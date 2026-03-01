@@ -22,4 +22,4 @@ Accepted
 ## Consequences
 - 서비스 간 강한 일관성 불가 → Eventual Consistency 허용
 - Kafka Consumer Group 기반 메시지 처리로 수평 확장 지원
-- Dead Letter Queue 설계 필요
+- Dead Letter Queue(DLQ) 설계는 ADR-0009로 별도 추적 예정 (메시지 처리 실패 시 데이터 정합성 보장 방안)
