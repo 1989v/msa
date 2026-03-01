@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-5개 독립 서비스(common, discovery, gateway, product, order, search)를 단일 레포지토리에서 관리해야 한다. 서비스 간 공통 라이브러리(common) 공유 필요. 독립 빌드/배포 지원 필요.
+6개 독립 서비스(common, discovery, gateway, product, order, search)를 단일 레포지토리에서 관리해야 한다. 서비스 간 공통 라이브러리(common) 공유 필요. 독립 빌드/배포 지원 필요.
 
 ## Decision
 - Gradle 멀티모듈 + Version Catalog (gradle/libs.versions.toml) 적용
