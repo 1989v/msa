@@ -20,6 +20,10 @@ Gateway에서 중앙 집중식 인증/인가 처리 필요. 상태 없는(Statel
 - 비대칭키(RS256): 키 관리 복잡, 현 규모에서 HS256으로 충분
 
 ## Consequences
-- Redis Cluster 장애 시 블랙리스트 검증 불가 → 블랙리스트 조회 실패 시 허용 (Fail-Open) 정책 적용
+- Redis Cluster 장애 시 블랙리스트 검증 불가 → Fail-Open 정책 적용 (허용). 단, 완화 방안:
+  - Actuator health endpoint로 Redis 장애 즉시 감지
+  - 장애 시 운영팀 알림(Alert) 트리거
+  - Access Token 만료 시간(30분)을 보안 경계로 활용
+  - 블랙리스트 조회 실패는 별도 메트릭으로 추적
 - Access Token 만료 전 강제 무효화는 블랙리스트로만 가능
 - 내부 서비스는 Gateway를 통해서만 접근 (직접 접근 시 인증 없음)

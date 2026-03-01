@@ -7,7 +7,7 @@ Accepted
 상품 전문 검색, 필터링, 정렬 기능 필요. RDBMS 검색 성능 한계.
 
 ## Decision
-- Elasticsearch 8.x 사용
+- Elasticsearch 8.17.0 사용
 - Search 서비스가 Elasticsearch 인덱스 단독 소유
 - 색인 전략:
   1. **전체 색인**: BulkProcessor 기반 (초기 데이터 적재, 배치 스케줄)

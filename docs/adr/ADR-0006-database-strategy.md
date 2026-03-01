@@ -21,4 +21,5 @@ Accepted
 ## Consequences
 - Replica 지연(Replication Lag) 발생 가능 → 강한 일관성 필요 시 Master 직접 조회
 - 서비스별 독립 배포/스케일 가능
-- Flyway/Liquibase 마이그레이션은 서비스 자체에서 관리
+- 스키마 마이그레이션: Flyway 사용 (Liquibase 대비 Spring Boot 통합 단순, SQL 기반으로 학습 비용 낮음)
+  각 서비스 모듈이 독립적으로 Flyway 마이그레이션 관리

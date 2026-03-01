@@ -21,4 +21,4 @@ Accepted
 ## Consequences
 - Eureka Self-Preservation Mode 비활성화 (로컬 환경)
 - 서비스 등록 지연으로 인한 초기 라우팅 실패 가능 → health check + retry 필요
-- K8s 전환 시 Eureka 의존성 제거 작업 필요
+- K8s 전환 시 Eureka 의존성 제거 작업 필요. 전환 결정 시 ADR-XXXX(K8s 마이그레이션)를 별도 작성하여 승인 받아야 함
