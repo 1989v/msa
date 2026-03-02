@@ -6,6 +6,10 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 
+kafka:
+  consumer:
+    group-id: search-indexer
+
 server:
   port: 8083
 

@@ -1,6 +1,6 @@
 package com.kgd.search.infrastructure.elasticsearch
 
-import com.kgd.search.application.product.port.ProductIndexPort
+import com.kgd.search.domain.product.port.ProductIndexPort
 import com.kgd.search.domain.product.model.ProductDocument
 import org.slf4j.LoggerFactory
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations

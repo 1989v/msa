@@ -1,6 +1,6 @@
 package com.kgd.search.infrastructure.messaging
 
-import com.kgd.search.application.product.port.ProductIndexPort
+import com.kgd.search.domain.product.port.ProductIndexPort
 import com.kgd.search.domain.product.model.ProductDocument
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
@@ -14,18 +14,24 @@ class ProductIndexingConsumer(
 
     @KafkaListener(
         topics = ["product.item.created", "product.item.updated"],
-        groupId = "search-indexer",
+        groupId = "\${kafka.consumer.group-id}",
         containerFactory = "productEventListenerContainerFactory"
     )
     fun consume(event: ProductIndexEvent) {
         log.info("Received product index event: productId={}", event.productId)
-        productIndexPort.indexProduct(
-            ProductDocument(
-                id = event.productId.toString(),
-                name = event.name,
-                price = event.price,
-                status = event.status
+        try {
+            productIndexPort.indexProduct(
+                ProductDocument(
+                    id = event.productId.toString(),
+                    name = event.name,
+                    price = event.price,
+                    status = event.status,
+                    createdAt = event.eventTime
+                )
             )
-        )
+        } catch (e: Exception) {
+            log.error("Failed to index product: productId={}, error={}", event.productId, e.message, e)
+            throw e
+        }
     }
 }
