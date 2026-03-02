@@ -48,7 +48,9 @@ RUN chown appuser:appgroup app.jar
 
 USER appuser
 
-EXPOSE 8080
+ARG SERVER_PORT=8080
+ENV SERVER_PORT=${SERVER_PORT}
+EXPOSE ${SERVER_PORT}
 
 ENTRYPOINT ["java", \
   "-XX:+UseContainerSupport", \

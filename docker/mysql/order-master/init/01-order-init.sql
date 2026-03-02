@@ -1,5 +1,0 @@
-CREATE USER IF NOT EXISTS 'replicator'@'%' IDENTIFIED BY 'replication_pw_2024';
-GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'%';
-FLUSH PRIVILEGES;
-
-ALTER DATABASE order_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
