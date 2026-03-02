@@ -4,6 +4,7 @@ docker/.env
 # Gradle
 .gradle/
 build/
+*/build/
 out/
 
 # IDE
@@ -23,3 +24,6 @@ logs/
 
 # Spring Boot
 target/
+
+# Backup files
+*.bak
