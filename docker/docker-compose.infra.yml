@@ -1,0 +1,432 @@
+version: '3.8'
+
+networks:
+  commerce-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  mysql-product-master-data:
+  mysql-product-replica-data:
+  mysql-order-master-data:
+  mysql-order-replica-data:
+  redis-1-data:
+  redis-2-data:
+  redis-3-data:
+  redis-4-data:
+  redis-5-data:
+  redis-6-data:
+  elasticsearch-data:
+  kafka-data:
+  zookeeper-data:
+  zookeeper-log:
+
+services:
+
+  # ============================================================
+  # MySQL — Product Service
+  # ============================================================
+
+  mysql-product-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-product-master
+    ports:
+      - "3316:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: product_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-product-master-data:/var/lib/mysql
+      - ./mysql/product-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/product-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.10
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-product-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-product-replica
+    ports:
+      - "3317:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: product_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-product-replica-data:/var/lib/mysql
+      - ./mysql/product-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-product-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.11
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # MySQL — Order Service
+  # ============================================================
+
+  mysql-order-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-order-master
+    ports:
+      - "3326:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: order_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-order-master-data:/var/lib/mysql
+      - ./mysql/order-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/order-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.20
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-order-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-order-replica
+    ports:
+      - "3327:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: order_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-order-replica-data:/var/lib/mysql
+      - ./mysql/order-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-order-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.21
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # Redis Cluster (3 Masters + 3 Replicas)
+  # ============================================================
+
+  redis-1:
+    image: redis:${REDIS_VERSION:-7.2}
+    container_name: redis-1
+    ports:
+      - "6379:6379"
+    command: >
+      redis-server
+      --port 6379
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --masterauth ${REDIS_PASSWORD}
+      --bind 0.0.0.0
+      --protected-mode no
+    volumes:
+      - redis-1-data:/data
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.2.1
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis-2:
+    image: redis:${REDIS_VERSION:-7.2}
+    container_name: redis-2
+    ports:
+      - "6380:6380"
+    command: >
+      redis-server
+      --port 6380
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --masterauth ${REDIS_PASSWORD}
+      --bind 0.0.0.0
+      --protected-mode no
+    volumes:
+      - redis-2-data:/data
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.2.2
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "-p", "6380", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis-3:
+    image: redis:${REDIS_VERSION:-7.2}
+    container_name: redis-3
+    ports:
+      - "6381:6381"
+    command: >
+      redis-server
+      --port 6381
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --masterauth ${REDIS_PASSWORD}
+      --bind 0.0.0.0
+      --protected-mode no
+    volumes:
+      - redis-3-data:/data
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.2.3
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "-p", "6381", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis-4:
+    image: redis:${REDIS_VERSION:-7.2}
+    container_name: redis-4
+    ports:
+      - "6382:6382"
+    command: >
+      redis-server
+      --port 6382
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --masterauth ${REDIS_PASSWORD}
+      --bind 0.0.0.0
+      --protected-mode no
+    volumes:
+      - redis-4-data:/data
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.2.4
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "-p", "6382", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis-5:
+    image: redis:${REDIS_VERSION:-7.2}
+    container_name: redis-5
+    ports:
+      - "6383:6383"
+    command: >
+      redis-server
+      --port 6383
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --masterauth ${REDIS_PASSWORD}
+      --bind 0.0.0.0
+      --protected-mode no
+    volumes:
+      - redis-5-data:/data
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.2.5
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "-p", "6383", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis-6:
+    image: redis:${REDIS_VERSION:-7.2}
+    container_name: redis-6
+    ports:
+      - "6384:6384"
+    command: >
+      redis-server
+      --port 6384
+      --cluster-enabled yes
+      --cluster-config-file /data/nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+      --masterauth ${REDIS_PASSWORD}
+      --bind 0.0.0.0
+      --protected-mode no
+    volumes:
+      - redis-6-data:/data
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.2.6
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "-p", "6384", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  # Redis Cluster 초기화 (한 번만 실행)
+  redis-cluster-init:
+    image: redis:${REDIS_VERSION:-7.2}
+    container_name: redis-cluster-init
+    depends_on:
+      redis-1:
+        condition: service_healthy
+      redis-2:
+        condition: service_healthy
+      redis-3:
+        condition: service_healthy
+      redis-4:
+        condition: service_healthy
+      redis-5:
+        condition: service_healthy
+      redis-6:
+        condition: service_healthy
+    networks:
+      - commerce-network
+    command: >
+      sh -c "redis-cli -a ${REDIS_PASSWORD} --cluster create
+      172.20.2.1:6379 172.20.2.2:6380 172.20.2.3:6381
+      172.20.2.4:6382 172.20.2.5:6383 172.20.2.6:6384
+      --cluster-replicas 1 --cluster-yes"
+    restart: on-failure
+
+  # ============================================================
+  # Elasticsearch
+  # ============================================================
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTICSEARCH_VERSION:-8.17.0}
+    container_name: elasticsearch
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - cluster.name=commerce-cluster
+      - node.name=commerce-node-1
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.3.1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  # ============================================================
+  # Zookeeper
+  # ============================================================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.0
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.4.1
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ============================================================
+  # Kafka
+  # ============================================================
+
+  kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_LOG_RETENTION_HOURS: 168
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.4.2
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
