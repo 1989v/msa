@@ -7,12 +7,14 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import org.springframework.cloud.gateway.filter.GatewayFilterChain
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest
 import org.springframework.mock.web.server.MockServerWebExchange
+import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 import reactor.test.StepVerifier
 
@@ -48,8 +50,15 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
         }
 
         `when`("유효한 JWT Bearer 토큰이 있으면") {
-            then("X-User-Id 헤더를 추가하고 체인을 진행해야 한다") {
-                val token = jwtUtil.generateAccessToken("user-1", listOf("USER"))
+            then("X-User-Id 및 X-User-Roles 헤더를 추가하고 체인을 진행해야 한다") {
+                val userId = "user-1"
+                val roles = "USER"
+                val token = jwtUtil.generateAccessToken(userId, listOf("USER"))
+
+                val exchangeSlot = slot<ServerWebExchange>()
+                every { chain.filter(capture(exchangeSlot)) } returns Mono.empty()
+                every { redisTemplate.hasKey("blacklist:$token") } returns false
+
                 val request = MockServerHttpRequest.get("/api/products/1")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
                     .build()
@@ -61,6 +70,8 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
 
                 // 체인이 호출되어야 함 (401이 아닌 경우)
                 exchange.response.statusCode shouldBe null // 응답이 설정되지 않음 = 성공적으로 체인 전달
+                exchangeSlot.captured.request.headers["X-User-Id"] shouldBe listOf(userId)
+                exchangeSlot.captured.request.headers["X-User-Roles"] shouldBe listOf(roles)
             }
         }
 
@@ -68,6 +79,25 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
             then("401 Unauthorized를 반환해야 한다") {
                 val request = MockServerHttpRequest.get("/api/products/1")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer invalid-token")
+                    .build()
+                val exchange = MockServerWebExchange.from(request)
+
+                val gatewayFilter = filter.apply(AuthenticationGatewayFilter.Config())
+                StepVerifier.create(gatewayFilter.filter(exchange, chain))
+                    .verifyComplete()
+
+                exchange.response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+            }
+        }
+
+        `when`("블랙리스트에 등록된 토큰이 있으면") {
+            then("401 Unauthorized를 반환해야 한다") {
+                val validToken = jwtUtil.generateAccessToken("user-1", listOf("USER"))
+
+                every { redisTemplate.hasKey("blacklist:$validToken") } returns true
+
+                val request = MockServerHttpRequest.get("/api/products/1")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer $validToken")
                     .build()
                 val exchange = MockServerWebExchange.from(request)
 

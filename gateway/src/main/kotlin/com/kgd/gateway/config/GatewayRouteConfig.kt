@@ -14,6 +14,12 @@ class GatewayRouteConfig(
     @Bean
     fun routeLocator(builder: RouteLocatorBuilder): RouteLocator =
         builder.routes()
+            // Auth Service (no authentication required)
+            .route("auth-service") { r ->
+                r.path("/api/auth/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri("lb://product-service")
+            }
             // Product Service
             .route("product-service") { r ->
                 r.path("/api/products/**")
