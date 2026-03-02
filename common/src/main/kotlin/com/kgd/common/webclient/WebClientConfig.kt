@@ -16,7 +16,5 @@ class WebClientConfig {
 
     @Bean
     fun defaultWebClient(builder: WebClient.Builder): WebClient =
-        builder
-            .defaultHeader("Content-Type", "application/json")
-            .build()
+        builder.build()
 }

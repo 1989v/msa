@@ -21,7 +21,7 @@ subprojects {
     pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
         extensions.configure<org.gradle.api.plugins.JavaPluginExtension>("java") {
             toolchain {
-                languageVersion.set(JavaLanguageVersion.of(21))
+                languageVersion.set(JavaLanguageVersion.of(25))
             }
         }
     }
@@ -43,8 +43,13 @@ subprojects {
     tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         compilerOptions {
             freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_24)
         }
+    }
+
+    // Kotlin max JVM target is 24 while toolchain is 25; align Java bytecode to 24 to match.
+    tasks.withType<JavaCompile> {
+        options.release.set(24)
     }
 
     tasks.withType<Test> {
