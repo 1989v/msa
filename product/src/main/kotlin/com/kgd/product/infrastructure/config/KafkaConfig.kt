@@ -22,8 +22,9 @@ class KafkaConfig {
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
             ProducerConfig.ACKS_CONFIG to "all",
-            ProducerConfig.RETRIES_CONFIG to 3,
-            ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true
+            ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true,
+            ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION to 5,
+            ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to 120000
         )
         return DefaultKafkaProducerFactory(props, StringSerializer(), JacksonJsonSerializer())
     }

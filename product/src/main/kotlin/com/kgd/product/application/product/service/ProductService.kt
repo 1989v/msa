@@ -27,7 +27,7 @@ class ProductService(
         val saved = repositoryPort.save(product)
         eventPort.publishProductCreated(saved)
         return CreateProductUseCase.Result(
-            id = saved.id!!,
+            id = requireNotNull(saved.id) { "저장된 상품에 ID가 없습니다" },
             name = saved.name,
             price = saved.price.amount,
             stock = saved.stock,
@@ -39,7 +39,7 @@ class ProductService(
     override fun execute(id: Long): GetProductUseCase.Result {
         val product = repositoryPort.findById(id) ?: throw ProductNotFoundException(id)
         return GetProductUseCase.Result(
-            id = product.id!!,
+            id = requireNotNull(product.id) { "저장된 상품에 ID가 없습니다" },
             name = product.name,
             price = product.price.amount,
             stock = product.stock,
@@ -56,7 +56,7 @@ class ProductService(
         val saved = repositoryPort.save(product)
         eventPort.publishProductUpdated(saved)
         return UpdateProductUseCase.Result(
-            id = saved.id!!,
+            id = requireNotNull(saved.id) { "저장된 상품에 ID가 없습니다" },
             name = saved.name,
             price = saved.price.amount,
             stock = saved.stock,

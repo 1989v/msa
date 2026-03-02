@@ -3,13 +3,15 @@ package com.kgd.product.presentation.product.controller
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.response.ApiResponse
+import org.springframework.core.Ordered
+import org.springframework.core.annotation.Order
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
 class ProductExceptionHandler {
 
     @ExceptionHandler(BusinessException::class)
@@ -21,11 +23,5 @@ class ProductExceptionHandler {
             else -> HttpStatus.INTERNAL_SERVER_ERROR
         }
         return ResponseEntity.status(status).body(ApiResponse.error(e.errorCode))
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidationException(e: MethodArgumentNotValidException): ResponseEntity<ApiResponse<Nothing>> {
-        val message = e.bindingResult.fieldErrors.firstOrNull()?.defaultMessage ?: "입력값이 올바르지 않습니다"
-        return ResponseEntity.badRequest().body(ApiResponse.error(ErrorCode.INVALID_INPUT.name, message))
     }
 }
