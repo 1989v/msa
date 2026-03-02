@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    master:
+      url: jdbc:mysql://mysql-order-master:3306/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    replica:
+      url: jdbc:mysql://mysql-order-replica:3306/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  kafka:
+    bootstrap-servers: kafka:29092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/
