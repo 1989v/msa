@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.spring.cloud.loadbalancer)
     implementation(libs.spring.cloud.circuitbreaker.reactor.resilience4j)
     implementation(libs.spring.boot.starter.data.redis)
+    implementation(libs.spring.boot.starter.security)
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.kotlin.coroutines.reactor)
     implementation(libs.jjwt.api)
