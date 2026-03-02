@@ -5,8 +5,6 @@ import com.kgd.search.domain.product.model.ProductDocument
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
-import java.time.LocalDateTime
 
 @Component
 class ProductIndexingConsumer(
@@ -31,11 +29,3 @@ class ProductIndexingConsumer(
         )
     }
 }
-
-data class ProductIndexEvent(
-    val productId: Long = 0,
-    val name: String = "",
-    val price: BigDecimal = BigDecimal.ZERO,
-    val status: String = "",
-    val eventTime: LocalDateTime = LocalDateTime.now()
-)

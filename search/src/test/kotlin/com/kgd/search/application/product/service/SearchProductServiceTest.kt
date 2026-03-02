@@ -31,6 +31,7 @@ class SearchProductServiceTest : BehaviorSpec({
                 result.products[0].id shouldBe "1"
                 result.products[0].name shouldBe "테스트 상품"
                 result.totalElements shouldBe 1L
+                result.totalPages shouldBe 1
                 result.currentPage shouldBe 0
             }
         }

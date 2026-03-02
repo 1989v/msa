@@ -9,21 +9,19 @@ import org.springframework.stereotype.Component
 
 @Component
 class ProductBulkIndexer(
-    private val elasticsearchOperations: ElasticsearchOperations,
-    private val repository: ProductElasticsearchRepository
+    private val elasticsearchOperations: ElasticsearchOperations
 ) : ProductIndexPort {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun indexProduct(document: ProductDocument) {
-        repository.save(document)
+        elasticsearchOperations.save(document)
         log.info("Indexed product: id={}, name={}", document.id, document.name)
     }
 
     override fun bulkIndex(documents: List<ProductDocument>) {
         if (documents.isEmpty()) return
-
-        val queries = documents.map { doc ->
+        val queries: List<org.springframework.data.elasticsearch.core.query.IndexQuery> = documents.map { doc ->
             IndexQueryBuilder()
                 .withId(doc.id)
                 .withObject(doc)
