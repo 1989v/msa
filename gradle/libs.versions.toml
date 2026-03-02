@@ -53,6 +53,7 @@ mysql-connector = { module = "com.mysql:mysql-connector-j", version.ref = "mysql
 
 # Elasticsearch
 spring-data-elasticsearch = { module = "org.springframework.data:spring-data-elasticsearch" }
+spring-boot-starter-data-elasticsearch = { module = "org.springframework.boot:spring-boot-starter-data-elasticsearch" }
 
 # Test
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
