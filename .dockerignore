@@ -1,0 +1,33 @@
+# Version control
+.git/
+.gitignore
+
+# IDE
+.idea/
+*.iml
+
+# Gradle cache
+.gradle/
+*/build/
+build/
+
+# Docker files
+docker/
+
+# Logs
+*.log
+out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+
+# Documentation
+docs/
+README.md
+
+# Front end
+front/
