@@ -3,8 +3,10 @@
 # ============================================================
 FROM eclipse-temurin:25-jdk-alpine AS builder
 
-ARG MODULE
-RUN test -n "$MODULE" || (echo "ERROR: MODULE build arg is required" && exit 1)
+ARG MODULE_GRADLE
+ARG MODULE_PATH
+RUN test -n "$MODULE_GRADLE" || (echo "ERROR: MODULE_GRADLE build arg is required" && exit 1)
+RUN test -n "$MODULE_PATH"   || (echo "ERROR: MODULE_PATH build arg is required"   && exit 1)
 
 WORKDIR /workspace
 
@@ -18,23 +20,29 @@ COPY common/build.gradle.kts common/
 COPY discovery/build.gradle.kts discovery/
 COPY gateway/build.gradle.kts gateway/
 COPY product/build.gradle.kts product/
+COPY product/domain/build.gradle.kts product/domain/
+COPY product/app/build.gradle.kts product/app/
 COPY order/build.gradle.kts order/
+COPY order/domain/build.gradle.kts order/domain/
+COPY order/app/build.gradle.kts order/app/
 COPY search/build.gradle.kts search/
+COPY search/domain/build.gradle.kts search/domain/
+COPY search/app/build.gradle.kts search/app/
 
 # 의존성 다운로드 (소스 변경과 분리하여 캐시 레이어 활용)
-RUN ./gradlew :${MODULE}:dependencies --no-daemon 2>/dev/null || true
+RUN ./gradlew :${MODULE_GRADLE}:dependencies --no-daemon 2>/dev/null || true
 
 # 전체 소스 복사 후 빌드
 COPY . .
 
-RUN ./gradlew :${MODULE}:bootJar -x test --no-daemon
+RUN ./gradlew :${MODULE_GRADLE}:bootJar -x test --no-daemon
 
 # ============================================================
 # Stage 2: Runtime
 # ============================================================
 FROM eclipse-temurin:25-jre-alpine AS runtime
 
-ARG MODULE
+ARG MODULE_PATH
 
 WORKDIR /app
 
@@ -42,7 +50,7 @@ WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # JAR 복사
-COPY --from=builder /workspace/${MODULE}/build/libs/${MODULE}-*.jar app.jar
+COPY --from=builder /workspace/${MODULE_PATH}/build/libs/*.jar app.jar
 
 RUN chown appuser:appgroup app.jar
 

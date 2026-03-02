@@ -67,6 +67,23 @@ Before generating implementation:
 - QueryDSL Q클래스는 `build/generated/source/kapt/` 에 생성 (git ignore 대상)
 - 빌드 명령: `./gradlew :{module}:build` (단일 모듈), `./gradlew build` (전체)
 
+### 모듈 명명 규칙 (Nested Submodule)
+
+각 서비스는 `{service}:domain` / `{service}:app` 형태의 중첩 Gradle 서브모듈로 분리된다.
+
+| Gradle 경로 | 파일시스템 경로 | 역할 |
+|------------|---------------|------|
+| `:product:domain` | `product/domain/` | 순수 도메인 (Spring/JPA 없음) |
+| `:product:app` | `product/app/` | Spring Boot 앱 (Application + Infrastructure + Presentation) |
+| `:order:domain` | `order/domain/` | 순수 도메인 |
+| `:order:app` | `order/app/` | Spring Boot 앱 |
+| `:search:domain` | `search/domain/` | 순수 도메인 |
+| `:search:app` | `search/app/` | Spring Boot 앱 |
+
+- **domain 모듈 규칙**: Spring/JPA 어노테이션을 추가하면 컴파일 에러로 차단됨 (의존성 없음)
+- **app 모듈**: `implementation(project(":{service}:domain"))`으로 domain 의존
+- **bootJar 이름**: `tasks.bootJar { archiveBaseName.set("{service}") }` 로 서비스명 통일
+
 
 ## 7. Package Naming Convention
 
@@ -76,19 +93,19 @@ Clean Architecture 레이어별 패키지:
 
 ```
 com.kgd.{service}/
-├── domain/
+├── domain/                          ← {service}:domain Gradle 서브모듈
 │   └── {entity}/
 │       ├── model/        # Aggregate, Entity, Value Object
 │       ├── policy/       # Domain Policy, Specification
 │       ├── event/        # Domain Event
 │       └── exception/    # Domain Exception
-├── application/
+├── application/                     ← {service}:app Gradle 서브모듈
 │   └── {entity}/
 │       ├── usecase/      # UseCase 인터페이스 (Inbound Port)
 │       ├── service/      # UseCase 구현체
 │       ├── port/         # Outbound Port 인터페이스
 │       └── dto/          # Command, Result, Query
-├── infrastructure/
+├── infrastructure/                  ← {service}:app Gradle 서브모듈
 │   ├── persistence/
 │   │   └── {entity}/
 │   │       ├── entity/   # JPA Entity
@@ -97,7 +114,7 @@ com.kgd.{service}/
 │   ├── client/           # WebClient 기반 외부 API Adapter
 │   ├── messaging/        # Kafka Producer/Consumer Adapter
 │   └── config/           # 기술 설정 (DataSource, Redis, Kafka 등)
-└── presentation/
+└── presentation/                    ← {service}:app Gradle 서브모듈
     └── {entity}/
         ├── controller/   # RestController
         └── dto/          # Request DTO, Response DTO
@@ -105,6 +122,7 @@ com.kgd.{service}/
 
 - 도메인 간 cross-reference 금지 (Order → Product 직접 참조 금지, API 호출만 허용)
 - domain 패키지는 Spring/JPA 어노테이션 사용 금지
+- domain 레이어 코드는 반드시 `{service}/domain/` Gradle 서브모듈에 위치
 
 
 ## 8. Test Rules

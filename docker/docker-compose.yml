@@ -8,7 +8,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        MODULE: discovery
+        MODULE_GRADLE: discovery
+        MODULE_PATH: discovery
     image: commerce/discovery:latest
     container_name: discovery
     ports:
@@ -31,7 +32,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        MODULE: gateway
+        MODULE_GRADLE: gateway
+        MODULE_PATH: gateway
     image: commerce/gateway:latest
     container_name: gateway
     ports:
@@ -55,7 +57,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        MODULE: product
+        MODULE_GRADLE: product:app
+        MODULE_PATH: product/app
     image: commerce/product:latest
     container_name: product
     ports:
@@ -82,7 +85,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        MODULE: order
+        MODULE_GRADLE: order:app
+        MODULE_PATH: order/app
     image: commerce/order:latest
     container_name: order
     ports:
@@ -109,7 +113,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
       args:
-        MODULE: search
+        MODULE_GRADLE: search:app
+        MODULE_PATH: search/app
     image: commerce/search:latest
     container_name: search
     ports:

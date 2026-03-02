@@ -4,7 +4,10 @@ include(
     "common",
     "discovery",
     "gateway",
-    "product",
-    "order",
-    "search"
+    "product:domain",
+    "product:app",
+    "order:domain",
+    "order:app",
+    "search:domain",
+    "search:app"
 )

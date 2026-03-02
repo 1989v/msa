@@ -1,16 +1,1 @@
-plugins {
-    alias(libs.plugins.kotlin.spring)
-    alias(libs.plugins.spring.boot)
-}
-
-dependencies {
-    implementation(project(":common"))
-    implementation(libs.spring.boot.starter.web)
-    implementation(libs.spring.boot.starter.actuator)
-    implementation(libs.spring.boot.starter.data.elasticsearch)
-    implementation(libs.spring.cloud.eureka.client)
-    implementation(libs.spring.cloud.loadbalancer)
-    implementation(libs.spring.kafka)
-    testImplementation(libs.spring.boot.starter.test)
-    testImplementation(libs.kotest.extensions.spring)
-}
+// Container project — subprojects: domain, app
