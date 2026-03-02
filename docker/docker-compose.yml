@@ -1,0 +1,132 @@
+version: '3.8'
+
+include:
+  - path: docker-compose.infra.yml
+
+services:
+
+  discovery:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE: discovery
+    image: commerce/discovery:latest
+    container_name: discovery
+    ports:
+      - "8761:8761"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.10
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8761/actuator/health | grep -q 'UP'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE: gateway
+    image: commerce/gateway:latest
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      discovery:
+        condition: service_healthy
+      redis-1:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.20
+    restart: unless-stopped
+
+  product:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE: product
+    image: commerce/product:latest
+    container_name: product
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      discovery:
+        condition: service_healthy
+      mysql-product-master:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.30
+    restart: unless-stopped
+
+  order:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE: order
+    image: commerce/order:latest
+    container_name: order
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      discovery:
+        condition: service_healthy
+      mysql-order-master:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.40
+    restart: unless-stopped
+
+  search:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE: search
+    image: commerce/search:latest
+    container_name: search
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      discovery:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.50
+    restart: unless-stopped
