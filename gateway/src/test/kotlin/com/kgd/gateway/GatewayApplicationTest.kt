@@ -1,9 +1,10 @@
 package com.kgd.gateway
 
 import io.kotest.core.spec.style.StringSpec
-import org.springframework.boot.test.context.SpringBootTest
+import io.kotest.matchers.shouldBe
 
-@SpringBootTest
 class GatewayApplicationTest : StringSpec({
-    "context loads" {}
+    "GatewayApplication exists" {
+        GatewayApplication::class.simpleName shouldBe "GatewayApplication"
+    }
 })

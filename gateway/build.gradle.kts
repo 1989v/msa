@@ -12,6 +12,10 @@ dependencies {
     implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.kotlin.coroutines.reactor)
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
+    testImplementation(libs.reactor.test)
 }
