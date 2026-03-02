@@ -8,8 +8,7 @@ import org.springframework.stereotype.Component
 class JwtTokenValidator(private val jwtUtil: JwtUtil) {
 
     fun validateAndExtract(token: String): Claims? =
-        if (jwtUtil.isValid(token)) runCatching { jwtUtil.parseToken(token) }.getOrNull()
-        else null
+        runCatching { jwtUtil.parseToken(token) }.getOrNull()
 
     fun extractFromHeader(authHeader: String?): String? =
         authHeader

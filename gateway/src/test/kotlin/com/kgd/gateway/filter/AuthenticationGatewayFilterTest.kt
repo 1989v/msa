@@ -9,7 +9,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import org.springframework.cloud.gateway.filter.GatewayFilterChain
-import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ReactiveRedisTemplate
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.mock.http.server.reactive.MockServerHttpRequest
@@ -26,13 +26,13 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
     )
     val jwtUtil = JwtUtil(jwtProps)
     val jwtTokenValidator = JwtTokenValidator(jwtUtil)
-    val redisTemplate = mockk<RedisTemplate<String, Any>>()
+    val redisTemplate = mockk<ReactiveRedisTemplate<String, Any>>()
     val filter = AuthenticationGatewayFilter(jwtTokenValidator, redisTemplate)
     val chain = mockk<GatewayFilterChain>()
 
     beforeEach {
         every { chain.filter(any()) } returns Mono.empty()
-        every { redisTemplate.hasKey(any<String>()) } returns false
+        every { redisTemplate.hasKey(any<String>()) } returns Mono.just(false)
     }
 
     given("인증 필터 적용 시") {
@@ -57,7 +57,7 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
 
                 val exchangeSlot = slot<ServerWebExchange>()
                 every { chain.filter(capture(exchangeSlot)) } returns Mono.empty()
-                every { redisTemplate.hasKey("blacklist:$token") } returns false
+                every { redisTemplate.hasKey("blacklist:$token") } returns Mono.just(false)
 
                 val request = MockServerHttpRequest.get("/api/products/1")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
@@ -94,7 +94,7 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
             then("401 Unauthorized를 반환해야 한다") {
                 val validToken = jwtUtil.generateAccessToken("user-1", listOf("USER"))
 
-                every { redisTemplate.hasKey("blacklist:$validToken") } returns true
+                every { redisTemplate.hasKey("blacklist:$validToken") } returns Mono.just(true)
 
                 val request = MockServerHttpRequest.get("/api/products/1")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer $validToken")
@@ -106,6 +106,26 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
                     .verifyComplete()
 
                 exchange.response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+            }
+        }
+
+        `when`("Redis가 예외를 던지면 (Fail-Open)") {
+            then("요청을 허용하고 체인을 진행해야 한다") {
+                val token = jwtUtil.generateAccessToken("user-1", listOf("USER"))
+                every { redisTemplate.hasKey(any<String>()) } returns Mono.error(RuntimeException("Redis connection failed"))
+                val exchangeSlot = slot<ServerWebExchange>()
+                every { chain.filter(capture(exchangeSlot)) } returns Mono.empty()
+
+                val request = MockServerHttpRequest.get("/api/products/1")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
+                    .build()
+                val exchange = MockServerWebExchange.from(request)
+
+                val gatewayFilter = filter.apply(AuthenticationGatewayFilter.Config())
+                StepVerifier.create(gatewayFilter.filter(exchange, chain))
+                    .verifyComplete()
+
+                exchange.response.statusCode shouldBe null // not 401 — chain proceeded
             }
         }
     }
