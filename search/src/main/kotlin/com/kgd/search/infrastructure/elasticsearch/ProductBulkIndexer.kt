@@ -4,6 +4,7 @@ import com.kgd.search.domain.product.port.ProductIndexPort
 import com.kgd.search.domain.product.model.ProductDocument
 import org.slf4j.LoggerFactory
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
+import org.springframework.data.elasticsearch.core.query.IndexQuery
 import org.springframework.data.elasticsearch.core.query.IndexQueryBuilder
 import org.springframework.stereotype.Component
 
@@ -21,7 +22,7 @@ class ProductBulkIndexer(
 
     override fun bulkIndex(documents: List<ProductDocument>) {
         if (documents.isEmpty()) return
-        val queries: List<org.springframework.data.elasticsearch.core.query.IndexQuery> = documents.map { doc ->
+        val queries: List<IndexQuery> = documents.map { doc ->
             IndexQueryBuilder()
                 .withId(doc.id)
                 .withObject(ProductEsDocument.fromDomain(doc))
