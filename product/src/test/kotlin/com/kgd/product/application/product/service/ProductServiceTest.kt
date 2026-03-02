@@ -1,7 +1,6 @@
 package com.kgd.product.application.product.service
 
 import com.kgd.product.application.product.port.ProductEventPort
-import com.kgd.product.application.product.port.ProductRepositoryPort
 import com.kgd.product.application.product.usecase.CreateProductUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
@@ -19,17 +18,17 @@ import io.mockk.verify
 import java.math.BigDecimal
 
 class ProductServiceTest : BehaviorSpec({
-    val repositoryPort = mockk<ProductRepositoryPort>()
+    val transactionalService = mockk<ProductTransactionalService>()
     val eventPort = mockk<ProductEventPort>(relaxed = true)
-    val service = ProductService(repositoryPort, eventPort)
+    val service = ProductService(transactionalService, eventPort)
 
-    beforeEach { clearMocks(repositoryPort, eventPort) }
+    beforeEach { clearMocks(transactionalService, eventPort) }
 
     given("상품 생성 명령이 들어오면") {
         `when`("유효한 커맨드이면") {
             then("상품이 저장되고 이벤트가 발행되어야 한다") {
                 val savedProduct = Product.restore(1L, "테스트", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
-                every { repositoryPort.save(any()) } returns savedProduct
+                every { transactionalService.save(any()) } returns savedProduct
 
                 val result = service.execute(CreateProductUseCase.Command("테스트", 1000.toBigDecimal(), 10))
 
@@ -45,7 +44,7 @@ class ProductServiceTest : BehaviorSpec({
         `when`("존재하는 상품 ID이면") {
             then("상품 정보가 반환되어야 한다") {
                 val product = Product.restore(1L, "상품", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
-                every { repositoryPort.findById(1L) } returns product
+                every { transactionalService.findById(1L) } returns product
 
                 val result = service.execute(1L)
 
@@ -55,7 +54,7 @@ class ProductServiceTest : BehaviorSpec({
         }
         `when`("존재하지 않는 상품 ID이면") {
             then("ProductNotFoundException이 발생해야 한다") {
-                every { repositoryPort.findById(999L) } returns null
+                every { transactionalService.findById(999L) } throws ProductNotFoundException(999L)
 
                 shouldThrow<ProductNotFoundException> {
                     service.execute(999L)
@@ -69,8 +68,8 @@ class ProductServiceTest : BehaviorSpec({
             then("상품이 수정되고 이벤트가 발행되어야 한다") {
                 val existingProduct = Product.restore(1L, "기존상품", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
                 val updatedProduct = Product.restore(1L, "수정상품", Money(2000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
-                every { repositoryPort.findById(1L) } returns existingProduct
-                every { repositoryPort.save(any()) } returns updatedProduct
+                every { transactionalService.findById(1L) } returns existingProduct
+                every { transactionalService.save(any()) } returns updatedProduct
 
                 val result = service.execute(UpdateProductUseCase.Command(1L, "수정상품", 2000.toBigDecimal()))
 
@@ -81,7 +80,7 @@ class ProductServiceTest : BehaviorSpec({
         }
         `when`("존재하지 않는 상품 ID이면") {
             then("ProductNotFoundException이 발생해야 한다") {
-                every { repositoryPort.findById(999L) } returns null
+                every { transactionalService.findById(999L) } throws ProductNotFoundException(999L)
                 shouldThrow<ProductNotFoundException> {
                     service.execute(UpdateProductUseCase.Command(999L, "수정상품", null))
                 }

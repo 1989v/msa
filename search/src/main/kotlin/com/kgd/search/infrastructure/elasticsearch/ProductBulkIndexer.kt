@@ -15,7 +15,7 @@ class ProductBulkIndexer(
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun indexProduct(document: ProductDocument) {
-        elasticsearchOperations.save(document)
+        elasticsearchOperations.save(ProductEsDocument.fromDomain(document))
         log.info("Indexed product: id={}, name={}", document.id, document.name)
     }
 
@@ -24,10 +24,10 @@ class ProductBulkIndexer(
         val queries: List<org.springframework.data.elasticsearch.core.query.IndexQuery> = documents.map { doc ->
             IndexQueryBuilder()
                 .withId(doc.id)
-                .withObject(doc)
+                .withObject(ProductEsDocument.fromDomain(doc))
                 .build()
         }
-        elasticsearchOperations.bulkIndex(queries, ProductDocument::class.java)
+        elasticsearchOperations.bulkIndex(queries, ProductEsDocument::class.java)
         log.info("Bulk indexed {} products", documents.size)
     }
 }
