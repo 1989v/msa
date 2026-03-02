@@ -35,7 +35,7 @@ class Product private constructor(
 
     fun decreaseStock(quantity: Int) {
         require(quantity > 0) { "수량은 0보다 커야 합니다" }
-        check(stock >= quantity) { "재고가 부족합니다" }
+        if (stock < quantity) throw com.kgd.product.domain.product.exception.InsufficientStockException()
         stock -= quantity
     }
 

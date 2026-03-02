@@ -4,6 +4,7 @@ import com.kgd.product.domain.product.model.Money
 import com.kgd.product.domain.product.model.Product
 import com.kgd.product.domain.product.model.ProductStatus
 import jakarta.persistence.*
+import org.hibernate.annotations.CreationTimestamp
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -21,6 +22,7 @@ class ProductJpaEntity(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: ProductStatus,
+    @CreationTimestamp
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now()
 ) {

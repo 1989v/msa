@@ -12,6 +12,7 @@ import com.kgd.product.domain.product.model.ProductStatus
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -21,6 +22,8 @@ class ProductServiceTest : BehaviorSpec({
     val repositoryPort = mockk<ProductRepositoryPort>()
     val eventPort = mockk<ProductEventPort>(relaxed = true)
     val service = ProductService(repositoryPort, eventPort)
+
+    beforeEach { clearMocks(repositoryPort, eventPort) }
 
     given("상품 생성 명령이 들어오면") {
         `when`("유효한 커맨드이면") {
@@ -74,6 +77,14 @@ class ProductServiceTest : BehaviorSpec({
                 result.name shouldBe "수정상품"
                 result.price shouldBe 2000.toBigDecimal()
                 verify(exactly = 1) { eventPort.publishProductUpdated(any()) }
+            }
+        }
+        `when`("존재하지 않는 상품 ID이면") {
+            then("ProductNotFoundException이 발생해야 한다") {
+                every { repositoryPort.findById(999L) } returns null
+                shouldThrow<ProductNotFoundException> {
+                    service.execute(UpdateProductUseCase.Command(999L, "수정상품", null))
+                }
             }
         }
     }

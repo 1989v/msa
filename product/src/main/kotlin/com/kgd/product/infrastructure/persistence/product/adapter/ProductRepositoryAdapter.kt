@@ -16,8 +16,21 @@ class ProductRepositoryAdapter(
     private val queryRepository: ProductQueryRepository
 ) : ProductRepositoryPort {
 
-    override fun save(product: Product): Product =
-        jpaRepository.save(ProductJpaEntity.fromDomain(product)).toDomain()
+    override fun save(product: Product): Product {
+        val entity = if (product.id != null) {
+            jpaRepository.findById(product.id).orElseThrow {
+                com.kgd.product.domain.product.exception.ProductNotFoundException(product.id)
+            }.also { e ->
+                e.name = product.name
+                e.price = product.price.amount
+                e.stock = product.stock
+                e.status = product.status
+            }
+        } else {
+            ProductJpaEntity.fromDomain(product)
+        }
+        return jpaRepository.save(entity).toDomain()
+    }
 
     override fun findById(id: Long): Product? =
         jpaRepository.findById(id).orElse(null)?.toDomain()

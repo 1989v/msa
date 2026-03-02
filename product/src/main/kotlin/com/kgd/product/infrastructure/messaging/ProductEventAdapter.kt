@@ -2,12 +2,12 @@ package com.kgd.product.infrastructure.messaging
 
 import com.kgd.product.application.product.port.ProductEventPort
 import com.kgd.product.domain.product.model.Product
+import com.kgd.product.infrastructure.messaging.event.ProductCreatedEvent
+import com.kgd.product.infrastructure.messaging.event.ProductUpdatedEvent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
-import java.time.LocalDateTime
 
 @Component
 class ProductEventAdapter(
@@ -46,19 +46,3 @@ class ProductEventAdapter(
             }
     }
 }
-
-data class ProductCreatedEvent(
-    val productId: Long,
-    val name: String,
-    val price: BigDecimal,
-    val status: String,
-    val eventTime: LocalDateTime = LocalDateTime.now()
-)
-
-data class ProductUpdatedEvent(
-    val productId: Long,
-    val name: String,
-    val price: BigDecimal,
-    val status: String,
-    val eventTime: LocalDateTime = LocalDateTime.now()
-)

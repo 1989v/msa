@@ -35,7 +35,7 @@ class ProductController(
     @PutMapping("/{id}")
     fun updateProduct(
         @PathVariable id: Long,
-        @RequestBody request: UpdateProductRequest
+        @Valid @RequestBody request: UpdateProductRequest
     ): ResponseEntity<ApiResponse<ProductResponse>> {
         val result = updateProductUseCase.execute(request.toCommand(id))
         return ResponseEntity.ok(ApiResponse.success(ProductResponse.from(result)))
