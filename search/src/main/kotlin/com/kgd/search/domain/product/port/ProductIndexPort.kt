@@ -1,4 +1,4 @@
-package com.kgd.search.application.product.port
+package com.kgd.search.domain.product.port
 
 import com.kgd.search.domain.product.model.ProductDocument
 
