@@ -20,11 +20,12 @@ class ProductBulkIndexerTest : BehaviorSpec({
         `when`("유효한 ProductDocument가 주어지면") {
             then("elasticsearchOperations.save()가 호출되어야 한다") {
                 val doc = ProductDocument("1", "테스트 상품", BigDecimal("10000"), "ACTIVE")
-                every { elasticsearchOperations.save(doc) } returns doc
+                val esDoc = ProductEsDocument.fromDomain(doc)
+                every { elasticsearchOperations.save(esDoc) } returns esDoc
 
                 indexer.indexProduct(doc)
 
-                verify(exactly = 1) { elasticsearchOperations.save(doc) }
+                verify(exactly = 1) { elasticsearchOperations.save(any<ProductEsDocument>()) }
             }
         }
     }
@@ -36,11 +37,11 @@ class ProductBulkIndexerTest : BehaviorSpec({
                     ProductDocument("1", "상품1", BigDecimal("10000"), "ACTIVE"),
                     ProductDocument("2", "상품2", BigDecimal("20000"), "ACTIVE")
                 )
-                every { elasticsearchOperations.bulkIndex(any<List<IndexQuery>>(), ProductDocument::class.java) } returns listOf()
+                every { elasticsearchOperations.bulkIndex(any<List<IndexQuery>>(), ProductEsDocument::class.java) } returns listOf()
 
                 indexer.bulkIndex(docs)
 
-                verify(exactly = 1) { elasticsearchOperations.bulkIndex(any<List<IndexQuery>>(), ProductDocument::class.java) }
+                verify(exactly = 1) { elasticsearchOperations.bulkIndex(any<List<IndexQuery>>(), ProductEsDocument::class.java) }
             }
         }
         `when`("빈 리스트가 주어지면") {

@@ -1,20 +1,16 @@
 package com.kgd.product.application.product.service
 
 import com.kgd.product.application.product.port.ProductEventPort
-import com.kgd.product.application.product.port.ProductRepositoryPort
 import com.kgd.product.application.product.usecase.CreateProductUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
-import com.kgd.product.domain.product.exception.ProductNotFoundException
 import com.kgd.product.domain.product.model.Money
 import com.kgd.product.domain.product.model.Product
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional
 class ProductService(
-    private val repositoryPort: ProductRepositoryPort,
+    private val transactionalService: ProductTransactionalService,
     private val eventPort: ProductEventPort
 ) : CreateProductUseCase, GetProductUseCase, UpdateProductUseCase {
 
@@ -24,7 +20,9 @@ class ProductService(
             price = Money(command.price),
             stock = command.stock
         )
-        val saved = repositoryPort.save(product)
+        // Transaction commits when save() returns
+        val saved = transactionalService.save(product)
+        // Publish event AFTER transaction committed
         eventPort.publishProductCreated(saved)
         return CreateProductUseCase.Result(
             id = requireNotNull(saved.id) { "저장된 상품에 ID가 없습니다" },
@@ -35,9 +33,8 @@ class ProductService(
         )
     }
 
-    @Transactional(readOnly = true)
     override fun execute(id: Long): GetProductUseCase.Result {
-        val product = repositoryPort.findById(id) ?: throw ProductNotFoundException(id)
+        val product = transactionalService.findById(id)
         return GetProductUseCase.Result(
             id = requireNotNull(product.id) { "저장된 상품에 ID가 없습니다" },
             name = product.name,
@@ -48,12 +45,14 @@ class ProductService(
     }
 
     override fun execute(command: UpdateProductUseCase.Command): UpdateProductUseCase.Result {
-        val product = repositoryPort.findById(command.id) ?: throw ProductNotFoundException(command.id)
+        val product = transactionalService.findById(command.id)
         product.update(
             name = command.name,
             price = command.price?.let { Money(it) }
         )
-        val saved = repositoryPort.save(product)
+        // Transaction commits when save() returns
+        val saved = transactionalService.save(product)
+        // Publish event AFTER transaction committed
         eventPort.publishProductUpdated(saved)
         return UpdateProductUseCase.Result(
             id = requireNotNull(saved.id) { "저장된 상품에 ID가 없습니다" },
