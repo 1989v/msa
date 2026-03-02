@@ -38,7 +38,7 @@ class GatewayRouteConfig(
                     }
                     .uri("lb://order-service")
             }
-            // Search Service (인증 있음)
+            // Search Service (authentication required)
             .route("search-service") { r ->
                 r.path("/api/search/**")
                     .filters { f ->

@@ -28,6 +28,7 @@ eureka:
     lease-expiration-duration-in-seconds: 15
 
 jwt:
+  # JWT_SECRET must be set in all non-local environments. Default is for local development only.
   secret: ${JWT_SECRET:default-dev-secret-key-32-chars-long!}
   access-expiry: 1800
   refresh-expiry: 604800
