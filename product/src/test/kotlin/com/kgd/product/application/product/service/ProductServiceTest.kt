@@ -4,6 +4,7 @@ import com.kgd.product.application.product.port.ProductEventPort
 import com.kgd.product.application.product.port.ProductRepositoryPort
 import com.kgd.product.application.product.usecase.CreateProductUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
+import com.kgd.product.application.product.usecase.UpdateProductUseCase
 import com.kgd.product.domain.product.exception.ProductNotFoundException
 import com.kgd.product.domain.product.model.Money
 import com.kgd.product.domain.product.model.Product
@@ -56,6 +57,23 @@ class ProductServiceTest : BehaviorSpec({
                 shouldThrow<ProductNotFoundException> {
                     service.execute(999L)
                 }
+            }
+        }
+    }
+
+    given("상품 수정 시") {
+        `when`("유효한 수정 명령이면") {
+            then("상품이 수정되고 이벤트가 발행되어야 한다") {
+                val existingProduct = Product.restore(1L, "기존상품", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
+                val updatedProduct = Product.restore(1L, "수정상품", Money(2000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
+                every { repositoryPort.findById(1L) } returns existingProduct
+                every { repositoryPort.save(any()) } returns updatedProduct
+
+                val result = service.execute(UpdateProductUseCase.Command(1L, "수정상품", 2000.toBigDecimal()))
+
+                result.name shouldBe "수정상품"
+                result.price shouldBe 2000.toBigDecimal()
+                verify(exactly = 1) { eventPort.publishProductUpdated(any()) }
             }
         }
     }

@@ -26,7 +26,10 @@ class ProductEventAdapter(
             status = product.status.name
         )
         kafkaTemplate.send(createdTopic, product.id.toString(), event)
-        log.info("Published ProductCreatedEvent: productId={}", product.id)
+            .whenComplete { _, ex ->
+                if (ex != null) log.error("Failed to publish ProductCreatedEvent: productId={}", product.id, ex)
+                else log.info("Published ProductCreatedEvent: productId={}", product.id)
+            }
     }
 
     override fun publishProductUpdated(product: Product) {
@@ -37,7 +40,10 @@ class ProductEventAdapter(
             status = product.status.name
         )
         kafkaTemplate.send(updatedTopic, product.id.toString(), event)
-        log.info("Published ProductUpdatedEvent: productId={}", product.id)
+            .whenComplete { _, ex ->
+                if (ex != null) log.error("Failed to publish ProductUpdatedEvent: productId={}", product.id, ex)
+                else log.info("Published ProductUpdatedEvent: productId={}", product.id)
+            }
     }
 }
 
