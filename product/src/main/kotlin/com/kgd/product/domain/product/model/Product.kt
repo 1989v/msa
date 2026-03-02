@@ -1,5 +1,6 @@
 package com.kgd.product.domain.product.model
 
+import com.kgd.product.domain.product.exception.InsufficientStockException
 import java.time.LocalDateTime
 
 class Product private constructor(
@@ -35,7 +36,7 @@ class Product private constructor(
 
     fun decreaseStock(quantity: Int) {
         require(quantity > 0) { "수량은 0보다 커야 합니다" }
-        if (stock < quantity) throw com.kgd.product.domain.product.exception.InsufficientStockException()
+        if (stock < quantity) throw InsufficientStockException()
         stock -= quantity
     }
 
