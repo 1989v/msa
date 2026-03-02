@@ -6,4 +6,6 @@ plugins {
 dependencies {
     implementation(libs.spring.cloud.eureka.server)
     implementation(libs.spring.boot.starter.actuator)
+    testImplementation(libs.kotest.extensions.spring)
+    testImplementation(libs.spring.boot.starter.test)
 }

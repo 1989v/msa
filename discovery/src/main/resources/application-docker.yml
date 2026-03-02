@@ -1,0 +1,8 @@
+# Docker 환경용 설정
+eureka:
+  instance:
+    hostname: discovery
+    prefer-ip-address: false
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/
