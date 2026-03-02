@@ -17,11 +17,13 @@ class ProductSearchAdapter(
 
     override fun search(keyword: String, pageable: Pageable): Page<ProductDocument> {
         val criteria = Criteria("name").matches(keyword)
-            .or(Criteria("status").`is`("ACTIVE"))
+            .and(Criteria("status").`is`("ACTIVE"))
         val query = CriteriaQuery(criteria, pageable)
 
         val searchHits = elasticsearchOperations.search(query, ProductDocument::class.java)
         val searchPage = SearchHitSupport.searchPageFor(searchHits, pageable)
+        // Spring Data Elasticsearch SearchHitSupport.unwrapSearchHits returns SearchHits<T>
+        // mapped to Page<T>, which requires an unchecked cast at the call site.
         @Suppress("UNCHECKED_CAST")
         return SearchHitSupport.unwrapSearchHits(searchPage) as Page<ProductDocument>
     }
