@@ -8,13 +8,14 @@ import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry
 import io.github.resilience4j.kotlin.circuitbreaker.executeSuspendFunction
 import kotlinx.coroutines.reactor.awaitSingle
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import java.math.BigDecimal
 
 @Component
 class PaymentAdapter(
-    private val webClient: WebClient,
+    @Qualifier("paymentWebClient") private val webClient: WebClient,
     private val circuitBreakerRegistry: CircuitBreakerRegistry
 ) : PaymentPort {
 

@@ -39,6 +39,8 @@ class DataSourceConfig {
             DataSourceType.REPLICA to replica
         ))
         setDefaultTargetDataSource(master)
+        // AbstractRoutingDataSource requires explicit initialization to resolve target data sources.
+        // Spring does not call afterPropertiesSet() automatically in @Bean methods.
         afterPropertiesSet()
     }
 
