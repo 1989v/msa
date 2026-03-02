@@ -20,8 +20,11 @@ class AesUtil(
     }
 
     private val secretKey: SecretKeySpec by lazy {
-        val keyBytes = aesKey.toByteArray(Charsets.UTF_8).copyOf(KEY_SIZE)
-        SecretKeySpec(keyBytes, "AES")
+        val keyBytes = aesKey.toByteArray(Charsets.UTF_8)
+        require(keyBytes.size >= KEY_SIZE) {
+            "AES key must be at least $KEY_SIZE bytes (got ${keyBytes.size}). Configure 'encryption.aes-key' with a 32-byte key."
+        }
+        SecretKeySpec(keyBytes.copyOf(KEY_SIZE), "AES")
     }
 
     fun encrypt(plainText: String): String {

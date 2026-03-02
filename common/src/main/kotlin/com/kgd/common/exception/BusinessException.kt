@@ -8,7 +8,7 @@ open class BusinessException(
 
 class NotFoundException(resource: String, id: Any? = null) : BusinessException(
     errorCode = ErrorCode.NOT_FOUND,
-    message = if (id != null) "$resource (id=$id)을(를) 찾을 수 없습니다" else "$resource 을(를) 찾을 수 없습니다"
+    message = if (id != null) "$resource (id=$id)을(를) 찾을 수 없습니다" else "${resource}을(를) 찾을 수 없습니다"
 )
 
 class UnauthorizedException(

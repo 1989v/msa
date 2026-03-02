@@ -43,8 +43,19 @@ class JwtUtil(private val props: JwtProperties) {
             .payload
 
     fun isValid(token: String): Boolean =
-        runCatching { parseToken(token) }.isSuccess
+        try {
+            parseToken(token)
+            true
+        } catch (e: JwtException) {
+            false
+        }
 
+    /**
+     * 토큰이 만료되었는지 확인한다.
+     * - 만료된 경우: `true`
+     * - 유효한 경우: `false`
+     * - 잘못된 토큰(변조/형식 오류) 인 경우: `false` (만료와 구분 불가 — `isValid()`로 선 검증 필요)
+     */
     fun isExpired(token: String): Boolean =
         try {
             parseToken(token)

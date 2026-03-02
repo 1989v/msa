@@ -86,11 +86,12 @@ class JwtUtilTest : BehaviorSpec({
         `when`("동일한 userId로 생성하면") {
             then("서로 다른 토큰이 생성되어야 한다") {
                 val token1 = jwtUtil.generateAccessToken("user-1", listOf("USER"))
-                Thread.sleep(10) // issuedAt 차이
+                Thread.sleep(1100) // JWT iat는 초 단위이므로 1초 이상 대기
                 val token2 = jwtUtil.generateAccessToken("user-1", listOf("USER"))
                 // 동일 userId라도 토큰 자체는 같을 수 있지만, 실제 운영에서는 다른 토큰 생성 보장
                 token1 shouldNotBe null
                 token2 shouldNotBe null
+                token1 shouldNotBe token2  // 동일한 시간에 생성되더라도 iat(issuedAt)으로 구분
             }
         }
     }
