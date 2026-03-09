@@ -2,6 +2,7 @@ package com.kgd.product.presentation.product.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.product.application.product.usecase.CreateProductUseCase
+import com.kgd.product.application.product.usecase.GetAllProductsUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
 import com.kgd.product.presentation.product.dto.CreateProductRequest
@@ -17,13 +18,23 @@ import org.springframework.web.bind.annotation.*
 class ProductController(
     private val createProductUseCase: CreateProductUseCase,
     private val getProductUseCase: GetProductUseCase,
-    private val updateProductUseCase: UpdateProductUseCase
+    private val updateProductUseCase: UpdateProductUseCase,
+    private val getAllProductsUseCase: GetAllProductsUseCase
 ) {
     @PostMapping
     fun createProduct(@Valid @RequestBody request: CreateProductRequest): ResponseEntity<ApiResponse<ProductResponse>> {
         val result = createProductUseCase.execute(request.toCommand())
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.success(ProductResponse.from(result)))
+    }
+
+    @GetMapping
+    fun getProducts(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "100") size: Int
+    ): ResponseEntity<ApiResponse<GetAllProductsUseCase.Result>> {
+        val result = getAllProductsUseCase.execute(GetAllProductsUseCase.Query(page, size))
+        return ResponseEntity.ok(ApiResponse.success(result))
     }
 
     @GetMapping("/{id}")

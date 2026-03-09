@@ -2,6 +2,7 @@ package com.kgd.product.application.product.service
 
 import com.kgd.product.application.product.port.ProductEventPort
 import com.kgd.product.application.product.usecase.CreateProductUseCase
+import com.kgd.product.application.product.usecase.GetAllProductsUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
 import com.kgd.product.domain.product.exception.ProductNotFoundException
@@ -10,12 +11,15 @@ import com.kgd.product.domain.product.model.Product
 import com.kgd.product.domain.product.model.ProductStatus
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import java.math.BigDecimal
+import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 
 class ProductServiceTest : BehaviorSpec({
     val transactionalService = mockk<ProductTransactionalService>()
@@ -84,6 +88,23 @@ class ProductServiceTest : BehaviorSpec({
                 shouldThrow<ProductNotFoundException> {
                     service.execute(UpdateProductUseCase.Command(999L, "수정상품", null))
                 }
+            }
+        }
+    }
+
+    given("상품 목록 조회 시") {
+        `when`("유효한 페이지 파라미터가 주어지면") {
+            then("페이지네이션된 상품 목록을 반환해야 한다") {
+                val product = Product.restore(1L, "테스트", Money(1000.toBigDecimal()), 10, ProductStatus.ACTIVE, java.time.LocalDateTime.now())
+                every { transactionalService.findAll(any()) } returns PageImpl(
+                    listOf(product),
+                    PageRequest.of(0, 100),
+                    1L
+                )
+                val result = service.execute(GetAllProductsUseCase.Query(0, 100))
+                result.products shouldHaveSize 1
+                result.totalElements shouldBe 1L
+                result.totalPages shouldBe 1
             }
         }
     }
