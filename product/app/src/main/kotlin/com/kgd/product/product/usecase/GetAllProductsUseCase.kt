@@ -1,6 +1,7 @@
 package com.kgd.product.application.product.usecase
 
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 interface GetAllProductsUseCase {
     fun execute(query: Query): Result
@@ -17,7 +18,8 @@ interface GetAllProductsUseCase {
             val name: String,
             val price: BigDecimal,
             val status: String,
-            val stock: Int
+            val stock: Int,
+            val createdAt: LocalDateTime
         )
     }
 }

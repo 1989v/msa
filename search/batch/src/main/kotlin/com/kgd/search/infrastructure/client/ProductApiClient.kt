@@ -7,6 +7,7 @@ import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 @Component
 class ProductApiClient(
@@ -19,7 +20,8 @@ class ProductApiClient(
         val name: String,
         val price: BigDecimal,
         val status: String,
-        val stock: Int
+        val stock: Int,
+        val createdAt: LocalDateTime
     )
 
     data class ProductPageResponse(
@@ -48,7 +50,9 @@ class ProductApiClient(
                 name = p["name"] as String,
                 price = BigDecimal(p["price"].toString()),
                 status = p["status"] as String,
-                stock = (p["stock"] as? Number)?.toInt() ?: 0
+                stock = (p["stock"] as? Number)?.toInt() ?: 0,
+                createdAt = p["createdAt"]?.toString()?.let { LocalDateTime.parse(it) }
+                    ?: LocalDateTime.now()
             )
         }
 

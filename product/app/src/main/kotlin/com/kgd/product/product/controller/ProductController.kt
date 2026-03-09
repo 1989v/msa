@@ -6,6 +6,7 @@ import com.kgd.product.application.product.usecase.GetAllProductsUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
 import com.kgd.product.presentation.product.dto.CreateProductRequest
+import com.kgd.product.presentation.product.dto.ProductListResponse
 import com.kgd.product.presentation.product.dto.ProductResponse
 import com.kgd.product.presentation.product.dto.UpdateProductRequest
 import jakarta.validation.Valid
@@ -34,9 +35,9 @@ class ProductController(
     fun getProducts(
         @RequestParam(defaultValue = "0") @Min(0) page: Int,
         @RequestParam(defaultValue = "100") @Min(1) @Max(500) size: Int
-    ): ResponseEntity<ApiResponse<GetAllProductsUseCase.Result>> {
+    ): ResponseEntity<ApiResponse<ProductListResponse>> {
         val result = getAllProductsUseCase.execute(GetAllProductsUseCase.Query(page, size))
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ResponseEntity.ok(ApiResponse.success(ProductListResponse.from(result)))
     }
 
     @GetMapping("/{id}")
