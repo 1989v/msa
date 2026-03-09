@@ -28,6 +28,8 @@ COPY order/app/build.gradle.kts order/app/
 COPY search/build.gradle.kts search/
 COPY search/domain/build.gradle.kts search/domain/
 COPY search/app/build.gradle.kts search/app/
+COPY search/consumer/build.gradle.kts search/consumer/
+COPY search/batch/build.gradle.kts search/batch/
 
 # 의존성 다운로드 (소스 변경과 분리하여 캐시 레이어 활용)
 RUN ./gradlew :${MODULE_GRADLE}:dependencies --no-daemon 2>/dev/null || true

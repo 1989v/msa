@@ -68,6 +68,6 @@ class IndexAliasManager(private val esClient: ElasticsearchClient) {
 
     private fun getIndicesForAlias(alias: String): List<String> =
         runCatching {
-            esClient.indices().getAlias { it.name(alias) }.result().keys.toList()
+            esClient.indices().getAlias { it.name(alias) }.aliases().keys.toList()
         }.getOrElse { emptyList() }
 }
