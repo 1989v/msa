@@ -13,7 +13,9 @@
 | `gateway` | 8080 | Spring Cloud Gateway (인증/인가, 라우팅) |
 | `product` | 8081 | 상품 서비스 (CRUD, 재고 관리) |
 | `order` | 8082 | 주문 서비스 (결제 연동, 이벤트 발행) |
-| `search` | 8083 | 검색 서비스 (Elasticsearch 기반) |
+| `search` | 8083 | 검색 서비스 (Elasticsearch 기반, 읽기 전용) |
+| `search-consumer` | 8084 | Kafka 증분 색인 서비스 |
+| `search-batch` | 8085 | Spring Batch 전체 색인 서비스 |
 | `common` | — | 공통 라이브러리 모듈 |
 
 ---
@@ -158,7 +160,9 @@ msa/
 │   └── app/         #   Spring Boot 앱
 ├── search/          # 검색 서비스 (컨테이너)
 │   ├── domain/      #   순수 도메인 모듈
-│   └── app/         #   Spring Boot 앱
+│   ├── app/         #   읽기 전용 REST 검색 API (포트 8083)
+│   ├── consumer/    #   Kafka 증분 색인 (포트 8084, BulkIngester)
+│   └── batch/       #   Spring Batch 전체 색인 (포트 8085, alias swap)
 ├── docker/          # Docker Compose 설정
 │   ├── docker-compose.infra.yml
 │   ├── docker-compose.yml

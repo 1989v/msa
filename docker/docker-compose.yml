@@ -133,3 +133,59 @@ services:
       commerce-network:
         ipv4_address: 172.20.0.50
     restart: unless-stopped
+
+  search-consumer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE_GRADLE: search:consumer
+        MODULE_PATH: search/consumer
+    image: commerce/search-consumer:latest
+    container_name: search-consumer
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      ELASTICSEARCH_URIS: http://elasticsearch:9200
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      EUREKA_DEFAULT_ZONE: http://discovery:8761/eureka/
+    depends_on:
+      discovery:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.51
+    restart: unless-stopped
+
+  search-batch:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE_GRADLE: search:batch
+        MODULE_PATH: search/batch
+    image: commerce/search-batch:latest
+    container_name: search-batch
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      ELASTICSEARCH_URIS: http://elasticsearch:9200
+      PRODUCT_SERVICE_URL: http://product:8081
+      EUREKA_DEFAULT_ZONE: http://discovery:8761/eureka/
+    depends_on:
+      discovery:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      product:
+        condition: service_started
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.52
+    restart: unless-stopped

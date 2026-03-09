@@ -15,11 +15,10 @@ class EsBulkDocumentProcessorTest : BehaviorSpec({
     beforeEach {
         clearMocks(esClient)
         processor = EsBulkDocumentProcessor(esClient, objectMapper)
-        processor.init()
     }
 
     afterEach {
-        processor.destroy()
+        // processor.destroy() not called since init() is skipped in unit tests
     }
 
     given("EsBulkDocumentProcessor 초기화 후") {

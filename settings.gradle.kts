@@ -9,5 +9,7 @@ include(
     "order:domain",
     "order:app",
     "search:domain",
-    "search:app"
+    "search:app",
+    "search:consumer",
+    "search:batch"
 )

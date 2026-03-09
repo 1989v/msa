@@ -78,11 +78,15 @@ Before generating implementation:
 | `:order:domain` | `order/domain/` | 순수 도메인 |
 | `:order:app` | `order/app/` | Spring Boot 앱 |
 | `:search:domain` | `search/domain/` | 순수 도메인 |
-| `:search:app` | `search/app/` | Spring Boot 앱 |
+| `:search:app` | `search/app/` | 검색 REST API (읽기 전용) |
+| `:search:consumer` | `search/consumer/` | Kafka 증분 색인 (BulkIngester) |
+| `:search:batch` | `search/batch/` | Spring Batch 전체 색인 (alias swap) |
 
 - **domain 모듈 규칙**: Spring/JPA 어노테이션을 추가하면 컴파일 에러로 차단됨 (의존성 없음)
 - **app 모듈**: `implementation(project(":{service}:domain"))`으로 domain 의존
 - **bootJar 이름**: `tasks.bootJar { archiveBaseName.set("{service}") }` 로 서비스명 통일
+- **search:consumer**: 포트 8084, Kafka 이벤트 수신 → BulkIngester 비동기 증분 색인
+- **search:batch**: 포트 8085, Spring Batch + WebClient → BulkIngester → alias swap 전체 색인
 
 
 ## 7. Package Naming Convention
