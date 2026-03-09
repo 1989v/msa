@@ -1,0 +1,6 @@
+# DB-direct 색인 모드 설정 (reindex.source=db, SPRING_PROFILES_ACTIVE=db 시 활성화)
+product:
+  datasource:
+    url: jdbc:mysql://${PRODUCT_DB_HOST:localhost}:${PRODUCT_DB_PORT:3317}/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&rewriteBatchedStatements=true
+    username: ${PRODUCT_DB_USER:${MYSQL_USER:root}}
+    password: ${PRODUCT_DB_PASSWORD:${MYSQL_PASSWORD:}}
