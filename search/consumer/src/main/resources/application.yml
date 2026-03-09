@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: search-consumer
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+
+server:
+  port: 8084
