@@ -178,13 +178,20 @@ services:
       ELASTICSEARCH_URIS: http://elasticsearch:9200
       PRODUCT_SERVICE_URL: http://product:8081
       EUREKA_DEFAULT_ZONE: http://discovery:8761/eureka/
+      REINDEX_SOURCE: ${REINDEX_SOURCE:-api}
+      PRODUCT_DB_HOST: mysql-product-replica
+      PRODUCT_DB_PORT: 3306
+      PRODUCT_DB_USER: ${MYSQL_USER}
+      PRODUCT_DB_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       discovery:
         condition: service_healthy
       elasticsearch:
         condition: service_healthy
       product:
-        condition: service_started
+        condition: service_healthy
+      mysql-product-replica:
+        condition: service_healthy
     networks:
       commerce-network:
         ipv4_address: 172.20.0.52
