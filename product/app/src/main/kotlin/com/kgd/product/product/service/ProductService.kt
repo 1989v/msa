@@ -76,7 +76,8 @@ class ProductService(
                     name = product.name,
                     price = product.price.amount,
                     status = product.status.name,
-                    stock = product.stock
+                    stock = product.stock,
+                    createdAt = product.createdAt
                 )
             },
             totalElements = page.totalElements,
