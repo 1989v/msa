@@ -1,0 +1,278 @@
+// charting/frontend/src/components/PatternChart.tsx
+import React, { useEffect, useRef, MutableRefObject } from 'react'
+import {
+  createChart,
+  ColorType,
+  CrosshairMode,
+  LineStyle,
+  type IChartApi,
+  type Time,
+  type LogicalRange,
+} from 'lightweight-charts'
+import { addDays, format, parseISO } from 'date-fns'
+import type { OhlcvBar } from '../api'
+import type { PatternDefinition } from '../lib/patterns'
+import type { Indicators } from './IndicatorToggle'
+import { calcMA, calcBollingerBands, calcRSI, calcMACD } from '../lib/indicators'
+import { interpolatePattern } from '../lib/patternMatcher'
+
+const CHART_DEFAULTS = {
+  layout: { background: { type: ColorType.Solid, color: '#ffffff' }, textColor: '#64748b' },
+  grid: { vertLines: { color: '#f1f5f9' }, horzLines: { color: '#f1f5f9' } },
+  crosshair: { mode: CrosshairMode.Normal },
+  rightPriceScale: { borderColor: '#e2e8f0' },
+  timeScale: { borderColor: '#e2e8f0', timeVisible: true, fixLeftEdge: false, fixRightEdge: false },
+}
+
+const WINDOW = 60
+const PROJ_DAYS = 20
+
+// ── Sub-chart panels ──────────────────────────────────────────────────────────
+
+function VolumePanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null> }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!containerRef.current || !mainRef.current) return
+    const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 110, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
+
+    const series = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'right' })
+    series.setData(ohlcv.map(b => ({
+      time: b.trade_date as Time,
+      value: Number(b.volume),
+      color: Number(b.close) >= Number(b.open) ? '#bbf7d0' : '#fecaca',
+    })))
+
+    const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+    const syncBack = (range: LogicalRange | null) => { if (range) mainRef.current?.timeScale().setVisibleLogicalRange(range) }
+    mainRef.current.timeScale().subscribeVisibleLogicalRangeChange(sync)
+    chart.timeScale().subscribeVisibleLogicalRangeChange(syncBack)
+
+    const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
+    ro.observe(containerRef.current)
+    return () => {
+      mainRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sync)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(syncBack)
+      ro.disconnect()
+      chart.remove()
+    }
+  }, [ohlcv])
+  return (
+    <div style={{ borderTop: '1px solid #e2e8f0' }}>
+      <div style={{ padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>Volume</div>
+      <div ref={containerRef} />
+    </div>
+  )
+}
+
+function RsiPanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null> }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!containerRef.current || !mainRef.current) return
+    const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 120, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
+
+    const closes = ohlcv.map(b => Number(b.close))
+    const rsiValues = calcRSI(closes)
+    const series = chart.addLineSeries({ color: '#8b5cf6', lineWidth: 1 })
+    series.setData(
+      ohlcv.map((b, i) => ({ time: b.trade_date as Time, value: rsiValues[i] ?? 50 }))
+        .filter((_, i) => rsiValues[i] !== null)
+    )
+    series.createPriceLine({ price: 70, color: '#ef4444', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OB 70' })
+    series.createPriceLine({ price: 30, color: '#22c55e', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OS 30' })
+    series.createPriceLine({ price: 50, color: '#94a3b8', lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: false, title: '' })
+
+    const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+    const syncBack = (range: LogicalRange | null) => { if (range) mainRef.current?.timeScale().setVisibleLogicalRange(range) }
+    mainRef.current.timeScale().subscribeVisibleLogicalRangeChange(sync)
+    chart.timeScale().subscribeVisibleLogicalRangeChange(syncBack)
+
+    const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
+    ro.observe(containerRef.current)
+    return () => {
+      mainRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sync)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(syncBack)
+      ro.disconnect()
+      chart.remove()
+    }
+  }, [ohlcv])
+  return (
+    <div style={{ borderTop: '1px solid #e2e8f0' }}>
+      <div style={{ padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>RSI (14)</div>
+      <div ref={containerRef} />
+    </div>
+  )
+}
+
+function MacdPanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null> }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!containerRef.current || !mainRef.current) return
+    const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 140, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
+
+    const closes = ohlcv.map(b => Number(b.close))
+    const macdData = calcMACD(closes)
+
+    const histSeries = chart.addHistogramSeries({ priceScaleId: 'right', lastValueVisible: false })
+    const macdSeries = chart.addLineSeries({ color: '#2563eb', lineWidth: 1, lastValueVisible: false })
+    const signalSeries = chart.addLineSeries({ color: '#ef4444', lineWidth: 1, lastValueVisible: false })
+
+    const validData = ohlcv.map((b, i) => ({ time: b.trade_date as Time, point: macdData[i] })).filter(d => d.point !== null)
+
+    histSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.histogram, color: d.point!.histogram >= 0 ? '#bbf7d0' : '#fecaca' })))
+    macdSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.macd })))
+    signalSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.signal })))
+
+    const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+    const syncBack = (range: LogicalRange | null) => { if (range) mainRef.current?.timeScale().setVisibleLogicalRange(range) }
+    mainRef.current.timeScale().subscribeVisibleLogicalRangeChange(sync)
+    chart.timeScale().subscribeVisibleLogicalRangeChange(syncBack)
+
+    const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
+    ro.observe(containerRef.current)
+    return () => {
+      mainRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sync)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(syncBack)
+      ro.disconnect()
+      chart.remove()
+    }
+  }, [ohlcv])
+  return (
+    <div style={{ borderTop: '1px solid #e2e8f0' }}>
+      <div style={{ padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>MACD (12,26,9)</div>
+      <div ref={containerRef} />
+    </div>
+  )
+}
+
+// ── Main chart ────────────────────────────────────────────────────────────────
+
+interface Props {
+  ohlcv: OhlcvBar[]
+  pattern: PatternDefinition | null
+  indicators: Indicators
+}
+
+export function PatternChart({ ohlcv, pattern, indicators }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  const chartRef = useRef<IChartApi | null>(null)
+
+  // Chart initialisation (once)
+  useEffect(() => {
+    if (!containerRef.current) return
+    const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 440 })
+    chartRef.current = chart
+    const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
+    ro.observe(containerRef.current)
+    return () => { ro.disconnect(); chart.remove(); chartRef.current = null }
+  }, [])
+
+  // Data update whenever ohlcv / pattern / indicators change
+  useEffect(() => {
+    const chart = chartRef.current
+    if (!chart || ohlcv.length === 0) return
+
+    // Remove all series and rebuild (simplest safe approach)
+    // lightweight-charts v4: removeSeries is available
+    try {
+      // @ts-ignore — access internal series list for cleanup
+      chart.getSeries?.()?.forEach?.((s: any) => chart.removeSeries(s))
+    } catch { /* ignore */ }
+
+    const closes = ohlcv.map(b => Number(b.close))
+
+    // ── Candlestick ──────────────────────────────────────────────────────────
+    const candleSeries = chart.addCandlestickSeries({
+      upColor: '#22c55e', downColor: '#ef4444',
+      borderUpColor: '#16a34a', borderDownColor: '#dc2626',
+      wickUpColor: '#16a34a', wickDownColor: '#dc2626',
+    })
+    candleSeries.setData(ohlcv.map(b => ({
+      time: b.trade_date as Time,
+      open: Number(b.open), high: Number(b.high), low: Number(b.low), close: Number(b.close),
+    })))
+
+    // ── MA Lines ─────────────────────────────────────────────────────────────
+    const maConfig = [
+      { key: 'ma5'  as const, period: 5,  color: '#f59e0b' },
+      { key: 'ma20' as const, period: 20, color: '#3b82f6' },
+      { key: 'ma60' as const, period: 60, color: '#a855f7' },
+    ]
+    maConfig.forEach(({ key, period, color }) => {
+      if (!indicators[key]) return
+      const maValues = calcMA(closes, period)
+      const series = chart.addLineSeries({ color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false })
+      series.setData(ohlcv.map((b, i) => ({ time: b.trade_date as Time, value: maValues[i] ?? NaN })).filter(d => !isNaN(d.value)))
+    })
+
+    // ── Bollinger Bands ──────────────────────────────────────────────────────
+    if (indicators.bb) {
+      const bb = calcBollingerBands(closes)
+      const upperSeries = chart.addLineSeries({ color: '#06b6d4', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
+      const lowerSeries = chart.addLineSeries({ color: '#06b6d4', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
+      const filtered = ohlcv.map((b, i) => ({ time: b.trade_date as Time, pt: bb[i] })).filter(d => d.pt !== null)
+      upperSeries.setData(filtered.map(d => ({ time: d.time, value: d.pt!.upper })))
+      lowerSeries.setData(filtered.map(d => ({ time: d.time, value: d.pt!.lower })))
+    }
+
+    // ── Pattern Overlay + Projection ─────────────────────────────────────────
+    if (pattern && ohlcv.length >= WINDOW) {
+      const windowBars = ohlcv.slice(-WINDOW)
+      const windowCloses = windowBars.map(b => Number(b.close))
+      const priceMin = Math.min(...windowCloses)
+      const priceMax = Math.max(...windowCloses)
+      const priceRange = priceMax - priceMin
+      const scale = (y: number) => priceMin + y * priceRange
+
+      // Pattern overlay (solid)
+      const patternInterp = interpolatePattern(pattern.curve, WINDOW)
+      const overlaySeries = chart.addLineSeries({
+        color: pattern.color, lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
+      })
+      const overlayData = windowBars.map((b, i) => ({ time: b.trade_date as Time, value: scale(patternInterp[i]) }))
+      // Add connection point (last bar shared with projection)
+      overlaySeries.setData(overlayData)
+
+      // Projection (dashed, future dates)
+      const projInterp = interpolatePattern(pattern.projection, PROJ_DAYS + 1)
+      const lastDate = parseISO(windowBars[windowBars.length - 1].trade_date)
+      const projSeries = chart.addLineSeries({
+        color: pattern.color, lineWidth: 2, lineStyle: LineStyle.Dashed,
+        priceLineVisible: false, lastValueVisible: false,
+      })
+      const projData = [
+        { time: windowBars[windowBars.length - 1].trade_date as Time, value: scale(projInterp[0]) },
+        ...Array.from({ length: PROJ_DAYS }, (_, i) => ({
+          time: format(addDays(lastDate, i + 1), 'yyyy-MM-dd') as Time,
+          value: scale(projInterp[i + 1]),
+        })),
+      ]
+      projSeries.setData(projData)
+
+      // "Now" marker
+      overlaySeries.setMarkers([{
+        time: windowBars[windowBars.length - 1].trade_date as Time,
+        position: 'aboveBar',
+        color: pattern.color,
+        shape: 'arrowDown',
+        text: 'Now',
+      }])
+    }
+
+    chart.timeScale().fitContent()
+  }, [ohlcv, pattern, indicators])
+
+  return (
+    <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden', margin: '0 16px' }}>
+      {ohlcv.length === 0 ? (
+        <div style={{ height: 440, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 14 }}>
+          종목을 선택하면 차트가 로드됩니다.
+        </div>
+      ) : (
+        <div ref={containerRef} />
+      )}
+      {ohlcv.length > 0 && indicators.volume && <VolumePanel ohlcv={ohlcv} mainRef={chartRef} />}
+      {ohlcv.length > 0 && indicators.rsi    && <RsiPanel    ohlcv={ohlcv} mainRef={chartRef} />}
+      {ohlcv.length > 0 && indicators.macd   && <MacdPanel   ohlcv={ohlcv} mainRef={chartRef} />}
+    </div>
+  )
+}
