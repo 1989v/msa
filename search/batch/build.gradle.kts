@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.spring.boot.starter.batch)
     implementation(libs.spring.webflux)
     implementation(libs.kotlin.coroutines.reactor)
+    implementation(libs.hikaricp)
     runtimeOnly(libs.h2)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
