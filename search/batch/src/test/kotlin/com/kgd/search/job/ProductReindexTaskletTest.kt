@@ -13,14 +13,15 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 class ProductReindexTaskletTest : BehaviorSpec({
     val productApiClient = mockk<ProductApiClient>()
     val bulkProcessor = mockk<EsBulkDocumentProcessor>(relaxed = true)
     val aliasManager = mockk<IndexAliasManager>(relaxed = true)
 
-    fun createTasklet(): ProductReindexTasklet {
-        val tasklet = ProductReindexTasklet(productApiClient, bulkProcessor, aliasManager)
+    fun createTasklet(): ProductApiReindexTasklet {
+        val tasklet = ProductApiReindexTasklet(productApiClient, bulkProcessor, aliasManager)
         tasklet.javaClass.getDeclaredField("indexAlias").apply {
             isAccessible = true
             set(tasklet, "products")
@@ -42,7 +43,7 @@ class ProductReindexTaskletTest : BehaviorSpec({
             then("모든 상품을 색인하고 alias를 교체해야 한다") {
                 coEvery { productApiClient.fetchPage(0, 100) } returns ProductApiClient.ProductPageResponse(
                     products = listOf(
-                        ProductApiClient.ProductDto(1L, "상품A", BigDecimal("1000"), "ACTIVE", 10)
+                        ProductApiClient.ProductDto(1L, "상품A", BigDecimal("1000"), "ACTIVE", 10, LocalDateTime.of(2026, 3, 9, 12, 0))
                     ),
                     totalElements = 1L,
                     totalPages = 1
@@ -63,12 +64,12 @@ class ProductReindexTaskletTest : BehaviorSpec({
         `when`("상품이 2페이지에 걸쳐 있으면") {
             then("모든 페이지를 순서대로 처리해야 한다") {
                 coEvery { productApiClient.fetchPage(0, 100) } returns ProductApiClient.ProductPageResponse(
-                    products = listOf(ProductApiClient.ProductDto(1L, "상품A", BigDecimal("1000"), "ACTIVE", 5)),
+                    products = listOf(ProductApiClient.ProductDto(1L, "상품A", BigDecimal("1000"), "ACTIVE", 5, LocalDateTime.of(2026, 3, 9, 12, 0))),
                     totalElements = 2L,
                     totalPages = 2
                 )
                 coEvery { productApiClient.fetchPage(1, 100) } returns ProductApiClient.ProductPageResponse(
-                    products = listOf(ProductApiClient.ProductDto(2L, "상품B", BigDecimal("2000"), "ACTIVE", 3)),
+                    products = listOf(ProductApiClient.ProductDto(2L, "상품B", BigDecimal("2000"), "ACTIVE", 3, LocalDateTime.of(2026, 3, 9, 12, 0))),
                     totalElements = 2L,
                     totalPages = 2
                 )
