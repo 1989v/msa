@@ -9,6 +9,8 @@ import com.kgd.product.presentation.product.dto.CreateProductRequest
 import com.kgd.product.presentation.product.dto.ProductResponse
 import com.kgd.product.presentation.product.dto.UpdateProductRequest
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
@@ -30,8 +32,8 @@ class ProductController(
 
     @GetMapping
     fun getProducts(
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "100") size: Int
+        @RequestParam(defaultValue = "0") @Min(0) page: Int,
+        @RequestParam(defaultValue = "100") @Min(1) @Max(500) size: Int
     ): ResponseEntity<ApiResponse<GetAllProductsUseCase.Result>> {
         val result = getAllProductsUseCase.execute(GetAllProductsUseCase.Query(page, size))
         return ResponseEntity.ok(ApiResponse.success(result))
