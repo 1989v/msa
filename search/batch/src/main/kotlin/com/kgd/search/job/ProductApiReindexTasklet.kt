@@ -11,11 +11,12 @@ import org.springframework.batch.core.scope.context.ChunkContext
 import org.springframework.batch.core.step.tasklet.Tasklet
 import org.springframework.batch.infrastructure.repeat.RepeatStatus
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
-import java.time.LocalDateTime
 
 @Component
-class ProductReindexTasklet(
+@ConditionalOnProperty(name = ["reindex.source"], havingValue = "api", matchIfMissing = true)
+class ProductApiReindexTasklet(
     private val productApiClient: ProductApiClient,
     private val bulkProcessor: EsBulkDocumentProcessor,
     private val aliasManager: IndexAliasManager
@@ -32,7 +33,7 @@ class ProductReindexTasklet(
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus =
         runBlocking {
             val newIndexName = aliasManager.createTimestampedIndexName(indexAlias)
-            log.info("Starting full reindex → {}", newIndexName)
+            log.info("Starting full reindex (API) → {}", newIndexName)
 
             aliasManager.createIndex(newIndexName)
 
@@ -52,7 +53,7 @@ class ProductReindexTasklet(
                             name = product.name,
                             price = product.price,
                             status = product.status,
-                            createdAt = LocalDateTime.now()
+                            createdAt = product.createdAt
                         )
                     )
                     totalIndexed++
@@ -62,9 +63,8 @@ class ProductReindexTasklet(
                 page++
             } while (page < totalPages)
 
-            // flush remaining operations before alias swap
+            // flush remaining operations before alias swap (blocks until complete)
             bulkProcessor.flush()
-            Thread.sleep(1000L)
 
             aliasManager.updateAliasAndCleanup(indexAlias, newIndexName)
             log.info("Reindex complete: {} docs indexed, {} errors", totalIndexed, bulkProcessor.errorCount.get())
