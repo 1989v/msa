@@ -1,5 +1,4 @@
 // charting/frontend/src/components/PatternSelector.tsx
-import React from 'react'
 import type { PatternMatch } from '../lib/patternMatcher'
 import type { Signal } from '../lib/patterns'
 

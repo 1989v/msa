@@ -1,5 +1,4 @@
 // charting/frontend/src/components/IndicatorToggle.tsx
-import React from 'react'
 
 export interface Indicators {
   ma5: boolean

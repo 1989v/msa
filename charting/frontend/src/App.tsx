@@ -1,5 +1,5 @@
 // charting/frontend/src/App.tsx
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { SymbolSearch } from './components/SymbolSearch'
 import { IndicatorToggle, type Indicators } from './components/IndicatorToggle'
