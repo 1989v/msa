@@ -1,5 +1,5 @@
 // charting/frontend/src/components/PatternChart.tsx
-import React, { useEffect, useRef, MutableRefObject } from 'react'
+import { useEffect, useRef, MutableRefObject } from 'react'
 import {
   createChart,
   ColorType,
