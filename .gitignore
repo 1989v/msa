@@ -7,7 +7,15 @@ __pycache__/
 *.egg
 *.egg-info/
 dist/
+# Docker secrets
+docker/.env
+
+# Gradle
+.gradle/
 build/
+
+*/build/
+out/
 .venv/
 venv/
 .env
@@ -21,6 +29,9 @@ dist/
 .idea/
 .vscode/
 *.iml
+*.iws
+*.ipr
+.vscode/
 
 # OS
 .DS_Store
@@ -28,3 +39,10 @@ Thumbs.db
 
 # Logs
 *.log
+logs/
+
+# Spring Boot
+target/
+
+# Backup files
+*.bak

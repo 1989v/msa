@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: order-service
+  datasource:
+    master:
+      url: jdbc:mysql://localhost:3326/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:order_user}
+      password: ${MYSQL_PASSWORD:order_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+    replica:
+      url: jdbc:mysql://localhost:3327/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:order_user}
+      password: ${MYSQL_PASSWORD:order_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+server:
+  port: 8082
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+payment:
+  service:
+    url: ${PAYMENT_SERVICE_URL:http://localhost:9090}
+
+kafka:
+  topics:
+    order-completed: order.order.completed
+    order-cancelled: order.order.cancelled
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
