@@ -1,0 +1,62 @@
+spring:
+  application:
+    name: product-service
+  datasource:
+    master:
+      url: jdbc:mysql://localhost:3316/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:product_user}
+      password: ${MYSQL_PASSWORD:product_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+    replica:
+      url: jdbc:mysql://localhost:3317/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:product_user}
+      password: ${MYSQL_PASSWORD:product_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  data:
+    redis:
+      cluster:
+        nodes:
+          - ${REDIS_NODE1:localhost:6379}
+          - ${REDIS_NODE2:localhost:6380}
+          - ${REDIS_NODE3:localhost:6381}
+          - ${REDIS_NODE4:localhost:6382}
+          - ${REDIS_NODE5:localhost:6383}
+          - ${REDIS_NODE6:localhost:6384}
+        password: ${REDIS_PASSWORD:}
+
+server:
+  port: 8081
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+kafka:
+  topics:
+    product-created: product.item.created
+    product-updated: product.item.updated
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

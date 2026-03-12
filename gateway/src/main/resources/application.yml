@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: gateway-service
+  data:
+    redis:
+      cluster:
+        nodes:
+          - localhost:6379
+          - localhost:6380
+          - localhost:6381
+          - localhost:6382
+          - localhost:6383
+          - localhost:6384
+        password: ${REDIS_PASSWORD:}
+        max-redirects: 3
+
+server:
+  port: 8080
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+    registry-fetch-interval-seconds: 5
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+
+jwt:
+  # JWT_SECRET must be set in all non-local environments. Default is for local development only.
+  secret: ${JWT_SECRET:default-dev-secret-key-32-chars-long!}
+  access-expiry: 1800
+  refresh-expiry: 604800
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
