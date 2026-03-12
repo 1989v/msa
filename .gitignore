@@ -1,14 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
 # Docker secrets
 docker/.env
 
 # Gradle
 .gradle/
 build/
+
 */build/
 out/
+.venv/
+venv/
+.env
+
+# Node / frontend
+node_modules/
+dist/
+.next/
 
 # IDE
 .idea/
+.vscode/
 *.iml
 *.iws
 *.ipr

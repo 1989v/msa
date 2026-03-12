@@ -51,7 +51,40 @@
 
 ---
 
-## 5. Data Ownership Rule
+## 5. Charting Service
+
+### Responsibility
+- 주식 OHLCV 데이터 수집 및 저장 (Yahoo Finance / FinanceDataReader)
+- 60-day 슬라이딩 윈도우 기반 패턴 생성 및 32-dim 벡터 임베딩
+- pgvector 코사인 유사도 기반 유사 패턴 검색 (top-20)
+- 미래 수익률(+5d/+20d/+60d) 통계 예측 (ForecastPolicy)
+- React 차트 시각화 프론트엔드 제공
+
+### Data Ownership
+- PostgreSQL + pgvector DB 완전 소유 (port 5433)
+- symbols, ohlcv_bars, patterns 테이블
+- 커머스 DB(MySQL)와 완전 분리
+
+### Tech Stack
+- Python 3.11 + FastAPI (ADR-003)
+- pgvector/pgvector:pg16 (ADR-002)
+- yfinance + FinanceDataReader (ADR-004)
+- React 18 + Recharts (Frontend, port 3010)
+
+### API Endpoints
+- POST /api/v1/similarity — 유사 패턴 검색 + 예측 통계
+- GET  /api/v1/symbols — 추적 종목 목록
+- POST /api/v1/symbols — 종목 등록
+- GET  /api/v1/{ticker}/ohlcv — OHLCV 데이터 조회
+
+### Does NOT
+- 커머스 DB(Product/Order) 접근 금지
+- Kafka 이벤트 발행/구독 없음 (독립 도메인)
+- 실시간 시세 제공 없음 (일별 데이터만)
+
+---
+
+## 6. Data Ownership Rule
 
 - 서비스 간 DB 공유 금지
 - 데이터 변경은 이벤트 기반으로 전파
