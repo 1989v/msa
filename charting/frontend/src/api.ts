@@ -63,6 +63,20 @@ export const fetchOhlcv = (ticker: string, start?: string, end?: string) =>
     .get<OhlcvBar[]>(`/api/v1/${ticker}/ohlcv`, { params: { start, end } })
     .then((r) => r.data)
 
+export interface SyncResult {
+  ticker: string
+  synced: boolean
+  reason?: string
+  next_sync_in_seconds?: number
+  bars_ingested?: number
+  patterns_created?: number
+}
+
+export const syncTicker = (ticker: string, force = false) =>
+  api
+    .post<SyncResult>(`/api/v1/${ticker}/sync`, null, { params: { force } })
+    .then((r) => r.data)
+
 export const searchSimilarity = (ticker: string, windowEndDate?: string, topK = 20) =>
   api
     .post<SimilarityResponse>('/api/v1/similarity', {
