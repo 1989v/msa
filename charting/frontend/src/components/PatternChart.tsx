@@ -148,35 +148,21 @@ function MacdPanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefO
 
 interface Props {
   ohlcv: OhlcvBar[]
-  pattern: PatternDefinition | null
+  patterns: PatternDefinition[]
   indicators: Indicators
 }
 
-export function PatternChart({ ohlcv, pattern, indicators }: Props) {
+export function PatternChart({ ohlcv, patterns, indicators }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
 
-  // Chart initialisation (once)
+  // Recreate chart whenever data changes (clean teardown + rebuild)
   useEffect(() => {
-    if (!containerRef.current) return
+    if (!containerRef.current || ohlcv.length === 0) return
     const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 440 })
     chartRef.current = chart
     const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
     ro.observe(containerRef.current)
-    return () => { ro.disconnect(); chart.remove(); chartRef.current = null }
-  }, [])
-
-  // Data update whenever ohlcv / pattern / indicators change
-  useEffect(() => {
-    const chart = chartRef.current
-    if (!chart || ohlcv.length === 0) return
-
-    // Remove all series and rebuild (simplest safe approach)
-    // lightweight-charts v4: removeSeries is available
-    try {
-      // @ts-ignore — access internal series list for cleanup
-      chart.getSeries?.()?.forEach?.((s: any) => chart.removeSeries(s))
-    } catch { /* ignore */ }
 
     const closes = ohlcv.map(b => Number(b.close))
 
@@ -214,52 +200,64 @@ export function PatternChart({ ohlcv, pattern, indicators }: Props) {
       lowerSeries.setData(filtered.map(d => ({ time: d.time, value: d.pt!.lower })))
     }
 
-    // ── Pattern Overlay + Projection ─────────────────────────────────────────
-    if (pattern && ohlcv.length >= WINDOW) {
+    // ── Pattern Overlays + Projections (multi) ──────────────────────────────
+    if (patterns.length > 0 && ohlcv.length >= WINDOW) {
       const windowBars = ohlcv.slice(-WINDOW)
       const windowCloses = windowBars.map(b => Number(b.close))
       const priceMin = Math.min(...windowCloses)
       const priceMax = Math.max(...windowCloses)
       const priceRange = priceMax - priceMin
       const scale = (y: number) => priceMin + y * priceRange
-
-      // Pattern overlay (solid)
-      const patternInterp = interpolatePattern(pattern.curve, WINDOW)
-      const overlaySeries = chart.addLineSeries({
-        color: pattern.color, lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
-      })
-      const overlayData = windowBars.map((b, i) => ({ time: b.trade_date as Time, value: scale(patternInterp[i]) }))
-      // Add connection point (last bar shared with projection)
-      overlaySeries.setData(overlayData)
-
-      // Projection (dashed, future dates)
-      const projInterp = interpolatePattern(pattern.projection, PROJ_DAYS + 1)
       const lastDate = parseISO(windowBars[windowBars.length - 1].trade_date)
-      const projSeries = chart.addLineSeries({
-        color: pattern.color, lineWidth: 2, lineStyle: LineStyle.Dashed,
-        priceLineVisible: false, lastValueVisible: false,
-      })
-      const projData = [
-        { time: windowBars[windowBars.length - 1].trade_date as Time, value: scale(projInterp[0]) },
-        ...Array.from({ length: PROJ_DAYS }, (_, i) => ({
-          time: format(addDays(lastDate, i + 1), 'yyyy-MM-dd') as Time,
-          value: scale(projInterp[i + 1]),
-        })),
-      ]
-      projSeries.setData(projData)
 
-      // "Now" marker
-      overlaySeries.setMarkers([{
-        time: windowBars[windowBars.length - 1].trade_date as Time,
-        position: 'aboveBar',
-        color: pattern.color,
-        shape: 'arrowDown',
-        text: 'Now',
-      }])
+      patterns.forEach((pattern) => {
+        // Overlay (solid)
+        const patternInterp = interpolatePattern(pattern.curve, WINDOW)
+        const overlaySeries = chart.addLineSeries({
+          color: pattern.color, lineWidth: 2, priceLineVisible: false, lastValueVisible: false,
+          title: pattern.name,
+        })
+        overlaySeries.setData(
+          windowBars.map((b, i) => ({ time: b.trade_date as Time, value: scale(patternInterp[i]) }))
+        )
+
+        // Projection (dashed)
+        const projXMin = pattern.projection[0].x
+        const projXMax = pattern.projection[pattern.projection.length - 1].x
+        const projXRange = projXMax - projXMin
+        const normalizedProj = pattern.projection.map(p => ({
+          x: projXRange === 0 ? 0 : (p.x - projXMin) / projXRange,
+          y: p.y,
+        }))
+        const projInterp = interpolatePattern(normalizedProj, PROJ_DAYS + 1)
+        const projSeries = chart.addLineSeries({
+          color: pattern.color, lineWidth: 2, lineStyle: LineStyle.Dashed,
+          priceLineVisible: false, lastValueVisible: false,
+        })
+        projSeries.setData([
+          { time: windowBars[windowBars.length - 1].trade_date as Time, value: scale(projInterp[0]) },
+          ...Array.from({ length: PROJ_DAYS }, (_, i) => ({
+            time: format(addDays(lastDate, i + 1), 'yyyy-MM-dd') as Time,
+            value: scale(projInterp[i + 1]),
+          })),
+        ])
+
+        // "Now" marker (only on first pattern to avoid clutter)
+        if (pattern === patterns[0]) {
+          overlaySeries.setMarkers([{
+            time: windowBars[windowBars.length - 1].trade_date as Time,
+            position: 'aboveBar',
+            color: pattern.color,
+            shape: 'arrowDown',
+            text: 'Now',
+          }])
+        }
+      })
     }
 
     chart.timeScale().fitContent()
-  }, [ohlcv, pattern, indicators])
+    return () => { ro.disconnect(); chart.remove(); chartRef.current = null }
+  }, [ohlcv, patterns, indicators])
 
   return (
     <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden', margin: '0 16px' }}>

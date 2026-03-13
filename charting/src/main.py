@@ -14,7 +14,7 @@ from src.adapter.persistence.ohlcv_repository import OhlcvRepository
 from src.adapter.persistence.pattern_repository import PatternRepository
 from src.config.database import get_session_factory
 from src.config.settings import get_settings
-from src.presentation.router import ohlcv_router, similarity_router, symbol_router
+from src.presentation.router import ohlcv_router, similarity_router, symbol_router, sync_router
 
 logger = structlog.get_logger(__name__)
 
@@ -74,6 +74,7 @@ def create_app() -> FastAPI:
     app.include_router(symbol_router.router)
     app.include_router(ohlcv_router.router)
     app.include_router(similarity_router.router)
+    app.include_router(sync_router.router)
 
     @app.get("/health")
     def health():
