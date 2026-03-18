@@ -17,11 +17,11 @@ import { calcMA, calcBollingerBands, calcRSI, calcMACD } from '../lib/indicators
 import { interpolatePattern } from '../lib/patternMatcher'
 
 const CHART_DEFAULTS = {
-  layout: { background: { type: ColorType.Solid, color: '#ffffff' }, textColor: '#64748b' },
-  grid: { vertLines: { color: '#f1f5f9' }, horzLines: { color: '#f1f5f9' } },
+  layout: { background: { type: ColorType.Solid, color: '#0f172a' }, textColor: '#64748b' },
+  grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
   crosshair: { mode: CrosshairMode.Normal },
-  rightPriceScale: { borderColor: '#e2e8f0' },
-  timeScale: { borderColor: '#e2e8f0', timeVisible: true, fixLeftEdge: false, fixRightEdge: false },
+  rightPriceScale: { borderColor: '#334155' },
+  timeScale: { borderColor: '#334155', timeVisible: true, fixLeftEdge: false, fixRightEdge: false },
 }
 
 const WINDOW = 60
@@ -39,7 +39,7 @@ function VolumePanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRe
     series.setData(ohlcv.map(b => ({
       time: b.trade_date as Time,
       value: Number(b.volume),
-      color: Number(b.close) >= Number(b.open) ? '#bbf7d0' : '#fecaca',
+      color: Number(b.close) >= Number(b.open) ? 'rgba(16,185,129,0.4)' : 'rgba(244,63,94,0.4)',
     })))
 
     const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
@@ -57,8 +57,8 @@ function VolumePanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRe
     }
   }, [ohlcv])
   return (
-    <div style={{ borderTop: '1px solid #e2e8f0' }}>
-      <div style={{ padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>Volume</div>
+    <div className="border-t border-slate-800">
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">Volume</div>
       <div ref={containerRef} />
     </div>
   )
@@ -79,7 +79,7 @@ function RsiPanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefOb
     )
     series.createPriceLine({ price: 70, color: '#ef4444', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OB 70' })
     series.createPriceLine({ price: 30, color: '#22c55e', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OS 30' })
-    series.createPriceLine({ price: 50, color: '#94a3b8', lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: false, title: '' })
+    series.createPriceLine({ price: 50, color: '#475569', lineWidth: 1, lineStyle: LineStyle.Dotted, axisLabelVisible: false, title: '' })
 
     const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
     const syncBack = (range: LogicalRange | null) => { if (range) mainRef.current?.timeScale().setVisibleLogicalRange(range) }
@@ -96,8 +96,8 @@ function RsiPanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefOb
     }
   }, [ohlcv])
   return (
-    <div style={{ borderTop: '1px solid #e2e8f0' }}>
-      <div style={{ padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>RSI (14)</div>
+    <div className="border-t border-slate-800">
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">RSI (14)</div>
       <div ref={containerRef} />
     </div>
   )
@@ -113,12 +113,12 @@ function MacdPanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefO
     const macdData = calcMACD(closes)
 
     const histSeries = chart.addHistogramSeries({ priceScaleId: 'right', lastValueVisible: false })
-    const macdSeries = chart.addLineSeries({ color: '#2563eb', lineWidth: 1, lastValueVisible: false })
+    const macdSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, lastValueVisible: false })
     const signalSeries = chart.addLineSeries({ color: '#ef4444', lineWidth: 1, lastValueVisible: false })
 
     const validData = ohlcv.map((b, i) => ({ time: b.trade_date as Time, point: macdData[i] })).filter(d => d.point !== null)
 
-    histSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.histogram, color: d.point!.histogram >= 0 ? '#bbf7d0' : '#fecaca' })))
+    histSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.histogram, color: d.point!.histogram >= 0 ? 'rgba(16,185,129,0.4)' : 'rgba(244,63,94,0.4)' })))
     macdSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.macd })))
     signalSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.signal })))
 
@@ -137,8 +137,8 @@ function MacdPanel({ ohlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefO
     }
   }, [ohlcv])
   return (
-    <div style={{ borderTop: '1px solid #e2e8f0' }}>
-      <div style={{ padding: '4px 12px', fontSize: 11, fontWeight: 600, color: '#94a3b8' }}>MACD (12,26,9)</div>
+    <div className="border-t border-slate-800">
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">MACD (12,26,9)</div>
       <div ref={containerRef} />
     </div>
   )
@@ -156,7 +156,6 @@ export function PatternChart({ ohlcv, patterns, indicators }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const chartRef = useRef<IChartApi | null>(null)
 
-  // Recreate chart whenever data changes (clean teardown + rebuild)
   useEffect(() => {
     if (!containerRef.current || ohlcv.length === 0) return
     const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 440 })
@@ -260,10 +259,18 @@ export function PatternChart({ ohlcv, patterns, indicators }: Props) {
   }, [ohlcv, patterns, indicators])
 
   return (
-    <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, overflow: 'hidden', margin: '0 16px' }}>
+    <div className="rounded-xl overflow-hidden h-full">
       {ohlcv.length === 0 ? (
-        <div style={{ height: 440, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: 14 }}>
-          종목을 선택하면 차트가 로드됩니다.
+        <div className="h-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-20 h-20 rounded-2xl bg-slate-800/50 flex items-center justify-center mx-auto mb-4">
+              <svg width="40" height="40" viewBox="0 0 40 40" className="text-slate-600">
+                <polyline points="5,30 12,20 20,25 28,10 35,15" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <p className="text-slate-400 font-medium">종목을 선택해주세요</p>
+            <p className="text-slate-600 text-sm mt-1">차트와 패턴 분석을 확인할 수 있습니다</p>
+          </div>
         </div>
       ) : (
         <div ref={containerRef} />

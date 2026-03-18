@@ -161,8 +161,8 @@ class ProductTest : BehaviorSpec({
 |------|------------|------------|
 | `product.item.created` | product | search |
 | `product.item.updated` | product | search |
-| `order.order.placed` | order | - |
 | `order.order.completed` | order | - |
+| `order.order.cancelled` | order | - |
 
 - Consumer Group ID: `{service}-{purpose}` 형식 (예: `search-indexer`)
 - DLQ 설계는 ADR-0009 참조 (추후 결정)
