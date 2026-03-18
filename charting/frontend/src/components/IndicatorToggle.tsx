@@ -30,24 +30,19 @@ export function IndicatorToggle({ value, onChange }: Props) {
     onChange({ ...value, [key]: !value[key] })
 
   return (
-    <div style={{ display: 'flex', gap: 6, padding: '8px 16px', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+    <div className="flex flex-wrap gap-2">
       {BUTTONS.map(({ key, label, color }) => {
         const active = value[key]
         return (
           <button
             key={key}
             onClick={() => toggle(key)}
-            style={{
-              padding: '4px 12px',
-              fontSize: 12,
-              fontWeight: 600,
-              border: `1.5px solid ${active ? color : '#d1d5db'}`,
-              borderRadius: 20,
-              background: active ? color : '#fff',
-              color: active ? '#fff' : '#6b7280',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-150 cursor-pointer ${
+              active
+                ? 'text-white'
+                : 'bg-slate-800/40 border-slate-700/50 text-slate-400 hover:bg-slate-700/50'
+            }`}
+            style={active ? { background: color, borderColor: color, color: '#fff' } : undefined}
           >
             {label}
           </button>

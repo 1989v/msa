@@ -1,0 +1,1259 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSA Commerce Platform - Documentation</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--sidebar-w:280px;--header-h:56px;--bg:#f8fafc;--sidebar-bg:#1e293b;--sidebar-text:#cbd5e1;--sidebar-active:#3b82f6;--sidebar-hover:#334155;--content-bg:#fff;--text:#1e293b;--text-muted:#64748b;--border:#e2e8f0;--code-bg:#f1f5f9;--link:#2563eb;--accent:#3b82f6}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;font-size:15px}
+a{color:var(--link);text-decoration:none}a:hover{text-decoration:underline}
+
+/* Header */
+.header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:linear-gradient(135deg,#1e3a5f 0%,#1e40af 100%);color:#fff;display:flex;align-items:center;padding:0 24px;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.header h1{font-size:18px;font-weight:800;letter-spacing:-.5px}
+.header .subtitle{font-size:12px;opacity:.7;margin-left:12px;font-weight:400}
+.header .menu-btn{display:none;background:none;border:none;color:#fff;font-size:22px;cursor:pointer;margin-right:12px}
+
+/* Sidebar */
+.sidebar{position:fixed;top:var(--header-h);left:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar-bg);overflow-y:auto;z-index:90;transition:transform .3s}
+.sidebar::-webkit-scrollbar{width:6px}
+.sidebar::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
+.sidebar .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#64748b;padding:20px 20px 8px;user-select:none}
+.sidebar .nav-item{display:block;padding:8px 20px 8px 28px;font-size:13px;color:var(--sidebar-text);cursor:pointer;border-left:3px solid transparent;transition:all .15s}
+.sidebar .nav-item:hover{background:var(--sidebar-hover);color:#fff;text-decoration:none}
+.sidebar .nav-item.active{border-left-color:var(--sidebar-active);background:var(--sidebar-hover);color:#fff;font-weight:600}
+
+/* Content */
+.content{margin-left:var(--sidebar-w);margin-top:var(--header-h);padding:32px 48px 80px;max-width:960px}
+.page{display:none}
+.page.active{display:block}
+.page h1{font-size:28px;font-weight:800;margin-bottom:8px;color:#0f172a;border-bottom:3px solid var(--accent);padding-bottom:12px}
+.page h2{font-size:21px;font-weight:700;margin:32px 0 12px;color:#1e293b;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.page h3{font-size:17px;font-weight:600;margin:24px 0 8px;color:#334155}
+.page h4{font-size:15px;font-weight:600;margin:20px 0 6px;color:#475569}
+.page p{margin:8px 0 12px}
+.page ul,.page ol{margin:8px 0 16px 24px}
+.page li{margin:4px 0}
+.page strong{font-weight:700}
+.page hr{border:none;border-top:1px solid var(--border);margin:24px 0}
+.page blockquote{border-left:4px solid var(--accent);background:var(--code-bg);padding:12px 16px;margin:12px 0;border-radius:0 6px 6px 0;color:var(--text-muted);font-size:14px}
+.page code{background:var(--code-bg);padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono','Fira Code',monospace;font-size:13px;color:#be185d}
+.page pre{background:#0f172a;color:#e2e8f0;padding:16px 20px;border-radius:8px;overflow-x:auto;margin:12px 0 16px;font-size:13px;line-height:1.6}
+.page pre code{background:none;padding:0;color:inherit;font-size:13px}
+.page table{width:100%;border-collapse:collapse;margin:12px 0 20px;font-size:14px}
+.page th{background:var(--code-bg);font-weight:700;text-align:left;padding:10px 14px;border:1px solid var(--border)}
+.page td{padding:8px 14px;border:1px solid var(--border)}
+.page tr:nth-child(even) td{background:#fafbfc}
+.breadcrumb{font-size:12px;color:var(--text-muted);margin-bottom:16px}
+.breadcrumb span{color:var(--accent);font-weight:600}
+
+/* Badge */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-left:8px}
+.badge-accepted{background:#dcfce7;color:#15803d}
+.badge-proposed{background:#fef9c3;color:#a16207}
+
+/* Search */
+.search-box{padding:12px 20px}
+.search-box input{width:100%;padding:8px 12px;background:#334155;border:1px solid #475569;border-radius:6px;color:#e2e8f0;font-size:13px;outline:none}
+.search-box input::placeholder{color:#64748b}
+.search-box input:focus{border-color:var(--sidebar-active)}
+
+/* Mobile */
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .content{margin-left:0;padding:24px 16px 80px}
+  .header .menu-btn{display:block}
+  .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:85}
+  .overlay.show{display:block}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <button class="menu-btn" onclick="toggleSidebar()">&#9776;</button>
+  <h1>MSA Commerce Platform</h1>
+  <span class="subtitle">Kotlin / Spring Boot / Clean Architecture</span>
+</header>
+
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<nav class="sidebar" id="sidebar">
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search docs..." oninput="filterNav(this.value)">
+  </div>
+
+  <div class="section-title">Overview</div>
+  <a class="nav-item active" data-page="readme" onclick="showPage('readme',this)">Documentation Index</a>
+
+  <div class="section-title">Architecture</div>
+  <a class="nav-item" data-page="arch-overview" onclick="showPage('arch-overview',this)">Platform Overview</a>
+  <a class="nav-item" data-page="arch-clean" onclick="showPage('arch-clean',this)">Clean Architecture</a>
+  <a class="nav-item" data-page="arch-boundary" onclick="showPage('arch-boundary',this)">Service Boundary</a>
+  <a class="nav-item" data-page="arch-comm" onclick="showPage('arch-comm',this)">Communication</a>
+  <a class="nav-item" data-page="arch-data" onclick="showPage('arch-data',this)">Data Strategy</a>
+  <a class="nav-item" data-page="arch-resilience" onclick="showPage('arch-resilience',this)">Resilience Strategy</a>
+  <a class="nav-item" data-page="arch-cdc" onclick="showPage('arch-cdc',this)">CDC Pipeline</a>
+
+  <div class="section-title">ADR - Commerce</div>
+  <a class="nav-item" data-page="adr-0001" onclick="showPage('adr-0001',this)">ADR-0001 Multi-Module Gradle</a>
+  <a class="nav-item" data-page="adr-0002" onclick="showPage('adr-0002',this)">ADR-0002 Language & Framework</a>
+  <a class="nav-item" data-page="adr-0003" onclick="showPage('adr-0003',this)">ADR-0003 Communication</a>
+  <a class="nav-item" data-page="adr-0004" onclick="showPage('adr-0004',this)">ADR-0004 Auth</a>
+  <a class="nav-item" data-page="adr-0005" onclick="showPage('adr-0005',this)">ADR-0005 Service Discovery</a>
+  <a class="nav-item" data-page="adr-0006" onclick="showPage('adr-0006',this)">ADR-0006 Database</a>
+  <a class="nav-item" data-page="adr-0007" onclick="showPage('adr-0007',this)">ADR-0007 Cache (Redis)</a>
+  <a class="nav-item" data-page="adr-0008" onclick="showPage('adr-0008',this)">ADR-0008 Search (ES)</a>
+  <a class="nav-item" data-page="adr-0009" onclick="showPage('adr-0009',this)">ADR-0009 Batch DB Access</a>
+
+  <div class="section-title">ADR - Charting</div>
+  <a class="nav-item" data-page="adr-c001" onclick="showPage('adr-c001',this)">ADR-001 Charting Service</a>
+  <a class="nav-item" data-page="adr-c002" onclick="showPage('adr-c002',this)">ADR-002 pgvector</a>
+  <a class="nav-item" data-page="adr-c003" onclick="showPage('adr-c003',this)">ADR-003 Python/FastAPI</a>
+  <a class="nav-item" data-page="adr-c004" onclick="showPage('adr-c004',this)">ADR-004 Yahoo Finance</a>
+
+  <div class="section-title">Services</div>
+  <a class="nav-item" data-page="svc-product" onclick="showPage('svc-product',this)">Product</a>
+  <a class="nav-item" data-page="svc-order" onclick="showPage('svc-order',this)">Order</a>
+  <a class="nav-item" data-page="svc-search" onclick="showPage('svc-search',this)">Search</a>
+  <a class="nav-item" data-page="svc-gateway" onclick="showPage('svc-gateway',this)">Gateway</a>
+  <a class="nav-item" data-page="svc-discovery" onclick="showPage('svc-discovery',this)">Discovery</a>
+  <a class="nav-item" data-page="svc-common" onclick="showPage('svc-common',this)">Common</a>
+  <a class="nav-item" data-page="svc-charting" onclick="showPage('svc-charting',this)">Charting</a>
+
+  <div class="section-title">Conventions</div>
+  <a class="nav-item" data-page="conv-pkg" onclick="showPage('conv-pkg',this)">Package Structure</a>
+  <a class="nav-item" data-page="conv-test" onclick="showPage('conv-test',this)">Testing</a>
+  <a class="nav-item" data-page="conv-api" onclick="showPage('conv-api',this)">API Format</a>
+  <a class="nav-item" data-page="conv-kafka" onclick="showPage('conv-kafka',this)">Kafka Topics</a>
+
+  <div class="section-title">Runbooks</div>
+  <a class="nav-item" data-page="run-local" onclick="showPage('run-local',this)">Local Dev Setup</a>
+  <a class="nav-item" data-page="run-docker" onclick="showPage('run-docker',this)">Docker Infrastructure</a>
+
+  <div class="section-title">Plans</div>
+  <a class="nav-item" data-page="plan-platform" onclick="showPage('plan-platform',this)">MSA Platform Plan</a>
+  <a class="nav-item" data-page="plan-search" onclick="showPage('plan-search',this)">Search Pipeline Plan</a>
+  <a class="nav-item" data-page="plan-batch" onclick="showPage('plan-batch',this)">Search Batch DB Reader</a>
+  <a class="nav-item" data-page="plan-chart-design" onclick="showPage('plan-chart-design',this)">Chart UI Design</a>
+  <a class="nav-item" data-page="plan-chart-impl" onclick="showPage('plan-chart-impl',this)">Chart UI Implementation</a>
+</nav>
+
+<main class="content">
+
+<!-- ==================== README ==================== -->
+<div class="page active" id="readme">
+<div class="breadcrumb">docs / <span>README.md</span></div>
+<h1>Commerce Platform Documentation Index</h1>
+<p>This directory contains all technical documentation for the MSA Commerce Platform.</p>
+
+<h2>Directory Structure</h2>
+<pre><code>docs/
+├── README.md                  -- Documentation index
+├── architecture/              -- Architecture design documents
+│   ├── 00.clean-architecture.md
+│   ├── platform-overview.md
+│   ├── service-boundary.md
+│   ├── communication.md
+│   ├── data-strategy.md
+│   ├── resilience-strategy.md
+│   └── cdc-pipeline.md
+├── adr/                       -- Architecture Decision Records
+│   ├── _template.md
+│   ├── ADR-0001 ~ ADR-0009   (Commerce Platform)
+│   └── ADR-001 ~ ADR-004     (Charting Service)
+├── services/                  -- Service-specific docs
+│   ├── product.md / order.md / search.md
+│   ├── gateway.md / discovery.md / common.md
+│   └── charting.md
+├── conventions/               -- Coding/operational conventions
+│   ├── package-structure.md / testing.md
+│   ├── api-format.md / kafka-topics.md
+├── runbooks/                  -- Operational guides
+│   ├── local-dev-setup.md / docker-infra.md
+└── plans/                     -- Implementation plans</code></pre>
+
+<h2>ADR Numbering</h2>
+<ul>
+<li><code>ADR-0001</code> ~ <code>ADR-0009</code>: Commerce platform core decisions (4-digit)</li>
+<li><code>ADR-001</code> ~ <code>ADR-004</code>: Charting service decisions (3-digit, separate domain)</li>
+</ul>
+
+<h2>Governance</h2>
+<ul>
+<li>Architecture changes require an ADR before implementation.</li>
+<li>Conflicting decisions must supersede existing ADRs with explicit references.</li>
+<li>CLAUDE.md (root) is the top-level AI working agreement.</li>
+</ul>
+</div>
+
+<!-- ==================== ARCHITECTURE ==================== -->
+<div class="page" id="arch-overview">
+<div class="breadcrumb">docs / architecture / <span>platform-overview.md</span></div>
+<h1>Platform Overview</h1>
+
+<h2>1. System Context</h2>
+<p>MSA-based commerce system.</p>
+<p><strong>Services:</strong> Gateway, Product, Order, Search, Charting, Common</p>
+<p><strong>Infrastructure:</strong></p>
+<ul>
+<li>MySQL (per-service, master/replica)</li>
+<li>Redis (cluster-ready)</li>
+<li>Kafka (event-driven)</li>
+<li>Elasticsearch (Search-only)</li>
+<li>PostgreSQL + pgvector (Charting-only, port 5433 -- ADR-002)</li>
+</ul>
+
+<h2>2. High-Level Service Diagram</h2>
+<pre><code>[ Client ]
+    |
+    v
+[ Gateway ]
+    |
+    +------------------+------------------+
+    |                  |                  |
+    v                  v                  v
+[ Product ]    [ Order ]         [ Charting ]
+    |                  |                  |
+    v                  v                  v
+[Product DB]   [Order DB]    [PostgreSQL+pgvector]
+               |
+               v
+           [ Kafka ] ---&gt; [ Search ]
+                              |
+                              v
+                      [ Elasticsearch ]</code></pre>
+<p>Each service owns an independent DB. Direct cross-service DB access is prohibited.</p>
+
+<h2>3. Traffic Flow</h2>
+<h3>3.1 Read Flow (Product Query)</h3>
+<p>Client &rarr; Gateway &rarr; Product &rarr; DB (Replica) &rarr; Response</p>
+
+<h3>3.2 Order Flow</h3>
+<p>Client &rarr; Gateway &rarr; Order &rarr; DB (Master) &rarr; Kafka Event Publish &rarr; Search (Index Update)</p>
+
+<h3>3.3 Search Flow</h3>
+<p>Client &rarr; Gateway &rarr; Search &rarr; Elasticsearch</p>
+
+<h2>4. Service Boundary Definition</h2>
+<table>
+<tr><th>Service</th><th>Responsibility</th></tr>
+<tr><td>Gateway</td><td>External entry point</td></tr>
+<tr><td>Product</td><td>Product domain owner</td></tr>
+<tr><td>Order</td><td>Order domain owner</td></tr>
+<tr><td>Search</td><td>Search-only Read model</td></tr>
+<tr><td>Charting</td><td>Chart pattern similarity analysis &amp; prediction</td></tr>
+<tr><td>Common</td><td>Shared infra/security/utils</td></tr>
+</table>
+
+<h2>5. Charting Service Traffic Flow</h2>
+<h3>5.1 Daily Data Collection (Scheduled)</h3>
+<p>APScheduler &rarr; YahooFinance/FinanceDataReader &rarr; ohlcv_bars (PostgreSQL) &rarr; FeatureExtractionPolicy &rarr; patterns.embedding (pgvector, HNSW)</p>
+<h3>5.2 Similar Pattern Search</h3>
+<p>Client &rarr; POST /api/v1/similarity &rarr; SearchSimilarPatternsUseCase &rarr; pgvector cosine similarity &rarr; top-20 patterns &rarr; ForecastPolicy &rarr; Response</p>
+</div>
+
+<div class="page" id="arch-clean">
+<div class="breadcrumb">docs / architecture / <span>00.clean-architecture.md</span></div>
+<h1>Clean Architecture (Kotlin Version)</h1>
+
+<h2>1. Purpose</h2>
+<ul>
+<li>Complete separation of business logic and technical details</li>
+<li>Framework-replaceable structure</li>
+<li>Maximum testability</li>
+<li>Domain-centric design</li>
+<li>Long-term maintainable codebase</li>
+</ul>
+
+<h2>2. Layer Structure</h2>
+<h3>2.1 Dependency Direction (Absolute Rule)</h3>
+<pre><code>Presentation
+      ↓
+Application
+      ↓
+    Domain
+      ↑
+Infrastructure</code></pre>
+<ul>
+<li>Dependencies always point inward (toward Domain)</li>
+<li>Domain knows no external frameworks</li>
+<li>Infrastructure handles technology at the outermost layer</li>
+</ul>
+
+<h2>3. Layer Responsibilities</h2>
+
+<h3>3.1 Domain Layer</h3>
+<p><strong>Responsibility:</strong> Core business rules, Aggregate Root, Entity, Value Object, Domain Policy, Domain Event, Business exceptions</p>
+<p><strong>Prohibited:</strong> Spring deps, JPA annotations, HTTP code, DB access, messaging, external API calls</p>
+
+<h3>3.2 Application Layer</h3>
+<p><strong>Responsibility:</strong> Use case orchestration, transaction boundaries, Port interface calls, DTO-Domain conversion</p>
+<p><strong>Allowed:</strong> @Service, @Transactional</p>
+<p><strong>Prohibited:</strong> Technical implementation details, direct DB entity usage, business rule implementation</p>
+
+<h3>3.3 Infrastructure Layer</h3>
+<p><strong>Responsibility:</strong> DB integration, external APIs, messaging, cache, file system, framework config</p>
+<p><strong>Role:</strong> Implements Port interfaces, converts technical exceptions to domain/application exceptions</p>
+
+<h3>3.4 Presentation Layer</h3>
+<p><strong>Responsibility:</strong> HTTP request/response, input validation, auth, API docs</p>
+<p><strong>Prohibited:</strong> Business logic, DB access</p>
+
+<h2>4. Port &amp; Adapter Pattern</h2>
+<h3>4.1 Inbound Port (UseCase Interface)</h3>
+<p>Location: Application layer</p>
+<pre><code>interface CreateUseCase {
+    fun execute(command: Command): Result
+}</code></pre>
+
+<h3>4.2 Outbound Port</h3>
+<p>Location: Application layer</p>
+<pre><code>interface RepositoryPort {
+    fun save(aggregate: Aggregate): Aggregate
+    fun findById(id: Long): Aggregate?
+}</code></pre>
+
+<h2>5. Package Structure (Nested Submodule)</h2>
+<pre><code>{service}/
+├── domain/          -- :{service}:domain (pure Kotlin)
+│   └── src/main/kotlin/com/kgd/{service}/domain/
+│       ├── model/ / policy/ / event/ / exception/
+└── app/             -- :{service}:app (Spring Boot)
+    └── src/main/kotlin/com/kgd/{service}/
+        ├── application/ (usecase/ service/ port/ dto/)
+        ├── infrastructure/ (persistence/ client/ messaging/ config/)
+        └── presentation/ (controller/ dto/)</code></pre>
+
+<h2>6. Data Flow Rules</h2>
+<p><strong>Input:</strong> Request DTO &rarr; Command &rarr; UseCase &rarr; Domain &rarr; Port &rarr; Infrastructure</p>
+<p><strong>Output:</strong> Infrastructure &rarr; Domain &rarr; Result &rarr; Response DTO</p>
+
+<h2>7. Architecture Quality Checklist</h2>
+<ul>
+<li>Application &rarr; Infrastructure direct references: 0</li>
+<li>Domain &rarr; Spring/JPA dependencies: 0</li>
+<li>Circular references: 0</li>
+<li>Domain test coverage: 90%+</li>
+<li>Key use case integration tests: 100%</li>
+</ul>
+</div>
+
+<div class="page" id="arch-boundary">
+<div class="breadcrumb">docs / architecture / <span>service-boundary.md</span></div>
+<h1>Service Boundary</h1>
+
+<h2>1. Gateway</h2>
+<p><strong>Responsibility:</strong> Auth, routing, request validation, external request normalization</p>
+<p><strong>Does NOT:</strong> Business logic, DB access</p>
+
+<h2>2. Product Service</h2>
+<p><strong>Responsibility:</strong> Product CRUD, status management, domain rules</p>
+<p><strong>Data Ownership:</strong> product_db (full)</p>
+
+<h2>3. Order Service</h2>
+<p><strong>Responsibility:</strong> Order creation, state transitions, payment integration</p>
+<p><strong>Data Ownership:</strong> order_db (full)</p>
+
+<h2>4. Search Service</h2>
+<p><strong>Responsibility:</strong> Search API, Elasticsearch index management, Kafka-based indexing</p>
+<p><strong>Data Ownership:</strong> Elasticsearch indices (no RDBMS)</p>
+
+<h2>5. Charting Service</h2>
+<p><strong>Responsibility:</strong> OHLCV data collection, 60-day sliding window patterns, 32-dim vector embedding, pgvector cosine similarity search, forecast statistics</p>
+<p><strong>Data Ownership:</strong> PostgreSQL + pgvector (port 5433)</p>
+<p><strong>Tech Stack:</strong> Python 3.11 + FastAPI (ADR-003), pgvector/pg16 (ADR-002)</p>
+<p><strong>Does NOT:</strong> Access commerce DB, Kafka events, real-time quotes</p>
+
+<h2>6. Data Ownership Rule</h2>
+<ul>
+<li>Cross-service DB sharing prohibited</li>
+<li>Changes propagated via events</li>
+<li>Direct queries require API calls</li>
+</ul>
+</div>
+
+<div class="page" id="arch-comm">
+<div class="breadcrumb">docs / architecture / <span>communication.md</span></div>
+<h1>Communication Strategy</h1>
+
+<h2>1. Synchronous Communication</h2>
+<p><strong>Technology:</strong> WebClient</p>
+<p><strong>Targets:</strong> Gateway &rarr; internal services, external API calls</p>
+<p><strong>Rules:</strong> CircuitBreaker required, Timeout mandatory, Retry policy explicit</p>
+
+<h2>2. Asynchronous Communication</h2>
+<p><strong>Technology:</strong> Kafka</p>
+<p><strong>Purpose:</strong> Domain event propagation, search index updates, reduced coupling</p>
+
+<h2>3. Kafka Topic Naming</h2>
+<p>Format: <code>{domain}.{entity}.{event}</code></p>
+<p>Examples: <code>product.item.created</code>, <code>order.order.completed</code></p>
+
+<h2>4. WebClient Standard Pattern</h2>
+<ul><li>Base URL separation</li><li>Timeout settings</li><li>CircuitBreaker applied</li><li>Common error mapping</li></ul>
+
+<h2>5. CircuitBreaker Standard</h2>
+<ul><li>Resilience4j</li><li>Failure-rate based open</li><li>Half-open state support</li><li>Minimal fallback</li></ul>
+</div>
+
+<div class="page" id="arch-data">
+<div class="breadcrumb">docs / architecture / <span>data-strategy.md</span></div>
+<h1>Data Strategy</h1>
+
+<h2>1. Database Isolation Principle</h2>
+<ul><li>Per-service DB isolation</li><li>Schema sharing prohibited</li><li>Direct DB access prohibited</li></ul>
+
+<h2>2. MySQL Read/Write Separation</h2>
+<p><strong>Structure:</strong> Master (Write) + Replica (Read)</p>
+<p>Write transactions go to Master. Reads go to Replica. Strong consistency reads use Master.</p>
+
+<h2>3. Transaction Boundary</h2>
+<ul><li>Transactions valid only within a service</li><li>Distributed transactions prohibited</li><li>Event-based eventual consistency</li></ul>
+
+<h2>4. Query Strategy</h2>
+<ul><li>JPA-based</li><li>QueryDSL for complex queries</li><li>Read model separation considered for complex reads</li></ul>
+</div>
+
+<div class="page" id="arch-resilience">
+<div class="breadcrumb">docs / architecture / <span>resilience-strategy.md</span></div>
+<h1>Resilience Strategy</h1>
+
+<h2>1. Circuit Breaker Policy</h2>
+<p>Resilience4j, sliding window failure rate, fast failure on Open state</p>
+
+<h2>2. Timeout Policy</h2>
+<ul><li>External API: short timeout</li><li>Internal services: defined SLA</li><li>DB: connection pool management</li></ul>
+
+<h2>3. Retry Policy</h2>
+<ul><li>Retry only for idempotent requests</li><li>Exponential backoff</li><li>No infinite retries</li></ul>
+
+<h2>4. Failure Propagation Prevention</h2>
+<ul><li>Kafka async decoupling</li><li>Bulkhead pattern considered</li><li>Cache fallback strategy</li></ul>
+
+<h2>5. High Availability Strategy</h2>
+<ul><li>Stateless services</li><li>Horizontal scaling</li><li>Redis Cluster design</li><li>Elasticsearch replicas</li></ul>
+</div>
+
+<div class="page" id="arch-cdc">
+<div class="breadcrumb">docs / architecture / <span>cdc-pipeline.md</span></div>
+<h1>CDC Pipeline Extension Guide</h1>
+
+<h2>Overview</h2>
+<p>CDC (Change Data Capture) reads DB binary logs in real-time and streams change events to Kafka. It can replace or complement the search-batch DB direct read approach (ADR-0009).</p>
+
+<h2>Comparison with Current Architecture</h2>
+<table>
+<tr><th>Aspect</th><th>Kafka App Events (Current)</th><th>DB Direct Read (ADR-0009)</th><th>CDC (Extension)</th></tr>
+<tr><td>Data completeness</td><td>Event loss if code missed</td><td>Reads DB directly</td><td>Captures all DB changes</td></tr>
+<tr><td>Real-time</td><td>ms</td><td>Batch schedule</td><td>ms~seconds</td></tr>
+<tr><td>Service boundary</td><td>Compliant</td><td>Exception allowed</td><td>Compliant (via Kafka)</td></tr>
+<tr><td>Ops complexity</td><td>Low</td><td>Low</td><td>High (Kafka Connect)</td></tr>
+</table>
+
+<h2>Recommended Adoption Timing</h2>
+<ul>
+<li>When product count exceeds tens of millions and batch indexing becomes a bottleneck</li>
+<li>When real-time search reflection becomes an SLA requirement</li>
+<li>When Kafka Connect infrastructure is already in operation</li>
+</ul>
+
+<h2>Architecture</h2>
+<pre><code>MySQL (product_db) --binlog--&gt; Debezium MySQL Connector
+                                      | (Kafka Connect)
+                                      v
+                          Kafka Topic: dbz.commerce.products
+                                      |
+                          +-----------+-----------+
+                          v                       v
+                 search-consumer           search-batch
+              (real-time incremental)    (initial/full index)</code></pre>
+
+<h2>Implementation Priority</h2>
+<ol>
+<li><strong>Current (done):</strong> App events + API/DB batch</li>
+<li><strong>Short-term:</strong> MySQL binlog + Debezium local test</li>
+<li><strong>Mid-term:</strong> CDC consumer addition (parallel)</li>
+<li><strong>Long-term:</strong> Full CDC transition</li>
+</ol>
+</div>
+
+<!-- ==================== ADR - COMMERCE ==================== -->
+<div class="page" id="adr-0001">
+<div class="breadcrumb">docs / adr / <span>ADR-0001-multi-module-gradle.md</span></div>
+<h1>ADR-0001: Multi-Module Gradle Project Structure <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Context</h2>
+<p>6 independent services (common, discovery, gateway, product, order, search) managed in a single repository. Shared library (common) needed. Independent build/deploy required.</p>
+<h2>Decision</h2>
+<ul>
+<li>Gradle multi-module + Version Catalog (gradle/libs.versions.toml)</li>
+<li>Root build.gradle.kts declares common plugins/dependencies only</li>
+<li>Each service module independently generates bootJar</li>
+<li>common module generates jar only (no bootJar)</li>
+</ul>
+<h2>Consequences</h2>
+<ul>
+<li>Shared Gradle build cache improves speed</li>
+<li>common module changes require all services to rebuild</li>
+<li>Centralized dependency version management via libs.versions.toml</li>
+</ul>
+</div>
+
+<div class="page" id="adr-0002">
+<div class="breadcrumb">docs / adr / <span>ADR-0002-language-and-framework.md</span></div>
+<h1>ADR-0002: Language &amp; Framework Selection <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<ul>
+<li>Java 25 LTS (JVM runtime), Kotlin 2.2.21 (primary language)</li>
+<li>Spring Boot 4.0.3 (Spring Framework 7.x)</li>
+<li>Spring Cloud 2025.1.0</li>
+<li>WebFlux adoption prohibited (except Gateway)</li>
+<li>Coroutines limited to external IO (WebClient)</li>
+<li>JPA + QueryDSL (blocking DB access)</li>
+<li>Kotest BehaviorSpec (BDD testing)</li>
+<li>JWT HS256 -- Gateway verifies JWT exclusively</li>
+</ul>
+<h2>Consequences</h2>
+<ul>
+<li>Kotlin all-open plugin required</li>
+<li>kotlin-jpa plugin required for JPA entities</li>
+<li>Spring Boot 4.0 = Jakarta EE 11 (no javax.*)</li>
+</ul>
+</div>
+
+<div class="page" id="adr-0003">
+<div class="breadcrumb">docs / adr / <span>ADR-0003-inter-service-communication.md</span></div>
+<h1>ADR-0003: Inter-Service Communication <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<ul>
+<li><strong>Sync:</strong> WebClient + Resilience4j CircuitBreaker</li>
+<li><strong>Async:</strong> Kafka event-based</li>
+<li>Topic naming: <code>{domain}.{entity}.{event}</code></li>
+<li>CircuitBreaker: sliding window, 50% failure rate &rarr; Open</li>
+<li>Timeout: external 3s, internal 5s</li>
+<li>Retry: max 3, exponential backoff, idempotent only</li>
+</ul>
+<h2>Consequences</h2>
+<ul>
+<li>Strong consistency impossible &rarr; Eventual Consistency</li>
+<li>Kafka Consumer Group horizontal scaling</li>
+<li>DLQ design tracked separately</li>
+</ul>
+</div>
+
+<div class="page" id="adr-0004">
+<div class="breadcrumb">docs / adr / <span>ADR-0004-authentication-and-authorization.md</span></div>
+<h1>ADR-0004: Authentication &amp; Authorization <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<ul>
+<li>JWT (HS256): Access Token 30min, Refresh Token 7d (Redis)</li>
+<li>JWT Blacklist in Redis (logout/force expiry)</li>
+<li>Gateway verifies JWT, passes X-User-Id/X-User-Roles headers</li>
+<li>JWT secret via environment variable (never hardcoded)</li>
+</ul>
+<h2>Consequences</h2>
+<ul>
+<li>Redis Cluster failure &rarr; Fail-Open policy with monitoring/alerting</li>
+<li>Pre-expiry token invalidation only via blacklist</li>
+<li>Internal services accessible only through Gateway</li>
+</ul>
+</div>
+
+<div class="page" id="adr-0005">
+<div class="breadcrumb">docs / adr / <span>ADR-0005-service-discovery.md</span></div>
+<h1>ADR-0005: Service Discovery <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<ul>
+<li>Spring Cloud Netflix Eureka (dedicated discovery module)</li>
+<li>All services auto-register with Eureka</li>
+<li>Spring Cloud LoadBalancer for client-side balancing</li>
+<li>Gateway uses <code>lb://service-name</code> URI routing</li>
+<li>K8s migration: remove Eureka, switch to K8s DNS</li>
+</ul>
+</div>
+
+<div class="page" id="adr-0006">
+<div class="breadcrumb">docs / adr / <span>ADR-0006-database-strategy.md</span></div>
+<h1>ADR-0006: Database Strategy <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<ul>
+<li>Per-service independent MySQL instances (product-db, order-db fully separated)</li>
+<li>Master (Write) + Replica (Read) per service</li>
+<li>AbstractRoutingDataSource for @Transactional(readOnly=true) &rarr; Replica routing</li>
+<li>JPA + QueryDSL, blocking I/O</li>
+<li>No distributed transactions &rarr; Kafka eventual consistency</li>
+<li>Schema migration: Flyway</li>
+</ul>
+</div>
+
+<div class="page" id="adr-0007">
+<div class="breadcrumb">docs / adr / <span>ADR-0007-cache-strategy.md</span></div>
+<h1>ADR-0007: Cache Strategy (Redis) <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<ul>
+<li>Redis Cluster mode (3 masters + 3 replicas)</li>
+<li>Key Prefix by purpose:
+  <ul>
+  <li>Cache: <code>cache:{service}:{entity}:{id}</code> (TTL 5min)</li>
+  <li>Session: <code>session:refresh:{userId}</code> (TTL 7d)</li>
+  <li>Blacklist: <code>blacklist:{token}</code></li>
+  <li>Lock: <code>lock:{resource}:{id}</code> (TTL 30s)</li>
+  </ul>
+</li>
+<li>Lettuce client (async support)</li>
+<li>Local Docker: 6-node cluster (ports 6379-6384)</li>
+</ul>
+</div>
+
+<div class="page" id="adr-0008">
+<div class="breadcrumb">docs / adr / <span>ADR-0008-search-strategy.md</span></div>
+<h1>ADR-0008: Search Strategy (Elasticsearch) <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<ul>
+<li>Elasticsearch 8.17.0</li>
+<li>Search service owns ES indices exclusively</li>
+<li>Full index: BulkProcessor-based (initial, scheduled batch)</li>
+<li>Incremental index: Kafka Consumer (product.item.created/updated)</li>
+<li>Korean search: nori analyzer</li>
+<li>Search service does not use MySQL</li>
+</ul>
+</div>
+
+<div class="page" id="adr-0009">
+<div class="breadcrumb">docs / adr / <span>ADR-0009-search-batch-db-direct-access.md</span></div>
+<h1>ADR-0009: Search Batch DB Direct Access Exception <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Context</h2>
+<p>search-batch full index uses Product API. API offset pagination causes page drift during changes. Snapshot consistency matters more for large-scale initial indexing and DR recovery.</p>
+<h2>Decision</h2>
+<p>Allow <code>search-batch</code> module read-only JDBC access to <code>mysql-product-replica</code>.</p>
+<ul>
+<li>Read-only (SELECT only) to replica only</li>
+<li>Activated only when <code>reindex.source=db</code></li>
+<li>Default: <code>reindex.source=api</code></li>
+<li>Two separate Spring Batch Jobs: <code>productApiReindexJob</code> / <code>productDbReindexJob</code></li>
+</ul>
+<h2>Consequences</h2>
+<ul>
+<li>search-batch couples to product DB schema</li>
+<li>Separate DB credentials required</li>
+<li>Supersedes ADR-0008 "no MySQL" rule for search-batch only</li>
+</ul>
+</div>
+
+<!-- ==================== ADR - CHARTING ==================== -->
+<div class="page" id="adr-c001">
+<div class="breadcrumb">docs / adr / <span>ADR-001-charting-service-introduction.md</span></div>
+<h1>ADR-001: Charting Service MSA Introduction <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Context</h2>
+<p>Stock OHLCV chart pattern similarity analysis is a completely separate domain from the commerce platform. Requires custom embedding (32-dim) and pgvector cosine similarity search.</p>
+<h2>Decision</h2>
+<p>Add charting as a new MSA service: Port 8010 (API), 5433 (PostgreSQL+pgvector), 3010 (Frontend). Independent Docker Compose deployment. Clean Architecture applied.</p>
+<h2>Consequences</h2>
+<ul>
+<li><strong>Positive:</strong> Domain isolation, independent deploy/scale, technology freedom</li>
+<li><strong>Negative:</strong> Additional service operations, separate PostgreSQL management</li>
+</ul>
+</div>
+
+<div class="page" id="adr-c002">
+<div class="breadcrumb">docs / adr / <span>ADR-002-pgvector-over-elasticsearch.md</span></div>
+<h1>ADR-002: pgvector over Elasticsearch <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<p>Use pgvector (PostgreSQL extension) for vector storage: <code>vector(32)</code> column, HNSW index (m=16, ef_construction=64, vector_cosine_ops).</p>
+<p>Single PostgreSQL instance manages metadata + vectors + OHLCV data together.</p>
+<h2>Alternatives Rejected</h2>
+<ul>
+<li><strong>Elasticsearch:</strong> Search-service-only infra, can't be shared (DB isolation rule)</li>
+<li><strong>Pinecone/Weaviate:</strong> SaaS cost, vendor lock-in</li>
+<li><strong>FAISS:</strong> No persistence, sync required</li>
+</ul>
+</div>
+
+<div class="page" id="adr-c003">
+<div class="breadcrumb">docs / adr / <span>ADR-003-python-fastapi-language-choice.md</span></div>
+<h1>ADR-003: Python/FastAPI Language Choice <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<p>Python 3.11 + FastAPI for charting service (data science requirements).</p>
+<ul>
+<li>ORM: SQLAlchemy 2.x (async)</li>
+<li>Numerics: numpy, pandas, scipy</li>
+<li>Data: yfinance, FinanceDataReader</li>
+<li>Scheduler: APScheduler 3.x</li>
+<li>Migration: Alembic</li>
+</ul>
+<h2>Rationale</h2>
+<p>yfinance, FinanceDataReader are Python-ecosystem-only. JVM lacks equivalent numerical computing libraries. Polyglot microservices is a standard MSA pattern.</p>
+</div>
+
+<div class="page" id="adr-c004">
+<div class="breadcrumb">docs / adr / <span>ADR-004-yahoo-finance-data-source.md</span></div>
+<h1>ADR-004: Yahoo Finance Data Source <span class="badge badge-accepted">Accepted</span></h1>
+<h2>Decision</h2>
+<p>yfinance (US/global) + FinanceDataReader (KR fallback).</p>
+<table>
+<tr><th>Stocks</th><th>Library</th><th>Reason</th></tr>
+<tr><td>US (S&amp;P 100)</td><td>yfinance</td><td>Stable US stock support</td></tr>
+<tr><td>KR (KOSPI/KOSDAQ)</td><td>yfinance + FDR fallback</td><td>FDR substitutes when yfinance KR fails</td></tr>
+</table>
+<h2>Risk Mitigation</h2>
+<p>Dependencies hidden behind <code>MarketDataClientPort</code> interface. Adapter pattern allows switching to paid APIs (Polygon.io, Tiingo) by replacing adapters only.</p>
+</div>
+
+<!-- ==================== SERVICES ==================== -->
+<div class="page" id="svc-product">
+<div class="breadcrumb">docs / services / <span>product.md</span></div>
+<h1>Product Service</h1>
+<p>Core commerce service owning the product domain. Handles product CRUD, status management, inventory.</p>
+
+<h2>Module Structure</h2>
+<table>
+<tr><th>Gradle path</th><th>Filesystem</th><th>Role</th></tr>
+<tr><td><code>:product:domain</code></td><td>product/domain/</td><td>Pure domain (no Spring/JPA)</td></tr>
+<tr><td><code>:product:app</code></td><td>product/app/</td><td>Spring Boot app</td></tr>
+</table>
+
+<h2>Domain Model</h2>
+<ul>
+<li><strong>Product</strong> (Aggregate Root): creation, state transitions, price/stock</li>
+<li><strong>Money</strong> (Value Object): monetary amount</li>
+<li><strong>ProductStatus</strong> (Enum): ACTIVE, INACTIVE</li>
+</ul>
+
+<h2>Kafka Events Published</h2>
+<table><tr><th>Topic</th><th>Trigger</th></tr>
+<tr><td><code>product.item.created</code></td><td>Product creation</td></tr>
+<tr><td><code>product.item.updated</code></td><td>Product update</td></tr></table>
+
+<h2>API Endpoints</h2>
+<table><tr><th>Method</th><th>Path</th><th>Description</th></tr>
+<tr><td>POST</td><td>/api/products</td><td>Create product</td></tr>
+<tr><td>GET</td><td>/api/products/{id}</td><td>Get product</td></tr>
+<tr><td>GET</td><td>/api/products</td><td>List products</td></tr>
+<tr><td>PUT</td><td>/api/products/{id}</td><td>Update product</td></tr></table>
+<p><strong>Port:</strong> 8081</p>
+</div>
+
+<div class="page" id="svc-order">
+<div class="breadcrumb">docs / services / <span>order.md</span></div>
+<h1>Order Service</h1>
+<p>Commerce service owning the order domain. Handles order creation, state transitions, payment integration.</p>
+
+<h2>Module Structure</h2>
+<table>
+<tr><th>Gradle path</th><th>Filesystem</th><th>Role</th></tr>
+<tr><td><code>:order:domain</code></td><td>order/domain/</td><td>Pure domain</td></tr>
+<tr><td><code>:order:app</code></td><td>order/app/</td><td>Spring Boot app</td></tr>
+</table>
+
+<h2>Domain Model</h2>
+<ul>
+<li><strong>Order</strong> (Aggregate Root): creation, state transitions</li>
+<li><strong>OrderItem</strong> (Entity): product ID, quantity, price</li>
+<li><strong>Money</strong> (VO), <strong>OrderStatus</strong> (Enum)</li>
+</ul>
+
+<h2>Kafka Events Published</h2>
+<table><tr><th>Topic</th><th>Trigger</th></tr>
+<tr><td><code>order.order.completed</code></td><td>Order completion</td></tr>
+<tr><td><code>order.order.cancelled</code></td><td>Order cancellation</td></tr></table>
+
+<h2>API Endpoints</h2>
+<table><tr><th>Method</th><th>Path</th><th>Description</th></tr>
+<tr><td>POST</td><td>/api/orders</td><td>Create order</td></tr>
+<tr><td>GET</td><td>/api/orders/{id}</td><td>Get order</td></tr></table>
+<p><strong>Port:</strong> 8082</p>
+</div>
+
+<div class="page" id="svc-search">
+<div class="breadcrumb">docs / services / <span>search.md</span></div>
+<h1>Search Service</h1>
+<p>Search-only Read model service. Elasticsearch-based product search API with Kafka incremental indexing and Spring Batch full indexing.</p>
+
+<h2>Module Structure</h2>
+<table>
+<tr><th>Gradle path</th><th>Filesystem</th><th>Role</th><th>Port</th></tr>
+<tr><td><code>:search:domain</code></td><td>search/domain/</td><td>Pure domain</td><td>-</td></tr>
+<tr><td><code>:search:app</code></td><td>search/app/</td><td>REST API (read-only)</td><td>8083</td></tr>
+<tr><td><code>:search:consumer</code></td><td>search/consumer/</td><td>Kafka incremental indexing</td><td>8084</td></tr>
+<tr><td><code>:search:batch</code></td><td>search/batch/</td><td>Spring Batch full indexing</td><td>8085</td></tr>
+</table>
+
+<h2>Architecture</h2>
+<pre><code>                +----- search:app (REST API) -----+
+Client --GET--> |  SearchController                |
+                |  ProductSearchAdapter (ES)       |
+                +----------------------------------+
+
+                +----- search:consumer ------------+
+Kafka --event-> |  ProductIndexingConsumer          |
+                |  EsBulkDocumentProcessor (ES)    |
+                +----------------------------------+
+
+                +----- search:batch ---------------+
+Scheduler -->   |  ProductDbReindexJobConfig        |
+                |  ProductApiReindexJobConfig       |
+                |  IndexAliasManager (alias swap)  |
+                +----------------------------------+</code></pre>
+
+<h2>Batch Indexing Strategy</h2>
+<ol>
+<li><strong>API-based:</strong> Product API call (service boundary compliant)</li>
+<li><strong>DB-direct:</strong> product_db replica read (ADR-0009)</li>
+<li><strong>Alias Swap:</strong> zero-downtime full reindex</li>
+</ol>
+</div>
+
+<div class="page" id="svc-gateway">
+<div class="breadcrumb">docs / services / <span>gateway.md</span></div>
+<h1>Gateway Service</h1>
+<p>Spring Cloud Gateway-based API Gateway. Single entry point for external traffic handling auth, routing, request validation.</p>
+
+<h2>Key Components</h2>
+<table><tr><th>Component</th><th>Role</th></tr>
+<tr><td>GatewayRouteConfig</td><td>Routing rules</td></tr>
+<tr><td>AuthenticationGatewayFilter</td><td>JWT authentication filter</td></tr>
+<tr><td>JwtTokenValidator</td><td>JWT token verification</td></tr>
+<tr><td>SecurityConfig</td><td>Spring Security config</td></tr>
+<tr><td>RedisConfig</td><td>Redis for JWT blacklist</td></tr></table>
+
+<p><strong>Constraints:</strong> No business logic, no direct DB access. WebFlux allowed (Gateway only).</p>
+<p><strong>Port:</strong> 8080</p>
+</div>
+
+<div class="page" id="svc-discovery">
+<div class="breadcrumb">docs / services / <span>discovery.md</span></div>
+<h1>Discovery Service</h1>
+<p>Spring Cloud Netflix Eureka-based service discovery. All services register with Eureka; Gateway discovers services via Eureka.</p>
+<p><strong>Module:</strong> <code>:discovery</code> (single module)</p>
+<p><strong>Port:</strong> 8761</p>
+</div>
+
+<div class="page" id="svc-common">
+<div class="breadcrumb">docs / services / <span>common.md</span></div>
+<h1>Common Module</h1>
+<p>Shared library module. Generates jar only (no bootJar).</p>
+
+<h2>Provided Components</h2>
+<table>
+<tr><th>Package</th><th>Component</th><th>Role</th></tr>
+<tr><td>response</td><td>ApiResponse&lt;T&gt;</td><td>Standard API response wrapper</td></tr>
+<tr><td>exception</td><td>BusinessException</td><td>Business exception base</td></tr>
+<tr><td>exception</td><td>ErrorCode</td><td>Error code enum</td></tr>
+<tr><td>exception</td><td>GlobalExceptionHandler</td><td>Global exception handler</td></tr>
+<tr><td>security</td><td>JwtUtil / JwtProperties</td><td>JWT token utils</td></tr>
+<tr><td>security</td><td>AesUtil</td><td>AES encryption util</td></tr>
+<tr><td>redis</td><td>RedisConfig</td><td>Redis common config</td></tr>
+<tr><td>webclient</td><td>WebClientConfig / WebClientBuilderFactory</td><td>WebClient common config</td></tr>
+</table>
+</div>
+
+<div class="page" id="svc-charting">
+<div class="breadcrumb">docs / services / <span>charting.md</span></div>
+<h1>Charting Service</h1>
+<p>Stock chart pattern similarity analysis and prediction. Operates independently from the commerce domain (ADR-001).</p>
+
+<h2>Tech Stack</h2>
+<ul>
+<li><strong>Backend:</strong> Python 3.11 + FastAPI</li>
+<li><strong>Database:</strong> PostgreSQL + pgvector (port 5433, ADR-002)</li>
+<li><strong>Data Source:</strong> Yahoo Finance / FinanceDataReader (ADR-004)</li>
+<li><strong>Frontend:</strong> React 18 + lightweight-charts (port 3010)</li>
+</ul>
+
+<h2>Core Domain</h2>
+<ul>
+<li>OHLCV data collection (APScheduler daily)</li>
+<li>60-day sliding window patterns, 32-dim vector embedding</li>
+<li>pgvector cosine similarity top-20 search</li>
+<li>Forecast statistics (+5d/+20d/+60d)</li>
+</ul>
+
+<h2>API Endpoints</h2>
+<table><tr><th>Method</th><th>Path</th><th>Description</th></tr>
+<tr><td>POST</td><td>/api/v1/similarity</td><td>Pattern search + prediction</td></tr>
+<tr><td>GET</td><td>/api/v1/symbols</td><td>Tracked symbol list</td></tr>
+<tr><td>POST</td><td>/api/v1/symbols</td><td>Register symbol</td></tr>
+<tr><td>GET</td><td>/api/v1/{ticker}/ohlcv</td><td>OHLCV data query</td></tr></table>
+
+<h2>Related ADRs</h2>
+<p>ADR-001 (Introduction), ADR-002 (pgvector), ADR-003 (Python/FastAPI), ADR-004 (Yahoo Finance)</p>
+</div>
+
+<!-- ==================== CONVENTIONS ==================== -->
+<div class="page" id="conv-pkg">
+<div class="breadcrumb">docs / conventions / <span>package-structure.md</span></div>
+<h1>Package Structure Convention</h1>
+
+<h2>Base Package</h2>
+<p><code>com.kgd.{service}</code></p>
+
+<h2>Nested Submodule Layout</h2>
+<pre><code>{service}/
+├── domain/                    -- :{service}:domain (pure Kotlin)
+│   └── src/main/kotlin/com/kgd/{service}/domain/
+│       └── {entity}/
+│           ├── model/         # Aggregate, Entity, VO
+│           ├── policy/        # Domain Policy, Specification
+│           ├── event/         # Domain Event
+│           └── exception/     # Domain Exception
+└── app/                       -- :{service}:app (Spring Boot)
+    └── src/main/kotlin/com/kgd/{service}/
+        ├── application/{entity}/
+        │   ├── usecase/       # UseCase interface (Inbound Port)
+        │   ├── service/       # UseCase impl
+        │   ├── port/          # Outbound Port interface
+        │   └── dto/           # Command, Result, Query
+        ├── infrastructure/
+        │   ├── persistence/{entity}/
+        │   │   ├── entity/    # JPA Entity
+        │   │   ├── repository/# Spring Data + QueryDSL
+        │   │   └── adapter/   # RepositoryPort impl
+        │   ├── client/        # WebClient adapters
+        │   ├── messaging/     # Kafka adapters
+        │   └── config/        # Tech config
+        └── presentation/{entity}/
+            ├── controller/    # RestController
+            └── dto/           # Request/Response DTO</code></pre>
+
+<h2>Rules</h2>
+<ol>
+<li><strong>domain module:</strong> No Spring/JPA annotations (compile error)</li>
+<li><strong>Cross-reference prohibited:</strong> Order &rarr; Product direct reference forbidden, API call only</li>
+<li><strong>app module:</strong> <code>implementation(project(":{service}:domain"))</code></li>
+<li><strong>bootJar name:</strong> <code>tasks.bootJar { archiveBaseName.set("{service}") }</code></li>
+</ol>
+
+<h2>Search Service Exception</h2>
+<table><tr><th>Gradle path</th><th>Role</th></tr>
+<tr><td><code>:search:app</code></td><td>REST API (read-only)</td></tr>
+<tr><td><code>:search:consumer</code></td><td>Kafka incremental indexing</td></tr>
+<tr><td><code>:search:batch</code></td><td>Spring Batch full indexing</td></tr></table>
+</div>
+
+<div class="page" id="conv-test">
+<div class="breadcrumb">docs / conventions / <span>testing.md</span></div>
+<h1>Testing Convention</h1>
+
+<h2>Framework</h2>
+<ul>
+<li><strong>Test Framework:</strong> Kotest BehaviorSpec (BDD style)</li>
+<li><strong>Test Double:</strong> MockK (Mockito prohibited)</li>
+</ul>
+
+<h2>Layer-specific Rules</h2>
+<table>
+<tr><th>Layer</th><th>Rule</th></tr>
+<tr><td>Domain</td><td>No Mock, pure unit tests. Run: <code>./gradlew :{service}:domain:test</code></td></tr>
+<tr><td>Application</td><td>Outbound Port mocked with MockK</td></tr>
+<tr><td>Infrastructure</td><td>Integration tests with real DB</td></tr>
+<tr><td>Presentation</td><td>API tests, request/response validation</td></tr>
+</table>
+
+<h2>BehaviorSpec Example</h2>
+<pre><code>class ProductTest : BehaviorSpec({
+    given("product creation") {
+        `when`("valid name and price") {
+            then("creates product with ACTIVE status") {
+                val product = Product.create("Test", Money(1000.toBigDecimal()), 10)
+                product.status shouldBe ProductStatus.ACTIVE
+            }
+        }
+    }
+})</code></pre>
+</div>
+
+<div class="page" id="conv-api">
+<div class="breadcrumb">docs / conventions / <span>api-format.md</span></div>
+<h1>API Response Format Convention</h1>
+<p>All HTTP responses wrapped with <code>ApiResponse&lt;T&gt;</code> (common module).</p>
+
+<h2>Success Response</h2>
+<pre><code>{
+  "success": true,
+  "data": { ... },
+  "error": null
+}</code></pre>
+
+<h2>Error Response</h2>
+<pre><code>{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "Product not found"
+  }
+}</code></pre>
+
+<h2>HTTP Status Codes</h2>
+<table>
+<tr><th>Code</th><th>Usage</th></tr>
+<tr><td>200</td><td>Read/Update success</td></tr>
+<tr><td>201</td><td>Create success</td></tr>
+<tr><td>400</td><td>Bad request (validation failure)</td></tr>
+<tr><td>401</td><td>Authentication failure</td></tr>
+<tr><td>403</td><td>Forbidden</td></tr>
+<tr><td>404</td><td>Resource not found</td></tr>
+<tr><td>500</td><td>Internal server error</td></tr>
+</table>
+</div>
+
+<div class="page" id="conv-kafka">
+<div class="breadcrumb">docs / conventions / <span>kafka-topics.md</span></div>
+<h1>Kafka Topic Convention</h1>
+
+<h2>Naming Format</h2>
+<p><code>{domain}.{entity}.{event}</code></p>
+
+<h2>Topic Registry</h2>
+<table>
+<tr><th>Topic</th><th>Publisher</th><th>Consumer</th><th>Description</th></tr>
+<tr><td><code>product.item.created</code></td><td>product</td><td>search-consumer</td><td>Product creation event</td></tr>
+<tr><td><code>product.item.updated</code></td><td>product</td><td>search-consumer</td><td>Product update event</td></tr>
+<tr><td><code>order.order.completed</code></td><td>order</td><td>-</td><td>Order completion event</td></tr>
+<tr><td><code>order.order.cancelled</code></td><td>order</td><td>-</td><td>Order cancellation event</td></tr>
+</table>
+
+<h2>Consumer Group Naming</h2>
+<p>Format: <code>{service}-{purpose}</code></p>
+<table><tr><th>Consumer Group ID</th><th>Service</th><th>Purpose</th></tr>
+<tr><td><code>search-indexer</code></td><td>search-consumer</td><td>ES incremental indexing</td></tr></table>
+
+<h2>CDC Topics (Future)</h2>
+<p>CDC via Debezium: <code>dbz.commerce.products</code></p>
+</div>
+
+<!-- ==================== RUNBOOKS ==================== -->
+<div class="page" id="run-local">
+<div class="breadcrumb">docs / runbooks / <span>local-dev-setup.md</span></div>
+<h1>Local Development Setup</h1>
+
+<h2>Prerequisites</h2>
+<ul>
+<li>JDK 25 (toolchain managed)</li>
+<li>Docker / Docker Compose</li>
+<li>Kotlin 2.2.21 (Gradle auto-downloads)</li>
+<li>Python 3.11 (charting service only)</li>
+<li>Node.js 18+ (charting frontend only)</li>
+</ul>
+
+<h2>1. Start Infrastructure</h2>
+<pre><code>docker compose -f docker/docker-compose.infra.yml up -d</code></pre>
+<p>Starts: MySQL (product/order master+replica), Redis Cluster (6 nodes), Kafka+Zookeeper, Elasticsearch, PostgreSQL+pgvector</p>
+
+<h2>2. Start Service Discovery</h2>
+<pre><code>./gradlew :discovery:bootRun
+# Eureka Dashboard: http://localhost:8761</code></pre>
+
+<h2>3. Start Individual Services</h2>
+<pre><code>./gradlew :gateway:bootRun
+./gradlew :product:app:bootRun
+./gradlew :order:app:bootRun
+./gradlew :search:app:bootRun
+./gradlew :search:consumer:bootRun
+./gradlew :search:batch:bootRun</code></pre>
+
+<h2>4. Port Map</h2>
+<table>
+<tr><th>Service</th><th>Port</th></tr>
+<tr><td>Gateway</td><td>8080</td></tr>
+<tr><td>Discovery (Eureka)</td><td>8761</td></tr>
+<tr><td>Product</td><td>8081</td></tr>
+<tr><td>Order</td><td>8082</td></tr>
+<tr><td>Search App</td><td>8083</td></tr>
+<tr><td>Search Consumer</td><td>8084</td></tr>
+<tr><td>Search Batch</td><td>8085</td></tr>
+<tr><td>Charting Frontend</td><td>3010</td></tr>
+</table>
+
+<h2>5. Build Commands</h2>
+<pre><code>./gradlew build                       # Full build
+./gradlew :product:app:build          # Single service
+./gradlew :product:domain:test        # Domain tests only
+./gradlew :product:app:bootJar        # Generate bootJar</code></pre>
+</div>
+
+<div class="page" id="run-docker">
+<div class="breadcrumb">docs / runbooks / <span>docker-infra.md</span></div>
+<h1>Docker Infrastructure Guide</h1>
+
+<h2>Compose Files</h2>
+<table><tr><th>File</th><th>Purpose</th></tr>
+<tr><td>docker/docker-compose.infra.yml</td><td>Infrastructure only (DB, Redis, Kafka, ES)</td></tr>
+<tr><td>docker/docker-compose.yml</td><td>Full stack (infra + services)</td></tr></table>
+
+<h2>Infrastructure Only</h2>
+<pre><code>docker compose -f docker/docker-compose.infra.yml up -d</code></pre>
+
+<h2>Full Stack</h2>
+<pre><code>docker compose -f docker/docker-compose.yml up -d</code></pre>
+
+<h2>Dockerfile Build Args</h2>
+<table><tr><th>Arg</th><th>Example</th><th>Description</th></tr>
+<tr><td>MODULE_GRADLE</td><td>product:app</td><td>Gradle project path (:)</td></tr>
+<tr><td>MODULE_PATH</td><td>product/app</td><td>Filesystem path (/)</td></tr></table>
+
+<h2>Infrastructure Components</h2>
+<h3>MySQL</h3>
+<p>product_db: master (3316) + replica (3317), order_db: master (3326) + replica (3327)</p>
+<h3>Redis Cluster</h3>
+<p>6 nodes (3 masters + 3 replicas)</p>
+<h3>Kafka</h3>
+<p>Broker + Zookeeper</p>
+<h3>Elasticsearch</h3>
+<p>Single node (local dev)</p>
+<h3>PostgreSQL + pgvector</h3>
+<p>Port 5433 (Charting service only)</p>
+</div>
+
+<!-- ==================== PLANS ==================== -->
+<div class="page" id="plan-platform">
+<div class="breadcrumb">docs / plans / <span>2026-03-02-msa-commerce-platform.md</span></div>
+<h1>MSA Commerce Platform Implementation Plan</h1>
+<p><strong>Goal:</strong> Build a production-deployable MSA commerce platform (Gateway, Product, Order, Search, Common)</p>
+<p><strong>Architecture:</strong> Clean Architecture multi-module Gradle. Per-service DB isolation, Kafka event-based async communication, Spring Cloud Gateway + Eureka.</p>
+<p><strong>Tech Stack:</strong> Java 25 LTS, Kotlin 2.2.21, Spring Boot 4.0.3, Spring Cloud 2025.1.0, MySQL 8.0 (R/W split), Redis Cluster 7.x (6 nodes), Elasticsearch 8.x, Kafka 3.x, Resilience4j, Kotest (BDD)</p>
+<p><em>This is a comprehensive implementation plan covering all tasks from ADR creation through module setup, Docker configuration, and service implementation. See the full document for task-by-task details.</em></p>
+</div>
+
+<div class="page" id="plan-search">
+<div class="breadcrumb">docs / plans / <span>2026-03-09-search-pipeline.md</span></div>
+<h1>Search Pipeline Implementation Plan</h1>
+<p><strong>Goal:</strong> Add search:consumer (incremental indexing) and search:batch (full indexing) modules with BulkIngester-based ES pipeline.</p>
+<p><strong>Architecture:</strong></p>
+<ul>
+<li><code>search:app</code> -- read-only REST search API (write responsibility removed)</li>
+<li><code>search:consumer</code> -- Kafka event &rarr; BulkIngester async incremental indexing</li>
+<li><code>search:batch</code> -- Spring Batch + WebClient(product:app) &rarr; BulkIngester &rarr; alias swap full indexing</li>
+<li>Both modules use Dual BulkIngester pattern (primary 5s/1000 + retry 3s/500)</li>
+</ul>
+</div>
+
+<div class="page" id="plan-batch">
+<div class="breadcrumb">docs / plans / <span>2026-03-09-search-batch-db-reader.md</span></div>
+<h1>Search Batch DB-Direct Reader Plan</h1>
+<p><strong>Goal:</strong> Add DB-direct read indexing Job to search-batch. API mode (existing) and DB mode (new) selectable via <code>reindex.source</code> config.</p>
+<table>
+<tr><th>Aspect</th><th>API Mode (existing)</th><th>DB Direct Mode (new)</th></tr>
+<tr><td>Data Source</td><td>Product REST API</td><td>product-replica MySQL</td></tr>
+<tr><td>Pagination</td><td>Offset-based (drift risk)</td><td>Keyset(id)-based (stable)</td></tr>
+<tr><td>Snapshot consistency</td><td>May vary across pages</td><td>Fixed view (replica lag)</td></tr>
+<tr><td>Service boundary</td><td>Compliant</td><td>Exception (ADR-0009)</td></tr>
+</table>
+</div>
+
+<div class="page" id="plan-chart-design">
+<div class="breadcrumb">docs / plans / <span>2026-03-10-pattern-chart-ui-design.md</span></div>
+<h1>Pattern Chart UI -- Design Document</h1>
+<p><strong>Goal:</strong> Redesign chart pattern analysis to professional trading terminal level with lightweight-charts.</p>
+<p><strong>Core Features:</strong> Symbol search &rarr; candlestick chart + pattern overlay + future trend projection + technical indicator toggles.</p>
+
+<h2>Technology</h2>
+<ul>
+<li><strong>Chart:</strong> lightweight-charts (TradingView OSS, ~100KB)</li>
+<li><strong>Indicators:</strong> Client-side pure TypeScript</li>
+<li><strong>Pattern Matching:</strong> Pearson correlation, client-side</li>
+</ul>
+
+<h2>Pattern Library (10 patterns)</h2>
+<table>
+<tr><th>ID</th><th>Name</th><th>Signal</th></tr>
+<tr><td>elliott_impulse</td><td>Elliott Wave 5</td><td>Neutral</td></tr>
+<tr><td>head_shoulders</td><td>Head &amp; Shoulders</td><td>Bearish</td></tr>
+<tr><td>inverse_head_shoulders</td><td>Inverse H&amp;S</td><td>Bullish</td></tr>
+<tr><td>double_top</td><td>Double Top</td><td>Bearish</td></tr>
+<tr><td>double_bottom</td><td>Double Bottom</td><td>Bullish</td></tr>
+<tr><td>cup_handle</td><td>Cup &amp; Handle</td><td>Bullish</td></tr>
+<tr><td>ascending_triangle</td><td>Ascending Triangle</td><td>Bullish</td></tr>
+<tr><td>descending_triangle</td><td>Descending Triangle</td><td>Bearish</td></tr>
+<tr><td>bull_flag</td><td>Bull Flag</td><td>Bullish</td></tr>
+<tr><td>bear_flag</td><td>Bear Flag</td><td>Bearish</td></tr>
+</table>
+
+<h2>Technical Indicators</h2>
+<table>
+<tr><th>Indicator</th><th>Default</th></tr>
+<tr><td>MA5 / MA20 / MA60</td><td>MA5, MA20 ON</td></tr>
+<tr><td>Bollinger Band</td><td>OFF</td></tr>
+<tr><td>Volume</td><td>ON</td></tr>
+<tr><td>RSI(14)</td><td>OFF</td></tr>
+<tr><td>MACD(12,26,9)</td><td>OFF</td></tr>
+</table>
+</div>
+
+<div class="page" id="plan-chart-impl">
+<div class="breadcrumb">docs / plans / <span>2026-03-10-pattern-chart-ui.md</span></div>
+<h1>Pattern Chart UI Implementation Plan</h1>
+<p><strong>Goal:</strong> Implement lightweight-charts based professional candlestick chart with 10 pattern overlays + technical indicator toggles + future trend projection.</p>
+<p><strong>Architecture:</strong> All pattern library, matching, indicator calculations are client-side (no additional API). Lightweight Charts with direct DOM manipulation. Main chart (candle+overlay) and sub-charts (Volume/RSI/MACD) as separate components with <code>subscribeVisibleLogicalRangeChange</code> time axis sync.</p>
+<p><strong>Tech Stack:</strong> lightweight-charts ^4.2, React 18, TypeScript, date-fns</p>
+
+<h2>Tasks Overview</h2>
+<ol>
+<li>Install lightweight-charts</li>
+<li>Create patterns.ts (10 pattern definitions)</li>
+<li>Create patternMatcher.ts (Pearson correlation)</li>
+<li>Create indicators.ts (MA, BB, RSI, MACD)</li>
+<li>Create IndicatorToggle.tsx</li>
+<li>Create PatternSelector.tsx</li>
+<li>Create PatternInfoBar.tsx</li>
+<li>Create PatternChart.tsx (main chart)</li>
+<li>Rewrite App.tsx</li>
+<li>Remove legacy components</li>
+<li>End-to-end verification</li>
+</ol>
+</div>
+
+</main>
+
+<script>
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById(id);
+  if (page) page.classList.add('active');
+  if (el) el.classList.add('active');
+  window.scrollTo(0, 0);
+  // Close mobile sidebar
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  // Update URL hash
+  history.replaceState(null, '', '#' + id);
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('show');
+}
+
+function filterNav(query) {
+  const q = query.toLowerCase();
+  document.querySelectorAll('.nav-item').forEach(item => {
+    const text = item.textContent.toLowerCase();
+    item.style.display = text.includes(q) ? '' : 'none';
+  });
+  document.querySelectorAll('.section-title').forEach(title => {
+    let next = title.nextElementSibling;
+    let anyVisible = false;
+    while (next && !next.classList.contains('section-title')) {
+      if (next.classList.contains('nav-item') && next.style.display !== 'none') anyVisible = true;
+      next = next.nextElementSibling;
+    }
+    title.style.display = anyVisible || !q ? '' : 'none';
+  });
+}
+
+// Handle initial hash
+window.addEventListener('DOMContentLoaded', () => {
+  const hash = location.hash.replace('#', '');
+  if (hash) {
+    const el = document.querySelector(`.nav-item[data-page="${hash}"]`);
+    if (el) showPage(hash, el);
+  }
+});
+</script>
+</body>
+</html>

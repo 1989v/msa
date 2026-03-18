@@ -1,6 +1,6 @@
 // charting/frontend/src/components/PatternSelector.tsx
 import type { PatternMatch } from '../lib/patternMatcher'
-import type { Signal } from '../lib/patterns'
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
 interface Props {
   matches: PatternMatch[]
@@ -8,53 +8,64 @@ interface Props {
   onToggle: (id: string) => void
 }
 
-const SIGNAL_BADGE: Record<Signal, { bg: string; text: string; label: string }> = {
-  bullish: { bg: '#dcfce7', text: '#15803d', label: '▲' },
-  bearish: { bg: '#fee2e2', text: '#b91c1c', label: '▼' },
-  neutral: { bg: '#fef9c3', text: '#a16207', label: '→' },
-}
-
 export function PatternSelector({ matches, selectedIds, onToggle }: Props) {
   if (matches.length === 0) {
-    return <div style={{ padding: '12px 16px', color: '#9ca3af', fontSize: 13 }}>종목을 선택하면 패턴 분석이 시작됩니다.</div>
+    return <p className="text-sm text-slate-500">종목을 선택하면 패턴 분석이 시작됩니다.</p>
   }
 
   return (
-    <div style={{ padding: '10px 16px', background: '#fff', borderBottom: '1px solid #e2e8f0' }}>
-      <div style={{ fontSize: 12, color: '#6b7280', fontWeight: 600, marginBottom: 8 }}>
-        패턴 선택 <span style={{ fontWeight: 400, color: '#9ca3af' }}>({selectedIds.size}개 선택)</span>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {matches.map(m => {
-          const active = selectedIds.has(m.pattern.id)
-          const badge = SIGNAL_BADGE[m.pattern.signal]
-          return (
-            <button
-              key={m.pattern.id}
-              onClick={() => onToggle(m.pattern.id)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                padding: '5px 12px', borderRadius: 20, fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', transition: 'all 0.15s',
-                border: active ? `2px solid ${m.pattern.color}` : '2px solid #e2e8f0',
-                background: active ? `${m.pattern.color}18` : '#f8fafc',
-                color: active ? m.pattern.color : '#64748b',
-              }}
-            >
-              <span style={{
-                width: 10, height: 10, borderRadius: '50%',
-                background: active ? m.pattern.color : '#cbd5e1',
-                display: 'inline-block', flexShrink: 0,
-              }} />
-              {m.pattern.name}
-              <span style={{ fontSize: 10, color: badge.text, background: badge.bg, padding: '1px 4px', borderRadius: 4 }}>
-                {badge.label}
-              </span>
-              <span style={{ fontSize: 10, color: '#9ca3af' }}>{m.score}%</span>
-            </button>
-          )
-        })}
-      </div>
+    <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+      {matches.map(m => {
+        const active = selectedIds.has(m.pattern.id)
+        const Icon = m.pattern.signal === 'bullish' ? TrendingUp : m.pattern.signal === 'bearish' ? TrendingDown : Minus
+
+        return (
+          <button
+            key={m.pattern.id}
+            onClick={() => onToggle(m.pattern.id)}
+            className={`w-full text-left px-3 py-3 rounded-xl transition-all duration-200 border ${
+              active
+                ? 'bg-slate-800 border-slate-600 shadow-lg'
+                : 'bg-slate-800/30 border-slate-700/30 hover:bg-slate-800/60 hover:border-slate-600/50'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-semibold text-sm text-white">{m.pattern.name}</span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0 rounded border ${
+                    m.pattern.signal === 'bullish'
+                      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                      : m.pattern.signal === 'bearish'
+                        ? 'bg-rose-500/20 text-rose-400 border-rose-500/30'
+                        : 'bg-amber-500/20 text-amber-400 border-amber-500/30'
+                  }`}
+                >
+                  <Icon className="w-3 h-3" />
+                  {m.pattern.signal === 'bullish' ? '상승' : m.pattern.signal === 'bearish' ? '하락' : '중립'}
+                </span>
+                <span className="text-xs text-slate-500">{m.score}%</span>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">{m.pattern.nameEn}</p>
+            {active && (
+              <div className="mt-2 pt-2 border-t border-slate-700/50">
+                <p className="text-xs text-slate-400 leading-relaxed">{m.pattern.description}</p>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-slate-500">정확도</span>
+                  <span className="text-xs font-bold" style={{ color: m.pattern.color }}>{m.pattern.accuracy}%</span>
+                </div>
+                <div className="mt-1.5 h-1 bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${m.pattern.accuracy}%`, background: m.pattern.color }}
+                  />
+                </div>
+              </div>
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }
