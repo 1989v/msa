@@ -39,21 +39,27 @@
 
 ```sql
 ALTER TABLE ohlcv_bars ADD COLUMN interval VARCHAR(5) NOT NULL DEFAULT '1d';
-ALTER TABLE ohlcv_bars ADD COLUMN bar_time TIME NULL;
+ALTER TABLE ohlcv_bars ADD COLUMN bar_time TIME NOT NULL DEFAULT '00:00:00';
 
--- 기존 unique constraint 변경
--- 기존: (symbol_id, trade_date)
--- 변경: (symbol_id, trade_date, interval, bar_time)
+-- 기존 unique constraint 삭제 후 재생성
+ALTER TABLE ohlcv_bars DROP CONSTRAINT IF EXISTS uq_ohlcv_bars_symbol_date;
+CREATE UNIQUE INDEX uq_ohlcv_bars ON ohlcv_bars (symbol_id, trade_date, interval, bar_time);
 ```
 
 - `interval`: `'1d'` (일봉) 또는 `'5m'` (5분봉)
-- `bar_time`: 분봉일 때 시각 (예: `09:30:00`), 일봉은 `NULL`
+- `bar_time`: 분봉일 때 시각 (예: `09:30:00`), 일봉은 `'00:00:00'` (sentinel, NULL 방지)
+
+**주의**: `save_batch()` upsert의 `index_elements`를 `["symbol_id", "trade_date", "interval", "bar_time"]`으로 변경 필수.
 
 #### 1.2 Domain Model 변경
 
-`OhlcvBar`에 `interval`과 `bar_time` 필드 추가.
+`OhlcvBar`에 `interval`과 `bar_time` 필드 추가. `interval`은 `Literal` 타입으로 제한.
 
 ```python
+from typing import Literal
+
+BarInterval = Literal['1d', '5m']
+
 @dataclass
 class OhlcvBar:
     symbol_id: int
@@ -63,24 +69,25 @@ class OhlcvBar:
     low: Decimal
     close: Decimal
     volume: int
-    interval: str = '1d'       # '1d' | '5m'
-    bar_time: time | None = None
+    interval: BarInterval = '1d'    # '1d' | '5m'
+    bar_time: time = time(0, 0)     # 일봉: 00:00:00, 분봉: 실제 시각
 ```
 
 #### 1.3 Port 변경
 
-`OhlcvRepositoryPort`에 interval 파라미터 추가:
+기존 `OhlcvRepositoryPort.find_by_symbol()` 메서드에 `interval` 파라미터 추가 (기존 시그니처 유지, 기본값 `'1d'`로 하위 호환):
 
 ```python
-def find_by_symbol_and_date_range(
-    self, symbol_id: int, start: date, end: date, interval: str = '1d'
+def find_by_symbol(
+    self, symbol_id: int, start: date | None = None, end: date | None = None,
+    interval: BarInterval = '1d'
 ) -> list[OhlcvBar]: ...
 ```
 
 `MarketDataClientPort`에 분봉 fetch 메서드 추가:
 
 ```python
-def fetch_intraday(self, ticker: str, interval: str = '5m') -> list[OhlcvBar]: ...
+def fetch_intraday(self, ticker: str, interval: BarInterval = '5m') -> list[OhlcvBar]: ...
 ```
 
 #### 1.4 UseCase: 분봉 수집
@@ -89,11 +96,13 @@ def fetch_intraday(self, ticker: str, interval: str = '5m') -> list[OhlcvBar]: .
 
 ```
 요청 (ticker, interval='5m')
-  → TTL 체크 (마지막 분봉 시각 + 5분 > now?)
+  → TTL 체크 (마지막 분봉의 trade_date + bar_time을 UTC 변환 후 + 5분 > now(UTC)?)
   → 만료 시: yfinance fetch (interval='5m', period='1d')
-  → DB 저장 (upsert)
+  → DB 저장 (upsert, index_elements에 interval+bar_time 포함)
   → 응답: bars_count
 ```
+
+**타임존 처리**: 모든 TTL 비교는 UTC 기준. yfinance가 반환하는 시각은 market-local이므로 저장 전 UTC로 변환하지 않고 원본 시각 유지 (bar_time은 시장 현지 시각). TTL 비교 시에만 market timezone → UTC 변환 수행.
 
 yfinance 제한사항:
 - `interval='5m'`은 최근 60일까지 조회 가능
@@ -135,9 +144,11 @@ GET /api/v1/{ticker}/ohlcv?interval=5m&start=2026-03-19
 기간 변경
   ├─ 1D → fetchOhlcv(ticker, '5m') → 5분봉 데이터 직접 사용
   ├─ 1W/1M/3M → fetchOhlcv(ticker, '1d') → 날짜 필터링
-  ├─ 1Y → fetchOhlcv(ticker, '1d') → aggregateWeekly()
-  └─ 5Y → fetchOhlcv(ticker, '1d') → aggregateMonthly()
+  ├─ 1Y → fetchOhlcv(ticker, '1d', start=now-1year) → aggregateWeekly()
+  └─ 5Y → fetchOhlcv(ticker, '1d', start=now-5years) → aggregateMonthly()
 ```
+
+`1Y`/`5Y`는 `start` 파라미터로 날짜 범위를 제한하여 불필요한 데이터 전송을 방지한다.
 
 #### 2.3 집계 함수 (신규 lib/aggregation.ts)
 
@@ -154,8 +165,8 @@ function aggregateMonthly(bars: OhlcvBar[]): OhlcvBar[]
 - Volume: 기간 내 sum(Volume)
 - trade_date: 기간 마지막 봉의 날짜
 
-주봉 그루핑: ISO week 기준 (월~금)
-월봉 그루핑: 같은 year-month
+주봉 그루핑: ISO week 기준 (월~금). 데이터 범위 경계의 불완전한 주(예: 수~금)도 포함하되, 해당 거래일만으로 집계.
+월봉 그루핑: 같은 year-month. 경계 불완전 월도 동일 처리.
 
 #### 2.4 API 타입 변경 (api.ts)
 
@@ -165,15 +176,20 @@ function fetchOhlcv(ticker: string, interval?: '1d' | '5m'): Promise<OhlcvBar[]>
 
 `OhlcvBar`에 `bar_time?: string` 필드 추가.
 
+캐시 키 전략: 일봉은 `['ohlcv', ticker, '1d']`, 분봉은 `['ohlcv', ticker, '5m']`로 분리하여 캐시 충돌 방지.
+
 ### 3. Frontend: 스마트 패턴 오버레이
 
 #### 3.1 자동 배치 알고리즘
 
-현재 화면의 봉 데이터에서 슬라이딩 윈도우 Pearson 상관계수 스캔:
+현재 화면의 봉 데이터에서 슬라이딩 윈도우 Pearson 상관계수 스캔.
+
+**최소 봉 수 제한**: 표시 봉이 20개 미만이면 패턴 오버레이를 비활성화하고 안내 메시지 표시 (1W 기간 등).
 
 ```
 입력: bars[] (현재 화면), pattern.curve[]
 윈도우 크기: W = min(60, bars.length)
+전제조건: bars.length >= 20 (미만 시 오버레이 비활성)
 
 for offset = 0 to bars.length - W:
     window = bars[offset..offset+W].closes
@@ -236,6 +252,12 @@ const [period, setPeriod] = useState<Period>('3M')    // 기간 선택
 const [patternOffset, setPatternOffset] = useState<number | null>(null)  // 드래그 offset (null=자동)
 const [patternWidth, setPatternWidth] = useState(60)   // 스케일 (봉 수)
 
+// period 변경 시 패턴 상태 초기화
+useEffect(() => {
+  setPatternOffset(null)  // 자동 배치로 리셋
+  setPatternWidth(60)
+}, [period])
+
 // 기간별 데이터 파생
 const displayBars = useMemo(() => {
   switch (period) {
@@ -279,13 +301,18 @@ const displayBars = useMemo(() => {
 ### 6. 테스트 계획
 
 #### Backend
-- `test_ohlcv_bar_interval`: interval/bar_time 필드 검증
-- `test_sync_intraday_ttl`: TTL 만료 시만 fetch 확인
-- `test_ohlcv_api_interval_param`: API interval 파라미터 동작
+- `test_ohlcv_bar_interval`: interval/bar_time 필드 검증 (sentinel 값 포함)
+- `test_sync_intraday_ttl`: TTL 만료 시만 fetch 확인, 미만료 시 캐시 반환
+- `test_ohlcv_api_interval_param`: API interval 파라미터 동작 (기본값 `1d`, `5m` 요청)
+- `test_save_batch_upsert_with_interval`: 새 index_elements로 upsert 정상 동작
+- `test_find_by_symbol_with_interval_filter`: interval별 필터링 정확도
+- `test_migration_rollback`: 0002 마이그레이션 upgrade/downgrade 양방향 검증
 
 #### Frontend
-- `aggregation.test.ts`: 주봉/월봉 집계 정확도
-- `patternMatcher.test.ts`: 슬라이딩 윈도우 최적 위치 정확도
+- `aggregation.test.ts`: 주봉/월봉 집계 정확도, 경계 불완전 주/월 처리
+- `patternMatcher.test.ts`: 슬라이딩 윈도우 최적 위치 정확도, 최소 봉 수 미만 시 비활성
+- `PeriodSelector.test.ts`: 기간 전환 시 state 초기화 확인
+- `PatternChart drag/scale`: 드래그 offset 범위 제한, 스케일 20~120 범위 검증
 
 ### 7. 제약 사항 및 리스크
 
@@ -293,6 +320,6 @@ const displayBars = useMemo(() => {
 |------|------|------|
 | yfinance 5분봉 제한 | 최근 60일까지만 과거 조회 가능 | 1D는 당일 데이터만 대상, 과거 분봉 미지원 |
 | yfinance rate limit | 과도한 요청 시 일시 차단 가능 | TTL 5분으로 호출 빈도 제한 |
-| 장외 시간 | 장 시작 전/후 분봉 없음 | 가장 최근 거래일 분봉 표시, 빈 상태 안내 메시지 |
+| 장외 시간 | 장 시작 전/후 분봉 없음 | API가 빈 배열 반환 시 가장 최근 거래일 분봉으로 fallback, UI에 "장 마감 — 최근 거래일 데이터" 안내 |
 | lightweight-charts 드래그 | 네이티브 드래그 미지원 | 투명 overlay div + 마우스 이벤트로 구현 |
 | 패턴 스케일 UX | 너무 줄이면 패턴 왜곡 | 최소 20봉 제한 |
