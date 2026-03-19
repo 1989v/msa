@@ -11,6 +11,7 @@ from src.adapter.persistence.ohlcv_repository import OhlcvRepository
 from src.adapter.persistence.pattern_repository import PatternRepository
 from src.adapter.persistence.symbol_repository import SymbolRepository
 from src.application.usecase.get_symbol_ohlcv_usecase import GetSymbolOhlcvUseCase
+from src.application.usecase.sync_intraday_usecase import SyncIntradayUseCase
 from src.application.usecase.ingest_symbol_data_usecase import IngestSymbolDataUseCase
 from src.application.usecase.register_symbol_usecase import RegisterSymbolUseCase
 from src.application.usecase.search_similar_patterns_usecase import SearchSimilarPatternsUseCase
@@ -68,4 +69,14 @@ def get_ohlcv_usecase(
     return GetSymbolOhlcvUseCase(
         symbol_repo=SymbolRepository(db),
         ohlcv_repo=OhlcvRepository(db),
+    )
+
+
+def get_sync_intraday_usecase(
+    db: Session = Depends(get_db),
+) -> SyncIntradayUseCase:
+    return SyncIntradayUseCase(
+        symbol_repo=SymbolRepository(db),
+        ohlcv_repo=OhlcvRepository(db),
+        market_client=YahooFinanceClient(),
     )

@@ -4,6 +4,7 @@ export interface Indicators {
   ma5: boolean
   ma20: boolean
   ma60: boolean
+  ma120: boolean
   bb: boolean
   volume: boolean
   rsi: boolean
@@ -19,6 +20,7 @@ const BUTTONS: { key: keyof Indicators; label: string; color: string }[] = [
   { key: 'ma5',    label: 'MA5',    color: '#f59e0b' },
   { key: 'ma20',   label: 'MA20',   color: '#3b82f6' },
   { key: 'ma60',   label: 'MA60',   color: '#a855f7' },
+  { key: 'ma120',  label: 'MA120',  color: '#ec4899' },
   { key: 'bb',     label: 'BB',     color: '#06b6d4' },
   { key: 'volume', label: 'VOL',    color: '#6b7280' },
   { key: 'rsi',    label: 'RSI',    color: '#10b981' },

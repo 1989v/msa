@@ -18,7 +18,7 @@ DEMO_SYMBOLS = [
     ("MSFT", "Microsoft Corp.", "US"),
     ("TSLA", "Tesla Inc.", "US"),
     ("NVDA", "NVIDIA Corp.", "US"),
-    ("005930.KS", "Samsung Electronics", "KR"),
+    ("005930.KS", "삼성전자", "KR"),
 ]
 
 START = date.today() - timedelta(days=365)

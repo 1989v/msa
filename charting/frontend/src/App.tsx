@@ -1,5 +1,5 @@
 // charting/frontend/src/App.tsx
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { LineChart } from 'lucide-react'
 import { SymbolSearch } from './components/SymbolSearch'
@@ -7,32 +7,69 @@ import { IndicatorToggle, type Indicators } from './components/IndicatorToggle'
 import { PatternSelector } from './components/PatternSelector'
 import { PatternChart } from './components/PatternChart'
 import { PredictionPanel } from './components/PredictionPanel'
-import { fetchOhlcv, syncTicker, type Symbol } from './api'
+import { fetchOhlcv, syncTicker, type Symbol, type OhlcvBar } from './api'
 import { PATTERNS } from './lib/patterns'
 import { matchPatterns, type PatternMatch } from './lib/patternMatcher'
 import { BarChart3, Layers, Settings } from 'lucide-react'
+import { PeriodSelector, type Period } from './components/PeriodSelector'
+import { ChartToolbar } from './components/ChartToolbar'
+import { aggregateWeekly, aggregateMonthly, filterRecent } from './lib/aggregation'
 
 const DEFAULT_INDICATORS: Indicators = {
-  ma5: true, ma20: true, ma60: false,
+  ma5: true, ma20: true, ma60: false, ma120: false,
   bb: false, volume: true, rsi: false, macd: false,
 }
+
+export type ChartType = 'candle' | 'line' | 'area'
+
+const EMPTY_BARS: OhlcvBar[] = []
 
 export default function App() {
   const [ticker, setTicker] = useState('')
   const [symbolName, setSymbolName] = useState('')
+  const [symbolMarket, setSymbolMarket] = useState<'US' | 'KR'>('US')
   const [indicators, setIndicators] = useState<Indicators>(DEFAULT_INDICATORS)
   const [patternMatches, setPatternMatches] = useState<PatternMatch[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [patternOffset, setPatternOffset] = useState<number | null>(null) // null = auto
+  const [patternWidth, setPatternWidth] = useState(60)
+  const [chartType, setChartType] = useState<ChartType>('candle')
+  const chartContainerRef = useRef<HTMLDivElement>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncStatus, setSyncStatus] = useState<string>('')
   const [activeTab, setActiveTab] = useState<'stocks' | 'patterns' | 'indicators'>('stocks')
+  const [period, setPeriod] = useState<Period>('3M')
   const queryClient = useQueryClient()
 
-  const { data: ohlcv = [], isLoading } = useQuery({
+  const { data: ohlcv = EMPTY_BARS, isLoading } = useQuery({
     queryKey: ['ohlcv', ticker],
     queryFn: () => fetchOhlcv(ticker),
     enabled: !!ticker,
   })
+
+  const { data: intradayBars = EMPTY_BARS } = useQuery({
+    queryKey: ['ohlcv', ticker, '5m'],
+    queryFn: () => fetchOhlcv(ticker, '5m'),
+    enabled: !!ticker && period === '1D',
+  })
+
+  const displayBars = useMemo(() => {
+    switch (period) {
+      case '1D': return intradayBars
+      case '1W': return filterRecent(ohlcv, 7)
+      case '1M': return filterRecent(ohlcv, 30)
+      case '3M': return filterRecent(ohlcv, 90)
+      case '1Y': return aggregateWeekly(filterRecent(ohlcv, 365))
+      case '5Y': return aggregateMonthly(ohlcv)
+    }
+  }, [period, ohlcv, intradayBars])
+
+  useEffect(() => {
+    setPatternMatches([])
+    setSelectedIds(new Set())
+    setPatternOffset(null)
+    setPatternWidth(60)
+  }, [period])
 
   // Auto-sync on ticker change
   useEffect(() => {
@@ -72,18 +109,28 @@ export default function App() {
       .finally(() => setSyncing(false))
   }, [ticker, syncing, queryClient])
 
-  // Auto-compute pattern matches when OHLCV data loads
+  const handleFullscreen = useCallback(() => {
+    const el = chartContainerRef.current
+    if (!el) return
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      el.requestFullscreen()
+    }
+  }, [])
+
+  // Auto-compute pattern matches when display data changes
   useEffect(() => {
-    if (ohlcv.length >= 60) {
-      const closes = ohlcv.map(b => Number(b.close))
-      const matches = matchPatterns(closes, PATTERNS)
+    if (displayBars.length >= 20) {
+      const closes = displayBars.map(b => Number(b.close))
+      const matches = matchPatterns(closes, PATTERNS, Math.min(60, displayBars.length))
       setPatternMatches(matches)
       setSelectedIds(new Set(matches[0] ? [matches[0].pattern.id] : []))
     } else {
       setPatternMatches([])
       setSelectedIds(new Set())
     }
-  }, [ohlcv])
+  }, [displayBars])
 
   const handleTogglePattern = useCallback((id: string) => {
     setSelectedIds(prev => {
@@ -97,6 +144,7 @@ export default function App() {
   const handleSelectSymbol = useCallback((symbol: Symbol) => {
     setTicker(symbol.ticker)
     setSymbolName(symbol.name)
+    setSymbolMarket(symbol.market)
     setActiveTab('patterns')
   }, [])
 
@@ -111,8 +159,8 @@ export default function App() {
   )
 
   // Price info from OHLCV
-  const lastPrice = ohlcv.length > 0 ? Number(ohlcv[ohlcv.length - 1].close) : 0
-  const firstPrice = ohlcv.length > 0 ? Number(ohlcv[0].close) : 0
+  const lastPrice = displayBars.length > 0 ? Number(displayBars[displayBars.length - 1].close) : 0
+  const firstPrice = displayBars.length > 0 ? Number(displayBars[0].close) : 0
   const priceChange = lastPrice - firstPrice
   const priceChangePercent = firstPrice !== 0 ? ((priceChange / firstPrice) * 100).toFixed(2) : '0.00'
   const isPositive = priceChange >= 0
@@ -243,12 +291,18 @@ export default function App() {
               <div className="flex items-end justify-between px-1">
                 <div>
                   <div className="flex items-center gap-3">
-                    <h2 className="text-2xl font-bold text-white tracking-tight">{ticker}</h2>
-                    <span className="text-sm text-slate-500">{symbolName}</span>
+                    <h2 className="text-2xl font-bold text-white tracking-tight">
+                      {symbolMarket === 'KR' ? symbolName : ticker}
+                    </h2>
+                    <span className="text-sm text-slate-500">
+                      {symbolMarket === 'KR' ? ticker.replace('.KS', '').replace('.KQ', '') : symbolName}
+                    </span>
                     {isLoading && <span className="text-xs text-slate-500">로딩 중…</span>}
                   </div>
                   <div className="flex items-baseline gap-3 mt-1">
-                    <span className="text-3xl font-bold text-white">${lastPrice.toFixed(2)}</span>
+                    <span className="text-3xl font-bold text-white">
+                      {symbolMarket === 'KR' ? `₩${lastPrice.toLocaleString()}` : `$${lastPrice.toFixed(2)}`}
+                    </span>
                     <span className={`text-sm font-semibold ${isPositive ? 'text-emerald-400' : 'text-rose-400'}`}>
                       {isPositive ? '+' : ''}{priceChange.toFixed(2)} ({isPositive ? '+' : ''}{priceChangePercent}%)
                     </span>
@@ -268,15 +322,32 @@ export default function App() {
               </div>
             )}
 
+            {ticker && (
+              <div className="flex items-center justify-between px-1">
+                <PeriodSelector value={period} onChange={setPeriod} />
+                <ChartToolbar
+                  chartType={chartType}
+                  onChartTypeChange={setChartType}
+                  onFullscreen={handleFullscreen}
+                />
+              </div>
+            )}
+
             {/* Chart */}
             <div
-              className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6"
-              style={{ height: 'clamp(350px, 50vh, 520px)' }}
+              ref={chartContainerRef}
+              className="rounded-2xl border border-slate-800 bg-slate-900/50 p-4 sm:p-6 fullscreen:bg-slate-950 fullscreen:p-2 overflow-visible"
+              style={{ minHeight: 350 }}
             >
               <PatternChart
-                ohlcv={ohlcv}
+                ohlcv={displayBars}
                 patterns={selectedPatterns}
                 indicators={indicators}
+                chartType={chartType}
+                patternOffset={patternOffset}
+                onPatternOffsetChange={setPatternOffset}
+                patternWidth={patternWidth}
+                onPatternWidthChange={setPatternWidth}
               />
             </div>
 

@@ -8,7 +8,7 @@ from decimal import Decimal
 import FinanceDataReader as fdr
 import structlog
 
-from src.domain.model.ohlcv import OhlcvBar
+from src.domain.model.ohlcv import BarInterval, OhlcvBar
 from src.domain.port.market_data_client_port import MarketDataClientPort
 
 logger = structlog.get_logger(__name__)
@@ -55,3 +55,8 @@ class FinanceDataReaderClient(MarketDataClientPort):
         except Exception as e:
             logger.error("Failed to fetch OHLCV from FinanceDataReader", ticker=ticker, error=str(e))
             return []
+
+    def fetch_intraday(self, ticker: str, interval: BarInterval = '5m') -> list[OhlcvBar]:
+        """FinanceDataReader does not support intraday data. Returns empty list."""
+        logger.info("Intraday not supported via FinanceDataReader", ticker=ticker)
+        return []

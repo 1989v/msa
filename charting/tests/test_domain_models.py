@@ -140,3 +140,30 @@ def test_insufficient_data_error():
 def test_invalid_symbol_error():
     err = InvalidSymbolError("INVALID")
     assert "INVALID" in str(err)
+
+
+from datetime import time as dt_time
+
+def test_ohlcv_bar_with_interval_and_bar_time():
+    bar = OhlcvBar(
+        symbol_id=1,
+        trade_date=date(2026, 3, 19),
+        open=Decimal("100"), high=Decimal("110"),
+        low=Decimal("95"), close=Decimal("105"),
+        volume=1000,
+        interval="5m",
+        bar_time=dt_time(9, 30),
+    )
+    assert bar.interval == "5m"
+    assert bar.bar_time == dt_time(9, 30)
+
+def test_ohlcv_bar_defaults_to_daily():
+    bar = OhlcvBar(
+        symbol_id=1,
+        trade_date=date(2026, 3, 19),
+        open=Decimal("100"), high=Decimal("110"),
+        low=Decimal("95"), close=Decimal("105"),
+        volume=1000,
+    )
+    assert bar.interval == "1d"
+    assert bar.bar_time == dt_time(0, 0)
