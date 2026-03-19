@@ -4,7 +4,7 @@ from datetime import date
 import structlog
 
 from src.domain.exception.charting_exceptions import InvalidSymbolError
-from src.domain.model.ohlcv import OhlcvBar
+from src.domain.model.ohlcv import BarInterval, OhlcvBar
 from src.domain.port.ohlcv_repository_port import OhlcvRepositoryPort
 from src.domain.port.symbol_repository_port import SymbolRepositoryPort
 
@@ -25,6 +25,7 @@ class GetSymbolOhlcvUseCase:
         ticker: str,
         start: date | None = None,
         end: date | None = None,
+        interval: BarInterval = '1d',
     ) -> list[OhlcvBar]:
         symbol = self._symbol_repo.find_by_ticker(ticker)
         if symbol is None:
@@ -34,6 +35,6 @@ class GetSymbolOhlcvUseCase:
         if symbol_id is None:
             raise InvalidSymbolError(ticker)
 
-        bars = self._ohlcv_repo.find_by_symbol(symbol_id, start=start, end=end)
-        logger.info("Retrieved OHLCV", ticker=ticker, bars=len(bars))
+        bars = self._ohlcv_repo.find_by_symbol(symbol_id, start=start, end=end, interval=interval)
+        logger.info("Retrieved OHLCV", ticker=ticker, interval=interval, bars=len(bars))
         return bars

@@ -1,5 +1,5 @@
 """SQLAlchemy ORM models for the Charting service."""
-from datetime import date, datetime
+from datetime import date, datetime, time
 
 from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
@@ -10,8 +10,10 @@ from sqlalchemy import (
     ForeignKey,
     Numeric,
     String,
+    Time,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -38,7 +40,9 @@ class SymbolOrm(Base):
 
 class OhlcvBarOrm(Base):
     __tablename__ = "ohlcv_bars"
-    __table_args__ = (UniqueConstraint("symbol_id", "trade_date"),)
+    __table_args__ = (
+        UniqueConstraint("symbol_id", "trade_date", "interval", "bar_time"),
+    )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
     symbol_id: Mapped[int] = mapped_column(
@@ -50,6 +54,8 @@ class OhlcvBarOrm(Base):
     low: Mapped[float] = mapped_column(Numeric(18, 6), nullable=False)
     close: Mapped[float] = mapped_column(Numeric(18, 6), nullable=False)
     volume: Mapped[int] = mapped_column(BigInteger, nullable=False)
+    interval: Mapped[str] = mapped_column(String(5), nullable=False, server_default="1d")
+    bar_time: Mapped[time] = mapped_column(Time, nullable=False, server_default=text("'00:00:00'"))
 
     symbol: Mapped["SymbolOrm"] = relationship(back_populates="ohlcv_bars")
 

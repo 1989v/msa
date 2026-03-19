@@ -20,6 +20,7 @@ export interface OhlcvBar {
   low: number
   close: number
   volume: number
+  bar_time?: string | null
 }
 
 export interface SimilarPattern {
@@ -58,9 +59,9 @@ export const fetchSymbols = () =>
 export const registerSymbol = (ticker: string, name: string, market: 'US' | 'KR') =>
   api.post<Symbol>('/api/v1/symbols', { ticker, name, market }).then((r) => r.data)
 
-export const fetchOhlcv = (ticker: string, start?: string, end?: string) =>
+export const fetchOhlcv = (ticker: string, interval: '1d' | '5m' = '1d', start?: string, end?: string) =>
   api
-    .get<OhlcvBar[]>(`/api/v1/${ticker}/ohlcv`, { params: { start, end } })
+    .get<OhlcvBar[]>(`/api/v1/${ticker}/ohlcv`, { params: { interval, start, end } })
     .then((r) => r.data)
 
 export interface SyncResult {

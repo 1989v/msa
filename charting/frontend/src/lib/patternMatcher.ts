@@ -57,3 +57,30 @@ export function matchPatterns(closes: number[], patterns: PatternDefinition[], w
     })
     .sort((a, b) => b.score - a.score)
 }
+
+/** Slide a pattern across all bars and return the best-matching offset */
+export function findBestMatchOffset(
+  closes: number[],
+  pattern: PatternDefinition,
+  windowSize: number = 60,
+): { offset: number; score: number } | null {
+  const W = Math.min(windowSize, closes.length)
+  if (closes.length < 20) return null
+
+  const interpolated = interpolatePattern(pattern.curve, W)
+  let bestOffset = 0
+  let bestScore = -Infinity
+
+  for (let offset = 0; offset <= closes.length - W; offset++) {
+    const window = closes.slice(offset, offset + W)
+    const normalized = minMaxNormalize(window)
+    const r = pearsonCorr(normalized, interpolated)
+    const score = ((r + 1) / 2) * 100
+    if (score > bestScore) {
+      bestScore = score
+      bestOffset = offset
+    }
+  }
+
+  return { offset: bestOffset, score: Math.round(bestScore) }
+}

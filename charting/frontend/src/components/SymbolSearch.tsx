@@ -71,8 +71,12 @@ export function SymbolSearch({ onSelect, selectedTicker }: Props) {
             >
               <TrendingUp className="w-3.5 h-3.5 shrink-0" />
               <div className="min-w-0">
-                <p className="font-semibold text-sm truncate">{s.ticker}</p>
-                <p className="text-xs text-slate-500 truncate">{s.name}</p>
+                <p className="font-semibold text-sm truncate">
+                  {s.market === 'KR' ? `${s.name}` : s.ticker}
+                </p>
+                <p className="text-xs text-slate-500 truncate">
+                  {s.market === 'KR' ? s.ticker.replace('.KS', '').replace('.KQ', '') : s.name}
+                </p>
               </div>
             </button>
           ))}
