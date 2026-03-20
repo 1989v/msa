@@ -12,9 +12,9 @@ import {
 import { addDays, parseISO } from 'date-fns'
 import type { OhlcvBar } from '../api'
 import type { PatternDefinition } from '../lib/patterns'
-import type { Indicators } from './IndicatorToggle'
+import type { Indicators, IndicatorParams } from './IndicatorToggle'
 import type { ChartType } from '../App'
-import { calcMA, calcBollingerBands, calcRSI, calcMACD } from '../lib/indicators'
+import { calcMA, calcBollingerBands, calcRSI, calcMACD, calcStochastic, calcWilliamsR, calcATR, calcOBV, calcVWAP } from '../lib/indicators'
 import { findBestMatchOffset, interpolatePattern, minMaxNormalize, pearsonCorr } from '../lib/patternMatcher'
 
 const CHART_DEFAULTS = {
@@ -107,7 +107,7 @@ function VolumePanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef:
   )
 }
 
-function RsiPanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null> }) {
+function RsiPanel({ ohlcv: rawOhlcv, mainRef, period }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null>; period: number }) {
   const containerRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!containerRef.current || !mainRef.current) return
@@ -115,7 +115,7 @@ function RsiPanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: Mu
     const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 120, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
 
     const closes = ohlcv.map(b => Number(b.close))
-    const rsiValues = calcRSI(closes)
+    const rsiValues = calcRSI(closes, period)
     const series = chart.addLineSeries({ color: '#8b5cf6', lineWidth: 1 })
     series.setData(
       ohlcv.map((b, i) => ({ time: toTime(b, i), value: rsiValues[i] ?? 50 }))
@@ -138,10 +138,10 @@ function RsiPanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: Mu
       ro.disconnect()
       chart.remove()
     }
-  }, [rawOhlcv])
+  }, [rawOhlcv, period])
   return (
     <div className="border-t border-slate-800">
-      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">RSI (14)</div>
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">RSI ({period})</div>
       <div ref={containerRef} />
     </div>
   )
@@ -189,12 +189,176 @@ function MacdPanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: M
   )
 }
 
+function StochasticPanel({ ohlcv: rawOhlcv, mainRef, kPeriod, dPeriod, slowing }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null>; kPeriod: number; dPeriod: number; slowing: number }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!containerRef.current || !mainRef.current) return
+    const { data: ohlcv, toTime } = prepareBars(rawOhlcv)
+    const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 120, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
+
+    const highs = ohlcv.map(b => Number(b.high))
+    const lows = ohlcv.map(b => Number(b.low))
+    const closes = ohlcv.map(b => Number(b.close))
+    const stochData = calcStochastic(highs, lows, closes, kPeriod, dPeriod, slowing)
+
+    const kSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, lastValueVisible: false })
+    const dSeries = chart.addLineSeries({ color: '#ef4444', lineWidth: 1, lastValueVisible: false })
+
+    const kData = ohlcv.map((b, i) => ({ time: toTime(b, i), value: stochData[i].k })).filter(d => d.value !== null) as { time: any; value: number }[]
+    const dData = ohlcv.map((b, i) => ({ time: toTime(b, i), value: stochData[i].d })).filter(d => d.value !== null) as { time: any; value: number }[]
+
+    kSeries.setData(kData)
+    dSeries.setData(dData)
+    kSeries.createPriceLine({ price: 80, color: '#ef4444', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OB 80' })
+    kSeries.createPriceLine({ price: 20, color: '#22c55e', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OS 20' })
+
+    const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+    const syncBack = (range: LogicalRange | null) => { if (range) mainRef.current?.timeScale().setVisibleLogicalRange(range) }
+    mainRef.current.timeScale().subscribeVisibleLogicalRangeChange(sync)
+    chart.timeScale().subscribeVisibleLogicalRangeChange(syncBack)
+
+    const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
+    ro.observe(containerRef.current)
+    return () => {
+      mainRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sync)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(syncBack)
+      ro.disconnect()
+      chart.remove()
+    }
+  }, [rawOhlcv, kPeriod, dPeriod, slowing])
+  return (
+    <div className="border-t border-slate-800">
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">Stochastic ({kPeriod},{dPeriod},{slowing})</div>
+      <div ref={containerRef} />
+    </div>
+  )
+}
+
+function WilliamsRPanel({ ohlcv: rawOhlcv, mainRef, period }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null>; period: number }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!containerRef.current || !mainRef.current) return
+    const { data: ohlcv, toTime } = prepareBars(rawOhlcv)
+    const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 120, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
+
+    const highs = ohlcv.map(b => Number(b.high))
+    const lows = ohlcv.map(b => Number(b.low))
+    const closes = ohlcv.map(b => Number(b.close))
+    const wrValues = calcWilliamsR(highs, lows, closes, period)
+
+    const series = chart.addLineSeries({ color: '#a78bfa', lineWidth: 1 })
+    series.setData(
+      ohlcv.map((b, i) => ({ time: toTime(b, i), value: wrValues[i] ?? -50 }))
+        .filter((_, i) => wrValues[i] !== null)
+    )
+    series.createPriceLine({ price: -20, color: '#ef4444', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OB -20' })
+    series.createPriceLine({ price: -80, color: '#22c55e', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OS -80' })
+
+    const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+    const syncBack = (range: LogicalRange | null) => { if (range) mainRef.current?.timeScale().setVisibleLogicalRange(range) }
+    mainRef.current.timeScale().subscribeVisibleLogicalRangeChange(sync)
+    chart.timeScale().subscribeVisibleLogicalRangeChange(syncBack)
+
+    const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
+    ro.observe(containerRef.current)
+    return () => {
+      mainRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sync)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(syncBack)
+      ro.disconnect()
+      chart.remove()
+    }
+  }, [rawOhlcv, period])
+  return (
+    <div className="border-t border-slate-800">
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">Williams %R ({period})</div>
+      <div ref={containerRef} />
+    </div>
+  )
+}
+
+function AtrPanel({ ohlcv: rawOhlcv, mainRef, period }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null>; period: number }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!containerRef.current || !mainRef.current) return
+    const { data: ohlcv, toTime } = prepareBars(rawOhlcv)
+    const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 110, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
+
+    const highs = ohlcv.map(b => Number(b.high))
+    const lows = ohlcv.map(b => Number(b.low))
+    const closes = ohlcv.map(b => Number(b.close))
+    const atrValues = calcATR(highs, lows, closes, period)
+
+    const series = chart.addLineSeries({ color: '#fbbf24', lineWidth: 1 })
+    series.setData(
+      ohlcv.map((b, i) => ({ time: toTime(b, i), value: atrValues[i] ?? NaN }))
+        .filter(d => !isNaN(d.value) && d.value !== null)
+    )
+
+    const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+    const syncBack = (range: LogicalRange | null) => { if (range) mainRef.current?.timeScale().setVisibleLogicalRange(range) }
+    mainRef.current.timeScale().subscribeVisibleLogicalRangeChange(sync)
+    chart.timeScale().subscribeVisibleLogicalRangeChange(syncBack)
+
+    const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
+    ro.observe(containerRef.current)
+    return () => {
+      mainRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sync)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(syncBack)
+      ro.disconnect()
+      chart.remove()
+    }
+  }, [rawOhlcv, period])
+  return (
+    <div className="border-t border-slate-800">
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">ATR ({period})</div>
+      <div ref={containerRef} />
+    </div>
+  )
+}
+
+function ObvPanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: MutableRefObject<IChartApi | null> }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!containerRef.current || !mainRef.current) return
+    const { data: ohlcv, toTime } = prepareBars(rawOhlcv)
+    const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 110, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
+
+    const closes = ohlcv.map(b => Number(b.close))
+    const volumes = ohlcv.map(b => Number(b.volume))
+    const obvValues = calcOBV(closes, volumes)
+
+    const series = chart.addLineSeries({ color: '#34d399', lineWidth: 1 })
+    series.setData(ohlcv.map((b, i) => ({ time: toTime(b, i), value: obvValues[i] })))
+
+    const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
+    const syncBack = (range: LogicalRange | null) => { if (range) mainRef.current?.timeScale().setVisibleLogicalRange(range) }
+    mainRef.current.timeScale().subscribeVisibleLogicalRangeChange(sync)
+    chart.timeScale().subscribeVisibleLogicalRangeChange(syncBack)
+
+    const ro = new ResizeObserver(() => chart.applyOptions({ width: containerRef.current!.clientWidth }))
+    ro.observe(containerRef.current)
+    return () => {
+      mainRef.current?.timeScale().unsubscribeVisibleLogicalRangeChange(sync)
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(syncBack)
+      ro.disconnect()
+      chart.remove()
+    }
+  }, [rawOhlcv])
+  return (
+    <div className="border-t border-slate-800">
+      <div className="px-3 py-1 text-[11px] font-semibold text-slate-500">OBV</div>
+      <div ref={containerRef} />
+    </div>
+  )
+}
+
 // ── Main chart ────────────────────────────────────────────────────────────────
 
 interface PatternChartProps {
   ohlcv: OhlcvBar[]
   patterns: PatternDefinition[]
   indicators: Indicators
+  indicatorParams?: IndicatorParams
   chartType?: ChartType
   patternOffset?: number | null
   onPatternOffsetChange?: (offset: number | null) => void
@@ -206,6 +370,7 @@ export function PatternChart({
   ohlcv,
   patterns,
   indicators,
+  indicatorParams,
   chartType = 'candle',
   patternOffset,
   onPatternOffsetChange,
@@ -375,10 +540,10 @@ export function PatternChart({
 
     // ── MA Lines ─────────────────────────────────────────────────────────────
     const maConfig = [
-      { key: 'ma5'  as const, period: 5,  color: '#f59e0b' },
-      { key: 'ma20' as const, period: 20, color: '#3b82f6' },
-      { key: 'ma60' as const, period: 60, color: '#a855f7' },
-      { key: 'ma120' as const, period: 120, color: '#ec4899' },
+      { key: 'ma5'  as const, period: indicatorParams?.ma5Period ?? 5,   color: '#f59e0b' },
+      { key: 'ma20' as const, period: indicatorParams?.ma20Period ?? 20,  color: '#3b82f6' },
+      { key: 'ma60' as const, period: indicatorParams?.ma60Period ?? 60,  color: '#a855f7' },
+      { key: 'ma120' as const, period: indicatorParams?.ma120Period ?? 120, color: '#ec4899' },
     ]
     maConfig.forEach(({ key, period, color }) => {
       if (!indicators[key]) return
@@ -389,12 +554,26 @@ export function PatternChart({
 
     // ── Bollinger Bands ──────────────────────────────────────────────────────
     if (indicators.bb) {
-      const bb = calcBollingerBands(closes)
+      const bbPeriod = indicatorParams?.bbPeriod ?? 20
+      const bbStdDev = indicatorParams?.bbStdDev ?? 2
+      const bb = calcBollingerBands(closes, bbPeriod, bbStdDev)
       const upperSeries = chart.addLineSeries({ color: '#06b6d4', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
       const lowerSeries = chart.addLineSeries({ color: '#06b6d4', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
       const filtered = data.map((b, i) => ({ time: toTime(b, i), pt: bb[i] })).filter(d => d.pt !== null)
       upperSeries.setData(filtered.map(d => ({ time: d.time, value: d.pt!.upper })))
       lowerSeries.setData(filtered.map(d => ({ time: d.time, value: d.pt!.lower })))
+    }
+
+    // ── VWAP Overlay ─────────────────────────────────────────────────────────
+    if (indicators.vwap) {
+      const highs = data.map(b => Number(b.high))
+      const lows = data.map(b => Number(b.low))
+      const volumes = data.map(b => Number(b.volume))
+      const vwapValues = calcVWAP(highs, lows, closes, volumes)
+      const vwapSeries = chart.addLineSeries({ color: '#60a5fa', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
+      vwapSeries.setData(
+        data.map((b, i) => ({ time: toTime(b, i), value: vwapValues[i] ?? NaN })).filter(d => !isNaN(d.value))
+      )
     }
 
     // Fit chart to actual data BEFORE adding projection series (which extend beyond data range)
@@ -503,7 +682,7 @@ export function PatternChart({
       chart.remove()
       chartRef.current = null
     }
-  }, [ohlcv, patterns, indicators, chartType, patternOffset, patternWidth, updateOverlayBounds])
+  }, [ohlcv, patterns, indicators, indicatorParams, chartType, patternOffset, patternWidth, updateOverlayBounds])
 
   const patternColor = patterns[0]?.color ?? '#8b5cf6'
 
@@ -649,9 +828,13 @@ export function PatternChart({
           )}
         </div>
       )}
-      {ohlcv.length > 0 && indicators.volume && <VolumePanel ohlcv={ohlcv} mainRef={chartRef} />}
-      {ohlcv.length > 0 && indicators.rsi    && <RsiPanel    ohlcv={ohlcv} mainRef={chartRef} />}
-      {ohlcv.length > 0 && indicators.macd   && <MacdPanel   ohlcv={ohlcv} mainRef={chartRef} />}
+      {ohlcv.length > 0 && indicators.volume     && <VolumePanel     ohlcv={ohlcv} mainRef={chartRef} />}
+      {ohlcv.length > 0 && indicators.rsi        && <RsiPanel        ohlcv={ohlcv} mainRef={chartRef} period={indicatorParams?.rsiPeriod ?? 14} />}
+      {ohlcv.length > 0 && indicators.macd       && <MacdPanel       ohlcv={ohlcv} mainRef={chartRef} />}
+      {ohlcv.length > 0 && indicators.stochastic && <StochasticPanel ohlcv={ohlcv} mainRef={chartRef} kPeriod={indicatorParams?.stochasticK ?? 14} dPeriod={indicatorParams?.stochasticD ?? 3} slowing={indicatorParams?.stochasticSlowing ?? 3} />}
+      {ohlcv.length > 0 && indicators.williamsR  && <WilliamsRPanel  ohlcv={ohlcv} mainRef={chartRef} period={indicatorParams?.williamsRPeriod ?? 14} />}
+      {ohlcv.length > 0 && indicators.atr        && <AtrPanel        ohlcv={ohlcv} mainRef={chartRef} period={indicatorParams?.atrPeriod ?? 14} />}
+      {ohlcv.length > 0 && indicators.obv        && <ObvPanel        ohlcv={ohlcv} mainRef={chartRef} />}
     </div>
   )
 }

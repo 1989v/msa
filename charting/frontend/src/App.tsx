@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { LineChart } from 'lucide-react'
 import { SymbolSearch } from './components/SymbolSearch'
-import { IndicatorToggle, type Indicators } from './components/IndicatorToggle'
+import { IndicatorToggle, type Indicators, type IndicatorParams, DEFAULT_PARAMS } from './components/IndicatorToggle'
 import { PatternSelector } from './components/PatternSelector'
 import { PatternChart } from './components/PatternChart'
 import { PredictionPanel } from './components/PredictionPanel'
@@ -18,6 +18,7 @@ import { aggregateWeekly, aggregateMonthly, filterRecent } from './lib/aggregati
 const DEFAULT_INDICATORS: Indicators = {
   ma5: true, ma20: true, ma60: false, ma120: false,
   bb: false, volume: true, rsi: false, macd: false,
+  stochastic: false, williamsR: false, atr: false, obv: false, vwap: false,
 }
 
 export type ChartType = 'candle' | 'line' | 'area'
@@ -29,6 +30,7 @@ export default function App() {
   const [symbolName, setSymbolName] = useState('')
   const [symbolMarket, setSymbolMarket] = useState<'US' | 'KR'>('US')
   const [indicators, setIndicators] = useState<Indicators>(DEFAULT_INDICATORS)
+  const [indicatorParams, setIndicatorParams] = useState<IndicatorParams>(DEFAULT_PARAMS)
   const [patternMatches, setPatternMatches] = useState<PatternMatch[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [patternOffset, setPatternOffset] = useState<number | null>(null) // null = auto
@@ -278,7 +280,12 @@ export default function App() {
                     <Settings className="w-4 h-4 text-amber-400" />
                     보조지표
                   </h2>
-                  <IndicatorToggle value={indicators} onChange={setIndicators} />
+                  <IndicatorToggle
+                    value={indicators}
+                    onChange={setIndicators}
+                    params={indicatorParams}
+                    onParamsChange={setIndicatorParams}
+                  />
                 </div>
               </div>
             </div>
@@ -343,6 +350,7 @@ export default function App() {
                 ohlcv={displayBars}
                 patterns={selectedPatterns}
                 indicators={indicators}
+                indicatorParams={indicatorParams}
                 chartType={chartType}
                 patternOffset={patternOffset}
                 onPatternOffsetChange={setPatternOffset}
