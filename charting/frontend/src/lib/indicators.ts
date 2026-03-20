@@ -68,3 +68,87 @@ export function calcMACD(closes: number[], fast = 12, slow = 26, signalPeriod = 
     return { macd: m, signal: s, histogram: m - s }
   })
 }
+
+/** Stochastic Oscillator (%K, %D) */
+export function calcStochastic(
+  highs: number[], lows: number[], closes: number[],
+  kPeriod = 14, dPeriod = 3, slowing = 3
+): { k: number | null; d: number | null }[] {
+  const result: { k: number | null; d: number | null }[] = []
+  const rawK: (number | null)[] = []
+
+  for (let i = 0; i < closes.length; i++) {
+    if (i < kPeriod - 1) { rawK.push(null); result.push({ k: null, d: null }); continue }
+    const hh = Math.max(...highs.slice(i - kPeriod + 1, i + 1))
+    const ll = Math.min(...lows.slice(i - kPeriod + 1, i + 1))
+    rawK.push(hh === ll ? 50 : ((closes[i] - ll) / (hh - ll)) * 100)
+    result.push({ k: null, d: null })
+  }
+
+  // Slow %K (SMA of raw %K)
+  for (let i = 0; i < rawK.length; i++) {
+    if (i < kPeriod - 1 + slowing - 1) continue
+    const slice = rawK.slice(i - slowing + 1, i + 1).filter(v => v !== null) as number[]
+    if (slice.length === slowing) result[i].k = slice.reduce((a, b) => a + b) / slowing
+  }
+
+  // %D (SMA of %K)
+  for (let i = 0; i < result.length; i++) {
+    if (result[i].k === null) continue
+    const kValues: number[] = []
+    for (let j = Math.max(0, i - dPeriod + 1); j <= i; j++) {
+      if (result[j].k !== null) kValues.push(result[j].k!)
+    }
+    if (kValues.length === dPeriod) result[i].d = kValues.reduce((a, b) => a + b) / dPeriod
+  }
+
+  return result
+}
+
+/** Williams %R */
+export function calcWilliamsR(highs: number[], lows: number[], closes: number[], period = 14): (number | null)[] {
+  return closes.map((close, i) => {
+    if (i < period - 1) return null
+    const hh = Math.max(...highs.slice(i - period + 1, i + 1))
+    const ll = Math.min(...lows.slice(i - period + 1, i + 1))
+    return hh === ll ? -50 : ((hh - close) / (hh - ll)) * -100
+  })
+}
+
+/** Average True Range */
+export function calcATR(highs: number[], lows: number[], closes: number[], period = 14): (number | null)[] {
+  const tr: number[] = []
+  for (let i = 0; i < closes.length; i++) {
+    if (i === 0) { tr.push(highs[i] - lows[i]); continue }
+    tr.push(Math.max(highs[i] - lows[i], Math.abs(highs[i] - closes[i - 1]), Math.abs(lows[i] - closes[i - 1])))
+  }
+  const result: (number | null)[] = []
+  for (let i = 0; i < tr.length; i++) {
+    if (i < period - 1) { result.push(null); continue }
+    if (i === period - 1) { result.push(tr.slice(0, period).reduce((a, b) => a + b) / period); continue }
+    result.push((result[i - 1]! * (period - 1) + tr[i]) / period)
+  }
+  return result
+}
+
+/** On-Balance Volume */
+export function calcOBV(closes: number[], volumes: number[]): number[] {
+  const obv: number[] = [0]
+  for (let i = 1; i < closes.length; i++) {
+    if (closes[i] > closes[i - 1]) obv.push(obv[i - 1] + volumes[i])
+    else if (closes[i] < closes[i - 1]) obv.push(obv[i - 1] - volumes[i])
+    else obv.push(obv[i - 1])
+  }
+  return obv
+}
+
+/** Volume Weighted Average Price */
+export function calcVWAP(highs: number[], lows: number[], closes: number[], volumes: number[]): (number | null)[] {
+  let cumTPV = 0, cumVol = 0
+  return closes.map((_, i) => {
+    const tp = (highs[i] + lows[i] + closes[i]) / 3
+    cumTPV += tp * volumes[i]
+    cumVol += volumes[i]
+    return cumVol === 0 ? null : cumTPV / cumVol
+  })
+}
