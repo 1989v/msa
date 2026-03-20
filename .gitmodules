@@ -1,0 +1,6 @@
+[submodule "charting"]
+	path = charting
+	url = https://github.com/1989v/msa-charting.git
+[submodule "ideabank"]
+	path = ideabank
+	url = https://github.com/1989v/msa-ideabank.git
