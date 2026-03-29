@@ -1,0 +1,71 @@
+.node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+
+.node:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.node.selected {
+  background: rgba(88, 166, 255, 0.1);
+  box-shadow: 0 0 0 1px var(--accent-blue);
+}
+
+.compact {
+  padding: 4px;
+}
+
+.spriteWrapper {
+  position: relative;
+  z-index: 3;
+}
+
+/* Seated position — character overlaps the chair */
+.seated {
+  margin-bottom: -10px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Walking animation */
+.walking {
+  animation: walkBounce 0.6s ease-in-out infinite;
+}
+
+@keyframes walkBounce {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-3px) rotate(-2deg); }
+  75% { transform: translateY(-3px) rotate(2deg); }
+}
+
+.name {
+  font-size: 9px;
+  color: var(--text-secondary);
+  text-align: center;
+  max-width: 56px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.statusIndicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.statusIndicator.idle { background: var(--text-muted); }
+.statusIndicator.working { background: var(--accent-green); box-shadow: 0 0 4px var(--accent-green); }
+.statusIndicator.thinking { background: var(--accent-yellow); box-shadow: 0 0 4px var(--accent-yellow); }

@@ -1,0 +1,50 @@
+.container {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sessionCards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lobby {
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.lobbyHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.lobbyIcon {
+  font-size: 16px;
+}
+
+.lobbyTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.lobbyCount {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.lobbyAgents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

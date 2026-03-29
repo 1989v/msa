@@ -1,0 +1,200 @@
+.room {
+  background: linear-gradient(135deg, var(--bg-secondary), rgba(139, 69, 19, 0.08));
+  border: 1px solid #8b4513;
+  border-radius: 12px;
+  padding: 12px;
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Carpet pattern */
+.room::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgba(139, 69, 19, 0.03) 0px,
+      rgba(139, 69, 19, 0.03) 2px,
+      transparent 2px,
+      transparent 8px
+    );
+  pointer-events: none;
+}
+
+.roomHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.roomIcon {
+  font-size: 16px;
+}
+
+.roomTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #d4a574;
+  letter-spacing: 0.05em;
+}
+
+.queueCount {
+  font-size: 11px;
+  color: var(--accent-yellow);
+  margin-left: auto;
+  background: rgba(210, 153, 34, 0.12);
+  padding: 2px 8px;
+  border-radius: 8px;
+  animation: queuePulse 2s ease-in-out infinite;
+}
+
+@keyframes queuePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.ceoDeskArea {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.ceoDesk {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ceoSvg {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+.ceoChair {
+  margin-top: -6px;
+  image-rendering: pixelated;
+}
+
+.nameplate {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  font-weight: 700;
+  color: #d4a574;
+  background: #3a2a1c;
+  padding: 1px 8px;
+  border-radius: 2px;
+  border: 1px solid #5c4033;
+  letter-spacing: 0.1em;
+}
+
+/* Queue line — agents walk in from the right */
+.queueLine {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  padding: 4px 0;
+  position: relative;
+  min-height: 56px;
+  flex-wrap: wrap;
+}
+
+.queuePath {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(212, 165, 116, 0.2) 0px,
+    rgba(212, 165, 116, 0.2) 8px,
+    transparent 8px,
+    transparent 16px
+  );
+}
+
+.queueSlot {
+  animation: walkIn 0.5s ease-out both;
+  position: relative;
+}
+
+@keyframes walkIn {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.queuedAgent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+  animation: waitingBob 2s ease-in-out infinite;
+  position: relative;
+}
+
+.queuedAgent:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.queuedAgent.urgent {
+  animation: urgentWait 1s ease-in-out infinite;
+}
+
+@keyframes waitingBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes urgentWait {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-2px) translateX(-1px); }
+  75% { transform: translateY(-2px) translateX(1px); }
+}
+
+.agentSprite {
+  position: relative;
+  image-rendering: pixelated;
+}
+
+.agentLabel {
+  font-size: 8px;
+  color: var(--text-muted);
+  max-width: 48px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.approvalIcon {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  font-size: 12px;
+  animation: approvalBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes approvalBounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}

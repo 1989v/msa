@@ -1,0 +1,30 @@
+# Open Questions Registry
+# Categories: pre-impl | impl-discovery | test-discovery | closure | waiver-revisit
+
+questions:
+  - id: OQ-001
+    category: impl-discovery
+    question: "픽셀 아트 스프라이트를 직접 그릴지, AI 생성(DALL-E 등)할지, 오픈소스 에셋을 사용할지"
+    raised_by: shape-spec
+    raised_at: 2026-03-30
+    status: open
+    resolution: null
+    resolved_at: null
+
+  - id: OQ-002
+    category: impl-discovery
+    question: "에이전트 상태 데이터를 실시간으로 가져올 방법 (CLI 폴링 주기, 또는 정적 데모 모드)"
+    raised_by: shape-spec
+    raised_at: 2026-03-30
+    status: open
+    resolution: null
+    resolved_at: null
+
+  - id: OQ-003
+    category: pre-impl
+    question: "front/ 디렉토리에 React+Vite 프로젝트 초기화 시 기존 charting 등 다른 front 프로젝트와의 관계 정리"
+    raised_by: shape-spec
+    raised_at: 2026-03-30
+    status: resolved
+    resolution: "front/ 디렉토리가 완전히 비어있음. 충돌할 기존 프로젝트 없음. 바로 초기화 가능."
+    resolved_at: 2026-03-30

@@ -1,0 +1,37 @@
+.desk {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.chair {
+  position: relative;
+  z-index: 1;
+  margin-bottom: -4px;
+}
+
+.chairSvg {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+.surface {
+  position: relative;
+  border-top: 2px solid transparent;
+  border-radius: 2px 2px 0 0;
+}
+
+.deskSvg {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+
+.monitor {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  image-rendering: pixelated;
+}
