@@ -1,0 +1,7 @@
+# harness-scaffold configuration
+mode: quality  # quality | efficient
+layers:
+  core: true
+  sdd: true
+  review: true
+parallel_execution: false

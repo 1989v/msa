@@ -1,80 +1,93 @@
-# Commerce Platform AI Working Agreement
+# CLAUDE.md
+# Commerce Platform Project Configuration
 
-## 1. Platform Intent
+---
 
-This project builds a production-ready MSA commerce platform.
+## Unified Rules
 
-The architecture must support:
-- Horizontal scalability
-- High availability
-- Service isolation
-- Kubernetes-ready deployment
+- **AGENTS.md**: Shared baseline navigation (if exists)
+- **CLAUDE.md**: Project-specific overrides (this file)
+- **PLANS.md**: Complex work orchestration
 
+**On conflict**: CLAUDE.md wins.
 
-## 2. Architecture Principles
+---
 
-This project strictly follows Clean Architecture.
+## Environment
 
-- Dependency direction must always point inward.
-- Domain layer must not depend on frameworks.
-- Application layer depends only on ports.
-- Infrastructure implements ports.
-- Direct dependency from Application to Infrastructure is prohibited.
-- Service-to-service database sharing is prohibited.
+### Build Commands
 
-Reference: /docs/architecture/clean-architecture.md
+```bash
+./gradlew build                        # 전체 빌드
+./gradlew :{module}:build              # 단일 모듈 (예: ./gradlew :product:app:build)
+./gradlew :{service}:domain:test       # 도메인 테스트 (Spring context 없음)
+./gradlew :{service}:app:bootJar       # 실행 JAR 생성
+```
 
+### Test Commands
 
-## 3. Architectural Constraints
+```bash
+./gradlew test                         # 전체 테스트
+./gradlew :{module}:test               # 단일 모듈 테스트
+```
 
-- Each service owns its database.
-- Internal DB access remains blocking (JPA).
-- External API communication uses WebClient.
-- Coroutine usage is limited to external IO operations.
-- Event-driven communication uses Kafka.
-- Search is based on Elasticsearch.
-- WebFlux full adoption is prohibited.
-- Redis must be designed with cluster scalability in mind.
+### Docker Commands
 
+```bash
+docker compose -f docker/docker-compose.infra.yml up -d   # 로컬 인프라
+docker compose -f docker/docker-compose.yml up -d          # 전체 기동
+```
 
-## 4. Architecture Governance
+---
 
-- Any architectural or structural change requires an ADR.
-- Implementation code must not be generated before ADR approval.
-- Existing ADRs must be reviewed before proposing new decisions.
-- If a conflict with existing ADRs is detected, pause and request clarification.
-- ADR numbering must be sequential.
-- Superseded ADRs must explicitly reference replacement ADRs.
+## Agent Behavior Standards
 
+코드 수정/생성 작업 시 다음 표준을 적용하세요:
 
-## 5. AI Execution Rules
+- **리스크 분류 & 검증 루프** → `agent-os/standards/agent-behavior/confirmation.md`
+  - Level 1-3 분류, Ralph Loop (BUILD→TEST→FIX, max 3회), Level 3 승인 필수
+- **구현 후 리뷰** → `agent-os/standards/agent-behavior/self-review.md`
+  - Level 1-2: 자동 lint, Level 3: fresh context reviewer
+- **문서 동기화** → `agent-os/standards/agent-behavior/doc-gardening.md`
+  - 구현 성공 후 Doc Impact Scan 실행
 
-Before generating implementation:
+**범용 행동 원칙**:
+- **탐색 우선, 증거 기반** → `agent-os/standards/agent-behavior/core-rules.md`
+- **컴팩션 복구** → `agent-os/standards/agent-behavior/compaction.md`
+- **세션 관리** → `agent-os/standards/agent-behavior/session.md`
 
-- Validate alignment with Architecture Principles.
-- Validate consistency with existing ADRs.
-- Validate consistency with relevant docs.
-- If ambiguity or conflict exists, pause and request clarification.
-- Avoid generating code before structure is finalized.
+---
 
+## Architecture
 
-## 6. Module & Build Rules
+This project strictly follows **Clean Architecture + Microservice**.
 
-- common 모듈은 `bootJar` 없이 `jar`만 생성 (실행 가능 JAR 아님)
+- Dependency direction must always point inward
+- Domain layer must not depend on frameworks
+- Application layer depends only on ports
+- Infrastructure implements ports
+- Direct dependency from Application to Infrastructure is prohibited
+- Service-to-service database sharing is prohibited
+- Any architectural or structural change requires an ADR
+
+Reference: `/docs/architecture/clean-architecture.md`
+
+---
+
+## Module & Build Rules
+
+- common 모듈은 `bootJar` 없이 `jar`만 생성
 - 서비스 모듈은 `implementation(project(":common"))`으로 common 의존
 - 모든 버전은 `gradle/libs.versions.toml` Version Catalog에서 중앙 관리
 - Java 25 LTS toolchain 전 모듈 통일: `JavaLanguageVersion.of(25)`
-- QueryDSL Q클래스는 `build/generated/source/kapt/` 에 생성 (git ignore 대상)
-- 빌드 명령: `./gradlew :{module}:build` (단일 모듈), `./gradlew build` (전체)
+- QueryDSL Q클래스는 `build/generated/source/kapt/`에 생성 (git ignore 대상)
 
-### 모듈 명명 규칙 (Nested Submodule)
-
-각 서비스는 `{service}:domain` / `{service}:app` 형태의 중첩 Gradle 서브모듈로 분리된다.
+### Nested Submodule 구조
 
 | Gradle 경로 | 파일시스템 경로 | 역할 |
 |------------|---------------|------|
 | `:product:domain` | `product/domain/` | 순수 도메인 (Spring/JPA 없음) |
-| `:product:app` | `product/app/` | Spring Boot 앱 (Application + Infrastructure + Presentation) |
+| `:product:app` | `product/app/` | Spring Boot 앱 |
 | `:order:domain` | `order/domain/` | 순수 도메인 |
 | `:order:app` | `order/app/` | Spring Boot 앱 |
 | `:search:domain` | `search/domain/` | 순수 도메인 |
@@ -82,18 +95,14 @@ Before generating implementation:
 | `:search:consumer` | `search/consumer/` | Kafka 증분 색인 (BulkIngester) |
 | `:search:batch` | `search/batch/` | Spring Batch 전체 색인 (alias swap) |
 
-- **domain 모듈 규칙**: Spring/JPA 어노테이션을 추가하면 컴파일 에러로 차단됨 (의존성 없음)
+- **domain 모듈 규칙**: Spring/JPA 어노테이션 사용 시 컴파일 에러 (의존성 없음)
 - **app 모듈**: `implementation(project(":{service}:domain"))`으로 domain 의존
-- **bootJar 이름**: `tasks.bootJar { archiveBaseName.set("{service}") }` 로 서비스명 통일
-- **search:consumer**: 포트 8084, Kafka 이벤트 수신 → BulkIngester 비동기 증분 색인
-- **search:batch**: 포트 8085, Spring Batch + WebClient → BulkIngester → alias swap 전체 색인
 
+---
 
-## 7. Package Naming Convention
+## Package Naming Convention
 
 Base package: `com.kgd.{service}`
-
-Clean Architecture 레이어별 패키지:
 
 ```
 com.kgd.{service}/
@@ -124,21 +133,30 @@ com.kgd.{service}/
         └── dto/          # Request DTO, Response DTO
 ```
 
-- 도메인 간 cross-reference 금지 (Order → Product 직접 참조 금지, API 호출만 허용)
-- domain 패키지는 Spring/JPA 어노테이션 사용 금지
-- domain 레이어 코드는 반드시 `{service}/domain/` Gradle 서브모듈에 위치
+---
 
+## Architectural Constraints
 
-## 8. Test Rules
+- Each service owns its database
+- Internal DB access remains blocking (JPA)
+- External API communication uses WebClient
+- Coroutine usage is limited to external IO operations
+- Event-driven communication uses Kafka
+- Search is based on Elasticsearch
+- WebFlux full adoption is prohibited
+- Redis must be designed with cluster scalability in mind
+- 도메인 간 cross-reference 금지 (API 호출만 허용)
+
+---
+
+## Test Rules
 
 - 테스트 프레임워크: **Kotest BehaviorSpec** (BDD 스타일)
 - 테스트 더블: **MockK** 사용 (Mockito 금지)
 - Domain 테스트: Mock 사용 금지, 순수 단위 테스트
 - Application 테스트: Outbound Port는 MockK로 Mock
 - 테스트 파일 위치: `src/test/kotlin/{패키지}/...`
-- 테스트 파일 이름: 구현체와 동일 이름 + `Test` suffix (예: `ProductTest.kt`)
-
-### Kotest BehaviorSpec 예시
+- 테스트 파일 이름: 구현체와 동일 이름 + `Test` suffix
 
 ```kotlin
 class ProductTest : BehaviorSpec({
@@ -153,7 +171,9 @@ class ProductTest : BehaviorSpec({
 })
 ```
 
-## 9. Kafka Topic Convention
+---
+
+## Kafka Topic Convention
 
 형식: `{domain}.{entity}.{event}`
 
@@ -165,43 +185,75 @@ class ProductTest : BehaviorSpec({
 | `order.order.cancelled` | order | - |
 
 - Consumer Group ID: `{service}-{purpose}` 형식 (예: `search-indexer`)
-- DLQ 설계는 ADR-0009 참조 (추후 결정)
 
+---
 
-## 10. API Response Format
+## API Response Format
 
-모든 HTTP 응답은 `ApiResponse<T>` (common 모듈)로 래핑한다.
+모든 HTTP 응답은 `ApiResponse<T>` (common 모듈)로 래핑.
 
-**성공 응답:**
 ```json
-{
-  "success": true,
-  "data": { ... },
-  "error": null
-}
+{ "success": true,  "data": { ... }, "error": null }
+{ "success": false, "data": null,    "error": { "code": "NOT_FOUND", "message": "..." } }
 ```
 
-**실패 응답:**
-```json
-{
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "NOT_FOUND",
-    "message": "상품을 찾을 수 없습니다"
-  }
-}
-```
+---
 
-- Controller는 `ApiResponse.success(data)` 또는 `ApiResponse.error(errorCode)` 사용
-- GlobalExceptionHandler가 최종 에러 변환 담당 (common 모듈 제공)
-- HTTP Status 코드는 의미에 맞게 사용 (200/201/400/401/403/404/500)
+## Architecture Governance
 
+- Any architectural or structural change requires an ADR
+- Implementation code must not be generated before ADR approval
+- Existing ADRs must be reviewed before proposing new decisions
+- If a conflict with existing ADRs is detected, pause and request clarification
+- ADR numbering must be sequential
 
-## 11. Docker & Local Dev Rules
+---
 
-- 로컬 인프라 기동: `docker compose -f docker/docker-compose.infra.yml up -d`
-- 전체 기동: `docker compose -f docker/docker-compose.yml up -d`
+## AI Execution Rules
+
+Before generating implementation:
+- Validate alignment with Architecture Principles
+- Validate consistency with existing ADRs
+- Validate consistency with relevant docs
+- If ambiguity or conflict exists, pause and request clarification
+- Avoid generating code before structure is finalized
+
+---
+
+## Standards & Conventions
+
+All rules are routed via `agent-os/standards/`.
+
+---
+
+## Active Commands
+
+| Command | Purpose |
+|---------|---------|
+| `/hnsf:shape-spec` | 요구사항 수집 및 스펙 폴더 초기화 |
+| `/hnsf:write-spec` | 스펙 문서 작성 |
+| `/hnsf:create-tasks` | 태스크 분해 |
+| `/hnsf:implement-tasks` | 구현 (워크트리 옵션) |
+| `/hnsf:orchestrate-tasks` | 순차/병렬 오케스트레이션 |
+| `/hnsf:drift-check` | 구현-스펙 불일치 감지 |
+| `/hnsf:interview-capture` | 구현 전 게이트 인터뷰 |
+| `/hnsf:verify` | 검증 (표준→린트→빌드→테스트) |
+| `/hnsf:spec-review` | 스펙 리뷰 (architecture/implementation/usecase) |
+
+---
+
+## Navigation Tips
+
+- Feature-specific work → `docs/specs/`
+- Standards → `agent-os/standards/`
+- Product context → `agent-os/product/`
+- Architecture docs → `docs/architecture/`
+- ADRs → `docs/adr/`
+
+---
+
+## Docker & Local Dev Rules
+
 - 서비스별 독립 실행 가능 (Eureka, 해당 DB만 있으면 됨)
 - `.env` 파일은 `docker/.env` (git ignore 대상, `.env.example` 제공)
-- 환경변수 주입: `SPRING_PROFILES_ACTIVE=docker` 로 Docker 전용 설정 활성화
+- 환경변수 주입: `SPRING_PROFILES_ACTIVE=docker`
