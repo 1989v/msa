@@ -56,6 +56,30 @@ export interface Notification {
   actionRequired: boolean
 }
 
+// Real-time live models (from WebSocket)
+export interface LiveSession {
+  sessionId: string
+  startedAt: string
+  active: boolean
+  subagentIds: string[]
+  taskIds: string[]
+}
+
+export interface LiveSubagent {
+  agentId: string
+  agentType: string
+  sessionId: string
+  active: boolean
+  lastMessage?: string
+}
+
+export interface LiveTask {
+  taskId: string
+  sessionId: string
+  subject?: string
+  completed: boolean
+}
+
 export interface AppData {
   sessions: Session[]
   teams: Team[]

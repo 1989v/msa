@@ -11,5 +11,6 @@ include(
     "search:domain",
     "search:app",
     "search:consumer",
-    "search:batch"
+    "search:batch",
+    "agent-viewer:api"
 )

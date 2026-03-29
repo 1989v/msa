@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { Agent, Team, Task, ViewMode, Notification, Session } from '@/types'
+import type { Agent, Team, Task, ViewMode, Notification, Session, LiveSession, LiveSubagent, LiveTask } from '@/types'
+import type { ConnectionStatus } from '@/hooks/useWebSocket'
 import { loadAppData } from '@/utils/dataLoader'
 
 interface AppState {
@@ -14,6 +15,10 @@ interface AppState {
   taskFilters: Set<string>
   sessionFilters: Set<string>
   showNotificationPanel: boolean
+  connectionStatus: ConnectionStatus
+  liveSessions: Map<string, LiveSession>
+  liveSubagents: Map<string, LiveSubagent>
+  liveTasks: Map<string, LiveTask>
 
   // Actions
   selectAgent: (id: string | null) => void
@@ -26,7 +31,14 @@ interface AppState {
   markNotificationRead: (id: string) => void
   approveNotification: (id: string) => void
   dismissNotification: (id: string) => void
+  setConnectionStatus: (status: ConnectionStatus) => void
+  handleWsEvent: (event: WsEvent) => void
   refresh: () => void
+}
+
+interface WsEvent {
+  type: string
+  data: Record<string, unknown>
 }
 
 function initializeData() {
@@ -51,6 +63,10 @@ export const useAppStore = create<AppState>((set) => {
     selectedAgentId: null,
     viewMode: 'session',
     showNotificationPanel: false,
+    connectionStatus: 'disconnected' as ConnectionStatus,
+    liveSessions: new Map<string, LiveSession>(),
+    liveSubagents: new Map<string, LiveSubagent>(),
+    liveTasks: new Map<string, LiveTask>(),
 
     selectAgent: (id) => set({ selectedAgentId: id }),
 
@@ -113,6 +129,79 @@ export const useAppStore = create<AppState>((set) => {
           ? new Set(state.tasks.map((t) => t.id))
           : new Set<string>(),
       })),
+
+    setConnectionStatus: (status) => set({ connectionStatus: status }),
+
+    handleWsEvent: (event) =>
+      set((state) => {
+        const liveSessions = new Map(state.liveSessions)
+        const liveSubagents = new Map(state.liveSubagents)
+        const liveTasks = new Map(state.liveTasks)
+
+        switch (event.type) {
+          case 'SESSION_START': {
+            const sid = event.data.sessionId as string
+            liveSessions.set(sid, {
+              sessionId: sid,
+              startedAt: event.data.startedAt as string,
+              active: true,
+              subagentIds: [],
+              taskIds: [],
+            })
+            break
+          }
+          case 'SESSION_END': {
+            const sid = event.data.sessionId as string
+            const s = liveSessions.get(sid)
+            if (s) liveSessions.set(sid, { ...s, active: false })
+            break
+          }
+          case 'SUBAGENT_START': {
+            const aid = event.data.agentId as string
+            const sid = event.data.sessionId as string
+            liveSubagents.set(aid, {
+              agentId: aid,
+              agentType: event.data.agentType as string,
+              sessionId: sid,
+              active: true,
+            })
+            const s = liveSessions.get(sid)
+            if (s && !s.subagentIds.includes(aid)) {
+              liveSessions.set(sid, { ...s, subagentIds: [...s.subagentIds, aid] })
+            }
+            break
+          }
+          case 'SUBAGENT_STOP': {
+            const aid = event.data.agentId as string
+            const sub = liveSubagents.get(aid)
+            if (sub) liveSubagents.set(aid, { ...sub, active: false, lastMessage: event.data.lastMessage as string | undefined })
+            break
+          }
+          case 'TASK_CREATED': {
+            const tid = event.data.taskId as string
+            const sid = event.data.sessionId as string
+            liveTasks.set(tid, {
+              taskId: tid,
+              sessionId: sid,
+              subject: event.data.subject as string | undefined,
+              completed: false,
+            })
+            const s = liveSessions.get(sid)
+            if (s && !s.taskIds.includes(tid)) {
+              liveSessions.set(sid, { ...s, taskIds: [...s.taskIds, tid] })
+            }
+            break
+          }
+          case 'TASK_COMPLETED': {
+            const tid = event.data.taskId as string
+            const t = liveTasks.get(tid)
+            if (t) liveTasks.set(tid, { ...t, completed: true })
+            break
+          }
+        }
+
+        return { liveSessions, liveSubagents, liveTasks }
+      }),
 
     refresh: () => {
       const data = initializeData()

@@ -1,6 +1,6 @@
 [versions]
 kotlin = "2.2.21"
-springBoot = "4.0.3"
+springBoot = "4.0.4"
 springCloud = "2025.1.0"
 springDependencyManagement = "1.1.7"
 querydsl = "5.1.0"
@@ -19,6 +19,7 @@ spring-boot-starter-validation = { module = "org.springframework.boot:spring-boo
 spring-boot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 spring-boot-starter-webflux = { module = "org.springframework.boot:spring-boot-starter-webflux" }
+spring-boot-starter-websocket = { module = "org.springframework.boot:spring-boot-starter-websocket" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
 spring-webflux = { module = "org.springframework:spring-webflux" }
 

@@ -8,10 +8,38 @@
   border-bottom: 1px solid var(--border);
 }
 
+.titleArea {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .title {
   font-size: 16px;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.connectionDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.connectionDot.connected { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.connectionDot.connecting { background: var(--accent-yellow); animation: blink 1s infinite; }
+.connectionDot.disconnected { background: var(--text-muted); }
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+.connectionLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.liveValue {
+  color: var(--accent-green);
+  font-weight: 600;
 }
 
 .stats {
