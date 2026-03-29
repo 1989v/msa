@@ -13,13 +13,8 @@
   box-shadow: 0 0 16px rgba(255, 255, 255, 0.04);
 }
 
-.area.completed {
-  opacity: 0.55;
-}
-
-.area.paused {
-  border-style: dashed;
-}
+.area.completed { opacity: 0.55; }
+.area.paused { border-style: dashed; }
 
 /* Header */
 .header {
@@ -42,25 +37,11 @@
   flex-shrink: 0;
 }
 
-.statusDot.active {
-  background: var(--accent-green);
-  box-shadow: 0 0 6px var(--accent-green);
-}
+.statusDot.active { background: var(--accent-green); box-shadow: 0 0 6px var(--accent-green); }
+.statusDot.paused { background: var(--accent-yellow); }
+.statusDot.completed { background: var(--text-muted); }
 
-.statusDot.paused {
-  background: var(--accent-yellow);
-}
-
-.statusDot.completed {
-  background: var(--text-muted);
-}
-
-.sessionName {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.3;
-}
+.sessionName { font-size: 14px; font-weight: 600; color: var(--text-primary); }
 
 .headerRight {
   display: flex;
@@ -70,24 +51,9 @@
   flex-shrink: 0;
 }
 
-.statusLabel {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
-}
-
-.timeLabel {
-  font-size: 10px;
-  color: var(--text-muted);
-}
-
-.description {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
+.statusLabel { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; }
+.timeLabel { font-size: 10px; color: var(--text-muted); }
+.description { font-size: 12px; color: var(--text-secondary); line-height: 1.4; }
 
 /* Stats */
 .statsBar {
@@ -98,24 +64,10 @@
   border-bottom: 1px solid var(--border);
 }
 
-.stat {
-  font-size: 11px;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.statIcon {
-  font-size: 12px;
-}
+.stat { font-size: 11px; color: var(--text-secondary); }
 
 /* Task progress */
-.taskProgress {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
+.taskProgress { display: flex; flex-direction: column; gap: 4px; }
 
 .taskRow {
   display: flex;
@@ -125,65 +77,157 @@
   color: var(--text-secondary);
 }
 
-.taskDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
+.taskDot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
 .taskDot.in-progress { background: var(--accent-green); }
 .taskDot.pending { background: var(--accent-yellow); }
 .taskDot.completed { background: var(--text-muted); }
 
-.taskName {
-  flex: 1;
+.taskName { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.miniProgress { width: 48px; height: 4px; background: var(--bg-tertiary); border-radius: 2px; overflow: hidden; flex-shrink: 0; }
+.miniProgressFill { height: 100%; background: var(--accent-blue); border-radius: 2px; transition: width 0.3s; }
+
+/* ========== Office Floor ========== */
+.officeFloor {
+  border-radius: 8px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.miniProgress {
-  width: 48px;
-  height: 4px;
-  background: var(--bg-tertiary);
-  border-radius: 2px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.miniProgressFill {
-  height: 100%;
-  background: var(--accent-blue);
-  border-radius: 2px;
-  transition: width 0.3s;
-}
-
-/* Agent workspace */
-.floor {
+  position: relative;
   background:
+    /* Carpet texture */
     repeating-linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0.02) 0px,
-      rgba(255, 255, 255, 0.02) 1px,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
       transparent 1px,
-      transparent 48px
+      transparent 40px
     ),
     repeating-linear-gradient(
       0deg,
-      rgba(255, 255, 255, 0.02) 0px,
-      rgba(255, 255, 255, 0.02) 1px,
+      rgba(255, 255, 255, 0.015) 0px,
+      rgba(255, 255, 255, 0.015) 1px,
       transparent 1px,
-      transparent 48px
-    );
-  border-radius: 8px;
-  padding: 8px;
-  min-height: 60px;
+      transparent 40px
+    ),
+    var(--bg-primary);
 }
 
-.agents {
+/* Top wall with decorations */
+.wall {
   display: flex;
-  flex-wrap: wrap;
+  gap: 24px;
+  padding: 6px 16px;
+  background: linear-gradient(180deg, rgba(48, 54, 61, 0.8) 0%, transparent 100%);
+  border-bottom: 2px solid var(--border);
+  justify-content: center;
+}
+
+.wallItem {
+  font-size: 14px;
+  opacity: 0.4;
+}
+
+/* Desk area */
+.deskArea {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
   gap: 4px;
-  align-content: flex-start;
+}
+
+/* Each role group = desk row */
+.deskRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  position: relative;
+}
+
+.rowLabel {
+  width: 72px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-top: 16px;
+}
+
+.rowIcon { font-size: 16px; }
+
+.rowName {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+
+/* Desk lines — agents in a row */
+.rowDesks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  flex: 1;
+}
+
+.deskLine {
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+/* Aisle between facing desks */
+.aisle {
+  width: 100%;
+  height: 8px;
+  position: relative;
+}
+
+.aisle::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--border) 0px,
+    var(--border) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+}
+
+/* Partition between role groups */
+.partition {
+  position: absolute;
+  bottom: -2px;
+  left: 72px;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, var(--border), transparent 80%);
+}
+
+.deskRow:last-child .partition { display: none; }
+
+/* Amenities corner */
+.amenities {
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px;
+  justify-content: flex-end;
+  border-top: 1px solid rgba(48, 54, 61, 0.5);
+}
+
+.amenity {
+  font-size: 16px;
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+
+.amenity:hover {
+  opacity: 0.7;
 }

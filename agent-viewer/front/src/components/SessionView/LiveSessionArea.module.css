@@ -26,178 +26,90 @@
   100% { transform: translateX(100%); }
 }
 
-.area.ended {
-  border-color: var(--border);
-  opacity: 0.6;
-}
+.area.ended { border-color: var(--border); opacity: 0.6; }
+.area.ended::before { display: none; }
 
-.area.ended::before {
-  display: none;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.headerLeft {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+.header { display: flex; justify-content: space-between; align-items: center; }
+.headerLeft { display: flex; align-items: center; gap: 8px; }
 
 .liveDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 8px; height: 8px; border-radius: 50%;
   background: var(--accent-green);
   box-shadow: 0 0 8px var(--accent-green);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
 .liveTag {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--accent-green);
-  background: rgba(63, 185, 80, 0.12);
-  padding: 1px 6px;
-  border-radius: 4px;
-  letter-spacing: 0.1em;
+  font-size: 10px; font-weight: 700; color: var(--accent-green);
+  background: rgba(63, 185, 80, 0.12); padding: 1px 6px; border-radius: 4px; letter-spacing: 0.1em;
 }
 
-.sessionId {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.time {
-  font-size: 11px;
-  color: var(--text-muted);
-}
+.sessionId { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.time { font-size: 11px; color: var(--text-muted); }
 
 .statsBar {
-  display: flex;
-  gap: 12px;
-  padding: 6px 0;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  display: flex; gap: 12px; padding: 6px 0;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
 }
+.stat { font-size: 11px; color: var(--text-secondary); }
 
-.stat {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
+.taskList { display: flex; flex-direction: column; gap: 4px; }
+.taskRow { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+.taskDot { width: 6px; height: 6px; border-radius: 50%; }
+.taskActive { background: var(--accent-green); }
+.done { background: var(--text-muted); }
+.taskName { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.taskList {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.taskRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.taskDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
-
-.taskDot.active { background: var(--accent-green); }
-.taskDot.done { background: var(--text-muted); }
-
-.taskName {
+/* Office floor */
+.officeFloor {
+  border-radius: 8px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.floor {
   background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(63, 185, 80, 0.03) 0px,
-      rgba(63, 185, 80, 0.03) 1px,
-      transparent 1px,
-      transparent 48px
-    ),
-    repeating-linear-gradient(
-      0deg,
-      rgba(63, 185, 80, 0.03) 0px,
-      rgba(63, 185, 80, 0.03) 1px,
-      transparent 1px,
-      transparent 48px
-    );
-  border-radius: 8px;
-  padding: 8px;
+    repeating-linear-gradient(90deg, rgba(63, 185, 80, 0.02) 0px, rgba(63, 185, 80, 0.02) 1px, transparent 1px, transparent 40px),
+    repeating-linear-gradient(0deg, rgba(63, 185, 80, 0.02) 0px, rgba(63, 185, 80, 0.02) 1px, transparent 1px, transparent 40px),
+    var(--bg-primary);
 }
 
-.agents {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.wall {
+  display: flex; gap: 20px; padding: 5px 16px; justify-content: center;
+  background: linear-gradient(180deg, rgba(48, 54, 61, 0.6) 0%, transparent 100%);
+  border-bottom: 2px solid var(--border);
 }
+.wallItem { font-size: 12px; opacity: 0.3; }
 
-.agentSlot {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 6px;
-  border-radius: 8px;
-  transition: background 0.15s;
-}
+.deskArea { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 
-.agentSlot:hover {
-  background: rgba(255, 255, 255, 0.04);
+.deskRow {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(48, 54, 61, 0.3);
 }
+.deskRow:last-child { border-bottom: none; }
 
-.agentActive {
-  /* active agents glow */
-}
+.rowLabel { width: 60px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding-top: 12px; }
+.rowIcon { font-size: 14px; }
+.rowName { font-size: 8px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; text-align: center; }
 
-.agentDone {
-  opacity: 0.5;
-}
+.rowDesks { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
 
-.spriteWrap {
-  image-rendering: pixelated;
+.deskUnit {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 6px; border-radius: 6px; position: relative;
+  transition: opacity 0.3s;
 }
+.deskUnit:hover { background: rgba(255, 255, 255, 0.04); }
+.deskDone { opacity: 0.35; }
 
-.agentType {
-  font-size: 9px;
-  color: var(--text-secondary);
-  max-width: 64px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.spriteWrap { image-rendering: pixelated; }
+.agentType { font-size: 8px; color: var(--text-muted); max-width: 56px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .activeBadge {
-  font-size: 8px;
-  color: var(--accent-green);
-  background: rgba(63, 185, 80, 0.12);
-  padding: 0 4px;
-  border-radius: 3px;
+  position: absolute; top: 0; right: 0; font-size: 10px;
+  animation: sparkle 1s ease-in-out infinite;
 }
+@keyframes sparkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-.doneBadge {
-  font-size: 8px;
-  color: var(--text-muted);
-  background: var(--bg-tertiary);
-  padding: 0 4px;
-  border-radius: 3px;
-  cursor: help;
-}
+.amenities { display: flex; gap: 12px; padding: 6px 16px; justify-content: flex-end; border-top: 1px solid rgba(48, 54, 61, 0.4); }
+.amenity { font-size: 14px; opacity: 0.3; }

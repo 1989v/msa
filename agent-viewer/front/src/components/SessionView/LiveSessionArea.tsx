@@ -3,7 +3,6 @@ import { PixelSprite } from '@/components/Sprite/PixelSprite'
 import { useAppStore } from '@/store/useAppStore'
 import styles from './LiveSessionArea.module.css'
 
-// Map agent types to sprite types
 const TYPE_SPRITE: Record<string, string> = {
   implementer: 'warrior',
   tester: 'archer',
@@ -21,6 +20,27 @@ const TYPE_SPRITE: Record<string, string> = {
   'analyzer-agent': 'scholar',
 }
 
+const ROLE_CATEGORY: Record<string, string> = {
+  warrior: 'Development',
+  archer: 'QA / Review',
+  sentinel: 'QA / Review',
+  mage: 'Planning',
+  strategist: 'Planning',
+  scholar: 'Research',
+  healer: 'Support',
+  architect: 'Support',
+  rogue: 'Support',
+  merchant: 'Support',
+}
+
+const CATEGORY_ICON: Record<string, string> = {
+  Planning: '📐',
+  Development: '⚒️',
+  'QA / Review': '🔍',
+  Research: '🔬',
+  Support: '🛠️',
+}
+
 function timeAgo(ts: string): string {
   const diff = Date.now() - new Date(ts).getTime()
   const mins = Math.floor(diff / 60000)
@@ -28,6 +48,21 @@ function timeAgo(ts: string): string {
   if (mins < 60) return `${mins}분 전`
   const hours = Math.floor(mins / 60)
   return `${hours}시간 전`
+}
+
+function groupByRole(subagents: LiveSubagent[]): { category: string; icon: string; subs: LiveSubagent[] }[] {
+  const map = new Map<string, LiveSubagent[]>()
+  for (const sub of subagents) {
+    const sprite = TYPE_SPRITE[sub.agentType] ?? 'warrior'
+    const cat = ROLE_CATEGORY[sprite] ?? 'General'
+    if (!map.has(cat)) map.set(cat, [])
+    map.get(cat)!.push(sub)
+  }
+  return Array.from(map.entries()).map(([category, subs]) => ({
+    category,
+    icon: CATEGORY_ICON[category] ?? '💼',
+    subs,
+  }))
 }
 
 interface Props {
@@ -41,6 +76,7 @@ export function LiveSessionArea({ session, subagents }: Props) {
     (t) => t.sessionId === session.sessionId
   )
   const activeCount = subagents.filter((s) => s.active).length
+  const roleGroups = groupByRole(subagents)
 
   return (
     <div className={`${styles.area} ${session.active ? styles.active : styles.ended}`}>
@@ -56,13 +92,9 @@ export function LiveSessionArea({ session, subagents }: Props) {
       </div>
 
       <div className={styles.statsBar}>
-        <span className={styles.stat}>
-          👥 {subagents.length}명 ({activeCount} active)
-        </span>
+        <span className={styles.stat}>👥 {subagents.length}명 ({activeCount} active)</span>
         {sessionTasks.length > 0 && (
-          <span className={styles.stat}>
-            📋 {sessionTasks.length} tasks
-          </span>
+          <span className={styles.stat}>📋 {sessionTasks.length} tasks</span>
         )}
       </div>
 
@@ -70,31 +102,49 @@ export function LiveSessionArea({ session, subagents }: Props) {
         <div className={styles.taskList}>
           {sessionTasks.map((task) => (
             <div key={task.taskId} className={styles.taskRow}>
-              <span className={`${styles.taskDot} ${task.completed ? styles.done : styles.active}`} />
+              <span className={`${styles.taskDot} ${task.completed ? styles.done : styles.taskActive}`} />
               <span className={styles.taskName}>{task.subject ?? task.taskId}</span>
             </div>
           ))}
         </div>
       )}
 
-      <div className={styles.floor}>
-        <div className={styles.agents}>
-          {subagents.map((sub) => (
-            <div key={sub.agentId} className={`${styles.agentSlot} ${sub.active ? styles.agentActive : styles.agentDone}`}>
-              <div className={styles.spriteWrap}>
-                <PixelSprite
-                  type={TYPE_SPRITE[sub.agentType] ?? 'warrior'}
-                  status={sub.active ? 'working' : 'idle'}
-                  size={32}
-                />
+      {/* Office floor with role-based desk rows */}
+      <div className={styles.officeFloor}>
+        <div className={styles.wall}>
+          <span className={styles.wallItem}>🖥️</span>
+          <span className={styles.wallItem}>📊</span>
+        </div>
+
+        <div className={styles.deskArea}>
+          {roleGroups.map((group) => (
+            <div key={group.category} className={styles.deskRow}>
+              <div className={styles.rowLabel}>
+                <span className={styles.rowIcon}>{group.icon}</span>
+                <span className={styles.rowName}>{group.category}</span>
               </div>
-              <span className={styles.agentType}>{sub.agentType}</span>
-              {sub.active && <span className={styles.activeBadge}>working</span>}
-              {!sub.active && sub.lastMessage && (
-                <span className={styles.doneBadge} title={sub.lastMessage}>done</span>
-              )}
+              <div className={styles.rowDesks}>
+                {group.subs.map((sub) => (
+                  <div key={sub.agentId} className={`${styles.deskUnit} ${sub.active ? '' : styles.deskDone}`}>
+                    <div className={styles.spriteWrap}>
+                      <PixelSprite
+                        type={TYPE_SPRITE[sub.agentType] ?? 'warrior'}
+                        status={sub.active ? 'working' : 'done'}
+                        size={32}
+                      />
+                    </div>
+                    <span className={styles.agentType}>{sub.agentType}</span>
+                    {sub.active && <span className={styles.activeBadge}>⚡</span>}
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
+        </div>
+
+        <div className={styles.amenities}>
+          <span className={styles.amenity}>🪴</span>
+          <span className={styles.amenity}>🚰</span>
         </div>
       </div>
     </div>

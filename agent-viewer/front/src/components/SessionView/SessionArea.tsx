@@ -15,6 +15,34 @@ const STATUS_LABEL: Record<string, string> = {
   completed: '완료',
 }
 
+// Group agents by role category for desk arrangement
+const ROLE_GROUPS: Record<string, { label: string; icon: string; types: string[] }> = {
+  planners: { label: 'Planning', icon: '📐', types: ['mage', 'strategist', 'scholar'] },
+  builders: { label: 'Development', icon: '⚒️', types: ['warrior'] },
+  reviewers: { label: 'QA / Review', icon: '🔍', types: ['archer', 'sentinel'] },
+  support: { label: 'Support', icon: '🛠️', types: ['healer', 'architect', 'rogue', 'merchant'] },
+}
+
+function groupAgentsByRole(agents: Agent[]): { label: string; icon: string; agents: Agent[] }[] {
+  const groups: { label: string; icon: string; agents: Agent[] }[] = []
+
+  for (const [, group] of Object.entries(ROLE_GROUPS)) {
+    const matched = agents.filter((a) => group.types.includes(a.spriteType))
+    if (matched.length > 0) {
+      groups.push({ label: group.label, icon: group.icon, agents: matched })
+    }
+  }
+
+  // Remaining agents not matched
+  const allMatched = groups.flatMap((g) => g.agents.map((a) => a.id))
+  const unmatched = agents.filter((a) => !allMatched.includes(a.id))
+  if (unmatched.length > 0) {
+    groups.push({ label: 'General', icon: '💼', agents: unmatched })
+  }
+
+  return groups
+}
+
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts
   const mins = Math.floor(diff / 60000)
@@ -30,6 +58,7 @@ export function SessionArea({ session, agents, tasks }: Props) {
 
   const sessionTasks = tasks.filter((t) => session.taskIds.includes(t.id))
   const workingCount = agents.filter((a) => a.status === 'working').length
+  const roleGroups = groupAgentsByRole(agents)
 
   return (
     <div
@@ -50,21 +79,14 @@ export function SessionArea({ session, agents, tasks }: Props) {
         </div>
       </div>
 
-      {/* Description */}
       <p className={styles.description}>{session.description}</p>
 
       {/* Stats bar */}
       <div className={styles.statsBar}>
-        <span className={styles.stat}>
-          <span className={styles.statIcon}>👥</span> {agents.length}명
-        </span>
-        <span className={styles.stat}>
-          <span className={styles.statIcon}>⚡</span> {workingCount}명 작업 중
-        </span>
+        <span className={styles.stat}>👥 {agents.length}명</span>
+        <span className={styles.stat}>⚡ {workingCount}명 작업 중</span>
         {sessionTasks.length > 0 && (
-          <span className={styles.stat}>
-            <span className={styles.statIcon}>📋</span> {sessionTasks.length}개 태스크
-          </span>
+          <span className={styles.stat}>📋 {sessionTasks.length}개 태스크</span>
         )}
       </div>
 
@@ -85,17 +107,62 @@ export function SessionArea({ session, agents, tasks }: Props) {
         </div>
       )}
 
-      {/* Agent workspace floor */}
-      <div className={styles.floor}>
-        <div className={styles.agents}>
-          {agents.map((agent) => (
-            <AgentNode
-              key={agent.id}
-              agent={agent}
-              showDesk
-              teamColor={session.color}
-            />
+      {/* Office floor — role-based desk arrangement */}
+      <div className={styles.officeFloor}>
+        {/* Wall decoration */}
+        <div className={styles.wall}>
+          <span className={styles.wallItem}>🖼️</span>
+          <span className={styles.wallItem}>📊</span>
+          <span className={styles.wallItem}>🗓️</span>
+        </div>
+
+        {/* Desk rows grouped by role */}
+        <div className={styles.deskArea}>
+          {roleGroups.map((group) => (
+            <div key={group.label} className={styles.deskRow}>
+              <div className={styles.rowLabel}>
+                <span className={styles.rowIcon}>{group.icon}</span>
+                <span className={styles.rowName}>{group.label}</span>
+              </div>
+              <div className={styles.rowDesks}>
+                {/* Top row - facing down */}
+                <div className={styles.deskLine}>
+                  {group.agents.slice(0, Math.ceil(group.agents.length / 2)).map((agent) => (
+                    <AgentNode
+                      key={agent.id}
+                      agent={agent}
+                      showDesk
+                      teamColor={session.color}
+                    />
+                  ))}
+                </div>
+                {/* Aisle divider */}
+                {group.agents.length > 1 && <div className={styles.aisle} />}
+                {/* Bottom row - facing up */}
+                {group.agents.length > 1 && (
+                  <div className={styles.deskLine}>
+                    {group.agents.slice(Math.ceil(group.agents.length / 2)).map((agent) => (
+                      <AgentNode
+                        key={agent.id}
+                        agent={agent}
+                        showDesk
+                        teamColor={session.color}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Partition wall between groups */}
+              <div className={styles.partition} />
+            </div>
           ))}
+        </div>
+
+        {/* Office amenities corner */}
+        <div className={styles.amenities}>
+          <span className={styles.amenity} title="정수기">🚰</span>
+          <span className={styles.amenity} title="화분">🪴</span>
+          <span className={styles.amenity} title="프린터">🖨️</span>
         </div>
       </div>
     </div>
