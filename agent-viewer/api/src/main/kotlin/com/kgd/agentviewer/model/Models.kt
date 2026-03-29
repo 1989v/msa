@@ -11,12 +11,15 @@ enum class EventType {
 
 data class AgentSession(
     val sessionId: String,
+    var name: String? = null,
+    var cwd: String? = null,
     val startedAt: Instant = Instant.now(),
     var endedAt: Instant? = null,
     val subagents: MutableMap<String, SubagentInfo> = mutableMapOf(),
     val tasks: MutableMap<String, TaskInfo> = mutableMapOf()
 ) {
     val isActive: Boolean get() = endedAt == null
+    val displayName: String get() = name ?: cwd?.substringAfterLast('/') ?: sessionId.take(8)
 }
 
 data class SubagentInfo(

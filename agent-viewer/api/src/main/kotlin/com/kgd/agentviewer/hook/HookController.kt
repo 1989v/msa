@@ -21,11 +21,19 @@ class HookController(
     @PostMapping("/session-start")
     fun sessionStart(@RequestBody body: Map<String, Any?>) {
         val sessionId = body["session_id"] as? String ?: return
-        log.info("Session started: {}", sessionId)
+        val cwd = body["cwd"] as? String
+        log.info("Session started: {} (cwd: {})", sessionId, cwd)
         val session = stateStore.startSession(sessionId)
+        session.cwd = cwd
+        session.name = cwd?.substringAfterLast('/')
         broadcaster.broadcast(WebSocketEvent(
             type = EventType.SESSION_START,
-            data = mapOf("sessionId" to session.sessionId, "startedAt" to session.startedAt)
+            data = mapOf(
+                "sessionId" to session.sessionId,
+                "name" to session.displayName,
+                "cwd" to session.cwd,
+                "startedAt" to session.startedAt
+            )
         ))
     }
 

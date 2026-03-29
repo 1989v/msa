@@ -1,38 +1,65 @@
 import { useAppStore, getAgentsBySession, getUnassignedToSession } from '@/store/useAppStore'
 import { SessionArea } from './SessionArea'
+import { LiveSessionArea } from './LiveSessionArea'
 import { AgentNode } from '@/components/OfficeGrid/AgentNode'
 import styles from './SessionGrid.module.css'
-
-const STATUS_ORDER: Record<string, number> = {
-  active: 0,
-  paused: 1,
-  completed: 2,
-}
 
 export function SessionGrid() {
   const sessions = useAppStore((s) => s.sessions)
   const agents = useAppStore((s) => s.agents)
   const tasks = useAppStore((s) => s.tasks)
   const sessionFilters = useAppStore((s) => s.sessionFilters)
+  const liveSessions = useAppStore((s) => s.liveSessions)
+  const liveSubagents = useAppStore((s) => s.liveSubagents)
+  const liveSessionList = Array.from(liveSessions.values())
+    .sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1))
 
-  const filtered = sessions
+  const staticSessions = sessions
     .filter((s) => sessionFilters.has(s.id))
-    .sort((a, b) => (STATUS_ORDER[a.status] ?? 9) - (STATUS_ORDER[b.status] ?? 9))
+    .sort((a, b) => {
+      const order: Record<string, number> = { active: 0, paused: 1, completed: 2 }
+      return (order[a.status] ?? 9) - (order[b.status] ?? 9)
+    })
 
   const unassigned = getUnassignedToSession(agents, sessions)
 
+  const hasAnySessions = liveSessionList.length > 0 || staticSessions.length > 0
+
   return (
     <div className={styles.container}>
-      <div className={styles.sessionCards}>
-        {filtered.map((session) => (
-          <SessionArea
-            key={session.id}
-            session={session}
-            agents={getAgentsBySession(agents, session)}
-            tasks={tasks}
-          />
-        ))}
-      </div>
+      {/* All sessions — unified list */}
+      {hasAnySessions && (
+        <div className={styles.sessionCards}>
+          {/* Real sessions from backend */}
+          {liveSessionList.map((session) => (
+            <LiveSessionArea
+              key={session.sessionId}
+              session={session}
+              subagents={session.subagentIds
+                .map((id) => liveSubagents.get(id))
+                .filter((s) => s != null)}
+            />
+          ))}
+
+          {/* Fallback static sessions (only when offline) */}
+          {staticSessions.map((session) => (
+            <SessionArea
+              key={session.id}
+              session={session}
+              agents={getAgentsBySession(agents, session)}
+              tasks={tasks}
+            />
+          ))}
+        </div>
+      )}
+
+      {!hasAnySessions && (
+        <div className={styles.empty}>
+          <span className={styles.emptyIcon}>🏢</span>
+          <p>활성 세션 없음</p>
+          <p className={styles.emptyHint}>Claude Code 세션을 시작하면 여기에 표시됩니다</p>
+        </div>
+      )}
 
       {unassigned.length > 0 && (
         <div className={styles.lobby}>

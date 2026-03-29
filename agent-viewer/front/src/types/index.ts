@@ -59,10 +59,19 @@ export interface Notification {
 // Real-time live models (from WebSocket)
 export interface LiveSession {
   sessionId: string
+  name?: string
+  cwd?: string
   startedAt: string
   active: boolean
   subagentIds: string[]
   taskIds: string[]
+}
+
+export interface Toast {
+  id: string
+  message: string
+  type: 'info' | 'success' | 'warning'
+  timestamp: number
 }
 
 export interface LiveSubagent {
@@ -78,6 +87,14 @@ export interface LiveTask {
   sessionId: string
   subject?: string
   completed: boolean
+}
+
+export interface TimelineEvent {
+  id: string
+  sessionId: string
+  type: string
+  message: string
+  timestamp: number
 }
 
 export interface AppData {

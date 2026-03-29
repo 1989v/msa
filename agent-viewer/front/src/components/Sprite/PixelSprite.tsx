@@ -1,10 +1,10 @@
-import type { AgentStatus } from '@/types'
+// Supports: idle, working, thinking, walking, done
 import { getSpriteConfig } from '@/utils/spriteConfig'
 import styles from './PixelSprite.module.css'
 
 interface Props {
   type: string
-  status: AgentStatus
+  status: string
   size?: number
 }
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Team, Agent } from '@/types'
 import { AgentNode } from './AgentNode'
+import { OfficeProp, getPropsForTeam } from './OfficeProp'
 import styles from './TeamArea.module.css'
 
 interface Props {
@@ -37,6 +38,9 @@ export function TeamArea({ team, agents }: Props) {
               showDesk
               teamColor={team.color}
             />
+          ))}
+          {getPropsForTeam(agents.length).map((propType) => (
+            <OfficeProp key={propType} type={propType} />
           ))}
         </div>
       </div>

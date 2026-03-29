@@ -1,0 +1,12 @@
+.prop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  opacity: 0.6;
+}
+
+.emoji {
+  font-size: 18px;
+}

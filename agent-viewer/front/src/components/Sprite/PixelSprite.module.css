@@ -40,6 +40,30 @@
   50% { opacity: 0.7; }
 }
 
+/* Walking animation - step left/right with bounce */
+.walking {
+  animation: walk 0.5s steps(2) infinite;
+}
+
+@keyframes walk {
+  0% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(-2px) translateY(-3px); }
+  50% { transform: translateX(0) translateY(0); }
+  75% { transform: translateX(2px) translateY(-3px); }
+  100% { transform: translateX(0) translateY(0); }
+}
+
+/* Fade out for completed agents */
+.done {
+  animation: fadeAway 1s ease-out forwards;
+}
+
+@keyframes fadeAway {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.1); }
+  100% { opacity: 0.2; transform: scale(0.8); }
+}
+
 /* Thinking question mark effect */
 .thinkingEffect {
   position: absolute;
