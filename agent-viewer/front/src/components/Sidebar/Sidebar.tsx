@@ -21,6 +21,11 @@ export function Sidebar() {
   const toggleTaskFilter = useAppStore((s) => s.toggleTaskFilter)
   const setAllTeamFilters = useAppStore((s) => s.setAllTeamFilters)
   const setAllTaskFilters = useAppStore((s) => s.setAllTaskFilters)
+  const connectionStatus = useAppStore((s) => s.connectionStatus)
+  const liveSessions = useAppStore((s) => s.liveSessions)
+  const liveSubagents = useAppStore((s) => s.liveSubagents)
+
+  const isConnected = connectionStatus === 'connected'
 
   const toggleSessionFilter = (id: string) => {
     useAppStore.setState((state) => {
@@ -30,11 +35,10 @@ export function Sidebar() {
     })
   }
 
-  const statusIcon: Record<string, string> = {
-    active: '🟢',
-    paused: '🟡',
-    completed: '⚪',
-  }
+  // Live sessions for sidebar
+  const liveSessionList = Array.from(liveSessions.values())
+  // Static sessions only when offline
+  const staticSessionList = isConnected ? [] : sessions
 
   return (
     <div className={styles.sidebar}>
@@ -75,18 +79,51 @@ export function Sidebar() {
           )}
         </div>
 
-        {viewMode === 'session' && sessions.map((session) => (
-          <label key={session.id} className={styles.filterItem}>
-            <input
-              type="checkbox"
-              checked={sessionFilters.has(session.id)}
-              onChange={() => toggleSessionFilter(session.id)}
-            />
-            <span className={styles.sessionIcon}>{statusIcon[session.status]}</span>
-            <span className={styles.filterLabel}>{session.name}</span>
-            <span className={styles.filterCount}>{session.agentIds.length}</span>
-          </label>
-        ))}
+        {/* Session list — live sessions when connected, static when offline */}
+        {viewMode === 'session' && (
+          <>
+            {liveSessionList.map((session) => {
+              const subCount = session.subagentIds.length
+              const activeCount = session.subagentIds
+                .map((id) => liveSubagents.get(id))
+                .filter((s) => s?.active).length
+              return (
+                <div key={session.sessionId} className={styles.filterItem}>
+                  <span className={styles.sessionIcon}>{session.active ? '🟢' : '⚪'}</span>
+                  <span className={styles.filterLabel}>
+                    {session.name ?? session.sessionId.slice(0, 12)}
+                  </span>
+                  <span className={styles.filterCount}>
+                    {activeCount}/{subCount}
+                  </span>
+                </div>
+              )
+            })}
+
+            {liveSessionList.length === 0 && !isConnected && staticSessionList.length === 0 && (
+              <div className={styles.emptyFilter}>세션 없음</div>
+            )}
+
+            {staticSessionList.map((session) => (
+              <label key={session.id} className={styles.filterItem}>
+                <input
+                  type="checkbox"
+                  checked={sessionFilters.has(session.id)}
+                  onChange={() => toggleSessionFilter(session.id)}
+                />
+                <span className={styles.sessionIcon}>
+                  {session.status === 'active' ? '🟢' : session.status === 'paused' ? '🟡' : '⚪'}
+                </span>
+                <span className={styles.filterLabel}>{session.name}</span>
+                <span className={styles.filterCount}>{session.agentIds.length}</span>
+              </label>
+            ))}
+
+            {isConnected && liveSessionList.length === 0 && (
+              <div className={styles.emptyFilter}>활성 세션 대기 중...</div>
+            )}
+          </>
+        )}
 
         {viewMode === 'team' && teams.map((team) => (
           <label key={team.id} className={styles.filterItem}>
