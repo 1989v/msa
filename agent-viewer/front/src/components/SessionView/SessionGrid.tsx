@@ -11,17 +11,21 @@ export function SessionGrid() {
   const sessionFilters = useAppStore((s) => s.sessionFilters)
   const liveSessions = useAppStore((s) => s.liveSessions)
   const liveSubagents = useAppStore((s) => s.liveSubagents)
+  const connectionStatus = useAppStore((s) => s.connectionStatus)
+  const isConnected = connectionStatus === 'connected'
+
   const liveSessionList = Array.from(liveSessions.values())
     .sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1))
 
-  const staticSessions = sessions
+  // Static sessions only show when backend is not connected (demo/offline mode)
+  const staticSessions = isConnected ? [] : sessions
     .filter((s) => sessionFilters.has(s.id))
     .sort((a, b) => {
       const order: Record<string, number> = { active: 0, paused: 1, completed: 2 }
       return (order[a.status] ?? 9) - (order[b.status] ?? 9)
     })
 
-  const unassigned = getUnassignedToSession(agents, sessions)
+  const unassigned = isConnected ? [] : getUnassignedToSession(agents, sessions)
 
   const hasAnySessions = liveSessionList.length > 0 || staticSessions.length > 0
 
@@ -41,7 +45,13 @@ export function SessionGrid() {
             />
           ))}
 
-          {/* Fallback static sessions (only when offline) */}
+          {/* Fallback: demo sessions shown when backend offline */}
+          {staticSessions.length > 0 && (
+            <div className={styles.demoBanner}>
+              <span className={styles.demoDot} />
+              DEMO MODE — 백엔드 미연결 (샘플 데이터)
+            </div>
+          )}
           {staticSessions.map((session) => (
             <SessionArea
               key={session.id}
