@@ -164,18 +164,45 @@ export const useAppStore = create<AppState>((set) => {
 
         switch (event.type) {
           case 'SESSION_START': {
-            const sid = event.data.sessionId as string
-            const name = event.data.name as string | undefined
-            liveSessions.set(sid, {
-              sessionId: sid,
-              name,
-              cwd: event.data.cwd as string | undefined,
-              startedAt: event.data.startedAt as string,
-              active: true,
-              subagentIds: [],
-              taskIds: [],
-            })
-            addToast(`🟢 세션 시작: ${name ?? sid.slice(0, 8)}`, 'info')
+            const source = event.data.source as string | undefined
+
+            if (source === 'scan') {
+              // Scanned session from file system (Claude, Codex, etc.)
+              const key = `${event.data.tool}:${event.data.projectPath}`
+              const existing = liveSessions.get(key)
+              const isNew = !existing
+              liveSessions.set(key, {
+                sessionId: key,
+                name: event.data.projectName as string,
+                cwd: event.data.projectPath as string,
+                tool: event.data.tool as string,
+                toolColor: event.data.toolColor as string,
+                startedAt: event.data.lastActivity as string,
+                active: (event.data.status as string) === 'active',
+                status: event.data.status as string,
+                lastUserMessage: event.data.lastUserMessage as string | undefined,
+                lastAssistantMessage: event.data.lastAssistantMessage as string | undefined,
+                subagentIds: existing?.subagentIds ?? [],
+                taskIds: existing?.taskIds ?? [],
+              })
+              if (isNew) {
+                addToast(`🔍 ${event.data.tool}: ${event.data.projectName}`, 'info')
+              }
+            } else {
+              // Hook-based session (Claude Code only)
+              const sid = event.data.sessionId as string
+              const name = event.data.name as string | undefined
+              liveSessions.set(sid, {
+                sessionId: sid,
+                name,
+                cwd: event.data.cwd as string | undefined,
+                startedAt: event.data.startedAt as string,
+                active: true,
+                subagentIds: [],
+                taskIds: [],
+              })
+              addToast(`🟢 세션 시작: ${name ?? sid.slice(0, 8)}`, 'info')
+            }
             break
           }
           case 'SESSION_END': {

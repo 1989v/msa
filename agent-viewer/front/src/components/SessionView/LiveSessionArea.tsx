@@ -83,16 +83,49 @@ export function LiveSessionArea({ session, subagents }: Props) {
       <div className={styles.header}>
         <div className={styles.headerLeft}>
           <span className={styles.liveDot} />
-          <span className={styles.liveTag}>LIVE</span>
+          {session.tool ? (
+            <span className={styles.toolTag} style={{ color: session.toolColor, borderColor: session.toolColor }}>
+              {session.tool}
+            </span>
+          ) : (
+            <span className={styles.liveTag}>LIVE</span>
+          )}
           <h3 className={styles.sessionId}>
             {session.name ?? `Session ${session.sessionId.slice(0, 8)}`}
           </h3>
         </div>
-        <span className={styles.time}>{timeAgo(session.startedAt)}</span>
+        <div className={styles.headerRight}>
+          {session.status && (
+            <span className={`${styles.statusBadge} ${styles[`status_${session.status}`]}`}>
+              {session.status === 'active' ? '작업 중' : session.status === 'waiting' ? '입력 대기' : '완료'}
+            </span>
+          )}
+          <span className={styles.time}>{timeAgo(session.startedAt)}</span>
+        </div>
       </div>
 
+      {/* Last conversation messages */}
+      {(session.lastUserMessage || session.lastAssistantMessage) && (
+        <div className={styles.conversation}>
+          {session.lastUserMessage && (
+            <div className={styles.msgRow}>
+              <span className={styles.msgRole}>User</span>
+              <span className={styles.msgText}>{session.lastUserMessage}</span>
+            </div>
+          )}
+          {session.lastAssistantMessage && (
+            <div className={styles.msgRow}>
+              <span className={styles.msgRoleBot}>Bot</span>
+              <span className={styles.msgText}>{session.lastAssistantMessage}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className={styles.statsBar}>
-        <span className={styles.stat}>👥 {subagents.length}명 ({activeCount} active)</span>
+        {subagents.length > 0 && (
+          <span className={styles.stat}>👥 {subagents.length}명 ({activeCount} active)</span>
+        )}
         {sessionTasks.length > 0 && (
           <span className={styles.stat}>📋 {sessionTasks.length} tasks</span>
         )}

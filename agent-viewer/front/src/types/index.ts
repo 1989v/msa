@@ -61,10 +61,15 @@ export interface LiveSession {
   sessionId: string
   name?: string
   cwd?: string
+  tool?: string
+  toolColor?: string
+  status?: string // "active", "waiting", "completed"
   startedAt: string
   active: boolean
   subagentIds: string[]
   taskIds: string[]
+  lastUserMessage?: string
+  lastAssistantMessage?: string
 }
 
 export interface Toast {

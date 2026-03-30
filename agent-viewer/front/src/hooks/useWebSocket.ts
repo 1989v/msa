@@ -52,10 +52,6 @@ export function useWebSocket() {
   }, [setConnectionStatus, handleWsEvent])
 
   useEffect(() => {
-    // Only connect if data source is not static-only
-    const source = import.meta.env.VITE_DATA_SOURCE ?? 'static'
-    if (source === 'static') return
-
     connect()
     return () => {
       if (reconnectTimer.current) clearTimeout(reconnectTimer.current)
