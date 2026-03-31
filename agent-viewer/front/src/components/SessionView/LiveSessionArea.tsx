@@ -4,41 +4,19 @@ import { useAppStore } from '@/store/useAppStore'
 import styles from './LiveSessionArea.module.css'
 
 const TYPE_SPRITE: Record<string, string> = {
-  implementer: 'warrior',
-  tester: 'archer',
-  Explore: 'archer',
-  Plan: 'strategist',
-  'general-purpose': 'warrior',
-  'code-reviewer': 'sentinel',
-  'spec-writer': 'mage',
-  'spec-shaper': 'mage',
-  'spec-initializer': 'scholar',
-  'tasks-list-creator': 'strategist',
-  verifier: 'sentinel',
-  'scaffolding-agent': 'architect',
-  'debug-agent': 'healer',
-  'analyzer-agent': 'scholar',
+  implementer: 'warrior', tester: 'archer', Explore: 'archer',
+  Plan: 'strategist', 'general-purpose': 'warrior', 'code-reviewer': 'sentinel',
+  'spec-writer': 'mage', 'spec-shaper': 'mage', 'spec-initializer': 'scholar',
+  'tasks-list-creator': 'strategist', verifier: 'sentinel',
+  'scaffolding-agent': 'architect', 'debug-agent': 'healer', 'analyzer-agent': 'scholar',
 }
 
-const ROLE_CATEGORY: Record<string, string> = {
-  warrior: 'Development',
-  archer: 'QA / Review',
-  sentinel: 'QA / Review',
-  mage: 'Planning',
-  strategist: 'Planning',
-  scholar: 'Research',
-  healer: 'Support',
-  architect: 'Support',
-  rogue: 'Support',
-  merchant: 'Support',
-}
-
-const CATEGORY_ICON: Record<string, string> = {
-  Planning: '📐',
-  Development: '⚒️',
-  'QA / Review': '🔍',
-  Research: '🔬',
-  Support: '🛠️',
+// Tool → default sprite for scanned sessions (no subagent data)
+const TOOL_SPRITE: Record<string, string> = {
+  'Claude Code': 'warrior',
+  'Codex': 'mage',
+  'OpenCode': 'architect',
+  'Gemini': 'scholar',
 }
 
 function timeAgo(ts: string): string {
@@ -50,19 +28,10 @@ function timeAgo(ts: string): string {
   return `${hours}시간 전`
 }
 
-function groupByRole(subagents: LiveSubagent[]): { category: string; icon: string; subs: LiveSubagent[] }[] {
-  const map = new Map<string, LiveSubagent[]>()
-  for (const sub of subagents) {
-    const sprite = TYPE_SPRITE[sub.agentType] ?? 'warrior'
-    const cat = ROLE_CATEGORY[sprite] ?? 'General'
-    if (!map.has(cat)) map.set(cat, [])
-    map.get(cat)!.push(sub)
-  }
-  return Array.from(map.entries()).map(([category, subs]) => ({
-    category,
-    icon: CATEGORY_ICON[category] ?? '💼',
-    subs,
-  }))
+function formatTokens(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`
+  return `${n}`
 }
 
 interface Props {
@@ -76,21 +45,27 @@ export function LiveSessionArea({ session, subagents }: Props) {
     (t) => t.sessionId === session.sessionId
   )
   const activeCount = subagents.filter((s) => s.active).length
-  const roleGroups = groupByRole(subagents)
+
+  // Determine sprite and speech for the main session character
+  const spriteType = TOOL_SPRITE[session.tool ?? ''] ?? 'warrior'
+  const statusAnim = session.status === 'active' ? 'working' : session.status === 'waiting' ? 'thinking' : 'idle'
+  const speechText = session.lastAssistantMessage?.slice(0, 80)
 
   return (
-    <div className={`${styles.area} ${session.active ? styles.active : styles.ended}`}>
+    <div
+      className={`${styles.area} ${session.active ? styles.active : styles.ended}`}
+    >
+      {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <span className={styles.liveDot} />
           {session.tool ? (
             <span className={styles.toolTag} style={{ color: session.toolColor, borderColor: session.toolColor }}>
               {session.tool}
             </span>
           ) : (
-            <span className={styles.liveTag}>LIVE</span>
+            <span className={styles.liveDot} />
           )}
-          <h3 className={styles.sessionId}>
+          <h3 className={styles.sessionName}>
             {session.name ?? `Session ${session.sessionId.slice(0, 8)}`}
           </h3>
         </div>
@@ -104,34 +79,17 @@ export function LiveSessionArea({ session, subagents }: Props) {
         </div>
       </div>
 
-      {/* Last conversation messages */}
-      {(session.lastUserMessage || session.lastAssistantMessage) && (
-        <div className={styles.conversation}>
-          {session.lastUserMessage && (
-            <div className={styles.msgRow}>
-              <span className={styles.msgRole}>User</span>
-              <span className={styles.msgText}>{session.lastUserMessage}</span>
-            </div>
-          )}
-          {session.lastAssistantMessage && (
-            <div className={styles.msgRow}>
-              <span className={styles.msgRoleBot}>Bot</span>
-              <span className={styles.msgText}>{session.lastAssistantMessage}</span>
-            </div>
-          )}
-        </div>
-      )}
-
+      {/* Stats bar */}
       <div className={styles.statsBar}>
         {subagents.length > 0 && (
-          <span className={styles.stat}>👥 {subagents.length}명 ({activeCount} active)</span>
+          <span className={styles.stat}>👥 {subagents.length} ({activeCount} active)</span>
         )}
         {session.costCents != null && session.costCents > 0 && (
           <span className={styles.stat}>💰 ${(session.costCents / 100).toFixed(2)}</span>
         )}
         {session.totalInputTokens != null && (
           <span className={styles.stat}>
-            📊 {((session.totalInputTokens + (session.totalOutputTokens ?? 0)) / 1000).toFixed(0)}K tokens
+            📊 {formatTokens(session.totalInputTokens + (session.totalOutputTokens ?? 0))}
           </span>
         )}
         {session.model && (
@@ -142,54 +100,46 @@ export function LiveSessionArea({ session, subagents }: Props) {
         )}
       </div>
 
-      {sessionTasks.length > 0 && (
-        <div className={styles.taskList}>
-          {sessionTasks.map((task) => (
-            <div key={task.taskId} className={styles.taskRow}>
-              <span className={`${styles.taskDot} ${task.completed ? styles.done : styles.taskActive}`} />
-              <span className={styles.taskName}>{task.subject ?? task.taskId}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Office floor with role-based desk rows */}
+      {/* Office floor with character */}
       <div className={styles.officeFloor}>
-        <div className={styles.wall}>
-          <span className={styles.wallItem}>🖥️</span>
-          <span className={styles.wallItem}>📊</span>
-        </div>
+        <div className={styles.characterArea}>
+          {/* Main session character with speech bubble */}
+          <div className={styles.mainCharacter}>
+            {speechText && (
+              <div className={styles.speechBubble}>
+                <span className={styles.speechText}>{speechText}</span>
+                <div className={styles.speechTail} />
+              </div>
+            )}
+            <PixelSprite type={spriteType} status={statusAnim} size={48} />
+            <span className={styles.charLabel}>{session.tool ?? 'Agent'}</span>
+          </div>
 
-        <div className={styles.deskArea}>
-          {roleGroups.map((group) => (
-            <div key={group.category} className={styles.deskRow}>
-              <div className={styles.rowLabel}>
-                <span className={styles.rowIcon}>{group.icon}</span>
-                <span className={styles.rowName}>{group.category}</span>
-              </div>
-              <div className={styles.rowDesks}>
-                {group.subs.map((sub) => (
-                  <div key={sub.agentId} className={`${styles.deskUnit} ${sub.active ? '' : styles.deskDone}`}>
-                    <div className={styles.spriteWrap}>
-                      <PixelSprite
-                        type={TYPE_SPRITE[sub.agentType] ?? 'warrior'}
-                        status={sub.active ? 'working' : 'done'}
-                        size={32}
-                      />
-                    </div>
-                    <span className={styles.agentType}>{sub.agentType}</span>
-                    {sub.active && <span className={styles.activeBadge}>⚡</span>}
-                  </div>
-                ))}
-              </div>
+          {/* Subagent characters */}
+          {subagents.length > 0 && (
+            <div className={styles.subagentRow}>
+              {subagents.map((sub) => (
+                <div key={sub.agentId} className={`${styles.subagentChar} ${sub.active ? '' : styles.subDone}`}>
+                  <PixelSprite
+                    type={TYPE_SPRITE[sub.agentType] ?? 'warrior'}
+                    status={sub.active ? 'working' : 'idle'}
+                    size={32}
+                  />
+                  <span className={styles.subLabel}>{sub.agentType}</span>
+                  {sub.active && <span className={styles.activeGlow}>⚡</span>}
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
 
-        <div className={styles.amenities}>
-          <span className={styles.amenity}>🪴</span>
-          <span className={styles.amenity}>🚰</span>
-        </div>
+        {/* User message at bottom */}
+        {session.lastUserMessage && (
+          <div className={styles.userMessage}>
+            <span className={styles.userIcon}>👤</span>
+            <span className={styles.userText}>{session.lastUserMessage}</span>
+          </div>
+        )}
       </div>
     </div>
   )
