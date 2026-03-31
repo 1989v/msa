@@ -42,6 +42,11 @@
   font-weight: 600;
 }
 
+.costValue {
+  color: var(--accent-yellow);
+  font-weight: 600;
+}
+
 .stats {
   display: flex;
   align-items: center;

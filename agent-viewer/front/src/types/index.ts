@@ -70,6 +70,12 @@ export interface LiveSession {
   taskIds: string[]
   lastUserMessage?: string
   lastAssistantMessage?: string
+  costCents?: number
+  totalInputTokens?: number
+  totalOutputTokens?: number
+  cacheReadTokens?: number
+  cacheWriteTokens?: number
+  model?: string
 }
 
 export interface Toast {

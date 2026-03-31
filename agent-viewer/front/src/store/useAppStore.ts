@@ -182,6 +182,12 @@ export const useAppStore = create<AppState>((set) => {
                 status: event.data.status as string,
                 lastUserMessage: event.data.lastUserMessage as string | undefined,
                 lastAssistantMessage: event.data.lastAssistantMessage as string | undefined,
+                costCents: event.data.costCents as number | undefined,
+                totalInputTokens: event.data.totalInputTokens as number | undefined,
+                totalOutputTokens: event.data.totalOutputTokens as number | undefined,
+                cacheReadTokens: event.data.cacheReadTokens as number | undefined,
+                cacheWriteTokens: event.data.cacheWriteTokens as number | undefined,
+                model: event.data.model as string | undefined,
                 subagentIds: existing?.subagentIds ?? [],
                 taskIds: existing?.taskIds ?? [],
               })

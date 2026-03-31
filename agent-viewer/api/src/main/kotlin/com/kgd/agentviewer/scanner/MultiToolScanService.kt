@@ -46,7 +46,13 @@ class MultiToolScanService(
                         "status" to session.status,
                         "lastActivity" to session.lastActivity,
                         "lastUserMessage" to session.lastUserMessage,
-                        "lastAssistantMessage" to session.lastAssistantMessage
+                        "lastAssistantMessage" to session.lastAssistantMessage,
+                        "costCents" to session.costCents,
+                        "totalInputTokens" to session.totalInputTokens,
+                        "totalOutputTokens" to session.totalOutputTokens,
+                        "cacheReadTokens" to session.cacheReadTokens,
+                        "cacheWriteTokens" to session.cacheWriteTokens,
+                        "model" to session.model
                     )
                 ))
             }

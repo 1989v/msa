@@ -16,5 +16,11 @@ data class ScannedSession(
     val lastActivity: Instant,
     val status: String, // "active", "waiting", "completed"
     val lastUserMessage: String?,
-    val lastAssistantMessage: String?
+    val lastAssistantMessage: String?,
+    val costCents: Int? = null,
+    val totalInputTokens: Long? = null,
+    val totalOutputTokens: Long? = null,
+    val cacheReadTokens: Long? = null,
+    val cacheWriteTokens: Long? = null,
+    val model: String? = null
 )

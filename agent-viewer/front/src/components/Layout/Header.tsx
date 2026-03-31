@@ -17,7 +17,10 @@ export function Header() {
 
   const activeTasks = tasks.filter((t) => t.status === 'in-progress').length
   const workingAgents = agents.filter((a) => a.status === 'working').length
+  const liveSessions = useAppStore((s) => s.liveSessions)
   const liveCount = Array.from(liveSubagents.values()).filter((s) => s.active).length
+  const totalCostCents = Array.from(liveSessions.values())
+    .reduce((sum, s) => sum + (s.costCents ?? 0), 0)
 
   return (
     <header className={styles.header}>
@@ -39,6 +42,11 @@ export function Header() {
         {liveCount > 0 && (
           <span className={styles.stat}>
             <span className={styles.liveValue}>{liveCount}</span> Live
+          </span>
+        )}
+        {totalCostCents > 0 && (
+          <span className={styles.stat}>
+            💰 <span className={styles.costValue}>${(totalCostCents / 100).toFixed(2)}</span>
           </span>
         )}
         <NotificationBell />

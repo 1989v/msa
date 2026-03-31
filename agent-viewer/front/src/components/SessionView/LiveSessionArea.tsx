@@ -126,6 +126,17 @@ export function LiveSessionArea({ session, subagents }: Props) {
         {subagents.length > 0 && (
           <span className={styles.stat}>👥 {subagents.length}명 ({activeCount} active)</span>
         )}
+        {session.costCents != null && session.costCents > 0 && (
+          <span className={styles.stat}>💰 ${(session.costCents / 100).toFixed(2)}</span>
+        )}
+        {session.totalInputTokens != null && (
+          <span className={styles.stat}>
+            📊 {((session.totalInputTokens + (session.totalOutputTokens ?? 0)) / 1000).toFixed(0)}K tokens
+          </span>
+        )}
+        {session.model && (
+          <span className={styles.stat}>🤖 {session.model}</span>
+        )}
         {sessionTasks.length > 0 && (
           <span className={styles.stat}>📋 {sessionTasks.length} tasks</span>
         )}
