@@ -4,3 +4,9 @@
 [submodule "ideabank"]
 	path = ideabank
 	url = https://github.com/1989v/msa-ideabank.git
+[submodule "gifticon"]
+	path = gifticon
+	url = https://github.com/1989v/msa-gifticon.git
+[submodule "auth"]
+	path = auth
+	url = https://github.com/1989v/msa-auth.git

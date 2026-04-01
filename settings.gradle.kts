@@ -12,5 +12,9 @@ include(
     "search:app",
     "search:consumer",
     "search:batch",
-    "agent-viewer:api"
+    "agent-viewer:api",
+    "gifticon:domain",
+    "gifticon:app",
+    "auth:domain",
+    "auth:app"
 )

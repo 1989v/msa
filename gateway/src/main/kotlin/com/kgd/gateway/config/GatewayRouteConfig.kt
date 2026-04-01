@@ -38,6 +38,15 @@ class GatewayRouteConfig(
                     }
                     .uri("lb://order-service")
             }
+            // Gifticon Service
+            .route("gifticon-service") { r ->
+                r.path("/api/gifticons/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(AuthenticationGatewayFilter.Config()))
+                            .stripPrefix(0)
+                    }
+                    .uri("lb://gifticon-service")
+            }
             // Search Service (authentication required)
             .route("search-service") { r ->
                 r.path("/api/search/**")

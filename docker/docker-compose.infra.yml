@@ -11,6 +11,11 @@ volumes:
   mysql-product-replica-data:
   mysql-order-master-data:
   mysql-order-replica-data:
+  mysql-gifticon-master-data:
+  mysql-gifticon-replica-data:
+  mysql-auth-master-data:
+  mysql-auth-replica-data:
+  gifticon-images:
   redis-1-data:
   redis-2-data:
   redis-3-data:
@@ -128,6 +133,118 @@ services:
     networks:
       commerce-network:
         ipv4_address: 172.20.1.21
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # MySQL — Gifticon Service
+  # ============================================================
+
+  mysql-gifticon-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-gifticon-master
+    ports:
+      - "3336:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: gifticon_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-gifticon-master-data:/var/lib/mysql
+      - ./mysql/gifticon-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/gifticon-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.30
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-gifticon-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-gifticon-replica
+    ports:
+      - "3337:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: gifticon_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-gifticon-replica-data:/var/lib/mysql
+      - ./mysql/gifticon-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-gifticon-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.31
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # MySQL — Auth Service
+  # ============================================================
+
+  mysql-auth-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-auth-master
+    ports:
+      - "3346:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: auth_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-auth-master-data:/var/lib/mysql
+      - ./mysql/auth-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/auth-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.40
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-auth-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-auth-replica
+    ports:
+      - "3347:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: auth_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-auth-replica-data:/var/lib/mysql
+      - ./mysql/auth-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-auth-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.41
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
