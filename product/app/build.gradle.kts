@@ -17,6 +17,7 @@ dependencies {
     implementation(libs.spring.kafka)
     implementation(libs.querydsl.jpa) { artifact { classifier = "jakarta" } }
     kapt(libs.querydsl.apt) { artifact { classifier = "jakarta" } }
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
