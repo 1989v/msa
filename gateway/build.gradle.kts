@@ -4,7 +4,9 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":common"))
+    implementation(project(":common")) {
+        exclude(group = "org.springframework.boot", module = "spring-boot-starter-web")
+    }
     implementation(libs.spring.cloud.gateway)
     implementation(libs.spring.cloud.eureka.client)
     implementation(libs.spring.cloud.loadbalancer)
