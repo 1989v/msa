@@ -1,0 +1,130 @@
+[
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt",
+    "lineStart": 14,
+    "lineEnd": 19,
+    "codeSnippet": "companion object {\n    fun create(name: String, price: Money, stock: Int): Product {\n        require(name.isNotBlank())\n        return Product(name = name, price = price, stock = stock, status = ProductStatus.ACTIVE)\n    }\n}",
+    "description": "companion object의 create/restore 팩토리 메서드로 Product 생성 로직 캡슐화"
+  },
+  {
+    "conceptId": "value-object",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Money.kt",
+    "lineStart": 5,
+    "lineEnd": 9,
+    "codeSnippet": "@JvmInline\nvalue class Money(val amount: BigDecimal) {\n    init { require(amount > BigDecimal.ZERO) }\n    operator fun plus(other: Money) = Money(amount + other.amount)\n}",
+    "description": "inline value class로 금액 도메인 규칙(양수 제약, 연산자 오버로딩)을 캡슐화한 VO"
+  },
+  {
+    "conceptId": "immutability",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Money.kt",
+    "lineStart": 5,
+    "lineEnd": 9,
+    "codeSnippet": "@JvmInline\nvalue class Money(val amount: BigDecimal) {",
+    "description": "value class + val 필드로 불변성 보장, 연산 시 새 인스턴스 반환"
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/ProductStatus.kt",
+    "lineStart": 3,
+    "lineEnd": 3,
+    "codeSnippet": "enum class ProductStatus { ACTIVE, INACTIVE }",
+    "description": "상품 상태를 ACTIVE/INACTIVE 열거형으로 제한"
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt",
+    "lineStart": 37,
+    "lineEnd": 41,
+    "codeSnippet": "fun decreaseStock(quantity: Int) {\n    require(quantity > 0)\n    if (stock < quantity) throw InsufficientStockException()\n    stock -= quantity\n}",
+    "description": "재고 부족 시 도메인 예외를 발생시키는 비즈니스 규칙 검증"
+  },
+  {
+    "conceptId": "hexagonal-architecture",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt",
+    "lineStart": 14,
+    "lineEnd": 18,
+    "codeSnippet": "class ProductService(\n    private val transactionalService: ProductTransactionalService,\n    private val eventPort: ProductEventPort\n) : CreateProductUseCase, GetProductUseCase, UpdateProductUseCase, GetAllProductsUseCase {",
+    "description": "UseCase 인터페이스 구현 + Port 의존으로 헥사고날 아키텍처의 Application Layer 구현"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/adapter/ProductRepositoryAdapter.kt",
+    "lineStart": 13,
+    "lineEnd": 17,
+    "codeSnippet": "@Component\nclass ProductRepositoryAdapter(\n    private val jpaRepository: ProductJpaRepository,\n    private val queryRepository: ProductQueryRepository\n) : ProductRepositoryPort {",
+    "description": "ProductRepositoryPort 구현체로 JPA 인프라를 도메인 포트에 연결하는 어댑터"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/ProductEventAdapter.kt",
+    "lineStart": 12,
+    "lineEnd": 17,
+    "codeSnippet": "@Component\nclass ProductEventAdapter(\n    private val kafkaTemplate: KafkaTemplate<String, Any>\n) : ProductEventPort {",
+    "description": "ProductEventPort 구현체로 Kafka 이벤트 발행을 어댑터로 추상화"
+  },
+  {
+    "conceptId": "event-driven-architecture",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/ProductEventAdapter.kt",
+    "lineStart": 21,
+    "lineEnd": 33,
+    "codeSnippet": "override fun publishProductCreated(product: Product) {\n    val event = ProductCreatedEvent(...)\n    kafkaTemplate.send(createdTopic, product.id.toString(), event)\n}",
+    "description": "상품 생성/수정 이벤트를 Kafka로 발행하여 search 서비스와 비동기 통신"
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/entity/ProductJpaEntity.kt",
+    "lineStart": 11,
+    "lineEnd": 27,
+    "codeSnippet": "@Entity @Table(name = \"products\")\nclass ProductJpaEntity(\n    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)\n    val id: Long? = null,\n    @Column(nullable = false, length = 200) var name: String,\n)",
+    "description": "JPA @Entity로 products 테이블을 Kotlin 객체에 매핑, toDomain()/fromDomain() 변환 제공"
+  },
+  {
+    "conceptId": "replication",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt",
+    "lineStart": 15,
+    "lineEnd": 21,
+    "codeSnippet": "class RoutingDataSource : AbstractRoutingDataSource() {\n    override fun determineCurrentLookupKey(): DataSourceType =\n        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly())\n            DataSourceType.REPLICA else DataSourceType.MASTER\n}",
+    "description": "@Transactional(readOnly) 여부로 Master/Replica DB를 자동 라우팅"
+  },
+  {
+    "conceptId": "idempotency",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/config/KafkaConfig.kt",
+    "lineStart": 25,
+    "lineEnd": 25,
+    "codeSnippet": "ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true,",
+    "description": "Kafka Producer 멱등성 설정으로 중복 메시지 발행 방지"
+  },
+  {
+    "conceptId": "specification-pattern",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/repository/ProductQueryRepository.kt",
+    "lineStart": 17,
+    "lineEnd": 32,
+    "codeSnippet": "fun findAllByStatus(status: ProductStatus, pageable: Pageable): Page<ProductJpaEntity> {\n    val content = queryFactory.selectFrom(product).where(product.status.eq(status))\n}",
+    "description": "QueryDSL로 타입 안전한 조건 쿼리를 프로그래밍 방식으로 구성"
+  },
+  {
+    "conceptId": "rest",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/controller/ProductController.kt",
+    "lineStart": 19,
+    "lineEnd": 27,
+    "codeSnippet": "@RestController @RequestMapping(\"/api/products\")\nclass ProductController(...) {\n    @PostMapping @GetMapping @PutMapping(\"/{id}\")\n}",
+    "description": "RESTful API 설계 — 리소스 URI + HTTP 메서드 기반 CRUD"
+  },
+  {
+    "conceptId": "acid",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductTransactionalService.kt",
+    "lineStart": 11,
+    "lineEnd": 29,
+    "codeSnippet": "@Transactional\nclass ProductTransactionalService(...) {\n    fun save(product: Product): Product = ...\n    @Transactional(readOnly = true) fun findById(id: Long): Product = ...\n}",
+    "description": "@Transactional로 ACID 트랜잭션 경계 관리, 읽기 전용 최적화 적용"
+  },
+  {
+    "conceptId": "serialization",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/event/ProductEvents.kt",
+    "lineStart": 6,
+    "lineEnd": 12,
+    "codeSnippet": "data class ProductCreatedEvent(\n    val productId: Long, val name: String, val price: BigDecimal,\n    val status: String, val eventTime: LocalDateTime = LocalDateTime.now()\n)",
+    "description": "Kafka 전송을 위해 JSON 직렬화되는 이벤트 data class"
+  }
+]

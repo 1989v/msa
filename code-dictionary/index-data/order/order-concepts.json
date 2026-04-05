@@ -1,0 +1,138 @@
+[
+  {
+    "conceptId": "saga-pattern",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/service/OrderService.kt",
+    "lineStart": 22,
+    "lineEnd": 61,
+    "codeSnippet": "// Phase 1: Save PENDING order (short transaction)\nval pendingOrder = orderTransactionalService.savePendingOrder(command)\n// Phase 2: Call external payment service (no transaction held)\nval paymentResult = paymentPort.requestPayment(...)\n// Phase 3: Update order status based on payment result",
+    "description": "3단계 사가 패턴 — PENDING 저장 → 외부 결제 호출 → COMPLETED/CANCELLED 갱신으로 분산 트랜잭션 처리"
+  },
+  {
+    "conceptId": "circuit-breaker",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt",
+    "lineStart": 26,
+    "lineEnd": 34,
+    "codeSnippet": "private val circuitBreaker = circuitBreakerRegistry.circuitBreaker(\"payment-service\")\noverride suspend fun requestPayment(...): PaymentResult {\n    return circuitBreaker.executeSuspendFunction { webClient.post()... }\n}",
+    "description": "Resilience4j 서킷 브레이커로 결제 서비스 호출 보호 (sliding window + failure threshold)"
+  },
+  {
+    "conceptId": "circuit-breaker",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/config/WebClientConfig.kt",
+    "lineStart": 23,
+    "lineEnd": 32,
+    "codeSnippet": "fun circuitBreakerRegistry(): CircuitBreakerRegistry {\n    val config = CircuitBreakerConfig.custom()\n        .slidingWindowSize(10).failureRateThreshold(50f)\n        .waitDurationInOpenState(Duration.ofSeconds(30)).build()\n}",
+    "description": "서킷 브레이커 설정 — 10건 슬라이딩 윈도우, 50% 실패율 임계치, 30초 Open 대기"
+  },
+  {
+    "conceptId": "event-driven-architecture",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventAdapter.kt",
+    "lineStart": 21,
+    "lineEnd": 45,
+    "codeSnippet": "override fun publishOrderCompleted(order: Order) {\n    val event = OrderCompletedEvent(...)\n    kafkaTemplate.send(completedTopic, order.id.toString(), event)\n}",
+    "description": "주문 완료/취소 이벤트를 Kafka로 발행하여 하위 서비스와 비동기 통신"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/port/OrderRepositoryPort.kt",
+    "lineStart": 1,
+    "lineEnd": 8,
+    "codeSnippet": "interface OrderRepositoryPort {\n    fun save(order: Order): Order\n    fun findById(id: Long): Order?\n}",
+    "description": "주문 저장소의 포트 인터페이스 — 인프라 구현과 도메인 분리"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/port/PaymentPort.kt",
+    "lineStart": 1,
+    "lineEnd": 13,
+    "codeSnippet": "interface PaymentPort {\n    suspend fun requestPayment(orderId: Long, amount: BigDecimal): PaymentResult\n}",
+    "description": "외부 결제 서비스 호출을 추상화하는 포트 인터페이스 (suspend 함수)"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/persistence/order/adapter/OrderRepositoryAdapter.kt",
+    "lineStart": 10,
+    "lineEnd": 29,
+    "codeSnippet": "class OrderRepositoryAdapter(...) : OrderRepositoryPort {\n    override fun save(order: Order): Order { ... }\n    override fun findById(id: Long): Order? = jpaRepository.findByIdWithItems(id)?.toDomain()\n}",
+    "description": "JPA 엔티티 ↔ 도메인 모델 변환을 담당하는 리포지토리 어댑터"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt",
+    "lineStart": 16,
+    "lineEnd": 36,
+    "codeSnippet": "class PaymentAdapter(...) : PaymentPort {\n    override suspend fun requestPayment(...): PaymentResult {\n        return circuitBreaker.executeSuspendFunction { webClient.post()... }\n    }\n}",
+    "description": "WebClient + 서킷 브레이커로 외부 결제 API를 호출하는 어댑터"
+  },
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/service/OrderService.kt",
+    "lineStart": 13,
+    "lineEnd": 18,
+    "codeSnippet": "class OrderService(...) : PlaceOrderUseCase, GetOrderUseCase {\n    private val orderTransactionalService: OrderTransactionalService\n    private val eventPort: OrderEventPort\n    private val paymentPort: PaymentPort\n}",
+    "description": "Application Layer가 UseCase 인터페이스를 구현하고 Port에만 의존 — 의존성 방향이 안쪽으로만 향함"
+  },
+  {
+    "conceptId": "aggregate",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt",
+    "lineStart": 5,
+    "lineEnd": 40,
+    "codeSnippet": "class Order private constructor(...) {\n    val items: List<OrderItem>\n    var status: OrderStatus\n    fun complete() { check(status == OrderStatus.PENDING) }\n    fun cancel() { check(status == OrderStatus.PENDING) }\n}",
+    "description": "Order 애그리거트 루트 — private 생성자, 상태 전이 메서드로 불변 규칙 보장"
+  },
+  {
+    "conceptId": "value-object",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Money.kt",
+    "lineStart": 5,
+    "lineEnd": 11,
+    "codeSnippet": "@JvmInline\nvalue class Money(val amount: BigDecimal) {\n    init { require(amount >= BigDecimal.ZERO) }\n    operator fun plus(other: Money) = Money(amount + other.amount)\n}",
+    "description": "금액 VO — inline value class로 0 이상 제약과 연산자 오버로딩 캡슐화"
+  },
+  {
+    "conceptId": "acid",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/service/OrderTransactionalService.kt",
+    "lineStart": 22,
+    "lineEnd": 45,
+    "codeSnippet": "@Transactional fun savePendingOrder(...) { ... }\n@Transactional fun completeOrder(...) { ... }\n@Transactional fun cancelOrder(...) { ... }\n@Transactional(readOnly = true) fun findById(...) { ... }",
+    "description": "짧은 트랜잭션 단위로 분리하여 외부 호출 중 DB 커넥션을 점유하지 않는 ACID 관리"
+  },
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt",
+    "lineStart": 15,
+    "lineEnd": 29,
+    "codeSnippet": "companion object {\n    fun create(userId: String, items: List<OrderItem>): Order { ... }\n    fun restore(id: Long?, userId: String, ...): Order = Order(...)\n}",
+    "description": "create()로 신규 생성, restore()로 영속성 복원 — 팩토리 메서드 패턴"
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/persistence/order/entity/OrderJpaEntity.kt",
+    "lineStart": 9,
+    "lineEnd": 48,
+    "codeSnippet": "@Entity @Table(name = \"orders\")\nclass OrderJpaEntity(\n    @OneToMany(mappedBy = \"order\", cascade = [CascadeType.ALL], orphanRemoval = true)\n    val items: MutableList<OrderItemJpaEntity> = mutableListOf()\n)",
+    "description": "JPA @Entity — 양방향 @OneToMany 관계, cascade + orphanRemoval로 생명주기 관리"
+  },
+  {
+    "conceptId": "coroutine",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/port/PaymentPort.kt",
+    "lineStart": 5,
+    "lineEnd": 5,
+    "codeSnippet": "suspend fun requestPayment(orderId: Long, amount: BigDecimal): PaymentResult",
+    "description": "suspend 함수로 외부 결제 API 호출을 비동기 논블로킹으로 처리"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/OrderItem.kt",
+    "lineStart": 3,
+    "lineEnd": 20,
+    "codeSnippet": "data class OrderItem private constructor(...) {\n    val subtotal: Money get() = Money(unitPrice.amount * quantity.toBigDecimal())\n}",
+    "description": "data class + computed property로 주문 항목의 소계 자동 계산"
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/controller/OrderExceptionHandler.kt",
+    "lineStart": 13,
+    "lineEnd": 26,
+    "codeSnippet": "@RestControllerAdvice @Order(Ordered.HIGHEST_PRECEDENCE)\nclass OrderExceptionHandler {\n    @ExceptionHandler(BusinessException::class)\n    fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>>\n}",
+    "description": "서비스별 전역 예외 핸들러로 도메인 예외를 HTTP 응답으로 변환"
+  }
+]

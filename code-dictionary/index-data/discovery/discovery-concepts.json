@@ -1,0 +1,10 @@
+[
+  {
+    "conceptId": "service-discovery",
+    "filePath": "discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt",
+    "lineStart": 1,
+    "lineEnd": 13,
+    "codeSnippet": "@SpringBootApplication\n@EnableEurekaServer\nclass DiscoveryApplication\n\nfun main(args: Array<String>) {\n    runApplication<DiscoveryApplication>(*args)\n}",
+    "description": "Eureka Server — @EnableEurekaServer로 서비스 레지스트리 활성화, 전체 MSA 서비스 등록/탐색 허브"
+  }
+]
