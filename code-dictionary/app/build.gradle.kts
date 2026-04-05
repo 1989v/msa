@@ -17,6 +17,7 @@ dependencies {
     kapt(libs.querydsl.apt) { artifact { classifier = "jakarta" } }
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     runtimeOnly(libs.mysql.connector)
+    implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-mysql")
     implementation("org.opensearch.client:opensearch-java:2.19.0")
     implementation("org.opensearch.client:opensearch-rest-client:2.19.0")

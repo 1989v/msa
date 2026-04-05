@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component
 import java.util.Date
 import javax.crypto.SecretKey
 
-@Component
 class JwtUtil(private val props: JwtProperties) {
 
     private val key: SecretKey by lazy {

@@ -554,10 +554,12 @@ services:
     environment:
       - discovery.type=single-node
       - DISABLE_SECURITY_PLUGIN=true
+      - DISABLE_INSTALL_DEMO_CONFIG=true
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
       - cluster.name=code-dictionary-cluster
       - node.name=code-dictionary-node-1
-      - plugins.query.datasources.encryption.masterkey=0000000000000000
+      - bootstrap.memory_lock=false
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Admin1234!
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     networks:
@@ -568,7 +570,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 90s
     restart: unless-stopped
 
   # ============================================================

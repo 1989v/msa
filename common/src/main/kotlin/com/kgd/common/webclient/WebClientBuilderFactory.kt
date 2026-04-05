@@ -8,7 +8,6 @@ import org.springframework.web.reactive.function.client.WebClient
  * 외부 API 호출 시 사용할 WebClient를 생성하여 제공한다.
  * CircuitBreaker 적용은 호출부에서 circuitBreaker.executeSuspendFunction { ... } 패턴으로 직접 수행한다.
  */
-@Component
 class WebClientBuilderFactory(
     private val webClientBuilder: WebClient.Builder
 ) {

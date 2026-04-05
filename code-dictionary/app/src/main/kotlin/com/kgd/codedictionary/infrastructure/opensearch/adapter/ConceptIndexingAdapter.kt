@@ -61,7 +61,14 @@ class ConceptIndexingAdapter(
                                 tf.definition(
                                     TokenFilterDefinition.of { tfd ->
                                         tfd.noriPartOfSpeech(
-                                            NoriPartOfSpeechTokenFilter.of { n -> n }
+                                            NoriPartOfSpeechTokenFilter.of { n ->
+                                                n.stoptags(listOf(
+                                                    "E", "IC", "J", "MAG", "MAJ",
+                                                    "MM", "SP", "SSC", "SSO", "SC",
+                                                    "SE", "XPN", "XSA", "XSN", "XSV",
+                                                    "UNA", "NA", "VSV"
+                                                ))
+                                            }
                                         )
                                     }
                                 )
@@ -88,6 +95,17 @@ class ConceptIndexingAdapter(
                                 an.custom(
                                     CustomAnalyzer.of { ca ->
                                         ca.tokenizer("nori_mixed")
+                                            .filter(listOf("lowercase", "nori_pos_filter"))
+                                    }
+                                )
+                            }
+                        )
+                        .analyzer(
+                            "concept_search_analyzer",
+                            Analyzer.of { an ->
+                                an.custom(
+                                    CustomAnalyzer.of { ca ->
+                                        ca.tokenizer("nori_mixed")
                                             .filter(listOf("lowercase", "nori_pos_filter", "concept_synonym"))
                                     }
                                 )
@@ -97,8 +115,8 @@ class ConceptIndexingAdapter(
                 }
                 .mappings { m ->
                     m.properties("concept_id", Property.of { p -> p.keyword { k -> k } })
-                        .properties("concept_name", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer") } })
-                        .properties("synonyms", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer") } })
+                        .properties("concept_name", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer").searchAnalyzer("concept_search_analyzer") } })
+                        .properties("synonyms", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer").searchAnalyzer("concept_search_analyzer") } })
                         .properties("category", Property.of { p -> p.keyword { k -> k } })
                         .properties("level", Property.of { p -> p.keyword { k -> k } })
                         .properties("file_path", Property.of { p -> p.keyword { k -> k } })
@@ -106,7 +124,7 @@ class ConceptIndexingAdapter(
                         .properties("line_end", Property.of { p -> p.integer { i -> i } })
                         .properties("code_snippet", Property.of { p -> p.text { t -> t } })
                         .properties("git_url", Property.of { p -> p.keyword { k -> k } })
-                        .properties("description", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer") } })
+                        .properties("description", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer").searchAnalyzer("concept_search_analyzer") } })
                         .properties("indexed_at", Property.of { p -> p.date { d -> d } })
                 }
         }
