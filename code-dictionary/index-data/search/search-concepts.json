@@ -1,90 +1,98 @@
 [
   {
-    "conceptId": "bulk-indexing",
-    "filePath": "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/EsBulkDocumentProcessor.kt",
-    "lineStart": 29,
-    "lineEnd": 58,
-    "codeSnippet": "private lateinit var primaryIngester: BulkIngester<Void>\nfun init() {\n    retryIngester = BulkIngester.of { b -> b.client(esClient).maxOperations(500).flushInterval(3, TimeUnit.SECONDS) }\n}\nfun processDocument(indexName: String, document: ProductDocument) {\n    primaryIngester.add(BulkOperation.of { op -> op.index { idx -> idx.index(indexName).id(document.id).document(docMap) } })\n}",
-    "description": "ES BulkIngester로 500건/3초 단위 벌크 색인 — primary + retry 이중 인제스터 구성"
-  },
-  {
-    "conceptId": "alias-swap",
-    "filePath": "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt",
-    "lineStart": 44,
-    "lineEnd": 67,
-    "codeSnippet": "fun updateAliasAndCleanup(alias: String, newIndexName: String, maxRetention: Int = 2) {\n    esClient.indices().updateAliases { req ->\n        existingIndices.forEach { oldIndex -> action.remove { r -> r.index(oldIndex).alias(alias) } }\n        action.add { a -> a.index(newIndexName).alias(alias) }\n    }\n    existingIndices.sortedDescending().drop(maxRetention).forEach { esClient.indices().delete { it } }\n}",
-    "description": "원자적 alias swap으로 무중단 재색인 — 기존 인덱스 제거 + 새 인덱스 연결 + 구버전 정리"
-  },
-  {
-    "conceptId": "inverse-index",
-    "filePath": "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt",
-    "lineStart": 19,
-    "lineEnd": 42,
-    "codeSnippet": "fun createIndex(indexName: String) {\n    esClient.indices().create { req -> req.index(indexName)\n        .settings { s -> s.analysis { a -> a.analyzer(\"nori_analyzer\") { an -> an.custom { c -> c.tokenizer(\"nori_tokenizer\") } } } }\n        .mappings { m -> m.properties(\"name\") { p -> p.text { t -> t.analyzer(\"nori_analyzer\") } } }\n    }\n}",
-    "description": "Nori 토크나이저 기반 역인덱스 생성 — 한국어 형태소 분석으로 전문 검색 지원"
-  },
-  {
-    "conceptId": "event-driven-architecture",
-    "filePath": "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt",
-    "lineStart": 19,
-    "lineEnd": 41,
-    "codeSnippet": "@KafkaListener(topics = [\"product.item.created\", \"product.item.updated\"], groupId = \"...\")\nfun consume(event: ProductIndexEvent) {\n    bulkProcessor.processDocument(indexAlias, ProductDocument(...))\n}",
-    "description": "Kafka 컨슈머가 상품 이벤트를 수신하여 검색 인덱스를 비동기 증분 갱신"
-  },
-  {
-    "conceptId": "fan-out",
-    "filePath": "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt",
-    "lineStart": 19,
-    "lineEnd": 23,
-    "codeSnippet": "@KafkaListener(topics = [\"product.item.created\", \"product.item.updated\"])",
-    "description": "다수의 이벤트 토픽을 단일 컨슈머가 수신하는 팬아웃 패턴"
-  },
-  {
-    "conceptId": "clean-architecture",
-    "filePath": "search/domain/src/main/kotlin/com/kgd/search/product/port/ProductSearchPort.kt",
-    "lineStart": 1,
-    "lineEnd": 9,
-    "codeSnippet": "interface ProductSearchPort {\n    fun search(keyword: String, pageable: Pageable): Page<ProductDocument>\n}",
-    "description": "도메인 계층의 검색 포트 인터페이스 — 인프라(ES) 구현과 분리"
-  },
-  {
-    "conceptId": "clean-architecture",
-    "filePath": "search/domain/src/main/kotlin/com/kgd/search/product/port/ProductIndexPort.kt",
-    "lineStart": 1,
-    "lineEnd": 8,
-    "codeSnippet": "interface ProductIndexPort {\n    fun indexProduct(document: ProductDocument)\n    fun bulkIndex(documents: List<ProductDocument>)\n}",
-    "description": "색인 포트 인터페이스 — ES 구현 세부사항을 도메인에서 추상화"
-  },
-  {
-    "conceptId": "port-adapter",
+    "conceptId": "adapter-pattern",
     "filePath": "search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductSearchAdapter.kt",
     "lineStart": 14,
     "lineEnd": 36,
-    "codeSnippet": "@Component\nclass ProductSearchAdapter(\n    private val elasticsearchOperations: ElasticsearchOperations\n) : ProductSearchPort {",
-    "description": "ProductSearchPort 구현체 — ElasticsearchOperations를 사용하여 검색 수행"
+    "codeSnippet": "class ProductSearchAdapter(\n    private val elasticsearchOperations: ElasticsearchOperations\n) : ProductSearchPort {\n    override fun search(keyword: String, pageable: Pageable): Page<ProductDocument>",
+    "description": "Elasticsearch 구현체를 ProductSearchPort 인터페이스로 어댑팅하여 도메인 계층과 인프라 계층 분리"
   },
   {
-    "conceptId": "adapter-pattern",
-    "filePath": "search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductEsDocument.kt",
-    "lineStart": 20,
-    "lineEnd": 37,
-    "codeSnippet": "companion object { fun fromDomain(doc: ProductDocument) = ProductEsDocument(...) }\nfun toDomain() = ProductDocument(id, name, price, status, createdAt)",
-    "description": "도메인 모델 ↔ ES 문서 간 변환을 담당하는 DTO 어댑터"
+    "conceptId": "port-adapter",
+    "filePath": "search/domain/src/main/kotlin/com/kgd/search/product/port/ProductSearchPort.kt",
+    "lineStart": 7,
+    "lineEnd": 9,
+    "codeSnippet": "interface ProductSearchPort {\n    fun search(keyword: String, pageable: Pageable): Page<ProductDocument>\n}",
+    "description": "헥사고날 아키텍처의 포트 정의로 검색 인프라와 비즈니스 로직 간 의존성 역전"
   },
   {
-    "conceptId": "alias-swap",
-    "filePath": "search/batch/src/main/kotlin/com/kgd/search/job/ReindexJobExecutionListener.kt",
-    "lineStart": 22,
-    "lineEnd": 38,
-    "codeSnippet": "override fun beforeJob(jobExecution: JobExecution) {\n    val newIndexName = aliasManager.createTimestampedIndexName(indexAlias)\n    aliasManager.createIndex(newIndexName)\n}\noverride fun afterJob(jobExecution: JobExecution) {\n    aliasManager.updateAliasAndCleanup(indexAlias, newIndexName)\n}",
-    "description": "Spring Batch Job 리스너로 배치 전 새 인덱스 생성, 성공 후 alias swap 수행"
+    "conceptId": "port-adapter",
+    "filePath": "search/domain/src/main/kotlin/com/kgd/search/product/port/ProductIndexPort.kt",
+    "lineStart": 5,
+    "lineEnd": 8,
+    "codeSnippet": "interface ProductIndexPort {\n    fun indexProduct(document: ProductDocument)\n    fun bulkIndex(documents: List<ProductDocument>)\n}",
+    "description": "헥사고날 아키텍처의 색인 포트로 Elasticsearch와 업무 로직의 느슨한 결합"
+  },
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/product/usecase/SearchProductUseCase.kt",
+    "lineStart": 5,
+    "lineEnd": 27,
+    "codeSnippet": "interface SearchProductUseCase {\n    fun execute(query: Query): Result\n    data class Query(...)\n    data class Result(...)\n}",
+    "description": "클린 아키텍처의 유스케이스 계층으로 비즈니스 규칙을 표현하고 프레임워크 독립적"
   },
   {
     "conceptId": "bulk-indexing",
-    "filePath": "search/batch/src/main/kotlin/com/kgd/search/job/ProductApiReindexTasklet.kt",
-    "lineStart": 33,
-    "lineEnd": 73,
-    "codeSnippet": "do {\n    val response = productApiClient.fetchPage(page, pageSize)\n    response.products.forEach { product ->\n        bulkProcessor.processDocument(newIndexName, ProductDocument(...))\n    }\n    page++\n} while (page < totalPages)\nbulkProcessor.flush()\naliasManager.updateAliasAndCleanup(indexAlias, newIndexName)",
-    "description": "API 페이징 + 벌크 프로세서로 전체 재색인 수행 후 alias swap으로 무중단 전환"
+    "filePath": "batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/EsBulkDocumentProcessor.kt",
+    "lineStart": 40,
+    "lineEnd": 57,
+    "codeSnippet": "primaryIngester = BulkIngester.of { b ->\n    b.client(esClient)\n     .maxOperations(1000)\n     .flushInterval(5, TimeUnit.SECONDS)\n     .listener(primaryListener())\n}\nfun processDocument(indexName: String, document: ProductDocument) {\n    primaryIngester.add(BulkOperation.of { op ->",
+    "description": "BulkIngester를 사용한 배치 색인으로 네트워크 왕복 최소화 및 처리량 최대화"
+  },
+  {
+    "conceptId": "bulk-indexing",
+    "filePath": "consumer/src/main/kotlin/com/kgd/search/infrastructure/indexing/EsBulkDocumentProcessor.kt",
+    "lineStart": 40,
+    "lineEnd": 57,
+    "codeSnippet": "primaryIngester = BulkIngester.of { b ->\n    b.client(esClient)\n     .maxOperations(1000)\n     .flushInterval(5, TimeUnit.SECONDS)\n     .listener(primaryListener())\n}\nfun processDocument(indexName: String, document: ProductDocument) {",
+    "description": "Kafka 컨슈머에서도 BulkIngester로 배치 색인하여 높은 처리량 달성"
+  },
+  {
+    "conceptId": "alias-swap",
+    "filePath": "batch/src/main/kotlin/com/kgd/search/job/ReindexJobExecutionListener.kt",
+    "lineStart": 29,
+    "lineEnd": 38,
+    "codeSnippet": "override fun afterJob(jobExecution: JobExecution) {\n    if (jobExecution.status != BatchStatus.COMPLETED) return\n    val newIndexName = jobExecution.executionContext.getString(NEW_INDEX_NAME_KEY)\n    bulkProcessor.flush()\n    aliasManager.updateAliasAndCleanup(indexAlias, newIndexName)\n    log.info(\"Alias swap complete: {} → {}\", newIndexName, bulkProcessor.errorCount.get())\n}",
+    "description": "배치 완료 후 alias를 새 색인으로 교체하여 무중단 재색인 구현"
+  },
+  {
+    "conceptId": "alias-swap",
+    "filePath": "batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt",
+    "lineStart": 47,
+    "lineEnd": 67,
+    "codeSnippet": "fun updateAliasAndCleanup(alias: String, newIndexName: String, maxRetention: Int = 2) {\n    val existingIndices = getIndicesForAlias(alias)\n    esClient.indices().updateAliases { req ->\n        req.actions { action ->\n            existingIndices.forEach { oldIndex ->\n                action.remove { r -> r.index(oldIndex).alias(alias) }\n            }\n            action.add { a -> a.index(newIndexName).alias(alias) }\n        }\n    }\n    existingIndices.sortedDescending().drop(maxRetention)\n        .forEach { oldIndex -> esClient.indices().delete { d -> d.index(oldIndex) } }\n}",
+    "description": "Alias 교체와 구 색인 정리로 무중단 재색인 및 히스토리 관리"
+  },
+  {
+    "conceptId": "event-driven-architecture",
+    "filePath": "consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt",
+    "lineStart": 19,
+    "lineEnd": 41,
+    "codeSnippet": "@KafkaListener(\n    topics = [\"product.item.created\", \"product.item.updated\"],\n    groupId = \"\\${kafka.consumer.group-id}\",\n    containerFactory = \"productEventListenerContainerFactory\"\n)\nfun consume(event: ProductIndexEvent) {\n    log.info(\"Received product event: productId={}\", event.productId)\n    bulkProcessor.processDocument(indexAlias, ProductDocument(...))\n}",
+    "description": "Kafka를 통한 이벤트 기반 아키텍처로 상품 변경 시 검색 인덱스 자동 갱신"
+  },
+  {
+    "conceptId": "fan-out",
+    "filePath": "consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt",
+    "lineStart": 19,
+    "lineEnd": 23,
+    "codeSnippet": "@KafkaListener(\n    topics = [\"product.item.created\", \"product.item.updated\"],\n    groupId = \"\\${kafka.consumer.group-id}\"\n)",
+    "description": "하나의 Kafka 토픽이 여러 이벤트(created, updated)를 처리하는 fan-out 패턴"
+  },
+  {
+    "conceptId": "inverse-index",
+    "filePath": "batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt",
+    "lineStart": 20,
+    "lineEnd": 42,
+    "codeSnippet": "fun createIndex(indexName: String) {\n    esClient.indices().create { req ->\n        req.index(indexName)\n           .settings { s ->\n               s.analysis { a ->\n                   a.analyzer(\"nori_analyzer\") { an ->\n                       an.custom { c -> c.tokenizer(\"nori_tokenizer\") }\n                   }\n               }\n           }\n           .mappings { m ->\n               m.properties(\"name\") { p ->\n                   p.text { t -> t.analyzer(\"nori_analyzer\") }\n               }\n           }\n}",
+    "description": "nori 분석기로 한글 토크나이징하여 역 색인(inverted index) 생성"
+  },
+  {
+    "conceptId": "inverse-index",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductEsDocument.kt",
+    "lineStart": 14,
+    "lineEnd": 14,
+    "codeSnippet": "@Field(type = FieldType.Text, analyzer = \"nori\") val name: String,",
+    "description": "상품명 필드에 nori 분석기 적용하여 한글 역 색인 활성화"
   }
 ]

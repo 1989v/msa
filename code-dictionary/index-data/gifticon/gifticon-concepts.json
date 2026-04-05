@@ -4,79 +4,127 @@
     "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
     "lineStart": 7,
     "lineEnd": 88,
-    "codeSnippet": "class Gifticon private constructor(...) {\n    fun markUsed() {\n        if (status != GifticonStatus.ACTIVE) throw InvalidGifticonStatusException()\n        status = GifticonStatus.USED\n    }\n}",
-    "description": "Gifticon 애그리거트 루트 — private 생성자, 상태 전이 메서드로 도메인 불변 규칙 보장"
+    "codeSnippet": "class Gifticon private constructor(\n    val id: Long? = null,\n    var brand: Brand,\n    var productName: String,\n    ...) {\n    companion object {\n        fun create(...) { ... }\n        fun restore(...) { ... }",
+    "description": "기프티콘 도메인 모델로 생성 및 상태 변경 비즈니스 로직을 캡슐화한 애그리게이트"
   },
   {
     "conceptId": "aggregate",
     "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ShareGroup.kt",
     "lineStart": 6,
     "lineEnd": 40,
-    "codeSnippet": "class ShareGroup private constructor(...) {\n    fun addMember(userId: Long) {\n        if (isMember(userId)) throw AlreadyMemberException()\n        members.add(ShareMember(userId = userId))\n    }\n}",
-    "description": "ShareGroup 애그리거트 — 멤버 추가/제거 시 중복 검증 등 불변 규칙 관리"
-  },
-  {
-    "conceptId": "value-object",
-    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Brand.kt",
-    "lineStart": 3,
-    "lineEnd": 7,
-    "codeSnippet": "data class Brand(val name: String, val category: String? = null) {\n    init { require(name.isNotBlank()) { \"브랜드명은 비어있을 수 없습니다\" } }\n}",
-    "description": "브랜드 VO — data class + init 블록으로 자기 검증하는 불변 값 객체"
+    "codeSnippet": "class ShareGroup private constructor(\n    val id: Long? = null,\n    var name: String,\n    val ownerId: Long,\n    val members: MutableList<ShareMember>",
+    "description": "공유 그룹 애그리게이트로 멤버 관리 및 소유권 검증 로직 포함"
   },
   {
     "conceptId": "value-object",
     "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/ExpiryDate.kt",
     "lineStart": 6,
     "lineEnd": 25,
-    "codeSnippet": "class ExpiryDate private constructor(val value: LocalDate) {\n    companion object {\n        fun create(date: LocalDate): ExpiryDate {\n            require(!date.isBefore(LocalDate.now()))\n            return ExpiryDate(date)\n        }\n    }\n    fun isExpiringSoon(days: Int) = ...\n    fun daysUntilExpiry() = ...\n}",
-    "description": "만료일 VO — private 생성자 + 팩토리 메서드, 만료 임박 판별 등 비즈니스 로직 캡슐화"
+    "codeSnippet": "class ExpiryDate private constructor(val value: LocalDate) {\n    companion object {\n        fun create(date: LocalDate): ExpiryDate\n        fun restore(date: LocalDate): ExpiryDate",
+    "description": "유효기간을 표현하는 값 객체로 유효성 검증과 만료일 계산 로직 포함"
+  },
+  {
+    "conceptId": "value-object",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Brand.kt",
+    "lineStart": 3,
+    "lineEnd": 7,
+    "codeSnippet": "data class Brand(val name: String, category: String? = null) {\n    init {\n        require(name.isNotBlank()) { \"브랜드명은 비어있을 수 없습니다\" }",
+    "description": "브랜드를 표현하는 데이터 값 객체"
   },
   {
     "conceptId": "sealed-class",
     "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/event/GifticonEvent.kt",
     "lineStart": 5,
     "lineEnd": 9,
-    "codeSnippet": "sealed class GifticonEvent {\n    data class GifticonRegistered(...) : GifticonEvent()\n    data class GifticonStatusChanged(...) : GifticonEvent()\n    data class GifticonExpiringSoon(...) : GifticonEvent()\n}",
-    "description": "sealed class로 도메인 이벤트 타입을 제한 — when 절 완전성 보장"
-  },
-  {
-    "conceptId": "factory-pattern",
-    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
-    "lineStart": 18,
-    "lineEnd": 61,
-    "codeSnippet": "companion object {\n    fun create(...): Gifticon { require(productName.isNotBlank()); return Gifticon(...) }\n    fun restore(id: Long?, ...): Gifticon = Gifticon(...)\n}",
-    "description": "create()로 검증 포함 생성, restore()로 영속성 복원 — 팩토리 메서드 패턴"
-  },
-  {
-    "conceptId": "clean-architecture",
-    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt",
-    "lineStart": 21,
-    "lineEnd": 33,
-    "codeSnippet": "@Service\nclass GifticonService(\n    private val transactionalService: GifticonTransactionalService,\n    private val imageStoragePort: ImageStoragePort,\n    private val ocrPort: OcrPort\n) : RegisterGifticonUseCase, GetGifticonUseCase, ...",
-    "description": "UseCase 인터페이스 구현 + Port 의존으로 Application Layer 구성"
+    "codeSnippet": "sealed class GifticonEvent {\n    data class GifticonRegistered(val gifticonId: Long, val ownerId: Long)\n    data class GifticonStatusChanged(...)\n    data class GifticonExpiringSoon(...)",
+    "description": "기프티콘 도메인 이벤트를 sealed class로 정의하여 타입 안정성 제공"
   },
   {
     "conceptId": "port-adapter",
     "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/GifticonRepositoryPort.kt",
     "lineStart": 8,
     "lineEnd": 15,
-    "codeSnippet": "interface GifticonRepositoryPort {\n    fun save(gifticon: Gifticon): Gifticon\n    fun findById(id: Long): Gifticon?\n    fun findExpiringGifticons(targetDate: LocalDate): List<Gifticon>\n}",
-    "description": "기프티콘 저장소 포트 — 만료 임박 조회 등 도메인 특화 쿼리 포함"
+    "codeSnippet": "interface GifticonRepositoryPort {\n    fun save(gifticon: Gifticon): Gifticon\n    fun findById(id: Long): Gifticon?\n    fun findAllByOwnerId(ownerId: Long, pageable: Pageable)",
+    "description": "기프티콘 저장소 포트로 클린 아키텍처 경계 정의"
   },
   {
-    "conceptId": "adapter-pattern",
-    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/client/OcrClientAdapter.kt",
-    "lineStart": 13,
-    "lineEnd": 40,
-    "codeSnippet": "class OcrClientAdapter(\n    private val webClient: WebClient\n) : OcrPort {\n    override fun extractText(imageContent: ByteArray): OcrResult {\n        val response = webClient.post().uri(\"$ocrUrl/api/ocr/extract\")...\n    }\n}",
-    "description": "외부 OCR 서비스를 WebClient로 호출하는 어댑터 — OcrPort 구현"
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/OcrPort.kt",
+    "lineStart": 3,
+    "lineEnd": 13,
+    "codeSnippet": "interface OcrPort {\n    fun extractText(imageContent: ByteArray): OcrResult\n}\ndata class OcrResult(\n    val rawText: String,\n    val brand: String?,",
+    "description": "OCR 외부 서비스에 대한 포트 정의"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/ImageStoragePort.kt",
+    "lineStart": 3,
+    "lineEnd": 6,
+    "codeSnippet": "interface ImageStoragePort {\n    fun store(fileName: String, content: ByteArray): String\n    fun delete(imageUrl: String)",
+    "description": "이미지 저장소 추상화 포트"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/storage/LocalImageStorageAdapter.kt",
+    "lineStart": 12,
+    "lineEnd": 35,
+    "codeSnippet": "@Component\nclass LocalImageStorageAdapter(\n    @Value(\"\\${gifticon.storage.path}\") private val storagePath: String\n) : ImageStoragePort {\n    override fun store(fileName: String, content: ByteArray): String",
+    "description": "로컬 파일시스템 이미지 저장소 어댑터"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/adapter/GifticonRepositoryAdapter.kt",
+    "lineStart": 14,
+    "lineEnd": 35,
+    "codeSnippet": "@Component\nclass GifticonRepositoryAdapter(\n    private val jpaRepository: GifticonJpaRepository\n) : GifticonRepositoryPort {\n    override fun save(gifticon: Gifticon): Gifticon",
+    "description": "JPA 기반 기프티콘 저장소 어댑터 구현"
   },
   {
     "conceptId": "orm",
     "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/entity/GifticonJpaEntity.kt",
     "lineStart": 12,
-    "lineEnd": 63,
-    "codeSnippet": "@Entity @Table(name = \"gifticons\")\nclass GifticonJpaEntity(...) {\n    fun toDomain(): Gifticon = Gifticon.restore(...)\n    companion object { fun fromDomain(gifticon: Gifticon) = GifticonJpaEntity(...) }\n}",
-    "description": "JPA 엔티티 — 도메인 모델과 양방향 변환(toDomain/fromDomain) 제공"
+    "lineEnd": 48,
+    "codeSnippet": "@Entity\n@Table(name = \"gifticons\")\nclass GifticonJpaEntity(\n    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)\n    val id: Long? = null,\n    @Column(nullable = false, length = 100)\n    var brandName: String,",
+    "description": "JPA 엔티티로 데이터베이스 매핑 및 도메인 변환 로직 포함"
+  },
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
+    "lineStart": 18,
+    "lineEnd": 38,
+    "codeSnippet": "companion object {\n    fun create(\n        brand: Brand,\n        productName: String,\n        imageUrl: String,\n        barcodeNumber: String,\n        expiryDate: LocalDate,\n        ownerId: Long\n    ): Gifticon { ... }",
+    "description": "팩토리 메서드로 기프티콘 객체 생성 및 유효성 검증"
+  },
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/entity/GifticonJpaEntity.kt",
+    "lineStart": 50,
+    "lineEnd": 62,
+    "codeSnippet": "companion object {\n    fun fromDomain(gifticon: Gifticon) = GifticonJpaEntity(\n        id = gifticon.id,\n        brandName = gifticon.brand.name,\n        brandCategory = gifticon.brand.category,",
+    "description": "팩토리 메서드로 도메인 모델을 JPA 엔티티로 변환"
+  },
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt",
+    "lineStart": 22,
+    "lineEnd": 33,
+    "codeSnippet": "@Service\nclass GifticonService(\n    private val transactionalService: GifticonTransactionalService,\n    private val imageStoragePort: ImageStoragePort,\n    private val ocrPort: OcrPort,\n    private val sharedGifticonPort: SharedGifticonPort,\n    private val viewMarkRepositoryPort: ViewMarkRepositoryPort\n) : RegisterGifticonUseCase,",
+    "description": "유스케이스 인터페이스 다중 구현으로 클린 아키텍처 계층 분리"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/port/ShareGroupRepositoryPort.kt",
+    "lineStart": 5,
+    "lineEnd": 11,
+    "codeSnippet": "interface ShareGroupRepositoryPort {\n    fun save(shareGroup: ShareGroup): ShareGroup\n    fun findById(id: Long): ShareGroup?\n    fun findByOwnerId(ownerId: Long): List<ShareGroup>",
+    "description": "공유 그룹 저장소 포트"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/sharing/adapter/ShareGroupRepositoryAdapter.kt",
+    "lineStart": 11,
+    "lineEnd": 31,
+    "codeSnippet": "@Component\nclass ShareGroupRepositoryAdapter(\n    private val jpaRepository: ShareGroupJpaRepository\n) : ShareGroupRepositoryPort {\n    override fun save(shareGroup: ShareGroup): ShareGroup",
+    "description": "공유 그룹 저장소 어댑터"
   }
 ]

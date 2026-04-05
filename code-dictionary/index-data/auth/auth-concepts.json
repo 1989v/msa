@@ -1,42 +1,98 @@
 [
   {
-    "conceptId": "jwt",
-    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt",
-    "lineStart": 12,
-    "lineEnd": 79,
-    "codeSnippet": "class TokenAdapter(...) : TokenPort {\n    override fun generateAccessToken(userId: Long): String {\n        return Jwts.builder().subject(userId.toString()).claim(\"type\", \"access\")\n            .issuedAt(now).expiration(Date(now.time + accessTokenExpiry)).signWith(key).compact()\n    }\n}",
-    "description": "JWT access/refresh 토큰 생성 — HMAC 서명, 만료 시간, claims 기반 인증"
+    "conceptId": "oauth",
+    "filePath": "auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/AuthProvider.kt",
+    "lineStart": 3,
+    "lineEnd": 5,
+    "codeSnippet": "enum class AuthProvider {\n    KAKAO, GOOGLE\n}",
+    "description": "OAuth 제공자를 열거형으로 정의"
   },
   {
     "conceptId": "oauth",
-    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt",
-    "lineStart": 12,
-    "lineEnd": 70,
-    "codeSnippet": "class GoogleOAuthClient(...) : OAuthClientPort {\n    override fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult {\n        val response = webClient.post().uri(\"https://oauth2.googleapis.com/token\")\n            .body(BodyInserters.fromFormData(\"grant_type\", \"authorization_code\").with(\"code\", authCode)...)\n    }\n}",
-    "description": "Google OAuth2 Authorization Code Flow 구현 — 인가 코드 → 토큰 교환"
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/usecase/OAuthLoginUseCase.kt",
+    "lineStart": 5,
+    "lineEnd": 20,
+    "codeSnippet": "interface OAuthLoginUseCase {\n    fun execute(command: Command): Result\n    data class Command(\n        val provider: AuthProvider,\n        val authCode: String,\n        val redirectUri: String",
+    "description": "OAuth 로그인 유스케이스 정의"
   },
   {
     "conceptId": "oauth",
     "filePath": "auth/app/src/main/kotlin/com/kgd/auth/client/KakaoOAuthClient.kt",
-    "lineStart": 12,
+    "lineStart": 13,
+    "lineEnd": 55,
+    "codeSnippet": "@Component(\"kakaoOAuthClient\")\nclass KakaoOAuthClient(\n    private val webClientBuilder: WebClient.Builder,\n    @Value(\"\\${oauth2.kakao.client-id}\") private val clientId: String\n) : OAuthClientPort {\n    override fun exchangeCodeForToken(authCode: String, redirectUri: String)",
+    "description": "카카오 OAuth 클라이언트 구현"
+  },
+  {
+    "conceptId": "oauth",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt",
+    "lineStart": 13,
+    "lineEnd": 55,
+    "codeSnippet": "@Component(\"googleOAuthClient\")\nclass GoogleOAuthClient(\n    private val webClientBuilder: WebClient.Builder,\n    @Value(\"\\${oauth2.google.client-id}\") private val clientId: String\n) : OAuthClientPort {\n    override fun exchangeCodeForToken(authCode: String, redirectUri: String)",
+    "description": "구글 OAuth 클라이언트 구현"
+  },
+  {
+    "conceptId": "jwt",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt",
+    "lineStart": 13,
     "lineEnd": 79,
-    "codeSnippet": "class KakaoOAuthClient(...) : OAuthClientPort {\n    override fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult {\n        webClient.post().uri(\"https://kauth.kakao.com/oauth/token\")...\n    }\n}",
-    "description": "Kakao OAuth2 Authorization Code Flow 구현"
+    "codeSnippet": "@Component\nclass TokenAdapter(\n    @Value(\"\\${jwt.secret}\") private val jwtSecret: String,\n    @Value(\"\\${jwt.access-token-expiry}\") private val accessTokenExpiry: Long\n) : TokenPort {\n    override fun generateAccessToken(userId: Long): String {",
+    "description": "JWT 토큰 생성 및 검증 어댑터"
+  },
+  {
+    "conceptId": "jwt",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/port/TokenPort.kt",
+    "lineStart": 3,
+    "lineEnd": 8,
+    "codeSnippet": "interface TokenPort {\n    fun generateAccessToken(userId: Long): String\n    fun generateRefreshToken(userId: Long): String\n    fun validateRefreshToken(token: String): Long?",
+    "description": "JWT 토큰 관리 포트"
   },
   {
     "conceptId": "factory-pattern",
     "filePath": "auth/app/src/main/kotlin/com/kgd/auth/config/OAuthClientConfig.kt",
     "lineStart": 10,
     "lineEnd": 20,
-    "codeSnippet": "@Bean\nfun oauthClients(\n    @Qualifier(\"kakaoOAuthClient\") kakaoClient: OAuthClientPort,\n    @Qualifier(\"googleOAuthClient\") googleClient: OAuthClientPort\n): Map<AuthProvider, OAuthClientPort> = mapOf(\n    AuthProvider.KAKAO to kakaoClient,\n    AuthProvider.GOOGLE to googleClient\n)",
-    "description": "AuthProvider → OAuthClient 매핑으로 팩토리 구성 — 새 프로바이더 추가 시 맵에만 등록"
+    "codeSnippet": "@Configuration\nclass OAuthClientConfig {\n    @Bean\n    fun oauthClients(\n        @Qualifier(\"kakaoOAuthClient\") kakaoClient: OAuthClientPort,\n        @Qualifier(\"googleOAuthClient\") googleClient: OAuthClientPort\n    ): Map<AuthProvider, OAuthClientPort>",
+    "description": "OAuth 클라이언트 팩토리 빈 설정"
   },
   {
-    "conceptId": "enum",
-    "filePath": "auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/AuthProvider.kt",
+    "conceptId": "port-adapter",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/port/OAuthClientPort.kt",
     "lineStart": 3,
-    "lineEnd": 5,
-    "codeSnippet": "enum class AuthProvider { KAKAO, GOOGLE }",
-    "description": "지원 OAuth 프로바이더를 열거형으로 타입 안전하게 정의"
+    "lineEnd": 15,
+    "codeSnippet": "interface OAuthClientPort {\n    fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult\n    fun getUserInfo(accessToken: String): OAuthUserInfo\n}\ndata class OAuthTokenResult(val accessToken: String)",
+    "description": "OAuth 클라이언트 포트 정의"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/port/UserRepositoryPort.kt",
+    "lineStart": 6,
+    "lineEnd": 10,
+    "codeSnippet": "interface UserRepositoryPort {\n    fun save(user: User): User\n    fun findById(id: Long): User?\n    fun findByProviderAndProviderId(provider: AuthProvider, providerId: String): User?",
+    "description": "사용자 저장소 포트"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/persistence/user/adapter/UserRepositoryAdapter.kt",
+    "lineStart": 11,
+    "lineEnd": 36,
+    "codeSnippet": "@Component\nclass UserRepositoryAdapter(\n    private val jpaRepository: UserJpaRepository\n) : UserRepositoryPort {\n    override fun save(user: User): User",
+    "description": "JPA 기반 사용자 저장소 어댑터"
+  },
+  {
+    "conceptId": "encryption",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt",
+    "lineStart": 23,
+    "lineEnd": 35,
+    "codeSnippet": "private val key: SecretKey by lazy {\n    Keys.hmacShaKeyFor(jwtSecret.toByteArray())\n}\noverride fun generateAccessToken(userId: Long): String {\n    val now = Date()\n    return Jwts.builder()",
+    "description": "HMAC 기반 JWT 토큰 서명으로 암호화 적용"
+  },
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/User.kt",
+    "lineStart": 14,
+    "lineEnd": 31,
+    "codeSnippet": "companion object {\n    fun create(\n        email: String,\n        name: String,\n        provider: AuthProvider,\n        providerId: String,\n        profileImageUrl: String? = null\n    ): User {",
+    "description": "팩토리 메서드로 사용자 객체 생성 및 검증"
   }
 ]

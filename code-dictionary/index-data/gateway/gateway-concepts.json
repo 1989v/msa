@@ -2,25 +2,49 @@
   {
     "conceptId": "api-gateway",
     "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt",
-    "lineStart": 9,
-    "lineEnd": 60,
-    "codeSnippet": "@Configuration\nclass GatewayRouteConfig(private val authFilter: AuthenticationGatewayFilter) {\n    @Bean\n    fun routeLocator(builder: RouteLocatorBuilder): RouteLocator =\n        builder.routes()\n            .route(\"auth-service\") { r -> r.path(\"/api/auth/**\").uri(\"lb://auth-service\") }\n            .route(\"gifticon-service\") { r -> r.path(\"/api/gifticons/**\").filters { f -> f.filter(authFilter.apply(...)) }.uri(\"lb://gifticon-service\") }\n            .build()\n}",
-    "description": "Spring Cloud Gateway — 경로 기반 라우팅 + 인증 필터 적용, lb:// 로드밸런서 연동"
+    "lineStart": 10,
+    "lineEnd": 59,
+    "codeSnippet": "@Configuration\nclass GatewayRouteConfig(\n    private val authFilter: AuthenticationGatewayFilter\n) {\n    @Bean\n    fun routeLocator(builder: RouteLocatorBuilder): RouteLocator",
+    "description": "Spring Cloud Gateway 라우팅 설정"
   },
   {
     "conceptId": "reverse-proxy",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt",
+    "lineStart": 16,
+    "lineEnd": 59,
+    "codeSnippet": ".route(\"auth-service\") { r ->\n    r.path(\"/api/auth/**\")\n        .filters { f -> f.stripPrefix(0) }\n        .uri(\"lb://auth-service\")\n}\n.route(\"gifticon-service\") { r ->",
+    "description": "마이크로서비스로의 요청 역프록시 설정"
+  },
+  {
+    "conceptId": "api-gateway",
     "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt",
-    "lineStart": 13,
+    "lineStart": 14,
     "lineEnd": 62,
-    "codeSnippet": "class AuthenticationGatewayFilter(...) : AbstractGatewayFilterFactory<...>(...) {\n    override fun apply(config: Config): GatewayFilter = GatewayFilter { exchange, chain ->\n        val token = jwtTokenValidator.extractFromHeader(authHeader)\n        val claims = jwtTokenValidator.validateAndExtract(token)\n        val mutatedRequest = request.mutate().header(\"X-User-Id\", userId).header(\"X-User-Roles\", roles).build()\n        chain.filter(exchange.mutate().request(mutatedRequest).build())\n    }\n}",
-    "description": "리버스 프록시 필터 — JWT 검증 후 X-User-Id/X-User-Roles 헤더를 주입하여 하위 서비스로 전달"
+    "codeSnippet": "@Component\nclass AuthenticationGatewayFilter(\n    private val jwtTokenValidator: JwtTokenValidator,\n    private val redisTemplate: ReactiveRedisTemplate<String, Any>\n) : AbstractGatewayFilterFactory<AuthenticationGatewayFilter.Config>(Config::class.java)",
+    "description": "JWT 검증 및 인증 필터 구현"
   },
   {
     "conceptId": "cors",
-    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/CorsConfig.kt",
-    "lineStart": 1,
-    "lineEnd": 20,
-    "codeSnippet": "@Configuration\nclass CorsConfig {\n    @Bean\n    fun corsWebFilter(): CorsWebFilter {\n        val config = CorsConfiguration().apply {\n            allowedOrigins = listOf(\"http://localhost:5173\", \"http://localhost:5174\")\n            allowedMethods = listOf(\"GET\", \"POST\", \"PUT\", \"DELETE\")\n        }\n    }\n}",
-    "description": "CORS 설정 — 프론트엔드 개발 서버 출처 허용, 허용 메서드/헤더 제어"
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt",
+    "lineStart": 49,
+    "lineEnd": 58,
+    "codeSnippet": "val mutatedRequest = request.mutate()\n    .header(\"X-User-Id\", userId)\n    .header(\"X-User-Roles\", roles)\n    .build()\nchain.filter(exchange.mutate().request(mutatedRequest).build())",
+    "description": "CORS 헤더 및 인증정보 전달"
+  },
+  {
+    "conceptId": "api-gateway",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/RequestLoggingFilter.kt",
+    "lineStart": 14,
+    "lineEnd": 32,
+    "codeSnippet": "@Component\nclass RequestLoggingFilter : GlobalFilter, Ordered {\n    override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {\n        val start = Instant.now()\n        return chain.filter(exchange).doFinally {",
+    "description": "전역 요청 로깅 필터"
+  },
+  {
+    "conceptId": "jwt",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/security/JwtTokenValidator.kt",
+    "lineStart": 8,
+    "lineEnd": 18,
+    "codeSnippet": "@Component\nclass JwtTokenValidator(private val jwtUtil: JwtUtil) {\n    fun validateAndExtract(token: String): Claims? =\n        runCatching { jwtUtil.parseToken(token) }.getOrNull()",
+    "description": "JWT 토큰 검증 및 클레임 추출"
   }
 ]

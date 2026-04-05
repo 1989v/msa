@@ -1,50 +1,50 @@
 [
   {
-    "conceptId": "exception-handling",
-    "filePath": "common/src/main/kotlin/com/kgd/common/exception/GlobalExceptionHandler.kt",
-    "lineStart": 12,
-    "lineEnd": 58,
-    "codeSnippet": "@RestControllerAdvice\nclass GlobalExceptionHandler {\n    @ExceptionHandler(BusinessException::class)\n    fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {\n        val status = when (e.errorCode) {\n            ErrorCode.NOT_FOUND -> HttpStatus.NOT_FOUND\n            ...\n        }\n    }\n}",
-    "description": "전역 예외 핸들러 — ErrorCode → HTTP 상태 코드 매핑으로 일관된 에러 응답"
+    "conceptId": "jwt",
+    "filePath": "common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt",
+    "lineStart": 13,
+    "lineEnd": 71,
+    "codeSnippet": "@Component\nclass JwtUtil(private val props: JwtProperties) {\n    private val key: SecretKey by lazy {\n        Keys.hmacShaKeyFor(props.secret.toByteArray(Charsets.UTF_8))\n    }\n    fun generateAccessToken(userId: String, roles: List<String>): String",
+    "description": "JWT 토큰 생성 및 검증 유틸리티"
   },
   {
-    "conceptId": "exception-handling",
-    "filePath": "common/src/main/kotlin/com/kgd/common/exception/BusinessException.kt",
-    "lineStart": 3,
-    "lineEnd": 26,
-    "codeSnippet": "open class BusinessException(val errorCode: ErrorCode, message: String = errorCode.message) : RuntimeException(message)\nclass NotFoundException(resource: String) : BusinessException(...)\nclass UnauthorizedException : BusinessException(...)",
-    "description": "비즈니스 예외 계층 구조 — ErrorCode 기반의 도메인 예외 기본 클래스"
+    "conceptId": "encryption",
+    "filePath": "common/src/main/kotlin/com/kgd/common/security/AesUtil.kt",
+    "lineStart": 12,
+    "lineEnd": 48,
+    "codeSnippet": "@Component\nclass AesUtil(\n    @Value(\"\\${encryption.aes-key}\") private val aesKey: String\n) {\n    companion object {\n        private const val ALGORITHM = \"AES/GCM/NoPadding\"\n        private const val GCM_IV_LENGTH = 12",
+    "description": "AES/GCM 기반 암복호화 유틸리티"
   },
   {
     "conceptId": "generic",
     "filePath": "common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt",
     "lineStart": 5,
     "lineEnd": 37,
-    "codeSnippet": "data class ApiResponse<T>(\n    val success: Boolean, val data: T? = null, val error: ErrorDetail? = null\n) {\n    companion object {\n        fun <T> success(data: T): ApiResponse<T> = ApiResponse(success = true, data = data)\n        fun <T> error(errorCode: ErrorCode): ApiResponse<T> = ...\n    }\n}",
-    "description": "제네릭 API 응답 래퍼 — 모든 서비스의 HTTP 응답을 통일된 포맷으로 감싸는 공통 모듈"
+    "codeSnippet": "data class ApiResponse<T>(\n    val success: Boolean,\n    val data: T? = null,\n    val error: ErrorDetail? = null\n) {\n    companion object {\n        fun <T> success(data: T): ApiResponse<T>",
+    "description": "제네릭 API 응답 래퍼로 타입 안정성 제공"
   },
   {
-    "conceptId": "jwt",
-    "filePath": "common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt",
-    "lineStart": 12,
-    "lineEnd": 71,
-    "codeSnippet": "class JwtUtil(private val props: JwtProperties) {\n    fun generateAccessToken(userId: String, roles: List<String>): String =\n        Jwts.builder().claim(\"userId\", userId).claim(\"roles\", roles).signWith(key).compact()\n    fun parseToken(token: String): Claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).payload\n}",
-    "description": "JWT 토큰 생성/파싱 유틸 — role 기반 claims, 서명 검증"
+    "conceptId": "exception-handling",
+    "filePath": "common/src/main/kotlin/com/kgd/common/exception/BusinessException.kt",
+    "lineStart": 3,
+    "lineEnd": 25,
+    "codeSnippet": "open class BusinessException(\n    val errorCode: ErrorCode,\n    message: String = errorCode.message,\n    cause: Throwable? = null\n) : RuntimeException(message, cause)\nclass NotFoundException(resource: String, id: Any? = null)",
+    "description": "비즈니스 예외 계층 구조로 체계적인 에러 처리"
   },
   {
-    "conceptId": "encryption",
-    "filePath": "common/src/main/kotlin/com/kgd/common/security/AesUtil.kt",
-    "lineStart": 11,
-    "lineEnd": 48,
-    "codeSnippet": "class AesUtil(@Value(\"\\${encryption.aes-key}\") private val aesKey: String) {\n    fun encrypt(plainText: String): String {\n        val iv = ByteArray(GCM_IV_LENGTH).also { SecureRandom().nextBytes(it) }\n        val cipher = Cipher.getInstance(ALGORITHM).apply { init(Cipher.ENCRYPT_MODE, secretKey, GCMParameterSpec(GCM_TAG_LENGTH, iv)) }\n    }\n}",
-    "description": "AES-GCM 대칭 암호화 유틸 — 랜덤 IV + Base64 인코딩으로 민감 데이터 보호"
-  },
-  {
-    "conceptId": "enum",
+    "conceptId": "exception-handling",
     "filePath": "common/src/main/kotlin/com/kgd/common/exception/ErrorCode.kt",
     "lineStart": 3,
     "lineEnd": 23,
-    "codeSnippet": "enum class ErrorCode(val message: String) {\n    INVALID_INPUT(\"입력값이 올바르지 않습니다\"),\n    NOT_FOUND(\"리소스를 찾을 수 없습니다\"),\n    UNAUTHORIZED(\"인증이 필요합니다\"),\n    FORBIDDEN(\"권한이 없습니다\"),\n    ...\n}",
-    "description": "에러 코드 열거형 — 한국어 메시지를 포함한 전체 서비스 공통 에러 분류"
+    "codeSnippet": "enum class ErrorCode(val message: String) {\n    INVALID_INPUT(\"입력값이 올바르지 않습니다\"),\n    NOT_FOUND(\"리소스를 찾을 수 없습니다\"),\n    UNAUTHORIZED(\"인증이 필요합니다\"),",
+    "description": "에러 코드 열거형으로 일관된 에러 관리"
+  },
+  {
+    "conceptId": "generic",
+    "filePath": "common/src/main/kotlin/com/kgd/common/webclient/WebClientBuilderFactory.kt",
+    "lineStart": 11,
+    "lineEnd": 17,
+    "codeSnippet": "@Component\nclass WebClientBuilderFactory(\n    private val webClientBuilder: WebClient.Builder\n) {\n    fun create(baseUrl: String): WebClient",
+    "description": "팩토리 패턴으로 WebClient 생성 추상화"
   }
 ]
