@@ -15,6 +15,8 @@ volumes:
   mysql-gifticon-replica-data:
   mysql-auth-master-data:
   mysql-auth-replica-data:
+  mysql-code-dictionary-master-data:
+  mysql-code-dictionary-replica-data:
   gifticon-images:
   redis-1-data:
   redis-2-data:
@@ -22,6 +24,7 @@ volumes:
   redis-4-data:
   redis-5-data:
   redis-6-data:
+  opensearch-data:
   elasticsearch-data:
   kafka-data:
   zookeeper-data:
@@ -254,6 +257,62 @@ services:
     restart: unless-stopped
 
   # ============================================================
+  # MySQL — Code Dictionary Service
+  # ============================================================
+
+  mysql-code-dictionary-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-code-dictionary-master
+    ports:
+      - "3338:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: code_dictionary_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-code-dictionary-master-data:/var/lib/mysql
+      - ./mysql/code-dictionary-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/code-dictionary-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.50
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-code-dictionary-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-code-dictionary-replica
+    ports:
+      - "3339:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: code_dictionary_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-code-dictionary-replica-data:/var/lib/mysql
+      - ./mysql/code-dictionary-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-code-dictionary-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.51
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
   # Redis Cluster (3 Masters + 3 Replicas)
   # ============================================================
 
@@ -474,6 +533,36 @@ services:
     networks:
       commerce-network:
         ipv4_address: 172.20.3.1
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    restart: unless-stopped
+
+  # ============================================================
+  # OpenSearch — Code Dictionary Service
+  # ============================================================
+
+  opensearch:
+    image: opensearchproject/opensearch:2.19.1
+    container_name: opensearch
+    ports:
+      - "9210:9200"
+      - "9310:9300"
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - cluster.name=code-dictionary-cluster
+      - node.name=code-dictionary-node-1
+      - plugins.query.datasources.encryption.masterkey=0000000000000000
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.3.10
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
       interval: 15s

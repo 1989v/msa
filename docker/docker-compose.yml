@@ -243,6 +243,35 @@ services:
         ipv4_address: 172.20.0.60
     restart: unless-stopped
 
+  code-dictionary:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE_GRADLE: code-dictionary:app
+        MODULE_PATH: code-dictionary/app
+    image: commerce/code-dictionary:latest
+    container_name: code-dictionary
+    ports:
+      - "8089:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      OPENSEARCH_HOST: opensearch
+      OPENSEARCH_PORT: 9200
+    depends_on:
+      discovery:
+        condition: service_healthy
+      mysql-code-dictionary-master:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.90
+    restart: unless-stopped
+
   search-batch:
     build:
       context: ..
