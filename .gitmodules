@@ -10,3 +10,6 @@
 [submodule "auth"]
 	path = auth
 	url = https://github.com/1989v/msa-auth.git
+[submodule "ai"]
+	path = ai
+	url = https://github.com/1989v/ai

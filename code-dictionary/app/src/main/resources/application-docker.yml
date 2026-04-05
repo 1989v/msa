@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    master:
+      jdbc-url: jdbc:mysql://mysql-code-dictionary-master:3306/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    replica:
+      jdbc-url: jdbc:mysql://mysql-code-dictionary-master:3306/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8080/eureka/
+
+opensearch:
+  host: opensearch
+  port: 9200

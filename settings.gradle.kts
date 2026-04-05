@@ -16,5 +16,7 @@ include(
     "gifticon:domain",
     "gifticon:app",
     "auth:domain",
-    "auth:app"
+    "auth:app",
+    "code-dictionary:domain",
+    "code-dictionary:app"
 )
