@@ -1,0 +1,7 @@
+package com.kgd.codedictionary.domain.concept.model
+
+enum class ConceptCategory {
+    BASICS, DATA_STRUCTURE, ALGORITHM, DESIGN_PATTERN, CONCURRENCY,
+    DISTRIBUTED_SYSTEM, ARCHITECTURE, INFRASTRUCTURE, DATA, SECURITY,
+    NETWORK, TESTING, LANGUAGE_FEATURE
+}
