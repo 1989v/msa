@@ -78,6 +78,7 @@ Reference: `/docs/architecture/clean-architecture.md`
 
 - common 모듈은 `bootJar` 없이 `jar`만 생성
 - 서비스 모듈은 `implementation(project(":common"))`으로 common 의존
+- **common 선택적 기능 로드**: `@EnableCommonFeatures(CommonFeature.SECURITY, ...)` 어노테이션으로 필요한 기능만 활성화. exception/response는 항상 로드, Security/Redis/WebClient는 명시적 선언 필요. 가이드: `/docs/architecture/common-features.md`
 - 모든 버전은 `gradle/libs.versions.toml` Version Catalog에서 중앙 관리
 - Java 25 LTS toolchain 전 모듈 통일: `JavaLanguageVersion.of(25)`
 - QueryDSL Q클래스는 `build/generated/source/kapt/`에 생성 (git ignore 대상)
