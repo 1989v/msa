@@ -1,9 +1,8 @@
 {
   "enabledPlugins": {
-    "doc-scaffolding@ai-common": true,
     "ai-debugger@ai-common": true,
     "private-repo@ai-common": true,
     "content-analyzer@ai-common": true,
-    "harness-scaffold@ai-common": true
+    "hns@ai-common": true
   }
 }
