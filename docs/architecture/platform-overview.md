@@ -98,3 +98,34 @@ APScheduler → YahooFinance/FinanceDataReader → ohlcv_bars (PostgreSQL)
 
 Client → POST /api/v1/similarity → SearchSimilarPatternsUseCase
 → pgvector cosine similarity → top-20 패턴 → ForecastPolicy → Response
+
+---
+
+## 6. Data Protection & Disaster Recovery
+
+### 6.1 백업 전략
+
+- **MySQL**: Percona XtraBackup 풀백업 (매일 02:00) + Binlog PITR (매 시간 아카이브)
+- **PostgreSQL**: pg_basebackup + WAL streaming (매일 02:00)
+- **File Storage**: rsync (gifticon 이미지, 매일 02:00)
+- **스토리지**: S3/GCS/Local 플러그인 방식 (STORAGE_PROVIDER 환경변수)
+
+### 6.2 RPO / RTO
+
+| 목표 | 수준 | 방법 |
+|------|------|------|
+| RPO | ~0 | Binlog/WAL 연속 보관으로 마지막 트랜잭션까지 복구 |
+| RTO | 수 분 | XtraBackup 복원 + binlog replay |
+
+### 6.3 보관 정책
+
+| 대상 | 보관 기간 |
+|------|-----------|
+| 풀백업 (MySQL, PostgreSQL, Files) | 7일 |
+| Binlog | 2일 |
+
+### 6.4 자동 페일오버 (비활성)
+
+Orchestrator + ProxySQL 기반. `docker/backup/ha/` 에 설정 포함, 필요 시 활성화.
+
+상세: `docker/backup/README.md`

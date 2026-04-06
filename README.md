@@ -174,10 +174,28 @@ msa/
 
 ---
 
+## 백업 & 재해 복구
+
+프로덕션 데이터 백업/복구 시스템이 `docker/backup/`에 구현되어 있습니다.
+
+| 항목 | 설명 |
+|------|------|
+| 백업 방식 | Percona XtraBackup (MySQL) + pg_basebackup (PostgreSQL) + rsync (파일) |
+| RPO | ~0 (Binlog PITR) |
+| RTO | 수 분 (풀백업 복원 + binlog replay) |
+| 스토리지 | S3 / GCS / Local 플러그인 방식 |
+| 보관 | 풀백업 7일, binlog 2일 |
+| 자동 페일오버 | Orchestrator + ProxySQL (비활성, 필요 시 활성화) |
+
+상세 가이드: [docker/backup/README.md](docker/backup/README.md)
+
+---
+
 ## 문서
 
 - [아키텍처 결정 기록 (ADR)](docs/adr/)
 - [Clean Architecture 가이드](docs/architecture/00.clean-architecture.md)
 - [데이터 전략](docs/architecture/data-strategy.md)
 - [Resilience 전략](docs/architecture/resilience-strategy.md)
+- [백업 설계](docs/superpowers/specs/2026-04-06-backup-management-design.md)
 - [구현 플랜](docs/plans/)

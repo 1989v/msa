@@ -32,6 +32,7 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 - **Kafka 토픽** → `docs/architecture/kafka-convention.md`
 - **API 응답 포맷**: `ApiResponse<T>` → `docs/architecture/api-response.md`
 - **Common 기능 로드**: `@EnableCommonFeatures` → `docs/architecture/common-features.md`
+- **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md`
 
 ---
 
@@ -48,9 +49,10 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 
 ## Skill Routing Priority
 
-신규 기능 개발 또는 작업 요청 시:
+신규 기능 개발 또는 작업 요청 시 (예: "새 기능 만들어줘", "기능 추가", "서비스 구현"):
 
-1. **Claude Teams + hns 조합 우선** — 병렬 분할 가능성을 항상 먼저 판단
+1. **`/hns:feat` 파이프라인 우선** — shape → write → review → tasks → implement → validate
+   - 병렬 분할 가능하면 Claude Teams + hns 조합
    - 패턴 A: hns 플래닝 → 독립 태스크를 Teams 병렬 디스패치
    - 패턴 B: 독립 작업 단위가 명확하면 Teams 분할 → 각 에이전트가 hns 수행
 2. **hns 단독** — 병렬 불가능한 단일 기능
@@ -82,3 +84,11 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 - 서비스별 독립 실행 (Eureka + 해당 DB만 필요)
 - 환경변수: `docker/.env` (gitignore, `.env.example` 제공)
 - Profile: `SPRING_PROFILES_ACTIVE=docker`
+
+## Backup & Disaster Recovery
+
+- 백업 스크립트: `docker/backup/scripts/` (Shell + Cron 기반)
+- 스토리지 플러그인: `docker/backup/storage-providers/` (S3/GCS/Local 교체 가능)
+- 보관 정책: 풀백업 7일, binlog 2일
+- 자동 페일오버: `docker/backup/ha/` (Orchestrator + ProxySQL, 비활성 상태)
+- 상세 가이드: `docker/backup/README.md`

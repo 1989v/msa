@@ -1,0 +1,12 @@
+[
+  {
+    "conceptId": "git-submodule",
+    "filePath": ".gitmodules",
+    "lineStart": 1,
+    "lineEnd": 15,
+    "codeSnippet": "[submodule \"charting\"]\n\tpath = charting\n\turl = https://github.com/1989v/msa-charting.git\n[submodule \"ai\"]\n\tpath = ai\n\turl = https://github.com/1989v/ai",
+    "description": "서브모듈 경로와 원격 URL 매핑 설정. 부모 repo는 각 서브모듈 디렉토리에 커밋 SHA 포인터만 기록하며 실제 파일 내용은 추적하지 않는다.",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/.gitmodules#L1-L15",
+    "gitCommitHash": ""
+  }
+]

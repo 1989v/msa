@@ -35,6 +35,9 @@ docs/
 ├── runbooks/                  ← 운영 가이드
 │   ├── local-dev-setup.md
 │   └── docker-infra.md
+├── study/                     ← 학습/개념 정리
+│   ├── git-submodule.md
+│   └── database-backup-concepts.md
 └── plans/                     ← 구현 계획서
     ├── 2026-03-02-msa-commerce-platform.md
     ├── 2026-03-09-search-batch-db-reader.md
@@ -52,6 +55,8 @@ docs/
 | 서비스 경계 | [service-boundary.md](architecture/service-boundary.md) |
 | ADR 목록 | [adr/](adr/) |
 | 로컬 개발 환경 | [local-dev-setup.md](runbooks/local-dev-setup.md) |
+| 백업 설계 스펙 | [backup-management-design.md](superpowers/specs/2026-04-06-backup-management-design.md) |
+| 백업 운영 가이드 | [docker/backup/README.md](../docker/backup/README.md) |
 
 ## ADR Numbering
 
