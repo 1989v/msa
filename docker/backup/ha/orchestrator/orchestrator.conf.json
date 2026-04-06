@@ -1,0 +1,23 @@
+{
+  "Debug": false,
+  "ListenAddress": ":3000",
+  "MySQLTopologyUser": "root",
+  "MySQLTopologyPassword": "commerce_root_pw_2024",
+  "MySQLReplicaUser": "replicator",
+  "MySQLReplicaPassword": "replication_pw_2024",
+  "BackendDB": "sqlite",
+  "SQLite3DataFile": "/var/lib/orchestrator/orchestrator.db",
+  "DiscoverByShowSlaveHosts": true,
+  "InstancePollSeconds": 3,
+  "UnseenInstanceForgetHours": 1,
+  "RecoveryPeriodBlockSeconds": 600,
+  "RecoverMasterClusterFilters": ["*"],
+  "RecoverIntermediateMasterClusterFilters": ["*"],
+  "AutoPseudoGTID": false,
+  "DetectClusterAliasQuery": "SELECT @@hostname",
+  "DetachLostReplicasAfterMasterFailover": true,
+  "ApplyMySQLPromotionAfterMasterFailover": true,
+  "PostFailoverProcesses": [
+    "/usr/local/bin/orchestrator-failover-hook.sh {failureType} {failedHost} {successorHost}"
+  ]
+}

@@ -1,0 +1,9 @@
+# docker/backup/crontab
+# Install: crontab docker/backup/crontab
+# Or append: crontab -l | cat - docker/backup/crontab | crontab -
+
+# Daily full backup at 02:00 AM
+0 2 * * * /path/to/docker/backup/scripts/backup-full.sh >> /var/log/backup-full.log 2>&1
+
+# Hourly binlog archive
+0 * * * * /path/to/docker/backup/scripts/binlog-archive.sh >> /var/log/binlog-archive.log 2>&1
