@@ -58,6 +58,11 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 
 > 이 규칙은 superpowers Skill Priority보다 우선합니다.
 
+**생산물 위치 규칙**: superpowers 스킬의 기본 출력 경로(`docs/superpowers/specs/`)를 사용하지 않는다. 모든 생산물은 프로젝트 docs/ 구조에 맞게 배치:
+- PRD / Spec → `docs/specs/`
+- Plan → `docs/plans/`
+- ADR → `docs/adr/`
+
 ---
 
 ## Navigation
