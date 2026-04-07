@@ -32,6 +32,9 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 - **Kafka 토픽** → `docs/architecture/kafka-convention.md`
 - **API 응답 포맷**: `ApiResponse<T>` → `docs/architecture/api-response.md`
 - **Common 기능 로드**: Auto-Configuration (`kgd.common.*`) → `docs/architecture/common-features.md`
+- **코드 생성 컨벤션**: 네이밍, DI 방향, 도메인 패턴 → `docs/adr/ADR-0014-code-convention.md`
+- **멱등성 패턴**: Kafka Consumer 중복 처리 방어 → `docs/adr/ADR-0012-idempotent-consumer.md`
+- **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
 - **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md`
 
 ---
@@ -49,12 +52,13 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 
 ## Skill Routing Priority
 
-신규 기능 개발 또는 작업 요청 시 (예: "새 기능 만들어줘", "기능 추가", "서비스 구현"):
+작업 요청 시 (예: "새 기능 만들어줘", "이거 어떻게 동작해?", "구조 알려줘", "서비스 구현"):
 
-1. **`/hns:feat` 파이프라인 우선** — shape → write → review → tasks → implement → validate
+1. **`/hns:start` 통합 진입점 우선** — 요청 분석 → 질의 응답 or 피처 파이프라인 자동 라우팅
+   - 코드베이스 질의: 탐색/분석/설명으로 바로 처리
+   - 피처 개발: shape → write → review → tasks → implement → validate 파이프라인
+   - 모호한 요청: 코드베이스 탐색 후 판단, 필요시 피처 파이프라인 전환 제안
    - 병렬 분할 가능하면 Claude Teams + hns 조합
-   - 패턴 A: hns 플래닝 → 독립 태스크를 Teams 병렬 디스패치
-   - 패턴 B: 독립 작업 단위가 명확하면 Teams 분할 → 각 에이전트가 hns 수행
 2. **hns 단독** — 병렬 불가능한 단일 기능
 3. **superpowers 보조** — hns 부적합 시(아이디어 탐색, 비개발 논의)
 

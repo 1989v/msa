@@ -1,91 +1,200 @@
 # Service Boundary
 
-## 1. Gateway
+## 1. Discovery
 
 ### Responsibility
-- 인증/인가
-- 라우팅
-- 요청 검증
-- 외부 요청 표준화
+- Eureka 서비스 디스커버리
+- 서비스 인스턴스 등록/해제/상태 관리
 
 ### Does NOT
 - 비즈니스 로직 수행 금지
 - DB 접근 금지
 
+| 포트 | DB |
+|------|-----|
+| 8761 | - |
+
 ---
 
-## 2. Product Service
+## 2. Gateway
+
+### Responsibility
+- API Gateway (라우팅)
+- JWT 인증/인가
+- Rate Limiting
+- 요청 검증 및 외부 요청 표준화
+
+### Does NOT
+- 비즈니스 로직 수행 금지
+- DB 접근 금지
+
+| 포트 | DB |
+|------|-----|
+| 8080 | - |
+
+---
+
+## 3. Product Service
 
 ### Responsibility
 - 상품 CRUD
 - 상품 상태 관리
 - 상품 도메인 규칙
+- 재고 변경 이벤트 수신 시 상품 수량 동기화
 
 ### Data Ownership
-- product DB 완전 소유
+- product_db 완전 소유
+
+### Events
+- 발행: `product.item.created`, `product.item.updated`
+- 수신: `inventory.stock.reserved`, `inventory.stock.released`, `inventory.stock.received`
+
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8081 | product_db | product:domain / product:app |
 
 ---
 
-## 3. Order Service
+## 4. Order Service
 
 ### Responsibility
 - 주문 생성
 - 주문 상태 전이
 - 결제 연계 (외부 API)
+- 재고 예약 만료 이벤트 수신
 
 ### Data Ownership
-- order DB 완전 소유
+- order_db 완전 소유
+
+### Events
+- 발행: `order.order.completed`, `order.order.cancelled`
+- 수신: `inventory.reservation.expired`
+
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8082 | order_db | order:domain / order:app |
 
 ---
 
-## 4. Search Service
+## 5. Search Service
 
 ### Responsibility
-- 검색 API 제공
+- 검색 API 제공 (REST, 읽기 전용)
 - Elasticsearch 인덱스 관리
-- Kafka 이벤트 기반 색인
+- Kafka 이벤트 기반 증분 색인 (consumer)
+- Spring Batch 전체 색인 (batch, alias swap)
 
 ### Data Ownership
 - Elasticsearch 인덱스 소유
-- RDBMS 미사용 (또는 최소화)
+- RDBMS 미사용
+
+### Events
+- 수신: `product.item.created`, `product.item.updated`
+
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8083 (app) / 8084 (consumer) | Elasticsearch | search:domain / search:app / search:consumer / search:batch |
 
 ---
 
-## 5. Charting Service
+## 6. Inventory Service
 
 ### Responsibility
-- 주식 OHLCV 데이터 수집 및 저장 (Yahoo Finance / FinanceDataReader)
-- 60-day 슬라이딩 윈도우 기반 패턴 생성 및 32-dim 벡터 임베딩
-- pgvector 코사인 유사도 기반 유사 패턴 검색 (top-20)
-- 미래 수익률(+5d/+20d/+60d) 통계 예측 (ForecastPolicy)
-- React 차트 시각화 프론트엔드 제공
+- 재고 관리 (SSOT: Single Source of Truth)
+- 재고 예약/차감/해제
+- Outbox 패턴으로 이벤트 발행
 
 ### Data Ownership
-- PostgreSQL + pgvector DB 완전 소유 (port 5433)
-- symbols, ohlcv_bars, patterns 테이블
-- 커머스 DB(MySQL)와 완전 분리
+- inventory_db 완전 소유
 
-### Tech Stack
-- Python 3.11 + FastAPI (ADR-003)
-- pgvector/pgvector:pg16 (ADR-002)
-- yfinance + FinanceDataReader (ADR-004)
-- React 18 + Recharts (Frontend, port 3010)
+### Events
+- 발행: `inventory.stock.reserved`, `inventory.stock.released`, `inventory.stock.confirmed`, `inventory.stock.received`, `inventory.reservation.expired`
+- 수신: `order.order.completed`, `order.order.cancelled`, `fulfillment.order.shipped`, `fulfillment.order.cancelled`
 
-### API Endpoints
-- POST /api/v1/similarity — 유사 패턴 검색 + 예측 통계
-- GET  /api/v1/symbols — 추적 종목 목록
-- POST /api/v1/symbols — 종목 등록
-- GET  /api/v1/{ticker}/ohlcv — OHLCV 데이터 조회
-
-### Does NOT
-- 커머스 DB(Product/Order) 접근 금지
-- Kafka 이벤트 발행/구독 없음 (독립 도메인)
-- 실시간 시세 제공 없음 (일별 데이터만)
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8085 | inventory_db | inventory:domain / inventory:app |
 
 ---
 
-## 6. Data Ownership Rule
+## 7. Gifticon Service
+
+### Responsibility
+- 기프티콘 관리
+
+### Data Ownership
+- gifticon_db 완전 소유
+
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8086 | gifticon_db | gifticon:domain / gifticon:app |
+
+---
+
+## 8. Auth Service
+
+### Responsibility
+- OAuth2 인증 (카카오/구글)
+- 사용자 인증 토큰 관리
+
+### Data Ownership
+- auth_db 완전 소유
+
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8087 | auth_db | auth:domain / auth:app |
+
+---
+
+## 9. Fulfillment Service
+
+### Responsibility
+- 출고 상태 관리 (상태 머신)
+- Outbox 패턴으로 이벤트 발행
+
+### Data Ownership
+- fulfillment_db 완전 소유
+
+### Events
+- 발행: `fulfillment.order.created`, `fulfillment.order.shipped`, `fulfillment.order.delivered`, `fulfillment.order.cancelled`
+- 수신: `inventory.stock.reserved`
+
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8088 | fulfillment_db | fulfillment:domain / fulfillment:app |
+
+---
+
+## 10. Code-Dictionary Service
+
+### Responsibility
+- 코드 사전 관리 (공통 코드 CRUD)
+
+### Data Ownership
+- code_dictionary_db 완전 소유
+
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8089 | code_dictionary_db | code-dictionary:domain / code-dictionary:app |
+
+---
+
+## 11. Warehouse Service
+
+### Responsibility
+- 창고 관리
+
+### Data Ownership
+- warehouse_db 완전 소유
+
+| 포트 | DB | 모듈 |
+|------|-----|------|
+| 8090 | warehouse_db | warehouse:domain / warehouse:app |
+
+---
+
+## Data Ownership Rule
 
 - 서비스 간 DB 공유 금지
-- 데이터 변경은 이벤트 기반으로 전파
-- 직접 조회가 필요한 경우 API 호출
+- 데이터 변경은 이벤트 기반으로 전파 (Kafka, Outbox + CDC)
+- 직접 조회가 필요한 경우 API 호출 (WebClient + CircuitBreaker + suspend)
