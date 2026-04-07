@@ -18,5 +18,9 @@ include(
     "auth:domain",
     "auth:app",
     "code-dictionary:domain",
-    "code-dictionary:app"
+    "code-dictionary:app",
+    "inventory:domain",
+    "inventory:app",
+    "fulfillment:domain",
+    "fulfillment:app"
 )

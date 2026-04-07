@@ -17,6 +17,10 @@ volumes:
   mysql-auth-replica-data:
   mysql-code-dictionary-master-data:
   mysql-code-dictionary-replica-data:
+  mysql-inventory-master-data:
+  mysql-inventory-replica-data:
+  mysql-fulfillment-master-data:
+  mysql-fulfillment-replica-data:
   gifticon-images:
   redis-1-data:
   redis-2-data:
@@ -304,6 +308,118 @@ services:
     networks:
       commerce-network:
         ipv4_address: 172.20.1.51
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # MySQL — Inventory Service
+  # ============================================================
+
+  mysql-inventory-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-inventory-master
+    ports:
+      - "3328:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: inventory_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-inventory-master-data:/var/lib/mysql
+      - ./mysql/inventory-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/inventory-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.60
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-inventory-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-inventory-replica
+    ports:
+      - "3329:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: inventory_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-inventory-replica-data:/var/lib/mysql
+      - ./mysql/inventory-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-inventory-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.61
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # MySQL — Fulfillment Service
+  # ============================================================
+
+  mysql-fulfillment-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-fulfillment-master
+    ports:
+      - "3330:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: fulfillment_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-fulfillment-master-data:/var/lib/mysql
+      - ./mysql/fulfillment-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/fulfillment-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.70
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-fulfillment-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-fulfillment-replica
+    ports:
+      - "3331:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: fulfillment_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-fulfillment-replica-data:/var/lib/mysql
+      - ./mysql/fulfillment-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-fulfillment-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.71
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s

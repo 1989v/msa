@@ -10,9 +10,17 @@
 |------|------------|------------|
 | `product.item.created` | product | search |
 | `product.item.updated` | product | search |
-| `order.order.completed` | order | - |
-| `order.order.cancelled` | order | - |
+| `order.order.completed` | order | inventory |
+| `order.order.cancelled` | order | inventory |
+| `inventory.stock.reserved` | inventory | fulfillment |
+| `inventory.stock.released` | inventory | - |
+| `inventory.stock.confirmed` | inventory | - |
+| `inventory.reservation.expired` | inventory | order |
+| `fulfillment.order.created` | fulfillment | - |
+| `fulfillment.order.shipped` | fulfillment | inventory |
+| `fulfillment.order.delivered` | fulfillment | - |
+| `fulfillment.order.cancelled` | fulfillment | inventory |
 
 ## Consumer Group ID
 
-형식: `{service}-{purpose}` (예: `search-indexer`)
+형식: `{service}-{purpose}` (예: `search-indexer`, `inventory-service`, `fulfillment-service`)

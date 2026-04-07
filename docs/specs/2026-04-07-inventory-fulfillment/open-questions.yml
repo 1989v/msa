@@ -1,0 +1,20 @@
+open_questions:
+  - id: OQ-1
+    question: "Outbox Polling 주기 1초가 적절한가? 너무 느리면 CDC로 빨리 전환해야 할 수 있다"
+    status: open
+    decision: null
+
+  - id: OQ-2
+    question: "Reservation TTL 기본값 30분이 적절한가? 비즈니스 요구에 따라 조정 필요"
+    status: open
+    decision: null
+
+  - id: OQ-3
+    question: "Fulfillment 서비스가 직접 inventory.stock.confirmed 이벤트를 트리거하는 게 맞는가? shipped 이벤트를 inventory가 소비하는 방식이 더 loose coupling"
+    status: closed
+    decision: "shipped 이벤트를 inventory가 소비하는 방식 채택 (spec에 반영됨)"
+
+  - id: OQ-4
+    question: "Phase 1에서 idempotent consumer가 필요한가? Kafka at-least-once에서 중복 처리 가능성"
+    status: open
+    decision: null

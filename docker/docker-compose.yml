@@ -251,6 +251,60 @@ services:
         ipv4_address: 172.20.0.90
     restart: unless-stopped
 
+  inventory:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE_GRADLE: inventory:app
+        MODULE_PATH: inventory/app
+    image: commerce/inventory:latest
+    container_name: inventory
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      discovery:
+        condition: service_healthy
+      mysql-inventory-master:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.80
+    restart: unless-stopped
+
+  fulfillment:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE_GRADLE: fulfillment:app
+        MODULE_PATH: fulfillment/app
+    image: commerce/fulfillment:latest
+    container_name: fulfillment
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    depends_on:
+      discovery:
+        condition: service_healthy
+      mysql-fulfillment-master:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.81
+    restart: unless-stopped
+
   search-batch:
     build:
       context: ..

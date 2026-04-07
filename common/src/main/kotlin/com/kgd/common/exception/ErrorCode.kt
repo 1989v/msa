@@ -19,5 +19,6 @@ enum class ErrorCode(val message: String) {
     INVALID_ORDER_STATUS("유효하지 않은 주문 상태입니다"),
     INVALID_PRODUCT_STATUS("유효하지 않은 상품 상태입니다"),
     INVALID_GIFTICON_STATUS("유효하지 않은 기프티콘 상태입니다"),
+    INVALID_FULFILLMENT_STATUS("유효하지 않은 풀필먼트 상태입니다"),
     OCR_EXTRACTION_FAILED("OCR 텍스트 추출에 실패했습니다")
 }
