@@ -28,6 +28,11 @@ spring:
         format_sql: false
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
 server:
   port: 8085
@@ -46,12 +51,20 @@ kafka:
     stock-confirmed: inventory.stock.confirmed
     reservation-expired: inventory.reservation.expired
 
+outbox:
+  polling:
+    enabled: ${OUTBOX_POLLING_ENABLED:true}
+
 inventory:
   reservation:
     ttl-minutes: 30
   outbox:
     polling-interval-ms: 1000
     max-retry: 3
+  reconciliation:
+    interval-ms: 300000
+  admission:
+    max-concurrent-reservations: ${INVENTORY_MAX_CONCURRENT_RESERVATIONS:1000}
 
 management:
   endpoints:

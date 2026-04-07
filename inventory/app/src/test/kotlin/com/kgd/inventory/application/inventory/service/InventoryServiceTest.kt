@@ -50,7 +50,7 @@ class InventoryServiceTest : BehaviorSpec({
                 result.productId shouldBe 100L
                 result.availableQty shouldBe 45
                 result.reservedQty shouldBe 15
-                verify(exactly = 1) { outboxPort.save("Inventory", 1L, "StockReserved", any()) }
+                verify(exactly = 1) { outboxPort.save("Inventory", 1L, "inventory.stock.reserved", any()) }
             }
         }
         `when`("재고가 부족하면") {
@@ -97,7 +97,7 @@ class InventoryServiceTest : BehaviorSpec({
                 result.productId shouldBe 100L
                 result.availableQty shouldBe 50
                 result.reservedQty shouldBe 10
-                verify(exactly = 1) { outboxPort.save("Inventory", 1L, "StockReleased", any()) }
+                verify(exactly = 1) { outboxPort.save("Inventory", 1L, "inventory.stock.released", any()) }
             }
         }
     }
@@ -122,7 +122,7 @@ class InventoryServiceTest : BehaviorSpec({
                 result.productId shouldBe 100L
                 result.availableQty shouldBe 45
                 result.reservedQty shouldBe 10
-                verify(exactly = 1) { outboxPort.save("Inventory", 1L, "StockConfirmed", any()) }
+                verify(exactly = 1) { outboxPort.save("Inventory", 1L, "inventory.stock.confirmed", any()) }
             }
         }
     }

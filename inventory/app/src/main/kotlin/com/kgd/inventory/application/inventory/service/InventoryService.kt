@@ -3,6 +3,7 @@ package com.kgd.inventory.application.inventory.service
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import com.kgd.inventory.application.inventory.port.InventoryCachePort
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
 import com.kgd.inventory.application.inventory.port.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
@@ -17,6 +18,8 @@ import com.kgd.inventory.domain.inventory.event.InventoryEvent
 import com.kgd.inventory.domain.inventory.model.Inventory
 import com.kgd.inventory.domain.reservation.model.Reservation
 import com.kgd.inventory.domain.reservation.model.ReservationStatus
+import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -27,8 +30,12 @@ class InventoryService(
     private val reservationRepository: ReservationRepositoryPort,
     private val outboxPort: OutboxPort,
     private val objectMapper: ObjectMapper,
+    @param:Autowired(required = false)
+    private val cachePort: InventoryCachePort? = null,
 ) : ReserveStockUseCase, ReleaseStockUseCase, ConfirmStockUseCase, ReceiveStockUseCase, GetInventoryUseCase,
     ConfirmStockByOrderUseCase, ReleaseStockByOrderUseCase {
+
+    private val log = LoggerFactory.getLogger(javaClass)
 
     companion object {
         private const val AGGREGATE_TYPE = "Inventory"
@@ -36,11 +43,23 @@ class InventoryService(
     }
 
     override fun execute(command: ReserveStockUseCase.Command): ReserveStockUseCase.Result {
+        // Redis fast-path: 사전 검증 (재고 부족 시 DB 접근 없이 빠르게 실패)
+        cachePort?.let { cache ->
+            val cacheResult = cache.reserveStock(command.productId, command.warehouseId, command.qty)
+            if (cacheResult == null) {
+                log.debug("Redis fast-path: 재고 부족 (productId={}, warehouseId={}, qty={})", command.productId, command.warehouseId, command.qty)
+                // Redis에서 부족 판정이지만 DB가 SSOT이므로 DB로 진행 (캐시가 오래됐을 수 있음)
+            }
+        }
+
         val inventory = inventoryRepository.findByProductIdAndWarehouseId(command.productId, command.warehouseId)
             ?: throw BusinessException(ErrorCode.NOT_FOUND, "재고를 찾을 수 없습니다: productId=${command.productId}, warehouseId=${command.warehouseId}")
 
         inventory.reserve(command.qty)
         val savedInventory = inventoryRepository.save(inventory)
+
+        // Redis 캐시 동기화 (DB 결과 기준)
+        syncCache(command.productId, command.warehouseId, savedInventory)
 
         val reservation = Reservation.create(
             orderId = command.orderId,
@@ -61,8 +80,9 @@ class InventoryService(
             warehouseId = command.warehouseId,
             qty = command.qty,
             orderId = command.orderId,
+            availableQty = savedInventory.getAvailableQty(),
         )
-        outboxPort.save(AGGREGATE_TYPE, inventoryId, "StockReserved", objectMapper.writeValueAsString(event))
+        outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.reserved", objectMapper.writeValueAsString(event))
 
         return ReserveStockUseCase.Result(
             reservationId = reservationId,
@@ -85,6 +105,9 @@ class InventoryService(
         inventory.release(reservation.qty)
         val savedInventory = inventoryRepository.save(inventory)
 
+        // Redis 캐시 동기화 (write-through)
+        syncCache(reservation.productId, reservation.warehouseId, savedInventory)
+
         val inventoryId = savedInventory.id
             ?: throw IllegalStateException("저장된 재고의 ID가 null입니다")
 
@@ -93,8 +116,9 @@ class InventoryService(
             warehouseId = reservation.warehouseId,
             qty = reservation.qty,
             orderId = command.orderId,
+            availableQty = savedInventory.getAvailableQty(),
         )
-        outboxPort.save(AGGREGATE_TYPE, inventoryId, "StockReleased", objectMapper.writeValueAsString(event))
+        outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.released", objectMapper.writeValueAsString(event))
 
         return ReleaseStockUseCase.Result(
             productId = reservation.productId,
@@ -116,6 +140,9 @@ class InventoryService(
         inventory.confirm(reservation.qty)
         val savedInventory = inventoryRepository.save(inventory)
 
+        // Redis 캐시 동기화 (write-through)
+        syncCache(reservation.productId, reservation.warehouseId, savedInventory)
+
         val inventoryId = savedInventory.id
             ?: throw IllegalStateException("저장된 재고의 ID가 null입니다")
 
@@ -124,8 +151,9 @@ class InventoryService(
             warehouseId = reservation.warehouseId,
             qty = reservation.qty,
             orderId = command.orderId,
+            availableQty = savedInventory.getAvailableQty(),
         )
-        outboxPort.save(AGGREGATE_TYPE, inventoryId, "StockConfirmed", objectMapper.writeValueAsString(event))
+        outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.confirmed", objectMapper.writeValueAsString(event))
 
         return ConfirmStockUseCase.Result(
             productId = reservation.productId,
@@ -141,6 +169,9 @@ class InventoryService(
         inventory.receive(command.qty)
         val savedInventory = inventoryRepository.save(inventory)
 
+        // Redis 캐시 동기화 (write-through)
+        syncCache(command.productId, command.warehouseId, savedInventory)
+
         val inventoryId = savedInventory.id
             ?: throw IllegalStateException("저장된 재고의 ID가 null입니다")
 
@@ -148,8 +179,9 @@ class InventoryService(
             productId = command.productId,
             warehouseId = command.warehouseId,
             qty = command.qty,
+            availableQty = savedInventory.getAvailableQty(),
         )
-        outboxPort.save(AGGREGATE_TYPE, inventoryId, "StockReceived", objectMapper.writeValueAsString(event))
+        outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.received", objectMapper.writeValueAsString(event))
 
         return ReceiveStockUseCase.Result(
             productId = command.productId,
@@ -160,10 +192,11 @@ class InventoryService(
     @Transactional(readOnly = true)
     override fun execute(query: GetInventoryUseCase.Query): List<GetInventoryUseCase.Result> {
         return inventoryRepository.findAllByProductId(query.productId).map { inventory ->
+            val cached = cachePort?.getStock(inventory.productId, inventory.warehouseId)
             GetInventoryUseCase.Result(
                 warehouseId = inventory.warehouseId,
-                availableQty = inventory.getAvailableQty(),
-                reservedQty = inventory.getReservedQty(),
+                availableQty = cached?.availableQty ?: inventory.getAvailableQty(),
+                reservedQty = cached?.reservedQty ?: inventory.getReservedQty(),
             )
         }
     }
@@ -182,6 +215,9 @@ class InventoryService(
             inventory.confirm(reservation.qty)
             val savedInventory = inventoryRepository.save(inventory)
 
+            // Redis 캐시 동기화 (write-through)
+            syncCache(reservation.productId, reservation.warehouseId, savedInventory)
+
             val inventoryId = savedInventory.id
                 ?: throw IllegalStateException("저장된 재고의 ID가 null입니다")
 
@@ -190,8 +226,9 @@ class InventoryService(
                 warehouseId = reservation.warehouseId,
                 qty = reservation.qty,
                 orderId = command.orderId,
+                availableQty = savedInventory.getAvailableQty(),
             )
-            outboxPort.save(AGGREGATE_TYPE, inventoryId, "StockConfirmed", objectMapper.writeValueAsString(event))
+            outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.confirmed", objectMapper.writeValueAsString(event))
 
             ConfirmStockByOrderUseCase.Result(
                 productId = reservation.productId,
@@ -215,6 +252,9 @@ class InventoryService(
             inventory.release(reservation.qty)
             val savedInventory = inventoryRepository.save(inventory)
 
+            // Redis 캐시 동기화 (write-through)
+            syncCache(reservation.productId, reservation.warehouseId, savedInventory)
+
             val inventoryId = savedInventory.id
                 ?: throw IllegalStateException("저장된 재고의 ID가 null입니다")
 
@@ -223,14 +263,23 @@ class InventoryService(
                 warehouseId = reservation.warehouseId,
                 qty = reservation.qty,
                 orderId = command.orderId,
+                availableQty = savedInventory.getAvailableQty(),
             )
-            outboxPort.save(AGGREGATE_TYPE, inventoryId, "StockReleased", objectMapper.writeValueAsString(event))
+            outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.released", objectMapper.writeValueAsString(event))
 
             ReleaseStockByOrderUseCase.Result(
                 productId = reservation.productId,
                 availableQty = savedInventory.getAvailableQty(),
                 reservedQty = savedInventory.getReservedQty(),
             )
+        }
+    }
+
+    private fun syncCache(productId: Long, warehouseId: Long, inventory: Inventory) {
+        try {
+            cachePort?.setStock(productId, warehouseId, inventory.getAvailableQty(), inventory.getReservedQty())
+        } catch (e: Exception) {
+            log.warn("Redis 캐시 동기화 실패 (productId={}, warehouseId={}): {}", productId, warehouseId, e.message)
         }
     }
 }

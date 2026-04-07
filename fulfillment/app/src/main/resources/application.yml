@@ -46,6 +46,10 @@ kafka:
     fulfillment-delivered: fulfillment.order.delivered
     fulfillment-cancelled: fulfillment.order.cancelled
 
+outbox:
+  polling:
+    enabled: ${OUTBOX_POLLING_ENABLED:true}
+
 fulfillment:
   outbox:
     polling-interval-ms: 1000

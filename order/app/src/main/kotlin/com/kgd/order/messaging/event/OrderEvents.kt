@@ -2,8 +2,10 @@ package com.kgd.order.infrastructure.messaging.event
 
 import java.math.BigDecimal
 import java.time.LocalDateTime
+import java.util.UUID
 
 data class OrderCompletedEvent(
+    val eventId: String = UUID.randomUUID().toString(),
     val orderId: Long,
     val userId: String,
     val totalAmount: BigDecimal,
@@ -19,6 +21,7 @@ data class OrderItemEvent(
 )
 
 data class OrderCancelledEvent(
+    val eventId: String = UUID.randomUUID().toString(),
     val orderId: Long,
     val userId: String,
     val eventTime: LocalDateTime = LocalDateTime.now()

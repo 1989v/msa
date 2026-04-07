@@ -7,6 +7,7 @@ import java.time.LocalDateTime
  * Inbound event: consumed from order.order.completed topic.
  */
 data class OrderCompletedEvent(
+    val eventId: String = "",
     val orderId: Long = 0,
     val userId: String = "",
     val totalAmount: BigDecimal = BigDecimal.ZERO,

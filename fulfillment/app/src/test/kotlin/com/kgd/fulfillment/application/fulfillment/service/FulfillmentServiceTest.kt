@@ -37,6 +37,7 @@ class FulfillmentServiceTest : BehaviorSpec({
                     status = FulfillmentStatus.PENDING,
                     createdAt = LocalDateTime.now()
                 )
+                every { fulfillmentRepository.findByOrderIdAndWarehouseId(100L, 10L) } returns null
                 every { fulfillmentRepository.save(any()) } returns saved
 
                 val result = service.execute(CreateFulfillmentUseCase.Command(orderId = 100L, warehouseId = 10L))
@@ -226,7 +227,7 @@ class FulfillmentServiceTest : BehaviorSpec({
                     status = FulfillmentStatus.SHIPPED,
                     createdAt = LocalDateTime.now()
                 )
-                every { fulfillmentRepository.findByOrderId(600L) } returns fulfillment
+                every { fulfillmentRepository.findAllByOrderId(600L) } returns listOf(fulfillment)
 
                 val result = service.findByOrderId(600L)
                 result.fulfillmentId shouldBe 6L

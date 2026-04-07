@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS fulfillment_order (
 
 CREATE TABLE IF NOT EXISTS outbox_event (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_id VARCHAR(36) NOT NULL,
     aggregate_type VARCHAR(50) NOT NULL,
     aggregate_id BIGINT NOT NULL,
     event_type VARCHAR(100) NOT NULL,
@@ -29,5 +30,12 @@ CREATE TABLE IF NOT EXISTS outbox_event (
     created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     published_at DATETIME(6) NULL,
     INDEX idx_outbox_status_created (status, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS processed_event (
+    event_id VARCHAR(36) PRIMARY KEY,
+    topic VARCHAR(100) NOT NULL,
+    processed_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    INDEX idx_processed_at (processed_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 EOF

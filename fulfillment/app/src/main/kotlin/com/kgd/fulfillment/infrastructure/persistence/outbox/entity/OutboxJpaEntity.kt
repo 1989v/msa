@@ -2,12 +2,15 @@ package com.kgd.fulfillment.infrastructure.persistence.outbox.entity
 
 import jakarta.persistence.*
 import java.time.LocalDateTime
+import java.util.UUID
 
 @Entity
 @Table(name = "outbox_event")
 class OutboxJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
+    @Column(nullable = false, length = 36)
+    val eventId: String = UUID.randomUUID().toString(),
     @Column(nullable = false, length = 50)
     val aggregateType: String,
     @Column(nullable = false)

@@ -16,6 +16,10 @@ dependencies {
     implementation(libs.spring.kafka)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     runtimeOnly(libs.mysql.connector)
+
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.spring.kafka.test)
+    testImplementation(libs.kotest.extensions.spring)
 }
 
 tasks.bootJar {
