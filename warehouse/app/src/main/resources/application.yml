@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: warehouse-service
+  datasource:
+    master:
+      url: jdbc:mysql://localhost:3332/warehouse_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:warehouse_user}
+      password: ${MYSQL_PASSWORD:warehouse_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+    replica:
+      url: jdbc:mysql://localhost:3333/warehouse_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:warehouse_user}
+      password: ${MYSQL_PASSWORD:warehouse_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+
+server:
+  port: 8090
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
