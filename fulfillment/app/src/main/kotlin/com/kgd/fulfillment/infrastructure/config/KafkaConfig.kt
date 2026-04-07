@@ -9,7 +9,11 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.*
+import org.springframework.kafka.listener.ContainerProperties
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
+import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer
+import org.springframework.util.backoff.FixedBackOff
 
 @Configuration
 class KafkaConfig {
@@ -49,11 +53,17 @@ class KafkaConfig {
 
     @Bean
     fun kafkaListenerContainerFactory(
-        consumerFactory: ConsumerFactory<String, String>
-    ): ConcurrentKafkaListenerContainerFactory<String, String> {
-        val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
-        factory.setConsumerFactory(consumerFactory)
-        factory.containerProperties.ackMode = org.springframework.kafka.listener.ContainerProperties.AckMode.MANUAL
-        return factory
-    }
+        consumerFactory: ConsumerFactory<String, String>,
+        kafkaTemplate: KafkaTemplate<String, Any>,
+    ): ConcurrentKafkaListenerContainerFactory<String, String> =
+        ConcurrentKafkaListenerContainerFactory<String, String>().apply {
+            setConsumerFactory(consumerFactory)
+            containerProperties.ackMode = ContainerProperties.AckMode.RECORD
+            setCommonErrorHandler(
+                DefaultErrorHandler(
+                    DeadLetterPublishingRecoverer(kafkaTemplate),
+                    FixedBackOff(1000L, 3L),
+                )
+            )
+        }
 }

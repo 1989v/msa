@@ -21,6 +21,8 @@ volumes:
   mysql-inventory-replica-data:
   mysql-fulfillment-master-data:
   mysql-fulfillment-replica-data:
+  mysql-warehouse-master-data:
+  mysql-warehouse-replica-data:
   gifticon-images:
   redis-1-data:
   redis-2-data:
@@ -429,6 +431,62 @@ services:
     restart: unless-stopped
 
   # ============================================================
+  # MySQL — Warehouse Service
+  # ============================================================
+
+  mysql-warehouse-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-warehouse-master
+    ports:
+      - "3332:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: warehouse_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-warehouse-master-data:/var/lib/mysql
+      - ./mysql/warehouse-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/warehouse-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.80
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-warehouse-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-warehouse-replica
+    ports:
+      - "3333:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: warehouse_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-warehouse-replica-data:/var/lib/mysql
+      - ./mysql/warehouse-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-warehouse-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.81
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
   # Redis Cluster (3 Masters + 3 Replicas)
   # ============================================================
 
@@ -752,4 +810,40 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # Kafka Connect + Debezium
+  # ============================================================
+
+  kafka-connect:
+    image: debezium/connect:2.7
+    container_name: kafka-connect
+    ports:
+      - "8084:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: connect-cluster
+      CONFIG_STORAGE_TOPIC: _connect_configs
+      OFFSET_STORAGE_TOPIC: _connect_offsets
+      STATUS_STORAGE_TOPIC: _connect_statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.4.3
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8083/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     restart: unless-stopped
