@@ -3,7 +3,6 @@ package com.kgd.common.redis
 import io.lettuce.core.cluster.ClusterClientOptions
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions
 import org.springframework.boot.autoconfigure.AutoConfiguration
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -12,14 +11,14 @@ import org.springframework.data.redis.connection.RedisClusterConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.time.Duration
 
-@AutoConfiguration(afterName = ["org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration"])
+@AutoConfiguration(afterName = ["org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration"])
 @ConditionalOnClass(RedisTemplate::class)
-@ConditionalOnBean(RedisClusterConfiguration::class)
 @ConditionalOnProperty(prefix = "kgd.common.redis", name = ["enabled"], havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "spring.data.redis.cluster", name = ["nodes"])
 class CommonRedisAutoConfiguration {
 
     @Bean
@@ -46,12 +45,14 @@ class CommonRedisAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    fun redisTemplate(factory: LettuceConnectionFactory): RedisTemplate<String, Any> =
-        RedisTemplate<String, Any>().apply {
+    fun redisTemplate(factory: LettuceConnectionFactory): RedisTemplate<String, Any> {
+        val jsonSerializer = GenericJacksonJsonRedisSerializer.create {}
+        return RedisTemplate<String, Any>().apply {
             connectionFactory = factory
             keySerializer = StringRedisSerializer()
-            valueSerializer = GenericJackson2JsonRedisSerializer()
+            valueSerializer = jsonSerializer
             hashKeySerializer = StringRedisSerializer()
-            hashValueSerializer = GenericJackson2JsonRedisSerializer()
+            hashValueSerializer = jsonSerializer
         }
+    }
 }
