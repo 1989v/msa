@@ -14,7 +14,10 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.core.ProducerFactory
 import org.springframework.kafka.listener.ContainerProperties
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
+import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer
+import org.springframework.util.backoff.FixedBackOff
 
 @Configuration
 class KafkaConfig {
@@ -55,9 +58,16 @@ class KafkaConfig {
     @Bean
     fun kafkaListenerContainerFactory(
         consumerFactory: ConsumerFactory<String, String>,
+        kafkaTemplate: KafkaTemplate<String, Any>,
     ): ConcurrentKafkaListenerContainerFactory<String, String> =
         ConcurrentKafkaListenerContainerFactory<String, String>().apply {
             setConsumerFactory(consumerFactory)
-            containerProperties.ackMode = ContainerProperties.AckMode.MANUAL
+            containerProperties.ackMode = ContainerProperties.AckMode.RECORD
+            setCommonErrorHandler(
+                DefaultErrorHandler(
+                    DeadLetterPublishingRecoverer(kafkaTemplate),
+                    FixedBackOff(1000L, 3L),
+                )
+            )
         }
 }

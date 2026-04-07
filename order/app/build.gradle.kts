@@ -22,6 +22,9 @@ dependencies {
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     runtimeOnly(libs.mysql.connector)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.kotest.extensions.spring)
+    testImplementation(libs.mockk)
 }
 
 tasks.bootJar {

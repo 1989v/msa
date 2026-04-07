@@ -14,9 +14,17 @@ class WebClientConfig {
     @Value("\${payment.service.url:http://localhost:9090}")
     private lateinit var paymentServiceUrl: String
 
+    @Value("\${product.service.url:http://localhost:8081}")
+    private lateinit var productServiceUrl: String
+
     @Bean("paymentWebClient")
     fun paymentWebClient(): WebClient = WebClient.builder()
         .baseUrl(paymentServiceUrl)
+        .build()
+
+    @Bean("productWebClient")
+    fun productWebClient(): WebClient = WebClient.builder()
+        .baseUrl(productServiceUrl)
         .build()
 
     @Bean

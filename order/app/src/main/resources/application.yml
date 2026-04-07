@@ -43,6 +43,10 @@ payment:
   service:
     url: ${PAYMENT_SERVICE_URL:http://localhost:9090}
 
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+
 kafka:
   topics:
     order-completed: order.order.completed

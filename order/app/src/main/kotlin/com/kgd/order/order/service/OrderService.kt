@@ -4,6 +4,7 @@ import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.PaymentPort
+import com.kgd.order.application.order.port.ProductPort
 import com.kgd.order.application.order.usecase.GetOrderUseCase
 import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.domain.order.exception.OrderNotFoundException
@@ -14,20 +15,37 @@ import org.springframework.stereotype.Service
 class OrderService(
     private val orderTransactionalService: OrderTransactionalService,
     private val eventPort: OrderEventPort,
-    private val paymentPort: PaymentPort
+    private val paymentPort: PaymentPort,
+    private val productPort: ProductPort,
 ) : PlaceOrderUseCase, GetOrderUseCase {
 
     private val log = LoggerFactory.getLogger(javaClass)
 
     /**
      * Places an order with the following transaction flow:
-     * 1. TX1: Save PENDING order (short transaction, commits)
-     * 2. No TX: Call external payment service
-     * 3. TX2: Mark order COMPLETED or CANCELLED based on payment result (short transaction)
+     * 1. Validate products via Product service
+     * 2. TX1: Save PENDING order (short transaction, commits)
+     * 3. No TX: Call external payment service
+     * 4. TX2: Mark order COMPLETED or CANCELLED based on payment result (short transaction)
      *
      * This ensures no DB connection is held during the external payment HTTP call.
      */
     override suspend fun execute(command: PlaceOrderUseCase.Command): PlaceOrderUseCase.Result {
+        // Phase 0: Product 유효성 검증
+        for (item in command.items) {
+            val productInfo = productPort.validateProduct(item.productId)
+            if (productInfo.status != "ACTIVE") {
+                throw BusinessException(
+                    ErrorCode.INVALID_PRODUCT_STATUS,
+                    "비활성 상품은 주문할 수 없습니다: productId=${item.productId}"
+                )
+            }
+            log.debug(
+                "상품 검증 완료: productId={}, name={}, price={}, clientPrice={}",
+                item.productId, productInfo.name, productInfo.price, item.unitPrice
+            )
+        }
+
         // Phase 1: Save PENDING order (short transaction, immediately committed)
         val pendingOrder = orderTransactionalService.savePendingOrder(command)
         val orderId = requireNotNull(pendingOrder.id) { "저장된 주문에 ID가 없습니다" }
