@@ -25,7 +25,7 @@ search:
     page-size: 100
 
 server:
-  port: 8085
+  port: 8092
 
 management:
   endpoints:
