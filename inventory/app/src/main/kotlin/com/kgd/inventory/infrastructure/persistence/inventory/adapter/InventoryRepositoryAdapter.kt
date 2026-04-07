@@ -23,4 +23,8 @@ class InventoryRepositoryAdapter(
     override fun findAllByProductId(productId: Long): List<Inventory> {
         return jpaRepository.findAllByProductId(productId).map { it.toDomain() }
     }
+
+    override fun findAll(): List<Inventory> {
+        return jpaRepository.findAll().map { it.toDomain() }
+    }
 }

@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 interface GetFulfillmentUseCase {
     fun findById(id: Long): Result
     fun findByOrderId(orderId: Long): Result
+    fun findAllByOrderId(orderId: Long): List<Result>
 
     data class Result(
         val fulfillmentId: Long,

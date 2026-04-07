@@ -20,7 +20,11 @@ class FulfillmentRepositoryAdapter(
         return jpaRepository.findById(id).orElse(null)?.toDomain()
     }
 
-    override fun findByOrderId(orderId: Long): FulfillmentOrder? {
-        return jpaRepository.findByOrderId(orderId)?.toDomain()
+    override fun findAllByOrderId(orderId: Long): List<FulfillmentOrder> {
+        return jpaRepository.findAllByOrderId(orderId).map { it.toDomain() }
+    }
+
+    override fun findByOrderIdAndWarehouseId(orderId: Long, warehouseId: Long): FulfillmentOrder? {
+        return jpaRepository.findByOrderIdAndWarehouseId(orderId, warehouseId)?.toDomain()
     }
 }

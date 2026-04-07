@@ -22,6 +22,16 @@ class FulfillmentService(
 ) : CreateFulfillmentUseCase, TransitionFulfillmentUseCase, GetFulfillmentUseCase {
 
     override fun execute(command: CreateFulfillmentUseCase.Command): CreateFulfillmentUseCase.Result {
+        // 동일 orderId + warehouseId 풀필먼트가 이미 존재하면 기존 것 반환
+        val existing = fulfillmentRepository.findByOrderIdAndWarehouseId(command.orderId, command.warehouseId)
+        if (existing != null) {
+            return CreateFulfillmentUseCase.Result(
+                fulfillmentId = requireNotNull(existing.id),
+                orderId = existing.orderId,
+                status = existing.getStatus().name,
+            )
+        }
+
         val fulfillmentOrder = FulfillmentOrder.create(
             orderId = command.orderId,
             warehouseId = command.warehouseId
@@ -88,9 +98,15 @@ class FulfillmentService(
 
     @Transactional(readOnly = true)
     override fun findByOrderId(orderId: Long): GetFulfillmentUseCase.Result {
-        val fulfillmentOrder = fulfillmentRepository.findByOrderId(orderId)
+        val fulfillments = fulfillmentRepository.findAllByOrderId(orderId)
+        val fulfillmentOrder = fulfillments.firstOrNull()
             ?: throw FulfillmentNotFoundException(orderId)
         return toResult(fulfillmentOrder)
+    }
+
+    @Transactional(readOnly = true)
+    override fun findAllByOrderId(orderId: Long): List<GetFulfillmentUseCase.Result> {
+        return fulfillmentRepository.findAllByOrderId(orderId).map { toResult(it) }
     }
 
     private fun toResult(fo: FulfillmentOrder): GetFulfillmentUseCase.Result {

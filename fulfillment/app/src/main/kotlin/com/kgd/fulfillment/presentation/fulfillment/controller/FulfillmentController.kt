@@ -66,4 +66,10 @@ class FulfillmentController(
         val result = getFulfillmentUseCase.findByOrderId(orderId)
         return ResponseEntity.ok(ApiResponse.success(result))
     }
+
+    @GetMapping("/orders/{orderId}/all")
+    fun getAllByOrderId(@PathVariable orderId: Long): ResponseEntity<ApiResponse<List<GetFulfillmentUseCase.Result>>> {
+        val result = getFulfillmentUseCase.findAllByOrderId(orderId)
+        return ResponseEntity.ok(ApiResponse.success(result))
+    }
 }

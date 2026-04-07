@@ -4,5 +4,6 @@ import com.kgd.fulfillment.infrastructure.persistence.fulfillment.entity.Fulfill
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface FulfillmentOrderJpaRepository : JpaRepository<FulfillmentOrderJpaEntity, Long> {
-    fun findByOrderId(orderId: Long): FulfillmentOrderJpaEntity?
+    fun findAllByOrderId(orderId: Long): List<FulfillmentOrderJpaEntity>
+    fun findByOrderIdAndWarehouseId(orderId: Long, warehouseId: Long): FulfillmentOrderJpaEntity?
 }
