@@ -2,8 +2,12 @@ package com.kgd.common.redis
 
 import io.lettuce.core.cluster.ClusterClientOptions
 import io.lettuce.core.cluster.ClusterTopologyRefreshOptions
+import org.springframework.boot.autoconfigure.AutoConfiguration
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisClusterConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
@@ -12,9 +16,14 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import java.time.Duration
 
-class RedisConfig {
+@AutoConfiguration(afterName = ["org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration"])
+@ConditionalOnClass(RedisTemplate::class)
+@ConditionalOnBean(RedisClusterConfiguration::class)
+@ConditionalOnProperty(prefix = "kgd.common.redis", name = ["enabled"], havingValue = "true", matchIfMissing = false)
+class CommonRedisAutoConfiguration {
 
     @Bean
+    @ConditionalOnMissingBean(LettuceConnectionFactory::class)
     fun lettuceConnectionFactory(
         clusterConfiguration: RedisClusterConfiguration
     ): LettuceConnectionFactory {
@@ -36,6 +45,7 @@ class RedisConfig {
     }
 
     @Bean
+    @ConditionalOnMissingBean
     fun redisTemplate(factory: LettuceConnectionFactory): RedisTemplate<String, Any> =
         RedisTemplate<String, Any>().apply {
             connectionFactory = factory

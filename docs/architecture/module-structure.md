@@ -4,9 +4,9 @@
 
 - `bootJar` 없이 `jar`만 생성
 - 서비스 모듈은 `implementation(project(":common"))`으로 common 의존
-- **선택적 기능 로드**: `@EnableCommonFeatures(CommonFeature.SECURITY, ...)` 어노테이션으로 필요한 기능만 활성화
+- **선택적 기능 로드**: Spring Boot Auto-Configuration 방식 (`kgd.common.*.enabled`)
   - exception/response는 항상 로드
-  - Security/Redis/WebClient는 명시적 선언 필요
+  - Security/Redis/WebClient는 서비스별 `application.yml`에서 활성화
   - 가이드: `/docs/architecture/common-features.md`
 
 ## 버전 & 빌드

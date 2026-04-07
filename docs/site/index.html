@@ -846,8 +846,8 @@ Scheduler -->   |  ProductDbReindexJobConfig        |
 <tr><td>exception</td><td>GlobalExceptionHandler</td><td>Global exception handler</td></tr>
 <tr><td>security</td><td>JwtUtil / JwtProperties</td><td>JWT token utils</td></tr>
 <tr><td>security</td><td>AesUtil</td><td>AES encryption util</td></tr>
-<tr><td>redis</td><td>RedisConfig</td><td>Redis common config</td></tr>
-<tr><td>webclient</td><td>WebClientConfig / WebClientBuilderFactory</td><td>WebClient common config</td></tr>
+<tr><td>redis</td><td>CommonRedisAutoConfiguration</td><td>Redis cluster auto-config (kgd.common.redis.enabled)</td></tr>
+<tr><td>webclient</td><td>CommonWebClientAutoConfiguration / WebClientBuilderFactory</td><td>WebClient auto-config + clone-based factory (kgd.common.web-client.enabled)</td></tr>
 </table>
 </div>
 

@@ -21,12 +21,13 @@
 | `exception` | `BusinessException` | 비즈니스 예외 기본 클래스 |
 | `exception` | `ErrorCode` | 에러 코드 enum |
 | `exception` | `GlobalExceptionHandler` | 전역 예외 핸들러 |
+| `security` | `CommonSecurityAutoConfiguration` | JWT/AES auto-configuration (`kgd.common.security.enabled`) |
 | `security` | `JwtUtil` | JWT 토큰 생성/검증 유틸 |
 | `security` | `JwtProperties` | JWT 설정 프로퍼티 |
 | `security` | `AesUtil` | AES 암호화 유틸 |
-| `redis` | `RedisConfig` | Redis 공통 설정 |
-| `webclient` | `WebClientConfig` | WebClient 공통 설정 |
-| `webclient` | `WebClientBuilderFactory` | WebClient.Builder 팩토리 |
+| `redis` | `CommonRedisAutoConfiguration` | Redis 클러스터 auto-configuration (`kgd.common.redis.enabled`) |
+| `webclient` | `CommonWebClientAutoConfiguration` | WebClient auto-configuration (`kgd.common.web-client.enabled`) |
+| `webclient` | `WebClientBuilderFactory` | 공통 정책 builder를 clone하여 서비스별 client 생성 |
 
 ## Usage
 

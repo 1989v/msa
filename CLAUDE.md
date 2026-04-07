@@ -31,7 +31,7 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 - **테스트**: Kotest BehaviorSpec + MockK → `docs/standards/test-rules.md`
 - **Kafka 토픽** → `docs/architecture/kafka-convention.md`
 - **API 응답 포맷**: `ApiResponse<T>` → `docs/architecture/api-response.md`
-- **Common 기능 로드**: `@EnableCommonFeatures` → `docs/architecture/common-features.md`
+- **Common 기능 로드**: Auto-Configuration (`kgd.common.*`) → `docs/architecture/common-features.md`
 - **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md`
 
 ---

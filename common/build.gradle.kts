@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.webflux)
+    implementation("org.springframework.boot:spring-boot-webclient")
     implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)

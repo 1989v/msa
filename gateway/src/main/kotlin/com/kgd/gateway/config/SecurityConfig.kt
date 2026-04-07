@@ -13,7 +13,6 @@ class SecurityConfig {
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =
         http
-            // CSRF disabled — gateway is stateless; all auth is JWT-based via AuthenticationGatewayFilter
             .csrf { it.disable() }
             .authorizeExchange { exchanges ->
                 exchanges.anyExchange().permitAll()
