@@ -8,7 +8,14 @@ data class OrderCompletedEvent(
     val userId: String,
     val totalAmount: BigDecimal,
     val status: String,
+    val items: List<OrderItemEvent> = emptyList(),
     val eventTime: LocalDateTime = LocalDateTime.now()
+)
+
+data class OrderItemEvent(
+    val productId: Long,
+    val quantity: Int,
+    val unitPrice: BigDecimal
 )
 
 data class OrderCancelledEvent(

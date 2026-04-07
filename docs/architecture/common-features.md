@@ -110,6 +110,8 @@ Boot의 `WebClientAutoConfiguration` 이후에 동작한다. `WebClient.Builder`
 | product | - | - | - | - | exception/response만 필요 |
 | order | - | - | - | - | exception/response만 필요 |
 | search | - | - | - | - | exception/response만 필요 |
+| inventory | - | - | - | - | exception/response만 필요 |
+| fulfillment | - | - | - | - | exception/response만 필요 |
 | discovery | - | - | - | - | Eureka 서버만 |
 
 ## 신규 공통 Feature 개발 가이드

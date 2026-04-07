@@ -4,6 +4,7 @@ import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.domain.order.model.Order
 import com.kgd.order.infrastructure.messaging.event.OrderCancelledEvent
 import com.kgd.order.infrastructure.messaging.event.OrderCompletedEvent
+import com.kgd.order.infrastructure.messaging.event.OrderItemEvent
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.core.KafkaTemplate
@@ -23,7 +24,14 @@ class OrderEventAdapter(
             orderId = requireNotNull(order.id),
             userId = order.userId,
             totalAmount = order.totalAmount.amount,
-            status = order.status.name
+            status = order.status.name,
+            items = order.items.map { item ->
+                OrderItemEvent(
+                    productId = item.productId,
+                    quantity = item.quantity,
+                    unitPrice = item.unitPrice.amount
+                )
+            }
         )
         kafkaTemplate.send(completedTopic, order.id.toString(), event)
             .whenComplete { _, ex ->

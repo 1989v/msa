@@ -6,14 +6,17 @@ import com.kgd.common.exception.ErrorCode
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
 import com.kgd.inventory.application.inventory.port.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
+import com.kgd.inventory.application.inventory.usecase.ConfirmStockByOrderUseCase
 import com.kgd.inventory.application.inventory.usecase.ConfirmStockUseCase
 import com.kgd.inventory.application.inventory.usecase.GetInventoryUseCase
 import com.kgd.inventory.application.inventory.usecase.ReceiveStockUseCase
+import com.kgd.inventory.application.inventory.usecase.ReleaseStockByOrderUseCase
 import com.kgd.inventory.application.inventory.usecase.ReleaseStockUseCase
 import com.kgd.inventory.application.inventory.usecase.ReserveStockUseCase
 import com.kgd.inventory.domain.inventory.event.InventoryEvent
 import com.kgd.inventory.domain.inventory.model.Inventory
 import com.kgd.inventory.domain.reservation.model.Reservation
+import com.kgd.inventory.domain.reservation.model.ReservationStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -24,7 +27,8 @@ class InventoryService(
     private val reservationRepository: ReservationRepositoryPort,
     private val outboxPort: OutboxPort,
     private val objectMapper: ObjectMapper,
-) : ReserveStockUseCase, ReleaseStockUseCase, ConfirmStockUseCase, ReceiveStockUseCase, GetInventoryUseCase {
+) : ReserveStockUseCase, ReleaseStockUseCase, ConfirmStockUseCase, ReceiveStockUseCase, GetInventoryUseCase,
+    ConfirmStockByOrderUseCase, ReleaseStockByOrderUseCase {
 
     companion object {
         private const val AGGREGATE_TYPE = "Inventory"
@@ -160,6 +164,72 @@ class InventoryService(
                 warehouseId = inventory.warehouseId,
                 availableQty = inventory.getAvailableQty(),
                 reservedQty = inventory.getReservedQty(),
+            )
+        }
+    }
+
+    override fun execute(command: ConfirmStockByOrderUseCase.Command): List<ConfirmStockByOrderUseCase.Result> {
+        val reservations = reservationRepository.findAllByOrderId(command.orderId)
+            .filter { it.getStatus() == ReservationStatus.ACTIVE }
+
+        return reservations.map { reservation ->
+            reservation.confirm()
+            reservationRepository.save(reservation)
+
+            val inventory = inventoryRepository.findByProductIdAndWarehouseId(reservation.productId, reservation.warehouseId)
+                ?: throw BusinessException(ErrorCode.NOT_FOUND, "재고를 찾을 수 없습니다: productId=${reservation.productId}, warehouseId=${reservation.warehouseId}")
+
+            inventory.confirm(reservation.qty)
+            val savedInventory = inventoryRepository.save(inventory)
+
+            val inventoryId = savedInventory.id
+                ?: throw IllegalStateException("저장된 재고의 ID가 null입니다")
+
+            val event = InventoryEvent.StockConfirmed(
+                productId = reservation.productId,
+                warehouseId = reservation.warehouseId,
+                qty = reservation.qty,
+                orderId = command.orderId,
+            )
+            outboxPort.save(AGGREGATE_TYPE, inventoryId, "StockConfirmed", objectMapper.writeValueAsString(event))
+
+            ConfirmStockByOrderUseCase.Result(
+                productId = reservation.productId,
+                availableQty = savedInventory.getAvailableQty(),
+                reservedQty = savedInventory.getReservedQty(),
+            )
+        }
+    }
+
+    override fun execute(command: ReleaseStockByOrderUseCase.Command): List<ReleaseStockByOrderUseCase.Result> {
+        val reservations = reservationRepository.findAllByOrderId(command.orderId)
+            .filter { it.getStatus() == ReservationStatus.ACTIVE }
+
+        return reservations.map { reservation ->
+            reservation.cancel()
+            reservationRepository.save(reservation)
+
+            val inventory = inventoryRepository.findByProductIdAndWarehouseId(reservation.productId, reservation.warehouseId)
+                ?: throw BusinessException(ErrorCode.NOT_FOUND, "재고를 찾을 수 없습니다: productId=${reservation.productId}, warehouseId=${reservation.warehouseId}")
+
+            inventory.release(reservation.qty)
+            val savedInventory = inventoryRepository.save(inventory)
+
+            val inventoryId = savedInventory.id
+                ?: throw IllegalStateException("저장된 재고의 ID가 null입니다")
+
+            val event = InventoryEvent.StockReleased(
+                productId = reservation.productId,
+                warehouseId = reservation.warehouseId,
+                qty = reservation.qty,
+                orderId = command.orderId,
+            )
+            outboxPort.save(AGGREGATE_TYPE, inventoryId, "StockReleased", objectMapper.writeValueAsString(event))
+
+            ReleaseStockByOrderUseCase.Result(
+                productId = reservation.productId,
+                availableQty = savedInventory.getAvailableQty(),
+                reservedQty = savedInventory.getReservedQty(),
             )
         }
     }

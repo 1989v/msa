@@ -10,11 +10,21 @@ open_questions:
     decision: null
 
   - id: OQ-3
-    question: "Fulfillment 서비스가 직접 inventory.stock.confirmed 이벤트를 트리거하는 게 맞는가? shipped 이벤트를 inventory가 소비하는 방식이 더 loose coupling"
+    question: "Fulfillment 서비스가 직접 inventory.stock.confirmed 이벤트를 트리거하는 게 맞는가?"
     status: closed
-    decision: "shipped 이벤트를 inventory가 소비하는 방식 채택 (spec에 반영됨)"
+    decision: "shipped 이벤트를 inventory가 소비하는 방식 채택 — ConfirmStockByOrderUseCase 구현 완료"
 
   - id: OQ-4
     question: "Phase 1에서 idempotent consumer가 필요한가? Kafka at-least-once에서 중복 처리 가능성"
     status: open
     decision: null
+
+  - id: OQ-5
+    question: "warehouseId 기본값 1 하드코딩 — 멀티 창고 지원 시 Order 이벤트에 warehouseId 포함 필요"
+    status: open
+    decision: null
+
+  - id: OQ-6
+    question: "Order 이벤트에 items가 없던 주문(기존 데이터)이 재발행되면 Inventory Consumer가 빈 items로 skip — 호환성 OK"
+    status: closed
+    decision: "items 비어있으면 로그 후 ack — 하위 호환 보장됨"

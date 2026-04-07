@@ -27,6 +27,10 @@
 | `:search:app` | `search/app/` | 검색 REST API (읽기 전용) |
 | `:search:consumer` | `search/consumer/` | Kafka 증분 색인 (BulkIngester) |
 | `:search:batch` | `search/batch/` | Spring Batch 전체 색인 (alias swap) |
+| `:inventory:domain` | `inventory/domain/` | 순수 도메인 (재고 예약/차감 모델) |
+| `:inventory:app` | `inventory/app/` | Spring Boot 앱 (재고 관리 서비스) |
+| `:fulfillment:domain` | `fulfillment/domain/` | 순수 도메인 (출고 상태 머신) |
+| `:fulfillment:app` | `fulfillment/app/` | Spring Boot 앱 (풀필먼트 서비스) |
 
 - **domain 모듈 규칙**: Spring/JPA 어노테이션 사용 시 컴파일 에러 (의존성 없음)
 - **app 모듈**: `implementation(project(":{service}:domain"))`으로 domain 의존

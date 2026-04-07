@@ -286,6 +286,37 @@ enum class FulfillmentStatus {
 기존 토픽과의 연동:
 - `order.order.completed` → inventory가 소비 → 재고 예약
 
+### 5.1 End-to-End 이벤트 흐름 (구현 완료)
+
+```
+Order 생성 → COMPLETED
+  │
+  ├─ order.order.completed (items 포함)
+  │   └─ Inventory Consumer: 상품별 재고 예약 (warehouseId=1 기본)
+  │       └─ inventory.stock.reserved (outbox)
+  │           └─ Fulfillment Consumer: 풀필먼트 생성 (PENDING)
+  │
+  ├─ 풀필먼트 상태 전이 (PICKING → PACKING → SHIPPED)
+  │   └─ fulfillment.order.shipped (outbox)
+  │       └─ Inventory Consumer: 주문 전체 예약 확정 (confirmByOrder)
+  │
+  ├─ 풀필먼트 취소
+  │   └─ fulfillment.order.cancelled (outbox)
+  │       └─ Inventory Consumer: 주문 전체 예약 해제 (releaseByOrder)
+  │
+  └─ 예약 만료 (스케줄러, 30분 TTL)
+      └─ inventory.reservation.expired (outbox)
+          └─ Order Consumer: 주문 취소 → order.order.cancelled 발행
+```
+
+### 5.2 서비스별 Kafka Consumer/Producer 매핑
+
+| 서비스 | Consumer (수신) | Producer (발행) |
+|--------|----------------|----------------|
+| order | `inventory.reservation.expired` | `order.order.completed`, `order.order.cancelled` |
+| inventory | `order.order.completed`, `fulfillment.order.shipped`, `fulfillment.order.cancelled` | `inventory.stock.*`, `inventory.reservation.expired` (outbox) |
+| fulfillment | `inventory.stock.reserved` | `fulfillment.order.*` (outbox) |
+
 ---
 
 ## 6. Outbox 패턴
@@ -373,7 +404,7 @@ CREATE TABLE fulfillment_order (
 ### 8.2 docker-compose.yml 추가
 
 - `inventory` 서비스 (port 8085)
-- `fulfillment` 서비스 (port 8086)
+- `fulfillment` 서비스 (port 8088)
 
 ### 8.3 Gateway 라우팅 추가
 
@@ -391,15 +422,24 @@ CREATE TABLE fulfillment_order (
 | order | 8082 |
 | search | 8083 |
 | **inventory** | **8085** |
-| **fulfillment** | **8086** |
+| **fulfillment** | **8088** |
 
 ---
 
-## 10. Phase 2 확장 포인트
+## 10. Phase 1 제약 및 Phase 2 확장 포인트
 
+### Phase 1 현재 제약
+- `warehouseId` 기본값 1 (단일 창고 가정) — 멀티 창고 라우팅 미구현
+- Outbox Polling 방식 (1초 간격) — CDC 대비 지연 존재
+- Idempotent consumer 미적용 — Kafka at-least-once에서 중복 가능
+- Product 서비스 유효성 검증 없음 — productId 존재 여부 미확인
+- Gateway 라우팅 미적용 — Eureka 직접 접근만 가능
+
+### Phase 2 확장
 - Redis Lua script fast-path (Inventory)
 - Debezium CDC (Outbox → Kafka)
 - Idempotent consumer (processed_event 테이블)
-- Warehouse 서비스 분리
+- Warehouse 서비스 분리 + 멀티 창고 라우팅
 - Reconciliation batch (Redis ↔ DB sync)
 - Admission control / rate limiting
+- Gateway 라우팅 추가 (`/api/inventories/**`, `/api/fulfillments/**`)
