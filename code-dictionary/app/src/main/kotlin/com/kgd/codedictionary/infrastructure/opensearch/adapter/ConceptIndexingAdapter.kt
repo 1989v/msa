@@ -74,21 +74,6 @@ class ConceptIndexingAdapter(
                                 )
                             }
                         )
-                        .filter(
-                            "concept_synonym",
-                            TokenFilter.of { tf ->
-                                tf.definition(
-                                    TokenFilterDefinition.of { tfd ->
-                                        tfd.synonymGraph(
-                                            SynonymGraphTokenFilter.of { sg ->
-                                                sg.synonyms(listOf(""))
-                                                    .updateable(true)
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
                         .analyzer(
                             "concept_analyzer",
                             Analyzer.of { an ->
@@ -106,7 +91,7 @@ class ConceptIndexingAdapter(
                                 an.custom(
                                     CustomAnalyzer.of { ca ->
                                         ca.tokenizer("nori_mixed")
-                                            .filter(listOf("lowercase", "nori_pos_filter", "concept_synonym"))
+                                            .filter(listOf("lowercase", "nori_pos_filter"))
                                     }
                                 )
                             }
@@ -193,11 +178,15 @@ class ConceptIndexingAdapter(
     override fun updateSynonyms(synonymMap: Map<String, List<String>>) {
         if (synonymMap.isEmpty()) return
 
-        val synonymRules = synonymMap.entries.map { (_, synonyms) ->
-            synonyms.joinToString(", ")
+        val synonymRules = synonymMap.entries
+            .map { (_, synonyms) -> synonyms.joinToString(", ") }
+            .filter { it.contains(",") }
+
+        if (synonymRules.isEmpty()) {
+            log.info("No valid synonym rules to update, skipping")
+            return
         }
 
-        // Close index before updating analysis settings
         openSearchClient.indices().close { c -> c.index(indexName) }
 
         try {
@@ -213,9 +202,20 @@ class ConceptIndexingAdapter(
                                             tfd.synonymGraph(
                                                 SynonymGraphTokenFilter.of { sg ->
                                                     sg.synonyms(synonymRules)
-                                                        .updateable(true)
+                                                        .lenient(true)
                                                 }
                                             )
+                                        }
+                                    )
+                                }
+                            )
+                            .analyzer(
+                                "concept_search_analyzer",
+                                Analyzer.of { an ->
+                                    an.custom(
+                                        CustomAnalyzer.of { ca ->
+                                            ca.tokenizer("nori_mixed")
+                                                .filter(listOf("lowercase", "nori_pos_filter", "concept_synonym"))
                                         }
                                     )
                                 }
@@ -225,8 +225,9 @@ class ConceptIndexingAdapter(
             }
 
             log.info("Updated synonym filter with {} rules", synonymRules.size)
+        } catch (e: Exception) {
+            log.warn("Failed to update synonyms, search will work without synonym expansion: {}", e.message)
         } finally {
-            // Re-open index
             openSearchClient.indices().open { o -> o.index(indexName) }
         }
     }
