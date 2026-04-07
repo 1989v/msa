@@ -1,0 +1,17 @@
+questions:
+  - id: Q1
+    status: open
+    question: "tessdata_fast 모델이 실제 기프티콘 이미지에서 만료일 추출 정확도가 충분한가?"
+    context: "구조화된 텍스트(YYYY.MM.DD)에 대해 85-95% 예상, PoC로 검증 필요"
+    impact: high
+
+  - id: Q2
+    status: closed
+    question: "iOS PWA에서 카메라 접근이 안정적인가?"
+    answer: "현재 <input type='file' capture='environment'> 사용 중이므로 iOS Safari 15+에서 안정적"
+
+  - id: Q3
+    status: open
+    question: "저사양 모바일(2GB RAM)에서 Tesseract.js OOM 발생 가능성?"
+    context: "이미지 1500px 리사이즈 + Worker 종료로 완화 가능, 실기기 테스트 필요"
+    impact: medium

@@ -46,3 +46,7 @@ target/
 
 # Backup files
 *.bak
+
+# Nginx dev SSL certs
+docker/nginx/ssl/*.key
+docker/nginx/ssl/*.crt
