@@ -426,20 +426,13 @@ CREATE TABLE fulfillment_order (
 
 ---
 
-## 10. Phase 1 제약 및 Phase 2 확장 포인트
+## 10. Phase 로드맵
 
-### Phase 1 현재 제약
-- `warehouseId` 기본값 1 (단일 창고 가정) — 멀티 창고 라우팅 미구현
-- Outbox Polling 방식 (1초 간격) — CDC 대비 지연 존재
-- Idempotent consumer 미적용 — Kafka at-least-once에서 중복 가능
-- Product 서비스 유효성 검증 없음 — productId 존재 여부 미확인
-- Gateway 라우팅 미적용 — Eureka 직접 접근만 가능
+Phase별 상세 범위, 우선순위, 의존 관계, 전환 기준은 [`roadmap.md`](./roadmap.md) 참조.
 
-### Phase 2 확장
-- Redis Lua script fast-path (Inventory)
-- Debezium CDC (Outbox → Kafka)
-- Idempotent consumer (processed_event 테이블)
-- Warehouse 서비스 분리 + 멀티 창고 라우팅
-- Reconciliation batch (Redis ↔ DB sync)
-- Admission control / rate limiting
-- Gateway 라우팅 추가 (`/api/inventories/**`, `/api/fulfillments/**`)
+| Phase | 핵심 목표 | 상태 |
+|-------|----------|------|
+| **Phase 1** | MVP — e2e 이벤트 흐름 동작 | 완료 |
+| **Phase 2** | 운영 안정성 + 멀티 창고 | 미착수 |
+| **Phase 3** | 성능 최적화 (10만 TPS) | 미착수 |
+| **Phase 4** | 고도화 (멀티 리전, 물류 최적화) | 미착수 |
