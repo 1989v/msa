@@ -1,0 +1,31 @@
+questions:
+  - id: OQ-1
+    status: closed
+    decision: "1차 파일시스템 직접 읽기. 문서 1MB 초과 시 ES 확장. 현재 560KB(88파일)"
+    question: "문서 인덱싱 방식 — 파일시스템 직접 읽기 vs Elasticsearch 인덱싱 vs 임베딩 벡터DB?"
+
+  - id: OQ-2
+    status: closed
+    decision: "Webhook — Spring Boot MVC 자연 통합, Gateway 뒤에서 URL 노출"
+    question: "Slack 연동 방식 — Socket Mode vs Webhook?"
+
+  - id: OQ-3
+    status: closed
+    decision: "React SPA — 기존 프론트엔드 패턴 활용, chatbot:app이 REST/WebSocket API 제공"
+    question: "웹 채팅 UI 기술 스택?"
+
+  - id: OQ-4
+    status: closed
+    decision: "내부=JWT(기존 auth 서비스), 외부=API Key 발급"
+    question: "auth 서비스 연동 범위?"
+
+  - id: OQ-5
+    status: closed
+    decision: "Anthropic SDK 직접 사용 — 프롬프트 조합, 비용 제어 세밀하게"
+    question: "Claude API 호출 방식?"
+
+  - id: OQ-6
+    status: open
+    question: "Anthropic Java SDK 최신 버전 및 Kotlin 코루틴 호환성?"
+    context: "Anthropic 공식 Java SDK가 suspend 함수를 지원하는지, 아니면 CompletableFuture → coroutine 브릿지 필요한지"
+    recommendation: "구현 시 확인. SDK가 비동기 미지원이면 Dispatchers.IO + blocking call"

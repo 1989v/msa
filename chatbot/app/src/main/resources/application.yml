@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: chatbot-service
+  datasource:
+    # 논리 스키마 분리: auth MySQL 인스턴스에 chatbot_db 스키마 공존
+    # 물리 분리 기준 → docs/adr/ADR-0015-chatbot-service.md 참조
+    url: jdbc:mysql://localhost:3346/chatbot_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:commerce_user}
+    password: ${MYSQL_PASSWORD:commerce_password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+
+server:
+  port: 8086
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+chatbot:
+  ai:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: claude-sonnet-4-6
+    max-tokens: 4096
+    max-budget-per-request: 0.50
+    max-budget-per-day: 50.00
+    timeout-seconds: 30
+    max-concurrent: 5
+  knowledge:
+    type: filesystem
+    docs-root: ${CHATBOT_DOCS_ROOT:..}
+    categories:
+      architecture: docs/architecture
+      adr: docs/adr
+      standard: agent-os/standards
+      guide: CLAUDE.md
+  conversation:
+    context-window-max-tokens: 10000
+    session-timeout-minutes: 60
+    max-messages-per-session: 50
+  slack:
+    signing-secret: ${SLACK_SIGNING_SECRET:}
+    bot-token: ${SLACK_BOT_TOKEN:}
+  security:
+    public-categories:
+      - architecture
+      - guide
+    internal-only-categories:
+      - standard
+      - spec

@@ -22,5 +22,9 @@ include(
     "inventory:domain",
     "inventory:app",
     "fulfillment:domain",
-    "fulfillment:app"
+    "fulfillment:app",
+    "warehouse:domain",
+    "warehouse:app",
+    "chatbot:domain",
+    "chatbot:app"
 )
