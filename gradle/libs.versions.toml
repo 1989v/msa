@@ -10,6 +10,7 @@ mockk = "1.13.16"
 jjwt = "0.12.6"
 springdoc = "3.0.1"
 mysql = "8.0.33"
+clickhouse = "0.7.1"
 
 [libraries]
 # Spring Boot Starters
@@ -41,6 +42,8 @@ kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines
 # Kafka
 spring-kafka = { module = "org.springframework.kafka:spring-kafka" }
 spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test" }
+kafka-streams = { module = "org.apache.kafka:kafka-streams" }
+kafka-streams-test = { module = "org.apache.kafka:kafka-streams-test-utils" }
 
 # QueryDSL
 querydsl-jpa = { module = "com.querydsl:querydsl-jpa", version.ref = "querydsl" }
@@ -57,6 +60,10 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 # DB
 mysql-connector = { module = "com.mysql:mysql-connector-j", version.ref = "mysql" }
 h2 = { module = "com.h2database:h2" }
+
+# ClickHouse
+clickhouse-jdbc = { module = "com.clickhouse:clickhouse-jdbc", version.ref = "clickhouse" }
+clickhouse-http = { module = "com.clickhouse:clickhouse-http-client", version.ref = "clickhouse" }
 
 # Spring Batch
 spring-boot-starter-batch = { module = "org.springframework.boot:spring-boot-starter-batch" }

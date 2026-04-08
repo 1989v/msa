@@ -26,5 +26,9 @@ include(
     "warehouse:domain",
     "warehouse:app",
     "chatbot:domain",
-    "chatbot:app"
+    "chatbot:app",
+    "analytics:domain",
+    "analytics:app",
+    "experiment:domain",
+    "experiment:app"
 )

@@ -23,6 +23,7 @@ volumes:
   mysql-fulfillment-replica-data:
   mysql-warehouse-master-data:
   mysql-warehouse-replica-data:
+  mysql-experiment-master-data:
   gifticon-images:
   redis-1-data:
   redis-2-data:
@@ -35,6 +36,7 @@ volumes:
   kafka-data:
   zookeeper-data:
   zookeeper-log:
+  clickhouse-data:
 
 services:
 
@@ -487,6 +489,33 @@ services:
     restart: unless-stopped
 
   # ============================================================
+  # MySQL — Experiment Service
+  # ============================================================
+
+  mysql-experiment-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-experiment-master
+    ports:
+      - "3348:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: experiment_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-experiment-master-data:/var/lib/mysql
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.90
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
   # Redis Cluster (3 Masters + 3 Replicas)
   # ============================================================
 
@@ -846,4 +875,32 @@ services:
       timeout: 5s
       retries: 10
       start_period: 60s
+    restart: unless-stopped
+
+  # ============================================================
+  # ClickHouse — Analytics Service (OLAP)
+  # ============================================================
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:${CLICKHOUSE_VERSION:-24.3}
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER:-analytics}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-analytics}
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB:-analytics}
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.5.1
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user ${CLICKHOUSE_USER:-analytics} --password ${CLICKHOUSE_PASSWORD:-analytics} --query 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped

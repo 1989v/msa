@@ -1,0 +1,49 @@
+questions:
+  - id: OQ-1
+    status: open
+    question: "ClickHouse 클러스터 구성 — 로컬 개발 시 단일 노드, 운영 시 클러스터? 초기엔 단일 노드로 시작하고 확장 가능한 구조?"
+    context: "새 인프라 도입. Docker Compose에 ClickHouse 컨테이너 추가 필요"
+    impact: high
+
+  - id: OQ-2
+    status: open
+    question: "Kafka Streams 앱을 analytics 서비스 내부에 임베딩할지, 별도 프로세스로 분리할지?"
+    context: "analytics 서비스가 REST API + Kafka Streams 두 가지 역할. 서비스 단일 책임 관점에서 분리가 나을 수 있음"
+    impact: medium
+
+  - id: OQ-3
+    status: open
+    question: "이벤트 토픽 전략 — 단일 토픽(analytics.events)에 eventType 파티션 키 vs 이벤트 유형별 개별 토픽?"
+    context: "단일 토픽이 관리 간편, 개별 토픽이 독립 소비/스케일링에 유리"
+    impact: medium
+
+  - id: OQ-4
+    status: open
+    question: "A/B 테스트 서비스의 DB — MySQL(실험 메타데이터) + ClickHouse(결과 분석) 이중 사용? 아니면 ClickHouse 단일?"
+    context: "실험 CRUD는 트랜잭셔널, 결과 분석은 OLAP 특성. 이중 DB가 적합할 수 있음"
+    impact: medium
+
+  - id: OQ-5
+    status: closed
+    question: "스코어 정규화 기준 — 전체 상품 대비? 카테고리별?"
+    answer: "유형별 독립 정규화. 상품 스코어는 상품끼리, 키워드 스코어는 키워드끼리 별개 모집단에서 산출"
+
+  - id: OQ-6
+    status: closed
+    question: "이벤트 수집 서비스 배치 위치"
+    answer: "analytics 신규 서비스로 독립 배치"
+
+  - id: OQ-7
+    status: closed
+    question: "이벤트 저장소 선택"
+    answer: "Kafka + ClickHouse"
+
+  - id: OQ-8
+    status: closed
+    question: "스코어 산출 주기"
+    answer: "준실시간 (Kafka Streams)"
+
+  - id: OQ-9
+    status: closed
+    question: "A/B 테스트 범위"
+    answer: "풀스택 — 실험 관리 + 버킷 할당 + 결과 분석"
