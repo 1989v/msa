@@ -48,9 +48,10 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
     }));
 
     const nodeColor = useCallback(
-      (node: GraphNode) => {
-        const color = CATEGORY_COLORS[node.category as Category] || '#888';
-        if (dimmed && !highlightedNodes.has(node.id)) {
+      (node: any) => {
+        const n = node as GraphNode;
+        const color = CATEGORY_COLORS[n.category as Category] || '#888';
+        if (dimmed && !highlightedNodes.has(n.id)) {
           return `${color}1a`;
         }
         return color;
@@ -59,20 +60,15 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
     );
 
     const nodeVal = useCallback(
-      (node: GraphNode) => Math.max(2, node.relatedCount * 2),
+      (node: any) => Math.max(2, (node as GraphNode).relatedCount * 2),
       []
     );
 
-    const nodeOpacity = useCallback(
-      (node: GraphNode) => {
-        if (dimmed && !highlightedNodes.has(node.id)) return 0.1;
-        return Math.min(1, 0.4 + (node.indexCount / 10) * 0.6);
-      },
-      [dimmed, highlightedNodes]
-    );
-
     const nodeLabel = useCallback(
-      (node: GraphNode) => `${node.name}\n${node.category} · ${node.level}`,
+      (node: any) => {
+        const n = node as GraphNode;
+        return `${n.name}\n${n.category} · ${n.level}`;
+      },
       []
     );
 
@@ -84,7 +80,7 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
         nodeLabel={nodeLabel}
         nodeColor={nodeColor}
         nodeVal={nodeVal}
-        nodeOpacity={nodeOpacity}
+        nodeOpacity={dimmed ? 0.1 : 0.75}
         linkColor={() => 'rgba(108, 99, 255, 0.2)'}
         linkWidth={0.5}
         onNodeClick={(node: unknown) => onNodeClick(node as GraphNode)}

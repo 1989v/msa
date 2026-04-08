@@ -5,7 +5,7 @@ import type { SuggestItem } from '../types/graph';
 export function useSuggest(query: string, debounceMs = 300) {
   const [suggestions, setSuggestions] = useState<SuggestItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);

@@ -75,7 +75,7 @@ export default function TreemapPanel({ nodes, onNodeClick }: TreemapPanelProps) 
         >
           <Tooltip
             contentStyle={{ background: '#1a1a2e', border: '1px solid #333', color: '#e0e0e0' }}
-            formatter={(value: number) => [`${value} indexes`, 'Code']}
+            formatter={(value: any) => [`${value} indexes`, 'Code']}
           />
         </Treemap>
       </ResponsiveContainer>

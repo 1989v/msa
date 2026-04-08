@@ -108,6 +108,7 @@ function LinkLine({
   const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points]);
 
   return (
+    // @ts-expect-error R3F line element conflicts with SVG line type
     <line geometry={geometry}>
       <lineBasicMaterial color="#6c63ff" transparent opacity={dimmed ? 0.03 : 0.15} />
     </line>
