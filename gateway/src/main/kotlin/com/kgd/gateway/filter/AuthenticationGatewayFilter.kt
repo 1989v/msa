@@ -16,7 +16,9 @@ class AuthenticationGatewayFilter(
     private val redisTemplate: ReactiveRedisTemplate<String, Any>
 ) : AbstractGatewayFilterFactory<AuthenticationGatewayFilter.Config>(Config::class.java) {
 
-    class Config
+    data class Config(
+        val requiredRoles: List<String> = emptyList()
+    )
 
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -49,14 +51,30 @@ class AuthenticationGatewayFilter(
                         val userId = claims.get("userId", String::class.java) ?: ""
                         @Suppress("UNCHECKED_CAST")
                         val roles = (claims.get("roles", List::class.java) as? List<*>)
-                            ?.joinToString(",") ?: ""
+                            ?.map { it.toString() } ?: emptyList()
+
+                        // 역할 기반 접근 제어
+                        if (config.requiredRoles.isNotEmpty() &&
+                            !hasRequiredRole(roles, config.requiredRoles)
+                        ) {
+                            log.warn("Insufficient role for {}: has={}, required={}", request.uri, roles, config.requiredRoles)
+                            exchange.response.statusCode = HttpStatus.FORBIDDEN
+                            return@flatMap exchange.response.setComplete()
+                        }
+
                         val mutatedRequest = request.mutate()
                             .header("X-User-Id", userId)
-                            .header("X-User-Roles", roles)
+                            .header("X-User-Roles", roles.joinToString(","))
                             .build()
                         chain.filter(exchange.mutate().request(mutatedRequest).build())
                     }
                 }
             }
+    }
+
+    private fun hasRequiredRole(userRoles: List<String>, requiredRoles: List<String>): Boolean {
+        // ROLE_ADMIN은 모든 역할을 포함
+        if (userRoles.contains("ROLE_ADMIN")) return true
+        return userRoles.any { it in requiredRoles }
     }
 }

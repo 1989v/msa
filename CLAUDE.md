@@ -97,6 +97,8 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 | charting | `charting/CLAUDE.md` | Python/FastAPI, 독립 도메인 |
 | analytics | `analytics/CLAUDE.md` | 이벤트 수집, 스코어 산출 (Kafka Streams + ClickHouse) |
 | experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼 |
+| member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
+| wishlist | `wishlist/CLAUDE.md` | 상품 위시리스트 (회원별) |
 
 > 서비스 특화 ADR은 해당 서비스의 `docs/adr/`에 위치 (예: `charting/docs/adr/`)
 

@@ -1,0 +1,33 @@
+open:
+  - id: OQ-1
+    question: "auth의 기존 users 테이블 데이터 마이그레이션 전략은? (auth DB → member DB)"
+    impact: high
+    note: "현재 운영 데이터가 있다면 다운타임 최소화 필요. 학습 프로젝트라면 단순 이전 가능."
+
+  - id: OQ-2
+    question: "Permission 세분화 수준 — 도메인 단위(PRODUCT, ORDER) vs 액션 단위(PRODUCT_READ, PRODUCT_WRITE)?"
+    impact: medium
+    note: "요구사항에서 도메인별 접근 제어 언급. 우선 도메인+액션 조합으로 설계, 초기엔 Role 기반 매핑만."
+
+  - id: OQ-3
+    question: "위시리스트에서 상품 정보(이름, 가격) 표시 방식 — API 조회 vs 비정규화?"
+    impact: medium
+    note: "CQRS 패턴 또는 조회 시 product API 호출. 초기엔 API 호출, 성능 이슈 시 CQRS."
+
+  - id: OQ-4
+    question: "auth의 TokenAdapter 자체 JWT 구현 제거 시 기존 발급된 토큰 호환성은?"
+    impact: high
+    note: "subject vs claim 방식 차이. 전환 시 기존 토큰 무효화 필요할 수 있음."
+
+closed:
+  - id: CQ-1
+    question: "회원과 인증을 분리할 것인가?"
+    answer: "분리. member(회원 식별) / auth(인증·인가) 별도 서비스."
+
+  - id: CQ-2
+    question: "개인정보 범위는?"
+    answer: "최소화. email, name, SSO 제공자/ID만. profileImageUrl 미저장."
+
+  - id: CQ-3
+    question: "시큐리티의 범위는?"
+    answer: "RBAC (Role-Based Access Control). 역할별 도메인 접근 제어. Spring Security + Gateway 필터."

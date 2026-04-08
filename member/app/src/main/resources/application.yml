@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: member-service
+  datasource:
+    master:
+      jdbc-url: jdbc:mysql://localhost:3356/member_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:member_user}
+      password: ${MYSQL_PASSWORD:member_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+    replica:
+      jdbc-url: jdbc:mysql://localhost:3357/member_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:member_user}
+      password: ${MYSQL_PASSWORD:member_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 10
+        minimum-idle: 2
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+
+server:
+  port: 8093
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_DEFAULT_ZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

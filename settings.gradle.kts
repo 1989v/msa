@@ -30,5 +30,9 @@ include(
     "analytics:domain",
     "analytics:app",
     "experiment:domain",
-    "experiment:app"
+    "experiment:app",
+    "member:domain",
+    "member:app",
+    "wishlist:domain",
+    "wishlist:app"
 )

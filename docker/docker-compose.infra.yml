@@ -23,6 +23,10 @@ volumes:
   mysql-fulfillment-replica-data:
   mysql-warehouse-master-data:
   mysql-warehouse-replica-data:
+  mysql-member-master-data:
+  mysql-member-replica-data:
+  mysql-wishlist-master-data:
+  mysql-wishlist-replica-data:
   mysql-experiment-master-data:
   gifticon-images:
   redis-1-data:
@@ -480,6 +484,118 @@ services:
     networks:
       commerce-network:
         ipv4_address: 172.20.1.81
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # MySQL — Member Service
+  # ============================================================
+
+  mysql-member-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-member-master
+    ports:
+      - "3356:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: member_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-member-master-data:/var/lib/mysql
+      - ./mysql/member-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/member-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.92
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-member-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-member-replica
+    ports:
+      - "3357:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: member_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-member-replica-data:/var/lib/mysql
+      - ./mysql/member-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-member-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.93
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  # ============================================================
+  # MySQL — Wishlist Service
+  # ============================================================
+
+  mysql-wishlist-master:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-wishlist-master
+    ports:
+      - "3366:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: wishlist_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-wishlist-master-data:/var/lib/mysql
+      - ./mysql/wishlist-master/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+      - ./mysql/wishlist-master/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.94
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql-wishlist-replica:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    container_name: mysql-wishlist-replica
+    ports:
+      - "3367:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: wishlist_db
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - mysql-wishlist-replica-data:/var/lib/mysql
+      - ./mysql/wishlist-replica/my.cnf:/etc/mysql/conf.d/commerce.cnf:ro
+    depends_on:
+      mysql-wishlist-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.1.95
     healthcheck:
       test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
