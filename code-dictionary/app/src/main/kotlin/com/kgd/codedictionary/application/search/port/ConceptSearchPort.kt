@@ -20,6 +20,15 @@ data class SearchResponse(
     val maxScore: Float?
 )
 
+data class SuggestHit(
+    val conceptId: String,
+    val conceptName: String,
+    val category: String,
+    val level: String,
+    val description: String?
+)
+
 interface ConceptSearchPort {
     fun search(query: String, category: String?, level: String?, from: Int, size: Int): SearchResponse
+    fun suggest(query: String, size: Int): List<SuggestHit>
 }

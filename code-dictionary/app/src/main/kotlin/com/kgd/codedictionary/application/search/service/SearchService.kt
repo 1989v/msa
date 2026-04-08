@@ -3,6 +3,8 @@ package com.kgd.codedictionary.application.search.service
 import com.kgd.codedictionary.application.search.dto.SearchCommand
 import com.kgd.codedictionary.application.search.dto.SearchHitDto
 import com.kgd.codedictionary.application.search.dto.SearchResultDto
+import com.kgd.codedictionary.application.search.dto.SuggestCommand
+import com.kgd.codedictionary.application.search.dto.SuggestItemDto
 import com.kgd.codedictionary.application.search.port.ConceptSearchPort
 import org.springframework.stereotype.Service
 
@@ -37,5 +39,17 @@ class SearchService(
             totalHits = response.totalHits,
             maxScore = response.maxScore
         )
+    }
+
+    fun suggest(command: SuggestCommand): List<SuggestItemDto> {
+        return searchPort.suggest(command.query, command.size).map { hit ->
+            SuggestItemDto(
+                conceptId = hit.conceptId,
+                name = hit.conceptName,
+                category = hit.category,
+                level = hit.level,
+                description = hit.description ?: ""
+            )
+        }
     }
 }

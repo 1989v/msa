@@ -3,6 +3,7 @@ package com.kgd.codedictionary.infrastructure.opensearch.adapter
 import com.kgd.codedictionary.application.search.port.ConceptSearchPort
 import com.kgd.codedictionary.application.search.port.SearchHit
 import com.kgd.codedictionary.application.search.port.SearchResponse
+import com.kgd.codedictionary.application.search.port.SuggestHit
 import org.opensearch.client.json.JsonData
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.query_dsl.Query
@@ -101,5 +102,55 @@ class ConceptSearchAdapter(
             totalHits = totalHits,
             maxScore = maxScore
         )
+    }
+
+    override fun suggest(query: String, size: Int): List<SuggestHit> {
+        val response = openSearchClient.search({ s ->
+            s.index(indexName)
+                .query { q ->
+                    q.bool { b ->
+                        b.should(listOf(
+                            Query.of { qq ->
+                                qq.multiMatch { mm ->
+                                    mm.query(query)
+                                        .fields(listOf(
+                                            "concept_name.autocomplete^3",
+                                            "concept_name^2",
+                                            "description.autocomplete",
+                                            "description",
+                                            "category"
+                                        ))
+                                }
+                            }
+                        ))
+                        .minimumShouldMatch("1")
+                    }
+                }
+                .size(size * 3)
+                .source { src ->
+                    src.filter { f ->
+                        f.includes(listOf("concept_id", "concept_name", "category", "level", "description"))
+                    }
+                }
+        }, JsonData::class.java)
+
+        val seen = mutableSetOf<String>()
+        return response.hits().hits().mapNotNull { hit ->
+            val sourceMap = hit.source()?.let {
+                @Suppress("UNCHECKED_CAST")
+                it.to(Map::class.java) as Map<String, Any?>
+            } ?: return@mapNotNull null
+
+            val conceptId = sourceMap["concept_id"]?.toString() ?: return@mapNotNull null
+            if (!seen.add(conceptId)) return@mapNotNull null
+
+            SuggestHit(
+                conceptId = conceptId,
+                conceptName = sourceMap["concept_name"]?.toString() ?: "",
+                category = sourceMap["category"]?.toString() ?: "",
+                level = sourceMap["level"]?.toString() ?: "",
+                description = sourceMap["description"]?.toString()
+            )
+        }.take(size)
     }
 }
