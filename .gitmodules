@@ -15,4 +15,4 @@
 	url = https://github.com/1989v/ai
 [submodule "private"]
 	path = private
-	url = https://github.com/kwongd/msa-private.git
+	url = https://github.com/1989v/msa-private.git
