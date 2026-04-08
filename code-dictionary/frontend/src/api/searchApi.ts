@@ -43,3 +43,24 @@ export const searchConcepts = async (
   const res = await api.get<ApiResponse<SearchResponse>>(`/api/v1/search?${params}`);
   return res.data.data;
 };
+
+import type { GraphData, SuggestItem, ConceptDetail } from '../types/graph';
+
+export const suggestConcepts = async (
+  query: string,
+  size = 8
+): Promise<SuggestItem[]> => {
+  const params = new URLSearchParams({ q: query, size: String(size) });
+  const res = await api.get<ApiResponse<SuggestItem[]>>(`/api/v1/search/suggest?${params}`);
+  return res.data.data;
+};
+
+export const fetchGraphData = async (): Promise<GraphData> => {
+  const res = await api.get<ApiResponse<GraphData>>('/api/v1/concepts/graph');
+  return res.data.data;
+};
+
+export const fetchConceptDetail = async (conceptId: string): Promise<ConceptDetail> => {
+  const res = await api.get<ApiResponse<ConceptDetail>>(`/api/v1/concepts/by-concept-id/${conceptId}`);
+  return res.data.data;
+};
