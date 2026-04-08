@@ -1,0 +1,38 @@
+[
+  {
+    "conceptId": "service-discovery",
+    "filePath": "discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt",
+    "lineStart": 1,
+    "lineEnd": 13,
+    "codeSnippet": "package com.kgd.discovery\n\nimport org.springframework.boot.autoconfigure.SpringBootApplication\nimport org.springframework.boot.runApplication\nimport org.springframework.cloud.netflix.eureka.server.EnableEurekaServer\n\n@SpringBootApplication\n@EnableEurekaServer\nclass DiscoveryApplication\n\nfun main(args: Array<String>) {\n    runApplication<DiscoveryApplication>(*args)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt#L1-L13",
+    "description": "@EnableEurekaServer activates Netflix Eureka — all microservices register here, gateway resolves lb:// URIs via this registry."
+  },
+  {
+    "conceptId": "msa",
+    "filePath": "discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt",
+    "lineStart": 7,
+    "lineEnd": 9,
+    "codeSnippet": "@SpringBootApplication\n@EnableEurekaServer\nclass DiscoveryApplication",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt#L7-L9",
+    "description": "Dedicated discovery microservice — central service registry enabling location transparency and dynamic scaling in the MSA."
+  },
+  {
+    "conceptId": "health-check",
+    "filePath": "discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt",
+    "lineStart": 7,
+    "lineEnd": 9,
+    "codeSnippet": "@SpringBootApplication\n@EnableEurekaServer\nclass DiscoveryApplication",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt#L7-L9",
+    "description": "Eureka server tracks service health via heartbeat — automatically deregisters unhealthy instances from the registry."
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt",
+    "lineStart": 7,
+    "lineEnd": 9,
+    "codeSnippet": "@SpringBootApplication\n@EnableEurekaServer\nclass DiscoveryApplication",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/discovery/src/main/kotlin/com/kgd/discovery/DiscoveryApplication.kt#L7-L9",
+    "description": "@EnableEurekaServer meta-annotation enables the full Eureka server auto-configuration with minimal boilerplate."
+  }
+]

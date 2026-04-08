@@ -1,0 +1,146 @@
+[
+  {
+    "conceptId": "data-class",
+    "filePath": "common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt",
+    "lineStart": 5,
+    "lineEnd": 14,
+    "codeSnippet": "data class ApiResponse<T>(\n    val success: Boolean,\n    val data: T? = null,\n    val error: ErrorDetail? = null\n) {\n    data class ErrorDetail(\n        val code: String,\n        val message: String\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt#L5-L14",
+    "description": "Standard API response envelope implemented as a nested data class — immutable, auto-equality, shareable across all services."
+  },
+  {
+    "conceptId": "generic",
+    "filePath": "common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt",
+    "lineStart": 5,
+    "lineEnd": 37,
+    "codeSnippet": "data class ApiResponse<T>(\n    val success: Boolean,\n    val data: T? = null,\n    val error: ErrorDetail? = null\n) {\n    companion object {\n        fun <T> success(data: T): ApiResponse<T> = ...\n        fun <T> error(errorCode: ErrorCode): ApiResponse<T> = ...\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt#L5-L37",
+    "description": "Generic type parameter T lets ApiResponse wrap any payload type while maintaining compile-time type safety."
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt",
+    "lineStart": 15,
+    "lineEnd": 36,
+    "codeSnippet": "companion object {\n    fun <T> success(data: T): ApiResponse<T> =\n        ApiResponse(success = true, data = data)\n\n    fun <T> success(): ApiResponse<T> =\n        ApiResponse(success = true)\n\n    fun <T> error(errorCode: ErrorCode): ApiResponse<T> =\n        ApiResponse(success = false, error = ErrorDetail(...))\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/response/ApiResponse.kt#L15-L36",
+    "description": "Factory methods in companion object provide named constructors (success/error) — idiomatic Kotlin alternative to static factory methods."
+  },
+  {
+    "conceptId": "jwt",
+    "filePath": "common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt",
+    "lineStart": 18,
+    "lineEnd": 36,
+    "codeSnippet": "fun generateAccessToken(userId: String, roles: List<String>): String =\n    Jwts.builder()\n        .claim(\"userId\", userId)\n        .claim(\"roles\", roles)\n        .claim(\"type\", \"access\")\n        .issuedAt(Date())\n        .expiration(Date(System.currentTimeMillis() + props.accessExpiry * 1000L))\n        .signWith(key)\n        .compact()",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt#L18-L36",
+    "description": "Generates HMAC-signed JWT access tokens with userId/roles claims and configurable expiry — shared utility for all services."
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "common/src/main/kotlin/com/kgd/common/exception/GlobalExceptionHandler.kt",
+    "lineStart": 13,
+    "lineEnd": 32,
+    "codeSnippet": "@RestControllerAdvice\nclass GlobalExceptionHandler {\n\n    @ExceptionHandler(BusinessException::class)\n    fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {\n        val status = when (e.errorCode) {\n            ErrorCode.NOT_FOUND -> HttpStatus.NOT_FOUND\n            ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED\n            ErrorCode.CIRCUIT_BREAKER_OPEN, ErrorCode.EXTERNAL_API_ERROR -> HttpStatus.SERVICE_UNAVAILABLE\n            else -> HttpStatus.INTERNAL_SERVER_ERROR\n        }\n        return ResponseEntity.status(status).body(ApiResponse.error(e.errorCode))\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/exception/GlobalExceptionHandler.kt#L13-L32",
+    "description": "Centralized @RestControllerAdvice maps domain BusinessException subtypes to HTTP status codes — single responsibility error translation."
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "common/src/main/kotlin/com/kgd/common/exception/ErrorCode.kt",
+    "lineStart": 3,
+    "lineEnd": 24,
+    "codeSnippet": "enum class ErrorCode(val message: String) {\n    INVALID_INPUT(\"입력값이 올바르지 않습니다\"),\n    NOT_FOUND(\"리소스를 찾을 수 없습니다\"),\n    UNAUTHORIZED(\"인증이 필요합니다\"),\n    CIRCUIT_BREAKER_OPEN(\"서비스가 일시적으로 사용 불가능합니다\"),\n    EXTERNAL_API_ERROR(\"외부 API 호출에 실패했습니다\"),\n    INSUFFICIENT_STOCK(\"재고가 부족합니다\"),\n    INVALID_ORDER_STATUS(\"유효하지 않은 주문 상태입니다\")\n    // ...\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/exception/ErrorCode.kt#L3-L24",
+    "description": "Enum with message property centralizes all error codes and human-readable messages as a shared vocabulary."
+  },
+  {
+    "conceptId": "polymorphism",
+    "filePath": "common/src/main/kotlin/com/kgd/common/exception/BusinessException.kt",
+    "lineStart": 3,
+    "lineEnd": 25,
+    "codeSnippet": "open class BusinessException(\n    val errorCode: ErrorCode,\n    message: String = errorCode.message,\n    cause: Throwable? = null\n) : RuntimeException(message, cause)\n\nclass NotFoundException(resource: String, id: Any? = null) : BusinessException(...)\nclass UnauthorizedException(...) : BusinessException(...)\nclass ForbiddenException(...) : BusinessException(...)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/exception/BusinessException.kt#L3-L25",
+    "description": "Exception hierarchy with open base class and typed subclasses — polymorphic catch in GlobalExceptionHandler dispatches all subtypes."
+  },
+  {
+    "conceptId": "circuit-breaker",
+    "filePath": "common/src/main/kotlin/com/kgd/common/exception/ErrorCode.kt",
+    "lineStart": 13,
+    "lineEnd": 14,
+    "codeSnippet": "CIRCUIT_BREAKER_OPEN(\"서비스가 일시적으로 사용 불가능합니다\"),\nEXTERNAL_API_ERROR(\"외부 API 호출에 실패했습니다\"),",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/exception/ErrorCode.kt#L13-L14",
+    "description": "Dedicated error codes for circuit breaker open state and external API failures — enables consistent HTTP 503 responses."
+  },
+  {
+    "conceptId": "event-driven-architecture",
+    "filePath": "common/src/main/kotlin/com/kgd/common/analytics/AnalyticsEventPublisher.kt",
+    "lineStart": 6,
+    "lineEnd": 23,
+    "codeSnippet": "class AnalyticsEventPublisher(\n    private val kafkaTemplate: KafkaTemplate<String, AnalyticsEvent>\n) {\n    companion object {\n        const val TOPIC = \"analytics.event.collected\"\n    }\n\n    fun publish(event: AnalyticsEvent) {\n        kafkaTemplate.send(TOPIC, event.visitorId, event)\n            .whenComplete { _, ex -> ... }\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/analytics/AnalyticsEventPublisher.kt#L6-L23",
+    "description": "Kafka-based analytics event publisher — fire-and-forget async publishing to decouple event producers from analytics pipeline."
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "common/src/main/kotlin/com/kgd/common/analytics/EventType.kt",
+    "lineStart": 3,
+    "lineEnd": 10,
+    "codeSnippet": "enum class EventType {\n    SEARCH_KEYWORD,\n    PAGE_VIEW,\n    PRODUCT_VIEW,\n    PRODUCT_CLICK,\n    ADD_TO_CART,\n    ORDER_COMPLETE\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/analytics/EventType.kt#L3-L10",
+    "description": "Enum defines the analytics event taxonomy shared across services — type-safe event classification."
+  },
+  {
+    "conceptId": "caching",
+    "filePath": "common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt",
+    "lineStart": 18,
+    "lineEnd": 44,
+    "codeSnippet": "@AutoConfiguration\n@ConditionalOnProperty(prefix = \"kgd.common.redis\", name = [\"enabled\"], havingValue = \"true\")\nclass CommonRedisAutoConfiguration {\n\n    @Bean\n    fun lettuceConnectionFactory(\n        clusterConfiguration: RedisClusterConfiguration\n    ): LettuceConnectionFactory {\n        val topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()\n            .enablePeriodicRefresh(Duration.ofMinutes(10))\n            .enableAllAdaptiveRefreshTriggers()\n            .build()",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt#L18-L44",
+    "description": "Auto-configured Redis cluster connection factory with periodic topology refresh — shared caching infrastructure for all services."
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "common/src/main/kotlin/com/kgd/common/security/CommonSecurityAutoConfiguration.kt",
+    "lineStart": 9,
+    "lineEnd": 12,
+    "codeSnippet": "@AutoConfiguration\n@ConditionalOnProperty(prefix = \"kgd.common.security\", name = [\"enabled\"], havingValue = \"true\", matchIfMissing = false)\n@EnableConfigurationProperties(JwtProperties::class)\nclass CommonSecurityAutoConfiguration {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/security/CommonSecurityAutoConfiguration.kt#L9-L12",
+    "description": "Spring Boot auto-configuration annotations with conditional activation — opt-in security beans via property flag."
+  },
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "common/src/main/kotlin/com/kgd/common/webclient/WebClientBuilderFactory.kt",
+    "lineStart": 9,
+    "lineEnd": 24,
+    "codeSnippet": "class WebClientBuilderFactory(\n    private val webClientBuilder: WebClient.Builder\n) {\n    fun create(baseUrl: String): WebClient =\n        webClientBuilder.clone()\n            .baseUrl(baseUrl)\n            .build()\n\n    fun builder(baseUrl: String? = null): WebClient.Builder {\n        val cloned = webClientBuilder.clone()\n        ...\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/webclient/WebClientBuilderFactory.kt#L9-L24",
+    "description": "Factory that clones a shared WebClient.Builder prototype per service — prevents state pollution between per-service clients."
+  },
+  {
+    "conceptId": "lambda",
+    "filePath": "common/src/main/kotlin/com/kgd/common/analytics/AnalyticsEventPublisher.kt",
+    "lineStart": 16,
+    "lineEnd": 21,
+    "codeSnippet": "fun publish(event: AnalyticsEvent) {\n    kafkaTemplate.send(TOPIC, event.visitorId, event)\n        .whenComplete { _, ex ->\n            if (ex != null) {\n                log.warn(\"Analytics event publish failed: {}\", event.eventId, ex)\n            }\n        }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/analytics/AnalyticsEventPublisher.kt#L16-L21",
+    "description": "Lambda callback for async Kafka send completion — captures outer scope variables without boilerplate anonymous class."
+  },
+  {
+    "conceptId": "singleton-pattern",
+    "filePath": "common/src/main/kotlin/com/kgd/common/analytics/BucketAssigner.kt",
+    "lineStart": 5,
+    "lineEnd": 7,
+    "codeSnippet": "object BucketAssigner {\n    fun assign(userId: String, experimentId: Long, variantWeights: List<Pair<String, Int>>): String {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/analytics/BucketAssigner.kt#L5-L7",
+    "description": "Kotlin object declaration is a singleton — stateless bucket assigner with deterministic MurmurHash3 variant assignment."
+  },
+  {
+    "conceptId": "extension-function",
+    "filePath": "common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt",
+    "lineStart": 44,
+    "lineEnd": 50,
+    "codeSnippet": "fun isValid(token: String): Boolean =\n    try {\n        parseToken(token)\n        true\n    } catch (e: JwtException) {\n        false\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/common/src/main/kotlin/com/kgd/common/security/JwtUtil.kt#L44-L50",
+    "description": "isValid/isExpired utility functions wrap exception-based JWT parsing into boolean results using try-expression idiom."
+  }
+]

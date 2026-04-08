@@ -1,0 +1,353 @@
+[
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
+    "lineStart": 18,
+    "lineEnd": 38,
+    "codeSnippet": "companion object {\n    fun create(\n        brand: Brand,\n        productName: String,\n        imageUrl: String,\n        barcodeNumber: String,\n        expiryDate: LocalDate,\n        ownerId: Long\n    ): Gifticon {\n        require(productName.isNotBlank()) { \"상품명은 비어있을 수 없습니다\" }\n        require(ownerId > 0) { \"소유자 ID는 0보다 커야 합니다\" }\n        return Gifticon(...)\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt#L18-L38",
+    "description": "private constructor + companion object factory method `create` enforces invariants before constructing a Gifticon, preventing invalid instances from being built directly"
+  },
+  {
+    "conceptId": "value-object",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Brand.kt",
+    "lineStart": 1,
+    "lineEnd": 7,
+    "codeSnippet": "data class Brand(val name: String, val category: String? = null) {\n    init {\n        require(name.isNotBlank()) { \"브랜드명은 비어있을 수 없습니다\" }\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Brand.kt#L1-L7",
+    "description": "Brand is an immutable data class that wraps brand name with validation — a canonical DDD value object with no identity of its own"
+  },
+  {
+    "conceptId": "value-object",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/ExpiryDate.kt",
+    "lineStart": 6,
+    "lineEnd": 25,
+    "codeSnippet": "class ExpiryDate private constructor(val value: LocalDate) {\n    companion object {\n        fun create(date: LocalDate): ExpiryDate {\n            require(!date.isBefore(LocalDate.now())) { \"유효기간은 과거일 수 없습니다\" }\n            return ExpiryDate(date)\n        }\n        fun restore(date: LocalDate): ExpiryDate = ExpiryDate(date)\n    }\n    fun isExpiringSoon(days: Int): Boolean { ... }\n    fun isExpired(): Boolean = LocalDate.now().isAfter(value)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/ExpiryDate.kt#L6-L25",
+    "description": "ExpiryDate wraps LocalDate with domain-meaningful behavior (isExpiringSoon, isExpired) and guards creation with past-date validation — a value object encapsulating expiry domain logic"
+  },
+  {
+    "conceptId": "aggregate",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
+    "lineStart": 7,
+    "lineEnd": 88,
+    "codeSnippet": "class Gifticon private constructor(\n    val id: Long? = null,\n    var brand: Brand,\n    var expiryDate: ExpiryDate,\n    var status: GifticonStatus,\n    ...\n) {\n    fun markUsed() { ... }\n    fun markExpired() { ... }\n    fun update(...) { ... }\n    fun isOwnedBy(userId: Long): Boolean = ownerId == userId\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt#L7-L88",
+    "description": "Gifticon is an aggregate root that controls its own state transitions (markUsed, markExpired) and encapsulates child value objects (Brand, ExpiryDate) while enforcing ownership invariants"
+  },
+  {
+    "conceptId": "aggregate",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ShareGroup.kt",
+    "lineStart": 6,
+    "lineEnd": 40,
+    "codeSnippet": "class ShareGroup private constructor(\n    val id: Long? = null,\n    var name: String,\n    val ownerId: Long,\n    val members: MutableList<ShareMember>,\n    ...\n) {\n    fun addMember(userId: Long) {\n        if (isMember(userId)) throw AlreadyMemberException()\n        members.add(ShareMember(userId = userId))\n    }\n    fun isMember(userId: Long): Boolean = ownerId == userId || members.any { it.userId == userId }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ShareGroup.kt#L6-L40",
+    "description": "ShareGroup is an aggregate root that manages its ShareMember collection, enforces uniqueness invariants on membership, and gates access through owner/member checks"
+  },
+  {
+    "conceptId": "sealed-class",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/event/GifticonEvent.kt",
+    "lineStart": 5,
+    "lineEnd": 9,
+    "codeSnippet": "sealed class GifticonEvent {\n    data class GifticonRegistered(val gifticonId: Long, val ownerId: Long) : GifticonEvent()\n    data class GifticonStatusChanged(val gifticonId: Long, val oldStatus: GifticonStatus, val newStatus: GifticonStatus) : GifticonEvent()\n    data class GifticonExpiringSoon(val gifticonId: Long, val ownerId: Long, val daysUntilExpiry: Int) : GifticonEvent()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/event/GifticonEvent.kt#L5-L9",
+    "description": "GifticonEvent uses a sealed class hierarchy to represent all possible domain events as a closed, exhaustively matchable type set"
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/GifticonStatus.kt",
+    "lineStart": 1,
+    "lineEnd": 3,
+    "codeSnippet": "enum class GifticonStatus { ACTIVE, USED, EXPIRED }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/GifticonStatus.kt#L1-L3",
+    "description": "GifticonStatus models the finite state machine of a gifticon's lifecycle as an enum, enabling exhaustive when-expression matching for state transitions"
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/exception/GifticonException.kt",
+    "lineStart": 1,
+    "lineEnd": 8,
+    "codeSnippet": "class GifticonNotFoundException(id: Long) : BusinessException(ErrorCode.NOT_FOUND, \"기프티콘(id=$id)을 찾을 수 없습니다\")\nclass InvalidGifticonStatusException : BusinessException(ErrorCode.INVALID_INPUT, \"유효하지 않은 기프티콘 상태입니다\")\nclass GifticonAccessDeniedException : BusinessException(ErrorCode.FORBIDDEN)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/exception/GifticonException.kt#L1-L8",
+    "description": "Domain-specific exception hierarchy extends a shared BusinessException base with typed ErrorCode, enabling structured error handling across layers without leaking infrastructure concerns into the domain"
+  },
+  {
+    "conceptId": "singleton-pattern",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/policy/ExpiryAlertPolicy.kt",
+    "lineStart": 7,
+    "lineEnd": 15,
+    "codeSnippet": "object ExpiryAlertPolicy {\n    val alertDays = listOf(7, 3, 1)\n\n    fun shouldAlert(expiryDate: ExpiryDate, today: LocalDate): Int? {\n        val daysUntil = ChronoUnit.DAYS.between(today, expiryDate.value).toInt()\n        return if (daysUntil in alertDays) daysUntil else null\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/policy/ExpiryAlertPolicy.kt#L7-L15",
+    "description": "ExpiryAlertPolicy is declared as a Kotlin object (singleton) to represent a stateless, shareable domain policy with no need for multiple instances"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ViewMark.kt",
+    "lineStart": 5,
+    "lineEnd": 9,
+    "codeSnippet": "data class ViewMark(\n    val gifticonId: Long,\n    val userId: Long,\n    val viewedAt: LocalDateTime = LocalDateTime.now()\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ViewMark.kt#L5-L9",
+    "description": "ViewMark uses data class for structural equality, copy(), and destructuring — appropriate for a read-tracking record that acts as an immutable value object"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/GifticonRepositoryPort.kt",
+    "lineStart": 8,
+    "lineEnd": 15,
+    "codeSnippet": "interface GifticonRepositoryPort {\n    fun save(gifticon: Gifticon): Gifticon\n    fun findById(id: Long): Gifticon?\n    fun findAllByOwnerId(ownerId: Long, pageable: Pageable): Page<Gifticon>\n    fun findExpiringGifticons(targetDate: LocalDate): List<Gifticon>\n    fun findExpiredActiveGifticons(today: LocalDate): List<Gifticon>\n    fun delete(id: Long)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/GifticonRepositoryPort.kt#L8-L15",
+    "description": "GifticonRepositoryPort is a hexagonal architecture outbound port — an interface defined in the application layer that is implemented by the infrastructure adapter (GifticonRepositoryAdapter)"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/ImageStoragePort.kt",
+    "lineStart": 3,
+    "lineEnd": 6,
+    "codeSnippet": "interface ImageStoragePort {\n    fun store(fileName: String, content: ByteArray): String\n    fun delete(imageUrl: String)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/ImageStoragePort.kt#L3-L6",
+    "description": "ImageStoragePort defines the storage abstraction boundary so the application layer never depends on local filesystem details — a secondary (driven) port in hexagonal architecture"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/PushNotificationPort.kt",
+    "lineStart": 3,
+    "lineEnd": 5,
+    "codeSnippet": "interface PushNotificationPort {\n    fun sendPush(userId: Long, title: String, body: String)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/port/PushNotificationPort.kt#L3-L5",
+    "description": "PushNotificationPort abstracts the push delivery mechanism so the domain can trigger notifications without coupling to any specific push service implementation"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/adapter/GifticonRepositoryAdapter.kt",
+    "lineStart": 13,
+    "lineEnd": 36,
+    "codeSnippet": "@Component\nclass GifticonRepositoryAdapter(\n    private val jpaRepository: GifticonJpaRepository\n) : GifticonRepositoryPort {\n    override fun save(gifticon: Gifticon): Gifticon {\n        val id = gifticon.id\n        val entity = if (id != null) { jpaRepository.findById(id)... } else { GifticonJpaEntity.fromDomain(gifticon) }\n        return jpaRepository.save(entity).toDomain()\n    }\n    ...\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/adapter/GifticonRepositoryAdapter.kt#L13-L36",
+    "description": "GifticonRepositoryAdapter implements GifticonRepositoryPort, adapting Spring Data JPA to the domain interface — a classic hexagonal infrastructure adapter that translates between JPA entities and domain objects"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/client/PushNotificationAdapter.kt",
+    "lineStart": 7,
+    "lineEnd": 15,
+    "codeSnippet": "@Component\nclass PushNotificationAdapter : PushNotificationPort {\n    private val log = LoggerFactory.getLogger(PushNotificationAdapter::class.java)\n\n    override fun sendPush(userId: Long, title: String, body: String) {\n        log.info(\"Push notification to userId={}, title={}, body={}\", userId, title, body)\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/client/PushNotificationAdapter.kt#L7-L15",
+    "description": "PushNotificationAdapter implements the PushNotificationPort interface, adapting external push delivery to the application's notification contract"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/storage/LocalImageStorageAdapter.kt",
+    "lineStart": 12,
+    "lineEnd": 35,
+    "codeSnippet": "@Component\nclass LocalImageStorageAdapter(\n    @Value(\"...\") private val storagePath: String\n) : ImageStoragePort {\n    override fun store(fileName: String, content: ByteArray): String { ... }\n    override fun delete(imageUrl: String) { ... }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/storage/LocalImageStorageAdapter.kt#L12-L35",
+    "description": "LocalImageStorageAdapter implements ImageStoragePort for local filesystem, adapting file I/O operations to the domain's storage abstraction"
+  },
+  {
+    "conceptId": "hexagonal-architecture",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/usecase/RegisterGifticonUseCase.kt",
+    "lineStart": 3,
+    "lineEnd": 25,
+    "codeSnippet": "interface RegisterGifticonUseCase {\n    fun execute(command: Command): Result\n\n    data class Command(\n        val imageBytes: ByteArray,\n        val fileName: String,\n        val ownerId: Long,\n        ...\n    )\n\n    data class Result(\n        val id: Long,\n        ...\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/usecase/RegisterGifticonUseCase.kt#L3-L25",
+    "description": "RegisterGifticonUseCase is a primary (driving) port in hexagonal architecture — a use case interface with nested Command/Result DTOs that defines the application boundary for the presentation layer to drive"
+  },
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt",
+    "lineStart": 20,
+    "lineEnd": 31,
+    "codeSnippet": "@Service\nclass GifticonService(\n    private val transactionalService: GifticonTransactionalService,\n    private val imageStoragePort: ImageStoragePort,\n    private val sharedGifticonPort: SharedGifticonPort,\n    private val viewMarkRepositoryPort: ViewMarkRepositoryPort\n) : RegisterGifticonUseCase,\n    GetGifticonUseCase,\n    GetMyGifticonsUseCase,\n    ChangeGifticonStatusUseCase,\n    UpdateGifticonUseCase,\n    DeleteGifticonUseCase {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt#L20-L31",
+    "description": "GifticonService implements multiple use case interfaces from the application layer and depends only on port abstractions — enforcing clean architecture's dependency rule: outer layers depend inward, never the reverse"
+  },
+  {
+    "conceptId": "interface",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt",
+    "lineStart": 26,
+    "lineEnd": 31,
+    "codeSnippet": ") : RegisterGifticonUseCase,\n    GetGifticonUseCase,\n    GetMyGifticonsUseCase,\n    ChangeGifticonStatusUseCase,\n    UpdateGifticonUseCase,\n    DeleteGifticonUseCase {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt#L26-L31",
+    "description": "GifticonService implements six use case interfaces simultaneously, demonstrating Kotlin's multiple-interface implementation to keep each use case as a discrete contract"
+  },
+  {
+    "conceptId": "ddd",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
+    "lineStart": 63,
+    "lineEnd": 87,
+    "codeSnippet": "fun markUsed() {\n    if (status != GifticonStatus.ACTIVE) throw InvalidGifticonStatusException()\n    status = GifticonStatus.USED\n}\nfun markExpired() {\n    status = GifticonStatus.EXPIRED\n}\nfun update(brand: Brand? = null, productName: String? = null, ...) {\n    brand?.let { this.brand = it }\n    ...\n}\nfun isOwnedBy(userId: Long): Boolean = ownerId == userId",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt#L63-L87",
+    "description": "Business logic (status transition guards, ownership check) lives inside the domain entity itself — a hallmark of DDD rich domain model rather than anemic model"
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/entity/GifticonJpaEntity.kt",
+    "lineStart": 12,
+    "lineEnd": 48,
+    "codeSnippet": "@Entity\n@Table(name = \"gifticons\")\nclass GifticonJpaEntity(\n    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)\n    val id: Long? = null,\n    @Enumerated(EnumType.STRING)\n    var status: GifticonStatus,\n    ...\n) {\n    fun toDomain(): Gifticon = Gifticon.restore(...)\n    companion object { fun fromDomain(gifticon: Gifticon) = GifticonJpaEntity(...) }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/entity/GifticonJpaEntity.kt#L12-L48",
+    "description": "GifticonJpaEntity uses JPA annotations (@Entity, @Table, @Enumerated) to map the domain aggregate to a relational table, with explicit toDomain/fromDomain conversion to maintain separation from the domain model"
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/sharing/entity/ShareGroupJpaEntity.kt",
+    "lineStart": 9,
+    "lineEnd": 30,
+    "codeSnippet": "@Entity\n@Table(name = \"share_groups\")\nclass ShareGroupJpaEntity(\n    ...\n    @OneToMany(mappedBy = \"group\", cascade = [CascadeType.ALL], orphanRemoval = true)\n    val members: MutableList<ShareMemberJpaEntity> = mutableListOf(),\n    ...\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/sharing/entity/ShareGroupJpaEntity.kt#L9-L30",
+    "description": "ShareGroupJpaEntity uses @OneToMany with CascadeType.ALL and orphanRemoval to manage the member collection lifecycle through JPA's ORM cascade semantics"
+  },
+  {
+    "conceptId": "layered-architecture",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/presentation/gifticon/controller/GifticonController.kt",
+    "lineStart": 11,
+    "lineEnd": 20,
+    "codeSnippet": "@RestController\n@RequestMapping(\"/api/gifticons\")\nclass GifticonController(\n    private val registerGifticonUseCase: RegisterGifticonUseCase,\n    private val getGifticonUseCase: GetGifticonUseCase,\n    ...\n) {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/presentation/gifticon/controller/GifticonController.kt#L11-L20",
+    "description": "GifticonController sits in the presentation layer and depends only on use case interfaces — never on service implementations or repositories, enforcing strict layered architecture boundaries"
+  },
+  {
+    "conceptId": "rest",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/presentation/gifticon/controller/GifticonController.kt",
+    "lineStart": 22,
+    "lineEnd": 57,
+    "codeSnippet": "@PostMapping\nfun register(@RequestHeader(\"X-User-Id\") userId: Long, @RequestPart(\"image\") image: MultipartFile, ...): ResponseEntity<ApiResponse<GifticonResponse>>\n\n@GetMapping\nfun getMyGifticons(...): ResponseEntity<ApiResponse<GifticonListResponse>>\n\n@GetMapping(\"/{id}\")\nfun getGifticon(...): ResponseEntity<ApiResponse<GifticonResponse>>\n\n@PutMapping(\"/{id}\")\nfun updateGifticon(...): ResponseEntity<ApiResponse<GifticonResponse>>\n\n@DeleteMapping(\"/{id}\")\nfun deleteGifticon(...): ResponseEntity<Unit>",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/presentation/gifticon/controller/GifticonController.kt#L22-L57",
+    "description": "GifticonController exposes a RESTful API with standard HTTP verbs (POST, GET, PUT, DELETE) mapped to resource-oriented endpoints, returning ApiResponse wrappers with appropriate HTTP status codes"
+  },
+  {
+    "conceptId": "null-safety",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt",
+    "lineStart": 46,
+    "lineEnd": 56,
+    "codeSnippet": "val saved = transactionalService.save(gifticon)\n\nreturn RegisterGifticonUseCase.Result(\n    id = requireNotNull(saved.id) { \"저장된 기프티콘에 ID가 없습니다\" },\n    brand = saved.brand.name,\n    ...\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt#L46-L56",
+    "description": "requireNotNull is used consistently after save() calls to convert nullable id (Long?) into non-null Long with a descriptive error, leveraging Kotlin's null safety contract at the application boundary"
+  },
+  {
+    "conceptId": "null-safety",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/ExpiryAlertService.kt",
+    "lineStart": 46,
+    "lineEnd": 47,
+    "codeSnippet": "val gifticonId = gifticon.id ?: return",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/ExpiryAlertService.kt#L46-L47",
+    "description": "Elvis operator with early return safely handles nullable id without throwing, demonstrating Kotlin null-safe flow control"
+  },
+  {
+    "conceptId": "scope-function",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/adapter/GifticonRepositoryAdapter.kt",
+    "lineStart": 20,
+    "lineEnd": 32,
+    "codeSnippet": "val entity = if (id != null) {\n    jpaRepository.findById(id).orElseThrow {\n        IllegalArgumentException(\"Gifticon not found: $id\")\n    }.also { e ->\n        e.brandName = gifticon.brand.name\n        e.productName = gifticon.productName\n        ...\n    }\n} else {\n    GifticonJpaEntity.fromDomain(gifticon)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/adapter/GifticonRepositoryAdapter.kt#L20-L32",
+    "description": "`also` scope function is used to update fields on an existing JPA entity inline while returning the entity itself, keeping the mutation logic co-located with the retrieval"
+  },
+  {
+    "conceptId": "scope-function",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/config/DataSourceConfig.kt",
+    "lineStart": 35,
+    "lineEnd": 45,
+    "codeSnippet": "@Bean\nfun routingDataSource(\n    @Qualifier(\"masterDataSource\") master: DataSource,\n    @Qualifier(\"replicaDataSource\") replica: DataSource\n): DataSource = RoutingDataSource().apply {\n    setTargetDataSources(mapOf(DataSourceType.MASTER to master, DataSourceType.REPLICA to replica))\n    setDefaultTargetDataSource(master)\n    afterPropertiesSet()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/config/DataSourceConfig.kt#L35-L45",
+    "description": "`apply` scope function initializes the RoutingDataSource configuration inline, returning the configured instance without a separate variable — idiomatic Kotlin builder-style configuration"
+  },
+  {
+    "conceptId": "lambda",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt",
+    "lineStart": 81,
+    "lineEnd": 94,
+    "codeSnippet": "return GetMyGifticonsUseCase.Result(\n    gifticons = page.content.map { gifticon ->\n        GetMyGifticonsUseCase.GifticonSummary(\n            id = requireNotNull(gifticon.id) { \"저장된 기프티콘에 ID가 없습니다\" },\n            brand = gifticon.brand.name,\n            ...\n            daysUntilExpiry = gifticon.expiryDate.daysUntilExpiry()\n        )\n    },\n    totalElements = page.totalElements,\n    totalPages = page.totalPages\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt#L81-L94",
+    "description": "Lambda expressions with `map` and `filter` are used throughout the service layer for transforming domain collections into result DTOs without imperative loops"
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonTransactionalService.kt",
+    "lineStart": 12,
+    "lineEnd": 20,
+    "codeSnippet": "@Service\n@Transactional\nclass GifticonTransactionalService(\n    private val gifticonRepository: GifticonRepositoryPort\n) {\n    fun save(gifticon: Gifticon): Gifticon = gifticonRepository.save(gifticon)\n\n    @Transactional(readOnly = true)\n    fun findById(id: Long): Gifticon = gifticonRepository.findById(id)\n        ?: throw GifticonNotFoundException(id)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonTransactionalService.kt#L12-L20",
+    "description": "@Transactional and @Transactional(readOnly=true) annotations declaratively manage transaction boundaries, separating write and read-only transaction semantics at the service level"
+  },
+  {
+    "conceptId": "cqrs",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/config/DataSourceConfig.kt",
+    "lineStart": 17,
+    "lineEnd": 55,
+    "codeSnippet": "class RoutingDataSource : AbstractRoutingDataSource() {\n    override fun determineCurrentLookupKey(): DataSourceType =\n        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly())\n            DataSourceType.REPLICA else DataSourceType.MASTER\n}\n\n@Bean\nfun dataSource(@Qualifier(\"routingDataSource\") routingDataSource: DataSource): DataSource =\n    LazyConnectionDataSourceProxy(routingDataSource)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/config/DataSourceConfig.kt#L17-L55",
+    "description": "RoutingDataSource routes read-only transactions to a REPLICA and write transactions to MASTER, implementing the read/write separation aspect of CQRS at the infrastructure level"
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/entity/GifticonJpaEntity.kt",
+    "lineStart": 50,
+    "lineEnd": 63,
+    "codeSnippet": "companion object {\n    fun fromDomain(gifticon: Gifticon) = GifticonJpaEntity(\n        id = gifticon.id,\n        brandName = gifticon.brand.name,\n        brandCategory = gifticon.brand.category,\n        ...\n        ownerId = gifticon.ownerId,\n        createdAt = gifticon.createdAt\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/gifticon/entity/GifticonJpaEntity.kt#L50-L63",
+    "description": "companion object hosts the static `fromDomain` factory function for JPA entity construction, keeping JPA-specific mapping logic out of the domain model while scoping it to the entity class"
+  },
+  {
+    "conceptId": "abstraction",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/port/SharedGifticonPort.kt",
+    "lineStart": 3,
+    "lineEnd": 7,
+    "codeSnippet": "interface SharedGifticonPort {\n    fun share(gifticonId: Long, groupId: Long)\n    fun isSharedWithUser(gifticonId: Long, userId: Long): Boolean\n    fun findSharedGifticonsByGroupId(groupId: Long): List<Long>\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/port/SharedGifticonPort.kt#L3-L7",
+    "description": "SharedGifticonPort abstracts the sharing persistence mechanism behind a capability-driven interface, allowing application logic to reason about sharing without knowing the underlying storage strategy"
+  },
+  {
+    "conceptId": "encapsulation",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
+    "lineStart": 7,
+    "lineEnd": 17,
+    "codeSnippet": "class Gifticon private constructor(\n    val id: Long? = null,\n    var brand: Brand,\n    var productName: String,\n    val imageUrl: String,\n    var barcodeNumber: String,\n    var expiryDate: ExpiryDate,\n    var status: GifticonStatus,\n    val ownerId: Long,\n    val createdAt: LocalDateTime = LocalDateTime.now()\n) {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt#L7-L17",
+    "description": "private constructor prevents direct instantiation of Gifticon from outside the class, forcing all creation through the factory methods that enforce invariants — core encapsulation of construction logic"
+  },
+  {
+    "conceptId": "idempotency",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/service/ShareService.kt",
+    "lineStart": 85,
+    "lineEnd": 96,
+    "codeSnippet": "override fun execute(command: MarkViewedUseCase.Command) {\n    if (!sharedGifticonPort.isSharedWithUser(command.gifticonId, command.userId)) {\n        throw GifticonAccessDeniedException()\n    }\n    val existing = viewMarkRepositoryPort.findByGifticonIdAndUserId(command.gifticonId, command.userId)\n    if (existing == null) {\n        viewMarkRepositoryPort.save(\n            ViewMark(gifticonId = command.gifticonId, userId = command.userId)\n        )\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/service/ShareService.kt#L85-L96",
+    "description": "MarkViewed checks for an existing ViewMark before saving, making the operation idempotent — repeated calls from the same user on the same gifticon have no additional effect"
+  },
+  {
+    "conceptId": "idempotency",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/sharing/adapter/SharedGifticonAdapter.kt",
+    "lineStart": 15,
+    "lineEnd": 22,
+    "codeSnippet": "override fun share(gifticonId: Long, groupId: Long) {\n    val existing = sharedGifticonJpaRepository.findByGifticonIdAndGroupId(gifticonId, groupId)\n    if (existing == null) {\n        sharedGifticonJpaRepository.save(\n            SharedGifticonJpaEntity(gifticonId = gifticonId, groupId = groupId)\n        )\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/infrastructure/persistence/sharing/adapter/SharedGifticonAdapter.kt#L15-L22",
+    "description": "The share operation checks for an existing record before inserting, ensuring duplicate share calls are idempotent and won't create duplicate SharedGifticon records"
+  },
+  {
+    "conceptId": "extension-function",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/presentation/gifticon/dto/GifticonResponse.kt",
+    "lineStart": 24,
+    "lineEnd": 45,
+    "codeSnippet": "companion object {\n    fun from(result: RegisterGifticonUseCase.Result): GifticonResponse {\n        val daysUntilExpiry = result.expiryDate?.let {\n            runCatching {\n                ChronoUnit.DAYS.between(LocalDate.now(), LocalDate.parse(it))\n            }.getOrNull()\n        }\n        return GifticonResponse(..., daysUntilExpiry = daysUntilExpiry)\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/presentation/gifticon/dto/GifticonResponse.kt#L24-L45",
+    "description": "runCatching { }.getOrNull() is used as an inline try-catch idiom to safely parse the expiry date string, returning null on failure rather than throwing — idiomatic Kotlin null-safe error handling"
+  },
+  {
+    "conceptId": "msa",
+    "filePath": "gifticon/app/src/main/kotlin/com/kgd/gifticon/GifticonApplication.kt",
+    "lineStart": 1,
+    "lineEnd": 11,
+    "codeSnippet": "@SpringBootApplication(scanBasePackages = [\"com.kgd.gifticon\", \"com.kgd.common.exception\", \"com.kgd.common.response\"])\nclass GifticonApplication\n\nfun main(args: Array<String>) {\n    runApplication<GifticonApplication>(*args)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/app/src/main/kotlin/com/kgd/gifticon/GifticonApplication.kt#L1-L11",
+    "description": "GifticonApplication is an independently deployable Spring Boot service within an MSA platform, restricted to its own bounded context package with shared common libraries loaded via explicit scan paths"
+  },
+  {
+    "conceptId": "bounded-context",
+    "filePath": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
+    "lineStart": 1,
+    "lineEnd": 5,
+    "codeSnippet": "package com.kgd.gifticon.domain.gifticon.model\n\nimport com.kgd.gifticon.domain.gifticon.exception.InvalidGifticonStatusException\nimport java.time.LocalDate\nimport java.time.LocalDateTime",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt#L1-L5",
+    "description": "The gifticon domain is isolated under com.kgd.gifticon with no cross-service imports, representing a self-contained bounded context within the MSA platform"
+  }
+]

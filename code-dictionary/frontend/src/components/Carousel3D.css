@@ -24,9 +24,9 @@
 }
 
 .carousel-slide.active {
-  width: 90%;
+  width: 84%;
   height: 100%;
-  left: 5%;
+  left: 8%;
   transform: translateZ(0) rotateY(0deg);
   opacity: 1;
   filter: none;
@@ -34,27 +34,27 @@
 }
 
 .carousel-slide.prev {
-  width: 160px;
-  height: 55%;
-  left: -4%;
-  top: 15%;
-  transform: rotateY(42deg) scale(0.55) translateZ(-80px);
-  opacity: 0.35;
-  filter: blur(1.5px);
-  z-index: 1;
+  width: 200px;
+  height: 60%;
+  left: -2%;
+  top: 12%;
+  transform: rotateY(35deg) scale(0.65) translateZ(-60px);
+  opacity: 0.5;
+  filter: blur(1px);
+  z-index: 2;
   cursor: pointer;
 }
 
 .carousel-slide.next {
-  width: 160px;
-  height: 55%;
-  right: -4%;
+  width: 200px;
+  height: 60%;
+  right: -2%;
   left: auto;
-  top: 15%;
-  transform: rotateY(-42deg) scale(0.55) translateZ(-80px);
-  opacity: 0.35;
-  filter: blur(1.5px);
-  z-index: 1;
+  top: 12%;
+  transform: rotateY(-35deg) scale(0.65) translateZ(-60px);
+  opacity: 0.5;
+  filter: blur(1px);
+  z-index: 2;
   cursor: pointer;
 }
 

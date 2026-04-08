@@ -1,0 +1,164 @@
+[
+  {
+    "conceptId": "port-adapter",
+    "filePath": "search/domain/src/main/kotlin/com/kgd/search/product/port/ProductSearchPort.kt",
+    "lineStart": 7,
+    "lineEnd": 9,
+    "codeSnippet": "interface ProductSearchPort {\n    fun search(keyword: String, pageable: Pageable): Page<ProductDocument>\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/domain/src/main/kotlin/com/kgd/search/product/port/ProductSearchPort.kt#L7-L9",
+    "description": "Domain port (inbound) that defines the search contract — ES adapter fulfills it, keeping domain free of infrastructure."
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "search/domain/src/main/kotlin/com/kgd/search/product/port/ProductIndexPort.kt",
+    "lineStart": 5,
+    "lineEnd": 8,
+    "codeSnippet": "interface ProductIndexPort {\n    fun indexProduct(document: ProductDocument)\n    fun bulkIndex(documents: List<ProductDocument>)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/domain/src/main/kotlin/com/kgd/search/product/port/ProductIndexPort.kt#L5-L8",
+    "description": "Domain port for indexing — infrastructure adapter wires to Elasticsearch BulkIngester."
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductSearchAdapter.kt",
+    "lineStart": 16,
+    "lineEnd": 19,
+    "codeSnippet": "@Component\nclass ProductSearchAdapter(\n    private val elasticsearchOperations: ElasticsearchOperations,\n    private val rankingProperties: RankingProperties\n) : ProductSearchPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductSearchAdapter.kt#L16-L19",
+    "description": "Adapter that bridges the domain ProductSearchPort to Spring Data Elasticsearch infrastructure."
+  },
+  {
+    "conceptId": "hexagonal-architecture",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/product/service/SearchProductService.kt",
+    "lineStart": 8,
+    "lineEnd": 11,
+    "codeSnippet": "@Service\nclass SearchProductService(\n    private val searchPort: ProductSearchPort\n) : SearchProductUseCase {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/app/src/main/kotlin/com/kgd/search/product/service/SearchProductService.kt#L8-L11",
+    "description": "Application service only depends on domain ports (not implementations) — textbook hexagonal architecture."
+  },
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/product/usecase/SearchProductUseCase.kt",
+    "lineStart": 5,
+    "lineEnd": 27,
+    "codeSnippet": "interface SearchProductUseCase {\n    fun execute(query: Query): Result\n\n    data class Query(\n        val keyword: String,\n        val page: Int = 0,\n        val size: Int = 20\n    )\n    // ...\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/app/src/main/kotlin/com/kgd/search/product/usecase/SearchProductUseCase.kt#L5-L27",
+    "description": "Use case interface in the application layer with nested Query/Result data classes — enforces clean inward dependency."
+  },
+  {
+    "conceptId": "inverse-index",
+    "filePath": "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt",
+    "lineStart": 21,
+    "lineEnd": 40,
+    "codeSnippet": "fun createIndex(indexName: String) {\n    esClient.indices().create { req ->\n        req.index(indexName)\n           .settings { s ->\n               s.analysis { a ->\n                   a.analyzer(\"nori_analyzer\") { an ->\n                       an.custom { c -> c.tokenizer(\"nori_tokenizer\") }\n                   }\n               }\n           }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt#L21-L40",
+    "description": "Creates an Elasticsearch index with nori tokenizer — sets up the inverted index structure with Korean morphological analysis."
+  },
+  {
+    "conceptId": "alias-swap",
+    "filePath": "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt",
+    "lineStart": 47,
+    "lineEnd": 67,
+    "codeSnippet": "fun updateAliasAndCleanup(alias: String, newIndexName: String, maxRetention: Int = 2) {\n    val existingIndices = getIndicesForAlias(alias)\n    esClient.indices().updateAliases { req ->\n        req.actions { action ->\n            existingIndices.forEach { oldIndex ->\n                action.remove { r -> r.index(oldIndex).alias(alias) }\n            }\n            action.add { a -> a.index(newIndexName).alias(alias) }\n        }\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/IndexAliasManager.kt#L47-L67",
+    "description": "Atomically removes old alias targets and adds new index — zero-downtime alias swap pattern for lossless reindexing."
+  },
+  {
+    "conceptId": "bulk-indexing",
+    "filePath": "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/EsBulkDocumentProcessor.kt",
+    "lineStart": 29,
+    "lineEnd": 46,
+    "codeSnippet": "private lateinit var primaryIngester: BulkIngester<Void>\nprivate lateinit var retryIngester: BulkIngester<Void>\n\n@PostConstruct\nfun init() {\n    retryIngester = BulkIngester.of { b ->\n        b.client(esClient).maxOperations(500).flushInterval(3, TimeUnit.SECONDS)\n    }\n    primaryIngester = BulkIngester.of { b ->\n        b.client(esClient).maxOperations(1000).flushInterval(5, TimeUnit.SECONDS)\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/EsBulkDocumentProcessor.kt#L29-L46",
+    "description": "Dual BulkIngester (primary + retry) with configurable batch sizes and flush intervals for high-throughput ES indexing."
+  },
+  {
+    "conceptId": "event-driven-architecture",
+    "filePath": "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt",
+    "lineStart": 19,
+    "lineEnd": 28,
+    "codeSnippet": "@KafkaListener(\n    topics = [\"product.item.created\", \"product.item.updated\"],\n    groupId = \"${kafka.consumer.group-id}\",\n    containerFactory = \"productEventListenerContainerFactory\"\n)\nfun consume(event: ProductIndexEvent) {\n    log.info(\"Received product event: productId={}\", event.productId)\n    bulkProcessor.processDocument(indexAlias, ProductDocument(...))\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt#L19-L28",
+    "description": "Kafka consumer that reactively indexes products into ES on domain events — event-driven CQRS read model update."
+  },
+  {
+    "conceptId": "msa",
+    "filePath": "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt",
+    "lineStart": 19,
+    "lineEnd": 23,
+    "codeSnippet": "@KafkaListener(\n    topics = [\"product.item.created\", \"product.item.updated\"],\n    groupId = \"${kafka.consumer.group-id}\",\n    containerFactory = \"productEventListenerContainerFactory\"\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ProductIndexingConsumer.kt#L19-L23",
+    "description": "Independent consumer microservice subscribes to product service Kafka events — cross-service communication without direct dependency."
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaConsumerConfig.kt",
+    "lineStart": 41,
+    "lineEnd": 46,
+    "codeSnippet": "factory.setCommonErrorHandler(\n    DefaultErrorHandler(\n        ExponentialBackOff(1000L, 2.0).apply { maxElapsedTime = 30_000L }\n    )\n)\nreturn factory",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/consumer/src/main/kotlin/com/kgd/search/infrastructure/config/KafkaConsumerConfig.kt#L41-L46",
+    "description": "Exponential backoff error handler for Kafka consumer failures — prevents thundering-herd on transient errors."
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "search/domain/src/main/kotlin/com/kgd/search/product/model/ProductDocument.kt",
+    "lineStart": 6,
+    "lineEnd": 16,
+    "codeSnippet": "data class ProductDocument(\n    val id: String,\n    val name: String,\n    val price: BigDecimal,\n    val status: String,\n    val createdAt: LocalDateTime = LocalDateTime.now(),\n    val popularityScore: Double = 0.0,\n    val ctr: Double = 0.0,\n    val cvr: Double = 0.0,\n    val scoreUpdatedAt: Long = 0\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/domain/src/main/kotlin/com/kgd/search/product/model/ProductDocument.kt#L6-L16",
+    "description": "Pure Kotlin data class as domain model — immutable value representation, auto-generated equals/hashCode/copy."
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductEsDocument.kt",
+    "lineStart": 11,
+    "lineEnd": 23,
+    "codeSnippet": "@Document(indexName = \"products\")\ndata class ProductEsDocument(\n    @Id val id: String,\n    @Field(type = FieldType.Text, analyzer = \"nori\") val name: String,\n    @Field(type = FieldType.Double) val price: BigDecimal,\n    @Field(type = FieldType.Keyword) val status: String,\n    @Field(type = FieldType.Date, format = [], pattern = [\"yyyy-MM-dd'T'HH:mm:ss\"])\n    val createdAt: LocalDateTime = LocalDateTime.now(),",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductEsDocument.kt#L11-L23",
+    "description": "Spring Data ES annotations map Kotlin properties to Elasticsearch field types and analyzers declaratively."
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductEsDocument.kt",
+    "lineStart": 24,
+    "lineEnd": 36,
+    "codeSnippet": "companion object {\n    fun fromDomain(doc: ProductDocument) = ProductEsDocument(\n        id = doc.id,\n        name = doc.name,\n        price = doc.price,\n        status = doc.status,\n        createdAt = doc.createdAt,\n        popularityScore = doc.popularityScore,\n        ctr = doc.ctr,\n        cvr = doc.cvr,\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductEsDocument.kt#L24-L36",
+    "description": "Companion object factory method for domain-to-ES document conversion — idiomatic Kotlin static-like constructor."
+  },
+  {
+    "conceptId": "rest",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/search/controller/SearchController.kt",
+    "lineStart": 10,
+    "lineEnd": 24,
+    "codeSnippet": "@RestController\n@RequestMapping(\"/api/search\")\nclass SearchController(private val searchProductUseCase: SearchProductUseCase) {\n\n    @GetMapping(\"/products\")\n    fun searchProducts(\n        @RequestParam keyword: String,\n        @RequestParam(defaultValue = \"0\") page: Int,\n        @RequestParam(defaultValue = \"20\") size: Int\n    ): ResponseEntity<ApiResponse<SearchProductUseCase.Result>> {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/app/src/main/kotlin/com/kgd/search/search/controller/SearchController.kt#L10-L24",
+    "description": "REST endpoint exposing keyword-based product search with pagination — standard HTTP GET with query params."
+  },
+  {
+    "conceptId": "reactive-streams",
+    "filePath": "search/batch/src/main/kotlin/com/kgd/search/infrastructure/client/ProductApiClient.kt",
+    "lineStart": 33,
+    "lineEnd": 40,
+    "codeSnippet": "suspend fun fetchPage(page: Int, size: Int = 100): ProductPageResponse {\n    val response = webClient.get()\n        .uri(\"/api/products?page=$page&size=$size\")\n        .retrieve()\n        .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})\n        .awaitSingle()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/batch/src/main/kotlin/com/kgd/search/infrastructure/client/ProductApiClient.kt#L33-L40",
+    "description": "WebClient with Kotlin coroutines awaitSingle — bridges reactive Mono to suspend function for batch reindexing."
+  },
+  {
+    "conceptId": "ddd",
+    "filePath": "search/domain/src/main/kotlin/com/kgd/search/product/model/ProductDocument.kt",
+    "lineStart": 1,
+    "lineEnd": 16,
+    "codeSnippet": "package com.kgd.search.domain.product.model\n\ndata class ProductDocument(\n    val id: String,\n    val name: String,\n    val price: BigDecimal,\n    val status: String,\n    val popularityScore: Double = 0.0,\n    val ctr: Double = 0.0,\n    val cvr: Double = 0.0\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/domain/src/main/kotlin/com/kgd/search/product/model/ProductDocument.kt#L1-L16",
+    "description": "Domain model in dedicated domain module — search bounded context owns its own ProductDocument read model, separate from the product service's entity."
+  },
+  {
+    "conceptId": "generic",
+    "filePath": "search/app/src/main/kotlin/com/kgd/search/search/controller/SearchController.kt",
+    "lineStart": 20,
+    "lineEnd": 24,
+    "codeSnippet": "): ResponseEntity<ApiResponse<SearchProductUseCase.Result>> {\n    val result = searchProductUseCase.execute(SearchProductUseCase.Query(keyword, page, size))\n    return ResponseEntity.ok(ApiResponse.success(result))\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/search/app/src/main/kotlin/com/kgd/search/search/controller/SearchController.kt#L20-L24",
+    "description": "ApiResponse<T> generic wrapper ensures type-safe response envelope across all REST endpoints."
+  }
+]

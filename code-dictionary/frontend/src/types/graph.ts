@@ -72,7 +72,7 @@ export interface RelatedConceptInfo {
 }
 
 export interface GraphRenderer {
-  focusNode: (nodeId: string) => void;
+  focusNode: (nodeId: string, withSidePanel?: boolean) => void;
   highlightNodes: (nodeIds: string[]) => void;
   dimAllExcept: (nodeIds: string[]) => void;
   resetView: () => void;

@@ -1,0 +1,128 @@
+[
+  {
+    "conceptId": "api-gateway",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt",
+    "lineStart": 19,
+    "lineEnd": 62,
+    "codeSnippet": "@Bean\nfun routeLocator(builder: RouteLocatorBuilder): RouteLocator =\n    builder.routes()\n        .route(\"auth-service\") { r ->\n            r.path(\"/api/auth/**\")\n                .filters { f -> f.stripPrefix(0) }\n                .uri(\"lb://auth-service\")\n        }\n        .route(\"product-service\") { r ->\n            r.path(\"/api/products/**\")\n                .filters { f -> f.filter(authFilter.apply(...)) }\n                .uri(\"lb://product-service\")\n        }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt#L19-L62",
+    "description": "Spring Cloud Gateway route definitions — single entry point routing requests to downstream microservices by path."
+  },
+  {
+    "conceptId": "load-balancer",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt",
+    "lineStart": 25,
+    "lineEnd": 27,
+    "codeSnippet": ".route(\"auth-service\") { r ->\n    r.path(\"/api/auth/**\")\n        .uri(\"lb://auth-service\")\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt#L25-L27",
+    "description": "lb:// URI scheme activates Spring Cloud LoadBalancer — resolves service name to actual instance via Eureka."
+  },
+  {
+    "conceptId": "rate-limiting",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt",
+    "lineStart": 63,
+    "lineEnd": 76,
+    "codeSnippet": ".route(\"inventory-service\") { r ->\n    r.path(\"/api/inventories/**\")\n        .filters { f ->\n            f.filter(authFilter.apply(...))\n                .requestRateLimiter { config ->\n                    config.setRateLimiter(redisRateLimiter)\n                    config.setKeyResolver(userKeyResolver)\n                    config.setDenyEmptyKey(false)\n                }\n        }\n        .uri(\"lb://inventory-service\")\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt#L63-L76",
+    "description": "Redis token-bucket rate limiter applied selectively to inventory service to protect against Flash Sale traffic spikes."
+  },
+  {
+    "conceptId": "rate-limiting",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt",
+    "lineStart": 33,
+    "lineEnd": 37,
+    "codeSnippet": "/**\n * Redis Token Bucket Rate Limiter.\n * replenishRate: 100 tokens/sec\n * burstCapacity: 200 tokens (allows short bursts)\n * requestedTokens: 1 token per request\n */\n@Bean\nfun redisRateLimiter(): RedisRateLimiter =\n    RedisRateLimiter(100, 200, 1)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt#L33-L37",
+    "description": "Token bucket implementation: 100 req/s steady-state with 200-token burst capacity configured via RedisRateLimiter."
+  },
+  {
+    "conceptId": "jwt",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt",
+    "lineStart": 23,
+    "lineEnd": 60,
+    "codeSnippet": "override fun apply(config: Config): GatewayFilter = GatewayFilter { exchange, chain ->\n    val token = jwtTokenValidator.extractFromHeader(authHeader)\n    // JWT 블랙리스트 체크 (Fail-Open 정책: Redis 장애 시 허용)\n    redisTemplate.hasKey(\"blacklist:$token\")\n        .onErrorReturn(false)\n        .flatMap { isBlacklisted ->\n            if (isBlacklisted) {\n                exchange.response.statusCode = HttpStatus.UNAUTHORIZED\n            } else {\n                val claims = jwtTokenValidator.validateAndExtract(token)\n                val mutatedRequest = request.mutate()\n                    .header(\"X-User-Id\", userId)\n                    .header(\"X-User-Roles\", roles)\n                    .build()\n            }\n        }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt#L23-L60",
+    "description": "JWT validation at gateway edge with Redis blacklist check — propagates user identity as downstream headers (X-User-Id, X-User-Roles)."
+  },
+  {
+    "conceptId": "service-discovery",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt",
+    "lineStart": 22,
+    "lineEnd": 27,
+    "codeSnippet": ".route(\"auth-service\") { r ->\n    r.path(\"/api/auth/**\")\n        .filters { f -> f.stripPrefix(0) }\n        .uri(\"lb://auth-service\")\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/config/GatewayRouteConfig.kt#L22-L27",
+    "description": "Gateway resolves lb://service-name via Eureka service discovery — dynamic routing without hardcoded IP addresses."
+  },
+  {
+    "conceptId": "caching",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt",
+    "lineStart": 54,
+    "lineEnd": 65,
+    "codeSnippet": "private fun getActiveExperiments(): Mono<List<ActiveExperiment>> {\n    return redis.opsForValue().get(ACTIVE_EXPERIMENTS_KEY)\n        .map { json ->\n            objectMapper.readValue(json, object : TypeReference<List<ActiveExperiment>>() {})\n        }\n        .defaultIfEmpty(emptyList())\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt#L54-L65",
+    "description": "Reads active experiment configuration from Redis cache at the gateway layer — avoids per-request DB lookup."
+  },
+  {
+    "conceptId": "reactive-streams",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt",
+    "lineStart": 35,
+    "lineEnd": 42,
+    "codeSnippet": "redisTemplate.hasKey(\"blacklist:$token\")\n    .onErrorReturn(false)\n    .flatMap { isBlacklisted ->\n        if (isBlacklisted) {\n            exchange.response.statusCode = HttpStatus.UNAUTHORIZED\n            exchange.response.setComplete()\n        } else {\n            chain.filter(...)\n        }\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt#L35-L42",
+    "description": "Reactive Mono chain in WebFlux gateway filter — non-blocking Redis check with flatMap continuation and error fallback."
+  },
+  {
+    "conceptId": "lambda",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt",
+    "lineStart": 13,
+    "lineEnd": 15,
+    "codeSnippet": "@Bean\nfun ipKeyResolver(): KeyResolver = KeyResolver { exchange ->\n    Mono.just(exchange.request.remoteAddress?.address?.hostAddress ?: \"unknown\")\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/config/RateLimiterConfig.kt#L13-L15",
+    "description": "SAM (Single Abstract Method) lambda implements KeyResolver functional interface — extracts rate limit key from exchange."
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt",
+    "lineStart": 14,
+    "lineEnd": 18,
+    "codeSnippet": "@Component\nclass AuthenticationGatewayFilter(\n    private val jwtTokenValidator: JwtTokenValidator,\n    private val redisTemplate: ReactiveRedisTemplate<String, Any>\n) : AbstractGatewayFilterFactory<AuthenticationGatewayFilter.Config>(Config::class.java) {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt#L14-L18",
+    "description": "Extends AbstractGatewayFilterFactory to wrap JWT+Redis authentication logic as a reusable gateway filter — adapter to SCG filter API."
+  },
+  {
+    "conceptId": "cors",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt",
+    "lineStart": 10,
+    "lineEnd": 21,
+    "codeSnippet": "@Configuration\n@EnableWebFluxSecurity\nclass SecurityConfig {\n\n    @Bean\n    fun securityWebFilterChain(http: ServerHttpSecurity): SecurityWebFilterChain =\n        http\n            .csrf { it.disable() }\n            .authorizeExchange { exchanges ->\n                exchanges.anyExchange().permitAll()\n            }\n            .build()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/config/SecurityConfig.kt#L10-L21",
+    "description": "WebFlux security chain with CSRF disabled — gateway handles auth at filter level, not Spring Security's CSRF mechanism."
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/RequestLoggingFilter.kt",
+    "lineStart": 14,
+    "lineEnd": 18,
+    "codeSnippet": "@Component\nclass RequestLoggingFilter : GlobalFilter, Ordered {\n\n    private val log = LoggerFactory.getLogger(RequestLoggingFilter::class.java)\n\n    override fun getOrder(): Int = Ordered.HIGHEST_PRECEDENCE",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/filter/RequestLoggingFilter.kt#L14-L18",
+    "description": "@Component + GlobalFilter + Ordered annotations register a highest-precedence cross-cutting logging filter automatically."
+  },
+  {
+    "conceptId": "interface",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/RequestLoggingFilter.kt",
+    "lineStart": 14,
+    "lineEnd": 32,
+    "codeSnippet": "class RequestLoggingFilter : GlobalFilter, Ordered {\n    override fun getOrder(): Int = Ordered.HIGHEST_PRECEDENCE\n\n    override fun filter(exchange: ServerWebExchange, chain: GatewayFilterChain): Mono<Void> {\n        val start = Instant.now()\n        return chain.filter(exchange).doFinally {\n            val duration = Duration.between(start, Instant.now()).toMillis()\n            log.info(\"[$method] $uri → $statusCode (${duration}ms)\")\n        }\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/filter/RequestLoggingFilter.kt#L14-L32",
+    "description": "Implements GlobalFilter and Ordered interfaces — interface-based extension point for gateway filter chain behavior."
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt",
+    "lineStart": 67,
+    "lineEnd": 71,
+    "codeSnippet": "data class ActiveExperiment(\n    val id: Long = 0,\n    val variants: List<Pair<String, Int>> = emptyList()\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt#L67-L71",
+    "description": "Inner data class as Redis-deserialized DTO with default values — Kotlin data class simplifies JSON mapping at the filter layer."
+  }
+]

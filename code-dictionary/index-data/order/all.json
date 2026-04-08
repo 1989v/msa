@@ -1,0 +1,353 @@
+[
+  {
+    "conceptId": "aggregate",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt",
+    "lineStart": 5,
+    "lineEnd": 29,
+    "codeSnippet": "class Order private constructor(\n    val id: Long? = null,\n    val userId: String,\n    val items: List<OrderItem>,\n    var status: OrderStatus,\n    val createdAt: LocalDateTime = LocalDateTime.now()\n) {\n    val totalAmount: Money\n        get() = items.fold(Money(java.math.BigDecimal.ZERO)) { acc, item -> acc + item.subtotal }\n\n    companion object {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt#L5-L29",
+    "description": "Order is the aggregate root that owns OrderItems and enforces invariants (status transitions, non-empty items); private constructor enforces creation through factory methods"
+  },
+  {
+    "conceptId": "ddd",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt",
+    "lineStart": 5,
+    "lineEnd": 40,
+    "codeSnippet": "class Order private constructor(...) {\n    companion object {\n        fun create(userId: String, items: List<OrderItem>): Order { ... }\n        fun restore(...): Order = Order(...)\n    }\n    fun complete() {\n        check(status == OrderStatus.PENDING) { \"PENDING 상태만 완료 처리할 수 있습니다\" }\n        status = OrderStatus.COMPLETED\n    }\n    fun cancel() { ... }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt#L5-L40",
+    "description": "Domain model encapsulates business rules as methods (complete/cancel) with explicit state transition guards, a core DDD aggregate pattern"
+  },
+  {
+    "conceptId": "value-object",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Money.kt",
+    "lineStart": 1,
+    "lineEnd": 11,
+    "codeSnippet": "@JvmInline\nvalue class Money(val amount: BigDecimal) {\n    init {\n        require(amount >= BigDecimal.ZERO) { \"금액은 0 이상이어야 합니다\" }\n    }\n    operator fun plus(other: Money) = Money(amount + other.amount)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/model/Money.kt#L1-L11",
+    "description": "Money is an immutable value object backed by Kotlin inline class; validates its invariant (non-negative) on construction and defines domain-meaningful arithmetic"
+  },
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/usecase/PlaceOrderUseCase.kt",
+    "lineStart": 1,
+    "lineEnd": 25,
+    "codeSnippet": "interface PlaceOrderUseCase {\n    suspend fun execute(command: Command): Result\n\n    data class Command(\n        val userId: String,\n        val items: List<OrderItemCommand>\n    )\n    data class Result(\n        val orderId: Long,\n        ...\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/usecase/PlaceOrderUseCase.kt#L1-L25",
+    "description": "Use case interface in the application layer defines the inbound port with no framework dependency, enforcing Clean Architecture's dependency rule"
+  },
+  {
+    "conceptId": "hexagonal-architecture",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/port/PaymentPort.kt",
+    "lineStart": 1,
+    "lineEnd": 13,
+    "codeSnippet": "interface PaymentPort {\n    suspend fun requestPayment(orderId: Long, amount: BigDecimal): PaymentResult\n}\n\ndata class PaymentResult(\n    val paymentId: String,\n    val status: String,\n    val amount: BigDecimal\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/port/PaymentPort.kt#L1-L13",
+    "description": "PaymentPort is an outbound port (secondary port) in hexagonal architecture — the application core depends on this abstraction, not on the HTTP client implementation"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt",
+    "lineStart": 17,
+    "lineEnd": 36,
+    "codeSnippet": "@Component\nclass PaymentAdapter(\n    @Qualifier(\"paymentWebClient\") private val webClient: WebClient,\n    private val circuitBreakerRegistry: CircuitBreakerRegistry\n) : PaymentPort {\n\n    override suspend fun requestPayment(orderId: Long, amount: BigDecimal): PaymentResult {\n        return circuitBreaker.executeSuspendFunction {\n            webClient.post().uri(\"/payments\")...\n        }\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt#L17-L36",
+    "description": "PaymentAdapter implements PaymentPort (outbound port) and adapts the WebClient HTTP call to the domain interface — a classic port-adapter translation"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/persistence/order/adapter/OrderRepositoryAdapter.kt",
+    "lineStart": 11,
+    "lineEnd": 29,
+    "codeSnippet": "@Component\nclass OrderRepositoryAdapter(\n    private val jpaRepository: OrderJpaRepository\n) : OrderRepositoryPort {\n\n    override fun save(order: Order): Order {\n        val entity = if (id != null) {\n            jpaRepository.findByIdWithItems(id)?.also { it.status = order.status } ?: ...\n        } else { OrderJpaEntity.fromDomain(order) }\n        return jpaRepository.save(entity).toDomain()\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/persistence/order/adapter/OrderRepositoryAdapter.kt#L11-L29",
+    "description": "OrderRepositoryAdapter translates between domain Order objects and JPA entities, implementing the outbound repository port to isolate the domain from persistence details"
+  },
+  {
+    "conceptId": "saga-pattern",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/service/OrderService.kt",
+    "lineStart": 33,
+    "lineEnd": 79,
+    "codeSnippet": "// Phase 1: Save PENDING order (short transaction, immediately committed)\nval pendingOrder = orderTransactionalService.savePendingOrder(command)\n// Phase 2: Call external payment service (no transaction held)\nval paymentResult = try {\n    paymentPort.requestPayment(orderId, pendingOrder.totalAmount.amount)\n} catch (e: Exception) {\n    val cancelled = orderTransactionalService.cancelOrder(orderId)\n    eventPort.publishOrderCancelled(cancelled)\n    throw BusinessException(...)\n}\n// Phase 3: Update order status based on payment result",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/service/OrderService.kt#L33-L79",
+    "description": "Order placement follows a choreography-based saga: each phase is a separate short transaction with explicit compensating actions (cancel + event) on payment failure"
+  },
+  {
+    "conceptId": "event-driven-architecture",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventAdapter.kt",
+    "lineStart": 22,
+    "lineEnd": 41,
+    "codeSnippet": "override fun publishOrderCompleted(order: Order) {\n    val event = OrderCompletedEvent(\n        orderId = requireNotNull(order.id),\n        userId = order.userId,\n        totalAmount = order.totalAmount.amount,\n        ...\n    )\n    kafkaTemplate.send(completedTopic, order.id.toString(), event)\n        .whenComplete { _, ex ->\n            if (ex != null) log.error(...) else log.info(...)\n        }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventAdapter.kt#L22-L41",
+    "description": "Order state changes (completed/cancelled) are published as domain events to Kafka, enabling downstream services to react asynchronously via event-driven integration"
+  },
+  {
+    "conceptId": "idempotency",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventConsumer.kt",
+    "lineStart": 28,
+    "lineEnd": 49,
+    "codeSnippet": "fun onReservationExpired(record: ConsumerRecord<String, String>) {\n    val eventId = node.get(\"eventId\")?.asText() ?: \"\"\n    val orderId = node.get(\"orderId\").asLong()\n\n    if (eventId.isNotBlank() && processedEventRepository.existsById(eventId)) {\n        log.info(\"Duplicate event detected, skipping: eventId={}\", eventId)\n        return\n    }\n    ...\n    processedEventRepository.save(ProcessedEventJpaEntity(eventId, topic))\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventConsumer.kt#L28-L49",
+    "description": "Consumer checks a processed_event table by eventId before handling, implementing idempotent Kafka consumer to prevent duplicate order cancellations on redelivery"
+  },
+  {
+    "conceptId": "circuit-breaker",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt",
+    "lineStart": 25,
+    "lineEnd": 35,
+    "codeSnippet": "override suspend fun requestPayment(orderId: Long, amount: BigDecimal): PaymentResult {\n    return circuitBreaker.executeSuspendFunction {\n        webClient.post()\n            .uri(\"/payments\")\n            .bodyValue(mapOf(\"orderId\" to orderId, \"amount\" to amount))\n            .retrieve()\n            .bodyToMono(PaymentResult::class.java)\n            .awaitSingle()\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt#L25-L35",
+    "description": "Resilience4j circuit breaker wraps the payment HTTP call to open the circuit after repeated failures, preventing cascade failures to the order service"
+  },
+  {
+    "conceptId": "circuit-breaker",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/client/ProductAdapter.kt",
+    "lineStart": 26,
+    "lineEnd": 46,
+    "codeSnippet": "override suspend fun validateProduct(productId: Long): ProductInfo {\n    return circuitBreaker.executeSuspendFunction {\n        try {\n            val response = webClient.get()\n                .uri(\"/api/products/{id}\", productId)\n                .retrieve()\n                .bodyToMono(ProductApiResponse::class.java)\n                .awaitSingle()\n            response?.data?.toProductInfo() ?: throw BusinessException(...)\n        } catch (e: WebClientResponseException.NotFound) { ... }\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/client/ProductAdapter.kt#L26-L46",
+    "description": "Circuit breaker protects product service calls so that product service outages trip the circuit and fail-fast rather than exhausting order service threads"
+  },
+  {
+    "conceptId": "replication",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/config/DataSourceConfig.kt",
+    "lineStart": 15,
+    "lineEnd": 51,
+    "codeSnippet": "class RoutingDataSource : AbstractRoutingDataSource() {\n    override fun determineCurrentLookupKey(): DataSourceType =\n        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly())\n            DataSourceType.REPLICA else DataSourceType.MASTER\n}\n\n@Bean @Primary\nfun dataSource(@Qualifier(\"routingDataSource\") routingDataSource: DataSource): DataSource =\n    LazyConnectionDataSourceProxy(routingDataSource)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/config/DataSourceConfig.kt#L15-L51",
+    "description": "RoutingDataSource directs read-only transactions to a replica and write transactions to the master, implementing read/write splitting for DB replication"
+  },
+  {
+    "conceptId": "coroutine",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/service/OrderService.kt",
+    "lineStart": 33,
+    "lineEnd": 55,
+    "codeSnippet": "override suspend fun execute(command: PlaceOrderUseCase.Command): PlaceOrderUseCase.Result {\n    for (item in command.items) {\n        val productInfo = productPort.validateProduct(item.productId)\n        ...\n    }\n    val pendingOrder = orderTransactionalService.savePendingOrder(command)\n    val paymentResult = try {\n        paymentPort.requestPayment(orderId, pendingOrder.totalAmount.amount)\n    } catch (e: Exception) { ... }\n    ...\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/service/OrderService.kt#L33-L55",
+    "description": "PlaceOrderUseCase.execute is a suspend function that sequentially calls suspend ports (productPort, paymentPort) with coroutine-based non-blocking I/O"
+  },
+  {
+    "conceptId": "coroutine",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt",
+    "lineStart": 9,
+    "lineEnd": 34,
+    "codeSnippet": "import kotlinx.coroutines.reactor.awaitSingle\n...\noverride suspend fun requestPayment(orderId: Long, amount: BigDecimal): PaymentResult {\n    return circuitBreaker.executeSuspendFunction {\n        webClient.post()...\n            .bodyToMono(PaymentResult::class.java)\n            .awaitSingle()\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt#L9-L34",
+    "description": "awaitSingle() bridges Project Reactor Mono to Kotlin coroutines, enabling suspension without blocking threads during HTTP calls"
+  },
+  {
+    "conceptId": "reactive-streams",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt",
+    "lineStart": 27,
+    "lineEnd": 35,
+    "codeSnippet": "webClient.post()\n    .uri(\"/payments\")\n    .bodyValue(mapOf(\"orderId\" to orderId, \"amount\" to amount))\n    .retrieve()\n    .bodyToMono(PaymentResult::class.java)\n    .awaitSingle()",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/client/PaymentAdapter.kt#L27-L35",
+    "description": "WebClient produces a Mono<PaymentResult> reactive stream for the HTTP response which is then consumed via coroutine bridge"
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/persistence/order/entity/OrderJpaEntity.kt",
+    "lineStart": 9,
+    "lineEnd": 47,
+    "codeSnippet": "@Entity\n@Table(name = \"orders\")\nclass OrderJpaEntity(\n    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)\n    val id: Long? = null,\n    @Enumerated(EnumType.STRING)\n    var status: OrderStatus,\n    @OneToMany(mappedBy = \"order\", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)\n    val items: MutableList<OrderItemJpaEntity> = mutableListOf()\n) { ... }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/persistence/order/entity/OrderJpaEntity.kt#L9-L47",
+    "description": "JPA entity maps the Order aggregate to the orders table with cascading item collection and lazy-loaded association, using Hibernate ORM"
+  },
+  {
+    "conceptId": "connection-pool",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/config/DataSourceConfig.kt",
+    "lineStart": 47,
+    "lineEnd": 51,
+    "codeSnippet": "@Bean\n@Primary\nfun dataSource(@Qualifier(\"routingDataSource\") routingDataSource: DataSource): DataSource =\n    LazyConnectionDataSourceProxy(routingDataSource)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/config/DataSourceConfig.kt#L47-L51",
+    "description": "LazyConnectionDataSourceProxy defers physical DB connection acquisition until the first actual statement, reducing connection pool pressure for read-only or short transactions"
+  },
+  {
+    "conceptId": "msa",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/service/OrderService.kt",
+    "lineStart": 15,
+    "lineEnd": 22,
+    "codeSnippet": "@Service\nclass OrderService(\n    private val orderTransactionalService: OrderTransactionalService,\n    private val eventPort: OrderEventPort,\n    private val paymentPort: PaymentPort,\n    private val productPort: ProductPort,\n) : PlaceOrderUseCase, GetOrderUseCase {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/service/OrderService.kt#L15-L22",
+    "description": "Order service depends on ProductPort and PaymentPort to call other microservices via HTTP, demonstrating inter-service communication in an MSA without shared DB"
+  },
+  {
+    "conceptId": "bounded-context",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt",
+    "lineStart": 1,
+    "lineEnd": 10,
+    "codeSnippet": "package com.kgd.order.domain.order.model\n\nimport java.time.LocalDateTime\n\nclass Order private constructor(\n    val id: Long? = null,\n    val userId: String,\n    val items: List<OrderItem>,\n    var status: OrderStatus,\n    val createdAt: LocalDateTime = LocalDateTime.now()\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt#L1-L10",
+    "description": "The order domain model is isolated in its own package/module with no reference to product or payment domain objects, representing the Order bounded context"
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/OrderStatus.kt",
+    "lineStart": 1,
+    "lineEnd": 3,
+    "codeSnippet": "enum class OrderStatus { PENDING, COMPLETED, CANCELLED }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/model/OrderStatus.kt#L1-L3",
+    "description": "OrderStatus enum models the finite set of valid order states, used to enforce state machine transitions in Order.complete() and Order.cancel()"
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt",
+    "lineStart": 15,
+    "lineEnd": 29,
+    "codeSnippet": "companion object {\n    fun create(userId: String, items: List<OrderItem>): Order {\n        require(items.isNotEmpty()) { \"주문 항목이 없습니다\" }\n        require(userId.isNotBlank()) { \"사용자 ID가 비어있을 수 없습니다\" }\n        return Order(userId = userId, items = items, status = OrderStatus.PENDING)\n    }\n\n    fun restore(...): Order = Order(...)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt#L15-L29",
+    "description": "Companion object provides static factory methods (create/restore) for Order, enforcing construction invariants while keeping the primary constructor private"
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/persistence/order/entity/OrderJpaEntity.kt",
+    "lineStart": 33,
+    "lineEnd": 47,
+    "codeSnippet": "companion object {\n    fun fromDomain(order: Order): OrderJpaEntity {\n        val entity = OrderJpaEntity(...)\n        val itemEntities = order.items.map { item ->\n            OrderItemJpaEntity.fromDomain(item).also { it.order = entity }\n        }\n        entity.items.addAll(itemEntities)\n        return entity\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/persistence/order/entity/OrderJpaEntity.kt#L33-L47",
+    "description": "Companion object holds the fromDomain factory method for mapping from domain model to JPA entity, keeping mapping logic co-located with the entity class"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/messaging/event/OrderEvents.kt",
+    "lineStart": 7,
+    "lineEnd": 28,
+    "codeSnippet": "data class OrderCompletedEvent(\n    val eventId: String = UUID.randomUUID().toString(),\n    val orderId: Long,\n    val userId: String,\n    val totalAmount: BigDecimal,\n    val status: String,\n    val items: List<OrderItemEvent> = emptyList(),\n    val eventTime: LocalDateTime = LocalDateTime.now()\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/messaging/event/OrderEvents.kt#L7-L28",
+    "description": "Event DTOs use Kotlin data classes with default values (eventId, eventTime) for automatic equals/hashCode/copy and clean JSON serialization via Jackson"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/usecase/PlaceOrderUseCase.kt",
+    "lineStart": 8,
+    "lineEnd": 24,
+    "codeSnippet": "data class Command(\n    val userId: String,\n    val items: List<OrderItemCommand>\n)\n\ndata class OrderItemCommand(\n    val productId: Long,\n    val quantity: Int,\n    val unitPrice: BigDecimal\n)\n\ndata class Result(\n    val orderId: Long,\n    ...\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/usecase/PlaceOrderUseCase.kt#L8-L24",
+    "description": "Nested data classes inside the use case interface serve as typed input commands and output results, providing immutable value-semantics for application layer boundaries"
+  },
+  {
+    "conceptId": "sealed-class",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/exception/OrderException.kt",
+    "lineStart": 1,
+    "lineEnd": 7,
+    "codeSnippet": "class OrderNotFoundException(id: Long) : BusinessException(ErrorCode.NOT_FOUND, \"주문(id=$id)을 찾을 수 없습니다\")\nclass InvalidOrderStatusException : BusinessException(ErrorCode.INVALID_ORDER_STATUS)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/exception/OrderException.kt#L1-L7",
+    "description": "Domain-specific exceptions extend BusinessException forming a typed exception hierarchy; though not sealed, they create a closed set of order domain error types"
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/controller/OrderExceptionHandler.kt",
+    "lineStart": 13,
+    "lineEnd": 27,
+    "codeSnippet": "@RestControllerAdvice\n@Order(Ordered.HIGHEST_PRECEDENCE)\nclass OrderExceptionHandler {\n\n    @ExceptionHandler(BusinessException::class)\n    fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {\n        val status = when (e.errorCode) {\n            ErrorCode.NOT_FOUND -> HttpStatus.NOT_FOUND\n            ErrorCode.INVALID_ORDER_STATUS -> HttpStatus.BAD_REQUEST\n            ErrorCode.EXTERNAL_API_ERROR -> HttpStatus.BAD_GATEWAY\n            else -> HttpStatus.INTERNAL_SERVER_ERROR\n        }\n        return ResponseEntity.status(status).body(ApiResponse.error(e.errorCode))\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/controller/OrderExceptionHandler.kt#L13-L27",
+    "description": "Global exception handler translates domain BusinessException to HTTP status codes using a when expression, centralizing error response mapping"
+  },
+  {
+    "conceptId": "interface",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/port/OrderRepositoryPort.kt",
+    "lineStart": 1,
+    "lineEnd": 8,
+    "codeSnippet": "interface OrderRepositoryPort {\n    fun save(order: Order): Order\n    fun findById(id: Long): Order?\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/port/OrderRepositoryPort.kt#L1-L8",
+    "description": "OrderRepositoryPort defines the repository abstraction as an interface, allowing the domain/application layer to depend on a contract rather than a concrete JPA implementation"
+  },
+  {
+    "conceptId": "null-safety",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/persistence/order/adapter/OrderRepositoryAdapter.kt",
+    "lineStart": 15,
+    "lineEnd": 24,
+    "codeSnippet": "override fun save(order: Order): Order {\n    val id = order.id\n    val entity = if (id != null) {\n        jpaRepository.findByIdWithItems(id)\n            ?.also { it.status = order.status }\n            ?: throw OrderNotFoundException(id)\n    } else {\n        OrderJpaEntity.fromDomain(order)\n    }\n    return jpaRepository.save(entity).toDomain()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/persistence/order/adapter/OrderRepositoryAdapter.kt#L15-L24",
+    "description": "Explicit id null-check and safe-call operator (?.) with Elvis (?:) chains demonstrate Kotlin null-safety handling nullable JPA id before repository calls"
+  },
+  {
+    "conceptId": "scope-function",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/persistence/order/entity/OrderJpaEntity.kt",
+    "lineStart": 41,
+    "lineEnd": 46,
+    "codeSnippet": "val itemEntities = order.items.map { item ->\n    OrderItemJpaEntity.fromDomain(item).also { it.order = entity }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/persistence/order/entity/OrderJpaEntity.kt#L41-L46",
+    "description": "also{} scope function sets the back-reference (item.order = entity) on a newly created entity before returning it, avoiding a separate variable for mutation"
+  },
+  {
+    "conceptId": "scope-function",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/config/DataSourceConfig.kt",
+    "lineStart": 33,
+    "lineEnd": 46,
+    "codeSnippet": "fun routingDataSource(...): DataSource = RoutingDataSource().apply {\n    setTargetDataSources(mapOf(\n        DataSourceType.MASTER to master,\n        DataSourceType.REPLICA to replica\n    ))\n    setDefaultTargetDataSource(master)\n    afterPropertiesSet()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/config/DataSourceConfig.kt#L33-L46",
+    "description": "apply{} scope function configures the RoutingDataSource inline on construction, making the builder pattern intent clear without temporary variables"
+  },
+  {
+    "conceptId": "lambda",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt",
+    "lineStart": 12,
+    "lineEnd": 13,
+    "codeSnippet": "val totalAmount: Money\n    get() = items.fold(Money(java.math.BigDecimal.ZERO)) { acc, item -> acc + item.subtotal }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt#L12-L13",
+    "description": "fold with a lambda accumulates OrderItem subtotals into a Money value, demonstrating functional-style collection processing in the domain model"
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventConsumer.kt",
+    "lineStart": 23,
+    "lineEnd": 28,
+    "codeSnippet": "@KafkaListener(\n    topics = [\"inventory.reservation.expired\"],\n    groupId = \"order-service\",\n    containerFactory = \"kafkaListenerContainerFactory\",\n)\nfun onReservationExpired(record: ConsumerRecord<String, String>) {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventConsumer.kt#L23-L28",
+    "description": "@KafkaListener annotation declaratively binds the method to a Kafka topic/consumer-group, with Spring's infrastructure handling offset management and deserialization"
+  },
+  {
+    "conceptId": "acid",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/service/OrderTransactionalService.kt",
+    "lineStart": 22,
+    "lineEnd": 48,
+    "codeSnippet": "@Transactional\nfun savePendingOrder(command: PlaceOrderUseCase.Command): Order { ... }\n\n@Transactional\nfun completeOrder(orderId: Long): Order { ... }\n\n@Transactional\nfun cancelOrder(orderId: Long): Order { ... }\n\n@Transactional(readOnly = true)\nfun findById(id: Long): Order?",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/service/OrderTransactionalService.kt#L22-L48",
+    "description": "Each DB mutation is wrapped in a distinct @Transactional method; deliberately separated so no transaction spans an external HTTP call, maintaining ACID atomicity per phase"
+  },
+  {
+    "conceptId": "generic",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/controller/OrderController.kt",
+    "lineStart": 19,
+    "lineEnd": 27,
+    "codeSnippet": "@PostMapping\nsuspend fun placeOrder(\n    @RequestHeader(\"X-User-Id\") userId: String,\n    @Valid @RequestBody request: PlaceOrderRequest\n): ResponseEntity<ApiResponse<OrderResponse>> {\n    val result = placeOrderUseCase.execute(request.toCommand(userId))\n    return ResponseEntity.status(HttpStatus.CREATED)\n        .body(ApiResponse.success(OrderResponse.from(result)))\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/controller/OrderController.kt#L19-L27",
+    "description": "ResponseEntity<ApiResponse<OrderResponse>> uses nested generics to type the HTTP response wrapper and inner payload, enabling type-safe response construction"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventAdapter.kt",
+    "lineStart": 13,
+    "lineEnd": 18,
+    "codeSnippet": "@Component\nclass OrderEventAdapter(\n    private val kafkaTemplate: KafkaTemplate<String, Any>,\n    @Value(\"${kafka.topics.order-completed}\") private val completedTopic: String,\n    @Value(\"${kafka.topics.order-cancelled}\") private val cancelledTopic: String\n) : OrderEventPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventAdapter.kt#L13-L18",
+    "description": "OrderEventAdapter adapts the domain OrderEventPort interface to Kafka's KafkaTemplate, translating domain Order objects into Kafka messages"
+  },
+  {
+    "conceptId": "retry-pattern",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/config/KafkaConfig.kt",
+    "lineStart": 58,
+    "lineEnd": 72,
+    "codeSnippet": "@Bean\nfun kafkaListenerContainerFactory(...): ConcurrentKafkaListenerContainerFactory<String, String> =\n    ConcurrentKafkaListenerContainerFactory<String, String>().apply {\n        setCommonErrorHandler(\n            DefaultErrorHandler(\n                DeadLetterPublishingRecoverer(kafkaTemplate),\n                FixedBackOff(1000L, 3L),\n            )\n        )\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/config/KafkaConfig.kt#L58-L72",
+    "description": "FixedBackOff(1000ms, 3 retries) configures Kafka consumer retry with a fixed interval; after exhaustion, DeadLetterPublishingRecoverer routes failed messages to a DLT"
+  },
+  {
+    "conceptId": "encapsulation",
+    "filePath": "order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt",
+    "lineStart": 5,
+    "lineEnd": 39,
+    "codeSnippet": "class Order private constructor(\n    val id: Long? = null,\n    ...\n    var status: OrderStatus,\n    ...\n) {\n    fun complete() {\n        check(status == OrderStatus.PENDING) { ... }\n        status = OrderStatus.COMPLETED\n    }\n    fun cancel() {\n        check(status == OrderStatus.PENDING) { ... }\n        status = OrderStatus.CANCELLED\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/domain/src/main/kotlin/com/kgd/order/order/model/Order.kt#L5-L39",
+    "description": "Private constructor prevents direct instantiation; status mutation is encapsulated behind complete() and cancel() which guard the valid state transitions"
+  },
+  {
+    "conceptId": "abstraction",
+    "filePath": "order/app/src/main/kotlin/com/kgd/order/order/port/ProductPort.kt",
+    "lineStart": 1,
+    "lineEnd": 15,
+    "codeSnippet": "interface ProductPort {\n    suspend fun validateProduct(productId: Long): ProductInfo\n}\n\ndata class ProductInfo(\n    val productId: Long,\n    val name: String,\n    val price: BigDecimal,\n    val status: String,\n    val stock: Int,\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/order/app/src/main/kotlin/com/kgd/order/order/port/ProductPort.kt#L1-L15",
+    "description": "ProductPort abstracts the product service dependency behind an interface with a domain-centric ProductInfo return type, hiding HTTP/Resilience4j details from the application core"
+  }
+]

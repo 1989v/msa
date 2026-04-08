@@ -21,18 +21,19 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
     const fgRef = useRef<any>(null);
 
     useImperativeHandle(ref, () => ({
-      focusNode(nodeId: string) {
-        const node = nodes.find((n) => n.id === nodeId);
-        if (node && fgRef.current) {
-          const distance = 120;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const n = node as any;
-          fgRef.current.cameraPosition(
-            { x: n.x + distance, y: n.y + distance / 2, z: n.z + distance },
-            { x: n.x, y: n.y, z: n.z },
-            1000
-          );
-        }
+      focusNode(nodeId: string, withSidePanel = false) {
+        if (!fgRef.current) return;
+        // force-graph 내부의 시뮬레이션된 노드에서 좌표를 가져와야 함
+        const graphNodes = fgRef.current.graphData().nodes;
+        const node = graphNodes.find((n: any) => n.id === nodeId);
+        if (!node) return;
+        const distance = 120;
+        const sideOffset = withSidePanel ? -60 : 0;
+        fgRef.current.cameraPosition(
+          { x: node.x + distance + sideOffset, y: node.y + distance / 2, z: node.z + distance },
+          { x: node.x + sideOffset, y: node.y, z: node.z },
+          1000
+        );
       },
       highlightNodes(_nodeIds: string[]) {
         // Handled via highlightedNodes prop
@@ -51,8 +52,13 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
       (node: any) => {
         const n = node as GraphNode;
         const color = CATEGORY_COLORS[n.category as Category] || '#888';
+        if (dimmed && highlightedNodes.has(n.id)) {
+          // 하이라이트 노드: 원래 색상 + 밝게
+          return '#ffffff';
+        }
         if (dimmed && !highlightedNodes.has(n.id)) {
-          return `${color}1a`;
+          // dim 노드: 매우 어둡게
+          return `${color}15`;
         }
         return color;
       },
@@ -60,7 +66,11 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
     );
 
     const nodeVal = useCallback(
-      (node: any) => Math.max(2, (node as GraphNode).relatedCount * 2),
+      (node: any) => {
+        const n = node as GraphNode;
+        // indexCount 기반 크기 차등 + relatedCount 보너스
+        return Math.max(3, n.indexCount * 2 + n.relatedCount + 1);
+      },
       []
     );
 
@@ -80,15 +90,25 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
         nodeLabel={nodeLabel}
         nodeColor={nodeColor}
         nodeVal={nodeVal}
-        nodeOpacity={dimmed ? 0.1 : 0.75}
-        linkColor={() => 'rgba(108, 99, 255, 0.2)'}
-        linkWidth={0.5}
+        nodeOpacity={0.85}
+        linkColor={() => 'rgba(140, 130, 255, 0.6)'}
+        linkWidth={1.5}
+        linkOpacity={0.6}
         onNodeClick={(node: unknown) => onNodeClick(node as GraphNode)}
         onBackgroundClick={onBackgroundClick}
         backgroundColor="rgba(0,0,0,0)"
         width={width}
         height={height}
         showNavInfo={false}
+        controlType="orbit"
+        onEngineReady={() => {
+          if (fgRef.current) {
+            const controls = fgRef.current.controls();
+            if (controls) {
+              controls.zoomSpeed = 3;
+            }
+          }
+        }}
       />
     );
   }

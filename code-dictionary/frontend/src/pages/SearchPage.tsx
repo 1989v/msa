@@ -18,22 +18,35 @@ export default function SearchPage() {
   const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set());
   const [dimmed, setDimmed] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [containerSize, setContainerSize] = useState({ width: window.innerWidth * 0.9, height: window.innerHeight - 80 });
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const updateSize = () => {
-      if (containerRef.current) {
-        setContainerSize({
-          width: containerRef.current.clientWidth,
-          height: containerRef.current.clientHeight,
-        });
+    const el = containerRef.current;
+    if (!el) return;
+
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        if (width > 0 && height > 0) {
+          setContainerSize({ width, height });
+        }
       }
+    });
+    ro.observe(el);
+
+    // Initial measurement with delay for carousel mount
+    const timer = setTimeout(() => {
+      if (el.clientWidth > 0 && el.clientHeight > 0) {
+        setContainerSize({ width: el.clientWidth, height: el.clientHeight });
+      }
+    }, 100);
+
+    return () => {
+      ro.disconnect();
+      clearTimeout(timer);
     };
-    updateSize();
-    window.addEventListener('resize', updateSize);
-    return () => window.removeEventListener('resize', updateSize);
-  }, []);
+  }, [data]);
 
   const handleNodeClick = useCallback((node: GraphNode) => {
     setSelectedConceptId(node.id);
@@ -51,7 +64,7 @@ export default function SearchPage() {
 
     setHighlightedNodes(new Set([node.id, ...related]));
     setDimmed(true);
-    graphRef.current?.focusNode(node.id);
+    graphRef.current?.focusNode(node.id, true);
   }, [data]);
 
   const handleBackgroundClick = useCallback(() => {
@@ -61,6 +74,16 @@ export default function SearchPage() {
     graphRef.current?.resetView();
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleBackgroundClick();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleBackgroundClick]);
+
   const handleSearch = useCallback(async (query: string) => {
     try {
       const result = await searchConcepts(query, undefined, undefined, 0, 50);
@@ -69,7 +92,7 @@ export default function SearchPage() {
       setDimmed(true);
       setCarouselIndex(0);
       if (result.hits.length > 0) {
-        graphRef.current?.focusNode(result.hits[0].conceptId);
+        graphRef.current?.focusNode(result.hits[0].conceptId, false);
       }
     } catch {
       // search failed silently
@@ -81,7 +104,7 @@ export default function SearchPage() {
     setHighlightedNodes(new Set([conceptId]));
     setDimmed(true);
     setCarouselIndex(0);
-    graphRef.current?.focusNode(conceptId);
+    graphRef.current?.focusNode(conceptId, true);
   }, []);
 
   const handleHeatmapClick = useCallback((category: string, level: string) => {
@@ -99,6 +122,17 @@ export default function SearchPage() {
     handleSelectConcept(conceptId);
     setCarouselIndex(0);
   }, [handleSelectConcept]);
+
+  const handleTreemapCategoryClick = useCallback((category: string) => {
+    if (!data) return;
+    const matching = data.nodes.filter((n) => n.category === category);
+    setHighlightedNodes(new Set(matching.map((n) => n.id)));
+    setDimmed(true);
+    setCarouselIndex(0);
+    if (matching.length > 0) {
+      graphRef.current?.focusNode(matching[0].id, false);
+    }
+  }, [data]);
 
   const handleNavigate = useCallback((conceptId: string) => {
     handleSelectConcept(conceptId);
@@ -166,7 +200,7 @@ export default function SearchPage() {
       label: 'Treemap',
       content: (
         <div className="carousel-slide-inner">
-          <TreemapPanel nodes={data.nodes} onNodeClick={handleTreemapClick} />
+          <TreemapPanel nodes={data.nodes} onNodeClick={handleTreemapClick} onCategoryClick={handleTreemapCategoryClick} />
         </div>
       ),
       preview: <div className="carousel-preview-card">Treemap</div>,

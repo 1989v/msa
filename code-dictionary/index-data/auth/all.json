@@ -1,0 +1,290 @@
+[
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/service/AuthService.kt",
+    "lineStart": 13,
+    "lineEnd": 19,
+    "codeSnippet": "@Service\nclass AuthService(\n    private val transactionalService: AuthTransactionalService,\n    private val tokenPort: TokenPort,\n    private val oauthClients: Map<AuthProvider, OAuthClientPort>\n) : OAuthLoginUseCase, GetUserProfileUseCase, RefreshTokenUseCase, LogoutUseCase {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/service/AuthService.kt#L13-L19",
+    "description": "Application service implements use-case interfaces (inbound ports) and depends only on outbound ports, never on infrastructure — the hallmark of clean architecture's application layer."
+  },
+  {
+    "conceptId": "hexagonal-architecture",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/port/OAuthClientPort.kt",
+    "lineStart": 1,
+    "lineEnd": 6,
+    "codeSnippet": "interface OAuthClientPort {\n    suspend fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult\n    suspend fun getUserInfo(accessToken: String): OAuthUserInfo\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/port/OAuthClientPort.kt#L1-L6",
+    "description": "OAuthClientPort is an outbound port (driven port) in hexagonal architecture, abstracting external OAuth provider communication so the application core stays infrastructure-agnostic."
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/persistence/user/adapter/UserRepositoryAdapter.kt",
+    "lineStart": 10,
+    "lineEnd": 13,
+    "codeSnippet": "@Component\nclass UserRepositoryAdapter(\n    private val jpaRepository: UserJpaRepository\n) : UserRepositoryPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/persistence/user/adapter/UserRepositoryAdapter.kt#L10-L13",
+    "description": "UserRepositoryAdapter is a driven adapter that implements the UserRepositoryPort interface, bridging domain port contracts with JPA infrastructure."
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt",
+    "lineStart": 12,
+    "lineEnd": 17,
+    "codeSnippet": "@Component\nclass TokenAdapter(\n    @Value(\"${jwt.secret}\") private val jwtSecret: String,\n    @Value(\"${jwt.access-expiry}\") private val accessTokenExpiry: Long,\n    @Value(\"${jwt.refresh-expiry}\") private val refreshTokenExpiry: Long\n) : TokenPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt#L12-L17",
+    "description": "TokenAdapter implements TokenPort (outbound port), adapting the JJWT library implementation to the port interface defined in the application layer."
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt",
+    "lineStart": 13,
+    "lineEnd": 18,
+    "codeSnippet": "@Component(\"googleOAuthClient\")\nclass GoogleOAuthClient(\n    private val webClientBuilder: WebClient.Builder,\n    @Value(\"${oauth2.google.client-id}\") private val clientId: String,\n    @Value(\"${oauth2.google.client-secret}\") private val clientSecret: String\n) : OAuthClientPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt#L13-L18",
+    "description": "GoogleOAuthClient adapts the Google OAuth2 REST API to the internal OAuthClientPort interface, acting as a classic object adapter between external API and domain contract."
+  },
+  {
+    "conceptId": "oauth",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt",
+    "lineStart": 20,
+    "lineEnd": 38,
+    "codeSnippet": "override suspend fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult {\n    val webClient = webClientBuilder.build()\n    val response = webClient.post()\n        .uri(\"https://oauth2.googleapis.com/token\")\n        .contentType(MediaType.APPLICATION_FORM_URLENCODED)\n        .body(\n            BodyInserters.fromFormData(\"grant_type\", \"authorization_code\")\n                .with(\"client_id\", clientId)\n                .with(\"client_secret\", clientSecret)\n                .with(\"redirect_uri\", redirectUri)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt#L20-L38",
+    "description": "Implements the OAuth 2.0 Authorization Code flow — exchanging an authorization code for an access token from Google's token endpoint."
+  },
+  {
+    "conceptId": "oauth",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/client/KakaoOAuthClient.kt",
+    "lineStart": 20,
+    "lineEnd": 35,
+    "codeSnippet": "override suspend fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult {\n    val webClient = webClientBuilder.build()\n    val response = webClient.post()\n        .uri(\"https://kauth.kakao.com/oauth/token\")\n        .contentType(MediaType.APPLICATION_FORM_URLENCODED)\n        .body(\n            BodyInserters.fromFormData(\"grant_type\", \"authorization_code\")\n                .with(\"client_id\", clientId)\n                .with(\"client_secret\", clientSecret)\n                .with(\"redirect_uri\", redirectUri)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/client/KakaoOAuthClient.kt#L20-L35",
+    "description": "Implements the OAuth 2.0 Authorization Code flow for Kakao's identity provider, demonstrating multi-provider OAuth support."
+  },
+  {
+    "conceptId": "jwt",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt",
+    "lineStart": 27,
+    "lineEnd": 36,
+    "codeSnippet": "override fun generateAccessToken(userId: Long): String {\n    val now = Date()\n    return Jwts.builder()\n        .subject(userId.toString())\n        .claim(\"type\", \"access\")\n        .issuedAt(now)\n        .expiration(Date(now.time + accessTokenExpiry * 1000L))\n        .signWith(key)\n        .compact()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt#L27-L36",
+    "description": "Generates a signed JWT access token with subject, type claim, and expiry — implementing stateless authentication via HMAC-signed tokens."
+  },
+  {
+    "conceptId": "jwt",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt",
+    "lineStart": 52,
+    "lineEnd": 67,
+    "codeSnippet": "override fun validateRefreshToken(token: String): Long? {\n    val userId = refreshTokenStore[refreshTokenKey(token)] ?: return null\n    return try {\n        val claims = Jwts.parser()\n            .verifyWith(key)\n            .build()\n            .parseSignedClaims(token)\n            .payload\n        if (claims[\"type\"] != \"refresh\") return null\n        userId.toLong()\n    } catch (e: Exception) { null }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt#L52-L67",
+    "description": "Validates a refresh JWT by verifying the HMAC signature and checking the token type claim, returning the userId or null on any failure."
+  },
+  {
+    "conceptId": "interface",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/port/TokenPort.kt",
+    "lineStart": 1,
+    "lineEnd": 8,
+    "codeSnippet": "interface TokenPort {\n    fun generateAccessToken(userId: Long): String\n    fun generateRefreshToken(userId: Long): String\n    fun validateRefreshToken(token: String): Long?\n    fun blacklistToken(token: String)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/port/TokenPort.kt#L1-L8",
+    "description": "TokenPort defines a pure interface contract for token operations, decoupling use-cases from the concrete JWT implementation."
+  },
+  {
+    "conceptId": "interface",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/usecase/OAuthLoginUseCase.kt",
+    "lineStart": 1,
+    "lineEnd": 20,
+    "codeSnippet": "interface OAuthLoginUseCase {\n    suspend fun execute(command: Command): Result\n\n    data class Command(\n        val provider: AuthProvider,\n        val authCode: String,\n        val redirectUri: String\n    )\n\n    data class Result(\n        val accessToken: String,\n        val refreshToken: String,\n        val userId: Long,\n        val isNewUser: Boolean\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/usecase/OAuthLoginUseCase.kt#L1-L20",
+    "description": "Use-case interface bundles Command input and Result output as nested data classes, providing a self-contained use-case contract typical in clean/hexagonal architecture."
+  },
+  {
+    "conceptId": "coroutine",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt",
+    "lineStart": 20,
+    "lineEnd": 36,
+    "codeSnippet": "override suspend fun exchangeCodeForToken(authCode: String, redirectUri: String): OAuthTokenResult {\n    val webClient = webClientBuilder.build()\n    val response = webClient.post()\n        .uri(\"https://oauth2.googleapis.com/token\")\n        ...\n        .bodyToMono(GoogleTokenResponse::class.java)\n        .awaitSingle()\n    return OAuthTokenResult(accessToken = response.accessToken)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt#L20-L36",
+    "description": "Uses Kotlin coroutines with suspend functions and .awaitSingle() to bridge reactive WebClient calls into coroutine-friendly async execution."
+  },
+  {
+    "conceptId": "reactive-streams",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt",
+    "lineStart": 22,
+    "lineEnd": 35,
+    "codeSnippet": "val response = webClient.post()\n    .uri(\"https://oauth2.googleapis.com/token\")\n    .contentType(MediaType.APPLICATION_FORM_URLENCODED)\n    .body(\n        BodyInserters.fromFormData(\"grant_type\", \"authorization_code\")\n            ...\n    )\n    .retrieve()\n    .bodyToMono(GoogleTokenResponse::class.java)\n    .awaitSingle()",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/client/GoogleOAuthClient.kt#L22-L35",
+    "description": "WebClient produces a Mono (reactive stream publisher) representing the async HTTP response, which is consumed by awaitSingle() in the coroutine context."
+  },
+  {
+    "conceptId": "ddd",
+    "filePath": "auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/User.kt",
+    "lineStart": 5,
+    "lineEnd": 31,
+    "codeSnippet": "class User private constructor(\n    val id: Long? = null,\n    val email: String,\n    var name: String,\n    val provider: AuthProvider,\n    val providerId: String,\n    var profileImageUrl: String?,\n    val createdAt: LocalDateTime = LocalDateTime.now()\n) {\n    companion object {\n        fun create(...): User { require(...); return User(...) }\n        fun restore(...): User = User(...)\n    }\n    fun updateProfile(name: String? = null, profileImageUrl: String? = null) { ... }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/User.kt#L5-L31",
+    "description": "User is a rich domain aggregate with private constructor, factory methods (create/restore), invariant guards via require(), and a domain behavior method (updateProfile) — classic DDD aggregate root pattern."
+  },
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/User.kt",
+    "lineStart": 14,
+    "lineEnd": 31,
+    "codeSnippet": "companion object {\n    fun create(\n        email: String,\n        name: String,\n        provider: AuthProvider,\n        providerId: String,\n        profileImageUrl: String? = null\n    ): User {\n        require(email.isNotBlank()) { \"이메일은 비어있을 수 없습니다\" }\n        require(name.isNotBlank()) { \"이름은 비어있을 수 없습니다\" }\n        return User(email = email, name = name, provider = provider, ...)\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/User.kt#L14-L31",
+    "description": "Companion object static factory methods (create vs restore) enforce invariants and control object construction, implementing the Factory pattern with private constructor."
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/persistence/user/entity/UserJpaEntity.kt",
+    "lineStart": 44,
+    "lineEnd": 54,
+    "codeSnippet": "companion object {\n    fun fromDomain(user: User) = UserJpaEntity(\n        id = user.id,\n        email = user.email,\n        name = user.name,\n        provider = user.provider,\n        providerId = user.providerId,\n        profileImageUrl = user.profileImageUrl,\n        createdAt = user.createdAt\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/persistence/user/entity/UserJpaEntity.kt#L44-L54",
+    "description": "Companion object hosts the fromDomain factory function for mapping from domain model to JPA entity, providing static-like utility scoped to the class."
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/dto/LoginResponse.kt",
+    "lineStart": 10,
+    "lineEnd": 18,
+    "codeSnippet": "companion object {\n    fun from(result: OAuthLoginUseCase.Result) = LoginResponse(\n        accessToken = result.accessToken,\n        refreshToken = result.refreshToken,\n        userId = result.userId,\n        isNewUser = result.isNewUser\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/dto/LoginResponse.kt#L10-L18",
+    "description": "Companion object provides a from() factory function to map use-case results to DTOs, a common Kotlin pattern for static-like construction methods."
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/port/OAuthClientPort.kt",
+    "lineStart": 8,
+    "lineEnd": 15,
+    "codeSnippet": "data class OAuthTokenResult(val accessToken: String)\n\ndata class OAuthUserInfo(\n    val email: String,\n    val name: String,\n    val providerId: String,\n    val profileImageUrl: String?\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/port/OAuthClientPort.kt#L8-L15",
+    "description": "Data classes model plain data transfer objects within the port layer, leveraging Kotlin's auto-generated equals/hashCode/copy/toString for immutable value carriers."
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/AuthProvider.kt",
+    "lineStart": 1,
+    "lineEnd": 5,
+    "codeSnippet": "enum class AuthProvider {\n    KAKAO, GOOGLE\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/AuthProvider.kt#L1-L5",
+    "description": "AuthProvider enum models the closed set of supported OAuth identity providers, enforcing type-safe provider selection throughout the domain."
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/config/DataSourceConfig.kt",
+    "lineStart": 13,
+    "lineEnd": 19,
+    "codeSnippet": "enum class DataSourceType { MASTER, REPLICA }\n\nclass RoutingDataSource : AbstractRoutingDataSource() {\n    override fun determineCurrentLookupKey(): DataSourceType =\n        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly())\n            DataSourceType.REPLICA else DataSourceType.MASTER\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/config/DataSourceConfig.kt#L13-L19",
+    "description": "DataSourceType enum represents the two routing targets (MASTER/REPLICA), used as type-safe keys in the AbstractRoutingDataSource map."
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "auth/domain/src/main/kotlin/com/kgd/auth/domain/user/exception/AuthException.kt",
+    "lineStart": 1,
+    "lineEnd": 15,
+    "codeSnippet": "class UserNotFoundException(id: Long) : BusinessException(\n    ErrorCode.NOT_FOUND,\n    \"사용자(id=$id)를 찾을 수 없습니다\"\n)\n\nclass DuplicateUserException(provider: AuthProvider, providerId: String) : BusinessException(\n    ErrorCode.DUPLICATE_RESOURCE,\n    \"사용자(provider=$provider, providerId=$providerId)가 이미 존재합니다\"\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/domain/src/main/kotlin/com/kgd/auth/domain/user/exception/AuthException.kt#L1-L15",
+    "description": "Domain-specific exception classes extend a common BusinessException with typed ErrorCode enums, allowing global exception handlers to map domain errors to HTTP responses uniformly."
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/persistence/user/entity/UserJpaEntity.kt",
+    "lineStart": 9,
+    "lineEnd": 33,
+    "codeSnippet": "@Entity\n@Table(\n    name = \"users\",\n    uniqueConstraints = [\n        UniqueConstraint(name = \"uk_provider_provider_id\", columnNames = [\"provider\", \"provider_id\"])\n    ]\n)\nclass UserJpaEntity(\n    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)\n    val id: Long? = null,\n    @Enumerated(EnumType.STRING)\n    val provider: AuthProvider,\n    ...\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/persistence/user/entity/UserJpaEntity.kt#L9-L33",
+    "description": "JPA annotations map the UserJpaEntity class to the users table with auto-generated identity, enum column mapping, and unique constraint — demonstrating ORM object-relational mapping."
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/persistence/user/entity/UserJpaEntity.kt",
+    "lineStart": 9,
+    "lineEnd": 32,
+    "codeSnippet": "@Entity\n@Table(name = \"users\", uniqueConstraints = [...])\nclass UserJpaEntity(\n    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)\n    val id: Long? = null,\n    @Column(nullable = false, length = 255)\n    var email: String,\n    @Enumerated(EnumType.STRING)\n    val provider: AuthProvider,\n    @CreationTimestamp\n    val createdAt: LocalDateTime = LocalDateTime.now()\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/persistence/user/entity/UserJpaEntity.kt#L9-L32",
+    "description": "Multiple JPA and Hibernate annotations (@Entity, @Table, @Id, @GeneratedValue, @Enumerated, @CreationTimestamp) drive runtime behaviour through metadata rather than imperative code."
+  },
+  {
+    "conceptId": "rest",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/controller/AuthController.kt",
+    "lineStart": 17,
+    "lineEnd": 39,
+    "codeSnippet": "@RestController\n@RequestMapping(\"/api/auth\")\nclass AuthController(...) {\n    @PostMapping(\"/login/{provider}\")\n    suspend fun login(\n        @PathVariable provider: String,\n        @Valid @RequestBody request: LoginRequest\n    ): ResponseEntity<ApiResponse<LoginResponse>> {\n        val authProvider = AuthProvider.valueOf(provider.uppercase())\n        val result = oauthLoginUseCase.execute(...)\n        return ResponseEntity.ok(ApiResponse.success(LoginResponse.from(result)))\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/controller/AuthController.kt#L17-L39",
+    "description": "RESTful controller with resource-based URL design (/api/auth/login/{provider}), HTTP POST for login, JSON request/response bodies wrapped in a uniform ApiResponse envelope."
+  },
+  {
+    "conceptId": "abstraction",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/port/UserRepositoryPort.kt",
+    "lineStart": 1,
+    "lineEnd": 10,
+    "codeSnippet": "interface UserRepositoryPort {\n    fun save(user: User): User\n    fun findById(id: Long): User?\n    fun findByProviderAndProviderId(provider: AuthProvider, providerId: String): User?\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/port/UserRepositoryPort.kt#L1-L10",
+    "description": "UserRepositoryPort abstracts persistence operations, exposing only domain-meaningful methods so the application layer never depends on JPA, SQL, or database details."
+  },
+  {
+    "conceptId": "polymorphism",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/service/AuthService.kt",
+    "lineStart": 13,
+    "lineEnd": 19,
+    "codeSnippet": "class AuthService(\n    private val oauthClients: Map<AuthProvider, OAuthClientPort>\n) : OAuthLoginUseCase, GetUserProfileUseCase, RefreshTokenUseCase, LogoutUseCase {\n\n    override suspend fun execute(command: OAuthLoginUseCase.Command): OAuthLoginUseCase.Result {\n        val oauthClient = oauthClients[command.provider]\n        ...",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/service/AuthService.kt#L13-L19",
+    "description": "AuthService implements multiple use-case interfaces (polymorphism via interface), and OAuthClientPort is resolved polymorphically from a Map at runtime based on the provider enum."
+  },
+  {
+    "conceptId": "encapsulation",
+    "filePath": "auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/User.kt",
+    "lineStart": 5,
+    "lineEnd": 13,
+    "codeSnippet": "class User private constructor(\n    val id: Long? = null,\n    val email: String,\n    var name: String,\n    val provider: AuthProvider,\n    val providerId: String,\n    var profileImageUrl: String?,\n    val createdAt: LocalDateTime = LocalDateTime.now()\n) {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/domain/src/main/kotlin/com/kgd/auth/domain/user/model/User.kt#L5-L13",
+    "description": "Private constructor encapsulates User object creation, forcing all construction through factory methods (create/restore) that enforce business invariants before allowing instantiation."
+  },
+  {
+    "conceptId": "msa",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/controller/UserController.kt",
+    "lineStart": 18,
+    "lineEnd": 25,
+    "codeSnippet": "@GetMapping(\"/me\")\nfun getMyProfile(\n    @RequestHeader(\"X-User-Id\") userId: Long\n): ResponseEntity<ApiResponse<UserProfileResponse>> {\n    val result = getUserProfileUseCase.execute(userId)\n    return ResponseEntity.ok(ApiResponse.success(UserProfileResponse.from(result)))\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/controller/UserController.kt#L18-L25",
+    "description": "The X-User-Id header is injected by the API gateway after JWT verification, illustrating the MSA pattern where the auth service trusts a trusted upstream header rather than re-validating tokens per request."
+  },
+  {
+    "conceptId": "singleton-pattern",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt",
+    "lineStart": 23,
+    "lineEnd": 25,
+    "codeSnippet": "private val key: SecretKey by lazy {\n    Keys.hmacShaKeyFor(jwtSecret.toByteArray())\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/security/TokenAdapter.kt#L23-L25",
+    "description": "The SecretKey is lazily initialized once per TokenAdapter instance using Kotlin's by lazy delegate, ensuring the expensive key derivation happens only once (singleton-like initialization)."
+  },
+  {
+    "conceptId": "generic",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/user/controller/AuthController.kt",
+    "lineStart": 29,
+    "lineEnd": 29,
+    "codeSnippet": "): ResponseEntity<ApiResponse<LoginResponse>> {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/user/controller/AuthController.kt#L29-L29",
+    "description": "ResponseEntity<ApiResponse<LoginResponse>> uses nested generic type parameters to compose a typed HTTP response wrapper around a typed API envelope, providing compile-time type safety for response shapes."
+  },
+  {
+    "conceptId": "lambda",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/config/SecurityConfig.kt",
+    "lineStart": 15,
+    "lineEnd": 22,
+    "codeSnippet": "fun securityFilterChain(http: HttpSecurity): SecurityFilterChain {\n    http\n        .csrf { it.disable() }\n        .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }\n        .authorizeHttpRequests { it.anyRequest().permitAll() }\n    return http.build()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/config/SecurityConfig.kt#L15-L22",
+    "description": "Spring Security's DSL accepts lambda configurers ({ it.disable() }, { it.sessionCreationPolicy(...) }) as trailing lambda parameters, demonstrating Kotlin lambda syntax for builder-style configuration."
+  },
+  {
+    "conceptId": "health-check",
+    "filePath": "auth/app/src/main/kotlin/com/kgd/auth/config/SecurityConfig.kt",
+    "lineStart": 14,
+    "lineEnd": 22,
+    "codeSnippet": "@Bean\nfun securityFilterChain(http: HttpSecurity): SecurityFilterChain {\n    http\n        .csrf { it.disable() }\n        .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }\n        .authorizeHttpRequests { it.anyRequest().permitAll() }\n    return http.build()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/auth/app/src/main/kotlin/com/kgd/auth/config/SecurityConfig.kt#L14-L22",
+    "description": "All endpoints are permitted without authentication (anyRequest().permitAll()), which allows load balancer health-check probes and actuator endpoints to pass without requiring a token."
+  }
+]

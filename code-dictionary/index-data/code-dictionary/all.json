@@ -1,0 +1,254 @@
+[
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/concept/port/ConceptRepositoryPort.kt",
+    "lineStart": 9,
+    "lineEnd": 20,
+    "codeSnippet": "interface ConceptRepositoryPort {\n    fun save(concept: Concept): Concept\n    fun findById(id: Long): Concept?\n    fun findByConceptId(conceptId: String): Concept?\n    fun findAll(pageable: Pageable): Page<Concept>\n    fun findByCategory(category: ConceptCategory, pageable: Pageable): Page<Concept>\n    fun findByLevel(level: ConceptLevel, pageable: Pageable): Page<Concept>\n    fun findAllWithSynonyms(): List<Concept>\n    fun delete(id: Long)\n    fun existsByConceptId(conceptId: String): Boolean\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/concept/port/ConceptRepositoryPort.kt#L9-L20",
+    "description": "Application layer defines a port interface for repository — the dependency points inward, decoupling domain/application from infrastructure per Clean Architecture rules"
+  },
+  {
+    "conceptId": "hexagonal-architecture",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/search/port/ConceptIndexingPort.kt",
+    "lineStart": 6,
+    "lineEnd": 12,
+    "codeSnippet": "interface ConceptIndexingPort {\n    fun indexConceptIndex(concept: Concept, conceptIndex: ConceptIndex)\n    fun bulkIndex(entries: List<Pair<Concept, ConceptIndex>>)\n    fun deleteByConceptId(conceptId: String)\n    fun createOrUpdateIndex()\n    fun updateSynonyms(synonymMap: Map<String, List<String>>)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/search/port/ConceptIndexingPort.kt#L6-L12",
+    "description": "An outbound port for search indexing — the application layer defines the interface and infrastructure implements it, following hexagonal architecture's port-adapter boundary"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/ConceptIndexingAdapter.kt",
+    "lineStart": 27,
+    "lineEnd": 32,
+    "codeSnippet": "@Component\nclass ConceptIndexingAdapter(\n    private val openSearchClient: OpenSearchClient,\n    @Value(\"\\${opensearch.index-name:concept-index}\") private val indexName: String\n) : ConceptIndexingPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/ConceptIndexingAdapter.kt#L27-L32",
+    "description": "ConceptIndexingAdapter implements ConceptIndexingPort, making it a classic adapter that bridges the application port to the concrete OpenSearch infrastructure"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/adapter/ConceptRepositoryAdapter.kt",
+    "lineStart": 16,
+    "lineEnd": 20,
+    "codeSnippet": "@Component\nclass ConceptRepositoryAdapter(\n    private val jpaRepository: ConceptJpaRepository\n) : ConceptRepositoryPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/adapter/ConceptRepositoryAdapter.kt#L16-L20",
+    "description": "ConceptRepositoryAdapter wraps a Spring Data JPA repository and adapts it to the domain-facing ConceptRepositoryPort interface, converting between JPA entities and domain models"
+  },
+  {
+    "conceptId": "ddd",
+    "filePath": "code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/model/Concept.kt",
+    "lineStart": 3,
+    "lineEnd": 35,
+    "codeSnippet": "class Concept private constructor(\n    val id: Long? = null,\n    val conceptId: String,\n    var name: String,\n    var category: ConceptCategory,\n    var level: ConceptLevel,\n    var description: String,\n    var synonyms: List<String>,\n    var relatedConceptIds: List<String>\n) {\n    companion object {\n        fun create(...): Concept { require(...); return Concept(...) }\n        fun restore(...): Concept = Concept(...)\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/model/Concept.kt#L3-L35",
+    "description": "Concept is a rich domain aggregate with private constructor, factory methods (create/restore), and invariant guards — a textbook DDD aggregate root pattern"
+  },
+  {
+    "conceptId": "value-object",
+    "filePath": "code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/index/model/CodeLocation.kt",
+    "lineStart": 3,
+    "lineEnd": 14,
+    "codeSnippet": "data class CodeLocation(\n    val filePath: String,\n    val lineStart: Int,\n    val lineEnd: Int,\n    val gitUrl: String? = null\n) {\n    init {\n        require(filePath.isNotBlank()) { \"filePath는 비어있을 수 없습니다\" }\n        require(lineStart > 0) { \"lineStart는 0보다 커야 합니다\" }\n        require(lineEnd >= lineStart) { \"lineEnd는 lineStart 이상이어야 합니다\" }\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/index/model/CodeLocation.kt#L3-L14",
+    "description": "CodeLocation is an immutable data class with validation invariants in init block — a canonical value object representing a code location without its own identity"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/concept/dto/ConceptDtos.kt",
+    "lineStart": 6,
+    "lineEnd": 22,
+    "codeSnippet": "data class CreateConceptCommand(\n    val conceptId: String,\n    val name: String,\n    val category: ConceptCategory,\n    val level: ConceptLevel,\n    val description: String,\n    val synonyms: List<String> = emptyList()\n)\n\ndata class UpdateConceptCommand(\n    val name: String? = null,\n    val category: ConceptCategory? = null,\n    val level: ConceptLevel? = null,\n    val description: String? = null,\n    val synonyms: List<String>? = null\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/concept/dto/ConceptDtos.kt#L6-L22",
+    "description": "Command objects (CreateConceptCommand, UpdateConceptCommand, ConceptResultDto) use Kotlin data class for automatic equals/hashCode/copy/toString — idiomatic DTO pattern throughout the application layer"
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/model/Concept.kt",
+    "lineStart": 13,
+    "lineEnd": 55,
+    "codeSnippet": "companion object {\n    fun create(\n        conceptId: String,\n        name: String,\n        category: ConceptCategory,\n        level: ConceptLevel,\n        description: String,\n        synonyms: List<String> = emptyList(),\n        relatedConceptIds: List<String> = emptyList()\n    ): Concept { require(conceptId.isNotBlank()); return Concept(...) }\n\n    fun restore(id: Long?, ...): Concept = Concept(...)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/model/Concept.kt#L13-L55",
+    "description": "companion object holds factory methods (create/restore) on the Concept and ConceptIndex domain classes — Kotlin's idiomatic equivalent of static factory methods"
+  },
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/entity/ConceptJpaEntity.kt",
+    "lineStart": 48,
+    "lineEnd": 65,
+    "codeSnippet": "companion object {\n    fun fromDomain(concept: Concept): ConceptJpaEntity {\n        val entity = ConceptJpaEntity(\n            id = concept.id,\n            conceptId = concept.conceptId,\n            name = concept.name,\n            category = concept.category.name,\n            level = concept.level.name,\n            description = concept.description\n        )\n        concept.synonyms.forEach { synonym ->\n            entity.synonyms.add(ConceptSynonymJpaEntity(synonym = synonym, concept = entity))\n        }\n        return entity\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/entity/ConceptJpaEntity.kt#L48-L65",
+    "description": "ConceptJpaEntity.fromDomain() and toDomain() are static factory methods that encapsulate creation and mapping logic — the Factory pattern applied for domain-to-entity translation"
+  },
+  {
+    "conceptId": "singleton-pattern",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/config/OpenSearchConfig.kt",
+    "lineStart": 12,
+    "lineEnd": 26,
+    "codeSnippet": "@Configuration\nclass OpenSearchConfig(\n    @Value(\"\\${opensearch.host}\") private val host: String,\n    @Value(\"\\${opensearch.port}\") private val port: Int,\n    @Value(\"\\${opensearch.scheme}\") private val scheme: String\n) {\n    @Bean\n    fun openSearchClient(): OpenSearchClient {\n        val httpHost = HttpHost(scheme, host, port)\n        val transport = ApacheHttpClient5TransportBuilder\n            .builder(httpHost).setMapper(JacksonJsonpMapper()).build()\n        return OpenSearchClient(transport)\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/config/OpenSearchConfig.kt#L12-L26",
+    "description": "@Bean in a @Configuration class produces a singleton-scoped OpenSearchClient — Spring manages a single shared instance for the application lifetime"
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/model/ConceptCategory.kt",
+    "lineStart": 3,
+    "lineEnd": 7,
+    "codeSnippet": "enum class ConceptCategory {\n    BASICS, DATA_STRUCTURE, ALGORITHM, DESIGN_PATTERN, CONCURRENCY,\n    DISTRIBUTED_SYSTEM, ARCHITECTURE, INFRASTRUCTURE, DATA, SECURITY,\n    NETWORK, TESTING, LANGUAGE_FEATURE\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/model/ConceptCategory.kt#L3-L7",
+    "description": "ConceptCategory and ConceptLevel are Kotlin enums that constrain valid values for concept classification — type-safe enumeration used throughout domain and application layers"
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/exception/ConceptException.kt",
+    "lineStart": 6,
+    "lineEnd": 13,
+    "codeSnippet": "class ConceptNotFoundException(conceptId: String) :\n    BusinessException(ErrorCode.NOT_FOUND, \"개념(conceptId=$conceptId)을 찾을 수 없습니다\")\n\nclass ConceptAlreadyExistsException(conceptId: String) :\n    BusinessException(ErrorCode.INVALID_INPUT, \"이미 존재하는 개념입니다: $conceptId\")\n\nclass ConceptIndexNotFoundException(id: Long) :\n    BusinessException(ErrorCode.NOT_FOUND, \"색인(id=$id)을 찾을 수 없습니다\")",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/exception/ConceptException.kt#L6-L13",
+    "description": "Domain-specific exceptions extend BusinessException with typed ErrorCodes — structured exception hierarchy that allows the presentation layer to return consistent error responses"
+  },
+  {
+    "conceptId": "interface",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/search/port/ConceptSearchPort.kt",
+    "lineStart": 31,
+    "lineEnd": 34,
+    "codeSnippet": "interface ConceptSearchPort {\n    fun search(query: String, category: String?, level: String?, from: Int, size: Int): SearchResponse\n    fun suggest(query: String, size: Int): List<SuggestHit>\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/search/port/ConceptSearchPort.kt#L31-L34",
+    "description": "ConceptSearchPort, ConceptIndexingPort, and ConceptRepositoryPort are Kotlin interfaces that define the contracts between layers — enabling dependency inversion and testability"
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/presentation/concept/controller/ConceptController.kt",
+    "lineStart": 17,
+    "lineEnd": 34,
+    "codeSnippet": "@RestController\n@RequestMapping(\"/api/v1/concepts\")\nclass ConceptController(private val conceptService: ConceptService) {\n    @GetMapping\n    fun list(\n        @RequestParam(required = false) category: String?,\n        @RequestParam(required = false) level: String?,\n        @RequestParam(defaultValue = \"0\") page: Int,\n        @RequestParam(defaultValue = \"20\") size: Int\n    ): ResponseEntity<ApiResponse<Page<ConceptResultDto>>> {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/presentation/concept/controller/ConceptController.kt#L17-L34",
+    "description": "Spring MVC annotations (@RestController, @RequestMapping, @GetMapping, @RequestParam, @PathVariable) are used pervasively to configure HTTP routing and parameter binding declaratively"
+  },
+  {
+    "conceptId": "generic",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/presentation/concept/controller/ConceptController.kt",
+    "lineStart": 29,
+    "lineEnd": 34,
+    "codeSnippet": "): ResponseEntity<ApiResponse<Page<ConceptResultDto>>> {\n    val parsedCategory = category?.let { ConceptCategory.valueOf(it.uppercase()) }\n    val parsedLevel = level?.let { ConceptLevel.valueOf(it.uppercase()) }\n    val result = conceptService.findAll(parsedCategory, parsedLevel, PageRequest.of(page, size))\n    return ResponseEntity.ok(ApiResponse.success(result))\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/presentation/concept/controller/ConceptController.kt#L29-L34",
+    "description": "ApiResponse<Page<ConceptResultDto>> and ResponseEntity<T> show nested generic type parameters used to wrap typed responses — generics enforce type safety across the response chain"
+  },
+  {
+    "conceptId": "lambda",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/graph/service/GraphService.kt",
+    "lineStart": 17,
+    "lineEnd": 43,
+    "codeSnippet": "val indexCountMap = allIndexes.groupBy { it.conceptId }.mapValues { it.value.size }\n\nval nodes = concepts.map { concept ->\n    GraphNodeDto(id = concept.conceptId, indexCount = indexCountMap[concept.conceptId] ?: 0)\n}\n\nval links = concepts.flatMap { concept ->\n    concept.relatedConceptIds\n        .filter { it in conceptIdSet }\n        .map { relatedId -> GraphLinkDto(source = concept.conceptId, target = relatedId, type = \"RELATED\") }\n}.distinctBy { setOf(it.source, it.target) }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/graph/service/GraphService.kt#L17-L43",
+    "description": "GraphService uses higher-order lambdas (map, flatMap, filter, groupBy, distinctBy) extensively to transform domain collections into graph data — idiomatic Kotlin functional style"
+  },
+  {
+    "conceptId": "extension-function",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/entity/ConceptJpaEntity.kt",
+    "lineStart": 37,
+    "lineEnd": 46,
+    "codeSnippet": "fun toDomain(): Concept = Concept.restore(\n    id = id,\n    conceptId = conceptId,\n    name = name,\n    category = ConceptCategory.valueOf(category),\n    level = ConceptLevel.valueOf(level),\n    description = description ?: \"\",\n    synonyms = synonyms.map { it.synonym },\n    relatedConceptIds = relations.map { it.targetConcept.conceptId }\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/entity/ConceptJpaEntity.kt#L37-L46",
+    "description": "toDomain() and fromDomain() methods on JPA entities add domain-conversion behavior directly to the class — the idiomatic Kotlin pattern of attaching behavior to types for clean layer mapping"
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/entity/ConceptJpaEntity.kt",
+    "lineStart": 11,
+    "lineEnd": 36,
+    "codeSnippet": "@Entity\n@Table(name = \"concept\")\nclass ConceptJpaEntity(\n    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)\n    val id: Long? = null,\n    @Column(nullable = false, unique = true, length = 100)\n    var conceptId: String,\n    @OneToMany(mappedBy = \"concept\", cascade = [CascadeType.ALL], orphanRemoval = true)\n    val synonyms: MutableList<ConceptSynonymJpaEntity> = mutableListOf(),\n    @OneToMany(mappedBy = \"sourceConcept\", cascade = [CascadeType.ALL], orphanRemoval = true)\n    val relations: MutableList<ConceptRelationJpaEntity> = mutableListOf()\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/entity/ConceptJpaEntity.kt#L11-L36",
+    "description": "ConceptJpaEntity uses JPA/Hibernate ORM annotations (@Entity, @Table, @OneToMany, @ManyToOne, CascadeType.ALL) to map the Concept aggregate to relational tables with relationship management"
+  },
+  {
+    "conceptId": "replication",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/DataSourceConfig.kt",
+    "lineStart": 17,
+    "lineEnd": 45,
+    "codeSnippet": "class RoutingDataSource : AbstractRoutingDataSource() {\n    override fun determineCurrentLookupKey(): DataSourceType =\n        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly())\n            DataSourceType.REPLICA else DataSourceType.MASTER\n}\n\n@Configuration\nclass DataSourceConfig {\n    @Bean @ConfigurationProperties(prefix = \"spring.datasource.master\")\n    fun masterDataSource(): DataSource = DataSourceBuilder.create().build()\n\n    @Bean @ConfigurationProperties(prefix = \"spring.datasource.replica\")\n    fun replicaDataSource(): DataSource = DataSourceBuilder.create().build()\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/DataSourceConfig.kt#L17-L45",
+    "description": "RoutingDataSource routes queries to MASTER or REPLICA based on transaction read-only flag — implements read/write splitting to leverage MySQL replication for scalable reads"
+  },
+  {
+    "conceptId": "connection-pool",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/DataSourceConfig.kt",
+    "lineStart": 47,
+    "lineEnd": 54,
+    "codeSnippet": "@Bean\n@Primary\nfun dataSource(@Qualifier(\"routingDataSource\") routingDataSource: DataSource): DataSource =\n    LazyConnectionDataSourceProxy(routingDataSource)\n\n@Bean\nfun jpaQueryFactory(entityManager: EntityManager): JPAQueryFactory =\n    JPAQueryFactory(entityManager)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/DataSourceConfig.kt#L47-L54",
+    "description": "LazyConnectionDataSourceProxy defers actual JDBC connection acquisition until the first statement executes — an optimization that reduces connection pool pressure for read-only transactions"
+  },
+  {
+    "conceptId": "cors",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/CorsConfig.kt",
+    "lineStart": 8,
+    "lineEnd": 17,
+    "codeSnippet": "@Configuration\nclass CorsConfig : WebMvcConfigurer {\n    override fun addCorsMappings(registry: CorsRegistry) {\n        registry.addMapping(\"/api/**\")\n            .allowedOrigins(\"http://localhost:5174\", \"http://localhost:5173\")\n            .allowedMethods(\"GET\", \"POST\", \"PUT\", \"DELETE\", \"OPTIONS\")\n            .allowedHeaders(\"*\")\n            .allowCredentials(true)\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/config/CorsConfig.kt#L8-L17",
+    "description": "CorsConfig explicitly permits cross-origin requests from the local frontend dev server ports — necessary because the frontend (Vite) runs on a different origin than the Spring Boot API"
+  },
+  {
+    "conceptId": "rest",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/presentation/concept/controller/ConceptController.kt",
+    "lineStart": 17,
+    "lineEnd": 67,
+    "codeSnippet": "@RestController\n@RequestMapping(\"/api/v1/concepts\")\nclass ConceptController(...) {\n    @GetMapping         fun list(...): ResponseEntity<ApiResponse<Page<ConceptResultDto>>>\n    @GetMapping(\"/{id}\") fun getById(@PathVariable id: Long): ...\n    @PostMapping        fun create(@RequestBody request: ConceptCreateRequest): ...\n    @PutMapping(\"/{id}\") fun update(@PathVariable id: Long, ...): ...\n    @DeleteMapping(\"/{id}\") fun delete(@PathVariable id: Long): ResponseEntity<Unit>\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/presentation/concept/controller/ConceptController.kt#L17-L67",
+    "description": "ConceptController exposes a full CRUD REST API using standard HTTP verbs (GET/POST/PUT/DELETE) with resource-based URL paths — textbook RESTful resource design"
+  },
+  {
+    "conceptId": "bulk-indexing",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/ConceptIndexingAdapter.kt",
+    "lineStart": 195,
+    "lineEnd": 225,
+    "codeSnippet": "override fun bulkIndex(entries: List<Pair<Concept, ConceptIndex>>) {\n    if (entries.isEmpty()) return\n    val operations = entries.map { (concept, conceptIndex) ->\n        val document = buildDocument(concept, conceptIndex)\n        BulkOperation.of { op ->\n            op.index<Map<String, Any?>> { idx ->\n                idx.index(indexName).id(docId).document(document)\n            }\n        }\n    }\n    val response = openSearchClient.bulk { b ->\n        b.index(indexName).operations(operations)\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/ConceptIndexingAdapter.kt#L195-L225",
+    "description": "bulkIndex() batches multiple documents into a single OpenSearch Bulk API call, avoiding N individual index requests for high-throughput sync operations"
+  },
+  {
+    "conceptId": "inverse-index",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/ConceptIndexingAdapter.kt",
+    "lineStart": 42,
+    "lineEnd": 130,
+    "codeSnippet": ".tokenizer(\"edge_ngram_tokenizer\", Tokenizer.of { t ->\n    t.definition(TokenizerDefinition.of { d ->\n        d.edgeNgram(EdgeNGramTokenizer.of { e ->\n            e.minGram(1).maxGram(20).tokenChars(listOf(TokenChar.Letter, TokenChar.Digit))\n        })\n    })\n})\n.analyzer(\"autocomplete_analyzer\", Analyzer.of { an ->\n    an.custom(CustomAnalyzer.of { ca ->\n        ca.tokenizer(\"edge_ngram_tokenizer\").filter(listOf(\"lowercase\"))\n    })\n})",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/opensearch/adapter/ConceptIndexingAdapter.kt#L42-L130",
+    "description": "The OpenSearch index mapping with custom analyzers (Nori Korean, edge-ngram) builds an inverted index over concept names, synonyms, descriptions, and code snippets for full-text search"
+  },
+  {
+    "conceptId": "encapsulation",
+    "filePath": "code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/model/Concept.kt",
+    "lineStart": 3,
+    "lineEnd": 70,
+    "codeSnippet": "class Concept private constructor(\n    val id: Long? = null,\n    ...\n) {\n    companion object {\n        fun create(...): Concept { require(conceptId.isNotBlank()); return Concept(...) }\n        fun restore(...): Concept = Concept(...)\n    }\n\n    fun update(name: String? = null, ...) {\n        name?.let { require(it.isNotBlank()); this.name = it }\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/domain/src/main/kotlin/com/kgd/codedictionary/domain/concept/model/Concept.kt#L3-L70",
+    "description": "Concept has a private constructor forcing all instantiation through factory methods — encapsulating invariant validation so the object can never be in an invalid state"
+  },
+  {
+    "conceptId": "abstraction",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/search/service/SearchService.kt",
+    "lineStart": 12,
+    "lineEnd": 43,
+    "codeSnippet": "@Service\nclass SearchService(private val searchPort: ConceptSearchPort) {\n    fun search(command: SearchCommand): SearchResultDto {\n        val response = searchPort.search(\n            query = command.query,\n            category = command.category,\n            level = command.level,\n            from = command.page * command.size,\n            size = command.size\n        )\n        return SearchResultDto(hits = response.hits.map { ... }, totalHits = response.totalHits)\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/application/search/service/SearchService.kt#L12-L43",
+    "description": "SearchService depends only on the ConceptSearchPort abstraction, with no knowledge of OpenSearch — the infrastructure detail is hidden behind an interface abstraction"
+  },
+  {
+    "conceptId": "polymorphism",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/adapter/ConceptRepositoryAdapter.kt",
+    "lineStart": 16,
+    "lineEnd": 20,
+    "codeSnippet": "@Component\nclass ConceptRepositoryAdapter(\n    private val jpaRepository: ConceptJpaRepository\n) : ConceptRepositoryPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/persistence/concept/adapter/ConceptRepositoryAdapter.kt#L16-L20",
+    "description": "ConceptRepositoryAdapter, ConceptIndexRepositoryAdapter, ConceptIndexingAdapter, and ConceptSearchAdapter all implement shared port interfaces — callers work with the interface type and the correct implementation is injected at runtime"
+  },
+  {
+    "conceptId": "msa",
+    "filePath": "code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/CodeDictionaryApplication.kt",
+    "lineStart": 3,
+    "lineEnd": 11,
+    "codeSnippet": "@SpringBootApplication(scanBasePackages = [\"com.kgd.codedictionary\", \"com.kgd.common.exception\", \"com.kgd.common.response\"])\nclass CodeDictionaryApplication\n\nfun main(args: Array<String>) {\n    runApplication<CodeDictionaryApplication>(*args)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/CodeDictionaryApplication.kt#L3-L11",
+    "description": "code-dictionary is an independent Spring Boot service with its own DB and domain — a standalone microservice deployed separately from other services in the MSA platform"
+  }
+]

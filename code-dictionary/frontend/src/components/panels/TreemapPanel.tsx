@@ -6,9 +6,10 @@ import type { Category } from '../../types';
 interface TreemapPanelProps {
   nodes: GraphNode[];
   onNodeClick: (conceptId: string) => void;
+  onCategoryClick?: (category: string) => void;
 }
 
-export default function TreemapPanel({ nodes, onNodeClick }: TreemapPanelProps) {
+export default function TreemapPanel({ nodes, onNodeClick, onCategoryClick }: TreemapPanelProps) {
   const grouped = nodes.reduce<Record<string, GraphNode[]>>((acc, node) => {
     (acc[node.category] ??= []).push(node);
     return acc;
@@ -16,6 +17,7 @@ export default function TreemapPanel({ nodes, onNodeClick }: TreemapPanelProps) 
 
   const data = Object.entries(grouped).map(([category, categoryNodes]) => ({
     name: CATEGORY_LABELS[category as Category] || category,
+    categoryKey: category,
     color: CATEGORY_COLORS[category as Category] || '#888',
     children: categoryNodes.map((n) => ({
       name: n.name,
@@ -26,8 +28,16 @@ export default function TreemapPanel({ nodes, onNodeClick }: TreemapPanelProps) 
   }));
 
   const CustomContent = (props: any) => {
-    const { x, y, width, height, name, color, conceptId } = props;
+    const { x, y, width, height, name, color, conceptId, categoryKey } = props;
     if (width < 20 || height < 20) return null;
+
+    const handleClick = () => {
+      if (conceptId) {
+        onNodeClick(conceptId);
+      } else if (categoryKey && onCategoryClick) {
+        onCategoryClick(categoryKey);
+      }
+    };
 
     return (
       <g>
@@ -41,8 +51,8 @@ export default function TreemapPanel({ nodes, onNodeClick }: TreemapPanelProps) 
           stroke="#0a0a14"
           strokeWidth={2}
           rx={4}
-          style={{ cursor: conceptId ? 'pointer' : 'default' }}
-          onClick={() => conceptId && onNodeClick(conceptId)}
+          style={{ cursor: 'pointer' }}
+          onClick={handleClick}
         />
         {width > 40 && height > 24 && (
           <text

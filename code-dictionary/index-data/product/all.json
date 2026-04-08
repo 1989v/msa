@@ -1,0 +1,461 @@
+[
+  {
+    "conceptId": "factory-pattern",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt",
+    "lineStart": 13,
+    "lineEnd": 18,
+    "codeSnippet": "companion object {\n    fun create(name: String, price: Money, stock: Int): Product {\n        require(name.isNotBlank()) { \"상품명은 비어있을 수 없습니다\" }\n        require(stock >= 0) { \"재고는 0 이상이어야 합니다\" }\n        return Product(name = name, price = price, stock = stock, status = ProductStatus.ACTIVE)\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt#L13-L18",
+    "description": "private constructor와 companion object의 create() 팩토리 메서드로 유효성 검증 후 도메인 객체를 생성하는 팩토리 패턴"
+  },
+  {
+    "conceptId": "ddd",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt",
+    "lineStart": 5,
+    "lineEnd": 48,
+    "codeSnippet": "class Product private constructor(\n    val id: Long? = null,\n    var name: String,\n    var price: Money,\n    var stock: Int,\n    var status: ProductStatus,\n    val createdAt: LocalDateTime = LocalDateTime.now()\n) {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt#L5-L48",
+    "description": "Product는 DDD 애그리게잇 루트로 private constructor, 팩토리 메서드, 내부 비즈니스 규칙(deactivate, syncStock, update)을 포함하는 완전한 도메인 객체"
+  },
+  {
+    "conceptId": "aggregate",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt",
+    "lineStart": 5,
+    "lineEnd": 48,
+    "codeSnippet": "class Product private constructor(\n    val id: Long? = null,\n    var name: String,\n    var price: Money,\n    var stock: Int,\n    var status: ProductStatus,\n    val createdAt: LocalDateTime = LocalDateTime.now()\n) {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt#L5-L48",
+    "description": "Product가 Money, ProductStatus를 포함하는 애그리게잇 루트로, 모든 상태 변경이 Product 메서드를 통해서만 이루어짐"
+  },
+  {
+    "conceptId": "value-object",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Money.kt",
+    "lineStart": 5,
+    "lineEnd": 9,
+    "codeSnippet": "@JvmInline\nvalue class Money(val amount: BigDecimal) {\n    init { require(amount > BigDecimal.ZERO) { \"금액은 0보다 커야 합니다\" } }\n    operator fun plus(other: Money) = Money(amount + other.amount)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/model/Money.kt#L5-L9",
+    "description": "Kotlin inline value class로 구현한 Money 값 객체 - 불변성, 자체 유효성 검증, 연산자 오버로딩을 갖추며 JVM 수준에서 박싱 없이 동작"
+  },
+  {
+    "conceptId": "immutability",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Money.kt",
+    "lineStart": 5,
+    "lineEnd": 9,
+    "codeSnippet": "@JvmInline\nvalue class Money(val amount: BigDecimal) {\n    init { require(amount > BigDecimal.ZERO) { \"금액은 0보다 커야 합니다\" } }\n    operator fun plus(other: Money) = Money(amount + other.amount)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/model/Money.kt#L5-L9",
+    "description": "Money value class는 amount가 val로 선언된 불변 객체이며, plus 연산도 새 Money 인스턴스를 반환하여 불변성을 유지"
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/ProductStatus.kt",
+    "lineStart": 3,
+    "lineEnd": 3,
+    "codeSnippet": "enum class ProductStatus { ACTIVE, INACTIVE }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/model/ProductStatus.kt#L3-L3",
+    "description": "상품의 생명주기 상태(ACTIVE/INACTIVE)를 enum으로 표현하여 타입 안전성 보장"
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/exception/ProductException.kt",
+    "lineStart": 6,
+    "lineEnd": 8,
+    "codeSnippet": "class ProductNotFoundException(id: Long) : BusinessException(ErrorCode.NOT_FOUND, \"상품(id=$id)을 찾을 수 없습니다\")\nclass InsufficientStockException : BusinessException(ErrorCode.INSUFFICIENT_STOCK)\nclass InvalidProductStatusException : BusinessException(ErrorCode.INVALID_PRODUCT_STATUS)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/exception/ProductException.kt#L6-L8",
+    "description": "도메인별 예외 클래스를 BusinessException으로 계층화하고 ErrorCode enum과 연결하여 일관된 오류 응답을 생성"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/port/ProductRepositoryPort.kt",
+    "lineStart": 7,
+    "lineEnd": 11,
+    "codeSnippet": "interface ProductRepositoryPort {\n    fun save(product: Product): Product\n    fun findById(id: Long): Product?\n    fun findAll(pageable: Pageable): Page<Product>\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/port/ProductRepositoryPort.kt#L7-L11",
+    "description": "헥사고날 아키텍처의 아웃바운드 포트 인터페이스로, 도메인은 이 인터페이스에만 의존하고 구체적인 JPA 구현체는 인프라 레이어에 위치"
+  },
+  {
+    "conceptId": "hexagonal-architecture",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/port/ProductRepositoryPort.kt",
+    "lineStart": 7,
+    "lineEnd": 11,
+    "codeSnippet": "interface ProductRepositoryPort {\n    fun save(product: Product): Product\n    fun findById(id: Long): Product?\n    fun findAll(pageable: Pageable): Page<Product>\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/port/ProductRepositoryPort.kt#L7-L11",
+    "description": "ProductRepositoryPort와 ProductEventPort를 통해 애플리케이션 코어가 외부 인프라(JPA, Kafka)에 직접 의존하지 않는 헥사고날 아키텍처 포트 구현"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/port/ProductEventPort.kt",
+    "lineStart": 5,
+    "lineEnd": 8,
+    "codeSnippet": "interface ProductEventPort {\n    fun publishProductCreated(product: Product)\n    fun publishProductUpdated(product: Product)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/port/ProductEventPort.kt#L5-L8",
+    "description": "Kafka 이벤트 발행을 위한 아웃바운드 포트 인터페이스로, 애플리케이션 서비스는 메시징 구현에 무관하게 이 포트만 사용"
+  },
+  {
+    "conceptId": "clean-architecture",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/usecase/CreateProductUseCase.kt",
+    "lineStart": 1,
+    "lineEnd": 10,
+    "codeSnippet": "interface CreateProductUseCase {\n    fun execute(command: Command): Result\n\n    data class Command(val name: String, val price: BigDecimal, val stock: Int)\n    data class Result(val id: Long, val name: String, val price: BigDecimal, val stock: Int, val status: String)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/usecase/CreateProductUseCase.kt#L1-L10",
+    "description": "UseCase 인터페이스에 Command/Result를 중첩 data class로 정의하여 프레젠테이션 레이어와 애플리케이션 레이어 간 명확한 경계를 구성하는 클린 아키텍처 패턴"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/usecase/CreateProductUseCase.kt",
+    "lineStart": 8,
+    "lineEnd": 9,
+    "codeSnippet": "data class Command(val name: String, val price: BigDecimal, val stock: Int)\ndata class Result(val id: Long, val name: String, val price: BigDecimal, val stock: Int, val status: String)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/usecase/CreateProductUseCase.kt#L8-L9",
+    "description": "UseCase의 입출력을 data class로 선언하여 자동 생성되는 equals/hashCode/copy/toString을 활용하고 불변 DTO로 사용"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/usecase/GetAllProductsUseCase.kt",
+    "lineStart": 8,
+    "lineEnd": 24,
+    "codeSnippet": "data class Query(val page: Int, val size: Int)\n\ndata class Result(\n    val products: List<ProductResult>,\n    val totalElements: Long,\n    val totalPages: Int\n) {\n    data class ProductResult(\n        val id: Long,\n        val name: String,\n        val price: BigDecimal,\n        val status: String,\n        val stock: Int,\n        val createdAt: LocalDateTime\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/usecase/GetAllProductsUseCase.kt#L8-L24",
+    "description": "중첩 data class로 페이지네이션 결과와 개별 상품 결과를 계층적으로 표현하는 UseCase 응답 구조"
+  },
+  {
+    "conceptId": "layered-architecture",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt",
+    "lineStart": 15,
+    "lineEnd": 18,
+    "codeSnippet": "@Service\nclass ProductService(\n    private val transactionalService: ProductTransactionalService,\n    private val eventPort: ProductEventPort\n) : CreateProductUseCase, GetProductUseCase, UpdateProductUseCase, GetAllProductsUseCase {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt#L15-L18",
+    "description": "단일 서비스 클래스가 여러 UseCase 인터페이스를 구현하여 프레젠테이션 레이어가 UseCase 인터페이스를 통해서만 접근하는 레이어드 아키텍처"
+  },
+  {
+    "conceptId": "event-driven-architecture",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt",
+    "lineStart": 27,
+    "lineEnd": 29,
+    "codeSnippet": "// Transaction commits when save() returns\nval saved = transactionalService.save(product)\n// Publish event AFTER transaction committed\neventPort.publishProductCreated(saved)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt#L27-L29",
+    "description": "트랜잭션 커밋 이후에 이벤트를 발행하도록 의도적으로 순서를 분리하여 유령 이벤트 발생을 방지하는 이벤트 드리븐 패턴"
+  },
+  {
+    "conceptId": "null-safety",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt",
+    "lineStart": 31,
+    "lineEnd": 31,
+    "codeSnippet": "id = requireNotNull(saved.id) { \"저장된 상품에 ID가 없습니다\" },",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt#L31-L31",
+    "description": "requireNotNull로 nullable Long? 타입의 id를 안전하게 non-null로 변환하며 오류 메시지를 제공하는 Kotlin null 안전성 활용"
+  },
+  {
+    "conceptId": "scope-function",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt",
+    "lineStart": 53,
+    "lineEnd": 55,
+    "codeSnippet": "product.update(\n    name = command.name,\n    price = command.price?.let { Money(it) }\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt#L53-L55",
+    "description": "let 스코프 함수를 nullable BigDecimal에 적용하여 null이 아닐 때만 Money 변환을 수행하는 간결한 null 처리"
+  },
+  {
+    "conceptId": "acid",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductTransactionalService.kt",
+    "lineStart": 17,
+    "lineEnd": 29,
+    "codeSnippet": "@Service\n@Transactional\nclass ProductTransactionalService(\n    private val productRepository: ProductRepositoryPort\n) {\n    fun save(product: Product): Product = productRepository.save(product)\n\n    @Transactional(readOnly = true)\n    fun findById(id: Long): Product = productRepository.findById(id)\n        ?: throw ProductNotFoundException(id)\n\n    @Transactional(readOnly = true)\n    fun findAll(pageable: Pageable): Page<Product> = productRepository.findAll(pageable)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/service/ProductTransactionalService.kt#L17-L29",
+    "description": "클래스 레벨 @Transactional과 readOnly 분리를 통해 DB 트랜잭션 ACID 보장 및 읽기 전용 최적화 적용"
+  },
+  {
+    "conceptId": "replication",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt",
+    "lineStart": 17,
+    "lineEnd": 21,
+    "codeSnippet": "class RoutingDataSource : org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource() {\n    override fun determineCurrentLookupKey(): DataSourceType =\n        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly())\n            DataSourceType.REPLICA else DataSourceType.MASTER\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt#L17-L21",
+    "description": "읽기 전용 트랜잭션은 REPLICA, 쓰기 트랜잭션은 MASTER로 라우팅하는 Master-Replica 데이터 복제 전략"
+  },
+  {
+    "conceptId": "enum",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt",
+    "lineStart": 15,
+    "lineEnd": 15,
+    "codeSnippet": "enum class DataSourceType { MASTER, REPLICA }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt#L15-L15",
+    "description": "마스터-레플리카 데이터소스 타입을 enum으로 표현하여 라우팅 키로 사용"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt",
+    "lineStart": 17,
+    "lineEnd": 21,
+    "codeSnippet": "class RoutingDataSource : org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource() {\n    override fun determineCurrentLookupKey(): DataSourceType =\n        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly())\n            DataSourceType.REPLICA else DataSourceType.MASTER\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt#L17-L21",
+    "description": "AbstractRoutingDataSource를 상속하여 트랜잭션 속성에 따라 동적으로 데이터소스를 선택하는 어댑터 패턴"
+  },
+  {
+    "conceptId": "idempotency",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/config/KafkaConfig.kt",
+    "lineStart": 33,
+    "lineEnd": 35,
+    "codeSnippet": "ProducerConfig.ACKS_CONFIG to \"all\",\nProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true,\nProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION to 5,",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/config/KafkaConfig.kt#L33-L35",
+    "description": "Kafka 프로듀서에 ENABLE_IDEMPOTENCE=true와 ACKS=all을 설정하여 네트워크 재시도 시 중복 메시지 발행을 방지하는 멱등성 보장"
+  },
+  {
+    "conceptId": "retry-pattern",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/config/KafkaConfig.kt",
+    "lineStart": 64,
+    "lineEnd": 70,
+    "codeSnippet": "setCommonErrorHandler(\n    DefaultErrorHandler(\n        DeadLetterPublishingRecoverer(kafkaTemplate),\n        FixedBackOff(1000L, 3L),\n    )\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/config/KafkaConfig.kt#L64-L70",
+    "description": "Kafka 컨슈머 오류 처리에 FixedBackOff(1초, 3회)로 재시도하고 최종 실패 시 DLQ로 전송하는 재시도 패턴"
+  },
+  {
+    "conceptId": "generic",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/config/KafkaConfig.kt",
+    "lineStart": 29,
+    "lineEnd": 29,
+    "codeSnippet": "fun producerFactory(): ProducerFactory<String, Any> {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/config/KafkaConfig.kt#L29-L29",
+    "description": "ProducerFactory와 KafkaTemplate에 제네릭 타입 파라미터를 적용하여 타입 안전한 Kafka 메시지 직렬화 구성"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/adapter/ProductRepositoryAdapter.kt",
+    "lineStart": 13,
+    "lineEnd": 17,
+    "codeSnippet": "@Component\nclass ProductRepositoryAdapter(\n    private val jpaRepository: ProductJpaRepository,\n    private val queryRepository: ProductQueryRepository\n) : ProductRepositoryPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/adapter/ProductRepositoryAdapter.kt#L13-L17",
+    "description": "JPA 레포지토리를 ProductRepositoryPort 인터페이스로 적응시키는 어댑터 패턴 - 도메인 모델과 JPA 엔티티 간 변환을 담당"
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/entity/ProductJpaEntity.kt",
+    "lineStart": 11,
+    "lineEnd": 28,
+    "codeSnippet": "@Entity\n@Table(name = \"products\")\nclass ProductJpaEntity(\n    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)\n    val id: Long? = null,\n    @Column(nullable = false, length = 200)\n    var name: String,\n    @Column(nullable = false, precision = 19, scale = 2)\n    var price: BigDecimal,\n    @Column(nullable = false)\n    var stock: Int,\n    @Enumerated(EnumType.STRING)\n    @Column(nullable = false, length = 20)\n    var status: ProductStatus,",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/entity/ProductJpaEntity.kt#L11-L28",
+    "description": "JPA 어노테이션(@Entity, @Table, @Column, @Enumerated)으로 도메인 모델과 독립된 별도의 JPA 엔티티를 정의하는 ORM 매핑"
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/entity/ProductJpaEntity.kt",
+    "lineStart": 31,
+    "lineEnd": 40,
+    "codeSnippet": "companion object {\n    fun fromDomain(product: Product) = ProductJpaEntity(\n        id = product.id,\n        name = product.name,\n        price = product.price.amount,\n        stock = product.stock,\n        status = product.status,\n        createdAt = product.createdAt\n    )\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/entity/ProductJpaEntity.kt#L31-L40",
+    "description": "companion object에 fromDomain 정적 팩토리 메서드를 정의하여 도메인 모델 → JPA 엔티티 변환 로직을 캡슐화"
+  },
+  {
+    "conceptId": "port-adapter",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/adapter/ProductRepositoryAdapter.kt",
+    "lineStart": 13,
+    "lineEnd": 41,
+    "codeSnippet": "@Component\nclass ProductRepositoryAdapter(\n    private val jpaRepository: ProductJpaRepository,\n    private val queryRepository: ProductQueryRepository\n) : ProductRepositoryPort {\n\n    override fun save(product: Product): Product {\n        ...\n        return jpaRepository.save(entity).toDomain()\n    }",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/adapter/ProductRepositoryAdapter.kt#L13-L41",
+    "description": "ProductRepositoryPort 아웃바운드 포트의 구체 구현으로, JPA 엔티티와 도메인 모델 간 변환을 수행하는 인프라 어댑터"
+  },
+  {
+    "conceptId": "orm",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/repository/ProductJpaRepository.kt",
+    "lineStart": 4,
+    "lineEnd": 6,
+    "codeSnippet": "interface ProductJpaRepository : JpaRepository<ProductJpaEntity, Long>",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/repository/ProductJpaRepository.kt#L4-L6",
+    "description": "Spring Data JPA의 JpaRepository를 상속하여 기본 CRUD 메서드를 자동 제공받는 ORM 레포지토리 패턴"
+  },
+  {
+    "conceptId": "n-plus-one",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/repository/ProductQueryRepository.kt",
+    "lineStart": 17,
+    "lineEnd": 31,
+    "codeSnippet": "fun findAllByStatus(status: ProductStatus, pageable: Pageable): Page<ProductJpaEntity> {\n    val content = queryFactory\n        .selectFrom(product)\n        .where(product.status.eq(status))\n        .offset(pageable.offset)\n        .limit(pageable.pageSize.toLong())\n        .fetch()\n\n    val total = queryFactory\n        .select(product.count())\n        .from(product)\n        .where(product.status.eq(status))\n        .fetchOne() ?: 0L",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/repository/ProductQueryRepository.kt#L17-L31",
+    "description": "QueryDSL로 컨텐츠 조회와 카운트를 별도 쿼리로 분리하여 페이지네이션 시 N+1 및 불필요한 count 쿼리 최적화"
+  },
+  {
+    "conceptId": "adapter-pattern",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/ProductEventAdapter.kt",
+    "lineStart": 13,
+    "lineEnd": 17,
+    "codeSnippet": "@Component\nclass ProductEventAdapter(\n    private val kafkaTemplate: KafkaTemplate<String, Any>,\n    @Value(\"${kafka.topics.product-created}\") private val createdTopic: String,\n    @Value(\"${kafka.topics.product-updated}\") private val updatedTopic: String\n) : ProductEventPort {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/messaging/ProductEventAdapter.kt#L13-L17",
+    "description": "ProductEventPort 인터페이스를 Kafka KafkaTemplate으로 구현하는 메시징 어댑터 - 도메인은 Kafka에 직접 의존하지 않음"
+  },
+  {
+    "conceptId": "event-driven-architecture",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/ProductEventAdapter.kt",
+    "lineStart": 21,
+    "lineEnd": 33,
+    "codeSnippet": "override fun publishProductCreated(product: Product) {\n    val event = ProductCreatedEvent(\n        productId = product.id!!,\n        name = product.name,\n        price = product.price.amount,\n        status = product.status.name\n    )\n    kafkaTemplate.send(createdTopic, product.id.toString(), event)\n        .whenComplete { _, ex ->\n            if (ex != null) log.error(\"Failed to publish ProductCreatedEvent: productId={}\", product.id, ex)\n            else log.info(\"Published ProductCreatedEvent: productId={}\", product.id)\n        }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/messaging/ProductEventAdapter.kt#L21-L33",
+    "description": "상품 생성/수정 이벤트를 Kafka에 비동기 발행하고 whenComplete 콜백으로 성공/실패를 로깅하는 이벤트 드리븐 아키텍처"
+  },
+  {
+    "conceptId": "msa",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt",
+    "lineStart": 17,
+    "lineEnd": 25,
+    "codeSnippet": "@KafkaListener(\n    topics = [\n        \"inventory.stock.reserved\",\n        \"inventory.stock.released\",\n        \"inventory.stock.received\",\n    ],\n    groupId = \"product-stock-sync\",\n    containerFactory = \"kafkaListenerContainerFactory\",\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt#L17-L25",
+    "description": "Inventory 서비스가 발행한 재고 변경 이벤트를 Product 서비스가 Kafka로 구독하는 MSA 서비스 간 비동기 통신"
+  },
+  {
+    "conceptId": "serialization",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt",
+    "lineStart": 29,
+    "lineEnd": 32,
+    "codeSnippet": "val node = objectMapper.readTree(record.value())\nval productId = node.get(\"productId\").asLong()\nval availableQty = node.get(\"availableQty\")?.asInt()",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt#L29-L32",
+    "description": "Jackson ObjectMapper로 Kafka 메시지 JSON 문자열을 역직렬화하여 필드를 추출하는 수동 역직렬화 처리"
+  },
+  {
+    "conceptId": "null-safety",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt",
+    "lineStart": 31,
+    "lineEnd": 39,
+    "codeSnippet": "val availableQty = node.get(\"availableQty\")?.asInt()\n\nif (availableQty != null) {\n    syncProductStockUseCase.execute(\n        SyncProductStockUseCase.Command(\n            productId = productId,\n            availableQty = availableQty,\n        )\n    )\n} else {\n    log.warn(\"availableQty not found in event payload, skipping stock sync: productId={}\", productId)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt#L31-L39",
+    "description": "nullable Int? 타입으로 선언 후 null 체크를 통해 필수 필드 누락 이벤트 페이로드를 안전하게 처리하는 Kotlin null 안전성"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/event/ProductEvents.kt",
+    "lineStart": 7,
+    "lineEnd": 23,
+    "codeSnippet": "data class ProductCreatedEvent(\n    val eventId: String = UUID.randomUUID().toString(),\n    val productId: Long,\n    val name: String,\n    val price: BigDecimal,\n    val status: String,\n    val eventTime: LocalDateTime = LocalDateTime.now()\n)\n\ndata class ProductUpdatedEvent(\n    val eventId: String = UUID.randomUUID().toString(),\n    ...\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/messaging/event/ProductEvents.kt#L7-L23",
+    "description": "Kafka 이벤트 페이로드를 data class로 정의하여 JSON 직렬화에 활용하고, UUID 기반 eventId로 이벤트를 식별"
+  },
+  {
+    "conceptId": "rest",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/controller/ProductController.kt",
+    "lineStart": 19,
+    "lineEnd": 56,
+    "codeSnippet": "@RestController\n@RequestMapping(\"/api/products\")\nclass ProductController(\n    private val createProductUseCase: CreateProductUseCase,\n    ...\n) {\n    @PostMapping\n    fun createProduct(@Valid @RequestBody request: CreateProductRequest): ResponseEntity<ApiResponse<ProductResponse>>\n    @GetMapping\n    fun getProducts(...): ResponseEntity<ApiResponse<ProductListResponse>>\n    @GetMapping(\"/{id}\")\n    fun getProduct(@PathVariable id: Long): ResponseEntity<ApiResponse<ProductResponse>>\n    @PutMapping(\"/{id}\")\n    fun updateProduct(...): ResponseEntity<ApiResponse<ProductResponse>>",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/controller/ProductController.kt#L19-L56",
+    "description": "HTTP 메서드(POST/GET/PUT)와 리소스 URI(/api/products/{id})를 명확히 분리한 RESTful API 컨트롤러"
+  },
+  {
+    "conceptId": "exception-handling",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/controller/ProductExceptionHandler.kt",
+    "lineStart": 13,
+    "lineEnd": 27,
+    "codeSnippet": "@RestControllerAdvice\n@Order(Ordered.HIGHEST_PRECEDENCE)\nclass ProductExceptionHandler {\n\n    @ExceptionHandler(BusinessException::class)\n    fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {\n        val status = when (e.errorCode) {\n            ErrorCode.NOT_FOUND -> HttpStatus.NOT_FOUND\n            ErrorCode.INSUFFICIENT_STOCK -> HttpStatus.CONFLICT\n            ErrorCode.INVALID_PRODUCT_STATUS -> HttpStatus.BAD_REQUEST\n            else -> HttpStatus.INTERNAL_SERVER_ERROR\n        }\n        return ResponseEntity.status(status).body(ApiResponse.error(e.errorCode))\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/controller/ProductExceptionHandler.kt#L13-L27",
+    "description": "@RestControllerAdvice와 when 표현식을 활용하여 도메인 예외를 HTTP 상태 코드로 변환하는 글로벌 예외 핸들러"
+  },
+  {
+    "conceptId": "annotation",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/controller/ProductController.kt",
+    "lineStart": 19,
+    "lineEnd": 28,
+    "codeSnippet": "@RestController\n@RequestMapping(\"/api/products\")\nclass ProductController(...) {\n    @PostMapping\n    fun createProduct(@Valid @RequestBody request: CreateProductRequest): ResponseEntity<ApiResponse<ProductResponse>> {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/controller/ProductController.kt#L19-L28",
+    "description": "@RestController, @RequestMapping, @Valid, @RequestBody 등 Spring MVC 어노테이션으로 HTTP 요청 매핑과 유효성 검사를 선언적으로 구성"
+  },
+  {
+    "conceptId": "data-class",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/dto/CreateProductRequest.kt",
+    "lineStart": 9,
+    "lineEnd": 18,
+    "codeSnippet": "data class CreateProductRequest(\n    @field:NotBlank(message = \"상품명은 필수입니다\")\n    val name: String,\n    @field:Positive(message = \"가격은 0보다 커야 합니다\")\n    val price: BigDecimal,\n    @field:Min(value = 0, message = \"재고는 0 이상이어야 합니다\")\n    val stock: Int\n) {\n    fun toCommand() = CreateProductUseCase.Command(name = name, price = price, stock = stock)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/dto/CreateProductRequest.kt#L9-L18",
+    "description": "Bean Validation 어노테이션을 포함한 data class DTO로 HTTP 요청을 수신하고 UseCase Command로 변환하는 패턴"
+  },
+  {
+    "conceptId": "companion-object",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/dto/ProductResponse.kt",
+    "lineStart": 15,
+    "lineEnd": 24,
+    "codeSnippet": "companion object {\n    fun from(result: CreateProductUseCase.Result) =\n        ProductResponse(result.id, result.name, result.price, result.stock, result.status)\n\n    fun from(result: GetProductUseCase.Result) =\n        ProductResponse(result.id, result.name, result.price, result.stock, result.status)\n\n    fun from(result: UpdateProductUseCase.Result) =\n        ProductResponse(result.id, result.name, result.price, result.stock, result.status)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/dto/ProductResponse.kt#L15-L24",
+    "description": "companion object에 오버로딩된 from() 팩토리 메서드를 정의하여 다양한 UseCase Result를 단일 응답 DTO로 변환"
+  },
+  {
+    "conceptId": "polymorphism",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/dto/ProductResponse.kt",
+    "lineStart": 15,
+    "lineEnd": 24,
+    "codeSnippet": "companion object {\n    fun from(result: CreateProductUseCase.Result) = ...\n    fun from(result: GetProductUseCase.Result) = ...\n    fun from(result: UpdateProductUseCase.Result) = ...\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/dto/ProductResponse.kt#L15-L24",
+    "description": "동일한 from 메서드 이름으로 서로 다른 Result 타입을 받는 메서드 오버로딩(ad-hoc 다형성)으로 일관된 변환 인터페이스 제공"
+  },
+  {
+    "conceptId": "lambda",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt",
+    "lineStart": 73,
+    "lineEnd": 83,
+    "codeSnippet": "products = page.content.map { product ->\n    GetAllProductsUseCase.Result.ProductResult(\n        id = requireNotNull(product.id) { \"저장된 상품에 ID가 없습니다\" },\n        name = product.name,\n        price = product.price.amount,\n        status = product.status.name,\n        stock = product.stock,\n        createdAt = product.createdAt\n    )\n},",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt#L73-L83",
+    "description": "map 고차 함수에 람다를 전달하여 도메인 객체 리스트를 DTO 리스트로 변환하는 함수형 스타일 처리"
+  },
+  {
+    "conceptId": "scope-function",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/adapter/ProductRepositoryAdapter.kt",
+    "lineStart": 21,
+    "lineEnd": 30,
+    "codeSnippet": "val entity = if (id != null) {\n    jpaRepository.findById(id).orElseThrow {\n        com.kgd.product.domain.product.exception.ProductNotFoundException(id)\n    }.also { e ->\n        e.name = product.name\n        e.price = product.price.amount\n        e.stock = product.stock\n        e.status = product.status\n    }\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/adapter/ProductRepositoryAdapter.kt#L21-L30",
+    "description": "also 스코프 함수로 기존 엔티티를 찾은 후 체이닝으로 필드를 업데이트하는 Kotlin 관용적 코드 스타일"
+  },
+  {
+    "conceptId": "bounded-context",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt",
+    "lineStart": 17,
+    "lineEnd": 25,
+    "codeSnippet": "@KafkaListener(\n    topics = [\n        \"inventory.stock.reserved\",\n        \"inventory.stock.released\",\n        \"inventory.stock.received\",\n    ],\n    groupId = \"product-stock-sync\",\n)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt#L17-L25",
+    "description": "Product 바운디드 컨텍스트가 Inventory 바운디드 컨텍스트의 이벤트를 소비하여 자체 재고 상태를 동기화하는 컨텍스트 간 통합"
+  },
+  {
+    "conceptId": "extension-function",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/entity/ProductJpaEntity.kt",
+    "lineStart": 29,
+    "lineEnd": 29,
+    "codeSnippet": "fun toDomain(): Product = Product.restore(id, name, Money(price), stock, status, createdAt)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/entity/ProductJpaEntity.kt#L29-L29",
+    "description": "ProductJpaEntity의 멤버 함수로 정의된 toDomain()은 JPA 엔티티를 도메인 모델로 변환하는 변환 메서드 패턴 (Kotlin 확장 함수 스타일)"
+  },
+  {
+    "conceptId": "abstraction",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/usecase/CreateProductUseCase.kt",
+    "lineStart": 5,
+    "lineEnd": 10,
+    "codeSnippet": "interface CreateProductUseCase {\n    fun execute(command: Command): Result\n\n    data class Command(val name: String, val price: BigDecimal, val stock: Int)\n    data class Result(val id: Long, val name: String, val price: BigDecimal, val stock: Int, val status: String)\n}",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/usecase/CreateProductUseCase.kt#L5-L10",
+    "description": "UseCase 인터페이스가 execute 단일 메서드와 Command/Result 내부 타입만 노출하여 구현 상세를 숨기는 추상화"
+  },
+  {
+    "conceptId": "encapsulation",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt",
+    "lineStart": 5,
+    "lineEnd": 18,
+    "codeSnippet": "class Product private constructor(\n    val id: Long? = null,\n    var name: String,\n    var price: Money,\n    var stock: Int,\n    var status: ProductStatus,\n    val createdAt: LocalDateTime = LocalDateTime.now()\n) {\n    companion object {\n        fun create(name: String, price: Money, stock: Int): Product {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt#L5-L18",
+    "description": "private constructor로 외부에서 직접 Product를 생성하지 못하게 막고, 팩토리 메서드를 통해서만 인스턴스를 생성하도록 강제하는 캡슐화"
+  },
+  {
+    "conceptId": "interface",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt",
+    "lineStart": 15,
+    "lineEnd": 18,
+    "codeSnippet": "class ProductService(\n    private val transactionalService: ProductTransactionalService,\n    private val eventPort: ProductEventPort\n) : CreateProductUseCase, GetProductUseCase, UpdateProductUseCase, GetAllProductsUseCase {",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/product/service/ProductService.kt#L15-L18",
+    "description": "단일 서비스 클래스가 4개 UseCase 인터페이스를 동시에 구현하여 각 UseCase별 의존성 주입이 가능한 인터페이스 다중 구현"
+  },
+  {
+    "conceptId": "inheritance",
+    "filePath": "product/domain/src/main/kotlin/com/kgd/product/product/exception/ProductException.kt",
+    "lineStart": 6,
+    "lineEnd": 8,
+    "codeSnippet": "class ProductNotFoundException(id: Long) : BusinessException(ErrorCode.NOT_FOUND, \"상품(id=$id)을 찾을 수 없습니다\")\nclass InsufficientStockException : BusinessException(ErrorCode.INSUFFICIENT_STOCK)\nclass InvalidProductStatusException : BusinessException(ErrorCode.INVALID_PRODUCT_STATUS)",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/domain/src/main/kotlin/com/kgd/product/product/exception/ProductException.kt#L6-L8",
+    "description": "도메인 예외 클래스들이 공통 BusinessException을 상속하여 계층적 예외 구조를 형성하고 공통 오류 처리 로직을 재사용"
+  },
+  {
+    "conceptId": "type-inference",
+    "filePath": "product/app/src/main/kotlin/com/kgd/product/persistence/product/repository/ProductQueryRepository.kt",
+    "lineStart": 17,
+    "lineEnd": 32,
+    "codeSnippet": "fun findAllByStatus(status: ProductStatus, pageable: Pageable): Page<ProductJpaEntity> {\n    val content = queryFactory\n        .selectFrom(product)\n        .where(product.status.eq(status))\n        .offset(pageable.offset)\n        .limit(pageable.pageSize.toLong())\n        .fetch()\n\n    val total = queryFactory\n        .select(product.count())\n        .from(product)\n        .where(product.status.eq(status))\n        .fetchOne() ?: 0L",
+    "gitUrl": "https://github.com/1989v/msa/blob/main/product/app/src/main/kotlin/com/kgd/product/persistence/product/repository/ProductQueryRepository.kt#L17-L32",
+    "description": "val content와 val total 변수에 명시적 타입 없이 QueryDSL 결과 타입이 자동 추론되는 Kotlin 타입 추론"
+  }
+]
