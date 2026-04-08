@@ -76,10 +76,27 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 | 영역 | 경로 |
 |------|------|
 | Architecture docs | `docs/architecture/` |
-| ADRs | `docs/adr/` |
+| ADRs (플랫폼) | `docs/adr/` |
 | Feature specs | `docs/specs/` |
+| Conventions | `docs/conventions/` |
 | Standards | `agent-os/standards/` |
 | Product context | `agent-os/product/` |
+
+### 서비스별 문서
+
+각 서비스 디렉토리에 `CLAUDE.md` + `docs/`가 있다. 서비스 작업 시 자동 로드됨.
+
+| 서비스 | CLAUDE.md | 비고 |
+|--------|-----------|------|
+| product | `product/CLAUDE.md` | SSOT, Kafka 발행 |
+| order | `order/CLAUDE.md` | 결제 연동, 상태 전이 |
+| search | `search/CLAUDE.md` | ES 인덱싱, 4개 모듈 |
+| gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting |
+| discovery | `discovery/CLAUDE.md` | Eureka Server |
+| common | `common/CLAUDE.md` | 공유 라이브러리 |
+| charting | `charting/CLAUDE.md` | Python/FastAPI, 독립 도메인 |
+
+> 서비스 특화 ADR은 해당 서비스의 `docs/adr/`에 위치 (예: `charting/docs/adr/`)
 
 ---
 

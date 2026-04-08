@@ -197,7 +197,7 @@ kgd:
 이 문서의 다음 항목을 갱신한다:
 - **각 Feature 상세** 섹션에 빈/조건/설정 테이블 추가
 - **현재 서비스별 적용 현황** 테이블에 새 열 추가
-- `docs/services/common.md` Provided Components 테이블에 추가
+- `common/docs/service.md` Provided Components 테이블에 추가
 
 ### 주의 사항
 
