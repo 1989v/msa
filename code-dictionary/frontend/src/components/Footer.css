@@ -1,0 +1,17 @@
+.site-footer {
+  text-align: center;
+  padding: 28px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-built {
+  font-size: 0.8rem;
+  color: #444;
+  margin: 0 0 4px;
+}
+
+.footer-copy {
+  font-size: 0.75rem;
+  color: #333;
+  margin: 0;
+}

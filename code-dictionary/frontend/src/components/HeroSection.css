@@ -1,0 +1,72 @@
+.hero-section {
+  background: linear-gradient(180deg, rgba(108, 99, 255, 0.08) 0%, transparent 100%);
+  padding: 48px 24px 36px;
+  text-align: center;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-inner {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.hero-tagline {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #e0e0e0;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 600px) {
+  .hero-tagline {
+    font-size: 1.6rem;
+  }
+}
+
+.hero-subtitle {
+  font-size: 1rem;
+  color: #888;
+  line-height: 1.6;
+  margin-bottom: 32px;
+}
+
+.hero-counters {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+.hero-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 36px;
+}
+
+.hero-counter-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #6c63ff;
+  line-height: 1;
+  margin-bottom: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-counter-label {
+  font-size: 0.75rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.hero-counter-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(108, 99, 255, 0.25);
+}
