@@ -343,6 +343,12 @@ body {
   overflow: hidden;
 }
 
+.viz-page-scroll {
+  background: #0a0a14;
+  min-height: 100vh;
+  color: #e0e0e0;
+}
+
 .search-bar-overlay {
   position: fixed;
   top: 16px;
@@ -351,6 +357,23 @@ body {
   z-index: 40;
   width: 420px;
   max-width: 90vw;
+}
+
+.search-bar-section {
+  position: sticky;
+  top: 56px;
+  z-index: 30;
+  padding: 12px 0;
+  display: flex;
+  justify-content: center;
+  background: rgba(10, 10, 20, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.carousel-section {
+  height: 80vh;
+  position: relative;
 }
 
 .search-bar-floating {

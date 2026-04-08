@@ -7,18 +7,27 @@ import HeatmapPanel from '../components/panels/HeatmapPanel';
 import StatsDashboard from '../components/panels/StatsDashboard';
 import TreemapPanel from '../components/panels/TreemapPanel';
 import DetailSidePanel from '../components/DetailSidePanel';
+import GNB from '../components/GNB';
+import HeroSection from '../components/HeroSection';
+import CategoryChips from '../components/CategoryChips';
+import PopularConcepts from '../components/PopularConcepts';
+import ServiceCatalog from '../components/ServiceCatalog';
+import AboutSection from '../components/AboutSection';
+import Footer from '../components/Footer';
 import { searchConcepts } from '../api/searchApi';
 import type { GraphRenderer, GraphNode } from '../types/graph';
+import type { Category } from '../types/index';
 
 export default function SearchPage() {
   const { data, loading, error } = useGraphData();
   const graphRef = useRef<GraphRenderer>(null);
+  const searchBarRef = useRef<HTMLDivElement>(null);
 
   const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
   const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set());
   const [dimmed, setDimmed] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const [containerSize, setContainerSize] = useState({ width: window.innerWidth * 0.9, height: window.innerHeight - 80 });
+  const [containerSize, setContainerSize] = useState({ width: window.innerWidth * 0.9, height: window.innerHeight * 0.8 });
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -35,7 +44,6 @@ export default function SearchPage() {
     });
     ro.observe(el);
 
-    // Initial measurement with delay for carousel mount
     const timer = setTimeout(() => {
       if (el.clientWidth > 0 && el.clientHeight > 0) {
         setContainerSize({ width: el.clientWidth, height: el.clientHeight });
@@ -52,13 +60,13 @@ export default function SearchPage() {
     setSelectedConceptId(node.id);
     const related = data?.links
       .filter((l) => {
-        const src = typeof l.source === 'string' ? l.source : (l.source as any).id;
-        const tgt = typeof l.target === 'string' ? l.target : (l.target as any).id;
+        const src = typeof l.source === 'string' ? l.source : (l.source as GraphNode).id;
+        const tgt = typeof l.target === 'string' ? l.target : (l.target as GraphNode).id;
         return src === node.id || tgt === node.id;
       })
       .map((l) => {
-        const src = typeof l.source === 'string' ? l.source : (l.source as any).id;
-        const tgt = typeof l.target === 'string' ? l.target : (l.target as any).id;
+        const src = typeof l.source === 'string' ? l.source : (l.source as GraphNode).id;
+        const tgt = typeof l.target === 'string' ? l.target : (l.target as GraphNode).id;
         return src === node.id ? tgt : src;
       }) ?? [];
 
@@ -107,6 +115,24 @@ export default function SearchPage() {
     graphRef.current?.focusNode(conceptId, true);
   }, []);
 
+  const handleCategoryFilter = useCallback((category: Category | null) => {
+    if (!data) return;
+    if (category === null) {
+      setHighlightedNodes(new Set());
+      setDimmed(false);
+      graphRef.current?.resetView();
+      return;
+    }
+    const matching = data.nodes.filter((n) => n.category === category);
+    const ids = new Set(matching.map((n) => n.id));
+    setHighlightedNodes(ids);
+    setDimmed(true);
+    setCarouselIndex(0);
+    if (matching.length > 0) {
+      graphRef.current?.focusNode(matching[0].id, false);
+    }
+  }, [data]);
+
   const handleHeatmapClick = useCallback((category: string, level: string) => {
     if (!data) return;
     const matching = data.nodes.filter((n) => n.category === category && n.level === level);
@@ -138,9 +164,19 @@ export default function SearchPage() {
     handleSelectConcept(conceptId);
   }, [handleSelectConcept]);
 
+  const handleSearchFocus = useCallback(() => {
+    if (searchBarRef.current) {
+      searchBarRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const input = searchBarRef.current.querySelector('input');
+      if (input) {
+        setTimeout(() => input.focus(), 400);
+      }
+    }
+  }, []);
+
   if (loading) {
     return (
-      <div className="viz-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="viz-page-scroll" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: '#888' }}>Loading concept graph...</p>
       </div>
     );
@@ -148,7 +184,7 @@ export default function SearchPage() {
 
   if (error || !data) {
     return (
-      <div className="viz-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="viz-page-scroll" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <p style={{ color: '#ff6b6b' }}>{error || 'Failed to load data'}</p>
       </div>
     );
@@ -208,12 +244,28 @@ export default function SearchPage() {
   ];
 
   return (
-    <div className="viz-page">
-      <div className="search-bar-overlay">
-        <SearchBar onSearch={handleSearch} onSelectConcept={handleSelectConcept} />
-      </div>
+    <div className="viz-page-scroll">
+      <GNB onSearchFocus={handleSearchFocus} />
 
-      <Carousel3D panels={panels} activeIndex={carouselIndex} onActiveChange={setCarouselIndex} />
+      <section id="tech">
+        <HeroSection stats={data.stats} serviceCount={9} />
+        <CategoryChips onCategoryFilter={handleCategoryFilter} />
+        <div className="search-bar-section" ref={searchBarRef}>
+          <SearchBar onSearch={handleSearch} onSelectConcept={handleSelectConcept} />
+        </div>
+        <div className="carousel-section">
+          <Carousel3D panels={panels} activeIndex={carouselIndex} onActiveChange={setCarouselIndex} />
+        </div>
+        <PopularConcepts nodes={data.nodes} onConceptClick={handleSelectConcept} />
+      </section>
+
+      <ServiceCatalog onConceptClick={handleSelectConcept} />
+
+      <section id="about">
+        <AboutSection stats={data.stats} />
+      </section>
+
+      <Footer />
 
       <DetailSidePanel
         conceptId={selectedConceptId}
