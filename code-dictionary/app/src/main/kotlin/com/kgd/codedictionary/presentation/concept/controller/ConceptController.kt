@@ -1,5 +1,6 @@
 package com.kgd.codedictionary.presentation.concept.controller
 
+import com.kgd.codedictionary.application.concept.dto.ConceptDetailDto
 import com.kgd.codedictionary.application.concept.dto.ConceptResultDto
 import com.kgd.codedictionary.application.concept.service.ConceptService
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
@@ -35,6 +36,12 @@ class ConceptController(
     @GetMapping("/{id}")
     fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<ConceptResultDto>> {
         val result = conceptService.findById(id)
+        return ResponseEntity.ok(ApiResponse.success(result))
+    }
+
+    @GetMapping("/by-concept-id/{conceptId}")
+    fun getByConceptId(@PathVariable conceptId: String): ResponseEntity<ApiResponse<ConceptDetailDto>> {
+        val result = conceptService.findByConceptIdDetail(conceptId)
         return ResponseEntity.ok(ApiResponse.success(result))
     }
 

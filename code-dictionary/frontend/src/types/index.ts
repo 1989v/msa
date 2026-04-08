@@ -41,3 +41,19 @@ export const LEVEL_LABELS: Record<Level, string> = {
   INTERMEDIATE: 'Intermediate',
   ADVANCED: 'Advanced',
 };
+
+export const CATEGORY_COLORS: Record<Category, string> = {
+  BASICS: '#4ecdc4',
+  DATA_STRUCTURE: '#45b7d1',
+  ALGORITHM: '#96ceb4',
+  DESIGN_PATTERN: '#6c63ff',
+  CONCURRENCY: '#ff6b6b',
+  DISTRIBUTED_SYSTEM: '#ffd93d',
+  ARCHITECTURE: '#a29bfe',
+  INFRASTRUCTURE: '#fd79a8',
+  DATA: '#00b894',
+  SECURITY: '#e17055',
+  NETWORK: '#0984e3',
+  TESTING: '#00cec9',
+  LANGUAGE_FEATURE: '#fdcb6e',
+};

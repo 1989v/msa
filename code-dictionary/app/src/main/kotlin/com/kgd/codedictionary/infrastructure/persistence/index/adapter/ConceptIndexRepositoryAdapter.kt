@@ -62,4 +62,10 @@ class ConceptIndexRepositoryAdapter(
     }
 
     override fun count(): Long = jpaRepository.count()
+
+    override fun findByConceptId(conceptId: String): List<ConceptIndex> =
+        jpaRepository.findByConceptConceptId(conceptId).map { it.toDomain() }
+
+    override fun findAll(): List<ConceptIndex> =
+        jpaRepository.findAll().map { it.toDomain() }
 }

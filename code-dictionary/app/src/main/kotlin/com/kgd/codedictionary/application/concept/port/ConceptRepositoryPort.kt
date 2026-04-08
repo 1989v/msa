@@ -16,4 +16,5 @@ interface ConceptRepositoryPort {
     fun findAllWithSynonyms(): List<Concept>
     fun delete(id: Long)
     fun existsByConceptId(conceptId: String): Boolean
+    fun findAllList(): List<Concept>
 }

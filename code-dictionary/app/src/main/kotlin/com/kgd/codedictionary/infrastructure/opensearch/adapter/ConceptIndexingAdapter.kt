@@ -6,10 +6,12 @@ import com.kgd.codedictionary.domain.index.model.ConceptIndex
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.analysis.Analyzer
 import org.opensearch.client.opensearch._types.analysis.CustomAnalyzer
+import org.opensearch.client.opensearch._types.analysis.EdgeNGramTokenizer
 import org.opensearch.client.opensearch._types.analysis.NoriDecompoundMode
 import org.opensearch.client.opensearch._types.analysis.NoriTokenizer
 import org.opensearch.client.opensearch._types.analysis.NoriPartOfSpeechTokenFilter
 import org.opensearch.client.opensearch._types.analysis.SynonymGraphTokenFilter
+import org.opensearch.client.opensearch._types.analysis.TokenChar
 import org.opensearch.client.opensearch._types.analysis.TokenFilter
 import org.opensearch.client.opensearch._types.analysis.TokenFilterDefinition
 import org.opensearch.client.opensearch._types.analysis.Tokenizer
@@ -49,6 +51,23 @@ class ConceptIndexingAdapter(
                                         d.noriTokenizer(
                                             NoriTokenizer.of { n ->
                                                 n.decompoundMode(NoriDecompoundMode.Mixed)
+                                            }
+                                        )
+                                    }
+                                )
+                            }
+                        )
+                        .tokenizer(
+                            "edge_ngram_tokenizer",
+                            Tokenizer.of { t ->
+                                t.definition(
+                                    TokenizerDefinition.of { d ->
+                                        d.edgeNgram(
+                                            EdgeNGramTokenizer.of { e ->
+                                                e.minGram(1).maxGram(20).tokenChars(listOf(
+                                                    TokenChar.Letter,
+                                                    TokenChar.Digit
+                                                ))
                                             }
                                         )
                                     }
@@ -96,11 +115,44 @@ class ConceptIndexingAdapter(
                                 )
                             }
                         )
+                        .analyzer(
+                            "autocomplete_analyzer",
+                            Analyzer.of { an ->
+                                an.custom(
+                                    CustomAnalyzer.of { ca ->
+                                        ca.tokenizer("edge_ngram_tokenizer")
+                                            .filter(listOf("lowercase"))
+                                    }
+                                )
+                            }
+                        )
+                        .analyzer(
+                            "autocomplete_search_analyzer",
+                            Analyzer.of { an ->
+                                an.custom(
+                                    CustomAnalyzer.of { ca ->
+                                        ca.tokenizer("standard")
+                                            .filter(listOf("lowercase"))
+                                    }
+                                )
+                            }
+                        )
                     }
                 }
                 .mappings { m ->
                     m.properties("concept_id", Property.of { p -> p.keyword { k -> k } })
-                        .properties("concept_name", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer").searchAnalyzer("concept_search_analyzer") } })
+                        .properties("concept_name", Property.of { p ->
+                            p.text { t ->
+                                t.analyzer("concept_analyzer")
+                                    .searchAnalyzer("concept_search_analyzer")
+                                    .fields("autocomplete", Property.of { sub ->
+                                        sub.text { st ->
+                                            st.analyzer("autocomplete_analyzer")
+                                                .searchAnalyzer("autocomplete_search_analyzer")
+                                        }
+                                    })
+                            }
+                        })
                         .properties("synonyms", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer").searchAnalyzer("concept_search_analyzer") } })
                         .properties("category", Property.of { p -> p.keyword { k -> k } })
                         .properties("level", Property.of { p -> p.keyword { k -> k } })
@@ -109,7 +161,18 @@ class ConceptIndexingAdapter(
                         .properties("line_end", Property.of { p -> p.integer { i -> i } })
                         .properties("code_snippet", Property.of { p -> p.text { t -> t } })
                         .properties("git_url", Property.of { p -> p.keyword { k -> k } })
-                        .properties("description", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer").searchAnalyzer("concept_search_analyzer") } })
+                        .properties("description", Property.of { p ->
+                            p.text { t ->
+                                t.analyzer("concept_analyzer")
+                                    .searchAnalyzer("concept_search_analyzer")
+                                    .fields("autocomplete", Property.of { sub ->
+                                        sub.text { st ->
+                                            st.analyzer("autocomplete_analyzer")
+                                                .searchAnalyzer("autocomplete_search_analyzer")
+                                        }
+                                    })
+                            }
+                        })
                         .properties("indexed_at", Property.of { p -> p.date { d -> d } })
                 }
         }
