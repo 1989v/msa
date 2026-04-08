@@ -18,3 +18,8 @@ management:
     web:
       exposure:
         include: health,info
+
+search:
+  ranking:
+    popularity-weight: 10.0
+    ctr-weight: 5.0

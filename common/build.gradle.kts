@@ -15,6 +15,7 @@ dependencies {
     runtimeOnly(libs.jjwt.jackson)
     implementation(libs.spring.cloud.circuitbreaker.resilience4j)
     implementation(libs.kotlin.coroutines.core)
+    implementation(libs.spring.kafka)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.spring.boot.starter.test)
 }

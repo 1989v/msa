@@ -15,6 +15,17 @@ spring:
           - localhost:6384
         password: ${REDIS_PASSWORD:}
         max-redirects: 3
+  cloud:
+    gateway:
+      routes:
+        - id: analytics-service
+          uri: lb://analytics-service
+          predicates:
+            - Path=/api/v1/scores/**, /api/v1/analytics/**
+        - id: experiment-service
+          uri: lb://experiment-service
+          predicates:
+            - Path=/api/v1/experiments/**
 
 server:
   port: 8080

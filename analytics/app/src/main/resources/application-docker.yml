@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    clickhouse:
+      url: jdbc:clickhouse://clickhouse:8123/analytics
+      username: ${CLICKHOUSE_USER:analytics}
+      password: ${CLICKHOUSE_PASSWORD:analytics}
+
+  data:
+    redis:
+      cluster:
+        nodes: redis-1:6379,redis-2:6380,redis-3:6381,redis-4:6382,redis-5:6383,redis-6:6384
+      password: ${REDIS_PASSWORD}
+
+  kafka:
+    bootstrap-servers: kafka:29092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka

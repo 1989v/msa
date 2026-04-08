@@ -8,5 +8,9 @@ data class ProductDocument(
     val name: String,
     val price: BigDecimal,
     val status: String,
-    val createdAt: LocalDateTime = LocalDateTime.now()
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+    val popularityScore: Double = 0.0,
+    val ctr: Double = 0.0,
+    val cvr: Double = 0.0,
+    val scoreUpdatedAt: Long = 0
 )

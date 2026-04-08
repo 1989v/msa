@@ -348,7 +348,7 @@ services:
     image: commerce/warehouse:latest
     container_name: warehouse
     ports:
-      - "8090:8090"
+      - "8094:8090"
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
       MYSQL_USER: ${MYSQL_USER}
@@ -363,6 +363,86 @@ services:
         ipv4_address: 172.20.0.82
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health | grep -q 'UP'"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  analytics:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE_GRADLE: analytics:app
+        MODULE_PATH: analytics/app
+    image: commerce/analytics:latest
+    container_name: analytics
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      # ClickHouse
+      SPRING_DATASOURCE_CLICKHOUSE_URL: jdbc:clickhouse://clickhouse:8123/analytics
+      SPRING_DATASOURCE_CLICKHOUSE_USERNAME: ${CLICKHOUSE_USER:-analytics}
+      SPRING_DATASOURCE_CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-analytics}
+      # Redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Kafka
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # Eureka
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery:8761/eureka
+    depends_on:
+      discovery:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.83
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health | grep -q 'UP'"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  experiment:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      args:
+        MODULE_GRADLE: experiment:app
+        MODULE_PATH: experiment/app
+    image: commerce/experiment:latest
+    container_name: experiment
+    ports:
+      - "8091:8091"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      # MySQL
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-experiment-master:3306/experiment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      # Redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      # Eureka
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://discovery:8761/eureka
+      # Analytics API
+      ANALYTICS_SERVICE_URL: http://analytics:8090
+    depends_on:
+      discovery:
+        condition: service_healthy
+      mysql-experiment-master:
+        condition: service_healthy
+    networks:
+      commerce-network:
+        ipv4_address: 172.20.0.84
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8091/actuator/health | grep -q 'UP'"]
       interval: 15s
       timeout: 10s
       retries: 5

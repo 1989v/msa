@@ -1,3 +1,6 @@
+# Superpowers
+.superpowers/
+
 # Python
 __pycache__/
 *.py[cod]
