@@ -82,4 +82,7 @@ class ConceptRepositoryAdapter(
 
     override fun existsByConceptId(conceptId: String): Boolean =
         jpaRepository.existsByConceptId(conceptId)
+
+    override fun findAllList(): List<Concept> =
+        jpaRepository.findAll().map { it.toDomain() }
 }

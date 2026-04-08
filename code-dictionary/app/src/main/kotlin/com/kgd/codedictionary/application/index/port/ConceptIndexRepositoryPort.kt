@@ -13,4 +13,6 @@ interface ConceptIndexRepositoryPort {
     fun deleteByConceptId(conceptId: String)
     fun deleteByFilePath(filePath: String)
     fun count(): Long
+    fun findByConceptId(conceptId: String): List<ConceptIndex>
+    fun findAll(): List<ConceptIndex>
 }
