@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { HealthResponse } from '@/types/system';
+import type { HealthResponse } from '@/types/system';
 
 interface HealthDetailProps {
   health: HealthResponse;

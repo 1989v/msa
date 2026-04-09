@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { DailyOrderStat, CategoryRevenue } from '@/types/dashboard';
+import type { DailyOrderStat, CategoryRevenue } from '@/types/dashboard';
 
 export async function fetchTodayOrders(): Promise<number> {
   try {

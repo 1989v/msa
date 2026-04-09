@@ -1,6 +1,6 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { StatCardData } from '@/types/dashboard';
+import type { StatCardData } from '@/types/dashboard';
 
 interface StatCardProps extends StatCardData {}
 

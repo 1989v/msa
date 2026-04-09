@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { Card } from '@/components/ui/card';
-import { DailyOrderStat } from '@/types/dashboard';
+import type { DailyOrderStat } from '@/types/dashboard';
 
 interface OrderChartProps {
   data: DailyOrderStat[];

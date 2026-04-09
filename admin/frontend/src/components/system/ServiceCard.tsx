@@ -3,7 +3,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { HealthDetail } from './HealthDetail';
-import { ServiceHealth } from '@/types/system';
+import type { ServiceHealth } from '@/types/system';
 import { cn } from '@/lib/utils';
 
 interface ServiceCardProps {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { JwtPayload, AuthState } from '@/types/auth';
+import type { JwtPayload, AuthState } from '@/types/auth';
 import { TOKEN_KEY } from '@/api/client';
 
 function decodeJwt(token: string): JwtPayload | null {

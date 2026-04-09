@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { EurekaApp, ServiceHealth } from '@/types/system';
+import type { EurekaApp, ServiceHealth } from '@/types/system';
 
 const SERVICES = [
   { name: 'product-service', port: 8081 },

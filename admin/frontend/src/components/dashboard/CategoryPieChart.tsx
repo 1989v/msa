@@ -1,6 +1,6 @@
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card } from '@/components/ui/card';
-import { CategoryRevenue } from '@/types/dashboard';
+import type { CategoryRevenue } from '@/types/dashboard';
 
 interface CategoryPieChartProps {
   data: CategoryRevenue[];
@@ -39,7 +39,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
                   borderRadius: '8px',
                   fontSize: '12px',
                 }}
-                formatter={(value: number) => [`₩${value.toLocaleString()}`, '매출']}
+                formatter={(value: any) => [`₩${(value as number).toLocaleString()}`, '매출']}
               />
               <Legend
                 iconSize={8}

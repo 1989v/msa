@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ServiceHealth } from '@/types/system';
+import type { ServiceHealth } from '@/types/system';
 
 interface ServiceSummaryProps {
   services: ServiceHealth[];
