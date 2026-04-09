@@ -99,6 +99,14 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 | experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼 |
 | member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
 | wishlist | `wishlist/CLAUDE.md` | 상품 위시리스트 (회원별) |
+| auth | (미생성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) |
+| gifticon | (미생성) | 기프티콘 관리, 공유 그룹 |
+| code-dictionary | (미생성) | IT 개념 사전, OpenSearch 검색, 시각화 |
+| inventory | (미생성) | 재고 관리, 예약 |
+| fulfillment | (미생성) | 주문 풀필먼트 |
+| warehouse | (미생성) | 창고 관리 |
+| chatbot | (미생성) | 대화형 AI |
+| admin | (미생성) | 백오피스 관리 도구 (FE only) |
 
 > 서비스 특화 ADR은 해당 서비스의 `docs/adr/`에 위치 (예: `charting/docs/adr/`)
 
