@@ -3,6 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ServiceCard } from '@/components/system/ServiceCard';
+import { GrafanaEmbed } from '@/components/system/GrafanaEmbed';
 import { fetchServiceHealthList } from '@/api/system';
 
 export function SystemPage() {
@@ -44,6 +45,8 @@ export function SystemPage() {
           <ServiceCard key={service.name} service={service} />
         ))}
       </div>
+
+      <GrafanaEmbed />
     </div>
   );
 }
