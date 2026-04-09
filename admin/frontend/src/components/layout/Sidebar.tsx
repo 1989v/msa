@@ -19,11 +19,11 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: '대시보드', icon: LayoutDashboard, to: '/admin', enabled: true },
-  { label: '회원 관리', icon: Users, to: '/admin/members', enabled: false },
-  { label: '상품 관리', icon: Package, to: '/admin/products', enabled: false },
-  { label: '주문 관리', icon: ClipboardList, to: '/admin/orders', enabled: false },
-  { label: '코드 사전', icon: BookOpen, to: '/admin/code-dictionary', enabled: false },
-  { label: '프로필', icon: User, to: '/admin/profile', enabled: false },
+  { label: '회원 관리', icon: Users, to: '/admin/members', enabled: true },
+  { label: '상품 관리', icon: Package, to: '/admin/products', enabled: true },
+  { label: '주문 관리', icon: ClipboardList, to: '/admin/orders', enabled: true },
+  { label: '코드 사전', icon: BookOpen, to: '/admin/code-dictionary', enabled: true },
+  { label: '프로필', icon: User, to: '/admin/profile', enabled: true },
   { label: '시스템', icon: Monitor, to: '/admin/system', enabled: true },
 ];
 
