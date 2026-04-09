@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.spring.cloud.eureka.client)
     implementation(libs.spring.kafka)
     implementation(libs.kafka.streams)

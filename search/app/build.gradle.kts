@@ -8,6 +8,7 @@ dependencies {
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.actuator)
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.spring.boot.starter.data.elasticsearch)
     implementation(libs.spring.cloud.eureka.client)
     implementation(libs.spring.cloud.loadbalancer)

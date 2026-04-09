@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.spring.cloud.eureka.client)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     implementation(libs.spring.webflux)

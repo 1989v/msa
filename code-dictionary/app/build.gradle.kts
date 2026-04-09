@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
+    implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.spring.cloud.eureka.client)
     implementation(libs.querydsl.jpa) { artifact { classifier = "jakarta" } }
     kapt(libs.querydsl.apt) { artifact { classifier = "jakarta" } }

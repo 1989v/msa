@@ -14,6 +14,7 @@ dependencies {
     implementation(libs.jjwt.api)
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
+    implementation("io.micrometer:micrometer-registry-prometheus")
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.reactor.test)
