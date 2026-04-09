@@ -7,7 +7,6 @@ import com.kgd.fulfillment.application.fulfillment.usecase.TransitionFulfillment
 import com.kgd.fulfillment.presentation.fulfillment.dto.CreateFulfillmentRequest
 import com.kgd.fulfillment.presentation.fulfillment.dto.TransitionRequest
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -18,58 +17,58 @@ class FulfillmentController(
     private val getFulfillmentUseCase: GetFulfillmentUseCase
 ) {
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    fun create(@RequestBody request: CreateFulfillmentRequest): ResponseEntity<ApiResponse<CreateFulfillmentUseCase.Result>> {
+    fun create(@RequestBody request: CreateFulfillmentRequest): ApiResponse<CreateFulfillmentUseCase.Result> {
         val result = createFulfillmentUseCase.execute(
             CreateFulfillmentUseCase.Command(
                 orderId = request.orderId,
                 warehouseId = request.warehouseId
             )
         )
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     @PatchMapping("/{id}/transition")
     fun transition(
         @PathVariable id: Long,
         @RequestBody request: TransitionRequest
-    ): ResponseEntity<ApiResponse<TransitionFulfillmentUseCase.Result>> {
+    ): ApiResponse<TransitionFulfillmentUseCase.Result> {
         val result = transitionFulfillmentUseCase.execute(
             TransitionFulfillmentUseCase.Command(
                 fulfillmentId = id,
                 targetStatus = request.targetStatus
             )
         )
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     @PatchMapping("/{id}/cancel")
-    fun cancel(@PathVariable id: Long): ResponseEntity<ApiResponse<TransitionFulfillmentUseCase.Result>> {
+    fun cancel(@PathVariable id: Long): ApiResponse<TransitionFulfillmentUseCase.Result> {
         val result = transitionFulfillmentUseCase.execute(
             TransitionFulfillmentUseCase.Command(
                 fulfillmentId = id,
                 targetStatus = "CANCELLED"
             )
         )
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<GetFulfillmentUseCase.Result>> {
+    fun getById(@PathVariable id: Long): ApiResponse<GetFulfillmentUseCase.Result> {
         val result = getFulfillmentUseCase.findById(id)
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     @GetMapping("/orders/{orderId}")
-    fun getByOrderId(@PathVariable orderId: Long): ResponseEntity<ApiResponse<GetFulfillmentUseCase.Result>> {
+    fun getByOrderId(@PathVariable orderId: Long): ApiResponse<GetFulfillmentUseCase.Result> {
         val result = getFulfillmentUseCase.findByOrderId(orderId)
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     @GetMapping("/orders/{orderId}/all")
-    fun getAllByOrderId(@PathVariable orderId: Long): ResponseEntity<ApiResponse<List<GetFulfillmentUseCase.Result>>> {
+    fun getAllByOrderId(@PathVariable orderId: Long): ApiResponse<List<GetFulfillmentUseCase.Result>> {
         val result = getFulfillmentUseCase.findAllByOrderId(orderId)
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 }

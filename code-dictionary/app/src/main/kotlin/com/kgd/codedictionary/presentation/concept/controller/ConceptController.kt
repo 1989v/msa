@@ -11,7 +11,6 @@ import com.kgd.common.response.ApiResponse
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -26,43 +25,44 @@ class ConceptController(
         @RequestParam(required = false) level: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
-    ): ResponseEntity<ApiResponse<Page<ConceptResultDto>>> {
+    ): ApiResponse<Page<ConceptResultDto>> {
         val parsedCategory = category?.let { ConceptCategory.valueOf(it.uppercase()) }
         val parsedLevel = level?.let { ConceptLevel.valueOf(it.uppercase()) }
         val result = conceptService.findAll(parsedCategory, parsedLevel, PageRequest.of(page, size))
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     @GetMapping("/{id}")
-    fun getById(@PathVariable id: Long): ResponseEntity<ApiResponse<ConceptResultDto>> {
+    fun getById(@PathVariable id: Long): ApiResponse<ConceptResultDto> {
         val result = conceptService.findById(id)
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     @GetMapping("/by-concept-id/{conceptId}")
-    fun getByConceptId(@PathVariable conceptId: String): ResponseEntity<ApiResponse<ConceptDetailDto>> {
+    fun getByConceptId(@PathVariable conceptId: String): ApiResponse<ConceptDetailDto> {
         val result = conceptService.findByConceptIdDetail(conceptId)
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    fun create(@RequestBody request: ConceptCreateRequest): ResponseEntity<ApiResponse<ConceptResultDto>> {
+    fun create(@RequestBody request: ConceptCreateRequest): ApiResponse<ConceptResultDto> {
         val result = conceptService.create(request.toCommand())
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
     @PutMapping("/{id}")
     fun update(
         @PathVariable id: Long,
         @RequestBody request: ConceptUpdateRequest
-    ): ResponseEntity<ApiResponse<ConceptResultDto>> {
+    ): ApiResponse<ConceptResultDto> {
         val result = conceptService.update(id, request.toCommand())
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
-    fun delete(@PathVariable id: Long): ResponseEntity<Unit> {
+    fun delete(@PathVariable id: Long) {
         conceptService.delete(id)
-        return ResponseEntity.noContent().build()
     }
 }

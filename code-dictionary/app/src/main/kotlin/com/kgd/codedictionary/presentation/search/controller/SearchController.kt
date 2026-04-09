@@ -4,7 +4,6 @@ import com.kgd.codedictionary.application.search.dto.SearchCommand
 import com.kgd.codedictionary.application.search.dto.SearchResultDto
 import com.kgd.codedictionary.application.search.service.SearchService
 import com.kgd.common.response.ApiResponse
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -23,7 +22,7 @@ class SearchController(
         @RequestParam(required = false) level: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
-    ): ResponseEntity<ApiResponse<SearchResultDto>> {
+    ): ApiResponse<SearchResultDto> {
         val result = searchService.search(
             SearchCommand(
                 query = q,
@@ -33,6 +32,6 @@ class SearchController(
                 size = size
             )
         )
-        return ResponseEntity.ok(ApiResponse.success(result))
+        return ApiResponse.success(result)
     }
 }

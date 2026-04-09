@@ -13,7 +13,6 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.Min
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -24,34 +23,34 @@ class ProductController(
     private val updateProductUseCase: UpdateProductUseCase,
     private val getAllProductsUseCase: GetAllProductsUseCase
 ) {
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
-    fun createProduct(@Valid @RequestBody request: CreateProductRequest): ResponseEntity<ApiResponse<ProductResponse>> {
+    fun createProduct(@Valid @RequestBody request: CreateProductRequest): ApiResponse<ProductResponse> {
         val result = createProductUseCase.execute(request.toCommand())
-        return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(ProductResponse.from(result)))
+        return ApiResponse.success(ProductResponse.from(result))
     }
 
     @GetMapping
     fun getProducts(
         @RequestParam(defaultValue = "0") @Min(0) page: Int,
         @RequestParam(defaultValue = "100") @Min(1) @Max(500) size: Int
-    ): ResponseEntity<ApiResponse<ProductListResponse>> {
+    ): ApiResponse<ProductListResponse> {
         val result = getAllProductsUseCase.execute(GetAllProductsUseCase.Query(page, size))
-        return ResponseEntity.ok(ApiResponse.success(ProductListResponse.from(result)))
+        return ApiResponse.success(ProductListResponse.from(result))
     }
 
     @GetMapping("/{id}")
-    fun getProduct(@PathVariable id: Long): ResponseEntity<ApiResponse<ProductResponse>> {
+    fun getProduct(@PathVariable id: Long): ApiResponse<ProductResponse> {
         val result = getProductUseCase.execute(id)
-        return ResponseEntity.ok(ApiResponse.success(ProductResponse.from(result)))
+        return ApiResponse.success(ProductResponse.from(result))
     }
 
     @PutMapping("/{id}")
     fun updateProduct(
         @PathVariable id: Long,
         @Valid @RequestBody request: UpdateProductRequest
-    ): ResponseEntity<ApiResponse<ProductResponse>> {
+    ): ApiResponse<ProductResponse> {
         val result = updateProductUseCase.execute(request.toCommand(id))
-        return ResponseEntity.ok(ApiResponse.success(ProductResponse.from(result)))
+        return ApiResponse.success(ProductResponse.from(result))
     }
 }
