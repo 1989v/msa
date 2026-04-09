@@ -1,9 +1,19 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { LoginPage } from '@/pages/LoginPage';
+import { UnauthorizedPage } from '@/pages/UnauthorizedPage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { SystemPage } from '@/pages/SystemPage';
 
 export default function App() {
   return (
     <Routes>
-      <Route path="/admin" element={<div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center"><h1 className="text-2xl font-bold">Admin Backoffice</h1></div>} />
+      <Route path="/admin/login" element={<LoginPage />} />
+      <Route path="/admin/unauthorized" element={<UnauthorizedPage />} />
+      <Route path="/admin" element={<AppLayout />}>
+        <Route index element={<DashboardPage />} />
+        <Route path="system" element={<SystemPage />} />
+      </Route>
     </Routes>
-  )
+  );
 }
