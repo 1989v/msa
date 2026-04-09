@@ -117,6 +117,9 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 - 서비스별 독립 실행 (Eureka + 해당 DB만 필요)
 - 환경변수: `docker/.env` (gitignore, `.env.example` 제공)
 - Profile: `SPRING_PROFILES_ACTIVE=docker`
+- 모니터링: `docker compose -f docker/docker-compose.monitoring.yml up -d` (Prometheus:9090 + Grafana:3000)
+  - 설정: `docker/monitoring/prometheus.yml`, `docker/monitoring/grafana/`
+  - ELK/Zipkin은 주석 상태, 필요 시 `--profile logging` / `--profile tracing`으로 활성화
 
 ## Backup & Disaster Recovery
 

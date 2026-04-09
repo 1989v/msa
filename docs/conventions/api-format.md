@@ -57,11 +57,14 @@ fun delete(@PathVariable id: Long) {
 ```
 
 > **금지 패턴**: `ResponseEntity<ApiResponse<T>>` — ResponseEntity는 이미 ApiResponse가 담당하는 응답 구조를 중복 래핑한다. HTTP 상태 코드 제어가 필요하면 `@ResponseStatus`를 사용한다.
+>
+> **예외**: `@ExceptionHandler` 메서드는 예외 종류에 따라 HTTP 상태 코드를 동적으로 결정해야 하므로 `ResponseEntity<ApiResponse<T>>` 사용을 허용한다 (GlobalExceptionHandler 등).
 
 ### Error Handling
 
 - `GlobalExceptionHandler` (common 모듈)가 최종 에러 변환 담당
 - `BusinessException` 기반 에러 코드 매핑
+- ExceptionHandler는 `ResponseEntity<ApiResponse<T>>` 사용 허용 (동적 HTTP 상태 코드 매핑 필요)
 
 ## HTTP Status Codes
 
