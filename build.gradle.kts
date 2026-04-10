@@ -55,4 +55,11 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
     }
+
+    // Apply Jib convention to every Spring Boot app module (ADR-0019).
+    // The convention sets base image, JVM flags, OCI labels, and image naming.
+    // Per-service overrides (e.g. container.ports) belong in the module's own build.gradle.kts.
+    pluginManager.withPlugin("org.springframework.boot") {
+        apply(plugin = "commerce.jib-convention")
+    }
 }
