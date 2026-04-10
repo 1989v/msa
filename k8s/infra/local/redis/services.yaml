@@ -1,0 +1,79 @@
+# Local simplification: the redis-1..6 hostnames from application-kubernetes.yml
+# all point to the same standalone Redis pod. Applications that use
+# spring.data.redis.cluster.nodes will fail on CLUSTER commands; the
+# k3s-lite overlay (Phase 3c) patches affected services to use
+# spring.data.redis.host + port instead. Prod overlay replaces this stack
+# with a real 6-node cluster per the selected Redis Operator (ADR-0019).
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+  namespace: commerce
+spec:
+  clusterIP: None
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6379, targetPort: 6379 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6379, targetPort: 6379 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-1
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6379, targetPort: 6379 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-2
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6380, targetPort: 6379 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-3
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6381, targetPort: 6379 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-4
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6382, targetPort: 6379 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-5
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6383, targetPort: 6379 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-6
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: redis }
+  ports: [{ name: redis, port: 6384, targetPort: 6379 }]

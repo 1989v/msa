@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-headless
+  namespace: commerce
+spec:
+  clusterIP: None
+  selector: { app.kubernetes.io/name: kafka }
+  ports:
+    - name: internal
+      port: 29092
+      targetPort: 29092
+    - name: client
+      port: 9092
+      targetPort: 9092
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: kafka }
+  ports:
+    - name: internal
+      port: 29092
+      targetPort: 29092
+    - name: client
+      port: 9092
+      targetPort: 9092

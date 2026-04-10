@@ -1,0 +1,53 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: mysql
+    app.kubernetes.io/part-of: commerce-platform
+data:
+  # Runs once on first MySQL start (when /var/lib/mysql is empty).
+  # Mirrors the per-service database + user conventions from
+  # docker/mysql/*/init/01-*.sh but consolidates into a single instance.
+  01-init-databases.sql: |
+    CREATE DATABASE IF NOT EXISTS product_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS order_db           CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS auth_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS chatbot_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS member_db          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS wishlist_db        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS gifticon_db        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS inventory_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS fulfillment_db     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS warehouse_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS code_dictionary_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS experiment_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    CREATE USER IF NOT EXISTS 'product_user'@'%'          IDENTIFIED BY 'product_password';
+    CREATE USER IF NOT EXISTS 'order_user'@'%'            IDENTIFIED BY 'order_password';
+    CREATE USER IF NOT EXISTS 'auth_user'@'%'             IDENTIFIED BY 'auth_password';
+    CREATE USER IF NOT EXISTS 'commerce_user'@'%'         IDENTIFIED BY 'commerce_password';
+    CREATE USER IF NOT EXISTS 'member_user'@'%'           IDENTIFIED BY 'member_password';
+    CREATE USER IF NOT EXISTS 'wishlist_user'@'%'         IDENTIFIED BY 'wishlist_password';
+    CREATE USER IF NOT EXISTS 'gifticon_user'@'%'         IDENTIFIED BY 'gifticon_password';
+    CREATE USER IF NOT EXISTS 'inventory_user'@'%'        IDENTIFIED BY 'inventory_password';
+    CREATE USER IF NOT EXISTS 'fulfillment_user'@'%'      IDENTIFIED BY 'fulfillment_password';
+    CREATE USER IF NOT EXISTS 'warehouse_user'@'%'        IDENTIFIED BY 'warehouse_password';
+    CREATE USER IF NOT EXISTS 'code_dictionary_user'@'%'  IDENTIFIED BY 'code_dictionary_password';
+    CREATE USER IF NOT EXISTS 'commerce'@'%'              IDENTIFIED BY '';
+
+    GRANT ALL PRIVILEGES ON product_db.*         TO 'product_user'@'%';
+    GRANT ALL PRIVILEGES ON order_db.*           TO 'order_user'@'%';
+    GRANT ALL PRIVILEGES ON auth_db.*            TO 'auth_user'@'%';
+    GRANT ALL PRIVILEGES ON chatbot_db.*         TO 'commerce_user'@'%';
+    GRANT ALL PRIVILEGES ON member_db.*          TO 'member_user'@'%';
+    GRANT ALL PRIVILEGES ON wishlist_db.*        TO 'wishlist_user'@'%';
+    GRANT ALL PRIVILEGES ON gifticon_db.*        TO 'gifticon_user'@'%';
+    GRANT ALL PRIVILEGES ON inventory_db.*       TO 'inventory_user'@'%';
+    GRANT ALL PRIVILEGES ON fulfillment_db.*     TO 'fulfillment_user'@'%';
+    GRANT ALL PRIVILEGES ON warehouse_db.*       TO 'warehouse_user'@'%';
+    GRANT ALL PRIVILEGES ON code_dictionary_db.* TO 'code_dictionary_user'@'%';
+    GRANT ALL PRIVILEGES ON experiment_db.*      TO 'commerce'@'%';
+
+    FLUSH PRIVILEGES;

@@ -1,0 +1,166 @@
+# Multiple Services that all route to the single MySQL pod via the same label
+# selector. This lets every application-kubernetes.yml keep the per-service
+# master/replica hostnames it inherited from docker-compose
+# (e.g. mysql-product-master, mysql-order-replica) without any code change.
+# For prod, the prod-k8s overlay replaces this with real master/replica pods
+# per Percona MySQL Operator CR (ADR-0019).
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-headless
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: mysql
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-product-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-product-replica
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-order-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-order-replica
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-auth-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-member-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-wishlist-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-gifticon-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-inventory-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-inventory-replica
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-fulfillment-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-fulfillment-replica
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-warehouse-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-warehouse-replica
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-code-dictionary-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-experiment-master
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
