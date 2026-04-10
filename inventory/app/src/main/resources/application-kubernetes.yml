@@ -11,7 +11,3 @@ spring:
       host: redis-1
       port: 6379
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery:8761/eureka/

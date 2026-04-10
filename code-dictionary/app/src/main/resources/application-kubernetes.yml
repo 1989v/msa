@@ -7,11 +7,6 @@ spring:
   flyway:
     enabled: false
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery:8761/eureka/
-
 opensearch:
   host: opensearch
   port: 9200

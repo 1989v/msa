@@ -10,7 +10,3 @@ spring:
           - redis-5:6383
           - redis-6:6384
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery:8761/eureka/

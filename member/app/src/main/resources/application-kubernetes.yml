@@ -5,7 +5,3 @@ spring:
     replica:
       jdbc-url: jdbc:mysql://mysql-member-master:3306/member_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery:8761/eureka/

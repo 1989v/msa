@@ -10,11 +10,6 @@ spring:
         nodes: redis-1:6379,redis-2:6380,redis-3:6381,redis-4:6382,redis-5:6383,redis-6:6384
       password: ${REDIS_PASSWORD}
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery:8761/eureka
-
 analytics:
   service:
     url: http://analytics:8090

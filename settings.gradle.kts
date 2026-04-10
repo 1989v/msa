@@ -2,7 +2,6 @@ rootProject.name = "commerce-platform"
 
 include(
     "common",
-    "discovery",
     "gateway",
     "product:domain",
     "product:app",

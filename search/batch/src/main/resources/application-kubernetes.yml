@@ -6,7 +6,3 @@ product:
   service:
     url: http://product:8081
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery:8761/eureka/

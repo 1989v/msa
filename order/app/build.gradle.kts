@@ -13,7 +13,6 @@ dependencies {
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
     implementation("io.micrometer:micrometer-registry-prometheus")
-    implementation(libs.spring.cloud.eureka.client)
     implementation(libs.spring.kafka)
     implementation(libs.spring.webflux)  // WebClient only, NOT WebFlux starter
     implementation(libs.kotlin.coroutines.core)

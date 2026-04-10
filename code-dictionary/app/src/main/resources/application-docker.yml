@@ -10,11 +10,6 @@ spring:
     hibernate:
       ddl-auto: validate
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://discovery:8080/eureka/
-
 opensearch:
   host: opensearch
   port: 9200

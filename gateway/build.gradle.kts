@@ -6,7 +6,6 @@ plugins {
 dependencies {
     implementation(project(":common"))
     implementation(libs.spring.cloud.gateway)
-    implementation(libs.spring.cloud.eureka.client)
     implementation(libs.spring.cloud.loadbalancer)
     implementation(libs.spring.cloud.circuitbreaker.reactor.resilience4j)
     implementation(libs.spring.boot.starter.data.redis)

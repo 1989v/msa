@@ -14,7 +14,6 @@ dependencies {
     implementation(libs.spring.boot.starter.actuator)
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.spring.boot.starter.websocket)
-    implementation(libs.spring.cloud.eureka.client)
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.kotlin.coroutines.reactor)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
