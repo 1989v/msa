@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-consumer
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: search-consumer
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  selector:
+    app.kubernetes.io/name: search-consumer
+  ports:
+    - name: http
+      port: 8084
+      targetPort: http

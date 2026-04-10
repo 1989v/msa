@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatbot
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: chatbot
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: chatbot
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: chatbot
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      serviceAccountName: chatbot
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: commerce/chatbot:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8086
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            # chatbot's filesystem knowledge base points at the repo root
+            # by default (see application.yml). In the image it is baked
+            # into /app, so override accordingly. prod overlay can mount
+            # a ConfigMap or a dedicated docs volume instead.
+            - name: CHATBOT_DOCS_ROOT
+              value: "/app"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi

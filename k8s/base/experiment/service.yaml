@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: experiment
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: experiment
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  selector:
+    app.kubernetes.io/name: experiment
+  ports:
+    - name: http
+      port: 8091
+      targetPort: http

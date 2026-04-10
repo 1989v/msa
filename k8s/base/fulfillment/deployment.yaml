@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fulfillment
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: fulfillment
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: fulfillment
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: fulfillment
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      serviceAccountName: fulfillment
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: commerce/fulfillment:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8088
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi

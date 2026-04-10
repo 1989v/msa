@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/part-of: commerce-platform
+  annotations:
+    # Local dev: no TLS redirect. prod overlay flips this and adds a
+    # cert-manager ClusterIssuer annotation (Phase 4).
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http

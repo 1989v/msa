@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Aggregates every Spring Boot app module's base manifests.
+# Environment-specific patches (replicas, resources, HPA, PDB, Secret
+# injection, Redis cluster->standalone rewrite for k3s-lite) live in
+# k8s/overlays/<env>/ and reference this directory as their base.
+# DO NOT apply this directory directly for a real environment; use an
+# overlay instead.
+namespace: commerce
+resources:
+  - gateway
+  - product
+  - order
+  - search
+  - search-consumer
+  - search-batch
+  - auth
+  - member
+  - wishlist
+  - gifticon
+  - inventory
+  - fulfillment
+  - warehouse
+  - analytics
+  - experiment
+  - chatbot
+  - code-dictionary
+  - agent-viewer-api

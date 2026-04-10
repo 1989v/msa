@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: wishlist
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: wishlist
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  selector:
+    app.kubernetes.io/name: wishlist
+  ports:
+    - name: http
+      port: 8095
+      targetPort: http
