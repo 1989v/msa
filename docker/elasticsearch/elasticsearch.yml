@@ -1,6 +1,0 @@
-cluster.name: commerce-cluster
-node.name: commerce-node-1
-network.host: 0.0.0.0
-discovery.type: single-node
-xpack.security.enabled: false
-xpack.security.enrollment.enabled: false

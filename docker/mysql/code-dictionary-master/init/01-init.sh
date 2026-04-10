@@ -1,9 +1,0 @@
-#!/bin/bash
-set -e
-
-mysql -uroot -p"${MYSQL_ROOT_PASSWORD}" << EOF
-CREATE USER IF NOT EXISTS 'replicator'@'%' IDENTIFIED BY '${REPLICATION_PASSWORD}';
-GRANT REPLICATION SLAVE ON *.* TO 'replicator'@'%';
-FLUSH PRIVILEGES;
-ALTER DATABASE code_dictionary_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-EOF

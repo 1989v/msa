@@ -7,11 +7,23 @@
 ## Commands
 
 ```bash
-./gradlew build                                            # 전체 빌드
-./gradlew :{service}:app:build                             # 단일 서비스 빌드
-./gradlew :{service}:domain:test                           # 도메인 테스트 (Spring context 없음)
-docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
+# Build
+./gradlew build                                         # 전체 빌드
+./gradlew :{service}:app:build                          # 단일 서비스 빌드
+./gradlew :{service}:domain:test                        # 도메인 테스트 (Spring context 없음)
+./gradlew jibBuildTar                                   # JVM 서비스 이미지 tar 생성 (Phase 2)
+
+# Local deployment (k3d / k3s-lite)
+kubectl apply -k k8s/overlays/k3s-lite                  # 인프라 + 서비스 + overlay 일괄
+scripts/image-import.sh --all                           # jibBuildTar 산출물을 k3d/kind로 로드
+
+# Production deployment (managed K8s)
+kubectl apply -k k8s/infra/prod                         # Operator 기반 인프라
+kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB + TLS
 ```
+
+과거 `docker compose` 기반 경로는 ADR-0019 Phase 6에서 제거됨.
+레거시 참조가 필요하면 `backup/docker-compose-snapshot` 브랜치 사용.
 
 ---
 
@@ -35,7 +47,8 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 - **코드 생성 컨벤션**: 네이밍, DI 방향, 도메인 패턴 → `docs/adr/ADR-0014-code-convention.md`
 - **멱등성 패턴**: Kafka Consumer 중복 처리 방어 → `docs/adr/ADR-0012-idempotent-consumer.md`
 - **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
-- **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md`
+- **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md` (스크립트) · `k8s/infra/prod/backup/` (CronJob 래퍼)
+- **K8s 전환**: 배포 모드 이원화, Eureka 제거, Jib → `docs/adr/ADR-0019-k8s-migration.md`
 
 ---
 
@@ -91,8 +104,7 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 | product | `product/CLAUDE.md` | SSOT, Kafka 발행 |
 | order | `order/CLAUDE.md` | 결제 연동, 상태 전이 |
 | search | `search/CLAUDE.md` | ES 인덱싱, 4개 모듈 |
-| gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting |
-| discovery | `discovery/CLAUDE.md` | Eureka Server |
+| gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting, K8s DNS 라우팅 |
 | common | `common/CLAUDE.md` | 공유 라이브러리 |
 | charting | `charting/CLAUDE.md` | Python/FastAPI, 독립 도메인 |
 | analytics | `analytics/CLAUDE.md` | 이벤트 수집, 스코어 산출 (Kafka Streams + ClickHouse) |
@@ -112,19 +124,29 @@ docker compose -f docker/docker-compose.infra.yml up -d    # 로컬 인프라
 
 ---
 
-## Local Dev
+## Local Dev (K8s, k3d 기준)
 
-- 서비스별 독립 실행 (Eureka + 해당 DB만 필요)
-- 환경변수: `docker/.env` (gitignore, `.env.example` 제공)
-- Profile: `SPRING_PROFILES_ACTIVE=docker`
-- 모니터링: `docker compose -f docker/docker-compose.monitoring.yml up -d` (Prometheus:9090 + Grafana:3000)
-  - 설정: `docker/monitoring/prometheus.yml`, `docker/monitoring/grafana/`
-  - ELK/Zipkin은 주석 상태, 필요 시 `--profile logging` / `--profile tracing`으로 활성화
+- Profile: `SPRING_PROFILES_ACTIVE=kubernetes` (Deployment에 주입됨)
+- 클러스터 기동 및 ingress 설치: `k8s/infra/local/ingress-nginx/README.md`
+- 전체 인프라 + 앱 기동:
+  ```bash
+  kubectl apply -k k8s/overlays/k3s-lite
+  scripts/image-import.sh --all     # 빌드한 이미지 tar 주입
+  ```
+- 인프라 최소 세트: MySQL/Redis/Kafka/Elasticsearch/OpenSearch/ClickHouse 단일 인스턴스 (k8s/infra/local/)
+- Redis는 standalone으로 배포되며, 클러스터 모드를 요구하는 5개 서비스(gateway, product, gifticon, analytics, experiment)는 overlay에서 `SPRING_APPLICATION_JSON`으로 standalone 전환됨
+
+## Deployment Modes (ADR-0019)
+
+| Mode | 대상 | Overlay | Infra |
+|---|---|---|---|
+| `k3s-lite` | 로컬 k3d / 에지 단일노드 | `k8s/overlays/k3s-lite/` | `k8s/infra/local/` (plain StatefulSet) |
+| `prod-k8s` | managed K8s (EKS/GKE/AKS) | `k8s/overlays/prod-k8s/` | `k8s/infra/prod/` (Operator 기반) |
 
 ## Backup & Disaster Recovery
 
-- 백업 스크립트: `docker/backup/scripts/` (Shell + Cron 기반)
+- 백업 스크립트(source of truth): `docker/backup/scripts/` (Shell 기반, 변경은 여기서)
 - 스토리지 플러그인: `docker/backup/storage-providers/` (S3/GCS/Local 교체 가능)
 - 보관 정책: 풀백업 7일, binlog 2일
-- 자동 페일오버: `docker/backup/ha/` (Orchestrator + ProxySQL, 비활성 상태)
-- 상세 가이드: `docker/backup/README.md`
+- **K8s 실행**: `k8s/infra/prod/backup/` — Dockerfile로 이미지 빌드 + CronJob으로 스케줄
+- 상세 가이드: `docker/backup/README.md` (스크립트) · `k8s/infra/prod/backup/README.md` (K8s 배포)

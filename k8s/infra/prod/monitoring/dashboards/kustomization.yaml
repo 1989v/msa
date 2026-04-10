@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: monitoring
+
+# Grafana dashboard ConfigMaps migrated from docker/monitoring/grafana/
+# during ADR-0019 Phase 6. The kube-prometheus-stack Grafana sidecar
+# discovers any ConfigMap with label `grafana_dashboard: "1"` in the
+# monitoring namespace and imports the JSON automatically.
+#
+# Apply with:
+#   kubectl apply -k k8s/infra/prod/monitoring/dashboards
+# (after installing kube-prometheus-stack from ../README.md)
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    grafana_dashboard: "1"
+
+configMapGenerator:
+  - name: grafana-dashboard-http
+    files:
+      - http-dashboard.json
+  - name: grafana-dashboard-jvm
+    files:
+      - jvm-dashboard.json
+  - name: grafana-dashboard-service-overview
+    files:
+      - service-overview.json
