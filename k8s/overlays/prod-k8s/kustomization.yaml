@@ -1,0 +1,46 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Production overlay for managed Kubernetes (EKS / GKE / AKS).
+#
+# This overlay intentionally does NOT pull in k8s/infra/local/ because
+# production uses Operator-managed infrastructure (Strimzi Kafka,
+# Percona MySQL, ECK Elasticsearch, Altinity ClickHouse, real Redis
+# cluster, kube-prometheus-stack) that lives under k8s/infra/prod/ and
+# lands in Phase 4.
+#
+# Apply with:
+#   kubectl apply -k k8s/overlays/prod-k8s
+#
+# Prerequisites (installed separately):
+#   - ingress-nginx
+#   - cert-manager + ClusterIssuer named "letsencrypt-prod" (Phase 4)
+#   - Phase 4 Operator infrastructure
+
+namespace: commerce
+
+resources:
+  - ../../base
+  - hpa.yaml
+  - pdb.yaml
+
+patches:
+  # Replicas: every app service scales to 2 replicas as a minimum
+  # guarantee for rolling updates and HPA headroom.
+  - path: patches/replicas.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+
+  # Resources: production sizing — double the base memory and add a
+  # CPU limit so noisy neighbors don't starve the node.
+  - path: patches/resources.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+
+  # Ingress TLS: switch to HTTPS with cert-manager.
+  - path: patches/ingress-tls.yaml
+    target:
+      kind: Ingress
+      name: gateway

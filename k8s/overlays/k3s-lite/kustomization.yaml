@@ -1,0 +1,52 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Single-node k3d / k3s-lite overlay.
+# Combines the local minimal infra (standalone MySQL/Redis/Kafka/ES/
+# OpenSearch/ClickHouse from Phase 3a) with the service base manifests
+# (Phase 3b), then applies k3s-specific trim-downs: smaller resource
+# requests, Redis standalone redirection, no HPA, no PDB.
+#
+# Apply with:
+#   kubectl apply -k k8s/overlays/k3s-lite
+
+namespace: commerce
+
+resources:
+  - ../../infra/local
+  - ../../base
+
+patches:
+  # Global resource reduction — halves the base requests/limits for
+  # every Spring Boot app so a single k3d node can host the full
+  # platform. Tune individually if a service thrashes the GC.
+  - path: patches/resources-reduce.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+
+  # Redis cluster -> standalone override. Only services whose
+  # application-kubernetes.yml declares cluster.nodes get this patch.
+  # Implementation: inject SPRING_APPLICATION_JSON env var with higher
+  # precedence than yml files, overriding cluster config with
+  # standalone host+port pointing at the Phase 3a redis Service.
+  - path: patches/redis-standalone-gateway.yaml
+    target:
+      kind: Deployment
+      name: gateway
+  - path: patches/redis-standalone-product.yaml
+    target:
+      kind: Deployment
+      name: product
+  - path: patches/redis-standalone-gifticon.yaml
+    target:
+      kind: Deployment
+      name: gifticon
+  - path: patches/redis-standalone-analytics.yaml
+    target:
+      kind: Deployment
+      name: analytics
+  - path: patches/redis-standalone-experiment.yaml
+    target:
+      kind: Deployment
+      name: experiment

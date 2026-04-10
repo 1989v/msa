@@ -1,0 +1,18 @@
+# Strategic merge patch: applied to every Deployment via the target
+# selector in kustomization.yaml. Reduces request/limit sizes so the
+# full 18-service platform fits on a single k3d node (~8 GiB).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder  # overridden by Kustomize target matcher
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi

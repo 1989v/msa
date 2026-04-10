@@ -1,0 +1,15 @@
+# SPRING_APPLICATION_JSON has higher precedence than application-*.yml
+# so this overlay-only injection nulls out the cluster.nodes list and
+# points the Redis client at the Phase 3a standalone "redis" Service.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: SPRING_APPLICATION_JSON
+              value: '{"spring":{"data":{"redis":{"cluster":null,"host":"redis","port":6379}}}}'

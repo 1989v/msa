@@ -1,0 +1,12 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: SPRING_APPLICATION_JSON
+              value: '{"spring":{"data":{"redis":{"cluster":null,"host":"redis","port":6379}}}}'
