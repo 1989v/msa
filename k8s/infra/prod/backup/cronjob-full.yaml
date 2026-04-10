@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-full
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: backup-runner
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  # Daily at 02:00 cluster time (matches docker/backup/crontab).
+  schedule: "0 2 * * *"
+  timeZone: "Asia/Seoul"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 600
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: backup-runner
+            app.kubernetes.io/component: backup-full
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: commerce/backup-runner:latest
+              imagePullPolicy: IfNotPresent
+              command: ["/backup-runner/scripts/backup-full.sh"]
+              envFrom:
+                - configMapRef:
+                    name: backup-env
+                - secretRef:
+                    name: backup-secret
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 512Mi
+                limits:
+                  memory: 2Gi
+              volumeMounts:
+                - name: staging
+                  mountPath: /backup
+          volumes:
+            - name: staging
+              persistentVolumeClaim:
+                claimName: backup-staging

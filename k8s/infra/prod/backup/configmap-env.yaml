@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-env
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: backup-runner
+    app.kubernetes.io/part-of: commerce-platform
+# Non-sensitive backup runner configuration. Sensitive values
+# (MYSQL passwords, cloud credentials, webhook URLs) live in the
+# backup-secret sibling and get merged via envFrom in the CronJob.
+data:
+  STORAGE_PROVIDER: "local"             # s3 | gcs | local
+  S3_BUCKET: "msa-backups"
+  S3_REGION: "ap-northeast-2"
+  GCS_BUCKET: "msa-backups"
+  LOCAL_BACKUP_DIR: "/mnt/backup"
+  BACKUP_STAGING_DIR: "/backup"
+  MYSQL_BACKUP_USER: "root"
+  PG_HOST: "charting-db"
+  PG_PORT: "5432"
+  PG_USER: "charting"
+  PG_DATABASE: "charting"
+  GIFTICON_IMAGES_DIR: "/app/storage/gifticon-images"
+  FULL_BACKUP_RETENTION_DAYS: "7"
+  BINLOG_RETENTION_DAYS: "2"

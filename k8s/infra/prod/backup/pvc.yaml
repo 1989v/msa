@@ -1,0 +1,19 @@
+# Staging volume for the backup runner. Each CronJob invocation
+# writes XtraBackup streams, binlog tarballs, and compressed dumps
+# here before the upload.sh step ships them to S3/GCS/local target.
+# Retention cleanup trims the staging tree after uploads succeed.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-staging
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: backup-runner
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 50Gi
+  # Override storageClassName for your cloud (gp3, pd-ssd, ...).
+  # storageClassName: gp3

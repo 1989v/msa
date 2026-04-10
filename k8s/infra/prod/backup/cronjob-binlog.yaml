@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-binlog
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: backup-runner
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  # Hourly (matches docker/backup/crontab).
+  schedule: "0 * * * *"
+  timeZone: "Asia/Seoul"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  startingDeadlineSeconds: 300
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: backup-runner
+            app.kubernetes.io/component: backup-binlog
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: commerce/backup-runner:latest
+              imagePullPolicy: IfNotPresent
+              command: ["/backup-runner/scripts/binlog-archive.sh"]
+              envFrom:
+                - configMapRef:
+                    name: backup-env
+                - secretRef:
+                    name: backup-secret
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 256Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: staging
+                  mountPath: /backup
+          volumes:
+            - name: staging
+              persistentVolumeClaim:
+                claimName: backup-staging
