@@ -1,0 +1,233 @@
+# Scaffolding: a single Percona MySQL cluster hosting all commerce
+# databases, with per-service Services aliased on top (matching the
+# local tree's approach). Split into multiple CRs when your isolation
+# story demands it.
+apiVersion: ps.percona.com/v1alpha1
+kind: PerconaServerMySQL
+metadata:
+  name: commerce-mysql
+  namespace: commerce
+spec:
+  crVersion: 0.11.0
+  secretsName: commerce-mysql-secrets
+  mysql:
+    clusterType: group-replication
+    size: 3
+    resources:
+      requests:
+        cpu: 500m
+        memory: 2Gi
+      limits:
+        memory: 4Gi
+    volumeSpec:
+      persistentVolumeClaim:
+        resources:
+          requests:
+            storage: 20Gi
+  proxy:
+    router:
+      enabled: true
+      size: 2
+      resources:
+        requests:
+          cpu: 100m
+          memory: 256Mi
+  backup:
+    enabled: true
+    image: percona/percona-xtrabackup:8.0
+    storages: {}
+---
+# Placeholder root Secret. Replace with a SealedSecret before apply.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: commerce-mysql-secrets
+  namespace: commerce
+type: Opaque
+stringData:
+  root: REPLACE_WITH_SEALED_SECRET
+  xtrabackup: REPLACE_WITH_SEALED_SECRET
+  monitor: REPLACE_WITH_SEALED_SECRET
+  clusteradmin: REPLACE_WITH_SEALED_SECRET
+  operator: REPLACE_WITH_SEALED_SECRET
+  orchestrator: REPLACE_WITH_SEALED_SECRET
+  replication: REPLACE_WITH_SEALED_SECRET
+---
+# Service aliases for each per-service database hostname in
+# application-kubernetes.yml. The selector points at Percona's
+# router pods, which load-balance read/write across the group.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-product-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-product-replica
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6447 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-order-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-order-replica
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6447 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-auth-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-member-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-wishlist-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-gifticon-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-inventory-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-inventory-replica
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6447 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-fulfillment-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-fulfillment-replica
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6447 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-warehouse-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-warehouse-replica
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6447 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-code-dictionary-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-experiment-master
+  namespace: commerce
+spec:
+  selector:
+    app.kubernetes.io/component: router
+    app.kubernetes.io/instance: commerce-mysql
+  ports: [{ name: mysql, port: 3306, targetPort: 6446 }]

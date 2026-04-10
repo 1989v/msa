@@ -1,0 +1,67 @@
+# One-shot Job that creates the 12 per-service databases and users
+# after the Percona cluster is Ready. The SQL is identical to
+# k8s/infra/local/mysql/configmap-init.yaml. Applied once after
+# mysql-clusters.yaml converges.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-init-sql
+  namespace: commerce
+data:
+  init.sql: |
+    CREATE DATABASE IF NOT EXISTS product_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS order_db           CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS auth_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS chatbot_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS member_db          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS wishlist_db        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS gifticon_db        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS inventory_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS fulfillment_db     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS warehouse_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS code_dictionary_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS experiment_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+    -- Users and grants: passwords come from SealedSecrets in prod,
+    -- not from this ConfigMap. The Secret entries are mounted as
+    -- env vars in the Job spec below, then substituted into the SQL
+    -- via shell before piping into mysql.
+
+    -- See README.md for the SealedSecret authoring workflow.
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mysql-init-databases
+  namespace: commerce
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mysql-client
+          image: mysql:8.0
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: commerce-mysql-secrets
+                  key: root
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              echo "Waiting for commerce-mysql router to accept connections..."
+              until mysql -h commerce-mysql-router -u root -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; do
+                sleep 3
+              done
+              mysql -h commerce-mysql-router -u root -p"$MYSQL_ROOT_PASSWORD" < /init/init.sql
+          volumeMounts:
+            - name: sql
+              mountPath: /init
+      volumes:
+        - name: sql
+          configMap:
+            name: mysql-init-sql

@@ -1,0 +1,171 @@
+# Topics matching docs/architecture/kafka-convention.md and the
+# publish/consume references in each service's application.yml.
+# Strimzi Topic Operator reconciles these into real Kafka topics.
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: product.item.created
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: product.item.updated
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.order.completed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: order.order.cancelled
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: "604800000"
+    min.insync.replicas: "2"
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.reserved
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.released
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.stock.confirmed
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reservation.expired
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.created
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.shipped
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.delivered
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: fulfillment.order.cancelled
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: analytics.event.collected
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 12
+  replicas: 3
+  config:
+    retention.ms: "2592000000"  # 30 days
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: analytics.score.updated
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  partitions: 6
+  replicas: 3

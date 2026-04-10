@@ -1,0 +1,79 @@
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: commerce-es
+  namespace: commerce
+spec:
+  version: 8.15.3
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: true  # local simplicity; prod TLS via cert-manager
+  nodeSets:
+    - name: master
+      count: 3
+      config:
+        node.roles: ["master"]
+        xpack.security.enabled: true
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+                limits:
+                  memory: 2Gi
+              env:
+                - name: ES_JAVA_OPTS
+                  value: -Xms1g -Xmx1g
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 5Gi
+    - name: data
+      count: 2
+      config:
+        node.roles: ["data", "ingest"]
+        xpack.security.enabled: true
+      podTemplate:
+        spec:
+          containers:
+            - name: elasticsearch
+              resources:
+                requests:
+                  cpu: 500m
+                  memory: 2Gi
+                limits:
+                  memory: 4Gi
+              env:
+                - name: ES_JAVA_OPTS
+                  value: -Xms2g -Xmx2g
+      volumeClaimTemplates:
+        - metadata:
+            name: elasticsearch-data
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 20Gi
+---
+# Alias Service so apps keep resolving the hostname "elasticsearch".
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  namespace: commerce
+spec:
+  selector:
+    elasticsearch.k8s.elastic.co/cluster-name: commerce-es
+    elasticsearch.k8s.elastic.co/node-data: "true"
+  ports:
+    - name: http
+      port: 9200
+      targetPort: 9200

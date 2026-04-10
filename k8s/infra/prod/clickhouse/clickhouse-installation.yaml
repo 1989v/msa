@@ -1,0 +1,63 @@
+apiVersion: clickhouse.altinity.com/v1
+kind: ClickHouseInstallation
+metadata:
+  name: commerce-clickhouse
+  namespace: commerce
+spec:
+  configuration:
+    users:
+      analytics/password: analytics    # replace via SealedSecret
+      analytics/networks/ip:
+        - "::/0"
+        - "0.0.0.0/0"
+      analytics/profile: default
+      analytics/quota: default
+    profiles:
+      default/max_memory_usage: "2000000000"
+      default/use_uncompressed_cache: "0"
+    clusters:
+      - name: commerce
+        layout:
+          shardsCount: 1
+          replicasCount: 1
+  templates:
+    podTemplates:
+      - name: clickhouse-pod
+        spec:
+          containers:
+            - name: clickhouse
+              image: clickhouse/clickhouse-server:24.8-alpine
+              resources:
+                requests:
+                  cpu: 200m
+                  memory: 1Gi
+                limits:
+                  memory: 2Gi
+    volumeClaimTemplates:
+      - name: data-volume
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 10Gi
+  defaults:
+    templates:
+      podTemplate: clickhouse-pod
+      dataVolumeClaimTemplate: data-volume
+---
+# Alias Service so "clickhouse:8123" keeps resolving from app yml.
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse
+  namespace: commerce
+spec:
+  selector:
+    clickhouse.altinity.com/chi: commerce-clickhouse
+  ports:
+    - name: http
+      port: 8123
+      targetPort: 8123
+    - name: native
+      port: 9000
+      targetPort: 9000

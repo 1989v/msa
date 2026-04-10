@@ -1,0 +1,91 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: controller
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  replicas: 3
+  roles:
+    - controller
+  storage:
+    type: persistent-claim
+    size: 10Gi
+    deleteClaim: false
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1Gi
+    limits:
+      memory: 2Gi
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: broker
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  replicas: 3
+  roles:
+    - broker
+  storage:
+    type: persistent-claim
+    size: 20Gi
+    deleteClaim: false
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      memory: 4Gi
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: commerce
+  namespace: commerce
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
+spec:
+  kafka:
+    version: 3.8.0
+    metadataVersion: "3.8"
+    listeners:
+      - name: internal
+        port: 29092
+        type: internal
+        tls: false
+    config:
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+    authorization:
+      type: simple
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+---
+# Alias Service so apps keep resolving "kafka:29092" instead of
+# Strimzi's default "commerce-kafka-bootstrap" name.
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: commerce
+  labels:
+    strimzi.io/cluster: commerce
+spec:
+  selector:
+    strimzi.io/cluster: commerce
+    strimzi.io/kind: Kafka
+    strimzi.io/broker-role: "true"
+  ports:
+    - name: internal
+      port: 29092
+      targetPort: 29092

@@ -1,0 +1,22 @@
+# Single ServiceMonitor that targets every commerce platform Service
+# via the shared part-of label set by k8s/base/*/service.yaml.
+# Scrapes /actuator/prometheus on the "http" named port.
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: commerce-platform-apps
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack  # matches the default Helm chart release
+spec:
+  namespaceSelector:
+    matchNames:
+      - commerce
+  selector:
+    matchLabels:
+      app.kubernetes.io/part-of: commerce-platform
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 30s
+      scrapeTimeout: 10s

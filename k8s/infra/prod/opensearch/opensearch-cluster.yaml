@@ -1,0 +1,53 @@
+apiVersion: opensearch.opster.io/v1
+kind: OpenSearchCluster
+metadata:
+  name: commerce-opensearch
+  namespace: commerce
+spec:
+  general:
+    serviceName: commerce-opensearch
+    version: "2.19.1"
+    httpPort: 9200
+    vendor: opensearch
+    setVMMaxMapCount: true
+  dashboards:
+    enable: false
+  security:
+    config:
+      adminCredentialsSecret:
+        name: commerce-opensearch-admin
+      securityConfigSecret:
+        name: commerce-opensearch-config
+    tls:
+      transport:
+        generate: true
+      http:
+        generate: true
+  nodePools:
+    - component: master-data
+      replicas: 1
+      diskSize: "5Gi"
+      resources:
+        requests:
+          cpu: 200m
+          memory: 1Gi
+        limits:
+          memory: 2Gi
+      roles:
+        - cluster_manager
+        - data
+        - ingest
+---
+# Alias Service so "opensearch:9200" keeps resolving from app yml.
+apiVersion: v1
+kind: Service
+metadata:
+  name: opensearch
+  namespace: commerce
+spec:
+  selector:
+    opster.io/opensearch-cluster: commerce-opensearch
+  ports:
+    - name: http
+      port: 9200
+      targetPort: 9200

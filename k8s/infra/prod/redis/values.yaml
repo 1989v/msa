@@ -1,0 +1,34 @@
+# Bitnami Redis Cluster Helm values for production.
+# Install with:
+#   helm upgrade --install redis bitnami/redis-cluster \
+#       --namespace commerce --values k8s/infra/prod/redis/values.yaml
+
+cluster:
+  nodes: 6
+  replicas: 1  # replicas PER master (3 masters * 1 = 3 replicas total)
+
+persistence:
+  enabled: true
+  size: 4Gi
+  # Override to gp3, pd-ssd, etc. for your cloud.
+  # storageClass: gp3
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+usePassword: true
+# password: replaced by auto-generation + Secret. Seal with kubeseal
+# and inject via existingSecret for git-tracked credentials.
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: commerce
+
+networkPolicy:
+  enabled: false  # flip on once kube-prometheus-stack ServiceMonitor is verified
