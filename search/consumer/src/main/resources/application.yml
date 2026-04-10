@@ -1,6 +1,8 @@
 spring:
   application:
     name: search-consumer
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
   kafka:
@@ -16,12 +18,28 @@ search:
 
 server:
   port: 8084
+  shutdown: graceful
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
 
 eureka:
   client:

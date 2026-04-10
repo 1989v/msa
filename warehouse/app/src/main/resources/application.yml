@@ -1,6 +1,8 @@
 spring:
   application:
     name: warehouse-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   datasource:
     master:
       url: jdbc:mysql://localhost:3332/warehouse_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -29,6 +31,7 @@ spring:
 
 server:
   port: 8090
+  shutdown: graceful
 
 eureka:
   client:
@@ -45,6 +48,18 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
   metrics:
     tags:
       application: ${spring.application.name}

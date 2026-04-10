@@ -1,6 +1,8 @@
 spring:
   application:
     name: search-batch
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
   datasource:
@@ -26,12 +28,28 @@ search:
 
 server:
   port: 8092
+  shutdown: graceful
 
 management:
   endpoints:
     web:
       exposure:
         include: health,info,metrics,batch
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
 
 eureka:
   client:

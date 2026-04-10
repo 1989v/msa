@@ -1,6 +1,8 @@
 spring:
   application:
     name: chatbot-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   datasource:
     # 논리 스키마 분리: auth MySQL 인스턴스에 chatbot_db 스키마 공존
     # 물리 분리 기준 → docs/adr/ADR-0015-chatbot-service.md 참조
@@ -22,6 +24,7 @@ spring:
 
 server:
   port: 8086
+  shutdown: graceful
 
 eureka:
   client:
@@ -38,6 +41,18 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
   metrics:
     tags:
       application: ${spring.application.name}

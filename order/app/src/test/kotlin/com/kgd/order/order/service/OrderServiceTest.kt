@@ -4,6 +4,8 @@ import com.kgd.common.exception.BusinessException
 import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.PaymentPort
 import com.kgd.order.application.order.port.PaymentResult
+import com.kgd.order.application.order.port.ProductInfo
+import com.kgd.order.application.order.port.ProductPort
 import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.domain.order.exception.OrderNotFoundException
 import com.kgd.order.domain.order.model.Money
@@ -25,9 +27,10 @@ class OrderServiceTest : BehaviorSpec({
     val transactionalService = mockk<OrderTransactionalService>()
     val eventPort = mockk<OrderEventPort>(relaxed = true)
     val paymentPort = mockk<PaymentPort>()
-    val service = OrderService(transactionalService, eventPort, paymentPort)
+    val productPort = mockk<ProductPort>()
+    val service = OrderService(transactionalService, eventPort, paymentPort, productPort)
 
-    beforeEach { clearMocks(transactionalService, eventPort, paymentPort) }
+    beforeEach { clearMocks(transactionalService, eventPort, paymentPort, productPort) }
 
     given("주문 생성 시") {
         `when`("유효한 주문 커맨드와 결제 성공") {
@@ -42,6 +45,10 @@ class OrderServiceTest : BehaviorSpec({
                         1L, "user-1",
                         listOf(OrderItem.of(1L, 2, Money(5000.toBigDecimal()))),
                         OrderStatus.COMPLETED, LocalDateTime.now()
+                    )
+                    coEvery { productPort.validateProduct(1L) } returns ProductInfo(
+                        productId = 1L, name = "Test Product",
+                        price = 5000.toBigDecimal(), status = "ACTIVE", stock = 100
                     )
                     every { transactionalService.savePendingOrder(any()) } returns pendingOrder
                     coEvery { paymentPort.requestPayment(any(), any()) } returns PaymentResult("pay-1", "SUCCESS", 10000.toBigDecimal())
@@ -69,6 +76,10 @@ class OrderServiceTest : BehaviorSpec({
                     val cancelledOrder = Order.restore(1L, "user-1",
                         listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
                         OrderStatus.CANCELLED, LocalDateTime.now()
+                    )
+                    coEvery { productPort.validateProduct(1L) } returns ProductInfo(
+                        productId = 1L, name = "Test Product",
+                        price = 1000.toBigDecimal(), status = "ACTIVE", stock = 100
                     )
                     every { transactionalService.savePendingOrder(any()) } returns pendingOrder
                     coEvery { paymentPort.requestPayment(any(), any()) } throws RuntimeException("Payment service down")

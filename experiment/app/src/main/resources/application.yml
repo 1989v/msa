@@ -1,9 +1,12 @@
 server:
   port: 8091
+  shutdown: graceful
 
 spring:
   application:
     name: experiment-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
   datasource:
     url: jdbc:mysql://localhost:3348/experiment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -52,6 +55,18 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
   metrics:
     tags:
       application: ${spring.application.name}

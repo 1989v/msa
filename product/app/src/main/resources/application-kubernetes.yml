@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    master:
+      url: jdbc:mysql://mysql-product-master:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    replica:
+      url: jdbc:mysql://mysql-product-replica:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  kafka:
+    bootstrap-servers: kafka:29092
+  data:
+    redis:
+      cluster:
+        nodes:
+          - redis-1:6379
+          - redis-2:6380
+          - redis-3:6381
+          - redis-4:6382
+          - redis-5:6383
+          - redis-6:6384
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/

@@ -1,0 +1,13 @@
+spring:
+  datasource:
+    master:
+      jdbc-url: jdbc:mysql://mysql-wishlist-master:3306/wishlist_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    replica:
+      jdbc-url: jdbc:mysql://mysql-wishlist-master:3306/wishlist_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  kafka:
+    bootstrap-servers: kafka:29092
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/

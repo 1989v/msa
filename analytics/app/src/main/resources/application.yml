@@ -1,9 +1,12 @@
 server:
   port: 8090
+  shutdown: graceful
 
 spring:
   application:
     name: analytics-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
 
   datasource:
     clickhouse:
@@ -59,6 +62,18 @@ management:
   endpoint:
     health:
       show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
   metrics:
     tags:
       application: ${spring.application.name}

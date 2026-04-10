@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    master:
+      url: jdbc:mysql://mysql-inventory-master:3306/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    replica:
+      url: jdbc:mysql://mysql-inventory-replica:3306/inventory_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  kafka:
+    bootstrap-servers: kafka:29092
+  data:
+    redis:
+      host: redis-1
+      port: 6379
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/

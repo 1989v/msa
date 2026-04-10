@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    master:
+      url: jdbc:mysql://mysql-warehouse-master:3306/warehouse_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    replica:
+      url: jdbc:mysql://mysql-warehouse-replica:3306/warehouse_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery:8761/eureka/
