@@ -139,4 +139,6 @@ export interface StoreSnapshot {
   }>
   waitingAgentIds: Set<string>
   queuedAgentIds: Set<string>
+  typingAgentIds: Set<string>
+  subagentParentByAgentId: Map<string, string>
 }

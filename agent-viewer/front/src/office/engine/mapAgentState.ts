@@ -1,24 +1,49 @@
-import type { LiveSession, LiveSubagent, Notification, Agent, Team } from '@/types'
+import type { LiveSession, LiveSubagent, Notification, Agent, Session, Team } from '@/types'
 import type { StoreSnapshot, World } from '../types'
 import { createCharacter, findSeatTile } from './world'
+
+function normalizeName(s: string | undefined): string {
+  return (s ?? '').toLowerCase().replace(/\s+/g, '').replace(/[—\-_.]+/g, '')
+}
 
 /** Build a StoreSnapshot from raw store data. */
 export function buildSnapshot(params: {
   agents: Agent[]
   teams: Team[]
+  sessions: Session[]
   liveSessions: LiveSession[]
   liveSubagents: LiveSubagent[]
   notifications: Notification[]
 }): StoreSnapshot {
-  const { agents, teams, liveSessions, liveSubagents, notifications } = params
+  const { agents, teams, sessions, liveSessions, liveSubagents, notifications } = params
 
   const waitingAgentIds = new Set<string>()
-  for (const s of liveSessions) {
-    if (s.status === 'waiting') {
-      // Associate session waiting with any agent assigned to it by sessionId
-      // is out of scope — fall back to tool-level match: no-op here.
-      // If the agent.role mentions the tool, we could map; left as future work.
-      void s
+  const typingAgentIds = new Set<string>()
+
+  // Match live sessions to static sessions by normalized name and propagate status
+  // to the static session's agentIds.
+  if (liveSessions.length > 0) {
+    const staticByNorm = new Map<string, Session>()
+    for (const s of sessions) {
+      staticByNorm.set(normalizeName(s.name), s)
+    }
+    for (const live of liveSessions) {
+      const norm = normalizeName(live.name)
+      const match = staticByNorm.get(norm)
+      const targets = match
+        ? match.agentIds
+        : // Fallback: fuzzy contains
+          sessions.find((s) => {
+            const sn = normalizeName(s.name)
+            return norm.length > 3 && (sn.includes(norm) || norm.includes(sn))
+          })?.agentIds
+      if (!targets) continue
+
+      if (live.status === 'waiting') {
+        for (const id of targets) waitingAgentIds.add(id)
+      } else if (live.status === 'active' || live.active) {
+        for (const id of targets) typingAgentIds.add(id)
+      }
     }
   }
 
@@ -29,9 +54,30 @@ export function buildSnapshot(params: {
     }
   }
 
-  // Use static agent.status field: 'thinking' → waiting bubble
+  // Fall back to static agent.status — won't override live-derived state.
   for (const a of agents) {
-    if (a.status === 'thinking') waitingAgentIds.add(a.id)
+    if (a.status === 'thinking' && !typingAgentIds.has(a.id) && !queuedAgentIds.has(a.id)) {
+      waitingAgentIds.add(a.id)
+    }
+  }
+
+  // Resolve sub-agent parent per sessionId by matching liveSession name to
+  // static session agentIds (take the first agentId as the lead).
+  const subagentParentByAgentId = new Map<string, string>()
+  const leadByLiveSessionId = new Map<string, string>()
+  if (liveSessions.length > 0) {
+    const staticByNorm = new Map<string, Session>()
+    for (const s of sessions) staticByNorm.set(normalizeName(s.name), s)
+    for (const live of liveSessions) {
+      const match = staticByNorm.get(normalizeName(live.name))
+      const lead = match?.agentIds[0]
+      if (lead) leadByLiveSessionId.set(live.sessionId, lead)
+    }
+  }
+  for (const sub of liveSubagents) {
+    if (!sub.active) continue
+    const lead = leadByLiveSessionId.get(sub.sessionId)
+    if (lead) subagentParentByAgentId.set(sub.agentId, lead)
   }
 
   return {
@@ -52,6 +98,8 @@ export function buildSnapshot(params: {
     })),
     waitingAgentIds,
     queuedAgentIds,
+    typingAgentIds,
+    subagentParentByAgentId,
   }
 }
 
@@ -141,24 +189,24 @@ export function syncWorldWithStore(world: World, snapshot: StoreSnapshot): void 
       c.desiredState = 'queued'
     } else if (snapshot.waitingAgentIds.has(a.id)) {
       c.desiredState = 'waiting'
-    } else if (a.status === 'working') {
+    } else if (snapshot.typingAgentIds.has(a.id) || a.status === 'working') {
       c.desiredState = 'type'
     } else {
       c.desiredState = 'idle'
     }
   }
 
-  // Handle subagent spawns — place next to parent if parent exists,
-  // otherwise near CEO desk.
+  // Handle subagent spawns — resolve parent via sessionId mapping first;
+  // fall back to any currently-typing agent; else a default position.
   for (const sub of snapshot.liveSubagents) {
     if (!sub.active) continue
     if (world.characters.has(sub.agentId)) continue
 
-    // Try to find a parent — for hook-based we don't have explicit parent,
-    // so pick the first live-session agent (or fall back).
-    const parentChar = [...world.characters.values()].find(
-      (c) => !c.isSubagent && c.desiredState === 'type',
-    )
+    const parentId = snapshot.subagentParentByAgentId.get(sub.agentId)
+    const parentChar =
+      (parentId ? world.characters.get(parentId) : undefined) ??
+      [...world.characters.values()].find((c) => !c.isSubagent && c.desiredState === 'type')
+
     const col = parentChar ? Math.min(world.cols - 2, parentChar.tileCol + 1) : 2
     const row = parentChar ? parentChar.tileRow : 2
 

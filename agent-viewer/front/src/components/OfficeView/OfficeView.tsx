@@ -23,6 +23,7 @@ export function OfficeView() {
 
   const agents = useAppStore((s) => s.agents)
   const teams = useAppStore((s) => s.teams)
+  const sessions = useAppStore((s) => s.sessions)
   const liveSessions = useAppStore((s) => s.liveSessions)
   const liveSubagents = useAppStore((s) => s.liveSubagents)
   const notifications = useAppStore((s) => s.notifications)
@@ -56,6 +57,7 @@ export function OfficeView() {
       buildSnapshot({
         agents,
         teams,
+        sessions,
         liveSessions: [...liveSessions.values()],
         liveSubagents: [...liveSubagents.values()],
         notifications,
@@ -83,12 +85,13 @@ export function OfficeView() {
       buildSnapshot({
         agents,
         teams,
+        sessions,
         liveSessions: [...liveSessions.values()],
         liveSubagents: [...liveSubagents.values()],
         notifications,
       }),
     )
-  }, [agents, teams, liveSessions, liveSubagents, notifications])
+  }, [agents, teams, sessions, liveSessions, liveSubagents, notifications])
 
   // Selected outline sync
   useEffect(() => {
