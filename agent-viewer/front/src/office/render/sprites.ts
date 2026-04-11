@@ -43,6 +43,13 @@ export function drawCharacters(
     const dx = Math.round(c.x - 8)
     const dy = Math.round(c.y - 14) + bob
 
+    // Drop shadow (oval under feet)
+    ctx.globalAlpha = 0.35 * alpha
+    ctx.fillStyle = '#000000'
+    ctx.fillRect(Math.round(c.x - 4), Math.round(c.y) + 1, 8, 2)
+    ctx.fillRect(Math.round(c.x - 3), Math.round(c.y) + 3, 6, 1)
+    ctx.globalAlpha = 1
+
     ctx.globalAlpha = alpha
     ctx.drawImage(baked as CanvasImageSource, dx, dy)
     ctx.globalAlpha = 1
