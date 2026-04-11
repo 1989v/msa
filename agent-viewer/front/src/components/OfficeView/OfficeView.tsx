@@ -3,6 +3,8 @@ import { useAppStore } from '@/store/useAppStore'
 import {
   TILE_SIZE,
   RENDER_SCALE,
+  WORLD_COLS,
+  WORLD_ROWS,
   buildDefaultLayout,
   drawWorld,
   pickCharacter,
@@ -35,11 +37,9 @@ export function OfficeView() {
   )
 
   const canvasSize = useMemo(() => {
-    const cols = 40
-    const rows = 26
     return {
-      logicalW: cols * TILE_SIZE,
-      logicalH: rows * TILE_SIZE,
+      logicalW: WORLD_COLS * TILE_SIZE,
+      logicalH: WORLD_ROWS * TILE_SIZE,
     }
   }, [])
 

@@ -45,6 +45,7 @@ export function createCharacter(params: {
     wanderTarget: null,
     wanderDwellTimer: 0,
     seatId: params.seatId,
+    loungeSpotId: null,
     bubble: null,
     isSubagent: params.isSubagent ?? false,
     parentAgentId: params.parentAgentId ?? null,

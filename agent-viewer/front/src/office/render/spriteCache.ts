@@ -4,9 +4,26 @@ import { Dir, type Direction } from '../types'
 const SPRITE_W = 16
 const SPRITE_H = 16
 
-type AnimKind = 'idle' | 'walk0' | 'walk1' | 'type0' | 'type1'
+type AnimKind =
+  | 'idle'
+  | 'walk0'
+  | 'walk1'
+  | 'walk2'
+  | 'walk3'
+  | 'type0'
+  | 'type1'
+  | 'rest'
 
-const ANIM_KINDS: AnimKind[] = ['idle', 'walk0', 'walk1', 'type0', 'type1']
+const ANIM_KINDS: AnimKind[] = [
+  'idle',
+  'walk0',
+  'walk1',
+  'walk2',
+  'walk3',
+  'type0',
+  'type1',
+  'rest',
+]
 const DIRECTIONS: Direction[] = [Dir.DOWN, Dir.LEFT, Dir.RIGHT, Dir.UP]
 
 type BakedCanvas = HTMLCanvasElement | OffscreenCanvas
@@ -27,7 +44,6 @@ function makeCanvas(): BakedCanvas {
   return c
 }
 
-/** Darken a hex color by mixing with black. */
 function darken(hex: string, amount: number): string {
   const h = hex.replace('#', '')
   const r = parseInt(h.slice(0, 2), 16)
@@ -40,7 +56,6 @@ function darken(hex: string, amount: number): string {
   return `#${rr}${gg}${bb}`
 }
 
-/** Lighten a hex color by mixing with white. */
 function lighten(hex: string, amount: number): string {
   const h = hex.replace('#', '')
   const r = parseInt(h.slice(0, 2), 16)
@@ -52,27 +67,101 @@ function lighten(hex: string, amount: number): string {
   return `#${rr}${gg}${bb}`
 }
 
-/**
- * 16×16 character bake. Layout (x = column, y = row):
- *
- *    0 1 2 3 4 5 6 7 8 9 A B C D E F
- * 0  . . . . . . . . . . . . . . . .
- * 1  . . . . . H H H H H H . . . . .    H = hair
- * 2  . . . . H h h h h h h H . . . .    h = hair highlight
- * 3  . . . . H s s s s s s H . . . .    s = face
- * 4  . . . . s S E s s E S s . . . .    S = sclera, E = pupil
- * 5  . . . . s c s s s s c s . . . .    c = cheek tint
- * 6  . . . . s s s m m s s s . . . .    m = mouth
- * 7  . . . . W W W W W W W W . . . .    W = white collar
- * 8  . . . A t t t T T t t t A . . .    A = sleeve, t = shirt, T = tie
- * 9  . . . A t t t T T t t t A . . .
- * A  . . . H t t b b b b t t H . . .    b = belt accent, H = hand (skin)
- * B  . . . . t t t t t t t t . . . .
- * C  . . . . P P . . . . P P . . . .    P = pants
- * D  . . . . P P . . . . P P . . . .
- * E  . . . S S S . . . . S S S . . .    S = shoes
- * F  . . . . . . . . . . . . . . . .
- */
+/** Walk leg offsets per 4-frame cycle (left, right shift in px). */
+function walkLegOffsets(frame: number): { lShift: number; rShift: number } {
+  switch (frame) {
+    case 0:
+      return { lShift: -1, rShift: 0 }
+    case 1:
+      return { lShift: 0, rShift: 0 }
+    case 2:
+      return { lShift: 0, rShift: -1 }
+    case 3:
+      return { lShift: 0, rShift: 0 }
+    default:
+      return { lShift: 0, rShift: 0 }
+  }
+}
+
+/** Walk arm swing opposite of legs. */
+function walkArmOffsets(frame: number): { lArm: number; rArm: number } {
+  switch (frame) {
+    case 0:
+      return { lArm: 0, rArm: -1 }
+    case 1:
+      return { lArm: 0, rArm: 0 }
+    case 2:
+      return { lArm: -1, rArm: 0 }
+    case 3:
+      return { lArm: 0, rArm: 0 }
+    default:
+      return { lArm: 0, rArm: 0 }
+  }
+}
+
+function drawRestPose(
+  ctx: CanvasRenderingContext2D,
+  config: SpriteConfig,
+  dir: Direction,
+) {
+  const fill = (color: string, x: number, y: number, w: number, h: number) => {
+    ctx.fillStyle = color
+    ctx.fillRect(x, y, w, h)
+  }
+  const bodyColor = config.color
+  const bodyDark = darken(config.color, 0.35)
+  const bodyLight = lighten(config.color, 0.2)
+  const accent = config.accentColor
+  const skin = config.skinColor
+  const skinShade = darken(config.skinColor, 0.2)
+  const hair = darken(config.color, 0.55)
+  const hairLight = darken(config.color, 0.35)
+  const pants = '#2c3a4f'
+  const outline = '#0c1017'
+
+  // Slightly slumped/lower posture — shifted down 1px + rounded shoulders
+  const shift = 1
+
+  // Hair
+  fill(hair, 5, 1 + shift, 6, 1)
+  fill(hair, 4, 2 + shift, 1, 2)
+  fill(hair, 11, 2 + shift, 1, 2)
+  fill(hairLight, 5, 2 + shift, 6, 1)
+
+  // Head / face
+  fill(skin, 5, 3 + shift, 6, 4)
+  fill(skinShade, 10, 4 + shift, 1, 3)
+
+  // Eyes — closed/sleepy (horizontal lines)
+  if (dir !== Dir.UP) {
+    fill(outline, 6, 5 + shift, 1, 1)
+    fill(outline, 9, 5 + shift, 1, 1)
+    fill(outline, 7, 6 + shift, 2, 1) // small smile
+  }
+
+  // Collar / shirt
+  fill('#f0f6fc', 4, 7 + shift, 8, 1)
+  // Body (slightly wider — slumped)
+  fill(bodyColor, 3, 8 + shift, 10, 4)
+  fill(accent, 7, 7 + shift, 2, 1) // tie
+  fill(accent, 7, 8 + shift, 2, 2)
+  fill(bodyLight, 3, 8 + shift, 1, 1)
+  fill(bodyDark, 12, 8 + shift, 1, 4)
+  fill(darken(accent, 0.3), 5, 11 + shift, 6, 1) // belt
+
+  // Arms resting on lap
+  fill(bodyColor, 2, 9 + shift, 2, 2)
+  fill(bodyColor, 12, 9 + shift, 2, 2)
+  fill(skin, 2, 11 + shift, 1, 1)
+  fill(skin, 13, 11 + shift, 1, 1)
+
+  // Legs bent forward (shorter)
+  fill(pants, 5, 12 + shift, 2, 2)
+  fill(pants, 9, 12 + shift, 2, 2)
+  fill('#1a1f28', 4, 14 + shift, 3, 1)
+  fill('#1a1f28', 9, 14 + shift, 3, 1)
+}
+
 function bakeVariant(
   config: SpriteConfig,
   dir: Direction,
@@ -82,6 +171,11 @@ function bakeVariant(
   const ctx = canvas.getContext('2d') as CanvasRenderingContext2D
   ctx.clearRect(0, 0, SPRITE_W, SPRITE_H)
   ctx.imageSmoothingEnabled = false
+
+  if (anim === 'rest') {
+    drawRestPose(ctx, config, dir)
+    return canvas
+  }
 
   const fill = (color: string, x: number, y: number, w: number, h: number) => {
     ctx.fillStyle = color
@@ -102,29 +196,35 @@ function bakeVariant(
   const shoe = '#1a1f28'
   const shoeHi = '#2a313d'
   const outline = '#0c1017'
-  const frame = anim === 'walk0' || anim === 'type0' ? 0 : 1
 
-  // ---------- HAIR ----------
+  // Determine walk frame (0..3) or type frame (0..1)
+  let walkFrame = 0
+  if (anim === 'walk0') walkFrame = 0
+  else if (anim === 'walk1') walkFrame = 1
+  else if (anim === 'walk2') walkFrame = 2
+  else if (anim === 'walk3') walkFrame = 3
+  const typeFrame = anim === 'type1' ? 1 : 0
+  const isWalking = anim.startsWith('walk')
+  const isTyping = anim === 'type0' || anim === 'type1'
+
+  // Hair
   fill(hair, 5, 1, 6, 1)
   fill(hair, 4, 2, 1, 2)
   fill(hair, 11, 2, 1, 2)
   fill(hairLight, 5, 2, 6, 1)
-  // Hair contour
   fill(outline, 4, 1, 1, 1)
   fill(outline, 11, 1, 1, 1)
 
-  // ---------- HEAD / FACE ----------
+  // Head / face
   fill(skin, 5, 3, 6, 1)
   fill(skin, 5, 4, 6, 1)
   fill(skin, 5, 5, 6, 1)
   fill(skin, 5, 6, 6, 1)
-  // Face side shading
   fill(skinShade, 10, 4, 1, 3)
   fill(skinShade, 5, 6, 6, 1)
 
-  // ---------- EYES (per direction) ----------
+  // Eyes per direction
   if (dir !== Dir.UP) {
-    // White sclera
     if (dir === Dir.DOWN) {
       fill('#ffffff', 6, 4, 1, 1)
       fill('#ffffff', 9, 4, 1, 1)
@@ -137,80 +237,68 @@ function bakeVariant(
       fill(outline, 8, 4, 1, 1)
       fill(outline, 10, 4, 1, 1)
     }
-    // Cheek tint (down/side)
     fill(lighten(skin, 0.25), 6, 5, 1, 1)
     fill(lighten(skin, 0.25), 9, 5, 1, 1)
-    // Mouth
     fill(accentDark, 7, 6, 2, 1)
   } else {
-    // Back of head — no face, just hair
     fill(hair, 5, 3, 6, 2)
     fill(hairLight, 5, 4, 6, 1)
   }
 
-  // ---------- COLLAR ----------
+  // Collar
   fill('#f0f6fc', 4, 7, 8, 1)
   fill(darken('#f0f6fc', 0.2), 4, 7, 1, 1)
   fill(darken('#f0f6fc', 0.2), 11, 7, 1, 1)
 
-  // ---------- BODY / SHIRT ----------
-  // Main shirt rows
+  // Body rows
   fill(bodyColor, 4, 8, 8, 1)
   fill(bodyColor, 4, 9, 8, 1)
   fill(bodyColor, 4, 10, 8, 1)
   fill(bodyColor, 4, 11, 8, 1)
-  // Tie in center (accent)
   fill(accent, 7, 7, 2, 1)
   fill(accent, 7, 8, 2, 1)
   fill(accent, 7, 9, 2, 1)
   fill(accent, 7, 10, 1, 1)
   fill(accent, 8, 10, 1, 1)
-  // Body side shading
   fill(bodyDark, 11, 8, 1, 4)
   fill(bodyLight, 4, 8, 1, 1)
-  // Belt
   fill(accentDark, 5, 11, 6, 1)
 
-  // ---------- ARMS ----------
-  const typing = anim === 'type0' || anim === 'type1'
-  const armYShift = typing ? (frame === 1 ? -1 : 0) : 0
+  // Arms
+  const armOff = isWalking ? walkArmOffsets(walkFrame) : { lArm: 0, rArm: 0 }
+  const typeOff = isTyping && typeFrame === 1 ? -1 : 0
+  const lArmY = isTyping ? 8 + typeOff : 8 + armOff.lArm
+  const rArmY = isTyping ? 8 + typeOff : 8 + armOff.rArm
 
-  // Sleeves (color)
-  fill(bodyColor, 3, 8 + armYShift, 1, 2)
-  fill(bodyColor, 12, 8 + armYShift, 1, 2)
-  fill(bodyDark, 12, 9 + armYShift, 1, 1)
-  // Hands (skin)
-  if (typing) {
-    // Hands brought forward over desk
-    fill(skin, 5, 10 + armYShift, 1, 1)
-    fill(skin, 10, 10 + armYShift, 1, 1)
-    fill(skin, 3, 10 + armYShift, 1, 1)
-    fill(skin, 12, 10 + armYShift, 1, 1)
+  fill(bodyColor, 3, lArmY, 1, 2)
+  fill(bodyColor, 12, rArmY, 1, 2)
+  fill(bodyDark, 12, rArmY + 1, 1, 1)
+
+  if (isTyping) {
+    // Both hands forward toward desk
+    fill(skin, 5, 10 + typeOff, 1, 1)
+    fill(skin, 10, 10 + typeOff, 1, 1)
+    fill(skin, 3, 10 + typeOff, 1, 1)
+    fill(skin, 12, 10 + typeOff, 1, 1)
   } else {
-    fill(skin, 3, 10 + armYShift, 1, 1)
-    fill(skin, 12, 10 + armYShift, 1, 1)
+    fill(skin, 3, 10 + armOff.lArm, 1, 1)
+    fill(skin, 12, 10 + armOff.rArm, 1, 1)
   }
 
-  // ---------- PANTS / LEGS ----------
-  const walking = anim === 'walk0' || anim === 'walk1'
-  const lShift = walking && frame === 1 ? -1 : 0
-  const rShift = walking && frame === 0 ? -1 : 0
-
-  // Left leg
+  // Legs
+  const { lShift, rShift } = isWalking ? walkLegOffsets(walkFrame) : { lShift: 0, rShift: 0 }
   fill(pants, 5, 12 + lShift, 2, 2)
   fill(pantsLight, 5, 12 + lShift, 1, 2)
-  // Right leg
   fill(pants, 9, 12 + rShift, 2, 2)
   fill(pantsLight, 9, 12 + rShift, 1, 2)
 
-  // ---------- SHOES ----------
+  // Shoes
   fill(shoe, 4, 14 + lShift, 3, 1)
   fill(shoeHi, 4, 14 + lShift, 1, 1)
   fill(shoe, 9, 14 + rShift, 3, 1)
   fill(shoeHi, 9, 14 + rShift, 1, 1)
 
-  // ---------- OUTLINE ----------
-  // Light silhouette outline on outer edges (body sides)
+  // Outline hints
   fill(outline, 3, 11, 1, 1)
   fill(outline, 12, 11, 1, 1)
 

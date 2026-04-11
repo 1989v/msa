@@ -18,7 +18,6 @@ interface ZoneRect {
 }
 
 function computeTeamZones(teamCount: number, midY: number, midH: number): ZoneRect[] {
-  // All available cols for teams (padded by 1 for walls)
   const totalW = WORLD_COLS - 2
   const startX = 1
 
@@ -32,73 +31,118 @@ function computeTeamZones(teamCount: number, midY: number, midH: number): ZoneRe
     const gx = i % colsPerRow
     const gy = Math.floor(i / colsPerRow)
     zones.push({
-      x: startX + gx * zoneW + 1,
-      y: midY + gy * zoneH + 1,
-      w: zoneW - 2,
-      h: zoneH - 2,
+      x: startX + gx * zoneW,
+      y: midY + gy * zoneH,
+      w: zoneW,
+      h: zoneH,
     })
   }
   return zones
+}
+
+/**
+ * Draw walls around the zone leaving a front-bottom doorway.
+ * Inside becomes carpet; walls are team-tinted along the top.
+ */
+function partitionZone(world: World, zone: ZoneRect, team: Team): void {
+  // Top + left + right walls; bottom has a doorway
+  for (let c = zone.x; c < zone.x + zone.w; c++) {
+    setTile(world, c, zone.y, TileType.WALL, team.color)
+  }
+  for (let r = zone.y; r < zone.y + zone.h; r++) {
+    setTile(world, zone.x, r, TileType.WALL, team.color)
+    setTile(world, zone.x + zone.w - 1, r, TileType.WALL, team.color)
+  }
+  // Bottom wall except a 2-tile doorway in the middle
+  const doorStart = zone.x + Math.floor(zone.w / 2) - 1
+  const doorEnd = doorStart + 2
+  for (let c = zone.x; c < zone.x + zone.w; c++) {
+    if (c >= doorStart && c < doorEnd) continue
+    setTile(world, c, zone.y + zone.h - 1, TileType.WALL, team.color)
+  }
+
+  // Paint interior carpet
+  for (let row = zone.y + 1; row < zone.y + zone.h - 1; row++) {
+    for (let col = zone.x + 1; col < zone.x + zone.w - 1; col++) {
+      const checker = (col + row) % 2 === 0
+      setTile(world, col, row, checker ? TileType.CARPET_A : TileType.CARPET_B, team.color)
+    }
+  }
 }
 
 function placeDesksInZone(
   _world: World,
   zone: ZoneRect,
   team: Team,
-  agentCount: number
+  agentCount: number,
 ): { desks: Furniture[]; seats: Seat[] } {
   const desks: Furniture[] = []
   const seats: Seat[] = []
 
-  // Each desk unit is 2 tiles wide and takes 3 tiles vertically: desk top row
-  // + seat row below. We lay out two columns of desks along the zone.
-  const deskCount = agentCount
-  const perCol = Math.ceil(deskCount / 2)
-  const desksStartX = zone.x + 1
-  const desksStartY = zone.y + 1
-  const colGap = Math.max(2, Math.floor((zone.w - 4) / 2))
+  // Interior usable area (inside the walls). Keep top row clear for
+  // whiteboard and bottom row clear for doorway.
+  const innerX = zone.x + 1
+  const innerY = zone.y + 2
+  const innerW = zone.w - 2
+  const innerH = zone.h - 3
+
+  if (innerW < 2 || innerH < 2) return { desks, seats }
+
+  // Two columns of desks (2-wide each) along left and right
+  const colXs = [innerX, innerX + innerW - 2]
+  const deskRowStep = 2 // desk (1) + seat (1), no gap
+  const rowsPerCol = Math.max(1, Math.floor(innerH / deskRowStep))
 
   let placed = 0
-  for (let c = 0; c < 2 && placed < deskCount; c++) {
-    for (let r = 0; r < perCol && placed < deskCount; r++) {
-      const col = desksStartX + c * colGap
-      const row = desksStartY + r * 3
-      if (row + 1 >= zone.y + zone.h) break
-
+  for (let ri = 0; ri < rowsPerCol && placed < agentCount; ri++) {
+    for (const cx of colXs) {
+      if (placed >= agentCount) break
+      const row = innerY + ri * deskRowStep
+      if (row + 1 >= innerY + innerH) break
       const deskUid = nextUid('desk')
-      const desk: Furniture = {
+      desks.push({
         uid: deskUid,
         type: 'desk',
-        col,
+        col: cx,
         row,
         w: 2,
         h: 1,
         color: team.color,
         facing: Dir.DOWN,
-      }
-      desks.push(desk)
-
+      })
       const seatUid = nextUid('seat')
-      const seat: Seat = {
+      seats.push({
         uid: seatUid,
-        col: col,
+        col: cx,
         row: row + 1,
         facing: Dir.UP,
         deskUid,
         teamId: team.id,
-      }
-      seats.push(seat)
+      })
       placed++
     }
   }
 
-  // Add a plant in the zone corner if there's room
-  if (zone.w >= 4 && zone.h >= 4) {
+  // Team name plate placeholder (whiteboard on top wall)
+  if (innerW >= 4) {
+    desks.push({
+      uid: nextUid('whiteboard'),
+      type: 'whiteboard',
+      col: zone.x + Math.floor(zone.w / 2) - 1,
+      row: zone.y + 1,
+      w: 2,
+      h: 1,
+      color: team.color,
+    })
+  }
+
+  // Plant in a corner
+  if (innerW >= 4) {
     desks.push({
       uid: nextUid('plant'),
       type: 'plant',
-      col: zone.x + zone.w - 1,
-      row: zone.y,
+      col: zone.x + zone.w - 2,
+      row: zone.y + zone.h - 3,
       w: 1,
       h: 1,
       color: team.color,
@@ -106,6 +150,214 @@ function placeDesksInZone(
   }
 
   return { desks, seats }
+}
+
+function buildLoungeArea(world: World, breakY: number): void {
+  const cols = WORLD_COLS
+  const breakBottom = WORLD_ROWS - 2
+
+  // Left sofa group: two sofas facing each other with a coffee table between
+  const g1cx = 6
+  const g1cy = breakY + 3
+  world.furniture.push({
+    uid: nextUid('sofa'),
+    type: 'sofa',
+    col: g1cx - 1,
+    row: g1cy - 2,
+    w: 3,
+    h: 1,
+    facing: Dir.DOWN,
+  })
+  world.furniture.push({
+    uid: nextUid('coffee-table'),
+    type: 'coffeeTable',
+    col: g1cx,
+    row: g1cy,
+    w: 1,
+    h: 1,
+  })
+  world.furniture.push({
+    uid: nextUid('sofa'),
+    type: 'sofa',
+    col: g1cx - 1,
+    row: g1cy + 2,
+    w: 3,
+    h: 1,
+    facing: Dir.UP,
+  })
+
+  // Right sofa group: mirror
+  const g2cx = cols - 7
+  const g2cy = breakY + 3
+  world.furniture.push({
+    uid: nextUid('sofa'),
+    type: 'sofa',
+    col: g2cx - 1,
+    row: g2cy - 2,
+    w: 3,
+    h: 1,
+    facing: Dir.DOWN,
+  })
+  world.furniture.push({
+    uid: nextUid('coffee-table'),
+    type: 'coffeeTable',
+    col: g2cx,
+    row: g2cy,
+    w: 1,
+    h: 1,
+  })
+  world.furniture.push({
+    uid: nextUid('sofa'),
+    type: 'sofa',
+    col: g2cx - 1,
+    row: g2cy + 2,
+    w: 3,
+    h: 1,
+    facing: Dir.UP,
+  })
+
+  // Center: ping pong table
+  const centerCol = Math.floor(cols / 2) - 2
+  world.furniture.push({
+    uid: nextUid('pingpong'),
+    type: 'pingPong',
+    col: centerCol,
+    row: breakY + 3,
+    w: 4,
+    h: 2,
+  })
+
+  // Lounge chairs near center
+  world.furniture.push({
+    uid: nextUid('lounge-chair'),
+    type: 'loungeChair',
+    col: centerCol - 2,
+    row: breakY + 2,
+    w: 1,
+    h: 1,
+    facing: Dir.DOWN,
+  })
+  world.furniture.push({
+    uid: nextUid('lounge-chair'),
+    type: 'loungeChair',
+    col: centerCol + 5,
+    row: breakY + 2,
+    w: 1,
+    h: 1,
+    facing: Dir.DOWN,
+  })
+
+  // Coffee machine + vending + water cooler on back wall
+  world.furniture.push({
+    uid: nextUid('coffee-machine'),
+    type: 'coffeeMachine',
+    col: 2,
+    row: breakY + 1,
+    w: 1,
+    h: 1,
+  })
+  world.furniture.push({
+    uid: nextUid('vending'),
+    type: 'vendingMachine',
+    col: 3,
+    row: breakY + 1,
+    w: 1,
+    h: 1,
+  })
+  world.furniture.push({
+    uid: nextUid('cooler'),
+    type: 'cooler',
+    col: cols - 4,
+    row: breakY + 1,
+    w: 1,
+    h: 1,
+  })
+
+  // Bookshelves on outer walls
+  world.furniture.push({
+    uid: nextUid('bookshelf'),
+    type: 'bookshelf',
+    col: 2,
+    row: breakBottom - 2,
+    w: 2,
+    h: 1,
+  })
+  world.furniture.push({
+    uid: nextUid('bookshelf'),
+    type: 'bookshelf',
+    col: cols - 4,
+    row: breakBottom - 2,
+    w: 2,
+    h: 1,
+  })
+
+  // Plants scattered around
+  world.furniture.push({
+    uid: nextUid('plant'),
+    type: 'plant',
+    col: 1,
+    row: breakY + 1,
+    w: 1,
+    h: 1,
+  })
+  world.furniture.push({
+    uid: nextUid('plant'),
+    type: 'plant',
+    col: cols - 2,
+    row: breakY + 1,
+    w: 1,
+    h: 1,
+  })
+  world.furniture.push({
+    uid: nextUid('plant'),
+    type: 'plant',
+    col: 1,
+    row: breakBottom - 1,
+    w: 1,
+    h: 1,
+  })
+  world.furniture.push({
+    uid: nextUid('plant'),
+    type: 'plant',
+    col: cols - 2,
+    row: breakBottom - 1,
+    w: 1,
+    h: 1,
+  })
+
+  // Lounge spots: seat positions on each sofa cushion
+  // Sofa facing DOWN (backrest at top, seat at bottom of sofa tile): character sits ON the sofa at its tile
+  const addSofaSpots = (col: number, row: number, width: number, facing: number) => {
+    for (let i = 0; i < width; i++) {
+      world.loungeSpots.push({
+        uid: nextUid('lspot'),
+        col: col + i,
+        row: row,
+        facing: facing as 0 | 1 | 2 | 3,
+        kind: 'sofa',
+      })
+    }
+  }
+  addSofaSpots(g1cx - 1, g1cy - 2, 3, Dir.DOWN)
+  addSofaSpots(g1cx - 1, g1cy + 2, 3, Dir.UP)
+  addSofaSpots(g2cx - 1, g2cy - 2, 3, Dir.DOWN)
+  addSofaSpots(g2cx - 1, g2cy + 2, 3, Dir.UP)
+
+  // Lounge chair spots
+  world.loungeSpots.push({
+    uid: nextUid('lspot'),
+    col: centerCol - 2,
+    row: breakY + 2,
+    facing: Dir.DOWN,
+    kind: 'chair',
+  })
+  world.loungeSpots.push({
+    uid: nextUid('lspot'),
+    col: centerCol + 5,
+    row: breakY + 2,
+    facing: Dir.DOWN,
+    kind: 'chair',
+  })
 }
 
 export function buildDefaultLayout(teams: Team[], agents: Agent[]): World {
@@ -117,15 +369,16 @@ export function buildDefaultLayout(teams: Team[], agents: Agent[]): World {
     tileTint: new Array(WORLD_COLS * WORLD_ROWS).fill(null),
     furniture: [],
     seats: [],
+    loungeSpots: [],
     breakTiles: [],
     ceoQueueTiles: [],
     ceoDesk: null,
     characters: new Map(),
     teamZones: new Map(),
+    time: 0,
   }
 
-  // --- Floors ---
-  // Outer wall border
+  // --- Outer walls ---
   for (let c = 0; c < WORLD_COLS; c++) {
     setTile(world, c, 0, TileType.WALL)
     setTile(world, c, WORLD_ROWS - 1, TileType.WALL)
@@ -135,20 +388,25 @@ export function buildDefaultLayout(teams: Team[], agents: Agent[]): World {
     setTile(world, WORLD_COLS - 1, r, TileType.WALL)
   }
 
-  // CEO zone (top)
+  // --- CEO zone (top) ---
   const ceoY = 1
   const ceoH = CEO_ROWS
   fillRect(world, 1, ceoY, WORLD_COLS - 2, ceoH, TileType.CEO)
 
-  // Break zone (bottom)
+  // --- Break zone (bottom) ---
   const breakY = WORLD_ROWS - 1 - BREAK_ROWS
   fillRect(world, 1, breakY, WORLD_COLS - 2, BREAK_ROWS, TileType.BREAK)
 
-  // Middle = team area
-  const midY = ceoY + ceoH
-  const midH = breakY - midY
+  // --- Middle = team area ---
+  const midY = ceoY + ceoH + 1 // +1 for corridor separator
+  const midH = breakY - midY - 1 // -1 for corridor separator below
 
-  // --- Team zones ---
+  // Corridor between CEO and team area (floor)
+  fillRect(world, 1, midY - 1, WORLD_COLS - 2, 1, TileType.FLOOR)
+  // Corridor between team area and break
+  fillRect(world, 1, breakY - 1, WORLD_COLS - 2, 1, TileType.FLOOR)
+
+  // Team zones
   const activeTeams = teams.filter((t) => agents.some((a) => a.team === t.id))
   const zones = computeTeamZones(activeTeams.length, midY, midH)
 
@@ -156,26 +414,15 @@ export function buildDefaultLayout(teams: Team[], agents: Agent[]): World {
     const zone = zones[i]
     if (!zone) return
     world.teamZones.set(team.id, { ...zone, color: team.color })
-
-    // Fill zone floor with team carpet
-    for (let row = zone.y; row < zone.y + zone.h; row++) {
-      for (let col = zone.x; col < zone.x + zone.w; col++) {
-        const checker = (col + row) % 2 === 0 ? TileType.CARPET_A : TileType.CARPET_B
-        setTile(world, col, row, checker, team.color)
-      }
-    }
-
-    // Plain floor gap between zones (for walking lanes) — handled by leaving
-    // non-zone tiles as VOID and filling them with FLOOR below.
-
+    partitionZone(world, zone, team)
     const teamAgents = agents.filter((a) => a.team === team.id)
     const { desks, seats } = placeDesksInZone(world, zone, team, teamAgents.length)
     world.furniture.push(...desks)
     world.seats.push(...seats)
   })
 
-  // Fill any remaining VOID inside the main hall with FLOOR (walking lanes)
-  for (let r = midY; r < midY + midH; r++) {
+  // Fill remaining VOID in the main hall with FLOOR (walking corridors)
+  for (let r = midY - 1; r < midY + midH + 1; r++) {
     for (let c = 1; c < WORLD_COLS - 1; c++) {
       const i = r * WORLD_COLS + c
       if (world.tiles[i] === TileType.VOID) {
@@ -199,94 +446,34 @@ export function buildDefaultLayout(teams: Team[], agents: Agent[]): World {
   })
   world.ceoDesk = { col: ceoDeskCol + 1, row: ceoDeskRow + 1 }
 
-  // CEO queue path: horizontal line in front of CEO desk
   const queueRow = ceoY + ceoH - 1
   const queueStart = ceoDeskCol
   for (let i = 0; i < 8; i++) {
     world.ceoQueueTiles.push({ col: queueStart + i, row: queueRow })
   }
 
-  // --- Break zone furniture ---
-  // Sofas
-  world.furniture.push({
-    uid: nextUid('sofa'),
-    type: 'sofa',
-    col: 4,
-    row: breakY + 1,
-    w: 3,
-    h: 1,
-    facing: Dir.DOWN,
-  })
-  world.furniture.push({
-    uid: nextUid('sofa'),
-    type: 'sofa',
-    col: WORLD_COLS - 7,
-    row: breakY + 1,
-    w: 3,
-    h: 1,
-    facing: Dir.DOWN,
-  })
+  // --- Lounge area ---
+  buildLoungeArea(world, breakY)
 
-  // Vending machine
-  world.furniture.push({
-    uid: nextUid('vending'),
-    type: 'vendingMachine',
-    col: Math.floor(WORLD_COLS / 2) - 1,
-    row: breakY + 1,
-    w: 1,
-    h: 1,
-  })
-
-  // Water cooler
-  world.furniture.push({
-    uid: nextUid('cooler'),
-    type: 'cooler',
-    col: Math.floor(WORLD_COLS / 2) + 1,
-    row: breakY + 1,
-    w: 1,
-    h: 1,
-  })
-
-  // Plants in corners of break zone
-  world.furniture.push({
-    uid: nextUid('plant'),
-    type: 'plant',
-    col: 2,
-    row: breakY + 2,
-    w: 1,
-    h: 1,
-  })
-  world.furniture.push({
-    uid: nextUid('plant'),
-    type: 'plant',
-    col: WORLD_COLS - 3,
-    row: breakY + 2,
-    w: 1,
-    h: 1,
-  })
-
-  // Break tiles available for wandering — pick walkable tiles in the break
-  // zone that are not directly on top of furniture.
-  const breakFurnitureBlocked = new Set<number>()
+  // Break tiles (walkable open floor in break zone, not where furniture sits)
+  const furnitureBlocked = new Set<number>()
   for (const f of world.furniture) {
-    if (f.row >= breakY) {
-      for (let dy = 0; dy < f.h; dy++) {
-        for (let dx = 0; dx < f.w; dx++) {
-          breakFurnitureBlocked.add((f.row + dy) * WORLD_COLS + (f.col + dx))
-        }
+    if (f.row < breakY) continue
+    for (let dy = 0; dy < f.h; dy++) {
+      for (let dx = 0; dx < f.w; dx++) {
+        furnitureBlocked.add((f.row + dy) * WORLD_COLS + (f.col + dx))
       }
     }
   }
-  for (let r = breakY + 2; r < WORLD_ROWS - 1; r++) {
-    for (let c = 2; c < WORLD_COLS - 2; c++) {
+  for (let r = breakY; r < WORLD_ROWS - 1; r++) {
+    for (let c = 1; c < WORLD_COLS - 1; c++) {
       const k = r * WORLD_COLS + c
-      if (world.tiles[k] === TileType.BREAK && !breakFurnitureBlocked.has(k)) {
+      if (world.tiles[k] === TileType.BREAK && !furnitureBlocked.has(k)) {
         world.breakTiles.push({ col: c, row: r })
       }
     }
   }
 
-  // Also let the lower row in front of sofas be a valid wander target
   return world
 }
 
@@ -299,7 +486,6 @@ export function tileCenterPx(col: number, row: number): { x: number; y: number }
 }
 
 export function assignSeats(world: World, agents: Agent[]): Map<string, string> {
-  // group seats by teamId
   const byTeam = new Map<string, string[]>()
   for (const seat of world.seats) {
     const arr = byTeam.get(seat.teamId) ?? []

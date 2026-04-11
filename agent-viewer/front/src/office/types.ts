@@ -35,11 +35,17 @@ export interface Seat {
 export type FurnitureType =
   | 'desk'
   | 'sofa'
+  | 'sofaH' // horizontal (side-facing) sofa
   | 'plant'
   | 'whiteboard'
   | 'vendingMachine'
   | 'ceoDesk'
   | 'cooler'
+  | 'coffeeTable'
+  | 'loungeChair'
+  | 'bookshelf'
+  | 'coffeeMachine'
+  | 'pingPong'
 
 export interface Furniture {
   uid: string
@@ -58,12 +64,22 @@ export const CharState = {
   READ: 'read',
   WALK: 'walk',
   WANDER: 'wander',
+  REST: 'rest',
   WAITING: 'waiting',
   QUEUED: 'queued',
 } as const
 export type CharState = (typeof CharState)[keyof typeof CharState]
 
 export type DesiredState = 'idle' | 'type' | 'waiting' | 'queued'
+
+export interface LoungeSpot {
+  uid: string
+  col: number
+  row: number
+  facing: Direction
+  /** Type of seating — affects rest pose */
+  kind: 'sofa' | 'chair'
+}
 
 export interface Character {
   agentId: string
@@ -94,6 +110,7 @@ export interface Character {
 
   // assignment
   seatId: string | null
+  loungeSpotId: string | null
 
   // visual overlays
   bubble: 'waiting' | 'permission' | null
@@ -114,11 +131,14 @@ export interface World {
   tileTint: Array<string | null>
   furniture: Furniture[]
   seats: Seat[]
+  loungeSpots: LoungeSpot[]
   breakTiles: Array<{ col: number; row: number }>
   ceoQueueTiles: Array<{ col: number; row: number }>
   ceoDesk: { col: number; row: number } | null
   characters: Map<string, Character>
   teamZones: Map<string, { x: number; y: number; w: number; h: number; color: string }>
+  /** UTC seconds since world creation — rendered by animated furniture */
+  time: number
 }
 
 export interface StoreSnapshot {

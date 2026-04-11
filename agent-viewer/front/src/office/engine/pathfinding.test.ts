@@ -10,11 +10,13 @@ function makeWorld(cols: number, rows: number): World {
     tileTint: new Array(cols * rows).fill(null),
     furniture: [],
     seats: [],
+    loungeSpots: [],
     breakTiles: [],
     ceoQueueTiles: [],
     ceoDesk: null,
     characters: new Map(),
     teamZones: new Map(),
+    time: 0,
   }
 }
 

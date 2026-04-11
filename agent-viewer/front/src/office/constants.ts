@@ -1,11 +1,11 @@
 export const TILE_SIZE = 16
 export const RENDER_SCALE = 2
 
-export const WORLD_COLS = 40
-export const WORLD_ROWS = 26
+export const WORLD_COLS = 44
+export const WORLD_ROWS = 32
 
 export const CEO_ROWS = 4
-export const BREAK_ROWS = 4
+export const BREAK_ROWS = 8
 
 export const COLORS = {
   background: '#0b0f14',

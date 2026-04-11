@@ -62,4 +62,36 @@ describe('buildDefaultLayout', () => {
     const mid = Math.floor(world.rows / 2) * world.cols + Math.floor(world.cols / 2)
     expect(world.tiles[mid]).not.toBe(0) // TileType.VOID === 0
   })
+
+  it('produces lounge spots for resting agents', () => {
+    const world = buildDefaultLayout(makeTeams(), makeAgents())
+    // Expect at least sofa spots + lounge chairs
+    expect(world.loungeSpots.length).toBeGreaterThanOrEqual(12)
+    // Every lounge spot should be within world bounds
+    for (const s of world.loungeSpots) {
+      expect(s.col).toBeGreaterThan(0)
+      expect(s.col).toBeLessThan(world.cols - 1)
+      expect(s.row).toBeGreaterThan(0)
+      expect(s.row).toBeLessThan(world.rows - 1)
+    }
+  })
+
+  it('walls each team zone (top + sides) with a front doorway', () => {
+    const world = buildDefaultLayout(makeTeams(), makeAgents())
+    for (const zone of world.teamZones.values()) {
+      // Top wall present
+      const topIdx = zone.y * world.cols + zone.x + 1
+      expect(world.tiles[topIdx]).toBe(4) // TileType.WALL
+      // At least one doorway tile in bottom row (i.e., a non-wall)
+      const bottomRow = zone.y + zone.h - 1
+      let doorwayFound = false
+      for (let c = zone.x + 1; c < zone.x + zone.w - 1; c++) {
+        if (world.tiles[bottomRow * world.cols + c] !== 4) {
+          doorwayFound = true
+          break
+        }
+      }
+      expect(doorwayFound).toBe(true)
+    }
+  })
 })

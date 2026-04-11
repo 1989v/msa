@@ -5,16 +5,30 @@ import type { RenderOverlay } from './renderer'
 import { ensureSpriteCache, getBakedSprite, type AnimKind } from './spriteCache'
 
 function idleBobOffset(char: Character): number {
-  if (char.state === CharState.IDLE || char.state === CharState.WAITING || char.state === CharState.QUEUED) {
+  if (
+    char.state === CharState.IDLE ||
+    char.state === CharState.WAITING ||
+    char.state === CharState.QUEUED
+  ) {
     return char.frame === 1 ? -1 : 0
   }
   return 0
 }
 
 function animKindFor(c: Character): AnimKind {
+  if (c.state === CharState.REST) return 'rest'
   if (c.state === CharState.TYPE) return c.frame === 1 ? 'type1' : 'type0'
   if (c.state === CharState.WALK || c.state === CharState.WANDER) {
-    return c.frame === 1 ? 'walk1' : 'walk0'
+    switch (c.frame % 4) {
+      case 0:
+        return 'walk0'
+      case 1:
+        return 'walk1'
+      case 2:
+        return 'walk2'
+      default:
+        return 'walk3'
+    }
   }
   return 'idle'
 }
@@ -43,12 +57,14 @@ export function drawCharacters(
     const dx = Math.round(c.x - 8)
     const dy = Math.round(c.y - 14) + bob
 
-    // Drop shadow (oval under feet)
-    ctx.globalAlpha = 0.35 * alpha
-    ctx.fillStyle = '#000000'
-    ctx.fillRect(Math.round(c.x - 4), Math.round(c.y) + 1, 8, 2)
-    ctx.fillRect(Math.round(c.x - 3), Math.round(c.y) + 3, 6, 1)
-    ctx.globalAlpha = 1
+    // Drop shadow (oval under feet) — skip for seated states
+    if (c.state !== CharState.REST && c.state !== CharState.TYPE) {
+      ctx.globalAlpha = 0.35 * alpha
+      ctx.fillStyle = '#000000'
+      ctx.fillRect(Math.round(c.x - 4), Math.round(c.y) + 1, 8, 2)
+      ctx.fillRect(Math.round(c.x - 3), Math.round(c.y) + 3, 6, 1)
+      ctx.globalAlpha = 1
+    }
 
     ctx.globalAlpha = alpha
     ctx.drawImage(baked as CanvasImageSource, dx, dy)

@@ -11,9 +11,12 @@ export function startGameLoop(world: World, render: RenderFn): () => void {
     const dt = Math.min((now - last) / 1000, 0.05)
     last = now
 
-    const taken = new Set<string>()
+    world.time += dt
+
+    const queueTaken = new Set<string>()
+    const loungeClaimed = new Set<string>()
     for (const c of world.characters.values()) {
-      tickCharacter(c, dt, world, taken)
+      tickCharacter(c, dt, world, queueTaken, loungeClaimed)
     }
 
     render(world)
