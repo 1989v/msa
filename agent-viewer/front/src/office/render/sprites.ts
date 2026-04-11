@@ -3,9 +3,15 @@ import type { Character, World } from '../types'
 import { CharState } from '../types'
 import type { RenderOverlay } from './renderer'
 import { ensureSpriteCache, getBakedSprite, type AnimKind } from './spriteCache'
+import { CHARACTER_TILES, SPRITE_TYPE_TO_CHARACTER } from '../assets/catalog'
+import { drawTileFromSheet, getSheet } from '../assets/loader'
 
 function idleBobOffset(char: Character): number {
-  if (char.state === CharState.IDLE || char.state === CharState.WAITING || char.state === CharState.QUEUED) {
+  if (
+    char.state === CharState.IDLE ||
+    char.state === CharState.WAITING ||
+    char.state === CharState.QUEUED
+  ) {
     return char.frame === 1 ? -1 : 0
   }
   return 0
@@ -19,6 +25,25 @@ function animKindFor(c: Character): AnimKind {
   return 'idle'
 }
 
+function pickCharacterTile(c: Character) {
+  const idx = SPRITE_TYPE_TO_CHARACTER[c.spriteType] ?? 0
+  return CHARACTER_TILES[idx % CHARACTER_TILES.length]
+}
+
+function drawAssetCharacter(
+  ctx: CanvasRenderingContext2D,
+  c: Character,
+  dx: number,
+  dy: number,
+): boolean {
+  const tile = pickCharacterTile(c)
+  if (!getSheet(tile.sheet)) return false
+  // Small walking bounce for walk states
+  const walkBounce =
+    (c.state === CharState.WALK || c.state === CharState.WANDER) && c.frame === 1 ? -1 : 0
+  return drawTileFromSheet(ctx, tile.sheet, tile.col, tile.row, dx, dy + walkBounce)
+}
+
 export function drawCharacters(
   ctx: CanvasRenderingContext2D,
   world: World,
@@ -26,7 +51,6 @@ export function drawCharacters(
 ): void {
   ensureSpriteCache()
 
-  // Depth sort by Y
   const chars = [...world.characters.values()].sort((a, b) => a.y - b.y)
 
   for (const c of chars) {
@@ -36,15 +60,20 @@ export function drawCharacters(
         ? c.spawnTimer
         : 1
 
-    const baked = getBakedSprite(c.spriteType, c.dir, animKindFor(c))
-    if (!baked) continue
-
     const bob = idleBobOffset(c)
     const dx = Math.round(c.x - 8)
     const dy = Math.round(c.y - 14) + bob
 
     ctx.globalAlpha = alpha
-    ctx.drawImage(baked as CanvasImageSource, dx, dy)
+
+    // Try asset sprite first, fall back to procedural bake
+    if (!drawAssetCharacter(ctx, c, dx, dy)) {
+      const baked = getBakedSprite(c.spriteType, c.dir, animKindFor(c))
+      if (baked) {
+        ctx.drawImage(baked as CanvasImageSource, dx, dy)
+      }
+    }
+
     ctx.globalAlpha = 1
 
     // Spawn matrix bars

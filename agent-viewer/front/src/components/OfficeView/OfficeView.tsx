@@ -11,6 +11,7 @@ import {
   type World,
 } from '@/office'
 import { buildSnapshot } from '@/office/engine/mapAgentState'
+import { preloadSheets } from '@/office/assets/loader'
 import styles from './OfficeView.module.css'
 
 export function OfficeView() {
@@ -49,6 +50,9 @@ export function OfficeView() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     if (!ctx) return
+
+    // Kick off asset preload (non-blocking — renderer falls back to procedural)
+    void preloadSheets()
 
     const world = buildDefaultLayout(teams, agents)
     worldRef.current = world
