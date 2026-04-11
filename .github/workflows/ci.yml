@@ -1,0 +1,116 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same ref so PR pushes don't pile up.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Gradle build + test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: ./gradlew build
+        run: ./gradlew build --no-daemon --stacktrace
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
+
+  jib-build:
+    name: Jib image build (verification only, no push)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: ./gradlew jibBuildTar
+        run: ./gradlew jibBuildTar --no-daemon
+
+      - name: Verify all 18 service tars
+        run: |
+          count=$(find . -type f -name jib-image.tar -not -path '*/node_modules/*' | wc -l | tr -d ' ')
+          echo "Found $count Jib image tars"
+          if [[ "$count" -lt 18 ]]; then
+            echo "::error::Expected 18 Jib image tars but found $count"
+            exit 1
+          fi
+
+  kustomize-validate:
+    name: Kustomize render check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+        with:
+          version: v1.31.0
+
+      - name: Render every kustomization
+        run: |
+          set -euo pipefail
+          fail=0
+          for dir in \
+              k8s/base \
+              k8s/infra/local \
+              k8s/infra/local/mysql \
+              k8s/infra/local/redis \
+              k8s/infra/local/kafka \
+              k8s/infra/local/elasticsearch \
+              k8s/infra/local/opensearch \
+              k8s/infra/local/clickhouse \
+              k8s/infra/prod/backup \
+              k8s/infra/prod/monitoring/dashboards \
+              k8s/overlays/k3s-lite \
+              k8s/overlays/prod-k8s; do
+            echo "::group::kustomize $dir"
+            if ! kubectl kustomize "$dir" > /tmp/render.yaml; then
+              echo "::error::kustomize render failed for $dir"
+              fail=1
+            else
+              wc -l /tmp/render.yaml
+            fi
+            echo "::endgroup::"
+          done
+          exit $fail

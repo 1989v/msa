@@ -45,6 +45,9 @@ val mainClassByImage: Map<String, String> = mapOf(
 
 val resolvedMainClass: String? = mainClassByImage[serviceImageName]
 val jibRegistry: String = (project.findProperty("jibRegistry") as String?) ?: "commerce"
+// Custom tag (e.g. CI commit SHA) overrides the default version-based tag.
+// Usage: ./gradlew jib -PjibTag=abc1234
+val jibCustomTag: String? = project.findProperty("jibTag") as String?
 
 if (resolvedMainClass == null) {
     // Library modules (like :common) apply the Spring Boot plugin for dependency
@@ -65,7 +68,12 @@ if (resolvedMainClass == null) {
         }
         to {
             image = "$jibRegistry/$serviceImageName"
-            tags = setOf("latest", project.version.toString())
+            // Tags: "latest" + either the CI-supplied jibTag or the project version.
+            tags = if (jibCustomTag != null) {
+                setOf("latest", jibCustomTag!!)
+            } else {
+                setOf("latest", project.version.toString())
+            }
         }
         container {
             mainClass = resolvedMainClass
