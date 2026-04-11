@@ -33,8 +33,10 @@ docs/
 │   ├── api-format.md
 │   └── kafka-topics.md
 ├── runbooks/                  ← 운영 가이드
-│   ├── local-dev-setup.md
-│   └── docker-infra.md
+│   ├── README.md              (핵심 구동 명령 요약)
+│   ├── k8s-deployment.md      (K8s / k3s 배포 전체 가이드)
+│   ├── local-dev-setup.md     (로컬 개발: bare-metal + k3d)
+│   └── docker-infra.md        (레거시 compose 안내 / 백업 브랜치 포인터)
 ├── study/                     ← 학습/개념 정리
 │   ├── git-submodule.md
 │   └── database-backup-concepts.md
@@ -50,13 +52,17 @@ docs/
 
 | 주제 | 문서 |
 |------|------|
-| 전체 아키텍처 | [platform-overview.md](architecture/platform-overview.md) |
-| Clean Architecture 원칙 | [00.clean-architecture.md](architecture/00.clean-architecture.md) |
-| 서비스 경계 | [service-boundary.md](architecture/service-boundary.md) |
+| **K8s / k3s 구동 (핵심 명령)** | [runbooks/README.md](runbooks/README.md) |
+| **K8s / k3s 배포 상세 런북** | [runbooks/k8s-deployment.md](runbooks/k8s-deployment.md) |
+| **K8s 배포 모델 (아키텍처)** | [architecture/k8s-deployment-model.md](architecture/k8s-deployment-model.md) |
+| K8s 마이그레이션 결정 기록 | [adr/ADR-0019-k8s-migration.md](adr/ADR-0019-k8s-migration.md) |
+| 로컬 개발 환경 | [runbooks/local-dev-setup.md](runbooks/local-dev-setup.md) |
+| 전체 아키텍처 | [architecture/platform-overview.md](architecture/platform-overview.md) |
+| Clean Architecture 원칙 | [architecture/00.clean-architecture.md](architecture/00.clean-architecture.md) |
+| 서비스 경계 | [architecture/service-boundary.md](architecture/service-boundary.md) |
 | ADR 목록 | [adr/](adr/) |
-| 로컬 개발 환경 | [local-dev-setup.md](runbooks/local-dev-setup.md) |
-| 백업 설계 스펙 | [backup-management-design.md](superpowers/specs/2026-04-06-backup-management-design.md) |
-| 백업 운영 가이드 | [docker/backup/README.md](../docker/backup/README.md) |
+| 백업 스크립트 (source of truth) | [../docker/backup/README.md](../docker/backup/README.md) |
+| 백업 K8s CronJob | [../k8s/infra/prod/backup/README.md](../k8s/infra/prod/backup/README.md) |
 
 ## ADR Numbering
 
