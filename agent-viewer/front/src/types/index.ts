@@ -1,6 +1,6 @@
 export type AgentStatus = 'idle' | 'working' | 'thinking'
 export type TaskStatus = 'pending' | 'in-progress' | 'completed'
-export type ViewMode = 'session' | 'team' | 'task'
+export type ViewMode = 'session' | 'team' | 'task' | 'office'
 export type SessionStatus = 'active' | 'paused' | 'completed'
 
 export interface Session {

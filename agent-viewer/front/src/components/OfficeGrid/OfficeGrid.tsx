@@ -3,6 +3,7 @@ import { TeamArea } from './TeamArea'
 import { CeoRoom } from './CeoRoom'
 import { TaskGrid } from '@/components/TaskView/TaskGrid'
 import { SessionGrid } from '@/components/SessionView/SessionGrid'
+import { OfficeView } from '@/components/OfficeView/OfficeView'
 import styles from './OfficeGrid.module.css'
 
 export function OfficeGrid() {
@@ -10,6 +11,10 @@ export function OfficeGrid() {
   const teams = useAppStore((s) => s.teams)
   const agents = useAppStore((s) => s.agents)
   const teamFilters = useAppStore((s) => s.teamFilters)
+
+  if (viewMode === 'office') {
+    return <OfficeView />
+  }
 
   if (viewMode === 'session') {
     return (

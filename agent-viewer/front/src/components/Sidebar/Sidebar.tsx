@@ -6,6 +6,7 @@ const VIEW_MODES: { mode: ViewMode; label: string; key: string }[] = [
   { mode: 'session', label: 'Sessions', key: '1' },
   { mode: 'team', label: 'Org Chart', key: '2' },
   { mode: 'task', label: 'Tasks', key: '3' },
+  { mode: 'office', label: 'Office', key: '4' },
 ]
 
 export function Sidebar() {
@@ -50,9 +51,15 @@ export function Sidebar() {
       <div className={styles.section}>
         <div className={styles.sectionHeader}>
           <h3 className={styles.sectionTitle}>
-            {viewMode === 'session' ? 'Sessions' : viewMode === 'team' ? 'Teams' : 'Tasks'}
+            {viewMode === 'session'
+              ? 'Sessions'
+              : viewMode === 'team'
+                ? 'Teams'
+                : viewMode === 'office'
+                  ? 'Office'
+                  : 'Tasks'}
           </h3>
-          {viewMode === 'team' && (
+          {(viewMode === 'team' || viewMode === 'office') && (
             <button
               className={styles.toggleAllBtn}
               onClick={() => setAllTeamFilters(teamFilters.size === 0)}
@@ -103,7 +110,7 @@ export function Sidebar() {
           </>
         )}
 
-        {viewMode === 'team' && teams.map((team) => (
+        {(viewMode === 'team' || viewMode === 'office') && teams.map((team) => (
           <label key={team.id} className={styles.filterItem}>
             <input
               type="checkbox"

@@ -20,6 +20,9 @@ export function useKeyboardShortcuts() {
         case '3':
           setViewMode('task')
           break
+        case '4':
+          setViewMode('office')
+          break
         case 'Escape':
           selectAgent(null)
           break
