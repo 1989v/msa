@@ -25,6 +25,21 @@ patches:
       kind: Deployment
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"
 
+  # Smoke-test only: let Hibernate auto-create tables since the local
+  # MySQL init script does not populate per-service schemas.
+  - path: patches/ddl-auto-update.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+
+  # k3s-lite: Spring Boot startup is slow on a loaded single-node
+  # cluster. Add a startupProbe so the liveness probe does not kill
+  # pods before they finish bootstrapping.
+  - path: patches/startup-probe.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+
   # Redis cluster -> standalone override. Only services whose
   # application-kubernetes.yml declares cluster.nodes get this patch.
   # Implementation: inject SPRING_APPLICATION_JSON env var with higher

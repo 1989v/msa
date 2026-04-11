@@ -1,9 +1,9 @@
 spring:
   datasource:
     master:
-      url: jdbc:mysql://mysql-fulfillment-master:3306/fulfillment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      jdbc-url: jdbc:mysql://mysql-fulfillment-master:3306/fulfillment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     replica:
-      url: jdbc:mysql://mysql-fulfillment-replica:3306/fulfillment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      jdbc-url: jdbc:mysql://mysql-fulfillment-replica:3306/fulfillment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
   kafka:
     bootstrap-servers: kafka:29092
 

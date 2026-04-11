@@ -20,7 +20,7 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: kafka
-          image: bitnami/kafka:3.8
+          image: bitnamilegacy/kafka:3.8
           imagePullPolicy: IfNotPresent
           ports:
             - name: internal

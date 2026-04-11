@@ -5,7 +5,7 @@ spring:
     timeout-per-shutdown-phase: 30s
   datasource:
     master:
-      url: jdbc:mysql://localhost:3326/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      jdbc-url: jdbc:mysql://localhost:3326/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       username: ${MYSQL_USER:order_user}
       password: ${MYSQL_PASSWORD:order_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
@@ -13,7 +13,7 @@ spring:
         maximum-pool-size: 10
         minimum-idle: 2
     replica:
-      url: jdbc:mysql://localhost:3327/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      jdbc-url: jdbc:mysql://localhost:3327/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       username: ${MYSQL_USER:order_user}
       password: ${MYSQL_PASSWORD:order_password}
       driver-class-name: com.mysql.cj.jdbc.Driver

@@ -1,0 +1,21 @@
+# k3s-lite smoke test: Spring Boot on Java 25 + Hibernate schema update
+# can easily take 60-90 seconds to reach Ready on a single-node k3d
+# cluster. The base liveness probe's 30s initialDelay is too aggressive
+# and kills the pod mid-startup. A startupProbe with a generous failure
+# threshold lets liveness hold off until startup succeeds.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 30   # up to 5 minutes total (20 + 30*10s)

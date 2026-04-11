@@ -1,0 +1,17 @@
+# Local smoke-test only: let Hibernate auto-create tables via ddl-auto=update.
+# Production deployment should rely on Flyway/Liquibase migrations applied
+# before the apps start, not on live schema mutation. This patch is
+# applied to every Deployment labelled part-of=commerce-platform in the
+# k3s-lite overlay.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"

@@ -1,9 +1,9 @@
 spring:
   datasource:
     master:
-      url: jdbc:mysql://mysql-product-master:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      jdbc-url: jdbc:mysql://mysql-product-master:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     replica:
-      url: jdbc:mysql://mysql-product-replica:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      jdbc-url: jdbc:mysql://mysql-product-replica:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
   kafka:
     bootstrap-servers: kafka:29092
   data:
