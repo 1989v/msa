@@ -4,6 +4,7 @@ import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Primary
 import reactor.core.publisher.Mono
 
 @Configuration
@@ -14,7 +15,12 @@ class RateLimiterConfig {
         Mono.just(exchange.request.remoteAddress?.address?.hostAddress ?: "unknown")
     }
 
+    // @Primary so Spring Cloud Gateway's requestRateLimiterGatewayFilterFactory
+    // picks this one by default when it asks for a single KeyResolver bean.
+    // GatewayRouteConfig also references it explicitly by field name via
+    // constructor injection, so the behaviour is unchanged.
     @Bean
+    @Primary
     fun userKeyResolver(): KeyResolver = KeyResolver { exchange ->
         Mono.just(
             exchange.request.headers.getFirst("X-User-Id")

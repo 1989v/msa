@@ -2,3 +2,4 @@ com.kgd.common.security.CommonSecurityAutoConfiguration
 com.kgd.common.redis.CommonRedisAutoConfiguration
 com.kgd.common.webclient.CommonWebClientAutoConfiguration
 com.kgd.common.analytics.AnalyticsAutoConfiguration
+com.kgd.common.jackson.CommonJacksonAutoConfiguration
