@@ -14,6 +14,7 @@ import PopularConcepts from '../components/PopularConcepts';
 import ServiceCatalog from '../components/ServiceCatalog';
 import AboutSection from '../components/AboutSection';
 import Footer from '../components/Footer';
+import QuizSection from '../components/quiz/QuizSection';
 import { searchConcepts } from '../api/searchApi';
 import type { GraphRenderer, GraphNode } from '../types/graph';
 import type { Category } from '../types/index';
@@ -258,6 +259,8 @@ export default function SearchPage() {
         </div>
         <PopularConcepts nodes={data.nodes} onConceptClick={handleSelectConcept} />
       </section>
+
+      <QuizSection nodes={data.nodes} onConceptClick={handleSelectConcept} />
 
       <ServiceCatalog onConceptClick={handleSelectConcept} />
 

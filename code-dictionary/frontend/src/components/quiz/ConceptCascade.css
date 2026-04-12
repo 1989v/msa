@@ -1,0 +1,421 @@
+/* ── Play Area ── */
+.cascade-container {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.cascade-play-area {
+  position: relative;
+  width: 100%;
+  height: 450px;
+  background: rgba(10, 10, 20, 0.5);
+  border-radius: 16px;
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+
+/* ── Score Bar ── */
+.cascade-score-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 10px 20px;
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 10;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.cascade-score-bar span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cascade-score-value {
+  color: #fff;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cascade-combo {
+  color: #ffd93d;
+}
+
+/* ── Progress indicator ── */
+.cascade-progress {
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* ── Falling Card ── */
+.cascade-card {
+  position: absolute;
+  top: 50px;
+  padding: 12px 16px;
+  background: rgba(26, 26, 46, 0.9);
+  border-radius: 10px;
+  border-left: 4px solid var(--card-color, #6c63ff);
+  cursor: grab;
+  z-index: 5;
+  pointer-events: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.15s;
+}
+
+.cascade-card:active {
+  cursor: grabbing;
+}
+
+.cascade-card.is-falling {
+  animation: cascade-fall 6s linear forwards;
+}
+
+.cascade-card.is-dragging {
+  animation-play-state: paused;
+  z-index: 20;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.cascade-card-name {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.cascade-card-desc {
+  color: #888;
+  font-size: 12px;
+  line-height: 1.4;
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+
+/* ── Fall Animation ── */
+@keyframes cascade-fall {
+  from {
+    top: 50px;
+  }
+  to {
+    top: calc(100% - 120px);
+  }
+}
+
+/* ── Correct / Wrong / Miss Animations ── */
+.cascade-card.is-correct {
+  animation: cascade-correct-shrink 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
+.cascade-card.is-wrong {
+  animation: cascade-shake 0.5s ease-out;
+}
+
+.cascade-card.is-missed {
+  animation: cascade-fade-out 0.6s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes cascade-correct-shrink {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes cascade-shake {
+  0%, 100% { transform: translateX(0); }
+  10% { transform: translateX(-8px); }
+  20% { transform: translateX(8px); }
+  30% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  50% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+  70% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes cascade-fade-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+/* ── Green Pulse Ring ── */
+.cascade-pulse-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 3px solid #4ecdc4;
+  pointer-events: none;
+  animation: cascade-pulse-expand 0.6s ease-out forwards;
+  z-index: 15;
+}
+
+@keyframes cascade-pulse-expand {
+  0% {
+    width: 20px;
+    height: 20px;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    width: 80px;
+    height: 80px;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+}
+
+/* ── Drop Zones ── */
+.cascade-zones {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  z-index: 4;
+}
+
+.cascade-zone {
+  flex: 1;
+  min-width: 100px;
+  padding: 12px 8px;
+  border-radius: 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--zone-color, #aaa);
+  background: var(--zone-bg, rgba(255, 255, 255, 0.05));
+  border: 2px solid transparent;
+  transition: transform 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.cascade-zone.is-active {
+  transform: scale(1.05);
+  background: var(--zone-bg-active, rgba(255, 255, 255, 0.12));
+  border-color: var(--zone-color, #aaa);
+  box-shadow: 0 0 16px var(--zone-glow, rgba(255, 255, 255, 0.1));
+}
+
+.cascade-zone-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cascade-zone-count {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.6;
+  font-weight: 400;
+}
+
+/* ── Start Screen ── */
+.cascade-start-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  text-align: center;
+}
+
+.cascade-start-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.cascade-start-subtitle {
+  font-size: 15px;
+  color: #888;
+  margin: 0;
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+.cascade-start-btn {
+  margin-top: 8px;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #6c63ff 0%, #a29bfe 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.cascade-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(108, 99, 255, 0.3);
+}
+
+/* ── Results Screen ── */
+.cascade-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 20px;
+  gap: 12px;
+}
+
+.cascade-results-card {
+  background: rgba(26, 26, 46, 0.9);
+  border-radius: 16px;
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.cascade-results-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px;
+}
+
+.cascade-results-score {
+  font-size: 48px;
+  font-weight: 800;
+  color: #6c63ff;
+  margin: 8px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.cascade-results-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 12px 0;
+  font-size: 14px;
+  color: #aaa;
+}
+
+.cascade-results-stats span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.cascade-results-stats strong {
+  font-size: 20px;
+  color: #fff;
+}
+
+.cascade-results-breakdown {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cascade-results-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.cascade-results-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cascade-results-cat-name {
+  flex: 1;
+  text-align: left;
+}
+
+.cascade-results-cat-score {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.cascade-results-bar-track {
+  width: 60px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.cascade-results-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease-out;
+}
+
+.cascade-play-again-btn {
+  margin-top: 16px;
+  padding: 10px 28px;
+  background: linear-gradient(135deg, #6c63ff 0%, #a29bfe 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.cascade-play-again-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(108, 99, 255, 0.3);
+}
+
+/* ── Waiting Indicator ── */
+.cascade-waiting {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #555;
+  font-size: 14px;
+  z-index: 3;
+}

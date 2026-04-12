@@ -1,0 +1,240 @@
+.memory-game {
+  background: #0d0d1a;
+  min-height: 100vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* --- Insufficient notice --- */
+
+.memory-game__insufficient {
+  color: #8a8a9a;
+  font-size: 16px;
+  text-align: center;
+  margin-top: 80px;
+}
+
+/* --- Score bar --- */
+
+.memory-game__scorebar {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 28px;
+  padding: 12px 28px;
+  background: rgba(26, 26, 46, 0.8);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.memory-game__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.memory-game__stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6a6a7a;
+}
+
+.memory-game__stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #e0e0f0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Card grid --- */
+
+.memory-game__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 140px);
+  gap: 14px;
+  perspective: 800px;
+}
+
+@media (max-width: 640px) {
+  .memory-game__grid {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 140px));
+    justify-content: center;
+  }
+}
+
+/* --- Card --- */
+
+.memory-card {
+  width: 140px;
+  height: 180px;
+  cursor: pointer;
+  perspective: 800px;
+}
+
+.memory-card__inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.4s ease;
+  transform-style: preserve-3d;
+}
+
+.memory-card--flipped .memory-card__inner {
+  transform: rotateY(180deg);
+}
+
+.memory-card__face {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* --- Back face (face-down) --- */
+
+.memory-card__face--back {
+  background: rgba(26, 26, 46, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.memory-card__question {
+  font-size: 48px;
+  font-weight: 700;
+  opacity: 0.7;
+  user-select: none;
+}
+
+/* --- Front face (face-up) --- */
+
+.memory-card__face--front {
+  background: rgba(26, 26, 46, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: rotateY(180deg);
+  padding: 14px 12px;
+  gap: 8px;
+}
+
+.memory-card__badge {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: #0d0d1a;
+  flex-shrink: 0;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.memory-card__name {
+  color: #e0e0f0;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.memory-card__description {
+  color: #b0b0c8;
+  text-align: center;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* --- Matched state --- */
+
+.memory-card--matched .memory-card__face--front {
+  border-color: rgba(0, 184, 148, 0.5);
+  box-shadow: 0 0 14px rgba(0, 184, 148, 0.2), inset 0 0 8px rgba(0, 184, 148, 0.05);
+}
+
+.memory-card--matched {
+  cursor: default;
+}
+
+/* --- Completion overlay --- */
+
+.memory-game__overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13, 13, 26, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: memory-fadeIn 0.3s ease;
+}
+
+.memory-game__congrats {
+  background: rgba(26, 26, 46, 0.95);
+  border: 1px solid rgba(0, 184, 148, 0.3);
+  border-radius: 16px;
+  padding: 40px 48px;
+  text-align: center;
+  max-width: 360px;
+  animation: memory-scaleIn 0.35s ease;
+}
+
+.memory-game__congrats-title {
+  color: #00b894;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 20px;
+}
+
+.memory-game__congrats-stats {
+  color: #b0b0c8;
+  font-size: 15px;
+  line-height: 2;
+  margin-bottom: 24px;
+}
+
+.memory-game__congrats-stats strong {
+  color: #e0e0f0;
+}
+
+.memory-game__play-again {
+  background: linear-gradient(135deg, #00b894, #00a383);
+  color: #0d0d1a;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 32px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.memory-game__play-again:hover {
+  opacity: 0.88;
+}
+
+/* --- Animations --- */
+
+@keyframes memory-fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes memory-scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
