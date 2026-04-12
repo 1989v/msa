@@ -63,16 +63,12 @@ describe('buildDefaultLayout', () => {
     expect(world.tiles[mid]).not.toBe(0) // TileType.VOID === 0
   })
 
-  it('produces lounge spots for resting agents', () => {
+  it('has break tiles for agent wandering', () => {
     const world = buildDefaultLayout(makeTeams(), makeAgents())
-    // Two 3-cushion sofas
-    expect(world.loungeSpots.length).toBeGreaterThanOrEqual(6)
-    // Every lounge spot should be within world bounds
-    for (const s of world.loungeSpots) {
-      expect(s.col).toBeGreaterThan(0)
-      expect(s.col).toBeLessThan(world.cols - 1)
-      expect(s.row).toBeGreaterThan(0)
-      expect(s.row).toBeLessThan(world.rows - 1)
+    expect(world.breakTiles.length).toBeGreaterThan(10)
+    for (const t of world.breakTiles) {
+      expect(t.col).toBeGreaterThan(0)
+      expect(t.col).toBeLessThan(world.cols - 1)
     }
   })
 

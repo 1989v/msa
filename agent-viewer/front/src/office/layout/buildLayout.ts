@@ -135,29 +135,7 @@ function placeDesksInZone(
 function buildLoungeArea(world: World, breakY: number): void {
   const cols = WORLD_COLS
 
-  // Two single sofas along the back row — simple lounge feel.
-  const leftSofaCol = 4
-  const rightSofaCol = cols - 7
-  world.furniture.push({
-    uid: nextUid('sofa'),
-    type: 'sofa',
-    col: leftSofaCol,
-    row: breakY + 1,
-    w: 3,
-    h: 1,
-    facing: Dir.DOWN,
-  })
-  world.furniture.push({
-    uid: nextUid('sofa'),
-    type: 'sofa',
-    col: rightSofaCol,
-    row: breakY + 1,
-    w: 3,
-    h: 1,
-    facing: Dir.DOWN,
-  })
-
-  // Vending + water cooler in the middle of the back row
+  // Vending + water cooler
   world.furniture.push({
     uid: nextUid('vending'),
     type: 'vendingMachine',
@@ -192,21 +170,7 @@ function buildLoungeArea(world: World, breakY: number): void {
     w: 1,
     h: 1,
   })
-
-  // Lounge spots on each sofa cushion (character sits facing DOWN/away from wall)
-  const addSofaSpots = (col: number, row: number, width: number) => {
-    for (let i = 0; i < width; i++) {
-      world.loungeSpots.push({
-        uid: nextUid('lspot'),
-        col: col + i,
-        row: row,
-        facing: Dir.DOWN,
-        kind: 'sofa',
-      })
-    }
-  }
-  addSofaSpots(leftSofaCol, breakY + 1, 3)
-  addSofaSpots(rightSofaCol, breakY + 1, 3)
+  // No sofas, no lounge spots — idle agents wander in break tiles.
 }
 
 export function buildDefaultLayout(teams: Team[], agents: Agent[]): World {

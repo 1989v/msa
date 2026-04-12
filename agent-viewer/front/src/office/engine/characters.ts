@@ -14,6 +14,11 @@ function directionBetween(
   return Dir.UP
 }
 
+function pickRandomBreakTile(world: World): { col: number; row: number } | null {
+  if (world.breakTiles.length === 0) return null
+  return world.breakTiles[Math.floor(Math.random() * world.breakTiles.length)]
+}
+
 function pickQueueTile(world: World, taken: Set<string>): { col: number; row: number } | null {
   for (const t of world.ceoQueueTiles) {
     const key = `${t.col}:${t.row}`
@@ -93,6 +98,9 @@ export function tickCharacter(
     c.frame = (c.frame + 1) % frameCount
   }
 
+  // Dwell timer (used by WANDER state to pause before picking next tile)
+  if (c.wanderDwellTimer > 0) c.wanderDwellTimer -= dt
+
   // Track claimed lounge spot across tick
   if (c.loungeSpotId) loungeClaimed.add(c.loungeSpotId)
 
@@ -161,7 +169,9 @@ function resolveArrival(c: Character, world: World, taken: Set<string>): void {
           break
         }
       }
-      c.state = CharState.IDLE
+      // Arrived at a break tile → dwell before wandering again
+      c.state = CharState.WANDER
+      c.wanderDwellTimer = TIMINGS.wanderDwellMin + Math.random() * (TIMINGS.wanderDwellMax - TIMINGS.wanderDwellMin)
       break
     }
   }
@@ -226,36 +236,49 @@ function applyDesiredState(
     return
   }
 
-  // desiredState === 'idle' → go rest at a lounge spot
-  if (c.state === CharState.REST) return // already resting
+  // desiredState === 'idle' → rest at lounge spot if available, else wander in break zone
+  if (c.state === CharState.REST) return
 
-  // Claim a lounge spot if we don't have one
-  if (!c.loungeSpotId) {
-    const free = findFreeLoungeSpot(c, world, loungeClaimed)
-    if (free) {
-      c.loungeSpotId = free.uid
-      loungeClaimed.add(free.uid)
-    }
-  }
-
-  if (c.loungeSpotId) {
-    const spot = world.loungeSpots.find((s) => s.uid === c.loungeSpotId)
-    if (spot) {
-      if (c.tileCol === spot.col && c.tileRow === spot.row) {
-        c.state = CharState.REST
-        c.dir = spot.facing as Character['dir']
-      } else {
-        moveCharacterToward(c, world, spot)
+  // Try lounge spot first (if any exist)
+  if (world.loungeSpots.length > 0) {
+    if (!c.loungeSpotId) {
+      const free = findFreeLoungeSpot(c, world, loungeClaimed)
+      if (free) {
+        c.loungeSpotId = free.uid
+        loungeClaimed.add(free.uid)
       }
-      return
+    }
+    if (c.loungeSpotId) {
+      const spot = world.loungeSpots.find((s) => s.uid === c.loungeSpotId)
+      if (spot) {
+        if (c.tileCol === spot.col && c.tileRow === spot.row) {
+          c.state = CharState.REST
+          c.dir = spot.facing as Character['dir']
+        } else {
+          moveCharacterToward(c, world, spot)
+        }
+        return
+      }
     }
   }
 
-  // No lounge spot available — idle at seat as fallback
-  if (seat && (c.tileCol !== seat.col || c.tileRow !== seat.row)) {
-    moveCharacterToward(c, world, seat)
+  // Wander in break zone (never return to desk while idle)
+  if (c.state === CharState.WANDER && c.path.length === 0) {
+    if (c.wanderDwellTimer > 0) return // dwell timer decremented in tick via frameTimer
+    const target = pickRandomBreakTile(world)
+    if (target) moveCharacterToward(c, world, target)
     return
   }
-  c.state = CharState.IDLE
-  c.dir = Dir.UP
+
+  if (c.state !== CharState.WANDER) {
+    const target = pickRandomBreakTile(world)
+    if (target) {
+      c.path = findPath(world, { col: c.tileCol, row: c.tileRow }, target)
+      if (c.path.length > 0) {
+        c.moveProgress = 0
+        c.state = CharState.WANDER
+        return
+      }
+    }
+  }
 }
