@@ -1,0 +1,55 @@
+# Frontend apps served at path-prefix routes via ingress-nginx.
+# rewrite-target strips the prefix so each SPA's nginx sees requests at /.
+# Gateway's catch-all Ingress (path: /) handles API traffic;
+# these more-specific paths take priority in nginx ingress routing.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontend
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /code-dictionary/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: code-dictionary-fe
+                port:
+                  name: http
+          - path: /gifticon/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gifticon-fe
+                port:
+                  name: http
+          - path: /agent-viewer/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: agent-viewer-fe
+                port:
+                  name: http
+          - path: /charting/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: charting-fe
+                port:
+                  name: http
+          - path: /charting-api/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: charting
+                port:
+                  name: http

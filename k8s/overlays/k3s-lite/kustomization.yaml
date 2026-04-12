@@ -65,3 +65,9 @@ patches:
     target:
       kind: Deployment
       name: experiment
+
+  # charting is FastAPI, not Spring Boot — override startup probe.
+  - path: patches/charting-probe.yaml
+    target:
+      kind: Deployment
+      name: charting

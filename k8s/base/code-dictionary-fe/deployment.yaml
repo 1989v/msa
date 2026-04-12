@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-dictionary-fe
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: code-dictionary-fe
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: code-dictionary-fe
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: code-dictionary-fe
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: app
+          image: commerce/code-dictionary-fe:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 64Mi

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: agent-viewer-fe
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: agent-viewer-fe
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  selector:
+    app.kubernetes.io/name: agent-viewer-fe
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

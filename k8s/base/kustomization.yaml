@@ -26,3 +26,10 @@ resources:
   - chatbot
   - code-dictionary
   - agent-viewer-api
+  # Frontend + non-JVM services (Phase 7 extension)
+  - code-dictionary-fe
+  - gifticon-fe
+  - agent-viewer-fe
+  - charting
+  - charting-fe
+  - frontend-ingress.yaml
