@@ -76,22 +76,16 @@ describe('buildDefaultLayout', () => {
     }
   })
 
-  it('walls each team zone (top + sides) with a front doorway', () => {
+  it('paints every team zone tile as carpet (open floor plan)', () => {
     const world = buildDefaultLayout(makeTeams(), makeAgents())
     for (const zone of world.teamZones.values()) {
-      // Top wall present
-      const topIdx = zone.y * world.cols + zone.x + 1
-      expect(world.tiles[topIdx]).toBe(4) // TileType.WALL
-      // At least one doorway tile in bottom row (i.e., a non-wall)
-      const bottomRow = zone.y + zone.h - 1
-      let doorwayFound = false
-      for (let c = zone.x + 1; c < zone.x + zone.w - 1; c++) {
-        if (world.tiles[bottomRow * world.cols + c] !== 4) {
-          doorwayFound = true
-          break
+      for (let row = zone.y; row < zone.y + zone.h; row++) {
+        for (let col = zone.x; col < zone.x + zone.w; col++) {
+          const t = world.tiles[row * world.cols + col]
+          // CARPET_A = 2, CARPET_B = 3
+          expect(t === 2 || t === 3).toBe(true)
         }
       }
-      expect(doorwayFound).toBe(true)
     }
   })
 })

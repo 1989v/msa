@@ -40,30 +40,10 @@ function computeTeamZones(teamCount: number, midY: number, midH: number): ZoneRe
   return zones
 }
 
-/**
- * Draw walls around the zone leaving a front-bottom doorway.
- * Inside becomes carpet; walls are team-tinted along the top.
- */
-function partitionZone(world: World, zone: ZoneRect, team: Team): void {
-  // Top + left + right walls; bottom has a doorway
-  for (let c = zone.x; c < zone.x + zone.w; c++) {
-    setTile(world, c, zone.y, TileType.WALL, team.color)
-  }
-  for (let r = zone.y; r < zone.y + zone.h; r++) {
-    setTile(world, zone.x, r, TileType.WALL, team.color)
-    setTile(world, zone.x + zone.w - 1, r, TileType.WALL, team.color)
-  }
-  // Bottom wall except a 2-tile doorway in the middle
-  const doorStart = zone.x + Math.floor(zone.w / 2) - 1
-  const doorEnd = doorStart + 2
-  for (let c = zone.x; c < zone.x + zone.w; c++) {
-    if (c >= doorStart && c < doorEnd) continue
-    setTile(world, c, zone.y + zone.h - 1, TileType.WALL, team.color)
-  }
-
-  // Paint interior carpet
-  for (let row = zone.y + 1; row < zone.y + zone.h - 1; row++) {
-    for (let col = zone.x + 1; col < zone.x + zone.w - 1; col++) {
+/** Paint the whole zone as team-tinted carpet (no walls — open floor plan). */
+function paintZoneCarpet(world: World, zone: ZoneRect, team: Team): void {
+  for (let row = zone.y; row < zone.y + zone.h; row++) {
+    for (let col = zone.x; col < zone.x + zone.w; col++) {
       const checker = (col + row) % 2 === 0
       setTile(world, col, row, checker ? TileType.CARPET_A : TileType.CARPET_B, team.color)
     }
@@ -79,12 +59,12 @@ function placeDesksInZone(
   const desks: Furniture[] = []
   const seats: Seat[] = []
 
-  // Interior usable area (inside the walls). Keep top row clear for
-  // whiteboard and bottom row clear for doorway.
+  // Open-plan carpet zone — leave a small margin so desks don't touch the
+  // outer walls / corridor lanes.
   const innerX = zone.x + 1
-  const innerY = zone.y + 2
+  const innerY = zone.y + 1
   const innerW = zone.w - 2
-  const innerH = zone.h - 3
+  const innerH = zone.h - 2
 
   if (innerW < 2 || innerH < 2) return { desks, seats }
 
@@ -414,7 +394,7 @@ export function buildDefaultLayout(teams: Team[], agents: Agent[]): World {
     const zone = zones[i]
     if (!zone) return
     world.teamZones.set(team.id, { ...zone, color: team.color })
-    partitionZone(world, zone, team)
+    paintZoneCarpet(world, zone, team)
     const teamAgents = agents.filter((a) => a.team === team.id)
     const { desks, seats } = placeDesksInZone(world, zone, team, teamAgents.length)
     world.furniture.push(...desks)
