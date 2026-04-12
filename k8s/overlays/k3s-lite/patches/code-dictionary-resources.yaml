@@ -1,0 +1,17 @@
+# code-dictionary needs more memory than the 512Mi k3s-lite default
+# (Spring Boot + JPA + OpenSearch client + Flyway + QueryDSL).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-dictionary
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi

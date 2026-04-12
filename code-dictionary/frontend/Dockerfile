@@ -3,8 +3,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-# Skip tsc type-check (pre-existing TS errors in ForceGraph3D.tsx);
-# Vite uses esbuild for transpilation which is type-agnostic.
+# VITE_API_URL="" makes axios use relative URLs (same origin).
+# nginx proxies /api/ to the code-dictionary backend inside K8s.
+ENV VITE_API_URL=""
+# Skip tsc type-check (pre-existing TS errors in ForceGraph3D.tsx).
 RUN npx vite build --base /code-dictionary/
 
 FROM nginx:1.27-alpine

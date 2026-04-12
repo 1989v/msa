@@ -71,3 +71,9 @@ patches:
     target:
       kind: Deployment
       name: charting
+
+  # code-dictionary needs more memory than the global 512Mi limit.
+  - path: patches/code-dictionary-resources.yaml
+    target:
+      kind: Deployment
+      name: code-dictionary
