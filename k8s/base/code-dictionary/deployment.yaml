@@ -29,6 +29,13 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # K8s auto-injects OPENSEARCH_PORT=tcp://<ip>:9200 from the
+            # opensearch Service. Spring binds that to opensearch.port (int)
+            # and fails with NumberFormatException. Explicit override fixes it.
+            - name: OPENSEARCH_PORT
+              value: "9200"
+            - name: OPENSEARCH_HOST
+              value: "opensearch"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
