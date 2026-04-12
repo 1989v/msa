@@ -49,6 +49,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
 - **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md` (스크립트) · `k8s/infra/prod/backup/` (CronJob 래퍼)
 - **K8s 전환**: 배포 모드 이원화, Eureka 제거, Jib → `docs/adr/ADR-0019-k8s-migration.md`
+- **FE 디자인 가드레일**: AI slop 방지, 타이포/색상/레이아웃/모션/접근성 → `docs/conventions/frontend-design.md`
 
 ---
 
