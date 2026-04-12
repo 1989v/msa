@@ -5,7 +5,7 @@ RUN npm ci
 COPY . .
 # Skip tsc type-check (pre-existing TS errors in ForceGraph3D.tsx);
 # Vite uses esbuild for transpilation which is type-agnostic.
-RUN npx vite build
+RUN npx vite build --base /code-dictionary/
 
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
