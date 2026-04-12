@@ -5,7 +5,10 @@ spring:
     replica:
       jdbc-url: jdbc:mysql://mysql-code-dictionary-master:3306/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
   flyway:
-    enabled: false
+    enabled: true
+    url: jdbc:mysql://mysql-code-dictionary-master:3306/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+    user: ${MYSQL_USER:code_dictionary_user}
+    password: ${MYSQL_PASSWORD:code_dictionary_password}
 
 opensearch:
   host: opensearch

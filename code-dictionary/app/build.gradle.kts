@@ -19,6 +19,8 @@ dependencies {
     runtimeOnly(libs.mysql.connector)
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-mysql")
+    // Spring Boot 4 split Flyway autoconfig into its own module
+    implementation("org.springframework.boot:spring-boot-flyway")
     implementation("org.opensearch.client:opensearch-java:2.19.0")
     implementation("org.opensearch.client:opensearch-rest-client:2.19.0")
     implementation("org.apache.httpcomponents.client5:httpclient5")
