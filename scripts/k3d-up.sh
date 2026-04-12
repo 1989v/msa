@@ -62,6 +62,13 @@ fi
 if [[ "$MODE" == "infra-only" ]]; then
     log "Applying infra only..."
     kubectl apply -k k8s/infra/local
+    log "Waiting for MySQL pod..."
+    kubectl -n commerce wait --for=condition=Ready pod/mysql-0 --timeout=120s 2>&1 | tail -1 || true
+    BACKUP_LATEST="${REPO_ROOT}/private/backups/mysql/latest"
+    if [[ -d "$BACKUP_LATEST" ]]; then
+        log "Restoring MySQL data from local backup..."
+        "$SCRIPT_DIR/k3d-mysql-restore.sh" || log "  (restore had errors)"
+    fi
     log "Done. Infra pods:"
     kubectl -n commerce get pods
     exit 0
@@ -98,6 +105,22 @@ build_fe charting           charting/infra/Dockerfile           charting/
 # ─── 5. Apply overlay ────────────────────────────────────
 log "Applying k3s-lite overlay..."
 kubectl apply -k k8s/overlays/k3s-lite 2>&1 | grep -c "created\|configured"
+
+# ─── 5.5. Restore MySQL data from last snapshot ─────────
+# Wait for MySQL to be ready first
+log "Waiting for MySQL pod..."
+kubectl -n commerce wait --for=condition=Ready pod/mysql-0 --timeout=120s 2>&1 | tail -1 || true
+
+# Give Flyway a chance to run first (app pods create schema on startup).
+# Then restore data from the latest local backup if it exists.
+BACKUP_LATEST="${REPO_ROOT}/private/backups/mysql/latest"
+if [[ -d "$BACKUP_LATEST" ]]; then
+    log "Restoring MySQL data from local backup..."
+    "$SCRIPT_DIR/k3d-mysql-restore.sh" || log "  (restore had errors — some DBs may be empty)"
+else
+    log "No local MySQL backup found — starting with Flyway seed data only."
+    log "  (Tip: run scripts/k3d-mysql-dump.sh to create a snapshot anytime)"
+fi
 
 # ─── 6. Core-only scale-down ─────────────────────────────
 if [[ "$MODE" == "core" ]]; then
