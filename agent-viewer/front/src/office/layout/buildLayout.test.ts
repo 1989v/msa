@@ -65,8 +65,8 @@ describe('buildDefaultLayout', () => {
 
   it('produces lounge spots for resting agents', () => {
     const world = buildDefaultLayout(makeTeams(), makeAgents())
-    // Expect at least sofa spots + lounge chairs
-    expect(world.loungeSpots.length).toBeGreaterThanOrEqual(12)
+    // Two 3-cushion sofas
+    expect(world.loungeSpots.length).toBeGreaterThanOrEqual(6)
     // Every lounge spot should be within world bounds
     for (const s of world.loungeSpots) {
       expect(s.col).toBeGreaterThan(0)

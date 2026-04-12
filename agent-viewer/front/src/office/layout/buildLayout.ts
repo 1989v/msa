@@ -134,112 +134,34 @@ function placeDesksInZone(
 
 function buildLoungeArea(world: World, breakY: number): void {
   const cols = WORLD_COLS
-  const breakBottom = WORLD_ROWS - 2
 
-  // Left sofa group: two sofas facing each other with a coffee table between
-  const g1cx = 6
-  const g1cy = breakY + 3
+  // Two single sofas along the back row — simple lounge feel.
+  const leftSofaCol = 4
+  const rightSofaCol = cols - 7
   world.furniture.push({
     uid: nextUid('sofa'),
     type: 'sofa',
-    col: g1cx - 1,
-    row: g1cy - 2,
-    w: 3,
-    h: 1,
-    facing: Dir.DOWN,
-  })
-  world.furniture.push({
-    uid: nextUid('coffee-table'),
-    type: 'coffeeTable',
-    col: g1cx,
-    row: g1cy,
-    w: 1,
-    h: 1,
-  })
-  world.furniture.push({
-    uid: nextUid('sofa'),
-    type: 'sofa',
-    col: g1cx - 1,
-    row: g1cy + 2,
-    w: 3,
-    h: 1,
-    facing: Dir.UP,
-  })
-
-  // Right sofa group: mirror
-  const g2cx = cols - 7
-  const g2cy = breakY + 3
-  world.furniture.push({
-    uid: nextUid('sofa'),
-    type: 'sofa',
-    col: g2cx - 1,
-    row: g2cy - 2,
-    w: 3,
-    h: 1,
-    facing: Dir.DOWN,
-  })
-  world.furniture.push({
-    uid: nextUid('coffee-table'),
-    type: 'coffeeTable',
-    col: g2cx,
-    row: g2cy,
-    w: 1,
-    h: 1,
-  })
-  world.furniture.push({
-    uid: nextUid('sofa'),
-    type: 'sofa',
-    col: g2cx - 1,
-    row: g2cy + 2,
-    w: 3,
-    h: 1,
-    facing: Dir.UP,
-  })
-
-  // Center: ping pong table
-  const centerCol = Math.floor(cols / 2) - 2
-  world.furniture.push({
-    uid: nextUid('pingpong'),
-    type: 'pingPong',
-    col: centerCol,
-    row: breakY + 3,
-    w: 4,
-    h: 2,
-  })
-
-  // Lounge chairs near center
-  world.furniture.push({
-    uid: nextUid('lounge-chair'),
-    type: 'loungeChair',
-    col: centerCol - 2,
-    row: breakY + 2,
-    w: 1,
-    h: 1,
-    facing: Dir.DOWN,
-  })
-  world.furniture.push({
-    uid: nextUid('lounge-chair'),
-    type: 'loungeChair',
-    col: centerCol + 5,
-    row: breakY + 2,
-    w: 1,
-    h: 1,
-    facing: Dir.DOWN,
-  })
-
-  // Coffee machine + vending + water cooler on back wall
-  world.furniture.push({
-    uid: nextUid('coffee-machine'),
-    type: 'coffeeMachine',
-    col: 2,
+    col: leftSofaCol,
     row: breakY + 1,
-    w: 1,
+    w: 3,
     h: 1,
+    facing: Dir.DOWN,
   })
+  world.furniture.push({
+    uid: nextUid('sofa'),
+    type: 'sofa',
+    col: rightSofaCol,
+    row: breakY + 1,
+    w: 3,
+    h: 1,
+    facing: Dir.DOWN,
+  })
+
+  // Vending + water cooler in the middle of the back row
   world.furniture.push({
     uid: nextUid('vending'),
     type: 'vendingMachine',
-    col: 3,
+    col: Math.floor(cols / 2) - 1,
     row: breakY + 1,
     w: 1,
     h: 1,
@@ -247,97 +169,44 @@ function buildLoungeArea(world: World, breakY: number): void {
   world.furniture.push({
     uid: nextUid('cooler'),
     type: 'cooler',
-    col: cols - 4,
+    col: Math.floor(cols / 2) + 1,
     row: breakY + 1,
     w: 1,
     h: 1,
   })
 
-  // Bookshelves on outer walls
+  // Corner plants
   world.furniture.push({
-    uid: nextUid('bookshelf'),
-    type: 'bookshelf',
+    uid: nextUid('plant'),
+    type: 'plant',
     col: 2,
-    row: breakBottom - 2,
-    w: 2,
-    h: 1,
-  })
-  world.furniture.push({
-    uid: nextUid('bookshelf'),
-    type: 'bookshelf',
-    col: cols - 4,
-    row: breakBottom - 2,
-    w: 2,
-    h: 1,
-  })
-
-  // Plants scattered around
-  world.furniture.push({
-    uid: nextUid('plant'),
-    type: 'plant',
-    col: 1,
-    row: breakY + 1,
+    row: breakY + 2,
     w: 1,
     h: 1,
   })
   world.furniture.push({
     uid: nextUid('plant'),
     type: 'plant',
-    col: cols - 2,
-    row: breakY + 1,
-    w: 1,
-    h: 1,
-  })
-  world.furniture.push({
-    uid: nextUid('plant'),
-    type: 'plant',
-    col: 1,
-    row: breakBottom - 1,
-    w: 1,
-    h: 1,
-  })
-  world.furniture.push({
-    uid: nextUid('plant'),
-    type: 'plant',
-    col: cols - 2,
-    row: breakBottom - 1,
+    col: cols - 3,
+    row: breakY + 2,
     w: 1,
     h: 1,
   })
 
-  // Lounge spots: seat positions on each sofa cushion
-  // Sofa facing DOWN (backrest at top, seat at bottom of sofa tile): character sits ON the sofa at its tile
-  const addSofaSpots = (col: number, row: number, width: number, facing: number) => {
+  // Lounge spots on each sofa cushion (character sits facing DOWN/away from wall)
+  const addSofaSpots = (col: number, row: number, width: number) => {
     for (let i = 0; i < width; i++) {
       world.loungeSpots.push({
         uid: nextUid('lspot'),
         col: col + i,
         row: row,
-        facing: facing as 0 | 1 | 2 | 3,
+        facing: Dir.DOWN,
         kind: 'sofa',
       })
     }
   }
-  addSofaSpots(g1cx - 1, g1cy - 2, 3, Dir.DOWN)
-  addSofaSpots(g1cx - 1, g1cy + 2, 3, Dir.UP)
-  addSofaSpots(g2cx - 1, g2cy - 2, 3, Dir.DOWN)
-  addSofaSpots(g2cx - 1, g2cy + 2, 3, Dir.UP)
-
-  // Lounge chair spots
-  world.loungeSpots.push({
-    uid: nextUid('lspot'),
-    col: centerCol - 2,
-    row: breakY + 2,
-    facing: Dir.DOWN,
-    kind: 'chair',
-  })
-  world.loungeSpots.push({
-    uid: nextUid('lspot'),
-    col: centerCol + 5,
-    row: breakY + 2,
-    facing: Dir.DOWN,
-    kind: 'chair',
-  })
+  addSofaSpots(leftSofaCol, breakY + 1, 3)
+  addSofaSpots(rightSofaCol, breakY + 1, 3)
 }
 
 export function buildDefaultLayout(teams: Team[], agents: Agent[]): World {
