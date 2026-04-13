@@ -26,7 +26,6 @@ class ChatService(
     private val properties: ChatbotProperties
 ) : AskQuestionUseCase, GetConversationUseCase, CloseConversationUseCase {
 
-    @Transactional
     override suspend fun execute(command: AskQuestionUseCase.Command): AskQuestionUseCase.Result {
         val conversation = resolveConversation(command)
 
@@ -81,7 +80,6 @@ class ChatService(
         )
     }
 
-    @Transactional(readOnly = true)
     override fun execute(command: GetConversationUseCase.Command): Conversation {
         return conversationRepository.findById(command.conversationId)
             ?: throw ConversationNotFoundException(command.conversationId)

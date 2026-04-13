@@ -13,7 +13,7 @@
 .toast {
   padding: 8px 20px;
   border-radius: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--text-primary);
   background: var(--bg-secondary);
@@ -25,9 +25,9 @@
   white-space: nowrap;
 }
 
-.toast.success { border-left: 3px solid var(--accent-green); }
-.toast.warning { border-left: 3px solid var(--accent-yellow); }
-.toast.info { border-left: 3px solid var(--accent-blue); }
+.toast.success { border-top: 2px solid var(--accent-green); }
+.toast.warning { border-top: 2px solid var(--accent-yellow); }
+.toast.info { border-top: 2px solid var(--accent-blue); }
 
 .message {
   display: flex;
@@ -43,4 +43,12 @@
 @keyframes fadeOut {
   from { opacity: 1; }
   to { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

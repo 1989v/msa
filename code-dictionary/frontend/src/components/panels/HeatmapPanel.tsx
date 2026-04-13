@@ -17,13 +17,13 @@ export default function HeatmapPanel({ matrix, onCellClick }: HeatmapPanelProps)
 
   return (
     <div style={{ padding: 32, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-      <h2 style={{ color: '#e0e0e0', fontSize: 18, marginBottom: 24, textAlign: 'center' }}>
+      <h2 style={{ color: '#e0e0e0', fontSize: '1.125rem', marginBottom: 24, textAlign: 'center' }}>
         Category × Level Heatmap
       </h2>
       <div style={{ display: 'grid', gridTemplateColumns: '140px repeat(3, 1fr)', gap: 4, maxWidth: 600, margin: '0 auto' }}>
         <div />
         {LEVELS.map((lvl) => (
-          <div key={lvl} style={{ textAlign: 'center', color: '#888', fontSize: 11, padding: 4 }}>
+          <div key={lvl} style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.6875rem', padding: 4 }}>
             {LEVEL_LABELS[lvl]}
           </div>
         ))}
@@ -32,7 +32,7 @@ export default function HeatmapPanel({ matrix, onCellClick }: HeatmapPanelProps)
           const catKey = cat as Category;
           return (
             <div key={cat} style={{ display: 'contents' }}>
-              <div style={{ color: CATEGORY_COLORS[catKey], fontSize: 12, display: 'flex', alignItems: 'center', paddingRight: 8 }}>
+              <div style={{ color: CATEGORY_COLORS[catKey], fontSize: '0.75rem', display: 'flex', alignItems: 'center', paddingRight: 8 }}>
                 {CATEGORY_LABELS[catKey]}
               </div>
               {LEVELS.map((lvl) => {
@@ -49,7 +49,7 @@ export default function HeatmapPanel({ matrix, onCellClick }: HeatmapPanelProps)
                       textAlign: 'center',
                       cursor: 'pointer',
                       color: intensity > 0.5 ? '#fff' : '#aaa',
-                      fontSize: 14,
+                      fontSize: '0.875rem',
                       fontWeight: 600,
                       transition: 'transform 0.15s',
                       minHeight: 36,

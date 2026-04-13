@@ -35,18 +35,18 @@
 }
 
 .roomIcon {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .roomTitle {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 700;
   color: #d4a574;
   letter-spacing: 0.05em;
 }
 
 .queueCount {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--accent-yellow);
   margin-left: auto;
   background: rgba(210, 153, 34, 0.12);
@@ -88,7 +88,7 @@
   top: -8px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 8px;
+  font-size: 0.5rem;
   font-weight: 700;
   color: #d4a574;
   background: #3a2a1c;
@@ -178,7 +178,7 @@
 }
 
 .agentLabel {
-  font-size: 8px;
+  font-size: 0.5rem;
   color: var(--text-muted);
   max-width: 48px;
   overflow: hidden;
@@ -190,11 +190,19 @@
   position: absolute;
   top: -4px;
   right: -4px;
-  font-size: 12px;
-  animation: approvalBounce 1.5s ease-in-out infinite;
+  font-size: 0.75rem;
+  animation: approvalPulse 1.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 }
 
-@keyframes approvalBounce {
+@keyframes approvalPulse {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

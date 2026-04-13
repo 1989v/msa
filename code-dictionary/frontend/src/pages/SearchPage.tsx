@@ -178,7 +178,7 @@ export default function SearchPage() {
   if (loading) {
     return (
       <div className="viz-page-scroll" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#888' }}>Loading concept graph...</p>
+        <p style={{ color: '#94a3b8' }}>Loading concept graph...</p>
       </div>
     );
   }

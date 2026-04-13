@@ -37,7 +37,7 @@ export default function DetailSidePanel({ conceptId, onClose, onNavigate }: Deta
     <div className={`detail-side-panel ${conceptId ? 'open' : ''}`}>
       <button className="detail-panel-close" onClick={onClose}>✕</button>
 
-      {loading && <p style={{ color: '#888' }}>Loading...</p>}
+      {loading && <p style={{ color: '#94a3b8' }}>Loading...</p>}
 
       {detail && !loading && (
         <>
@@ -47,7 +47,7 @@ export default function DetailSidePanel({ conceptId, onClose, onNavigate }: Deta
               <span className="detail-badge" style={{ background: CATEGORY_COLORS[detail.category as Category] }}>
                 {CATEGORY_LABELS[detail.category as Category]}
               </span>
-              <span className="detail-badge" style={{ background: LEVEL_COLORS[detail.level] || '#888' }}>
+              <span className="detail-badge" style={{ background: LEVEL_COLORS[detail.level] || '#94a3b8' }}>
                 {detail.level}
               </span>
             </div>
@@ -85,7 +85,7 @@ export default function DetailSidePanel({ conceptId, onClose, onNavigate }: Deta
                 {detail.relatedConcepts.map((rc) => (
                   <li key={rc.conceptId} className="detail-related-item" onClick={() => onNavigate(rc.conceptId)}>
                     {rc.name}
-                    <span style={{ marginLeft: 6, fontSize: 10, color: '#666' }}>{rc.category}</span>
+                    <span style={{ marginLeft: 6, fontSize: '0.625rem', color: '#64748b' }}>{rc.category}</span>
                   </li>
                 ))}
               </ul>

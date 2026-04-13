@@ -20,7 +20,7 @@
 
 .popular-subtitle {
   font-size: 0.9rem;
-  color: #666;
+  color: #64748b;
 }
 
 .popular-grid {
@@ -94,7 +94,7 @@
 
 .popular-card-desc {
   font-size: 0.82rem;
-  color: #666;
+  color: #64748b;
   line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 3;

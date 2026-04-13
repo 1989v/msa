@@ -22,6 +22,11 @@ export function OAuthCallbackPage() {
       return;
     }
 
+    // TODO: OAuth bypass — 실제 연동 시 아래 3줄 제거하고 loginWithOAuth 블록 활성화
+    const dummyJwt = `header.${btoa(JSON.stringify({ userId: '1', roles: ['ROLE_ADMIN'], type: 'access', exp: Math.floor(Date.now() / 1000) + 3600, iat: Math.floor(Date.now() / 1000) }))}.signature`;
+    login(dummyJwt);
+    navigate('/admin', { replace: true }); return;
+
     loginWithOAuth(provider, code)
       .then((result) => {
         login(result.accessToken);

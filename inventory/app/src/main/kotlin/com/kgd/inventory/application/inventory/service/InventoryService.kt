@@ -18,13 +18,12 @@ import com.kgd.inventory.domain.inventory.event.InventoryEvent
 import com.kgd.inventory.domain.inventory.model.Inventory
 import com.kgd.inventory.domain.reservation.model.Reservation
 import com.kgd.inventory.domain.reservation.model.ReservationStatus
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional
 class InventoryService(
     private val inventoryRepository: InventoryRepositoryPort,
     private val reservationRepository: ReservationRepositoryPort,
@@ -35,19 +34,20 @@ class InventoryService(
 ) : ReserveStockUseCase, ReleaseStockUseCase, ConfirmStockUseCase, ReceiveStockUseCase, GetInventoryUseCase,
     ConfirmStockByOrderUseCase, ReleaseStockByOrderUseCase {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     companion object {
         private const val AGGREGATE_TYPE = "Inventory"
         private const val RESERVATION_TTL_MINUTES = 30L
     }
 
+    @Transactional
     override fun execute(command: ReserveStockUseCase.Command): ReserveStockUseCase.Result {
         // Redis fast-path: 사전 검증 (재고 부족 시 DB 접근 없이 빠르게 실패)
         cachePort?.let { cache ->
             val cacheResult = cache.reserveStock(command.productId, command.warehouseId, command.qty)
             if (cacheResult == null) {
-                log.debug("Redis fast-path: 재고 부족 (productId={}, warehouseId={}, qty={})", command.productId, command.warehouseId, command.qty)
+                log.debug { "Redis fast-path: 재고 부족 (productId=${command.productId}, warehouseId=${command.warehouseId}, qty=${command.qty})" }
                 // Redis에서 부족 판정이지만 DB가 SSOT이므로 DB로 진행 (캐시가 오래됐을 수 있음)
             }
         }
@@ -92,6 +92,7 @@ class InventoryService(
         )
     }
 
+    @Transactional
     override fun execute(command: ReleaseStockUseCase.Command): ReleaseStockUseCase.Result {
         val reservation = reservationRepository.findByOrderIdAndProductId(command.orderId, command.productId)
             ?: throw BusinessException(ErrorCode.NOT_FOUND, "예약을 찾을 수 없습니다: orderId=${command.orderId}, productId=${command.productId}")
@@ -127,6 +128,7 @@ class InventoryService(
         )
     }
 
+    @Transactional
     override fun execute(command: ConfirmStockUseCase.Command): ConfirmStockUseCase.Result {
         val reservation = reservationRepository.findByOrderIdAndProductId(command.orderId, command.productId)
             ?: throw BusinessException(ErrorCode.NOT_FOUND, "예약을 찾을 수 없습니다: orderId=${command.orderId}, productId=${command.productId}")
@@ -162,6 +164,7 @@ class InventoryService(
         )
     }
 
+    @Transactional
     override fun execute(command: ReceiveStockUseCase.Command): ReceiveStockUseCase.Result {
         val inventory = inventoryRepository.findByProductIdAndWarehouseId(command.productId, command.warehouseId)
             ?: Inventory.create(productId = command.productId, warehouseId = command.warehouseId, initialQty = 0)
@@ -189,7 +192,6 @@ class InventoryService(
         )
     }
 
-    @Transactional(readOnly = true)
     override fun execute(query: GetInventoryUseCase.Query): List<GetInventoryUseCase.Result> {
         return inventoryRepository.findAllByProductId(query.productId).map { inventory ->
             val cached = cachePort?.getStock(inventory.productId, inventory.warehouseId)
@@ -201,6 +203,7 @@ class InventoryService(
         }
     }
 
+    @Transactional
     override fun execute(command: ConfirmStockByOrderUseCase.Command): List<ConfirmStockByOrderUseCase.Result> {
         val reservations = reservationRepository.findAllByOrderId(command.orderId)
             .filter { it.getStatus() == ReservationStatus.ACTIVE }
@@ -238,6 +241,7 @@ class InventoryService(
         }
     }
 
+    @Transactional
     override fun execute(command: ReleaseStockByOrderUseCase.Command): List<ReleaseStockByOrderUseCase.Result> {
         val reservations = reservationRepository.findAllByOrderId(command.orderId)
             .filter { it.getStatus() == ReservationStatus.ACTIVE }
@@ -279,7 +283,7 @@ class InventoryService(
         try {
             cachePort?.setStock(productId, warehouseId, inventory.getAvailableQty(), inventory.getReservedQty())
         } catch (e: Exception) {
-            log.warn("Redis 캐시 동기화 실패 (productId={}, warehouseId={}): {}", productId, warehouseId, e.message)
+            log.warn(e) { "Redis 캐시 동기화 실패 (productId=$productId, warehouseId=$warehouseId)" }
         }
     }
 }

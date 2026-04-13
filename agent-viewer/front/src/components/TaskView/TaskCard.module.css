@@ -31,13 +31,13 @@
 .statusDot.completed { background: var(--text-muted); }
 
 .title {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .description {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1.4;
 }
@@ -54,14 +54,14 @@
   height: 100%;
   background: var(--accent-blue);
   border-radius: 3px;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease; /* fe-design-exempt: A-8 — progress bar fill width */
 }
 
 .progressText {
   position: absolute;
   right: 0;
   top: -16px;
-  font-size: 10px;
+  font-size: 0.625rem;
   color: var(--text-muted);
 }
 
@@ -73,7 +73,7 @@
 }
 
 .overflow {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-muted);
   padding: 4px 8px;
   background: var(--bg-tertiary);

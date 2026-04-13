@@ -30,22 +30,22 @@
 }
 
 .fbq-score-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: #888;
+  color: #94a3b8;
 }
 
 .fbq-score-value {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 700;
   color: #e0e0e0;
 }
 
 .fbq-score-pct {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 400;
-  color: #888;
+  color: #94a3b8;
 }
 
 .fbq-streak {
@@ -81,8 +81,8 @@
   justify-content: center;
   gap: 12px;
   padding: 48px 0;
-  color: #888;
-  font-size: 14px;
+  color: #94a3b8;
+  font-size: 0.875rem;
 }
 
 .fbq-spinner {
@@ -106,7 +106,7 @@
   gap: 16px;
   padding: 32px 0;
   color: #ff6b6b;
-  font-size: 14px;
+  font-size: 0.875rem;
   text-align: center;
 }
 
@@ -114,8 +114,8 @@
 .fbq-empty {
   text-align: center;
   padding: 48px 0;
-  color: #666;
-  font-size: 14px;
+  color: #64748b;
+  font-size: 0.875rem;
 }
 
 /* --- Concept Header --- */
@@ -128,7 +128,7 @@
 }
 
 .fbq-concept-name {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 700;
   color: #f0f0f0;
   margin: 0;
@@ -138,7 +138,7 @@
   display: inline-block;
   padding: 2px 10px;
   border-radius: 12px;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -147,7 +147,7 @@
 
 /* --- Instruction --- */
 .fbq-instruction {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #777;
   margin-bottom: 20px;
 }
@@ -155,9 +155,9 @@
 /* --- Description (with blanks) --- */
 .fbq-description {
   font-family: "Iowan Old Style", Georgia, serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 2.2;
-  color: #ccc;
+  color: #cbd5e1;
   padding: 20px 24px;
   background: rgba(10, 10, 24, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -174,13 +174,13 @@
 .fbq-blank-input {
   display: inline-block;
   font-family: "Iowan Old Style", Georgia, serif;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.4;
   color: #e0e0e0;
   background: transparent;
   border: none;
   border-bottom: 2px solid rgba(108, 99, 255, 0.5);
-  outline: none;
+  outline: 2px solid transparent;
   padding: 0 4px;
   margin: 0 2px;
   vertical-align: baseline;
@@ -196,6 +196,11 @@
 .fbq-blank-input:focus {
   border-bottom-color: #6c63ff;
   background: rgba(108, 99, 255, 0.06);
+}
+
+.fbq-blank-input:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
 }
 
 .fbq-blank-input:disabled {
@@ -224,7 +229,7 @@
 .fbq-correct-answer {
   display: block;
   font-family: "Iowan Old Style", Georgia, serif;
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: #00b894;
   margin-top: 1px;
   text-align: center;
@@ -246,7 +251,7 @@
 
 .fbq-btn {
   padding: 8px 24px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   border: none;
   border-radius: 8px;
@@ -304,7 +309,7 @@
 
   .fbq-description {
     padding: 16px;
-    font-size: 13px;
+    font-size: 0.8125rem;
     line-height: 2;
   }
 
@@ -313,10 +318,18 @@
   }
 
   .fbq-score-value {
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   .fbq-concept-name {
-    font-size: 18px;
+    font-size: 1.125rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

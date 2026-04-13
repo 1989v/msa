@@ -54,7 +54,7 @@ function NodeMesh({
   onClick: () => void;
 }) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const color = CATEGORY_COLORS[node.category as Category] || '#888';
+  const color = CATEGORY_COLORS[node.category as Category] || '#94a3b8';
   const radius = Math.max(1.5, node.relatedCount * 0.8);
   const opacity = dimmed && !highlighted ? 0.1 : Math.min(1, 0.4 + (node.indexCount / 10) * 0.6);
 
@@ -79,7 +79,7 @@ function NodeMesh({
       <Text
         position={[node.x, node.y + radius + 1.5, node.z]}
         fontSize={1.2}
-        color="#ccc"
+        color="#cbd5e1"
         anchorX="center"
         anchorY="bottom"
       >

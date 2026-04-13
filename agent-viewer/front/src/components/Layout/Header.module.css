@@ -15,7 +15,7 @@
 }
 
 .title {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -33,7 +33,7 @@
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
 .connectionLabel {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-muted);
 }
 
@@ -54,7 +54,7 @@
 }
 
 .stat {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
 }
 
@@ -65,7 +65,7 @@
 
 .refreshBtn {
   padding: 4px 12px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--text-secondary);
   background: var(--bg-tertiary);
   border: 1px solid var(--border);
@@ -77,4 +77,12 @@
 .refreshBtn:hover {
   color: var(--text-primary);
   border-color: var(--accent-blue);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -128,7 +128,7 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (node: any) => {
         const n = node as GraphNode;
-        const color = CATEGORY_COLORS[n.category as Category] || '#888';
+        const color = CATEGORY_COLORS[n.category as Category] || '#94a3b8';
         const radius = bubbleRadius(n);
         const cacheKey = `${n.id}`;
 
@@ -154,7 +154,7 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (node: any) => {
         const n = node as GraphNode;
-        const color = CATEGORY_COLORS[n.category as Category] || '#888';
+        const color = CATEGORY_COLORS[n.category as Category] || '#94a3b8';
         if (dimmed && highlightedNodes.has(n.id)) return '#ffffff';
         if (dimmed && !highlightedNodes.has(n.id)) return `${color}15`;
         return color;
@@ -216,7 +216,7 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (node: any) => {
         const n = node as GraphNode;
-        const color = CATEGORY_COLORS[n.category as Category] || '#888';
+        const color = CATEGORY_COLORS[n.category as Category] || '#94a3b8';
         return `<div style="background:#1e2030;padding:0.75rem 1rem;border-radius:0.5rem;border:1px solid #2a2d3e;max-width:15rem;font-family:system-ui,sans-serif">
           <div style="font-weight:600;font-size:1rem;color:#e2e4ea;margin-bottom:0.25rem">${n.name}</div>
           <div style="font-size:0.875rem;color:${color};margin-bottom:0.25rem">${n.category.replace(/_/g, ' ')} · ${n.level}</div>

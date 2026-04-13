@@ -28,17 +28,17 @@
 }
 
 .lobbyIcon {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .lobbyTitle {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .lobbyCount {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-left: auto;
 }

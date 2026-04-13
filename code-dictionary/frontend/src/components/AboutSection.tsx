@@ -71,7 +71,7 @@ export default function AboutSection({ stats }: AboutSectionProps) {
                 <PolarGrid stroke="rgba(108,99,255,0.2)" />
                 <PolarAngleAxis
                   dataKey="subject"
-                  tick={{ fill: '#888', fontSize: 11 }}
+                  tick={{ fill: '#94a3b8', fontSize: 11 }}
                 />
                 <Radar
                   name="Count"
@@ -87,7 +87,7 @@ export default function AboutSection({ stats }: AboutSectionProps) {
                     border: '1px solid rgba(108,99,255,0.3)',
                     borderRadius: 8,
                     color: '#e0e0e0',
-                    fontSize: 13,
+                    fontSize: '0.8125rem',
                   }}
                 />
               </RadarChart>

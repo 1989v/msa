@@ -11,6 +11,7 @@ jjwt = "0.12.6"
 springdoc = "3.0.1"
 mysql = "8.0.33"
 clickhouse = "0.7.1"
+kotlinLogging = "7.0.7"
 
 [libraries]
 # Spring Boot Starters
@@ -38,6 +39,9 @@ spring-cloud-circuitbreaker-reactor-resilience4j = { module = "org.springframewo
 kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
 kotlin-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
 kotlin-coroutines-reactor = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-reactor" }
+
+# Logging
+kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlinLogging" }
 
 # Kafka
 spring-kafka = { module = "org.springframework.kafka:spring-kafka" }

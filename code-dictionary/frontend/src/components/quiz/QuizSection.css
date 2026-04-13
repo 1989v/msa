@@ -18,7 +18,7 @@
 
 .quiz-subtitle {
   font-size: 0.95rem;
-  color: #666;
+  color: #64748b;
 }
 
 /* Mode Tabs */
@@ -69,7 +69,7 @@
 
 .quiz-mode-desc {
   font-size: 0.7rem;
-  color: #666;
+  color: #64748b;
 }
 
 /* Quiz Content Area */

@@ -17,7 +17,7 @@ interface OrderChartProps {
 export function OrderChart({ data }: OrderChartProps) {
   return (
     <Card className="p-4 space-y-3">
-      <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">7일 주문 현황</h3>
+      <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">7일 주문 현황</h2>
       {data.length === 0 ? (
         <div className="h-48 flex items-center justify-center text-sm text-zinc-400">
           데이터 없음

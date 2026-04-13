@@ -18,12 +18,12 @@ export default function TreemapPanel({ nodes, onNodeClick, onCategoryClick }: Tr
   const data = Object.entries(grouped).map(([category, categoryNodes]) => ({
     name: CATEGORY_LABELS[category as Category] || category,
     categoryKey: category,
-    color: CATEGORY_COLORS[category as Category] || '#888',
+    color: CATEGORY_COLORS[category as Category] || '#94a3b8',
     children: categoryNodes.map((n) => ({
       name: n.name,
       size: Math.max(1, n.indexCount),
       conceptId: n.id,
-      color: CATEGORY_COLORS[n.category as Category] || '#888',
+      color: CATEGORY_COLORS[n.category as Category] || '#94a3b8',
     })),
   }));
 
@@ -46,7 +46,7 @@ export default function TreemapPanel({ nodes, onNodeClick, onCategoryClick }: Tr
           y={y}
           width={width}
           height={height}
-          fill={color || '#888'}
+          fill={color || '#94a3b8'}
           fillOpacity={0.7}
           stroke="#0a0a14"
           strokeWidth={2}
@@ -72,7 +72,7 @@ export default function TreemapPanel({ nodes, onNodeClick, onCategoryClick }: Tr
 
   return (
     <div style={{ padding: 32, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-      <h2 style={{ color: '#e0e0e0', fontSize: 18, marginBottom: 24, textAlign: 'center' }}>
+      <h2 style={{ color: '#e0e0e0', fontSize: '1.125rem', marginBottom: 24, textAlign: 'center' }}>
         Concept Treemap
       </h2>
       <ResponsiveContainer width="100%" height="80%">
@@ -84,7 +84,7 @@ export default function TreemapPanel({ nodes, onNodeClick, onCategoryClick }: Tr
           content={<CustomContent />}
         >
           <Tooltip
-            contentStyle={{ background: '#1a1a2e', border: '1px solid #333', color: '#e0e0e0' }}
+            contentStyle={{ background: '#1a1a2e', border: '1px solid #334155', color: '#e0e0e0' }}
             formatter={(value: any) => [`${value} indexes`, 'Code']}
           />
         </Treemap>

@@ -29,12 +29,12 @@
 }
 
 .title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
 }
 
 .pendingBadge {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   color: var(--accent-red);
   background: rgba(248, 81, 73, 0.12);
@@ -70,7 +70,7 @@
 }
 
 .item.urgent {
-  border-left: 3px solid var(--accent-red);
+  border-top: 2px solid var(--accent-red);
 }
 
 .item.read {
@@ -97,13 +97,13 @@
 }
 
 .agentName {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .typeBadge {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 500;
   border: 1px solid;
   border-radius: 4px;
@@ -112,20 +112,20 @@
 }
 
 .time {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
 .itemTitle {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 4px;
 }
 
 .itemMessage {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--text-secondary);
   line-height: 1.5;
 }
@@ -138,7 +138,7 @@
 
 .approveBtn, .deferBtn, .dismissBtn {
   padding: 4px 12px;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -179,5 +179,13 @@
   padding: 32px;
   text-align: center;
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 0.875rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

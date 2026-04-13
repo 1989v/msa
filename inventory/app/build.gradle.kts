@@ -8,6 +8,7 @@ plugins {
 dependencies {
     implementation(project(":inventory:domain"))
     implementation(project(":common"))
+    implementation(libs.kotlin.logging)
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.data.redis)
