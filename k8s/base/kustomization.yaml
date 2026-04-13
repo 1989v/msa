@@ -32,4 +32,5 @@ resources:
   - agent-viewer-fe
   - charting
   - charting-fe
+  - admin-fe
   - frontend-ingress.yaml

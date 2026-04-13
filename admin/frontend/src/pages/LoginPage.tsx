@@ -1,21 +1,13 @@
 import { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { getGoogleOAuthUrl, getKakaoOAuthUrl } from '@/api/auth';
 
 export function LoginPage() {
-  const { isAuthenticated, isAdmin, login } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      login(token);
-    }
-  }, [searchParams, login]);
 
   useEffect(() => {
     if (isAuthenticated) {
