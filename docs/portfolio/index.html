@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>Tech Portfolio — Commerce MSA Platform</title>
+  <meta name="description" content="Clean Architecture + MSA 커머스 플랫폼 기술 포트폴리오">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
+  <style>
+    :root {
+      --base-font-size: 15px;
+      --theme-color: #42b983;
+      --sidebar-width: 260px;
+      --sidebar-nav-link-color--active: #42b983;
+      --code-font-size: 0.85em;
+    }
+    .markdown-section h1 { border-bottom: 2px solid var(--theme-color); padding-bottom: 0.3em; }
+    .markdown-section table { font-size: 0.9em; }
+    .cover-main { max-width: 700px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: 'Tech Portfolio',
+      repo: '',
+      loadSidebar: true,
+      subMaxLevel: 3,
+      search: {
+        placeholder: 'Search...',
+        noData: 'No results',
+        depth: 3
+      },
+      coverpage: true,
+      auto2top: true,
+      relativePath: true
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-kotlin.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-yaml.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-typescript.min.js"></script>
+</body>
+</html>
