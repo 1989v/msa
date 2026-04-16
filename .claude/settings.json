@@ -3,6 +3,7 @@
     "ai-debugger@ai-common": true,
     "private-repo@ai-common": true,
     "content-analyzer@ai-common": true,
-    "hns@ai-common": true
+    "hns@ai-common": true,
+    "study@ai-common": true
   }
 }
