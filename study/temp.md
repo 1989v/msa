@@ -10,4 +10,4 @@
 
 | # | 주제 | 계획서 | 상태 |
 |---|------|-------|------|
-| 1 | AWS 네트워크 인프라 | [1-aws-network.md](docs/1-aws-network.md) | draft |
+| 1 | AWS 네트워크 인프라 | [1-aws-network.md](docs/1-aws-network.md) | completed |
