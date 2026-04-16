@@ -93,6 +93,23 @@ jobs:
             exit 1
           fi
 
+  doc-index-check:
+    name: Doc index drift check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check doc-index drift
+        run: python3 ai/plugins/hns/scripts/doc_map.py --check
+
   kustomize-validate:
     name: Kustomize render check
     runs-on: ubuntu-latest

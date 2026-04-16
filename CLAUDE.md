@@ -53,6 +53,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **@Transactional 규칙**: 외부 IO 분리, 중첩 txn 예외 금지, 클래스 레벨 주의 → `docs/adr/ADR-0020-transactional-usage.md`
 - **로깅 규칙**: kotlin-logging 필수, 람다 형식, error 레벨 규칙 → `docs/adr/ADR-0021-logging-conventions.md`
 - **Entity 수정 규칙**: 전체 동기화 vs 부분 수정 분리, 캡슐화 → `docs/adr/ADR-0022-entity-mutation-conventions.md`
+- **문서-소스 추적**: `doc_map.py` / `doc_scan.py`, `docs/doc-index.json` 정책, `docs/doc-index.lock.json` 검증 → `docs/adr/ADR-0023-doc-index-tracking.md`
 
 ---
 

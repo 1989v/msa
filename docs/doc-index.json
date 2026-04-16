@@ -1,0 +1,97 @@
+{
+  "_note": "Doc Index Policy (ADR-0023). 사람이 유지하는 SOT. lock 파일은 doc_map.py 가 생성.",
+  "version": 1,
+
+  "source_roots": [
+    "product", "order", "search", "gateway", "common", "charting",
+    "analytics", "experiment", "member", "wishlist", "admin", "auth",
+    "chatbot", "gifticon", "inventory", "fulfillment", "warehouse"
+  ],
+
+  "doc_roots": ["docs"],
+
+  "ignore_patterns": [
+    "**/build/**",
+    "**/node_modules/**",
+    "**/.gradle/**",
+    "**/target/**",
+    "**/dist/**",
+    "**/coverage/**",
+    "**/__pycache__/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*Test.kt",
+    "**/*Spec.kt"
+  ],
+
+  "source_extensions": [".kt", ".java", ".py", ".ts", ".tsx", ".vue", ".go"],
+
+  "_manual_links_note": "pattern 으로 표현 불가한 cross-cutting 문서. 각 항목: {doc, sources:[glob...]}",
+  "manual_links": [
+    {
+      "doc": "docs/architecture/kafka-convention.md",
+      "sources": ["*/src/main/kotlin/*messaging*"]
+    },
+    {
+      "doc": "docs/architecture/api-response.md",
+      "sources": ["*/src/main/kotlin/*presentation*"]
+    },
+    {
+      "doc": "docs/architecture/00.clean-architecture.md",
+      "sources": [
+        "*/domain/src/main/kotlin/*",
+        "*/src/main/kotlin/*infrastructure*"
+      ]
+    },
+    {
+      "doc": "docs/adr/ADR-0020-transactional-usage.md",
+      "sources": ["*/src/main/kotlin/*application*Service.kt"]
+    },
+    {
+      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
+      "sources": ["*/domain/src/main/kotlin/*domain*"]
+    },
+    {
+      "doc": "docs/conventions/package-structure.md",
+      "sources": [
+        "*/src/main/kotlin/*presentation*",
+        "*/src/main/kotlin/*application*",
+        "*/src/main/kotlin/*persistence*",
+        "*/src/main/kotlin/*messaging*",
+        "*/domain/src/main/kotlin/*domain*"
+      ]
+    }
+  ],
+
+  "_pattern_rules_note": "1회 정의로 N개 소스 → 서비스 CLAUDE.md 매핑. fnmatch 기반. {service} 는 doc 경로에서만 치환.",
+  "pattern_rules": [
+    {
+      "name": "svc-kotlin",
+      "source": "*/src/main/kotlin/*",
+      "doc": "{service}/CLAUDE.md",
+      "link_type": "pattern"
+    },
+    {
+      "name": "svc-python",
+      "source": "charting/*",
+      "doc": "charting/CLAUDE.md",
+      "link_type": "pattern"
+    },
+    {
+      "name": "svc-frontend",
+      "source": "admin/*",
+      "doc": "admin/CLAUDE.md",
+      "link_type": "pattern"
+    }
+  ],
+
+  "_protected_docs_note": "자동 편집 대상에서 제외. ADR/standards/CLAUDE.md 는 자동 수정 금지.",
+  "protected_docs": [
+    "docs/adr/**",
+    "agent-os/standards/**",
+    "**/CLAUDE.md"
+  ]
+}
