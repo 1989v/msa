@@ -4,6 +4,7 @@
     "private-repo@ai-common": true,
     "content-analyzer@ai-common": true,
     "hns@ai-common": true,
-    "study@ai-common": true
+    "study@ai-common": true,
+    "ideabank@ai-common": true
   }
 }
