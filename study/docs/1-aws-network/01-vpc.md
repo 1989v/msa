@@ -8,7 +8,7 @@ level: deep
 
 # VPC (Virtual Private Cloud) — Deep Study
 
-> 상위: [plan.md](plan.md) · 프리뷰: [preview.md](preview.md)
+> 상위: [00-plan.md](00-plan.md) · 프리뷰: [00-preview.md](00-preview.md)
 
 ## 1. 재확인 (프리뷰 요약)
 
