@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seven-split
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: seven-split
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: seven-split
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: seven-split
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      serviceAccountName: seven-split
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: app
+          image: commerce/seven-split:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8094
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            - name: DB_USERNAME
+              value: "seven_split"
+            - name: DB_PASSWORD
+              value: "seven_split"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              # Backtest engine — allow in-flight runs to finalize and outbox flush.
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
