@@ -29,6 +29,14 @@ kgd:
     analytics:
       enabled: false
 
+# TG-06.5: seven_split 전용 ClickHouse 설정. analytics DB 와 분리 (ADR-0024 §12).
+seven-split:
+  clickhouse:
+    url: ${SEVEN_SPLIT_CH_URL:jdbc:clickhouse://localhost:8123/seven_split}
+    username: ${SEVEN_SPLIT_CH_USERNAME:seven_split}
+    password: ${SEVEN_SPLIT_CH_PASSWORD:seven_split}
+    database: seven_split
+
 management:
   endpoints:
     web:

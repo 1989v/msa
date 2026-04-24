@@ -17,11 +17,16 @@ dependencies {
     // TG-04: application port 시그니처가 Coroutine(suspend, Flow) 기반이므로 명시적으로 도입.
     // spring-boot-starter-web 은 Reactor 코루틴을 전이로 끌어오지 않는다.
     implementation(libs.kotlin.coroutines.core)
+    // TG-06.5: ClickHouse JDBC. seven_split DB 접속 / SchemaBootstrapper 에서 사용.
+    implementation(libs.clickhouse.jdbc)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.kotest.property)
     testImplementation(libs.turbine)
+    // TG-06.6: ClickHouse Testcontainers 스키마 스모크 테스트.
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.clickhouse)
     testRuntimeOnly(libs.h2)
 }
 
