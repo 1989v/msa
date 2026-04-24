@@ -1,0 +1,27 @@
+plugins {
+    alias(libs.plugins.kotlin.spring)
+    alias(libs.plugins.kotlin.jpa)
+    alias(libs.plugins.kotlin.kapt)
+    alias(libs.plugins.spring.boot)
+}
+
+dependencies {
+    implementation(project(":seven-split:domain"))
+    implementation(project(":common"))
+    implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation(libs.spring.boot.starter.validation)
+    implementation(libs.spring.boot.starter.actuator)
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    runtimeOnly(libs.mysql.connector)
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.kotest.extensions.spring)
+    testImplementation(libs.kotest.property)
+    testImplementation(libs.turbine)
+    testRuntimeOnly(libs.h2)
+}
+
+tasks.bootJar {
+    archiveBaseName.set("seven-split")
+}

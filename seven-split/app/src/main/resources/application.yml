@@ -1,0 +1,54 @@
+server:
+  port: 8094
+  shutdown: graceful
+
+spring:
+  application:
+    name: seven-split-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  threads:
+    virtual:
+      enabled: true  # ADR-0024 §3 가상 스레드 활성화
+  datasource:
+    url: jdbc:mysql://localhost:3306/seven_split?useSSL=false&serverTimezone=UTC
+    username: ${DB_USERNAME:seven_split}
+    password: ${DB_PASSWORD:seven_split}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+kgd:
+  common:
+    redis:
+      enabled: false  # Phase 1 불필요
+    analytics:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
