@@ -53,3 +53,4 @@ target/
 # Nginx dev SSL certs
 docker/nginx/ssl/*.key
 docker/nginx/ssl/*.crt
+docs/verify/

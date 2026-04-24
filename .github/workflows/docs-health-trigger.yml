@@ -1,0 +1,38 @@
+name: Docs Health
+
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+      - '**/*.yml'
+      - '**/*.yaml'
+      - '**/*.kt'
+      - '**/*.java'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - 'docs/**'
+  push:
+    branches:
+      - main
+  schedule:
+    # 매주 월 10:00 KST = 01:00 UTC — doc quality GC
+    - cron: '0 1 * * 1'
+    # 매주 수 10:00 KST = 01:00 UTC — doctor check
+    - cron: '0 1 * * 3'
+  workflow_dispatch:
+    inputs:
+      jobs:
+        description: 'jobs to run'
+        required: false
+        default: 'hygiene,stale-doc,doctor-check,quality-gc'
+
+jobs:
+  docs-health:
+    uses: ./.github/workflows/docs-health.yml
+    with:
+      plugin_repo: 1989v/ai
+      plugin_ref: main
+      jobs: ${{ github.event.inputs.jobs || 'hygiene,stale-doc,doctor-check' }}
+    secrets:
+      ANTHROPIC_API_KEY_FOR_WORKFLOWS: ${{ secrets.ANTHROPIC_API_KEY_FOR_WORKFLOWS }}
+      RUNNER_GH_TOKEN: ${{ secrets.RUNNER_GH_TOKEN }}

@@ -1,0 +1,597 @@
+name: Docs Health (Reusable)
+
+# 사용자 프로젝트에 복사해서 쓰는 재사용 가능 워크플로.
+# 4개 job:
+#   - hygiene      (PR)      : 필수 루트 파일 (AGENTS.md / CLAUDE.md / docs/index.yml) 존재 검증
+#   - stale-doc    (push)    : 코드 diff 기반 영향 문서 식별 → Claude 자동 수정 PR
+#   - quality-gc   (cron)    : 주기적 문서 품질 GC (broken link, orphan, 중복)
+#   - doctor-check (cron)    : 4-layer health diagnostic + 자동 수정 PR
+#
+# 호출하는 레포는 아래 시크릿을 설정해야 한다:
+#   ANTHROPIC_API_KEY_FOR_WORKFLOWS  (필수)
+#   RUNNER_GH_TOKEN                  (선택; 없으면 GITHUB_TOKEN fallback)
+#
+# ---
+# 비용 모드 스위치 (Repository Variable)
+#   HNS_DOCS_HEALTH_MODE  (선택, 기본값: 'full')
+#     - 'full'     : 전체 실행 (진단 + Claude auto-fix)
+#     - 'diagnose' : 진단만 실행, Claude 호출 step 모두 skip (토큰 0)
+#     - 'off'      : 워크플로 전체 early-exit
+#
+# Settings → Secrets and variables → Actions → Variables 에서 즉시 변경 가능.
+# 긴급 kill-switch: 'off' 로 설정. 예산 ceiling 도달 시: 'diagnose'.
+
+on:
+  workflow_call:
+    inputs:
+      base_branch:
+        description: 'Base branch (비워두면 자동 감지)'
+        required: false
+        type: string
+        default: ''
+      plugin_repo:
+        description: 'hns 플러그인 스크립트를 받을 레포 (org/repo)'
+        required: true
+        type: string
+      plugin_ref:
+        description: 'hns 플러그인 ref (브랜치/태그)'
+        required: false
+        type: string
+        default: 'main'
+      source_patterns:
+        description: '소스 파일 glob 패턴 (공백 구분). 비우면 언어 자동 감지'
+        required: false
+        type: string
+        default: ''
+      exclude_paths:
+        description: 'diff에서 제외할 경로 (pipe 구분 grep 패턴)'
+        required: false
+        type: string
+        default: '/test/|/e2eTest/|/integrationTest/|/__tests__/|/docs/|/.github/'
+      jobs:
+        description: '콤마 구분 실행 job 목록: hygiene,stale-doc,doctor-check,quality-gc'
+        required: false
+        type: string
+        default: 'hygiene,stale-doc,doctor-check'
+      stale_doc_model:
+        description: 'stale-doc 수정 모델'
+        required: false
+        type: string
+        default: 'sonnet'
+      quality_gc_model:
+        description: 'quality-gc 수정 모델'
+        required: false
+        type: string
+        default: 'sonnet'
+      doctor_model:
+        description: 'doctor-check 수정 모델'
+        required: false
+        type: string
+        default: 'sonnet'
+      schedule_quality_gc:
+        description: 'quality-gc cron (빈 값이면 비활성)'
+        required: false
+        type: string
+        default: '0 1 * * 1'
+      schedule_doctor:
+        description: 'doctor-check cron (빈 값이면 비활성)'
+        required: false
+        type: string
+        default: '0 1 * * 3'
+      metrics_repo:
+        description: 'docs health metrics 를 저장할 중앙 레포 (org/repo, 비우면 비활성)'
+        required: false
+        type: string
+        default: ''
+    secrets:
+      ANTHROPIC_API_KEY_FOR_WORKFLOWS:
+        required: true
+      RUNNER_GH_TOKEN:
+        required: false
+
+jobs:
+  resolve-config:
+    name: "Config"
+    runs-on: ubuntu-latest
+    outputs:
+      mode: ${{ steps.config.outputs.mode }}
+      autofix_enabled: ${{ steps.config.outputs.autofix_enabled }}
+      base_branch: ${{ steps.config.outputs.base_branch }}
+      source_patterns: ${{ steps.config.outputs.source_patterns }}
+      run_hygiene: ${{ steps.config.outputs.run_hygiene }}
+      run_stale_doc: ${{ steps.config.outputs.run_stale_doc }}
+      run_doctor: ${{ steps.config.outputs.run_doctor }}
+      run_quality_gc: ${{ steps.config.outputs.run_quality_gc }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve config
+        id: config
+        env:
+          HEALTH_MODE: ${{ vars.HNS_DOCS_HEALTH_MODE }}
+        run: |
+          MODE="${HEALTH_MODE:-full}"
+          case "$MODE" in
+            full|diagnose|off) ;;
+            *)
+              echo "WARN: unknown HNS_DOCS_HEALTH_MODE='$MODE', defaulting to 'full'" >&2
+              MODE="full"
+              ;;
+          esac
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "::notice::docs-health mode = $MODE (set via vars.HNS_DOCS_HEALTH_MODE)"
+
+          if [ "$MODE" = "off" ]; then
+            echo "docs-health workflow is OFF — all jobs will skip."
+            echo "autofix_enabled=false" >> "$GITHUB_OUTPUT"
+            echo "run_hygiene=false" >> "$GITHUB_OUTPUT"
+            echo "run_stale_doc=false" >> "$GITHUB_OUTPUT"
+            echo "run_doctor=false" >> "$GITHUB_OUTPUT"
+            echo "run_quality_gc=false" >> "$GITHUB_OUTPUT"
+            echo "base_branch=main" >> "$GITHUB_OUTPUT"
+            echo "source_patterns=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$MODE" = "diagnose" ]; then
+            echo "autofix_enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "autofix_enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+          BASE="${{ inputs.base_branch }}"
+          if [ -z "$BASE" ]; then
+            BASE=$(git remote show origin 2>/dev/null | grep 'HEAD branch' | awk '{print $NF}')
+            [ -z "$BASE" ] && BASE="main"
+          fi
+          echo "base_branch=$BASE" >> "$GITHUB_OUTPUT"
+
+          PATTERNS="${{ inputs.source_patterns }}"
+          if [ -z "$PATTERNS" ]; then
+            if ls *.gradle* build.gradle* 2>/dev/null | head -1 > /dev/null 2>&1; then
+              PATTERNS="*.java *.kt *.gradle *.properties"
+            elif [ -f "package.json" ]; then
+              PATTERNS="*.ts *.tsx *.js *.jsx"
+            elif [ -f "requirements.txt" ] || [ -f "pyproject.toml" ]; then
+              PATTERNS="*.py"
+            elif [ -f "Gemfile" ]; then
+              PATTERNS="*.rb"
+            elif [ -f "Package.swift" ]; then
+              PATTERNS="*.swift"
+            else
+              PATTERNS="*.java *.kt *.ts *.tsx *.js *.py *.rb *.swift *.go"
+            fi
+          fi
+          echo "source_patterns=$PATTERNS" >> "$GITHUB_OUTPUT"
+
+          JOBS="${{ inputs.jobs }}"
+          echo "run_hygiene=$(echo $JOBS | grep -qw hygiene && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "run_stale_doc=$(echo $JOBS | grep -qw stale-doc && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "run_doctor=$(echo $JOBS | grep -qw doctor-check && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "run_quality_gc=$(echo $JOBS | grep -qw quality-gc && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  hygiene:
+    name: "PR · Hygiene"
+    needs: resolve-config
+    if: |
+      needs.resolve-config.outputs.run_hygiene == 'true' &&
+      (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify docs structure
+        run: |
+          ERRORS=0
+          test -f CLAUDE.md || { echo "FAIL: CLAUDE.md missing"; ERRORS=$((ERRORS+1)); }
+          test -d docs || { echo "FAIL: docs/ missing"; ERRORS=$((ERRORS+1)); }
+          if [ -f docs/index.yml ]; then
+            echo "ok: docs/index.yml present"
+          else
+            echo "WARN: docs/index.yml missing"
+          fi
+          if [ -f docs/standards/lints/verify-docs-hygiene.sh ]; then
+            bash docs/standards/lints/verify-docs-hygiene.sh || ERRORS=$((ERRORS+1))
+          fi
+          exit $ERRORS
+
+  stale-doc-update:
+    name: "Push · Stale Doc Update"
+    needs: resolve-config
+    if: |
+      needs.resolve-config.outputs.run_stale_doc == 'true' &&
+      (
+        (github.event_name == 'push' && github.ref_name == needs.resolve-config.outputs.base_branch && github.actor != 'github-actions[bot]' && github.actor != 'claude[bot]') ||
+        github.event_name == 'workflow_dispatch'
+      )
+    concurrency:
+      group: stale-doc-${{ github.ref_name }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-config.outputs.base_branch }}
+          fetch-depth: 0
+
+      - name: Get changed source files
+        id: changed-files
+        env:
+          SOURCE_PATTERNS: ${{ needs.resolve-config.outputs.source_patterns }}
+          EXCLUDE_PATHS: ${{ inputs.exclude_paths }}
+        run: |
+          BASE_SHA="${{ github.event.before }}"
+          HEAD_SHA="${{ github.sha }}"
+
+          if [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ] || [ -z "$BASE_SHA" ]; then
+            BASE_SHA="$(git rev-list --max-parents=0 HEAD | tail -1)"
+          fi
+
+          PATTERN_ARGS=""
+          for p in $SOURCE_PATTERNS; do
+            PATTERN_ARGS="$PATTERN_ARGS -- '$p'"
+          done
+
+          CHANGED=$(eval git diff --name-only "${BASE_SHA}" "${HEAD_SHA}" $PATTERN_ARGS \
+            | grep -Ev "$EXCLUDE_PATHS" \
+            || true)
+
+          {
+            echo "changed_files<<EOF"
+            echo "$CHANGED"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          [ -z "$CHANGED" ] && echo "skip=true" >> "$GITHUB_OUTPUT" || echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout hns plugin
+        if: steps.changed-files.outputs.skip == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.plugin_repo }}
+          ref: ${{ inputs.plugin_ref }}
+          path: .hns-plugin
+          token: ${{ secrets.RUNNER_GH_TOKEN || secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Run doc_scan
+        id: doc-scan
+        if: steps.changed-files.outputs.skip == 'false'
+        run: |
+          SCANNER=".hns-plugin/plugins/hns/scripts/doc_scan.py"
+          if [ ! -f "$SCANNER" ]; then
+            echo "doc_scan not found, skipping" >&2
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          mkdir -p docs/verify
+          python3 "$SCANNER" \
+            --repo . \
+            --base "${{ steps.changed-files.outputs.base_sha }}" \
+            --json \
+            > docs/verify/DOC_SCAN.json 2>/dev/null || true
+
+          if [ ! -s "docs/verify/DOC_SCAN.json" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          python3 -c "
+          import json, os
+          from pathlib import Path
+          data = json.loads(Path('docs/verify/DOC_SCAN.json').read_text())
+          findings = data.get('impacted') or data.get('findings') or []
+          count = len(findings)
+          with Path(os.environ['GITHUB_OUTPUT']).open('a') as h:
+              h.write(f'finding_count={count}\n')
+              h.write(f'skip={\"true\" if count == 0 else \"false\"}\n')
+              h.write('impacted_docs<<EOF\n')
+              for f in findings:
+                  path = f.get('docPath') or f.get('path') or ''
+                  if path:
+                      h.write(path + '\n')
+              h.write('EOF\n')
+          "
+
+      - name: Run Claude — Stale Doc Fix
+        if: |
+          needs.resolve-config.outputs.autofix_enabled == 'true' &&
+          steps.changed-files.outputs.skip == 'false' &&
+          steps.doc-scan.outputs.skip != 'true'
+        uses: anthropics/claude-code-base-action@v0.0.63
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_FOR_WORKFLOWS }}
+          model: ${{ inputs.stale_doc_model }}
+          allowed_tools: "Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(python3:*)"
+          settings: |
+            { "defaultMode": "acceptEdits" }
+          prompt: |
+            Read CLAUDE.md and docs/index.yml (if present) for context.
+
+            ## Role — Stale Doc Update
+            Use docs/verify/DOC_SCAN.json as source of truth.
+            For each impacted document:
+              1. Read the flagged document
+              2. Read the changed source files from the diff
+              3. If the document is actually stale, update it directly
+              4. If current, skip it — but record WHY in your assessment
+
+            ## Audit trail (MANDATORY)
+            Write a summary to `docs/verify/STALE_DOC_AUDIT.md`:
+              - Date, commit range, number of findings reviewed
+              - For each finding: file path, verdict (stale/current), one-line reasoning
+
+            ## Archive rules
+            If a source file was DELETED and a doc references only that file:
+              - Move doc to docs/legacies/deprecated/
+              - Update frontmatter: status: deprecated, deprecated_reason: "source deleted"
+
+            Do NOT do full-tree GC.
+            Changed files: git diff ${{ steps.changed-files.outputs.base_sha }}...${{ steps.changed-files.outputs.head_sha }}
+            Impacted docs:
+            ${{ steps.doc-scan.outputs.impacted_docs }}
+
+            If any docs were updated, moved, or created, create a PR:
+              - branch: docs/stale-update-$(date +%Y-%m-%d)
+              - base: ${{ needs.resolve-config.outputs.base_branch }}
+              - title: "[docs] stale doc update — N files"
+              - labels: documentation
+              - Regular PR (not draft)
+              - After creating the PR: `gh pr merge --auto --squash`
+
+  doc-quality-gc:
+    name: "Scheduled · Doc Quality GC"
+    needs: resolve-config
+    if: |
+      needs.resolve-config.outputs.run_quality_gc == 'true' &&
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    concurrency:
+      group: doc-quality-gc-${{ github.ref_name }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-config.outputs.base_branch }}
+          fetch-depth: 0
+
+      - name: Run Claude — Doc Quality GC
+        if: needs.resolve-config.outputs.autofix_enabled == 'true'
+        uses: anthropics/claude-code-base-action@v0.0.63
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_FOR_WORKFLOWS }}
+          model: ${{ inputs.quality_gc_model }}
+          timeout_minutes: 120
+          allowed_tools: "Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(python3:*)"
+          settings: |
+            { "defaultMode": "acceptEdits" }
+          prompt: |
+            Read CLAUDE.md and docs/index.yml for context.
+            If docs/standards/quality-rules.md exists, follow its rules.
+            Otherwise, scan docs/ for: broken links, stale references, inconsistent formatting,
+            orphan files not in index, duplicate content.
+
+            ## Archive rules for orphan docs
+            If a doc in docs/ is not registered in index.yml AND its referenced source files no longer exist:
+              - Move to docs/legacies/deprecated/
+              - Update frontmatter: status: deprecated, deprecated_reason: "orphan — source removed"
+            If a doc IS in index.yml but all its source references are dead:
+              - Add frontmatter flag: needs_review: true
+
+            Create a PR only if actual changes exist (regular PR, not draft).
+            Branch: docs/quality-gc-$(date +%Y-%m-%d), base: ${{ needs.resolve-config.outputs.base_branch }}
+            After PR creation: `gh pr merge --auto --squash`
+
+  doctor-check:
+    name: "Scheduled · Doctor Check"
+    needs: resolve-config
+    if: |
+      needs.resolve-config.outputs.run_doctor == 'true' &&
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    concurrency:
+      group: doctor-check-${{ github.ref_name }}
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-config.outputs.base_branch }}
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Checkout hns plugin
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.plugin_repo }}
+          ref: ${{ inputs.plugin_ref }}
+          path: .hns-plugin
+          token: ${{ secrets.RUNNER_GH_TOKEN || secrets.GITHUB_TOKEN }}
+          fetch-depth: 1
+
+      - name: Run doctor diagnostics
+        id: doctor
+        run: |
+          DOCTOR=".hns-plugin/plugins/hns/scripts/doctor.py"
+          LOCAL_DOCTOR="docs/standards/lints/doctor.py"
+
+          if [ -f "$LOCAL_DOCTOR" ]; then
+            DOCTOR="$LOCAL_DOCTOR"
+          elif [ ! -f "$DOCTOR" ]; then
+            echo "status=SKIP" >> "$GITHUB_OUTPUT"
+            echo "No doctor script found" >&2
+            exit 0
+          fi
+
+          mkdir -p docs/verify
+          python3 "$DOCTOR" . \
+            --strict \
+            --output-md docs/verify/DOCTOR_REPORT.md \
+            --output-json docs/verify/DOCTOR_REPORT.json \
+            2>&1 | tee /tmp/doctor-output.txt || true
+
+          if grep -q "Status\*\*: FAIL" /tmp/doctor-output.txt || grep -q "Status: FAIL" /tmp/doctor-output.txt; then
+            echo "status=FAIL" >> "$GITHUB_OUTPUT"
+          elif grep -q "Status\*\*: WARN" /tmp/doctor-output.txt || grep -q "Status: WARN" /tmp/doctor-output.txt; then
+            echo "status=WARN" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=PASS" >> "$GITHUB_OUTPUT"
+          fi
+
+          python3 -c "
+          import json, sys
+          from pathlib import Path
+          out = open(sys.argv[1], 'a')
+          rep = Path('docs/verify/DOCTOR_REPORT.json')
+          if rep.exists():
+              data = json.loads(rep.read_text())
+              out.write(f'score={data.get(\"score\", 0)}\n')
+              layers = {l['id']: l['status'] for l in data.get('layers', [])}
+              out.write(f'layers_json={json.dumps(layers)}\n')
+              findings = sum(len(l.get('findings', [])) for l in data.get('layers', []))
+              out.write(f'finding_count={findings}\n')
+          else:
+              out.write('score=0\nlayers_json={}\nfinding_count=0\n')
+          " "$GITHUB_OUTPUT"
+
+      - name: Run Claude — Doctor Auto-fix
+        if: |
+          needs.resolve-config.outputs.autofix_enabled == 'true' &&
+          steps.doctor.outputs.status != 'PASS' &&
+          steps.doctor.outputs.status != 'SKIP'
+        uses: anthropics/claude-code-base-action@v0.0.63
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY_FOR_WORKFLOWS }}
+          model: ${{ inputs.doctor_model }}
+          allowed_tools: "Read,Write,Edit,Glob,Grep,Bash(git:*),Bash(gh:*),Bash(find:*),Bash(python3:*)"
+          settings: |
+            { "defaultMode": "acceptEdits" }
+          prompt: |
+            Read CLAUDE.md and docs/index.yml for context.
+            Doctor status: ${{ steps.doctor.outputs.status }}
+
+            Use docs/verify/DOCTOR_REPORT.md (and DOCTOR_REPORT.json) as source of truth.
+            If docs/standards/doctor-rules.md exists, follow its auto-fix rules.
+
+            ## Continuation from previous run
+            If docs/verify/DOCTOR_TODO.md exists, read it first.
+            Unresolved items are HIGH PRIORITY — fix them before new findings.
+            After fixing, remove them from the file. If all resolved, delete DOCTOR_TODO.md.
+
+            ## Mandatory fix rules
+
+            ### L1-* — Index Integrity
+            - Missing docs/index.yml: create a minimal one listing existing docs/*.md
+            - Registered doc not found: remove from index.yml OR restore the file
+            - Orphan docs: register in index.yml OR move to docs/legacies/deprecated/
+
+            ### L2-* — Agent Guidance
+            - Missing CLAUDE.md: create a minimal one with Build and Commands sections
+            - Short CLAUDE.md: expand with repo-specific guidance
+
+            ### L3-* — Harness Alignment
+            - Broken links: fix the link or remove the reference
+            - Stale harness-gc-report.md: run `/hns:gc` or remove the stale file
+
+            ### L4-* — Evidence Coverage
+            - For spec/standard docs without `<!-- source: ... -->`, add a citation referencing the originating code file
+
+            ### Batch size control
+            Fix up to **20 findings per run**. Priority: L3 broken links → L1 index → L2 agent → L4 evidence.
+            Remaining findings go into `docs/verify/DOCTOR_TODO.md`.
+
+            Create a regular PR only if actual changes exist.
+            Branch: docs/doctor-$(date +%Y-%m-%d), base: ${{ needs.resolve-config.outputs.base_branch }}
+            After PR creation: `gh pr merge --auto --squash`
+
+      - name: Push metrics to central repo
+        if: inputs.metrics_repo != '' && steps.doctor.outputs.status != 'SKIP'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.RUNNER_GH_TOKEN || secrets.GITHUB_TOKEN }}
+          METRIC_REPO_NAME: ${{ github.repository }}
+          METRIC_SCORE: ${{ steps.doctor.outputs.score }}
+          METRIC_STATUS: ${{ steps.doctor.outputs.status }}
+          METRIC_FINDINGS: ${{ steps.doctor.outputs.finding_count }}
+          METRIC_LAYERS: ${{ steps.doctor.outputs.layers_json }}
+          METRIC_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          METRICS_REPO: ${{ inputs.metrics_repo }}
+        run: |
+          set +e
+          REPO_SHORT="${METRIC_REPO_NAME##*/}"
+          FILE_PATH="metrics/docs-health/${REPO_SHORT}.json"
+
+          METRIC_JSON=$(python3 -c "
+          import json, os
+          layers = json.loads(os.environ.get('METRIC_LAYERS') or '{}')
+          print(json.dumps({
+            'repo': os.environ['METRIC_REPO_NAME'],
+            'date': '$(date -u +%Y-%m-%dT%H:%M:%SZ)',
+            'score': int(os.environ.get('METRIC_SCORE') or '0'),
+            'status': os.environ.get('METRIC_STATUS', ''),
+            'finding_count': int(os.environ.get('METRIC_FINDINGS') or '0'),
+            'run_url': os.environ['METRIC_RUN_URL'],
+            'layers': layers
+          }, indent=2))
+          ")
+
+          EXISTING=$(gh api "repos/${METRICS_REPO}/contents/${FILE_PATH}" --jq '.content' 2>/dev/null || true)
+
+          if [ -n "$EXISTING" ] && [ "$EXISTING" != "null" ]; then
+            EXISTING_DATA=$(echo "$EXISTING" | base64 -d 2>/dev/null || echo "[]")
+            SHA=$(gh api "repos/${METRICS_REPO}/contents/${FILE_PATH}" --jq '.sha' 2>/dev/null)
+          else
+            EXISTING_DATA="[]"
+            SHA=""
+          fi
+
+          UPDATED=$(echo "$EXISTING_DATA" | METRIC_JSON="$METRIC_JSON" python3 -c "
+          import sys, json, os
+          data = json.load(sys.stdin)
+          if not isinstance(data, list):
+              data = []
+          data.append(json.loads(os.environ['METRIC_JSON']))
+          data = data[-90:]
+          print(json.dumps(data, indent=2))
+          ")
+
+          ENCODED=$(echo "$UPDATED" | base64 -w 0 2>/dev/null || echo "$UPDATED" | base64 2>/dev/null)
+
+          if [ -n "$SHA" ]; then
+            gh api "repos/${METRICS_REPO}/contents/${FILE_PATH}" \
+              -X PUT \
+              -f message="metrics: update docs-health for ${REPO_SHORT}" \
+              -f content="$ENCODED" \
+              -f sha="$SHA" \
+              --silent && echo "Metrics updated for ${REPO_SHORT}" || echo "WARN: metrics push failed"
+          else
+            gh api "repos/${METRICS_REPO}/contents/${FILE_PATH}" \
+              -X PUT \
+              -f message="metrics: init docs-health for ${REPO_SHORT}" \
+              -f content="$ENCODED" \
+              --silent && echo "Metrics initialized for ${REPO_SHORT}" || echo "WARN: metrics init failed"
+          fi
