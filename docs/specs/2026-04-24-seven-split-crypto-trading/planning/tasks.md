@@ -272,16 +272,16 @@ Q-D 확정 범위 수집 배치. 증분·재수집·재처리 전략은 `context
 
 MySQL에 CRUD 상태 저장 + Outbox + 감사 로그. Phase 1은 전략/백테스트 실행 결과 저장이 핵심이며, 크레덴셜/주문 테이블은 스키마만 사전 마련(Phase 2/3에서 채움).
 
-- [ ] TG-08.0 **Complete**: Flyway 마이그레이션 성공 + JPA 엔티티 CRUD 통합 테스트(Testcontainers MySQL) green.
-  - [ ] TG-08.1 Flyway `V001__init.sql` — `split_strategy`, `strategy_run`, `round_slot`, `order`, `exchange_credential`, `notification_target`, `outbox`, `processed_event`, `audit_log` 테이블 생성. 모든 테이블에 `tenant_id VARCHAR(64) NOT NULL` + 인덱스 `(tenant_id, ...)`
-  - [ ] TG-08.2 JPA Entity 매핑 — `SplitStrategyEntity`, `StrategyRunEntity`, `RoundSlotEntity`, `OrderEntity`, `ExchangeCredentialEntity`, `NotificationTargetEntity`, `OutboxEntity`, `ProcessedEventEntity`, `AuditLogEntity`. 도메인 모델은 Entity와 분리(infrastructure/persistence/mapper)
-  - [ ] TG-08.3 JPA Repository 인터페이스 + QueryDSL 커스텀 쿼리. `@TenantAware` AOP 또는 JPA Filter(혹은 Repository 레이어에서 tenantId 필수 파라미터)로 INV-05 강제
-  - [ ] TG-08.4 Mapper — `SplitStrategy ↔ SplitStrategyEntity`, `RoundSlot ↔ RoundSlotEntity` 등. 도메인 ↔ 엔티티 단방향 변환만 허용
-  - [ ] TG-08.5 Adapter 구현(port → JPA): `JpaStrategyRepository : StrategyRepositoryPort`, `JpaRoundSlotRepository : RoundSlotRepositoryPort`, 등
-  - [ ] TG-08.6 Outbox pattern — 상태 전이 트랜잭션 내 `OutboxEntity` insert, 별도 `OutboxPublisher` 스케줄러가 Kafka로 flush(Phase 1은 Kafka 실발행 토글 off, 테이블 append만 확인)
-  - [ ] TG-08.7 Testcontainers MySQL 통합 테스트 — 전략 create → run start → slot open → order place → slot close 플로우 1종 + tenantId 격리 케이스 1종
-  - [ ] TG-08.8 `@Transactional` 경계(ADR-0020): **외부 IO(거래소 REST 호출)는 트랜잭션 밖**. Repository adapter는 짧은 내부 트랜잭션만 유지. 클래스 레벨 `@Transactional` 금지
-  - [ ] TG-08.9 **Verify**: `./gradlew :seven-split:app:test --tests '*JpaRepository*' --tests '*PersistenceIntegrationSpec*'` 성공
+- [x] TG-08.0 **Complete**: Flyway 마이그레이션 성공 + JPA 엔티티 CRUD 통합 테스트(Testcontainers MySQL) green.
+  - [x] TG-08.1 Flyway `V001__init.sql` — `split_strategy`, `strategy_run`, `round_slot`, `order`, `exchange_credential`, `notification_target`, `outbox`, `processed_event`, `audit_log` 테이블 생성. 모든 테이블에 `tenant_id VARCHAR(64) NOT NULL` + 인덱스 `(tenant_id, ...)`
+  - [x] TG-08.2 JPA Entity 매핑 — `SplitStrategyEntity`, `StrategyRunEntity`, `RoundSlotEntity`, `OrderEntity`, `ExchangeCredentialEntity`, `NotificationTargetEntity`, `OutboxEntity`, `ProcessedEventEntity`, `AuditLogEntity`. 도메인 모델은 Entity와 분리(infrastructure/persistence/mapper)
+  - [x] TG-08.3 JPA Repository 인터페이스 + QueryDSL 커스텀 쿼리. `@TenantAware` AOP 또는 JPA Filter(혹은 Repository 레이어에서 tenantId 필수 파라미터)로 INV-05 강제
+  - [x] TG-08.4 Mapper — `SplitStrategy ↔ SplitStrategyEntity`, `RoundSlot ↔ RoundSlotEntity` 등. 도메인 ↔ 엔티티 단방향 변환만 허용
+  - [x] TG-08.5 Adapter 구현(port → JPA): `JpaStrategyRepository : StrategyRepositoryPort`, `JpaRoundSlotRepository : RoundSlotRepositoryPort`, 등
+  - [x] TG-08.6 Outbox pattern — 상태 전이 트랜잭션 내 `OutboxEntity` insert, 별도 `OutboxPublisher` 스케줄러가 Kafka로 flush(Phase 1은 Kafka 실발행 토글 off, 테이블 append만 확인)
+  - [x] TG-08.7 Testcontainers MySQL 통합 테스트 — 전략 create → run start → slot open → order place → slot close 플로우 1종 + tenantId 격리 케이스 1종
+  - [x] TG-08.8 `@Transactional` 경계(ADR-0020): **외부 IO(거래소 REST 호출)는 트랜잭션 밖**. Repository adapter는 짧은 내부 트랜잭션만 유지. 클래스 레벨 `@Transactional` 금지
+  - [x] TG-08.9 **Verify**: `./gradlew :seven-split:app:test --tests '*JpaRepository*' --tests '*PersistenceIntegrationSpec*'` 성공
 
 **Acceptance Criteria**:
 - 모든 테이블에 `tenant_id` 컬럼 + 인덱스 존재

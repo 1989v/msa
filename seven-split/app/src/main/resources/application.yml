@@ -21,6 +21,12 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+  # TG-08: Flyway 마이그레이션. Hibernate ddl-auto=validate 와 결합해 스키마 변경은 Flyway 가 단독 책임.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
 
 kgd:
   common:
