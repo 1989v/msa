@@ -29,6 +29,14 @@ kgd:
     analytics:
       enabled: false
 
+# TG-06.5: quant 전용 ClickHouse 설정. analytics DB 와 분리 (ADR-0024 §12).
+quant:
+  clickhouse:
+    url: ${SEVEN_SPLIT_CH_URL:jdbc:clickhouse://localhost:8123/quant}
+    username: ${SEVEN_SPLIT_CH_USERNAME:quant}
+    password: ${SEVEN_SPLIT_CH_PASSWORD:quant}
+    database: quant
+
 management:
   endpoints:
     web:
