@@ -165,16 +165,16 @@ standards:
 
 Application/Infrastructure가 구현할 Port를 먼저 선언하여 후속 TG(엔진/영속/외부 연동)가 병렬 가능한 계약을 확보한다. 모든 Repository port는 `tenantId`를 강제 시그니처에 포함(INV-05).
 
-- [ ] TG-04.0 **Complete**: port 인터페이스만으로 컴파일되고, 각 port에 Kdoc 시그니처/계약/에러 조건이 기술됨.
-  - [ ] TG-04.1 `com.kgd.sevensplit.domain.common.Clock` — `fun now(): Instant`, 테스트용 `FakeClock` 구현 domain test 소스셋에 동반
-  - [ ] TG-04.2 `com.kgd.sevensplit.application.exchange.ExchangeAdapter` (application layer) — `suspend fun placeOrder(cmd: OrderCommand): OrderAck`, `suspend fun cancelOrder(tenantId, exchangeOrderId)`, `suspend fun fetchBalance(tenantId, exchange): Balance`, `suspend fun fetchExecution(orderId: UUID): ExecutionReport?`
-  - [ ] TG-04.3 `MarketDataSubscriber` port — `fun subscribe(symbol: Symbol): Flow<Tick>`, `fun fallbackPoll(symbol: Symbol): Flow<Tick>` (Phase 2 구현, Phase 1은 인터페이스만)
-  - [ ] TG-04.4 `HistoricalMarketDataSource` port — `fun stream(symbol: Symbol, from: Instant, to: Instant, interval: BarInterval): Flow<Bar>`. Phase 1 백테스트 엔진의 입력
-  - [ ] TG-04.5 `EventPublisher` port — `suspend fun publish(event: DomainEvent)`. Outbox append는 구현체 책임
-  - [ ] TG-04.6 `CredentialVault` port — `suspend fun store(tenantId, exchange, plaintext): CredentialId`, `suspend fun load(tenantId, exchange): DecryptedCredential` — **복호 결과는 단명 wrapper, 절대 DTO/로그로 흐르지 않도록 wrapper에 `toString()` 마스킹**
-  - [ ] TG-04.7 Repository ports: `StrategyRepositoryPort`, `StrategyRunRepositoryPort`, `RoundSlotRepositoryPort`, `OrderRepositoryPort`, `ExchangeCredentialRepositoryPort`, `OutboxRepositoryPort`, `BacktestRunRepositoryPort` — 모든 조회/저장 시그니처에 `tenantId: TenantId` 필수 파라미터
-  - [ ] TG-04.8 `NotificationSender` port — `suspend fun send(tenantId, event: NotificationEvent): SendResult` (Phase 1 skeleton, Phase 2에서 Telegram adapter)
-  - [ ] TG-04.9 **Verify**: `./gradlew :seven-split:domain:compileKotlin :seven-split:app:compileKotlin` 성공 + Kdoc missing 경고 0
+- [x] TG-04.0 **Complete**: port 인터페이스만으로 컴파일되고, 각 port에 Kdoc 시그니처/계약/에러 조건이 기술됨.
+  - [x] TG-04.1 `com.kgd.sevensplit.domain.common.Clock` — `fun now(): Instant`, 테스트용 `FakeClock` 구현 domain test 소스셋에 동반
+  - [x] TG-04.2 `com.kgd.sevensplit.application.exchange.ExchangeAdapter` (application layer) — `suspend fun placeOrder(cmd: OrderCommand): OrderAck`, `suspend fun cancelOrder(tenantId, exchangeOrderId)`, `suspend fun fetchBalance(tenantId, exchange): Balance`, `suspend fun fetchExecution(orderId: UUID): ExecutionReport?`
+  - [x] TG-04.3 `MarketDataSubscriber` port — `fun subscribe(symbol: Symbol): Flow<Tick>`, `fun fallbackPoll(symbol: Symbol): Flow<Tick>` (Phase 2 구현, Phase 1은 인터페이스만)
+  - [x] TG-04.4 `HistoricalMarketDataSource` port — `fun stream(symbol: Symbol, from: Instant, to: Instant, interval: BarInterval): Flow<Bar>`. Phase 1 백테스트 엔진의 입력
+  - [x] TG-04.5 `EventPublisher` port — `suspend fun publish(event: DomainEvent)`. Outbox append는 구현체 책임
+  - [x] TG-04.6 `CredentialVault` port — `suspend fun store(tenantId, exchange, plaintext): CredentialId`, `suspend fun load(tenantId, exchange): DecryptedCredential` — **복호 결과는 단명 wrapper, 절대 DTO/로그로 흐르지 않도록 wrapper에 `toString()` 마스킹**
+  - [x] TG-04.7 Repository ports: `StrategyRepositoryPort`, `StrategyRunRepositoryPort`, `RoundSlotRepositoryPort`, `OrderRepositoryPort`, `ExchangeCredentialRepositoryPort`, `OutboxRepositoryPort`, `BacktestRunRepositoryPort` — 모든 조회/저장 시그니처에 `tenantId: TenantId` 필수 파라미터
+  - [x] TG-04.8 `NotificationSender` port — `suspend fun send(tenantId, event: NotificationEvent): SendResult` (Phase 1 skeleton, Phase 2에서 Telegram adapter)
+  - [x] TG-04.9 **Verify**: `./gradlew :seven-split:domain:compileKotlin :seven-split:app:compileKotlin` 성공 + Kdoc missing 경고 0
 
 **Acceptance Criteria**:
 - 모든 Repository port 시그니처에 `tenantId` 파라미터 존재 — grep으로 확인 가능
