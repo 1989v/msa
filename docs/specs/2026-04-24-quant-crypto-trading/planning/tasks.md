@@ -246,15 +246,15 @@ ADR-0024 §12에 따라 analytics 인프라 재사용 + 별도 DB `quant`에 테
 
 Q-D 확정 범위 수집 배치. 증분·재수집·재처리 전략은 `context/data-ingestion.md`(Preflight P.1)를 참조. REST 기반이며 Phase 1 외 WS 사용 금지.
 
-- [ ] TG-07.0 **Complete**: `./gradlew :quant:app:bootRun --args='--spring.profiles.active=ingest-bithumb'` 또는 `BithumbHistoryIngestCommand` 수동 실행 시 대상 2종 × 2023-01~현재 분봉이 `quant.market_tick_bithumb`에 적재된다.
-  - [ ] TG-07.1 `BithumbRestClient` — `suspend fun fetchCandles(symbol, interval, from, to): List<CandleResponse>`, WebClient + Coroutine, 공식 rate limit 여유분 내 백오프
-  - [ ] TG-07.2 `BithumbHistoryIngestService` — 기간 슬라이싱(월 단위), 각 슬라이스 순차 호출, ClickHouse insert(배치 1k rows), 성공 시 `ingest_checkpoint` 테이블(or 메타 JSON) 갱신. 실패 슬라이스는 DLQ 파일로 기록
-  - [ ] TG-07.3 증분 재실행 — checkpoint 이후부터만 호출. 재수집 플래그 옵션(`--force-reingest=symbol,from,to`)
-  - [ ] TG-07.4 `CommandLineRunner` or Spring Boot `ApplicationRunner` 로 프로파일(`ingest-bithumb`) 활성화 시에만 기동
-  - [ ] TG-07.5 단위 테스트: MockWebServer 로 빗썸 응답 스텁, 페이지네이션·빈 응답·5xx retry 3케이스 커버
-  - [ ] TG-07.6 통합 스모크(nightly 태그): Testcontainers ClickHouse + MockWebServer 로 최소 1개월치 적재 → `SELECT count()` 검증
-  - [ ] TG-07.7 로깅(ADR-0021): `logger.info { "bithumb ingest progress symbol=$s slice=$from..$to rows=$n" }` 람다 형식, API key/secret 출력 금지 (Phase 1은 public endpoint라 key 없음)
-  - [ ] TG-07.8 **Verify**: 단위 테스트 + 통합 스모크 통과 + 수동 실행 후 `SELECT min(ts), max(ts), count() FROM quant.market_tick_bithumb WHERE symbol='BTC_KRW'` 로 2023-01 ~ 현재 범위 확인
+- [x] TG-07.0 **Complete**: `./gradlew :quant:app:bootRun --args='--spring.profiles.active=ingest-bithumb'` 또는 `BithumbHistoryIngestCommand` 수동 실행 시 대상 2종 × 2023-01~현재 분봉이 `quant.market_tick_bithumb`에 적재된다.
+  - [x] TG-07.1 `BithumbRestClient` — `suspend fun fetchCandles(symbol, interval, from, to): List<CandleResponse>`, WebClient + Coroutine, 공식 rate limit 여유분 내 백오프
+  - [x] TG-07.2 `BithumbHistoryIngestService` — 기간 슬라이싱(월 단위), 각 슬라이스 순차 호출, ClickHouse insert(배치 1k rows), 성공 시 `ingest_checkpoint` 테이블(or 메타 JSON) 갱신. 실패 슬라이스는 DLQ 파일로 기록
+  - [x] TG-07.3 증분 재실행 — checkpoint 이후부터만 호출. 재수집 플래그 옵션(`--force-reingest=symbol,from,to`)
+  - [x] TG-07.4 `CommandLineRunner` or Spring Boot `ApplicationRunner` 로 프로파일(`ingest-bithumb`) 활성화 시에만 기동
+  - [x] TG-07.5 단위 테스트: MockWebServer 로 빗썸 응답 스텁, 페이지네이션·빈 응답·5xx retry 3케이스 커버
+  - [x] TG-07.6 통합 스모크(nightly 태그): Testcontainers ClickHouse + MockWebServer 로 최소 1개월치 적재 → `SELECT count()` 검증
+  - [x] TG-07.7 로깅(ADR-0021): `logger.info { "bithumb ingest progress symbol=$s slice=$from..$to rows=$n" }` 람다 형식, API key/secret 출력 금지 (Phase 1은 public endpoint라 key 없음)
+  - [x] TG-07.8 **Verify**: 단위 테스트 + 통합 스모크 통과 + 수동 실행 후 `SELECT min(ts), max(ts), count() FROM quant.market_tick_bithumb WHERE symbol='BTC_KRW'` 로 2023-01 ~ 현재 범위 확인
 
 **Acceptance Criteria**:
 - 배치는 멱등 재실행 가능 (중복 insert 0 — ReplacingMergeTree + ORDER BY 키로 보장)
