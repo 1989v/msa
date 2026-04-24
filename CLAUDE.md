@@ -116,6 +116,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼 |
 | member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
 | wishlist | `wishlist/CLAUDE.md` | 상품 위시리스트 (회원별) |
+| seven-split | `seven-split/CLAUDE.md` | 세븐스플릿 암호화폐 자동매매 (신규, Phase 1 진행 중) |
 | auth | (미생성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) |
 | gifticon | (미생성) | 기프티콘 관리, 공유 그룹 |
 | code-dictionary | (미생성) | IT 개념 사전, OpenSearch 검색, 시각화 |

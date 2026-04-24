@@ -431,19 +431,19 @@ ADR-0019 Phase 2 배포 모드에 맞춰 `k8s/overlays/k3s-lite/seven-split/` ov
 
 ADR-0021 로깅 규칙 + Phase 1 최소 메트릭 + `seven-split/CLAUDE.md` + `seven-split/docs/` 신설. 루트 `CLAUDE.md` Navigation 표 업데이트.
 
-- [ ] TG-14.0 **Complete**: 서비스 기동 시 `/actuator/prometheus` 에서 Phase 1 메트릭이 노출되며 `seven-split/CLAUDE.md`가 생성됨.
-  - [ ] TG-14.1 kotlin-logging 설정 — 모든 로거는 `private val logger = KotlinLogging.logger {}`, 람다 형식만 허용, API key/secret 평문 출력 금지. Phase 1 lint 규칙 1개 (정규식 캡처) 추가 검토
-  - [ ] TG-14.2 Micrometer 메트릭 Phase 1 subset:
+- [x] TG-14.0 **Complete**: 서비스 기동 시 `/actuator/prometheus` 에서 Phase 1 메트릭이 노출되며 `seven-split/CLAUDE.md`가 생성됨.
+  - [x] TG-14.1 kotlin-logging 설정 — 모든 로거는 `private val logger = KotlinLogging.logger {}`, 람다 형식만 허용, API key/secret 평문 출력 금지. Phase 1 lint 규칙 1개 (정규식 캡처) 추가 검토
+  - [x] TG-14.2 Micrometer 메트릭 Phase 1 subset:
     - `seven_split_strategy_evaluation_latency_seconds{mode="backtest"}` (p50/p95/p99)
     - `seven_split_backtest_run_total{status}`
     - `seven_split_backtest_run_duration_seconds`
     - `seven_split_ingest_bithumb_rows_total{symbol}`
     - `seven_split_outbox_pending_rows` (gauge)
-  - [ ] TG-14.3 Outbox 테이블 모니터링 기본 — `OutboxEntity` 미발행 행 수 gauge 노출, 단순 알람 기준은 문서에만 명시
-  - [ ] TG-14.4 `seven-split/CLAUDE.md` 작성 — 서비스 개요, Phase 로드맵, 모듈 구조, 주요 명령어, Navigation(spec/ADR/docs 링크)
-  - [ ] TG-14.5 `seven-split/docs/` 초기 구조 — `README.md`(요약), `golden-set-update.md`(TG-12 참조), `ingest-bithumb.md`(TG-07 참조)
-  - [ ] TG-14.6 루트 `CLAUDE.md` Navigation 표에 seven-split 항목 `(신규, Phase 1 진행 중)` 으로 업데이트 (기존 "미생성" → 경로 지정)
-  - [ ] TG-14.7 **Verify**: `./gradlew :seven-split:app:bootRun --args='--spring.profiles.active=local'` 기동 후 `curl localhost:<port>/actuator/prometheus | grep seven_split` 최소 3개 메트릭 노출
+  - [x] TG-14.3 Outbox 테이블 모니터링 기본 — `OutboxEntity` 미발행 행 수 gauge 노출, 단순 알람 기준은 문서에만 명시
+  - [x] TG-14.4 `seven-split/CLAUDE.md` 작성 — 서비스 개요, Phase 로드맵, 모듈 구조, 주요 명령어, Navigation(spec/ADR/docs 링크)
+  - [x] TG-14.5 `seven-split/docs/` 초기 구조 — `README.md`(요약), `golden-set-update.md`(TG-12 참조), `ingest-bithumb.md`(TG-07 참조)
+  - [x] TG-14.6 루트 `CLAUDE.md` Navigation 표에 seven-split 항목 `(신규, Phase 1 진행 중)` 으로 업데이트 (기존 "미생성" → 경로 지정)
+  - [x] TG-14.7 **Verify**: `./gradlew :seven-split:app:bootRun --args='--spring.profiles.active=local'` 기동 후 `curl localhost:<port>/actuator/prometheus | grep seven_split` 최소 3개 메트릭 노출
 
 **Acceptance Criteria**:
 - `logger.{info,debug,warn}` 호출이 모두 람다 형식 (grep 기반 검사 통과)

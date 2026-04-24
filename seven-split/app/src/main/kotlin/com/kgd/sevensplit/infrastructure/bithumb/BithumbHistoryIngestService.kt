@@ -2,6 +2,7 @@ package com.kgd.sevensplit.infrastructure.bithumb
 
 import com.kgd.sevensplit.infrastructure.ingest.IngestCheckpointStore
 import com.kgd.sevensplit.infrastructure.ingest.IngestDlqRecorder
+import com.kgd.sevensplit.infrastructure.metrics.SevenSplitMetrics
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Clock
 import java.time.Instant
@@ -23,6 +24,9 @@ private val log = KotlinLogging.logger {}
  * - [IngestCheckpointStore] 에 저장된 lastTs 보다 큰 row 만 insert.
  * - 설령 중복 insert 가 발생해도 `market_tick_bithumb` 는 ReplacingMergeTree 이므로 최종 일관성 보장.
  * - [forceFull]=true 로 checkpoint 무시하고 전체 재수집 가능(`--force-reingest` 경로).
+ *
+ * TG-14.2: [metrics] 가 주입되면 `seven_split_ingest_bithumb_rows_total{symbol}` 카운터에
+ * inserted row 수를 누적한다. 테스트에서는 null 로 호출 가능.
  */
 class BithumbHistoryIngestService(
     private val client: BithumbRestClient,
@@ -30,6 +34,7 @@ class BithumbHistoryIngestService(
     private val checkpointStore: IngestCheckpointStore,
     private val dlqRecorder: IngestDlqRecorder,
     private val clock: Clock = Clock.systemUTC(),
+    private val metrics: SevenSplitMetrics? = null,
 ) {
 
     /**
@@ -86,6 +91,8 @@ class BithumbHistoryIngestService(
         val maxTsMs = newRows.maxOf { it.timestampMs }
         val newCheckpoint = Instant.ofEpochMilli(maxTsMs)
         checkpointStore.saveLastTs(symbol, interval, newCheckpoint)
+        // TG-14.2: inserted row 수 누적 (실패/빈 응답은 위에서 early return 으로 제외됨)
+        metrics?.ingestRowsIncrement(symbol, newRows.size.toLong())
         log.info {
             "bithumb ingest progress symbol=$symbol interval=$interval rows=${newRows.size} " +
                 "totalSeen=${allRows.size} newCheckpoint=$newCheckpoint"

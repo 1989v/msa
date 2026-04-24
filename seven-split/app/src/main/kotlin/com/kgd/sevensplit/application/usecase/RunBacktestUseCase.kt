@@ -22,6 +22,7 @@ import com.kgd.sevensplit.domain.common.Clock
 import com.kgd.sevensplit.domain.event.StrategyActivated
 import com.kgd.sevensplit.domain.event.StrategyLiquidated
 import com.kgd.sevensplit.domain.strategy.EndReason
+import com.kgd.sevensplit.infrastructure.metrics.SevenSplitMetrics
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -53,6 +54,11 @@ private val logger = KotlinLogging.logger {}
  *
  * ## 로깅 (ADR-0021)
  * kotlin-logging 람다 형식. error 레벨은 외부 IO 실패 한정.
+ *
+ * ## 메트릭 (TG-14.2)
+ * - 성공/실패 `seven_split_backtest_run_total{status}` 증가
+ * - 전체 소요시간 `seven_split_backtest_run_duration_seconds` 기록
+ * - MeterRegistry 가 없는 테스트 구성에서도 동작하도록 `metrics` 는 nullable optional.
  */
 @Component
 class RunBacktestUseCase(
@@ -63,6 +69,7 @@ class RunBacktestUseCase(
     private val clock: Clock,
     private val objectMapper: ObjectMapper,
     private val backtestRunRepository: BacktestRunRepositoryPort? = null,
+    private val metrics: SevenSplitMetrics? = null,
     @Value("\${seven-split.backtest.initial-balance:100000000000}")
     private val initialBalanceRaw: String = "100000000000",
     @Value("\${seven-split.backtest.bar-interval:MINUTE_1}")
@@ -70,6 +77,20 @@ class RunBacktestUseCase(
 ) {
 
     suspend fun execute(command: RunBacktestCommand): BacktestRunResultView {
+        val startNanos = System.nanoTime()
+        try {
+            val view = doExecute(command)
+            metrics?.backtestRunSuccess?.increment()
+            return view
+        } catch (e: Throwable) {
+            metrics?.backtestRunFailed?.increment()
+            throw e
+        } finally {
+            metrics?.recordBacktestDuration(System.nanoTime() - startNanos)
+        }
+    }
+
+    private suspend fun doExecute(command: RunBacktestCommand): BacktestRunResultView {
         // 1. 전략 조회
         val strategy = strategyRepository.findById(command.tenantId, command.strategyId)
             ?: throw StrategyNotFoundException(command.strategyId, command.tenantId)
