@@ -11,6 +11,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
+  # TG-08: 단위/슬라이스 테스트 프로파일에서는 Flyway 를 끈다 (H2 + ddl-auto=create-drop 사용).
+  # MySQL 통합 테스트는 PersistenceIntegrationSpec 이 Testcontainers 로 별도 DataSource 를 주입.
+  flyway:
+    enabled: false
 
 kgd:
   common:
