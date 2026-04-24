@@ -12,6 +12,8 @@ springdoc = "3.0.1"
 mysql = "8.0.33"
 clickhouse = "0.7.1"
 kotlinLogging = "7.0.7"
+turbine = "1.1.0"
+testcontainers = "1.20.4"
 
 [libraries]
 # Spring Boot Starters
@@ -86,6 +88,12 @@ kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.
 kotest-extensions-spring = { module = "io.kotest.extensions:kotest-extensions-spring", version.ref = "kotestSpring" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 reactor-test = { module = "io.projectreactor:reactor-test" }
+turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+testcontainers-junit = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
+testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "testcontainers" }
+testcontainers-clickhouse = { module = "org.testcontainers:clickhouse", version.ref = "testcontainers" }
+testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
