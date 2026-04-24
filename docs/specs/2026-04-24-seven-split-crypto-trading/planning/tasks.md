@@ -138,16 +138,16 @@ standards:
 
 `test-quality.md §5` 정합성 불변식을 kotest-property로 강제한다. `:seven-split:domain` 테스트 소스셋에만 위치하며 Spring context를 로드하지 않는다. 테스트는 각 INV당 1개 핵심 property + behavioural Given/When/Then 1~2개로 구성, 과도한 exhaustive 테스트는 지양한다 (2~8 focused tests 원칙).
 
-- [ ] TG-03.0 **Complete**: `./gradlew :seven-split:domain:test` 실행 시 INV-01 ~ INV-07 모두 green.
-  - [ ] TG-03.1 `fixtures/SplitFixtures.kt` — `arbSplitStrategyConfig()`, `arbRoundSlot()`, `arbPriceTick()` Kotest Arb 제공, 공유 가변 상태 금지
-  - [ ] TG-03.2 `SplitStrategyConfigPropertySpec` — INV-07 검증: 생성 가능한 모든 조합이 `roundCount ∈ [1,50]`, `entryGapPercent < 0`, `takeProfitPercentPerRound` 각 원소 > 0 이고 길이 = roundCount. 경계값 및 위반 입력에 대해 예외 발생
-  - [ ] TG-03.3 `NoStopLossInvariantSpec` — INV-01: 임의의 가격 경로(급락 포함)에서 `SplitStrategy` 시뮬 실행 후 수집된 `DomainEvent` 목록에 `StopLoss*`류 이벤트가 0건임을 확인
-  - [ ] TG-03.4 `RoundSlotIndependentSellSpec` — INV-02: 슬롯 i의 `fillSell`은 슬롯 i의 `entryPrice`에만 의존. 평균단가를 주입해도 매도 precondition이 참조하지 않음을 확인 (mock Context)
-  - [ ] TG-03.5 `EqualOrderAmountSpec` — INV-03: 모든 회차 `Order.quantity * Order.price` 명목이 `initialOrderAmount` 와 일치(부분체결 보정은 별도). 부분체결 반복 케이스도 목표 명목은 동일
-  - [ ] TG-03.6 `RoundSlotStateTransitionSpec` — 허용된 전이 path만 성공, 나머지는 `IllegalSlotTransitionException`. BehaviorSpec Given/When/Then 서술
-  - [ ] TG-03.7 `IdempotentOrderSpec` — INV-06: 동일 `orderId`를 2회 이상 전송할 때 도메인 수준에서 생성 가능한 `OrderPlaced` 이벤트가 1회만 쌓이는지 확인 (실 거래소 검증은 TG-05/TG-09에서)
-  - [ ] TG-03.8 `LeverageForbiddenSpec` — 원칙 2: margin/future 주문 타입 사용 시 컴파일 에러 또는 런타임 `LeverageAttemptException`. Kotlin 시그니처 + sealed class 경로
-  - [ ] TG-03.9 **Verify**: `./gradlew :seven-split:domain:test --tests '*PropertySpec' --tests '*InvariantSpec'` 전부 성공
+- [x] TG-03.0 **Complete**: `./gradlew :seven-split:domain:test` 실행 시 INV-01 ~ INV-07 모두 green.
+  - [x] TG-03.1 `fixtures/SplitFixtures.kt` — `arbSplitStrategyConfig()`, `arbRoundSlot()`, `arbPriceTick()` Kotest Arb 제공, 공유 가변 상태 금지
+  - [x] TG-03.2 `SplitStrategyConfigPropertySpec` — INV-07 검증: 생성 가능한 모든 조합이 `roundCount ∈ [1,50]`, `entryGapPercent < 0`, `takeProfitPercentPerRound` 각 원소 > 0 이고 길이 = roundCount. 경계값 및 위반 입력에 대해 예외 발생
+  - [x] TG-03.3 `NoStopLossInvariantSpec` — INV-01: 임의의 가격 경로(급락 포함)에서 `SplitStrategy` 시뮬 실행 후 수집된 `DomainEvent` 목록에 `StopLoss*`류 이벤트가 0건임을 확인
+  - [x] TG-03.4 `RoundSlotIndependentSellSpec` — INV-02: 슬롯 i의 `fillSell`은 슬롯 i의 `entryPrice`에만 의존. 평균단가를 주입해도 매도 precondition이 참조하지 않음을 확인 (mock Context)
+  - [x] TG-03.5 `EqualOrderAmountSpec` — INV-03: 모든 회차 `Order.quantity * Order.price` 명목이 `initialOrderAmount` 와 일치(부분체결 보정은 별도). 부분체결 반복 케이스도 목표 명목은 동일
+  - [x] TG-03.6 `RoundSlotStateTransitionSpec` — 허용된 전이 path만 성공, 나머지는 `IllegalSlotTransitionException`. BehaviorSpec Given/When/Then 서술
+  - [x] TG-03.7 `IdempotentOrderSpec` — INV-06: 동일 `orderId`를 2회 이상 전송할 때 도메인 수준에서 생성 가능한 `OrderPlaced` 이벤트가 1회만 쌓이는지 확인 (실 거래소 검증은 TG-05/TG-09에서)
+  - [x] TG-03.8 `LeverageForbiddenSpec` — 원칙 2: margin/future 주문 타입 사용 시 컴파일 에러 또는 런타임 `LeverageAttemptException`. Kotlin 시그니처 + sealed class 경로
+  - [x] TG-03.9 **Verify**: `./gradlew :seven-split:domain:test --tests '*PropertySpec' --tests '*InvariantSpec'` 전부 성공
 
 **Acceptance Criteria**:
 - 7종 불변식 테스트가 각각 전용 Spec 파일로 존재
