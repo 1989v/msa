@@ -105,21 +105,21 @@ standards:
 
 순수 도메인(`:seven-split:domain`)에 Aggregate/Entity/VO + 상태머신을 올린다. Spring/JPA/프레임워크 의존 금지. 부분체결(OQ-020)은 **별도 substate 없이 `RoundSlot`에 `filledQty / targetQty` 필드를 두어 partial fill을 표현**하는 방식으로 인라인 확정한다 (상태는 기존 5단계 유지: `EMPTY → PENDING_BUY → FILLED → PENDING_SELL → CLOSED → EMPTY`, `FILLED`은 `filledQty >= targetQty` 조건).
 
-- [ ] TG-02.0 **Complete**: domain 모듈에 Aggregate/Entity/VO + 상태 전이 메서드가 존재하고, domain 단위 테스트(다음 TG-03에서 작성)에서 호출 가능하다.
-  - [ ] TG-02.1 패키지 생성: `seven-split/domain/src/main/kotlin/com/kgd/sevensplit/domain/{strategy,slot,order,credential,notification}/` + `common/{Price.kt, Quantity.kt, TenantId.kt, ExecutionMode.kt}`
-  - [ ] TG-02.2 `SplitStrategyConfig` VO — `roundCount: Int`, `entryGapPercent: BigDecimal`, `takeProfitPercentPerRound: List<BigDecimal>`, `initialOrderAmount: BigDecimal`, `targetSymbol: String`, 생성자에서 INV-07 검증 (`roundCount ∈ [1,50]`, `entryGapPercent < 0`, 배열 길이 == roundCount, 모든 요소 > 0), 위반 시 `SplitStrategyConfigInvalidException : BusinessException`
-  - [ ] TG-02.3 `SplitStrategy` Aggregate Root — `strategyId`, `tenantId`, `SplitStrategyConfig`, `ExecutionMode`, `StrategyStatus`, 메서드: `activate()`, `pause()`, `resume()`, `liquidate(reason)`, `nextRoundEntryCondition(lastFilledRound): PriceCondition`
-  - [ ] TG-02.4 `StrategyStatus` enum + 전이 테이블(`DRAFT → ACTIVE → PAUSED → LIQUIDATED → ARCHIVED`), 허용되지 않은 전이 시 `IllegalStrategyTransitionException`
-  - [ ] TG-02.5 `StrategyRun` Entity — `runId`, `strategyId`, `tenantId`, `startedAt`, `endedAt`, `ExecutionMode`, `seed`, `EndReason?`, `status: StrategyRunStatus`. 메서드: `end(reason: EndReason)`(endedAt 세팅), `enterAwaitingExhausted()`, `backToActive()`
-  - [ ] TG-02.6 `StrategyRunStatus` enum: `INITIALIZED → ACTIVE → (ACTIVE ↔ AWAITING_EXHAUSTED) → LIQUIDATING → CLOSED`
-  - [ ] TG-02.7 `RoundSlot` Entity — `slotId`, `runId`, `roundIndex`, `state: RoundSlotState`, `entryPrice: Price?`, `targetQty: Quantity`, `filledQty: Quantity`, `takeProfitPercent: BigDecimal`. 메서드: `requestBuy(price)`, `fillBuy(executedPrice, executedQty)` (partial fill 누적, `filledQty >= targetQty`이면 `FILLED` 전이), `requestSell()`, `fillSell(executedPrice)` precondition 검증(INV-02, 위반 시 `StopLossAttemptException`)
-  - [ ] TG-02.8 `RoundSlotState` enum + 전이 가드 (`EMPTY → PENDING_BUY → FILLED → PENDING_SELL → CLOSED → EMPTY`)
-  - [ ] TG-02.9 `Order` Entity — `orderId: UUID`(v7 권장), `slotId`, `side: OrderSide`, `orderType: SpotOrderType`(margin/future 컴파일 불가), `quantity`, `price`, `status: OrderStatus`, `exchangeOrderId: String?`. `OrderStatus`: `ACCEPTED → SUBMITTED → PARTIALLY_FILLED → FILLED | REJECTED | CANCELLED`
-  - [ ] TG-02.10 `ExchangeCredential` Aggregate — `credentialId`, `tenantId`, `exchange`, `apiKeyCipher: ByteArray`, `apiSecretCipher: ByteArray`, `passphraseCipher: ByteArray?`, `ipWhitelist: List<String>`. 평문 필드 노출 금지(`toString()` override로 마스킹)
-  - [ ] TG-02.11 `NotificationTarget` VO — `tenantId`, `channel: NotificationChannel`, `botTokenCipher: ByteArray`, `chatId: String`
-  - [ ] TG-02.12 도메인 이벤트 sealed class 계층 `DomainEvent` + 구현(`StrategyActivated`, `StrategyPaused`, `StrategyResumed`, `StrategyLiquidated`, `RoundSlotOpened`, `RoundSlotClosed`, `OrderPlaced`, `OrderFilled`, `OrderPartiallyFilled`, `OrderFailed`, `OrderCancelled`, `RiskLimitBreached`, `EmergencyLiquidationTriggered`, `ExchangeConnectionDegraded`, `ExchangeConnectionRestored`)
-  - [ ] TG-02.13 `BusinessException` 파생 도메인 예외 정리: `SplitStrategyConfigInvalidException`, `IllegalStrategyTransitionException`, `IllegalSlotTransitionException`, `StopLossAttemptException`, `LeverageAttemptException`
-  - [ ] TG-02.14 **Verify**: `./gradlew :seven-split:domain:compileKotlin` 성공, domain 모듈이 Spring/JPA 의존성을 포함하지 않음을 `./gradlew :seven-split:domain:dependencies --configuration compileClasspath` 로 재확인
+- [x] TG-02.0 **Complete**: domain 모듈에 Aggregate/Entity/VO + 상태 전이 메서드가 존재하고, domain 단위 테스트(다음 TG-03에서 작성)에서 호출 가능하다.
+  - [x] TG-02.1 패키지 생성: `seven-split/domain/src/main/kotlin/com/kgd/sevensplit/domain/{strategy,slot,order,credential,notification}/` + `common/{Price.kt, Quantity.kt, TenantId.kt, ExecutionMode.kt}`
+  - [x] TG-02.2 `SplitStrategyConfig` VO — `roundCount: Int`, `entryGapPercent: BigDecimal`, `takeProfitPercentPerRound: List<BigDecimal>`, `initialOrderAmount: BigDecimal`, `targetSymbol: String`, 생성자에서 INV-07 검증 (`roundCount ∈ [1,50]`, `entryGapPercent < 0`, 배열 길이 == roundCount, 모든 요소 > 0), 위반 시 `SplitStrategyConfigInvalidException : BusinessException`
+  - [x] TG-02.3 `SplitStrategy` Aggregate Root — `strategyId`, `tenantId`, `SplitStrategyConfig`, `ExecutionMode`, `StrategyStatus`, 메서드: `activate()`, `pause()`, `resume()`, `liquidate(reason)`, `nextRoundEntryCondition(lastFilledRound): PriceCondition`
+  - [x] TG-02.4 `StrategyStatus` enum + 전이 테이블(`DRAFT → ACTIVE → PAUSED → LIQUIDATED → ARCHIVED`), 허용되지 않은 전이 시 `IllegalStrategyTransitionException`
+  - [x] TG-02.5 `StrategyRun` Entity — `runId`, `strategyId`, `tenantId`, `startedAt`, `endedAt`, `ExecutionMode`, `seed`, `EndReason?`, `status: StrategyRunStatus`. 메서드: `end(reason: EndReason)`(endedAt 세팅), `enterAwaitingExhausted()`, `backToActive()`
+  - [x] TG-02.6 `StrategyRunStatus` enum: `INITIALIZED → ACTIVE → (ACTIVE ↔ AWAITING_EXHAUSTED) → LIQUIDATING → CLOSED`
+  - [x] TG-02.7 `RoundSlot` Entity — `slotId`, `runId`, `roundIndex`, `state: RoundSlotState`, `entryPrice: Price?`, `targetQty: Quantity`, `filledQty: Quantity`, `takeProfitPercent: BigDecimal`. 메서드: `requestBuy(price)`, `fillBuy(executedPrice, executedQty)` (partial fill 누적, `filledQty >= targetQty`이면 `FILLED` 전이), `requestSell()`, `fillSell(executedPrice)` precondition 검증(INV-02, 위반 시 `StopLossAttemptException`)
+  - [x] TG-02.8 `RoundSlotState` enum + 전이 가드 (`EMPTY → PENDING_BUY → FILLED → PENDING_SELL → CLOSED → EMPTY`)
+  - [x] TG-02.9 `Order` Entity — `orderId: UUID`(v7 권장), `slotId`, `side: OrderSide`, `orderType: SpotOrderType`(margin/future 컴파일 불가), `quantity`, `price`, `status: OrderStatus`, `exchangeOrderId: String?`. `OrderStatus`: `ACCEPTED → SUBMITTED → PARTIALLY_FILLED → FILLED | REJECTED | CANCELLED`
+  - [x] TG-02.10 `ExchangeCredential` Aggregate — `credentialId`, `tenantId`, `exchange`, `apiKeyCipher: ByteArray`, `apiSecretCipher: ByteArray`, `passphraseCipher: ByteArray?`, `ipWhitelist: List<String>`. 평문 필드 노출 금지(`toString()` override로 마스킹)
+  - [x] TG-02.11 `NotificationTarget` VO — `tenantId`, `channel: NotificationChannel`, `botTokenCipher: ByteArray`, `chatId: String`
+  - [x] TG-02.12 도메인 이벤트 sealed class 계층 `DomainEvent` + 구현(`StrategyActivated`, `StrategyPaused`, `StrategyResumed`, `StrategyLiquidated`, `RoundSlotOpened`, `RoundSlotClosed`, `OrderPlaced`, `OrderFilled`, `OrderPartiallyFilled`, `OrderFailed`, `OrderCancelled`, `RiskLimitBreached`, `EmergencyLiquidationTriggered`, `ExchangeConnectionDegraded`, `ExchangeConnectionRestored`)
+  - [x] TG-02.13 `BusinessException` 파생 도메인 예외 정리: `SplitStrategyConfigInvalidException`, `IllegalStrategyTransitionException`, `IllegalSlotTransitionException`, `StopLossAttemptException`, `LeverageAttemptException`
+  - [x] TG-02.14 **Verify**: `./gradlew :seven-split:domain:compileKotlin` 성공, domain 모듈이 Spring/JPA 의존성을 포함하지 않음을 `./gradlew :seven-split:domain:dependencies --configuration compileClasspath` 로 재확인
 
 **Acceptance Criteria**:
 - 모든 Aggregate/Entity가 프레임워크 애노테이션 없이 순수 Kotlin으로 컴파일됨
