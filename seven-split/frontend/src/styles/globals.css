@@ -1,0 +1,91 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Seven-Split — global styles
+   frontend-design.md 가드레일 적용:
+   - body 16px 최소
+   - tabular-nums (숫자 정렬)
+   - prefers-reduced-motion 필수 지원
+   - 순수 검정 회피 (ink-950)
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-top: env(safe-area-inset-top);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 1rem; /* 16px 최소 */
+  line-height: 1.6;
+  background-color: oklch(98% 0.005 250); /* ink-50 */
+  color: oklch(14% 0.006 250); /* ink-900 — 순수 검정 회피 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* iOS bounce 회피 + 가로 스크롤 차단 */
+  overscroll-behavior-y: none;
+  overflow-x: hidden;
+}
+
+/* 숫자 정렬 — 데이터 테이블/PnL 표시 */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 포커스 링 — frontend-design.md §6, 절대 outline:none 금지 */
+:focus-visible {
+  outline: 2px solid oklch(60% 0.16 220);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 모션 — prefers-reduced-motion 필수 지원 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* 입력방식별 hit-target 보정 */
+@media (pointer: coarse) {
+  button,
+  [role='button'],
+  a {
+    min-height: 44px;
+  }
+}
+
+/* 스크롤바 — 모바일에서 기본 가림, 데스크탑에서만 노출 */
+@media (pointer: fine) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(85% 0.010 250);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(70% 0.012 250);
+  }
+}
