@@ -100,7 +100,7 @@ questions:
 
   - id: OQ-008
     category: infra
-    status: open
+    status: closed
     priority: low
     title: ClickHouse 과거 틱 데이터 확보 경로
     description: >
@@ -110,6 +110,13 @@ questions:
       남은 과제: 재수집·증분·재처리 전략, 적재 스키마(`seven_split` DB 네임스페이스), 실패 재시도 설계.
     resolution_path: Phase 1 착수 전 수집·적재·재처리 잡 설계 (context/data-ingestion.md)
     blocker_for: Phase 1 백테스트 실행
+    closed_at: 2026-04-26
+    closed_by: TG-07 구현 + context/data-ingestion.md
+    resolution: >
+      TG-07 BithumbHistoryIngestService + ClickHouse seven_split 스키마(V001~V004) 구현 완료.
+      증분 수집(FileIngestCheckpointStore) + DLQ(IngestDlqRecorder) + 1000 row 배치 insert.
+      ReplacingMergeTree로 중복 흡수, PARTITION BY toYYYYMM(ts), ORDER BY (symbol, interval, ts).
+      상세 설계는 context/data-ingestion.md 참조. Phase 1 미적용 항목(자동 스케줄·DLQ 자동 재시도·5년 TTL)은 Phase 2.
 
   # ── 알림 (Q-C 텔레그램 채택에 따른 신규) ───────────────────────────────────
 
@@ -149,15 +156,19 @@ questions:
 
   - id: OQ-011
     category: exchange-terms
-    status: open
+    status: pending-user
     priority: high
     title: 빗썸·업비트 이용 약관 상 자동매매 허용 여부 및 API Key 용도 제한
     description: >
       거래소별 이용약관/OpenAPI 약관에 자동매매(봇) 허용 여부, API Key의 상업적 사용 금지 조항,
       특정 전략 유형(마켓메이킹/고빈도/재정거래) 제한이 기재돼 있는지 확인 필요.
       본 서비스는 개인 1인 운용이지만 약관 위반은 계정 정지·Key 회수·법적 책임 위험.
-    resolution_path: Phase 1 착수 전 사용자 확인 (약관 조항 링크 + 발췌)
-    blocker_for: Phase 1 착수 (백테스트 자체는 무관하지만 Phase 2~3 전제 조건으로 선행 확인)
+    resolution_path: Phase 2 착수 전 사용자 직접 약관 검토 (context/exchange-terms.md 체크리스트 채우기)
+    blocker_for: Phase 2 페이퍼 트레이딩 / Phase 3 실매매 (Phase 1 백테스트는 무관)
+    note: |
+      2026-04-26 자동 fetch 시도 실패 (apidocs.bithumb.com/docs/policy 404,
+      docs.upbit.com 본문 미접근). context/exchange-terms.md 에 검토 프레임워크 작성 완료,
+      사용자 수동 약관 확인 후 closed 가능.
 
   - id: OQ-012
     category: risk

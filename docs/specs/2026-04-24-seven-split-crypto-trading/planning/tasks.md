@@ -463,7 +463,7 @@ ADR-0021 로깅 규칙 + Phase 1 최소 메트릭 + `seven-split/CLAUDE.md` + `s
 **3개월분(예: 2024-01 ~ 2024-03) BTC/KRW 분봉 → ClickHouse 적재 → 백테스트 실행 → 결과 API 조회 → FE 렌더** 전체 종단 시나리오를 1개의 통합 스위트로 검증 + Phase 1 완료 체크리스트.
 
 - [ ] TG-15.0 **Complete**: E2E 통합 테스트 green + Readiness Checklist 모두 통과.
-  - [ ] TG-15.1 `SevenSplitPhase1E2ESpec` (Testcontainers 기반 MySQL + ClickHouse + Kafka) — 시나리오:
+  - [x] TG-15. `SevenSplitPhase1E2ESpec` (Testcontainers 기반 MySQL + ClickHouse + Kafka) — 시나리오:
     1. `TestDataSeeder` 가 3개월 분봉 CSV → ClickHouse insert
     2. `POST /api/v1/strategies` 로 전략 생성(roundCount=7, entryGapPercent=-3, takeProfit=+5 균등)
     3. `POST /api/v1/backtests` 실행
@@ -472,7 +472,7 @@ ADR-0021 로깅 규칙 + Phase 1 최소 메트릭 + `seven-split/CLAUDE.md` + `s
     6. ClickHouse `seven_split.backtest_run` 테이블에 실행 메타 저장 확인
   - [ ] TG-15.2 결정론 재실행 체크 — 동일 전략 + 동일 기간 2회 백테스트 시 결과 완전 일치(시드 고정)
   - [ ] TG-15.3 FE dev 서버 + 백엔드 dev 서버 수동 검증 스크립트 — 전략 생성 → 백테스트 → `/runs/:runId` 결과 페이지 렌더 체크리스트(`seven-split/docs/phase1-readiness.md`)
-  - [ ] TG-15.4 Readiness Checklist 문서 `seven-split/docs/phase1-readiness.md`:
+  - [x] TG-15. Readiness Checklist 문서 `seven-split/docs/phase1-readiness.md`:
     - [ ] 모든 TG 완료
     - [ ] `./gradlew :seven-split:domain:test :seven-split:app:test :seven-split:app:goldenTest` 성공
     - [ ] `kubectl apply -k k8s/overlays/k3s-lite` seven-split Ready
@@ -482,7 +482,7 @@ ADR-0021 로깅 규칙 + Phase 1 최소 메트릭 + `seven-split/CLAUDE.md` + `s
     - [ ] 서비스 CLAUDE.md + docs 존재, 루트 Navigation 갱신
     - [ ] ADR-0024 Status 가 Proposed → Accepted 전환 검토 (본 TG 완료 후 별도 PR로)
     - [ ] Preflight P.0/P.1 closed 재확인
-  - [ ] TG-15.5 릴리즈 노트 초안 `docs/specs/2026-04-24-seven-split-crypto-trading/phase1-release-notes.md` — 구현된 FR/NFR 목록 + 범위 밖 항목 + Phase 2 Preflight 후보(OQ-007/017/018)
+  - [x] TG-15. 릴리즈 노트 초안 `docs/specs/2026-04-24-seven-split-crypto-trading/phase1-release-notes.md` — 구현된 FR/NFR 목록 + 범위 밖 항목 + Phase 2 Preflight 후보(OQ-007/017/018)
   - [ ] TG-15.6 **Verify**: `./gradlew :seven-split:app:test --tests '*Phase1E2ESpec*'` + Readiness Checklist 전 항목 수동 체크 + 최종 PR 리뷰
 
 **Acceptance Criteria**:
