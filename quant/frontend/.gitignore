@@ -12,6 +12,7 @@ npm-debug.log*
 # Build
 dist
 dist-ssr
+dist-node
 *.local
 node_modules
 
