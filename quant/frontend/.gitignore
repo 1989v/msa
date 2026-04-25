@@ -1,0 +1,22 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+
+# Build
+dist
+dist-ssr
+*.local
+node_modules
+
+# Typescript
+*.tsbuildinfo
+
+# PWA
+dev-dist
