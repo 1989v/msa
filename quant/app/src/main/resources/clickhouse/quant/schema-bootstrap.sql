@@ -1,0 +1,3 @@
+-- Load order: V001 -> V002 -> V003 -> V004
+-- SchemaBootstrapper 가 위 순서대로 classpath 파일을 읽어 순차 실행한다.
+-- 수동 부트스트랩 시: cat V001__*.sql V002__*.sql V003__*.sql V004__*.sql | clickhouse-client --multiquery

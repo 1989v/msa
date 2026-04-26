@@ -15,6 +15,10 @@
 9. Redis 심화 (자료구조 내부, AOF/RDB 퍼시스턴스, 클러스터, Cache Stampede 방어, 분산 락, Stream)
 10. Observability 3축 (Metrics: Prometheus + Grafana / Logs: ELK, Loki / Tracing: OpenTelemetry, Jaeger)
 11. K8s 심화 + 배포 전략 (Operator/CRD, Networking 심화, Rolling/Blue-Green/Canary, Helm, GitOps)
+12. Latency Numbers Every Programmer Should Know, 즉 레이어간 통신 비용에 대한 스터(L1, 메인메모리, SSD, 데이터센터간 통신, 디스크, 리전간 통신 등)
+  12-1. https://colin-scott.github.io/personal_website/research/interactive_latency.html
+  12-2. https://research.cs.cornell.edu/ladis2009/talks/dean-keynote-ladis2009.pdf page 12
+  12-3. https://www.youtube.com/watch?v=WbzMtyyOQpM
 
 ## 파이프라인
 
@@ -42,3 +46,4 @@
 | 9 | Redis 심화 | [9-redis-deep-dive/](docs/9-redis-deep-dive/) | draft |
 | 10 | Observability 3축 | [10-observability/](docs/10-observability/) | draft |
 | 11 | K8s 심화 + 배포 전략 | [11-k8s-deep-dive/](docs/11-k8s-deep-dive/) | draft |
+| 12 | Latency Numbers Every Programmer Should Know | [12-latency-numbers/](docs/12-latency-numbers/) | **completed + 12 deep files** |
