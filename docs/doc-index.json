@@ -51,7 +51,7 @@
       "sources": ["*/src/main/kotlin/*application*Service.kt"]
     },
     {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
+      "doc": "docs/conventions/entity-mutation.md",
       "sources": ["*/domain/src/main/kotlin/*domain*"]
     },
     {
