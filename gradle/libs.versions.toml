@@ -15,6 +15,9 @@ kotlinLogging = "7.0.7"
 turbine = "1.1.0"
 testcontainers = "1.20.4"
 okhttp = "4.12.0"
+resilience4j = "2.3.0"
+ociSdk = "3.46.0"
+nimbusJose = "9.40"
 
 [libraries]
 # Spring Boot Starters
@@ -96,6 +99,18 @@ testcontainers-mysql = { module = "org.testcontainers:mysql", version.ref = "tes
 testcontainers-clickhouse = { module = "org.testcontainers:clickhouse", version.ref = "testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:kafka", version.ref = "testcontainers" }
 mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp" }
+
+# Resilience (Phase 2: CB / Bulkhead / Timeout)
+resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
+resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j" }
+
+# OCI SDK (Phase 2: KEK envelope encryption via OCI Vault)
+oci-kms = { module = "com.oracle.oci.sdk:oci-java-sdk-keymanagement", version.ref = "ociSdk" }
+oci-common = { module = "com.oracle.oci.sdk:oci-java-sdk-common", version.ref = "ociSdk" }
+
+# JWT (Phase 2 ADR-0024 Errata: 빗썸/업비트 모두 JWT(HS256) 인증)
+nimbus-jose = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbusJose" }
+# Phase 2 Rate Limiter는 Redis Lua script로 직접 구현. Bucket4j는 Phase 3 검토 시 카탈로그 추가.
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

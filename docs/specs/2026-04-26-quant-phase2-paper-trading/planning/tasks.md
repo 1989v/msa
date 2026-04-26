@@ -89,18 +89,18 @@ standards:
 
 Phase 2 신규 라이브러리를 `gradle/libs.versions.toml`에 등재하고, Phase 1 spec §16에서 미해결로 명시된 "order/app 리터럴 → 카탈로그 승격"도 함께 처리한다.
 
-- [ ] TG-P2-01.0 **Complete**: `./gradlew :quant:app:dependencies --configuration runtimeClasspath` 결과에 신규 라이브러리 4종이 catalog 키로 해소된다.
-  - [ ] TG-P2-01.1 `gradle/libs.versions.toml` 신규 카탈로그 추가:
+- [x] TG-P2-01.0 **Complete**: `./gradlew :quant:app:dependencies --configuration runtimeClasspath` 결과에 신규 라이브러리 4종이 catalog 키로 해소된다.
+  - [x] TG-P2-01.1 `gradle/libs.versions.toml` 신규 카탈로그 추가:
     - `oci-java-sdk-keymanagement` (KEK 발급 — 최신 안정 버전)
     - `nimbus-jose-jwt` (JWT HS256 서명, Phase 3 실 매매 베이스 클래스용)
     - `resilience4j-circuitbreaker` (CB)
     - `resilience4j-kotlin` (Coroutine 통합)
     - `bucket4j-redis` (Phase 3 검토용 placeholder, Phase 2는 Lua script 직접 사용 → 의존성만 등재 후 미사용 OK)
-  - [ ] TG-P2-01.2 Phase 1 spec §16 미해결: `order/app/build.gradle.kts` 의 resilience4j 리터럴 의존을 `libs.resilience4j.circuitbreaker` / `libs.resilience4j.kotlin` 카탈로그로 전환
-  - [ ] TG-P2-01.3 `quant/app/build.gradle.kts` 에 신규 카탈로그 키 추가 (`libs.oci.kms`, `libs.nimbus.jose`, `libs.resilience4j.circuitbreaker`, `libs.resilience4j.kotlin`)
-  - [ ] TG-P2-01.4 OCI SDK transitive 충돌 검사: `./gradlew :quant:app:dependencyInsight --dependency oci-java-sdk-common` → 단일 버전 유지
-  - [ ] TG-P2-01.5 빌드 영향 회귀 검증: 전체 `./gradlew build` 성공 (Phase 1 테스트 영향 0)
-  - [ ] TG-P2-01.6 **Verify**: `./gradlew :quant:app:build :order:app:build` 성공 + `git grep -n 'io.github.resilience4j' order/app/build.gradle.kts` → 카탈로그 참조만 남음
+  - [x] TG-P2-01.2 Phase 1 spec §16 미해결: `order/app/build.gradle.kts` 의 resilience4j 리터럴 의존을 `libs.resilience4j.circuitbreaker` / `libs.resilience4j.kotlin` 카탈로그로 전환
+  - [x] TG-P2-01.3 `quant/app/build.gradle.kts` 에 신규 카탈로그 키 추가 (`libs.oci.kms`, `libs.nimbus.jose`, `libs.resilience4j.circuitbreaker`, `libs.resilience4j.kotlin`)
+  - [x] TG-P2-01.4 OCI SDK transitive 충돌 검사: `./gradlew :quant:app:dependencyInsight --dependency oci-java-sdk-common` → 단일 버전 유지
+  - [x] TG-P2-01.5 빌드 영향 회귀 검증: 전체 `./gradlew build` 성공 (Phase 1 테스트 영향 0)
+  - [x] TG-P2-01.6 **Verify**: `./gradlew :quant:app:build :order:app:build` 성공 + `git grep -n 'io.github.resilience4j' order/app/build.gradle.kts` → 카탈로그 참조만 남음
 
 **Acceptance Criteria**:
 - 신규 카탈로그 5개 키 모두 `libs.versions.toml`에 등재

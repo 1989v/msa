@@ -28,6 +28,13 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")
     runtimeOnly(libs.mysql.connector)
+    // Phase 2 — TG-P2-01: 신규 카탈로그 등재
+    implementation(libs.resilience4j.circuitbreaker)
+    implementation(libs.resilience4j.kotlin)
+    implementation(libs.oci.kms)        // ADR-0027 KEK envelope encryption
+    implementation(libs.oci.common)
+    implementation(libs.nimbus.jose)    // 빗썸/업비트 JWT(HS256) 인증 (ADR-0024 Errata)
+    // Phase 2 Rate Limiter: Redis Lua script 직접 구현. Bucket4j는 Phase 3 검토 시 도입.
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.kotest.property)
