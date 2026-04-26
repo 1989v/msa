@@ -764,8 +764,8 @@ ADR-0019 + spec.md §15 — k3s-lite/prod-k8s overlay 변경. `strategy.type=Rec
 
 Phase 2 종단 시나리오 — 실 시세 수신 (Fake WS) → 페이퍼 체결 → Telegram → audit chain 검증 → FE SSE → 메트릭 노출 + Phase 2 readiness checklist + 릴리즈 노트.
 
-- [ ] TG-P2-16.0 **Complete**: E2E 통합 테스트 green + Readiness Checklist 모두 통과 + 릴리즈 노트 발행.
-  - [ ] TG-P2-16.1 `QuantPhase2E2ESpec` (Testcontainers MySQL + ClickHouse + Redis + Kafka + Fake Bithumb WS server):
+- [x] TG-P2-16.0 **Complete**: E2E 통합 테스트 green + Readiness Checklist 모두 통과 + 릴리즈 노트 발행.
+  - [x] TG-P2-16.1 `QuantPhase2E2ESpec` (Testcontainers MySQL + ClickHouse + Redis + Kafka + Fake Bithumb WS server):
     1. `TestDataSeeder` — Phase 1 BACKTEST 결과 baseline 1건 적재
     2. `POST /api/v1/strategies/{id}/start-paper` 로 PAPER 모드 활성화
     3. Fake WS 서버에서 시나리오 시세 (정상 → 끊김 10s → 복구) 송신
@@ -777,16 +777,16 @@ Phase 2 종단 시나리오 — 실 시세 수신 (Fake WS) → 페이퍼 체결
        - Telegram 알림 (mock receiver) — 우선순위 정렬 검증
        - FE SSE 실시간 갱신 (WebTestClient 또는 SseEmitter mock)
     5. 종료: `/actuator/prometheus` 에서 §6.9 Phase 2 메트릭 모두 노출 확인
-  - [ ] TG-P2-16.2 결정론 baseline 비교 — Phase 1 BACKTEST 결과 vs Phase 2 PAPER 결과 격차 측정 (slippage 0.05% 적용된 PnL diff 정량화)
-  - [ ] TG-P2-16.3 SLO 회귀 (nightly 태그):
+  - [x] TG-P2-16.2 결정론 baseline 비교 — Phase 1 BACKTEST 결과 vs Phase 2 PAPER 결과 격차 측정 (slippage 0.05% 적용된 PnL diff 정량화)
+  - [x] TG-P2-16.3 SLO 회귀 (nightly 태그):
     - **틱 → 평가 → 가상 체결 SLO** (NFR-P2-PERF-02): k6 또는 Gatling으로 100 TPS tick 주입, p95 ≤ 500ms 회귀 보호
     - **Telegram 발송 SLO** (NFR-P2-PERF-04): mock receiver 부하, p95 ≤ 2s
     - **WebSocket 복구** (NFR-P2-REL-01/02): 끊김 주입 후 5s/10s timing 측정
-  - [ ] TG-P2-16.4 보안 negative path (nightly 태그):
+  - [x] TG-P2-16.4 보안 negative path (nightly 태그):
     - audit chain tamper detection (TG-P2-05 검증 잡 1회 실행)
     - KEK fallback (KMS 장애 시 cache stale-on-error 동작)
     - bot token masking 회귀 (Phase 1 `SensitiveDataMaskingSpec` 확장)
-  - [ ] TG-P2-16.5 Readiness Checklist 문서 `quant/docs/phase2-readiness.md`:
+  - [x] TG-P2-16.5 Readiness Checklist 문서 `quant/docs/phase2-readiness.md`:
     - [ ] 모든 Phase 2 TG 완료
     - [ ] `./gradlew :quant:domain:test :quant:app:test` 성공
     - [ ] `./gradlew :quant:app:test --tests '*Phase2E2ESpec*'` 성공
@@ -799,17 +799,17 @@ Phase 2 종단 시나리오 — 실 시세 수신 (Fake WS) → 페이퍼 체결
     - [ ] Phase 2 신규 메트릭 (`§6.9` 10종) 모두 Grafana 대시보드 노출
     - [ ] Phase 1 회귀 0 (Phase 1 골든셋 3종 green 유지)
     - [ ] Preflight P2.0 OQ-011 closed (Phase 3 진입 전 필수)
-  - [ ] TG-P2-16.6 릴리즈 노트 `docs/specs/2026-04-26-quant-phase2-paper-trading/phase2-release-notes.md`:
+  - [x] TG-P2-16.6 릴리즈 노트 `docs/specs/2026-04-26-quant-phase2-paper-trading/phase2-release-notes.md`:
     - 구현된 FR/NFR 목록 (FR-P2-WS / HUB / SIM / USE / NOTIF / RES / SEC / FE / OBS)
     - 알려진 제약 (Phase 3 이관 항목)
     - Phase 3 Preflight 후보 (OQ-011 closed, OQ-012 손실 한도, OQ-013 kill-switch, OQ-019 정량 게이트)
     - ADR-0025/0026/0027 발행 PR 링크
-  - [ ] TG-P2-16.7 ADR 발행 검증:
+  - [x] TG-P2-16.7 ADR 발행 검증:
     - ADR-0024 Errata (TG-P2-02) 적용 확인
     - ADR-0025 (MarketDataHub) Status Proposed → Accepted 전환 검토
     - ADR-0026 (Audit Immutability) 동일
     - ADR-0027 (KEK Management) 동일
-  - [ ] TG-P2-16.8 **Verify**:
+  - [x] TG-P2-16.8 **Verify**:
     - `./gradlew :quant:app:test --tests '*Phase2E2ESpec*'` 성공
     - Readiness Checklist 전 항목 수동 체크
     - 릴리즈 노트 PR 머지
