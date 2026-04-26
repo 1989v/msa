@@ -1,10 +1,14 @@
 package com.kgd.quant.infrastructure.metrics
 
+import com.kgd.quant.application.port.notification.NotificationPriority
+import com.kgd.quant.application.port.notification.NotificationPriorityQueue
 import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -36,6 +40,11 @@ import java.util.concurrent.atomic.AtomicInteger
  *  - `quant_market_hub_dropped_total{reason}` — SharedFlow tryEmit 실패 (DROP_OLDEST 발생)
  *  - `quant_market_hub_kafka_publish_failure_total` — Kafka fan-out collector 발행 실패
  *
+ * Phase 2 추가 메트릭 (TG-P2-10 Telegram notification):
+ *  - `quant_notification_send_latency_seconds{channel,priority}` — 발송 latency 타이머
+ *  - `quant_notification_send_failure_total{channel,reason}` — 발송 실패 누적
+ *  - `quant_notification_queue_depth{priority}` — gauge, 큐 대기 건수 (NotificationPriorityQueue.size)
+ *
  * Gauge `quant_outbox_pending_rows` 는 라이프사이클이 다르므로 [OutboxPendingMetric] 참조.
  *
  * ## 사용 규칙 (ADR-0021)
@@ -43,6 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * - `symbol` 태그는 거래쌍(BTC_KRW 등) 과 같이 카디널리티가 제한된 값만 허용.
  * - `from_version` / `to_version` 태그는 KEK 라벨이 아닌 INT 값 — 카디널리티 제한 (회전 횟수 ≤ 일 단위).
  * - `exchange`, `outcome`, `source`, `reason` 태그 또한 enum 또는 상수 집합으로만 발행한다.
+ * - `channel`, `priority`, `reason` (notification) 태그도 enum / 상수 집합만 사용 (telegram/email, CRITICAL/RISK/INFO 등).
  */
 @Component
 class QuantMetrics(
@@ -96,7 +106,7 @@ class QuantMetrics(
 
     /** [backtestDuration] 에 nanos 를 기록. */
     fun recordBacktestDuration(nanos: Long) {
-        backtestDuration.record(nanos, java.util.concurrent.TimeUnit.NANOSECONDS)
+        backtestDuration.record(nanos, TimeUnit.NANOSECONDS)
     }
 
     // --- TG-P2-03: KEK 캐시 메트릭 ---
@@ -230,7 +240,7 @@ class QuantMetrics(
     fun setWsConnectionState(exchange: String, state: Int) {
         val ref = wsConnectionStates.computeIfAbsent(exchange) {
             val holder = AtomicInteger(state)
-            io.micrometer.core.instrument.Gauge.builder(METRIC_WS_CONNECTION_STATE, holder) { it.get().toDouble() }
+            Gauge.builder(METRIC_WS_CONNECTION_STATE, holder) { it.get().toDouble() }
                 .description("WebSocket connection state (0=disconnected,1=fallback,2=connected)")
                 .tag("exchange", exchange)
                 .register(registry)
@@ -261,6 +271,83 @@ class QuantMetrics(
     /** Kafka fan-out collector 발행 실패 (hot path 영향 없음) 카운트. */
     fun marketHubKafkaPublishFailure() = marketHubKafkaPublishFailureCounter.increment()
 
+    // --- TG-P2-10: Telegram notification 메트릭 ---
+
+    /**
+     * (channel, priority) 조합별 Timer 캐시.
+     * channel: `telegram` (Phase 2 단일), priority: enum 3종 (CRITICAL/RISK/INFO) — 카디널리티 ≤ 6.
+     */
+    private val notificationLatencyTimers =
+        ConcurrentHashMap<Pair<String, String>, Timer>()
+
+    /**
+     * 알림 1건 발송 성공 후 latency(ms) 를 [Timer] 에 기록한다.
+     *
+     * @param channel  발송 채널 (`telegram`, 향후 `email` 등). lowercase 권장.
+     * @param priority [NotificationPriority] enum name (`CRITICAL` / `RISK` / `INFO`).
+     * @param latencyMs WebClient 호출 ~ 응답까지 millis. 음수 입력은 무시.
+     */
+    fun notificationSendLatency(channel: String, priority: String, latencyMs: Long) {
+        if (latencyMs < 0L) return
+        val timer = notificationLatencyTimers.computeIfAbsent(channel to priority) {
+            Timer.builder(METRIC_NOTIFICATION_SEND_LATENCY)
+                .description("Notification send latency by channel and priority")
+                .tag("channel", channel)
+                .tag("priority", priority)
+                .publishPercentiles(0.5, 0.95, 0.99)
+                .register(registry)
+        }
+        timer.record(latencyMs, TimeUnit.MILLISECONDS)
+    }
+
+    /**
+     * (channel, reason) 조합별 Counter 캐시. reason 은 enum 또는 상수 집합으로 제한:
+     * `not_configured`, `client_error_4xx`, `max_retries_exceeded`, `client_error_<code>` 등.
+     */
+    private val notificationFailureCounters =
+        ConcurrentHashMap<Pair<String, String>, Counter>()
+
+    /**
+     * 알림 발송 실패 1건 누적. 4xx / 5xx 최종 실패 / 토큰 미설정 등 모든 실패 사유 통합.
+     *
+     * @param channel 발송 채널
+     * @param reason  실패 사유 라벨 — 카디널리티 통제를 위해 상수/enum 으로만 발행.
+     */
+    fun notificationSendFailure(channel: String, reason: String) {
+        val counter = notificationFailureCounters.computeIfAbsent(channel to reason) {
+            Counter.builder(METRIC_NOTIFICATION_SEND_FAILURE_TOTAL)
+                .description("Total notification send failures by channel and reason")
+                .tag("channel", channel)
+                .tag("reason", reason)
+                .register(registry)
+        }
+        counter.increment()
+    }
+
+    /** priority 별 queue depth gauge 가 등록된 큐 reference 캐시. priority 당 최대 1회 등록. */
+    private val notificationQueueDepthRegistered =
+        ConcurrentHashMap<NotificationPriority, NotificationPriorityQueue>()
+
+    /**
+     * Notification 큐의 [size] 를 priority 별 gauge 로 노출.
+     *
+     * Spring 컨텍스트 시작 시 [com.kgd.quant.infrastructure.notification.NotificationDispatcher]
+     * 또는 별도 init 빈에서 1회 호출하면 priority 마다 gauge 가 등록된다.
+     *
+     * 두 번째 이후 호출은 no-op (queue reference 가 동일해도 등록을 반복하지 않음).
+     */
+    fun registerNotificationQueueDepth(queue: NotificationPriorityQueue) {
+        for (priority in NotificationPriority.values()) {
+            notificationQueueDepthRegistered.computeIfAbsent(priority) {
+                Gauge.builder(METRIC_NOTIFICATION_QUEUE_DEPTH, queue) { it.size(priority).toDouble() }
+                    .description("Current depth of notification priority queue")
+                    .tag("priority", priority.name)
+                    .register(registry)
+                queue
+            }
+        }
+    }
+
     companion object {
         const val METRIC_BACKTEST_RUN_TOTAL = "quant_backtest_run_total"
         const val METRIC_BACKTEST_RUN_DURATION = "quant_backtest_run_duration_seconds"
@@ -278,5 +365,8 @@ class QuantMetrics(
         const val METRIC_WS_CONNECTION_STATE = "quant_ws_connection_state"
         const val METRIC_MARKET_HUB_DROPPED_TOTAL = "quant_market_hub_dropped_total"
         const val METRIC_MARKET_HUB_KAFKA_PUBLISH_FAILURE_TOTAL = "quant_market_hub_kafka_publish_failure_total"
+        const val METRIC_NOTIFICATION_SEND_LATENCY = "quant_notification_send_latency_seconds"
+        const val METRIC_NOTIFICATION_SEND_FAILURE_TOTAL = "quant_notification_send_failure_total"
+        const val METRIC_NOTIFICATION_QUEUE_DEPTH = "quant_notification_queue_depth"
     }
 }

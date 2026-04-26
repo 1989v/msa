@@ -96,6 +96,16 @@ quant:
         jitter: ${SEVEN_SPLIT_PAPER_LATENCY_JITTER_MS:20}  # ± jitter
     partial-fill:
       probability: ${SEVEN_SPLIT_PAPER_PARTIAL_FILL_PROB:0.0}  # Phase 2 reserved (현재 사용 안 함)
+  # TG-P2-10: Telegram Bot 알림 어댑터. bot-token / default-chat-id 미설정 시 발송은 skip 되고 메트릭만 기록.
+  # 운영에서는 K8s Secret 으로 TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID 주입.
+  notification:
+    telegram:
+      api-base: ${TELEGRAM_API_BASE:https://api.telegram.org}
+      bot-token: ${TELEGRAM_BOT_TOKEN:}
+      default-chat-id: ${TELEGRAM_CHAT_ID:}
+      rate-limit-interval-ms: ${TELEGRAM_RATE_LIMIT_INTERVAL_MS:1000}
+    dispatcher:
+      enabled: ${SEVEN_SPLIT_NOTIFICATION_DISPATCHER:true}
 
 management:
   endpoints:

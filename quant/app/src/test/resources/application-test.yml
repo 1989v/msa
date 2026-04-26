@@ -33,3 +33,8 @@ quant:
         current-version: v1
         kek-versions:
           v1: 000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f
+  # TG-P2-10: 테스트에서 NotificationDispatcher 백그라운드 worker 가 자동 기동되지 않도록 disable.
+  # Sender / Queue / RateLimiter 단위 테스트는 직접 인스턴스화하여 검증한다.
+  notification:
+    dispatcher:
+      enabled: false
