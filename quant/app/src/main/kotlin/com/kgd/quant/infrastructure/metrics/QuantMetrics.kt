@@ -25,6 +25,10 @@ import java.util.concurrent.atomic.AtomicInteger
  *  - `quant_kek_rotation_lazy_reencrypt_total{from_version,to_version,table}` —
  *    회전 잡이 row 1건을 새 KEK 로 재암호화 성공한 누적 건수.
  *
+ * Phase 2 추가 메트릭 (TG-P2-05 audit chain):
+ *  - `quant_audit_log_appended_total` — audit_log row append 성공 누적
+ *  - `quant_audit_hash_chain_invalid_total` — AuditChainVerifier 가 invalid 검출한 row 수
+ *
  * Phase 2 추가 메트릭 (TG-P2-06 / TG-P2-07 시세 hot path):
  *  - `quant_market_tick_received_total{exchange,symbol,source}` — 수신한 Tick 누적 (source ∈ WS/REST)
  *  - `quant_ws_reconnect_attempts_total{exchange,outcome}` — WebSocket 재연결 시도 (outcome ∈ success/fail)
@@ -145,6 +149,27 @@ class QuantMetrics(
         counter.increment()
     }
 
+    // --- TG-P2-05: audit chain 메트릭 ---
+
+    private val auditLogAppendedCounter: Counter = Counter
+        .builder(METRIC_AUDIT_LOG_APPENDED_TOTAL)
+        .description("Total audit_log rows successfully appended (writer user, ClickHouse quant_audit)")
+        .register(registry)
+
+    private val auditHashChainInvalidCounter: Counter = Counter
+        .builder(METRIC_AUDIT_HASH_CHAIN_INVALID_TOTAL)
+        .description("Total invalid hash-chain rows detected by AuditChainVerifier")
+        .register(registry)
+
+    /** audit_log row 1건이 ClickHouse 에 INSERT 성공했을 때 호출. */
+    fun auditLogAppended() = auditLogAppendedCounter.increment()
+
+    /** AuditChainVerifier 가 검증 사이클에서 invalid 로 탐지한 row 수만큼 누적. */
+    fun auditHashChainInvalid(count: Int) {
+        if (count <= 0) return
+        auditHashChainInvalidCounter.increment(count.toDouble())
+    }
+
     // --- TG-P2-06 / TG-P2-07: 시세 hot path 메트릭 ---
 
     /**
@@ -246,6 +271,8 @@ class QuantMetrics(
         const val METRIC_KEK_CACHE_MISSES_TOTAL = "quant_kek_cache_misses_total"
         const val METRIC_KEK_CACHE_STALE_TOTAL = "quant_kek_cache_stale_total"
         const val METRIC_KEK_ROTATION_LAZY_REENCRYPT_TOTAL = "quant_kek_rotation_lazy_reencrypt_total"
+        const val METRIC_AUDIT_LOG_APPENDED_TOTAL = "quant_audit_log_appended_total"
+        const val METRIC_AUDIT_HASH_CHAIN_INVALID_TOTAL = "quant_audit_hash_chain_invalid_total"
         const val METRIC_MARKET_TICK_RECEIVED_TOTAL = "quant_market_tick_received_total"
         const val METRIC_WS_RECONNECT_ATTEMPTS_TOTAL = "quant_ws_reconnect_attempts_total"
         const val METRIC_WS_CONNECTION_STATE = "quant_ws_connection_state"

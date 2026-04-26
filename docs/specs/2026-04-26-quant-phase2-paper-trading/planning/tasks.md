@@ -231,33 +231,33 @@ Phase 1 `ExchangeCredential` / `NotificationTarget` 의 `byte` 필드(이미 AES
 
 ADR-0026 결정 — `quant_audit` ClickHouse DB 신설 + RBAC 분리 + prev_hash 체인 + Kafka mirror. Phase 1 `audit_log` (MySQL) 는 운영 로그 용도로 유지하되, Phase 2 신규 audit는 ClickHouse `quant_audit.audit_log`로 이관.
 
-- [ ] TG-P2-05.0 **Complete**: 신규 audit row insert 시 prev_hash 체인이 정확히 계산되며 nightly 검증 잡이 임의 변조를 검출한다.
-  - [ ] TG-P2-05.1 ClickHouse DDL `quant/app/src/main/resources/clickhouse/quant_audit/V001__create_database_and_audit_log.sql`:
+- [x] TG-P2-05.0 **Complete**: 신규 audit row insert 시 prev_hash 체인이 정확히 계산되며 nightly 검증 잡이 임의 변조를 검출한다.
+  - [x] TG-P2-05.1 ClickHouse DDL `quant/app/src/main/resources/clickhouse/quant_audit/V001__create_database_and_audit_log.sql`:
     - `CREATE DATABASE IF NOT EXISTS quant_audit`
     - `CREATE TABLE quant_audit.audit_log (...)` (spec.md §10.2 스키마, MergeTree, ORDER BY (tenant_id, occurred_at, audit_id))
     - ReplacingMergeTree 등 변경 가능 엔진 사용 금지 — DDL 코멘트로 명시
-  - [ ] TG-P2-05.2 RBAC 분리 SOP 문서 `quant/docs/audit-rbac-sop.md`:
+  - [x] TG-P2-05.2 RBAC 분리 SOP 문서 `quant/docs/audit-rbac-sop.md`:
     - `quant_audit_writer` user — INSERT ONLY (quant 서비스가 사용)
     - `quant_audit_reader` user — SELECT ONLY (검증 잡, 운영자)
     - DBA 권한 escalation 절차 (변조 탐지 후 복구 시 한정)
     - `CREATE USER ... GRANT INSERT ON quant_audit.audit_log` 예시 SQL
-  - [ ] TG-P2-05.3 `infrastructure/security/audit/AuditLogPublisher.kt`:
+  - [x] TG-P2-05.3 `infrastructure/security/audit/AuditLogPublisher.kt`:
     - `suspend fun publish(event: AuditEvent)`
     - 처리: (1) 직전 row hash 조회 (`SELECT current_hash FROM ... ORDER BY occurred_at DESC LIMIT 1`) (2) `current_hash = SHA256(prev_hash || payload_json || occurred_at || actor)` 계산 (3) ClickHouse INSERT (writer user) (4) Outbox에 Kafka mirror 이벤트 append
     - prev_hash 조회는 단일 instance 내 캐시 (Phase 2 single replica 가정 — Phase 3 multi-replica 시 leader pod 전환)
-  - [ ] TG-P2-05.4 `AuditChainVerifier` (시간당 1회 cron):
+  - [x] TG-P2-05.4 `AuditChainVerifier` (시간당 1회 cron):
     - 직전 1시간 분량 row 순차 replay
     - 각 row의 `current_hash`가 `SHA256(prev_hash || payload_json || ...)` 와 일치 검증
     - invalid 검출 시 `quant.audit.hash_chain.invalid_total` 메트릭 증가 + CRITICAL Telegram 알림 (TG-P2-10 발송)
-  - [ ] TG-P2-05.5 Kafka mirror 토픽 `quant.audit.v1` — Outbox relay (TG-P2-12) 통해 발행. consumer 격리 저장소 적재는 Phase 3 외부 오픈 시점
-  - [ ] TG-P2-05.6 통합 테스트 (Testcontainers ClickHouse + Kafka):
+  - [x] TG-P2-05.5 Kafka mirror 토픽 `quant.audit.v1` — Outbox relay (TG-P2-12) 통해 발행. consumer 격리 저장소 적재는 Phase 3 외부 오픈 시점
+  - [x] TG-P2-05.6 통합 테스트 (Testcontainers ClickHouse + Kafka):
     - `AuditLogHashChainAppendSpec` — 연속 5건 insert 시 prev_hash 체인 정확성
     - `AuditLogHashChainTamperDetectionSpec` — 임의 row UPDATE (DBA 권한 시뮬) 시 검증 잡이 invalid 검출
     - `AuditLogDbPermissionSpec` — writer user로 UPDATE 시도 시 권한 거부 (RBAC 검증)
     - `AuditLogKafkaMirrorSpec` — row insert 후 `quant.audit.v1` 토픽에 동일 payload 발행 검증
     - `AuditChainReplayJobSpec` — nightly 잡 1회 실행 시 정상 chain → metric 0
-  - [ ] TG-P2-05.7 INV-P2-10 강제: prev_hash 컬럼 NULL 거부 — DDL `NOT NULL` + application-level validation
-  - [ ] TG-P2-05.8 **Verify**: `./gradlew :quant:app:test --tests '*AuditLog*' --tests '*AuditChain*'` 성공 (Testcontainers 활성)
+  - [x] TG-P2-05.7 INV-P2-10 강제: prev_hash 컬럼 NULL 거부 — DDL `NOT NULL` + application-level validation
+  - [x] TG-P2-05.8 **Verify**: `./gradlew :quant:app:test --tests '*AuditLog*' --tests '*AuditChain*'` 성공 (Testcontainers 활성)
 
 **Acceptance Criteria**:
 - ClickHouse DB 명이 `quant_audit` (Phase 1 `quant` 와 분리)

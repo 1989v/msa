@@ -62,6 +62,17 @@ quant:
         region: ${OCI_REGION:}
         vault-key-ocid: ${OCI_VAULT_KEY_OCID:}
         crypto-endpoint: ${OCI_VAULT_CRYPTO_ENDPOINT:}
+  # TG-P2-05 (ADR-0026): audit_log 별도 ClickHouse DB (`quant_audit`) + RBAC 분리.
+  # `enabled=true` 시에만 AuditClickHouseConfig / ClickHouseAuditLogPublisher / AuditChainVerifier 가 등록.
+  audit:
+    enabled: ${SEVEN_SPLIT_AUDIT_ENABLED:false}
+    chain-verifier:
+      enabled: ${SEVEN_SPLIT_AUDIT_CHAIN_VERIFIER_ENABLED:true}
+    clickhouse:
+      url: ${SEVEN_SPLIT_AUDIT_CH_URL:jdbc:clickhouse://localhost:8123/quant_audit}
+      user: ${SEVEN_SPLIT_AUDIT_CH_USER:quant_audit_writer}
+      password: ${SEVEN_SPLIT_AUDIT_CH_PASSWORD:}
+      pool-size: ${SEVEN_SPLIT_AUDIT_CH_POOL_SIZE:4}
   # TG-P2-06 / TG-P2-07: 시세 hot path. 기본 비활성, 운영 활성화 시 K8s overlay 에서 enabled=true.
   market:
     bithumb-ws:
