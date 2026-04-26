@@ -3,10 +3,10 @@
   "version": 1,
   "summary": {
     "source_count": 593,
-    "doc_count": 163,
+    "doc_count": 167,
     "link_count": 1105,
     "missing_count": 124,
-    "dangling_count": 147,
+    "dangling_count": 151,
     "coverage_by_service": {
       "product": {
         "total": 31,
@@ -9099,6 +9099,10 @@
       "service": "root"
     },
     {
+      "doc": "docs/conventions/code-convention.md",
+      "service": "root"
+    },
+    {
       "doc": "docs/conventions/frontend-design.md",
       "service": "root"
     },
@@ -9108,6 +9112,10 @@
     },
     {
       "doc": "docs/conventions/latency-budget.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/conventions/logging.md",
       "service": "root"
     },
     {
@@ -9424,6 +9432,14 @@
     },
     {
       "doc": "docs/specs/2026-04-26-seven-split-phase2-paper-trading/planning/test-quality.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/standards/doc-index-tracking.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/standards/service-local-docs.md",
       "service": "root"
     },
     {
