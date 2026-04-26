@@ -197,5 +197,5 @@ msa/
 - [Clean Architecture 가이드](docs/architecture/00.clean-architecture.md)
 - [데이터 전략](docs/architecture/data-strategy.md)
 - [Resilience 전략](docs/architecture/resilience-strategy.md)
-- [백업 설계](docs/superpowers/specs/2026-04-06-backup-management-design.md)
+- [백업 설계 — 스크립트](docker/backup/README.md) · [K8s 배포](k8s/infra/prod/backup/README.md)
 - [구현 플랜](docs/plans/)

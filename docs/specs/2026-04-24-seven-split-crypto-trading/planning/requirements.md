@@ -81,9 +81,9 @@ author: shape-agent (sharded from initialization.md via Q-A ~ Q-E)
 | API 응답 포맷 | `docs/architecture/api-response.md` | `ApiResponse<T>` 표준 |
 | 멱등성 소비자 | `docs/adr/ADR-0012-idempotent-consumer.md` | 체결 이벤트 중복 처리 방어 |
 | 장애 대비 | `docs/adr/ADR-0015-resilience-strategy.md` | CircuitBreaker, DLQ, Rate Limiting, CQRS 패턴 |
-| 트랜잭션 | `docs/adr/ADR-0020-transactional-usage.md` | 외부 IO 분리 (거래소 REST 호출은 트랜잭션 밖) |
-| 로깅 | `docs/adr/ADR-0021-logging-conventions.md` | kotlin-logging 람다 형식 |
-| Entity 수정 | `docs/adr/ADR-0022-entity-mutation-conventions.md` | `RoundSlot` 상태 전이 캡슐화 |
+| 트랜잭션 | `docs/conventions/transactional-usage.md` | 외부 IO 분리 (거래소 REST 호출은 트랜잭션 밖) |
+| 로깅 | `docs/conventions/logging.md` | kotlin-logging 람다 형식 |
+| Entity 수정 | `docs/conventions/entity-mutation.md` | `RoundSlot` 상태 전이 캡슐화 |
 | K8s 배포 | `k8s/overlays/k3s-lite`, `k8s/overlays/prod-k8s` | `seven-split` Deployment/Service overlay 추가 |
 | 시계열 저장소 | `analytics` 서비스의 ClickHouse 사용 패턴 | 백테스트 OHLCV, 틱 재생 (인프라만 공유, DB는 `seven_split` 분리) |
 | 차트/시각화 협업 | `charting/` (Python FastAPI) | 공개 차트 엔드포인트 — 내부 대시보드는 별도 FE 모듈 |

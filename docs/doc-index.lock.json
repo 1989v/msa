@@ -3,10 +3,10 @@
   "version": 1,
   "summary": {
     "source_count": 593,
-    "doc_count": 170,
+    "doc_count": 173,
     "link_count": 1105,
     "missing_count": 124,
-    "dangling_count": 154,
+    "dangling_count": 157,
     "coverage_by_service": {
       "product": {
         "total": 31,
@@ -9035,7 +9035,19 @@
       "service": "root"
     },
     {
+      "doc": "docs/adr/ADR-0025-market-data-hub.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/adr/ADR-0026-audit-log-immutability.md",
+      "service": "root"
+    },
+    {
       "doc": "docs/adr/ADR-0026-docs-taxonomy.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/adr/ADR-0027-oci-vault-kek-envelope-encryption.md",
       "service": "root"
     },
     {

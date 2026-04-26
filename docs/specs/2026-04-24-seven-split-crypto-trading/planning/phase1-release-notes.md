@@ -2,7 +2,7 @@
 
 **릴리즈 일자**: 2026-04-26
 **스펙**: [seven-split-crypto-trading](.)
-**ADR**: [ADR-0024](../../adr/ADR-0024-seven-split-service.md) (Proposed)
+**ADR**: [ADR-0024](../../../adr/ADR-0024-seven-split-service.md) (Proposed)
 
 ---
 

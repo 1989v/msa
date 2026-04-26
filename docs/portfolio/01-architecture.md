@@ -97,7 +97,7 @@ com.kgd.{service}/
     └── dto/             # Request/Response
 ```
 
-**근거**: `docs/adr/ADR-0014-code-convention.md`
+**근거**: `docs/conventions/code-convention.md`
 
 ---
 
@@ -137,4 +137,4 @@ Inventory ──kafka──→ Fulfillment ──kafka──→ Order
 
 ---
 
-*Code references: `settings.gradle.kts` · `docs/architecture/00.clean-architecture.md` · `docs/adr/ADR-0014-code-convention.md`*
+*Code references: `settings.gradle.kts` · `docs/architecture/00.clean-architecture.md` · `docs/conventions/code-convention.md`*
