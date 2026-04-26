@@ -1,0 +1,240 @@
+# Open Questions — Quant Phase 2 (Paper Trading)
+# 사이클: 2026-04-26 ~
+# 형식: id / title / status / options / default_proposal / decision / rationale / carry_from
+# 상태: OPEN(default 제안 상태) → CONFIRMED(사용자 1회 확인 후) → DECIDED(최종)
+
+---
+
+# ── Phase 1 이월 (결정 완료) ────────────────────────────────────────────────
+
+- id: OQ-007
+  title: "시세 이벤트 버스 구현체 선택"
+  status: DECIDED
+  carry_from: "Phase 1 OQ-007"
+  decision: "Coroutine SharedFlow primary + Kafka fan-out side-effect collector"
+  rationale: |
+    - hot path (Strategy Engine, Dashboard, Alert)는 in-process SharedFlow로 지연 최소화
+    - 외부 소비자(analytics 등)를 위해 별도 collector가 비동기 Kafka 발행
+    - Kafka publisher bean은 optional — Phase 2 미활성, Phase 3+ 활성
+  decided_at: "2026-04-26"
+
+- id: OQ-011
+  title: "빗썸 거래소 약관 자동매매 허용 여부"
+  status: DECIDED
+  carry_from: "Phase 1 OQ-011"
+  decision: "진행 — 명시적 금지 조항 미발견, Order rate limit 존재로 자동매매 전제 설계 확인"
+  rationale: |
+    - 빗썸 약관 직접 1회 검토 수행
+    - 자동매매 명시적 금지 조항 미발견
+    - Order rate limit 별도 존재 = 자동매매 전제 설계로 해석
+    - 법무 검토는 실매매(Phase 3) 이전 재수행 권장
+  decided_at: "2026-04-26"
+
+---
+
+# ── Phase 2 신규 미결 (default 제안 — 사용자 1회 확인 대기) ────────────────
+
+- id: OQ-P2-001
+  title: "KEK 회전 주기 및 키 저장소 전략"
+  status: OPEN
+  carry_from: "Phase 1 OQ-017"
+  options:
+    - label: "A — 주기적 회전 (e.g. 90일) + AWS KMS"
+      pros: "관리형, 감사 로그 자동, 하드웨어 HSM 옵션"
+      cons: "외부 의존성, 비용"
+    - label: "B — 주기적 회전 + Vault (HashiCorp)"
+      pros: "온프레미스 가능, Transit Secret Engine으로 envelope encryption"
+      cons: "운영 복잡도"
+    - label: "C — 수동 회전 + k8s Secret (현 Phase 2 임시)"
+      pros: "즉시 구현 가능"
+      cons: "회전 자동화 없음, 감사 어려움"
+    - label: "D — OCI Vault Service (Always Free Tier) + 1년 회전 + lazy re-encryption"
+      pros: "관리형, 감사 자동, 비용 0 (Always Free), 단일 클라우드(OCI) 일관성"
+      cons: "OCI 종속 — Port 추상화로 완화"
+  default_proposal:
+    summary: "OCI Vault Service (Always Free Tier) + 1년 회전 + lazy re-encryption (운영 OCI Vault 미구축 시 LocalFile/환경변수 KEK + SOP 문서화)"
+    detail: |
+      - 운영: OCI Vault Service Always Free Tier 사용, 회전 주기 1년 (Phase 2 시작값, Phase 3에서 90일 단축 검토)
+      - lazy re-encryption: 회전 후 다음 read 시점에 재암호화 후 write back → 일괄 마이그레이션 회피
+      - Key version 식별자(`kek-v1`, `kek-v2`)를 암호문 prefix에 기록
+      - OCI Vault 미구축 환경: LocalFile/환경변수 KEK + manual SOP (`quant/docs/key-rotation-sop.md`) 로 degrade
+      - 짧은 회전(90일)은 Phase 2 초기 운영 부하 과다 → 1년 시작 후 단축
+      - AWS KMS(A) 대비 비용 0 + 단일 클라우드(OCI 호스팅 정책) 단순화 우선
+  decision: null
+  rationale: null
+  blocking: true
+  target_phase: "Phase 2"
+
+- id: OQ-P2-002
+  title: "audit_log 불변성 보장 방안"
+  status: OPEN
+  carry_from: "Phase 1 OQ-018"
+  options:
+    - label: "A — append-only 테이블 + DELETE/UPDATE 권한 제거 (DB 수준)"
+      pros: "단순, 즉시 적용"
+      cons: "DBA 권한 있으면 우회 가능"
+    - label: "B — 외부 서명 (각 로우에 HMAC 또는 RSA 서명)"
+      pros: "변조 감지 가능"
+      cons: "키 관리 추가, 검증 오버헤드"
+    - label: "C — 별도 감사 DB (ClickHouse MergeTree, ReplacingMergeTree 제외)"
+      pros: "고성능 읽기, 기존 ClickHouse 인프라 활용"
+      cons: "이중 기록 복잡도"
+    - label: "D — WORM 오브젝트 스토리지 (S3 Object Lock)"
+      pros: "규제 대응 수준 불변성"
+      cons: "쿼리 불편, 비용"
+  default_proposal:
+    summary: "prev_hash 체인 (옵션 B 변형) + DB 권한 REVOKE (옵션 A) + Kafka mirror topic"
+    detail: |
+      3중 방어 결합:
+      1. Application 계층 — 각 row insert 시 `prev_hash = SHA256(prev_row || current_payload)` 체인 컬럼
+      2. DB 권한 — application user에 UPDATE/DELETE REVOKE (INSERT/SELECT만 GRANT)
+      3. Kafka mirror — `quant.audit.v1` 토픽 동기 발행, 외부 consumer가 별도 사본 보관
+      - 검증 job: nightly cron이 hash chain replay → invalid 시 CRITICAL 알림
+      - WORM (옵션 D)는 Phase 3 외부 오픈 시점 도입 검토 (운영 단순성 우선)
+      - 옵션 C(별도 DB)는 이중 기록 복잡도 대비 이득 낮음 → 보류
+  decision: null
+  rationale: null
+  blocking: true
+  target_phase: "Phase 2"
+
+- id: OQ-P2-003
+  title: "SimulatedExchangeAdapter slippage 모델 파라미터"
+  status: OPEN
+  options:
+    - label: "A — 고정 slippage (e.g. 0.05%)"
+      pros: "단순, 예측 가능"
+      cons: "비현실적"
+    - label: "B — 거래량 비례 slippage (volume-weighted)"
+      pros: "현실적"
+      cons: "거래량 데이터 필요"
+    - label: "C — 정규분포 랜덤 slippage (mean=0, sigma=설정)"
+      pros: "통계적 현실감"
+      cons: "파라미터 튜닝 필요"
+  default_proposal:
+    summary: "고정 0.05% (옵션 A) — BTC/ETH 메이저 자산 기본값"
+    detail: |
+      - Phase 2는 엔진 검증이 목적 → 단순/예측 가능한 모델 선호
+      - SlippageModel 인터페이스로 추상화하여 Phase 3에서 volume-weighted (옵션 B) 또는 정규분포 (옵션 C)로 교체 가능
+      - calibration은 Phase 3 실 체결 데이터 확보 후 진행
+      - 매수 시 +0.05% (unfavorable), 매도 시 -0.05% (unfavorable)
+  decision: null
+  rationale: null
+  blocking: false
+  target_phase: "Phase 2"
+
+- id: OQ-P2-004
+  title: "Telegram Bot API 알림 Rate Limit 정책"
+  status: OPEN
+  options:
+    - label: "A — per-chat 1 msg/s 버킷 (Telegram 공식 권장)"
+      pros: "API 제한 준수"
+      cons: "급등락 시 알림 지연"
+    - label: "B — 이벤트 집계 후 배치 발송 (e.g. 5s 윈도우)"
+      pros: "노이즈 감소, Rate Limit 여유"
+      cons: "즉시성 희생"
+    - label: "C — 우선순위 큐 (CRITICAL 즉시, INFO 배치)"
+      pros: "중요 알림 보장"
+      cons: "구현 복잡도"
+  default_proposal:
+    summary: "옵션 A + C 결합 — per-chat 1 msg/s 토큰 버킷 + 우선순위 큐 (CRITICAL > RISK > INFO)"
+    detail: |
+      - Telegram API 공식 한도 준수 (per-chat 1 msg/s)
+      - 우선순위 분류:
+        * CRITICAL: 긴급 청산 실행, 거래소 인증 실패, 5xx 연속
+        * RISK: 회차 전 소진(AWAITING_EXHAUSTED), Rate Limit 80% 도달, WS 폴백 전환
+        * INFO: 체결 성공, 슬롯 EMPTY 복귀
+      - CRITICAL/RISK는 큐 우선 dequeue 보장
+      - 배치(B)는 즉시성 손실 → 부적합
+  decision: null
+  rationale: null
+  blocking: false
+  target_phase: "Phase 2"
+
+- id: OQ-P2-005
+  title: "MarketDataHub SharedFlow buffer 전략"
+  status: OPEN
+  options:
+    - label: "A — DROP_OLDEST (고정 버퍼, 느린 소비자는 최신 데이터만)"
+      pros: "메모리 안전, 시세는 최신이 우선"
+      cons: "느린 소비자 데이터 손실"
+    - label: "B — SUSPEND (소비자가 느리면 생산자 대기)"
+      pros: "데이터 손실 없음"
+      cons: "WebSocket 소비 지연 위험"
+    - label: "C — BUFFER + DROP_LATEST (버퍼 초과 시 신규 DROP)"
+      pros: "생산자 비차단"
+      cons: "최신 시세 누락 가능"
+  default_proposal:
+    summary: "옵션 A — extraBufferCapacity=256, BufferOverflow.DROP_OLDEST"
+    detail: |
+      - 시세는 최신성이 가치 (지나간 틱은 의미 약함)
+      - 메모리 안전 + 느린 소비자가 producer를 멈추지 않음
+      - SUSPEND(B)는 WebSocket 소비 지연 → 끊김 인지 지연 위험
+      - DROP_LATEST(C)는 최신 시세 누락 → 전략 평가 정확성 저해
+      - drop 발생은 메트릭 (`quant.market.hub.dropped_total`) 으로 노출
+  decision: null
+  rationale: null
+  blocking: false
+  target_phase: "Phase 2"
+
+- id: OQ-P2-006
+  title: "Rate Limiter 구현체 선택 (per API Key)"
+  status: OPEN
+  options:
+    - label: "A — Redis token bucket (Lua script, 분산 일관성)"
+      pros: "다중 인스턴스 공유, 정확한 제한"
+      cons: "Redis 의존, 레이턴시 +1 hop"
+    - label: "B — Bucket4j in-process (in-memory)"
+      pros: "레이턴시 최소, 의존성 없음"
+      cons: "인스턴스 간 독립 — 스케일아웃 시 초과 허용 가능"
+    - label: "C — Bucket4j + Redis backend (JCache)"
+      pros: "분산 + Bucket4j API 편의"
+      cons: "설정 복잡도"
+  default_proposal:
+    summary: "옵션 A — Redis token bucket (Lua script). Phase 3에서 Bucket4j+Redis(C) 검토."
+    detail: |
+      - Phase 2 단계에서 multi-instance 스케일아웃 가정 → 분산 일관성 필요
+      - in-process Bucket4j(B)는 인스턴스 간 초과 허용 위험 → 거래소 한도 위반 가능
+      - Lua script로 atomic 토큰 소비/refill 보장
+      - Redis는 Phase 1 인프라에 이미 standalone 배포됨 (k3s-lite overlay)
+      - Bucket4j+Redis(C)는 API 편의는 좋으나 설정 복잡도 → Phase 3에서 마이그레이션 검토
+  decision: null
+  rationale: null
+  blocking: false
+  target_phase: "Phase 2"
+
+- id: OQ-P2-007
+  title: "FE 페이퍼 트레이딩 모니터링 실시간 연결 방식"
+  status: OPEN
+  options:
+    - label: "A — SSE (Server-Sent Events)"
+      pros: "단방향 단순, HTTP/2 멀티플렉싱 친화"
+      cons: "서버→클라이언트 단방향만"
+    - label: "B — WebSocket"
+      pros: "양방향, 저지연"
+      cons: "게이트웨이 WebSocket 지원 필요, 연결 관리 복잡"
+    - label: "C — Polling (1~2s)"
+      pros: "구현 즉시, 인프라 단순"
+      cons: "지연, 서버 부하"
+  default_proposal:
+    summary: "옵션 A — SSE (Server-Sent Events)"
+    detail: |
+      - 단방향 push로 polling(C) 대비 효율적
+      - WebSocket(B) 대비 단순 (게이트웨이/인증 별도 설정 불필요)
+      - 양방향이 필요해지면 Phase 3에서 WebSocket 전환 검토 (예: FE에서 직접 청산 명령 송신)
+      - EventSource 기본 재연결 + 5s exponential backoff 적용
+      - 초기 hydrate는 REST snapshot, 이후 SSE delta로 갱신
+  decision: null
+  rationale: null
+  blocking: false
+  target_phase: "Phase 2"
+
+- id: OQ-P2-008
+  category: phase-gate
+  status: open
+  priority: high
+  title: PAPER vs 실 시장 slippage 격차 검증 게이트
+  description: >
+    SimulatedExchangeAdapter 의 slippage 0.05% 가정이 실 호가창 best ask 대비
+    얼마나 정확한지 PAPER 운용 중 병행 검증. p95 격차 ≤ 0.1% 가 Phase 3 진입 게이트.
+  resolution_path: PAPER Phase 운용 중 Kafka fanout enable 로 실 호가 병행 수집 + 비교 잡 추가
+  blocker_for: Phase 3 실매매 진입

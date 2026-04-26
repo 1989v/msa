@@ -116,3 +116,17 @@ Proposed
 - Quant 리스크 규칙 엔진 — 손실 제한/긴급 청산 정책 규약화
 - 페이퍼 → 실매매 승격 게이트 ADR (OQ-019)
 - 실매매 권한/2FA/Gateway 우회 방지 ADR (OQ-013/015/016)
+
+## Errata (2026-04-26)
+
+### 빗썸 API 인증 방식 정정
+- **본 ADR 작성 시점 표기**: "빗썸: API Key + Secret HMAC-SHA512"
+- **정확한 사실 (빗썸 API 2.0)**: 빗썸도 업비트와 동일하게 **JWT(HS256) Bearer 토큰** 방식.
+  - DB 보관 비밀: **Access Key + Secret Key** (업비트와 동일 명명)
+  - 매 요청 시 Secret Key로 JWT 서명 → `Authorization: Bearer <jwt>` 헤더
+  - JWT payload: `access_key`, `nonce`, `timestamp`, `query_hash`, `query_hash_alg`
+  - 서명 알고리즘: HS256
+- **영향**: 두 거래소가 동일 인증 패턴 → `AbstractJwtBasedExchangeAdapter` 베이스 클래스로 공통화 가능
+- **출처**: https://apidocs.bithumb.com/docs/인증-헤더-만들기
+- **반영 위치**: Phase 2 spec.md §3, ADR-0025/0026/0027 (Phase 2 신규 ADR)
+- **Phase 1 코드 영향**: Phase 1은 거래소 호출 없음(백테스트만)이라 영향 없음. Phase 2 거래소 어댑터 구현 시 JWT 패턴 적용.
