@@ -15,11 +15,11 @@ standards:
   - docs/architecture/module-structure.md
   - docs/architecture/kafka-convention.md
   - docs/architecture/api-response.md
-  - docs/adr/ADR-0014-code-convention.md
+  - docs/conventions/code-convention.md
   - docs/adr/ADR-0019-k8s-migration.md
-  - docs/adr/ADR-0020-transactional-usage.md
-  - docs/adr/ADR-0021-logging-conventions.md
-  - docs/adr/ADR-0022-entity-mutation-conventions.md
+  - docs/conventions/transactional-usage.md
+  - docs/conventions/logging.md
+  - docs/conventions/entity-mutation.md
 ---
 
 # Task Breakdown — seven-split-crypto-trading (Phase 1: 백테스트)

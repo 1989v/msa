@@ -16,12 +16,12 @@ standards:
   - docs/architecture/api-response.md
   - docs/adr/ADR-0002-language-and-framework.md
   - docs/adr/ADR-0012-idempotent-consumer.md
-  - docs/adr/ADR-0014-code-convention.md
+  - docs/conventions/code-convention.md
   - docs/adr/ADR-0015-resilience-strategy.md
   - docs/adr/ADR-0019-k8s-migration.md
-  - docs/adr/ADR-0020-transactional-usage.md
-  - docs/adr/ADR-0021-logging-conventions.md
-  - docs/adr/ADR-0022-entity-mutation-conventions.md
+  - docs/conventions/transactional-usage.md
+  - docs/conventions/logging.md
+  - docs/conventions/entity-mutation.md
 ---
 
 # Specification — seven-split-crypto-trading
