@@ -3,10 +3,10 @@
   "version": 1,
   "summary": {
     "source_count": 593,
-    "doc_count": 148,
+    "doc_count": 161,
     "link_count": 1105,
     "missing_count": 124,
-    "dangling_count": 132,
+    "dangling_count": 145,
     "coverage_by_service": {
       "product": {
         "total": 31,
@@ -9019,6 +9019,14 @@
       "service": "root"
     },
     {
+      "doc": "docs/adr/ADR-0024-seven-split-service.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/adr/ADR-0025-latency-budget.md",
+      "service": "root"
+    },
+    {
       "doc": "docs/adr/_template.md",
       "service": "root"
     },
@@ -9364,6 +9372,50 @@
     },
     {
       "doc": "docs/specs/2026-04-11-pixel-office-view/tasks.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-24-seven-split-crypto-trading/context/data-ingestion.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-24-seven-split-crypto-trading/context/exchange-terms.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-24-seven-split-crypto-trading/planning/initialization.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-24-seven-split-crypto-trading/planning/phase1-release-notes.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-24-seven-split-crypto-trading/planning/requirements.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-24-seven-split-crypto-trading/planning/spec.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-24-seven-split-crypto-trading/planning/tasks.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-24-seven-split-crypto-trading/planning/test-quality.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-26-seven-split-phase2-paper-trading/planning/initialization.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-26-seven-split-phase2-paper-trading/planning/requirements.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-26-seven-split-phase2-paper-trading/planning/test-quality.md",
       "service": "root"
     },
     {
