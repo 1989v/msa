@@ -12,7 +12,11 @@ import com.kgd.quant.domain.event.EventPublisher
 import com.kgd.quant.domain.event.ExchangeConnectionDegraded
 import com.kgd.quant.domain.event.ExchangeConnectionRestored
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
+import com.kgd.quant.infrastructure.resilience.CircuitBreakerConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException
+import io.github.resilience4j.circuitbreaker.CircuitBreaker
+import io.github.resilience4j.kotlin.circuitbreaker.executeSuspendFunction
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import kotlinx.coroutines.CoroutineScope
@@ -25,6 +29,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
@@ -49,9 +54,10 @@ private val log = KotlinLogging.logger {}
  * - WS 가 CONNECTED 로 복귀하면 polling 중지 + [ExchangeConnectionRestored] 이벤트 발행.
  * - 진입 시 [ExchangeConnectionDegraded] 이벤트 발행 (reason = `ws_down_${seconds}s`).
  *
- * ## 단순화 / TODO
- * - REST retry / backoff / CircuitBreaker wrap 은 TG-P2-11 에서 통합 적용.
- * - 본 poller 는 골격(state machine + 매초 호출 + Tick 정규화) 만 제공.
+ * ## TG-P2-11 — CircuitBreaker 적용
+ * REST 호출은 [bithumbRestCircuitBreaker] (ADR-0015 §1, name=`bithumb-rest`) 로 wrap 된다.
+ * CB OPEN 상태에서는 [CallNotPermittedException] 가 throw 되며, 본 poller 는 silent skip
+ * (다음 polling 사이클에서 자연 재시도. 30s waitDurationInOpenState 후 half-open 전이).
  *
  * ## ADR-0020
  * `@Transactional` 금지 — 외부 IO + Hub emit 만 수행.
@@ -68,6 +74,8 @@ class BithumbRestFallbackPoller(
     private val eventPublisher: EventPublisher,
     private val metrics: QuantMetrics,
     private val objectMapper: ObjectMapper,
+    @Qualifier(CircuitBreakerConfiguration.BEAN_BITHUMB_REST_CB)
+    private val bithumbRestCircuitBreaker: CircuitBreaker,
     @Value("\${quant.market.bithumb-rest.base-url:https://api.bithumb.com}")
     private val baseUrl: String,
     @Value("\${quant.market.bithumb-ws.system-tenant:system}")
@@ -146,7 +154,11 @@ class BithumbRestFallbackPoller(
                             hub.emit(tick)
                         }
                     }.onFailure { ex ->
-                        log.warn { "REST fallback poll failed symbol=$symbol reason=${ex.message}" }
+                        if (ex is CallNotPermittedException) {
+                            log.debug { "REST fallback skipped (CB open) symbol=$symbol" }
+                        } else {
+                            log.warn { "REST fallback poll failed symbol=$symbol reason=${ex.message}" }
+                        }
                     }
                 }
                 delay(POLL_INTERVAL_MS)
@@ -165,11 +177,14 @@ class BithumbRestFallbackPoller(
     }
 
     private suspend fun fetchTickViaRest(symbol: String): Tick? {
-        val raw: String? = webClient.get()
-            .uri("/public/ticker/{symbol}", symbol)
-            .retrieve()
-            .bodyToMono(String::class.java)
-            .awaitSingle()
+        // TG-P2-11: bithumb-rest CircuitBreaker 로 wrap. CB OPEN 시 CallNotPermittedException → 호출자가 skip.
+        val raw: String? = bithumbRestCircuitBreaker.executeSuspendFunction {
+            webClient.get()
+                .uri("/public/ticker/{symbol}", symbol)
+                .retrieve()
+                .bodyToMono(String::class.java)
+                .awaitSingle()
+        }
         return raw?.let { parseRestTick(symbol, it) }
     }
 

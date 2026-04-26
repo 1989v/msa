@@ -13,10 +13,13 @@ import com.kgd.quant.domain.event.EventPublisher
 import com.kgd.quant.domain.event.ExchangeConnectionDegraded
 import com.kgd.quant.domain.event.ExchangeConnectionRestored
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
+import com.kgd.quant.infrastructure.resilience.CircuitBreakerConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException
+import io.github.resilience4j.circuitbreaker.CircuitBreaker
+import io.github.resilience4j.kotlin.circuitbreaker.executeSuspendFunction
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
-import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +35,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -58,6 +62,11 @@ private val log = KotlinLogging.logger {}
  * - 10s 연속 단절은 [BithumbRestFallbackPoller] 가 별도 모니터링 → REST 폴백.
  * - 도메인 이벤트 발행: [ExchangeConnectionDegraded] / [ExchangeConnectionRestored].
  *
+ * ## TG-P2-11 — CircuitBreaker 적용
+ * 재연결 호출 (`connectAndSubscribe`) 은 [bithumbWsReconnectCircuitBreaker] (ADR-0015 §1, name=`bithumb-ws-reconnect`) 로 wrap.
+ * CB OPEN 시 [CallNotPermittedException] 가 throw 되어 재연결 시도가 short-circuit 되며,
+ * 30s waitDurationInOpenState 후 half-open 전이로 자연 복구된다.
+ *
  * ## Activation
  * `quant.market.bithumb-ws.enabled=true` 일 때만 bean 생성 (Phase 2 default false).
  * Phase 1 백테스트 / 통합 테스트는 본 컴포넌트를 활성화하지 않는다.
@@ -82,6 +91,8 @@ class BithumbWebSocketSubscriber(
     private val eventPublisher: EventPublisher,
     private val metrics: QuantMetrics,
     private val objectMapper: ObjectMapper,
+    @Qualifier(CircuitBreakerConfiguration.BEAN_BITHUMB_WS_RECONNECT_CB)
+    private val bithumbWsReconnectCircuitBreaker: CircuitBreaker,
     @Value("\${quant.market.bithumb-ws.url:wss://pubwss.bithumb.com/pub/ws}")
     private val wsUrl: String,
     @Value("\${quant.market.bithumb-ws.symbols:BTC_KRW,ETH_KRW}")
@@ -131,13 +142,20 @@ class BithumbWebSocketSubscriber(
         while (currentCoroutineContext().isActive) {
             transition(ConnectionState.CONNECTING)
             try {
-                connectAndSubscribe()
+                // TG-P2-11: bithumb-ws-reconnect CB 로 wrap. CB OPEN 시 CallNotPermittedException → backoff 후 재시도.
+                bithumbWsReconnectCircuitBreaker.executeSuspendFunction {
+                    connectAndSubscribe()
+                }
                 // 정상 종료(서버 측 close) → 즉시 재시도, backoff reset
                 backoffMs = INITIAL_BACKOFF_MS
                 transition(ConnectionState.DISCONNECTED)
                 log.info { "Bithumb WS session ended cleanly, will reconnect" }
             } catch (ce: CancellationException) {
                 throw ce
+            } catch (e: CallNotPermittedException) {
+                metrics.wsReconnectAttempt(EXCHANGE, OUTCOME_FAIL)
+                log.warn { "Bithumb WS reconnect short-circuited (CB open) backoff=${backoffMs}ms" }
+                transition(ConnectionState.DISCONNECTED)
             } catch (e: Exception) {
                 metrics.wsReconnectAttempt(EXCHANGE, OUTCOME_FAIL)
                 log.warn { "Bithumb WS connection failed reason=${e.message} backoff=${backoffMs}ms" }

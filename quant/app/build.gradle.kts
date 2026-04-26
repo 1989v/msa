@@ -40,6 +40,8 @@ dependencies {
     implementation("io.projectreactor.netty:reactor-netty-http")
     // Phase 2 — TG-P2-07: Kafka fan-out collector + TG-P2-12 Outbox relay
     implementation(libs.spring.kafka)
+    // Phase 2 — TG-P2-11: Redis Lua token bucket Rate Limiter (StringRedisTemplate)
+    implementation(libs.spring.boot.starter.data.redis)
     // Phase 2 Rate Limiter: Redis Lua script 직접 구현. Bucket4j는 Phase 3 검토 시 도입.
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)

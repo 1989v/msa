@@ -27,6 +27,12 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     baseline-version: 0
+  # TG-P2-11: Redis Token Bucket Rate Limiter (운영에서만 활성화). Phase 1/Phase 2-backtest 는 Redis 미연결.
+  data:
+    redis:
+      host: ${SEVEN_SPLIT_REDIS_HOST:localhost}
+      port: ${SEVEN_SPLIT_REDIS_PORT:6379}
+      timeout: 2s
 
 kgd:
   common:
@@ -106,6 +112,21 @@ quant:
       rate-limit-interval-ms: ${TELEGRAM_RATE_LIMIT_INTERVAL_MS:1000}
     dispatcher:
       enabled: ${SEVEN_SPLIT_NOTIFICATION_DISPATCHER:true}
+  # TG-P2-11: Resilience (CircuitBreaker / Redis Token Bucket / DLQ).
+  # CircuitBreaker bean 은 항상 등록 (CircuitBreakerConfiguration), Rate Limiter / DLQ 는 conditional.
+  resilience:
+    ratelimit:
+      enabled: ${SEVEN_SPLIT_RATELIMIT_ENABLED:false}
+      bithumb:
+        bucket-size: ${SEVEN_SPLIT_BITHUMB_BUCKET_SIZE:90}     # 빗썸 Public API 150/sec 의 60%
+        refill-rate: ${SEVEN_SPLIT_BITHUMB_REFILL_RATE:90}     # tokens per second
+  # TG-P2-12: Outbox → Kafka relay 활성화 플래그.
+  # default false — 운영 활성화는 K8s overlay 에서 SEVEN_SPLIT_OUTBOX_RELAY=true 주입.
+  outbox:
+    relay:
+      enabled: ${SEVEN_SPLIT_OUTBOX_RELAY:false}
+      topic: ${SEVEN_SPLIT_OUTBOX_RELAY_TOPIC:quant.events.v1}
+      publish-timeout-seconds: ${SEVEN_SPLIT_OUTBOX_RELAY_TIMEOUT_SEC:5}
 
 management:
   endpoints:

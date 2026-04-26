@@ -8,10 +8,15 @@ import com.kgd.quant.application.port.notification.NotificationSender
 import com.kgd.quant.application.port.notification.SendResult
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
+import com.kgd.quant.infrastructure.resilience.CircuitBreakerConfiguration
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.github.resilience4j.circuitbreaker.CallNotPermittedException
+import io.github.resilience4j.circuitbreaker.CircuitBreaker
+import io.github.resilience4j.kotlin.circuitbreaker.executeSuspendFunction
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.beans.factory.ObjectProvider
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
@@ -27,11 +32,13 @@ private val log = KotlinLogging.logger {}
  * ## 발송 흐름
  * 1. bot token 또는 chatId 미설정 시 즉시 [SendResult.Failure]("not_configured", retryable=false) 반환 (warn 로그).
  * 2. [PerChatRateLimiter.acquire] 로 1 msg/s/chat 강제 (Phase 2 in-memory).
- * 3. WebClient `POST {apiBase}/bot{token}/sendMessage` JSON `{chat_id, text, parse_mode}`.
+ * 3. WebClient `POST {apiBase}/bot{token}/sendMessage` JSON `{chat_id, text, parse_mode}` —
+ *    [telegramBotCircuitBreaker] 로 wrap (TG-P2-11 ADR-0015 §1).
  * 4. 응답 분기:
  *    - 2xx → [SendResult.Success] + latency 메트릭
  *    - 4xx → 즉시 실패 (`client_error_<code>`, retryable=false)
  *    - 5xx 또는 IO 예외 → exp backoff 1s/2s/4s 로 최대 [MAX_ATTEMPTS] 회 재시도, 최종 실패 시 audit + 메트릭
+ *    - CB OPEN ([CallNotPermittedException]) → 즉시 실패 (`circuit_breaker_open`, retryable=true) — 다음 dispatch 사이클에서 재시도.
  *
  * ## 보안 (INV-P2-12)
  * - bot token 은 절대 로그/메트릭 태그에 노출하지 않는다. 예외 메시지 출력 시 [maskToken] 적용.
@@ -45,6 +52,7 @@ private val log = KotlinLogging.logger {}
  *
  * ## ADR / 컨벤션 준수
  * - ADR-0002: WebClient(WebFlux) + Coroutines (`awaitSingleOrNull`) 사용.
+ * - ADR-0015 §1: `telegram-bot` CircuitBreaker (failureRate 50% / window 20 / wait 30s / halfOpen 5).
  * - ADR-0020: `@Transactional` 미부착 — 외부 IO 합성.
  * - ADR-0021: kotlin-logging 람다 형식 + token 평문 미노출.
  */
@@ -60,6 +68,8 @@ class TelegramBotNotificationSender(
     private val webClientBuilder: WebClient.Builder,
     private val metrics: QuantMetrics,
     private val auditPublisherProvider: ObjectProvider<AuditLogPublisher>,
+    @Qualifier(CircuitBreakerConfiguration.BEAN_TELEGRAM_BOT_CB)
+    private val telegramBotCircuitBreaker: CircuitBreaker,
 ) : NotificationSender {
 
     private val webClient: WebClient by lazy { webClientBuilder.baseUrl(apiBase).build() }
@@ -85,19 +95,21 @@ class TelegramBotNotificationSender(
         repeat(MAX_ATTEMPTS) { attempt ->
             try {
                 val startNanos = System.nanoTime()
-                webClient.post()
-                    .uri("/bot{token}/sendMessage", botToken)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(
-                        mapOf(
-                            "chat_id" to chatId,
-                            "text" to text,
-                            "parse_mode" to "Markdown",
+                telegramBotCircuitBreaker.executeSuspendFunction {
+                    webClient.post()
+                        .uri("/bot{token}/sendMessage", botToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(
+                            mapOf(
+                                "chat_id" to chatId,
+                                "text" to text,
+                                "parse_mode" to "Markdown",
+                            )
                         )
-                    )
-                    .retrieve()
-                    .toBodilessEntity()
-                    .awaitSingleOrNull()
+                        .retrieve()
+                        .toBodilessEntity()
+                        .awaitSingleOrNull()
+                }
                 val latencyMs = (System.nanoTime() - startNanos) / 1_000_000L
                 metrics.notificationSendLatency(CHANNEL, priority.name, latencyMs)
                 log.info {
@@ -105,6 +117,14 @@ class TelegramBotNotificationSender(
                         "priority=${priority.name} latencyMs=$latencyMs attempt=${attempt + 1}"
                 }
                 return SendResult.Success
+            } catch (e: CallNotPermittedException) {
+                // CircuitBreaker OPEN — 즉시 실패. retryable=true 로 dispatcher 가 다음 사이클에 재시도하도록 안내.
+                lastFailure = e
+                log.warn {
+                    "telegram CB open — abort notificationId=$notificationId attempt=${attempt + 1}"
+                }
+                metrics.notificationSendFailure(CHANNEL, REASON_CIRCUIT_BREAKER_OPEN)
+                return SendResult.Failure(REASON_CIRCUIT_BREAKER_OPEN, retryable = true)
             } catch (e: WebClientResponseException) {
                 lastFailure = e
                 val status = e.statusCode
@@ -219,6 +239,7 @@ class TelegramBotNotificationSender(
         const val REASON_NOT_CONFIGURED: String = "not_configured"
         const val REASON_MAX_RETRIES_EXCEEDED: String = "max_retries_exceeded"
         const val REASON_CLIENT_ERROR_PREFIX: String = "client_error_"
+        const val REASON_CIRCUIT_BREAKER_OPEN: String = "circuit_breaker_open"
 
         const val ACTION_TELEGRAM_SEND_FAILED: String = "TELEGRAM_SEND_FAILED"
     }

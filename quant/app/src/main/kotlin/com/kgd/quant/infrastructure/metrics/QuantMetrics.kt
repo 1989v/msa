@@ -45,6 +45,10 @@ import java.util.concurrent.atomic.AtomicInteger
  *  - `quant_notification_send_failure_total{channel,reason}` — 발송 실패 누적
  *  - `quant_notification_queue_depth{priority}` — gauge, 큐 대기 건수 (NotificationPriorityQueue.size)
  *
+ * Phase 2 추가 메트릭 (TG-P2-12 Outbox relay 활성화):
+ *  - `quant_outbox_publish_total{topic}` — Kafka publish 성공 누적
+ *  - `quant_outbox_publish_failure_total{topic}` — Kafka publish 실패 누적 (다음 polling 재시도 대상)
+ *
  * Gauge `quant_outbox_pending_rows` 는 라이프사이클이 다르므로 [OutboxPendingMetric] 참조.
  *
  * ## 사용 규칙 (ADR-0021)
@@ -53,6 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * - `from_version` / `to_version` 태그는 KEK 라벨이 아닌 INT 값 — 카디널리티 제한 (회전 횟수 ≤ 일 단위).
  * - `exchange`, `outcome`, `source`, `reason` 태그 또한 enum 또는 상수 집합으로만 발행한다.
  * - `channel`, `priority`, `reason` (notification) 태그도 enum / 상수 집합만 사용 (telegram/email, CRITICAL/RISK/INFO 등).
+ * - `topic` (outbox) 태그는 Kafka 토픽 이름 — Phase 2 generic `quant.events.v1` 단일 (카디널리티 1).
  */
 @Component
 class QuantMetrics(
@@ -348,6 +353,44 @@ class QuantMetrics(
         }
     }
 
+    // --- TG-P2-12: Outbox → Kafka relay 메트릭 ---
+
+    /** topic 별 publish 성공 Counter 캐시. */
+    private val outboxPublishCounters = ConcurrentHashMap<String, Counter>()
+
+    /** topic 별 publish 실패 Counter 캐시. */
+    private val outboxPublishFailureCounters = ConcurrentHashMap<String, Counter>()
+
+    /**
+     * Outbox row 1건이 Kafka 로 publish 성공한 카운트.
+     *
+     * @param topic 발행 대상 Kafka 토픽 (Phase 2: generic `quant.events.v1`).
+     */
+    fun outboxPublished(topic: String) {
+        val counter = outboxPublishCounters.computeIfAbsent(topic) {
+            Counter.builder(METRIC_OUTBOX_PUBLISH_TOTAL)
+                .description("Total outbox rows successfully published to Kafka")
+                .tag("topic", topic)
+                .register(registry)
+        }
+        counter.increment()
+    }
+
+    /**
+     * Outbox row 1건의 Kafka publish 가 실패한 카운트 (다음 polling 사이클에서 재시도된다).
+     *
+     * @param topic 발행 시도 Kafka 토픽.
+     */
+    fun outboxPublishFailed(topic: String) {
+        val counter = outboxPublishFailureCounters.computeIfAbsent(topic) {
+            Counter.builder(METRIC_OUTBOX_PUBLISH_FAILURE_TOTAL)
+                .description("Total outbox publish failures (will be retried on next polling cycle)")
+                .tag("topic", topic)
+                .register(registry)
+        }
+        counter.increment()
+    }
+
     companion object {
         const val METRIC_BACKTEST_RUN_TOTAL = "quant_backtest_run_total"
         const val METRIC_BACKTEST_RUN_DURATION = "quant_backtest_run_duration_seconds"
@@ -368,5 +411,7 @@ class QuantMetrics(
         const val METRIC_NOTIFICATION_SEND_LATENCY = "quant_notification_send_latency_seconds"
         const val METRIC_NOTIFICATION_SEND_FAILURE_TOTAL = "quant_notification_send_failure_total"
         const val METRIC_NOTIFICATION_QUEUE_DEPTH = "quant_notification_queue_depth"
+        const val METRIC_OUTBOX_PUBLISH_TOTAL = "quant_outbox_publish_total"
+        const val METRIC_OUTBOX_PUBLISH_FAILURE_TOTAL = "quant_outbox_publish_failure_total"
     }
 }
