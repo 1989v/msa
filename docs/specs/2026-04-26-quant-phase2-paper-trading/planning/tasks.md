@@ -276,33 +276,33 @@ ADR-0026 결정 — `quant_audit` ClickHouse DB 신설 + RBAC 분리 + prev_hash
 
 FR-P2-WS — 빗썸 Public WebSocket 구독 + REST 폴백 + 자동 재연결. Phase 1 `MarketDataSubscriber` Port 구현체.
 
-- [ ] TG-P2-06.0 **Complete**: Fake WebSocket server 기반 통합 테스트로 정상 수신/끊김 5s 재연결/10s REST 폴백/복구 시 원복 시나리오 모두 green.
-  - [ ] TG-P2-06.1 `infrastructure/stream/BithumbWebSocketSubscriber.kt`:
+- [x] TG-P2-06.0 **Complete**: Fake WebSocket server 기반 통합 테스트로 정상 수신/끊김 5s 재연결/10s REST 폴백/복구 시 원복 시나리오 모두 green.
+  - [x] TG-P2-06.1 `infrastructure/stream/BithumbWebSocketSubscriber.kt`:
     - `MarketDataSubscriber` 구현
     - `reactor-netty` `WebSocketClient` + `awaitX` Coroutine 브릿지
     - `wss://` 연결 + `ticker`/`orderbook`/`transaction` 채널 구독
     - 수신 페이로드 → `Tick(symbol, price, qty, timestamp, source=WS)` 정규화 (INV-P2-08 source 필드 강제)
     - gzip 압축 처리 (빗썸 WS 사양)
     - heartbeat / ping-pong 처리 (idle timeout 시 즉시 재연결)
-  - [ ] TG-P2-06.2 재연결 정책:
+  - [x] TG-P2-06.2 재연결 정책:
     - 끊김 감지 → 5초 이내 재연결 (지수 백오프 1s → 2s → 5s 상한)
     - 메트릭: `quant.ws.reconnect.attempts_total{exchange,outcome=success|fail}`
-  - [ ] TG-P2-06.3 `infrastructure/stream/BithumbRestFallbackPoller.kt`:
+  - [x] TG-P2-06.3 `infrastructure/stream/BithumbRestFallbackPoller.kt`:
     - WS 연속 10초 단절 시 자동 활성 (REST 매초 폴링)
     - WS 복구 시 자동 중지
     - 전환/원복 시 `ExchangeConnectionDegraded` / `ExchangeConnectionRestored` 도메인 이벤트 EventPublisher로 발행
-  - [ ] TG-P2-06.4 메트릭:
+  - [x] TG-P2-06.4 메트릭:
     - `quant.ws.connection.state{exchange}` (gauge 0/1/2 = disconnected/fallback/connected)
     - `quant.market.tick.received_total{exchange,symbol,source}` (source ∈ {WS, REST})
     - `quant.market.tick.latency_seconds{exchange,symbol}` (수신 → Hub emit)
-  - [ ] TG-P2-06.5 lifecycle: `@Component` `@PostConstruct` 시작, `@PreDestroy` graceful close (WS unsubscribe + 연결 종료)
-  - [ ] TG-P2-06.6 트랜잭션 외부 (ADR-0020): WS 콜백/Hub emit 코드 경로에 `@Transactional` 금지 — 코드 리뷰 체크리스트
-  - [ ] TG-P2-06.7 통합 테스트 — Fake Bithumb WebSocket Server (Ktor 또는 Java WebSocket Server 기반, TQ-P2-OQ-01 결정에 따라 선택):
+  - [x] TG-P2-06.5 lifecycle: `@Component` `@PostConstruct` 시작, `@PreDestroy` graceful close (WS unsubscribe + 연결 종료)
+  - [x] TG-P2-06.6 트랜잭션 외부 (ADR-0020): WS 콜백/Hub emit 코드 경로에 `@Transactional` 금지 — 코드 리뷰 체크리스트
+  - [x] TG-P2-06.7 통합 테스트 — Fake Bithumb WebSocket Server (Ktor 또는 Java WebSocket Server 기반, TQ-P2-OQ-01 결정에 따라 선택):
     - `BithumbWebSocketSubscriberSpec` — 정상 메시지 수신 → `Tick` 정규화
     - `BithumbWebSocketReconnectSpec` — 5s 이내 재연결 (지수 백오프, virtual time)
     - `BithumbWebSocketFallbackSpec` — 10s 연속 끊김 → REST 폴링 자동 전환, 복구 시 자동 원복, 도메인 이벤트 발행 검증
     - `BithumbWebSocketHeartbeatSpec` — ping-pong / idle timeout
-  - [ ] TG-P2-06.8 **Verify**: `./gradlew :quant:app:test --tests '*BithumbWebSocket*'` 성공 (실 빗썸 endpoint 호출 0건 — Fake server target)
+  - [x] TG-P2-06.8 **Verify**: `./gradlew :quant:app:test --tests '*BithumbWebSocket*'` 성공 (실 빗썸 endpoint 호출 0건 — Fake server target)
 
 **Acceptance Criteria**:
 - 모든 `Tick` 인스턴스에 `source ∈ {WS, REST}` 필드 존재 (INV-P2-08)
@@ -321,8 +321,8 @@ FR-P2-WS — 빗썸 Public WebSocket 구독 + REST 폴백 + 자동 재연결. Ph
 
 ADR-0025 결정 — `MarketDataHub` SharedFlow primary + 옵셔널 Kafka fan-out collector.
 
-- [ ] TG-P2-07.0 **Complete**: 다중 소비자가 동일 tick을 동시 수신 + DROP_OLDEST 정책 검증 + Kafka collector enabled/disabled 분기 검증 모두 green.
-  - [ ] TG-P2-07.1 `application/market/MarketDataHub.kt`:
+- [x] TG-P2-07.0 **Complete**: 다중 소비자가 동일 tick을 동시 수신 + DROP_OLDEST 정책 검증 + Kafka collector enabled/disabled 분기 검증 모두 green.
+  - [x] TG-P2-07.1 `application/market/MarketDataHub.kt`:
     ```kotlin
     @Component
     class MarketDataHub {
@@ -335,22 +335,22 @@ ADR-0025 결정 — `MarketDataHub` SharedFlow primary + 옵셔널 Kafka fan-out
         fun emit(tick: Tick) { /* tryEmit + drop metric */ }
     }
     ```
-  - [ ] TG-P2-07.2 `infrastructure/stream/MarketTickKafkaCollector.kt`:
+  - [x] TG-P2-07.2 `infrastructure/stream/MarketTickKafkaCollector.kt`:
     - `MarketDataHub.asFlow()` 별도 coroutine job collect → `quant.market.tick.bithumb.v1` Kafka 발행
     - `@ConditionalOnProperty(name = "quant.market.kafka-fanout.enabled", havingValue = "true")` (Phase 2 default false)
     - 발행 실패는 hot path에 영향 0% — 별도 coroutine context, 실패 시 메트릭만 증가
-  - [ ] TG-P2-07.3 메트릭:
+  - [x] TG-P2-07.3 메트릭:
     - `quant.market.hub.dropped_total{reason=buffer_overflow}` (counter)
     - `quant.market.hub.subscribers{type}` (gauge — 활성 소비자 수)
     - `quant.market.hub.kafka_publish_failure_total` (collector 활성 시)
-  - [ ] TG-P2-07.4 단위 테스트 (Turbine + Kotest):
+  - [x] TG-P2-07.4 단위 테스트 (Turbine + Kotest):
     - `MarketDataHubFanoutSpec` — 다중 구독자 동시 수신 (in-process)
     - `MarketDataHubBufferOverflowSpec` — 느린 소비자 + DROP_OLDEST 시 새 tick 우선, drop 카운터 증가
     - `MarketDataHubKafkaCollectorEnabledSpec` — `kafka-fanout.enabled=true` 시 publish 호출 검증 (MockK Kafka publisher)
     - `MarketDataHubKafkaCollectorDisabledSpec` — default false 시 collector bean 미생성 (no-op)
     - `MarketDataHubBackpressureSpec` — producer 비차단 (`tryEmit` returns true/false)
-  - [ ] TG-P2-07.5 lifecycle: collector job은 `MarketDataHub` 와 동일 lifecycle (`@PostConstruct` 시작, `@PreDestroy` cancel)
-  - [ ] TG-P2-07.6 **Verify**: `./gradlew :quant:app:test --tests '*MarketDataHub*'` 성공
+  - [x] TG-P2-07.5 lifecycle: collector job은 `MarketDataHub` 와 동일 lifecycle (`@PostConstruct` 시작, `@PreDestroy` cancel)
+  - [x] TG-P2-07.6 **Verify**: `./gradlew :quant:app:test --tests '*MarketDataHub*'` 성공
 
 **Acceptance Criteria**:
 - SharedFlow 설정: `replay=0`, `extraBufferCapacity=256`, `DROP_OLDEST` (OQ-P2-005)

@@ -5,6 +5,7 @@ import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * TG-14.2: Quant Phase 1 Micrometer facade.
@@ -24,12 +25,20 @@ import java.util.concurrent.ConcurrentHashMap
  *  - `quant_kek_rotation_lazy_reencrypt_total{from_version,to_version,table}` —
  *    회전 잡이 row 1건을 새 KEK 로 재암호화 성공한 누적 건수.
  *
+ * Phase 2 추가 메트릭 (TG-P2-06 / TG-P2-07 시세 hot path):
+ *  - `quant_market_tick_received_total{exchange,symbol,source}` — 수신한 Tick 누적 (source ∈ WS/REST)
+ *  - `quant_ws_reconnect_attempts_total{exchange,outcome}` — WebSocket 재연결 시도 (outcome ∈ success/fail)
+ *  - `quant_ws_connection_state{exchange}` — gauge 0=disconnected / 1=fallback / 2=connected
+ *  - `quant_market_hub_dropped_total{reason}` — SharedFlow tryEmit 실패 (DROP_OLDEST 발생)
+ *  - `quant_market_hub_kafka_publish_failure_total` — Kafka fan-out collector 발행 실패
+ *
  * Gauge `quant_outbox_pending_rows` 는 라이프사이클이 다르므로 [OutboxPendingMetric] 참조.
  *
  * ## 사용 규칙 (ADR-0021)
  * - API key / Bot token / 평문 credential 을 **태그 값으로 절대 사용하지 않는다**.
  * - `symbol` 태그는 거래쌍(BTC_KRW 등) 과 같이 카디널리티가 제한된 값만 허용.
  * - `from_version` / `to_version` 태그는 KEK 라벨이 아닌 INT 값 — 카디널리티 제한 (회전 횟수 ≤ 일 단위).
+ * - `exchange`, `outcome`, `source`, `reason` 태그 또한 enum 또는 상수 집합으로만 발행한다.
  */
 @Component
 class QuantMetrics(
@@ -136,6 +145,97 @@ class QuantMetrics(
         counter.increment()
     }
 
+    // --- TG-P2-06 / TG-P2-07: 시세 hot path 메트릭 ---
+
+    /**
+     * (exchange, symbol, source) 조합별 Counter 캐시.
+     * symbol 카디널리티는 Phase 2 default 2종(BTC_KRW/ETH_KRW), source = enum 3종(WS/REST/BACKTEST) 으로 제한.
+     */
+    private val tickReceivedCounters = ConcurrentHashMap<Triple<String, String, String>, Counter>()
+
+    /**
+     * 시세 1건 수신/정규화 성공 시 증가.
+     *
+     * @param exchange `bithumb` / `upbit` (lowercase 권장)
+     * @param symbol 거래쌍 (예: `BTC_KRW`)
+     * @param source [com.kgd.quant.application.port.marketdata.TickSource] enum name (`WS` / `REST`)
+     */
+    fun marketTickReceived(exchange: String, symbol: String, source: String) {
+        val counter = tickReceivedCounters.computeIfAbsent(Triple(exchange, symbol, source)) {
+            Counter.builder(METRIC_MARKET_TICK_RECEIVED_TOTAL)
+                .description("Total ticks received and normalized into MarketDataHub")
+                .tag("exchange", exchange)
+                .tag("symbol", symbol)
+                .tag("source", source)
+                .register(registry)
+        }
+        counter.increment()
+    }
+
+    /** (exchange, outcome) 조합별 Counter 캐시. outcome ∈ {success, fail}. */
+    private val wsReconnectCounters = ConcurrentHashMap<Pair<String, String>, Counter>()
+
+    /**
+     * WebSocket 재연결 시도 1건 카운트.
+     *
+     * @param exchange 거래소 이름 (`bithumb`)
+     * @param outcome `success` 또는 `fail`
+     */
+    fun wsReconnectAttempt(exchange: String, outcome: String) {
+        val counter = wsReconnectCounters.computeIfAbsent(exchange to outcome) {
+            Counter.builder(METRIC_WS_RECONNECT_ATTEMPTS_TOTAL)
+                .description("Total WebSocket reconnect attempts grouped by outcome")
+                .tag("exchange", exchange)
+                .tag("outcome", outcome)
+                .register(registry)
+        }
+        counter.increment()
+    }
+
+    /**
+     * WebSocket 연결 상태 gauge 백업 atomic. Gauge 등록은 [registerWsConnectionState] 에서 lazy 수행.
+     * 0 = disconnected / 1 = fallback / 2 = connected.
+     */
+    private val wsConnectionStates = ConcurrentHashMap<String, AtomicInteger>()
+
+    /**
+     * 거래소 단위 WebSocket 연결 상태 gauge 갱신.
+     * 첫 호출 시 gauge 가 lazy 등록되며, 이후 호출은 atomic value 만 갱신한다.
+     */
+    fun setWsConnectionState(exchange: String, state: Int) {
+        val ref = wsConnectionStates.computeIfAbsent(exchange) {
+            val holder = AtomicInteger(state)
+            io.micrometer.core.instrument.Gauge.builder(METRIC_WS_CONNECTION_STATE, holder) { it.get().toDouble() }
+                .description("WebSocket connection state (0=disconnected,1=fallback,2=connected)")
+                .tag("exchange", exchange)
+                .register(registry)
+            holder
+        }
+        ref.set(state)
+    }
+
+    /** (reason) 별 Counter 캐시. reason ∈ {buffer_overflow}. */
+    private val marketHubDroppedCounters = ConcurrentHashMap<String, Counter>()
+
+    /** SharedFlow tryEmit 실패 (느린 소비자로 인한 buffer overflow) 카운트. */
+    fun marketHubDropped(reason: String) {
+        val counter = marketHubDroppedCounters.computeIfAbsent(reason) {
+            Counter.builder(METRIC_MARKET_HUB_DROPPED_TOTAL)
+                .description("Total ticks dropped from MarketDataHub SharedFlow buffer")
+                .tag("reason", reason)
+                .register(registry)
+        }
+        counter.increment()
+    }
+
+    private val marketHubKafkaPublishFailureCounter: Counter = Counter
+        .builder(METRIC_MARKET_HUB_KAFKA_PUBLISH_FAILURE_TOTAL)
+        .description("Total Kafka publish failures from MarketTickKafkaCollector (does not block hot path)")
+        .register(registry)
+
+    /** Kafka fan-out collector 발행 실패 (hot path 영향 없음) 카운트. */
+    fun marketHubKafkaPublishFailure() = marketHubKafkaPublishFailureCounter.increment()
+
     companion object {
         const val METRIC_BACKTEST_RUN_TOTAL = "quant_backtest_run_total"
         const val METRIC_BACKTEST_RUN_DURATION = "quant_backtest_run_duration_seconds"
@@ -146,5 +246,10 @@ class QuantMetrics(
         const val METRIC_KEK_CACHE_MISSES_TOTAL = "quant_kek_cache_misses_total"
         const val METRIC_KEK_CACHE_STALE_TOTAL = "quant_kek_cache_stale_total"
         const val METRIC_KEK_ROTATION_LAZY_REENCRYPT_TOTAL = "quant_kek_rotation_lazy_reencrypt_total"
+        const val METRIC_MARKET_TICK_RECEIVED_TOTAL = "quant_market_tick_received_total"
+        const val METRIC_WS_RECONNECT_ATTEMPTS_TOTAL = "quant_ws_reconnect_attempts_total"
+        const val METRIC_WS_CONNECTION_STATE = "quant_ws_connection_state"
+        const val METRIC_MARKET_HUB_DROPPED_TOTAL = "quant_market_hub_dropped_total"
+        const val METRIC_MARKET_HUB_KAFKA_PUBLISH_FAILURE_TOTAL = "quant_market_hub_kafka_publish_failure_total"
     }
 }

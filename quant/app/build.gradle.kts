@@ -36,6 +36,10 @@ dependencies {
     implementation(libs.nimbus.jose)    // 빗썸/업비트 JWT(HS256) 인증 (ADR-0024 Errata)
     // Phase 2 — TG-P2-03: KMS DEK 캐시 (TTL 30분 + stale-on-error)
     implementation(libs.caffeine)
+    // Phase 2 — TG-P2-06: 빗썸 WebSocket 클라이언트 (reactor-netty)
+    implementation("io.projectreactor.netty:reactor-netty-http")
+    // Phase 2 — TG-P2-07: Kafka fan-out collector + TG-P2-12 Outbox relay
+    implementation(libs.spring.kafka)
     // Phase 2 Rate Limiter: Redis Lua script 직접 구현. Bucket4j는 Phase 3 검토 시 도입.
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
