@@ -52,7 +52,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **FE 디자인 가드레일**: AI slop 방지, 타이포/색상/레이아웃/모션/접근성 → `docs/conventions/frontend-design.md`
 - **@Transactional 규칙**: 외부 IO 분리, 중첩 txn 예외 금지, 클래스 레벨 주의 → `docs/conventions/transactional-usage.md`
 - **로깅 규칙**: kotlin-logging 필수, 람다 형식, error 레벨 규칙 → `docs/conventions/logging.md`
-- **Entity 수정 규칙**: 전체 동기화 vs 부분 수정 분리, 캡슐화 → `docs/adr/ADR-0022-entity-mutation-conventions.md`
+- **Entity 수정 규칙**: 전체 동기화 vs 부분 수정 분리, 캡슐화 → `docs/conventions/entity-mutation.md`
 - **문서-소스 추적**: `doc_map.py` / `doc_scan.py`, `docs/doc-index.json` 정책, `docs/doc-index.lock.json` 검증 → `docs/standards/doc-index-tracking.md`
 - **Latency Budget**: latency 를 설계 입력으로 강제 + Tier 1 P99 SLA + 측정 표준 → `docs/adr/ADR-0025-latency-budget.md` (실천: `docs/conventions/latency-budget.md`)
 - **docs 분류 정책**: ADR vs Conventions vs Standards 의 정의 / 판단 기준 / 분해 원칙 / redirect 표준 → `docs/adr/ADR-0026-docs-taxonomy.md`
