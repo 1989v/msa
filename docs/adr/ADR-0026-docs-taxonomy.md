@@ -94,7 +94,7 @@ Moved (재분류) — 2026-MM-DD
 |---|---|---|---|
 | 0014 code-convention | 코딩 규칙 (네이밍/DI/도메인) | 전체 convention | → `docs/conventions/code-convention.md` ✅ 적용됨 |
 | 0016 service-local-docs | 문서 조직 정책 | 전체 standards | → `docs/standards/service-local-docs.md` ✅ 적용됨 (디렉토리 신설) |
-| 0020 transactional-usage | 원칙 (외부 IO ↔ TXN 경계) + 실천 (사용법) | 분해 — 원칙은 ADR 좁힘, 실천은 conventions | → 별도 PR (분해, 0022 와 함께) |
+| 0020 transactional-usage | 본문 자체가 "유형: Convention" 라벨, 4가지 사용 규칙 | **분해 불필요** — 원칙(외부 IO ↔ TXN)은 ADR-0014→code-convention §6 에 이미 있음 | → `docs/conventions/transactional-usage.md` ✅ 적용됨 |
 | 0021 logging-conventions | 코딩 규칙 | 전체 convention | → `docs/conventions/logging.md` ✅ 적용됨 |
 | 0022 entity-mutation | 원칙 (entity 자기 보호) + 실천 (mutation 패턴) | 분해 — 원칙은 ADR 좁힘, 실천은 conventions | → 별도 PR (분해 까다로움) |
 | 0023 doc-index-tracking | 도구 / 자동화 정책 | 전체 standards | → `docs/standards/doc-index-tracking.md` ✅ 적용됨 |

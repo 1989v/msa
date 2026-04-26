@@ -47,7 +47,7 @@
       ]
     },
     {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
+      "doc": "docs/conventions/transactional-usage.md",
       "sources": ["*/src/main/kotlin/*application*Service.kt"]
     },
     {
