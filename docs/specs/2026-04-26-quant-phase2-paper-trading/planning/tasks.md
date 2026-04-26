@@ -368,22 +368,22 @@ ADR-0025 결정 — `MarketDataHub` SharedFlow primary + 옵셔널 Kafka fan-out
 
 FR-P2-SIM — `PaperExchangeAdapter` + `SlippageModel` Port + `PaperAccount` 가상 잔고. Phase 1 `ExchangeAdapter` Port 구현체.
 
-- [ ] TG-P2-08.0 **Complete**: 시장가 매수/매도가 latest tick × (1 ± 0.0005) 가격으로 체결되며 PaperAccount 잔고 격리 검증 green.
-  - [ ] TG-P2-08.1 `application/port/exchange/SlippageModel.kt` Port:
+- [x] TG-P2-08.0 **Complete**: 시장가 매수/매도가 latest tick × (1 ± 0.0005) 가격으로 체결되며 PaperAccount 잔고 격리 검증 green.
+  - [x] TG-P2-08.1 `application/port/exchange/SlippageModel.kt` Port:
     ```kotlin
     interface SlippageModel {
         fun apply(tick: Price, side: OrderSide): Price
     }
     ```
-  - [ ] TG-P2-08.2 `infrastructure/exchange/FixedSlippageModel.kt`:
+  - [x] TG-P2-08.2 `infrastructure/exchange/FixedSlippageModel.kt`:
     - rate = 0.0005 (0.05%, BTC/ETH 메이저 default)
     - 매수: `executedPrice = tick × (1 + 0.0005)`, 매도: `executedPrice = tick × (1 - 0.0005)`
     - configurable: `quant.paper.slippage.rate` 프로퍼티
-  - [ ] TG-P2-08.3 Flyway `V003__paper_account.sql`:
+  - [x] TG-P2-08.3 Flyway `V003__paper_account.sql`:
     - `CREATE TABLE paper_account (paper_account_id BIGINT PK AUTO_INCREMENT, tenant_id VARCHAR(64) NOT NULL, strategy_id BIGINT NOT NULL, base_asset VARCHAR(16) NOT NULL DEFAULT 'KRW', balance DECIMAL(28,8) NOT NULL, created_at DATETIME(6), updated_at DATETIME(6), INDEX idx_paper_account_tenant (tenant_id, strategy_id))`
     - FK strategy_id → split_strategy(id) (논리 FK, 강제 X — 서비스 간 분리 원칙 보존)
-  - [ ] TG-P2-08.4 `application/paper/port/PaperAccountRepositoryPort.kt` + JPA Adapter (TG-08 Phase 1 패턴 재사용)
-  - [ ] TG-P2-08.5 `infrastructure/exchange/PaperExchangeAdapter.kt`:
+  - [x] TG-P2-08.4 `application/paper/port/PaperAccountRepositoryPort.kt` + JPA Adapter (TG-08 Phase 1 패턴 재사용)
+  - [x] TG-P2-08.5 `infrastructure/exchange/PaperExchangeAdapter.kt`:
     - `ExchangeAdapter` 구현 (PAPER 모드 전용)
     - `placeOrder(cmd)`:
       1. `MarketDataHub.asFlow()`의 latest tick 조회 (`flow.replayCache` 또는 별도 latest cache)
@@ -393,21 +393,21 @@ FR-P2-SIM — `PaperExchangeAdapter` + `SlippageModel` Port + `PaperAccount` 가
       5. PaperAccount 잔고 차감/증가
       6. `OrderFilled` 도메인 이벤트 발행 (Phase 1 EventPublisher)
     - `cancelOrder`, `fetchBalance`, `fetchExecution` 모두 PaperAccount 기반
-  - [ ] TG-P2-08.6 부분체결 시뮬 인터페이스:
+  - [x] TG-P2-08.6 부분체결 시뮬 인터페이스:
     - `paper.partial-fill.probability` (default 0.0 — Phase 2 비활성)
     - `partial-fill.ratio-min/max` 파라미터 보유
     - 활성화 시 `OrderPartiallyFilled` 이벤트 발행 인터페이스 검증
-  - [ ] TG-P2-08.7 체결 latency 모델:
+  - [x] TG-P2-08.7 체결 latency 모델:
     - `paper.execution-latency.ms.default = 50` + jitter ±20ms (NFR-P2-PERF-02 검증용)
     - `delay()` Coroutine으로 시뮬
-  - [ ] TG-P2-08.8 단위 테스트 (Kotest BehaviorSpec + kotest-property):
+  - [x] TG-P2-08.8 단위 테스트 (Kotest BehaviorSpec + kotest-property):
     - `PaperExchangeAdapterMarketBuySpec` — 시장가 매수: tick × 1.0005 정확성
     - `PaperExchangeAdapterMarketSellSpec` — 시장가 매도: tick × 0.9995 정확성
     - `SlippageModelPropertySpec` — property: 매수가 ≥ tick, 매도가 ≤ tick (모든 입력)
     - `PaperExchangeAdapterPartialFillSpec` — probability=1.0 강제 시 `OrderPartiallyFilled` 이벤트 발행
     - `PaperAccountIsolationSpec` (INV-P2-09) — PaperAccount 잔고 변경이 ExchangeCredential 잔고와 분리 (Repository 레이어 검증)
     - `OrderIdIdempotencySpec` (Phase 1 INV-06 유지) — 동일 OrderId 2회 호출 시 동일 가상 체결 결과
-  - [ ] TG-P2-08.9 **Verify**: `./gradlew :quant:app:test --tests '*PaperExchange*' --tests '*SlippageModel*' --tests '*PaperAccount*'` 성공
+  - [x] TG-P2-08.9 **Verify**: `./gradlew :quant:app:test --tests '*PaperExchange*' --tests '*SlippageModel*' --tests '*PaperAccount*'` 성공
 
 **Acceptance Criteria**:
 - `exchangeOrderId`에 `paper-` prefix 강제 (FR-P2-SIM-05)
@@ -426,32 +426,32 @@ FR-P2-SIM — `PaperExchangeAdapter` + `SlippageModel` Port + `PaperAccount` 가
 
 FR-P2-USE — Phase 1 `ActivateStrategyUseCase` 분기 + 신규 `StartPaperTradingUseCase` / `StopPaperTradingUseCase` / `GetPaperStatusQuery`.
 
-- [ ] TG-P2-09.0 **Complete**: PAPER 모드 활성화 시 `PaperExchangeAdapter` + `MarketDataHub.subscribe(symbol)` 주입 + `StrategyExecutor` 코드 변경 0 검증.
-  - [ ] TG-P2-09.1 `application/paper/usecase/StartPaperTradingUseCase.kt`:
+- [x] TG-P2-09.0 **Complete**: PAPER 모드 활성화 시 `PaperExchangeAdapter` + `MarketDataHub.subscribe(symbol)` 주입 + `StrategyExecutor` 코드 변경 0 검증.
+  - [x] TG-P2-09.1 `application/paper/usecase/StartPaperTradingUseCase.kt`:
     - input: `tenantId`, `strategyId`
     - 실행: `ActivateStrategyUseCase` 호출 시 `ExecutionMode = PAPER` 분기 → `PaperExchangeAdapter` 주입 → `MarketDataHub.subscribe(symbol)` 시작 → `StrategyExecutor.run()` 시작 (Coroutine job)
     - PaperAccount 초기 잔고 = 사용자 입력 (default 1000만 KRW)
     - 응답: `runId`
-  - [ ] TG-P2-09.2 `application/paper/usecase/StopPaperTradingUseCase.kt`:
+  - [x] TG-P2-09.2 `application/paper/usecase/StopPaperTradingUseCase.kt`:
     - input: `tenantId`, `runId`
     - 실행: `StrategyRun.end(EndReason.Archived)` → MarketDataHub 구독 해제 → Coroutine job cancel
-  - [ ] TG-P2-09.3 `application/paper/usecase/PausePaperTradingUseCase.kt` / `ResumePaperTradingUseCase.kt`:
+  - [x] TG-P2-09.3 `application/paper/usecase/PausePaperTradingUseCase.kt` / `ResumePaperTradingUseCase.kt`:
     - 일시정지: 시세 구독은 유지, 트리거 평가만 중단 (`StrategyRun.enterAwaitingExhausted()` 재사용 또는 별도 flag)
     - 재개: 즉시 트리거 평가 재개
-  - [ ] TG-P2-09.4 `application/paper/query/GetPaperStatusQuery.kt`:
+  - [x] TG-P2-09.4 `application/paper/query/GetPaperStatusQuery.kt`:
     - input: `tenantId`, `runId`
     - 출력: 활성 PAPER 실행 현황 (slot 상태, 누적 PnL, 시작 시각, 현재 잔고)
-  - [ ] TG-P2-09.5 `StrategyExecutor` / `StrategyEngineLoop` 코드 변경 0 검증 — diff 확인
-  - [ ] TG-P2-09.6 EndReason 검증: PAPER 모드는 `EndReason ∈ {Liquidated, Paused, Archived}` 만 허용 (Completed 차단)
-  - [ ] TG-P2-09.7 PAPER 결과는 Phase 1 `BacktestResult` 스키마 재사용 + `executionMode='PAPER'` 필드로 구분 (FR-P2-USE-04)
-  - [ ] TG-P2-09.8 단위 테스트:
+  - [x] TG-P2-09.5 `StrategyExecutor` / `StrategyEngineLoop` 코드 변경 0 검증 — diff 확인
+  - [x] TG-P2-09.6 EndReason 검증: PAPER 모드는 `EndReason ∈ {Liquidated, Paused, Archived}` 만 허용 (Completed 차단)
+  - [x] TG-P2-09.7 PAPER 결과는 Phase 1 `BacktestResult` 스키마 재사용 + `executionMode='PAPER'` 필드로 구분 (FR-P2-USE-04)
+  - [x] TG-P2-09.8 단위 테스트:
     - `ActivateStrategyPaperModeSpec` — PAPER 모드 활성화 시 PaperExchangeAdapter + MarketDataHub.subscribe 주입 검증
     - `PaperModeEngineReuseSpec` — StrategyExecutor 코드가 BACKTEST/PAPER 양쪽에서 동일 동작
     - `PaperModeEndReasonSpec` — Completed 차단
     - `PaperResultSchemaCompatSpec` — leaderboard 비교 UI 데이터 호환
     - `StartStopPaperTradingHappyPathSpec` — start → status → stop 플로우 1종
     - `PauseResumeIntegrationSpec` — pause 중 시세 구독 유지, resume 시 즉시 트리거 평가 재개
-  - [ ] TG-P2-09.9 **Verify**: `./gradlew :quant:app:test --tests '*PaperTrading*' --tests '*PaperMode*'` 성공
+  - [x] TG-P2-09.9 **Verify**: `./gradlew :quant:app:test --tests '*PaperTrading*' --tests '*PaperMode*'` 성공
 
 **Acceptance Criteria**:
 - StrategyExecutor / StrategyEngineLoop 코드 diff 0 (Phase 1 그대로)

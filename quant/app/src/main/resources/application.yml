@@ -75,6 +75,16 @@ quant:
     kafka-fanout:
       enabled: ${SEVEN_SPLIT_MARKET_KAFKA_FANOUT_ENABLED:false}
       topic: quant.market.tick.bithumb.v1
+  # TG-P2-08: PAPER 모드 가상 거래소 파라미터. 'paper' 또는 'test' 프로파일에서만 PaperExchangeAdapter 활성화.
+  paper:
+    slippage:
+      rate: ${SEVEN_SPLIT_PAPER_SLIPPAGE_RATE:0.0005}      # 0.05% 고정 슬리피지
+    execution-latency:
+      ms:
+        default: ${SEVEN_SPLIT_PAPER_LATENCY_MS:50}        # 평균 거래소 지연
+        jitter: ${SEVEN_SPLIT_PAPER_LATENCY_JITTER_MS:20}  # ± jitter
+    partial-fill:
+      probability: ${SEVEN_SPLIT_PAPER_PARTIAL_FILL_PROB:0.0}  # Phase 2 reserved (현재 사용 안 함)
 
 management:
   endpoints:
