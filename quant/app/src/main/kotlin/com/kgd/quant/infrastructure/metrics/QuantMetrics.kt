@@ -15,6 +15,11 @@ import java.util.concurrent.ConcurrentHashMap
  *  - `quant_strategy_evaluation_latency_seconds{mode}` — 전략 평가 루프 지연 (backtest 모드 전용 Phase 1)
  *  - `quant_ingest_bithumb_rows_total{symbol}` — 빗썸 히스토리 수집 insert 건수
  *
+ * Phase 2 추가 메트릭 (TG-P2-03 KEK 캐시):
+ *  - `quant_kek_cache_hits_total` — DEK 캐시 hit 누적
+ *  - `quant_kek_cache_misses_total` — DEK 캐시 miss 누적 (KMS 호출 발생)
+ *  - `quant_kek_cache_stale_total` — KMS 일시 장애 시 만료 entry 재사용 누적
+ *
  * Gauge `quant_outbox_pending_rows` 는 라이프사이클이 다르므로 [OutboxPendingMetric] 참조.
  *
  * ## 사용 규칙 (ADR-0021)
@@ -76,11 +81,37 @@ class QuantMetrics(
         backtestDuration.record(nanos, java.util.concurrent.TimeUnit.NANOSECONDS)
     }
 
+    // --- TG-P2-03: KEK 캐시 메트릭 ---
+
+    private val kekCacheHits: Counter = Counter.builder(METRIC_KEK_CACHE_HITS_TOTAL)
+        .description("Total DEK cache hits (no KMS call needed)")
+        .register(registry)
+
+    private val kekCacheMisses: Counter = Counter.builder(METRIC_KEK_CACHE_MISSES_TOTAL)
+        .description("Total DEK cache misses (KMS unwrap invoked)")
+        .register(registry)
+
+    private val kekCacheStale: Counter = Counter.builder(METRIC_KEK_CACHE_STALE_TOTAL)
+        .description("Total stale-on-error DEK cache hits (KMS failure fallback)")
+        .register(registry)
+
+    /** DEK 캐시 hit 1건 카운트. */
+    fun kekCacheHit() = kekCacheHits.increment()
+
+    /** DEK 캐시 miss 1건 카운트 (KMS unwrap 호출 직후). */
+    fun kekCacheMiss() = kekCacheMisses.increment()
+
+    /** KMS 장애 시 만료된 캐시 entry 를 stale 로 반환한 횟수. */
+    fun kekCacheStale() = kekCacheStale.increment()
+
     companion object {
         const val METRIC_BACKTEST_RUN_TOTAL = "quant_backtest_run_total"
         const val METRIC_BACKTEST_RUN_DURATION = "quant_backtest_run_duration_seconds"
         const val METRIC_STRATEGY_EVALUATION_LATENCY = "quant_strategy_evaluation_latency_seconds"
         const val METRIC_INGEST_BITHUMB_ROWS_TOTAL = "quant_ingest_bithumb_rows_total"
         const val METRIC_OUTBOX_PENDING_ROWS = "quant_outbox_pending_rows"
+        const val METRIC_KEK_CACHE_HITS_TOTAL = "quant_kek_cache_hits_total"
+        const val METRIC_KEK_CACHE_MISSES_TOTAL = "quant_kek_cache_misses_total"
+        const val METRIC_KEK_CACHE_STALE_TOTAL = "quant_kek_cache_stale_total"
     }
 }

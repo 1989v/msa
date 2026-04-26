@@ -42,6 +42,26 @@ quant:
     username: ${SEVEN_SPLIT_CH_USERNAME:quant}
     password: ${SEVEN_SPLIT_CH_PASSWORD:quant}
     database: quant
+  # TG-P2-03 (ADR-0027): KEK 보관 어댑터 분기.
+  # provider 값에 따라 OCI Vault / LocalFile / Fake 중 1개만 활성화된다.
+  # - oci   : 운영 (K8s Secret 으로 OCI_* 자격증명 주입 필수)
+  # - local : 로컬 dev / k3s-lite (application-local.yml 에서 KEK hex 주입)
+  # - fake  : (예약) 테스트 환경. 실제 빈 등록은 테스트 source set 에서 수동 구성.
+  security:
+    kms:
+      provider: ${SEVEN_SPLIT_KMS_PROVIDER:local}
+      local:
+        current-version: ${SEVEN_SPLIT_LOCAL_KEK_CURRENT_VERSION:v1}
+        kek-versions:
+          v1: ${SEVEN_SPLIT_LOCAL_KEK_V1:}
+      oci:
+        tenancy-ocid: ${OCI_TENANCY:}
+        user-ocid: ${OCI_USER:}
+        fingerprint: ${OCI_FINGERPRINT:}
+        private-key-path: ${OCI_PRIVATE_KEY_PATH:}
+        region: ${OCI_REGION:}
+        vault-key-ocid: ${OCI_VAULT_KEY_OCID:}
+        crypto-endpoint: ${OCI_VAULT_CRYPTO_ENDPOINT:}
 
 management:
   endpoints:

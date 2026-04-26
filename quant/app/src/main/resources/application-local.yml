@@ -1,0 +1,24 @@
+# TG-P2-03 (ADR-0027) — LOCAL DEV ONLY KEK 설정.
+#
+# 본 파일은 개발자 PC / k3d 클러스터에서 실 KMS 호출 없이 envelope encryption 흐름을
+# 테스트하기 위한 dummy KEK 값을 담는다. **운영 / 스테이징 / 실 키 절대 금지**.
+#
+# 운영 환경은 OCI Vault provider 를 사용하며, K8s Secret 으로 OCI_* 변수를 주입한다.
+#
+# 활성화 조건:
+#  - SPRING_PROFILES_ACTIVE=local
+#  - quant.security.kms.provider=local (default)
+#
+# 회전 시뮬레이션:
+#  - kek-versions 에 v2 hex 추가 + current-version: v2 로 swap
+#  - 재기동 후 LocalFileKmsAdapter 가 v2 로 새 wrap, v1 로 wrap 된 기존 데이터도 unwrap 가능
+
+quant:
+  security:
+    kms:
+      provider: local
+      local:
+        current-version: v1
+        kek-versions:
+          # 32-byte hex (DUMMY — local dev only)
+          v1: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef

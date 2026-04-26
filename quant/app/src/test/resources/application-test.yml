@@ -22,3 +22,14 @@ kgd:
       enabled: false
     analytics:
       enabled: false
+
+# TG-P2-03: 테스트 프로파일 — LocalFile KMS 어댑터 활성화용 dummy KEK.
+# 평문 hex 32-byte (00 ~ 1F 반복) — 단위 테스트 안정화 목적, 운영 절대 사용 금지.
+quant:
+  security:
+    kms:
+      provider: local
+      local:
+        current-version: v1
+        kek-versions:
+          v1: 000102030405060708090a0b0c0d0e0f000102030405060708090a0b0c0d0e0f
