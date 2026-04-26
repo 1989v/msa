@@ -92,12 +92,12 @@ Moved (재분류) — 2026-MM-DD
 
 | ADR | 현재 본질 | 분해 결과 | 처리 |
 |---|---|---|---|
-| 0014 code-convention | 코딩 규칙 (네이밍/DI/도메인) | 전체 convention | → `docs/conventions/code-convention.md` (별도 PR) |
-| 0016 service-local-docs | 문서 조직 정책 | 전체 standards | → `docs/standards/service-local-docs.md` (별도 PR) |
-| 0020 transactional-usage | 원칙 (외부 IO ↔ TXN 경계) + 실천 (사용법) | 분해 — 원칙은 ADR 좁힘, 실천은 conventions | → 별도 PR |
-| 0021 logging-conventions | 코딩 규칙 | 전체 convention | → `docs/conventions/logging.md` (별도 PR) |
+| 0014 code-convention | 코딩 규칙 (네이밍/DI/도메인) | 전체 convention | → `docs/conventions/code-convention.md` ✅ 적용됨 |
+| 0016 service-local-docs | 문서 조직 정책 | 전체 standards | → `docs/standards/service-local-docs.md` ✅ 적용됨 (디렉토리 신설) |
+| 0020 transactional-usage | 원칙 (외부 IO ↔ TXN 경계) + 실천 (사용법) | 분해 — 원칙은 ADR 좁힘, 실천은 conventions | → 별도 PR (분해, 0022 와 함께) |
+| 0021 logging-conventions | 코딩 규칙 | 전체 convention | → `docs/conventions/logging.md` ✅ 적용됨 |
 | 0022 entity-mutation | 원칙 (entity 자기 보호) + 실천 (mutation 패턴) | 분해 — 원칙은 ADR 좁힘, 실천은 conventions | → 별도 PR (분해 까다로움) |
-| 0023 doc-index-tracking | 도구 / 자동화 정책 | 전체 standards | → `docs/standards/doc-index-tracking.md` (별도 PR, 신설 디렉토리) |
+| 0023 doc-index-tracking | 도구 / 자동화 정책 | 전체 standards | → `docs/standards/doc-index-tracking.md` ✅ 적용됨 |
 | 0025 latency-budget | 원칙 (budget 강제 + 측정 표준) + 실천 (어휘) + 운영 (Tier 숫자) | 분해 — 원칙은 ADR 좁힘, 실천은 conventions, 운영은 conventions 부록 | **본 PR 에서 처리** (사례) |
 
 → 본 PR 은 메타 ADR (0026) + 0025 분해 (사례) 까지. 나머지 6개는 별도 PR 들로 진행.
