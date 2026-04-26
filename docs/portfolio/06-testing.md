@@ -145,7 +145,7 @@ given("재고 예약 시")
 ./gradlew :product:app:test
 ```
 
-**근거**: `docs/conventions/testing.md` · `docs/adr/ADR-0014-code-convention.md`
+**근거**: `docs/conventions/testing.md` · `docs/conventions/code-convention.md`
 
 ---
 
