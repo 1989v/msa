@@ -3,10 +3,10 @@
   "version": 1,
   "summary": {
     "source_count": 593,
-    "doc_count": 169,
+    "doc_count": 170,
     "link_count": 1105,
     "missing_count": 124,
-    "dangling_count": 153,
+    "dangling_count": 154,
     "coverage_by_service": {
       "product": {
         "total": 31,
@@ -1977,398 +1977,6 @@
       "resolved": true
     },
     {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/model/KeywordScore.kt",
-      "link_type": "manual",
-      "service": "analytics",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/model/ProductScore.kt",
-      "link_type": "manual",
-      "service": "analytics",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/model/ScoreNormalizer.kt",
-      "link_type": "manual",
-      "service": "analytics",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/model/ScoreStats.kt",
-      "link_type": "manual",
-      "service": "analytics",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/port/EventRepositoryPort.kt",
-      "link_type": "manual",
-      "service": "analytics",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/port/KeywordScoreRepositoryPort.kt",
-      "link_type": "manual",
-      "service": "analytics",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/port/ProductScoreRepositoryPort.kt",
-      "link_type": "manual",
-      "service": "analytics",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/port/ScoreCachePort.kt",
-      "link_type": "manual",
-      "service": "analytics",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "auth/domain/src/main/kotlin/com/kgd/auth/domain/auth/model/AuthProvider.kt",
-      "link_type": "manual",
-      "service": "auth",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "auth/domain/src/main/kotlin/com/kgd/auth/domain/role/exception/RoleException.kt",
-      "link_type": "manual",
-      "service": "auth",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "auth/domain/src/main/kotlin/com/kgd/auth/domain/role/model/MemberRole.kt",
-      "link_type": "manual",
-      "service": "auth",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "auth/domain/src/main/kotlin/com/kgd/auth/domain/role/model/Role.kt",
-      "link_type": "manual",
-      "service": "auth",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/exception/ChatbotException.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/AccessDecision.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/ChannelType.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/Conversation.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/ConversationStatus.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/Message.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/MessageRole.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/UserRole.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/service/ConversationDomainService.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/model/Experiment.kt",
-      "link_type": "manual",
-      "service": "experiment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/model/ExperimentStatus.kt",
-      "link_type": "manual",
-      "service": "experiment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/model/StatisticalSignificance.kt",
-      "link_type": "manual",
-      "service": "experiment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/model/Variant.kt",
-      "link_type": "manual",
-      "service": "experiment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/port/ExperimentRepositoryPort.kt",
-      "link_type": "manual",
-      "service": "experiment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/event/FulfillmentEvent.kt",
-      "link_type": "manual",
-      "service": "fulfillment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/exception/FulfillmentException.kt",
-      "link_type": "manual",
-      "service": "fulfillment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentOrder.kt",
-      "link_type": "manual",
-      "service": "fulfillment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentStatus.kt",
-      "link_type": "manual",
-      "service": "fulfillment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/event/GifticonEvent.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/exception/GifticonException.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Brand.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/ExpiryDate.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/GifticonStatus.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/policy/ExpiryAlertPolicy.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/exception/ShareException.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ShareGroup.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ShareMember.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ViewMark.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/event/InventoryEvent.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/exception/InventoryException.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/model/Inventory.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/event/ReservationEvent.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/exception/ReservationException.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/model/Reservation.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/model/ReservationStatus.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "member/domain/src/main/kotlin/com/kgd/member/domain/exception/MemberException.kt",
-      "link_type": "manual",
-      "service": "member",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "member/domain/src/main/kotlin/com/kgd/member/domain/model/Member.kt",
-      "link_type": "manual",
-      "service": "member",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "member/domain/src/main/kotlin/com/kgd/member/domain/model/MemberStatus.kt",
-      "link_type": "manual",
-      "service": "member",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "member/domain/src/main/kotlin/com/kgd/member/domain/model/SsoProvider.kt",
-      "link_type": "manual",
-      "service": "member",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "warehouse/domain/src/main/kotlin/com/kgd/warehouse/domain/warehouse/exception/WarehouseException.kt",
-      "link_type": "manual",
-      "service": "warehouse",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "warehouse/domain/src/main/kotlin/com/kgd/warehouse/domain/warehouse/model/Warehouse.kt",
-      "link_type": "manual",
-      "service": "warehouse",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "wishlist/domain/src/main/kotlin/com/kgd/wishlist/domain/exception/WishlistException.kt",
-      "link_type": "manual",
-      "service": "wishlist",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
-      "source": "wishlist/domain/src/main/kotlin/com/kgd/wishlist/domain/model/WishlistItem.kt",
-      "link_type": "manual",
-      "service": "wishlist",
-      "resolved": true
-    },
-    {
       "doc": "docs/architecture/00.clean-architecture.md",
       "source": "analytics/app/src/main/kotlin/com/kgd/analytics/infrastructure/cache/ScoreCacheAdapter.kt",
       "link_type": "manual",
@@ -3976,6 +3584,398 @@
       "source": "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/messaging/ScoreUpdateEvent.kt",
       "link_type": "manual",
       "service": "search",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/model/KeywordScore.kt",
+      "link_type": "manual",
+      "service": "analytics",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/model/ProductScore.kt",
+      "link_type": "manual",
+      "service": "analytics",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/model/ScoreNormalizer.kt",
+      "link_type": "manual",
+      "service": "analytics",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/model/ScoreStats.kt",
+      "link_type": "manual",
+      "service": "analytics",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/port/EventRepositoryPort.kt",
+      "link_type": "manual",
+      "service": "analytics",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/port/KeywordScoreRepositoryPort.kt",
+      "link_type": "manual",
+      "service": "analytics",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/port/ProductScoreRepositoryPort.kt",
+      "link_type": "manual",
+      "service": "analytics",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "analytics/domain/src/main/kotlin/com/kgd/analytics/domain/port/ScoreCachePort.kt",
+      "link_type": "manual",
+      "service": "analytics",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "auth/domain/src/main/kotlin/com/kgd/auth/domain/auth/model/AuthProvider.kt",
+      "link_type": "manual",
+      "service": "auth",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "auth/domain/src/main/kotlin/com/kgd/auth/domain/role/exception/RoleException.kt",
+      "link_type": "manual",
+      "service": "auth",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "auth/domain/src/main/kotlin/com/kgd/auth/domain/role/model/MemberRole.kt",
+      "link_type": "manual",
+      "service": "auth",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "auth/domain/src/main/kotlin/com/kgd/auth/domain/role/model/Role.kt",
+      "link_type": "manual",
+      "service": "auth",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/exception/ChatbotException.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/AccessDecision.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/ChannelType.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/Conversation.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/ConversationStatus.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/Message.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/MessageRole.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/model/UserRole.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "chatbot/domain/src/main/kotlin/com/kgd/chatbot/domain/service/ConversationDomainService.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/model/Experiment.kt",
+      "link_type": "manual",
+      "service": "experiment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/model/ExperimentStatus.kt",
+      "link_type": "manual",
+      "service": "experiment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/model/StatisticalSignificance.kt",
+      "link_type": "manual",
+      "service": "experiment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/model/Variant.kt",
+      "link_type": "manual",
+      "service": "experiment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "experiment/domain/src/main/kotlin/com/kgd/experiment/domain/port/ExperimentRepositoryPort.kt",
+      "link_type": "manual",
+      "service": "experiment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/event/FulfillmentEvent.kt",
+      "link_type": "manual",
+      "service": "fulfillment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/exception/FulfillmentException.kt",
+      "link_type": "manual",
+      "service": "fulfillment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentOrder.kt",
+      "link_type": "manual",
+      "service": "fulfillment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "fulfillment/domain/src/main/kotlin/com/kgd/fulfillment/domain/fulfillment/model/FulfillmentStatus.kt",
+      "link_type": "manual",
+      "service": "fulfillment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/event/GifticonEvent.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/exception/GifticonException.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Brand.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/ExpiryDate.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/Gifticon.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/model/GifticonStatus.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/gifticon/policy/ExpiryAlertPolicy.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/exception/ShareException.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ShareGroup.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ShareMember.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "gifticon/domain/src/main/kotlin/com/kgd/gifticon/domain/sharing/model/ViewMark.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/event/InventoryEvent.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/exception/InventoryException.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/inventory/model/Inventory.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/event/ReservationEvent.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/exception/ReservationException.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/model/Reservation.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "inventory/domain/src/main/kotlin/com/kgd/inventory/domain/reservation/model/ReservationStatus.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "member/domain/src/main/kotlin/com/kgd/member/domain/exception/MemberException.kt",
+      "link_type": "manual",
+      "service": "member",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "member/domain/src/main/kotlin/com/kgd/member/domain/model/Member.kt",
+      "link_type": "manual",
+      "service": "member",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "member/domain/src/main/kotlin/com/kgd/member/domain/model/MemberStatus.kt",
+      "link_type": "manual",
+      "service": "member",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "member/domain/src/main/kotlin/com/kgd/member/domain/model/SsoProvider.kt",
+      "link_type": "manual",
+      "service": "member",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "warehouse/domain/src/main/kotlin/com/kgd/warehouse/domain/warehouse/exception/WarehouseException.kt",
+      "link_type": "manual",
+      "service": "warehouse",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "warehouse/domain/src/main/kotlin/com/kgd/warehouse/domain/warehouse/model/Warehouse.kt",
+      "link_type": "manual",
+      "service": "warehouse",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "wishlist/domain/src/main/kotlin/com/kgd/wishlist/domain/exception/WishlistException.kt",
+      "link_type": "manual",
+      "service": "wishlist",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/entity-mutation.md",
+      "source": "wishlist/domain/src/main/kotlin/com/kgd/wishlist/domain/model/WishlistItem.kt",
+      "link_type": "manual",
+      "service": "wishlist",
       "resolved": true
     },
     {
@@ -9016,6 +9016,10 @@
     },
     {
       "doc": "docs/adr/ADR-0021-logging-conventions.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/adr/ADR-0022-entity-mutation-conventions.md",
       "service": "root"
     },
     {
