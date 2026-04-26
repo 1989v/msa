@@ -1,0 +1,68 @@
+server:
+  port: 8094
+  shutdown: graceful
+
+spring:
+  application:
+    name: seven-split-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  threads:
+    virtual:
+      enabled: true  # ADR-0024 §3 가상 스레드 활성화
+  datasource:
+    url: jdbc:mysql://localhost:3306/seven_split?useSSL=false&serverTimezone=UTC
+    username: ${DB_USERNAME:seven_split}
+    password: ${DB_PASSWORD:seven_split}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  # TG-08: Flyway 마이그레이션. Hibernate ddl-auto=validate 와 결합해 스키마 변경은 Flyway 가 단독 책임.
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
+
+kgd:
+  common:
+    redis:
+      enabled: false  # Phase 1 불필요
+    analytics:
+      enabled: false
+
+# TG-06.5: seven_split 전용 ClickHouse 설정. analytics DB 와 분리 (ADR-0024 §12).
+seven-split:
+  clickhouse:
+    url: ${SEVEN_SPLIT_CH_URL:jdbc:clickhouse://localhost:8123/seven_split}
+    username: ${SEVEN_SPLIT_CH_USERNAME:seven_split}
+    password: ${SEVEN_SPLIT_CH_PASSWORD:seven_split}
+    database: seven_split
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}

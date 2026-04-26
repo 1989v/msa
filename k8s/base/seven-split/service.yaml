@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seven-split
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: seven-split
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  selector:
+    app.kubernetes.io/name: seven-split
+  ports:
+    - name: http
+      port: 8094
+      targetPort: http

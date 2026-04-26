@@ -26,6 +26,7 @@ resources:
   - chatbot
   - code-dictionary
   - agent-viewer-api
+  - seven-split
   # Frontend + non-JVM services (Phase 7 extension)
   - code-dictionary-fe
   - gifticon-fe

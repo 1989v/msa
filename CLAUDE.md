@@ -54,6 +54,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **로깅 규칙**: kotlin-logging 필수, 람다 형식, error 레벨 규칙 → `docs/adr/ADR-0021-logging-conventions.md`
 - **Entity 수정 규칙**: 전체 동기화 vs 부분 수정 분리, 캡슐화 → `docs/adr/ADR-0022-entity-mutation-conventions.md`
 - **문서-소스 추적**: `doc_map.py` / `doc_scan.py`, `docs/doc-index.json` 정책, `docs/doc-index.lock.json` 검증 → `docs/adr/ADR-0023-doc-index-tracking.md`
+- **Latency Budget**: latency 를 설계 입력으로 강제 + Tier 1 P99 SLA + 측정 표준 → `docs/adr/ADR-0025-latency-budget.md` (실천: `docs/conventions/latency-budget.md`)
+- **docs 분류 정책**: ADR vs Conventions vs Standards 의 정의 / 판단 기준 / 분해 원칙 / redirect 표준 → `docs/adr/ADR-0026-docs-taxonomy.md`
 
 ---
 
@@ -116,6 +118,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼 |
 | member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
 | wishlist | `wishlist/CLAUDE.md` | 상품 위시리스트 (회원별) |
+| seven-split | `seven-split/CLAUDE.md` | 세븐스플릿 암호화폐 자동매매 (신규, Phase 1 진행 중) |
 | auth | (미생성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) |
 | gifticon | (미생성) | 기프티콘 관리, 공유 그룹 |
 | code-dictionary | (미생성) | IT 개념 사전, OpenSearch 검색, 시각화 |
