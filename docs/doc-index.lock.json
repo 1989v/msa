@@ -3,10 +3,10 @@
   "version": 1,
   "summary": {
     "source_count": 593,
-    "doc_count": 161,
+    "doc_count": 163,
     "link_count": 1105,
     "missing_count": 124,
-    "dangling_count": 145,
+    "dangling_count": 147,
     "coverage_by_service": {
       "product": {
         "total": 31,
@@ -9027,6 +9027,10 @@
       "service": "root"
     },
     {
+      "doc": "docs/adr/ADR-0026-docs-taxonomy.md",
+      "service": "root"
+    },
+    {
       "doc": "docs/adr/_template.md",
       "service": "root"
     },
@@ -9100,6 +9104,10 @@
     },
     {
       "doc": "docs/conventions/kafka-topics.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/conventions/latency-budget.md",
       "service": "root"
     },
     {
