@@ -77,3 +77,10 @@ patches:
     target:
       kind: Deployment
       name: code-dictionary
+
+  # quant Phase 2: replicas=1 강제 (Recreate) + KMS local + outbox kafka-relay enable
+  # + Telegram dispatcher disabled (Bot Token 미설정 시) — TG-P2-15
+  - path: patches/quant-phase2.yaml
+    target:
+      kind: Deployment
+      name: quant
