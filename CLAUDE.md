@@ -54,7 +54,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **로깅 규칙**: kotlin-logging 필수, 람다 형식, error 레벨 규칙 → `docs/adr/ADR-0021-logging-conventions.md`
 - **Entity 수정 규칙**: 전체 동기화 vs 부분 수정 분리, 캡슐화 → `docs/adr/ADR-0022-entity-mutation-conventions.md`
 - **문서-소스 추적**: `doc_map.py` / `doc_scan.py`, `docs/doc-index.json` 정책, `docs/doc-index.lock.json` 검증 → `docs/adr/ADR-0023-doc-index-tracking.md`
-- **Latency Budget**: 자릿수 그룹(ns/µs/ms) + Tier 별 P99 budget + 신규 호출 경로 검토 체크리스트 → `docs/adr/ADR-0025-latency-budget.md`
+- **Latency Budget**: latency 를 설계 입력으로 강제 + Tier 1 P99 SLA + 측정 표준 → `docs/adr/ADR-0025-latency-budget.md` (실천: `docs/conventions/latency-budget.md`)
+- **docs 분류 정책**: ADR vs Conventions vs Standards 의 정의 / 판단 기준 / 분해 원칙 / redirect 표준 → `docs/adr/ADR-0026-docs-taxonomy.md`
 
 ---
 
