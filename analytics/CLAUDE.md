@@ -27,4 +27,4 @@
 
 ## Docs
 
-- [서비스 상세](docs/service.md)
+- [analytics 스코어링 시스템 ADR](../docs/adr/ADR-0017-analytics-scoring-system.md)

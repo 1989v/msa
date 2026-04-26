@@ -1,6 +1,9 @@
 # Superpowers
 .superpowers/
 
+# Personal / private working directory
+private/
+
 # Python
 __pycache__/
 *.py[cod]

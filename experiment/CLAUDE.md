@@ -26,4 +26,4 @@ A/B 테스트 실험 관리, 버킷 할당, 결과 분석 서비스.
 
 ## Docs
 
-- [서비스 상세](docs/service.md)
+- [common 모듈 BucketAssigner](../common/CLAUDE.md) — MurmurHash3 결정적 해싱 패턴

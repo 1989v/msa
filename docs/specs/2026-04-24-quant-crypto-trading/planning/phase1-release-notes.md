@@ -2,7 +2,7 @@
 
 **릴리즈 일자**: 2026-04-26
 **스펙**: [quant-crypto-trading](.)
-**ADR**: [ADR-0024](../../adr/ADR-0024-quant-service.md) (Proposed)
+**ADR**: [ADR-0024](../../../adr/ADR-0024-quant-service.md) (Proposed)
 
 ---
 
