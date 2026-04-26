@@ -10,6 +10,7 @@ import { BacktestRunsPage } from '@/pages/BacktestRunsPage'
 import { BacktestRunDetailPage } from '@/pages/BacktestRunDetailPage'
 import { LeaderboardPage } from '@/pages/LeaderboardPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { PaperTradingMonitorPage } from '@/pages/PaperTradingMonitorPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 const queryClient = new QueryClient({
@@ -65,6 +66,14 @@ export default function App() {
             element={
               <AppShell withTabBar={false}>
                 <BacktestSubmitPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/strategies/:id/paper/monitor"
+            element={
+              <AppShell withTabBar={false}>
+                <PaperTradingMonitorPage />
               </AppShell>
             }
           />

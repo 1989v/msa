@@ -667,36 +667,36 @@ FR-P2-FE — SSE 컨트롤러 + Gateway long-lived 라우팅 활성화 + first-m
 
 FR-P2-FE — `quant/frontend/src/pages/PaperTradingMonitorPage.tsx` 신규 페이지 + EventSource 클라이언트 + 실시간 가격/체결/PnL 표시.
 
-- [ ] TG-P2-14.0 **Complete**: `cd quant/frontend && npm run build && npm run test` 성공 + 로컬 dev 서버에서 SSE 실시간 갱신 확인.
-  - [ ] TG-P2-14.1 `quant/frontend/src/pages/PaperTradingMonitorPage.tsx`:
+- [x] TG-P2-14.0 **Complete**: `cd quant/frontend && npm run build && npm run test` 성공 + 로컬 dev 서버에서 SSE 실시간 갱신 확인.
+  - [x] TG-P2-14.1 `quant/frontend/src/pages/PaperTradingMonitorPage.tsx`:
     - 진입 경로: 전략 상세 페이지 → "PAPER 모니터링" 버튼
     - 거래쌍별 패널: 현재가 (큰 폰트, 변동 highlight), 최근 체결 N건 타임라인, 호가 흐름 (best bid/ask), 활성 회차 슬롯 상태 (EMPTY/PENDING_BUY/FILLED 색상)
     - 가상 체결 타임라인 (회차별 색상 분기)
     - 활성 전략 카드 (누적 PnL, 회차 회전률)
-  - [ ] TG-P2-14.2 `quant/frontend/src/api/sse/paperStream.ts`:
+  - [x] TG-P2-14.2 `quant/frontend/src/api/sse/paperStream.ts`:
     - EventSource 클라이언트 + first-message JWT 인증 (spec.md §12.2)
     - 재연결: 5s exponential backoff
     - 폴백: SSE 끊김/미지원 시 2s polling (`/api/v1/strategies/{id}/paper/status`)
     - 이벤트 핸들러: `tick`, `slot`, `order`
-  - [ ] TG-P2-14.3 `quant/frontend/src/hooks/usePaperStream.ts`:
+  - [x] TG-P2-14.3 `quant/frontend/src/hooks/usePaperStream.ts`:
     - 초기 hydrate: REST `GET /api/v1/paper/snapshot/{strategyId}`
     - 이후 SSE delta로 갱신
     - 다중 거래쌍 분기 (탭 전환 시 SSE 구독 격리)
-  - [ ] TG-P2-14.4 `quant/frontend/src/components/paper/`:
+  - [x] TG-P2-14.4 `quant/frontend/src/components/paper/`:
     - `RealtimePricePanel.tsx` — 현재가 + 변동 highlight
     - `OrderBookFlow.tsx` — best bid/ask
     - `PaperExecutionTimeline.tsx` — 가상 체결 타임라인 (회차별 색상)
     - `TrancheSlotGrid.tsx` — 활성 회차 슬롯 상태 표시
-  - [ ] TG-P2-14.5 lightweight-charts 실시간 갱신 — Phase 1 차트 컴포넌트 재사용 + tick 이벤트로 series.update() 호출
-  - [ ] TG-P2-14.6 디자인 가드 (재사용): Phase 1 PWA 셸 / Tailwind / Pretendard / lightweight-charts. 모바일 우선, 세로 레이아웃. `docs/conventions/frontend-design.md` 준수
-  - [ ] TG-P2-14.7 라우트 등록 — `/strategies/:id/paper/monitor` 추가
-  - [ ] TG-P2-14.8 Vitest + React Testing Library + EventSource mock 테스트:
+  - [x] TG-P2-14.5 lightweight-charts 실시간 갱신 — Phase 1 차트 컴포넌트 재사용 + tick 이벤트로 series.update() 호출
+  - [x] TG-P2-14.6 디자인 가드 (재사용): Phase 1 PWA 셸 / Tailwind / Pretendard / lightweight-charts. 모바일 우선, 세로 레이아웃. `docs/conventions/frontend-design.md` 준수
+  - [x] TG-P2-14.7 라우트 등록 — `/strategies/:id/paper/monitor` 추가
+  - [x] TG-P2-14.8 Vitest + React Testing Library + EventSource mock 테스트:
     - `PaperTradingMonitorPageSpec` — 초기 hydrate (REST snapshot) → SSE delta 갱신 합산
     - `PaperStreamHookSpec` — EventSource 재연결 5s exponential backoff, error 핸들링
     - `RealtimePricePanelSpec` — 가격 변동 highlight, 모바일 레이아웃
     - `PaperExecutionTimelineSpec` — 회차별 색상 분기
     - `MultiSymbolTabsSpec` — 탭 전환 시 SSE 구독 격리 (정상 unsubscribe)
-  - [ ] TG-P2-14.9 **Verify**: `cd quant/frontend && npm run build && npm run test` 성공
+  - [x] TG-P2-14.9 **Verify**: `cd quant/frontend && npm run build && npm run test` 성공
 
 **Acceptance Criteria**:
 - 모바일 우선 (Phase 1 §12 PWA 유지) — 터치 친화 인터랙션
