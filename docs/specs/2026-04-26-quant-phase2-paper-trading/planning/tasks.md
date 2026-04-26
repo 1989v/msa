@@ -619,36 +619,36 @@ Phase 1 알려진 제약 #3 해소 — `OutboxRelay` payload deserialization 구
 
 FR-P2-FE — SSE 컨트롤러 + Gateway long-lived 라우팅 활성화 + first-message JWT 인증.
 
-- [ ] TG-P2-13.0 **Complete**: SSE 연결 → first-message JWT → tick/slot/order 이벤트 수신 + Gateway 경유 라우팅 검증 green.
-  - [ ] TG-P2-13.1 `presentation/paper/PaperStreamSseController.kt`:
+- [x] TG-P2-13.0 **Complete**: SSE 연결 → first-message JWT → tick/slot/order 이벤트 수신 + Gateway 경유 라우팅 검증 green.
+  - [x] TG-P2-13.1 `presentation/paper/PaperStreamSseController.kt`:
     - `GET /api/v1/strategies/{id}/paper/sse`
     - `SseEmitter` 또는 Coroutine `Flow<ServerSentEvent<*>>` (Spring MVC suspend 컨트롤러 호환)
     - 가상 스레드 위에서 long-lived 연결 유지
     - 이벤트 type: `tick`, `slot`, `order` (spec.md §12.2)
     - 데이터 source: `MarketDataHub.asFlow()` filter by symbol + 도메인 이벤트 EventBus subscribe
-  - [ ] TG-P2-13.2 first-message JWT 인증 (spec.md §12.2 확정):
+  - [x] TG-P2-13.2 first-message JWT 인증 (spec.md §12.2 확정):
     - 클라이언트가 SSE 연결 후 첫 message로 `{"type":"auth","token":"<jwt>"}` 전송
     - 서버가 JWT 검증 후 `auth-ok` 또는 `auth-fail` 응답
     - 실패 시 즉시 연결 종료
     - 30초 내 인증 미완료 시 자동 종료
-  - [ ] TG-P2-13.3 `presentation/paper/PaperTradingController.kt`:
+  - [x] TG-P2-13.3 `presentation/paper/PaperTradingController.kt`:
     - `POST /api/v1/strategies/{id}/start-paper` (FR-P2-USE-01)
     - `GET /api/v1/strategies/{id}/paper/status`
     - `POST /api/v1/strategies/{id}/paper/pause` / `/resume`
     - `GET /api/v1/paper/snapshot/{strategyId}` (FE 초기 hydrate, slot + 최근 체결 50건)
     - 모두 `ApiResponse<T>` 래퍼 (Phase 1 컨벤션) — SSE 컨트롤러 제외
-  - [ ] TG-P2-13.4 Gateway 변경:
+  - [x] TG-P2-13.4 Gateway 변경:
     - `gateway/src/main/resources/application.yml` 라우트 정의: SSE 경로 `/api/v1/strategies/*/paper/sse` `httpClient.responseTimeout` 비활성 (또는 1h 이상 override)
     - `gateway/src/main/kotlin/com/kgd/gateway/config/SseRouteConfig.kt` (필요 시) — Reactor Netty `keepAlive` enable, `Cache-Control: no-cache` / `X-Accel-Buffering: no` 응답 헤더 통과 검증
     - HTTP/1.1 chunked 응답 buffering 차단 검증
-  - [ ] TG-P2-13.5 회귀 테스트:
+  - [x] TG-P2-13.5 회귀 테스트:
     - `SsePaperStreamControllerSpec` (Spring MockMvc 또는 WebTestClient) — SSE 연결 + first-message JWT + 이벤트 수신
     - `SseFirstMessageAuthSpec` — JWT 미전송 30초 후 자동 종료
     - `SseFirstMessageAuthFailSpec` — invalid JWT 시 즉시 종료
     - `PaperTradingControllerSpec` — start/status/pause/resume happy path + 403(다른 tenant) + 400(invalid)
     - `GatewaySseRoutingSpec` (gateway 모듈 테스트) — 기존 short-lived REST 라우팅 영향 0
-  - [ ] TG-P2-13.6 폴백: 클라이언트 SSE 끊김/미지원 시 `polling 2s` (`/api/v1/strategies/{id}/paper/status` 재호출) — FE에서 처리, 백엔드 변경 무
-  - [ ] TG-P2-13.7 **Verify**: `./gradlew :quant:app:test --tests '*PaperStream*' --tests '*PaperTradingController*' :gateway:test --tests '*SseRouting*'` 성공
+  - [x] TG-P2-13.6 폴백: 클라이언트 SSE 끊김/미지원 시 `polling 2s` (`/api/v1/strategies/{id}/paper/status` 재호출) — FE에서 처리, 백엔드 변경 무
+  - [x] TG-P2-13.7 **Verify**: `./gradlew :quant:app:test --tests '*PaperStream*' --tests '*PaperTradingController*' :gateway:test --tests '*SseRouting*'` 성공
 
 **Acceptance Criteria**:
 - SSE 컨트롤러가 first-message JWT 인증 강제 (30s timeout)

@@ -19,6 +19,9 @@ spring:
         max-redirects: 3
   cloud:
     gateway:
+      # Long-lived SSE 라우팅 시 Reactor Netty 의 기본 응답 타임아웃이 끊지 않도록
+      # SSE 전용 라우트(quant-paper-sse)는 메타데이터로 response-timeout=0 (disable) 명시.
+      # 글로벌 httpClient.responseTimeout 은 변경하지 않는다 (단방향 short-lived 라우트 영향 회피).
       routes:
         - id: analytics-service
           uri: http://analytics:8090
@@ -28,6 +31,20 @@ spring:
           uri: http://experiment:8091
           predicates:
             - Path=/api/v1/experiments/**
+        # TG-P2-13 — Quant SSE (long-lived). 반드시 REST 라우트보다 위에 두어
+        # 더 구체적인 경로 패턴이 먼저 매칭되게 한다.
+        - id: quant-paper-sse
+          uri: http://quant:8094
+          predicates:
+            - Path=/api/v1/strategies/*/paper/sse
+          metadata:
+            response-timeout: 0
+            connect-timeout: 5000
+        # TG-P2-13 — Quant REST (short-lived).
+        - id: quant-service
+          uri: http://quant:8094
+          predicates:
+            - Path=/api/v1/strategies/**
 
 server:
   port: 8080
