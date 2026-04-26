@@ -249,8 +249,8 @@ ADR-0015 장애 대비 전략 준수.
 
 ### 9.1 거래소 WebSocket 특성 (Phase 1~2는 public 시세만)
 
-- **빗썸**: HMAC-SHA512 인증 / 비표준 JSON 페이로드 / heartbeat 미기재(구현 시 실측 확인 필요)
-- **업비트**: JWT 인증 / gzip 압축 요청 가능 / idle 120s disconnect
+- **빗썸**: JWT(HS256) 인증 / 비표준 JSON 페이로드 / heartbeat 미기재(구현 시 실측 확인 필요) — [Errata 2026-04-26: 기존 HMAC-SHA512 표기 오류, ADR-0024 Errata 참조. 업비트와 동일 패턴]
+- **업비트**: JWT(HS256) 인증 / gzip 압축 요청 가능 / idle 120s disconnect
 - **범위**: Phase 1~2는 **public 시세 WS만 구독**, private 채널(주문/체결)은 **REST 폴링**으로 확보. private WS 도입은 Phase 3 이후 ADR로 결정.
 
 ---

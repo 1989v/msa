@@ -268,7 +268,7 @@ author: shape-agent (sharded from initialization.md via Q-A ~ Q-E)
 - **`experiment`** (선택): 파라미터 A/B 테스트 연동 (장기)
 
 ### 10.2 외부 의존성
-- **빗썸 OpenAPI**: REST + WebSocket (HMAC-SHA512)
+- **빗썸 OpenAPI**: REST + WebSocket (JWT/HS256) — [Errata 2026-04-26: 기존 HMAC-SHA512 표기 오류, ADR-0024 Errata 참조]
 - **업비트 Open API**: REST + WebSocket (JWT, gzip 지원, idle 120s) — Phase 3부터
 - **텔레그램 Bot API**: 알림 송신
 - **ClickHouse**: 과거 틱·백테스트 시계열 저장 (`quant` DB)

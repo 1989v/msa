@@ -24,8 +24,8 @@
 
 | Phase | 범위 | 상태 |
 |---|---|---|
-| Phase 1 | 백테스트 엔진 + ClickHouse 스키마 + REST API + FE 스캐폴드 | 진행 중 |
-| Phase 2 | 페이퍼 트레이딩 (WebSocket 시세 + SimulatedExchangeAdapter + Telegram) | TBD |
+| Phase 1 | 백테스트 엔진 + ClickHouse 스키마 + REST API + FE 스캐폴드 | 출고 가능 |
+| Phase 2 | 페이퍼 트레이딩 (WebSocket 시세 + SimulatedExchangeAdapter + Telegram + OCI Vault KEK + audit chain) | 진행 중 (Errata: 빗썸 인증 = JWT(HS256), ADR-0024 Errata 참조) |
 | Phase 3 | 실매매 (빗썸/업비트 실 주문 + Rate Limiter + Kill-switch + 2FA) | TBD |
 
 ## Key Rules

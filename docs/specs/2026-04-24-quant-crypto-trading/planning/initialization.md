@@ -136,7 +136,7 @@ quant/
 - **[미결]** 암호화폐 변동성 기준 기본값 제안 — 주식 기준(-3%/+10%)을 직접 쓸지, 암호화폐 조정값(예: -5~-8%/+5~+15%)으로 시작할지. 백테스트로 결정.
 
 ### 거래소 연동
-- **[결정 2026-04-24]** 빗썸·업비트 **공식 OpenAPI(REST + WebSocket)** 연동. 인증 방식이 상이(빗썸: API Key + Secret HMAC-SHA512, 업비트: JWT)하므로 `ExchangeAdapter` port 인터페이스로 격리.
+- **[결정 2026-04-24]** 빗썸·업비트 **공식 OpenAPI(REST + WebSocket)** 연동. **[Errata 2026-04-26]** 두 거래소 모두 **JWT(HS256)** 인증 — Access Key + Secret Key 보관 / Secret Key 로 매 요청 JWT 서명. 기존 "빗썸 HMAC-SHA512" 표기는 오류(ADR-0024 Errata 참조). 동일 패턴이라 `AbstractJwtBasedExchangeAdapter` 베이스로 공통화. `ExchangeAdapter` port 인터페이스로 거래소 교체.
 - **[결정 2026-04-24]** MVP 우선순위 = **빗썸 먼저 (Phase 1~2)**, **Phase 3 실매매 진입 시 업비트 추가**. 어댑터 port는 1일차부터 추상화해 두 거래소 교체/병렬 실행이 가능하도록 설계.
 - **[미결]** 주문 실패/부분체결/네트워크 장애 시 재시도 및 상태 복구 규칙 — 기본 방침은 idempotent order ID + exponential backoff. 구체 정책은 구현 단계에서 확정.
 - **[부분 결정]** Rate Limit 관리 = 유저 API Key 단위로 호출량 카운터, 한도 근접 시 백오프. 빗썸·업비트 각자 공식 한도값은 구현 시점에 확인.

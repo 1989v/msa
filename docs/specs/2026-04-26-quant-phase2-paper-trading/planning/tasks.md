@@ -118,16 +118,16 @@ Phase 2 신규 라이브러리를 `gradle/libs.versions.toml`에 등재하고, P
 
 Phase 1 ADR-0024 §3·§9.1, spec.md §9.1, Phase 1 코드 일부에 표기된 "빗썸 HMAC-SHA512" 인증 표기를 **JWT(HS256)** 으로 정정한다. 본 TG는 문서/주석/잔존 코드 정합성 확보가 목적이며 실제 JWT 서명 구현은 TG-P2-03 (KMS) 이후 Phase 3 진입 시 `AbstractJwtBasedExchangeAdapter`로 일괄 구현한다.
 
-- [ ] TG-P2-02.0 **Complete**: 코드/주석/문서에 "HMAC-SHA512" 잔존 0건 (단, ADR-0024 본문 Errata 섹션의 정정 기록은 보존).
-  - [ ] TG-P2-02.1 grep 일괄 스캔: `git grep -n -E 'HMAC[-_]?SHA512|hmacSha512' quant/ docs/`
-  - [ ] TG-P2-02.2 Phase 1 `quant/app/infrastructure/bithumb/` REST 클라이언트 주석/Kdoc 정정 (코드는 public endpoint라 인증 미사용 → 주석만 영향)
-  - [ ] TG-P2-02.3 ADR-0024 본문 하단에 `## Errata (2026-04-26)` 섹션 추가:
+- [x] TG-P2-02.0 **Complete**: 코드/주석/문서에 "HMAC-SHA512" 잔존 0건 (단, ADR-0024 본문 Errata 섹션의 정정 기록은 보존).
+  - [x] TG-P2-02.1 grep 일괄 스캔: `git grep -n -E 'HMAC[-_]?SHA512|hmacSha512' quant/ docs/`
+  - [x] TG-P2-02.2 Phase 1 `quant/app/infrastructure/bithumb/` REST 클라이언트 주석/Kdoc 정정 (코드는 public endpoint라 인증 미사용 → 주석만 영향)
+  - [x] TG-P2-02.3 ADR-0024 본문 하단에 `## Errata (2026-04-26)` 섹션 추가:
     - 정정 내용: 빗썸 인증 = JWT(HS256) (업비트 동일 패턴)
     - 잔존 코드 위치, 정정 PR 번호 (본 TG)
     - `AbstractJwtBasedExchangeAdapter` 패턴 도입 예고 (Phase 3)
-  - [ ] TG-P2-02.4 새 ADR 발행: `docs/adr/ADR-0024-errata-bithumb-jwt.md` (Errata 섹션 분리 발행 옵션 — Plan 단계 결정에 따라 본문 append vs 분리 발행 중 1)
-  - [ ] TG-P2-02.5 `quant/CLAUDE.md` Phase 로드맵 섹션에 "Phase 2 Errata 적용" 1줄 추가
-  - [ ] TG-P2-02.6 **Verify**: `git grep -n -E 'HMAC[-_]?SHA512' quant/ -- ':!docs/adr/ADR-0024*'` 결과 0건
+  - [x] TG-P2-02.4 새 ADR 발행: `docs/adr/ADR-0024-errata-bithumb-jwt.md` (Errata 섹션 분리 발행 옵션 — Plan 단계 결정에 따라 본문 append vs 분리 발행 중 1)
+  - [x] TG-P2-02.5 `quant/CLAUDE.md` Phase 로드맵 섹션에 "Phase 2 Errata 적용" 1줄 추가
+  - [x] TG-P2-02.6 **Verify**: `git grep -n -E 'HMAC[-_]?SHA512' quant/ -- ':!docs/adr/ADR-0024*'` 결과 0건
 
 **Acceptance Criteria**:
 - 코드/주석에 HMAC-SHA512 표기 0건

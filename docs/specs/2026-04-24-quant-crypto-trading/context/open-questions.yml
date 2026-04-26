@@ -303,5 +303,5 @@ decisions_log:
       - '상태머신 확장: StrategyRun.status에 AWAITING_EXHAUSTED 추가 (INITIALIZED → ACTIVE → (ACTIVE ↔ AWAITING_EXHAUSTED) → LIQUIDATING → CLOSED)'
       - 'NFR-PERF-04 메트릭 반영: quant.dashboard.response.latency_seconds{endpoint} p95 ≤ 500ms SLO'
       - 'HPA 전제 명시: p95 기반 HPA는 Prometheus Adapter 도입 후 enable, 그 전까지 CPU 70%로 degrade'
-      - '거래소 WS 특성 문서화: 빗썸 HMAC-SHA512 / 업비트 JWT+gzip+idle 120s / Phase 1~2는 public 시세 WS만, private는 REST 폴링'
+      - '거래소 WS 특성 문서화: 빗썸 JWT(HS256) [Errata 2026-04-26: 기존 HMAC-SHA512 표기 오류, ADR-0024 Errata 참조] / 업비트 JWT+gzip+idle 120s / Phase 1~2는 public 시세 WS만, private는 REST 폴링'
       - 'OQ-011 ~ OQ-020 신규 등록: Phase 1 착수(OQ-011, OQ-020) / Phase 2 착수(OQ-017, OQ-018) / Phase 3 착수(OQ-012~016, OQ-019) 게이트'
