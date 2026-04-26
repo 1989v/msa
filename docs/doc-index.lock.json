@@ -3,10 +3,10 @@
   "version": 1,
   "summary": {
     "source_count": 593,
-    "doc_count": 167,
+    "doc_count": 169,
     "link_count": 1105,
     "missing_count": 124,
-    "dangling_count": 151,
+    "dangling_count": 153,
     "coverage_by_service": {
       "product": {
         "total": 31,
@@ -1974,97 +1974,6 @@
       "link_type": "pattern",
       "rule": "svc-kotlin",
       "service": "common",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "chatbot/app/src/main/kotlin/com/kgd/chatbot/application/chat/service/ChatService.kt",
-      "link_type": "manual",
-      "service": "chatbot",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "fulfillment/app/src/main/kotlin/com/kgd/fulfillment/application/fulfillment/service/FulfillmentService.kt",
-      "link_type": "manual",
-      "service": "fulfillment",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/ExpiryAlertService.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonTransactionalService.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/service/ShareService.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/service/ShareTransactionalService.kt",
-      "link_type": "manual",
-      "service": "gifticon",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "inventory/app/src/main/kotlin/com/kgd/inventory/application/inventory/service/InventoryReconciliationService.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "inventory/app/src/main/kotlin/com/kgd/inventory/application/inventory/service/InventoryService.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "inventory/app/src/main/kotlin/com/kgd/inventory/application/reservation/service/ReservationExpiryService.kt",
-      "link_type": "manual",
-      "service": "inventory",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "member/app/src/main/kotlin/com/kgd/member/application/member/service/MemberService.kt",
-      "link_type": "manual",
-      "service": "member",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "warehouse/app/src/main/kotlin/com/kgd/warehouse/application/warehouse/service/WarehouseService.kt",
-      "link_type": "manual",
-      "service": "warehouse",
-      "resolved": true
-    },
-    {
-      "doc": "docs/adr/ADR-0020-transactional-usage.md",
-      "source": "wishlist/app/src/main/kotlin/com/kgd/wishlist/application/wishlist/service/WishlistService.kt",
-      "link_type": "manual",
-      "service": "wishlist",
       "resolved": true
     },
     {
@@ -5850,6 +5759,97 @@
     {
       "doc": "docs/conventions/package-structure.md",
       "source": "wishlist/domain/src/main/kotlin/com/kgd/wishlist/domain/model/WishlistItem.kt",
+      "link_type": "manual",
+      "service": "wishlist",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "chatbot/app/src/main/kotlin/com/kgd/chatbot/application/chat/service/ChatService.kt",
+      "link_type": "manual",
+      "service": "chatbot",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "fulfillment/app/src/main/kotlin/com/kgd/fulfillment/application/fulfillment/service/FulfillmentService.kt",
+      "link_type": "manual",
+      "service": "fulfillment",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/ExpiryAlertService.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonService.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/gifticon/service/GifticonTransactionalService.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/service/ShareService.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "gifticon/app/src/main/kotlin/com/kgd/gifticon/application/sharing/service/ShareTransactionalService.kt",
+      "link_type": "manual",
+      "service": "gifticon",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "inventory/app/src/main/kotlin/com/kgd/inventory/application/inventory/service/InventoryReconciliationService.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "inventory/app/src/main/kotlin/com/kgd/inventory/application/inventory/service/InventoryService.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "inventory/app/src/main/kotlin/com/kgd/inventory/application/reservation/service/ReservationExpiryService.kt",
+      "link_type": "manual",
+      "service": "inventory",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "member/app/src/main/kotlin/com/kgd/member/application/member/service/MemberService.kt",
+      "link_type": "manual",
+      "service": "member",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "warehouse/app/src/main/kotlin/com/kgd/warehouse/application/warehouse/service/WarehouseService.kt",
+      "link_type": "manual",
+      "service": "warehouse",
+      "resolved": true
+    },
+    {
+      "doc": "docs/conventions/transactional-usage.md",
+      "source": "wishlist/app/src/main/kotlin/com/kgd/wishlist/application/wishlist/service/WishlistService.kt",
       "link_type": "manual",
       "service": "wishlist",
       "resolved": true
@@ -9011,6 +9011,10 @@
       "service": "root"
     },
     {
+      "doc": "docs/adr/ADR-0020-transactional-usage.md",
+      "service": "root"
+    },
+    {
       "doc": "docs/adr/ADR-0021-logging-conventions.md",
       "service": "root"
     },
@@ -9428,6 +9432,10 @@
     },
     {
       "doc": "docs/specs/2026-04-26-seven-split-phase2-paper-trading/planning/requirements.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/specs/2026-04-26-seven-split-phase2-paper-trading/planning/spec.md",
       "service": "root"
     },
     {
