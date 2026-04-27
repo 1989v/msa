@@ -19,6 +19,7 @@
   12-1. https://colin-scott.github.io/personal_website/research/interactive_latency.html
   12-2. https://research.cs.cornell.edu/ladis2009/talks/dean-keynote-ladis2009.pdf page 12
   12-3. https://www.youtube.com/watch?v=WbzMtyyOQpM
+13. encrypt, jwt, aes, sha 등등
 
 ## 파이프라인
 
@@ -47,3 +48,4 @@
 | 10 | Observability 3축 | [10-observability/](docs/10-observability/) | draft |
 | 11 | K8s 심화 + 배포 전략 | [11-k8s-deep-dive/](docs/11-k8s-deep-dive/) | draft |
 | 12 | Latency Numbers Every Programmer Should Know | [12-latency-numbers/](docs/12-latency-numbers/) | **completed + 12 deep files** |
+| 13 | 암호화 · JWT · SSO · 클라우드 KMS | [13-crypto-jwt-sso/](docs/13-crypto-jwt-sso/) | **completed** |
