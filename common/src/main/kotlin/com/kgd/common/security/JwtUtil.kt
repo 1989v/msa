@@ -5,8 +5,8 @@ import io.jsonwebtoken.ExpiredJwtException
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
-import org.springframework.stereotype.Component
 import java.util.Date
+import java.util.UUID
 import javax.crypto.SecretKey
 
 class JwtUtil(private val props: JwtProperties) {
@@ -16,30 +16,51 @@ class JwtUtil(private val props: JwtProperties) {
     }
 
     fun generateAccessToken(userId: String, roles: List<String>): String =
-        Jwts.builder()
-            .claim("userId", userId)
+        baseBuilder(userId)
             .claim("roles", roles)
             .claim("type", "access")
-            .issuedAt(Date())
             .expiration(Date(System.currentTimeMillis() + props.accessExpiry * 1000L))
             .signWith(key)
             .compact()
 
     fun generateRefreshToken(userId: String): String =
-        Jwts.builder()
-            .claim("userId", userId)
+        baseBuilder(userId)
             .claim("type", "refresh")
-            .issuedAt(Date())
             .expiration(Date(System.currentTimeMillis() + props.refreshExpiry * 1000L))
             .signWith(key)
             .compact()
 
-    fun parseToken(token: String): Claims =
-        Jwts.parser()
+    private fun baseBuilder(userId: String) =
+        Jwts.builder()
+            .apply { props.kid?.let { header().keyId(it).and() } }
+            .apply { props.issuer?.let { issuer(it) } }
+            .apply { props.audience?.let { audience().add(it).and() } }
+            .subject(userId)
+            .id(UUID.randomUUID().toString())
+            .claim("userId", userId)
+            .issuedAt(Date())
+
+    fun parseToken(token: String): Claims {
+        val claims = Jwts.parser()
             .verifyWith(key)
             .build()
             .parseSignedClaims(token)
             .payload
+
+        props.issuer?.let { configured ->
+            val tokenIss = claims.issuer
+            if (tokenIss != null && tokenIss != configured) {
+                throw JwtException("Issuer mismatch: expected=$configured got=$tokenIss")
+            }
+        }
+        props.audience?.let { configured ->
+            val tokenAud = claims.audience
+            if (!tokenAud.isNullOrEmpty() && configured !in tokenAud) {
+                throw JwtException("Audience mismatch: expected=$configured got=$tokenAud")
+            }
+        }
+        return claims
+    }
 
     fun isValid(token: String): Boolean =
         try {

@@ -4,9 +4,12 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.string.shouldNotBeEmpty
 import io.jsonwebtoken.JwtException
+import io.jsonwebtoken.Jwts
 
 class JwtUtilTest : BehaviorSpec({
 
@@ -32,6 +35,14 @@ class JwtUtilTest : BehaviorSpec({
                 @Suppress("UNCHECKED_CAST")
                 (claims["roles"] as List<*>) shouldBe listOf("USER", "ADMIN")
                 claims["type"] shouldBe "access"
+            }
+        }
+        `when`("표준 클레임을 확인하면") {
+            then("subject와 jti가 채워져 있어야 한다") {
+                val token = jwtUtil.generateAccessToken("user-42", listOf("USER"))
+                val claims = jwtUtil.parseToken(token)
+                claims.subject shouldBe "user-42"
+                claims.id.shouldNotBeEmpty()
             }
         }
     }
@@ -86,12 +97,83 @@ class JwtUtilTest : BehaviorSpec({
         `when`("동일한 userId로 생성하면") {
             then("서로 다른 토큰이 생성되어야 한다") {
                 val token1 = jwtUtil.generateAccessToken("user-1", listOf("USER"))
-                Thread.sleep(1100) // JWT iat는 초 단위이므로 1초 이상 대기
                 val token2 = jwtUtil.generateAccessToken("user-1", listOf("USER"))
-                // 동일 userId라도 토큰 자체는 같을 수 있지만, 실제 운영에서는 다른 토큰 생성 보장
+                // jti(UUID) 가 매번 달라 토큰도 항상 다름
                 token1 shouldNotBe null
                 token2 shouldNotBe null
-                token1 shouldNotBe token2  // 동일한 시간에 생성되더라도 iat(issuedAt)으로 구분
+                token1 shouldNotBe token2
+            }
+        }
+        `when`("두 토큰의 jti를 비교하면") {
+            then("서로 달라야 한다") {
+                val t1 = jwtUtil.generateAccessToken("user-1", listOf("USER"))
+                val t2 = jwtUtil.generateAccessToken("user-1", listOf("USER"))
+                jwtUtil.parseToken(t1).id shouldNotBe jwtUtil.parseToken(t2).id
+            }
+        }
+    }
+
+    given("kid / issuer / audience가 설정된 경우") {
+        val configuredProps = JwtProperties(
+            secret = "test-secret-key-must-be-at-least-32-chars-long!!",
+            accessExpiry = 1800L,
+            refreshExpiry = 604800L,
+            issuer = "https://kgd.example/auth",
+            audience = "kgd-api",
+            kid = "key-2026-04"
+        )
+        val configuredUtil = JwtUtil(configuredProps)
+
+        `when`("토큰을 생성하면") {
+            then("iss와 aud 클레임이 포함되어야 한다") {
+                val token = configuredUtil.generateAccessToken("user-1", listOf("USER"))
+                val claims = configuredUtil.parseToken(token)
+                claims.issuer shouldBe "https://kgd.example/auth"
+                claims.audience shouldContain "kgd-api"
+            }
+            then("헤더에 kid가 포함되어야 한다") {
+                val token = configuredUtil.generateAccessToken("user-1", listOf("USER"))
+                val header = Jwts.parser()
+                    .verifyWith(
+                        io.jsonwebtoken.security.Keys.hmacShaKeyFor(
+                            configuredProps.secret.toByteArray(Charsets.UTF_8)
+                        )
+                    )
+                    .build()
+                    .parseSignedClaims(token)
+                    .header
+                header.keyId shouldBe "key-2026-04"
+            }
+        }
+
+        `when`("issuer가 다른 토큰을 검증하면") {
+            then("JwtException이 발생해야 한다") {
+                val otherProps = configuredProps.copy(issuer = "https://other/auth")
+                val otherUtil = JwtUtil(otherProps)
+                val foreignToken = otherUtil.generateAccessToken("user-1", listOf("USER"))
+                shouldThrow<JwtException> {
+                    configuredUtil.parseToken(foreignToken)
+                }
+            }
+        }
+
+        `when`("audience가 다른 토큰을 검증하면") {
+            then("JwtException이 발생해야 한다") {
+                val otherProps = configuredProps.copy(audience = "other-api")
+                val otherUtil = JwtUtil(otherProps)
+                val foreignToken = otherUtil.generateAccessToken("user-1", listOf("USER"))
+                shouldThrow<JwtException> {
+                    configuredUtil.parseToken(foreignToken)
+                }
+            }
+        }
+
+        `when`("iss/aud가 없는 옛 토큰을 검증하면 (backwards-compat)") {
+            then("기존 동작과 동일하게 통과해야 한다") {
+                // configuredUtil 설정 전에 발급된 옛 토큰을 시뮬레이션
+                val legacyToken = jwtUtil.generateAccessToken("user-1", listOf("USER"))
+                val claims = configuredUtil.parseToken(legacyToken)
+                claims.subject shouldBe "user-1"
             }
         }
     }
