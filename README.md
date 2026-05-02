@@ -1,7 +1,9 @@
 # Commerce Platform (MSA)
 
 실서비스 배포 가능 수준의 MSA 기반 커머스 플랫폼.
-수평 확장, 이중화, Docker 로컬 개발 환경, Kubernetes(EKS) 배포 가능 구조로 설계되었습니다.
+수평 확장, 이중화, k3d / k3s-lite 로컬 개발 환경, managed Kubernetes(EKS/GKE/AKS) 배포 가능 구조로 설계되었습니다.
+
+> 구동 모드는 ADR-0019에 따라 k3d (로컬) / managed K8s (운영) 이원화. docker compose 경로는 Phase 6에서 제거됨.
 
 ---
 
@@ -9,14 +11,15 @@
 
 | 서비스 | 포트 | 설명 |
 |--------|------|------|
-| `discovery` | 8761 | Eureka 서비스 디스커버리 |
-| `gateway` | 8080 | Spring Cloud Gateway (인증/인가, 라우팅) |
+| `gateway` | 8080 | Spring Cloud Gateway (인증/인가, 라우팅) — Eureka는 ADR-0019에서 K8s DNS로 대체 |
 | `product` | 8081 | 상품 서비스 (CRUD, 재고 관리) |
 | `order` | 8082 | 주문 서비스 (결제 연동, 이벤트 발행) |
 | `search` | 8083 | 검색 서비스 (Elasticsearch 기반, 읽기 전용) |
 | `search-consumer` | 8084 | Kafka 증분 색인 서비스 |
 | `search-batch` | 8085 | Spring Batch 전체 색인 서비스 |
 | `common` | — | 공통 라이브러리 모듈 |
+
+> 전체 서비스 목록(auth/member/wishlist/gifticon/inventory/fulfillment/warehouse/analytics/experiment/chatbot/code-dictionary/agent-viewer-api/quant, FE 6종, charting Python)은 [`CLAUDE.md`](CLAUDE.md) 참조.
 
 ---
 
@@ -38,47 +41,87 @@
 
 ---
 
-## 인프라 포트 현황
+## 인프라 (k3d 클러스터 내부)
 
-| 컨테이너 | 호스트 포트 | 용도 |
-|----------|------------|------|
-| mysql-product-master | 3316 | Product DB 쓰기 |
-| mysql-product-replica | 3317 | Product DB 읽기 |
-| mysql-order-master | 3326 | Order DB 쓰기 |
-| mysql-order-replica | 3327 | Order DB 읽기 |
-| redis-1~6 | 6379~6384 | Redis Cluster (3 Master + 3 Replica) |
-| elasticsearch | 9200, 9300 | 검색 엔진 |
-| zookeeper | 2181 | Kafka 코디네이터 |
-| kafka | 9092 | 메시지 브로커 |
+K8s 환경에선 모든 인프라가 ClusterIP로만 노출됩니다. 호스트에서 접근하려면 `kubectl port-forward` 사용.
+
+| Service (ClusterIP) | 포트 | 용도 |
+|---------------------|------|------|
+| `mysql` (+ 17개 alias) | 3306 | 서비스별 논리 DB (단일 인스턴스, ADR-0019 Phase 3a) |
+| `redis` | 6379 | Standalone (운영은 cluster, k3s-lite는 standalone 자동 전환) |
+| `kafka` | 9092 | KRaft 단일 노드 (Zookeeper 제거) |
+| `elasticsearch` | 9200 | 검색 인덱싱 |
+| `opensearch` | 9200 | code-dictionary 검색 |
+| `clickhouse` | 8123 (HTTP), 9000 (TCP) | analytics / quant |
+
+```bash
+# 호스트에서 mysql 접속하기
+kubectl -n commerce port-forward svc/mysql 3306:3306
+mysql -h 127.0.0.1 -P 3306 -uroot -p
+```
+
+운영(prod-k8s)에선 Operator 기반(Percona MySQL HA / Strimzi Kafka 등)으로 교체 — `k8s/infra/prod/`.
 
 ---
 
-## 빠른 시작
+## 빠른 시작 (k3d / k3s-lite)
 
-### 1. 환경변수 설정
+> 사전 요구: Docker, k3d, kubectl, helm, JDK 25. 프로덕션 배포는 [`k8s/overlays/prod-k8s/README.md`](k8s/overlays/prod-k8s/README.md) 참조.
+
+### 0. 클러스터 + ingress-nginx (최초 1회)
 
 ```bash
-cp docker/.env.example docker/.env
-# docker/.env 파일 열어서 비밀번호, JWT_SECRET, AES_KEY 값 설정
+k3d cluster create commerce \
+    --k3s-arg "--disable=traefik@server:*" \
+    -p "80:80@loadbalancer" -p "443:443@loadbalancer"
+
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+    --namespace ingress-nginx --create-namespace \
+    --set controller.ingressClassResource.default=true \
+    --set controller.admissionWebhooks.enabled=false
 ```
 
-### 2. 인프라 기동 (DB, Redis, Kafka, Elasticsearch)
+자세한 옵션은 [`k8s/infra/local/ingress-nginx/README.md`](k8s/infra/local/ingress-nginx/README.md).
+
+### 1. 이미지 빌드 & 클러스터 임포트
 
 ```bash
-docker compose -f docker/docker-compose.infra.yml up -d
+# JVM 서비스 (Spring Boot, Jib tar)
+./gradlew jibBuildTar
+scripts/image-import.sh --all
+
+# FE 6종 + charting (Python) — Docker daemon 필요
+scripts/image-import.sh --fe
+scripts/image-import.sh --image commerce/charting:latest
+
+# 또는 위 셋을 한 방에:
+scripts/image-import.sh --all-images
 ```
 
-### 3. 전체 서비스 기동
+### 2. 인프라 + 서비스 일괄 기동
 
 ```bash
-docker compose -f docker/docker-compose.yml up -d
+kubectl apply -k k8s/overlays/k3s-lite              # 인프라(MySQL/Redis/Kafka/ES/OpenSearch/ClickHouse) + 서비스 + ingress
+kubectl -n commerce get pods -w                     # Ready 상태까지 대기
 ```
 
-### 4. 서비스 단독 실행 (로컬 개발)
+접속: `http://localhost/admin/`, `/quant/`, `/charting/`, `/gifticon/`, `/agent-viewer/`, `/code-dictionary/` (FE), `/api/...` (gateway).
+
+### 3. 서비스 단독 실행 (로컬 개발 / k8s 외부)
 
 ```bash
-# 인프라 기동 후
-./gradlew :product:bootRun
+# 인프라만 기동된 상태에서 단일 서비스를 IDE/CLI로 실행
+./gradlew :product:app:bootRun
+./gradlew :quant:app:bootRun --args='--spring.profiles.active=local'
+```
+
+### 4. 정리
+
+```bash
+kubectl delete -k k8s/overlays/k3s-lite
+kubectl -n commerce delete pvc --all                # 데이터까지 초기화하려면
+k3d cluster delete commerce                         # 클러스터 자체 제거
 ```
 
 ---
@@ -101,6 +144,13 @@ docker compose -f docker/docker-compose.yml up -d
 
 # 테스트 제외 빌드
 ./gradlew build -x test
+
+# K8s용 이미지 빌드 (Jib tar 산출물: */build/jib-image.tar)
+./gradlew jibBuildTar                  # 전체
+./gradlew :product:app:jibBuildTar     # 단일
+
+# k3d/kind에 임포트 (FE/Python 포함)
+scripts/image-import.sh --all-images
 ```
 
 ---
@@ -150,24 +200,23 @@ presentation/    # REST Controller, DTO
 ```
 msa/
 ├── common/          # 공통 라이브러리 (bootJar 없음)
-├── discovery/       # Eureka Server
-├── gateway/         # Spring Cloud Gateway
+├── gateway/         # Spring Cloud Gateway (K8s DNS 라우팅, Eureka 제거)
 ├── product/         # 상품 서비스 (컨테이너)
 │   ├── domain/      #   순수 도메인 모듈 (Spring/JPA 의존성 없음)
 │   └── app/         #   Spring Boot 앱 (Application + Infrastructure + Presentation)
 ├── order/           # 주문 서비스 (컨테이너)
-│   ├── domain/      #   순수 도메인 모듈
-│   └── app/         #   Spring Boot 앱
-├── search/          # 검색 서비스 (컨테이너)
-│   ├── domain/      #   순수 도메인 모듈
-│   ├── app/         #   읽기 전용 REST 검색 API (포트 8083)
-│   ├── consumer/    #   Kafka 증분 색인 (포트 8084, BulkIngester)
-│   └── batch/       #   Spring Batch 전체 색인 (포트 8085, alias swap)
-├── docker/          # Docker Compose 설정
-│   ├── docker-compose.infra.yml
-│   ├── docker-compose.yml
-│   └── .env.example
-├── docs/            # 아키텍처 문서, ADR
+├── search/          # 검색 서비스 (app / consumer / batch + domain)
+├── quant/     # 분할매매 자동매매 (app + frontend PWA)
+├── auth, member, wishlist, gifticon, inventory, fulfillment, warehouse,
+│ analytics, experiment, chatbot, code-dictionary, agent-viewer/  # 서비스별 nested submodule
+├── admin/frontend, charting/{frontend,infra,src}, *-fe/        # FE & non-JVM
+├── k8s/             # Kustomize 매니페스트
+│   ├── base/        #   서비스 + FE 매니페스트 (env 무관)
+│   ├── infra/       #   local (k3d) / prod (Operator 기반)
+│   └── overlays/    #   k3s-lite (로컬) / prod-k8s (운영)
+├── scripts/         # image-import.sh, k3d-up.sh, k3d-mysql-{dump,restore}.sh
+├── docker/          # backup 스크립트, MySQL/ES init, JVM 베이스 Dockerfile
+├── docs/            # 아키텍처 문서, ADR, specs, plans
 └── gradle/
     └── libs.versions.toml  # Version Catalog (중앙 버전 관리)
 ```
