@@ -1,0 +1,33 @@
+# ADR-0031 §5.10 — 백엔드 Pod 의 내부 egress 보강 (Phase 1 결함 보정)
+#
+# 기존 05~09 파일은 인프라(mysql/redis/kafka/clickhouse/es/os) 의 ingress
+# 만 풀어주고 있다. default-deny-all 이 백엔드 Pod 의 egress 도 막고 있어
+# `applyConfigured: NetworkPolicy` 후 모든 백엔드가 인프라/타 백엔드 호출에
+# 실패하는 사이드 이펙트가 있었음 (k3d 로컬 검증 2026-05-02).
+#
+# 보강 방향:
+#   - 백엔드 Pod (part-of=commerce-platform, NotIn 인프라) 에 대해
+#     commerce namespace 내부 모든 Pod 으로의 egress 를 허용한다.
+#   - 외부 트래픽은 11-allow-egress-https-public 에서 별도 통제.
+#   - DNS 는 01-allow-dns-egress 에서 별도 처리.
+#
+# 더 보수적으로 좁히려면 인프라 6종 + gateway/order/product/search 등
+# 명시 selector + port whitelist 로 분해 가능. zero-trust 강화는 Phase 2.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-egress-internal
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/part-of, operator: In, values: [commerce-platform] }
+      - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, elasticsearch, opensearch, clickhouse] }
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector: {}                # commerce ns 내부 모든 Pod

@@ -1,3 +1,16 @@
 spring:
   datasource:
-    url: jdbc:mysql://mysql:3306/quant?useSSL=false&serverTimezone=UTC
+    url: jdbc:mysql://mysql-quant-master:3306/quant?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+
+# ADR-0029 PR-9 — processed_event 7일 retention cleanup 스케줄러 활성화.
+# common 의 IdempotentEventCleanupScheduler 가 매일 cron 시각에 retention 보다 오래된 row 를 삭제.
+# (base application.yml 의 kgd.common.{redis,analytics} 블록을 보강.)
+kgd:
+  common:
+    messaging:
+      idempotent:
+        cleanup:
+          enabled: true
+          retention: P7D
+          cron: "0 0 4 * * *"
+          zone: Asia/Seoul

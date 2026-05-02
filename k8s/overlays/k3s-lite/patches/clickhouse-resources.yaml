@@ -1,0 +1,18 @@
+# ClickHouse 는 기본 1Gi limit 으로는 standalone 부팅 중 OOMKilled.
+# k3s-lite 단일 노드 기준 2Gi 로 상향 — analytics / experiment / quant 가
+# clickhouse 의존이라 본 한도 부족이 곧바로 4개 서비스 연쇄 실패로 이어짐.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+spec:
+  template:
+    spec:
+      containers:
+        - name: clickhouse
+          resources:
+            requests:
+              cpu: 100m
+              memory: 1Gi
+            limits:
+              memory: 2Gi

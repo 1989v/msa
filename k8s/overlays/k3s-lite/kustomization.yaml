@@ -82,9 +82,22 @@ patches:
       kind: Deployment
       name: code-dictionary
 
+  # gifticon: 글로벌 512Mi limit 부족 → OOMKilled. 768Mi 로 상향.
+  - path: patches/gifticon-resources.yaml
+    target:
+      kind: Deployment
+      name: gifticon
+
   # quant Phase 2: replicas=1 강제 (Recreate) + KMS local + outbox kafka-relay enable
   # + Telegram dispatcher disabled (Bot Token 미설정 시) — TG-P2-15
   - path: patches/quant-phase2.yaml
     target:
       kind: Deployment
       name: quant
+
+  # clickhouse: 1Gi limit 부족 → OOMKilled. 2Gi 로 상향.
+  # analytics / experiment / quant 가 의존하므로 회복 시 연쇄 회복.
+  - path: patches/clickhouse-resources.yaml
+    target:
+      kind: StatefulSet
+      name: clickhouse

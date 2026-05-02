@@ -26,6 +26,7 @@ resources:
   - 09-allow-app-to-clickhouse.yaml
   - 10-allow-monitoring-scrape.yaml
   - 11-allow-egress-https-public.yaml
+  - 12-allow-backend-egress-internal.yaml
 
 # 주의: commonLabels / labels (includeSelectors=true) 는 사용 금지.
 # NetworkPolicy 의 podSelector.matchLabels 에 합쳐지면 selector 가

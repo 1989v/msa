@@ -23,6 +23,7 @@ data:
     CREATE DATABASE IF NOT EXISTS warehouse_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS code_dictionary_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS experiment_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS quant        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     CREATE USER IF NOT EXISTS 'product_user'@'%'          IDENTIFIED BY 'product_password';
     CREATE USER IF NOT EXISTS 'order_user'@'%'            IDENTIFIED BY 'order_password';
@@ -35,6 +36,7 @@ data:
     CREATE USER IF NOT EXISTS 'fulfillment_user'@'%'      IDENTIFIED BY 'fulfillment_password';
     CREATE USER IF NOT EXISTS 'warehouse_user'@'%'        IDENTIFIED BY 'warehouse_password';
     CREATE USER IF NOT EXISTS 'code_dictionary_user'@'%'  IDENTIFIED BY 'code_dictionary_password';
+    CREATE USER IF NOT EXISTS 'quant'@'%'           IDENTIFIED BY 'quant';
     CREATE USER IF NOT EXISTS 'commerce'@'%'              IDENTIFIED BY '';
 
     GRANT ALL PRIVILEGES ON product_db.*         TO 'product_user'@'%';
@@ -49,5 +51,6 @@ data:
     GRANT ALL PRIVILEGES ON warehouse_db.*       TO 'warehouse_user'@'%';
     GRANT ALL PRIVILEGES ON code_dictionary_db.* TO 'code_dictionary_user'@'%';
     GRANT ALL PRIVILEGES ON experiment_db.*      TO 'commerce'@'%';
+    GRANT ALL PRIVILEGES ON quant.*        TO 'quant'@'%';
 
     FLUSH PRIVILEGES;
