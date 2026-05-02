@@ -1,0 +1,32 @@
+# ADR-0031 §5.9 — monitoring ns → 모든 백엔드 actuator scrape
+#
+# monitoring ns 의 Prometheus 가 commerce ns 의 백엔드 /actuator/prometheus 를
+# scrape 하도록 named port http 허용.
+#
+# 라벨 선택 근거:
+#   - k8s/infra/prod/monitoring/servicemonitor-apps.yaml:8 — monitoring ns 에서 scrape
+#   - K8s 1.22+ 에서 namespace 의 kubernetes.io/metadata.name 라벨 자동 부여
+#
+# k3s-lite 비고: 로컬에는 monitoring ns 를 배포하지 않으므로 이 정책은 no-op.
+# 그래도 base 에 두면 prod 에서 그대로 효과 발휘. (overlay patch 로 끄지 않아도 무해함)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-monitoring-scrape
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: commerce-platform
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - { port: http, protocol: TCP }     # /actuator/prometheus 는 service 별 named port http 에서 노출

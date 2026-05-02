@@ -1,0 +1,31 @@
+# ADR-0031 §1 (table) — analytics → ClickHouse (8123 HTTP)
+#
+# 현재 ClickHouse 호출은 analytics 서비스만 한다.
+# 다른 서비스가 추가로 필요해지면 from.podSelector matchExpressions 에 In list 추가.
+#
+# 라벨 선택 근거:
+#   - k8s/infra/local/clickhouse/service.yaml:8 (app.kubernetes.io/name=clickhouse)
+#   - k8s/base/analytics/deployment.yaml:7 (app.kubernetes.io/name=analytics)
+#
+# 포트 비고: ClickHouse 의 HTTP interface = 8123 (default). Native TCP = 9000 (미사용).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-clickhouse
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: clickhouse
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: analytics
+      ports:
+        - { port: 8123, protocol: TCP }

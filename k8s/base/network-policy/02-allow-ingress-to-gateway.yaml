@@ -1,0 +1,30 @@
+# ADR-0031 §5.3 — ingress-nginx → gateway 만 허용
+#
+# 외부 트래픽은 ingress-nginx 를 통해서만 들어와야 하며,
+# gateway 는 ingress-nginx ns 의 Pod 만 받아들인다.
+# 다른 ns 또는 commerce ns 내부 Pod 가 직접 gateway:8080 호출 차단.
+#
+# 라벨 선택 근거:
+#   - k8s/base/gateway/deployment.yaml:7 (app.kubernetes.io/name=gateway)
+#   - ingress-nginx 차트 기본 ns 라벨: kubernetes.io/metadata.name=ingress-nginx
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-gateway
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - { port: 8080, protocol: TCP }

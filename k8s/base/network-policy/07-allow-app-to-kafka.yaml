@@ -1,0 +1,33 @@
+# ADR-0031 §5.8 — 백엔드 → Kafka (9092)
+#
+# commerce ns 의 Spring Boot 백엔드만 kafka:9092 (CLIENT listener) 호출 허용.
+# 29092 (INTERNAL) / 9093 (CONTROLLER) 는 broker 자기 자신만 사용 → 외부 허용 X.
+#
+# 라벨 선택 근거:
+#   - k8s/infra/local/kafka/statefulset.yaml:7 (app.kubernetes.io/name=kafka)
+#   - k8s/infra/local/kafka/service.yaml:13 (port 9092 = CLIENT)
+#
+# prod 비고: Strimzi Kafka 는 strimzi.io/cluster=commerce 라벨을 쓰므로
+# prod overlay 에서 selector 한 줄 추가 필요 (Phase 2 작업).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-kafka
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: kafka
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/part-of, operator: In, values: [commerce-platform] }
+              - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, elasticsearch, opensearch, clickhouse] }
+      ports:
+        - { port: 9092, protocol: TCP }

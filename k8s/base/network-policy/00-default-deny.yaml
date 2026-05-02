@@ -1,0 +1,21 @@
+# ADR-0031 §5.1 — Default-deny (Phase 0: 검토용, overlay 미포함)
+#
+# commerce namespace 의 모든 Pod 에 대한 ingress / egress 를 기본 차단.
+# 다른 NetworkPolicy 가 명시적으로 허용하는 트래픽만 통과한다.
+#
+# 주의: 이 정책 단독으로는 DNS 도 차단되어 모든 서비스가 즉사한다.
+# 반드시 01-allow-dns-egress.yaml 과 함께 적용한다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector: {}                       # commerce ns 의 모든 Pod
+  policyTypes:
+    - Ingress
+    - Egress
+  # ingress / egress 필드 없음 → 모두 차단

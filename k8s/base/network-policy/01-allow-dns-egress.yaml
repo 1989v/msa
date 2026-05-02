@@ -1,0 +1,30 @@
+# ADR-0031 §5.2 — DNS egress 허용 (필수)
+#
+# default-deny-all 만 적용하면 Pod 가 service DNS (예: mysql-product-master)
+# 조회조차 못 해 모든 통신이 즉사한다. 이 정책은 ns 전체 Pod 에 대해
+# kube-system/kube-dns:53 (UDP+TCP) 호출을 허용한다.
+#
+# 검증: kubectl exec <any-pod> -- nslookup kubernetes.default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector: {}                       # ns 전체
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns          # CoreDNS 표준 라벨 (k3s/EKS/GKE/AKS 동일)
+      ports:
+        - { port: 53, protocol: UDP }
+        - { port: 53, protocol: TCP }

@@ -82,8 +82,8 @@ order: 00
 
 | # | 항목 | 사유 | 권장 액션 |
 |---|---|---|---|
-| R1 | `inventory.stock.received` topic publisher 위치 검증 | 본 리포트 시점에 inventory `outboxPort.save` 의 모든 eventType grep 까진 안 함 | 다음 검증 round 에서 inventory `OutboxPolling` + `inventoryEvent` payload 검사 |
-| R2 | `product/CLAUDE.md` 의 "Product는 Inventory의 SSOT" 표현 | study 자료 범위 외 (CLAUDE.md 수정 금지 정책) | 별도 PR 또는 hns:gc 시 재검토 |
+| R1 | ~~`inventory.stock.received` topic publisher 위치 검증~~ | **해결 (2026-05-02 round 2)**: `inventory/app/.../InventoryService.kt:181-187` 가 `outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.received", ...)` 호출 — publisher 존재 확인 | unchanged — Outbox 패턴 일관 |
+| R2 | ~~`product/CLAUDE.md` 의 "Product는 Inventory의 SSOT" 표현~~ | **해결 (2026-05-02)**: `product/CLAUDE.md` 직접 수정 — "Product 는 카탈로그(이름/가격/카테고리/상태) 의 SSOT, 재고는 Inventory 가 SSOT (ADR-0013)" 로 정정 | unchanged |
 | R3 | 메타 마커 (`"검증 필요" 라고 말하라`, future-looking Strimzi/OTel 도입 등) | stale 아님 (학습 권장 또는 외부 의존 검토) | 정기적 재검토 불필요 |
 | R4 | `8-system-design/05-payment-system.md:247` "PENDING → TIMEOUT (★ 재확인 필요)" | 상태머신 design note (런타임 확인 권장) — stale code claim 아님 | unchanged |
 

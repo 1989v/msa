@@ -1,0 +1,34 @@
+# ADR-0031 §5.4 — gateway → 모든 백엔드 named port "http"
+#
+# gateway 만 백엔드 서비스의 named port http 로 호출 가능.
+# 대상: app.kubernetes.io/part-of=commerce-platform 이면서 name != gateway
+# (인프라 statefulset 은 part-of 라벨이 없으므로 자동 제외됨 — 검증 필요)
+#
+# named port "http" 를 사용하므로 서비스별 포트 번호 다양성 (8080-8095, 8010, 80) 추상화.
+# 모든 base/{service}/deployment.yaml 의 containerPort 가 name: http 로 정의되어 있다.
+#
+# 라벨 선택 근거:
+#   - 16개 모든 backend deployment 가 동일 패턴 사용 확인
+#   - k8s/base/product/deployment.yaml:7-8, k8s/base/order/deployment.yaml:7-8 …
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-backends
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/part-of, operator: In, values: [commerce-platform] }
+      - { key: app.kubernetes.io/name, operator: NotIn, values: [gateway] }
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: gateway
+      ports:
+        - { port: http, protocol: TCP }     # named port; service 별 8080~8095 / 8010 / 80

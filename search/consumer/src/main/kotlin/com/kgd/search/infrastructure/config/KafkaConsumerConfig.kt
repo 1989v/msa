@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.config
 
+import com.kgd.common.exception.BusinessException
 import com.kgd.search.infrastructure.messaging.ProductIndexEvent
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -41,7 +42,13 @@ class KafkaConsumerConfig {
         factory.setCommonErrorHandler(
             DefaultErrorHandler(
                 ExponentialBackOff(1000L, 2.0).apply { maxElapsedTime = 30_000L }
-            )
+            ).apply {
+                // ADR-0015 §2: 비즈니스 예외와 입력 검증 예외는 재시도 무의미 → 즉시 종료.
+                addNotRetryableExceptions(
+                    BusinessException::class.java,
+                    IllegalArgumentException::class.java,
+                )
+            }
         )
         return factory
     }

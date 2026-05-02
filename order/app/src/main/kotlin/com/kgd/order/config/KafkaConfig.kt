@@ -1,5 +1,6 @@
 package com.kgd.order.infrastructure.config
 
+import com.kgd.common.exception.BusinessException
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -67,7 +68,13 @@ class KafkaConfig {
                 DefaultErrorHandler(
                     DeadLetterPublishingRecoverer(kafkaTemplate),
                     FixedBackOff(1000L, 3L),
-                )
+                ).apply {
+                    // ADR-0015 §2: 비즈니스 예외와 입력 검증 예외는 재시도 무의미 → 즉시 DLT.
+                    addNotRetryableExceptions(
+                        BusinessException::class.java,
+                        IllegalArgumentException::class.java,
+                    )
+                }
             )
         }
 }

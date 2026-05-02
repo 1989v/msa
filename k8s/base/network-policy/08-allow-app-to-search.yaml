@@ -1,0 +1,30 @@
+# ADR-0031 §1 (table) — 백엔드 → Search (Elasticsearch / OpenSearch :9200)
+#
+# search 계열 서비스 (search, search-batch, search-consumer) 와 code-dictionary 가
+# OpenSearch / Elasticsearch 를 호출한다. selector 는 In 으로 둘 다 허용한다.
+#
+# 라벨 선택 근거:
+#   - k8s/infra/local/elasticsearch/service.yaml:8 (app.kubernetes.io/name=elasticsearch)
+#   - k8s/infra/local/opensearch/service.yaml:8  (app.kubernetes.io/name=opensearch)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-search
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/name, operator: In, values: [elasticsearch, opensearch] }
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/part-of, operator: In, values: [commerce-platform] }
+              - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, elasticsearch, opensearch, clickhouse] }
+      ports:
+        - { port: 9200, protocol: TCP }

@@ -1,0 +1,29 @@
+# ADR-0031 §5.5 — 백엔드 ↔ 백엔드 (제한적)
+#
+# 직접 백엔드-백엔드 호출은 의도적으로 마찰을 둔다 (Saga / 이벤트 기반 권장).
+# 현재 유일하게 허용되는 페어:
+#   - order → product  (order/.../WebClientConfig.kt:14-18)
+#
+# 새 백엔드-백엔드 호출이 추가되면 별도 NetworkPolicy 를 추가한다.
+# 공유 manifest 한 파일에 모아두고 ingress 를 늘리는 방식 (per-target)으로 관리.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-order-to-product
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: product
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: order
+      ports:
+        - { port: http, protocol: TCP }

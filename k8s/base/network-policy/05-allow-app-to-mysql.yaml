@@ -1,0 +1,33 @@
+# ADR-0031 §5.6 — 백엔드 → MySQL (3306)
+#
+# commerce ns 의 Spring Boot 백엔드 (part-of=commerce-platform)만 mysql:3306 호출 허용.
+# 인프라 statefulset (mysql, redis, kafka, ...) 자기들끼리는 차단 (NotIn list).
+#
+# 라벨 선택 근거:
+#   - k8s/infra/local/mysql/statefulset.yaml:7 (app.kubernetes.io/name=mysql)
+#   - 16 backend deployment 가 part-of=commerce-platform 라벨 보유
+#
+# prod 비고: Percona Operator 는 별도 라벨 (app.kubernetes.io/instance=...) 을 쓸 수
+# 있으므로 prod overlay 에서 selector 보강 필요 (Phase 2 작업).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-mysql
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: mysql
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/part-of, operator: In, values: [commerce-platform] }
+              - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, elasticsearch, opensearch, clickhouse] }
+      ports:
+        - { port: 3306, protocol: TCP }

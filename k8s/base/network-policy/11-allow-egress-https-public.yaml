@@ -1,0 +1,36 @@
+# ADR-0031 §5.10 — 외부 HTTPS egress (제한된 서비스만)
+#
+# 외부 인터넷 :443 호출이 필요한 서비스 화이트리스트:
+#   - auth         OAuth 토큰 검증 (Google/Apple/Kakao 등)
+#   - quant  거래소 API (Binance/Upbit/Bithumb), Telegram, KMS (OCI Vault — ADR-0027)
+#   - gifticon     외부 OCR API
+#   - charting     외부 시세 / 차트 데이터 API
+# 다른 서비스는 외부 :443 차단된 상태 (default-deny + DNS only).
+#
+# CIDR 정책: 0.0.0.0/0 - RFC1918 (클러스터 내부) - link-local.
+# 새 KMS / 외부 API 사용 서비스가 추가되면 matchExpressions.values 에 추가한다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress-https-public
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, gifticon, charting] }
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8                  # 클러스터/사설망
+              - 172.16.0.0/12               # 클러스터/사설망
+              - 192.168.0.0/16              # 클러스터/사설망
+              - 169.254.0.0/16              # link-local (cloud metadata 차단)
+      ports:
+        - { port: 443, protocol: TCP }

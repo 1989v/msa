@@ -1,0 +1,33 @@
+# ADR-0031 §5.7 — 백엔드 → Redis (6379)
+#
+# commerce ns 의 Spring Boot 백엔드만 redis:6379 호출 허용.
+# k3s-lite 에서는 standalone, prod 에서는 cluster 인데 라벨은 동일 (app.kubernetes.io/name=redis).
+#
+# 라벨 선택 근거:
+#   - k8s/infra/local/redis/statefulset.yaml:7 (app.kubernetes.io/name=redis)
+#   - prod Bitnami chart 도 동일 라벨 사용 (값 보강은 Phase 2)
+#
+# 비고: Bitnami Redis chart 의 networkPolicy.enabled 와 본 정책의 중복은
+# Phase 2 말미에 일원화 (ADR-0031 §6 Consequences).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-to-redis
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchExpressions:
+              - { key: app.kubernetes.io/part-of, operator: In, values: [commerce-platform] }
+              - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, elasticsearch, opensearch, clickhouse] }
+      ports:
+        - { port: 6379, protocol: TCP }

@@ -1,0 +1,35 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# ADR-0031 — NetworkPolicy (Phase 0: 검토용)
+#
+# 본 kustomization 은 commerce namespace 의 default-deny + allowlist 정책 set 을 묶는다.
+# Phase 0 (현재) 에서는 어떤 overlay 에도 포함되어 있지 않다 → 적용되지 않는다.
+# Phase 1 에서 k8s/overlays/k3s-lite/kustomization.yaml 의 resources 에 추가하면 활성화된다.
+#
+# 적용 순서/의존성: K8s NetworkPolicy 는 선언적이라 적용 순서는 무관하다.
+# 다만 운영자 가독성을 위해 prefix (00-, 01-, ...) 로 정렬했다.
+#
+# Rollback: kubectl delete -k k8s/base/network-policy
+namespace: commerce
+
+resources:
+  - 00-default-deny.yaml
+  - 01-allow-dns-egress.yaml
+  - 02-allow-ingress-to-gateway.yaml
+  - 03-allow-gateway-to-backends.yaml
+  - 04-allow-backend-to-backend.yaml
+  - 05-allow-app-to-mysql.yaml
+  - 06-allow-app-to-redis.yaml
+  - 07-allow-app-to-kafka.yaml
+  - 08-allow-app-to-search.yaml
+  - 09-allow-app-to-clickhouse.yaml
+  - 10-allow-monitoring-scrape.yaml
+  - 11-allow-egress-https-public.yaml
+
+# 주의: commonLabels / labels (includeSelectors=true) 는 사용 금지.
+# NetworkPolicy 의 podSelector.matchLabels 에 합쳐지면 selector 가
+# 의도치 않은 라벨 조건을 강제하여 정책이 영구 no-op 이 된다.
+# (예: analytics Pod 에 app.kubernetes.io/component=network-policy 가 없음 →
+# allow-app-to-clickhouse 가 매칭되는 from Pod 0개)
+# 메타데이터 라벨은 각 매니페스트 metadata.labels 에 직접 작성한다.
