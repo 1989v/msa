@@ -62,9 +62,30 @@ sequenceDiagram
 
 ## 3. 단계별 코드 분석
 
-### 3.1 Order 측 (시작점, 추정)
+### 3.1 Order 측 (시작점) — 검증 결과 (2026-05-01)
 
-`order/app/src/main/kotlin/com/kgd/order/.../OrderService.kt` 가 주문 완료 시 outbox 에 `order.order.completed` 저장. 동일 Outbox 패턴.
+**검증 결과**: Order 는 **Outbox 패턴을 사용하지 않는다**. 실제 코드 — `order/app/src/main/kotlin/com/kgd/order/messaging/OrderEventAdapter.kt:14-54` 는 `KafkaTemplate` 으로 **직접 발행**:
+
+```kotlin
+@Component
+class OrderEventAdapter(
+    private val kafkaTemplate: KafkaTemplate<String, Any>,
+    @Value("\${kafka.topics.order-completed}") private val completedTopic: String,
+    @Value("\${kafka.topics.order-cancelled}") private val cancelledTopic: String,
+) : OrderEventPort {
+    override fun publishOrderCompleted(order: Order) {
+        val event = OrderCompletedEvent(...)
+        kafkaTemplate.send(completedTopic, order.id.toString(), event)
+            .whenComplete { _, ex -> if (ex != null) log.error(...) else log.info(...) }
+    }
+}
+```
+
+→ **이는 ADR-0011 의 "Outbox 로 발행 원자성 보장" 원칙에서 Order 가 빠져 있는 상태**. inventory/fulfillment 만 OutboxPollingPublisher 보유 (`inventory/app/.../infrastructure/messaging/OutboxPollingPublisher.kt:22`, `fulfillment/.../OutboxPollingPublisher.kt:22`). 따라서 다음 시나리오에 취약:
+
+- Order DB commit 성공 → `kafkaTemplate.send` 실패 → consumer 가 영원히 못 받음
+- DB commit 후 프로세스 crash → 같은 결과
+- → **개선 후보 (P0)**: Order 도 OutboxPollingPublisher 도입 또는 Spring Kafka Transactional Outbox 사용 (19-improvements §1 보강 필요).
 
 ### 3.2 Inventory 측 — order.completed 수신 + reserve
 

@@ -116,9 +116,14 @@ msa 프로젝트가 이미 MSA 기반이라 모든 패턴이 적용 가능하며
 
 ## 7. 미결 사항
 
+> **회고 (2026-05-02)**: 본 섹션은 plan 작성 시점의 미결 항목이며, 현재 deep study 완료 상태에서 각 항목별로 마킹됨.
+
 - 이론 깊이: Raft/Paxos 내부 알고리즘 이해 vs 개념만
+  - ✅ 결정: 알고리즘 절차까지 깊이 학습. `06-paxos-raft.md` 에서 Raft election/log/safety 절차 + etcd/ZK 비교까지.
 - 실습 포함: Resilience4j 실제 구현 실습?
+  - ✅ 결정: Phase 3 코드베이스 적용으로 통합 — `18-codebase-resilience.md` 에서 ADR-0015 의 Circuit Breaker 적용처 + Token Bucket + Admission Control 분석. 별도 lab 대신 실 코드 grep + improvements §5 (Bulkhead 명시화 P1) 로 후속 ADR 후보화.
 - Event Sourcing 도입 가능성 검토 포함 여부
+  - ✅ 결정: `15-event-sourcing-cqrs.md` 이론 + improvements §10 (P3) 에서 quant ledger/position 도메인 ES 도입 ADR 후보 등재.
 
 ## 8. 원본 메모
 

@@ -6,6 +6,34 @@
 
 ---
 
+## ⚠️ ADR 번호 정합성 재조정 (2026-05-02 update)
+
+본 문서의 본문에서 사전 할당된 ADR 번호 (ADR-0028~0061)와 **실제 `docs/adr/` 에 부여된 번호가 다르다**. 본문 내 번호는 학습 단계 가번호이며, 실제 채택 ADR 번호는 아래 표가 source of truth 다.
+
+| 실제 부여 번호 | 본문 가번호 | 제목 | 상태 |
+|---|---|---|---|
+| **ADR-0028** | (가번호 ADR-0030) | 분산 추적 (OpenTelemetry + Tempo) | Proposed (`docs/adr/ADR-0028-distributed-tracing.md`) |
+| **ADR-0029** | (가번호 ADR-0033) | Idempotent Consumer Helper (ADR-0012 보강) | Proposed (`docs/adr/ADR-0029-idempotent-consumer-helper.md`) |
+| **ADR-0030** | (가번호 ADR-0029) | Read-after-Write Stickiness | Proposed (`docs/adr/ADR-0030-read-after-write-stickiness.md`) |
+| **ADR-0031** | (가번호 ADR-0034) | K8s NetworkPolicy (Default-Deny) | Proposed (`docs/adr/ADR-0031-network-policy.md`) |
+| **ADR-0032** | (신규 — verification round) | Order Outbox + Cancellation Compensation | Proposed (`docs/adr/ADR-0032-order-outbox-cancellation.md`) |
+
+### 실 ADR 추가 후 잔여 가번호 후보
+
+본문 §2-§5 의 가번호 ADR-0028 (JVM Tuning), ADR-0031 (gateway 고도화), ADR-0032 (Outbox 운영), ADR-0034 (NetworkPolicy 외 보안), ADR-0035~0061 등은 **모두 실제 부여 안 됨**. 향후 ADR 작성 시 `docs/adr/` 의 다음 비어있는 번호 (현재 ADR-0033 부터) 부터 순차 할당 권장.
+
+### Verification Round (2026-05-02) 추가 후보
+
+`study/docs/00-VERIFICATION-REPORT.md` 의 검증 결과로 신규 발견된 P0 갭 (본문에 없던 항목):
+
+- **ADR-0032 — Order Outbox + Cancellation Compensation** (위 표에 이미 등재). ADR-0011 위반 (Order 측 Outbox 부재) + `order.order.cancelled` consumer 부재의 두 갭을 묶음.
+- **잔여 follow-up (ADR 미할당)**:
+  - `addNotRetryableExceptions` 미적용 — ADR-0015 ErrorHandler 보강 ticket (별도)
+  - `processed_event` cleanup 스케줄러 미존재 — ADR-0029 Phase 2 작업으로 흡수 (Verification Follow-up 섹션 참조)
+  - `InventoryStockSyncConsumer.kt` 멱등 체크 누락 — ADR-0029 Phase 3 마이그레이션 대상에 추가
+
+---
+
 ## 1. Executive Summary
 
 - 총 **34개** ADR 후보 발굴 (중복 제거 후)

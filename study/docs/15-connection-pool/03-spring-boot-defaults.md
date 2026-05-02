@@ -141,7 +141,7 @@ spring:
 
 ### 3. 다중 DataSource 시 Auto-config 우회
 
-R/W 분리처럼 master/replica 두 DataSource 가 필요하면 자동 설정이 더 이상 알맞지 않다. msa 프로젝트는 [DataSourceConfig.kt](file:///Users/gideok-kwon/IdeaProjects/msa/product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt) 처럼 직접 선언.
+R/W 분리처럼 master/replica 두 DataSource 가 필요하면 자동 설정이 더 이상 알맞지 않다. msa 프로젝트는 DataSourceConfig.kt (`product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt`) 처럼 직접 선언.
 
 ```kotlin
 @Bean

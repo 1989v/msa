@@ -128,7 +128,7 @@ DNS 조회:
 - 일반 ClusterIP Service: A 레코드 1개 (= ClusterIP)
 - Headless: A 레코드 N개 (= 모든 Pod IP) → **클라이언트가 직접 LB 결정**
 
-이 차이가 [#18 gRPC 학습](../18-grpc-deep-dive/) 에서 보았던 "gRPC 가 ClusterIP Service 뒤에 있으면 한 Pod 으로만 트래픽이 몰린다" 문제의 해결책이다 — Headless 로 두면 gRPC client (또는 Lettuce) 가 모든 Pod IP 를 보고 자체 LB.
+이 차이가 [#18 gRPC 학습](../18-grpc/) 에서 보았던 "gRPC 가 ClusterIP Service 뒤에 있으면 한 Pod 으로만 트래픽이 몰린다" 문제의 해결책이다 — Headless 로 두면 gRPC client (또는 Lettuce) 가 모든 Pod IP 를 보고 자체 LB.
 
 ## 5. Service — ClusterIP / NodePort / LoadBalancer / ExternalName
 

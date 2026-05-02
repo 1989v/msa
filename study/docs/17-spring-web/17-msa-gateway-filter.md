@@ -280,7 +280,7 @@ class RateLimiterConfig {
 |---|---|---|---|
 | 1 | RequestLoggingFilter | `Integer.MIN_VALUE` (HIGHEST_PRECEDENCE) | 모든 시간 측정 포함 |
 | 2 | VisitorIdFilter | `-10` | 인증 전 vid 헤더 |
-| 3 | ExperimentAssignmentFilter | (확인 필요) | A/B bucket 할당 |
+| 3 | ExperimentAssignmentFilter | `-5` (`gateway/src/main/kotlin/com/kgd/gateway/filter/ExperimentAssignmentFilter.kt:27`) | A/B bucket 할당 |
 | 4 | AuthenticationGatewayFilter | (라우트마다 명시) | 인증 |
 | 5 | RedisRateLimiter | (Spring Cloud Gateway 내부) | 인증된 user 기준 limit |
 | 6 | NettyRoutingFilter | `Ordered.LOWEST_PRECEDENCE` | downstream forward |

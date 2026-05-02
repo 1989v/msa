@@ -133,10 +133,16 @@ codebase-relevant: false
 
 ## 7. 미결 사항
 
+> **회고 (2026-05-02)**: 본 섹션은 plan 작성 시점의 미결 항목이며, 현재 deep study 완료 상태에서 각 항목별로 마킹됨.
+
 - 10개 다 할지 vs 핵심 5-6개 심화
+  - ✅ 결정: 10개 + 공통 framework 모두 작성 (`02-url-shortener` ~ `11-map-system`). msa grounding 3건 (Rate Limiter / Search / e-Commerce) 은 코드 직접 분석 깊이로 차등.
 - Whiteboard 연습 vs 노트 정리만
+  - ⏸️ 미결 (이유: 본 학습 결과물은 노트 정리 형태로 산출. 실제 whiteboard 연습은 학습 자료 회독 후 별도 활동으로 분리 — preview 의 "면접 진행 표준 30분" 표가 가이드 역할).
 - 시뮬레이션 시간 (30분 × 10회)
+  - ⏸️ 미결 (이유: 본 단계는 자료 작성. 30분 시뮬레이션 회독은 학습 종료 후 회독 단계로 분리 — `00-LEARNING-GUIDE.md` 회독 전략 참조).
 - msa 경험 연결 스토리 작성 분량
+  - ✅ 결정: e-Commerce 시나리오(`10-ecommerce-system.md`) 가 msa 회고 통합 + improvements (`12-improvements.md`) 에서 P0-P3 12개 ADR 후보로 압축. 면접 답변 즉시 활용 가능 분량.
 
 ## 8. 원본 메모
 

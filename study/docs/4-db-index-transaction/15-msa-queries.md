@@ -281,7 +281,7 @@ suspend fun processOrder(order: Order) {
 
 ### NOT IN / `<>` (점검 필요)
 
-QueryDSL 의 `ne`, `notIn` 사용 여부 — grep 으로 추가 확인 필요. 발견 시 케이스별 점검.
+QueryDSL 의 `ne`, `notIn` 사용 여부 — **검증 결과 (2026-05-01)**: msa 코드베이스에 `.ne(`, `.notIn(` 호출 zero hit. 즉 부정 술어 사용처가 없어 인덱스 스캔 불가 위험은 현재 없음.
 
 ## 멘탈 모델
 

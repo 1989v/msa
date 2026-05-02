@@ -116,10 +116,16 @@ msa 프로젝트가 다중 서비스 구조라 관측성 필요도가 매우 높
 
 ## 7. 미결 사항
 
+> **회고 (2026-05-02)**: 본 섹션은 plan 작성 시점의 미결 항목이며, 현재 deep study 완료 상태에서 각 항목별로 마킹됨.
+
 - 실습 범위: 로컬 Prometheus + Grafana 스택 구축?
+  - 🔄 부분 결정: 이론 + k3d 환경 적용(`02-prometheus-pull-model.md`) + msa 현 상태 grep(`12-msa-current-state.md`) — kube-prometheus-stack/ServiceMonitor 가 이미 있어 신규 stack 구축 불필요 / 추가 검토 필요: HPA Custom Metric 연결 (improvements ADR-X4 후속).
 - 분산 Tracing 도입 여부 (msa 에 현재 미도입 상태일 가능성)
+  - ✅ 결정: 미도입 확인 → improvements 의 ADR-X3 (OpenTelemetry + Tempo 도입) 으로 정식 ADR 초안 (⭐⭐⭐⭐⭐ / 1-2주). `08-opentelemetry-tracing.md` + `09-sampling-and-correlation.md` 가 근거 자료.
 - SLO 설계 실습 깊이
+  - ✅ 결정: `10-slo-sli-error-budget.md` 에서 multi-window burn rate alert + ADR-0025 latency budget 결합까지. RED Dashboard 표준화는 improvements ADR-X4 (quick win 0.5주).
 - 로그 파이프라인 (Loki vs ELK) 선택 근거 비교
+  - ✅ 결정: `06-logs-elk-vs-loki.md` 에서 비용/카디널리티 트레이드오프 비교 → Loki 채택. improvements ADR-X2 (Loki + Promtail 도입, ⭐⭐⭐⭐⭐) 으로 정식화.
 
 ## 8. 원본 메모
 

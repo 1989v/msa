@@ -26,7 +26,7 @@ created: 2026-05-01
 → 분산 동시 쓰기 자체가 없음 → CRDT 불필요
 ```
 
-CRDT 의 트리거인 *multi-region active-active* 가 없다. K8s 운영도 현재 단일 region (k3s-lite 또는 prod-k8s, [ADR-0019](../../docs/adr/ADR-0019-k8s-migration.md)).
+CRDT 의 트리거인 *multi-region active-active* 가 없다. K8s 운영도 현재 단일 region (k3s-lite 또는 prod-k8s, ADR-0019 — `docs/adr/ADR-0019-k8s-migration.md`).
 
 ## 영역 1: analytics (PV/UV 카운터, 좋아요)
 

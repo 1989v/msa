@@ -245,7 +245,7 @@ fun fooInternal() {
 }
 ```
 
-[ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 에서 금지.
+ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 에서 금지.
 
 ### 3. service 내부 chained call
 

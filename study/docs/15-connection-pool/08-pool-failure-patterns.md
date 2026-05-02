@@ -88,7 +88,7 @@ histogram_quantile(0.99,
 
 ## 원인 2: 트랜잭션 내 외부 IO
 
-[ADR-0020 transactional-usage](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 의 핵심 주제.
+ADR-0020 transactional-usage (`docs/adr/ADR-0020-transactional-usage.md`) 의 핵심 주제.
 
 ### 안티패턴
 

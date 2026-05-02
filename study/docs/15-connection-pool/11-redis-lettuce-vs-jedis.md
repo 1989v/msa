@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 11. Lettuce vs Jedis 내부 차이
 
-Spring Data Redis 의 두 driver. 풀 관점에서 *완전히 다른 모델* 을 따른다. msa 는 [common Redis 자동 설정](file:///Users/gideok-kwon/IdeaProjects/msa/common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt) 에서 Lettuce 사용.
+Spring Data Redis 의 두 driver. 풀 관점에서 *완전히 다른 모델* 을 따른다. msa 는 common Redis 자동 설정 (`common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt`) 에서 Lettuce 사용.
 
 ---
 
@@ -295,7 +295,7 @@ Spring Boot 2.x 부터 *Lettuce 가 default*. 새 프로젝트는 사실상 Lett
 
 ## msa 의 Lettuce 설정 분석
 
-[common/CommonRedisAutoConfiguration.kt](file:///Users/gideok-kwon/IdeaProjects/msa/common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt) 의 핵심:
+`common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt` 의 핵심:
 
 ```kotlin
 val topologyRefreshOptions = ClusterTopologyRefreshOptions.builder()

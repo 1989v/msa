@@ -120,9 +120,14 @@ Spring 의 HTTP 요청-응답 파이프라인 (Servlet Filter → DispatcherServ
 
 ## 7. 미결 사항
 
+> **회고 (2026-05-02)**: 본 섹션은 plan 작성 시점의 미결 항목이며, 현재 deep study 완료 상태에서 각 항목별로 마킹됨.
+
 - 17 묶음의 적정 깊이 (5개 sub-topic 깊이 균형)
+  - ✅ 결정: 4 phase 로 재구성 (파이프라인 4 + Filter/Interceptor/AOP 4 + Jackson 5 + gzip 3 + msa 적용 2). Filter/AOP 와 Jackson 은 면접 단골 → 깊이 균등, gzip 은 운영 결정 위주.
 - BREACH 실습 포함 여부
+  - 🔄 부분 결정: `16-gzip-breach.md` 에서 TLS+압축 사이드 채널 + 민감 body 비활성화 패턴 정리 / 추가 검토 필요: 직접 공격 재현 lab 은 미포함 (운영 결정 가이드만 도출).
 - WebFlux 의 Filter 모델 (WebFilter) 까지 다룰지
+  - ✅ 결정: `04-webmvc-vs-webflux.md` 에서 Servlet Filter ↔ WebFilter 비교 + gateway 가 후자인 이유. `17-msa-gateway-filter.md` 에서 VisitorIdFilter / RequestLoggingFilter / AuthenticationGatewayFilter 순서 분석.
 
 ## 8. 원본 메모
 

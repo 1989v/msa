@@ -171,7 +171,7 @@ spring:
         shutdown-timeout: 100ms
 ```
 
-msa 의 [CommonRedisAutoConfiguration.kt](file:///Users/gideok-kwon/IdeaProjects/msa/common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt) 는 pool 미사용 (single multiplex) + adaptive topology refresh + commandTimeout 2s. 일반 서비스에 충분.
+msa 의 CommonRedisAutoConfiguration.kt (`common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt`) 는 pool 미사용 (single multiplex) + adaptive topology refresh + commandTimeout 2s. 일반 서비스에 충분.
 
 ---
 
@@ -331,7 +331,7 @@ redis-cli -c CONFIG GET maxclients
 
 ### 5. Cluster failover 시 stale connection
 
-Lettuce 는 adaptive refresh trigger 로 회복. 단, refresh 주기 사이 (수 초) 는 stale 명령이 fail 가능. 재시도 / circuit breaker 조합 권장 ([ADR-0015](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0015-resilience-strategy.md)).
+Lettuce 는 adaptive refresh trigger 로 회복. 단, refresh 주기 사이 (수 초) 는 stale 명령이 fail 가능. 재시도 / circuit breaker 조합 권장 (ADR-0015, `docs/adr/ADR-0015-resilience-strategy.md`).
 
 ---
 

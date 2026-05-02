@@ -115,7 +115,7 @@ override suspend fun fetchProduct(id: Long): Product { ... }
 |---|---|---|
 | order → payment | ✓ | |
 | order → product | ✓ | |
-| inventory → product (있다면) | ? | grep 으로 검증 |
+| inventory → product (있다면) | ✗ | 검증 결과 (2026-05-01): inventory 코드에 product HTTP 호출 없음 (역방향 — product 가 inventory 이벤트 consume) |
 | Kafka producer | X | (CB 부적합 영역) |
 | Redis 호출 | X | RedisTemplate 직접, fail-open 처리 |
 | ES indexing | X | retry + DLT 로 처리 |
@@ -287,30 +287,30 @@ class AdmissionControlFilter(
 
 ## 5. DLQ (Dead Letter Queue)
 
-`fulfillment/.../infrastructure/config/KafkaConfig.kt` (추정 — grep 으로 검증):
+**검증 결과 (2026-05-01)**: `fulfillment/app/src/main/kotlin/com/kgd/fulfillment/infrastructure/config/KafkaConfig.kt:54-68` (그리고 `inventory/.../KafkaConfig.kt:58-72` 동일):
 
 ```kotlin
 @Bean
-fun errorHandler(
-    template: KafkaTemplate<String, String>,
-): DefaultErrorHandler {
-    val recoverer = DeadLetterPublishingRecoverer(template) { record, _ ->
-        TopicPartition("${record.topic()}.DLT", record.partition())
-    }
-    val backOff = FixedBackOff(1000L, 3L)  // 1s, 3 retries
-    return DefaultErrorHandler(recoverer, backOff).apply {
-        // not-retryable 분류
-        addNotRetryableExceptions(
-            BusinessException::class.java,
-            IllegalArgumentException::class.java,
+fun kafkaListenerContainerFactory(
+    consumerFactory: ConsumerFactory<String, String>,
+    kafkaTemplate: KafkaTemplate<String, Any>,
+): ConcurrentKafkaListenerContainerFactory<String, String> =
+    ConcurrentKafkaListenerContainerFactory<String, String>().apply {
+        setConsumerFactory(consumerFactory)
+        containerProperties.ackMode = ContainerProperties.AckMode.RECORD
+        setCommonErrorHandler(
+            DefaultErrorHandler(
+                DeadLetterPublishingRecoverer(kafkaTemplate),
+                FixedBackOff(1000L, 3L),
+            )
         )
     }
-}
 ```
 
 **관찰** (ADR-0015 표준):
-- FixedBackOff 1s × 3 → DLT
-- 비즈니스 예외는 즉시 DLT (재시도 무의미)
+- FixedBackOff 1s × 3 → DLT (`{topic}-dlt` Spring Kafka 기본 형식)
+- AckMode.RECORD — 한 메시지마다 ACK
+- **`addNotRetryableExceptions` 는 코드에 미적용** — 검증 결과: 전체 msa 코드베이스 어디에도 없음. 즉 BusinessException 도 1초 × 3회 재시도 후 DLT. 즉시 DLT 하려면 추가 필요 (개선 후보).
 - DLT 모니터링 + 재처리는 Phase 3-4 로 명시
 
 **개선 후보**:

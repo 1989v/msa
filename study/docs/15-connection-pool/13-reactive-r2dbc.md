@@ -212,7 +212,7 @@ Lettuce 의 multiplex 모델은 reactive 와 *완벽히 호환* — single conne
 
 ### gateway 서비스의 모델 (msa)
 
-[gateway/application.yml](file:///Users/gideok-kwon/IdeaProjects/msa/gateway/src/main/resources/application.yml) 를 보면:
+`gateway/src/main/resources/application.yml` 를 보면:
 
 ```yaml
 spring:
@@ -235,7 +235,7 @@ spring:
 
 ## msa 가 R2DBC 를 도입할 수 있을까
 
-[quant](file:///Users/gideok-kwon/IdeaProjects/msa/quant/CLAUDE.md) 같은 *high-throughput stream* 서비스에서 검토 가치는 있음. 하지만:
+quant (`quant/CLAUDE.md`) 같은 *high-throughput stream* 서비스에서 검토 가치는 있음. 하지만:
 
 - JPA 가 익숙한 팀 → 학습 곡선
 - transaction 패턴 변경 (R2dbcTransactionManager)
@@ -258,7 +258,7 @@ A: throughput 자체는 비슷. *connection 수가 적게 든다* 는 게 reacti
 
 ### Q: gateway 가 SSE 를 어떻게 처리하나?
 
-A: msa 의 gateway 는 [quant paper SSE 라우트](file:///Users/gideok-kwon/IdeaProjects/msa/gateway/src/main/resources/application.yml) 를 별도 metadata `response-timeout: 0` 로 설정 — Reactor Netty 가 long-lived connection 을 끊지 않게. WebFlux 라서 가능. WebMVC + Tomcat 이면 thread 한 개가 영원히 점유.
+A: msa 의 gateway 는 quant paper SSE 라우트 (`gateway/src/main/resources/application.yml`) 를 별도 metadata `response-timeout: 0` 로 설정 — Reactor Netty 가 long-lived connection 을 끊지 않게. WebFlux 라서 가능. WebMVC + Tomcat 이면 thread 한 개가 영원히 점유.
 
 ---
 

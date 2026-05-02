@@ -172,7 +172,7 @@ created: 2026-05-01
 
 - 권장 순서: **01 → 02 → ... → 18** (Bottom-up). 단 Phase 1 (01-03) 만 익숙하면 Phase 2 안에서는 원하는 순서로 진입 가능.
 - 04-06 (Hikari 내부) 은 한 세트로 묶어 1.5h 안에 끊는 것을 권장.
-- 09-10 (R/W 분리) 은 코드베이스 [DataSourceConfig.kt](file:///Users/gideok-kwon/IdeaProjects/msa/product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt) 를 옆에 띄워두고 학습.
+- 09-10 (R/W 분리) 은 코드베이스 DataSourceConfig.kt (`product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt`) 를 옆에 띄워두고 학습.
 - 15-16 (실전) 은 Phase 2 끝낸 직후가 retention 가장 높음.
 - 18 (면접 Q&A) 은 회독용 — 학습 종료 후 1주일 간격 2회 회독.
 

@@ -20,6 +20,20 @@ created: 2026-05-01
 
 ---
 
+## 0. P0 — Order 측 Outbox 패턴 도입 (2026-05-01 검증 추가)
+
+**문제**: 16장의 §3.1 검증 결과 — Order 는 `OrderEventAdapter.kt` 에서 `kafkaTemplate.send` 로 **DB tx 와 분리되어 직접 발행**. ADR-0011 의 "Outbox 발행 원자성" 원칙에서 Order 만 빠져 있음. DB commit 후 Kafka publish 실패 또는 프로세스 crash 시 inventory/fulfillment 가 영원히 못 받는 메시지 손실 가능.
+
+**해법**: inventory/fulfillment 가 사용 중인 패턴을 그대로 Order 에 도입.
+1. `order_outbox` 테이블 + `OrderOutboxJpaEntity`
+2. `OutboxPort` interface, `OutboxJpaAdapter` 구현
+3. `OrderService` 가 `kafkaTemplate.send` 대신 `outboxPort.save("Order", orderId, "order.order.completed", payload)` 호출
+4. `OutboxPollingPublisher` (`@Scheduled`) 로 polling 발행
+
+**ADR**: ADR-0011 후속 commit (별도 ADR 없이) — Order 도 동일 패턴 적용 명시.
+
+---
+
 ## 1. P0 — Consumer 메서드 @Transactional 적용
 
 **문제**: 17 장에서 분석한 대로, consumer 메서드 자체가 `@Transactional` 이 아니라서 비즈니스 로직 (use case) 과 `processedEvent.save` 가 분리 tx. → reserve 후 save 실패 시 다음 재배달이 이중 reserve 가능.
@@ -249,9 +263,10 @@ class RateLimiterConfig(
 
 ---
 
-## 9. P2 — Kafka Consumer ExponentialBackOff + Jitter
+## 9. P2 — Kafka Consumer ExponentialBackOff + Jitter + addNotRetryableExceptions
 
 **문제**: 현재 FixedBackOff(1s, 3) → DLT. thundering herd 미방어.
+**추가 검증 (2026-05-01)**: 18장 진단 정정 — 현재 `addNotRetryableExceptions` 는 코드에 미적용 (msa 전체 grep 결과 zero). BusinessException 도 동일하게 1초 × 3회 재시도 후 DLT 로 흘러감. 비즈니스 검증 실패가 DLT 까지 가는 비효율 → not-retryable 분류 명시 필요.
 
 **해법**:
 

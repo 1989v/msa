@@ -54,7 +54,8 @@ msa 의 Redis 사용은 (a) **gateway 의 인증 블랙리스트 + RateLimiter (
 │       • ratelimit:{exchange}:{tenantId}:{apiKeyHash}         │
 │       • bithumb=90/s, default=100/s                          │
 ├─────────────────────────────────────────────────────────────┤
-│ experiment / gifticon / product (Redis 사용 추정)             │
+│ experiment / gifticon / product (검증 완료: application-      │
+│   kubernetes.yml 에 spring.data.redis 설정 명시)              │
 │ └─ application-kubernetes.yml 에 cluster.nodes 명시           │
 │    → k3s-lite overlay 에서 standalone 으로 전환됨              │
 └─────────────────────────────────────────────────────────────┘

@@ -60,7 +60,7 @@ created: 2026-05-01
 
 ### 꼬리 1: "(2) 트랜잭션 내 외부 IO 의 결정적 증거는?"
 
-> 두 가지를 보면 됩니다. 첫째 hikaricp.connections.usage 의 P99 와 외부 서비스 (예: payment) 의 http_client_requests P99 가 *거의 같음*. 두 값이 함께 폭증하고 비슷한 그래프 모양이면 외부 IO 가 connection 을 잡고 있다는 결정적 증거입니다. 둘째 DB 측 PROCESSLIST 가 *Sleep 상태*. 풀은 active=max 인데 DB 는 idle 이면 풀 외부 (애플리케이션) 가 점유 중이라는 뜻입니다. 처치는 [ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 의 외부 IO 분리 — TransactionalService 패턴.
+> 두 가지를 보면 됩니다. 첫째 hikaricp.connections.usage 의 P99 와 외부 서비스 (예: payment) 의 http_client_requests P99 가 *거의 같음*. 두 값이 함께 폭증하고 비슷한 그래프 모양이면 외부 IO 가 connection 을 잡고 있다는 결정적 증거입니다. 둘째 DB 측 PROCESSLIST 가 *Sleep 상태*. 풀은 active=max 인데 DB 는 idle 이면 풀 외부 (애플리케이션) 가 점유 중이라는 뜻입니다. 처치는 ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 의 외부 IO 분리 — TransactionalService 패턴.
 
 ### 꼬리 2: "leak detection 은 어떻게 동작하나요?"
 
@@ -80,11 +80,11 @@ created: 2026-05-01
 
 ### 꼬리 1: "LazyConnectionDataSourceProxy 가 빠지면 어떻게 보이나요?"
 
-> 풀 메트릭에서 master 풀만 active 가 채워지고 replica 풀은 항상 idle. `@Transactional(readOnly=true)` 가 잘 적용된 줄 알지만 실제로는 *모두 master 로 라우팅*. 코드 리뷰만으로는 발견 어렵고 메트릭으로만 보임. msa 의 [DataSourceConfig.kt](file:///Users/gideok-kwon/IdeaProjects/msa/product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt) 는 정상적으로 `@Primary fun dataSource(...)` 에서 LazyConnectionDataSourceProxy 로 wrap 합니다.
+> 풀 메트릭에서 master 풀만 active 가 채워지고 replica 풀은 항상 idle. `@Transactional(readOnly=true)` 가 잘 적용된 줄 알지만 실제로는 *모두 master 로 라우팅*. 코드 리뷰만으로는 발견 어렵고 메트릭으로만 보임. msa 의 DataSourceConfig.kt (`product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt`) 는 정상적으로 `@Primary fun dataSource(...)` 에서 LazyConnectionDataSourceProxy 로 wrap 합니다.
 
 ### 꼬리 2: "readOnly=true 트랜잭션 안에서 write 하면?"
 
-> MySQL replica 는 read-only mode 이므로 *reject* 합니다. 단 일부 환경 (Hibernate flush 모드 NEVER, MyISAM) 에서는 *silent fail* 가능 — 데이터 손실. [ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 에서 readOnly 트랜잭션 안 write 금지를 명시합니다. 또 클래스 레벨 `@Transactional(readOnly=true)` 도 금지 — 메서드별 명시 패턴이라 의도치 않은 mix 회피.
+> MySQL replica 는 read-only mode 이므로 *reject* 합니다. 단 일부 환경 (Hibernate flush 모드 NEVER, MyISAM) 에서는 *silent fail* 가능 — 데이터 손실. ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 에서 readOnly 트랜잭션 안 write 금지를 명시합니다. 또 클래스 레벨 `@Transactional(readOnly=true)` 도 금지 — 메서드별 명시 패턴이라 의도치 않은 mix 회피.
 
 ### 꼬리 3: "self-invocation 으로 readOnly 메서드를 호출하면?"
 
@@ -104,7 +104,7 @@ created: 2026-05-01
 
 ### 꼬리 2: "Cluster topology refresh 의 adaptive trigger 는 어떤 게 있나요?"
 
-> 다섯 가지입니다. MOVED_REDIRECT (slot 이동 응답 받음), ASK_REDIRECT (resharding 중), PERSISTENT_RECONNECTS (같은 노드 재연결 실패 반복), UNCOVERED_SLOT (slot mapping 빈 곳), UNKNOWN_NODE (모르는 노드 응답). [common 자동설정](file:///Users/gideok-kwon/IdeaProjects/msa/common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt) 의 `enableAllAdaptiveRefreshTriggers()` 가 이 다섯 모두 활성화. periodic refresh (10분) 와 함께면 failover 후 거의 자동 회복.
+> 다섯 가지입니다. MOVED_REDIRECT (slot 이동 응답 받음), ASK_REDIRECT (resharding 중), PERSISTENT_RECONNECTS (같은 노드 재연결 실패 반복), UNCOVERED_SLOT (slot mapping 빈 곳), UNKNOWN_NODE (모르는 노드 응답). common 자동설정 (`common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt`) 의 `enableAllAdaptiveRefreshTriggers()` 가 이 다섯 모두 활성화. periodic refresh (10분) 와 함께면 failover 후 거의 자동 회복.
 
 ### 꼬리 3: "분산 락은 Lettuce 의 multiplex 를 그대로 써도 되나요?"
 
@@ -124,7 +124,7 @@ created: 2026-05-01
 
 ### 꼬리 2: "msa 의 gateway 가 SSE 를 어떻게 처리하나요?"
 
-> [gateway/application.yml](file:///Users/gideok-kwon/IdeaProjects/msa/gateway/src/main/resources/application.yml) 의 quant-paper-sse 라우트에 `metadata.response-timeout: 0` 을 명시 — Reactor Netty 의 default response timeout 을 disable. WebFlux 라서 single thread 가 N 개의 SSE connection 을 동시에 처리 가능. WebMVC + Tomcat 이면 thread 한 개가 SSE 한 개에 영원히 묶입니다.
+> gateway/application.yml (`gateway/src/main/resources/application.yml`) 의 quant-paper-sse 라우트에 `metadata.response-timeout: 0` 을 명시 — Reactor Netty 의 default response timeout 을 disable. WebFlux 라서 single thread 가 N 개의 SSE connection 을 동시에 처리 가능. WebMVC + Tomcat 이면 thread 한 개가 SSE 한 개에 영원히 묶입니다.
 
 ### 꼬리 3: "boundedElastic scheduler 의 한계는?"
 
@@ -148,7 +148,7 @@ created: 2026-05-01
 
 ### 꼬리 3: "DB failover 와 idempotency 의 관계는?"
 
-> failover 직전에 *commit 직전* 의 트랜잭션이 있을 수 있습니다. 클라이언트는 timeout 으로 인지하고 retry 하는데, 서버는 이미 commit 된 상태 → *중복 처리*. 해결은 [ADR-0012](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0012-idempotent-consumer.md) 의 idempotent consumer 패턴 — 클라이언트가 idempotency key 를 보내고, 서버가 이를 unique 로 저장. retry 가 같은 key 면 기존 결과 반환. failover 안전성은 풀 설정만으로는 부족하고 *애플리케이션 layer* 에서 함께 설계해야 합니다.
+> failover 직전에 *commit 직전* 의 트랜잭션이 있을 수 있습니다. 클라이언트는 timeout 으로 인지하고 retry 하는데, 서버는 이미 commit 된 상태 → *중복 처리*. 해결은 ADR-0012 (`docs/adr/ADR-0012-idempotent-consumer.md`) 의 idempotent consumer 패턴 — 클라이언트가 idempotency key 를 보내고, 서버가 이를 unique 로 저장. retry 가 같은 key 면 기존 결과 반환. failover 안전성은 풀 설정만으로는 부족하고 *애플리케이션 layer* 에서 함께 설계해야 합니다.
 
 ---
 

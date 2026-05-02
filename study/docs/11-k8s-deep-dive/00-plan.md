@@ -144,10 +144,16 @@ msa 프로젝트가 이미 K8s 기반 (`prod-k8s`, `k3s-lite`) 이라 직접 적
 
 ## 7. 미결 사항
 
+> **회고 (2026-05-02)**: 본 섹션은 plan 작성 시점의 미결 항목이며, 현재 deep study 완료 상태에서 각 항목별로 마킹됨.
+
 - Operator 패턴 실습 (간단한 Controller 작성?) 포함 여부
+  - 🔄 부분 결정: `04-crd-operator.md` 에서 kubebuilder scaffold + Finalizer/Status subresource/Conversion webhook 까지 이론 + 구조 정리 / 추가 검토 필요: 직접 Operator 작성은 별도 활동 (improvements §16 "자체 도메인 Operator" — quant KEK 회전 후보).
 - GitOps 실제 도입 검토까지 포함?
+  - ✅ 결정: `12-gitops.md` (App-of-Apps/sync wave/drift detection) + improvements §9 Argo CD 도입 ADR(L3) + §11 Argo Rollouts (Canary) ADR(L3) 정식 등재.
 - Service Mesh (Istio) 깊이
+  - ✅ 결정: `13-service-mesh.md` 에서 Sidecar vs Ambient + mTLS + traffic split + 비용/복잡도 트레이드오프. 도입은 improvements 우선순위 표에서 "장기 (Linkerd 우선)" 로 보류.
 - Helm vs Kustomize 선택 근거 심화
+  - ✅ 결정: `11-helm-vs-kustomize.md` 에서 Chart 구조/hook/library chart vs kustomize patches 비교. msa 는 Kustomize 유지 결정 (현 ADR-0019 와 정합).
 
 ## 8. 원본 메모
 

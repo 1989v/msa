@@ -80,7 +80,7 @@ ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
 | analytics ingestion | `analytics-event-ingestion` | ✓ |
 | analytics streams | `analytics-streams` (application.id) | ✓ |
 | wishlist product | `wishlist-product-cleanup` | ✓ |
-| wishlist member | (코드 미확인) | - |
+| wishlist member | `wishlist-member-cleanup` (`wishlist/app/src/main/kotlin/com/kgd/wishlist/infrastructure/consumer/MemberEventConsumer.kt:20`) | ✓ |
 | quant | `quant-notification` 등 (Phase 3) | ✓ |
 
 → 일관됨.

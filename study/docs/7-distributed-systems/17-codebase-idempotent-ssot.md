@@ -44,7 +44,7 @@ class ProcessedEventJpaEntity(
 
 - PK 가 `eventId` 이므로 DB UNIQUE 보장
 - TTL 없음 → cleanup 배치 필요 (7일)
-- → **cleanup 스케줄러 코드 확인 필요** (별도 grep 시 검증)
+- **검증 결과 (2026-05-01)**: `processed_event` 를 정리하는 `@Scheduled` 배치는 `inventory` / `fulfillment` 어디에도 **존재하지 않음**. `inventory` 의 스케줄러는 `ReservationExpiryService`(`inventory/app/.../application/reservation/service/ReservationExpiryService.kt:24`) 와 `InventoryReconciliationService`(`inventory/app/.../application/inventory/service/InventoryReconciliationService.kt:18`) 둘 뿐이며, `processed_event` 와 무관. → ADR-0012 명세 (7일 보관) 미구현 — 도입 필요 (19-improvements §7).
 
 ## 3. Outbox 측 eventId 주입
 
@@ -160,15 +160,27 @@ Product.stock = Inventory 이벤트 기반 read-only 캐시
 
 ### 6.1 Inventory 이벤트 → Product 동기화
 
-`product/.../infrastructure/messaging/InventoryEventConsumer.kt` (추정 — grep 으로 검증):
+**검증 결과 (2026-05-01)**: 실제 파일은 `product/app/src/main/kotlin/com/kgd/product/messaging/InventoryStockSyncConsumer.kt:11` (이름이 `InventoryEventConsumer` 가 아니라 `InventoryStockSyncConsumer`). 핵심 로직 (요약):
 
 ```kotlin
-@KafkaListener(topics = ["inventory.stock.reserved", "inventory.stock.released", "inventory.stock.received"])
-fun onStockChanged(record: ConsumerRecord<String, String>) {
-    val event = mapper.readValue(record.value(), StockEvent::class.java)
-    productService.syncStock(event.productId, event.availableQty)
+@KafkaListener(
+    topics = ["inventory.stock.reserved", "inventory.stock.released", "inventory.stock.received"],
+    groupId = "product-stock-sync",
+    containerFactory = "kafkaListenerContainerFactory",
+)
+fun onInventoryStockChanged(record: ConsumerRecord<String, String>) {
+    val node = objectMapper.readTree(record.value())
+    val productId = node.get("productId").asLong()
+    val availableQty = node.get("availableQty")?.asInt()
+    if (availableQty != null) {
+        syncProductStockUseCase.execute(SyncProductStockUseCase.Command(productId, availableQty))
+    }
 }
 ```
+
+→ 그리고 `Product.syncStock(availableQty)` 는 `product/domain/src/main/kotlin/com/kgd/product/product/model/Product.kt:36` 에 실재. ADR-0013 의 SSOT 흐름 (Inventory → Product) 코드 확인 완료.
+
+**주의**: 본 consumer 는 **멱등 체크 (`processedEventRepository`) 가 없음** — `Product.syncStock` 이 자연스러운 idempotent set 연산이라 안전하지만, ordering 문제로 stale availableQty 가 덮어쓸 가능성 존재 (개선 후보).
 
 ### 6.2 Product.stock 동기화 메서드
 
@@ -267,17 +279,17 @@ fun reconcile() {
 
 ## 10. Producer Idempotence 설정
 
-`inventory/.../infrastructure/config/KafkaConfig.kt` (추정):
+**검증 결과 (2026-05-01)**: `inventory/app/src/main/kotlin/com/kgd/inventory/infrastructure/config/KafkaConfig.kt:29-37` 에서 코드로 명시:
 
-```yaml
-spring:
-  kafka:
-    producer:
-      acks: all
-      enable-idempotence: true
-      retries: Integer.MAX_VALUE
-      max-in-flight-requests-per-connection: 5
+```kotlin
+ProducerConfig.ACKS_CONFIG to "all",
+ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG to true,
+ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION to 5,
+ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to 120000,
 ```
+
+`fulfillment/app/src/main/kotlin/com/kgd/fulfillment/infrastructure/config/KafkaConfig.kt:29-33` 도 동일.
+**주의**: `retries` 는 명시적으로 설정 안 했음 — `enable.idempotence=true` 일 때 Kafka Producer 가 자동으로 `retries=Integer.MAX_VALUE` 로 강제하므로 의도는 같음.
 
 → Kafka 차원 producer 멱등성. 단, **eventId 가 메시지 본문에 있으니** consumer 측 dedup 이 진짜 보장.
 
@@ -293,7 +305,7 @@ spring:
 | Optimistic Lock | ✓ | @Version |
 | SSOT 정의 (Product/Inventory) | ✓ | ADR-0013 |
 | Reconciliation | ✓ | InventoryReconciliationService |
-| processed_event cleanup | ? | 별도 grep 으로 검증 필요 |
+| processed_event cleanup | ✗ | 검증 결과: 미존재 — 도입 필요 (inventory/fulfillment 어디에도 cleanup 스케줄러 없음) |
 
 ## 12. 개선 후보 5선
 

@@ -95,7 +95,7 @@ spring:
 
 ### 현황
 - `gateway/build.gradle.kts` 에 `spring-cloud-circuitbreaker-reactor-resilience4j` 의존성은 있음
-- `application.yml` 에서 *route 별 timeout / CB 미설정* (확인 필요)
+- `application.yml` 에서 *route 별 timeout / CB 미설정* — **검증 결과 (2026-05-01)**: `gateway/src/main/resources/application.yml` 확인 결과 `spring.cloud.gateway.httpclient.*` (connect-timeout, response-timeout, pool) 설정 없음. route metadata `response-timeout: 0` 만 SSE 라우트 (`quant-paper-sse`) 에 명시. 글로벌 default 도, CB filter 도 미적용 — 도입 필요
 - 다운스트림이 hang 하면 Gateway 의 connection 누적 가능
 
 ### 문제
@@ -161,7 +161,7 @@ redisTemplate.hasKey("blacklist:$token")
 ### 문제
 - Redis 장애가 *조용히 무력화* — blacklist 가 사실상 OFF
 - 발견 timing 이 늦으면 보안 사고
-- 현재 메트릭 / 알람 미설정 (확인 필요)
+- 현재 메트릭 / 알람 미설정 — **검증 결과 (2026-05-01)**: `gateway/.../filter/AuthenticationGatewayFilter.kt` 의 `onErrorReturn(false)` 경로에 Micrometer counter 등 메트릭 호출 없음. Prometheus 알람 룰도 별도 정의 없음 (검색 zero hit) — 도입 필요
 
 ### 제안
 ```kotlin

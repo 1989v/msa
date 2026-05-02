@@ -198,7 +198,7 @@ EKS/GKE/AKS 는 CCM 을 자체 구현체로 교체. self-hosted (kubeadm) 는 cl
 ### 면접 빈출
 
 - "Pod 가 ContainerCreating 에서 멈췄어요" → kubelet event 봐라. 보통 image pull 실패, CSI mount 실패, CNI IP 부족.
-- "MaxRAMPercentage=75 인데 OOMKilled" → kubelet 이 cgroup memory limit 으로 종료. JVM heap 외 metaspace/direct buffer/스레드 스택을 잊지 말 것 ([#2 JVM 학습 cross-ref](../02-jvm-deep-dive/)).
+- "MaxRAMPercentage=75 인데 OOMKilled" → kubelet 이 cgroup memory limit 으로 종료. JVM heap 외 metaspace/direct buffer/스레드 스택을 잊지 말 것 ([#2 JVM 학습 cross-ref](../2-jvm-gc/)).
 
 ## 8. 데이터 플레인 — kube-proxy
 

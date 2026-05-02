@@ -163,7 +163,7 @@ spring:
 
 ### 현황
 
-11개 서비스가 [DataSourceConfig.kt](file:///Users/gideok-kwon/IdeaProjects/msa/product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt) 와 *동일한* 코드 보유.
+11개 서비스가 DataSourceConfig.kt (`product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt`) 와 *동일한* 코드 보유.
 
 ### 제안
 
@@ -230,7 +230,7 @@ kgd:
 
 ### 변경
 
-[CommonRedisAutoConfiguration.kt](file:///Users/gideok-kwon/IdeaProjects/msa/common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt) 에 ClientResources 추가:
+`common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt` 에 ClientResources 추가:
 
 ```kotlin
 @Bean
@@ -283,7 +283,7 @@ grep -A 20 "@Transactional" order/app/src/main/kotlin/com/kgd/order/order/servic
   | grep -E "WebClient|webClient|kafka|kafkaTemplate|s3"
 ```
 
-[ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 에서 외부 IO 분리 권장. *TransactionalService 분리 패턴* 이 적용되어 있는지 확인:
+ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 에서 외부 IO 분리 권장. *TransactionalService 분리 패턴* 이 적용되어 있는지 확인:
 
 - `OrderTransactionalService` — `@Transactional` 만 담당
 - `OrderService` — orchestration, 외부 IO
@@ -505,7 +505,7 @@ val clientOptions = ClusterClientOptions.builder()
 3. **ADR-XXXX-db-connection-budget.md** — DB max_connections 정책 + ProxySQL 도입 결정
 4. **ADR-XXXX-hpa-replica-cap.md** — HPA cap 산정 정책
 
-각 ADR 은 [ADR-0026 docs-taxonomy](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0026-docs-taxonomy.md) 의 정의 (구조 결정) 에 부합.
+각 ADR 은 ADR-0026 docs-taxonomy (`docs/adr/ADR-0026-docs-taxonomy.md`) 의 정의 (구조 결정) 에 부합.
 
 ---
 
@@ -532,7 +532,7 @@ P2 적용 후:
 - P0 두 개 (leak detection, connection timeout) 는 즉시 적용 — risk 없음, 효과 큼
 - DataSourceConfig common 추출 + stickiness 도입은 ADR 필수 (구조 결정)
 - DB max_connections + HPA cap 은 *함께* 결정 (서로 의존)
-- 각 ADR 은 [docs taxonomy](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0026-docs-taxonomy.md) 의 ADR 정의 부합
+- 각 ADR 은 docs taxonomy (`docs/adr/ADR-0026-docs-taxonomy.md`) 의 ADR 정의 부합
 
 ## 다음 학습
 

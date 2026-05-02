@@ -106,7 +106,7 @@ experiment, quant, search/app, analytics — 각각 이유 다름:
 - L = 50 × 0.2 = 10
 - margin × 2 = 20 → 풀 20 필요
 - 현재 10 → **부족 위험** ⚠
-- 단, [ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 의 외부 IO 분리 패턴이 적용되면 점유 시간이 50ms 이하로 떨어져 풀 10 충분
+- 단, ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 의 외부 IO 분리 패턴이 적용되면 점유 시간이 50ms 이하로 떨어져 풀 10 충분
 
 ### gifticon (멀티 도메인)
 
@@ -196,7 +196,7 @@ class DataSourceConfig {
 
 ## gateway Lettuce 설정 분석
 
-[gateway/application.yml](file:///Users/gideok-kwon/IdeaProjects/msa/gateway/src/main/resources/application.yml):
+`gateway/src/main/resources/application.yml`:
 
 ```yaml
 spring:
@@ -215,14 +215,14 @@ spring:
 - ✅ WebFlux + Lettuce 조합 — reactive 표준
 - ✅ Cluster 6 노드 (3 master + 3 replica) — production 형태
 - ✅ max-redirects 3 — slot 이동 시 적정
-- ⚠ commandTimeout 명시 없음 → [common Redis 자동설정](file:///Users/gideok-kwon/IdeaProjects/msa/common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt) 의 2s 적용
+- ⚠ commandTimeout 명시 없음 → common Redis 자동설정 (`common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt`) 의 2s 적용
 - ⚠ pool 설정 없음 → single multiplex (적정)
 
 ---
 
 ## common Redis 자동 설정 분석
 
-[common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt](file:///Users/gideok-kwon/IdeaProjects/msa/common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt):
+`common/src/main/kotlin/com/kgd/common/redis/CommonRedisAutoConfiguration.kt`:
 
 ```kotlin
 @AutoConfiguration(afterName = [...DataRedisAutoConfiguration])
@@ -265,7 +265,7 @@ class CommonRedisAutoConfiguration {
 
 ## standalone 전환 (k3s-lite overlay)
 
-[k3s-lite kustomization](file:///Users/gideok-kwon/IdeaProjects/msa/k8s/overlays/k3s-lite/kustomization.yaml):
+k3s-lite kustomization (`k8s/overlays/k3s-lite/kustomization.yaml`):
 
 ```yaml
 patches:
@@ -305,7 +305,7 @@ replica: 11 서비스 × HPA peak 5 × pool 10 = 550 connection (다른 host)
 master: 550 > 100   ⚠ 대규모 fail
 ```
 
-→ 인스턴스 수 cap 또는 ProxySQL 도입 필요. msa 가 prod 에서 어떤 instance class 인지 확인 필요 (현재 [k8s/infra/prod](file:///Users/gideok-kwon/IdeaProjects/msa/k8s/infra/prod) 에 명시).
+→ 인스턴스 수 cap 또는 ProxySQL 도입 필요. msa 가 prod 에서 어떤 instance class 인지 확인 필요 (현재 `k8s/infra/prod` 에 명시).
 
 ---
 
@@ -342,7 +342,7 @@ master: 550 > 100   ⚠ 대규모 fail
 
 - 11개 서비스가 모두 R/W 분리 표준 패턴으로 일관됨 — 강점
 - 운영 옵션 (leak detection, timeout, pool-name) 누락이 공통 약점
-- order 서비스는 트랜잭션 외부 IO 분리 ([ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md)) 가 풀 사이즈와 직결
+- order 서비스는 트랜잭션 외부 IO 분리 (ADR-0020, `docs/adr/ADR-0020-transactional-usage.md`) 가 풀 사이즈와 직결
 - Lettuce 설정은 production-ready, 단 메트릭 활성 추가 필요
 - DataSourceConfig.kt 11개 중복 — common 추출 후보
 

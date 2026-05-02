@@ -96,10 +96,16 @@ Conflict-free Replicated Data Type (CRDT) 와 Mergeable Replicated Data Type (MR
 
 ## 7. 미결 사항
 
+> **회고 (2026-05-02)**: 본 섹션은 plan 작성 시점의 미결 항목이며, 현재 deep study 완료 상태에서 각 항목별로 마킹됨.
+
 - 협업 에디터 핸즈온(Yjs) 포함 여부
+  - 🔄 부분 결정: 이론 + 데이터 모델 (`08-sequence-crdts.md` + `09-json-crdts.md`: Logoot/RGA/WOOT/Yata, Yjs/Automerge opset) / 추가 검토 필요: 실제 Yjs 핸즈온 코드 작성은 미포함 (도입 트리거 조건 충족 시 후속).
 - MRDT 깊이 (OCaml Irmin 까지 vs CRDT 위주)
+  - 🔄 부분 결정: `13-mrdt.md` 에서 Git-style 3-way merge + LCA + replay merge + 사용자 정의 merge function 까지. OCaml 구문은 의사코드 위주로 (preview 학습 가이드 명시).
 - Operational Transform 비교 포함 여부
+  - ✅ 결정: `14-crdt-vs-ot.md` 에서 OT transformation matrix + 협업 에디터가 CRDT 로 이동한 이유까지 정리.
 - ADR 작성 여부 (msa 도입 검토 결론)
+  - ✅ 결정: `18-improvements.md` 에서 "현 시점 보류 + 트리거 조건 명시" ADR-NNNN 후보 등재. 조건부 ADR 2건 (wishlist 멀티 디바이스 OR-Set, 글로벌 cache Redis CRDB) 도 트리거 조건 명시.
 
 ## 8. 원본 메모
 

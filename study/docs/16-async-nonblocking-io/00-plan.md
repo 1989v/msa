@@ -124,10 +124,16 @@ codebase-relevant: true
 
 ## 7. 미결 사항
 
+> **회고 (2026-05-02)**: 본 섹션은 plan 작성 시점의 미결 항목이며, 현재 deep study 완료 상태에서 각 항목별로 마킹됨.
+
 - io_uring 깊이 (Java 가 직접 안 씀)
+  - ✅ 결정: `05-io-uring.md` 에서 SQ/CQ ring buffer + syscall amortization + 보안 우려/disable 추세까지 개념 정리. Java 직접 사용 안 함을 명시 (POSIX AIO/IOCP 와 함께 비교).
 - Netty 내부 코드 reading 깊이
+  - ✅ 결정: `09-netty-internals.md` 에서 boss/worker EventLoop + ChannelHandler 체인 + ByteBuf 참조 카운팅까지 (Phase 2 우선순위 최상). 코드 파일 단위 reading 보다는 구조/계약 중심.
 - WebFlux 실습 vs 이론
+  - 🔄 부분 결정: `12-webflux-vs-mvc.md` (이론) + `15-msa-gateway-webflux.md` (gateway 실 코드 분석: AuthenticationGatewayFilter, ReactiveRedisTemplate, Mono 체인). 추가 검토 필요: 별도 마이그레이션 lab 미작성 (improvements 의 결정 가이드로 통합).
 - Virtual Threads 와의 비교 깊이 (#3 과 어디까지 분담)
+  - ✅ 결정: `13-virtual-threads-impact.md` 에서 JDK 21+ VT + pinning + MVC+VT 가 일반적 우위 결론. #3 은 동시성 프리미티브로서의 VT (JDK 25, JEP 491) / #16 은 IO 모델 비교 관점에서 분담.
 
 ## 8. 원본 메모
 

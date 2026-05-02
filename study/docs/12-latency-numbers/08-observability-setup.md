@@ -273,7 +273,7 @@ sum(rate(http_server_requests_seconds_bucket[1m])) by (le)
 
 ### 현재 상태 (코드베이스)
 
-- `common/` 에 Micrometer 의존성과 기본 설정이 있을 가능성 높음 (확인 필요)
+- `common/` 에 Micrometer 의존성/설정 — **검증 결과 (2026-05-01)**: `common/build.gradle.kts` 등에 `micrometer` 의존성 zero hit. 대신 각 서비스 (gateway, warehouse, wishlist, analytics, auth 등) `build.gradle.kts` 에 개별 추가됨. 즉 *서비스 레벨* 의 의존성. common 에 공통 설정 추출은 개선 후보 (ADR 후보)
 - 각 서비스의 `application.yml` 에 actuator 노출 설정 필요
 - K8s manifest 에 prometheus.io 어노테이션 필요
 - `k8s/infra/local/` 에 Prometheus / Grafana 미배포 상태 (10번에서 정식 배포 예정)

@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 09. Reader/Writer 분리 패턴
 
-읽기 부하를 replica 로 분산하는 표준 패턴. msa 코드베이스의 [DataSourceConfig.kt](file:///Users/gideok-kwon/IdeaProjects/msa/product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt) 가 이미 이 패턴으로 구현되어 있다.
+읽기 부하를 replica 로 분산하는 표준 패턴. msa 코드베이스의 DataSourceConfig.kt (`product/app/src/main/kotlin/com/kgd/product/config/DataSourceConfig.kt`) 가 이미 이 패턴으로 구현되어 있다.
 
 세 컴포넌트의 *조합* 이 핵심: AbstractRoutingDataSource + LazyConnectionDataSourceProxy + `@Transactional(readOnly=true)`.
 
@@ -295,7 +295,7 @@ class ProductService(...) {
 }
 ```
 
-[ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 에서 *클래스 레벨 금지*. 이유:
+ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 에서 *클래스 레벨 금지*. 이유:
 
 - 명시성 부족 — 메서드만 봐서는 트랜잭션 속성 모름
 - override 누락 시 silent fail
@@ -320,7 +320,7 @@ class ProductController(private val service: ProductService) {
 }
 ```
 
-해결: read-only service 메서드에는 *항상* `@Transactional(readOnly = true)` 명시. 이게 [ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 의 일부.
+해결: read-only service 메서드에는 *항상* `@Transactional(readOnly = true)` 명시. 이게 ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 의 일부.
 
 ---
 

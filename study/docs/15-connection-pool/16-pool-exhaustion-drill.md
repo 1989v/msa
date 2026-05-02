@@ -232,7 +232,7 @@ http_client_requests_seconds{uri="/charge", quantile="0.99"} = 5.1
 
 - 패턴: usage 높음 + DB 측 Sleep + thread dump 가 외부 IO 에 park
 - 원인: `@Transactional` 안에 외부 HTTP / Kafka / S3
-- 처치: [ADR-0020](file:///Users/gideok-kwon/IdeaProjects/msa/docs/adr/ADR-0020-transactional-usage.md) 의 외부 IO 분리
+- 처치: ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 의 외부 IO 분리
 
 ---
 

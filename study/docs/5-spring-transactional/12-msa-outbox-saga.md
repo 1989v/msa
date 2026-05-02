@@ -268,7 +268,7 @@ override fun execute(command: ReleaseStockByOrderUseCase.Command): List<...> {
 }
 ```
 
-→ "이미 reserved 된 재고를 외부 트리거로 해제" 하는 별도 use case. 다만 이 use case 가 **언제 호출되는지** 가 중요한데, `order.order.cancelled` 같은 이벤트를 InventoryEventConsumer 가 받아서 호출하는 패턴이 자연스러움 (실제 구현은 코드 추가 확인 필요).
+→ "이미 reserved 된 재고를 외부 트리거로 해제" 하는 별도 use case. 다만 이 use case 가 **언제 호출되는지** 가 중요한데, `order.order.cancelled` 같은 이벤트를 InventoryEventConsumer 가 받아서 호출하는 패턴이 자연스러움. **검증 결과 (2026-05-01)**: `inventory/app/.../infrastructure/messaging/InventoryEventConsumer.kt` 에서 `onOrderCompleted`(order.order.completed → reserve), `onFulfillmentShipped`(fulfillment.order.shipped → confirm), `onFulfillmentCancelled`(fulfillment.order.cancelled → release) 세 개만 정의됨. **`order.order.cancelled` 토픽 consumer 는 없음** — 즉 결제 실패 / 사용자 취소 시 inventory 즉시 release 가 명시적으로 트리거되지 않고, `ReservationExpiryService` 의 30분 TTL fallback 으로만 회복. → 19-improvements §4 (payment 실패 시 명시적 inventory 보상) 가 이 정확한 gap 을 가리킴.
 
 `ReservationExpiryService` 는 TTL 30분 만료된 reservation 을 주기적으로 cancel + 재고 release. 이건 **사고 회복 안전망** 역할.
 

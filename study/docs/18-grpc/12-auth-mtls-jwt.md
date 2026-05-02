@@ -254,7 +254,7 @@ gateway (Spring Cloud Gateway, JWT 검증, RBAC, RateLimit)
 auth / member / product / order / ...
 ```
 
-- gateway 의 JwtAuthenticationFilter (확인 필요)
+- gateway 의 인증 필터 — **검증 결과 (2026-05-01)**: 실제 클래스명은 `AuthenticationGatewayFilter` (`gateway/src/main/kotlin/com/kgd/gateway/filter/AuthenticationGatewayFilter.kt`). `JwtAuthenticationFilter` 이름은 msa 어디에도 없음 (grep zero hit). 인증 로직은 `JwtTokenValidator` + Redis blacklist 조합으로 분리 적용
 - 각 서비스는 SecurityContext 에서 user 식별
 - 내부 호출 시 JWT 헤더 propagation (구현 여부에 따라)
 
