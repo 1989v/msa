@@ -21,6 +21,8 @@
 - `CommonSecurityAutoConfiguration` — JWT/AES 자동 설정 (`kgd.common.security.enabled`)
 - `CommonRedisAutoConfiguration` — Redis 클러스터 자동 설정 (`kgd.common.redis.enabled`)
 - `CommonWebClientAutoConfiguration` — WebClient 자동 설정 (`kgd.common.web-client.enabled`)
+- `IdempotentEventHandlerAutoConfiguration` — Kafka consumer 멱등 헬퍼 (ADR-0029, `messaging` 패키지). `ProcessedEventRepositoryPort` 구현체를 등록한 서비스에서만 활성. `kgd.common.messaging.idempotent.cleanup.enabled=true` 시 7일 retention 스케줄러 동작.
+- `KgdMessagingOutboxAutoConfiguration` — Transactional Outbox 표준 (ADR-0032 Phase 0, `messaging.outbox` 패키지). `OutboxPort` / `OutboxPollingPublisher` / `OutboxEntity` 를 제공. JPA classpath + `outbox.polling.enabled` (default true) 에서 활성. 서비스 application class 가 `@EntityScan` / `@EnableJpaRepositories` 에 `com.kgd.common.messaging.outbox` 패키지를 명시해야 동작.
 
 ## Key Rules
 

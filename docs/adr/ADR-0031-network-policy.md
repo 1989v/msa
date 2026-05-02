@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-05-02)
+Accepted (2026-05-02)
 
 > 본 ADR 은 ADR-0019 (K8s 전환) 의 보안 기둥 중 하나를 채운다. Service Mesh / mTLS 는
 > 별도 ADR (P3, 미할당) 에서 다루며, 본 ADR 은 L3/L4 NetworkPolicy 만 다룬다.

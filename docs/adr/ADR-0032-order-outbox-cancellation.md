@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-05-02)
 
 **Date**: 2026-05-02
 **Authors**: TBD

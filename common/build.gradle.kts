@@ -16,6 +16,14 @@ dependencies {
     implementation(libs.spring.cloud.circuitbreaker.resilience4j)
     implementation(libs.kotlin.coroutines.core)
     implementation(libs.spring.kafka)
+    // ADR-0029 — IdempotentEventHandler 람다 로깅 (kotlin-logging)
+    implementation(libs.kotlin.logging)
+    // ADR-0032 Phase 0 — Outbox 모듈에서 @Entity / JpaRepository 를 정의하므로 JPA 의존이 필요하다.
+    // 단, JPA 미사용 서비스(gateway 등)에 강제하지 않도록 compileOnly 로만 노출. 사용 서비스
+    // (fulfillment, inventory, order 등)는 자체 build.gradle.kts 의 spring-boot-starter-data-jpa
+    // 가 런타임 클래스패스를 책임진다.
+    compileOnly(libs.spring.boot.starter.data.jpa)
+    testImplementation(libs.spring.boot.starter.data.jpa)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.spring.boot.starter.test)
 }

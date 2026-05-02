@@ -27,7 +27,16 @@ cp study/log/template-week.md study/log/2026-WNN.md
 
 | 주차 | 회독 회차 | 다룬 주제 | 산출물 |
 |---|---|---|---|
-| (예시) 2026-W18 | 1회독 | #2 JVM Phase 1-2 | `2026-W18.md` |
+| 2026-W17 | (시스템 구축) | 18 주제 deep study + ADR 승격 + 부분 구현 | [2026-W17.md](2026-W17.md) |
+
+## 정기 grounding refresh 일정
+
+| 시점 | 사유 | 범위 |
+|---|---|---|
+| **2026-08-01** (3개월 후) | 인용 줄번호 stale 검사 + ADR 후속 commit 반영 | study/docs 전체 |
+| ADR-0011 / 0012 후속 commit 후 | 코드 변경 시 study 자료 정정 | 영향 받은 chapter |
+
+자세한 일정은 [`docs/00-VERIFICATION-REPORT.md §5`](../docs/00-VERIFICATION-REPORT.md) 참조.
 
 ---
 

@@ -15,6 +15,10 @@ namespace: commerce
 resources:
   - ../../infra/local
   - ../../base
+  # ADR-0031 Phase 1 — k3s-lite 에 NetworkPolicy 적용 (default-deny + 명시 허용 12종).
+  # CNI 가 NetworkPolicy 지원해야 적용됨 (k3d 기본 Flannel 은 silent no-op → Calico/Cilium 권장).
+  # 활성화 후 k8s/base/network-policy/README.md 의 smoke test 4단계 실행 필수.
+  - ../../base/network-policy
 
 patches:
   # Global resource reduction — halves the base requests/limits for

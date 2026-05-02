@@ -45,10 +45,11 @@ kafka:
 outbox:
   polling:
     enabled: ${OUTBOX_POLLING_ENABLED:true}
+    # ADR-0032 Phase 0 — common 의 OutboxPollingPublisher 가 본 키를 사용 (default 1000ms)
+    interval-ms: 1000
 
 fulfillment:
   outbox:
-    polling-interval-ms: 1000
     max-retry: 3
 
 management:

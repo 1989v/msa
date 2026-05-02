@@ -3,3 +3,5 @@ com.kgd.common.redis.CommonRedisAutoConfiguration
 com.kgd.common.webclient.CommonWebClientAutoConfiguration
 com.kgd.common.analytics.AnalyticsAutoConfiguration
 com.kgd.common.jackson.CommonJacksonAutoConfiguration
+com.kgd.common.messaging.IdempotentEventHandlerAutoConfiguration
+com.kgd.common.messaging.outbox.KgdMessagingOutboxAutoConfiguration

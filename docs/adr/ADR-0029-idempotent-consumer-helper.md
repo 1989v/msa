@@ -1,7 +1,7 @@
 # ADR-0029 Idempotent Consumer Helper 표준화 (ADR-0012 보강)
 
 ## Status
-Proposed
+Accepted (2026-05-02)
 
 ## Date
 2026-05-02
