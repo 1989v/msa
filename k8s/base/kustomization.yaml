@@ -34,4 +34,5 @@ resources:
   - charting
   - charting-fe
   - admin-fe
+  - quant-fe
   - frontend-ingress.yaml

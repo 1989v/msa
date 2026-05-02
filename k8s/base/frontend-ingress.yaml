@@ -53,6 +53,13 @@ spec:
                 name: admin-fe
                 port:
                   name: http
+          - path: /quant/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: quant-fe
+                port:
+                  name: http
           - path: /charting-api/(.*)
             pathType: ImplementationSpecific
             backend:

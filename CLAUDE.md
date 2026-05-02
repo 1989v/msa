@@ -15,7 +15,10 @@
 
 # Local deployment (k3d / k3s-lite)
 kubectl apply -k k8s/overlays/k3s-lite                  # 인프라 + 서비스 + overlay 일괄
-scripts/image-import.sh --all                           # jibBuildTar 산출물을 k3d/kind로 로드
+scripts/image-import.sh --all                           # jibBuildTar 산출물(JVM)을 k3d/kind로 로드
+scripts/image-import.sh --fe                            # FE 6종 docker build + 클러스터 로드
+scripts/image-import.sh --image commerce/charting:latest # charting (Python) 빌드+로드
+scripts/image-import.sh --all-images                    # 위 셋을 한 방에 (jib + FE + non-JVM)
 
 # Production deployment (managed K8s)
 kubectl apply -k k8s/infra/prod                         # Operator 기반 인프라

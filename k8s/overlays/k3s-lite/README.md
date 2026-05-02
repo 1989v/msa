@@ -44,12 +44,26 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 ./gradlew jibBuildTar
 scripts/image-import.sh --all
 
-# 3. apply the full overlay
+# 3. build and import FE / non-JVM images (admin-fe, charting-fe,
+#    gifticon-fe, agent-viewer-fe, code-dictionary-fe, quant-fe,
+#    and the charting Python service). Requires Docker daemon.
+scripts/image-import.sh --fe                       # FE only
+scripts/image-import.sh --image commerce/charting:latest   # Python service
+
+# Or, in one shot (jib tars + every FE + non-JVM image):
+scripts/image-import.sh --all-images
+
+# 4. apply the full overlay
 kubectl apply -k k8s/overlays/k3s-lite
 
-# 4. wait for everything to reach Ready
+# 5. wait for everything to reach Ready
 kubectl -n commerce get pods -w
 ```
+
+> Step 2 requires `./gradlew jibBuildTar` to have produced
+> `*/build/jib-image.tar` files. Step 3 requires a working Docker
+> daemon (Rancher Desktop / Docker Desktop / colima). On a fresh
+> checkout, prefer `--all-images` once both prerequisites are met.
 
 ## Known limitations
 
