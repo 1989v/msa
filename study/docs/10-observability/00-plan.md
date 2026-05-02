@@ -1,9 +1,9 @@
 ---
 id: 10
 title: Observability 3축
-status: draft
+status: completed
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-05-02
 tags: [observability, metrics, logs, tracing, prometheus, grafana, opentelemetry]
 difficulty: intermediate
 estimated-hours: 18

@@ -1,9 +1,9 @@
 ---
 id: 7
 title: 분산 시스템 이론 + 패턴
-status: draft
+status: completed
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-05-02
 tags: [distributed-systems, cap, pacelc, saga, 2pc, idempotency, circuit-breaker]
 difficulty: advanced
 estimated-hours: 18

@@ -1,9 +1,9 @@
 ---
 id: 11
 title: K8s 심화 + 배포 전략
-status: draft
+status: completed
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-05-02
 tags: [kubernetes, operator, crd, helm, gitops, deployment-strategy, canary]
 difficulty: intermediate
 estimated-hours: 20

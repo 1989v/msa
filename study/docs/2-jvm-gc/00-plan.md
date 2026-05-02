@@ -1,9 +1,9 @@
 ---
 id: 2
 title: JVM 내부 + GC 튜닝
-status: ready
+status: completed
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-05-02
 tags: [jvm, gc, g1, zgc, memory, performance, oom]
 difficulty: advanced
 estimated-hours: 35
@@ -112,6 +112,7 @@ msa 프로젝트의 모든 JVM 서비스 (product, order, search, gateway, commo
 - Native Memory Tracking (NMT)
 - OOM 유형: Java heap space / Metaspace / GC overhead / Direct buffer / Unable to create native thread
 - Heap Dump 분석: MAT (Memory Analyzer Tool), jhat, jcmd
+- Thread Dump 와의 조합 진단: `jcmd <pid> Thread.print` 로 thread state + heap 상태 cross-check (스레드 덤프 분석 상세는 #3 동시성 plan Phase 2 참조)
 
 ### Phase 3: 실전 적용
 - msa 프로젝트 JVM 서비스의 기본 JVM 옵션 확인 (`jib` 빌드 설정, k8s Deployment 의 JVM_OPTS)

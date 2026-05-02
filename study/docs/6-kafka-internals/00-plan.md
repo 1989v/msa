@@ -1,9 +1,9 @@
 ---
 id: 6
 title: Kafka 내부 동작
-status: draft
+status: completed
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-05-02
 tags: [kafka, messaging, partition, consumer-group, exactly-once, idempotency, dlq]
 difficulty: advanced
 estimated-hours: 20

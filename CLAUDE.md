@@ -101,6 +101,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | Conventions | `docs/conventions/` |
 | Standards | `agent-os/standards/` |
 | Product context | `agent-os/product/` |
+| Study notes (백엔드 시니어 학습 노트) | `study/` — 18 주제 / 333 파일 / ~97K 줄. entry: `study/CLAUDE.md`, master index: `study/docs/00-INDEX.md`, ADR 후보: `study/docs/00-ADR-CANDIDATES.md` |
 
 ### 서비스별 문서
 

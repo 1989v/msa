@@ -1,9 +1,9 @@
 ---
 id: 4
 title: DB 인덱스 + 트랜잭션 격리
-status: draft
+status: completed
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-05-02
 tags: [database, mysql, index, b-tree, transaction, mvcc, isolation, lock, deadlock, intention-lock, mdl]
 difficulty: advanced
 estimated-hours: 25

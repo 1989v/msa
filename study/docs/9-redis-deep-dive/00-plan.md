@@ -1,9 +1,9 @@
 ---
 id: 9
 title: Redis 심화
-status: draft
+status: completed
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-05-02
 tags: [redis, cache, persistence, cluster, stampede, distributed-lock, stream]
 difficulty: intermediate
 estimated-hours: 15

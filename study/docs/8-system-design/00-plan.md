@@ -1,9 +1,9 @@
 ---
 id: 8
 title: 시스템 설계 시나리오 10선
-status: draft
+status: completed
 created: 2026-04-16
-updated: 2026-04-16
+updated: 2026-05-02
 tags: [system-design, scalability, interview, architecture]
 difficulty: advanced
 estimated-hours: 30
