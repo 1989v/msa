@@ -64,17 +64,20 @@ order: 00
 
 - 18장 §5 의 "비즈니스 예외는 즉시 DLT" 가정이 코드와 다름 → 19장 §9 에서도 같은 가정으로 ExponentialBackOff 만 다룸
 - 본 리포트 수정으로 cascade 정정 (18장: addNotRetryableExceptions 미적용 명시 + 19장 §9: 두 가지 모두 개선 필요 명시)
+- **해결 (2026-05-02)**: commit `27a94ad` 에서 6 서비스 KafkaConfig 에 `addNotRetryableExceptions(BusinessException, IllegalArgumentException)` 적용 + 6 Kotest 테스트.
 
 ### 3.4 Order Outbox 부재 — ADR-0011 cascade 영향
 
 - ADR-0011 ("Outbox 패턴으로 이벤트 발행의 원자성 보장") 의 적용 범위가 inventory + fulfillment 만이고 Order 가 빠져 있는 상태
 - 16장 §3.1 + 19-improvements §0 (신설) 에 명시
-- **별도 액션 권장**: ADR-0011 보강 commit 또는 별도 follow-up ADR.
+- ~~**별도 액션 권장**: ADR-0011 보강 commit 또는 별도 follow-up ADR.~~
+- **해결 (2026-05-03)**: ADR-0032 (Order Outbox + Cancellation Compensation) 작성 + PR-2 commit `651017b` 로 Order 측 Outbox 도입 완료. ADR-0011 §Refinement 섹션에 cross-ref 추가.
 
 ### 3.5 `inventory.stock.received` 토픽 — InventoryStockSyncConsumer 가 listen 하나 inventory 측 publish 미확인
 
 - `product/.../InventoryStockSyncConsumer.kt:21` 가 `inventory.stock.received` 토픽 listen
-- inventory 측 `outboxPort.save(..., "inventory.stock.received", ...)` 호출 grep 결과 — 별도 검증 필요. (본 리포트 시점에는 직접 확인 안 함; 17/16 장 본문은 reserved/released/confirmed 만 명시) — **잔여 미해결 (3.5)**.
+- inventory 측 `outboxPort.save(..., "inventory.stock.received", ...)` 호출 grep 결과 — 별도 검증 필요. (본 리포트 시점에는 직접 확인 안 함; 17/16 장 본문은 reserved/released/confirmed 만 명시) — ~~**잔여 미해결 (3.5)**~~.
+- **해결 (2026-05-02 round 2)**: `inventory/app/.../InventoryService.kt:181-187` 가 `outboxPort.save(AGGREGATE_TYPE, inventoryId, "inventory.stock.received", ...)` 호출 — publisher 존재 확인. 추가로 PR-7 (commit `651017b`) 에서 `InventoryStockSyncConsumer` 측 멱등 처리 신설 (검증 §2 #4 갭 해소).
 
 ---
 

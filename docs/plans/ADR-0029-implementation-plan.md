@@ -520,11 +520,11 @@ ADR-0029 §Rollout Phase 3 권고 + Verification Follow-up §2 추가 대상.
 - [ ] `:64-97` `onFulfillmentShipped` 리팩터링.
 - [ ] `:99-132` `onFulfillmentCancelled` 리팩터링.
 - [ ] groupId 모두 "inventory-service" 통일 (이미 일치, 검증만).
-- [ ] **자연 멱등 보강 검증** (Policy A 의 핵심 책임):
-  - `reserveStockUseCase.execute(...)` — 현 `findByOrderIdAndWarehouseId` 로 보강돼 있음 (study 17 §11). 검증.
-  - `confirmStockByOrderUseCase.execute(...)` — 상태 전이 (RESERVED → CONFIRMED). 이미 CONFIRMED 면 no-op 인지 검증.
-  - `releaseStockByOrderUseCase.execute(...)` — 상태 전이 (RESERVED → RELEASED). 동일 검증.
-  - 자연 멱등이 안 되면 PR-8 이전 별도 보강 PR (PR-8a) 로 분리 — 이중 차감 risk 가 가장 크므로 매우 보수적으로.
+- [x] **자연 멱등 보강 검증** (Policy A 의 핵심 책임) — **PR-8 실 검증 결과 (2026-05-03)**:
+  - `reserveStockUseCase.execute(...)` — **자연 멱등 NOT OK**. 같은 `(orderId, productId)` 두 번 호출 시 매번 새 Reservation + `inventory.reserve(qty)` 두 번 deduct → 이중 차감 risk. 사전 plan 의 "현 `findByOrderIdAndWarehouseId` 로 보강돼 있음 (study 17 §11)" 주장은 **fulfillment 측 보강을 inventory 에 잘못 attribute** 한 것 — wording 정정. → **PR-8a 신설**: `findActiveByOrderIdAndProductId` pre-check 로 idempotent return 보강 (Option A 채택, commit `651017b`).
+  - `confirmStockByOrderUseCase.execute(...)` — **자연 멱등 OK**. `InventoryService.kt:209` 의 `.filter { it.getStatus() == ReservationStatus.ACTIVE }` 가 이미 CONFIRMED reservation 을 결과에서 제외 → empty list → no-op.
+  - `releaseStockByOrderUseCase.execute(...)` — **자연 멱등 OK**. `InventoryService.kt:247` 동일 ACTIVE filter.
+  - 결과: PR-8 가 3/4 listener 만 helper 이관, `onOrderCompleted` 는 PR-8a 에서 보강 후 이관 완료.
 
 #### 7.6.2 통합 테스트
 
