@@ -195,14 +195,18 @@ main() {
     fi
 
     local rc=0
-    for t in "${tars[@]}"; do
-        import_one "$t" "$loader" || rc=$?
-    done
-    for line in "${image_refs[@]}"; do
-        local ref="${line%%|*}"
-        build_target_line "$line" || { rc=$?; continue; }
-        import_image_ref "$ref" "$loader" || rc=$?
-    done
+    if [[ ${#tars[@]} -gt 0 ]]; then
+        for t in "${tars[@]}"; do
+            import_one "$t" "$loader" || rc=$?
+        done
+    fi
+    if [[ ${#image_refs[@]} -gt 0 ]]; then
+        for line in "${image_refs[@]}"; do
+            local ref="${line%%|*}"
+            build_target_line "$line" || { rc=$?; continue; }
+            import_image_ref "$ref" "$loader" || rc=$?
+        done
+    fi
     exit $rc
 }
 

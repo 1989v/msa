@@ -40,7 +40,8 @@ val mainClassByImage: Map<String, String> = mapOf(
     "experiment" to "com.kgd.experiment.ExperimentApplicationKt",
     "chatbot" to "com.kgd.chatbot.ChatbotApplicationKt",
     "code-dictionary" to "com.kgd.codedictionary.CodeDictionaryApplicationKt",
-    "agent-viewer-api" to "com.kgd.agentviewer.AgentViewerApplicationKt"
+    "agent-viewer-api" to "com.kgd.agentviewer.AgentViewerApplicationKt",
+    "quant" to "com.kgd.quant.QuantApplicationKt"
 )
 
 val resolvedMainClass: String? = mainClassByImage[serviceImageName]
