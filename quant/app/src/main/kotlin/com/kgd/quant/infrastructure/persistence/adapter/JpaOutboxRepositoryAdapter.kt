@@ -7,6 +7,7 @@ import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.event.DomainEvent
 import com.kgd.quant.infrastructure.persistence.entity.OutboxEntity
 import com.kgd.quant.infrastructure.persistence.repository.OutboxJpaRepository
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.Instant
@@ -35,6 +36,10 @@ import java.util.UUID
 class JpaOutboxRepositoryAdapter(
     private val jpa: OutboxJpaRepository,
     private val objectMapper: ObjectMapper,
+    // common 의 IdempotentEventHandlerAutoConfiguration 도 별도 TransactionTemplate
+    // 빈(`idempotentEventTransactionTemplate`) 을 등록하므로, by-type 주입 시 후보가
+    // 2개라 충돌. PersistenceConfig 에서 정의한 outbox 전용 빈을 명시한다.
+    @Qualifier("outboxTransactionTemplate")
     private val transactionTemplate: TransactionTemplate
 ) : OutboxRepositoryPort {
 

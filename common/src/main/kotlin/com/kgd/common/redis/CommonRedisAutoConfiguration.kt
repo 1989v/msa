@@ -43,8 +43,12 @@ class CommonRedisAutoConfiguration {
         return LettuceConnectionFactory(clusterConfiguration, lettuceClientConfig)
     }
 
+    // Spring Boot 4.0 의 DataRedisAutoConfiguration 도 동일 이름 'redisTemplate' 빈을
+    // 등록한다. 무한정 ConditionalOnMissingBean 만 사용하면 generic type (Object,Object vs
+    // String,Any) 차이로 conditional 이 빗나가 BeanDefinitionOverrideException 이 발생.
+    // 이름 기반 가드로 명시한다.
     @Bean
-    @ConditionalOnMissingBean
+    @ConditionalOnMissingBean(name = ["redisTemplate"])
     fun redisTemplate(factory: LettuceConnectionFactory): RedisTemplate<String, Any> {
         val jsonSerializer = GenericJacksonJsonRedisSerializer.create {}
         return RedisTemplate<String, Any>().apply {
