@@ -1,7 +1,6 @@
 package com.kgd.order.application.order.service
 
 import com.kgd.common.exception.BusinessException
-import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.PaymentPort
 import com.kgd.order.application.order.port.PaymentResult
 import com.kgd.order.application.order.port.ProductInfo
@@ -25,16 +24,15 @@ import java.time.LocalDateTime
 
 class OrderServiceTest : BehaviorSpec({
     val transactionalService = mockk<OrderTransactionalService>()
-    val eventPort = mockk<OrderEventPort>(relaxed = true)
     val paymentPort = mockk<PaymentPort>()
     val productPort = mockk<ProductPort>()
-    val service = OrderService(transactionalService, eventPort, paymentPort, productPort)
+    val service = OrderService(transactionalService, paymentPort, productPort)
 
-    beforeEach { clearMocks(transactionalService, eventPort, paymentPort, productPort) }
+    beforeEach { clearMocks(transactionalService, paymentPort, productPort) }
 
     given("주문 생성 시") {
         `when`("유효한 주문 커맨드와 결제 성공") {
-            then("주문이 저장되고 결제가 처리되어야 한다") {
+            then("주문이 저장되고 결제 후 completeOrder 가 호출되어야 한다") {
                 runTest {
                     val pendingOrder = Order.restore(
                         1L, "user-1",
@@ -62,12 +60,15 @@ class OrderServiceTest : BehaviorSpec({
                     result.orderId shouldBe 1L
                     result.userId shouldBe "user-1"
                     result.status shouldBe "COMPLETED"
-                    verify(exactly = 1) { eventPort.publishOrderCompleted(any()) }
+                    // ADR-0032 PR-2: outbox INSERT 는 completeOrder TX 내부에서 처리되므로
+                    // OrderService 가 직접 publish 호출하지 않는다.
+                    verify(exactly = 1) { transactionalService.completeOrder(1L) }
+                    verify(exactly = 0) { transactionalService.cancelOrder(any()) }
                 }
             }
         }
         `when`("결제 실패 시") {
-            then("주문이 취소되어야 한다") {
+            then("주문이 취소(cancelOrder)되어야 한다") {
                 runTest {
                     val pendingOrder = Order.restore(1L, "user-1",
                         listOf(OrderItem.of(1L, 1, Money(1000.toBigDecimal()))),
@@ -90,7 +91,10 @@ class OrderServiceTest : BehaviorSpec({
                             "user-1", listOf(PlaceOrderUseCase.OrderItemCommand(1L, 1, 1000.toBigDecimal()))
                         ))
                     }
-                    verify(exactly = 1) { eventPort.publishOrderCancelled(any()) }
+                    // ADR-0032 PR-2: outbox INSERT 는 cancelOrder TX 내부에서 처리되므로
+                    // OrderService 가 직접 publish 호출하지 않는다.
+                    verify(exactly = 1) { transactionalService.cancelOrder(1L) }
+                    verify(exactly = 0) { transactionalService.completeOrder(any()) }
                 }
             }
         }

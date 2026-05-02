@@ -41,7 +41,7 @@ private val log = KotlinLogging.logger {}
  * ## 단순화 / TODO
  * - `failure_count` 컬럼 (Flyway V004) + DLQ 분기 + 임계 초과 시 RISK 알림 enqueue 는 후속 PR.
  * - 이벤트 type → 토픽 정밀 매핑 ([topicMapping]) 은 후속 PR.
- * - Idempotent consumer ([IdempotentEventConsumer]) 활용은 후속 (Phase 3 외부 통합 시 본격 도입).
+ * - Idempotent consumer ([com.kgd.common.messaging.IdempotentEventHandler]) 활용은 후속 (Phase 3 외부 통합 시 본격 도입).
  */
 @Component
 @Profile("!test")
@@ -94,7 +94,7 @@ class OutboxRelay(
                 }
             } catch (e: Exception) {
                 // markPublished 실패 시 다음 polling 에서 중복 publish 가 발생할 수 있다.
-                // 컨슈머 측 멱등성(processed_event 기반 IdempotentEventConsumer) 으로 방어된다 (ADR-0012).
+                // 컨슈머 측 멱등성 (processed_event 기반 common IdempotentEventHandler) 으로 방어된다 (ADR-0012, ADR-0029).
                 log.warn { "outbox markPublished failed size=${publishedEventIds.size} reason=${e.message}" }
             }
         }

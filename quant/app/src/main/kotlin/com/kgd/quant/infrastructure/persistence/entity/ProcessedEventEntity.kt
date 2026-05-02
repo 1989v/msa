@@ -22,7 +22,9 @@ import java.util.UUID
  * 3. 미존재면 비즈니스 처리 → INSERT 로 마킹.
  *    - INSERT 충돌(PK violation) 시 다른 instance 가 처리한 것이므로 silent skip.
  *
- * 본 마킹/조회는 [com.kgd.quant.infrastructure.outbox.IdempotentEventConsumer] 헬퍼가 담당한다.
+ * 본 마킹/조회는 common 모듈의 [com.kgd.common.messaging.IdempotentEventHandler] 헬퍼가 담당하며,
+ * 본 엔티티는 [com.kgd.quant.infrastructure.persistence.adapter.JpaProcessedEventRepositoryAdapter]
+ * 를 통해 [com.kgd.common.messaging.ProcessedEventRepositoryPort] 로 노출된다 (ADR-0029).
  *
  * ## V001 스키마
  * ```

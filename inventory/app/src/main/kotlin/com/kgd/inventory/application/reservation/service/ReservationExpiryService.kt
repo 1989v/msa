@@ -6,7 +6,9 @@ import com.kgd.inventory.application.inventory.port.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
 import com.kgd.inventory.application.reservation.usecase.ExpireReservationsUseCase
 import com.kgd.inventory.domain.reservation.event.ReservationEvent
+import com.kgd.inventory.infrastructure.metrics.InventoryMetrics
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +19,10 @@ class ReservationExpiryService(
     private val inventoryRepositoryPort: InventoryRepositoryPort,
     private val outboxPort: OutboxPort,
     private val objectMapper: ObjectMapper,
+    // ADR-0032 Phase 3 / PR-4 — TTL fallback 발화 메트릭. 정상 흐름이면 0 이어야 한다.
+    // @Autowired(required = false) 로 노출해 Micrometer 미적재 환경(테스트 등)에서도 서비스 초기화가 가능.
+    @Autowired(required = false)
+    private val inventoryMetrics: InventoryMetrics? = null,
 ) : ExpireReservationsUseCase {
 
     private val log = LoggerFactory.getLogger(javaClass)
@@ -61,6 +67,8 @@ class ReservationExpiryService(
                     "inventory.reservation.expired",
                     objectMapper.writeValueAsString(event),
                 )
+                // ADR-0032 Phase 3 / PR-4 — fallback 발화 시점 카운터 증가.
+                inventoryMetrics?.incrementReservationExpired(reservation.warehouseId)
                 count++
             } catch (e: Exception) {
                 log.error("Failed to expire reservation id={}", reservation.id, e)

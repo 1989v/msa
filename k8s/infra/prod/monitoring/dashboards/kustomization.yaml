@@ -26,3 +26,9 @@ configMapGenerator:
   - name: grafana-dashboard-service-overview
     files:
       - service-overview.json
+  - name: grafana-dashboard-order-cancellation
+    files:
+      - order-cancellation.json
+  - name: grafana-dashboard-idempotent-consumer
+    files:
+      - idempotent-consumer.json

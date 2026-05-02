@@ -40,6 +40,20 @@ label) so kube-prometheus-stack starts scraping automatically.
 
 A starter ServiceMonitor is in `servicemonitor-apps.yaml`.
 
+## PrometheusRule (alerts)
+
+Alert rule 은 `*-alerts.yaml` 파일로 분리해서 관리한다 (kube-prometheus-stack 의
+`PrometheusRule` CRD). chart default selector 는 `release: kube-prometheus-stack`
+라벨을 사용하므로 본 파일들도 동일 라벨을 명시한다.
+
+```bash
+# 현재 적용 가능한 rule 파일
+kubectl apply -f order-cancellation-alerts.yaml      # ADR-0032 PR-4
+kubectl apply -f idempotent-alerts.yaml              # ADR-0029 PR-9
+```
+
+Runbook 링크 anchor 는 `docs/runbooks/` 의 파일과 매칭. 알람 추가 시 runbook 동시 갱신.
+
 ## Dashboard migration
 
 The existing Grafana dashboards under

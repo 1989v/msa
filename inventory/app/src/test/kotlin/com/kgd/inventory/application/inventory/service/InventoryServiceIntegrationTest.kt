@@ -38,6 +38,7 @@ class InventoryServiceIntegrationTest : BehaviorSpec({
                     LocalDateTime.now().plusMinutes(30), LocalDateTime.now(),
                 )
 
+                every { reservationRepository.findActiveByOrderIdAndProductId(10L, 100L) } returns null
                 every { inventoryRepository.findByProductIdAndWarehouseId(100L, 1L) } returns inventory
                 every { inventoryRepository.save(any()) } returns savedInventory
                 every { reservationRepository.save(any()) } returns reservation
@@ -79,6 +80,8 @@ class InventoryServiceIntegrationTest : BehaviorSpec({
                     LocalDateTime.now().plusMinutes(30), LocalDateTime.now(),
                 )
 
+                every { reservationRepository.findActiveByOrderIdAndProductId(20L, 200L) } returns null
+                every { reservationRepository.findActiveByOrderIdAndProductId(21L, 200L) } returns null
                 every { inventoryRepository.findByProductIdAndWarehouseId(200L, 1L) } returns inventory
                 every { inventoryRepository.save(any()) } returnsMany listOf(savedInventory1, savedInventory2)
                 every { reservationRepository.save(any()) } returnsMany listOf(reservation1, reservation2)

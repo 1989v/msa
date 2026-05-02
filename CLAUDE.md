@@ -48,7 +48,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **API 응답 포맷**: `ApiResponse<T>` → `docs/architecture/api-response.md`
 - **Common 기능 로드**: Auto-Configuration (`kgd.common.*`) → `docs/architecture/common-features.md`
 - **코드 생성 컨벤션**: 네이밍, DI 방향, 도메인 패턴 → `docs/conventions/code-convention.md`
-- **멱등성 패턴**: Kafka Consumer 중복 처리 방어 → `docs/adr/ADR-0012-idempotent-consumer.md`
+- **멱등성 패턴**: Kafka Consumer 중복 처리 방어 → `docs/conventions/idempotent-consumer.md` (실천 가이드, ADR-0012/0029)
 - **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
 - **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md` (스크립트) · `k8s/infra/prod/backup/` (CronJob 래퍼)
 - **K8s 전환**: 배포 모드 이원화, Eureka 제거, Jib → `docs/adr/ADR-0019-k8s-migration.md`

@@ -18,6 +18,9 @@ dependencies {
     implementation(libs.querydsl.jpa) { artifact { classifier = "jakarta" } }
     kapt(libs.querydsl.apt) { artifact { classifier = "jakarta" } }
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    // ADR-0029 PR-7 — Flyway baseline 도입. Hibernate ddl-auto=validate 와 결합해 스키마 변경은 Flyway 단독 책임.
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-mysql")
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)

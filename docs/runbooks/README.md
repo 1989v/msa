@@ -8,6 +8,7 @@
 | K8s / k3s 배포 상세 (두 모드) | [`k8s-deployment.md`](k8s-deployment.md) |
 | 로컬 개발 (bare-metal + k3d) | [`local-dev-setup.md`](local-dev-setup.md) |
 | 레거시 docker-compose (보관) | [`docker-infra.md`](docker-infra.md) |
+| Order Outbox + Cancellation 알람 (ADR-0032) | [`order-outbox-cancellation.md`](order-outbox-cancellation.md) |
 
 ---
 

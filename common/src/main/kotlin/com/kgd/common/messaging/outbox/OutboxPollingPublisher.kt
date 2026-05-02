@@ -31,6 +31,8 @@ class OutboxPollingPublisher(
     @Scheduled(fixedDelayString = "\${outbox.polling.interval-ms:1000}")
     fun publishPendingEvents() {
         val events = outboxRepository.findAllByStatusOrderByCreatedAtAsc("PENDING")
+        // ADR-0032 Phase 3 — gauge 갱신은 빈 polling 에서도 수행해야 한다 (정상 흐름이면 0 으로 떨어진다).
+        metrics.recordPendingCount(events.size.toLong())
         if (events.isEmpty()) return
 
         log.debug("Found {} pending outbox events", events.size)

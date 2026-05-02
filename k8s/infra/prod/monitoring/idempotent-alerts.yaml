@@ -1,0 +1,147 @@
+# ADR-0029 PR-9 — Idempotent Consumer Helper 알람 룰.
+#
+# kube-prometheus-stack 의 Prometheus operator 가 PrometheusRule CRD 를 watch.
+# `release: kube-prometheus-stack` 라벨이 chart 의 default ruleSelector 와 매칭되어
+# 자동 적재된다 (servicemonitor-apps.yaml / order-cancellation-alerts.yaml 과 동일 패턴).
+#
+# Runbook 링크는 docs/runbooks/idempotent-consumer.md 의 anchor 참조.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: idempotent-consumer
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: idempotent-consumer.rules
+      interval: 30s
+      rules:
+        - alert: IdempotentSkipRateHigh
+          # skip 비율 = skipped / (processed + skipped + race). 정상은 0~수%.
+          # 30% 초과 5분 지속 → publisher 측 중복 발행 / consumer rebalance 폭주 의심.
+          expr: |
+            (
+              sum by (consumer_group) (rate(kgd_idempotent_processed_total{result="skipped"}[5m]))
+              /
+              clamp_min(
+                sum by (consumer_group) (rate(kgd_idempotent_processed_total[5m])),
+                0.001
+              )
+            ) > 0.3
+          for: 5m
+          labels:
+            severity: warning
+            adr: "0029"
+            channel: slack
+          annotations:
+            summary: "Idempotent skip ratio > 30% ({{ $labels.consumer_group }})"
+            description: |
+              consumer_group={{ $labels.consumer_group }} 의 skip 비율이 5분 동안 30% 초과.
+              → publisher 측 중복 발행 / consumer rebalance / 재처리 폭주 의심.
+            runbook_url: "https://github.com/.../docs/runbooks/idempotent-consumer.md#idempotentskipratehigh"
+
+        - alert: IdempotentMissingIdRateHigh
+          # ADR-0029 §Decision §6 — eventId 누락은 graceful degrade (UUID 생성).
+          # 정상 운영에서는 0 이어야 하며, 1% 초과 5분 지속 = publisher 측 헤더/필드 누락 점검 필요.
+          expr: |
+            (
+              sum by (consumer_group) (rate(kgd_idempotent_event_missing_id_total[5m]))
+              /
+              clamp_min(
+                sum by (consumer_group) (rate(kgd_idempotent_processed_total[5m])),
+                0.001
+              )
+            ) > 0.01
+          for: 5m
+          labels:
+            severity: warning
+            adr: "0029"
+            channel: slack
+          annotations:
+            summary: "eventId missing rate > 1% ({{ $labels.consumer_group }})"
+            description: |
+              consumer_group={{ $labels.consumer_group }} 에서 eventId 누락 graceful degrade 가
+              5분 동안 1% 초과 발화. publisher 측 이벤트 헤더/필드 누락을 점검.
+            runbook_url: "https://github.com/.../docs/runbooks/idempotent-consumer.md#idempotentmissingidratehigh"
+
+        - alert: IdempotentRaceRateHigh
+          # RACE outcome = 멀티 인스턴스 동시 INSERT 충돌. 정상 0~수%.
+          # 10% 초과 10분 지속 → DB lock 경합 / 재시도 폭증 의심.
+          expr: |
+            (
+              sum by (consumer_group) (rate(kgd_idempotent_processed_total{result="race"}[5m]))
+              /
+              clamp_min(
+                sum by (consumer_group) (rate(kgd_idempotent_processed_total[5m])),
+                0.001
+              )
+            ) > 0.1
+          for: 10m
+          labels:
+            severity: info
+            adr: "0029"
+            channel: slack
+          annotations:
+            summary: "Idempotent RACE rate > 10% ({{ $labels.consumer_group }})"
+            description: |
+              consumer_group={{ $labels.consumer_group }} 의 RACE 비율이 10분 동안 10% 초과.
+              멀티 인스턴스 동시 INSERT 충돌 빈도 ↑ — DB lock 경합 / 재시도 폭증 의심.
+            runbook_url: "https://github.com/.../docs/runbooks/idempotent-consumer.md#idempotentraceratehigh"
+
+        - alert: IdempotentErrorRateHigh
+          # ERROR outcome = 헬퍼 내부 예외 (DB 장애 / TX 실패 등). 0 이 정상.
+          expr: sum by (consumer_group) (rate(kgd_idempotent_processed_total{result="error"}[5m])) > 0
+          for: 5m
+          labels:
+            severity: warning
+            adr: "0029"
+            channel: slack
+          annotations:
+            summary: "Idempotent ERROR outcome detected ({{ $labels.consumer_group }})"
+            description: |
+              consumer_group={{ $labels.consumer_group }} 에서 idempotent helper ERROR outcome 이 5분간 발화.
+              DB 장애 / TX rollback / Repository 구현 예외 점검.
+            runbook_url: "https://github.com/.../docs/runbooks/idempotent-consumer.md#idempotenterrorratehigh"
+
+        - alert: IdempotentCleanupSchedulerStalled
+          # cleanup 스케줄러는 매일 cron 으로 실행. 25시간 동안 실행 횟수 0 = stalled.
+          # spring_scheduled_tasks_seconds_count 는 Spring observation. classname 으로 IdempotentEventCleanupScheduler 필터.
+          # `application` 라벨은 ServiceMonitor + management.metrics.tags.application 로 부여됨.
+          expr: |
+            sum by (application) (
+              increase(spring_scheduled_tasks_seconds_count{classname=~".*IdempotentEventCleanupScheduler.*"}[25h])
+            ) < 1
+            and on (application)
+            sum by (application) (
+              kgd_idempotent_processed_total
+            ) > 0
+          for: 30m
+          labels:
+            severity: critical
+            adr: "0029"
+            channel: pagerduty
+          annotations:
+            summary: "Idempotent cleanup scheduler stalled ({{ $labels.application }})"
+            description: |
+              {{ $labels.application }} 의 IdempotentEventCleanupScheduler 가 최근 25시간 동안 실행되지 않음.
+              → cron 또는 Spring scheduler stall 의심. processed_event 테이블 무한 증가 방지를 위해 즉시 점검.
+            runbook_url: "https://github.com/.../docs/runbooks/idempotent-consumer.md#idempotentcleanupschedulerstalled"
+
+        - alert: IdempotentCleanupSchedulerFailed
+          # cleanup 실행 시 예외 발생 → Spring observation 의 outcome=ERROR.
+          expr: |
+            sum by (application) (
+              increase(spring_scheduled_tasks_seconds_count{classname=~".*IdempotentEventCleanupScheduler.*", outcome="ERROR"}[1h])
+            ) > 0
+          for: 5m
+          labels:
+            severity: critical
+            adr: "0029"
+            channel: pagerduty
+          annotations:
+            summary: "Idempotent cleanup execution failed ({{ $labels.application }})"
+            description: |
+              {{ $labels.application }} 의 IdempotentEventCleanupScheduler 가 최근 1시간 내 실패.
+              DB 권한 / DELETE 쿼리 실패 / network 장애 점검.
+            runbook_url: "https://github.com/.../docs/runbooks/idempotent-consumer.md#idempotentcleanupschedulerfailed"

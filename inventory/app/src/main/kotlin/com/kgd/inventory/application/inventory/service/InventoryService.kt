@@ -43,6 +43,33 @@ class InventoryService(
 
     @Transactional
     override fun execute(command: ReserveStockUseCase.Command): ReserveStockUseCase.Result {
+        // ADR-0029 PR-8a — 자연 멱등 보강 (Option A pre-check).
+        // 같은 (orderId, productId) 의 ACTIVE Reservation 이 이미 있으면 신규 차감 없이 기존 결과를 반환한다.
+        // - common IdempotentEventHandler 의 race 흡수 (`DataIntegrityViolationException`) 와는 별개 이슈:
+        //   helper 가 마킹 이전 단계에서 멀티 인스턴스 간 동시 INSERT 가 발생하면 두 인스턴스 모두 block 을
+        //   1회 실행할 수 있다. 이 시점에 본 pre-check 가 두 번째 인스턴스를 no-op 으로 흡수해 이중 차감을 막는다.
+        // - DB UNIQUE 제약 (Option B) 까지는 도입하지 않는다 — 스키마 변경 비용 + 도메인 의도 (CANCELLED/EXPIRED/
+        //   CONFIRMED 가 다수 존재 가능) 를 동시에 만족시키려면 부분 인덱스 등 추가 설계가 필요하기 때문.
+        reservationRepository.findActiveByOrderIdAndProductId(command.orderId, command.productId)?.let { existing ->
+            log.info {
+                "ReserveStockUseCase idempotent return — existing ACTIVE reservation reused: " +
+                    "orderId=${command.orderId} productId=${command.productId} reservationId=${existing.id}"
+            }
+            val inventoryForView = inventoryRepository.findByProductIdAndWarehouseId(existing.productId, existing.warehouseId)
+                ?: throw BusinessException(
+                    ErrorCode.NOT_FOUND,
+                    "재고를 찾을 수 없습니다: productId=${existing.productId}, warehouseId=${existing.warehouseId}",
+                )
+            val reservationId = existing.id
+                ?: throw IllegalStateException("기존 예약의 ID 가 null 입니다: orderId=${command.orderId}, productId=${command.productId}")
+            return ReserveStockUseCase.Result(
+                reservationId = reservationId,
+                productId = existing.productId,
+                availableQty = inventoryForView.getAvailableQty(),
+                reservedQty = inventoryForView.getReservedQty(),
+            )
+        }
+
         // Redis fast-path: 사전 검증 (재고 부족 시 DB 접근 없이 빠르게 실패)
         cachePort?.let { cache ->
             val cacheResult = cache.reserveStock(command.productId, command.warehouseId, command.qty)

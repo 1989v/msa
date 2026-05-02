@@ -22,6 +22,14 @@ class ReservationRepositoryAdapter(
         return jpaRepository.findByOrderIdAndProductId(orderId, productId)?.toDomain()
     }
 
+    override fun findActiveByOrderIdAndProductId(orderId: Long, productId: Long): Reservation? {
+        return jpaRepository.findFirstByOrderIdAndProductIdAndStatus(
+            orderId = orderId,
+            productId = productId,
+            status = ReservationStatus.ACTIVE.name,
+        )?.toDomain()
+    }
+
     override fun findAllExpired(): List<Reservation> {
         return jpaRepository.findAllByStatusAndExpiredAtBefore(
             ReservationStatus.ACTIVE.name,

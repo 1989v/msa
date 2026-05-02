@@ -11,3 +11,16 @@ spring:
       host: redis-1
       port: 6379
 
+# ADR-0029 PR-9 — processed_event 7일 retention cleanup 스케줄러 활성화.
+# common 의 IdempotentEventCleanupScheduler 가 매일 cron 시각에 retention 보다 오래된 row 를 삭제.
+# 5 서비스 cron 시간 분산 (DB 부하 분산):
+#   inventory   03:30, order 03:00, fulfillment 03:15, product 03:45, quant 04:00 (Asia/Seoul).
+kgd:
+  common:
+    messaging:
+      idempotent:
+        cleanup:
+          enabled: true
+          retention: P7D
+          cron: "0 30 3 * * *"
+          zone: Asia/Seoul

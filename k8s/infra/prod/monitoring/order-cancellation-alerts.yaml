@@ -1,0 +1,105 @@
+# ADR-0032 Phase 3 / PR-4 — Order Outbox + Cancellation 보상 흐름 알람.
+#
+# kube-prometheus-stack 의 Prometheus operator 가 PrometheusRule CRD 를 watch.
+# `release: kube-prometheus-stack` 라벨이 chart 의 default ruleSelector 와 매칭되어
+# 자동 적재된다 (servicemonitor-apps.yaml 과 동일 패턴).
+#
+# Runbook 링크는 docs/runbooks/order-outbox-cancellation.md 의 anchor 참조.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: order-outbox-cancellation
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: order-outbox-cancellation.rules
+      interval: 30s
+      rules:
+        - alert: OutboxLagHigh
+          # Outbox PENDING 가 지속 누적 = polling publisher 또는 broker 장애 의심.
+          expr: max by (application) (outbox_pending_count) > 100
+          for: 5m
+          labels:
+            severity: warning
+            adr: "0032"
+            channel: slack
+          annotations:
+            summary: "Outbox PENDING rows backlog ({{ $labels.application }})"
+            description: |
+              {{ $labels.application }} 의 outbox_pending_count 가 5분 동안 100 초과를 유지.
+              → polling publisher 또는 Kafka broker 장애 의심.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#outboxlaghigh"
+
+        - alert: OutboxLagCritical
+          expr: max by (application) (outbox_pending_count) > 1000
+          for: 1m
+          labels:
+            severity: critical
+            adr: "0032"
+            channel: pagerduty
+          annotations:
+            summary: "Outbox backlog catastrophic ({{ $labels.application }})"
+            description: |
+              {{ $labels.application }} 의 outbox_pending_count 가 1분 동안 1000 초과.
+              보상 흐름이 사실상 정지 — flash sale / refund 실패 가능성 큼.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#outboxlagcritical"
+
+        - alert: OutboxPublishFailureRateHigh
+          # 최근 5분 발행 실패율 > 1%. broker / topic ACL / serializer 의심.
+          expr: |
+            (
+              sum by (application) (rate(outbox_publish_error_total[5m]))
+              /
+              clamp_min(
+                sum by (application) (rate(outbox_publish_total[5m]) + rate(outbox_publish_error_total[5m])),
+                0.001
+              )
+            ) > 0.01
+          for: 5m
+          labels:
+            severity: warning
+            adr: "0032"
+            channel: slack
+          annotations:
+            summary: "Outbox publish failure rate > 1% ({{ $labels.application }})"
+            description: |
+              5분 평균 outbox 발행 실패율이 1% 를 초과.
+              Kafka broker 가용성 / topic ACL / payload 직렬화 오류 의심.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#outboxpublishfailureratehigh"
+
+        - alert: CancellationLatencyP99High
+          # order.order.cancelled → inventory release p99 > 5s = SLA 위반.
+          expr: |
+            histogram_quantile(
+              0.99,
+              sum by (le, reason) (rate(order_cancellation_to_release_latency_seconds_bucket[5m]))
+            ) > 5
+          for: 10m
+          labels:
+            severity: warning
+            adr: "0032"
+            channel: slack
+          annotations:
+            summary: "Order cancellation p99 latency > 5s (reason={{ $labels.reason }})"
+            description: |
+              order.order.cancelled → inventory release p99 latency 가 10분 동안 5s 초과.
+              SLA (Outbox polling 1s + Kafka + consumer) 위반. consumer lag / DB lock 의심.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#cancellationlatencyp99high"
+
+        - alert: ReservationExpiryFallbackTriggered
+          # ADR-0032 invariant: 정상 흐름에서 inventory_reservation_expired_total 은 0.
+          # 1시간 윈도 increase > 0 = cancellation 흐름 또는 Outbox 장애 의심.
+          expr: sum(increase(inventory_reservation_expired_total[1h])) > 0
+          for: 5m
+          labels:
+            severity: warning
+            adr: "0032"
+            channel: slack
+          annotations:
+            summary: "TTL fallback expiries detected (ADR-0032 invariant violated)"
+            description: |
+              최근 1시간 내 reservation TTL fallback 이 발화했다. 이는 정상 흐름에서 0 이어야 하며,
+              발화는 order.order.cancelled 흐름 또는 Order Outbox 장애를 의미한다.
+            runbook_url: "https://github.com/.../docs/runbooks/order-outbox-cancellation.md#reservationexpiryfallbacktriggered"

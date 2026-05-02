@@ -82,3 +82,21 @@ common 모듈에 다음을 제공한다:
 - processed_event INSERT로 인한 미미한 쓰기 부하
 - 7일 보관 정책 관리 필요 (스케줄러)
 - 기존 이벤트 클래스에 eventId 필드 추가 필요 (하위 호환성 고려)
+
+## Refinement (2026-05-XX, ADR-0029)
+
+본 결정의 §2 (`processed_event` 스키마), §3 (atomicity 시맨틱), §4 (common 모듈 위치) 는
+[ADR-0029 — Idempotent Consumer Helper](ADR-0029-idempotent-consumer-helper.md) 로 보강 표준화됐다.
+실제 운영 코드는 ADR-0029 의 결정을 따른다 — 주요 변경점은 다음과 같다.
+
+- §2 PK 표준화 — `event_id VARCHAR(36)` 단일 PK → `(event_id BINARY(16), consumer_group VARCHAR(64))` 복합 PK.
+  fan-out 컨슈머에서 같은 메시지를 다른 그룹이 처리할 때의 dedup 충돌이 제거된다.
+- §3 atomicity 시맨틱 — "비즈니스 + 마킹 같은 트랜잭션" 표현은 외부 IO (ADR-0020) 와 충돌 → ADR-0029 §3
+  Policy A 로 변경. 비즈니스 처리(`block`)와 마킹 INSERT 는 별도 트랜잭션이며, 호출자의 자연 멱등이
+  중복 실행 안전성을 보장한다 (`DataIntegrityViolationException` 흡수 + 호출자 pre-check / UNIQUE).
+- §4 common 모듈 — 인터페이스/엔티티/유틸 → common 의 [IdempotentEventHandler] (헬퍼) +
+  [ProcessedEventRepositoryPort] (Port) + 각 서비스의 JPA 어댑터 패턴.
+- "Consequences > 7일 보관 정책 관리 필요 (스케줄러)" 의 미실현 갭은 ADR-0029 의
+  `IdempotentEventCleanupScheduler` 가 표준 구현을 제공한다 (`kgd.common.messaging.idempotent.cleanup.*`).
+
+운영 가이드는 [docs/conventions/idempotent-consumer.md](../conventions/idempotent-consumer.md) 참조.

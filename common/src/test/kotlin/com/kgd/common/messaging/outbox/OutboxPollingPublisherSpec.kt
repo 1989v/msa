@@ -24,9 +24,10 @@ class OutboxPollingPublisherSpec : BehaviorSpec({
         `when`("PENDING row 가 없으면") {
             every { repository.findAllByStatusOrderByCreatedAtAsc("PENDING") } returns emptyList()
 
-            then("Kafka 호출 없이 종료한다") {
+            then("Kafka 호출 없이 종료하고 pending gauge 가 0 으로 갱신된다") {
                 publisher.publishPendingEvents()
                 verify(exactly = 0) { kafkaTemplate.send(any<String>(), any<String>(), any()) }
+                verify(exactly = 1) { metrics.recordPendingCount(0L) }
             }
         }
 
@@ -63,6 +64,7 @@ class OutboxPollingPublisherSpec : BehaviorSpec({
                 (row.publishedAt != null) shouldBe true
                 verify(exactly = 1) { repository.save(row) }
                 verify(exactly = 1) { metrics.incrementPublishSuccess() }
+                verify(exactly = 1) { metrics.recordPendingCount(1L) }
             }
         }
 

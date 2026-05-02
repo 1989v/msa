@@ -22,7 +22,7 @@ import org.springframework.util.backoff.FixedBackOff
  *
  * ## ADR-0012 멱등성 컨슈머와의 관계
  * DLQ 재처리 시에도 `processed_event` 테이블 기반 멱등성으로 중복 방어된다.
- * 본 빈은 DLQ 라우팅까지만 책임지고, consumer 측 idempotency 는 [com.kgd.quant.infrastructure.outbox.IdempotentEventConsumer] 가 담당한다.
+ * 본 빈은 DLQ 라우팅까지만 책임지고, consumer 측 idempotency 는 common 의 [com.kgd.common.messaging.IdempotentEventHandler] 가 담당한다 (ADR-0029).
  *
  * ## Phase 2 단순화
  * - DLQ Consumer (알림 발송, 재처리 API) 는 후속 PR.

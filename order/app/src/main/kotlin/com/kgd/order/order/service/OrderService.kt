@@ -2,7 +2,6 @@ package com.kgd.order.application.order.service
 
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
-import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.application.order.port.PaymentPort
 import com.kgd.order.application.order.port.ProductPort
 import com.kgd.order.application.order.usecase.GetOrderUseCase
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Service
 @Service
 class OrderService(
     private val orderTransactionalService: OrderTransactionalService,
-    private val eventPort: OrderEventPort,
     private val paymentPort: PaymentPort,
     private val productPort: ProductPort,
 ) : PlaceOrderUseCase, GetOrderUseCase {
@@ -26,7 +24,8 @@ class OrderService(
      * 1. Validate products via Product service
      * 2. TX1: Save PENDING order (short transaction, commits)
      * 3. No TX: Call external payment service
-     * 4. TX2: Mark order COMPLETED or CANCELLED based on payment result (short transaction)
+     * 4. TX2: Mark order COMPLETED or CANCELLED based on payment result. ADR-0032 PR-2 부터
+     *    outbox INSERT 가 같은 TX 안에서 함께 commit 되어 별도 publish 호출은 필요 없다.
      *
      * This ensures no DB connection is held during the external payment HTTP call.
      */
@@ -55,15 +54,13 @@ class OrderService(
             paymentPort.requestPayment(orderId, pendingOrder.totalAmount.amount)
         } catch (e: Exception) {
             log.error("Payment failed for orderId={}, cancelling order", orderId, e)
-            val cancelled = orderTransactionalService.cancelOrder(orderId)
-            eventPort.publishOrderCancelled(cancelled)
+            orderTransactionalService.cancelOrder(orderId)
             throw BusinessException(ErrorCode.EXTERNAL_API_ERROR, "결제 서비스 호출 실패: ${e.message}")
         }
 
         // Phase 3: Update order status based on payment result (short transaction)
         return if (paymentResult.status == "SUCCESS") {
             val completed = orderTransactionalService.completeOrder(orderId)
-            eventPort.publishOrderCompleted(completed)
             PlaceOrderUseCase.Result(
                 orderId = requireNotNull(completed.id),
                 userId = completed.userId,
@@ -72,8 +69,7 @@ class OrderService(
             )
         } else {
             log.warn("Payment returned non-SUCCESS status={} for orderId={}", paymentResult.status, orderId)
-            val cancelled = orderTransactionalService.cancelOrder(orderId)
-            eventPort.publishOrderCancelled(cancelled)
+            orderTransactionalService.cancelOrder(orderId)
             throw BusinessException(ErrorCode.EXTERNAL_API_ERROR, "결제 실패: ${paymentResult.status}")
         }
     }

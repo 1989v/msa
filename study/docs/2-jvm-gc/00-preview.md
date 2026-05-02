@@ -52,7 +52,7 @@ JVM 학습은 **메모리 구조**를 머릿속에 그리고, 그 위에서 **GC
 
 ## 소주제 지도
 
-> 23개 파일로 분할. Phase 1 기초 5개, Phase 2 심화 8개, 실습 4개, Phase 3 msa 적용 3개, 산출물 2개.
+> 24개 파일로 분할. Phase 1 기초 5개, Phase 2 심화 8개, 실습 4개, Phase 3 msa 적용 3개, 심화 부록 1개, 산출물 2개.
 
 ### Phase 1: JVM 메모리 + GC 기본 (5개)
 
@@ -94,12 +94,18 @@ JVM 학습은 **메모리 구조**를 머릿속에 그리고, 그 위에서 **GC
 | 19 | K8s 메모리 리밋 ↔ 힙 비율 | [19-k8s-memory-vs-heap.md](19-k8s-memory-vs-heap.md) | resources.limits vs `-XX:MaxRAMPercentage`, OOMKilled 방지 |
 | 20 | 관측성: Prometheus + Micrometer | [20-observability-prometheus.md](20-observability-prometheus.md) | actuator/prometheus, JVM 메트릭 핵심 시리즈, Grafana 패널 |
 
+### 심화 부록 (1개)
+
+| # | 소주제 | 심화 파일 | 핵심 |
+|---|---|---|---|
+| 23 | G1GC 튜닝 Cookbook | [23-g1gc-tuning-cookbook.md](23-g1gc-tuning-cookbook.md) | 9개 시나리오 (디폴트 / Heap / Young 핵심 / Young 초과 / Old 초과 / back-to-back / Allocation Burst / System.gc / OS sys time) |
+
 ### 산출물 (2개)
 
 | # | 소주제 | 심화 파일 | 핵심 |
 |---|---|---|---|
 | 21 | msa JVM 튜닝 개선 후보 + ADR 후보 | [21-improvements.md](21-improvements.md) | 10개 제안 + 우선순위 + ADR-0028 후보 초안 |
-| 22 | 면접 Q&A 50문항 + 꼬리 질문 | [22-interview-qa.md](22-interview-qa.md) | 6 영역 × 8문항 + 함정 / 실무 스토리 |
+| 22 | 면접 Q&A 50문항 + 꼬리 질문 | [22-interview-qa.md](22-interview-qa.md) | 6 영역 × 8문항 + 함정 / 실무 스토리 + 23번 cookbook 카드 |
 
 ---
 
@@ -187,12 +193,13 @@ JVM 학습은 **메모리 구조**를 머릿속에 그리고, 그 위에서 **GC
 
 ## 학습 진행 가이드
 
-- 권장 순서: **01 → 02 → ... → 22** (Top-down 직진)
+- 권장 순서: **01 → 02 → ... → 20 → 23 → 21 → 22** (Top-down 직진, 23 은 Phase 2 심화 끝부분)
 - Phase 1(01-05)은 의존성 있음 → 순서대로 (메모리 → 할당 → 도달성 → 알고리즘 → GC 종류)
 - Phase 2(06-13)는 06 G1 → 07 ZGC → 09 GC 로그 → 12 OOM → 13 Heap Dump 핵심 경로 우선, 08 Shenandoah / 10 JIT / 11 NMT는 보조
 - 13-heap-dump-mat.md 의 마지막 섹션은 **#3 동시성 (스레드 덤프)** 와 cross-reference. 현재 #3 은 별도 plan 으로 진행 — 본 토픽에서는 "어떻게 조합하는가"만 다룸
 - 실습(14-17)은 Phase 2 종료 후 권장 — 개념 없이 실습부터 하면 로그/덤프 해석이 안 됨
 - Phase 3(18-20)은 실제 msa 코드를 직접 열어보며 진행
+- **23-g1gc-tuning-cookbook.md** 는 06번 (G1 알고리즘) + 09/14 (로그) + 18/19 (msa 적용) 을 종합한 의사결정 트리 — Phase 2/3 종료 후 회독 권장
 - **22-interview-qa.md**는 회독용 — 학습 종료 후 1주일 간격으로 2회 회독
 
 각 파일 호출:
