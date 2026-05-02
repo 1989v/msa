@@ -88,6 +88,12 @@ patches:
       kind: Deployment
       name: gifticon
 
+  # fulfillment: 글로벌 512Mi limit 부족 → OOMKilled. 768Mi 로 상향.
+  - path: patches/fulfillment-resources.yaml
+    target:
+      kind: Deployment
+      name: fulfillment
+
   # quant Phase 2: replicas=1 강제 (Recreate) + KMS local + outbox kafka-relay enable
   # + Telegram dispatcher disabled (Bot Token 미설정 시) — TG-P2-15
   - path: patches/quant-phase2.yaml

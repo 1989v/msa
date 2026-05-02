@@ -1,0 +1,17 @@
+# fulfillment: 글로벌 resources-reduce(512Mi limit) 부족 → 부팅 후 OOMKilled.
+# JPA + Kafka + outbox(common) 합쳐 768Mi 가 안전선.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fulfillment
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 50m
+              memory: 384Mi
+            limits:
+              memory: 768Mi

@@ -1,6 +1,12 @@
 # Strategic merge patch: applied to every Deployment via the target
 # selector in kustomization.yaml. Reduces request/limit sizes so the
-# full 18-service platform fits on a single k3d node (~8 GiB).
+# full ~26-service platform fits on a 16~24 GiB k3d node.
+#
+# 메모리 한도 결정 근거:
+#   - Spring Boot 4.0 + Java 25 + outbox(common) 합쳐 512Mi 에서
+#     gifticon/fulfillment/chatbot 등이 OOMKilled. 768Mi 가 안전선.
+#   - 26 deployment × 768Mi ≈ 20Gi (실사용은 더 작음, request 384Mi 기준).
+#     Docker Desktop 24Gi 권장 (k3s-lite README 참고).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,6 +19,6 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 256Mi
+              memory: 384Mi
             limits:
-              memory: 512Mi
+              memory: 768Mi
