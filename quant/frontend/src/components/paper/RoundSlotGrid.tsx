@@ -29,7 +29,7 @@ const STATE_LABEL: Record<PaperSlotState, string> = {
 /**
  * 회차 슬롯 그리드.
  *
- * - 분할 원칙기준 최대 50회차이지만, UI는 우선 7열 grid 로 시각화 (회차 ≥ 8 시 줄바꿈)
+ * - 최대 50회차이지만, UI는 우선 7열 grid 로 시각화 (회차 ≥ 8 시 줄바꿈)
  * - 각 슬롯: 회차 번호 + 상태 + (FILLED/PENDING_SELL 시) 진입가
  */
 export function TrancheSlotGrid({ slots }: Props) {

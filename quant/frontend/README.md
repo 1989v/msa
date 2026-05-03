@@ -1,6 +1,6 @@
 # Quant Frontend
 
-분할매매 분할매매 대시보드 — **모바일 우선 PWA**.
+Quant 트레이딩 대시보드 — **모바일 우선 PWA**.
 
 > 위치: `quant/frontend/` · 백엔드: `quant:app` (port 8094)
 > 폼팩터 결정: spec.md §12 — 본인 1인 운용 시나리오상 휴대폰에서 빠른 확인이 주.

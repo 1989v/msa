@@ -174,7 +174,7 @@ export function StrategyForm({
           {...form.register('entryGapPercent', { valueAsNumber: true })}
         />
         <FieldError message={form.formState.errors.entryGapPercent?.message} />
-        <HelpText> 분할 원칙: 직전 회차 대비 -3% (예: -3.0)</HelpText>
+        <HelpText>직전 회차 대비 -3% (예: -3.0)</HelpText>
       </div>
 
       <div>

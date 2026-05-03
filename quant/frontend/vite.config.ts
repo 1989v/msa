@@ -22,7 +22,7 @@ export default defineConfig({
       manifest: {
         name: 'Quant',
         short_name: 'Quant',
-        description: '분할매매 분할매매 대시보드',
+        description: 'Quant 트레이딩 대시보드',
         start_url: '/',
         display: 'standalone',
         orientation: 'portrait',

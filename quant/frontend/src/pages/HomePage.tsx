@@ -37,7 +37,7 @@ export function HomePage() {
     <>
       <PageHeader
         title="Quant"
-        subtitle="분할매매 분할매매 대시보드"
+        subtitle="Quant 트레이딩 대시보드"
       />
 
       <div className="px-4 py-4 space-y-6">
