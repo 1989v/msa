@@ -41,7 +41,7 @@ private val log = KotlinLogging.logger {}
 @ConditionalOnProperty(
     name = ["quant.audit.chain-verifier.enabled"],
     havingValue = "true",
-    matchIfMissing = true,
+    matchIfMissing = false,
 )
 class AuditChainVerifier(
     @Qualifier("auditDataSource") private val auditDataSource: DataSource,

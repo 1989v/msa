@@ -49,7 +49,7 @@ class OutboxRelay(
     private val outboxRepo: OutboxJpaRepository,
     private val kafkaTemplateProvider: ObjectProvider<KafkaTemplate<String, String>>,
     private val metrics: QuantMetrics,
-    private val transactionTemplate: TransactionTemplate,
+    @org.springframework.beans.factory.annotation.Qualifier("outboxTransactionTemplate") private val transactionTemplate: TransactionTemplate,
     @Value("\${quant.outbox.relay.enabled:false}")
     private val enabled: Boolean,
     @Value("\${quant.outbox.relay.topic:quant.events.v1}")

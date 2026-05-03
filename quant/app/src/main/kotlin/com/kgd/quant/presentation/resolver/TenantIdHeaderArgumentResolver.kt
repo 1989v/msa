@@ -22,8 +22,9 @@ import org.springframework.web.method.support.ModelAndViewContainer
 class TenantIdHeaderArgumentResolver : HandlerMethodArgumentResolver {
 
     override fun supportsParameter(parameter: MethodParameter): Boolean =
-        parameter.hasParameterAnnotation(TenantHeader::class.java) &&
-            parameter.parameterType == TenantId::class.java
+        // TenantId 는 @JvmInline value class 라 컴파일 후 parameterType 이 String 으로 보일 수 있다.
+        // type 체크를 생략하고 어노테이션 존재만 본다.
+        parameter.hasParameterAnnotation(TenantHeader::class.java)
 
     override fun resolveArgument(
         parameter: MethodParameter,
@@ -35,7 +36,9 @@ class TenantIdHeaderArgumentResolver : HandlerMethodArgumentResolver {
         if (headerValue.isNullOrBlank()) {
             throw MissingRequestHeaderException(HEADER_NAME, parameter)
         }
-        return TenantId(headerValue)
+        // value class 라 JVM signature 가 String. resolver 는 raw String 을 반환하면
+        // Spring 이 method invoke 시 Kotlin compiler-generated wrapping 으로 TenantId 가 됨.
+        return headerValue
     }
 
     companion object {

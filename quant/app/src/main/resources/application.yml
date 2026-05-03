@@ -30,8 +30,8 @@ spring:
   # TG-P2-11: Redis Token Bucket Rate Limiter (운영에서만 활성화). Phase 1/Phase 2-backtest 는 Redis 미연결.
   data:
     redis:
-      host: ${SEVEN_SPLIT_REDIS_HOST:localhost}
-      port: ${SEVEN_SPLIT_REDIS_PORT:6379}
+      host: ${QUANT_REDIS_HOST:localhost}
+      port: ${QUANT_REDIS_PORT:6379}
       timeout: 2s
 
 kgd:
@@ -44,9 +44,9 @@ kgd:
 # TG-06.5: quant 전용 ClickHouse 설정. analytics DB 와 분리 (ADR-0024 §12).
 quant:
   clickhouse:
-    url: ${SEVEN_SPLIT_CH_URL:jdbc:clickhouse://localhost:8123/quant}
-    username: ${SEVEN_SPLIT_CH_USERNAME:quant}
-    password: ${SEVEN_SPLIT_CH_PASSWORD:quant}
+    url: ${QUANT_CH_URL:jdbc:clickhouse://localhost:8123/quant}
+    username: ${QUANT_CH_USERNAME:quant}
+    password: ${QUANT_CH_PASSWORD:quant}
     database: quant
   # TG-P2-03 (ADR-0027): KEK 보관 어댑터 분기.
   # provider 값에 따라 OCI Vault / LocalFile / Fake 중 1개만 활성화된다.
@@ -55,11 +55,11 @@ quant:
   # - fake  : (예약) 테스트 환경. 실제 빈 등록은 테스트 source set 에서 수동 구성.
   security:
     kms:
-      provider: ${SEVEN_SPLIT_KMS_PROVIDER:local}
+      provider: ${QUANT_KMS_PROVIDER:local}
       local:
-        current-version: ${SEVEN_SPLIT_LOCAL_KEK_CURRENT_VERSION:v1}
+        current-version: ${QUANT_LOCAL_KEK_CURRENT_VERSION:v1}
         kek-versions:
-          v1: ${SEVEN_SPLIT_LOCAL_KEK_V1:}
+          v1: ${QUANT_LOCAL_KEK_V1:}
       oci:
         tenancy-ocid: ${OCI_TENANCY:}
         user-ocid: ${OCI_USER:}
@@ -71,37 +71,37 @@ quant:
   # TG-P2-05 (ADR-0026): audit_log 별도 ClickHouse DB (`quant_audit`) + RBAC 분리.
   # `enabled=true` 시에만 AuditClickHouseConfig / ClickHouseAuditLogPublisher / AuditChainVerifier 가 등록.
   audit:
-    enabled: ${SEVEN_SPLIT_AUDIT_ENABLED:false}
+    enabled: ${QUANT_AUDIT_ENABLED:false}
     chain-verifier:
-      enabled: ${SEVEN_SPLIT_AUDIT_CHAIN_VERIFIER_ENABLED:true}
+      enabled: ${QUANT_AUDIT_CHAIN_VERIFIER_ENABLED:false}
     clickhouse:
-      url: ${SEVEN_SPLIT_AUDIT_CH_URL:jdbc:clickhouse://localhost:8123/quant_audit}
-      user: ${SEVEN_SPLIT_AUDIT_CH_USER:quant_audit_writer}
-      password: ${SEVEN_SPLIT_AUDIT_CH_PASSWORD:}
-      pool-size: ${SEVEN_SPLIT_AUDIT_CH_POOL_SIZE:4}
+      url: ${QUANT_AUDIT_CH_URL:jdbc:clickhouse://localhost:8123/quant_audit}
+      user: ${QUANT_AUDIT_CH_USER:quant_audit_writer}
+      password: ${QUANT_AUDIT_CH_PASSWORD:}
+      pool-size: ${QUANT_AUDIT_CH_POOL_SIZE:4}
   # TG-P2-06 / TG-P2-07: 시세 hot path. 기본 비활성, 운영 활성화 시 K8s overlay 에서 enabled=true.
   market:
     bithumb-ws:
-      enabled: ${SEVEN_SPLIT_BITHUMB_WS_ENABLED:false}
-      url: ${SEVEN_SPLIT_BITHUMB_WS_URL:wss://pubwss.bithumb.com/pub/ws}
-      symbols: ${SEVEN_SPLIT_BITHUMB_WS_SYMBOLS:BTC_KRW,ETH_KRW}
+      enabled: ${QUANT_BITHUMB_WS_ENABLED:false}
+      url: ${QUANT_BITHUMB_WS_URL:wss://pubwss.bithumb.com/pub/ws}
+      symbols: ${QUANT_BITHUMB_WS_SYMBOLS:BTC_KRW,ETH_KRW}
       monitor-interval-ms: 1000
       system-tenant: system
     bithumb-rest:
-      base-url: ${SEVEN_SPLIT_BITHUMB_REST_URL:https://api.bithumb.com}
+      base-url: ${QUANT_BITHUMB_REST_URL:https://api.bithumb.com}
     kafka-fanout:
-      enabled: ${SEVEN_SPLIT_MARKET_KAFKA_FANOUT_ENABLED:false}
+      enabled: ${QUANT_MARKET_KAFKA_FANOUT_ENABLED:false}
       topic: quant.market.tick.bithumb.v1
   # TG-P2-08: PAPER 모드 가상 거래소 파라미터. 'paper' 또는 'test' 프로파일에서만 PaperExchangeAdapter 활성화.
   paper:
     slippage:
-      rate: ${SEVEN_SPLIT_PAPER_SLIPPAGE_RATE:0.0005}      # 0.05% 고정 슬리피지
+      rate: ${QUANT_PAPER_SLIPPAGE_RATE:0.0005}      # 0.05% 고정 슬리피지
     execution-latency:
       ms:
-        default: ${SEVEN_SPLIT_PAPER_LATENCY_MS:50}        # 평균 거래소 지연
-        jitter: ${SEVEN_SPLIT_PAPER_LATENCY_JITTER_MS:20}  # ± jitter
+        default: ${QUANT_PAPER_LATENCY_MS:50}        # 평균 거래소 지연
+        jitter: ${QUANT_PAPER_LATENCY_JITTER_MS:20}  # ± jitter
     partial-fill:
-      probability: ${SEVEN_SPLIT_PAPER_PARTIAL_FILL_PROB:0.0}  # Phase 2 reserved (현재 사용 안 함)
+      probability: ${QUANT_PAPER_PARTIAL_FILL_PROB:0.0}  # Phase 2 reserved (현재 사용 안 함)
   # TG-P2-10: Telegram Bot 알림 어댑터. bot-token / default-chat-id 미설정 시 발송은 skip 되고 메트릭만 기록.
   # 운영에서는 K8s Secret 으로 TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID 주입.
   notification:
@@ -111,22 +111,22 @@ quant:
       default-chat-id: ${TELEGRAM_CHAT_ID:}
       rate-limit-interval-ms: ${TELEGRAM_RATE_LIMIT_INTERVAL_MS:1000}
     dispatcher:
-      enabled: ${SEVEN_SPLIT_NOTIFICATION_DISPATCHER:true}
+      enabled: ${QUANT_NOTIFICATION_DISPATCHER:true}
   # TG-P2-11: Resilience (CircuitBreaker / Redis Token Bucket / DLQ).
   # CircuitBreaker bean 은 항상 등록 (CircuitBreakerConfiguration), Rate Limiter / DLQ 는 conditional.
   resilience:
     ratelimit:
-      enabled: ${SEVEN_SPLIT_RATELIMIT_ENABLED:false}
+      enabled: ${QUANT_RATELIMIT_ENABLED:false}
       bithumb:
-        bucket-size: ${SEVEN_SPLIT_BITHUMB_BUCKET_SIZE:90}     # 빗썸 Public API 150/sec 의 60%
-        refill-rate: ${SEVEN_SPLIT_BITHUMB_REFILL_RATE:90}     # tokens per second
+        bucket-size: ${QUANT_BITHUMB_BUCKET_SIZE:90}     # 빗썸 Public API 150/sec 의 60%
+        refill-rate: ${QUANT_BITHUMB_REFILL_RATE:90}     # tokens per second
   # TG-P2-12: Outbox → Kafka relay 활성화 플래그.
-  # default false — 운영 활성화는 K8s overlay 에서 SEVEN_SPLIT_OUTBOX_RELAY=true 주입.
+  # default false — 운영 활성화는 K8s overlay 에서 QUANT_OUTBOX_RELAY=true 주입.
   outbox:
     relay:
-      enabled: ${SEVEN_SPLIT_OUTBOX_RELAY:false}
-      topic: ${SEVEN_SPLIT_OUTBOX_RELAY_TOPIC:quant.events.v1}
-      publish-timeout-seconds: ${SEVEN_SPLIT_OUTBOX_RELAY_TIMEOUT_SEC:5}
+      enabled: ${QUANT_OUTBOX_RELAY:false}
+      topic: ${QUANT_OUTBOX_RELAY_TOPIC:quant.events.v1}
+      publish-timeout-seconds: ${QUANT_OUTBOX_RELAY_TIMEOUT_SEC:5}
 
 management:
   endpoints:

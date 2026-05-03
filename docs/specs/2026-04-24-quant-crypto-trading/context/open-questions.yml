@@ -222,7 +222,7 @@ questions:
     priority: high
     title: 실매매 권한 Role 명명 + step-up auth(2FA) 적용 엔드포인트
     description: >
-      실매매 전용 Role(예: `ROLE_SEVEN_SPLIT_LIVE`) 신설 여부, 2FA(step-up) 필요 엔드포인트
+      실매매 전용 Role(예: `ROLE_QUANT_LIVE`) 신설 여부, 2FA(step-up) 필요 엔드포인트
       (전략 활성화/파라미터 변경/긴급 청산/kill-switch/Key CRUD 등) 정의 필요.
     resolution_path: Phase 3 착수 전 (인증 ADR과 정합)
     blocker_for: Phase 3 실매매 출시

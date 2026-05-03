@@ -25,7 +25,7 @@ ADR-0024 §8에서 거래소 API Key/텔레그램 Bot Token을 **AES-GCM 봉투 
 
 ### 2. 로컬 dev KEK: LocalFileKmsAdapter
 - 로컬 개발 환경은 OCI 호출하지 않음 — 개발자별 독립 KEK
-- KEK 로드 우선순위: `SEVEN_SPLIT_LOCAL_KEK` 환경변수 → `application-local.yml` (gitignore 처리)
+- KEK 로드 우선순위: `QUANT_LOCAL_KEK` 환경변수 → `application-local.yml` (gitignore 처리)
 - 32-byte hex 인코딩, 개발자 본인만 보유 (공유 금지)
 - 프로덕션 KEK와 분리되어 개발 데이터로 운영 데이터를 복호 불가
 

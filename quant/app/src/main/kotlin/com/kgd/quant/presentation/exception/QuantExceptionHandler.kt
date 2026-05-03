@@ -47,7 +47,7 @@ class QuantExceptionHandler {
      * INV-07 전략 설정 불변식 위반 → 400.
      *
      * common handler 는 `BusinessException` 을 `INVALID_INPUT` 으로 잡아 이미 400 을 내지만,
-     * 세부 코드 문자열을 `SEVEN_SPLIT_CONFIG_INVALID` 로 치환해 클라이언트가 세부 원인을
+     * 세부 코드 문자열을 `QUANT_CONFIG_INVALID` 로 치환해 클라이언트가 세부 원인을
      * 구분할 수 있게 한다.
      */
     @ExceptionHandler(TrancheStrategyConfigInvalidException::class)
@@ -57,7 +57,7 @@ class QuantExceptionHandler {
         logger.warn { "TrancheStrategyConfig invariant violation: ${e.message}" }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ApiResponse.error("SEVEN_SPLIT_CONFIG_INVALID", e.message ?: "Config invalid"))
+            .body(ApiResponse.error("QUANT_CONFIG_INVALID", e.message ?: "Config invalid"))
     }
 
     /**
@@ -72,7 +72,7 @@ class QuantExceptionHandler {
         logger.warn { "Illegal StrategyStatus transition: ${e.message}" }
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
-            .body(ApiResponse.error("SEVEN_SPLIT_ILLEGAL_STRATEGY_TRANSITION", e.message ?: "Illegal transition"))
+            .body(ApiResponse.error("QUANT_ILLEGAL_STRATEGY_TRANSITION", e.message ?: "Illegal transition"))
     }
 
     @ExceptionHandler(IllegalSlotTransitionException::class)
@@ -82,7 +82,7 @@ class QuantExceptionHandler {
         logger.warn { "Illegal TrancheSlotState transition: ${e.message}" }
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
-            .body(ApiResponse.error("SEVEN_SPLIT_ILLEGAL_SLOT_TRANSITION", e.message ?: "Illegal slot transition"))
+            .body(ApiResponse.error("QUANT_ILLEGAL_SLOT_TRANSITION", e.message ?: "Illegal slot transition"))
     }
 
     /**
@@ -98,7 +98,7 @@ class QuantExceptionHandler {
         logger.error(e) { "INV-02 stop-loss invariant violated: ${e.message}" }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error("SEVEN_SPLIT_STOP_LOSS_ATTEMPT", e.message ?: "Stop-loss attempt"))
+            .body(ApiResponse.error("QUANT_STOP_LOSS_ATTEMPT", e.message ?: "Stop-loss attempt"))
     }
 
     /**
@@ -111,7 +111,7 @@ class QuantExceptionHandler {
         logger.error(e) { "Leverage attempt detected: ${e.message}" }
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ApiResponse.error("SEVEN_SPLIT_LEVERAGE_FORBIDDEN", e.message ?: "Leverage forbidden"))
+            .body(ApiResponse.error("QUANT_LEVERAGE_FORBIDDEN", e.message ?: "Leverage forbidden"))
     }
 
     /**
@@ -124,7 +124,7 @@ class QuantExceptionHandler {
         logger.warn { "Phase 1 not-implemented feature invoked: ${e.message}" }
         return ResponseEntity
             .status(HttpStatus.NOT_IMPLEMENTED)
-            .body(ApiResponse.error("SEVEN_SPLIT_NOT_IMPLEMENTED_PHASE1", e.message ?: "Not implemented"))
+            .body(ApiResponse.error("QUANT_NOT_IMPLEMENTED_PHASE1", e.message ?: "Not implemented"))
     }
 
     /**

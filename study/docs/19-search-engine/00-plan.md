@@ -1,12 +1,12 @@
 ---
 id: 19
 title: 검색엔진 심화 — Elasticsearch · OpenSearch · Hybrid · Re-Ranking · BM25 · nori
-status: refined
+status: in-progress
 created: 2026-05-03
 updated: 2026-05-03
 tags: [elasticsearch, opensearch, lucene, bm25, tf-idf, nori, hybrid-search, vector-search, re-ranking, ltr, search-relevance]
 difficulty: advanced
-estimated-hours: 26
+estimated-hours: 32
 codebase-relevant: true
 ---
 
@@ -254,17 +254,64 @@ codebase-relevant: true
 | 2. Vector·Hybrid·Re-Ranking | dense_vector, HNSW, RRF, cross-encoder, LTR | **A** (처음 다수) | **개념부터 풀어쓰기**, ES/OpenSearch API 예제로 grounding, 임베딩 모델 학습/배포는 개념까지만 (실 학습 X) |
 | 3. 클러스터·동기화·운영 | master/data 노드, shard 산정, Outbox/CDC, alias swap, ILM, snapshot | **B** (운영 경험 일부, 시니어 의사결정 약함) | 기본 + **시니어 의사결정 영역 강조** (shard 산정 공식, CDC vs Outbox 선택 기준, 재색인 RTO 측정 방법) |
 
-### 7-C. 미결 — 다음 브레인스토밍 라운드에서 결정
+### 7-C. 학습 목표 가중 (확정 — 2026-05-03, 라운드 2)
 
-- **목표 가중**: 면접 대비 vs msa 실무 적용 vs 둘 다 — Phase 3/4 비중 결정 (다음 질문)
-- **PoC 코드 작성 여부**: msa search 서비스에 hybrid search 실제 구현 vs plan 단계까지만
-- **OpenSearch vs ES 비교 비중**: 단일 챕터 vs 매 phase 마다 cross-reference
-- **ADR 작성 범위** (4건 후보):
-  - "ES vs OpenSearch 일원화"
-  - "검색 인덱스에 변동성 큰 필드 금지 컨벤션"
-  - "색인 lag SLA + ADR-0025 보강"
-  - "Hybrid Search 도입 검토"
-- **운영 시뮬레이션**: 실제 k3d 클러스터에서 ES 노드 죽이기 / 리밸런싱 관찰 포함 여부
+> **C — 균형 (면접 + 실무 둘 다)** 선택. 모든 Phase 풀 커버리지, 면접·실무 모두 1급 자료.
+
+산출물 무게: **면접 카드 35% / 코드 grounding 35% / 개념 30%**
+
+- Phase 4 (면접): 17개 질문 모두 모범답안 + 꼬리질문 + 악마의 변호인 시나리오까지 작성
+- Phase 3 (코드 grounding): msa search 서비스 4-모듈 직접 분석 + 개선 후보 도출 + ADR 후보 승격
+- Phase 1·2 (개념·심화): 14개 서브토픽 풀 커버리지 (학습 정책 §7-A 와 결합)
+
+estimated-hours: 26 → **32** 으로 재상향 (균형 + 풀 커버리지 결합 효과)
+
+### 7-D. 잔여 미결 일괄 결정 (확정 — 2026-05-03, 라운드 2)
+
+C 선택과 모순되지 않는 방향으로 5건 일괄 처리:
+
+| 항목 | 결정 |
+|---|---|
+| **PoC 코드 작성** | ✅ **부분 PoC** — msa search 서비스에서 한 endpoint (예: product 검색) 만 hybrid search (BM25 + dense_vector + RRF) 로 PoC 코드 작성. 나머지는 plan 수준. |
+| **ES vs OpenSearch 비교 비중** | ✅ **이중 트랙** — 매 phase 마다 cross-reference 한 줄씩 (`> [OS 차이]: ...`) + Phase 2 §11 단일 종합 챕터. |
+| **ADR 작성 범위** | ✅ **4건 모두 Proposed 단계까지** — `19-improvements.md` 한 파일에 4 ADR 초안 (gRPC #18 의 `19-improvements.md` 패턴 차용). 승격 여부는 학습 후 별도 판단. |
+| **k3d 운영 시뮬레이션** | ✅ **시나리오 절차서 작성** — 실제 실행은 선택, 절차/예상결과/디버깅 체크리스트는 운영 챕터에 포함 (ES 노드 죽이기 / shard 리밸런싱 관찰 / yellow→red 진단). |
+| **Phase D 학습 전략** | ✅ **자동 결정** — 풀 커버리지 + C 선택 → 노트 + Q&A 카드 둘 다, PoC 코드 실습 포함 (위 항목으로 충족). |
+
+### 7-E. 산출물 구조 (확정)
+
+플랜 실행 시 다음 deep file 들이 `19-search-engine/` 하위에 생성될 예정:
+
+```
+00-plan.md                                  (본 파일)
+00-preview.md                               (소주제 지도, /study:exec 19)
+01-search-overview.md                       (검색 vs 조회, ES/OS 등장 배경)
+02-lucene-internals.md                      (segment/refresh/flush/merge)
+03-inverted-index-deep.md                   (term dictionary/postings/skip list)
+04-analyzer-pipeline.md                     (char filter/tokenizer/token filter)
+05-korean-morphology-nori.md                (nori vs mecab-ko, decompound, 사용자 사전)
+06-tf-idf-bm25-scoring.md                   (수식·k1/b 직관·function_score)
+07-query-dsl-patterns.md                    (term/match/multi_match/bool/nested/suggest)
+08-vector-search-hnsw.md                    (dense_vector, HNSW, M/ef_construction)
+09-hybrid-search-rrf.md                     (BM25+vector, RRF vs weighted)
+10-reranking-cross-encoder-ltr.md           (cross-encoder, LTR plugin)
+11-elasticsearch-vs-opensearch.md           (라이선스·기능·마이그레이션)
+12-cluster-topology-shard-sizing.md         (master/data/coordinating, shard 산정 공식)
+13-indexing-pipeline-ilm.md                 (ingest pipeline, alias swap, ILM/ISM)
+14-sync-outbox-cdc.md                       (Outbox vs Debezium CDC, 색인 lag SLA)
+15-msa-search-grounding.md                  (search 4-모듈 직접 분석)
+16-operations-monitoring-rto.md             (cluster health, hot threads, snapshot, 재색인 RTO)
+17-k8s-failure-simulation.md                (k3d ES 노드 죽이기 시나리오 절차서)
+18-hybrid-search-poc.md                     (msa search 서비스 부분 PoC 코드)
+19-improvements.md                          (ADR 4건 Proposed 초안 통합)
+20-interview-qa.md                          (17 면접 질문 + 꼬리질문 + 악마의 변호인)
+```
+
+총 **20+ deep files** 예상 (개수 자체는 estimated-hours 32 와 정합).
+
+### 7-F. 모든 미결 종결
+
+> 본 plan 의 미결 사항은 모두 종결됐습니다. 추가 조정 필요 시 `/study:bs 19` 재호출.
 
 ## 8. 원본 메모
 

@@ -12,7 +12,7 @@ import com.kgd.common.exception.ErrorCode
  *   PARTIALLY_FILLED  → PARTIALLY_FILLED | FILLED | CANCELLED
  *   FILLED / REJECTED / CANCELLED → (종료)
  *
- * TODO: ErrorCode.SEVEN_SPLIT_ILLEGAL_ORDER_TRANSITION 를 common 모듈에 추가.
+ * TODO: ErrorCode.QUANT_ILLEGAL_ORDER_TRANSITION 를 common 모듈에 추가.
  */
 enum class OrderStatus {
     ACCEPTED,

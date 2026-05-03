@@ -407,7 +407,7 @@ ADR-0019 Phase 2 배포 모드에 맞춰 `k8s/overlays/k3s-lite/quant/` overlay 
 - [x] TG-13.0 **Complete**: `kubectl apply -k k8s/overlays/k3s-lite` 실행 시 quant Deployment/Service가 Ready 상태.
   - [x] TG-13.1 `k8s/overlays/k3s-lite/quant/kustomization.yaml` + `deployment.yaml` + `service.yaml` + `configmap.yaml` + (필요시) `secret.yaml` 템플릿
   - [x] TG-13.2 Redis standalone 전환: Phase 1은 Redis 사용 최소(HPA용 메트릭/rate limiter는 Phase 2+), 그러나 Spring Cluster 모드 기본 비활성화 — `SPRING_APPLICATION_JSON` 으로 standalone 지정(기존 5개 서비스 패턴 복제)
-  - [x] TG-13.3 ConfigMap — MySQL/Kafka/ClickHouse 엔드포인트, `SPRING_PROFILES_ACTIVE=kubernetes`, `SEVEN_SPLIT_CLICKHOUSE_DATABASE=quant`
+  - [x] TG-13.3 ConfigMap — MySQL/Kafka/ClickHouse 엔드포인트, `SPRING_PROFILES_ACTIVE=kubernetes`, `QUANT_CLICKHOUSE_DATABASE=quant`
   - [x] TG-13.4 Secret stub — 거래소 API KEK/Telegram 토큰은 Phase 1 미사용이므로 빈 값, 구조만 준비
   - [x] TG-13.5 Jib 이미지 빌드 확인 — `./gradlew :quant:app:jibBuildTar` → tar 산출 → `scripts/image-import.sh --all` 에 포함
   - [x] TG-13.6 `image-import.sh` 가 quant 서비스를 인식하는지 확인(기존 스크립트 패턴 확장)

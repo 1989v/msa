@@ -33,7 +33,7 @@ import javax.crypto.spec.SecretKeySpec
  * - 토큰 식별자만 로그 (예: 버전 라벨 `local-v1`).
  */
 @Component
-@Profile("local", "test")
+@Profile("local", "test", "kubernetes")
 @ConditionalOnProperty(
     name = ["quant.security.kms.provider"],
     havingValue = "local",
@@ -157,8 +157,8 @@ class LocalFileKmsAdapter(
  * ```
  *
  * 환경변수 매핑:
- * - `SEVEN_SPLIT_SECURITY_KMS_LOCAL_CURRENT_VERSION`
- * - `SEVEN_SPLIT_SECURITY_KMS_LOCAL_KEK_VERSIONS_V1` 등
+ * - `QUANT_SECURITY_KMS_LOCAL_CURRENT_VERSION`
+ * - `QUANT_SECURITY_KMS_LOCAL_KEK_VERSIONS_V1` 등
  */
 @ConfigurationProperties(prefix = "quant.security.kms.local")
 data class LocalKmsProperties(
