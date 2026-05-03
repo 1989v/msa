@@ -18,12 +18,12 @@ import com.kgd.quant.domain.tranche.TrancheSlotState
  * 메서드는 `DomainEvent` 를 반환하여 Application 레이어가 이벤트 버스에 실을 수 있게 한다.
  */
 class TrancheStrategy internal constructor(
-    val id: StrategyId,
-    val tenantId: TenantId,
+    override val id: StrategyId,
+    override val tenantId: TenantId,
     val config: TrancheStrategyConfig,
     val executionMode: ExecutionMode,
     status: StrategyStatus
-) {
+) : Strategy {
     var status: StrategyStatus = status
         private set
 

@@ -43,6 +43,10 @@ dependencies {
     // Phase 2 — TG-P2-11: Redis Lua token bucket Rate Limiter (StringRedisTemplate)
     implementation(libs.spring.boot.starter.data.redis)
     // Phase 2 Rate Limiter: Redis Lua script 직접 구현. Bucket4j는 Phase 3 검토 시 도입.
+    // Quant 통합 플랫폼 (ADR-0033/0034) — 기술적 지표 + 임베딩 numeric array
+    implementation(libs.ta4j.core)
+    implementation(libs.multik.core)
+    implementation(libs.multik.default)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.kotest.property)
