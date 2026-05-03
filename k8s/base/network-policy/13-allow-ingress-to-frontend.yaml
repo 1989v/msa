@@ -1,0 +1,40 @@
+# ADR-0031 §5.11 — ingress-nginx → FE Pod ingress 허용 (Phase 1 결함 보정)
+#
+# 02-allow-ingress-to-gateway 가 gateway 만 다루기 때문에 admin-fe / charting-fe /
+# gifticon-fe / agent-viewer-fe / code-dictionary-fe / quant-fe / charting (Python)
+# 으로 가는 ingress-nginx 트래픽이 default-deny-all 에 의해 차단된다 (k3d 로컬 검증
+# 2026-05-03 — 모든 FE 진입이 502 Bad Gateway).
+#
+# 본 정책은 commerce ns 의 FE 계열 Pod 에 ingress-nginx ns 의 Pod 만 :80/:8010 으로 호출
+# 허용한다. 경계 안전성: ingress-nginx 에서만 들어오는 것이 보장됨.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-frontend
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - admin-fe
+          - charting-fe
+          - gifticon-fe
+          - agent-viewer-fe
+          - code-dictionary-fe
+          - quant-fe
+          - charting
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - { port: 80, protocol: TCP }
+        - { port: 8010, protocol: TCP }   # charting (Python/FastAPI)
