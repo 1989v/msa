@@ -191,8 +191,8 @@ class EnvelopeEncryptionIntegrationSpec(
         @JvmStatic
         val mysql: MySQLContainer<*> = MySQLContainer("mysql:8.0.36")
             .withDatabaseName("quant")
-            .withUsername("seven")
-            .withPassword("seven")
+            .withUsername("quant")
+            .withPassword("quant")
             .also { it.start() }
 
         @JvmStatic

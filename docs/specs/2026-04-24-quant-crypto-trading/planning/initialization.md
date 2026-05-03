@@ -3,7 +3,6 @@ spec: quant-crypto-trading
 date: 2026-04-24
 source: ideabank/docs/12-quant-crypto.md
 status: ready
-author-reference: 『분할매매: 분할 투자 전략』
 ---
 
 # 분할매매 전략 기반 암호화폐 퀀텀 매매 웹 서비스 — 초기 PRD

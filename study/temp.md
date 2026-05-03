@@ -30,6 +30,22 @@
   17-4. jackson
   17-5. gzip
 18. grpc
+19. 검색엔진 심화 (Elasticsearch · OpenSearch · Hybrid Search · Re-Ranking)
+  19-1. Lucene 기반 내부 (segment / commit / refresh / flush / merge)
+  19-2. Inverted Index + Analyzer/Tokenizer/Filter pipeline
+  19-3. 한국어 형태소 분석기 (nori vs mecab-ko vs seunjeon, 사용자 사전, decompound mode)
+  19-4. 스코어링 알고리즘 (TF-IDF → BM25, BM25 파라미터 k1/b 튜닝, function_score)
+  19-5. Query DSL 패턴 (term/match/multi_match/bool/nested/function_score, 하이라이트, suggest)
+  19-6. Vector / Semantic Search (dense_vector, HNSW, kNN, 임베딩 파이프라인)
+  19-7. Hybrid Search (BM25 + dense, RRF · Reciprocal Rank Fusion, weighted score)
+  19-8. Re-Ranking (cross-encoder, LTR · Learning To Rank, business signal 결합)
+  19-9. Cluster 토폴로지 (master/data/coordinating/ingest 노드, shard/replica, allocation awareness)
+  19-10. 인덱싱 파이프라인 (ingest pipeline, processor, reindex, alias, ILM/ISM)
+  19-11. Elasticsearch vs OpenSearch 분기 (라이선스 변천, 기능 차이, 호환성, 마이그레이션 비용)
+  19-12. 동기화 전략 (Outbox + Kafka + ES Sink, Debezium CDC, eventual consistency, 색인 lag SLA)
+  19-13. msa search 서비스 grounding (실제 인덱스 설계, 가격/재고 같은 변동성 큰 필드 분리 원칙)
+  19-14. 운영 — 모니터링 (cluster health, hot threads, slow log), 재색인 RTO, 백업/스냅샷
+  > 입력 자료: `study/notes/2026-05-03-원본데이터-보조저장소-패턴-검색엔진.md` (코딩하는기술사 영상 요약 — 원본 + 보조 저장소 패턴 + 2단계 조회 + Polyglot Persistence)
 
 ## 파이프라인
 
@@ -64,7 +80,8 @@
 | 16 | 비동기 · 논블러킹 IO (NIO · Reactor · Netty) | [16-async-nonblocking-io/](docs/16-async-nonblocking-io/) | **completed + 19 deep files** |
 | 17 | Spring Web 처리 심화 (Filter/Interceptor/AOP · Jackson · gzip) | [17-spring-web/](docs/17-spring-web/) | **completed + 20 deep files** |
 | 18 | gRPC 심화 (Protobuf · HTTP/2 · Streaming) | [18-grpc/](docs/18-grpc/) | **completed + 20 deep files** |
+| 19 | 검색엔진 심화 (ES · OpenSearch · Hybrid · Re-Ranking · BM25 · nori) | [19-search-engine/](docs/19-search-engine/) | **draft — plan 생성, brainstorm 대기** |
 
 > **흡수 노트**: 원본 17-1 (`@Transactional(readonly/writable)`) 은 #5 plan + deep file 06/07 에, 17-3 (스레드 덤프) 은 #3 plan + deep file 20 에 흡수됨 (2026-05-01).
 >
-> **전체 통계** (2026-05-02 기준): 18개 주제 / 333개 파일 / 약 97,063 줄.
+> **전체 통계** (2026-05-02 기준): 18개 주제 / 333개 파일 / 약 97,063 줄. (#19 plan 생성 2026-05-03 — draft 상태)
