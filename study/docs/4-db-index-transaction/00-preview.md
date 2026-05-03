@@ -100,12 +100,13 @@ DB 면접/실무 사고는 **6층 사다리**다. 아래 층의 물리 제약이
 | 15 | msa 쿼리 패턴 + slow 후보 | [15-msa-queries.md](15-msa-queries.md) | OutboxRelay, Wishlist, Order/Product 쿼리, slow 후보 |
 | 16 | TX 와 라우팅 / 격리 결합 | [16-msa-tx-routing.md](16-msa-tx-routing.md) | ADR-0020 와 lock 보유 시간, RoutingDataSource × 격리, replica lag |
 
-### 산출물 (2개)
+### 산출물 (2개) + Cookbook (1개)
 
 | # | 소주제 | 심화 파일 | 핵심 |
 |---|---|---|---|
 | 17 | 개선 제안 종합 | [17-improvements.md](17-improvements.md) | 인덱스 추가/제거, partition/sharding ADR 후보, 격리 수정 후보 |
 | 18 | 면접 Q&A 카드 | [18-interview-qa.md](18-interview-qa.md) | 4 Phase × 8~10 카드 = 35+ 카드 |
+| 19 | 동시성 제어 Cookbook | [19-concurrency-control-cookbook.md](19-concurrency-control-cookbook.md) | 9 시나리오 × 4 패턴 decision matrix + 실 회사 사례 (Stripe / Amazon / Shopify / 은행 / 티켓팅 / MSA) + Defense-in-Depth |
 
 ---
 
@@ -190,7 +191,8 @@ DB 면접/실무 사고는 **6층 사다리**다. 아래 층의 물리 제약이
 
 ## 학습 진행 가이드
 
-- 권장 순서: **01 → 02 → ... → 18** Bottom-up. Phase 1 은 의존성 강함, Phase 2 부터는 09 (EXPLAIN) 만 먼저 보고 점프 가능.
+- 권장 순서: **01 → 02 → ... → 18 → 19** Bottom-up. Phase 1 은 의존성 강함, Phase 2 부터는 09 (EXPLAIN) 만 먼저 보고 점프 가능.
+- **19 (Cookbook)** 은 07/08/16 + #5/#7/#9 학습 후 보면 매핑이 깔끔. 면접 시나리오 답변용 무기.
 - Phase 1 (01-04) 은 자료구조에 약한 사람만 정독. 익숙하면 02-03 만 읽고 05 로.
 - **06 (MVCC) + 07 (Lock) + 08 (Deadlock)** 은 본 학습의 코어. 면접 단골 + 실무 장애 1순위.
 - **09 (EXPLAIN) + 11 (Anti-pattern)** 은 PR 리뷰에서 즉시 쓰는 무기. 손에 익을 때까지 회독.

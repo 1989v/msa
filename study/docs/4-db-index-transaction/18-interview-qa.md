@@ -262,6 +262,50 @@ msa 는 둘 다 미적용 — 트래픽 임계 도달 시 ADR-0030/31 검토.
 
 ---
 
+## Phase 5: 동시성 제어 Cookbook (시나리오 매핑) — 19 파일 보강
+
+### Q5.1 동시성 제어, 어떤 패턴부터 검토하시나요?
+
+**A (요약)**: 4 패턴 (UNIQUE / Optimistic / Pessimistic / Distributed) 을 외우는 게 아니라 **시나리오 → 패턴 매핑** 으로 답합니다. INSERT race → UNIQUE, UPDATE 충돌 → 충돌율 1% 기준 Optimistic/Pessimistic, 긴 TX → 분리 + 상태 머신, DB 밖 자원 → Distributed Lock. **핵심 룰**: "분산 락은 마지막 수단, DB 락이 본질".
+
+**확장**: 회사 사례 — Stripe Idempotency-Key 는 (UNIQUE + Cache + Pessimistic) 의 결합, 은행 송금은 (UNIQUE + Pessimistic + 상태 머신), 티켓팅은 (Redis Lua + Outbox + UNIQUE).
+
+**함정**: "Redis 분산 락이 DB lock 보다 빠르지 않나요?" → "단일 row 보호엔 DB lock 이 안전하고 fencing token 도 자동. 분산 락은 자원이 DB 밖일 때만." (#19 §1.2 참조)
+
+### Q5.2 Optimistic vs Pessimistic 선택 기준?
+
+**A (요약)**: **충돌 빈도** 가 1차 기준. < 1% Optimistic, > 10% Pessimistic, > 30% 면 재설계 (sharding / counter / Redis INCR). **TX 길이** 가 2차 기준 — Pessimistic 은 외부 IO 절대 금지 (ADR-0020).
+
+**확장**: Shopify inventory 는 Optimistic (`updated_at` 기반), 은행 잔액은 Pessimistic, GitHub PR 은 Optimistic (ETag/If-Match), Cassandra LWT 도 Optimistic (Paxos).
+
+**함정**: "@Version 으로 INSERT race 보호 가능?" → "불가. version=0 의 race window 존재. INSERT race 는 UNIQUE 제약." (#19 §3.1, §5.3)
+
+### Q5.3 티켓팅처럼 같은 row 에 1만 TPS 가 들어오면?
+
+**A (요약)**: DB Pessimistic Lock 은 1 TPS, Optimistic+retry 도 retry storm. 답은 **Redis Lua atomic 차감 + DB Outbox 비동기 확정**. 추가 layer: WAF + rate limit + 대기열 + pre-warm.
+
+**확장**: 인터파크/Naver/Ticketmaster 모두 동일. Redis 단일 스레드가 직렬화 보장 + µs latency. DB 는 자기 페이스로 따라옴.
+
+**함정**: "Redis 가 SSOT 의 일부면 가용성은?" → "RDB+AOF + replica + Sentinel/Cluster. 그래도 결제급 정합성은 부족 → Outbox 로 DB 가 ground truth." (#19 §3.5)
+
+### Q5.4 결제는 Optimistic Lock 만으로 충분한가요?
+
+**A (요약)**: **아니오**. Optimistic 의 retry 가 결제 retry 와 합쳐지면 이중 결제 위험. 결제는 **defense-in-depth** 4 layer: (1) Idempotency-Key 캐시, (2) DB UNIQUE on charge_id, (3) Pessimistic Lock on account row, (4) 상태 머신 (PENDING/AUTHORIZED/CAPTURED). + reconciliation batch.
+
+**확장**: Stripe PaymentIntent 가 정확히 이 패턴. Toss / KakaoPay / 국내 은행 자금 이체 동일. **단일 패턴은 SPOF**.
+
+**함정**: "DB UNIQUE 만으로 안 되나?" → "잔액 음수 방어 못 함. 차감 시 X-lock 필수. UNIQUE 는 결제 자체 dedup, lock 은 잔액 invariant." (#19 §4.1)
+
+### Q5.5 Outbox multi-worker 는 어떻게 분배?
+
+**A (요약)**: **`SELECT ... FOR UPDATE SKIP LOCKED`** (MySQL 8.0+). DB 가 행별 X-lock + 다른 worker 는 그 row 건너뜀. 추가 인프라 없이 worker N 개 모두 active → throughput N 배.
+
+**확장**: Eventuate Tram / Stripe Webhook 큐 / Sidekiq Pro 모두 동일 (Postgres 면 동일 구문). 대안은 Debezium CDC 로 polling 자체 제거.
+
+**함정**: "분산 락으로 한 worker 만 active 하면?" → "단일 worker → throughput 1배. SKIP LOCKED 가 분배에 더 적합." (#19 §3.8)
+
+---
+
 ## 회독 권장 일정
 
 - **D+0**: 학습 종료 직후 1회독.
@@ -271,9 +315,10 @@ msa 는 둘 다 미적용 — 트래픽 임계 도달 시 ADR-0030/31 검토.
 
 ## 핵심 포인트
 
-- 4 Phase × 8~10 카드 = **42 카드**.
+- 4 Phase × 8~10 카드 + Phase 5 (Cookbook) 5 카드 = **47 카드**.
 - 면접 단골은 **Phase 2 (MVCC, Lock, EXPLAIN)** 에 몰려 있음 — 우선 회독.
 - Phase 3 (msa) 는 **회사 사례 답변** 의 무기 — "저희 msa 에선..." 으로 시작 가능.
+- Phase 5 (Cookbook) 는 **시나리오 → 패턴 매핑** 무기 — Stripe/Amazon/Shopify/은행/티켓팅 사례 결합.
 - "한 줄 정리" 3개 (Q4.9) 를 머리에 박아두면 어떤 파생 질문도 방어.
 
 ## 마무리
