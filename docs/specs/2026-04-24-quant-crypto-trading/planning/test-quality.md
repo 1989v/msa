@@ -22,7 +22,7 @@ standards:
 
 - **결정론 우선**: 전략 엔진은 동일 입력에 동일 출력. 난수/시간 의존성을 주입형으로 격리(`Clock`, `RandomSource`).
 - **Clean Architecture 경계별 분리**: `:domain` 테스트는 Spring Context 없이 돌아야 한다(`test-rules.md` 원칙).
-- **BehaviorSpec + Given/When/Then**: 규칙 서술형 이름을 사용한다 (`describe 분할매매 매수 트리거`).
+- **BehaviorSpec + Given/When/Then**: 규칙 서술형 이름을 사용한다 (`describe 분할매매 전략 매수 트리거`).
 - **테스트 피라미드**: 단위(도메인 규칙) > 모듈 통합(어댑터·Repository) > 컨테이너 통합(Testcontainers) > E2E(백테스트 골든셋) 순으로 비중.
 - **SLO 테스트는 별도 게이트**: 성능 테스트는 일반 CI에서 제외하고 주기(nightly) 잡으로 돌린다.
 

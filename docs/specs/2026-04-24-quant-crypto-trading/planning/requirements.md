@@ -10,7 +10,7 @@ decisions-confirmed-on: 2026-04-24
 author: shape-agent (sharded from initialization.md via Q-A ~ Q-E)
 ---
 
-# Requirements — 분할매매 기반 암호화폐 퀀텀 매매 웹 서비스
+# Requirements — 분할매매 전략 기반 암호화폐 퀀텀 매매 웹 서비스
 
 > 본 문서는 `planning/initialization.md`(seed PRD)와 사용자 응답 Q-A ~ Q-E(2026-04-24)를 기반으로 요구사항을 정제한 결과물입니다.
 > 추상 전략 원리는 initialization.md 섹션 1~2, 기술 스택은 섹션 4를 참조하고 중복 서술하지 않습니다.
@@ -20,7 +20,7 @@ author: shape-agent (sharded from initialization.md via Q-A ~ Q-E)
 
 ## 1. Initial Description (압축 요약)
 
- 『분할매매』 분할 매매 전략을 빗썸·업비트 등 국내 암호화폐 거래소에 적용하는 **자동매매 웹 서비스**. 자본을 N(기본 7) 회차로 나누어 **각 회차가 독립 매수가 기준으로 독립 익절**하고, 손절은 없음. 단계적 출시(**Phase 1 백테스트 → Phase 2 페이퍼 → Phase 3 실매매**)이며, 코드는 멀티테넌트 SaaS 구조로 시작하되 MVP 운용은 본인 1인 1계정이다.
+『분할매매』 분할 매매 전략을 빗썸·업비트 등 국내 암호화폐 거래소에 적용하는 **자동매매 웹 서비스**. 자본을 N(기본 7) 회차로 나누어 **각 회차가 독립 매수가 기준으로 독립 익절**하고, 손절은 없음. 단계적 출시(**Phase 1 백테스트 → Phase 2 페이퍼 → Phase 3 실매매**)이며, 코드는 멀티테넌트 SaaS 구조로 시작하되 MVP 운용은 본인 1인 1계정이다.
 
 세부 원리·분할 원칙·서비스 구조는 `planning/initialization.md` §1~§5를 단일 출처로 삼는다.
 
@@ -217,7 +217,7 @@ author: shape-agent (sharded from initialization.md via Q-A ~ Q-E)
 ## 8. Scope
 
 ### 8.1 In-Scope (MVP ~ Phase 3)
-- 분할매매 정통 분할 원칙중 **2·5·6·7 + 회차 독립 익절** 강제 (원칙 1·3·4는 포트폴리오 차원으로 out-of-scope — spec §15.1)
+- 분할매매 전략 정통 분할 원칙 중 **2·5·6·7 + 회차 독립 익절** 강제 (원칙 1·3·4는 포트폴리오 차원으로 out-of-scope — spec §15.1)
 - 빗썸 어댑터(Phase 1~2), 업비트 어댑터(Phase 3 추가)
 - WebSocket 시세 + REST 폴백 (public 시세만, private는 REST)
 - 백테스트 모드 (BTC/KRW, ETH/KRW 분봉, 2023-01~현재)
@@ -241,7 +241,7 @@ author: shape-agent (sharded from initialization.md via Q-A ~ Q-E)
 - **공개 리더보드** — 본 MVP는 본인 용도 한정, 외부 공개 랭킹 없음
 - **이메일 알림** — Phase 2 이후
 - **웹/모바일 푸시** — Phase 4 이후
-- **분할매매 원칙 1·3·4 (포트폴리오 차원)** — `AccountPortfolio` 도메인 확장 후 재검토 (spec §15.1)
+- **분할매매 전략 원칙 1·3·4 (포트폴리오 차원)** — `AccountPortfolio` 도메인 확장 후 재검토 (spec §15.1)
 
 ---
 
@@ -316,7 +316,7 @@ author: shape-agent (sharded from initialization.md via Q-A ~ Q-E)
 
 ## 11. Requirements Summary
 
-- **Functional**: 분할매매 분할 원칙중 2·5·6·7 + 회차 독립 익절 엔진 + 빗썸(→업비트) 어댑터 + 백테스트/페이퍼/실매매 3모드 + 대시보드·현황판·리더보드 + 텔레그램 알림 + 긴급 청산 + tenantId 격리.
+- **Functional**: 분할매매 전략 분할 원칙 중 2·5·6·7 + 회차 독립 익절 엔진 + 빗썸(→업비트) 어댑터 + 백테스트/페이퍼/실매매 3모드 + 대시보드·현황판·리더보드 + 텔레그램 알림 + 긴급 청산 + tenantId 격리.
 - **Scope**: MVP 본인 1명·5쌍×7회차 슬롯, 코드는 50×50 확장 한도. 현물 전용, 자동 추천·마진·해외 거래소·공개 랭킹·원칙 1·3·4(포트폴리오 차원) 제외.
 - **Technical**: Kotlin 2.2.21 + **Spring Boot 4.0.4**, Clean Architecture nested submodule (`com.kgd.quant`), Coroutine Flow(WS)/suspend(REST), 도메인 이벤트 + Outbox + Kafka, MySQL + ClickHouse(`quant` DB) + Redis, K8s 양 overlay, p95 500ms SLO, WS 5s/10s 복구 규칙, 30일 분봉 5분 재생, FE는 `quant/frontend/` 독립 React+Vite.
 

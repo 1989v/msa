@@ -206,7 +206,7 @@ msa/
 │   └── app/         #   Spring Boot 앱 (Application + Infrastructure + Presentation)
 ├── order/           # 주문 서비스 (컨테이너)
 ├── search/          # 검색 서비스 (app / consumer / batch + domain)
-├── quant/     # 분할매매 자동매매 (app + frontend PWA)
+├── quant/     # 분할매매 전략 자동매매 (app + frontend PWA)
 ├── auth, member, wishlist, gifticon, inventory, fulfillment, warehouse,
 │ analytics, experiment, chatbot, code-dictionary, agent-viewer/  # 서비스별 nested submodule
 ├── admin/frontend, charting/{frontend,infra,src}, *-fe/        # FE & non-JVM

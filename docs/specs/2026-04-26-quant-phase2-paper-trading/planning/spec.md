@@ -679,7 +679,7 @@ Plan 단계에서 Phase 2 사이클 동안 다음 ADR을 발행한다:
 - 업비트 어댑터 신설 (Phase 3 — `AbstractJwtBasedExchangeAdapter` 재사용)
 - 글로벌 kill-switch / 손실 한도 / 페이퍼→실매매 정량 승격 게이트 (Phase 3, OQ-012/019)
 - NetworkPolicy / mTLS / 실매매 2FA (Phase 3, OQ-013/015/016)
-- 분할 원칙1·3·4 포트폴리오 차원 (Phase 1 §15.1 유지)
+- 분할 원칙 1·3·4 포트폴리오 차원 (Phase 1 §15.1 유지)
 - WORM 스토리지 (S3 Object Lock) — Phase 3+ 외부 오픈 시점
 - volume-weighted / 정규분포 slippage — Phase 3 실 체결 데이터 calibration 후
 - WebSocket 양방향 FE 연결 — Phase 2는 SSE만

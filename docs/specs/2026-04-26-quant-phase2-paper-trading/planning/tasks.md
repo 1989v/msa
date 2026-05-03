@@ -908,7 +908,7 @@ Preflight P2.1 (OCI Vault), P2.0 (OQ-011 — Phase 3 진입 전)
 - HPA p95 latency 기반 (Prometheus Adapter 도입 후)
 
 **기능 확장**:
-- 분할 원칙1·3·4 포트폴리오 차원 (Phase 1 §15.1 유지)
+- 분할 원칙 1·3·4 포트폴리오 차원 (Phase 1 §15.1 유지)
 - 공개 리더보드 (외부 SaaS 상용화)
 - WebSocket 양방향 FE 연결 (Phase 2는 SSE 단방향)
 - volume-weighted / 정규분포 slippage 모델 (Phase 3 실 체결 데이터 calibration 후)

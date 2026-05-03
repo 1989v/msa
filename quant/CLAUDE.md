@@ -1,6 +1,6 @@
 # Quant Service
 
- 『분할매매』 분할 원칙을 빗썸/업비트 암호화폐 거래소에 적용하는 규칙 기반 자동매매 서비스.
+『분할매매』 분할 원칙을 빗썸/업비트 암호화폐 거래소에 적용하는 규칙 기반 자동매매 서비스.
 
 ## Modules
 
@@ -30,7 +30,7 @@
 
 ## Key Rules
 
--  분할 원칙정통 구현 — 손절 없음(원칙 7), 레버리지 금지(원칙 2, `SpotOrderType` sealed), 회차별 독립 익절
+- 분할 원칙 정통 구현 — 손절 없음(원칙 7), 레버리지 금지(원칙 2, `SpotOrderType` sealed), 회차별 독립 익절
 - Clean Architecture 엄수 — domain 모듈에 Spring/JPA 금지
 - ADR-0002 런타임: MVC + JPA blocking + Coroutine 외부 IO + Tomcat 가상 스레드
 - ClickHouse `quant` DB 별도 소유 — analytics DB 직접 참조 금지
