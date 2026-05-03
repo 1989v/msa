@@ -1,12 +1,12 @@
 ---
 id: 19
 title: 검색엔진 심화 — Elasticsearch · OpenSearch · Hybrid · Re-Ranking · BM25 · nori
-status: draft
+status: refined
 created: 2026-05-03
 updated: 2026-05-03
 tags: [elasticsearch, opensearch, lucene, bm25, tf-idf, nori, hybrid-search, vector-search, re-ranking, ltr, search-relevance]
 difficulty: advanced
-estimated-hours: 20
+estimated-hours: 26
 codebase-relevant: true
 ---
 
@@ -236,21 +236,35 @@ codebase-relevant: true
 - ES LTR plugin: github.com/o19s/elasticsearch-learning-to-rank
 - OpenSearch Neural Search / RRF docs
 
-## 7. 미결 사항
+## 7. 미결 사항 / 브레인스토밍 결정 로그
 
-브레인스토밍 (`/study:bs 19`) 에서 결정할 항목:
+### 7-A. 학습 정책 (확정 — 2026-05-03)
 
-- **Vector / LTR 깊이**: 이론 + ES/OpenSearch API 수준까지만 vs 임베딩 모델 학습/배포까지 포함
+> **모든 서브토픽 풀 커버리지** — 14개 서브토픽 + Phase 1 기본 개념까지 모두 글로 남긴다. **스킵 없음**. 목적은 복습용 자료(future-self 가 다시 읽을 때 빈 곳이 없도록).
+
+이 정책은 분량 산정에 직접 영향:
+- estimated-hours: 20 → **26** 으로 상향
+- 묶음 2 (Vector·Hybrid·Re-Rank) 가 자가평가 A → 개념을 더 풀어 써야 함 → 분량 가중
+
+### 7-B. 사용자 자가평가 (확정 — 2026-05-03)
+
+| 묶음 | 범위 | 레벨 | 작성 무게 |
+|---|---|---|---|
+| 1. 인덱싱·스코어링 기본기 | Lucene segment/refresh, Inverted Index, Analyzer, nori, BM25/TF-IDF, Query DSL | **B** (실무 경험 O, 내부/튜닝 약함) | 기본 개념 + **심화·튜닝 보강** (BM25 k1/b 수식 직관, refresh vs flush 명확화, nori decompound 3-mode 비교) |
+| 2. Vector·Hybrid·Re-Ranking | dense_vector, HNSW, RRF, cross-encoder, LTR | **A** (처음 다수) | **개념부터 풀어쓰기**, ES/OpenSearch API 예제로 grounding, 임베딩 모델 학습/배포는 개념까지만 (실 학습 X) |
+| 3. 클러스터·동기화·운영 | master/data 노드, shard 산정, Outbox/CDC, alias swap, ILM, snapshot | **B** (운영 경험 일부, 시니어 의사결정 약함) | 기본 + **시니어 의사결정 영역 강조** (shard 산정 공식, CDC vs Outbox 선택 기준, 재색인 RTO 측정 방법) |
+
+### 7-C. 미결 — 다음 브레인스토밍 라운드에서 결정
+
+- **목표 가중**: 면접 대비 vs msa 실무 적용 vs 둘 다 — Phase 3/4 비중 결정 (다음 질문)
 - **PoC 코드 작성 여부**: msa search 서비스에 hybrid search 실제 구현 vs plan 단계까지만
-- **OpenSearch vs ES 비교의 비중**: 단일 챕터 vs 매 phase 마다 cross-reference
-- **분량 분배**: 검색 품질 (스코어링/튜닝) vs 인프라 (클러스터/운영) — 시니어 역할상 어느 쪽 무게?
-- **ADR 작성 범위**:
+- **OpenSearch vs ES 비교 비중**: 단일 챕터 vs 매 phase 마다 cross-reference
+- **ADR 작성 범위** (4건 후보):
   - "ES vs OpenSearch 일원화"
   - "검색 인덱스에 변동성 큰 필드 금지 컨벤션"
   - "색인 lag SLA + ADR-0025 보강"
   - "Hybrid Search 도입 검토"
-  - 4건 모두? 일부?
-- **운영 시뮬레이션**: 실제 k3d 클러스터에서 ES 노드 죽이기 / 리밸런싱 관찰을 포함할지
+- **운영 시뮬레이션**: 실제 k3d 클러스터에서 ES 노드 죽이기 / 리밸런싱 관찰 포함 여부
 
 ## 8. 원본 메모
 
