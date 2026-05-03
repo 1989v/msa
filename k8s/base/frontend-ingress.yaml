@@ -2,6 +2,9 @@
 # rewrite-target strips the prefix so each SPA's nginx sees requests at /.
 # Gateway's catch-all Ingress (path: /) handles API traffic;
 # these more-specific paths take priority in nginx ingress routing.
+#
+# 정규식 /?(.*) 는 /admin , /admin/ , /admin/anything 모두 매칭하기 위함.
+# /(.*) 만 두면 trailing slash 없는 /admin 이 catch-all gateway 로 빠져 404.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -18,49 +21,49 @@ spec:
   rules:
     - http:
         paths:
-          - path: /code-dictionary/(.*)
+          - path: /code-dictionary/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: code-dictionary-fe
                 port:
                   name: http
-          - path: /gifticon/(.*)
+          - path: /gifticon/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: gifticon-fe
                 port:
                   name: http
-          - path: /agent-viewer/(.*)
+          - path: /agent-viewer/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: agent-viewer-fe
                 port:
                   name: http
-          - path: /charting/(.*)
+          - path: /charting/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: charting-fe
                 port:
                   name: http
-          - path: /admin/(.*)
+          - path: /admin/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: admin-fe
                 port:
                   name: http
-          - path: /quant/(.*)
+          - path: /quant/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: quant-fe
                 port:
                   name: http
-          - path: /charting-api/(.*)
+          - path: /charting-api/?(.*)
             pathType: ImplementationSpecific
             backend:
               service:

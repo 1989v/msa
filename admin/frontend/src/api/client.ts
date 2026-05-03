@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BYPASS_AUTH } from '@/hooks/useAuth';
+import { BYPASS_AUTH } from '@/lib/auth-bypass';
 
 const TOKEN_KEY = 'admin_token';
 
