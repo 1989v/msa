@@ -11,6 +11,9 @@ import { BacktestRunDetailPage } from '@/pages/BacktestRunDetailPage'
 import { LeaderboardPage } from '@/pages/LeaderboardPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { PaperTradingMonitorPage } from '@/pages/PaperTradingMonitorPage'
+import { ChartsPage } from '@/pages/ChartsPage'
+import { LearnPage } from '@/pages/LearnPage'
+import { LearnDetailPage } from '@/pages/LearnDetailPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 const queryClient = new QueryClient({
@@ -104,6 +107,30 @@ export default function App() {
             element={
               <AppShell>
                 <LeaderboardPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/charts"
+            element={
+              <AppShell>
+                <ChartsPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/learn"
+            element={
+              <AppShell>
+                <LearnPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/learn/:slug"
+            element={
+              <AppShell>
+                <LearnDetailPage />
               </AppShell>
             }
           />
