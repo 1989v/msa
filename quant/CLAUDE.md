@@ -1,13 +1,30 @@
-# Quant Service
+# Quant Service — 통합 트레이딩 플랫폼
 
-『분할매매』 분할 원칙을 빗썸/업비트 암호화폐 거래소에 적용하는 규칙 기반 자동매매 서비스.
+자동매매 전략(분할/시그널/융합) + 차트 분석 + 입문자 지표 학습을 단일 서비스로 통합 (ADR-0033).
+자산 클래스 무관 (`Asset` / `Market` 추상화). Phase 1 은 빗썸 암호화폐 + sealed `Strategy` 도입.
+
+## 메뉴 (FE `/quant/`)
+
+| 라우트 | 메뉴 |
+|---|---|
+| `/quant/strategies` | 자동매매 전략 (Tranche / Signal — Phase 1, Hybrid — Phase 3) |
+| `/quant/charts` | 차트 분석 (OHLCV + ta4j 지표 + 패턴 유사도) |
+| `/quant/learn` | 입문자 지표 학습 CMS (DB 기반) |
+
+## Strategy sealed (ADR-0033)
+
+- `TrancheStrategy` — 분할 진입 (기존)
+- `SignalStrategy` — single-source 시그널 (Phase 1 신규): VolumeSpike / RsiBreakout / MaCross / BollingerSqueeze
+- `HybridStrategy` — 합성 (Phase 3)
 
 ## Modules
 
 | Gradle path | 역할 |
 |---|---|
-| `:quant:domain` | Pure Kotlin 도메인 (전략/회차/주문/이벤트) |
-| `:quant:app` | Spring Boot 앱 (port 8094) |
+| `:quant:domain` | Pure Kotlin 도메인 (Asset/Market/Strategy sealed/Tranche/Signal/IndicatorContent) |
+| `:quant:app` | Spring Boot 앱 (port 8094) — REST + ta4j + multik + JPA + ClickHouse + pgvector |
+| `quant/ingest/` | Python sidecar (별도 lifecycle) — yfinance/FDR → ClickHouse insert |
+| `quant/frontend/` | React SPA (basename `/quant/`) — 메뉴 3종 |
 
 ## Commands
 

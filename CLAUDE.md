@@ -117,12 +117,12 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | search | `search/CLAUDE.md` | ES 인덱싱, 4개 모듈 |
 | gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting, K8s DNS 라우팅 |
 | common | `common/CLAUDE.md` | 공유 라이브러리 |
-| charting | `charting/CLAUDE.md` | Python/FastAPI, 독립 도메인 |
+| charting | `charting/CLAUDE.md` | Python/FastAPI, 독립 도메인 — Phase 2 종료 시 quant 로 흡수 (ADR-0033) |
 | analytics | `analytics/CLAUDE.md` | 이벤트 수집, 스코어 산출 (Kafka Streams + ClickHouse) |
 | experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼 |
 | member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
 | wishlist | `wishlist/CLAUDE.md` | 상품 위시리스트 (회원별) |
-| quant | `quant/CLAUDE.md` | 분할매매 전략 암호화폐 자동매매 (신규, Phase 1 진행 중) |
+| quant | `quant/CLAUDE.md` | 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS (ADR-0033, Phase 1 진행 중) |
 | auth | (미생성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) |
 | gifticon | (미생성) | 기프티콘 관리, 공유 그룹 |
 | code-dictionary | (미생성) | IT 개념 사전, OpenSearch 검색, 시각화 |

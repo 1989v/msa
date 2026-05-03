@@ -27,6 +27,7 @@ resources:
   - code-dictionary
   - agent-viewer-api
   - quant
+  - quant-ingest
   # Frontend + non-JVM services (Phase 7 extension)
   - code-dictionary-fe
   - gifticon-fe

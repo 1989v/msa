@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quant-ingest-hourly
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-ingest
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  # 시간봉: 매시 +5min — 거래소 candle 마감 후 수집
+  schedule: "5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: quant-ingest
+            app.kubernetes.io/part-of: commerce-platform
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: ingest
+              image: commerce/quant-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--mode=incremental", "--interval=1h"]
+              env:
+                - name: CLICKHOUSE_URL
+                  value: "http://clickhouse:8123"
+                - name: CLICKHOUSE_DB
+                  value: "quant"
+              resources:
+                requests: { cpu: 50m, memory: 256Mi }
+                limits:   { memory: 512Mi }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quant-ingest-daily
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-ingest
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  # 일봉: KST 16:30 — KOSPI/KOSDAQ 마감 +30min (UTC 07:30)
+  schedule: "30 7 * * 1-5"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: quant-ingest
+            app.kubernetes.io/part-of: commerce-platform
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: ingest
+              image: commerce/quant-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--mode=incremental", "--interval=1d"]
+              env:
+                - name: CLICKHOUSE_URL
+                  value: "http://clickhouse:8123"
+                - name: CLICKHOUSE_DB
+                  value: "quant"
+              resources:
+                requests: { cpu: 50m, memory: 256Mi }
+                limits:   { memory: 512Mi }
