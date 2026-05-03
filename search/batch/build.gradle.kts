@@ -9,6 +9,10 @@ dependencies {
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.spring.boot.starter.data.elasticsearch)
     implementation(libs.spring.boot.starter.batch)
+    // Spring Boot 4.0: starter-batch 만으로는 DataSource/TransactionManager auto-config 가
+    // 활성화되지 않아 명시적으로 starter-jdbc 를 추가한다 (BatchTransactionManagerConfig 의
+    // 임시 빈 등록을 대체). spring-jdbc + HikariCP + DataSourceAutoConfiguration 일괄.
+    implementation(libs.spring.boot.starter.jdbc)
     implementation(libs.spring.webflux)
     implementation(libs.kotlin.coroutines.reactor)
     implementation(libs.hikaricp)
