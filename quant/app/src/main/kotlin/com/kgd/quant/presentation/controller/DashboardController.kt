@@ -35,10 +35,17 @@ class DashboardController(
     ): ApiResponse<DashboardOverview> {
         val runs = listBacktestRuns.execute(tenantId, null)
         val totalPnl = runs.fold(BigDecimal.ZERO) { acc, r -> acc.add(r.realizedPnl) }
+        val totalFills = runs.sumOf { it.fillCount }
+        val distinctStrategies = runs.map { it.strategyId }.toSet().size
+        val lastEndedAt = runs.maxOfOrNull { it.endedAt }?.toString()
         return ApiResponse.success(
             DashboardOverview(
-                totalRuns = runs.size,
-                totalRealizedPnl = totalPnl
+                tenantId = tenantId.value,
+                totalStrategies = distinctStrategies,
+                totalBacktests = runs.size,
+                cumulativeRealizedPnl = totalPnl.toPlainString(),
+                totalFills = totalFills,
+                lastRunEndedAt = lastEndedAt,
             )
         )
     }
