@@ -19,9 +19,10 @@ export function writeTenantId(tenantId: string): void {
   window.localStorage.setItem(TENANT_STORAGE_KEY, tenantId)
 }
 
-const baseURL =
-  import.meta.env.VITE_API_BASE_URL ??
-  (import.meta.env.DEV ? '' : '/api/quant')
+// 운영/로컬 모두 절대 path. 브라우저 origin → ingress catch-all → gateway 라우팅.
+// 이전에는 prod 에서 '/api/quant' 를 baseURL 로 잡아 path 와 합쳐
+// /api/quant/api/v1/... 이중 prefix 로 gateway 가 404 응답하던 결함이 있었음.
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export const apiClient = axios.create({
   baseURL,
