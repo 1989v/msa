@@ -16,3 +16,6 @@
 [submodule "private"]
 	path = private
 	url = https://github.com/1989v/msa-private.git
+[submodule "career"]
+	path = career
+	url = https://github.com/1989v/msa-career.git
