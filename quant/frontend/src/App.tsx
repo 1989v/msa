@@ -27,7 +27,9 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      {/* basename = vite --base /quant/ 와 동기화. SPA 내부 링크가
+          ingress prefix 를 자동 부여해 /quant/strategies/new 형태 생성. */}
+      <BrowserRouter basename={import.meta.env.BASE_URL}>
         <Routes>
           <Route
             path="/"
