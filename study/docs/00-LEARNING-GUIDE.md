@@ -1,8 +1,10 @@
 # msa Study — Learning Guide
 
-> 333개 파일 / 약 97K 줄 분량의 18개 주제를 어떻게 회독하고 체화할지에 대한 실용 가이드.
-> 산출물: 주제별 deep study (18개) + ADR 후보 통합 (`00-ADR-CANDIDATES.md`, 34개 후보).
-> 본 가이드는 “읽기 → 코드 grounding → 면접 카드 → ADR/PR” 4단계 transition 의 표준 운영 매뉴얼.
+> 355개 파일 / 약 107K 줄 분량의 19개 주제를 어떻게 회독하고 체화할지에 대한 실용 가이드.
+> 산출물: 주제별 deep study (19개) + ADR 후보 통합 (`00-ADR-CANDIDATES.md`, 34 + #19 의 9개 = 43개 후보).
+> 본 가이드는 "읽기 → 코드 grounding → 면접 카드 → ADR/PR" 4단계 transition 의 표준 운영 매뉴얼.
+>
+> **NOTE (2026-05-04)**: #19 검색엔진 심화는 본 가이드의 트랙 A/B/C 표 안에 포함되지 않은 신규 주제. msa 의 search 서비스 직접 grounding 이라 codebase-relevant=true → **트랙 B/C 의 Tier 2 (저장소/데이터)** 에 배치 권장 (32h 추가 = 약 1 Phase 분량).
 
 ---
 

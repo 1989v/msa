@@ -80,8 +80,8 @@
 | 16 | 비동기 · 논블러킹 IO (NIO · Reactor · Netty) | [16-async-nonblocking-io/](docs/16-async-nonblocking-io/) | **completed + 19 deep files** |
 | 17 | Spring Web 처리 심화 (Filter/Interceptor/AOP · Jackson · gzip) | [17-spring-web/](docs/17-spring-web/) | **completed + 20 deep files** |
 | 18 | gRPC 심화 (Protobuf · HTTP/2 · Streaming) | [18-grpc/](docs/18-grpc/) | **completed + 20 deep files** |
-| 19 | 검색엔진 심화 (ES · OpenSearch · Hybrid · Re-Ranking · BM25 · nori) | [19-search-engine/](docs/19-search-engine/) | **in-progress — deep 2/20 (02 lucene-internals)** |
+| 19 | 검색엔진 심화 (ES · OpenSearch · Hybrid · Re-Ranking · BM25 · nori) | [19-search-engine/](docs/19-search-engine/) | **completed + 20 deep files** |
 
 > **흡수 노트**: 원본 17-1 (`@Transactional(readonly/writable)`) 은 #5 plan + deep file 06/07 에, 17-3 (스레드 덤프) 은 #3 plan + deep file 20 에 흡수됨 (2026-05-01).
 >
-> **전체 통계** (2026-05-02 기준): 18개 주제 / 333개 파일 / 약 97,063 줄. (#19 plan 생성 2026-05-03 — draft 상태)
+> **전체 통계** (2026-05-03 기준): 19개 주제 / 354개 파일 (#19 +21 = 20 deep + plan + preview). #19 학습 완료 2026-05-03.

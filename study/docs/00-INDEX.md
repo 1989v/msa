@@ -1,13 +1,14 @@
 ---
 type: master-index
 created: 2026-05-02
-covers: 18 study topics (2026-04-16 ~ 2026-05-02)
+updated: 2026-05-04
+covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 ---
 
 # msa Study — Master Index
 
-> 18개 학습 주제의 단일 entry point. 각 주제 카드, 학습 순서 추천, 영역별 그루핑, 의존 그래프, 키워드 검색 인덱스를 제공한다.
-> 산출물 통계 (2026-05-02 기준): **18개 주제 / 333개 deep file / 약 97,063 줄**.
+> 19개 학습 주제의 단일 entry point. 각 주제 카드, 학습 순서 추천, 영역별 그루핑, 의존 그래프, 키워드 검색 인덱스를 제공한다.
+> 산출물 통계 (2026-05-04 기준): **19개 주제 / 355개 deep file / 약 106,862 줄**. (#19 검색엔진 추가, 2026-05-03 ~ 2026-05-04)
 
 ---
 
@@ -48,8 +49,9 @@ covers: 18 study topics (2026-04-16 ~ 2026-05-02)
 | 16 | [비동기 · 논블로킹 IO (NIO · Reactor · Netty)](16-async-nonblocking-io/) | advanced | 18h | 21 | 6,547 | true | completed (19 deep) |
 | 17 | [Spring Web 처리 심화 (Filter · Interceptor · AOP · Jackson · gzip)](17-spring-web/) | intermediate | 14h | 22 | 5,279 | true | completed (20 deep) |
 | 18 | [gRPC 심화 (Protobuf · HTTP/2 · Streaming)](18-grpc/) | intermediate | 14h | 22 | 6,297 | false | completed (20 deep) |
+| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 22 | 9,799 | true | completed (20 deep) |
 
-**합계**: 18 주제 / 423h 학습 시간 추정 / 333 file / 97,063 line.
+**합계**: 19 주제 / 455h 학습 시간 추정 / 355 file / 106,862 line.
 
 > "코드 연관" false 인 주제 (8/14/18) 도 msa 적용 가능성 검토 섹션을 가진다 — false 의 의미는 "현재 코드에 직접 매핑되는 구현이 적다" 정도로 해석.
 
@@ -141,6 +143,7 @@ JVM 위에서 동작하는 모든 서비스의 토대.
 | 9 | [Redis](9-redis-deep-dive/) | 자료구조 인코딩, Cluster, Stampede, 분산락 |
 | 15 | [Connection Pool](15-connection-pool/) | HikariCP 내부, Lettuce, R/W 분리 |
 | 14 | [CRDT/MRDT](14-crdt-mrdt/) | SEC/Semilattice, OR-Set, Yjs/Automerge |
+| 19 | [검색엔진](19-search-engine/) | Lucene, BM25, nori, Vector/HNSW, RRF, Outbox→ES |
 
 ### 3.3 메시징
 
@@ -426,6 +429,14 @@ flowchart TD
 - **관련 주제**: #6 Kafka (동기 RPC vs 비동기 이벤트 분담) · #11 K8s (Headless Service / xDS) · #13 Crypto (mTLS) · #16 Async/IO (HTTP/2).
 - **msa 적용**: REST → gRPC 가상 마이그레이션 시나리오 (gateway↔auth / order↔inventory / search↔product), 부분/보류 ADR.
 
+### #19 검색엔진 심화 (ES · OpenSearch · Hybrid · Re-Rank · BM25 · nori)
+
+- **폴더**: [19-search-engine/](19-search-engine/)
+- **미리보기**: [00-preview.md](19-search-engine/00-preview.md) · **계획**: [00-plan.md](19-search-engine/00-plan.md) · **개선안**: [19-improvements.md](19-search-engine/19-improvements.md) · **면접**: [20-interview-qa.md](19-search-engine/20-interview-qa.md)
+- **핵심**: "5층 스택". Lucene (segment / refresh ≠ flush ≠ commit / translog / merge) → Analyzer (nori decompound 3-mode / 사용자 사전 / search_analyzer 분리) → 스코어링 (BM25 k1·b / function_score / Vector dense_vector + HNSW) → 검색 품질 (Hybrid RRF / Re-Rank cross-encoder + LTR) → 동기화 (Outbox vs Debezium CDC / version_type=external / 색인 lag SLA) + 운영 (cluster health / shard 산정 / RTO).
+- **관련 주제**: #4 DB (RDB 와의 비교, B-Tree vs Inverted Index) · #6 Kafka (Outbox / 멱등 consumer) · #7 분산시스템 (eventual consistency) · #9 Redis (보조 저장소 패턴) · #11 K8s (ECK / OpenSearch Operator).
+- **msa 적용**: search 서비스 4-모듈 (`domain/app/consumer/batch`) 직접 분석 + 강점 10개 / 점검 17개 / **ADR 후보 4건** (lag SLA / 변동성 필드 컨벤션 / ES vs OpenSearch 일원화 / Hybrid Search 도입) + Hybrid Search PoC 코드.
+
 ---
 
 ## 6. 키워드 검색 인덱스
@@ -588,11 +599,11 @@ flowchart TD
 
 ## 7. 코드베이스 연관도
 
-### 7.1 직접 적용 가능 (codebase-relevant: true) — 15개 주제
+### 7.1 직접 적용 가능 (codebase-relevant: true) — 16개 주제
 
-#1, #2, #3, #4, #5, #6, #7, #9, #10, #11, #12, #13, #15, #16, #17
+#1, #2, #3, #4, #5, #6, #7, #9, #10, #11, #12, #13, #15, #16, #17, #19
 
-> 1, 2, 3 등 모든 "true" 주제는 plan.md 5번 섹션에 구체 코드 위치 (예: `commerce.jib-convention.gradle.kts`, `common/security/JwtUtil.kt`) 가 명시됨.
+> 1, 2, 3 등 모든 "true" 주제는 plan.md 5번 섹션에 구체 코드 위치 (예: `commerce.jib-convention.gradle.kts`, `common/security/JwtUtil.kt`, `search/{app,consumer,batch}/`) 가 명시됨.
 
 ### 7.2 이론 / 인프라 (codebase-relevant: false) — 3개 주제
 
@@ -625,6 +636,10 @@ flowchart TD
 | **ADR-0029 Read-after-Write Stickiness via Redis** | #4, #5, #15 (3개) |
 | **ADR-0033 Idempotent Consumer 헬퍼 (common 모듈)** | #5, #6, #7 (3개) |
 | **ADR-0028 JVM Tuning Convention** | #2 (단독, P0) |
+| **(신규) 검색 색인 lag SLA + ADR-0025 보강** | #19 (단독, 즉시) |
+| **(신규) 검색 인덱스 변동성 필드 컨벤션 (Two-Phase Lookup)** | #19 (단독, 즉시) |
+| **(신규) ES vs OpenSearch 일원화** | #19 (단독, 분기) |
+| **(신규) Hybrid Search (BM25 + Vector + RRF) 도입** | #19 (단독, 반기 PoC 후) |
 
 ---
 

@@ -1,6 +1,6 @@
 # msa Study — Interview Master Index
 
-> 18개 주제의 면접 카드를 통합. Top 빈출 / 영역별 / 모의 면접 시나리오 / 1시간 회독 가이드.
+> 19개 주제의 면접 카드를 통합. Top 빈출 / 영역별 / 모의 면접 시나리오 / 1시간 회독 가이드.
 > 한국 대기업 백엔드 시니어/테크리드 면접 대비 최종 회독용.
 
 ---
@@ -42,8 +42,9 @@
 | 16 | Async/Nonblocking IO | 38 (8+6+5+10+3+6) + 인덱스 50 | 38 | [16-async-nonblocking-io/19-interview-qa.md](16-async-nonblocking-io/19-interview-qa.md) |
 | 17 | Spring Web | 36 (8+10+8+6+4) | 36 | [17-spring-web/20-interview-qa.md](17-spring-web/20-interview-qa.md) |
 | 18 | gRPC | 30 (10+12+8) | 30 | [18-grpc/20-interview-qa.md](18-grpc/20-interview-qa.md) |
+| 19 | 검색엔진 심화 (ES · BM25 · Hybrid · Re-Rank) | 17 + 꼬리 3단계 + 악마의 변호인 17 | 50+ | [19-search-engine/20-interview-qa.md](19-search-engine/20-interview-qa.md) |
 
-**총합**: 약 730개 카드, 핵심 카드 약 670개
+**총합**: 약 780개 카드, 핵심 카드 약 720개 (#19 추가 반영)
 
 ---
 

@@ -1,6 +1,6 @@
 # study/ — MSA 학습 노트
 
-> 18개 주제 / 333개 파일 / ~97K 줄의 백엔드 시니어 학습 자료.
+> 19개 주제 / 355개 파일 / ~107K 줄의 백엔드 시니어 학습 자료.
 
 본 폴더는 msa 코드베이스를 grounding 으로 삼아 작성한 백엔드 학습/면접 자료의 source of truth 다.
 `/study:*` skill 파이프라인이 산출하는 모든 결과물은 이 폴더 안에 위치한다.
@@ -9,11 +9,11 @@
 
 ## Quick Navigation
 
-- **Master Index**: [docs/00-INDEX.md](docs/00-INDEX.md) — 18 주제 entry point
+- **Master Index**: [docs/00-INDEX.md](docs/00-INDEX.md) — 19 주제 entry point
 - **Interview Index**: [docs/00-INTERVIEW-INDEX.md](docs/00-INTERVIEW-INDEX.md) — 면접 카드 통합
 - **Learning Guide**: [docs/00-LEARNING-GUIDE.md](docs/00-LEARNING-GUIDE.md) — 회독 전략
 - **ADR Candidates**: [docs/00-ADR-CANDIDATES.md](docs/00-ADR-CANDIDATES.md) — 학습 → ADR 후보 통합
-- **현재 진도/스코프**: [temp.md](temp.md) — 18 주제 진척 추적 표
+- **현재 진도/스코프**: [temp.md](temp.md) — 19 주제 진척 추적 표
 
 ---
 
@@ -141,7 +141,7 @@ CLAUDE.md 루트의 Skill Routing Priority (`/hns:start` → hns → superpowers
 ## Source of Truth
 
 - 학습 진도 표 → `temp.md`
-- 18 주제 entry → `docs/00-INDEX.md`
+- 19 주제 entry → `docs/00-INDEX.md`
 - ADR 후보 → `docs/00-ADR-CANDIDATES.md`
 - 면접 통합 → `docs/00-INTERVIEW-INDEX.md`
 - 회독 전략 → `docs/00-LEARNING-GUIDE.md`

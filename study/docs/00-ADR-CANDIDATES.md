@@ -1580,11 +1580,60 @@ ADR-0026 (docs-taxonomy) 준수:
 
 ---
 
-## 11. 변경 이력
+## 11. #19 검색엔진 심화 — ADR 후보 (2026-05-04 추가)
+
+> 출처: `study/docs/19-search-engine/19-improvements.md`. msa search 서비스 (4-모듈) 의 코드 grounding (`study/docs/19-search-engine/15-msa-search-grounding.md`) 에서 도출한 점검 포인트 17건을 ADR 4 + 보너스 5 로 통합.
+
+### 11-1. 핵심 ADR 4건
+
+| 가번호 | 제목 | 우선순위 | Effort | Risk |
+|---|---|---|---|---|
+| **(신규-S1)** | 검색 인덱스 색인 lag SLA 정의 + ADR-0025 보강 | 즉시 | 2-3d | 낮음 |
+| **(신규-S2)** | 검색 인덱스 변동성 필드 컨벤션 — Two-Phase Lookup 강제 | 즉시 | 1 sprint | 중간 |
+| **(신규-S3)** | ES vs OpenSearch 일원화 — OpenSearch 인프라 정리 | 분기 | 분기 | 중간 |
+| **(신규-S4)** | Hybrid Search 도입 — BM25 + Dense Vector + RRF | 반기 | PoC 1주 + 분기 | 중간 |
+
+### 11-2. 보너스 ADR 후보 5건 (운영 표준)
+
+§15 grounding 의 17개 점검 포인트 중 ADR 4건 외 추가:
+
+| 가번호 | 제목 | 점검 매핑 |
+|---|---|---|
+| **(신규-S5)** | ES 인덱싱 멱등성 표준 — `version_type=external` + 도메인 version 강제 | ⚠11 (ADR-0012 보강) |
+| **(신규-S6)** | 검색 인덱스 매핑 표준 — multi-field (`name.raw` keyword) + search_analyzer 분리 | ⚠2, ⚠3 |
+| **(신규-S7)** | ES Bulk 영구 실패 메시지 DLQ — retry 후에도 실패하면 Kafka DLQ topic | ⚠13 |
+| **(신규-S8)** | search:batch reindex 시 `refresh_interval=-1` + `replica=0` 토글 컨벤션 | ⚠15 |
+| **(신규-S9)** | Alias Swap 후 검증 단계 + 옛 인덱스 1시간 보관 (즉시 cleanup ❌) | ⚠16 |
+
+### 11-3. 핵심 결정 변수
+
+- **즉시 ADR (S1, S2)**: 운영 가시성 + 데이터 일관성 — ROI 명확, Effort 작음
+- **분기 ADR (S3)**: ES 와 OpenSearch 가 인프라에 둘 다 있지만 search 코드는 ES only → 일원화로 운영 부담 50% ↓
+- **반기 ADR (S4)**: Hybrid Search 의 효과는 PoC (`study/docs/19-search-engine/18-hybrid-search-poc.md`) 결과로 결정 — 자연어 / 동의어 검색 품질 향상 정량 검증 필요
+- **보너스 (S5~S9)**: 5건 통합 ADR ("search 운영 표준") 또는 개별 ADR 양자택일
+
+### 11-4. 코드 grounding 출처
+
+- `search/CLAUDE.md` — 4-모듈 구조, 멱등성 패턴 (ADR-0012)
+- `search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductSearchAdapter.kt:21-73` — function_score (popularity + ctr log1p)
+- `search/app/src/main/kotlin/com/kgd/search/elasticsearch/ProductEsDocument.kt` — nori analyzer, price 색인 (변동성 점검 대상)
+- `search/consumer/src/main/kotlin/com/kgd/search/infrastructure/indexing/EsBulkDocumentProcessor.kt` — 이중 ingester (primary + retry)
+- `search/batch/src/main/kotlin/com/kgd/search/job/ReindexJobExecutionListener.kt` — alias swap 패턴
+
+### 11-5. 관련 기존 ADR
+
+- ADR-0012 / ADR-0029 — Idempotent Consumer (S5 와 결합)
+- ADR-0020 — Transactional usage (Dual Write 금지 원칙, S2 와 정합)
+- ADR-0025 — Latency budget (S1 의 보강 대상)
+
+---
+
+## 12. 변경 이력
 
 | 일자 | 변경 | 작성자 |
 |---|---|---|
 | 2026-05-01 | 최초 작성 — 15개 학습 주제의 improvements.md 통합 | kgd |
+| 2026-05-04 | #19 검색엔진 심화 ADR 9건 (핵심 4 + 보너스 5) 추가 (§11) | kgd |
 
 ---
 

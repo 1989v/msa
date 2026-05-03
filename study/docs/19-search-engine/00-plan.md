@@ -1,9 +1,10 @@
 ---
 id: 19
 title: 검색엔진 심화 — Elasticsearch · OpenSearch · Hybrid · Re-Ranking · BM25 · nori
-status: in-progress
+status: completed
 created: 2026-05-03
 updated: 2026-05-03
+completed: 2026-05-03
 tags: [elasticsearch, opensearch, lucene, bm25, tf-idf, nori, hybrid-search, vector-search, re-ranking, ltr, search-relevance]
 difficulty: advanced
 estimated-hours: 32
