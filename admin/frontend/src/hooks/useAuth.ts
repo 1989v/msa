@@ -6,11 +6,11 @@ import { TOKEN_KEY } from '@/api/client';
 // 이유: auth-service / OAuth provider 가 로컬에 미기동인 상태에서도
 //       admin FE 화면 진입을 검증할 수 있도록 한시적으로 추가.
 // 영향: AppLayout 의 isAuthenticated / isAdmin 가드가 무조건 통과되어
-//       /admin 하위 페이지를 인증 없이 렌더링한다. (API 호출은 token 부재로
-//       여전히 401 가능 — 그건 별도 처리.)
+//       /admin 하위 페이지를 인증 없이 렌더링한다.
+//       api/client.ts 의 401 redirect 도 BYPASS 면 비활성화 (무한 루프 방지).
 // TODO(removal): auth flow 정상화 후 본 상수 + bypass 분기 즉시 제거.
 //                운영 빌드에 절대 포함 금지. README 의 운영 배포 체크리스트 참고.
-const BYPASS_AUTH = true;
+export const BYPASS_AUTH = true;
 
 const MOCK_AUTH_STATE: AuthState = {
   token: 'local-bypass',
