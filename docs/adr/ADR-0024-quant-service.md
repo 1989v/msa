@@ -1,7 +1,38 @@
 # ADR-0024 Quant 암호화폐 자동매매 서비스 도입
 
 ## Status
-Proposed
+Proposed (2026-04-24) — **Extended by ADR-0033 (2026-05-04)**
+
+## Errata 2026-05-04 — 통합 플랫폼 확장
+
+ADR-0033 (Quant 통합 플랫폼) 결정에 따라 본 서비스 범위가 확장된다.
+
+### 확장되는 범위
+
+- **자산 클래스** — Phase 1 까지 암호화폐 전용. Phase 2+ 부터 주식(US/KR) 포함.
+  도메인 모델 `Asset` / `Market` 추상화 신규 도입.
+- **strategy 도메인 모델** — 기존 `TrancheStrategy` 가 신규 sealed `Strategy` 의 자식이 된다.
+  자식 추가:
+  - `SignalStrategy` (Phase 1) — single-source 시그널(거래량 급증 / RSI breakout / MA cross / BB squeeze)
+  - `HybridStrategy` (Phase 3) — Tranche + Signal 합성
+- **메뉴** — `/quant/strategies` 외에 `/quant/charts` (차트 분석), `/quant/learn` (입문자 지표 학습 CMS) 신규.
+- **데이터 소스** — 빗썸 외에 yfinance / FinanceDataReader (주식, ingest sidecar) 추가.
+- **인프라** — pgvector(임베딩) + ClickHouse(시세) 모두 사용. Python ingest sidecar (K8s CronJob) 추가.
+
+### 유지되는 결정
+
+- 분할 진입(Tranche) 도메인 모델 / paper trading / 백테스트 엔진 / Outbox / tenantId 격리(INV-05)
+- ClickHouse 시세 저장 / Kafka outbox / Coroutine + JPA 런타임(ADR-0002)
+- Phase 1 (백테스트), Phase 2 (paper), Phase 3 (실매매) 구분
+
+### 관련 ADR
+
+- ADR-0033 — 통합 플랫폼 도입 (옵션 C 결정 메타)
+- ADR-0034 — 통합 기술 스택 (Kotlin 단일 + Python ingest sidecar)
+- ADR-0035 — 시계열 저장소 Phase 1 분리 유지
+- charting/docs/adr/ADR-001 — Errata: charting 서비스 흡수 → Phase 2 폐기
+
+---
 
 > 루트 `docs/adr/`에 두는 이유: 플랫폼 최초 금융/트레이딩 도메인 진입 + analytics 인프라(ClickHouse) 공유 결정 포함.
 
