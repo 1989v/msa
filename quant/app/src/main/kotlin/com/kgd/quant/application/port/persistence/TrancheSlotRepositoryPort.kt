@@ -2,7 +2,7 @@ package com.kgd.quant.application.port.persistence
 
 import com.kgd.quant.domain.common.RunId
 import com.kgd.quant.domain.common.TenantId
-import com.kgd.quant.domain.slot.TrancheSlot
+import com.kgd.quant.domain.tranche.TrancheSlot
 
 /**
  * TrancheSlotRepositoryPort — `TrancheSlot` 영속화 port.

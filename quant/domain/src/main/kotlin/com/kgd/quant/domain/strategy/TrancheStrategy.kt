@@ -8,8 +8,8 @@ import com.kgd.quant.domain.event.StrategyActivated
 import com.kgd.quant.domain.event.StrategyLiquidated
 import com.kgd.quant.domain.event.StrategyPaused
 import com.kgd.quant.domain.event.StrategyResumed
-import com.kgd.quant.domain.slot.TrancheSlot
-import com.kgd.quant.domain.slot.TrancheSlotState
+import com.kgd.quant.domain.tranche.TrancheSlot
+import com.kgd.quant.domain.tranche.TrancheSlotState
 
 /**
  * TrancheStrategy — 7분할 전략 Aggregate Root.

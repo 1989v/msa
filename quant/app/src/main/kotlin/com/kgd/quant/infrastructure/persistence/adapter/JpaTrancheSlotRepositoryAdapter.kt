@@ -4,7 +4,7 @@ import com.kgd.quant.application.port.persistence.TrancheSlotRepositoryPort
 import com.kgd.quant.domain.common.Clock
 import com.kgd.quant.domain.common.RunId
 import com.kgd.quant.domain.common.TenantId
-import com.kgd.quant.domain.slot.TrancheSlot
+import com.kgd.quant.domain.tranche.TrancheSlot
 import com.kgd.quant.infrastructure.persistence.mapper.TrancheSlotMapper
 import com.kgd.quant.infrastructure.persistence.repository.TrancheSlotJpaRepository
 import com.kgd.quant.infrastructure.persistence.repository.StrategyRunJpaRepository

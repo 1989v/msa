@@ -9,7 +9,7 @@ import com.kgd.quant.domain.common.ExecutionMode
 import com.kgd.quant.domain.common.RunId
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
-import com.kgd.quant.domain.slot.TrancheSlotState
+import com.kgd.quant.domain.tranche.TrancheSlotState
 import com.kgd.quant.domain.strategy.StrategyRunStatus
 import com.kgd.quant.domain.strategy.StrategyStatus
 import org.springframework.stereotype.Component

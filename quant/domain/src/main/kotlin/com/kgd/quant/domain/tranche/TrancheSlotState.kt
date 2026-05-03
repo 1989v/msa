@@ -1,4 +1,4 @@
-package com.kgd.quant.domain.slot
+package com.kgd.quant.domain.tranche
 
 import com.kgd.quant.domain.exception.IllegalSlotTransitionException
 

@@ -14,8 +14,8 @@ import com.kgd.quant.domain.event.TrancheSlotOpened
 import com.kgd.quant.domain.order.OrderCommand
 import com.kgd.quant.domain.order.OrderSide
 import com.kgd.quant.domain.order.SpotOrderType
-import com.kgd.quant.domain.slot.TrancheSlot
-import com.kgd.quant.domain.slot.TrancheSlotState
+import com.kgd.quant.domain.tranche.TrancheSlot
+import com.kgd.quant.domain.tranche.TrancheSlotState
 import com.kgd.quant.domain.strategy.PriceCondition
 import com.kgd.quant.domain.strategy.TrancheStrategy
 import com.kgd.quant.domain.strategy.StrategyRun

@@ -6,8 +6,8 @@ import com.kgd.quant.domain.common.Quantity
 import com.kgd.quant.domain.common.RunId
 import com.kgd.quant.domain.common.SlotId
 import com.kgd.quant.domain.common.TenantId
-import com.kgd.quant.domain.slot.TrancheSlot
-import com.kgd.quant.domain.slot.TrancheSlotState
+import com.kgd.quant.domain.tranche.TrancheSlot
+import com.kgd.quant.domain.tranche.TrancheSlotState
 import com.kgd.quant.infrastructure.persistence.entity.TrancheSlotEntity
 import java.time.Instant
 

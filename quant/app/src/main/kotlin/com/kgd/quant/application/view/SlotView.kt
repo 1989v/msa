@@ -4,8 +4,8 @@ import com.kgd.quant.domain.common.Percent
 import com.kgd.quant.domain.common.Price
 import com.kgd.quant.domain.common.Quantity
 import com.kgd.quant.domain.common.SlotId
-import com.kgd.quant.domain.slot.TrancheSlot
-import com.kgd.quant.domain.slot.TrancheSlotState
+import com.kgd.quant.domain.tranche.TrancheSlot
+import com.kgd.quant.domain.tranche.TrancheSlotState
 
 /**
  * SlotView — 백테스트 상세 응답의 회차 슬롯 한 건.

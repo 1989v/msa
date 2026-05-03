@@ -14,7 +14,7 @@ import com.kgd.quant.domain.common.SlotId
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.event.StrategyActivated
-import com.kgd.quant.domain.slot.TrancheSlot
+import com.kgd.quant.domain.tranche.TrancheSlot
 import com.kgd.quant.domain.strategy.StrategyRun
 import com.kgd.quant.infrastructure.persistence.entity.PaperAccountEntity
 import io.github.oshai.kotlinlogging.KotlinLogging

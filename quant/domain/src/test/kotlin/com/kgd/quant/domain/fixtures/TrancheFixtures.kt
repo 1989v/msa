@@ -8,7 +8,7 @@ import com.kgd.quant.domain.common.RunId
 import com.kgd.quant.domain.common.SlotId
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
-import com.kgd.quant.domain.slot.TrancheSlot
+import com.kgd.quant.domain.tranche.TrancheSlot
 import com.kgd.quant.domain.strategy.TrancheStrategy
 import com.kgd.quant.domain.strategy.TrancheStrategyConfig
 import com.kgd.quant.domain.strategy.StrategyRun
