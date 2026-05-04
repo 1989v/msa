@@ -8,7 +8,9 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 # msa Study — Master Index
 
 > 19개 학습 주제의 단일 entry point. 각 주제 카드, 학습 순서 추천, 영역별 그루핑, 의존 그래프, 키워드 검색 인덱스를 제공한다.
-> 산출물 통계 (2026-05-04 기준): **19개 주제 / 368개 deep file / 약 110,114 줄**. (#19 검색엔진 추가 + `99-concept-catalog.md` 보강 + Top-12 deep-dive 12개 (22~33), 2026-05-03 ~ 2026-05-04)
+> 산출물 통계 (2026-05-04 기준): **19개 주제 / 386개 deep file / 약 114,294 줄**. (#19 검색엔진 추가 + Top-12 deep-dive 12개 (22~33) + 19개 주제 모두에 `99-concept-catalog.md` 추가, 2026-05-03 ~ 2026-05-04)
+>
+> **99-concept-catalog 사용 안내**: 각 주제 디렉토리의 `99-concept-catalog.md` 는 공식 reference 기준 풀 개념 매트릭스 + 갭 진단 + 우선 심화 후보 + 표준 deep-dive 템플릿. 새 학습 시작점 또는 review 시 첫 진입 권장.
 
 ---
 
