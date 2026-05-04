@@ -110,11 +110,11 @@ patches:
 
   # ADR-0036 P2-T20 — charting Soft scale 0 (Phase 2 폐기 진행).
   # 트래픽이 quant 로 이행 완료된 시점에 활성. Hard remove (k8s/base 디렉토리 삭제) 는 후속 작업.
-  - path: patches/charting-replicas-zero.yaml
+  - path: patches/charting-replicas-zero-be.yaml
     target:
       kind: Deployment
       name: charting
-  - path: patches/charting-replicas-zero.yaml
+  - path: patches/charting-replicas-zero-fe.yaml
     target:
       kind: Deployment
       name: charting-fe
