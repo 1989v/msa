@@ -92,6 +92,54 @@ class IndicatorCalculator {
         return out
     }
 
+    fun macd(bars: List<Bar>, fastPeriod: Int = 12, slowPeriod: Int = 26, signalPeriod: Int = 9): Macd {
+        require(fastPeriod > 0 && slowPeriod > fastPeriod && signalPeriod > 0) {
+            "macd periods invalid (fast=$fastPeriod, slow=$slowPeriod, signal=$signalPeriod)"
+        }
+        val fast = ema(bars, fastPeriod)
+        val slow = ema(bars, slowPeriod)
+        val macdLine = bars.indices.map { i ->
+            IndicatorPoint(bars[i].ts, fast[i].value.subtract(slow[i].value).setScale(8, RoundingMode.HALF_UP))
+        }
+        val k = BigDecimal(2).divide(BigDecimal(signalPeriod + 1), 16, RoundingMode.HALF_UP)
+        var prev: BigDecimal? = null
+        val signalLine = macdLine.map { p ->
+            val current = if (prev == null) p.value
+            else p.value.multiply(k).add(prev!!.multiply(BigDecimal.ONE.subtract(k)))
+                .setScale(8, RoundingMode.HALF_UP)
+            prev = current
+            IndicatorPoint(p.ts, current)
+        }
+        val histogram = bars.indices.map { i ->
+            IndicatorPoint(bars[i].ts, macdLine[i].value.subtract(signalLine[i].value).setScale(8, RoundingMode.HALF_UP))
+        }
+        return Macd(macd = macdLine, signal = signalLine, histogram = histogram)
+    }
+
+    fun stochastic(bars: List<Bar>, kPeriod: Int = 14, dPeriod: Int = 3): Stochastic {
+        require(kPeriod > 0 && dPeriod > 0) { "stochastic periods must be > 0" }
+        val k = bars.indices.map { i ->
+            val from = maxOf(0, i - kPeriod + 1)
+            val window = bars.subList(from, i + 1)
+            val highestHigh = window.maxOf { it.high }
+            val lowestLow = window.minOf { it.low }
+            val range = highestHigh.subtract(lowestLow)
+            val value = if (range.signum() == 0) BigDecimal("50.0000")
+            else bars[i].close.subtract(lowestLow).multiply(BigDecimal(100))
+                .divide(range, 4, RoundingMode.HALF_UP)
+            IndicatorPoint(bars[i].ts, value)
+        }
+        val d = k.indices.map { i ->
+            val from = maxOf(0, i - dPeriod + 1)
+            val window = k.subList(from, i + 1)
+            val mean = window.map { it.value }
+                .reduce { acc, v -> acc.add(v) }
+                .divide(BigDecimal(window.size), 4, RoundingMode.HALF_UP)
+            IndicatorPoint(k[i].ts, mean)
+        }
+        return Stochastic(k = k, d = d)
+    }
+
     fun bollinger(bars: List<Bar>, period: Int, stdDevMultiplier: BigDecimal): BollingerBands {
         require(period > 0) { "period must be > 0" }
         val middle = sma(bars, period)
@@ -140,5 +188,16 @@ class IndicatorCalculator {
         val middle: List<IndicatorPoint>,
         val upper: List<IndicatorPoint>,
         val lower: List<IndicatorPoint>,
+    )
+
+    data class Macd(
+        val macd: List<IndicatorPoint>,
+        val signal: List<IndicatorPoint>,
+        val histogram: List<IndicatorPoint>,
+    )
+
+    data class Stochastic(
+        val k: List<IndicatorPoint>,
+        val d: List<IndicatorPoint>,
     )
 }

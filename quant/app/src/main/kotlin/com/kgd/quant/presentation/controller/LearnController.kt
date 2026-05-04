@@ -53,10 +53,10 @@ class LearnController(
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     suspend fun create(
-        @RequestHeader("X-Role", required = false) role: String?,
+        @com.kgd.quant.presentation.resolver.RolesHeader roles: Set<String>,
         @RequestBody request: CreateRequest,
     ): ApiResponse<ContentResponse> {
-        ensureAdmin(role)
+        ensureAdmin(roles)
         val created = useCase.create(
             IndicatorContentUseCase.CreateInput(
                 slug = Slug(request.slug),
@@ -74,11 +74,11 @@ class LearnController(
 
     @PutMapping("/{id}")
     suspend fun update(
-        @RequestHeader("X-Role", required = false) role: String?,
+        @com.kgd.quant.presentation.resolver.RolesHeader roles: Set<String>,
         @PathVariable id: String,
         @RequestBody request: UpdateRequest,
     ): ApiResponse<ContentResponse> {
-        ensureAdmin(role)
+        ensureAdmin(roles)
         val updated = useCase.update(
             ContentId(UUID.fromString(id)),
             IndicatorContentUseCase.UpdateInput(
@@ -97,15 +97,17 @@ class LearnController(
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     suspend fun delete(
-        @RequestHeader("X-Role", required = false) role: String?,
+        @com.kgd.quant.presentation.resolver.RolesHeader roles: Set<String>,
         @PathVariable id: String,
     ) {
-        ensureAdmin(role)
+        ensureAdmin(roles)
         useCase.delete(ContentId(UUID.fromString(id)))
     }
 
-    private fun ensureAdmin(role: String?) {
-        if (role != "ADMIN") {
+    private fun ensureAdmin(roles: Set<String>) {
+        // gateway AuthenticationGatewayFilter 가 JWT roles 를 X-User-Roles 콤마구분으로 주입.
+        // 운영에선 헤더 위변조 방지가 gateway 측 책임 (JWT 미통과 요청은 401 차단).
+        if ("ROLE_ADMIN" !in roles) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "ROLE_ADMIN required")
         }
     }

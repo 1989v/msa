@@ -54,6 +54,33 @@ class IndicatorQuery(
         return calculator.ema(bars, period)
     }
 
+    suspend fun macd(
+        assetCode: AssetCode,
+        marketCode: MarketCode,
+        interval: String,
+        from: Instant,
+        to: Instant,
+        fastPeriod: Int = 12,
+        slowPeriod: Int = 26,
+        signalPeriod: Int = 9,
+    ): IndicatorCalculator.Macd {
+        val bars = ohlcvRepo.query(assetCode, marketCode, interval, from, to)
+        return calculator.macd(bars, fastPeriod, slowPeriod, signalPeriod)
+    }
+
+    suspend fun stochastic(
+        assetCode: AssetCode,
+        marketCode: MarketCode,
+        interval: String,
+        from: Instant,
+        to: Instant,
+        kPeriod: Int = 14,
+        dPeriod: Int = 3,
+    ): IndicatorCalculator.Stochastic {
+        val bars = ohlcvRepo.query(assetCode, marketCode, interval, from, to)
+        return calculator.stochastic(bars, kPeriod, dPeriod)
+    }
+
     suspend fun bollinger(
         assetCode: AssetCode,
         marketCode: MarketCode,

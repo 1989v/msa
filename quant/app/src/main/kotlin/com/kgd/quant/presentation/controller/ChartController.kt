@@ -44,6 +44,24 @@ class ChartController(
         )
         return ApiResponse.success(result)
     }
+
+    @GetMapping("/similarity/search")
+    suspend fun similaritySearch(
+        @RequestParam asset: String,
+        @RequestParam market: String,
+        @RequestParam windowEnd: String,
+        @RequestParam(defaultValue = "60") windowDays: Int,
+        @RequestParam(defaultValue = "20") k: Int,
+    ): ApiResponse<List<com.kgd.quant.application.port.persistence.SimilarityHit>> {
+        val hits = similarityQuery.searchSimilar(
+            AssetCode(asset),
+            MarketCode(market),
+            Instant.parse(windowEnd),
+            windowDays,
+            k,
+        )
+        return ApiResponse.success(hits)
+    }
     @GetMapping("/ohlcv")
     suspend fun ohlcv(
         @RequestParam asset: String,
@@ -98,7 +116,32 @@ class ChartController(
                 )
                 ApiResponse.success(IndicatorSeriesResponse.bollinger(bb))
             }
-            else -> error("Unknown indicator type: $type (supported: RSI/SMA/EMA/BB)")
+            "MACD" -> {
+                val m = indicatorQuery.macd(assetCode, marketCode, interval, fromTs, toTs)
+                ApiResponse.success(
+                    IndicatorSeriesResponse(
+                        type = "MACD",
+                        series = mapOf(
+                            "macd" to m.macd.map { IndicatorSeriesResponse.Point(it.ts.toString(), it.value) },
+                            "signal" to m.signal.map { IndicatorSeriesResponse.Point(it.ts.toString(), it.value) },
+                            "histogram" to m.histogram.map { IndicatorSeriesResponse.Point(it.ts.toString(), it.value) },
+                        ),
+                    )
+                )
+            }
+            "STOCH" -> {
+                val s = indicatorQuery.stochastic(assetCode, marketCode, interval, fromTs, toTs)
+                ApiResponse.success(
+                    IndicatorSeriesResponse(
+                        type = "STOCH",
+                        series = mapOf(
+                            "k" to s.k.map { IndicatorSeriesResponse.Point(it.ts.toString(), it.value) },
+                            "d" to s.d.map { IndicatorSeriesResponse.Point(it.ts.toString(), it.value) },
+                        ),
+                    )
+                )
+            }
+            else -> error("Unknown indicator type: $type (supported: RSI/SMA/EMA/BB/MACD/STOCH)")
         }
     }
 

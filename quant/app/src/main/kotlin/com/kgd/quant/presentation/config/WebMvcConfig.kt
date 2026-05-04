@@ -1,5 +1,6 @@
 package com.kgd.quant.presentation.config
 
+import com.kgd.quant.presentation.resolver.RolesHeaderArgumentResolver
 import com.kgd.quant.presentation.resolver.TenantIdHeaderArgumentResolver
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
@@ -16,5 +17,6 @@ class WebMvcConfig : WebMvcConfigurer {
 
     override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
         resolvers.add(TenantIdHeaderArgumentResolver())
+        resolvers.add(RolesHeaderArgumentResolver())
     }
 }

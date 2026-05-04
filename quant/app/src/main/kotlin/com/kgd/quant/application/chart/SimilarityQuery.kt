@@ -2,8 +2,12 @@ package com.kgd.quant.application.chart
 
 import com.kgd.quant.application.embedding.PatternEmbedder
 import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
+import com.kgd.quant.application.port.persistence.PatternEmbeddingRepositoryPort
+import com.kgd.quant.application.port.persistence.SimilarityHit
+import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.stereotype.Component
 import java.time.Instant
 
@@ -22,7 +26,30 @@ import java.time.Instant
 class SimilarityQuery(
     private val ohlcvRepo: OhlcvRepositoryPort,
     private val embedder: PatternEmbedder,
+    /**
+     * pgvector adapter — Phase 1 인프라 미완 환경에선 빈 부재 가능 (ObjectProvider 로 옵셔널 주입).
+     */
+    private val embeddingRepoProvider: ObjectProvider<PatternEmbeddingRepositoryPort>,
 ) {
+
+    suspend fun searchSimilar(
+        assetCode: AssetCode,
+        marketCode: MarketCode,
+        windowEnd: Instant,
+        windowDays: Int = 60,
+        k: Int = 20,
+        assetClass: AssetClass? = null,
+    ): List<SimilarityHit> {
+        val embedded = embedWindow(assetCode, marketCode, windowEnd, windowDays)
+        if (embedded.embedding.isEmpty()) return emptyList()
+        val repo = embeddingRepoProvider.ifAvailable ?: return emptyList()
+        return repo.searchTopK(
+            query = embedded.embedding.toDoubleArray(),
+            k = k,
+            assetClass = assetClass,
+            excludeAsset = assetCode,
+        )
+    }
     suspend fun embedWindow(
         assetCode: AssetCode,
         marketCode: MarketCode,
