@@ -59,7 +59,7 @@
 
 **답변 (지원자)**:
 
-> 안녕하세요. 백엔드 10년차이고, 최근 4년은 커머스 도메인의 MSA 전환을 주도했습니다. 제가 가장 깊이 다룬 건 **JVM 메모리/GC 와 동시성**입니다. 운영 중 OOMKilled 사고를 두 번 겪었는데, 둘 다 heap dump 만 봐서는 원인이 안 보였고 NMT(Native Memory Tracking) 와 cgroup memory 까지 내려가야 했습니다. 그 경험으로 JVM 을 "heap = JVM" 이 아니라 "RSS = heap + metaspace + direct + thread stack + code cache + native" 로 보는 시각이 잡혔습니다.
+> 안녕하세요. 백엔드 10년차이고, 최근 4년은 커머스 도메인의 MSA (Microservices Architecture, 마이크로서비스 아키텍처) 전환을 주도했습니다. 제가 가장 깊이 다룬 건 **JVM 메모리/GC 와 동시성**입니다. 운영 중 OOMKilled 사고를 두 번 겪었는데, 둘 다 heap dump 만 봐서는 원인이 안 보였고 NMT(Native Memory Tracking) 와 cgroup memory 까지 내려가야 했습니다. 그 경험으로 JVM 을 "heap = JVM" 이 아니라 "RSS = heap + metaspace + direct + thread stack + code cache + native" 로 보는 시각이 잡혔습니다.
 
 > 동시성은 최근 Virtual Thread 를 Tomcat 에 도입하면서 pinning 을 깊게 봤고, 같이 ThreadLocal/MDC 가 carrier 와 어떻게 결합되는지도 정리했습니다. 오늘은 그 두 토픽을 중심으로 답변드리겠습니다.
 
@@ -159,7 +159,7 @@
 >
 > **(3) lock owner 추적**. dump 에는 `waiting to lock <0x000007c1>` 식으로 lock 의 identity hash 가 찍힙니다. 같은 ID 를 `locked <0x000007c1>` 라인에서 grep 하면 owner thread 와 그 stack 이 나오죠. owner 가 무엇을 기다리는지가 root cause 입니다.
 >
-> **(4) 정량화**. async-profiler 로 `-e lock` 모드를 5분 돌리면 contention time 이 method 별로 누적된 flame graph 가 나옵니다. 이게 발표 자료에도 그대로 쓸 수 있는 정량 증거고, 회고 ADR 의 근거가 됩니다.
+> **(4) 정량화**. async-profiler 로 `-e lock` 모드를 5분 돌리면 contention time 이 method 별로 누적된 flame graph 가 나옵니다. 이게 발표 자료에도 그대로 쓸 수 있는 정량 증거고, 회고 ADR (Architecture Decision Record, 아키텍처 결정 기록) 의 근거가 됩니다.
 
 **꼬리**: "Thread 가 RUNNABLE 인데 hang 같다면?" (→ `#3 Q3.5`)
 
@@ -235,7 +235,7 @@
 >
 > **도메인**: Order 엔티티의 상태 머신은 `PENDING → PAID → CONFIRMED → SHIPPED` 또는 `PENDING → CANCELLED`. 핵심은 **PENDING 상태에서 결제 timeout 이 나도 자동 FAILED 하지 않고** PG 조회 (POLL) 로 확정하는 겁니다 — 이중 결제 방어의 첫 단추.
 >
-> Idempotency-Key 는 24h 보관 (Stripe 표준), msa 에선 7d 까지 늘려 ADR-0012 에 처리하고 있습니다 — DLQ 재처리 + 운영자 수동 retry 시간 보장 목적.
+> Idempotency-Key 는 24h 보관 (Stripe 표준), msa 에선 7d 까지 늘려 ADR-0012 에 처리하고 있습니다 — DLQ (Dead Letter Queue, 데드 레터 큐) 재처리 + 운영자 수동 retry 시간 보장 목적.
 
 #### B.2.4 High-Level 다이어그램 (10분)
 
@@ -390,7 +390,7 @@ sequenceDiagram
 > 1. **DB**: 가장 먼저 깨집니다. write 600 → 6000 RPS 면 단일 MySQL primary 가 못 받음. read replica 늘리는 건 1차, 그래도 안 되면 customer_id 기반 샤딩. orders 테이블이 1.8TB → 18TB 되면 archival policy 도 같이 가야 함.
 > 2. **Cache**: Redis 가 hot key (인기 상품) 에서 stampede. mutex / probabilistic early expiration 으로 보강.
 > 3. **MQ**: Kafka partition 수가 consumer 수 한계가 됨. partition rebalancing + cooperative-sticky 로 영향 최소화.
-> 4. **Network**: 마지막. AWS Cross-AZ traffic 비용이 물리적 병목보다 먼저 매니저를 깨웁니다 ($0.01/GB × 양방향).
+> 4. **Network**: 마지막. AWS Cross-AZ (Availability Zone, 가용 영역) traffic 비용이 물리적 병목보다 먼저 매니저를 깨웁니다 ($0.01/GB × 양방향).
 >
 > 순서가 중요한 이유 — 한 번에 다 손대면 변경 단위가 너무 커져 롤백 불가능. 한 단계씩, 정량 SLI 깨지는 시점에 다음 단계로 넘어가는 게 정공법입니다.
 
@@ -399,7 +399,7 @@ sequenceDiagram
 | 구분 | 시그널 |
 |---|---|
 | 합격 | 4단 답변 구조 (결론/메커니즘/트레이드오프/msa 사례) 자동 적용, 5종 패키지 즉답, 숫자 근거 (DAU → RPS) 명시, "결제는 동기, 후속은 비동기" 분리 의도 설명, 다이어그램 손으로 그릴 수 있음 |
-| 탈락 | 2PC 가 정답이라 답, "Kafka transaction 으로 EOS" 단정, 보상 TX 실패 시나리오 미고려, 다이어그램 없이 말로만 설계 |
+| 탈락 | 2PC (Two-Phase Commit, 2단계 커밋) 가 정답이라 답, "Kafka transaction 으로 EOS" 단정, 보상 TX 실패 시나리오 미고려, 다이어그램 없이 말로만 설계 |
 | 평가 포인트 | 처음 4분에 **요구사항/non-goals 명시** 했는지, deep dive 2개를 **트레이드오프 포함** 으로 설명했는지, "다시 한다면" 류 자기 비판이 자연스럽게 나오는지 |
 
 > **회고 한 줄**: 2차 면접의 핵심은 "내가 쥐고 있는 구조" 를 면접관에게 한 시간 안에 그려 보여주는 것. 다이어그램 + 5종 패키지 + 30초 요약을 미리 외워가는 게 차이를 만든다.

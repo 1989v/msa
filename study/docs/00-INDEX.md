@@ -8,7 +8,7 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 # msa Study — Master Index
 
 > 19개 학습 주제의 단일 entry point. 각 주제 카드, 학습 순서 추천, 영역별 그루핑, 의존 그래프, 키워드 검색 인덱스를 제공한다.
-> 산출물 통계 (2026-05-04 기준): **19개 주제 / 356개 deep file / 약 107,443 줄**. (#19 검색엔진 추가 + `99-concept-catalog.md` 보강, 2026-05-03 ~ 2026-05-04)
+> 산출물 통계 (2026-05-04 기준): **19개 주제 / 368개 deep file / 약 110,114 줄**. (#19 검색엔진 추가 + `99-concept-catalog.md` 보강 + Top-12 deep-dive 12개 (22~33), 2026-05-03 ~ 2026-05-04)
 
 ---
 
@@ -49,9 +49,9 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 | 16 | [비동기 · 논블로킹 IO (NIO · Reactor · Netty)](16-async-nonblocking-io/) | advanced | 18h | 21 | 6,547 | true | completed (19 deep) |
 | 17 | [Spring Web 처리 심화 (Filter · Interceptor · AOP · Jackson · gzip)](17-spring-web/) | intermediate | 14h | 22 | 5,279 | true | completed (20 deep) |
 | 18 | [gRPC 심화 (Protobuf · HTTP/2 · Streaming)](18-grpc/) | intermediate | 14h | 22 | 6,297 | false | completed (20 deep) |
-| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 23 | 10,380 | true | completed (20 deep + 99 catalog) |
+| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 35 | 13,051 | true | completed (20 deep + 99 catalog + 22~33 보강 12) |
 
-**합계**: 19 주제 / 455h 학습 시간 추정 / 356 file / 107,443 line.
+**합계**: 19 주제 / 455h 학습 시간 추정 / 368 file / 110,114 line.
 
 > "코드 연관" false 인 주제 (8/14/18) 도 msa 적용 가능성 검토 섹션을 가진다 — false 의 의미는 "현재 코드에 직접 매핑되는 구현이 적다" 정도로 해석.
 
@@ -289,7 +289,7 @@ flowchart TD
 
 - **폴더**: [1-aws-network/](1-aws-network/)
 - **미리보기**: [00-preview.md](1-aws-network/00-preview.md) · **계획**: [00-plan.md](1-aws-network/00-plan.md) · **면접**: [19-interview-qa.md](1-aws-network/19-interview-qa.md)
-- **핵심**: VPC를 회사 전용 건물 단지로 본다. 서브넷(층) / IGW(정문) / SG(카드, stateful) / NACL(층 출입판, stateless) / NAT GW(택배 접수처) / ALB(L7 리셉셔니스트) / NLB(L4 우체국). 면접 빈출인 SG↔NACL 차이, ALB↔NLB 선택, NAT GW 비용 회피 (VPC Endpoint), Cross-AZ $0.01/GB 양방향 비용, EKS VPC CNI 까지.
+- **핵심**: VPC를 회사 전용 건물 단지로 본다. 서브넷(층) / IGW(정문) / SG(카드, stateful) / NACL(층 출입판, stateless) / NAT GW(택배 접수처) / ALB(L7 리셉셔니스트) / NLB(L4 우체국). 면접 빈출인 SG↔NACL 차이, ALB↔NLB 선택, NAT GW 비용 회피 (VPC Endpoint), Cross-AZ (Availability Zone, 가용 영역) $0.01/GB 양방향 비용, EKS VPC CNI 까지.
 - **관련 주제**: #11 K8s (EKS 매핑) · #12 Latency (DC↔리전 RTT) · #13 mTLS (서비스 메시).
 - **msa 적용**: `k8s/overlays/prod-k8s/`, `k8s/base/frontend-ingress.yaml` Ingress 라우팅에 ALB/NLB 매핑 가이드 제공.
 

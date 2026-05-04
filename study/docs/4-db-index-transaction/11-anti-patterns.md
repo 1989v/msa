@@ -304,7 +304,7 @@ INDEX idx_orders_status (status)
 SELECT * FROM members WHERE email = ?
 ```
 - email 인덱스 없음! `uk_sso (sso_provider, sso_provider_id)` 만 UNIQUE.
-- email 검색이 자주 쓰이면 추가 후보 — 그러나 SSO 기반이라 외부에서 email 직접 검색은 별로 없을 듯. (15 에서.)
+- email 검색이 자주 쓰이면 추가 후보 — 그러나 SSO (Single Sign-On, 단일 로그인) 기반이라 외부에서 email 직접 검색은 별로 없을 듯. (15 에서.)
 
 ### Code-Dictionary 의 `concept_id VARCHAR(100) UNIQUE`
 

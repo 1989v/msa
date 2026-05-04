@@ -50,7 +50,7 @@ fun dataSource(routingDataSource: DataSource): DataSource =
     LazyConnectionDataSourceProxy(routingDataSource)
 ```
 
-→ 11개 서비스 모두 같은 패턴. ADR-0020 의 핵심 패턴.
+→ 11개 서비스 모두 같은 패턴. ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020 의 핵심 패턴.
 
 ## 결합 포인트 1 — `readOnly` 의 두 가지 효과
 
@@ -123,7 +123,7 @@ fun processOrder(order: Order) {
 1. **lock_wait_timeout** (기본 50s) 까지 다른 TX block.
 2. 동시 트래픽 폭주 시 **deadlock** 확률 ↑.
 3. **MDL EXCLUSIVE** 의 시나리오 — 누군가 ALTER 시도하면 대기열 형성.
-4. **undo log 적체** — long TX 가 살아 있으면 다른 TX 의 update 의 undo 가 purge 안 됨 → history list 폭증 (06 참조).
+4. **undo log 적체** — long TX 가 살아 있으면 다른 TX 의 update 의 undo 가 purge 안 됨 → history list 폭증 (06 참조 — MVCC (Multi-Version Concurrency Control, 다중 버전 동시성 제어) 가 옛 버전을 들고 있어야 하므로).
 
 해결 (ADR-0020):
 ```kotlin
@@ -238,7 +238,7 @@ DataSourceUtils.getConnection() — 그러나 LazyConnectionDataSourceProxy 가 
 ## 멘탈 모델
 
 > `@Transactional` 한 줄은 **5개 layer 의 합성**:
-> 1. AOP proxy (#5)
+> 1. AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) proxy (#5)
 > 2. TransactionInterceptor → MVCC + Lock (본 학습)
 > 3. PlatformTransactionManager (격리/readOnly 설정)
 > 4. LazyConnectionDataSourceProxy (connection 지연)

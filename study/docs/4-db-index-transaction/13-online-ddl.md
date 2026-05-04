@@ -10,13 +10,13 @@ created: 2026-05-01
 
 ## 핵심 정의
 
-운영 트래픽 중 DDL (인덱스 추가, 컬럼 추가/변경) 을 안전하게 수행하는 방법.
+운영 트래픽 중 DDL (Data Definition Language — 인덱스 추가, 컬럼 추가/변경) 을 안전하게 수행하는 방법.
 
 - **MySQL native Online DDL**: ALGORITHM=INPLACE/INSTANT, LOCK=NONE/SHARED.
 - **pt-online-schema-change** (Percona): 그림자 테이블 + 트리거.
 - **gh-ost** (GitHub): 그림자 테이블 + binlog 추적.
 
-08 (MDL) 에서 DDL 한 줄이 서비스 정지를 만들 수 있음을 봤다. 본 문서는 그 회피 방법.
+08 (MDL (Metadata Lock, 메타데이터 락)) 에서 DDL 한 줄이 서비스 정지를 만들 수 있음을 봤다. 본 문서는 그 회피 방법.
 
 ## MySQL Native Online DDL
 
@@ -233,7 +233,7 @@ ERROR 1799 (HY000): Online DDL operation failed because the row log exceeded its
 
 ### 3. FK + pt-osc
 
-- pt-osc 가 FK 처리하는 방식이 application 레벨 가정과 다를 수 있음.
+- pt-osc 가 FK (Foreign Key, 외래 키) 처리하는 방식이 application 레벨 가정과 다를 수 있음.
 - `--alter-foreign-keys-method=auto|rebuild_constraints|drop_swap` 신중히.
 
 ### 4. MDL 에서 묵시적 EXCLUSIVE

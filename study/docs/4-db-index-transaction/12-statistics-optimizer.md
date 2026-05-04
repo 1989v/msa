@@ -27,7 +27,7 @@ cardinality(col) = COUNT(DISTINCT col)
 selectivity(col) = cardinality(col) / total_rows  ∈ (0, 1]
 ```
 
-- 1 에 가까울수록 high-cardinality (PK, UUID).
+- 1 에 가까울수록 high-cardinality (PK (Primary Key, 기본 키), UUID).
 - 0 에 가까울수록 low (boolean, enum).
 
 ### 옵티마이저의 cost 추정
@@ -250,7 +250,7 @@ LIMIT 10;
 
 ### routing 영향
 
-ADR-0020 의 readOnly → replica 라우팅. replica 에 통계 갱신이 master 와 다를 수 있음 (replication 으로 mysql.innodb_index_stats 도 sync 되지만 sample 시점 차이). → master 에서 EXPLAIN, replica 에서 다시 비교 권장.
+ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020 의 readOnly → replica 라우팅. replica 에 통계 갱신이 master 와 다를 수 있음 (replication 으로 mysql.innodb_index_stats 도 sync 되지만 sample 시점 차이). → master 에서 EXPLAIN, replica 에서 다시 비교 권장.
 
 ## 함정
 

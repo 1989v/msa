@@ -194,7 +194,7 @@ fun findByEmail(email: String): MemberJpaEntity?  // (가설)
 ```
 
 - email 인덱스 없음. 직접 검색이 필요하면 ALL.
-- 현재 SSO 위주라 직접 email 검색이 거의 없음 — 추가 필요성 낮음.
+- 현재 SSO (Single Sign-On, 단일 로그인) 위주라 직접 email 검색이 거의 없음 — 추가 필요성 낮음.
 - 추후 admin 검색 기능에서 필요해지면 추가.
 
 ### 후보 7: Audit Log Append-Only
@@ -254,7 +254,7 @@ fun processOrder(order: Order) {
 }
 ```
 
-해결 (ADR-0020):
+해결 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020):
 ```kotlin
 @Transactional
 fun saveOrder(order: Order): Order = orderRepo.save(order)

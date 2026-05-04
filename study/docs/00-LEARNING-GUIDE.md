@@ -78,14 +78,14 @@
 | 6 | #3 Phase 3 + #1 AWS Phase 1 | msa 코드 점검 + VPC/Subnet | 1pass-summary |
 | 7 | #1 AWS Phase 2 | SG/NACL/NAT/ALB/NLB | 1pass-summary |
 | 8 | #1 Phase 3-5 + #4 DB Phase 1 | EKS 매핑 + B-tree | 멘탈 모델 그림 |
-| 9 | #4 DB Phase 2 | MVCC / 격리 / lock / deadlock | 1pass-summary |
-| 10 | #4 Phase 3 + #5 Spring Tx 1회독 | msa 코드 + propagation/AOP | 외부 IO 분리 의견 |
+| 9 | #4 DB Phase 2 | MVCC (Multi-Version Concurrency Control, 다중 버전 동시성 제어) / 격리 / lock / deadlock | 1pass-summary |
+| 10 | #4 Phase 3 + #5 Spring Tx 1회독 | msa 코드 + propagation/AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) | 외부 IO 분리 의견 |
 | 11 | #15 Conn Pool 1회독 | HikariCP / Lettuce / R/W 분리 | sizing 계산 |
-| 12 | #9 Redis Phase 1-3 | 자료구조 / RDB+AOF / Cluster | 1pass-summary |
+| 12 | #9 Redis Phase 1-3 | 자료구조 / RDB (Redis Database 스냅샷) +AOF (Append-Only File) / Cluster | 1pass-summary |
 | 13 | #9 Phase 4-5 + #6 Kafka Phase 1 | RedLock 비판 + Broker 기본 | 분산 락 의견 |
 | 14 | #6 Phase 2-3 | acks/EOS / Consumer Group | 멘탈 모델 그림 |
 | 15 | #6 Phase 4-5 + #7 분산 Phase 1 | EOS / 운영 + CAP/PACELC | 1pass-summary |
-| 16 | #7 Phase 2-3 | Saga/2PC + msa 적용 | improvements 평가 |
+| 16 | #7 Phase 2-3 | Saga/2PC (Two-Phase Commit, 2단계 커밋) + msa 적용 | improvements 평가 |
 | 17 | #14 CRDT 1회독 | 이론 + 자료구조 + 비교 | CRDT 적용 후보 평가 |
 | 18 | #8 시스템 설계 시나리오 5개 | 5 시나리오 정독 | 답변 골자 노트 |
 | 19 | #8 시나리오 5개 + #10 Observability Phase 1 | 시나리오 + Metrics 기초 | 답변 골자 노트 |
@@ -276,7 +276,7 @@ graph TD
 | 의존 edge | 줄여도 되는 조건 | 줄이지 말아야 하는 신호 |
 |-----------|-------------------|--------------------------|
 | #4 → #5 | DB 격리 / lock 기본 알고 있음 | propagation = REQUIRED 의 “외부 IO 분리” 이유 설명 못함 |
-| #2 → #11 | K8s Pod limit 기본 OK | OOMKilled vs JVM OOM 구분 못함 |
+| #2 → #11 | K8s Pod limit 기본 OK | OOMKilled vs JVM OOM (Out Of Memory, 메모리 부족) 구분 못함 |
 | #3 → #16 | NIO selector 직관 OK | epoll level vs edge trigger 구분 못함 |
 | #16 → #18 | HTTP/2 multiplexing 직관 OK | flow control / window update 모름 |
 | #10 → #8 | metrics 4-Golden 답변 가능 | tracing 의 sampling / propagation 모름 |
@@ -403,7 +403,7 @@ graph TD
 - **사고 흐름**:
   1. #12 자릿수 감각 — 정상 P99 가 무엇인지 baseline 확인
   2. #10 메트릭 — `http_server_requests_seconds` P99 / `jvm_gc_pause_seconds` / `hikaricp_connections_pending`
-  3. #11 — Pod CPU throttling / memory limit / HPA 동작
+  3. #11 — Pod CPU throttling / memory limit / HPA (Horizontal Pod Autoscaler, 수평 파드 오토스케일러) 동작
   4. #2 — GC 로그에서 STW pause / Old gen 증가 / Heap dump
   5. #15 — pool 대기시간이 latency 의 N% 인지 분리 (Little’s Law)
 - **해결 방향**: GC 튜닝 (#2 ADR-0028) → pool 사이즈 조정 (#15 ADR-0029) → HPA threshold 조정 (#11)

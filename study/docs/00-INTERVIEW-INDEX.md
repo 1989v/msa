@@ -61,7 +61,7 @@
 
 **Q2. "JVM (Java Virtual Machine, 자바 가상 머신) 메모리 영역 5가지 + Xmx 가 컨테이너 limit 와 어떻게 다른가?"**
 > A: Heap, Metaspace, Stack, PC Register, Native(Direct/Code/GC). limit = RSS = 힙 + native 전부. 힙은 70-75% (`MaxRAMPercentage=70`), 30% 가 native. 절대값 (-Xmx) 보다 비율 권장 — limit 변경 시 자동 추적.
-> 꼬리: "OOMKilled 와 Java OOM 5종 차이?" / "MaxRAMPercentage 75 가 default 인데 70 권장 이유?"
+> 꼬리: "OOMKilled 와 Java OOM (Out Of Memory, 메모리 부족) 5종 차이?" / "MaxRAMPercentage 75 가 default 인데 70 권장 이유?"
 > 출처: #2 Q1, Q7, Q41, #11 Q4, Q38
 
 **Q3. "ZGC 와 G1 중 무엇을 언제 쓰나요?"**
@@ -100,14 +100,14 @@
 > 출처: #2 Q34, Q35, Q38
 
 **Q10. "msa 가 @Async 안 쓰는 이유?"**
-> A: ADR-0002 — Spring MVC + JPA blocking + Kotlin coroutine(외부 IO) + Tomcat VT. coroutine 이 비동기를 직선 코드로 처리 + structured concurrency 로 lifecycle 관리 → @Async 함정(default SimpleAsyncTaskExecutor = 풀 없음, ThreadLocal 안 따라감) 자연 회피.
+> A: ADR (Architecture Decision Record, 아키텍처 결정 기록)-0002 — Spring MVC + JPA blocking + Kotlin coroutine(외부 IO) + Tomcat VT. coroutine 이 비동기를 직선 코드로 처리 + structured concurrency 로 lifecycle 관리 → @Async 함정(default SimpleAsyncTaskExecutor = 풀 없음, ThreadLocal 안 따라감) 자연 회피.
 > 꼬리: "coroutine 사용 패턴?" / "VT 적용 후보?"
 > 출처: #3 Q4.1, Q4.5, Q4.6
 
 ### 2.2 저장소/데이터 (Top 11-20)
 
 **Q11. "InnoDB 의 PK 가 왜 그렇게 중요한가요?"**
-> A: clustered index = PK 라 테이블 자체가 PK 순 정렬. secondary index leaf 가 row 위치 아닌 PK 값 보유 → secondary 조회는 항상 secondary lookup → clustered lookup 의 2단계. PK 가 길거나 무작위(UUIDv4) 면 모든 secondary index 가 비대 + page split.
+> A: clustered index = PK (Primary Key, 기본 키) 라 테이블 자체가 PK 순 정렬. secondary index leaf 가 row 위치 아닌 PK 값 보유 → secondary 조회는 항상 secondary lookup → clustered lookup 의 2단계. PK 가 길거나 무작위(UUIDv4) 면 모든 secondary index 가 비대 + page split.
 > 꼬리: "PostgreSQL 도 같은가?" / "UUIDv7 이 왜 권장?"
 > 출처: #4 Q1.2
 
@@ -169,7 +169,7 @@
 > 출처: #6 Q1.3, Q1.8, Q2.1, Q2.2
 
 **Q23. "Outbox 패턴이 뭔가?"**
-> A: DB tx 안에서 outbox 테이블에 이벤트 row 같은 tx 로 INSERT → commit 시 entity 변경 + 이벤트 row atomic. 별도 polling/CDC publisher 가 Kafka 발행. **Dual write 문제 해결**. msa 의 inventory/fulfillment/quant 표준.
+> A: DB tx 안에서 outbox 테이블에 이벤트 row 같은 tx 로 INSERT → commit 시 entity 변경 + 이벤트 row atomic. 별도 polling/CDC (Change Data Capture, 변경 데이터 캡처) publisher 가 Kafka 발행. **Dual write 문제 해결**. msa 의 inventory/fulfillment/quant 표준.
 > 꼬리: "@TransactionalEventListener 와 차이?" / "단점?"
 > 출처: #5 Q3.1, Q3.2, Q3.4, #6 Q4.4, #7 Q3.8
 
@@ -184,7 +184,7 @@
 > 출처: #7 Q3.1, Q3.2, Q3.3
 
 **Q26. "DLQ 메시지 어떻게 재처리?"**
-> A: DLQ 토픽(.DLT) 구독하는 별도 consumer + 관리자 API 로 원본 토픽 재발행. DefaultErrorHandler 가 추가한 헤더(`kafka_dlt-original-topic`, `kafka_dlt-exception-message`) 로 컨텍스트 파악. 재처리 시 컨슈머 멱등성으로 중복 방어.
+> A: DLQ (Dead Letter Queue, 데드 레터 큐) 토픽(.DLT) 구독하는 별도 consumer + 관리자 API 로 원본 토픽 재발행. DefaultErrorHandler 가 추가한 헤더(`kafka_dlt-original-topic`, `kafka_dlt-exception-message`) 로 컨텍스트 파악. 재처리 시 컨슈머 멱등성으로 중복 방어.
 > 꼬리: "FixedBackOff vs Exponential?" / "DLT 모니터링?"
 > 출처: #6 Q4.2, Q4.5
 
@@ -211,7 +211,7 @@
 ### 2.4 분산/시스템 설계 (Top 31-40)
 
 **Q31. "CAP 에서 무엇을 선택하나?"**
-> A: CAP 는 분할 시점만 적용. 도메인별로 다름. 재고/결제/인증 = CP(강일관성), 검색/추천/카탈로그 = AP(가용성). 평시는 PACELC 로 EL/EC 추가. CAP 의 C 는 Linearizability 이지 ACID 의 C(constraint) 와 다름.
+> A: CAP (Consistency / Availability / Partition tolerance, 일관성·가용성·분할 내성) 는 분할 시점만 적용. 도메인별로 다름. 재고/결제/인증 = CP(강일관성), 검색/추천/카탈로그 = AP(가용성). 평시는 PACELC (Partition → Availability/Consistency, Else → Latency/Consistency) 로 EL/EC (Eventual Consistency, 최종 일관성) 추가. CAP 의 C 는 Linearizability 이지 ACID (Atomicity / Consistency / Isolation / Durability, 원자성·일관성·격리성·내구성) 의 C(constraint) 와 다름.
 > 꼬리: "FLP Impossibility 의 의미?" / "Eventual Consistency 실무?"
 > 출처: #7 Q1.1-1.4
 
@@ -822,7 +822,7 @@
 
 - **JVM**: Stop-The-World, Safepoint, Card Table, Remembered Set, SATB, Colored Pointer, Load Barrier, Compressed Oops, Code Cache, Deoptimization, Tiered Compilation, JFR continuous, Native Memory Tracking
 - **Concurrency**: happens-before, JMM, AQS, ABA, CAS, monitor inflation, lock elision, escape analysis, scalar replacement, lock-free, wait-free, structured concurrency, virtual thread pinning, JEP 491
-- **DB**: clustered index, secondary lookup, MVCC, ReadView, next-key lock, gap lock, Insert Intention, MDL chain, ICP (Index Condition Pushdown), filesort, temp table, INSTANT/INPLACE/pt-osc/gh-ost, online DDL
+- **DB**: clustered index, secondary lookup, MVCC (Multi-Version Concurrency Control, 다중 버전 동시성 제어), ReadView, next-key lock, gap lock, Insert Intention, MDL (Metadata Lock, 메타데이터 락) chain, ICP (Index Condition Pushdown), filesort, temp table, INSTANT/INPLACE/pt-osc/gh-ost, online DDL (Data Definition Language)
 - **Spring**: TransactionInterceptor, AbstractRoutingDataSource, LazyConnectionDataSourceProxy, FlushMode MANUAL, AFTER_COMMIT, REQUIRES_NEW, NESTED Savepoint, UnexpectedRollbackException, DelegatingFilterProxy, FilterChainProxy
 - **Kafka**: ISR, HW, LEO, LSO, KRaft, ZAB, KIP-679, KIP-392, KIP-848, KIP-932, transactional.id epoch fencing, Cooperative-Sticky, sticky partitioner, log compaction, tiered storage
 - **Distributed**: CAP, PACELC, FLP, Linearizability, SI, SSI, write skew, fencing token, RedLock, RedLock 비판 (Kleppmann), Pivot Transaction, Vector Clock, HLC, SATB, Quorum, Choreography

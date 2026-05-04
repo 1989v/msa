@@ -136,12 +136,12 @@ sources:
 | `object` / `nested` / `flattened` / `join` | 객체 표현 4 패턴 — 평탄화 / 정확매칭 / dynamic key / parent-child | [nested](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/nested), [flattened](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/flattened), [join](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/parent-join) | 🟡 부분 (#07 nested 만) |
 | `geo_point` / `geo_shape` / `point` / `shape` | 지리 vs 평면 좌표 + Lat-Lon vs polygon | [geo-point](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/geo-point), [geo-shape](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/geo-shape) | ★ 신규 |
 | `dense_vector` | 고정 차원 벡터 (HNSW + ANN). 양자화·차원·similarity 옵션 | [dense-vector](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dense-vector) | ✅ 커버 (#08) |
-| `sparse_vector` | ELSER 출력 같은 sparse 가중치. token weight 기반 BM25-like 점수 | [sparse-vector](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/sparse-vector) | ★ 신규 |
-| `semantic_text` | ES 8.13+ — 자동 chunking + inference endpoint 호출, 매핑만 선언하면 임베딩 자동 | [semantic-text](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/semantic-text) | ★ 신규 |
-| `rank_feature` / `rank_features` | 사전 계산된 numeric 가중치를 rank-only 색인 — pagerank·인기도 효율 결합 | [rank-features](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/rank-features) | ★ 신규 |
+| `sparse_vector` | ELSER 출력 같은 sparse 가중치. token weight 기반 BM25-like 점수 | [sparse-vector](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/sparse-vector) | ✅ 커버 ([27](27-mapping-field-types.md), [28](28-elser-semantic-text.md)) |
+| `semantic_text` | ES 8.13+ — 자동 chunking + inference endpoint 호출, 매핑만 선언하면 임베딩 자동 | [semantic-text](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/semantic-text) | ✅ 커버 ([27](27-mapping-field-types.md), [28](28-elser-semantic-text.md)) |
+| `rank_feature` / `rank_features` | 사전 계산된 numeric 가중치를 rank-only 색인 — pagerank·인기도 효율 결합 | [rank-features](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/rank-features) | ✅ 커버 ([27](27-mapping-field-types.md), [32](32-specialized-queries.md)) |
 | `token_count` | 다른 필드의 토큰 수를 정수 색인 — 길이 기반 필터/정렬 | [token-count](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/token-count) | ★ 신규 |
 | `histogram` / `aggregate_metric_double` | 사전 집계된 분포·통계 저장 → downsampling/롤업 | [histogram](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/histogram), [aggregate-metric-double](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/aggregate-metric-double) | ★ 신규 |
-| `percolator` | **stored query** 를 색인하는 특별 타입 — `percolate` 쿼리의 짝 | [percolator field](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/percolator) | ★ 신규 (사용자 명시 예시) |
+| `percolator` | **stored query** 를 색인하는 특별 타입 — `percolate` 쿼리의 짝 | [percolator field](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/percolator) | ✅ 커버 ([22](22-percolate.md), [27](27-mapping-field-types.md)) |
 | `alias` field | 필드 alias — 마이그레이션·ECS 호환 | [alias](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/field-alias) | ★ 신규 |
 | meta fields (`_id`, `_source`, `_index`, `_routing`, `_ignored`, `_meta`, `_doc_count`) | 시스템 메타. `_source` disable, `_routing` 로 shard 고정 등 운영 결정 직결 | [meta-fields](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-meta-field) | 🟡 부분 (`_routing` 만) |
 
@@ -203,8 +203,8 @@ sources:
 | `bool` (must / should / must_not / filter) | 가장 흔한 조합. `filter` 는 캐시 + 점수 미계산 | [bool](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-bool-query) | ✅ 커버 (#07) |
 | `dis_max` | should 매칭 점수의 max + tie_breaker — multi_match best_fields 의 내부 | [dis-max](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-dis-max-query) | 🟡 부분 |
 | `function_score` / `script_score` | 점수 변형 — gauss/linear/exp decay, field_value_factor, random_score | [function-score](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-function-score-query) | ✅ 커버 (#06) |
-| `boosting` (positive + negative_boost) | 매칭은 시키되 점수 깎기 — 광고 차단/품절 강등 | [boosting](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-boosting-query) | ★ 신규 |
-| `constant_score` | 매칭만 보고 점수는 상수 → filter 캐싱 효과 | [constant-score](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-constant-score-query) | ★ 신규 |
+| `boosting` (positive + negative_boost) | 매칭은 시키되 점수 깎기 — 광고 차단/품절 강등 | [boosting](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-boosting-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
+| `constant_score` | 매칭만 보고 점수는 상수 → filter 캐싱 효과 | [constant-score](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-constant-score-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
 
 ### G. Query DSL — Joining / Geo / Span / Specialized
 
@@ -212,14 +212,14 @@ sources:
 |---|---|---|---|
 | `nested` | nested 필드의 정확 매칭 + inner_hits | [nested-query](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-nested-query) | ✅ 커버 (#07) |
 | `has_child` / `has_parent` / `parent_id` | join 필드 기반 부모-자식 검색 | [joining](https://www.elastic.co/docs/reference/query-languages/query-dsl/joining-queries) | 🟡 부분 |
-| `geo_distance` / `geo_bounding_box` / `geo_shape` | 위치 반경·박스·임의 도형 | [geo](https://www.elastic.co/docs/reference/query-languages/query-dsl/geo-queries) | ★ 신규 |
-| `shape` (cartesian) | 평면 좌표 (x,y) 도형 검색 — 도면·게임 | [shape](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-shape-query) | ★ 신규 |
+| `geo_distance` / `geo_bounding_box` / `geo_shape` | 위치 반경·박스·임의 도형 | [geo](https://www.elastic.co/docs/reference/query-languages/query-dsl/geo-queries) | ✅ 커버 ([30](30-geo-queries.md)) |
+| `shape` (cartesian) | 평면 좌표 (x,y) 도형 검색 — 도면·게임 | [shape](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-shape-query) | ✅ 커버 ([30](30-geo-queries.md)) |
 | `span_term` / `span_first` / `span_near` / `span_or` / `span_not` / `span_within` / `span_containing` / `field_masking_span` / `span_multi` | Lucene span — 정밀한 위치 조건. 법률·표절·의료 도메인 | [span-queries](https://www.elastic.co/docs/reference/query-languages/query-dsl/span-queries) | ★ 신규 |
-| `percolate` | "stored query 에 새 doc 매칭" — alerting / saved search / 실시간 분류 | [percolate](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-percolate-query) | ★ 신규 (사용자 명시) |
-| `more_like_this` (MLT) | 주어진 doc 와 유사한 doc 검색 — "관련 상품" 단순 추천 | [more-like-this](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-mlt-query) | ★ 신규 |
-| `pinned` | 특정 doc id 를 강제 상위 — 광고/큐레이션 | [pinned](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-pinned-query) | ★ 신규 |
-| `distance_feature` | numeric/date/geo 거리 기반 부스트 — recency·근접도 효율 결합 | [distance-feature](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-distance-feature-query) | ★ 신규 |
-| `rank_feature` | rank_features 필드 가중치 기반 부스트 (script_score 보다 빠름) | [rank-feature-query](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-rank-feature-query) | ★ 신규 |
+| `percolate` | "stored query 에 새 doc 매칭" — alerting / saved search / 실시간 분류 | [percolate](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-percolate-query) | ✅ 커버 ([22](22-percolate.md)) |
+| `more_like_this` (MLT) | 주어진 doc 와 유사한 doc 검색 — "관련 상품" 단순 추천 | [more-like-this](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-mlt-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
+| `pinned` | 특정 doc id 를 강제 상위 — 광고/큐레이션 | [pinned](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-pinned-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
+| `distance_feature` | numeric/date/geo 거리 기반 부스트 — recency·근접도 효율 결합 | [distance-feature](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-distance-feature-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
+| `rank_feature` | rank_features 필드 가중치 기반 부스트 (script_score 보다 빠름) | [rank-feature-query](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-rank-feature-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
 | `script` query | Painless 임의 조건 (expensive query 군) | [script-query](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-script-query) | ★ 신규 |
 | `wrapper` | Base64 wrapped JSON query — 동적 query 위임 | [wrapper](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-wrapper-query) | ★ 신규 |
 | `rule_query` | Search Application 의 query rule 적용 (조건부 pinned/exclude) | [rule-query](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-rule-query) | ★ 신규 |
@@ -245,12 +245,12 @@ sources:
 | `_search/template` (Mustache) + `_render/template` | 파라미터화된 search template — 클라이언트와 쿼리 분리 | [search-template](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-template) | ★ 신규 |
 | `_search?profile=true` | per-shard query/agg 비용 분석 | [profile](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-profile) | 🟡 부분 (#16 언급) |
 | `_search/scroll` (legacy) | snapshot pagination — deep pagination 용. 8.x 부터 PIT 권장 | [scroll](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results) | ★ 신규 (deprecated 경로) |
-| **Point in Time (PIT)** + **search_after** | snapshot id 기반 일관 pagination — 현재 권장 | [paginate](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results) | ★ 신규 |
+| **Point in Time (PIT)** + **search_after** | snapshot id 기반 일관 pagination — 현재 권장 | [paginate](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results) | ✅ 커버 ([24](24-pit-search-after.md)) |
 | `_async_search` | long-running search — 비동기 제출, ID 로 polling | [async-search](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/async-search) | ★ 신규 |
 | `_mvt` (Mapbox Vector Tile) | geo 검색 결과를 vector tile binary 로 — 지도 UI 직결 | [vector-tile](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/vector-tile-search) | ★ 신규 |
-| **Field collapsing** + `inner_hits` | group-by + 그룹 내 top-N | [collapse](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/collapse-search-results) | ★ 신규 |
-| **Rescore** | top-N window 만 secondary query 로 재점수 — Two-Stage retrieval 의 ES 네이티브 | [rescore](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/filter-search-results) | 🟡 부분 (#10 개념만) |
-| **Retrievers API** (8.14+) | top-level 재정렬 트리: `standard` / `knn` / `rrf` / `linear` / `text_similarity_reranker` / `rule` | [retrievers](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrievers) | ★ 신규 (현 표준) |
+| **Field collapsing** + `inner_hits` | group-by + 그룹 내 top-N | [collapse](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/collapse-search-results) | ✅ 커버 ([25](25-field-collapsing-rescore.md)) |
+| **Rescore** | top-N window 만 secondary query 로 재점수 — Two-Stage retrieval 의 ES 네이티브 | [rescore](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/filter-search-results) | ✅ 커버 ([25](25-field-collapsing-rescore.md)) |
+| **Retrievers API** (8.14+) | top-level 재정렬 트리: `standard` / `knn` / `rrf` / `linear` / `text_similarity_reranker` / `rule` | [retrievers](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrievers) | ✅ 커버 ([23](23-retrievers-api.md)) |
 | **Search Application API** (8.x) | endpoint·template·query rule 묶음 — relevance 운영 추상 | [search-application](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-application) | ★ 신규 |
 | **Behavioral Analytics** | 클릭/로그 수집 → relevance tuning 입력 | [behavioral-analytics](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/behavioral-analytics) | ★ 신규 |
 
@@ -258,12 +258,12 @@ sources:
 
 | 카테고리 | 종류 | 공식 링크 | 상태 |
 |---|---|---|---|
-| **Bucket** | `terms` / `multi_terms` / `significant_terms` / `significant_text` / `rare_terms` / `sampler` / `diversified_sampler` / `histogram` / `date_histogram` / `auto_date_histogram` / `variable_width_histogram` / `range` / `date_range` / `ip_range` / `geo_distance` / `geohash_grid` / `geotile_grid` / `geohex_grid` / `filter` / `filters` / `adjacency_matrix` / `nested` / `reverse_nested` / `parent` / `children` / `composite` (pagination) / `missing` | [bucket-aggs](https://www.elastic.co/docs/reference/aggregations/search-aggregations-bucket) | 🟡 부분 (terms/range 만) |
-| **Metric** | `avg` / `sum` / `min` / `max` / `value_count` / `stats` / `extended_stats` / `cardinality` (HyperLogLog++) / `percentile` (TDigest/HDR) / `percentile_ranks` / `top_hits` / `top_metrics` / `scripted_metric` / `geo_bounds` / `geo_centroid` / `geo_line` / `weighted_avg` / `median_absolute_deviation` / `matrix_stats` / `string_stats` / `t_test` / `boxplot` / `rate` | [metric-aggs](https://www.elastic.co/docs/reference/aggregations/search-aggregations-metrics) | 🟡 부분 |
-| **Pipeline** | `avg_bucket` / `sum_bucket` / `min_bucket` / `max_bucket` / `stats_bucket` / `extended_stats_bucket` / `percentiles_bucket` / `moving_fn` (legacy `moving_avg`) / `derivative` / `cumulative_sum` / `cumulative_cardinality` / `serial_diff` / `bucket_script` / `bucket_selector` / `bucket_sort` / `normalize` / `inference` (ML) | [pipeline-aggs](https://www.elastic.co/docs/reference/aggregations/pipeline) | ★ 신규 |
-| **Composite** + `after_key` | aggregation 의 keyset pagination — 대규모 GROUP BY | [composite](https://www.elastic.co/docs/reference/aggregations/search-aggregations-bucket-composite-aggregation) | ★ 신규 |
-| **Significant terms / text** | uncommonly common — 트렌드/이상 탐지 | docs | ★ 신규 |
-| **Top hits / Top metrics** | 그룹별 대표 doc / 가장 최신 metric 하나 | docs | ★ 신규 |
+| **Bucket** | `terms` / `multi_terms` / `significant_terms` / `significant_text` / `rare_terms` / `sampler` / `diversified_sampler` / `histogram` / `date_histogram` / `auto_date_histogram` / `variable_width_histogram` / `range` / `date_range` / `ip_range` / `geo_distance` / `geohash_grid` / `geotile_grid` / `geohex_grid` / `filter` / `filters` / `adjacency_matrix` / `nested` / `reverse_nested` / `parent` / `children` / `composite` (pagination) / `missing` | [bucket-aggs](https://www.elastic.co/docs/reference/aggregations/search-aggregations-bucket) | ✅ 커버 ([26](26-aggregations-catalog.md)) |
+| **Metric** | `avg` / `sum` / `min` / `max` / `value_count` / `stats` / `extended_stats` / `cardinality` (HyperLogLog++) / `percentile` (TDigest/HDR) / `percentile_ranks` / `top_hits` / `top_metrics` / `scripted_metric` / `geo_bounds` / `geo_centroid` / `geo_line` / `weighted_avg` / `median_absolute_deviation` / `matrix_stats` / `string_stats` / `t_test` / `boxplot` / `rate` | [metric-aggs](https://www.elastic.co/docs/reference/aggregations/search-aggregations-metrics) | ✅ 커버 ([26](26-aggregations-catalog.md)) |
+| **Pipeline** | `avg_bucket` / `sum_bucket` / `min_bucket` / `max_bucket` / `stats_bucket` / `extended_stats_bucket` / `percentiles_bucket` / `moving_fn` (legacy `moving_avg`) / `derivative` / `cumulative_sum` / `cumulative_cardinality` / `serial_diff` / `bucket_script` / `bucket_selector` / `bucket_sort` / `normalize` / `inference` (ML) | [pipeline-aggs](https://www.elastic.co/docs/reference/aggregations/pipeline) | ✅ 커버 ([26](26-aggregations-catalog.md)) |
+| **Composite** + `after_key` | aggregation 의 keyset pagination — 대규모 GROUP BY | [composite](https://www.elastic.co/docs/reference/aggregations/search-aggregations-bucket-composite-aggregation) | ✅ 커버 ([26](26-aggregations-catalog.md)) |
+| **Significant terms / text** | uncommonly common — 트렌드/이상 탐지 | docs | ✅ 커버 ([26](26-aggregations-catalog.md)) |
+| **Top hits / Top metrics** | 그룹별 대표 doc / 가장 최신 metric 하나 | docs | ✅ 커버 ([26](26-aggregations-catalog.md)) |
 
 ### J. Ingest / 데이터 변환
 
@@ -285,8 +285,8 @@ sources:
 | **Data Stream Lifecycle (DSL)** (8.x) | data stream 전용 단순 라이프사이클 (rollover + retention) | [data-stream-lifecycle](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/data-stream-lifecycle) | ★ 신규 |
 | **Snapshot/Restore** | 외부 repo (S3/GCS/Azure/HDFS) 로 백업 | [snapshot-restore](https://www.elastic.co/docs/reference/elasticsearch/snapshot-restore) | ✅ 커버 (#16) |
 | **Snapshot Lifecycle Management (SLM)** | snapshot 자동 스케줄·보관 — Elastic | [slm](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/snapshot-lifecycle-management) | ★ 신규 |
-| **Searchable Snapshots** | snapshot 을 마운트해 직접 검색 — 스토리지 비용 ↓ (Elastic) | [searchable-snapshots](https://www.elastic.co/docs/reference/elasticsearch/searchable-snapshots) | ★ 신규 (Elastic 전용) |
-| **Frozen tier** | searchable snapshot 기반 cold 단계 이후 — 거의 무한 보존 | docs | ★ 신규 (Elastic 전용) |
+| **Searchable Snapshots** | snapshot 을 마운트해 직접 검색 — 스토리지 비용 ↓ (Elastic) | [searchable-snapshots](https://www.elastic.co/docs/reference/elasticsearch/searchable-snapshots) | ✅ 커버 ([31](31-ccs-ccr-snapshots.md)) |
+| **Frozen tier** | searchable snapshot 기반 cold 단계 이후 — 거의 무한 보존 | docs | ✅ 커버 ([31](31-ccs-ccr-snapshots.md)) |
 | `_reindex` | 인덱스 → 인덱스 복사 + transform | [reindex](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/reindex) | ✅ 커버 (#13) |
 | `_update_by_query` / `_delete_by_query` | 쿼리 매칭 doc 일괄 update/delete (script 가능) | [update-by-query](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/update-by-query) | ★ 신규 |
 | `_split` / `_shrink` / `_clone` index | shard 수 변경 (split=증가, shrink=감소, clone=동일 복제) | [split](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/split-index) | ★ 신규 |
@@ -298,8 +298,8 @@ sources:
 
 | 개념 | 1-줄 정의 | 공식 링크 | 상태 |
 |---|---|---|---|
-| **Cross-Cluster Search (CCS)** | 여러 클러스터 인덱스를 한 검색으로. `cluster_one:index*` syntax | [ccs](https://www.elastic.co/docs/reference/elasticsearch/cross-cluster-search) | ★ 신규 |
-| **Cross-Cluster Replication (CCR)** | leader → follower 단방향 복제. DR (Disaster Recovery, 재해 복구) / 지역 분산 (Elastic 전용) | [ccr](https://www.elastic.co/docs/reference/elasticsearch/ccr) | ★ 신규 (Elastic 전용) |
+| **Cross-Cluster Search (CCS)** | 여러 클러스터 인덱스를 한 검색으로. `cluster_one:index*` syntax | [ccs](https://www.elastic.co/docs/reference/elasticsearch/cross-cluster-search) | ✅ 커버 ([31](31-ccs-ccr-snapshots.md)) |
+| **Cross-Cluster Replication (CCR)** | leader → follower 단방향 복제. DR (Disaster Recovery, 재해 복구) / 지역 분산 (Elastic 전용) | [ccr](https://www.elastic.co/docs/reference/elasticsearch/ccr) | ✅ 커버 ([31](31-ccs-ccr-snapshots.md)) |
 | Remote clusters (sniff vs proxy) | CCS/CCR 의 연결 모드 — 노드 발견 vs proxy 단일 endpoint | docs | ★ 신규 |
 | **Authentication realms** — native / file / LDAP / AD / SAML / OIDC / Kerberos / PKI | 인증 백엔드 분리 | [auth realms](https://www.elastic.co/docs/reference/elasticsearch/security-roles-and-privileges) | ★ 신규 |
 | **API keys** + **Service accounts** | machine-to-machine 인증 | [api-keys](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/security-apis) | ★ 신규 |
@@ -313,10 +313,10 @@ sources:
 
 | 개념 | 1-줄 정의 | 공식 링크 | 상태 |
 |---|---|---|---|
-| **Inference API** | 모델 등록 (HF / OpenAI / Cohere / Azure / Vertex / ELSER / E5 / Watsonx) → endpoint 단위 호출 | [inference](https://www.elastic.co/docs/reference/elasticsearch/inference) | ★ 신규 (현 표준) |
-| **ELSER** (Elastic Learned Sparse EncodeR) | 사전학습된 sparse retrieval 모델 — token weight 출력 | [elser](https://www.elastic.co/docs/reference/elasticsearch/inference/elser) | ★ 신규 |
-| **E5 multilingual** | dense embedding (multilingual) 모델 — text-embedding | docs | ★ 신규 |
-| **semantic_text 필드** + 자동 chunking | 매핑 한 줄로 chunk + embedding 자동 — 8.13+ 권장 | [semantic-text](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/semantic-text) | ★ 신규 |
+| **Inference API** | 모델 등록 (HF / OpenAI / Cohere / Azure / Vertex / ELSER / E5 / Watsonx) → endpoint 단위 호출 | [inference](https://www.elastic.co/docs/reference/elasticsearch/inference) | ✅ 커버 ([28](28-elser-semantic-text.md)) |
+| **ELSER** (Elastic Learned Sparse EncodeR) | 사전학습된 sparse retrieval 모델 — token weight 출력 | [elser](https://www.elastic.co/docs/reference/elasticsearch/inference/elser) | ✅ 커버 ([28](28-elser-semantic-text.md)) |
+| **E5 multilingual** | dense embedding (multilingual) 모델 — text-embedding | docs | ✅ 커버 ([28](28-elser-semantic-text.md)) |
+| **semantic_text 필드** + 자동 chunking | 매핑 한 줄로 chunk + embedding 자동 — 8.13+ 권장 | [semantic-text](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/semantic-text) | ✅ 커버 ([28](28-elser-semantic-text.md)) |
 | **kNN with filter** (pre-filter) | ANN 후보 좁히기 — 정확도/지연 트레이드오프 | docs | ★ 신규 |
 | **Vector quantization** (BBQ / INT8 / INT4 / scalar) | dense_vector 메모리 ↓. **BBQ** = Better Binary Quantization (8.x 신기능) | [dense-vector quantization](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dense-vector) | ★ 신규 |
 | **Anomaly Detection ML jobs** | 시계열 이상 탐지 (SMV/HMM/RCF 계열) | [ml-anomaly](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ml-anomaly-apis) | ★ 신규 (Elastic 전용) |
@@ -328,10 +328,10 @@ sources:
 | 개념 | 1-줄 정의 | 공식 링크 | 상태 |
 |---|---|---|---|
 | **Query DSL** (JSON) | 가장 풍부한 표현, 본 카탈로그 §D~G | docs | ✅ 커버 |
-| **EQL** (Event Query Language) | 시퀀스/threat hunting 도메인 언어 — security 워크로드 | [eql](https://www.elastic.co/docs/reference/query-languages/eql) | ★ 신규 |
-| **ES\|QL** (Elasticsearch Query Language) | piped 표현식 (`FROM ... \| WHERE ... \| STATS ... \| LIMIT`) — 8.11+ Kibana Discover 차세대 | [esql](https://www.elastic.co/docs/reference/query-languages/esql) | ★ 신규 |
-| **SQL API** | JDBC + REST SQL — BI 도구 호환 | [sql](https://www.elastic.co/docs/reference/query-languages/sql) | ★ 신규 |
-| **PPL** (Piped Processing Language, OS 전용) | OpenSearch 의 piped query 언어 — 로그 분석 | [ppl](https://docs.opensearch.org/3.5/search-plugins/sql/ppl/index) | ★ 신규 (OS 전용) |
+| **EQL** (Event Query Language) | 시퀀스/threat hunting 도메인 언어 — security 워크로드 | [eql](https://www.elastic.co/docs/reference/query-languages/eql) | ✅ 커버 ([33](33-query-languages.md)) |
+| **ES\|QL** (Elasticsearch Query Language) | piped 표현식 (`FROM ... \| WHERE ... \| STATS ... \| LIMIT`) — 8.11+ Kibana Discover 차세대 | [esql](https://www.elastic.co/docs/reference/query-languages/esql) | ✅ 커버 ([33](33-query-languages.md)) |
+| **SQL API** | JDBC + REST SQL — BI 도구 호환 | [sql](https://www.elastic.co/docs/reference/query-languages/sql) | ✅ 커버 ([33](33-query-languages.md)) |
+| **PPL** (Piped Processing Language, OS 전용) | OpenSearch 의 piped query 언어 — 로그 분석 | [ppl](https://docs.opensearch.org/3.5/search-plugins/sql/ppl/index) | ✅ 커버 ([33](33-query-languages.md)) |
 
 ### O. 스크립팅
 
@@ -357,14 +357,14 @@ sources:
 
 | 개념 | 1-줄 정의 | 공식 링크 | 상태 |
 |---|---|---|---|
-| **Search Pipeline** (request / response / search-phase processors) | 검색 요청·응답 변환 파이프라인 — ES 의 ingest 의 검색 버전 | [search-pipelines](https://docs.opensearch.org/3.5/search-plugins/search-pipelines/index) | ★ 신규 (OS 전용) |
-| **normalization-processor** | hybrid query 의 score normalize (`min_max` / `l2` / `rrf`) + combination (`arithmetic_mean` / `geometric_mean` / `harmonic_mean`) | [normalization](https://docs.opensearch.org/3.5/search-plugins/search-pipelines/normalization-processor) | ★ 신규 |
-| **Hybrid query** (top-level) | OS 의 hybrid 검색 표준 — search pipeline 과 한 쌍 | [hybrid](https://docs.opensearch.org/3.5/query-dsl/compound/hybrid) | ★ 신규 |
-| **Neural search** plugin | text → embedding → kNN 자동화 (model_id 지정) | [neural](https://docs.opensearch.org/3.5/search-plugins/neural-text-search) | ★ 신규 |
-| **Neural Sparse search** + 2-phase processor | sparse retrieval (BM25-like 토큰 가중치) + 가속 처리 | [neural-sparse](https://docs.opensearch.org/3.5/search-plugins/neural-sparse-search) | ★ 신규 |
+| **Search Pipeline** (request / response / search-phase processors) | 검색 요청·응답 변환 파이프라인 — ES 의 ingest 의 검색 버전 | [search-pipelines](https://docs.opensearch.org/3.5/search-plugins/search-pipelines/index) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
+| **normalization-processor** | hybrid query 의 score normalize (`min_max` / `l2` / `rrf`) + combination (`arithmetic_mean` / `geometric_mean` / `harmonic_mean`) | [normalization](https://docs.opensearch.org/3.5/search-plugins/search-pipelines/normalization-processor) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
+| **Hybrid query** (top-level) | OS 의 hybrid 검색 표준 — search pipeline 과 한 쌍 | [hybrid](https://docs.opensearch.org/3.5/query-dsl/compound/hybrid) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
+| **Neural search** plugin | text → embedding → kNN 자동화 (model_id 지정) | [neural](https://docs.opensearch.org/3.5/search-plugins/neural-text-search) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
+| **Neural Sparse search** + 2-phase processor | sparse retrieval (BM25-like 토큰 가중치) + 가속 처리 | [neural-sparse](https://docs.opensearch.org/3.5/search-plugins/neural-sparse-search) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
 | **k-NN engines** (faiss / nmslib / lucene) | OS 는 3-엔진 선택 가능. faiss = HNSW + IVF/PQ, nmslib = HNSW (legacy), lucene = ES 호환 | [k-nn](https://docs.opensearch.org/3.5/vector-search/k-nn) | ★ 신규 |
 | **k-NN 양자화** (FP16 / INT8 / Binary) + disk-based vectors | 메모리·디스크 절약 옵션 — Elastic BBQ 와 비교 가능 | [k-nn quantization](https://docs.opensearch.org/3.5/vector-search/optimizing-storage) | ★ 신규 |
-| **ML Commons** | 범용 모델 등록·서빙 plugin — neural 의 토대 | [ml-commons](https://docs.opensearch.org/3.5/ml-commons-plugin/index) | ★ 신규 |
+| **ML Commons** | 범용 모델 등록·서빙 plugin — neural 의 토대 | [ml-commons](https://docs.opensearch.org/3.5/ml-commons-plugin/index) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
 | **Conversational Search** / RAG (Retrieval-Augmented Generation, 검색 증강 생성) | LLM 연계 답변 생성 endpoint | [conversational](https://docs.opensearch.org/3.5/search-plugins/conversational-search) | ★ 신규 |
 | **Anomaly Detection plugin** (RCF) | Random Cut Forest 기반 시계열 이상 탐지 — Elastic ML 의 OSS 대안 | [anomaly-detection](https://docs.opensearch.org/3.5/observing-your-data/ad/index) | ★ 신규 |
 | **Alerting plugin** + **Notifications** | trigger 기반 알람 — Watcher 의 OSS 대안 | [alerting](https://docs.opensearch.org/3.5/observing-your-data/alerting/index) | ★ 신규 |

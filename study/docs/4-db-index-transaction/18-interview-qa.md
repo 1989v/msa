@@ -32,7 +32,7 @@ created: 2026-05-01
 
 ### Q1.2 InnoDB 에서 PK 가 왜 그렇게 중요해요?
 
-**A (요약)**: InnoDB 는 **clustered index = PK** 라서 테이블 자체가 PK 순으로 정렬됩니다. secondary index 의 leaf 는 row 위치가 아니라 **PK 값** 을 보유 — secondary 조회는 항상 secondary lookup → clustered lookup 의 2 단계. PK 가 길거나 무작위면 모든 secondary index 가 비대해지고 page split 도 자주 발생합니다.
+**A (요약)**: InnoDB 는 **clustered index = PK (Primary Key, 기본 키)** 라서 테이블 자체가 PK 순으로 정렬됩니다. secondary index 의 leaf 는 row 위치가 아니라 **PK 값** 을 보유 — secondary 조회는 항상 secondary lookup → clustered lookup 의 2 단계. PK 가 길거나 무작위면 모든 secondary index 가 비대해지고 page split 도 자주 발생합니다.
 
 **A (확장)**: 그래서 PK 컨벤션은 짧고 단조 증가 — BIGINT AUTO_INCREMENT 또는 UUIDv7. UUIDv4 같은 랜덤은 매 INSERT 가 leaf 중간을 분할 → 페이지 채움률 50-70%, random IO ↑.
 
@@ -54,11 +54,11 @@ created: 2026-05-01
 
 ### Q1.6 ACID 4 가지를 InnoDB 가 어떻게 구현하나요?
 
-**A**:
+**A**: ACID (Atomicity / Consistency / Isolation / Durability, 원자성·일관성·격리성·내구성):
 - **A**: undo log 로 ROLLBACK 가능.
-- **C**: FK / UNIQUE / CHECK 제약 + application 책임.
-- **I**: MVCC + Lock + 격리 수준.
-- **D**: redo log (WAL) + fsync (`innodb_flush_log_at_trx_commit=1`).
+- **C**: FK (Foreign Key, 외래 키) / UNIQUE / CHECK 제약 + application 책임.
+- **I**: MVCC (Multi-Version Concurrency Control, 다중 버전 동시성 제어) + Lock + 격리 수준.
+- **D**: redo log (WAL (Write-Ahead Log, 선기록 로그)) + fsync (`innodb_flush_log_at_trx_commit=1`).
 
 ### Q1.7 4 격리 수준의 이상 현상 매트릭스?
 
@@ -86,7 +86,7 @@ created: 2026-05-01
 
 **확장**: RR 은 TX 첫 SELECT 시 ReadView 생성 후 끝까지 유지, RC 는 매 SELECT 마다. 그래서 RR 에선 TX 안에서 같은 SELECT 결과가 변하지 않음. Locking read (FOR UPDATE) 는 MVCC 우회 — 현재 데이터 + lock.
 
-**함정**: "long TX 의 위험은?" → "undo 가 쌓여 history list 폭증, buffer pool 압박. ADR-0020 의 외부 IO 분리 이유."
+**함정**: "long TX 의 위험은?" → "undo 가 쌓여 history list 폭증, buffer pool 압박. ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020 의 외부 IO 분리 이유."
 
 ### Q2.2 InnoDB RR 에서 phantom read 가 발생하나요?
 
@@ -114,7 +114,7 @@ created: 2026-05-01
 
 ### Q2.7 MDL (Metadata Lock) 사슬?
 
-**A**: DDL 의 MDL EXCLUSIVE 는 DML 의 MDL SHARED 와 충돌. long-running TX 가 SHARED MDL 을 들고 있으면 ALTER 가 wait → 그 뒤로 모든 후속 SELECT 도 wait → 서비스 정지. 회피: `innodb_lock_wait_timeout` 짧게 + DDL 전 long TX 확인 + INSTANT/INPLACE/pt-osc/gh-ost 활용.
+**A**: DDL (Data Definition Language) 의 MDL (Metadata Lock, 메타데이터 락) EXCLUSIVE 는 DML (Data Manipulation Language) 의 MDL SHARED 와 충돌. long-running TX 가 SHARED MDL 을 들고 있으면 ALTER 가 wait → 그 뒤로 모든 후속 SELECT 도 wait → 서비스 정지. 회피: `innodb_lock_wait_timeout` 짧게 + DDL 전 long TX 확인 + INSTANT/INPLACE/pt-osc/gh-ost 활용.
 
 ### Q2.8 EXPLAIN 의 type / key / rows / Extra 핵심?
 
@@ -300,7 +300,7 @@ msa 는 둘 다 미적용 — 트래픽 임계 도달 시 ADR-0030/31 검토.
 
 **A (요약)**: **`SELECT ... FOR UPDATE SKIP LOCKED`** (MySQL 8.0+). DB 가 행별 X-lock + 다른 worker 는 그 row 건너뜀. 추가 인프라 없이 worker N 개 모두 active → throughput N 배.
 
-**확장**: Eventuate Tram / Stripe Webhook 큐 / Sidekiq Pro 모두 동일 (Postgres 면 동일 구문). 대안은 Debezium CDC 로 polling 자체 제거.
+**확장**: Eventuate Tram / Stripe Webhook 큐 / Sidekiq Pro 모두 동일 (Postgres 면 동일 구문). 대안은 Debezium CDC (Change Data Capture, 변경 데이터 캡처) 로 polling 자체 제거.
 
 **함정**: "분산 락으로 한 worker 만 active 하면?" → "단일 worker → throughput 1배. SKIP LOCKED 가 분배에 더 적합." (#19 §3.8)
 
