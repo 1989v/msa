@@ -31,6 +31,7 @@ sources:
 | 메모리 layer | L1 / L2 / L3 / DRAM / SSD / HDD / DC / region | ✅ |
 | 네트워크 | RTT region 간 / DC 내 | ✅ |
 | 디스크 | random vs seq, NVMe vs SATA | ✅ |
+| **2024+ 현대 하드웨어 자릿수** (NVMe / DDR5 / L1-L3 cache / PCIe 4-5 / 클라우드 / Lambda cold start / DB / 벡터 검색 / GPU inference) | 갱신본 자릿수 카탈로그 | ✅ 커버 ([13](13-modern-hardware-latency.md)) |
 | msa 적용 | ADR-0025 latency budget | ✅ |
 | 측정 | 표준 metric (#10 cross) | 🟡 |
 

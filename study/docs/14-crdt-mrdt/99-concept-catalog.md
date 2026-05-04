@@ -33,6 +33,7 @@ sources:
 | Map / Tree | OR-Map, Tree CRDT | ✅ |
 | Yjs / Automerge | 라이브러리 | ✅ |
 | MRDT (Mergeable Replicated Data Type) | Riak | ✅ |
+| **CRDT 자료구조 카탈로그** (Counter / Set / Register / Sequence / Map / Graph / JSON CRDT 16종 통합) | State-based + Op-based 분류, semilattice 증명 | ✅ 커버 ([20](20-crdt-types-deep.md)) |
 | 응용 | 협업 에디터, multi-leader DB | ✅ |
 
 ### 1-A. 갭 진단
@@ -116,8 +117,9 @@ sources:
 | 개념 | 정의 | 상태 |
 |---|---|---|
 | Tree CRDT (Kleppmann 2020) | move 작업 안전 | ★ 신규 |
-| JSON CRDT (Automerge) | nested merge | ★ 신규 |
+| JSON CRDT (Automerge) | nested merge | ✅ 커버 ([20](20-crdt-types-deep.md)) |
 | **Block-wise CRDT** | document = blocks | ★ 신규 |
+| **2P2P-Graph** (Add/Remove vertex+edge) | graph CRDT | ✅ 커버 ([20](20-crdt-types-deep.md)) |
 
 ### F. 라이브러리 / 운영
 

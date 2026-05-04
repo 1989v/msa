@@ -38,6 +38,8 @@ sources:
 | Online DDL | ALGORITHM=INSTANT/INPLACE/COPY | ✅ |
 | Statistics / Optimizer | histogram, persistent stats | ✅ |
 | msa entities / queries / TX routing | 적용 | ✅ |
+| Online DDL 심화 | INSTANT/INPLACE/COPY / gh-ost / pt-osc / PG CREATE INDEX CONCURRENTLY | ✅ 커버 ([20](20-online-ddl-deep.md)) |
+| Deadlock 안티패턴 | 4 조건 / wait-for graph / SHOW ENGINE INNODB STATUS / SKIP LOCKED / 회피 | ✅ 커버 ([21](21-deadlock-anti-patterns.md)) |
 
 ### 1-A. 갭 진단
 
@@ -167,7 +169,7 @@ sources:
 | ALGORITHM=INPLACE | online | ✅ |
 | ALGORITHM=COPY | rebuild — 마지막 수단 | ✅ |
 | LOCK= NONE / SHARED / EXCLUSIVE | 동시 DML 영향 | ✅ |
-| **gh-ost / pt-online-schema-change** | external tool | 🟡 |
+| **gh-ost / pt-online-schema-change** | external tool | ✅ 커버 ([20](20-online-ddl-deep.md)) |
 | pg_repack (PG) | bloat 회피 | ★ 신규 |
 
 ### I. 운영 / 진단

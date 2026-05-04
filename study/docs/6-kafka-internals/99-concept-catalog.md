@@ -31,6 +31,10 @@ sources:
 | DLQ | 실패 토픽 분리 | ✅ |
 | msa 적용 | Kafka 토픽 컨벤션 + ADR-0012/0029 | ✅ |
 | 운영 | lag, throughput, ISR shrink | ✅ |
+| KRaft / Tiered Storage / Cruise Control | ZK 제거, hot/cold segment, 자동 리밸런서 | ✅ ([14](14-kraft-tiered-storage.md)) |
+| Rebalance Protocols | Cooperative (KIP-429), Static Membership (KIP-345), KIP-848 신 protocol | ✅ ([15](15-rebalance-protocols.md)) |
+| Log Compaction / Tombstone | key 별 최신 값, mixed (delete+compact), compacted topic 패턴 | ✅ ([16](16-log-compaction-tombstone.md)) |
+| Streams DSL — KStream/KTable | KStream/KTable/GlobalKTable, EOS V2, DSL operators | ✅ ([17](17-streams-api-kstream-ktable.md)) |
 
 ### 1-A. 갭 진단 (Apache Kafka 4.0 기준)
 
@@ -80,14 +84,14 @@ sources:
 | 개념 | 정의 | 상태 |
 |---|---|---|
 | Broker / Controller | Controller = cluster metadata 관리 | ✅ |
-| **KRaft mode** (no ZooKeeper) | 4.0 부터 표준 — Raft consensus | ★ 신규 |
+| **KRaft mode** (no ZooKeeper) | 4.0 부터 표준 — Raft consensus | ✅ 커버 ([14](14-kraft-tiered-storage.md)) |
 | Topic / Partition / Replica | 분산 단위 | ✅ |
 | ISR (In-Sync Replicas) | acks=all + min.insync.replicas | ✅ |
 | Leader election (clean / unclean) | data loss trade | ★ 신규 |
 | Rack awareness | replica placement | 🟡 |
-| **Tiered Storage** | hot/cold segment 분리 (S3) | ★ 신규 |
+| **Tiered Storage** | hot/cold segment 분리 (S3) | ✅ 커버 ([14](14-kraft-tiered-storage.md)) |
 | Reassignment | partition 이동 | 🟡 |
-| **Cruise Control** (LinkedIn) | 자동 리밸런서 | ★ 신규 |
+| **Cruise Control** (LinkedIn) | 자동 리밸런서 | ✅ 커버 ([14](14-kraft-tiered-storage.md)) |
 
 ### B. Producer
 
@@ -113,9 +117,9 @@ sources:
 | **isolation.level** (read_committed / uncommitted) | EOS consumer 측 | ✅ |
 | max.poll.records / max.poll.interval.ms | poll 주기 | ✅ |
 | session.timeout.ms / heartbeat.interval.ms | 멤버십 | ✅ |
-| **Cooperative Rebalancing** (KIP-429) | incremental | ★ 신규 |
-| **Static Membership** (KIP-345) | group.instance.id | ★ 신규 |
-| **Consumer Group Protocol 신규** (4.x) | next-gen | ★ 신규 |
+| **Cooperative Rebalancing** (KIP-429) | incremental | ✅ 커버 ([15](15-rebalance-protocols.md)) |
+| **Static Membership** (KIP-345) | group.instance.id | ✅ 커버 ([15](15-rebalance-protocols.md)) |
+| **Consumer Group Protocol 신규** (4.x) | next-gen | ✅ 커버 ([15](15-rebalance-protocols.md)) |
 | Consumer fetcher (max.partition.fetch.bytes) | tuning | 🟡 |
 
 ### D. EOS / Idempotency
@@ -125,7 +129,7 @@ sources:
 | Idempotent Producer | PID + sequence — partition 단위 중복 회피 | ✅ |
 | Transactional Producer | 다중 partition atomic | ✅ |
 | Read Committed | aborted TX 안 읽음 | ✅ |
-| Streams EOS V2 | 가벼운 EOS | ★ 신규 |
+| Streams EOS V2 | 가벼운 EOS | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
 | **Consumer 멱등성** (msa 표준) | DB unique key + idempotency key | ✅ |
 | DLQ 패턴 | 영구 실패 격리 | ✅ |
 
@@ -134,25 +138,25 @@ sources:
 | 개념 | 정의 | 상태 |
 |---|---|---|
 | Retention (delete) | 시간/크기 기반 삭제 | ✅ |
-| **Compaction** (log compaction) | key 별 최신 값 유지 | ★ 신규 |
-| Mixed (delete + compact) | 두 정책 결합 | ★ 신규 |
-| Tombstone | null value = 삭제 마커 | ★ 신규 |
-| Compacted topic 사용 패턴 | KTable, materialized view | ★ 신규 |
+| **Compaction** (log compaction) | key 별 최신 값 유지 | ✅ 커버 ([16](16-log-compaction-tombstone.md)) |
+| Mixed (delete + compact) | 두 정책 결합 | ✅ 커버 ([16](16-log-compaction-tombstone.md)) |
+| Tombstone | null value = 삭제 마커 | ✅ 커버 ([16](16-log-compaction-tombstone.md)) |
+| Compacted topic 사용 패턴 | KTable, materialized view | ✅ 커버 ([16](16-log-compaction-tombstone.md)) |
 
 ### F. Kafka Streams
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| KStream / KTable / GlobalKTable | 스트림 vs 테이블 | ★ 신규 |
-| DSL operators | map / filter / flatMap / branch / merge / through | ★ 신규 |
-| join 종류 | KStream-KStream (windowed) / KStream-KTable / KTable-KTable / GlobalKTable | ★ 신규 |
-| Windowing | tumbling / hopping / session / sliding | ★ 신규 |
-| Aggregation | reduce / aggregate / count + windowed | ★ 신규 |
-| State Store (RocksDB / in-memory) | 로컬 상태 | ★ 신규 |
-| Interactive Queries | state store HTTP 노출 | ★ 신규 |
-| Processor API | DSL 보다 저수준 | ★ 신규 |
-| Suppress | window emit 정책 | ★ 신규 |
-| Streams EOS V2 | exactly-once-v2 | ★ 신규 |
+| KStream / KTable / GlobalKTable | 스트림 vs 테이블 | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| DSL operators | map / filter / flatMap / branch / merge / through | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| join 종류 | KStream-KStream (windowed) / KStream-KTable / KTable-KTable / GlobalKTable | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| Windowing | tumbling / hopping / session / sliding | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| Aggregation | reduce / aggregate / count + windowed | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| State Store (RocksDB / in-memory) | 로컬 상태 | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| Interactive Queries | state store HTTP 노출 | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| Processor API | DSL 보다 저수준 | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| Suppress | window emit 정책 | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
+| Streams EOS V2 | exactly-once-v2 | ✅ 커버 ([17](17-streams-api-kstream-ktable.md)) |
 
 ### G. Connect
 
@@ -201,7 +205,7 @@ sources:
 | Throughput / RPS | metric | ✅ |
 | JMX metrics + kafka_exporter (Prom) | observability | 🟡 |
 | Burrow (lag) / CMAK / AKHQ | 도구 | 🟡 |
-| **Cruise Control / Strimzi Operator** | k8s 기반 자동 운영 | ★ 신규 |
+| **Cruise Control / Strimzi Operator** | k8s 기반 자동 운영 | ✅ 커버 ([14](14-kraft-tiered-storage.md)) |
 
 ---
 

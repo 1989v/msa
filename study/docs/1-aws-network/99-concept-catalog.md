@@ -42,6 +42,8 @@ sources:
 | 운영 | VPC Flow Logs / CloudWatch | 13~14 |
 | msa 연결 | EKS (Elastic Kubernetes Service) 환경에서 본 주제들 적용 | 15~17 (가설) |
 | 면접 카드 | 시나리오 + 트러블슈팅 | 18~20 |
+| IPv6 / IPAM / BYOIP | dual-stack, IPv6-only subnet, Egress-only IGW, IPAM 풀, BYOIP, primary/secondary CIDR | ✅ ([20](20-ipv6-ipam-byoip.md)) |
+| DNS / DHCP / SG references / VPC Lattice | DHCP options, enableDnsSupport/Hostnames, SG sg-id 참조, VPC Lattice mesh | ✅ ([21](21-dns-dhcp-sg-deep.md)) |
 
 > 정확한 매핑은 각 deep file 의 frontmatter 와 헤딩으로 확인 — 본 표는 카테고리 단위 요약.
 
@@ -85,13 +87,13 @@ AWS 공식 docs 카테고리 기준으로 다음 영역이 19 내 deep file 에 
 | **Route Table / Main vs Custom** | 서브넷 → 다음 hop 결정 | docs/vpc/route-tables | ✅ 커버 |
 | **IGW (Internet Gateway)** | 양방향 인터넷 게이트웨이 | docs/vpc/internet-gateway | ✅ 커버 |
 | **NAT Gateway / Instance** | private → 인터넷 outbound (단방향) | docs/vpc/vpc-nat-gateway | ✅ 커버 |
-| **Egress-only IGW** | IPv6 전용 outbound | docs/vpc/egress-only-internet-gateway | ★ 신규 |
-| **CIDR 블록 (primary/secondary)** | IPv4 1차 + 4 secondary, IPv6 추가 | docs/vpc/vpc-ip-addressing | 🟡 부분 |
-| **IPv6 (dual-stack / IPv6-only)** | dual-stack vs single-stack 결정 | docs/vpc/ipv6-on-aws | ★ 신규 |
-| **DHCP options set** | 도메인/DNS 서버 설정 | docs/vpc/VPC_DHCP_Options | ★ 신규 |
-| **DNS resolution / hostnames** | enableDnsSupport / enableDnsHostnames | docs/vpc/vpc-dns | 🟡 부분 |
-| **IPAM (IP Address Manager)** | IP 풀 자동 할당, account 간 공유 | docs/vpc/what-is-it-ipam | ★ 신규 |
-| **Bring Your Own IP (BYOIP)** | 자체 보유 IP 풀 import | docs/vpc/vpc-byoip | ★ 신규 |
+| **Egress-only IGW** | IPv6 전용 outbound | docs/vpc/egress-only-internet-gateway | ✅ 커버 ([20](20-ipv6-ipam-byoip.md)) |
+| **CIDR 블록 (primary/secondary)** | IPv4 1차 + 4 secondary, IPv6 추가 | docs/vpc/vpc-ip-addressing | ✅ 커버 ([20](20-ipv6-ipam-byoip.md)) |
+| **IPv6 (dual-stack / IPv6-only)** | dual-stack vs single-stack 결정 | docs/vpc/ipv6-on-aws | ✅ 커버 ([20](20-ipv6-ipam-byoip.md)) |
+| **DHCP options set** | 도메인/DNS 서버 설정 | docs/vpc/VPC_DHCP_Options | ✅ 커버 ([21](21-dns-dhcp-sg-deep.md)) |
+| **DNS resolution / hostnames** | enableDnsSupport / enableDnsHostnames | docs/vpc/vpc-dns | ✅ 커버 ([21](21-dns-dhcp-sg-deep.md)) |
+| **IPAM (IP Address Manager)** | IP 풀 자동 할당, account 간 공유 | docs/vpc/what-is-it-ipam | ✅ 커버 ([20](20-ipv6-ipam-byoip.md)) |
+| **Bring Your Own IP (BYOIP)** | 자체 보유 IP 풀 import | docs/vpc/vpc-byoip | ✅ 커버 ([20](20-ipv6-ipam-byoip.md)) |
 
 ### B. 보안 (네트워크 layer)
 
@@ -99,7 +101,7 @@ AWS 공식 docs 카테고리 기준으로 다음 영역이 19 내 deep file 에 
 |---|---|---|---|
 | **Security Group** | stateful, 인스턴스 단위, allow only | docs/vpc/VPC_SecurityGroups | ✅ 커버 |
 | **NACL (Network ACL)** | stateless, 서브넷 단위, allow + deny | docs/vpc/vpc-network-acls | ✅ 커버 |
-| **SG references (sg ↔ sg)** | 동적 IP 회피 — sg id 로 source 지정 | docs | 🟡 부분 |
+| **SG references (sg ↔ sg)** | 동적 IP 회피 — sg id 로 source 지정 | docs | ✅ 커버 ([21](21-dns-dhcp-sg-deep.md)) |
 | **Prefix lists (managed/customer)** | 재사용 가능한 CIDR 묶음 | docs/vpc/managed-prefix-lists | ★ 신규 |
 | **Network Firewall** | Suricata 기반 stateful firewall, TLS inspection | docs/network-firewall | ★ 신규 |
 | **AWS WAF (Web Application Firewall)** | L7 — SQLi/XSS/rate-based rule | docs/waf/latest/developerguide | ★ 신규 |
@@ -137,7 +139,7 @@ AWS 공식 docs 카테고리 기준으로 다음 영역이 19 내 deep file 에 
 | **Direct Connect (DX)** | 전용선 dedicated/hosted | docs/directconnect | ★ 신규 |
 | **PrivateLink / VPC Endpoints** | Interface (ENI) vs Gateway (S3/DynamoDB) endpoint | docs/vpc/privatelink | ★ 신규 |
 | **PrivateLink Endpoint Service** | SaaS 제공자 측 — 사설 endpoint 제공 | docs/vpc/privatelink/concepts/endpoint-service | ★ 신규 |
-| **VPC Lattice** | service-to-service mesh — Auth + Routing 통합 관리형 | docs/vpc-lattice | ★ 신규 |
+| **VPC Lattice** | service-to-service mesh — Auth + Routing 통합 관리형 | docs/vpc-lattice | ✅ 커버 ([21](21-dns-dhcp-sg-deep.md)) |
 | **Resource Access Manager (RAM)** | cross-account 자원 공유 (TGW/PrivateLink/Subnet) | docs/ram | ★ 신규 |
 
 ### E. EKS / Kubernetes 네트워킹 연결

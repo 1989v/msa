@@ -33,6 +33,7 @@ sources:
 | Coroutine | Kotlin Flow vs Reactor (cross #3) | ✅ |
 | WebFlux | Reactor 위 Spring 5+ | ✅ |
 | Backpressure | Pull / Push / Reactive Streams 표준 | ✅ |
+| **Reactor + Netty 파이프라인 통합** (Mono/Flux ↔ ChannelHandler ↔ EventLoopGroup ↔ ByteBuf, WebFlux 내부) | reactive 풀스택 분해 | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
 | msa 적용 | gateway WebFlux, charting Python async | ✅ |
 
 ### 1-A. 갭 진단
@@ -101,27 +102,27 @@ sources:
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| EventLoop / EventLoopGroup | Netty 의 thread model | ✅ |
-| ChannelPipeline + Inbound/Outbound Handler | event 흐름 | ✅ |
+| EventLoop / EventLoopGroup | Netty 의 thread model | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
+| ChannelPipeline + Inbound/Outbound Handler | event 흐름 | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
 | Bootstrap / ServerBootstrap | client / server 시작 | ✅ |
-| **ByteBuf** — direct/heap/composite + pooled/unpooled | 메모리 | ★ 신규 |
+| **ByteBuf** — direct/heap/composite + pooled/unpooled | 메모리 | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
 | **Reference counting (ref count)** + leak detector | release 의무 | ★ 신규 |
 | **FastThreadLocal** | ThreadLocal 보다 빠른 lookup | ★ 신규 |
 | Channel options (SO_BACKLOG / TCP_NODELAY / SO_KEEPALIVE / SO_LINGER) | 표준 옵션 | ★ 신규 |
-| HTTP codec (HTTP/1, HTTP/2, HTTP/3 incubator) | 코덱 | 🟡 |
+| HTTP codec (HTTP/1, HTTP/2, HTTP/3 incubator) | 코덱 | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
 | Netty + Virtual Threads 호환성 | Loom 영향 | ★ 신규 |
 
 ### D. Project Reactor
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| Mono / Flux | 0-1 / 0-N | ✅ |
+| Mono / Flux | 0-1 / 0-N | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
 | Operator (map / flatMap / concatMap / switchMap / merge / zip) | 변환 | ✅ |
-| **publishOn vs subscribeOn** | scheduler 변경 | ★ 신규 |
-| **Schedulers** (parallel / boundedElastic / single / immediate) | thread pool | ✅ |
-| **Backpressure (BUFFER/DROP/LATEST/ERROR)** | overflow strategy | ✅ |
-| **Reactor Context** | ThreadLocal 대체 — coroutine context 와 유사 | ★ 신규 |
-| **Sinks** (Many.unicast/multicast/replay, One, Empty) | hot publisher | ★ 신규 |
+| **publishOn vs subscribeOn** | scheduler 변경 | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
+| **Schedulers** (parallel / boundedElastic / single / immediate) | thread pool | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
+| **Backpressure (BUFFER/DROP/LATEST/ERROR)** | overflow strategy | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
+| **Reactor Context** | ThreadLocal 대체 — coroutine context 와 유사 | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
+| **Sinks** (Many.unicast/multicast/replay, One, Empty) | hot publisher | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
 | Hot vs Cold | share / replay / multicast / autoConnect | ✅ |
 | Retry / repeat / backoff (Reactor.retry / Resilience4j) | 회복성 | 🟡 |
 | **StepVerifier** (Reactor Test) | reactive test | ★ 신규 |
@@ -141,11 +142,11 @@ sources:
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| WebFlux 의 두 모델 (annotation / functional routing) | 2 | ✅ |
+| WebFlux 의 두 모델 (annotation / functional routing) | 2 | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
 | WebFilter | non-blocking filter | ✅ |
 | WebClient | non-blocking HTTP client (RestTemplate 후속) | ✅ |
 | R2DBC integration | reactive DB | ★ 신규 |
-| **Reactor Netty** (server / client) | 기본 server | 🟡 |
+| **Reactor Netty** (server / client) | 기본 server | ✅ 커버 ([20](20-reactor-netty-pipeline-deep.md)) |
 | Server-Sent Events (SSE) | text/event-stream | ★ 신규 |
 | WebSocket on WebFlux | reactive ws | 🟡 |
 

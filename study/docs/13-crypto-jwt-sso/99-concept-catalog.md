@@ -38,6 +38,10 @@ sources:
 | OAuth 2.0 / OIDC | flows | ✅ |
 | KMS | AWS / GCP / Azure / HSM | ✅ |
 | msa 적용 | gateway 인증, key rotation | ✅ |
+| AEAD / KDF / 안전 난수 | nonce uniqueness, AES-GCM-SIV, HKDF, CSPRNG, Key Wrap, Crypto-agility | ✅ ([21](21-aead-nonce-key-derivation.md)) |
+| JWT 함정 / Zero-Trust | alg=none, 0-RTT replay, DPoP, mTLS-bound, refresh token rotation | ✅ ([22](22-jwt-pitfalls-zero-trust.md)) |
+| mTLS in mesh / Cert rotation | SPIFFE/SPIRE, Istio/Linkerd auto rotation, OCSP, CT log | ✅ ([23](23-mtls-mesh-cert-rotation.md)) |
+| PQC (Post-Quantum Crypto) | CRYSTALS-Kyber/Dilithium, SPHINCS+, Falcon, Hybrid TLS | ✅ ([24](24-post-quantum-crypto.md)) |
 
 ### 1-A. 갭 진단
 
@@ -105,9 +109,9 @@ sources:
 | AES (128/192/256) | 대칭 표준 | ✅ |
 | Modes — ECB / CBC / CTR / GCM / CCM / SIV / OCB | mode 5종 + AEAD 변형 | ✅ |
 | ChaCha20-Poly1305 | mobile 친화 AEAD | ✅ |
-| **AEAD nonce uniqueness 함정** | nonce 재사용 = key 노출 (GCM 치명) | ★ 신규 |
-| AES-SIV / AES-GCM-SIV | nonce-misuse-resistant | ★ 신규 |
-| Key Wrap (RFC 3394 / 5649) | KEK 로 DEK 보호 | ★ 신규 |
+| **AEAD nonce uniqueness 함정** | nonce 재사용 = key 노출 (GCM 치명) | ✅ 커버 ([21](21-aead-nonce-key-derivation.md)) |
+| AES-SIV / AES-GCM-SIV | nonce-misuse-resistant | ✅ 커버 ([21](21-aead-nonce-key-derivation.md)) |
+| Key Wrap (RFC 3394 / 5649) | KEK 로 DEK 보호 | ✅ 커버 ([21](21-aead-nonce-key-derivation.md)) |
 
 ### B. Asymmetric / Hash / MAC / KDF
 
@@ -119,19 +123,19 @@ sources:
 | RSA-PSS (signature) | OAEP encryption | 🟡 |
 | SHA-2 / SHA-3 / BLAKE2/3 | hash | ✅ |
 | HMAC / KMAC / GMAC | MAC | ✅ |
-| **HKDF (RFC 5869)** — extract + expand | 표준 KDF | ★ 신규 |
+| **HKDF (RFC 5869)** — extract + expand | 표준 KDF | ✅ 커버 ([21](21-aead-nonce-key-derivation.md)) |
 | PBKDF2 / Argon2 / scrypt / bcrypt | password hash | ✅ |
-| **CSPRNG / DRBG** | 안전 난수 | ★ 신규 |
+| **CSPRNG / DRBG** | 안전 난수 | ✅ 커버 ([21](21-aead-nonce-key-derivation.md)) |
 
 ### C. Post-Quantum (NIST 2024)
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| **CRYSTALS-Kyber (ML-KEM)** | KEM 표준 | ★ 신규 |
-| **CRYSTALS-Dilithium (ML-DSA)** | signature 표준 | ★ 신규 |
-| SPHINCS+ / Falcon | 추가 signature | ★ 신규 |
-| **Hybrid TLS (X25519 + Kyber)** | 전환기 표준 | ★ 신규 |
-| Crypto-agility | 알고리즘 교체 가능성 | ★ 신규 |
+| **CRYSTALS-Kyber (ML-KEM)** | KEM 표준 | ✅ 커버 ([24](24-post-quantum-crypto.md)) |
+| **CRYSTALS-Dilithium (ML-DSA)** | signature 표준 | ✅ 커버 ([24](24-post-quantum-crypto.md)) |
+| SPHINCS+ / Falcon | 추가 signature | ✅ 커버 ([24](24-post-quantum-crypto.md)) |
+| **Hybrid TLS (X25519 + Kyber)** | 전환기 표준 | ✅ 커버 ([24](24-post-quantum-crypto.md)) |
+| Crypto-agility | 알고리즘 교체 가능성 | ✅ 커버 ([21](21-aead-nonce-key-derivation.md)) |
 
 ### D. TLS / mTLS
 
@@ -140,11 +144,11 @@ sources:
 | TLS 1.3 vs 1.2 | 1-RTT, removed weak ciphers | ✅ |
 | Cipher suites (TLS_AES_*) | 5 표준 | 🟡 |
 | Session resumption (PSK + 0-RTT) | 가속 | 🟡 |
-| **0-RTT 함정 (replay)** | idempotent only | ★ 신규 |
+| **0-RTT 함정 (replay)** | idempotent only | ✅ 커버 ([22](22-jwt-pitfalls-zero-trust.md)) |
 | mTLS (client cert) | 양방향 | ✅ |
-| **mTLS in mesh (Istio/Linkerd auto rotation)** | 자동 rotation | ★ 신규 |
-| Certificate Transparency (CT log) | misissue 감지 | ★ 신규 |
-| OCSP / OCSP Stapling / CRL | revocation | ★ 신규 |
+| **mTLS in mesh (Istio/Linkerd auto rotation)** | 자동 rotation | ✅ 커버 ([23](23-mtls-mesh-cert-rotation.md)) |
+| Certificate Transparency (CT log) | misissue 감지 | ✅ 커버 ([23](23-mtls-mesh-cert-rotation.md)) |
+| OCSP / OCSP Stapling / CRL | revocation | ✅ 커버 ([23](23-mtls-mesh-cert-rotation.md)) |
 
 ### E. JWT / JOSE 패밀리
 
@@ -153,12 +157,12 @@ sources:
 | JWT (RFC 7519) | claims | ✅ |
 | JWS / JWE / JWK / JWA / JWT | 5 RFC | ✅ |
 | alg (HS256 / RS256 / ES256 / EdDSA / PS256) | 서명 | ✅ |
-| **alg=none 함정** | CVE | ★ 신규 |
-| **HS vs RS confusion** | public key → HS secret | ★ 신규 |
+| **alg=none 함정** | CVE | ✅ 커버 ([22](22-jwt-pitfalls-zero-trust.md)) |
+| **HS vs RS confusion** | public key → HS secret | ✅ 커버 ([22](22-jwt-pitfalls-zero-trust.md)) |
 | JWE alg vs enc | key mgmt vs content enc | ★ 신규 |
 | JWK / JWKS rotation (kid + old/new) | 표준 | ★ 신규 |
 | jti + denylist (revocation 패턴) | 취소 | ★ 신규 |
-| **Refresh Token rotation + reuse detection** | 보안 표준 | ★ 신규 |
+| **Refresh Token rotation + reuse detection** | 보안 표준 | ✅ 커버 ([22](22-jwt-pitfalls-zero-trust.md)) |
 | **PASETO** (v3/v4) | JWT 대안 | ★ 신규 |
 
 ### F. OAuth 2 / 2.1 / OIDC
@@ -173,8 +177,8 @@ sources:
 | **OAuth 2.1** | implicit 제거 + PKCE 의무화 | ★ 신규 |
 | **PAR (RFC 9126)** | request push | ★ 신규 |
 | **JAR (RFC 9101)** | request 객체 JWT | ★ 신규 |
-| **mTLS client auth (RFC 8705)** | sender-constrained | ★ 신규 |
-| **DPoP** | proof-of-possession | ★ 신규 |
+| **mTLS client auth (RFC 8705)** | sender-constrained | ✅ 커버 ([22](22-jwt-pitfalls-zero-trust.md)) |
+| **DPoP** | proof-of-possession | ✅ 커버 ([22](22-jwt-pitfalls-zero-trust.md)) |
 | Token introspection (RFC 7662) | 서버 조회 | ★ 신규 |
 | Token revocation (RFC 7009) | 취소 | ★ 신규 |
 | OIDC ID Token + UserInfo + Discovery (.well-known) | OIDC 표준 | ✅ |

@@ -38,6 +38,8 @@ sources:
 | Replication | Leader-Follower / Multi-Leader / Leaderless | ✅ |
 | Partitioning | Range / Hash / Consistent Hashing | ✅ |
 | msa 적용 | ADR-0012, ADR-0015 | ✅ |
+| Consensus 심화 | FLP / Paxos (Basic/Multi) / Raft / Multi-Raft / PBFT | ✅ 커버 ([21](21-consensus-raft-paxos.md)) |
+| Saga 보상 심화 | Choreography vs Orchestration / Compensating tx / TCC / Temporal / Outbox+Inbox | ✅ 커버 ([22](22-saga-compensation-deep.md)) |
 
 ### 1-A. 갭 진단
 
@@ -95,7 +97,7 @@ sources:
 | FLP impossibility | async + 1 fault = consensus 불가 (정해진 시간 안에) | ✅ |
 | 8 Fallacies of Distributed Computing | 네트워크 가정 함정 | ✅ |
 | Two Generals Problem | 신뢰 불가능한 메시지 | 🟡 |
-| Byzantine Fault | 악의적 노드 — PBFT, Tendermint | 🟡 |
+| Byzantine Fault | 악의적 노드 — PBFT, Tendermint | ✅ 커버 ([21](21-consensus-raft-paxos.md)) |
 
 ### B. 일관성 모델 / 합의
 
@@ -106,8 +108,8 @@ sources:
 | Read-Your-Writes / Monotonic Reads / Writes | session 보장 | 🟡 |
 | Paxos / Multi-Paxos | 합의 표준 | ✅ |
 | **Raft** | 이해 가능한 합의 — 표준 | ✅ |
-| **Viewstamped Replication** | 학술 | 🟡 |
-| **PBFT / Tendermint** | Byzantine | 🟡 |
+| **Viewstamped Replication** | 학술 | ✅ 커버 ([21](21-consensus-raft-paxos.md)) |
+| **PBFT / Tendermint** | Byzantine | ✅ 커버 ([21](21-consensus-raft-paxos.md)) |
 | **Calvin / Spanner / TrueTime** | deterministic / globally synced clock | ★ 신규 |
 | Quorum (N/W/R, W+R>N) | Dynamo 스타일 | ★ 신규 |
 | Read repair / Anti-entropy / Hinted handoff | Quorum 보강 | ★ 신규 |
@@ -149,7 +151,7 @@ sources:
 | **Outbox / Inbox** | 단일 DB TX 안에 outbox 만 | ✅ |
 | **CDC** (Debezium) | binlog → Kafka | ✅ |
 | Event Sourcing + CQRS | 이벤트만 저장 + 별도 read model | ★ 신규 |
-| Saga compensating action 설계 | 보상 가능한가 | ★ 신규 |
+| Saga compensating action 설계 | 보상 가능한가 | ✅ 커버 ([22](22-saga-compensation-deep.md)) |
 
 ### F. 회복성 (Resilience)
 
@@ -173,7 +175,7 @@ sources:
 | **Gossip protocol** (SWIM / phi accrual) | 멤버십 | ★ 신규 |
 | **Service Discovery** — DNS / Consul / Eureka / K8s service | 발견 | 🟡 |
 | **Coordinator** — ZooKeeper / etcd / Consul | metadata | ✅ |
-| **Leader Election** (lease-based) | 단일 리더 보장 | 🟡 |
+| **Leader Election** (lease-based) | 단일 리더 보장 | ✅ 커버 ([21](21-consensus-raft-paxos.md)) |
 | **Distributed Lock** | Redlock 논쟁 | ✅ |
 
 ### H. 패턴 (microservices.io)

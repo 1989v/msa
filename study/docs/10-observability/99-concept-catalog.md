@@ -32,6 +32,8 @@ sources:
 | Sampling | head / tail | ✅ |
 | Cardinality | label explosion | ✅ |
 | msa 적용 | actuator, exporter, collector | ✅ |
+| Prometheus 심화 | TSDB / WAL / Sample compression / Federation / Remote write / SD / PromQL | ✅ 커버 ([15](15-prometheus-internals.md)) |
+| OpenTelemetry 심화 | OTel SDK / Collector / Context propagation / Sampling / OTLP / Semantic Conventions | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
 
 ### 1-A. 갭 진단
 
@@ -93,15 +95,15 @@ sources:
 | 개념 | 정의 | 상태 |
 |---|---|---|
 | Counter / Gauge / Histogram / Summary | 4 타입 | ✅ |
-| **Native Histogram** (Prom 2.40+) | sparse exponential bucket | ★ 신규 |
-| Histogram bucket 설계 | exponential vs custom | ★ 신규 |
+| **Native Histogram** (Prom 2.40+) | sparse exponential bucket | ✅ 커버 ([15](15-prometheus-internals.md)) |
+| Histogram bucket 설계 | exponential vs custom | ✅ 커버 ([15](15-prometheus-internals.md)) |
 | Exposition format / OpenMetrics | text/plain or proto | 🟡 |
 | Pull (scrape) vs Push (Pushgateway, OTel push) | 2가지 | ✅ |
 | Cardinality | label explosion 방지 | ✅ |
-| **Recording rules / Alerting rules** | 사전 계산 / 알람 정의 | ★ 신규 |
-| **Federation** | Prometheus 분산 | ★ 신규 |
-| Mimir / Cortex / Thanos / VictoriaMetrics | 장기 저장 | ★ 신규 |
-| PromQL — rate, increase, histogram_quantile, topk, predict_linear, ... | 함수 셋 | 🟡 |
+| **Recording rules / Alerting rules** | 사전 계산 / 알람 정의 | ✅ 커버 ([15](15-prometheus-internals.md)) |
+| **Federation** | Prometheus 분산 | ✅ 커버 ([15](15-prometheus-internals.md)) |
+| Mimir / Cortex / Thanos / VictoriaMetrics | 장기 저장 | ✅ 커버 ([15](15-prometheus-internals.md)) |
+| PromQL — rate, increase, histogram_quantile, topk, predict_linear, ... | 함수 셋 | ✅ 커버 ([15](15-prometheus-internals.md)) |
 
 ### B. Logs
 
@@ -114,18 +116,18 @@ sources:
 | **Log → trace correlation** | trace_id field | ★ 신규 |
 | Log sampling / drop | 비용 절감 | ★ 신규 |
 | Log retention 정책 | hot / warm / cold | 🟡 |
-| OTel Logs SDK | 표준화 | ★ 신규 |
+| OTel Logs SDK | 표준화 | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
 
 ### C. Traces
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
 | Trace / Span / Span context | 트리 모델 | ✅ |
-| Span kind (CLIENT/SERVER/PRODUCER/CONSUMER/INTERNAL) | 5종 | ★ 신규 |
-| **W3C Trace Context (traceparent / tracestate)** | 표준 propagation | ★ 신규 |
-| Baggage | cross-service 메타데이터 | ★ 신규 |
-| Span events / links | log within span / multi-parent | ★ 신규 |
-| Sampling — head / tail / probabilistic / rate-limit / parent-based | 5종 | 🟡 |
+| Span kind (CLIENT/SERVER/PRODUCER/CONSUMER/INTERNAL) | 5종 | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
+| **W3C Trace Context (traceparent / tracestate)** | 표준 propagation | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
+| Baggage | cross-service 메타데이터 | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
+| Span events / links | log within span / multi-parent | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
+| Sampling — head / tail / probabilistic / rate-limit / parent-based | 5종 | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
 | Trace store — Jaeger / Zipkin / Tempo | 비교 | 🟡 |
 | Service map | 자동 토폴로지 | ★ 신규 |
 
@@ -133,13 +135,13 @@ sources:
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| OTel SDK (Java / Python / Node / Go) | API + impl | 🟡 |
+| OTel SDK (Java / Python / Node / Go) | API + impl | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
 | **Auto-instrumentation** (JVM agent) | 0-config 계측 | ✅ |
-| Manual instrumentation | custom span/attr | 🟡 |
-| **OTel Collector** | receivers / processors / exporters / pipelines | ★ 신규 |
-| **OTLP** (gRPC / HTTP) | wire protocol | ★ 신규 |
-| **Semantic Conventions** | `service.name`, `http.*`, `db.*` | ★ 신규 |
-| Resource vs Span attributes | 식별 vs 컨텍스트 | ★ 신규 |
+| Manual instrumentation | custom span/attr | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
+| **OTel Collector** | receivers / processors / exporters / pipelines | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
+| **OTLP** (gRPC / HTTP) | wire protocol | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
+| **Semantic Conventions** | `service.name`, `http.*`, `db.*` | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
+| Resource vs Span attributes | 식별 vs 컨텍스트 | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
 | **OpenTelemetry Operator** (k8s) | injection | ★ 신규 |
 
 ### E. Profiling (Continuous)
@@ -157,7 +159,7 @@ sources:
 | 개념 | 정의 | 상태 |
 |---|---|---|
 | **RUM** (Real User Monitoring) | browser SDK | ★ 신규 |
-| **OTel Web SDK** | frontend tracing | ★ 신규 |
+| **OTel Web SDK** | frontend tracing | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
 | **Synthetic monitoring** — Blackbox exporter, k6, Synthetics | scripted | ★ 신규 |
 | Web Vitals (LCP / INP / CLS) | UX 메트릭 | ★ 신규 |
 
@@ -196,9 +198,9 @@ sources:
 | 개념 | 정의 | 상태 |
 |---|---|---|
 | Log/metric cost (cardinality) | label explosion | ✅ |
-| Tail sampling | 비싸지만 정확 | 🟡 |
+| Tail sampling | 비싸지만 정확 | ✅ 커버 ([16](16-opentelemetry-deep.md)) |
 | Long-term storage trade-off | hot vs cold | 🟡 |
-| Pushgateway 함정 | short-lived job | ★ 신규 |
+| Pushgateway 함정 | short-lived job | ✅ 커버 ([15](15-prometheus-internals.md)) |
 
 ---
 

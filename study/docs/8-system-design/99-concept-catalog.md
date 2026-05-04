@@ -37,6 +37,10 @@ sources:
 | Search (커머스) | inverted index, ranking (#19) | ✅ |
 | Commerce | 장바구니, 주문, 결제 통합 | ✅ |
 | Map / Ride hailing | geo, 매칭, ETA | ✅ |
+| **Search Autocomplete (search-as-you-type)** | Trie + score, prefix matching, edit distance | ✅ 커버 ([14](14-realtime-search-autocomplete.md)) |
+| **Distributed Counter (impressions/clicks)** | high QPS counter, HyperLogLog, sharding | ✅ 커버 ([15](15-distributed-counter-impressions.md)) |
+| **Payment Idempotency** | idempotency key, Outbox + payment, 멱등 보장 | ✅ 커버 ([16](16-payment-idempotency.md)) |
+| **IoT Telemetry Pipeline** | MQTT, 시계열 ingest, edge → cloud, OLAP 저장 | ✅ 커버 ([17](17-iot-telemetry-pipeline.md)) |
 
 ### 1-A. 갭 진단 — 추가 표준 시나리오
 
@@ -44,7 +48,7 @@ sources:
 12. **Newsfeed at Scale (BigTable / GraphDB)**
 13. **Distributed File Storage (S3, GFS, HDFS)**
 14. **Distributed Cache (memcached / Redis cluster)**
-15. **Distributed Counter (high QPS counters)**
+15. **Distributed Counter (high QPS counters)** — ✅ 커버 ([15](15-distributed-counter-impressions.md))
 16. **Distributed Queue / Pub-Sub**
 17. **Distributed KV store (DynamoDB, Cassandra)**
 18. **Distributed SQL (Spanner, CockroachDB)**
@@ -53,7 +57,7 @@ sources:
 21. **Live Streaming (Twitch)** — low-latency
 22. **Ads Serving (Real-time bidding)** — RTB
 23. **Recommendation System** — offline + online (#19 cross)
-24. **Search Autocomplete (Twitter/Google)** — Trie + score
+24. **Search Autocomplete (Twitter/Google)** — Trie + score — ✅ 커버 ([14](14-realtime-search-autocomplete.md))
 25. **Web Crawler** — politeness, dedup, Bloom filter
 26. **Photo Sharing (Instagram)** — feed + media + likes
 27. **Real-time Analytics (Druid / ClickHouse)** — OLAP

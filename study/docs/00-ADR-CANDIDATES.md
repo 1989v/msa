@@ -1661,7 +1661,60 @@ ADR-0026 (docs-taxonomy) 준수:
 
 ---
 
-## 12. 변경 이력
+## 12. 다른 토픽 ADR 후보 (Wave 1+2 deep file 27건 — 2026-05-05 추가)
+
+12 토픽에 27 신규 deep file 작성 결과로 도출된 ADR 후보를 통합. 각 deep file 의 ADR 후보 절을 본 표로 통합 — 상세는 해당 deep file 또는 토픽 improvements.md 참조.
+
+### 12-1. 분야별 핵심 ADR 후보
+
+| 가번호 | 영역 | 제목 | 출처 | 우선순위 |
+|---|---|---|---|---|
+| **(신규-A1)** | #1 AWS | IPv6 dual-stack 마이그레이션 (public IPv4 비용 회피) + IPAM 도입 | [1/20-ipv6-ipam-byoip.md](1-aws-network/20-ipv6-ipam-byoip.md) | 분기 |
+| **(신규-A2)** | #1 AWS | SG ↔ SG references 표준 + DNS hostnames 운영 점검 | [1/21-dns-dhcp-sg-deep.md](1-aws-network/21-dns-dhcp-sg-deep.md) | 즉시 (NetworkPolicy 보강) |
+| **(신규-K1)** | #6 Kafka | KRaft mode 마이그레이션 + Tiered Storage 도입 (S3 backed) | [6/14-kraft-tiered-storage.md](6-kafka-internals/14-kraft-tiered-storage.md) | 분기 |
+| **(신규-K2)** | #6 Kafka | Cooperative Rebalancing + Static Membership 표준 (search-consumer / analytics) | [6/15-rebalance-protocols.md](6-kafka-internals/15-rebalance-protocols.md) | 즉시 (rebalance 폭주 방어) |
+| **(신규-K3)** | #6 Kafka | Compacted topic + Tombstone 운영 표준 (outbox / saga state) | [6/16-log-compaction-tombstone.md](6-kafka-internals/16-log-compaction-tombstone.md) | 분기 |
+| **(신규-K4)** | #6 Kafka | Streams API 도입 (analytics 의 click 집계 / search score 계산) | [6/17-streams-api-kstream-ktable.md](6-kafka-internals/17-streams-api-kstream-ktable.md) | 반기 |
+| **(신규-O1)** | #10 Observability | Prometheus HA + Mimir/Thanos remote_write + cardinality 정책 | [10/15-prometheus-internals.md](10-observability/15-prometheus-internals.md) | 분기 |
+| **(신규-O2)** | #10 Observability | OpenTelemetry SDK + Collector 전사 도입 (3-pillar 통합) | [10/16-opentelemetry-deep.md](10-observability/16-opentelemetry-deep.md) | 즉시 (현재 ADR-0028 보강) |
+| **(신규-K5)** | #11 K8s | Operator pattern 표준 — 자체 CRD 작성 가이드라인 | [11/18-operator-pattern-crd.md](11-k8s-deep-dive/18-operator-pattern-crd.md) | 분기 |
+| **(신규-K6)** | #11 K8s | GitOps 전환 — Argo CD ApplicationSet + SOPS/SealedSecrets | [11/19-gitops-argocd-flux.md](11-k8s-deep-dive/19-gitops-argocd-flux.md) | 분기 |
+| **(신규-K7)** | #11 K8s | Argo Rollouts + AnalysisTemplate 자동 카나리 (gateway / order / search) | [11/20-canary-bluegreen-argo-rollouts.md](11-k8s-deep-dive/20-canary-bluegreen-argo-rollouts.md) | 분기 |
+| **(신규-C1)** | #13 Crypto | AEAD nonce 정책 + HKDF 표준 + crypto-agility 인프라 | [13/21-aead-nonce-key-derivation.md](13-crypto-jwt-sso/21-aead-nonce-key-derivation.md) | 즉시 (보안 사고 위험) |
+| **(신규-C2)** | #13 Crypto | JWT 운영 표준 — alg=none 차단 / refresh rotation / DPoP / mTLS-bound | [13/22-jwt-pitfalls-zero-trust.md](13-crypto-jwt-sso/22-jwt-pitfalls-zero-trust.md) | 즉시 |
+| **(신규-C3)** | #13 Crypto | mTLS in mesh 도입 (Istio/Linkerd auto rotation) — 서비스 간 인증 표준 | [13/23-mtls-mesh-cert-rotation.md](13-crypto-jwt-sso/23-mtls-mesh-cert-rotation.md) | 분기 |
+| **(신규-C4)** | #13 Crypto | PQC (Post-Quantum) 마이그레이션 — Hybrid TLS (X25519 + Kyber) | [13/24-post-quantum-crypto.md](13-crypto-jwt-sso/24-post-quantum-crypto.md) | 반기-장기 |
+| **(신규-D1)** | #4 DB | Online DDL 표준 — INSTANT/INPLACE 알고리즘 명시 + Flyway 통합 | [4/20-online-ddl-deep.md](4-db-index-transaction/20-online-ddl-deep.md) | 즉시 |
+| **(신규-D2)** | #4 DB | Deadlock 회피 표준 — 일관 정렬 / SKIP LOCKED / 재시도 패턴 | [4/21-deadlock-anti-patterns.md](4-db-index-transaction/21-deadlock-anti-patterns.md) | 즉시 |
+| **(신규-DS1)** | #7 Distributed | Consensus 사용 인벤토리 (Kafka KRaft / etcd / Strimzi controller) | [7/21-consensus-raft-paxos.md](7-distributed-systems/21-consensus-raft-paxos.md) | 문서화 |
+| **(신규-DS2)** | #7 Distributed | Saga 패턴 표준 (order/inventory/gifticon) — Choreography vs Orchestration 결정 | [7/22-saga-compensation-deep.md](7-distributed-systems/22-saga-compensation-deep.md) | 분기 |
+| **(신규-CC1)** | #14 CRDT | wishlist / shopping cart / gifticon 의 다중 디바이스 동기화 — OR-Set / LWW-Register 도입 | [14/20-crdt-types-deep.md](14-crdt-mrdt/20-crdt-types-deep.md) | 반기 |
+| **(신규-CO1)** | #3 Concurrency | Spring Boot 3.x Virtual Thread 활성화 + structured concurrency 가이드라인 | [3/25-virtual-thread-coroutine-deep.md](3-java-kotlin-concurrency/25-virtual-thread-coroutine-deep.md) | 즉시 |
+| **(신규-IO1)** | #16 Async I/O | Reactor + Netty pipeline 운영 표준 (gateway / search:app 의 reactive client) | [16/20-reactor-netty-pipeline-deep.md](16-async-nonblocking-io/20-reactor-netty-pipeline-deep.md) | 분기 |
+| **(신규-SD1)** | #8 System Design | 4 시나리오 카드 — 자동완성 / 광고 카운팅 / 결제 멱등성 / IoT 텔레메트리 | [8/14~17](8-system-design/) | 참고 |
+| **(신규-LN1)** | #12 Latency | 2024+ 현대 하드웨어 latency budget 갱신 — ADR-0025 보강 | [12/13-modern-hardware-latency.md](12-latency-numbers/13-modern-hardware-latency.md) | 분기 |
+
+### 12-2. 우선순위 합산
+
+- **즉시 ADR**: A2, K2, O2, C1, C2, D1, D2, CO1 — 8건
+- **분기 ADR**: A1, K1, K3, O1, K5, K6, K7, C3, DS2, IO1, LN1 — 11건
+- **반기 ADR**: K4, CC1, C4 — 3건
+- **문서화**: DS1 — 1건
+- **참고**: SD1 — 1건
+
+총 24 신규 ADR 후보. 19번의 17건 (S1~S17) 과 합치면 **총 41건의 ADR 후보**.
+
+### 12-3. cross-cutting 결합 후보
+
+여러 토픽이 동시에 다루는 후보 — 통합 ADR 화 검토:
+
+- **mTLS 도입** = C3 (#13) + K7 (#11 traffic shaping) + A2 (#1 SG references) → 1 ADR ("mTLS + zero-trust 도입")
+- **Outbox + Saga** = DS2 (#7) + ADR-0011 (기존) + K3 (#6 compacted topic state) → 1 ADR ("분산 트랜잭션 운영 표준")
+- **OTel + Latency Budget** = O2 (#10) + LN1 (#12) + ADR-0025 → 1 ADR ("3-pillar observability + latency budget v2")
+
+---
+
+## 13. 변경 이력
 
 | 일자 | 변경 | 작성자 |
 |---|---|---|
@@ -1669,6 +1722,7 @@ ADR-0026 (docs-taxonomy) 준수:
 | 2026-05-04 | #19 검색엔진 심화 ADR 9건 (핵심 4 + 보너스 5) 추가 (§11) | kgd |
 | 2026-05-04 | #19 평가/modifier/자동완성 deep file (34~36) 보강 — ADR 3건 (S10~S12) 추가 (§11-2-bis) | kgd |
 | 2026-05-05 | #19 인덱스/매핑/운영/시계열/벡터 deep file (37~41) 보강 — ADR 5건 (S13~S17) 추가 (§11-2-ter) | kgd |
+| 2026-05-05 | 다른 12 토픽 deep file 27건 (Wave 1+2) — ADR 24건 (A1, A2, K1~K7, O1, O2, C1~C4, D1, D2, DS1, DS2, CC1, CO1, IO1, SD1, LN1) 추가 (§12) | kgd |
 
 ---
 

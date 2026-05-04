@@ -32,8 +32,11 @@ sources:
 | 운영 | HPA / VPA / PDB | ✅ |
 | 배포 전략 | Rolling / Blue-Green / Canary | ✅ |
 | Operator / CRD | controller pattern | ✅ |
-| GitOps | ArgoCD / Flux | 🟡 |
+| GitOps | ArgoCD / Flux | ✅ 커버 ([19](19-gitops-argocd-flux.md)) |
 | 보안 | RBAC / ServiceAccount | ✅ |
+| Operator 심화 | Reconcile loop / Finalizers / controller-runtime / Kubebuilder | ✅ 커버 ([18](18-operator-pattern-crd.md)) |
+| GitOps 심화 | Argo CD / Flux / ApplicationSet / Sync waves / SealedSecrets / SOPS | ✅ 커버 ([19](19-gitops-argocd-flux.md)) |
+| Progressive Delivery | Canary / Blue-Green / Argo Rollouts / AnalysisTemplate / Traffic shaping | ✅ 커버 ([20](20-canary-bluegreen-argo-rollouts.md)) |
 
 ### 1-A. 갭 진단 (k8s 공식 트리 기준)
 
@@ -150,8 +153,8 @@ sources:
 | **PSA (Pod Security Admission)** — Restricted / Baseline / Privileged | PSP 후속 | ★ 신규 |
 | Pod Security Context (runAsUser / fsGroup / capabilities / seccomp / AppArmor) | 격리 | 🟡 |
 | **Workload Identity / IRSA** (EKS) | cloud IAM ↔ k8s SA | ★ 신규 |
-| **External Secrets Operator** + Vault | secret 외부화 | ★ 신규 |
-| **SealedSecrets / SOPS** | git-friendly | ★ 신규 |
+| **External Secrets Operator** + Vault | secret 외부화 | ✅ 커버 ([19](19-gitops-argocd-flux.md)) |
+| **SealedSecrets / SOPS** | git-friendly | ✅ 커버 ([19](19-gitops-argocd-flux.md)) |
 | **OPA Gatekeeper / Kyverno** | policy as code | ★ 신규 |
 | Audit log | API audit | ★ 신규 |
 
@@ -170,10 +173,10 @@ sources:
 | 개념 | 정의 | 상태 |
 |---|---|---|
 | Controller pattern (reconcile loop) | controller-runtime | ✅ |
-| Workqueue + RateLimiter | re-queue 안정성 | ★ 신규 |
+| Workqueue + RateLimiter | re-queue 안정성 | ✅ 커버 ([18](18-operator-pattern-crd.md)) |
 | Operator-SDK / Kubebuilder | scaffold | ✅ |
-| Status sub-resource | spec/status 분리 | ★ 신규 |
-| Finalizers | 삭제 보호 | 🟡 |
+| Status sub-resource | spec/status 분리 | ✅ 커버 ([18](18-operator-pattern-crd.md)) |
+| Finalizers | 삭제 보호 | ✅ 커버 ([18](18-operator-pattern-crd.md)) |
 | OperatorHub.io | 공개 operator | ✅ |
 | 인기 Operator: Strimzi (Kafka) / CloudNativePG / Postgres Operator (Zalando) / Redis Operator / Elastic Operator | 운영 표준 | 🟡 |
 
@@ -181,12 +184,12 @@ sources:
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| ArgoCD — App of Apps / ApplicationSet / Sync waves / hooks | 배포 표준 | ★ 신규 |
-| Flux — Source / Kustomization / HelmRelease / Image automation | 동등 표준 | ★ 신규 |
+| ArgoCD — App of Apps / ApplicationSet / Sync waves / hooks | 배포 표준 | ✅ 커버 ([19](19-gitops-argocd-flux.md)) |
+| Flux — Source / Kustomization / HelmRelease / Image automation | 동등 표준 | ✅ 커버 ([19](19-gitops-argocd-flux.md)) |
 | Helm — Chart / Values / hooks | 패키징 | ✅ |
 | Kustomize — overlay / patches | overlay | ✅ |
-| Image automation (Flux) | tag bump → PR | ★ 신규 |
-| Progressive Delivery (Argo Rollouts / Flagger) | canary/blue-green 자동 | ★ 신규 |
+| Image automation (Flux) | tag bump → PR | ✅ 커버 ([19](19-gitops-argocd-flux.md)) |
+| Progressive Delivery (Argo Rollouts / Flagger) | canary/blue-green 자동 | ✅ 커버 ([20](20-canary-bluegreen-argo-rollouts.md)) |
 
 ### H. 노드 / 자동 프로비저닝
 

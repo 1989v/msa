@@ -42,6 +42,7 @@ sources:
 | Future / 비동기 | Future, CompletableFuture, ListenableFuture | ✅ |
 | Coroutine | CoroutineScope/Job/Dispatcher, Channel (cold/hot), Flow, Backpressure | ✅ |
 | Virtual Threads | Loom, JDK 21 GA, blocking IO 친화 | ✅ |
+| **Virtual Thread ↔ Coroutine 비교** (Loom / Continuation / Pinning / StructuredTaskScope vs suspend / Dispatcher / Flow / Channel) | M:N 모델 양자 비교 + 선택 가이드 | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
 | msa 적용 | @Async / @Scheduled / Kafka Concurrency / @Version / @Lock / Redis 분산락 | ✅ |
 | 진단 | thread dump, stack trace 분석 | ✅ |
 
@@ -151,20 +152,20 @@ JDK / Kotlin 공식 기준 다음 영역이 추가 deep dive 가치:
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| Virtual Thread (JEP 444) | M:N, blocking IO 친화 | ✅ 커버 |
-| Carrier Thread | underlying platform thread | ✅ |
-| Pinning (synchronized 안) | carrier 고정 — `-Djdk.tracePinnedThreads=full` | ★ 신규 |
+| Virtual Thread (JEP 444) | M:N, blocking IO 친화 | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
+| Carrier Thread | underlying platform thread | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
+| Pinning (synchronized 안) | carrier 고정 — `-Djdk.tracePinnedThreads=full` | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
 | Thread.ofVirtual().start | builder API | ✅ |
-| Continuation API (internal) | coroutine 의 Java 측 underlying | ★ 신규 |
-| Virtual Thread schedulers | ForkJoinPool 기반 carrier | 🟡 |
+| Continuation API (internal) | coroutine 의 Java 측 underlying | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
+| Virtual Thread schedulers | ForkJoinPool 기반 carrier | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
 
 ### G. Structured Concurrency / Scoped Values
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| **StructuredTaskScope** (JEP 462) | scope 기반 자식 task — fail-fast / first-success | ★ 신규 |
+| **StructuredTaskScope** (JEP 462) | scope 기반 자식 task — fail-fast / first-success | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
 | **Scoped Values** (JEP 446) | immutable per-thread context — Virtual Thread 친화 | ★ 신규 |
-| **Kotlin coroutineScope / supervisorScope** | 등가 | ✅ |
+| **Kotlin coroutineScope / supervisorScope** | 등가 | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
 | **CompletionStage cancellation** | timeout / cancel propagation | 🟡 |
 
 ### H. Reactive Streams / Reactor
@@ -181,18 +182,18 @@ JDK / Kotlin 공식 기준 다음 영역이 추가 deep dive 가치:
 
 | 개념 | 정의 | 상태 |
 |---|---|---|
-| suspend 함수 | Continuation 기반 | ✅ |
-| CoroutineScope / Job / Dispatchers | 컨텍스트 | ✅ |
+| suspend 함수 | Continuation 기반 | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
+| CoroutineScope / Job / Dispatchers | 컨텍스트 | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
 | coroutineScope vs CoroutineScope | scope vs builder | ✅ |
 | supervisorScope / SupervisorJob | 자식 실패 격리 | ✅ |
 | CoroutineExceptionHandler | uncaught | ✅ |
 | Cancellation cooperation | isActive / yield / ensureActive | 🟡 |
-| Channel (4 capacity 모드) | RENDEZVOUS / CONFLATED / BUFFERED / UNLIMITED | ✅ |
-| Channel pattern | fan-out / fan-in / pipeline | ✅ |
-| Flow (cold) | collect / map / flatMap / buffer / debounce / sample / catch / retry | 🟡 부분 |
+| Channel (4 capacity 모드) | RENDEZVOUS / CONFLATED / BUFFERED / UNLIMITED | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
+| Channel pattern | fan-out / fan-in / pipeline | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
+| Flow (cold) | collect / map / flatMap / buffer / debounce / sample / catch / retry | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
 | StateFlow / SharedFlow (hot) | UI / event hub | ✅ |
 | Mutex / Semaphore | coroutine 친화 lock | ★ 신규 |
-| Dispatchers (IO / Default / Main / Unconfined) | 실행 풀 | ✅ |
+| Dispatchers (IO / Default / Main / Unconfined) | 실행 풀 | ✅ 커버 ([25](25-virtual-thread-coroutine-deep.md)) |
 | coroutineContext + CoroutineName / + Job + ... | 합성 | 🟡 |
 | flowOn / collectLatest / launchIn | operator 패턴 | 🟡 |
 

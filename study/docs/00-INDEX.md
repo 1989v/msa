@@ -33,27 +33,27 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 
 | # | 주제 | 난이도 | 시간 | 파일 | 줄 | 코드 연관 | 상태 |
 |---|---|---|---|---|---|---|---|
-| 1 | [AWS 네트워크 인프라](1-aws-network/) | intermediate-to-advanced | 35h | 21 | 5,492 | true | completed (19 deep) |
+| 1 | [AWS 네트워크 인프라](1-aws-network/) | intermediate-to-advanced | 35h | 24 | 7,220 | true | completed (19 deep + 20~21 IPv6·IPAM·BYOIP / DNS·DHCP·SG) |
 | 2 | [JVM 내부 + GC 튜닝](2-jvm-gc/) | advanced | 35h | 24 | 8,190 | true | completed (22 deep) |
-| 3 | [Java/Kotlin 동시성 심화](3-java-kotlin-concurrency/) | advanced | 25h | 26 | 7,079 | true | completed (24 deep) |
-| 4 | [DB 인덱스 + 트랜잭션 격리](4-db-index-transaction/) | advanced | 25h | 20 | 5,107 | true | completed (18 deep) |
+| 3 | [Java/Kotlin 동시성 심화](3-java-kotlin-concurrency/) | advanced | 25h | 28 | 8,089 | true | completed (24 deep + 25 Virtual Thread vs Coroutine) |
+| 4 | [DB 인덱스 + 트랜잭션 격리](4-db-index-transaction/) | advanced | 25h | 24 | 8,447 | true | completed (18 deep + 99 catalog + 20~21 Online DDL / Deadlock) |
 | 5 | [Spring Transactional 심화](5-spring-transactional/) | intermediate | 12h | 16 | 4,973 | true | completed (14 deep) |
-| 6 | [Kafka 내부 동작](6-kafka-internals/) | advanced | 20h | 15 | 3,666 | true | completed (13 deep) |
-| 7 | [분산 시스템 이론 + 패턴](7-distributed-systems/) | advanced | 18h | 22 | 6,360 | true | completed (20 deep) |
-| 8 | [시스템 설계 시나리오 10선](8-system-design/) | advanced | 30h | 15 | 4,596 | false | completed (13 deep) |
+| 6 | [Kafka 내부 동작](6-kafka-internals/) | advanced | 20h | 20 | 7,088 | true | completed (13 deep + 14~17 KRaft·Tiered / Rebalance / Compaction / Streams API) |
+| 7 | [분산 시스템 이론 + 패턴](7-distributed-systems/) | advanced | 18h | 25 | 8,086 | true | completed (20 deep + 21~22 Consensus (Raft/Paxos) / Saga deep) |
+| 8 | [시스템 설계 시나리오 10선](8-system-design/) | advanced | 30h | 20 | 6,893 | false | completed (13 deep + 14~17 4 시나리오 — 자동완성·카운팅·결제·IoT) |
 | 9 | [Redis 심화](9-redis-deep-dive/) | intermediate | 15h | 21 | 5,101 | true | completed (19 deep) |
-| 10 | [Observability 3축](10-observability/) | intermediate | 18h | 16 | 5,341 | true | completed (14 deep) |
-| 11 | [K8s 심화 + 배포 전략](11-k8s-deep-dive/) | intermediate | 20h | 19 | 6,270 | true | completed (17 deep) |
-| 12 | [Latency Numbers](12-latency-numbers/) | intermediate | 24h | 14 | 3,180 | true | completed (12 deep) |
-| 13 | [암호화 · JWT · SSO · KMS](13-crypto-jwt-sso/) | advanced | 34h | 22 | 2,597 | true | completed (20 deep) |
-| 14 | [CRDT · MRDT](14-crdt-mrdt/) | advanced | 14h | 21 | 4,968 | false | completed (19 deep) |
+| 10 | [Observability 3축](10-observability/) | intermediate | 18h | 19 | 7,790 | true | completed (14 deep + 15~16 Prometheus internals / OpenTelemetry deep) |
+| 11 | [K8s 심화 + 배포 전략](11-k8s-deep-dive/) | intermediate | 20h | 23 | 9,617 | true | completed (17 deep + 18~20 Operator+CRD / GitOps / Canary+Blue-Green) |
+| 12 | [Latency Numbers](12-latency-numbers/) | intermediate | 24h | 16 | 4,292 | true | completed (12 deep + 13 2024+ 현대 하드웨어 자릿수) |
+| 13 | [암호화 · JWT · SSO · KMS](13-crypto-jwt-sso/) | advanced | 34h | 27 | 6,197 | true | completed (20 deep + 21~24 AEAD·KDF / JWT 함정 / mTLS mesh / PQC) |
+| 14 | [CRDT · MRDT](14-crdt-mrdt/) | advanced | 14h | 23 | 5,887 | false | completed (19 deep + 20 CRDT 자료구조 카탈로그) |
 | 15 | [커넥션 풀 심화 (HikariCP · R/W · Redis Pool)](15-connection-pool/) | intermediate | 12h | 20 | 6,020 | true | completed (18 deep) |
-| 16 | [비동기 · 논블로킹 IO (NIO · Reactor · Netty)](16-async-nonblocking-io/) | advanced | 18h | 21 | 6,547 | true | completed (19 deep) |
+| 16 | [비동기 · 논블로킹 IO (NIO · Reactor · Netty)](16-async-nonblocking-io/) | advanced | 18h | 23 | 7,681 | true | completed (19 deep + 20 Reactor + Netty pipeline) |
 | 17 | [Spring Web 처리 심화 (Filter · Interceptor · AOP · Jackson · gzip)](17-spring-web/) | intermediate | 14h | 22 | 5,279 | true | completed (20 deep) |
 | 18 | [gRPC 심화 (Protobuf · HTTP/2 · Streaming)](18-grpc/) | intermediate | 14h | 22 | 6,297 | false | completed (20 deep) |
 | 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 44 | 20,069 | true | completed (20 deep + 99 catalog + 22~33 보강 12 + 34~36 평가/modifier/자동완성 + 37~41 인덱스 템플릿/매핑 파워/운영 API/시계열/벡터 고급) |
 
-**합계**: 19 주제 / 455h 학습 시간 추정 / 421 file / 123,720 line.
+**합계**: 19 주제 / 455h 학습 시간 추정 / 448 file / 145,358 line.
 
 > "코드 연관" false 인 주제 (8/14/18) 도 msa 적용 가능성 검토 섹션을 가진다 — false 의 의미는 "현재 코드에 직접 매핑되는 구현이 적다" 정도로 해석.
 
