@@ -112,6 +112,7 @@ mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "
 # Resilience (Phase 2: CB / Bulkhead / Timeout)
 resilience4j-circuitbreaker = { module = "io.github.resilience4j:resilience4j-circuitbreaker", version.ref = "resilience4j" }
 resilience4j-kotlin = { module = "io.github.resilience4j:resilience4j-kotlin", version.ref = "resilience4j" }
+resilience4j-ratelimiter = { module = "io.github.resilience4j:resilience4j-ratelimiter", version.ref = "resilience4j" }
 
 # OCI SDK (Phase 2: KEK envelope encryption via OCI Vault)
 oci-kms = { module = "com.oracle.oci.sdk:oci-java-sdk-keymanagement", version.ref = "ociSdk" }

@@ -33,6 +33,7 @@ dependencies {
     // Phase 2 — TG-P2-01: 신규 카탈로그 등재
     implementation(libs.resilience4j.circuitbreaker)
     implementation(libs.resilience4j.kotlin)
+    implementation(libs.resilience4j.ratelimiter)
     implementation(libs.oci.kms)        // ADR-0027 KEK envelope encryption
     implementation(libs.oci.common)
     implementation(libs.nimbus.jose)    // 빗썸/업비트 JWT(HS256) 인증 (ADR-0024 Errata)

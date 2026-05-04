@@ -76,6 +76,30 @@ data class MaCross(
     }
 }
 
+/**
+ * KimchiPremiumThreshold — 김치프리미엄(거래소 간 가격 차이) 진입/청산 임계 (ADR-0036 Phase 2).
+ *
+ * - entry: 프리미엄 ≥ entryThresholdPercent 일 때 진입 후보
+ * - exit:  프리미엄 ≤ exitThresholdPercent 일 때 청산
+ *
+ * 계산 공식은 application/kimchi/KimchiPremiumCalculator 참조.
+ */
+data class KimchiPremiumThreshold(
+    val entryThresholdPercent: BigDecimal,
+    val exitThresholdPercent: BigDecimal,
+) : SignalConfig {
+    init {
+        require(entryThresholdPercent > exitThresholdPercent) {
+            "entry($entryThresholdPercent) must be > exit($exitThresholdPercent)"
+        }
+        require(entryThresholdPercent in BigDecimal("-50") .. BigDecimal("50")) {
+            "entryThresholdPercent must be in -50..50 (got $entryThresholdPercent)"
+        }
+    }
+    override fun describe(): String =
+        "KimchiPremium entry≥${entryThresholdPercent}% / exit≤${exitThresholdPercent}%"
+}
+
 data class BollingerSqueeze(
     /** BB 계산 기간 — 일반적으로 20. */
     val period: Int,

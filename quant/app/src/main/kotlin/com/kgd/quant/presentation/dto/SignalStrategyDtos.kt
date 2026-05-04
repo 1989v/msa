@@ -38,12 +38,14 @@ data class SignalStrategyResponse(
     JsonSubTypes.Type(value = SignalConfigDto.RsiBreakoutDto::class, name = "RSI_BREAKOUT"),
     JsonSubTypes.Type(value = SignalConfigDto.MaCrossDto::class, name = "MA_CROSS"),
     JsonSubTypes.Type(value = SignalConfigDto.BollingerSqueezeDto::class, name = "BB_SQUEEZE"),
+    JsonSubTypes.Type(value = SignalConfigDto.KimchiPremiumThresholdDto::class, name = "KIMCHI_PREMIUM"),
 )
 sealed class SignalConfigDto {
     data class VolumeSpikeDto(val multiplier: BigDecimal, val window: Int) : SignalConfigDto()
     data class RsiBreakoutDto(val period: Int, val threshold: BigDecimal, val direction: String) : SignalConfigDto()
     data class MaCrossDto(val fastPeriod: Int, val slowPeriod: Int, val direction: String) : SignalConfigDto()
     data class BollingerSqueezeDto(val period: Int, val stdDev: BigDecimal, val squeezeThreshold: BigDecimal) : SignalConfigDto()
+    data class KimchiPremiumThresholdDto(val entryThresholdPercent: BigDecimal, val exitThresholdPercent: BigDecimal) : SignalConfigDto()
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
