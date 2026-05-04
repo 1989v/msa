@@ -55,10 +55,13 @@ kubectl -n commerce logs job/backup-full-smoke -f
 ```
 
 Expected: `backup-full.sh` runs XtraBackup against every per-service
-MySQL alias Service, dumps the PostgreSQL charting database, archives
-the configured file directories, uploads to the chosen storage
-provider, and then invokes `cleanup.sh` to trim per
-`FULL_BACKUP_RETENTION_DAYS` (default 7).
+MySQL alias Service, archives the configured file directories,
+uploads to the chosen storage provider, and then invokes
+`cleanup.sh` to trim per `FULL_BACKUP_RETENTION_DAYS` (default 7).
+
+> PostgreSQL 백업은 charting Hard remove (ADR-0036 P2-T20, 2026-05-02)
+> 와 함께 비활성됐다. `backup-postgres.sh` / `restore-postgres.sh`
+> 는 quant pgvector 백업으로 재활용 가능한 형태로 보존만 되어 있다.
 
 ## Migration path after stabilisation
 

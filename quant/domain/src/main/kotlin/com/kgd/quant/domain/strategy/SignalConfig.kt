@@ -1,5 +1,6 @@
 package com.kgd.quant.domain.strategy
 
+import com.kgd.quant.domain.market.MarketCode
 import java.math.BigDecimal
 
 /**
@@ -82,11 +83,16 @@ data class MaCross(
  * - entry: 프리미엄 ≥ entryThresholdPercent 일 때 진입 후보
  * - exit:  프리미엄 ≤ exitThresholdPercent 일 때 청산
  *
+ * SignalStrategy 의 `market` 은 KR 측 (예: BITHUMB), [foreignMarket] 은 비교 대상 해외 거래소
+ * (예: BINANCE/BYBIT). 백테스트는 `quant.kimchi_premium_tick(asset_code, kr_market, foreign_market, ts)`
+ * 시계열을 read 한다.
+ *
  * 계산 공식은 application/kimchi/KimchiPremiumCalculator 참조.
  */
 data class KimchiPremiumThreshold(
     val entryThresholdPercent: BigDecimal,
     val exitThresholdPercent: BigDecimal,
+    val foreignMarket: MarketCode,
 ) : SignalConfig {
     init {
         require(entryThresholdPercent > exitThresholdPercent) {
@@ -97,7 +103,7 @@ data class KimchiPremiumThreshold(
         }
     }
     override fun describe(): String =
-        "KimchiPremium entry≥${entryThresholdPercent}% / exit≤${exitThresholdPercent}%"
+        "KimchiPremium(vs ${foreignMarket.value}) entry≥${entryThresholdPercent}% / exit≤${exitThresholdPercent}%"
 }
 
 data class BollingerSqueeze(

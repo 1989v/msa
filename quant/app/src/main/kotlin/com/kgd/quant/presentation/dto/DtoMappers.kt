@@ -30,7 +30,11 @@ internal fun SignalConfigDto.toDomain(): SignalConfig = when (this) {
     )
     is SignalConfigDto.BollingerSqueezeDto -> BollingerSqueeze(period, stdDev, squeezeThreshold)
     is SignalConfigDto.KimchiPremiumThresholdDto ->
-        com.kgd.quant.domain.strategy.KimchiPremiumThreshold(entryThresholdPercent, exitThresholdPercent)
+        com.kgd.quant.domain.strategy.KimchiPremiumThreshold(
+            entryThresholdPercent = entryThresholdPercent,
+            exitThresholdPercent = exitThresholdPercent,
+            foreignMarket = com.kgd.quant.domain.market.MarketCode(foreignMarket),
+        )
 }
 
 internal fun SignalConfig.toDto(): SignalConfigDto = when (this) {
@@ -39,8 +43,11 @@ internal fun SignalConfig.toDto(): SignalConfigDto = when (this) {
     is MaCross -> SignalConfigDto.MaCrossDto(fastPeriod, slowPeriod, direction.name)
     is BollingerSqueeze -> SignalConfigDto.BollingerSqueezeDto(period, stdDev, squeezeThreshold)
     is com.kgd.quant.domain.strategy.KimchiPremiumThreshold ->
-        // Phase 2 신규 — DTO 는 P2-T10 후속에서 추가, 임시 BollingerSqueezeDto 미사용 방지를 위해 별도 DTO 정의 필요
-        SignalConfigDto.KimchiPremiumThresholdDto(entryThresholdPercent, exitThresholdPercent)
+        SignalConfigDto.KimchiPremiumThresholdDto(
+            entryThresholdPercent = entryThresholdPercent,
+            exitThresholdPercent = exitThresholdPercent,
+            foreignMarket = foreignMarket.value,
+        )
 }
 
 internal fun PositionSizingDto.toDomain(): PositionSizing = when (this) {

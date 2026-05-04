@@ -3,7 +3,9 @@
 # Usage: backup-full.sh
 #
 # Daily full backup orchestrator.
-# Runs MySQL backups (all databases), PostgreSQL backup, file backup, then cleanup.
+# Runs MySQL backups (all databases), file backup, then cleanup.
+# (PostgreSQL/charting 백업은 ADR-0036 P2-T20 charting Hard remove 와 함께 폐기됨, 2026-05-02.
+# quant pgvector 백업이 필요하면 backup-postgres.sh 를 quant-postgres 호스트로 재활용 가능.)
 
 set -euo pipefail
 
@@ -34,13 +36,16 @@ while IFS='|' read -r db_name master_host master_port; do
     fi
 done < "${CONFIG_DIR}/databases.conf"
 
-# --- PostgreSQL backup ---
-if "${SCRIPT_DIR}/backup-postgres.sh"; then
-    RESULTS+=("PostgreSQL/charting: OK")
-else
-    RESULTS+=("PostgreSQL/charting: FAILED")
-    ERRORS=$((ERRORS + 1))
-fi
+# --- PostgreSQL backup (현재 비활성) ---
+# charting 서비스가 quant 로 통합 후 Hard remove 되어 PostgreSQL 영구 데이터 부재.
+# quant pgvector 도입 시 PG_HOST=quant-postgres 등으로 환경변수 갱신 후 아래 블록 활성화.
+#
+# if "${SCRIPT_DIR}/backup-postgres.sh"; then
+#     RESULTS+=("PostgreSQL: OK")
+# else
+#     RESULTS+=("PostgreSQL: FAILED")
+#     ERRORS=$((ERRORS + 1))
+# fi
 
 # --- File backup ---
 if "${SCRIPT_DIR}/backup-files.sh"; then

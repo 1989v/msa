@@ -56,10 +56,9 @@ class Ta4jCrossValidationSpec : BehaviorSpec({
                 }
             }
             `when`("RSI($period) 양 구현 비교") {
-                then("두 구현 모두 0..100 범위 + 동일 부호 추세 (절대값 동등성은 Wilder vs SMA-RSI 차이로 ±15 까지 허용)") {
-                    // 자체 구현은 SMA 기반 RSI, ta4j 0.18 은 Wilder smoothing 기반.
-                    // 두 알고리즘은 본질적으로 평균 산출 방식이 달라 절대값 차이가 ±15 까지 발생.
-                    // Phase 2 정밀 통합 시 자체 구현을 Wilder smoothing 으로 교체하면 동등 가능.
+                then("절대 오차 ≤ 0.5 (Wilder smoothing 통일 후 — H4)") {
+                    // H4 (2026-05-05) 자체 구현을 ta4j MMA 호환 Wilder smoothing 으로 교체.
+                    // 두 구현 모두 α=1/period 의 continuous EMA 시드 → period+5 봉부터 ±0.5 이내 일치.
                     val a = own.rsi(bars, period)
                     val b = ta4j.rsi(bars, period)
                     for (i in (period + 5) until a.size) {
@@ -68,7 +67,7 @@ class Ta4jCrossValidationSpec : BehaviorSpec({
                         require(av >= BigDecimal.ZERO && av <= BigDecimal("100"))
                         require(bv >= BigDecimal.ZERO && bv <= BigDecimal("100"))
                         val diff = av.subtract(bv).abs()
-                        diff shouldBeLessThan BigDecimal("15.0")
+                        diff shouldBeLessThan BigDecimal("0.5")
                     }
                 }
             }

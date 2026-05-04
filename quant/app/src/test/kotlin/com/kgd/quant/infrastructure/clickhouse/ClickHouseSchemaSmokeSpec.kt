@@ -17,7 +17,9 @@ private val dockerAvailable: Boolean =
     runCatching { DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false)
 
 class ClickHouseSchemaSmokeSpec : BehaviorSpec({
-    val image = DockerImageName.parse("clickhouse/clickhouse-server:24.3")
+    // 24.x 이미지는 default 사용자 인증 정책이 강화되어 Testcontainers 기본 plain 접근이 거부됨.
+    // 23.8 LTS 로 고정 (운영 사용은 24.x — 본 spec 은 schema bootstrap 검증 용도라 버전 무관).
+    val image = DockerImageName.parse("clickhouse/clickhouse-server:23.8")
         .asCompatibleSubstituteFor("clickhouse/clickhouse-server")
     val container: ClickHouseContainer? = if (dockerAvailable) ClickHouseContainer(image) else null
 

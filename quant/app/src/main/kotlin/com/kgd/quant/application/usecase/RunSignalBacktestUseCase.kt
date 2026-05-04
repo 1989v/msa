@@ -1,6 +1,7 @@
 package com.kgd.quant.application.usecase
 
 import com.kgd.quant.application.indicator.IndicatorCalculator
+import com.kgd.quant.application.port.persistence.KimchiPremiumTickRepositoryPort
 import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
 import com.kgd.quant.application.port.persistence.SignalStrategyRepositoryPort
 import com.kgd.quant.domain.common.StrategyId
@@ -13,6 +14,7 @@ import com.kgd.quant.domain.strategy.SignalConfig
 import com.kgd.quant.domain.strategy.SignalStrategy
 import com.kgd.quant.domain.strategy.VolumeSpike
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
@@ -21,14 +23,12 @@ import java.time.Instant
 private val log = KotlinLogging.logger {}
 
 /**
- * RunSignalBacktestUseCase — SignalStrategy 백테스트 (ADR-0036 P2 + G2).
+ * RunSignalBacktestUseCase — SignalStrategy 백테스트 (ADR-0036 P2 + G2/H3).
  *
  * Phase 2 지원 시그널:
  * - VolumeSpike / RsiBreakout / MaCross / BollingerSqueeze (단일 거래소)
- * - **KimchiPremiumThreshold** (G2 신규) — historical 김치프리미엄 시계열 필요.
- *   현 구현은 단순화된 cross-exchange OHLCV 비교 (kr_market vs foreign_market 양쪽 close).
- *   ClickHouse `quant.kimchi_premium_tick` 가 적재돼 있으면 이를 직접 read 하는 것이 정통이지만
- *   Phase 2 단순화는 양 시장 OHLCV 비교로 placeholder.
+ * - **KimchiPremiumThreshold** (H3 정통화) — `quant.kimchi_premium_tick` 시계열을 read 하여
+ *   각 봉 시각의 직전 tick 의 `premiumPercent` 를 entry/exit threshold 와 비교한다.
  *
  * Phase 1 단순화 그대로:
  * - 슬리피지 / 수수료 미반영
@@ -39,6 +39,7 @@ class RunSignalBacktestUseCase(
     private val ohlcvRepo: OhlcvRepositoryPort,
     private val calculator: IndicatorCalculator,
     private val strategyRepo: SignalStrategyRepositoryPort,
+    private val kimchiTickRepoProvider: ObjectProvider<KimchiPremiumTickRepositoryPort>,
 ) {
     suspend fun execute(
         tenantId: TenantId,
@@ -146,25 +147,63 @@ class RunSignalBacktestUseCase(
     }
 
     /**
-     * G2 — KimchiPremium 시그널 평가 (단순화 버전).
+     * H3 — KimchiPremium 시그널 평가 (정통화).
      *
-     * 정통 구현은 ClickHouse `quant.kimchi_premium_tick` 시계열을 read 해야 하지만 Phase 2
-     * 초기에는 적재 인프라가 미완. 본 구현은 strategy 의 asset/market 한쪽만 사용 — 시그널 평가
-     * 자체는 가능하지만 실 김치프리미엄 비교는 후속 task.
+     * `quant.kimchi_premium_tick(asset_code, kr_market, foreign_market, ts, premium_percent)`
+     * 시계열을 read 한 후, 각 OHLCV 봉의 ts 직전 tick 의 premiumPercent 가
+     * entryThresholdPercent 이상이면 진입 trigger 로 간주한다 (exit 평가는 본 백테스트
+     * 단순화 모델 — final close PnL — 에서는 사용하지 않음).
      *
-     * Phase 2 후속에서 `KimchiPremiumTickRepositoryPort` 도입 후 정통화.
+     * Tick repo 빈이 없는 환경 (ClickHouse 비활성) → trigger 없음 (백테스트는 정상 종료).
      */
-    private fun evaluateKimchiPremium(
+    private suspend fun evaluateKimchiPremium(
         strategy: SignalStrategy,
         bars: List<IndicatorCalculator.Bar>,
         c: KimchiPremiumThreshold,
     ): List<Boolean> {
-        // 단순화: 평가 로직 placeholder — 향후 KimchiPremiumTickRepositoryPort 연동
-        log.warn {
-            "KimchiPremium 백테스트 — 시계열 적재 placeholder. " +
-                "strategy=${strategy.id.value}, threshold=${c.entryThresholdPercent}/${c.exitThresholdPercent}"
+        val repo = kimchiTickRepoProvider.ifAvailable
+        if (repo == null) {
+            log.warn { "KimchiPremiumTickRepositoryPort 빈 미등록 — trigger 없음 (strategy=${strategy.id.value})" }
+            return List(bars.size) { false }
         }
-        return List(bars.size) { false }
+        val from = bars.first().ts
+        val to = bars.last().ts.plusSeconds(1)
+        val ticks = repo.query(
+            assetCode = strategy.asset.code,
+            krMarketCode = strategy.market.code,
+            foreignMarketCode = c.foreignMarket,
+            from = from,
+            to = to,
+        )
+        if (ticks.isEmpty()) {
+            log.info {
+                "KimchiPremium 백테스트 — 시계열 비어있음 " +
+                    "(asset=${strategy.asset.code.value} kr=${strategy.market.code.value} fx=${c.foreignMarket.value})"
+            }
+            return List(bars.size) { false }
+        }
+        // ts ASC 정렬 보장 — 각 봉 시각 t 에 대해 t 이전 마지막 tick 을 찾는다 (이진 탐색).
+        val tsArray = ticks.map { it.ts }
+        val premiums = ticks.map { it.premiumPercent }
+        return bars.map { bar ->
+            val idx = priorIndex(tsArray, bar.ts)
+            if (idx < 0) false
+            else premiums[idx] >= c.entryThresholdPercent
+        }
+    }
+
+    /** ts ASC 배열에서 target 이하 마지막 index — 없으면 -1. */
+    private fun priorIndex(tsArray: List<Instant>, target: Instant): Int {
+        var lo = 0
+        var hi = tsArray.size - 1
+        var ans = -1
+        while (lo <= hi) {
+            val mid = (lo + hi) ushr 1
+            if (tsArray[mid] <= target) {
+                ans = mid; lo = mid + 1
+            } else hi = mid - 1
+        }
+        return ans
     }
 
     data class SignalBacktestSummary(

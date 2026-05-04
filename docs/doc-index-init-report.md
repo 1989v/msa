@@ -1,29 +1,29 @@
 # Doc Index — Initial Scan Report
 
-- sources: 593
-- docs: 148
-- resolved links: 1105
-- missing (source without doc): 124
-- dangling (doc without source): 132
+- sources: 915
+- docs: 203
+- resolved links: 1857
+- missing (source without doc): 222
+- dangling (doc without source): 188
 
 ## Coverage by service
 
 | Service | Total | Linked | Coverage |
 |---|---:|---:|---:|
-| admin | 47 | 0 | 0.0% |
-| analytics | 29 | 29 | 100.0% |
+| admin | 48 | 0 | 0.0% |
+| analytics | 30 | 30 | 100.0% |
 | auth | 34 | 7 | 20.6% |
-| charting | 74 | 74 | 100.0% |
 | chatbot | 34 | 30 | 88.2% |
-| common | 17 | 17 | 100.0% |
+| common | 31 | 31 | 100.0% |
 | experiment | 21 | 21 | 100.0% |
-| fulfillment | 25 | 24 | 96.0% |
+| fulfillment | 21 | 20 | 95.2% |
 | gateway | 10 | 10 | 100.0% |
 | gifticon | 112 | 69 | 61.6% |
-| inventory | 44 | 43 | 97.7% |
+| inventory | 46 | 45 | 97.8% |
 | member | 17 | 17 | 100.0% |
-| order | 33 | 33 | 100.0% |
-| product | 31 | 31 | 100.0% |
+| order | 34 | 34 | 100.0% |
+| product | 34 | 34 | 100.0% |
+| root | 378 | 281 | 74.3% |
 | search | 33 | 33 | 100.0% |
 | warehouse | 14 | 13 | 92.9% |
 | wishlist | 18 | 18 | 100.0% |

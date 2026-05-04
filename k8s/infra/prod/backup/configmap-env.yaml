@@ -9,6 +9,11 @@ metadata:
 # Non-sensitive backup runner configuration. Sensitive values
 # (MYSQL passwords, cloud credentials, webhook URLs) live in the
 # backup-secret sibling and get merged via envFrom in the CronJob.
+#
+# PostgreSQL 백업 (PG_HOST/PG_USER/PG_DATABASE) 은 ADR-0036 P2-T20 에서
+# charting 서비스 Hard remove 와 함께 제거됨 (2026-05-02). quant pgvector
+# 백업이 필요해지면 PG_HOST=quant-postgres 등으로 다시 추가하고
+# backup-full.sh 의 PostgreSQL 블록을 활성화한다.
 data:
   STORAGE_PROVIDER: "local"             # s3 | gcs | local
   S3_BUCKET: "msa-backups"
@@ -17,10 +22,6 @@ data:
   LOCAL_BACKUP_DIR: "/mnt/backup"
   BACKUP_STAGING_DIR: "/backup"
   MYSQL_BACKUP_USER: "root"
-  PG_HOST: "charting-db"
-  PG_PORT: "5432"
-  PG_USER: "charting"
-  PG_DATABASE: "charting"
   GIFTICON_IMAGES_DIR: "/app/storage/gifticon-images"
   FULL_BACKUP_RETENTION_DAYS: "7"
   BINLOG_RETENTION_DAYS: "2"

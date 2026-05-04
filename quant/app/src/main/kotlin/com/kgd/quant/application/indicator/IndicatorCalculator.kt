@@ -45,44 +45,46 @@ class IndicatorCalculator {
         }
     }
 
+    /**
+     * RSI — Wilder smoothing 기반 (ta4j 0.18 `RSIIndicator` / `MMAIndicator` 와 호환).
+     *
+     * ta4j 의 MMA 는 α = 1/period 의 continuous EMA 로 정의되며, 첫 값은 그대로 시드로 받고
+     * 이후 매 봉마다 `avg = avg·(1-α) + value·α` 를 적용한다 (i<period 에서도 동일). 본 구현도
+     * 동일 알고리즘을 따른다 — 결과는 Ta4jCrossValidationSpec 에서 ±0.5 이내로 일치.
+     *
+     * H4 (2026-05-05) 이전에는 i<period 에서 50 고정 + i==period 에서 SMA seed 를 사용했으나,
+     * ta4j 와 ±15 까지 누적 오차 발생 → 본 통일 구현으로 교체.
+     */
     fun rsi(bars: List<Bar>, period: Int): List<IndicatorPoint> {
         require(period > 0) { "period must be > 0" }
+        if (bars.isEmpty()) return emptyList()
         if (bars.size < 2) return bars.map { IndicatorPoint(it.ts, BigDecimal("50.0000")) }
 
-        val gains = mutableListOf<BigDecimal>()
-        val losses = mutableListOf<BigDecimal>()
-        for (i in 1 until bars.size) {
-            val change = bars[i].close.subtract(bars[i - 1].close)
-            gains.add(if (change > BigDecimal.ZERO) change else BigDecimal.ZERO)
-            losses.add(if (change < BigDecimal.ZERO) change.negate() else BigDecimal.ZERO)
-        }
+        val alpha = BigDecimal.ONE.divide(BigDecimal(period), 16, RoundingMode.HALF_UP)
+        val oneMinusAlpha = BigDecimal.ONE.subtract(alpha)
 
         val out = mutableListOf<IndicatorPoint>()
-        out.add(IndicatorPoint(bars[0].ts, BigDecimal("50.0000")))
-        var avgGain: BigDecimal? = null
-        var avgLoss: BigDecimal? = null
+        out.add(IndicatorPoint(bars[0].ts, BigDecimal("50.0000")))   // 시드 봉 — 의미 없음
+
+        // ta4j GainIndicator(0) = LossIndicator(0) = 0 → 시드 0 으로 시작 후 i>=1 부터 EMA 식 적용.
+        var avgGain: BigDecimal = BigDecimal.ZERO
+        var avgLoss: BigDecimal = BigDecimal.ZERO
 
         for (i in 1 until bars.size) {
-            if (i < period) {
-                out.add(IndicatorPoint(bars[i].ts, BigDecimal("50.0000")))
-                continue
-            }
-            if (i == period) {
-                val gSum = gains.subList(0, period).reduce { a, b -> a.add(b) }
-                val lSum = losses.subList(0, period).reduce { a, b -> a.add(b) }
-                avgGain = gSum.divide(BigDecimal(period), 8, RoundingMode.HALF_UP)
-                avgLoss = lSum.divide(BigDecimal(period), 8, RoundingMode.HALF_UP)
-            } else {
-                val g = gains[i - 1]
-                val l = losses[i - 1]
-                avgGain = avgGain!!.multiply(BigDecimal(period - 1)).add(g)
-                    .divide(BigDecimal(period), 8, RoundingMode.HALF_UP)
-                avgLoss = avgLoss!!.multiply(BigDecimal(period - 1)).add(l)
-                    .divide(BigDecimal(period), 8, RoundingMode.HALF_UP)
-            }
-            val rsiValue = if (avgLoss!!.signum() == 0) BigDecimal("100.0000")
+            val change = bars[i].close.subtract(bars[i - 1].close)
+            val gain = if (change > BigDecimal.ZERO) change else BigDecimal.ZERO
+            val loss = if (change < BigDecimal.ZERO) change.negate() else BigDecimal.ZERO
+
+            avgGain = avgGain.multiply(oneMinusAlpha)
+                .add(gain.multiply(alpha))
+                .setScale(8, RoundingMode.HALF_UP)
+            avgLoss = avgLoss.multiply(oneMinusAlpha)
+                .add(loss.multiply(alpha))
+                .setScale(8, RoundingMode.HALF_UP)
+
+            val rsiValue = if (avgLoss.signum() == 0) BigDecimal("100.0000")
             else {
-                val rs = avgGain!!.divide(avgLoss, 8, RoundingMode.HALF_UP)
+                val rs = avgGain.divide(avgLoss, 8, RoundingMode.HALF_UP)
                 BigDecimal(100).subtract(
                     BigDecimal(100).divide(BigDecimal.ONE.add(rs), 4, RoundingMode.HALF_UP)
                 )

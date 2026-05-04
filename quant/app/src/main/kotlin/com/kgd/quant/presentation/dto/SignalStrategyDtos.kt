@@ -45,7 +45,11 @@ sealed class SignalConfigDto {
     data class RsiBreakoutDto(val period: Int, val threshold: BigDecimal, val direction: String) : SignalConfigDto()
     data class MaCrossDto(val fastPeriod: Int, val slowPeriod: Int, val direction: String) : SignalConfigDto()
     data class BollingerSqueezeDto(val period: Int, val stdDev: BigDecimal, val squeezeThreshold: BigDecimal) : SignalConfigDto()
-    data class KimchiPremiumThresholdDto(val entryThresholdPercent: BigDecimal, val exitThresholdPercent: BigDecimal) : SignalConfigDto()
+    data class KimchiPremiumThresholdDto(
+        val entryThresholdPercent: BigDecimal,
+        val exitThresholdPercent: BigDecimal,
+        val foreignMarket: String,
+    ) : SignalConfigDto()
 }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")

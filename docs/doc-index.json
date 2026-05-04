@@ -3,9 +3,10 @@
   "version": 1,
 
   "source_roots": [
-    "product", "order", "search", "gateway", "common", "charting",
+    "product", "order", "search", "gateway", "common",
     "analytics", "experiment", "member", "wishlist", "admin", "auth",
-    "chatbot", "gifticon", "inventory", "fulfillment", "warehouse"
+    "chatbot", "gifticon", "inventory", "fulfillment", "warehouse",
+    "quant", "code-dictionary", "agent-viewer-api"
   ],
 
   "doc_roots": ["docs"],
@@ -75,9 +76,9 @@
       "link_type": "pattern"
     },
     {
-      "name": "svc-python",
-      "source": "charting/*",
-      "doc": "charting/CLAUDE.md",
+      "name": "svc-python-ingest",
+      "source": "quant/ingest/*",
+      "doc": "quant/CLAUDE.md",
       "link_type": "pattern"
     },
     {
