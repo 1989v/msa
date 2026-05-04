@@ -82,8 +82,8 @@
 | 16 | 비동기 · 논블러킹 IO (NIO · Reactor · Netty) | [16-async-nonblocking-io/](docs/16-async-nonblocking-io/) | **completed + 19 deep + 99-catalog** |
 | 17 | Spring Web 처리 심화 (Filter/Interceptor/AOP · Jackson · gzip) | [17-spring-web/](docs/17-spring-web/) | **completed + 20 deep + 99-catalog** |
 | 18 | gRPC 심화 (Protobuf · HTTP/2 · Streaming) | [18-grpc/](docs/18-grpc/) | **completed + 20 deep + 99-catalog** |
-| 19 | 검색엔진 심화 (ES · OpenSearch · Hybrid · Re-Ranking · BM25 · nori · 평가/modifier/자동완성) | [19-search-engine/](docs/19-search-engine/) | **completed + 39 deep + 99-catalog** (※ Top-12 보강 22~33 + 평가 34 + modifier 35 + 자동완성 36, 2026-05-04) |
+| 19 | 검색엔진 심화 (ES · OpenSearch · Hybrid · Re-Ranking · BM25 · nori · 평가/modifier/자동완성/인덱스템플릿/매핑/운영API/시계열/벡터고급) | [19-search-engine/](docs/19-search-engine/) | **completed + 44 deep + 99-catalog** (※ Top-12 보강 22~33 + 평가 34 + modifier 35 + 자동완성 36 + 인덱스 템플릿 37 + 매핑 파워 38 + 운영 API 39 + 시계열 40 + 벡터 고급 41, 2026-05-05) |
 
 > **흡수 노트**: 원본 17-1 (`@Transactional(readonly/writable)`) 은 #5 plan + deep file 06/07 에, 17-3 (스레드 덤프) 은 #3 plan + deep file 20 에 흡수됨 (2026-05-01).
 >
-> **전체 통계** (2026-05-04 기준): 19개 주제 / 416개 폴더 파일 + master 8 = 424 .md / 118,890 폴더 line. #19 = 39 파일 / 15,238 line (Top-12 보강 22~33 + 평가/modifier/자동완성 34~36 추가).
+> **전체 통계** (2026-05-05 기준): 19개 주제 / 421개 폴더 파일 + master 8 = 429 .md / 123,720 폴더 line. #19 = 44 파일 / 20,069 line (Top-12 보강 22~33 + 평가/modifier/자동완성 34~36 + 인덱스 템플릿/매핑/운영 API/시계열/벡터 고급 37~41 추가).

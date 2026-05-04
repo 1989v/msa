@@ -84,6 +84,11 @@ sources:
 | 평가 메트릭 | Precision / Recall / F1 / MRR / MAP / DCG / IDCG / nDCG — judgment list + ES `_rank_eval` API | [34-eval-metrics-precision-recall-ndcg.md](34-eval-metrics-precision-recall-ndcg.md) |
 | function_score modifier | NONE / SQRT / LN1P / LN2P / LOG1P / LOG2P / SQUARE / RECIPROCAL — 수식·0 처리·featureScore 분포·msa 적용 점검 | [35-field-value-factor-modifiers.md](35-field-value-factor-modifiers.md) |
 | 자동완성 | ngram / edge_ngram / search_as_you_type / completion suggester (FST) / `_terms_enum` / 한국어 자모 분리 (ICU NFD) / msa 단계적 도입 | [36-autocomplete-ngram-edgengram.md](36-autocomplete-ngram-edgengram.md) |
+| Index/Component Template | 8.x composable templates / resolution 알고리즘 / `index.codec` / `index.sort.*` / `refresh_interval` / `translog.*` / msa 분해 도입 | [37-index-templates.md](37-index-templates.md) |
+| Mapping Power Features | numeric/scaled_float / object 4-패턴 / copy_to / runtime fields / dynamic_templates / subobjects / doc_values / norms / index_options / ignore_above / null_value / _routing / combined_fields (BM25F) / terms-lookup / dis_max | [38-mapping-power-features.md](38-mapping-power-features.md) |
+| 검색 운영 API | _msearch / _count / _field_caps / _validate / _search/template / _async_search / _update_by_query / _delete_by_query / _split / _shrink / _clone / _tasks / _cluster/allocation/explain / _cat/* | [39-search-ops-apis.md](39-search-ops-apis.md) |
+| 시계열 / Data Streams | Data Streams / DSL (8.x) vs ILM / Rollover / Downsampling / histogram·aggregate_metric_double / Transforms / SLM / Searchable Snapshots / TSDS | [40-data-streams-downsampling.md](40-data-streams-downsampling.md) |
+| 벡터 고급 | kNN with filter (pre/post) / num_candidates / similarity 4종 / ES BBQ·INT8·INT4 quantization / OS k-NN engines (faiss/nmslib/lucene) / 메모리 비용 모델 | [41-vector-advanced.md](41-vector-advanced.md) |
 
 ### 1-A. 한눈에 보는 갭 진단
 
@@ -131,19 +136,19 @@ sources:
 | `match_only_text` | 점수 계산용 통계 비저장, 디스크 ↓ — 로그 분석 워크로드용 | [match-only-text](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/match-only-text) | ★ 신규 |
 | `search_as_you_type` | edge_ngram + shingle 자동, prefix·infix 검색 빠름 | [search-as-you-type](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/search-as-you-type) | ✅ 커버 ([36](36-autocomplete-ngram-edgengram.md)) |
 | `completion` | suggester 전용 FST (Finite State Transducer) 기반 자동완성 | [suggesters/completion](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-suggesters) | ✅ 커버 ([36](36-autocomplete-ngram-edgengram.md)) |
-| numeric (`long`/`integer`/`short`/`byte`/`double`/`float`/`half_float`/`scaled_float`/`unsigned_long`) | 정밀도 vs 디스크 트레이드오프. `scaled_float` = 정수 저장 + scale 분리 → 가격 필드에 유용 | [numeric](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/number) | 🟡 부분 |
+| numeric (`long`/`integer`/`short`/`byte`/`double`/`float`/`half_float`/`scaled_float`/`unsigned_long`) | 정밀도 vs 디스크 트레이드오프. `scaled_float` = 정수 저장 + scale 분리 → 가격 필드에 유용 | [numeric](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/number) | ✅ 커버 ([38](38-mapping-power-features.md) numeric/scaled_float) |
 | `date` / `date_nanos` | epoch_millis vs ns 정밀도. APM/관측에선 nanos 필수 | [date](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/date), [date_nanos](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/date_nanos) | ★ 신규 |
 | `boolean` / `binary` | 단순 타입 | docs/reference/elasticsearch/mapping-reference | ✅ 일반 |
 | `ip` / `version` | IP 주소·SemVer 정렬 인식 | [ip](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/ip), [version](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/version) | ★ 신규 |
 | range types (`integer_range`/`float_range`/`long_range`/`double_range`/`date_range`/`ip_range`) | 도큐먼트가 범위를 들고 있는 케이스 (예: 이벤트 유효기간) | [range](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/range) | ★ 신규 |
-| `object` / `nested` / `flattened` / `join` | 객체 표현 4 패턴 — 평탄화 / 정확매칭 / dynamic key / parent-child | [nested](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/nested), [flattened](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/flattened), [join](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/parent-join) | 🟡 부분 (#07 nested 만) |
+| `object` / `nested` / `flattened` / `join` | 객체 표현 4 패턴 — 평탄화 / 정확매칭 / dynamic key / parent-child | [nested](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/nested), [flattened](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/flattened), [join](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/parent-join) | ✅ 커버 ([38](38-mapping-power-features.md) object 4-패턴) |
 | `geo_point` / `geo_shape` / `point` / `shape` | 지리 vs 평면 좌표 + Lat-Lon vs polygon | [geo-point](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/geo-point), [geo-shape](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/geo-shape) | ★ 신규 |
 | `dense_vector` | 고정 차원 벡터 (HNSW + ANN). 양자화·차원·similarity 옵션 | [dense-vector](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dense-vector) | ✅ 커버 (#08) |
 | `sparse_vector` | ELSER 출력 같은 sparse 가중치. token weight 기반 BM25-like 점수 | [sparse-vector](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/sparse-vector) | ✅ 커버 ([27](27-mapping-field-types.md), [28](28-elser-semantic-text.md)) |
 | `semantic_text` | ES 8.13+ — 자동 chunking + inference endpoint 호출, 매핑만 선언하면 임베딩 자동 | [semantic-text](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/semantic-text) | ✅ 커버 ([27](27-mapping-field-types.md), [28](28-elser-semantic-text.md)) |
 | `rank_feature` / `rank_features` | 사전 계산된 numeric 가중치를 rank-only 색인 — pagerank·인기도 효율 결합 | [rank-features](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/rank-features) | ✅ 커버 ([27](27-mapping-field-types.md), [32](32-specialized-queries.md)) |
-| `token_count` | 다른 필드의 토큰 수를 정수 색인 — 길이 기반 필터/정렬 | [token-count](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/token-count) | ★ 신규 |
-| `histogram` / `aggregate_metric_double` | 사전 집계된 분포·통계 저장 → downsampling/롤업 | [histogram](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/histogram), [aggregate-metric-double](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/aggregate-metric-double) | ★ 신규 |
+| `token_count` | 다른 필드의 토큰 수를 정수 색인 — 길이 기반 필터/정렬 | [token-count](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/token-count) | ✅ 커버 ([38](38-mapping-power-features.md)) |
+| `histogram` / `aggregate_metric_double` | 사전 집계된 분포·통계 저장 → downsampling/롤업 | [histogram](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/histogram), [aggregate-metric-double](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/aggregate-metric-double) | ✅ 커버 ([40](40-data-streams-downsampling.md)) |
 | `percolator` | **stored query** 를 색인하는 특별 타입 — `percolate` 쿼리의 짝 | [percolator field](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/percolator) | ✅ 커버 ([22](22-percolate.md), [27](27-mapping-field-types.md)) |
 | `alias` field | 필드 alias — 마이그레이션·ECS 호환 | [alias](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/field-alias) | ★ 신규 |
 | meta fields (`_id`, `_source`, `_index`, `_routing`, `_ignored`, `_meta`, `_doc_count`) | 시스템 메타. `_source` disable, `_routing` 로 shard 고정 등 운영 결정 직결 | [meta-fields](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-meta-field) | 🟡 부분 (`_routing` 만) |
@@ -156,29 +161,29 @@ sources:
 | `normalizer` (keyword 전용) | keyword 에 lowercase·asciifolding 같은 token filter 만 적용 | [normalizer](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/normalizer) | ★ 신규 |
 | `index` (true/false) | 색인 여부 — false 시 검색 불가, _source 만 저장 | [index param](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-index) | ★ 신규 |
 | `store` | _source 와 별개 stored field — `_source` disable 시 의미 | [store](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/mapping-store) | ★ 신규 |
-| `doc_values` / `norms` / `index_options` | 정렬·집계 효율 / 점수 계산 통계 저장 / postings 상세도 | [doc-values](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/doc-values), [norms](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/norms), [index-options](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/index-options) | 🟡 부분 (#03 일반 언급) |
+| `doc_values` / `norms` / `index_options` | 정렬·집계 효율 / 점수 계산 통계 저장 / postings 상세도 | [doc-values](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/doc-values), [norms](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/norms), [index-options](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/index-options) | ✅ 커버 ([38](38-mapping-power-features.md)) |
 | `fields` (multi-field) | 한 source → 여러 색인 (`title` text + `title.raw` keyword) | [multi-fields](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/multi-fields) | ✅ 커버 (#04) |
-| `copy_to` | 여러 필드 값을 합쳐 가상 필드 생성 — `multi_match` 대안 | [copy-to](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/copy-to) | ★ 신규 |
-| `dynamic` / `dynamic_templates` | 동적 매핑 정책, 패턴별 타입 자동 매핑 | [dynamic-templates](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dynamic-templates) | ★ 신규 |
-| `runtime` fields (schema-on-read) | 색인 없이 query/agg 시점 계산 | [runtime](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/runtime) | ★ 신규 |
-| `subobjects: false` | dot-notation 필드명을 평탄화 (`a.b.c` 한 leaf 로) | [subobjects](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/subobjects) | ★ 신규 |
+| `copy_to` | 여러 필드 값을 합쳐 가상 필드 생성 — `multi_match` 대안 | [copy-to](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/copy-to) | ✅ 커버 ([38](38-mapping-power-features.md)) |
+| `dynamic` / `dynamic_templates` | 동적 매핑 정책, 패턴별 타입 자동 매핑 | [dynamic-templates](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dynamic-templates) | ✅ 커버 ([38](38-mapping-power-features.md)) |
+| `runtime` fields (schema-on-read) | 색인 없이 query/agg 시점 계산 | [runtime](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/runtime) | ✅ 커버 ([38](38-mapping-power-features.md)) |
+| `subobjects: false` | dot-notation 필드명을 평탄화 (`a.b.c` 한 leaf 로) | [subobjects](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/subobjects) | ✅ 커버 ([38](38-mapping-power-features.md)) |
 | `similarity` (BM25/boolean/scripted/dfr/dfi/ib/lmd/lmj) | 필드별 점수 모델 교체 | [similarity](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/similarity) | ✅ 커버 (#06) |
-| `eager_global_ordinals` | terms agg/parent-child 첫 쿼리 latency ↓ — refresh 마다 빌드 | [eager-global-ordinals](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/eager-global-ordinals) | ★ 신규 |
-| `ignore_above` / `ignore_malformed` / `null_value` | keyword 길이 cut / 잘못된 값 무시 / null 치환 | docs/reference/elasticsearch/mapping-reference | 🟡 부분 |
+| `eager_global_ordinals` | terms agg/parent-child 첫 쿼리 latency ↓ — refresh 마다 빌드 | [eager-global-ordinals](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/eager-global-ordinals) | ✅ 커버 ([38](38-mapping-power-features.md)) |
+| `ignore_above` / `ignore_malformed` / `null_value` | keyword 길이 cut / 잘못된 값 무시 / null 치환 | docs/reference/elasticsearch/mapping-reference | ✅ 커버 ([38](38-mapping-power-features.md)) |
 | `term_vector` | offsets·payloads 색인 — fast vector highlighter / MLT 가속 | [term-vector](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/term-vector) | ★ 신규 |
 
 ### C. Index Templates / Settings
 
 | 개념 | 1-줄 정의 | 공식 링크 | 상태 |
 |---|---|---|---|
-| **Index template** / **Component template** (composable) | 인덱스 생성 시 mapping/settings 자동 적용. 8.x 표준 = composable | [index-templates](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/index-templates) | ★ 신규 |
+| **Index template** / **Component template** (composable) | 인덱스 생성 시 mapping/settings 자동 적용. 8.x 표준 = composable | [index-templates](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/index-templates) | ✅ 커버 ([37](37-index-templates.md)) |
 | `number_of_shards` / `number_of_replicas` | 샤드/레플리카 — sizing 공식 | [index settings](https://www.elastic.co/docs/reference/elasticsearch/index-settings) | ✅ 커버 (#12) |
 | `refresh_interval` | NRT (Near Real-Time, 준실시간) 가시성 주기 | [refresh interval](https://www.elastic.co/docs/reference/elasticsearch/index-settings) | ✅ 커버 (#02) |
-| `index.codec` (default / best_compression) | 디스크 ↔ CPU 트레이드오프, ZSTD 옵션 (8.x) | [codec](https://www.elastic.co/docs/reference/elasticsearch/index-settings) | ★ 신규 |
-| `index.sort.*` | segment 내부 정렬 — early termination 가능 (`sort + size` 빠른 응답) | [index-sort](https://www.elastic.co/docs/reference/elasticsearch/index-settings/index-modules-index-sorting) | ★ 신규 |
+| `index.codec` (default / best_compression) | 디스크 ↔ CPU 트레이드오프, ZSTD 옵션 (8.x) | [codec](https://www.elastic.co/docs/reference/elasticsearch/index-settings) | ✅ 커버 ([37](37-index-templates.md)) |
+| `index.sort.*` | segment 내부 정렬 — early termination 가능 (`sort + size` 빠른 응답) | [index-sort](https://www.elastic.co/docs/reference/elasticsearch/index-settings/index-modules-index-sorting) | ✅ 커버 ([37](37-index-templates.md)) |
 | `routing.allocation.*` | shard allocation filtering / awareness | [allocation](https://www.elastic.co/docs/reference/elasticsearch/index-settings/index-modules-allocation) | ✅ 커버 (#12) |
-| **Data streams** + **Data Stream Lifecycle (DSL)** | 시계열 append-only 인덱스 추상 + 8.x DSL 자동 rollover | [data-streams](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/data-streams) | ★ 신규 |
-| **Downsampling** (rollups 후속) | 시계열 metric을 더 큰 interval 로 사전 집계 | [downsampling](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/downsampling) | ★ 신규 |
+| **Data streams** + **Data Stream Lifecycle (DSL)** | 시계열 append-only 인덱스 추상 + 8.x DSL 자동 rollover | [data-streams](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/data-streams) | ✅ 커버 ([40](40-data-streams-downsampling.md)) |
+| **Downsampling** (rollups 후속) | 시계열 metric을 더 큰 interval 로 사전 집계 | [downsampling](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/downsampling) | ✅ 커버 ([40](40-data-streams-downsampling.md)) |
 
 ### D. Query DSL — Term-level Queries
 
@@ -187,7 +192,7 @@ sources:
 | `term` / `terms` / `terms_set` / `ids` | 정확 매칭. `terms_set` 은 최소 N 개 매치 조건 | [term-level](https://www.elastic.co/docs/reference/query-languages/query-dsl/term-level-queries) | ✅ 커버 (#07) |
 | `range` (date math 포함) | 숫자/날짜 범위. `now-1d/d` 같은 date math | [range](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-range-query) | 🟡 부분 (date math 별도 안 다룸) |
 | `exists` / `prefix` / `wildcard` / `regexp` / `fuzzy` | 존재성·접두·와일드·정규식·퍼지 | [term-level](https://www.elastic.co/docs/reference/query-languages/query-dsl/term-level-queries) | ✅ 커버 (#07) |
-| `terms` lookup | 다른 인덱스의 doc 에서 terms 동적 fetch | [terms-lookup](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-terms-query) | ★ 신규 |
+| `terms` lookup | 다른 인덱스의 doc 에서 terms 동적 fetch | [terms-lookup](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-terms-query) | ✅ 커버 ([38](38-mapping-power-features.md)) |
 
 ### E. Query DSL — Full-text Queries
 
@@ -195,7 +200,7 @@ sources:
 |---|---|---|---|
 | `match` / `match_phrase` / `match_phrase_prefix` / `multi_match` | 기본 풀텍스트 4종. `multi_match` types: `best_fields`/`most_fields`/`cross_fields`/`phrase`/`phrase_prefix`/`bool_prefix` | [full-text](https://www.elastic.co/docs/reference/query-languages/query-dsl/full-text-queries) | ✅ 커버 (#07) |
 | `match_bool_prefix` | tokens 를 should + 마지막 token prefix — autocomplete 대체재 | [match-bool-prefix](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-match-bool-prefix-query) | ★ 신규 |
-| `combined_fields` | BM25F 진짜 구현. cross-field 매칭의 정확한 idf 계산 | [combined-fields](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-combined-fields-query) | ★ 신규 |
+| `combined_fields` | BM25F 진짜 구현. cross-field 매칭의 정확한 idf 계산 | [combined-fields](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-combined-fields-query) | ✅ 커버 ([38](38-mapping-power-features.md)) |
 | `intervals` | 위치/거리 조건의 정밀 풀텍스트 ("X 와 Y 가 5 단어 이내") | [intervals](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-intervals-query) | ★ 신규 |
 | `query_string` (Lucene syntax) / `simple_query_string` | 사용자 입력 raw query — operator 파싱 | [query-string](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-query-string-query) | ★ 신규 |
 
@@ -204,7 +209,7 @@ sources:
 | 개념 | 1-줄 정의 | 공식 링크 | 상태 |
 |---|---|---|---|
 | `bool` (must / should / must_not / filter) | 가장 흔한 조합. `filter` 는 캐시 + 점수 미계산 | [bool](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-bool-query) | ✅ 커버 (#07) |
-| `dis_max` | should 매칭 점수의 max + tie_breaker — multi_match best_fields 의 내부 | [dis-max](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-dis-max-query) | 🟡 부분 |
+| `dis_max` | should 매칭 점수의 max + tie_breaker — multi_match best_fields 의 내부 | [dis-max](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-dis-max-query) | ✅ 커버 ([38](38-mapping-power-features.md)) |
 | `function_score` / `script_score` | 점수 변형 — gauss/linear/exp decay, field_value_factor, random_score | [function-score](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-function-score-query) | ✅ 커버 (#06, [35](35-field-value-factor-modifiers.md) modifier 풀 카탈로그) |
 | `field_value_factor.modifier` (NONE/SQRT/LN1P/LN2P/LOG1P/LOG2P/RECIPROCAL/SQUARE) | raw 필드 값의 비선형 압축 — saturation 함수 카탈로그. 0 처리·곱연산 안전성·featureScore 분포 | [field-value-factor](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-function-score-query#function-field-value-factor) | ✅ 커버 ([35](35-field-value-factor-modifiers.md)) |
 | `boosting` (positive + negative_boost) | 매칭은 시키되 점수 깎기 — 광고 차단/품절 강등 | [boosting](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-boosting-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
@@ -239,18 +244,18 @@ sources:
 | 개념 | 1-줄 정의 | 공식 링크 | 상태 |
 |---|---|---|---|
 | `_search` (POST/GET) | 표준 검색. `query` + `aggs` + `sort` + ... | [search](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-your-data) | ✅ 커버 |
-| `_msearch` (multi-search) | 여러 검색을 NDJSON 으로 묶어 round-trip ↓ | [msearch](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/multi-search) | ★ 신규 |
+| `_msearch` (multi-search) | 여러 검색을 NDJSON 으로 묶어 round-trip ↓ | [msearch](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/multi-search) | ✅ 커버 ([39](39-search-ops-apis.md)) |
 | `_count` | doc 수만 반환 | docs/reference/elasticsearch/rest-apis | ★ 신규 |
 | `_explain` | 특정 doc 의 매칭/점수 trace | [explain-api](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/explain-api) | 🟡 부분 (explain:true 만) |
-| `_field_caps` | 인덱스 패턴 전체 필드 메타 — Kibana data view 핵심 | [field-caps](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/field-caps) | ★ 신규 |
+| `_field_caps` | 인덱스 패턴 전체 필드 메타 — Kibana data view 핵심 | [field-caps](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/field-caps) | ✅ 커버 ([39](39-search-ops-apis.md)) |
 | `_terms_enum` | keyword 필드의 prefix-기반 빠른 자동완성 (suggester 보다 단순) | [terms-enum](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/terms-enum) | ✅ 커버 ([36](36-autocomplete-ngram-edgengram.md)) |
-| `_search_shards` | 어느 shard 가 hit 될지 사전 검사 — 캐시 워밍/디버깅 | docs | ★ 신규 |
-| `_validate/query` | 쿼리 문법 검증 only | docs | ★ 신규 |
-| `_search/template` (Mustache) + `_render/template` | 파라미터화된 search template — 클라이언트와 쿼리 분리 | [search-template](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-template) | ★ 신규 |
+| `_search_shards` | 어느 shard 가 hit 될지 사전 검사 — 캐시 워밍/디버깅 | docs | ✅ 커버 ([39](39-search-ops-apis.md)) |
+| `_validate/query` | 쿼리 문법 검증 only | docs | ✅ 커버 ([39](39-search-ops-apis.md)) |
+| `_search/template` (Mustache) + `_render/template` | 파라미터화된 search template — 클라이언트와 쿼리 분리 | [search-template](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-template) | ✅ 커버 ([39](39-search-ops-apis.md)) |
 | `_search?profile=true` | per-shard query/agg 비용 분석 | [profile](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-profile) | 🟡 부분 (#16 언급) |
 | `_search/scroll` (legacy) | snapshot pagination — deep pagination 용. 8.x 부터 PIT 권장 | [scroll](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results) | ★ 신규 (deprecated 경로) |
 | **Point in Time (PIT)** + **search_after** | snapshot id 기반 일관 pagination — 현재 권장 | [paginate](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/paginate-search-results) | ✅ 커버 ([24](24-pit-search-after.md)) |
-| `_async_search` | long-running search — 비동기 제출, ID 로 polling | [async-search](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/async-search) | ★ 신규 |
+| `_async_search` | long-running search — 비동기 제출, ID 로 polling | [async-search](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/async-search) | ✅ 커버 ([39](39-search-ops-apis.md)) |
 | `_mvt` (Mapbox Vector Tile) | geo 검색 결과를 vector tile binary 로 — 지도 UI 직결 | [vector-tile](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/vector-tile-search) | ★ 신규 |
 | **Field collapsing** + `inner_hits` | group-by + 그룹 내 top-N | [collapse](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/collapse-search-results) | ✅ 커버 ([25](25-field-collapsing-rescore.md)) |
 | **Rescore** | top-N window 만 secondary query 로 재점수 — Two-Stage retrieval 의 ES 네이티브 | [rescore](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/filter-search-results) | ✅ 커버 ([25](25-field-collapsing-rescore.md)) |
@@ -289,14 +294,14 @@ sources:
 | **ILM** (ES) / **ISM** (OS) | Hot-Warm-Cold-Frozen-Delete 단계 자동 전이 | [ilm](https://www.elastic.co/docs/reference/elasticsearch/index-lifecycle-management) | ✅ 커버 (#13) |
 | **Data Stream Lifecycle (DSL)** (8.x) | data stream 전용 단순 라이프사이클 (rollover + retention) | [data-stream-lifecycle](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/data-stream-lifecycle) | ★ 신규 |
 | **Snapshot/Restore** | 외부 repo (S3/GCS/Azure/HDFS) 로 백업 | [snapshot-restore](https://www.elastic.co/docs/reference/elasticsearch/snapshot-restore) | ✅ 커버 (#16) |
-| **Snapshot Lifecycle Management (SLM)** | snapshot 자동 스케줄·보관 — Elastic | [slm](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/snapshot-lifecycle-management) | ★ 신규 |
+| **Snapshot Lifecycle Management (SLM)** | snapshot 자동 스케줄·보관 — Elastic | [slm](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/snapshot-lifecycle-management) | ✅ 커버 ([40](40-data-streams-downsampling.md)) |
 | **Searchable Snapshots** | snapshot 을 마운트해 직접 검색 — 스토리지 비용 ↓ (Elastic) | [searchable-snapshots](https://www.elastic.co/docs/reference/elasticsearch/searchable-snapshots) | ✅ 커버 ([31](31-ccs-ccr-snapshots.md)) |
 | **Frozen tier** | searchable snapshot 기반 cold 단계 이후 — 거의 무한 보존 | docs | ✅ 커버 ([31](31-ccs-ccr-snapshots.md)) |
 | `_reindex` | 인덱스 → 인덱스 복사 + transform | [reindex](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/reindex) | ✅ 커버 (#13) |
-| `_update_by_query` / `_delete_by_query` | 쿼리 매칭 doc 일괄 update/delete (script 가능) | [update-by-query](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/update-by-query) | ★ 신규 |
-| `_split` / `_shrink` / `_clone` index | shard 수 변경 (split=증가, shrink=감소, clone=동일 복제) | [split](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/split-index) | ★ 신규 |
+| `_update_by_query` / `_delete_by_query` | 쿼리 매칭 doc 일괄 update/delete (script 가능) | [update-by-query](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/update-by-query) | ✅ 커버 ([39](39-search-ops-apis.md)) |
+| `_split` / `_shrink` / `_clone` index | shard 수 변경 (split=증가, shrink=감소, clone=동일 복제) | [split](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/split-index) | ✅ 커버 ([39](39-search-ops-apis.md)) |
 | `_forcemerge` / `_refresh` / `_flush` | segment 병합 강제 / 가시성 즉시 / disk sync | docs | 🟡 부분 (#02 개념만) |
-| **Transforms** (continuous / batch) | entity-centric pivot — "user 별 last 30d 합계" 같은 materialized view | [transforms](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/transforms) | ★ 신규 |
+| **Transforms** (continuous / batch) | entity-centric pivot — "user 별 last 30d 합계" 같은 materialized view | [transforms](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/transforms) | ✅ 커버 ([40](40-data-streams-downsampling.md)) |
 | **Rollups** (deprecated → Downsampling) | 시계열 사전 집계 | docs | skip (deprecated) |
 
 ### L. 분산 / 멀티 클러스터 / 보안
@@ -322,8 +327,8 @@ sources:
 | **ELSER** (Elastic Learned Sparse EncodeR) | 사전학습된 sparse retrieval 모델 — token weight 출력 | [elser](https://www.elastic.co/docs/reference/elasticsearch/inference/elser) | ✅ 커버 ([28](28-elser-semantic-text.md)) |
 | **E5 multilingual** | dense embedding (multilingual) 모델 — text-embedding | docs | ✅ 커버 ([28](28-elser-semantic-text.md)) |
 | **semantic_text 필드** + 자동 chunking | 매핑 한 줄로 chunk + embedding 자동 — 8.13+ 권장 | [semantic-text](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/semantic-text) | ✅ 커버 ([28](28-elser-semantic-text.md)) |
-| **kNN with filter** (pre-filter) | ANN 후보 좁히기 — 정확도/지연 트레이드오프 | docs | ★ 신규 |
-| **Vector quantization** (BBQ / INT8 / INT4 / scalar) | dense_vector 메모리 ↓. **BBQ** = Better Binary Quantization (8.x 신기능) | [dense-vector quantization](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dense-vector) | ★ 신규 |
+| **kNN with filter** (pre-filter) | ANN 후보 좁히기 — 정확도/지연 트레이드오프 | docs | ✅ 커버 ([41](41-vector-advanced.md)) |
+| **Vector quantization** (BBQ / INT8 / INT4 / scalar) | dense_vector 메모리 ↓. **BBQ** = Better Binary Quantization (8.x 신기능) | [dense-vector quantization](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/dense-vector) | ✅ 커버 ([41](41-vector-advanced.md)) |
 | **Anomaly Detection ML jobs** | 시계열 이상 탐지 (SMV/HMM/RCF 계열) | [ml-anomaly](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ml-anomaly-apis) | ★ 신규 (Elastic 전용) |
 | **Categorization ML** | 비정형 로그 자동 카테고리화 | docs | ★ 신규 (Elastic 전용) |
 | **Watcher** | 주기적 query → 조건 → action (email/webhook/slack) | [watcher](https://www.elastic.co/docs/reference/elasticsearch/watcher) | ★ 신규 (Elastic 전용) |
@@ -350,11 +355,11 @@ sources:
 
 | 개념 | 1-줄 정의 | 공식 링크 | 상태 |
 |---|---|---|---|
-| `_cat/*` (indices/shards/nodes/allocation/recovery/master/health/tasks/pending_tasks/...) | 사람이 보는 cluster 상태 | [cat](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-apis) | 🟡 부분 (#16 health 만) |
+| `_cat/*` (indices/shards/nodes/allocation/recovery/master/health/tasks/pending_tasks/...) | 사람이 보는 cluster 상태 | [cat](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/cat-apis) | ✅ 커버 ([39](39-search-ops-apis.md)) |
 | `_nodes/stats` / `_cluster/stats` | 노드/클러스터 상세 통계 | docs | ✅ 커버 (#16) |
-| `_tasks` 관리 + cancel | long-running task 취소 (reindex/by_query) | [tasks](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/task-management) | ★ 신규 |
+| `_tasks` 관리 + cancel | long-running task 취소 (reindex/by_query) | [tasks](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/task-management) | ✅ 커버 ([39](39-search-ops-apis.md)) |
 | `_nodes/hot_threads` | thread dump — 병목 식별 | docs | ✅ 커버 (#16) |
-| `_cluster/allocation/explain` | 왜 이 shard 가 unassigned 인지 설명 | docs | ★ 신규 |
+| `_cluster/allocation/explain` | 왜 이 shard 가 unassigned 인지 설명 | docs | ✅ 커버 ([39](39-search-ops-apis.md)) |
 | Search Slow Log / Index Slow Log | 임계값 초과 쿼리 로깅 | docs | ✅ 커버 (#16) |
 | Profile API | 쿼리/aggs 의 per-shard 비용 분석 | docs | 🟡 부분 |
 
@@ -367,7 +372,7 @@ sources:
 | **Hybrid query** (top-level) | OS 의 hybrid 검색 표준 — search pipeline 과 한 쌍 | [hybrid](https://docs.opensearch.org/3.5/query-dsl/compound/hybrid) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
 | **Neural search** plugin | text → embedding → kNN 자동화 (model_id 지정) | [neural](https://docs.opensearch.org/3.5/search-plugins/neural-text-search) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
 | **Neural Sparse search** + 2-phase processor | sparse retrieval (BM25-like 토큰 가중치) + 가속 처리 | [neural-sparse](https://docs.opensearch.org/3.5/search-plugins/neural-sparse-search) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
-| **k-NN engines** (faiss / nmslib / lucene) | OS 는 3-엔진 선택 가능. faiss = HNSW + IVF/PQ, nmslib = HNSW (legacy), lucene = ES 호환 | [k-nn](https://docs.opensearch.org/3.5/vector-search/k-nn) | ★ 신규 |
+| **k-NN engines** (faiss / nmslib / lucene) | OS 는 3-엔진 선택 가능. faiss = HNSW + IVF/PQ, nmslib = HNSW (legacy), lucene = ES 호환 | [k-nn](https://docs.opensearch.org/3.5/vector-search/k-nn) | ✅ 커버 ([41](41-vector-advanced.md)) |
 | **k-NN 양자화** (FP16 / INT8 / Binary) + disk-based vectors | 메모리·디스크 절약 옵션 — Elastic BBQ 와 비교 가능 | [k-nn quantization](https://docs.opensearch.org/3.5/vector-search/optimizing-storage) | ★ 신규 |
 | **ML Commons** | 범용 모델 등록·서빙 plugin — neural 의 토대 | [ml-commons](https://docs.opensearch.org/3.5/ml-commons-plugin/index) | ✅ 커버 ([29](29-os-search-pipeline-neural.md)) |
 | **Conversational Search** / RAG (Retrieval-Augmented Generation, 검색 증강 생성) | LLM 연계 답변 생성 endpoint | [conversational](https://docs.opensearch.org/3.5/search-plugins/conversational-search) | ★ 신규 |

@@ -145,6 +145,19 @@
 | ICU | International Components for Unicode, 유니코드 국제화 컴포넌트 |
 | NFD | Normalization Form Decomposed, 정규화 분해 (Unicode 정규화 형식 — 한글 자모 분리에 사용) |
 | ELSER | Elastic Learned Sparse EncodeR (Elastic 의 sparse 임베딩 모델) |
+| BBQ | Better Binary Quantization (ES 8.x 의 32x 메모리 절감 벡터 양자화) |
+| IVF | Inverted File index (faiss 의 cluster 기반 ANN 자료구조) |
+| PQ | Product Quantization, 곱 양자화 (faiss 의 벡터 압축) |
+| NRT | Near Real-Time, 준실시간 (ES 의 1초 default refresh 모델) |
+| TSDS | Time-Series Data Stream, 시계열 데이터 스트림 (ES 8.7+ metric 전용 최적화) |
+| DLS | Document Level Security, 문서 레벨 보안 |
+| FLS | Field Level Security, 필드 레벨 보안 |
+| SLM | Snapshot Lifecycle Management, 스냅샷 생명주기 관리 |
+| DSL (data stream) | Data Stream Lifecycle, 데이터 스트림 라이프사이클 (8.x ILM 의 단순화 버전 — Domain-Specific Language 의 DSL 과 구분) |
+| NDJSON | Newline-Delimited JSON, 줄 단위 JSON (bulk / msearch 입력 형식) |
+| ECS | Elastic Common Schema, 일래스틱 공통 스키마 |
+| OTel | OpenTelemetry, 오픈 텔레메트리 |
+| ROI | Return On Investment, 투자 대비 수익 |
 | MRR | Mean Reciprocal Rank, 평균 상호 순위 |
 | MAP | Mean Average Precision, 평균 평균 정밀도 |
 | DCG | Discounted Cumulative Gain, 할인 누적 이득 |

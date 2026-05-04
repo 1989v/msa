@@ -1620,6 +1620,24 @@ ADR-0026 (docs-taxonomy) 준수:
 - **S11 즉시성**: 현재 LOG1P 가 0~1 정규화 featureScore 에 적용되면 0 입력 폭사 위험 — 1d 코드 변경이지만 효과 ↑.
 - **S12 단계적**: Phase 1 만 매핑 변경, Phase 2~3 은 ICU + 별도 analytics 연동 → 분기 단위.
 
+### 11-2-ter. 인덱스/매핑/운영/시계열/벡터 ADR 후보 5건 (#37~41 추가, 2026-05-05)
+
+§37 Index Template / §38 Mapping Power / §39 Search Ops / §40 Data Streams / §41 Vector Advanced 작성에서 도출:
+
+| 가번호 | 제목 | 출처 | 우선순위 |
+|---|---|---|---|
+| **(신규-S13)** | 검색 인덱스 component template 분해 — base/search_settings/product_mapping/lifecycle 4 component 로 표준화 | [37-index-templates.md](19-search-engine/37-index-templates.md) §7 | 분기 (IndexAliasManager 의 inline mapping 리팩터) |
+| **(신규-S14)** | ProductEsDocument 매핑 v2 — `BigDecimal Double` → `scaled_float` (가격 정밀도) + `popularityScore` Double → scaled_float + `_routing` 카테고리 고정 + `name.raw` keyword multi-field + nested 옵션 | [38-mapping-power-features.md](19-search-engine/38-mapping-power-features.md) §9 | 즉시 (가격 정밀도 손실 + sort/agg 불가 해소) |
+| **(신규-S15)** | search:app 의 카테고리/필터 검색을 `_msearch` (NDJSON) 로 묶어 round-trip 최소화 + Mustache search template 으로 client-query 분리 | [39-search-ops-apis.md](19-search-engine/39-search-ops-apis.md) §12 | 즉시 (latency P99 개선) |
+| **(신규-S16)** | analytics 시계열 (`event/click/view`) 인덱스를 Data Stream + DSL (8.x) 로 표준화 + 30일 후 Downsampling (5m → 1h interval) | [40-data-streams-downsampling.md](19-search-engine/40-data-streams-downsampling.md) §12 | 분기 (analytics 인프라와 결합) |
+| **(신규-S17)** | Hybrid Search 도입 시 dense_vector 를 `int8_hnsw` quantization 으로 색인 (1M~10M doc 기준 4x 메모리 절감 + recall ≥ 0.95) | [41-vector-advanced.md](19-search-engine/41-vector-advanced.md) §12 | 반기 (S4 Hybrid Search 도입과 동시) |
+
+핵심 결정 변수 (S13~S17):
+- **S14 즉시**: 가격 BigDecimal → Double 변환 시 정밀도 손실 (소수점 4자리 이후) — 운영 사고 위험. scaled_float (scaling_factor=100) 로 정수 저장.
+- **S15 즉시**: search 검색 페이지 multi-call (필터별 count, 카테고리별 hits 등) round-trip 합산이 latency P99 의 30%+. _msearch 로 1 round-trip 통합.
+- **S13 분기**: component template 분해는 새 인덱스 추가 시 ROI 크지만 기존 IndexAliasManager 리팩터 비용 있음 — Phase 0 (현재 single inline) 와 병행 도입.
+- **S16 / S17 분기-반기**: 외부 인프라 (analytics ClickHouse / vector embedding) 와 결합 — 단독 결정 ❌, 별도 ADR 와 묶음.
+
 ### 11-3. 핵심 결정 변수
 
 - **즉시 ADR (S1, S2)**: 운영 가시성 + 데이터 일관성 — ROI 명확, Effort 작음
@@ -1650,6 +1668,7 @@ ADR-0026 (docs-taxonomy) 준수:
 | 2026-05-01 | 최초 작성 — 15개 학습 주제의 improvements.md 통합 | kgd |
 | 2026-05-04 | #19 검색엔진 심화 ADR 9건 (핵심 4 + 보너스 5) 추가 (§11) | kgd |
 | 2026-05-04 | #19 평가/modifier/자동완성 deep file (34~36) 보강 — ADR 3건 (S10~S12) 추가 (§11-2-bis) | kgd |
+| 2026-05-05 | #19 인덱스/매핑/운영/시계열/벡터 deep file (37~41) 보강 — ADR 5건 (S13~S17) 추가 (§11-2-ter) | kgd |
 
 ---
 

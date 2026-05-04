@@ -42,9 +42,9 @@
 | 16 | Async/Nonblocking IO | 38 (8+6+5+10+3+6) + 인덱스 50 | 38 | [16-async-nonblocking-io/19-interview-qa.md](16-async-nonblocking-io/19-interview-qa.md) |
 | 17 | Spring Web | 36 (8+10+8+6+4) | 36 | [17-spring-web/20-interview-qa.md](17-spring-web/20-interview-qa.md) |
 | 18 | gRPC | 30 (10+12+8) | 30 | [18-grpc/20-interview-qa.md](18-grpc/20-interview-qa.md) |
-| 19 | 검색엔진 심화 (ES · BM25 · Hybrid · Re-Rank · 평가/modifier/자동완성) | 17 + 꼬리 3단계 + 악마의 변호인 17 + 34/35/36 보강 19 | 70+ | [20-interview-qa.md](19-search-engine/20-interview-qa.md) · [34-eval-metrics](19-search-engine/34-eval-metrics-precision-recall-ndcg.md) · [35-modifiers](19-search-engine/35-field-value-factor-modifiers.md) · [36-autocomplete](19-search-engine/36-autocomplete-ngram-edgengram.md) |
+| 19 | 검색엔진 심화 (ES · BM25 · Hybrid · Re-Rank · 평가/modifier/자동완성/index-template/매핑/운영API/시계열/벡터고급) | 17 + 꼬리 3단계 + 악마의 변호인 17 + 34/35/36/37/38/39/40/41 보강 약 55 | 110+ | [20-interview-qa.md](19-search-engine/20-interview-qa.md) · [34-eval-metrics](19-search-engine/34-eval-metrics-precision-recall-ndcg.md) · [35-modifiers](19-search-engine/35-field-value-factor-modifiers.md) · [36-autocomplete](19-search-engine/36-autocomplete-ngram-edgengram.md) · [37-index-templates](19-search-engine/37-index-templates.md) · [38-mapping-power](19-search-engine/38-mapping-power-features.md) · [39-search-ops](19-search-engine/39-search-ops-apis.md) · [40-data-streams](19-search-engine/40-data-streams-downsampling.md) · [41-vector-advanced](19-search-engine/41-vector-advanced.md) |
 
-**총합**: 약 800개 카드, 핵심 카드 약 740개 (#19 평가/modifier/자동완성 보강 반영)
+**총합**: 약 840개 카드, 핵심 카드 약 780개 (#19 인덱스/매핑/운영/시계열/벡터고급 보강 반영)
 
 ---
 

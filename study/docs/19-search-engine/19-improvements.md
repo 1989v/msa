@@ -407,6 +407,67 @@ PoC 추정 권장 순서:
 
 ---
 
+## 인덱스 / 매핑 / 운영 / 시계열 / 벡터 ADR 후보 (#37~41 추가, 2026-05-05)
+
+§37 / §38 / §39 / §40 / §41 deep file 작성 결과:
+
+### ADR-XXXX-13: 검색 인덱스 component template 분해
+
+출처: [37-index-templates.md](37-index-templates.md) §7.
+
+현재 `IndexAliasManager` 가 inline mapping/settings 를 코드로 들고 있음. 8.x composable 표준에 맞게 4 개 component template (`base` / `search_settings` / `product_mapping` / `lifecycle`) 로 분해 → 새 인덱스 도입 시 재사용성 ↑, mapping 변경 시 영향 범위 좁힘.
+
+- 우선순위: 분기 (기존 코드 리팩터 비용 있음, 새 인덱스 도입 시 즉시 도입)
+- Effort: 1~2 sprint (component 분리 + apply 자동화 + alias swap 흐름 통합)
+- 효과: 새 인덱스 추가 시 boilerplate 90% ↓
+
+### ADR-XXXX-14: ProductEsDocument 매핑 v2
+
+출처: [38-mapping-power-features.md](38-mapping-power-features.md) §9.
+
+`ProductEsDocument.kt` 의 다음 항목 매핑 변경:
+- `price: BigDecimal` Double 색인 → `scaled_float` (`scaling_factor=100`) — 정밀도 손실 (소수점 4자리) 해소
+- `popularityScore: Double` → `scaled_float` (`scaling_factor=1000`) — 정렬/집계 효율
+- `name` → multi-field (`name.raw` keyword) — sort / agg / 정확 매칭 가능
+- `_routing` 을 `category_id` 에 고정 — 카테고리 검색 fan-out 90% ↓
+- `options` array → `nested` (정확 매칭 보장) 또는 `flattened` (기본값) 결정
+
+- 우선순위: 즉시 (가격 정밀도는 운영 사고 위험)
+- Effort: 1 sprint (매핑 변경 + reindex + 검증)
+- 효과 측정: ADR-XXXX-10 nDCG@10 + 가격 정밀도 회귀 테스트
+
+### ADR-XXXX-15: search:app 의 _msearch + Mustache search template
+
+출처: [39-search-ops-apis.md](39-search-ops-apis.md) §12.
+
+검색 페이지의 multi-call (메인 검색 + 필터별 count + 카테고리별 hits 등) 을 `_msearch` (NDJSON) 1 round-trip 통합. Mustache `_search/template` 로 client-query 분리 (배포 없이 query 변경).
+
+- 우선순위: 즉시 (latency P99 30% 개선 기대)
+- Effort: 2 sprint (template 정의 + client wrapper + 검증)
+- 효과 측정: typing-to-result P99, ADR-XXXX-10 nDCG (회귀 없는지)
+
+### ADR-XXXX-16: analytics 시계열 인덱스를 Data Stream + DSL 로 표준화
+
+출처: [40-data-streams-downsampling.md](40-data-streams-downsampling.md) §12.
+
+`analytics` 의 event/click/view 를 ES Data Stream 으로 색인 (현재 ClickHouse 가 SoR). DSL (8.x) 으로 30일 hot retention + Downsampling (5m → 1h interval) 으로 30일 후 압축 → 메모리·디스크 ↓.
+
+- 우선순위: 분기 (analytics 인프라 결정과 결합)
+- Effort: 1 분기 (인덱스 마이그레이션 + DSL + Downsampling 정책 + 모니터링)
+- 효과: 시계열 검색 latency 일관성 + 90일+ 데이터 보관 가능
+
+### ADR-XXXX-17: Hybrid Search dense_vector quantization 표준 (int8_hnsw)
+
+출처: [41-vector-advanced.md](41-vector-advanced.md) §12.
+
+ADR-XXXX-4 (Hybrid Search) 도입 시 dense_vector 를 `int8_hnsw` 로 색인 — 1M~10M doc 기준 4x 메모리 절감 + recall ≥ 0.95 유지. BBQ (32x 절감) 는 정밀도 손실로 후순위.
+
+- 우선순위: 반기 (S4 Hybrid Search 와 동시 도입)
+- Effort: ADR-XXXX-4 의 일부
+- 효과: 1억 doc × 768d 벡터 메모리 ~300GB → ~75GB
+
+---
+
 ## 종합 요약
 
 ### ADR 우선순위
@@ -417,9 +478,14 @@ PoC 추정 권장 순서:
 | 1 (즉시) | XXXX-2: 변동성 필드 컨벤션 | 1 sprint | 중간 | 데이터 일관성 ↑ |
 | 1 (즉시) | XXXX-10: 검색 품질 측정 (judgment + nDCG) | 1 sprint | 낮음 | 모든 검색 변경의 효과 검증 가능 |
 | 1 (즉시) | XXXX-11: modifier 표준 (LN2P) | 1d | 낮음 | 0 입력 폭사 방지 |
+| 1 (즉시) | XXXX-14: ProductEsDocument 매핑 v2 (scaled_float / _routing / multi-field) | 1 sprint | 중간 | 가격 정밀도 + sort/agg + fan-out 90% ↓ |
+| 1 (즉시) | XXXX-15: _msearch + Mustache search template | 2 sprint | 낮음 | latency P99 30% ↓ |
 | 2 (분기) | XXXX-3: ES vs OS 일원화 | 분기 | 중간 | 운영 부담 50% ↓ |
 | 2 (분기) | XXXX-12: 자동완성 도입 (Phase 1~2) | 분기 | 중간 | 검색 UX ↑ |
+| 2 (분기) | XXXX-13: component template 분해 | 1~2 sprint | 중간 | 새 인덱스 boilerplate 90% ↓ |
+| 2 (분기) | XXXX-16: analytics Data Stream + DSL + Downsampling | 1 분기 | 중간 | 시계열 검색 일관성 + 90일+ 보관 |
 | 3 (반기) | XXXX-4: Hybrid Search | 분기+ | 중간 | 검색 품질 ↑ (PoC 의존) |
+| 3 (반기) | XXXX-17: Hybrid quantization 표준 (int8_hnsw) | XXXX-4 일부 | 낮음 | 메모리 4x ↓ |
 | 보너스 | XXXX-5~9: 운영 표준 | 각 1-2d | 낮음 | 운영 안전성 ↑ |
 
 ### Effort 합산
