@@ -28,7 +28,7 @@ depth: full
 
 ## 1. 한 줄 핵심
 
-ES (Elasticsearch) / OS (OpenSearch) 는 검색·분석·보안 워크로드별로 **5종 query language** 를 가진다. 표현력·도메인·운영자 친숙도 trade-off — **새 검색은 Query DSL, 분석은 ES|QL/PPL, security 는 EQL, BI 호환은 SQL**.
+ES (Elasticsearch) / OS (OpenSearch) 는 검색·분석·보안 워크로드별로 **5종 query language** 를 가진다. 표현력·도메인·운영자 친숙도 trade-off — **새 검색은 Query DSL (Domain-Specific Language, 도메인 특화 언어), 분석은 ES|QL/PPL, security 는 EQL, BI 호환은 SQL**.
 
 ## 2. 5종 한 줄 비교
 

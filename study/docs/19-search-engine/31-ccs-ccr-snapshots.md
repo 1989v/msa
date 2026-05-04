@@ -75,7 +75,7 @@ GET /local-idx,cluster_one:remote-idx/_search
 **활용**:
 - **DR**: 한 리전 leader, 다른 리전 follower → 리전 장애 시 follower 승격
 - **지역 분산**: leader 리전 + N follower → 리전 가까운 사용자가 follower 검색
-- **CQRS**: leader = 색인 헤비, follower = 검색 헤비 (데이터/검색 분리)
+- **CQRS (Command Query Responsibility Segregation, 명령-조회 책임 분리)**: leader = 색인 헤비, follower = 검색 헤비 (데이터/검색 분리)
 
 > ★ **Elastic 라이선스 전용** (Platinum+). OpenSearch 에는 cross-cluster replication plugin 별도 (이름은 동일 / 메커니즘 비슷).
 
@@ -192,7 +192,7 @@ POST /_snapshot/my-repo/snapshot-2025-04/_mount?wait_for_completion=true
 
 **ADR-XXXX (Proposed)**: "DR 전략 — single-region 단계는 snapshot only, multi-region 단계는 OS CCR follower 검토"
 - **이유**: CCR 는 운영 복잡도 큰 결정 — 멀티 리전 필요성 정당화 후
-- **위험**: ES 사용 시 CCR 라이선스 비용 → ADR-3 (ES vs OS 일원화) 와 결합 검토
+- **위험**: ES (Elasticsearch) 사용 시 CCR 라이선스 비용 → ADR-3 (ES vs OS 일원화) 와 결합 검토
 
 ## 11. 면접 카드 + 꼬리질문
 

@@ -51,9 +51,9 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 | 16 | [비동기 · 논블로킹 IO (NIO · Reactor · Netty)](16-async-nonblocking-io/) | advanced | 18h | 21 | 6,547 | true | completed (19 deep) |
 | 17 | [Spring Web 처리 심화 (Filter · Interceptor · AOP · Jackson · gzip)](17-spring-web/) | intermediate | 14h | 22 | 5,279 | true | completed (20 deep) |
 | 18 | [gRPC 심화 (Protobuf · HTTP/2 · Streaming)](18-grpc/) | intermediate | 14h | 22 | 6,297 | false | completed (20 deep) |
-| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 35 | 13,051 | true | completed (20 deep + 99 catalog + 22~33 보강 12) |
+| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 39 | 15,238 | true | completed (20 deep + 99 catalog + 22~33 보강 12 + 34~36 평가/modifier/자동완성) |
 
-**합계**: 19 주제 / 455h 학습 시간 추정 / 368 file / 110,114 line.
+**합계**: 19 주제 / 455h 학습 시간 추정 / 416 file / 118,890 line.
 
 > "코드 연관" false 인 주제 (8/14/18) 도 msa 적용 가능성 검토 섹션을 가진다 — false 의 의미는 "현재 코드에 직접 매핑되는 구현이 적다" 정도로 해석.
 
@@ -437,7 +437,7 @@ flowchart TD
 - **미리보기**: [00-preview.md](19-search-engine/00-preview.md) · **계획**: [00-plan.md](19-search-engine/00-plan.md) · **개선안**: [19-improvements.md](19-search-engine/19-improvements.md) · **면접**: [20-interview-qa.md](19-search-engine/20-interview-qa.md)
 - **핵심**: "5층 스택". Lucene (segment / refresh ≠ flush ≠ commit / translog / merge) → Analyzer (nori decompound 3-mode / 사용자 사전 / search_analyzer 분리) → 스코어링 (BM25 k1·b / function_score / Vector dense_vector + HNSW) → 검색 품질 (Hybrid RRF / Re-Rank cross-encoder + LTR) → 동기화 (Outbox vs Debezium CDC / version_type=external / 색인 lag SLA) + 운영 (cluster health / shard 산정 / RTO).
 - **관련 주제**: #4 DB (RDB 와의 비교, B-Tree vs Inverted Index) · #6 Kafka (Outbox / 멱등 consumer) · #7 분산시스템 (eventual consistency) · #9 Redis (보조 저장소 패턴) · #11 K8s (ECK / OpenSearch Operator).
-- **msa 적용**: search 서비스 4-모듈 (`domain/app/consumer/batch`) 직접 분석 + 강점 10개 / 점검 17개 / **ADR 후보 4건** (lag SLA / 변동성 필드 컨벤션 / ES vs OpenSearch 일원화 / Hybrid Search 도입) + Hybrid Search PoC 코드.
+- **msa 적용**: search 서비스 4-모듈 (`domain/app/consumer/batch`) 직접 분석 + 강점 10개 / 점검 17개 / **ADR 후보 7건** (lag SLA / 변동성 필드 컨벤션 / ES vs OpenSearch 일원화 / Hybrid Search 도입 + 평가 메트릭·judgment 인프라 / function_score modifier 표준 LN2P / 자동완성 단계적 도입) + Hybrid Search PoC 코드 + 평가/modifier/자동완성 deep file 3건 (#34~36).
 
 ---
 

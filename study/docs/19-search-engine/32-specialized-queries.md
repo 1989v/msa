@@ -58,7 +58,7 @@ depth: full
 - 동작: doc 의 텍스트 → analyzer → top-N term 추출 → bool should
 - 비용 큰 영역: term vectors 가 없으면 fielddata 로 추출
 - **언제**: 단순 "관련 상품" 추천 (MVP)
-- **한계**: 의미 매칭 안 됨 — 임베딩 + kNN 이 정밀
+- **한계**: 의미 매칭 안 됨 — 임베딩 + kNN (K-Nearest Neighbors, K-최근접 이웃) 이 정밀
 
 ### 3-B. pinned
 
@@ -229,6 +229,6 @@ depth: full
 
 ## 11. 다음 학습
 
-- §99 §F dis_max / boosting / constant_score 와 BM25 의 결합 (#06)
+- §99 §F dis_max / boosting / constant_score 와 BM25 (Best Match 25) 의 결합 (#06)
 - §99 §G semantic / sparse_vector 와 결합 (→ [28-elser-semantic-text.md](28-elser-semantic-text.md))
 - §99 §H retrievers 의 standard 노드에 specialized query 끼우기 (→ [23-retrievers-api.md](23-retrievers-api.md))

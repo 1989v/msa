@@ -101,7 +101,7 @@ PUT /docs
 - index 시점에 자동 chunking + inference endpoint 호출 → embedding 저장
 - query: `semantic` query 또는 `match` query 로 자연어 — 자동 inference
 - chunking strategy 옵션 (sentence / word / 8.x 신규)
-- 효과: 매핑 한 줄로 BM25 + sparse/dense retrieval 동시
+- 효과: 매핑 한 줄로 BM25 (Best Match 25) + sparse/dense retrieval 동시
 
 ### 3-D. dense_vector / sparse_vector / rank_features
 

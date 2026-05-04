@@ -182,9 +182,9 @@ POST /<index>/_mvt/<field>/<z>/<x>/<y>
 
 ## 8. 운영 / 모니터링
 
-- BKD tree 색인 → segment merge 시 IO 비용 — 시계열 위치 데이터는 별도 인덱스 분리
+- BKD tree 색인 → segment merge 시 IO (Input/Output, 입출력) 비용 — 시계열 위치 데이터는 별도 인덱스 분리
 - circuit breaker (request) — 큰 polygon WITHIN 매우 비쌈
-- vector tile 캐시: CDN/edge 캐시와 결합 가능 (zoom/x/y key)
+- vector tile 캐시: CDN (Content Delivery Network, 콘텐츠 전송 네트워크) /edge 캐시와 결합 가능 (zoom/x/y key)
 - precision 동적 조정: zoom level 에 따라 grid precision 매핑 표 (`zoom→precision`) 표준화
 
 ## 9. msa 코드베이스 grounding

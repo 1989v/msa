@@ -81,6 +81,9 @@ sources:
 | 개선 후보 | ADR-XXXX-1~4 (lag SLA / Two-Phase Lookup / OS 일원화 / Hybrid 도입) | [19-improvements.md](19-improvements.md) |
 | 면접 카드 | Q1~Q17 + 꼬리질문 + 악마의 변호인 | [20-interview-qa.md](20-interview-qa.md) |
 | 보강 Q&A | Two-Phase 가격 필터 / Refresh-Translog 단계별 / Segment 증가 패턴 | [21-followup-qa.md](21-followup-qa.md) |
+| 평가 메트릭 | Precision / Recall / F1 / MRR / MAP / DCG / IDCG / nDCG — judgment list + ES `_rank_eval` API | [34-eval-metrics-precision-recall-ndcg.md](34-eval-metrics-precision-recall-ndcg.md) |
+| function_score modifier | NONE / SQRT / LN1P / LN2P / LOG1P / LOG2P / SQUARE / RECIPROCAL — 수식·0 처리·featureScore 분포·msa 적용 점검 | [35-field-value-factor-modifiers.md](35-field-value-factor-modifiers.md) |
+| 자동완성 | ngram / edge_ngram / search_as_you_type / completion suggester (FST) / `_terms_enum` / 한국어 자모 분리 (ICU NFD) / msa 단계적 도입 | [36-autocomplete-ngram-edgengram.md](36-autocomplete-ngram-edgengram.md) |
 
 ### 1-A. 한눈에 보는 갭 진단
 
@@ -126,8 +129,8 @@ sources:
 | `constant_keyword` | 모든 doc 가 같은 값을 갖는 keyword (data stream tier 분류 등) | [constant_keyword](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/keyword) | ★ 신규 |
 | `wildcard` | 비정형 텍스트 (로그·URL 등) prefix/wildcard 효율 검색용 | [wildcard](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/keyword) | ★ 신규 |
 | `match_only_text` | 점수 계산용 통계 비저장, 디스크 ↓ — 로그 분석 워크로드용 | [match-only-text](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/match-only-text) | ★ 신규 |
-| `search_as_you_type` | edge_ngram + shingle 자동, prefix·infix 검색 빠름 | [search-as-you-type](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/search-as-you-type) | ★ 신규 |
-| `completion` | suggester 전용 FST (Finite State Transducer) 기반 자동완성 | [suggesters/completion](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-suggesters) | 🟡 부분 (#07 suggester) |
+| `search_as_you_type` | edge_ngram + shingle 자동, prefix·infix 검색 빠름 | [search-as-you-type](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/search-as-you-type) | ✅ 커버 ([36](36-autocomplete-ngram-edgengram.md)) |
+| `completion` | suggester 전용 FST (Finite State Transducer) 기반 자동완성 | [suggesters/completion](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-suggesters) | ✅ 커버 ([36](36-autocomplete-ngram-edgengram.md)) |
 | numeric (`long`/`integer`/`short`/`byte`/`double`/`float`/`half_float`/`scaled_float`/`unsigned_long`) | 정밀도 vs 디스크 트레이드오프. `scaled_float` = 정수 저장 + scale 분리 → 가격 필드에 유용 | [numeric](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/number) | 🟡 부분 |
 | `date` / `date_nanos` | epoch_millis vs ns 정밀도. APM/관측에선 nanos 필수 | [date](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/date), [date_nanos](https://www.elastic.co/docs/reference/elasticsearch/mapping-reference/date_nanos) | ★ 신규 |
 | `boolean` / `binary` | 단순 타입 | docs/reference/elasticsearch/mapping-reference | ✅ 일반 |
@@ -202,7 +205,8 @@ sources:
 |---|---|---|---|
 | `bool` (must / should / must_not / filter) | 가장 흔한 조합. `filter` 는 캐시 + 점수 미계산 | [bool](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-bool-query) | ✅ 커버 (#07) |
 | `dis_max` | should 매칭 점수의 max + tie_breaker — multi_match best_fields 의 내부 | [dis-max](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-dis-max-query) | 🟡 부분 |
-| `function_score` / `script_score` | 점수 변형 — gauss/linear/exp decay, field_value_factor, random_score | [function-score](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-function-score-query) | ✅ 커버 (#06) |
+| `function_score` / `script_score` | 점수 변형 — gauss/linear/exp decay, field_value_factor, random_score | [function-score](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-function-score-query) | ✅ 커버 (#06, [35](35-field-value-factor-modifiers.md) modifier 풀 카탈로그) |
+| `field_value_factor.modifier` (NONE/SQRT/LN1P/LN2P/LOG1P/LOG2P/RECIPROCAL/SQUARE) | raw 필드 값의 비선형 압축 — saturation 함수 카탈로그. 0 처리·곱연산 안전성·featureScore 분포 | [field-value-factor](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-function-score-query#function-field-value-factor) | ✅ 커버 ([35](35-field-value-factor-modifiers.md)) |
 | `boosting` (positive + negative_boost) | 매칭은 시키되 점수 깎기 — 광고 차단/품절 강등 | [boosting](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-boosting-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
 | `constant_score` | 매칭만 보고 점수는 상수 → filter 캐싱 효과 | [constant-score](https://www.elastic.co/docs/reference/query-languages/query-dsl/query-dsl-constant-score-query) | ✅ 커버 ([32](32-specialized-queries.md)) |
 
@@ -239,7 +243,7 @@ sources:
 | `_count` | doc 수만 반환 | docs/reference/elasticsearch/rest-apis | ★ 신규 |
 | `_explain` | 특정 doc 의 매칭/점수 trace | [explain-api](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/explain-api) | 🟡 부분 (explain:true 만) |
 | `_field_caps` | 인덱스 패턴 전체 필드 메타 — Kibana data view 핵심 | [field-caps](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/field-caps) | ★ 신규 |
-| `_terms_enum` | keyword 필드의 prefix-기반 빠른 자동완성 (suggester 보다 단순) | [terms-enum](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/terms-enum) | ★ 신규 |
+| `_terms_enum` | keyword 필드의 prefix-기반 빠른 자동완성 (suggester 보다 단순) | [terms-enum](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/terms-enum) | ✅ 커버 ([36](36-autocomplete-ngram-edgengram.md)) |
 | `_search_shards` | 어느 shard 가 hit 될지 사전 검사 — 캐시 워밍/디버깅 | docs | ★ 신규 |
 | `_validate/query` | 쿼리 문법 검증 only | docs | ★ 신규 |
 | `_search/template` (Mustache) + `_render/template` | 파라미터화된 search template — 클라이언트와 쿼리 분리 | [search-template](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-template) | ★ 신규 |
@@ -253,6 +257,7 @@ sources:
 | **Retrievers API** (8.14+) | top-level 재정렬 트리: `standard` / `knn` / `rrf` / `linear` / `text_similarity_reranker` / `rule` | [retrievers](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrievers) | ✅ 커버 ([23](23-retrievers-api.md)) |
 | **Search Application API** (8.x) | endpoint·template·query rule 묶음 — relevance 운영 추상 | [search-application](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/search-application) | ★ 신규 |
 | **Behavioral Analytics** | 클릭/로그 수집 → relevance tuning 입력 | [behavioral-analytics](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/behavioral-analytics) | ★ 신규 |
+| **`_rank_eval`** (Ranking Evaluation API) | judgment list + metric (precision/recall/MRR/DCG/nDCG/ERR) 으로 검색 품질 자동 측정 | [rank-eval](https://www.elastic.co/docs/reference/elasticsearch/rest-apis/ranking-evaluation) | ✅ 커버 ([34](34-eval-metrics-precision-recall-ndcg.md)) |
 
 ### I. Aggregations
 

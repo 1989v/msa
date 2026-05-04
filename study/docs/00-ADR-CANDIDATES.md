@@ -72,7 +72,7 @@
 - **출처**: 주제 #2 JVM/GC (`study/docs/2-jvm-gc/21-improvements.md` 제안 1, 2, 3, 5)
 - **문제**:
   - `commerce.jib-convention.gradle.kts` 의 `jvmFlags` 는 `-XX:+UseContainerSupport`, `-XX:MaxRAMPercentage=75.0`, `-Djava.security.egd=file:/dev/./urandom` 만 박혀있음.
-  - GC 로그 / 자동 Heap Dump / NMT / 영역별 한도 가 모두 빠져있음 → 장애 시 GC forensic 불가, OOM 원인 분석 불가, native 영역 분해 불가.
+  - GC 로그 / 자동 Heap Dump / NMT / 영역별 한도 가 모두 빠져있음 → 장애 시 GC forensic 불가, OOM (Out Of Memory, 메모리 부족) 원인 분석 불가, native 영역 분해 불가.
   - 1Gi limit + MaxRAMPercentage=75 가 native 예산 빠듯: heap 768MB + Metaspace ~150MB + Code Cache 240MB + Thread 50MB + GC Internal 50MB + Direct (default=Xmx) 768MB → 합계 2GB+ 가능 → OOMKilled 위험.
 - **제안**:
   - base jvmFlags 에 다음 추가 — `-XX:+UseG1GC` (명시), `-Xlog:gc*::time,uptime,level,tags` (stdout → Loki 수집), `-XX:+HeapDumpOnOutOfMemoryError`, `-XX:HeapDumpPath=/var/log/jvm/heapdump-%t.hprof`, `-XX:+ExitOnOutOfMemoryError`, `-XX:NativeMemoryTracking=summary`, `-XX:MaxRAMPercentage=70.0` (75 → 70), `-XX:MaxMetaspaceSize=256m`, `-XX:ReservedCodeCacheSize=128m`, `-XX:MaxDirectMemorySize=64m`.
@@ -322,7 +322,7 @@
   - `allow-monitoring-scrape` — monitoring ns prometheus → 모든 pod 의 actuator port (8080).
   - `deny-cross-namespace-by-default` — 다른 ns 통신 차단.
 - **CNI 전제**: NetworkPolicy 지원 필수.
-  - EKS: VPC CNI 의 `enableNetworkPolicy=true` 옵션 활성 또는 Calico add-on.
+  - EKS: VPC (Virtual Private Cloud, 가상 사설 클라우드) CNI 의 `enableNetworkPolicy=true` 옵션 활성 또는 Calico add-on.
   - GKE: dataplane v2 (eBPF) 기본 지원.
   - AKS: Azure CNI Powered by Cilium.
   - k3d/k3s-lite: Calico 또는 Flannel + canal.
@@ -341,7 +341,7 @@
   - K-ISMS / PCI-DSS 일부 요구 충족
   - 새 서비스 추가 시 NetworkPolicy PR 필수 → 운영 절차 추가
   - 디버깅 시 connection refuse 가 NetworkPolicy 인지 식별 어려움 → eBPF 도구 (Cilium hubble) 권장
-  - mTLS 까지는 보장 안 함 (트래픽 내용 도청 가능). mTLS 는 Service Mesh 도입 시 별도 ADR (P3).
+  - mTLS (mutual TLS, 양방향 TLS) 까지는 보장 안 함 (트래픽 내용 도청 가능). mTLS 는 Service Mesh 도입 시 별도 ADR (P3).
 - **Alternatives**:
   - Service Mesh 의 AuthorizationPolicy — 더 강력하지만 Mesh 도입 비용. defer.
   - Calico GlobalNetworkPolicy — CNI 종속, ns 단위 표준화 어려움. reject.
@@ -394,7 +394,7 @@
     }
     ```
   - analytics/inventory/quant/gateway 의 모든 `redis.opsForValue().set(..., ttl)` 호출부에 적용.
-- **KPI**:
+- **KPI (Key Performance Indicator, 핵심 성과 지표)**:
   - OOMKilled 0건 / 30일
   - "expire spike" latency p99 ms 단위 spike 0건
   - DEL latency p99 < 1ms (lazyfree 효과)
@@ -1605,6 +1605,21 @@ ADR-0026 (docs-taxonomy) 준수:
 | **(신규-S8)** | search:batch reindex 시 `refresh_interval=-1` + `replica=0` 토글 컨벤션 | ⚠15 |
 | **(신규-S9)** | Alias Swap 후 검증 단계 + 옛 인덱스 1시간 보관 (즉시 cleanup ❌) | ⚠16 |
 
+### 11-2-bis. 평가/스코어링/자동완성 ADR 후보 3건 (#34~36 추가, 2026-05-04)
+
+§34 평가 메트릭 / §35 modifier / §36 자동완성 deep file 작성에서 도출:
+
+| 가번호 | 제목 | 출처 | 우선순위 |
+|---|---|---|---|
+| **(신규-S10)** | 검색 품질 측정 — judgment list (analytics 기반 등급화) + ES `_rank_eval` 일배치 + nDCG@10 SLA | [34-eval-metrics-precision-recall-ndcg.md](19-search-engine/34-eval-metrics-precision-recall-ndcg.md) §8 | 즉시 (Phase 1: judgment 인프라) |
+| **(신규-S11)** | function_score modifier 표준 — featureScore 도메인 LN2P + raw 카운트 LOG1P + range>0 가드 | [35-field-value-factor-modifiers.md](19-search-engine/35-field-value-factor-modifiers.md) §10 | 즉시 (코드 변경 1d) |
+| **(신규-S12)** | 검색 자동완성 단계적 도입 — search_as_you_type → custom edge_ngram + ICU 자모 분리 → completion suggester | [36-autocomplete-ngram-edgengram.md](19-search-engine/36-autocomplete-ngram-edgengram.md) §10 | 분기 (Phase 1: 1주 / Phase 2: 2~3주 / Phase 3: analytics 연동 후) |
+
+핵심 결정 변수 (S10~S12):
+- **S10 즉시성**: 측정 인프라 없이는 S11 / S12 효과 검증 ❌ → 가장 먼저 도입.
+- **S11 즉시성**: 현재 LOG1P 가 0~1 정규화 featureScore 에 적용되면 0 입력 폭사 위험 — 1d 코드 변경이지만 효과 ↑.
+- **S12 단계적**: Phase 1 만 매핑 변경, Phase 2~3 은 ICU + 별도 analytics 연동 → 분기 단위.
+
 ### 11-3. 핵심 결정 변수
 
 - **즉시 ADR (S1, S2)**: 운영 가시성 + 데이터 일관성 — ROI 명확, Effort 작음
@@ -1634,6 +1649,7 @@ ADR-0026 (docs-taxonomy) 준수:
 |---|---|---|
 | 2026-05-01 | 최초 작성 — 15개 학습 주제의 improvements.md 통합 | kgd |
 | 2026-05-04 | #19 검색엔진 심화 ADR 9건 (핵심 4 + 보너스 5) 추가 (§11) | kgd |
+| 2026-05-04 | #19 평가/modifier/자동완성 deep file (34~36) 보강 — ADR 3건 (S10~S12) 추가 (§11-2-bis) | kgd |
 
 ---
 

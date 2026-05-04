@@ -141,6 +141,18 @@
 | ILM | Index Lifecycle Management, 인덱스 생명주기 관리 |
 | ANN | Approximate Nearest Neighbor, 근사 최근접 이웃 |
 | KNN | K-Nearest Neighbors, K-최근접 이웃 |
+| FST | Finite State Transducer, 유한 상태 변환기 (completion suggester 자료구조) |
+| ICU | International Components for Unicode, 유니코드 국제화 컴포넌트 |
+| NFD | Normalization Form Decomposed, 정규화 분해 (Unicode 정규화 형식 — 한글 자모 분리에 사용) |
+| ELSER | Elastic Learned Sparse EncodeR (Elastic 의 sparse 임베딩 모델) |
+| MRR | Mean Reciprocal Rank, 평균 상호 순위 |
+| MAP | Mean Average Precision, 평균 평균 정밀도 |
+| DCG | Discounted Cumulative Gain, 할인 누적 이득 |
+| IDCG | Ideal DCG, 이상적 DCG (정렬이 완벽할 때의 DCG) |
+| NDCG / nDCG | Normalized Discounted Cumulative Gain, 정규화된 누적 할인 이득 |
+| CTR | Click-Through Rate, 클릭률 |
+| CVR | Conversion Rate, 전환율 |
+| IPW | Inverse Propensity Weighting, 역경향 가중 (랭킹 debias) |
 
 ### 쿠버네티스 / 컨테이너
 

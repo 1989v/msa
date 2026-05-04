@@ -369,6 +369,44 @@ PoC 추정 권장 순서:
 
 ---
 
+## 평가 / 스코어링 / 자동완성 ADR 후보 (#34~36 추가, 2026-05-04)
+
+§34 / §35 / §36 deep file 작성 결과 도출:
+
+### ADR-XXXX-10: 검색 품질 측정 — judgment + nDCG@10 + A/B 통합
+
+출처: [34-eval-metrics-precision-recall-ndcg.md](34-eval-metrics-precision-recall-ndcg.md) §8.
+
+현재 검색 품질을 객관 측정 ❌. analytics 의 클릭/구매 로그를 등급화 (노출=0/클릭=1/카트=2/구매=3) → ES `_rank_eval` 일배치 → nDCG@10 시계열 + Grafana 대시보드. PM 라벨 cross-check + experiment 서비스 도입 후 A/B 통합.
+
+- 우선순위: 즉시 (S11/S12 효과 검증의 전제)
+- Effort: Phase 1 1 sprint (judgment 인프라) + Phase 2~4 점진적
+- ADR-0025 (latency budget) 와 결합 → "품질 SLA + latency SLA" 동시 정의
+
+### ADR-XXXX-11: function_score modifier 표준 — featureScore 는 LN2P
+
+출처: [35-field-value-factor-modifiers.md](35-field-value-factor-modifiers.md) §10.
+
+`ProductSearchAdapter.kt:149` 의 LOG1P 가 0~1 정규화 featureScore 에 적용되면 0 입력 (예: 신상품) 시 boost_mode=multiply 로 score 폭사. **LN2P** (`ln(2+x)`) 로 교체 — 1.59x 압축 + 0 자동 가드. raw 카운트는 LOG1P + range>0 가드 유지.
+
+- 우선순위: 즉시 (코드 변경 1d)
+- Effort: 1d (분포 점검 + 코드 변경 + 회귀 테스트)
+- 효과 측정: ADR-XXXX-10 의 nDCG@10 으로 비교
+
+### ADR-XXXX-12: 검색 자동완성 단계적 도입
+
+출처: [36-autocomplete-ngram-edgengram.md](36-autocomplete-ngram-edgengram.md) §10.
+
+현재 자동완성 미적용 (§15 점검 2). 3 단계 도입:
+- Phase 1 (1주): `search_as_you_type` 매핑 추가 — 영문 prefix 즉시
+- Phase 2 (2~3주): `analysis-icu` 플러그인 + custom edge_ngram + 자모 분리 (NFD) — 한국어 풀 자동완성
+- Phase 3 (analytics 연동 후): completion suggester + weight 기반 정렬
+
+- 우선순위: Phase 1 즉시, Phase 2 분기, Phase 3 반기
+- 효과 측정: typing-to-result latency P99 + 자동완성 클릭률
+
+---
+
 ## 종합 요약
 
 ### ADR 우선순위
@@ -377,7 +415,10 @@ PoC 추정 권장 순서:
 |---|---|---|---|---|
 | 1 (즉시) | XXXX-1: 색인 lag SLA | 2-3d | 낮음 | 운영 가시성 ↑↑ |
 | 1 (즉시) | XXXX-2: 변동성 필드 컨벤션 | 1 sprint | 중간 | 데이터 일관성 ↑ |
+| 1 (즉시) | XXXX-10: 검색 품질 측정 (judgment + nDCG) | 1 sprint | 낮음 | 모든 검색 변경의 효과 검증 가능 |
+| 1 (즉시) | XXXX-11: modifier 표준 (LN2P) | 1d | 낮음 | 0 입력 폭사 방지 |
 | 2 (분기) | XXXX-3: ES vs OS 일원화 | 분기 | 중간 | 운영 부담 50% ↓ |
+| 2 (분기) | XXXX-12: 자동완성 도입 (Phase 1~2) | 분기 | 중간 | 검색 UX ↑ |
 | 3 (반기) | XXXX-4: Hybrid Search | 분기+ | 중간 | 검색 품질 ↑ (PoC 의존) |
 | 보너스 | XXXX-5~9: 운영 표준 | 각 1-2d | 낮음 | 운영 안전성 ↑ |
 

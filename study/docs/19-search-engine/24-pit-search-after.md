@@ -29,7 +29,7 @@ depth: full
 
 ## 2. 공식 정의 + 등장 배경
 
-- **from/size 한계**: ES 는 `index.max_result_window` (기본 10000) 로 deep `from` 차단. coordinator 가 `from + size` 만큼 모아서 정렬해야 하기 때문
+- **from/size 한계**: ES (Elasticsearch) 는 `index.max_result_window` (기본 10000) 로 deep `from` 차단. coordinator 가 `from + size` 만큼 모아서 정렬해야 하기 때문
 - **Scroll** (legacy): snapshot + scroll_id — 단방향 일괄 처리에는 좋지만 **stateful** 이고 search 슬롯/메모리를 점유, 동시 사용 어려움
 - **PIT (7.10+)** + **search_after**: snapshot 을 명시적 자원(`pit_id`)으로 분리, search_after 는 **마지막 hit 의 sort 값** 을 다음 호출에 전달 → **stateless** 한 keyset pagination
 - 8.x 부터 ES 권장: scroll → PIT + search_after

@@ -26,11 +26,11 @@ depth: full
 
 ## 1. 한 줄 핵심
 
-ES 8.14+ 의 **retriever** 는 "어떤 후보 집합을 어떻게 재정렬할지" 를 **트리 구조** 로 표현하는 search request 의 새 1급 시민. 기존 `query` + `knn` + `rescore` 분산 표현을 **재귀 합성 가능한 단일 DSL** 로 통합.
+ES (Elasticsearch) 8.14+ 의 **retriever** 는 "어떤 후보 집합을 어떻게 재정렬할지" 를 **트리 구조** 로 표현하는 search request 의 새 1급 시민. 기존 `query` + `knn` + `rescore` 분산 표현을 **재귀 합성 가능한 단일 DSL (Domain-Specific Language, 도메인 특화 언어)** 로 통합.
 
 ## 2. 공식 정의 + 등장 배경
 
-- 등장 배경: hybrid (키워드+벡터) + rerank (cross-encoder/LTR) 가 표준화되자, 기존 `query` / top-level `knn` / `rescore` 의 **분산 표현이 합성 불가능** 했다 (예: kNN + BM25 RRF 후 다시 cross-encoder rerank).
+- 등장 배경: hybrid (키워드+벡터) + rerank (cross-encoder/LTR (Learning to Rank, 랭킹 학습)) 가 표준화되자, 기존 `query` / top-level `knn` / `rescore` 의 **분산 표현이 합성 불가능** 했다 (예: kNN (K-Nearest Neighbors, K-최근접 이웃) + BM25 (Best Match 25) RRF 후 다시 cross-encoder rerank).
 - **retriever** 는 트리 노드처럼 중첩 가능 — outer `text_similarity_reranker` → inner `rrf` → leaf `standard` / `knn`.
 - 8.14 GA, 9.x 에서 정착. 신규 검색 코드는 모두 retriever 작성을 권장.
 
@@ -166,7 +166,7 @@ POST /products/_search
 | RRF | retriever 노드로 자연 표현 | normalization-processor 의 `rrf` 기법 (search pipeline 안) |
 | Rerank | text_similarity_reranker retriever | rerank processor (검색 파이프라인) + ML Commons |
 
-> ★ Hybrid/Rerank 의 **표현 모델이 두 진영 갈림길**. 마이그레이션 시 client 코드 큰 변경 필요. → ES vs OS 일원화 ADR 후보 (#11 19-improvements ADR-3) 의 핵심 근거 1.
+> ★ Hybrid/Rerank 의 **표현 모델이 두 진영 갈림길**. 마이그레이션 시 client 코드 큰 변경 필요. → ES vs OS 일원화 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보 (#11 19-improvements ADR-3) 의 핵심 근거 1.
 
 ## 7. 운영 / 모니터링
 

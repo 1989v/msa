@@ -27,13 +27,13 @@ depth: full
 
 - **Field Collapsing**: `terms` agg 같은 풀 group-by 가 아니라, **검색 결과 hits 안에서** 동일 필드 값을 묶어 **그룹별 top-N** 만 보여주는 기능 (예: 셀러별 대표 상품 1개씩)
 - **Inner Hits**: 각 그룹/nested/parent-child 안의 매칭된 자식 hits 를 함께 반환
-- **Rescore**: top-N window 만 secondary query 로 재점수 — Two-Stage retrieval 의 ES 네이티브 표현
+- **Rescore**: top-N window 만 secondary query 로 재점수 — Two-Stage retrieval 의 ES (Elasticsearch) 네이티브 표현
 
 ## 2. 공식 정의 + 등장 배경
 
 - **Collapse**: 5.x 도입. `terms` agg 의 metric 으로는 불편한 "그룹별 대표 hit" 워크로드 (예: 검색 결과에 같은 셀러가 N 개 나오면 1 개로 압축) 를 검색 결과 자체에서 표현
 - **Inner Hits**: nested / parent-child 매칭 시, 어떤 하위 doc 이 매칭됐는지 까지 응답 (단순 doc 매칭 정보로는 부족)
-- **Rescore**: BM25 1차 후 top-N 만 비싼 쿼리 (function_score, script_score) 로 재점수 → 전체 비용 ↓. **retrievers API 의 rescorer 노드**(8.14+)로 통합되는 추세
+- **Rescore**: BM25 (Best Match 25) 1차 후 top-N 만 비싼 쿼리 (function_score, script_score) 로 재점수 → 전체 비용 ↓. **retrievers API 의 rescorer 노드**(8.14+)로 통합되는 추세
 
 ## 3. 동작 원리
 
