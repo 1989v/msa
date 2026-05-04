@@ -12,7 +12,7 @@ created: 2026-05-01
 
 > CRD (CustomResourceDefinition) = "내 클러스터에 새 종류(kind) 의 리소스를 등록하는 명령".
 
-등록 후에는 `kubectl get mykind` 가 동작하고, watch / RBAC / OpenAPI / kubectl describe 까지 모두 K8s 가 처리해준다. 컨트롤러 없이도 CRD 만으로는 "값을 저장하는 객체" 가 되며, 컨트롤러를 붙여야 의미가 생긴다.
+등록 후에는 `kubectl get mykind` 가 동작하고, watch / RBAC (Role-Based Access Control, 역할 기반 접근 제어) / OpenAPI / kubectl describe 까지 모두 K8s 가 처리해준다. 컨트롤러 없이도 CRD 만으로는 "값을 저장하는 객체" 가 되며, 컨트롤러를 붙여야 의미가 생긴다.
 
 핵심 분리:
 - **CRD** = 스키마 정의

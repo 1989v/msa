@@ -54,7 +54,7 @@ Redis 는 결국 **단일 스레드 명령 루프** 위에 자료구조 / 영속
 **핵심 5문장만 외운다**:
 1. **Redis 가 빠른 이유는 메모리 + 단일 스레드 + epoll**, "단일 스레드라 느릴 것" 이라는 직관이 틀린 이유는 컨텍스트 스위치/락이 없기 때문.
 2. **자료구조는 데이터가 작을 때 listpack/intset 으로 메모리 효율 우선, 커지면 hashtable/skiplist 로 시간 복잡도 우선** 자동 변환.
-3. **AOF everysec 가 표준** — fsync always 는 디스크가 병목, no 는 OS 캐시 의존이라 위험.
+3. **AOF (Append-Only File) everysec 가 표준** — fsync always 는 디스크가 병목, no 는 OS 캐시 의존이라 위험.
 4. **Cluster 는 16384 슬롯 + gossip + MOVED/ASK redirect**, multi-key 트랜잭션은 hash tag `{...}` 로 동일 슬롯 강제해야 가능.
 5. **분산 락은 RedLock 보다 단일 마스터 + 펜싱 토큰**이 안전하다 (Kleppmann 비판), Stop-the-world GC + clock drift 로 RedLock 도 불완전.
 

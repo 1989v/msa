@@ -7,7 +7,7 @@ title: msa 회고에서 도출한 개선 후보
 
 # 12. msa 개선 후보
 
-> 10번 e-Commerce 회고와 06번 Rate Limiter 분석에서 도출한 개선 항목. 각각을 ADR 후보 + Phase 별 우선순위로 정리. 면접 시 "이 프로젝트의 다음 단계는?" 질문에 답변용.
+> 10번 e-Commerce 회고와 06번 Rate Limiter 분석에서 도출한 개선 항목. 각각을 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보 + Phase 별 우선순위로 정리. 면접 시 "이 프로젝트의 다음 단계는?" 질문에 답변용.
 
 ---
 
@@ -171,7 +171,7 @@ class KsuidGenerator {
 ### 4-2. Service Mesh (Istio)
 
 **왜**:
-- mTLS를 코드 밖으로
+- mTLS (mutual TLS, 양방향 TLS)를 코드 밖으로
 - 가시성 (Kiali, Jaeger 자동)
 - Canary / Traffic split 코드 변경 없이
 
@@ -184,8 +184,8 @@ class KsuidGenerator {
 **설계**:
 - Primary: ap-northeast-2 (서울)
 - Standby: ap-northeast-1 (도쿄)
-- DB: Aurora Global Database (RPO 1초, RTO 1분)
-- Kafka MirrorMaker → DR cluster sync
+- DB: Aurora Global Database (RPO (Recovery Point Objective, 복구 지점 목표) 1초, RTO (Recovery Time Objective, 복구 시간 목표) 1분)
+- Kafka MirrorMaker → DR (Disaster Recovery, 재해 복구) cluster sync
 - Route53 health check → 자동 failover
 
 **Cost**: 인프라 ~1.5배.
@@ -205,7 +205,7 @@ class KsuidGenerator {
 
 ### 5-2. DLQ 일원화
 
-**현재**: 각 서비스가 자체 DLQ. 대시보드 흩어짐.
+**현재**: 각 서비스가 자체 DLQ (Dead Letter Queue, 데드 레터 큐). 대시보드 흩어짐.
 
 **개선**:
 - 공통 DLQ 토픽 (`dlq.{originTopic}.{consumerGroup}`)
@@ -264,7 +264,7 @@ class KsuidGenerator {
 
 ### 8-3. "장애 대응은?"
 
-> "현재는 단일 region이라 region 다운 시 서비스 정지가 한계입니다. Multi-region active-passive로 RPO 1초, RTO 1분 목표가 다음 단계이고, 그 전 단계로 Aurora Multi-AZ + Kafka MirrorMaker 도입을 고려하고 있습니다."
+> "현재는 단일 region이라 region 다운 시 서비스 정지가 한계입니다. Multi-region active-passive로 RPO 1초, RTO 1분 목표가 다음 단계이고, 그 전 단계로 Aurora Multi-AZ (Availability Zone, 가용 영역) + Kafka MirrorMaker 도입을 고려하고 있습니다."
 
 ---
 
@@ -274,7 +274,7 @@ class KsuidGenerator {
 |---|---|---|
 | 단일 PG | OK | ★★★ 위험 (장애 = 매출 0) |
 | Auto-Increment PK | OK (1만 row) | 1억 row 폭사 |
-| 단일 region | OK | SLA 99.9% 못 맞춤 |
+| 단일 region | OK | SLA (Service Level Agreement, 서비스 수준 협약) 99.9% 못 맞춤 |
 | 단일 limiter | OK | 사용자 불만, 차등 안 됨 |
 | Notification 산재 | OK | 채널 추가 시 N×M 결합 |
 | Saga 가시성 부족 | OK (작은 흐름) | 운영 디버깅 비용 폭증 |

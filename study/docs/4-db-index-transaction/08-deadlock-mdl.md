@@ -12,7 +12,7 @@ created: 2026-05-01
 
 - **Deadlock**: 두 TX 가 서로 상대방이 잡은 lock 을 기다리며 영원히 대기.
 - **InnoDB 의 Deadlock 감지**: 매 lock 요청 시 wait-for graph 의 cycle 검출 → 즉시 한쪽 abort.
-- **MDL (Metadata Lock)**: DDL/DML 이 테이블의 metadata (스키마) 일관성 보장을 위해 잡는 lock.
+- **MDL (Metadata Lock, 메타데이터 락)**: DDL (Data Definition Language)/DML (Data Manipulation Language) 이 테이블의 metadata (스키마) 일관성 보장을 위해 잡는 lock.
 
 이 문서는 deadlock 재현 + 진단 + MDL 사슬 + AUTO-INC 모드를 다룬다. 운영 장애의 큰 비중이 이 셋.
 

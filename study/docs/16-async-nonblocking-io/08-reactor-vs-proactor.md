@@ -11,7 +11,7 @@ created: 2026-05-01
 ## TL;DR
 
 - **Reactor 패턴** = "데이터 *준비됨* 알림" 후 호출자가 read — **분면 (3) sync non-blocking** 에 매핑
-- **Proactor 패턴** = "IO *완료됨* 알림" — 분면 (4) async non-blocking 에 매핑
+- **Proactor 패턴** = "IO (Input/Output, 입출력) *완료됨* 알림" — 분면 (4) async non-blocking 에 매핑
 - Reactor = Linux/epoll/Netty/libuv 의 모델
 - Proactor = Windows IOCP / 진짜 async (io_uring) 의 모델
 - Doug Lea 의 [Scalable IO in Java](http://gee.cs.oswego.edu/dl/cpjslides/nio.pdf) 가 Reactor 의 표준 텍스트

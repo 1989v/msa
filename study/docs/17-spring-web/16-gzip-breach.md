@@ -10,7 +10,7 @@ created: 2026-05-01
 
 > 면접 보안 단골: **"BREACH 공격이 뭔가요? 대응책은?"**
 >
-> 압축 + TLS 의 사이드 채널을 통해 secret 을 유출하는 공격. 대처를 몰라 응답 모두에 gzip 켜면 사고 가능.
+> 압축 + TLS (Transport Layer Security, 전송 계층 보안) 의 사이드 채널을 통해 secret 을 유출하는 공격. 대처를 몰라 응답 모두에 gzip 켜면 사고 가능.
 
 ## 1. CRIME (2012) — TLS 압축 공격
 
@@ -70,7 +70,7 @@ created: 2026-05-01
    - 응답 body 에 `Search results for: ABC` + `csrf_token="ABC123XYZ"` 같이 포함
    - gzip 이 `ABC` 의 반복을 짧게 인코딩 → 응답 크기 ↓
 2. `?search=ABD` (틀린 추측) → 반복 없음 → 응답 크기 그대로
-3. 차이 관찰 → CSRF 토큰 한 글자씩 복원
+3. 차이 관찰 → CSRF (Cross-Site Request Forgery, 사이트 간 요청 위조) 토큰 한 글자씩 복원
 
 ### TLS 위에서도 가능?
 

@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-VPC Endpoint 는 AWS 서비스(S3, DynamoDB, ECR 등)를 **VPC 내부 프라이빗 경로로 접근**하게 해주는 기능. NAT Gateway 를 거치지 않아 비용 절감 + 보안 강화.
+VPC (Virtual Private Cloud, 가상 사설 클라우드) Endpoint 는 AWS 서비스(S3 (Simple Storage Service, 객체 스토리지), DynamoDB, ECR 등)를 **VPC 내부 프라이빗 경로로 접근**하게 해주는 기능. NAT (Network Address Translation, 네트워크 주소 변환) Gateway 를 거치지 않아 비용 절감 + 보안 강화.
 
 두 가지 타입: **Gateway Endpoint** (S3/DDB, 무료) / **Interface Endpoint** (나머지 대부분, 유료).
 
@@ -89,7 +89,7 @@ Interface (유료, 하지만 NAT 보다 싸므로 필수):
 
 ### 3.4 AZ 별 ENI (Interface)
 
-- Interface Endpoint 는 **서브넷 지정** 필요 (보통 AZ 별 1개씩)
+- Interface Endpoint 는 **서브넷 지정** 필요 (보통 AZ (Availability Zone, 가용 영역) 별 1개씩)
 - 특정 AZ 장애 시 해당 ENI 불가 → 다른 AZ ENI 로 자동 failover
 
 ## 4. 실제 코드/msa 연결
@@ -161,7 +161,7 @@ Phase 4 의 개선 포인트 #2 — EKS 이전 Terraform 에 Endpoint 기본 포
 
 **진단**:
 1. Endpoint 의 `route_table_ids` 에 해당 서브넷의 RT 포함 여부 확인
-2. 퍼블릭 서브넷 RT 는 포함 안 됨 → 퍼블릭 인스턴스는 여전히 IGW 경유 (OK)
+2. 퍼블릭 서브넷 RT 는 포함 안 됨 → 퍼블릭 인스턴스는 여전히 IGW (Internet Gateway) 경유 (OK)
 3. 프라이빗 RT 에 연결이 누락됐을 가능성
 
 **해결**: RT 연결 재확인. Terraform 의 `route_table_ids = aws_route_table.private[*].id` 정확히 설정.
@@ -173,7 +173,7 @@ Phase 4 의 개선 포인트 #2 — EKS 이전 Terraform 에 Endpoint 기본 포
 **진단**:
 1. `ecr.api` + `ecr.dkr` 둘 다 있는지 확인 (두 개 모두 필요)
 2. `sts` Endpoint 도 있어야 IRSA 로 ECR 권한 획득 가능
-3. Endpoint SG 가 Pod 에서 443 허용하는지
+3. Endpoint SG (Security Group, 보안 그룹) 가 Pod 에서 443 허용하는지
 4. `private_dns_enabled = true` 인지
 
 **해결**: 필수 5개 (ecr.api, ecr.dkr, sts, logs, s3) 모두 세팅.
@@ -205,7 +205,7 @@ Q11: VPC Endpoint 가 왜 필요한가요?
 
 **Q11-1-1 답변**: S3/DynamoDB 는 AWS 가 일찍 PrivateLink 를 출시하기 전부터 라우팅 기반 Gateway Endpoint 를 지원. 나머지는 PrivateLink 출시 후 Interface Endpoint (ENI 기반) 로 통일.
 
-**Q11-2-1 답변**: 특정 S3 버킷/액션만 허용, 특정 IAM Role 만 접근, 특정 리전 제한 등. 예: "이 VPC 에서는 기업 데이터 버킷만 접근 가능, 외부 공개 버킷은 차단".
+**Q11-2-1 답변**: 특정 S3 버킷/액션만 허용, 특정 IAM (Identity and Access Management, 자격 증명 및 접근 관리) Role 만 접근, 특정 리전 제한 등. 예: "이 VPC 에서는 기업 데이터 버킷만 접근 가능, 외부 공개 버킷은 차단".
 
 **Q11-3-1 답변**: true 면 기본 서비스 DNS 이름 (예: `ecr.ap-northeast-2.amazonaws.com`) 이 VPC 내에서 Endpoint ENI IP 로 resolve. 애플리케이션 코드 수정 없이 자동 우회. false 면 endpoint-specific DNS 사용 필요.
 

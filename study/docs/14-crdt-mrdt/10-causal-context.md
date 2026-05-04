@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 10. Causal Context — vector clock 의 진화
 
-CRDT 의 메타데이터를 압축하고 정확한 *causal* 시맨틱을 부여하는 핵심 도구. **OR-Set 의 tag 폭증 문제** 를 해결한다.
+CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 의 메타데이터를 압축하고 정확한 *causal* 시맨틱을 부여하는 핵심 도구. **OR-Set 의 tag 폭증 문제** 를 해결한다.
 
 ## 동기: vector clock 만으로 부족한 이유
 

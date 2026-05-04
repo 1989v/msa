@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-JVM 의 RSS(실 사용 메모리)는 **힙(`-Xmx`) 보다 훨씬 큰** 게 정상. Metaspace, Code Cache, GC Internal, Thread Stacks, Direct Buffers 등 native 영역이 합쳐지기 때문. **K8s OOMKilled 의 주범은 거의 항상 native 누수** — 힙은 멀쩡한데 RSS 가 limit 를 초과해서 죽는다. **NMT** 가 이걸 영역별로 분해해서 보여주는 JVM 내장 진단. `-XX:NativeMemoryTracking=summary` 로 켜고 `jcmd <pid> VM.native_memory` 로 조회.
+JVM (Java Virtual Machine, 자바 가상 머신) 의 RSS(실 사용 메모리)는 **힙(`-Xmx`) 보다 훨씬 큰** 게 정상. Metaspace, Code Cache, GC (Garbage Collection, 가비지 컬렉션) Internal, Thread Stacks, Direct Buffers 등 native 영역이 합쳐지기 때문. **K8s (Kubernetes) OOMKilled 의 주범은 거의 항상 native 누수** — 힙은 멀쩡한데 RSS 가 limit 를 초과해서 죽는다. **NMT** 가 이걸 영역별로 분해해서 보여주는 JVM 내장 진단. `-XX:NativeMemoryTracking=summary` 로 켜고 `jcmd <pid> VM.native_memory` 로 조회.
 
 ```
    JVM Process RSS = 1.2 GB

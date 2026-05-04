@@ -113,7 +113,7 @@ fun getProduct(id: Long): Product {
 
 ### 3.3 함정
 
-- lock 획득자가 OOM / pause 등으로 죽으면 TTL 만료까지 대기자들이 stuck (TTL = 5s 정도로 짧게).
+- lock 획득자가 OOM (Out Of Memory, 메모리 부족) / pause 등으로 죽으면 TTL 만료까지 대기자들이 stuck (TTL = 5s 정도로 짧게).
 - lock 실패자의 retry 가 너무 짧으면 polling 오버헤드. 너무 길면 latency.
 - DEL 시 owner token 검증 안 하면 다른 owner 락 풀어버림 (12 파일).
 

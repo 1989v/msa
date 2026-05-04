@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 한 줄 요약
 
-> Kafka 가 EOS 를 강제로 보장하지 못하는 외부 시스템 영역에서 **at-least-once + 컨슈머 멱등성** 으로 effectively-once 달성 (ADR-0012). 처리 실패는 **Spring DefaultErrorHandler + DeadLetterPublishingRecoverer** 로 자동 재시도 + DLQ 송부 (ADR-0015). 운영 사고는 **URP / lag 폭증 / unclean election** 이 핵심 시그널.
+> Kafka 가 EOS 를 강제로 보장하지 못하는 외부 시스템 영역에서 **at-least-once + 컨슈머 멱등성** 으로 effectively-once 달성 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012). 처리 실패는 **Spring DefaultErrorHandler + DeadLetterPublishingRecoverer** 로 자동 재시도 + DLQ (Dead Letter Queue, 데드 레터 큐) 송부 (ADR-0015). 운영 사고는 **URP / lag 폭증 / unclean election** 이 핵심 시그널.
 
 ## 1. 컨슈머 멱등 패턴 종합
 
@@ -202,7 +202,7 @@ fun consume(record: ConsumerRecord<String, String>) {
 kafka-topics.sh --bootstrap-server kafka:9092 --describe \
   --under-replicated-partitions
 ```
-- 출력 있으면 = ISR 부족
+- 출력 있으면 = ISR (In-Sync Replicas) 부족
 - 즉시 조사: broker 장애? 디스크? 네트워크?
 - 알람 임계: > 0 이면 warning
 
@@ -321,7 +321,7 @@ sequenceDiagram
   > ADR-0012 에 따라 7일 보관 후 스케줄러로 정리. 보관 기간은 retention.ms × 안전 배수 정도 (msa 토픽 7d → processed_event 도 7d). 중복 메시지가 retention 보다 늦게 도착하는 경우는 없으므로 안전.
 
 - **Q. URP 가 0 보다 큰 상태가 지속되면 무엇을 할 건가?**
-  > 1) 어느 broker / partition 인지 확인 (`kafka-topics --describe --under-replicated-partitions`), 2) 해당 broker 의 디스크 / 네트워크 / GC 점검, 3) follower 가 못 따라잡으면 replica.lag.time.max.ms 임시 늘리되 근본 원인 해결, 4) broker 추가 / partition 재배치 (`kafka-reassign-partitions`).
+  > 1) 어느 broker / partition 인지 확인 (`kafka-topics --describe --under-replicated-partitions`), 2) 해당 broker 의 디스크 / 네트워크 / GC (Garbage Collection, 가비지 컬렉션) 점검, 3) follower 가 못 따라잡으면 replica.lag.time.max.ms 임시 늘리되 근본 원인 해결, 4) broker 추가 / partition 재배치 (`kafka-reassign-partitions`).
 
 - **Q. DefaultErrorHandler 의 backoff 가 FixedBackOff (1s × 3) 인데, ExponentialBackOff 가 더 좋지 않나?**
   > ExponentialBackOff (예: 1s, 2s, 4s, 8s) 는 일시적 장애 (DB peak, 외부 API 일시 장애) 에 더 잘 견딘다. msa 는 단순화로 Fixed 사용. 트래픽 큰 토픽이나 외부 의존 많은 컨슈머는 Exponential 검토 가치 있음.

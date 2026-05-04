@@ -41,7 +41,7 @@ title: URL Shortener (bit.ly) 설계
 
 ### 가정
 
-- 신규 단축 URL: **1억 / 월** = 약 40 / 초 (write QPS)
+- 신규 단축 URL: **1억 / 월** = 약 40 / 초 (write QPS (Queries Per Second, 초당 쿼리 수))
 - Read : Write = 100 : 1 → **read QPS 4,000** (피크 12,000)
 - 평균 URL 길이: 원본 100 bytes, 단축 7자 + 메타 50 bytes
 - 보관 기간: 5년
@@ -60,7 +60,7 @@ Cache (active set 20%)
   = 1.2B × 150 bytes ≈ 180GB → Redis Cluster 6 shards × 32GB OK
 
 Bandwidth
-  = 12,000 read × 500 byte (헤더 포함) ≈ 6MB/s → 단일 ALB OK
+  = 12,000 read × 500 byte (헤더 포함) ≈ 6MB/s → 단일 ALB (Application Load Balancer, 애플리케이션 로드 밸런서) OK
 ```
 
 > **숫자가 말해주는 것**: 5년 1TB는 단일 MySQL로 충분. 샤딩이 아니라 **캐시와 redirect 응답속도**가 본질.
@@ -139,7 +139,7 @@ fun shorten(url: String, attempt: Int = 0): String {
 
 ### 4-3. 본 msa의 ID 채번 전략 참고
 
-본 프로젝트는 단일 MySQL Auto-Increment를 사용 중 (ADR-0006). URL Shortener도 동일 방식이 가장 단순하고 안전.
+본 프로젝트는 단일 MySQL Auto-Increment를 사용 중 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0006). URL Shortener도 동일 방식이 가장 단순하고 안전.
 
 ```sql
 -- url_mapping
@@ -173,7 +173,7 @@ flowchart LR
 ```
 
 **핵심 설계**:
-1. **CDN에 redirect 응답 캐싱** → 가장 큰 win. `Cache-Control` 5분~1시간.
+1. **CDN (Content Delivery Network, 콘텐츠 전송 네트워크)에 redirect 응답 캐싱** → 가장 큰 win. `Cache-Control` 5분~1시간.
 2. **Redis 미스율 < 1%** 목표. Active set 전부 Redis.
 3. **클릭 이벤트는 Kafka로 비동기** → DB write QPS 격리.
 4. ClickHouse는 통계용 OLAP (OLTP 절대 금지).
@@ -224,7 +224,7 @@ ORDER BY (click_date, short_key);
 
 ### 7-3. Hot key 문제
 
-특정 URL이 viral 되면 → **Local cache (Caffeine) + Jitter TTL** 로 stampede 방어.
+특정 URL이 viral 되면 → **Local cache (Caffeine) + Jitter TTL (Time To Live, 생존 시간)** 로 stampede 방어.
 
 ```kotlin
 @Cacheable(value = ["short"], cacheManager = "caffeineCM")

@@ -49,7 +49,7 @@ created: 2026-04-28
 **메커니즘** — Merkle-Damgård 해시는 마지막 내부 상태가 곧 출력값. 공격자는 `H(K || M)`을 새로운 IV로 사용해 이어서 압축할 수 있음.
 
 ### 방어
-- HMAC 사용 (`HMAC(K, M) = H((K ⊕ opad) || H((K ⊕ ipad) || M))`) — 외부 해시가 한 번 더 막음
+- HMAC (Hash-based Message Authentication Code, 해시 기반 메시지 인증 코드) 사용 (`HMAC(K, M) = H((K ⊕ opad) || H((K ⊕ ipad) || M))`) — 외부 해시가 한 번 더 막음
 - 또는 SHA-3, BLAKE2 (length extension 면역)
 - 또는 SHA-512/256, SHA-512/224 같은 truncated 변형
 

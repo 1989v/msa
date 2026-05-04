@@ -6,7 +6,7 @@ created: 2026-05-01
 
 # 분산 시스템 이론 + 패턴 — Preview
 
-> 학습자 수준: advanced (10년차 백엔드, MSA 운영 경험) · 전체 예상 시간: 18h · 목표: 면접 방어 + msa 코드베이스 진단/개선
+> 학습자 수준: advanced (10년차 백엔드, MSA (Microservices Architecture, 마이크로서비스 아키텍처) 운영 경험) · 전체 예상 시간: 18h · 목표: 면접 방어 + msa 코드베이스 진단/개선
 > 계획서: [00-plan.md](00-plan.md) · 학습 순서: 이론 → 합의 → 트랜잭션 → 운영 패턴 → 코드 적용
 
 ---
@@ -50,7 +50,7 @@ created: 2026-05-01
 
 **핵심 7문장만 외우자**:
 1. 분산 시스템의 본질은 **부분 장애(partial failure)** + **네트워크 비결정성**.
-2. CAP 는 **분할 시 C vs A 트레이드오프**, PACELC 는 평시에도 **L vs C** 가 있다는 확장.
+2. CAP (Consistency / Availability / Partition tolerance, 일관성·가용성·분할 내성) 는 **분할 시 C vs A 트레이드오프**, PACELC (Partition → Availability/Consistency, Else → Latency/Consistency) 는 평시에도 **L vs C** 가 있다는 확장.
 3. FLP: **비동기 + 1개 노드 장애** 만으로 **결정론적 합의 불가능** → 타임아웃 휴리스틱이 답.
 4. Saga 는 ACID 의 **Atomicity 를 포기**하고 **보상 트랜잭션**으로 정합성을 사후 회복하는 패턴.
 5. 멱등성은 **at-least-once 메시징의 전제**: 중복은 막을 수 없으니 "중복이 와도 안전"하게 만든다.
@@ -164,7 +164,7 @@ flowchart TB
 
 | 질문 | 답 |
 |---|---|
-| 분산 트랜잭션 | **2PC 는 거의 안 씀**. MSA 에선 Saga (장기) 가 표준 |
+| 분산 트랜잭션 | **2PC (Two-Phase Commit, 2단계 커밋) 는 거의 안 씀**. MSA 에선 Saga (장기) 가 표준 |
 | Saga 어느 쪽 | 단계 ≤4: Choreography, ≥5 또는 추적 중요: Orchestration |
 | 멱등성 보장 | 메시지마다 **eventId** + **DB UNIQUE / processed_event** |
 | Retry | **Exponential Backoff + Full Jitter** + idempotent 일 때만 |
@@ -199,7 +199,7 @@ flowchart TB
 
 - **#14 CRDT/MRDT**: Layer 3 의 일관성 모델 / Vector Clock 이 CRDT 의 토대. 협업/오프라인 동기화 가 필요하면 14번 다시 펼치기.
 - **#16 Async/IO**: Layer 5 의 Bulkhead / Backpressure / non-blocking 이 본 토픽 운영 패턴과 직접 연결. order-service 가 webflux + suspend 로 통합한 것이 그 결과.
-- **#13 Crypto/JWT**: Saga 의 멱등 키 전송 / mTLS 로 서비스 간 신뢰 + jti 로 token replay 방어 가 본 토픽 멱등성 의 변형.
+- **#13 Crypto/JWT**: Saga 의 멱등 키 전송 / mTLS (mutual TLS, 양방향 TLS) 로 서비스 간 신뢰 + jti 로 token replay 방어 가 본 토픽 멱등성 의 변형.
 
 각 파일 호출:
 ```

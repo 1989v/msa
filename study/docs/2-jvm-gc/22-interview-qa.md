@@ -21,7 +21,7 @@ created: 2026-05-01
 
 ### Q1. **JVM 메모리 영역 5가지 말해보세요**
 
-**A**: Heap, Metaspace, Stack(스레드별), PC Register, Native Memory(Direct Buffer / Code Cache / GC Internal).
+**A**: Heap, Metaspace, Stack(스레드별), PC Register, Native Memory(Direct Buffer / Code Cache / GC (Garbage Collection, 가비지 컬렉션) Internal).
 
 - Q-1: PermGen 과 Metaspace 차이?
   - Heap 안 → Native 로 위치 이동, 한도 무제한이 default, GC 트리거 다름
@@ -256,7 +256,7 @@ created: 2026-05-01
 - Q-1: 메시지 별 진단 다른가요?
   - 완전 다름. heap 은 MAT, Metaspace 는 ClassLoader, native thread 는 ulimit / ExecutorService
 - Q-2: OOMKilled 는 어디?
-  - 5종류에 안 들어감. OS / cgroup 이 죽임. JVM 안에서 메시지 안 보임
+  - 5종류에 안 들어감. OS / cgroup 이 죽임. JVM (Java Virtual Machine, 자바 가상 머신) 안에서 메시지 안 보임
 
 ### Q27. Heap Dump 채취 방법?
 

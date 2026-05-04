@@ -11,7 +11,7 @@ created: 2026-05-03
 ## 1. 한 줄 핵심
 
 > **인덱싱 = doc 가공 (ingest pipeline) + 색인 + 라이프사이클 관리.**
-> Alias swap 은 무중단 reindex 의 표준, ILM/ISM 은 시계열 데이터의 hot-warm-cold 자동화.
+> Alias swap 은 무중단 reindex 의 표준, ILM (Index Lifecycle Management, 인덱스 생명주기 관리) /ISM 은 시계열 데이터의 hot-warm-cold 자동화.
 
 ## 2. Bulk API — 모든 인덱싱의 출발점
 

@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-NAT Gateway 는 **프라이빗 서브넷의 리소스가 외부 인터넷으로 아웃바운드 통신** 하게 해주는 관리형 서비스. 퍼블릭 서브넷에 배치하며, AWS 에서 가장 비용이 문제되는 서비스 중 하나.
+NAT (Network Address Translation, 네트워크 주소 변환) Gateway 는 **프라이빗 서브넷의 리소스가 외부 인터넷으로 아웃바운드 통신** 하게 해주는 관리형 서비스. 퍼블릭 서브넷에 배치하며, AWS 에서 가장 비용이 문제되는 서비스 중 하나.
 
 ## 2. 내부 메커니즘
 
@@ -46,8 +46,8 @@ NAT Gateway 는 **프라이빗 서브넷의 리소스가 외부 인터넷으로 
 ### 2.4 AZ 귀속
 
 - NAT Gateway 는 **특정 AZ 의 서브넷** 에 배치
-- 해당 AZ 장애 시 NAT 도 다운 → 다른 AZ 프라이빗 서브넷이 영향
-- HA 는 **AZ 당 NAT 하나씩 + AZ 별 RT** 로 구성
+- 해당 AZ (Availability Zone, 가용 영역) 장애 시 NAT 도 다운 → 다른 AZ 프라이빗 서브넷이 영향
+- HA (High Availability, 고가용성) 는 **AZ 당 NAT 하나씩 + AZ 별 RT** 로 구성
 
 ### 2.5 처리량
 
@@ -74,11 +74,11 @@ Idle 비용: $32
 
 ### 3.2 비용 최적화 4가지
 
-1. **VPC Endpoint 로 AWS 서비스 우회**
+1. **VPC (Virtual Private Cloud, 가상 사설 클라우드) Endpoint 로 AWS 서비스 우회**
    - S3 / DynamoDB: **Gateway Endpoint** (무료!)
    - ECR / STS / Logs: **Interface Endpoint** (유료지만 NAT 보다 저렴)
 
-2. **NAT Instance** (직접 EC2 NAT)
+2. **NAT Instance** (직접 EC2 (Elastic Compute Cloud, 가상 머신 서비스) NAT)
    - `t3.nano` ~ $5/월, 처리량 ~1 Gbps
    - 단점: 관리 부담, SPoF, 낮은 처리량
 
@@ -154,7 +154,7 @@ resource "aws_route_table" "private" {
 
 ### 4.3 msa 프로젝트 관점
 
-- 현재 msa 는 로컬 K8s (NAT 개념 없음)
+- 현재 msa 는 로컬 K8s (Kubernetes) (NAT 개념 없음)
 - EKS 이전 시: **Phase 4 의 개선 포인트 #2** 적용 — VPC Endpoint 우선 세팅
 - `18-improvements.md` 에서 상세
 
@@ -213,7 +213,7 @@ Q7: NAT Gateway 가 뭐고 왜 필요한가요?
 
 **Q7-1-1-1 답변**: Interface Endpoint ($0.01/h + $0.01/GB) 는 NAT ($0.045/h + $0.045/GB) 대비 4.5배 저렴. 대용량 ECR pull, Secrets Manager 조회 등에서 이득.
 
-**Q7-2-1 답변**: NAT GW 는 내부적으로 IGW 를 경유해서 인터넷에 나가야 함. 프라이빗 서브넷은 IGW 경로가 없으므로 NAT 자체가 동작 불가.
+**Q7-2-1 답변**: NAT GW 는 내부적으로 IGW (Internet Gateway) 를 경유해서 인터넷에 나가야 함. 프라이빗 서브넷은 IGW 경로가 없으므로 NAT 자체가 동작 불가.
 
 **Q7-3-1 답변**: 트래픽 볼륨 기준. 월 TB 이상이면 AZ 별 NAT (Cross-AZ 비용 회피), 소규모면 단일 공유 NAT (고정비 절감). 고가용성 요구가 높으면 무조건 AZ 별.
 

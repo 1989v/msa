@@ -12,7 +12,7 @@ created: 2026-05-01
 
 - **Ingress** = HTTP/HTTPS L7 진입의 1세대 표준. 단순하지만 좁다.
 - **Gateway API** = Ingress 후속. TCP/UDP/gRPC 까지, 멀티 팀/멀티 controller 모델.
-- **NetworkPolicy** = Pod 사이 L3/L4 방화벽. CNI 가 구현 (Calico/Cilium 필수).
+- **NetworkPolicy** = Pod 사이 L3/L4 방화벽. CNI (Container Network Interface, 컨테이너 네트워크 인터페이스) 가 구현 (Calico/Cilium 필수).
 - **CoreDNS** = 서비스 디스커버리 DNS. ndots:5 함정과 NodeLocal DNSCache 가 핵심.
 
 ## 2. Ingress 의 구조 (다시)

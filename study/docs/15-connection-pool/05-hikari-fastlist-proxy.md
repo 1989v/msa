@@ -38,7 +38,7 @@ public boolean remove(Object o) {
 ```
 
 문제점:
-- range check 는 매 호출마다 — JIT 가 inline 해도 분기 한 번 추가
+- range check 는 매 호출마다 — JIT (Just-In-Time compilation, 즉시 컴파일) 가 inline 해도 분기 한 번 추가
 - `remove(Object)` 는 O(n) + `equals` 호출
 - ArrayList 는 thread-safety 없지만 일부 메서드 (modCount) 가 `synchronized` 의 fence 효과를 줘 JIT 가 최적화 어려움
 

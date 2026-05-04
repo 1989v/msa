@@ -6,7 +6,7 @@ created: 2026-05-01
 
 # Spring Transactional 심화 — Preview
 
-> 학습자 수준: 중급(intermediate, 10년차 백엔드) · 전체 예상 시간: 12h · 목표: 면접 대비 + msa ADR-0020/0022/0012 실무 연결
+> 학습자 수준: 중급(intermediate, 10년차 백엔드) · 전체 예상 시간: 12h · 목표: 면접 대비 + msa ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020/0022/0012 실무 연결
 > 계획서: [00-plan.md](00-plan.md) · 깊이 패키지: P3 풀팩 · 학습 순서: Top-down (메커니즘 → 전파/격리 → 분리 패턴 → 코드베이스)
 
 ---
@@ -44,10 +44,10 @@ created: 2026-05-01
 ```
 
 **핵심 5문장만 외운다**:
-1. `@Transactional` 은 **프록시 기반 AOP** — 외부 호출(프록시)만 가로채고, 같은 빈 내부 호출(self-invocation)은 무력화된다.
+1. `@Transactional` 은 **프록시 기반 AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍)** — 외부 호출(프록시)만 가로채고, 같은 빈 내부 호출(self-invocation)은 무력화된다.
 2. 기본 롤백은 `RuntimeException` / `Error` 만. **Checked Exception 은 기본 미롤백** — 필요하면 `rollbackFor`.
 3. `readOnly = true` 의 본질은 두 가지: **Hibernate FlushMode.MANUAL → dirty check skip** + **TransactionSynchronizationManager.isCurrentTransactionReadOnly() → 라우팅 키**.
-4. 외부 IO(HTTP/Kafka) 와 DB 트랜잭션은 **반드시 분리한다**. msa 는 `{Entity}TransactionalService` 분리 + Outbox 폴링 패턴이 표준.
+4. 외부 IO (Input/Output, 입출력)(HTTP/Kafka) 와 DB 트랜잭션은 **반드시 분리한다**. msa 는 `{Entity}TransactionalService` 분리 + Outbox 폴링 패턴이 표준.
 5. 중첩 `@Transactional` 에서 **예외를 catch 해도 rollback-only 마킹은 되돌릴 수 없다** → `UnexpectedRollbackException`.
 
 ---
@@ -180,7 +180,7 @@ created: 2026-05-01
 
 ## 관련 다음 학습
 
-- **#4 DB Index/Transaction** — 격리 수준이 InnoDB MVCC/lock 으로 어떻게 구현되는지 깊게.
+- **#4 DB Index/Transaction** — 격리 수준이 InnoDB MVCC (Multi-Version Concurrency Control, 다중 버전 동시성 제어)/lock 으로 어떻게 구현되는지 깊게.
 - **#15 Connection Pool** — `LazyConnectionDataSourceProxy` 가 connection 획득 시점을 늦추는 효과의 정량적 측정.
 - **#7 Distributed Systems / #6 Kafka Internals** — Saga + Outbox 가 분산 환경에서 정확히 무엇을 보장하는가.
 - **#3 Java/Kotlin Concurrency** — `ThreadLocal` 기반 `TransactionSynchronizationManager` 가 reactive 환경에서 깨지는 이유.

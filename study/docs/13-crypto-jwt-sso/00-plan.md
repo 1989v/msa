@@ -28,7 +28,7 @@ self-assessment:
 서비스 인증/인가, 민감 정보 보호, 외부 IdP 연동에 필요한 보안 기초를 한 번에 정리한다.
 대칭키(AES) / 해시(SHA) / 메시지 인증(HMAC) → 토큰(JWT) → 사용자 인증 흐름(SSO/OAuth2/OIDC) → 키 보관(KMS) 순서로 추상화 레이어를 따라 올라간다.
 
-현재 msa 프로젝트는 `common/security`에 AES-GCM 암호화기와 JWT(HS256) 발급기를 가지고 있고, gateway에서 JWT 검증 필터로 인증을 처리한다. 다만 SSO/OAuth2 IdP 연동, 키 회전(rotation), 외부 KMS 연동은 아직 구현되어 있지 않다. 이번 학습은 "왜 이렇게 구현했는지 / 운영 환경에서 무엇이 부족한지"를 설명할 수 있는 수준이 목표다.
+현재 msa 프로젝트는 `common/security`에 AES (Advanced Encryption Standard, 고급 암호화 표준)-GCM 암호화기와 JWT (JSON Web Token, HS256) 발급기를 가지고 있고, gateway에서 JWT 검증 필터로 인증을 처리한다. 다만 SSO (Single Sign-On, 단일 로그인)/OAuth (Open Authorization)2 IdP 연동, 키 회전(rotation), 외부 KMS (Key Management Service, 키 관리 서비스) 연동은 아직 구현되어 있지 않다. 이번 학습은 "왜 이렇게 구현했는지 / 운영 환경에서 무엇이 부족한지"를 설명할 수 있는 수준이 목표다.
 
 ## 2. 학습 목표
 

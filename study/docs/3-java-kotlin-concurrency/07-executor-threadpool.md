@@ -53,7 +53,7 @@ RejectedExecutionHandler 호출
 
 | 팩토리 | 내부 | 위험 |
 |---|---|---|
-| `newFixedThreadPool(N)` | core=max=N, **`LinkedBlockingQueue` (unbounded)** | queue 에 무한 적재 → OOM |
+| `newFixedThreadPool(N)` | core=max=N, **`LinkedBlockingQueue` (unbounded)** | queue 에 무한 적재 → OOM (Out Of Memory, 메모리 부족) |
 | `newCachedThreadPool()` | core=0, **max=Integer.MAX_VALUE**, `SynchronousQueue` | 스레드 무제한 생성 → OOM |
 | `newSingleThreadExecutor()` | 1개 스레드, **unbounded queue** | 같은 OOM 위험 |
 | `newScheduledThreadPool(N)` | unbounded queue + 시간 우선순위 | OK 한 편 |
@@ -111,7 +111,7 @@ fun safeExecutor(name: String, core: Int, max: Int, queueCapacity: Int): Executo
 
 `N = 코어 수 또는 코어 수 + 1`
 
-JIT 컴파일/GC 같은 백그라운드 자원 고려. 이 이상은 컨텍스트 스위칭 비용으로 손해.
+JIT (Just-In-Time compilation, 즉시 컴파일) 컴파일/GC (Garbage Collection, 가비지 컬렉션) 같은 백그라운드 자원 고려. 이 이상은 컨텍스트 스위칭 비용으로 손해.
 
 ### IO bound
 

@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 13. msa 개선 제안 종합
 
-> 본 학습을 통해 발견한 msa 의 트랜잭션 / Outbox / replica routing 영역 개선 후보 10가지. 우선순위 + ADR 필요 여부.
+> 본 학습을 통해 발견한 msa 의 트랜잭션 / Outbox / replica routing 영역 개선 후보 10가지. 우선순위 + ADR (Architecture Decision Record, 아키텍처 결정 기록) 필요 여부.
 
 ---
 
@@ -252,7 +252,7 @@ fun publishPendingEvents() { ... }
 
 ### 4. @TransactionalEventListener 도입 (캐시 무효화)
 
-**현재** — Inventory 의 `syncCache` 가 트랜잭션 안에서 Redis 호출. ADR-0020 의 "외부 IO 트랜잭션 밖" 권고와 약한 충돌.
+**현재** — Inventory 의 `syncCache` 가 트랜잭션 안에서 Redis 호출. ADR-0020 의 "외부 IO (Input/Output, 입출력) 트랜잭션 밖" 권고와 약한 충돌.
 
 **개선**:
 ```kotlin
@@ -264,7 +264,7 @@ fun onInventoryChanged(event: InventoryChangedEvent) {
 
 - 도메인 이벤트 → 캐시 동기화 분리
 - DB commit 후 보장된 시점에 캐시 갱신
-- JVM crash 시 손실 가능 — 운영적으로 받아들일지는 별도 결정
+- JVM (Java Virtual Machine, 자바 가상 머신) crash 시 손실 가능 — 운영적으로 받아들일지는 별도 결정
 
 **ADR 불필요** — 마이너 개선
 

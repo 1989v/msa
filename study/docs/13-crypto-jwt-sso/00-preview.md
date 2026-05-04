@@ -50,11 +50,11 @@ created: 2026-04-28
 ```
 
 **핵심 5문장만 외운다**:
-1. **AES-256-GCM**이 새 시스템 대칭 암호 기본 (AEAD = 암호화 + 무결성).
+1. **AES (Advanced Encryption Standard, 고급 암호화 표준)-256-GCM**이 새 시스템 대칭 암호 기본 (AEAD = 암호화 + 무결성).
 2. **비밀번호는 argon2id**, 일반 해시(SHA)는 빠르므로 금지.
-3. **JWT 검증은 알고리즘 화이트리스트** 강제 (alg:none 방어).
-4. **KMS는 Envelope Encryption** 패턴 — 마스터 키는 절대 KMS 밖으로 안 나옴.
-5. **TLS 1.3은 PFS 강제** — 0-RTT는 idempotent 요청에만.
+3. **JWT (JSON Web Token) 검증은 알고리즘 화이트리스트** 강제 (alg:none 방어).
+4. **KMS (Key Management Service, 키 관리 서비스)는 Envelope Encryption** 패턴 — 마스터 키는 절대 KMS 밖으로 안 나옴.
+5. **TLS (Transport Layer Security, 전송 계층 보안) 1.3은 PFS 강제** — 0-RTT는 idempotent 요청에만.
 
 ---
 

@@ -8,7 +8,7 @@ created: 2026-05-01
 
 > 학습자 수준: intermediate · 전체 예상 시간: 14h · 목표: HTTP 파이프라인 모든 layer 를 그림으로 설명 + 면접 답변
 > 계획서: [00-plan.md](00-plan.md) · 학습 순서: 파이프라인 외곽(Filter)부터 안쪽(Controller, MessageConverter)으로 → 응답 후 처리(gzip)
-> 산출물 후보: ObjectMapper auto-config 통일, AOP 표준 패턴, "응답 압축 위치" ADR
+> 산출물 후보: ObjectMapper auto-config 통일, AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 표준 패턴, "응답 압축 위치" ADR (Architecture Decision Record, 아키텍처 결정 기록)
 
 ---
 
@@ -176,7 +176,7 @@ created: 2026-05-01
 - 같은 빈 안에서 `this.method()` 호출하며 `@Transactional`/`@Async`/AOP 동작 기대
 - gzip 을 Tomcat 과 Nginx 둘 다에서 켜기 (이중 압축은 일어나지 않지만 디버깅 혼란)
 - 인증 토큰 응답 body 에 그대로 노출 + gzip 켜기 (BREACH 위험)
-- `Vary: Accept-Encoding` 누락한 채 CDN 앞단에 캐시 (압축/비압축 응답 섞임)
+- `Vary: Accept-Encoding` 누락한 채 CDN (Content Delivery Network, 콘텐츠 전송 네트워크) 앞단에 캐시 (압축/비압축 응답 섞임)
 
 ---
 

@@ -11,16 +11,16 @@ created: 2026-04-16
 
 ## 멘탈 모델: "AWS 네트워크 = 회사 전용 건물 단지"
 
-- **VPC** = 회사가 임차한 건물 전체 (외부 격리된 내부 주소 체계)
+- **VPC (Virtual Private Cloud, 가상 사설 클라우드)** = 회사가 임차한 건물 전체 (외부 격리된 내부 주소 체계)
 - **서브넷** = 건물 내 층/구역 (공개 리셉션층 vs 직원 전용층)
-- **IGW** = 건물 정문 (외부 인터넷과 연결되는 유일한 통로)
+- **IGW (Internet Gateway)** = 건물 정문 (외부 인터넷과 연결되는 유일한 통로)
 - **Route Table** = 우편 배달 규칙
-- **SG** = 리소스 단위 출입 카드 (stateful, Allow-only)
-- **NACL** = 층 단위 출입 규칙판 (stateless, Allow+Deny)
-- **NAT Gateway** = 익명 택배 접수처 (내부 → 외부 아웃바운드)
+- **SG (Security Group, 보안 그룹)** = 리소스 단위 출입 카드 (stateful, Allow-only)
+- **NACL (Network Access Control List, 네트워크 ACL)** = 층 단위 출입 규칙판 (stateless, Allow+Deny)
+- **NAT (Network Address Translation, 네트워크 주소 변환) Gateway** = 익명 택배 접수처 (내부 → 외부 아웃바운드)
 - **EIP** = 건물 고정 번지수
-- **ALB** = L7 리셉셔니스트 (내용 기반 분기)
-- **NLB** = L4 우체국 직원 (봉투만 보고 빠르게 전달)
+- **ALB (Application Load Balancer, 애플리케이션 로드 밸런서)** = L7 리셉셔니스트 (내용 기반 분기)
+- **NLB (Network Load Balancer, 네트워크 로드 밸런서)** = L4 우체국 직원 (봉투만 보고 빠르게 전달)
 
 ---
 
@@ -155,7 +155,7 @@ created: 2026-04-16
 
 1. **`/study:start 1 security-group`** — SG vs NACL 은 단골 질문. 꼬리 4단계까지
 2. **`/study:start 1 alb`** — L7 LB 는 msa 에도 직접 연결 (ingress-nginx)
-3. **`/study:start 1 vpc`** — 기본이자 전제. CIDR 설계/확장성
+3. **`/study:start 1 vpc`** — 기본이자 전제. CIDR (Classless Inter-Domain Routing) 설계/확장성
 4. **`/study:start 1 subnet`** — 퍼블릭/프라이빗의 실체 이해
 5. **`/study:start 1 eks-networking`** — msa 이전 시 핵심
 6. **`/study:start 1 nat-gateway`** — 비용 이슈 면접 단골

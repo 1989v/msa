@@ -39,7 +39,7 @@ send(record)
 | `all` (`-1`) | leader + ISR 전체 가 받은 후 ack | min.ISR 까지 안전 | 최대 | **데이터 손실 절대 안 됨** (msa 표준) |
 
 **`acks=all` 의 함정**:
-- `min.insync.replicas` 가 **broker/topic 레벨** 설정. acks=all 만 보면 안 되고 ISR 수도 봐야.
+- `min.insync.replicas` 가 **broker/topic 레벨** 설정. acks=all 만 보면 안 되고 ISR (In-Sync Replicas) 수도 봐야.
 - `min.ISR=1` + `acks=all` → leader 1 개만 살아있어도 ack → 사실상 acks=1.
 - msa 프로덕션: `min.ISR=2`, `RF=3` → leader + 1 follower 까지 받아야 ack. **1대 장애 허용**.
 
@@ -75,7 +75,7 @@ ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG to 120000,
 **중요**:
 - 이건 **단일 producer 인스턴스 + 단일 세션** 안에서만 보장. producer 가 재시작하면 PID 재발급되어 중복 가능.
 - **세션 간 멱등이 필요하면 Transactional Producer** (`transactional.id`).
-- **컨슈머 측 멱등성과는 별개** — broker 까지의 중복 발행을 막는 것이지, 컨슈머가 같은 메시지를 두 번 처리하는 건 별도 문제 (그래서 ADR-0012 의 processed_event 가 필요).
+- **컨슈머 측 멱등성과는 별개** — broker 까지의 중복 발행을 막는 것이지, 컨슈머가 같은 메시지를 두 번 처리하는 건 별도 문제 (그래서 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012 의 processed_event 가 필요).
 
 ## 4. retries / delivery.timeout.ms 의 관계
 

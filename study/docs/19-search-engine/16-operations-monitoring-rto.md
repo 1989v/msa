@@ -8,12 +8,12 @@ created: 2026-05-03
 
 # 16. 운영 — 모니터링 + RTO
 
-> 묶음 3 (B) 시니어 의사결정. "ES 가 갑자기 느려졌다" / "노드 죽었다" / "데이터 사라졌다" 의 진단 / 복구 절차.
+> 묶음 3 (B) 시니어 의사결정. "ES (Elasticsearch) 가 갑자기 느려졌다" / "노드 죽었다" / "데이터 사라졌다" 의 진단 / 복구 절차.
 
 ## 1. 한 줄 핵심
 
-> **운영의 핵심 = 4축 모니터링 (cluster health / latency / saturation / errors) + 정기 RTO 훈련 + snapshot 자동화.**
-> SoR (RDB) 가 아닌 ES 의 RTO = "재색인 시간". 이 숫자를 모르면 운영 안전망 없음.
+> **운영의 핵심 = 4축 모니터링 (cluster health / latency / saturation / errors) + 정기 RTO (Recovery Time Objective, 복구 시간 목표) 훈련 + snapshot 자동화.**
+> SoR (System of Record, 원본 데이터 시스템) (RDB (Relational Database, 관계형 데이터베이스)) 가 아닌 ES 의 RTO = "재색인 시간". 이 숫자를 모르면 운영 안전망 없음.
 
 ## 2. Cluster Health — 첫 번째 신호
 

@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-K8s `limits.memory` 는 **컨테이너 RSS 의 한도**. JVM 의 RSS = **힙 + 모든 native 영역**. 힙을 limit 의 X% 로만 잡으면 (1-X)% 가 native 예산이 된다. **이 공식이 OOMKilled 방지의 핵심**. 보통 70-75% 가 안전 영역. msa 의 1Gi limit 기준 권장은 **힙 70% (~715MB) + Metaspace 256MB + Thread 80MB + Code Cache 128MB + Direct 64MB + GC Internal 50MB + 여유 30MB**. 정확한 산정 없이 75% 박으면 250MB 의 native 예산이 빠듯해 OOMKilled 가능.
+K8s (Kubernetes) `limits.memory` 는 **컨테이너 RSS 의 한도**. JVM (Java Virtual Machine, 자바 가상 머신) 의 RSS = **힙 + 모든 native 영역**. 힙을 limit 의 X% 로만 잡으면 (1-X)% 가 native 예산이 된다. **이 공식이 OOMKilled 방지의 핵심**. 보통 70-75% 가 안전 영역. msa 의 1Gi limit 기준 권장은 **힙 70% (~715MB) + Metaspace 256MB + Thread 80MB + Code Cache 128MB + Direct 64MB + GC (Garbage Collection, 가비지 컬렉션) Internal 50MB + 여유 30MB**. 정확한 산정 없이 75% 박으면 250MB 의 native 예산이 빠듯해 OOMKilled 가능.
 
 ```
    Container Memory Limit (1 Gi)

@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 09. JSON CRDT — Automerge · Yjs
 
-협업 도구의 데이터를 표현하는 *전체 document* 단위 CRDT. **Map + List + Register + Counter 의 재귀 합성**.
+협업 도구의 데이터를 표현하는 *전체 document* 단위 CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입). **Map + List + Register + Counter 의 재귀 합성**.
 
 ## 두 시스템
 

@@ -48,7 +48,7 @@ jcmd 12345 Thread.print -l    # locked synchronizers (ReentrantLock 등) 포함
 ```
 
 - jcmd 가 jstack 의 superset
-- `-l` 옵션이 **`ReentrantLock`/AQS lock 까지 표시** — synchronized 만 잡는 jstack 의 한계 보완
+- `-l` 옵션이 **`ReentrantLock`/AQS (AbstractQueuedSynchronizer) lock 까지 표시** — synchronized 만 잡는 jstack 의 한계 보완
 - 더 가볍고 안정적
 
 ### 3. `kill -3 <pid>` — 컨테이너에서 jcmd 못 쓸 때
@@ -159,7 +159,7 @@ java.lang.Thread.State: RUNNABLE
         ...
 ```
 
-JVM 입장에서 실행 가능. **OS 입장에선 IO 대기** 중일 수도 있음 (`Net.poll`, `socketRead0`, `epoll_wait`).
+JVM 입장에서 실행 가능. **OS 입장에선 IO (Input/Output, 입출력) 대기** 중일 수도 있음 (`Net.poll`, `socketRead0`, `epoll_wait`).
 
 → RUNNABLE 이라고 해서 무조건 CPU 쓰는 건 아님. CPU bound vs IO bound 구분은 **stack 의 native call** 로 판별.
 

@@ -223,7 +223,7 @@ Kleppmann 권장: correctness 가 핵심이면 Redis 락 대신 **ZooKeeper / Et
 - "RedLock 알고리즘?" → N개 독립 마스터 동시 시도 + 과반 + elapsed < ttl.
 - "Kleppmann 의 비판?" → clock drift, STW pause 시 TTL 기반은 항상 mutual exclusion 깨짐 가능.
 - "펜싱 토큰?" → 단조 증가 token 을 storage 에 함께 전달 → stale write 차단.
-- "Redisson 의 watchdog?" → 락 TTL 의 1/3 마다 자동 갱신, GC pause 길지 않으면 안전.
+- "Redisson 의 watchdog?" → 락 TTL 의 1/3 마다 자동 갱신, GC (Garbage Collection, 가비지 컬렉션) pause 길지 않으면 안전.
 - "ZooKeeper / Etcd 와 Redis 차이?" → consensus (Raft) vs async replication. correctness 가 중요하면 전자.
 - "RedLock vs 단일 master?" → RedLock 도 같은 한계 (clock, STW). 운영 복잡도 증가에 비해 이득 작음. 대부분 단일 master + 펜싱 token 으로 충분.
 

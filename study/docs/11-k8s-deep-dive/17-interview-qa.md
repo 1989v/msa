@@ -16,7 +16,7 @@ created: 2026-05-01
 
 ### Q1. **kubectl apply 한 줄이 클러스터 안에서 어떻게 흘러가나요?**
 
-> 8단계예요. (1) 클라이언트가 kubeconfig 로 인증 토큰 결정 → (2) OpenAPI 스키마로 default 채우고 last-applied annotation 으로 3-way merge 계산 → (3) HTTPS 로 api-server 호출 → (4) api-server 가 인증 → 인가(RBAC) → mutating admission → schema validation → validating admission → (5) etcd write 후 resourceVersion 증가 → (6) controller-manager 가 watch 로 받아 ReplicaSet/Pod 만듦 → (7) scheduler 가 nodeName bind → (8) kubelet 이 CRI/CNI/CSI 호출해 컨테이너 시작.
+> 8단계예요. (1) 클라이언트가 kubeconfig 로 인증 토큰 결정 → (2) OpenAPI 스키마로 default 채우고 last-applied annotation 으로 3-way merge 계산 → (3) HTTPS 로 api-server 호출 → (4) api-server 가 인증 → 인가(RBAC (Role-Based Access Control, 역할 기반 접근 제어)) → mutating admission → schema validation → validating admission → (5) etcd write 후 resourceVersion 증가 → (6) controller-manager 가 watch 로 받아 ReplicaSet/Pod 만듦 → (7) scheduler 가 nodeName bind → (8) kubelet 이 CRI/CNI/CSI 호출해 컨테이너 시작.
 > 핵심은 **api-server 만 etcd 를 만진다** 는 점이에요. 그래서 RBAC/admission 의 단일 게이트가 되고, 그게 K8s 보안 모델의 중심이에요.
 
 ### Q2. **Deployment 와 StatefulSet 의 차이?**

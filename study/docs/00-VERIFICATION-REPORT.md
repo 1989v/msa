@@ -50,7 +50,7 @@ order: 00
 
 ### 3.1 ADR-0013 SSOT 방향 — Product CLAUDE.md 와 study 자료 불일치
 
-- `product/CLAUDE.md` 의 "Key Rules": **"Product는 Inventory의 SSOT"** ← 이 표현이 ADR-0013 의 의도와 반대로 읽힘
+- `product/CLAUDE.md` 의 "Key Rules": **"Product는 Inventory의 SSOT"** ← 이 표현이 ADR (Architecture Decision Record, 아키텍처 결정 기록) -0013 의 의도와 반대로 읽힘
 - `study/docs/7-distributed-systems/17-codebase-idempotent-ssot.md:155-159` 에서 ADR-0013 인용: **"Inventory 가 재고 SSOT, Product.stock = Inventory 이벤트 기반 read-only 캐시"**
 - 코드 흐름 (Inventory → Kafka → `Product.syncStock` 호출) 도 study 자료와 일치
 - → `product/CLAUDE.md` 의 표현이 stale 가능성. 본 리포트 범위 (study 자료 수정만) 외이므로 미수정. **별도 액션 권장**: product/CLAUDE.md 점검.

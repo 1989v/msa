@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-- **Direct Buffer** = JVM heap 밖의 native memory 에 잡힌 ByteBuffer → syscall 인자로 직접 전달 가능
+- **Direct Buffer** = JVM (Java Virtual Machine, 자바 가상 머신) heap 밖의 native memory 에 잡힌 ByteBuffer → syscall 인자로 직접 전달 가능
 - 일반 read 는 *4 번* 컨텍스트 스위치 + *4 번* 데이터 복사
 - **sendfile** = kernel-only 복사로 컨텍스트 스위치 2 번, 복사 2 번 (혹은 더 적음)
 - Java 의 `FileChannel.transferTo()` 가 sendfile 매핑

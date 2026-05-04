@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 목표
 
-JFR (Java Flight Recorder) 로 운영 영향 < 1% 의 프로파일링 데이터 수집 → JMC (JDK Mission Control) 로 hot method, allocation hotspot, GC, thread contention, lock 분석. **운영 환경에서 항상 켜둘 수 있는 프로파일러** 사용법.
+JFR (Java Flight Recorder) 로 운영 영향 < 1% 의 프로파일링 데이터 수집 → JMC (JDK Mission Control) 로 hot method, allocation hotspot, GC (Garbage Collection, 가비지 컬렉션), thread contention, lock 분석. **운영 환경에서 항상 켜둘 수 있는 프로파일러** 사용법.
 
 ## 소요 시간
 

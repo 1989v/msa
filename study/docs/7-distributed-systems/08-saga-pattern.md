@@ -7,7 +7,7 @@ created: 2026-05-01
 
 # 08. Saga Pattern — Choreography vs Orchestration
 
-> Saga 는 **ACID 의 Atomicity 를 포기** 하고 **보상 트랜잭션** 으로 정합성을 사후 회복하는 분산 트랜잭션 패턴. MSA 의 표준.
+> Saga 는 **ACID (Atomicity / Consistency / Isolation / Durability, 원자성·일관성·격리성·내구성) 의 Atomicity 를 포기** 하고 **보상 트랜잭션** 으로 정합성을 사후 회복하는 분산 트랜잭션 패턴. MSA (Microservices Architecture, 마이크로서비스 아키텍처) 의 표준.
 
 ## 1. Saga 의 역사
 
@@ -277,7 +277,7 @@ ReservationExpiry (TTL 30분)
 
 ### 8.2 강점
 
-- Outbox 로 발행 원자성 (ADR-0011)
+- Outbox 로 발행 원자성 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0011)
 - 멱등 Consumer (ADR-0012, processed_event)
 - Optimistic Lock (`@Version`)
 - ReservationExpiry 로 PENDING 상태 자동 정리

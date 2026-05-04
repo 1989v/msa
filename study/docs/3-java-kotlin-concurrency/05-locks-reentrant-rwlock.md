@@ -192,12 +192,12 @@ fun put(key: String, value: String) {
 
 - 락 안에서 `wait/notify` 못 씀 → `Condition` 으로 대체
 - API 가 더 verbose
-- JIT 최적화는 일반 락 (편향/경량) 만큼 강하지 않음
+- JIT (Just-In-Time compilation, 즉시 컴파일) 최적화는 일반 락 (편향/경량) 만큼 강하지 않음
 - read-write 분리가 *진짜 이득* 인지 측정해야 함
 
 ## Lock의 내부 — AQS (AbstractQueuedSynchronizer)
 
-`ReentrantLock`, `Semaphore`, `CountDownLatch`, `ReentrantReadWriteLock`, `FutureTask` 모두 **AQS 기반**.
+`ReentrantLock`, `Semaphore`, `CountDownLatch`, `ReentrantReadWriteLock`, `FutureTask` 모두 **AQS (AbstractQueuedSynchronizer) 기반**.
 
 AQS 핵심:
 - `volatile int state` — 락 보유자 카운트, semaphore 토큰, latch count 등 자유롭게 의미 부여

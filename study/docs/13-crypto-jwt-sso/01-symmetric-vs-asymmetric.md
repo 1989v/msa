@@ -10,7 +10,7 @@ created: 2026-04-28
 
 ## 핵심 정의
 - **대칭키**: 암호화/복호화에 같은 키를 사용 (AES, ChaCha20)
-- **비대칭키**: 공개키-개인키 쌍, 한쪽으로 암호화하면 반대쪽으로만 복호화 (RSA, ECC, EdDSA)
+- **비대칭키**: 공개키-개인키 쌍, 한쪽으로 암호화하면 반대쪽으로만 복호화 (RSA (Rivest–Shamir–Adleman), ECC (Elliptic Curve Cryptography, 타원 곡선 암호), EdDSA)
 
 ## 왜 둘 다 쓰는가 — 속도와 키 분배의 트레이드오프
 

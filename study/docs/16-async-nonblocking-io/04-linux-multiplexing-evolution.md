@@ -15,7 +15,7 @@ created: 2026-05-01
 - **epoll** (Linux 2.6, 2002) — fd 를 한 번 등록(`epoll_ctl`)하면 커널이 ready list 유지 → O(1)
 - **kqueue** (BSD/macOS) — 비슷한 디자인, 더 일반적 (file/socket 외 process/signal/timer 도 감시)
 - **IOCP** (Windows) — 분류상 (4) async, completion port 큐로 결과 통보
-- 현대 백엔드 = epoll (Linux) / kqueue (Mac) / IOCP (Windows). Java NIO Selector 는 이들 위에 자동 매핑.
+- 현대 백엔드 = epoll (Linux) / kqueue (Mac) / IOCP (Windows). Java NIO (Non-blocking I/O, 비차단 입출력) Selector 는 이들 위에 자동 매핑.
 
 ---
 

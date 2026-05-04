@@ -148,7 +148,7 @@ ERROR 1792 (HY000): Cannot execute statement in a READ ONLY transaction.
 
 - AWS Aurora MySQL: Connection 의 readOnly 플래그를 보고 reader endpoint 로 자동 라우팅 (드라이버 레벨)
 - ProxySQL: query rule + connection state 로 read replica 라우팅
-- RDS Proxy: read/write split 옵션 활성화 시 활용
+- RDS (Relational Database Service, 관계형 데이터베이스 서비스) Proxy: read/write split 옵션 활성화 시 활용
 
 **이것이 왜 우리에게 의미가 있나** — msa 가 application 레벨에서 이미 `RoutingDataSource` + `LazyConnectionDataSourceProxy` 로 라우팅을 하고 있어서, JDBC Connection.setReadOnly 를 별도로 활용하지는 않지만, Aurora 환경으로 옮길 때 추가 layer 로 활용 가능.
 
@@ -170,7 +170,7 @@ TransactionSynchronizationManager.isActualTransactionActive()      // true
 이 메타 정보를 활용해서:
 - **`AbstractRoutingDataSource.determineCurrentLookupKey()`** 에서 readOnly 면 replica 로 분기 → **msa 11 서비스 표준 패턴**
 - 로깅에 트랜잭션 메타 추가
-- AOP advice 에서 트랜잭션 컨텍스트 확인
+- AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) advice 에서 트랜잭션 컨텍스트 확인
 
 상세 패턴은 [07-replica-routing-pattern.md](07-replica-routing-pattern.md) 에서.
 

@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 한 줄
 
-`Atomic*` 은 **CAS (Compare-And-Swap) 하드웨어 명령어로 락 없이** 원자적 read-modify-write 를 구현한 lock-free 자료구조. contention 낮을 땐 락보다 훨씬 빠르고, 높을 땐 `LongAdder` 같은 striped 변형이 더 빠르다.
+`Atomic*` 은 **CAS (Compare-And-Swap, 비교-교환) 하드웨어 명령어로 락 없이** 원자적 read-modify-write 를 구현한 lock-free 자료구조. contention 낮을 땐 락보다 훨씬 빠르고, 높을 땐 `LongAdder` 같은 striped 변형이 더 빠르다.
 
 ## CAS 동작 원리
 
@@ -84,7 +84,7 @@ while (true) {
 
 스택 push/pop 마다 stamp 증가 → 같은 값이 돌아와도 stamp 다르면 CAS 실패.
 
-> **실무에서 ABA 가 문제 되는 빈도는 낮다** — 대부분의 atomic 사용처는 카운터/플래그/객체 swap 인데 GC 가 free-and-reuse 패턴을 차단해준다 (Java 는 C/C++ 처럼 raw memory 재활용 안 됨). lock-free queue 같은 직접 구현 자료구조에서나 본격적 문제.
+> **실무에서 ABA (ABA problem, ABA 문제 — CAS 의 함정) 가 문제 되는 빈도는 낮다** — 대부분의 atomic 사용처는 카운터/플래그/객체 swap 인데 GC (Garbage Collection, 가비지 컬렉션) 가 free-and-reuse 패턴을 차단해준다 (Java 는 C/C++ 처럼 raw memory 재활용 안 됨). lock-free queue 같은 직접 구현 자료구조에서나 본격적 문제.
 
 ## `AtomicInteger` vs `LongAdder`
 

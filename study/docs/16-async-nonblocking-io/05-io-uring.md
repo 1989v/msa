@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-- **io_uring** (Linux 5.1+, 2019, Jens Axboe) — 분면 (4) async non-blocking
+- **io_uring** (Linux 5.1+, 2019, Jens Axboe) — 분면 (4) async IO (Input/Output, 입출력) non-blocking
 - 핵심 아이디어: **유저↔커널 공유 ring buffer 두 개** (Submission Queue / Completion Queue) → syscall 없이 IO 요청/완료 전달 가능
 - read/write 뿐 아니라 accept/connect/openat/sendmsg/splice 등 모든 IO syscall 을 큐에 넣을 수 있음
 - 진짜로 (1) 대기 + (2) 복사 모두 커널에 위임됨

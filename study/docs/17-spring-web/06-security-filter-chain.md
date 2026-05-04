@@ -68,7 +68,7 @@ WebMVC 에서 `EnableWebSecurity` + 기본 설정 시 등록되는 핵심 Filter
 
 ## 4. JWT Stateless 인증 시 흔한 변형
 
-**Authorization 헤더 → JWT 검증 → SecurityContext 설정** 까지가 표준 패턴:
+**Authorization 헤더 → JWT (JSON Web Token) 검증 → SecurityContext 설정** 까지가 표준 패턴:
 
 ```kotlin
 class JwtAuthenticationFilter(

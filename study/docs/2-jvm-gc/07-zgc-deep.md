@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-ZGC 는 **모든 GC phase 가 concurrent**, 힙 크기와 무관하게 **STW < 1ms** 를 달성한 GC. 핵심 무기는 **Colored Pointer** — 64-bit 포인터의 상위 비트에 GC 메타데이터를 박아서 객체와 함께 이동/추적. 그리고 **Load Barrier** — 모든 객체 read 시 짧은 가드 코드가 실행되어 mid-flight 이동 중인 객체도 안전하게 처리. JDK 21 부터 **Generational ZGC** GA, JDK 25 부터는 ZGC = always Generational.
+ZGC (Z Garbage Collector) 는 **모든 GC (Garbage Collection, 가비지 컬렉션) phase 가 concurrent**, 힙 크기와 무관하게 **STW < 1ms** 를 달성한 GC. 핵심 무기는 **Colored Pointer** — 64-bit 포인터의 상위 비트에 GC 메타데이터를 박아서 객체와 함께 이동/추적. 그리고 **Load Barrier** — 모든 객체 read 시 짧은 가드 코드가 실행되어 mid-flight 이동 중인 객체도 안전하게 처리. JDK 21 부터 **Generational ZGC** GA, JDK 25 부터는 ZGC = always Generational.
 
 ```
    Pointer (64-bit)
@@ -83,7 +83,7 @@ ZGC 는 한 객체를 **세 가지 다른 가상 주소** 로 접근 가능. 객
 
 ### 동작
 
-JIT 가 모든 reference load (`obj.field`) 에 다음 가드 코드를 끼움:
+JIT (Just-In-Time compilation, 즉시 컴파일) 가 모든 reference load (`obj.field`) 에 다음 가드 코드를 끼움:
 
 ```c
 // 의사 코드
@@ -175,7 +175,7 @@ JDK 21 의 generational ZGC:
 
 ```
 실시간 추천 서비스, 힙 32GB
-G1: Mixed GC pause 400ms
+G1 (Garbage-First Collector): Mixed GC pause 400ms
 ZGC: 항상 < 1ms
 ```
 
@@ -273,7 +273,7 @@ configure<JibExtension> {
 }
 ```
 
-K8s 에서 `vm.nr_hugepages` 설정 또는 `node-feature-discovery` 가 필요할 수 있음 — large pages 는 sysctl 설정 필요.
+K8s (Kubernetes) 에서 `vm.nr_hugepages` 설정 또는 `node-feature-discovery` 가 필요할 수 있음 — large pages 는 sysctl 설정 필요.
 
 ### 검증 방법 (Lab 1 에서)
 

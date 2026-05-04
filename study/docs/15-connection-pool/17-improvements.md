@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 17. msa 풀 설정 개선 후보
 
-[15-codebase-audit.md](15-codebase-audit.md) 의 점검 결과를 기반으로 *우선순위* 와 *적용 방법* 을 정리. 각 항목은 ADR 후보 또는 단순 PR 후보.
+[15-codebase-audit.md](15-codebase-audit.md) 의 점검 결과를 기반으로 *우선순위* 와 *적용 방법* 을 정리. 각 항목은 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보 또는 단순 PR 후보.
 
 ---
 

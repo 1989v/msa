@@ -14,7 +14,7 @@ estimated-hours: 2
 ## 0. 이 파일에서 얻을 것
 
 - `wrk` / `k6` 로 부하 + latency 분포 측정 가능
-- 캐시 hit ratio 0/50/100% 변화 시 P50/P99 가 어떻게 움직이는지 관측
+- 캐시 hit ratio 0/50/100% 변화 시 P50/P99 (99th Percentile, 가장 느린 1%) 가 어떻게 움직이는지 관측
 - fan-out 시뮬레이션으로 tail 곱셈 효과 직접 확인
 - 면접 카드: "캐시 hit 률이 P99 에 미치는 영향" 실측 일화
 

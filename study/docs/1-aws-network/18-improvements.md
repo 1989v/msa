@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-msa 프로젝트 EKS 이전 시의 **8가지 개선 제안**. 우선순위 + ADR 필요 여부 + 영향 범위 명시. Phase 4 의 중심.
+msa 프로젝트 EKS 이전 시의 **8가지 개선 제안**. 우선순위 + ADR (Architecture Decision Record, 아키텍처 결정 기록) 필요 여부 + 영향 범위 명시. Phase 4 의 중심.
 
 ## 2. 개선 제안 종합
 
@@ -29,7 +29,7 @@ msa 프로젝트 EKS 이전 시의 **8가지 개선 제안**. 우선순위 + ADR
 
 ### 3.1 [높음] NetworkPolicy 기본 deny
 
-**현재**: msa 의 K8s 에 NetworkPolicy 미적용 → 모든 Pod 간 자유 통신.
+**현재**: msa 의 K8s (Kubernetes) 에 NetworkPolicy 미적용 → 모든 Pod 간 자유 통신.
 
 **리스크**: 한 Pod 침해 시 횡단 공격 (lateral movement) 가능. 제로 트러스트 위배.
 
@@ -75,7 +75,7 @@ spec:
 
 **현재**: 미적용 (EKS 이전 전).
 
-**리스크**: EKS 이전 시 NAT Gateway 데이터 비용 폭증 + 외부 경유 보안 약화.
+**리스크**: EKS 이전 시 NAT (Network Address Translation, 네트워크 주소 변환) Gateway 데이터 비용 폭증 + 외부 경유 보안 약화.
 
 **제안**: Terraform 기본 module 에 아래 Endpoint 포함:
 - **Gateway (무료)**: S3, DynamoDB
@@ -96,7 +96,7 @@ spec:
 **트레이드오프**:
 - 보안 강화 ↑
 - 운영 복잡도 ↑ (VPN 필요)
-- 외부 CI/CD 의 kubectl 실행 제한
+- 외부 CI/CD (Continuous Integration / Continuous Delivery, 지속적 통합 / 지속적 배포) 의 kubectl 실행 제한
 
 **ADR**: 접근 방식 변경 → ADR 필요. 복구 경로 명시.
 
@@ -116,7 +116,7 @@ Internet → CloudFront (Shield Standard + 캐싱)
 **비용**: 월 $50-200 추가 (트래픽 의존).
 
 **효과**:
-- L7 공격 차단 (SQLi, XSS, bot)
+- L7 공격 차단 (SQLi, XSS (Cross-Site Scripting, 사이트 간 스크립팅), bot)
 - Edge 캐싱으로 오리진 부하 감소
 - Shield Standard 자동 적용
 
@@ -129,7 +129,7 @@ Internet → CloudFront (Shield Standard + 캐싱)
 **EKS 이전 시 리스크**: Kafka, LB, Pod 간 통신이 Cross-AZ 로 많이 흐름 → 월 수백 달러 비용.
 
 **제안**:
-1. VPC Flow Logs → S3 → Athena 로 트래픽 분석
+1. VPC (Virtual Private Cloud, 가상 사설 클라우드) Flow Logs → S3 (Simple Storage Service, 객체 스토리지) → Athena 로 트래픽 분석
 2. K8s Service 에 `trafficDistribution: PreferClose` 적용
 3. Kafka Broker `broker.rack` + Consumer `client.rack` 설정
 4. ALB `enable_cross_zone_load_balancing` 운영 데이터 기반 판단
@@ -143,7 +143,7 @@ Internet → CloudFront (Shield Standard + 캐싱)
 **미래 요건**: 파트너사 IP 화이트리스트 등록 필요한 연동 발생 시.
 
 **제안**:
-- NLB + EIP 로 고정 IP 제공
+- NLB (Network Load Balancer, 네트워크 로드 밸런서) + EIP 로 고정 IP 제공
 - NLB → 내부 ALB 또는 EKS Ingress 로 포워딩
 - 파트너 Endpoint 분리
 
@@ -174,12 +174,12 @@ Internet → CloudFront (Shield Standard + 캐싱)
 ## 4. 구현 로드맵 (EKS 이전 기준)
 
 ### Day-1 (이전 시작 당일)
-- ☑ VPC 설계 (CIDR `/16` + 서브넷 3 AZ × 2종류 `/22` EKS + `/24` DB)
+- ☑ VPC 설계 (CIDR (Classless Inter-Domain Routing) `/16` + 서브넷 3 AZ (Availability Zone, 가용 영역) × 2종류 `/22` EKS + `/24` DB)
 - ☑ NAT Gateway × 3 AZ
 - ☑ VPC Endpoint 필수 5개 세팅 (#2)
 - ☑ EKS 클러스터 (프라이빗 endpoint, #3)
-- ☑ VPC CNI Prefix Delegation (#7)
-- ☑ SG 체인 (ALB → App → DB)
+- ☑ VPC CNI (Container Network Interface, 컨테이너 네트워크 인터페이스) Prefix Delegation (#7)
+- ☑ SG (Security Group, 보안 그룹) 체인 (ALB (Application Load Balancer, 애플리케이션 로드 밸런서) → App → DB)
 
 ### Week-1
 - ☑ AWS LB Controller 설치
@@ -217,7 +217,7 @@ Internet → CloudFront (Shield Standard + 캐싱)
 **진단**: CI runner 가 VPC 외부 → API 서버 접근 불가.
 
 **해결**:
-- **Self-hosted runner** 를 VPC 내 EC2 에 배치
+- **Self-hosted runner** 를 VPC 내 EC2 (Elastic Compute Cloud, 가상 머신 서비스) 에 배치
 - 또는 **AWS CodeBuild** (VPC 내부 실행)
 - 또는 GitOps (ArgoCD) 로 전환 — push 대신 pull 방식
 

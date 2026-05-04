@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## Strong Eventual Consistency (SEC)
 
-CRDT 는 *Eventually Consistent* 가 아니라 ***Strong* Eventually Consistent*다. 차이는 결정론.
+CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 는 *Eventually Consistent* 가 아니라 ***Strong* Eventually Consistent*다. 차이는 결정론.
 
 | | Eventual Consistency | Strong Eventual Consistency |
 |---|---|---|

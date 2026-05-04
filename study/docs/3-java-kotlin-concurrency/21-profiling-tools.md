@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 한 줄
 
-thread dump 가 *순간 사진* 이라면 프로파일러는 *지속 영상*. **async-profiler** 가 lock contention/CPU/allocation 을 lightweight 하게 샘플링하고, **JFR** 이 JVM 내장 이벤트 (lock inflation, GC, IO) 를 기록한다. msa 운영에선 dump 로 1차 가설 → profiler 로 정량 확인 의 순서.
+thread dump 가 *순간 사진* 이라면 프로파일러는 *지속 영상*. **async-profiler** 가 lock contention/CPU/allocation 을 lightweight 하게 샘플링하고, **JFR** 이 JVM (Java Virtual Machine, 자바 가상 머신) 내장 이벤트 (lock inflation, GC (Garbage Collection, 가비지 컬렉션), IO (Input/Output, 입출력)) 를 기록한다. msa 운영에선 dump 로 1차 가설 → profiler 로 정량 확인 의 순서.
 
 ## async-profiler — 가장 자주 쓸 것
 

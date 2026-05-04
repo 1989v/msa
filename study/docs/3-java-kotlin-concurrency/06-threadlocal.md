@@ -63,10 +63,10 @@ ThreadLocalMap.Entry:
 ### 무슨 일이 일어나나
 
 1. Application 코드가 `ThreadLocal` 인스턴스에 대한 참조를 잃음
-2. WeakReference 라 ThreadLocal 자체는 GC 됨 → key 가 null 이 됨
+2. WeakReference 라 ThreadLocal 자체는 GC (Garbage Collection, 가비지 컬렉션) 됨 → key 가 null 이 됨
 3. **그러나 value 는 strong reference 라 안 사라짐** → "stale entry"
 4. 스레드 풀의 worker thread 가 영원히 살아있으면 stale entry 도 영원히 살아있음
-5. 누적 → OOM
+5. 누적 → OOM (Out Of Memory, 메모리 부족)
 
 ### `remove()` 가 정답
 

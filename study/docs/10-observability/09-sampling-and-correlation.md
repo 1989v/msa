@@ -283,7 +283,7 @@ bucket 별로 마지막 sample 1개의 trace_id 를 보관. 즉 1초에 1000개 
 
 ## 6. Sampling 의 통계적 함정
 
-### 6.1 1% sampling 으로 P99 가 정확한가?
+### 6.1 1% sampling 으로 P99 (99th Percentile, 가장 느린 1%) 가 정확한가?
 
 - 100k req → 1% = 1000 req. P99 = 상위 10개의 latency.
 - 통계적 분산 큼. 짧은 시간 윈도우에서 P99 의 P99 같은 메타-tail 은 못 봄.

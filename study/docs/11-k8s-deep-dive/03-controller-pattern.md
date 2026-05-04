@@ -12,7 +12,7 @@ created: 2026-05-01
 
 > "K8s 의 모든 동작은 **'desired state(spec) 와 observed state(status) 의 차이를 좁히는 무한 루프'** 다. 그 루프 한 사이클을 reconcile 이라 부른다."
 
-이 패턴 하나만 머릿속에 박히면, ReplicaSet, Deployment, HPA, Operator, GitOps 가 같은 모양임을 알 수 있다.
+이 패턴 하나만 머릿속에 박히면, ReplicaSet, Deployment, HPA (Horizontal Pod Autoscaler, 수평 파드 오토스케일러), Operator, GitOps 가 같은 모양임을 알 수 있다.
 
 ## 2. 가장 단순한 의사코드
 

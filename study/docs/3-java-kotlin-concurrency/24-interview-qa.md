@@ -26,7 +26,7 @@ created: 2026-05-01
 
 > 불가. `count++` 는 read-modify-write 3단계라 volatile 의 가시성만으론 부족. `AtomicInteger.incrementAndGet()` 또는 `synchronized` 필수. 매우 높은 contention 의 카운터는 `LongAdder` 가 정답 (striped).
 
-**Q1.4** CAS 와 `synchronized` 중 뭘 쓰나?
+**Q1.4** CAS (Compare-And-Swap, 비교-교환) 와 `synchronized` 중 뭘 쓰나?
 
 > 단일 변수 swap + contention 낮음 → CAS (Atomic). 복합 연산 또는 critical section 길음 → `synchronized`. 매우 높은 contention 카운터는 `LongAdder`. 락 안에서 외부 IO 는 절대 안 됨.
 
@@ -60,7 +60,7 @@ created: 2026-05-01
 
 **Q2.1** happens-before 가 무엇인가?
 
-> JMM 의 가시성/순서 보장 형식 명세. A happens-before B 면 A 의 모든 메모리 효과가 B 에서 반드시 보임. transitive (A→B, B→C ⇒ A→C). 8가지 규칙 — program order, monitor lock, volatile variable, thread start/join, interruption, finalizer, transitivity. 멀티스레드 코드의 모든 정합성 보장의 기반.
+> JMM (Java Memory Model, 자바 메모리 모델) 의 가시성/순서 보장 형식 명세. A happens-before B 면 A 의 모든 메모리 효과가 B 에서 반드시 보임. transitive (A→B, B→C ⇒ A→C). 8가지 규칙 — program order, monitor lock, volatile variable, thread start/join, interruption, finalizer, transitivity. 멀티스레드 코드의 모든 정합성 보장의 기반.
 
 **Q2.2** Double-Checked Locking 에 volatile 빠지면?
 
@@ -124,7 +124,7 @@ created: 2026-05-01
 
 **Q3.4** 데드락 자동 검출은 어떻게 동작?
 
-> JVM 이 모든 스레드의 monitor wait queue + held monitor 그래프를 만들고 사이클 검색. 사이클 있으면 thread dump 하단에 "Found N Java-level deadlock" 명시 출력. `synchronized` 데드락은 `jstack` 으로 즉시 보이지만, ReentrantLock/AQS 데드락은 `jcmd -l` 의 lockable synchronizers 정보 필요. Livelock 은 자동 검출 안 됨 — 수동 패턴 분석.
+> JVM 이 모든 스레드의 monitor wait queue + held monitor 그래프를 만들고 사이클 검색. 사이클 있으면 thread dump 하단에 "Found N Java-level deadlock" 명시 출력. `synchronized` 데드락은 `jstack` 으로 즉시 보이지만, ReentrantLock/AQS (AbstractQueuedSynchronizer) 데드락은 `jcmd -l` 의 lockable synchronizers 정보 필요. Livelock 은 자동 검출 안 됨 — 수동 패턴 분석.
 
 **Q3.5** RUNNABLE 인데 hang 같다?
 
@@ -148,7 +148,7 @@ created: 2026-05-01
 
 **Q4.1** msa 가 `@Async` 안 쓰는 이유?
 
-> ADR-0002 결정 — Spring MVC + JPA blocking + Kotlin coroutine (외부 IO) + Tomcat 가상 스레드. coroutine 이 비동기를 직선 코드로 처리 + structured concurrency 로 lifecycle 관리 → `@Async` 의 함정 (default `SimpleAsyncTaskExecutor` = 풀 없음, ThreadLocal 안 따라감, 예외 처리 모호) 자연 회피. coroutine 이 가독성·디버깅·취소 측면에서 우위.
+> ADR (Architecture Decision Record, 아키텍처 결정 기록)-0002 결정 — Spring MVC + JPA blocking + Kotlin coroutine (외부 IO) + Tomcat 가상 스레드. coroutine 이 비동기를 직선 코드로 처리 + structured concurrency 로 lifecycle 관리 → `@Async` 의 함정 (default `SimpleAsyncTaskExecutor` = 풀 없음, ThreadLocal 안 따라감, 예외 처리 모호) 자연 회피. coroutine 이 가독성·디버깅·취소 측면에서 우위.
 
 **Q4.2** Kafka consumer concurrency 의 영향?
 

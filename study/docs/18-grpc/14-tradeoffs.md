@@ -197,9 +197,9 @@ created: 2026-05-01
 
 ## 9. msa 컨텍스트의 결론
 
-ADR-0003 의 현 결정 ("gRPC: 학습 비용 / proto 관리 부담 → 미채택") 은 **2024-2025 시점 상황**에서 합리적이었다. 2026 의 변경 요인:
+ADR (Architecture Decision Record, 아키텍처 결정 기록) -0003 의 현 결정 ("gRPC: 학습 비용 / proto 관리 부담 → 미채택") 은 **2024-2025 시점 상황**에서 합리적이었다. 2026 의 변경 요인:
 
-1. K8s 정착 (ADR-0019) → mesh 도입 가능성
+1. K8s (Kubernetes) 정착 (ADR-0019) → mesh 도입 가능성
 2. ADR-0025 latency budget → P99 / fan-out 가시성 ↑
 3. 서비스 수 증가 (10+) → 강한 schema 의 가치 ↑
 4. 일부 핫패스 (auth, inventory, search 인덱싱) 의 latency / payload 압박
@@ -214,7 +214,7 @@ A: (1) 디버깅 도구 부족 (curl 불가), (2) 브라우저 직결 불가 (gR
 
 > Q: REST 와 gRPC 를 같이 운영하면 안 되나?
 
-A: 가능하고 표준 패턴. 외부 (브라우저, 3rd party) = REST, 내부 (서비스 간) = gRPC. 변환 계층 (gateway, BFF, Envoy transcoder) 으로 연결. "어느 하나로 통일" 시도가 함정.
+A: 가능하고 표준 패턴. 외부 (브라우저, 3rd party) = REST, 내부 (서비스 간) = gRPC. 변환 계층 (gateway, BFF (Backend For Frontend), Envoy transcoder) 으로 연결. "어느 하나로 통일" 시도가 함정.
 
 > Q: msa 처럼 REST + Kafka 가 잘 도는데 굳이 gRPC?
 

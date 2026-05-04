@@ -25,7 +25,7 @@ A 와 B 가 동시에 같은 position 5 에 insert 하면?
 
 ## 핵심 아이디어: position → globally unique ID
 
-전통적 List 는 *index* 로 위치를 가리킨다 → 동시 insert 시 index 충돌. CRDT 의 답: **각 element 에 globally unique 한 dense identifier** 부여.
+전통적 List 는 *index* 로 위치를 가리킨다 → 동시 insert 시 index 충돌. CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 의 답: **각 element 에 globally unique 한 dense identifier** 부여.
 
 ```
 "Hello"

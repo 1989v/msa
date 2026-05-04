@@ -195,7 +195,7 @@ client.newCall(request).enqueue(object : Callback {
 
 - 외부 SDK (Slack, OAuth provider 등) 가 OkHttp 를 의존성으로 가져옴 → 그대로 사용
 - 정밀한 interceptor 가 필요할 때
-- HTTP/2 stream 이 필요할 때 (gRPC 빼고는 드뭄)
+- HTTP/2 stream 이 필요할 때 (gRPC (gRPC Remote Procedure Call) 빼고는 드뭄)
 
 > 우리 msa 에선 *OkHttp 를 직접 사용하는 곳은 없음* (테스트 fixture 정도). Slack/Claude SDK 가 내부적으로 사용할 가능성.
 

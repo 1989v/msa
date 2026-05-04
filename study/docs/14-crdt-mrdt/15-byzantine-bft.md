@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 15. Byzantine 환경의 CRDT — 신뢰의 가정
 
-일반 CRDT 는 **모든 replica 가 정직** 하다고 가정. 악의적 replica 가 false dot 을 보내거나 invariant 위반 op 을 발행하면 시스템이 깨진다.
+일반 CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 는 **모든 replica 가 정직** 하다고 가정. 악의적 replica 가 false dot 을 보내거나 invariant 위반 op 을 발행하면 시스템이 깨진다.
 
 ## 일반 CRDT 의 신뢰 가정
 

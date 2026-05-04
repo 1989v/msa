@@ -129,7 +129,7 @@ Budget 잔여  →  허용된 행동
 
 ## 5. Burn Rate — Multi-Window Multi-Burn-Rate Alert
 
-P99 절대값 alert 의 문제:
+P99 (99th Percentile, 가장 느린 1%) 절대값 alert 의 문제:
 - 1초 latency 폭증에 alert → false positive
 - 작은 increment 가 누적되어 SLO 를 천천히 소진 → alert 안 옴
 

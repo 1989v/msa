@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 한 줄
 
-`synchronized` 는 contention 에 따라 **Biased → Lightweight → Heavyweight** 3단계로 inflation 한다. JIT 가 contention 패턴을 보면서 자동으로 단계 조정. JDK 15 부터 Biased Lock 은 deprecate, JDK 18+ default off (JEP 374). 이 진화 메커니즘 이해는 thread dump / async-profiler 분석에 필수.
+`synchronized` 는 contention 에 따라 **Biased → Lightweight → Heavyweight** 3단계로 inflation 한다. JIT (Just-In-Time compilation, 즉시 컴파일) 가 contention 패턴을 보면서 자동으로 단계 조정. JDK 15 부터 Biased Lock 은 deprecate, JDK 18+ default off (JEP 374). 이 진화 메커니즘 이해는 thread dump / async-profiler 분석에 필수.
 
 ## 객체 헤더 — Mark Word
 

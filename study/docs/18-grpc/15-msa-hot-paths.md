@@ -52,7 +52,7 @@ override suspend fun validateProduct(productId: Long): ProductInfo {
 | **페이로드 크기** | 평균 / P99 byte | 큰 메시지 → wire 절감 ↑ |
 | **Schema drift 위험** | 양 서비스 간 DTO 동기화 | 자주 변경되는 도메인 |
 
-ADR-0025 의 latency budget 도구를 그대로 활용.
+ADR (Architecture Decision Record, 아키텍처 결정 기록) -0025 의 latency budget 도구를 그대로 활용.
 
 ## 3. 핫패스 후보 분석
 
@@ -215,7 +215,7 @@ ADR-0025 의 latency budget 도구를 그대로 활용.
 ### Phase 3: mesh (선택)
 
 - Istio 또는 Linkerd 도입 의사결정
-- 자동 mTLS + AuthorizationPolicy
+- 자동 mTLS (mutual TLS, 양방향 TLS) + AuthorizationPolicy
 - proto 정의는 그대로, 인증 로직 mesh 로 위임
 
 ## 8. 측정 항목 (POC 단계)
@@ -246,9 +246,9 @@ ADR-0025 의 latency budget 도구를 그대로 활용.
 
 A: 코드베이스 grep 으로 동기 호출 페어를 식별하고, latency / 빈도 / payload / schema drift 4축 평가. 현 시점 우선 후보:
 - POC: `order → product` (schema drift 자주, 작은 latency, 단순 endpoint)
-- Phase 1: `gateway → auth` (high RPS, deadline propagation 가치)
+- Phase 1: `gateway → auth` (high RPS (Requests Per Second, 초당 요청 수), deadline propagation 가치)
 - Phase 1-2: `search-batch → product` (server-streaming 의 best fit)
-- 외부 / OAuth / Kafka 자리는 제외
+- 외부 / OAuth (Open Authorization, 인가 프로토콜) / Kafka 자리는 제외
 
 > Q: 모든 호출을 gRPC 로 바꾸지 않는 이유?
 

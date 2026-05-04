@@ -92,7 +92,7 @@ histogram_quantile(0.99,
   rate(hikaricp_connections_usage_seconds_bucket[5m]))
 ```
 
-각 borrow → return 점유 시간. 이 값이 P99 200ms → 1s 로 늘면 트랜잭션 길이 또는 외부 IO 문제 ([08-pool-failure-patterns.md](08-pool-failure-patterns.md)).
+각 borrow → return 점유 시간. 이 값이 P99 200ms → 1s 로 늘면 트랜잭션 길이 또는 외부 IO (Input/Output, 입출력) 문제 ([08-pool-failure-patterns.md](08-pool-failure-patterns.md)).
 
 ### 5. timeout 발생
 

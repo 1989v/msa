@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 04. Counter CRDT
 
-가장 단순한 CRDT. **분산 카운터** — 여러 replica 가 동시에 increment/decrement 하면서 정확한 합계로 수렴.
+가장 단순한 CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입). **분산 카운터** — 여러 replica 가 동시에 increment/decrement 하면서 정확한 합계로 수렴.
 
 ## 단순 카운터의 문제
 

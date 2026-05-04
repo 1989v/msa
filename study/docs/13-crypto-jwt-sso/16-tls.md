@@ -43,7 +43,7 @@ Client                                    Server
 3. **Key Exchange (DHE/ECDHE)** — Forward Secrecy 보장 (master secret이 서버 개인키로부터 도출되지 않음)
 4. **Finished** — 핸드셰이크 메시지 전체에 대한 MAC — 다운그레이드/MITM 방지
 
-### Cipher Suite (TLS 1.2)
+### Cipher Suite (TLS (Transport Layer Security, 전송 계층 보안) 1.2)
 형식: `TLS_KX_AU_WITH_ENC_MAC`
 - `TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384`
   - **ECDHE** — 키 교환 (Forward Secrecy)

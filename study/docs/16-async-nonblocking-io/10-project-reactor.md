@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-- **Project Reactor** = Reactive Streams 표준의 JVM 구현, Spring WebFlux 의 기본 reactive lib
+- **Project Reactor** = Reactive Streams 표준의 JVM (Java Virtual Machine, 자바 가상 머신) 구현, Spring WebFlux 의 기본 reactive lib
 - **Publisher = Flux (0..N)** / **Mono (0..1)** — cold by default
 - **Operator chain 은 두 단계** — assembly time (선언) → subscription time (실행)
 - **Schedulers** 4 종 — parallel / boundedElastic / single / immediate

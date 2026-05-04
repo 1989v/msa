@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-NACL 은 **서브넷 레벨** 의 **Stateless** 방화벽. **Allow + Deny** 모두 가능. 규칙은 **번호 순서대로 평가**되고 첫 매칭에서 종료.
+NACL (Network Access Control List, 네트워크 ACL) 은 **서브넷 레벨** 의 **Stateless** 방화벽. **Allow + Deny** 모두 가능. 규칙은 **번호 순서대로 평가**되고 첫 매칭에서 종료.
 
 ## 2. 내부 메커니즘
 
@@ -31,7 +31,7 @@ Rule# *:   DENY  All (암묵)
 ```
 
 - 낮은 번호 → 높은 번호 순으로 **위에서 아래로** 평가
-- **첫 매칭에서 종료** (SG 처럼 전체 OR 아님)
+- **첫 매칭에서 종료** (SG (Security Group, 보안 그룹) 처럼 전체 OR 아님)
 - 맨 끝 `*` 규칙은 "나머지 전부 Deny" (고정, 수정 불가)
 
 ### 2.3 기본 NACL vs 커스텀 NACL
@@ -62,7 +62,7 @@ Rule# *:   DENY  All (암묵)
 
 ### 3.1 실무에서 NACL 언제 쓰나?
 
-1. **특정 IP 차단** — 공격 IP, 규제 대상 국가 CIDR
+1. **특정 IP 차단** — 공격 IP, 규제 대상 국가 CIDR (Classless Inter-Domain Routing)
 2. **규제 준수** — 명시적 deny 규칙 필요 (PCI DSS 등)
 3. **서브넷 단위 일괄 제어** — 수십~수백 리소스에 같은 규칙 적용
 
@@ -138,7 +138,7 @@ resource "aws_network_acl" "private" {
 
 ### 4.3 msa 프로젝트 관점
 
-- K8s NetworkPolicy 가 NACL 과 **다른 레이어** — NetworkPolicy 는 Pod 레벨, NACL 은 서브넷 레벨
+- K8s (Kubernetes) NetworkPolicy 가 NACL 과 **다른 레이어** — NetworkPolicy 는 Pod 레벨, NACL 은 서브넷 레벨
 - EKS 이전 시 기본 NACL 유지하고 NetworkPolicy + SG 로 제어하는 게 표준
 
 ## 5. 장애 시나리오 3개
@@ -165,9 +165,9 @@ Outbound Rule 100: ALLOW TCP 1024-65535 to 0.0.0.0/0
 
 ### 시나리오 3: "NAT Gateway 뒤 트래픽이 간헐적 실패"
 
-**증상**: 프라이빗 EC2 가 외부 호출 시 간헐 timeout.
+**증상**: 프라이빗 EC2 (Elastic Compute Cloud, 가상 머신 서비스) 가 외부 호출 시 간헐 timeout.
 
-**진단**: NAT Gateway 의 ephemeral port 범위는 **1024-65535**. NACL 에서 이 범위가 제한적으로만 허용되어 있으면 일부 연결이 차단됨.
+**진단**: NAT (Network Address Translation, 네트워크 주소 변환) Gateway 의 ephemeral port 범위는 **1024-65535**. NACL 에서 이 범위가 제한적으로만 허용되어 있으면 일부 연결이 차단됨.
 
 **해결**: NACL Outbound 에 `TCP 1024-65535 to 0.0.0.0/0` 전체 허용.
 

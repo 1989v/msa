@@ -344,7 +344,7 @@ val order = order {
 - gradle 빌드 시간: proto 생성 단계 추가 → +5-10s (서비스당)
 - 결과 jar: protobuf-java + grpc-netty-shaded → +~10MB (Netty)
 - Spring Boot fat jar 와 충돌: `grpc-netty-shaded` (Netty 충돌 회피용 shaded 버전) 권장
-- gRPC 서버는 별도 포트 (9090) 가 일반적 → K8s Service 는 두 포트 노출 (8080 REST, 9090 gRPC)
+- gRPC 서버는 별도 포트 (9090) 가 일반적 → K8s (Kubernetes) Service 는 두 포트 노출 (8080 REST, 9090 gRPC)
 
 ## 다음 학습
 

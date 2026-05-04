@@ -34,7 +34,7 @@ grep -rn "@Async\b" --include="*.kt" /Users/gideok-kwon/IdeaProjects/msa | grep 
 # (출력 없음)
 ```
 
-→ 직접 `@Async` 안 쓰고 **coroutine + `Dispatchers.IO`** 또는 **명시적 `CoroutineScope`** 로 대체. ADR-0002 의 결정과 일치.
+→ 직접 `@Async` 안 쓰고 **coroutine + `Dispatchers.IO`** 또는 **명시적 `CoroutineScope`** 로 대체. ADR (Architecture Decision Record, 아키텍처 결정 기록)-0002 의 결정과 일치.
 
 **의의**: `@Async` 의 함정 (default `SimpleAsyncTaskExecutor` = 풀 없음, ThreadLocal 안 따라감) 을 자연 회피.
 
@@ -184,7 +184,7 @@ grep -rn "redisson\|RLock" --include="*.kt" /Users/gideok-kwon/IdeaProjects/msa 
 
 ### 현재 Redis 사용처
 - gateway `RedisRateLimiter` — Spring Cloud Gateway 의 token bucket
-- gateway `AuthenticationGatewayFilter` — Redis blacklist (JWT)
+- gateway `AuthenticationGatewayFilter` — Redis blacklist (JWT (JSON Web Token))
 
 → rate limit 은 락이 아니라 *token bucket*. 진짜 분산 락은 없다.
 

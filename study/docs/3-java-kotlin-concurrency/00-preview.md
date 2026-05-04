@@ -53,7 +53,7 @@ created: 2026-05-01
 
 1. **JMM happens-before** 가 깨지면 가시성/순서 보장이 모두 무너진다 — `volatile`, `synchronized`, `Lock unlock`, `Thread.start/join` 이 그 다리.
 2. **`synchronized` 와 `volatile` 은 다른 문제를 푼다** — `synchronized` = 원자성+가시성, `volatile` = 가시성만.
-3. **`Atomic*` 은 락 없는 CAS 루프** — contention 낮으면 빠르고 ABA 문제는 `AtomicStampedReference` 로.
+3. **`Atomic*` 은 락 없는 CAS (Compare-And-Swap, 비교-교환) 루프** — contention 낮으면 빠르고 ABA (ABA problem, ABA 문제 — CAS 의 함정) 문제는 `AtomicStampedReference` 로.
 4. **`ConcurrentHashMap` Java 8** = bin 단위 `synchronized` + CAS, 트리화는 충돌 8 이상.
 5. **Kotlin coroutine** 은 컴파일러가 `Continuation` 을 만드는 state machine, 스레드를 점유하지 않는 suspend 가 핵심.
 6. **Virtual Threads (JDK 25)** = 캐리어 스레드 위 M:N 매핑, blocking IO 는 unmount, `synchronized` pinning 은 JEP 491 으로 거의 해소.

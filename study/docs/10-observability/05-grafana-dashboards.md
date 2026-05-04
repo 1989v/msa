@@ -79,7 +79,7 @@ created: 2026-05-01
 
 ### 2.4 Heatmap Panel — Duration 의 분포 시각화
 
-p99 line chart 만으로는 분포의 bimodal 을 놓침 (예: 50ms 와 800ms 두 봉우리). Heatmap 으로 확인:
+p99 (99th Percentile, 가장 느린 1%) line chart 만으로는 분포의 bimodal 을 놓침 (예: 50ms 와 800ms 두 봉우리). Heatmap 으로 확인:
 
 ```json
 {

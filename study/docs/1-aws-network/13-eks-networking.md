@@ -10,13 +10,13 @@ level: deep
 
 ## 1. 재확인
 
-EKS 는 Amazon **VPC CNI** 플러그인을 기본 사용. Pod 이 **VPC 서브넷 IP 를 직접 할당**받아 VPC 내 다른 리소스 (RDS 등) 와 동일 네트워크로 통신한다. 다른 K8s CNI (Calico, Flannel) 와의 결정적 차이.
+EKS 는 Amazon **VPC (Virtual Private Cloud, 가상 사설 클라우드) CNI (Container Network Interface, 컨테이너 네트워크 인터페이스)** 플러그인을 기본 사용. Pod 이 **VPC 서브넷 IP 를 직접 할당**받아 VPC 내 다른 리소스 (RDS (Relational Database Service, 관계형 데이터베이스 서비스) 등) 와 동일 네트워크로 통신한다. 다른 K8s (Kubernetes) CNI (Calico, Flannel) 와의 결정적 차이.
 
 ## 2. 내부 메커니즘
 
 ### 2.1 VPC CNI 의 IP 할당
 
-- EC2 워커 노드 = ENI (Elastic Network Interface) 를 가짐
+- EC2 (Elastic Compute Cloud, 가상 머신 서비스) 워커 노드 = ENI (Elastic Network Interface) 를 가짐
 - ENI 는 **Secondary IP 주소**를 여러 개 할당받을 수 있음
 - Pod 이 생성되면 Secondary IP 하나를 Pod 에 할당
 - Pod 는 VPC 서브넷의 하나의 일반 IP 가 됨
@@ -107,8 +107,8 @@ Pod → Route Table → NAT Gateway → IGW → Internet
 ### 2.7 AWS Load Balancer Controller
 
 - EKS Helm 설치
-- `Ingress` 리소스 감지 → ALB 자동 생성
-- `Service type=LoadBalancer` + annotation → NLB 자동 생성
+- `Ingress` 리소스 감지 → ALB (Application Load Balancer, 애플리케이션 로드 밸런서) 자동 생성
+- `Service type=LoadBalancer` + annotation → NLB (Network Load Balancer, 네트워크 로드 밸런서) 자동 생성
 - annotation 예시: `alb.ingress.kubernetes.io/target-type: ip`
 
 ### 2.8 Pod Security Group (SecurityGroupPolicy)
@@ -135,7 +135,7 @@ spec:
 ### 3.1 VPC CNI 의 장단점
 
 **장점**:
-- Pod = VPC IP → SG 적용 가능, VPC 내 리소스와 자연스러운 통신
+- Pod = VPC IP → SG (Security Group, 보안 그룹) 적용 가능, VPC 내 리소스와 자연스러운 통신
 - 네트워크 성능 우수 (오버레이 없음)
 - AWS 서비스와 긴밀 통합
 
@@ -153,7 +153,7 @@ spec:
 
 ### 3.3 Service Mesh (Istio/Linkerd)
 
-- mTLS, 트래픽 분할, 관측성 등 추가
+- mTLS (mutual TLS, 양방향 TLS), 트래픽 분할, 관측성 등 추가
 - 복잡도 증가, 성능 오버헤드
 - EKS + Istio 는 흔한 조합이지만 필요성 판단 중요
 
@@ -222,7 +222,7 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
 현재 msa 가 EKS 이전 시 그대로 적용:
 - `k8s/base/gateway/ingress.yaml` (ingress-nginx) → **ALB 로 자동 매핑** (AWS LB Controller + annotation 추가)
 - 모든 Service(ClusterIP) → VPC 내부 통신 (변경 없음)
-- HPA + PDB → 그대로 동작 (AWS 인프라 차원은 Cluster Autoscaler 필요)
+- HPA (Horizontal Pod Autoscaler, 수평 파드 오토스케일러) + PDB (Pod Disruption Budget, 파드 중단 예산) → 그대로 동작 (AWS 인프라 차원은 Cluster Autoscaler 필요)
 
 ## 5. 장애 시나리오 3개
 
@@ -244,13 +244,13 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
 **증상**: Pod 이벤트에 `ImagePullBackOff`.
 
 **진단**:
-1. 노드가 프라이빗 서브넷에 있는데 NAT 없거나 VPC Endpoint 없음
+1. 노드가 프라이빗 서브넷에 있는데 NAT (Network Address Translation, 네트워크 주소 변환) 없거나 VPC Endpoint 없음
 2. ECR 권한 (IRSA or Node Role) 없음
 3. 이미지 태그 오타
 
 **해결**:
 - VPC Endpoint `ecr.api` + `ecr.dkr` + `sts` + `logs` + `s3` (Gateway) 세팅
-- IAM Role 에 `AmazonEC2ContainerRegistryReadOnly` 포함
+- IAM (Identity and Access Management, 자격 증명 및 접근 관리) Role 에 `AmazonEC2ContainerRegistryReadOnly` 포함
 
 ### 시나리오 3: "NetworkPolicy 적용했는데 동작 안 함"
 

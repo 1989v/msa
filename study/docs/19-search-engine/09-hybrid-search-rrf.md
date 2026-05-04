@@ -8,7 +8,7 @@ created: 2026-05-03
 
 # 09. Hybrid Search
 
-> 묶음 2 (A) 풀어쓰기. BM25 와 vector 의 결합이 왜 단순 합산이 어렵고, RRF 가 왜 표준이 되었는가.
+> 묶음 2 (A) 풀어쓰기. BM25 (Best Match 25) 와 vector 의 결합이 왜 단순 합산이 어렵고, RRF 가 왜 표준이 되었는가.
 
 ## 1. 한 줄 핵심
 

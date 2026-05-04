@@ -8,7 +8,7 @@ created: 2026-05-03
 
 # 18. Hybrid Search PoC
 
-> 묶음 2 (A) 의 종합 적용. msa search 서비스 (`product` 검색) 에 hybrid (BM25 + dense_vector + RRF) 를 한 endpoint 만 부분 PoC. 전면 도입은 §19 ADR 후 별도 결정.
+> 묶음 2 (A) 의 종합 적용. msa search 서비스 (`product` 검색) 에 hybrid (BM25 (Best Match 25) + dense_vector + RRF (Reciprocal Rank Fusion, 상호 순위 융합)) 를 한 endpoint 만 부분 PoC. 전면 도입은 §19 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후 별도 결정.
 
 ## 1. 한 줄 핵심
 

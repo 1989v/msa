@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 18. 가상 마이그레이션 (POC 시안)
 
-> ADR 작성을 위해 *작은 endpoint 하나* 를 끝까지 그려본다. `order → product.getById` 가 후보 (15-msa-hot-paths 에서 식별).
+> ADR (Architecture Decision Record, 아키텍처 결정 기록) 작성을 위해 *작은 endpoint 하나* 를 끝까지 그려본다. `order → product.getById` 가 후보 (15-msa-hot-paths 에서 식별).
 
 ## 1. 현재 상태 (REST)
 
@@ -452,7 +452,7 @@ A: `dns:///product-grpc.svc.cluster.local:9090` + `defaultLoadBalancingPolicy: r
 
 > Q: 인증은?
 
-A: Phase 0 (POC) = h2c (no TLS), NetworkPolicy 로 격리. Phase 1 = JWT metadata propagation (gateway 가 검증 → metadata 로 user_id 전파). Phase 2 (mesh) = mTLS 자동.
+A: Phase 0 (POC) = h2c (no TLS), NetworkPolicy 로 격리. Phase 1 = JWT (JSON Web Token) metadata propagation (gateway 가 검증 → metadata 로 user_id 전파). Phase 2 (mesh) = mTLS (mutual TLS, 양방향 TLS) 자동.
 
 ## 다음 학습
 

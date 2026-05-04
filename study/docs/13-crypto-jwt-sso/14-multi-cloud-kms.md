@@ -18,7 +18,7 @@ created: 2026-04-28
 | External Key | Custom Key Store (CloudHSM) | **EKM (External Key Manager)** — 외부 KMS와 연동 |
 | 가격 모델 | 키당 + API 호출 | 키 버전당 + 작업당 |
 
-**EKM** — GCP가 외부 KMS(예: 자체 데이터센터 HSM)에 키를 두고 GCP 데이터를 암호화 가능. Sovereign cloud / 강한 컴플라이언스 시나리오.
+**EKM** — GCP가 외부 KMS (Key Management Service, 키 관리 서비스)(예: 자체 데이터센터 HSM (Hardware Security Module, 하드웨어 보안 모듈))에 키를 두고 GCP 데이터를 암호화 가능. Sovereign cloud / 강한 컴플라이언스 시나리오.
 
 ## Azure Key Vault
 

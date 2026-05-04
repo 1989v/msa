@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-Heap Dump 는 JVM 힙의 스냅샷(.hprof) — **모든 객체 + 참조 그래프**. 누수 진단의 정공법. **jcmd / jmap** 으로 채취, **Eclipse MAT** 으로 분석. MAT 의 핵심 무기는 **Dominator Tree** (큰 객체 retention 분석) 와 **Leak Suspects Report** (자동 누수 후보 추천). 그리고 Heap Dump 만으로는 부족할 때가 있다 — **데드락이나 무한 루프성 OOM** 은 Thread Dump 와 cross-check 해야 정확. Thread Dump 정밀 분석은 **#3 동시성 plan Phase 2** 에서 다루고, 본 절에서는 두 덤프를 **어떻게 조합 진단**하는지의 절차만 정리한다.
+Heap Dump 는 JVM (Java Virtual Machine, 자바 가상 머신) 힙의 스냅샷(.hprof) — **모든 객체 + 참조 그래프**. 누수 진단의 정공법. **jcmd / jmap** 으로 채취, **Eclipse MAT** 으로 분석. MAT 의 핵심 무기는 **Dominator Tree** (큰 객체 retention 분석) 와 **Leak Suspects Report** (자동 누수 후보 추천). 그리고 Heap Dump 만으로는 부족할 때가 있다 — **데드락이나 무한 루프성 OOM (Out Of Memory, 메모리 부족)** 은 Thread Dump 와 cross-check 해야 정확. Thread Dump 정밀 분석은 **#3 동시성 plan Phase 2** 에서 다루고, 본 절에서는 두 덤프를 **어떻게 조합 진단**하는지의 절차만 정리한다.
 
 ```
    힙 덤프 (.hprof, GB 단위)

@@ -336,7 +336,7 @@ JPA 환경에서 NESTED 를 쓰지 마라. 정적 분석으로 잡히지 않는 
 
 msa 는 **거의 모든 트랜잭션이 REQUIRED (default)** 이다. `grep -rn "REQUIRES_NEW\|NESTED" /Users/gideok-kwon/IdeaProjects/msa --include="*.kt"` 결과가 거의 비어있는 게 그 증거.
 
-이는 msa 가 의도적으로 **외부 IO 를 트랜잭션 밖으로 분리** 하는 패턴 (Outbox, TransactionalService 분리) 으로 풀고 있기 때문 — REQUIRES_NEW 같은 복잡한 도구가 필요 없게 설계된 것이 정답.
+이는 msa 가 의도적으로 **외부 IO (Input/Output, 입출력) 를 트랜잭션 밖으로 분리** 하는 패턴 (Outbox, TransactionalService 분리) 으로 풀고 있기 때문 — REQUIRES_NEW 같은 복잡한 도구가 필요 없게 설계된 것이 정답.
 
 면접 답변 패턴:
 > "실무에서 REQUIRES_NEW 는 감사 로그처럼 메인 트랜잭션 결과와 독립적으로 기록해야 할 때만 씁니다. 우리 msa 에서는 그런 케이스도 보통 Outbox + Kafka 로 분리하기 때문에 REQUIRES_NEW 자체를 거의 안 씁니다. NESTED 는 JPA 환경이라 미지원이라서 후보에서 빠집니다."

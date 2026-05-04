@@ -26,11 +26,11 @@ created: 2026-05-03
 
 ### 답변
 
-**핵심**: B-Tree 인덱스가 prefix 정렬이라 `'%foo%'` 같은 suffix wildcard 는 인덱스 사용 불가하고, 한국어 형태소 / 동의어 / 오타 / 자동완성 기능을 RDB FTS 만으로는 못 합니다.
+**핵심**: B-Tree 인덱스가 prefix 정렬이라 `'%foo%'` 같은 suffix wildcard 는 인덱스 사용 불가하고, 한국어 형태소 / 동의어 / 오타 / 자동완성 기능을 RDB (Relational Database, 관계형 데이터베이스) FTS 만으로는 못 합니다.
 
-**설명**: ES 는 Lucene 기반 inverted index 로 term 단위 매칭, BM25 스코어링, nori 형태소 분석, fuzzy / completion suggester 등 검색 워크로드에 특화. RDB 는 OLTP 트랜잭션 / 정합성에 특화.
+**설명**: ES (Elasticsearch) 는 Lucene 기반 inverted index 로 term 단위 매칭, BM25 (Best Match 25) 스코어링, nori 형태소 분석, fuzzy / completion suggester 등 검색 워크로드에 특화. RDB 는 OLTP 트랜잭션 / 정합성에 특화.
 
-**실무**: msa 의 product 검색을 ES 로 분리. RDB 는 SoR, ES 는 read 모델 — Kafka 로 비동기 인덱싱.
+**실무**: msa 의 product 검색을 ES 로 분리. RDB 는 SoR (System of Record, 원본 데이터 시스템), ES 는 read 모델 — Kafka 로 비동기 인덱싱.
 
 **+α**: 단, "Just Use Postgres" — 작은 규모는 Postgres FTS / pgvector 로 충분. 병목 증명 후 분리.
 

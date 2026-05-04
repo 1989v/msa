@@ -9,7 +9,7 @@ phase: 2
 
 ## 한줄 요약
 
-RDB 는 특정 시점의 메모리 전체를 binary 로 덤프한 스냅샷. **`fork(2)` + Copy-on-Write** 로 메인 프로세스가 명령을 계속 받으면서 자식이 dump 한다. 빠른 restore + 작은 파일이 장점, **데이터 유실 위험 (스냅샷 사이 변경)** 과 **fork latency / CoW 메모리 폭증** 이 단점.
+RDB (Redis Database 스냅샷) 는 특정 시점의 메모리 전체를 binary 로 덤프한 스냅샷. **`fork(2)` + Copy-on-Write** 로 메인 프로세스가 명령을 계속 받으면서 자식이 dump 한다. 빠른 restore + 작은 파일이 장점, **데이터 유실 위험 (스냅샷 사이 변경)** 과 **fork latency / CoW 메모리 폭증** 이 단점.
 
 ## 1. RDB 가 무엇인가
 

@@ -160,7 +160,7 @@ created: 2026-05-01
 
 - pool size 를 thread pool size 와 같게 잡기 (DB 가 thread 수만큼 동시 처리하지 못함)
 - HPA 인스턴스 폭증 시 DB max_connections 무시
-- `@Transactional` 을 외부 IO (HTTP/Kafka) 까지 감싸기 → connection 점유
+- `@Transactional` 을 외부 IO (Input/Output, 입출력) (HTTP/Kafka) 까지 감싸기 → connection 점유
 - WebFlux 에서 일반 JDBC + Hikari 사용 (event loop block)
 - maxLifetime 을 DB wait_timeout 보다 길게 (서버 측 강제 종료 → stale connection)
 - 분산 락 / pub-sub 을 일반 Lettuce shared connection 에서 실행

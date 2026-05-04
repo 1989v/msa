@@ -1,7 +1,7 @@
 # msa Study — Learning Guide
 
 > 355개 파일 / 약 107K 줄 분량의 19개 주제를 어떻게 회독하고 체화할지에 대한 실용 가이드.
-> 산출물: 주제별 deep study (19개) + ADR 후보 통합 (`00-ADR-CANDIDATES.md`, 34 + #19 의 9개 = 43개 후보).
+> 산출물: 주제별 deep study (19개) + ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보 통합 (`00-ADR-CANDIDATES.md`, 34 + #19 의 9개 = 43개 후보).
 > 본 가이드는 "읽기 → 코드 grounding → 면접 카드 → ADR/PR" 4단계 transition 의 표준 운영 매뉴얼.
 >
 > **NOTE (2026-05-04)**: #19 검색엔진 심화는 본 가이드의 트랙 A/B/C 표 안에 포함되지 않은 신규 주제. msa 의 search 서비스 직접 grounding 이라 codebase-relevant=true → **트랙 B/C 의 Tier 2 (저장소/데이터)** 에 배치 권장 (32h 추가 = 약 1 Phase 분량).
@@ -29,8 +29,8 @@
 - **총 가용 시간**: 12주 × 20h ≈ **240h**
 - **전략**: 18 주제 중 면접·실무 ROI 가 가장 높은 12개로 압축, 회독은 1.5회 (1회독 + 핵심 12개에 한해 면접카드 회독)
 - **회독 정책**: 1회독은 모든 deep file 80% 정독 + Phase 3 코드 grounding 필수, 0.5회독은 interview-qa 카드 회독 + 30초 구두 답변 연습
-- **선정 12개**: #2 JVM, #3 동시성, #4 DB, #5 Spring Tx, #6 Kafka, #7 분산시스템, #9 Redis, #10 Observability, #11 K8s, #12 Latency, #13 보안, #15 Connection Pool
-- **제외 6개 (트랙 A 한정)**: #1 AWS Network (EKS 전환 전이라 후순위), #8 시스템 설계 (다른 12개에서 자연 흡수), #14 CRDT (msa 미적용), #16 NIO/Reactor (msa MVC 위주), #17 Spring Web (#5/#15 와 겹침), #18 gRPC (msa 미적용)
+- **선정 12개**: #2 JVM (Java Virtual Machine, 자바 가상 머신), #3 동시성, #4 DB, #5 Spring Tx, #6 Kafka, #7 분산시스템, #9 Redis, #10 Observability, #11 K8s (Kubernetes), #12 Latency, #13 보안, #15 Connection Pool
+- **제외 6개 (트랙 A 한정)**: #1 AWS Network (EKS 전환 전이라 후순위), #8 시스템 설계 (다른 12개에서 자연 흡수), #14 CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) (msa 미적용), #16 NIO (Non-blocking I/O, 비차단 입출력) /Reactor (msa MVC 위주), #17 Spring Web (#5/#15 와 겹침), #18 gRPC (msa 미적용)
 - **주차별 시나리오**:
 
 | 주차 | 학습 주제 | 시간 | 비고 |

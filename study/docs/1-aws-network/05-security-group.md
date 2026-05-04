@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-SG 는 **리소스 레벨** 의 **Stateful** 방화벽. **Allow 규칙만** 가능하고 Deny 불가. 응답 트래픽은 자동 허용 (stateful 의 핵심).
+SG (Security Group, 보안 그룹) 는 **리소스 레벨** 의 **Stateful** 방화벽. **Allow 규칙만** 가능하고 Deny 불가. 응답 트래픽은 자동 허용 (stateful 의 핵심).
 
 ## 2. 내부 메커니즘
 
@@ -31,7 +31,7 @@ Security Group: sg-app
     └── Protocol: All, Port: All,  Destination: 0.0.0.0/0  (기본)
 ```
 
-- **Source/Destination**: CIDR 또는 **다른 SG 의 ID** (prefix list 도 가능)
+- **Source/Destination**: CIDR (Classless Inter-Domain Routing) 또는 **다른 SG 의 ID** (prefix list 도 가능)
 - 규칙 평가: **모든 규칙의 OR** — 여러 규칙 중 하나라도 매칭되면 허용
 
 ### 2.3 SG 간 참조 (SG-to-SG)
@@ -57,7 +57,7 @@ App-SG:
 
 ### 2.5 리소스당 SG 최대 개수
 
-- EC2: 기본 5개, 증설 신청 시 최대 16개
+- EC2 (Elastic Compute Cloud, 가상 머신 서비스): 기본 5개, 증설 신청 시 최대 16개
 - ENI: 5개
 - 여러 SG 는 OR 결합
 
@@ -134,9 +134,9 @@ resource "aws_security_group" "db" {
 
 ### 4.2 msa 프로젝트의 현재 상태
 
-- K8s 기반이라 AWS SG 미적용 (노드 SG 는 EKS 설치 시 자동)
-- **NetworkPolicy 미적용** 상태 — AWS SG 의 K8s 대응물 Gap (ADR 필요)
-- Pod SG 기능(SecurityGroupPolicy CRD) 도입 여지
+- K8s (Kubernetes) 기반이라 AWS SG 미적용 (노드 SG 는 EKS 설치 시 자동)
+- **NetworkPolicy 미적용** 상태 — AWS SG 의 K8s 대응물 Gap (ADR (Architecture Decision Record, 아키텍처 결정 기록) 필요)
+- Pod SG 기능(SecurityGroupPolicy CRD (Custom Resource Definition, 커스텀 리소스 정의)) 도입 여지
 
 ### 4.3 Pod 별 SG (EKS VPC CNI 고급 기능)
 
@@ -160,7 +160,7 @@ spec:
 
 ### 시나리오 1: "SG 에 허용 추가했는데 접속 안 됨"
 
-**증상**: App-SG 에 8080 인바운드 추가했는데 ALB Target Group unhealthy.
+**증상**: App-SG 에 8080 인바운드 추가했는데 ALB (Application Load Balancer, 애플리케이션 로드 밸런서) Target Group unhealthy.
 
 **진단**:
 1. Source 가 ALB-SG 인지, ALB 의 IP 인지 혼동
@@ -208,11 +208,11 @@ Q5: Security Group 과 NACL 의 차이는?
 
 **Q5 핵심**: 레벨(리소스/서브넷), 상태(Stateful/Stateless), 규칙(Allow-only/Allow+Deny), 평가(OR 전체/순서 첫 매칭).
 
-**Q5-1-1 답변**: NACL 은 Stateless — 인바운드 80 허용했어도 응답용 ephemeral port (1024-65535) 아웃바운드 허용을 따로 넣어야 응답 가능. 실무에서 자주 놓치는 지점.
+**Q5-1-1 답변**: NACL (Network Access Control List, 네트워크 ACL) 은 Stateless — 인바운드 80 허용했어도 응답용 ephemeral port (1024-65535) 아웃바운드 허용을 따로 넣어야 응답 가능. 실무에서 자주 놓치는 지점.
 
 **Q5-2-1 답변**: SG 로는 불가능 (Allow only). NACL 에서 해당 IP CIDR 의 Deny 규칙을 낮은 번호로 추가. 또는 AWS WAF 의 IP Set 차단.
 
-**Q5-3-1-1 답변**: VPC CNI 의 **Branch ENI** 기능. `SecurityGroupPolicy` CRD 로 Pod 레이블에 매칭해 SG 를 할당. Pod 마다 별도 ENI 를 할당받는 방식이라 노드 타입 제약이 있음.
+**Q5-3-1-1 답변**: VPC (Virtual Private Cloud, 가상 사설 클라우드) CNI (Container Network Interface, 컨테이너 네트워크 인터페이스) 의 **Branch ENI** 기능. `SecurityGroupPolicy` CRD 로 Pod 레이블에 매칭해 SG 를 할당. Pod 마다 별도 ENI 를 할당받는 방식이라 노드 타입 제약이 있음.
 
 ## 7. 함정 질문 / 오해 포인트
 

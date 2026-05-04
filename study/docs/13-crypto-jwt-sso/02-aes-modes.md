@@ -16,7 +16,7 @@ created: 2026-04-28
 
 ## 블록 암호 vs 스트림 암호
 
-- **블록**: 고정 크기 블록 단위 변환 (AES, DES). 패딩 필요할 수 있음
+- **블록**: 고정 크기 블록 단위 변환 (AES (Advanced Encryption Standard, 고급 암호화 표준), DES). 패딩 필요할 수 있음
 - **스트림**: 비트/바이트 단위 XOR (ChaCha20, RC4 deprecated). 패딩 불필요
 - AES도 CTR/GCM 모드를 쓰면 사실상 스트림 암호처럼 동작
 

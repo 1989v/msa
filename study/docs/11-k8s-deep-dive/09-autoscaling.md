@@ -79,7 +79,7 @@ desired = ceil(currentReplicas × (currentMetric / targetMetric))
 
 예: 현재 4 Pod, CPU 80%, 목표 70% → desired = ceil(4 × 80/70) = ceil(4.57) = 5.
 
-**"무엇을 측정할 것인가" 가 항상 핵심**. CPU 70% 기본은 안전하지만 실제 부하 패턴 (RPS, p99, queue depth) 과 연결 안 될 수 있음.
+**"무엇을 측정할 것인가" 가 항상 핵심**. CPU 70% 기본은 안전하지만 실제 부하 패턴 (RPS (Requests Per Second, 초당 요청 수), p99, queue depth) 과 연결 안 될 수 있음.
 
 ### `behavior` 의 의미 (1.18+)
 

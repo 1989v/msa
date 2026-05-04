@@ -14,7 +14,7 @@ codebase-relevant: true
 
 ## 1. 개요
 
-Spring 의 `@Transactional` 애노테이션 동작 원리, 전파 속성 7종, 격리 수준, proxy 기반 AOP 의 한계, 외부 IO 분리 패턴을 심화 학습한다. 10년차가 반드시 방어해야 하는 주제이며, msa 프로젝트의 ADR-0020 이 이미 규정하고 있어 실무 연결이 직결된다.
+Spring 의 `@Transactional` 애노테이션 동작 원리, 전파 속성 7종, 격리 수준, proxy 기반 AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 의 한계, 외부 IO (Input/Output, 입출력) 분리 패턴을 심화 학습한다. 10년차가 반드시 방어해야 하는 주제이며, msa 프로젝트의 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020 이 이미 규정하고 있어 실무 연결이 직결된다.
 
 ## 2. 학습 목표
 

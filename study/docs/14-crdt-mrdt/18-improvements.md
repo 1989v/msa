@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 18. CRDT 도입 검토 결론 + ADR 후보
 
-[17-msa-application.md](17-msa-application.md) 의 영역별 분석을 바탕으로 한 종합 결론과 ADR 후보 초안.
+[17-msa-application.md](17-msa-application.md) 의 영역별 분석을 바탕으로 한 CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 도입 종합 결론과 ADR 후보 초안.
 
 ## 한 줄 결론
 

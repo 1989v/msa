@@ -125,7 +125,7 @@ mapper.addMixIn(ThirdPartyMoney::class.java, ThirdPartyMoneyMixIn::class.java)
 
 ### MixIn 활용 사례
 
-- 외부 SDK DTO 의 민감 필드 마스킹
+- 외부 SDK DTO (Data Transfer Object, 데이터 전송 객체) 의 민감 필드 마스킹
 - Java 의 enum 직렬화 변경
 - 외부 클래스에 `@JsonIgnoreProperties` 일괄 적용
 

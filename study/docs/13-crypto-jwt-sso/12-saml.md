@@ -10,7 +10,7 @@ created: 2026-04-28
 
 ## 핵심
 
-OAuth/OIDC 이전에 자리잡은 **기업 SSO 표준**. XML 기반.
+OAuth (Open Authorization)/OIDC (OpenID Connect) 이전에 자리잡은 **기업 SSO (Single Sign-On, 단일 로그인) 표준**. XML 기반.
 
 ## 역할
 

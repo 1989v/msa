@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 목표
 
-msa 의 **product 서비스**를 로컬 K8s(k3d)에 띄우고 G1 / ZGC / Parallel GC 로그를 수집해 GCEasy / GCViewer 로 비교 분석한다. 면접에서 "직접 GC 튜닝 해봤냐" 의 실무 스토리 자산화.
+msa 의 **product 서비스**를 로컬 K8s (Kubernetes)(k3d)에 띄우고 G1 (Garbage-First Collector) / ZGC (Z Garbage Collector) / Parallel GC (Garbage Collection, 가비지 컬렉션) 로그를 수집해 GCEasy / GCViewer 로 비교 분석한다. 면접에서 "직접 GC 튜닝 해봤냐" 의 실무 스토리 자산화.
 
 ## 소요 시간
 

@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 10. gRPC 로드밸런싱
 
-> "K8s 에서 gRPC 가 한 pod 만 받는다" 는 가장 흔한 운영 트러블. 원인을 알면 해법이 명확.
+> "K8s (Kubernetes) 에서 gRPC 가 한 pod 만 받는다" 는 가장 흔한 운영 트러블. 원인을 알면 해법이 명확.
 
 ## 1. 문제의 본질 (다시)
 
@@ -187,7 +187,7 @@ ingress-nginx 의 nginx 가 HTTP/2 로 backend 와 통신 + L7 LB. 외부 노출
 ### 함정
 
 - ingress 가 HTTP/2 ALPN 활성화 필요
-- TLS 종단 위치 (passthrough vs reencrypt) 에 따라 mTLS 처리 다름
+- TLS (Transport Layer Security, 전송 계층 보안) 종단 위치 (passthrough vs reencrypt) 에 따라 mTLS (mutual TLS, 양방향 TLS) 처리 다름
 - 일부 cloud LB 는 HTTP/2 streaming 에 idle timeout 60s 같은 제한
 
 ## 6. 방법 4: gRPC xDS resolver (mesh)

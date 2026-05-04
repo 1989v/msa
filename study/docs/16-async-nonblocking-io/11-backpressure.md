@@ -172,7 +172,7 @@ flux.onBackpressureError()
 
 ## 6. 다른 영역의 backpressure
 
-backpressure 는 reactive 만의 발명품이 아니다. **모든 IO 시스템이 비슷한 메커니즘**을 가진다.
+backpressure 는 reactive 만의 발명품이 아니다. **모든 IO (Input/Output, 입출력) 시스템이 비슷한 메커니즘**을 가진다.
 
 ### TCP 의 sliding window
 

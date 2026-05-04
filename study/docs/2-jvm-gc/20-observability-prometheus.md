@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-msa 의 모든 JVM 서비스는 이미 **Spring Boot Actuator + Micrometer Prometheus** 통합이 끝나있다 (`common/build.gradle.kts` 의 `spring-boot-starter-actuator`, `product/app/build.gradle.kts` 의 `micrometer-registry-prometheus`). 그리고 `k8s/infra/prod/monitoring/servicemonitor-apps.yaml` 의 ServiceMonitor 가 모든 commerce 라벨 pod 의 `/actuator/prometheus` 를 자동 수집. **수집 인프라는 다 있다 — 활용도가 부족할 뿐**. 본 절은 JVM 핵심 메트릭 시리즈, 알람 룰, Grafana 패널, 그리고 운영에서 봐야 하는 7개 panel 을 정리한다.
+msa 의 모든 JVM (Java Virtual Machine, 자바 가상 머신) 서비스는 이미 **Spring Boot Actuator + Micrometer Prometheus** 통합이 끝나있다 (`common/build.gradle.kts` 의 `spring-boot-starter-actuator`, `product/app/build.gradle.kts` 의 `micrometer-registry-prometheus`). 그리고 `k8s/infra/prod/monitoring/servicemonitor-apps.yaml` 의 ServiceMonitor 가 모든 commerce 라벨 pod 의 `/actuator/prometheus` 를 자동 수집. **수집 인프라는 다 있다 — 활용도가 부족할 뿐**. 본 절은 JVM 핵심 메트릭 시리즈, 알람 룰, Grafana 패널, 그리고 운영에서 봐야 하는 7개 panel 을 정리한다.
 
 ---
 

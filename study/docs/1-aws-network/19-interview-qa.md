@@ -27,42 +27,42 @@ level: deep
 
 ### Q1. "VPC 가 뭐고 왜 필요한가요?"
 
-**핵심**: AWS 클라우드 내에 격리된 가상 네트워크 공간. CIDR 로 IP 범위 지정, 기본 외부 격리.
+**핵심**: AWS 클라우드 내에 격리된 가상 네트워크 공간. CIDR (Classless Inter-Domain Routing) 로 IP 범위 지정, 기본 외부 격리.
 
 **꼬리**:
 - Q1-1: CIDR 설계는? → `/16` 권장, 사내 IP 충돌 주의
 - Q1-1-1: 변경 가능? → 기본 CIDR 불가, Secondary Block 가능
-- Q1-2: 여러 VPC 연결은? → Peering(소규모) / TGW(대규모) / PrivateLink(서비스 단위)
+- Q1-2: 여러 VPC (Virtual Private Cloud, 가상 사설 클라우드) 연결은? → Peering(소규모) / TGW (Transit Gateway)(대규모) / PrivateLink(서비스 단위)
 - Q1-2-1: Peering non-transitive 문제? → A-B-C 삼각 통신 불가, TGW 필요
 
-**실무**: msa 를 EKS 로 이전한다면 `10.0.0.0/16` VPC 에 퍼블릭/프라이빗 서브넷 3 AZ 구성으로 기술 검증 완료.
+**실무**: msa 를 EKS 로 이전한다면 `10.0.0.0/16` VPC 에 퍼블릭/프라이빗 서브넷 3 AZ (Availability Zone, 가용 영역) 구성으로 기술 검증 완료.
 
 ### Q2. "퍼블릭 서브넷과 프라이빗 서브넷 차이는?"
 
-**핵심**: **라우트 테이블에 `0.0.0.0/0 → IGW` 경로 유무**. 서브넷 자체 속성 아님.
+**핵심**: **라우트 테이블에 `0.0.0.0/0 → IGW (Internet Gateway)` 경로 유무**. 서브넷 자체 속성 아님.
 
 **꼬리**:
 - Q2-1: 왜 App 을 Private 에? → 공격 표면 축소
-- Q2-1-1: Private App 이 외부 호출은? → NAT Gateway (또는 VPC Endpoint)
+- Q2-1-1: Private App 이 외부 호출은? → NAT (Network Address Translation, 네트워크 주소 변환) Gateway (또는 VPC Endpoint)
 - Q2-1-1-1: NAT 비용 큰 경우? → Gateway Endpoint (S3/DDB 무료), Fck-NAT
 
-**실무**: msa EKS 이전 설계에서 ALB + NAT 만 퍼블릭, App Pod + RDS 는 프라이빗.
+**실무**: msa EKS 이전 설계에서 ALB (Application Load Balancer, 애플리케이션 로드 밸런서) + NAT 만 퍼블릭, App Pod + RDS (Relational Database Service, 관계형 데이터베이스 서비스) 는 프라이빗.
 
 ### Q3. "Security Group 과 NACL 차이는?"
 
-**핵심**: SG = 리소스 레벨 Stateful Allow-only, NACL = 서브넷 레벨 Stateless Allow+Deny.
+**핵심**: SG (Security Group, 보안 그룹) = 리소스 레벨 Stateful Allow-only, NACL (Network Access Control List, 네트워크 ACL) = 서브넷 레벨 Stateless Allow+Deny.
 
 **꼬리**:
 - Q3-1: Stateful/Stateless 실제 차이? → 응답 자동 허용 여부 (NACL 은 ephemeral port 별도 필요)
 - Q3-1-1: NACL 은 언제 쓰나? → 특정 IP 차단 (SG 는 Deny 불가)
 - Q3-2: SG-to-SG 참조는? → IP 대신 다른 SG ID 로 동적 연결
-- Q3-2-1: EKS Pod 별 SG? → `SecurityGroupPolicy` CRD + VPC CNI Branch ENI
+- Q3-2-1: EKS Pod 별 SG? → `SecurityGroupPolicy` CRD (Custom Resource Definition, 커스텀 리소스 정의) + VPC CNI (Container Network Interface, 컨테이너 네트워크 인터페이스) Branch ENI
 
 **실무**: msa NetworkPolicy 미적용 → AWS SG "ALB-SG 로부터만" 패턴을 NetworkPolicy 로 이식 예정 (Phase 4).
 
 ### Q4. "ALB 와 NLB 중 뭘 언제 쓰나요?"
 
-**핵심**: HTTP 경로/호스트 라우팅 = ALB. TCP/UDP + 고정 IP + 저지연 = NLB.
+**핵심**: HTTP 경로/호스트 라우팅 = ALB. TCP/UDP + 고정 IP + 저지연 = NLB (Network Load Balancer, 네트워크 로드 밸런서).
 
 **꼬리**:
 - Q4-1: ALB + NLB 조합 패턴? → Outer NLB (고정 IP) + Inner ALB (L7 라우팅)
@@ -89,7 +89,7 @@ level: deep
 **꼬리**:
 - Q6-1: 노드당 Pod 수 계산? → `(ENI × IP/ENI) - 1`
 - Q6-1-1: 늘리는 방법? → Prefix Delegation (/28 prefix 할당)
-- Q6-2: K8s Service 가 AWS LB 로? → Ingress → ALB (LB Controller), Service + annotation → NLB
+- Q6-2: K8s (Kubernetes) Service 가 AWS LB 로? → Ingress → ALB (LB Controller), Service + annotation → NLB
 
 **실무**: msa EKS 이전 시 `t3.medium` 17 Pod 제한 → Prefix Delegation 으로 확장 설계 (Terraform 모듈에 반영).
 
@@ -117,7 +117,7 @@ level: deep
 
 ### Q9. "WAF 와 Shield 차이?"
 
-**핵심**: WAF = L7 (SQLi/XSS/bot), Shield = L3/L4 DDoS. 조합 사용.
+**핵심**: WAF = L7 (SQLi/XSS (Cross-Site Scripting, 사이트 간 스크립팅)/bot), Shield = L3/L4 DDoS. 조합 사용.
 
 **꼬리**:
 - Q9-1: NLB 에 WAF 붙이기? → 불가. CloudFront 경유
@@ -237,7 +237,7 @@ Frontend:
 - VPC Endpoint: NAT 비용 절감
 
 **스케일 확장**:
-- 10x 트래픽 → ALB 자동 스케일, Pod HPA, RDS Read Replica 추가
+- 10x 트래픽 → ALB 자동 스케일, Pod HPA (Horizontal Pod Autoscaler, 수평 파드 오토스케일러), RDS Read Replica 추가
 - 리전 확장 → Route 53 Latency-based Routing + 리전 간 Transit Gateway
 
 ### 시나리오 2: 파트너 IP 화이트리스트 기반 연동

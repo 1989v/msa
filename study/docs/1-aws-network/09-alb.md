@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-ALB 는 HTTP/HTTPS 트래픽을 **L7 (애플리케이션 계층)** 에서 경로/호스트/헤더/쿼리스트링 기반으로 라우팅하는 로드밸런서. msa 프로젝트의 ingress-nginx 와 유사한 역할.
+ALB (Application Load Balancer, 애플리케이션 로드 밸런서) 는 HTTP/HTTPS 트래픽을 **L7 (애플리케이션 계층)** 에서 경로/호스트/헤더/쿼리스트링 기반으로 라우팅하는 로드밸런서. msa 프로젝트의 ingress-nginx 와 유사한 역할.
 
 ## 2. 내부 메커니즘
 
@@ -29,8 +29,8 @@ ALB
 
 ### 2.2 요청 흐름 (step-by-step)
 
-1. Client → DNS resolve → ALB DNS 이름 → 여러 AZ 의 ALB 노드 IP
-2. ALB 노드가 TLS 종료 (HTTPS listener 면)
+1. Client → DNS resolve → ALB DNS 이름 → 여러 AZ (Availability Zone, 가용 영역) 의 ALB 노드 IP
+2. ALB 노드가 TLS (Transport Layer Security, 전송 계층 보안) 종료 (HTTPS listener 면)
 3. Listener Rule 매칭 (우선순위 낮은 번호부터)
 4. 매칭된 Rule 의 Target Group 선택
 5. Target Group 의 Health Check 통과한 Target 중 선택 (LB 알고리즘)
@@ -240,7 +240,7 @@ resource "aws_lb_listener_rule" "product" {
 **해결**:
 - ALB `idle_timeout=300` 또는 `4000`
 - 클라이언트에서 20-30초마다 ping 전송
-- NLB 로 전환 (Connection 기반 더 유연)
+- NLB (Network Load Balancer, 네트워크 로드 밸런서) 로 전환 (Connection 기반 더 유연)
 
 ### 시나리오 3: "HTTPS Listener 에 ACM 인증서가 반영 안 됨"
 
@@ -268,7 +268,7 @@ Q9: ALB 가 뭐고 어떻게 동작하나요?
         └── Q9-3-1-1: Liveness 와 Readiness 분리가 왜 중요한가요?
 ```
 
-**Q9 답변**: L7 로드밸런서. HTTP Listener 와 Rule 로 경로/호스트/헤더 기반 라우팅. Target Group 이 실제 백엔드 (EC2/Pod/Lambda) 를 묶고 Health Check 를 관리. EKS 에서는 AWS LB Controller 가 Ingress 리소스로부터 자동 프로비저닝.
+**Q9 답변**: L7 로드밸런서. HTTP Listener 와 Rule 로 경로/호스트/헤더 기반 라우팅. Target Group 이 실제 백엔드 (EC2 (Elastic Compute Cloud, 가상 머신 서비스)/Pod/Lambda) 를 묶고 Health Check 를 관리. EKS 에서는 AWS LB Controller 가 Ingress 리소스로부터 자동 프로비저닝.
 
 **Q9-1-1-1 답변**: Outer NLB + Inner ALB. NLB 로 고정 IP 제공 (파트너 allow-list) + ALB 로 L7 경로 분기. 비용은 늘지만 두 장점 모두.
 

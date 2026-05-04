@@ -190,7 +190,7 @@ class StampedeGuardedCache(
 
 `docs/adr/ADR-NEW-cache-stampede-policy.md` 신설:
 - 모든 read-heavy 캐시에 TTL jitter 의무
-- hot key 정의 (top N, QPS 임계) 후 stampede 방어 적용
+- hot key 정의 (top N, QPS (Queries Per Second, 초당 쿼리 수) 임계) 후 stampede 방어 적용
 - single-flight 우선, XFetch 는 P1
 
 ## 5. P0-4: Hash tag 컨벤션 (Cluster multi-key)

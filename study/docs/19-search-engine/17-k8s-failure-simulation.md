@@ -62,7 +62,7 @@ watch -n 2 'curl -s localhost:9200/_cat/nodes?v'
 
 ### 3-1. 사전 조건
 
-- ES 클러스터: 3 data nodes
+- ES (Elasticsearch) 클러스터: 3 data nodes
 - products 인덱스: 3 primary, 1 replica → 6 shard
 - cluster health: green
 

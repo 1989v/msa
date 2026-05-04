@@ -29,12 +29,12 @@ title: Map / Geo System (Uber, Yelp, 배달앱) 설계
 | 검색 P99 | 100ms |
 | 위치 검색 정확도 | ±50m |
 | 동시 운전자 | 100k (서울 기준) |
-| 동시 사용자 검색 | 50k QPS |
+| 동시 사용자 검색 | 50k QPS (Queries Per Second, 초당 쿼리 수) |
 
 ### Out of scope
 
 - Routing engine (OSRM/Google Maps API 외부 의존)
-- 지도 타일 렌더링 (CDN으로 분리)
+- 지도 타일 렌더링 (CDN (Content Delivery Network, 콘텐츠 전송 네트워크)으로 분리)
 
 ---
 
@@ -347,7 +347,7 @@ GEOSEARCH "drivers:active" 강남 BYRADIUS 1km
 → 수천 명 후보 → CPU 부하
 
 해결:
-  - 결과를 Redis 캐시 (10초 TTL, 위치 기반 key)
+  - 결과를 Redis 캐시 (10초 TTL (Time To Live, 생존 시간), 위치 기반 key)
   - 이미 매칭 시도 중인 driver는 별도 set으로 격리
 ```
 

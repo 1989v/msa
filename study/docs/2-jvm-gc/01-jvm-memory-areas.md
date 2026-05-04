@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-JVM은 프로세스 가상 메모리 안에서 **힙(공유, GC 대상) + 메타스페이스(클래스 메타) + 스레드별 스택 + 네이티브(Direct/JNI/코드 캐시)** 4가지 큰 영역을 관리한다. OOM 메시지는 이 4영역 중 어디에서 터졌는지를 구분해서 보여준다 — 메시지를 못 읽으면 진단이 안 된다.
+JVM (Java Virtual Machine, 자바 가상 머신)은 프로세스 가상 메모리 안에서 **힙(공유, GC (Garbage Collection, 가비지 컬렉션) 대상) + 메타스페이스(클래스 메타) + 스레드별 스택 + 네이티브(Direct/JNI/코드 캐시)** 4가지 큰 영역을 관리한다. OOM (Out Of Memory, 메모리 부족) 메시지는 이 4영역 중 어디에서 터졌는지를 구분해서 보여준다 — 메시지를 못 읽으면 진단이 안 된다.
 
 ```
    ┌───────────────────────────────────────────────────────────┐
@@ -219,7 +219,7 @@ jcmd <pid> VM.native_memory summary
 
 ### 컨테이너 OOMKilled
 
-힙은 멀쩡한데 **RSS가 limit를 초과**해서 K8s OOMKiller에 죽는 경우 — 거의 항상 native memory(Direct Buffer / Metaspace / Code Cache / NMT 의 Internal 항목) 누수다. 이때 JVM 안에서는 `OutOfMemoryError` 가 아예 안 던져지고 그냥 SIGKILL → 컨테이너 재시작. 가장 골치 아픈 시나리오.
+힙은 멀쩡한데 **RSS가 limit를 초과**해서 K8s (Kubernetes) OOMKiller에 죽는 경우 — 거의 항상 native memory(Direct Buffer / Metaspace / Code Cache / NMT 의 Internal 항목) 누수다. 이때 JVM 안에서는 `OutOfMemoryError` 가 아예 안 던져지고 그냥 SIGKILL → 컨테이너 재시작. 가장 골치 아픈 시나리오.
 
 ---
 

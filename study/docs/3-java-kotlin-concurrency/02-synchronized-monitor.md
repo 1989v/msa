@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 한 줄
 
-`synchronized` 는 **JVM 내장 락(intrinsic lock = monitor)** 을 사용하는 가장 기본적인 동기화 도구. **원자성 + 가시성** 을 동시에 보장하며, JIT 가 적극적으로 최적화한다 (편향 락 → 경량 락 → 중량 락 단계적 inflation; 자세한 건 [10-synchronized-internals.md](10-synchronized-internals.md)).
+`synchronized` 는 **JVM (Java Virtual Machine, 자바 가상 머신) 내장 락(intrinsic lock = monitor)** 을 사용하는 가장 기본적인 동기화 도구. **원자성 + 가시성** 을 동시에 보장하며, JIT (Just-In-Time compilation, 즉시 컴파일) 가 적극적으로 최적화한다 (편향 락 → 경량 락 → 중량 락 단계적 inflation; 자세한 건 [10-synchronized-internals.md](10-synchronized-internals.md)).
 
 ## monitor 의 정체
 

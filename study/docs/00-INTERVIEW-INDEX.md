@@ -54,12 +54,12 @@
 
 ### 2.1 런타임/JVM (Top 1-10)
 
-**Q1. "GC 가 멈출 때 어떻게 진단하나요?"**
+**Q1. "GC (Garbage Collection, 가비지 컬렉션) 가 멈출 때 어떻게 진단하나요?"**
 > A: GC 로그(`-Xlog:gc*`) → GCEasy 분석 → 5지표(Pause P99 / Throughput / Allocation Rate / Promotion / Old 점유율) 확인. 동시에 JFR continuous 로 allocation hot spot. STW 시점과 P99 spike 가 겹치면 GC 가 원인. 알고리즘 변경(G1 → ZGC), heap 조정, 객체 재사용 검토.
 > 꼬리: "Full GC 가 보이면 어떻게?" / "ZGC 가 G1 보다 항상 좋은가?"
 > 출처: #2 Q25, #10 Q40, #12 Q2
 
-**Q2. "JVM 메모리 영역 5가지 + Xmx 가 컨테이너 limit 와 어떻게 다른가?"**
+**Q2. "JVM (Java Virtual Machine, 자바 가상 머신) 메모리 영역 5가지 + Xmx 가 컨테이너 limit 와 어떻게 다른가?"**
 > A: Heap, Metaspace, Stack, PC Register, Native(Direct/Code/GC). limit = RSS = 힙 + native 전부. 힙은 70-75% (`MaxRAMPercentage=70`), 30% 가 native. 절대값 (-Xmx) 보다 비율 권장 — limit 변경 시 자동 추적.
 > 꼬리: "OOMKilled 와 Java OOM 5종 차이?" / "MaxRAMPercentage 75 가 default 인데 70 권장 이유?"
 > 출처: #2 Q1, Q7, Q41, #11 Q4, Q38
@@ -75,7 +75,7 @@
 > 출처: #3 Q1.2, Q1.3, Q2.1, Q2.2
 
 **Q5. "Virtual Thread 가 뭐고 언제 쓰나?"**
-> A: JDK 21 stable, carrier thread 위 mount/unmount 되는 가벼운 스레드. blocking IO 호출 시 자동 unmount → carrier 풀려남. 1개 비용 수백 B 라 수백만 동시 가능. blocking IO 많은 일반 MVC 서비스 1순위, JDK 25 부터 synchronized pinning 거의 해소.
+> A: JDK 21 stable, carrier thread 위 mount/unmount 되는 가벼운 스레드. blocking IO (Input/Output, 입출력) 호출 시 자동 unmount → carrier 풀려남. 1개 비용 수백 B 라 수백만 동시 가능. blocking IO 많은 일반 MVC 서비스 1순위, JDK 25 부터 synchronized pinning 거의 해소.
 > 꼬리: "pinning 이 뭔가?" / "WebFlux 의 의미가 줄어든 이유?"
 > 출처: #3 Q2.11, Q2.12, #16 Q27, Q32
 
@@ -94,7 +94,7 @@
 > 꼬리: "NMT 사용법?" / "MaxDirectMemorySize 미지정 위험?"
 > 출처: #2 Q26, Q42, #11 Q4, Q38
 
-**Q9. "JIT 의 inlining / escape analysis?"**
+**Q9. "JIT (Just-In-Time compilation, 즉시 컴파일) 의 inlining / escape analysis?"**
 > A: Inlining = 작은 메서드(35 byte) 를 호출지에 펼침 + 추가 최적화 기회. Escape Analysis = 객체가 메서드 escape 안 하면 힙 할당 생략 + 스택/레지스터 분해(scalar replacement). JMH `-prof gc` 의 alloc.rate.norm 으로 검증.
 > 꼬리: "warm-up 단축 방법?" / "deoptimization 트리거?"
 > 출처: #2 Q34, Q35, Q38
@@ -117,7 +117,7 @@
 > 출처: #4 Q2.2, #5 Q2.4
 
 **Q13. "@Transactional 의 동작 원리는?"**
-> A: Spring AOP proxy 기반. CGLIB(Boot 기본) 또는 JDK Dynamic Proxy 가 메서드 가로채 TransactionInterceptor 호출 → PlatformTransactionManager.getTransaction() → target 실행 → 정상이면 commit, RuntimeException/Error 면 rollback. 비즈니스 코드에 트랜잭션 코드 0줄.
+> A: Spring AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) proxy 기반. CGLIB(Boot 기본) 또는 JDK Dynamic Proxy 가 메서드 가로채 TransactionInterceptor 호출 → PlatformTransactionManager.getTransaction() → target 실행 → 정상이면 commit, RuntimeException/Error 면 rollback. 비즈니스 코드에 트랜잭션 코드 0줄.
 > 꼬리: "self-invocation 함정?" / "private 메서드 동작?"
 > 출처: #5 Q1.1, Q1.6, Q1.7
 
@@ -137,7 +137,7 @@
 > 출처: #5 Q2.9, #15 Q4
 
 **Q17. "HikariCP 풀 사이즈 어떻게 정하나?"**
-> A: Little's Law: L = λ × W. 피크 RPS × 평균 query latency = 동시 connection 수. 1.5-2배 margin → 서비스 측 풀. 다음 (인스턴스 수 × 풀 사이즈) ≤ DB max_connections × 0.8 검증. "small is fast" — 작은 풀이 context switch / cache miss / lock contention 모두 줄임.
+> A: Little's Law: L = λ × W. 피크 RPS (Requests Per Second, 초당 요청 수) × 평균 query latency = 동시 connection 수. 1.5-2배 margin → 서비스 측 풀. 다음 (인스턴스 수 × 풀 사이즈) ≤ DB max_connections × 0.8 검증. "small is fast" — 작은 풀이 context switch / cache miss / lock contention 모두 줄임.
 > 꼬리: "RPS 두 배 시?" / "DB max_connections 한계 도달 시?"
 > 출처: #15 Q1, Q4.5, #12 Q5
 

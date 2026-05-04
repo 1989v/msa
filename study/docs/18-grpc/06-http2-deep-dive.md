@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 06. HTTP/2 deep dive
 
-gRPC 의 streaming / multiplexing / efficient header 가능 여부는 HTTP/2 에 100% 위임된다. HTTP/2 를 모르면 K8s LB 이슈 / head-of-line blocking / flow control 디버깅이 모두 미궁에 빠진다.
+gRPC 의 streaming / multiplexing / efficient header 가능 여부는 HTTP/2 에 100% 위임된다. HTTP/2 를 모르면 K8s (Kubernetes) LB 이슈 / head-of-line blocking / flow control 디버깅이 모두 미궁에 빠진다.
 
 ## 1. HTTP/1.1 의 한계 (왜 HTTP/2 가 필요했나)
 
@@ -167,13 +167,13 @@ HTTP/2 는 두 가지 모드:
 
 ### h2 (실세계 표준)
 
-- 브라우저는 **TLS 만 지원** (h2c 직접 사용 불가)
+- 브라우저는 **TLS (Transport Layer Security, 전송 계층 보안) 만 지원** (h2c 직접 사용 불가)
 - ALPN: TLS handshake 중 `h2` / `http/1.1` 우선순위 협상
 - 인증서 + ALPN = 자연스러운 fallback
 
 ### h2c (내부망)
 
-- TLS 부담 ↓ (서비스 메시 / mTLS 가 별도로 처리할 때)
+- TLS 부담 ↓ (서비스 메시 / mTLS (mutual TLS, 양방향 TLS) 가 별도로 처리할 때)
 - Spring `grpc-server-spring-boot-starter` 기본 = `negotiation-type: PLAINTEXT` (h2c)
 - prior knowledge mode = "이 서버는 무조건 h2c" 가정 (Upgrade 협상 생략)
 - K8s 내부 (NetworkPolicy 로 격리) 에서 흔함

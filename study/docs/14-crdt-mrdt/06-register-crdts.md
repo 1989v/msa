@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 06. Register CRDT
 
-Register = **single value 를 저장**하는 CRDT. 읽기 시 한 값을 반환해야 함. concurrent write 시 어떤 값을 고를지가 핵심.
+Register = **single value 를 저장**하는 CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입). 읽기 시 한 값을 반환해야 함. concurrent write 시 어떤 값을 고를지가 핵심.
 
 두 패러다임:
 - **LWW-Register** — timestamp 큰 쪽 채택 (충돌 시 한 값 선택)

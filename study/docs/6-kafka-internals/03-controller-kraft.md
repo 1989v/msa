@@ -149,7 +149,7 @@ Raft 의 표준 동작:
 4. quorum (과반) 이 ack → committed → broker 들에게 전파
 5. leader 가 죽으면 election term 증가, 새 leader 선출 (보통 < 1초)
 
-**일반 토픽 leader election** 과는 다른 메커니즘 (그쪽은 ISR 에서 선택, 단순). 메타데이터의 합의가 Raft.
+**일반 토픽 leader election** 과는 다른 메커니즘 (그쪽은 ISR (In-Sync Replicas) 에서 선택, 단순). 메타데이터의 합의가 Raft.
 
 ## 6. 메타데이터 vs 데이터 차이 정리
 

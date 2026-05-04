@@ -20,7 +20,7 @@ created: 2026-05-01
 
 ### 꼬리 1: "RPS 가 갑자기 두 배 됐을 때는?"
 
-> Little's Law 의 λ 가 두 배 됐으니 L 도 두 배. 풀이 부족해 pending 이 발생하면 풀 ↑ 가 답이지만, *DB 측 한계* 부터 검증합니다. (인스턴스 × 풀) 가 max_connections 의 80% 안인지, DB CPU 가 받을 수 있는지. 단순히 풀만 늘리면 DB 부하가 폭증해 더 큰 사고가 됩니다. 보통은 HPA 가 인스턴스를 늘리고 풀은 그대로 두는 게 안전합니다.
+> Little's Law 의 λ 가 두 배 됐으니 L 도 두 배. 풀이 부족해 pending 이 발생하면 풀 ↑ 가 답이지만, *DB 측 한계* 부터 검증합니다. (인스턴스 × 풀) 가 max_connections 의 80% 안인지, DB CPU 가 받을 수 있는지. 단순히 풀만 늘리면 DB 부하가 폭증해 더 큰 사고가 됩니다. 보통은 HPA (Horizontal Pod Autoscaler, 수평 파드 오토스케일러) 가 인스턴스를 늘리고 풀은 그대로 두는 게 안전합니다.
 
 ### 꼬리 2: "DB max_connections 가 한계에 닿으면?"
 

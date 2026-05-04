@@ -331,7 +331,7 @@ redis-cli -c CONFIG GET maxclients
 
 ### 5. Cluster failover 시 stale connection
 
-Lettuce 는 adaptive refresh trigger 로 회복. 단, refresh 주기 사이 (수 초) 는 stale 명령이 fail 가능. 재시도 / circuit breaker 조합 권장 (ADR-0015, `docs/adr/ADR-0015-resilience-strategy.md`).
+Lettuce 는 adaptive refresh trigger 로 회복. 단, refresh 주기 사이 (수 초) 는 stale 명령이 fail 가능. 재시도 / circuit breaker 조합 권장 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0015, `docs/adr/ADR-0015-resilience-strategy.md`).
 
 ---
 

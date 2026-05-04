@@ -295,7 +295,7 @@ class ProductService(...) {
 }
 ```
 
-ADR-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 에서 *클래스 레벨 금지*. 이유:
+ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020 (`docs/adr/ADR-0020-transactional-usage.md`) 에서 *클래스 레벨 금지*. 이유:
 
 - 명시성 부족 — 메서드만 봐서는 트랜잭션 속성 모름
 - override 누락 시 silent fail

@@ -20,7 +20,7 @@ created: 2026-05-01
 A. 1999 년 Dan Kegel 이 제기한 *한 서버에서 1만 동접을 처리할 수 있는가* 문제. thread-per-connection 으로는 1만 thread × 1MB stack = 10GB VAS + 컨텍스트 스위치 폭증 + 커널 자료구조 부담으로 무너짐. 답은 *한 thread 가 epoll 로 여러 fd 멀티플렉싱*. C10M 은 syscall 자체가 비용이 되는 영역으로 io_uring / kernel bypass 가 답.
 
 ### Q2. IO 의 두 단계가 뭔가요?
-A. (1) 데이터 도착 대기 (네트워크에서 socket recv buffer 까지) + (2) 커널-유저 버퍼 복사 (read syscall 안에서 memcpy). "비동기" 라는 단어가 두 단계를 모두 위임하는지 (1) 만 하는지 모호한데, 이 구분이 IO 모델 분류의 기준.
+A. (1) 데이터 도착 대기 (네트워크에서 socket recv buffer 까지) + (2) 커널-유저 버퍼 복사 (read syscall 안에서 memcpy). "비동기" 라는 단어가 두 단계를 모두 위임하는지 (1) 만 하는지 모호한데, 이 구분이 IO (Input/Output, 입출력) 모델 분류의 기준.
 
 ### Q3. Sync/Async 와 Blocking/Non-blocking 의 차이는?
 A. 두 축이 다름. Blocking/Non-blocking 은 *호출이 즉시 리턴하는가* — read 가 데이터 없을 때 막히느냐 EAGAIN 리턴하느냐. Sync/Async 는 *데이터 복사 단계 (커널→유저) 를 OS 에 위임하느냐* — sync 는 호출자가, async 는 OS 가. 그래서 4 분면이 나오는데 실용적으론 (1) blocking sync, (2) non-blocking sync (multiplex), (3) non-blocking async (io_uring/IOCP) 만 의미 있음.

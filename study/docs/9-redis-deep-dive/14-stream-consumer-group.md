@@ -215,7 +215,7 @@ fun reclaimStuckMessages() {
 | In-memory worker queue (분산 cron 등) | ✓ |
 
 → msa 의 경우 가능한 도입 후보:
-- **Notification fanout**: gateway 가 SSE / WebSocket push 하기 위한 in-memory event stream (휘발 OK)
+- **Notification fanout**: gateway 가 SSE (Server-Sent Events) / WebSocket push 하기 위한 in-memory event stream (휘발 OK)
 - **Cache invalidation 이벤트** (cross-service): product 캐시 invalidation 같은 짧은 보존 / 빠른 fanout
 
 18 improvements 에서 검토.

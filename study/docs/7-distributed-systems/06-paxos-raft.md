@@ -213,7 +213,7 @@ msa 는 합의 알고리즘을 **직접 구현하지 않음**. 그러나 다음 
 
 ### 7.2 간접 영향
 
-- **Kafka topic 의 leader election**: ISR 기반, controller 가 결정 (controller 자체는 Raft)
+- **Kafka topic 의 leader election**: ISR (In-Sync Replicas) 기반, controller 가 결정 (controller 자체는 Raft)
 - **k8s leader election**: etcd 의 lease + Raft
 - **분산 락 / 잠금 서비스**: Redis 단일 master (강한 합의 X), ZK / etcd (Raft) 사용 가능
 

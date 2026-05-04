@@ -146,7 +146,7 @@ URL: https://colin-scott.github.io/personal_website/research/interactive_latency
 - **#2 (DRAM→SSD)**: "왜 캐시 레이어를 두는가" 의 핵심 근거
 - **#3 (SSD→DC RTT)**: 분산 시스템에서 "원격 vs 로컬" 의 자릿수 차이. **Redis vs 로컬 디스크** 같은 헷갈리는 비교에 답 제공
 - **#4 (DC→대륙 RTT)**: 멀티 리전 / 글로벌 사용자 / CDN 결정의 베이스라인
-- **#5 (평균→P99)**: 단일 latency 가 아닌 분포의 **tail** 이 SLA 와 fan-out 곱셈을 지배
+- **#5 (평균→P99 (99th Percentile, 가장 느린 1%))**: 단일 latency 가 아닌 분포의 **tail** 이 SLA 와 fan-out 곱셈을 지배
 
 → 5개로 시스템 설계의 80% 결정을 정량 추론할 수 있다.
 

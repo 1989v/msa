@@ -122,7 +122,7 @@ offset 4: key=user3, value={name:"C"}
 **용도**:
 - **changelog topic** (Kafka Streams 내부 state store 백업)
 - **__consumer_offsets** (그래서 compact)
-- DB CDC 의 마지막 상태 보관
+- DB CDC (Change Data Capture, 변경 데이터 캡처) 의 마지막 상태 보관
 - 캐시 유사 패턴
 
 **Compact + Delete 섞기**:
@@ -142,7 +142,7 @@ retention.ms=2592000000   # 30일 후엔 압축본도 삭제
    → 그 사이 컨슈머는 "user1 삭제됨" 신호를 받을 기회가 있음
 ```
 
-`delete.retention.ms` 가 너무 짧으면 컨슈머가 tombstone 을 못 보고 캐시에 stale 데이터 유지될 수 있음. 다운스트림 처리 SLA 보다 길게 잡아야 함.
+`delete.retention.ms` 가 너무 짧으면 컨슈머가 tombstone 을 못 보고 캐시에 stale 데이터 유지될 수 있음. 다운스트림 처리 SLA (Service Level Agreement, 서비스 수준 협약) 보다 길게 잡아야 함.
 
 ## 7. Offset Reset 정책
 
@@ -159,7 +159,7 @@ ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest"
 | `latest` | 새로 들어오는 것만 | 실시간 모니터링, 과거 무시 |
 | `none` | 예외 throw | 명시적 리셋 강제, 자동 진행 거부 |
 
-**msa 의 trade-off**: `earliest` 라 신규 컨슈머 그룹이 떠도 retention 기간 내 모든 메시지를 다시 받는다 → **멱등성이 필수** (그래서 ADR-0012). 만약 latest 였다면 신규 그룹은 시작 전 이벤트를 영구 누락.
+**msa 의 trade-off**: `earliest` 라 신규 컨슈머 그룹이 떠도 retention 기간 내 모든 메시지를 다시 받는다 → **멱등성이 필수** (그래서 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012). 만약 latest 였다면 신규 그룹은 시작 전 이벤트를 영구 누락.
 
 ## 8. 시간 기반 lookup (offsets.for.times)
 

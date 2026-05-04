@@ -8,12 +8,12 @@ created: 2026-05-03
 
 # 19. 개선 후보 통합 — ADR 4건
 
-> §15 grounding 의 점검 포인트 + 영상 요약 자료의 7개 액션 아이템을 ADR 4건의 Proposed 초안으로 통합. 학습 자료 단계의 초안이며, `docs/adr/` 승격은 별도 검토 필요.
+> §15 grounding 의 점검 포인트 + 영상 요약 자료의 7개 액션 아이템을 ADR (Architecture Decision Record, 아키텍처 결정 기록) 4건의 Proposed 초안으로 통합. 학습 자료 단계의 초안이며, `docs/adr/` 승격은 별도 검토 필요.
 
 ## 1. 한 줄 핵심
 
 > **본 ADR 4건은 msa search 의 "정통 패턴 준수 + 점검 포인트" 의 시니어 결론.**
-> 우선순위: ① 색인 lag SLA (즉시) → ② 변동성 필드 컨벤션 (즉시) → ③ ES 일원화 (분기) → ④ Hybrid Search (반기).
+> 우선순위: ① 색인 lag SLA (Service Level Agreement, 서비스 수준 협약) (즉시) → ② 변동성 필드 컨벤션 (즉시) → ③ ES (Elasticsearch) 일원화 (분기) → ④ Hybrid Search (반기).
 
 ---
 

@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 1. 추상화의 차이
 
-REST 와 RPC 는 단순히 "포맷이 다르다" 가 아니라 **클라이언트가 서버를 어떻게 모델링하느냐** 가 다르다.
+REST (Representational State Transfer) 와 RPC (Remote Procedure Call, 원격 프로시저 호출) 는 단순히 "포맷이 다르다" 가 아니라 **클라이언트가 서버를 어떻게 모델링하느냐** 가 다르다.
 
 | 축 | REST | RPC (gRPC) |
 |---|---|---|
@@ -77,7 +77,7 @@ val response: ProductResponse = productStub.getProduct(
 
 ## 5. 캐시 / 게이트웨이 친화성
 
-REST 는 HTTP 의 광범위한 인프라 (CDN, reverse proxy, browser cache, OpenAPI 도구) 를 그대로 활용. gRPC 는:
+REST 는 HTTP 의 광범위한 인프라 (CDN (Content Delivery Network, 콘텐츠 전송 네트워크), reverse proxy, browser cache, OpenAPI 도구) 를 그대로 활용. gRPC 는:
 
 - **CDN / reverse proxy 캐시 ❌** — 메시지가 binary 라 일반 CDN 이 의미 해석 불가, idempotent 표시도 약함
 - **브라우저 직접 호출 ❌** — gRPC-Web 필요 (Envoy 프록시 변환)
@@ -106,7 +106,7 @@ REST 는 HTTP 의 광범위한 인프라 (CDN, reverse proxy, browser cache, Ope
 
 - 서비스 간 동기 호출: **WebClient (Reactor 기반)** + Resilience4j CircuitBreaker
 - 비동기: Kafka (`{domain}.{entity}.{event}` 토픽)
-- ADR-0003 명시: "**gRPC: Protocol Buffer 관리 부담, 팀 학습 비용**" 이유로 미채택
+- ADR (Architecture Decision Record, 아키텍처 결정 기록) -0003 명시: "**gRPC: Protocol Buffer 관리 부담, 팀 학습 비용**" 이유로 미채택
 - 도입 시 가장 큰 이득 후보: gateway↔auth (인증 latency), order↔inventory (예약/차감 핫패스), search 인덱싱 (대량 페이로드)
 
 ## 8. 자주 듣는 오해 정정
@@ -121,7 +121,7 @@ REST 는 HTTP 의 광범위한 인프라 (CDN, reverse proxy, browser cache, Ope
 
 > **"gRPC 는 어렵다"**
 
-- 코드 작성은 오히려 단순 (DTO 자동 생성). 어려움은 **운영** (LB, mTLS, 디버깅 도구 부족) 에 집중됨 → 이게 학습 비용의 본질.
+- 코드 작성은 오히려 단순 (DTO (Data Transfer Object, 데이터 전송 객체) 자동 생성). 어려움은 **운영** (LB, mTLS (mutual TLS, 양방향 TLS), 디버깅 도구 부족) 에 집중됨 → 이게 학습 비용의 본질.
 
 ## 다음 학습
 

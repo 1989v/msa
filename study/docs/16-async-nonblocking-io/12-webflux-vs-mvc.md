@@ -32,7 +32,7 @@ Tomcat thread pool (default 200)
 ```
 
 - 한 요청 = 한 thread 가 *처음부터 끝까지* 잡고 있음
-- IO 대기 중에도 thread 는 점유 상태 (memory + scheduler 부담)
+- IO (Input/Output, 입출력) 대기 중에도 thread 는 점유 상태 (memory + scheduler 부담)
 - thread pool exhaustion 시 새 요청 거부 / 큐잉
 
 ### WebFlux

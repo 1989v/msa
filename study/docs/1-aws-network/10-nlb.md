@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-NLB 는 TCP/UDP/TLS 트래픽을 **L4 (전송 계층)** 에서 라우팅. 내용을 보지 않고 IP+Port 만 본다. 초저지연 (μs) + 초고처리량 (수백만 rps) + **고정 IP** + **클라이언트 IP 보존**이 핵심 차별점.
+NLB (Network Load Balancer, 네트워크 로드 밸런서) 는 TCP/UDP/TLS (Transport Layer Security, 전송 계층 보안) 트래픽을 **L4 (전송 계층)** 에서 라우팅. 내용을 보지 않고 IP+Port 만 본다. 초저지연 (μs) + 초고처리량 (수백만 rps) + **고정 IP** + **클라이언트 IP 보존**이 핵심 차별점.
 
 ## 2. 내부 메커니즘
 
@@ -18,11 +18,11 @@ NLB 는 TCP/UDP/TLS 트래픽을 **L4 (전송 계층)** 에서 라우팅. 내용
 
 - HTTP 헤더/경로/쿼리 무시 → 내용 파싱 비용 없음
 - TCP/UDP 연결 단위 라우팅
-- 지연이 ALB 대비 10-100배 낮음 (수십~수백 μs)
+- 지연이 ALB (Application Load Balancer, 애플리케이션 로드 밸런서) 대비 10-100배 낮음 (수십~수백 μs)
 
 ### 2.2 고정 IP 제공
 
-- **AZ 별 1개 IP** 할당 (ALB 와 다른 핵심 특징)
+- **AZ (Availability Zone, 가용 영역) 별 1개 IP** 할당 (ALB 와 다른 핵심 특징)
 - EIP 연결 가능 → 외부 화이트리스트 등록 용이
 - 2 AZ → 2개 IP, 3 AZ → 3개 IP
 
@@ -37,7 +37,7 @@ NLB 는 TCP/UDP/TLS 트래픽을 **L4 (전송 계층)** 에서 라우팅. 내용
 - Target Type 에 따라 동작 다름:
   - `instance`: 항상 보존
   - `ip`: preserve_client_ip 옵션 (EKS 에서 주의 필요)
-- Docker/K8s 환경에서는 SG/iptables 가 클라이언트 IP 를 이해해야 함
+- Docker/K8s (Kubernetes) 환경에서는 SG (Security Group, 보안 그룹)/iptables 가 클라이언트 IP 를 이해해야 함
 
 ### 2.5 처리량
 
@@ -203,7 +203,7 @@ spec:
 **해결**:
 - SG 변경 전 이전 IP + 새 IP 둘 다 허용
 - 파트너 전환 완료 후 이전 IP 제거
-- 가능하면 CIDR 범위로 허용하여 변경 최소화
+- 가능하면 CIDR (Classless Inter-Domain Routing) 범위로 허용하여 변경 최소화
 
 ## 6. 면접 꼬리 질문 트리
 

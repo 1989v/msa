@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-- **NIO** (JDK 1.4, 2002) = "New IO" — Channel + Buffer + Selector 3 축
+- **NIO (Non-blocking I/O, 비차단 입출력)** (JDK 1.4, 2002) = "New IO" — Channel + Buffer + Selector 3 축
 - Channel = OS fd 추상화 (FileChannel, SocketChannel, ServerSocketChannel)
 - Buffer = 메모리 블록 + 4 포인터 (mark / position / limit / capacity)
 - Selector = epoll/kqueue 의 Java wrapper

@@ -236,7 +236,7 @@ ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG to false,
   > Coordinator 가 그 컨슈머를 그룹에서 제거 → rebalance. 그 동안 컨슈머가 처리 중이던 메시지의 offset 은 commit 못 됨 → 새 owner 가 이전 위치부터 재처리. 처리 시간 긴 작업은 별도 worker 에 dispatch 후 즉시 poll() 복귀 패턴 권장.
 
 - **Q. Static Membership 의 효과?**
-  > rolling restart / 짧은 GC pause 같은 일시적 부재에 rebalance 트리거 안 함. session.timeout.ms 안에 같은 instance ID 로 재합류하면 그대로 진행. K8s StatefulSet 의 pod 이름을 instance.id 로 쓰는 패턴이 흔함.
+  > rolling restart / 짧은 GC (Garbage Collection, 가비지 컬렉션) pause 같은 일시적 부재에 rebalance 트리거 안 함. session.timeout.ms 안에 같은 instance ID 로 재합류하면 그대로 진행. K8s StatefulSet 의 pod 이름을 instance.id 로 쓰는 패턴이 흔함.
 
 - **Q. CooperativeStickyAssignor 가 RangeAssignor 보다 좋은 이유?**
   > 1) Sticky — rebalance 시 partition 이동 최소화 (캐시 보존), 2) Cooperative — STW 최소화 (변경 없는 partition 은 계속 처리), 3) 균등 분산 (Range 의 첫 컨슈머 부하 집중 문제 없음). 단점은 클라이언트 호환성 (모든 컨슈머가 cooperative 지원해야 mixed mode 사용 가능).

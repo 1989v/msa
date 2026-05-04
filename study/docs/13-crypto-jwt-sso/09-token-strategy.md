@@ -21,7 +21,7 @@ created: 2026-04-28
 ### Stateless의 진짜 비용
 
 세션 무효화의 어려움 → 대안:
-1. **짧은 TTL** (15분 내외) + Refresh Token으로 재발급
+1. **짧은 TTL (Time To Live, 생존 시간)** (15분 내외) + Refresh Token으로 재발급
 2. **Blacklist** (Redis): 무효화 시 jti/토큰 자체를 블랙리스트
 3. **Token versioning** — 사용자 객체에 `tokenVersion` 필드, 클레임에도 포함, mismatch 시 거부
 

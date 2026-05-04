@@ -14,7 +14,7 @@ codebase-relevant: true
 
 ## 1. 개요
 
-Spring 의 HTTP 요청-응답 파이프라인 (Servlet Filter → DispatcherServlet → HandlerInterceptor → @Controller → ResponseBodyAdvice → MessageConverter → 압축) 전반을 학습한다. Filter/Interceptor/AOP 의 차이, Spring Security FilterChainProxy, Jackson 직렬화 커스터마이징, HTTP gzip 압축까지 묶어 다룬다.
+Spring 의 HTTP 요청-응답 파이프라인 (Servlet Filter → DispatcherServlet → HandlerInterceptor → @Controller → ResponseBodyAdvice → MessageConverter → 압축) 전반을 학습한다. Filter/Interceptor/AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 의 차이, Spring Security FilterChainProxy, Jackson 직렬화 커스터마이징, HTTP gzip 압축까지 묶어 다룬다.
 
 원본 17 의 5개 항목 중 17-1(readOnly Transactional) 은 #5 에 흡수, 17-3(스레드 덤프) 은 #3 에 흡수 → 남은 17-2/17-4/17-5 를 "HTTP 파이프라인" 우산으로 통합.
 
@@ -46,11 +46,11 @@ Spring 의 HTTP 요청-응답 파이프라인 (Servlet Filter → DispatcherServ
 - **Servlet Filter**
   - `jakarta.servlet.Filter` 인터페이스
   - `@Order` / `FilterRegistrationBean` 으로 순서 제어
-  - DispatcherServlet 진입 *전* 동작 → Spring DI 일부 제약 (lazy bean)
+  - DispatcherServlet 진입 *전* 동작 → Spring DI (Dependency Injection, 의존성 주입) 일부 제약 (lazy bean)
   - 활용: 인증, 로깅, CORS, request body 로깅 (caching wrapper 필요)
 - **Spring Security FilterChainProxy**
   - DelegatingFilterProxy → FilterChainProxy → SecurityFilterChain
-  - SecurityFilter 들 (AuthenticationFilter, AuthorizationFilter, CsrfFilter, ...)
+  - SecurityFilter 들 (AuthenticationFilter, AuthorizationFilter, CsrfFilter (CSRF, Cross-Site Request Forgery, 사이트 간 요청 위조), ...)
   - 일반 Filter chain 안의 한 Filter 로 박혀 있는 구조
 - **HandlerInterceptor**
   - `preHandle` / `postHandle` / `afterCompletion`
@@ -77,7 +77,7 @@ Spring 의 HTTP 요청-응답 파이프라인 (Servlet Filter → DispatcherServ
   - Kotlin null-safety (`KotlinModule(strictNullChecks=true)`)
 - **HTTP gzip 압축 (17-5)**
   - 압축 layer 선택지: Tomcat (`server.compression.enabled=true`), Spring Boot 자동, Reverse Proxy (Nginx/Envoy/CloudFront), Application 직접
-  - 어디서 압축할지 의사결정: CPU 비용 vs 네트워크 비용, mTLS terminate 위치
+  - 어디서 압축할지 의사결정: CPU 비용 vs 네트워크 비용, mTLS (mutual TLS, 양방향 TLS) terminate 위치
   - 압축 알고리즘 비교: gzip / deflate / brotli (Accept-Encoding 협상)
   - **압축하면 안 되는 것**: 이미 압축된 컨텐츠 (image/jpeg, video, gzipped json), 작은 응답 (< 1KB 무의미), TLS+gzip → BREACH 공격 (민감 데이터 응답 압축 주의)
   - `Accept-Encoding` ↔ `Content-Encoding` ↔ `Vary: Accept-Encoding` 캐시 정합성
@@ -88,7 +88,7 @@ Spring 의 HTTP 요청-응답 파이프라인 (Servlet Filter → DispatcherServ
 - 각 서비스의 HandlerInterceptor 사용처
 - common 의 AOP (logging, timing) — `@Around` 로 외부 API 호출 latency 자동 측정
 - ObjectMapper 설정 통일 (common/auto-config) → snake_case, kotlin module, jsr310 module
-- gzip 활성화 위치 결정: K8s ingress(Nginx) 에서 할지 Spring Boot 에서 할지
+- gzip 활성화 위치 결정: K8s (Kubernetes) ingress(Nginx) 에서 할지 Spring Boot 에서 할지
 - BREACH 위험 점검 (인증 토큰 응답 body 노출 + gzip 활성)
 - HandlerInterceptor 로 trace id 주입 패턴
 
@@ -108,7 +108,7 @@ Spring 의 HTTP 요청-응답 파이프라인 (Servlet Filter → DispatcherServ
 - **common**: 공통 AOP, ObjectMapper config
 - **각 서비스**: HandlerInterceptor 사용처
 - **K8s ingress-nginx**: gzip 설정 위치
-- **ADR 후보**: "응답 압축 위치 표준화"
+- **ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보**: "응답 압축 위치 표준화"
 
 ## 6. 참고 자료
 

@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-서브넷은 **VPC 내부를 AZ 단위로 쪼갠 IP 묶음**이다. 서브넷 자체는 퍼블릭/프라이빗 속성이 없으며, **라우트 테이블에 IGW 경로가 있느냐 없느냐**로 구분된다. 하나의 서브넷은 정확히 하나의 AZ 에 귀속되므로 HA 는 필수적으로 멀티 서브넷이 된다.
+서브넷은 **VPC (Virtual Private Cloud, 가상 사설 클라우드) 내부를 AZ (Availability Zone, 가용 영역) 단위로 쪼갠 IP 묶음**이다. 서브넷 자체는 퍼블릭/프라이빗 속성이 없으며, **라우트 테이블에 IGW (Internet Gateway) 경로가 있느냐 없느냐**로 구분된다. 하나의 서브넷은 정확히 하나의 AZ 에 귀속되므로 HA (High Availability, 고가용성) 는 필수적으로 멀티 서브넷이 된다.
 
 ## 2. 내부 메커니즘
 
@@ -30,7 +30,7 @@ level: deep
 ### 2.2 AZ 귀속
 
 - 각 서브넷은 **하나의 AZ 에만** 속함
-- EC2/RDS/Pod 등이 이 서브넷에 배치되면 해당 AZ 에 물리적으로 생성됨
+- EC2 (Elastic Compute Cloud, 가상 머신 서비스)/RDS (Relational Database Service, 관계형 데이터베이스 서비스)/Pod 등이 이 서브넷에 배치되면 해당 AZ 에 물리적으로 생성됨
 - AZ 장애 시 해당 서브넷의 모든 리소스가 영향받음
 
 ### 2.3 Public IP 자동 할당 (`MapPublicIpOnLaunch`)
@@ -66,7 +66,7 @@ VPC 10.0.0.0/16 (65,536 IP)
 ### 3.2 퍼블릭 vs 프라이빗 배치
 
 **퍼블릭 서브넷에 두는 것**:
-- ALB, NAT Gateway
+- ALB (Application Load Balancer, 애플리케이션 로드 밸런서), NAT (Network Address Translation, 네트워크 주소 변환) Gateway
 - Bastion Host (SSH 점프 서버) — 요즘은 SSM Session Manager 로 대체
 - 인터넷 페이싱 API 가 필요한 외부 워커
 
@@ -145,14 +145,14 @@ AWS Load Balancer Controller 가 서브넷을 자동 선택할 때 쓰는 태그
 
 **진단**: 단일 AZ 배치 → 해당 AZ 운명 공동체.
 
-**해결**: 최소 2 AZ, 권장 3 AZ 에 서브넷 분산. HPA/PDB 로 Pod 분산 보장. ALB 는 기본적으로 멀티 AZ.
+**해결**: 최소 2 AZ, 권장 3 AZ 에 서브넷 분산. HPA (Horizontal Pod Autoscaler, 수평 파드 오토스케일러)/PDB (Pod Disruption Budget, 파드 중단 예산) 로 Pod 분산 보장. ALB 는 기본적으로 멀티 AZ.
 
 ### 시나리오 2: EKS Pod 가 더 이상 안 뜸 — "Insufficient IP"
 
 **증상**: 노드에 리소스 여유는 있는데 Pod 스케줄링 실패, 이벤트에 `no IP available`.
 
 **진단**:
-1. VPC CNI 가 Pod 마다 서브넷 IP 를 소비
+1. VPC CNI (Container Network Interface, 컨테이너 네트워크 인터페이스) 가 Pod 마다 서브넷 IP 를 소비
 2. 서브넷이 `/24` (251개) 였는데 Pod 이 이미 소진
 3. `kubectl get nodes` 의 allocatable `pods` vs 실제 running
 
@@ -168,7 +168,7 @@ AWS Load Balancer Controller 가 서브넷을 자동 선택할 때 쓰는 태그
 **진단**:
 1. 서브넷의 **Route Table** 에 `0.0.0.0/0 → IGW` 경로가 있는가?
 2. RT 를 서브넷에 연결(associate) 했는가? — 기본 RT 에 의존하면 안 됨
-3. EC2 의 SG 가 아웃바운드 허용하는가? (SG 기본은 모두 허용이지만 커스텀 SG 는 다를 수 있음)
+3. EC2 의 SG (Security Group, 보안 그룹) 가 아웃바운드 허용하는가? (SG 기본은 모두 허용이지만 커스텀 SG 는 다를 수 있음)
 
 **해결**: RT 와 서브넷은 **명시적 연결** 필수. Terraform 의 `aws_route_table_association`.
 

@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 한 줄
 
-JVM 스레드는 **6개 상태**(`Thread.State` enum) 사이를 전이하며, 각 상태는 thread dump 진단의 1차 신호다. `RUNNABLE` 이라고 무조건 CPU 쓰는 건 아니고, `BLOCKED` 와 `WAITING` 은 다른 의미다.
+JVM (Java Virtual Machine, 자바 가상 머신) 스레드는 **6개 상태**(`Thread.State` enum) 사이를 전이하며, 각 상태는 thread dump 진단의 1차 신호다. `RUNNABLE` 이라고 무조건 CPU 쓰는 건 아니고, `BLOCKED` 와 `WAITING` 은 다른 의미다.
 
 ## 스레드 상태 6개 (`java.lang.Thread.State`)
 

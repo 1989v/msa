@@ -11,11 +11,11 @@ created: 2026-05-03
 ## 1. 한 줄 핵심
 
 > **filter 와 query 의 구분이 성능과 관련도의 시작점.**
-> 정확 매칭 / sort / agg = filter (캐시), 관련도 매칭 = query (BM25). 이걸 헷갈리면 ES 가 느린 RDB 가 된다.
+> 정확 매칭 / sort / agg = filter (캐시), 관련도 매칭 = query (BM25 (Best Match 25)). 이걸 헷갈리면 ES (Elasticsearch) 가 느린 RDB (Relational Database, 관계형 데이터베이스) 가 된다.
 
 ## 2. Query DSL 의 구조
 
-ES Query DSL = JSON 으로 표현하는 Lucene Query.
+ES Query DSL (Domain-Specific Language, 도메인 특화 언어) = JSON 으로 표현하는 Lucene Query.
 
 ```json
 {

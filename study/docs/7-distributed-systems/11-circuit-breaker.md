@@ -66,7 +66,7 @@ slidingWindowSize = 60 (sec)
 → 최근 60초 동안의 호출 실패율
 ```
 
-QPS 가 낮은 서비스엔 time-based 가 더 정확. QPS 가 일정하면 count-based 가 가벼움.
+QPS (Queries Per Second, 초당 쿼리 수) 가 낮은 서비스엔 time-based 가 더 정확. QPS 가 일정하면 count-based 가 가벼움.
 
 ## 4. Resilience4j — 자바/코틀린 표준
 
@@ -307,7 +307,7 @@ failureRateThreshold: 50
 
 ### Q6. "msa 에서 어디에 적용?"
 
-> "order → payment, order → product. 둘 다 동기 외부/내부 호출. Kafka 같은 비동기는 CB 대신 DLT + 멱등 consumer 로 처리 (ADR-0015)."
+> "order → payment, order → product. 둘 다 동기 외부/내부 호출. Kafka 같은 비동기는 CB 대신 DLT + 멱등 consumer 로 처리 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0015)."
 
 ## 13. 한 줄 요약
 

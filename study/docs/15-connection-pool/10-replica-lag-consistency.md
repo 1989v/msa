@@ -29,7 +29,7 @@ R/W 분리의 *비용* — eventually consistent. master 에 write 한 직후 re
                           [Replica SQL Thread] ──apply──→ [Replica DB]
 ```
 
-- **IO Thread**: master 에서 binlog 를 가져와 replica 의 relay log 에 저장
+- **IO (Input/Output, 입출력) Thread**: master 에서 binlog 를 가져와 replica 의 relay log 에 저장
 - **SQL Thread**: relay log 를 replica 에 적용
 
 각 단계마다 lag 발생 가능. 운영 환경 lag:

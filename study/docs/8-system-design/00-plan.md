@@ -21,7 +21,7 @@ codebase-relevant: false
 ## 2. 학습 목표
 
 - 시스템 설계 면접의 체계적 접근 방법 (요구사항 → 추정 → API → 데이터 → 아키텍처) 숙달
-- QPS / 스토리지 / 대역폭 추정 기법
+- QPS (Queries Per Second, 초당 쿼리 수) / 스토리지 / 대역폭 추정 기법
 - Read-heavy vs Write-heavy 시스템의 설계 차이
 - 10개 시나리오 각각 30분 내 완주 가능
 - 면접관의 꼬리 질문 (스케일 10x, 장애 시나리오) 에 대응
@@ -29,9 +29,9 @@ codebase-relevant: false
 
 ## 3. 선수 지식
 
-- 주제 1-7 완료 (AWS 네트워크, JVM, 동시성, DB, Spring, Kafka, 분산 시스템)
+- 주제 1-7 완료 (AWS 네트워크, JVM (Java Virtual Machine, 자바 가상 머신), 동시성, DB, Spring, Kafka, 분산 시스템)
 - Redis, Elasticsearch 기본
-- CDN 기본 (CloudFront)
+- CDN (Content Delivery Network, 콘텐츠 전송 네트워크) 기본 (CloudFront)
 
 ## 4. 학습 로드맵
 
@@ -44,7 +44,7 @@ codebase-relevant: false
   5. Data Model (스키마, 인덱스, 샤딩 키)
   6. Deep Dive (병목 분석, 스케일링, 장애 대응)
 - 공통 빌딩 블록:
-  - Load Balancer (ALB/NLB)
+  - Load Balancer (ALB (Application Load Balancer, 애플리케이션 로드 밸런서)/NLB (Network Load Balancer, 네트워크 로드 밸런서))
   - CDN (CloudFront)
   - Application Server (Stateless)
   - RDBMS + Sharding + Replication
@@ -52,7 +52,7 @@ codebase-relevant: false
   - Message Queue (Kafka, SQS)
   - Object Storage (S3)
   - Search (Elasticsearch)
-  - Real-time (WebSocket, SSE, Long Polling)
+  - Real-time (WebSocket, SSE (Server-Sent Events), Long Polling)
 
 ### Phase 2: 10개 시나리오 상세
 - **2-1. URL Shortener (bit.ly)**
@@ -142,7 +142,7 @@ codebase-relevant: false
 - 시뮬레이션 시간 (30분 × 10회)
   - ⏸️ 미결 (이유: 본 단계는 자료 작성. 30분 시뮬레이션 회독은 학습 종료 후 회독 단계로 분리 — `00-LEARNING-GUIDE.md` 회독 전략 참조).
 - msa 경험 연결 스토리 작성 분량
-  - ✅ 결정: e-Commerce 시나리오(`10-ecommerce-system.md`) 가 msa 회고 통합 + improvements (`12-improvements.md`) 에서 P0-P3 12개 ADR 후보로 압축. 면접 답변 즉시 활용 가능 분량.
+  - ✅ 결정: e-Commerce 시나리오(`10-ecommerce-system.md`) 가 msa 회고 통합 + improvements (`12-improvements.md`) 에서 P0-P3 12개 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보로 압축. 면접 답변 즉시 활용 가능 분량.
 
 ## 8. 원본 메모
 

@@ -14,7 +14,7 @@ codebase-relevant: true
 
 ## 1. 개요
 
-"비동기"와 "논블로킹"은 자주 혼용되지만 서로 다른 축이다. OS 단의 IO 모델(blocking/non-blocking, sync/async, IO multiplexing) 부터 Java NIO/NIO.2, Reactor 패턴, Netty 내부, Spring WebFlux/Reactor Project 까지 *IO 계층의 비동기*를 학습한다.
+"비동기"와 "논블로킹"은 자주 혼용되지만 서로 다른 축이다. OS 단의 IO (Input/Output, 입출력) 모델(blocking/non-blocking, sync/async, IO multiplexing) 부터 Java NIO (Non-blocking I/O, 비차단 입출력)/NIO.2, Reactor 패턴, Netty 내부, Spring WebFlux/Reactor Project 까지 *IO 계층의 비동기*를 학습한다.
 
 #3(동시성)은 *thread/memory model*, 본 주제는 *IO model* — 면접에서 명확히 구분되는 주제.
 

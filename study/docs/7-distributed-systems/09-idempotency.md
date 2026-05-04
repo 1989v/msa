@@ -131,7 +131,7 @@ class PaymentController(
 
 ### 3.3 멱등 Consumer (Inbox / processed_event)
 
-Kafka Consumer 가 같은 메시지를 두 번 받는 시나리오 방어. msa 의 ADR-0012.
+Kafka Consumer 가 같은 메시지를 두 번 받는 시나리오 방어. msa 의 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012.
 
 ```sql
 CREATE TABLE processed_event (

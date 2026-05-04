@@ -95,7 +95,7 @@ class CommonRedisAutoConfiguration {
 
 1. **`enableAllAdaptiveRefreshTriggers()`** — MOVED/ASK redirect 시 즉시 토폴로지 갱신. (09 cluster 파일 참고). Lettuce default 는 off 라 명시 필수.
 2. **`enablePeriodicRefresh(10min)`** — failover/replica promote 같은 변화를 catch.
-3. **`commandTimeout(2s)`** — 무한 대기 방지. 단, 2초는 P99 SLA 를 고려하면 좀 길 수 있음 (외부 IO 의 timeout 으로 자주 박힘).
+3. **`commandTimeout(2s)`** — 무한 대기 방지. 단, 2초는 P99 (99th Percentile, 가장 느린 1%) SLA 를 고려하면 좀 길 수 있음 (외부 IO 의 timeout 으로 자주 박힘).
 4. **`@ConditionalOnProperty cluster.nodes`** — cluster 설정이 있을 때만 활성. standalone 환경에서 자동 비활성.
 
 ### 개선 여지

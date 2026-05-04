@@ -12,7 +12,7 @@ created: 2026-04-28
 
 ## 18.1 `AesUtil` — KMS Envelope Encryption 모드 추가
 
-**목표**: 기존 단순 AES 모드는 유지하면서, KMS 모드를 옵트인으로 추가.
+**목표**: 기존 단순 AES (Advanced Encryption Standard, 고급 암호화 표준) 모드는 유지하면서, KMS (Key Management Service, 키 관리 서비스) 모드를 옵트인으로 추가.
 
 ```kotlin
 package com.kgd.common.security

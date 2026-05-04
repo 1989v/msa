@@ -89,7 +89,7 @@ http_filters:
 ### 2-5. msa 도입 시 고려
 
 - 관리 페이지 (admin) 에서 백엔드 gRPC 호출 시 의미
-- 일반 storefront 는 BFF / REST 가 더 자연스러움
+- 일반 storefront 는 BFF (Backend For Frontend) / REST 가 더 자연스러움
 - proto 가 BFF 와 브라우저까지 공유되는 강한 schema 가 이득일 때만 검토
 
 ## 3. grpc-gateway — gRPC ↔ REST/JSON 자동 매핑
@@ -248,7 +248,7 @@ curl -X POST https://api.example.com/commerce.product.v1.ProductService/GetProdu
 | 외부 REST → Envoy transcoder → gRPC | Envoy 에서 TLS, 내부 mTLS (mesh) |
 | 외부 gRPC-Web → Envoy → gRPC native | Envoy 에서 TLS |
 
-⇒ 외부 TLS 와 내부 mTLS 의 종단 위치는 **명확히 분리** 권장.
+⇒ 외부 TLS (Transport Layer Security, 전송 계층 보안) 와 내부 mTLS (mutual TLS, 양방향 TLS) 의 종단 위치는 **명확히 분리** 권장.
 
 ## 8. 도구 비교 요약
 

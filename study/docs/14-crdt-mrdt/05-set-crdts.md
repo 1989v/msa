@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 05. Set CRDT
 
-분산 Set — 여러 replica 가 동시에 add/remove 하면서 수렴. **Set 은 CRDT 의 가장 풍부한 영역** — Counter 보다 트릭이 많다.
+분산 Set — 여러 replica 가 동시에 add/remove 하면서 수렴. **Set 은 CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 의 가장 풍부한 영역** — Counter 보다 트릭이 많다.
 
 ## G-Set (Grow-only Set)
 

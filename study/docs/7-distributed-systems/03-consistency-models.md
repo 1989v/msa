@@ -123,7 +123,7 @@ Eventual read (local replica): <1ms
 | **product.stock** (캐시) | Eventual | Kafka consumer 로 동기화 |
 | **product 카탈로그 정보** | Read-your-writes | seller 가 등록 후 자기 화면엔 즉시 보임 (master read) |
 | **search 인덱스** | Eventual | ES bulk indexing, indexing lag 수 초 허용 |
-| **auth.role** | Linearizable | RBAC 정합성 절대 |
+| **auth.role** | Linearizable | RBAC (Role-Based Access Control, 역할 기반 접근 제어) 정합성 절대 |
 | **wishlist** | Causal+ | 추가/삭제 순서만 보존되면 OK |
 | **analytics 지표** | Eventual | ClickHouse, 분 단위 집계 OK |
 
@@ -189,8 +189,8 @@ fun reconcile() {
 
 ## 11. CAP / Linearizability 의 미묘한 차이
 
-- CAP 의 C 는 정확히 **linearizability**
-- 그러나 많은 사람들이 "strong consistency = ACID" 로 오해 → ACID 의 C 는 **integrity constraint** (referential integrity 등) 로 다른 의미
+- CAP (Consistency / Availability / Partition tolerance, 일관성·가용성·분할 내성) 의 C 는 정확히 **linearizability**
+- 그러나 많은 사람들이 "strong consistency = ACID (Atomicity / Consistency / Isolation / Durability, 원자성·일관성·격리성·내구성)" 로 오해 → ACID 의 C 는 **integrity constraint** (referential integrity 등) 로 다른 의미
 - 면접에서 CAP 의 C 를 **"linearizable"** 이라고 못박으면 점수가 나옴
 
 ## 12. 한 줄 요약

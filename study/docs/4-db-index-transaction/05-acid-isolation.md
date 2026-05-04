@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 정의
 
-- **ACID**: Atomicity / Consistency / Isolation / Durability — DB 트랜잭션의 4 보장.
+- **ACID (Atomicity / Consistency / Isolation / Durability, 원자성·일관성·격리성·내구성)**: Atomicity / Consistency / Isolation / Durability — DB 트랜잭션의 4 보장.
 - **Isolation Level**: 동시 트랜잭션끼리 얼마나 서로 안 보이게 할지의 4단계 (+ 1).
 - **이상 현상 (Anomaly)**: 격리가 약할 때 발생하는 4가지 — Dirty Read / Non-Repeatable Read / Phantom Read / Lost Update.
 

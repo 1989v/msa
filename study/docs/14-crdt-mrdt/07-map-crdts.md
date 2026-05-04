@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 07. Map CRDT
 
-Key → CRDT 의 매핑. **재귀 합성** 의 시작점이며, 실 시스템에서 가장 자주 쓰이는 CRDT (왜냐하면 JSON document 가 본질적으로 Map).
+Key → CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 의 매핑. **재귀 합성** 의 시작점이며, 실 시스템에서 가장 자주 쓰이는 CRDT (왜냐하면 JSON document 가 본질적으로 Map).
 
 ## 단순 Map의 문제
 

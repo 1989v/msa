@@ -36,7 +36,7 @@ title: 시스템 설계 공통 프레임워크 (절차 / 추정 / 빌딩 블록)
 | Consistency | Strong | Read-your-writes | Eventual |
 | Durability | 11 9s | 11 9s | 9 9s |
 
-본 msa 프로젝트는 ADR-0025에서 이 표를 강제 입력으로 둔다.
+본 msa 프로젝트는 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0025에서 이 표를 강제 입력으로 둔다.
 
 ### Step 2. Capacity Estimation (용량 산정) — 5분
 
@@ -46,7 +46,7 @@ title: 시스템 설계 공통 프레임워크 (절차 / 추정 / 빌딩 블록)
 1일 = 86,400 초 ≈ 100,000 초 (10^5)
 1년 = 365 × 86,400 ≈ 30M 초 (3 × 10^7)
 
-DAU 100만 × 일 평균 10 read → 일 1천만 read → QPS 100
+DAU 100만 × 일 평균 10 read → 일 1천만 read → QPS (Queries Per Second, 초당 쿼리 수) 100
 DAU 1000만 × 일 평균 10 read → 일 1억 read → QPS 1,000
 DAU 1억 × 일 평균 10 read → 일 10억 read → QPS 10,000
 
@@ -106,10 +106,10 @@ flowchart LR
 ```
 
 **조립 룰**:
-- Read-heavy → CDN + Cache + Read Replica 강조
+- Read-heavy → CDN (Content Delivery Network, 콘텐츠 전송 네트워크) + Cache + Read Replica 강조
 - Write-heavy → Queue + Worker + Idempotency 강조
-- 실시간 → WebSocket / SSE + presence store
-- 검색 → ES + 색인 파이프라인 (Kafka CDC)
+- 실시간 → WebSocket / SSE (Server-Sent Events) + presence store
+- 검색 → ES + 색인 파이프라인 (Kafka CDC (Change Data Capture, 변경 데이터 캡처))
 
 ### Step 5. Deep Dive — 10분
 

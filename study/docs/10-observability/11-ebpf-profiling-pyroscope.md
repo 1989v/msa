@@ -40,7 +40,7 @@ Profiles : "WHERE in CODE?" (어느 함수가 CPU/Memory 잡아먹나)
 | 운영 부담 (재현 어려움) | 부담 없음 (자동) |
 | 무료 | 약간의 CPU (~0.5-2%) |
 
-→ "6시간 전 P99 가 튄 시점의 flame graph" 를 즉시 볼 수 있다는 게 핵심 가치.
+→ "6시간 전 P99 (99th Percentile, 가장 느린 1%) 가 튄 시점의 flame graph" 를 즉시 볼 수 있다는 게 핵심 가치.
 
 ## 3. eBPF — 커널 레벨 관측
 

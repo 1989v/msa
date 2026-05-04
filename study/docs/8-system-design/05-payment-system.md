@@ -46,7 +46,7 @@ title: Payment System (Toss / Stripe) 설계
 DAU = 1천만
 1인 일 결제 = 평균 0.5건
 일 결제 = 5M 건
-write QPS = 5M / 86400 ≈ 60 (피크 ×5 = 300)
+write QPS (Queries Per Second, 초당 쿼리 수) = 5M / 86400 ≈ 60 (피크 ×5 = 300)
 read QPS  = 결제 후 조회 평균 5회 → 25M / 86400 ≈ 300 (피크 1500)
 
 Storage:
@@ -102,7 +102,7 @@ flowchart LR
 **핵심 설계**:
 - **Idempotency가 첫 관문** — 모든 요청은 Redis SETNX 통과해야 PG 호출
 - **Ledger 분리** — payments 테이블과 별도, append-only, 잔액 계산은 ledger sum
-- **CircuitBreaker** — PG 장애 시 빠른 fail (본 msa ADR-0015)
+- **CircuitBreaker** — PG 장애 시 빠른 fail (본 msa ADR (Architecture Decision Record, 아키텍처 결정 기록)-0015)
 - **Reconciliation** — 매일 새벽 PG 거래 내역 download + DB 대사
 
 ---
@@ -167,7 +167,7 @@ sequenceDiagram
 **보상 트랜잭션 원칙**:
 - 모든 단계는 **idempotent** (재시도 안전)
 - 실패 시 역순으로 보상 호출
-- 보상도 실패하면 → **DLQ + 운영자 alert**
+- 보상도 실패하면 → **DLQ (Dead Letter Queue, 데드 레터 큐) + 운영자 alert**
 - 본 msa Order.cancel()은 PENDING만 가능 → COMPLETED 후엔 별도 환불 플로우
 
 ### 5-3. Ledger (복식부기)
@@ -319,7 +319,7 @@ fun reconcile() {
 | 결정 | 선택 | 포기 |
 |---|---|---|
 | Idempotency | 3중 방어 (Redis + DB + PG) | 단순성 |
-| 분산 트랜잭션 | SAGA + 보상 | 2PC (성능/가용성 안 됨) |
+| 분산 트랜잭션 | SAGA + 보상 | 2PC (Two-Phase Commit, 2단계 커밋) (성능/가용성 안 됨) |
 | Ledger | 복식부기 append-only | 단순 잔액 컬럼 (race condition) |
 | PG 장애 | CircuitBreaker + 다중 PG | 단일 PG (장애 시 전체 정지) |
 | Consistency | Strong (잔액) | Eventual (정산은 D+1 OK) |

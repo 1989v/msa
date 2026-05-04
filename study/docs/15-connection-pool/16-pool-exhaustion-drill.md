@@ -226,7 +226,7 @@ hikaricp_connections_usage_seconds{quantile="0.99"} = 5.2
 http_client_requests_seconds{uri="/charge", quantile="0.99"} = 5.1
 ```
 
-→ 두 값이 *거의 동일* = 외부 IO 가 connection 을 잡고 있다는 결정적 증거.
+→ 두 값이 *거의 동일* = 외부 IO (Input/Output, 입출력) 가 connection 을 잡고 있다는 결정적 증거.
 
 #### 결론
 

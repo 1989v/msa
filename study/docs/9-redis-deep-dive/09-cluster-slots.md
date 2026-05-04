@@ -13,7 +13,7 @@ Redis Cluster 는 **16384 hash slot** 을 마스터 노드들에 배분 + **goss
 
 ## 1. 왜 Cluster 인가
 
-- 단일 master 의 한계: 메모리 (서버당 수십 GB), 단일 스레드 명령 한계 (100k QPS)
+- 단일 master 의 한계: 메모리 (서버당 수십 GB), 단일 스레드 명령 한계 (100k QPS (Queries Per Second, 초당 쿼리 수))
 - 수평 확장이 필요할 때 sharding → consistent hashing 보다 단순한 **slot-based routing** 채택
 
 ## 2. 16384 슬롯

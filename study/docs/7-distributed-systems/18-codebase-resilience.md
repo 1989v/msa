@@ -7,7 +7,7 @@ created: 2026-05-01
 
 # 18. msa 의 Resilience (ADR-0015) + Gateway Rate Limiting
 
-> Phase 3 마지막. Circuit Breaker, DLQ, Token Bucket, Admission Control 의 실제 구현을 점검.
+> Phase 3 마지막. Circuit Breaker, DLQ (Dead Letter Queue, 데드 레터 큐), Token Bucket, Admission Control 의 실제 구현을 점검.
 
 ## 1. ADR-0015 의 9개 영역
 
@@ -15,7 +15,7 @@ created: 2026-05-01
 1. Circuit Breaker (Resilience4j)
 2. Dead Letter Queue (Spring Kafka DefaultErrorHandler)
 3. Rate Limiting (Gateway Token Bucket + 서비스 RL)
-4. CQRS (Inventory read = Redis)
+4. CQRS (Command Query Responsibility Segregation, 명령-조회 책임 분리) (Inventory read = Redis)
 5. Timeout & Retry
 6. Bulkhead (서비스별 별도 풀)
 7. Graceful Degradation
@@ -159,7 +159,7 @@ class RateLimiterConfig {
 
 **관찰**:
 - Token Bucket 알고리즘 (Spring Cloud Gateway 표준)
-- 100 RPS replenish + 200 burst → 대부분의 인터널 트래픽엔 충분, 외부 크롤러/봇엔 약간 부족
+- 100 RPS (Requests Per Second, 초당 요청 수) replenish + 200 burst → 대부분의 인터널 트래픽엔 충분, 외부 크롤러/봇엔 약간 부족
 - userKeyResolver 가 `X-User-Id` 우선, 없으면 IP — 인증 후/전 모두 대응
 - `@Primary` 로 Spring Cloud Gateway 의 RequestRateLimiter 가 자동 선택
 
@@ -282,7 +282,7 @@ class AdmissionControlFilter(
 - 단순 `INCR` (token bucket Lua 만큼 정교하지 않음) — 충분히 atomic
 
 **개선 후보**:
-- "재고 1.2 배" 룰 (ADR-0015 명세) 이 코드에 미구현 — 단순 max 1000
+- "재고 1.2 배" 룰 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0015 명세) 이 코드에 미구현 — 단순 max 1000
 - 도메인별로 max 다르게 (warehouse 별 capacity 등)
 
 ## 5. DLQ (Dead Letter Queue)

@@ -10,8 +10,8 @@ created: 2026-04-28
 
 ## 일반 TLS vs mTLS
 
-- **일반 TLS** — 클라이언트만 서버 인증
-- **mTLS** — 클라이언트도 인증서 제시, 서버가 검증
+- **일반 TLS (Transport Layer Security, 전송 계층 보안)** — 클라이언트만 서버 인증
+- **mTLS (mutual TLS, 양방향 TLS)** — 클라이언트도 인증서 제시, 서버가 검증
 
 ## 사용 시나리오
 

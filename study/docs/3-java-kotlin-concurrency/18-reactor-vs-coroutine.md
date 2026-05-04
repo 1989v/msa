@@ -195,7 +195,7 @@ val flux: Flux<Int> = flow.asFlux()
 
 ### 일반 서비스 → MVC + coroutine
 - Spring MVC + Kotlin
-- coroutine 으로 외부 IO 처리 (e.g., `quant`)
+- coroutine 으로 외부 IO (Input/Output, 입출력) 처리 (e.g., `quant`)
 - Spring MVC 의 일반 controller + `suspend fun` 조합 가능
 
 ### 왜 일반 서비스에 WebFlux 안 썼나?
@@ -203,7 +203,7 @@ val flux: Flux<Int> = flow.asFlux()
 - JPA blocking → Reactor 와 안 맞음 (R2DBC 가 답이지만 생태계 좁음)
 - coroutine + JDBC + `Dispatchers.IO` 조합이 *충분히 빠르고* 가독성 좋음
 
-> **ADR-0002** (msa 런타임 결정): MVC + JPA blocking + Coroutine 외부 IO + Tomcat 가상 스레드. 정확히 이 트레이드오프를 명시.
+> **ADR-0002** (Architecture Decision Record, 아키텍처 결정 기록 — msa 런타임 결정): MVC + JPA blocking + Coroutine 외부 IO + Tomcat 가상 스레드. 정확히 이 트레이드오프를 명시.
 
 ## stack trace 비교
 

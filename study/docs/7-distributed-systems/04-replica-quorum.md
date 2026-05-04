@@ -13,10 +13,10 @@ created: 2026-05-01
 
 | 목적 | 설명 |
 |---|---|
-| 가용성 (HA) | 1대 죽어도 서비스 계속 |
+| 가용성 (HA (High Availability, 고가용성)) | 1대 죽어도 서비스 계속 |
 | 지리적 분산 | 사용자 가까이 read latency ↓ |
 | 처리량 (read scale) | read fan-out |
-| 백업 / DR | replica = 부분적 백업 |
+| 백업 / DR (Disaster Recovery, 재해 복구) | replica = 부분적 백업 |
 
 **비용**: write 가 더 비쌈 (모든 replica 에 propagate), 일관성 트레이드오프.
 
@@ -143,7 +143,7 @@ B: {nodeA: 2, nodeB: 2}
 
 ```
 3 broker → 토픽 partition replica = 3 (RF=3)
-producer.acks=all  → ISR 모두 ack
+producer.acks=all  → ISR (In-Sync Replicas) 모두 ack
 min.insync.replicas=2  → 적어도 2 replica 살아있어야 write 허용
 ```
 
@@ -222,8 +222,8 @@ network partition 으로 양측이 서로 자신이 leader 라고 믿는 상황.
 
 - [ ] 모든 stateful 컴포넌트 (DB, Redis, Kafka, ES) 의 **replication 모드** 가 명시되어 있나?
 - [ ] **write 일관성** (acks/quorum) 이 도메인 critical level 에 맞나?
-- [ ] **failover 시 데이터 손실 가능성** 이 RPO 에 부합하나?
-- [ ] **read replica lag** 모니터링 SLI 가 있나?
+- [ ] **failover 시 데이터 손실 가능성** 이 RPO (Recovery Point Objective, 복구 지점 목표) 에 부합하나?
+- [ ] **read replica lag** 모니터링 SLI (Service Level Indicator, 서비스 수준 지표) 가 있나?
 - [ ] **split-brain** 시나리오에 대한 대응이 있나? (fencing / quorum)
 
 ## 10. 한 줄 요약

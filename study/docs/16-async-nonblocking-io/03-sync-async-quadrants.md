@@ -11,7 +11,7 @@ created: 2026-05-01
 ## TL;DR
 
 - Sync/Async 와 Blocking/Non-blocking 은 **같은 축이 아니다**
-- Sync/Async = "단계 2 (복사) 를 누가 하느냐" — 호출자(sync) vs OS(async)
+- Sync/Async = "단계 2 (복사) 를 누가 하느냐" — 호출자(sync) vs OS (Operating System)(async)
 - Blocking/Non-blocking = "호출이 즉시 리턴하느냐" — block(blocking) vs 즉시(non-blocking)
 - 그래서 **4 분면**이 나오는데, 실용적으로는 3 칸만 의미가 있다
 - "비동기" 라는 한국어는 callback/future/coroutine/event-loop 모두를 가리켜 모호함 — 면접에서 명확히 정의하고 답해야 한다

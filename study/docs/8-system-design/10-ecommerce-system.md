@@ -93,13 +93,13 @@ Order COMPLETED → Kafka outbox → product.score.update / search index / analy
 ```
 
 **평가**: ★★★★★
-- 서비스 간 강결합 회피 (CDC + Debezium)
-- 멱등성 패턴 (ADR-0012)으로 At-least-once 안전
+- 서비스 간 강결합 회피 (CDC (Change Data Capture, 변경 데이터 캡처) + Debezium)
+- 멱등성 패턴 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012)으로 At-least-once 안전
 - 본 msa search consumer가 모범 사례
 
 **한계**:
 - 흐름 추적 어려움 (분산 트레이싱 강화 필요)
-- DLQ 정책 일관되지 않음 (서비스마다 다름)
+- DLQ (Dead Letter Queue, 데드 레터 큐) 정책 일관되지 않음 (서비스마다 다름)
 
 #### ④ Search 분리 (ADR-0008, 0009)
 
@@ -174,7 +174,7 @@ Order COMPLETED → Kafka outbox → product.score.update / search index / analy
 
 **부족**:
 - 대기열 (Queue Gateway) 없음 → 8번 ticketing 패턴 필요
-- CDN 적극 활용 미정 (정적 자원)
+- CDN (Content Delivery Network, 콘텐츠 전송 네트워크) 적극 활용 미정 (정적 자원)
 - Multi-region 미지원
 
 ### 3-2. 결제 폭주 (블프 세일)

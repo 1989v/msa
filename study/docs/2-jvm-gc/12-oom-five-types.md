@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-`OutOfMemoryError` 는 메시지가 **5가지** — 각각 원인과 진단법이 완전히 다르다. 메시지를 못 읽으면 진단 방향이 틀어진다. (1) **Java heap space** = 힙 부족, 가장 흔함. (2) **Metaspace** = 클래스 메타. (3) **GC overhead limit exceeded** = GC 가 일은 하는데 효율 < 2%. (4) **Direct buffer memory** = off-heap NIO. (5) **Unable to create native thread** = 스레드 한도 초과. 추가로 **OOMKilled (K8s)** 는 OOM 이 아니라 **OS 가 죽인 것** — JVM 안에서 메시지가 안 보임. 면접 단골: "OOM 발생하면 어떻게 진단하시나요?" → 메시지 종류부터 분류한다고 답해야 점수.
+`OutOfMemoryError` 는 메시지가 **5가지** — 각각 원인과 진단법이 완전히 다르다. 메시지를 못 읽으면 진단 방향이 틀어진다. (1) **Java heap space** = 힙 부족, 가장 흔함. (2) **Metaspace** = 클래스 메타. (3) **GC (Garbage Collection, 가비지 컬렉션) overhead limit exceeded** = GC 가 일은 하는데 효율 < 2%. (4) **Direct buffer memory** = off-heap NIO. (5) **Unable to create native thread** = 스레드 한도 초과. 추가로 **OOMKilled (K8s (Kubernetes))** 는 OOM (Out Of Memory, 메모리 부족) 이 아니라 **OS 가 죽인 것** — JVM (Java Virtual Machine, 자바 가상 머신) 안에서 메시지가 안 보임. 면접 단골: "OOM 발생하면 어떻게 진단하시나요?" → 메시지 종류부터 분류한다고 답해야 점수.
 
 ```
    OutOfMemoryError 메시지 분기

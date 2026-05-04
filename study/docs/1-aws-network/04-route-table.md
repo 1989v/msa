@@ -12,7 +12,7 @@ level: deep
 
 라우트 테이블은 서브넷의 트래픽이 **"어디로 가는지"** 를 정의하는 규칙 묶음. 각 서브넷은 **정확히 하나의 RT 에 연결** 되며, 하나의 RT 는 여러 서브넷에 공유 가능 (1:N).
 
-RT 잘못 설정은 **인터넷 단절의 1순위 원인** — SG 보다 먼저 의심할 영역.
+RT 잘못 설정은 **인터넷 단절의 1순위 원인** — SG (Security Group, 보안 그룹) 보다 먼저 의심할 영역.
 
 ## 2. 내부 메커니즘
 
@@ -39,9 +39,9 @@ Route Table: rtb-public
 
 ### 2.3 `local` 경로의 특별함
 
-- VPC 생성 시 RT 에 자동으로 `<VPC CIDR> → local` 추가
+- VPC (Virtual Private Cloud, 가상 사설 클라우드) 생성 시 RT 에 자동으로 `<VPC CIDR (Classless Inter-Domain Routing)> → local` 추가
 - **삭제 불가, 수정 불가** → VPC 내부는 항상 통신 가능
-- 이 때문에 같은 VPC 내 리소스는 기본적으로 네트워크 레벨에서 reachable (SG/NACL 로만 차단)
+- 이 때문에 같은 VPC 내 리소스는 기본적으로 네트워크 레벨에서 reachable (SG/NACL (Network Access Control List, 네트워크 ACL) 로만 차단)
 
 ### 2.4 Main Route Table (기본 RT)
 
@@ -80,7 +80,7 @@ Route Table: rtb-public
 ### 3.2 AZ 별 별도 RT vs 공유
 
 **AZ 별 별도 RT (권장)**:
-- 각 AZ 의 프라이빗 서브넷이 **같은 AZ 의 NAT** 를 바라봄
+- 각 AZ (Availability Zone, 가용 영역) 의 프라이빗 서브넷이 **같은 AZ 의 NAT (Network Address Translation, 네트워크 주소 변환)** 를 바라봄
 - Cross-AZ 트래픽 비용 회피
 - RT 개수만 AZ 수만큼
 
@@ -131,9 +131,9 @@ resource "aws_route_table" "private" {
 
 ### 4.3 msa 프로젝트 연결
 
-현재 msa 는 K8s Ingress 가 ALB 역할인데, EKS 이전 시 RT 는:
+현재 msa 는 K8s (Kubernetes) Ingress 가 ALB (Application Load Balancer, 애플리케이션 로드 밸런서) 역할인데, EKS 이전 시 RT 는:
 - Public RT: ALB, NAT GW 배치용 서브넷
-- Private RT × 3 AZ: EKS 워커 노드 + RDS 서브넷용
+- Private RT × 3 AZ: EKS 워커 노드 + RDS (Relational Database Service, 관계형 데이터베이스 서비스) 서브넷용
 
 ### 4.4 VPC Endpoint 경로 (Gateway 타입)
 
@@ -152,11 +152,11 @@ Gateway Endpoint 는 `<S3 prefix list> → vpce-xxx` 경로가 RT 에 자동 추
 
 ### 시나리오 1: 새 서브넷이 인터넷 안 됨
 
-**증상**: 방금 만든 서브넷의 EC2 가 외부 통신 안 됨.
+**증상**: 방금 만든 서브넷의 EC2 (Elastic Compute Cloud, 가상 머신 서비스) 가 외부 통신 안 됨.
 
 **진단**:
 1. 서브넷에 연결된 RT 확인
-2. 아마 **Main RT** 에 묵시적 연결됨 — Main RT 가 IGW 없는 기본값이면 인터넷 안 됨
+2. 아마 **Main RT** 에 묵시적 연결됨 — Main RT 가 IGW (Internet Gateway) 없는 기본값이면 인터넷 안 됨
 
 **해결**: `aws_route_table_association` 명시적으로 퍼블릭 RT 에 연결.
 

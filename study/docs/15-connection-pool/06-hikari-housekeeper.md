@@ -181,7 +181,7 @@ private ScheduledFuture<?> scheduleKeepalive() {
 
 ### 왜 필요한가
 
-K8s / cloud LB / NAT gateway 는 보통 *idle TCP* 를 5~15분 후 silent drop 한다. 클라이언트는 모르고, 다음 packet 송신 시 RST 받고 fail.
+K8s (Kubernetes) / cloud LB / NAT (Network Address Translation, 네트워크 주소 변환) gateway 는 보통 *idle TCP* 를 5~15분 후 silent drop 한다. 클라이언트는 모르고, 다음 packet 송신 시 RST 받고 fail.
 
 ```
 [App]──TCP──[k8s svc / NAT]──TCP──[MySQL]

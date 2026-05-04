@@ -371,5 +371,5 @@ override suspend fun execute(command: PlaceOrderUseCase.Command): PlaceOrderUseC
 
 ## 다음 학습
 
-- [09-external-io-separation.md](09-external-io-separation.md) — 외부 IO 분리 패턴 종합
+- [09-external-io-separation.md](09-external-io-separation.md) — 외부 IO (Input/Output, 입출력) 분리 패턴 종합
 - [10-transaction-template.md](10-transaction-template.md) — 프로그래밍 방식 트랜잭션

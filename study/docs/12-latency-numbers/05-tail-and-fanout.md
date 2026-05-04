@@ -14,7 +14,7 @@ estimated-hours: 1
 
 ## 0. 이 파일에서 얻을 것
 
-- **평균 vs P99 vs P999** 의 차이가 왜 사용자 경험을 결정하는가
+- **평균 vs P99 (99th Percentile, 가장 느린 1%) vs P999** 의 차이가 왜 사용자 경험을 결정하는가
 - **fan-out 의 곱셈 효과** — 백엔드 1개의 P99 가 전체 시스템의 P50 을 결정
 - **Little's Law** — latency 와 throughput 과 동시 처리량의 관계
 - 면접 답변 카드: "평균 latency 는 빠른데 사용자가 느리다고 합니다. 어디 의심?"

@@ -49,12 +49,12 @@ Client (deadline 500ms)
 | 취소 신호 | 클라 close → TCP RST | RST_STREAM 즉시 |
 | 표준 | 없음 | `grpc-timeout` metadata 표준 |
 
-⇒ msa 의 **fan-out 핫패스에서 tail latency 곱셈 효과 방지** 의 강력한 도구. ADR-0025 (latency budget) 와 자연스럽게 결합.
+⇒ msa 의 **fan-out 핫패스에서 tail latency 곱셈 효과 방지** 의 강력한 도구. ADR (Architecture Decision Record, 아키텍처 결정 기록) -0025 (latency budget) 와 자연스럽게 결합.
 
 ### 1-4. 실무 권고
 
 - 모든 RPC 는 deadline 을 **반드시 명시** (default = 무한 대기 = 위험)
-- gateway / outermost hop 이 사용자 SLA 에서 derive (예: 3s)
+- gateway / outermost hop 이 사용자 SLA (Service Level Agreement, 서비스 수준 협약) 에서 derive (예: 3s)
 - 내부 호출은 자동 전파 → 별도 설정 불필요
 - deadline 이 임박하면 **expensive work 를 시작하지 말 것** (DB 쓰기, 외부 호출)
 
@@ -294,7 +294,7 @@ override suspend fun getProduct(req: GetProductRequest): GetProductResponse {
 ### 8-1. Health check (`grpc.health.v1.Health`)
 
 - gRPC 표준 health check 서비스
-- K8s readiness/liveness probe 가 gRPC native 로 호출 가능 (1.24+)
+- K8s (Kubernetes) readiness/liveness probe 가 gRPC native 로 호출 가능 (1.24+)
   ```yaml
   livenessProbe:
     grpc:

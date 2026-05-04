@@ -165,7 +165,7 @@ groups:
 - `metric` = 원본 메트릭
 - `operation` = `rate5m`, `p99` 등
 
-→ msa 의 `prom rules` 는 미작성 상태. ADR 후보.
+→ msa 의 `prom rules` 는 미작성 상태. ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보.
 
 ### 4.2 Recording vs Alerting Rule 의 차이
 

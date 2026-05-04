@@ -12,7 +12,7 @@ created: 2026-05-03
 
 ## 1. 한 줄 핵심
 
-> **msa search 서비스는 BM25 + function_score + alias swap 의 정통 패턴을 따른다.**
+> **msa search 서비스는 BM25 (Best Match 25) + function_score + alias swap 의 정통 패턴을 따른다.**
 > 단, 변동성 필드 색인 (price), 멱등성 명시화 (version_type=external), search_analyzer 분리, multi-field 패턴 등 시니어 의사결정 점검 포인트가 5개 도출됨.
 
 ## 2. 모듈 구조 검증

@@ -9,7 +9,7 @@ phase: 3
 
 ## 한줄 요약
 
-가장 단순한 분산 락은 `SET lock:key uuid NX EX 5` + Lua DEL (owner 검증). atomic + TTL 자동 회수가 핵심. 그러나 **GC pause / clock drift / async replication** 으로 인해 **단일 마스터 SETNX 도 절대 안전하지 않다** — 그래서 펜싱 토큰이 필요 (13 에서).
+가장 단순한 분산 락은 `SET lock:key uuid NX EX 5` + Lua DEL (owner 검증). atomic + TTL 자동 회수가 핵심. 그러나 **GC (Garbage Collection, 가비지 컬렉션) pause / clock drift / async replication** 으로 인해 **단일 마스터 SETNX 도 절대 안전하지 않다** — 그래서 펜싱 토큰이 필요 (13 에서).
 
 ## 1. SETNX 의 안전한 형태
 

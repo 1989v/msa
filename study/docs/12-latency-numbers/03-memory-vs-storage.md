@@ -77,7 +77,7 @@ estimated-hours: 1
 
 - **Read ~16µs / Write ~수십 µs** (큰 차이는 아님)
 - 그러나 SSD 가 **거의 가득 차면 (~80%+)** write latency 가 폭증 — GC (garbage collection) 와 wear leveling 충돌
-- 실무 시그널: "SSD 사용률 90% 넘으면 P99 가 갑자기 ms 단위로 늘어남"
+- 실무 시그널: "SSD 사용률 90% 넘으면 P99 (99th Percentile, 가장 느린 1%) 가 갑자기 ms 단위로 늘어남"
 
 ---
 

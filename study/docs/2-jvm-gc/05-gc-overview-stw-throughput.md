@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-GC 는 **Throughput(처리량) 우선** 과 **Latency(저지연) 우선** 의 두 갈래. Parallel 은 throughput, ZGC/Shenandoah 는 latency. **G1 이 둘의 균형으로 JDK 9+ 기본**. JDK 21 LTS 부터는 ZGC Generational 이 안정화되어 큰 힙(8GB+) + 저지연 요구 워크로드의 새 기본이 되어가고 있다. **선택은 힙 크기 + 허용 가능한 pause time + throughput 손실 감내 여부 3개 축**.
+GC (Garbage Collection, 가비지 컬렉션) 는 **Throughput(처리량) 우선** 과 **Latency(저지연) 우선** 의 두 갈래. Parallel 은 throughput, ZGC (Z Garbage Collector)/Shenandoah 는 latency. **G1 (Garbage-First Collector) 이 둘의 균형으로 JDK 9+ 기본**. JDK 21 LTS 부터는 ZGC Generational 이 안정화되어 큰 힙(8GB+) + 저지연 요구 워크로드의 새 기본이 되어가고 있다. **선택은 힙 크기 + 허용 가능한 pause time + throughput 손실 감내 여부 3개 축**.
 
 ```
 Latency (낮은 pause)
@@ -55,7 +55,7 @@ Latency (낮은 pause)
 ### CMS (Concurrent Mark-Sweep) — Deprecated
 
 - **JDK 9 deprecated, JDK 14 제거**
-- 면접에서 "왜 CMS 가 사라졌나요?" 질문 단골 → **Old 단편화 + Initial Mark/Remark 의 STW + 코드 복잡도**
+- 면접에서 "왜 CMS (Concurrent Mark-Sweep) 가 사라졌나요?" 질문 단골 → **Old 단편화 + Initial Mark/Remark 의 STW + 코드 복잡도**
 - 후계자 = G1
 - 학습 포인트: CMS 는 사라졌지만 그 개념(concurrent mark)이 G1/ZGC 의 뿌리
 
@@ -97,7 +97,7 @@ Latency (낮은 pause)
 ### Epsilon GC (no-op)
 
 - **활성화**: `-XX:+UseEpsilonGC -XX:+UnlockExperimentalVMOptions`
-- **GC 안 함** — 힙이 다 차면 OOM
+- **GC 안 함** — 힙이 다 차면 OOM (Out Of Memory, 메모리 부족)
 - **용도**: 짧은 수명 워크로드(CLI tool, JMH 벤치마크 ), GC 영향 배제하고 측정할 때
 
 ---
@@ -125,7 +125,7 @@ Total GC Time = Frequency × Duration
 
 ### Throughput 의 정량 목표
 
-JVM 기본 GC throughput 목표 = **99%** (즉 GC 시간 < 1%). 측정:
+JVM (Java Virtual Machine, 자바 가상 머신) 기본 GC throughput 목표 = **99%** (즉 GC 시간 < 1%). 측정:
 ```
 GC log 에서:
   Total app time: 600s
@@ -143,7 +143,7 @@ GC log 에서:
 | 실시간 트레이딩 | < 10ms |
 | HFT / 음성 처리 | < 1ms (ZGC) |
 
-msa 의 일반 서비스(product, order, search)는 G1 의 200ms 기본이 안전 마진. 단 search 같은 P99 < 500ms SLO 가 있는 서비스는 더 짧은 pause 가 필요할 수 있음 (ADR-0025 latency budget).
+msa 의 일반 서비스(product, order, search)는 G1 의 200ms 기본이 안전 마진. 단 search 같은 P99 (Percentile, 백분위수 — 99th Percentile, 가장 느린 1%) < 500ms SLO (Service Level Objective, 서비스 수준 목표) 가 있는 서비스는 더 짧은 pause 가 필요할 수 있음 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0025 latency budget).
 
 ---
 
@@ -238,7 +238,7 @@ GC    [█][█][█][█][█][█][█][█][█][█][█][█][█][█]
 
 ### JDK 24-25
 - non-generational ZGC 제거 — 이제 ZGC = 항상 generational
-- Late Barrier Expansion (G1 의 write barrier 코드 생성 시점 연기) → JIT 코드 품질 ↑
+- Late Barrier Expansion (G1 의 write barrier 코드 생성 시점 연기) → JIT (Just-In-Time compilation, 즉시 컴파일) 코드 품질 ↑
 - **AOT 컴파일** (Project Leyden 일부 GA) — 부팅 시간 단축
 
 ### JDK 25 LTS의 추천 GC

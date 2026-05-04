@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 목표
 
-의도적으로 누수 시나리오를 만들어 OOM 을 재현 → heap dump 채취 → Eclipse MAT 의 Leak Suspects / Dominator Tree / Path to GC Roots 로 원인 추적. **누수 진단 절차** 를 몸에 붙인다.
+의도적으로 누수 시나리오를 만들어 OOM (Out Of Memory, 메모리 부족) 을 재현 → heap dump 채취 → Eclipse MAT 의 Leak Suspects / Dominator Tree / Path to GC (Garbage Collection, 가비지 컬렉션) Roots 로 원인 추적. **누수 진단 절차** 를 몸에 붙인다.
 
 ## 소요 시간
 

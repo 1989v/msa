@@ -18,7 +18,7 @@ created: 2026-05-01
    L1: TLS / etcd encryption  ────► 통신/저장 보호
 ```
 
-각 층은 보완재. RBAC 만으로 부족하고, PSS 만으로 부족함.
+각 층은 보완재. RBAC (Role-Based Access Control, 역할 기반 접근 제어) 만으로 부족하고, PSS 만으로 부족함.
 
 ## 2. RBAC — Role-Based Access Control
 

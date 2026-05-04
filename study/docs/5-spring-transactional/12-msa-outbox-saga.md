@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 12. msa Outbox + Saga 적용 분석
 
-> **이 파일의 한 줄 요약** — msa 는 inventory/fulfillment/quant 에 Outbox 적용. order/inventory/fulfillment 의 흐름이 자연스러운 **choreography Saga**. 보상 트랜잭션 일부는 미구현 — 운영 시 manual intervention 가능성.
+> **이 파일의 한 줄 요약** — msa 는 inventory/fulfillment/quant 에 Outbox 적용. order/inventory/fulfillment 의 흐름이 자연스러운 **choreography Saga**. 보상 트랜잭션 일부는 미구현 — 운영 시 manual intervention 가능성. ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012 멱등성 키 활용.
 
 ---
 
@@ -345,7 +345,7 @@ Outbox 폴링이 단순 ORDER BY createdAt 으로 정렬해도, Kafka 발행이 
 
 ### Q. Outbox 의 단점은?
 
-> 4가지 정도 알고 있습니다. 첫째, polling interval 만큼 latency 가 생겨서 1초 미만 즉시성이 필요한 케이스에는 CDC (Debezium) 같은 대안이 더 적합합니다. 둘째, 테이블이 무한 증가해서 별도 retention 정책 (7일 후 DELETE) 이 필요합니다. 셋째, Kafka partition key 를 적절히 안 잡으면 같은 aggregate 의 이벤트 순서가 흔들립니다. 넷째, multi-replica 배포 시 두 인스턴스가 같이 폴링하면 중복 발행이 일어나서 SchedulerLock 같은 분산 락이 필요합니다. 우리 msa 는 1, 2번이 미해결 — 폴링 1초 latency 는 비즈니스적으로 허용 범위 안이지만, retention 스케줄러는 ADR 후보로 정리할 예정입니다.
+> 4가지 정도 알고 있습니다. 첫째, polling interval 만큼 latency 가 생겨서 1초 미만 즉시성이 필요한 케이스에는 CDC (Change Data Capture, 변경 데이터 캡처) (Debezium) 같은 대안이 더 적합합니다. 둘째, 테이블이 무한 증가해서 별도 retention 정책 (7일 후 DELETE) 이 필요합니다. 셋째, Kafka partition key 를 적절히 안 잡으면 같은 aggregate 의 이벤트 순서가 흔들립니다. 넷째, multi-replica 배포 시 두 인스턴스가 같이 폴링하면 중복 발행이 일어나서 SchedulerLock 같은 분산 락이 필요합니다. 우리 msa 는 1, 2번이 미해결 — 폴링 1초 latency 는 비즈니스적으로 허용 범위 안이지만, retention 스케줄러는 ADR 후보로 정리할 예정입니다.
 
 ---
 

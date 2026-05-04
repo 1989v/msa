@@ -8,11 +8,11 @@ created: 2026-05-03
 
 # 14. 동기화 — Outbox vs CDC
 
-> 묶음 3 (B) 시니어 의사결정 핵심. Dual Write 금지 → 어떻게 동기화? Outbox vs CDC 의 선택 기준 + msa 의 idempotent-consumer 패턴 (ADR-0012/0029) 와 결합.
+> 묶음 3 (B) 시니어 의사결정 핵심. Dual Write 금지 → 어떻게 동기화? Outbox vs CDC (Change Data Capture, 변경 데이터 캡처) 의 선택 기준 + msa 의 idempotent-consumer 패턴 (ADR (Architecture Decision Record, 아키텍처 결정 기록) -0012/0029) 와 결합.
 
 ## 1. 한 줄 핵심
 
-> **RDB (SoR) → 보조 저장소 (ES) 동기화는 단방향 + 비동기 + 멱등 + 측정 가능 한 lag SLA 가 표준.**
+> **RDB (Relational Database, 관계형 데이터베이스) (SoR (System of Record, 원본 데이터 시스템)) → 보조 저장소 (ES (Elasticsearch)) 동기화는 단방향 + 비동기 + 멱등 + 측정 가능 한 lag SLA (Service Level Agreement, 서비스 수준 협약) 가 표준.**
 > 구현 패턴은 Outbox 또는 CDC. msa 는 Outbox + Kafka 가 주력.
 
 ## 2. Dual Write 의 함정 (다시 강조)

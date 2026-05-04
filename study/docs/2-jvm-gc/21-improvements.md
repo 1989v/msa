@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-학습 결과를 바탕으로 msa 의 JVM/GC 운영을 개선할 **10개 제안** 을 우선순위로 정리. **현재 ADR 없음** → ADR-0028 (가칭) 신설 후보. 핵심: (1) GC 로그 / 자동 dump 가 빠진 게 가장 큰 운영 risk. (2) MaxRAMPercentage=75 가 1Gi limit 에선 빠듯. (3) 모니터링 인프라는 이미 완비 — **알람 룰만 추가 필요**.
+학습 결과를 바탕으로 msa 의 JVM (Java Virtual Machine, 자바 가상 머신)/GC (Garbage Collection, 가비지 컬렉션) 운영을 개선할 **10개 제안** 을 우선순위로 정리. **현재 ADR (Architecture Decision Record, 아키텍처 결정 기록) 없음** → ADR-0028 (가칭) 신설 후보. 핵심: (1) GC 로그 / 자동 dump 가 빠진 게 가장 큰 운영 risk. (2) MaxRAMPercentage=75 가 1Gi limit 에선 빠듯. (3) 모니터링 인프라는 이미 완비 — **알람 룰만 추가 필요**.
 
 ---
 

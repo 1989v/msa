@@ -12,7 +12,7 @@ level: deep
 
 ## 1. 재확인 (프리뷰 요약)
 
-VPC 는 AWS 리전 내에 생성하는 **논리적으로 격리된 가상 네트워크 공간**이다. CIDR 블록으로 내부 IP 범위를 지정하고, IGW 를 붙이기 전까지는 외부와 완전히 단절된다. 모든 EC2/RDS/EKS 리소스는 어딘가의 VPC 에 속한다.
+VPC (Virtual Private Cloud, 가상 사설 클라우드) 는 AWS 리전 내에 생성하는 **논리적으로 격리된 가상 네트워크 공간**이다. CIDR (Classless Inter-Domain Routing) 블록으로 내부 IP 범위를 지정하고, IGW (Internet Gateway) 를 붙이기 전까지는 외부와 완전히 단절된다. 모든 EC2 (Elastic Compute Cloud, 가상 머신 서비스)/RDS (Relational Database Service, 관계형 데이터베이스 서비스)/EKS 리소스는 어딘가의 VPC 에 속한다.
 
 ## 2. 내부 메커니즘
 
@@ -83,7 +83,7 @@ VPC (논리 네트워크)
 
 ### 4.1 msa 프로젝트 관점
 
-현재 msa 는 K8s 기반 (EKS 미이전) 으로, VPC 개념이 로컬에는 없고 프로덕션 EKS 이전 시 필요.
+현재 msa 는 K8s (Kubernetes) 기반 (EKS 미이전) 으로, VPC 개념이 로컬에는 없고 프로덕션 EKS 이전 시 필요.
 
 `docs/adr/ADR-0019-k8s-migration.md` 는 K8s 전환을 명시하지만 AWS VPC 설계는 미정.
 
@@ -131,8 +131,8 @@ resource "aws_vpc_ipv4_cidr_block_association" "secondary" {
 
 **진단**:
 1. 양쪽 **Route Table 에 상대 CIDR 경로** 추가했는가? (Peering 생성만으론 자동 안 됨)
-2. SG 가 상대 CIDR 을 허용하는가?
-3. NACL 이 막고 있는가?
+2. SG (Security Group, 보안 그룹) 가 상대 CIDR 을 허용하는가?
+3. NACL (Network Access Control List, 네트워크 ACL) 이 막고 있는가?
 4. CIDR 이 겹치지는 않는가? (겹치면 애초에 연결 실패하지만 재확인)
 
 **해결**: Peering 은 **라우팅 + SG 둘 다** 수동 설정 필요.
@@ -171,7 +171,7 @@ Q1: VPC 가 뭔가요?
 
 **Q1-1-1-1 답변**: **크게 잡는 게 낫다**. IP 는 공짜고, 실무에서 예상 외 확장이 빈번함. `/16` 이 관례. 단, 사내 다른 VPC / 온프레미스 CIDR 과 겹치지 않도록 사전 IPAM 필요.
 
-**Q1-2-1-1 답변**: Peering 은 **1:1, non-transitive** — 10개 VPC 면 45개 Peering 필요, A-B-C 삼각 통신 불가. TGW 는 **허브 구조, transitive** — 1개 TGW 에 모든 VPC 를 붙이면 O(N) 확장. 비용: Peering 은 연결비 무료, TGW 는 시간당 + 데이터 처리비.
+**Q1-2-1-1 답변**: Peering 은 **1:1, non-transitive** — 10개 VPC 면 45개 Peering 필요, A-B-C 삼각 통신 불가. TGW (Transit Gateway) 는 **허브 구조, transitive** — 1개 TGW 에 모든 VPC 를 붙이면 O(N) 확장. 비용: Peering 은 연결비 무료, TGW 는 시간당 + 데이터 처리비.
 
 ## 7. 함정 질문 / 오해 포인트
 

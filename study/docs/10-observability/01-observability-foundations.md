@@ -23,7 +23,7 @@ created: 2026-05-01
 
 - **known knowns**: 내가 알고 있고, 모니터링하고 있다 (CPU > 80% alert)
 - **known unknowns**: 내가 모르지만, 모니터링은 가능하다 (Heap dump 분석)
-- **unknown unknowns**: 내가 무엇이 무엇인지조차 모른다 (어떤 사용자 ID 의 어떤 path 가 P99 100배 튀고 있나?)
+- **unknown unknowns**: 내가 무엇이 무엇인지조차 모른다 (어떤 사용자 ID 의 어떤 path 가 P99 (99th Percentile, 가장 느린 1%) 100배 튀고 있나?)
 
 → Observability 는 **사후 자유 질의 (ad-hoc query)** 로 unknown unknowns 를 좁혀가는 능력. 이걸 위해 high-cardinality 데이터를 보존해야 함 → 자연스럽게 비용 문제로 연결됨.
 

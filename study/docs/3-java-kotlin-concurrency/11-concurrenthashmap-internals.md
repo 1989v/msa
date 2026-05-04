@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 한 줄
 
-ConcurrentHashMap 은 **Java 7 까진 segment 단위 락 (16개 정도)**, **Java 8 부턴 bin 단위 `synchronized` + CAS + 트리화** 로 구조가 바뀌었다. Java 8 버전이 contention 분산이 더 fine-grained 하고, hash collision 공격에도 트리 변환으로 방어한다.
+ConcurrentHashMap 은 **Java 7 까진 segment 단위 락 (16개 정도)**, **Java 8 부턴 bin 단위 `synchronized` + CAS (Compare-And-Swap, 비교-교환) + 트리화** 로 구조가 바뀌었다. Java 8 버전이 contention 분산이 더 fine-grained 하고, hash collision 공격에도 트리 변환으로 방어한다.
 
 ## Java 7 — Segmented Locking
 

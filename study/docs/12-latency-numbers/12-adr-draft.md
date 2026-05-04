@@ -9,7 +9,7 @@ estimated-hours: 4
 
 # 12. ADR-0025 초안 작성 — Latency Budget 표준
 
-> Phase 5. 본 학습의 마지막 산출물. 09 (msa 호출 경로 budget) 의 표를 ADR 형식으로 변환.
+> Phase 5. 본 학습의 마지막 산출물. 09 (msa 호출 경로 budget) 의 표를 ADR (Architecture Decision Record, 아키텍처 결정 기록) 형식으로 변환.
 > 아래 본문은 그대로 `docs/adr/ADR-0025-latency-budget.md` 로 옮길 수 있는 PR-ready 초안.
 
 ## 0. 이 파일에서 얻을 것

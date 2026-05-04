@@ -100,7 +100,7 @@ spec:
 
 **현재**: 모든 HPA CPU 70% 단일.
 
-**제안 A — gateway 의 RPS 기반**:
+**제안 A — gateway 의 RPS (Requests Per Second, 초당 요청 수) 기반**:
 
 ```yaml
 # Prometheus Adapter rule

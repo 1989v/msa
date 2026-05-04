@@ -43,7 +43,7 @@ estimated-hours: 2
 2. DRAM → SSD ×1000 (캐시 레이어 도입 근거)
 3. SSD → DC RTT ×30 (Redis vs 로컬 디스크)
 4. DC → 대륙 간 RTT ×300 (멀티 리전 비용)
-5. 평균 → P99 ×3-10 (tail latency)
+5. 평균 → P99 (99th Percentile, 가장 느린 1%) ×3-10 (tail latency)
 
 ---
 

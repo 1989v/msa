@@ -14,7 +14,7 @@ created: 2026-04-28
 
 ## Phase 1: 암호 빌딩 블록 (8개)
 
-**Q1.1** AES-GCM vs CBC, 왜 GCM을 쓰는가?
+**Q1.1** AES (Advanced Encryption Standard, 고급 암호화 표준)-GCM vs CBC, 왜 GCM을 쓰는가?
 > CBC는 무결성을 제공하지 않아서 padding oracle attack에 취약하고, MAC을 별도로 붙여야 함. GCM은 CTR 모드로 병렬화 가능하고 GMAC으로 인증 태그까지 포함된 AEAD라 단일 호출로 기밀성+무결성을 보장. 표준이 GCM으로 굳어진 이유.
 
 **Q1.2** IV는 비밀이어야 하는가? 왜 한 번만 써야 하는가?

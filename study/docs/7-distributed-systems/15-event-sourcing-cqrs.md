@@ -7,7 +7,7 @@ created: 2026-05-01
 
 # 15. Event Sourcing + CQRS + Exactly-Once
 
-> Event Sourcing 은 **"상태는 이벤트의 누적"** 으로 보는 패러다임. CQRS 는 **read 와 write 의 분리**. 둘은 자주 함께 쓰이지만 **별개 패턴**.
+> Event Sourcing (ES (Event Sourcing, 이벤트 소싱)) 은 **"상태는 이벤트의 누적"** 으로 보는 패러다임. CQRS (Command Query Responsibility Segregation, 명령-조회 책임 분리) 는 **read 와 write 의 분리**. 둘은 자주 함께 쓰이지만 **별개 패턴**.
 
 ## 1. Event Sourcing (ES)
 
@@ -166,7 +166,7 @@ fun reconcile() {
 | analytics | 이미 이벤트 기반 | 자연 ES |
 | product / search / wishlist | CRUD 단순 | 비추 |
 
-→ 19-improvements.md 에서 **ES 도입 검토 ADR 후보** 로 정리.
+→ 19-improvements.md 에서 **ES 도입 검토 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보** 로 정리.
 
 ## 5. ES 의 Event Versioning
 
@@ -308,7 +308,7 @@ aggregate 가 수백만 이벤트 누적 → snapshot 필수.
 | Read | projection 또는 replay | 정통 RDBMS query |
 | 복잡도 | 매우 높음 | 보통 |
 | 적용 비용 | 큼 (전면 재설계) | 작음 (테이블 추가) |
-| 추천 | critical / audit 도메인 | 거의 모든 MSA 분산 tx |
+| 추천 | critical / audit 도메인 | 거의 모든 MSA (Microservices Architecture, 마이크로서비스 아키텍처) 분산 tx |
 
 → msa 는 **Outbox 까지** 도입. ES 는 별도 ADR 후보 (특히 quant).
 

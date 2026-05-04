@@ -155,7 +155,7 @@ k8s/infra/prod/monitoring/dashboards/
 2. JVM Non-Heap Memory
 3. (이하 GC, threads 등 — 직접 검증 누락)
 
-→ #02 의 JFR cross-ref. GC pause heatmap 추가 권장.
+→ #02 의 JFR cross-ref. GC (Garbage Collection, 가비지 컬렉션) pause heatmap 추가 권장.
 
 ### 2.4 누락된 dashboard
 

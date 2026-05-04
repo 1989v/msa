@@ -57,7 +57,7 @@ spec:
 | `readinessProbe` | Endpoints 에서 Pod IP 제거 (트래픽 차단) | 평시 |
 | `livenessProbe` | Pod kill → 재기동 | 평시 |
 
-함정: **readiness 가 실패하면 Service 에서 빠질 뿐 Pod 는 살아있다.** liveness 와 readiness 를 같은 endpoint 로 두면 부팅 중 OOM-killed 루프에 빠지기 쉽다. msa 는 Spring Boot Actuator 의 `/actuator/health/{liveness,readiness}` 분리 endpoint 를 사용한다 (`k8s/base/gateway/deployment.yaml:32-44`).
+함정: **readiness 가 실패하면 Service 에서 빠질 뿐 Pod 는 살아있다.** liveness 와 readiness 를 같은 endpoint 로 두면 부팅 중 OOM (Out Of Memory, 메모리 부족)-killed 루프에 빠지기 쉽다. msa 는 Spring Boot Actuator 의 `/actuator/health/{liveness,readiness}` 분리 endpoint 를 사용한다 (`k8s/base/gateway/deployment.yaml:32-44`).
 
 ### QoS 클래스 (resource 설정에 따른 자동 분류)
 

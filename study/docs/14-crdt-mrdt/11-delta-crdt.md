@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 11. Delta-CRDT · Anti-Entropy
 
-CvRDT 의 가장 큰 운영 문제: **state 가 크면 매번 전체 전송이 부담**. Delta-CRDT 는 변경분만 전송하는 우아한 해결책.
+CvRDT 의 가장 큰 운영 문제: **state 가 크면 매번 전체 전송이 부담**. Delta-CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 는 변경분만 전송하는 우아한 해결책.
 
 ## 동기
 

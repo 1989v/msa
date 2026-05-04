@@ -92,7 +92,7 @@ CONFIG SET maxmemory 4gb
 CONFIG SET maxmemory-policy allkeys-lfu
 ```
 
-`maxmemory 0` 은 무제한 (시스템 메모리 한도까지) — **운영에서는 항상 명시**해야 OOM 으로 OS 가 프로세스 죽이는 걸 막는다.
+`maxmemory 0` 은 무제한 (시스템 메모리 한도까지) — **운영에서는 항상 명시**해야 OOM (Out Of Memory, 메모리 부족) 으로 OS 가 프로세스 죽이는 걸 막는다.
 
 ### 3.2 6가지 정책 (Redis 7.x)
 

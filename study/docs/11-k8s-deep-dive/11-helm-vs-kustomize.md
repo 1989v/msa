@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 1. 두 도구가 푸는 같은 문제
 
-> "같은 K8s 매니페스트를 환경(dev/stage/prod) 에 따라 조금씩 다르게 적용하기."
+> "같은 K8s (Kubernetes) 매니페스트를 환경(dev/stage/prod) 에 따라 조금씩 다르게 적용하기."
 
 해결 방향:
 - **Helm** — Go template 으로 변수 치환 + 함수 + 조건부 (Sprig). 패키지(차트) 단위 배포.

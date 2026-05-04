@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 19. msa 표준화 후보 종합
 
-> 본 파일은 17번 학습 전체 ([01](01-http-pipeline.md) ~ [18](18-msa-common-patterns.md)) 의 결론을 우선순위별 ADR 후보로 정리한다.
+> 본 파일은 17번 학습 전체 ([01](01-http-pipeline.md) ~ [18](18-msa-common-patterns.md)) 의 결론을 우선순위별 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보로 정리한다.
 
 ## 1. 제안 종합표
 
@@ -244,7 +244,7 @@ class BithumbClient(...) {
 
 **언제 Phase 2?**: Tier 1 서비스에서 외부 호출 latency 가 SLA 의 50% 를 넘기 시작할 때.
 
-**ADR**: 장기 (AOP 표준 패턴)
+**ADR**: 장기 (AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 표준 패턴)
 
 ### 6. BREACH 대응 — 위 #2 와 합침
 
@@ -272,7 +272,7 @@ fun chain(http: ServerHttpSecurity, jwtDecoder: ReactiveJwtDecoder): SecurityWeb
         .build()
 ```
 
-→ Spring Security 표준 컴포넌트 (JWT decoder, JWKS, RBAC) 활용.
+→ Spring Security 표준 컴포넌트 (JWT (JSON Web Token) decoder, JWKS, RBAC (Role-Based Access Control, 역할 기반 접근 제어)) 활용.
 
 **ADR**: L3 — 13번 ADR-0004 (인증) + 외부 IdP 도입과 함께.
 
@@ -282,8 +282,8 @@ fun chain(http: ServerHttpSecurity, jwtDecoder: ReactiveJwtDecoder): SecurityWeb
 
 **개선**:
 
-- K8s `NetworkPolicy` — gateway pod 만 다운스트림 service 호출 가능
-- Istio/Linkerd — 자동 mTLS, SPIFFE identity
+- K8s (Kubernetes) `NetworkPolicy` — gateway pod 만 다운스트림 service 호출 가능
+- Istio/Linkerd — 자동 mTLS (mutual TLS, 양방향 TLS), SPIFFE identity
 
 → 13번 학습의 #17-mtls 과 직결.
 

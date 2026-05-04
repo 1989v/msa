@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 목표
 
-JMH 로 micro 벤치마크 작성 → **Escape Analysis / Inlining / Tiered Compilation** 효과를 직접 측정. 면접에서 "JIT 가 정말 객체 할당을 제거하나요?" 같은 질문에 측정 데이터로 답할 수 있게 만든다.
+JMH 로 micro 벤치마크 작성 → **Escape Analysis / Inlining / Tiered Compilation** 효과를 직접 측정. 면접에서 "JIT (Just-In-Time compilation, 즉시 컴파일) 가 정말 객체 할당을 제거하나요?" 같은 질문에 측정 데이터로 답할 수 있게 만든다.
 
 ## 소요 시간
 

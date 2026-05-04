@@ -14,13 +14,13 @@ title: 시나리오별 면접 꼬리질문 모음
 ## 0. 공통 (어떤 시나리오든)
 
 **Q. DAU 10x로 늘면 어디가 먼저 터질까요?**
-A. "보통 DB → Cache → MQ → Network 순으로 병목이 옮겨갑니다. DB는 인덱스/샤딩, Cache는 hit ratio + Stampede 방어, MQ는 partition 추가 + autoscale, Network는 CDN/edge로 풀겠습니다. 어디가 먼저인지는 현재 read:write 비율과 active set 크기로 판단합니다."
+A. "보통 DB → Cache → MQ → Network 순으로 병목이 옮겨갑니다. DB는 인덱스/샤딩, Cache는 hit ratio + Stampede 방어, MQ는 partition 추가 + autoscale, Network는 CDN (Content Delivery Network, 콘텐츠 전송 네트워크)/edge로 풀겠습니다. 어디가 먼저인지는 현재 read:write 비율과 active set 크기로 판단합니다."
 
 **Q. Consistency vs Availability 우선순위는?**
 A. "Tier 1 (결제, 잔액)은 Strong Consistency 필수, Tier 2 (조회, 검색)는 Read-your-writes로 충분, Tier 3 (분석, 추천)은 Eventual OK. 본 msa의 latency budget도 같은 분류로 운영합니다."
 
 **Q. 어디서부터 모니터링하시나요?**
-A. "RED 메트릭 (Rate, Errors, Duration) per service + USE (Utilization, Saturation, Errors) per resource. SLO를 99.9% 정의하고 error budget 소진율이 50% 넘으면 alert."
+A. "RED 메트릭 (Rate, Errors, Duration) per service + USE (Utilization, Saturation, Errors) per resource. SLO (Service Level Objective, 서비스 수준 목표)를 99.9% 정의하고 error budget 소진율이 50% 넘으면 alert."
 
 ---
 
@@ -30,7 +30,7 @@ A. "RED 메트릭 (Rate, Errors, Duration) per service + USE (Utilization, Satur
 **A.** "Auto-Increment + Base62는 충돌 0이라 가장 단순합니다. Hash 방식이면 같은 키 발견 시 (1) 같은 원본 URL이면 재사용, (2) 다른 URL이면 attempt 카운터 증가시켜 재해시. 5회 초과 시 길이를 1자 늘립니다. UNIQUE 제약은 DB 레벨에서 한 번 더 방어."
 
 ### Q2. 5년 후 60억 row, 단일 MySQL 가능?
-**A.** "60억 × 150 byte = 900GB, 단일 MySQL 한계 근처입니다. 첫 번째 카드는 cold storage 이관 (1년 미사용 → S3), 두 번째는 read replica 추가, 세 번째가 샤딩 (short_key prefix hash 기반). 90%는 cache hit이라 실제 DB QPS는 작아 read replica로 버틸 수 있습니다."
+**A.** "60억 × 150 byte = 900GB, 단일 MySQL 한계 근처입니다. 첫 번째 카드는 cold storage 이관 (1년 미사용 → S3 (Simple Storage Service, 객체 스토리지)), 두 번째는 read replica 추가, 세 번째가 샤딩 (short_key prefix hash 기반). 90%는 cache hit이라 실제 DB QPS (Queries Per Second, 초당 쿼리 수)는 작아 read replica로 버틸 수 있습니다."
 
 ### Q3. 클릭 통계가 1초 단위로 정확해야 한다면?
 **A.** "그러면 Kafka 비동기 모델은 부적합. 동기 INCR을 Redis에 + 1분마다 batch flush로 ClickHouse에 적재. 다만 Redis 다운 시 손실이 있어, write-ahead log (Kafka producer)와 함께 운영합니다. 1초 정확도는 비용 ↑↑ — 보통 5-10초 lag 합의가 적절."
@@ -84,10 +84,10 @@ A. "RED 메트릭 (Rate, Errors, Duration) per service + USE (Utilization, Satur
 ## 4. Payment System (05번)
 
 ### Q1. 이중 결제 방어를 어떻게?
-**A.** "3중 방어: (1) Redis SETNX(idempo:key, TTL 24h)로 빠른 거절, (2) DB UNIQUE(idempotency_key)로 한 번 더, (3) PG 자체 idempotency_key로 마지막. Redis 다운 시 DB로 fallback. 가장 위험은 PG TIMEOUT — 절대 FAILED 처리 안 하고 5분 후 PG 조회로 확정."
+**A.** "3중 방어: (1) Redis SETNX(idempo:key, TTL (Time To Live, 생존 시간) 24h)로 빠른 거절, (2) DB UNIQUE(idempotency_key)로 한 번 더, (3) PG 자체 idempotency_key로 마지막. Redis 다운 시 DB로 fallback. 가장 위험은 PG TIMEOUT — 절대 FAILED 처리 안 하고 5분 후 PG 조회로 확정."
 
 ### Q2. SAGA 보상 트랜잭션 실패 시?
-**A.** "보상도 idempotent 설계. 실패 시 DLQ로 격리 + 운영자 alert + 자동 재시도 (exponential backoff). 끝까지 실패하면 manual reconciliation. 금융권은 보통 운영팀이 매일 새벽 reconcile job 결과를 검토."
+**A.** "보상도 idempotent 설계. 실패 시 DLQ (Dead Letter Queue, 데드 레터 큐)로 격리 + 운영자 alert + 자동 재시도 (exponential backoff). 끝까지 실패하면 manual reconciliation. 금융권은 보통 운영팀이 매일 새벽 reconcile job 결과를 검토."
 
 ### Q3. PG 5초 timeout 발생 시 사용자 화면은?
 **A.** "사용자에게는 'PENDING - 결과를 확인 중' 표시. 백엔드는 PG 조회 API로 5분 단위 확인 → 결과 확정 후 webhook/push로 사용자 알림. 결제 SSOT는 자체 DB (PG 의존 X)."
@@ -103,7 +103,7 @@ A. "RED 메트릭 (Rate, Errors, Duration) per service + USE (Utilization, Satur
 ## 5. Rate Limiter (06번)
 
 ### Q1. Token Bucket vs Sliding Window 언제?
-**A.** "Token Bucket이 80% 정답 — burst 허용 + 단순. Sliding Window는 정확한 SLA 검증 (99 RPS 정확히)이 필요할 때, 메모리 비용 감수. 본 msa는 Spring Cloud Gateway의 RedisRateLimiter (Token Bucket) 사용 중."
+**A.** "Token Bucket이 80% 정답 — burst 허용 + 단순. Sliding Window는 정확한 SLA (Service Level Agreement, 서비스 수준 협약) 검증 (99 RPS (Requests Per Second, 초당 요청 수) 정확히)이 필요할 때, 메모리 비용 감수. 본 msa는 Spring Cloud Gateway의 RedisRateLimiter (Token Bucket) 사용 중."
 
 ### Q2. 분산 환경에서 정확한 카운터는?
 **A.** "중앙 Redis + Lua script 가 표준. Spring Cloud Gateway 내장 Lua가 `last_tokens + delta * rate`를 atomic 계산. Redis 단일 스레드라 race condition 없음. 분산 캐시 (Redis Cluster) 도 OK — key 기반 hash."
@@ -185,7 +185,7 @@ A. "RED 메트릭 (Rate, Errors, Duration) per service + USE (Utilization, Satur
 **A.** "Auto-Increment PK를 KSUID로 바꾸겠습니다. 현재는 단일 MySQL 의존이라 1억 row 도달 시 샤딩 마이그레이션이 강제됩니다. 처음부터 분산 친화적 ID로 시작했으면 점진적 샤딩이 쉬웠을 것."
 
 ### Q3. Saga Choreography 선택 이유와 한계?
-**A.** "Phase 1에서 단순성 우선이라 Choreography 채택 (ADR-0011). 이벤트 chain이 명확하고 중앙 의존 없음이 장점. 한계는 흐름 추적 — 분산 트레이싱 (OpenTelemetry + Jaeger) 강화가 다음 과제. 복잡한 5+ 단계는 Orchestrator (Temporal) 도 검토."
+**A.** "Phase 1에서 단순성 우선이라 Choreography 채택 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0011). 이벤트 chain이 명확하고 중앙 의존 없음이 장점. 한계는 흐름 추적 — 분산 트레이싱 (OpenTelemetry + Jaeger) 강화가 다음 과제. 복잡한 5+ 단계는 Orchestrator (Temporal) 도 검토."
 
 ### Q4. 단일 PG 의존은 위험한가?
 **A.** "운영 환경에선 매우 위험 — PG 다운 = 매출 0. 본 msa는 학습 목적이라 단일이지만, P1 개선 후보로 Multi-PG 라우팅 (70/20/10 split) + per-provider CircuitBreaker + 정산 reconciliation 분리를 두고 있습니다."

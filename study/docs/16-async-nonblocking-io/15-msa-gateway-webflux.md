@@ -98,7 +98,7 @@ fun routeLocator(builder: RouteLocatorBuilder): RouteLocator =
 - 모든 filter 가 `Mono` 를 반환 (어딘가에서)
 - `uri("http://product:8081")` — Reactor Netty `HttpClient` 가 request 를 forward
 
-> **K8s DNS 라우팅** — `http://product:8081` 같은 짧은 호스트네임이 K8s service DNS 로 resolve.
+> **K8s (Kubernetes) DNS 라우팅** — `http://product:8081` 같은 짧은 호스트네임이 K8s service DNS 로 resolve.
 
 ---
 

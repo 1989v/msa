@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 13. msa 코드베이스 적용 제안
 
-> Phase 3 ([11-msa-codebase-grep.md](11-msa-codebase-grep.md)) 의 발견 사항을 우선순위 + ADR 필요 여부로 정리.
+> Phase 3 ([11-msa-codebase-grep.md](11-msa-codebase-grep.md)) 의 발견 사항을 우선순위 + ADR (Architecture Decision Record, 아키텍처 결정 기록) 필요 여부로 정리.
 
 ## 코드 / 설정 개선 제안 종합
 
@@ -200,14 +200,14 @@ StreamsConfig.PROCESSING_GUARANTEE_CONFIG to "exactly_once_v2"
 
 **주의**:
 - Streams 의 외부 write (Redis cacheProductScore, ClickHouse productScoreRepository.save) 는 **여전히 외부 IO** → EOS 보장 외. 멱등 설계 별도 필요 (현재는 windowedKey 기반 자연 멱등 — OK).
-- transactional broker 설정 필요 (msa 프로덕션은 이미 RF=3, min.ISR=2 갖춤).
+- transactional broker 설정 필요 (msa 프로덕션은 이미 RF=3, min.ISR (In-Sync Replicas)=2 갖춤).
 - throughput 약간 ↓ (트랜잭션 오버헤드, 보통 10-30%).
 
 **ADR**: 마이너 (운영 모드 명시).
 
 ### 11. rack-awareness 도입
 
-**전제**: msa 프로덕션이 multi-AZ 배포.
+**전제**: msa 프로덕션이 multi-AZ (Availability Zone, 가용 영역) 배포.
 
 **개선**:
 ```yaml
@@ -314,4 +314,4 @@ ConsumerConfig.CLIENT_RACK_CONFIG to System.getenv("AWS_REGION") + "-" +
 
 ## 결론
 
-msa 의 Kafka 사용은 **표준이 잘 잡혀있고 일관성도 좋다**. ADR-0012 (멱등 컨슈머) + ADR-0015 (DLQ + Resilience) 가 코드와 부합한다. 개선 후보는 대부분 **운영 안정성** (rebalance 부담 ↓, atomic 멱등) 또는 **비용 최적화** (rack-aware, compression) 영역. 즉시 가치 있는 것 (1, 2, 3) 은 코드 변경 작고 ADR 불필요 — 다음 sprint 후보.
+msa 의 Kafka 사용은 **표준이 잘 잡혀있고 일관성도 좋다**. ADR-0012 (멱등 컨슈머) + ADR-0015 (DLQ (Dead Letter Queue, 데드 레터 큐) + Resilience) 가 코드와 부합한다. 개선 후보는 대부분 **운영 안정성** (rebalance 부담 ↓, atomic 멱등) 또는 **비용 최적화** (rack-aware, compression) 영역. 즉시 가치 있는 것 (1, 2, 3) 은 코드 변경 작고 ADR 불필요 — 다음 sprint 후보.

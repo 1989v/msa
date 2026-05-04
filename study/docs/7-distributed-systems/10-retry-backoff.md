@@ -214,7 +214,7 @@ fun errorHandler(deadLetterRecoverer: DeadLetterPublishingRecoverer): DefaultErr
 }
 ```
 
-→ 3회 retry 실패 시 DLT (Dead Letter Topic) 으로. ADR-0015 의 표준.
+→ 3회 retry 실패 시 DLT (Dead Letter Topic) 으로. ADR (Architecture Decision Record, 아키텍처 결정 기록)-0015 의 표준.
 
 ## 9. HTTP Retry-After 헤더 존중
 

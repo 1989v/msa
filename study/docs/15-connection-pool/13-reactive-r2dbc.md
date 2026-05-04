@@ -65,7 +65,7 @@ class BadController(private val repo: ProductRepository) {
 1. event loop thread 4~8 개 — JDBC borrow + query 가 blocking
 2. Hikari 풀 10 일 때 동시 요청 10 개면 *모든 event loop thread 가 park*
 3. 다른 endpoint (Redis 만 쓰는, JDBC 없는) 도 동시에 *완전히 멈춤*
-4. K8s liveness probe 도 fail → pod 재시작
+4. K8s (Kubernetes) liveness probe 도 fail → pod 재시작
 
 해결: blocking 을 *반드시* 별도 scheduler 로.
 

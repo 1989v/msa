@@ -15,7 +15,7 @@ created: 2026-05-01
 ## Phase 1: 기본 메커니즘 (8개)
 
 **Q1.1** `@Transactional` 의 동작 원리를 설명해보세요.
-> Spring AOP 의 프록시 기반입니다. 컨테이너가 빈을 만들 때 `@Transactional` 이 붙은 클래스의 프록시 객체를 생성하는데, 인터페이스가 있으면 JDK Dynamic Proxy, 없으면 CGLIB 으로 만들고 Spring Boot 기본은 CGLIB 입니다. 외부에서 메서드 호출이 들어오면 프록시가 가로채서 `TransactionInterceptor` 가 호출됩니다. 이 인터셉터가 `PlatformTransactionManager.getTransaction()` 으로 트랜잭션 시작 → target 의 실제 메서드 실행 → 정상 종료면 commit, RuntimeException 이나 Error 면 rollback 을 수행합니다. 비즈니스 코드 안에 트랜잭션 코드를 한 줄도 안 쓰는 이유는 이 인터셉터가 모두 처리하기 때문입니다.
+> Spring AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 의 프록시 기반입니다. 컨테이너가 빈을 만들 때 `@Transactional` 이 붙은 클래스의 프록시 객체를 생성하는데, 인터페이스가 있으면 JDK Dynamic Proxy, 없으면 CGLIB 으로 만들고 Spring Boot 기본은 CGLIB 입니다. 외부에서 메서드 호출이 들어오면 프록시가 가로채서 `TransactionInterceptor` 가 호출됩니다. 이 인터셉터가 `PlatformTransactionManager.getTransaction()` 으로 트랜잭션 시작 → target 의 실제 메서드 실행 → 정상 종료면 commit, RuntimeException 이나 Error 면 rollback 을 수행합니다. 비즈니스 코드 안에 트랜잭션 코드를 한 줄도 안 쓰는 이유는 이 인터셉터가 모두 처리하기 때문입니다.
 
 **Q1.2** CGLIB 와 JDK Dynamic Proxy 의 차이는?
 > JDK 는 인터페이스 기반이라 빈이 인터페이스를 구현해야 하고 그 인터페이스의 메서드만 프록시할 수 있습니다. CGLIB 는 바이트코드를 생성해 서브클래스를 만들기 때문에 인터페이스 없이도 동작하지만 final 클래스나 final 메서드는 프록시할 수 없습니다. Kotlin 은 모든 클래스가 기본 final 이라 충돌이 일어나는데 `kotlin-spring` Gradle 플러그인이 `@Component`/`@Service`/`@Transactional` 같은 클래스를 자동으로 open 처리해줍니다. Spring Boot 기본은 `proxy-target-class=true` 로 인터페이스 유무와 무관하게 CGLIB 입니다.
@@ -61,7 +61,7 @@ created: 2026-05-01
 > DB 의 기본 격리 수준을 그대로 쓴다는 의미입니다. MySQL 은 REPEATABLE READ, PostgreSQL 과 Oracle 은 READ COMMITTED, SQL Server 도 READ COMMITTED 입니다. 같은 코드라도 DB 가 다르면 격리 동작이 다르다는 뜻이라서, 격리에 의존하는 비즈니스라면 `Isolation.READ_COMMITTED` 처럼 명시하는 게 안전합니다. msa 는 모든 서비스가 MySQL InnoDB 라 default 그대로 쓰고, isolation 명시가 거의 없습니다.
 
 **Q2.7** `readOnly = true` 의 실제 효과는 무엇인가요?
-> 네 가지가 직렬로 작동합니다. 첫째, Hibernate FlushMode 가 MANUAL 로 바뀌어 자동 flush 와 dirty check 를 안 합니다. 둘째, persistence context 가 entity snapshot 을 안 보관해서 메모리/CPU 를 절약합니다. 셋째, JDBC `Connection.setReadOnly(true)` 가 호출되는데 MySQL Connector/J 는 이걸 `SET SESSION TRANSACTION READ ONLY` 로 보내고, Aurora 같은 환경에서는 read replica 자동 라우팅 신호로 쓰입니다. 넷째, `TransactionSynchronizationManager` 에 readOnly 플래그가 ThreadLocal 로 노출돼서 application 레벨 라우팅에서 활용할 수 있습니다. 우리 msa 는 11개 JVM 서비스가 이 4번째 효과로 `RoutingDataSource` 가 master/replica 를 분기하고 있습니다.
+> 네 가지가 직렬로 작동합니다. 첫째, Hibernate FlushMode 가 MANUAL 로 바뀌어 자동 flush 와 dirty check 를 안 합니다. 둘째, persistence context 가 entity snapshot 을 안 보관해서 메모리/CPU 를 절약합니다. 셋째, JDBC `Connection.setReadOnly(true)` 가 호출되는데 MySQL Connector/J 는 이걸 `SET SESSION TRANSACTION READ ONLY` 로 보내고, Aurora 같은 환경에서는 read replica 자동 라우팅 신호로 쓰입니다. 넷째, `TransactionSynchronizationManager` 에 readOnly 플래그가 ThreadLocal 로 노출돼서 application 레벨 라우팅에서 활용할 수 있습니다. 우리 msa 는 11개 JVM (Java Virtual Machine, 자바 가상 머신) 서비스가 이 4번째 효과로 `RoutingDataSource` 가 master/replica 를 분기하고 있습니다.
 
 **Q2.8** `readOnly = true` 트랜잭션 안에서 entity 를 수정하면 어떻게 되나요?
 > Silent failure 가 발생합니다. FlushMode 가 MANUAL 이라 dirty check 가 안 일어나고 JPA 가 SQL 자체를 발행하지 않아서 driver 의 readOnly 검사도 안 걸립니다. 메서드는 예외 없이 정상 리턴하고 in-memory 에서는 변경된 것처럼 보이지만 DB 에는 반영되지 않습니다. 가장 무서운 종류의 버그라서 msa convention 에서는 단순 조회는 `@Transactional` 자체를 빼고, readOnly 가 정말 필요한 경우 — multi-query 일관성, Lazy loading, replica 라우팅 — 에만 명시적으로 사용하도록 규정하고 있습니다.
@@ -70,7 +70,7 @@ created: 2026-05-01
 > Spring 의 `AbstractRoutingDataSource` 를 상속해서 `RoutingDataSource` 를 만들고, `determineCurrentLookupKey` 안에서 `TransactionSynchronizationManager.isCurrentTransactionReadOnly()` 를 봐서 readOnly 면 REPLICA, 아니면 MASTER 를 반환합니다. 그 위에 `LazyConnectionDataSourceProxy` 를 한 번 더 감싸는 게 핵심인데, 이유는 `AbstractRoutingDataSource` 만 쓰면 트랜잭션 시작 시점에 커넥션을 잡아버려서 readOnly 메타가 ThreadLocal 에 들어가기 전에 라우팅 결정이 잘못 일어날 수 있습니다. `LazyConnectionDataSourceProxy` 는 첫 SQL 실행 시점까지 커넥션 획득을 미루기 때문에 트랜잭션 메타가 확정된 후에 라우팅이 결정돼서 정확합니다. msa 11개 JVM 서비스 모두 이 패턴을 표준으로 적용하고 있습니다.
 
 **Q2.10** Replica routing 의 한계는?
-> Replica lag 으로 인한 read-after-write 비일관성이 가장 큰 약점입니다. 사용자가 글을 쓰자마자 새로고침하면 replica 에 아직 안 와서 안 보일 수 있습니다. 우리 msa 는 현재 stickiness 정책이 없어서 향후 ADR 로 정리할 후보입니다. 옵션은 Redis 에 "최근 N 초 동안 이 사용자는 master 로" 같은 마커를 두는 방식, 또는 read-after-write 가 중요한 endpoint 에 `@WithMaster` 같은 hint 를 다는 방식입니다. 또 다른 한계는 같은 트랜잭션 안에서 master/replica 를 동적으로 바꿀 수 없다는 점인데, 이건 명시적 트랜잭션 분리로 해결합니다.
+> Replica lag 으로 인한 read-after-write 비일관성이 가장 큰 약점입니다. 사용자가 글을 쓰자마자 새로고침하면 replica 에 아직 안 와서 안 보일 수 있습니다. 우리 msa 는 현재 stickiness 정책이 없어서 향후 ADR (Architecture Decision Record, 아키텍처 결정 기록) 로 정리할 후보입니다. 옵션은 Redis 에 "최근 N 초 동안 이 사용자는 master 로" 같은 마커를 두는 방식, 또는 read-after-write 가 중요한 endpoint 에 `@WithMaster` 같은 hint 를 다는 방식입니다. 또 다른 한계는 같은 트랜잭션 안에서 master/replica 를 동적으로 바꿀 수 없다는 점인데, 이건 명시적 트랜잭션 분리로 해결합니다.
 
 **Q2.11** UnexpectedRollbackException 이 왜 발생하나요?
 > 중첩된 `@Transactional` 호출에서 안쪽 메서드가 RuntimeException 을 던지면 Spring 이 그 트랜잭션을 rollback-only 로 마킹합니다. 바깥 메서드가 그 예외를 catch 해서 정상 리턴하려고 하면, Spring 이 commit 을 시도하면서 rollback-only 마킹을 발견하고 `UnexpectedRollbackException` 을 던집니다. catch 한다고 마킹이 풀리는 게 아닙니다. 회피 방법은 네 가지: 안쪽 메서드를 REQUIRES_NEW 로 분리해서 별 트랜잭션으로 만들거나, 예외 대신 nullable 을 리턴하는 OrNull 메서드를 따로 두거나, 가장 안전하게는 외부 메서드의 `@Transactional` 자체를 제거하고 오케스트레이션만 하게 만드는 것. msa 의 `OrderService.execute()` 가 그렇게 설계됐습니다.
@@ -92,13 +92,13 @@ created: 2026-05-01
 > XA / 2PC 는 모든 참여자가 commit 가능 여부를 미리 보고하고 coordinator 가 일괄 commit 하는 방식인데, 모든 참여자가 lock 을 잡은 채로 prepared 상태로 대기하니까 throughput 이 매우 낮고 coordinator 장애 시 in-doubt transaction 이 생기는 문제가 있습니다. Saga 는 그 정반대 — 각 참여자가 자기 로컬 트랜잭션을 즉시 commit 하고, 실패 시 보상 트랜잭션으로 원복합니다. 강한 isolation 을 포기하는 대신 가용성과 성능을 얻고 eventual consistency 를 받아들이는 trade-off 입니다. 단점은 보상 트랜잭션을 항상 만들 수 있는 게 아니라는 점 — 이메일 발송 보상이 사과 메일이 되는 식이죠. msa 는 choreography Saga 로 order → inventory → fulfillment 흐름을 구성하고 있습니다.
 
 **Q3.4** Outbox 의 단점은?
-> 네 가지 알고 있습니다. 첫째, polling interval 만큼 latency — 1초 미만 즉시성이 필요하면 CDC (Debezium) 같은 대안이 더 적합합니다. 둘째, 테이블 무한 증가 — 별도 retention 정책 (7일 후 DELETE) 이 필요한데 msa 는 아직 미구현 입니다. 셋째, Kafka partition key 를 적절히 안 잡으면 같은 aggregate 의 이벤트 순서가 흔들립니다. 넷째, multi-replica 배포 시 두 인스턴스가 같이 폴링하면 중복 발행이 일어나서 SchedulerLock 같은 분산 락이 필요합니다. msa 는 1, 2번이 미해결 — 폴링 1초 latency 는 비즈니스적으로 허용 범위라서 그대로 두고 retention 스케줄러는 ADR 후보로 정리할 예정입니다.
+> 네 가지 알고 있습니다. 첫째, polling interval 만큼 latency — 1초 미만 즉시성이 필요하면 CDC (Change Data Capture, 변경 데이터 캡처) (Debezium) 같은 대안이 더 적합합니다. 둘째, 테이블 무한 증가 — 별도 retention 정책 (7일 후 DELETE) 이 필요한데 msa 는 아직 미구현 입니다. 셋째, Kafka partition key 를 적절히 안 잡으면 같은 aggregate 의 이벤트 순서가 흔들립니다. 넷째, multi-replica 배포 시 두 인스턴스가 같이 폴링하면 중복 발행이 일어나서 SchedulerLock 같은 분산 락이 필요합니다. msa 는 1, 2번이 미해결 — 폴링 1초 latency 는 비즈니스적으로 허용 범위라서 그대로 두고 retention 스케줄러는 ADR 후보로 정리할 예정입니다.
 
 **Q3.5** TransactionTemplate 은 언제 쓰나요?
 > 거의 안 씁니다. `@Transactional` 이 선언적이라 코드가 깔끔하고, 함정도 클래스 분리로 거의 다 풀리니까요. 그래도 알고 있는 케이스는 두 가지: 첫째, 동적으로 timeout 이나 propagation 을 바꿔야 할 때. 둘째, suspend 함수처럼 ThreadLocal 기반 트랜잭션 동기화가 어색한 곳에서 명시적으로 트랜잭션 경계를 정해야 할 때입니다. 다만 msa 는 suspend 인 OrderService 도 non-suspend 인 OrderTransactionalService 빈을 호출하는 우회로 풀어서 TransactionTemplate 없이 모든 케이스를 처리하고 있습니다.
 
 **Q3.6** 외부 API 호출 (e.g. 결제) 을 트랜잭션 안에서 하면 어떤 문제가 생기나요?
-> 세 가지 문제가 있습니다. 첫째, 커넥션 점유 — HTTP 호출이 수 초 걸리는 동안 DB 커넥션을 잡고 있어서 풀 사이즈에 압력이 가고 latency budget 을 깨뜨립니다. 둘째, phantom 이벤트 또는 이중 발행 — 트랜잭션 안에서 Kafka 발행하면 commit 전에 발행돼서 트랜잭션 롤백 시 이벤트만 broker 에 남거나, after_commit 보장 없이 발행되니 consumer 가 존재하지 않는 entity 의 이벤트를 받을 수 있습니다. 셋째, 부분 실패 회복 불가 — 외부 API timeout 시 실제로 처리됐는지 모르는 상태에서 롤백하면 외부는 commit 됐는데 우리는 롤백된 상태가 됩니다. 그래서 msa 는 TransactionalService 분리 + Outbox 로 외부 IO 를 트랜잭션 밖으로 빼냅니다.
+> 세 가지 문제가 있습니다. 첫째, 커넥션 점유 — HTTP 호출이 수 초 걸리는 동안 DB 커넥션을 잡고 있어서 풀 사이즈에 압력이 가고 latency budget 을 깨뜨립니다. 둘째, phantom 이벤트 또는 이중 발행 — 트랜잭션 안에서 Kafka 발행하면 commit 전에 발행돼서 트랜잭션 롤백 시 이벤트만 broker 에 남거나, after_commit 보장 없이 발행되니 consumer 가 존재하지 않는 entity 의 이벤트를 받을 수 있습니다. 셋째, 부분 실패 회복 불가 — 외부 API timeout 시 실제로 처리됐는지 모르는 상태에서 롤백하면 외부는 commit 됐는데 우리는 롤백된 상태가 됩니다. 그래서 msa 는 TransactionalService 분리 + Outbox 로 외부 IO (Input/Output, 입출력) 를 트랜잭션 밖으로 빼냅니다.
 
 **Q3.7** ADR-0012 idempotent consumer 의 핵심 메커니즘은?
 > 모든 Kafka 이벤트에 UUID `eventId` 필드를 추가하고, consumer 측에서 `processed_event` 테이블 — `event_id PRIMARY KEY` — 로 중복 체크합니다. 메시지를 받으면 eventId 추출 → processed_event 조회 → 존재하면 ACK 후 skip, 없으면 비즈니스 로직 실행 + processed_event INSERT 를 같은 트랜잭션 안에서 처리. eventId INSERT 가 PK 충돌하면 자동으로 롤백돼서 동시성 안전합니다. Outbox 의 at-least-once 와 결합해서 effectively-once 시맨틱을 만듭니다. 보관 정책은 7일이고 `processed_event` retention 스케줄러도 운영 중입니다.

@@ -10,19 +10,19 @@ level: deep
 
 ## 1. 재확인
 
-IGW 는 VPC 의 **유일한 인터넷 진입/탈출점**. VPC 당 1개만 연결 가능하며, 관리형 리소스라 사용자가 관리할 것은 없다. IGW 자체는 고가용/수평확장이 자동.
+IGW (Internet Gateway) 는 VPC (Virtual Private Cloud, 가상 사설 클라우드) 의 **유일한 인터넷 진입/탈출점**. VPC 당 1개만 연결 가능하며, 관리형 리소스라 사용자가 관리할 것은 없다. IGW 자체는 고가용/수평확장이 자동.
 
 ## 2. 내부 메커니즘
 
 ### 2.1 물리적 실체
 
 - IGW 는 **논리 컴포넌트** — 실제 특정 장비 지정 불가
-- AWS 백본에서 VPC 의 퍼블릭 IP 를 공인 IP 로 **NAT 변환**하여 인터넷에 전달
+- AWS 백본에서 VPC 의 퍼블릭 IP 를 공인 IP 로 **NAT (Network Address Translation, 네트워크 주소 변환) 변환**하여 인터넷에 전달
 - 양방향 (인바운드 + 아웃바운드) 지원
 
 ### 2.2 NAT 동작 (IGW 의 숨은 역할)
 
-- EC2 의 프라이빗 IP `10.0.1.5` ↔ 할당된 퍼블릭 IP `54.xxx.xxx.xxx` 간 1:1 NAT
+- EC2 (Elastic Compute Cloud, 가상 머신 서비스) 의 프라이빗 IP `10.0.1.5` ↔ 할당된 퍼블릭 IP `54.xxx.xxx.xxx` 간 1:1 NAT
 - 응답 트래픽은 자동으로 NAT 테이블을 통해 원래 프라이빗 IP 로 되돌림
 - 이것이 EC2 가 "프라이빗 IP 만 갖고도 인터넷 가능" 한 이유
 
@@ -47,7 +47,7 @@ IGW 는 VPC 의 **유일한 인터넷 진입/탈출점**. VPC 당 1개만 연결
 
 ### 3.1 VPC 당 IGW 1개 제약의 의미
 
-- 여러 인터넷 경로가 필요한 경우? → **별도 VPC 생성 + Peering/TGW**
+- 여러 인터넷 경로가 필요한 경우? → **별도 VPC 생성 + Peering/TGW (Transit Gateway)**
 - 조직 단위로 인터넷 출구를 중앙화하려면 **AWS Network Firewall + Central Egress VPC** 패턴
 
 ### 3.2 "IGW 없는 VPC" 시나리오
@@ -87,7 +87,7 @@ resource "aws_route_table" "public" {
 
 ### 4.2 msa 프로젝트 → AWS
 
-현재 msa 의 로컬 K8s (k3d) 는 IGW 가 없음 (Docker host 네트워크 활용). EKS 이전 시:
+현재 msa 의 로컬 K8s (Kubernetes) (k3d) 는 IGW 가 없음 (Docker host 네트워크 활용). EKS 이전 시:
 - 기본 1개 IGW 로 퍼블릭 서브넷 (ALB, NAT GW) 외부 접근
 - ADR-0019 는 IGW 관련 결정은 없음 → EKS 이전 ADR 에 명시 필요
 
@@ -110,8 +110,8 @@ resource "aws_route_table" "public" {
 
 **진단**:
 1. EC2 가 실제로 **퍼블릭 서브넷**에 있나? (서브넷 → RT 연결 확인)
-2. SG 아웃바운드 80/443 허용?
-3. NACL 아웃바운드 + ephemeral 인바운드 허용?
+2. SG (Security Group, 보안 그룹) 아웃바운드 80/443 허용?
+3. NACL (Network Access Control List, 네트워크 ACL) 아웃바운드 + ephemeral 인바운드 허용?
 4. EC2 내부 방화벽 (`iptables`/`firewalld`) 없나?
 
 **해결**: 4가지 전제 체크리스트 순회. 가장 흔한 원인은 서브넷이 기본 RT (IGW 경로 없음) 에 묵시적 연결되어 있던 경우.

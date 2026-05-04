@@ -42,7 +42,7 @@ ProductService$$SpringCGLIB$$0          ← 프록시 객체 (서브클래스)
 호출자 (정상 결과 또는 예외)
 ```
 
-핵심은 **`TransactionInterceptor`** 라는 AOP advice 가 호출 전후로 트랜잭션을 시작/커밋/롤백한다는 것. 비즈니스 코드 안에서 트랜잭션 코드를 한 줄도 쓰지 않는 이유는 이 인터셉터가 다 처리하기 때문이다.
+핵심은 **`TransactionInterceptor`** 라는 AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) advice 가 호출 전후로 트랜잭션을 시작/커밋/롤백한다는 것. 비즈니스 코드 안에서 트랜잭션 코드를 한 줄도 쓰지 않는 이유는 이 인터셉터가 다 처리하기 때문이다.
 
 ---
 

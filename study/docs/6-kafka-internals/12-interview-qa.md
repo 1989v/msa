@@ -21,7 +21,7 @@ created: 2026-05-01
 > Producer 의 partitioner 가 `hash(key) % partitions` 식이라, partitions 가 6→12 로 바뀌면 같은 key 가 다른 파티션으로 간다. 즉 같은 aggregate 의 메시지 순서가 깨진다. 보통 토픽을 새로 만들고 마이그레이션하거나, 처음부터 여유 있게 잡는다.
 
 **Q1.3** Replication Factor 와 min.insync.replicas 의 관계?
-> RF 는 복제본 총 개수, min.ISR 은 acks=all write 가 성공하려면 동기화 상태여야 하는 최소 replica 수. RF=3 + min.ISR=2 → 1대 장애까지 안전하게 쓰기 가능. RF=3 + min.ISR=1 이면 acks=all 의 의미가 사실상 acks=1 로 격하된다.
+> RF 는 복제본 총 개수, min.ISR (In-Sync Replicas) 은 acks=all write 가 성공하려면 동기화 상태여야 하는 최소 replica 수. RF=3 + min.ISR=2 → 1대 장애까지 안전하게 쓰기 가능. RF=3 + min.ISR=1 이면 acks=all 의 의미가 사실상 acks=1 로 격하된다.
 
 **Q1.4** Consumer 가 offset 을 어떻게 관리하나?
 > __consumer_offsets 라는 내부 토픽 (compact 정책) 에 (group.id, topic, partition) → (offset, metadata) 를 commit 한다. group coordinator 가 그 그룹의 commit 을 받아 토픽에 기록한다. 컨슈머 재시작/리밸런스 시 마지막 commit offset 부터 이어서 처리.
@@ -55,7 +55,7 @@ created: 2026-05-01
 > 1) **Sequential I/O** — append-only 로그라 random write 없음 (HDD 도 100MB/s). 2) **OS Page Cache** — fsync 강제 안 하고 page cache 에 의존, replication 으로 손실 방지. 3) **Zero-copy (sendfile)** — file → socket 직접 전송, user/kernel context switch 최소.
 
 **Q2.5** Kafka broker 의 JVM heap 을 작게 잡는 이유?
-> Kafka 는 Java 객체 캐싱을 거의 안 한다. heap 크면 GC pause ↑. 메모리 64GB 라면 heap 4-6GB + 나머지 OS page cache → 최근 데이터가 in-memory 효과. heap 큰 게 오히려 throughput 떨어진다.
+> Kafka 는 Java 객체 캐싱을 거의 안 한다. heap 크면 GC (Garbage Collection, 가비지 컬렉션) pause ↑. 메모리 64GB 라면 heap 4-6GB + 나머지 OS page cache → 최근 데이터가 in-memory 효과. heap 큰 게 오히려 throughput 떨어진다.
 
 **Q2.6** ISR 과 HW (High Watermark) 의 관계?
 > HW = ISR 모두에 복제된 마지막 offset = ISR LEO 들의 최솟값. 컨슈머는 HW 까지만 읽을 수 있다 (그 위는 invisible). 그래서 한번 컨슈머에 보였던 메시지는 절대 사라지지 않는다 — leader 죽어도 ISR 안의 다른 replica 가 같은 데이터 보유.
@@ -64,7 +64,7 @@ created: 2026-05-01
 > ISR 이 모두 죽었을 때, ISR 외 replica (out-of-sync) 를 leader 로 선출해 가용성 확보. 단 그 replica 의 LEO 가 HW 보다 작으면 그 차이만큼 데이터 손실. 도메인 이벤트는 false (안전성 우선), 메트릭/로그는 true (가용성 우선) 가 흔한 선택.
 
 **Q2.8** TLS 활성화 시 throughput 떨어지는 이유?
-> zero-copy (sendfile) 가 깨진다. 평문 file → 암호화는 user 공간에서 해야 하므로 sendfile 사용 불가. CPU 부하도 ↑. AES-NI 같은 hw 가속 + 충분한 코어 필요. 보통 throughput 30-50% 감소.
+> TLS (Transport Layer Security, 전송 계층 보안) 활성화 시 zero-copy (sendfile) 가 깨진다. 평문 file → 암호화는 user 공간에서 해야 하므로 sendfile 사용 불가. CPU 부하도 ↑. AES-NI 같은 hw 가속 + 충분한 코어 필요. 보통 throughput 30-50% 감소.
 
 ---
 
@@ -99,10 +99,10 @@ created: 2026-05-01
 ## Phase 4: 멱등성 / DLQ / 운영 (8개)
 
 **Q4.1** 멱등 컨슈머 패턴 4가지?
-> 1) DB UNIQUE/PRIMARY KEY (자연 멱등), 2) Redis SETNX (빠르나 Redis 장애 시 결정 필요), 3) processed_event 테이블 (msa 표준, ADR-0012), 4) Inbox Pattern (수신/처리 분리). 도메인에 따라 선택.
+> 1) DB UNIQUE/PRIMARY KEY (자연 멱등), 2) Redis SETNX (빠르나 Redis 장애 시 결정 필요), 3) processed_event 테이블 (msa 표준, ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012), 4) Inbox Pattern (수신/처리 분리). 도메인에 따라 선택.
 
 **Q4.2** DLQ 메시지를 어떻게 재처리하나?
-> DLQ 토픽 (.DLT) 을 구독하는 별도 consumer + 관리자 API 로 원본 토픽에 재발행. DefaultErrorHandler 가 자동으로 추가한 헤더 (`kafka_dlt-original-topic`, `kafka_dlt-exception-message` 등) 로 컨텍스트 파악. 재처리 시 컨슈머 멱등성으로 중복 방어.
+> DLQ (Dead Letter Queue, 데드 레터 큐) 토픽 (.DLT) 을 구독하는 별도 consumer + 관리자 API 로 원본 토픽에 재발행. DefaultErrorHandler 가 자동으로 추가한 헤더 (`kafka_dlt-original-topic`, `kafka_dlt-exception-message` 등) 로 컨텍스트 파악. 재처리 시 컨슈머 멱등성으로 중복 방어.
 
 **Q4.3** processed_event 테이블이 무한정 커지는 문제?
 > ADR-0012 에 따라 7일 보관 후 스케줄러로 정리. 보관 기간은 retention.ms × 안전 배수 (msa 토픽 7d → processed_event 7d). 같은 메시지가 retention 보다 늦게 도착하는 경우는 없으므로 안전.
@@ -139,7 +139,7 @@ created: 2026-05-01
 > Connect 는 source/sink connector 표준. JDBC, ES, S3 등 connector 가 미리 있어 코드 없이 데이터 이동. cluster 모드로 운영. 자체 producer/consumer 는 비즈니스 로직과 결합. 단순 ETL 은 Connect, 비즈니스 로직 끼면 자체.
 
 **Q5.5** Rack-aware fetch (KIP-881) 가 비용 절감하는 이유?
-> AWS / GCP cross-AZ 트래픽은 GB 당 과금. 같은 AZ 의 follower replica 에서 fetch 하면 zone 내 트래픽으로 처리되어 무료/저렴. 트래픽 큰 클러스터에서 월 수천 달러 절감 가능. 단 follower fetch 는 약간 stale (HW 까지) → strong consistency 필요시 leader fetch.
+> AWS / GCP cross-AZ (Availability Zone, 가용 영역) 트래픽은 GB 당 과금. 같은 AZ 의 follower replica 에서 fetch 하면 zone 내 트래픽으로 처리되어 무료/저렴. 트래픽 큰 클러스터에서 월 수천 달러 절감 가능. 단 follower fetch 는 약간 stale (HW 까지) → strong consistency 필요시 leader fetch.
 
 **Q5.6** Tiered Storage (Kafka 3.6+) 의 의미?
 > 옛날 segment 를 S3 같은 외부 스토리지로 offload. 로컬 디스크는 hot 데이터만 유지 → 디스크 비용 ↓, retention 무한대로 늘릴 수 있음. 컨슈머는 투명하게 외부 storage 도 읽음 (broker 가 중계). msa 는 미도입 — retention 30d analytics 토픽이 후보.

@@ -87,7 +87,7 @@ fun encrypt(plainText: String, aad: ByteArray? = null): String { ... }
 
 ### 7. External Secrets Operator
 
-**현재** — JWT secret, AES key가 K8s Secret(또는 환경변수)로 주입.
+**현재** — JWT (JSON Web Token) secret, AES (Advanced Encryption Standard, 고급 암호화 표준) key가 K8s (Kubernetes) Secret(또는 환경변수)로 주입.
 
 **개선** — AWS Secrets Manager에서 동기화. 회전 자동화.
 

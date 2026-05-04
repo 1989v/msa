@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 15. Accept-Encoding ↔ Vary ↔ 캐시 정합성
 
-> 압축을 켜면 같은 URL 이 두 가지 응답(압축 vs 비압축)을 만든다. CDN/proxy 캐시가 둘을 구분하지 못하면 **응답 오염** 이 발생.
+> 압축을 켜면 같은 URL 이 두 가지 응답(압축 vs 비압축)을 만든다. CDN (Content Delivery Network, 콘텐츠 전송 네트워크) /proxy 캐시가 둘을 구분하지 못하면 **응답 오염** 이 발생.
 
 ## 1. 협상 메커니즘
 

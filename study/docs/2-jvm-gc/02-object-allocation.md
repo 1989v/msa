@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-새 객체는 거의 다 **자기 스레드의 TLAB**(Thread-Local Allocation Buffer) 안에서 bump-pointer 로 할당된다. TLAB 가 차면 다른 TLAB 를 받거나 직접 Eden 에 할당. Minor GC 에서 살아남으면 Survivor → Old 로 promotion. **할당 99.9%는 Lock-free 한 포인터 증가 한 번**이라는 점이 JVM 의 핵심 성능 비결이다.
+새 객체는 거의 다 **자기 스레드의 TLAB**(Thread-Local Allocation Buffer) 안에서 bump-pointer 로 할당된다. TLAB 가 차면 다른 TLAB 를 받거나 직접 Eden 에 할당. Minor GC (Garbage Collection, 가비지 컬렉션) 에서 살아남으면 Survivor → Old 로 promotion. **할당 99.9%는 Lock-free 한 포인터 증가 한 번**이라는 점이 JVM (Java Virtual Machine, 자바 가상 머신) 의 핵심 성능 비결이다.
 
 ```
    ┌────────────────────────────────────────────────────────────────┐
@@ -40,7 +40,7 @@ created: 2026-05-01
 
 힙은 모든 스레드가 공유 → 동시에 객체를 할당하면 **잠금 경쟁**이 일어난다. Java 에서 `new Foo()` 가 lock 을 잡으면 멀티스레드 throughput이 망가진다.
 
-해법: 각 스레드에 **자기만의 작은 Eden 영역(TLAB)** 을 미리 떼어준다. 그 안에서는 *bump-pointer 한 줄짜리 포인터 증가* 만으로 할당. lock 도 CAS 도 필요 없음.
+해법: 각 스레드에 **자기만의 작은 Eden 영역(TLAB)** 을 미리 떼어준다. 그 안에서는 *bump-pointer 한 줄짜리 포인터 증가* 만으로 할당. lock 도 CAS (Compare-And-Swap, 비교-교환) 도 필요 없음.
 
 ```
 TLAB 내부:

@@ -24,7 +24,7 @@ created: 2026-04-28
 | **OAEP** | 암호화 | **권장** |
 | **PSS** | 서명 | **권장** (확률적, IND-CCA2) |
 
-Raw RSA는 결정론적이라 같은 평문이 같은 암호문이 되고, padding oracle 공격에 취약하다.
+Raw RSA (Rivest–Shamir–Adleman)는 결정론적이라 같은 평문이 같은 암호문이 되고, padding oracle 공격에 취약하다.
 
 ## ECDSA (Elliptic Curve DSA)
 

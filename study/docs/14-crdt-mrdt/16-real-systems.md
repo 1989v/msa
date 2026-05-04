@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 16. 실 시스템에서의 CRDT
 
-이론은 명확. **production 에선 운영 디테일이 차이를 만든다**. 대표 시스템 6개.
+이론은 명확. **production 에선 운영 디테일이 차이를 만든다**. 대표 시스템 6개. 본 절은 CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 의 실 시스템 사례를 다룬다.
 
 ## 1. Riak DT (Riak Data Types)
 

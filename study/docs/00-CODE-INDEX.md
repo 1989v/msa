@@ -30,7 +30,7 @@
   - [§2.ai](#ai)
   - [§2.search](#search)
 - [§2.5 Infra & Build](#25-infra--build)
-- [§3 ADR 역인덱스](#3-adr-역인덱스)
+- [§3 ADR (Architecture Decision Record, 아키텍처 결정 기록) 역인덱스](#3-adr-역인덱스)
 - [§4 Convention / Architecture / Standards / Spec / Plan 역인덱스](#4-convention--architecture--standards--spec--plan-역인덱스)
 - [§5 Path Type 통계](#5-path-type-통계)
 - [§6 Forward Index — 학습 노트별 인용 코드](#6-forward-index--학습-노트별-인용-코드)

@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-JVM 은 부팅 시 모든 코드를 native 로 컴파일하지 않는다. 처음엔 **인터프리터**로 바이트코드를 한 줄씩 실행, 자주 호출되는 hot method 만 **JIT 컴파일러(C1, C2)** 가 native 로 변환. **Tiered Compilation** 은 C1 빠른 컴파일 → C2 깊은 최적화 단계적 적용. C2 의 무기는 **inlining** (메서드 호출 제거) 과 **escape analysis** (객체 할당 제거). 이 둘이 Kotlin/Java 의 추상화 비용을 사실상 0 으로 만든다. **JFR + JMC** 로 hot method 를 보고, **JMH** 로 효과를 측정.
+JVM (Java Virtual Machine, 자바 가상 머신) 은 부팅 시 모든 코드를 native 로 컴파일하지 않는다. 처음엔 **인터프리터**로 바이트코드를 한 줄씩 실행, 자주 호출되는 hot method 만 **JIT (Just-In-Time compilation, 즉시 컴파일) 컴파일러(C1, C2)** 가 native 로 변환. **Tiered Compilation** 은 C1 빠른 컴파일 → C2 깊은 최적화 단계적 적용. C2 의 무기는 **inlining** (메서드 호출 제거) 과 **escape analysis** (객체 할당 제거). 이 둘이 Kotlin/Java 의 추상화 비용을 사실상 0 으로 만든다. **JFR + JMC** 로 hot method 를 보고, **JMH** 로 효과를 측정.
 
 ```
    소스 코드

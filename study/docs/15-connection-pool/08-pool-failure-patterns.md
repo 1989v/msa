@@ -115,7 +115,7 @@ fun placeOrder(req: OrderRequest): Order {
 ### 메트릭 패턴
 
 - `hikaricp.connections.active` 가 *지속적으로* high
-- `hikaricp.connections.usage.avg` 가 외부 IO timeout 과 비슷
+- `hikaricp.connections.usage.avg` 가 외부 IO (Input/Output, 입출력) timeout 과 비슷
 - DB QPS 는 낮음 (대부분 idle 상태)
 - 외부 서비스 (payment) 의 latency 와 *상관관계* 가 명확
 

@@ -29,7 +29,7 @@ title: Search System (ES 기반) — msa search 모듈 직접 분석
 | 검색 P99 latency | 200ms |
 | Indexing lag (event → 검색 노출) | < 5초 |
 | Availability | 99.9% (검색 다운 시 카탈로그 못 봄) |
-| Scale | 1억 product, 1000 QPS |
+| Scale | 1억 product, 1000 QPS (Queries Per Second, 초당 쿼리 수) |
 
 ---
 
@@ -177,10 +177,10 @@ fun consume(event: ProductIndexEvent) {
 ```
 
 **핵심**:
-- product 서비스 → Kafka → search consumer (CDC 패턴)
+- product 서비스 → Kafka → search consumer (CDC (Change Data Capture, 변경 데이터 캡처) 패턴)
 - `indexAlias` 사용 (직접 인덱스명 X) → reindex 시 무중단 swap
 - consumer group: `search-indexer`
-- 멱등성 (ADR-0012): 같은 productId가 두 번 와도 ES upsert 동작
+- 멱등성 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012): 같은 productId가 두 번 와도 ES upsert 동작
 
 ### 4-6. Bulk Indexer (`EsBulkDocumentProcessor.kt`)
 
@@ -385,7 +385,7 @@ search consumer → ES partial update (popularityScore 갱신)
 
 ### 8-3. Hot keyword 문제
 
-- 동일 키워드 1초 1만 호출 → 캐시 hit 99% (Redis 결과 캐시 5초 TTL)
+- 동일 키워드 1초 1만 호출 → 캐시 hit 99% (Redis 결과 캐시 5초 TTL (Time To Live, 생존 시간))
 - ES 쿼리 cache hot key 비활성화 시 application 레벨 캐시 필수
 
 ---

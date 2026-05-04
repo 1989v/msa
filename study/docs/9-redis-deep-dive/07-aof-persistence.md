@@ -9,7 +9,7 @@ phase: 2
 
 ## 한줄 요약
 
-AOF 는 모든 write 명령을 디스크에 append 하는 영속화 방식. **`appendfsync everysec`** 가 표준 (1초 손실 허용 + 성능). 시간이 지나면 파일이 커져 **AOF rewrite** (BGREWRITEAOF) 로 압축. Redis 7 의 **multi-part AOF + RDB preamble (mixed)** 가 현재 권장 운영 형태.
+AOF (Append-Only File) 는 모든 write 명령을 디스크에 append 하는 영속화 방식. **`appendfsync everysec`** 가 표준 (1초 손실 허용 + 성능). 시간이 지나면 파일이 커져 **AOF rewrite** (BGREWRITEAOF) 로 압축. Redis 7 의 **multi-part AOF + RDB preamble (mixed)** 가 현재 권장 운영 형태.
 
 ## 1. AOF 작동 원리
 

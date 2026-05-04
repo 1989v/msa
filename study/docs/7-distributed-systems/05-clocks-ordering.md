@@ -258,7 +258,7 @@ data class VectorClock(val nodeId: String, val map: Map<String, Long> = emptyMap
 ## 10. 함정 피하기
 
 - **"DB 의 timestamp 컬럼만 비교하면 되지 않나?"** — 같은 DB 노드 안에서만 OK. cross-node 비교는 위험
-- **"NTP 잘 맞추면 ms 단위 정확하지 않나?"** — 평소엔 그렇지만 GC pause / VM migration 등 outlier 가 자주 발생
+- **"NTP 잘 맞추면 ms 단위 정확하지 않나?"** — 평소엔 그렇지만 GC (Garbage Collection, 가비지 컬렉션) pause / VM migration 등 outlier 가 자주 발생
 - **"Kafka producer timestamp 사용해도 되지 않나?"** — broker 가 자기 시계로 덮어쓰기 가능 (`message.timestamp.type=LogAppendTime`). 정확한 인과는 offset 으로
 - **"sequence number 만 쓰면 되지 않나?"** — 단일 producer 한정. 분산 producer 는 unique 보장 어려움 (UUID + Lamport 같이)
 

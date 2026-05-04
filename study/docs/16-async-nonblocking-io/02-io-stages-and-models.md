@@ -12,7 +12,7 @@ created: 2026-05-01
 
 - **모든 read syscall 은 두 단계** — `(1) 데이터가 도착할 때까지 대기` + `(2) 커널 버퍼 → 유저 버퍼 복사`
 - "blocking", "non-blocking", "multiplexing", "async" 는 이 두 단계를 *누가 처리하는가* 의 차이일 뿐이다
-- IO multiplexing(epoll) 도 단계 (2) 는 호출자가 직접 한다 → 그래서 sync non-blocking
+- IO (Input/Output, 입출력) multiplexing(epoll) 도 단계 (2) 는 호출자가 직접 한다 → 그래서 sync non-blocking
 - "진짜 async" 는 단계 (1) + (2) 모두 커널에 위임 (io_uring / IOCP / POSIX AIO)
 
 이 모델을 머릿속에 그리지 않으면 면접에서 90% 가 흔들린다.

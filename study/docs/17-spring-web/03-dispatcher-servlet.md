@@ -101,7 +101,7 @@ fun doDispatch(req: HttpServletRequest, res: HttpServletResponse) {
 
 - `InvocableHandlerMethod#invokeForRequest` 가 reflection 으로 호출
 - 예외 발생 시 즉시 `dispatchException` 에 잡힘
-- 트랜잭션은 보통 Service 진입 시 시작 — Controller 자체에는 없음 (msa ADR-0020)
+- 트랜잭션은 보통 Service 진입 시 시작 — Controller 자체에는 없음 (msa ADR (Architecture Decision Record, 아키텍처 결정 기록) -0020)
 
 ### 7단계 — Interceptor.postHandle
 
@@ -130,7 +130,7 @@ if (mv != null && !mv.wasCleared()) {
 
 ### ArgumentResolver
 
-`@RequestBody DTO` 를 받기까지의 흐름:
+`@RequestBody DTO (Data Transfer Object, 데이터 전송 객체)` 를 받기까지의 흐름:
 
 ```
 RequestResponseBodyMethodProcessor.resolveArgument()

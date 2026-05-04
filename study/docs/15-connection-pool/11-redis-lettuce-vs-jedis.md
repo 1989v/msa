@@ -319,7 +319,7 @@ return LettuceConnectionFactory(clusterConfiguration, lettuceClientConfig)
 
 - ✅ adaptive refresh — failover 자동 회복
 - ✅ commandTimeout 2s — fail-fast
-- ⚠ pool 설정 없음 — single connection 모드 (대부분 OK, but high TPS 환경 검토)
+- ⚠ pool 설정 없음 — single connection 모드 (대부분 OK, but high TPS (Transactions Per Second, 초당 트랜잭션 수) 환경 검토)
 - ⚠ `disconnectedBehavior` 미설정 — default `DEFAULT` (재연결 시도 동안 명령 reject), 환경에 따라 `ACCEPT_COMMANDS` 도 고려
 - ⚠ `autoReconnect` default true (OK)
 - ⚠ K3s-lite overlay 에서는 Cluster → standalone 으로 override (SPRING_APPLICATION_JSON)

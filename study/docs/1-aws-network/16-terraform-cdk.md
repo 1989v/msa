@@ -11,7 +11,7 @@ level: deep
 ## 1. 재확인
 
 AWS 인프라를 코드로 관리하는 두 가지 주요 방식:
-- **Terraform (HashiCorp)**: 선언형 DSL (HCL), 멀티 클라우드, State 관리, 업계 표준
+- **Terraform (HashiCorp)**: 선언형 DSL (Domain-Specific Language, 도메인 특화 언어) (HCL), 멀티 클라우드, State 관리, 업계 표준
 - **AWS CDK**: 프로그래밍 언어 (TS/Python/Java), AWS 전용, 내부적으로 CloudFormation 생성
 
 ## 2. 내부 메커니즘
@@ -96,7 +96,7 @@ AWS 인프라를 코드로 관리하는 두 가지 주요 방식:
 
 ### 3.4 msa 프로젝트 관점
 
-현재 Kustomize (K8s manifest) 로 애플리케이션 배포. AWS 리소스 (VPC/EKS/RDS) 관리에는:
+현재 Kustomize (K8s (Kubernetes) manifest) 로 애플리케이션 배포. AWS 리소스 (VPC (Virtual Private Cloud, 가상 사설 클라우드)/EKS/RDS (Relational Database Service, 관계형 데이터베이스 서비스)) 관리에는:
 - **Terraform 권장**:
   - Kotlin/Spring 팀이라 TS/Python 추가 학습 부담
   - 업계 표준이라 이직 시 유리

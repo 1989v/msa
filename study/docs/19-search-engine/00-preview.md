@@ -56,13 +56,13 @@ created: 2026-05-03
 
 **핵심 7문장만 외운다**:
 
-1. **ES "near real-time" 의 정체** = refresh interval (기본 1s) → 가시성과 내구성은 분리. **flush(=commit)** 가 디스크 동기화. translog 가 둘 사이의 안전망.
-2. **BM25 의 b 가 핵심 튜닝 변수** = 문서 길이 정규화 강도. 본문 길이 편차 큰 corpus (게시판 vs 상품명) 에서는 b ↓ 검토. k1 은 saturation.
+1. **ES (Elasticsearch) "near real-time" 의 정체** = refresh interval (기본 1s) → 가시성과 내구성은 분리. **flush(=commit)** 가 디스크 동기화. translog 가 둘 사이의 안전망.
+2. **BM25 (Best Match 25) 의 b 가 핵심 튜닝 변수** = 문서 길이 정규화 강도. 본문 길이 편차 큰 corpus (게시판 vs 상품명) 에서는 b ↓ 검토. k1 은 saturation.
 3. **nori decompound 3-mode** = `none` (원형 유지) · `discard` (분해만) · `mixed` (둘 다 색인). 검색어와 색인어가 일치하지 않으면 hit 0 → search_analyzer 분리 필수.
 4. **text vs keyword** = analyzed vs not-analyzed. 정확 매칭/sort/aggregation 은 무조건 keyword. multi-field 패턴 (`title` text + `title.raw` keyword) 가 표준.
-5. **Hybrid Search 의 RRF 가 weighted score 보다 안전한 이유** = rank 기반 → 두 시스템 점수 분포 정규화 불필요. ES 8.8+ / OpenSearch 2.10+ 네이티브.
-6. **HNSW 3-파라미터** = M (노드당 연결 수, 메모리 ↔ 정확도) · ef_construction (빌드 너비) · ef_search (쿼리 너비, 지연 ↔ 정확도). dense_vector 변경 = 전체 reindex.
-7. **Dual Write 절대 금지** = SoR (RDB) → Outbox/CDC → Kafka → ES 단방향. ES 데이터 손실 시 RDB 에서 재구성 가능해야 함 ("보조 저장소 재구성 가능성" 이 운영 안전망).
+5. **Hybrid Search 의 RRF (Reciprocal Rank Fusion, 상호 순위 융합) 가 weighted score 보다 안전한 이유** = rank 기반 → 두 시스템 점수 분포 정규화 불필요. ES 8.8+ / OpenSearch 2.10+ 네이티브.
+6. **HNSW (Hierarchical Navigable Small World) 3-파라미터** = M (노드당 연결 수, 메모리 ↔ 정확도) · ef_construction (빌드 너비) · ef_search (쿼리 너비, 지연 ↔ 정확도). dense_vector 변경 = 전체 reindex.
+7. **Dual Write 절대 금지** = SoR (System of Record, 원본 데이터 시스템) (RDB (Relational Database, 관계형 데이터베이스)) → Outbox/CDC (Change Data Capture, 변경 데이터 캡처) → Kafka → ES 단방향. ES 데이터 손실 시 RDB 에서 재구성 가능해야 함 ("보조 저장소 재구성 가능성" 이 운영 안전망).
 
 ---
 

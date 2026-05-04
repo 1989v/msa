@@ -185,7 +185,7 @@ spec:
 
 ### 4.1 msa 의 30s 선택 — 적절한가?
 
-- ADR-0025 Tier 1 P99 SLA: 50-300ms 범위
+- ADR-0025 Tier 1 P99 (99th Percentile, 가장 느린 1%) SLA: 50-300ms 범위
 - Alert evaluation: 1m
 - → scrape 30s 는 표준. 단, **버스트 스파이크 (5초 이내 5xx 폭발)** 는 인지 지연 발생.
 - 개선 ADR 후보: Tier 1 서비스만 15s 로 줄이는 옵션 (gateway, product, order)

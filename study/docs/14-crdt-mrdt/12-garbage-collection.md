@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 12. Garbage Collection — CRDT 의 진짜 적
 
-CRDT 가 학술 영역을 벗어나 실 시스템에서 쓰이려면 반드시 풀어야 하는 문제. **tombstone 누적 = 메모리 폭증**.
+CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 가 학술 영역을 벗어나 실 시스템에서 쓰이려면 반드시 풀어야 하는 문제. **tombstone 누적 = 메모리 폭증**.
 
 ## 문제: Tombstone 이 사라지지 않는다
 

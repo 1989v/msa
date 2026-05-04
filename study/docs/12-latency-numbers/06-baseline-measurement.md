@@ -53,7 +53,7 @@ min  max  avg  p50   p99   p999
 80   3500 320  250   1200  3000   (단위: µs)
 ```
 
-- **avg ~320 µs / p99 ~1.2 ms** → 표의 "DC 내 RTT 500 µs" 와 자릿수 일치 ✅
+- **avg ~320 µs / p99 (99th Percentile, 가장 느린 1%) ~1.2 ms** → 표의 "DC 내 RTT 500 µs" 와 자릿수 일치 ✅
 - p999 가 avg 의 ~10배 → 외울 비율 #5 (평균→P99 ×3-10) 검증
 - max 가 ms 영역 → outlier (GC, kube-proxy, network jitter) 존재
 

@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-멀티 VPC 간 통신을 위한 3가지 방식:
+멀티 VPC (Virtual Private Cloud, 가상 사설 클라우드) 간 통신을 위한 3가지 방식:
 - **VPC Peering**: 1:1 직접 연결, 무료
 - **Transit Gateway (TGW)**: 허브-스포크 구조, 확장성 우수, 유료
 - **PrivateLink**: 특정 서비스만 공개, 보안 우수
@@ -60,7 +60,7 @@ Gateway       │
 
 ### 2.4 PrivateLink
 
-- 제공자(Service Provider) 가 **NLB 앞에 Endpoint Service** 를 생성
+- 제공자(Service Provider) 가 **NLB (Network Load Balancer, 네트워크 로드 밸런서) 앞에 Endpoint Service** 를 생성
 - 소비자(Consumer) 가 **Interface Endpoint** 를 자신의 VPC 에 생성하여 연결
 - **단방향 접근** — 소비자 → 제공자만 가능
 - SaaS 연동, 크로스 계정 서비스 공유에 적합
@@ -108,7 +108,7 @@ Gateway       │
 **PrivateLink**:
 - 외부 SaaS (Snowflake, Datadog, New Relic) 통합
 - 자사 중앙 서비스 (인증, 결제) 를 다른 계정에 노출
-- VPC CIDR 충돌 시 (Peering 불가)
+- VPC CIDR (Classless Inter-Domain Routing) 충돌 시 (Peering 불가)
 
 ### 3.3 CIDR 충돌
 
@@ -199,8 +199,8 @@ resource "aws_vpc_endpoint" "partner_api" {
 
 **진단**:
 1. **양쪽 RT** 에 상대 CIDR 경로 추가됐는지 (자주 놓침)
-2. 양쪽 VPC 의 SG 가 상대 CIDR 허용하는지
-3. NACL 이 막고 있는지
+2. 양쪽 VPC 의 SG (Security Group, 보안 그룹) 가 상대 CIDR 허용하는지
+3. NACL (Network Access Control List, 네트워크 ACL) 이 막고 있는지
 4. CIDR 이 겹치지는 않는지
 
 **해결**: 양방향 RT 추가 + SG 규칙 확인 (SG 는 다른 VPC 의 SG 참조 불가, CIDR 사용 필요).

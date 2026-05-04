@@ -8,12 +8,12 @@ created: 2026-05-03
 
 # 08. Vector Search + HNSW
 
-> 묶음 2 (A) 풀어쓰기 시작. 임베딩 / 벡터 검색 / HNSW 가 처음이라는 가정으로 개념부터 단단히.
+> 묶음 2 (A) 풀어쓰기 시작. 임베딩 / 벡터 검색 / HNSW (Hierarchical Navigable Small World) 가 처음이라는 가정으로 개념부터 단단히.
 
 ## 1. 한 줄 핵심
 
 > **Vector Search = "의미가 비슷한" 문서 검색.**
-> BM25 가 정확한 단어를 찾는다면, vector search 는 단어가 달라도 의미가 같으면 찾는다. 핵심 도구는 dense vector 임베딩 + HNSW 그래프 기반 ANN (근사 최근접 이웃).
+> BM25 (Best Match 25) 가 정확한 단어를 찾는다면, vector search 는 단어가 달라도 의미가 같으면 찾는다. 핵심 도구는 dense vector 임베딩 + HNSW 그래프 기반 ANN (Approximate Nearest Neighbor, 근사 최근접 이웃).
 
 ## 2. 왜 Vector Search 인가
 

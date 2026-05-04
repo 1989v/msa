@@ -21,7 +21,7 @@ created: 2026-05-01
 
 - InnoDB 의 기본 페이지 = **16 KiB**. 한 페이지에 row 가 수십~수백 개.
 - "1 row 만 읽고 싶어" 도 OS/디스크는 페이지 통째로 읽음. 메모리에 올린 뒤 그 안에서 row 를 찾는다.
-- HDD: random IO 한 번 = ~10ms (seek + rotational). SSD: ~0.1ms 이지만 latency 는 여전히 메모리 접근 (~100ns) 의 1000 배.
+- HDD: random IO (Input/Output, 입출력) 한 번 = ~10ms (seek + rotational). SSD: ~0.1ms 이지만 latency 는 여전히 메모리 접근 (~100ns) 의 1000 배.
 
 ### 비용 모델 (단순화)
 

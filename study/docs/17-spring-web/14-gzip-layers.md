@@ -42,7 +42,7 @@ created: 2026-05-01
 이유:
 
 - 앱 노드 CPU 절감 — 같은 응답을 여러 백엔드 인스턴스가 압축할 필요 없음
-- Ingress 가 TLS 종단이라 `Vary: Accept-Encoding` 같은 캐시 정책도 한 곳에서 관리
+- Ingress 가 TLS (Transport Layer Security, 전송 계층 보안) 종단이라 `Vary: Accept-Encoding` 같은 캐시 정책도 한 곳에서 관리
 - Spring Boot 코드 변경 없음 — 인프라 결정으로 가능
 
 ## 3. msa 의 현재 상태
@@ -217,7 +217,7 @@ http.server.requests.duration  # 압축 전후 비교
 
 ### Q1. HTTP gzip 을 어디서 켜는 게 맞나요?
 
-> "표준은 reverse proxy/ingress 한 곳입니다. msa 라면 ingress-nginx 의 `use-gzip: true` 한 줄로 모든 백엔드 응답에 일괄 적용되니, Spring Boot 의 `server.compression.enabled` 를 서비스마다 따로 켤 필요가 없습니다. 앱 노드 CPU 부담을 인프라로 외주 보내는 효과도 있고요. CDN 까지 있으면 거기서 한 번 더 처리하지만 일반적으로 origin 응답 압축과 CDN 압축이 충돌하지 않게 한쪽만 켭니다."
+> "표준은 reverse proxy/ingress 한 곳입니다. msa 라면 ingress-nginx 의 `use-gzip: true` 한 줄로 모든 백엔드 응답에 일괄 적용되니, Spring Boot 의 `server.compression.enabled` 를 서비스마다 따로 켤 필요가 없습니다. 앱 노드 CPU 부담을 인프라로 외주 보내는 효과도 있고요. CDN (Content Delivery Network, 콘텐츠 전송 네트워크) 까지 있으면 거기서 한 번 더 처리하지만 일반적으로 origin 응답 압축과 CDN 압축이 충돌하지 않게 한쪽만 켭니다."
 
 ### Q2. 늘 켜야 하나요?
 

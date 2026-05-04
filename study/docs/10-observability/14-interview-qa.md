@@ -24,7 +24,7 @@ created: 2026-05-01
 
 ### Q3. RED / USE / Golden Signals 차이?
 
-> RED (Rate / Errors / Duration) 는 **서비스 단위** 표준 — Spring Boot 의 `http_server_requests_seconds` 가 그대로 RED 입니다. USE (Utilization / Saturation / Errors) 는 **리소스 단위** — CPU/Memory/Disk 에 적용. Golden Signals (Latency / Traffic / Errors / Saturation) 는 SLO 정의의 input 으로 사용합니다. 실무에선 RED 는 service dashboard, USE 는 node dashboard 에 분리합니다.
+> RED (Rate / Errors / Duration) 는 **서비스 단위** 표준 — Spring Boot 의 `http_server_requests_seconds` 가 그대로 RED 입니다. USE (Utilization / Saturation / Errors) 는 **리소스 단위** — CPU/Memory/Disk 에 적용. Golden Signals (Latency / Traffic / Errors / Saturation) 는 SLO (Service Level Objective, 서비스 수준 목표) 정의의 input 으로 사용합니다. 실무에선 RED 는 service dashboard, USE 는 node dashboard 에 분리합니다.
 
 ### Q4. Cardinality 가 왜 1번 적인가?
 

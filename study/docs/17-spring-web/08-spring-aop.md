@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 08. Spring AOP + AspectJ
 
-> 면접 단골: **"@Transactional 이 안 먹는 경우는?"** 답의 핵심은 self-invocation. 그 메커니즘을 그림으로 설명할 수 있어야 한다.
+> 면접 단골: **"@Transactional 이 안 먹는 경우는?"** 답의 핵심은 self-invocation. 그 메커니즘을 그림으로 설명할 수 있어야 한다. (AOP = Aspect-Oriented Programming, 관점 지향 프로그래밍)
 
 ## 1. AOP 의 두 가지 구현 모델
 

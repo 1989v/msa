@@ -61,7 +61,7 @@ spring:
 - gateway (WebFlux/Netty) — VT 무관
 - quant (coroutine 메인) — coroutine 이 이미 충분, 별도 검토
 
-**ADR**: ADR-0002 의 런타임 결정 갱신 (가상 스레드 적용 명시)
+**ADR (Architecture Decision Record, 아키텍처 결정 기록)**: ADR-0002 의 런타임 결정 갱신 (가상 스레드 적용 명시)
 
 ### 2. Kafka `listener.concurrency` 설정
 

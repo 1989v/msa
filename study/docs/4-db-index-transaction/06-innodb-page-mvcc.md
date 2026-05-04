@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 정의
 
-- **MVCC (Multi-Version Concurrency Control)**: 같은 row 의 여러 버전을 유지해서 **읽기는 lock 없이** 일관성 보장.
+- **MVCC (Multi-Version Concurrency Control, 다중 버전 동시성 제어)**: 같은 row 의 여러 버전을 유지해서 **읽기는 lock 없이** 일관성 보장.
 - **Undo Log**: 수정 전 이미지를 보관. ROLLBACK 의 원본 + MVCC 의 과거 버전 소스.
 - **Read View**: 어떤 버전이 "내가 볼 수 있는 버전" 인지 결정하는 메타.
 

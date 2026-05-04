@@ -15,7 +15,7 @@ learner-level: intermediate
 
 ## 1. 개요
 
-JVM 의 메모리 구조, GC 알고리즘, 튜닝 기법을 10년차 수준으로 정리한다. G1/ZGC/Shenandoah 등 현대 GC 의 동작 원리를 이해하고, GC 로그를 해석하여 실제 프로덕션 이슈를 진단할 수 있는 수준을 목표로 한다. OOM 원인 분석, Heap/Metaspace/Direct Buffer 이해, JIT 최적화 기법까지 포함한다.
+JVM (Java Virtual Machine, 자바 가상 머신) 의 메모리 구조, GC (Garbage Collection, 가비지 컬렉션) 알고리즘, 튜닝 기법을 10년차 수준으로 정리한다. G1 (Garbage-First Collector)/ZGC (Z Garbage Collector)/Shenandoah 등 현대 GC 의 동작 원리를 이해하고, GC 로그를 해석하여 실제 프로덕션 이슈를 진단할 수 있는 수준을 목표로 한다. OOM (Out Of Memory, 메모리 부족) 원인 분석, Heap/Metaspace/Direct Buffer 이해, JIT (Just-In-Time compilation, 즉시 컴파일) 최적화 기법까지 포함한다.
 
 msa 프로젝트의 모든 JVM 서비스 (product, order, search, gateway, common, analytics, experiment, member, wishlist, auth, chatbot, gifticon, inventory, fulfillment, warehouse) 에 직접 적용 가능.
 
@@ -41,7 +41,7 @@ msa 프로젝트의 모든 JVM 서비스 (product, order, search, gateway, commo
 - **방식**: 개념 + 실습 풀 세트 (GC 로그 분석 + Heap Dump + JFR + JMH)
 - **실습 계획**:
   1. **GC 로그 실습 (Phase 2 말~Phase 3)**
-     - msa 서비스 하나 (예: product) 를 로컬 K8s 에 띄우고 `-Xlog:gc*:file=gc.log` 옵션으로 로그 수집
+     - msa 서비스 하나 (예: product) 를 로컬 K8s (Kubernetes) 에 띄우고 `-Xlog:gc*:file=gc.log` 옵션으로 로그 수집
      - GCEasy.io / GCViewer 로 분석: pause time, throughput, allocation rate, promotion rate
      - `-XX:+UseG1GC -XX:MaxGCPauseMillis=200`, `-XX:+UseZGC` 등 옵션 바꿔가며 영향 측정
   2. **Heap Dump + MAT (Phase 3)**
@@ -96,10 +96,10 @@ msa 프로젝트의 모든 JVM 서비스 (product, order, search, gateway, commo
 
 ### Phase 1: 기본 개념
 - JVM 메모리 영역: Heap (Young/Old), Metaspace, Stack, PC Register, Native
-- 객체 할당 흐름: TLAB → Eden → Survivor → Old
+- 객체 할당 흐름: TLAB (Thread-Local Allocation Buffer) → Eden → Survivor → Old
 - GC Root, Reachability 분석
 - Mark-Sweep, Mark-Compact, Copy 알고리즘
-- Serial GC, Parallel GC, CMS (deprecated), G1GC, ZGC, Shenandoah 개요
+- Serial GC, Parallel GC, CMS (Concurrent Mark-Sweep) (deprecated), G1GC, ZGC, Shenandoah 개요
 - Stop-The-World (STW) 와 Concurrent
 - Throughput vs Latency (Pause Time) 트레이드오프
 
@@ -133,7 +133,7 @@ msa 프로젝트의 모든 JVM 서비스 (product, order, search, gateway, commo
 - **모든 JVM 서비스의 빌드 설정**: `{service}/app/build.gradle.kts` (Jib config)
 - **K8s Deployment 메모리 리소스**: `k8s/base/{service}/deployment.yaml`
 - **공통 라이브러리**: `common/` (JVM 성능에 영향)
-- **관련 ADR**: 현재 JVM 튜닝 관련 ADR 없음 (Phase 4에서 ADR 제안 가능)
+- **관련 ADR (Architecture Decision Record, 아키텍처 결정 기록)**: 현재 JVM 튜닝 관련 ADR 없음 (Phase 4에서 ADR 제안 가능)
 
 ## 6. 참고 자료
 

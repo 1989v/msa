@@ -12,7 +12,7 @@ created: 2026-05-01
 
 - **C10K** = "한 서버에서 동시 접속 1만 개를 처리할 수 있는가?" (Dan Kegel, 1999)
 - 표면 답: "thread 1만 개 띄우면 되지 않나?" → 메모리, 컨텍스트 스위치, 스케줄러, fd 한계 모두 무너짐
-- 진짜 답: **한 thread 가 수많은 fd 를 동시에 감시**해야 함 → IO multiplexing 필요
+- 진짜 답: **한 thread 가 수많은 fd 를 동시에 감시**해야 함 → IO (Input/Output, 입출력) multiplexing 필요
 - 이 한 문장이 select → poll → epoll → kqueue → io_uring 의 모든 기술 진화의 출발점이다
 
 ---

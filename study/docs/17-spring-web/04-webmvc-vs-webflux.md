@@ -149,7 +149,7 @@ class AuthenticationGatewayFilter(
 
 ## 5. AOP 는 둘 다 동일
 
-AOP 는 HTTP 레이어가 아니라 **메소드 호출 가로채기** 라서 WebMVC/WebFlux 무관:
+AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 는 HTTP 레이어가 아니라 **메소드 호출 가로채기** 라서 WebMVC/WebFlux 무관:
 
 ```kotlin
 @Aspect
@@ -187,7 +187,7 @@ fun time(pjp: ProceedingJoinPoint): Any? {
 
 - **gateway** = WebFlux (Spring Cloud Gateway 표준)
 - **모든 다른 서비스** = WebMVC + 가상 스레드 (Spring Boot 4 / Tomcat / `spring.threads.virtual.enabled`)
-- 이 결정은 ADR-0002 에 있음 — "gateway 만 reactive, 나머지는 blocking + 가상 스레드"
+- 이 결정은 ADR (Architecture Decision Record, 아키텍처 결정 기록) -0002 에 있음 — "gateway 만 reactive, 나머지는 blocking + 가상 스레드"
 
 ## 7. 면접 한 줄 답변
 

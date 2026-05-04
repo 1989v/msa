@@ -13,7 +13,7 @@ created: 2026-04-28
 - **인증 (Authentication)** — "누구인가" 검증. 비밀번호, 생체, OTP, mTLS 등.
 - **인가 (Authorization)** — "무엇을 할 수 있는가" 결정. RBAC, ABAC, 권한 정책.
 
-**자주 헷갈리는 점** — OAuth 2.0은 **인가(Authorization) 프로토콜**이지 인증이 아니다. "이 클라이언트가 이 사용자의 자원에 이런 범위로 접근할 권한을 받았다"가 본질. 사용자 인증은 OAuth 위에 OIDC를 얹어야 표준화된다.
+**자주 헷갈리는 점** — OAuth (Open Authorization) 2.0은 **인가(Authorization) 프로토콜**이지 인증이 아니다. "이 클라이언트가 이 사용자의 자원에 이런 범위로 접근할 권한을 받았다"가 본질. 사용자 인증은 OAuth 위에 OIDC를 얹어야 표준화된다.
 
 ## 역할
 

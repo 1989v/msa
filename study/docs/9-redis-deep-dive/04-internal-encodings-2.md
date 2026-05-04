@@ -176,7 +176,7 @@ Stream 은 **radix tree (라딕스 트리) + listpack** 의 조합이다.
 
 ## 7. rehashing 의 운영 영향
 
-- BGSAVE 와 rehashing 이 겹치면 fork 후 **CoW 페이지 폭증** (rehash 중인 ht[0]/ht[1] 두 테이블 모두 dirty 페이지 가능). 운영에서 RDB 시간을 새벽으로 분리하는 이유 중 하나.
+- BGSAVE 와 rehashing 이 겹치면 fork 후 **CoW 페이지 폭증** (rehash 중인 ht[0]/ht[1] 두 테이블 모두 dirty 페이지 가능). 운영에서 RDB (Redis Database 스냅샷) 시간을 새벽으로 분리하는 이유 중 하나.
 - 50% 규모 변경 (대규모 import / FLUSHDB) 후 rehashing 트래픽 latency 가 5-10% 솟구쳐도 정상.
 
 ## 8. defrag (active-defrag)

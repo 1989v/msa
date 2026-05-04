@@ -50,7 +50,7 @@ created: 2026-05-01
 2. **Cardinality 폭발은 Prometheus 의 1번 운영 사고** — `userId`, `path`, `requestId` 같은 고유값 라벨 금지.
 3. **Histogram > Summary** (bucket 합산 가능, 다중 인스턴스 quantile 계산 가능) — Spring Boot Actuator `percentiles-histogram=true` 가 정답.
 4. **OpenTelemetry 는 표준, Jaeger/Zipkin/Tempo 는 백엔드** — Vendor lock-in 회피하려면 OTel API 로 작성.
-5. **SLO 는 "행복한 사용자 비율"** — 알람은 burn rate (다중 윈도우) 기준이지 P99 절대값이 아니다.
+5. **SLO 는 "행복한 사용자 비율"** — 알람은 burn rate (다중 윈도우) 기준이지 P99 (99th Percentile, 가장 느린 1%) 절대값이 아니다.
 
 ---
 

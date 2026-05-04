@@ -118,7 +118,7 @@ k8s/
 | quant | Recreate + replicas=1 + KMS local | Recreate + KMS Vault |
 | DDL | `ddl-auto: update` (Hibernate 자동) | flyway 가정 |
 
-ADR-0019 §5 의 매트릭스가 이 코드와 정확히 일치.
+ADR (Architecture Decision Record, 아키텍처 결정 기록)-0019 §5 의 매트릭스가 이 코드와 정확히 일치.
 
 ## 4. 주요 매니페스트 직접 읽기
 

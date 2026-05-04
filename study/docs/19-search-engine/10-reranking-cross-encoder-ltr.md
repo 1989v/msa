@@ -8,11 +8,11 @@ created: 2026-05-03
 
 # 10. Re-Ranking
 
-> 묶음 2 (A) 의 마지막 풀어쓰기. RRF 까지가 stage 1, re-rank 가 stage 2. 검색 품질의 마지막 1마일.
+> 묶음 2 (A) 의 마지막 풀어쓰기. RRF (Reciprocal Rank Fusion, 상호 순위 융합) 까지가 stage 1, re-rank 가 stage 2. 검색 품질의 마지막 1마일.
 
 ## 1. 한 줄 핵심
 
-> **Stage 1 (BM25 + vector + RRF) 가 후보 100개를 추린다면, Stage 2 (re-rank) 가 그 중 정밀하게 top 10 을 결정한다.**
+> **Stage 1 (BM25 (Best Match 25) + vector + RRF) 가 후보 100개를 추린다면, Stage 2 (re-rank) 가 그 중 정밀하게 top 10 을 결정한다.**
 > 비용이 큰 모델/계산을 후보에만 적용하는 것이 검색 품질 vs latency 의 표준 해법.
 
 ## 2. Re-Ranking 이 필요한 이유
@@ -27,7 +27,7 @@ BM25 + vector + RRF 까지로:
 ### 2-2. Re-Rank 가 풀어주는 것
 
 - **세밀한 의미 매칭** — bi-encoder (vector) 는 query/doc 독립 인코딩, cross-encoder 는 query+doc 동시 입력 → 정확도 ↑
-- **비즈니스 시그널** — function_score 보다 정교한 결합 (LTR)
+- **비즈니스 시그널** — function_score 보다 정교한 결합 (LTR (Learning to Rank, 랭킹 학습))
 - **개인화** — 사용자 컨텍스트 (구매 이력, 카테고리 선호)
 - **광고 / 프로모션** — 별도 layer 로 분리
 

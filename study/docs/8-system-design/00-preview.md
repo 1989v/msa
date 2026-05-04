@@ -35,7 +35,7 @@ created: 2026-05-01
 
 | 사분면 | 핵심 도전 | 시나리오 |
 |---|---|---|
-| (1) Read-heavy + Stateless | 캐시 계층화, CDN | URL Shortener, Search |
+| (1) Read-heavy + Stateless | 캐시 계층화, CDN (Content Delivery Network, 콘텐츠 전송 네트워크) | URL Shortener, Search |
 | (2) Read-heavy + Stateful | Fan-out 모델, Hot Partition | Feed, Map (위치) |
 | (3) Write-heavy + Stateful | 분산 트랜잭션, 재고 동시성, Idempotency | Payment, Ticketing, Chat, e-Commerce |
 | (4) Write-heavy + Stateless | 분산 카운터, Token Bucket | Rate Limiter, Notification |
@@ -92,7 +92,7 @@ created: 2026-05-01
 
 ```
 00:00 ─ 04:00  요구사항 명확화 (Functional / Non-Functional / Out of scope)
-04:00 ─ 09:00  용량 산정 (DAU → QPS → Storage → Bandwidth)
+04:00 ─ 09:00  용량 산정 (DAU → QPS (Queries Per Second, 초당 쿼리 수) → Storage → Bandwidth)
 09:00 ─ 12:00  API 설계 (3-5개 핵심 엔드포인트)
 12:00 ─ 17:00  High-Level Architecture (LB → App → Cache → DB → Queue)
 17:00 ─ 22:00  Data Model + 샤딩/인덱스
@@ -111,7 +111,7 @@ created: 2026-05-01
 
 | 시나리오 | 본 프로젝트 매핑 | 활용 ADR |
 |---|---|---|
-| Rate Limiter (06) | `gateway/RateLimiterConfig.kt` (Redis Token Bucket) | ADR-0015 |
+| Rate Limiter (06) | `gateway/RateLimiterConfig.kt` (Redis Token Bucket) | ADR (Architecture Decision Record, 아키텍처 결정 기록)-0015 |
 | Search (09) | `search/{domain,app,consumer,batch}` 4개 모듈 | ADR-0008, ADR-0009, ADR-0012 |
 | e-Commerce (10) | 전체 msa (product/order/inventory/search/...) | ADR-0001, 0006, 0011, 0013, 0019 |
 | Payment (05) | `order` + 외부 PG (CircuitBreaker) | ADR-0015 |

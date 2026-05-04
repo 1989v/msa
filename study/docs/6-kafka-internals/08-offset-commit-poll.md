@@ -68,10 +68,10 @@ fun onOrderCompleted(record: ConsumerRecord<String, String>) {
 }
 ```
 
-- 처리 중 예외 발생 → commit 안 됨 → 다음 poll 에서 같은 메시지 재전달 (DLQ 재시도 정책으로 처리)
+- 처리 중 예외 발생 → commit 안 됨 → 다음 poll 에서 같은 메시지 재전달 (DLQ (Dead Letter Queue, 데드 레터 큐) 재시도 정책으로 처리)
 - 정상 처리 → commit → offset 진행
 
-**at-least-once + 컨슈머 멱등성** 으로 effectively-once 달성 (ADR-0012).
+**at-least-once + 컨슈머 멱등성** 으로 effectively-once 달성 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012).
 
 ## 4. AckMode 의 종류 (Spring Kafka)
 

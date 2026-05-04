@@ -124,7 +124,7 @@ suspend fun handleRequest(): Response {
 }
 ```
 
-→ msa 는 ADR-0002 에서 "Coroutine 외부 IO" 사용 — MDCContext 적용이 필수. (Phase 3 검증 항목)
+→ msa 는 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0002 에서 "Coroutine 외부 IO" 사용 — MDCContext 적용이 필수. (Phase 3 검증 항목)
 
 ## 3. Webflux — MDC 가 깨진다
 

@@ -44,7 +44,7 @@ class ProcessedEventJpaEntity(
 
 - PK 가 `eventId` 이므로 DB UNIQUE 보장
 - TTL 없음 → cleanup 배치 필요 (7일)
-- **검증 결과 (2026-05-01)**: `processed_event` 를 정리하는 `@Scheduled` 배치는 `inventory` / `fulfillment` 어디에도 **존재하지 않음**. `inventory` 의 스케줄러는 `ReservationExpiryService`(`inventory/app/.../application/reservation/service/ReservationExpiryService.kt:24`) 와 `InventoryReconciliationService`(`inventory/app/.../application/inventory/service/InventoryReconciliationService.kt:18`) 둘 뿐이며, `processed_event` 와 무관. → ADR-0012 명세 (7일 보관) 미구현 — 도입 필요 (19-improvements §7).
+- **검증 결과 (2026-05-01)**: `processed_event` 를 정리하는 `@Scheduled` 배치는 `inventory` / `fulfillment` 어디에도 **존재하지 않음**. `inventory` 의 스케줄러는 `ReservationExpiryService`(`inventory/app/.../application/reservation/service/ReservationExpiryService.kt:24`) 와 `InventoryReconciliationService`(`inventory/app/.../application/inventory/service/InventoryReconciliationService.kt:18`) 둘 뿐이며, `processed_event` 와 무관. → ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012 명세 (7일 보관) 미구현 — 도입 필요 (19-improvements §7).
 
 ## 3. Outbox 측 eventId 주입
 
@@ -341,7 +341,7 @@ fun onFulfillmentShipped(...) { ... }
 
 ### 12.4 warehouseId 라우팅
 
-- `warehouseId = 1L` 하드코딩 → 다중 창고 시 라우팅 (지역, 재고, SLA 기준)
+- `warehouseId = 1L` 하드코딩 → 다중 창고 시 라우팅 (지역, 재고, SLA (Service Level Agreement, 서비스 수준 협약) 기준)
 
 ### 12.5 Saga 추적 (trace_id 전파)
 

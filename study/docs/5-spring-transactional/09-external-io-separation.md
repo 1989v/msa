@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 09. 외부 IO 분리 패턴
 
-> **이 파일의 한 줄 요약** — 외부 IO (HTTP, Kafka 발행) 를 DB 트랜잭션 안에서 하면 **커넥션 점유 + 부분 실패 + 이중 발행** 의 3중 문제. 해결책 4가지: TransactionalService 분리 / Outbox / @TransactionalEventListener / Saga.
+> **이 파일의 한 줄 요약** — 외부 IO (Input/Output, 입출력) (HTTP, Kafka 발행) 를 DB 트랜잭션 안에서 하면 **커넥션 점유 + 부분 실패 + 이중 발행** 의 3중 문제. 해결책 4가지: TransactionalService 분리 / Outbox / @TransactionalEventListener / Saga.
 
 ---
 
@@ -30,7 +30,7 @@ fun placeOrder(cmd: Command): Order {
 
 문제 3가지:
 
-1. **커넥션 점유**: HTTP 호출 (초 단위) 동안 DB 커넥션을 잡고 있음 → 풀 사이즈 압박, latency budget 초과 (#15 connection pool, ADR-0025 latency budget).
+1. **커넥션 점유**: HTTP 호출 (초 단위) 동안 DB 커넥션을 잡고 있음 → 풀 사이즈 압박, latency budget 초과 (#15 connection pool, ADR (Architecture Decision Record, 아키텍처 결정 기록)-0025 latency budget).
 2. **이중 발행 / phantom 이벤트**: kafkaTemplate.send 가 commit 전에 발행됨 → 트랜잭션 롤백되어도 이벤트가 broker 에 남음 → consumer 가 존재하지 않는 order 의 이벤트를 받음.
 3. **부분 실패 회복 불가**: 외부 HTTP 가 timeout 됐는데 실제로 결제가 됐는지 안 됐는지 알 수 없음. 트랜잭션 롤백 시도 → 결제는 됐고 주문은 없음.
 

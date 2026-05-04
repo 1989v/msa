@@ -40,7 +40,7 @@ DAU = 1천만
 1인 일 평균 push = 10개
 1인 일 평균 email = 1개
 
-일 push   = 100M / 일 → QPS 1,200 (피크 ×5 = 6,000)
+일 push   = 100M / 일 → QPS (Queries Per Second, 초당 쿼리 수) 1,200 (피크 ×5 = 6,000)
 일 email  = 10M  / 일 → QPS 120
 캠페인 (마케팅): 분당 100만 (피크)
 
@@ -255,7 +255,7 @@ CREATE TABLE notification_history (
 
 ### 8-2. APNs / FCM rate limit
 
-- APNs: 연결당 ~수천 RPS (HTTP/2 multiplexing)
+- APNs: 연결당 ~수천 RPS (Requests Per Second, 초당 요청 수) (HTTP/2 multiplexing)
 - FCM: per-app 1M/분
 - Worker 자체에 token bucket (out-bound throttle)
 
@@ -303,7 +303,7 @@ CREATE TABLE notification_history (
 
 ## 12. 면접 30초 요약
 
-> "Notification은 채널 추상화 + 사용자 보호 시스템. Producer는 Kafka에 발행, Router 워커가 (1) 사용자 선호, (2) Quiet Hours, (3) Throttle, (4) Dedup 4단계 필터 후 채널별 토픽으로 fan-out. 채널 워커는 외부 API rate limit 고려한 자체 throttle. 마케팅 캠페인은 S3 + Spark + Kafka 분할 발행. 본 msa는 chatbot/notification 도메인 미구현 — 향후 ADR 후보."
+> "Notification은 채널 추상화 + 사용자 보호 시스템. Producer는 Kafka에 발행, Router 워커가 (1) 사용자 선호, (2) Quiet Hours, (3) Throttle, (4) Dedup 4단계 필터 후 채널별 토픽으로 fan-out. 채널 워커는 외부 API rate limit 고려한 자체 throttle. 마케팅 캠페인은 S3 + Spark + Kafka 분할 발행. 본 msa는 chatbot/notification 도메인 미구현 — 향후 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보."
 
 ---
 

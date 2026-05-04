@@ -14,9 +14,9 @@ codebase-relevant: true
 
 ## 1. 개요
 
-분산 시스템의 이론적 기반 (CAP, PACELC, FLP Impossibility, Consensus) 과 실전 패턴 (SAGA, 2PC, Idempotency, Retry, Circuit Breaker, 분산 락) 을 학습한다. MSA 아키텍처를 설계/운영하는 10년차 백엔드 개발자의 필수 지식.
+분산 시스템의 이론적 기반 (CAP (Consistency / Availability / Partition tolerance, 일관성·가용성·분할 내성), PACELC (Partition → Availability/Consistency, Else → Latency/Consistency), FLP Impossibility, Consensus) 과 실전 패턴 (SAGA, 2PC (Two-Phase Commit, 2단계 커밋), Idempotency, Retry, Circuit Breaker, 분산 락) 을 학습한다. MSA (Microservices Architecture, 마이크로서비스 아키텍처) 아키텍처를 설계/운영하는 10년차 백엔드 개발자의 필수 지식.
 
-msa 프로젝트가 이미 MSA 기반이라 모든 패턴이 적용 가능하며, ADR-0012/0015 와 직결.
+msa 프로젝트가 이미 MSA 기반이라 모든 패턴이 적용 가능하며, ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012/0015 와 직결.
 
 ## 2. 학습 목표
 
@@ -27,7 +27,7 @@ msa 프로젝트가 이미 MSA 기반이라 모든 패턴이 적용 가능하며
 - Retry 전략 (Exponential Backoff + Jitter), 멱등성과의 관계
 - Circuit Breaker 패턴 (Resilience4j, Hystrix)
 - 분산 락 (Redis RedLock, ZooKeeper) 의 한계와 사용처
-- Event Sourcing, CQRS 의 장단점
+- Event Sourcing, CQRS (Command Query Responsibility Segregation, 명령-조회 책임 분리) 의 장단점
 - Eventually Consistent 의 실무 의미
 - 면접 "CAP 에서 뭘 버리셨어요?" "SAGA 와 2PC 차이?" 같은 질문 방어
 
@@ -83,7 +83,7 @@ msa 프로젝트가 이미 MSA 기반이라 모든 패턴이 적용 가능하며
 
 ### Phase 3: 실전 적용
 - msa 프로젝트 ADR-0012 (멱등 Consumer) 구현 리뷰
-- ADR-0015 (Resilience Strategy) - Circuit Breaker, DLQ, Rate Limiting, CQRS
+- ADR-0015 (Resilience Strategy) - Circuit Breaker, DLQ (Dead Letter Queue, 데드 레터 큐), Rate Limiting, CQRS
 - inventory-fulfillment 의 SAGA 패턴 적용 가능성 (ADR-0011)
 - gateway 의 Rate Limiting 구현 (Redis Token Bucket)
 - product-inventory SSOT (ADR-0013) 와 일관성 모델

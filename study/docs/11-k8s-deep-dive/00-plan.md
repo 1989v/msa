@@ -14,7 +14,7 @@ codebase-relevant: true
 
 ## 1. 개요
 
-K8s 의 컨트롤 플레인 내부 동작, Operator / CRD 패턴, 고급 네트워킹, 배포 전략 (Rolling / Blue-Green / Canary), Helm, GitOps (ArgoCD / Flux) 까지 10년차 수준으로 학습한다. ADR-0019 (K8s 전환) 이후의 실무 심화.
+K8s (Kubernetes) 의 컨트롤 플레인 내부 동작, Operator / CRD 패턴, 고급 네트워킹, 배포 전략 (Rolling / Blue-Green / Canary), Helm, GitOps (ArgoCD / Flux) 까지 10년차 수준으로 학습한다. ADR-0019 (K8s 전환) 이후의 실무 심화.
 
 msa 프로젝트가 이미 K8s 기반 (`prod-k8s`, `k3s-lite`) 이라 직접 적용 가능.
 

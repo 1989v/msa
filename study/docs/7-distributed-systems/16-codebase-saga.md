@@ -81,7 +81,7 @@ class OrderEventAdapter(
 }
 ```
 
-→ **이는 ADR-0011 의 "Outbox 로 발행 원자성 보장" 원칙에서 Order 가 빠져 있는 상태**. inventory/fulfillment 만 OutboxPollingPublisher 보유 (`inventory/app/.../infrastructure/messaging/OutboxPollingPublisher.kt:22`, `fulfillment/.../OutboxPollingPublisher.kt:22`). 따라서 다음 시나리오에 취약:
+→ **이는 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0011 의 "Outbox 로 발행 원자성 보장" 원칙에서 Order 가 빠져 있는 상태**. inventory/fulfillment 만 OutboxPollingPublisher 보유 (`inventory/app/.../infrastructure/messaging/OutboxPollingPublisher.kt:22`, `fulfillment/.../OutboxPollingPublisher.kt:22`). 따라서 다음 시나리오에 취약:
 
 - Order DB commit 성공 → `kafkaTemplate.send` 실패 → consumer 가 영원히 못 받음
 - DB commit 후 프로세스 crash → 같은 결과
@@ -378,7 +378,7 @@ fun onFulfillmentCancelled(record: ConsumerRecord<String, String>) {
 ### 5.5 Reservation 의 PENDING 상태가 길어짐
 
 - fulfillment 가 SHIPPED/CANCELLED 가지 않으면 30분간 stock 묶임
-- → SLA 위반 시 알림 / 자동 escalation
+- → SLA (Service Level Agreement, 서비스 수준 협약) 위반 시 알림 / 자동 escalation
 
 ### 5.6 Pivot Transaction 부재
 
@@ -415,7 +415,7 @@ fun expire() {
 
 ## 8. 한 줄 진단
 
-> msa 의 Saga = **Choreography + Outbox + 멱등 Consumer + Reservation TTL** = MSA 표준 분산 트랜잭션 베스트 프랙티스.
+> msa 의 Saga = **Choreography + Outbox + 멱등 Consumer + Reservation TTL** = MSA (Microservices Architecture, 마이크로서비스 아키텍처) 표준 분산 트랜잭션 베스트 프랙티스.
 > 강점: 도메인 자율성, 발행/수신 원자성. 약점: 흐름 추적, 보상 부분 명시화 → 19-improvements 에서 ADR 후보로.
 
 ## 9. 재미있는 코드 스니펫

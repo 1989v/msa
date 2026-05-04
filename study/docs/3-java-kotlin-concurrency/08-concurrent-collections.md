@@ -137,12 +137,12 @@ listeners.forEach { it.onEvent(event) }
 - write 가 read 의 1% 미만일 때
 
 **금물**:
-- 큰 list 에 빈번한 write — 매번 전체 복사로 GC 폭발
+- 큰 list 에 빈번한 write — 매번 전체 복사로 GC (Garbage Collection, 가비지 컬렉션) 폭발
 - 핫패스 메모리 민감한 곳
 
 ## ConcurrentLinkedQueue — non-blocking MPMC
 
-Michael-Scott non-blocking queue 알고리즘. CAS 만 사용, 락 없음.
+Michael-Scott non-blocking queue 알고리즘. CAS (Compare-And-Swap, 비교-교환) 만 사용, 락 없음.
 
 ```kotlin
 val queue = ConcurrentLinkedQueue<Task>()
@@ -152,7 +152,7 @@ val t = queue.poll()    // 비어있으면 null
 
 - **size() 가 O(N)** — linked list 전체 순회. 호출 자제.
 - capacity 없음 → 메모리 무제한 (위험)
-- producer 가 consumer 보다 빠르면 OOM
+- producer 가 consumer 보다 빠르면 OOM (Out Of Memory, 메모리 부족)
 
 → **bounded 가 필요하면 BlockingQueue 가 정답**.
 

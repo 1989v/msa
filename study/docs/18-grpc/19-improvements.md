@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 19. gRPC 도입 검토 ADR 초안
 
-> 본 문서는 `docs/adr/` 의 정식 ADR 후보. 학습 결과를 정리하여 의사결정 근거 + 옵션 비교 + 추천을 담았다. 그대로 ADR 로 승격 가능하도록 형식 준수.
+> 본 문서는 `docs/adr/` 의 정식 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보. 학습 결과를 정리하여 의사결정 근거 + 옵션 비교 + 추천을 담았다. 그대로 ADR 로 승격 가능하도록 형식 준수.
 
 ---
 
@@ -23,9 +23,9 @@ created: 2026-05-01
 - **Related**:
   - ADR-0003 (서비스 간 통신 방식 — REST + Kafka 의 현 결정)
   - ADR-0011 (inventory + fulfillment 서비스 — 동기/비동기 분리)
-  - ADR-0015 (resilience strategy — Circuit Breaker / DLQ / RateLimit)
-  - ADR-0019 (K8s 마이그레이션 — k3s-lite / prod-k8s 모드)
-  - ADR-0025 (latency budget — Tier 1 P99 SLA)
+  - ADR-0015 (resilience strategy — Circuit Breaker / DLQ (Dead Letter Queue, 데드 레터 큐) / RateLimit)
+  - ADR-0019 (K8s (Kubernetes) 마이그레이션 — k3s-lite / prod-k8s 모드)
+  - ADR-0025 (latency budget — Tier 1 P99 SLA (Service Level Agreement, 서비스 수준 협약))
 
 ## Context
 
@@ -114,9 +114,9 @@ ADR-0003 (2024) 에서 서비스 간 동기 통신은 **WebClient + Resilience4j
 #### Phase 1 — 핫패스 1-3 쌍 (1개월)
 
 - **추가 대상**:
-  - `gateway → auth` (high RPS, deadline propagation)
+  - `gateway → auth` (high RPS (Requests Per Second, 초당 요청 수), deadline propagation)
   - `order → inventory` (ADR-0011 의 동기 부분, 핫패스)
-- **인증**: JWT metadata propagation (gateway 가 검증, 내부는 metadata 로 user_id 전파)
+- **인증**: JWT (JSON Web Token) metadata propagation (gateway 가 검증, 내부는 metadata 로 user_id 전파)
 - **CI**: Buf lint + breaking detection 도입
 
 #### Phase 2 — 확산 (3개월)
@@ -134,7 +134,7 @@ ADR-0003 (2024) 에서 서비스 간 동기 통신은 **WebClient + Resilience4j
 
 ### 2. 도입 *제외* 범위
 
-- 외부 API (Kakao OAuth, Google OAuth, 결제 PG, Bithumb, Slack, Claude API)
+- 외부 API (Kakao OAuth (Open Authorization, 인가 프로토콜), Google OAuth, 결제 PG, Bithumb, Slack, Claude API)
 - 브라우저 직접 호출 (REST 유지)
 - 비동기 이벤트 흐름 (Kafka 유지) — `*.outbox` / `*.event` / `*.placed` 등
 - 현재 트래픽이 낮은 호출 (ROI 부재)
@@ -149,9 +149,9 @@ ADR-0003 (2024) 에서 서비스 간 동기 통신은 **WebClient + Resilience4j
 
 ### 4. 인증 / 보안
 
-- Phase 0-1: h2c (no TLS) + NetworkPolicy
+- Phase 0-1: h2c (no TLS (Transport Layer Security, 전송 계층 보안)) + NetworkPolicy
 - Phase 2: TLS 종단 = gateway, 내부는 평문 (NetworkPolicy 로 격리)
-- Phase 3 (mesh 도입 시): 자동 mTLS + AuthorizationPolicy
+- Phase 3 (mesh 도입 시): 자동 mTLS (mutual TLS, 양방향 TLS) + AuthorizationPolicy
 
 ### 5. Resilience 통합
 
@@ -198,7 +198,7 @@ ADR-0003 (2024) 에서 서비스 간 동기 통신은 **WebClient + Resilience4j
 
 ### 4. GraphQL 도입 — 거부
 
-- 본 ADR 의 범위 밖. GraphQL 은 BFF 레벨 (BFF → 프론트) 에 적합. 서비스 간 동기 RPC 의 대체로는 부적합.
+- 본 ADR 의 범위 밖. GraphQL 은 BFF (Backend For Frontend) 레벨 (BFF → 프론트) 에 적합. 서비스 간 동기 RPC 의 대체로는 부적합.
 
 ## Consequences
 

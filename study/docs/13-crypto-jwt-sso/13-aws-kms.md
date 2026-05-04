@@ -19,7 +19,7 @@ created: 2026-04-28
 - DB에 평문 저장
 
 ### 완화 패턴
-- K8s Secret + RBAC + EncryptionConfiguration (etcd 암호화)
+- K8s (Kubernetes) Secret + RBAC (Role-Based Access Control, 역할 기반 접근 제어) + EncryptionConfiguration (etcd 암호화)
 - HashiCorp Vault, AWS Secrets Manager
 - KMS / HSM (키가 아예 디바이스 밖으로 안 나옴)
 

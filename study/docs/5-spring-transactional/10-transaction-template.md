@@ -21,7 +21,7 @@ created: 2026-05-01
 fun findById(id: Long): Product? = repository.findById(id)
 ```
 
-- AOP 프록시가 호출 전후로 트랜잭션 관리
+- AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 프록시가 호출 전후로 트랜잭션 관리
 - 코드가 깔끔, 의도 명확
 - **프록시 의존** — self-invocation, suspend, private 메서드 등에서 함정
 

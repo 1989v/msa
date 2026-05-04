@@ -62,7 +62,7 @@ class JsonSerializer(private val mapper: ObjectMapper) {
 
 ## 3. 비용 측정 — 왜 "비싼" 가
 
-대략적인 측정 (단일 스레드, 간단 POJO 기준, 환경마다 다름):
+대략적인 측정 (단일 스레드, 간단 POJO (Plain Old Java Object) 기준, 환경마다 다름):
 
 | 작업 | 시간 |
 |---|---|

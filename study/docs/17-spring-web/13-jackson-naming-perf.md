@@ -72,14 +72,14 @@ data class WeirdDto(
 ### camelCase 유지가 적합한 경우
 
 - 내부 Service-to-Service API (Kotlin/Java/JS 모두 native)
-- BFF 가 변환을 흡수
+- BFF (Backend For Frontend) 가 변환을 흡수
 - 이미 camelCase 로 굳어진 레거시
 
 ### msa 의 현재 상태
 
 `grep` 결과 `spring.jackson.property-naming-strategy` 사용 없음 → **모든 서비스 camelCase**.
 
-→ 외부 노출 API 가 늘면(B2B SDK 같은) snake_case 전환 필요. 결정은 ADR 필요 ([19](19-improvements.md)).
+→ 외부 노출 API 가 늘면(B2B SDK 같은) snake_case 전환 필요. 결정은 ADR (Architecture Decision Record, 아키텍처 결정 기록) 필요 ([19](19-improvements.md)).
 
 ## 3. KotlinModule strictNullChecks
 
@@ -127,7 +127,7 @@ mapper.readValue("""{"id":1,"nickname":null}""", User::class)
 
 ### 문제
 
-Jackson 기본 직렬화는 **reflection** 기반. 매 호출마다 setter/getter 를 reflective 호출 → JIT 최적화 어려움.
+Jackson 기본 직렬화는 **reflection** 기반. 매 호출마다 setter/getter 를 reflective 호출 → JIT (Just-In-Time compilation, 즉시 컴파일) 최적화 어려움.
 
 ### Blackbird
 

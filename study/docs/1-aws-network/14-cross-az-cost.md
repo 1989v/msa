@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-AZ 간 데이터 전송은 **양방향 GB 당 $0.01** 씩 부과. 대량 트래픽 환경에서 예상 외 큰 비용 발생. Kafka, RDS 동기 복제, LB 분산 등이 주요 원인.
+AZ (Availability Zone, 가용 영역) 간 데이터 전송은 **양방향 GB 당 $0.01** 씩 부과. 대량 트래픽 환경에서 예상 외 큰 비용 발생. Kafka, RDS (Relational Database Service, 관계형 데이터베이스 서비스) 동기 복제, LB 분산 등이 주요 원인.
 
 ## 2. 내부 메커니즘
 
@@ -37,7 +37,7 @@ Internet Egress (대부분)  → $0.09/GB (첫 1GB 무료)
    - 쓰기 발생 시마다 Cross-AZ
    - 쓰기 부하 많은 서비스면 비용 큼
 
-3. **ALB → Target (Cross-Zone LB 활성)**
+3. **ALB (Application Load Balancer, 애플리케이션 로드 밸런서) → Target (Cross-Zone LB 활성)**
    - ALB 가 모든 AZ 의 Target 에 균등 분배
    - 요청의 대부분이 다른 AZ 로 감
    - `enable_cross_zone_load_balancing = false` 로 비활성 가능
@@ -51,7 +51,7 @@ Internet Egress (대부분)  → $0.09/GB (첫 1GB 무료)
 
 ### 2.3 Topology Aware Routing (K8s)
 
-- K8s 1.30+ `spec.trafficDistribution: PreferClose`
+- K8s (Kubernetes) 1.30+ `spec.trafficDistribution: PreferClose`
 - Service 의 엔드포인트 중 **같은 AZ** 의 Pod 을 우선 선택
 - 이전 버전의 `Topology Keys` 를 대체
 
@@ -74,7 +74,7 @@ Internet Egress (대부분)  → $0.09/GB (첫 1GB 무료)
 - 같은 AZ 의 Target 만 분배
 - **단점**: 부하 균등성 저하 (AZ 별 Target 수가 다르면 불균형)
 
-**3. 단일 AZ 집중 (HA 포기)**
+**3. 단일 AZ 집중 (HA (High Availability, 고가용성) 포기)**
 - 비용 극우선일 때
 - 개발/스테이징 환경에 적합
 - 프로덕션은 권장 안 함
@@ -85,7 +85,7 @@ Internet Egress (대부분)  → $0.09/GB (첫 1GB 무료)
 
 ### 3.2 모니터링
 
-**VPC Flow Logs** → Athena 쿼리로 AZ 간 트래픽 분석:
+**VPC (Virtual Private Cloud, 가상 사설 클라우드) Flow Logs** → Athena 쿼리로 AZ 간 트래픽 분석:
 
 ```sql
 SELECT 
@@ -201,7 +201,7 @@ resource "aws_flow_log" "this" {
 
 **해결**:
 - 모든 AZ 에 최소 1개 Pod 확보 (`topologySpreadConstraints` + `minReadySeconds`)
-- 또는 AZ 별 HPA 하한 설정
+- 또는 AZ 별 HPA (Horizontal Pod Autoscaler, 수평 파드 오토스케일러) 하한 설정
 
 ## 6. 면접 꼬리 질문 트리
 

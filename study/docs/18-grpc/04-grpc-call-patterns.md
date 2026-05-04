@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 1. 4 패턴이 가능한 이유
 
-HTTP/2 의 stream 은 **양방향 frame 흐름** 이다 (#06 참조). 이 위에서 gRPC 는 4가지 RPC 형태를 자연스럽게 표현한다.
+HTTP/2 의 stream 은 **양방향 frame 흐름** 이다 (#06 참조). 이 위에서 gRPC 는 4가지 RPC (Remote Procedure Call, 원격 프로시저 호출) 형태를 자연스럽게 표현한다.
 
 ```
 요청 1 → 응답 1            : Unary

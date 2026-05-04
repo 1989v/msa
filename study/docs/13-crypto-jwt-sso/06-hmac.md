@@ -25,7 +25,7 @@ created: 2026-04-28
 ## 사용 시나리오
 
 - API 요청 서명 (AWS Signature V4도 HMAC-SHA256 기반)
-- JWT HS256/HS384/HS512 알고리즘
+- JWT (JSON Web Token) HS256/HS384/HS512 알고리즘
 - TLS PRF / Cipher Suite의 MAC 부분 (TLS 1.2 GCM 이전)
 - 토큰/세션 변조 검출
 - 웹훅(webhook) 서명 검증

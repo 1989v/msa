@@ -15,7 +15,7 @@ created: 2026-05-01
 - VT 등장으로 **WebFlux 의 가치 영역이 축소** — 대부분 MVC + VT 가 같은 throughput, 더 단순
 - 한계: **pinning** (synchronized / native call), JNI / FFI 사용 라이브러리, 일부 ThreadLocal 패턴
 - 우리 msa 의 *MVC 서비스들* 이 VT 활성화하면 thread pool 한계 거의 사라짐 — [18 글](18-improvements.md) 참고
-- 이 주제는 **#3 동시성 학습 (별도 토픽)** 과 cross-ref. 여기서는 *IO 모델 관점만* 정리
+- 이 주제는 **#3 동시성 학습 (별도 토픽)** 과 cross-ref. 여기서는 *IO (Input/Output, 입출력) 모델 관점만* 정리
 
 ---
 

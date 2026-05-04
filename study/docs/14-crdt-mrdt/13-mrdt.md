@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 13. MRDT — CRDT 의 진화 (Git 의 영혼)
 
-CRDT 의 한계: 모든 자료구조가 *수렴 가능한 형태*로 재설계 필요. List 는 RGA, Set 은 OR-Set... 사용자 정의가 어렵다. **MRDT** 는 다른 답을 제시 — *"Git 처럼 3-way merge 를 쓰자"*.
+CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 의 한계: 모든 자료구조가 *수렴 가능한 형태*로 재설계 필요. List 는 RGA, Set 은 OR-Set... 사용자 정의가 어렵다. **MRDT (Mergeable Replicated Data Type, 병합 가능 복제 데이터 타입)** 는 다른 답을 제시 — *"Git 처럼 3-way merge 를 쓰자"*.
 
 ## 동기
 

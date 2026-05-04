@@ -236,7 +236,7 @@ PDB 는 **voluntary disruption** 만 막는다:
 **involuntary disruption** 은 못 막음:
 - 노드 OS crash
 - kubelet 죽음
-- 리소스 부족 OOM
+- 리소스 부족 OOM (Out Of Memory, 메모리 부족)
 - 클라우드 spot 회수
 
 ### msa 패턴

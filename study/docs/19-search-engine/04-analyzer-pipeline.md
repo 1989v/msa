@@ -10,7 +10,7 @@ created: 2026-05-03
 
 ## 1. 한 줄 핵심
 
-> **검색 품질의 1차 결정 요소는 BM25 가 아니라 analyzer 다.**
+> **검색 품질의 1차 결정 요소는 BM25 (Best Match 25) 가 아니라 analyzer 다.**
 > 인덱싱 analyzer 와 검색 analyzer 가 어긋나면 어떤 BM25 튜닝도 의미 없다.
 
 ## 2. Analyzer = 텍스트 → 토큰 변환 파이프라인

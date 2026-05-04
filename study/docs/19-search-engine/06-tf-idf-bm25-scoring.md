@@ -8,11 +8,11 @@ created: 2026-05-03
 
 # 06. TF-IDF → BM25 스코어링
 
-> 묶음 1 (B) 약점 정조준. "BM25 의 k1, b 가 뭔가요?" 는 시니어 면접 단골. 수식 자체보다 **언제 어느 방향으로 튜닝하는가** 가 핵심.
+> 묶음 1 (B) 약점 정조준. "BM25 (Best Match 25) 의 k1, b 가 뭔가요?" 는 시니어 면접 단골. 수식 자체보다 **언제 어느 방향으로 튜닝하는가** 가 핵심.
 
 ## 1. 한 줄 핵심
 
-> **BM25 = TF-IDF 에 길이 정규화와 tf saturation 을 추가한 것.**
+> **BM25 = TF-IDF (Term Frequency – Inverse Document Frequency, 용어 빈도-역문서 빈도) 에 길이 정규화와 tf saturation 을 추가한 것.**
 > k1 = tf saturation 속도, b = 길이 정규화 강도. 도메인의 문서 길이 분포 + tf 분포가 다르면 default 가 안 맞을 수 있다.
 
 ## 2. TF-IDF 부터

@@ -1,6 +1,6 @@
 # msa Platform ADR 후보 통합 리스트
 
-> 18개 학습 주제 deep study (2026-04 ~ 2026-05) 산출물에서 발굴된 ADR 후보를 통합·중복 제거·우선순위 매긴 문서.
+> 18개 학습 주제 deep study (2026-04 ~ 2026-05) 산출물에서 발굴된 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보를 통합·중복 제거·우선순위 매긴 문서.
 > 현재 사용 중 ADR: ADR-0001 ~ ADR-0027 (2026-05-02 기준). 후속 ADR 번호는 ADR-0028 부터 시작 가능.
 > Source: `study/docs/{2..18}/*-improvements.md` 15개 파일 (1, 12, 13 은 본 통합 대상에서 제외 — 1 (aws-network) / 12 (latency-numbers) / 13 (crypto-jwt-sso) 은 별도 산출물 또는 ADR-0027 등에서 부분 반영됨).
 

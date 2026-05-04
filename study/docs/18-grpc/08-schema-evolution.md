@@ -18,7 +18,7 @@ created: 2026-05-01
 | **Forward compat** | 옛 schema 의 코드가 새 데이터를 읽을 수 있음 | reader 가 옛, writer 가 새 |
 | **Full compat** | 둘 다 만족 | 양방향 |
 
-MSA 에서 서비스 배포 순서가 보장 안 될 때 (rolling update, 분리된 팀) **full compat** 가 default.
+MSA (Microservices Architecture, 마이크로서비스 아키텍처) 에서 서비스 배포 순서가 보장 안 될 때 (rolling update, 분리된 팀) **full compat** 가 default.
 
 ## 2. wire format 이 만든 호환 규칙
 

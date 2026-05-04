@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-본 파일은 Oracle 의 [Garbage-First Garbage Collector Tuning](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-g1-garbage-collector1.html) 공식 가이드를 9개 실전 시나리오로 풀어쓴 cookbook 이다. 06번 (G1 상세) 이 알고리즘 / 자료구조 중심이라면, 본 파일은 **"증상이 보이면 무엇을 만지나"** 의 의사결정 트리. 모든 케이스에 (1) 증상 → (2) 진단 query → (3) 튜닝 옵션 → (4) 검증 방법 → (5) 트레이드오프 5단계로 정리. msa 의 1Gi limit / 70% MaxRAMPercentage 환경을 디폴트 가정으로 한다.
+본 파일은 Oracle 의 [Garbage-First Garbage Collector Tuning](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-g1-garbage-collector1.html) 공식 가이드를 9개 실전 시나리오로 풀어쓴 cookbook 이다. 06번 (G1 (Garbage-First Collector) 상세) 이 알고리즘 / 자료구조 중심이라면, 본 파일은 **"증상이 보이면 무엇을 만지나"** 의 의사결정 트리. 모든 케이스에 (1) 증상 → (2) 진단 query → (3) 튜닝 옵션 → (4) 검증 방법 → (5) 트레이드오프 5단계로 정리. msa 의 1Gi limit / 70% MaxRAMPercentage 환경을 디폴트 가정으로 한다.
 
 ```
    증상 인식 ──→ 진단(GC 로그/NMT/JFR) ──→ 옵션 변경 ──→ 검증 ──→ 트레이드오프 수용 여부

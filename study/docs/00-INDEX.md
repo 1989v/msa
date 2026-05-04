@@ -8,7 +8,7 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 # msa Study — Master Index
 
 > 19개 학습 주제의 단일 entry point. 각 주제 카드, 학습 순서 추천, 영역별 그루핑, 의존 그래프, 키워드 검색 인덱스를 제공한다.
-> 산출물 통계 (2026-05-04 기준): **19개 주제 / 355개 deep file / 약 106,862 줄**. (#19 검색엔진 추가, 2026-05-03 ~ 2026-05-04)
+> 산출물 통계 (2026-05-04 기준): **19개 주제 / 356개 deep file / 약 107,443 줄**. (#19 검색엔진 추가 + `99-concept-catalog.md` 보강, 2026-05-03 ~ 2026-05-04)
 
 ---
 
@@ -49,9 +49,9 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 | 16 | [비동기 · 논블로킹 IO (NIO · Reactor · Netty)](16-async-nonblocking-io/) | advanced | 18h | 21 | 6,547 | true | completed (19 deep) |
 | 17 | [Spring Web 처리 심화 (Filter · Interceptor · AOP · Jackson · gzip)](17-spring-web/) | intermediate | 14h | 22 | 5,279 | true | completed (20 deep) |
 | 18 | [gRPC 심화 (Protobuf · HTTP/2 · Streaming)](18-grpc/) | intermediate | 14h | 22 | 6,297 | false | completed (20 deep) |
-| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 22 | 9,799 | true | completed (20 deep) |
+| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 23 | 10,380 | true | completed (20 deep + 99 catalog) |
 
-**합계**: 19 주제 / 455h 학습 시간 추정 / 355 file / 106,862 line.
+**합계**: 19 주제 / 455h 학습 시간 추정 / 356 file / 107,443 line.
 
 > "코드 연관" false 인 주제 (8/14/18) 도 msa 적용 가능성 검토 섹션을 가진다 — false 의 의미는 "현재 코드에 직접 매핑되는 구현이 적다" 정도로 해석.
 
@@ -66,20 +66,20 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 먼저 깔아야 위쪽 토론이 정량적으로 가능해진다.
 
 - **[#12 Latency Numbers](12-latency-numbers/)** (24h) — 자릿수 어휘 (ns/µs/ms). 후속 주제 모두에서 재사용.
-- **[#1 AWS 네트워크 인프라](1-aws-network/)** (35h) — VPC/SG/ALB/NLB 기본. K8s 토론의 물리 토대.
+- **[#1 AWS 네트워크 인프라](1-aws-network/)** (35h) — VPC (Virtual Private Cloud, 가상 사설 클라우드) /SG (Security Group, 보안 그룹) /ALB (Application Load Balancer, 애플리케이션 로드 밸런서) /NLB (Network Load Balancer, 네트워크 로드 밸런서) 기본. K8s (Kubernetes) 토론의 물리 토대.
 
 ### Tier 1 — 런타임 / 언어
 
 JVM 위에서 동작하는 모든 서비스의 토대.
 
-- **[#2 JVM 내부 + GC 튜닝](2-jvm-gc/)** (35h) — 메모리 / GC / 진단 3-Layer.
+- **[#2 JVM 내부 + GC 튜닝](2-jvm-gc/)** (35h) — 메모리 / GC (Garbage Collection, 가비지 컬렉션) / 진단 3-Layer (JVM = Java Virtual Machine, 자바 가상 머신).
 - **[#3 Java/Kotlin 동시성](3-java-kotlin-concurrency/)** (25h) — JMM / synchronized / coroutine / Virtual Threads. #2 와 짝.
 
 ### Tier 2 — 저장소 / 데이터
 
 스토리지 계층의 일관성 / 동시성.
 
-- **[#4 DB 인덱스 + 트랜잭션 격리](4-db-index-transaction/)** (25h) — B+Tree / MVCC / Lock / EXPLAIN.
+- **[#4 DB 인덱스 + 트랜잭션 격리](4-db-index-transaction/)** (25h) — B+Tree / MVCC (Multi-Version Concurrency Control, 다중 버전 동시성 제어) / Lock / EXPLAIN.
 - **[#5 Spring Transactional 심화](5-spring-transactional/)** (12h) — #4 의 application 레이어.
 - **[#15 커넥션 풀 심화](15-connection-pool/)** (12h) — HikariCP / Lettuce / R/W 분리. #5 와 직결.
 - **[#9 Redis 심화](9-redis-deep-dive/)** (15h) — 캐시 / 분산락 / Stream.
@@ -89,29 +89,29 @@ JVM 위에서 동작하는 모든 서비스의 토대.
 비동기 통신과 동기 RPC.
 
 - **[#6 Kafka 내부 동작](6-kafka-internals/)** (20h) — Broker / Consumer / EOS.
-- **[#18 gRPC 심화](18-grpc/)** (14h) — Protobuf / HTTP/2 / Streaming.
+- **[#18 gRPC 심화](18-grpc/)** (14h) — Protobuf / HTTP/2 / Streaming (gRPC = gRPC Remote Procedure Call, RPC (Remote Procedure Call, 원격 프로시저 호출) 프레임워크).
 
 ### Tier 4 — 분산 / 데이터 동기화
 
 여러 노드/리전에서의 일관성과 충돌 해소.
 
-- **[#7 분산 시스템 이론 + 패턴](7-distributed-systems/)** (18h) — CAP/PACELC/Saga/Idempotency/CB.
+- **[#7 분산 시스템 이론 + 패턴](7-distributed-systems/)** (18h) — CAP (Consistency / Availability / Partition tolerance, 일관성·가용성·분할 내성) /PACELC (Partition → Availability/Consistency, Else → Latency/Consistency) /Saga/Idempotency/CB.
 - **[#14 CRDT · MRDT](14-crdt-mrdt/)** (14h) — multi-master 충돌의 자동 merge.
 
 ### Tier 5 — IO / 웹 처리
 
-응용 계층의 IO와 요청 파이프라인.
+응용 계층의 IO (Input/Output, 입출력) 와 요청 파이프라인.
 
-- **[#16 비동기 · 논블로킹 IO](16-async-nonblocking-io/)** (18h) — NIO / Netty / Reactor / WebFlux.
-- **[#17 Spring Web 처리 심화](17-spring-web/)** (14h) — Filter / Interceptor / AOP / Jackson / gzip.
+- **[#16 비동기 · 논블로킹 IO](16-async-nonblocking-io/)** (18h) — NIO (Non-blocking I/O, 비차단 입출력) / Netty / Reactor / WebFlux.
+- **[#17 Spring Web 처리 심화](17-spring-web/)** (14h) — Filter / Interceptor / AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) / Jackson / gzip.
 
 ### Tier 6 — 관측 / 운영 / 보안 / 인프라
 
 배포 / 관측 / 보안.
 
-- **[#10 Observability 3축](10-observability/)** (18h) — Metrics / Logs / Traces + SLO.
-- **[#11 K8s 심화 + 배포 전략](11-k8s-deep-dive/)** (20h) — CRD / Operator / GitOps.
-- **[#13 암호화 · JWT · SSO · KMS](13-crypto-jwt-sso/)** (34h) — AES / JWT / OIDC / KMS / mTLS.
+- **[#10 Observability 3축](10-observability/)** (18h) — Metrics / Logs / Traces + SLO (Service Level Objective, 서비스 수준 목표).
+- **[#11 K8s 심화 + 배포 전략](11-k8s-deep-dive/)** (20h) — CRD (Custom Resource Definition, 커스텀 리소스 정의) / Operator / GitOps.
+- **[#13 암호화 · JWT · SSO · KMS](13-crypto-jwt-sso/)** (34h) — AES (Advanced Encryption Standard, 고급 암호화 표준) / JWT (JSON Web Token) / OIDC (OpenID Connect) / KMS (Key Management Service, 키 관리 서비스) / mTLS (mutual TLS, 양방향 TLS) / SSO (Single Sign-On, 단일 로그인).
 
 ### Tier 7 — 시스템 설계 통합
 
@@ -143,7 +143,7 @@ JVM 위에서 동작하는 모든 서비스의 토대.
 | 9 | [Redis](9-redis-deep-dive/) | 자료구조 인코딩, Cluster, Stampede, 분산락 |
 | 15 | [Connection Pool](15-connection-pool/) | HikariCP 내부, Lettuce, R/W 분리 |
 | 14 | [CRDT/MRDT](14-crdt-mrdt/) | SEC/Semilattice, OR-Set, Yjs/Automerge |
-| 19 | [검색엔진](19-search-engine/) | Lucene, BM25, nori, Vector/HNSW, RRF, Outbox→ES |
+| 19 | [검색엔진](19-search-engine/) | Lucene, BM25 (Best Match 25), nori, Vector/HNSW (Hierarchical Navigable Small World), RRF (Reciprocal Rank Fusion, 상호 순위 융합), Outbox→ES (Elasticsearch) |
 
 ### 3.3 메시징
 

@@ -211,7 +211,7 @@ class UserController {
 - ❌ 어노테이션 산발 → 도메인 클래스에 view 정책이 들러붙음
 - 대안: **응답 DTO 를 view 별로 분리** (예: UserSummaryDto, UserDetailDto) — 보일러플레이트 ↑ 이지만 명확
 
-→ msa 에선 **DTO 분리** 가 표준이라 `@JsonView` 거의 안 씀.
+→ msa 에선 **DTO (Data Transfer Object, 데이터 전송 객체) 분리** 가 표준이라 `@JsonView` 거의 안 씀.
 
 ## 5. ResponseBodyAdvice — 한 단계 더 위에서 후처리
 

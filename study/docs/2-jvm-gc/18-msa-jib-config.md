@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-msa 의 모든 JVM 서비스는 `buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts` 의 단일 convention 으로 컨테이너 이미지를 빌드한다. 현재 설정은 **컨테이너 인식 + 힙 75%** 의 기본만 박혀 있고, **GC 로그 / 자동 dump / Metaspace 한도 / Code Cache 한도 / NMT** 가 빠져있다. 운영 진단성 / OOM 안전성 측면에서 보강 필요. 본 절은 현 설정의 분해 + 부족점 + 개선안을 정리한다.
+msa 의 모든 JVM (Java Virtual Machine, 자바 가상 머신) 서비스는 `buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts` 의 단일 convention 으로 컨테이너 이미지를 빌드한다. 현재 설정은 **컨테이너 인식 + 힙 75%** 의 기본만 박혀 있고, **GC (Garbage Collection, 가비지 컬렉션) 로그 / 자동 dump / Metaspace 한도 / Code Cache 한도 / NMT** 가 빠져있다. 운영 진단성 / OOM (Out Of Memory, 메모리 부족) 안전성 측면에서 보강 필요. 본 절은 현 설정의 분해 + 부족점 + 개선안을 정리한다.
 
 ---
 

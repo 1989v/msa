@@ -41,8 +41,8 @@ Thread A (Core 1)              Thread B (Core 2)
 
 1. **read 마다 메인 메모리에서 가져옴** (또는 캐시 invalidate 후 다시 fetch)
 2. **write 즉시 메인 메모리에 flush**
-3. **재배열(reordering) 금지** — volatile read 이전 코드는 read 뒤로 못 옮김, volatile write 이후 코드는 write 앞으로 못 옮김 (JMM happens-before)
-4. **64-bit 변수 atomicity** — JLS 상 `long`/`double` 의 read/write 는 32-bit JVM 에선 두 번에 나눠 일어날 수 있는데(tearing), `volatile` 붙이면 단일 atomic 으로 보장
+3. **재배열(reordering) 금지** — volatile read 이전 코드는 read 뒤로 못 옮김, volatile write 이후 코드는 write 앞으로 못 옮김 (JMM (Java Memory Model, 자바 메모리 모델) happens-before)
+4. **64-bit 변수 atomicity** — JLS 상 `long`/`double` 의 read/write 는 32-bit JVM (Java Virtual Machine, 자바 가상 머신) 에선 두 번에 나눠 일어날 수 있는데(tearing), `volatile` 붙이면 단일 atomic 으로 보장
 
 ## 가시성만 보장 — 원자성 X
 
@@ -74,7 +74,7 @@ Thread B:                     read count(0) → +1 → write 1
 
 1. **counter 증가** → `AtomicLong` / `LongAdder`
 2. **여러 변수 동시 갱신** (예: `x` 와 `y` 가 항상 같이 변해야 함) → `synchronized` / `Lock`
-3. **read 한 값에 의존해 write** → CAS 또는 락
+3. **read 한 값에 의존해 write** → CAS (Compare-And-Swap, 비교-교환) 또는 락
 
 ## 정석 패턴 1: shutdown flag
 
@@ -220,7 +220,7 @@ class OutboxRelay {
 
 **Q. `volatile` 의 reordering 방지가 정확히 무슨 의미?**
 
-JIT/CPU 가 명령어 재배열 (out-of-order execution) 을 통해 성능을 끌어올리는데, `volatile` write 앞에 있던 일반 write 는 *write 뒤로 옮길 수 없고*, `volatile` read 뒤에 있는 일반 read 는 *read 앞으로 옮길 수 없다*. 이걸 메모리 배리어 (memory barrier) 라고 부르고, x86 에선 `volatile` write 가 mfence 또는 lock prefix 명령어로 컴파일된다.
+JIT (Just-In-Time compilation, 즉시 컴파일)/CPU 가 명령어 재배열 (out-of-order execution) 을 통해 성능을 끌어올리는데, `volatile` write 앞에 있던 일반 write 는 *write 뒤로 옮길 수 없고*, `volatile` read 뒤에 있는 일반 read 는 *read 앞으로 옮길 수 없다*. 이걸 메모리 배리어 (memory barrier) 라고 부르고, x86 에선 `volatile` write 가 mfence 또는 lock prefix 명령어로 컴파일된다.
 
 **Q. final 필드와 volatile 의 차이?**
 

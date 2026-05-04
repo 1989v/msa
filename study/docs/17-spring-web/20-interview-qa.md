@@ -17,7 +17,7 @@ created: 2026-05-01
 
 **Q1.1** HTTP 요청이 클라이언트에서 떠나서 응답으로 돌아오기까지 어떤 단계를 거치나요?
 
-> Reverse Proxy (TLS 종단 + L7 라우팅 + gzip 후보지) → Servlet Container (Tomcat 또는 Reactor Netty) → Servlet Filter chain (Spring Security 의 FilterChainProxy 포함) → DispatcherServlet → HandlerInterceptor.preHandle → Controller (AOP proxy chain 포함) → ReturnValueHandler → HttpMessageConverter (Jackson) → Filter chain 응답측 → Container → Reverse Proxy 순입니다. Filter 는 DispatcherServlet 밖, Interceptor 는 안, AOP 는 메소드 단위라는 게 핵심 위치 차이고요.
+> Reverse Proxy (TLS (Transport Layer Security, 전송 계층 보안) 종단 + L7 라우팅 + gzip 후보지) → Servlet Container (Tomcat 또는 Reactor Netty) → Servlet Filter chain (Spring Security 의 FilterChainProxy 포함) → DispatcherServlet → HandlerInterceptor.preHandle → Controller (AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) proxy chain 포함) → ReturnValueHandler → HttpMessageConverter (Jackson) → Filter chain 응답측 → Container → Reverse Proxy 순입니다. Filter 는 DispatcherServlet 밖, Interceptor 는 안, AOP 는 메소드 단위라는 게 핵심 위치 차이고요.
 
 **Q1.2** Filter 와 Interceptor 의 차이를 한 줄로?
 
@@ -85,7 +85,7 @@ created: 2026-05-01
 
 **Q2.9** SecurityFilterChain 을 여러 개 두는 이유는?
 
-> URL 패턴별로 다른 보안 정책을 두기 위해서입니다. `/admin/**` 은 ROLE_ADMIN 강제, `/api/**` 은 JWT, `/public/**` 은 permitAll 같은 식으로 chain 을 분리하면 각 chain 마다 13개 Filter 의 동작이 독립적으로 구성됩니다. `FilterChainProxy` 가 매칭 순서대로 첫 번째 매칭되는 chain 만 적용하니 `@Order` 로 우선순위 명시가 필요합니다.
+> URL 패턴별로 다른 보안 정책을 두기 위해서입니다. `/admin/**` 은 ROLE_ADMIN 강제, `/api/**` 은 JWT (JSON Web Token), `/public/**` 은 permitAll 같은 식으로 chain 을 분리하면 각 chain 마다 13개 Filter 의 동작이 독립적으로 구성됩니다. `FilterChainProxy` 가 매칭 순서대로 첫 번째 매칭되는 chain 만 적용하니 `@Order` 로 우선순위 명시가 필요합니다.
 
 **Q2.10** AOP 가 안 먹는 또 다른 케이스가 있나요?
 
@@ -109,7 +109,7 @@ created: 2026-05-01
 
 **Q3.4** snake_case API 를 카멜케이스 모델로 받으려면?
 
-> ObjectMapper 에 `setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)` 또는 `application.yml` 의 `spring.jackson.property-naming-strategy: SNAKE_CASE` 한 줄로 양방향 변환됩니다. 한 필드만 다른 컨벤션이면 그 필드만 `@JsonProperty` 로 명시하고요. msa 는 외부 API 컨벤션 결정 후 ADR 로 일괄 적용 계획입니다.
+> ObjectMapper 에 `setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)` 또는 `application.yml` 의 `spring.jackson.property-naming-strategy: SNAKE_CASE` 한 줄로 양방향 변환됩니다. 한 필드만 다른 컨벤션이면 그 필드만 `@JsonProperty` 로 명시하고요. msa 는 외부 API 컨벤션 결정 후 ADR (Architecture Decision Record, 아키텍처 결정 기록) 로 일괄 적용 계획입니다.
 
 **Q3.5** KotlinModule 의 strictNullChecks 는 어떤 옵션이고 왜 필요한가요?
 
@@ -117,7 +117,7 @@ created: 2026-05-01
 
 **Q3.6** 외부 라이브러리의 클래스 직렬화를 변경하려면?
 
-> MixIn 패턴을 씁니다. 라이브러리 클래스 자체는 못 건드리니 별도 abstract class 에 어노테이션을 달고 `mapper.addMixIn(LibClass.class, MixInClass.class)` 로 등록하면 단방향으로 어노테이션이 덮입니다. 외부 SDK DTO 의 민감 필드 마스킹, FQCN 노출 차단 같은 시나리오에 유용합니다.
+> MixIn 패턴을 씁니다. 라이브러리 클래스 자체는 못 건드리니 별도 abstract class 에 어노테이션을 달고 `mapper.addMixIn(LibClass.class, MixInClass.class)` 로 등록하면 단방향으로 어노테이션이 덮입니다. 외부 SDK DTO (Data Transfer Object, 데이터 전송 객체) 의 민감 필드 마스킹, FQCN 노출 차단 같은 시나리오에 유용합니다.
 
 **Q3.7** `JsonView` vs DTO 분리?
 
@@ -133,7 +133,7 @@ created: 2026-05-01
 
 **Q4.1** HTTP gzip 을 어디서 켜는 게 맞나요?
 
-> 표준은 reverse proxy/ingress 한 곳입니다. msa 라면 ingress-nginx 의 `use-gzip: true` 설정으로 모든 백엔드 응답에 일괄 적용됩니다. Spring Boot 의 `server.compression.enabled` 를 서비스마다 켜는 건 일관성 깨질 위험과 앱 노드 CPU 부담 때문에 안 쓰고요. CDN 까지 있으면 거기서 또 처리하지만 origin 과 CDN 둘 다 켜는 건 의미 없으니 한쪽만 활성합니다.
+> 표준은 reverse proxy/ingress 한 곳입니다. msa 라면 ingress-nginx 의 `use-gzip: true` 설정으로 모든 백엔드 응답에 일괄 적용됩니다. Spring Boot 의 `server.compression.enabled` 를 서비스마다 켜는 건 일관성 깨질 위험과 앱 노드 CPU 부담 때문에 안 쓰고요. CDN (Content Delivery Network, 콘텐츠 전송 네트워크) 까지 있으면 거기서 또 처리하지만 origin 과 CDN 둘 다 켜는 건 의미 없으니 한쪽만 활성합니다.
 
 **Q4.2** 늘 gzip 을 켜야 하나요?
 
@@ -145,7 +145,7 @@ created: 2026-05-01
 
 **Q4.4** BREACH 대응 방법은?
 
-> 정공은 응답 분리입니다. 인증 토큰을 사용자 입력이 echo 되는 응답과 함께 내려보내지 않는 거죠. 추가로 CSRF 토큰을 매 요청마다 다르게 마스킹하고 (masked double-submit), 민감 path 만 ingress 단에서 압축 비활성합니다. msa 는 ingress-nginx 의 path 별 `gzip off` annotation 또는 별도 ingress 분리로 처리할 계획이고요. rate limit 가 충분히 낮으면 BREACH 의 수천 번 추측이 실전에서 어려워집니다.
+> 정공은 응답 분리입니다. 인증 토큰을 사용자 입력이 echo 되는 응답과 함께 내려보내지 않는 거죠. 추가로 CSRF (Cross-Site Request Forgery, 사이트 간 요청 위조) 토큰을 매 요청마다 다르게 마스킹하고 (masked double-submit), 민감 path 만 ingress 단에서 압축 비활성합니다. msa 는 ingress-nginx 의 path 별 `gzip off` annotation 또는 별도 ingress 분리로 처리할 계획이고요. rate limit 가 충분히 낮으면 BREACH 의 수천 번 추측이 실전에서 어려워집니다.
 
 **Q4.5** `Vary: Accept-Encoding` 이 왜 필요한가요?
 
@@ -193,4 +193,4 @@ created: 2026-05-01
 
 - 17번 다음으로 자연스러운 주제는 **분산 추적 (OpenTelemetry / Zipkin)** — 본 학습의 trace ID 표준이 1단계, 그 위 span propagation / context propagation 이 2단계
 - 또는 **Spring Boot 4 / Jackson 3 마이그레이션** — `CommonJacksonAutoConfiguration` 이 임시방편이라 정식 마이그레이션 계획 필요
-- 또는 **Service Mesh (Istio / Linkerd)** — 17 의 mTLS / NetworkPolicy 결정 (#10 in [19](19-improvements.md)) 와 13 의 mTLS 학습이 만나는 지점
+- 또는 **Service Mesh (Istio / Linkerd)** — 17 의 mTLS (mutual TLS, 양방향 TLS) / NetworkPolicy 결정 (#10 in [19](19-improvements.md)) 와 13 의 mTLS 학습이 만나는 지점

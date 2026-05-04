@@ -14,7 +14,7 @@ created: 2026-05-01
 
 ### TCP 3-way handshake
 
-DB 가 같은 데이터센터(LAN, RTT < 1ms) 에 있어도 3-way handshake 는 1 RTT 가 걸린다. AWS 동일 AZ 기준 보통 0.3~0.7ms. cross-AZ 는 1~2ms. cross-region 은 30~100ms 까지 늘어난다.
+DB 가 같은 데이터센터(LAN, RTT < 1ms) 에 있어도 3-way handshake 는 1 RTT 가 걸린다. AWS 동일 AZ (Availability Zone, 가용 영역) 기준 보통 0.3~0.7ms. cross-AZ 는 1~2ms. cross-region 은 30~100ms 까지 늘어난다.
 
 ```
 Client → SYN              → Server     ┐

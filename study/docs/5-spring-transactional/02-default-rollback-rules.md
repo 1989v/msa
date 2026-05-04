@@ -38,7 +38,7 @@ target.method() 실행
 다만 다음 경우에 Checked 가 등장한다:
 - Java 라이브러리 호출 (`URLConnection.connect()` → `IOException`)
 - JDBC 직접 사용 (`SQLException`)
-- 파일 IO (`FileNotFoundException`)
+- 파일 IO (Input/Output, 입출력) (`FileNotFoundException`)
 
 ```kotlin
 @Transactional

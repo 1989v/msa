@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 한 줄 요약
 
-> msa 의 모든 서비스 Kafka 사용처를 grep + 직접 읽어 정리. **Producer 표준 (acks=all + idempotence + max.in.flight=5 + delivery.timeout=120s)** 은 일관됨. **Consumer 멱등성 (processed_event)** 은 inventory/order/quant 적용. **DLQ 정책 (FixedBackOff 1s × 3 + DLT 접미사)** 일관. 단점은 Outbox 패턴 부분 적용 (inventory/fulfillment/quant) + Cooperative-Sticky / group.instance.id 미설정.
+> msa 의 모든 서비스 Kafka 사용처를 grep + 직접 읽어 정리. **Producer 표준 (acks=all + idempotence + max.in.flight=5 + delivery.timeout=120s)** 은 일관됨. **Consumer 멱등성 (processed_event)** 은 inventory/order/quant 적용. **DLQ (Dead Letter Queue, 데드 레터 큐) 정책 (FixedBackOff 1s × 3 + DLT 접미사)** 일관. 단점은 Outbox 패턴 부분 적용 (inventory/fulfillment/quant) + Cooperative-Sticky / group.instance.id 미설정.
 
 ## 1. 서비스 별 사용 매트릭스
 
@@ -335,7 +335,7 @@ events
 
 ### 토픽 (kafka-convention.md 와 일치)
 `k8s/infra/prod/strimzi/kafka-topics.yaml`:
-- 도메인 이벤트: 6 partitions, 3 replicas, retention 7d, min.ISR 2
+- 도메인 이벤트: 6 partitions, 3 replicas, retention 7d, min.ISR (In-Sync Replicas) 2
 - `analytics.event.collected`: **12 partitions, 30d retention** (트래픽 + 재처리)
 - DLT 토픽은 명시 안 됨 → auto-create 또는 운영 시 직접 생성 필요
 
@@ -362,7 +362,7 @@ kafka:
 ### 잘 된 점
 - ✓ Producer 표준 (acks=all + idempotence + max.in.flight=5 + delivery.timeout=120s) 일관
 - ✓ DLQ 정책 (FixedBackOff 1s × 3 + .DLT 접미사) 일관
-- ✓ ADR-0012 컨슈머 멱등 패턴 적용 (inventory, order, quant)
+- ✓ ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012 컨슈머 멱등 패턴 적용 (inventory, order, quant)
 - ✓ Outbox 패턴 (inventory, fulfillment, quant) — 도메인 변경 atomic
 - ✓ 토픽 컨벤션 (`{domain}.{entity}.{event}`) + groupId 컨벤션 (`{service}-{purpose}`) 일관
 - ✓ KRaft 모드 (ZK 부담 없음)
@@ -378,7 +378,7 @@ kafka:
 - △ Outbox key 가 quant 은 eventId (순서 보장 안 됨) → aggregateId 기반 정밀 토픽 매핑 필요
 - △ Schema Registry 미사용 — JSON 직렬화 의존, 스키마 변경 시 호환성 직접 관리
 - △ analytics Streams 의 `processing.guarantee` 미설정 (기본 at_least_once)
-- △ rack-awareness 미설정 (multi-AZ 시 cross-AZ 비용)
+- △ rack-awareness 미설정 (multi-AZ (Availability Zone, 가용 영역) 시 cross-AZ 비용)
 
 자세한 우선순위 + ADR 필요 여부는 [13-improvements.md](13-improvements.md).
 

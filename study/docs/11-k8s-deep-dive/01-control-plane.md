@@ -34,7 +34,7 @@ created: 2026-05-01
             └──────────────────────────────────────────────┘
 ```
 
-핵심: **컨트롤 플레인의 모든 컴포넌트는 직접 etcd 를 만지지 않는다. 오직 api-server 만 만진다.** 이것이 RBAC/admission/audit 의 단일 게이트가 되는 이유다.
+핵심: **컨트롤 플레인의 모든 컴포넌트는 직접 etcd 를 만지지 않는다. 오직 api-server 만 만진다.** 이것이 RBAC (Role-Based Access Control, 역할 기반 접근 제어)/admission/audit 의 단일 게이트가 되는 이유다.
 
 ## 2. kube-apiserver — REST 게이트웨이
 

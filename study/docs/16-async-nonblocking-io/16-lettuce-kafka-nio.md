@@ -13,7 +13,7 @@ created: 2026-05-01
 - **Lettuce** = Netty 기반 Redis client. **single-thread connection 다중화** + 자동 reconnect
 - 우리 msa: 모든 서비스가 Lettuce 사용 (`common/CommonRedisAutoConfiguration`)
 - Lettuce 는 *기본 sync API* 와 *reactive API* 모두 제공 — Gateway 만 reactive, 나머지는 sync
-- **Kafka Java client** = 자체 NIO Selector loop, Netty 사용 안 함
+- **Kafka Java client** = 자체 NIO (Non-blocking I/O, 비차단 입출력) Selector loop, Netty 사용 안 함
 - producer 는 *async send + callback*, consumer 는 *sync poll loop*
 - 두 라이브러리 모두 **분면 (3) sync non-blocking IO multiplexing** 위에서 동작
 

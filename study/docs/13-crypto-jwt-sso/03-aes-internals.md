@@ -12,7 +12,7 @@ created: 2026-04-28
 
 ## SPN (Substitution-Permutation Network)
 
-- AES는 SPN 구조 (DES는 Feistel 구조)
+- AES (Advanced Encryption Standard, 고급 암호화 표준)는 SPN 구조 (DES는 Feistel 구조)
 - **혼돈(Confusion)** — 키와 ciphertext 관계를 복잡하게 (S-box가 담당)
 - **확산(Diffusion)** — 평문 한 비트 변경이 ciphertext 전체에 퍼지게 (ShiftRows + MixColumns가 담당)
 

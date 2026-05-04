@@ -18,7 +18,7 @@ title: Rate Limiter — 4 알고리즘 + msa gateway 코드 분석
 1. **Per-User**, **Per-IP**, **Per-API** 단위 호출 제한
 2. 초과 시 **HTTP 429 Too Many Requests** + `Retry-After` 헤더
 3. 화이트리스트 (운영자, 내부 서비스)
-4. **Burst 허용**: 평균 100 RPS인데 초당 200까지 일시 폭증 허용
+4. **Burst 허용**: 평균 100 RPS (Requests Per Second, 초당 요청 수)인데 초당 200까지 일시 폭증 허용
 5. 동적 변경 (Flash Sale 시 throttle 강화)
 
 ### Non-Functional
@@ -96,7 +96,7 @@ Sliding Counter: 이전 윈도우 + 현재 윈도우의 weighted sum
 | Fixed Window | ✅ (경계) | 낮음 | 매우 작음 | 매우 낮음 |
 | Sliding Window | △ | 높음 | 큼 | 높음 |
 
-> **현실 정답**: Token Bucket (대부분 시스템). Sliding Window는 정확한 SLA 검증이 필요할 때.
+> **현실 정답**: Token Bucket (대부분 시스템). Sliding Window는 정확한 SLA (Service Level Agreement, 서비스 수준 협약) 검증이 필요할 때.
 
 ---
 

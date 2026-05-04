@@ -10,7 +10,7 @@ level: deep
 
 ## 1. 재확인
 
-현재 msa 프로젝트 (K8s 기반, `prod-k8s`/`k3s-lite` 오버레이) 를 AWS EKS 로 이전할 때의 **매핑 + Terraform 모듈 구성**을 정리한다. Phase 3 의 실전 적용 영역.
+현재 msa 프로젝트 (K8s (Kubernetes) 기반, `prod-k8s`/`k3s-lite` 오버레이) 를 AWS EKS 로 이전할 때의 **매핑 + Terraform 모듈 구성**을 정리한다. Phase 3 의 실전 적용 영역.
 
 ## 2. 현재 msa 네트워크 구조 (AWS 매핑)
 
@@ -47,22 +47,22 @@ Client → Route 53 → ALB (AWS LB Controller 생성) → Target Group (gateway
 
 ### 2.3 서비스 발견
 
-- **Eureka 제거** (ADR-0019 Phase 1b, 2026-04-10)
-- 모든 서비스 호출이 K8s Service DNS 사용: `http://{service}:{port}`
+- **Eureka 제거** (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0019 Phase 1b, 2026-04-10)
+- 모든 서비스 호출이 K8s Service DNS (Domain Name System, 도메인 이름 시스템) 사용: `http://{service}:{port}`
 - EKS 이전 시 동일 구조 유지 가능
 
 ### 2.4 prod-k8s 오버레이 차이
 
-- HPA: 17개 서비스 (CPU 70% target, 2-8 replicas)
-- PDB: 14개 서비스 (minAvailable: 1)
-- TLS: cert-manager + Let's Encrypt
+- HPA (Horizontal Pod Autoscaler, 수평 파드 오토스케일러): 17개 서비스 (CPU 70% target, 2-8 replicas)
+- PDB (Pod Disruption Budget, 파드 중단 예산): 14개 서비스 (minAvailable: 1)
+- TLS (Transport Layer Security, 전송 계층 보안): cert-manager + Let's Encrypt
 - Traefik 명시적 비활성화 (ingress-nginx 선택)
 
 ## 3. Terraform 모듈 5종 설계
 
 ### 3.1 modules/vpc
 
-**역할**: VPC + 서브넷 + IGW + NAT + Route Table 기본 네트워크.
+**역할**: VPC (Virtual Private Cloud, 가상 사설 클라우드) + 서브넷 + IGW (Internet Gateway) + NAT (Network Address Translation, 네트워크 주소 변환) + Route Table 기본 네트워크.
 
 ```hcl
 # modules/vpc/main.tf
@@ -168,7 +168,7 @@ output "private_db_subnet_ids"  { value = aws_subnet.private_db[*].id }
 
 ### 3.2 modules/security
 
-**역할**: ALB/App/DB SG 정의 + SG-to-SG 체인.
+**역할**: ALB (Application Load Balancer, 애플리케이션 로드 밸런서)/App/DB SG (Security Group, 보안 그룹) 정의 + SG-to-SG 체인.
 
 ```hcl
 resource "aws_security_group" "alb" {
@@ -237,7 +237,7 @@ resource "aws_vpc_endpoint" "interface" {
 
 ### 3.4 modules/eks
 
-**역할**: EKS 클러스터 + 노드 그룹 + VPC CNI 설정.
+**역할**: EKS 클러스터 + 노드 그룹 + VPC CNI (Container Network Interface, 컨테이너 네트워크 인터페이스) 설정.
 
 ```hcl
 resource "aws_eks_cluster" "this" {
@@ -279,7 +279,7 @@ resource "aws_eks_addon" "vpc_cni" {
 
 ### 3.5 modules/alb (필요 시)
 
-**역할**: EKS 외부 서비스 (예: Bastion, 레거시 EC2) 용 ALB.
+**역할**: EKS 외부 서비스 (예: Bastion, 레거시 EC2 (Elastic Compute Cloud, 가상 머신 서비스)) 용 ALB.
 
 EKS 기반 서비스는 **AWS LB Controller** 가 Ingress 리소스로 자동 프로비저닝하므로 Terraform 불필요.
 
@@ -355,8 +355,8 @@ metadata:
 ### 4.3 ADR-0019 후속 결정
 
 - 네트워크 관련 결정 추가 필요:
-  - VPC CIDR 할당 (`10.0.0.0/16` 권장)
-  - NAT 전략 (AZ 별 vs 공유)
+  - VPC CIDR (Classless Inter-Domain Routing) 할당 (`10.0.0.0/16` 권장)
+  - NAT 전략 (AZ (Availability Zone, 가용 영역) 별 vs 공유)
   - VPC Endpoint 기본 세트
   - 프라이빗 endpoint 여부
   - Prefix Delegation 활성화
@@ -381,7 +381,7 @@ metadata:
 
 **진단**:
 1. AWS LB Controller 설치 여부 확인
-2. IRSA (IAM Role for Service Account) 설정 확인
+2. IRSA (IAM (Identity and Access Management, 자격 증명 및 접근 관리) Role for Service Account) 설정 확인
 3. 서브넷 태그 (`kubernetes.io/role/elb`) 확인
 4. VPC 의 Endpoint 또는 NAT 가 있어야 Controller 가 AWS API 호출 가능
 

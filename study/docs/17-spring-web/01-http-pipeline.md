@@ -87,14 +87,14 @@ created: 2026-05-01
 
 ### ① Reverse Proxy / Ingress
 
-- **책임**: TLS 종단, L7 라우팅, Rate limiting, gzip/br 압축, mTLS 검증
+- **책임**: TLS (Transport Layer Security, 전송 계층 보안) 종단, L7 라우팅, Rate limiting, gzip/br 압축, mTLS (mutual TLS, 양방향 TLS) 검증
 - **msa 위치**: `k8s/base/gateway/ingress.yaml` 의 ingress-nginx, prod 에서는 cert-manager + Let's Encrypt
 - **핵심 결정**: gzip/br 을 여기서 끝낸다 → 애플리케이션은 raw JSON 만 신경 쓴다
 - **TLS terminate 후** 에는 평문 → mTLS 가 아니면 클러스터 내부는 평문이라는 점 의식
 
 ### ② Servlet Container (Tomcat)
 
-- **책임**: HTTP 파싱, NIO/AIO 기반 connector, thread-per-request → 가상 스레드 (Boot 3.2+)
+- **책임**: HTTP 파싱, NIO (Non-blocking I/O, 비차단 입출력) /AIO (Asynchronous I/O, 비동기 입출력) 기반 connector, thread-per-request → 가상 스레드 (Boot 3.2+)
 - **클래스 흐름**: `Connector` → `CoyoteAdapter.service()` → `ApplicationFilterChain.doFilter()`
 - **Spring Boot 4 기본**: `server.tomcat.threads.max=200`, 가상 스레드 enable 시 thread pool 무시
 - **Reactor Netty(WebFlux)** 와 차이: 이벤트 루프 + Mono/Flux. msa 의 gateway 가 이쪽
@@ -130,9 +130,9 @@ created: 2026-05-01
 
 ### ⑥ Controller (proxy chain)
 
-- **AOP 프록시**: `@Controller` 빈 자체가 프록시일 수도 있고 (advice 가 있으면), Service 호출 시점에 Service 의 프록시를 통과
-- **트랜잭션 경계**: `@Transactional` 이 첫 적용되는 지점은 보통 Service. Controller 에서는 권장 안 됨 (외부 IO 분리, ADR-0020)
-- **Argument resolution**: 헤더 → DTO 매핑 시 Jackson 의 `ObjectReader` 가 호출됨 → ObjectMapper 영향
+- **AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 프록시**: `@Controller` 빈 자체가 프록시일 수도 있고 (advice 가 있으면), Service 호출 시점에 Service 의 프록시를 통과
+- **트랜잭션 경계**: `@Transactional` 이 첫 적용되는 지점은 보통 Service. Controller 에서는 권장 안 됨 (외부 IO (Input/Output, 입출력) 분리, ADR (Architecture Decision Record, 아키텍처 결정 기록) -0020)
+- **Argument resolution**: 헤더 → DTO (Data Transfer Object, 데이터 전송 객체) 매핑 시 Jackson 의 `ObjectReader` 가 호출됨 → ObjectMapper 영향
 - **반환**: 도메인 객체 또는 `ResponseEntity<T>` → 다음 단계로
 
 ### ⑦ ReturnValueHandler / Converter / ResponseBodyAdvice

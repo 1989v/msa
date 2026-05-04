@@ -213,7 +213,7 @@ A:
 
 msa 의 `Product` / `Order` / `Member` 는 partial update 가 흔함:
 - 가격 변경, 재고 변경, 이름 변경 — 각각 별도 요청
-- 현재 REST 는 PATCH + nullable DTO 로 처리
+- 현재 REST 는 PATCH + nullable DTO (Data Transfer Object, 데이터 전송 객체) 로 처리
 - gRPC 도입 시 → 모든 mutable 필드는 `optional` + `FieldMask` 조합 권장
 
 ```protobuf

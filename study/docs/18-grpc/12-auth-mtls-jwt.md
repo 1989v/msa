@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 12. gRPC 인증
 
-> 인증 = "누구냐", 인가 = "그 사람이 그걸 해도 되냐". gRPC 는 두 축을 모두 metadata + interceptor 로 자연스럽게 표현한다.
+> 인증 = "누구냐", 인가 = "그 사람이 그걸 해도 되냐". gRPC 는 두 축 (mTLS (mutual TLS, 양방향 TLS), JWT (JSON Web Token)) 을 모두 metadata + interceptor 로 자연스럽게 표현한다.
 
 ## 1. 인증 옵션 3가지
 
@@ -18,7 +18,7 @@ created: 2026-05-01
 | **JWT via metadata** | 사용자 (토큰) | 사용자 위임 호출 |
 | **둘 다 (mTLS + JWT)** | 서비스 + 사용자 | 사용자 컨텍스트 + 서비스 신원 모두 필요 |
 
-#13 SSO 에서 다룬 내용과 결합되는 지점이 많음.
+#13 SSO (Single Sign-On, 단일 로그인) 에서 다룬 내용과 결합되는 지점이 많음.
 
 ## 2. mTLS — 서비스 신원 검증
 
@@ -195,7 +195,7 @@ class JwtServerInterceptor(private val jwtUtil: JwtUtil) : ServerInterceptor {
 
 ### 3-3. 인가 (RBAC) 결합
 
-msa 의 ROLE_USER / SELLER / ADMIN 패턴을 그대로 활용:
+msa 의 ROLE_USER / SELLER / ADMIN 패턴을 그대로 활용 (RBAC = Role-Based Access Control, 역할 기반 접근 제어):
 
 ```kotlin
 class RoleAuthInterceptor : ServerInterceptor {
@@ -267,7 +267,7 @@ auth / member / product / order / ...
 ```
 
 - gateway 가 외부 REST 받고 내부는 gRPC 로 변환 (grpc-gateway 의 역방향)
-- 또는 별도 BFF 서비스가 변환
+- 또는 별도 BFF (Backend For Frontend) 서비스가 변환
 - 내부 mTLS 는 mesh (Istio) 위임
 
 ### 5-3. 단계적 도입

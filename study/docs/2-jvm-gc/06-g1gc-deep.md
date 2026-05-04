@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-G1 (Garbage First) 은 **힙을 같은 크기 region 으로 쪼개고, 가장 garbage 가 많은 region 부터 회수**한다는 발상의 GC. Young/Old 가 영역으로 고정되지 않고 region 이 동적으로 역할을 가진다(Eden / Survivor / Old / Humongous). 핵심 자료구조는 **Remembered Set (RSet)** — region 간 참조를 추적해 Young GC 가 Old 전체를 스캔하지 않게 한다. **Mixed GC** 가 G1의 묘미: Young + 일부 Old region 을 함께 evacuate 하여 incremental 하게 Old 정리.
+G1 (Garbage-First Collector) 은 **힙을 같은 크기 region 으로 쪼개고, 가장 garbage 가 많은 region 부터 회수**한다는 발상의 GC (Garbage Collection, 가비지 컬렉션). Young/Old 가 영역으로 고정되지 않고 region 이 동적으로 역할을 가진다(Eden / Survivor / Old / Humongous). 핵심 자료구조는 **Remembered Set (RSet)** — region 간 참조를 추적해 Young GC 가 Old 전체를 스캔하지 않게 한다. **Mixed GC** 가 G1의 묘미: Young + 일부 Old region 을 함께 evacuate 하여 incremental 하게 Old 정리.
 
 ```
    힙 (예: 4GB) → 2048 개의 2MB region 으로 분할
@@ -66,7 +66,7 @@ G1 (Garbage First) 은 **힙을 같은 크기 region 으로 쪼개고, 가장 ga
 ### 처리
 
 ```
-일반 객체:  TLAB → Eden region
+일반 객체:  TLAB (Thread-Local Allocation Buffer) → Eden region
 
 Humongous:  Eden 우회 → 연속된 빈 region 들에 직접 할당, Old 로 분류
             └ 한 region 에 정확히 1개만, 끝 region 은 padding 으로 낭비
@@ -135,7 +135,7 @@ Young GC 시 X 의 RSet 을 보면 Old A, B 의 일부만 스캔하면 됨.
 
 ### Write Barrier 의 역할
 
-JIT 가 모든 reference store (`obj.field = other`) 에 다음 코드를 끼움:
+JIT (Just-In-Time compilation, 즉시 컴파일) 가 모든 reference store (`obj.field = other`) 에 다음 코드를 끼움:
 
 ```
 // 의사 코드
@@ -255,7 +255,7 @@ fun setField(obj: Any, field: String, newValue: Any?) {
 ### G1 vs ZGC 의 marking 방식
 
 - G1: SATB
-- ZGC: Incremental Update (load barrier 로 읽는 시점에 수정)
+- ZGC (Z Garbage Collector): Incremental Update (load barrier 로 읽는 시점에 수정)
 
 차이는 7번에서.
 

@@ -83,7 +83,7 @@ return doSomethingWith(curX, curY)
 
 ### 장점
 - **read 가 락을 안 잡음** → contention 폭증해도 read throughput 거의 일정
-- read lock 의 reader counter 갱신 (CAS) 비용도 절약
+- read lock 의 reader counter 갱신 (CAS (Compare-And-Swap, 비교-교환)) 비용도 절약
 
 ### 단점 — *심각하게* 알아야 할 한계
 

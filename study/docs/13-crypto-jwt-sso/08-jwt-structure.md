@@ -42,8 +42,8 @@ Payload는 **서명만 되어 있고 암호화는 안 됨**. 누구나 디코드
 
 ## JWS vs JWE
 
-- **JWS (Signed)** — 무결성+인증, 평문 가시. 99%의 JWT가 이것.
-- **JWE (Encrypted)** — 암호화까지. 표준은 있지만 거의 안 씀 (TLS가 전송 암호화 담당, 페이로드는 본질적으로 비공개일 필요 없음). 모바일 앱 토큰처럼 클라이언트가 페이로드를 못 읽게 막아야 할 때만.
+- **JWS (JSON Web Signature, Signed)** — 무결성+인증, 평문 가시. 99%의 JWT가 이것.
+- **JWE (JSON Web Encryption, Encrypted)** — 암호화까지. 표준은 있지만 거의 안 씀 (TLS (Transport Layer Security, 전송 계층 보안)가 전송 암호화 담당, 페이로드는 본질적으로 비공개일 필요 없음). 모바일 앱 토큰처럼 클라이언트가 페이로드를 못 읽게 막아야 할 때만.
 
 ## 서명 알고리즘 비교
 

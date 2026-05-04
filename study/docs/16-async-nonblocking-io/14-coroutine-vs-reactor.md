@@ -12,7 +12,7 @@ created: 2026-05-01
 
 - **Coroutine** = 컴파일러가 만든 *continuation 기반 비동기* — `suspend` 함수가 핵심
 - **Reactor** = Reactive Streams 의 Publisher (Mono/Flux) — operator 기반
-- IO 모델은 *둘 다 동일* (분면 3, 같은 Selector/EventLoop 위에서 동작)
+- IO (Input/Output, 입출력) 모델은 *둘 다 동일* (분면 3, 같은 Selector/EventLoop 위에서 동작)
 - 차이는 **표현력 / 디버깅 / 학습 비용**
 - Coroutine 의 코드는 *imperative* 하게 보임 → 디버깅 용이, 직관적
 - Reactor 는 operator chain 으로 *복잡한 흐름 제어* (retry / timeout / fallback / parallel) 가 자연스러움

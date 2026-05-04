@@ -3,8 +3,9 @@ id: 19
 title: 검색엔진 심화 — Elasticsearch · OpenSearch · Hybrid · Re-Ranking · BM25 · nori
 status: completed
 created: 2026-05-03
-updated: 2026-05-03
+updated: 2026-05-04
 completed: 2026-05-03
+augmented: 2026-05-04 (99-concept-catalog 추가)
 tags: [elasticsearch, opensearch, lucene, bm25, tf-idf, nori, hybrid-search, vector-search, re-ranking, ltr, search-relevance]
 difficulty: advanced
 estimated-hours: 32
@@ -15,24 +16,24 @@ codebase-relevant: true
 
 ## 1. 개요
 
-검색은 "원본 데이터(SoR) + 워크로드별 보조 저장소" 패턴의 가장 대표적인 적용 사례다. msa 의 `search` 서비스는 product DB 를 SoR 로 두고 Kafka CDC 로 ES 인덱스를 유지하는 read-only 모델이며, batch 모듈은 alias swap 으로 무중단 리인덱싱을 한다 (`search/CLAUDE.md`). 본 주제는 **Lucene 내부 → Analyzer/형태소 → BM25 스코어링 → Vector/Hybrid → Re-Ranking → 운영** 까지 시니어 백엔드 관점으로 깊게 본다.
+검색은 "원본 데이터(SoR (System of Record, 원본 데이터 시스템)) + 워크로드별 보조 저장소" 패턴의 가장 대표적인 적용 사례다. msa 의 `search` 서비스는 product DB 를 SoR 로 두고 Kafka CDC (Change Data Capture, 변경 데이터 캡처) 로 ES (Elasticsearch) 인덱스를 유지하는 read-only 모델이며, batch 모듈은 alias swap 으로 무중단 리인덱싱을 한다 (`search/CLAUDE.md`). 본 주제는 **Lucene 내부 → Analyzer/형태소 → BM25 (Best Match 25) 스코어링 → Vector/Hybrid → Re-Ranking → 운영** 까지 시니어 백엔드 관점으로 깊게 본다.
 
-검색은 백엔드 시니어가 잘못 설계하면 가장 비싸게 갚게 되는 영역이다 — **인덱스 매핑 변경은 곧 전체 reindex**, **스코어링 튜닝은 비즈니스 KPI 직결**, **Dual Write 정합성 실수는 사용자 신뢰 즉시 손상**. 이 모든 것이 한 주제 안에 묶여 있다.
+검색은 백엔드 시니어가 잘못 설계하면 가장 비싸게 갚게 되는 영역이다 — **인덱스 매핑 변경은 곧 전체 reindex**, **스코어링 튜닝은 비즈니스 KPI (Key Performance Indicator, 핵심 성과 지표) 직결**, **Dual Write 정합성 실수는 사용자 신뢰 즉시 손상**. 이 모든 것이 한 주제 안에 묶여 있다.
 
 ## 2. 학습 목표
 
 - Lucene segment / commit / refresh / flush / merge 의 동작과 검색 가시성·내구성 모델 설명
 - Inverted Index 의 자료구조 (term dictionary, postings list, skip list) + analyzer 파이프라인 추적
 - 한국어 형태소 분석 (nori vs mecab-ko vs seunjeon) 의 토크나이징 방식 차이 + 사용자 사전·decompound mode 튜닝
-- TF-IDF → BM25 의 수식적 차이, BM25 의 k1/b 파라미터가 무엇을 통제하는가, function_score 결합 패턴
-- Query DSL 핵심 패턴 (term/match/multi_match/bool/nested/function_score) 과 score 계산 추적 (`explain: true`)
-- Vector Search (dense_vector, HNSW 그래프 + ef_construction/M 파라미터) 의 동작과 비용
-- Hybrid Search 통합 전략: Reciprocal Rank Fusion (RRF) vs weighted score, ES/OpenSearch 각각의 구현
-- Re-Ranking 의 두 갈래: cross-encoder 모델 vs Learning-To-Rank (LTR plugin, business signal 결합)
+- TF-IDF (Term Frequency – Inverse Document Frequency, 용어 빈도-역문서 빈도) → BM25 의 수식적 차이, BM25 의 k1/b 파라미터가 무엇을 통제하는가, function_score 결합 패턴
+- Query DSL (Domain-Specific Language, 도메인 특화 언어) 핵심 패턴 (term/match/multi_match/bool/nested/function_score) 과 score 계산 추적 (`explain: true`)
+- Vector Search (dense_vector, HNSW (Hierarchical Navigable Small World) 그래프 + ef_construction/M 파라미터) 의 동작과 비용
+- Hybrid Search 통합 전략: Reciprocal Rank Fusion (RRF (Reciprocal Rank Fusion, 상호 순위 융합)) vs weighted score, ES/OpenSearch (OpenSearch — 검색 컨텍스트) 각각의 구현
+- Re-Ranking 의 두 갈래: cross-encoder 모델 vs Learning-To-Rank (LTR (Learning to Rank, 랭킹 학습) plugin, business signal 결합)
 - 클러스터 토폴로지 설계 (master/data/coordinating/ingest, hot-warm-cold, shard 크기/개수 산정 공식)
-- Outbox + Kafka + ES Sink / Debezium CDC 동기화 패턴 + eventual consistency 의 색인 lag SLA 정의
-- Elasticsearch ↔ OpenSearch 분기의 라이선스/기능/호환성/마이그레이션 비용 정리 → ADR 후보
-- 운영 노하우: cluster health 모니터링, hot threads, slow log, snapshot/restore, 재색인 RTO 측정
+- Outbox + Kafka + ES Sink / Debezium CDC 동기화 패턴 + eventual consistency 의 색인 lag SLA (Service Level Agreement, 서비스 수준 협약) 정의
+- Elasticsearch ↔ OpenSearch 분기의 라이선스/기능/호환성/마이그레이션 비용 정리 → ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보
+- 운영 노하우: cluster health 모니터링, hot threads, slow log, snapshot/restore, 재색인 RTO (Recovery Time Objective, 복구 시간 목표) 측정
 
 ## 3. 선수 지식
 
@@ -41,7 +42,7 @@ codebase-relevant: true
 - HTTP / JSON / REST
 - Kafka 컨슈머 + 멱등성 (`#6`)
 - Spring Data 기본 (Repository / Page / Pageable)
-- 분산 시스템 기본 (`#7` — eventual consistency, CAP)
+- 분산 시스템 기본 (`#7` — eventual consistency (EC, Eventual Consistency, 최종 일관성), CAP (Consistency / Availability / Partition tolerance, 일관성·가용성·분할 내성))
 - 임베딩 모델 (text-embedding-ada / sentence-transformers) 의 개념적 이해
 
 ## 4. 학습 로드맵
@@ -107,12 +108,12 @@ codebase-relevant: true
 #### 2-5. Vector / Semantic Search
 - dense_vector field type (ES 8 / OpenSearch 2)
 - 거리 함수: cosine / dot_product / l2_norm
-- **HNSW 그래프**: 다층 그래프 기반 ANN
+- **HNSW 그래프**: 다층 그래프 기반 ANN (Approximate Nearest Neighbor, 근사 최근접 이웃)
   - M: 노드당 연결 수 (메모리 ↔ 정확도)
   - ef_construction: 인덱싱 시 탐색 너비
   - ef_search: 쿼리 시 탐색 너비 (정확도 ↔ 지연)
 - 인덱싱 비용: dense_vector 는 segment 단위 그래프 빌드 → reindex 매우 비쌈
-- 쿼리: kNN search (top-k 근접 이웃)
+- 쿼리: kNN (K-Nearest Neighbors, K-최근접 이웃) search (top-k 근접 이웃)
 - 임베딩 파이프라인: text → embedding model (OpenAI / sentence-transformers / KoSimCSE) → ES bulk
 - 임베딩 모델 변경 = 전체 reindex (모델 버전을 mapping 에 박을 것)
 
@@ -141,7 +142,7 @@ codebase-relevant: true
   - coordinating-only 노드로 fan-out 분리 (대규모에서)
 - **샤드 산정 공식**: 인덱스 크기 / 30~50GB per shard, 노드당 shard ≤ 20 × heap_GB
 - **Replica**: 가용성 + 읽기 처리량 (search 는 모든 replica 에서 실행)
-- **Hot-warm-cold**: ILM (ES) / ISM (OpenSearch) — 시계열 데이터에 유리
+- **Hot-warm-cold**: ILM (Index Lifecycle Management, 인덱스 생명주기 관리) (ES) / ISM (OpenSearch) — 시계열 데이터에 유리
 - **Allocation awareness**: rack/zone 분산
 - 모니터링: cluster health (green/yellow/red), pending tasks, hot threads, indexing/search rate, GC pause
 
@@ -306,9 +307,11 @@ C 선택과 모순되지 않는 방향으로 5건 일괄 처리:
 18-hybrid-search-poc.md                     (msa search 서비스 부분 PoC 코드)
 19-improvements.md                          (ADR 4건 Proposed 초안 통합)
 20-interview-qa.md                          (17 면접 질문 + 꼬리질문 + 악마의 변호인)
+21-followup-qa.md                           (보강 Q&A — Two-Phase 가격 필터 / Refresh-Translog 단계별 / Segment 증가 패턴)
+99-concept-catalog.md                       (★ 2026-05-04 추가 — ES/OS 공식 reference 기준 풀 개념 카탈로그 + 심화 템플릿. percolate/ELSER/PIT/retrievers/geo/span/MLT 등 누락 영역 발굴)
 ```
 
-총 **20+ deep files** 예상 (개수 자체는 estimated-hours 32 와 정합).
+총 **23 deep files** (00-plan + 00-preview + 01~21 + 99 catalog).
 
 ### 7-F. 모든 미결 종결
 

@@ -214,8 +214,8 @@ class AuthenticationGatewayFilter(
 - ✅ `GatewayFilterFactory` 패턴 — 라우트별 Config 주입 ([04](04-webmvc-vs-webflux.md))
 - ✅ Fail-Open — Redis 장애로 전 사용자 인증 거부 사태 방지
 - ✅ X-User-Id / X-User-Roles 다운스트림 전파
-- ⚠️ **다운스트림이 헤더를 신뢰** — 외부 직접 호출 가능하면 위조 위험 ([19](19-improvements.md), 13번 mTLS 학습 연결)
-- △ kid/iss/aud claim 검증 안 함 — JWT 표준 클레임 보강 후보 (이미 13번 19-improvements 의 1순위)
+- ⚠️ **다운스트림이 헤더를 신뢰** — 외부 직접 호출 가능하면 위조 위험 ([19](19-improvements.md), 13번 mTLS (mutual TLS, 양방향 TLS) 학습 연결)
+- △ kid/iss/aud claim 검증 안 함 — JWT (JSON Web Token) 표준 클레임 보강 후보 (이미 13번 19-improvements 의 1순위)
 - △ 인증 path 화이트리스트 (`/api/auth/login`) 가 SecurityConfig 가 아닌 GatewayRouteConfig 에서 분기 — Spring Security 표준 어긋남
 
 ### 2.4. SecurityConfig (skeleton)
@@ -238,9 +238,9 @@ class SecurityConfig {
 
 - WebFlux Security 의 13개 Filter 가 등록되긴 하지만 **모두 permitAll** 로 인증 위임
 - 실제 인증은 `AuthenticationGatewayFilter` 가 라우트별로 처리
-- **trade-off**: Spring Security 의 OAuth2 client / JWT decoder / `@PreAuthorize` 같은 표준 컴포넌트 모두 미사용
+- **trade-off**: Spring Security 의 OAuth (Open Authorization, 인가 프로토콜) 2 client / JWT decoder / `@PreAuthorize` 같은 표준 컴포넌트 모두 미사용
 
-→ 외부 IdP 도입 시 (Cognito/Keycloak) 이 구조를 ServerHttpSecurity 의 OAuth2 + JWT decoder 표준 구성으로 이전하는 게 자연스러움. **장기 ADR 후보**.
+→ 외부 IdP 도입 시 (Cognito/Keycloak) 이 구조를 ServerHttpSecurity 의 OAuth2 + JWT decoder 표준 구성으로 이전하는 게 자연스러움. **장기 ADR (Architecture Decision Record, 아키텍처 결정 기록) 후보**.
 
 ### 2.5. RateLimiterConfig
 

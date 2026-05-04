@@ -90,7 +90,7 @@ Spring Boot 1.4 (2016) 까지는 Tomcat JDBC 가 default 였다. 1.4 부터 Hika
 ### Hikari 의 설계 철학 (이게 면접 단골)
 
 - **"No frills"** — 불필요한 기능 (Statement caching, query interceptor) 은 일부러 *안* 만든다. JDBC 드라이버나 DB 측에서 더 잘 한다는 입장
-- **Bytecode-level 최적화** — 메서드 길이 < 35 bytes (JIT inline 한도), HotSpot 최적화에 의존
+- **Bytecode-level 최적화** — 메서드 길이 < 35 bytes (JIT (Just-In-Time compilation, 즉시 컴파일) inline 한도), HotSpot 최적화에 의존
 - **microbenchmark 검증** — HdrHistogram 으로 P99 측정
 - **defensive programming 거부** — 인자 검증 최소화, 예외 처리 단순
 

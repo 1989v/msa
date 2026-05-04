@@ -9,7 +9,7 @@ phase: 1
 
 ## 한줄 요약
 
-Redis 자료구조는 "**작을 때는 메모리 효율 우선 (listpack/intset/embstr), 커지면 시간 복잡도 우선 (hashtable/skiplist)**" 으로 자동 변환된다. 이 임계값 (config 로 노출) 을 외워두면 메모리 산정과 P99 지연을 같은 언어로 말할 수 있다.
+Redis 자료구조는 "**작을 때는 메모리 효율 우선 (listpack/intset/embstr), 커지면 시간 복잡도 우선 (hashtable/skiplist)**" 으로 자동 변환된다. 이 임계값 (config 로 노출) 을 외워두면 메모리 산정과 P99 (99th Percentile, 가장 느린 1%) 지연을 같은 언어로 말할 수 있다.
 
 이 파일은 String 의 SDS, Hash/List/ZSet 작은 인스턴스의 Listpack, Set 의 Intset 까지.
 

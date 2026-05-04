@@ -25,7 +25,7 @@ created: 2026-04-28
 - **Salt** — 사용자별 랜덤 값. DB에 비밀번호 해시와 함께 저장. **공개돼도 됨**.
   - 목적: 같은 비밀번호가 같은 해시가 되지 않게 함 (rainbow table 무력화)
   - 권장 길이: 16바이트 이상
-- **Pepper** — 애플리케이션 전체가 공유하는 비밀값. **별도 보관 (KMS, HSM)**
+- **Pepper** — 애플리케이션 전체가 공유하는 비밀값. **별도 보관 (KMS (Key Management Service, 키 관리 서비스), HSM (Hardware Security Module, 하드웨어 보안 모듈))**
   - 목적: DB만 유출됐을 때도 해시 무력화 — DB와 pepper가 같이 털려야 깰 수 있음
   - HMAC(pepper, password) 후 메인 알고리즘 적용하는 식
 

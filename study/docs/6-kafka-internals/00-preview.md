@@ -53,7 +53,7 @@ Kafka 는 표면적으로는 메시지 큐로 보이지만 본질은 **append-on
 
 **핵심 7문장만 외운다**:
 1. **파티션은 병렬화 단위이자 순서 보장 단위** — 한 파티션은 한 컨슈머에만 할당된다.
-2. **acks=all + min.insync.replicas=2 + enable.idempotence=true** 가 데이터 손실 없는 표준 조합.
+2. **acks=all + min.insync.replicas=2 + enable.idempotence=true** 가 데이터 손실 없는 표준 조합. ISR (In-Sync Replicas) 보장.
 3. **HW (High Watermark) 까지만 컨슈머에 노출** 된다 — ISR 모두에 복제된 오프셋.
 4. **EOS는 Producer 트랜잭션 + Consumer read_committed + Consume-Transform-Produce** 한정으로만 성립한다 (외부 DB commit 시 깨짐).
 5. **Consumer 멱등성은 외부에서 챙긴다** — Kafka 가 만들어주지 않는다 (msa는 `processed_event` 테이블).
@@ -190,7 +190,7 @@ Kafka 는 표면적으로는 메시지 큐로 보이지만 본질은 **append-on
 - `unclean.leader.election.enable=true` (데이터 손실 허용)
 - `min.insync.replicas=1` + `acks=all` (replication 효과 무력화)
 - 메시지 본문에 멱등 키 없이 발행 (Consumer 측 dedup 불가)
-- DLQ 만들고 모니터링 안 함 (조용히 쌓임)
+- DLQ (Dead Letter Queue, 데드 레터 큐) 만들고 모니터링 안 함 (조용히 쌓임)
 - 한 파티션을 두 Consumer 인스턴스에 동시 할당 시도 (Kafka가 막지만 설계 원칙으로도 금지)
 
 ---

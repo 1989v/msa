@@ -50,7 +50,7 @@ fun releaseLock(key: String, token: String) {
 
 ### 2.3 한계
 
-- TTL 동안에 holder 가 GC pause / 네트워크 단절로 멈췄다가 재개하면, **이미 락이 만료** 됐는데 holder 는 자기가 가졌다고 착각 → critical section 이 두 holder 에서 동시 실행 (lost lock!)
+- TTL 동안에 holder 가 GC (Garbage Collection, 가비지 컬렉션) pause / 네트워크 단절로 멈췄다가 재개하면, **이미 락이 만료** 됐는데 holder 는 자기가 가졌다고 착각 → critical section 이 두 holder 에서 동시 실행 (lost lock!)
 
 ## 3. Redisson RedLock (Antirez 제안)
 

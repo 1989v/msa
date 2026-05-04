@@ -9,7 +9,7 @@ phase: 2
 
 ## 한줄 요약
 
-Redis 의 HA 1단계는 **async replication (master → replica)** + **Sentinel 로 자동 failover**. async 라 master 가 ack 없이도 응답하므로 빠르지만 **failover 시 데이터 유실 가능**. Sentinel 은 quorum 기반 투표로 새 master 를 선출한다.
+Redis 의 HA (High Availability, 고가용성) 1단계는 **async replication (master → replica)** + **Sentinel 로 자동 failover**. async 라 master 가 ack 없이도 응답하므로 빠르지만 **failover 시 데이터 유실 가능**. Sentinel 은 quorum 기반 투표로 새 master 를 선출한다.
 
 ## 1. Replication 기본
 

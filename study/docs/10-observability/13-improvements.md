@@ -7,7 +7,7 @@ created: 2026-05-01
 
 # 13. Improvements — Observability 도입 ADR 초안
 
-> #12 의 Gap 매트릭스를 입력으로, msa 의 다음 6개월 Observability 로드맵 ADR 초안.
+> #12 의 Gap 매트릭스를 입력으로, msa 의 다음 6개월 Observability 로드맵 ADR (Architecture Decision Record, 아키텍처 결정 기록) 초안.
 
 ## 1. ADR 후보 5개 — 우선순위 정렬
 

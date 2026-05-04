@@ -46,7 +46,7 @@ title: Chat System (Slack DM / WhatsApp / KakaoTalk) 설계
 DAU = 5천만 (KakaoTalk 한국 가정)
 1인당 일 메시지 = 50개
 일 메시지 = 50M × 50 = 2.5B / 일
-write QPS = 2.5B / 86400 ≈ 30,000 (피크 ×3 = 100k)
+write QPS (Queries Per Second, 초당 쿼리 수) = 2.5B / 86400 ≈ 30,000 (피크 ×3 = 100k)
 
 메시지 평균 크기 = 200 bytes
 일 storage = 2.5B × 200 bytes = 500GB / 일
@@ -91,7 +91,7 @@ server → client
 { "type": "TYPING", "conversationId": 123, "userId": "u2" }
 ```
 
-> WebSocket vs SSE vs Long Polling: WebSocket이 양방향 + 적은 오버헤드. 모바일 환경(WiFi/LTE 전환)은 reconnection 핸들링 필수.
+> WebSocket vs SSE (Server-Sent Events) vs Long Polling: WebSocket이 양방향 + 적은 오버헤드. 모바일 환경(WiFi/LTE 전환)은 reconnection 핸들링 필수.
 
 ---
 
@@ -249,7 +249,7 @@ Heartbeat 30초마다 → SET presence:{userId} ONLINE EX 60
 - **Linux file descriptor**: ulimit -n 1M
 - **Netty / Reactor Netty**: 100k 연결/서버 무난 (8GB heap)
 - **Kotlin coroutine + WebFlux**: thread 적게 사용
-- **TLS termination**: LB에서 종료 (서버 CPU 절약)
+- **TLS (Transport Layer Security, 전송 계층 보안) termination**: LB에서 종료 (서버 CPU 절약)
 
 ---
 
@@ -313,7 +313,7 @@ Heartbeat 30초마다 → SET presence:{userId} ONLINE EX 60
 
 ## 12. 면접 30초 요약
 
-> "Chat은 stateful + write-heavy. 핵심 분리는 (1) Connection layer (WebSocket cluster, sticky LB + Redis pub/sub), (2) Storage (Cassandra, conversation_id 파티션), (3) Push (Kafka → APNs/FCM). 순서 보장은 conversation_id로 Kafka 파티션 묶고 timeuuid로 정렬. Presence는 Redis TTL heartbeat. 본 msa의 Kafka 이벤트 패턴 + Redis 패턴이 그대로 적용 가능합니다."
+> "Chat은 stateful + write-heavy. 핵심 분리는 (1) Connection layer (WebSocket cluster, sticky LB + Redis pub/sub), (2) Storage (Cassandra, conversation_id 파티션), (3) Push (Kafka → APNs/FCM). 순서 보장은 conversation_id로 Kafka 파티션 묶고 timeuuid로 정렬. Presence는 Redis TTL (Time To Live, 생존 시간) heartbeat. 본 msa의 Kafka 이벤트 패턴 + Redis 패턴이 그대로 적용 가능합니다."
 
 ---
 

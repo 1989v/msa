@@ -17,7 +17,7 @@ K8s 가 강제하는 4가지:
 3. **모든 노드 ↔ 모든 Pod** 통신 (NAT 없이)
 4. **Pod 가 보는 자기 IP == 다른 Pod 가 보는 그 Pod IP**
 
-이걸 구현하는 게 **CNI plugin** (Calico/Cilium/VPC CNI/...) 의 역할.
+이걸 구현하는 게 **CNI (Container Network Interface, 컨테이너 네트워크 인터페이스) plugin** (Calico/Cilium/VPC CNI/...) 의 역할.
 
 ## 2. CNI — Pod 네트워크 구현체
 

@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## TL;DR
 
-- **Netty** = JVM 진영 표준 비동기 네트워크 프레임워크. Reactor 패턴 main+sub 모델 ([08 글](08-reactor-vs-proactor.md))
+- **Netty** = JVM (Java Virtual Machine, 자바 가상 머신) 진영 표준 비동기 네트워크 프레임워크. Reactor 패턴 main+sub 모델 ([08 글](08-reactor-vs-proactor.md))
 - **EventLoopGroup = boss + worker**, 각 EventLoop = 1 thread + 1 Selector
 - **Channel ↔ ChannelPipeline ↔ ChannelHandler 체인** — 인바운드/아웃바운드 분리
 - **ByteBuf** = Netty 의 ByteBuffer 대체 — pooled/unpooled, direct/heap, 참조 카운팅

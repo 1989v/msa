@@ -20,7 +20,7 @@ created: 2026-05-01
 | at-least-once | 1회 또는 N회 (중복 가능) | 처리 후 commit (msa 표준) |
 | exactly-once | 정확히 1회 | EOS 또는 effectively-once |
 
-**effectively-once** = at-least-once + 멱등성 = 결과적으로 1회와 같음. msa 가 ADR-0012 로 달성하는 방식.
+**effectively-once** = at-least-once + 멱등성 = 결과적으로 1회와 같음. msa 가 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012 로 달성하는 방식.
 
 ## 2. EOS 의 두 가지 의미
 
@@ -253,6 +253,6 @@ Streams 는 자동으로:
 
 ## 11. 다음 단계
 
-- [10-idempotency-dlq-failure.md](10-idempotency-dlq-failure.md) — 멱등 컨슈머 + DLQ 심화
+- [10-idempotency-dlq-failure.md](10-idempotency-dlq-failure.md) — 멱등 컨슈머 + DLQ (Dead Letter Queue, 데드 레터 큐) 심화
 - [11-msa-codebase-grep.md](11-msa-codebase-grep.md) — msa 의 Outbox + 컨슈머 멱등 전수조사
 - [13-improvements.md](13-improvements.md) — analytics Streams EOS 도입 검토

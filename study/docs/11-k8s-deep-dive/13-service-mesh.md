@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 1. 한 문장 요약
 
-> "각 Pod 에 사이드카(또는 노드 에이전트) 를 붙여서 **트래픽을 가로채고**, **mTLS / observability / traffic policy** 를 앱 코드 변경 없이 제공하는 인프라 층."
+> "각 Pod 에 사이드카(또는 노드 에이전트) 를 붙여서 **트래픽을 가로채고**, **mTLS (mutual TLS, 양방향 TLS) / observability / traffic policy** 를 앱 코드 변경 없이 제공하는 인프라 층."
 
 ## 2. 왜 필요한가 — Mesh 가 푸는 5가지 문제
 

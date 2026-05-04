@@ -14,7 +14,7 @@ created: 2026-05-01
 
 ## Phase 1: 분산 충돌 + SEC + 패러다임 (8개)
 
-**Q1.1** CRDT 가 정확히 무엇인가?
+**Q1.1** CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 가 정확히 무엇인가?
 > Conflict-free Replicated Data Type — 분산 환경에서 여러 replica 가 동시에 쓰기를 해도 자동으로 수렴하는 자료구조. 핵심은 merge 함수가 associative · commutative · idempotent (ACI) 라서 어떤 순서/중복으로 합쳐도 같은 결과. 그래서 *Strong* Eventually Consistent 보장이 가능.
 
 > 꼬리질문: "Eventually Consistent 와의 차이를 더 명확히?"

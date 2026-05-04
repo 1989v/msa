@@ -41,7 +41,7 @@ $ grep -r "@Aspect" /Users/.../msa/src --include="*.kt"
 # (운영 코드에 0건. template 1개)
 ```
 
-**현재 AOP 사용 0건**. Resilience4j 가 내부 AOP 를 쓰지만 사용자 코드 측엔 없음.
+**현재 AOP (Aspect-Oriented Programming, 관점 지향 프로그래밍) 사용 0건**. Resilience4j 가 내부 AOP 를 쓰지만 사용자 코드 측엔 없음.
 
 ### 1.3. gzip / compression
 
@@ -208,7 +208,7 @@ class BithumbClient(...) {
 
 추가 후보 Aspect:
 
-- **`@Auditable`** — order, payment, gifticon 의 감사 로그 자동 기록 (ADR-0026 audit-log immutability 와 연결)
+- **`@Auditable`** — order, payment, gifticon 의 감사 로그 자동 기록 (ADR (Architecture Decision Record, 아키텍처 결정 기록) -0026 audit-log immutability 와 연결)
 - **`@TenantBoundary`** — quant 의 tenantId 자동 검증 (현재 ArgumentResolver 로 처리)
 
 ## 4. 결정 #3 — gzip 활성화 위치

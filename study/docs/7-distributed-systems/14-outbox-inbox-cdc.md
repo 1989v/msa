@@ -165,7 +165,7 @@ fun handle(event: KafkaEvent) {
 }
 ```
 
-→ msa 의 `processed_event` 가 Inbox 의 변형. ADR-0012 의 핵심.
+→ msa 의 `processed_event` 가 Inbox 의 변형. ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012 의 핵심.
 
 ### Inbox vs processed_event 차이
 
@@ -179,7 +179,7 @@ msa 는 단순 dedup 만 필요해서 processed_event 로 단순화.
 
 ## 5. CDC (Change Data Capture)
 
-DB binlog 를 읽어 데이터 변경을 이벤트로 발행하는 패턴.
+CDC (Change Data Capture, 변경 데이터 캡처) 는 DB binlog 를 읽어 데이터 변경을 이벤트로 발행하는 패턴.
 
 ### 5.1 Debezium
 

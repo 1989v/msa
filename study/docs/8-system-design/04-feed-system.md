@@ -47,7 +47,7 @@ DAU = 2억 (트위터 글로벌 가정)
 1인 일 작성 = 0.5 post
 1인 일 timeline 조회 = 50회
 
-Write QPS = 200M × 0.5 / 86400 ≈ 1,150 (피크 ×3 = 3,500)
+Write QPS (Queries Per Second, 초당 쿼리 수) = 200M × 0.5 / 86400 ≈ 1,150 (피크 ×3 = 3,500)
 Read QPS  = 200M × 50 / 86400 ≈ 115,000 (피크 350k)
 
 Storage:
@@ -226,7 +226,7 @@ Capped: ZREMRANGEBYRANK 0 -801  # 800개 초과 시 트림
 
 ### 7-3. Cold cache 처리
 
-- 비활성 사용자가 30일 후 로그인 → inbox TTL 만료
+- 비활성 사용자가 30일 후 로그인 → inbox TTL (Time To Live, 생존 시간) 만료
 - Lazy rebuild: 첫 GET /feed 시 follow 목록 → 각자의 user_timeline에서 최근 20개씩 fetch + merge → inbox 캐시 채움
 
 ### 7-4. Celebrity 문제 심화

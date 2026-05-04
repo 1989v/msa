@@ -220,7 +220,7 @@ x86-64 의 일반적 cache line 크기. ARM 도 같음. CPU 가 메모리를 *li
 
 **Q. `LongAdder` 가 false sharing 을 자동으로 어떻게 해결?**
 
-내부적으로 `Cell[]` 배열을 두고 각 Cell 에 `@Contended` 적용. 스레드별 hash 로 자기 Cell 에 inc → cache line 분리 + striped. AtomicLong 의 단일 변수 CAS contention 도 같이 해소. JDK 가 캡슐화한 mechanical sympathy 패턴.
+내부적으로 `Cell[]` 배열을 두고 각 Cell 에 `@Contended` 적용. 스레드별 hash 로 자기 Cell 에 inc → cache line 분리 + striped. AtomicLong 의 단일 변수 CAS (Compare-And-Swap, 비교-교환) contention 도 같이 해소. JDK 가 캡슐화한 mechanical sympathy 패턴.
 
 **Q. False sharing 을 production 에서 어떻게 진단?**
 

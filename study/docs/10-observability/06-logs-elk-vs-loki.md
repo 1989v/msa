@@ -360,7 +360,7 @@ flowchart LR
 - Vector = Fluent Bit / Logstash 통합 차세대 collector
 - Pipeline 패턴: 직접 forward → Kafka 버퍼 → Hot/Cold tiering
 - Sampling: level / endpoint / trace ID / rate limit 4종
-- PII 마스킹은 **5단 방어** (코드 → lib → collector → RBAC → 만료)
+- PII 마스킹은 **5단 방어** (코드 → lib → collector → RBAC (Role-Based Access Control, 역할 기반 접근 제어) → 만료)
 - msa 는 로그 stack 미도입 — Loki + logback-spring.xml 표준 ADR 후보
 
 ## 13. 다음 단계

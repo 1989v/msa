@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 15. msa 코드베이스 풀 설정 점검
 
-이론을 코드에 매핑. 11개 JVM 서비스의 hikari 설정, gateway Lettuce, common Redis 자동 설정을 *현재 상태 기준으로 평가*.
+이론을 코드에 매핑. 11개 JVM (Java Virtual Machine, 자바 가상 머신) 서비스의 hikari 설정, gateway Lettuce, common Redis 자동 설정을 *현재 상태 기준으로 평가*.
 
 ---
 

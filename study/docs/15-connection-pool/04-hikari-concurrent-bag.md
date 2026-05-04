@@ -33,7 +33,7 @@ public synchronized Connection getConnection() {
 
 1. `synchronized` 가 *전체 메서드* 를 잠근다 — 100 thread 가 동시에 borrow 하면 99개가 대기
 2. `wait/notify` 의 wakeup 이 *한 명만* 깨운다는 보장 없음 — thundering herd
-3. JVM 의 monitor lock 은 contention 시 OS-level mutex (heavyweight) 로 escalate
+3. JVM (Java Virtual Machine, 자바 가상 머신) 의 monitor lock 은 contention 시 OS-level mutex (heavyweight) 로 escalate
 
 ConcurrentLinkedQueue 기반 (Tomcat JDBC) 도 CAS spin loop 가 cache line bouncing 을 일으켜 thread 수가 늘어날수록 *contention* 이 빠르게 증가.
 

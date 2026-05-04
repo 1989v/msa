@@ -23,7 +23,7 @@ L1/L2 캐시 → 메인 메모리 → SSD → 데이터센터 내부 → 리전 
 
 - 인접 구간 간 latency 비율을 즉답할 수 있다 (예: "메인 메모리 vs SSD 랜덤 read = 약 1000배", "DC 내 RTT vs 대륙 간 RTT = 약 300배")
 - 각 구간을 자릿수(ns / µs / ms)로 그룹핑하여 머릿속 지도를 그릴 수 있다
-- 시스템 설계 토론에서 "이 호출은 어느 자릿수 비용인가" 를 추론할 수 있다 (Redis GET vs MySQL PK vs Kafka produce vs S3 GET vs cross-region replication)
+- 시스템 설계 토론에서 "이 호출은 어느 자릿수 비용인가" 를 추론할 수 있다 (Redis GET vs MySQL PK vs Kafka produce vs S3 (Simple Storage Service, 객체 스토리지) GET vs cross-region replication)
 - 표를 근거로 한 아키텍처 패턴을 설명할 수 있다 (캐시 계층화, fan-out 의 tail latency 곱셈, 멀티 리전 vs 단일 리전, 동기 vs 이벤트 발행)
 - msa 호출 경로(gateway → product → MySQL/Redis/ES)에 latency budget 자릿수 단위로 배분할 수 있다
 - 면접에서 "이 API p99 가 느려요. 어디 의심?" 질문에 자릿수 기반 우선순위로 답할 수 있다

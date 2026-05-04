@@ -56,8 +56,8 @@ DB 면접/실무 사고는 **6층 사다리**다. 아래 층의 물리 제약이
 
 **핵심 7문장만 외운다**:
 1. DB 가 **B+Tree** 를 쓰는 이유는 디스크가 **페이지(16KiB)** 단위라서. fanout 수백~수천이면 1억 행도 트리 깊이 3-4.
-2. InnoDB 의 **clustered index = PK** — secondary index 의 leaf 는 **PK 값**을 들고 있다. 이 한 문장이 covering / lookup / pk 길이 / 정렬 모두 설명.
-3. **MVCC = "읽기는 lock 없이"** — undo log 로 과거 버전을 만들어주는 메커니즘. REPEATABLE READ 의 snapshot 일관성도 여기서 나온다.
+2. InnoDB 의 **clustered index = PK (Primary Key, 기본 키)** — secondary index 의 leaf 는 **PK 값**을 들고 있다. 이 한 문장이 covering / lookup / pk 길이 / 정렬 모두 설명.
+3. **MVCC (Multi-Version Concurrency Control, 다중 버전 동시성 제어) = "읽기는 lock 없이"** — undo log 로 과거 버전을 만들어주는 메커니즘. REPEATABLE READ 의 snapshot 일관성도 여기서 나온다.
 4. InnoDB 의 **REPEATABLE READ + Gap Lock + Next-key Lock** 조합이 phantom read 를 차단한다. 표준 SQL 정의와 다른 InnoDB 만의 특징.
 5. Lock 호환성: **S↔S 만 공존**. X 는 모두 충돌. **IS/IX 는 row-level 과 table-level 을 충돌 없이 공존**시키는 메타 락.
 6. **Deadlock 은 InnoDB 가 자동 감지** (wait-for graph) → 한쪽만 rollback. 진단은 `SHOW ENGINE INNODB STATUS` 의 LATEST DETECTED DEADLOCK 섹션.
@@ -184,7 +184,7 @@ DB 면접/실무 사고는 **6층 사다리**다. 아래 층의 물리 제약이
 - **JPA flush 시점**: TX 종료 직전. 그 전에 보낸 SELECT 가 캐시(1차) 에서 stale 한 값 받아 락 충돌 시 의외 동작.
 - **`@OneToMany fetch=LAZY` + Open-In-View 활성**: TX 밖에서 Lazy 로딩 → 새 connection + 새 snapshot → repeatable read 가 깨진 듯한 착각.
 - **QueryDSL 의 `ne` / `notIn`**: 인덱스 못 탐 (negative match). cardinality 낮은 enum 의 NOT 조건은 거의 ALL.
-- **Hibernate `nullable = false` 변경**: ALTER 가 INPLACE 안 되고 COPY → MDL 폭탄. ADR-0020 의 long TX 와 만나면 서비스 정지.
+- **Hibernate `nullable = false` 변경**: ALTER 가 INPLACE 안 되고 COPY → MDL (Metadata Lock, 메타데이터 락) 폭탄. ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020 의 long TX 와 만나면 서비스 정지.
 - **`@Version` 낙관락**: row lock 안 잡고 UPDATE WHERE version=? 로 충돌 검출. lock 보유 시간 0 이라 lock wait 없음. 동시 업데이트 빈도 높으면 retry 폭주.
 
 ---

@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 한 줄
 
-Virtual Thread (VT) 는 **JVM 이 직접 스케줄링하는 가벼운 스레드** — 1:1 OS 스레드 매핑이 아니라 *carrier thread* 위에 M:N 매핑. blocking IO 가 자동으로 *unmount* 되어 carrier 를 풀어준다. JDK 21 stable, **JDK 24/25 의 JEP 491 (synchronized pinning 제거) + structured concurrency** 로 큰 제약 거의 해소.
+Virtual Thread (VT) 는 **JVM (Java Virtual Machine, 자바 가상 머신) 이 직접 스케줄링하는 가벼운 스레드** — 1:1 OS 스레드 매핑이 아니라 *carrier thread* 위에 M:N 매핑. blocking IO (Input/Output, 입출력) 가 자동으로 *unmount* 되어 carrier 를 풀어준다. JDK 21 stable, **JDK 24/25 의 JEP 491 (synchronized pinning 제거) + structured concurrency** 로 큰 제약 거의 해소.
 
 ## 문제: 플랫폼 스레드의 한계
 

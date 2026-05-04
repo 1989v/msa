@@ -36,7 +36,7 @@ created: 2026-05-01
 ```
 
 장점:
-- **자격증명 위치 역전** — CI 에 클러스터 자격증명 줄 필요 없음 (보안 ↑)
+- **자격증명 위치 역전** — CI (Continuous Integration, 지속적 통합) 에 클러스터 자격증명 줄 필요 없음 (보안 ↑)
 - **drift 자동 수정** — 누군가 `kubectl edit` 해도 git 으로 복귀
 - **PR 기반 변경 추적** — 누가 언제 무엇을 바꿨는지 git history
 - **rollback = git revert** — 롤백이 코드 변경의 일관성

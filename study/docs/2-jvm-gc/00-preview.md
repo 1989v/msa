@@ -13,7 +13,7 @@ created: 2026-05-01
 
 ## 멘탈 모델: "메모리 → GC → 진단" 3-Layer
 
-JVM 학습은 **메모리 구조**를 머릿속에 그리고, 그 위에서 **GC가 어떻게 움직이는지** 이해하고, 마지막으로 **로그/덤프로 외부 관찰**하는 순서가 가장 빠르다.
+JVM (Java Virtual Machine, 자바 가상 머신) 학습은 **메모리 구조**를 머릿속에 그리고, 그 위에서 **GC (Garbage Collection, 가비지 컬렉션)가 어떻게 움직이는지** 이해하고, 마지막으로 **로그/덤프로 외부 관찰**하는 순서가 가장 빠르다.
 
 ```
   ┌──────────────────────────────────────────────┐
@@ -40,13 +40,13 @@ JVM 학습은 **메모리 구조**를 머릿속에 그리고, 그 위에서 **GC
 ```
 
 **핵심 7문장만 외운다**:
-1. **객체는 거의 다 Eden TLAB에 할당**되고, 살아남으면 Survivor를 거쳐 Old로 promotion 된다.
+1. **객체는 거의 다 Eden TLAB (Thread-Local Allocation Buffer)에 할당**되고, 살아남으면 Survivor를 거쳐 Old로 promotion 된다.
 2. **GC Root에서 도달 가능한 객체만 살아남는다** — 참조가 끊긴 순간 죽은 객체.
 3. **Throughput vs Latency는 트레이드오프** — Parallel GC는 Throughput, ZGC는 Latency.
 4. **G1은 Region 기반** — Young/Old가 고정 영역이 아니라 region이 동적 역할 부여.
 5. **ZGC는 Colored Pointer + Load Barrier**로 sub-ms STW 달성, 모든 phase가 concurrent.
 6. **컨테이너 환경 힙은 `-XX:MaxRAMPercentage`로 비율 지정** — 절대값보다 안전.
-7. **OOM은 5가지** — Java heap / Metaspace / GC overhead / Direct buffer / Unable to create native thread, 각각 진단법이 다르다.
+7. **OOM (Out Of Memory, 메모리 부족)은 5가지** — Java heap / Metaspace / GC overhead / Direct buffer / Unable to create native thread, 각각 진단법이 다르다.
 
 ---
 
@@ -183,7 +183,7 @@ JVM 학습은 **메모리 구조**를 머릿속에 그리고, 그 위에서 **GC
 ### 절대 하지 말 것
 
 - 컨테이너에서 `-Xmx`를 절대값으로 박기 (limit 변경 시 잊어버림 → OOMKilled)
-- `-XX:+UseConcMarkSweepGC` (CMS, JDK 14에서 제거)
+- `-XX:+UseConcMarkSweepGC` (CMS (Concurrent Mark-Sweep), JDK 14에서 제거)
 - 힙 덤프를 운영 중 무인 호출 (STW 동반, 큰 힙은 분~십분)
 - GC 로그 끄고 운영 (장애 시 원인 진단 불가)
 - `System.gc()` 운영 코드에 박기 (Full GC 강제, 명시적 차단 옵션 있음)
@@ -195,7 +195,7 @@ JVM 학습은 **메모리 구조**를 머릿속에 그리고, 그 위에서 **GC
 
 - 권장 순서: **01 → 02 → ... → 20 → 23 → 21 → 22** (Top-down 직진, 23 은 Phase 2 심화 끝부분)
 - Phase 1(01-05)은 의존성 있음 → 순서대로 (메모리 → 할당 → 도달성 → 알고리즘 → GC 종류)
-- Phase 2(06-13)는 06 G1 → 07 ZGC → 09 GC 로그 → 12 OOM → 13 Heap Dump 핵심 경로 우선, 08 Shenandoah / 10 JIT / 11 NMT는 보조
+- Phase 2(06-13)는 06 G1 → 07 ZGC → 09 GC 로그 → 12 OOM → 13 Heap Dump 핵심 경로 우선, 08 Shenandoah / 10 JIT (Just-In-Time compilation, 즉시 컴파일) / 11 NMT는 보조
 - 13-heap-dump-mat.md 의 마지막 섹션은 **#3 동시성 (스레드 덤프)** 와 cross-reference. 현재 #3 은 별도 plan 으로 진행 — 본 토픽에서는 "어떻게 조합하는가"만 다룸
 - 실습(14-17)은 Phase 2 종료 후 권장 — 개념 없이 실습부터 하면 로그/덤프 해석이 안 됨
 - Phase 3(18-20)은 실제 msa 코드를 직접 열어보며 진행

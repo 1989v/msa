@@ -14,7 +14,7 @@ estimated-hours: 2
 
 ## 0. 이 파일에서 얻을 것
 
-- Spring Boot Actuator + Micrometer 로 HTTP / JVM / 커스텀 메트릭 노출
+- Spring Boot Actuator + Micrometer 로 HTTP / JVM (Java Virtual Machine, 자바 가상 머신) / 커스텀 메트릭 노출
 - Prometheus 가 메트릭 scrape, Grafana 가 시각화
 - latency **히스토그램 + heatmap** 으로 분포 변화 관측
 - 면접 카드: "latency 모니터링 어떻게 하시나요?"

@@ -37,7 +37,7 @@ HW  (High Watermark): ISR 전체에 복제된 마지막 offset
 
 ## 2. HW (High Watermark) 의 정확한 의미
 
-- **모든 ISR replica 의 LEO 의 최솟값**
+- **모든 ISR replica 의 LEO (Log End Offset) 의 최솟값**
 - 컨슈머는 HW 까지만 읽을 수 있음 (그 위는 invisible)
 
 ```
@@ -157,7 +157,7 @@ spec:
 
 ## 8. Rack Awareness (KIP-392, KIP-881)
 
-**문제**: 클라우드 환경에서 partition 의 모든 replica 가 같은 AZ (rack) 에 배치되면, AZ 장애시 partition 전체 사라짐. 또 cross-AZ 트래픽 비용 ↑.
+**문제**: 클라우드 환경에서 partition 의 모든 replica 가 같은 AZ (Availability Zone, 가용 영역) (rack) 에 배치되면, AZ 장애시 partition 전체 사라짐. 또 cross-AZ 트래픽 비용 ↑.
 
 **해결**:
 - Producer/broker 에 `broker.rack` 설정 → controller 가 rack 분산을 고려해 replica 배치

@@ -22,7 +22,7 @@ created: 2026-05-01
 
 ## 0. P0 — Order 측 Outbox 패턴 도입 (2026-05-01 검증 추가)
 
-**문제**: 16장의 §3.1 검증 결과 — Order 는 `OrderEventAdapter.kt` 에서 `kafkaTemplate.send` 로 **DB tx 와 분리되어 직접 발행**. ADR-0011 의 "Outbox 발행 원자성" 원칙에서 Order 만 빠져 있음. DB commit 후 Kafka publish 실패 또는 프로세스 crash 시 inventory/fulfillment 가 영원히 못 받는 메시지 손실 가능.
+**문제**: 16장의 §3.1 검증 결과 — Order 는 `OrderEventAdapter.kt` 에서 `kafkaTemplate.send` 로 **DB tx 와 분리되어 직접 발행**. ADR (Architecture Decision Record, 아키텍처 결정 기록)-0011 의 "Outbox 발행 원자성" 원칙에서 Order 만 빠져 있음. DB commit 후 Kafka publish 실패 또는 프로세스 crash 시 inventory/fulfillment 가 영원히 못 받는 메시지 손실 가능.
 
 **해법**: inventory/fulfillment 가 사용 중인 패턴을 그대로 Order 에 도입.
 1. `order_outbox` 테이블 + `OrderOutboxJpaEntity`
@@ -206,7 +206,7 @@ override suspend fun requestPayment(...): PaymentResult {
 
 **ADR**: ADR 후보 — "Saga Orchestrator 도입 (조건부 트리거)"
 - Decision: Choreography 유지 + 5+ 단계 / BPM 요구 시 Temporal 도입
-- Trigger: 새 Saga 가 5+ 단계 또는 SLA/감사 요구
+- Trigger: 새 Saga 가 5+ 단계 또는 SLA (Service Level Agreement, 서비스 수준 협약)/감사 요구
 
 ---
 
@@ -301,7 +301,7 @@ fun errorHandler(template: KafkaTemplate<String, String>): DefaultErrorHandler {
 **2순위**: order / payment
 - 회계 audit
 - 고객 분쟁 시 이력 재구성
-- 단, ES 도입 비용 큼 — 별도 도메인 (ledger) 로 시작 가능
+- 단, ES (Event Sourcing, 이벤트 소싱) 도입 비용 큼 — 별도 도메인 (ledger) 로 시작 가능
 
 **3순위**: auth.role
 - 누가 언제 어떤 role 부여했는지 audit

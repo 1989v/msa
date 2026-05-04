@@ -16,15 +16,15 @@ created: 2026-05-01
 
 ### Q1.1. CAP 에서 무엇을 선택하시나요?
 
-**핵심**: CAP 는 **분할 시점만** 적용. 도메인별로 다름.
+**핵심**: CAP (Consistency / Availability / Partition tolerance, 일관성·가용성·분할 내성) 는 **분할 시점만** 적용. 도메인별로 다름.
 - 재고 / 결제 / 인증: **CP** (강일관성 우선)
 - 검색 / 추천 / 카탈로그: **AP** (가용성 우선)
 
-**후속**: "그럼 평시엔?" → PACELC 로 EL/EC 추가 설명.
+**후속**: "그럼 평시엔?" → PACELC (Partition → Availability/Consistency, Else → Latency/Consistency) 로 EL/EC 추가 설명.
 
 ### Q1.2. CAP 의 C 가 정확히 뭔가요?
 
-**핵심**: **Linearizability**. 모든 노드가 같은 시점에 같은 데이터를 보고, 그 순서가 wall-clock 과 일치. ACID 의 C (constraint) 와는 다름.
+**핵심**: **Linearizability**. 모든 노드가 같은 시점에 같은 데이터를 보고, 그 순서가 wall-clock 과 일치. ACID (Atomicity / Consistency / Isolation / Durability, 원자성·일관성·격리성·내구성) 의 C (constraint) 와는 다름.
 
 ### Q1.3. PACELC 가 CAP 보다 정확한 이유?
 
@@ -57,7 +57,7 @@ created: 2026-05-01
 
 ### Q1.8. 분산 시스템에서 wall-clock 비교가 위험한 이유?
 
-**핵심**: NTP drift, GC pause, VM migration 으로 노드 간 시계가 ms~s 단위 어긋남. 인과 판단은 **logical clock (Lamport/Vector/HLC)** 또는 **Kafka offset** 같은 sequence.
+**핵심**: NTP drift, GC (Garbage Collection, 가비지 컬렉션) pause, VM migration 으로 노드 간 시계가 ms~s 단위 어긋남. 인과 판단은 **logical clock (Lamport/Vector/HLC)** 또는 **Kafka offset** 같은 sequence.
 
 ---
 
@@ -105,7 +105,7 @@ created: 2026-05-01
 
 ### Q3.1. 2PC 가 MSA 에서 안 쓰이는 이유?
 
-**핵심**: **Blocking** (coordinator 장애 시 잠금 무한 보유) + **성능** (잠금 시간 길어 throughput ↓) + **매니지드 DB XA 미지원** + **운영 복잡도**.
+**핵심**: 2PC (Two-Phase Commit, 2단계 커밋) 가 MSA (Microservices Architecture, 마이크로서비스 아키텍처) 에서 안 쓰이는 이유는 **Blocking** (coordinator 장애 시 잠금 무한 보유) + **성능** (잠금 시간 길어 throughput ↓) + **매니지드 DB XA 미지원** + **운영 복잡도**.
 
 ### Q3.2. Saga Choreography vs Orchestration?
 
@@ -140,11 +140,11 @@ msa 는 inventory ↔ fulfillment 가 Choreography (3-4 단계).
 
 ### Q3.7. Idempotency-Key 의 표준 보관 기간?
 
-**핵심**: Stripe 는 24시간. msa 의 processed_event 는 7일 (ADR-0012). Body hash 같이 저장 → 같은 key 다른 body 는 422 reject.
+**핵심**: Stripe 는 24시간. msa 의 processed_event 는 7일 (ADR (Architecture Decision Record, 아키텍처 결정 기록)-0012). Body hash 같이 저장 → 같은 key 다른 body 는 422 reject.
 
 ### Q3.8. Outbox 패턴이 뭔가요?
 
-**핵심**: DB tx 안에서 outbox 테이블에 이벤트 row INSERT → 같은 tx 로 commit → 별도 publisher 가 polling/CDC 로 Kafka 발행. **Dual write 문제 해결**.
+**핵심**: DB tx 안에서 outbox 테이블에 이벤트 row INSERT → 같은 tx 로 commit → 별도 publisher 가 polling/CDC (Change Data Capture, 변경 데이터 캡처) 로 Kafka 발행. **Dual write 문제 해결**.
 
 ---
 
@@ -160,7 +160,7 @@ msa 는 inventory ↔ fulfillment 가 Choreography (3-4 단계).
 - **Count-based**: 최근 N건 기준 (msa: 10건)
 - **Time-based**: 최근 N초 기준
 
-QPS 낮으면 time-based 가 정확. 일정하면 count-based 가 가벼움.
+QPS (Queries Per Second, 초당 쿼리 수) 낮으면 time-based 가 정확. 일정하면 count-based 가 가벼움.
 
 ### Q4.3. CB 의 fallback 어떻게 설계?
 
@@ -221,7 +221,7 @@ msa 의 processed_event 는 Inbox 의 단순화 버전.
 
 ### Q5.3. CQRS 와 ES 의 관계?
 
-**핵심**: 별개 패턴. CQRS = read/write 모델 분리, ES = 상태 = 이벤트. 자주 함께 쓰이지만 따로도 가능. msa 는 CQRS 만 (ES 미적용).
+**핵심**: 별개 패턴. CQRS (Command Query Responsibility Segregation, 명령-조회 책임 분리) = read/write 모델 분리, ES (Event Sourcing, 이벤트 소싱) = 상태 = 이벤트. 자주 함께 쓰이지만 따로도 가능. msa 는 CQRS 만 (ES 미적용).
 
 ### Q5.4. Exactly-Once Semantics 가 가능한가?
 
@@ -261,7 +261,7 @@ msa 의 processed_event 는 Inbox 의 단순화 버전.
 
 ### Card C: "Resilience 4종 세트?"
 
-> Circuit Breaker (외부 호출) + DLQ (Kafka consumer) + Bulkhead (자원 격리) + Rate Limiting (처리량). 하나만 적용하면 나머지가 발목 잡음.
+> Circuit Breaker (외부 호출) + DLQ (Dead Letter Queue, 데드 레터 큐) (Kafka consumer) + Bulkhead (자원 격리) + Rate Limiting (처리량). 하나만 적용하면 나머지가 발목 잡음.
 
 ### Card D: "일관성 모델 결정 트리?"
 

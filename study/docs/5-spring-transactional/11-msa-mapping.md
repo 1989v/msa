@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 11. msa 코드베이스 매핑
 
-> **이 파일의 한 줄 요약** — msa 의 트랜잭션 표준은 ADR-0020 (transactional usage) + ADR-0022 (entity mutation) + ADR-0012 (idempotent consumer) 의 3중 결합. 11개 JVM 서비스가 이 표준을 따른다.
+> **이 파일의 한 줄 요약** — msa 의 트랜잭션 표준은 ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020 (transactional usage) + ADR-0022 (entity mutation) + ADR-0012 (idempotent consumer) 의 3중 결합. 11개 JVM (Java Virtual Machine, 자바 가상 머신) 서비스가 이 표준을 따른다.
 
 ---
 
@@ -235,7 +235,7 @@ class DataSourceConfig {
 
 → **product/order 만 분리 패턴 적용** — 둘 다 외부 HTTP 호출 (PaymentPort, 또는 Kafka 발행이 없음을 보장하는 분리) 이 비즈니스 흐름의 핵심이라 분리가 정당화됨.
 
-inventory/fulfillment 는 **외부 HTTP 호출이 없고 Outbox 로만 발행**하기 때문에 `@Transactional` 클래스 레벨로 충분하고, 외부 IO 분리 필요성이 약함.
+inventory/fulfillment 는 **외부 HTTP 호출이 없고 Outbox 로만 발행**하기 때문에 `@Transactional` 클래스 레벨로 충분하고, 외부 IO (Input/Output, 입출력) 분리 필요성이 약함.
 
 ### Inventory 의 패턴
 

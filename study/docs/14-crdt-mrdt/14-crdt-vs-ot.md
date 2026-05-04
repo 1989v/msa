@@ -8,7 +8,7 @@ created: 2026-05-01
 
 # 14. CRDT vs OT — 협업 에디터의 두 패러다임
 
-협업 에디터의 분산 동기화는 두 패러다임 중 하나. **OT** 가 1989년부터 자리 잡았고, **CRDT** 가 2010년 이후 떠올랐다.
+협업 에디터의 분산 동기화는 두 패러다임 중 하나. **OT** 가 1989년부터 자리 잡았고, **CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입)** 가 2010년 이후 떠올랐다.
 
 ## OT (Operational Transform) 의 핵심
 

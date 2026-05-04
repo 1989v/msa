@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 두 패러다임의 차이
 
-CRDT 는 두 방식으로 정의된다 — **state 를 주고받느냐, op 를 주고받느냐**.
+CRDT (Conflict-free Replicated Data Type, 충돌 없는 복제 데이터 타입) 는 두 방식으로 정의된다 — **state 를 주고받느냐, op 를 주고받느냐**.
 
 ```
 CvRDT (state-based)              CmRDT (op-based)

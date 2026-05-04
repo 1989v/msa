@@ -26,7 +26,7 @@ msa 프로젝트가 다중 서비스 구조라 관측성 필요도가 매우 높
 - Grafana 대시보드 설계 (USE / RED 방법론)
 - 로그 구조화 (JSON) + 수집 파이프라인 (Fluent Bit → Loki/ELK)
 - 분산 트레이싱 (OpenTelemetry) 의 Trace/Span/Context 전파
-- SLI / SLO / SLA 정의와 측정
+- SLI (Service Level Indicator, 서비스 수준 지표) / SLO / SLA 정의와 측정
 - AlertManager 알람 설계
 - 면접 "장애 어떻게 탐지/대응하나요?" "트레이싱 도입 경험?" 방어
 
