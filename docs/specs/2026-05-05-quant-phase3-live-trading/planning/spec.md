@@ -58,17 +58,20 @@ data class RiskLimit(
 - **Redis** (저지연 read, ≤200ms reflect 보장)
 - **MySQL** `kill_switch_log` (append-only 감사)
 
-### 1.4 OrderRecord (실주문)
+### 1.4 LiveOrderRecord (실주문)
 
-Phase 2 의 페이퍼 OrderRecord 확장:
+Phase 2 의 페이퍼 OrderRecord 와 분리된 Phase 3 LIVE 전용 record. trade_mode 컬럼으로
+구분하지 않고 별도 테이블 `live_order_record` 에 저장 (`order_record` 는 페이퍼 전용 유지).
+도메인은 lean value-type (`MarketCode` / `AssetCode`) 만 보유 — `Market` / `Asset` 전체 객체는
+인프라 레이어에서 lookup.
 
 ```kotlin
-data class OrderRecord(
+data class LiveOrderRecord(
     val id: OrderId,
     val tenantId: TenantId,
     val strategyId: StrategyId,
-    val market: Market,
-    val asset: Asset,
+    val marketCode: MarketCode,
+    val assetCode: AssetCode,
     val side: OrderSide,
     val type: SpotOrderType,            // ADR-0024: limit/market only, 레버리지 금지
     val priceKrw: BigDecimal?,
@@ -78,7 +81,6 @@ data class OrderRecord(
     val placedAt: Instant,
     val filledAt: Instant?,
     val cancelledAt: Instant?,
-    val tradeMode: TradeMode,           // PAPER | LIVE
     val auditHashPrev: String?,         // chain
     val auditHashCurrent: String,       // SHA-256(prev || serialized)
 )
@@ -86,18 +88,25 @@ data class OrderRecord(
 
 ### 1.5 AuditEvent (chain)
 
+도메인은 chain 식별만 (`prevHash` / `currentHash`). DB row id (`AuditId`) 는 auto-increment 로
+인프라 레이어가 부여하며 도메인 모델 외부.
+
 ```kotlin
 data class AuditEvent(
-    val id: AuditId,
     val tenantId: TenantId,
-    val eventType: AuditEventType,      // ORDER_PLACED, ORDER_FILLED, KILL_SWITCH_TOGGLE,
-                                         // RISK_LIMIT_CHANGE, LIVE_MODE_TOGGLE, RECONCILE_DRIFT
-    val payloadJson: String,             // canonical JSON
+    val eventType: AuditEventType,      // LIVE_MODE_TOGGLE / RISK_LIMIT_CHANGE /
+                                         // KILL_SWITCH_TOGGLE / ORDER_PLACED / ORDER_FILLED /
+                                         // ORDER_CANCELLED / ORDER_REJECTED /
+                                         // RECONCILE_DRIFT / TWO_FA_VERIFIED / TWO_FA_FAILED
+    val payloadCanonical: String,        // canonical JSON (정렬된 키)
     val occurredAt: Instant,
     val prevHash: String?,
-    val currentHash: String,             // SHA-256(prev || canonical(payload) || occurredAt)
+    val currentHash: String,             // SHA-256(prev || payloadCanonical || occurredAt)
 )
 ```
+
+DB 컬럼은 `payload_json` (LONGTEXT) — 도메인 필드명(`payloadCanonical`) 과 다른 이유는 SQL 쪽
+가독성을 위해. `AuditEvent.payloadCanonical → audit_event.payload_json` 으로 매핑.
 
 체인 검증 job:
 - 매일 KST 03:00

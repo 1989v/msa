@@ -16,9 +16,8 @@
 # Local deployment (k3d / k3s-lite)
 kubectl apply -k k8s/overlays/k3s-lite                  # 인프라 + 서비스 + overlay 일괄
 scripts/image-import.sh --all                           # jibBuildTar 산출물(JVM)을 k3d/kind로 로드
-scripts/image-import.sh --fe                            # FE 6종 docker build + 클러스터 로드
-scripts/image-import.sh --image commerce/charting:latest # charting (Python) 빌드+로드
-scripts/image-import.sh --all-images                    # 위 셋을 한 방에 (jib + FE + non-JVM)
+scripts/image-import.sh --fe                            # FE 5종 docker build + 클러스터 로드
+scripts/image-import.sh --all-images                    # 위 둘을 한 방에 (jib + FE)
 
 # Production deployment (managed K8s)
 kubectl apply -k k8s/infra/prod                         # Operator 기반 인프라
@@ -117,22 +116,21 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | search | `search/CLAUDE.md` | ES 인덱싱, 4개 모듈 |
 | gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting, K8s DNS 라우팅 |
 | common | `common/CLAUDE.md` | 공유 라이브러리 |
-| charting | `charting/CLAUDE.md` | Python/FastAPI, 독립 도메인 — Phase 2 종료 시 quant 로 흡수 (ADR-0033) |
 | analytics | `analytics/CLAUDE.md` | 이벤트 수집, 스코어 산출 (Kafka Streams + ClickHouse) |
 | experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼 |
 | member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
 | wishlist | `wishlist/CLAUDE.md` | 상품 위시리스트 (회원별) |
 | quant | `quant/CLAUDE.md` | 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS (ADR-0033, Phase 1 진행 중) |
-| auth | (미생성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) |
-| gifticon | (미생성) | 기프티콘 관리, 공유 그룹 |
-| code-dictionary | (미생성) | IT 개념 사전, OpenSearch 검색, 시각화 |
-| inventory | (미생성) | 재고 관리, 예약 |
-| fulfillment | (미생성) | 주문 풀필먼트 |
-| warehouse | (미생성) | 창고 관리 |
-| chatbot | (미생성) | 대화형 AI |
-| admin | (미생성) | 백오피스 관리 도구 (FE only) |
+| auth | (CLAUDE.md 미작성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) — 서비스 코드 존재 |
+| gifticon | (CLAUDE.md 미작성) | 기프티콘 관리, 공유 그룹 — 서비스 코드 존재 |
+| code-dictionary | (CLAUDE.md 미작성) | IT 개념 사전, OpenSearch 검색, 시각화 — 서비스 코드 존재 |
+| inventory | (CLAUDE.md 미작성) | 재고 관리, 예약 — 서비스 코드 존재 |
+| fulfillment | (CLAUDE.md 미작성) | 주문 풀필먼트 — 서비스 코드 존재 |
+| warehouse | (CLAUDE.md 미작성) | 창고 관리 — 서비스 코드 존재 |
+| chatbot | (CLAUDE.md 미작성) | 대화형 AI — 서비스 코드 존재 |
+| admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
 
-> 서비스 특화 ADR은 해당 서비스의 `docs/adr/`에 위치 (예: `charting/docs/adr/`)
+> charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
 
 ---
 

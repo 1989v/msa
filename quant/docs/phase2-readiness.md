@@ -1,9 +1,9 @@
 # Phase 2 Readiness Checklist
 
 **서비스**: quant
-**Phase**: 2 (페이퍼 트레이딩)
-**작성일**: 2026-04-27
-**기준 ADR**: [ADR-0024](../../docs/adr/ADR-0024-quant-service.md) (Proposed) + Phase 2 신규 ADR-0025/0026/0027
+**Phase**: 2 (페이퍼 트레이딩 + cross-exchange 김치프리미엄 + Phase 3 도메인 준비)
+**작성일**: 2026-04-27 (G1~G4: 2026-05-04, H1~H8 + I1~I3: 2026-05-05)
+**기준 ADR**: [ADR-0024](../../docs/adr/ADR-0024-quant-service.md) (Proposed) + Phase 2 신규 ADR-0025/0026/0027 + ADR-0036(P2 cross-exchange) + ADR-0037(P3 Proposed)
 
 ---
 
@@ -43,6 +43,47 @@
 - [x] **TG-P2-15** K8s k3s-lite overlay Phase 2 패치
 - [x] **TG-P2-16** Phase 2 readiness/release notes (본 문서)
 
+### G1~G4 follow-up (2026-05-04)
+
+- [x] **G1** binance/pgvector 활성화
+  - `BithumbMarketAdapter` 신규 (KR side adapter — KimchiPremiumCalculator 가 lookup)
+  - `QuantPostgresDataSourceConfig` 갱신 — DataSource Spring bean 제거 (JPA hijack 방지)
+  - `quant-phase2.yaml` overlay 에 binance/pgvector 활성 환경변수 주입
+  - 김치프리미엄 endpoint 검증: BTC@BITHUMB↔BINANCE → -0.0242% 응답
+- [x] **G2** KimchiPremiumThreshold 백테스트 wire-up
+  - `RunSignalBacktestUseCase` 신규 — 5종 시그널 모두 분기 (placeholder 단계)
+- [x] **G3** charting Hard remove
+  - `k8s/base/charting{,-fe}/` 디렉토리 삭제
+  - frontend-ingress / overlay patches / network-policy 정리
+- [x] **G4** Phase 3 spec
+  - `docs/specs/2026-05-05-quant-phase3-live-trading/` (initialization/spec/tasks)
+  - `ADR-0037-quant-phase3-live-trading.md` (Proposed)
+
+### H1~H8 follow-up (2026-05-05) — 후속 정비
+
+- [x] **H1** charting-db 백업 잔재 청소 (configmap-env / backup-full.sh / README)
+- [x] **H2** doc-index — source_roots 갱신 (charting 제거, quant/code-dictionary/agent-viewer-api 추가)
+- [x] **H3** KimchiPremium 백테스트 정통화
+  - `KimchiPremiumThreshold.foreignMarket: MarketCode` 도메인 확장
+  - `KimchiPremiumTickRepositoryPort` + `ClickHouseKimchiPremiumTickAdapter` 신규
+  - `evaluateKimchiPremium` 정통 시계열 read 구현
+- [x] **H4** ta4j RSI Wilder smoothing 통일 (자체 RSI 를 ta4j MMA 호환 EMA 시드로 교체, tolerance ±15→±0.5)
+- [x] **H5** Phase 3 도메인 sealed + Flyway (TG-P3-04~08)
+  - `LiveTradingMode` / `RiskLimit` / `KillSwitch` / `AuditEvent`(SHA-256 chain) / `LiveOrderRecord`
+  - V20260505_001 — 6 테이블
+  - `LiveDomainSpec` BehaviorSpec (chain 변조 검출)
+- [x] **H6** OQ-011~020 closure 양식 (Phase 3 ADR-0037 Accepted 차단)
+- [x] **H7** 전체 build + Kotest PASS (197 actionable tasks)
+- [x] **H8** clean-architecture validator PASS (12 신규/수정 파일)
+
+### I1~I3 follow-up (2026-05-05) — placeholder 잔재 정통화
+
+- [x] **I1** RunHybridBacktestUseCase — 5종 시그널 모두 정통 평가 (BollingerSqueeze/KimchiPremium 분기 포함)
+- [x] **I2** KimchiPremium tick ingest scheduler (`KimchiPremiumTickIngestScheduler`)
+  - `quant.kimchi-ingest.enabled=true` + `quantClickHouseJdbcTemplate` 빈 조건 적재 활성
+  - 5 분 fixedDelay, 기본 자산: BTC/ETH/XRP @ BITHUMB↔BINANCE
+- [x] **I3** OrderId.newV7() 정통화 — `com.fasterxml.uuid.Generators.timeBasedEpochGenerator()` (UUID v7, RFC 9562)
+
 ### 문서
 - [x] [Phase 2 Spec](../../docs/specs/2026-04-26-quant-phase2-paper-trading/planning/spec.md)
 - [x] [Phase 2 Requirements](../../docs/specs/2026-04-26-quant-phase2-paper-trading/planning/requirements.md)
@@ -75,9 +116,9 @@
 
 ## 종합 판정
 
-**Phase 2 백엔드 + FE 페이퍼 트레이딩 골격 출고 가능.**
+**Phase 2 백엔드 + FE 페이퍼 트레이딩 골격 + cross-exchange 김치프리미엄 + Phase 3 도메인 준비 완료.**
 
-자동화된 검증이 통과한 항목 (체크된 항목)은 코드/테스트/문서 모두 정합. 단위 테스트 약 60+ specs green.
+G1~G4 / H1~H8 / I1~I3 follow-up 까지 모두 통과. 자동화된 검증이 통과한 항목 (체크된 항목)은 코드/테스트/문서 모두 정합. 단위 테스트 60+ specs green + Phase 3 도메인 invariant + chain verify spec 추가.
 
 수동 검증 / 운영 진입 전 잔여 항목:
 1. Docker 환경에서 `*IntegrationSpec*` 1회 수동 실행 (Testcontainers MySQL/ClickHouse/Redis/Kafka)

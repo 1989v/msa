@@ -21,6 +21,7 @@ nimbusJose = "9.40"
 caffeine = "3.1.8"
 ta4j = "0.18"
 multik = "0.2.3"
+javaUuidGenerator = "5.1.0"
 
 [libraries]
 # Spring Boot Starters
@@ -121,6 +122,9 @@ oci-common = { module = "com.oracle.oci.sdk:oci-java-sdk-common", version.ref = 
 # JWT (Phase 2 ADR-0024 Errata: 빗썸/업비트 모두 JWT(HS256) 인증)
 nimbus-jose = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbusJose" }
 # Phase 2 Rate Limiter는 Redis Lua script로 직접 구현. Bucket4j는 Phase 3 검토 시 카탈로그 추가.
+
+# UUID v7 generator (I3, 2026-05-05) — quant OrderId.newV7() 정통화
+java-uuid-generator = { module = "com.fasterxml.uuid:java-uuid-generator", version.ref = "javaUuidGenerator" }
 
 # Cache (Phase 2 TG-P2-03: KMS DEK 캐시)
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }

@@ -1,20 +1,23 @@
 package com.kgd.quant.domain.common
 
+import com.fasterxml.uuid.Generators
 import java.util.UUID
 
 /**
  * OrderId — 주문 식별자.
  *
- * - UUID v7(시간 정렬 + 랜덤)을 권장하나, JDK/기본 라이브러리에 v7 생성기가 없다.
- * - TODO: java-uuid-generator 등 v7 생성기를 infra 레벨에 도입 후 `newV7()`를 교체한다.
- *   현재는 `UUID.randomUUID()` (v4) 로 대체.
+ * UUID v7 (시간 정렬 + 랜덤) — `com.fasterxml.uuid.Generators.timeBasedEpochGenerator()` (RFC 9562).
+ * - 시간 prefix 가 포함되어 DB 인덱스 / sort 친화적
+ * - 단조 증가 보장 (생성기 내부 sequence)
+ * - I3 (2026-05-05) 정통화 — 이전 v4 fallback 제거
  */
 @JvmInline
 value class OrderId(val value: UUID) {
     override fun toString(): String = value.toString()
 
     companion object {
-        fun newV7(): OrderId = OrderId(UUID.randomUUID()) // TODO: swap to UUIDv7 generator
+        private val V7 = Generators.timeBasedEpochGenerator()
+        fun newV7(): OrderId = OrderId(V7.generate())
         fun of(value: String): OrderId = OrderId(UUID.fromString(value))
     }
 }

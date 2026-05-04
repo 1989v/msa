@@ -55,8 +55,11 @@ while IFS='|' read -r db_name _ _; do
     "${SCRIPT_DIR}/upload.sh" --cleanup "mysql/${db_name}/binlog" "$BINLOG_DAYS"
 done < "${CONFIG_DIR}/databases.conf"
 
-# PostgreSQL
-"${SCRIPT_DIR}/upload.sh" --cleanup "postgres/charting" "$FULL_DAYS"
+# PostgreSQL — charting Hard remove (ADR-0036 P2-T20, 2026-05-02) 후 비활성.
+# quant pgvector 등으로 PG 백업 활성 시 PG_DATABASE 변수로 dynamic path 사용.
+if [[ -n "${PG_DATABASE:-}" ]]; then
+    "${SCRIPT_DIR}/upload.sh" --cleanup "postgres/${PG_DATABASE}" "$FULL_DAYS"
+fi
 
 # Files
 "${SCRIPT_DIR}/upload.sh" --cleanup "files/gifticon" "$FULL_DAYS"

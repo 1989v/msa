@@ -103,4 +103,4 @@ patches:
       name: clickhouse
 
   # ADR-0036 P2-T20 — charting Hard remove 완료 (k8s/base/charting & charting-fe 삭제됨, 2026-05-02).
-  # 잔여 잡(backup PG_HOST=charting-db 등)은 후속 cleanup task 에서 정리.
+  # 잔여 backup script / configmap 잔재도 H1 + I6 (2026-05-05) 에서 정리 완료.

@@ -38,8 +38,10 @@ if [[ ! -d "$BACKUP_DIR" ]]; then
     exit 1
 fi
 
-CONTAINER="charting-db"
-VOLUME_NAME="charting-db-data"
+# charting Hard remove (ADR-0036 P2-T20, 2026-05-02) 후 default 컨테이너 이름 제거.
+# 호출자 환경변수 또는 backup.env 에 PG_CONTAINER / PG_VOLUME 명시 필수 (예: quant-postgres).
+CONTAINER="${PG_CONTAINER:?PG_CONTAINER 환경변수가 설정되어야 한다 (예: quant-postgres)}"
+VOLUME_NAME="${PG_VOLUME:?PG_VOLUME 환경변수가 설정되어야 한다 (예: quant-postgres-data)}"
 DATA_DIR="/var/lib/postgresql/data"
 
 echo "========================================"
@@ -76,7 +78,7 @@ docker start "${CONTAINER}"
 
 # Wait for ready
 for i in $(seq 1 30); do
-    if docker exec "${CONTAINER}" pg_isready -U "${PG_USER:-charting}" -d "${DB_NAME}" 2>/dev/null; then
+    if docker exec "${CONTAINER}" pg_isready -U "${PG_USER:?PG_USER 환경변수 필수}" -d "${DB_NAME}" 2>/dev/null; then
         echo "[$(date '+%H:%M:%S')] PostgreSQL is ready"
         break
     fi
