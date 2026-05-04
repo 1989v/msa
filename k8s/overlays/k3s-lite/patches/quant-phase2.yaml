@@ -1,7 +1,8 @@
-# Phase 2 (TG-P2-15) — quant overlay
+# Phase 2 (TG-P2-15 + ADR-0036 G1) — quant overlay
 # - strategy.type=Recreate: replicas=1 가정 보호 (rolling update 시 일시적 replicas=2 차단)
 # - SPRING_APPLICATION_JSON: KMS provider=local + outbox kafka-relay enable + market kafka-fanout disable
 #   + paper trading 모드 + Telegram dispatcher disabled (default, Bot Token 미설정)
+#   + Phase 2 G1: quant.binance.enabled / quant.pgvector.enabled / quant.fx.provider 활성
 # - QUANT_LOCAL_KEK: dev hex (운영은 prod-k8s overlay에서 OCI Vault Secret 주입)
 apiVersion: apps/v1
 kind: Deployment
@@ -23,7 +24,15 @@ spec:
                     "security": {"kms": {"provider": "local"}},
                     "outbox": {"relay": {"enabled": true}},
                     "market": {"kafka-fanout": {"enabled": false}},
-                    "audit": {"enabled": false}
+                    "audit": {"enabled": false},
+                    "binance": {"enabled": true},
+                    "pgvector": {
+                      "enabled": true,
+                      "url": "jdbc:postgresql://quant-postgres:5432/quant",
+                      "username": "quant",
+                      "password": "quant"
+                    },
+                    "fx": {"provider": "bithumb-proxy"}
                   }
                 }
             - name: QUANT_KMS_PROVIDER

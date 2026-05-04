@@ -70,12 +70,6 @@ patches:
       kind: Deployment
       name: experiment
 
-  # charting is FastAPI, not Spring Boot — override startup probe.
-  - path: patches/charting-probe.yaml
-    target:
-      kind: Deployment
-      name: charting
-
   # code-dictionary needs more memory than the global 512Mi limit.
   - path: patches/code-dictionary-resources.yaml
     target:
@@ -108,13 +102,5 @@ patches:
       kind: StatefulSet
       name: clickhouse
 
-  # ADR-0036 P2-T20 — charting Soft scale 0 (Phase 2 폐기 진행).
-  # 트래픽이 quant 로 이행 완료된 시점에 활성. Hard remove (k8s/base 디렉토리 삭제) 는 후속 작업.
-  - path: patches/charting-replicas-zero-be.yaml
-    target:
-      kind: Deployment
-      name: charting
-  - path: patches/charting-replicas-zero-fe.yaml
-    target:
-      kind: Deployment
-      name: charting-fe
+  # ADR-0036 P2-T20 — charting Hard remove 완료 (k8s/base/charting & charting-fe 삭제됨, 2026-05-02).
+  # 잔여 잡(backup PG_HOST=charting-db 등)은 후속 cleanup task 에서 정리.

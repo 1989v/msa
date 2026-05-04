@@ -44,11 +44,10 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 ./gradlew jibBuildTar
 scripts/image-import.sh --all
 
-# 3. build and import FE / non-JVM images (admin-fe, charting-fe,
-#    gifticon-fe, agent-viewer-fe, code-dictionary-fe, quant-fe,
-#    and the charting Python service). Requires Docker daemon.
+# 3. build and import FE / non-JVM images (admin-fe, gifticon-fe,
+#    agent-viewer-fe, code-dictionary-fe, quant-fe). Requires Docker daemon.
+# (charting / charting-fe 는 ADR-0036 P2-T20 에서 Hard remove 완료, 2026-05-02.)
 scripts/image-import.sh --fe                       # FE only
-scripts/image-import.sh --image commerce/charting:latest   # Python service
 
 # Or, in one shot (jib tars + every FE + non-JVM image):
 scripts/image-import.sh --all-images

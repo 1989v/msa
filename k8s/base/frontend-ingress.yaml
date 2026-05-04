@@ -42,13 +42,6 @@ spec:
                 name: agent-viewer-fe
                 port:
                   name: http
-          - path: /charting/?(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: charting-fe
-                port:
-                  name: http
           - path: /admin/?(.*)
             pathType: ImplementationSpecific
             backend:
@@ -61,12 +54,5 @@ spec:
             backend:
               service:
                 name: quant-fe
-                port:
-                  name: http
-          - path: /charting-api/?(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: charting
                 port:
                   name: http

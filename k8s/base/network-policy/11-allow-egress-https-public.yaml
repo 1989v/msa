@@ -4,7 +4,7 @@
 #   - auth         OAuth 토큰 검증 (Google/Apple/Kakao 등)
 #   - quant  거래소 API (Binance/Upbit/Bithumb), Telegram, KMS (OCI Vault — ADR-0027)
 #   - gifticon     외부 OCR API
-#   - charting     외부 시세 / 차트 데이터 API
+# (charting 은 ADR-0036 P2-T20 에서 Hard remove 되어 제외됨, 2026-05-02.)
 # 다른 서비스는 외부 :443 차단된 상태 (default-deny + DNS only).
 #
 # CIDR 정책: 0.0.0.0/0 - RFC1918 (클러스터 내부) - link-local.
@@ -20,7 +20,7 @@ metadata:
 spec:
   podSelector:
     matchExpressions:
-      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, gifticon, charting] }
+      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, gifticon] }
   policyTypes:
     - Egress
   egress:

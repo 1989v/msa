@@ -32,8 +32,6 @@ resources:
   - code-dictionary-fe
   - gifticon-fe
   - agent-viewer-fe
-  - charting
-  - charting-fe
   - admin-fe
   - quant-fe
   - frontend-ingress.yaml

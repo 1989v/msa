@@ -33,12 +33,12 @@ Phase 0 의 목적:
 | `08-allow-app-to-search.yaml` | 백엔드 → elasticsearch / opensearch :9200 |
 | `09-allow-app-to-clickhouse.yaml` | analytics → clickhouse:8123 |
 | `10-allow-monitoring-scrape.yaml` | monitoring ns Prometheus → 백엔드 named port http |
-| `11-allow-egress-https-public.yaml` | auth/quant/gifticon/charting → 외부 :443 |
+| `11-allow-egress-https-public.yaml` | auth/quant/gifticon → 외부 :443 |
 | `kustomization.yaml` | 위 12개 묶음 |
 
 ## Selector 매칭 검증 결과
 
-### 백엔드 서비스 (16개 + FE/charting)
+### 백엔드 서비스 (16개 + FE)
 
 `k8s/base/{service}/deployment.yaml` 의 metadata.labels 점검 결과 모두 동일 패턴:
 
@@ -50,11 +50,12 @@ labels:
 
 검증한 deployment (sample):
 - `gateway` (8080), `product` (8081), `order` (8082), `search` (8083)
-- `auth` (8087), `gifticon` (8086), `quant` (8094), `charting` (8010)
+- `auth` (8087), `gifticon` (8086), `quant` (8094)
 - `analytics` (8090) — ClickHouse 호출자
 
 → §03 (gateway-to-backends), §10 (monitoring-scrape) 의 part-of 라벨 selector 와
-일치. §11 (external-https-egress) 의 4개 In list 도 실제 deployment name 과 일치.
+일치. §11 (external-https-egress) 의 In list 도 실제 deployment name 과 일치.
+(charting 은 ADR-0036 P2-T20 에서 Hard remove 완료, 2026-05-02.)
 
 ### 인프라 (k3s-lite local)
 

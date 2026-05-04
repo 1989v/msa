@@ -1,7 +1,0 @@
-# charting (BE) Phase 2 폐기 준비 — replicas=0.
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: charting
-spec:
-  replicas: 0
