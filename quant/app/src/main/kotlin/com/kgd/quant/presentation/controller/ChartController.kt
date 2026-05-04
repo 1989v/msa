@@ -2,6 +2,7 @@ package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.quant.application.chart.IndicatorQuery
+import com.kgd.quant.application.chart.SimilarityQuery
 import com.kgd.quant.application.indicator.IndicatorCalculator
 import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
@@ -26,7 +27,23 @@ import java.time.Instant
 class ChartController(
     private val ohlcvRepo: OhlcvRepositoryPort,
     private val indicatorQuery: IndicatorQuery,
+    private val similarityQuery: SimilarityQuery,
 ) {
+    @GetMapping("/similarity")
+    suspend fun similarity(
+        @RequestParam asset: String,
+        @RequestParam market: String,
+        @RequestParam windowEnd: String,
+        @RequestParam(defaultValue = "60") windowDays: Int,
+    ): ApiResponse<SimilarityQuery.EmbedResult> {
+        val result = similarityQuery.embedWindow(
+            AssetCode(asset),
+            MarketCode(market),
+            Instant.parse(windowEnd),
+            windowDays,
+        )
+        return ApiResponse.success(result)
+    }
     @GetMapping("/ohlcv")
     suspend fun ohlcv(
         @RequestParam asset: String,

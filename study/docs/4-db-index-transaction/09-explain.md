@@ -42,7 +42,7 @@ WHERE o.user_id = 'alice' AND o.status = 'PAID';
 | type | 설명 | 비용 |
 |---|---|---|
 | **system** | 테이블에 row 1개 (사실상 상수) | 0 |
-| **const** | PK 또는 UNIQUE 인덱스 = 1개 row | 매우 낮음 |
+| **const** | PK (Primary Key, 기본 키) 또는 UNIQUE 인덱스 = 1개 row | 매우 낮음 |
 | **eq_ref** | JOIN 시 PK/UNIQUE 로 정확히 1 row 매칭 | 매우 낮음 |
 | **ref** | 인덱스 = 로 N rows | 낮음 |
 | **range** | 인덱스 범위 (`BETWEEN`, `IN`, `>`, `<`) | 중간 |
@@ -261,7 +261,7 @@ JOIN order_items oi ON oi.order_id = o.id
 WHERE o.id = :id;
 ```
 - 예상 plan: orders type=const + order_items type=ref(idx_order_items_oid).
-- ✅ 좋음. PK + FK 인덱스 활용.
+- ✅ 좋음. PK + FK (Foreign Key, 외래 키) 인덱스 활용.
 
 `WishlistItemJpaRepository.findByMemberId`:
 ```sql

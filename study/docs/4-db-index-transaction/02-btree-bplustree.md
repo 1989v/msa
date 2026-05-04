@@ -11,7 +11,7 @@ created: 2026-05-01
 ## 핵심 정의
 
 - **B-Tree**: 한 노드에 **여러 키 + 자식 포인터** 를 담는 자가 균형 다진 트리. 모든 leaf 까지 깊이 동일.
-- **B+Tree**: B-Tree 변형. **데이터(또는 PK 포인터) 는 leaf 에만**, internal 노드는 키만. **leaf 끼리 연결 리스트(double linked)**.
+- **B+Tree**: B-Tree 변형. **데이터(또는 PK (Primary Key, 기본 키) 포인터) 는 leaf 에만**, internal 노드는 키만. **leaf 끼리 연결 리스트(double linked)**.
 
 대부분 RDBMS (InnoDB, PostgreSQL, Oracle, SQL Server) 의 인덱스는 **B+Tree**. "B-Tree 인덱스" 라는 용어는 관습적이고 실체는 B+Tree.
 
@@ -195,7 +195,7 @@ fun estimateBPlusTreeDepth(
 - fanout 은 페이지 크기 / 키 크기 → **PK 짧게 + 단조 증가** 가 최강.
 - B+Tree 의 **leaf 연결 리스트** 가 범위 쿼리 효율의 비결.
 - LSM 은 쓰기 위주 시스템에서 대안. OLTP 는 여전히 B+Tree.
-- 단편화는 random delete/update 가 누적되며 발생 → 주기적 OPTIMIZE / online DDL 고려.
+- 단편화는 random delete/update 가 누적되며 발생 → 주기적 OPTIMIZE / online DDL (Data Definition Language) 고려.
 
 ## 다음 학습
 - [03-clustered-vs-secondary.md](03-clustered-vs-secondary.md) — InnoDB 의 clustered / secondary 의 결정적 차이

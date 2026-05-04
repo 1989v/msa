@@ -52,7 +52,7 @@ application 코드에서 명시할 일 없음. row 의 S/X 를 잡으면 InnoDB 
 └──────────────────────────────────────────────────┘
 ```
 
-InnoDB 의 **모든 lock 은 인덱스 entry 에 걸린다**. 테이블에 인덱스가 없으면? **clustered index (PK) 의 entire scan 에 X-lock** → 사실상 테이블 락.
+InnoDB 의 **모든 lock 은 인덱스 entry 에 걸린다**. 테이블에 인덱스가 없으면? **clustered index (PK (Primary Key, 기본 키)) 의 entire scan 에 X-lock** → 사실상 테이블 락.
 
 → 면접 답변: "InnoDB 의 row lock 은 사실 인덱스 lock 입니다. 인덱스 없는 컬럼으로 UPDATE WHERE 하면 모든 row 를 X-lock 잡으므로, **WHERE 절의 컬럼은 반드시 인덱스가 있어야** row lock 의 효과를 누릴 수 있습니다."
 
@@ -127,7 +127,7 @@ UPDATE orders SET status='PAID' WHERE created_at = '2026-05-01';
 ```
 
 - 모든 row 에 X-lock 시도 → **사실상 테이블 락**.
-- → DML 시 WHERE 컬럼 인덱스 필수.
+- → DML (Data Manipulation Language) 시 WHERE 컬럼 인덱스 필수.
 
 ### 케이스 3: 범위 SELECT FOR UPDATE (RR)
 
@@ -251,7 +251,7 @@ UPDATE orders SET status='PAID' WHERE user_id='alice' AND status='PENDING';
 - idx_orders_user_id 사용 가정.
 - alice 의 모든 PK record 에 X-lock + 그 사이 gap 에 gap lock.
 - 다른 TX 의 alice 새 주문 INSERT 가 block (insert intention 충돌).
-- → ADR-0020 의 권고: 이런 bulk update 는 가능하면 짧게 끊어 (LIMIT + 반복) 또는 비동기로.
+- → ADR (Architecture Decision Record, 아키텍처 결정 기록)-0020 의 권고: 이런 bulk update 는 가능하면 짧게 끊어 (LIMIT + 반복) 또는 비동기로.
 
 `quant` Outbox relay (`OutboxJpaRepository.findTop100ByPublishedAtIsNullOrderByOccurredAtAsc`):
 - 현재 SKIP LOCKED 미사용. relay worker 가 1개일 때만 안전.

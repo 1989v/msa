@@ -59,19 +59,19 @@ INSERT INTO orders (...) VALUES (...);
 ```
 - clustered index (PK) 1번 쓰기.
 - secondary index N 개 → 각각 leaf 페이지 갱신 (+ 분할 가능).
-- **WAL (redo log) 도 N+1 번 기록**.
+- **WAL (Write-Ahead Log, 선기록 로그 — redo log) 도 N+1 번 기록**.
 
 쓰기 빈도 높은 OLTP 에서 secondary index 가 5개 → 7개로 늘면 INSERT 처리량 ~30% 하락이 흔함.
 
 ### 비용 2: 디스크/메모리 공간
 
-각 secondary index 는 (인덱스 컬럼들 + PK) 의 사본. PK 가 길면 (UUID 36byte, BIGINT 8byte) 인덱스 N 개에 모두 PK 가 박힘 → 공간 폭증.
+각 secondary index 는 (인덱스 컬럼들 + PK (Primary Key, 기본 키)) 의 사본. PK 가 길면 (UUID 36byte, BIGINT 8byte) 인덱스 N 개에 모두 PK 가 박힘 → 공간 폭증.
 
 ### 비용 3: 옵티마이저 혼란
 
 인덱스가 너무 많으면 옵티마이저가 잘못된 인덱스를 고를 확률 ↑. 통계가 stale 하면 더 자주 사고. (12 에서 자세히.)
 
-### 비용 4: DDL 비용
+### 비용 4: DDL (Data Definition Language) 비용
 
 `CREATE INDEX` 자체가 분 ~ 시간 단위. Online DDL 도 무료가 아니다. (13 에서.)
 

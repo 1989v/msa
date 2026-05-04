@@ -10,7 +10,7 @@ created: 2026-05-01
 
 ## 핵심 정의
 
-- **Clustered Index (클러스터드 인덱스)**: 테이블 데이터 자체가 인덱스의 leaf. **테이블이 곧 인덱스**. InnoDB 의 PK.
+- **Clustered Index (클러스터드 인덱스)**: 테이블 데이터 자체가 인덱스의 leaf. **테이블이 곧 인덱스**. InnoDB 의 PK (Primary Key, 기본 키).
 - **Secondary Index (세컨더리 인덱스)**: leaf 가 **PK 값**을 들고 있는 별도 B+Tree. 데이터 row 가 아님.
 
 이 한 줄이 InnoDB 의 모든 성격을 결정한다. 면접 단골 ("InnoDB 는 왜 PK 가 중요해요?") 에 답하려면 leaf 그림을 머리에 그려야 한다.
@@ -59,7 +59,7 @@ Secondary Index on user_id (idx_orders_user_id)
 1. `idx_orders_user_id` 트리에서 alice 찾음 → leaf 에서 PK 1, 3 발견.
 2. **clustered index 트리에서 PK 1, 3 으로 다시 lookup** → 실제 row 가져옴.
 
-이걸 **lookup (또는 random IO 룩업)** 이라 한다. row 가 N 개면 lookup 도 N 번.
+이걸 **lookup (또는 random IO (Input/Output, 입출력) 룩업)** 이라 한다. row 가 N 개면 lookup 도 N 번.
 
 ### 예 — 100만 row 결과 시 비용
 

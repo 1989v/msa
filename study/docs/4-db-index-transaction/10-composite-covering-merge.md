@@ -15,7 +15,7 @@ created: 2026-05-01
 - **Index Merge**: 옵티마이저가 여러 단독 인덱스의 결과를 union/intersection.
 - **Index Skip Scan** (8.0+): 복합 인덱스의 leftmost 가 빠진 쿼리도 부분적으로 활용.
 
-03 에서 secondary leaf = PK 라는 구조를 이해했다면, 이 4개는 그 구조의 **활용 패턴 4종 세트**.
+03 에서 secondary leaf = PK (Primary Key, 기본 키) 라는 구조를 이해했다면, 이 4개는 그 구조의 **활용 패턴 4종 세트**.
 
 ## 복합 인덱스 — 컬럼 순서 룰
 
@@ -79,13 +79,13 @@ SELECT user_id, status, total_amount FROM orders WHERE user_id='alice';
 
 ### 효과
 
-- secondary 페이지만 읽음 (cluster random IO 0).
+- secondary 페이지만 읽음 (cluster random IO (Input/Output, 입출력) 0).
 - buffer pool hit rate ↑ (인덱스가 작아 RAM 안에 잘 들어감).
 
 ### 단점
 
 - 인덱스 크기 ↑ (모든 컬럼 포함).
-- DML 비용 ↑ (인덱스 갱신 컬럼 수 ↑).
+- DML (Data Manipulation Language) 비용 ↑ (인덱스 갱신 컬럼 수 ↑).
 - 추가 컬럼 변경마다 인덱스 갱신.
 
 ### MySQL Has No INCLUDE Clause

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient, unwrap, toApiError } from '@/api/client'
+import { OhlcvCandleChart } from '@/components/charts/OhlcvCandleChart'
 
 type IndicatorType = 'RSI' | 'SMA' | 'EMA' | 'BB'
 
@@ -109,41 +110,21 @@ export function ChartsPage() {
       </div>
 
       <section>
-        <h2 className="text-lg font-semibold mt-4 mb-2">OHLCV (최근 30일)</h2>
+        <h2 className="text-lg font-semibold mt-4 mb-2">OHLCV — {asset} @ {market} ({interval})</h2>
         {ohlcvQ.isLoading && <div>로딩...</div>}
         {ohlcvQ.isError && (
           <div className="text-red-500">에러: {toApiError(ohlcvQ.error).message}</div>
         )}
-        {ohlcvQ.data && (
-          <div className="text-sm text-zinc-500">
-            {ohlcvQ.data.length} 봉 — 첫 close: {ohlcvQ.data[0]?.close} / 마지막 close:{' '}
-            {ohlcvQ.data[ohlcvQ.data.length - 1]?.close}
-          </div>
+        {ohlcvQ.data && ohlcvQ.data.length > 0 && (
+          <OhlcvCandleChart bars={ohlcvQ.data} indicator={indicatorQ.data} />
         )}
-      </section>
-
-      <section>
-        <h2 className="text-lg font-semibold mt-4 mb-2">
-          {indicator}({period}) 지표
-        </h2>
-        {indicatorQ.isLoading && <div>로딩...</div>}
-        {indicatorQ.isError && (
-          <div className="text-red-500">에러: {toApiError(indicatorQ.error).message}</div>
-        )}
-        {indicatorQ.data && (
-          <div className="text-sm">
-            {Object.entries(indicatorQ.data.series).map(([key, points]) => (
-              <div key={key} className="mb-2">
-                <span className="font-medium">{key}: </span>
-                마지막 {points.length} 포인트 — 최근 값: {points[points.length - 1]?.value}
-              </div>
-            ))}
-          </div>
+        {ohlcvQ.data && ohlcvQ.data.length === 0 && (
+          <div className="text-sm text-zinc-500">데이터 없음 (ingest 가 아직 적재하지 않았습니다)</div>
         )}
       </section>
 
       <p className="text-xs text-zinc-500 mt-4">
-        ※ Phase 1 placeholder. 실제 차트(lightweight-charts) + 패턴 유사도 + 미래 수익률 예측은 Phase 1 후반.
+        ※ 패턴 유사도 / 미래 수익률 예측은 Phase 2 (charting 흡수 시) 추가됩니다.
       </p>
     </div>
   )

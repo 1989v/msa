@@ -94,7 +94,7 @@ Root: 지구 전체 사각형
 ```
 
 - "이 좌표 (lat, lng) 가 어느 다각형 안에 있나?" 같은 검색을 O(log N).
-- 거리/근접 (KNN) 도 효율적.
+- 거리/근접 (KNN (K-Nearest Neighbors, K-최근접 이웃)) 도 효율적.
 
 ### MySQL
 
@@ -134,7 +134,7 @@ inverted index:
 
 - AND: doc 리스트 교집합.
 - OR: 합집합.
-- TF-IDF / BM25 로 score 계산해 정렬.
+- TF-IDF (Term Frequency – Inverse Document Frequency, 용어 빈도-역문서 빈도) / BM25 (Best Match 25) 로 score 계산해 정렬.
 
 ### MySQL FULLTEXT
 
@@ -152,7 +152,7 @@ WHERE MATCH(title, body) AGAINST('mysql index' IN NATURAL LANGUAGE MODE);
 
 - 한국어 형태소 미지원 (ngram 토크나이저는 가능). 한국어 검색 품질 낮음.
 - → 한국어 검색은 거의 항상 **Elasticsearch / OpenSearch** 사용.
-- msa 에선 `search` 서비스가 ES, `code-dictionary` 가 OpenSearch 사용.
+- msa 에선 `search` 서비스가 ES (Elasticsearch), `code-dictionary` 가 OpenSearch 사용.
 
 ### LIKE 와의 비교
 
@@ -198,11 +198,11 @@ WHERE status = 'ACTIVE';
 
 | 서비스 | 사용 인덱스 | 비고 |
 |---|---|---|
-| order | B+Tree (idx_orders_user_id, idx_orders_status, FK) | OLTP 표준 |
+| order | B+Tree (idx_orders_user_id, idx_orders_status, FK (Foreign Key, 외래 키)) | OLTP 표준 |
 | product | B+Tree (idx_products_status) | selectivity 낮아 거의 안 탐 |
-| member | B+Tree + UNIQUE (uk_sso) | SSO 로그인 lookup |
+| member | B+Tree + UNIQUE (uk_sso) | SSO (Single Sign-On, 단일 로그인) 로그인 lookup |
 | wishlist | B+Tree + UNIQUE (uk_member_product) | 중복 추가 방지 |
-| auth | B+Tree + UNIQUE (uk_member_role) | RBAC 중복 방지 |
+| auth | B+Tree + UNIQUE (uk_member_role) | RBAC (Role-Based Access Control, 역할 기반 접근 제어) 중복 방지 |
 | quant | B+Tree (idx_*_tenant 다수) | multi-tenant 패턴 |
 | code-dictionary | B+Tree | 검색은 OpenSearch 가 담당 |
 | analytics | ClickHouse (skip index, primary index) | OLAP — 전혀 다른 모델 |
