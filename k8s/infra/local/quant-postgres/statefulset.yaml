@@ -1,0 +1,60 @@
+# quant-postgres — pgvector 가 활성화된 PostgreSQL 16 (ADR-0033/0035 Phase 1 후반).
+# 차트 패턴 임베딩 (`quant_pattern`) 전용. 메인 도메인은 MySQL 그대로 사용.
+#
+# 운영(prod-k8s)에선 별도 Operator 또는 RDS 로 교체.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: quant-postgres
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-postgres
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  serviceName: quant-postgres-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: quant-postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: quant-postgres
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: postgres
+          image: pgvector/pgvector:pg16
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { name: postgres, containerPort: 5432 }
+          env:
+            - { name: POSTGRES_DB,       value: quant }
+            - { name: POSTGRES_USER,     value: quant }
+            - { name: POSTGRES_PASSWORD, value: quant }
+            - { name: PGDATA,            value: /var/lib/postgresql/data/pgdata }
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "quant", "-d", "quant"]
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "quant", "-d", "quant"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits:   { memory: 512Mi }
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

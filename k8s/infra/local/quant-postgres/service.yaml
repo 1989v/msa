@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: quant-postgres
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-postgres
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  selector:
+    app.kubernetes.io/name: quant-postgres
+  ports:
+    - { name: postgres, port: 5432, targetPort: 5432 }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quant-postgres-headless
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-postgres
+spec:
+  clusterIP: None
+  selector:
+    app.kubernetes.io/name: quant-postgres
+  ports:
+    - { name: postgres, port: 5432, targetPort: 5432 }

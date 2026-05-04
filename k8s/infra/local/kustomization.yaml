@@ -11,3 +11,4 @@ resources:
   - elasticsearch
   - opensearch
   - clickhouse
+  - quant-postgres

@@ -28,6 +28,8 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")
     runtimeOnly(libs.mysql.connector)
+    // ADR-0033/0035 Phase 1 후반 — pgvector 어댑터용 PostgreSQL 드라이버 (secondary DS)
+    runtimeOnly("org.postgresql:postgresql:42.7.4")
     // Phase 2 — TG-P2-01: 신규 카탈로그 등재
     implementation(libs.resilience4j.circuitbreaker)
     implementation(libs.resilience4j.kotlin)
