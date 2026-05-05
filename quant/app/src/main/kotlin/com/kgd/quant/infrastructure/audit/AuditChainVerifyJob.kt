@@ -1,9 +1,12 @@
 package com.kgd.quant.infrastructure.audit
 
 import com.kgd.quant.application.live.AuditChainService
+import com.kgd.quant.application.live.KillSwitchService
+import com.kgd.quant.application.live.LiveModeService
 import com.kgd.quant.application.port.persistence.AuditEventRepositoryPort
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.AuditEvent
+import com.kgd.quant.domain.live.SuspendReason
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.micrometer.core.instrument.MeterRegistry
 import kotlinx.coroutines.runBlocking
@@ -31,6 +34,8 @@ private val log = KotlinLogging.logger {}
 class AuditChainVerifyJob(
     private val service: AuditChainService,
     private val repo: AuditEventRepositoryPort,
+    private val killSwitchService: KillSwitchService,
+    private val liveModeService: LiveModeService,
     private val meterRegistry: MeterRegistry,
     @Value("\${quant.audit.verify.tenants:}")
     private val tenantsCsv: String,
@@ -68,6 +73,7 @@ class AuditChainVerifyJob(
                                 "[P1] audit-verify HASH_MISMATCH tenant=$tenantValue idx=${result.index} " +
                                     "stored=${result.stored.take(8)} recomputed=${result.recomputed.take(8)}"
                             }
+                            autoSuspend(TenantId(tenantValue), "audit-chain hash mismatch idx=${result.index}")
                         }
                         is AuditEvent.VerifyResult.PrevHashMismatch -> {
                             fail++
@@ -76,6 +82,7 @@ class AuditChainVerifyJob(
                                 "[P1] audit-verify PREV_HASH_MISMATCH tenant=$tenantValue idx=${result.index} " +
                                     "expected=${result.expected?.take(8)} actual=${result.actual?.take(8)}"
                             }
+                            autoSuspend(TenantId(tenantValue), "audit-chain prev_hash mismatch idx=${result.index}")
                         }
                     }
                 } catch (ex: Exception) {
@@ -85,5 +92,12 @@ class AuditChainVerifyJob(
             }
         }
         log.info { "audit-verify: done ok=$ok fail=$fail" }
+    }
+
+    private suspend fun autoSuspend(tenantId: TenantId, reason: String) {
+        runCatching {
+            killSwitchService.toggleTenant(tenantId, enabled = true, actorId = 0L, reason = "auto: $reason")
+            liveModeService.suspend(tenantId, SuspendReason.RECONCILE_DRIFT, by = null)
+        }.onFailure { log.error(it) { "auto-suspend failed for tenant=${tenantId.value}" } }
     }
 }

@@ -11,8 +11,10 @@ import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.credential.Exchange
 import com.kgd.quant.domain.live.AuditEventType
 import com.kgd.quant.domain.live.LiveOrderRecord
+import com.kgd.quant.domain.live.LiveTradingMode
 import com.kgd.quant.domain.live.SuspendReason
 import com.kgd.quant.domain.order.OrderStatus
+import com.kgd.quant.infrastructure.metrics.QuantPhase3Metrics
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.stereotype.Service
@@ -40,16 +42,26 @@ private val log = KotlinLogging.logger {}
  */
 @Service
 class PlaceLiveOrderUseCase(
+    private val liveModeService: LiveModeService,
     private val killSwitchService: KillSwitchService,
     private val riskLimitService: RiskLimitService,
     private val auditChain: AuditChainService,
     private val credentialVault: CredentialVault,
     private val orderRepo: LiveOrderRecordRepositoryPort,
+    private val metrics: QuantPhase3Metrics,
     private val liveAdaptersProvider: ObjectProvider<LiveExchangeAdapter>,
 ) {
     suspend fun execute(input: Input): LiveOrderRecord {
         val now = Instant.now()
         val orderKrw = (input.priceKrw ?: BigDecimal.ZERO).multiply(input.placement.quantity)
+
+        // 게이트 1: live-mode == Enabled
+        val mode = liveModeService.current(input.tenantId)
+        if (mode !is LiveTradingMode.Enabled) {
+            audit(input, AuditEventType.ORDER_REJECTED, mapOf("stage" to "live-mode", "current" to mode::class.simpleName), now)
+            metrics.liveOrderRecorded(input.placement.marketCode.value, "rejected")
+            throw OrderRejectedByGate("live-mode is ${mode::class.simpleName}", SuspendReason.USER_KILL_SWITCH)
+        }
 
         // 게이트 2~4: kill-switch 3-레벨
         val ks = killSwitchService.snapshot(input.tenantId, input.strategyId)
@@ -60,6 +72,7 @@ class PlaceLiveOrderUseCase(
                 else -> "strategy"
             }
             audit(input, AuditEventType.ORDER_REJECTED, mapOf("stage" to "kill-switch", "level" to reason), now)
+            metrics.liveOrderRecorded(input.placement.marketCode.value, "rejected")
             throw OrderRejectedByGate("kill-switch ON ($reason)", SuspendReason.USER_KILL_SWITCH)
         }
 
@@ -67,6 +80,8 @@ class PlaceLiveOrderUseCase(
         when (val r = riskLimitService.evaluatePreOrder(input.tenantId, orderKrw)) {
             is RiskLimitService.PreOrderResult.Reject -> {
                 audit(input, AuditEventType.ORDER_REJECTED, mapOf("stage" to "risk-limit", "reason" to r.reason.name, "detail" to r.detail), now)
+                metrics.liveOrderRecorded(input.placement.marketCode.value, "rejected")
+                metrics.riskLimitBreach(r.reason.name)
                 throw OrderRejectedByGate(r.detail, r.reason)
             }
             is RiskLimitService.PreOrderResult.Allow -> { /* 통과 */ }
@@ -77,12 +92,16 @@ class PlaceLiveOrderUseCase(
             ?: throw IllegalStateException("LiveExchangeAdapter for ${input.placement.marketCode.value} not registered")
         val credential = credentialVault.load(input.tenantId, input.exchange)
 
+        val placeStart = System.currentTimeMillis()
         val ack = try {
             adapter.placeOrder(credential, input.placement)
         } catch (ex: ExchangeException) {
             audit(input, AuditEventType.ORDER_REJECTED, mapOf("stage" to "exchange", "error" to ex.javaClass.simpleName, "msg" to (ex.message ?: "")), now)
+            metrics.liveOrderRecorded(input.placement.marketCode.value, "rejected")
+            metrics.liveOrderLatency(input.placement.marketCode.value, System.currentTimeMillis() - placeStart)
             throw ex
         }
+        metrics.liveOrderLatency(input.placement.marketCode.value, System.currentTimeMillis() - placeStart)
 
         // 성공 — AuditChain + OrderRecord persist
         val orderId = OrderId.newV7()
@@ -121,7 +140,25 @@ class PlaceLiveOrderUseCase(
             auditHashCurrent = auditEvent.currentHash,
         )
         orderRepo.save(record)
+        metrics.liveOrderRecorded(input.placement.marketCode.value, "placed")
         log.info { "live order placed orderId=${orderId} exchangeOrderId=${ack.exchangeOrderId}" }
+
+        // 사후 누적 + 자동 trigger 평가 (체결 추정 — 실 체결 PnL 은 reconcile 단계 후속에서 보정)
+        val autoSuspend = riskLimitService.recordOrderAndCheck(
+            tenantId = input.tenantId,
+            orderKrw = orderKrw,
+            pnlKrw = BigDecimal.ZERO, // placement 시점은 PnL 0 — fill 후 보정
+        )
+        if (autoSuspend != null) {
+            killSwitchService.toggleTenant(
+                tenantId = input.tenantId,
+                enabled = true,
+                actorId = 0L,
+                reason = "auto: ${autoSuspend.name} after order $orderId",
+            )
+            liveModeService.suspend(input.tenantId, autoSuspend, by = null)
+            metrics.riskLimitBreach(autoSuspend.name)
+        }
         return record
     }
 

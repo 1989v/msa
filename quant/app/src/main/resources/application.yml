@@ -68,12 +68,20 @@ quant:
         region: ${OCI_REGION:}
         vault-key-ocid: ${OCI_VAULT_KEY_OCID:}
         crypto-endpoint: ${OCI_VAULT_CRYPTO_ENDPOINT:}
+    # Phase 3 (L1) — 2FA brute-force 방어 한도 (per-user 1분당 시도 횟수)
+    two-fa:
+      max-attempts-per-minute: ${QUANT_2FA_MAX_ATTEMPTS:5}
   # TG-P2-05 (ADR-0026): audit_log 별도 ClickHouse DB (`quant_audit`) + RBAC 분리.
   # `enabled=true` 시에만 AuditClickHouseConfig / ClickHouseAuditLogPublisher / AuditChainVerifier 가 등록.
   audit:
     enabled: ${QUANT_AUDIT_ENABLED:false}
     chain-verifier:
       enabled: ${QUANT_AUDIT_CHAIN_VERIFIER_ENABLED:false}
+    # Phase 3 (L4) — 매일 KST 03:00 audit_event chain 무결성 검증
+    verify:
+      enabled: ${QUANT_AUDIT_VERIFY_ENABLED:false}
+      tenants: ${QUANT_AUDIT_VERIFY_TENANTS:}
+      limit: ${QUANT_AUDIT_VERIFY_LIMIT:100000}
     clickhouse:
       url: ${QUANT_AUDIT_CH_URL:jdbc:clickhouse://localhost:8123/quant_audit}
       user: ${QUANT_AUDIT_CH_USER:quant_audit_writer}
@@ -127,6 +135,27 @@ quant:
       enabled: ${QUANT_OUTBOX_RELAY:false}
       topic: ${QUANT_OUTBOX_RELAY_TOPIC:quant.events.v1}
       publish-timeout-seconds: ${QUANT_OUTBOX_RELAY_TIMEOUT_SEC:5}
+
+  # Phase 3 실매매 (ADR-0037 / L7) — 모든 기능 default OFF, K8s overlay 또는 환경변수로 활성화.
+  # 거래소 어댑터 / live-trading / reconcile / audit-verify / 2FA 한도 등.
+  # (기존 quant.audit / quant.security 블록과 병합되도록 spring.profiles 중첩 회피.)
+  live-trading:
+    enabled: ${QUANT_LIVE_TRADING_ENABLED:false}
+  reconcile:
+    enabled: ${QUANT_RECONCILE_ENABLED:false}
+  bithumb:
+    live:
+      enabled: ${QUANT_BITHUMB_LIVE_ENABLED:false}
+      base-url: ${QUANT_BITHUMB_LIVE_URL:https://api.bithumb.com}
+  upbit:
+    live:
+      enabled: ${QUANT_UPBIT_LIVE_ENABLED:false}
+  bybit:
+    live:
+      enabled: ${QUANT_BYBIT_LIVE_ENABLED:false}
+  okx:
+    live:
+      enabled: ${QUANT_OKX_LIVE_ENABLED:false}
 
 management:
   endpoints:
