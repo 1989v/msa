@@ -3,7 +3,7 @@ import { fetchTreemapStats } from '../../api/treemap';
 import type { TreemapDataDto } from '../../api/treemap';
 import TreemapView from './TreemapView';
 import CategoryChipStrip from './CategoryChipStrip';
-import { categorySwatch, tileColor } from './tileColor';
+import { categorySwatch } from './tileColor';
 import './TreemapSection.css';
 
 /**
@@ -100,31 +100,8 @@ export default function TreemapSection({ onTileClick }: TreemapSectionProps) {
       </div>
 
       {data && (
-        <footer className="ko-treemap-legend" aria-label="범례 — 카테고리 색상 + 레벨 농도">
-          {/* 레벨 농도 가이드 — 같은 카테고리(예시: 파랑) 안에서 lightness 변화 */}
-          <span className="ko-legend-group" aria-label="레벨 농도 가이드">
-            <span className="ko-legend-label">난이도</span>
-            <span
-              className="ko-legend-dot"
-              aria-hidden="true"
-              style={{ background: tileColor('INFRASTRUCTURE', 'BEGINNER') }}
-            />
-            <span className="ko-legend-mini">입문 {data.totals.byLevel.BEGINNER ?? 0}</span>
-            <span
-              className="ko-legend-dot"
-              aria-hidden="true"
-              style={{ background: tileColor('INFRASTRUCTURE', 'INTERMEDIATE') }}
-            />
-            <span className="ko-legend-mini">중급 {data.totals.byLevel.INTERMEDIATE ?? 0}</span>
-            <span
-              className="ko-legend-dot"
-              aria-hidden="true"
-              style={{ background: tileColor('INFRASTRUCTURE', 'ADVANCED') }}
-            />
-            <span className="ko-legend-mini">심화 {data.totals.byLevel.ADVANCED ?? 0}</span>
-          </span>
-
-          {/* 카테고리 색상 — 13 개 hue */}
+        <footer className="ko-treemap-legend" aria-label="범례 — 카테고리 색상 + 레벨 합계">
+          {/* 카테고리 색상 — 단일 축 인코딩 (카테고리=색) */}
           <span className="ko-legend-group ko-legend-categories" aria-label="카테고리 색상">
             <span className="ko-legend-label">카테고리</span>
             {Object.keys(data.totals.byCategory)
@@ -139,6 +116,14 @@ export default function TreemapSection({ onTileClick }: TreemapSectionProps) {
                   <span className="ko-legend-mini">{cat}</span>
                 </span>
               ))}
+          </span>
+
+          {/* 레벨별 합계 (텍스트만 — 색상 인코딩 X) */}
+          <span className="ko-legend-group" aria-label="레벨별 concept 합계">
+            <span className="ko-legend-label">난이도</span>
+            <span className="ko-legend-mini">입문 {data.totals.byLevel.BEGINNER ?? 0}</span>
+            <span className="ko-legend-mini">중급 {data.totals.byLevel.INTERMEDIATE ?? 0}</span>
+            <span className="ko-legend-mini">심화 {data.totals.byLevel.ADVANCED ?? 0}</span>
           </span>
 
           <span className="ko-legend-total">

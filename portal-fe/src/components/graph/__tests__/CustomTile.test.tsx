@@ -35,16 +35,17 @@ function renderTile(overrides: Record<string, unknown> = {}) {
 }
 
 describe('CustomTile (code-dictionary)', () => {
-  it('renders a treeitem rect filled with category×level OKLCH color', () => {
+  it('renders a treeitem rect filled with the category hex color (single-axis encoding)', () => {
     const { container } = renderTile();
 
     const tile = screen.getByRole('treeitem');
     expect(tile).toBeInTheDocument();
 
-    // ARCHITECTURE hue=195, INTERMEDIATE lightness=0.62, chroma=0.16
+    // CATEGORY_COLORS.ARCHITECTURE = '#a29bfe' — 카테고리 단일 축
     const rect = container.querySelector('g[role="treeitem"] rect');
     expect(rect).not.toBeNull();
-    expect(rect?.getAttribute('fill')).toMatch(/^oklch\(0\.62 0\.16 195\)$/);
+    expect(rect?.getAttribute('fill')).toBe('#a29bfe');
+    expect(rect?.getAttribute('fill-opacity')).toBe('0.7');
   });
 
   it('builds aria-label with name, level (한글) and indexCount', () => {
