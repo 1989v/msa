@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient, unwrap, toApiError } from '@/api/client'
 import { OhlcvCandleChart } from '@/components/charts/OhlcvCandleChart'
+import type { ApiResponse } from '@/types/api'
 
 type IndicatorType = 'RSI' | 'SMA' | 'EMA' | 'BB'
 
@@ -40,7 +41,7 @@ export function ChartsPage() {
   const ohlcvQ = useQuery({
     queryKey: ['ohlcv', asset, market, interval, from, to],
     queryFn: async () => {
-      const res = await apiClient.get<{ data: OhlcvBar[] }>(
+      const res = await apiClient.get<ApiResponse<OhlcvBar[]>>(
         `/api/v1/charts/ohlcv?asset=${asset}&market=${market}&interval=${interval}&from=${from}&to=${to}`
       )
       return unwrap(res)
@@ -50,7 +51,7 @@ export function ChartsPage() {
   const indicatorQ = useQuery({
     queryKey: ['indicator', asset, market, interval, from, to, indicator, period],
     queryFn: async () => {
-      const res = await apiClient.get<{ data: IndicatorSeries }>(
+      const res = await apiClient.get<ApiResponse<IndicatorSeries>>(
         `/api/v1/charts/indicators?asset=${asset}&market=${market}&interval=${interval}&from=${from}&to=${to}&type=${indicator}&period=${period}`
       )
       return unwrap(res)

@@ -22,6 +22,20 @@ Phase 0 의 목적:
 
 | 파일 | 역할 |
 |---|---|
+## OQ-015 (Phase 3 Gateway 우회 차단) closure 매핑
+
+ADR-0037 OQ-015 default 결정 (J1, 2026-05-05) 의 "NetworkPolicy 로 quant Pod ingress 를
+gateway namespace 만 허용 / 외부 LB 직접 노출 절대 불가" 는 본 디렉토리의 다음 정책들로
+이미 충족된다:
+
+- `03-allow-gateway-to-backends.yaml` — quant Pod 의 ingress 는 gateway 만 (직접 cross-pod 호출 차단)
+- `02-allow-ingress-to-gateway.yaml` — 외부 (ingress-nginx) → gateway 만 가능 (LB → quant 직접 차단)
+- `11-allow-egress-https-public.yaml` — quant 의 외부 :443 화이트리스트 (auth/quant/gifticon)
+
+mTLS 강제는 ADR-0037 OQ-015 default 에서 Phase 4 로 결정 (Phase 3 GA 까지는 NetworkPolicy 만으로 충분).
+
+| 파일 | 역할 |
+|---|---|
 | `00-default-deny.yaml` | commerce ns 전체 ingress + egress 기본 차단 |
 | `01-allow-dns-egress.yaml` | kube-system kube-dns:53 허용 (필수) |
 | `02-allow-ingress-to-gateway.yaml` | ingress-nginx ns → gateway:8080 |

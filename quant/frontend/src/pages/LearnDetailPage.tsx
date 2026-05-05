@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { apiClient, unwrap, toApiError } from '@/api/client'
+import type { ApiResponse } from '@/types/api'
 
 interface IndicatorContent {
   id: string
@@ -30,7 +31,7 @@ export function LearnDetailPage() {
     queryKey: ['learn-indicator', slug],
     enabled: !!slug,
     queryFn: async () => {
-      const res = await apiClient.get<{ data: IndicatorContent }>(
+      const res = await apiClient.get<ApiResponse<IndicatorContent>>(
         `/api/v1/learn/indicators/${slug}`
       )
       return unwrap(res)

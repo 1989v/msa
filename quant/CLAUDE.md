@@ -41,9 +41,9 @@
 
 | Phase | 범위 | 상태 |
 |---|---|---|
-| Phase 1 | 백테스트 엔진 + ClickHouse 스키마 + REST API + FE 스캐폴드 | 출고 가능 |
-| Phase 2 | 페이퍼 트레이딩 (WebSocket 시세 + SimulatedExchangeAdapter + Telegram + OCI Vault KEK + audit chain) | 진행 중 (Errata: 빗썸 인증 = JWT(HS256), ADR-0024 Errata 참조) |
-| Phase 3 | 실매매 (빗썸/업비트 실 주문 + Rate Limiter + Kill-switch + 2FA) | TBD |
+| Phase 1 | 백테스트 엔진 + ClickHouse 스키마 + REST API + FE 스캐폴드 | 출고 |
+| Phase 2 | 페이퍼 트레이딩 + WebSocket 시세 + KEK envelope + audit chain + cross-exchange 김치프리미엄 (ADR-0036) | 출고 |
+| Phase 3 | 실매매 — 4-layer 게이트(live-mode→KillSwitch→RiskLimit→2FA) + 3-레벨 KillSwitch + TOTP 2FA(RFC 6238) + SHA-256 audit chain + ReconcileJob (ADR-0037 Accepted) | 코어 구현 완료, 거래소 어댑터 4종(빗썸 1종 완료) wire-up 후 Beta |
 
 ## Key Rules
 
@@ -74,11 +74,6 @@
 
 ## Open Questions (Phase 2/3 Blockers)
 
-- OQ-011 거래소 약관 자동매매 허용 — Phase 1 선행
-- OQ-012 손실 한도 — Phase 3
-- OQ-013 글로벌 kill-switch — Phase 3
-- OQ-014 주문 reconcile — Phase 3
-- OQ-015 Gateway 우회 차단 — Phase 3
-- OQ-016 실매매 2FA — Phase 3
-- OQ-017 KEK 회전 — Phase 2
-- OQ-018 audit_log 불변성 — Phase 2
+- ✅ OQ-011 ~ OQ-020 (Phase 3) — J1 default closure, ADR-0037 Accepted (운영자 법무 자문 후 OQ-011/019 Errata 가능)
+- ✅ OQ-017 KEK 회전 — Phase 2 lazy re-encryption 구현
+- ✅ OQ-018 audit_log 불변성 — Phase 2 chain + Phase 3 ADR-0037 audit_event chain
