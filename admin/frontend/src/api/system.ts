@@ -44,12 +44,19 @@ export async function fetchEurekaApps(): Promise<EurekaApp[]> {
 async function fetchActuatorHealth(svcName: string): Promise<'UP' | 'DOWN' | 'UNKNOWN'> {
   const url = svcName === 'gateway' ? '/actuator/health' : `/svc/${svcName}/actuator/health`;
   try {
-    const res = await apiClient.get<{ status?: string }>(url, { timeout: 3000 });
+    // timeout 5000 — pod cold start (lazy init) 시 actuator 응답 지연 가능.
+    const res = await apiClient.get<{ status?: string }>(url, { timeout: 5000 });
     const s = res.data?.status;
     if (s === 'UP') return 'UP';
     if (s === 'DOWN') return 'DOWN';
     return 'UNKNOWN';
-  } catch {
+  } catch (e) {
+    // 네트워크/타임아웃 = pod 응답 불가 → DOWN.
+    // (콘솔 로그를 통해 디버그: 어떤 svc 가 fail 했는지 추적 가능)
+    if (typeof console !== 'undefined') {
+      // eslint-disable-next-line no-console
+      console.warn(`[health] ${svcName} actuator check failed:`, (e as Error)?.message);
+    }
     return 'DOWN';
   }
 }
