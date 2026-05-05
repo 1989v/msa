@@ -3,10 +3,10 @@
   "version": 1,
   "summary": {
     "source_count": 965,
-    "doc_count": 210,
+    "doc_count": 199,
     "link_count": 2066,
     "missing_count": 198,
-    "dangling_count": 195,
+    "dangling_count": 184,
     "coverage_by_service": {
       "product": {
         "total": 34,
@@ -16218,50 +16218,6 @@
     }
   ],
   "dangling_docs": [
-    {
-      "doc": "charting/CLAUDE.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/adr/ADR-001-charting-service-introduction.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/adr/ADR-002-pgvector-over-elasticsearch.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/adr/ADR-003-python-fastapi-language-choice.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/adr/ADR-004-yahoo-finance-data-source.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/prd/copytarget.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/prd/custom-indicator-editor.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/prd/kotlin-spring-porting.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/service.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/superpowers/plans/2026-03-19-chart-period-pattern-overlay.md",
-      "service": "charting"
-    },
-    {
-      "doc": "charting/docs/superpowers/specs/2026-03-19-chart-period-pattern-overlay-design.md",
-      "service": "charting"
-    },
     {
       "doc": "common/docs/service.md",
       "service": "common"

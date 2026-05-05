@@ -123,7 +123,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | quant | `quant/CLAUDE.md` | 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS + Phase 3 실매매 (ADR-0033/0036/0037, Phase 3 코어 구현 완료, 거래소 어댑터 4종 wire-up 후 Beta) |
 | auth | (CLAUDE.md 미작성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) — 서비스 코드 존재 |
 | gifticon | (CLAUDE.md 미작성) | 기프티콘 관리, 공유 그룹 — 서비스 코드 존재 |
-| code-dictionary | (CLAUDE.md 미작성) | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD — 서비스 코드 존재. FE 는 portal-fe 의 `/dict` 라우트로 통합 (2026-05-05) |
+| code-dictionary | (CLAUDE.md 미작성) | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD — 서비스 코드 존재. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반) |
 | inventory | (CLAUDE.md 미작성) | 재고 관리, 예약 — 서비스 코드 존재 |
 | fulfillment | (CLAUDE.md 미작성) | 주문 풀필먼트 — 서비스 코드 존재 |
 | warehouse | (CLAUDE.md 미작성) | 창고 관리 — 서비스 코드 존재 |
@@ -136,7 +136,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 
 | Path | FE | 비고 |
 |------|----|------|
-| `/` (root catch-all) | `portal-fe` | MSA 진입점 — 포트폴리오 + 코드딕셔너리 `/dict` + 서비스 카탈로그 `/services` + 어바웃 `/about` |
+| `/` (root catch-all) | `portal-fe` | MSA 진입점 — 단일 SPA 에 코드딕셔너리(트리맵/그래프/검색) + 포트폴리오 + 서비스 카탈로그 + 어바웃 섹션이 scroll anchor 로 통합 |
 | `/admin/*` | `admin-fe` | 백오피스 |
 | `/quant/*` | `quant-fe` | 트레이딩 (Phase 3) |
 | `/gifticon/*` | `gifticon-fe` | 기프티콘 |
