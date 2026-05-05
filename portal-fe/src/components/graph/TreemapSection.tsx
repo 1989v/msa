@@ -3,6 +3,7 @@ import { fetchTreemapStats } from '../../api/treemap';
 import type { TreemapDataDto } from '../../api/treemap';
 import TreemapView from './TreemapView';
 import CategoryChipStrip from './CategoryChipStrip';
+import { categorySwatch, tileColor } from './tileColor';
 import './TreemapSection.css';
 
 /**
@@ -99,22 +100,47 @@ export default function TreemapSection({ onTileClick }: TreemapSectionProps) {
       </div>
 
       {data && (
-        <footer className="ko-treemap-legend" aria-label="레벨별 concept 합계">
-          <span className="ko-legend-item">
-            <span className="ko-legend-dot ko-legend-dot--beginner" aria-hidden="true" />
-            BEGINNER
-            <span className="ko-legend-count">{data.totals.byLevel.BEGINNER ?? 0}</span>
+        <footer className="ko-treemap-legend" aria-label="범례 — 카테고리 색상 + 레벨 농도">
+          {/* 레벨 농도 가이드 — 같은 카테고리(예시: 파랑) 안에서 lightness 변화 */}
+          <span className="ko-legend-group" aria-label="레벨 농도 가이드">
+            <span className="ko-legend-label">난이도</span>
+            <span
+              className="ko-legend-dot"
+              aria-hidden="true"
+              style={{ background: tileColor('INFRASTRUCTURE', 'BEGINNER') }}
+            />
+            <span className="ko-legend-mini">입문 {data.totals.byLevel.BEGINNER ?? 0}</span>
+            <span
+              className="ko-legend-dot"
+              aria-hidden="true"
+              style={{ background: tileColor('INFRASTRUCTURE', 'INTERMEDIATE') }}
+            />
+            <span className="ko-legend-mini">중급 {data.totals.byLevel.INTERMEDIATE ?? 0}</span>
+            <span
+              className="ko-legend-dot"
+              aria-hidden="true"
+              style={{ background: tileColor('INFRASTRUCTURE', 'ADVANCED') }}
+            />
+            <span className="ko-legend-mini">심화 {data.totals.byLevel.ADVANCED ?? 0}</span>
           </span>
-          <span className="ko-legend-item">
-            <span className="ko-legend-dot ko-legend-dot--intermediate" aria-hidden="true" />
-            INTERMEDIATE
-            <span className="ko-legend-count">{data.totals.byLevel.INTERMEDIATE ?? 0}</span>
+
+          {/* 카테고리 색상 — 13 개 hue */}
+          <span className="ko-legend-group ko-legend-categories" aria-label="카테고리 색상">
+            <span className="ko-legend-label">카테고리</span>
+            {Object.keys(data.totals.byCategory)
+              .filter((c) => (data.totals.byCategory[c] ?? 0) > 0)
+              .map((cat) => (
+                <span key={cat} className="ko-legend-cat-item" title={`${cat} (${data.totals.byCategory[cat]})`}>
+                  <span
+                    className="ko-legend-dot"
+                    aria-hidden="true"
+                    style={{ background: categorySwatch(cat) }}
+                  />
+                  <span className="ko-legend-mini">{cat}</span>
+                </span>
+              ))}
           </span>
-          <span className="ko-legend-item">
-            <span className="ko-legend-dot ko-legend-dot--advanced" aria-hidden="true" />
-            ADVANCED
-            <span className="ko-legend-count">{data.totals.byLevel.ADVANCED ?? 0}</span>
-          </span>
+
           <span className="ko-legend-total">
             Total <span className="ko-legend-count">{data.totals.totalConcepts}</span>
           </span>

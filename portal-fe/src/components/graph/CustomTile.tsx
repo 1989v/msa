@@ -1,16 +1,22 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { TreemapLevel } from '../../api/treemap';
+import { tileColor, categoryBackground } from './tileColor';
 
 /**
  * CustomTile — recharts <Treemap> custom content renderer for Code Dictionary.
  *
  * Spec: docs/specs/2026-05-05-code-dictionary-treemap/planning/spec.md §6.5, §6.6, §6.9
  *
+ * 색상 인코딩 (네이버 증권 트리맵 스타일):
+ *  - 카테고리 = OKLCH hue (13 개 균등) — 같은 카테고리 = 같은 색계열, 자연스러운 그룹
+ *  - level    = 같은 hue 내 lightness (BEGINNER 밝음 → ADVANCED 어둠)
+ *
  * Responsibilities:
- *  1. color tile by level via OKLCH var(--ko-level-*) tokens (cool->warm sequential)
- *  2. label priority by tile area (name + count > name only > omit)
- *  3. a11y: aria-label, role=treeitem, focus-ring outline
- *  4. click -> onTileClick(conceptId)
+ *  1. leaf tile fill = tileColor(category, level)
+ *  2. depth=1 카테고리 컨테이너 = 옅은 hue 배경 + 강한 stroke + 라벨
+ *  3. label priority by tile area (name + count > name only > omit)
+ *  4. a11y: aria-label, role=treeitem, focus-ring outline
+ *  5. click -> onTileClick(conceptId)
  */
 
 interface CustomTileProps {
@@ -30,12 +36,6 @@ interface CustomTileProps {
   // injected by parent
   onTileClick?: (conceptId: string) => void;
 }
-
-const LEVEL_TO_TOKEN: Record<TreemapLevel, string> = {
-  BEGINNER: 'var(--ko-level-beginner)',
-  INTERMEDIATE: 'var(--ko-level-intermediate)',
-  ADVANCED: 'var(--ko-level-advanced)',
-};
 
 const LEVEL_LABEL: Record<TreemapLevel, string> = {
   BEGINNER: '입문',
@@ -63,8 +63,9 @@ export default function CustomTile(props: CustomTileProps) {
   const isLeaf = depth >= 2 || Boolean(conceptId);
 
   if (!isLeaf) {
-    // Category container — draw subtle separator only
+    // Category container — 옅은 hue 배경 + 강한 stroke 로 영역 분리, 라벨 강조
     if (width <= 0 || height <= 0) return <g />;
+    const bg = name ? categoryBackground(name) : 'transparent';
     return (
       <g>
         <rect
@@ -72,18 +73,18 @@ export default function CustomTile(props: CustomTileProps) {
           y={y}
           width={width}
           height={height}
-          fill="transparent"
-          stroke="rgba(255,255,255,0.15)"
-          strokeWidth={1}
+          fill={bg}
+          stroke="rgba(255,255,255,0.35)"
+          strokeWidth={2}
         />
         {width > 80 && height > 28 && (
           <text
-            x={x + 8}
-            y={y + 16}
-            fill="#94a3b8"
-            fontSize={11}
-            fontWeight={600}
-            style={{ pointerEvents: 'none', textTransform: 'uppercase', letterSpacing: 0.5 }}
+            x={x + 10}
+            y={y + 18}
+            fill="rgba(255,255,255,0.85)"
+            fontSize={12}
+            fontWeight={700}
+            style={{ pointerEvents: 'none', textTransform: 'uppercase', letterSpacing: 0.6 }}
           >
             {name}
           </text>
@@ -94,7 +95,7 @@ export default function CustomTile(props: CustomTileProps) {
 
   if (width <= 0 || height <= 0) return <g />;
 
-  const fill = level ? LEVEL_TO_TOKEN[level] : 'var(--ko-level-beginner)';
+  const fill = tileColor(props.categoryKey, level);
   const area = width * height;
 
   const handleClick = () => {

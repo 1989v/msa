@@ -1,0 +1,56 @@
+import type { TreemapLevel } from '../../api/treemap';
+
+/**
+ * tileColor — 카테고리×레벨 → OKLCH 문자열.
+ *
+ * 인코딩 (네이버 증권 트리맵 스타일):
+ *  - 카테고리 = hue (13 개 균등 분포, 360°/13 ≈ 27.7° 간격)
+ *  - level    = lightness (BEGINNER 밝음 → ADVANCED 어둠) — 같은 카테고리 내 농도 변화
+ *  - chroma   = 0.10 (UI 베이스보다 진하지만 garish 하지 않음 — 데이터 viz 의미 색상)
+ *
+ * 같은 카테고리의 concept 들은 hue 가 같아 자연스러운 그룹으로 식별되고,
+ * level 차이는 같은 hue 내 lightness 단계로 구분된다.
+ */
+
+const CATEGORY_HUE: Record<string, number> = {
+  BASICS: 15,              // warm red-orange
+  DATA_STRUCTURE: 45,      // amber
+  ALGORITHM: 75,           // yellow-green
+  DESIGN_PATTERN: 105,     // green
+  CONCURRENCY: 135,        // teal-green
+  DISTRIBUTED_SYSTEM: 165, // teal
+  ARCHITECTURE: 195,       // cyan
+  INFRASTRUCTURE: 225,     // blue
+  DATA: 255,               // indigo
+  SECURITY: 285,           // violet
+  NETWORK: 315,            // magenta
+  TESTING: 345,            // pink-red
+  LANGUAGE_FEATURE: 0,     // pure red (wraps around)
+};
+
+const LEVEL_LIGHTNESS: Record<TreemapLevel, number> = {
+  BEGINNER: 0.80,
+  INTERMEDIATE: 0.62,
+  ADVANCED: 0.46,
+};
+
+const CHROMA = 0.10;
+
+export function tileColor(categoryKey: string | undefined, level: TreemapLevel | undefined): string {
+  const hue = (categoryKey && CATEGORY_HUE[categoryKey]) ?? 220;
+  const lightness = (level && LEVEL_LIGHTNESS[level]) ?? 0.62;
+  return `oklch(${lightness} ${CHROMA} ${hue})`;
+}
+
+/** 카테고리 베이스 색상 (level=INTERMEDIATE 고정) — 범례/chip dot 등에 사용. */
+export function categorySwatch(categoryKey: string): string {
+  return tileColor(categoryKey, 'INTERMEDIATE');
+}
+
+/** 카테고리 hue 만 사용한 매우 옅은 배경 — depth=1 컨테이너용. */
+export function categoryBackground(categoryKey: string): string {
+  const hue = CATEGORY_HUE[categoryKey] ?? 220;
+  return `oklch(0.18 0.04 ${hue})`;
+}
+
+export const ALL_CATEGORIES = Object.keys(CATEGORY_HUE);

@@ -18,6 +18,7 @@ interface TreemapNodeLeaf {
   size: number;
   level: TreemapLevel;
   conceptId: string;
+  categoryKey: string;  // hue 결정에 사용 (recharts content() 가 leaf payload 만 넘김)
 }
 
 interface TreemapNodeCategory {
@@ -48,6 +49,7 @@ function toTreemapData(dto: TreemapDataDto): TreemapNodeRoot {
         size: Math.max(1, c.indexCount),
         level: c.level,
         conceptId: c.conceptId,
+        categoryKey: cat.name,  // 부모 카테고리 hue 를 leaf 색상 계산에 사용
       })),
     })),
   };

@@ -27,6 +27,7 @@ function renderTile(overrides: Record<string, unknown> = {}) {
         level="INTERMEDIATE"
         conceptId="clean-architecture"
         indexCount={12}
+        categoryKey="ARCHITECTURE"
         {...overrides}
       />
     </svg>,
@@ -34,16 +35,16 @@ function renderTile(overrides: Record<string, unknown> = {}) {
 }
 
 describe('CustomTile (code-dictionary)', () => {
-  it('renders a treeitem rect filled with the level token color', () => {
+  it('renders a treeitem rect filled with category×level OKLCH color', () => {
     const { container } = renderTile();
 
     const tile = screen.getByRole('treeitem');
     expect(tile).toBeInTheDocument();
 
-    // The first <rect> inside the tile carries the OKLCH var(--ko-level-*) fill.
+    // ARCHITECTURE hue=195, INTERMEDIATE lightness=0.62, chroma=0.10
     const rect = container.querySelector('g[role="treeitem"] rect');
     expect(rect).not.toBeNull();
-    expect(rect?.getAttribute('fill')).toBe('var(--ko-level-intermediate)');
+    expect(rect?.getAttribute('fill')).toMatch(/^oklch\(0\.62 0\.1 195\)$/);
   });
 
   it('builds aria-label with name, level (한글) and indexCount', () => {
