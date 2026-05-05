@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.jpa)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.spring.boot)
+    // JMH micro-benchmark (T5.1) — manual run only: ./gradlew :code-dictionary:app:jmh
+    id("me.champeau.jmh") version "0.7.2"
 }
 
 dependencies {
@@ -25,6 +27,11 @@ dependencies {
     implementation("org.opensearch.client:opensearch-rest-client:2.19.0")
     implementation("org.apache.httpcomponents.client5:httpclient5")
     implementation("org.apache.httpcomponents.core5:httpcore5")
+    // Treemap stats endpoint — Caffeine in-memory cache (spec.md §7)
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation(libs.caffeine)
+    // kotlin-logging 람다 (logging convention)
+    implementation(libs.kotlin.logging)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
 }
@@ -35,3 +42,11 @@ tasks.bootJar {
 
 // QueryDSL Q class generation path
 kotlin.sourceSets.main { kotlin.srcDir("build/generated/source/kapt/main") }
+
+// JMH source set (src/jmh/kotlin) — uses production classpath; manual execution only.
+// 기본 plugin 설정만 사용 (warm-up / measurement / fork 는 어노테이션 레벨에서 정의).
+jmh {
+    // benchmarkMode / warmupIterations / iterations 는 GetCategoryStatsBench 클래스 어노테이션 사용.
+    // 결과 디렉토리: build/results/jmh
+    resultFormat.set("JSON")
+}

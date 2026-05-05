@@ -13,6 +13,7 @@ import com.kgd.codedictionary.domain.concept.exception.ConceptNotFoundException
 import com.kgd.codedictionary.domain.concept.model.Concept
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -22,6 +23,7 @@ class ConceptService(
     private val conceptRepository: ConceptRepositoryPort,
     private val indexRepository: ConceptIndexRepositoryPort
 ) {
+    @CacheEvict(value = ["conceptCategoryStats"], allEntries = true)
     fun create(command: CreateConceptCommand): ConceptResultDto {
         if (conceptRepository.existsByConceptId(command.conceptId)) {
             throw ConceptAlreadyExistsException(command.conceptId)
@@ -53,6 +55,7 @@ class ConceptService(
         return page.map { toResultDto(it) }
     }
 
+    @CacheEvict(value = ["conceptCategoryStats"], allEntries = true)
     fun update(id: Long, command: UpdateConceptCommand): ConceptResultDto {
         val concept = conceptRepository.findById(id)
             ?: throw ConceptNotFoundException(id.toString())
@@ -67,6 +70,7 @@ class ConceptService(
         return toResultDto(saved)
     }
 
+    @CacheEvict(value = ["conceptCategoryStats"], allEntries = true)
     fun delete(id: Long) {
         conceptRepository.findById(id) ?: throw ConceptNotFoundException(id.toString())
         conceptRepository.delete(id)

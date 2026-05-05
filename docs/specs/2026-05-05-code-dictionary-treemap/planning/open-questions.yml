@@ -1,0 +1,135 @@
+# Open Questions — Code Dictionary Treemap
+# Phase 1 (Spec Shaper) 시드. 답변 확정 시 status: resolved + resolution 기록.
+# Phase 2 (Spec Writer, 2026-05-05): Q1/Q3/Q4/Q5/Q6/Q8 → tentative_decision, Q2/Q7 → deferred.
+# Phase 2 revision (2026-05-05): Q1 → closed (cool→warm sequential 결정).
+
+questions:
+  - id: Q1
+    topic: 색상 매핑
+    question: |
+      트리맵 tile 색상으로 사용할 BEGINNER / INTERMEDIATE / ADVANCED 의 정확한 hex (또는 oklch) 는?
+      docs/conventions/frontend-design.md 의 60-30-10 / WCAG AA 규칙을 준수해야 함.
+      네이버 트리맵은 red/blue/gray 인데, 학습 난이도는 신호등(green→yellow→red)이 직관적이지만
+      red 가 "고급"을 의미하는 것이 부정적으로 읽힐 가능성도 있음.
+    options:
+      - 신호등(green / amber / red) — 직관적이나 red=ADVANCED 의 부정적 함의 우려
+      - 단색 그라데이션(연한 파랑 → 진한 파랑) — 난이도 = 깊이로 표현
+      - 디자인 토큰 신규 정의 (frontend-design.md 업데이트 동반)
+    impact: F5 구현, NFR4 (대비 검증)
+    status: closed
+    resolution: |
+      cool → warm sequential 채택 (신호등 매핑 폐기 — 한국 금융 UX 의 빨강=상승 컨벤션과 충돌).
+      OKLCH lightness 만 단조 변동, chroma 는 0.01 부근 고정.
+        - BEGINNER:     oklch(0.85 0.01  220)  --ko-level-beginner     (cool light teal)
+        - INTERMEDIATE: oklch(0.70 0.012  90)  --ko-level-intermediate (neutral amber)
+        - ADVANCED:     oklch(0.55 0.015  30)  --ko-level-advanced     (warm deep magenta)
+      양쪽 frontend 의 globals.css (또는 token 정의 파일) 에 선언. 색상 단독 의존 금지
+      (NFR4) 는 텍스트 라벨 병기로 보강.
+
+  - id: Q2
+    topic: 카테고리 정렬
+    question: |
+      13 개 카테고리 chip 의 표시 순서는?
+    options:
+      - 알파벳 / 가나다 순
+      - indexCount 합계 desc (가장 큰 카테고리가 좌측)
+      - 사용자 정의 (도메인 흐름 기반 — 예: 기초 → 응용)
+      - 사용자 FE 와 admin FE 다른 순서 허용
+    impact: F6
+    status: deferred
+    resolution: |
+      implement 단계에서 결정. 1 차안: indexCount 합계 desc (네이버 트리맵의 면적 desc 와
+      직관 일치). 운영자 피드백 후 사용자 FE/admin FE 분기 검토.
+
+  - id: Q3
+    topic: 빈 카테고리 처리
+    question: |
+      concept 0 개인 카테고리는 chip / 트리맵에서 어떻게 처리?
+    options:
+      - chip 자체 숨김
+      - chip 표시하되 disabled (회색 처리)
+      - chip 클릭 시 "데이터 없음" placeholder 표시
+    impact: F6, FE 컴포넌트 테스트 (test-quality.md)
+    status: tentative_decision
+    resolution: |
+      chip 자체 숨김. 운영자에게는 별도 admin "빈 카테고리" 인디케이터(향후 V2)로 보강.
+      현재는 시각적 노이즈 최소화를 우선.
+
+  - id: Q4
+    topic: indexCount 0 인 concept
+    question: |
+      indexCount=0 인 concept 은 트리맵에 어떻게 표시?
+      0 이면 면적이 0 → recharts 가 렌더하지 않거나 한 점으로 압축됨.
+    options:
+      - 응답에서 제외 (stats endpoint level 에서 필터)
+      - 응답에는 포함, FE 에서 제외
+      - 최소 면적 보장 (예: floor(indexCount, 1))
+      - 별도 "준비 중" 섹션으로 분리 표시
+    impact: F1 응답 shape, F5 렌더링, GraphService unit test 시나리오
+    status: tentative_decision
+    resolution: |
+      indexCount=0 concept 은 응답에서 제외. 단 카테고리 전체가 0 이면 최소 1 개
+      placeholder 를 보존하여 카테고리 자체는 트리맵에 노출. `includeZeroIndex` 쿼리
+      파라미터로 admin 디버깅 시에는 포함 가능.
+
+  - id: Q5
+    topic: 캐시 무효화 전략
+    question: |
+      stats endpoint 캐싱 — concept CUD 시 invalidate 할지, TTL 만 사용할지?
+    options:
+      - Caffeine TTL only (예: 5 분) — 단순, 약간의 stale 허용
+      - Caffeine + CUD 시점 명시적 invalidate — 즉시 반영
+      - Redis 분산 캐시 (다중 인스턴스 대비) + invalidate 이벤트
+      - 캐시 없음 (concept ~500 + index ~5000 이면 충분히 빠를 것이라 가정)
+    impact: NFR1, NFR3, performance benchmark
+    status: tentative_decision
+    resolution: |
+      Caffeine in-memory TTL 5 분 + ConceptService 의 create/update/delete 시점에서
+      명시적 evict. prod-k8s 다중 인스턴스 Redis 도입은 V2 별도 스펙.
+
+  - id: Q6
+    topic: admin 트리맵 클릭 액션
+    question: |
+      admin FE 에서 tile 클릭 시 어떤 액션?
+    options:
+      - 사용자 FE 와 동일하게 concept 상세로 라우팅
+      - concept edit 다이얼로그 즉시 오픈 (운영자 동선 단축)
+      - 사이드 패널에 상세 정보만 표시 + edit 버튼
+    impact: F3, F7
+    status: tentative_decision
+    resolution: |
+      admin FE 는 edit 다이얼로그 즉시 오픈 (운영자 동선 최단). 사용자 FE 는 concept
+      detail 페이지로 navigate. 양쪽 FE 가 동일 stats endpoint 를 쓰되 onSelect 콜백만
+      다르게 주입.
+
+  - id: Q7
+    topic: 모바일 chip overflow
+    question: |
+      모바일 viewport 에서 13+ 개 카테고리 chip 가 한 줄에 안 들어갈 때 처리?
+      네이버 레퍼런스는 가로 스크롤 + 우측 화살표 패턴.
+    options:
+      - 가로 스크롤 (네이버 동일 패턴)
+      - 줄바꿈 (wrap)
+      - 드롭다운으로 압축
+      - "전체 + 상위 N + 더보기"
+    impact: F6, NFR5
+    status: deferred
+    resolution: |
+      implement 단계에서 결정. 1 차안: 가로 스크롤 + 우측 fade gradient (네이버 동일
+      패턴). wrap/드롭다운은 사용자 테스트 결과에 따라 검토. 페이지 레벨 가로 스크롤
+      금지 원칙은 유지 — chip strip 컨테이너 내부에 한정.
+
+  - id: Q8
+    topic: ForceGraph3D 와의 관계
+    question: |
+      기존 사용자 FE 의 ForceGraph3D 와 신규 트리맵을 어떻게 공존?
+    options:
+      - 탭 전환 (그래프 / 트리맵 두 개 뷰)
+      - 트리맵을 default, 그래프는 보조 토글
+      - 별도 페이지 (Treemap 전용 라우트)
+      - SearchPage 내부 view mode 토글
+    impact: F2, FE 라우팅 설계, 사용자 동선
+    status: tentative_decision
+    resolution: |
+      SearchPage 내부 view-mode 토글로 탭 전환. Treemap 을 default 로 노출하고 그래프는
+      보조 뷰. 별도 라우트 신설은 SEO/공유 필요 시 V2 검토.

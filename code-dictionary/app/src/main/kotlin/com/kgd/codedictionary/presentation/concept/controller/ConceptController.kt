@@ -3,10 +3,15 @@ package com.kgd.codedictionary.presentation.concept.controller
 import com.kgd.codedictionary.application.concept.dto.ConceptDetailDto
 import com.kgd.codedictionary.application.concept.dto.ConceptResultDto
 import com.kgd.codedictionary.application.concept.service.ConceptService
+import com.kgd.codedictionary.application.graph.dto.CategoryStatsFilter
+import com.kgd.codedictionary.application.graph.dto.TreemapDataDto
+import com.kgd.codedictionary.application.graph.service.GraphService
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
 import com.kgd.codedictionary.presentation.concept.dto.ConceptCreateRequest
 import com.kgd.codedictionary.presentation.concept.dto.ConceptUpdateRequest
+import com.kgd.common.exception.BusinessException
+import com.kgd.common.exception.ErrorCode
 import com.kgd.common.response.ApiResponse
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -16,7 +21,8 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/v1/concepts")
 class ConceptController(
-    private val conceptService: ConceptService
+    private val conceptService: ConceptService,
+    private val graphService: GraphService
 ) {
 
     @GetMapping
@@ -42,6 +48,44 @@ class ConceptController(
     fun getByConceptId(@PathVariable conceptId: String): ApiResponse<ConceptDetailDto> {
         val result = conceptService.findByConceptIdDetail(conceptId)
         return ApiResponse.success(result)
+    }
+
+    /**
+     * 트리맵 stats endpoint — spec.md §5.1.
+     *
+     * - `categories`: comma-separated, 미지정 시 전체 카테고리
+     * - `includeZeroIndex`: indexCount=0 concept 포함 여부 (default false)
+     * - 알 수 없는 카테고리명 → 400 INVALID_INPUT (common ErrorCode 미존재 → INVALID_INPUT 사용)
+     */
+    @GetMapping("/stats/treemap")
+    fun getTreemapStats(
+        @RequestParam(required = false) categories: String?,
+        @RequestParam(required = false, defaultValue = "false") includeZeroIndex: Boolean
+    ): ApiResponse<TreemapDataDto> {
+        val categorySet: Set<String>? = categories
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.takeIf { it.isNotEmpty() }
+            ?.map { it.uppercase() }
+            ?.toSet()
+
+        // 입력 검증: 알 수 없는 카테고리명 → 400
+        categorySet?.forEach { name ->
+            runCatching { ConceptCategory.valueOf(name) }
+                .onFailure {
+                    throw BusinessException(
+                        errorCode = ErrorCode.INVALID_INPUT,
+                        message = "알 수 없는 카테고리: $name"
+                    )
+                }
+        }
+
+        val filter = CategoryStatsFilter(
+            categories = categorySet,
+            includeZeroIndex = includeZeroIndex
+        )
+        return ApiResponse.success(graphService.getCategoryStats(filter))
     }
 
     @ResponseStatus(HttpStatus.CREATED)

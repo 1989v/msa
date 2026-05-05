@@ -34,6 +34,11 @@ spring:
               uri: http://experiment:8091
               predicates:
                 - Path=/api/v1/experiments/**
+            # T4.1 — Code Dictionary 서비스 (IT 개념 사전 + OpenSearch 검색/시각화)
+            - id: code-dictionary-service
+              uri: http://code-dictionary:8089
+              predicates:
+                - Path=/api/v1/concepts/**, /api/v1/index/**
             # TG-P2-13 — Quant SSE (long-lived). 반드시 REST 라우트보다 위에 두어
             # 더 구체적인 경로 패턴이 먼저 매칭되게 한다.
             - id: quant-paper-sse

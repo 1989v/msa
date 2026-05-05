@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createColumnHelper, useReactTable, getCoreRowModel } from '@tanstack/react-table';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -7,9 +7,11 @@ import {
   createConcept,
   updateConcept,
   deleteConcept,
-  syncOpenSearch,
+  submitIndexSync,
+  getIndexSyncJob,
+  fetchConceptByConceptId,
 } from '@/api/codeDictionary';
-import type { Concept } from '@/api/codeDictionary';
+import type { Concept, IndexSyncJob } from '@/api/codeDictionary';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { Dialog } from '@/components/ui/dialog';
@@ -17,6 +19,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import TreemapSection from '@/components/codeDictionary/TreemapSection';
+import { cn } from '@/lib/utils';
 
 const columnHelper = createColumnHelper<Concept>();
 
@@ -51,6 +55,8 @@ const EMPTY_FORM: ConceptFormData = {
   description: '',
   synonyms: '',
 };
+
+type TabKey = 'treemap' | 'crud';
 
 function ConceptFormDialog({
   open,
@@ -133,12 +139,16 @@ function ConceptFormDialog({
 
 export function CodeDictionaryPage() {
   const queryClient = useQueryClient();
+  // Q8: Treemap is default tab in admin (operator quick-edit flow)
+  const [tab, setTab] = useState<TabKey>('treemap');
   const [page, setPage] = useState(0);
   const [filterCategory, setFilterCategory] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Concept | null>(null);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
+  const [treemapLoadError, setTreemapLoadError] = useState<string | null>(null);
 
   const { data } = useQuery({
     queryKey: ['concepts', page, filterCategory, filterLevel],
@@ -160,6 +170,7 @@ export function CodeDictionaryPage() {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['concepts'] });
+      void queryClient.invalidateQueries({ queryKey: ['treemap-stats'] });
       setCreateOpen(false);
     },
   });
@@ -176,6 +187,7 @@ export function CodeDictionaryPage() {
       }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['concepts'] });
+      void queryClient.invalidateQueries({ queryKey: ['treemap-stats'] });
       setEditTarget(null);
     },
   });
@@ -184,20 +196,68 @@ export function CodeDictionaryPage() {
     mutationFn: deleteConcept,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['concepts'] });
+      void queryClient.invalidateQueries({ queryKey: ['treemap-stats'] });
     },
   });
 
   const syncMutation = useMutation({
-    mutationFn: syncOpenSearch,
-    onSuccess: (msg) => {
-      setSyncMessage(msg ?? 'OpenSearch 동기화 완료');
-      setTimeout(() => setSyncMessage(null), 3000);
+    mutationFn: submitIndexSync,
+    onSuccess: (job: IndexSyncJob) => {
+      setActiveJobId(job.jobId);
+      setSyncMessage(`동기화 시작: ${job.jobId.slice(0, 8)}…`);
     },
     onError: () => {
-      setSyncMessage('동기화 중 오류가 발생했습니다');
+      setSyncMessage('동기화 시작 실패');
       setTimeout(() => setSyncMessage(null), 3000);
     },
   });
+
+  const { data: activeJob } = useQuery({
+    queryKey: ['index-sync', activeJobId],
+    queryFn: () => getIndexSyncJob(activeJobId as string),
+    enabled: !!activeJobId,
+    refetchInterval: (query) => {
+      const j = query.state.data;
+      if (!j) return 1000;
+      return j.status === 'SUCCESS' || j.status === 'FAILED' ? false : 1000;
+    },
+  });
+
+  useEffect(() => {
+    if (!activeJob) return;
+    if (activeJob.status === 'SUCCESS') {
+      setSyncMessage(`완료 — ${activeJob.indexedCount}건 (${activeJob.newIndex ?? ''})`);
+      setActiveJobId(null);
+      const t = setTimeout(() => setSyncMessage(null), 6000);
+      return () => clearTimeout(t);
+    }
+    if (activeJob.status === 'FAILED') {
+      setSyncMessage(`실패: ${activeJob.error ?? '알 수 없는 오류'}`);
+      setActiveJobId(null);
+      const t = setTimeout(() => setSyncMessage(null), 6000);
+      return () => clearTimeout(t);
+    }
+    if (activeJob.status === 'RUNNING') {
+      setSyncMessage(`진행 중 — ${activeJob.newIndex ?? ''}`);
+    }
+  }, [activeJob]);
+
+  // T3.6: tile click → fetch full concept then open edit dialog
+  const handleTreemapTileClick = async (conceptId: string) => {
+    setTreemapLoadError(null);
+    try {
+      const concept = await fetchConceptByConceptId(conceptId);
+      if (concept) {
+        setEditTarget(concept);
+      } else {
+        setTreemapLoadError(`개념을 찾을 수 없습니다: ${conceptId}`);
+        setTimeout(() => setTreemapLoadError(null), 3000);
+      }
+    } catch {
+      setTreemapLoadError('개념 정보를 불러오지 못했습니다');
+      setTimeout(() => setTreemapLoadError(null), 3000);
+    }
+  };
 
   const columns: ColumnDef<Concept, string>[] = [
     columnHelper.accessor('conceptId', { header: 'Concept ID' }) as ColumnDef<Concept, string>,
@@ -257,6 +317,10 @@ export function CodeDictionaryPage() {
       }
     : EMPTY_FORM;
 
+  const tabBtnBase = 'ko-tab-btn inline-flex items-center justify-center rounded-md px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-[var(--focus-ring)] focus-visible:outline-offset-2';
+  const tabBtnActive = 'bg-zinc-900 text-zinc-50 dark:bg-zinc-100 dark:text-zinc-900';
+  const tabBtnIdle = 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800';
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -268,39 +332,81 @@ export function CodeDictionaryPage() {
           <Button
             variant="outline"
             onClick={() => syncMutation.mutate()}
-            disabled={syncMutation.isPending}
+            disabled={syncMutation.isPending || !!activeJobId}
           >
-            {syncMutation.isPending ? '동기화 중...' : 'OpenSearch 동기화'}
+            {activeJobId || syncMutation.isPending ? '재인덱싱 중...' : 'OpenSearch 재인덱싱'}
           </Button>
-          <Button onClick={() => setCreateOpen(true)}>등록</Button>
+          {tab === 'crud' && (
+            <Button onClick={() => setCreateOpen(true)}>등록</Button>
+          )}
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <Select
-          value={filterCategory}
-          onChange={(e) => { setFilterCategory(e.target.value); setPage(0); }}
-          className="w-48"
+      <div
+        role="tablist"
+        aria-label="코드 사전 보기 모드"
+        className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900/40"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'treemap'}
+          onClick={() => setTab('treemap')}
+          className={cn(tabBtnBase, tab === 'treemap' ? tabBtnActive : tabBtnIdle)}
         >
-          <option value="">전체 카테고리</option>
-          {CATEGORY_OPTIONS.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </Select>
-        <Select
-          value={filterLevel}
-          onChange={(e) => { setFilterLevel(e.target.value); setPage(0); }}
-          className="w-40"
+          트리맵
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === 'crud'}
+          onClick={() => setTab('crud')}
+          className={cn(tabBtnBase, tab === 'crud' ? tabBtnActive : tabBtnIdle)}
         >
-          <option value="">전체 난이도</option>
-          {LEVEL_OPTIONS.map((l) => (
-            <option key={l} value={l}>{l}</option>
-          ))}
-        </Select>
+          CRUD
+        </button>
       </div>
 
-      <DataTable table={table} onRowClick={(row) => setEditTarget(row)} />
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      {treemapLoadError && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-300"
+        >
+          {treemapLoadError}
+        </div>
+      )}
+
+      {tab === 'treemap' ? (
+        <TreemapSection onTileClick={handleTreemapTileClick} />
+      ) : (
+        <>
+          <div className="flex gap-3">
+            <Select
+              value={filterCategory}
+              onChange={(e) => { setFilterCategory(e.target.value); setPage(0); }}
+              className="w-48"
+            >
+              <option value="">전체 카테고리</option>
+              {CATEGORY_OPTIONS.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </Select>
+            <Select
+              value={filterLevel}
+              onChange={(e) => { setFilterLevel(e.target.value); setPage(0); }}
+              className="w-40"
+            >
+              <option value="">전체 난이도</option>
+              {LEVEL_OPTIONS.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </Select>
+          </div>
+
+          <DataTable table={table} onRowClick={(row) => setEditTarget(row)} />
+          <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+        </>
+      )}
 
       <ConceptFormDialog
         open={createOpen}
