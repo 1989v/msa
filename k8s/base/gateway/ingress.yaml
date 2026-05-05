@@ -16,8 +16,11 @@ spec:
   rules:
     - http:
         paths:
-          - path: /
-            pathType: Prefix
+          # /api(/.*)? 는 frontend ingress 의 /(.*) catch-all 보다 더 긴 regex 라
+          # nginx-ingress longer-prefix-first 매칭에서 우선 잡혀 gateway 로 라우팅된다.
+          # (이전 path: / 는 frontend /(.*) 가 가로채 portal-fe HTML 을 반환했음)
+          - path: /api(/.*)?
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: gateway
