@@ -9,7 +9,6 @@ import {
   Monitor,
   ExternalLink,
   TrendingUp,
-  LineChart,
   Gift,
   Eye,
   BookMarked,
@@ -38,13 +37,14 @@ const navItems: NavItem[] = [
 
 // 외부 SPA / 서비스 진입점 — ingress 가 path-prefix 로 라우팅 (frontend-ingress.yaml).
 // 운영 도메인 분리 시 to 를 절대 URL 로 교체.
+// 차팅은 ADR-0036 P2-T20 (2026-05-02) 에서 quant 로 흡수 완료 → /quant/charts 로 대체.
 const externalServices: NavItem[] = [
   { label: '분할매매', icon: Coins, to: '/quant/', enabled: true, external: true },
-  { label: '차팅', icon: TrendingUp, to: '/charting/', enabled: true, external: true },
+  { label: '차트 분석', icon: TrendingUp, to: '/quant/charts', enabled: true, external: true },
   { label: '기프티콘', icon: Gift, to: '/gifticon/', enabled: true, external: true },
   { label: '에이전트 뷰어', icon: Eye, to: '/agent-viewer/', enabled: true, external: true },
-  { label: '코드 딕셔너리', icon: BookMarked, to: '/code-dictionary/', enabled: true, external: true },
-  { label: '차팅 API (Swagger)', icon: LineChart, to: '/charting-api/docs', enabled: true, external: true },
+  // 2026-05-05: code-dictionary FE 가 portal-fe 단일 SPA 의 메인 콘텐츠로 통합되어 root / 진입.
+  { label: '코드 딕셔너리', icon: BookMarked, to: '/', enabled: true, external: true },
 ];
 
 interface SidebarProps {

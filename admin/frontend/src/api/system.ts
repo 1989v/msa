@@ -1,16 +1,23 @@
 import { apiClient } from './client';
 import type { EurekaApp, ServiceHealth } from '@/types/system';
 
+// 2026-04-10 (ADR-0019 Phase 1b): Eureka 제거 → K8s 네이티브 service discovery 로 전환.
+// Pod health 는 K8s liveness/readiness probe 가 관리. admin FE 는 게이트웨이 actuator
+// 프록시 라우트가 없으면 직접 health 확인 불가 → status="K8S_MANAGED" 로 표시 + 안내.
+// (TODO: 게이트웨이에 /svc/<name>/actuator/health 프록시 라우트 추가 시 진짜 health 표시)
 const SERVICES = [
-  { name: 'product-service', port: 8081 },
-  { name: 'order-service', port: 8082 },
-  { name: 'search-service', port: 8083 },
-  { name: 'auth-service', port: 8087 },
-  { name: 'gateway-service', port: 8080 },
-  { name: 'code-dictionary-service', port: 8089 },
-  { name: 'member-service', port: 8093 },
-  { name: 'gifticon-service', port: 8086 },
-  { name: 'wishlist-service', port: 8095 },
+  { name: 'product', port: 8081 },
+  { name: 'order', port: 8082 },
+  { name: 'search', port: 8083 },
+  { name: 'auth', port: 8087 },
+  { name: 'gateway', port: 8080 },
+  { name: 'code-dictionary', port: 8089 },
+  { name: 'member', port: 8093 },
+  { name: 'gifticon', port: 8086 },
+  { name: 'wishlist', port: 8095 },
+  { name: 'quant', port: 8094 },
+  { name: 'analytics', port: 8084 },
+  { name: 'experiment', port: 8085 },
 ];
 
 interface EurekaAppsResponse {
@@ -28,42 +35,20 @@ interface EurekaAppsResponse {
   };
 }
 
+// Eureka 호환 stub — ADR-0019 Phase 1b 에서 Discovery 제거됨. 항상 빈 배열 반환.
 export async function fetchEurekaApps(): Promise<EurekaApp[]> {
-  try {
-    const res = await apiClient.get<EurekaAppsResponse>('/eureka/apps', {
-      headers: { Accept: 'application/json' },
-    });
-    const apps = res.data.applications?.application ?? [];
-    return apps.map((app) => ({
-      name: app.name,
-      instances: (app.instance ?? []).map((inst) => ({
-        instanceId: inst.instanceId,
-        hostName: inst.hostName,
-        port: inst.port?.$ ?? 0,
-        status: inst.status as ServiceHealth['status'],
-        lastUpdatedTimestamp: inst.lastUpdatedTimestamp,
-      })),
-    }));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 export async function fetchServiceHealthList(): Promise<ServiceHealth[]> {
-  const eurekaApps = await fetchEurekaApps();
-  const eurekaMap = new Map<string, 'UP' | 'DOWN' | 'UNKNOWN'>();
-
-  for (const app of eurekaApps) {
-    const anyUp = app.instances.some((i) => i.status === 'UP');
-    eurekaMap.set(app.name.toLowerCase(), anyUp ? 'UP' : 'DOWN');
-  }
-
+  // K8s liveness/readiness probe 가 pod health 관리. admin FE 는 게이트웨이 actuator
+  // 프록시 라우트 없이는 직접 확인 불가 → UNKNOWN 으로 표시. UP/DOWN 카운트 대신
+  // SystemPage 가 "K8s 관리" 안내 표시.
   return SERVICES.map((svc) => {
-    const eurekaStatus = eurekaMap.get(svc.name) ?? 'UNKNOWN';
     return {
       name: svc.name,
       port: svc.port,
-      status: eurekaStatus,
+      status: 'UNKNOWN' as const,
       lastChecked: Date.now(),
     };
   });
