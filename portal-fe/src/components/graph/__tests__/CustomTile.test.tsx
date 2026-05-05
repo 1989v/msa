@@ -41,10 +41,10 @@ describe('CustomTile (code-dictionary)', () => {
     const tile = screen.getByRole('treeitem');
     expect(tile).toBeInTheDocument();
 
-    // ARCHITECTURE hue=195, INTERMEDIATE lightness=0.62, chroma=0.10
+    // ARCHITECTURE hue=195, INTERMEDIATE lightness=0.62, chroma=0.16
     const rect = container.querySelector('g[role="treeitem"] rect');
     expect(rect).not.toBeNull();
-    expect(rect?.getAttribute('fill')).toMatch(/^oklch\(0\.62 0\.1 195\)$/);
+    expect(rect?.getAttribute('fill')).toMatch(/^oklch\(0\.62 0\.16 195\)$/);
   });
 
   it('builds aria-label with name, level (한글) and indexCount', () => {

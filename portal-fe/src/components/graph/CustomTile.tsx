@@ -1,6 +1,6 @@
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import type { TreemapLevel } from '../../api/treemap';
-import { tileColor, categoryBackground } from './tileColor';
+import { tileColor, categoryBackground, tileTextColor } from './tileColor';
 
 /**
  * CustomTile — recharts <Treemap> custom content renderer for Code Dictionary.
@@ -96,6 +96,8 @@ export default function CustomTile(props: CustomTileProps) {
   if (width <= 0 || height <= 0) return <g />;
 
   const fill = tileColor(props.categoryKey, level);
+  const textFill = tileTextColor(level);
+  const countFill = level === 'ADVANCED' ? 'rgba(241,245,249,0.75)' : 'rgba(10,10,20,0.75)';
   const area = width * height;
 
   const handleClick = () => {
@@ -153,7 +155,7 @@ export default function CustomTile(props: CustomTileProps) {
           y={showCount ? y + height / 2 - 8 : y + height / 2}
           textAnchor="middle"
           dominantBaseline="central"
-          fill="#0a0a14"
+          fill={textFill}
           fontSize={Math.min(14, Math.max(10, width / 10))}
           fontWeight={600}
           style={{ pointerEvents: 'none' }}
@@ -167,7 +169,7 @@ export default function CustomTile(props: CustomTileProps) {
           y={y + height / 2 + 10}
           textAnchor="middle"
           dominantBaseline="central"
-          fill="rgba(10, 10, 20, 0.75)"
+          fill={countFill}
           fontSize={11}
           style={{ pointerEvents: 'none', fontVariantNumeric: 'tabular-nums' }}
         >
