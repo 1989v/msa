@@ -73,6 +73,26 @@ patches:
     target:
       kind: Deployment
       name: code-dictionary
+  - path: patches/redis-standalone-order.yaml
+    target:
+      kind: Deployment
+      name: order
+  - path: patches/redis-standalone-search.yaml
+    target:
+      kind: Deployment
+      name: search
+  - path: patches/redis-standalone-auth.yaml
+    target:
+      kind: Deployment
+      name: auth
+  - path: patches/redis-standalone-member.yaml
+    target:
+      kind: Deployment
+      name: member
+  - path: patches/redis-standalone-wishlist.yaml
+    target:
+      kind: Deployment
+      name: wishlist
 
   # code-dictionary needs more memory than the global 512Mi limit.
   - path: patches/code-dictionary-resources.yaml

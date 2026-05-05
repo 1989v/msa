@@ -39,37 +39,53 @@ export async function fetchEurekaApps(): Promise<EurekaApp[]> {
   return [];
 }
 
-// 게이트웨이 actuator 프록시 라우트 (gateway/application.yml: actuator-<svc>) 를 통해
-// 각 서비스의 /actuator/health 를 호출. gateway 자체는 /actuator/health 직접 호출.
-async function fetchActuatorHealth(svcName: string): Promise<'UP' | 'DOWN' | 'UNKNOWN'> {
+import type { HealthResponse } from '@/types/system';
+
+// 게이트웨이 actuator 프록시 라우트를 통해 각 서비스의 /actuator/health 를 호출.
+// gateway 자체는 /actuator/health 직접 호출. 응답이 JSON 이 아니면 (예: portal-fe HTML
+// catch-all 가로챔) UNKNOWN 처리하여 라우팅 오류를 가시화.
+async function fetchActuatorHealth(svcName: string): Promise<{
+  status: 'UP' | 'DOWN' | 'UNKNOWN';
+  health?: HealthResponse;
+}> {
   const url = svcName === 'gateway' ? '/actuator/health' : `/svc/${svcName}/actuator/health`;
   try {
-    // timeout 5000 — pod cold start (lazy init) 시 actuator 응답 지연 가능.
-    const res = await apiClient.get<{ status?: string }>(url, { timeout: 5000 });
-    const s = res.data?.status;
-    if (s === 'UP') return 'UP';
-    if (s === 'DOWN') return 'DOWN';
-    return 'UNKNOWN';
-  } catch (e) {
-    // 네트워크/타임아웃 = pod 응답 불가 → DOWN.
-    // (콘솔 로그를 통해 디버그: 어떤 svc 가 fail 했는지 추적 가능)
-    if (typeof console !== 'undefined') {
+    const res = await apiClient.get<HealthResponse | string>(url, {
+      timeout: 5000,
+      headers: { Accept: 'application/json' },
+    });
+    // ingress 가 잘못 라우팅하면 portal-fe 의 HTML 이 반환됨 → 객체 아님
+    if (typeof res.data !== 'object' || res.data === null) {
       // eslint-disable-next-line no-console
-      console.warn(`[health] ${svcName} actuator check failed:`, (e as Error)?.message);
+      console.warn(`[health] ${svcName}: non-JSON response (라우팅 오류 의심)`);
+      return { status: 'UNKNOWN' };
     }
-    return 'DOWN';
+    const health = res.data as HealthResponse;
+    const s = health.status;
+    if (s === 'UP') return { status: 'UP', health };
+    if (s === 'DOWN') return { status: 'DOWN', health };
+    return { status: 'UNKNOWN', health };
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn(`[health] ${svcName} actuator check failed:`, (e as Error)?.message);
+    return { status: 'DOWN' };
   }
 }
 
 export async function fetchServiceHealthList(): Promise<ServiceHealth[]> {
-  // 12 개 서비스 병렬 health 조회. 실패는 DOWN 으로 처리.
+  // 12 개 서비스 병렬 health 조회. 응답 객체에서 components 까지 보존하여
+  // ServiceCard 가 expand 시 detail 표시 가능.
   const results = await Promise.all(
-    SERVICES.map(async (svc) => ({
-      name: svc.name,
-      port: svc.port,
-      status: await fetchActuatorHealth(svc.name),
-      lastChecked: Date.now(),
-    })),
+    SERVICES.map(async (svc) => {
+      const result = await fetchActuatorHealth(svc.name);
+      return {
+        name: svc.name,
+        port: svc.port,
+        status: result.status,
+        health: result.health,
+        lastChecked: Date.now(),
+      };
+    }),
   );
   return results;
 }

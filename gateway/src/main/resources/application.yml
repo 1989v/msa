@@ -7,16 +7,9 @@ spring:
     timeout-per-shutdown-phase: 30s
   data:
     redis:
-      cluster:
-        nodes:
-          - ${REDIS_NODE1:localhost:6379}
-          - ${REDIS_NODE2:localhost:6380}
-          - ${REDIS_NODE3:localhost:6381}
-          - ${REDIS_NODE4:localhost:6382}
-          - ${REDIS_NODE5:localhost:6383}
-          - ${REDIS_NODE6:localhost:6384}
-        password: ${REDIS_PASSWORD:}
-        max-redirects: 3
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   cloud:
     gateway:
       # Long-lived SSE 라우팅 시 Reactor Netty 의 기본 응답 타임아웃이 끊지 않도록

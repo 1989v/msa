@@ -42,15 +42,9 @@ spring:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   data:
     redis:
-      cluster:
-        nodes:
-          - ${REDIS_NODE1:localhost:6379}
-          - ${REDIS_NODE2:localhost:6380}
-          - ${REDIS_NODE3:localhost:6381}
-          - ${REDIS_NODE4:localhost:6382}
-          - ${REDIS_NODE5:localhost:6383}
-          - ${REDIS_NODE6:localhost:6384}
-        password: ${REDIS_PASSWORD:}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
 
 server:
   port: 8081

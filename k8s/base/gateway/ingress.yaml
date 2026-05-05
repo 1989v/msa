@@ -16,10 +16,26 @@ spec:
   rules:
     - http:
         paths:
-          # /api(/.*)? 는 frontend ingress 의 /(.*) catch-all 보다 더 긴 regex 라
-          # nginx-ingress longer-prefix-first 매칭에서 우선 잡혀 gateway 로 라우팅된다.
-          # (이전 path: / 는 frontend /(.*) 가 가로채 portal-fe HTML 을 반환했음)
+          # nginx-ingress longer-prefix-first 매칭으로 gateway 가 frontend /(.*)
+          # catch-all 보다 우선 잡혀야 함. 따라서 다음 path 들은 모두 gateway 로:
+          #   /api(/.*)?     — REST API (JWT 가드)
+          #   /svc/(.*)      — actuator 프록시 (admin 시스템 대시보드 health 표시용)
+          #   /actuator(/.*)?— gateway 자체 actuator
           - path: /api(/.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http
+          - path: /svc/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http
+          - path: /actuator(/.*)?
             pathType: ImplementationSpecific
             backend:
               service:

@@ -8,14 +8,8 @@ spring:
     bootstrap-servers: kafka:29092
   data:
     redis:
-      cluster:
-        nodes:
-          - redis-1:6379
-          - redis-2:6380
-          - redis-3:6381
-          - redis-4:6382
-          - redis-5:6383
-          - redis-6:6384
+      host: redis-1
+      port: 6379
 
 # ADR-0029 PR-9 — processed_event 7일 retention cleanup 스케줄러 활성화.
 # common 의 IdempotentEventCleanupScheduler 가 매일 cron 시각에 retention 보다 오래된 row 를 삭제.

@@ -12,4 +12,4 @@ spec:
         - name: app
           env:
             - name: SPRING_APPLICATION_JSON
-              value: '{"spring":{"data":{"redis":{"cluster":null,"host":"redis","port":6379}}}}'
+              value: '{"spring":{"data":{"redis":{"host":"redis","port":6379}}}}'
