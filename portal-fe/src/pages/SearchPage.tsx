@@ -5,7 +5,6 @@ import Carousel3D from '../components/Carousel3D';
 import ForceGraph3D from '../components/graph/ForceGraph3D';
 import HeatmapPanel from '../components/panels/HeatmapPanel';
 import StatsDashboard from '../components/panels/StatsDashboard';
-import TreemapPanel from '../components/panels/TreemapPanel';
 import TreemapSection from '../components/graph/TreemapSection';
 import DetailSidePanel from '../components/DetailSidePanel';
 import GNB from '../components/GNB';
@@ -20,8 +19,6 @@ import { searchConcepts } from '../api/searchApi';
 import type { GraphRenderer, GraphNode } from '../types/graph';
 import type { Category } from '../types/index';
 
-type ViewMode = 'graph' | 'treemap';
-
 export default function SearchPage() {
   const { data, loading, error } = useGraphData();
   const graphRef = useRef<GraphRenderer>(null);
@@ -30,11 +27,10 @@ export default function SearchPage() {
   const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
   const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set());
   const [dimmed, setDimmed] = useState(false);
-  const [carouselIndex, setCarouselIndex] = useState(0);
+  // 트리맵을 기본 뷰로 (Q8). Carousel index 3 = Treemap 슬롯.
+  const [carouselIndex, setCarouselIndex] = useState(3);
   const [containerSize, setContainerSize] = useState({ width: window.innerWidth * 0.9, height: window.innerHeight * 0.8 });
   const containerRef = useRef<HTMLDivElement>(null);
-  // spec.md §6.1 / Q8 — Treemap is default view
-  const [viewMode, setViewMode] = useState<ViewMode>('treemap');
 
   useEffect(() => {
     const el = containerRef.current;
@@ -150,22 +146,6 @@ export default function SearchPage() {
     }
   }, [data]);
 
-  const handleTreemapClick = useCallback((conceptId: string) => {
-    handleSelectConcept(conceptId);
-    setCarouselIndex(0);
-  }, [handleSelectConcept]);
-
-  const handleTreemapCategoryClick = useCallback((category: string) => {
-    if (!data) return;
-    const matching = data.nodes.filter((n) => n.category === category);
-    setHighlightedNodes(new Set(matching.map((n) => n.id)));
-    setDimmed(true);
-    setCarouselIndex(0);
-    if (matching.length > 0) {
-      graphRef.current?.focusNode(matching[0].id, false);
-    }
-  }, [data]);
-
   const handleNavigate = useCallback((conceptId: string) => {
     handleSelectConcept(conceptId);
   }, [handleSelectConcept]);
@@ -241,8 +221,8 @@ export default function SearchPage() {
       key: 'treemap',
       label: 'Treemap',
       content: (
-        <div className="carousel-slide-inner">
-          <TreemapPanel nodes={data.nodes} onNodeClick={handleTreemapClick} onCategoryClick={handleTreemapCategoryClick} />
+        <div className="carousel-slide-inner" style={{ width: '100%', height: '100%' }}>
+          <TreemapSection onTileClick={handleSelectConcept} />
         </div>
       ),
       preview: <div className="carousel-preview-card">Treemap</div>,
@@ -260,33 +240,8 @@ export default function SearchPage() {
           <SearchBar onSearch={handleSearch} onSelectConcept={handleSelectConcept} />
         </div>
 
-        <div className="viz-mode-toggle" role="group" aria-label="시각화 모드 선택">
-          <button
-            type="button"
-            className={`viz-mode-btn ${viewMode === 'treemap' ? 'is-active' : ''}`}
-            aria-pressed={viewMode === 'treemap'}
-            onClick={() => setViewMode('treemap')}
-          >
-            트리맵
-          </button>
-          <button
-            type="button"
-            className={`viz-mode-btn ${viewMode === 'graph' ? 'is-active' : ''}`}
-            aria-pressed={viewMode === 'graph'}
-            onClick={() => setViewMode('graph')}
-          >
-            그래프
-          </button>
-        </div>
-
         <div className="carousel-section">
-          {viewMode === 'graph' ? (
-            <Carousel3D panels={panels} activeIndex={carouselIndex} onActiveChange={setCarouselIndex} />
-          ) : (
-            <div className="carousel-slide-inner" style={{ width: '100%', height: '100%' }}>
-              <TreemapSection onTileClick={handleSelectConcept} />
-            </div>
-          )}
+          <Carousel3D panels={panels} activeIndex={carouselIndex} onActiveChange={setCarouselIndex} />
         </div>
         <PopularConcepts nodes={data.nodes} onConceptClick={handleSelectConcept} />
       </section>

@@ -105,7 +105,10 @@ export default function TreemapView({ data, onTileClick }: TreemapViewProps) {
     >
       <ResponsiveContainer width="100%" height="100%">
         <Treemap
-          data={tree.children}
+          // recharts 의 readonly TreemapDataType 시그니처가 우리 nested 타입과 호환되지
+          // 않아 cast. CustomTile 이 실제 shape 를 알고 렌더한다.
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          data={tree.children as any}
           dataKey="size"
           aspectRatio={aspectRatio}
           stroke="#0a0a14"
