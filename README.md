@@ -21,6 +21,15 @@
 
 > 전체 서비스 목록(auth/member/wishlist/gifticon/inventory/fulfillment/warehouse/analytics/experiment/chatbot/code-dictionary/agent-viewer-api/quant, FE 5종)은 [`CLAUDE.md`](CLAUDE.md) 참조. charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove (2026-05-02).
 
+### 도구 / 별도 레포
+
+플랫폼 서비스 아님. 본 레포 빌드/배포 대상 외이며 개발 도구 또는 보조 앱.
+
+| 레포 | 형태 | 설명 |
+|------|------|------|
+| `ai` | submodule (`1989v/ai`, `ai/` 경로) | Claude Code 플러그인 모노레포 — hns / ai-debugger / private-repo / content-analyzer |
+| `muxbar` | sibling repo (`1989v/muxbar`) | macOS menu bar 앱 — tmux 세션 관리 + caffeinate 토글 (Swift 5.9+) |
+
 ---
 
 ## 기술 스택

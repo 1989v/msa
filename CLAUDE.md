@@ -132,6 +132,15 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
 
+### 도구 / 별도 레포
+
+플랫폼 서비스가 아닌 사이드 레포지토리. msa 본 레포에 직접 빌드/배포되지 않으며, 개발 도구 또는 보조 앱.
+
+| 레포 | 형태 | 위치 | 설명 |
+|------|------|------|------|
+| `ai` | submodule (`1989v/ai`) | `ai/` (msa 내부) | Claude Code 플러그인 모노레포 — hns / ai-debugger / private-repo / content-analyzer 4종 (`ai/CLAUDE.md`) |
+| `muxbar` | sibling repo (`1989v/muxbar`) | `~/IdeaProjects/muxbar` | macOS menu bar 네이티브 앱 — tmux 세션 관리 + caffeinate 토글 (Swift 5.9+, macOS 13+) |
+
 ---
 
 ## Local Dev (K8s, k3d 기준)
