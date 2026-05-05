@@ -26,7 +26,7 @@ export async function fetchOrders(page = 0, size = 20, status?: string): Promise
   try {
     const params = new URLSearchParams({ page: String(page), size: String(size) });
     if (status) params.set('status', status);
-    const res = await apiClient.get<ApiResponse<PageResponse<Order>>>(`/api/v1/orders?${params}`);
+    const res = await apiClient.get<ApiResponse<PageResponse<Order>>>(`/api/orders?${params}`);
     return res.data.data;
   } catch {
     return { content: [], totalElements: 0, totalPages: 0, number: 0, size };
@@ -35,7 +35,7 @@ export async function fetchOrders(page = 0, size = 20, status?: string): Promise
 
 export async function fetchOrder(id: number): Promise<OrderDetail | null> {
   try {
-    const res = await apiClient.get<ApiResponse<OrderDetail>>(`/api/v1/orders/${id}`);
+    const res = await apiClient.get<ApiResponse<OrderDetail>>(`/api/orders/${id}`);
     return res.data.data;
   } catch {
     return null;
@@ -43,5 +43,5 @@ export async function fetchOrder(id: number): Promise<OrderDetail | null> {
 }
 
 export async function updateOrderStatus(id: number, status: string): Promise<void> {
-  await apiClient.patch(`/api/v1/orders/${id}/status`, { status });
+  await apiClient.patch(`/api/orders/${id}/status`, { status });
 }

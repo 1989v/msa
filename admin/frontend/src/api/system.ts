@@ -2,9 +2,8 @@ import { apiClient } from './client';
 import type { EurekaApp, ServiceHealth } from '@/types/system';
 
 // 2026-04-10 (ADR-0019 Phase 1b): Eureka 제거 → K8s 네이티브 service discovery 로 전환.
-// Pod health 는 K8s liveness/readiness probe 가 관리. admin FE 는 게이트웨이 actuator
-// 프록시 라우트가 없으면 직접 health 확인 불가 → status="K8S_MANAGED" 로 표시 + 안내.
-// (TODO: 게이트웨이에 /svc/<name>/actuator/health 프록시 라우트 추가 시 진짜 health 표시)
+// 2026-05-05: 게이트웨이에 actuator-<svc> 프록시 라우트 12 개 추가 → admin FE 가
+// /svc/<name>/actuator/health 로 실제 UP/DOWN 직접 확인 가능. (gateway 자체는 /actuator/health)
 const SERVICES = [
   { name: 'product', port: 8081 },
   { name: 'order', port: 8082 },
@@ -16,8 +15,8 @@ const SERVICES = [
   { name: 'gifticon', port: 8086 },
   { name: 'wishlist', port: 8095 },
   { name: 'quant', port: 8094 },
-  { name: 'analytics', port: 8084 },
-  { name: 'experiment', port: 8085 },
+  { name: 'analytics', port: 8090 },
+  { name: 'experiment', port: 8091 },
 ];
 
 interface EurekaAppsResponse {
@@ -40,16 +39,31 @@ export async function fetchEurekaApps(): Promise<EurekaApp[]> {
   return [];
 }
 
+// 게이트웨이 actuator 프록시 라우트 (gateway/application.yml: actuator-<svc>) 를 통해
+// 각 서비스의 /actuator/health 를 호출. gateway 자체는 /actuator/health 직접 호출.
+async function fetchActuatorHealth(svcName: string): Promise<'UP' | 'DOWN' | 'UNKNOWN'> {
+  const url = svcName === 'gateway' ? '/actuator/health' : `/svc/${svcName}/actuator/health`;
+  try {
+    const res = await apiClient.get<{ status?: string }>(url, { timeout: 3000 });
+    const s = res.data?.status;
+    if (s === 'UP') return 'UP';
+    if (s === 'DOWN') return 'DOWN';
+    return 'UNKNOWN';
+  } catch {
+    return 'DOWN';
+  }
+}
+
 export async function fetchServiceHealthList(): Promise<ServiceHealth[]> {
-  // K8s liveness/readiness probe 가 pod health 관리. admin FE 는 게이트웨이 actuator
-  // 프록시 라우트 없이는 직접 확인 불가 → UNKNOWN 으로 표시. UP/DOWN 카운트 대신
-  // SystemPage 가 "K8s 관리" 안내 표시.
-  return SERVICES.map((svc) => {
-    return {
+  // 12 개 서비스 병렬 health 조회. 실패는 DOWN 으로 처리.
+  const results = await Promise.all(
+    SERVICES.map(async (svc) => ({
       name: svc.name,
       port: svc.port,
-      status: 'UNKNOWN' as const,
+      status: await fetchActuatorHealth(svc.name),
       lastChecked: Date.now(),
-    };
-  });
+    })),
+  );
+  return results;
 }
+

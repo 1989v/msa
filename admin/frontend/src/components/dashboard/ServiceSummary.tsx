@@ -11,30 +11,21 @@ export function ServiceSummary({ services }: ServiceSummaryProps) {
   const upCount = services.filter((s) => s.status === 'UP').length;
   const downCount = services.filter((s) => s.status === 'DOWN').length;
   const unknownCount = services.filter((s) => s.status === 'UNKNOWN').length;
-  const allUnknown = unknownCount === services.length;
 
   return (
     <Card className="p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">서비스 등록 ({services.length})</h3>
+        <h3 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">서비스 상태 ({services.length})</h3>
         <div className="flex items-center gap-2">
-          {allUnknown ? (
-            <Badge variant="secondary" title="K8s liveness/readiness probe 가 관리. 게이트웨이 actuator 프록시 라우트 미구현.">
-              K8s 관리
+          {upCount > 0 && (
+            <Badge variant="default" className="bg-green-600 text-white dark:bg-green-600 dark:text-white">
+              UP {upCount}
             </Badge>
-          ) : (
-            <>
-              {upCount > 0 && (
-                <Badge variant="default" className="bg-green-600 text-white dark:bg-green-600 dark:text-white">
-                  UP {upCount}
-                </Badge>
-              )}
-              {downCount > 0 && (
-                <Badge variant="destructive">DOWN {downCount}</Badge>
-              )}
-              {unknownCount > 0 && <Badge variant="secondary">UNKNOWN {unknownCount}</Badge>}
-            </>
           )}
+          {downCount > 0 && (
+            <Badge variant="destructive">DOWN {downCount}</Badge>
+          )}
+          {unknownCount > 0 && <Badge variant="secondary">UNKNOWN {unknownCount}</Badge>}
           <Link
             to="/admin/system"
             className="text-xs text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 underline"

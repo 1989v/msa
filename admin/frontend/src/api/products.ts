@@ -18,7 +18,7 @@ export async function fetchProducts(page = 0, size = 20, search?: string): Promi
   try {
     const params = new URLSearchParams({ page: String(page), size: String(size) });
     if (search) params.set('search', search);
-    const res = await apiClient.get<ApiResponse<PageResponse<Product>>>(`/api/v1/products?${params}`);
+    const res = await apiClient.get<ApiResponse<PageResponse<Product>>>(`/api/products?${params}`);
     return res.data.data;
   } catch {
     return { content: [], totalElements: 0, totalPages: 0, number: 0, size };
@@ -27,7 +27,7 @@ export async function fetchProducts(page = 0, size = 20, search?: string): Promi
 
 export async function fetchProduct(id: number): Promise<Product | null> {
   try {
-    const res = await apiClient.get<ApiResponse<Product>>(`/api/v1/products/${id}`);
+    const res = await apiClient.get<ApiResponse<Product>>(`/api/products/${id}`);
     return res.data.data;
   } catch {
     return null;
@@ -35,13 +35,13 @@ export async function fetchProduct(id: number): Promise<Product | null> {
 }
 
 export async function createProduct(data: Omit<Product, 'id' | 'createdAt'>): Promise<void> {
-  await apiClient.post('/api/v1/products', data);
+  await apiClient.post('/api/products', data);
 }
 
 export async function updateProduct(id: number, data: Partial<Product>): Promise<void> {
-  await apiClient.put(`/api/v1/products/${id}`, data);
+  await apiClient.put(`/api/products/${id}`, data);
 }
 
 export async function deleteProduct(id: number): Promise<void> {
-  await apiClient.delete(`/api/v1/products/${id}`);
+  await apiClient.delete(`/api/products/${id}`);
 }

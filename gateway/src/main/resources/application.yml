@@ -55,6 +55,70 @@ spring:
               predicates:
                 - Path=/api/v1/strategies/**, /api/v1/dashboard/**, /api/v1/leaderboard/**, /api/v1/runs/**, /api/v1/signal-strategies/**, /api/v1/charts/**, /api/v1/learn/**
 
+            # === Backend REST 라우트 (admin / 일반 클라이언트용) ===
+            # 백엔드 컨트롤러는 /api/products, /api/orders, /api/auth, /api/members 사용 (no v1).
+            - id: product-service
+              uri: http://product:8081
+              predicates: [Path=/api/products/**]
+            - id: order-service
+              uri: http://order:8082
+              predicates: [Path=/api/orders/**]
+            - id: auth-service
+              uri: http://auth:8087
+              predicates: [Path=/api/auth/**]
+            - id: member-service
+              uri: http://member:8093
+              predicates: [Path=/api/members/**]
+
+            # === Actuator 프록시 라우트 (admin 서비스 health 표시용) ===
+            # 사용: /svc/<service>/actuator/health → http://<service>:<port>/actuator/health
+            # 패턴: StripPrefix=2 가 /svc/<service> 두 segment 를 제거.
+            # gateway 자체 actuator 는 /actuator/health (routes 무관, Spring Boot 가 직접 노출).
+            - id: actuator-product
+              uri: http://product:8081
+              predicates: [Path=/svc/product/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-order
+              uri: http://order:8082
+              predicates: [Path=/svc/order/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-search
+              uri: http://search:8083
+              predicates: [Path=/svc/search/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-auth
+              uri: http://auth:8087
+              predicates: [Path=/svc/auth/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-code-dictionary
+              uri: http://code-dictionary:8089
+              predicates: [Path=/svc/code-dictionary/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-member
+              uri: http://member:8093
+              predicates: [Path=/svc/member/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-gifticon
+              uri: http://gifticon:8086
+              predicates: [Path=/svc/gifticon/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-wishlist
+              uri: http://wishlist:8095
+              predicates: [Path=/svc/wishlist/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-quant
+              uri: http://quant:8094
+              predicates: [Path=/svc/quant/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-analytics
+              uri: http://analytics:8090
+              predicates: [Path=/svc/analytics/actuator/**]
+              filters: [StripPrefix=2]
+            - id: actuator-experiment
+              uri: http://experiment:8091
+              predicates: [Path=/svc/experiment/actuator/**]
+              filters: [StripPrefix=2]
+
 server:
   port: 8080
   shutdown: graceful
