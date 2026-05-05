@@ -1,0 +1,77 @@
+{
+  "annotations": {"list": []},
+  "title": "Quant Phase 3 — Live Trading",
+  "tags": ["quant", "phase3", "live-trading"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": {"from": "now-6h", "to": "now"},
+  "panels": [
+    {
+      "id": 1,
+      "title": "Live Orders / 5m (by exchange × status)",
+      "type": "timeseries",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {"expr": "sum by (exchange, status) (rate(quant_live_orders_total[5m]))", "legendFormat": "{{exchange}} / {{status}}"}
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Live Order Latency p50/p95/p99 (s)",
+      "type": "timeseries",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {"expr": "histogram_quantile(0.5, sum by (exchange, le) (rate(quant_live_order_latency_seconds_bucket[5m])))", "legendFormat": "p50 {{exchange}}"},
+        {"expr": "histogram_quantile(0.95, sum by (exchange, le) (rate(quant_live_order_latency_seconds_bucket[5m])))", "legendFormat": "p95 {{exchange}}"},
+        {"expr": "histogram_quantile(0.99, sum by (exchange, le) (rate(quant_live_order_latency_seconds_bucket[5m])))", "legendFormat": "p99 {{exchange}}"}
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Kill-switch state (1=ON)",
+      "type": "stat",
+      "gridPos": {"x": 0, "y": 8, "w": 8, "h": 4},
+      "targets": [
+        {"expr": "max(quant_kill_switch_state{scope=\"global\"})", "legendFormat": "global"},
+        {"expr": "sum(quant_kill_switch_state{scope=\"tenant\"})", "legendFormat": "tenants(count ON)"}
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Risk Limit Breach (5m rate, by type)",
+      "type": "timeseries",
+      "gridPos": {"x": 8, "y": 8, "w": 8, "h": 4},
+      "targets": [
+        {"expr": "sum by (type) (rate(quant_risk_limit_breach_total[5m]))", "legendFormat": "{{type}}"}
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Reconcile Drift (5m rate, by exchange × drift_type)",
+      "type": "timeseries",
+      "gridPos": {"x": 16, "y": 8, "w": 8, "h": 4},
+      "targets": [
+        {"expr": "sum by (exchange, drift_type) (rate(quant_reconcile_drift_total[5m]))", "legendFormat": "{{exchange}} {{drift_type}}"}
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Audit Chain Verify (daily)",
+      "type": "stat",
+      "gridPos": {"x": 0, "y": 12, "w": 8, "h": 4},
+      "targets": [
+        {"expr": "sum by (result) (increase(quant_audit_chain_verify_total[24h]))", "legendFormat": "{{result}}"}
+      ]
+    },
+    {
+      "id": 7,
+      "title": "2FA Verify (5m rate)",
+      "type": "timeseries",
+      "gridPos": {"x": 8, "y": 12, "w": 16, "h": 4},
+      "targets": [
+        {"expr": "sum by (result) (rate(quant_2fa_verify_total[5m]))", "legendFormat": "{{result}}"}
+      ]
+    }
+  ]
+}

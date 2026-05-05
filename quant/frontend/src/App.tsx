@@ -14,6 +14,7 @@ import { PaperTradingMonitorPage } from '@/pages/PaperTradingMonitorPage'
 import { ChartsPage } from '@/pages/ChartsPage'
 import { LearnPage } from '@/pages/LearnPage'
 import { LearnDetailPage } from '@/pages/LearnDetailPage'
+import { LiveTradingPage } from '@/pages/LiveTradingPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 
 const queryClient = new QueryClient({
@@ -131,6 +132,14 @@ export default function App() {
             element={
               <AppShell>
                 <LearnDetailPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/live-trading"
+            element={
+              <AppShell withTabBar={false}>
+                <LiveTradingPage />
               </AppShell>
             }
           />
