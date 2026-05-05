@@ -7,8 +7,10 @@ import axios from 'axios';
  * Spec: docs/specs/2026-05-05-code-dictionary-treemap/planning/spec.md §5.1
  */
 
+// VITE_API_URL 이 빈 문자열이면 same-origin relative path 사용 (운영 / K8s ingress 경유).
+// nullish coalescing 으로 빈 문자열을 fallback 으로 보내지 않도록.
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8089',
+  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8089',
 });
 
 export type TreemapLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
