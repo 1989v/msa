@@ -1,10 +1,15 @@
 # Frontend apps served at path-prefix routes via ingress-nginx.
 # rewrite-target strips the prefix so each SPA's nginx sees requests at /.
-# Gateway's catch-all Ingress (path: /) handles API traffic;
-# these more-specific paths take priority in nginx ingress routing.
 #
 # 정규식 /?(.*) 는 /admin , /admin/ , /admin/anything 모두 매칭하기 위함.
 # /(.*) 만 두면 trailing slash 없는 /admin 이 catch-all gateway 로 빠져 404.
+#
+# Phase: portal-fe (MSA 진입점) 도입 후 root 매칭은 portal-fe 가 가져간다.
+# nginx-ingress 의 longer-prefix-first 매칭으로 다른 sub-FE prefix 가 우선 잡힘:
+#   /admin/x      → /admin/?(.*)        → admin-fe       (longer)
+#   /quant/x      → /quant/?(.*)        → quant-fe       (longer)
+#   /about        → /(.*)               → portal-fe      (root catch-all)
+#   /api/v1/...   → gateway ingress 가 먼저 잡음 (별도 ingress)
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -21,13 +26,6 @@ spec:
   rules:
     - http:
         paths:
-          - path: /code-dictionary/?(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: code-dictionary-fe
-                port:
-                  name: http
           - path: /gifticon/?(.*)
             pathType: ImplementationSpecific
             backend:
@@ -54,5 +52,13 @@ spec:
             backend:
               service:
                 name: quant-fe
+                port:
+                  name: http
+          # portal-fe = MSA 진입점 (root). 다른 prefix 와 안 매칭되면 본 catch-all 로 라우팅.
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: portal-fe
                 port:
                   name: http

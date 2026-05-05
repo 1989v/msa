@@ -29,7 +29,7 @@ resources:
   - quant
   - quant-ingest
   # Frontend + non-JVM services (Phase 7 extension)
-  - code-dictionary-fe
+  - portal-fe
   - gifticon-fe
   - agent-viewer-fe
   - admin-fe

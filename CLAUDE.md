@@ -123,7 +123,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | quant | `quant/CLAUDE.md` | 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS + Phase 3 실매매 (ADR-0033/0036/0037, Phase 3 코어 구현 완료, 거래소 어댑터 4종 wire-up 후 Beta) |
 | auth | (CLAUDE.md 미작성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) — 서비스 코드 존재 |
 | gifticon | (CLAUDE.md 미작성) | 기프티콘 관리, 공유 그룹 — 서비스 코드 존재 |
-| code-dictionary | (CLAUDE.md 미작성) | IT 개념 사전, OpenSearch 검색, 시각화 — 서비스 코드 존재 |
+| code-dictionary | (CLAUDE.md 미작성) | IT 개념 사전, OpenSearch 검색, 시각화 — 서비스 코드 존재. FE 는 portal-fe 의 `/dict` 라우트로 통합 (2026-05-05) |
 | inventory | (CLAUDE.md 미작성) | 재고 관리, 예약 — 서비스 코드 존재 |
 | fulfillment | (CLAUDE.md 미작성) | 주문 풀필먼트 — 서비스 코드 존재 |
 | warehouse | (CLAUDE.md 미작성) | 창고 관리 — 서비스 코드 존재 |
@@ -131,6 +131,19 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
+
+### Frontend 진입 구조 (2026-05-05 portal-fe 도입)
+
+| Path | FE | 비고 |
+|------|----|------|
+| `/` (root catch-all) | `portal-fe` | MSA 진입점 — 포트폴리오 + 코드딕셔너리 `/dict` + 서비스 카탈로그 `/services` + 어바웃 `/about` |
+| `/admin/*` | `admin-fe` | 백오피스 |
+| `/quant/*` | `quant-fe` | 트레이딩 (Phase 3) |
+| `/gifticon/*` | `gifticon-fe` | 기프티콘 |
+| `/agent-viewer/*` | `agent-viewer-fe` | AI 에이전트 viewer |
+| `/api/v1/*`, `/sse/*`, `/ws/*`, `/actuator/*` | `gateway` | 백엔드 API (REST + SSE + WebSocket + actuator) |
+
+ingress-nginx 의 longer-prefix-first 매칭 → sub-FE prefix 가 portal-fe 의 root catch-all 보다 우선. gateway 는 `/api`/`/sse`/`/ws`/`/actuator` specific path 만 받도록 좁힘 (이전: `/` catch-all).
 
 ### 도구 / 별도 레포
 

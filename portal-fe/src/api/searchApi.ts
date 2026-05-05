@@ -64,3 +64,17 @@ export const fetchConceptDetail = async (conceptId: string): Promise<ConceptDeta
   const res = await api.get<ApiResponse<ConceptDetail>>(`/api/v1/concepts/by-concept-id/${conceptId}`);
   return res.data.data;
 };
+
+export interface ServiceItem {
+  code: string;
+  name: string;
+  description: string;
+  port: number | null;
+  isPrivate: boolean;
+  concepts: string[];
+}
+
+export const fetchServices = async (): Promise<ServiceItem[]> => {
+  const res = await api.get<ApiResponse<ServiceItem[]>>('/api/v1/services');
+  return res.data.data;
+};

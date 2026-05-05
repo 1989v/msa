@@ -96,7 +96,7 @@ build_fe() {
         log "  → $name imported" || log "  → $name import (may already exist)"
 }
 
-build_fe code-dictionary-fe code-dictionary/frontend/Dockerfile code-dictionary/frontend/
+build_fe portal-fe code-dictionary/frontend/Dockerfile code-dictionary/frontend/
 build_fe gifticon-fe        gifticon/frontend/Dockerfile        gifticon/frontend/
 build_fe agent-viewer-fe    agent-viewer/front/Dockerfile       agent-viewer/front/
 build_fe charting-fe        charting/frontend/Dockerfile        charting/frontend/
@@ -128,7 +128,7 @@ if [[ "$MODE" == "core" ]]; then
     for svc in chatbot analytics experiment code-dictionary \
                search-batch search-consumer agent-viewer-api \
                inventory fulfillment warehouse member wishlist gifticon \
-               code-dictionary-fe gifticon-fe agent-viewer-fe charting charting-fe; do
+               portal-fe gifticon-fe agent-viewer-fe charting charting-fe; do
         kubectl -n commerce scale deploy/$svc --replicas=0 2>/dev/null || true
     done
 fi

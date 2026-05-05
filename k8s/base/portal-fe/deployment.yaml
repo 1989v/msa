@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: code-dictionary-fe
+  name: portal-fe
   namespace: commerce
   labels:
-    app.kubernetes.io/name: code-dictionary-fe
+    app.kubernetes.io/name: portal-fe
     app.kubernetes.io/part-of: commerce-platform
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: code-dictionary-fe
+      app.kubernetes.io/name: portal-fe
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: code-dictionary-fe
+        app.kubernetes.io/name: portal-fe
         app.kubernetes.io/part-of: commerce-platform
     spec:
       terminationGracePeriodSeconds: 15
       containers:
         - name: app
-          image: commerce/code-dictionary-fe:latest
+          image: commerce/portal-fe:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

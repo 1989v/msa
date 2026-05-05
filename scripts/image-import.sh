@@ -40,7 +40,7 @@ commerce/admin-fe:latest|admin/frontend|Dockerfile
 commerce/charting-fe:latest|charting/frontend|Dockerfile
 commerce/gifticon-fe:latest|gifticon/frontend|Dockerfile
 commerce/agent-viewer-fe:latest|agent-viewer/front|Dockerfile
-commerce/code-dictionary-fe:latest|code-dictionary/frontend|Dockerfile
+commerce/portal-fe:latest|portal-fe|Dockerfile
 commerce/quant-fe:latest|quant/frontend|Dockerfile
 commerce/charting:latest|charting|infra/Dockerfile
 commerce/quant-ingest:latest|quant/ingest|Dockerfile

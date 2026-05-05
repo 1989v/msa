@@ -11,6 +11,13 @@
   --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
 
+  /* Code Dictionary Treemap level color tokens (cool -> warm sequential, OKLCH) */
+  /* spec.md §6.2 — chroma fixed near 0.01, lightness varies for sequential encoding (WCAG AA) */
+  --ko-level-beginner: oklch(0.85 0.01 220);
+  --ko-level-intermediate: oklch(0.70 0.012 90);
+  --ko-level-advanced: oklch(0.55 0.015 30);
+  --focus-ring: 2px solid oklch(0.50 0.15 240);
+
   font-family: var(--sans);
   font-size: 16px;
   line-height: 1.5;
@@ -29,6 +36,17 @@
     --accent-hover: #3b82f6;
     --code-bg: #1e293b;
     --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .treemap-tile,
+  .chip,
+  .ko-chip,
+  .ko-treemap-tile {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
   }
 }
 
@@ -384,6 +402,48 @@ body {
 .carousel-section {
   height: 80vh;
   position: relative;
+}
+
+/* Treemap / Graph view-mode toggle (spec.md §6.1, Q8) */
+.viz-mode-toggle {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 4px;
+  margin: 12px 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 999px;
+  width: fit-content;
+  margin-left: auto;
+}
+
+.viz-mode-btn {
+  min-height: 36px;
+  padding: 6px 18px;
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-family: inherit;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.viz-mode-btn:hover {
+  color: #f1f5f9;
+}
+
+.viz-mode-btn.is-active {
+  background: rgba(148, 163, 184, 0.18);
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.viz-mode-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .search-bar-floating {

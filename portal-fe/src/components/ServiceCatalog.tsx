@@ -1,0 +1,103 @@
+import { useEffect, useState } from 'react';
+import { CATEGORY_COLORS } from '../types/index';
+import { fetchServices, type ServiceItem } from '../api/searchApi';
+import './ServiceCatalog.css';
+
+const CONCEPT_COLORS: Record<string, string> = {
+  'aggregate': CATEGORY_COLORS.ARCHITECTURE,
+  'event-driven-architecture': CATEGORY_COLORS.DISTRIBUTED_SYSTEM,
+  'saga-pattern': CATEGORY_COLORS.DISTRIBUTED_SYSTEM,
+  'idempotency': CATEGORY_COLORS.DISTRIBUTED_SYSTEM,
+  'circuit-breaker': CATEGORY_COLORS.INFRASTRUCTURE,
+  'inverse-index': CATEGORY_COLORS.DATA,
+  'bulk-indexing': CATEGORY_COLORS.DATA,
+  'alias-swap': CATEGORY_COLORS.DATA,
+  'jwt': CATEGORY_COLORS.SECURITY,
+  'oauth': CATEGORY_COLORS.SECURITY,
+  'coroutine': CATEGORY_COLORS.CONCURRENCY,
+  'api-gateway': CATEGORY_COLORS.INFRASTRUCTURE,
+  'rate-limiting': CATEGORY_COLORS.INFRASTRUCTURE,
+  'sealed-class': CATEGORY_COLORS.LANGUAGE_FEATURE,
+  'cqrs': CATEGORY_COLORS.ARCHITECTURE,
+  'port-adapter': CATEGORY_COLORS.ARCHITECTURE,
+  'service-discovery': CATEGORY_COLORS.INFRASTRUCTURE,
+  'health-check': CATEGORY_COLORS.INFRASTRUCTURE,
+};
+
+interface ServiceCatalogProps {
+  onConceptClick: (conceptId: string) => void;
+}
+
+export default function ServiceCatalog({ onConceptClick }: ServiceCatalogProps) {
+  const [services, setServices] = useState<ServiceItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchServices()
+      .then((data) => {
+        if (!cancelled) setServices(data);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : '서비스 목록을 불러오지 못했습니다');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleConceptClick = (conceptId: string) => {
+    const techSection = document.getElementById('tech');
+    if (techSection) {
+      techSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    setTimeout(() => onConceptClick(conceptId), 300);
+  };
+
+  return (
+    <section id="services" className="service-catalog-section">
+      <div className="service-catalog-inner">
+        <div className="service-catalog-header">
+          <h2 className="service-catalog-title">서비스 카탈로그</h2>
+          <p className="service-catalog-subtitle">MSA 커머스 플랫폼을 구성하는 서비스들</p>
+        </div>
+        {loading && <div className="service-catalog-status">불러오는 중...</div>}
+        {error && <div className="service-catalog-status">{error}</div>}
+        {!loading && !error && (
+          <div className="service-catalog-grid">
+            {services.map((service) => (
+              <div key={service.code} className="service-card">
+                <div className="service-card-top">
+                  <span className="service-name">{service.name}</span>
+                  {service.port != null && (
+                    <span className="service-port">:{service.port}</span>
+                  )}
+                </div>
+                <p className="service-description">{service.description}</p>
+                <div className="service-concepts">
+                  {service.concepts.map((concept) => {
+                    const color = CONCEPT_COLORS[concept] ?? '#6c63ff';
+                    return (
+                      <button
+                        key={concept}
+                        className="service-concept-chip"
+                        style={{ background: `${color}20`, color, borderColor: `${color}44` }}
+                        onClick={() => handleConceptClick(concept)}
+                      >
+                        {concept}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}

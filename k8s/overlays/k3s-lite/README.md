@@ -45,7 +45,7 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 scripts/image-import.sh --all
 
 # 3. build and import FE / non-JVM images (admin-fe, gifticon-fe,
-#    agent-viewer-fe, code-dictionary-fe, quant-fe). Requires Docker daemon.
+#    agent-viewer-fe, portal-fe, quant-fe). Requires Docker daemon.
 # (charting / charting-fe 는 ADR-0036 P2-T20 에서 Hard remove 완료, 2026-05-02.)
 scripts/image-import.sh --fe                       # FE only
 

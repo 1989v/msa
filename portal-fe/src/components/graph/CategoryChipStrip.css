@@ -1,0 +1,107 @@
+.ko-chip-strip-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.ko-chip-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 8px 40px 8px 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex: 1;
+}
+
+.ko-chip-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.ko-chip {
+  scroll-snap-align: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 22px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.ko-chip:hover {
+  background: rgba(148, 163, 184, 0.12);
+  color: #f1f5f9;
+}
+
+.ko-chip:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.ko-chip.is-active {
+  background: rgba(148, 163, 184, 0.18);
+  border-color: rgba(241, 245, 249, 0.7);
+  color: #f8fafc;
+  font-weight: 600;
+}
+
+.ko-chip-name {
+  font-variant-numeric: tabular-nums;
+}
+
+.ko-chip-count {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+
+.ko-chip.is-active .ko-chip-count {
+  color: #cbd5e1;
+}
+
+.ko-chip-strip-arrow {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  background: rgba(10, 10, 20, 0.7);
+  backdrop-filter: blur(4px);
+  color: #cbd5e1;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ko-chip-strip-arrow:hover {
+  background: rgba(148, 163, 184, 0.15);
+  color: #f1f5f9;
+}
+
+.ko-chip-strip-arrow:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .ko-chip-strip-arrow {
+    display: none;
+  }
+}

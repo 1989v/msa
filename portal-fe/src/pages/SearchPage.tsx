@@ -6,6 +6,7 @@ import ForceGraph3D from '../components/graph/ForceGraph3D';
 import HeatmapPanel from '../components/panels/HeatmapPanel';
 import StatsDashboard from '../components/panels/StatsDashboard';
 import TreemapPanel from '../components/panels/TreemapPanel';
+import TreemapSection from '../components/graph/TreemapSection';
 import DetailSidePanel from '../components/DetailSidePanel';
 import GNB from '../components/GNB';
 import HeroSection from '../components/HeroSection';
@@ -19,6 +20,8 @@ import { searchConcepts } from '../api/searchApi';
 import type { GraphRenderer, GraphNode } from '../types/graph';
 import type { Category } from '../types/index';
 
+type ViewMode = 'graph' | 'treemap';
+
 export default function SearchPage() {
   const { data, loading, error } = useGraphData();
   const graphRef = useRef<GraphRenderer>(null);
@@ -30,6 +33,8 @@ export default function SearchPage() {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [containerSize, setContainerSize] = useState({ width: window.innerWidth * 0.9, height: window.innerHeight * 0.8 });
   const containerRef = useRef<HTMLDivElement>(null);
+  // spec.md §6.1 / Q8 — Treemap is default view
+  const [viewMode, setViewMode] = useState<ViewMode>('treemap');
 
   useEffect(() => {
     const el = containerRef.current;
@@ -254,8 +259,34 @@ export default function SearchPage() {
         <div className="search-bar-section" ref={searchBarRef}>
           <SearchBar onSearch={handleSearch} onSelectConcept={handleSelectConcept} />
         </div>
+
+        <div className="viz-mode-toggle" role="group" aria-label="시각화 모드 선택">
+          <button
+            type="button"
+            className={`viz-mode-btn ${viewMode === 'treemap' ? 'is-active' : ''}`}
+            aria-pressed={viewMode === 'treemap'}
+            onClick={() => setViewMode('treemap')}
+          >
+            트리맵
+          </button>
+          <button
+            type="button"
+            className={`viz-mode-btn ${viewMode === 'graph' ? 'is-active' : ''}`}
+            aria-pressed={viewMode === 'graph'}
+            onClick={() => setViewMode('graph')}
+          >
+            그래프
+          </button>
+        </div>
+
         <div className="carousel-section">
-          <Carousel3D panels={panels} activeIndex={carouselIndex} onActiveChange={setCarouselIndex} />
+          {viewMode === 'graph' ? (
+            <Carousel3D panels={panels} activeIndex={carouselIndex} onActiveChange={setCarouselIndex} />
+          ) : (
+            <div className="carousel-slide-inner" style={{ width: '100%', height: '100%' }}>
+              <TreemapSection onTileClick={handleSelectConcept} />
+            </div>
+          )}
         </div>
         <PopularConcepts nodes={data.nodes} onConceptClick={handleSelectConcept} />
       </section>

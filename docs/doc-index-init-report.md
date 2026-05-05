@@ -1,16 +1,16 @@
 # Doc Index — Initial Scan Report
 
-- sources: 977
-- docs: 204
-- resolved links: 2023
-- missing (source without doc): 225
-- dangling (doc without source): 189
+- sources: 962
+- docs: 210
+- resolved links: 2060
+- missing (source without doc): 198
+- dangling (doc without source): 195
 
 ## Coverage by service
 
 | Service | Total | Linked | Coverage |
 |---|---:|---:|---:|
-| admin | 48 | 0 | 0.0% |
+| admin | 53 | 0 | 0.0% |
 | analytics | 30 | 30 | 100.0% |
 | auth | 34 | 7 | 20.6% |
 | chatbot | 34 | 30 | 88.2% |
@@ -23,7 +23,7 @@
 | member | 17 | 17 | 100.0% |
 | order | 34 | 34 | 100.0% |
 | product | 34 | 34 | 100.0% |
-| root | 440 | 340 | 77.3% |
+| root | 420 | 352 | 83.8% |
 | search | 33 | 33 | 100.0% |
 | warehouse | 14 | 13 | 92.9% |
 | wishlist | 18 | 18 | 100.0% |

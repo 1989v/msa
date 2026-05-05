@@ -101,7 +101,8 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 ./gradlew jibBuildTar
 scripts/image-import.sh --all
 
-# FE 5종 (admin / quant / gifticon / agent-viewer / code-dictionary) — Docker daemon 필요
+# FE 5종 (portal / admin / quant / gifticon / agent-viewer) — Docker daemon 필요
+# portal = MSA 진입점 (root /). 사이트 = 포트폴리오 + 코드딕셔너리 + 서비스 카탈로그.
 scripts/image-import.sh --fe
 
 # 또는 위 둘을 한 방에:
@@ -115,7 +116,10 @@ kubectl apply -k k8s/overlays/k3s-lite              # 인프라(MySQL/Redis/Kafk
 kubectl -n commerce get pods -w                     # Ready 상태까지 대기
 ```
 
-접속: `http://localhost/admin/`, `/quant/`, `/gifticon/`, `/agent-viewer/`, `/code-dictionary/` (FE), `/api/...` (gateway).
+접속:
+- `http://localhost/` — **portal** (MSA 진입점, 포트폴리오 + 코드딕셔너리 `/dict` + 서비스 카탈로그 `/services`)
+- `http://localhost/admin/`, `/quant/`, `/gifticon/`, `/agent-viewer/` — sub-FE
+- `http://localhost/api/v1/...` — gateway (REST), `/sse/...` `/ws/...` (long-lived), `/actuator/...` (헬스)
 
 ### 3. 서비스 단독 실행 (로컬 개발 / k8s 외부)
 
