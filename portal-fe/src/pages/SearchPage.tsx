@@ -5,6 +5,7 @@ import Carousel3D from '../components/Carousel3D';
 import ForceGraph3D from '../components/graph/ForceGraph3D';
 import HeatmapPanel from '../components/panels/HeatmapPanel';
 import StatsDashboard from '../components/panels/StatsDashboard';
+import TreemapPanel from '../components/panels/TreemapPanel';
 import TreemapSection from '../components/graph/TreemapSection';
 import DetailSidePanel from '../components/DetailSidePanel';
 import GNB from '../components/GNB';
@@ -150,6 +151,23 @@ export default function SearchPage() {
     handleSelectConcept(conceptId);
   }, [handleSelectConcept]);
 
+  // 기존 TreemapPanel 핸들러 — 그래프 하이라이트 연동 + concept 선택
+  const handleTreemapClick = useCallback((conceptId: string) => {
+    handleSelectConcept(conceptId);
+    setCarouselIndex(0);
+  }, [handleSelectConcept]);
+
+  const handleTreemapCategoryClick = useCallback((category: string) => {
+    if (!data) return;
+    const matching = data.nodes.filter((n) => n.category === category);
+    setHighlightedNodes(new Set(matching.map((n) => n.id)));
+    setDimmed(true);
+    setCarouselIndex(0);
+    if (matching.length > 0) {
+      graphRef.current?.focusNode(matching[0].id, false);
+    }
+  }, [data]);
+
   const handleSearchFocus = useCallback(() => {
     if (searchBarRef.current) {
       searchBarRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -226,6 +244,20 @@ export default function SearchPage() {
         </div>
       ),
       preview: <div className="carousel-preview-card">Treemap</div>,
+    },
+    {
+      key: 'treemap-graph',
+      label: 'Concept Treemap',
+      content: (
+        <div className="carousel-slide-inner">
+          <TreemapPanel
+            nodes={data.nodes}
+            onNodeClick={handleTreemapClick}
+            onCategoryClick={handleTreemapCategoryClick}
+          />
+        </div>
+      ),
+      preview: <div className="carousel-preview-card">Concept Treemap</div>,
     },
   ];
 
