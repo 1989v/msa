@@ -1,9 +1,11 @@
 # ADR-0037 — Quant Phase 3 실매매 (Live Trading)
 
-- 상태: Proposed (OQ-011 ~ OQ-020 closure 시 Accepted 전환)
-- 일자: 2026-05-05
+- 상태: **Accepted** (J1 잠정 default closure 기반, 2026-05-05)
+- 일자: 2026-05-05 (Proposed) / 2026-05-05 (Accepted)
 - 컨텍스트: ADR-0024 (Quant 서비스), ADR-0033 (통합 플랫폼), ADR-0036 (Phase 2 cross-exchange)
 - 관련 스펙: [docs/specs/2026-05-05-quant-phase3-live-trading/](../specs/2026-05-05-quant-phase3-live-trading/planning/spec.md)
+- OQ closure: [open-questions.md](../specs/2026-05-05-quant-phase3-live-trading/planning/open-questions.md)
+  (OQ-011 / OQ-019 는 운영자 법무 자문 후 Errata 가능)
 
 ## Context
 
@@ -93,16 +95,16 @@ Phase 1 (백테스트) → Phase 2 (페이퍼 + cross-exchange) 완료 후, Phas
 - 장점: UX 단순
 - 단점: 토큰 탈취 시 즉시 실 자본 손실. → 2FA 필수
 
-## Open Questions (Phase 3 진입 차단 — closure 필수)
+## Open Questions (closed via J1 default, 2026-05-05)
 
-- OQ-011 거래소 약관 자동매매 허용 (4 거래소 각각)
-- OQ-012 일일 손실 한도 default 값
-- OQ-013 글로벌 kill-switch 권한 (1인 vs 2인 승인)
-- OQ-014 reconcile drift 자동 보정 vs 수동
-- OQ-015 Gateway 우회 차단
-- OQ-016 2FA seed 분실 복구 절차
-- OQ-019 Bybit/OKX 한국 사용자 약관
-- OQ-020 Audit root hash 외부 anchoring
+- ✅ OQ-011 거래소: 빗썸/업비트만 Phase 3, Bybit/OKX 는 GA 단계 OQ-019 closure 후
+- ✅ OQ-012 손실 한도: default 100k KRW / cap 10M KRW / override 시 2FA + 24h
+- ✅ OQ-013 글로벌 kill-switch: Phase 3 Admin 1 인 / 자동 trigger 3종 (reject 50% / chain mismatch / drift burst) → Phase 4 Admin 2 인
+- ✅ OQ-014 reconcile drift: status 자동 / 수량·가격 mismatch suspend / LOST 6시간
+- ✅ OQ-015 gateway 우회: NetworkPolicy 강화 / mTLS Phase 4 / 외부 LB 직접 노출 불가
+- ✅ OQ-016 2FA 분실: 백업코드 → 신분증+24h+Admin 1인 / 재등록 후 24h 주문차단
+- ⚠️ OQ-019 Bybit/OKX: Phase 3 보류, GA 시 법무 검토 후 추가 ADR
+- ✅ OQ-020 audit anchoring: Phase 3 내부 chain only, Phase 4 외부 TSA 검토
 
 ## Roll-out
 
