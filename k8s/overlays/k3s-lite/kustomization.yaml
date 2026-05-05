@@ -69,6 +69,10 @@ patches:
     target:
       kind: Deployment
       name: experiment
+  - path: patches/redis-standalone-code-dictionary.yaml
+    target:
+      kind: Deployment
+      name: code-dictionary
 
   # code-dictionary needs more memory than the global 512Mi limit.
   - path: patches/code-dictionary-resources.yaml
