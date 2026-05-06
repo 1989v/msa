@@ -152,15 +152,47 @@
   }
 }
 
-/* Light theme override (선택) — body[data-theme="light"] */
+/* =========================================================================
+   Light theme — 자동 + 수동 override
+   ============================================================================
+   default = dark.
+   다음 selector 중 하나라도 true 면 light 토큰 swap:
+     1) prefers-color-scheme: light  (시스템 기반)
+     2) :root[data-theme="light"]
+     3) :root.light
+     4) body[data-theme="light"]
+   강제 dark override:
+     :root[data-theme="dark"], :root.dark, body[data-theme="dark"]
+   admin-fe useTheme 은 .dark/.light class 사용 → 자동 매칭.
+   portal/quant 는 main.tsx 에서 data-theme 명시 권장.
+   ========================================================================= */
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']):not(.dark) {
+    --ko-surface-0: oklch(0.98 0.005 250);
+    --ko-surface-1: oklch(1.00 0 0);
+    --ko-surface-2: oklch(0.96 0.008 250);
+    --ko-surface-3: oklch(0.92 0.01 250);
+    --ko-text-primary: oklch(0.20 0.015 250);
+    --ko-text-secondary: oklch(0.40 0.012 250);
+    --ko-text-muted: oklch(0.55 0.01 250);
+    --ko-border-subtle: oklch(0.92 0.008 250);
+    --ko-border-default: oklch(0.84 0.01 250);
+    --ko-border-strong: oklch(0.70 0.015 250);
+  }
+}
+
+:root[data-theme='light'],
+:root.light,
 body[data-theme='light'] {
   --ko-surface-0: oklch(0.98 0.005 250);
-  --ko-surface-1: oklch(0.96 0.008 250);
-  --ko-surface-2: oklch(0.92 0.01 250);
-  --ko-surface-3: oklch(0.88 0.012 250);
+  --ko-surface-1: oklch(1.00 0 0);
+  --ko-surface-2: oklch(0.96 0.008 250);
+  --ko-surface-3: oklch(0.92 0.01 250);
   --ko-text-primary: oklch(0.20 0.015 250);
   --ko-text-secondary: oklch(0.40 0.012 250);
   --ko-text-muted: oklch(0.55 0.01 250);
-  --ko-border-subtle: oklch(0.88 0.008 250);
-  --ko-border-default: oklch(0.78 0.01 250);
+  --ko-border-subtle: oklch(0.92 0.008 250);
+  --ko-border-default: oklch(0.84 0.01 250);
+  --ko-border-strong: oklch(0.70 0.015 250);
 }

@@ -2,7 +2,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY vendor ./vendor
-RUN npm ci
+RUN rm -f package-lock.json && npm install --no-audit --no-fund
 COPY . .
 # portal-fe = MSA root 진입점. ingress 가 / catch-all 로 받고,
 # /api/* 는 별도 ingress rule 이 gateway 로 라우팅.
