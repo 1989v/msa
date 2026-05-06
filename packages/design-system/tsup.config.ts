@@ -9,7 +9,7 @@ export default defineConfig({
   dts: true,
   sourcemap: true,
   clean: true,
-  external: ['react', 'react-dom', 'react/jsx-runtime'],
+  external: ['react', 'react-dom', 'react/jsx-runtime', 'recharts'],
   // CSS Modules + raw .css 자체 처리: tsup 은 .css import 를 소스 보존하므로
   // onSuccess 에서 별도 복사. 컴포넌트 .module.css 는 dist/components/ 로,
   // tokens.css 는 dist/tokens.css 로, styles.css 는 모든 module.css 합본으로.

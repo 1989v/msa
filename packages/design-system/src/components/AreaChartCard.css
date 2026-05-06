@@ -1,0 +1,59 @@
+.ko-areachart {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  font-family: var(--ko-font-family);
+  color: var(--ko-text-primary);
+}
+
+.ko-areachart--card {
+  padding: var(--ko-space-4) var(--ko-space-5);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+}
+
+.ko-areachart__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+}
+
+.ko-areachart__title {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+  font-weight: var(--ko-weight-medium);
+}
+
+.ko-areachart__meta {
+  font-size: var(--ko-text-sm);
+  font-weight: var(--ko-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.ko-areachart__meta--profit {
+  color: var(--ko-status-profit);
+}
+
+.ko-areachart__meta--loss {
+  color: var(--ko-status-loss);
+}
+
+.ko-areachart__meta--neutral {
+  color: var(--ko-accent-primary);
+}
+
+.ko-areachart__canvas {
+  width: 100%;
+  position: relative;
+}
+
+.ko-areachart__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+}

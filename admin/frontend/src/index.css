@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* @kgd/design-system 토큰을 admin 전체 body 에 적용 (sample 2 다크 네이비 톤) */
+html.dark body {
+  background-color: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+}
+
 /*
  * Code Dictionary Treemap level color tokens (cool -> warm sequential, OKLCH)
  * Spec: docs/specs/2026-05-05-code-dictionary-treemap/planning/spec.md §6.2

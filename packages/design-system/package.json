@@ -1,6 +1,6 @@
 {
   "name": "@kgd/design-system",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "kgd 통합 디자인 시스템 — OKLCH 토큰 + 5 핵심 React 컴포넌트. admin/quant/portal-fe 공유.",
   "private": true,
   "type": "module",
@@ -27,13 +27,20 @@
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "recharts": "^2.0.0 || ^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "recharts": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "recharts": "^3.0.0",
     "tsup": "^8.5.0",
     "typescript": "^5.7.0"
   }

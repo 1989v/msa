@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { ListRow, SegmentControl, StatCard } from '@kgd/design-system';
+import { AreaChartCard, ListRow, SegmentControl, StatCard } from '@kgd/design-system';
 
 /**
  * PortfolioDemoPage — 샘플 2 (포트폴리오) 정확 매칭 demo.
@@ -103,60 +102,18 @@ export function PortfolioDemoPage() {
         />
       </div>
 
-      {/* 4. 누적수익 그래프 */}
+      {/* 4. 누적수익 그래프 (디자인 시스템 AreaChartCard) */}
       <div className="mb-6">
-        <StatCard
+        <AreaChartCard
           title="누적수익 그래프"
-          meta={
-            <span style={{ color: 'var(--ko-status-profit)', fontWeight: 700 }}>+9.3만원</span>
-          }
-          primary={null}
-          primaryTone="neutral"
-        >
-          <div style={{ width: '100%', height: 200 }}>
-            <ResponsiveContainer>
-              <AreaChart data={cumulativeReturn} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="profitGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(0.72 0.19 145)" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="oklch(0.72 0.19 145)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis
-                  dataKey="date"
-                  stroke="oklch(0.55 0.01 250)"
-                  tick={{ fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis
-                  stroke="oklch(0.55 0.01 250)"
-                  tick={{ fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v) => `${v}만`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'oklch(0.24 0.025 254)',
-                    border: '1px solid oklch(0.32 0.015 250)',
-                    borderRadius: '8px',
-                    color: 'oklch(0.96 0.005 250)',
-                    fontSize: '12px',
-                  }}
-                  formatter={(v: number) => [`${v.toFixed(1)}만원`, '누적수익']}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke="oklch(0.72 0.19 145)"
-                  strokeWidth={2.5}
-                  fill="url(#profitGrad)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </StatCard>
+          meta="+9.3만원"
+          tone="profit"
+          height={200}
+          data={cumulativeReturn.map((d) => ({ x: d.date, y: d.value }))}
+          yFormatter={(v) => `${v}만`}
+          tooltipFormatter={(v) => `${v.toFixed(1)}만원`}
+          tooltipLabel="누적수익"
+        />
       </div>
 
       {/* 5. 바로투자 */}

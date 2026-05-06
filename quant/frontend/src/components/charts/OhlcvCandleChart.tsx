@@ -45,18 +45,27 @@ export function OhlcvCandleChart({ bars, indicator, height = 360 }: Props) {
     const el = containerRef.current
     if (!el) return
 
+    // 디자인 시스템 다크 네이비 톤 (sample 1/2 매칭). lightweight-charts 는
+    // CSS 변수를 직접 못 받아 OKLCH literal 을 같은 색으로 명시.
     const chart = createChart(el, {
       width: el.clientWidth,
       height,
-      layout: { background: { type: ColorType.Solid, color: '#ffffff' }, textColor: '#3a3a3a' },
-      grid: { vertLines: { color: '#eee' }, horzLines: { color: '#eee' } },
+      layout: {
+        background: { type: ColorType.Solid, color: 'rgba(0,0,0,0)' },
+        textColor: 'oklch(0.62 0.015 250)',
+      },
+      grid: {
+        vertLines: { color: 'oklch(0.32 0.015 250)' },
+        horzLines: { color: 'oklch(0.32 0.015 250)' },
+      },
       timeScale: { timeVisible: true, secondsVisible: false },
+      rightPriceScale: { borderColor: 'oklch(0.32 0.015 250)' },
     })
     const candle = chart.addCandlestickSeries({
-      upColor: '#16a34a',
-      downColor: '#dc2626',
-      wickUpColor: '#16a34a',
-      wickDownColor: '#dc2626',
+      upColor: 'oklch(0.72 0.19 145)',     // sample profit green
+      downColor: 'oklch(0.65 0.22 25)',    // sample loss red
+      wickUpColor: 'oklch(0.72 0.19 145)',
+      wickDownColor: 'oklch(0.65 0.22 25)',
       borderVisible: false,
     })
     chartRef.current = chart
@@ -95,7 +104,8 @@ export function OhlcvCandleChart({ bars, indicator, height = 360 }: Props) {
     indicatorSeriesRef.current.clear()
     if (!indicator) return
 
-    const palette = ['#2563eb', '#a855f7', '#f97316']
+    // 디자인 시스템 accent 색상 (primary 파랑 / secondary 청록 / amber)
+    const palette = ['oklch(0.68 0.16 245)', 'oklch(0.78 0.14 180)', 'oklch(0.74 0.16 90)']
     Object.entries(indicator.series).forEach(([key, points], idx) => {
       const line = chart.addLineSeries({
         color: palette[idx % palette.length],

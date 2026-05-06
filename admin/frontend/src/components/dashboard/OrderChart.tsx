@@ -1,69 +1,26 @@
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { Card } from '@/components/ui/card';
+import { AreaChartCard } from '@kgd/design-system';
 import type { DailyOrderStat } from '@/types/dashboard';
 
 interface OrderChartProps {
   data: DailyOrderStat[];
 }
 
+/**
+ * OrderChart — admin 대시보드 7일 주문 현황.
+ *
+ * @kgd/design-system AreaChartCard 사용 — sample 2 (포트폴리오 누적수익) 의
+ * 다크 네이비 카드 + 녹색 그라디언트 area 톤을 그대로 적용.
+ */
 export function OrderChart({ data }: OrderChartProps) {
   return (
-    <Card className="p-4 space-y-3">
-      <h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">7일 주문 현황</h2>
-      {data.length === 0 ? (
-        <div className="h-48 flex items-center justify-center text-sm text-zinc-400">
-          데이터 없음
-        </div>
-      ) : (
-        <div className="h-48">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a1a1aa" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#a1a1aa" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 10, fill: '#a1a1aa' }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: '#a1a1aa' }}
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#18181b',
-                  border: '1px solid #3f3f46',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="orderCount"
-                stroke="#a1a1aa"
-                strokeWidth={2}
-                fill="url(#colorOrders)"
-                name="주문수"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-    </Card>
+    <AreaChartCard
+      title="7일 주문 현황"
+      tone="profit"
+      height={200}
+      data={data.map((d) => ({ x: d.date.slice(5), y: d.orderCount }))}
+      tooltipFormatter={(v) => `${v}건`}
+      tooltipLabel="주문수"
+      emptyMessage="데이터 없음"
+    />
   );
 }

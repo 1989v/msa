@@ -29,3 +29,6 @@ export type { CheckboxProps } from './components/Checkbox';
 
 export { TrancheCard } from './components/TrancheCard';
 export type { TrancheCardProps } from './components/TrancheCard';
+
+export { AreaChartCard } from './components/AreaChartCard';
+export type { AreaChartCardProps, AreaPoint } from './components/AreaChartCard';
