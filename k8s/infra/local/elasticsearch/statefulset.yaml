@@ -30,7 +30,9 @@ spec:
             runAsUser: 0
       containers:
         - name: elasticsearch
-          image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+          # ES 9.x — Spring Boot 4.x 의 ES 9.x co-located client 와 정렬.
+          # 8.15.3 ↔ 9.x client 는 media-type 헤더 호환성 문제로 search service 가 DOWN.
+          image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

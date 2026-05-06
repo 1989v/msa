@@ -57,3 +57,4 @@ target/
 docker/nginx/ssl/*.key
 docker/nginx/ssl/*.crt
 docs/verify/
+.qa/
