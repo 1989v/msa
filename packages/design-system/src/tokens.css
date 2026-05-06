@@ -1,0 +1,166 @@
+/**
+ * @kgd/design-system — Design Tokens
+ *
+ * OKLCH 기반 (frontend-design.md 컨벤션 준수).
+ * 다크 테마 default. 샘플 1 (자동매매 상세) + 샘플 2 (포트폴리오) 분석에서 도출.
+ *
+ * 사용:
+ *   import '@kgd/design-system/tokens.css';
+ *   .my-card { background: var(--ko-surface-2); color: var(--ko-text-primary); }
+ *
+ * 토큰 그룹:
+ *   1. Color — surface / text / border / accent / status
+ *   2. Typography — font-family / size scale / weight
+ *   3. Spacing — 4px 베이스 grid
+ *   4. Radius — rounded scale
+ *   5. Shadow — elevation
+ *   6. Motion — duration / easing
+ */
+
+:root {
+  /* =========================================================================
+     1. COLOR — OKLCH (60-30-10, chroma 0.005-0.04 base, accent up to 0.18)
+     ========================================================================= */
+
+  /* Surface (배경 hierarchy) — 다크 네이비 */
+  --ko-surface-0: oklch(0.18 0.02 250);   /* 페이지 배경 (#0a1426 근사) */
+  --ko-surface-1: oklch(0.23 0.02 250);   /* 카드 배경 (#152038 근사) */
+  --ko-surface-2: oklch(0.28 0.02 250);   /* hover / 활성 카드 */
+  --ko-surface-3: oklch(0.33 0.02 250);   /* nested element */
+
+  /* Text */
+  --ko-text-primary: oklch(0.96 0.005 250);   /* 거의 흰색, 저채도 */
+  --ko-text-secondary: oklch(0.78 0.01 250);  /* 보조 텍스트 */
+  --ko-text-muted: oklch(0.62 0.015 250);     /* 라벨, 캡션 */
+  --ko-text-disabled: oklch(0.45 0.01 250);
+
+  /* Border */
+  --ko-border-subtle: oklch(0.32 0.015 250);
+  --ko-border-default: oklch(0.42 0.015 250);
+  --ko-border-strong: oklch(0.55 0.02 250);
+
+  /* Accent — primary action (파랑, 샘플 1 체크박스/탭 underline) */
+  --ko-accent-primary: oklch(0.68 0.16 245);
+  --ko-accent-primary-hover: oklch(0.74 0.16 245);
+  --ko-accent-primary-active: oklch(0.62 0.16 245);
+  --ko-accent-primary-bg: oklch(0.30 0.10 245);  /* primary 배경(은은) */
+
+  /* Accent — secondary (청록, 샘플 2 segment 활성) */
+  --ko-accent-secondary: oklch(0.78 0.14 180);
+  --ko-accent-secondary-hover: oklch(0.83 0.14 180);
+
+  /* Status — Profit (녹색, "수익 +") */
+  --ko-status-profit: oklch(0.74 0.18 145);
+  --ko-status-profit-bg: oklch(0.30 0.08 145);
+
+  /* Status — Loss (빨강, "손실 -") */
+  --ko-status-loss: oklch(0.68 0.20 25);
+  --ko-status-loss-bg: oklch(0.30 0.10 25);
+
+  /* Status — Warning (앰버) */
+  --ko-status-warning: oklch(0.80 0.15 75);
+  --ko-status-warning-bg: oklch(0.32 0.08 75);
+
+  /* Status — Info / Neutral */
+  --ko-status-info: oklch(0.75 0.10 240);
+
+  /* Focus ring (a11y) */
+  --ko-focus-ring: 2px solid oklch(0.74 0.16 245);
+  --ko-focus-ring-offset: 2px;
+
+  /* =========================================================================
+     2. TYPOGRAPHY
+     ========================================================================= */
+
+  --ko-font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --ko-font-mono: 'SF Mono', 'JetBrains Mono', Monaco, Consolas, monospace;
+
+  /* Size scale (1rem = 16px) */
+  --ko-text-xs: 0.75rem;     /* 12px — 캡션, 작은 라벨 */
+  --ko-text-sm: 0.875rem;    /* 14px — secondary text */
+  --ko-text-base: 1rem;      /* 16px — body */
+  --ko-text-lg: 1.125rem;    /* 18px — section heading */
+  --ko-text-xl: 1.25rem;     /* 20px */
+  --ko-text-2xl: 1.5rem;     /* 24px — page heading */
+  --ko-text-3xl: 1.875rem;   /* 30px — KPI 큰 숫자 */
+  --ko-text-4xl: 2.25rem;    /* 36px — hero 숫자 (샘플 2 평가액) */
+
+  /* Line heights */
+  --ko-leading-tight: 1.2;
+  --ko-leading-normal: 1.5;
+  --ko-leading-relaxed: 1.7;
+
+  /* Weights */
+  --ko-weight-normal: 400;
+  --ko-weight-medium: 500;
+  --ko-weight-semibold: 600;
+  --ko-weight-bold: 700;
+
+  /* =========================================================================
+     3. SPACING — 4px base grid
+     ========================================================================= */
+
+  --ko-space-0: 0;
+  --ko-space-1: 0.25rem;   /*  4px */
+  --ko-space-2: 0.5rem;    /*  8px */
+  --ko-space-3: 0.75rem;   /* 12px */
+  --ko-space-4: 1rem;      /* 16px */
+  --ko-space-5: 1.25rem;   /* 20px */
+  --ko-space-6: 1.5rem;    /* 24px */
+  --ko-space-8: 2rem;      /* 32px */
+  --ko-space-10: 2.5rem;   /* 40px */
+  --ko-space-12: 3rem;     /* 48px */
+  --ko-space-16: 4rem;     /* 64px */
+
+  /* =========================================================================
+     4. RADIUS
+     ========================================================================= */
+
+  --ko-radius-sm: 4px;
+  --ko-radius-md: 8px;       /* 카드 기본 */
+  --ko-radius-lg: 12px;      /* 큰 카드 (샘플 1/2 main 카드) */
+  --ko-radius-xl: 16px;
+  --ko-radius-full: 9999px;  /* pill / circle avatar */
+
+  /* =========================================================================
+     5. SHADOW (elevation)
+     ========================================================================= */
+
+  --ko-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.18);
+  --ko-shadow-md: 0 2px 6px -1px rgba(0, 0, 0, 0.22), 0 2px 4px -2px rgba(0, 0, 0, 0.18);
+  --ko-shadow-lg: 0 8px 16px -4px rgba(0, 0, 0, 0.28), 0 4px 8px -4px rgba(0, 0, 0, 0.22);
+  --ko-shadow-xl: 0 16px 32px -8px rgba(0, 0, 0, 0.32);
+
+  /* =========================================================================
+     6. MOTION
+     ========================================================================= */
+
+  --ko-duration-fast: 100ms;
+  --ko-duration-normal: 150ms;
+  --ko-duration-slow: 250ms;
+
+  --ko-ease-out: cubic-bezier(0.0, 0.0, 0.2, 1.0);
+  --ko-ease-in-out: cubic-bezier(0.4, 0.0, 0.2, 1.0);
+}
+
+/* prefers-reduced-motion 적용 (frontend-design.md 강제) */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ko-duration-fast: 0ms;
+    --ko-duration-normal: 0ms;
+    --ko-duration-slow: 0ms;
+  }
+}
+
+/* Light theme override (선택) — body[data-theme="light"] */
+body[data-theme='light'] {
+  --ko-surface-0: oklch(0.98 0.005 250);
+  --ko-surface-1: oklch(0.96 0.008 250);
+  --ko-surface-2: oklch(0.92 0.01 250);
+  --ko-surface-3: oklch(0.88 0.012 250);
+  --ko-text-primary: oklch(0.20 0.015 250);
+  --ko-text-secondary: oklch(0.40 0.012 250);
+  --ko-text-muted: oklch(0.55 0.01 250);
+  --ko-border-subtle: oklch(0.88 0.008 250);
+  --ko-border-default: oklch(0.78 0.01 250);
+}

@@ -1,0 +1,93 @@
+.ko-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-3) var(--ko-space-4);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ko-radius-md);
+  font-family: var(--ko-font-family);
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+  color: var(--ko-text-primary);
+  cursor: pointer;
+  transition:
+    background-color var(--ko-duration-fast) var(--ko-ease-out),
+    border-color var(--ko-duration-fast) var(--ko-ease-out),
+    color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.ko-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.ko-btn:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.ko-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  width: 1rem;
+  height: 1rem;
+}
+
+/* === Tones === */
+.ko-btn--primary {
+  background: var(--ko-accent-primary);
+  color: oklch(0.18 0.02 250);
+}
+
+.ko-btn--primary:hover:not(:disabled) {
+  background: var(--ko-accent-primary-hover);
+}
+
+.ko-btn--primary:active:not(:disabled) {
+  background: var(--ko-accent-primary-active);
+}
+
+.ko-btn--danger {
+  background: var(--ko-status-loss);
+  color: var(--ko-text-primary);
+}
+
+.ko-btn--danger:hover:not(:disabled) {
+  background: oklch(0.74 0.20 25);
+}
+
+.ko-btn--subtle {
+  background: var(--ko-surface-2);
+  border-color: var(--ko-border-subtle);
+  color: var(--ko-text-primary);
+}
+
+.ko-btn--subtle:hover:not(:disabled) {
+  background: var(--ko-surface-3);
+  border-color: var(--ko-border-default);
+}
+
+/* === Sizes === */
+.ko-btn--sm {
+  padding: var(--ko-space-2) var(--ko-space-3);
+  font-size: var(--ko-text-sm);
+  border-radius: var(--ko-radius-sm);
+}
+
+.ko-btn--md {
+  padding: var(--ko-space-3) var(--ko-space-4);
+  font-size: var(--ko-text-base);
+}
+
+.ko-btn--lg {
+  padding: var(--ko-space-4) var(--ko-space-6);
+  font-size: var(--ko-text-lg);
+  border-radius: var(--ko-radius-lg);
+}
+
+/* === Modifiers === */
+.ko-btn--full {
+  width: 100%;
+}

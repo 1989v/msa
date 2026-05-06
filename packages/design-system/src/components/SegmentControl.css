@@ -1,0 +1,86 @@
+.ko-segment {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--ko-font-family);
+}
+
+.ko-segment__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-2) var(--ko-space-3);
+  background: transparent;
+  border: none;
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+  font-weight: var(--ko-weight-medium);
+  cursor: pointer;
+  transition: color var(--ko-duration-fast) var(--ko-ease-out),
+              background-color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.ko-segment__btn:hover {
+  color: var(--ko-text-secondary);
+}
+
+.ko-segment__btn:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.ko-segment__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  padding: 0 var(--ko-space-1);
+  border-radius: var(--ko-radius-full);
+  background: var(--ko-surface-3);
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ====== Pill variant (샘플 2: 빗썸/업비트) ====== */
+.ko-segment--pill {
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-1);
+  background: transparent;
+}
+
+.ko-segment--pill .ko-segment__btn {
+  border-radius: var(--ko-radius-full);
+  padding: var(--ko-space-2) var(--ko-space-4);
+}
+
+.ko-segment--pill .ko-segment__btn--active {
+  background: var(--ko-accent-secondary);
+  color: var(--ko-surface-0);
+  font-weight: var(--ko-weight-semibold);
+}
+
+.ko-segment--pill .ko-segment__btn--active .ko-segment__count {
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
+}
+
+/* ====== Underline variant (샘플 1: 진행중/완료) ====== */
+.ko-segment--underline {
+  gap: 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+  width: 100%;
+}
+
+.ko-segment--underline .ko-segment__btn {
+  flex: 1 1 0;
+  justify-content: center;
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.ko-segment--underline .ko-segment__btn--active {
+  color: var(--ko-accent-primary);
+  border-bottom-color: var(--ko-accent-primary);
+  font-weight: var(--ko-weight-semibold);
+}

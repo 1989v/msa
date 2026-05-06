@@ -1,0 +1,109 @@
+.ko-list-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-3) var(--ko-space-4);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-md);
+  font-family: var(--ko-font-family);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color var(--ko-duration-fast) var(--ko-ease-out),
+              border-color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.ko-list-row--interactive {
+  cursor: pointer;
+}
+
+.ko-list-row--interactive:hover {
+  background: var(--ko-surface-2);
+  border-color: var(--ko-border-default);
+}
+
+.ko-list-row--interactive:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.ko-list-row__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--ko-radius-full);
+  background: var(--ko-surface-3);
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-xs);
+  font-weight: var(--ko-weight-bold);
+  letter-spacing: 0.02em;
+}
+
+.ko-list-row__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ko-list-row__primary {
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+  color: var(--ko-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ko-list-row__secondary {
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ko-list-row__value {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.ko-list-row__value-main {
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+  color: var(--ko-text-primary);
+}
+
+.ko-list-row__value-sub {
+  font-size: var(--ko-text-xs);
+  font-weight: var(--ko-weight-medium);
+}
+
+.ko-list-row__value--profit .ko-list-row__value-main,
+.ko-list-row__value--profit .ko-list-row__value-sub {
+  color: var(--ko-status-profit);
+}
+
+.ko-list-row__value--loss .ko-list-row__value-main,
+.ko-list-row__value--loss .ko-list-row__value-sub {
+  color: var(--ko-status-loss);
+}
+
+.ko-list-row__value--neutral .ko-list-row__value-sub {
+  color: var(--ko-text-muted);
+}
+
+.ko-list-row__trailing {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--ko-text-muted);
+}

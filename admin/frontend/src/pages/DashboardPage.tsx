@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { StatCard } from '@/components/dashboard/StatCard';
+import { KpiCard } from '@kgd/design-system';
 import { OrderChart } from '@/components/dashboard/OrderChart';
 import { CategoryPieChart } from '@/components/dashboard/CategoryPieChart';
 import { ServiceSummary } from '@/components/dashboard/ServiceSummary';
@@ -53,16 +53,15 @@ export function DashboardPage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">대시보드</h1>
 
-      {/* Stat cards */}
+      {/* KPI cards — @kgd/design-system */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard label="오늘 주문" value={todayOrders} trend="neutral" />
-        <StatCard
+        <KpiCard label="오늘 주문" value={Number(todayOrders).toLocaleString()} />
+        <KpiCard
           label="오늘 매출"
           value={`₩${Number(todayRevenue).toLocaleString()}`}
-          trend="neutral"
         />
-        <StatCard label="신규 가입" value={memberCount.newCount} trend="neutral" />
-        <StatCard label="총 회원" value={memberCount.totalCount} trend="neutral" />
+        <KpiCard label="신규 가입" value={Number(memberCount.newCount).toLocaleString()} />
+        <KpiCard label="총 회원" value={Number(memberCount.totalCount).toLocaleString()} />
       </div>
 
       {/* Charts */}

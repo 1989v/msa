@@ -1,6 +1,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY vendor ./vendor
 RUN npm ci
 COPY . .
 # portal-fe = MSA root 진입점. ingress 가 / catch-all 로 받고,
