@@ -12,7 +12,7 @@
    ========================================================================== */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   --safe-bottom: env(safe-area-inset-bottom);
   --safe-top: env(safe-area-inset-top);
 }
@@ -27,17 +27,16 @@ html {
   -webkit-text-size-adjust: 100%;
 }
 
+/* @kgd/design-system 토큰 사용 — 샘플 1/2 다크 네이비 매칭 */
 body {
   margin: 0;
-  font-family:
-    'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  font-size: 1rem; /* 16px 최소 */
+  font-family: var(--ko-font-family);
+  font-size: 1rem;
   line-height: 1.6;
-  background-color: oklch(98% 0.005 250); /* ink-50 */
-  color: oklch(14% 0.006 250); /* ink-900 — 순수 검정 회피 */
+  background-color: var(--ko-surface-0);
+  color: var(--ko-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* iOS bounce 회피 + 가로 스크롤 차단 */
   overscroll-behavior-y: none;
   overflow-x: hidden;
 }
@@ -47,10 +46,10 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* 포커스 링 — frontend-design.md §6, 절대 outline:none 금지 */
+/* 포커스 링 — design-system 토큰 */
 :focus-visible {
-  outline: 2px solid oklch(60% 0.16 220);
-  outline-offset: 2px;
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
   border-radius: 4px;
 }
 
@@ -82,10 +81,10 @@ body {
     height: 8px;
   }
   ::-webkit-scrollbar-thumb {
-    background: oklch(85% 0.010 250);
+    background: var(--ko-border-default);
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(70% 0.012 250);
+    background: var(--ko-border-strong);
   }
 }

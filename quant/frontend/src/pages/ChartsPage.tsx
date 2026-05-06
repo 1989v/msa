@@ -122,34 +122,55 @@ export function ChartsPage() {
     retry: false,
   })
 
+  // 디자인 시스템 토큰 기반 input — 다크 카드 안에 자연스럽게 어울리는 form control
   const inputCls =
-    'border border-zinc-300 rounded px-3 py-2 text-sm bg-white text-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+    'rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400'
+  const inputStyle: React.CSSProperties = {
+    background: 'var(--ko-surface-2)',
+    border: '1px solid var(--ko-border-subtle)',
+    color: 'var(--ko-text-primary)',
+  }
+
+  // 카드 wrapper 공통 스타일 (디자인 시스템 토큰)
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--ko-surface-1)',
+    border: '1px solid var(--ko-border-subtle)',
+    borderRadius: 'var(--ko-radius-lg)',
+    padding: 'var(--ko-space-5)',
+  }
 
   return (
-    <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto text-zinc-900">
+    <div
+      className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto"
+      style={{ color: 'var(--ko-text-primary)' }}
+    >
       <header className="space-y-1">
         <h1 className="text-2xl md:text-3xl font-bold">차트 분석</h1>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
           OHLCV 캔들 + 기술적 지표 + 패턴 유사도 기반 미래 수익률 예측 (k-NN).
         </p>
       </header>
 
-      <section className="bg-white border border-zinc-200 rounded-lg p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-zinc-700 mb-3">조회 조건</h2>
+      <section style={cardStyle}>
+        <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--ko-text-secondary)' }}>
+          조회 조건
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">자산</span>
+            <span className="text-xs" style={{ color: 'var(--ko-text-muted)' }}>자산</span>
             <input
               className={inputCls + ' w-full'}
+              style={inputStyle}
               value={asset}
               onChange={(e) => setAsset(e.target.value.toUpperCase())}
               placeholder="BTC"
             />
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">거래소</span>
+            <span className="text-xs" style={{ color: 'var(--ko-text-muted)' }}>거래소</span>
             <select
               className={inputCls + ' w-full'}
+              style={inputStyle}
               value={market}
               onChange={(e) => setMarket(e.target.value)}
             >
@@ -160,9 +181,10 @@ export function ChartsPage() {
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">인터벌</span>
+            <span className="text-xs" style={{ color: 'var(--ko-text-muted)' }}>인터벌</span>
             <select
               className={inputCls + ' w-full'}
+              style={inputStyle}
               value={interval}
               onChange={(e) => setInterval(e.target.value)}
             >
@@ -173,9 +195,10 @@ export function ChartsPage() {
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">지표</span>
+            <span className="text-xs" style={{ color: 'var(--ko-text-muted)' }}>지표</span>
             <select
               className={inputCls + ' w-full'}
+              style={inputStyle}
               value={indicator}
               onChange={(e) => setIndicator(e.target.value as IndicatorType)}
             >
@@ -186,10 +209,11 @@ export function ChartsPage() {
             </select>
           </label>
           <label className="space-y-1">
-            <span className="text-xs text-zinc-500">period</span>
+            <span className="text-xs" style={{ color: 'var(--ko-text-muted)' }}>period</span>
             <input
               type="number"
               className={inputCls + ' w-full tabular-nums'}
+              style={inputStyle}
               value={period}
               onChange={(e) => setPeriod(parseInt(e.target.value || '14', 10))}
               min={2}
@@ -199,13 +223,15 @@ export function ChartsPage() {
         </div>
       </section>
 
-      <section className="bg-white border border-zinc-200 rounded-lg p-4 shadow-sm">
+      <section style={cardStyle}>
         <h2 className="text-base font-semibold mb-3">
           OHLCV — {asset} @ {market} ({interval})
         </h2>
-        {ohlcvQ.isLoading && <div className="text-sm text-zinc-500">로딩 중…</div>}
+        {ohlcvQ.isLoading && (
+          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>로딩 중…</div>
+        )}
         {ohlcvQ.isError && (
-          <div className="text-sm text-red-600">
+          <div className="text-sm" style={{ color: 'var(--ko-status-loss)' }}>
             에러: {toApiError(ohlcvQ.error).message}
           </div>
         )}
@@ -213,28 +239,37 @@ export function ChartsPage() {
           <OhlcvCandleChart bars={ohlcvQ.data} indicator={indicatorQ.data} />
         )}
         {ohlcvQ.data && ohlcvQ.data.length === 0 && (
-          <div className="text-sm text-zinc-500">
+          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
             데이터 없음 (ingest 가 아직 적재하지 않았습니다)
           </div>
         )}
       </section>
 
-      <section className="bg-white border border-zinc-200 rounded-lg p-4 shadow-sm">
+      <section style={cardStyle}>
         <h2 className="text-base font-semibold mb-3">
           미래 수익률 예측 (k-NN, 과거 유사 패턴 평균)
         </h2>
-        {predictionQ.isLoading && <div className="text-sm text-zinc-500">예측 계산 중…</div>}
+        {predictionQ.isLoading && (
+          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>예측 계산 중…</div>
+        )}
         {predictionQ.isError && (
-          <div className="text-sm text-zinc-500">
+          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
             예측 불가 — {toApiError(predictionQ.error).message}
           </div>
         )}
         {predictionQ.data && (
           <>
             {predictionQ.data.sample === 0 ? (
-              <div className="rounded border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-600">
+              <div
+                className="rounded p-4 text-sm"
+                style={{
+                  background: 'var(--ko-surface-2)',
+                  border: '1px solid var(--ko-border-subtle)',
+                  color: 'var(--ko-text-secondary)',
+                }}
+              >
                 유사 패턴이 발견되지 않았습니다 (히스토리 부족 또는 pgvector 인덱스 미적재).
-                <span className="block text-xs text-zinc-500 mt-1">
+                <span className="block text-xs mt-1" style={{ color: 'var(--ko-text-muted)' }}>
                   ingest sidecar 로 60+ 일 OHLCV 적재 후 임베딩 백필 필요.
                 </span>
               </div>
@@ -268,11 +303,13 @@ export function ChartsPage() {
         )}
       </section>
 
-      <section className="bg-white border border-zinc-200 rounded-lg p-4 shadow-sm">
+      <section style={cardStyle}>
         <h2 className="text-base font-semibold mb-3">유사 패턴 — 과거 유사 구간 (top 20)</h2>
-        {similarityQ.isLoading && <div className="text-sm text-zinc-500">유사 구간 검색 중…</div>}
+        {similarityQ.isLoading && (
+          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>유사 구간 검색 중…</div>
+        )}
         {similarityQ.isError && (
-          <div className="text-sm text-zinc-500">
+          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
             유사도 검색 불가 — {toApiError(similarityQ.error).message}
           </div>
         )}
@@ -280,7 +317,13 @@ export function ChartsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
-                <tr className="border-b text-left text-zinc-500 text-xs uppercase tracking-wide">
+                <tr
+                  className="text-left text-xs uppercase tracking-wide"
+                  style={{
+                    color: 'var(--ko-text-muted)',
+                    borderBottom: '1px solid var(--ko-border-subtle)',
+                  }}
+                >
                   <th className="py-2 px-2">자산</th>
                   <th className="py-2 px-2">거래소</th>
                   <th className="py-2 px-2">윈도우 종료</th>
@@ -293,20 +336,42 @@ export function ChartsPage() {
                 {similarityQ.data.map((hit, i) => (
                   <tr
                     key={`${hit.assetCode}-${hit.tsWindowEnd}-${i}`}
-                    className="border-b last:border-0 hover:bg-zinc-50"
+                    className="last:border-0"
+                    style={{ borderBottom: '1px solid var(--ko-border-subtle)' }}
                   >
                     <td className="py-2 px-2 font-medium">{hit.assetCode}</td>
-                    <td className="py-2 px-2 text-zinc-600">{hit.marketCode}</td>
-                    <td className="py-2 px-2 tabular-nums text-xs text-zinc-600">
+                    <td className="py-2 px-2" style={{ color: 'var(--ko-text-secondary)' }}>
+                      {hit.marketCode}
+                    </td>
+                    <td
+                      className="py-2 px-2 tabular-nums text-xs"
+                      style={{ color: 'var(--ko-text-secondary)' }}
+                    >
                       {hit.tsWindowEnd.slice(0, 10)}
                     </td>
                     <td className="py-2 px-2 text-right tabular-nums">
                       {(hit.similarity * 100).toFixed(1)}%
                     </td>
-                    <td className="py-2 px-2 text-right tabular-nums">
+                    <td
+                      className="py-2 px-2 text-right tabular-nums"
+                      style={{
+                        color:
+                          parseFloat(hit.return5d ?? '0') >= 0
+                            ? 'var(--ko-status-profit)'
+                            : 'var(--ko-status-loss)',
+                      }}
+                    >
                       {pct(hit.return5d)}
                     </td>
-                    <td className="py-2 px-2 text-right tabular-nums">
+                    <td
+                      className="py-2 px-2 text-right tabular-nums"
+                      style={{
+                        color:
+                          parseFloat(hit.return20d ?? '0') >= 0
+                            ? 'var(--ko-status-profit)'
+                            : 'var(--ko-status-loss)',
+                      }}
+                    >
                       {pct(hit.return20d)}
                     </td>
                   </tr>
@@ -316,7 +381,7 @@ export function ChartsPage() {
           </div>
         )}
         {similarityQ.data && similarityQ.data.length === 0 && (
-          <div className="text-sm text-zinc-500">
+          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
             유사 패턴 없음 — pgvector 인덱스에 충분한 임베딩이 없거나 60+ 일 히스토리 부족.
           </div>
         )}

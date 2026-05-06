@@ -50,12 +50,13 @@
 }
 
 .ko-btn--danger {
-  background: var(--ko-status-loss);
-  color: var(--ko-text-primary);
+  background: var(--ko-action-danger);
+  color: #fff;
+  font-weight: var(--ko-weight-bold);
 }
 
 .ko-btn--danger:hover:not(:disabled) {
-  background: oklch(0.74 0.20 25);
+  background: var(--ko-action-danger-hover);
 }
 
 .ko-btn--subtle {

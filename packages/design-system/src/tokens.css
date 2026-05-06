@@ -22,11 +22,11 @@
      1. COLOR — OKLCH (60-30-10, chroma 0.005-0.04 base, accent up to 0.18)
      ========================================================================= */
 
-  /* Surface (배경 hierarchy) — 다크 네이비 */
-  --ko-surface-0: oklch(0.18 0.02 250);   /* 페이지 배경 (#0a1426 근사) */
-  --ko-surface-1: oklch(0.23 0.02 250);   /* 카드 배경 (#152038 근사) */
-  --ko-surface-2: oklch(0.28 0.02 250);   /* hover / 활성 카드 */
-  --ko-surface-3: oklch(0.33 0.02 250);   /* nested element */
+  /* Surface (배경 hierarchy) — 다크 네이비, 샘플 1/2 hex 정확 매칭 */
+  --ko-surface-0: oklch(0.17 0.025 252);   /* #0c1424 — 페이지 배경 */
+  --ko-surface-1: oklch(0.24 0.025 254);   /* #1a2238 — 카드 배경 */
+  --ko-surface-2: oklch(0.29 0.025 254);   /* hover / 활성 카드 */
+  --ko-surface-3: oklch(0.34 0.025 254);   /* nested element */
 
   /* Text */
   --ko-text-primary: oklch(0.96 0.005 250);   /* 거의 흰색, 저채도 */
@@ -49,13 +49,17 @@
   --ko-accent-secondary: oklch(0.78 0.14 180);
   --ko-accent-secondary-hover: oklch(0.83 0.14 180);
 
-  /* Status — Profit (녹색, "수익 +") */
-  --ko-status-profit: oklch(0.74 0.18 145);
-  --ko-status-profit-bg: oklch(0.30 0.08 145);
+  /* Status — Profit (녹색, "수익 +") — #22c55e 샘플 매칭 */
+  --ko-status-profit: oklch(0.72 0.19 145);
+  --ko-status-profit-bg: oklch(0.30 0.09 145);
 
-  /* Status — Loss (빨강, "손실 -") */
-  --ko-status-loss: oklch(0.68 0.20 25);
-  --ko-status-loss-bg: oklch(0.30 0.10 25);
+  /* Status — Loss (빨강, "손실 -") — #ef4444 샘플 매칭 */
+  --ko-status-loss: oklch(0.65 0.22 25);
+  --ko-status-loss-bg: oklch(0.30 0.12 25);
+
+  /* Action — Danger (강한 빨강, full-width 정지 버튼) — #dc2626 매칭 */
+  --ko-action-danger: oklch(0.55 0.22 25);
+  --ko-action-danger-hover: oklch(0.60 0.22 25);
 
   /* Status — Warning (앰버) */
   --ko-status-warning: oklch(0.80 0.15 75);

@@ -4,8 +4,8 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import './styles/globals.css'
 
-// quant-fe 는 light theme — design-system 토큰을 light 변형으로 swap.
-document.documentElement.dataset.theme = 'light';
+// quant-fe 는 다크 테마 (샘플 디자인 매칭). prefers-color-scheme 영향 차단.
+document.documentElement.dataset.theme = 'dark';
 
 const rootEl = document.getElementById('root')
 if (!rootEl) {
