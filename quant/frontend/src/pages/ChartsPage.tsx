@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { KpiCard } from '@kgd/design-system'
 import { apiClient, unwrap, toApiError } from '@/api/client'
 import { OhlcvCandleChart } from '@/components/charts/OhlcvCandleChart'
 import type { ApiResponse } from '@/types/api'
@@ -238,31 +239,29 @@ export function ChartsPage() {
                 </span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                <div className="border border-zinc-200 rounded p-3">
-                  <div className="text-xs text-zinc-500">샘플 (k)</div>
-                  <div className="text-2xl font-bold tabular-nums text-zinc-900">
-                    {predictionQ.data.sample}
-                  </div>
-                </div>
-                <div className="border border-zinc-200 rounded p-3">
-                  <div className="text-xs text-zinc-500">평균 5d 수익률</div>
-                  <div className="text-2xl font-bold tabular-nums text-zinc-900">
-                    {pct(predictionQ.data.avgReturn5d)}
-                  </div>
-                </div>
-                <div className="border border-zinc-200 rounded p-3">
-                  <div className="text-xs text-zinc-500">평균 20d 수익률</div>
-                  <div className="text-2xl font-bold tabular-nums text-zinc-900">
-                    {pct(predictionQ.data.avgReturn20d)}
-                  </div>
-                </div>
-                <div className="border border-zinc-200 rounded p-3">
-                  <div className="text-xs text-zinc-500">평균 60d 수익률</div>
-                  <div className="text-2xl font-bold tabular-nums text-zinc-900">
-                    {pct(predictionQ.data.avgReturn60d)}
-                  </div>
-                </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <KpiCard label="샘플 (k)" value={predictionQ.data.sample} />
+                <KpiCard
+                  label="평균 5d 수익률"
+                  value={pct(predictionQ.data.avgReturn5d)}
+                  deltaTone={
+                    parseFloat(predictionQ.data.avgReturn5d ?? '0') > 0 ? 'profit' : 'loss'
+                  }
+                />
+                <KpiCard
+                  label="평균 20d 수익률"
+                  value={pct(predictionQ.data.avgReturn20d)}
+                  deltaTone={
+                    parseFloat(predictionQ.data.avgReturn20d ?? '0') > 0 ? 'profit' : 'loss'
+                  }
+                />
+                <KpiCard
+                  label="평균 60d 수익률"
+                  value={pct(predictionQ.data.avgReturn60d)}
+                  deltaTone={
+                    parseFloat(predictionQ.data.avgReturn60d ?? '0') > 0 ? 'profit' : 'loss'
+                  }
+                />
               </div>
             )}
           </>

@@ -42,49 +42,15 @@
   }
 }
 
+/* @kgd/design-system ListRow 가 메인 row 책임 — 카드 wrapper 는 concepts 영역 추가만. */
 .service-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
-  padding: 20px;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.service-card:hover {
-  border-color: rgba(108, 99, 255, 0.4);
-  box-shadow: 0 4px 20px rgba(108, 99, 255, 0.08);
-}
-
-.service-card-top {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.service-name {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #e0e0e0;
-}
-
-.service-port {
-  font-size: 0.75rem;
-  color: #555;
-  font-family: ui-monospace, monospace;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.service-description {
-  font-size: 0.85rem;
-  color: #777;
-  margin-bottom: 14px;
-  line-height: 1.5;
+  flex-direction: column;
+  gap: var(--ko-space-3);
 }
 
 .service-concepts {
+  padding-left: var(--ko-space-2);
   display: flex;
   flex-wrap: wrap;
   gap: 6px;

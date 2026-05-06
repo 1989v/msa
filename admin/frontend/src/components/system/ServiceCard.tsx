@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { ListRow } from '@kgd/design-system';
 import { HealthDetail } from './HealthDetail';
 import type { ServiceHealth } from '@/types/system';
 import { cn } from '@/lib/utils';
@@ -10,71 +9,62 @@ interface ServiceCardProps {
   service: ServiceHealth;
 }
 
+const STATUS_COLOR: Record<ServiceHealth['status'], string> = {
+  UP: 'bg-green-500',
+  DOWN: 'bg-red-500',
+  UNKNOWN: 'bg-yellow-500',
+};
+
+const STATUS_TEXT_CLS: Record<ServiceHealth['status'], string> = {
+  UP: 'text-green-500',
+  DOWN: 'text-red-500',
+  UNKNOWN: 'text-yellow-500',
+};
+
+/**
+ * ServiceCard — 서비스 health row.
+ *
+ * @kgd/design-system ListRow 를 base 로 사용 + expand 시 HealthDetail 토글.
+ * - avatar: status dot
+ * - primary: 서비스명
+ * - secondary: ":<port>"
+ * - value: status text (UP/DOWN/UNKNOWN, 색상 분기)
+ * - trailing: chevron
+ */
 export function ServiceCard({ service }: ServiceCardProps) {
   const [expanded, setExpanded] = useState(false);
-
-  const statusDot = (
-    <span
-      className={cn(
-        'h-2 w-2 rounded-full shrink-0',
-        service.status === 'UP'
-          ? 'bg-green-500'
-          : service.status === 'DOWN'
-          ? 'bg-red-500'
-          : 'bg-yellow-500'
-      )}
-    />
-  );
+  const dot = <span className={cn('h-2 w-2 rounded-full', STATUS_COLOR[service.status])} />;
 
   return (
-    <Card className="overflow-hidden">
-      <button
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
-        onClick={() => setExpanded((e) => !e)}
-      >
-        <div className="flex items-center gap-3">
-          {statusDot}
-          <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-            {service.name}
-          </span>
-          <Badge variant="outline" className="text-xs">
-            :{service.port}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge
-            variant={
-              service.status === 'UP'
-                ? 'default'
-                : service.status === 'DOWN'
-                ? 'destructive'
-                : 'outline'
-            }
-            className={
-              service.status === 'UP'
-                ? 'bg-green-600 text-white dark:bg-green-600 dark:text-white'
-                : undefined
-            }
-          >
+    <div>
+      <ListRow
+        avatar={dot}
+        primary={service.name}
+        secondary={`:${service.port}`}
+        value={
+          <span className={cn('font-bold', STATUS_TEXT_CLS[service.status])}>
             {service.status}
-          </Badge>
-          {expanded ? (
-            <ChevronUp className="h-4 w-4 text-zinc-400" />
+          </span>
+        }
+        trailing={
+          expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />
+        }
+        onClick={() => setExpanded((e) => !e)}
+      />
+      {expanded && (
+        <div
+          className={cn(
+            'mt-2 rounded-md border border-zinc-200 dark:border-zinc-800',
+            'px-4 py-3 bg-white/40 dark:bg-zinc-900/40',
+          )}
+        >
+          {service.health ? (
+            <HealthDetail health={service.health} />
           ) : (
-            <ChevronDown className="h-4 w-4 text-zinc-400" />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">헬스 정보를 가져올 수 없습니다</p>
           )}
         </div>
-      </button>
-      {expanded && service.health && (
-        <div className="px-4 pb-3 border-t border-zinc-200 dark:border-zinc-800">
-          <HealthDetail health={service.health} />
-        </div>
       )}
-      {expanded && !service.health && (
-        <div className="px-4 pb-3 border-t border-zinc-200 dark:border-zinc-800">
-          <p className="text-xs text-zinc-500 dark:text-zinc-400 py-2">헬스 정보를 가져올 수 없습니다</p>
-        </div>
-      )}
-    </Card>
+    </div>
   );
 }

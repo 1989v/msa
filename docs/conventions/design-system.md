@@ -4,7 +4,15 @@
 전체 프로젝트 frontend 의 시각 통일을 위한 공유 패키지.
 **OKLCH 토큰 + 5 핵심 React 컴포넌트** 를 모든 frontend 가 import 해 사용.
 
-> **2026-05-06 도입**. 샘플 디자인 분석 (네이버 증권 스타일 자동매매 + 포트폴리오 UI) 에서 도출한 디자인 언어를 코드로 고정.
+> **2026-05-06 도입**. 아래 샘플 디자인 분석 (네이버 증권 스타일 자동매매 + 포트폴리오 UI) 에서 도출한 디자인 언어를 코드로 고정.
+
+## 0. 디자인 언어 출처
+
+| 샘플 1 — 자동매매 상세 | 샘플 2 — 포트폴리오 |
+|---|---|
+| ![tranche detail](../assets/design-system/sample-1-tranche-detail.png) | ![portfolio](../assets/design-system/sample-2-portfolio.png) |
+
+공통 시각 패턴: 다크 네이비 surface · 큰 KPI 숫자 (tabular-nums) · profit=녹색 / loss=빨강 · 카드 radius 12 · accent 파랑(primary) + 청록(secondary) · 행 단위 list (avatar + 메인/보조 + 우측 값 + chevron).
 
 ---
 
@@ -213,13 +221,13 @@ const [tab, setTab] = useState<'progress' | 'done'>('progress');
 
 ---
 
-## 7. 적용 현황 (2026-05-06)
+## 7. 적용 현황 (2026-05-07)
 
 | FE | tokens.css import | 컴포넌트 사용 | 비고 |
 |---|---|---|---|
-| `admin/frontend` | ✅ `src/main.tsx` | `KpiCard` (Dashboard) | 추가 마이그레이션 예정 |
-| `quant/frontend` | ✅ `src/main.tsx` | (예정 — ChartsPage 의 prediction 카드) | |
-| `portal-fe` | ✅ `src/main.tsx` | (예정 — 트리맵 범례, 서비스 카탈로그) | Tailwind 미사용 |
+| `admin/frontend` | ✅ `src/main.tsx` | `KpiCard` (Dashboard 4 카드), `ListRow` (SystemPage ServiceCard 12 행) | |
+| `quant/frontend` | ✅ `src/main.tsx` | `KpiCard` (ChartsPage prediction 4 카드) | |
+| `portal-fe` | ✅ `src/main.tsx` | `ListRow` (ServiceCatalog 7 서비스 행) | Tailwind 미사용 — pure CSS 토큰 |
 
 ---
 
@@ -227,7 +235,7 @@ const [tab, setTab] = useState<'progress' | 'done'>('progress');
 
 - **Tailwind v3 vs v4**: design-system 컴포넌트는 Tailwind 의존하지 **않음** (CSS 토큰만 사용). 각 FE 의 Tailwind 설정과 무관하게 작동.
 - **React 18 vs 19**: peerDependency `^18 || ^19` — 호환성 보장.
-- **Tarball 갱신**: 디자인 시스템 변경 시 반드시 `scripts/sync-design-system.sh` 실행 후 각 FE 재빌드. (CI 자동화는 후속 과제)
+- **Tarball 갱신 자동화**: `.githooks/pre-commit` 가 `packages/design-system/src` 변경을 감지하면 `scripts/sync-design-system.sh` 자동 실행 + 3 FE 의 vendor/package-lock 자동 staged. 활성화: `scripts/install-hooks.sh` (1 회).
 - **OKLCH 브라우저 지원**: Chrome 111+, Safari 15.4+, Firefox 113+. `frontend-design.md` 의 OKLCH 정책과 정합.
 
 ---
@@ -236,4 +244,4 @@ const [tab, setTab] = useState<'progress' | 'done'>('progress');
 
 - `docs/conventions/frontend-design.md` — AI Slop 방지, OKLCH WCAG AA 가드레일
 - `docs/specs/2026-05-05-code-dictionary-treemap/planning/spec.md` — OKLCH 적용 첫 사례
-- 샘플 이미지: `/Users/gideok-kwon/Downloads/designSample{1,2}.png` (커밋 시 `docs/assets/design-system/` 으로 이동 권장)
+- 샘플 이미지: [`docs/assets/design-system/sample-1-tranche-detail.png`](../assets/design-system/sample-1-tranche-detail.png), [`docs/assets/design-system/sample-2-portfolio.png`](../assets/design-system/sample-2-portfolio.png)

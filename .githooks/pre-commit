@@ -1,0 +1,52 @@
+#!/bin/bash
+# Pre-commit hook (tracked: .githooks/) — 활성화: scripts/install-hooks.sh
+#
+# 책임:
+#   1. commit author = kgd / 1989v@naver.com 강제
+#   2. hns doctor 경고 (warn-only)
+#   3. @kgd/design-system 변경 시 sync-design-system.sh 자동 실행 + vendor 스테이지
+
+REQUIRED_NAME="kgd"
+REQUIRED_EMAIL="1989v@naver.com"
+
+CURRENT_NAME=$(git config user.name)
+CURRENT_EMAIL=$(git config user.email)
+
+FIXED=false
+
+if [ "$CURRENT_NAME" != "$REQUIRED_NAME" ]; then
+    git config --local user.name "$REQUIRED_NAME"
+    echo "⚠️  user.name '$CURRENT_NAME' → '$REQUIRED_NAME' (auto-fixed)"
+    FIXED=true
+fi
+
+if [ "$CURRENT_EMAIL" != "$REQUIRED_EMAIL" ]; then
+    git config --local user.email "$REQUIRED_EMAIL"
+    echo "⚠️  user.email '$CURRENT_EMAIL' → '$REQUIRED_EMAIL' (auto-fixed)"
+    FIXED=true
+fi
+
+if [ "$FIXED" = true ]; then
+    echo "✅ Local git config corrected. Commit will proceed with $REQUIRED_NAME <$REQUIRED_EMAIL>"
+fi
+
+# hns doctor (있을 때만)
+HNS_DOCTOR="$HOME/IdeaProjects/ai/plugins/hns/scripts/doctor.py"
+if [ -f "$HNS_DOCTOR" ]; then
+    "$HNS_DOCTOR" "." --warn-only || true
+fi
+
+# === @kgd/design-system 자동 동기화 ===
+if git diff --cached --name-only | grep -qE "^packages/design-system/(src/|package\.json|tsup\.config\.ts)"; then
+    echo "▶ design-system 변경 감지 — sync-design-system.sh 자동 실행"
+    REPO_ROOT=$(git rev-parse --show-toplevel)
+    if "$REPO_ROOT/scripts/sync-design-system.sh" >/dev/null 2>&1; then
+        for fe in admin/frontend quant/frontend portal-fe; do
+            git add "$REPO_ROOT/$fe/vendor/" "$REPO_ROOT/$fe/package.json" "$REPO_ROOT/$fe/package-lock.json" 2>/dev/null || true
+        done
+        echo "✅ design-system tarball + 3 FE vendor staged"
+    else
+        echo "❌ sync-design-system.sh 실패 — scripts/sync-design-system.sh 수동 실행 후 재시도"
+        exit 1
+    fi
+fi

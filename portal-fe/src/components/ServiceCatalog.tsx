@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
+import { ListRow } from '@kgd/design-system';
 import { CATEGORY_COLORS } from '../types/index';
 import { fetchServices, type ServiceItem } from '../api/searchApi';
 import './ServiceCatalog.css';
+
+function abbr(name: string): string {
+  // "Code Dictionary" → "CD", "Product" → "P"
+  const words = name.trim().split(/\s+/);
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
 
 const CONCEPT_COLORS: Record<string, string> = {
   'aggregate': CATEGORY_COLORS.ARCHITECTURE,
@@ -71,13 +79,12 @@ export default function ServiceCatalog({ onConceptClick }: ServiceCatalogProps) 
           <div className="service-catalog-grid">
             {services.map((service) => (
               <div key={service.code} className="service-card">
-                <div className="service-card-top">
-                  <span className="service-name">{service.name}</span>
-                  {service.port != null && (
-                    <span className="service-port">:{service.port}</span>
-                  )}
-                </div>
-                <p className="service-description">{service.description}</p>
+                <ListRow
+                  avatar={<span>{abbr(service.name)}</span>}
+                  primary={service.name}
+                  secondary={service.description}
+                  value={service.port != null ? `:${service.port}` : undefined}
+                />
                 <div className="service-concepts">
                   {service.concepts.map((concept) => {
                     const color = CONCEPT_COLORS[concept] ?? '#6c63ff';
