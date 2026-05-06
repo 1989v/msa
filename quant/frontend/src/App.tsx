@@ -13,6 +13,8 @@ import { SettingsPage } from '@/pages/SettingsPage'
 import { PaperTradingMonitorPage } from '@/pages/PaperTradingMonitorPage'
 import { ChartsPage } from '@/pages/ChartsPage'
 import { LearnPage } from '@/pages/LearnPage'
+import { PortfolioDemoPage } from '@/pages/PortfolioDemoPage'
+import { TrancheDemoPage } from '@/pages/TrancheDemoPage'
 import { LearnDetailPage } from '@/pages/LearnDetailPage'
 import { LiveTradingPage } from '@/pages/LiveTradingPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -148,6 +150,23 @@ export default function App() {
             element={
               <AppShell withTabBar={false}>
                 <SettingsPage />
+              </AppShell>
+            }
+          />
+          {/* === @kgd/design-system showcase pages (샘플 1/2 정확 매칭) === */}
+          <Route
+            path="/portfolio-demo"
+            element={
+              <AppShell withTabBar={false}>
+                <PortfolioDemoPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/tranche-demo"
+            element={
+              <AppShell withTabBar={false}>
+                <TrancheDemoPage />
               </AppShell>
             }
           />

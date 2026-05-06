@@ -23,3 +23,9 @@ export type { SegmentControlProps, SegmentOption } from './components/SegmentCon
 
 export { PrimaryButton } from './components/PrimaryButton';
 export type { PrimaryButtonProps } from './components/PrimaryButton';
+
+export { Checkbox } from './components/Checkbox';
+export type { CheckboxProps } from './components/Checkbox';
+
+export { TrancheCard } from './components/TrancheCard';
+export type { TrancheCardProps } from './components/TrancheCard';

@@ -25,7 +25,7 @@
     "react-router-dom": "^7.14.0",
     "recharts": "^3.8.1",
     "three": "^0.183.2",
-    "@kgd/design-system": "file:./vendor/kgd-design-system-0.1.0.tgz"
+    "@kgd/design-system": "file:./vendor/kgd-design-system-0.2.0.tgz"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

@@ -68,3 +68,36 @@
     font-size: var(--ko-text-2xl);
   }
 }
+
+/* ========================================================================
+   Row variant — 샘플 1 (자동매매 상세 KPI) 패턴
+   "현재가 ········· 119,897,000원 -0.05%"
+   라벨 좌, 값+델타 우 (한 줄)
+   ======================================================================== */
+.ko-kpi-card--row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ko-kpi-card--row .ko-kpi-card__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+}
+
+.ko-kpi-card--row .ko-kpi-card__value-group {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--ko-space-2);
+}
+
+.ko-kpi-card--row .ko-kpi-card__value {
+  font-size: var(--ko-text-xl);
+}
+
+@media (max-width: 640px) {
+  .ko-kpi-card--row .ko-kpi-card__value {
+    font-size: var(--ko-text-lg);
+  }
+}

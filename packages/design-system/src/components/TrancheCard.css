@@ -1,0 +1,124 @@
+.ko-tranche-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-4) var(--ko-space-5);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+  font-family: var(--ko-font-family);
+  color: var(--ko-text-primary);
+  transition:
+    background-color var(--ko-duration-fast) var(--ko-ease-out),
+    border-color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.ko-tranche-card--interactive {
+  cursor: pointer;
+}
+
+.ko-tranche-card--interactive:hover {
+  background: var(--ko-surface-2);
+  border-color: var(--ko-border-default);
+}
+
+.ko-tranche-card--interactive:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.ko-tranche-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+}
+
+.ko-tranche-card__label {
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-bold);
+  color: var(--ko-text-primary);
+}
+
+.ko-tranche-card__header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.ko-tranche-card__delta {
+  font-size: var(--ko-text-sm);
+  font-weight: var(--ko-weight-bold);
+}
+
+.ko-tranche-card__delta--profit {
+  color: var(--ko-status-profit);
+}
+
+.ko-tranche-card__delta--loss {
+  color: var(--ko-status-loss);
+}
+
+.ko-tranche-card__delta--neutral {
+  color: var(--ko-text-secondary);
+}
+
+.ko-tranche-card__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--ko-space-2);
+  border-radius: var(--ko-radius-sm);
+  background: var(--ko-surface-3);
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-xs);
+  font-weight: var(--ko-weight-semibold);
+}
+
+/* === 매수가 / 매도가 / 수량 grid === */
+.ko-tranche-card__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: var(--ko-space-3);
+}
+
+.ko-tranche-card__field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ko-tranche-card__field-label {
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+}
+
+.ko-tranche-card__field-value {
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+  color: var(--ko-text-primary);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* === 하단 메타 === */
+.ko-tranche-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: var(--ko-space-2);
+  border-top: 1px solid var(--ko-border-subtle);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--ko-leading-normal);
+}
+
+@media (max-width: 640px) {
+  .ko-tranche-card__field-value {
+    font-size: var(--ko-text-sm);
+  }
+}

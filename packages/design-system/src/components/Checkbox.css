@@ -1,0 +1,70 @@
+.ko-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  cursor: pointer;
+  font-family: var(--ko-font-family);
+  font-size: var(--ko-text-sm);
+  font-weight: var(--ko-weight-medium);
+  color: var(--ko-text-primary);
+  user-select: none;
+}
+
+.ko-checkbox__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.ko-checkbox__box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 1.5px solid var(--ko-border-strong);
+  border-radius: var(--ko-radius-sm);
+  background: var(--ko-surface-2);
+  transition:
+    background-color var(--ko-duration-fast) var(--ko-ease-out),
+    border-color var(--ko-duration-fast) var(--ko-ease-out);
+  flex-shrink: 0;
+  color: transparent;
+}
+
+.ko-checkbox__check {
+  width: 0.875rem;
+  height: 0.875rem;
+  display: block;
+}
+
+.ko-checkbox__input:checked + .ko-checkbox__box {
+  background: var(--ko-accent-primary);
+  border-color: var(--ko-accent-primary);
+  color: #fff;
+}
+
+.ko-checkbox__input:focus-visible + .ko-checkbox__box {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.ko-checkbox__input:disabled ~ .ko-checkbox__box,
+.ko-checkbox__input:disabled ~ .ko-checkbox__label {
+  opacity: 0.55;
+}
+
+/* 라벨 색상 분류 (선택) */
+.ko-checkbox--profit .ko-checkbox__label {
+  color: var(--ko-status-profit);
+}
+
+.ko-checkbox--loss .ko-checkbox__label {
+  color: var(--ko-status-loss);
+}

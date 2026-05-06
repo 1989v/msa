@@ -12,6 +12,11 @@ export interface KpiCardProps {
   deltaTone?: 'profit' | 'loss' | 'neutral';
   /** 좌측 아이콘 (선택) */
   icon?: ReactNode;
+  /**
+   * 레이아웃 — 'column' (default) 라벨 위, 값 아래 |
+   * 'row' 라벨 좌, 값+delta 우 (샘플 1 자동매매 상세 패턴: "현재가 ··· 119,897,000원 -0.05%")
+   */
+  layout?: 'column' | 'row';
   /** 추가 CSS class */
   className?: string;
 }
@@ -30,10 +35,32 @@ export function KpiCard({
   delta,
   deltaTone = 'neutral',
   icon,
+  layout = 'column',
   className,
 }: KpiCardProps) {
+  const cls = `ko-kpi-card ko-kpi-card--${layout}${className ? ` ${className}` : ''}`;
+
+  if (layout === 'row') {
+    return (
+      <div className={cls}>
+        <span className="ko-kpi-card__label">
+          {icon && <span className="ko-kpi-card__icon">{icon}</span>}
+          {label}
+        </span>
+        <span className="ko-kpi-card__value-group">
+          <span className="ko-kpi-card__value">{value}</span>
+          {delta != null && (
+            <span className={`ko-kpi-card__delta ko-kpi-card__delta--${deltaTone}`}>
+              {delta}
+            </span>
+          )}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div className={`ko-kpi-card${className ? ` ${className}` : ''}`}>
+    <div className={cls}>
       <div className="ko-kpi-card__header">
         {icon && <span className="ko-kpi-card__icon">{icon}</span>}
         <span className="ko-kpi-card__label">{label}</span>
