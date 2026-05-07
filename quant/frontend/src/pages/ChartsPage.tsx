@@ -1,11 +1,17 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { ChevronDown, X } from 'lucide-react'
 import { KpiCard } from '@kgd/design-system'
 import { apiClient, unwrap, toApiError } from '@/api/client'
 import type { ApiResponse } from '@/types/api'
 
-// 부활된 charting 모듈 — ADR-0036 P2-T20 hard-remove 이전의 기능들
-import { fetchSymbols, type Symbol as ChartSymbol, type OhlcvBar } from '@/charting/api'
+import {
+  fetchSymbols,
+  backendMarketOf,
+  backendAssetOf,
+  type Symbol as ChartSymbol,
+  type OhlcvBar,
+} from '@/charting/api'
 import { PatternChart } from '@/charting/components/PatternChart'
 import { PatternSelector } from '@/charting/components/PatternSelector'
 import { PeriodSelector } from '@/charting/components/PeriodSelector'
@@ -22,7 +28,6 @@ import type { ChartType } from '@/charting/types'
 import { matchPatterns } from '@/charting/lib/patternMatcher'
 import { PATTERNS as ALL_PATTERNS } from '@/charting/lib/patterns'
 
-// === 백엔드 prediction / similarity 응답 타입 (ChartController 일치) ===
 interface PredictionTopHit {
   asset: string
   market: string
@@ -58,6 +63,14 @@ function pct(value: string | null | undefined, fractionDigits = 2): string {
   return `${(n * 100).toFixed(fractionDigits)}%`
 }
 
+function formatPrice(n: number, assetClass: ChartSymbol['assetClass']): string {
+  if (!Number.isFinite(n)) return '—'
+  if (assetClass === 'STOCK_KR') return `₩${n.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}`
+  if (assetClass === 'STOCK_US') return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  // CRYPTO — KRW
+  return `₩${n.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}`
+}
+
 const DEFAULT_INDICATORS: Indicators = {
   ma5: false,
   ma20: true,
@@ -74,21 +87,37 @@ const DEFAULT_INDICATORS: Indicators = {
   vwap: false,
 }
 
+type BottomTab = 'indicators' | 'patterns' | 'prediction' | 'similar'
+
+const BOTTOM_TABS: Array<{ key: BottomTab; label: string }> = [
+  { key: 'indicators', label: '지표' },
+  { key: 'patterns', label: '패턴' },
+  { key: 'prediction', label: '예측' },
+  { key: 'similar', label: '유사' },
+]
+
 /**
- * ChartsPage — quant 통합 차트 분석 (charting 부활 + sample 1/2 톤).
+ * ChartsPage — 모바일 우선 차트 분석 (빗썸 모바일 패턴 벤치마크).
  *
- * 구성:
- *   1. SymbolSearch — 종목 자동완성
- *   2. PeriodSelector — 기간 (분봉/시간봉/일봉)
- *   3. ChartToolbar — 차트 종류 (candle/line/area)
- *   4. IndicatorToggle — 다중 지표 (MA / BB / RSI / MACD / Stoch / ATR / OBV / VWAP)
- *   5. PatternChart — 캔들 + 지표 overlay + 패턴 매칭
- *   6. PatternSelector — 인식된 차트 패턴 (8 종)
- *   7. PredictionPanel — 미래 수익률 예측 (k-NN)
- *   8. 유사 패턴 테이블 (top 20)
+ * 모바일 (< md):
+ *   - sticky 가격 헤더 (종목 + 현재가 + 변동률) — 탭 시 종목 sheet 오픈
+ *   - 시간프레임 가로 스크롤 칩
+ *   - 풀폭 차트
+ *   - 하단 탭 (지표 / 패턴 / 예측 / 유사) — 가로 스크롤
+ *
+ * 데스크탑 (≥ md):
+ *   - 좌측 종목 패널 + 우측 차트 영역 (sticky 헤더 유지)
+ *   - 데이터 패널을 단일 column 으로 stacking
  */
 export function ChartsPage() {
-  const [symbol, setSymbol] = useState<ChartSymbol>({ code: 'BTC', name: '비트코인', market: 'BITHUMB' })
+  const [symbol, setSymbol] = useState<ChartSymbol>({
+    id: 1,
+    ticker: 'BTC',
+    name: '비트코인',
+    market: 'CRYPTO',
+    assetClass: 'CRYPTO',
+    active: true,
+  })
   const [interval, setInterval] = useState('1d')
   const [chartType, setChartType] = useState<ChartType>('candle')
   const [indicators, setIndicators] = useState<Indicators>(DEFAULT_INDICATORS)
@@ -96,14 +125,12 @@ export function ChartsPage() {
   const [selectedPatternIds, setSelectedPatternIds] = useState<Set<string>>(new Set())
   const [patternOffset, setPatternOffset] = useState<number | null>(null)
   const [patternWidth, setPatternWidth] = useState<number>(60)
+  const [bottomTab, setBottomTab] = useState<BottomTab>('patterns')
+  const [symbolSheetOpen, setSymbolSheetOpen] = useState(false)
 
-  // SymbolSearch 가 호출하는 fetcher
-  const symbolsQuery = useQuery({
-    queryKey: ['charting-symbols', ''],
-    queryFn: () => fetchSymbols(''),
-  })
+  const backendMarket = backendMarketOf(symbol.assetClass)
+  const backendAsset = backendAssetOf(symbol.ticker, symbol.assetClass)
 
-  // 기간 — 무한 refetch 방지 (UTC midnight 고정)
   const { from, to } = useMemo(() => {
     const today = new Date()
     today.setUTCHours(0, 0, 0, 0)
@@ -111,13 +138,12 @@ export function ChartsPage() {
     return { from: monthAgo.toISOString(), to: today.toISOString() }
   }, [])
 
-  // OHLCV — quant /api/v1/charts/ohlcv
   const ohlcvQ = useQuery({
-    queryKey: ['ohlcv', symbol.code, symbol.market, interval, from, to],
+    queryKey: ['ohlcv', symbol.ticker, backendMarket, interval, from, to],
     queryFn: async (): Promise<OhlcvBar[]> => {
       const qs = new URLSearchParams({
-        asset: symbol.code,
-        market: symbol.market,
+        asset: backendAsset,
+        market: backendMarket,
         interval,
         from,
         to,
@@ -126,18 +152,32 @@ export function ChartsPage() {
         ApiResponse<Array<{ ts: string; open: string | number; high: string | number; low: string | number; close: string | number; volume: string | number }>>
       >(`/api/v1/charts/ohlcv?${qs}`)
       const data = unwrap(res)
-      return data.map((b) => ({
-        ts: b.ts,
-        open: Number(b.open),
-        high: Number(b.high),
-        low: Number(b.low),
-        close: Number(b.close),
-        volume: Number(b.volume),
-      }))
+      return data.map((b) => {
+        const [date, timepart] = (b.ts || '').split('T')
+        return {
+          trade_date: date,
+          bar_time: timepart && !timepart.startsWith('00:00:00') ? timepart.slice(0, 8) : null,
+          open: Number(b.open),
+          high: Number(b.high),
+          low: Number(b.low),
+          close: Number(b.close),
+          volume: Number(b.volume),
+        } satisfies OhlcvBar
+      })
     },
   })
 
-  // 패턴 매칭 (client-side)
+  // 가격 요약 — 마지막 close + 첫 close 대비 변동률
+  const priceSummary = useMemo(() => {
+    const bars = ohlcvQ.data
+    if (!bars || bars.length === 0) return null
+    const first = bars[0].close
+    const last = bars[bars.length - 1].close
+    const change = last - first
+    const changePct = first > 0 ? (change / first) * 100 : 0
+    return { last, change, changePct, isUp: change >= 0 }
+  }, [ohlcvQ.data])
+
   const matches = useMemo(() => {
     if (!ohlcvQ.data || ohlcvQ.data.length < 20) return []
     const closes = ohlcvQ.data.map((b) => b.close)
@@ -158,121 +198,135 @@ export function ChartsPage() {
     })
   }
 
-  // Prediction
   const predictionQ = useQuery({
-    queryKey: ['prediction', symbol.code, symbol.market],
+    queryKey: ['prediction', symbol.ticker, backendMarket],
     queryFn: async () => {
       const res = await apiClient.get<ApiResponse<Prediction>>(
-        `/api/v1/charts/prediction?asset=${symbol.code}&market=${symbol.market}&windowDays=60&k=50`,
+        `/api/v1/charts/prediction?asset=${backendAsset}&market=${backendMarket}&windowDays=60&k=50`,
       )
       return unwrap(res)
     },
     retry: false,
   })
 
-  // Similarity (top 20)
   const similarityQ = useQuery({
-    queryKey: ['similarity-search', symbol.code, symbol.market, to],
+    queryKey: ['similarity-search', symbol.ticker, backendMarket, to],
     queryFn: async () => {
       const res = await apiClient.get<ApiResponse<SimilarityHit[]>>(
-        `/api/v1/charts/similarity/search?asset=${symbol.code}&market=${symbol.market}&windowEnd=${to}&windowDays=60&k=20`,
+        `/api/v1/charts/similarity/search?asset=${backendAsset}&market=${backendMarket}&windowEnd=${to}&windowDays=60&k=20`,
       )
       return unwrap(res)
     },
     retry: false,
   })
 
-  // PredictionPanel 컴포넌트가 요구하는 단일 객체 형태로 변환 (legacy)
-  const predictionForPanel = useMemo(() => {
-    if (!predictionQ.data) return null
-    const p = predictionQ.data
-    return {
-      sample: p.sample,
-      avgReturn5d: p.avgReturn5d != null ? Number(p.avgReturn5d) : null,
-      avgReturn20d: p.avgReturn20d != null ? Number(p.avgReturn20d) : null,
-      avgReturn60d: p.avgReturn60d != null ? Number(p.avgReturn60d) : null,
-      topHits: p.topHits.map((h) => ({
-        asset: h.asset,
-        market: h.market,
-        similarity: h.similarity,
-        return5d: h.return5d != null ? Number(h.return5d) : null,
-        return20d: h.return20d != null ? Number(h.return20d) : null,
-        return60d: h.return60d != null ? Number(h.return60d) : null,
-      })),
-    }
-  }, [predictionQ.data])
-
-  const cardStyle: React.CSSProperties = {
-    background: 'var(--ko-surface-1)',
-    border: '1px solid var(--ko-border-subtle)',
-    borderRadius: 'var(--ko-radius-lg)',
-    padding: 'var(--ko-space-5)',
+  const onPickSymbol = (s: ChartSymbol) => {
+    setSymbol(s)
+    setSymbolSheetOpen(false)
   }
 
   return (
     <div
-      className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto"
-      style={{ color: 'var(--ko-text-primary)' }}
+      className="min-h-screen flex flex-col"
+      style={{ background: 'var(--ko-surface-0)', color: 'var(--ko-text-primary)' }}
     >
-      <header className="space-y-1">
-        <h1 className="text-2xl md:text-3xl font-bold">차트 분석</h1>
-        <p className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
-          OHLCV 캔들 + 기술적 지표 + 패턴 매칭 + k-NN 미래 수익률 예측 (charting 부활).
-        </p>
-      </header>
+      {/* === Sticky 가격 헤더 — 종목명 + 현재가 + 변동률 === */}
+      <header
+        className="sticky top-0 z-20 backdrop-blur-md"
+        style={{
+          background: 'color-mix(in oklch, var(--ko-surface-0) 85%, transparent)',
+          borderBottom: '1px solid var(--ko-border-subtle)',
+        }}
+      >
+        <div className="px-4 md:px-6 py-3 flex items-center gap-3">
+          <button
+            onClick={() => setSymbolSheetOpen(true)}
+            className="flex items-center gap-2 active:scale-[0.98] transition-transform"
+          >
+            <div className="text-left">
+              <div className="text-base md:text-lg font-bold leading-tight">
+                {symbol.name}
+              </div>
+              <div className="text-[11px] md:text-xs leading-tight" style={{ color: 'var(--ko-text-muted)' }}>
+                {symbol.ticker} · {assetLabel(symbol.assetClass)}
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4" style={{ color: 'var(--ko-text-muted)' }} />
+          </button>
 
-      {/* 1. 종목 / 기간 / 차트 종류 */}
-      <section style={cardStyle} className="space-y-3">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div>
-            <label className="text-xs block mb-1" style={{ color: 'var(--ko-text-muted)' }}>
-              종목
-            </label>
-            <SymbolSearch
-              symbols={symbolsQuery.data ?? []}
-              selected={symbol}
-              onSelect={setSymbol}
+          <div className="flex-1" />
+
+          {priceSummary && (
+            <div className="text-right">
+              <div
+                className="text-base md:text-xl font-bold tabular-nums leading-tight"
+                style={{
+                  color: priceSummary.isUp
+                    ? 'var(--ko-status-profit)'
+                    : 'var(--ko-status-loss)',
+                }}
+              >
+                {formatPrice(priceSummary.last, symbol.assetClass)}
+              </div>
+              <div
+                className="text-[11px] md:text-xs tabular-nums leading-tight"
+                style={{
+                  color: priceSummary.isUp
+                    ? 'var(--ko-status-profit)'
+                    : 'var(--ko-status-loss)',
+                }}
+              >
+                {priceSummary.isUp ? '▲' : '▼'} {Math.abs(priceSummary.changePct).toFixed(2)}%
+                <span className="ml-1.5" style={{ color: 'var(--ko-text-muted)' }}>
+                  ({priceSummary.change >= 0 ? '+' : ''}
+                  {formatPrice(priceSummary.change, symbol.assetClass)})
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 시간프레임 + 차트 종류 — 가로 스크롤 */}
+        <div className="px-4 md:px-6 pb-2.5 flex items-center gap-2 overflow-x-auto scrollbar-hide">
+          <PeriodSelector value={interval} onChange={setInterval} />
+          <div className="shrink-0 ml-auto">
+            <ChartToolbar
+              chartType={chartType}
+              onChartTypeChange={setChartType}
+              onFullscreen={() => {
+                document.querySelector('.ko-pattern-chart-wrapper')?.requestFullscreen?.()
+              }}
             />
           </div>
-          <div>
-            <label className="text-xs block mb-1" style={{ color: 'var(--ko-text-muted)' }}>
-              기간
-            </label>
-            <PeriodSelector value={interval} onChange={setInterval} />
-          </div>
-          <div>
-            <label className="text-xs block mb-1" style={{ color: 'var(--ko-text-muted)' }}>
-              차트 종류
-            </label>
-            <ChartToolbar value={chartType} onChange={setChartType} />
-          </div>
         </div>
-      </section>
+      </header>
 
-      {/* 2. 지표 토글 */}
-      <section style={cardStyle}>
-        <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--ko-text-secondary)' }}>
-          지표
-        </h2>
-        <IndicatorToggle
-          value={indicators}
-          onChange={setIndicators}
-          params={indicatorParams}
-          onParamsChange={setIndicatorParams}
-        />
-      </section>
-
-      {/* 3. PatternChart — 메인 캔들 차트 */}
-      <section style={cardStyle}>
-        <h2 className="text-base font-semibold mb-3">
-          {symbol.name} ({symbol.code}) @ {symbol.market} · {interval}
-        </h2>
+      {/* === 메인 차트 === */}
+      <section className="px-2 md:px-6 py-3">
         {ohlcvQ.isLoading && (
-          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>로딩 중…</div>
+          <div className="text-sm py-12 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+            로딩 중…
+          </div>
         )}
         {ohlcvQ.isError && (
-          <div className="text-sm" style={{ color: 'var(--ko-status-loss)' }}>
+          <div className="text-sm py-12 text-center" style={{ color: 'var(--ko-status-loss)' }}>
             에러: {toApiError(ohlcvQ.error).message}
+          </div>
+        )}
+        {ohlcvQ.data && ohlcvQ.data.length === 0 && (
+          <div
+            className="text-sm py-12 text-center rounded-2xl"
+            style={{
+              color: 'var(--ko-text-muted)',
+              background: 'var(--ko-surface-1)',
+              border: '1px solid var(--ko-border-subtle)',
+            }}
+          >
+            데이터 없음 — ingest 가 아직 적재하지 않았습니다.
+            <br />
+            <span className="text-xs">
+              ({symbol.ticker} @ {backendMarket})
+            </span>
           </div>
         )}
         {ohlcvQ.data && ohlcvQ.data.length > 0 && (
@@ -288,157 +342,257 @@ export function ChartsPage() {
             onPatternWidthChange={setPatternWidth}
           />
         )}
-        {ohlcvQ.data && ohlcvQ.data.length === 0 && (
-          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
-            데이터 없음 (ingest 가 아직 적재하지 않았습니다)
-          </div>
-        )}
       </section>
 
-      {/* 4. 패턴 매칭 결과 */}
-      <section style={cardStyle}>
-        <h2 className="text-base font-semibold mb-3">차트 패턴 매칭</h2>
-        <PatternSelector
-          matches={matches}
-          selectedIds={selectedPatternIds}
-          onToggle={togglePattern}
-        />
-      </section>
-
-      {/* 5. 미래 수익률 예측 */}
-      <section style={cardStyle}>
-        <h2 className="text-base font-semibold mb-3">미래 수익률 예측 (k-NN, 과거 유사 패턴)</h2>
-        {predictionQ.isLoading && (
-          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>예측 계산 중…</div>
-        )}
-        {predictionQ.isError && (
-          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
-            예측 불가 — {toApiError(predictionQ.error).message}
-          </div>
-        )}
-        {predictionForPanel && predictionForPanel.sample > 0 && (
-          <PredictionPanel prediction={predictionForPanel} />
-        )}
-        {predictionForPanel && predictionForPanel.sample === 0 && (
-          <div
-            className="rounded p-4 text-sm"
-            style={{
-              background: 'var(--ko-surface-2)',
-              border: '1px solid var(--ko-border-subtle)',
-              color: 'var(--ko-text-secondary)',
-            }}
-          >
-            유사 패턴이 발견되지 않았습니다 (히스토리 부족 또는 pgvector 인덱스 미적재).
-          </div>
-        )}
-      </section>
-
-      {/* 6. KpiCard 요약 (예측 sample > 0 시) */}
-      {predictionForPanel && predictionForPanel.sample > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiCard label="샘플 (k)" value={predictionForPanel.sample} />
-          <KpiCard
-            label="평균 5d 수익률"
-            value={pct(predictionQ.data!.avgReturn5d)}
-            deltaTone={(predictionForPanel.avgReturn5d ?? 0) > 0 ? 'profit' : 'loss'}
-          />
-          <KpiCard
-            label="평균 20d 수익률"
-            value={pct(predictionQ.data!.avgReturn20d)}
-            deltaTone={(predictionForPanel.avgReturn20d ?? 0) > 0 ? 'profit' : 'loss'}
-          />
-          <KpiCard
-            label="평균 60d 수익률"
-            value={pct(predictionQ.data!.avgReturn60d)}
-            deltaTone={(predictionForPanel.avgReturn60d ?? 0) > 0 ? 'profit' : 'loss'}
-          />
+      {/* === 하단 탭 — 지표 / 패턴 / 예측 / 유사 === */}
+      <section className="px-4 md:px-6 mt-1">
+        <div
+          className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1 sticky top-[calc(var(--ko-chart-header-h,140px))]"
+        >
+          {BOTTOM_TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setBottomTab(t.key)}
+              className={`shrink-0 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                bottomTab === t.key
+                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {t.label}
+              {t.key === 'patterns' && matches.length > 0 && (
+                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                  {matches.length}
+                </span>
+              )}
+            </button>
+          ))}
         </div>
-      )}
+      </section>
 
-      {/* 7. 유사 패턴 테이블 */}
-      <section style={cardStyle}>
-        <h2 className="text-base font-semibold mb-3">유사 패턴 — 과거 유사 구간 (top 20)</h2>
-        {similarityQ.isLoading && (
-          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>유사 구간 검색 중…</div>
+      {/* === 탭 콘텐츠 === */}
+      <section className="px-4 md:px-6 py-3 space-y-3 flex-1">
+        {bottomTab === 'indicators' && (
+          <Card>
+            <IndicatorToggle
+              value={indicators}
+              onChange={setIndicators}
+              params={indicatorParams}
+              onParamsChange={setIndicatorParams}
+            />
+          </Card>
         )}
-        {similarityQ.isError && (
-          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
-            유사도 검색 불가 — {toApiError(similarityQ.error).message}
+
+        {bottomTab === 'patterns' && (
+          <Card>
+            {matches.length === 0 ? (
+              <p className="text-sm py-6 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+                인식된 패턴이 없습니다 (히스토리가 충분한 시점을 선택하세요).
+              </p>
+            ) : (
+              <PatternSelector
+                matches={matches}
+                selectedIds={selectedPatternIds}
+                onToggle={togglePattern}
+              />
+            )}
+          </Card>
+        )}
+
+        {bottomTab === 'prediction' && (
+          <div className="space-y-3">
+            {predictionQ.isLoading && (
+              <Card>
+                <p className="text-sm py-4 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+                  예측 계산 중…
+                </p>
+              </Card>
+            )}
+            {predictionQ.isError && (
+              <Card>
+                <p className="text-sm py-4 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+                  예측 불가 — {toApiError(predictionQ.error).message}
+                </p>
+              </Card>
+            )}
+            {matches.length > 0 && (
+              <PredictionPanel matches={matches} ticker={symbol.ticker} />
+            )}
+            {predictionQ.data && predictionQ.data.sample > 0 && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+                <KpiCard label="샘플 (k)" value={predictionQ.data.sample} />
+                <KpiCard
+                  label="5d"
+                  value={pct(predictionQ.data.avgReturn5d)}
+                  deltaTone={parseFloat(predictionQ.data.avgReturn5d ?? '0') > 0 ? 'profit' : 'loss'}
+                />
+                <KpiCard
+                  label="20d"
+                  value={pct(predictionQ.data.avgReturn20d)}
+                  deltaTone={parseFloat(predictionQ.data.avgReturn20d ?? '0') > 0 ? 'profit' : 'loss'}
+                />
+                <KpiCard
+                  label="60d"
+                  value={pct(predictionQ.data.avgReturn60d)}
+                  deltaTone={parseFloat(predictionQ.data.avgReturn60d ?? '0') > 0 ? 'profit' : 'loss'}
+                />
+              </div>
+            )}
+            {predictionQ.data && predictionQ.data.sample === 0 && (
+              <Card>
+                <p className="text-sm py-4 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+                  유사 패턴이 발견되지 않았습니다 (히스토리 부족 또는 pgvector 인덱스 미적재).
+                </p>
+              </Card>
+            )}
           </div>
         )}
-        {similarityQ.data && similarityQ.data.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm border-collapse">
-              <thead>
-                <tr
-                  className="text-left text-xs uppercase tracking-wide"
-                  style={{
-                    color: 'var(--ko-text-muted)',
-                    borderBottom: '1px solid var(--ko-border-subtle)',
-                  }}
-                >
-                  <th className="py-2 px-2">자산</th>
-                  <th className="py-2 px-2">거래소</th>
-                  <th className="py-2 px-2">윈도우 종료</th>
-                  <th className="py-2 px-2 text-right">유사도</th>
-                  <th className="py-2 px-2 text-right">5d 수익률</th>
-                  <th className="py-2 px-2 text-right">20d 수익률</th>
-                </tr>
-              </thead>
-              <tbody>
-                {similarityQ.data.map((hit, i) => (
-                  <tr
-                    key={`${hit.assetCode}-${hit.tsWindowEnd}-${i}`}
-                    className="last:border-0"
-                    style={{ borderBottom: '1px solid var(--ko-border-subtle)' }}
-                  >
-                    <td className="py-2 px-2 font-medium">{hit.assetCode}</td>
-                    <td className="py-2 px-2" style={{ color: 'var(--ko-text-secondary)' }}>
-                      {hit.marketCode}
-                    </td>
-                    <td
-                      className="py-2 px-2 tabular-nums text-xs"
-                      style={{ color: 'var(--ko-text-secondary)' }}
-                    >
-                      {hit.tsWindowEnd.slice(0, 10)}
-                    </td>
-                    <td className="py-2 px-2 text-right tabular-nums">
-                      {(hit.similarity * 100).toFixed(1)}%
-                    </td>
-                    <td
-                      className="py-2 px-2 text-right tabular-nums"
+
+        {bottomTab === 'similar' && (
+          <Card>
+            {similarityQ.isLoading && (
+              <p className="text-sm py-4 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+                유사 구간 검색 중…
+              </p>
+            )}
+            {similarityQ.isError && (
+              <p className="text-sm py-4 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+                유사도 검색 불가 — {toApiError(similarityQ.error).message}
+              </p>
+            )}
+            {similarityQ.data && similarityQ.data.length === 0 && (
+              <p className="text-sm py-4 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+                유사 패턴 없음 — pgvector 인덱스 부족.
+              </p>
+            )}
+            {similarityQ.data && similarityQ.data.length > 0 && (
+              <div className="overflow-x-auto -mx-2">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr
+                      className="text-left text-xs uppercase tracking-wide"
                       style={{
-                        color:
-                          parseFloat(hit.return5d ?? '0') >= 0
-                            ? 'var(--ko-status-profit)'
-                            : 'var(--ko-status-loss)',
+                        color: 'var(--ko-text-muted)',
+                        borderBottom: '1px solid var(--ko-border-subtle)',
                       }}
                     >
-                      {pct(hit.return5d)}
-                    </td>
-                    <td
-                      className="py-2 px-2 text-right tabular-nums"
-                      style={{
-                        color:
-                          parseFloat(hit.return20d ?? '0') >= 0
-                            ? 'var(--ko-status-profit)'
-                            : 'var(--ko-status-loss)',
-                      }}
-                    >
-                      {pct(hit.return20d)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {similarityQ.data && similarityQ.data.length === 0 && (
-          <div className="text-sm" style={{ color: 'var(--ko-text-muted)' }}>
-            유사 패턴 없음 — pgvector 인덱스에 충분한 임베딩이 없거나 60+ 일 히스토리 부족.
-          </div>
+                      <th className="py-2 px-2">자산</th>
+                      <th className="py-2 px-2 hidden sm:table-cell">거래소</th>
+                      <th className="py-2 px-2 hidden md:table-cell">윈도우 종료</th>
+                      <th className="py-2 px-2 text-right">유사도</th>
+                      <th className="py-2 px-2 text-right">5d</th>
+                      <th className="py-2 px-2 text-right">20d</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {similarityQ.data.map((hit, i) => (
+                      <tr
+                        key={`${hit.assetCode}-${hit.tsWindowEnd}-${i}`}
+                        style={{ borderBottom: '1px solid var(--ko-border-subtle)' }}
+                      >
+                        <td className="py-2 px-2 font-medium">{hit.assetCode}</td>
+                        <td className="py-2 px-2 hidden sm:table-cell" style={{ color: 'var(--ko-text-secondary)' }}>
+                          {hit.marketCode}
+                        </td>
+                        <td className="py-2 px-2 hidden md:table-cell tabular-nums text-xs" style={{ color: 'var(--ko-text-secondary)' }}>
+                          {hit.tsWindowEnd.slice(0, 10)}
+                        </td>
+                        <td className="py-2 px-2 text-right tabular-nums">
+                          {(hit.similarity * 100).toFixed(1)}%
+                        </td>
+                        <td
+                          className="py-2 px-2 text-right tabular-nums"
+                          style={{
+                            color:
+                              parseFloat(hit.return5d ?? '0') >= 0
+                                ? 'var(--ko-status-profit)'
+                                : 'var(--ko-status-loss)',
+                          }}
+                        >
+                          {pct(hit.return5d)}
+                        </td>
+                        <td
+                          className="py-2 px-2 text-right tabular-nums"
+                          style={{
+                            color:
+                              parseFloat(hit.return20d ?? '0') >= 0
+                                ? 'var(--ko-status-profit)'
+                                : 'var(--ko-status-loss)',
+                          }}
+                        >
+                          {pct(hit.return20d)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
         )}
       </section>
+
+      {/* === 종목 선택 시트 === */}
+      {symbolSheetOpen && (
+        <SymbolSheet onClose={() => setSymbolSheetOpen(false)}>
+          <SymbolSearch onSelect={onPickSymbol} selectedTicker={symbol.ticker} />
+        </SymbolSheet>
+      )}
     </div>
+  )
+}
+
+function assetLabel(a: ChartSymbol['assetClass']): string {
+  return a === 'CRYPTO' ? '코인' : a === 'STOCK_KR' ? '국내주식' : '미국주식'
+}
+
+function Card({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      style={{
+        background: 'var(--ko-surface-1)',
+        border: '1px solid var(--ko-border-subtle)',
+        borderRadius: 'var(--ko-radius-lg)',
+        padding: 'var(--ko-space-4)',
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function SymbolSheet({
+  children,
+  onClose,
+}: {
+  children: React.ReactNode
+  onClose: () => void
+}) {
+  return (
+    <>
+      <div
+        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div
+        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl p-4 max-h-[85vh] overflow-y-auto md:inset-y-0 md:right-auto md:left-0 md:rounded-r-2xl md:rounded-tl-none md:max-w-md md:max-h-none"
+        style={{
+          background: 'var(--ko-surface-1)',
+          border: '1px solid var(--ko-border-subtle)',
+        }}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold">종목 선택</h3>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
+            aria-label="닫기"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </>
   )
 }

@@ -31,6 +31,7 @@ const navItems: NavItem[] = [
   { label: '상품 관리', icon: Package, to: '/admin/products', enabled: true },
   { label: '주문 관리', icon: ClipboardList, to: '/admin/orders', enabled: true },
   { label: '코드 사전', icon: BookOpen, to: '/admin/code-dictionary', enabled: true },
+  { label: '퀀트 자산', icon: Coins, to: '/admin/quant/assets', enabled: true },
   { label: '프로필', icon: User, to: '/admin/profile', enabled: true },
   { label: '시스템', icon: Monitor, to: '/admin/system', enabled: true },
 ];

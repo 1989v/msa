@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { Home, LineChart, ListOrdered, Trophy } from 'lucide-react'
+import { Home, LineChart, CandlestickChart, ListOrdered, Trophy } from 'lucide-react'
 import { cn } from '@/lib/cn'
 
 interface Tab {
@@ -13,6 +13,7 @@ interface Tab {
 const tabs: Tab[] = [
   { to: '/', label: '홈', icon: Home, exact: true },
   { to: '/strategies', label: '전략', icon: LineChart },
+  { to: '/charts', label: '차트', icon: CandlestickChart },
   { to: '/runs', label: '백테스트', icon: ListOrdered },
   { to: '/leaderboard', label: '리더보드', icon: Trophy },
 ]

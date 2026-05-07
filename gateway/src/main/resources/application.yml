@@ -46,7 +46,7 @@ spring:
             - id: quant-service
               uri: http://quant:8094
               predicates:
-                - Path=/api/v1/strategies/**, /api/v1/dashboard/**, /api/v1/leaderboard/**, /api/v1/runs/**, /api/v1/signal-strategies/**, /api/v1/charts/**, /api/v1/learn/**
+                - Path=/api/v1/strategies/**, /api/v1/dashboard/**, /api/v1/leaderboard/**, /api/v1/runs/**, /api/v1/signal-strategies/**, /api/v1/charts/**, /api/v1/learn/**, /api/v1/quant/**
 
             # === Backend REST 라우트 (admin / 일반 클라이언트용) ===
             # 백엔드 컨트롤러는 /api/products, /api/orders, /api/auth, /api/members 사용 (no v1).

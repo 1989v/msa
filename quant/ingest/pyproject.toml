@@ -9,6 +9,7 @@ dependencies = [
     "clickhouse-connect>=0.7.16",
     "pandas>=2.2.0",
     "click>=8.1.0",
+    "requests>=2.31.0",
 ]
 
 [project.optional-dependencies]

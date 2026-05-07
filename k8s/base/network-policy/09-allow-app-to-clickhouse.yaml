@@ -1,7 +1,10 @@
-# ADR-0031 §1 (table) — analytics → ClickHouse (8123 HTTP)
+# ADR-0031 §1 (table) — {analytics, quant, quant-ingest} → ClickHouse (8123 HTTP)
 #
-# 현재 ClickHouse 호출은 analytics 서비스만 한다.
-# 다른 서비스가 추가로 필요해지면 from.podSelector matchExpressions 에 In list 추가.
+# ClickHouse 호출 서비스:
+#   - analytics      events 적재/조회
+#   - quant          OHLCV 차트 read (ChartController)
+#   - quant-ingest   OHLCV write (yfinance/FDR sidecar)
+# 다른 서비스가 추가로 필요해지면 ingress.from.podSelector matchExpressions 에 추가.
 #
 # 라벨 선택 근거:
 #   - k8s/infra/local/clickhouse/service.yaml:8 (app.kubernetes.io/name=clickhouse)
@@ -25,7 +28,7 @@ spec:
   ingress:
     - from:
         - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: analytics
+            matchExpressions:
+              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, quant-ingest] }
       ports:
         - { port: 8123, protocol: TCP }

@@ -22,16 +22,25 @@ spec:
             app.kubernetes.io/part-of: commerce-platform
         spec:
           restartPolicy: OnFailure
+          # K8s legacy service env 자동 주입 (CLICKHOUSE_PORT=tcp://...) 가
+          # sink 의 int(env) 변환과 충돌 → 차단.
+          enableServiceLinks: false
           containers:
             - name: ingest
               image: commerce/quant-ingest:latest
               imagePullPolicy: IfNotPresent
               args: ["--mode=incremental", "--interval=1h"]
               env:
-                - name: CLICKHOUSE_URL
-                  value: "http://clickhouse:8123"
+                - name: CLICKHOUSE_HOST
+                  value: "clickhouse"
+                - name: CLICKHOUSE_PORT
+                  value: "8123"
                 - name: CLICKHOUSE_DB
                   value: "quant"
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
               resources:
                 requests: { cpu: 50m, memory: 256Mi }
                 limits:   { memory: 512Mi }
@@ -60,16 +69,23 @@ spec:
             app.kubernetes.io/part-of: commerce-platform
         spec:
           restartPolicy: OnFailure
+          enableServiceLinks: false
           containers:
             - name: ingest
               image: commerce/quant-ingest:latest
               imagePullPolicy: IfNotPresent
               args: ["--mode=incremental", "--interval=1d"]
               env:
-                - name: CLICKHOUSE_URL
-                  value: "http://clickhouse:8123"
+                - name: CLICKHOUSE_HOST
+                  value: "clickhouse"
+                - name: CLICKHOUSE_PORT
+                  value: "8123"
                 - name: CLICKHOUSE_DB
                   value: "quant"
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
               resources:
                 requests: { cpu: 50m, memory: 256Mi }
                 limits:   { memory: 512Mi }

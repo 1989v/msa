@@ -1,0 +1,25 @@
+# Phase 1.5 (V20260507_001) — quant-ingest sidecar 가 quant API 호출 허용.
+#
+# ingest scheduler 가 /api/v1/quant/assets?activeOnly=true 로 자산 카탈로그 fetch.
+# (이 외 시세 fetch 는 yfinance/FDR 외부 → 11-allow-egress-https-public 로 처리)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingest-to-quant
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: quant
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: quant-ingest
+      ports:
+        - { port: http, protocol: TCP }

@@ -2,7 +2,8 @@
 #
 # 외부 인터넷 :443 호출이 필요한 서비스 화이트리스트:
 #   - auth         OAuth 토큰 검증 (Google/Apple/Kakao 등)
-#   - quant  거래소 API (Binance/Upbit/Bithumb), Telegram, KMS (OCI Vault — ADR-0027)
+#   - quant        거래소 API (Binance/Upbit/Bithumb), Telegram, KMS (OCI Vault — ADR-0027)
+#   - quant-ingest yfinance / FinanceDataReader (Yahoo / Naver) OHLCV 시세 수집 sidecar
 #   - gifticon     외부 OCR API
 # (charting 은 ADR-0036 P2-T20 에서 Hard remove 되어 제외됨, 2026-05-02.)
 # 다른 서비스는 외부 :443 차단된 상태 (default-deny + DNS only).
@@ -20,7 +21,7 @@ metadata:
 spec:
   podSelector:
     matchExpressions:
-      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, gifticon] }
+      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, quant-ingest, gifticon] }
   policyTypes:
     - Egress
   egress:

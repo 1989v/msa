@@ -9,6 +9,7 @@ import { MembersPage } from '@/pages/MembersPage';
 import { ProductsPage } from '@/pages/ProductsPage';
 import { OrdersPage } from '@/pages/OrdersPage';
 import { CodeDictionaryPage } from '@/pages/CodeDictionaryPage';
+import { QuantAssetCatalogPage } from '@/pages/QuantAssetCatalogPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="code-dictionary" element={<CodeDictionaryPage />} />
+        <Route path="quant/assets" element={<QuantAssetCatalogPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
     </Routes>

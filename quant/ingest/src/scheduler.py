@@ -4,16 +4,21 @@ K8s CronJob 이 본 모듈을 호출:
     python -m src.scheduler --mode=incremental --interval=1d
 
 ADR-0033/0034.
+Phase 1.5 — 자산 카탈로그 DB 화 (V20260507_001).
+quant /api/v1/quant/assets 에서 active 자산을 fetch.
+실패 시 DEFAULT_TARGETS fallback (오프라인 / 첫 부트스트랩 보호).
 """
 from __future__ import annotations
 
 import logging
 import os
-import sys
+from typing import List, Tuple
 
 import click
+import requests
 
 from src.sinks.clickhouse_sink import insert_bars
+from src.sources.fdr_src import fetch_fdr
 from src.sources.yfinance_src import fetch_yfinance
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -21,14 +26,52 @@ log = logging.getLogger("quant-ingest")
 
 
 # 자산 카탈로그 — Phase 1 시드.
+# FE SymbolSearch 의 POPULAR_SYMBOLS 와 정합 유지 필요.
 # 실제 운영에선 ConfigMap / DB 시드로 교체.
 DEFAULT_TARGETS = [
     # (asset_code, asset_class, source)
+    # 미국 주식 (yfinance → market_code=YAHOO)
     ("AAPL", "STOCK_US", "yfinance"),
+    ("NVDA", "STOCK_US", "yfinance"),
+    ("TSLA", "STOCK_US", "yfinance"),
     ("MSFT", "STOCK_US", "yfinance"),
+    ("GOOGL", "STOCK_US", "yfinance"),
+    ("META", "STOCK_US", "yfinance"),
+    # 한국 주식 (FDR → market_code=FDR_KR)
+    ("005930", "STOCK_KR", "fdr"),  # 삼성전자
+    ("000660", "STOCK_KR", "fdr"),  # SK하이닉스
+    ("035420", "STOCK_KR", "fdr"),  # NAVER
+    ("035720", "STOCK_KR", "fdr"),  # 카카오
+    ("005380", "STOCK_KR", "fdr"),  # 현대차
+    ("207940", "STOCK_KR", "fdr"),  # 삼성바이오로직스
+    # 코인 (yfinance USD pair → market_code=YAHOO)
     ("BTC-USD", "CRYPTO", "yfinance"),
     ("ETH-USD", "CRYPTO", "yfinance"),
 ]
+
+
+def load_targets() -> List[Tuple[str, str, str]]:
+    """quant 백엔드의 자산 카탈로그 fetch.
+
+    `QUANT_API_URL` 미지정 시 in-cluster DNS `http://quant:8094` 사용.
+    실패 시 DEFAULT_TARGETS 로 fallback (오프라인 / DB 미부트 케이스 보호).
+    """
+    base = os.environ.get("QUANT_API_URL", "http://quant:8094")
+    url = f"{base}/api/v1/quant/assets?activeOnly=true"
+    try:
+        r = requests.get(url, timeout=5)
+        r.raise_for_status()
+        body = r.json()
+        items = body.get("data") or body.get("payload") or []
+        targets = [(d["assetCode"], d["assetClass"], d["source"]) for d in items]
+        if not targets:
+            log.warning("asset catalog returned empty, fallback DEFAULT_TARGETS")
+            return DEFAULT_TARGETS
+        log.info("loaded %d targets from quant catalog API", len(targets))
+        return targets
+    except Exception as exc:
+        log.warning("failed to load asset catalog from %s: %s — fallback DEFAULT_TARGETS", url, exc)
+        return DEFAULT_TARGETS
 
 
 @click.command()
@@ -37,8 +80,9 @@ DEFAULT_TARGETS = [
 @click.option("--lookback-days", type=int, default=7)
 def main(mode: str, interval: str, lookback_days: int) -> None:
     log.info("quant-ingest start mode=%s interval=%s lookback_days=%d", mode, interval, lookback_days)
+    targets = load_targets()
     total = 0
-    for asset_code, asset_class, source in DEFAULT_TARGETS:
+    for asset_code, asset_class, source in targets:
         try:
             if source == "yfinance":
                 bars = list(fetch_yfinance(
@@ -47,6 +91,9 @@ def main(mode: str, interval: str, lookback_days: int) -> None:
                     lookback_days=lookback_days,
                     asset_class=asset_class,
                 ))
+            elif source == "fdr":
+                # FDR 은 KR 주식 일봉만 지원 (interval 인자 무시)
+                bars = list(fetch_fdr(asset_code=asset_code, lookback_days=lookback_days))
             else:
                 log.warning("skip unknown source=%s for asset=%s", source, asset_code)
                 continue
