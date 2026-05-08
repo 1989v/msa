@@ -262,8 +262,8 @@ export function ChartsPage() {
                 className="text-base md:text-xl font-bold tabular-nums leading-tight"
                 style={{
                   color: priceSummary.isUp
-                    ? 'var(--ko-status-profit)'
-                    : 'var(--ko-status-loss)',
+                    ? 'var(--ko-quote-rise)'
+                    : 'var(--ko-quote-fall)',
                 }}
               >
                 {formatPrice(priceSummary.last, symbol.assetClass)}
@@ -272,8 +272,8 @@ export function ChartsPage() {
                 className="text-[11px] md:text-xs tabular-nums leading-tight"
                 style={{
                   color: priceSummary.isUp
-                    ? 'var(--ko-status-profit)'
-                    : 'var(--ko-status-loss)',
+                    ? 'var(--ko-quote-rise)'
+                    : 'var(--ko-quote-fall)',
                 }}
               >
                 {priceSummary.isUp ? '▲' : '▼'} {Math.abs(priceSummary.changePct).toFixed(2)}%

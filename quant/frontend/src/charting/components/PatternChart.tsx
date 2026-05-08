@@ -81,8 +81,9 @@ function VolumePanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef:
     const series = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'right' })
     series.setData(ohlcv.map((b, i) => ({
       time: toTime(b, i),
+      // Quote-aligned (rise=red, fall=blue) — synced with --ko-quote-rise/fall.
       value: Number(b.volume),
-      color: Number(b.close) >= Number(b.open) ? 'rgba(16,185,129,0.4)' : 'rgba(244,63,94,0.4)',
+      color: Number(b.close) >= Number(b.open) ? 'rgba(250,97,109,0.4)' : 'rgba(52,133,250,0.4)',
     })))
 
     const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
@@ -163,7 +164,8 @@ function MacdPanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: M
 
     const validData = ohlcv.map((b, i) => ({ time: toTime(b, i), point: macdData[i] })).filter(d => d.point !== null)
 
-    histSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.histogram, color: d.point!.histogram >= 0 ? 'rgba(16,185,129,0.4)' : 'rgba(244,63,94,0.4)' })))
+    // MACD histogram is momentum direction — align with quote convention (positive=red, negative=blue).
+    histSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.histogram, color: d.point!.histogram >= 0 ? 'rgba(250,97,109,0.4)' : 'rgba(52,133,250,0.4)' })))
     macdSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.macd })))
     signalSeries.setData(validData.map(d => ({ time: d.time, value: d.point!.signal })))
 
@@ -486,10 +488,11 @@ export function PatternChart({
     // ── Main series (candle / line / area) ────────────────────────────────────
     let candleSeries: any
     if (chartType === 'candle') {
+      // Quote colors — KR convention (rise=red, fall=blue). Synced with --ko-quote-rise/fall in tokens.css.
       candleSeries = chart.addCandlestickSeries({
-        upColor: '#22c55e', downColor: '#ef4444',
-        borderUpColor: '#16a34a', borderDownColor: '#dc2626',
-        wickUpColor: '#16a34a', wickDownColor: '#dc2626',
+        upColor: '#FA616D', downColor: '#3485FA',
+        borderUpColor: '#FA616D', borderDownColor: '#3485FA',
+        wickUpColor: '#FA616D', wickDownColor: '#3485FA',
       })
       candleSeries.setData(data.map((b, i) => ({
         time: toTime(b, i),
@@ -709,9 +712,9 @@ export function PatternChart({
             <div className="absolute top-1 left-1 z-30 flex gap-3 px-2 py-1 rounded bg-slate-900/95 backdrop-blur text-[11px] font-mono pointer-events-none shadow-lg">
               <span className="text-slate-400">{hoverBar.trade_date}{hoverBar.bar_time && hoverBar.bar_time !== '00:00:00' ? ` ${hoverBar.bar_time.slice(0, 5)}` : ''}</span>
               <span className="text-slate-300">O <span className="text-white">{Number(hoverBar.open).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
-              <span className="text-slate-300">H <span className="text-emerald-400">{Number(hoverBar.high).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
-              <span className="text-slate-300">L <span className="text-rose-400">{Number(hoverBar.low).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
-              <span className="text-slate-300">C <span className={Number(hoverBar.close) >= Number(hoverBar.open) ? 'text-emerald-400' : 'text-rose-400'}>{Number(hoverBar.close).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
+              <span className="text-slate-300">H <span style={{ color: 'var(--ko-quote-rise)' }}>{Number(hoverBar.high).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
+              <span className="text-slate-300">L <span style={{ color: 'var(--ko-quote-fall)' }}>{Number(hoverBar.low).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
+              <span className="text-slate-300">C <span style={{ color: Number(hoverBar.close) >= Number(hoverBar.open) ? 'var(--ko-quote-rise)' : 'var(--ko-quote-fall)' }}>{Number(hoverBar.close).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></span>
               <span className="text-slate-500">Vol {Number(hoverBar.volume).toLocaleString()}</span>
             </div>
           )}

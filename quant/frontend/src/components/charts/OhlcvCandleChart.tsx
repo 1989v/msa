@@ -61,11 +61,12 @@ export function OhlcvCandleChart({ bars, indicator, height = 360 }: Props) {
       timeScale: { timeVisible: true, secondsVisible: false },
       rightPriceScale: { borderColor: 'oklch(0.32 0.015 250)' },
     })
+    // Quote convention (KR — rise=red, fall=blue). Synced with --ko-quote-rise/fall in tokens.css.
     const candle = chart.addCandlestickSeries({
-      upColor: 'oklch(0.72 0.19 145)',     // sample profit green
-      downColor: 'oklch(0.65 0.22 25)',    // sample loss red
-      wickUpColor: 'oklch(0.72 0.19 145)',
-      wickDownColor: 'oklch(0.65 0.22 25)',
+      upColor: 'oklch(0.69 0.20 18)',     // --ko-quote-rise (#FA616D 근사)
+      downColor: 'oklch(0.63 0.18 254)',  // --ko-quote-fall (#3485FA 근사)
+      wickUpColor: 'oklch(0.69 0.20 18)',
+      wickDownColor: 'oklch(0.63 0.18 254)',
       borderVisible: false,
     })
     chartRef.current = chart

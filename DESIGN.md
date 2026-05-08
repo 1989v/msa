@@ -1,10 +1,10 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 1.0.0
+version: 1.1.0
 archetype: dark-trading
 mood: [data-dense, calm-night, korean-fintech]
-last_updated: 2026-05-08
+last_updated: 2026-05-09
 owners: [frontend-platform]
 default_theme: dark
 themes: [dark, light]
@@ -39,14 +39,23 @@ tokens:
     secondary:       { oklch: "0.78 0.14 180", role: "secondary toggle/segment" }
     secondary_hover: { oklch: "0.83 0.14 180" }
 
-    # Status (semantic — 직접 텍스트로 메시지 의미 표현 금지, 색만 사용 X)
-    profit:          { hex: "#22c55e", oklch: "0.72 0.19 145", role: "positive deltas only" }
+    # Status — P/L semantic (백테스트 PnL, 페이퍼/실매매 성과, 전략 평가 전용)
+    profit:          { hex: "#22c55e", oklch: "0.72 0.19 145", role: "P/L positive — backtest, paper, live trading" }
     profit_bg:       { oklch: "0.30 0.09 145" }
-    loss:            { hex: "#ef4444", oklch: "0.65 0.22 25",  role: "negative deltas only" }
+    loss:            { hex: "#ef4444", oklch: "0.65 0.22 25",  role: "P/L negative — backtest, paper, live trading" }
     loss_bg:         { oklch: "0.30 0.12 25" }
     warning:         { oklch: "0.80 0.15 75",  role: "caution / pending" }
     info:            { oklch: "0.75 0.10 240", role: "informational" }
     danger:          { hex: "#dc2626", oklch: "0.55 0.22 25", role: "destructive action (full-width stop)" }
+
+    # Quote — 한국 시세 관습 (캔들/가격 변동/시세 칩 전용)
+    # P/L 의미와 의도적 분리: 시세는 한국 관습(상승=빨강), P/L 은 글로벌(수익=녹색).
+    quote_rise:        { hex: "#FA616D", oklch: "0.69 0.20 18",  role: "candle up / price rise — KR convention" }
+    quote_rise_strong: { hex: "#F04251", oklch: "0.61 0.23 22",  role: "strong rise emphasis" }
+    quote_rise_bg:     { oklch: "0.30 0.10 18" }
+    quote_fall:        { hex: "#3485FA", oklch: "0.63 0.18 254", role: "candle down / price fall — KR convention" }
+    quote_fall_link:   { hex: "#449BFF", oklch: "0.71 0.17 250", role: "link / hover variant" }
+    quote_fall_bg:     { oklch: "0.30 0.10 254" }
 
   typography:
     family:        "Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
@@ -105,7 +114,8 @@ tokens:
 | **Primary** `{colors.primary}` | 화면당 가장 중요한 1개의 액션 / 활성 탭 underline / focus ring. 둘 이상 쓰면 위계 무너짐. |
 | **Secondary** `{colors.secondary}` | segment control 활성 / 토글. primary 와 같은 화면 공존 가능. |
 | **Surface 0/1/2/3** | 페이지 → 카드 → hover → nested 의 4단 계층. 카드 안에 카드 중첩 시 한 단계만 더 밝게. |
-| **Profit/Loss** | **delta(변동값) 표현에만 사용**. 일반 텍스트 강조에 녹/적 색 금지 (색맹 접근성 + 의미 오인). 항상 ▲/▼ 같은 형태 신호와 병기. |
+| **Profit/Loss** `{colors.profit}` `{colors.loss}` | **P/L 의미 전용** — 백테스트 PnL, 페이퍼/실매매 성과, 전략 평가. 글로벌(수익=녹색) 관습. 항상 ▲/▼ 같은 형태 신호와 병기. |
+| **Quote Rise/Fall** `{colors.quote_rise}` `{colors.quote_fall}` | **시세 표시 전용** — 캔들 색, 가격 변동률, 시세 microcontext 칩. 한국 관습(상승=빨강 / 하락=파랑). P/L 색상과 절대 혼용 금지. |
 | **Danger** | 비가역 파괴 액션 전용 (계정 삭제 / 전략 정지). 일반 취소 버튼엔 사용 금지. |
 
 WCAG: text 색은 항상 surface 와 4.5:1 (large 18pt+ 는 3:1) 이상 — light/dark 양 테마 모두 보장 (light token 은 `tokens.css` 하단 참조).
@@ -182,6 +192,7 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 - ❌ AI slop 패턴: gradient pastel + 모서리 16px+ + emoji-heavy. 우리 톤 아님.
 - ❌ `Primary` 색을 화면당 2개 이상 큰 액션에 사용.
 - ❌ 일반 텍스트 강조에 profit/loss 색 사용 (예: 일반 강조 "중요!" 를 빨강).
+- ❌ **시세(캔들/가격 변동률)에 `{colors.profit}` / `{colors.loss}` 사용**. 시세는 `{colors.quote_rise}` / `{colors.quote_fall}` 로 분리. P/L(전략 성과, 백테스트) 만 profit/loss 사용.
 - ❌ 카드 그림자 남발 — shadow 는 modal/popover 만.
 - ❌ 모호 사이즈 "조금 크게 / 살짝 어둡게" — 항상 토큰 값 명시.
 - ❌ 토큰 외 색상 추가 시 review 없이 1회용으로 inline. 추가는 `tokens.css` PR 로.

@@ -1,0 +1,55 @@
+version: 1
+spec: 2026-05-08-quant-charts-toss-grade
+status: open
+questions:
+  - id: OQ-Q01
+    status: closed
+    closed_at: 2026-05-09
+    resolution: "lightweight-charts 4.2.3 사용 중 (quant/frontend/package.json) — panes API 사용 가능. TG-2 진행 가능."
+    topic: lightweight-charts 버전
+    question: 현 의존성 버전 확인 후 4.2+ panes API 사용 가능 여부 결정
+    impact: TG-2 전체
+    resolution_owner: implementer
+    target_phase: P1
+
+  - id: OQ-Q02
+    status: open
+    topic: 분봉 ingest
+    question: 분봉(1m/5m/30m) ingest 를 P3 SSE 와 동시 도입할지, 분리 ADR 로 갈지
+    impact: TG-15
+    resolution_owner: 운영자
+    target_phase: P3
+
+  - id: OQ-Q03
+    status: open
+    topic: 그리기 도구 우선순위
+    question: 그리기 도구를 P2 → P3 로 미루는 게 ROI 더 좋을까
+    impact: TG-11
+    resolution_owner: 운영자
+    target_phase: P2
+
+  - id: OQ-Q04
+    status: open
+    topic: SSE 인증
+    question: 익명 시세 SSE 허용 — 기존 차트 API anonymous 정책과 일치 가정 — 운영자 확인
+    impact: TG-13-7 (gateway 라우팅)
+    resolution_owner: 운영자
+    target_phase: P3
+
+  - id: OQ-Q05
+    status: closed
+    closed_at: 2026-05-09
+    resolution: "Pretendard 가 design-system 의 --ko-font-family 토큰에 이미 정의됨 (tokens.css L79). quant-fe 가 자동 상속. 추가 import 불필요."
+    topic: 폰트
+    question: 'Pretendard 가 quant-fe 에 이미 import 되어 있는지, 신규 webfont import 가 필요한지'
+    impact: 토스 톤 매칭 — 우리는 Toss Product Sans 미보유
+    resolution_owner: implementer
+    target_phase: P1
+
+  - id: OQ-Q06
+    status: open
+    topic: AI 자연어 요약
+    question: P1 의 client-side 룰 기반 요약을 P2 에서 LLM 호출로 격상할지, 그대로 유지할지
+    impact: TG-10
+    resolution_owner: 운영자
+    target_phase: P2

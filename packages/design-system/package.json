@@ -1,6 +1,6 @@
 {
   "name": "@kgd/design-system",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "kgd 통합 디자인 시스템 — OKLCH 토큰 + 5 핵심 React 컴포넌트. admin/quant/portal-fe 공유.",
   "private": true,
   "type": "module",
