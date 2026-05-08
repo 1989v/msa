@@ -16,6 +16,7 @@ import { PatternSelector } from '@/charting/components/PatternSelector'
 import { TimeframeSelector } from '@/charting/components/TimeframeSelector'
 import { SymbolSearch } from '@/charting/components/SymbolSearch'
 import { SymbolPickerSheet } from '@/charting/components/SymbolPickerSheet'
+import { AiSideCard } from '@/charting/components/AiSideCard'
 import {
   DEFAULT_PARAMS,
   type Indicators,
@@ -467,6 +468,8 @@ export function ChartsPage() {
         }
       />
 
+      <div className="flex-1 lg:max-w-screen-2xl lg:mx-auto lg:w-full lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4">
+        <main className="lg:min-w-0">
       {/* === 메인 차트 === */}
       <section className="px-2 md:px-6 py-3">
         {ohlcvQ.isLoading && (
@@ -814,6 +817,38 @@ export function ChartsPage() {
           </Card>
         )}
       </section>
+        </main>
+
+        {/* 데스크톱 (≥lg) 우측 sticky AI 사이드 카드 — TG-7 */}
+        <aside className="hidden lg:block px-4 py-3">
+          <div className="sticky top-[260px]">
+            {ohlcvQ.data && ohlcvQ.data.length > 0 && (
+              <AiSideCard
+                summary={aiSummaryText(ohlcvQ.data, microcontextChips)}
+                topMatch={
+                  matches.length > 0
+                    ? {
+                        label: matches[0].pattern.name,
+                        score: matches[0].score,
+                        color: matches[0].pattern.color,
+                      }
+                    : undefined
+                }
+                prediction={
+                  predictionQ.data
+                    ? {
+                        sample: predictionQ.data.sample,
+                        avgReturn5d: predictionQ.data.avgReturn5d,
+                        avgReturn20d: predictionQ.data.avgReturn20d,
+                      }
+                    : null
+                }
+                onSeeMore={() => setBottomTab('insight')}
+              />
+            )}
+          </div>
+        </aside>
+      </div>
 
       {/* === 종목 선택 sheet (mobile) / dialog (desktop) — '/' 단축키 === */}
       <SymbolPickerSheet
