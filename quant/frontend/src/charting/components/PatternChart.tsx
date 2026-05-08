@@ -388,7 +388,8 @@ export function PatternChart({
     setHoverBar(info.bar)
   }, [])
 
-  const candleMode = chartType === 'candle'
+  // heikinashi 도 캔들 모드로 취급 — score 마커 anchor 가능
+  const candleMode = chartType === 'candle' || chartType === 'heikinashi'
   const empty = bars.length === 0
   const subPaneCount = countActiveSubPanes(state)
   // Each sub-pane adds ~110-140px height. ChartCore total height = main 440 + (130 per pane).
@@ -432,7 +433,7 @@ export function PatternChart({
     >
       <ChartCore
         bars={bars}
-        chartType={chartType === 'candle' ? 'candle' : chartType === 'line' ? 'line' : 'area'}
+        chartType={chartType}
         indicators={indicators}
         onCrosshairMove={handleCrosshair}
         onChartReady={handleChartReady}

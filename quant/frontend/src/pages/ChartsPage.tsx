@@ -13,7 +13,7 @@ import {
 } from '@/charting/api'
 import { PatternChart } from '@/charting/components/PatternChart'
 import { PatternSelector } from '@/charting/components/PatternSelector'
-import { PeriodSelector } from '@/charting/components/PeriodSelector'
+import { TimeframeSelector } from '@/charting/components/TimeframeSelector'
 import { SymbolSearch } from '@/charting/components/SymbolSearch'
 import {
   IndicatorToggle,
@@ -29,7 +29,7 @@ import {
   RangePositionBar,
   type MicrocontextChip,
 } from '@/charting/components/MicrocontextRail'
-import type { ChartType } from '@/charting/types'
+import type { ChartType, TimeframeKey } from '@/charting/types'
 import { matchPatterns } from '@/charting/lib/patternMatcher'
 import { PATTERNS as ALL_PATTERNS } from '@/charting/lib/patterns'
 import { calcMA, calcRSI, calcATR } from '@/charting/lib/indicators'
@@ -148,7 +148,7 @@ export function ChartsPage() {
     assetClass: 'CRYPTO',
     active: true,
   })
-  const [interval, setInterval] = useState('1d')
+  const [interval, setInterval] = useState<TimeframeKey>('1d')
   const [chartType, setChartType] = useState<ChartType>('candle')
   const [indicators, setIndicators] = useState<Indicators>(DEFAULT_INDICATORS)
   const [indicatorParams, setIndicatorParams] = useState<IndicatorParams>(DEFAULT_PARAMS)
@@ -371,7 +371,7 @@ export function ChartsPage() {
           <div className="space-y-2">
             <MicrocontextRail chips={microcontextChips} />
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
-              <PeriodSelector value={interval} onChange={setInterval} />
+              <TimeframeSelector value={interval} onChange={setInterval} />
               <div className="shrink-0 ml-auto">
                 <ChartToolbar
                   chartType={chartType}
@@ -381,6 +381,10 @@ export function ChartsPage() {
                       .querySelector('.ko-pattern-chart-wrapper')
                       ?.requestFullscreen?.()
                   }}
+                  indicators={indicators}
+                  onIndicatorsChange={setIndicators}
+                  indicatorParams={indicatorParams}
+                  onIndicatorParamsChange={setIndicatorParams}
                 />
               </div>
             </div>
