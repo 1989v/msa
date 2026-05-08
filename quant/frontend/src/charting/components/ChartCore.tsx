@@ -34,6 +34,8 @@ import {
   LineSeries,
   HistogramSeries,
   AreaSeries,
+  type IChartApi,
+  type ISeriesApi,
   type Time,
 } from 'lightweight-charts'
 import type { OhlcvBar } from '../api'
@@ -79,6 +81,15 @@ interface Props {
   chartType: ChartCoreType
   indicators?: ChartIndicatorSeries[]
   onCrosshairMove?: (info: ChartCrosshairInfo) => void
+  /** Fires when the chart instance is created (and again with null on cleanup).
+   *  Use this to attach overlays that need direct access to timeScale / priceScale. */
+  onChartReady?: (
+    chart: IChartApi | null,
+    mainSeries: ISeriesApi<'Candlestick' | 'Line' | 'Area'> | null,
+  ) => void
+  /** Optional caller-supplied time-key resolver (intraday sequential vs UTC).
+   *  Defaults to: bar_time present → unix epoch s (UTC), else trade_date string. */
+  toTime?: (bar: OhlcvBar, index: number) => Time
   /** Total chart height including all panes. */
   height?: number
   /** Per-pane stretch factor (default: pane 0 = 4, others = 1). */
@@ -92,11 +103,14 @@ export function ChartCore({
   chartType,
   indicators = [],
   onCrosshairMove,
+  onChartReady,
+  toTime: toTimeProp,
   height = 440,
   paneStretch,
   className,
   style,
 }: Props) {
+  const toTime = toTimeProp ?? defaultBarToTimeKey
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [chartReady, setChartReady] = useState(false)
 
@@ -130,58 +144,65 @@ export function ChartCore({
     })
 
     // ── Main price series ────────────────────────────────────────────────────
-    const sortedBars = sortBars(bars)
-    const mainOhlc = sortedBars.map(b => ({
-      time: barToTimeKey(b),
+    // Caller-supplied toTime preserves PatternChart's intraday-sequential mode;
+    // default treats bar_time as UTC.
+    const useCustomTime = !!toTimeProp
+    const sortedBars = useCustomTime ? bars : sortBars(bars)
+    const mainOhlc = sortedBars.map((b, i) => ({
+      time: toTime(b, i),
       open: Number(b.open),
       high: Number(b.high),
       low: Number(b.low),
       close: Number(b.close),
     }))
-    const mainCloseSeries = sortedBars.map(b => ({
-      time: barToTimeKey(b),
+    const mainCloseSeries = sortedBars.map((b, i) => ({
+      time: toTime(b, i),
       value: Number(b.close),
     }))
 
+    let mainSeries:
+      | ISeriesApi<'Candlestick'>
+      | ISeriesApi<'Line'>
+      | ISeriesApi<'Area'>
+
     if (chartType === 'candle' || chartType === 'heikinashi') {
       const data = chartType === 'heikinashi' ? toHeikinAshi(mainOhlc) : mainOhlc
-      chart
-        .addSeries(
-          CandlestickSeries,
-          {
-            upColor: tokens.quoteRise,
-            downColor: tokens.quoteFall,
-            borderUpColor: tokens.quoteRise,
-            borderDownColor: tokens.quoteFall,
-            wickUpColor: tokens.quoteRise,
-            wickDownColor: tokens.quoteFall,
-            borderVisible: false,
-          },
-          0,
-        )
-        .setData(data)
+      const candle = chart.addSeries(
+        CandlestickSeries,
+        {
+          upColor: tokens.quoteRise,
+          downColor: tokens.quoteFall,
+          borderUpColor: tokens.quoteRise,
+          borderDownColor: tokens.quoteFall,
+          wickUpColor: tokens.quoteRise,
+          wickDownColor: tokens.quoteFall,
+          borderVisible: false,
+        },
+        0,
+      )
+      candle.setData(data)
+      mainSeries = candle
     } else if (chartType === 'line') {
-      chart
-        .addSeries(
-          LineSeries,
-          { color: tokens.accentPrimary, lineWidth: 2 },
-          0,
-        )
-        .setData(mainCloseSeries)
+      const line = chart.addSeries(
+        LineSeries,
+        { color: tokens.accentPrimary, lineWidth: 2 },
+        0,
+      )
+      line.setData(mainCloseSeries)
+      mainSeries = line
     } else {
-      // area
-      chart
-        .addSeries(
-          AreaSeries,
-          {
-            topColor: withAlpha(tokens.accentPrimary, 0.4),
-            bottomColor: withAlpha(tokens.accentPrimary, 0.02),
-            lineColor: tokens.accentPrimary,
-            lineWidth: 2,
-          },
-          0,
-        )
-        .setData(mainCloseSeries)
+      const area = chart.addSeries(
+        AreaSeries,
+        {
+          topColor: withAlpha(tokens.accentPrimary, 0.4),
+          bottomColor: withAlpha(tokens.accentPrimary, 0.02),
+          lineColor: tokens.accentPrimary,
+          lineWidth: 2,
+        },
+        0,
+      )
+      area.setData(mainCloseSeries)
+      mainSeries = area
     }
 
     // ── Indicator series ─────────────────────────────────────────────────────
@@ -239,8 +260,8 @@ export function ChartCore({
     // ── Crosshair OHLCV legend ───────────────────────────────────────────────
     if (onCrosshairMove) {
       const barByTime = new Map<string, OhlcvBar>()
-      sortedBars.forEach(b => {
-        const key = timeKeyToString(barToTimeKey(b))
+      sortedBars.forEach((b, i) => {
+        const key = timeKeyToString(toTime(b, i))
         barByTime.set(key, b)
       })
       chart.subscribeCrosshairMove(param => {
@@ -255,6 +276,8 @@ export function ChartCore({
 
     chart.timeScale().fitContent()
     setChartReady(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onChartReady?.(chart, mainSeries as any)
 
     const ro = new ResizeObserver(() => {
       if (containerRef.current) {
@@ -265,11 +288,22 @@ export function ChartCore({
 
     return () => {
       ro.disconnect()
+      onChartReady?.(null, null)
       chart.remove()
       setChartReady(false)
     }
-    // bars / indicators 변경 시 차트 재생성. 인스턴스 재사용은 TG-2-C 의 imperative API 로 추후 최적화.
-  }, [bars, chartType, indicators, height, paneStretch, onCrosshairMove])
+    // bars / indicators 변경 시 차트 재생성. 인스턴스 재사용은 TG-2-D 에서 imperative API 로 추후 최적화.
+  }, [
+    bars,
+    chartType,
+    indicators,
+    height,
+    paneStretch,
+    onCrosshairMove,
+    onChartReady,
+    toTime,
+    toTimeProp,
+  ])
 
   return (
     <div
@@ -363,11 +397,14 @@ function sortBars(bars: OhlcvBar[]): OhlcvBar[] {
 }
 
 /**
- * OhlcvBar → lightweight-charts Time key.
+ * Default OhlcvBar → lightweight-charts Time key.
  * Daily (bar_time null/'00:00:00') → 'YYYY-MM-DD' string (BusinessDay-compatible).
- * Intraday → unix epoch seconds.
+ * Intraday → unix epoch seconds (assumes bar_time is already UTC).
+ *
+ * Callers needing PatternChart-style sequential intraday timestamps should
+ * pass their own `toTime` prop.
  */
-function barToTimeKey(b: OhlcvBar): Time {
+function defaultBarToTimeKey(b: OhlcvBar, _i: number): Time {
   if (!b.bar_time || b.bar_time.startsWith('00:00:00')) {
     return b.trade_date as unknown as Time
   }
