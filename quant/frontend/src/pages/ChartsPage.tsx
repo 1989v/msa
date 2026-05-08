@@ -1,12 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { KpiCard } from '@kgd/design-system'
 import { apiClient, unwrap, toApiError } from '@/api/client'
 import type { ApiResponse } from '@/types/api'
 
 import {
-  fetchSymbols,
   backendMarketOf,
   backendAssetOf,
   type Symbol as ChartSymbol,
@@ -24,9 +23,16 @@ import {
 } from '@/charting/components/IndicatorToggle'
 import { ChartToolbar } from '@/charting/components/ChartToolbar'
 import { PredictionPanel } from '@/charting/components/PredictionPanel'
+import { StickyStockHeader } from '@/charting/components/StickyStockHeader'
+import {
+  MicrocontextRail,
+  RangePositionBar,
+  type MicrocontextChip,
+} from '@/charting/components/MicrocontextRail'
 import type { ChartType } from '@/charting/types'
 import { matchPatterns } from '@/charting/lib/patternMatcher'
 import { PATTERNS as ALL_PATTERNS } from '@/charting/lib/patterns'
+import { calcMA, calcRSI, calcATR } from '@/charting/lib/indicators'
 
 interface PredictionTopHit {
   asset: string
@@ -69,6 +75,30 @@ function formatPrice(n: number, assetClass: ChartSymbol['assetClass']): string {
   if (assetClass === 'STOCK_US') return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   // CRYPTO — KRW
   return `₩${n.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}`
+}
+
+/** 거래대금: KR 자산 = 조/억/만원, US = $compact. */
+function formatCompactKrw(n: number, assetClass: ChartSymbol['assetClass']): string {
+  if (!Number.isFinite(n) || n <= 0) return '—'
+  if (assetClass === 'STOCK_US') {
+    if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
+    if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`
+    if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`
+    return `$${n.toFixed(0)}`
+  }
+  if (n >= 1e12) return `${(n / 1e12).toFixed(1)}조원`
+  if (n >= 1e8) return `${(n / 1e8).toFixed(1)}억원`
+  if (n >= 1e4) return `${(n / 1e4).toFixed(0)}만원`
+  return `${Math.round(n).toLocaleString('ko-KR')}원`
+}
+
+/** 거래량 (단위 없음): B/M/K. */
+function formatCompactCount(n: number): string {
+  if (!Number.isFinite(n) || n <= 0) return '—'
+  if (n >= 1e9) return `${(n / 1e9).toFixed(2)}B`
+  if (n >= 1e6) return `${(n / 1e6).toFixed(2)}M`
+  if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
+  return Math.round(n).toLocaleString()
 }
 
 const DEFAULT_INDICATORS: Indicators = {
@@ -178,6 +208,107 @@ export function ChartsPage() {
     return { last, change, changePct, isUp: change >= 0 }
   }, [ohlcvQ.data])
 
+  // Microcontext chips — TG-3 (P1 데이터 기반 7-chip)
+  const microcontextChips = useMemo<MicrocontextChip[]>(() => {
+    const bars = ohlcvQ.data
+    if (!bars || bars.length === 0) return []
+    const closes = bars.map(b => b.close)
+    const highs = bars.map(b => b.high)
+    const lows = bars.map(b => b.low)
+    const volumes = bars.map(b => b.volume)
+
+    const last = closes[closes.length - 1]
+    const high = Math.max(...highs)
+    const low = Math.min(...lows)
+    const rangePos = high > low ? (last - low) / (high - low) : 0.5
+
+    const totalVolume = volumes.reduce((a, b) => a + b, 0)
+    const avgVolume = totalVolume / Math.max(volumes.length, 1)
+    const totalTurnover = bars.reduce((a, b) => a + b.close * b.volume, 0)
+
+    const finiteLast = (arr: (number | null)[]): number | null => {
+      for (let i = arr.length - 1; i >= 0; i--) {
+        const v = arr[i]
+        if (v != null && Number.isFinite(v)) return v
+      }
+      return null
+    }
+    const lastRsi = finiteLast(calcRSI(closes, 14))
+    const lastAtr = finiteLast(calcATR(highs, lows, closes, 14))
+    const lastMa20 = finiteLast(calcMA(closes, 20))
+    const ma20Dev = lastMa20 != null ? ((last - lastMa20) / lastMa20) * 100 : null
+
+    const chips: MicrocontextChip[] = [
+      {
+        key: 'range',
+        label: '30일 범위',
+        value: formatPrice(low, symbol.assetClass),
+        secondary: `~ ${formatPrice(high, symbol.assetClass)}`,
+        visual: <RangePositionBar position={rangePos} />,
+      },
+      {
+        key: 'turnover',
+        label: '거래대금 (30D)',
+        value: formatCompactKrw(totalTurnover, symbol.assetClass),
+      },
+      {
+        key: 'avgVol',
+        label: '평균 거래량',
+        value: formatCompactCount(avgVolume),
+      },
+      {
+        key: 'rsi',
+        label: 'RSI(14)',
+        value: lastRsi != null ? lastRsi.toFixed(1) : '—',
+        tone:
+          lastRsi == null
+            ? 'muted'
+            : lastRsi >= 70
+              ? 'rise'
+              : lastRsi <= 30
+                ? 'fall'
+                : 'neutral',
+        secondary:
+          lastRsi == null
+            ? undefined
+            : lastRsi >= 70
+              ? '과매수'
+              : lastRsi <= 30
+                ? '과매도'
+                : '중립',
+      },
+      {
+        key: 'atr',
+        label: 'ATR(14)',
+        value: lastAtr != null ? lastAtr.toFixed(2) : '—',
+        secondary: '변동성',
+      },
+      {
+        key: 'ma20',
+        label: 'MA20',
+        value: lastMa20 != null ? formatPrice(lastMa20, symbol.assetClass) : '—',
+        secondary:
+          ma20Dev != null
+            ? `${ma20Dev >= 0 ? '+' : ''}${ma20Dev.toFixed(1)}%`
+            : undefined,
+        tone:
+          ma20Dev == null ? 'muted' : ma20Dev >= 0 ? 'rise' : 'fall',
+      },
+      {
+        key: 'change',
+        label: '기간 수익률',
+        value: priceSummary
+          ? `${priceSummary.isUp ? '+' : ''}${priceSummary.changePct.toFixed(2)}%`
+          : '—',
+        tone: priceSummary == null ? 'muted' : priceSummary.isUp ? 'rise' : 'fall',
+        secondary: priceSummary
+          ? `${priceSummary.change >= 0 ? '+' : ''}${formatPrice(priceSummary.change, symbol.assetClass)}`
+          : undefined,
+      },
+    ]
+    return chips
+  }, [ohlcvQ.data, symbol.assetClass, priceSummary])
+
   const matches = useMemo(() => {
     if (!ohlcvQ.data || ohlcvQ.data.length < 20) return []
     const closes = ohlcvQ.data.map((b) => b.close)
@@ -230,76 +361,32 @@ export function ChartsPage() {
       className="min-h-screen flex flex-col"
       style={{ background: 'var(--ko-surface-0)', color: 'var(--ko-text-primary)' }}
     >
-      {/* === Sticky 가격 헤더 — 종목명 + 현재가 + 변동률 === */}
-      <header
-        className="sticky top-0 z-20 backdrop-blur-md"
-        style={{
-          background: 'color-mix(in oklch, var(--ko-surface-0) 85%, transparent)',
-          borderBottom: '1px solid var(--ko-border-subtle)',
-        }}
-      >
-        <div className="px-4 md:px-6 py-3 flex items-center gap-3">
-          <button
-            onClick={() => setSymbolSheetOpen(true)}
-            className="flex items-center gap-2 active:scale-[0.98] transition-transform"
-          >
-            <div className="text-left">
-              <div className="text-base md:text-lg font-bold leading-tight">
-                {symbol.name}
-              </div>
-              <div className="text-[11px] md:text-xs leading-tight" style={{ color: 'var(--ko-text-muted)' }}>
-                {symbol.ticker} · {assetLabel(symbol.assetClass)}
-              </div>
-            </div>
-            <ChevronDown className="w-4 h-4" style={{ color: 'var(--ko-text-muted)' }} />
-          </button>
-
-          <div className="flex-1" />
-
-          {priceSummary && (
-            <div className="text-right">
-              <div
-                className="text-base md:text-xl font-bold tabular-nums leading-tight"
-                style={{
-                  color: priceSummary.isUp
-                    ? 'var(--ko-quote-rise)'
-                    : 'var(--ko-quote-fall)',
-                }}
-              >
-                {formatPrice(priceSummary.last, symbol.assetClass)}
-              </div>
-              <div
-                className="text-[11px] md:text-xs tabular-nums leading-tight"
-                style={{
-                  color: priceSummary.isUp
-                    ? 'var(--ko-quote-rise)'
-                    : 'var(--ko-quote-fall)',
-                }}
-              >
-                {priceSummary.isUp ? '▲' : '▼'} {Math.abs(priceSummary.changePct).toFixed(2)}%
-                <span className="ml-1.5" style={{ color: 'var(--ko-text-muted)' }}>
-                  ({priceSummary.change >= 0 ? '+' : ''}
-                  {formatPrice(priceSummary.change, symbol.assetClass)})
-                </span>
+      {/* === Sticky 종목 헤더 — 종목명/큰 가격/변동률 + microcontext + 시간프레임/도구바 === */}
+      <StickyStockHeader
+        symbol={symbol}
+        priceSummary={priceSummary}
+        formatPrice={n => formatPrice(n, symbol.assetClass)}
+        onSymbolClick={() => setSymbolSheetOpen(true)}
+        microcontext={
+          <div className="space-y-2">
+            <MicrocontextRail chips={microcontextChips} />
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+              <PeriodSelector value={interval} onChange={setInterval} />
+              <div className="shrink-0 ml-auto">
+                <ChartToolbar
+                  chartType={chartType}
+                  onChartTypeChange={setChartType}
+                  onFullscreen={() => {
+                    document
+                      .querySelector('.ko-pattern-chart-wrapper')
+                      ?.requestFullscreen?.()
+                  }}
+                />
               </div>
             </div>
-          )}
-        </div>
-
-        {/* 시간프레임 + 차트 종류 — 가로 스크롤 */}
-        <div className="px-4 md:px-6 pb-2.5 flex items-center gap-2 overflow-x-auto scrollbar-hide">
-          <PeriodSelector value={interval} onChange={setInterval} />
-          <div className="shrink-0 ml-auto">
-            <ChartToolbar
-              chartType={chartType}
-              onChartTypeChange={setChartType}
-              onFullscreen={() => {
-                document.querySelector('.ko-pattern-chart-wrapper')?.requestFullscreen?.()
-              }}
-            />
           </div>
-        </div>
-      </header>
+        }
+      />
 
       {/* === 메인 차트 === */}
       <section className="px-2 md:px-6 py-3">
@@ -540,10 +627,6 @@ export function ChartsPage() {
       )}
     </div>
   )
-}
-
-function assetLabel(a: ChartSymbol['assetClass']): string {
-  return a === 'CRYPTO' ? '코인' : a === 'STOCK_KR' ? '국내주식' : '미국주식'
 }
 
 function Card({ children }: { children: React.ReactNode }) {
