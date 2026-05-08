@@ -5,6 +5,11 @@ import {
   ColorType,
   CrosshairMode,
   LineStyle,
+  CandlestickSeries,
+  LineSeries,
+  HistogramSeries,
+  AreaSeries,
+  createSeriesMarkers,
   type IChartApi,
   type Time,
   type LogicalRange,
@@ -78,7 +83,7 @@ function VolumePanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef:
     const { data: ohlcv, toTime } = prepareBars(rawOhlcv)
     const chart = createChart(containerRef.current, { ...CHART_DEFAULTS, height: 110, timeScale: { ...CHART_DEFAULTS.timeScale, visible: false } })
 
-    const series = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'right' })
+    const series = chart.addSeries(HistogramSeries, { priceFormat: { type: 'volume' }, priceScaleId: 'right' })
     series.setData(ohlcv.map((b, i) => ({
       time: toTime(b, i),
       // Quote-aligned (rise=red, fall=blue) — synced with --ko-quote-rise/fall.
@@ -117,7 +122,7 @@ function RsiPanel({ ohlcv: rawOhlcv, mainRef, period }: { ohlcv: OhlcvBar[]; mai
 
     const closes = ohlcv.map(b => Number(b.close))
     const rsiValues = calcRSI(closes, period)
-    const series = chart.addLineSeries({ color: '#8b5cf6', lineWidth: 1 })
+    const series = chart.addSeries(LineSeries, { color: '#8b5cf6', lineWidth: 1 })
     series.setData(
       ohlcv.map((b, i) => ({ time: toTime(b, i), value: rsiValues[i] ?? 50 }))
         .filter((_, i) => rsiValues[i] !== null)
@@ -158,9 +163,9 @@ function MacdPanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: M
     const closes = ohlcv.map(b => Number(b.close))
     const macdData = calcMACD(closes)
 
-    const histSeries = chart.addHistogramSeries({ priceScaleId: 'right', lastValueVisible: false })
-    const macdSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, lastValueVisible: false })
-    const signalSeries = chart.addLineSeries({ color: '#ef4444', lineWidth: 1, lastValueVisible: false })
+    const histSeries = chart.addSeries(HistogramSeries, { priceScaleId: 'right', lastValueVisible: false })
+    const macdSeries = chart.addSeries(LineSeries, { color: '#3b82f6', lineWidth: 1, lastValueVisible: false })
+    const signalSeries = chart.addSeries(LineSeries, { color: '#ef4444', lineWidth: 1, lastValueVisible: false })
 
     const validData = ohlcv.map((b, i) => ({ time: toTime(b, i), point: macdData[i] })).filter(d => d.point !== null)
 
@@ -203,8 +208,8 @@ function StochasticPanel({ ohlcv: rawOhlcv, mainRef, kPeriod, dPeriod, slowing }
     const closes = ohlcv.map(b => Number(b.close))
     const stochData = calcStochastic(highs, lows, closes, kPeriod, dPeriod, slowing)
 
-    const kSeries = chart.addLineSeries({ color: '#3b82f6', lineWidth: 1, lastValueVisible: false })
-    const dSeries = chart.addLineSeries({ color: '#ef4444', lineWidth: 1, lastValueVisible: false })
+    const kSeries = chart.addSeries(LineSeries, { color: '#3b82f6', lineWidth: 1, lastValueVisible: false })
+    const dSeries = chart.addSeries(LineSeries, { color: '#ef4444', lineWidth: 1, lastValueVisible: false })
 
     const kData = ohlcv.map((b, i) => ({ time: toTime(b, i), value: stochData[i].k })).filter(d => d.value !== null) as { time: any; value: number }[]
     const dData = ohlcv.map((b, i) => ({ time: toTime(b, i), value: stochData[i].d })).filter(d => d.value !== null) as { time: any; value: number }[]
@@ -248,7 +253,7 @@ function WilliamsRPanel({ ohlcv: rawOhlcv, mainRef, period }: { ohlcv: OhlcvBar[
     const closes = ohlcv.map(b => Number(b.close))
     const wrValues = calcWilliamsR(highs, lows, closes, period)
 
-    const series = chart.addLineSeries({ color: '#a78bfa', lineWidth: 1 })
+    const series = chart.addSeries(LineSeries, { color: '#a78bfa', lineWidth: 1 })
     series.setData(
       ohlcv.map((b, i) => ({ time: toTime(b, i), value: wrValues[i] ?? -50 }))
         .filter((_, i) => wrValues[i] !== null)
@@ -290,7 +295,7 @@ function AtrPanel({ ohlcv: rawOhlcv, mainRef, period }: { ohlcv: OhlcvBar[]; mai
     const closes = ohlcv.map(b => Number(b.close))
     const atrValues = calcATR(highs, lows, closes, period)
 
-    const series = chart.addLineSeries({ color: '#fbbf24', lineWidth: 1 })
+    const series = chart.addSeries(LineSeries, { color: '#fbbf24', lineWidth: 1 })
     series.setData(
       ohlcv.map((b, i) => ({ time: toTime(b, i), value: atrValues[i] ?? NaN }))
         .filter(d => !isNaN(d.value) && d.value !== null)
@@ -329,7 +334,7 @@ function ObvPanel({ ohlcv: rawOhlcv, mainRef }: { ohlcv: OhlcvBar[]; mainRef: Mu
     const volumes = ohlcv.map(b => Number(b.volume))
     const obvValues = calcOBV(closes, volumes)
 
-    const series = chart.addLineSeries({ color: '#34d399', lineWidth: 1 })
+    const series = chart.addSeries(LineSeries, { color: '#34d399', lineWidth: 1 })
     series.setData(ohlcv.map((b, i) => ({ time: toTime(b, i), value: obvValues[i] })))
 
     const sync = (range: LogicalRange | null) => { if (range) chart.timeScale().setVisibleLogicalRange(range) }
@@ -489,7 +494,7 @@ export function PatternChart({
     let candleSeries: any
     if (chartType === 'candle') {
       // Quote colors — KR convention (rise=red, fall=blue). Synced with --ko-quote-rise/fall in tokens.css.
-      candleSeries = chart.addCandlestickSeries({
+      candleSeries = chart.addSeries(CandlestickSeries, {
         upColor: '#FA616D', downColor: '#3485FA',
         borderUpColor: '#FA616D', borderDownColor: '#3485FA',
         wickUpColor: '#FA616D', wickDownColor: '#3485FA',
@@ -499,7 +504,7 @@ export function PatternChart({
         open: Number(b.open), high: Number(b.high), low: Number(b.low), close: Number(b.close),
       })))
     } else if (chartType === 'line') {
-      candleSeries = chart.addLineSeries({
+      candleSeries = chart.addSeries(LineSeries, {
         color: '#3b82f6', lineWidth: 2,
         priceLineVisible: false, lastValueVisible: true,
         crosshairMarkerVisible: true, crosshairMarkerRadius: 4,
@@ -508,7 +513,7 @@ export function PatternChart({
         time: toTime(b, i), value: Number(b.close),
       })))
     } else {
-      candleSeries = chart.addAreaSeries({
+      candleSeries = chart.addSeries(AreaSeries, {
         topColor: 'rgba(59,130,246,0.4)', bottomColor: 'rgba(59,130,246,0.02)',
         lineColor: '#3b82f6', lineWidth: 2,
         priceLineVisible: false, lastValueVisible: true,
@@ -551,7 +556,7 @@ export function PatternChart({
     maConfig.forEach(({ key, period, color }) => {
       if (!indicators[key]) return
       const maValues = calcMA(closes, period)
-      const series = chart.addLineSeries({ color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false })
+      const series = chart.addSeries(LineSeries, { color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false })
       series.setData(data.map((b, i) => ({ time: toTime(b, i), value: maValues[i] ?? NaN })).filter(d => !isNaN(d.value)))
     })
 
@@ -560,8 +565,8 @@ export function PatternChart({
       const bbPeriod = indicatorParams?.bbPeriod ?? 20
       const bbStdDev = indicatorParams?.bbStdDev ?? 2
       const bb = calcBollingerBands(closes, bbPeriod, bbStdDev)
-      const upperSeries = chart.addLineSeries({ color: '#06b6d4', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
-      const lowerSeries = chart.addLineSeries({ color: '#06b6d4', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
+      const upperSeries = chart.addSeries(LineSeries, { color: '#06b6d4', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
+      const lowerSeries = chart.addSeries(LineSeries, { color: '#06b6d4', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
       const filtered = data.map((b, i) => ({ time: toTime(b, i), pt: bb[i] })).filter(d => d.pt !== null)
       upperSeries.setData(filtered.map(d => ({ time: d.time, value: d.pt!.upper })))
       lowerSeries.setData(filtered.map(d => ({ time: d.time, value: d.pt!.lower })))
@@ -573,7 +578,7 @@ export function PatternChart({
       const lows = data.map(b => Number(b.low))
       const volumes = data.map(b => Number(b.volume))
       const vwapValues = calcVWAP(highs, lows, closes, volumes)
-      const vwapSeries = chart.addLineSeries({ color: '#60a5fa', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
+      const vwapSeries = chart.addSeries(LineSeries, { color: '#60a5fa', lineWidth: 1, lineStyle: LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false })
       vwapSeries.setData(
         data.map((b, i) => ({ time: toTime(b, i), value: vwapValues[i] ?? NaN })).filter(d => !isNaN(d.value))
       )
@@ -621,7 +626,7 @@ export function PatternChart({
         value: scalePrice(interp[i]),
       }))
 
-      const overlaySeries = chart.addLineSeries({
+      const overlaySeries = chart.addSeries(LineSeries, {
         color: p.color,
         lineWidth: 2,
         lineStyle: 0,
@@ -651,7 +656,7 @@ export function PatternChart({
         return { time: addDays(lastDate, i + 1).toISOString().slice(0, 10) as string as Time, value: scalePrice(y) }
       })
 
-      const projSeries = chart.addLineSeries({
+      const projSeries = chart.addSeries(LineSeries, {
         color: p.color,
         lineWidth: 2,
         lineStyle: 2,
@@ -661,10 +666,11 @@ export function PatternChart({
       })
       projSeries.setData(projData)
 
-      // Score marker on first pattern only
-      if (idx === 0 && windowBars.length > 0 && typeof candleSeries.setMarkers === 'function') {
+      // Score marker on first pattern only — v5 primitive (markers attach via createSeriesMarkers).
+      // Line/Area series accept markers too, but only the candle path showed score historically.
+      if (idx === 0 && windowBars.length > 0 && chartType === 'candle') {
         const markerBar = windowBars[windowBars.length - 1]
-        candleSeries.setMarkers([{
+        createSeriesMarkers(candleSeries, [{
           time: toTime(markerBar, Math.min(offset + W - 1, data.length - 1)),
           position: 'aboveBar',
           color: p.color,

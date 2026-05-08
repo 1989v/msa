@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import {
   ColorType,
   createChart,
+  CandlestickSeries,
+  LineSeries,
   type IChartApi,
   type ISeriesApi,
   type Time,
@@ -62,7 +64,7 @@ export function OhlcvCandleChart({ bars, indicator, height = 360 }: Props) {
       rightPriceScale: { borderColor: 'oklch(0.32 0.015 250)' },
     })
     // Quote convention (KR — rise=red, fall=blue). Synced with --ko-quote-rise/fall in tokens.css.
-    const candle = chart.addCandlestickSeries({
+    const candle = chart.addSeries(CandlestickSeries, {
       upColor: 'oklch(0.69 0.20 18)',     // --ko-quote-rise (#FA616D 근사)
       downColor: 'oklch(0.63 0.18 254)',  // --ko-quote-fall (#3485FA 근사)
       wickUpColor: 'oklch(0.69 0.20 18)',
@@ -108,7 +110,7 @@ export function OhlcvCandleChart({ bars, indicator, height = 360 }: Props) {
     // 디자인 시스템 accent 색상 (primary 파랑 / secondary 청록 / amber)
     const palette = ['oklch(0.68 0.16 245)', 'oklch(0.78 0.14 180)', 'oklch(0.74 0.16 90)']
     Object.entries(indicator.series).forEach(([key, points], idx) => {
-      const line = chart.addLineSeries({
+      const line = chart.addSeries(LineSeries, {
         color: palette[idx % palette.length],
         lineWidth: 1,
       })

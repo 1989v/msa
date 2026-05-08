@@ -4,9 +4,11 @@ import {
   createChart,
   IChartApi,
   ISeriesApi,
+  LineSeries,
   LineStyle,
   SeriesMarker,
   Time,
+  createSeriesMarkers,
 } from 'lightweight-charts'
 import type { BacktestFillView } from '@/types/api'
 
@@ -21,7 +23,7 @@ interface Props {
  * lightweight-charts 기반 가격 + 매수/매도 마커 오버레이.
  * priceSeries 가 없으면 fills 의 price 로 단순 라인을 그려 placeholder 시각화.
  *
- * NOTE: lightweight-charts 4.x API 사용. 추후 5.x 마이그레이션 시 createChart 옵션 변동 가능.
+ * NOTE: lightweight-charts v5 API. addSeries(LineSeries, ...) + createSeriesMarkers primitive.
  */
 export function BacktestRunChart({ fills, priceSeries, height = 280 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -52,7 +54,7 @@ export function BacktestRunChart({ fills, priceSeries, height = 280 }: Props) {
     })
     chartRef.current = chart
 
-    const lineSeries = chart.addLineSeries({
+    const lineSeries = chart.addSeries(LineSeries, {
       color: '#666666',
       lineWidth: 2,
     })
@@ -103,7 +105,8 @@ export function BacktestRunChart({ fills, priceSeries, height = 280 }: Props) {
         shape: f.side === 'BUY' ? 'arrowUp' : 'arrowDown',
         text: `${f.roundIndex + 1}`,
       }))
-    series.setMarkers(markers)
+    // v5: markers are a separate primitive — attach via createSeriesMarkers.
+    createSeriesMarkers(series, markers)
   }, [fills, priceSeries])
 
   return (

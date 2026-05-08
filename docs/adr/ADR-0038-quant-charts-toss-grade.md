@@ -34,12 +34,22 @@
 
 이 ADR 은 **Foundation 3 phase (UI 인터랙션 + 정보 위계 + 실시간 시세)** 의 핵심 결정만 잠근다. 호가/매매주체/뉴스/발견 화면은 후속 spec/ADR 으로 분리.
 
-### D1. 차트 라이브러리: **lightweight-charts 4.2+ 를 메인 엔진**으로 통합
+### D1. 차트 라이브러리: **lightweight-charts v5+ 를 메인 엔진**으로 통합
 
-- 현재 `OhlcvCandleChart.tsx` 가 lightweight-charts 4.x 사용 중. 메인 차트(`PatternChart`)도 같은 엔진으로 마이그레이션.
-- 4.2+ 의 **panes API** 사용해 가격/거래량/RSI/MACD 를 **별도 sub-pane** 으로 분리. (현재는 단일 panel overlay).
-- 패턴 overlay 는 lightweight-charts 의 `subscribeCrosshairMove` + Canvas overlay layer 로 합성. 기존 패턴 매칭 로직 (`patternMatcher.ts`) 보존.
+- 현재 quant-fe 는 lightweight-charts 4.2.3 사용 중. **v5+ 가 multi-pane 정통 지원** (5.0 release: "Multi-Pane Support — One of our most requested features"). v4.2 는 multi-chart sync 흉내만 가능.
+- v5 의 **panes API** 사용해 가격/거래량/RSI/MACD 를 **단일 chart + 별도 pane** 으로 분리. `chart.addSeries(SeriesType, options, paneIndex)` 시그니처 + `chart.addPane()`/`panes()`/`swapPanes()`/`removePane()`.
+- v4 → v5 breaking changes:
+  - `addCandlestickSeries(...)` → `addSeries(CandlestickSeries, ...)` (Series type 별도 import)
+  - `addLineSeries / addHistogramSeries / addAreaSeries` 동일 통합
+  - `series.setMarkers([...])` → `createSeriesMarkers(series, [...])` primitive 분리
+- 패턴 overlay 는 lightweight-charts 의 `subscribeCrosshairMove` + `priceToCoordinate`/`timeToCoordinate` 좌표 변환 + Canvas overlay layer 로 합성. 기존 패턴 매칭 로직 (`patternMatcher.ts`) 보존.
 - TradingView Advanced Charts (토스 사용) 는 라이선스 비용 부담 + iframe 통합 비용으로 보류.
+
+**TG-2 진행 전략 — Plan C (단계적)**:
+- 2-A: v5 업그레이드 (3 파일 series API rename + setMarkers primitive) — 기존 동작 유지
+- 2-B: `ChartCore` 추출 + `OhlcvCandleChart` 위임
+- 2-C: `PatternChart` 의 7 sub-panel 을 단일 chart + panes 로 통합
+- 2-D: `lib/indicators.ts` paneIndex 메타 + 회귀 테스트
 
 ### D2. 색상 토큰 분리: `--ko-quote-*` (시세) vs `--ko-status-*` (P/L)
 
