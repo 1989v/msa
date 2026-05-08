@@ -152,3 +152,71 @@ export function calcVWAP(highs: number[], lows: number[], closes: number[], volu
     return cumVol === 0 ? null : cumTPV / cumVol
   })
 }
+
+// ─── Indicator metadata (TG-2-D) ─────────────────────────────────────────────
+
+export type IndicatorKey =
+  | 'ma5' | 'ma20' | 'ma60' | 'ma120'
+  | 'bb' | 'vwap'
+  | 'volume'
+  | 'rsi' | 'stochastic' | 'williamsR' | 'atr'
+  | 'macd' | 'obv'
+
+/**
+ * Logical pane group for indicators. Caller (PatternChart) maps to numeric paneIndex:
+ *
+ * - `overlay`     → paneIndex 0 (메인 가격 차트 위 overlay) — MA·BB·VWAP
+ * - `volume`      → paneIndex 1+ (volume 활성 시 첫 sub-pane) — Volume
+ * - `oscillator`  → paneIndex N (활성 순서대로 다음 빈 pane) — RSI / Stoch / Williams%R / ATR
+ * - `momentum`    → paneIndex N — MACD / OBV
+ *
+ * 동적 할당 이유: 사용자가 활성화한 sub-pane 만 화면에 표시 (비활성은 paneIndex 미점유).
+ */
+export type IndicatorPaneGroup = 'overlay' | 'volume' | 'oscillator' | 'momentum'
+
+export interface IndicatorMeta {
+  /** Short label for UI buttons / tooltips. */
+  label: string
+  /** Logical pane group. */
+  paneGroup: IndicatorPaneGroup
+  /** Default color (hex). For multi-line indicators (MACD/Stoch), `secondaryColor` 도 함께. */
+  color: string
+  secondaryColor?: string
+}
+
+/**
+ * Single source of truth for indicator metadata. PatternChart / IndicatorPopover 가
+ * 메타에서 color, label, paneGroup 을 가져와 사용한다.
+ *
+ * 색상은 한국 시세 관습과 분리된 보조 지표 팔레트 — 시세 색(--ko-quote-*) 와 충돌 X.
+ */
+export const INDICATOR_META: Record<IndicatorKey, IndicatorMeta> = {
+  ma5:        { label: 'MA5',        paneGroup: 'overlay',    color: '#f59e0b' },
+  ma20:       { label: 'MA20',       paneGroup: 'overlay',    color: '#3b82f6' },
+  ma60:       { label: 'MA60',       paneGroup: 'overlay',    color: '#a855f7' },
+  ma120:      { label: 'MA120',      paneGroup: 'overlay',    color: '#ec4899' },
+  bb:         { label: 'BB',         paneGroup: 'overlay',    color: '#06b6d4' },
+  vwap:       { label: 'VWAP',       paneGroup: 'overlay',    color: '#60a5fa' },
+  volume:     { label: 'Volume',     paneGroup: 'volume',     color: '#6b7280' },
+  rsi:        { label: 'RSI',        paneGroup: 'oscillator', color: '#8b5cf6' },
+  stochastic: { label: 'Stoch',      paneGroup: 'oscillator', color: '#3b82f6', secondaryColor: '#ef4444' },
+  williamsR:  { label: '%R',         paneGroup: 'oscillator', color: '#a78bfa' },
+  atr:        { label: 'ATR',        paneGroup: 'oscillator', color: '#fbbf24' },
+  macd:       { label: 'MACD',       paneGroup: 'momentum',   color: '#3b82f6', secondaryColor: '#ef4444' },
+  obv:        { label: 'OBV',        paneGroup: 'momentum',   color: '#34d399' },
+}
+
+/** Active indicator keys → ordered list of sub-pane keys (deterministic).
+ *  paneIndex 0 은 메인 — 여기서 반환되는 키들이 순서대로 paneIndex 1, 2, 3, ... 차지.
+ *  groupOrder 로 안정적 순서 보장. */
+export function activeSubPaneKeys(active: Partial<Record<IndicatorKey, boolean>>): IndicatorKey[] {
+  // 'volume' first, then oscillators, then momentum — visual hierarchy.
+  const groupOrder: IndicatorPaneGroup[] = ['volume', 'oscillator', 'momentum']
+  const keys: IndicatorKey[] = []
+  for (const group of groupOrder) {
+    for (const key of Object.keys(INDICATOR_META) as IndicatorKey[]) {
+      if (INDICATOR_META[key].paneGroup === group && active[key]) keys.push(key)
+    }
+  }
+  return keys
+}

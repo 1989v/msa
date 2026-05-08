@@ -12,19 +12,39 @@
 ### TG-1: 색상 토큰 분리 + DESIGN.md 표준 갱신
 - [ ] T-1-1: `DESIGN.md` 에 `--ko-quote-rise/fall/rise-strong/fall-link` 추가
 - [ ] T-1-2: `docs/standards/design-md.md` 에 "시세 vs P/L 색상 분리" 정책 추가
-- [ ] T-1-3: `quant/frontend/src/pages/ChartsPage.tsx` 의 `priceSummary` 색상 마이그레이션 (`--ko-status-*` → `--ko-quote-*`)
-- [ ] T-1-4: `OhlcvCandleChart.tsx`, `PatternChart.tsx` 캔들 색상 마이그레이션
-- [ ] T-1-5: 회귀 — 백테스트/페이퍼/실매매 화면이 여전히 `--ko-status-*` 유지하는지 grep + 시각 확인
+- [x] T-1-3: `quant/frontend/src/pages/ChartsPage.tsx` 의 `priceSummary` 색상 마이그레이션 (`--ko-status-*` → `--ko-quote-*`) — 4b477ed
+- [x] T-1-4: `OhlcvCandleChart.tsx`, `PatternChart.tsx` 캔들/볼륨/MACD 히스토그램/호버 색상 마이그레이션 — 4b477ed
+- [x] T-1-5: 회귀 grep — ChartsPage L312/L508-520 의 `--ko-status-*` 잔존은 P/L 의미라 의도된 유지
 
-### TG-2: lightweight-charts 4.2+ panes 통합
-- [ ] T-2-1: `quant/frontend/package.json` 의 `lightweight-charts` 버전 확인 + 4.2+ 업그레이드
-- [ ] T-2-2: `charting/components/ChartCore.tsx` 신규 — props (bars / chartType / indicators / patternOverlays / onCrosshairMove)
-- [ ] T-2-3: panes 분배 로직 — paneIndex 0(가격) / 1(거래량) / 2(oscillator) / 3(MACD)
-- [ ] T-2-4: `lib/indicators.ts` 에 시리즈별 paneIndex 메타 추가
-- [ ] T-2-5: `charting/lib/patternOverlay.ts` 신규 — lightweight-charts 좌표 변환 → Canvas overlay
-- [ ] T-2-6: `OhlcvCandleChart.tsx` 를 `ChartCore` 로 위임
-- [ ] T-2-7: `PatternChart.tsx` 도 `ChartCore` + patternOverlay 합성으로 마이그레이션
-- [ ] T-2-8: 회귀 테스트 (Vitest + RTL): paneIndex 별 시리즈 호출 확인
+### TG-2: lightweight-charts v5+ panes 통합 (Plan C 단계적, ADR-0038 D1)
+
+#### TG-2-A: v4 → v5 업그레이드 — 958b8b8
+- [x] T-2-A-1: `quant/frontend/package.json` ^4.2.3 → ^5.2.0 + npm install
+- [x] T-2-A-2: 3 파일의 series API 통합 — `addCandlestickSeries/Line/Histogram/Area(opts)` → `addSeries(SeriesType, opts)` (sed 일괄 + import 5종 추가)
+- [x] T-2-A-3: markers primitive — `series.setMarkers(...)` → `createSeriesMarkers(series, ...)`
+- [x] T-2-A-4: ADR-0038 D1 정정 — v4.2+ → v5+ + breaking change 표 + Plan C 명시
+
+#### TG-2-B: ChartCore 추출 + OhlcvCandleChart 위임 — 3dfef92
+- [x] T-2-B-1: `charting/components/ChartCore.tsx` 신규 — props (bars/chartType/indicators[]/onCrosshairMove/onChartReady/toTime/paneStretch)
+- [x] T-2-B-2: panes 분배 로직 — paneIndex 0(가격) / 1(거래량) / 2(oscillator) / 3(momentum), v5 `addSeries(SeriesType, opts, paneIndex)`
+- [x] T-2-B-3: 색상은 `getComputedStyle` 로 `--ko-*` 토큰 동적 추출, OKLCH literal fallback
+- [x] T-2-B-4: heikinashi 변환 helper, withAlpha (hex/rgb/oklch all-format)
+- [x] T-2-B-5: `OhlcvCandleChart.tsx` → ChartCore 위임 wrapper
+
+#### TG-2-C: PatternChart panes 통합 + PatternOverlay 분리 — b3dbca3
+- [x] T-2-C-1: `charting/components/PatternOverlay.tsx` 신규 — chart/mainSeries 인스턴스 받아 좌표 변환 + 패턴 라인/projection (chart.addSeries) + score 마커 (createSeriesMarkers, candle 모드) + DOM 드래그 핸들/score badge
+- [x] T-2-C-2: `PatternChart.tsx` 재작성 (840줄 → ~480줄) — 단일 ChartCore + indicators[] 동적 매핑
+- [x] T-2-C-3: 활성화된 sub-pane 만 paneIndex 1+ 동적 할당 (Volume/RSI/MACD/Stoch/Williams/ATR/OBV)
+- [x] T-2-C-4: 메인 pane overlays — MA 5/20/60/120, Bollinger Bands, VWAP (paneIndex 0)
+- [x] T-2-C-5: prepareBars 의 KR intraday timezone 안전 로직 보존 (sequential 5min timestamp)
+
+#### TG-2-D: indicators.ts paneIndex 메타 + 규약 문서화
+- [x] T-2-D-1: `lib/indicators.ts` 에 `IndicatorKey` / `IndicatorPaneGroup` / `IndicatorMeta` / `INDICATOR_META` / `activeSubPaneKeys` 신규 export
+- [x] T-2-D-2: paneIndex 규약 JSDoc 명시 (overlay=0, volume / oscillator / momentum 동적 할당)
+- [ ] T-2-D-3: PatternChart 의 hardcoded color array 를 INDICATOR_META 참조로 점진 교체 (TG-4 IndicatorPopover 와 함께)
+- [ ] T-2-D-4: vitest 인프라 도입 + 회귀 테스트 — **P1 종합 검증 TG-8 로 이관**
+  - 도입 비용 (vitest, @testing-library/react, jsdom, vitest.config.ts) 이 단일 task 수준이라 묶음
+  - 테스트 대상: ChartCore paneIndex 분배, prepareBars intraday detect, activeSubPaneKeys 순서, PatternOverlay 드래그 핸들
 
 ### TG-3: Sticky 종목 헤더 + Microcontext
 - [ ] T-3-1: `charting/components/StickyStockHeader.tsx` 신규 — 종목명/가격/변동/변동률
