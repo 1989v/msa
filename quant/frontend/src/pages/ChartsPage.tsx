@@ -1,7 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { X } from 'lucide-react'
 import { KpiCard } from '@kgd/design-system'
 import { apiClient, unwrap, toApiError } from '@/api/client'
 import type { ApiResponse } from '@/types/api'
@@ -16,6 +15,7 @@ import { PatternChart } from '@/charting/components/PatternChart'
 import { PatternSelector } from '@/charting/components/PatternSelector'
 import { TimeframeSelector } from '@/charting/components/TimeframeSelector'
 import { SymbolSearch } from '@/charting/components/SymbolSearch'
+import { SymbolPickerSheet } from '@/charting/components/SymbolPickerSheet'
 import {
   DEFAULT_PARAMS,
   type Indicators,
@@ -215,6 +215,23 @@ export function ChartsPage() {
     )
   }
   const [symbolSheetOpen, setSymbolSheetOpen] = useState(false)
+
+  // '/' 단축키 — input/textarea/contentEditable focus 외에서 종목 검색 sheet 오픈
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== '/') return
+      const target = e.target as HTMLElement | null
+      if (!target) return
+      const tag = target.tagName?.toUpperCase()
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+      e.preventDefault()
+      setSymbolSheetOpen(true)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const backendMarket = backendMarketOf(symbol.assetClass)
   const backendAsset = backendAssetOf(symbol.ticker, symbol.assetClass)
@@ -798,12 +815,13 @@ export function ChartsPage() {
         )}
       </section>
 
-      {/* === 종목 선택 시트 === */}
-      {symbolSheetOpen && (
-        <SymbolSheet onClose={() => setSymbolSheetOpen(false)}>
-          <SymbolSearch onSelect={onPickSymbol} selectedTicker={symbol.ticker} />
-        </SymbolSheet>
-      )}
+      {/* === 종목 선택 sheet (mobile) / dialog (desktop) — '/' 단축키 === */}
+      <SymbolPickerSheet
+        open={symbolSheetOpen}
+        onClose={() => setSymbolSheetOpen(false)}
+      >
+        <SymbolSearch onSelect={onPickSymbol} selectedTicker={symbol.ticker} />
+      </SymbolPickerSheet>
     </div>
   )
 }
@@ -857,38 +875,3 @@ function Card({ children }: { children: React.ReactNode }) {
   )
 }
 
-function SymbolSheet({
-  children,
-  onClose,
-}: {
-  children: React.ReactNode
-  onClose: () => void
-}) {
-  return (
-    <>
-      <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      <div
-        className="fixed inset-x-0 bottom-0 z-50 rounded-t-2xl p-4 max-h-[85vh] overflow-y-auto md:inset-y-0 md:right-auto md:left-0 md:rounded-r-2xl md:rounded-tl-none md:max-w-md md:max-h-none"
-        style={{
-          background: 'var(--ko-surface-1)',
-          border: '1px solid var(--ko-border-subtle)',
-        }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-base font-semibold">종목 선택</h3>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-slate-700/50 transition-colors"
-            aria-label="닫기"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </>
-  )
-}
