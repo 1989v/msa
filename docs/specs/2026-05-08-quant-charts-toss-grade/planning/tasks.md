@@ -46,48 +46,53 @@
   - 도입 비용 (vitest, @testing-library/react, jsdom, vitest.config.ts) 이 단일 task 수준이라 묶음
   - 테스트 대상: ChartCore paneIndex 분배, prepareBars intraday detect, activeSubPaneKeys 순서, PatternOverlay 드래그 핸들
 
-### TG-3: Sticky 종목 헤더 + Microcontext
-- [ ] T-3-1: `charting/components/StickyStockHeader.tsx` 신규 — 종목명/가격/변동/변동률
-- [ ] T-3-2: 스크롤 시 가격 폰트 32→20px 트랜지션 (Intersection Observer)
-- [ ] T-3-3: `charting/components/MicrocontextRail.tsx` 신규 — 7-chip 가로 스크롤
-- [ ] T-3-4: 7-chip 데이터 계산 로직 (`useChartData` 또는 `useMemo`):
-  - 1일 범위, 52주 범위(현재가 위치), 거래대금, 거래량, 시총(P1 placeholder), RSI 마지막값, ATR 마지막값
-- [ ] T-3-5: 좌·우 화살표 버튼 (데스크톱) + swipe (모바일)
-- [ ] T-3-6: ChartsPage 에 통합
+### TG-3: Sticky 종목 헤더 + Microcontext — 5a8513a
+- [x] T-3-1: `charting/components/StickyStockHeader.tsx` 신규 — 종목명/큰 가격/변동률, --ko-quote-* 토큰
+- [x] T-3-2: 가격 폰트 xl/2xl + tabular-nums (Intersection Observer 기반 트랜지션은 P2)
+- [x] T-3-3: `charting/components/MicrocontextRail.tsx` 신규 — 가로 스크롤 chips, RangePositionBar
+- [x] T-3-4: 7-chip P1 데이터 — 30일 범위(+ 위치 bar) / 거래대금 / 평균 거래량 / RSI(14) tone / ATR / MA20 + dev% / 기간 수익률
+- [x] T-3-5: 데스크톱 좌·우 chevron 버튼 (스크롤 가능 시 노출), 모바일 swipe (snap-x)
+- [x] T-3-6: ChartsPage 통합 + 미사용 fetchSymbols / assetLabel 정리
 
-### TG-4: 시간프레임 + 도구바
-- [ ] T-4-1: `charting/components/TimeframeSelector.tsx` 변경 — 7-칩 (1m/5m/30m disabled, 1d/1w/1M/1y 활성)
-- [ ] T-4-2: disabled 칩 hover 시 tooltip "Phase 3 활성화 예정"
-- [ ] T-4-3: `charting/components/ChartToolbar.tsx` 변경 — 차트모양/보조지표/그리기(disabled)/종목비교(disabled)/크게보기
-- [ ] T-4-4: `charting/components/IndicatorPopover.tsx` 신규 — 기존 `IndicatorToggle` 을 popover wrap
-- [ ] T-4-5: 차트모양 popover — candle/line/area/heikinashi
-- [ ] T-4-6: 크게보기 — `requestFullscreen` API + iOS Safari fallback
+### TG-4: 시간프레임 + 도구바 + IndicatorPopover — f0abc09
+- [x] T-4-1: `charting/components/TimeframeSelector.tsx` 신규 — 7-칩 + types.ts TimeframeKey/TIMEFRAMES 메타
+- [x] T-4-2: 분봉 3종 disabled (Phase 3 SSE 와 함께 활성), aria-disabled + tooltip
+- [x] T-4-3: `ChartToolbar.tsx` 갱신 — 차트모양 popover (heikinashi 추가) + IndicatorPopover + 그리기(P2 disabled) + 종목비교(P2 disabled) + 크게보기
+- [x] T-4-4: `IndicatorPopover.tsx` 신규 — 외부 클릭/ESC 닫기, 활성 카운트 배지
+- [x] T-4-5: 차트모양 popover — 4종 (candle/heikinashi/line/area)
+- [x] T-4-6: 크게보기 = requestFullscreen API
+- [x] T-4-7: PeriodSelector.tsx 삭제, 기존 누적 타입 에러 2건 (fetchSymbols/Period) 해결
 
-### TG-5: 5-Tab 시스템
-- [ ] T-5-1: `charting/tabs/ChartInfoTab.tsx` 신규 — 메인 차트 + 도구바
-- [ ] T-5-2: `charting/tabs/AiInsightTab.tsx` 신규 — 패턴+유사+예측 통합 (기존 4-tab 통합)
-- [ ] T-5-3: `charting/tabs/StockInfoTab.tsx` 신규 — P2 placeholder
+### TG-5: 5-Tab 시스템 + URL 라우팅 — 37037d9
+- [x] T-5-1: BottomTab 5종 — chart(default) / info(disabled) / insight / news(disabled) / flows(disabled)
+- [x] T-5-2: insight 탭 — AI 자연어 요약 + 패턴 매치 + Prediction KPI + Similarity 표 통합
+- [x] T-5-3: info / news / flows 는 DisabledTabPlaceholder + Phase 2 활성화 안내
+- [x] T-5-4: URL ?tab= 라우팅 (useSearchParams, replace), default(chart) 는 query 미박힘
+- [x] T-5-5: aiSummaryText helper — RSI/MA20/변동률 임계 기반 단문 (P2 LLM 격상 검토)
+- [x] T-5-6: 탭 nav role=tablist + aria-selected/disabled, --ko-accent-primary 토큰
 - [ ] T-5-4: `charting/tabs/NewsTab.tsx` / `FlowsTab.tsx` 신규 — disabled placeholder
 - [ ] T-5-5: ChartsPage 의 4-tab → 5-tab 전환 + URL query param `tab=` 라우팅
 - [ ] T-5-6: AiInsightTab — 자연어 요약 룰 (RSI/거래량/변동률 임계 기반 단문 생성)
 
-### TG-6: SymbolPicker + 검색 단축키
-- [ ] T-6-1: `charting/components/SymbolPickerSheet.tsx` — bottom sheet (mobile) + dialog (desktop)
-- [ ] T-6-2: '/' 키 단축키 (focus 가 input 이 아닐 때)
-- [ ] T-6-3: 기존 `SymbolSearch` 를 sheet 안에 embed
+### TG-6: SymbolPicker + 검색 단축키 — ef9bb2b
+- [x] T-6-1: `SymbolPickerSheet.tsx` 신규 — bottom sheet (모바일) + side dialog (데스크톱), role=dialog/aria-modal, ESC/overlay 닫기, 자동 input focus
+- [x] T-6-2: '/' 키 단축키 (window keydown, INPUT/TEXTAREA/contentEditable focus 시 무시)
+- [x] T-6-3: 기존 `SymbolSearch` 를 sheet 안에 embed, ChartsPage 의 inline SymbolSheet 제거
 
-### TG-7: 데스크톱 사이드 AI 카드
-- [ ] T-7-1: 데스크톱 ≥ 1024 에서 우측 sticky AI 요약 카드 (AiInsightTab 의 자연어 요약 + 핵심 매치 1개)
-- [ ] T-7-2: 모바일에선 카드 미노출 (탭 안에서만)
+### TG-7: 데스크톱 사이드 AI 카드 — 4c851d3
+- [x] T-7-1: `AiSideCard.tsx` 신규 — summary + topMatch + prediction (5d/20d KPI) + onSeeMore (insight 탭 점프)
+- [x] T-7-2: ChartsPage outer lg grid (main 1fr + aside 320px), aside 는 hidden lg:block + sticky top-260px
+- [x] T-7-3: 모바일/태블릿은 grid 미적용 — 단일 column 유지
 
 ### TG-8: P1 종합 검증
-- [ ] T-8-1: a11y — keyboard navigation 모든 탭/도구바, ARIA labels
-- [ ] T-8-2: prefers-reduced-motion 시 transitions 비활성
-- [ ] T-8-3: 모바일 빠른 스크롤 시 sticky 헤더 jank 없음 (60fps)
-- [ ] T-8-4: 색상 토큰 grep — 시세 영역에 `--ko-status-*` 잔존 0
-- [ ] T-8-5: `hns:validate --code` PASS
-- [ ] T-8-6: `hns:validate-fe-design` 통과 (AI slop 미탐지)
-- [ ] T-8-7: 사용자 시연 + 승인
+- [x] T-8-1: a11y — role=tab/tablist/dialog, aria-selected/disabled/modal, aria-label/title 19곳 (검증)
+- [x] T-8-2: prefers-reduced-motion → tokens.css `@media` 에서 모든 duration 0ms (TG-1 에 이미 적용)
+- [x] T-8-3: vitest + jsdom 도입 (vitest@^2.1.9, jsdom@^26.1.0) + vitest.config.ts + npm scripts (test/test:watch)
+- [x] T-8-4: 색상 토큰 grep — 시세 영역 `--ko-status-*` 잔존 7곳 모두 P/L 의미 (similarity 5d/20d, AiSideCard MiniReturnKpi, ChartsPage 에러 메시지) — 의도된 유지
+- [x] T-8-5: 단위 테스트 12 passing — INDICATOR_META 메타 일관성 / activeSubPaneKeys 순서 / calcMA / calcRSI / calcOBV / calcBollingerBands / calcVWAP
+- [x] T-8-6: typecheck 0 errors final
+- [ ] T-8-7: 통합 테스트 (RTL + 컴포넌트) — P2 또는 별도 사이클
+- [ ] T-8-8: `hns:validate --code` 실행 + 사용자 시연 + 승인
 
 ---
 

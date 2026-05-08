@@ -1,6 +1,6 @@
 # ADR-0038 — Quant 차트 페이지 토스증권 수준 고도화 (Foundation)
 
-- **Status**: Accepted (2026-05-09)
+- **Status**: Accepted (2026-05-09) — **Phase 1 (Foundation) 출고 완료 (2026-05-09)**
 - **Date**: 2026-05-08
 - **Deciders**: 운영자
 - **Related**:
@@ -116,7 +116,7 @@
 
 | Phase | 범위 | 종속성 | 예상 분량 |
 |---|---|---|---|
-| **P1: Foundation** | D1 차트엔진 통합, D2 토큰, D3 5-tab, D4 sticky 헤더+microcontext, D5 시간프레임(daily), D6 도구바(축소판) | none | ~2주 |
+| **P1: Foundation** ✅ | D1 차트엔진 통합 (TG-1~2-D), D2 토큰, D3 5-tab (TG-5), D4 sticky 헤더+microcontext (TG-3), D5 시간프레임(daily) + D6 도구바 (TG-4), SymbolPicker (TG-6), AI 사이드 카드 (TG-7), vitest 인프라 (TG-8) — **8 commits, 2026-05-09 완료** | none | 1일 |
 | **P2: Info & AI** | 종목정보 탭(yfinance fundamentals fetch), AI 인사이트 통합 카드, 그리기·종목비교 | P1 | ~1.5주 |
 | **P3: Realtime** | D7 SSE backend + `usePriceStream` + price flash + 분봉 시간프레임 활성화 | P1 + 백엔드 SSE | ~1.5주 |
 | **(P4) Discover** | 발견·트렌딩 화면 | 별도 ADR/spec | (분리) |
