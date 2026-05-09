@@ -36,6 +36,8 @@ import { PATTERNS as ALL_PATTERNS } from '@/charting/lib/patterns'
 import { calcMA, calcRSI, calcATR } from '@/charting/lib/indicators'
 import { useFundamentals } from '@/charting/hooks/useFundamentals'
 import { usePriceStream } from '@/charting/hooks/usePriceStream'
+import { useInvestorFlows } from '@/charting/hooks/useInvestorFlows'
+import { InvestorFlowsPanel } from '@/charting/components/InvestorFlowsPanel'
 import {
   type Drawing,
   listFor as listDrawingsFor,
@@ -169,7 +171,7 @@ const BOTTOM_TABS: Array<{
   { key: 'info', label: '종목정보' },
   { key: 'insight', label: 'AI 인사이트' },
   { key: 'news', label: '뉴스·공시', disabled: true, reason: 'P2 활성화 예정' },
-  { key: 'flows', label: '매매주체', disabled: true, reason: 'P2 활성화 예정' },
+  { key: 'flows', label: '매매주체' },
 ]
 
 function isBottomTab(value: string | null): value is BottomTab {
@@ -329,6 +331,15 @@ export function ChartsPage() {
 
   // TG-9 — Fundamentals (Yahoo v10 quoteSummary, 1h 캐시)
   const fundamentalsQ = useFundamentals(backendAsset, backendMarket)
+
+  // ADR-0040 — 매매주체 (KR 주식 전용)
+  const investorFlowsQ = useInvestorFlows(
+    backendAsset,
+    backendMarket,
+    from,
+    to,
+    symbol.assetClass === 'STOCK_KR',
+  )
 
   // TG-11 — 사용자 그리기 (가로선 prototype, localStorage 저장)
   const drawingAssetKey = useMemo(
@@ -917,9 +928,11 @@ export function ChartsPage() {
 
         {bottomTab === 'flows' && (
           <Card>
-            <DisabledTabPlaceholder
-              title="매매주체 동향"
-              description="개인·외국인·기관 순매수/매도 일별 데이터를 KRX/FDR ingest 보강 후 제공할 예정입니다."
+            <InvestorFlowsPanel
+              flows={investorFlowsQ.data ?? []}
+              loading={investorFlowsQ.isLoading}
+              error={investorFlowsQ.isError}
+              isKr={symbol.assetClass === 'STOCK_KR'}
             />
           </Card>
         )}

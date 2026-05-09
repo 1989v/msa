@@ -6,6 +6,7 @@ import com.kgd.quant.application.chart.IndicatorQuery
 import com.kgd.quant.application.chart.PredictionQuery
 import com.kgd.quant.application.chart.SimilarityQuery
 import com.kgd.quant.application.indicator.IndicatorCalculator
+import com.kgd.quant.application.port.persistence.InvestorFlowsPort
 import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
@@ -32,6 +33,7 @@ class ChartController(
     private val similarityQuery: SimilarityQuery,
     private val predictionQuery: PredictionQuery,
     private val fundamentalsQuery: FundamentalsQuery,
+    private val investorFlowsPort: InvestorFlowsPort,
 ) {
     @GetMapping("/prediction")
     suspend fun prediction(
@@ -196,6 +198,41 @@ class ChartController(
             avgDailyVolume = f.avgDailyVolume,
             asOf = f.asOf.toString(),
         )
+
+    /**
+     * ADR-0040 — 매매주체 동향 (KR 주식 전용).
+     */
+    @GetMapping("/investor-flows")
+    suspend fun investorFlows(
+        @RequestParam asset: String,
+        @RequestParam market: String,
+        @RequestParam from: String,
+        @RequestParam to: String,
+    ): ApiResponse<List<InvestorFlowResponse>> {
+        val flows = investorFlowsPort.query(
+            AssetCode(asset),
+            MarketCode(market),
+            Instant.parse(from),
+            Instant.parse(to),
+        )
+        return ApiResponse.success(
+            flows.map {
+                InvestorFlowResponse(
+                    tradeDate = it.tradeDate.toString(),
+                    individualNet = it.individualNet,
+                    foreignNet = it.foreignNet,
+                    institutionNet = it.institutionNet,
+                )
+            },
+        )
+    }
+
+    data class InvestorFlowResponse(
+        val tradeDate: String,
+        val individualNet: Long,
+        val foreignNet: Long,
+        val institutionNet: Long,
+    )
 
     data class FundamentalsResponse(
         val asset: String,

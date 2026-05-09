@@ -17,8 +17,9 @@ from typing import List, Tuple
 import click
 import requests
 
-from src.sinks.clickhouse_sink import insert_bars
+from src.sinks.clickhouse_sink import insert_bars, insert_investor_flows
 from src.sources.fdr_src import fetch_fdr
+from src.sources.investor_flows_src import fetch_investor_flows
 from src.sources.yfinance_src import fetch_yfinance, safe_lookback_days
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -75,6 +76,12 @@ def load_targets() -> List[Tuple[str, str, str]]:
 
 
 @click.command()
+@click.option(
+    "--job",
+    type=click.Choice(["ohlcv", "investor-flows"]),
+    default="ohlcv",
+    help="Ingest job. 'ohlcv' (default) = OHLCV 시계열, 'investor-flows' = ADR-0040 KR 매매주체 일별",
+)
 @click.option("--mode", type=click.Choice(["incremental", "backfill"]), default="incremental")
 @click.option(
     "--interval",
@@ -84,7 +91,30 @@ def load_targets() -> List[Tuple[str, str, str]]:
     "yfinance 분봉(1m/5m/30m) 은 lookback 자동 한도 적용 (1m=7일, 5m/30m=60일).",
 )
 @click.option("--lookback-days", type=int, default=7)
-def main(mode: str, interval: str, lookback_days: int) -> None:
+def main(job: str, mode: str, interval: str, lookback_days: int) -> None:
+    if job == "investor-flows":
+        return _run_investor_flows(lookback_days)
+    return _run_ohlcv(mode, interval, lookback_days)
+
+
+def _run_investor_flows(lookback_days: int) -> None:
+    log.info("quant-ingest investor-flows start lookback_days=%d", lookback_days)
+    targets = load_targets()
+    total = 0
+    for asset_code, asset_class, _source in targets:
+        if asset_class != "STOCK_KR":
+            continue  # KR 주식 전용
+        try:
+            flows = list(fetch_investor_flows(asset_code, lookback_days))
+            n = insert_investor_flows(flows)
+            total += n
+            log.info("ingested investor-flows asset=%s rows=%d", asset_code, n)
+        except Exception as exc:
+            log.exception("investor-flows ingest failed asset=%s: %s", asset_code, exc)
+    log.info("quant-ingest investor-flows done total_rows=%d", total)
+
+
+def _run_ohlcv(mode: str, interval: str, lookback_days: int) -> None:
     # 분봉은 yfinance 한도 내로 lookback 자동 조정
     effective_lookback = safe_lookback_days(interval, lookback_days)
     if effective_lookback != lookback_days:

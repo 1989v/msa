@@ -6,6 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "yfinance>=0.2.40",
     "finance-datareader>=0.9.50",
+    "pykrx>=1.0.45",
     "clickhouse-connect>=0.7.16",
     "pandas>=2.2.0",
     "click>=8.1.0",

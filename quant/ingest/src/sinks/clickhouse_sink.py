@@ -1,6 +1,7 @@
 """ClickHouse `quant.ohlcv` 멱등 INSERT.
 
 ADR-0033/0034 — 메인 서비스 read-only, 본 sidecar 가 단방향 적재.
+ADR-0040 — investor_flows 테이블에도 동일 패턴.
 """
 from __future__ import annotations
 
@@ -10,6 +11,17 @@ from typing import Iterable
 import clickhouse_connect
 
 from src.sources.yfinance_src import OhlcvBar
+from src.sources.investor_flows_src import InvestorFlowRow
+
+
+def _client():
+    return clickhouse_connect.get_client(
+        host=os.environ.get("CLICKHOUSE_HOST", "clickhouse"),
+        port=int(os.environ.get("CLICKHOUSE_PORT", "8123")),
+        database=os.environ.get("CLICKHOUSE_DB", "quant"),
+        username=os.environ.get("CLICKHOUSE_USER", "default"),
+        password=os.environ.get("CLICKHOUSE_PASSWORD", ""),
+    )
 
 
 def insert_bars(bars: Iterable[OhlcvBar]) -> int:
@@ -31,19 +43,43 @@ def insert_bars(bars: Iterable[OhlcvBar]) -> int:
     if not rows:
         return 0
 
-    client = clickhouse_connect.get_client(
-        host=os.environ.get("CLICKHOUSE_HOST", "clickhouse"),
-        port=int(os.environ.get("CLICKHOUSE_PORT", "8123")),
-        database=os.environ.get("CLICKHOUSE_DB", "quant"),
-        username=os.environ.get("CLICKHOUSE_USER", "default"),
-        password=os.environ.get("CLICKHOUSE_PASSWORD", ""),
-    )
+    client = _client()
     client.insert(
         "ohlcv",
         rows,
         column_names=[
             "asset_code", "asset_class", "market_code", "interval",
             "ts", "open", "high", "low", "close", "volume",
+        ],
+    )
+    return len(rows)
+
+
+def insert_investor_flows(flows: Iterable[InvestorFlowRow]) -> int:
+    """ADR-0040 — investor_flows 테이블에 멱등 INSERT.
+
+    Returns: insert 행 수.
+    """
+    rows = [
+        (
+            f.asset_code,
+            f.market_code,
+            f.trade_date.date() if hasattr(f.trade_date, "date") else f.trade_date,
+            f.individual_net,
+            f.foreign_net,
+            f.institution_net,
+        )
+        for f in flows
+    ]
+    if not rows:
+        return 0
+    client = _client()
+    client.insert(
+        "investor_flows",
+        rows,
+        column_names=[
+            "asset_code", "market_code", "trade_date",
+            "individual_net", "foreign_net", "institution_net",
         ],
     )
     return len(rows)
