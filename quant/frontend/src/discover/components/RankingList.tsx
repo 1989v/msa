@@ -116,7 +116,7 @@ function toneColor(t: 'rise' | 'fall' | 'muted'): string {
 function formatPriceCompact(s: string, assetClass: string): string {
   const n = parseFloat(s)
   if (!Number.isFinite(n)) return '—'
-  if (assetClass === 'STOCK_US') {
+  if (assetClass === 'STOCK_US' || assetClass === 'CRYPTO') {
     return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
   return `₩${Math.round(n).toLocaleString('ko-KR')}`
@@ -130,7 +130,8 @@ function formatPctSigned(p: number | null): string {
 function formatCompactKrw(s: string, assetClass: string): string {
   const n = parseFloat(s)
   if (!Number.isFinite(n) || n <= 0) return '—'
-  if (assetClass === 'STOCK_US') {
+  if (assetClass === 'STOCK_US' || assetClass === 'CRYPTO') {
+    if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`
     if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
     if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`
     if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`

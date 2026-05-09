@@ -42,48 +42,62 @@ class ClickHouseRankingAdapter(
             RankingMode.GAINERS -> "change_pct DESC"
             RankingMode.LOSERS -> "change_pct ASC"
         }
-        val marketClause = if (marketFilter != null) "AND market_code = ?" else ""
+        // marketFilter 는 enum 으로 들어와도 신뢰할 수 없는 외부 입력일 수 있으므로 whitelist.
+        val safeMarket = marketFilter?.takeIf { ALLOWED_MARKETS.matches(it) }
+        val marketClause = if (safeMarket != null) "AND r.market_code = '$safeMarket'" else ""
+        val safeLimit = limit.coerceIn(1, 200)
+        // ClickHouse JDBC 0.7.1 PreparedStatement 가 CTE 내부 FROM 을 multi-statement 로
+        // 잘못 split 하는 버그 회피 — placeholder 미사용, 모든 값을 whitelist 후 직접 삽입.
+        // market 별 max(trade_date) 로 KR/US/CRYPTO 시차 보정 (전체 max 로 잠그면 늦은 마감 시장만 노출).
         val sql = """
-            WITH latest AS (
-                SELECT max(trade_date) AS d FROM quant.discover_daily_ranking
+            WITH latest_per_market AS (
+                SELECT market_code, max(trade_date) AS d
+                FROM quant.discover_daily_ranking
+                GROUP BY market_code
             ),
-            prev AS (
-                SELECT max(trade_date) AS d FROM quant.discover_daily_ranking
-                WHERE trade_date < (SELECT d FROM latest)
+            prev_per_market AS (
+                SELECT r.market_code, max(r.trade_date) AS d
+                FROM quant.discover_daily_ranking r
+                INNER JOIN latest_per_market l ON l.market_code = r.market_code
+                WHERE r.trade_date < l.d
+                GROUP BY r.market_code
             )
             SELECT
-                r.asset_code,
-                r.asset_class,
-                r.market_code,
-                r.last_close,
-                r.first_close,
+                r.asset_code AS asset_code,
+                r.asset_class AS asset_class,
+                r.market_code AS market_code,
+                r.last_close AS last_close,
+                r.first_close AS first_close,
                 COALESCE(p.last_close, r.first_close) AS prev_close,
-                r.turnover,
-                r.volume_total,
+                r.turnover AS turnover,
+                r.volume_total AS volume_total,
                 CASE
                     WHEN COALESCE(p.last_close, r.first_close) > 0
                         THEN (r.last_close - COALESCE(p.last_close, r.first_close)) / COALESCE(p.last_close, r.first_close)
                     ELSE NULL
                 END AS change_pct
             FROM quant.discover_daily_ranking r
-            LEFT JOIN quant.discover_daily_ranking p
-                ON r.asset_code = p.asset_code
-               AND r.market_code = p.market_code
-               AND p.trade_date = (SELECT d FROM prev)
-            WHERE r.trade_date = (SELECT d FROM latest)
+            INNER JOIN latest_per_market l
+                ON l.market_code = r.market_code
+               AND r.trade_date = l.d
+            LEFT JOIN (
+                SELECT pr.asset_code, pr.market_code, pr.last_close
+                FROM quant.discover_daily_ranking pr
+                INNER JOIN prev_per_market pp
+                    ON pp.market_code = pr.market_code
+                   AND pp.d = pr.trade_date
+            ) AS p
+                ON p.asset_code = r.asset_code
+               AND p.market_code = r.market_code
+            WHERE 1 = 1
               $marketClause
               ${if (mode == RankingMode.GAINERS || mode == RankingMode.LOSERS) "AND change_pct IS NOT NULL" else ""}
             ORDER BY $orderClause
-            LIMIT ?
+            LIMIT $safeLimit
         """.trimIndent()
 
-        val args: Array<Any> = if (marketFilter != null) {
-            arrayOf(marketFilter, limit)
-        } else {
-            arrayOf(limit)
-        }
         runCatching {
-            jdbc.query(sql, args) { rs, _ ->
+            jdbc.query(sql) { rs, _ ->
                 MarketRanking(
                     asset = rs.getString("asset_code"),
                     market = rs.getString("market_code"),
@@ -106,4 +120,8 @@ class ClickHouseRankingAdapter(
 
     @Suppress("unused")
     private fun MathContext.useless() = Unit // keep import warnings down
+
+    private companion object {
+        private val ALLOWED_MARKETS = Regex("^[A-Z][A-Z0-9_]{0,31}$")
+    }
 }
