@@ -15,7 +15,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
  * 후속: Redis pubsub 으로 multi-instance fan-out.
  */
 interface PriceStreamPort {
-    fun subscribe(asset: AssetCode, market: MarketCode): SseEmitter
+    fun subscribe(
+        asset: AssetCode,
+        market: MarketCode,
+        /** EventSource 의 Last-Event-ID 헤더 (epoch ms 문자열). null = 첫 연결. */
+        lastEventId: String? = null,
+    ): SseEmitter
     fun publish(tick: PriceTick)
     /** Active 구독자 수 — Prometheus 메트릭/디버깅용. */
     fun subscriberCount(asset: AssetCode, market: MarketCode): Int

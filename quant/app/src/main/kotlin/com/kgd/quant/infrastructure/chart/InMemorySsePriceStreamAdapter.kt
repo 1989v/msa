@@ -13,9 +13,13 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * InMemorySsePriceStreamAdapter — 단일 인스턴스 in-memory SSE registry (TG-13 prototype).
+ * InMemorySsePriceStreamAdapter — 단일 인스턴스 in-memory SSE registry.
  *
- * Multi-instance fan-out 은 Redis pubsub 도입 (별도 PR) 시 추가.
+ * Multi-instance fan-out: Redis pubsub 도입 시 RedisBackedSsePriceStreamAdapter 가 publish 를 Redis 로 broadcast,
+ * 본 adapter 는 그대로 emitter registry 만 담당.
+ *
+ * Last-Event-ID replay (TG-13 보강): 자산별 ring buffer (최근 100 tick) 보관 → reconnect 시
+ * 클라이언트가 보낸 Last-Event-ID 이후의 tick 을 즉시 emit.
  *
  * - 자산 키 = "asset:market"
  * - emitter 별 onCompletion / onTimeout / onError → registry 에서 제거
@@ -28,7 +32,16 @@ class InMemorySsePriceStreamAdapter : PriceStreamPort {
     /** 자산 키 → 활성 emitter 리스트 */
     private val registry = ConcurrentHashMap<String, CopyOnWriteArrayList<SseEmitter>>()
 
-    override fun subscribe(asset: AssetCode, market: MarketCode): SseEmitter {
+    /** 자산 키 → 최근 N tick (replay 용 ring buffer). */
+    private val recent = ConcurrentHashMap<String, java.util.ArrayDeque<PriceTick>>()
+
+    private val recentCapacity = 100
+
+    override fun subscribe(
+        asset: AssetCode,
+        market: MarketCode,
+        lastEventId: String?,
+    ): SseEmitter {
         val key = key(asset, market)
         // 30분 idle timeout — heartbeat 가 갱신
         val emitter = SseEmitter(30 * 60 * 1000L)
@@ -50,24 +63,39 @@ class InMemorySsePriceStreamAdapter : PriceStreamPort {
             list.remove(emitter)
             log.debug { "sse hello fail key=$key error=${it.message}" }
         }
+
+        // Last-Event-ID replay
+        if (lastEventId != null) {
+            replayAfter(emitter, key, lastEventId)
+        }
         return emitter
+    }
+
+    private fun replayAfter(emitter: SseEmitter, key: String, lastEventId: String) {
+        val sinceMs = lastEventId.toLongOrNull() ?: return
+        val buffer = recent[key] ?: return
+        // ArrayDeque iteration 은 thread-safe X — copy 해서 replay.
+        val snapshot = synchronized(buffer) { buffer.toList() }
+        snapshot.asSequence()
+            .filter { it.ts.toEpochMilli() > sinceMs }
+            .forEach { tick ->
+                runCatching { emitter.send(toEvent(tick)) }
+                    .onFailure { log.debug { "sse replay fail key=$key error=${it.message}" } }
+            }
     }
 
     override fun publish(tick: PriceTick) {
         val key = key(tick.asset, tick.market)
+        // ring buffer 갱신 (구독자 없어도 보관 — reconnect 직전 tick 도 살림)
+        val buffer = recent.computeIfAbsent(key) { java.util.ArrayDeque() }
+        synchronized(buffer) {
+            buffer.add(tick)
+            while (buffer.size > recentCapacity) buffer.removeFirst()
+        }
+
         val list = registry[key] ?: return
         if (list.isEmpty()) return
-        val payload = mapOf(
-            "asset" to tick.asset.value,
-            "market" to tick.market.value,
-            "price" to tick.price.toPlainString(),
-            "volume" to tick.volume?.toPlainString(),
-            "ts" to tick.ts.toString(),
-        )
-        val event = SseEmitter.event()
-            .name("tick")
-            .id(tick.ts.toEpochMilli().toString())
-            .data(payload)
+        val event = toEvent(tick)
 
         val dead = mutableListOf<SseEmitter>()
         list.forEach { e ->
@@ -80,6 +108,20 @@ class InMemorySsePriceStreamAdapter : PriceStreamPort {
             }
         }
         if (dead.isNotEmpty()) list.removeAll(dead)
+    }
+
+    private fun toEvent(tick: PriceTick): SseEmitter.SseEventBuilder {
+        val payload = mapOf(
+            "asset" to tick.asset.value,
+            "market" to tick.market.value,
+            "price" to tick.price.toPlainString(),
+            "volume" to tick.volume?.toPlainString(),
+            "ts" to tick.ts.toString(),
+        )
+        return SseEmitter.event()
+            .name("tick")
+            .id(tick.ts.toEpochMilli().toString())
+            .data(payload)
     }
 
     override fun subscriberCount(asset: AssetCode, market: MarketCode): Int =
