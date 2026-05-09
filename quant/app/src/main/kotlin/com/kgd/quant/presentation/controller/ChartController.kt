@@ -6,6 +6,7 @@ import com.kgd.quant.application.chart.IndicatorQuery
 import com.kgd.quant.application.chart.PredictionQuery
 import com.kgd.quant.application.chart.SimilarityQuery
 import com.kgd.quant.application.indicator.IndicatorCalculator
+import com.kgd.quant.application.port.external.NewsPort
 import com.kgd.quant.application.port.persistence.InvestorFlowsPort
 import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
@@ -34,6 +35,7 @@ class ChartController(
     private val predictionQuery: PredictionQuery,
     private val fundamentalsQuery: FundamentalsQuery,
     private val investorFlowsPort: InvestorFlowsPort,
+    private val newsPort: NewsPort,
 ) {
     @GetMapping("/prediction")
     suspend fun prediction(
@@ -226,6 +228,39 @@ class ChartController(
             },
         )
     }
+
+    /**
+     * ADR-0041 — 종목 뉴스/공시 (Yahoo v8 search news, 10분 Caffeine 캐시).
+     */
+    @GetMapping("/news")
+    suspend fun news(
+        @RequestParam asset: String,
+        @RequestParam market: String,
+        @RequestParam(defaultValue = "20") limit: Int,
+    ): ApiResponse<List<NewsResponse>> {
+        val items = newsPort.fetch(AssetCode(asset), MarketCode(market), limit)
+        return ApiResponse.success(
+            items.map {
+                NewsResponse(
+                    title = it.title,
+                    source = it.source,
+                    url = it.url,
+                    publishedAt = it.publishedAt.toString(),
+                    summary = it.summary,
+                    kind = it.kind.name,
+                )
+            },
+        )
+    }
+
+    data class NewsResponse(
+        val title: String,
+        val source: String,
+        val url: String,
+        val publishedAt: String,
+        val summary: String?,
+        val kind: String,
+    )
 
     data class InvestorFlowResponse(
         val tradeDate: String,

@@ -38,6 +38,8 @@ import { useFundamentals } from '@/charting/hooks/useFundamentals'
 import { usePriceStream } from '@/charting/hooks/usePriceStream'
 import { useInvestorFlows } from '@/charting/hooks/useInvestorFlows'
 import { InvestorFlowsPanel } from '@/charting/components/InvestorFlowsPanel'
+import { useNews } from '@/charting/hooks/useNews'
+import { NewsFeed } from '@/charting/components/NewsFeed'
 import {
   type Drawing,
   listFor as listDrawingsFor,
@@ -170,7 +172,7 @@ const BOTTOM_TABS: Array<{
   { key: 'chart', label: '차트·정보' },
   { key: 'info', label: '종목정보' },
   { key: 'insight', label: 'AI 인사이트' },
-  { key: 'news', label: '뉴스·공시', disabled: true, reason: 'P2 활성화 예정' },
+  { key: 'news', label: '뉴스·공시' },
   { key: 'flows', label: '매매주체' },
 ]
 
@@ -340,6 +342,9 @@ export function ChartsPage() {
     to,
     symbol.assetClass === 'STOCK_KR',
   )
+
+  // ADR-0041 — 뉴스 (Yahoo v8 search news)
+  const newsQ = useNews(backendAsset, backendMarket, 20)
 
   // TG-11 — 사용자 그리기 (가로선 prototype, localStorage 저장)
   const drawingAssetKey = useMemo(
@@ -919,9 +924,10 @@ export function ChartsPage() {
 
         {bottomTab === 'news' && (
           <Card>
-            <DisabledTabPlaceholder
-              title="뉴스·공시"
-              description="실시간 뉴스 피드와 공시 자료를 P2 에서 통합할 예정입니다."
+            <NewsFeed
+              items={newsQ.data ?? []}
+              loading={newsQ.isLoading}
+              error={newsQ.isError}
             />
           </Card>
         )}
