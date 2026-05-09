@@ -33,6 +33,14 @@ spec:
               value: "quant"
             - name: DB_PASSWORD
               value: "quant"
+            # ClickHouse `quant` DB — ohlcv read + ranking VIEW + DART corp_codes + investor_flows
+            # ingest cronjob 들과 동일 host/port. user 는 read 권한 보유한 analytics 계정 재사용.
+            - name: QUANT_CH_URL
+              value: "jdbc:clickhouse://clickhouse:8123/quant"
+            - name: QUANT_CH_USERNAME
+              value: "analytics"
+            - name: QUANT_CH_PASSWORD
+              value: "analytics"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
