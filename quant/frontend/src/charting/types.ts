@@ -32,9 +32,11 @@ export interface TimeframeOption {
 }
 
 export const TIMEFRAMES: TimeframeOption[] = [
-  { key: '1m', label: '1분', disabled: true, disabledReason: 'Phase 3 (실시간 SSE) 와 함께 활성화' },
-  { key: '5m', label: '5분', disabled: true, disabledReason: 'Phase 3 (실시간 SSE) 와 함께 활성화' },
-  { key: '30m', label: '30분', disabled: true, disabledReason: 'Phase 3 (실시간 SSE) 와 함께 활성화' },
+  // TG-15: 분봉 ingest 활성화 (Python sidecar yfinance 1m/5m/30m 매핑 추가).
+  // 데이터 가용성은 K8s CronJob 의 interval 별 ingest 주기에 의존.
+  { key: '1m', label: '1분' },
+  { key: '5m', label: '5분' },
+  { key: '30m', label: '30분' },
   { key: '1d', label: '일' },
   { key: '1w', label: '주' },
   { key: '1mo', label: '월' },

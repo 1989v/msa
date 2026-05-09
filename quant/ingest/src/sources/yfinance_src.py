@@ -70,5 +70,41 @@ def fetch_yfinance(
 
 
 def _to_yf_interval(interval: str) -> str:
-    mapping = {"1m": "1m", "5m": "5m", "15m": "15m", "1h": "60m", "1d": "1d"}
+    """우리 TimeframeKey → yfinance interval 매핑.
+
+    yfinance 가 직접 지원: 1m / 5m / 15m / 30m / 60m / 1d / 1wk / 1mo / 3mo.
+    1y 는 미지원 → 1mo 로 fallback (12개 = 1년 근사).
+    """
+    mapping = {
+        "1m": "1m",
+        "5m": "5m",
+        "15m": "15m",
+        "30m": "30m",
+        "1h": "60m",
+        "1d": "1d",
+        "1w": "1wk",
+        "1mo": "1mo",
+        "1y": "1mo",  # yfinance 1y interval 미지원
+    }
     return mapping.get(interval, "1d")
+
+
+# yfinance 의 interval 별 lookback 한도 (일).
+# 분봉은 7일 (1m) / 60일 (5m/15m/30m), 그 외는 충분.
+INTERVAL_MAX_LOOKBACK_DAYS = {
+    "1m": 7,
+    "5m": 60,
+    "15m": 60,
+    "30m": 60,
+    "1h": 730,
+    "1d": 365 * 5,
+    "1w": 365 * 20,
+    "1mo": 365 * 50,
+    "1y": 365 * 50,
+}
+
+
+def safe_lookback_days(interval: str, requested: int) -> int:
+    """yfinance 한도 내로 lookback 을 조정."""
+    cap = INTERVAL_MAX_LOOKBACK_DAYS.get(interval, 365)
+    return min(requested, cap)

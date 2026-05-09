@@ -19,7 +19,7 @@ import requests
 
 from src.sinks.clickhouse_sink import insert_bars
 from src.sources.fdr_src import fetch_fdr
-from src.sources.yfinance_src import fetch_yfinance
+from src.sources.yfinance_src import fetch_yfinance, safe_lookback_days
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("quant-ingest")
@@ -76,10 +76,26 @@ def load_targets() -> List[Tuple[str, str, str]]:
 
 @click.command()
 @click.option("--mode", type=click.Choice(["incremental", "backfill"]), default="incremental")
-@click.option("--interval", type=click.Choice(["1m", "5m", "15m", "1h", "1d"]), default="1d")
+@click.option(
+    "--interval",
+    type=click.Choice(["1m", "5m", "15m", "30m", "1h", "1d", "1w", "1mo", "1y"]),
+    default="1d",
+    help="TimeframeKey — FE/quant TimeframeSelector 와 정합. "
+    "yfinance 분봉(1m/5m/30m) 은 lookback 자동 한도 적용 (1m=7일, 5m/30m=60일).",
+)
 @click.option("--lookback-days", type=int, default=7)
 def main(mode: str, interval: str, lookback_days: int) -> None:
-    log.info("quant-ingest start mode=%s interval=%s lookback_days=%d", mode, interval, lookback_days)
+    # 분봉은 yfinance 한도 내로 lookback 자동 조정
+    effective_lookback = safe_lookback_days(interval, lookback_days)
+    if effective_lookback != lookback_days:
+        log.info(
+            "lookback_days clamped %d -> %d for interval=%s (yfinance limit)",
+            lookback_days, effective_lookback, interval,
+        )
+    log.info(
+        "quant-ingest start mode=%s interval=%s lookback_days=%d",
+        mode, interval, effective_lookback,
+    )
     targets = load_targets()
     total = 0
     for asset_code, asset_class, source in targets:
@@ -88,12 +104,15 @@ def main(mode: str, interval: str, lookback_days: int) -> None:
                 bars = list(fetch_yfinance(
                     asset_code=asset_code,
                     interval=interval,
-                    lookback_days=lookback_days,
+                    lookback_days=effective_lookback,
                     asset_class=asset_class,
                 ))
             elif source == "fdr":
-                # FDR 은 KR 주식 일봉만 지원 (interval 인자 무시)
-                bars = list(fetch_fdr(asset_code=asset_code, lookback_days=lookback_days))
+                # FDR 은 KR 주식 일봉만 지원 — 분봉 요청 시 skip (분봉 KR 은 별도 source 필요)
+                if interval not in ("1d", "1w", "1mo", "1y"):
+                    log.info("skip fdr asset=%s — interval=%s 미지원 (daily only)", asset_code, interval)
+                    continue
+                bars = list(fetch_fdr(asset_code=asset_code, lookback_days=effective_lookback))
             else:
                 log.warning("skip unknown source=%s for asset=%s", source, asset_code)
                 continue
