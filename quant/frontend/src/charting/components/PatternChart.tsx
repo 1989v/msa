@@ -385,21 +385,30 @@ export function PatternChart({
     }
 
     // ─ Compare overlay (TG-12) ───────────────────────────────────────────
-    // 비교 종목 close 라인을 paneIndex 0 + 별도 left priceScale 에 표시.
-    // 메인 candle 가격 단위와 비교 종목 가격 단위가 다를 수 있어 좌·우 분리.
-    if (compareBars && compareBars.length > 0) {
-      const compareData = compareBars
-        .map((b, i) => ({ time: toTime(b, i), value: Number(b.close) }))
-        .filter(d => Number.isFinite(d.value))
-      result.push({
-        name: compareLabel ?? 'Compare',
-        paneIndex: 0,
-        type: 'line',
-        color: compareColor,
-        lineWidth: 2,
-        priceScaleId: 'left',
-        data: compareData,
-      })
+    // 비교 종목을 메인 첫 close 기준으로 정규화 (시작점 동일) → 같은 priceScale 에서 비교 가능.
+    // raw 가격이 아니라 "메인과 동일 시작점에서 % 변동" 의미.
+    if (compareBars && compareBars.length > 0 && bars.length > 0) {
+      const mainFirst = Number(bars[0].close)
+      const compFirst = Number(compareBars[0].close)
+      if (Number.isFinite(mainFirst) && Number.isFinite(compFirst) && compFirst > 0) {
+        const scale = mainFirst / compFirst
+        const compareData = compareBars
+          .map((b, i) => ({
+            time: toTime(b, i),
+            value: Number(b.close) * scale,
+          }))
+          .filter(d => Number.isFinite(d.value))
+        result.push({
+          name: compareLabel
+            ? `${compareLabel} (정규화)`
+            : 'Compare (정규화)',
+          paneIndex: 0,
+          type: 'line',
+          color: compareColor,
+          lineWidth: 2,
+          data: compareData,
+        })
+      }
     }
 
     return result
@@ -480,7 +489,6 @@ export function PatternChart({
         toTime={toTime}
         height={totalHeight}
         paneStretch={{ 0: 4 }}
-        leftPriceScaleVisible={!!compareBars && compareBars.length > 0}
       />
 
       {/* OHLCV legend on crosshair hover */}
