@@ -12,6 +12,7 @@ import { LeaderboardPage } from '@/pages/LeaderboardPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { PaperTradingMonitorPage } from '@/pages/PaperTradingMonitorPage'
 import { ChartsPage } from '@/pages/ChartsPage'
+import { DiscoverPage } from '@/pages/DiscoverPage'
 import { LearnPage } from '@/pages/LearnPage'
 import { PortfolioDemoPage } from '@/pages/PortfolioDemoPage'
 import { TrancheDemoPage } from '@/pages/TrancheDemoPage'
@@ -118,6 +119,14 @@ export default function App() {
             element={
               <AppShell width="full">
                 <ChartsPage />
+              </AppShell>
+            }
+          />
+          <Route
+            path="/discover"
+            element={
+              <AppShell width="full">
+                <DiscoverPage />
               </AppShell>
             }
           />
