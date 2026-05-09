@@ -710,15 +710,26 @@ export function ChartsPage() {
 
       <div className="flex-1 lg:max-w-screen-2xl lg:mx-auto lg:w-full lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4">
         <main className="lg:min-w-0">
-      {/* === 메인 차트 === */}
-      <section className="px-2 md:px-6 py-3">
+      {/* === 메인 차트 — minHeight 700px (PatternChart 의 height 와 동일) 으로 reserved space === */}
+      <section className="px-2 md:px-6 py-3" style={{ minHeight: 700 }}>
         {ohlcvQ.isLoading && (
-          <div className="text-sm py-12 text-center" style={{ color: 'var(--ko-text-muted)' }}>
+          <div
+            className="text-sm py-12 text-center rounded-xl"
+            style={{
+              color: 'var(--ko-text-muted)',
+              background: 'var(--ko-surface-1)',
+              border: '1px solid var(--ko-border-subtle)',
+              minHeight: 660,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             로딩 중…
           </div>
         )}
         {ohlcvQ.isError && (
-          <div className="text-sm py-12 text-center" style={{ color: 'var(--ko-status-loss)' }}>
+          <div className="text-sm py-12 text-center" style={{ color: 'var(--ko-status-loss)', minHeight: 660 }}>
             에러: {toApiError(ohlcvQ.error).message}
           </div>
         )}
@@ -729,6 +740,11 @@ export function ChartsPage() {
               color: 'var(--ko-text-muted)',
               background: 'var(--ko-surface-1)',
               border: '1px solid var(--ko-border-subtle)',
+              minHeight: 660,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
             }}
           >
             데이터 없음 — ingest 가 아직 적재하지 않았습니다.

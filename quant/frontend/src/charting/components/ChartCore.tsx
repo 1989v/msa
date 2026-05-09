@@ -126,6 +126,18 @@ export function ChartCore({
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [chartReady, setChartReady] = useState(false)
 
+  // Callback props 를 ref 에 보관 — useEffect deps 에서 제외하여
+  // 부모 re-render 마다 차트 전체 재생성 (chart.remove + recreate) 회피.
+  // ForcedReflow 비용의 많은 부분이 매번의 chart 재초기화에서 발생.
+  const onCrosshairMoveRef = useRef(onCrosshairMove)
+  const onChartClickRef = useRef(onChartClick)
+  const onChartReadyRef = useRef(onChartReady)
+  useEffect(() => {
+    onCrosshairMoveRef.current = onCrosshairMove
+    onChartClickRef.current = onChartClick
+    onChartReadyRef.current = onChartReady
+  }, [onCrosshairMove, onChartClick, onChartReady])
+
   useEffect(() => {
     if (!containerRef.current || bars.length === 0) return
 
@@ -274,68 +286,70 @@ export function ChartCore({
     })
 
     // ── Crosshair OHLCV legend ───────────────────────────────────────────────
-    if (onCrosshairMove) {
-      const barByTime = new Map<string, OhlcvBar>()
-      sortedBars.forEach((b, i) => {
-        const key = timeKeyToString(toTime(b, i))
-        barByTime.set(key, b)
-      })
-      chart.subscribeCrosshairMove(param => {
-        if (!param.time) {
-          onCrosshairMove({ time: null, bar: null })
-          return
-        }
-        const key = timeKeyToString(param.time)
-        onCrosshairMove({ time: param.time, bar: barByTime.get(key) ?? null })
-      })
-    }
+    // ref 통해 호출 — 부모가 callback 을 새로 만들어 넘겨도 재구독 불필요.
+    const barByTime = new Map<string, OhlcvBar>()
+    sortedBars.forEach((b, i) => {
+      const key = timeKeyToString(toTime(b, i))
+      barByTime.set(key, b)
+    })
+    chart.subscribeCrosshairMove(param => {
+      const cb = onCrosshairMoveRef.current
+      if (!cb) return
+      if (!param.time) {
+        cb({ time: null, bar: null })
+        return
+      }
+      const key = timeKeyToString(param.time)
+      cb({ time: param.time, bar: barByTime.get(key) ?? null })
+    })
 
     // ── Click handler (drawing mode) ─────────────────────────────────────────
-    if (onChartClick) {
-      chart.subscribeClick(param => {
-        if (!param.time || !param.point) return
-        const price = mainSeries.coordinateToPrice(param.point.y)
-        if (price == null || !Number.isFinite(price)) return
-        // BusinessDay → 'YYYY-MM-DD', else 그대로
-        const t = param.time
-        const normalized: string | number =
-          typeof t === 'number' || typeof t === 'string'
-            ? t
-            : `${(t as { year: number }).year}-${String((t as { month: number }).month).padStart(2, '0')}-${String((t as { day: number }).day).padStart(2, '0')}`
-        onChartClick({ time: normalized, price: Number(price) })
-      })
-    }
+    chart.subscribeClick(param => {
+      const cb = onChartClickRef.current
+      if (!cb) return
+      if (!param.time || !param.point) return
+      const price = mainSeries.coordinateToPrice(param.point.y)
+      if (price == null || !Number.isFinite(price)) return
+      const t = param.time
+      const normalized: string | number =
+        typeof t === 'number' || typeof t === 'string'
+          ? t
+          : `${(t as { year: number }).year}-${String((t as { month: number }).month).padStart(2, '0')}-${String((t as { day: number }).day).padStart(2, '0')}`
+      cb({ time: normalized, price: Number(price) })
+    })
 
     chart.timeScale().fitContent()
     setChartReady(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onChartReady?.(chart, mainSeries as any)
+    onChartReadyRef.current?.(chart, mainSeries as any)
 
-    const ro = new ResizeObserver(() => {
-      if (containerRef.current) {
-        chart.applyOptions({ width: containerRef.current.clientWidth })
+    // ResizeObserver entries 의 contentRect.width 를 사용 — clientWidth/offsetWidth
+    // 는 호출 시점에 forced layout 을 일으켜 reflow 비용이 큼 (lightweight-charts
+    // _invalidateBitmapSize 102ms 의 주범). entries 는 이미 측정된 layout 결과라
+    // 추가 reflow 없음.
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width
+      if (typeof w === 'number' && w > 0) {
+        chart.applyOptions({ width: Math.floor(w) })
       }
     })
     ro.observe(containerRef.current)
 
     return () => {
       ro.disconnect()
-      onChartReady?.(null, null)
+      onChartReadyRef.current?.(null, null)
       chart.remove()
       setChartReady(false)
     }
-    // bars / indicators 변경 시 차트 재생성. 인스턴스 재사용은 TG-2-D 에서 imperative API 로 추후 최적화.
+    // callback ref 패턴 적용 — onCrosshairMove/onChartClick/onChartReady 는 deps 에서 제외.
+    // toTimeProp 도 toTime (resolved) 만 deps 에 두면 된다 (toTime 자체가 toTimeProp 에 의존).
   }, [
     bars,
     chartType,
     indicators,
     height,
     paneStretch,
-    onCrosshairMove,
-    onChartClick,
-    onChartReady,
     toTime,
-    toTimeProp,
     leftPriceScaleVisible,
   ])
 
@@ -343,7 +357,9 @@ export function ChartCore({
     <div
       ref={containerRef}
       className={className}
-      style={{ width: '100%', height, ...style }}
+      // minHeight 부여 — bars 가 fetch 전 비어 있을 때도 차트 영역이 자리 잡혀
+      // CLS (Cumulative Layout Shift) 안정화. 데이터 도착 후에도 동일 height.
+      style={{ width: '100%', height, minHeight: height, ...style }}
       data-chart-ready={chartReady ? 'true' : 'false'}
     />
   )

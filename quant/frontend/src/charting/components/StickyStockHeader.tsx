@@ -47,6 +47,8 @@ export function StickyStockHeader({
         background:
           'color-mix(in oklch, var(--ko-surface-0) 88%, transparent)',
         borderBottom: '1px solid var(--ko-border-subtle)',
+        // CLS 안정화 — 가격 fetch 전후로 height 변화 없도록 reserved space (210px = 80 + 130).
+        minHeight: 210,
       }}
     >
       <div className="px-4 md:px-6 pt-3 pb-2 flex items-end gap-3">
