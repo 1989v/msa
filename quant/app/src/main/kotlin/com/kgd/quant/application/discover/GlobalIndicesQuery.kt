@@ -63,6 +63,20 @@ class GlobalIndicesQuery(
             .filterNotNull()
     }
 
+    /**
+     * USD↔KRW 환율 — ranking currency-normalize 용.
+     *
+     * `KRW=X` ticker 의 latest price (yfinance 의 USD/KRW 환율). 캐시 hit 시 즉시 반환,
+     * miss 시 fetchOne 호출 후 cache 채움. 외부 호출 실패 시 null → 호출자 fallback.
+     */
+    suspend fun usdKrwRate(): java.math.BigDecimal? {
+        val cached = cache.getIfPresent("KRW=X")
+        if (cached != null) return cached.price
+        val q = runCatching { fetchOne("KRW=X", "USD/KRW") }.getOrNull() ?: return null
+        cache.put("KRW=X", q)
+        return q.price
+    }
+
     private suspend fun fetchOne(ticker: String, name: String): GlobalIndexQuote? {
         val res = webClient.get()
             .uri { ub ->

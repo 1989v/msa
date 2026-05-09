@@ -41,6 +41,10 @@ spec:
               value: "analytics"
             - name: QUANT_CH_PASSWORD
               value: "analytics"
+            # Bithumb 호가/체결 WS subscriber 활성화 (ADR-0039 PA).
+            # CRYPTO 차트 호가·체결 탭 의 데이터 source.
+            - name: QUANT_CHARTS_ORDERBOOK_BITHUMB_ENABLED
+              value: "true"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

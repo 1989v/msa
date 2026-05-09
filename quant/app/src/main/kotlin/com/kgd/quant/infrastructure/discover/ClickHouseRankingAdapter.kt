@@ -35,10 +35,20 @@ class ClickHouseRankingAdapter(
         mode: RankingMode,
         marketFilter: String?,
         limit: Int,
+        krwPerUsd: Double?,
     ): List<MarketRanking> = withContext(Dispatchers.IO) {
+        // currency-normalize: KR turnover 를 USD 환산하여 모든 자산 클래스 비교 가능하게.
+        // krwPerUsd 미지정/0 이면 raw 단위 그대로 (legacy 동작).
+        val safeRate = krwPerUsd?.takeIf { it.isFinite() && it > 0 }
+        val turnoverExpr = if (safeRate != null) {
+            "if(r.asset_class = 'STOCK_KR', toFloat64(r.turnover) / $safeRate, toFloat64(r.turnover))"
+        } else {
+            "toFloat64(r.turnover)"
+        }
+        val volumeExpr = "toFloat64(r.volume_total)"
         val orderClause = when (mode) {
-            RankingMode.TURNOVER -> "turnover DESC"
-            RankingMode.VOLUME -> "volume_total DESC"
+            RankingMode.TURNOVER -> "$turnoverExpr DESC"
+            RankingMode.VOLUME -> "$volumeExpr DESC"
             RankingMode.GAINERS -> "change_pct DESC"
             RankingMode.LOSERS -> "change_pct ASC"
         }

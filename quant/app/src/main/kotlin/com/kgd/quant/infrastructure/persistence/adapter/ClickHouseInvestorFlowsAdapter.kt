@@ -34,25 +34,24 @@ class ClickHouseInvestorFlowsAdapter(
         from: Instant,
         to: Instant,
     ): List<InvestorFlow> = withContext(Dispatchers.IO) {
+        // ClickHouse JDBC 0.7.1 PreparedStatement bad SQL grammar 회피 (OhlcvAdapter 동일).
+        val safeAsset = asset.value.takeIf { SAFE_IDENT.matches(it) }
+            ?: return@withContext emptyList()
+        val safeMarket = market.value.takeIf { SAFE_IDENT.matches(it) }
+            ?: return@withContext emptyList()
+        val fromDate = Timestamp.from(from).toString().substring(0, 10)
+        val toDate = Timestamp.from(to).toString().substring(0, 10)
         val sql = """
             SELECT trade_date, individual_net, foreign_net, institution_net
             FROM quant.investor_flows
-            WHERE asset_code = ?
-              AND market_code = ?
-              AND trade_date >= toDate(?)
-              AND trade_date <= toDate(?)
+            WHERE asset_code = '$safeAsset'
+              AND market_code = '$safeMarket'
+              AND trade_date >= toDate('$fromDate')
+              AND trade_date <= toDate('$toDate')
             ORDER BY trade_date ASC
         """.trimIndent()
         try {
-            jdbc.query(
-                sql,
-                arrayOf(
-                    asset.value,
-                    market.value,
-                    Timestamp.from(from),
-                    Timestamp.from(to),
-                ),
-            ) { rs, _ ->
+            jdbc.query(sql) { rs, _ ->
                 InvestorFlow(
                     asset = asset,
                     market = market,
@@ -66,5 +65,9 @@ class ClickHouseInvestorFlowsAdapter(
             log.warn { "ClickHouseInvestorFlowsAdapter query failed: ${ex.message}" }
             emptyList()
         }
+    }
+
+    private companion object {
+        private val SAFE_IDENT = Regex("^[A-Za-z0-9._\\-]{1,64}$")
     }
 }

@@ -63,13 +63,56 @@ class YahooFundamentalsAdapter(
     private suspend fun fetchUncached(asset: AssetCode, market: MarketCode): Fundamentals? {
         val tickers = candidateTickers(asset, market)
         for (t in tickers) {
-            val json = runCatching { fetchYahoo(t) }.getOrElse {
-                log.debug { "yahoo fundamentals fail asset=$asset market=$market ticker=$t error=${it.message}" }
+            // v10 quoteSummary 는 crumb 인증 필요 → 보통 401. 시도하되 fail 시 v8 fallback.
+            val json = runCatching { fetchYahoo(t) }.getOrElse { null }
+            if (json != null) return parse(asset, market, json)
+            // v8 chart meta fallback — partial fundamentals (52W H/L + price + volume).
+            val meta = runCatching { fetchYahooChartMeta(t) }.getOrElse {
+                log.debug { "yahoo v8 meta fail asset=$asset market=$market ticker=$t error=${it.message}" }
                 null
-            } ?: continue
-            return parse(asset, market, json)
+            }
+            if (meta != null) return parseFromMeta(asset, market, meta)
         }
         return null
+    }
+
+    private suspend fun fetchYahooChartMeta(ticker: String): JsonNode? {
+        val res = webClient.get()
+            .uri { ub ->
+                ub.path("/v8/finance/chart/$ticker")
+                    .queryParam("range", "1d")
+                    .queryParam("interval", "1d")
+                    .build()
+            }
+            .retrieve()
+            .bodyToMono<String>()
+            .awaitSingle()
+        val node = objectMapper.readTree(res)
+        val result = node.path("chart").path("result")
+        if (!result.isArray || result.size() == 0) return null
+        val meta = result[0].path("meta")
+        return if (meta.isMissingNode || meta.isNull) null else meta
+    }
+
+    private fun parseFromMeta(asset: AssetCode, market: MarketCode, meta: JsonNode): Fundamentals {
+        return Fundamentals(
+            asset = asset,
+            market = market,
+            marketCap = null,
+            peRatio = null,
+            eps = null,
+            dividendYield = null,
+            beta = null,
+            weeks52High = numberOrNull(meta.path("fiftyTwoWeekHigh")),
+            weeks52Low = numberOrNull(meta.path("fiftyTwoWeekLow")),
+            avgDailyVolume = numberOrNull(meta.path("regularMarketVolume")),
+            asOf = Instant.now(),
+        )
+    }
+
+    private fun numberOrNull(n: JsonNode): BigDecimal? {
+        if (n.isMissingNode || n.isNull || !n.isNumber) return null
+        return BigDecimal(n.asText())
     }
 
     /** Yahoo ticker 후보 — KR 은 .KS / .KQ 둘 다 시도. */

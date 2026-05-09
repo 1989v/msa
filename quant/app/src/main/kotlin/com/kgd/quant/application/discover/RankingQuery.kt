@@ -27,6 +27,7 @@ class RankingQuery(
     private val catalog: AssetCatalogRepositoryPort,
     private val ohlcvRepo: OhlcvRepositoryPort,
     private val rankingPort: RankingPort? = null,
+    private val globalIndices: GlobalIndicesQuery? = null,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -35,8 +36,15 @@ class RankingQuery(
         marketFilter: String? = null,
         limit: Int = 20,
     ): List<MarketRanking> {
+        // 환율 fetch — KR turnover (KRW) 와 US/CRYPTO turnover (USD) 비교 가능하게 USD 환산.
+        // marketFilter 가 단일 시장이면 환산 불필요. fetch 실패 시 null → raw 비교 fallback.
+        val krwPerUsd: Double? = if (marketFilter == null && globalIndices != null) {
+            runCatching { globalIndices!!.usdKrwRate()?.toDouble() }.getOrNull()
+        } else {
+            null
+        }
         val raw = rankingPort?.let {
-            runCatching { it.rank(mode, marketFilter, limit) }.getOrElse {
+            runCatching { it.rank(mode, marketFilter, limit, krwPerUsd) }.getOrElse {
                 log.warn { "RankingPort failed, fallback to N+1: ${it.message}" }
                 null
             }
