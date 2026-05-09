@@ -52,35 +52,66 @@ export function backendAssetOf(ticker: string, assetClass: AssetClass): string {
   return ticker;
 }
 
-const POPULAR_SYMBOLS: Symbol[] = [
-  // 코인 (BITHUMB KRW pair)
+/** quant 백엔드의 자산 카탈로그 row. AssetCatalogController 응답 schema 와 정합. */
+interface CatalogItem {
+  id: string;
+  assetCode: string;
+  assetClass: AssetClass;
+  source: string;
+  displayName: string;
+  active: boolean;
+  sortOrder: number;
+}
+
+/** Last-resort fallback (catalog API 5xx / 네트워크 실패 시). 운영 시 catalog 가 source-of-truth. */
+const FALLBACK_SYMBOLS: Symbol[] = [
   { id: 1, ticker: 'BTC', name: '비트코인', market: 'CRYPTO', assetClass: 'CRYPTO', active: true },
   { id: 2, ticker: 'ETH', name: '이더리움', market: 'CRYPTO', assetClass: 'CRYPTO', active: true },
-  { id: 3, ticker: 'XRP', name: '리플', market: 'CRYPTO', assetClass: 'CRYPTO', active: true },
-  { id: 4, ticker: 'SOL', name: '솔라나', market: 'CRYPTO', assetClass: 'CRYPTO', active: true },
-  { id: 5, ticker: 'ADA', name: '카르다노', market: 'CRYPTO', assetClass: 'CRYPTO', active: true },
-  { id: 6, ticker: 'DOGE', name: '도지코인', market: 'CRYPTO', assetClass: 'CRYPTO', active: true },
-  { id: 7, ticker: 'AVAX', name: '아발란체', market: 'CRYPTO', assetClass: 'CRYPTO', active: true },
-  { id: 8, ticker: 'DOT', name: '폴카닷', market: 'CRYPTO', assetClass: 'CRYPTO', active: true },
-  // 한국 주식 (FDR_KR)
   { id: 100, ticker: '005930', name: '삼성전자', market: 'STOCK_KR', assetClass: 'STOCK_KR', active: true },
-  { id: 101, ticker: '000660', name: 'SK하이닉스', market: 'STOCK_KR', assetClass: 'STOCK_KR', active: true },
-  { id: 102, ticker: '035420', name: 'NAVER', market: 'STOCK_KR', assetClass: 'STOCK_KR', active: true },
-  { id: 103, ticker: '035720', name: '카카오', market: 'STOCK_KR', assetClass: 'STOCK_KR', active: true },
-  { id: 104, ticker: '005380', name: '현대차', market: 'STOCK_KR', assetClass: 'STOCK_KR', active: true },
-  { id: 105, ticker: '207940', name: '삼성바이오로직스', market: 'STOCK_KR', assetClass: 'STOCK_KR', active: true },
-  // 미국 주식 (YAHOO)
   { id: 200, ticker: 'AAPL', name: 'Apple', market: 'STOCK_US', assetClass: 'STOCK_US', active: true },
-  { id: 201, ticker: 'NVDA', name: 'NVIDIA', market: 'STOCK_US', assetClass: 'STOCK_US', active: true },
-  { id: 202, ticker: 'TSLA', name: 'Tesla', market: 'STOCK_US', assetClass: 'STOCK_US', active: true },
-  { id: 203, ticker: 'MSFT', name: 'Microsoft', market: 'STOCK_US', assetClass: 'STOCK_US', active: true },
-  { id: 204, ticker: 'GOOGL', name: 'Alphabet', market: 'STOCK_US', assetClass: 'STOCK_US', active: true },
-  { id: 205, ticker: 'META', name: 'Meta', market: 'STOCK_US', assetClass: 'STOCK_US', active: true },
 ];
 
-/** 심볼 검색 — backend symbols API 미구현 → client-side filter (popular only). */
+/** assetCode → 표시 ticker. CRYPTO 'BTC-USD' → 'BTC'. */
+function tickerOf(item: CatalogItem): string {
+  if (item.assetClass === 'CRYPTO') return item.assetCode.split('-')[0];
+  return item.assetCode;
+}
+
+let _catalogCache: { ts: number; data: Symbol[] } | null = null;
+const CATALOG_TTL_MS = 60_000;
+
+/**
+ * 심볼 카탈로그 — `/api/v1/quant/assets?activeOnly=true` 동적 fetch.
+ * 백엔드 자산 카탈로그 (DB) 가 source-of-truth. 60s in-memory cache.
+ * API 실패 시 FALLBACK_SYMBOLS (4 종) 로 degrade.
+ */
 export async function fetchSymbols(): Promise<Symbol[]> {
-  return POPULAR_SYMBOLS;
+  const now = Date.now();
+  if (_catalogCache && now - _catalogCache.ts < CATALOG_TTL_MS) {
+    return _catalogCache.data;
+  }
+  try {
+    const res = await apiClient.get<ApiResponse<CatalogItem[]>>(
+      '/api/v1/quant/assets?activeOnly=true'
+    );
+    const items = unwrap(res.data);
+    const symbols: Symbol[] = items
+      .filter((it) => it.active)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map<Symbol>((it, idx) => ({
+        id: idx + 1,
+        ticker: tickerOf(it),
+        name: it.displayName,
+        market: it.assetClass,
+        assetClass: it.assetClass,
+        active: it.active,
+      }));
+    _catalogCache = { ts: now, data: symbols };
+    return symbols;
+  } catch (err) {
+    console.warn('[quant] asset catalog fetch failed, using fallback:', err);
+    return FALLBACK_SYMBOLS;
+  }
 }
 
 /** OHLCV 시계열 — quant /api/v1/charts/ohlcv 매핑. yfinance 의 stock 종목은 ts 가 daily(00:00). */

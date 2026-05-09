@@ -1188,7 +1188,9 @@ function StockInfoSection({
     },
     {
       label: '배당수익률',
-      value: formatPct(f.dividendYield),
+      // yfinance .info 의 dividendYield 는 이미 percent (0.37 = 0.37%) — formatPct 는 ×100
+      // 하므로 여기서는 raw 값을 그대로 percent 로 표기.
+      value: formatYieldPct(f.dividendYield),
     },
     {
       label: '베타',
@@ -1262,6 +1264,12 @@ function formatPct(s: string | null | undefined): string {
   const n = parseNum(s)
   if (!Number.isFinite(n)) return '—'
   return `${(n * 100).toFixed(2)}%`
+}
+
+function formatYieldPct(s: string | null | undefined): string {
+  const n = parseNum(s)
+  if (!Number.isFinite(n)) return '—'
+  return `${n.toFixed(2)}%`
 }
 
 function DisabledTabPlaceholder({

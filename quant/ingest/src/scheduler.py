@@ -20,11 +20,13 @@ import requests
 from src.sinks.clickhouse_sink import (
     insert_bars,
     insert_dart_corp_codes,
+    insert_fundamentals,
     insert_investor_flows,
 )
 from src.sources.dart_corp_src import fetch_dart_corp_codes
 from src.sources.fdr_src import fetch_fdr
 from src.sources.investor_flows_src import fetch_investor_flows
+from src.sources.yfinance_fundamentals_src import fetch_yfinance_fundamentals
 from src.sources.yfinance_src import fetch_yfinance, safe_lookback_days
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -83,12 +85,13 @@ def load_targets() -> List[Tuple[str, str, str]]:
 @click.command()
 @click.option(
     "--job",
-    type=click.Choice(["ohlcv", "investor-flows", "dart-corp-codes"]),
+    type=click.Choice(["ohlcv", "investor-flows", "dart-corp-codes", "fundamentals"]),
     default="ohlcv",
     help=(
         "Ingest job. 'ohlcv' (default) = OHLCV 시계열, "
         "'investor-flows' = ADR-0040 KR 매매주체 일별, "
-        "'dart-corp-codes' = ADR-0041 DART corp_code 매핑 (주 1회)"
+        "'dart-corp-codes' = ADR-0041 DART corp_code 매핑 (주 1회), "
+        "'fundamentals' = V011 yfinance Ticker.info 일별 적재"
     ),
 )
 @click.option("--mode", type=click.Choice(["incremental", "backfill"]), default="incremental")
@@ -105,7 +108,31 @@ def main(job: str, mode: str, interval: str, lookback_days: int) -> None:
         return _run_investor_flows(lookback_days)
     if job == "dart-corp-codes":
         return _run_dart_corp_codes()
+    if job == "fundamentals":
+        return _run_fundamentals()
     return _run_ohlcv(mode, interval, lookback_days)
+
+
+def _run_fundamentals() -> None:
+    """V011 quant.fundamentals daily ingest."""
+    log.info("quant-ingest fundamentals start")
+    targets = load_targets()
+    rows = []
+    for asset_code, asset_class, _source in targets:
+        try:
+            row = fetch_yfinance_fundamentals(asset_code, asset_class)
+            if row is not None:
+                rows.append(row)
+                log.info(
+                    "fundamentals fetched asset=%s mc=%s pe=%s eps=%s",
+                    asset_code, row.market_cap, row.pe_ratio, row.eps,
+                )
+            else:
+                log.info("fundamentals empty asset=%s", asset_code)
+        except Exception as exc:
+            log.exception("fundamentals fetch failed asset=%s: %s", asset_code, exc)
+    n = insert_fundamentals(rows)
+    log.info("quant-ingest fundamentals done rows=%d", n)
 
 
 def _run_dart_corp_codes() -> None:

@@ -22,6 +22,7 @@ spec:
         metadata:
           labels:
             app.kubernetes.io/name: quant-ingest
+            app.kubernetes.io/part-of: commerce-platform
             quant.kgd.io/job: "dart-corp-codes"
         spec:
           restartPolicy: OnFailure

@@ -13,6 +13,7 @@ import clickhouse_connect
 from src.sources.yfinance_src import OhlcvBar
 from src.sources.investor_flows_src import InvestorFlowRow
 from src.sources.dart_corp_src import DartCorpCodeRow
+from src.sources.yfinance_fundamentals_src import FundamentalsRow
 
 
 def _client():
@@ -77,6 +78,40 @@ def insert_dart_corp_codes(rows: Iterable[DartCorpCodeRow]) -> int:
         "dart_corp_codes",
         data,
         column_names=["corp_code", "corp_name", "stock_code", "modify_date"],
+    )
+    return len(data)
+
+
+def insert_fundamentals(rows: Iterable[FundamentalsRow]) -> int:
+    """V011 — quant.fundamentals 멱등 INSERT (ReplacingMergeTree(ingested_at))."""
+    data = [
+        (
+            r.asset_code,
+            r.asset_class,
+            r.market_code,
+            r.as_of,
+            r.market_cap,
+            r.pe_ratio,
+            r.eps,
+            r.dividend_yield,
+            r.beta,
+            r.weeks52_high,
+            r.weeks52_low,
+            r.avg_daily_volume,
+        )
+        for r in rows
+    ]
+    if not data:
+        return 0
+    client = _client()
+    client.insert(
+        "fundamentals",
+        data,
+        column_names=[
+            "asset_code", "asset_class", "market_code", "as_of",
+            "market_cap", "pe_ratio", "eps", "dividend_yield", "beta",
+            "weeks52_high", "weeks52_low", "avg_daily_volume",
+        ],
     )
     return len(data)
 
