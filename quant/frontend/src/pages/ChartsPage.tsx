@@ -49,6 +49,8 @@ import {
   clearDrawings as clearDrawingsFor,
   makeAssetKey,
   makeHorizontalLine,
+  makeTrendLine,
+  regressionEndpoints,
 } from '@/charting/lib/drawing'
 
 interface PredictionTopHit {
@@ -387,6 +389,33 @@ export function ChartsPage() {
     setDrawings(prev => [...prev, drawing])
   }, [ohlcvQ.data, drawingAssetKey])
 
+  const handleAddTrendLine = useCallback(() => {
+    const bars = ohlcvQ.data
+    if (!bars || bars.length < 5) return
+    // 최근 30봉 close 의 선형 회귀
+    const window = bars.slice(-30)
+    const points = window.map((b, i) => ({ x: i, y: b.close }))
+    const reg = regressionEndpoints(points)
+    if (!reg) return
+    const startBar = window[reg.startX]
+    const endBar = window[reg.endX] ?? window[window.length - 1]
+    const startTime = startBar.bar_time
+      ? Math.floor(new Date(`${startBar.trade_date}T${startBar.bar_time}Z`).getTime() / 1000)
+      : startBar.trade_date
+    const endTime = endBar.bar_time
+      ? Math.floor(new Date(`${endBar.trade_date}T${endBar.bar_time}Z`).getTime() / 1000)
+      : endBar.trade_date
+    const drawing = makeTrendLine(
+      startTime,
+      reg.startY,
+      endTime,
+      reg.endY,
+      'oklch(0.78 0.14 180)', // accent-secondary 청록
+    )
+    addDrawing(drawingAssetKey, drawing)
+    setDrawings(prev => [...prev, drawing])
+  }, [ohlcvQ.data, drawingAssetKey])
+
   const handleClearDrawings = useCallback(() => {
     clearDrawingsFor(drawingAssetKey)
     setDrawings([])
@@ -591,6 +620,7 @@ export function ChartsPage() {
                   onCompareClick={() => setCompareSheetOpen(true)}
                   onCompareClear={() => setCompareSymbol(null)}
                   onAddHorizontalLine={handleAddHorizontalLine}
+                  onAddTrendLine={handleAddTrendLine}
                   onClearDrawings={handleClearDrawings}
                   drawingCount={drawings.length}
                 />

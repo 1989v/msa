@@ -549,9 +549,10 @@ export function PatternChart({
         </div>
       )}
 
-      {/* User drawings (horizontal lines etc.) — TG-11 */}
-      {mainSeries && drawings && drawings.length > 0 && (
+      {/* User drawings (horizontal lines + trend lines) — TG-11 */}
+      {chart && mainSeries && drawings && drawings.length > 0 && (
         <DrawingOverlay
+          chart={chart}
           mainSeries={mainSeries}
           drawings={drawings}
           formatPrice={formatPrice}

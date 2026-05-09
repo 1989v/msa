@@ -35,6 +35,8 @@ interface Props {
   onCompareClear?: () => void
   /** TG-11 그리기 — 가로선 추가 (현재 종가 기준). 미제공 시 그리기 비활성. */
   onAddHorizontalLine?: () => void
+  /** 추세선 자동 추가 (최근 N봉 close 회귀선). 미제공 시 추세선 메뉴 hide. */
+  onAddTrendLine?: () => void
   onClearDrawings?: () => void
   drawingCount?: number
   className?: string
@@ -59,6 +61,7 @@ export function ChartToolbar({
   onCompareClick,
   onCompareClear,
   onAddHorizontalLine,
+  onAddTrendLine,
   onClearDrawings,
   drawingCount = 0,
   className,
@@ -84,6 +87,7 @@ export function ChartToolbar({
       {onAddHorizontalLine ? (
         <DrawingMenu
           onAddHorizontalLine={onAddHorizontalLine}
+          onAddTrendLine={onAddTrendLine}
           onClearDrawings={onClearDrawings}
           drawingCount={drawingCount}
         />
@@ -271,10 +275,12 @@ function ChartTypeMenu({
 
 function DrawingMenu({
   onAddHorizontalLine,
+  onAddTrendLine,
   onClearDrawings,
   drawingCount,
 }: {
   onAddHorizontalLine: () => void
+  onAddTrendLine?: () => void
   onClearDrawings?: () => void
   drawingCount: number
 }) {
@@ -362,6 +368,23 @@ function DrawingMenu({
           >
             가로선 추가 <span style={{ color: 'var(--ko-text-muted)' }}>(현재 종가)</span>
           </button>
+          {onAddTrendLine && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onAddTrendLine()
+                setOpen(false)
+              }}
+              className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
+              style={{
+                color: 'var(--ko-text-secondary)',
+                background: 'transparent',
+              }}
+            >
+              추세선 자동 추가 <span style={{ color: 'var(--ko-text-muted)' }}>(최근 30봉 회귀)</span>
+            </button>
+          )}
           {onClearDrawings && drawingCount > 0 && (
             <button
               type="button"
