@@ -12,7 +12,7 @@ import {
   type ISeriesApi,
   type Time,
 } from 'lightweight-charts'
-import { ChartCore, type ChartCrosshairInfo, type ChartIndicatorSeries } from './ChartCore'
+import { ChartCore, type ChartClickInfo, type ChartCrosshairInfo, type ChartIndicatorSeries } from './ChartCore'
 import { PatternOverlay } from './PatternOverlay'
 import { DrawingOverlay } from './DrawingOverlay'
 import type { Drawing } from '../lib/drawing'
@@ -49,6 +49,8 @@ interface PatternChartProps {
   /** TG-11 그리기 — 사용자 가로선 등. */
   drawings?: Drawing[]
   formatPrice?: (n: number) => string
+  /** TG-11 그리기 — chart click (drawing mode 활성 시 두 점 클릭). */
+  onChartClick?: (info: ChartClickInfo) => void
 }
 
 // ── Bar prep (KR intraday timezone safety) ────────────────────────────────
@@ -112,6 +114,7 @@ export function PatternChart({
   compareColor = 'oklch(0.78 0.14 180)', // --ko-accent-secondary 청록
   drawings,
   formatPrice,
+  onChartClick,
 }: PatternChartProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const [chart, setChart] = useState<IChartApi | null>(null)
@@ -485,6 +488,7 @@ export function PatternChart({
         chartType={chartType}
         indicators={indicators}
         onCrosshairMove={handleCrosshair}
+        onChartClick={onChartClick}
         onChartReady={handleChartReady}
         toTime={toTime}
         height={totalHeight}

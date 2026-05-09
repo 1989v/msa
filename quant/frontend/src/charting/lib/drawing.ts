@@ -3,7 +3,7 @@
 // 사용자 그리기 (현재: 가로선만, 후속에 추세선/측정도구) 의 데이터 모델 + localStorage IO.
 // 자산별 (asset:market) 로 분리 저장.
 
-export type DrawingKind = 'horizontal-line' | 'trend-line'
+export type DrawingKind = 'horizontal-line' | 'trend-line' | 'measure'
 
 export interface HorizontalLineDrawing {
   kind: 'horizontal-line'
@@ -31,7 +31,22 @@ export interface TrendLineDrawing {
   createdAt: number
 }
 
-export type Drawing = HorizontalLineDrawing | TrendLineDrawing
+/**
+ * 측정도구 — 두 점 사이의 가격 변동률 + 시간 간격을 표시.
+ * Phase A: 두 점 line + 가격 변동% 라벨 (시간 간격은 후속).
+ */
+export interface MeasureDrawing {
+  kind: 'measure'
+  id: string
+  startTime: string | number
+  startPrice: number
+  endTime: string | number
+  endPrice: number
+  color: string
+  createdAt: number
+}
+
+export type Drawing = HorizontalLineDrawing | TrendLineDrawing | MeasureDrawing
 
 const STORAGE_KEY = 'quant:drawings:v1'
 
@@ -106,6 +121,25 @@ export function makeTrendLine(
   return {
     kind: 'trend-line',
     id: makeId('tl'),
+    startTime,
+    startPrice,
+    endTime,
+    endPrice,
+    color,
+    createdAt: Date.now(),
+  }
+}
+
+export function makeMeasure(
+  startTime: string | number,
+  startPrice: number,
+  endTime: string | number,
+  endPrice: number,
+  color: string,
+): MeasureDrawing {
+  return {
+    kind: 'measure',
+    id: makeId('ms'),
     startTime,
     startPrice,
     endTime,

@@ -50,8 +50,10 @@ import {
   makeAssetKey,
   makeHorizontalLine,
   makeTrendLine,
+  makeMeasure,
   regressionEndpoints,
 } from '@/charting/lib/drawing'
+import type { ChartClickInfo } from '@/charting/components/ChartCore'
 
 interface PredictionTopHit {
   asset: string
@@ -389,6 +391,77 @@ export function ChartsPage() {
     setDrawings(prev => [...prev, drawing])
   }, [ohlcvQ.data, drawingAssetKey])
 
+  // 직접 클릭 그리기 모드 — TG-11 확장
+  const [drawingMode, setDrawingMode] = useState<'idle' | 'trend-line' | 'measure'>('idle')
+  const [drawingFirstPoint, setDrawingFirstPoint] = useState<ChartClickInfo | null>(null)
+
+  const drawingModeLabel = useMemo(() => {
+    if (drawingMode === 'idle') return null
+    const which = drawingMode === 'trend-line' ? '추세선' : '측정도구'
+    return drawingFirstPoint
+      ? `${which}: 끝점 클릭 (ESC 취소)`
+      : `${which}: 시작점 클릭 (ESC 취소)`
+  }, [drawingMode, drawingFirstPoint])
+
+  // ESC 로 drawing mode 취소
+  useEffect(() => {
+    if (drawingMode === 'idle') return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDrawingMode('idle')
+        setDrawingFirstPoint(null)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [drawingMode])
+
+  const handleChartClick = useCallback(
+    (info: ChartClickInfo) => {
+      if (drawingMode === 'idle') return
+      if (!drawingFirstPoint) {
+        setDrawingFirstPoint(info)
+        return
+      }
+      // 두 번째 점 — drawing 추가 + mode reset
+      const startTime = drawingFirstPoint.time
+      const endTime = info.time
+      const startPrice = drawingFirstPoint.price
+      const endPrice = info.price
+      const drawing =
+        drawingMode === 'trend-line'
+          ? makeTrendLine(
+              startTime as unknown as string | number,
+              startPrice,
+              endTime as unknown as string | number,
+              endPrice,
+              'oklch(0.78 0.14 180)', // 청록
+            )
+          : makeMeasure(
+              startTime as unknown as string | number,
+              startPrice,
+              endTime as unknown as string | number,
+              endPrice,
+              'oklch(0.74 0.16 90)', // amber
+            )
+      addDrawing(drawingAssetKey, drawing)
+      setDrawings(prev => [...prev, drawing])
+      setDrawingMode('idle')
+      setDrawingFirstPoint(null)
+    },
+    [drawingMode, drawingFirstPoint, drawingAssetKey],
+  )
+
+  const handleStartTrendLineDraw = useCallback(() => {
+    setDrawingMode('trend-line')
+    setDrawingFirstPoint(null)
+  }, [])
+
+  const handleStartMeasureDraw = useCallback(() => {
+    setDrawingMode('measure')
+    setDrawingFirstPoint(null)
+  }, [])
+
   const handleAddTrendLine = useCallback(() => {
     const bars = ohlcvQ.data
     if (!bars || bars.length < 5) return
@@ -621,8 +694,11 @@ export function ChartsPage() {
                   onCompareClear={() => setCompareSymbol(null)}
                   onAddHorizontalLine={handleAddHorizontalLine}
                   onAddTrendLine={handleAddTrendLine}
+                  onStartTrendLineDraw={handleStartTrendLineDraw}
+                  onStartMeasureDraw={handleStartMeasureDraw}
                   onClearDrawings={handleClearDrawings}
                   drawingCount={drawings.length}
+                  drawingModeLabel={drawingModeLabel}
                 />
               </div>
             </div>
@@ -679,6 +755,7 @@ export function ChartsPage() {
             compareLabel={compareSymbol?.name}
             drawings={drawings}
             formatPrice={formatSymbolPrice}
+            onChartClick={drawingMode !== 'idle' ? handleChartClick : undefined}
           />
         )}
       </section>

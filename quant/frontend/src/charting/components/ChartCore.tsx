@@ -76,11 +76,18 @@ export interface ChartCrosshairInfo {
   bar: OhlcvBar | null
 }
 
+export interface ChartClickInfo {
+  time: Time
+  price: number
+}
+
 interface Props {
   bars: OhlcvBar[]
   chartType: ChartCoreType
   indicators?: ChartIndicatorSeries[]
   onCrosshairMove?: (info: ChartCrosshairInfo) => void
+  /** Click on chart — 그리기 도구 (TG-11) 직접 클릭 모드용. */
+  onChartClick?: (info: ChartClickInfo) => void
   /** Fires when the chart instance is created (and again with null on cleanup).
    *  Use this to attach overlays that need direct access to timeScale / priceScale. */
   onChartReady?: (
@@ -105,6 +112,7 @@ export function ChartCore({
   chartType,
   indicators = [],
   onCrosshairMove,
+  onChartClick,
   onChartReady,
   toTime: toTimeProp,
   height = 440,
@@ -281,6 +289,16 @@ export function ChartCore({
       })
     }
 
+    // ── Click handler (drawing mode) ─────────────────────────────────────────
+    if (onChartClick) {
+      chart.subscribeClick(param => {
+        if (!param.time || !param.point) return
+        const price = mainSeries.coordinateToPrice(param.point.y)
+        if (price == null || !Number.isFinite(price)) return
+        onChartClick({ time: param.time, price: Number(price) })
+      })
+    }
+
     chart.timeScale().fitContent()
     setChartReady(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -307,6 +325,7 @@ export function ChartCore({
     height,
     paneStretch,
     onCrosshairMove,
+    onChartClick,
     onChartReady,
     toTime,
     toTimeProp,

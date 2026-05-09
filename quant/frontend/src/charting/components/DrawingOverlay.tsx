@@ -76,6 +76,39 @@ export function DrawingOverlay({ chart, mainSeries, drawings, formatPrice }: Pro
           { time: d.endTime as unknown as Time, value: d.endPrice },
         ])
         trendSeriesRef.current.push(series)
+      } else if (d.kind === 'measure') {
+        // 측정도구 — dashed line + 시작/끝 priceLine 라벨 (가격 변동% 표시)
+        const series = chart.addSeries(
+          LineSeries,
+          {
+            color: d.color,
+            lineWidth: 2,
+            lineStyle: LineStyle.Dotted,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+          },
+          0,
+        )
+        series.setData([
+          { time: d.startTime as unknown as Time, value: d.startPrice },
+          { time: d.endTime as unknown as Time, value: d.endPrice },
+        ])
+        trendSeriesRef.current.push(series)
+        // 끝점 priceLine 으로 변동% 표시
+        const changePct = d.startPrice > 0
+          ? ((d.endPrice - d.startPrice) / d.startPrice) * 100
+          : 0
+        const sign = changePct >= 0 ? '+' : ''
+        const line = mainSeries.createPriceLine({
+          price: d.endPrice,
+          color: d.color,
+          lineWidth: 1,
+          lineStyle: LineStyle.Dotted,
+          axisLabelVisible: true,
+          title: `${sign}${changePct.toFixed(2)}%`,
+        })
+        priceLinesRef.current.push(line)
       }
     })
 

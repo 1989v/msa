@@ -37,8 +37,14 @@ interface Props {
   onAddHorizontalLine?: () => void
   /** 추세선 자동 추가 (최근 N봉 close 회귀선). 미제공 시 추세선 메뉴 hide. */
   onAddTrendLine?: () => void
+  /** 추세선 직접 그리기 모드 시작 (두 점 클릭). */
+  onStartTrendLineDraw?: () => void
+  /** 측정도구 모드 시작 (두 점 클릭). */
+  onStartMeasureDraw?: () => void
   onClearDrawings?: () => void
   drawingCount?: number
+  /** 활성 drawing mode 라벨 — 표시용 (예: '추세선: 시작점 클릭'). */
+  drawingModeLabel?: string | null
   className?: string
 }
 
@@ -62,8 +68,11 @@ export function ChartToolbar({
   onCompareClear,
   onAddHorizontalLine,
   onAddTrendLine,
+  onStartTrendLineDraw,
+  onStartMeasureDraw,
   onClearDrawings,
   drawingCount = 0,
+  drawingModeLabel,
   className,
 }: Props) {
   const showIndicatorPopover =
@@ -88,8 +97,11 @@ export function ChartToolbar({
         <DrawingMenu
           onAddHorizontalLine={onAddHorizontalLine}
           onAddTrendLine={onAddTrendLine}
+          onStartTrendLineDraw={onStartTrendLineDraw}
+          onStartMeasureDraw={onStartMeasureDraw}
           onClearDrawings={onClearDrawings}
           drawingCount={drawingCount}
+          drawingModeLabel={drawingModeLabel}
         />
       ) : (
         <ToolButton
@@ -276,13 +288,19 @@ function ChartTypeMenu({
 function DrawingMenu({
   onAddHorizontalLine,
   onAddTrendLine,
+  onStartTrendLineDraw,
+  onStartMeasureDraw,
   onClearDrawings,
   drawingCount,
+  drawingModeLabel,
 }: {
   onAddHorizontalLine: () => void
   onAddTrendLine?: () => void
+  onStartTrendLineDraw?: () => void
+  onStartMeasureDraw?: () => void
   onClearDrawings?: () => void
   drawingCount: number
+  drawingModeLabel?: string | null
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
@@ -384,6 +402,51 @@ function DrawingMenu({
             >
               추세선 자동 추가 <span style={{ color: 'var(--ko-text-muted)' }}>(최근 30봉 회귀)</span>
             </button>
+          )}
+          {onStartTrendLineDraw && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onStartTrendLineDraw()
+                setOpen(false)
+              }}
+              className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
+              style={{
+                color: 'var(--ko-text-secondary)',
+                background: 'transparent',
+              }}
+            >
+              추세선 그리기 <span style={{ color: 'var(--ko-text-muted)' }}>(두 점 클릭)</span>
+            </button>
+          )}
+          {onStartMeasureDraw && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onStartMeasureDraw()
+                setOpen(false)
+              }}
+              className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
+              style={{
+                color: 'var(--ko-text-secondary)',
+                background: 'transparent',
+              }}
+            >
+              측정도구 <span style={{ color: 'var(--ko-text-muted)' }}>(두 점 클릭)</span>
+            </button>
+          )}
+          {drawingModeLabel && (
+            <div
+              className="px-2.5 py-1.5 text-[11px] rounded"
+              style={{
+                color: 'var(--ko-accent-primary-hover)',
+                background: 'color-mix(in oklch, var(--ko-accent-primary) 14%, transparent)',
+              }}
+            >
+              {drawingModeLabel}
+            </div>
           )}
           {onClearDrawings && drawingCount > 0 && (
             <button
