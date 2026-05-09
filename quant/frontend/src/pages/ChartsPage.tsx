@@ -35,6 +35,7 @@ import { matchPatterns } from '@/charting/lib/patternMatcher'
 import { PATTERNS as ALL_PATTERNS } from '@/charting/lib/patterns'
 import { calcMA, calcRSI, calcATR } from '@/charting/lib/indicators'
 import { useFundamentals } from '@/charting/hooks/useFundamentals'
+import { usePriceStream } from '@/charting/hooks/usePriceStream'
 import {
   type Drawing,
   listFor as listDrawingsFor,
@@ -356,16 +357,23 @@ export function ChartsPage() {
     setDrawings([])
   }, [drawingAssetKey])
 
-  // 가격 요약 — 마지막 close + 첫 close 대비 변동률
+  // TG-14 — 실시간 가격 stream (활성 시 priceSummary.last override)
+  const priceStream = usePriceStream(backendAsset, backendMarket)
+
+  // 가격 요약 — 마지막 close + 첫 close 대비 변동률 (live tick override 가능)
   const priceSummary = useMemo(() => {
     const bars = ohlcvQ.data
     if (!bars || bars.length === 0) return null
     const first = bars[0].close
-    const last = bars[bars.length - 1].close
+    const baseLast = bars[bars.length - 1].close
+    const liveLast = priceStream.tick
+      ? parseFloat(priceStream.tick.price)
+      : NaN
+    const last = Number.isFinite(liveLast) ? liveLast : baseLast
     const change = last - first
     const changePct = first > 0 ? (change / first) * 100 : 0
     return { last, change, changePct, isUp: change >= 0 }
-  }, [ohlcvQ.data])
+  }, [ohlcvQ.data, priceStream.tick])
 
   // Microcontext chips — TG-3 (P1 데이터 기반 7-chip)
   const microcontextChips = useMemo<MicrocontextChip[]>(() => {

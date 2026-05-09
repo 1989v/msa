@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import type { Symbol as ChartSymbol } from '@/charting/api'
+import { PriceFlash } from './PriceFlash'
 
 export interface StickyHeaderPriceSummary {
   last: number
@@ -79,12 +80,14 @@ export function StickyStockHeader({
 
         {priceSummary && (
           <div className="text-right">
-            <div
-              className="text-xl md:text-2xl font-bold tabular-nums leading-tight"
-              style={{ color: toneToVar(tone) }}
-            >
-              {formatPrice(priceSummary.last)}
-            </div>
+            <PriceFlash price={priceSummary.last}>
+              <div
+                className="text-xl md:text-2xl font-bold tabular-nums leading-tight"
+                style={{ color: toneToVar(tone) }}
+              >
+                {formatPrice(priceSummary.last)}
+              </div>
+            </PriceFlash>
             <div
               className="text-xs md:text-sm tabular-nums leading-tight mt-0.5"
               style={{ color: toneToVar(tone) }}
