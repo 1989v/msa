@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="theme-color" content="#0c1424" />
     <link
       rel="stylesheet"
       as="style"
@@ -15,6 +15,11 @@
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Quant</title>
+    <!-- design-system CSS 변수 로드 전 brief paint 시 user-agent default white 가
+         보이지 않도록 base background 인라인 — body 의 var(--ko-surface-0) 와 일치. -->
+    <style>
+      html, body { background-color: #0c1424; color: #f1f5f9; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

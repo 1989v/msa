@@ -27,8 +27,8 @@ export default defineConfig({
         scope: '/quant/',
         display: 'standalone',
         orientation: 'portrait',
-        theme_color: '#0a0a0a',
-        background_color: '#ffffff',
+        theme_color: '#0c1424',
+        background_color: '#0c1424',
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },

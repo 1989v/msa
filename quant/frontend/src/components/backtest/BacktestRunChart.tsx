@@ -38,14 +38,15 @@ export function BacktestRunChart({ fills, priceSeries, height = 280 }: Props) {
       width: el.clientWidth,
       height,
       layout: {
-        background: { type: ColorType.Solid, color: '#ffffff' },
-        textColor: '#3a3a3a',
+        // 다크 테마와 충돌 회피 — transparent 로 부모 background 사용 (--ko-surface-1).
+        background: { type: ColorType.Solid, color: 'transparent' },
+        textColor: '#94a3b8',
         fontFamily: 'Pretendard, system-ui, sans-serif',
         fontSize: 12,
       },
       grid: {
-        vertLines: { color: '#eeeeee', style: LineStyle.Dotted },
-        horzLines: { color: '#eeeeee', style: LineStyle.Dotted },
+        vertLines: { color: '#2c3550', style: LineStyle.Dotted },
+        horzLines: { color: '#2c3550', style: LineStyle.Dotted },
       },
       rightPriceScale: { borderVisible: false },
       timeScale: { borderVisible: false, timeVisible: true, secondsVisible: false },
