@@ -40,6 +40,10 @@ interface PatternChartProps {
   onPatternOffsetChange?: (offset: number | null) => void
   patternWidth?: number
   onPatternWidthChange?: (width: number) => void
+  /** TG-12 종목비교 — 비교 종목 OHLCV (메인과 동일 시간축). 비활성 시 undefined. */
+  compareBars?: OhlcvBar[]
+  compareLabel?: string
+  compareColor?: string
 }
 
 // ── Bar prep (KR intraday timezone safety) ────────────────────────────────
@@ -98,6 +102,9 @@ export function PatternChart({
   onPatternOffsetChange,
   patternWidth = 60,
   onPatternWidthChange,
+  compareBars,
+  compareLabel,
+  compareColor = 'oklch(0.78 0.14 180)', // --ko-accent-secondary 청록
 }: PatternChartProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const [chart, setChart] = useState<IChartApi | null>(null)
@@ -370,8 +377,34 @@ export function PatternChart({
       })
     }
 
+    // ─ Compare overlay (TG-12) ───────────────────────────────────────────
+    // 비교 종목 close 라인을 paneIndex 0 + 별도 left priceScale 에 표시.
+    // 메인 candle 가격 단위와 비교 종목 가격 단위가 다를 수 있어 좌·우 분리.
+    if (compareBars && compareBars.length > 0) {
+      const compareData = compareBars
+        .map((b, i) => ({ time: toTime(b, i), value: Number(b.close) }))
+        .filter(d => Number.isFinite(d.value))
+      result.push({
+        name: compareLabel ?? 'Compare',
+        paneIndex: 0,
+        type: 'line',
+        color: compareColor,
+        lineWidth: 2,
+        priceScaleId: 'left',
+        data: compareData,
+      })
+    }
+
     return result
-  }, [bars, state, indicatorParams, toTime])
+  }, [
+    bars,
+    state,
+    indicatorParams,
+    toTime,
+    compareBars,
+    compareLabel,
+    compareColor,
+  ])
 
   const handleChartReady = useCallback(
     (
@@ -440,6 +473,7 @@ export function PatternChart({
         toTime={toTime}
         height={totalHeight}
         paneStretch={{ 0: 4 }}
+        leftPriceScaleVisible={!!compareBars && compareBars.length > 0}
       />
 
       {/* OHLCV legend on crosshair hover */}

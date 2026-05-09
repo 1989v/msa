@@ -216,6 +216,8 @@ export function ChartsPage() {
     )
   }
   const [symbolSheetOpen, setSymbolSheetOpen] = useState(false)
+  const [compareSymbol, setCompareSymbol] = useState<ChartSymbol | null>(null)
+  const [compareSheetOpen, setCompareSheetOpen] = useState(false)
 
   // '/' 단축키 — input/textarea/contentEditable focus 외에서 종목 검색 sheet 오픈
   useEffect(() => {
@@ -244,33 +246,70 @@ export function ChartsPage() {
     return { from: monthAgo.toISOString(), to: today.toISOString() }
   }, [])
 
+  const fetchOhlcv = async (
+    asset: string,
+    market: string,
+  ): Promise<OhlcvBar[]> => {
+    const qs = new URLSearchParams({
+      asset,
+      market,
+      interval,
+      from,
+      to,
+    }).toString()
+    const res = await apiClient.get<
+      ApiResponse<
+        Array<{
+          ts: string
+          open: string | number
+          high: string | number
+          low: string | number
+          close: string | number
+          volume: string | number
+        }>
+      >
+    >(`/api/v1/charts/ohlcv?${qs}`)
+    const data = unwrap(res)
+    return data.map(b => {
+      const [date, timepart] = (b.ts || '').split('T')
+      return {
+        trade_date: date,
+        bar_time:
+          timepart && !timepart.startsWith('00:00:00')
+            ? timepart.slice(0, 8)
+            : null,
+        open: Number(b.open),
+        high: Number(b.high),
+        low: Number(b.low),
+        close: Number(b.close),
+        volume: Number(b.volume),
+      } satisfies OhlcvBar
+    })
+  }
+
   const ohlcvQ = useQuery({
     queryKey: ['ohlcv', symbol.ticker, backendMarket, interval, from, to],
-    queryFn: async (): Promise<OhlcvBar[]> => {
-      const qs = new URLSearchParams({
-        asset: backendAsset,
-        market: backendMarket,
-        interval,
-        from,
-        to,
-      }).toString()
-      const res = await apiClient.get<
-        ApiResponse<Array<{ ts: string; open: string | number; high: string | number; low: string | number; close: string | number; volume: string | number }>>
-      >(`/api/v1/charts/ohlcv?${qs}`)
-      const data = unwrap(res)
-      return data.map((b) => {
-        const [date, timepart] = (b.ts || '').split('T')
-        return {
-          trade_date: date,
-          bar_time: timepart && !timepart.startsWith('00:00:00') ? timepart.slice(0, 8) : null,
-          open: Number(b.open),
-          high: Number(b.high),
-          low: Number(b.low),
-          close: Number(b.close),
-          volume: Number(b.volume),
-        } satisfies OhlcvBar
-      })
-    },
+    queryFn: () => fetchOhlcv(backendAsset, backendMarket),
+  })
+
+  // TG-12 — 비교 종목 OHLCV (compareSymbol 활성 시에만)
+  const compareBackendMarket = compareSymbol
+    ? backendMarketOf(compareSymbol.assetClass)
+    : null
+  const compareBackendAsset = compareSymbol
+    ? backendAssetOf(compareSymbol.ticker, compareSymbol.assetClass)
+    : null
+  const compareOhlcvQ = useQuery({
+    queryKey: [
+      'ohlcv-compare',
+      compareSymbol?.ticker ?? '',
+      compareBackendMarket ?? '',
+      interval,
+      from,
+      to,
+    ],
+    enabled: !!compareSymbol && !!compareBackendAsset && !!compareBackendMarket,
+    queryFn: () => fetchOhlcv(compareBackendAsset!, compareBackendMarket!),
   })
 
   // 가격 요약 — 마지막 close + 첫 close 대비 변동률
@@ -461,6 +500,9 @@ export function ChartsPage() {
                   onIndicatorsChange={setIndicators}
                   indicatorParams={indicatorParams}
                   onIndicatorParamsChange={setIndicatorParams}
+                  compareLabel={compareSymbol?.name ?? null}
+                  onCompareClick={() => setCompareSheetOpen(true)}
+                  onCompareClear={() => setCompareSymbol(null)}
                 />
               </div>
             </div>
@@ -509,6 +551,12 @@ export function ChartsPage() {
             onPatternOffsetChange={setPatternOffset}
             patternWidth={patternWidth}
             onPatternWidthChange={setPatternWidth}
+            compareBars={
+              compareOhlcvQ.data && compareOhlcvQ.data.length > 0
+                ? compareOhlcvQ.data
+                : undefined
+            }
+            compareLabel={compareSymbol?.name}
           />
         )}
       </section>
@@ -856,6 +904,21 @@ export function ChartsPage() {
         onClose={() => setSymbolSheetOpen(false)}
       >
         <SymbolSearch onSelect={onPickSymbol} selectedTicker={symbol.ticker} />
+      </SymbolPickerSheet>
+
+      {/* === 비교 종목 선택 sheet — TG-12 === */}
+      <SymbolPickerSheet
+        open={compareSheetOpen}
+        onClose={() => setCompareSheetOpen(false)}
+        title="비교 종목 선택"
+      >
+        <SymbolSearch
+          onSelect={s => {
+            setCompareSymbol(s)
+            setCompareSheetOpen(false)
+          }}
+          selectedTicker={compareSymbol?.ticker ?? ''}
+        />
       </SymbolPickerSheet>
     </div>
   )

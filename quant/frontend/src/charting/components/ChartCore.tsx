@@ -94,6 +94,8 @@ interface Props {
   height?: number
   /** Per-pane stretch factor (default: pane 0 = 4, others = 1). */
   paneStretch?: Record<number, number>
+  /** Left price scale (TG-12 비교 종목용). 시리즈는 `priceScaleId: 'left'` 로 attach. */
+  leftPriceScaleVisible?: boolean
   className?: string
   style?: CSSProperties
 }
@@ -107,6 +109,7 @@ export function ChartCore({
   toTime: toTimeProp,
   height = 440,
   paneStretch,
+  leftPriceScaleVisible,
   className,
   style,
 }: Props) {
@@ -136,6 +139,10 @@ export function ChartCore({
       },
       crosshair: { mode: CrosshairMode.Normal },
       rightPriceScale: { borderColor: tokens.borderSubtle },
+      leftPriceScale: {
+        visible: !!leftPriceScaleVisible,
+        borderColor: tokens.borderSubtle,
+      },
       timeScale: {
         borderColor: tokens.borderSubtle,
         timeVisible: true,
@@ -303,6 +310,7 @@ export function ChartCore({
     onChartReady,
     toTime,
     toTimeProp,
+    leftPriceScaleVisible,
   ])
 
   return (

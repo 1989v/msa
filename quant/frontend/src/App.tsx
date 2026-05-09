@@ -116,7 +116,7 @@ export default function App() {
           <Route
             path="/charts"
             element={
-              <AppShell>
+              <AppShell width="full">
                 <ChartsPage />
               </AppShell>
             }

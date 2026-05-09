@@ -27,6 +27,12 @@ interface Props {
   onIndicatorsChange?: (next: Indicators) => void
   indicatorParams?: IndicatorParams
   onIndicatorParamsChange?: (next: IndicatorParams) => void
+  /** TG-12 종목비교 — 활성 비교 종목 라벨. 미제공 시 비교 비활성. */
+  compareLabel?: string | null
+  /** 비교 종목 추가/변경 클릭 — caller 가 SymbolPickerSheet 등 노출. */
+  onCompareClick?: () => void
+  /** 비교 해제 — null state 로 reset. */
+  onCompareClear?: () => void
   className?: string
 }
 
@@ -45,10 +51,14 @@ export function ChartToolbar({
   onIndicatorsChange,
   indicatorParams,
   onIndicatorParamsChange,
+  compareLabel,
+  onCompareClick,
+  onCompareClear,
   className,
 }: Props) {
   const showIndicatorPopover =
     !!indicators && !!onIndicatorsChange && !!indicatorParams && !!onIndicatorParamsChange
+  const compareActive = !!compareLabel
 
   return (
     <div className={cn('flex items-center gap-1', className)}>
@@ -63,21 +73,71 @@ export function ChartToolbar({
         />
       )}
 
-      {/* 그리기 (P2) */}
+      {/* 그리기 (P2) — 후속 PR */}
       <ToolButton
         icon={PencilLine}
         label="그리기"
-        title="그리기 도구 (P2 활성화 예정)"
+        title="그리기 도구 (후속 PR)"
         disabled
       />
 
-      {/* 종목비교 (P2) */}
-      <ToolButton
-        icon={GitCompare}
-        label="비교"
-        title="종목비교 (P2 활성화 예정)"
-        disabled
-      />
+      {/* 종목비교 (TG-12) */}
+      {onCompareClick ? (
+        <button
+          type="button"
+          onClick={onCompareClick}
+          aria-label="종목비교"
+          title={compareActive ? `비교 중: ${compareLabel}` : '종목비교'}
+          className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors"
+          style={{
+            background: compareActive
+              ? 'color-mix(in oklch, var(--ko-accent-secondary) 22%, transparent)'
+              : 'color-mix(in oklch, var(--ko-surface-2) 60%, transparent)',
+            border: compareActive
+              ? '1px solid color-mix(in oklch, var(--ko-accent-secondary) 40%, transparent)'
+              : '1px solid var(--ko-border-subtle)',
+            color: compareActive
+              ? 'var(--ko-accent-secondary)'
+              : 'var(--ko-text-secondary)',
+          }}
+        >
+          <GitCompare className="w-3.5 h-3.5" aria-hidden="true" />
+          <span className="hidden md:inline">
+            {compareActive ? compareLabel : '비교'}
+          </span>
+          {compareActive && onCompareClear && (
+            <span
+              role="button"
+              tabIndex={0}
+              aria-label="비교 해제"
+              onClick={e => {
+                e.stopPropagation()
+                onCompareClear()
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.stopPropagation()
+                  onCompareClear()
+                }
+              }}
+              className="ml-0.5 text-[10px] px-1 rounded cursor-pointer"
+              style={{
+                background:
+                  'color-mix(in oklch, var(--ko-accent-secondary) 30%, transparent)',
+              }}
+            >
+              ✕
+            </span>
+          )}
+        </button>
+      ) : (
+        <ToolButton
+          icon={GitCompare}
+          label="비교"
+          title="종목비교"
+          disabled
+        />
+      )}
 
       {/* 크게보기 */}
       <ToolButton
