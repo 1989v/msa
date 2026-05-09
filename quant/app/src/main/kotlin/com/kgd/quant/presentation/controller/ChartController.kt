@@ -1,6 +1,7 @@
 package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
+import com.kgd.quant.application.chart.FundamentalsQuery
 import com.kgd.quant.application.chart.IndicatorQuery
 import com.kgd.quant.application.chart.PredictionQuery
 import com.kgd.quant.application.chart.SimilarityQuery
@@ -30,6 +31,7 @@ class ChartController(
     private val indicatorQuery: IndicatorQuery,
     private val similarityQuery: SimilarityQuery,
     private val predictionQuery: PredictionQuery,
+    private val fundamentalsQuery: FundamentalsQuery,
 ) {
     @GetMapping("/prediction")
     suspend fun prediction(
@@ -163,6 +165,51 @@ class ChartController(
             else -> error("Unknown indicator type: $type (supported: RSI/SMA/EMA/BB/MACD/STOCH)")
         }
     }
+
+    /**
+     * Fundamentals — Yahoo Finance v10 quoteSummary (캐시 TTL 1h).
+     *
+     * - asset: 표시 ticker (예: AAPL, 005930, BTC-USD).
+     *   STOCK_KR 은 raw 종목코드 (예: 005930) — 어댑터가 .KS / .KQ 변환.
+     * - market: FDR_KR / YAHOO. CRYPTO 는 보통 fundamentals 없음 (null 반환).
+     */
+    @GetMapping("/fundamentals")
+    suspend fun fundamentals(
+        @RequestParam asset: String,
+        @RequestParam market: String,
+    ): ApiResponse<FundamentalsResponse?> {
+        val data = fundamentalsQuery.fundamentals(AssetCode(asset), MarketCode(market))
+        return ApiResponse.success(data?.let(::toResponse))
+    }
+
+    private fun toResponse(f: com.kgd.quant.domain.asset.Fundamentals): FundamentalsResponse =
+        FundamentalsResponse(
+            asset = f.asset.value,
+            market = f.market.value,
+            marketCap = f.marketCap,
+            peRatio = f.peRatio,
+            eps = f.eps,
+            dividendYield = f.dividendYield,
+            beta = f.beta,
+            weeks52High = f.weeks52High,
+            weeks52Low = f.weeks52Low,
+            avgDailyVolume = f.avgDailyVolume,
+            asOf = f.asOf.toString(),
+        )
+
+    data class FundamentalsResponse(
+        val asset: String,
+        val market: String,
+        val marketCap: BigDecimal?,
+        val peRatio: BigDecimal?,
+        val eps: BigDecimal?,
+        val dividendYield: BigDecimal?,
+        val beta: BigDecimal?,
+        val weeks52High: BigDecimal?,
+        val weeks52Low: BigDecimal?,
+        val avgDailyVolume: BigDecimal?,
+        val asOf: String,
+    )
 
     private fun IndicatorCalculator.Bar.toResponse() = OhlcvBarResponse(
         ts = ts.toString(),

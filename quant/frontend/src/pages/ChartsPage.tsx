@@ -34,6 +34,7 @@ import type { ChartType, TimeframeKey } from '@/charting/types'
 import { matchPatterns } from '@/charting/lib/patternMatcher'
 import { PATTERNS as ALL_PATTERNS } from '@/charting/lib/patterns'
 import { calcMA, calcRSI, calcATR } from '@/charting/lib/indicators'
+import { useFundamentals } from '@/charting/hooks/useFundamentals'
 
 interface PredictionTopHit {
   asset: string
@@ -156,7 +157,7 @@ const BOTTOM_TABS: Array<{
   reason?: string
 }> = [
   { key: 'chart', label: '차트·정보' },
-  { key: 'info', label: '종목정보', disabled: true, reason: 'P2 활성화 예정' },
+  { key: 'info', label: '종목정보' },
   { key: 'insight', label: 'AI 인사이트' },
   { key: 'news', label: '뉴스·공시', disabled: true, reason: 'P2 활성화 예정' },
   { key: 'flows', label: '매매주체', disabled: true, reason: 'P2 활성화 예정' },
@@ -311,6 +312,9 @@ export function ChartsPage() {
     enabled: !!compareSymbol && !!compareBackendAsset && !!compareBackendMarket,
     queryFn: () => fetchOhlcv(compareBackendAsset!, compareBackendMarket!),
   })
+
+  // TG-9 — Fundamentals (Yahoo v10 quoteSummary, 1h 캐시)
+  const fundamentalsQ = useFundamentals(backendAsset, backendMarket)
 
   // 가격 요약 — 마지막 close + 첫 close 대비 변동률
   const priceSummary = useMemo(() => {
@@ -639,9 +643,11 @@ export function ChartsPage() {
 
         {bottomTab === 'info' && (
           <Card>
-            <DisabledTabPlaceholder
-              title="종목정보"
-              description="시가총액, PER, 배당수익률, 52주 범위 등 yfinance fundamentals 데이터를 P2 에서 제공할 예정입니다."
+            <StockInfoSection
+              fundamentals={fundamentalsQ.data ?? null}
+              loading={fundamentalsQ.isLoading}
+              error={fundamentalsQ.isError}
+              assetClass={symbol.assetClass}
             />
           </Card>
         )}
@@ -922,6 +928,129 @@ export function ChartsPage() {
       </SymbolPickerSheet>
     </div>
   )
+}
+
+/** 종목정보 탭 콘텐츠 — fundamentals 카드 그리드. TG-9 활성화. */
+function StockInfoSection({
+  fundamentals,
+  loading,
+  error,
+  assetClass,
+}: {
+  fundamentals: import('@/charting/hooks/useFundamentals').Fundamentals | null
+  loading: boolean
+  error: boolean
+  assetClass: ChartSymbol['assetClass']
+}) {
+  if (loading) {
+    return (
+      <p
+        className="text-sm py-6 text-center"
+        style={{ color: 'var(--ko-text-muted)' }}
+      >
+        종목 정보 불러오는 중…
+      </p>
+    )
+  }
+  if (error || !fundamentals) {
+    return (
+      <DisabledTabPlaceholder
+        title="종목정보 없음"
+        description="이 자산은 fundamentals 데이터가 제공되지 않거나 (CRYPTO 등), 외부 source 가 응답하지 않습니다."
+      />
+    )
+  }
+
+  const f = fundamentals
+  const items: Array<{ label: string; value: string; secondary?: string }> = [
+    {
+      label: '시가총액',
+      value: formatCompactKrw(parseNum(f.marketCap), assetClass),
+    },
+    {
+      label: 'PER (TTM)',
+      value: formatRatio(f.peRatio),
+    },
+    {
+      label: 'EPS (TTM)',
+      value: formatRatio(f.eps),
+    },
+    {
+      label: '배당수익률',
+      value: formatPct(f.dividendYield),
+    },
+    {
+      label: '베타',
+      value: formatRatio(f.beta),
+    },
+    {
+      label: '52주 최고',
+      value: f.weeks52High != null ? formatRatio(f.weeks52High) : '—',
+    },
+    {
+      label: '52주 최저',
+      value: f.weeks52Low != null ? formatRatio(f.weeks52Low) : '—',
+    },
+    {
+      label: '평균 거래량 (3M)',
+      value: formatCompactCount(parseNum(f.avgDailyVolume)),
+    },
+  ]
+
+  return (
+    <div>
+      <div
+        className="text-[10px] uppercase tracking-wide mb-2"
+        style={{ color: 'var(--ko-text-muted)' }}
+      >
+        Yahoo Finance · {new Date(f.asOf).toLocaleString('ko-KR')}
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+        {items.map(it => (
+          <div
+            key={it.label}
+            className="rounded-lg p-2.5"
+            style={{
+              background: 'var(--ko-surface-2)',
+              border: '1px solid var(--ko-border-subtle)',
+            }}
+          >
+            <div
+              className="text-[10px] uppercase tracking-wide"
+              style={{ color: 'var(--ko-text-muted)' }}
+            >
+              {it.label}
+            </div>
+            <div
+              className="mt-0.5 text-sm font-semibold tabular-nums"
+              style={{ color: 'var(--ko-text-primary)' }}
+            >
+              {it.value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function parseNum(s: string | null | undefined): number {
+  if (s == null) return NaN
+  const n = parseFloat(s)
+  return Number.isFinite(n) ? n : NaN
+}
+
+function formatRatio(s: string | null | undefined): string {
+  const n = parseNum(s)
+  if (!Number.isFinite(n)) return '—'
+  if (Math.abs(n) >= 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 0 })
+  return n.toFixed(2)
+}
+
+function formatPct(s: string | null | undefined): string {
+  const n = parseNum(s)
+  if (!Number.isFinite(n)) return '—'
+  return `${(n * 100).toFixed(2)}%`
 }
 
 function DisabledTabPlaceholder({
