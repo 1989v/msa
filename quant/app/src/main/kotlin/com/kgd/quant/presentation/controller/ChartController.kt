@@ -3,6 +3,7 @@ package com.kgd.quant.presentation.controller
 import com.kgd.common.response.ApiResponse
 import com.kgd.quant.application.chart.FundamentalsQuery
 import com.kgd.quant.application.chart.IndicatorQuery
+import com.kgd.quant.application.chart.OrderbookPort
 import com.kgd.quant.application.chart.PredictionQuery
 import com.kgd.quant.application.chart.SimilarityQuery
 import com.kgd.quant.application.indicator.IndicatorCalculator
@@ -36,6 +37,7 @@ class ChartController(
     private val fundamentalsQuery: FundamentalsQuery,
     private val investorFlowsPort: InvestorFlowsPort,
     private val newsPort: NewsPort,
+    private val orderbookPort: OrderbookPort,
 ) {
     @GetMapping("/prediction")
     suspend fun prediction(
@@ -252,6 +254,67 @@ class ChartController(
             },
         )
     }
+
+    /**
+     * ADR-0039 — 호가 snapshot (CRYPTO 빗썸 ws). 데이터 없으면 null.
+     */
+    @GetMapping("/orderbook")
+    fun orderbook(
+        @RequestParam asset: String,
+        @RequestParam market: String,
+    ): ApiResponse<OrderbookResponse?> {
+        val s = orderbookPort.latestSnapshot(AssetCode(asset), MarketCode(market))
+            ?: return ApiResponse.success(null)
+        return ApiResponse.success(
+            OrderbookResponse(
+                asset = s.asset.value,
+                market = s.market.value,
+                asks = s.asks.map { LevelDto(it.price, it.quantity) },
+                bids = s.bids.map { LevelDto(it.price, it.quantity) },
+                ts = s.ts.toString(),
+            ),
+        )
+    }
+
+    /**
+     * ADR-0039 — 최근 체결 stream (snapshot mode, 50건).
+     * SSE delta 는 후속 PR (TG-13/14 SSE infra 재사용).
+     */
+    @GetMapping("/trades")
+    fun trades(
+        @RequestParam asset: String,
+        @RequestParam market: String,
+        @RequestParam(defaultValue = "50") limit: Int,
+    ): ApiResponse<List<TradeResponse>> {
+        val list = orderbookPort.recentTrades(AssetCode(asset), MarketCode(market), limit)
+        return ApiResponse.success(
+            list.map {
+                TradeResponse(
+                    price = it.price,
+                    quantity = it.quantity,
+                    side = it.side.name,
+                    ts = it.ts.toString(),
+                )
+            },
+        )
+    }
+
+    data class OrderbookResponse(
+        val asset: String,
+        val market: String,
+        val asks: List<LevelDto>,
+        val bids: List<LevelDto>,
+        val ts: String,
+    )
+
+    data class LevelDto(val price: BigDecimal, val quantity: BigDecimal)
+
+    data class TradeResponse(
+        val price: BigDecimal,
+        val quantity: BigDecimal,
+        val side: String,
+        val ts: String,
+    )
 
     data class NewsResponse(
         val title: String,

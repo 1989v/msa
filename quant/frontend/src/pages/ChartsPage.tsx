@@ -40,6 +40,8 @@ import { useInvestorFlows } from '@/charting/hooks/useInvestorFlows'
 import { InvestorFlowsPanel } from '@/charting/components/InvestorFlowsPanel'
 import { useNews } from '@/charting/hooks/useNews'
 import { NewsFeed } from '@/charting/components/NewsFeed'
+import { useOrderbook, useTrades } from '@/charting/hooks/useOrderbook'
+import { OrderbookPanel } from '@/charting/components/OrderbookPanel'
 import {
   type Drawing,
   listFor as listDrawingsFor,
@@ -161,7 +163,7 @@ const DEFAULT_INDICATORS: Indicators = {
  *  - news    : 뉴스·공시 — P2 disabled
  *  - flows   : 매매주체 (외국인/기관/개인) — P2 disabled
  */
-type BottomTab = 'chart' | 'info' | 'insight' | 'news' | 'flows'
+type BottomTab = 'chart' | 'info' | 'insight' | 'news' | 'flows' | 'orderbook'
 
 const BOTTOM_TABS: Array<{
   key: BottomTab
@@ -174,6 +176,7 @@ const BOTTOM_TABS: Array<{
   { key: 'insight', label: 'AI 인사이트' },
   { key: 'news', label: '뉴스·공시' },
   { key: 'flows', label: '매매주체' },
+  { key: 'orderbook', label: '호가·체결' },
 ]
 
 function isBottomTab(value: string | null): value is BottomTab {
@@ -182,7 +185,8 @@ function isBottomTab(value: string | null): value is BottomTab {
     value === 'info' ||
     value === 'insight' ||
     value === 'news' ||
-    value === 'flows'
+    value === 'flows' ||
+    value === 'orderbook'
   )
 }
 
@@ -345,6 +349,21 @@ export function ChartsPage() {
 
   // ADR-0041 — 뉴스 (Yahoo v8 search news)
   const newsQ = useNews(backendAsset, backendMarket, 20)
+
+  // ADR-0039 — 호가/체결 (CRYPTO 빗썸 전용 — backendMarket=BITHUMB)
+  // backendMarketOf 가 CRYPTO 도 'YAHOO' 반환 (yfinance ingest 정합) — 호가 query 는 'BITHUMB' 강제
+  const orderbookMarket = symbol.assetClass === 'CRYPTO' ? 'BITHUMB' : backendMarket
+  const orderbookQ = useOrderbook(
+    symbol.ticker,
+    orderbookMarket,
+    symbol.assetClass === 'CRYPTO',
+  )
+  const tradesQ = useTrades(
+    symbol.ticker,
+    orderbookMarket,
+    50,
+    symbol.assetClass === 'CRYPTO',
+  )
 
   // TG-11 — 사용자 그리기 (가로선 prototype, localStorage 저장)
   const drawingAssetKey = useMemo(
@@ -939,6 +958,17 @@ export function ChartsPage() {
               loading={investorFlowsQ.isLoading}
               error={investorFlowsQ.isError}
               isKr={symbol.assetClass === 'STOCK_KR'}
+            />
+          </Card>
+        )}
+
+        {bottomTab === 'orderbook' && (
+          <Card>
+            <OrderbookPanel
+              snapshot={orderbookQ.data ?? null}
+              trades={tradesQ.data ?? []}
+              isCrypto={symbol.assetClass === 'CRYPTO'}
+              loading={orderbookQ.isLoading}
             />
           </Card>
         )}
