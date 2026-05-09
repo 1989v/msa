@@ -14,6 +14,8 @@ import {
 } from 'lightweight-charts'
 import { ChartCore, type ChartCrosshairInfo, type ChartIndicatorSeries } from './ChartCore'
 import { PatternOverlay } from './PatternOverlay'
+import { DrawingOverlay } from './DrawingOverlay'
+import type { Drawing } from '../lib/drawing'
 import type { OhlcvBar } from '../api'
 import type { PatternDefinition } from '../lib/patterns'
 import type { Indicators, IndicatorParams } from './IndicatorToggle'
@@ -44,6 +46,9 @@ interface PatternChartProps {
   compareBars?: OhlcvBar[]
   compareLabel?: string
   compareColor?: string
+  /** TG-11 그리기 — 사용자 가로선 등. */
+  drawings?: Drawing[]
+  formatPrice?: (n: number) => string
 }
 
 // ── Bar prep (KR intraday timezone safety) ────────────────────────────────
@@ -105,6 +110,8 @@ export function PatternChart({
   compareBars,
   compareLabel,
   compareColor = 'oklch(0.78 0.14 180)', // --ko-accent-secondary 청록
+  drawings,
+  formatPrice,
 }: PatternChartProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const [chart, setChart] = useState<IChartApi | null>(null)
@@ -532,6 +539,15 @@ export function PatternChart({
             Vol {Number(hoverBar.volume).toLocaleString()}
           </span>
         </div>
+      )}
+
+      {/* User drawings (horizontal lines etc.) — TG-11 */}
+      {mainSeries && drawings && drawings.length > 0 && (
+        <DrawingOverlay
+          mainSeries={mainSeries}
+          drawings={drawings}
+          formatPrice={formatPrice}
+        />
       )}
 
       {/* Pattern overlay (drag handles + score badge + matched/projected lines) */}

@@ -33,6 +33,10 @@ interface Props {
   onCompareClick?: () => void
   /** 비교 해제 — null state 로 reset. */
   onCompareClear?: () => void
+  /** TG-11 그리기 — 가로선 추가 (현재 종가 기준). 미제공 시 그리기 비활성. */
+  onAddHorizontalLine?: () => void
+  onClearDrawings?: () => void
+  drawingCount?: number
   className?: string
 }
 
@@ -54,6 +58,9 @@ export function ChartToolbar({
   compareLabel,
   onCompareClick,
   onCompareClear,
+  onAddHorizontalLine,
+  onClearDrawings,
+  drawingCount = 0,
   className,
 }: Props) {
   const showIndicatorPopover =
@@ -73,13 +80,21 @@ export function ChartToolbar({
         />
       )}
 
-      {/* 그리기 (P2) — 후속 PR */}
-      <ToolButton
-        icon={PencilLine}
-        label="그리기"
-        title="그리기 도구 (후속 PR)"
-        disabled
-      />
+      {/* 그리기 (TG-11) */}
+      {onAddHorizontalLine ? (
+        <DrawingMenu
+          onAddHorizontalLine={onAddHorizontalLine}
+          onClearDrawings={onClearDrawings}
+          drawingCount={drawingCount}
+        />
+      ) : (
+        <ToolButton
+          icon={PencilLine}
+          label="그리기"
+          title="그리기 도구"
+          disabled
+        />
+      )}
 
       {/* 종목비교 (TG-12) */}
       {onCompareClick ? (
@@ -246,6 +261,130 @@ function ChartTypeMenu({
               </button>
             )
           })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Drawing menu ────────────────────────────────────────────────────────────
+
+function DrawingMenu({
+  onAddHorizontalLine,
+  onClearDrawings,
+  drawingCount,
+}: {
+  onAddHorizontalLine: () => void
+  onClearDrawings?: () => void
+  drawingCount: number
+}) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onEsc)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onEsc)
+    }
+  }, [open])
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors"
+        style={{
+          background: open
+            ? 'color-mix(in oklch, var(--ko-accent-primary) 22%, transparent)'
+            : 'color-mix(in oklch, var(--ko-surface-2) 60%, transparent)',
+          border: `1px solid ${
+            open
+              ? 'color-mix(in oklch, var(--ko-accent-primary) 40%, transparent)'
+              : 'var(--ko-border-subtle)'
+          }`,
+          color: open
+            ? 'var(--ko-accent-primary-hover)'
+            : 'var(--ko-text-secondary)',
+        }}
+        title="그리기"
+      >
+        <PencilLine className="w-3.5 h-3.5" aria-hidden="true" />
+        <span className="hidden md:inline">그리기</span>
+        {drawingCount > 0 && (
+          <span
+            className="ml-0.5 text-[10px] px-1 rounded tabular-nums"
+            style={{
+              background:
+                'color-mix(in oklch, var(--ko-accent-primary) 30%, transparent)',
+              color: 'var(--ko-accent-primary-hover)',
+            }}
+          >
+            {drawingCount}
+          </span>
+        )}
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 mt-1.5 z-30 w-[200px] rounded-xl shadow-lg p-1"
+          style={{
+            background: 'var(--ko-surface-1)',
+            border: '1px solid var(--ko-border-subtle)',
+          }}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              onAddHorizontalLine()
+              setOpen(false)
+            }}
+            className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
+            style={{
+              color: 'var(--ko-text-secondary)',
+              background: 'transparent',
+            }}
+          >
+            가로선 추가 <span style={{ color: 'var(--ko-text-muted)' }}>(현재 종가)</span>
+          </button>
+          {onClearDrawings && drawingCount > 0 && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                onClearDrawings()
+                setOpen(false)
+              }}
+              className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
+              style={{
+                color: 'var(--ko-status-loss)',
+                background: 'transparent',
+              }}
+            >
+              전체 지우기 ({drawingCount})
+            </button>
+          )}
+          <div
+            className="text-[10px] px-2.5 py-1.5"
+            style={{ color: 'var(--ko-text-muted)' }}
+          >
+            추세선·측정도구는 후속 PR
+          </div>
         </div>
       )}
     </div>

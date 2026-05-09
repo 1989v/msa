@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { KpiCard } from '@kgd/design-system'
@@ -35,6 +35,14 @@ import { matchPatterns } from '@/charting/lib/patternMatcher'
 import { PATTERNS as ALL_PATTERNS } from '@/charting/lib/patterns'
 import { calcMA, calcRSI, calcATR } from '@/charting/lib/indicators'
 import { useFundamentals } from '@/charting/hooks/useFundamentals'
+import {
+  type Drawing,
+  listFor as listDrawingsFor,
+  addDrawing,
+  clearDrawings as clearDrawingsFor,
+  makeAssetKey,
+  makeHorizontalLine,
+} from '@/charting/lib/drawing'
 
 interface PredictionTopHit {
   asset: string
@@ -220,6 +228,11 @@ export function ChartsPage() {
   const [compareSymbol, setCompareSymbol] = useState<ChartSymbol | null>(null)
   const [compareSheetOpen, setCompareSheetOpen] = useState(false)
 
+  const formatSymbolPrice = useCallback(
+    (n: number) => formatPrice(n, symbol.assetClass),
+    [symbol.assetClass],
+  )
+
   // '/' 단축키 — input/textarea/contentEditable focus 외에서 종목 검색 sheet 오픈
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -315,6 +328,33 @@ export function ChartsPage() {
 
   // TG-9 — Fundamentals (Yahoo v10 quoteSummary, 1h 캐시)
   const fundamentalsQ = useFundamentals(backendAsset, backendMarket)
+
+  // TG-11 — 사용자 그리기 (가로선 prototype, localStorage 저장)
+  const drawingAssetKey = useMemo(
+    () => makeAssetKey(backendAsset, backendMarket),
+    [backendAsset, backendMarket],
+  )
+  const [drawings, setDrawings] = useState<Drawing[]>(() =>
+    listDrawingsFor(drawingAssetKey),
+  )
+  // 종목 변경 시 해당 자산의 drawings 다시 로드
+  useEffect(() => {
+    setDrawings(listDrawingsFor(drawingAssetKey))
+  }, [drawingAssetKey])
+
+  const handleAddHorizontalLine = useCallback(() => {
+    const bars = ohlcvQ.data
+    if (!bars || bars.length === 0) return
+    const lastClose = bars[bars.length - 1].close
+    const drawing = makeHorizontalLine(lastClose, 'oklch(0.74 0.16 90)') // amber
+    addDrawing(drawingAssetKey, drawing)
+    setDrawings(prev => [...prev, drawing])
+  }, [ohlcvQ.data, drawingAssetKey])
+
+  const handleClearDrawings = useCallback(() => {
+    clearDrawingsFor(drawingAssetKey)
+    setDrawings([])
+  }, [drawingAssetKey])
 
   // 가격 요약 — 마지막 close + 첫 close 대비 변동률
   const priceSummary = useMemo(() => {
@@ -507,6 +547,9 @@ export function ChartsPage() {
                   compareLabel={compareSymbol?.name ?? null}
                   onCompareClick={() => setCompareSheetOpen(true)}
                   onCompareClear={() => setCompareSymbol(null)}
+                  onAddHorizontalLine={handleAddHorizontalLine}
+                  onClearDrawings={handleClearDrawings}
+                  drawingCount={drawings.length}
                 />
               </div>
             </div>
@@ -561,6 +604,8 @@ export function ChartsPage() {
                 : undefined
             }
             compareLabel={compareSymbol?.name}
+            drawings={drawings}
+            formatPrice={formatSymbolPrice}
           />
         )}
       </section>
