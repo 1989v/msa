@@ -363,23 +363,37 @@ interface ResolvedTokens {
   accentPrimary: string
 }
 
+/** lightweight-charts v5 는 hex/rgb/rgba 만 파싱 — OKLCH reject.
+ *  fallback 토큰 모두 hex (DESIGN.md 의 hex 매핑 그대로). */
 const DEFAULT_TOKENS: ResolvedTokens = {
-  surface0: 'oklch(0.17 0.025 252)',
-  surface1: 'oklch(0.24 0.025 254)',
-  borderSubtle: 'oklch(0.32 0.015 250)',
-  borderStrong: 'oklch(0.55 0.02 250)',
-  textPrimary: 'oklch(0.96 0.005 250)',
-  textMuted: 'oklch(0.62 0.015 250)',
-  quoteRise: 'oklch(0.69 0.20 18)',
-  quoteFall: 'oklch(0.63 0.18 254)',
-  accentPrimary: 'oklch(0.68 0.16 245)',
+  surface0: '#0c1424',
+  surface1: '#1a2238',
+  borderSubtle: '#2c3550',
+  borderStrong: '#475569',
+  textPrimary: '#f1f5f9',
+  textMuted: '#94a3b8',
+  quoteRise: '#FA616D',
+  quoteFall: '#3485FA',
+  accentPrimary: '#0ea5e9',
 }
 
+/**
+ * lightweight-charts v5 는 hex/rgb/rgba 만 파싱 — OKLCH 미지원.
+ * Chrome/Safari/Firefox 모두 OKLCH → sRGB native 변환 안 함 (Canvas fillStyle / getComputedStyle 모두 oklch 그대로 반환).
+ * 결국 차트 색상 토큰은 CSS var 동적 갱신 X, 항상 hex DEFAULT_TOKENS 사용.
+ *
+ * 단, css var 가 hex/rgb 로 명시되어 있다면 (light/dark theme custom theme 도구 등) 그대로 사용.
+ */
 function readTokens(): ResolvedTokens {
   if (typeof window === 'undefined') return DEFAULT_TOKENS
   const cs = getComputedStyle(document.documentElement)
-  const get = (name: string, fallback: string) =>
-    cs.getPropertyValue(name).trim() || fallback
+  const get = (name: string, fallback: string): string => {
+    const raw = cs.getPropertyValue(name).trim()
+    if (!raw) return fallback
+    // hex / rgb / rgba 만 통과, 그 외 (oklch/lab/hsl) 는 fallback (lwc 미파싱)
+    if (raw.startsWith('#') || raw.startsWith('rgb')) return raw
+    return fallback
+  }
   return {
     surface0: get('--ko-surface-0', DEFAULT_TOKENS.surface0),
     surface1: get('--ko-surface-1', DEFAULT_TOKENS.surface1),
