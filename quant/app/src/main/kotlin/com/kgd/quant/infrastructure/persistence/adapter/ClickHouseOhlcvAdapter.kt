@@ -40,28 +40,30 @@ class ClickHouseOhlcvAdapter(
         from: Instant,
         to: Instant,
     ): List<IndicatorCalculator.Bar> = withContext(Dispatchers.IO) {
+        // ClickHouse JDBC 0.7.1 의 PreparedStatement 가 일부 SQL form 에서
+        // bad SQL grammar 를 일으킨다 (RankingAdapter 와 동일 회피 — 파라미터를
+        // whitelist 검증 후 직접 삽입, FORMAT 절도 제거). 모든 입력은 whitelist 또는
+        // ClickHouse literal escape.
+        val safeAsset = assetCode.value.takeIf { SAFE_IDENT.matches(it) }
+            ?: return@withContext emptyList()
+        val safeMarket = marketCode.value.takeIf { SAFE_IDENT.matches(it) }
+            ?: return@withContext emptyList()
+        val safeInterval = interval.takeIf { SAFE_INTERVAL.matches(it) }
+            ?: return@withContext emptyList()
+        val fromTs = Timestamp.from(from).toString()
+        val toTs = Timestamp.from(to).toString()
         val sql = """
             SELECT ts, open, high, low, close, volume
             FROM quant.ohlcv
-            WHERE asset_code = ?
-              AND market_code = ?
-              AND interval = ?
-              AND ts >= ?
-              AND ts < ?
+            WHERE asset_code = '$safeAsset'
+              AND market_code = '$safeMarket'
+              AND interval = '$safeInterval'
+              AND ts >= toDateTime64('$fromTs', 3)
+              AND ts < toDateTime64('$toTs', 3)
             ORDER BY ts ASC
-            FORMAT TabSeparated
         """.trimIndent()
         try {
-            jdbc.query(
-                sql,
-                arrayOf(
-                    assetCode.value,
-                    marketCode.value,
-                    interval,
-                    Timestamp.from(from),
-                    Timestamp.from(to),
-                ),
-            ) { rs, _ ->
+            jdbc.query(sql) { rs, _ ->
                 IndicatorCalculator.Bar(
                     ts = rs.getTimestamp("ts").toInstant(),
                     open = rs.getBigDecimal("open") ?: BigDecimal.ZERO,
@@ -75,5 +77,10 @@ class ClickHouseOhlcvAdapter(
             log.warn { "ClickHouseOhlcvAdapter query failed: ${ex.message}" }
             emptyList()
         }
+    }
+
+    private companion object {
+        private val SAFE_IDENT = Regex("^[A-Za-z0-9._\\-]{1,64}$")
+        private val SAFE_INTERVAL = Regex("^[0-9]{1,3}[smhdwMy]$|^1d$|^1h$|^1m$")
     }
 }

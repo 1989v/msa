@@ -93,15 +93,17 @@ function pct(value: string | null | undefined, fractionDigits = 2): string {
 function formatPrice(n: number, assetClass: ChartSymbol['assetClass']): string {
   if (!Number.isFinite(n)) return '—'
   if (assetClass === 'STOCK_KR') return `₩${n.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}`
-  if (assetClass === 'STOCK_US') return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  // CRYPTO — KRW
+  if (assetClass === 'STOCK_US' || assetClass === 'CRYPTO') {
+    return `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
   return `₩${n.toLocaleString('ko-KR', { maximumFractionDigits: 0 })}`
 }
 
-/** 거래대금: KR 자산 = 조/억/만원, US = $compact. */
+/** 거래대금: KR 자산 = 조/억/만원, US/CRYPTO = $compact. */
 function formatCompactKrw(n: number, assetClass: ChartSymbol['assetClass']): string {
   if (!Number.isFinite(n) || n <= 0) return '—'
-  if (assetClass === 'STOCK_US') {
+  if (assetClass === 'STOCK_US' || assetClass === 'CRYPTO') {
+    if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`
     if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`
     if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`
     if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`
