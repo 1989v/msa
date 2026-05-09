@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component
 class NewsAggregator(
     private val yahoo: YahooNewsAdapter,
     private val dart: DartDisclosureAdapter,
+    private val naver: NaverNewsAdapter,
 ) : NewsPort {
     override suspend fun fetch(
         asset: AssetCode,
@@ -30,7 +31,8 @@ class NewsAggregator(
     ): List<NewsItem> = coroutineScope {
         val yahooDeferred = async { yahoo.fetch(asset, market, limit) }
         val dartDeferred = async { dart.fetch(asset, market, limit) }
-        val merged = (yahooDeferred.await() + dartDeferred.await())
+        val naverDeferred = async { naver.fetch(asset, market, limit) }
+        val merged = (yahooDeferred.await() + dartDeferred.await() + naverDeferred.await())
             .sortedByDescending { it.publishedAt }
             .distinctBy { it.url }
             .take(limit)

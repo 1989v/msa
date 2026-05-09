@@ -4,12 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.quant.application.chart.OrderbookPort
 import com.kgd.quant.application.port.persistence.AssetCatalogRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
-import com.kgd.quant.domain.asset.OrderbookLevel
-import com.kgd.quant.domain.asset.OrderbookSnapshot
 import com.kgd.quant.domain.asset.TradeFill
 import com.kgd.quant.domain.asset.TradeSide
 import com.kgd.quant.domain.asset.catalog.AssetClass
 import com.kgd.quant.domain.market.MarketCode
+import com.kgd.quant.infrastructure.chart.OrderbookSnapshotMaintainer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
@@ -50,6 +49,7 @@ import java.time.Instant
 )
 class BithumbOrderbookSubscriber(
     private val store: OrderbookPort,
+    private val maintainer: OrderbookSnapshotMaintainer,
     private val objectMapper: ObjectMapper,
     private val assetCatalog: AssetCatalogRepositoryPort,
     @Value("\${quant.charts.orderbook.bithumb.url:wss://pubwss.bithumb.com/pub/ws}")
@@ -150,29 +150,27 @@ class BithumbOrderbookSubscriber(
         val content = node.path("content")
         val list = content.path("list")
         if (!list.isArray || list.size() == 0) return
-        // symbol 별 그룹
+        // symbol 별 그룹 → maintainer 에 incremental delta 로 전달 (정확 누적 snapshot 유지)
         val bySymbol = list.groupBy { it.path("symbol").asText() }
         bySymbol.forEach { (symbol, levels) ->
             val asset = symbol.substringBefore("_")
-            val asks = levels
-                .filter { it.path("orderType").asText() == "ask" }
-                .mapNotNull { it.toLevel() }
-                .sortedBy { it.price }
-                .take(15)
-            val bids = levels
-                .filter { it.path("orderType").asText() == "bid" }
-                .mapNotNull { it.toLevel() }
-                .sortedByDescending { it.price }
-                .take(15)
-            if (asks.isEmpty() && bids.isEmpty()) return@forEach
-            store.publish(
-                OrderbookSnapshot(
-                    asset = AssetCode(asset),
-                    market = MarketCode("BITHUMB"),
-                    asks = asks,
-                    bids = bids,
-                    ts = Instant.now(),
-                ),
+            val deltas = levels.mapNotNull { lvl ->
+                val price = runCatching { BigDecimal(lvl.path("price").asText()) }.getOrNull()
+                    ?: return@mapNotNull null
+                val qty = runCatching { BigDecimal(lvl.path("quantity").asText()) }.getOrNull()
+                    ?: return@mapNotNull null
+                val side = when (lvl.path("orderType").asText()) {
+                    "ask" -> OrderbookSnapshotMaintainer.Side.ASK
+                    "bid" -> OrderbookSnapshotMaintainer.Side.BID
+                    else -> return@mapNotNull null
+                }
+                OrderbookSnapshotMaintainer.Delta(side, price, qty)
+            }
+            if (deltas.isEmpty()) return@forEach
+            maintainer.applyDeltas(
+                AssetCode(asset),
+                MarketCode("BITHUMB"),
+                deltas,
             )
         }
     }
@@ -203,13 +201,6 @@ class BithumbOrderbookSubscriber(
                 ),
             )
         }
-    }
-
-    private fun com.fasterxml.jackson.databind.JsonNode.toLevel(): OrderbookLevel? {
-        val price = runCatching { BigDecimal(path("price").asText()) }.getOrNull() ?: return null
-        val qty = runCatching { BigDecimal(path("quantity").asText()) }.getOrNull() ?: return null
-        if (qty.signum() <= 0) return null // 0 quantity = 가격대 제거 신호 (incremental)
-        return OrderbookLevel(price, qty)
     }
 
     private fun List<String>.toJsonArray(): String =

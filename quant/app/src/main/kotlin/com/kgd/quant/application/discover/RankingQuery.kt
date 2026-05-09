@@ -17,15 +17,16 @@ import java.math.RoundingMode
 import java.time.Instant
 
 /**
- * RankingQuery — 자산 catalog 의 active 자산을 OHLCV 시계열에서 집계해 ranking.
+ * RankingQuery — ranking use case + displayName 합성.
  *
- * Phase A prototype — N+1 자산별 ohlcv query (작은 카탈로그 가정).
- * 후속: ClickHouse materialized view (`quant.discover_daily_ranking`) 도입.
+ * RankingPort 의 단일 쿼리 결과 (asset/changePct/turnover/...) 에 자산 카탈로그의 displayName 을 join.
+ * RankingPort 미가용 (ClickHouse JdbcTemplate 미설정) 시 자체 N+1 fallback.
  */
 @Service
 class RankingQuery(
     private val catalog: AssetCatalogRepositoryPort,
     private val ohlcvRepo: OhlcvRepositoryPort,
+    private val rankingPort: RankingPort? = null,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -33,6 +34,31 @@ class RankingQuery(
         mode: RankingMode,
         marketFilter: String? = null,
         limit: Int = 20,
+    ): List<MarketRanking> {
+        val raw = rankingPort?.let {
+            runCatching { it.rank(mode, marketFilter, limit) }.getOrElse {
+                log.warn { "RankingPort failed, fallback to N+1: ${it.message}" }
+                null
+            }
+        } ?: rankByCatalogScan(mode, marketFilter, limit)
+        // displayName 합성 — 카탈로그에서 (asset_code, market) 매핑.
+        val nameMap = runCatching {
+            catalog.findAll(activeOnly = true).associateBy(
+                keySelector = { it.assetCode to marketCodeOf(it.source) },
+                valueTransform = { it.displayName },
+            )
+        }.getOrElse { emptyMap() }
+        return raw.map { r ->
+            val name = nameMap[r.asset to r.market] ?: r.displayName
+            r.copy(displayName = name)
+        }
+    }
+
+    /** Fallback: 자산 카탈로그 + ohlcv N+1 (ClickHouse 미가용). */
+    private suspend fun rankByCatalogScan(
+        mode: RankingMode,
+        marketFilter: String?,
+        limit: Int,
     ): List<MarketRanking> = coroutineScope {
         val assets = catalog.findAll(activeOnly = true)
         val to = Instant.now()
@@ -96,7 +122,7 @@ class RankingQuery(
     }
 
     /** AssetSource → quant ohlcv 의 market_code 매핑. */
-    private fun marketCodeOf(source: AssetSource): String = when (source) {
+    internal fun marketCodeOf(source: AssetSource): String = when (source) {
         AssetSource.YFINANCE -> "YAHOO"
         AssetSource.FDR -> "FDR_KR"
     }

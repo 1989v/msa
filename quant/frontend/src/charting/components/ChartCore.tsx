@@ -77,7 +77,8 @@ export interface ChartCrosshairInfo {
 }
 
 export interface ChartClickInfo {
-  time: Time
+  /** Normalized — daily 'YYYY-MM-DD' / intraday epoch seconds (number). */
+  time: string | number
   price: number
 }
 
@@ -295,7 +296,13 @@ export function ChartCore({
         if (!param.time || !param.point) return
         const price = mainSeries.coordinateToPrice(param.point.y)
         if (price == null || !Number.isFinite(price)) return
-        onChartClick({ time: param.time, price: Number(price) })
+        // BusinessDay → 'YYYY-MM-DD', else 그대로
+        const t = param.time
+        const normalized: string | number =
+          typeof t === 'number' || typeof t === 'string'
+            ? t
+            : `${(t as { year: number }).year}-${String((t as { month: number }).month).padStart(2, '0')}-${String((t as { day: number }).day).padStart(2, '0')}`
+        onChartClick({ time: normalized, price: Number(price) })
       })
     }
 
