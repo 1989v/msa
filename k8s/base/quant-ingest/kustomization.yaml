@@ -5,3 +5,4 @@ resources:
   - cronjob.yaml
   - cronjob-intraday.yaml
   - cronjob-investor-flows.yaml
+  - cronjob-dart-corp-codes.yaml

@@ -3,6 +3,7 @@ package com.kgd.quant.application.discover
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.kgd.quant.infrastructure.config.QuantChartsProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.async
@@ -25,6 +26,7 @@ import java.time.Duration
 @Service
 class GlobalIndicesQuery(
     private val objectMapper: ObjectMapper,
+    private val properties: QuantChartsProperties,
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -41,21 +43,11 @@ class GlobalIndicesQuery(
         .maximumSize(100)
         .build()
 
-    /** ADR-0042 D4 의 8종 글로벌 지수. */
-    private val INDICES = listOf(
-        "^IXIC" to "나스닥",
-        "^GSPC" to "S&P 500",
-        "^SOX" to "필라델피아 반도체",
-        "^VIX" to "VIX",
-        "^KS11" to "코스피",
-        "^KQ11" to "코스닥",
-        "KRW=X" to "달러환율",
-        "DX-Y.NYB" to "달러인덱스",
-    )
-
     suspend fun fetchAll(): List<GlobalIndexQuote> = coroutineScope {
-        INDICES
-            .map { (ticker, name) ->
+        properties.globalIndices
+            .map { cfg ->
+                val ticker = cfg.ticker
+                val name = cfg.name
                 async {
                     cache.getIfPresent(ticker) ?: runCatching {
                         val q = fetchOne(ticker, name)
@@ -66,6 +58,7 @@ class GlobalIndicesQuery(
                     }.getOrNull()
                 }
             }
+            .toList()
             .awaitAll()
             .filterNotNull()
     }

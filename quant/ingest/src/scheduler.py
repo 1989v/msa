@@ -17,7 +17,12 @@ from typing import List, Tuple
 import click
 import requests
 
-from src.sinks.clickhouse_sink import insert_bars, insert_investor_flows
+from src.sinks.clickhouse_sink import (
+    insert_bars,
+    insert_dart_corp_codes,
+    insert_investor_flows,
+)
+from src.sources.dart_corp_src import fetch_dart_corp_codes
 from src.sources.fdr_src import fetch_fdr
 from src.sources.investor_flows_src import fetch_investor_flows
 from src.sources.yfinance_src import fetch_yfinance, safe_lookback_days
@@ -78,9 +83,13 @@ def load_targets() -> List[Tuple[str, str, str]]:
 @click.command()
 @click.option(
     "--job",
-    type=click.Choice(["ohlcv", "investor-flows"]),
+    type=click.Choice(["ohlcv", "investor-flows", "dart-corp-codes"]),
     default="ohlcv",
-    help="Ingest job. 'ohlcv' (default) = OHLCV 시계열, 'investor-flows' = ADR-0040 KR 매매주체 일별",
+    help=(
+        "Ingest job. 'ohlcv' (default) = OHLCV 시계열, "
+        "'investor-flows' = ADR-0040 KR 매매주체 일별, "
+        "'dart-corp-codes' = ADR-0041 DART corp_code 매핑 (주 1회)"
+    ),
 )
 @click.option("--mode", type=click.Choice(["incremental", "backfill"]), default="incremental")
 @click.option(
@@ -94,7 +103,19 @@ def load_targets() -> List[Tuple[str, str, str]]:
 def main(job: str, mode: str, interval: str, lookback_days: int) -> None:
     if job == "investor-flows":
         return _run_investor_flows(lookback_days)
+    if job == "dart-corp-codes":
+        return _run_dart_corp_codes()
     return _run_ohlcv(mode, interval, lookback_days)
+
+
+def _run_dart_corp_codes() -> None:
+    log.info("quant-ingest dart-corp-codes start")
+    try:
+        rows = list(fetch_dart_corp_codes())
+        n = insert_dart_corp_codes(rows)
+        log.info("quant-ingest dart-corp-codes done rows=%d", n)
+    except Exception as exc:
+        log.exception("dart-corp-codes ingest failed: %s", exc)
 
 
 def _run_investor_flows(lookback_days: int) -> None:

@@ -1,0 +1,53 @@
+# ADR-0041 — DART corp_code 매핑 ingest CronJob.
+# DART corpCode.xml 갱신 빈도 낮음 (주 1회). 매주 일요일 새벽 (UTC 18:00 일 = KST 03:00 월).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quant-ingest-dart-corp-codes
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    quant.kgd.io/job: "dart-corp-codes"
+spec:
+  # 매주 일요일 UTC 18:00 (월요일 KST 03:00)
+  schedule: "0 18 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: quant-ingest
+            quant.kgd.io/job: "dart-corp-codes"
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/quant-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=dart-corp-codes"]
+              env:
+                - name: CLICKHOUSE_HOST
+                  value: "clickhouse"
+                - name: CLICKHOUSE_PORT
+                  value: "8123"
+                - name: CLICKHOUSE_DB
+                  value: "quant"
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
+                - name: DART_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: quant-secrets
+                      key: dart-api-key
+                      optional: true
+              resources:
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 512Mi }

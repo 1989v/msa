@@ -12,6 +12,7 @@ import clickhouse_connect
 
 from src.sources.yfinance_src import OhlcvBar
 from src.sources.investor_flows_src import InvestorFlowRow
+from src.sources.dart_corp_src import DartCorpCodeRow
 
 
 def _client():
@@ -53,6 +54,31 @@ def insert_bars(bars: Iterable[OhlcvBar]) -> int:
         ],
     )
     return len(rows)
+
+
+def insert_dart_corp_codes(rows: Iterable[DartCorpCodeRow]) -> int:
+    """ADR-0041 — dart_corp_codes 테이블 멱등 INSERT.
+
+    Returns: insert 행 수.
+    """
+    data = [
+        (
+            r.corp_code,
+            r.corp_name,
+            r.stock_code,
+            r.modify_date.date() if hasattr(r.modify_date, "date") else r.modify_date,
+        )
+        for r in rows
+    ]
+    if not data:
+        return 0
+    client = _client()
+    client.insert(
+        "dart_corp_codes",
+        data,
+        column_names=["corp_code", "corp_name", "stock_code", "modify_date"],
+    )
+    return len(data)
 
 
 def insert_investor_flows(flows: Iterable[InvestorFlowRow]) -> int:

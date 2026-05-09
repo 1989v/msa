@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.kgd.quant.application.port.persistence.DartCorpCodePort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.NewsItem
 import com.kgd.quant.domain.asset.NewsKind
@@ -32,6 +33,7 @@ import java.time.format.DateTimeFormatter
 @Component
 class DartDisclosureAdapter(
     private val objectMapper: ObjectMapper,
+    private val corpCodePort: DartCorpCodePort,
     @Value("\${quant.charts.dart.api-key:}")
     private val apiKey: String,
 ) {
@@ -46,20 +48,11 @@ class DartDisclosureAdapter(
         .maximumSize(500)
         .build()
 
-    /** Phase A 하드코딩 매핑. 후속에 DB 매핑 도입. */
-    private val CORP_CODE_BY_STOCK = mapOf(
-        "005930" to "00126380",  // 삼성전자
-        "000660" to "00164779",  // SK하이닉스
-        "035420" to "00266961",  // NAVER
-        "035720" to "00258801",  // 카카오
-        "005380" to "00164742",  // 현대차
-        "207940" to "00877059",  // 삼성바이오로직스
-    )
-
     suspend fun fetch(asset: AssetCode, market: MarketCode, limit: Int = 20): List<NewsItem> {
         if (apiKey.isBlank()) return emptyList()
         if (market.value != "FDR_KR") return emptyList()
-        val corpCode = CORP_CODE_BY_STOCK[asset.value] ?: return emptyList()
+        // ClickHouse dart_corp_codes 테이블 조회 (Caffeine 1h 캐시)
+        val corpCode = corpCodePort.findCorpCode(asset.value) ?: return emptyList()
         val key = "$corpCode:$limit"
         cache.getIfPresent(key)?.let { return it }
         val items = runCatching { fetchUncached(asset, market, corpCode, limit) }.getOrElse {

@@ -2,11 +2,13 @@ package com.kgd.quant.infrastructure.exchange
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.quant.application.chart.OrderbookPort
+import com.kgd.quant.application.port.persistence.AssetCatalogRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.OrderbookLevel
 import com.kgd.quant.domain.asset.OrderbookSnapshot
 import com.kgd.quant.domain.asset.TradeFill
 import com.kgd.quant.domain.asset.TradeSide
+import com.kgd.quant.domain.asset.catalog.AssetClass
 import com.kgd.quant.domain.market.MarketCode
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
@@ -19,6 +21,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
@@ -48,10 +51,12 @@ import java.time.Instant
 class BithumbOrderbookSubscriber(
     private val store: OrderbookPort,
     private val objectMapper: ObjectMapper,
+    private val assetCatalog: AssetCatalogRepositoryPort,
     @Value("\${quant.charts.orderbook.bithumb.url:wss://pubwss.bithumb.com/pub/ws}")
     private val wsUrl: String,
-    @Value("\${quant.charts.orderbook.bithumb.symbols:BTC_KRW,ETH_KRW,XRP_KRW,SOL_KRW}")
-    private val symbolsCsv: String,
+    /** Fallback (자산 카탈로그 비어있을 때). */
+    @Value("\${quant.charts.orderbook.bithumb.fallback-symbols:BTC_KRW,ETH_KRW}")
+    private val fallbackSymbolsCsv: String,
 ) {
     private val log = KotlinLogging.logger {}
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -70,7 +75,32 @@ class BithumbOrderbookSubscriber(
                 delay(5_000) // simple fixed-delay reconnect (재연결 정밀화는 후속)
             }
         }
-        log.info { "BithumbOrderbookSubscriber started symbols=$symbolsCsv" }
+        log.info { "BithumbOrderbookSubscriber started" }
+    }
+
+    /**
+     * 구독 symbol 목록 — 자산 카탈로그의 active CRYPTO 자산 자동 fetch.
+     * assetCode 가 'BTC-USD' 형태 (yfinance pair) → 빗썸 'BTC_KRW' 변환.
+     * fallback: 카탈로그 비었거나 fetch 실패 시 fallbackSymbolsCsv.
+     */
+    private fun resolveSymbols(): List<String> {
+        val fromCatalog = runBlocking {
+            runCatching {
+                assetCatalog.findAll(activeOnly = true)
+                    .filter { it.assetClass == AssetClass.CRYPTO }
+                    .mapNotNull { item ->
+                        // 'BTC-USD' / 'BTC' / 'ETH-USD' → 'BTC_KRW'
+                        val base = item.assetCode.substringBefore("-")
+                        if (base.isBlank()) null else "${base}_KRW"
+                    }
+                    .distinct()
+            }.getOrElse {
+                log.debug { "asset catalog fetch fail: ${it.message}" }
+                emptyList()
+            }
+        }
+        if (fromCatalog.isNotEmpty()) return fromCatalog
+        return fallbackSymbolsCsv.split(",").map { it.trim() }.filter { it.isNotBlank() }
     }
 
     @PreDestroy
@@ -80,7 +110,13 @@ class BithumbOrderbookSubscriber(
     }
 
     private suspend fun connectAndSubscribe() {
-        val symbols = symbolsCsv.split(",").map { it.trim() }.filter { it.isNotBlank() }
+        val symbols = resolveSymbols()
+        if (symbols.isEmpty()) {
+            log.warn { "bithumb subscriber: no symbols resolved (catalog empty + fallback empty)" }
+            delay(30_000)
+            return
+        }
+        log.info { "bithumb subscribing symbols=$symbols" }
         val subOrderbook = """{"type":"orderbookdepth","symbols":${symbols.toJsonArray()}}"""
         val subTransaction = """{"type":"transaction","symbols":${symbols.toJsonArray()}}"""
 

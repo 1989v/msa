@@ -1,9 +1,11 @@
 package com.kgd.quant.infrastructure.chart
 
 import com.kgd.quant.application.chart.PriceStreamPort
+import com.kgd.quant.application.port.persistence.AssetCatalogRepositoryPort
 import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.PriceTick
+import com.kgd.quant.domain.asset.catalog.AssetSource
 import com.kgd.quant.domain.market.MarketCode
 import com.kgd.quant.infrastructure.external.YahooLatestPriceAdapter
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -31,19 +33,12 @@ import kotlin.random.Random
 class StubPricePollingScheduler(
     private val priceStream: PriceStreamPort,
     private val ohlcvRepo: OhlcvRepositoryPort,
+    private val assetCatalog: AssetCatalogRepositoryPort,
     private val yahooLatest: YahooLatestPriceAdapter,
     @Value("\${quant.charts.stream.mode:yahoo}")
     private val mode: String,
 ) {
     private val log = KotlinLogging.logger {}
-
-    /** 활성 구독자 있는 자산만 폴링하기 위해 캐시. */
-    private val watchlist = listOf(
-        // (asset, market)
-        "BTC-USD" to "YAHOO",
-        "AAPL" to "YAHOO",
-        "005930" to "FDR_KR",
-    )
 
     @Scheduled(fixedDelay = 30_000L)
     fun pollAndPublish() {
@@ -51,7 +46,18 @@ class StubPricePollingScheduler(
         if (priceStream.totalSubscriberCount() == 0) return
 
         val now = Instant.now()
-        watchlist.forEach { (asset, market) ->
+        // 자동화: 자산 카탈로그 active 자산만 폴링 (하드코딩 watchlist 제거)
+        val targets = runBlocking {
+            runCatching {
+                assetCatalog.findAll(activeOnly = true).map { item ->
+                    item.assetCode to marketCodeOf(item.source)
+                }
+            }.getOrElse {
+                log.debug { "asset catalog fetch failed: ${it.message}" }
+                emptyList()
+            }
+        }
+        targets.forEach { (asset, market) ->
             val a = AssetCode(asset)
             val m = MarketCode(market)
             if (priceStream.subscriberCount(a, m) == 0) return@forEach
@@ -84,6 +90,11 @@ class StubPricePollingScheduler(
         val noise = Random.nextDouble(-0.003, 0.003)
         val price = basePrice.toDouble() * (1.0 + noise)
         return BigDecimal.valueOf(price).setScale(8, RoundingMode.HALF_UP)
+    }
+
+    private fun marketCodeOf(source: AssetSource): String = when (source) {
+        AssetSource.YFINANCE -> "YAHOO"
+        AssetSource.FDR -> "FDR_KR"
     }
 
     private fun lastClose(asset: AssetCode, market: MarketCode): BigDecimal? = runBlocking {
