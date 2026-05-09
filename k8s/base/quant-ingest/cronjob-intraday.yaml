@@ -1,0 +1,130 @@
+# TG-15 — 분봉 ingest CronJob.
+# yfinance 의 분봉 한도: 1m=7일 / 5m,30m=60일.
+# yfinance 무료 tier rate limit 고려: 1m 은 5분 주기, 5m/30m 은 시간 주기.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quant-ingest-1m
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    quant.kgd.io/interval: "1m"
+spec:
+  # 1분봉: 5분마다 (마지막 5분치 incremental)
+  schedule: "*/5 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: quant-ingest
+            app.kubernetes.io/part-of: commerce-platform
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/quant-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--mode=incremental", "--interval=1m", "--lookback-days=1"]
+              env:
+                - name: CLICKHOUSE_HOST
+                  value: "clickhouse"
+                - name: CLICKHOUSE_PORT
+                  value: "8123"
+                - name: CLICKHOUSE_DB
+                  value: "quant"
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
+              resources:
+                requests: { cpu: 50m, memory: 256Mi }
+                limits:   { memory: 512Mi }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quant-ingest-5m
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-ingest
+    quant.kgd.io/interval: "5m"
+spec:
+  # 5분봉: 15분마다
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/quant-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--mode=incremental", "--interval=5m", "--lookback-days=2"]
+              env:
+                - name: CLICKHOUSE_HOST
+                  value: "clickhouse"
+                - name: CLICKHOUSE_PORT
+                  value: "8123"
+                - name: CLICKHOUSE_DB
+                  value: "quant"
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
+              resources:
+                requests: { cpu: 50m, memory: 256Mi }
+                limits:   { memory: 512Mi }
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: quant-ingest-30m
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: quant-ingest
+    quant.kgd.io/interval: "30m"
+spec:
+  # 30분봉: 매 시간 +35분 (시간봉과 충돌 회피)
+  schedule: "35 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/quant-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--mode=incremental", "--interval=30m", "--lookback-days=7"]
+              env:
+                - name: CLICKHOUSE_HOST
+                  value: "clickhouse"
+                - name: CLICKHOUSE_PORT
+                  value: "8123"
+                - name: CLICKHOUSE_DB
+                  value: "quant"
+                - name: CLICKHOUSE_USER
+                  value: "analytics"
+                - name: CLICKHOUSE_PASSWORD
+                  value: "analytics"
+              resources:
+                requests: { cpu: 50m, memory: 256Mi }
+                limits:   { memory: 512Mi }
