@@ -186,11 +186,15 @@ def _run_ohlcv(mode: str, interval: str, lookback_days: int) -> None:
                     asset_class=asset_class,
                 ))
             elif source == "fdr":
-                # FDR 은 KR 주식 일봉만 지원 — 분봉 요청 시 skip (분봉 KR 은 별도 source 필요)
+                # FDR 자체는 daily 만 — 분봉 skip, 1w/1mo/1y 는 fdr_src 가 resample.
                 if interval not in ("1d", "1w", "1mo", "1y"):
                     log.info("skip fdr asset=%s — interval=%s 미지원 (daily only)", asset_code, interval)
                     continue
-                bars = list(fetch_fdr(asset_code=asset_code, lookback_days=effective_lookback))
+                bars = list(fetch_fdr(
+                    asset_code=asset_code,
+                    lookback_days=effective_lookback,
+                    interval=interval,
+                ))
             else:
                 log.warning("skip unknown source=%s for asset=%s", source, asset_code)
                 continue
