@@ -45,6 +45,8 @@ import { NewsFeed } from '@/charting/components/NewsFeed'
 import { useOrderbook, useTrades } from '@/charting/hooks/useOrderbook'
 import { OrderbookPanel } from '@/charting/components/OrderbookPanel'
 import { QuoteStatRibbon } from '@/charting/components/QuoteStatRibbon'
+import { PaperOrderTicket } from '@/charting/components/PaperOrderTicket'
+import { TradeStrengthBar } from '@/charting/components/TradeStrengthBar'
 import {
   type Drawing,
   listFor as listDrawingsFor,
@@ -258,6 +260,7 @@ export function ChartsPage() {
   const [selectedPatternIds, setSelectedPatternIds] = useState<Set<string>>(new Set())
   const [patternOffset, setPatternOffset] = useState<number | null>(null)
   const [patternWidth, setPatternWidth] = useState<number>(60)
+  const [paperPrefillPrice, setPaperPrefillPrice] = useState<number | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
   const tabParam = searchParams.get('tab')
   const bottomTab: BottomTab = isBottomTab(tabParam) ? tabParam : 'chart'
@@ -1132,6 +1135,10 @@ export function ChartsPage() {
         {bottomTab === 'orderbook' && (
           <Card>
             <div className="space-y-3">
+              {/* 체결강도 — 최근 50건 매수/매도 비율 */}
+              {tradesQ.data && tradesQ.data.length > 0 && (
+                <TradeStrengthBar trades={tradesQ.data} />
+              )}
               {ohlcvQ.data && ohlcvQ.data.length > 0 && (
                 <QuoteStatRibbon
                   open={ohlcvQ.data[ohlcvQ.data.length - 1].open}
@@ -1161,18 +1168,32 @@ export function ChartsPage() {
                   formatPrice={n => formatPrice(n, symbol.assetClass)}
                 />
               )}
-              <OrderbookPanel
-                snapshot={orderbookQ.data ?? null}
-                trades={tradesQ.data ?? []}
-                isCrypto={symbol.assetClass === 'CRYPTO'}
-                loading={orderbookQ.isLoading}
-                currentPrice={
-                  tradesQ.data && tradesQ.data.length > 0
-                    ? parseFloat(tradesQ.data[0].price)
-                    : priceSummary?.last ?? null
-                }
-                onPriceClick={p => handleAddHorizontalLine(p)}
-              />
+              {/* 호가창 + 페이퍼 주문창 — 토스 order 페이지 양옆 레이아웃 */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-3">
+                <OrderbookPanel
+                  snapshot={orderbookQ.data ?? null}
+                  trades={tradesQ.data ?? []}
+                  isCrypto={symbol.assetClass === 'CRYPTO'}
+                  loading={orderbookQ.isLoading}
+                  currentPrice={
+                    tradesQ.data && tradesQ.data.length > 0
+                      ? parseFloat(tradesQ.data[0].price)
+                      : priceSummary?.last ?? null
+                  }
+                  onPriceClick={p => setPaperPrefillPrice(p)}
+                />
+                <PaperOrderTicket
+                  asset={backendAsset}
+                  market={orderbookMarket}
+                  currentPrice={
+                    tradesQ.data && tradesQ.data.length > 0
+                      ? parseFloat(tradesQ.data[0].price)
+                      : priceSummary?.last ?? null
+                  }
+                  formatPrice={n => formatPrice(n, symbol.assetClass)}
+                  prefillPrice={paperPrefillPrice}
+                />
+              </div>
             </div>
           </Card>
         )}
