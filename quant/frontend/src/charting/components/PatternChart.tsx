@@ -116,7 +116,7 @@ export function PatternChart({
   onPatternWidthChange,
   compareBars,
   compareLabel,
-  compareColor = 'oklch(0.78 0.14 180)', // --ko-accent-secondary 청록
+  compareColor = '#14b8a6', // --ko-accent-secondary 청록 (lightweight-charts 가 oklch 미지원 → hex)
   drawings,
   formatPrice,
   onChartClick,

@@ -77,9 +77,10 @@ export function OhlcvCandleChart({ bars, indicator, height = 360 }: Props) {
   )
 }
 
-/** Design-system accent palette (primary blue / secondary teal / amber). */
+/** Design-system accent palette (primary blue / secondary teal / amber).
+ *  lightweight-charts 가 oklch literal 미지원 → hex 로 사전 변환 (디자인 토큰 동등). */
 const PALETTE = [
-  'oklch(0.68 0.16 245)',
-  'oklch(0.78 0.14 180)',
-  'oklch(0.74 0.16 90)',
+  '#3b82f6', // primary blue
+  '#14b8a6', // secondary teal
+  '#84cc16', // amber-green
 ]

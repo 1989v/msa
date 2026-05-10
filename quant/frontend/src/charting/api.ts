@@ -94,7 +94,7 @@ export async function fetchSymbols(): Promise<Symbol[]> {
     const res = await apiClient.get<ApiResponse<CatalogItem[]>>(
       '/api/v1/quant/assets?activeOnly=true'
     );
-    const items = unwrap(res.data);
+    const items = unwrap(res);
     const symbols: Symbol[] = items
       .filter((it) => it.active)
       .sort((a, b) => a.sortOrder - b.sortOrder)
