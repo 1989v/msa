@@ -417,11 +417,14 @@ export function ChartsPage() {
     setDrawings(listDrawingsFor(drawingAssetKey))
   }, [drawingAssetKey])
 
-  const handleAddHorizontalLine = useCallback(() => {
+  const handleAddHorizontalLine = useCallback((price?: number) => {
     const bars = ohlcvQ.data
-    if (!bars || bars.length === 0) return
-    const lastClose = bars[bars.length - 1].close
-    const drawing = makeHorizontalLine(lastClose, 'oklch(0.74 0.16 90)') // amber
+    let target = price
+    if (target == null || !Number.isFinite(target)) {
+      if (!bars || bars.length === 0) return
+      target = bars[bars.length - 1].close
+    }
+    const drawing = makeHorizontalLine(target, '#84cc16') // amber-green
     addDrawing(drawingAssetKey, drawing)
     setDrawings(prev => [...prev, drawing])
   }, [ohlcvQ.data, drawingAssetKey])
@@ -470,14 +473,14 @@ export function ChartsPage() {
               startPrice,
               endTime as unknown as string | number,
               endPrice,
-              'oklch(0.78 0.14 180)', // 청록
+              '#14b8a6', // 청록
             )
           : makeMeasure(
               startTime as unknown as string | number,
               startPrice,
               endTime as unknown as string | number,
               endPrice,
-              'oklch(0.74 0.16 90)', // amber
+              '#84cc16', // amber
             )
       addDrawing(drawingAssetKey, drawing)
       setDrawings(prev => [...prev, drawing])
@@ -518,7 +521,7 @@ export function ChartsPage() {
       reg.startY,
       endTime,
       reg.endY,
-      'oklch(0.78 0.14 180)', // accent-secondary 청록
+      '#14b8a6', // accent-secondary 청록
     )
     addDrawing(drawingAssetKey, drawing)
     setDrawings(prev => [...prev, drawing])
@@ -795,6 +798,7 @@ export function ChartsPage() {
         {ohlcvQ.data && ohlcvQ.data.length > 0 && (
           <PatternChart
             ohlcv={ohlcvQ.data}
+            interval={interval}
             patterns={selectedPatterns}
             indicators={indicators}
             indicatorParams={indicatorParams}

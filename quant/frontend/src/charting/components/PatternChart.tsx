@@ -34,6 +34,8 @@ import {
 
 interface PatternChartProps {
   ohlcv: OhlcvBar[]
+  /** 시간프레임 — bar timestamp stride 계산용 (1m/5m/30m/1h …). */
+  interval?: string
   patterns: PatternDefinition[]
   indicators: Indicators
   indicatorParams?: IndicatorParams
@@ -57,8 +59,16 @@ interface PatternChartProps {
 //
 // Intraday bars from KR exchanges report bar_time as UTC 00:00 for KST 09:00.
 // Direct UTC parse would shift the chart 9 hours back. We instead assign
-// sequential 5-minute timestamps starting from midnight UTC of trade_date.
-function prepareBars(bars: OhlcvBar[]): {
+// sequential timestamps with interval-correct stride starting from midnight UTC.
+const INTERVAL_SECONDS: Record<string, number> = {
+  '1m': 60,
+  '5m': 5 * 60,
+  '15m': 15 * 60,
+  '30m': 30 * 60,
+  '1h': 60 * 60,
+}
+
+function prepareBars(bars: OhlcvBar[], interval: string = '5m'): {
   data: OhlcvBar[]
   intraday: boolean
   toTime: (b: OhlcvBar, idx: number) => Time
@@ -74,14 +84,16 @@ function prepareBars(bars: OhlcvBar[]): {
   if (intraday) {
     const baseDate = new Date(bars[0].trade_date + 'T00:00:00Z')
     const baseTs = Math.floor(baseDate.getTime() / 1000)
-    const interval = 5 * 60
+    // interval prop 따라 stride 결정 — 1m/5m/30m/1h 등 정확한 시간축 매핑.
+    // (이전: 5*60 hardcoded → 1m 봉이 5분 간격으로 잘못 표시되던 버그)
+    const stride = INTERVAL_SECONDS[interval] ?? 5 * 60
     const timeMap = new Map<OhlcvBar, number>()
-    bars.forEach((b, i) => timeMap.set(b, baseTs + i * interval))
+    bars.forEach((b, i) => timeMap.set(b, baseTs + i * stride))
     return {
       data: [...bars],
       intraday: true,
       toTime: (b, idx) =>
-        ((timeMap.get(b) ?? baseTs + idx * interval) as unknown) as Time,
+        ((timeMap.get(b) ?? baseTs + idx * stride) as unknown) as Time,
     }
   }
   const sorted = [...bars].sort((a, b) =>
@@ -106,6 +118,7 @@ const PANE_STRETCH: Record<number, number> = { 0: 4 }
 
 export function PatternChart({
   ohlcv,
+  interval = '5m',
   patterns,
   indicators: state,
   indicatorParams,
@@ -129,8 +142,8 @@ export function PatternChart({
   const [hoverBar, setHoverBar] = useState<OhlcvBar | null>(null)
 
   const { data: bars, intraday, toTime } = useMemo(
-    () => prepareBars(ohlcv),
-    [ohlcv],
+    () => prepareBars(ohlcv, interval),
+    [ohlcv, interval],
   )
 
   // 활성화된 indicators 만 ChartCore 에 전달. paneIndex 동적 할당
