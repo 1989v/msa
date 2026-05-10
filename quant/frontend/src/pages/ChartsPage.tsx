@@ -44,6 +44,7 @@ import { useNews } from '@/charting/hooks/useNews'
 import { NewsFeed } from '@/charting/components/NewsFeed'
 import { useOrderbook, useTrades } from '@/charting/hooks/useOrderbook'
 import { OrderbookPanel } from '@/charting/components/OrderbookPanel'
+import { QuoteStatRibbon } from '@/charting/components/QuoteStatRibbon'
 import {
   type Drawing,
   listFor as listDrawingsFor,
@@ -1126,18 +1127,49 @@ export function ChartsPage() {
 
         {bottomTab === 'orderbook' && (
           <Card>
-            <OrderbookPanel
-              snapshot={orderbookQ.data ?? null}
-              trades={tradesQ.data ?? []}
-              isCrypto={symbol.assetClass === 'CRYPTO'}
-              loading={orderbookQ.isLoading}
-              currentPrice={
-                tradesQ.data && tradesQ.data.length > 0
-                  ? parseFloat(tradesQ.data[0].price)
-                  : priceSummary?.last ?? null
-              }
-              onPriceClick={p => handleAddHorizontalLine(p)}
-            />
+            <div className="space-y-3">
+              {ohlcvQ.data && ohlcvQ.data.length > 0 && (
+                <QuoteStatRibbon
+                  open={ohlcvQ.data[ohlcvQ.data.length - 1].open}
+                  high={ohlcvQ.data[ohlcvQ.data.length - 1].high}
+                  low={ohlcvQ.data[ohlcvQ.data.length - 1].low}
+                  volume={ohlcvQ.data[ohlcvQ.data.length - 1].volume}
+                  prevClose={
+                    ohlcvQ.data.length > 1
+                      ? ohlcvQ.data[ohlcvQ.data.length - 2].close
+                      : null
+                  }
+                  weeks52High={
+                    fundamentalsQ.data?.weeks52High != null
+                      ? Number(fundamentalsQ.data.weeks52High)
+                      : null
+                  }
+                  weeks52Low={
+                    fundamentalsQ.data?.weeks52Low != null
+                      ? Number(fundamentalsQ.data.weeks52Low)
+                      : null
+                  }
+                  avgDailyVolume3M={
+                    fundamentalsQ.data?.avgDailyVolume != null
+                      ? Number(fundamentalsQ.data.avgDailyVolume)
+                      : null
+                  }
+                  formatPrice={n => formatPrice(n, symbol.assetClass)}
+                />
+              )}
+              <OrderbookPanel
+                snapshot={orderbookQ.data ?? null}
+                trades={tradesQ.data ?? []}
+                isCrypto={symbol.assetClass === 'CRYPTO'}
+                loading={orderbookQ.isLoading}
+                currentPrice={
+                  tradesQ.data && tradesQ.data.length > 0
+                    ? parseFloat(tradesQ.data[0].price)
+                    : priceSummary?.last ?? null
+                }
+                onPriceClick={p => handleAddHorizontalLine(p)}
+              />
+            </div>
           </Card>
         )}
       </section>
