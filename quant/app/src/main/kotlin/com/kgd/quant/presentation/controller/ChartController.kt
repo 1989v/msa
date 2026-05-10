@@ -200,6 +200,10 @@ class ChartController(
             weeks52High = f.weeks52High,
             weeks52Low = f.weeks52Low,
             avgDailyVolume = f.avgDailyVolume,
+            heldPctInstitutions = f.heldPctInstitutions,
+            heldPctInsiders = f.heldPctInsiders,
+            shortRatio = f.shortRatio,
+            floatShares = f.floatShares,
             asOf = f.asOf.toString(),
         )
 
@@ -343,6 +347,10 @@ class ChartController(
         val weeks52High: BigDecimal?,
         val weeks52Low: BigDecimal?,
         val avgDailyVolume: BigDecimal?,
+        val heldPctInstitutions: BigDecimal?,
+        val heldPctInsiders: BigDecimal?,
+        val shortRatio: BigDecimal?,
+        val floatShares: BigDecimal?,
         val asOf: String,
     )
 

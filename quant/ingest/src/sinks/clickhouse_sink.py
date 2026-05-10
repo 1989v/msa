@@ -83,7 +83,7 @@ def insert_dart_corp_codes(rows: Iterable[DartCorpCodeRow]) -> int:
 
 
 def insert_fundamentals(rows: Iterable[FundamentalsRow]) -> int:
-    """V011 — quant.fundamentals 멱등 INSERT (ReplacingMergeTree(ingested_at))."""
+    """V011/V012 — quant.fundamentals 멱등 INSERT (ReplacingMergeTree(ingested_at))."""
     data = [
         (
             r.asset_code,
@@ -98,6 +98,10 @@ def insert_fundamentals(rows: Iterable[FundamentalsRow]) -> int:
             r.weeks52_high,
             r.weeks52_low,
             r.avg_daily_volume,
+            r.held_pct_institutions,
+            r.held_pct_insiders,
+            r.short_ratio,
+            r.float_shares,
         )
         for r in rows
     ]
@@ -111,6 +115,7 @@ def insert_fundamentals(rows: Iterable[FundamentalsRow]) -> int:
             "asset_code", "asset_class", "market_code", "as_of",
             "market_cap", "pe_ratio", "eps", "dividend_yield", "beta",
             "weeks52_high", "weeks52_low", "avg_daily_volume",
+            "held_pct_institutions", "held_pct_insiders", "short_ratio", "float_shares",
         ],
     )
     return len(data)

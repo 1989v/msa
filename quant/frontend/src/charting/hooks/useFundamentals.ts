@@ -19,6 +19,14 @@ export interface Fundamentals {
   weeks52High: string | null
   weeks52Low: string | null
   avgDailyVolume: string | null
+  /** 기관 보유율 (소수 — 0.5 = 50%). */
+  heldPctInstitutions?: string | null
+  /** 임직원/내부자 보유율. */
+  heldPctInsiders?: string | null
+  /** 공매도 비율 (Days to Cover). */
+  shortRatio?: string | null
+  /** 유통주식수. */
+  floatShares?: string | null
   asOf: string
 }
 

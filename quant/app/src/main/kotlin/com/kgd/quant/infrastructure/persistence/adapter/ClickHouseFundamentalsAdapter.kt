@@ -43,7 +43,8 @@ class ClickHouseFundamentalsAdapter(
             val sql = """
                 SELECT asset_code, market_code, market_cap, pe_ratio, eps,
                        dividend_yield, beta, weeks52_high, weeks52_low,
-                       avg_daily_volume, as_of
+                       avg_daily_volume, held_pct_institutions, held_pct_insiders,
+                       short_ratio, float_shares, as_of
                 FROM quant.fundamentals FINAL
                 WHERE asset_code = '$safeAsset'
                   AND market_code = '$safeMarket'
@@ -73,6 +74,10 @@ class ClickHouseFundamentalsAdapter(
             weeks52High = rs.getNullableBigDecimal("weeks52_high"),
             weeks52Low = rs.getNullableBigDecimal("weeks52_low"),
             avgDailyVolume = rs.getNullableBigDecimal("avg_daily_volume"),
+            heldPctInstitutions = rs.getNullableBigDecimal("held_pct_institutions"),
+            heldPctInsiders = rs.getNullableBigDecimal("held_pct_insiders"),
+            shortRatio = rs.getNullableBigDecimal("short_ratio"),
+            floatShares = rs.getNullableBigDecimal("float_shares"),
             asOf = Instant.now(),
         )
     }

@@ -906,6 +906,11 @@ export function ChartsPage() {
               loading={fundamentalsQ.isLoading}
               error={fundamentalsQ.isError}
               assetClass={symbol.assetClass}
+              prevClose={
+                ohlcvQ.data && ohlcvQ.data.length > 1
+                  ? ohlcvQ.data[ohlcvQ.data.length - 2].close
+                  : null
+              }
             />
           </Card>
         )}
@@ -1166,6 +1171,7 @@ export function ChartsPage() {
                       : null
                   }
                   formatPrice={n => formatPrice(n, symbol.assetClass)}
+                  isKr={symbol.assetClass === 'STOCK_KR'}
                 />
               )}
               {/* 호가창 + 페이퍼 주문창 — 토스 order 페이지 양옆 레이아웃 */}
@@ -1263,11 +1269,14 @@ function StockInfoSection({
   loading,
   error,
   assetClass,
+  prevClose,
 }: {
   fundamentals: import('@/charting/hooks/useFundamentals').Fundamentals | null
   loading: boolean
   error: boolean
   assetClass: ChartSymbol['assetClass']
+  /** KR 상하한가 계산용 (전일 종가). */
+  prevClose: number | null
 }) {
   if (loading) {
     return (
@@ -1289,11 +1298,27 @@ function StockInfoSection({
   }
 
   const f = fundamentals
+  // KR 상하한가 — 전일 종가 ±30%.
+  const isKr = assetClass === 'STOCK_KR'
+  const limitUp = isKr && prevClose != null && Number.isFinite(prevClose) ? prevClose * 1.3 : null
+  const limitDown = isKr && prevClose != null && Number.isFinite(prevClose) ? prevClose * 0.7 : null
   const items: Array<{ label: string; value: string; secondary?: string }> = [
     {
       label: '시가총액',
       value: formatCompactKrw(parseNum(f.marketCap), assetClass),
     },
+    ...(isKr
+      ? [
+          {
+            label: '상한가',
+            value: limitUp != null ? formatPrice(limitUp, assetClass) : '—',
+          },
+          {
+            label: '하한가',
+            value: limitDown != null ? formatPrice(limitDown, assetClass) : '—',
+          },
+        ]
+      : []),
     {
       label: 'PER (TTM)',
       value: formatRatio(f.peRatio),
@@ -1323,6 +1348,22 @@ function StockInfoSection({
     {
       label: '평균 거래량 (3M)',
       value: formatCompactCount(parseNum(f.avgDailyVolume)),
+    },
+    {
+      label: '기관 보유율',
+      value: formatPct(f.heldPctInstitutions),
+    },
+    {
+      label: '임직원 보유율',
+      value: formatPct(f.heldPctInsiders),
+    },
+    {
+      label: '공매도 비율 (Days)',
+      value: formatRatio(f.shortRatio),
+    },
+    {
+      label: '유통주식수',
+      value: formatCompactCount(parseNum(f.floatShares)),
     },
   ]
 

@@ -30,6 +30,11 @@ class FundamentalsRow:
     weeks52_high: Optional[float]
     weeks52_low: Optional[float]
     avg_daily_volume: Optional[float]
+    # V012 — 보유율 / 공매도 / 유통주식수
+    held_pct_institutions: Optional[float] = None
+    held_pct_insiders: Optional[float] = None
+    short_ratio: Optional[float] = None
+    float_shares: Optional[float] = None
 
 
 def _to_yf_ticker(asset_code: str, asset_class: str) -> str:
@@ -113,5 +118,9 @@ def fetch_yfinance_fundamentals(
             weeks52_high=_safe_float(info.get("fiftyTwoWeekHigh")) or _safe_float(_safe_dict_get(fast, "yearHigh")),
             weeks52_low=_safe_float(info.get("fiftyTwoWeekLow")) or _safe_float(_safe_dict_get(fast, "yearLow")),
             avg_daily_volume=_safe_float(info.get("averageDailyVolume3Month")) or _safe_float(_safe_dict_get(fast, "threeMonthAverageVolume")),
+            held_pct_institutions=_safe_float(info.get("heldPercentInstitutions")),
+            held_pct_insiders=_safe_float(info.get("heldPercentInsiders")),
+            short_ratio=_safe_float(info.get("shortRatio")),
+            float_shares=_safe_float(info.get("floatShares")),
         )
     return None

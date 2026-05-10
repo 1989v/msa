@@ -19,6 +19,8 @@ interface Props {
   avgDailyVolume3M: number | null
   formatPrice: (n: number) => string
   formatVolume?: (n: number) => string
+  /** KR 주식 (KOSPI/KOSDAQ) — 상하한가 ±30% 표시. */
+  isKr?: boolean
 }
 
 export const QuoteStatRibbon = memo(function QuoteStatRibbon({
@@ -32,6 +34,7 @@ export const QuoteStatRibbon = memo(function QuoteStatRibbon({
   avgDailyVolume3M,
   formatPrice,
   formatVolume,
+  isKr = false,
 }: Props) {
   const fmtV = formatVolume ?? defaultFormatVolume
 
@@ -43,10 +46,20 @@ export const QuoteStatRibbon = memo(function QuoteStatRibbon({
     return 'muted'
   }
 
+  // KR 상하한가 — 전일 종가 ±30% (KOSPI/KOSDAQ 동일).
+  const limitUp = isKr && prevClose != null ? prevClose * 1.3 : null
+  const limitDown = isKr && prevClose != null ? prevClose * 0.7 : null
+
   const items: Array<{ label: string; value: string; tone?: 'rise' | 'fall' | 'muted' }> = [
     { label: '시가', value: open != null ? formatPrice(open) : '—', tone: tone(open, prevClose) },
     { label: '고가', value: high != null ? formatPrice(high) : '—', tone: 'rise' },
     { label: '저가', value: low != null ? formatPrice(low) : '—', tone: 'fall' },
+    ...(isKr
+      ? [
+          { label: '상한가', value: limitUp != null ? formatPrice(limitUp) : '—', tone: 'rise' as const },
+          { label: '하한가', value: limitDown != null ? formatPrice(limitDown) : '—', tone: 'fall' as const },
+        ]
+      : []),
     { label: '52주 최고', value: weeks52High != null ? formatPrice(weeks52High) : '—' },
     { label: '52주 최저', value: weeks52Low != null ? formatPrice(weeks52Low) : '—' },
     { label: '거래량', value: volume != null ? fmtV(volume) : '—' },

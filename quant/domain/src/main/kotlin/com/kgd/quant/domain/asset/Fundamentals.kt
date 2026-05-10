@@ -33,6 +33,14 @@ data class Fundamentals(
     val weeks52Low: BigDecimal? = null,
     /** 일평균 거래량 (3개월). */
     val avgDailyVolume: BigDecimal? = null,
+    /** 기관 보유율 (소수점 — 0.5 = 50%). yfinance heldPercentInstitutions. */
+    val heldPctInstitutions: BigDecimal? = null,
+    /** 임직원/내부자 보유율. yfinance heldPercentInsiders. */
+    val heldPctInsiders: BigDecimal? = null,
+    /** 공매도 비율 (Days to Cover). yfinance shortRatio. */
+    val shortRatio: BigDecimal? = null,
+    /** 유통주식수. yfinance floatShares. */
+    val floatShares: BigDecimal? = null,
     /** 외부 source 마지막 갱신 또는 우리 fetch 시각. */
     val asOf: Instant,
 )
