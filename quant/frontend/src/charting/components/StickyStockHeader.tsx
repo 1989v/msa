@@ -6,7 +6,6 @@ import { ChevronDown } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/cn'
 import type { Symbol as ChartSymbol } from '@/charting/api'
-import { PriceFlash } from './PriceFlash'
 
 export interface StickyHeaderPriceSummary {
   last: number
@@ -17,9 +16,8 @@ export interface StickyHeaderPriceSummary {
 
 interface Props {
   symbol: ChartSymbol
-  priceSummary: StickyHeaderPriceSummary | null
-  /** 호출자 측 통화 포맷 (예: ₩276,500). */
-  formatPrice: (n: number) => string
+  /** 가격/변동률 슬롯 — 라이브 격리 위해 호출자가 LivePriceBadge 또는 정적 텍스트 렌더. */
+  priceSlot?: ReactNode
   onSymbolClick?: () => void
   /** 헤더 하단 microcontext rail. 호출자가 MicrocontextRail 직접 렌더. */
   microcontext?: ReactNode
@@ -28,18 +26,11 @@ interface Props {
 
 export function StickyStockHeader({
   symbol,
-  priceSummary,
-  formatPrice,
+  priceSlot,
   onSymbolClick,
   microcontext,
   className,
 }: Props) {
-  const tone: 'rise' | 'fall' | undefined = priceSummary
-    ? priceSummary.isUp
-      ? 'rise'
-      : 'fall'
-    : undefined
-
   return (
     <header
       className={cn('sticky top-0 z-20 backdrop-blur-md', className)}
@@ -80,32 +71,7 @@ export function StickyStockHeader({
 
         <div className="flex-1" />
 
-        {priceSummary && (
-          <div className="text-right">
-            <PriceFlash price={priceSummary.last}>
-              <div
-                className="text-xl md:text-2xl font-bold tabular-nums leading-tight"
-                style={{ color: toneToVar(tone) }}
-              >
-                {formatPrice(priceSummary.last)}
-              </div>
-            </PriceFlash>
-            <div
-              className="text-xs md:text-sm tabular-nums leading-tight mt-0.5"
-              style={{ color: toneToVar(tone) }}
-            >
-              {priceSummary.isUp ? '▲' : '▼'}{' '}
-              {Math.abs(priceSummary.changePct).toFixed(2)}%
-              <span
-                className="ml-1.5"
-                style={{ color: 'var(--ko-text-muted)' }}
-              >
-                ({priceSummary.change >= 0 ? '+' : ''}
-                {formatPrice(priceSummary.change)})
-              </span>
-            </div>
-          </div>
-        )}
+        {priceSlot}
       </div>
 
       {microcontext && (
@@ -117,10 +83,4 @@ export function StickyStockHeader({
 
 function assetLabel(a: ChartSymbol['assetClass']): string {
   return a === 'CRYPTO' ? '코인' : a === 'STOCK_KR' ? '국내주식' : '미국주식'
-}
-
-function toneToVar(tone?: 'rise' | 'fall'): string {
-  if (tone === 'rise') return 'var(--ko-quote-rise)'
-  if (tone === 'fall') return 'var(--ko-quote-fall)'
-  return 'var(--ko-text-primary)'
 }

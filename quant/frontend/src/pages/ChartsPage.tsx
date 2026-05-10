@@ -35,7 +35,9 @@ import { matchPatterns } from '@/charting/lib/patternMatcher'
 import { PATTERNS as ALL_PATTERNS } from '@/charting/lib/patterns'
 import { calcMA, calcRSI, calcATR } from '@/charting/lib/indicators'
 import { useFundamentals } from '@/charting/hooks/useFundamentals'
-import { usePriceStream } from '@/charting/hooks/usePriceStream'
+// usePriceStream 은 LivePriceBadge 안에서만 사용 — ChartsPage 전체 re-render 회피.
+// import { usePriceStream } from '@/charting/hooks/usePriceStream'
+import { LivePriceBadge } from '@/charting/components/LivePriceBadge'
 import { useInvestorFlows } from '@/charting/hooks/useInvestorFlows'
 import { InvestorFlowsPanel } from '@/charting/components/InvestorFlowsPanel'
 import { useNews } from '@/charting/hooks/useNews'
@@ -496,23 +498,17 @@ export function ChartsPage() {
     setDrawings([])
   }, [drawingAssetKey])
 
-  // TG-14 — 실시간 가격 stream (활성 시 priceSummary.last override)
-  const priceStream = usePriceStream(backendAsset, backendMarket)
-
-  // 가격 요약 — 마지막 close + 첫 close 대비 변동률 (live tick override 가능)
+  // 가격 요약 — ohlcv 마지막 close 정적 계산. 실시간 tick 은 StickyStockHeader 안의
+  // <LivePriceBadge> 가 자체 SSE 구독으로 격리 update — ChartsPage 전체 re-render 회피.
   const priceSummary = useMemo(() => {
     const bars = ohlcvQ.data
     if (!bars || bars.length === 0) return null
     const first = bars[0].close
-    const baseLast = bars[bars.length - 1].close
-    const liveLast = priceStream.tick
-      ? parseFloat(priceStream.tick.price)
-      : NaN
-    const last = Number.isFinite(liveLast) ? liveLast : baseLast
+    const last = bars[bars.length - 1].close
     const change = last - first
     const changePct = first > 0 ? (change / first) * 100 : 0
     return { last, change, changePct, isUp: change >= 0 }
-  }, [ohlcvQ.data, priceStream.tick])
+  }, [ohlcvQ.data])
 
   // Microcontext chips — TG-3 (P1 데이터 기반 7-chip)
   const microcontextChips = useMemo<MicrocontextChip[]>(() => {
@@ -667,11 +663,21 @@ export function ChartsPage() {
       className="min-h-screen flex flex-col"
       style={{ background: 'var(--ko-surface-0)', color: 'var(--ko-text-primary)' }}
     >
-      {/* === Sticky 종목 헤더 — 종목명/큰 가격/변동률 + microcontext + 시간프레임/도구바 === */}
+      {/* === Sticky 종목 헤더 — 종목명/microcontext/시간프레임/도구바 ===
+           가격 슬롯은 LivePriceBadge 가 자체 SSE 로 격리 update — 페이지 re-render 회피. */}
       <StickyStockHeader
         symbol={symbol}
-        priceSummary={priceSummary}
-        formatPrice={n => formatPrice(n, symbol.assetClass)}
+        priceSlot={
+          priceSummary ? (
+            <LivePriceBadge
+              asset={backendAsset}
+              market={backendMarket}
+              baseLast={priceSummary.last}
+              baseFirst={priceSummary.last - priceSummary.change}
+              format={n => formatPrice(n, symbol.assetClass)}
+            />
+          ) : null
+        }
         onSymbolClick={() => setSymbolSheetOpen(true)}
         microcontext={
           <div className="space-y-2">
