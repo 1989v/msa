@@ -365,12 +365,19 @@ function DrawingMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 mt-1.5 z-30 w-[200px] rounded-xl shadow-lg p-1"
+          className="absolute right-0 mt-2 z-50 w-[300px] rounded-xl p-2"
           style={{
-            background: 'var(--ko-surface-1)',
-            border: '1px solid var(--ko-border-subtle)',
+            background: '#0c1424',
+            border: '1px solid #475569',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
           }}
         >
+          <div
+            className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider"
+            style={{ color: '#94a3b8' }}
+          >
+            그리기 도구
+          </div>
           <button
             type="button"
             role="menuitem"
@@ -378,13 +385,22 @@ function DrawingMenu({
               onAddHorizontalLine()
               setOpen(false)
             }}
-            className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
+            className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 transition-colors"
             style={{
-              color: 'var(--ko-text-secondary)',
+              color: '#f1f5f9',
               background: 'transparent',
+              fontSize: '13px',
             }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#1a2238')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            가로선 추가 <span style={{ color: 'var(--ko-text-muted)' }}>(현재 종가)</span>
+            <span className="text-base">📍</span>
+            <div className="flex-1">
+              <div className="font-medium">가로선 추가</div>
+              <div className="text-[11px]" style={{ color: '#94a3b8' }}>
+                현재 종가에 즉시 가로선
+              </div>
+            </div>
           </button>
           {onAddTrendLine && (
             <button
@@ -394,13 +410,18 @@ function DrawingMenu({
                 onAddTrendLine()
                 setOpen(false)
               }}
-              className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
-              style={{
-                color: 'var(--ko-text-secondary)',
-                background: 'transparent',
-              }}
+              className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 transition-colors"
+              style={{ color: '#f1f5f9', background: 'transparent', fontSize: '13px' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#1a2238')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
-              추세선 자동 추가 <span style={{ color: 'var(--ko-text-muted)' }}>(최근 30봉 회귀)</span>
+              <span className="text-base">📈</span>
+              <div className="flex-1">
+                <div className="font-medium">추세선 자동</div>
+                <div className="text-[11px]" style={{ color: '#94a3b8' }}>
+                  최근 30봉 선형 회귀
+                </div>
+              </div>
             </button>
           )}
           {onStartTrendLineDraw && (
@@ -411,13 +432,18 @@ function DrawingMenu({
                 onStartTrendLineDraw()
                 setOpen(false)
               }}
-              className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
-              style={{
-                color: 'var(--ko-text-secondary)',
-                background: 'transparent',
-              }}
+              className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 transition-colors"
+              style={{ color: '#f1f5f9', background: 'transparent', fontSize: '13px' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#1a2238')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
-              추세선 그리기 <span style={{ color: 'var(--ko-text-muted)' }}>(두 점 클릭)</span>
+              <span className="text-base">✏️</span>
+              <div className="flex-1">
+                <div className="font-medium">추세선 그리기</div>
+                <div className="text-[11px]" style={{ color: '#94a3b8' }}>
+                  차트에서 두 지점 클릭
+                </div>
+              </div>
             </button>
           )}
           {onStartMeasureDraw && (
@@ -428,49 +454,52 @@ function DrawingMenu({
                 onStartMeasureDraw()
                 setOpen(false)
               }}
-              className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
-              style={{
-                color: 'var(--ko-text-secondary)',
-                background: 'transparent',
-              }}
+              className="w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-2.5 transition-colors"
+              style={{ color: '#f1f5f9', background: 'transparent', fontSize: '13px' }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#1a2238')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
             >
-              측정도구 <span style={{ color: 'var(--ko-text-muted)' }}>(두 점 클릭)</span>
+              <span className="text-base">📐</span>
+              <div className="flex-1">
+                <div className="font-medium">측정도구</div>
+                <div className="text-[11px]" style={{ color: '#94a3b8' }}>
+                  두 지점 거리/% 측정
+                </div>
+              </div>
             </button>
           )}
           {drawingModeLabel && (
             <div
-              className="px-2.5 py-1.5 text-[11px] rounded"
+              className="mx-1 my-1.5 px-2.5 py-2 text-[12px] rounded-lg"
               style={{
-                color: 'var(--ko-accent-primary-hover)',
-                background: 'color-mix(in oklch, var(--ko-accent-primary) 14%, transparent)',
+                color: '#0ea5e9',
+                background: 'rgba(14,165,233,0.14)',
+                border: '1px solid rgba(14,165,233,0.3)',
               }}
             >
-              {drawingModeLabel}
+              ⏳ {drawingModeLabel}
             </div>
           )}
           {onClearDrawings && drawingCount > 0 && (
-            <button
-              type="button"
-              role="menuitem"
-              onClick={() => {
-                onClearDrawings()
-                setOpen(false)
-              }}
-              className="w-full text-left text-xs px-2.5 py-2 rounded-lg transition-colors hover:brightness-110"
-              style={{
-                color: 'var(--ko-status-loss)',
-                background: 'transparent',
-              }}
-            >
-              전체 지우기 ({drawingCount})
-            </button>
+            <>
+              <div className="my-1 mx-1" style={{ borderTop: '1px solid #2c3550' }} />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  onClearDrawings()
+                  setOpen(false)
+                }}
+                className="w-full text-left px-3 py-2 rounded-lg flex items-center gap-2.5 transition-colors"
+                style={{ color: '#FA616D', background: 'transparent', fontSize: '13px' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(250,97,109,0.10)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+              >
+                <span className="text-base">🗑</span>
+                <div className="flex-1 font-medium">전체 지우기 ({drawingCount})</div>
+              </button>
+            </>
           )}
-          <div
-            className="text-[10px] px-2.5 py-1.5"
-            style={{ color: 'var(--ko-text-muted)' }}
-          >
-            추세선·측정도구는 후속 PR
-          </div>
         </div>
       )}
     </div>
