@@ -36,6 +36,11 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // 새 SW 가 install 되면 즉시 activate + 모든 client 즉시 새 SW 가 controller —
+        // 이전: 사용자 브라우저가 stale build 를 무한 cache hit 하던 문제 해결.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         runtimeCaching: [
           {
