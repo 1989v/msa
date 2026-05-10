@@ -99,6 +99,11 @@ function cleanFinite<T extends { value: number | null }>(arr: T[]): T[] {
   return arr.filter(d => d.value !== null && Number.isFinite(d.value))
 }
 
+// ChartCore deps 안정화 — 매 render 마다 새 object 생성을 막아 useEffect 의
+// chart.remove + recreate 무한 사이클 (canvas 1x1 reset → 재생성, 12K mutations/s)
+// 방지. 메인 pane 0 의 stretch 4 (sub-pane 1 의 4배 높이).
+const PANE_STRETCH: Record<number, number> = { 0: 4 }
+
 export function PatternChart({
   ohlcv,
   patterns,
@@ -492,7 +497,7 @@ export function PatternChart({
         onChartReady={handleChartReady}
         toTime={toTime}
         height={totalHeight}
-        paneStretch={{ 0: 4 }}
+        paneStretch={PANE_STRETCH}
       />
 
       {/* OHLCV legend on crosshair hover */}

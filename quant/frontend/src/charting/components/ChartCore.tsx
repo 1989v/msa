@@ -323,19 +323,31 @@ export function ChartCore({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onChartReadyRef.current?.(chart, mainSeries as any)
 
-    // ResizeObserver entries 의 contentRect.width 를 사용 — clientWidth/offsetWidth
-    // 는 호출 시점에 forced layout 을 일으켜 reflow 비용이 큼 (lightweight-charts
-    // _invalidateBitmapSize 102ms 의 주범). entries 는 이미 측정된 layout 결과라
-    // 추가 reflow 없음.
+    // ResizeObserver — entries[0].contentRect 사용 (forced layout 회피).
+    // 추가 안전장치: ① 마지막 적용 width 와 비교하여 동일 시 skip — applyOptions 가
+    // canvas attribute 변경 → layout 재계산 → ResizeObserver 재호출 의 무한 loop
+    // 방지 (이전: 초당 12,000+ canvas mutations 발생). ② rAF debounce — 한 frame
+    // 동안 여러 entry 가 와도 마지막 1회만 적용.
+    let lastAppliedWidth = -1
+    let rafId: number | null = null
     const ro = new ResizeObserver((entries) => {
-      const w = entries[0]?.contentRect.width
-      if (typeof w === 'number' && w > 0) {
-        chart.applyOptions({ width: Math.floor(w) })
-      }
+      const raw = entries[0]?.contentRect.width
+      if (typeof raw !== 'number' || raw <= 0) return
+      const w = Math.floor(raw)
+      if (w === lastAppliedWidth) return
+      if (rafId != null) return
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null
+        if (w !== lastAppliedWidth) {
+          lastAppliedWidth = w
+          chart.applyOptions({ width: w })
+        }
+      })
     })
     ro.observe(containerRef.current)
 
     return () => {
+      if (rafId != null) window.cancelAnimationFrame(rafId)
       ro.disconnect()
       onChartReadyRef.current?.(null, null)
       chart.remove()
