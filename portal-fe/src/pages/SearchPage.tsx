@@ -187,9 +187,60 @@ export default function SearchPage() {
   }
 
   if (error || !data) {
+    // code-dictionary 백엔드 unavailable 시 (5xx / network) graceful fallback —
+    // 메인 페이지가 빈 에러 메시지만 보이지 않도록 안내 + 다른 서비스 진입 링크.
     return (
-      <div className="viz-page-scroll" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#ff6b6b' }}>{error || 'Failed to load data'}</p>
+      <div
+        className="viz-page-scroll"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 16,
+          padding: 24,
+        }}
+      >
+        <h2 style={{ color: '#f1f5f9', fontSize: 22, fontWeight: 700 }}>kgd.dev</h2>
+        <p style={{ color: '#94a3b8', textAlign: 'center', maxWidth: 480 }}>
+          코드 사전 백엔드가 일시적으로 응답하지 않습니다. 다른 서비스는 정상 동작 중입니다.
+        </p>
+        <p style={{ color: '#64748b', fontSize: 13 }}>
+          {error ? `(${error})` : ''}
+        </p>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <a
+            href="/quant/"
+            style={{ padding: '10px 16px', background: '#1a2238', color: '#f1f5f9', borderRadius: 10, textDecoration: 'none', border: '1px solid #2c3550' }}
+          >
+            Quant 트레이딩
+          </a>
+          <a
+            href="/admin/"
+            style={{ padding: '10px 16px', background: '#1a2238', color: '#f1f5f9', borderRadius: 10, textDecoration: 'none', border: '1px solid #2c3550' }}
+          >
+            Admin
+          </a>
+          <a
+            href="/gifticon/"
+            style={{ padding: '10px 16px', background: '#1a2238', color: '#f1f5f9', borderRadius: 10, textDecoration: 'none', border: '1px solid #2c3550' }}
+          >
+            기프티콘
+          </a>
+          <a
+            href="/agent-viewer/"
+            style={{ padding: '10px 16px', background: '#1a2238', color: '#f1f5f9', borderRadius: 10, textDecoration: 'none', border: '1px solid #2c3550' }}
+          >
+            Agent Viewer
+          </a>
+        </div>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          style={{ padding: '8px 14px', background: 'transparent', color: '#94a3b8', borderRadius: 8, border: '1px solid #2c3550', cursor: 'pointer', marginTop: 8 }}
+        >
+          다시 시도
+        </button>
       </div>
     );
   }
