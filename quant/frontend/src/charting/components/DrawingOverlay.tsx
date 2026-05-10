@@ -48,13 +48,14 @@ export function DrawingOverlay({ chart, mainSeries, drawings, formatPrice }: Pro
     drawings.forEach(d => {
       if (d.kind === 'horizontal-line') {
         const title = formatPrice ? formatPrice(d.price) : d.price.toLocaleString()
+        // 라인 더 두껍고 solid 로 — dashed lineWidth=1 은 시각적으로 너무 약함
         const line = mainSeries.createPriceLine({
           price: d.price,
           color: d.color,
-          lineWidth: 1,
-          lineStyle: LineStyle.Dashed,
+          lineWidth: 2,
+          lineStyle: LineStyle.Solid,
           axisLabelVisible: true,
-          title,
+          title: `📍 ${title}`,
         })
         priceLinesRef.current.push(line)
       } else if (d.kind === 'trend-line') {
@@ -63,7 +64,7 @@ export function DrawingOverlay({ chart, mainSeries, drawings, formatPrice }: Pro
           LineSeries,
           {
             color: d.color,
-            lineWidth: 2,
+            lineWidth: 3,
             lineStyle: LineStyle.Solid,
             priceLineVisible: false,
             lastValueVisible: false,
