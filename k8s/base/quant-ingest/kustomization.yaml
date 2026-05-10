@@ -7,3 +7,4 @@ resources:
   - cronjob-investor-flows.yaml
   - cronjob-dart-corp-codes.yaml
   - cronjob-fundamentals.yaml
+  - cronjob-longterm.yaml

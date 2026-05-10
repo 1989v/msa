@@ -1,18 +1,18 @@
-# TG-15 — 분봉 ingest CronJob.
-# yfinance 의 분봉 한도: 1m=7일 / 5m,30m=60일.
-# yfinance 무료 tier rate limit 고려: 1m 은 5분 주기, 5m/30m 은 시간 주기.
+# Long-term interval ingest — 주봉/월봉/년봉.
+# 1w/1mo 는 yfinance 가 직접 지원, 1y 는 1mo 12배수로 fallback (scheduler 에서 처리).
+# daily 와 별도로 매일 1회 실행 (장기봉은 갱신 빈도 낮음).
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: quant-ingest-1m
+  name: quant-ingest-weekly
   namespace: commerce
   labels:
     app.kubernetes.io/name: quant-ingest
     app.kubernetes.io/part-of: commerce-platform
-    quant.kgd.io/interval: "1m"
+    quant.kgd.io/interval: "1w"
 spec:
-  # 1분봉: 5분마다 (마지막 5분치 incremental)
-  schedule: "*/5 * * * *"
+  # 주봉: 매일 KST 17:00 (UTC 08:00) — daily 끝나고 30분 후
+  schedule: "0 8 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
@@ -24,6 +24,7 @@ spec:
           labels:
             app.kubernetes.io/name: quant-ingest
             app.kubernetes.io/part-of: commerce-platform
+            quant.kgd.io/interval: "1w"
         spec:
           restartPolicy: OnFailure
           enableServiceLinks: false
@@ -31,7 +32,7 @@ spec:
             - name: ingest
               image: commerce/quant-ingest:latest
               imagePullPolicy: IfNotPresent
-              args: ["--mode=incremental", "--interval=1m", "--lookback-days=1"]
+              args: ["--mode=incremental", "--interval=1w", "--lookback-days=730"]
               env:
                 - name: CLICKHOUSE_HOST
                   value: "clickhouse"
@@ -50,15 +51,15 @@ spec:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: quant-ingest-5m
+  name: quant-ingest-monthly
   namespace: commerce
   labels:
     app.kubernetes.io/name: quant-ingest
     app.kubernetes.io/part-of: commerce-platform
-    quant.kgd.io/interval: "5m"
+    quant.kgd.io/interval: "1mo"
 spec:
-  # 5분봉: 15분마다
-  schedule: "*/15 * * * *"
+  # 월봉: 매주 일요일 KST 18:00 (UTC 09:00 일)
+  schedule: "0 9 * * 0"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
@@ -70,7 +71,7 @@ spec:
           labels:
             app.kubernetes.io/name: quant-ingest
             app.kubernetes.io/part-of: commerce-platform
-            quant.kgd.io/interval: "5m"
+            quant.kgd.io/interval: "1mo"
         spec:
           restartPolicy: OnFailure
           enableServiceLinks: false
@@ -78,7 +79,7 @@ spec:
             - name: ingest
               image: commerce/quant-ingest:latest
               imagePullPolicy: IfNotPresent
-              args: ["--mode=incremental", "--interval=5m", "--lookback-days=2"]
+              args: ["--mode=incremental", "--interval=1mo", "--lookback-days=1825"]
               env:
                 - name: CLICKHOUSE_HOST
                   value: "clickhouse"
@@ -97,15 +98,15 @@ spec:
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: quant-ingest-30m
+  name: quant-ingest-yearly
   namespace: commerce
   labels:
     app.kubernetes.io/name: quant-ingest
     app.kubernetes.io/part-of: commerce-platform
-    quant.kgd.io/interval: "30m"
+    quant.kgd.io/interval: "1y"
 spec:
-  # 30분봉: 매 시간 +35분 (시간봉과 충돌 회피)
-  schedule: "35 * * * *"
+  # 년봉: 매월 1일 KST 18:00 (UTC 09:00) — yfinance 1y 미지원, scheduler 가 1mo fallback.
+  schedule: "0 9 1 * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 3
@@ -117,7 +118,7 @@ spec:
           labels:
             app.kubernetes.io/name: quant-ingest
             app.kubernetes.io/part-of: commerce-platform
-            quant.kgd.io/interval: "30m"
+            quant.kgd.io/interval: "1y"
         spec:
           restartPolicy: OnFailure
           enableServiceLinks: false
@@ -125,7 +126,7 @@ spec:
             - name: ingest
               image: commerce/quant-ingest:latest
               imagePullPolicy: IfNotPresent
-              args: ["--mode=incremental", "--interval=30m", "--lookback-days=7"]
+              args: ["--mode=incremental", "--interval=1y", "--lookback-days=1825"]
               env:
                 - name: CLICKHOUSE_HOST
                   value: "clickhouse"

@@ -126,8 +126,38 @@ function formatCompactCount(n: number): string {
   return Math.round(n).toLocaleString()
 }
 
-/** AI 한 줄 요약 — RSI/MA20/변동률 임계로 단문 생성 (P2 에서 LLM 으로 격상 검토). */
-function aiSummaryText(bars: OhlcvBar[], chips: MicrocontextChip[]): string {
+/** Interval 별 봉 단위 라벨. */
+function barUnitLabel(interval: string): string {
+  switch (interval) {
+    case '1m': return '분'
+    case '5m': return '5분봉'
+    case '15m': return '15분봉'
+    case '30m': return '30분봉'
+    case '1h': return '시간'
+    case '1d': return '일'
+    case '1w': return '주'
+    case '1mo': return '개월'
+    case '1y': return '년'
+    default: return '봉'
+  }
+}
+
+/** Interval 별 윈도우 라벨 (microcontext '범위' chip 등). */
+function rangeLabel(interval: string, count: number): string {
+  if (interval === '1m') return `최근 ${count}분`
+  if (interval === '5m') return `최근 ${count * 5}분`
+  if (interval === '15m') return `최근 ${count * 15}분`
+  if (interval === '30m') return `최근 ${count * 30}분`
+  if (interval === '1h') return `최근 ${count}시간`
+  if (interval === '1d') return `최근 ${count}일`
+  if (interval === '1w') return `최근 ${count}주`
+  if (interval === '1mo') return `최근 ${count}개월`
+  if (interval === '1y') return `최근 ${count}년`
+  return `최근 ${count}봉`
+}
+
+/** AI 한 줄 요약 — RSI/MA20/변동률 임계로 단문 생성. interval 별 단위 표기. */
+function aiSummaryText(bars: OhlcvBar[], chips: MicrocontextChip[], interval: string): string {
   if (bars.length === 0) return ''
   const first = bars[0].close
   const last = bars[bars.length - 1].close
@@ -138,7 +168,7 @@ function aiSummaryText(bars: OhlcvBar[], chips: MicrocontextChip[]): string {
   const ma20Chip = chips.find(c => c.key === 'ma20')
 
   const parts: string[] = []
-  parts.push(`최근 ${bars.length}일 ${changePct >= 0 ? '+' : ''}${changePct.toFixed(1)}% ${direction}`)
+  parts.push(`${rangeLabel(interval, bars.length)} ${changePct >= 0 ? '+' : ''}${changePct.toFixed(1)}% ${direction}`)
   if (rsiChip?.secondary && rsiChip.secondary !== '중립') {
     parts.push(`RSI ${rsiChip.value} ${rsiChip.secondary}`)
   }
@@ -540,17 +570,18 @@ export function ChartsPage() {
     const lastMa20 = finiteLast(calcMA(closes, 20))
     const ma20Dev = lastMa20 != null ? ((last - lastMa20) / lastMa20) * 100 : null
 
+    const rangeText = rangeLabel(interval, bars.length).replace('최근 ', '')
     const chips: MicrocontextChip[] = [
       {
         key: 'range',
-        label: '30일 범위',
+        label: `${rangeText} 범위`,
         value: formatPrice(low, symbol.assetClass),
         secondary: `~ ${formatPrice(high, symbol.assetClass)}`,
         visual: <RangePositionBar position={rangePos} />,
       },
       {
         key: 'turnover',
-        label: '거래대금 (30D)',
+        label: `거래대금 (${rangeText})`,
         value: formatCompactKrw(totalTurnover, symbol.assetClass),
       },
       {
@@ -609,7 +640,7 @@ export function ChartsPage() {
       },
     ]
     return chips
-  }, [ohlcvQ.data, symbol.assetClass, priceSummary])
+  }, [ohlcvQ.data, symbol.assetClass, priceSummary, interval])
 
   const matches = useMemo(() => {
     if (!ohlcvQ.data || ohlcvQ.data.length < 20) return []
@@ -899,7 +930,7 @@ export function ChartsPage() {
                       className="text-sm mt-0.5"
                       style={{ color: 'var(--ko-text-primary)' }}
                     >
-                      {aiSummaryText(ohlcvQ.data, microcontextChips)}
+                      {aiSummaryText(ohlcvQ.data, microcontextChips, interval)}
                     </div>
                   </div>
                 </div>
@@ -1100,6 +1131,12 @@ export function ChartsPage() {
               trades={tradesQ.data ?? []}
               isCrypto={symbol.assetClass === 'CRYPTO'}
               loading={orderbookQ.isLoading}
+              currentPrice={
+                tradesQ.data && tradesQ.data.length > 0
+                  ? parseFloat(tradesQ.data[0].price)
+                  : priceSummary?.last ?? null
+              }
+              onPriceClick={p => handleAddHorizontalLine(p)}
             />
           </Card>
         )}
@@ -1111,7 +1148,7 @@ export function ChartsPage() {
           <div className="sticky top-[260px]">
             {ohlcvQ.data && ohlcvQ.data.length > 0 && (
               <AiSideCard
-                summary={aiSummaryText(ohlcvQ.data, microcontextChips)}
+                summary={aiSummaryText(ohlcvQ.data, microcontextChips, interval)}
                 topMatch={
                   matches.length > 0
                     ? {
