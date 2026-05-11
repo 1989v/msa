@@ -635,6 +635,54 @@ PUT /_snapshot/s3_repo/snapshot_2026_05_03
 - "BM25 만으로 이커머스 부족 → function_score / LTR / business re-rank"
 - "검색 품질 = nDCG / CTR / CVR 동시 측정"
 
+---
+
+## 부록. MAB / Thompson Sampling 면접 카드 (2026-05-12 추가)
+
+§42~§44 의 온라인 학습 트랙 보강. 시니어/플랫폼 인터뷰에서 자주 묻는 영역.
+
+### Q-M1. CTR 정렬에서 평균 CTR 만 저장하면 무엇이 빠지나요?
+
+> **핵심**: uncertainty(분포 폭) 가 사라진다. 1/2 와 500/1000 둘 다 평균 50% 지만 진짜 CTR 이 어디 있을지 모르는 정도는 완전히 다르다. function_score 의 `ctr: Double` 같은 점추정 한 숫자는 신규 arm 의 cold-start 와 폭주를 동시에 만든다.
+
+**꼬리**: "그럼 무엇을 저장해야 하나요?" → "clicks, impressions, lastTs 세 카운터. 조회 시점에 `Beta(clicks+α₀, impressions−clicks+β₀)` 로 분포를 구성. α, β 두 숫자가 분포 모양을 완전히 결정하므로 저장 부담 적다."
+
+### Q-M2. Thompson Sampling 의 핵심은 무엇인가요?
+
+> **핵심**: Bernoulli 의 conjugate prior 가 Beta 라서 posterior 업데이트가 `α += click`, `β += non-click` 두 카운터로 끝난다. 매 요청마다 그 Beta 분포에서 랜덤 샘플 하나 뽑아 ranking. 데이터가 적은 arm 은 분포가 넓어 가끔 높은 샘플이 나오는 효과로 exploration 이 자동 발생.
+
+**꼬리**: "왜 광고/추천에서 표준이 됐나요?" → "prior 결합이 자연스럽고(empirical Bayes 직결), 분포 자체가 탐색 강도를 정해 별도 노브가 적다. Microsoft / Yahoo 실증 논문이 LinUCB 와 동등 이상 성능을 반복 보고."
+
+### Q-M3. ES `gauss(created_at)` decay 와 Thompson Sampling 의 차이는?
+
+> **핵심**: decay 는 결정적 freshness boost — 시간만 보고 클릭 학습 없음. TS 는 확률적 탐색 — 실제 반응으로 분포가 좁아지며 좋은/나쁜 arm 자동 분리. 두 축은 직교 — 함께 쓰면 신상품 seed boost + 실측 기반 미세 조정 모두 얻는다.
+
+### Q-M4. msa search 에 MAB 를 어떻게 끼웠나요? (ADR-0043 사례)
+
+> **핵심**: ES function_score 결과 top-N(100) 을 `ThompsonReranker` 가 `(categoryId, productId)` 단위 Redis state batch fetch, `Beta(clicks+priorα, impressions−clicks+priorβ)` 샘플링, `hybrid = 0.8 × esNorm + 0.2 × sample` 로 재정렬. Beta sampling 은 µs 단위라 ADR-0025 P99 200ms 예산 안에서 운영.
+
+**꼬리**: "Redis 가 죽으면?" → "fetchBatch 가 빈 map 반환 → 모든 arm 이 prior 만 사용해 결정적 prior mean 으로 약간만 흔들림. 검색 자체는 계속 동작 (graceful degradation). state 는 클릭/노출 이벤트에서 다시 누적."
+
+### Q-M5. cold-start (클릭 0) 인 신상품은 어떻게 다루나요?
+
+> **핵심**: `Beta(1,1)` 은 평균 0.5 라 위험. 카테고리/지역 평균 CTR 기반 **empirical Bayes prior** 를 주입. 평균 CTR 10% 면 `Beta(α₀, β₀) = (1, 9)`, 신뢰도 강하면 `(5, 45)`. 추가로 `impressionThreshold` (예: 50) 미만은 prior 만 사용해 1~2 노출 첫 클릭 폭주 방지.
+
+### Q-M6. flicker 가 뭐고 어떻게 방지하나요?
+
+> **핵심**: TS 가 매 요청마다 새 sample 을 뽑아 같은 사용자에게 다른 순위가 보이는 현상. mitigation: (1) `(userId|sessionId, query)` session cache 60s 내 같은 sample 반환, (2) top-N 만 TS 적용 나머지 결정적, (3) 1~3 위 위치 보존 부분 sampling.
+
+### Q-M7. MAB 와 LTR (LambdaMART) 의 관계는?
+
+> **핵심**: 직교축. LTR 은 오프라인 학습 — judgment list 로 nDCG 직접 최적화. MAB 는 온라인 학습 — 실시간 클릭으로 분포 업데이트. 표준 cascade 는 `retrieve → function_score → LTR → MAB → business rerank`. 본 PR 은 Phase 1 이라 LTR 미도입, function_score → MAB 단순화.
+
+### Q-M8. ε-greedy / UCB1 / Thompson 의 차이를 한 줄씩?
+
+> - **ε-greedy**: ε 확률로 균등 랜덤 — 명백히 나쁜 arm 도 동일 노출. regret O(T).
+> - **UCB1**: 결정적, `√(ln N / n)` 보너스. regret O(log T). prior 결합 어색.
+> - **Thompson**: 확률적, posterior 샘플링. regret O(log T). prior/empirical Bayes 자연 결합.
+
+**악마의 변호인**: "TS 가 결과를 흔들어 사용자 신뢰 하락은?" → "session cache 와 hybrid weight (default 0.8) 로 ES relevance dominate, TS 는 미세 조정만. A/B 로 검증 후 weight 조정."
+
 > **§20 회독 체크리스트**:
 > - [ ] 17개 질문에 핵심 답변 + 설명 + 실무 + +α 형식으로 답할 수 있다
 > - [ ] 꼬리 질문 3단계까지 자연스럽게 이어간다

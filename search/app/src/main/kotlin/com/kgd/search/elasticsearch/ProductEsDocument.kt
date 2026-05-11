@@ -19,7 +19,8 @@ data class ProductEsDocument(
     @Field(type = FieldType.Double) val popularityScore: Double = 0.0,
     @Field(type = FieldType.Double) val ctr: Double = 0.0,
     @Field(type = FieldType.Double) val cvr: Double = 0.0,
-    @Field(type = FieldType.Long) val scoreUpdatedAt: Long = 0
+    @Field(type = FieldType.Long) val scoreUpdatedAt: Long = 0,
+    @Field(type = FieldType.Keyword) val categoryId: String? = null
 ) {
     companion object {
         fun fromDomain(doc: ProductDocument) = ProductEsDocument(
@@ -31,7 +32,8 @@ data class ProductEsDocument(
             popularityScore = doc.popularityScore,
             ctr = doc.ctr,
             cvr = doc.cvr,
-            scoreUpdatedAt = doc.scoreUpdatedAt
+            scoreUpdatedAt = doc.scoreUpdatedAt,
+            categoryId = doc.categoryId
         )
     }
 
@@ -44,6 +46,7 @@ data class ProductEsDocument(
         popularityScore = popularityScore,
         ctr = ctr,
         cvr = cvr,
-        scoreUpdatedAt = scoreUpdatedAt
+        scoreUpdatedAt = scoreUpdatedAt,
+        categoryId = categoryId
     )
 }

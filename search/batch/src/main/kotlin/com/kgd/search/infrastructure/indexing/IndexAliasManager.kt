@@ -36,28 +36,38 @@ class IndexAliasManager(private val esClient: ElasticsearchClient) {
                    m.properties("createdAt") { p ->
                        p.date { d -> d.format("yyyy-MM-dd'T'HH:mm:ss") }
                    }
+                   // ADR-0043 — Bandit arm 키. legacy doc 에 없을 수 있어 nullable.
+                   m.properties("categoryId") { p -> p.keyword { it } }
+                   m.properties("popularityScore") { p -> p.double_ { it } }
+                   m.properties("ctr") { p -> p.double_ { it } }
+                   m.properties("cvr") { p -> p.double_ { it } }
+                   m.properties("scoreUpdatedAt") { p -> p.long_ { it } }
                }
         }
         log.info("Created index: {}", indexName)
     }
 
     /**
-     * alias를 newIndexName으로 교체하고, 이전 색인 중 maxRetention 초과분을 삭제.
+     * alias를 newIndexName으로 atomic 교체하고, 이름 prefix 로 전체 timestamped 인덱스를 스캔해
+     * 최신 maxRetention 개를 제외한 옛 인덱스를 삭제.
      */
     fun updateAliasAndCleanup(alias: String, newIndexName: String, maxRetention: Int = 2) {
-        val existingIndices = getIndicesForAlias(alias)
+        val aliasedIndices = getIndicesForAlias(alias)
 
         esClient.indices().updateAliases { req ->
-            req.actions { action ->
-                existingIndices.forEach { oldIndex ->
-                    action.remove { r -> r.index(oldIndex).alias(alias) }
-                }
-                action.add { a -> a.index(newIndexName).alias(alias) }
+            // ES Java client: actions(Function<Builder, ObjectBuilder<Action>>) 는 단건 액션 빌더.
+            // 여러 액션을 등록하려면 매 액션마다 .actions{} 를 별도 호출해야 함.
+            aliasedIndices.forEach { oldIndex ->
+                req.actions { a -> a.remove { r -> r.index(oldIndex).alias(alias) } }
             }
+            req.actions { a -> a.add { ad -> ad.index(newIndexName).alias(alias) } }
+            req
         }
-        log.info("Alias '{}' → '{}'", alias, newIndexName)
+        log.info("Alias '{}' → '{}' (removed {} old)", alias, newIndexName, aliasedIndices.size)
 
-        existingIndices
+        // 이름 prefix 기반 전체 스캔 — alias 가 빠진 옛 인덱스도 retention 정리
+        val allTimestamped = listIndicesByPrefix("${alias}_")
+        allTimestamped
             .sortedDescending()
             .drop(maxRetention)
             .forEach { oldIndex ->
@@ -69,5 +79,10 @@ class IndexAliasManager(private val esClient: ElasticsearchClient) {
     private fun getIndicesForAlias(alias: String): List<String> =
         runCatching {
             esClient.indices().getAlias { it.name(alias) }.aliases().keys.toList()
+        }.getOrElse { emptyList() }
+
+    private fun listIndicesByPrefix(prefix: String): List<String> =
+        runCatching {
+            esClient.indices().get { it.index("${prefix}*") }.indices().keys.toList()
         }.getOrElse { emptyList() }
 }

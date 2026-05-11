@@ -3,12 +3,12 @@ id: 19
 title: 검색엔진 심화 — Elasticsearch · OpenSearch · Hybrid · Re-Ranking · BM25 · nori
 status: completed
 created: 2026-05-03
-updated: 2026-05-04
+updated: 2026-05-12
 completed: 2026-05-03
-augmented: 2026-05-04 (99-concept-catalog 추가)
-tags: [elasticsearch, opensearch, lucene, bm25, tf-idf, nori, hybrid-search, vector-search, re-ranking, ltr, search-relevance]
+augmented: 2026-05-04 (99-concept-catalog 추가) · 2026-05-12 (42-44 online learning track 추가, ADR-0043)
+tags: [elasticsearch, opensearch, lucene, bm25, tf-idf, nori, hybrid-search, vector-search, re-ranking, ltr, search-relevance, mab, thompson-sampling, online-learning, bayesian]
 difficulty: advanced
-estimated-hours: 32
+estimated-hours: 36
 codebase-relevant: true
 ---
 
@@ -308,10 +308,13 @@ C 선택과 모순되지 않는 방향으로 5건 일괄 처리:
 19-improvements.md                          (ADR 4건 Proposed 초안 통합)
 20-interview-qa.md                          (17 면접 질문 + 꼬리질문 + 악마의 변호인)
 21-followup-qa.md                           (보강 Q&A — Two-Phase 가격 필터 / Refresh-Translog 단계별 / Segment 증가 패턴)
+42-bayesian-beta-thompson.md                (★ 2026-05-12 추가 — Bayesian update + Beta(α,β) + Thompson Sampling 원리)
+43-mab-algorithms.md                        (★ 2026-05-12 추가 — ε-greedy/UCB1/Thompson/LinUCB/Neural Bandit 비교)
+44-msa-bandit-grounding.md                  (★ 2026-05-12 추가 — msa ThompsonReranker grounding + ADR-0043 매핑)
 99-concept-catalog.md                       (★ 2026-05-04 추가 — ES/OS 공식 reference 기준 풀 개념 카탈로그 + 심화 템플릿. percolate/ELSER/PIT/retrievers/geo/span/MLT 등 누락 영역 발굴)
 ```
 
-총 **23 deep files** (00-plan + 00-preview + 01~21 + 99 catalog).
+총 **26 deep files** (00-plan + 00-preview + 01~21 + 42~44 online learning + 99 catalog).
 
 ### 7-F. 모든 미결 종결
 

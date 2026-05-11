@@ -3,13 +3,14 @@ package com.kgd.search.infrastructure.elasticsearch
 import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
 import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
 import com.kgd.search.domain.product.model.ProductDocument
+import com.kgd.search.domain.product.model.ScoredProductDocument
 import com.kgd.search.domain.product.port.ProductSearchPort
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
-import org.springframework.data.elasticsearch.core.SearchHitSupport
+import org.springframework.data.elasticsearch.core.SearchHits
 import org.springframework.stereotype.Component
 
 @Component
@@ -19,6 +20,18 @@ class ProductSearchAdapter(
 ) : ProductSearchPort {
 
     override fun search(keyword: String, pageable: Pageable): Page<ProductDocument> {
+        val hits = executeSearch(keyword, pageable)
+        val content = hits.searchHits.map { it.content.toDomain() }
+        return PageImpl(content, pageable, hits.totalHits)
+    }
+
+    override fun searchScored(keyword: String, pageable: Pageable): Page<ScoredProductDocument> {
+        val hits = executeSearch(keyword, pageable)
+        val content = hits.searchHits.map { ScoredProductDocument(it.content.toDomain(), it.score.toDouble()) }
+        return PageImpl(content, pageable, hits.totalHits)
+    }
+
+    private fun executeSearch(keyword: String, pageable: Pageable): SearchHits<ProductEsDocument> {
         val query = NativeQuery.builder()
             .withQuery { q ->
                 q.functionScore { fs ->
@@ -60,15 +73,6 @@ class ProductSearchAdapter(
             }
             .withPageable(pageable)
             .build()
-
-        val searchHits = elasticsearchOperations.search(query, ProductEsDocument::class.java)
-        val searchPage = SearchHitSupport.searchPageFor(searchHits, pageable)
-        @Suppress("UNCHECKED_CAST")
-        val esPage = SearchHitSupport.unwrapSearchHits(searchPage) as Page<ProductEsDocument>
-        return PageImpl(
-            esPage.content.map { it.toDomain() },
-            esPage.pageable,
-            esPage.totalElements
-        )
+        return elasticsearchOperations.search(query, ProductEsDocument::class.java)
     }
 }

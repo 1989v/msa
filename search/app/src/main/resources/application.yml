@@ -5,6 +5,12 @@ spring:
     timeout-per-shutdown-phase: 30s
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 server:
   port: 8083
   shutdown: graceful
@@ -37,3 +43,15 @@ search:
   ranking:
     popularity-weight: 10.0
     ctr-weight: 5.0
+  # ADR-0043 — Bandit / Thompson Sampling rerank
+  bandit:
+    enabled: true
+    top-n: 100
+    prior-alpha: 1.0
+    prior-beta: 9.0
+    decay-lambda-per-day: 0.02
+    hybrid-weight: 0.8
+    impression-threshold: 50
+    session-cache-seconds: 60
+    # category-priors:
+    #   "fashion-women": "5.0,45.0"
