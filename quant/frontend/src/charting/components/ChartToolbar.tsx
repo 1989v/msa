@@ -92,17 +92,81 @@ export function ChartToolbar({
         />
       )}
 
-      {/* 그리기 (TG-11) */}
+      {/* 그리기 (TG-11) — 드롭다운 대신 inline 4 버튼 + 카운트 / 지우기.
+          이전 popover 가 mousedown race 로 펼쳐지지 않던 버그 우회 + 사용자
+          즉시 클릭 가능. */}
       {onAddHorizontalLine ? (
-        <DrawingMenu
-          onAddHorizontalLine={onAddHorizontalLine}
-          onAddTrendLine={onAddTrendLine}
-          onStartTrendLineDraw={onStartTrendLineDraw}
-          onStartMeasureDraw={onStartMeasureDraw}
-          onClearDrawings={onClearDrawings}
-          drawingCount={drawingCount}
-          drawingModeLabel={drawingModeLabel}
-        />
+        <div className="flex items-center gap-1 px-1" style={{
+          borderLeft: '1px solid var(--ko-border-subtle)',
+          borderRight: '1px solid var(--ko-border-subtle)',
+        }}>
+          <button
+            type="button"
+            onClick={() => onAddHorizontalLine()}
+            title="가로선 추가 (현재 종가)"
+            className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors hover:brightness-125"
+            style={{
+              background: 'color-mix(in oklch, var(--ko-surface-2) 60%, transparent)',
+              color: 'var(--ko-text-secondary)',
+              border: '1px solid var(--ko-border-subtle)',
+            }}
+          >
+            <span>📍</span>
+            <span className="hidden md:inline">가로선</span>
+          </button>
+          {onAddTrendLine && (
+            <button
+              type="button"
+              onClick={onAddTrendLine}
+              title="추세선 자동 (최근 30봉 회귀)"
+              className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors hover:brightness-125"
+              style={{
+                background: 'color-mix(in oklch, var(--ko-surface-2) 60%, transparent)',
+                color: 'var(--ko-text-secondary)',
+                border: '1px solid var(--ko-border-subtle)',
+              }}
+            >
+              <span>📈</span>
+              <span className="hidden md:inline">추세선</span>
+            </button>
+          )}
+          {onStartMeasureDraw && (
+            <button
+              type="button"
+              onClick={onStartMeasureDraw}
+              title="측정도구 (두 점 클릭)"
+              className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors hover:brightness-125"
+              style={{
+                background: drawingModeLabel?.includes('측정')
+                  ? 'color-mix(in oklch, var(--ko-accent-primary) 22%, transparent)'
+                  : 'color-mix(in oklch, var(--ko-surface-2) 60%, transparent)',
+                color: drawingModeLabel?.includes('측정')
+                  ? 'var(--ko-accent-primary-hover)'
+                  : 'var(--ko-text-secondary)',
+                border: '1px solid var(--ko-border-subtle)',
+              }}
+            >
+              <span>📐</span>
+              <span className="hidden md:inline">측정</span>
+            </button>
+          )}
+          {onClearDrawings && drawingCount > 0 && (
+            <button
+              type="button"
+              onClick={onClearDrawings}
+              title={`전체 지우기 (${drawingCount})`}
+              className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors hover:brightness-125"
+              style={{
+                background: 'color-mix(in oklch, var(--ko-quote-fall) 14%, transparent)',
+                color: 'var(--ko-quote-fall)',
+                border: '1px solid color-mix(in oklch, var(--ko-quote-fall) 30%, transparent)',
+              }}
+            >
+              <span>🗑</span>
+              <span className="tabular-nums">{drawingCount}</span>
+            </button>
+          )}
+        </div>
       ) : (
         <ToolButton
           icon={PencilLine}
