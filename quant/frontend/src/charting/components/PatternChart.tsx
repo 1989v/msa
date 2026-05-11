@@ -15,6 +15,7 @@ import {
 import { ChartCore, type ChartClickInfo, type ChartCrosshairInfo, type ChartIndicatorSeries } from './ChartCore'
 import { PatternOverlay } from './PatternOverlay'
 import { DrawingOverlay } from './DrawingOverlay'
+import { DrawingPreviewOverlay, type DrawingPreviewFirstPoint } from './DrawingPreviewOverlay'
 import type { Drawing } from '../lib/drawing'
 import type { OhlcvBar } from '../api'
 import type { PatternDefinition } from '../lib/patterns'
@@ -53,6 +54,13 @@ interface PatternChartProps {
   formatPrice?: (n: number) => string
   /** TG-11 그리기 — chart click (drawing mode 활성 시 두 점 클릭). */
   onChartClick?: (info: ChartClickInfo) => void
+  /** 추세선·측정도구 그리기 중 첫 점 클릭 직후 — 마우스 따라다니는 preview 활성화. */
+  drawingPreview?: {
+    firstPoint: DrawingPreviewFirstPoint
+    mode: 'trend-line' | 'measure'
+  } | null
+  /** 초기 표시 봉 수 — 마지막 N봉만 viewport (long-period 지표 가시성 확보). */
+  initialVisibleBars?: number
 }
 
 // ── Bar prep (KR intraday timezone safety) ────────────────────────────────
@@ -133,6 +141,8 @@ export function PatternChart({
   drawings,
   formatPrice,
   onChartClick,
+  drawingPreview,
+  initialVisibleBars,
 }: PatternChartProps) {
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const [chart, setChart] = useState<IChartApi | null>(null)
@@ -511,6 +521,7 @@ export function PatternChart({
         toTime={toTime}
         height={totalHeight}
         paneStretch={PANE_STRETCH}
+        initialVisibleBars={initialVisibleBars}
       />
 
       {/* OHLCV legend on crosshair hover */}
@@ -578,6 +589,16 @@ export function PatternChart({
           mainSeries={mainSeries}
           drawings={drawings}
           formatPrice={formatPrice}
+        />
+      )}
+
+      {/* Drawing preview (마우스 따라다니는 점선) — 첫 점 클릭 후 활성 */}
+      {chart && mainSeries && drawingPreview && (
+        <DrawingPreviewOverlay
+          chart={chart}
+          mainSeries={mainSeries}
+          firstPoint={drawingPreview.firstPoint}
+          mode={drawingPreview.mode}
         />
       )}
 

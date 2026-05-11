@@ -3,6 +3,7 @@
 // 도구바 — 차트모양 / 보조지표 / 그리기(disabled, P2) / 종목비교(disabled, P2) / 크게보기.
 // IndicatorPopover 통해 지표 토글 + 파라미터 편집.
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   CandlestickChart,
   LineChart,
@@ -92,81 +93,17 @@ export function ChartToolbar({
         />
       )}
 
-      {/* 그리기 (TG-11) — 드롭다운 대신 inline 4 버튼 + 카운트 / 지우기.
-          이전 popover 가 mousedown race 로 펼쳐지지 않던 버그 우회 + 사용자
-          즉시 클릭 가능. */}
+      {/* 그리기 (TG-11) */}
       {onAddHorizontalLine ? (
-        <div className="flex items-center gap-1 px-1" style={{
-          borderLeft: '1px solid var(--ko-border-subtle)',
-          borderRight: '1px solid var(--ko-border-subtle)',
-        }}>
-          <button
-            type="button"
-            onClick={() => onAddHorizontalLine()}
-            title="가로선 추가 (현재 종가)"
-            className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors hover:brightness-125"
-            style={{
-              background: 'color-mix(in oklch, var(--ko-surface-2) 60%, transparent)',
-              color: 'var(--ko-text-secondary)',
-              border: '1px solid var(--ko-border-subtle)',
-            }}
-          >
-            <span>📍</span>
-            <span className="hidden md:inline">가로선</span>
-          </button>
-          {onAddTrendLine && (
-            <button
-              type="button"
-              onClick={onAddTrendLine}
-              title="추세선 자동 (최근 30봉 회귀)"
-              className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors hover:brightness-125"
-              style={{
-                background: 'color-mix(in oklch, var(--ko-surface-2) 60%, transparent)',
-                color: 'var(--ko-text-secondary)',
-                border: '1px solid var(--ko-border-subtle)',
-              }}
-            >
-              <span>📈</span>
-              <span className="hidden md:inline">추세선</span>
-            </button>
-          )}
-          {onStartMeasureDraw && (
-            <button
-              type="button"
-              onClick={onStartMeasureDraw}
-              title="측정도구 (두 점 클릭)"
-              className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors hover:brightness-125"
-              style={{
-                background: drawingModeLabel?.includes('측정')
-                  ? 'color-mix(in oklch, var(--ko-accent-primary) 22%, transparent)'
-                  : 'color-mix(in oklch, var(--ko-surface-2) 60%, transparent)',
-                color: drawingModeLabel?.includes('측정')
-                  ? 'var(--ko-accent-primary-hover)'
-                  : 'var(--ko-text-secondary)',
-                border: '1px solid var(--ko-border-subtle)',
-              }}
-            >
-              <span>📐</span>
-              <span className="hidden md:inline">측정</span>
-            </button>
-          )}
-          {onClearDrawings && drawingCount > 0 && (
-            <button
-              type="button"
-              onClick={onClearDrawings}
-              title={`전체 지우기 (${drawingCount})`}
-              className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors hover:brightness-125"
-              style={{
-                background: 'color-mix(in oklch, var(--ko-quote-fall) 14%, transparent)',
-                color: 'var(--ko-quote-fall)',
-                border: '1px solid color-mix(in oklch, var(--ko-quote-fall) 30%, transparent)',
-              }}
-            >
-              <span>🗑</span>
-              <span className="tabular-nums">{drawingCount}</span>
-            </button>
-          )}
-        </div>
+        <DrawingMenu
+          onAddHorizontalLine={onAddHorizontalLine}
+          onAddTrendLine={onAddTrendLine}
+          onStartTrendLineDraw={onStartTrendLineDraw}
+          onStartMeasureDraw={onStartMeasureDraw}
+          onClearDrawings={onClearDrawings}
+          drawingCount={drawingCount}
+          drawingModeLabel={drawingModeLabel}
+        />
       ) : (
         <ToolButton
           icon={PencilLine}
@@ -256,27 +193,38 @@ function ChartTypeMenu({
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
   const ActiveIcon = CHART_TYPE_ICON[chartType]
   const activeLabel = CHART_TYPES.find(t => t.value === chartType)?.label ?? chartType
 
+  // button rect → menu fixed 좌표 계산 (overflow 부모에 의한 clipping 회피).
+  useEffect(() => {
+    if (!open || !buttonRef.current) return
+    const r = buttonRef.current.getBoundingClientRect()
+    setPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
+  }, [open])
+
   useEffect(() => {
     if (!open) return
+    // click outside — root (button) + menuRef (portal) 둘 다 외부면 close.
     const onDoc = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+      const t = e.target as Node
+      if (
+        rootRef.current && !rootRef.current.contains(t) &&
+        menuRef.current && !menuRef.current.contains(t)
+      ) {
         setOpen(false)
       }
     }
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    // setTimeout(0) — race 회피 (button click 의 mousedown 이 같은 tick 외부 click 으로 인식).
-    const t = window.setTimeout(() => {
-      document.addEventListener('mousedown', onDoc)
-      document.addEventListener('keydown', onEsc)
-    }, 0)
+    document.addEventListener('click', onDoc)
+    document.addEventListener('keydown', onEsc)
     return () => {
-      window.clearTimeout(t)
-      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('click', onDoc)
       document.removeEventListener('keydown', onEsc)
     }
   }, [open])
@@ -284,8 +232,9 @@ function ChartTypeMenu({
   return (
     <div ref={rootRef} className="relative">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={e => { e.stopPropagation(); setOpen(o => !o) }}
         aria-haspopup="menu"
         aria-expanded={open}
         className="px-2.5 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors"
@@ -308,13 +257,19 @@ function ChartTypeMenu({
         <span className="hidden sm:inline">{activeLabel}</span>
       </button>
 
-      {open && (
+      {open && pos && createPortal(
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 mt-1.5 z-30 w-[160px] rounded-xl shadow-lg p-1"
+          className="w-[180px] rounded-xl shadow-lg p-1"
           style={{
-            background: 'var(--ko-surface-1)',
-            border: '1px solid var(--ko-border-subtle)',
+            position: 'fixed',
+            top: pos.top,
+            right: pos.right,
+            zIndex: 9999,
+            background: '#0c1424',
+            border: '1px solid #475569',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
           }}
         >
           {CHART_TYPES.map(({ value, label }) => {
@@ -345,7 +300,8 @@ function ChartTypeMenu({
               </button>
             )
           })}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
@@ -372,27 +328,34 @@ function DrawingMenu({
 }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
+
+  useEffect(() => {
+    if (!open || !buttonRef.current) return
+    const r = buttonRef.current.getBoundingClientRect()
+    setPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
+  }, [open])
 
   useEffect(() => {
     if (!open) return
     const onDoc = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+      const t = e.target as Node
+      if (
+        rootRef.current && !rootRef.current.contains(t) &&
+        menuRef.current && !menuRef.current.contains(t)
+      ) {
         setOpen(false)
       }
     }
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    // setTimeout(0) — button click 의 mousedown 이 같은 tick 에 처리되면서 listener
-    // 가 그 mousedown 도 외부로 인식해 즉시 close 되는 race 회피 (메뉴가 열렸다가
-    // 같은 frame 안에 close 되어 사용자 시점에 안 보이던 진짜 버그).
-    const t = window.setTimeout(() => {
-      document.addEventListener('mousedown', onDoc)
-      document.addEventListener('keydown', onEsc)
-    }, 0)
+    document.addEventListener('click', onDoc)
+    document.addEventListener('keydown', onEsc)
     return () => {
-      window.clearTimeout(t)
-      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('click', onDoc)
       document.removeEventListener('keydown', onEsc)
     }
   }, [open])
@@ -400,8 +363,9 @@ function DrawingMenu({
   return (
     <div ref={rootRef} className="relative">
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={e => { e.stopPropagation(); setOpen(o => !o) }}
         aria-haspopup="menu"
         aria-expanded={open}
         className="px-2 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors"
@@ -436,11 +400,16 @@ function DrawingMenu({
         )}
       </button>
 
-      {open && (
+      {open && pos && createPortal(
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute right-0 mt-2 z-50 w-[300px] rounded-xl p-2"
+          className="w-[300px] rounded-xl p-2"
           style={{
+            position: 'fixed',
+            top: pos.top,
+            right: pos.right,
+            zIndex: 9999,
             background: '#0c1424',
             border: '1px solid #475569',
             boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
@@ -574,7 +543,8 @@ function DrawingMenu({
               </button>
             </>
           )}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

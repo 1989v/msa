@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { KpiCard } from '@kgd/design-system'
@@ -129,20 +129,35 @@ function formatCompactCount(n: number): string {
   return Math.round(n).toLocaleString()
 }
 
-/** Interval 별 봉 단위 라벨. */
-function barUnitLabel(interval: string): string {
-  switch (interval) {
-    case '1m': return '분'
-    case '5m': return '5분봉'
-    case '15m': return '15분봉'
-    case '30m': return '30분봉'
-    case '1h': return '시간'
-    case '1d': return '일'
-    case '1w': return '주'
-    case '1mo': return '개월'
-    case '1y': return '년'
-    default: return '봉'
-  }
+/**
+ * Interval 별 OHLCV fetch 기간 (일 단위).
+ * MA120 같은 long-period 지표가 viewport 내내 그려지도록 넉넉히 가져온다.
+ * (예: 일봉이면 365일 → 약 250영업일 → MA120 도 130여봉부터 그려짐).
+ * visibleRange 는 ChartCore 의 initialVisibleBars 로 마지막 일부만 보이게 제한.
+ */
+const FETCH_DAYS_BY_INTERVAL: Record<string, number> = {
+  '1m': 3,
+  '5m': 14,
+  '15m': 30,
+  '30m': 60,
+  '1h': 120,
+  '1d': 365,
+  '1w': 5 * 365,
+  '1mo': 20 * 365,
+  '1y': 50 * 365,
+}
+
+/** Interval 별 차트 초기 visible bars (가져온 데이터 중 최근 N봉만 viewport). */
+const VISIBLE_BARS_BY_INTERVAL: Record<string, number> = {
+  '1m': 120,
+  '5m': 120,
+  '15m': 120,
+  '30m': 120,
+  '1h': 120,
+  '1d': 90,
+  '1w': 60,
+  '1mo': 60,
+  '1y': 30,
 }
 
 /** Interval 별 윈도우 라벨 (microcontext '범위' chip 등). */
@@ -304,12 +319,15 @@ export function ChartsPage() {
   const backendMarket = backendMarketOf(symbol.assetClass)
   const backendAsset = backendAssetOf(symbol.ticker, symbol.assetClass)
 
+  // Fetch 기간은 interval 에 맞춰 동적 — MA120 등 long-period 지표가
+  // 화면에 그려질 수 있도록 충분한 봉을 가져오고, visibleRange 는 최근만 노출.
   const { from, to } = useMemo(() => {
     const today = new Date()
     today.setUTCHours(0, 0, 0, 0)
-    const monthAgo = new Date(today.getTime() - 30 * 86400_000)
-    return { from: monthAgo.toISOString(), to: today.toISOString() }
-  }, [])
+    const days = FETCH_DAYS_BY_INTERVAL[interval] ?? 365
+    const start = new Date(today.getTime() - days * 86400_000)
+    return { from: start.toISOString(), to: today.toISOString() }
+  }, [interval])
 
   const fetchOhlcv = async (
     asset: string,
@@ -436,6 +454,17 @@ export function ChartsPage() {
   const [drawingMode, setDrawingMode] = useState<'idle' | 'trend-line' | 'measure'>('idle')
   const [drawingFirstPoint, setDrawingFirstPoint] = useState<ChartClickInfo | null>(null)
 
+  // ref 미러 — handleChartClick 의 closure trap 회피 (subscribeClick 콜백이
+  // ref.current 로 호출되더라도 useCallback closure 가 stale 일 가능성 차단).
+  const drawingModeRef = useRef(drawingMode)
+  const drawingFirstPointRef = useRef(drawingFirstPoint)
+  useEffect(() => {
+    drawingModeRef.current = drawingMode
+  }, [drawingMode])
+  useEffect(() => {
+    drawingFirstPointRef.current = drawingFirstPoint
+  }, [drawingFirstPoint])
+
   const drawingModeLabel = useMemo(() => {
     if (drawingMode === 'idle') return null
     const which = drawingMode === 'trend-line' ? '추세선' : '측정도구'
@@ -459,38 +488,40 @@ export function ChartsPage() {
 
   const handleChartClick = useCallback(
     (info: ChartClickInfo) => {
-      if (drawingMode === 'idle') return
-      if (!drawingFirstPoint) {
+      // ref 로 최신 state 읽기 — useCallback closure 가 stale 일 위험 차단.
+      const mode = drawingModeRef.current
+      const first = drawingFirstPointRef.current
+      if (mode === 'idle') return
+      if (!first) {
+        // 첫번째 클릭 — ref 즉시 동기화 (다음 클릭이 빠를 때를 대비) + state 도 set.
+        drawingFirstPointRef.current = info
         setDrawingFirstPoint(info)
         return
       }
-      // 두 번째 점 — drawing 추가 + mode reset
-      const startTime = drawingFirstPoint.time
-      const endTime = info.time
-      const startPrice = drawingFirstPoint.price
-      const endPrice = info.price
       const drawing =
-        drawingMode === 'trend-line'
+        mode === 'trend-line'
           ? makeTrendLine(
-              startTime as unknown as string | number,
-              startPrice,
-              endTime as unknown as string | number,
-              endPrice,
+              first.time as unknown as string | number,
+              first.price,
+              info.time as unknown as string | number,
+              info.price,
               '#14b8a6', // 청록
             )
           : makeMeasure(
-              startTime as unknown as string | number,
-              startPrice,
-              endTime as unknown as string | number,
-              endPrice,
+              first.time as unknown as string | number,
+              first.price,
+              info.time as unknown as string | number,
+              info.price,
               '#84cc16', // amber
             )
       addDrawing(drawingAssetKey, drawing)
       setDrawings(prev => [...prev, drawing])
+      drawingFirstPointRef.current = null
+      drawingModeRef.current = 'idle'
       setDrawingMode('idle')
       setDrawingFirstPoint(null)
     },
-    [drawingMode, drawingFirstPoint, drawingAssetKey],
+    [drawingAssetKey],
   )
 
   const handleStartTrendLineDraw = useCallback(() => {
@@ -818,7 +849,19 @@ export function ChartsPage() {
             compareLabel={compareSymbol?.name}
             drawings={drawings}
             formatPrice={formatSymbolPrice}
+            initialVisibleBars={VISIBLE_BARS_BY_INTERVAL[interval] ?? 90}
             onChartClick={drawingMode !== 'idle' ? handleChartClick : undefined}
+            drawingPreview={
+              drawingMode !== 'idle' && drawingFirstPoint
+                ? {
+                    firstPoint: {
+                      time: drawingFirstPoint.time,
+                      price: drawingFirstPoint.price,
+                    },
+                    mode: drawingMode,
+                  }
+                : null
+            }
           />
         )}
       </section>

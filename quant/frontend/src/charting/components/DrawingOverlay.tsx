@@ -21,6 +21,25 @@ interface Props {
   formatPrice?: (n: number) => string
 }
 
+interface SortedPoint {
+  time: Time
+  value: number
+}
+
+function timeToNumber(t: Time): number {
+  if (typeof t === 'number') return t
+  if (typeof t === 'string') {
+    const ms = Date.parse(t)
+    return Number.isFinite(ms) ? ms / 1000 : 0
+  }
+  const d = t as { year: number; month: number; day: number }
+  return Date.UTC(d.year, d.month - 1, d.day) / 1000
+}
+
+function sortByTime(a: SortedPoint, b: SortedPoint): SortedPoint[] {
+  return timeToNumber(a.time) <= timeToNumber(b.time) ? [a, b] : [b, a]
+}
+
 export function DrawingOverlay({ chart, mainSeries, drawings, formatPrice }: Props) {
   const priceLinesRef = useRef<IPriceLine[]>([])
   const trendSeriesRef = useRef<ISeriesApi<'Line'>[]>([])
@@ -60,6 +79,12 @@ export function DrawingOverlay({ chart, mainSeries, drawings, formatPrice }: Pro
         priceLinesRef.current.push(line)
       } else if (d.kind === 'trend-line') {
         // 두 점 LineSeries 로 추세선 그리기 (paneIndex 0)
+        // lightweight-charts 는 ascending order 요구 — 사용자가 오→왼 클릭한 경우
+        // setData 가 silently reject 되어 선이 안 보이던 버그 차단.
+        const sorted = sortByTime(
+          { time: d.startTime as unknown as Time, value: d.startPrice },
+          { time: d.endTime as unknown as Time, value: d.endPrice },
+        )
         const series = chart.addSeries(
           LineSeries,
           {
@@ -72,13 +97,14 @@ export function DrawingOverlay({ chart, mainSeries, drawings, formatPrice }: Pro
           },
           0,
         )
-        series.setData([
-          { time: d.startTime as unknown as Time, value: d.startPrice },
-          { time: d.endTime as unknown as Time, value: d.endPrice },
-        ])
+        series.setData(sorted)
         trendSeriesRef.current.push(series)
       } else if (d.kind === 'measure') {
         // 측정도구 — dashed line + 시작/끝 priceLine 라벨 (가격 변동% 표시)
+        const sorted = sortByTime(
+          { time: d.startTime as unknown as Time, value: d.startPrice },
+          { time: d.endTime as unknown as Time, value: d.endPrice },
+        )
         const series = chart.addSeries(
           LineSeries,
           {
@@ -91,10 +117,7 @@ export function DrawingOverlay({ chart, mainSeries, drawings, formatPrice }: Pro
           },
           0,
         )
-        series.setData([
-          { time: d.startTime as unknown as Time, value: d.startPrice },
-          { time: d.endTime as unknown as Time, value: d.endPrice },
-        ])
+        series.setData(sorted)
         trendSeriesRef.current.push(series)
         // 끝점 priceLine 으로 변동% 표시
         const changePct = d.startPrice > 0

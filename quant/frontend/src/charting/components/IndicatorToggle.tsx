@@ -1,5 +1,6 @@
 // charting/frontend/src/components/IndicatorToggle.tsx
-import { useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Info } from 'lucide-react'
 
 export interface IndicatorParams {
@@ -92,6 +93,39 @@ const PARAM_LABELS: Record<string, string> = {
 
 export function IndicatorToggle({ value, onChange, params, onParamsChange }: Props) {
   const [editingKey, setEditingKey] = useState<keyof Indicators | null>(null)
+  // 글로벌 hover tooltip — portal 로 빼서 popover panel 의 overflow clipping 회피.
+  const [hovered, setHovered] = useState<{
+    key: keyof Indicators
+    rect: { left: number; right: number; top: number; bottom: number }
+  } | null>(null)
+  // Param popover anchor — editingKey 가 있을 때 버튼 rect 추적.
+  const buttonRefs = useRef<Map<keyof Indicators, HTMLButtonElement>>(new Map())
+  const [paramAnchor, setParamAnchor] = useState<DOMRect | null>(null)
+
+  // editingKey 가 바뀌면 해당 버튼 rect 로 paramAnchor 갱신.
+  useLayoutEffect(() => {
+    if (!editingKey) {
+      setParamAnchor(null)
+      return
+    }
+    const el = buttonRefs.current.get(editingKey)
+    if (el) setParamAnchor(el.getBoundingClientRect())
+  }, [editingKey])
+
+  // viewport resize/scroll 시 param popover 위치 재계산.
+  useEffect(() => {
+    if (!editingKey) return
+    const recompute = () => {
+      const el = buttonRefs.current.get(editingKey)
+      if (el) setParamAnchor(el.getBoundingClientRect())
+    }
+    window.addEventListener('resize', recompute)
+    window.addEventListener('scroll', recompute, true)
+    return () => {
+      window.removeEventListener('resize', recompute)
+      window.removeEventListener('scroll', recompute, true)
+    }
+  }, [editingKey])
 
   const toggle = (key: keyof Indicators) =>
     onChange({ ...value, [key]: !value[key] })
@@ -102,13 +136,25 @@ export function IndicatorToggle({ value, onChange, params, onParamsChange }: Pro
         {BUTTONS.map(({ key, label, color, paramKeys }) => {
           const active = value[key]
           return (
-            <div key={key} className="relative group">
+            <div key={key} className="relative">
               <button
+                ref={el => {
+                  if (el) buttonRefs.current.set(key, el)
+                  else buttonRefs.current.delete(key)
+                }}
                 onClick={() => toggle(key)}
                 onContextMenu={(e) => {
                   e.preventDefault()
                   if (paramKeys) setEditingKey(editingKey === key ? null : key)
                 }}
+                onMouseEnter={e => {
+                  const r = e.currentTarget.getBoundingClientRect()
+                  setHovered({
+                    key,
+                    rect: { left: r.left, right: r.right, top: r.top, bottom: r.bottom },
+                  })
+                }}
+                onMouseLeave={() => setHovered(prev => (prev?.key === key ? null : prev))}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-150 cursor-pointer ${
                   active
                     ? 'text-white'
@@ -126,42 +172,202 @@ export function IndicatorToggle({ value, onChange, params, onParamsChange }: Pro
                   </span>
                 )}
               </button>
-              {/* Tooltip */}
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-xs text-slate-300 whitespace-normal w-56 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-xl">
-                <div className="flex items-start gap-1.5">
-                  <Info className="w-3 h-3 text-slate-500 shrink-0 mt-0.5" />
-                  <span>{TOOLTIPS[key]}</span>
-                </div>
-              </div>
-              {/* Parameter popover */}
-              {editingKey === key && paramKeys && (
-                <div className="absolute top-full left-0 mt-1 p-3 rounded-lg bg-slate-800 border border-slate-700 z-50 shadow-xl min-w-[180px]">
-                  <p className="text-xs font-semibold text-slate-300 mb-2">{label} 설정</p>
-                  {paramKeys.map(pk => (
-                    <div key={pk} className="flex items-center justify-between gap-2 mb-1.5">
-                      <label className="text-xs text-slate-400">{PARAM_LABELS[pk]}</label>
-                      <input
-                        type="number"
-                        value={params[pk]}
-                        onChange={(e) => onParamsChange({ ...params, [pk]: Number(e.target.value) || 1 })}
-                        className="w-16 px-2 py-1 text-xs bg-slate-700 border border-slate-600 rounded text-white text-right"
-                        min={1}
-                        step={pk === 'bbStdDev' ? 0.5 : 1}
-                      />
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => setEditingKey(null)}
-                    className="w-full mt-1 px-2 py-1 text-xs text-slate-400 hover:text-white bg-slate-700 rounded"
-                  >
-                    닫기
-                  </button>
-                </div>
-              )}
             </div>
           )
         })}
       </div>
+
+      {/* Floating tooltip — portal, viewport-aware placement */}
+      {hovered && (
+        <FloatingTooltip
+          rect={hovered.rect}
+          text={TOOLTIPS[hovered.key]}
+        />
+      )}
+
+      {/* Floating parameter popover — portal */}
+      {editingKey && paramAnchor && (() => {
+        const btn = BUTTONS.find(b => b.key === editingKey)
+        if (!btn || !btn.paramKeys) return null
+        return (
+          <FloatingParamPopover
+            anchorRect={paramAnchor}
+            label={btn.label}
+            paramKeys={btn.paramKeys}
+            params={params}
+            onParamsChange={onParamsChange}
+            onClose={() => setEditingKey(null)}
+          />
+        )
+      })()}
     </div>
+  )
+}
+
+// ── Floating tooltip — portal to body + viewport-aware placement ──────────────
+function FloatingTooltip({
+  rect,
+  text,
+}: {
+  rect: { left: number; right: number; top: number; bottom: number }
+  text: string
+}) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [pos, setPos] = useState<{ top: number; left: number; placement: 'top' | 'bottom' } | null>(null)
+
+  useLayoutEffect(() => {
+    const tip = ref.current
+    if (!tip) return
+    const tipR = tip.getBoundingClientRect()
+    const margin = 8
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const cx = (rect.left + rect.right) / 2
+
+    // 위쪽이 충분하면 top, 아니면 bottom
+    const spaceAbove = rect.top
+    const spaceBelow = vh - rect.bottom
+    const placement: 'top' | 'bottom' =
+      spaceAbove >= tipR.height + margin || spaceAbove > spaceBelow
+        ? 'top'
+        : 'bottom'
+
+    const top =
+      placement === 'top'
+        ? Math.max(margin, rect.top - tipR.height - margin)
+        : Math.min(vh - tipR.height - margin, rect.bottom + margin)
+
+    // 좌우 — 가운데 정렬 후 viewport clamp
+    let left = cx - tipR.width / 2
+    if (left < margin) left = margin
+    if (left + tipR.width > vw - margin) left = vw - tipR.width - margin
+
+    setPos({ top, left, placement })
+  }, [rect.left, rect.right, rect.top, rect.bottom])
+
+  return createPortal(
+    <div
+      ref={ref}
+      style={{
+        position: 'fixed',
+        top: pos?.top ?? -9999,
+        left: pos?.left ?? -9999,
+        zIndex: 10000,
+        pointerEvents: 'none',
+        opacity: pos ? 1 : 0,
+        transition: 'opacity 80ms ease-out',
+        width: 224,
+        background: '#1e293b',
+        border: '1px solid #475569',
+        boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+      }}
+      className="px-3 py-2 rounded-lg text-xs text-slate-300"
+      role="tooltip"
+    >
+      <div className="flex items-start gap-1.5">
+        <Info className="w-3 h-3 text-slate-500 shrink-0 mt-0.5" />
+        <span>{text}</span>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+// ── Floating parameter popover — portal + viewport-aware ──────────────────────
+function FloatingParamPopover({
+  anchorRect,
+  label,
+  paramKeys,
+  params,
+  onParamsChange,
+  onClose,
+}: {
+  anchorRect: DOMRect
+  label: string
+  paramKeys: (keyof IndicatorParams)[]
+  params: IndicatorParams
+  onParamsChange: (next: IndicatorParams) => void
+  onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement | null>(null)
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const margin = 8
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+
+    // 기본 아래쪽
+    const spaceBelow = vh - anchorRect.bottom
+    const placeBelow = spaceBelow >= r.height + margin || spaceBelow > anchorRect.top
+    const top = placeBelow
+      ? Math.min(vh - r.height - margin, anchorRect.bottom + 4)
+      : Math.max(margin, anchorRect.top - r.height - 4)
+
+    // 기본 anchor 좌측 정렬, viewport clamp
+    let left = anchorRect.left
+    if (left + r.width > vw - margin) left = vw - r.width - margin
+    if (left < margin) left = margin
+
+    setPos({ top, left })
+  }, [anchorRect.left, anchorRect.right, anchorRect.top, anchorRect.bottom])
+
+  // 외부 클릭/ESC 닫기
+  useEffect(() => {
+    const onDoc = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
+    }
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onEsc)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onEsc)
+    }
+  }, [onClose])
+
+  return createPortal(
+    <div
+      ref={ref}
+      role="dialog"
+      style={{
+        position: 'fixed',
+        top: pos?.top ?? -9999,
+        left: pos?.left ?? -9999,
+        zIndex: 10001,
+        minWidth: 180,
+        background: '#1e293b',
+        border: '1px solid #475569',
+        boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+      }}
+      className="p-3 rounded-lg"
+    >
+      <p className="text-xs font-semibold text-slate-300 mb-2">{label} 설정</p>
+      {paramKeys.map(pk => (
+        <div key={pk} className="flex items-center justify-between gap-2 mb-1.5">
+          <label className="text-xs text-slate-400">{PARAM_LABELS[pk]}</label>
+          <input
+            type="number"
+            value={params[pk]}
+            onChange={e => onParamsChange({ ...params, [pk]: Number(e.target.value) || 1 })}
+            className="w-16 px-2 py-1 text-xs bg-slate-700 border border-slate-600 rounded text-white text-right"
+            min={1}
+            step={pk === 'bbStdDev' ? 0.5 : 1}
+          />
+        </div>
+      ))}
+      <button
+        onClick={onClose}
+        className="w-full mt-1 px-2 py-1 text-xs text-slate-400 hover:text-white bg-slate-700 rounded"
+      >
+        닫기
+      </button>
+    </div>,
+    document.body,
   )
 }

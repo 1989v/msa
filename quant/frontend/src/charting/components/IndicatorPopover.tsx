@@ -2,7 +2,9 @@
 //
 // 도구바의 "보조지표" 팝오버 — 기존 IndicatorToggle 을 wrap.
 // 클릭 시 dropdown 으로 펼침. 외부 클릭/ESC 로 닫힘.
+// Portal 로 document.body 에 렌더 — overflow-x-auto 부모 (ChartToolbar) 의 clipping 회피.
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { TrendingUp } from 'lucide-react'
 import { IndicatorToggle, type Indicators, type IndicatorParams } from './IndicatorToggle'
 import { cn } from '@/lib/cn'
@@ -24,21 +26,42 @@ export function IndicatorPopover({
 }: Props) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const panelRef = useRef<HTMLDivElement | null>(null)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
 
+  // 버튼 위치 변경 시 panel 위치 재계산 (window resize / scroll).
+  useEffect(() => {
+    if (!open || !buttonRef.current) return
+    const compute = () => {
+      const r = buttonRef.current!.getBoundingClientRect()
+      setPos({ top: r.bottom + 6, right: window.innerWidth - r.right })
+    }
+    compute()
+    window.addEventListener('resize', compute)
+    window.addEventListener('scroll', compute, true)
+    return () => {
+      window.removeEventListener('resize', compute)
+      window.removeEventListener('scroll', compute, true)
+    }
+  }, [open])
+
+  // 외부 클릭/ESC 로 닫힘. panelRef 포함 — portal 로 빼서 rootRef 자식이 아니므로 별도 체크.
   useEffect(() => {
     if (!open) return
     const onDoc = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const t = e.target as Node
+      const inRoot = rootRef.current?.contains(t) ?? false
+      const inPanel = panelRef.current?.contains(t) ?? false
+      if (!inRoot && !inPanel) setOpen(false)
     }
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('click', onDoc)
     document.addEventListener('keydown', onEsc)
     return () => {
-      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('click', onDoc)
       document.removeEventListener('keydown', onEsc)
     }
   }, [open])
@@ -48,6 +71,7 @@ export function IndicatorPopover({
   return (
     <div ref={rootRef} className={cn('relative', className)}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen(o => !o)}
         aria-haspopup="dialog"
@@ -84,14 +108,20 @@ export function IndicatorPopover({
         )}
       </button>
 
-      {open && (
+      {open && pos && createPortal(
         <div
+          ref={panelRef}
           role="dialog"
           aria-label="보조지표 설정"
-          className="absolute right-0 mt-1.5 z-30 w-[320px] max-h-[70vh] overflow-y-auto rounded-xl shadow-lg p-3"
+          className="w-[320px] max-h-[70vh] overflow-y-auto rounded-xl shadow-2xl p-3"
           style={{
-            background: 'var(--ko-surface-1)',
-            border: '1px solid var(--ko-border-subtle)',
+            position: 'fixed',
+            top: pos.top,
+            right: pos.right,
+            zIndex: 9999,
+            background: '#0c1424',
+            border: '1px solid #475569',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
           }}
         >
           <IndicatorToggle
@@ -100,7 +130,8 @@ export function IndicatorPopover({
             params={params}
             onParamsChange={onParamsChange}
           />
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

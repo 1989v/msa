@@ -104,6 +104,13 @@ interface Props {
   paneStretch?: Record<number, number>
   /** Left price scale (TG-12 비교 종목용). 시리즈는 `priceScaleId: 'left'` 로 attach. */
   leftPriceScaleVisible?: boolean
+  /**
+   * 초기 표시 봉 수 — fetch 한 전체 데이터 중 마지막 N봉만 viewport 안으로 fit.
+   * 좌측 더 오래된 데이터는 스크롤로 확인 가능 (MA120 같은 long-period 지표가
+   * viewport 내내 그려질 수 있도록 fetch 는 길게, 표시는 최근만).
+   * 미지정 시 fitContent (전체 데이터 fit).
+   */
+  initialVisibleBars?: number
   className?: string
   style?: CSSProperties
 }
@@ -119,6 +126,7 @@ export function ChartCore({
   height = 440,
   paneStretch,
   leftPriceScaleVisible,
+  initialVisibleBars,
   className,
   style,
 }: Props) {
@@ -304,13 +312,20 @@ export function ChartCore({
     })
 
     // ── Click handler (drawing mode) ─────────────────────────────────────────
+    // 빈 영역 (캔들 바깥, 우측 padding) 클릭 시 param.time 이 null →
+    // coordinateToTime fallback 으로 x 좌표를 시간으로 변환 (visible range 밖이면 null).
     chart.subscribeClick(param => {
       const cb = onChartClickRef.current
       if (!cb) return
-      if (!param.time || !param.point) return
+      if (!param.point) return
+      let t: Time | null = param.time ?? null
+      if (t == null) {
+        const ct = chart.timeScale().coordinateToTime(param.point.x)
+        if (ct == null) return
+        t = ct as Time
+      }
       const price = mainSeries.coordinateToPrice(param.point.y)
       if (price == null || !Number.isFinite(price)) return
-      const t = param.time
       const normalized: string | number =
         typeof t === 'number' || typeof t === 'string'
           ? t
@@ -318,7 +333,22 @@ export function ChartCore({
       cb({ time: normalized, price: Number(price) })
     })
 
-    chart.timeScale().fitContent()
+    // 초기 visibleRange — 마지막 N봉만 보이게 (좌측은 스크롤 가능).
+    // setVisibleLogicalRange 는 logical index 기반 → 데이터 길이보다 N 이 크면 전체 fit.
+    if (
+      initialVisibleBars != null &&
+      sortedBars.length > 0 &&
+      initialVisibleBars < sortedBars.length
+    ) {
+      const lastIdx = sortedBars.length - 1
+      // 우측 약간 padding 0.5 — 마지막 봉이 우측 가장자리에 붙지 않게.
+      chart.timeScale().setVisibleLogicalRange({
+        from: lastIdx - initialVisibleBars + 1,
+        to: lastIdx + 0.5,
+      })
+    } else {
+      chart.timeScale().fitContent()
+    }
     setChartReady(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onChartReadyRef.current?.(chart, mainSeries as any)
@@ -363,6 +393,7 @@ export function ChartCore({
     paneStretch,
     toTime,
     leftPriceScaleVisible,
+    initialVisibleBars,
   ])
 
   return (

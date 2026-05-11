@@ -13,7 +13,7 @@
 //   └─────────┴─────────┴─────────┘
 //
 // 가격 클릭 시 onPriceClick 콜백 (주문창 통합 시 prefill 용 — 현재는 prop 만 노출).
-import { Fragment, memo } from 'react'
+import { memo } from 'react'
 import type { OrderbookSnapshot, TradeFill } from '@/charting/hooks/useOrderbook'
 
 interface Props {
