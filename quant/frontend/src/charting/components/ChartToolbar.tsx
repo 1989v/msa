@@ -205,9 +205,13 @@ function ChartTypeMenu({
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onEsc)
+    // setTimeout(0) — race 회피 (button click 의 mousedown 이 같은 tick 외부 click 으로 인식).
+    const t = window.setTimeout(() => {
+      document.addEventListener('mousedown', onDoc)
+      document.addEventListener('keydown', onEsc)
+    }, 0)
     return () => {
+      window.clearTimeout(t)
       document.removeEventListener('mousedown', onDoc)
       document.removeEventListener('keydown', onEsc)
     }
@@ -315,9 +319,15 @@ function DrawingMenu({
     const onEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpen(false)
     }
-    document.addEventListener('mousedown', onDoc)
-    document.addEventListener('keydown', onEsc)
+    // setTimeout(0) — button click 의 mousedown 이 같은 tick 에 처리되면서 listener
+    // 가 그 mousedown 도 외부로 인식해 즉시 close 되는 race 회피 (메뉴가 열렸다가
+    // 같은 frame 안에 close 되어 사용자 시점에 안 보이던 진짜 버그).
+    const t = window.setTimeout(() => {
+      document.addEventListener('mousedown', onDoc)
+      document.addEventListener('keydown', onEsc)
+    }, 0)
     return () => {
+      window.clearTimeout(t)
       document.removeEventListener('mousedown', onDoc)
       document.removeEventListener('keydown', onEsc)
     }
