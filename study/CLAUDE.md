@@ -53,10 +53,11 @@ codebase-relevant: true | false
 |---|---|---|
 | `/study:init N` | 주제 초기화 | `docs/{N}-{slug}/00-plan.md` |
 | `/study:bs N` | 방향 다듬기 | plan.md 개정 + 미결사항 정리 |
-| `/study:exec N` | preview (소주제 지도) | `docs/{N}-{slug}/00-preview.md` |
-| `/study:start N [subtopic]` | 본격 심화 | `docs/{N}-{slug}/NN-{subtopic}.md` |
+| `/study:exec N` | preview (소주제 지도) + 본격 심화 | `docs/{N}-{slug}/00-preview.md` + `NN-{subtopic}.md` |
 
-파이프라인은 partial 진입을 허용한다. 이미 plan.md 가 있으면 `/study:bs` 부터, preview 까지 있으면 `/study:start` 부터 재개.
+`/study:exec` 는 첫 호출 시 `00-preview.md` 를 생성하고, 이후 호출 (또는 자연어 지시) 로 `NN-{subtopic}.md` 본격 심화 파일을 순차 작성한다. 파이프라인은 partial 진입을 허용한다 — 이미 plan.md 가 있으면 `/study:bs` 부터, preview 까지 있으면 다음 deep file 부터 재개.
+
+> **Note**: 과거 문서에 `/study:start` 항목이 있었으나 실제 스킬로 등록되지 않았다. exec 가 preview + 심화 deep file 모두 처리하는 통합 entry 다 (2026-05-12 정정).
 
 ---
 
