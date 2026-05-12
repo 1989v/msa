@@ -1,0 +1,25 @@
+# ADR-0046 — recommendation → recommendation-ann (8000) HTTP
+#
+# recommendation 서비스 (Kotlin) 가 Two-Tower retrieval 요청을 recommendation-ann
+# (Python FastAPI + FAISS HNSW) 로 위임. 다른 서비스는 recommendation-ann 호출 불가.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-recommendation-to-ann
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: recommendation-ann
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: recommendation
+      ports:
+        - { port: http, protocol: TCP }

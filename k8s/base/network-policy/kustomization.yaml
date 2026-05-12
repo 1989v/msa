@@ -29,6 +29,7 @@ resources:
   - 12-allow-backend-egress-internal.yaml
   - 13-allow-ingress-to-frontend.yaml
   - 14-allow-ingest-to-quant.yaml
+  - 15-allow-recommendation-to-ann.yaml
 
 # 주의: commonLabels / labels (includeSelectors=true) 는 사용 금지.
 # NetworkPolicy 의 podSelector.matchLabels 에 합쳐지면 selector 가

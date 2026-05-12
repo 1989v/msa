@@ -2,6 +2,7 @@ package com.kgd.recommendation.presentation
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.recommendation.application.usecase.GetCategoryBestUseCase
+import com.kgd.recommendation.application.usecase.GetPersonalizedUseCase
 import com.kgd.recommendation.application.usecase.GetSimilarItemsUseCase
 import com.kgd.recommendation.presentation.dto.RecommendationDto
 import org.springframework.web.bind.annotation.GetMapping
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController
 class RecommendationController(
     private val getCategoryBest: GetCategoryBestUseCase,
     private val getSimilarItems: GetSimilarItemsUseCase,
+    private val getPersonalized: GetPersonalizedUseCase,
 ) {
     /**
      * 도시 × 카테고리 단위 인기 추천 Top-N.
@@ -41,6 +43,21 @@ class RecommendationController(
         @RequestParam(defaultValue = "20") limit: Int,
     ): ApiResponse<RecommendationDto> {
         val result = getSimilarItems.execute(itemId, limit)
+        return ApiResponse.success(RecommendationDto.from(result))
+    }
+
+    /**
+     * 사용자별 personalized 추천.
+     *
+     * Phase 3 (ADR-0044, ADR-0046) — Two-Tower retrieval + FAISS HNSW (recommendation-ann sidecar).
+     * Cold-start fallback: 신규/저활동 user → user 선호 (city, category) 추정 → Category Best.
+     */
+    @GetMapping("/personalized")
+    fun personalized(
+        @RequestParam userId: Long,
+        @RequestParam(defaultValue = "20") limit: Int,
+    ): ApiResponse<RecommendationDto> {
+        val result = getPersonalized.execute(userId, limit)
         return ApiResponse.success(RecommendationDto.from(result))
     }
 }

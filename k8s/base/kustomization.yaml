@@ -29,6 +29,7 @@ resources:
   - quant
   - quant-ingest
   - recommendation
+  - recommendation-ann
   # Frontend + non-JVM services (Phase 7 extension)
   - portal-fe
   - gifticon-fe
