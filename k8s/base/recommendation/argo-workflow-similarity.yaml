@@ -1,0 +1,37 @@
+# ADR-0044 Phase 2 — weekly Item-Item CF (PPMI) recomputation
+#
+# 호출 흐름: Argo CronWorkflow → curl POST → /internal/sync/item-similarity
+# → ClickHouse 의 PPMI SQL 실행 → analytics.item_similarity 갱신
+# → Redis reco:similar:{itemId} ZSET atomic swap
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: recommendation-similarity-weekly
+  namespace: commerce
+spec:
+  schedule: "0 3 * * 0"  # 매주 일요일 03:00 KST
+  timezone: "Asia/Seoul"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 1800
+  workflowSpec:
+    entrypoint: trigger-sync
+    activeDeadlineSeconds: 7200  # 2 hour hard cap
+    templates:
+      - name: trigger-sync
+        retryStrategy:
+          limit: 2
+          retryPolicy: Always
+          backoff:
+            duration: "5m"
+            factor: 2
+            maxDuration: "20m"
+        container:
+          image: curlimages/curl:8.6.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              curl -sSf -X POST \
+                --max-time 3600 \
+                http://recommendation:8092/internal/sync/item-similarity \
+                -H "Content-Type: application/json"

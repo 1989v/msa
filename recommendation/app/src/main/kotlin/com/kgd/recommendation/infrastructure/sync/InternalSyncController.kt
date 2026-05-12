@@ -15,10 +15,18 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/internal/sync")
 class InternalSyncController(
     private val cbScoreSync: CbScoreSync,
+    private val itemSimilaritySync: ItemSimilaritySync,
 ) {
     @PostMapping("/cb-score")
     fun runCbScoreSync(): ApiResponse<CbScoreSync.SyncResult> {
         val result = cbScoreSync.sync()
+        return ApiResponse.success(result)
+    }
+
+    /** Phase 2 — Item-Item CF (PPMI) 재계산 + Redis sync. */
+    @PostMapping("/item-similarity")
+    fun runItemSimilaritySync(): ApiResponse<ItemSimilaritySync.SyncResult> {
+        val result = itemSimilaritySync.sync()
         return ApiResponse.success(result)
     }
 }

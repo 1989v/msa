@@ -21,6 +21,9 @@ class ClickHouseConfig(
 ) {
     @Bean(name = ["clickHouseDataSource"], destroyMethod = "close")
     fun clickHouseDataSource(): DataSource {
+        // ADR-0044 Phase 2 — read + write 둘 다 필요 (item_similarity TRUNCATE/INSERT).
+        // analytics DB 의 recommendation_* 테이블만 접근. 향후 별도 user (recommendation_writer)
+        // 분리 가능 — DBA 정책 결정 시점에.
         val config = HikariConfig().apply {
             jdbcUrl = url
             this.username = this@ClickHouseConfig.username
@@ -30,7 +33,6 @@ class ClickHouseConfig(
             minimumIdle = 1
             connectionTimeout = 5_000
             poolName = "recommendation-clickhouse-pool"
-            isReadOnly = true
         }
         return HikariDataSource(config)
     }
