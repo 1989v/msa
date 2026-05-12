@@ -32,12 +32,14 @@ data class CreateExperimentRequest(
 data class VariantRequest(
     val name: String,
     val weight: Int,
-    val config: Map<String, Any> = emptyMap()
+    // Jackson 이 missing JSON field 의 Kotlin default value 를 호출하지 못함 (non-null 강제 null).
+    // → nullable 로 받고 toDomain 에서 default 적용.
+    val config: Map<String, Any>? = null
 ) {
     fun toDomain(): Variant = Variant(
         id = null,
         name = name,
         weight = weight,
-        config = config
+        config = config ?: emptyMap()
     )
 }

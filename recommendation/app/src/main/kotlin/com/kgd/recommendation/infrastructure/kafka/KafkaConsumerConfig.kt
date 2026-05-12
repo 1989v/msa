@@ -2,13 +2,18 @@ package com.kgd.recommendation.infrastructure.kafka
 
 import com.kgd.common.analytics.AnalyticsEvent
 import org.apache.kafka.clients.consumer.ConsumerConfig
+import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
+import org.springframework.kafka.core.DefaultKafkaProducerFactory
+import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.core.ProducerFactory
 import org.springframework.kafka.support.serializer.JsonDeserializer
 
 /**
@@ -60,4 +65,21 @@ class KafkaConsumerConfig(
         factory.setConsumerFactory(stringConsumerFactory())
         return factory
     }
+
+    // Phase 7 — impression event publish 용 String producer
+    @Bean
+    fun recommendationStringProducerFactory(): ProducerFactory<String, String> {
+        val props = mapOf<String, Any>(
+            ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
+            ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+            ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
+            ProducerConfig.ACKS_CONFIG to "1",
+            ProducerConfig.LINGER_MS_CONFIG to 20,
+        )
+        return DefaultKafkaProducerFactory(props)
+    }
+
+    @Bean
+    fun stringKafkaTemplate(): KafkaTemplate<String, String> =
+        KafkaTemplate(recommendationStringProducerFactory())
 }

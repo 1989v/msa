@@ -29,4 +29,11 @@ class BanditMonitorController(
         banditPolicy.recordClick(variant)
         return ApiResponse.success(mapOf("variant" to variant, "recorded" to true))
     }
+
+    /** 운영자 수동 reset (Redis backend 만 — multi-instance posterior 초기화). */
+    @PostMapping("/reset")
+    fun reset(): ApiResponse<Map<String, Boolean>> {
+        banditPolicy.reset()
+        return ApiResponse.success(mapOf("reset" to true))
+    }
 }

@@ -2,6 +2,7 @@ package com.kgd.recommendation.application.usecase
 
 import com.kgd.recommendation.infrastructure.bandit.BanditPolicy
 import com.kgd.recommendation.infrastructure.client.RecommendationExperimentClient
+import com.kgd.recommendation.infrastructure.kafka.RecommendationImpressionPublisher
 import com.kgd.recommendation.port.EmbeddingAnnPort
 import com.kgd.recommendation.port.RankingPort
 import com.kgd.recommendation.port.UserMetadataPort
@@ -36,6 +37,7 @@ class GetPersonalizedUseCase(
     private val categoryBest: GetCategoryBestUseCase,
     private val experimentClient: RecommendationExperimentClient,
     private val banditPolicy: BanditPolicy,
+    private val impressionPublisher: RecommendationImpressionPublisher,
     @Value("\${recommendation.experiment.id:0}") private val experimentId: Long,
 ) {
     private val logger = KotlinLogging.logger {}
@@ -73,11 +75,14 @@ class GetPersonalizedUseCase(
         }.let { rec ->
             // variant 메타 데이터를 context 에는 못 넣음 (기존 도메인 변경 회피).
             // source 에 variant 접두사 추가하여 A/B 분석 가능하게.
-            if (variant != DEFAULT_VARIANT && rec.items.isNotEmpty()) {
+            val tagged = if (variant != DEFAULT_VARIANT && rec.items.isNotEmpty()) {
                 rec.copy(items = rec.items.map { it.copy(source = "${it.source}|ab:$variant") })
             } else {
                 rec
             }
+            // Phase 7 — 노출 이벤트 publish (Kafka). 활성화 시점에만 동작 (graceful).
+            impressionPublisher.publishImpressions(tagged, variant)
+            tagged
         }
     }
 
