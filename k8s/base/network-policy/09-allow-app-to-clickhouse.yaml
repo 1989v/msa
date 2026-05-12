@@ -1,9 +1,10 @@
-# ADR-0031 §1 (table) — {analytics, quant, quant-ingest} → ClickHouse (8123 HTTP)
+# ADR-0031 §1 (table) — {analytics, quant, quant-ingest, recommendation} → ClickHouse (8123 HTTP)
 #
 # ClickHouse 호출 서비스:
 #   - analytics      events 적재/조회
 #   - quant          OHLCV 차트 read (ChartController)
 #   - quant-ingest   OHLCV write (yfinance/FDR sidecar)
+#   - recommendation ADR-0045 Phase 1 — analytics DB 의 recommendation_events MV read + raw insert
 # 다른 서비스가 추가로 필요해지면 ingress.from.podSelector matchExpressions 에 추가.
 #
 # 라벨 선택 근거:
@@ -29,6 +30,6 @@ spec:
     - from:
         - podSelector:
             matchExpressions:
-              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, quant-ingest] }
+              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, quant-ingest, recommendation] }
       ports:
         - { port: 8123, protocol: TCP }
