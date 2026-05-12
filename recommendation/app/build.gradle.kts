@@ -14,6 +14,7 @@ dependencies {
     implementation(libs.spring.kafka)
     implementation(libs.kotlin.logging)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    implementation("org.apache.commons:commons-math3:3.6.1")  // BetaDistribution for ThompsonSampler
 
     // ClickHouse JDBC — analytics DB 조회용 (read-only).
     implementation("com.clickhouse:clickhouse-jdbc:0.6.0")

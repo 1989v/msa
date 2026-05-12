@@ -36,6 +36,7 @@ class RankingAnnRestClient(
         userCity: Long,
         candidates: List<RecommendationItem>,
         k: Int,
+        rankerType: String,
     ): List<RecommendationItem> {
         if (candidates.isEmpty()) return emptyList()
 
@@ -45,6 +46,7 @@ class RankingAnnRestClient(
             "user_city" to userCity,
             "candidate_item_ids" to candidates.map { it.itemId },
             "k" to k,
+            "ranker_type" to rankerType,
         )
         val request = HttpEntity(payload, headers)
 
@@ -59,8 +61,9 @@ class RankingAnnRestClient(
             if (body.itemIds.isEmpty()) {
                 return candidates.take(k)
             }
+            val source = "ranker-$rankerType"
             body.itemIds.zip(body.scores).map { (itemId, score) ->
-                RecommendationItem(itemId = itemId, score = score, source = "ranker-wide-and-deep")
+                RecommendationItem(itemId = itemId, score = score, source = source)
             }
         } catch (e: Exception) {
             logger.warn { "recommendation-ann /rank 실패 (userId=$userId): ${e.message} — retrieval 순서 유지" }

@@ -1,0 +1,24 @@
+# ADR-0044 Phase 4.5 — recommendation → experiment (8091) HTTP
+#
+# recommendation 서비스가 사용자별 A/B variant 조회를 위해 experiment 서비스 호출.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-recommendation-to-experiment
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: experiment
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: recommendation
+      ports:
+        - { port: http, protocol: TCP }

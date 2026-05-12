@@ -40,4 +40,24 @@ class KafkaConsumerConfig(
         factory.setConsumerFactory(analyticsEventConsumerFactory())
         return factory
     }
+
+    // Phase 7 — click event 용 String consumer (간단 payload 처리)
+    @Bean(name = ["recommendationStringConsumerFactory"])
+    fun stringConsumerFactory(): ConsumerFactory<String, String> {
+        val props = mapOf<String, Any>(
+            ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
+            ConsumerConfig.GROUP_ID_CONFIG to "recommendation-click-consumer",
+            ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
+            ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "latest",
+        )
+        return DefaultKafkaConsumerFactory(props)
+    }
+
+    @Bean(name = ["recommendationStringKafkaListenerContainerFactory"])
+    fun stringKafkaListenerContainerFactory(): ConcurrentKafkaListenerContainerFactory<String, String> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
+        factory.setConsumerFactory(stringConsumerFactory())
+        return factory
+    }
 }

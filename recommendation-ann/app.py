@@ -44,8 +44,8 @@ class _State:
         self.item_embeddings: np.ndarray | None = None
         self.item_ids: np.ndarray | None = None
         self.index: faiss.Index | None = None
-        # Ranking (optional — degraded mode 시 None)
-        self.ranker_session: ort.InferenceSession | None = None
+        # Ranking — multiple rankers (Phase 4 W&D + Phase 5 DLRM)
+        self.ranker_sessions: dict[str, ort.InferenceSession] = {}
         self.item_meta_lookup: dict[int, tuple[int, int]] = {}
         self.user_city_lookup: dict[int, int] = {}
         self.lock = threading.RLock()
@@ -78,33 +78,45 @@ class _State:
         else:
             log.warning("Retrieval models not found — /search will return empty")
 
-        # ---- Ranking (Wide & Deep) ----
-        ranker_onnx = MODELS_DIR / "ranker.onnx"
+        # ---- Ranking (Wide & Deep + DLRM) ----
         item_meta = MODELS_DIR / "item_metadata.npy"
-        new_ranker_session: ort.InferenceSession | None = None
+        new_sessions: dict[str, ort.InferenceSession] = {}
         new_meta_lookup: dict[int, tuple[int, int]] = {}
-        if ranker_onnx.exists() and item_meta.exists():
-            new_ranker_session = ort.InferenceSession(str(ranker_onnx), providers=["CPUExecutionProvider"])
-            meta = np.load(item_meta)  # (N, 3) — [item_id, city_id, category_id]
+
+        if item_meta.exists():
+            meta = np.load(item_meta)
             for row in meta:
                 new_meta_lookup[int(row[0])] = (int(row[1]), int(row[2]))
-            log.info(f"Ranking ready: {len(new_meta_lookup)} item metadata")
-        else:
-            log.warning("Ranker not found — /rank will return identity (no re-ranking)")
+
+        # Wide & Deep (Phase 4) — file: ranker.onnx
+        wd_onnx = MODELS_DIR / "ranker.onnx"
+        if wd_onnx.exists():
+            new_sessions["wide_and_deep"] = ort.InferenceSession(str(wd_onnx), providers=["CPUExecutionProvider"])
+            log.info("Ranker [wide_and_deep] loaded")
+
+        # DLRM (Phase 5) — file: dlrm.onnx
+        dlrm_onnx = MODELS_DIR / "dlrm.onnx"
+        if dlrm_onnx.exists():
+            new_sessions["dlrm"] = ort.InferenceSession(str(dlrm_onnx), providers=["CPUExecutionProvider"])
+            log.info("Ranker [dlrm] loaded")
+
+        if not new_sessions:
+            log.warning("No ranker found — /rank will return identity")
 
         with self.lock:
             self.user_session = new_user_session
             self.item_embeddings = new_embeddings
             self.item_ids = new_ids
             self.index = new_index
-            self.ranker_session = new_ranker_session
+            self.ranker_sessions = new_sessions
             self.item_meta_lookup = new_meta_lookup
+        log.info(f"Ranking ready: {len(new_meta_lookup)} item metadata, rankers={list(new_sessions.keys())}")
 
     def retrieval_ready(self) -> bool:
         return self.user_session is not None and self.index is not None
 
     def ranking_ready(self) -> bool:
-        return self.ranker_session is not None and bool(self.item_meta_lookup)
+        return bool(self.ranker_sessions) and bool(self.item_meta_lookup)
 
 
 state = _State()
@@ -134,6 +146,7 @@ class RankRequest(BaseModel):
     user_city: int = 0  # 0 = unknown
     candidate_item_ids: list[int]
     k: int = 20
+    ranker_type: str = "wide_and_deep"  # "wide_and_deep" 또는 "dlrm" (Phase 5)
 
 
 class RankResponse(BaseModel):
@@ -149,6 +162,7 @@ def health() -> dict:
         "ranking_ready": state.ranking_ready(),
         "n_items": int(state.item_embeddings.shape[0]) if state.retrieval_ready() else 0,
         "n_ranker_meta": len(state.item_meta_lookup),
+        "rankers": list(state.ranker_sessions.keys()),
     }
 
 
@@ -199,9 +213,9 @@ def search(req: SearchRequest):
 @app.post("/rank", response_model=RankResponse)
 def rank(req: RankRequest):
     """
-    Phase 4 — Wide & Deep ranking.
+    Phase 4 + 5 — Wide & Deep / DLRM ranking (ranker_type 으로 선택).
 
-    Ranker 가 없거나 candidate metadata 누락 시 identity (입력 순서 그대로 + score 0) 반환.
+    Ranker 가 없거나 candidate metadata 누락 시 identity 반환.
     호출자가 이 경우 retrieval score 를 그대로 사용.
     """
     if not req.candidate_item_ids:
@@ -210,7 +224,7 @@ def rank(req: RankRequest):
         raise HTTPException(status_code=400, detail="k must be in [1, 1000]")
 
     with state.lock:
-        session = state.ranker_session
+        session = state.ranker_sessions.get(req.ranker_type)
         meta = state.item_meta_lookup
 
     if session is None or not meta:

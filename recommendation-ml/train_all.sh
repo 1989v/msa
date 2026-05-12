@@ -11,5 +11,9 @@ echo "[train_all] Wide & Deep ranking 학습..."
 python train_ranking.py
 
 echo ""
+echo "[train_all] DLRM ranking 학습..."
+python train_dlrm.py
+
+echo ""
 echo "[train_all] 완료. ${OUTPUT_DIR:-/models} 의 산출물:"
 ls -la "${OUTPUT_DIR:-/models}"
