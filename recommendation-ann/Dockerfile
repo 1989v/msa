@@ -7,10 +7,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
 
-# Phase 3 PoC — 학습된 모델을 image 에 baked-in.
-# Production 화 시점에 PVC mount + recommendation-ml Job 으로 일일 재학습 분리.
-COPY models/ /models/
-
+# Phase 3.5 — 모델 파일은 PVC mount 로 외부에서 공유 (image baked-in 제거).
+# recommendation-ml K8s Job 이 학습 후 PVC /models 에 적재.
+# PVC 가 비어있어도 ann 은 degraded 모드로 기동, reindex 호출 시 활성화.
 ENV MODELS_DIR=/models
 
 EXPOSE 8000

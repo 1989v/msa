@@ -30,6 +30,7 @@ spec:
     - from:
         - podSelector:
             matchExpressions:
-              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, quant-ingest, recommendation] }
+              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, quant-ingest, recommendation, recommendation-ml] }
       ports:
-        - { port: 8123, protocol: TCP }
+        - { port: 8123, protocol: TCP }   # HTTP — recommendation 등이 사용
+        - { port: 9000, protocol: TCP }   # Native TCP — recommendation-ml (clickhouse_driver) 가 사용

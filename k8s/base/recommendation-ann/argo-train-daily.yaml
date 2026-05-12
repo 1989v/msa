@@ -1,0 +1,69 @@
+# Phase 3.5 — Two-Tower 일일 재학습 + ANN reindex (Argo CronWorkflow)
+#
+# Argo Workflows 가 설치된 환경에서 적용. 매일 04:00 KST.
+# 흐름:
+#   1) recommendation-ml Job → ClickHouse 에서 학습 → /models PVC 에 onnx/npy 적재
+#   2) reindex-ann task → POST http://recommendation-ann/reindex → 메모리 swap
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: recommendation-train-daily
+  namespace: commerce
+spec:
+  schedule: "0 4 * * *"  # 매일 04:00 KST
+  timezone: "Asia/Seoul"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 1800
+  workflowSpec:
+    entrypoint: pipeline
+    activeDeadlineSeconds: 7200
+    volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: recommendation-models
+    templates:
+      - name: pipeline
+        steps:
+          - - name: train
+              template: train-two-tower
+          - - name: reindex
+              template: reindex-ann
+
+      - name: train-two-tower
+        container:
+          image: commerce/recommendation-ml:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CLICKHOUSE_HOST
+              value: "clickhouse"
+            - name: CLICKHOUSE_PORT
+              value: "9000"
+            - name: CLICKHOUSE_USER
+              value: "analytics"
+            - name: CLICKHOUSE_PASSWORD
+              value: "analytics"
+            - name: OUTPUT_DIR
+              value: "/models"
+            - name: EPOCHS
+              value: "30"
+          volumeMounts:
+            - name: models
+              mountPath: /models
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+
+      - name: reindex-ann
+        container:
+          image: curlimages/curl:8.6.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              curl -sSf -X POST \
+                --max-time 300 \
+                http://recommendation-ann:8000/reindex \
+                -H "Content-Type: application/json"

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: recommendation-models
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: recommendation-models
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 200Mi
+  # storageClassName: local-path  # k3d default — 클러스터별 변경

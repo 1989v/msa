@@ -1,0 +1,59 @@
+# Phase 3.5 — recommendation-ml Job (수동 trigger 또는 Argo CronWorkflow 가 호출).
+#
+# 적용:
+#   kubectl create -f k8s/base/recommendation-ann/train-job.yaml
+# 또는 Argo CronWorkflow (k8s/base/recommendation-ann/argo-train-daily.yaml) 가 매일 자동 실행.
+#
+# K8s Job 은 generateName 으로 매번 새 인스턴스. PVC 는 recommendation-ann 과 공유 → 학습 후
+# recommendation-ann 이 reindex API 로 재로드.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: recommendation-ml-train-
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: recommendation-ml
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: 1800  # 30 min hard cap
+  ttlSecondsAfterFinished: 86400  # 1 day retention
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: recommendation-ml
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      restartPolicy: Never
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: recommendation-models
+      containers:
+        - name: train
+          image: commerce/recommendation-ml:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: CLICKHOUSE_HOST
+              value: "clickhouse"
+            - name: CLICKHOUSE_PORT
+              value: "9000"
+            - name: CLICKHOUSE_USER
+              value: "analytics"
+            - name: CLICKHOUSE_PASSWORD
+              value: "analytics"
+            - name: OUTPUT_DIR
+              value: "/models"
+            - name: EPOCHS
+              value: "30"
+            - name: BATCH_SIZE
+              value: "128"
+          volumeMounts:
+            - name: models
+              mountPath: /models
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              memory: 2Gi

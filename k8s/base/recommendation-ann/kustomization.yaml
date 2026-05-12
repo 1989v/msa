@@ -3,5 +3,6 @@ kind: Kustomization
 namespace: commerce
 resources:
   - serviceaccount.yaml
+  - pvc.yaml
   - deployment.yaml
   - service.yaml

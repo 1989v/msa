@@ -19,6 +19,12 @@ spec:
     spec:
       serviceAccountName: recommendation-ann
       terminationGracePeriodSeconds: 30
+      # Phase 3.5 — image baked-in models 대신 PVC mount (Argo Job 이 학습 결과 PVC 에 적재).
+      # 모델 부재 시 ann 은 degraded 모드로 기동 (학습 완료 후 reindex 호출 시 enabled).
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: recommendation-models
       containers:
         - name: app
           image: commerce/recommendation-ann:latest
@@ -26,6 +32,9 @@ spec:
           ports:
             - name: http
               containerPort: 8000
+          volumeMounts:
+            - name: models
+              mountPath: /models
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
