@@ -1,0 +1,41 @@
+# ADR-0045 Phase 1 — daily Category Best score sync
+#
+# Argo Workflows 가 설치된 환경에서만 적용. K3s-lite 의 기본 설치에는 포함되지 않음.
+# 적용: kubectl apply -f k8s/base/recommendation/argo-workflow.yaml
+#
+# 호출 흐름: Argo CronWorkflow → curl POST → recommendation 서비스의 /internal/sync/cb-score
+# → ClickHouse 의 recommendation_score_daily 에서 행동 카운트 읽기
+# → 행동 가중합 × log(1 + Wilson_LCB × 100) 계산
+# → Redis reco:cb:{cityId}:{categoryId} ZSET atomic swap
+apiVersion: argoproj.io/v1alpha1
+kind: CronWorkflow
+metadata:
+  name: recommendation-cb-daily
+  namespace: commerce
+spec:
+  schedule: "0 2 * * *"  # 매일 02:00 KST (cluster timezone 따라)
+  timezone: "Asia/Seoul"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  workflowSpec:
+    entrypoint: trigger-sync
+    activeDeadlineSeconds: 1800  # 30 min hard cap
+    templates:
+      - name: trigger-sync
+        retryStrategy:
+          limit: 3
+          retryPolicy: Always
+          backoff:
+            duration: "30s"
+            factor: 2
+            maxDuration: "5m"
+        container:
+          image: curlimages/curl:8.6.0
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              curl -sSf -X POST \
+                --max-time 600 \
+                http://recommendation:8092/internal/sync/cb-score \
+                -H "Content-Type: application/json"

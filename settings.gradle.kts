@@ -35,5 +35,7 @@ include(
     "wishlist:domain",
     "wishlist:app",
     "quant:domain",
-    "quant:app"
+    "quant:app",
+    "recommendation:domain",
+    "recommendation:app"
 )

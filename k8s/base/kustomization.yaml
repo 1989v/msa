@@ -28,6 +28,7 @@ resources:
   - agent-viewer-api
   - quant
   - quant-ingest
+  - recommendation
   # Frontend + non-JVM services (Phase 7 extension)
   - portal-fe
   - gifticon-fe

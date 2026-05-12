@@ -132,5 +132,11 @@ class GatewayRouteConfig(
                     }
                     .uri("http://warehouse:8090")
             }
+            // Recommendation Service — ADR-0044 Phase 1 (인증 불필요, 메인 페이지 비로그인 사용자도 호출)
+            .route("recommendation-service") { r ->
+                r.path("/api/v1/recommendations/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri("http://recommendation:8092")
+            }
             .build()
 }
