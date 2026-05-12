@@ -1,6 +1,7 @@
 package com.kgd.recommendation.application.usecase
 
 import com.kgd.recommendation.port.EmbeddingAnnPort
+import com.kgd.recommendation.port.RankingPort
 import com.kgd.recommendation.port.UserMetadataPort
 import com.kgd.recommendation.recommendation.Recommendation
 import com.kgd.recommendation.recommendation.RecommendationContext
@@ -10,16 +11,22 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 
 /**
- * Phase 3 — Two-Tower retrieval 기반 personalized 추천.
+ * Phase 3 + 4 — Two-Tower retrieval + Wide & Deep ranking 기반 personalized 추천 (ADR-0044/0046/0047).
+ *
+ * Funnel (학습 §01 §5):
+ *   1) Retrieval: Two-Tower (recommendation-ann /search) — Top-100 후보 (RETRIEVAL_K)
+ *   2) Ranking:   Wide & Deep (recommendation-ann /rank) — Top-N 정밀 재정렬
+ *   3) Boost / Cold-start fallback: 결과 부족 시 (city, category) CB 결합
  *
  * Cold-start fallback chain (§17):
- * 1. 활성 사용자 (action_count >= MIN_ACTIONS): recommendation-ann 호출 → Top-K
- * 2. 결과 부족 시 사용자의 선호 (city, category) 추론 → CB 로 보완
- * 3. 신규/anonymous 사용자: 곧장 CB (선호 추정 가능하면) 또는 default fallback
+ * - action_count < MIN_ACTIONS_FOR_PERSONALIZED → CB 직행
+ * - retrieval 결과 부족 → user 선호 (city, category) 추론 → CB 로 보완
+ * - retrieval 결과 충분 → ranking → Top-N
  */
 @Service
 class GetPersonalizedUseCase(
     private val annPort: EmbeddingAnnPort,
+    private val rankingPort: RankingPort,
     private val userMetadata: UserMetadataPort,
     private val categoryBest: GetCategoryBestUseCase,
 ) {
@@ -37,39 +44,41 @@ class GetPersonalizedUseCase(
             return fallbackToCategoryBest(userId, limit, defaultCityId, defaultCategoryId, source = "personalized-cold-start")
         }
 
-        // Active user: ANN retrieval
-        val annItems = annPort.retrievePersonalized(userId, limit)
+        // Stage 1 Retrieval — Top-100 (또는 limit×5, 더 작은 값)
+        val retrievalK = maxOf(limit * 5, RETRIEVAL_K_DEFAULT)
+        val annCandidates = annPort.retrievePersonalized(userId, retrievalK)
 
-        if (annItems.size >= (limit + 1) / 2) {
-            // 충분한 결과
+        if (annCandidates.size < (limit + 1) / 2) {
+            // Retrieval 결과 부족 → user 선호 context 로 CB 결합
+            val preferred = userMetadata.inferPreferredContext(userId)
+            val cb = if (preferred != null) {
+                categoryBest.execute(preferred.cityId, preferred.categoryId, limit)
+            } else {
+                categoryBest.execute(defaultCityId, defaultCategoryId, limit)
+            }
+            val existingIds = annCandidates.map { it.itemId }.toSet()
+            val cbFiltered = cb.items.filter { it.itemId !in existingIds }.take(limit - annCandidates.size)
             return Recommendation(
                 type = RecommendationType.PERSONALIZED,
                 userId = userId,
-                context = RecommendationContext(),
-                items = annItems.take(limit),
+                context = RecommendationContext(
+                    cityId = preferred?.cityId,
+                    categoryId = preferred?.categoryId,
+                ),
+                items = annCandidates + cbFiltered,
                 generatedAt = Instant.now(),
             )
         }
 
-        // ANN 결과 부족 → user 선호 context 로 CB 결합
-        val preferred = userMetadata.inferPreferredContext(userId)
-        val cb = if (preferred != null) {
-            categoryBest.execute(preferred.cityId, preferred.categoryId, limit)
-        } else {
-            categoryBest.execute(defaultCityId, defaultCategoryId, limit)
-        }
-
-        val existingIds = annItems.map { it.itemId }.toSet()
-        val cbFiltered = cb.items.filter { it.itemId !in existingIds }.take(limit - annItems.size)
+        // Stage 2 Ranking — Wide & Deep 재정렬
+        val userCity = userMetadata.inferPreferredContext(userId)?.cityId ?: 0L
+        val ranked = rankingPort.rerank(userId, userCity, annCandidates, limit)
 
         return Recommendation(
             type = RecommendationType.PERSONALIZED,
             userId = userId,
-            context = RecommendationContext(
-                cityId = preferred?.cityId,
-                categoryId = preferred?.categoryId,
-            ),
-            items = annItems + cbFiltered,
+            context = RecommendationContext(cityId = if (userCity > 0) userCity else null),
+            items = ranked.ifEmpty { annCandidates.take(limit) },
             generatedAt = Instant.now(),
         )
     }
@@ -100,5 +109,6 @@ class GetPersonalizedUseCase(
     companion object {
         const val MAX_LIMIT = 100
         const val MIN_ACTIONS_FOR_PERSONALIZED = 5L
+        const val RETRIEVAL_K_DEFAULT = 100
     }
 }
