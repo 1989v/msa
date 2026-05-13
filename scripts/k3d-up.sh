@@ -85,7 +85,7 @@ fi
 log "Importing JVM images into k3d..."
 "$SCRIPT_DIR/image-import.sh" --all 2>&1 | tail -1
 
-# ─── 4. Frontend + charting images (Docker) ──────────────
+# ─── 4. Frontend images (Docker) ─────────────────────────
 build_fe() {
     local name="$1" dockerfile="$2" context="$3"
     if [[ "$REBUILD" == true ]] || ! docker image inspect "commerce/${name}:latest" &>/dev/null; then
@@ -96,11 +96,9 @@ build_fe() {
         log "  → $name imported" || log "  → $name import (may already exist)"
 }
 
-build_fe portal-fe code-dictionary/frontend/Dockerfile code-dictionary/frontend/
+build_fe portal-fe          portal-fe/Dockerfile                portal-fe/
 build_fe gifticon-fe        gifticon/frontend/Dockerfile        gifticon/frontend/
 build_fe agent-viewer-fe    agent-viewer/front/Dockerfile       agent-viewer/front/
-build_fe charting-fe        charting/frontend/Dockerfile        charting/frontend/
-build_fe charting           charting/infra/Dockerfile           charting/
 
 # ─── 5. Apply overlay ────────────────────────────────────
 log "Applying k3s-lite overlay..."
@@ -128,7 +126,7 @@ if [[ "$MODE" == "core" ]]; then
     for svc in chatbot analytics experiment code-dictionary \
                search-batch search-consumer agent-viewer-api \
                inventory fulfillment warehouse member wishlist gifticon \
-               portal-fe gifticon-fe agent-viewer-fe charting charting-fe; do
+               portal-fe gifticon-fe agent-viewer-fe; do
         kubectl -n commerce scale deploy/$svc --replicas=0 2>/dev/null || true
     done
 fi
@@ -150,12 +148,12 @@ total=$(kubectl -n commerce get pods --no-headers 2>&1 | wc -l | tr -d ' ')
 echo " Pods:  ${ready}/${total} Ready"
 echo ""
 echo " Endpoints:"
-echo "   Gateway (API)    http://localhost/"
-echo "   Code Dictionary  http://localhost/code-dictionary/"
+echo "   Portal (root)    http://localhost/"
+echo "   Admin            http://localhost/admin/"
+echo "   Quant            http://localhost/quant/"
 echo "   Gifticon         http://localhost/gifticon/"
 echo "   Agent Viewer     http://localhost/agent-viewer/"
-echo "   Charting         http://localhost/charting/"
-echo "   Charting API     http://localhost/charting-api/docs"
+echo "   API (gateway)    http://localhost/api/"
 echo ""
 echo " 정리:  k3d cluster delete $CLUSTER_NAME"
 echo " 도움:  scripts/k3d-up.sh --help"

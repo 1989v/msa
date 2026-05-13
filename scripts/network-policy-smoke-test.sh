@@ -76,7 +76,7 @@ else
   warn "product pod 미발견 → skip"
 fi
 
-# 5. product → 외부 (example.com:443) 차단 (auth/quant/gifticon/charting 만 허용 정책)
+# 5. product → 외부 (example.com:443) 차단 (auth/quant/gifticon 만 허용 정책)
 echo "[5/5] product → example.com:443 차단 (외부 egress 제한 검증)"
 if [ -n "$PRODUCT_POD" ]; then
   if kubectl -n "$NS" exec "$PRODUCT_POD" -- timeout 5 sh -c 'echo > /dev/tcp/example.com/443' 2>/dev/null; then

@@ -15,7 +15,7 @@
 #   scripts/image-import.sh --service product          # auto-locate <service>/app/build/jib-image.tar
 #   scripts/image-import.sh --all                      # import every jib-image.tar under build/
 #   scripts/image-import.sh --fe                       # docker build + load every FE image
-#   scripts/image-import.sh --image commerce/charting:latest
+#   scripts/image-import.sh --image commerce/admin-fe:latest
 #                                                      # build + load a single named target
 #   scripts/image-import.sh --all-images               # jib tars + FE + non-JVM (full platform)
 #
@@ -37,12 +37,10 @@ usage() {
 build_targets() {
     cat <<'TARGETS'
 commerce/admin-fe:latest|admin/frontend|Dockerfile
-commerce/charting-fe:latest|charting/frontend|Dockerfile
 commerce/gifticon-fe:latest|gifticon/frontend|Dockerfile
 commerce/agent-viewer-fe:latest|agent-viewer/front|Dockerfile
 commerce/portal-fe:latest|portal-fe|Dockerfile
 commerce/quant-fe:latest|quant/frontend|Dockerfile
-commerce/charting:latest|charting|infra/Dockerfile
 commerce/quant-ingest:latest|quant/ingest|Dockerfile
 TARGETS
 }

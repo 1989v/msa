@@ -29,6 +29,15 @@ spec:
         - name: opensearch
           image: opensearchproject/opensearch:2.19.1
           imagePullPolicy: IfNotPresent
+          # Korean nori analyzer 플러그인 보장 — 미설치 시 시작 전 설치 (bundled, 외부 다운로드 불요)
+          command:
+            - bash
+            - -c
+            - |
+              if ! /usr/share/opensearch/bin/opensearch-plugin list | grep -q analysis-nori; then
+                /usr/share/opensearch/bin/opensearch-plugin install --batch analysis-nori
+              fi
+              exec /usr/share/opensearch/opensearch-docker-entrypoint.sh
           ports:
             - name: http
               containerPort: 9200
