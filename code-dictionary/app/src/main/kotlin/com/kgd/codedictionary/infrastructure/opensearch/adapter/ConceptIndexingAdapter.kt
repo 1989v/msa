@@ -6,17 +6,9 @@ import com.kgd.codedictionary.domain.index.model.ConceptIndex
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.analysis.Analyzer
 import org.opensearch.client.opensearch._types.analysis.CustomAnalyzer
-import org.opensearch.client.opensearch._types.analysis.EdgeNGramTokenizer
-import org.opensearch.client.opensearch._types.analysis.NoriDecompoundMode
-import org.opensearch.client.opensearch._types.analysis.NoriTokenizer
-import org.opensearch.client.opensearch._types.analysis.NoriPartOfSpeechTokenFilter
 import org.opensearch.client.opensearch._types.analysis.SynonymGraphTokenFilter
-import org.opensearch.client.opensearch._types.analysis.TokenChar
 import org.opensearch.client.opensearch._types.analysis.TokenFilter
 import org.opensearch.client.opensearch._types.analysis.TokenFilterDefinition
-import org.opensearch.client.opensearch._types.analysis.Tokenizer
-import org.opensearch.client.opensearch._types.analysis.TokenizerDefinition
-import org.opensearch.client.opensearch._types.mapping.Property
 import org.opensearch.client.opensearch.core.bulk.BulkOperation
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -26,219 +18,63 @@ import java.time.format.DateTimeFormatter
 @Component
 class ConceptIndexingAdapter(
     private val openSearchClient: OpenSearchClient,
-    @Value("\${opensearch.index-name:concept-index}") private val indexName: String
+    @Value("\${opensearch.index-name:concept-index}") private val aliasName: String
 ) : ConceptIndexingPort {
 
     private val log = LoggerFactory.getLogger(ConceptIndexingAdapter::class.java)
 
-    override fun createOrUpdateIndex() {
-        val indexExists = openSearchClient.indices().exists { e -> e.index(indexName) }.value()
-
-        if (indexExists) {
-            log.info("Index '{}' already exists, skipping creation", indexName)
-            return
-        }
-
-        openSearchClient.indices().create { c ->
-            c.index(indexName)
-                .settings { s ->
-                    s.analysis { a ->
-                        a.tokenizer(
-                            "nori_mixed",
-                            Tokenizer.of { t ->
-                                t.definition(
-                                    TokenizerDefinition.of { d ->
-                                        d.noriTokenizer(
-                                            NoriTokenizer.of { n ->
-                                                n.decompoundMode(NoriDecompoundMode.Mixed)
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
-                        .tokenizer(
-                            "edge_ngram_tokenizer",
-                            Tokenizer.of { t ->
-                                t.definition(
-                                    TokenizerDefinition.of { d ->
-                                        d.edgeNgram(
-                                            EdgeNGramTokenizer.of { e ->
-                                                e.minGram(1).maxGram(20).tokenChars(listOf(
-                                                    TokenChar.Letter,
-                                                    TokenChar.Digit
-                                                ))
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
-                        .filter(
-                            "nori_pos_filter",
-                            TokenFilter.of { tf ->
-                                tf.definition(
-                                    TokenFilterDefinition.of { tfd ->
-                                        tfd.noriPartOfSpeech(
-                                            NoriPartOfSpeechTokenFilter.of { n ->
-                                                n.stoptags(listOf(
-                                                    "E", "IC", "J", "MAG", "MAJ",
-                                                    "MM", "SP", "SSC", "SSO", "SC",
-                                                    "SE", "XPN", "XSA", "XSN", "XSV",
-                                                    "UNA", "NA", "VSV"
-                                                ))
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        )
-                        .analyzer(
-                            "concept_analyzer",
-                            Analyzer.of { an ->
-                                an.custom(
-                                    CustomAnalyzer.of { ca ->
-                                        ca.tokenizer("nori_mixed")
-                                            .filter(listOf("lowercase", "nori_pos_filter"))
-                                    }
-                                )
-                            }
-                        )
-                        .analyzer(
-                            "concept_search_analyzer",
-                            Analyzer.of { an ->
-                                an.custom(
-                                    CustomAnalyzer.of { ca ->
-                                        ca.tokenizer("nori_mixed")
-                                            .filter(listOf("lowercase", "nori_pos_filter"))
-                                    }
-                                )
-                            }
-                        )
-                        .analyzer(
-                            "autocomplete_analyzer",
-                            Analyzer.of { an ->
-                                an.custom(
-                                    CustomAnalyzer.of { ca ->
-                                        ca.tokenizer("edge_ngram_tokenizer")
-                                            .filter(listOf("lowercase"))
-                                    }
-                                )
-                            }
-                        )
-                        .analyzer(
-                            "autocomplete_search_analyzer",
-                            Analyzer.of { an ->
-                                an.custom(
-                                    CustomAnalyzer.of { ca ->
-                                        ca.tokenizer("standard")
-                                            .filter(listOf("lowercase"))
-                                    }
-                                )
-                            }
-                        )
-                    }
-                }
-                .mappings { m ->
-                    m.properties("concept_id", Property.of { p -> p.keyword { k -> k } })
-                        .properties("concept_name", Property.of { p ->
-                            p.text { t ->
-                                t.analyzer("concept_analyzer")
-                                    .searchAnalyzer("concept_search_analyzer")
-                                    .fields("autocomplete", Property.of { sub ->
-                                        sub.text { st ->
-                                            st.analyzer("autocomplete_analyzer")
-                                                .searchAnalyzer("autocomplete_search_analyzer")
-                                        }
-                                    })
-                            }
-                        })
-                        .properties("synonyms", Property.of { p -> p.text { t -> t.analyzer("concept_analyzer").searchAnalyzer("concept_search_analyzer") } })
-                        .properties("category", Property.of { p -> p.keyword { k -> k } })
-                        .properties("level", Property.of { p -> p.keyword { k -> k } })
-                        .properties("file_path", Property.of { p -> p.keyword { k -> k } })
-                        .properties("line_start", Property.of { p -> p.integer { i -> i } })
-                        .properties("line_end", Property.of { p -> p.integer { i -> i } })
-                        .properties("code_snippet", Property.of { p -> p.text { t -> t } })
-                        .properties("git_url", Property.of { p -> p.keyword { k -> k } })
-                        .properties("description", Property.of { p ->
-                            p.text { t ->
-                                t.analyzer("concept_analyzer")
-                                    .searchAnalyzer("concept_search_analyzer")
-                                    .fields("autocomplete", Property.of { sub ->
-                                        sub.text { st ->
-                                            st.analyzer("autocomplete_analyzer")
-                                                .searchAnalyzer("autocomplete_search_analyzer")
-                                        }
-                                    })
-                            }
-                        })
-                        .properties("indexed_at", Property.of { p -> p.date { d -> d } })
-                }
-        }
-
-        log.info("Index '{}' created successfully", indexName)
-    }
-
     override fun indexConceptIndex(concept: Concept, conceptIndex: ConceptIndex) {
         val document = buildDocument(concept, conceptIndex)
-
         openSearchClient.index { i ->
-            i.index(indexName)
-                .id("${concept.conceptId}_${conceptIndex.id ?: conceptIndex.location.filePath}_${conceptIndex.location.lineStart}")
+            i.index(aliasName)
+                .id(docId(concept, conceptIndex))
                 .document(document)
         }
-
         log.debug("Indexed concept '{}' at '{}'", concept.conceptId, conceptIndex.location.filePath)
     }
 
-    override fun bulkIndex(entries: List<Pair<Concept, ConceptIndex>>) {
+    override fun deleteByConceptId(conceptId: String) {
+        openSearchClient.deleteByQuery { d ->
+            d.index(aliasName)
+                .query { q ->
+                    q.term { t ->
+                        t.field("concept_id").value { v -> v.stringValue(conceptId) }
+                    }
+                }
+        }
+        log.info("Deleted documents for conceptId '{}'", conceptId)
+    }
+
+    override fun bulkIndex(targetIndex: String, entries: List<Pair<Concept, ConceptIndex>>) {
         if (entries.isEmpty()) return
 
         val operations = entries.map { (concept, conceptIndex) ->
             val document = buildDocument(concept, conceptIndex)
-            val docId = "${concept.conceptId}_${conceptIndex.id ?: conceptIndex.location.filePath}_${conceptIndex.location.lineStart}"
-
             BulkOperation.of { op ->
                 op.index<Map<String, Any?>> { idx ->
-                    idx.index(indexName)
-                        .id(docId)
+                    idx.index(targetIndex)
+                        .id(docId(concept, conceptIndex))
                         .document(document)
                 }
             }
         }
 
         val response = openSearchClient.bulk { b ->
-            b.index(indexName)
-                .operations(operations)
+            b.index(targetIndex).operations(operations)
         }
 
         if (response.errors()) {
             val errorItems = response.items().filter { it.error() != null }
-            log.error("Bulk indexing had {} errors out of {} operations", errorItems.size, entries.size)
-            errorItems.forEach { item ->
-                log.error("Bulk error: index={}, id={}, error={}", item.index(), item.id(), item.error()?.reason())
+            log.error("Bulk indexing had {} errors out of {} (index={})", errorItems.size, entries.size, targetIndex)
+            errorItems.take(5).forEach { item ->
+                log.error("  error: id={}, reason={}", item.id(), item.error()?.reason())
             }
         } else {
-            log.info("Bulk indexed {} documents successfully", entries.size)
+            log.info("Bulk indexed {} docs into '{}'", entries.size, targetIndex)
         }
     }
 
-    override fun deleteByConceptId(conceptId: String) {
-        openSearchClient.deleteByQuery { d ->
-            d.index(indexName)
-                .query { q ->
-                    q.term { t ->
-                        t.field("concept_id")
-                            .value { v -> v.stringValue(conceptId) }
-                    }
-                }
-        }
-
-        log.info("Deleted documents for conceptId '{}'", conceptId)
-    }
-
-    override fun updateSynonyms(synonymMap: Map<String, List<String>>) {
+    override fun updateSynonyms(targetIndex: String, synonymMap: Map<String, List<String>>) {
         if (synonymMap.isEmpty()) return
 
         val synonymRules = synonymMap.entries
@@ -246,15 +82,14 @@ class ConceptIndexingAdapter(
             .filter { it.contains(",") }
 
         if (synonymRules.isEmpty()) {
-            log.info("No valid synonym rules to update, skipping")
+            log.info("No valid synonym rules to update on '{}', skipping", targetIndex)
             return
         }
 
-        openSearchClient.indices().close { c -> c.index(indexName) }
-
+        openSearchClient.indices().close { c -> c.index(targetIndex) }
         try {
             openSearchClient.indices().putSettings { s ->
-                s.index(indexName)
+                s.index(targetIndex)
                     .settings { settings ->
                         settings.analysis { a ->
                             a.filter(
@@ -264,15 +99,13 @@ class ConceptIndexingAdapter(
                                         TokenFilterDefinition.of { tfd ->
                                             tfd.synonymGraph(
                                                 SynonymGraphTokenFilter.of { sg ->
-                                                    sg.synonyms(synonymRules)
-                                                        .lenient(true)
+                                                    sg.synonyms(synonymRules).lenient(true)
                                                 }
                                             )
                                         }
                                     )
                                 }
-                            )
-                            .analyzer(
+                            ).analyzer(
                                 "concept_search_analyzer",
                                 Analyzer.of { an ->
                                     an.custom(
@@ -286,29 +119,29 @@ class ConceptIndexingAdapter(
                         }
                     }
             }
-
-            log.info("Updated synonym filter with {} rules", synonymRules.size)
+            log.info("Updated synonym filter on '{}' with {} rules", targetIndex, synonymRules.size)
         } catch (e: Exception) {
-            log.warn("Failed to update synonyms, search will work without synonym expansion: {}", e.message)
+            log.warn("Failed to update synonyms on '{}': {}", targetIndex, e.message)
         } finally {
-            openSearchClient.indices().open { o -> o.index(indexName) }
+            openSearchClient.indices().open { o -> o.index(targetIndex) }
         }
     }
 
-    private fun buildDocument(concept: Concept, conceptIndex: ConceptIndex): Map<String, Any?> {
-        return mapOf(
-            "concept_id" to concept.conceptId,
-            "concept_name" to concept.name,
-            "synonyms" to concept.synonyms.joinToString(" "),
-            "category" to concept.category.name,
-            "level" to concept.level.name,
-            "file_path" to conceptIndex.location.filePath,
-            "line_start" to conceptIndex.location.lineStart,
-            "line_end" to conceptIndex.location.lineEnd,
-            "code_snippet" to conceptIndex.codeSnippet,
-            "git_url" to conceptIndex.location.gitUrl,
-            "description" to (conceptIndex.description ?: concept.description),
-            "indexed_at" to conceptIndex.indexedAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-        )
-    }
+    private fun docId(concept: Concept, conceptIndex: ConceptIndex): String =
+        "${concept.conceptId}_${conceptIndex.id ?: conceptIndex.location.filePath}_${conceptIndex.location.lineStart}"
+
+    private fun buildDocument(concept: Concept, conceptIndex: ConceptIndex): Map<String, Any?> = mapOf(
+        "concept_id" to concept.conceptId,
+        "concept_name" to concept.name,
+        "synonyms" to concept.synonyms.joinToString(" "),
+        "category" to concept.category.name,
+        "level" to concept.level.name,
+        "file_path" to conceptIndex.location.filePath,
+        "line_start" to conceptIndex.location.lineStart,
+        "line_end" to conceptIndex.location.lineEnd,
+        "code_snippet" to conceptIndex.codeSnippet,
+        "git_url" to conceptIndex.location.gitUrl,
+        "description" to (conceptIndex.description ?: concept.description),
+        "indexed_at" to conceptIndex.indexedAt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
 }

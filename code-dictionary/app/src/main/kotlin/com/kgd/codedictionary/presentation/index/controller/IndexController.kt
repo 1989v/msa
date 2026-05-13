@@ -4,10 +4,12 @@ import com.kgd.codedictionary.application.index.dto.CreateIndexCommand
 import com.kgd.codedictionary.application.index.dto.IndexResultDto
 import com.kgd.codedictionary.application.index.dto.IndexStatusDto
 import com.kgd.codedictionary.application.index.service.IndexService
+import com.kgd.codedictionary.application.sync.dto.IndexSyncJob
 import com.kgd.codedictionary.application.sync.service.SyncService
 import com.kgd.common.response.ApiResponse
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -29,9 +31,20 @@ class IndexController(
     }
 
     @PostMapping("/sync")
-    fun syncToOpenSearch(): ApiResponse<String> {
-        syncService.syncAllToOpenSearch()
-        return ApiResponse.success("동기화 완료")
+    fun submitSync(): ApiResponse<IndexSyncJob> = ApiResponse.success(syncService.submit())
+
+    @GetMapping("/sync/{jobId}")
+    fun getSyncJob(@PathVariable jobId: String): ApiResponse<IndexSyncJob> {
+        val job = syncService.get(jobId)
+            ?: return ApiResponse.success(
+                IndexSyncJob(
+                    jobId = jobId,
+                    status = com.kgd.codedictionary.application.sync.dto.IndexSyncStatus.FAILED,
+                    startedAt = java.time.Instant.EPOCH,
+                    error = "job not found"
+                )
+            )
+        return ApiResponse.success(job)
     }
 
     @GetMapping("/status")
