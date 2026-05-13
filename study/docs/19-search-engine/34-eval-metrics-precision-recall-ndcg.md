@@ -486,6 +486,7 @@ Phase 4: A/B 테스트 통합 (experiment 서비스 도입 후)
 - §18 — Hybrid Search PoC 의 nDCG@10 비교
 - §19 — 검색 품질 측정 부재 ADR 후보
 - §35 — function_score modifier (이 메트릭으로 modifier 효과 측정)
+- **§45 — Offline vs Online · Bias 보정 · 3-Tier 파이프라인** (본 파일은 메트릭 수식 / Stage 축, §45 는 Setting 축 + bias + 평가 파이프라인)
 
 ---
 
