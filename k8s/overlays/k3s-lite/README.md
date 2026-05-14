@@ -9,7 +9,7 @@ and applies trim-downs to fit a laptop-class cluster (~8 GiB RAM).
 - **Base layers**
   - `../../infra/local` — MySQL (single pod + 17 aliased Services),
     Redis (standalone + 6 aliased Services), Kafka (KRaft single-node),
-    Elasticsearch, OpenSearch, ClickHouse
+    Elasticsearch (+ Nori plugin), ClickHouse
   - `../../base` — 18 Spring Boot app Deployments + Services + Ingress
 - **Overlay patches**
   - `patches/resources-reduce.yaml` — strategic merge applied to every

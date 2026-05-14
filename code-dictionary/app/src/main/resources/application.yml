@@ -39,11 +39,12 @@ server:
   port: 8089
   shutdown: graceful
 
-opensearch:
-  host: ${OPENSEARCH_HOST:localhost}
-  port: ${OPENSEARCH_PORT:9210}
-  scheme: http
+spring.elasticsearch:
+  uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+
+elasticsearch:
   index-name: concept-index
+  retention: 2
 
 management:
   endpoints:

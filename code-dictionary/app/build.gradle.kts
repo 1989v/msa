@@ -23,10 +23,7 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-mysql")
     // Spring Boot 4 split Flyway autoconfig into its own module
     implementation("org.springframework.boot:spring-boot-flyway")
-    implementation("org.opensearch.client:opensearch-java:2.19.0")
-    implementation("org.opensearch.client:opensearch-rest-client:2.19.0")
-    implementation("org.apache.httpcomponents.client5:httpclient5")
-    implementation("org.apache.httpcomponents.core5:httpcore5")
+    implementation(libs.spring.boot.starter.data.elasticsearch)
     // Treemap stats endpoint — Caffeine in-memory cache (spec.md §7)
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation(libs.caffeine)

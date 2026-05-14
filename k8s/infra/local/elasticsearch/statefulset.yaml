@@ -34,6 +34,16 @@ spec:
           # 8.15.3 ↔ 9.x client 는 media-type 헤더 호환성 문제로 search service 가 DOWN.
           image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
           imagePullPolicy: IfNotPresent
+          # Korean nori analyzer 플러그인 보장 — code-dictionary 가 Nori tokenizer 사용
+          # (search 서비스는 미사용, 단일 ES 클러스터 공유)
+          command:
+            - bash
+            - -c
+            - |
+              if ! /usr/share/elasticsearch/bin/elasticsearch-plugin list | grep -q analysis-nori; then
+                /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch analysis-nori
+              fi
+              exec /usr/local/bin/docker-entrypoint.sh elasticsearch
           ports:
             - name: http
               containerPort: 9200

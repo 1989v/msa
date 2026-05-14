@@ -10,6 +10,6 @@ spring:
     user: ${MYSQL_USER:code_dictionary_user}
     password: ${MYSQL_PASSWORD:code_dictionary_password}
 
-opensearch:
-  host: opensearch
-  port: 9200
+spring:
+  elasticsearch:
+    uris: http://elasticsearch:9200

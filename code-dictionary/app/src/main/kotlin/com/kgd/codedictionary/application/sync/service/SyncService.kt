@@ -6,7 +6,7 @@ import com.kgd.codedictionary.application.search.port.ConceptIndexingPort
 import com.kgd.codedictionary.application.sync.dto.IndexSyncJob
 import com.kgd.codedictionary.domain.index.model.CodeLocation
 import com.kgd.codedictionary.domain.index.model.ConceptIndex
-import com.kgd.codedictionary.infrastructure.opensearch.adapter.IndexAliasManager
+import com.kgd.codedictionary.infrastructure.elasticsearch.adapter.IndexAliasManager
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Pageable
@@ -20,8 +20,8 @@ class SyncService(
     private val indexingPort: ConceptIndexingPort,
     private val aliasManager: IndexAliasManager,
     private val jobRegistry: IndexSyncJobRegistry,
-    @Value("\${opensearch.index-name:concept-index}") private val alias: String,
-    @Value("\${opensearch.retention:2}") private val retention: Int
+    @Value("\${elasticsearch.index-name:concept-index}") private val alias: String,
+    @Value("\${elasticsearch.retention:2}") private val retention: Int
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 

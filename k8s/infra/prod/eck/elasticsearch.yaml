@@ -17,6 +17,15 @@ spec:
         xpack.security.enabled: true
       podTemplate:
         spec:
+          # Nori plugin 설치 — code-dictionary 가 Korean tokenizer 사용
+          initContainers:
+            - name: install-plugins
+              command:
+                - sh
+                - -c
+                - |
+                  bin/elasticsearch-plugin list | grep -q analysis-nori || \
+                  bin/elasticsearch-plugin install --batch analysis-nori
           containers:
             - name: elasticsearch
               resources:
@@ -43,6 +52,14 @@ spec:
         xpack.security.enabled: true
       podTemplate:
         spec:
+          initContainers:
+            - name: install-plugins
+              command:
+                - sh
+                - -c
+                - |
+                  bin/elasticsearch-plugin list | grep -q analysis-nori || \
+                  bin/elasticsearch-plugin install --batch analysis-nori
           containers:
             - name: elasticsearch
               resources:

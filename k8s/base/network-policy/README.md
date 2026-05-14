@@ -44,7 +44,7 @@ mTLS 강제는 ADR-0037 OQ-015 default 에서 Phase 4 로 결정 (Phase 3 GA 까
 | `05-allow-app-to-mysql.yaml` | 백엔드 → mysql:3306 |
 | `06-allow-app-to-redis.yaml` | 백엔드 → redis:6379 |
 | `07-allow-app-to-kafka.yaml` | 백엔드 → kafka:9092 (CLIENT) |
-| `08-allow-app-to-search.yaml` | 백엔드 → elasticsearch / opensearch :9200 |
+| `08-allow-app-to-search.yaml` | 백엔드 → elasticsearch :9200 |
 | `09-allow-app-to-clickhouse.yaml` | analytics → clickhouse:8123 |
 | `10-allow-monitoring-scrape.yaml` | monitoring ns Prometheus → 백엔드 named port http |
 | `11-allow-egress-https-public.yaml` | auth/quant/gifticon → 외부 :443 |
@@ -78,7 +78,7 @@ labels:
 | §05 mysql | `app.kubernetes.io/name=mysql` | `k8s/infra/local/mysql/statefulset.yaml:7` |
 | §06 redis | `app.kubernetes.io/name=redis` | `k8s/infra/local/redis/statefulset.yaml:7` |
 | §07 kafka | `app.kubernetes.io/name=kafka` | `k8s/infra/local/kafka/statefulset.yaml:7` |
-| §08 search | `In [elasticsearch, opensearch]` | `k8s/infra/local/elasticsearch/service.yaml:8`, `k8s/infra/local/opensearch/service.yaml:8` |
+| §08 search | `app.kubernetes.io/name=elasticsearch` | `k8s/infra/local/elasticsearch/service.yaml:8` |
 | §09 clickhouse | `app.kubernetes.io/name=clickhouse` | `k8s/infra/local/clickhouse/service.yaml:8` |
 
 ### Namespace 라벨

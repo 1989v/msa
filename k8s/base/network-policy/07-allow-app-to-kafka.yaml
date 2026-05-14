@@ -28,6 +28,6 @@ spec:
         - podSelector:
             matchExpressions:
               - { key: app.kubernetes.io/part-of, operator: In, values: [commerce-platform] }
-              - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, elasticsearch, opensearch, clickhouse] }
+              - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, elasticsearch, clickhouse] }
       ports:
         - { port: 9092, protocol: TCP }

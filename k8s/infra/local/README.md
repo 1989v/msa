@@ -17,8 +17,7 @@ rationale behind splitting local and prod infra.
 | `mysql/`         | Single MySQL 8.0 pod hosting every service's database. Aliased Services (`mysql-product-master`, `mysql-order-replica`, ...) point to the same backing pod so `application-kubernetes.yml` needs no changes. |
 | `redis/`         | Standalone Redis 7 with `redis`, `redis-1..6` Services (see caveat)     |
 | `kafka/`         | Kafka 3.8 KRaft single-node (no ZooKeeper). Exposes `kafka:29092`       |
-| `elasticsearch/` | Elasticsearch 8.15 single-node (search service)                         |
-| `opensearch/`    | OpenSearch 2.19 single-node (code-dictionary service)                   |
+| `elasticsearch/` | Elasticsearch 9.0 single-node + Nori plugin (search + code-dictionary)  |
 | `clickhouse/`    | ClickHouse 24.8 single-node (analytics service)                         |
 | `ingress-nginx/` | README with Helm install instructions                                   |
 
@@ -64,10 +63,8 @@ kubectl -n commerce exec -it mysql-0 -- \
 kubectl -n commerce exec -it kafka-0 -- \
     kafka-topics.sh --bootstrap-server kafka:29092 --list
 
-# Elasticsearch / OpenSearch / ClickHouse
+# Elasticsearch / ClickHouse
 kubectl -n commerce exec -it elasticsearch-0 -- \
-    curl -s http://localhost:9200/_cluster/health
-kubectl -n commerce exec -it opensearch-0 -- \
     curl -s http://localhost:9200/_cluster/health
 kubectl -n commerce exec -it clickhouse-0 -- \
     clickhouse-client --query "SELECT 1"
@@ -111,13 +108,12 @@ topology.
 | Redis         | 128 Mi         | 256 Mi       |
 | Kafka         | 768 Mi         | 1.5 Gi       |
 | Elasticsearch | 1 Gi           | 1.5 Gi       |
-| OpenSearch    | 1 Gi           | 1.5 Gi       |
 | ClickHouse    | 512 Mi         | 1 Gi         |
-| **Total**     | **~4 Gi**      | **~6.75 Gi** |
+| **Total**     | **~3 Gi**      | **~5.25 Gi** |
 
-If your local cluster has less than 6 GiB free, skip `opensearch/` or
-`clickhouse/` from `kustomization.yaml` and disable the corresponding
-services in the app overlay.
+If your local cluster has less than 6 GiB free, skip `clickhouse/`
+from `kustomization.yaml` and disable the corresponding services in
+the app overlay.
 
 ### Storage
 

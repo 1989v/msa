@@ -30,14 +30,13 @@ found" errors during the initial rollout.
    - `strimzi/` — Kafka + KafkaTopic CRs
    - `percona-mysql/` — Percona Server for MySQL Operator + clusters
    - `redis/` — Bitnami Redis Cluster Helm chart (6 nodes)
-   - `eck/` — Elastic Cloud on Kubernetes + Elasticsearch cluster
-   - `opensearch/` — OpenSearch Operator + OpenSearchCluster
+   - `eck/` — Elastic Cloud on Kubernetes + Elasticsearch cluster (+ Nori plugin)
    - `clickhouse/` — Altinity ClickHouse Operator + installation CR
 
 Every data plane Operator reconciles its own CR into StatefulSets,
 PVCs, and Services that match the DNS names already hardcoded in
 `application-kubernetes.yml` (e.g. `mysql-product-master`,
-`redis-1..6`, `kafka:29092`, `elasticsearch:9200`, `opensearch:9200`,
+`redis-1..6`, `kafka:29092`, `elasticsearch:9200`,
 `clickhouse:8123`). The app side of the platform needs no further
 change once all CRs are Ready.
 
@@ -50,15 +49,14 @@ change once all CRs are Ready.
 | `strimzi/`         | Strimzi Kafka Operator         | Kafka cluster + topic declaration            |
 | `percona-mysql/`   | Percona Operator for MySQL     | HA MySQL with XtraBackup-compatible backups |
 | `redis/`           | Bitnami Redis Cluster (Helm)   | 6-node Redis cluster (replaces local-path redis standalone) |
-| `eck/`             | Elastic Cloud on Kubernetes    | Elasticsearch cluster used by search service |
-| `opensearch/`      | OpenSearch Operator            | OpenSearch cluster used by code-dictionary   |
+| `eck/`             | Elastic Cloud on Kubernetes    | Elasticsearch cluster (search + code-dictionary, Nori plugin) |
 | `clickhouse/`      | Altinity ClickHouse Operator   | ClickHouse installation used by analytics    |
 | `monitoring/`      | kube-prometheus-stack          | Prometheus + Alertmanager + Grafana          |
 
 ## Resource footprint (rough baseline)
 
 With 3-broker Kafka, 1 master + 1 replica MySQL per service,
-6-node Redis cluster, 3 master + 2 data Elasticsearch, 1-node OpenSearch
+6-node Redis cluster, 3 master + 2 data Elasticsearch,
 and ClickHouse single-node:
 
 | Component    | Pods | Memory total |
@@ -67,10 +65,9 @@ and ClickHouse single-node:
 | MySQL        |   24 |         24Gi |
 | Redis        |    6 |          6Gi |
 | Elasticsearch|    5 |         10Gi |
-| OpenSearch   |    1 |          2Gi |
 | ClickHouse   |    1 |          2Gi |
 | Monitoring   |   ~8 |          4Gi |
-| **Total**    |  ~48 |        ~54Gi |
+| **Total**    |  ~47 |        ~52Gi |
 
 A 3-node managed cluster with 4 CPU / 16 GiB per node is the minimum
 to handle this comfortably; 6 nodes is recommended for headroom.

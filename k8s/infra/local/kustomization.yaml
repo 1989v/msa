@@ -9,6 +9,5 @@ resources:
   - redis
   - kafka
   - elasticsearch
-  - opensearch
   - clickhouse
   - quant-postgres

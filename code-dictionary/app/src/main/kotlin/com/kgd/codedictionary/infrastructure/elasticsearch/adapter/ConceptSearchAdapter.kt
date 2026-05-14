@@ -1,20 +1,20 @@
-package com.kgd.codedictionary.infrastructure.opensearch.adapter
+package com.kgd.codedictionary.infrastructure.elasticsearch.adapter
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient
+import co.elastic.clients.elasticsearch._types.query_dsl.Query
+import co.elastic.clients.json.JsonData
 import com.kgd.codedictionary.application.search.port.ConceptSearchPort
 import com.kgd.codedictionary.application.search.port.SearchHit
 import com.kgd.codedictionary.application.search.port.SearchResponse
 import com.kgd.codedictionary.application.search.port.SuggestHit
-import org.opensearch.client.json.JsonData
-import org.opensearch.client.opensearch.OpenSearchClient
-import org.opensearch.client.opensearch._types.query_dsl.Query
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
 @Component
 class ConceptSearchAdapter(
-    private val openSearchClient: OpenSearchClient,
-    @Value("\${opensearch.index-name:concept-index}") private val indexName: String
+    private val elasticsearchClient: ElasticsearchClient,
+    @Value("\${elasticsearch.index-name:concept-index}") private val indexName: String
 ) : ConceptSearchPort {
 
     private val log = LoggerFactory.getLogger(ConceptSearchAdapter::class.java)
@@ -44,7 +44,7 @@ class ConceptSearchAdapter(
             )
         }
 
-        val response = openSearchClient.search({ s ->
+        val response = elasticsearchClient.search({ s ->
             s.index(indexName)
                 .query { q ->
                     q.bool { b ->
@@ -105,7 +105,7 @@ class ConceptSearchAdapter(
     }
 
     override fun suggest(query: String, size: Int): List<SuggestHit> {
-        val response = openSearchClient.search({ s ->
+        val response = elasticsearchClient.search({ s ->
             s.index(indexName)
                 .query { q ->
                     q.bool { b ->

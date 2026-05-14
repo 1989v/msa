@@ -29,7 +29,7 @@ budgets, and TLS on top of the shared service base.
 
 This overlay intentionally does not pull in any infrastructure from
 `k8s/infra/local/`. Production backing services (Kafka, MySQL, Redis,
-Elasticsearch, OpenSearch, ClickHouse) come from Operator-managed
+Elasticsearch, ClickHouse) come from Operator-managed
 stacks under `k8s/infra/prod/`, which is Phase 4 of the migration
 (ADR-0019) and arrives in a later commit.
 
