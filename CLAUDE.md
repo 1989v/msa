@@ -174,6 +174,7 @@ ingress-nginx 의 longer-prefix-first 매칭 → sub-FE prefix 가 portal-fe 의
 | Mode | 대상 | Overlay | Infra |
 |---|---|---|---|
 | `k3s-lite` | 로컬 k3d / 에지 단일노드 | `k8s/overlays/k3s-lite/` | `k8s/infra/local/` (plain StatefulSet) |
+| `oci-arm` | OCI Ampere A1 free tier (arm64) | `k8s/overlays/oci-arm/` | `k8s/infra/local/` (k3s-lite 상속, nip.io + cert-manager) |
 | `prod-k8s` | managed K8s (EKS/GKE/AKS) | `k8s/overlays/prod-k8s/` | `k8s/infra/prod/` (Operator 기반) |
 
 ## Backup & Disaster Recovery

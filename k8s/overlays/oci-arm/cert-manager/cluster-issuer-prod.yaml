@@ -1,0 +1,16 @@
+# Let's Encrypt Production — 실제 trusted 인증서. Rate limit (50 certs/주/등록 도메인).
+# nip.io 는 Public Suffix List 에 등재되어 있어 각 서브도메인이 독립 도메인 취급 → 사실상 무제한.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: __OCI_LE_EMAIL__
+    privateKeySecretRef:
+      name: letsencrypt-prod-account
+    solvers:
+      - http01:
+          ingress:
+            class: nginx

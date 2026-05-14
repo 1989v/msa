@@ -1,0 +1,64 @@
+# gateway ingress 에 host + TLS 추가.
+#
+# 단일 hostname `commerce.<IP-DASHED>.nip.io` 으로 모든 path 통합:
+#   /api/...      → gateway (REST)
+#   /sse/...      → gateway (SSE)
+#   /ws/...       → gateway (WebSocket)
+#   /svc/...      → gateway (actuator proxy)
+#   /actuator/... → gateway (own actuator)
+#
+# render.sh 가 __OCI_IP_DASHED__ 를 실제 IP-dashed 로 치환한다.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gateway
+  namespace: commerce
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - commerce.__OCI_IP_DASHED__.nip.io
+      secretName: gateway-nipio-tls
+  rules:
+    - host: commerce.__OCI_IP_DASHED__.nip.io
+      http:
+        paths:
+          - path: /api(/.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http
+          - path: /sse(/.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http
+          - path: /ws(/.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http
+          - path: /svc/(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http
+          - path: /actuator(/.*)?
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: gateway
+                port:
+                  name: http

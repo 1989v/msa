@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# OCI Ampere A1 (arm64) single-node overlay.
+#
+# 베이스: k3s-lite (이미 리소스 절감 + Redis standalone + ClickHouse 메모리 상향 적용)
+# 위에 다음을 더 얹는다:
+#   - nip.io 기반 host 라우팅 (도메인 없이 TLS 가능)
+#   - cert-manager + Let's Encrypt HTTP01 challenge
+#   - 24GB / 4 OCPU 안에서 전체 서비스 셋 가동
+#
+# 멀티 아키텍처 (arm64): 사용 중인 컨테이너 이미지가 전부 multi-arch 인지 확인.
+#   - 인프라(MySQL/Kafka/Redis/ES/ClickHouse): 공식 이미지 multi-arch ✅
+#   - JVM 서비스: Jib 빌드는 빌드 호스트 아키텍처 따라감.
+#     로컬이 Apple Silicon 이면 그대로 arm64. Intel Mac 이면 platforms 추가 필요.
+#   - FE: docker buildx build --platform linux/arm64
+#
+# 적용 절차 (요약):
+#   1. ./k8s/overlays/oci-arm/scripts/render.sh <PUBLIC_IP> <LE_EMAIL> | kubectl apply -f -
+#   2. cert-manager 가 ClusterIssuer 로 letsencrypt-prod 발급 (5~30s)
+#   3. https://commerce.<IP-DASHED>.nip.io 접속 가능
+#
+# 자세한 사전 작업(k3s 설치, 방화벽, ingress-nginx, cert-manager 설치)은 README 참조.
+
+namespace: commerce
+
+resources:
+  - ../k3s-lite
+  - cert-manager/cluster-issuer-staging.yaml
+  - cert-manager/cluster-issuer-prod.yaml
+
+patches:
+  - path: patches/ingress-gateway-tls.yaml
+    target:
+      kind: Ingress
+      name: gateway
+  - path: patches/ingress-frontend-tls.yaml
+    target:
+      kind: Ingress
+      name: frontend
