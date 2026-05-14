@@ -15,7 +15,8 @@ Single-node k3s 배포용 overlay. 베이스는 `k3s-lite` 이고 그 위에 nip
 | ingress-nginx | helm install (`--set controller.service.type=LoadBalancer`) |
 | cert-manager | helm install (CRDs 포함, `--set installCRDs=true`) |
 
-자세한 부트스트랩 스크립트는 `scripts/oci-bootstrap.sh` (Phase C) 참조.
+자세한 부트스트랩 스크립트: [`scripts/oci-bootstrap.sh`](../../../scripts/oci-bootstrap.sh).
+VM 안에서 `sudo ./scripts/oci-bootstrap.sh` 한 번이면 k3s + ingress-nginx + cert-manager 까지 자동 설치된다.
 
 ## 이미지 사전 작업 (arm64)
 
