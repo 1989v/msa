@@ -1,0 +1,94 @@
+# Argo CD Helm 차트 values — 최소 리소스 (총 ~704Mi) 설정.
+# 차트: argo/argo-cd (https://argoproj.github.io/argo-helm)
+#
+# 운영 보장 한계점:
+#   - 50개 미만 resource 의 단일 클러스터에 한해 동작 검증
+#   - UI 다중 동시 접속 시 server OOM 위험 — 단일 사용자 권장
+#   - first reconcile 5~10초 → 30~60초로 느려질 수 있음 (controller 메모리 작음)
+#
+# 옵션 컴포넌트 비활성 (dex/notifications/applicationset) — 130Mi 추가 회수.
+
+global:
+  # 모든 컴포넌트에 동일 라벨 부여 (NetworkPolicy 매칭용)
+  additionalLabels:
+    app.kubernetes.io/part-of: argocd
+
+configs:
+  params:
+    # Ingress 가 TLS 종단 → server 는 평문 HTTP 로 서빙
+    server.insecure: true
+    # 클러스터 cache resync 주기 (기본 24h → 8h, controller 메모리 절약)
+    controller.app.resync: "28800"
+
+  cm:
+    # GitHub 같은 외부 OIDC 안 씀
+    admin.enabled: "true"
+    # statusbadge / branding 비활성으로 server CPU 절약
+    statusbadge.enabled: "false"
+
+server:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 30m
+      memory: 96Mi
+    limits:
+      memory: 192Mi
+  metrics:
+    enabled: false
+  # autoscaler 비활성 (단일 노드)
+  autoscaling:
+    enabled: false
+
+repoServer:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 30m
+      memory: 96Mi
+    limits:
+      memory: 192Mi
+  metrics:
+    enabled: false
+  autoscaling:
+    enabled: false
+  # 26 deployment kustomize build 시 메모리 피크 대비 — 동시 렌더링 1개로 제한
+  env:
+    - name: ARGOCD_EXEC_TIMEOUT
+      value: "5m"
+    - name: ARGOCD_GIT_ATTEMPTS_COUNT
+      value: "1"
+
+controller:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  metrics:
+    enabled: false
+  # 단일 controller (sharding 비활성)
+  enableStatefulSet: true
+
+redis:
+  enabled: true
+  resources:
+    requests:
+      cpu: 10m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+  metrics:
+    enabled: false
+
+# ─── 옵션 컴포넌트 전부 비활성 ───
+dex:
+  enabled: false
+
+notifications:
+  enabled: false
+
+applicationSet:
+  enabled: false

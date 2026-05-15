@@ -17,13 +17,15 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
-  packages: write    # required for ghcr.io push via GITHUB_TOKEN
+  contents: write      # manifest commit-back
+  packages: write      # ghcr.io push
 
 jobs:
   publish:
-    name: Build & push 18 JVM images to GHCR
+    name: Build & push all images + update oci-arm manifest
     runs-on: ubuntu-latest
+    # `[skip ci]` prevent self-trigger on commit-back
+    if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -49,13 +51,22 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Set up Docker Buildx (arm64 via QEMU)
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=moby/buildkit:latest
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Resolve registry + tag
         id: meta
         run: |
           set -euo pipefail
           REGISTRY="${{ github.event.inputs.registry }}"
           if [[ -z "$REGISTRY" ]]; then
-            # ghcr.io/<owner>, lowercased per Docker registry rules.
             owner_lc=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
             REGISTRY="ghcr.io/$owner_lc"
           fi
@@ -73,14 +84,106 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: ./gradlew jib (push to registry)
+      # ───── JVM 이미지: 20개 service Jib 빌드 (multi-arch amd64+arm64) ─────
+      - name: ./gradlew jib (push multi-arch JVM images)
         run: |
           ./gradlew jib --no-daemon \
               -PjibRegistry=${{ steps.meta.outputs.registry }} \
               -PjibTag=${{ steps.meta.outputs.tag }}
 
+      # ───── FE/Python 이미지: docker buildx multi-arch ─────────────────────
+      - name: Build & push Docker-based images (FE + Python)
+        env:
+          REGISTRY: ${{ steps.meta.outputs.registry }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # name|context|dockerfile
+          IMAGES=(
+            "admin-fe|admin/frontend|Dockerfile"
+            "gifticon-fe|gifticon/frontend|Dockerfile"
+            "agent-viewer-fe|agent-viewer/front|Dockerfile"
+            "portal-fe|portal-fe|Dockerfile"
+            "quant-fe|quant/frontend|Dockerfile"
+            "quant-ingest|quant/ingest|Dockerfile"
+            "recommendation-ml|recommendation-ml|Dockerfile"
+            "recommendation-ann|recommendation-ann|Dockerfile"
+          )
+          for entry in "${IMAGES[@]}"; do
+            IFS='|' read -r name ctx df <<< "$entry"
+            if [[ ! -f "$ctx/$df" ]]; then
+              echo "::warning::Skip $name — $ctx/$df not found"
+              continue
+            fi
+            echo "── docker buildx build → $REGISTRY/$name:{latest,$TAG}"
+            docker buildx build \
+              --platform linux/amd64,linux/arm64 \
+              -f "$ctx/$df" \
+              -t "$REGISTRY/$name:latest" \
+              -t "$REGISTRY/$name:$TAG" \
+              --push \
+              "$ctx"
+          done
+
+      # ───── kustomization.yaml 의 images: 섹션 갱신 ────────────────────────
+      - name: Update oci-arm manifest image tags
+        env:
+          REGISTRY: ${{ steps.meta.outputs.registry }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # yq v4 설치 (mikefarah/yq)
+          if ! command -v yq &>/dev/null; then
+            curl -sSL -o /tmp/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+            chmod +x /tmp/yq
+            sudo mv /tmp/yq /usr/local/bin/yq
+          fi
+
+          # 28개 서비스 (JVM 20 + Docker 8) — image 이름 명세
+          ALL_IMAGES=(
+            gateway product order search search-batch search-consumer
+            auth member wishlist gifticon analytics experiment
+            code-dictionary inventory fulfillment warehouse chatbot
+            quant recommendation agent-viewer-api
+            admin-fe gifticon-fe agent-viewer-fe portal-fe quant-fe
+            quant-ingest recommendation-ml recommendation-ann
+          )
+
+          KUSTOM=k8s/overlays/oci-arm/kustomization.yaml
+
+          # images: 키 없으면 빈 배열로 초기화
+          yq -i '.images = (.images // [])' "$KUSTOM"
+
+          for svc in "${ALL_IMAGES[@]}"; do
+            # 기존 항목 제거 후 새 항목 추가 (upsert)
+            yq -i "(.images) |= map(select(.name != \"commerce/$svc\"))" "$KUSTOM"
+            yq -i "(.images) += [{\"name\": \"commerce/$svc\", \"newName\": \"$REGISTRY/$svc\", \"newTag\": \"$TAG\"}]" "$KUSTOM"
+          done
+
+          # 정렬 + 검증
+          yq -i '(.images) |= sort_by(.name)' "$KUSTOM"
+          yq '.images' "$KUSTOM" | head -30
+
+      - name: Commit manifest update
+        run: |
+          set -euo pipefail
+          if git diff --quiet k8s/overlays/oci-arm/kustomization.yaml; then
+            echo "No manifest changes — skip commit"
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add k8s/overlays/oci-arm/kustomization.yaml
+          git commit -m "ci: bump oci-arm image tags to ${{ steps.meta.outputs.tag }} [skip ci]"
+          git push
+
       - name: Summary
         run: |
-          echo "Pushed images with registry **${{ steps.meta.outputs.registry }}**" >> "$GITHUB_STEP_SUMMARY"
-          echo "Tags: **latest**, **${{ steps.meta.outputs.tag }}**"             >> "$GITHUB_STEP_SUMMARY"
-          echo "Run \`./gradlew jib -PjibRegistry=${{ steps.meta.outputs.registry }}\` locally to reproduce." >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Image publish"
+            echo "Registry: \`${{ steps.meta.outputs.registry }}\`"
+            echo "Tag     : \`${{ steps.meta.outputs.tag }}\` + \`latest\`"
+            echo "Architectures: linux/amd64, linux/arm64"
+            echo
+            echo "Argo CD 가 main 의 manifest 변경을 감지하면 자동 sync 됩니다."
+          } >> "$GITHUB_STEP_SUMMARY"
