@@ -1,0 +1,101 @@
+name: submodule-bump
+
+# 빌드에 참여하는 서브모듈(auth, gifticon) 의 main HEAD 를 추적해서 msa 의
+# 포인터를 자동 갱신한다. 변경 있을 때만 commit + push → images.yml 트리거 →
+# Argo CD 가 새 매니페스트 sync.
+#
+# 다른 서브모듈(ai/private/career/ideabank) 은 빌드와 무관하므로 자동 갱신
+# 대상에서 제외 — CI 분 절약 + 불필요한 rebuild 방지.
+
+on:
+  schedule:
+    - cron: "0 * * * *"   # 매 시간 정각 (UTC)
+  workflow_dispatch: {}   # 수동 즉시 트리거
+
+permissions:
+  contents: write          # commit-back 권한
+
+concurrency:
+  group: submodule-bump
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    name: Bump auth + gifticon to upstream main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout msa (with submodules)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          submodules: true
+          fetch-depth: 0
+
+      - name: Update build-participant submodules to upstream main
+        id: bump
+        run: |
+          set -euo pipefail
+          # auth, gifticon 만 추적. 나머지(ai/private/career/ideabank) 는 무시.
+          TARGETS=(auth gifticon)
+          for s in "${TARGETS[@]}"; do
+            if [[ -d "$s/.git" || -f "$s/.git" ]]; then
+              echo "── git submodule update --remote $s"
+              git submodule update --remote --recursive -- "$s" || true
+            else
+              echo "::warning::Submodule $s missing — skipping"
+            fi
+          done
+
+          # 변경된 서브모듈 목록 (commit 메시지용)
+          CHANGED=$(git status --porcelain | awk '/^ M/ {print $2}' | tr '\n' ' ' | sed 's/ $//')
+          echo "changed=$CHANGED" >> "$GITHUB_OUTPUT"
+
+          if [[ -z "$CHANGED" ]]; then
+            echo "No submodule updates available."
+          else
+            echo "Changed submodules: $CHANGED"
+            git --no-pager diff --submodule=log
+          fi
+
+      - name: Commit + push bump
+        if: steps.bump.outputs.changed != ''
+        run: |
+          set -euo pipefail
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -u -- ${{ steps.bump.outputs.changed }}
+
+          # 각 서브모듈의 새 short-SHA 를 메시지에 포함 (추적성)
+          DETAILS=""
+          for s in ${{ steps.bump.outputs.changed }}; do
+            sha=$(git -C "$s" rev-parse --short HEAD)
+            DETAILS="${DETAILS}\n  - ${s}: ${sha}"
+          done
+
+          git commit -m "$(printf "chore(submodules): bump %s\n%s" \
+            "${{ steps.bump.outputs.changed }}" \
+            "$DETAILS")"
+          git push
+
+          echo "✓ bump commit pushed — images.yml 워크플로가 곧 트리거됩니다."
+
+      - name: Summary
+        run: |
+          if [[ -n "${{ steps.bump.outputs.changed }}" ]]; then
+            echo "## Bumped submodules" >> "$GITHUB_STEP_SUMMARY"
+            echo "${{ steps.bump.outputs.changed }}" | tr ' ' '\n' | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "→ images.yml 이 곧 새 commit 으로 트리거됩니다." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## No changes" >> "$GITHUB_STEP_SUMMARY"
+            echo "All tracked submodules already at upstream main." >> "$GITHUB_STEP_SUMMARY"
+          fi
