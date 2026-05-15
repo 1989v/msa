@@ -30,6 +30,7 @@ resources:
   - cert-manager/cluster-issuer-prod.yaml
 
 patches:
+  # ─── Ingress: nip.io host + cert-manager TLS ────────────────────────────────
   - path: patches/ingress-gateway-tls.yaml
     target:
       kind: Ingress
@@ -38,3 +39,66 @@ patches:
     target:
       kind: Ingress
       name: frontend
+
+  # ─── JVM tuning (모든 Deployment 에 주입, nginx 컨테이너는 무시함) ────────
+  - path: patches/java-tool-options.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+
+  # ─── Tier XL (1.2Gi) — analytics: Kafka Streams + RocksDB state store ────
+  - path: patches/resources-xl-1200mi.yaml
+    target:
+      kind: Deployment
+      name: analytics
+
+  # ─── Tier L (1Gi) — quant: Phase 3 실시간 트레이딩 엔진 ──────────────────
+  # code-dictionary 는 k3s-lite 베이스 패치에서 이미 1Gi 로 설정됨.
+  - path: patches/resources-l-1gi.yaml
+    target:
+      kind: Deployment
+      name: quant
+
+  # ─── Tier M (768Mi) — k3s-lite 글로벌 기본값으로 충분, 별도 패치 없음 ────
+  #     적용 대상: gateway, product, order, search, gifticon, fulfillment
+  #     (gifticon/fulfillment 는 k3s-lite 의 동일값 명시 패치 보유)
+
+  # ─── Tier S (512Mi) — Kafka consumer + 경량 JPA ─────────────────────────
+  - path: patches/resources-s-512mi.yaml
+    target: { kind: Deployment, name: experiment }
+  - path: patches/resources-s-512mi.yaml
+    target: { kind: Deployment, name: search-batch }
+  - path: patches/resources-s-512mi.yaml
+    target: { kind: Deployment, name: search-consumer }
+  - path: patches/resources-s-512mi.yaml
+    target: { kind: Deployment, name: recommendation }
+  - path: patches/resources-s-512mi.yaml
+    target: { kind: Deployment, name: recommendation-ann }
+  - path: patches/resources-s-512mi.yaml
+    target: { kind: Deployment, name: auth }
+  - path: patches/resources-s-512mi.yaml
+    target: { kind: Deployment, name: chatbot }
+
+  # ─── Tier XS (384Mi) — 최소 CRUD ─────────────────────────────────────────
+  - path: patches/resources-xs-384mi.yaml
+    target: { kind: Deployment, name: member }
+  - path: patches/resources-xs-384mi.yaml
+    target: { kind: Deployment, name: wishlist }
+  - path: patches/resources-xs-384mi.yaml
+    target: { kind: Deployment, name: inventory }
+  - path: patches/resources-xs-384mi.yaml
+    target: { kind: Deployment, name: warehouse }
+  - path: patches/resources-xs-384mi.yaml
+    target: { kind: Deployment, name: agent-viewer-api }
+
+  # ─── Tier FE (96Mi) — nginx static ────────────────────────────────────────
+  - path: patches/resources-fe-96mi.yaml
+    target: { kind: Deployment, name: portal-fe }
+  - path: patches/resources-fe-96mi.yaml
+    target: { kind: Deployment, name: admin-fe }
+  - path: patches/resources-fe-96mi.yaml
+    target: { kind: Deployment, name: quant-fe }
+  - path: patches/resources-fe-96mi.yaml
+    target: { kind: Deployment, name: gifticon-fe }
+  - path: patches/resources-fe-96mi.yaml
+    target: { kind: Deployment, name: agent-viewer-fe }

@@ -1,0 +1,17 @@
+# Tier S — Kafka consumer + 경량 JPA 서비스.
+# JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60.0 (별도 패치) 와 결합하면 heap ~300Mi.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 50m
+              memory: 256Mi
+            limits:
+              memory: 512Mi

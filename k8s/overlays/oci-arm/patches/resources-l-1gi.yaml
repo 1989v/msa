@@ -1,0 +1,17 @@
+# Tier L — quant (Phase 3 실시간 트레이딩, multi-exchange adapter)
+# code-dictionary 는 k3s-lite 베이스 패치에서 이미 1Gi 로 올라가 있어 별도 처리 X.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi

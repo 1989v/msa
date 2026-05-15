@@ -1,0 +1,16 @@
+# Tier XS — 최소 CRUD 서비스. heap ~230Mi (MaxRAMPercentage=60%).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 50m
+              memory: 192Mi
+            limits:
+              memory: 384Mi

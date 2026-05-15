@@ -84,26 +84,37 @@ https://commerce.132-226-10-55.nip.io/sse/...      → gateway SSE
 https://commerce.132-226-10-55.nip.io/ws/...       → gateway WebSocket
 ```
 
-## 리소스 예산 (24GB / 4 OCPU)
+## 리소스 예산 (24GB / 4 OCPU) — 6 Tier 차등 배분
+
+`patches/resources-*.yaml` 로 서비스별 메모리 한도를 다음과 같이 분배:
+
+| Tier | Limit | 서비스 | 비고 |
+|---|---|---|---|
+| **XL** | 1.2Gi | analytics | Kafka Streams + RocksDB state store + ClickHouse client |
+| **L** | 1Gi | code-dictionary (k3s-lite 베이스), quant | ES+Flyway+QueryDSL+Caffeine / Phase 3 실시간 트레이딩 |
+| **M** | 768Mi | gateway, product, order, search, gifticon, fulfillment | 고트래픽 / Kafka producer / OOM 이력 |
+| **S** | 512Mi | experiment, search-batch, search-consumer, recommendation, recommendation-ann, auth, chatbot | Kafka consumer + 경량 JPA |
+| **XS** | 384Mi | member, wishlist, inventory, warehouse, agent-viewer-api | 최소 CRUD |
+| **FE** | 96Mi | portal-fe, admin-fe, quant-fe, gifticon-fe, agent-viewer-fe | nginx static |
+
+JVM heap 보정: `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60.0` 전 백엔드 주입 →
+512Mi 컨테이너 = ~300Mi heap, 384Mi 컨테이너 = ~230Mi heap. nginx 는 변수 무시.
+
+**총 한도 합산:**
 
 | 그룹 | 메모리 한도 합 |
 |---|---|
-| 인프라 (MySQL/Redis/Kafka/ES/ClickHouse/quant-postgres) | ~7GB |
-| 백엔드 서비스 16종 (k3s-lite 기준 768MB 제한, 일부 1GB) | ~13GB |
-| FE 5종 (nginx) | ~250MB |
-| k3s + ingress-nginx + cert-manager + 시스템 | ~3GB |
-| **요청량 (실제 idle)** | **~15GB** |
-| **한도 합** (스파이크 시 상한) | **~23GB** |
+| 백엔드 21종 (XL/L/M/S/XS 차등) | ~13.0 Gi |
+| FE 5종 (96Mi) | ~0.5 Gi |
+| 인프라 (MySQL/Redis/Kafka/ES/ClickHouse/Postgres) | ~6.75 Gi |
+| k3s + ingress-nginx + cert-manager + 시스템 | ~2.3 Gi |
+| **합계** | **~22.6 Gi** ✓ (24Gi 안에 ~1.4Gi 여유) |
 
 CPU 4 OCPU: cold start 시 1~2분간 high CPU (모든 JVM warmup 동시 발생).
 이후 idle 은 1 OCPU 이하. 운영용이 아닌 데모/포트폴리오 용도라 수용 가능.
 
-부족하면 우선 제거 후보:
-- `analytics`, `experiment` (Kafka Streams + ClickHouse 부담)
-- `chatbot`, `warehouse`, `fulfillment`, `inventory` (보조 서비스)
-
-각 서비스를 빼려면 base 의 해당 deployment 를 kustomize patch 로
-`replicas: 0` 으로 깎거나, kustomization 에서 제외하는 패치 추가.
+특정 서비스가 OOM 나면 해당 tier 패치만 수정 (예: chatbot 이 부족하면
+S(512) → M(768) 로 승격). 글로벌 default 는 건드리지 말 것.
 
 ## 트러블슈팅
 

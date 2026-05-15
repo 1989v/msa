@@ -1,0 +1,21 @@
+# 모든 commerce-platform Deployment 에 JAVA_TOOL_OPTIONS 주입.
+#
+# 목적: 512Mi 이하 limit 인 서비스에서 JVM 기본 MaxRAMPercentage=25% 로는 heap
+# 이 128Mi 미만이 되어 Spring Boot 4 + outbox poller 가 OOM. 60% 로 올려서
+# 512Mi → ~300Mi heap, 384Mi → ~230Mi heap 확보.
+#
+# nginx 컨테이너(FE) 는 env 변수 무시 → 함께 적용해도 무해.
+# kustomize 의 strategic merge 는 env 리스트에 append 하므로 base 의 기존 env
+# 와 충돌 없음.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder  # kustomize target 매처가 덮어씀 (labelSelector)
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=60.0"

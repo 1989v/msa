@@ -1,0 +1,16 @@
+# Tier FE — nginx 정적 자산 서빙. 실측 RSS ~30Mi.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 96Mi
