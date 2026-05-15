@@ -135,11 +135,10 @@ jobs:
               echo "::warning::Skip $name — $ctx/$df not found"
               continue
             fi
-            echo "── docker buildx build → $REGISTRY/$name:{latest,$TAG}"
+            echo "── docker buildx build → $REGISTRY/$name:$TAG"
             docker buildx build \
               --platform linux/arm64 \
               -f "$ctx/$df" \
-              -t "$REGISTRY/$name:latest" \
               -t "$REGISTRY/$name:$TAG" \
               --push \
               "$ctx"

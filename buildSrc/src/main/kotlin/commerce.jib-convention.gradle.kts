@@ -90,11 +90,13 @@ if (resolvedMainClass == null) {
         }
         to {
             image = "$jibRegistry/$serviceImageName"
-            // Tags: "latest" + either the CI-supplied jibTag or the project version.
+            // Tags: CI 가 sha 태그 주입한 경우 sha 만, 아니면 project version 만.
+            // "latest" 는 제거 — OCIR 에서 동시 manifest write 시 충돌 가능 +
+            // k8s manifest 는 어차피 sha 태그로 핀닝되어 latest 무의미.
             tags = if (jibCustomTag != null) {
-                setOf("latest", jibCustomTag!!)
+                setOf(jibCustomTag!!)
             } else {
-                setOf("latest", project.version.toString())
+                setOf(project.version.toString())
             }
         }
         container {
