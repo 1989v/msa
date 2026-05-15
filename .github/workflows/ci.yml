@@ -133,11 +133,11 @@ jobs:
               k8s/infra/local/redis \
               k8s/infra/local/kafka \
               k8s/infra/local/elasticsearch \
-              k8s/infra/local/opensearch \
               k8s/infra/local/clickhouse \
               k8s/infra/prod/backup \
               k8s/infra/prod/monitoring/dashboards \
               k8s/overlays/k3s-lite \
+              k8s/overlays/oci-arm \
               k8s/overlays/prod-k8s; do
             echo "::group::kustomize $dir"
             if ! kubectl kustomize "$dir" > /tmp/render.yaml; then
