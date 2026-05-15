@@ -105,9 +105,12 @@ jobs:
           password: ${{ secrets.OCIR_TOKEN }}
 
       # ───── JVM 이미지: 20개 service Jib 빌드 (arm64 only) ─────
-      - name: ./gradlew jib (push arm64 JVM images)
+      # --max-workers=1: OCIR 가 동일 base image layer 의 manifest 동시쓰기 시
+      # 내부 Object Storage 의 ConcurrentObjectUpdate (409 → 500) 로 실패하는
+      # 이슈 회피. Gradle 의 jib task 들을 완전 직렬로 push.
+      - name: ./gradlew jib (push arm64 JVM images, serial)
         run: |
-          ./gradlew jib --no-daemon \
+          ./gradlew jib --no-daemon --max-workers=1 \
               -PjibRegistry=${{ steps.meta.outputs.registry }} \
               -PjibTag=${{ steps.meta.outputs.tag }}
 
