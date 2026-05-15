@@ -89,15 +89,13 @@ if (resolvedMainClass == null) {
             }
         }
         to {
-            image = "$jibRegistry/$serviceImageName"
-            // Tags: CI 가 sha 태그 주입한 경우 sha 만, 아니면 project version 만.
-            // "latest" 는 제거 — OCIR 에서 동시 manifest write 시 충돌 가능 +
-            // k8s manifest 는 어차피 sha 태그로 핀닝되어 latest 무의미.
-            tags = if (jibCustomTag != null) {
-                setOf(jibCustomTag!!)
-            } else {
-                setOf(project.version.toString())
-            }
+            // Jib 는 image 에 태그 없으면 자동으로 `latest` 를 기본 태그로 추가함.
+            // OCIR 동시 manifest write 충돌 회피 + k8s manifest 는 sha 로 pin 되어
+            // latest 가 무의미하므로 image URL 에 직접 태그를 박아 latest 자동 추가
+            // 자체를 차단.
+            val effectiveTag: String = jibCustomTag ?: project.version.toString()
+            image = "$jibRegistry/$serviceImageName:$effectiveTag"
+            // tags 비워둠 — image 의 태그 하나만 push.
         }
         container {
             mainClass = resolvedMainClass
