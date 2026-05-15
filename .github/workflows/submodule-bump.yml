@@ -1,16 +1,17 @@
 name: submodule-bump
 
 # 빌드에 참여하는 서브모듈(auth, gifticon) 의 main HEAD 를 추적해서 msa 의
-# 포인터를 자동 갱신한다. 변경 있을 때만 commit + push → images.yml 트리거 →
+# 포인터를 갱신한다. 변경 있을 때만 commit + push → images.yml 트리거 →
 # Argo CD 가 새 매니페스트 sync.
 #
-# 다른 서브모듈(ai/private/career/ideabank) 은 빌드와 무관하므로 자동 갱신
-# 대상에서 제외 — CI 분 절약 + 불필요한 rebuild 방지.
+# 다른 서브모듈(ai/private/career/ideabank) 은 빌드와 무관하므로 갱신 대상 제외.
+#
+# 수동 트리거 전용 — 외부 IDE 로 msa-auth/msa-gifticon 에 직접 push 한 뒤
+# msa 포인터 갱신을 깜빡했을 때 안전망. 평소엔 msa 안에서 통합 작업하므로
+# cron 자동 실행은 불필요.
 
 on:
-  schedule:
-    - cron: "0 * * * *"   # 매 시간 정각 (UTC)
-  workflow_dispatch: {}   # 수동 즉시 트리거
+  workflow_dispatch: {}   # 수동 즉시 트리거 전용 (필요 시 Actions 탭에서 Run workflow)
 
 permissions:
   contents: write          # commit-back 권한
