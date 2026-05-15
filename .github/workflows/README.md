@@ -17,21 +17,30 @@ parallel jobs:
 
 ## images.yml — main push and version tags
 
-Runs on push to `main` and on `v*` tags. Builds and pushes all 18 JVM
-images to **GitHub Container Registry** (`ghcr.io/<owner>`) using Jib's
-direct push mode (no Docker daemon needed).
+Runs on push to `main` and on `v*` tags. Builds 28 images (20 JVM via
+Jib + 8 Docker via buildx) for **linux/arm64** only and pushes them to
+**Oracle Container Registry (OCIR)** in the `<region>.ocir.io/<namespace>`
+registry. After push, updates `k8s/overlays/oci-arm/kustomization.yaml`
+with the new image tags and commits-back to main (Argo CD picks it up).
 
 Tag strategy:
 - `latest` — always.
 - Short commit SHA (`${GITHUB_SHA:0:7}`) for `main` pushes.
 - Tag name (e.g. `v1.2.3`) for `refs/tags/v*` pushes.
 
-The registry can be overridden via `workflow_dispatch` input if you want
-to push to a private registry instead. The default uses the lowercased
-repository owner so `1989v/msa` becomes `ghcr.io/1989v/<service>`.
+Required repository secrets:
 
-Authentication uses the workflow's `GITHUB_TOKEN` with the
-`packages: write` permission, so no extra secrets need to be configured.
+| Secret | Example | Purpose |
+|---|---|---|
+| `APP_ID` | `123456` | GitHub App ID (commit-back + submodule fetch) |
+| `APP_PRIVATE_KEY` | (.pem 내용) | GitHub App private key |
+| `OCIR_REGION` | `ap-seoul-1` | OCI region key |
+| `OCIR_NAMESPACE` | `kgdcommerce` | Tenancy Object Storage namespace |
+| `OCIR_USERNAME` | `kgdcommerce/me@ex.com` | `<namespace>/<oci-username>` |
+| `OCIR_TOKEN` | (auth token) | OCI User Settings → Auth Tokens |
+
+Multi-arch (amd64+arm64) 가 필요하면 buildSrc 의 jib-convention 기본값
+또는 workflow_dispatch 의 `-PjibPlatforms` 인자로 override.
 
 ## Jib local reproducibility
 
@@ -39,9 +48,10 @@ Both workflows ultimately call the same Gradle commands you would run on
 a developer laptop:
 
 ```bash
-./gradlew jibBuildTar                                  # produce tarballs
-./gradlew jib -PjibRegistry=ghcr.io/1989v              # build + push
-./gradlew jib -PjibRegistry=ghcr.io/1989v -PjibTag=abc1234   # custom tag
+./gradlew jibBuildTar                                  # produce tarballs (arm64)
+./gradlew jib -PjibRegistry=ap-seoul-1.ocir.io/kgdcommerce   # build + push to OCIR
+./gradlew jib -PjibRegistry=... -PjibTag=abc1234       # custom tag
+./gradlew jib -PjibPlatforms="linux/amd64,linux/arm64" # multi-arch
 ```
 
 The `-PjibTag` property was added to the convention plugin in this

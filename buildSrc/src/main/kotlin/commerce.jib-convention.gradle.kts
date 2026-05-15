@@ -50,18 +50,18 @@ val jibRegistry: String = (project.findProperty("jibRegistry") as String?) ?: "c
 // Custom tag (e.g. CI commit SHA) overrides the default version-based tag.
 // Usage: ./gradlew jib -PjibTag=abc1234
 val jibCustomTag: String? = project.findProperty("jibTag") as String?
-// Target platforms — multi-arch by default so OCI Ampere(arm64) 와 일반 x86 클러스터
-// 모두 같은 이미지를 사용한다. -PjibPlatforms="linux/arm64" 로 단일 플랫폼 빌드 가능.
-// 형식: "os/arch[,os/arch...]" (예: "linux/amd64,linux/arm64")
+// Target platforms — 기본값은 arm64 단일 (OCI Ampere A1 만 사용).
+// amd64 도 필요해지면 -PjibPlatforms="linux/amd64,linux/arm64" 로 multi-arch 빌드.
+// 형식: "os/arch[,os/arch...]"
 val jibPlatforms: List<Pair<String, String>> = (project.findProperty("jibPlatforms") as String?)
     ?.split(",")
     ?.map { it.trim() }
     ?.filter { it.isNotBlank() }
     ?.map { spec ->
         val parts = spec.split("/", limit = 2)
-        parts[0] to parts.getOrElse(1) { "amd64" }   // os to arch
+        parts[0] to parts.getOrElse(1) { "arm64" }   // os to arch
     }
-    ?: listOf("linux" to "amd64", "linux" to "arm64")
+    ?: listOf("linux" to "arm64")
 
 if (resolvedMainClass == null) {
     // Library modules (like :common) apply the Spring Boot plugin for dependency

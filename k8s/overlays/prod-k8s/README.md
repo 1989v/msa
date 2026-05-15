@@ -60,7 +60,7 @@ kubectl apply -k k8s/overlays/prod-k8s
 - [ ] Wire Secrets via SealedSecrets or External Secrets (Phase 4)
       instead of the plaintext defaults in application-kubernetes.yml.
 - [ ] Set `jibRegistry` to your push target and build images with
-      `./gradlew jib -PjibRegistry=ghcr.io/1989v` (or your registry).
+      `./gradlew jib -PjibRegistry=<region>.ocir.io/<namespace>` (or your registry).
       Update the image pull references if your registry is private.
 - [ ] Size CPU/memory limits per real metrics once kube-prometheus-
       stack data is available.

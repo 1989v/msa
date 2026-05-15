@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       registry:
-        description: "Override registry (defaults to ghcr.io/<owner>)"
+        description: "Override registry (default: <region>.ocir.io/<namespace>)"
         required: false
         default: ""
 
@@ -18,11 +18,10 @@ concurrency:
 
 permissions:
   contents: write      # manifest commit-back
-  packages: write      # ghcr.io push
 
 jobs:
   publish:
-    name: Build & push all images + update oci-arm manifest
+    name: Build & push arm64 images to OCIR + update oci-arm manifest
     runs-on: ubuntu-latest
     # `[skip ci]` prevent self-trigger on commit-back
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
@@ -63,12 +62,18 @@ jobs:
 
       - name: Resolve registry + tag
         id: meta
+        env:
+          OCIR_REGION: ${{ secrets.OCIR_REGION }}
+          OCIR_NAMESPACE: ${{ secrets.OCIR_NAMESPACE }}
         run: |
           set -euo pipefail
           REGISTRY="${{ github.event.inputs.registry }}"
           if [[ -z "$REGISTRY" ]]; then
-            owner_lc=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-            REGISTRY="ghcr.io/$owner_lc"
+            if [[ -z "${OCIR_REGION}" || -z "${OCIR_NAMESPACE}" ]]; then
+              echo "::error::OCIR_REGION / OCIR_NAMESPACE secrets must be set"
+              exit 1
+            fi
+            REGISTRY="${OCIR_REGION}.ocir.io/${OCIR_NAMESPACE}"
           fi
           TAG="${GITHUB_SHA::7}"
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
@@ -77,21 +82,21 @@ jobs:
           echo "registry=$REGISTRY"  | tee -a "$GITHUB_OUTPUT"
           echo "tag=$TAG"            | tee -a "$GITHUB_OUTPUT"
 
-      - name: Authenticate to GHCR
+      - name: Authenticate to OCIR
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ${{ secrets.OCIR_REGION }}.ocir.io
+          username: ${{ secrets.OCIR_USERNAME }}
+          password: ${{ secrets.OCIR_TOKEN }}
 
-      # ───── JVM 이미지: 20개 service Jib 빌드 (multi-arch amd64+arm64) ─────
-      - name: ./gradlew jib (push multi-arch JVM images)
+      # ───── JVM 이미지: 20개 service Jib 빌드 (arm64 only) ─────
+      - name: ./gradlew jib (push arm64 JVM images)
         run: |
           ./gradlew jib --no-daemon \
               -PjibRegistry=${{ steps.meta.outputs.registry }} \
               -PjibTag=${{ steps.meta.outputs.tag }}
 
-      # ───── FE/Python 이미지: docker buildx multi-arch ─────────────────────
+      # ───── FE/Python 이미지: docker buildx arm64 ──────────────────────────
       - name: Build & push Docker-based images (FE + Python)
         env:
           REGISTRY: ${{ steps.meta.outputs.registry }}
@@ -117,7 +122,7 @@ jobs:
             fi
             echo "── docker buildx build → $REGISTRY/$name:{latest,$TAG}"
             docker buildx build \
-              --platform linux/amd64,linux/arm64 \
+              --platform linux/arm64 \
               -f "$ctx/$df" \
               -t "$REGISTRY/$name:latest" \
               -t "$REGISTRY/$name:$TAG" \
@@ -180,10 +185,10 @@ jobs:
       - name: Summary
         run: |
           {
-            echo "## Image publish"
+            echo "## Image publish (OCIR / arm64)"
             echo "Registry: \`${{ steps.meta.outputs.registry }}\`"
             echo "Tag     : \`${{ steps.meta.outputs.tag }}\` + \`latest\`"
-            echo "Architectures: linux/amd64, linux/arm64"
+            echo "Architecture: linux/arm64"
             echo
             echo "Argo CD 가 main 의 manifest 변경을 감지하면 자동 sync 됩니다."
           } >> "$GITHUB_STEP_SUMMARY"

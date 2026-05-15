@@ -11,23 +11,39 @@ OCI Ampere A1 24GB 환경에서 메모리 최소화 (704Mi 한도 합) 로 GitOp
 
 ## 사전 조건
 
-`scripts/oci-bootstrap.sh` 완료 상태 (k3s + ingress-nginx + cert-manager).
+1. `scripts/oci-bootstrap.sh` 완료 (k3s + ingress-nginx + cert-manager)
+2. **OCIR Auth Token 발급**: OCI Console → User Settings → Auth Tokens
+3. Tenancy **Object Storage namespace** 확인 (Profile → Tenancy 페이지)
 
 ## 설치
 
 ```bash
+OCIR_REGION=ap-seoul-1 \
+OCIR_NAMESPACE=<tenancy-namespace> \
+OCIR_USERNAME="<tenancy-namespace>/<oci-username>" \
+OCIR_TOKEN='<auth-token>' \
 ./k8s/argocd/install.sh <PUBLIC_IP> <LE_EMAIL> <GIT_REPO_URL>
 
 # 예시
+OCIR_REGION=ap-seoul-1 \
+OCIR_NAMESPACE=kgdcommerce \
+OCIR_USERNAME='kgdcommerce/me@example.com' \
+OCIR_TOKEN='xxxxxxx' \
 ./k8s/argocd/install.sh 132.226.10.55 me@example.com \
   https://github.com/kgd/msa.git
 ```
 
+> federated user (OCI IAM Identity Domain) 면 username 형식이
+> `<namespace>/oracleidentitycloudservice/<oci-username>` 입니다.
+
 스크립트 진행 단계:
-1. Helm 차트 설치 (`argo/argo-cd`, namespace `argocd`)
-2. `Application/commerce` CRD apply — main 브랜치의 `k8s/overlays/oci-arm` 감시
-3. UI ingress apply + Let's Encrypt TLS 발급 대기
-4. 초기 admin 비밀번호 출력
+1. `commerce` ns 생성 + `ocir-pull-secret` 등록 (docker-registry 형식)
+2. commerce ns 의 모든 ServiceAccount 에 `imagePullSecrets` 자동 부착
+3. 신규 SA 자동 patch CronJob 등록 (매 2분, Argo CD sync 후 생성된 SA 추격)
+4. Helm 차트 설치 (`argo/argo-cd`, namespace `argocd`)
+5. `Application/commerce` CRD apply — main 브랜치의 `k8s/overlays/oci-arm` 감시
+6. UI ingress apply + Let's Encrypt TLS 발급 대기
+7. 초기 admin 비밀번호 출력
 
 ## 운영
 
