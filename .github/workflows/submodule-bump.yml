@@ -32,12 +32,19 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - name: Checkout msa (with submodules)
+      - name: Checkout msa (root only)
         uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
-          submodules: true
+          submodules: false
           fetch-depth: 0
+
+      - name: Init bump-target submodules (auth, gifticon)
+        run: |
+          set -euo pipefail
+          # career/ai/private/ideabank 은 bump 대상도 아니고 일부 레포는 부재 →
+          # auth, gifticon 만 명시적으로 init.
+          git submodule update --init -- auth gifticon
 
       - name: Update build-participant submodules to upstream main
         id: bump
