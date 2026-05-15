@@ -25,12 +25,15 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - name: Checkout (with submodules)
+      - name: Checkout (root only)
         uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
-          submodules: recursive
+          submodules: false
           fetch-depth: 0
+
+      - name: Init build-required submodules (auth, gifticon)
+        run: git submodule update --init --recursive -- auth gifticon
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -66,11 +69,14 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
 
-      - name: Checkout (with submodules)
+      - name: Checkout (root only)
         uses: actions/checkout@v4
         with:
           token: ${{ steps.app-token.outputs.token }}
-          submodules: recursive
+          submodules: false
+
+      - name: Init build-required submodules (auth, gifticon)
+        run: git submodule update --init --recursive -- auth gifticon
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -97,10 +103,22 @@ jobs:
     name: Doc index drift check
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+
+      - name: Checkout (root only)
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          token: ${{ steps.app-token.outputs.token }}
+          submodules: false
+
+      - name: Init ai submodule (doc_map.py 위치)
+        run: git submodule update --init -- ai
 
       - name: Set up Python
         uses: actions/setup-python@v5
