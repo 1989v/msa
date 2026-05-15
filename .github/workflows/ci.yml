@@ -1,5 +1,14 @@
 name: ci
 
+# 슬림 CI — manifest 깨짐만 사전 차단.
+#
+# 옛 jobs (build / jib-build / doc-index-check) 는 제거:
+#   - build / jib-build : images.yml 이 동일한 빌드를 더 강하게 수행 (push 까지).
+#                          중복이고 솔로 환경에선 로컬 `./gradlew build` 로 대체.
+#   - doc-index-check   : 문서 정합성은 배포 흐름과 독립. 필요 시 별도 워크플로 분리.
+#
+# 남긴 것: kustomize-validate (가벼움, k8s overlay 안전망).
+
 on:
   pull_request:
     branches: [main]
@@ -7,148 +16,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Cancel in-progress runs for the same ref so PR pushes don't pile up.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Gradle build + test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: Checkout (root only)
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          submodules: false
-          fetch-depth: 0
-
-      - name: Init build-required submodules (auth, gifticon)
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          set -euo pipefail
-          git config --global \
-            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
-            "https://github.com/"
-          git submodule update --init --recursive -- auth gifticon
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: ./gradlew build
-        run: ./gradlew build --no-daemon --stacktrace
-
-      - name: Upload test reports on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports
-          path: |
-            **/build/reports/tests/
-            **/build/test-results/
-
-  jib-build:
-    name: Jib image build (verification only, no push)
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: Checkout (root only)
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          submodules: false
-
-      - name: Init build-required submodules (auth, gifticon)
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          set -euo pipefail
-          git config --global \
-            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
-            "https://github.com/"
-          git submodule update --init --recursive -- auth gifticon
-
-      - name: Set up JDK 25
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: ./gradlew jibBuildTar
-        run: ./gradlew jibBuildTar --no-daemon
-
-      - name: Verify all 18 service tars
-        run: |
-          count=$(find . -type f -name jib-image.tar -not -path '*/node_modules/*' | wc -l | tr -d ' ')
-          echo "Found $count Jib image tars"
-          if [[ "$count" -lt 18 ]]; then
-            echo "::error::Expected 18 Jib image tars but found $count"
-            exit 1
-          fi
-
-  doc-index-check:
-    name: Doc index drift check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate GitHub App token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-
-      - name: Checkout (root only)
-        uses: actions/checkout@v4
-        with:
-          token: ${{ steps.app-token.outputs.token }}
-          submodules: false
-
-      - name: Init ai submodule (doc_map.py 위치)
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-        run: |
-          set -euo pipefail
-          git config --global \
-            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
-            "https://github.com/"
-          git submodule update --init -- ai
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Check doc-index drift
-        run: python3 ai/plugins/hns/scripts/doc_map.py --check
-
   kustomize-validate:
     name: Kustomize render check
     runs-on: ubuntu-latest
