@@ -88,6 +88,8 @@ jobs:
             fi
             REGISTRY="${OCIR_REGION}.ocir.io/${OCIR_NAMESPACE}"
           fi
+          # Docker image reference 는 모두 소문자여야 함 (대문자 들어가면 jib 실패).
+          REGISTRY=$(echo "$REGISTRY" | tr '[:upper:]' '[:lower:]')
           TAG="${GITHUB_SHA::7}"
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
