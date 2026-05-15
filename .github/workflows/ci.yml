@@ -33,7 +33,14 @@ jobs:
           fetch-depth: 0
 
       - name: Init build-required submodules (auth, gifticon)
-        run: git submodule update --init --recursive -- auth gifticon
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          git submodule update --init --recursive -- auth gifticon
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -76,7 +83,14 @@ jobs:
           submodules: false
 
       - name: Init build-required submodules (auth, gifticon)
-        run: git submodule update --init --recursive -- auth gifticon
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          git submodule update --init --recursive -- auth gifticon
 
       - name: Set up JDK 25
         uses: actions/setup-java@v4
@@ -118,7 +132,14 @@ jobs:
           submodules: false
 
       - name: Init ai submodule (doc_map.py 위치)
-        run: git submodule update --init -- ai
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          git submodule update --init -- ai
 
       - name: Set up Python
         uses: actions/setup-python@v5

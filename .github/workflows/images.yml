@@ -42,10 +42,16 @@ jobs:
           fetch-depth: 0
 
       - name: Init build-required submodules (auth, gifticon)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-          # 빌드에 필요한 서브모듈만 init — career/ai/private/ideabank 는
-          # CI 빌드와 무관하므로 fetch 안함 (없거나 권한 없어도 실패하지 않음)
+          # actions/checkout 의 자동 자격 주입은 submodules:false 일 때 일어나지 않음.
+          # https://github.com URL 을 토큰 박힌 형태로 강제 치환해서 private 레포 clone 가능.
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          # career/ai/private/ideabank 는 CI 빌드와 무관 → fetch 안함
           git submodule update --init --recursive -- auth gifticon
 
       - name: Set up JDK 25

@@ -41,10 +41,14 @@ jobs:
           fetch-depth: 0
 
       - name: Init bump-target submodules (auth, gifticon)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-          # career/ai/private/ideabank 은 bump 대상도 아니고 일부 레포는 부재 →
-          # auth, gifticon 만 명시적으로 init.
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          # career/ai/private/ideabank 는 bump 대상 아님 + 일부 부재 → 제외
           git submodule update --init -- auth gifticon
 
       - name: Update build-participant submodules to upstream main
