@@ -22,7 +22,9 @@ permissions:
 jobs:
   publish:
     name: Build & push arm64 images to OCIR + update oci-arm manifest
-    runs-on: ubuntu-latest
+    # arm64 native runner — QEMU 에뮬레이션 없음 → Node 24 V8 JIT 충돌 해소.
+    # msa repo 가 public 이라 free unlimited. amd64 보다 5~10배 빠름.
+    runs-on: ubuntu-24.04-arm
     # `[skip ci]` prevent self-trigger on commit-back
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
@@ -63,15 +65,11 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Set up Docker Buildx (arm64 via QEMU)
+      - name: Set up Docker Buildx (native arm64)
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: image=moby/buildkit:latest
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64
+      # QEMU 단계 제거 — runner 자체가 arm64 라 에뮬레이션 불필요.
 
       - name: Resolve registry + tag
         id: meta
@@ -154,9 +152,9 @@ jobs:
           TAG: ${{ steps.meta.outputs.tag }}
         run: |
           set -euo pipefail
-          # yq v4 설치 (mikefarah/yq)
+          # yq v4 설치 (arm64 runner) — mikefarah/yq
           if ! command -v yq &>/dev/null; then
-            curl -sSL -o /tmp/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+            curl -sSL -o /tmp/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
             chmod +x /tmp/yq
             sudo mv /tmp/yq /usr/local/bin/yq
           fi
