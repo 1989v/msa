@@ -25,6 +25,10 @@ configs:
     admin.enabled: "true"
     # statusbadge / branding 비활성으로 server CPU 절약
     statusbadge.enabled: "false"
+    # git submodule fetch 비활성 — msa 의 private submodule(auth/gifticon 등)
+    # 은 빌드 측에서만 필요. 매니페스트만 보는 Argo CD 는 submodule 무관.
+    # 비활성 안하면 repo-server 가 anonymous clone 시도 → 자격 없어 sync 실패.
+    reposerver.git.modules.enabled: "false"
 
 server:
   replicas: 1
