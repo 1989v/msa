@@ -95,85 +95,85 @@ patches:
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/agent-viewer-api
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-api
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/agent-viewer-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-fe
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/fulfillment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/fulfillment
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/inventory
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/inventory
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/member
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/member
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/order
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/order
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/quant
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/quant-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-ingest
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/recommendation
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/recommendation-ann
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ann
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/recommendation-ml
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ml
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/warehouse
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/warehouse
-    newTag: 25e98ab
+    newTag: 80920eb
   - name: commerce/wishlist
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/wishlist
-    newTag: 25e98ab
+    newTag: 80920eb
