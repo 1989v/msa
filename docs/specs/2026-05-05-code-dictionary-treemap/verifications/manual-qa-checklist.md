@@ -1,3 +1,5 @@
+<!-- source: code-dictionary -->
+<!-- source: portal-fe -->
 # Manual QA Checklist — Code Dictionary Treemap
 
 > **Manual execution required — defer to QA pass before production rollout.**

@@ -1,3 +1,4 @@
+<!-- source: quant -->
 # Quant Phase 3 Spec — Live Trading
 
 > 본 문서: 실매매 도메인의 기술 스펙. 컨텍스트와 OQ는 [initialization.md](initialization.md) 참조.

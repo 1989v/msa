@@ -1,3 +1,4 @@
+<!-- source: quant -->
 # 빗썸 시세 데이터 적재 파이프라인 설계 (Preflight P.1 / OQ-008)
 
 **상태**: ✅ TG-07 구현 + 본 문서로 closed 가능

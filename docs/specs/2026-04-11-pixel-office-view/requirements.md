@@ -1,3 +1,4 @@
+<!-- source: agent-viewer -->
 # Requirements — Pixel Office View (agent-viewer FE)
 
 **Date**: 2026-04-11

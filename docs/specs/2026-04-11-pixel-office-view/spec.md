@@ -1,3 +1,4 @@
+<!-- source: agent-viewer -->
 # Spec — Pixel Office View
 
 **Date**: 2026-04-11

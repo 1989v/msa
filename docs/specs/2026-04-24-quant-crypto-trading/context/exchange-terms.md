@@ -1,3 +1,4 @@
+<!-- source: quant -->
 # 거래소 OpenAPI 자동매매 약관 검토 (Preflight P.0 / OQ-011)
 
 **상태**: ⚠ **사용자 수동 확인 필요** (자동 fetch 차단됨)

@@ -1,3 +1,4 @@
+<!-- source: quant -->
 ---
 spec: quant-unified-platform
 date: 2026-05-04

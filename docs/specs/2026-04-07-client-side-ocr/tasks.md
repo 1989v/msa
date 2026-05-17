@@ -1,3 +1,4 @@
+<!-- source: gifticon -->
 # Tasks: Client-Side OCR Migration
 
 ## Group A: 프론트엔드 OCR 모듈 (독립 구현 가능)

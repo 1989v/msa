@@ -1,3 +1,4 @@
+<!-- source: agent-viewer -->
 # Task Breakdown: Agent Team Visualizer
 
 ## Overview

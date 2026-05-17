@@ -1,3 +1,4 @@
+<!-- source: quant -->
 ---
 spec: quant-crypto-trading
 date: 2026-04-24

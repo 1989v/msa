@@ -1,3 +1,5 @@
+<!-- source: quant -->
+<!-- source: portal-fe -->
 # 토스증권 디자인 토큰 (실측)
 
 추출 출처: `tossinvest.com/stocks/A005930/order` 의 computed style — chrome-devtools `evaluate_script`.

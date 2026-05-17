@@ -1,3 +1,4 @@
+<!-- source: gifticon -->
 # Test Strategy: Client-Side OCR Migration
 
 ## Test Scope

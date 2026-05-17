@@ -1,3 +1,4 @@
+<!-- source: admin -->
 # Admin Backoffice Framework Design — Spec 1
 
 **Date**: 2026-04-09

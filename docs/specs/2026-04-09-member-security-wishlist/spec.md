@@ -1,3 +1,6 @@
+<!-- source: member -->
+<!-- source: auth -->
+<!-- source: wishlist -->
 # Spec — Member + Security(Auth RBAC) + Wishlist
 
 **Date**: 2026-04-09

@@ -1,3 +1,4 @@
+<!-- source: agent-viewer -->
 # PRD: Agent Viewer — Real-time Agent Visualization Service
 
 ## 개요

@@ -1,3 +1,4 @@
+<!-- source: quant -->
 # Quant Phase 3 — Live Trading Initialization
 
 > 생성: 2026-05-05

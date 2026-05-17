@@ -1,3 +1,4 @@
+<!-- source: gifticon -->
 # Requirements: Client-Side OCR Migration
 
 ## Background

@@ -1,3 +1,5 @@
+<!-- source: code-dictionary -->
+<!-- source: portal-fe -->
 # Spec: Code Dictionary Treemap Visualization
 
 ## 1. Overview

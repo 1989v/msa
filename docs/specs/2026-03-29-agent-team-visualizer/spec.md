@@ -1,3 +1,4 @@
+<!-- source: agent-viewer -->
 # Specification: Agent Team Visualizer
 
 ## Goal

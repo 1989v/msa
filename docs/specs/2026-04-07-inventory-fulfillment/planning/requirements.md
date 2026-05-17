@@ -1,3 +1,6 @@
+<!-- source: inventory -->
+<!-- source: fulfillment -->
+<!-- source: warehouse -->
 # Inventory + Fulfillment Service — Requirements
 
 ## 1. 배경

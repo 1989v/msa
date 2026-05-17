@@ -1,4 +1,5 @@
-<!-- source: docs/conventions/frontend-design.md, docs/conventions/design-system.md, packages/design-system/src/tokens.css -->
+<!-- source: docs/conventions/frontend-design.md -->
+<!-- source: DESIGN.md -->
 # DESIGN.md 표준 (Standard)
 
 AI 에이전트(Claude Code / Cursor / Stitch / Windsurf 등) 가 일관된 UI 를 생성하도록 하는 **단일 디자인 명세 파일** 의 작성 규칙.

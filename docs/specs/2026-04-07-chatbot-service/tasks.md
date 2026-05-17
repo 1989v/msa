@@ -1,3 +1,4 @@
+<!-- source: chatbot -->
 # Tasks — Chatbot Service
 
 > Spec: `docs/specs/2026-04-07-chatbot-service/spec.md`

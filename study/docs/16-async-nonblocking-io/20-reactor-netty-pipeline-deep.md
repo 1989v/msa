@@ -803,7 +803,7 @@ gateway 가 *non-blocking* 이라는 뜻:
 - backend 가 느려도 gateway 의 다른 connection 처리 영향 X
 - 단, Reactor Netty 의 connection pool 은 *유한* → backend 의 max in-flight 가 gateway 의 한계
 
-→ **latency budget 설계 시점에 명시** ([study/docs/12-latency](../12-latency/) 참조).
+→ **latency budget 설계 시점에 명시** ([study/docs/12-latency-numbers](../12-latency-numbers/) 참조).
 
 ### 15.6 잠재 함정
 

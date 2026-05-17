@@ -1,3 +1,6 @@
+<!-- source: inventory -->
+<!-- source: fulfillment -->
+<!-- source: warehouse -->
 # Implementation Tasks — Inventory + Fulfillment
 
 ## Group 1: 프로젝트 스캐폴딩 (병렬 불가) ✅

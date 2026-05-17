@@ -1,3 +1,4 @@
+<!-- source: code-dictionary -->
 # Pretext Interactive Text — Code Dictionary
 
 ## Summary

@@ -1,3 +1,4 @@
+<!-- source: agent-viewer -->
 # Agent Team Visualizer — Raw Idea
 
 Date: 2026-03-29

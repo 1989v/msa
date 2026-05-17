@@ -1,3 +1,4 @@
+<!-- source: quant -->
 ---
 spec: quant-phase2-paper-trading
 date: 2026-04-26

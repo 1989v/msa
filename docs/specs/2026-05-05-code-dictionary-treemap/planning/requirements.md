@@ -1,3 +1,5 @@
+<!-- source: code-dictionary -->
+<!-- source: portal-fe -->
 # Requirements — Code Dictionary Treemap
 
 ## Initial Description

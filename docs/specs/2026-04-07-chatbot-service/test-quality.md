@@ -1,3 +1,4 @@
+<!-- source: chatbot -->
 # Test Strategy — Chatbot Service
 
 ## Layer별 테스트 전략

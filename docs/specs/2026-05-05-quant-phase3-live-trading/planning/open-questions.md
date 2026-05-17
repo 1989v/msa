@@ -1,3 +1,4 @@
+<!-- source: quant -->
 # Phase 3 Open Questions — Closure (J1, 2026-05-05)
 
 > J1 (2026-05-05) — 코드 진행을 위해 합리적 default 로 잠정 closure. **운영자 최종 검토 필수**

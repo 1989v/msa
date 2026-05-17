@@ -1,3 +1,5 @@
+<!-- source: quant -->
+<!-- source: portal-fe -->
 # Spec — Quant Charts Toss-grade Upgrade
 
 **Linked**: ADR-0038, `requirements.md`, `research/notes.md`, `research/design-tokens.md`

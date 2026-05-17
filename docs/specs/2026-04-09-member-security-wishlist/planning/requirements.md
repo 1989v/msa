@@ -1,3 +1,6 @@
+<!-- source: member -->
+<!-- source: auth -->
+<!-- source: wishlist -->
 # Requirements — Member + Security(Auth RBAC) + Wishlist
 
 ## 배경

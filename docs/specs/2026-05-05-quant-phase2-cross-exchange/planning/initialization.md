@@ -1,3 +1,4 @@
+<!-- source: quant -->
 ---
 spec: quant-phase2-cross-exchange
 date: 2026-05-05

@@ -1,3 +1,4 @@
+<!-- source: quant -->
 # Quant Phase 2 Release Notes
 
 **릴리즈 일자**: 2026-04-27

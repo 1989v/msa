@@ -1,3 +1,4 @@
+<!-- source: quant -->
 ---
 spec: quant-phase2-paper-trading
 phase: 2 (paper-trading)

@@ -1,3 +1,6 @@
+<!-- source: member -->
+<!-- source: auth -->
+<!-- source: wishlist -->
 # Test Strategy — Member + Security + Wishlist
 
 ## 테스트 프레임워크

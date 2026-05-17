@@ -1,3 +1,4 @@
+<!-- source: analytics -->
 # Spec — Analytics & Scoring System
 
 ## 1. Overview

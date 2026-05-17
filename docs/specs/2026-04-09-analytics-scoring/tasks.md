@@ -1,3 +1,4 @@
+<!-- source: analytics -->
 # Task Breakdown: Analytics & Scoring System
 
 ## Overview

@@ -1,3 +1,4 @@
+<!-- source: quant -->
 # Phase 3 Tasks — Live Trading
 
 > 본 task list 는 [spec.md](spec.md) 의 12개 섹션에 1:1 매핑.

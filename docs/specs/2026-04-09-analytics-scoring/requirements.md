@@ -1,3 +1,4 @@
+<!-- source: analytics -->
 # Requirements — Analytics & Scoring System
 
 ## 1. 이벤트 수집 (Event Collection)

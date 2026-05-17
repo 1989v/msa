@@ -1,3 +1,4 @@
+<!-- source: admin -->
 # Admin CRUD Management Menus Design — Spec 2
 
 **Date**: 2026-04-09

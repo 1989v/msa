@@ -1,3 +1,4 @@
+<!-- source: quant -->
 ---
 spec: quant-crypto-trading
 phase: 1 (backtest)

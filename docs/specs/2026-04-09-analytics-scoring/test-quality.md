@@ -1,3 +1,4 @@
+<!-- source: analytics -->
 # Test Strategy — Analytics & Scoring System
 
 ## 테스트 계층

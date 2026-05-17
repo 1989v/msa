@@ -1,3 +1,4 @@
+<!-- source: analytics -->
 # Raw Idea
 
 검색/전시 영역에 CTR, CVR 등 지표 기반 컨텐츠 평가 체계 구현.

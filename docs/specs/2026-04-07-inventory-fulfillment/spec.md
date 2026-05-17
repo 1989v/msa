@@ -1,3 +1,6 @@
+<!-- source: inventory -->
+<!-- source: fulfillment -->
+<!-- source: warehouse -->
 # Spec: Inventory + Fulfillment Service
 
 **Date**: 2026-04-07

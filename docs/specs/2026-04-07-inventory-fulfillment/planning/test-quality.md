@@ -1,3 +1,6 @@
+<!-- source: inventory -->
+<!-- source: fulfillment -->
+<!-- source: warehouse -->
 # Test Strategy — Inventory + Fulfillment
 
 ## Domain Tests (Mock 금지, 순수 단위 테스트)

@@ -1,3 +1,6 @@
+<!-- source: inventory -->
+<!-- source: fulfillment -->
+<!-- source: warehouse -->
 # Inventory + Fulfillment — Phase Roadmap
 
 **Last updated**: 2026-04-07

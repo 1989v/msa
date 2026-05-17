@@ -1,3 +1,5 @@
+<!-- source: code-dictionary -->
+<!-- source: portal-fe -->
 # Test & Quality Strategy — Code Dictionary Treemap
 
 ## Test Naming Convention

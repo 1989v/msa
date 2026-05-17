@@ -1,3 +1,6 @@
+<!-- source: member -->
+<!-- source: auth -->
+<!-- source: wishlist -->
 # Tasks — Member + Security(Auth RBAC) + Wishlist
 
 ## Group 1: Infrastructure Setup (선행 작업)

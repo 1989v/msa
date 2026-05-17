@@ -1,3 +1,4 @@
+<!-- source: gifticon -->
 # Engineer Review: Client-Side OCR Migration
 
 > Reviewer: Claude Opus 4.6 (Senior Code Reviewer)

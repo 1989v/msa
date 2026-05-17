@@ -1,3 +1,4 @@
+<!-- source: gifticon -->
 # Spec: Client-Side OCR Migration
 
 > 기프티콘 OCR을 서버(Python Tesseract)에서 클라이언트(Tesseract.js)로 이전.

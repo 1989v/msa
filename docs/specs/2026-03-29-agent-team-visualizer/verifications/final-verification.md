@@ -1,3 +1,4 @@
+<!-- source: agent-viewer -->
 # Final Verification: Agent Team Visualizer
 
 ## Date: 2026-03-30

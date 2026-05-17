@@ -1,3 +1,4 @@
+<!-- source: quant -->
 # Quant Phase 2 — Paper Trading
 # Spec Initialization
 

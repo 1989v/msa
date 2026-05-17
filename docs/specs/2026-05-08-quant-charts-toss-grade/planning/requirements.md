@@ -1,3 +1,5 @@
+<!-- source: quant -->
+<!-- source: portal-fe -->
 # Requirements — Quant Charts Toss-grade Upgrade
 
 **Spec ID**: 2026-05-08-quant-charts-toss-grade

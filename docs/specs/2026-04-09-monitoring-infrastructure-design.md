@@ -1,3 +1,5 @@
+<!-- source: k8s/infra/local/monitoring -->
+<!-- source: k8s/infra/prod/monitoring -->
 # Monitoring Infrastructure Design — Spec 1.5
 
 **Date**: 2026-04-09

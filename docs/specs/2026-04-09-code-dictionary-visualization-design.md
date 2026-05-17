@@ -1,3 +1,4 @@
+<!-- source: code-dictionary -->
 # Code-Dictionary Frontend Visualization Design
 
 **Date**: 2026-04-09

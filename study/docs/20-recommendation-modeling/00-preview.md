@@ -123,7 +123,7 @@ created: 2026-05-12
 | 13 | Paper 2: YouTube Deep Recsys → Two-Tower (2016/2019) | [13-paper-two-tower.md](13-paper-two-tower.md) | candidate generation vs ranking 분리, weighted logistic regression, dot product retrieval |
 | 14 | Paper 3: DLRM (Meta 2019) | [14-paper-dlrm.md](14-paper-dlrm.md) | sparse + dense feature, pairwise dot product interaction, model/data parallelism |
 | 15 | Paper 4: TabTransformer (Amazon 2020) | [15-paper-tab-transformer.md](15-paper-tab-transformer.md) | categorical embedding + multi-head self-attention, contextual embedding |
-| 16 | Toy Training (MovieLens-1M + Jupyter notebook) | [16-toy-training-movielens.md](16-toy-training-movielens.md) + [notebooks/](notebooks/) | Two-Tower / Wide&Deep 직접 구현, FAISS 색인 + latency 측정, vt-deep 14종 정체 확인 |
+| 16 | Toy Training (MovieLens-1M + Jupyter notebook) | [16-toy-training-movielens.md](16-toy-training-movielens.md) | Two-Tower / Wide&Deep 직접 구현, FAISS 색인 + latency 측정, vt-deep 14종 정체 확인 |
 
 ### Phase 7: Cold-start + 메타 (1개)
 

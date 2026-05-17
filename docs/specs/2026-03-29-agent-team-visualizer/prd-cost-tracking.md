@@ -1,3 +1,4 @@
+<!-- source: agent-viewer -->
 # PRD: Agent Viewer — 작업/비용 트래킹 확장
 
 ## 개요

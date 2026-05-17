@@ -1,3 +1,4 @@
+<!-- source: chatbot -->
 # Spec — Chatbot Service
 
 > **Status**: Draft
