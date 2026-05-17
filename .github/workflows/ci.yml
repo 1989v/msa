@@ -110,10 +110,56 @@ jobs:
         run: |
           set -e
           fail=0
-          # Ruby psych 가 duplicate top-level key 거부 → Spring Boot startup
-          # 시점의 SnakeYAML strict 모드와 동일 동작.
+          # Psych 의 YAML.load 는 duplicate key 를 조용히 덮어쓸 수 있으므로
+          # AST 를 직접 순회해 동일 mapping 안의 중복 key 를 명시적으로 차단한다.
           while IFS= read -r f; do
-            if ! ruby -ryaml -e "YAML.load(File.read('$f'))" 2>err.tmp; then
+            if ! ruby - "$f" 2>err.tmp <<'RUBY'
+          require "psych"
+
+          path = ARGV.fetch(0)
+          tree = Psych.parse_stream(File.read(path), filename: path)
+          errors = []
+
+          def key_name(node)
+            case node
+            when Psych::Nodes::Scalar
+              node.value
+            else
+              node.to_yaml
+            end
+          end
+
+          def walk_yaml(node, path, errors)
+            case node
+            when Psych::Nodes::Mapping
+              seen = {}
+              node.children.each_slice(2) do |key_node, value_node|
+                key = key_name(key_node)
+                line = key_node.start_line + 1
+                full_path = (path + [key]).join(".")
+
+                if seen.key?(key)
+                  errors << "duplicate key '#{full_path}' at line #{line} (first seen at line #{seen[key]})"
+                else
+                  seen[key] = line
+                end
+
+                walk_yaml(value_node, path + [key], errors)
+              end
+            when Psych::Nodes::Sequence
+              node.children.each_with_index do |child, index|
+                walk_yaml(child, path + ["[#{index}]"], errors)
+              end
+            end
+          end
+
+          tree.children.each do |document|
+            walk_yaml(document.root, [], errors) if document.root
+          end
+
+          abort(errors.join("\n")) unless errors.empty?
+          RUBY
+            then
               echo "::error file=$f::$(cat err.tmp | head -1)"
               fail=1
             fi
