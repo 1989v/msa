@@ -2,9 +2,14 @@ name: ci
 
 # PR/main 머지 전 사전 검증.
 #
-# 두 job:
-#   - compile-gate     : Kotlin/Java 컴파일 검증 (test 는 미포함, 시간 절약)
+# 세 job (병렬):
+#   - compile-gate       : Kotlin/Java 컴파일 검증 (test 는 미포함)
+#   - yaml-validate      : application*.yml syntax + duplicate key 검증
 #   - kustomize-validate : k8s overlay 렌더 검증
+#
+# yaml-validate 가 catch 한 케이스: Spring Boot startup 시점에야 발견되던
+# duplicate top-level key (예: spring: 블록 두 번). compile-gate 는 yml 을
+# 안 읽어서 못 잡음.
 #
 # 무거운 test/jib 는 images.yml 이 main push 시 수행. 솔로 환경 + public runner
 # 무료라 PR 단계엔 빠른 게이트만.
@@ -66,6 +71,59 @@ jobs:
 
       - name: ./gradlew compileKotlin compileJava
         run: ./gradlew compileKotlin compileJava --no-daemon
+
+  yaml-validate:
+    name: application*.yml syntax check
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            msa
+            msa-auth
+            msa-gifticon
+
+      - name: Checkout (root + auth/gifticon submodules)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          submodules: false
+          fetch-depth: 1
+
+      - name: Init build-required submodules (auth, gifticon)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          git submodule update --init --recursive -- auth gifticon
+
+      - name: Validate every application*.yml
+        run: |
+          set -e
+          fail=0
+          # Ruby psych 가 duplicate top-level key 거부 → Spring Boot startup
+          # 시점의 SnakeYAML strict 모드와 동일 동작.
+          while IFS= read -r f; do
+            if ! ruby -ryaml -e "YAML.load(File.read('$f'))" 2>err.tmp; then
+              echo "::error file=$f::$(cat err.tmp | head -1)"
+              fail=1
+            fi
+            rm -f err.tmp
+          done < <(find . \
+                     -path ./.git -prune -o \
+                     -path '*/build' -prune -o \
+                     -path '*/node_modules' -prune -o \
+                     -name "application*.yml" -print)
+          exit $fail
 
   kustomize-validate:
     name: Kustomize render check
