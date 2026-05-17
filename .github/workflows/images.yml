@@ -154,14 +154,17 @@ jobs:
             esac
           done <<< "$CHANGED_FILES"
 
-          # 중복 제거
-          JVM_SVCS=$(echo "$JVM_SVCS" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//')
-          DOCKER_SVCS=$(echo "$DOCKER_SVCS" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//')
+          # 중복 제거. 빌드 대상이 없을 때도 pipefail 에 걸리지 않아야 한다.
+          normalize_services() {
+            printf '%s\n' "$*" | tr ' ' '\n' | awk 'NF' | sort -u | tr '\n' ' ' | sed 's/ $//'
+          }
+          JVM_SVCS=$(normalize_services "$JVM_SVCS")
+          DOCKER_SVCS=$(normalize_services "$DOCKER_SVCS")
 
           echo "→ 빌드 대상 JVM    : ${JVM_SVCS:-없음}"
           echo "→ 빌드 대상 Docker : ${DOCKER_SVCS:-없음}"
 
-          KUSTOMIZE_SVCS=$(echo "$JVM_SVCS $DOCKER_SVCS" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//')
+          KUSTOMIZE_SVCS=$(normalize_services "$JVM_SVCS $DOCKER_SVCS")
           echo "→ manifest 갱신 대상: ${KUSTOMIZE_SVCS:-없음}"
 
           echo "jvm_services=$JVM_SVCS" >> "$GITHUB_OUTPUT"
