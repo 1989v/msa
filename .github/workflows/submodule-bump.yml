@@ -32,10 +32,6 @@ jobs:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-          repositories: |
-            msa
-            msa-auth
-            msa-gifticon
 
       - name: Checkout msa (root only)
         uses: actions/checkout@v4
