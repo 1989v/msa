@@ -119,7 +119,9 @@ jobs:
           # submodule pointer bump 는 path 가 'auth' (no slash) 로 나옴 →
           # 'auth' 와 'auth/*' 둘 다 매칭해야 함. gifticon 동일.
           while IFS= read -r file; do
-            [[ -z "$file" ]] && continue
+            if [[ -z "$file" ]]; then
+              continue
+            fi
             case "$file" in
               gateway/*)                                 JVM_SVCS+=" gateway" ;;
               product/*)                                 JVM_SVCS+=" product" ;;
