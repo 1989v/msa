@@ -24,14 +24,19 @@ jobs:
   bump:
     name: Bump auth + gifticon to upstream main
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: |
+            msa
+            msa-auth
+            msa-gifticon
 
       - name: Checkout msa (root only)
         uses: actions/checkout@v4

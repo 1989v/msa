@@ -16,6 +16,8 @@ on:
         default: "false"
 
 # Only one image-publish run at a time per ref.
+# cancel-in-progress: false — OCIR push 중 cancel 시 partial manifest 위험.
+# 대신 job-level timeout-minutes 로 hang 방지.
 concurrency:
   group: images-${{ github.ref }}
   cancel-in-progress: false
@@ -29,16 +31,23 @@ jobs:
     # arm64 native runner — QEMU 에뮬레이션 없음 → Node 24 V8 JIT 충돌 해소.
     # msa repo 가 public 이라 free unlimited. amd64 보다 5~10배 빠름.
     runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60        # hang 시 6h default → 60m 로 단축
     # `[skip ci]` prevent self-trigger on commit-back
     if: ${{ !contains(github.event.head_commit.message, '[skip ci]') }}
     steps:
       - name: Generate GitHub App token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ secrets.APP_ID }}
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          # 최소권한: 이 워크플로가 접근하는 3개 repo 만 명시.
+          # App 설치 페이지에 msa / msa-auth / msa-gifticon 셋 모두 있어야 동작.
+          repositories: |
+            msa
+            msa-auth
+            msa-gifticon
 
       - name: Checkout (root only)
         uses: actions/checkout@v4
@@ -106,7 +115,9 @@ jobs:
 
           DOCKER_SVCS=""
 
-          # 경로별 서비스 매핑
+          # 경로별 서비스 매핑.
+          # submodule pointer bump 는 path 가 'auth' (no slash) 로 나옴 →
+          # 'auth' 와 'auth/*' 둘 다 매칭해야 함. gifticon 동일.
           while IFS= read -r file; do
             [[ -z "$file" ]] && continue
             case "$file" in
@@ -116,10 +127,10 @@ jobs:
               search/app/*|search/domain/*)              JVM_SVCS+=" search" ;;
               search/batch/*)                            JVM_SVCS+=" search-batch" ;;
               search/consumer/*)                         JVM_SVCS+=" search-consumer" ;;
-              auth/*)                                    JVM_SVCS+=" auth" ;;
+              auth|auth/*)                               JVM_SVCS+=" auth" ;;
               member/*)                                  JVM_SVCS+=" member" ;;
               wishlist/*)                                JVM_SVCS+=" wishlist" ;;
-              gifticon/app/*|gifticon/domain/*)          JVM_SVCS+=" gifticon" ;;
+              gifticon|gifticon/app/*|gifticon/domain/*) JVM_SVCS+=" gifticon" ;;
               gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
               inventory/*)                               JVM_SVCS+=" inventory" ;;
               fulfillment/*)                             JVM_SVCS+=" fulfillment" ;;
@@ -183,6 +194,7 @@ jobs:
 
       - name: Resolve registry + tag
         id: meta
+        if: ${{ steps.changes.outputs.kustomize_services != '' }}
         env:
           OCIR_REGION: ${{ secrets.OCIR_REGION }}
           OCIR_NAMESPACE: ${{ secrets.OCIR_NAMESPACE }}
@@ -205,6 +217,7 @@ jobs:
           echo "tag=$TAG"           | tee -a "$GITHUB_OUTPUT"
 
       - name: Authenticate to OCIR
+        if: ${{ steps.changes.outputs.kustomize_services != '' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.OCIR_REGION }}.ocir.io
@@ -271,6 +284,7 @@ jobs:
       # ───── kustomization.yaml 의 images: 섹션 부분 갱신 ─────────────────────
       # 변경된 서비스의 newTag 만 새 sha 로 update. 나머지 image entry 는 그대로.
       - name: Update oci-arm manifest image tags (부분)
+        if: ${{ steps.changes.outputs.kustomize_services != '' }}
         env:
           REGISTRY: ${{ steps.meta.outputs.registry }}
           TAG: ${{ steps.meta.outputs.tag }}
@@ -294,7 +308,11 @@ jobs:
           echo "── 갱신된 images: 항목 미리보기"
           yq '.images[] | select(.newTag == "'"${TAG}"'") | "\(.name) → \(.newName):\(.newTag)"' "$KUSTOM"
 
+      # main branch push 일 때만 commit-back.
+      # tag push (v*) 는 detached HEAD 라 git push to main 불가 + 의미상 release
+      # 시점엔 manifest 갱신 별개로 처리.
       - name: Commit manifest update
+        if: ${{ steps.changes.outputs.kustomize_services != '' && github.ref == 'refs/heads/main' }}
         run: |
           set -euo pipefail
           if git diff --quiet k8s/overlays/oci-arm/kustomization.yaml; then

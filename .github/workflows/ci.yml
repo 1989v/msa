@@ -1,13 +1,13 @@
 name: ci
 
-# 슬림 CI — manifest 깨짐만 사전 차단.
+# PR/main 머지 전 사전 검증.
 #
-# 옛 jobs (build / jib-build / doc-index-check) 는 제거:
-#   - build / jib-build : images.yml 이 동일한 빌드를 더 강하게 수행 (push 까지).
-#                          중복이고 솔로 환경에선 로컬 `./gradlew build` 로 대체.
-#   - doc-index-check   : 문서 정합성은 배포 흐름과 독립. 필요 시 별도 워크플로 분리.
+# 두 job:
+#   - compile-gate     : Kotlin/Java 컴파일 검증 (test 는 미포함, 시간 절약)
+#   - kustomize-validate : k8s overlay 렌더 검증
 #
-# 남긴 것: kustomize-validate (가벼움, k8s overlay 안전망).
+# 무거운 test/jib 는 images.yml 이 main push 시 수행. 솔로 환경 + public runner
+# 무료라 PR 단계엔 빠른 게이트만.
 
 on:
   pull_request:
@@ -21,9 +21,56 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  compile-gate:
+    name: Kotlin/Java compile (compile only, no test)
+    runs-on: ubuntu-24.04-arm   # public repo + arm64 무료
+    timeout-minutes: 20
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            msa
+            msa-auth
+            msa-gifticon
+
+      - name: Checkout (root only)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          submodules: false
+          fetch-depth: 1
+
+      - name: Init build-required submodules (auth, gifticon)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          git submodule update --init --recursive -- auth gifticon
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: ./gradlew compileKotlin compileJava
+        run: ./gradlew compileKotlin compileJava --no-daemon
+
   kustomize-validate:
     name: Kustomize render check
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
