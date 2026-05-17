@@ -40,6 +40,19 @@ patches:
     target:
       kind: Deployment
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+  # ─── OCIR pull secret (모든 앱 Pod spec 에 명시) ───────────────────────────
+  - path: patches/image-pull-secret-deployment.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+  - path: patches/image-pull-secret-cronjob.yaml
+    target:
+      kind: CronJob
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+  - path: patches/image-pull-secret-job.yaml
+    target:
+      kind: Job
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
   # ─── Tier XL (1.2Gi) — analytics: Kafka Streams + RocksDB state store ────
   - path: patches/resources-xl-1200mi.yaml
     target:

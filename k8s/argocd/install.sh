@@ -18,7 +18,7 @@ Usage: $0 <PUBLIC_IP> <LE_EMAIL> <GITHUB_REPO_URL>
   LE_EMAIL        : Let's Encrypt 등록 이메일
   GITHUB_REPO_URL : Argo CD 가 sync 할 Git repo (HTTPS 또는 SSH)
 
-환경변수 (OCIR pull secret 생성용 — commerce ns 의 모든 SA 에 자동 부착):
+환경변수 (OCIR pull secret 생성용):
   OCIR_REGION     : OCI region key (예: ap-seoul-1)
   OCIR_NAMESPACE  : Tenancy Object Storage namespace
   OCIR_USERNAME   : "\$NAMESPACE/\$USERNAME" 형식
@@ -45,7 +45,7 @@ log() { echo -e "\033[1;34m▶\033[0m $*"; }
 ok()  { echo -e "\033[1;32m✓\033[0m $*"; }
 
 #───────────────────────────────────────────────────────────────────────────────
-# 1. commerce ns 의 OCIR pull secret + 전 SA 자동 부착
+# 1. commerce ns 의 OCIR pull secret 생성
 #───────────────────────────────────────────────────────────────────────────────
 log "OCIR ImagePullSecret 생성 (namespace: commerce)"
 kubectl create namespace commerce --dry-run=client -o yaml | kubectl apply -f -
@@ -58,7 +58,8 @@ kubectl -n commerce create secret docker-registry ocir-pull-secret \
   --dry-run=client -o yaml | kubectl apply -f -
 ok "ocir-pull-secret 등록"
 
-# 기존 SA 가 있으면 imagePullSecrets 패치, 없으면 다음에 ArgoCD 가 SA 만든 직후 후처리 잡으로 처리됨
+# 기존 SA 에도 imagePullSecrets 를 붙여 둔다. 실제 앱 Pod 는 oci-arm
+# overlay 의 Pod spec imagePullSecrets 로도 동일 secret 을 참조한다.
 log "기존 ServiceAccount 에 imagePullSecrets 부착"
 for sa in $(kubectl -n commerce get sa -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
   kubectl -n commerce patch serviceaccount "$sa" \
@@ -68,72 +69,16 @@ for sa in $(kubectl -n commerce get sa -o jsonpath='{.items[*].metadata.name}' 2
 done
 ok "SA imagePullSecrets 부착 (기존)"
 
-# Argo CD 가 sync 하면서 새 SA 를 만들면 자동으로 patch — 후처리 CronJob 등록
-log "신규 SA 자동 patch CronJob 등록"
-kubectl apply -f - <<'YAML'
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: sa-pullsecret-patcher
-  namespace: commerce
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: sa-pullsecret-patcher
-  namespace: commerce
-rules:
-  - apiGroups: [""]
-    resources: ["serviceaccounts"]
-    verbs: ["get", "list", "patch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: sa-pullsecret-patcher
-  namespace: commerce
-subjects:
-  - kind: ServiceAccount
-    name: sa-pullsecret-patcher
-    namespace: commerce
-roleRef:
-  kind: Role
-  name: sa-pullsecret-patcher
-  apiGroup: rbac.authorization.k8s.io
----
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: sa-pullsecret-patcher
-  namespace: commerce
-spec:
-  schedule: "*/2 * * * *"   # 매 2분 — sync 직후 빠르게 따라잡기
-  concurrencyPolicy: Forbid
-  jobTemplate:
-    spec:
-      ttlSecondsAfterFinished: 60
-      template:
-        spec:
-          serviceAccountName: sa-pullsecret-patcher
-          restartPolicy: OnFailure
-          containers:
-            - name: kubectl
-              image: bitnami/kubectl:1.31
-              command:
-                - sh
-                - -c
-                - |
-                  set -e
-                  for sa in $(kubectl -n commerce get sa -o jsonpath='{.items[*].metadata.name}'); do
-                    has=$(kubectl -n commerce get sa "$sa" -o jsonpath='{.imagePullSecrets[*].name}' 2>/dev/null || true)
-                    if ! echo "$has" | tr ' ' '\n' | grep -qx "ocir-pull-secret"; then
-                      kubectl -n commerce patch serviceaccount "$sa" \
-                        --type merge \
-                        -p '{"imagePullSecrets":[{"name":"ocir-pull-secret"}]}'
-                    fi
-                  done
-YAML
-ok "CronJob/sa-pullsecret-patcher 등록 (매 2분)"
+# 옛 설치 스크립트는 신규 SA 추격용 CronJob 을 만들었지만, 현재는
+# oci-arm overlay 가 각 Pod spec 에 imagePullSecrets 를 직접 주입한다.
+# Docker Hub rate limit 으로 bitnami/kubectl pull 이 실패하는 잡음도 제거.
+log "legacy sa-pullsecret-patcher 정리"
+kubectl -n commerce delete cronjob sa-pullsecret-patcher --ignore-not-found >/dev/null
+kubectl -n commerce delete job -l batch.kubernetes.io/cronjob-name=sa-pullsecret-patcher --ignore-not-found >/dev/null
+kubectl -n commerce delete serviceaccount sa-pullsecret-patcher --ignore-not-found >/dev/null
+kubectl -n commerce delete role sa-pullsecret-patcher --ignore-not-found >/dev/null
+kubectl -n commerce delete rolebinding sa-pullsecret-patcher --ignore-not-found >/dev/null
+ok "legacy sa-pullsecret-patcher 정리 완료"
 
 #───────────────────────────────────────────────────────────────────────────────
 # 2. Helm 차트 설치 — Argo CD

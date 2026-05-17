@@ -39,13 +39,16 @@ OCIR_TOKEN='xxxxxxx' \
 
 스크립트 진행 단계:
 1. `commerce` ns 생성 + `ocir-pull-secret` 등록 (docker-registry 형식)
-2. commerce ns 의 모든 ServiceAccount 에 `imagePullSecrets` 자동 부착
-3. 신규 SA 자동 patch CronJob 등록 (매 2분, Argo CD sync 후 생성된 SA 추격)
-4. Helm 차트 설치 (`argo/argo-cd`, namespace `argocd`)
-5. `Application/commerce` CRD apply — main 브랜치의 `k8s/overlays/oci-arm` 감시
+2. 기존 ServiceAccount 에 `imagePullSecrets` 부착
+3. Helm 차트 설치 (`argo/argo-cd`, namespace `argocd`)
+4. `Application/commerce` CRD apply — main 브랜치의 `k8s/overlays/oci-arm` 감시
    (`spec.source.kustomize.patches` 로 nip.io host / Let's Encrypt email 주입)
-6. UI ingress apply + Let's Encrypt TLS 발급 대기
-7. 초기 admin 비밀번호 출력
+5. UI ingress apply + Let's Encrypt TLS 발급 대기
+6. 초기 admin 비밀번호 출력
+
+`oci-arm` overlay 는 모든 앱 Deployment/CronJob Pod spec 에
+`imagePullSecrets: [{ name: ocir-pull-secret }]` 를 직접 주입한다. 따라서 별도
+SA patch CronJob 은 만들지 않는다.
 
 ## 운영
 
