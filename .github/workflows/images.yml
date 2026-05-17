@@ -10,6 +10,10 @@ on:
         description: "Override registry (default: <region>.ocir.io/<namespace>)"
         required: false
         default: ""
+      rebuild_all:
+        description: "변경 감지 무시하고 28개 전부 재빌드"
+        required: false
+        default: "false"
 
 # Only one image-publish run at a time per ref.
 concurrency:
@@ -48,28 +52,134 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
           set -euo pipefail
-          # actions/checkout 의 자동 자격 주입은 submodules:false 일 때 일어나지 않음.
-          # https://github.com URL 을 토큰 박힌 형태로 강제 치환해서 private 레포 clone 가능.
           git config --global \
             url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
             "https://github.com/"
-          # career/ai/private/ideabank 는 CI 빌드와 무관 → fetch 안함
           git submodule update --init --recursive -- auth gifticon
 
+      # ───── 변경된 서비스 감지 ──────────────────────────────────────────────
+      # 입력값: git diff HEAD~1..HEAD (직전 commit 대비) 또는 force rebuild.
+      # 출력: jvm_services, docker_services, kustomize_services 의 space-separated 목록.
+      # 공유 의존성(common/buildSrc/gradle 등) 변경 시 모든 backend 강제 rebuild.
+      - name: Detect changed services
+        id: changes
+        env:
+          REBUILD_ALL: ${{ github.event.inputs.rebuild_all }}
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+
+          ALL_JVM="gateway product order search search-batch search-consumer auth member wishlist gifticon analytics experiment code-dictionary inventory fulfillment warehouse chatbot quant recommendation agent-viewer-api"
+          ALL_DOCKER="admin-fe gifticon-fe agent-viewer-fe portal-fe quant-fe quant-ingest recommendation-ml recommendation-ann"
+
+          # 강제 rebuild 트리거
+          if [[ "$REBUILD_ALL" == "true" ]] \
+             || [[ "$GITHUB_EVENT_BEFORE" == "0000000000000000000000000000000000000000" ]] \
+             || [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "→ 전체 rebuild 모드 (force / first push / version tag)"
+            echo "jvm_services=$ALL_JVM" >> "$GITHUB_OUTPUT"
+            echo "docker_services=$ALL_DOCKER" >> "$GITHUB_OUTPUT"
+            echo "kustomize_services=$ALL_JVM $ALL_DOCKER" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # before SHA 가 비어있거나 잘못된 경우 fallback
+          if ! git cat-file -e "$GITHUB_EVENT_BEFORE" 2>/dev/null; then
+            echo "→ before SHA unreachable, 전체 rebuild fallback"
+            echo "jvm_services=$ALL_JVM" >> "$GITHUB_OUTPUT"
+            echo "docker_services=$ALL_DOCKER" >> "$GITHUB_OUTPUT"
+            echo "kustomize_services=$ALL_JVM $ALL_DOCKER" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          CHANGED_FILES=$(git diff --name-only "$GITHUB_EVENT_BEFORE" HEAD)
+          echo "── 변경 파일 ($(echo "$CHANGED_FILES" | wc -l) 개):"
+          echo "$CHANGED_FILES" | sed 's/^/   /'
+
+          # 공유 의존성 변경 시 모든 JVM rebuild
+          if echo "$CHANGED_FILES" | grep -qE '^(common/|buildSrc/|gradle/|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$|gradle/libs\.versions\.toml$)'; then
+            echo "→ 공유 의존성 변경 감지 — 전체 JVM rebuild"
+            JVM_SVCS="$ALL_JVM"
+          else
+            JVM_SVCS=""
+          fi
+
+          DOCKER_SVCS=""
+
+          # 경로별 서비스 매핑
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            case "$file" in
+              gateway/*)                                 JVM_SVCS+=" gateway" ;;
+              product/*)                                 JVM_SVCS+=" product" ;;
+              order/*)                                   JVM_SVCS+=" order" ;;
+              search/app/*|search/domain/*)              JVM_SVCS+=" search" ;;
+              search/batch/*)                            JVM_SVCS+=" search-batch" ;;
+              search/consumer/*)                         JVM_SVCS+=" search-consumer" ;;
+              auth/*)                                    JVM_SVCS+=" auth" ;;
+              member/*)                                  JVM_SVCS+=" member" ;;
+              wishlist/*)                                JVM_SVCS+=" wishlist" ;;
+              gifticon/app/*|gifticon/domain/*)          JVM_SVCS+=" gifticon" ;;
+              gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
+              inventory/*)                               JVM_SVCS+=" inventory" ;;
+              fulfillment/*)                             JVM_SVCS+=" fulfillment" ;;
+              warehouse/*)                               JVM_SVCS+=" warehouse" ;;
+              analytics/*)                               JVM_SVCS+=" analytics" ;;
+              experiment/*)                              JVM_SVCS+=" experiment" ;;
+              code-dictionary/*)                         JVM_SVCS+=" code-dictionary" ;;
+              chatbot/*)                                 JVM_SVCS+=" chatbot" ;;
+              quant/app/*|quant/domain/*|quant/glossary*)JVM_SVCS+=" quant" ;;
+              quant/frontend/*)                          DOCKER_SVCS+=" quant-fe" ;;
+              quant/ingest/*)                            DOCKER_SVCS+=" quant-ingest" ;;
+              recommendation/app/*|recommendation/domain/*) JVM_SVCS+=" recommendation" ;;
+              recommendation-ml/*)                       DOCKER_SVCS+=" recommendation-ml" ;;
+              recommendation-ann/*)                      DOCKER_SVCS+=" recommendation-ann" ;;
+              agent-viewer/api/*|agent-viewer/domain/*)  JVM_SVCS+=" agent-viewer-api" ;;
+              agent-viewer/front/*)                      DOCKER_SVCS+=" agent-viewer-fe" ;;
+              admin/frontend/*)                          DOCKER_SVCS+=" admin-fe" ;;
+              portal-fe/*)                               DOCKER_SVCS+=" portal-fe" ;;
+              # k8s 매니페스트만 변경 → 빌드 무관 (Argo CD 가 직접 sync)
+              # docs/ai/private/career/ideabank → 빌드 무관
+            esac
+          done <<< "$CHANGED_FILES"
+
+          # 중복 제거
+          JVM_SVCS=$(echo "$JVM_SVCS" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//')
+          DOCKER_SVCS=$(echo "$DOCKER_SVCS" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//')
+
+          echo "→ 빌드 대상 JVM    : ${JVM_SVCS:-없음}"
+          echo "→ 빌드 대상 Docker : ${DOCKER_SVCS:-없음}"
+
+          KUSTOMIZE_SVCS=$(echo "$JVM_SVCS $DOCKER_SVCS" | tr ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | sed 's/ $//')
+          echo "→ manifest 갱신 대상: ${KUSTOMIZE_SVCS:-없음}"
+
+          echo "jvm_services=$JVM_SVCS" >> "$GITHUB_OUTPUT"
+          echo "docker_services=$DOCKER_SVCS" >> "$GITHUB_OUTPUT"
+          echo "kustomize_services=$KUSTOMIZE_SVCS" >> "$GITHUB_OUTPUT"
+
+      - name: 변경 없으면 조기 종료
+        if: ${{ steps.changes.outputs.kustomize_services == '' }}
+        run: |
+          echo "✓ 빌드 대상 서비스 없음 — 워크플로 종료"
+          echo "변경된 파일이 image 빌드와 무관한 경로 (k8s/, docs/, etc.)" >> "$GITHUB_STEP_SUMMARY"
+          exit 0
+
       - name: Set up JDK 25
+        if: ${{ steps.changes.outputs.jvm_services != '' }}
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "25"
 
       - name: Set up Gradle
+        if: ${{ steps.changes.outputs.jvm_services != '' }}
         uses: gradle/actions/setup-gradle@v4
 
       - name: Set up Docker Buildx (native arm64)
+        if: ${{ steps.changes.outputs.docker_services != '' }}
         uses: docker/setup-buildx-action@v3
         with:
           driver-opts: image=moby/buildkit:latest
-      # QEMU 단계 제거 — runner 자체가 arm64 라 에뮬레이션 불필요.
 
       - name: Resolve registry + tag
         id: meta
@@ -86,14 +196,13 @@ jobs:
             fi
             REGISTRY="${OCIR_REGION}.ocir.io/${OCIR_NAMESPACE}"
           fi
-          # Docker image reference 는 모두 소문자여야 함 (대문자 들어가면 jib 실패).
           REGISTRY=$(echo "$REGISTRY" | tr '[:upper:]' '[:lower:]')
           TAG="${GITHUB_SHA::7}"
           if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
             TAG="${GITHUB_REF#refs/tags/}"
           fi
-          echo "registry=$REGISTRY"  | tee -a "$GITHUB_OUTPUT"
-          echo "tag=$TAG"            | tee -a "$GITHUB_OUTPUT"
+          echo "registry=$REGISTRY" | tee -a "$GITHUB_OUTPUT"
+          echo "tag=$TAG"           | tee -a "$GITHUB_OUTPUT"
 
       - name: Authenticate to OCIR
         uses: docker/login-action@v3
@@ -102,87 +211,88 @@ jobs:
           username: ${{ secrets.OCIR_USERNAME }}
           password: ${{ secrets.OCIR_TOKEN }}
 
-      # ───── JVM 이미지: 20개 service Jib 빌드 (arm64 only) ─────
-      # --max-workers=1: OCIR 가 동일 base image layer 의 manifest 동시쓰기 시
-      # 내부 Object Storage 의 ConcurrentObjectUpdate (409 → 500) 로 실패하는
-      # 이슈 회피. Gradle 의 jib task 들을 완전 직렬로 push.
-      - name: ./gradlew jib (push arm64 JVM images, serial)
+      # ───── JVM 이미지: 변경된 서비스만 Jib 빌드 (arm64, serial) ─────────────
+      - name: ./gradlew jib (변경된 JVM 서비스만)
+        if: ${{ steps.changes.outputs.jvm_services != '' }}
         run: |
-          ./gradlew jib --no-daemon --max-workers=1 \
+          set -euo pipefail
+          # 서비스 이름 → Gradle task path 매핑
+          TASKS=""
+          for svc in ${{ steps.changes.outputs.jvm_services }}; do
+            case "$svc" in
+              gateway)            TASKS+=" :gateway:jib" ;;
+              search)             TASKS+=" :search:app:jib" ;;
+              search-batch)       TASKS+=" :search:batch:jib" ;;
+              search-consumer)    TASKS+=" :search:consumer:jib" ;;
+              agent-viewer-api)   TASKS+=" :agent-viewer:api:jib" ;;
+              *)                  TASKS+=" :${svc}:app:jib" ;;
+            esac
+          done
+          echo "── Gradle tasks: $TASKS"
+          ./gradlew --no-daemon --max-workers=1 \
               -PjibRegistry=${{ steps.meta.outputs.registry }} \
-              -PjibTag=${{ steps.meta.outputs.tag }}
+              -PjibTag=${{ steps.meta.outputs.tag }} \
+              $TASKS
 
-      # ───── FE/Python 이미지: docker buildx arm64 ──────────────────────────
-      - name: Build & push Docker-based images (FE + Python)
+      # ───── FE/Python 이미지: 변경된 서비스만 buildx (arm64) ─────────────────
+      - name: Build & push 변경된 Docker 이미지
+        if: ${{ steps.changes.outputs.docker_services != '' }}
         env:
           REGISTRY: ${{ steps.meta.outputs.registry }}
           TAG: ${{ steps.meta.outputs.tag }}
         run: |
           set -euo pipefail
-          # name|context|dockerfile
-          IMAGES=(
-            "admin-fe|admin/frontend|Dockerfile"
-            "gifticon-fe|gifticon/frontend|Dockerfile"
-            "agent-viewer-fe|agent-viewer/front|Dockerfile"
-            "portal-fe|portal-fe|Dockerfile"
-            "quant-fe|quant/frontend|Dockerfile"
-            "quant-ingest|quant/ingest|Dockerfile"
-            "recommendation-ml|recommendation-ml|Dockerfile"
-            "recommendation-ann|recommendation-ann|Dockerfile"
+          # 서비스 이름 → context 경로 매핑
+          declare -A DOCKER_CTX=(
+            [admin-fe]="admin/frontend"
+            [gifticon-fe]="gifticon/frontend"
+            [agent-viewer-fe]="agent-viewer/front"
+            [portal-fe]="portal-fe"
+            [quant-fe]="quant/frontend"
+            [quant-ingest]="quant/ingest"
+            [recommendation-ml]="recommendation-ml"
+            [recommendation-ann]="recommendation-ann"
           )
-          for entry in "${IMAGES[@]}"; do
-            IFS='|' read -r name ctx df <<< "$entry"
-            if [[ ! -f "$ctx/$df" ]]; then
-              echo "::warning::Skip $name — $ctx/$df not found"
+          for svc in ${{ steps.changes.outputs.docker_services }}; do
+            ctx="${DOCKER_CTX[$svc]:-}"
+            if [[ -z "$ctx" || ! -f "$ctx/Dockerfile" ]]; then
+              echo "::warning::Skip $svc — context 또는 Dockerfile 없음"
               continue
             fi
-            echo "── docker buildx build → $REGISTRY/$name:$TAG"
+            echo "── docker buildx build → $REGISTRY/$svc:$TAG"
             docker buildx build \
               --platform linux/arm64 \
-              -f "$ctx/$df" \
-              -t "$REGISTRY/$name:$TAG" \
+              -f "$ctx/Dockerfile" \
+              -t "$REGISTRY/$svc:$TAG" \
               --push \
               "$ctx"
           done
 
-      # ───── kustomization.yaml 의 images: 섹션 갱신 ────────────────────────
-      - name: Update oci-arm manifest image tags
+      # ───── kustomization.yaml 의 images: 섹션 부분 갱신 ─────────────────────
+      # 변경된 서비스의 newTag 만 새 sha 로 update. 나머지 image entry 는 그대로.
+      - name: Update oci-arm manifest image tags (부분)
         env:
           REGISTRY: ${{ steps.meta.outputs.registry }}
           TAG: ${{ steps.meta.outputs.tag }}
         run: |
           set -euo pipefail
-          # yq v4 설치 (arm64 runner) — mikefarah/yq
           if ! command -v yq &>/dev/null; then
             curl -sSL -o /tmp/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_arm64
             chmod +x /tmp/yq
             sudo mv /tmp/yq /usr/local/bin/yq
           fi
 
-          # 28개 서비스 (JVM 20 + Docker 8) — image 이름 명세
-          ALL_IMAGES=(
-            gateway product order search search-batch search-consumer
-            auth member wishlist gifticon analytics experiment
-            code-dictionary inventory fulfillment warehouse chatbot
-            quant recommendation agent-viewer-api
-            admin-fe gifticon-fe agent-viewer-fe portal-fe quant-fe
-            quant-ingest recommendation-ml recommendation-ann
-          )
-
           KUSTOM=k8s/overlays/oci-arm/kustomization.yaml
-
-          # images: 키 없으면 빈 배열로 초기화
           yq -i '.images = (.images // [])' "$KUSTOM"
 
-          for svc in "${ALL_IMAGES[@]}"; do
-            # 기존 항목 제거 후 새 항목 추가 (upsert)
+          for svc in ${{ steps.changes.outputs.kustomize_services }}; do
             yq -i "(.images) |= map(select(.name != \"commerce/$svc\"))" "$KUSTOM"
             yq -i "(.images) += [{\"name\": \"commerce/$svc\", \"newName\": \"$REGISTRY/$svc\", \"newTag\": \"$TAG\"}]" "$KUSTOM"
           done
 
-          # 정렬 + 검증
           yq -i '(.images) |= sort_by(.name)' "$KUSTOM"
-          yq '.images' "$KUSTOM" | head -30
+          echo "── 갱신된 images: 항목 미리보기"
+          yq '.images[] | select(.newTag == "'"${TAG}"'") | "\(.name) → \(.newName):\(.newTag)"' "$KUSTOM"
 
       - name: Commit manifest update
         run: |
@@ -194,16 +304,22 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add k8s/overlays/oci-arm/kustomization.yaml
-          git commit -m "ci: bump oci-arm image tags to ${{ steps.meta.outputs.tag }} [skip ci]"
+          UPDATED_COUNT=$(echo "${{ steps.changes.outputs.kustomize_services }}" | tr ' ' '\n' | wc -l)
+          SVCS="${{ steps.changes.outputs.kustomize_services }}"
+          git commit -m "ci: bump ${UPDATED_COUNT} service image tag(s) to ${{ steps.meta.outputs.tag }} [skip ci]" -m "Services: ${SVCS}"
           git push
 
       - name: Summary
         run: |
           {
-            echo "## Image publish (OCIR / arm64)"
+            echo "## Image publish (OCIR / arm64) — incremental"
             echo "Registry: \`${{ steps.meta.outputs.registry }}\`"
-            echo "Tag     : \`${{ steps.meta.outputs.tag }}\` + \`latest\`"
-            echo "Architecture: linux/arm64"
+            echo "Tag     : \`${{ steps.meta.outputs.tag }}\`"
             echo
-            echo "Argo CD 가 main 의 manifest 변경을 감지하면 자동 sync 됩니다."
+            echo "### Rebuilt"
+            echo "- JVM   : \`${{ steps.changes.outputs.jvm_services }}\`"
+            echo "- Docker: \`${{ steps.changes.outputs.docker_services }}\`"
+            echo
+            echo "→ 변경된 서비스만 이미지 push + kustomization.yaml 갱신."
+            echo "→ Argo CD 가 변경된 deployment 만 rolling update."
           } >> "$GITHUB_STEP_SUMMARY"
