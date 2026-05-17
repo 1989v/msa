@@ -268,9 +268,15 @@ jobs:
           )
           for svc in ${{ steps.changes.outputs.docker_services }}; do
             ctx="${DOCKER_CTX[$svc]:-}"
-            if [[ -z "$ctx" || ! -f "$ctx/Dockerfile" ]]; then
-              echo "::warning::Skip $svc — context 또는 Dockerfile 없음"
-              continue
+            # Dockerfile 부재 시 fail-fast. skip 하면 manifest 의 image tag 는
+            # 갱신되는데 실제 이미지는 OCIR 에 없어 Argo CD 가 ImagePullBackOff.
+            if [[ -z "$ctx" ]]; then
+              echo "::error::$svc 의 context 매핑이 DOCKER_CTX 에 없음"
+              exit 1
+            fi
+            if [[ ! -f "$ctx/Dockerfile" ]]; then
+              echo "::error::$svc 의 Dockerfile 부재 ($ctx/Dockerfile). 매핑 수정 또는 서비스 정리 필요"
+              exit 1
             fi
             echo "── docker buildx build → $REGISTRY/$svc:$TAG"
             docker buildx build \
@@ -328,6 +334,7 @@ jobs:
           git push
 
       - name: Summary
+        if: ${{ steps.changes.outputs.kustomize_services != '' }}
         run: |
           {
             echo "## Image publish (OCIR / arm64) — incremental"
