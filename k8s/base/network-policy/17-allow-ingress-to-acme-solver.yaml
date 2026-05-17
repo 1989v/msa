@@ -1,0 +1,33 @@
+# ADR-0031 — ingress-nginx → cert-manager HTTP-01 challenge solver 허용
+#
+# default-deny-all 이 commerce ns 전체에 적용되어 있어 cert-manager 가 동적으로
+# 생성하는 ACME challenge solver Pod (acme.cert-manager.io/http01-solver=true)
+# 가 ingress-nginx 로부터 :8089 트래픽을 받지 못한다.
+#
+# 증상: Let's Encrypt 가 challenge 도달은 하나 ingress-nginx 가 upstream
+# 으로 502 (connect() failed (111: Connection refused)) — Order/Challenge
+# state=pending 영구 정체.
+#
+# 해결: solver Pod 의 라벨 (`acme.cert-manager.io/http01-solver=true`) 을
+# 타겟으로 ingress-nginx ns 에서만 :8089 인바운드 허용.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-acme-solver
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      acme.cert-manager.io/http01-solver: "true"
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - { port: 8089, protocol: TCP }

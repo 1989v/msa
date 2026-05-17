@@ -456,33 +456,93 @@ GitHub → msa → Actions → images → Run workflow → rebuild_all = true
 
 원인 후보:
 1. cert-manager 가 아직 발급 진행 중 (HTTP01 challenge)
-2. letsencrypt-staging 으로 발급됨 (untrusted CA)
-3. Let's Encrypt rate limit
+2. **NetworkPolicy 가 ACME solver Pod 차단** (가장 흔함, 아래 참조)
+3. letsencrypt-staging 으로 발급됨 (untrusted CA)
+4. Let's Encrypt rate limit
+5. 브라우저 캐시 / HSTS (서버는 정상인데 브라우저만 옛 cert 캐싱)
 
-진단:
+진단 (한 번에):
 ```bash
-kubectl -n commerce describe certificate gateway-nipio-tls | tail -20
-kubectl -n commerce describe certificate frontend-nipio-tls | tail -20
-kubectl -n argocd describe certificate argocd-tls | tail -10
+kubectl -n commerce get certificate,order,challenge
 ```
 
-`Reason: Issued` 면 정상. `Reason: Failed` 면 message 확인.
+- `READY=True` cert + `valid` order → 서버 정상, 브라우저 캐시 의심 (시크릿 창 검증)
+- `state=pending` challenge 가 5분 이상 → ACME solver 도달 실패 (아래 NetworkPolicy 케이스)
+- order 도 없음 → cert-manager / ClusterIssuer 자체 문제
 
-stuck 시 강제 재시도:
+실제 서빙되는 cert 발급자 확인 (브라우저 캐시 vs 서버 문제 판별):
+```bash
+echo | openssl s_client -connect commerce.<IP-DASHED>.nip.io:443 \
+  -servername commerce.<IP-DASHED>.nip.io 2>/dev/null \
+  | openssl x509 -noout -issuer
+```
+- `O = Let's Encrypt` → 정상, 브라우저 캐시 / HSTS 문제 (Chrome:
+  `chrome://net-internals/#hsts` → Delete domain security policies)
+- `O = Kubernetes Ingress Controller Fake Certificate` → ingress-nginx 가
+  실제 cert 못 붙임 (TLS secret 누락 / Ingress.spec.tls 매핑 오류)
+- `O = (STAGING) Let's Encrypt` → staging issuer 사용 중, prod 로 교체
+
+### HTTPS challenge 영구 pending (NetworkPolicy 차단)
+
+증상:
+- `kubectl -n commerce get challenge` → `state=pending` 이 10분+ 유지
+- `kubectl -n commerce describe challenge` → `Reason: Waiting for HTTP-01
+  challenge propagation: wrong status code '502'`
+- ingress-nginx 로그: `connect() failed (111: Connection refused) while
+  connecting to upstream` (upstream = solver Pod IP:8089)
+
+원인: commerce ns 의 `default-deny-all` NetworkPolicy 가 cert-manager 가
+동적 생성하는 ACME solver Pod (라벨 `acme.cert-manager.io/http01-solver=true`)
+의 인바운드도 차단. ingress-nginx → solver:8089 패킷이 CNI 에서 drop/RST
+처리되어 nginx 입장에선 connection refused.
+
+해결: `k8s/base/network-policy/17-allow-ingress-to-acme-solver.yaml` 이
+ingress-nginx ns → solver Pod :8089 만 명시 허용. main 반영 후 Argo CD sync
+또는 즉시 적용:
+```bash
+kubectl apply -f k8s/base/network-policy/17-allow-ingress-to-acme-solver.yaml
+```
+
+자동 재시도까지 1-2분. cert-manager 가 challenge self-check 통과하면 Order →
+valid, Cert → Ready, solver Ingress/Pod 자동 정리. 그 후엔 `curl http://...
+/.well-known/acme-challenge/test` 가 308 (HTTPS 리다이렉트) 응답이 정상 — cert
+발급 완료 후 challenge path 가 사라지고 일반 ingress 가 받기 때문.
+
+### stuck 시 강제 재시도
+
+NetworkPolicy 까지 정상인데도 풀리지 않으면 cert/order 삭제하면 cert-manager
+가 신규 challenge 생성하며 재시도:
 ```bash
 kubectl -n commerce delete certificate gateway-nipio-tls frontend-nipio-tls
-# 자동 재생성 + 재발급 시도
 ```
 
-## sa-pullsecret-patcher ImagePullBackOff
+## sa-pullsecret-patcher 잔여 리소스 (legacy)
 
-`bitnami/kubectl:1.31` Docker Hub rate limit. **무시 OK** — install.sh 가
-이미 SA patch 다 함, 신규 SA 안 생기면 patcher 없어도 동작.
+ADR-0019 phase 6 이후 `oci-arm` overlay 는 모든 Deployment/CronJob/Job Pod
+spec 에 `imagePullSecrets: [{name: ocir-pull-secret}]` 를 JSON 6902 patch 로
+직접 주입한다 (`k8s/overlays/oci-arm/patches/image-pull-secret-*.yaml`).
+따라서 별도 SA patcher CronJob 은 불필요하며 install.sh 에서도 제거됨
+(commit 2f5b2df).
 
-영구 해결 (선택):
+구버전 install.sh 로 부트스트랩한 클러스터에는 legacy 리소스가 남아 있어
+`bitnami/kubectl:1.31` Docker Hub rate limit 으로 ImagePullBackOff 가 계속
+보일 수 있다. 본 서비스 트래픽엔 영향 없으나 Argo CD/K8s 상태가 지저분하므로
+정리 권장:
 ```bash
-# CronJob 자체 제거
-kubectl -n commerce delete cronjob sa-pullsecret-patcher
+kubectl -n commerce delete cronjob sa-pullsecret-patcher --ignore-not-found
+kubectl -n commerce delete job \
+  -l batch.kubernetes.io/cronjob-name=sa-pullsecret-patcher --ignore-not-found
+kubectl -n commerce get pods --no-headers \
+  | awk '/^sa-pullsecret-patcher/{print $1}' \
+  | xargs -r kubectl -n commerce delete pod
+kubectl -n argocd annotate app commerce \
+  argocd.argoproj.io/refresh=hard --overwrite
+```
+
+검증 (실패 Pod 없어야 함):
+```bash
+kubectl -n commerce get pods --no-headers \
+  | awk '$3 != "Running" && $3 != "Completed"'
 ```
 
 ## Argo CD: OutOfSync + Degraded (StatefulSet drift)

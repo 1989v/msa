@@ -31,6 +31,7 @@ resources:
   - 14-allow-ingest-to-quant.yaml
   - 15-allow-recommendation-to-ann.yaml
   - 16-allow-recommendation-to-experiment.yaml
+  - 17-allow-ingress-to-acme-solver.yaml
 
 # 주의: commonLabels / labels (includeSelectors=true) 는 사용 금지.
 # NetworkPolicy 의 podSelector.matchLabels 에 합쳐지면 selector 가
