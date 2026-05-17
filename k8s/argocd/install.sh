@@ -153,7 +153,9 @@ ok "Helm 설치 완료"
 # 3. Application CRD 적용 — commerce 플랫폼 sync 시작
 #───────────────────────────────────────────────────────────────────────────────
 log "Application CRD 적용 (repo: $GITHUB_REPO_URL)"
-sed "s|__GITHUB_REPO_URL__|$GITHUB_REPO_URL|g" \
+sed -e "s|__GITHUB_REPO_URL__|$GITHUB_REPO_URL|g" \
+    -e "s|__OCI_IP_DASHED__|$IP_DASHED|g" \
+    -e "s|__OCI_LE_EMAIL__|$LE_EMAIL|g" \
   "$SCRIPT_DIR/application.yaml" | kubectl apply -f -
 ok "Application 등록"
 

@@ -46,7 +46,16 @@ ssh opc@<OCI_IP> "for t in ~/images/*.tar; do sudo k3s ctr images import \$t; do
 
 ## 적용 절차
 
-### 1) Render & apply
+**권장 경로: Argo CD 가 자동 sync** — `k8s/argocd/install.sh` 가 Application CRD 의
+`spec.source.kustomize.patches` 에 IP/email 을 주입해 매번 override.
+이 overlay 의 매니페스트 안 placeholder 는 그대로 두고 git 에는 환경값 안 박힘.
+
+### 1) Argo CD 경로 (권장)
+
+`k8s/argocd/install.sh` 실행 → Application 등록 → 자동 sync. 상세는
+`k8s/argocd/README.md` 참조.
+
+### 1-A) Legacy fallback — `render.sh` (Argo CD 안 쓸 때만)
 
 ```bash
 # 인자: <PUBLIC_IP> <LE_EMAIL>
@@ -56,6 +65,7 @@ ssh opc@<OCI_IP> "for t in ~/images/*.tar; do sudo k3s ctr images import \$t; do
 
 내부적으로 `kubectl kustomize` 가 빌드한 매니페스트의
 `__OCI_IP_DASHED__` 와 `__OCI_LE_EMAIL__` 를 sed 로 치환해서 출력한다.
+검증용 / Argo CD 미사용 환경에서만 사용.
 
 ### 2) cert 발급 확인
 

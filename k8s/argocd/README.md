@@ -5,7 +5,8 @@ OCI Ampere A1 24GB 환경에서 메모리 최소화 (704Mi 한도 합) 로 GitOp
 ## 구성
 
 - `values.yaml` — Helm chart values (server/repo/controller/redis 리소스 한도)
-- `application.yaml` — commerce 플랫폼 sync 정의 (`__GITHUB_REPO_URL__` 치환)
+- `application.yaml` — commerce 플랫폼 sync 정의 (`__GITHUB_REPO_URL__`,
+  `__OCI_IP_DASHED__`, `__OCI_LE_EMAIL__` 치환)
 - `ingress.yaml.template` — UI ingress (cert-manager TLS, `__OCI_IP_DASHED__` 치환)
 - `install.sh` — 일괄 설치 스크립트
 
@@ -42,6 +43,7 @@ OCIR_TOKEN='xxxxxxx' \
 3. 신규 SA 자동 patch CronJob 등록 (매 2분, Argo CD sync 후 생성된 SA 추격)
 4. Helm 차트 설치 (`argo/argo-cd`, namespace `argocd`)
 5. `Application/commerce` CRD apply — main 브랜치의 `k8s/overlays/oci-arm` 감시
+   (`spec.source.kustomize.patches` 로 nip.io host / Let's Encrypt email 주입)
 6. UI ingress apply + Let's Encrypt TLS 발급 대기
 7. 초기 admin 비밀번호 출력
 
@@ -117,6 +119,38 @@ kubectl -n argocd logs deploy/argocd-repo-server --tail=50
 # 강제 refresh
 argocd app get commerce --refresh
 ```
+
+### Ingress host 에 `__OCI_IP_DASHED__` 가 남음
+
+Argo CD 는 `k8s/overlays/oci-arm/scripts/render.sh` 를 실행하지 않고
+`kustomization.yaml` 을 직접 렌더링한다. `commerce.__OCI_IP_DASHED__.nip.io`
+에러가 나면 `Application/commerce` 에 설치 시점의 inline Kustomize patch 가
+없는 상태다.
+
+```bash
+./k8s/argocd/install.sh <PUBLIC_IP> <LE_EMAIL> <GIT_REPO_URL>
+```
+
+또는 `Application/commerce` 의 `spec.source.kustomize.patches` 에 gateway /
+frontend Ingress host 와 ClusterIssuer email patch 를 직접 넣은 뒤 refresh 한다.
+
+### Staging ClusterIssuer 비활성 (선택)
+
+운영상 `letsencrypt-staging` 은 거의 안 쓰고 prod 만 사용. 매니페스트에서
+빼고 싶으면 `k8s/overlays/oci-arm/kustomization.yaml` 의 resources 에서 staging
+한 줄 주석/제거:
+
+```yaml
+resources:
+  - ../k3s-lite
+  # - cert-manager/cluster-issuer-staging.yaml   # 디버깅 안 할 때 비활성
+  - cert-manager/cluster-issuer-prod.yaml
+```
+
+그리고 `k8s/argocd/application.yaml` 의 `kustomize.patches` 에서 staging email
+patch entry 도 같이 제거. 첫 cert 발급 디버깅 시 staging 으로 먼저 검증하고
+싶을 때만 다시 활성. Let's Encrypt prod 의 rate limit (호스트당 50 cert/주)
+은 nip.io 서브도메인이 각각 독립 도메인 취급되어 실질 무제한.
 
 ### Drift / SelfHeal 비활성화 임시
 
