@@ -172,15 +172,21 @@ cat <<EOF
 2) 이미지 import — 로컬에서 빌드한 Jib tar 를 VM 으로 옮긴 뒤:
      for t in ~/images/*.tar; do sudo k3s ctr images import \$t; done
 
-3) commerce 매니페스트 적용 (이 호스트에서, msa 레포 클론 후):
-     ./k8s/overlays/oci-arm/scripts/render.sh ${PUBLIC_IP} you@example.com \\
-       | kubectl apply -f -
+3) DNS A 레코드 7종 등록 (Cloudflare 등): @ admin quant gft agent api argocd
+   → 모두 ${PUBLIC_IP} 로, Proxy=DNS only (gray cloud)
+   ※ Reserved Public IP 권장 (OCI Console → 1.7 참조) → VM 재생성에도 IP 유지.
 
-4) 인증서 발급 진행 확인:
-     kubectl -n commerce describe certificate gateway-nipio-tls
-     kubectl -n commerce describe certificate frontend-nipio-tls
+4) commerce 매니페스트 적용 — Argo CD 경로 (권장, msa 레포 클론 후):
+     source ~/.commerce-env  # PUBLIC_IP / LE_EMAIL / OCIR_* / DOMAIN
+     ./k8s/argocd/install.sh "\$PUBLIC_IP" "\$LE_EMAIL" \\
+       https://github.com/1989v/msa.git "\$DOMAIN"
+   또는 단발 적용 — render.sh (Argo CD 미사용 시):
+     ./k8s/overlays/oci-arm/scripts/render.sh <DOMAIN> <LE_EMAIL> | kubectl apply -f -
 
-5) 접속:
-     https://commerce.${PUBLIC_IP//./-}.nip.io/
+5) 인증서 발급 진행 확인:
+     kubectl -n commerce get certificate
+   → 6개 (portal/admin/quant/gifticon/agent/api-tls) READY=True 까지 1-2분.
+
+6) 접속: https://<DOMAIN>/ (portal-fe), https://admin.<DOMAIN>/ 등.
 
 EOF

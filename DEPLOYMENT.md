@@ -49,7 +49,7 @@ OCI Console → Compute → Instances → Create Instance
 | Boot volume | 47GB (Always Free 한도 안) |
 | SSH key | 본인 public key (`~/.ssh/oracle.pub`) 또는 새로 생성 |
 
-생성 후 **Public IPv4 메모** (예: `134.185.107.208`).
+생성 후 **Public IPv4 메모** (예: `168.107.22.114`).
 
 ## 1.2 VCN Security List — 80/443 허용
 
@@ -278,7 +278,7 @@ GitHub Actions 페이지에 images workflow ✓ Success.
 cat >> ~/.ssh/config <<EOF
 
 Host msa-oci
-    HostName 134.185.107.208
+    HostName 168.107.22.114
     User ubuntu
     IdentityFile ~/.ssh/oracle
 EOF
@@ -337,7 +337,7 @@ export OCIR_NAMESPACE=axyooxbyk5yv
 export OCIR_USERNAME='axyooxbyk5yv/1989v@naver.com'
 export OCIR_TOKEN='여기에-실제-토큰-paste'
 export LE_EMAIL='your.email@example.com'
-export PUBLIC_IP='134.185.107.208'
+export PUBLIC_IP='168.107.22.114'
 export DOMAIN='1989v.com'
 EOF
 chmod 600 ~/.commerce-env
