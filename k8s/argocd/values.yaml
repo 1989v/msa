@@ -62,6 +62,11 @@ repoServer:
       value: "5m"
     - name: ARGOCD_GIT_ATTEMPTS_COUNT
       value: "1"
+    # private submodule (gifticon 등) fetch 실패 회피 — Argo CD 는 manifest 만
+    # 필요해서 submodule 안 가져와도 무관. 이거 없으면 repo-server 가 submodule
+    # init 시도하다 401 로 sync 영구 실패.
+    - name: ARGOCD_GIT_MODULES_ENABLED
+      value: "false"
 
 controller:
   replicas: 1
