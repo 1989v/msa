@@ -8,6 +8,7 @@ plugins {
 dependencies {
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.websocket)
+    implementation(libs.spring.boot.starter.actuator)
     implementation(libs.kotlin.reflect)
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
