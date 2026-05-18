@@ -129,7 +129,7 @@ images:
     newTag: b0eff16
   - name: commerce/agent-viewer-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-fe
-    newTag: 842e5a5
+    newTag: "6367585"
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
     newTag: 80920eb
@@ -177,7 +177,7 @@ images:
     newTag: 80920eb
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
-    newTag: 842e5a5
+    newTag: "6367585"
   - name: commerce/quant-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-ingest
     newTag: 80920eb
