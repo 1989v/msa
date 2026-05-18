@@ -123,7 +123,7 @@ images:
     newTag: 842e5a5
   - name: commerce/agent-viewer-api
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-api
-    newTag: 80920eb
+    newTag: b0eff16
   - name: commerce/agent-viewer-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-fe
     newTag: 842e5a5
