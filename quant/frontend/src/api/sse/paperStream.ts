@@ -59,8 +59,12 @@ export class PaperStreamClient {
 
     connect(): void {
         if (this.disposed) return
+        // SSE 는 Cloudflare proxy 의 response 버퍼링 회피 위해 별도 bypass host 사용.
+        // VITE_SSE_BASE_URL 우선, 없으면 REST 와 같은 origin 사용 (로컬 dev).
         const baseUrl =
-            import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8094'
+            import.meta.env.VITE_SSE_BASE_URL ??
+            import.meta.env.VITE_API_BASE_URL ??
+            'http://localhost:8094'
         const params = new URLSearchParams()
         if (this.symbol) params.set('symbol', this.symbol)
         // 단순화: query param 으로 인증 토큰 전달 (Phase 3 first-message 인증으로 대체 예정)

@@ -46,8 +46,11 @@ export function usePriceStream(
       return
     }
 
-    const url = `/api/v1/charts/stream/${encodeURIComponent(asset)}/${encodeURIComponent(market)}`
-    const es = new EventSource(url)
+    // SSE 는 Cloudflare proxy 의 response 버퍼링 회피 위해 별도 bypass host 사용.
+    // VITE_SSE_BASE_URL 미설정 시 same-origin (로컬 dev / proxy 미사용 환경).
+    const sseBase = (import.meta.env.VITE_SSE_BASE_URL ?? '').replace(/\/$/, '')
+    const url = `${sseBase}/api/v1/charts/stream/${encodeURIComponent(asset)}/${encodeURIComponent(market)}`
+    const es = new EventSource(url, { withCredentials: false })
     sourceRef.current = es
 
     let lastCommitAt = 0
