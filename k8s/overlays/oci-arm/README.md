@@ -1,9 +1,9 @@
 # oci-arm Overlay — Oracle Cloud Ampere A1 (Always Free)
 
 Single-node k3s 배포용 overlay. 베이스는 `k3s-lite` 이고 그 위에 커스텀 도메인
-(`commerce.<DOMAIN>`) 호스트 라우팅 + cert-manager 기반 Let's Encrypt TLS 를
-얹는다. DNS A 레코드만 OCI public IP 로 설정돼 있으면 자동으로 신뢰 가능한
-HTTPS 발급.
+기반 host 라우팅 (FE 별 subdomain) + cert-manager 기반 Let's Encrypt TLS 를
+얹는다. 7개 DNS A 레코드 (`@`, admin, quant, gft, agent, api, argocd) 가 OCI
+public IP 로 설정돼 있으면 자동으로 cert 발급.
 
 ## 사전 요구사항 (OCI VM 안에서)
 
@@ -66,8 +66,9 @@ ssh opc@<OCI_IP> "for t in ~/images/*.tar; do sudo k3s ctr images import \$t; do
 
 내부적으로 `kubectl kustomize` 가 빌드한 매니페스트의
 `__DOMAIN__` 와 `__OCI_LE_EMAIL__` 를 sed 로 치환해서 출력한다.
-검증용 / Argo CD 미사용 환경에서만 사용. 사전에 DNS A 레코드
-(`commerce.<DOMAIN>` → public IP) 가 등록돼 있어야 cert 발급된다.
+검증용 / Argo CD 미사용 환경에서만 사용. 사전에 DNS A 레코드 7종 (root,
+admin, quant, gft, agent, api, argocd → public IP) 가 등록돼 있어야 cert
+발급된다.
 
 ### 2) cert 발급 확인
 
@@ -86,15 +87,18 @@ kubectl -n commerce get secret | grep nipio-tls
 ### 3) 접속
 
 ```
-https://commerce.<DOMAIN>/             → portal-fe (root)
-https://commerce.<DOMAIN>/admin/       → admin-fe
-https://commerce.<DOMAIN>/quant/       → quant-fe
-https://commerce.<DOMAIN>/gifticon/    → gifticon-fe
-https://commerce.<DOMAIN>/agent-viewer/→ agent-viewer-fe
-https://commerce.<DOMAIN>/api/v1/...   → gateway REST
-https://commerce.<DOMAIN>/sse/...      → gateway SSE
-https://commerce.<DOMAIN>/ws/...       → gateway WebSocket
+https://<DOMAIN>/                   → portal-fe (root)
+https://admin.<DOMAIN>/             → admin-fe
+https://quant.<DOMAIN>/             → quant-fe
+https://gft.<DOMAIN>/               → gifticon-fe
+https://agent.<DOMAIN>/             → agent-viewer-fe
+https://api.<DOMAIN>/api/v1/...     → gateway REST (직접 호출용)
+https://api.<DOMAIN>/sse/...        → gateway SSE
+https://api.<DOMAIN>/ws/...         → gateway WebSocket
 ```
+
+각 FE subdomain 도 `/api`, `/ws`, `/sse`, `/actuator`, `/svc` 를 같은 host 의
+gateway 로 proxy 한다 → FE 코드는 same-origin `/api/*` 호출 유지, CORS 불필요.
 
 ## 리소스 예산 (24GB / 4 OCPU) — 6 Tier 차등 배분
 
@@ -135,8 +139,8 @@ S(512) → M(768) 로 승격). 글로벌 default 는 건드리지 말 것.
 - ingress-nginx 가 80 포트 LoadBalancer 로 떠 있는지 확인
 - 호스트의 80/443 이 OCI VCN Security List + iptables 양쪽 모두 열렸는지
 - `kubectl -n cert-manager logs deploy/cert-manager` 에서 challenge 실패 사유 확인
-- DNS: `dig commerce.<DOMAIN>` 가 OCI public IP 반환하는지 (Cloudflare proxy
-  off, gray cloud 상태인지)
+- DNS: `dig <DOMAIN> admin.<DOMAIN> api.<DOMAIN>` 등이 OCI public IP 반환하는지
+  (Cloudflare proxy off, gray cloud 상태인지)
 - 빠른 디버깅: staging issuer 로 먼저 발급 시도
   (`cert-manager.io/cluster-issuer: "letsencrypt-staging"` 으로 패치)
 

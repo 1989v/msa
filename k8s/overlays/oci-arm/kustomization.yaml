@@ -4,7 +4,7 @@ kind: Kustomization
 #
 # 베이스: k3s-lite (이미 리소스 절감 + Redis standalone + ClickHouse 메모리 상향 적용)
 # 위에 다음을 더 얹는다:
-#   - 커스텀 도메인 (commerce.<DOMAIN>) 기반 host 라우팅
+#   - 커스텀 도메인 기반 host 라우팅 (FE 별 subdomain — admin/quant/gft/agent/api)
 #   - cert-manager + Let's Encrypt HTTP01 challenge
 #   - 24GB / 4 OCPU 안에서 전체 서비스 셋 가동
 #
@@ -15,11 +15,11 @@ kind: Kustomization
 #   - FE: docker buildx build --platform linux/arm64
 #
 # 적용 절차 (요약):
-#   1. DNS A 레코드 등록: commerce.<DOMAIN> / argocd.<DOMAIN> → OCI public IP
+#   1. DNS A 레코드 7종 등록: @(root), admin, quant, gft, agent, api, argocd → OCI public IP
 #   2. ./k8s/overlays/oci-arm/scripts/render.sh <DOMAIN> <LE_EMAIL> | kubectl apply -f -
 #      (또는 Argo CD 사용 시 ./k8s/argocd/install.sh ... <DOMAIN>)
-#   3. cert-manager 가 ClusterIssuer 로 letsencrypt-prod 발급 (수 초~수 분)
-#   4. https://commerce.<DOMAIN> 접속 가능
+#   3. cert-manager 가 ClusterIssuer 로 letsencrypt-prod 발급 (수 초~수 분, host 마다 별개 cert)
+#   4. https://<DOMAIN> 접속 가능 (portal-fe 메인)
 #
 # 자세한 사전 작업(k3s 설치, 방화벽, ingress-nginx, cert-manager 설치)은 README 참조.
 namespace: commerce
@@ -27,16 +27,26 @@ resources:
   - ../k3s-lite
   - cert-manager/cluster-issuer-staging.yaml
   - cert-manager/cluster-issuer-prod.yaml
+  # 통합 Ingress — 6 host (root + admin/quant/gft/agent/api) + TLS.
+  # base 의 단일 path-routed Ingress 2개 (frontend, gateway) 는 아래 $patch:
+  # delete 로 무력화.
+  - ingresses/commerce-platform.yaml
 patches:
-  # ─── Ingress: <DOMAIN> host + cert-manager TLS ──────────────────────────────
-  - path: patches/ingress-gateway-tls.yaml
-    target:
+  # ─── base 의 path-routed Ingress 2개 제거 (subdomain 라우팅으로 대체) ────────
+  - patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
       kind: Ingress
-      name: gateway
-  - path: patches/ingress-frontend-tls.yaml
-    target:
+      metadata:
+        name: frontend
+        namespace: commerce
+  - patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
       kind: Ingress
-      name: frontend
+      metadata:
+        name: gateway
+        namespace: commerce
   # ─── JVM tuning (모든 Deployment 에 주입, nginx 컨테이너는 무시함) ────────
   - path: patches/java-tool-options.yaml
     target:

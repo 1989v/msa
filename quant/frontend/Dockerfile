@@ -4,7 +4,7 @@ COPY package.json package-lock.json ./
 COPY vendor ./vendor
 RUN rm -f package-lock.json && npm install --no-audit --no-fund
 COPY . .
-RUN npx vite build --base /quant/
+RUN npx vite build --base /
 
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html

@@ -7,8 +7,9 @@
 # Example:
 #   ./scripts/render.sh 1989v.com me@example.com | kubectl apply -f -
 #
-# Ingress 는 commerce.<DOMAIN> 단일 host 에 path 라우팅. DNS A 레코드
-# (commerce, argocd 서브도메인) 가 OCI public IP 로 사전 설정돼 있어야 한다.
+# Ingress 는 host 별 분리 — root (portal-fe), admin., quant., gft., agent. (FE 5종)
+# + api. (gateway) + argocd. (UI). DNS A 레코드 7종이 OCI public IP 로 사전
+# 설정돼 있어야 한다.
 
 set -euo pipefail
 

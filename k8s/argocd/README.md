@@ -15,8 +15,8 @@ OCI Ampere A1 24GB 환경에서 메모리 최소화 (704Mi 한도 합) 로 GitOp
 1. `scripts/oci-bootstrap.sh` 완료 (k3s + ingress-nginx + cert-manager)
 2. **OCIR Auth Token 발급**: OCI Console → User Settings → Auth Tokens
 3. Tenancy **Object Storage namespace** 확인 (Profile → Tenancy 페이지)
-4. **DNS A 레코드 등록**: `commerce.<DOMAIN>` / `argocd.<DOMAIN>` → OCI public IP
-   (Cloudflare 권장, DNS-only / gray cloud)
+4. **DNS A 레코드 등록** (7종, 모두 OCI public IP / Cloudflare DNS-only):
+   `@` (root), `admin`, `quant`, `gft`, `agent`, `api`, `argocd`
 
 ## 설치
 
@@ -128,8 +128,9 @@ argocd app get commerce --refresh
 ### Ingress host 에 `__DOMAIN__` 가 남음
 
 Argo CD 는 `k8s/overlays/oci-arm/scripts/render.sh` 를 실행하지 않고
-`kustomization.yaml` 을 직접 렌더링한다. `commerce.__DOMAIN__` 에러가 나면
-`Application/commerce` 에 설치 시점의 inline Kustomize patch 가 없는 상태다.
+`kustomization.yaml` 을 직접 렌더링한다. `__DOMAIN__` (literal placeholder) 가
+Ingress host 에 그대로 남으면 `Application/commerce` 의 inline Kustomize
+patch 가 설치 시점에 누락된 상태다.
 
 ```bash
 ./k8s/argocd/install.sh <PUBLIC_IP> <LE_EMAIL> <GIT_REPO_URL> <DOMAIN>

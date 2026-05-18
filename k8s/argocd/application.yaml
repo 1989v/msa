@@ -20,28 +20,55 @@ spec:
       # inline patches 로 주입한다. install.sh 가 __DOMAIN__ /
       # __OCI_LE_EMAIL__ / __GITHUB_REPO_URL__ 를 sed 로 치환.
       patches:
+        # commerce 통합 Ingress — 6 host (rules + tls) 각각 __DOMAIN__ 치환.
+        # rules / tls 순서는 ingresses/commerce-platform.yaml 의 정의 순서:
+        #   0: <DOMAIN> (root, portal-fe)
+        #   1: admin.<DOMAIN>
+        #   2: quant.<DOMAIN>
+        #   3: gft.<DOMAIN>
+        #   4: agent.<DOMAIN>
+        #   5: api.<DOMAIN>
         - target:
             group: networking.k8s.io
             kind: Ingress
-            name: gateway
+            name: commerce
           patch: |-
             - op: replace
-              path: /spec/tls/0/hosts/0
-              value: commerce.__DOMAIN__
-            - op: replace
               path: /spec/rules/0/host
-              value: commerce.__DOMAIN__
-        - target:
-            group: networking.k8s.io
-            kind: Ingress
-            name: frontend
-          patch: |-
+              value: __DOMAIN__
+            - op: replace
+              path: /spec/rules/1/host
+              value: admin.__DOMAIN__
+            - op: replace
+              path: /spec/rules/2/host
+              value: quant.__DOMAIN__
+            - op: replace
+              path: /spec/rules/3/host
+              value: gft.__DOMAIN__
+            - op: replace
+              path: /spec/rules/4/host
+              value: agent.__DOMAIN__
+            - op: replace
+              path: /spec/rules/5/host
+              value: api.__DOMAIN__
             - op: replace
               path: /spec/tls/0/hosts/0
-              value: commerce.__DOMAIN__
+              value: __DOMAIN__
             - op: replace
-              path: /spec/rules/0/host
-              value: commerce.__DOMAIN__
+              path: /spec/tls/1/hosts/0
+              value: admin.__DOMAIN__
+            - op: replace
+              path: /spec/tls/2/hosts/0
+              value: quant.__DOMAIN__
+            - op: replace
+              path: /spec/tls/3/hosts/0
+              value: gft.__DOMAIN__
+            - op: replace
+              path: /spec/tls/4/hosts/0
+              value: agent.__DOMAIN__
+            - op: replace
+              path: /spec/tls/5/hosts/0
+              value: api.__DOMAIN__
         - target:
             group: cert-manager.io
             kind: ClusterIssuer

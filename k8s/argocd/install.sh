@@ -18,9 +18,9 @@ Usage: $0 <PUBLIC_IP> <LE_EMAIL> <GITHUB_REPO_URL> <DOMAIN>
   LE_EMAIL        : Let's Encrypt 등록 이메일
   GITHUB_REPO_URL : Argo CD 가 sync 할 Git repo (HTTPS 또는 SSH)
   DOMAIN          : 베이스 도메인 (예: 1989v.com)
-                    → commerce.<DOMAIN> 과 argocd.<DOMAIN> 로 라우팅된다.
-                    Cloudflare DNS 등에 A 레코드 (commerce, argocd) 가
-                    PUBLIC_IP 로 미리 설정돼 있어야 한다.
+                    → root + admin/quant/gft/agent/api/argocd subdomain 7종으로
+                    라우팅된다. Cloudflare DNS 등에 A 레코드 7개가 PUBLIC_IP 로
+                    미리 설정돼 있어야 한다.
 
 환경변수 (OCIR pull secret 생성용):
   OCIR_REGION     : OCI region key (예: ap-seoul-1)

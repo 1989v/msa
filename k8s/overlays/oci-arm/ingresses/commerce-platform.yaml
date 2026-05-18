@@ -1,0 +1,159 @@
+# commerce 플랫폼 단일 Ingress — 5 FE subdomain + 1 API subdomain + 통합 TLS.
+#
+# host 매핑:
+#   <DOMAIN>            (root)  → portal-fe
+#   admin.<DOMAIN>              → admin-fe
+#   quant.<DOMAIN>              → quant-fe
+#   gft.<DOMAIN>                → gifticon-fe
+#   agent.<DOMAIN>              → agent-viewer-fe
+#   api.<DOMAIN>                → gateway (REST/WS/SSE 전용)
+#
+# 각 FE host 는 root path "/" 가 자기 FE 로 가고, /api · /ws · /sse · /actuator
+# · /svc 는 모두 gateway 로 proxy (FE 코드에서 same-origin 호출 유지).
+#
+# render.sh / install.sh 가 __DOMAIN__ 를 실제 도메인 (예: 1989v.com) 로 치환.
+# Argo CD 경로에서는 Application/commerce 의 spec.source.kustomize.patches 가
+# /spec/rules/N/host 와 /spec/tls/N/hosts/0 를 op:replace 로 주입한다.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: commerce
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [__DOMAIN__]
+      secretName: portal-tls
+    - hosts: [admin.__DOMAIN__]
+      secretName: admin-tls
+    - hosts: [quant.__DOMAIN__]
+      secretName: quant-tls
+    - hosts: [gft.__DOMAIN__]
+      secretName: gifticon-tls
+    - hosts: [agent.__DOMAIN__]
+      secretName: agent-tls
+    - hosts: [api.__DOMAIN__]
+      secretName: api-tls
+  rules:
+    # ─── portal-fe (root domain) ───
+    - host: __DOMAIN__
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /ws
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /sse
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /actuator
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /svc
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }
+    # ─── admin-fe ───
+    - host: admin.__DOMAIN__
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /ws
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /sse
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /actuator
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /svc
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: admin-fe, port: { name: http } } }
+    # ─── quant-fe ───
+    - host: quant.__DOMAIN__
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /ws
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /sse
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /actuator
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /svc
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: quant-fe, port: { name: http } } }
+    # ─── gifticon-fe (gft.<DOMAIN>) ───
+    - host: gft.__DOMAIN__
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /ws
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /sse
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /actuator
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /svc
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: gifticon-fe, port: { name: http } } }
+    # ─── agent-viewer-fe (agent.<DOMAIN>) ───
+    - host: agent.__DOMAIN__
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /ws
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /sse
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /actuator
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /svc
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: agent-viewer-fe, port: { name: http } } }
+    # ─── gateway API 전용 host ───
+    - host: api.__DOMAIN__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }

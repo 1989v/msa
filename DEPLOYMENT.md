@@ -318,12 +318,21 @@ kubectl -n cert-manager get pods  # 3개 Running
 > 있어야 한다. cert-manager 의 HTTP01 challenge 가 도메인을 IP 로 해소할 수
 > 있어야 cert 발급된다.
 >
-> | Type | Name      | Value          | Proxy        |
-> |------|-----------|----------------|--------------|
-> | A    | commerce  | `$PUBLIC_IP`   | DNS only (gray cloud) |
-> | A    | argocd    | `$PUBLIC_IP`   | DNS only (gray cloud) |
+> | Type | Name      | Value          | Proxy        | 가는 곳 |
+> |------|-----------|----------------|--------------|---------|
+> | A    | `@` (root)| `$PUBLIC_IP`   | DNS only     | portal-fe |
+> | A    | admin     | `$PUBLIC_IP`   | DNS only     | admin-fe |
+> | A    | quant     | `$PUBLIC_IP`   | DNS only     | quant-fe |
+> | A    | gft       | `$PUBLIC_IP`   | DNS only     | gifticon-fe |
+> | A    | agent     | `$PUBLIC_IP`   | DNS only     | agent-viewer-fe |
+> | A    | api       | `$PUBLIC_IP`   | DNS only     | gateway (REST/WS/SSE) |
+> | A    | argocd    | `$PUBLIC_IP`   | DNS only     | Argo CD UI |
 >
-> 검증: `dig +short commerce.$DOMAIN argocd.$DOMAIN` → 둘 다 `$PUBLIC_IP` 반환.
+> 검증: `dig +short $DOMAIN admin.$DOMAIN quant.$DOMAIN gft.$DOMAIN agent.$DOMAIN api.$DOMAIN argocd.$DOMAIN` → 7줄 모두 `$PUBLIC_IP` 반환.
+>
+> Cloudflare 팁: root A 레코드는 Name 칸에 `@` 또는 도메인 자체 입력. proxy 는
+> 모두 회색 구름 (DNS only) 로. proxied 모드는 도입 안정화 후 별도 작업 (WebSocket/SSE
+> timeout 튜닝 필요).
 
 ```bash
 source ~/.commerce-env   # OCIR 시크릿 + DOMAIN 환경변수 로드
@@ -404,14 +413,21 @@ PW  : (5.1 의 출력값)
 
 좌측 commerce app 클릭 → 모든 resource 상태 시각화.
 
-## 6.2 commerce 플랫폼
+## 6.2 commerce 플랫폼 (host 별 분리)
 
 | URL | 화면 |
 |---|---|
-| `https://commerce.<DOMAIN>/` | portal-fe |
-| `https://commerce.<DOMAIN>/admin/` | admin-fe |
-| `https://commerce.<DOMAIN>/quant/` | quant-fe |
-| `https://commerce.<DOMAIN>/api/v1/products?page=0&size=10` | gateway REST |
+| `https://<DOMAIN>/` | portal-fe (메인 진입, 코드딕셔너리/포트폴리오) |
+| `https://admin.<DOMAIN>/` | admin-fe |
+| `https://quant.<DOMAIN>/` | quant-fe |
+| `https://gft.<DOMAIN>/` | gifticon-fe |
+| `https://agent.<DOMAIN>/` | agent-viewer-fe |
+| `https://api.<DOMAIN>/api/v1/products?page=0&size=10` | gateway REST 직접 |
+| `https://<DOMAIN>/api/v1/products?page=0&size=10` | 동일, FE same-origin 호출 경로 |
+
+각 FE subdomain Ingress 는 `/api`, `/ws`, `/sse`, `/actuator`, `/svc` 를 같은
+host 에서 gateway 로 proxy 한다 → FE 코드는 CORS 없이 `/api/*` 동일 origin
+호출 유지. 직접 API 클라이언트 (postman/mobile) 는 `api.<DOMAIN>` 사용.
 
 첫 접속 시 cert 발급 대기로 5분간 503 가능. 또는 인증서가 staging 으로 떨어진
 경우 브라우저 경고 — 아래 "Known Issues" 참조.
@@ -483,8 +499,8 @@ kubectl -n commerce get certificate,order,challenge
 
 실제 서빙되는 cert 발급자 확인 (브라우저 캐시 vs 서버 문제 판별):
 ```bash
-echo | openssl s_client -connect commerce.<DOMAIN>:443 \
-  -servername commerce.<DOMAIN> 2>/dev/null \
+echo | openssl s_client -connect <DOMAIN>:443 \
+  -servername <DOMAIN> 2>/dev/null \
   | openssl x509 -noout -issuer
 ```
 - `O = Let's Encrypt` → 정상, 브라우저 캐시 / HSTS 문제 (Chrome:
