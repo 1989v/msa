@@ -1,31 +1,30 @@
 #!/usr/bin/env bash
-# Render oci-arm overlay with concrete public IP + Let's Encrypt email.
+# Render oci-arm overlay with concrete domain + Let's Encrypt email.
 #
 # Usage:
-#   ./scripts/render.sh <PUBLIC_IP> <LE_EMAIL>
+#   ./scripts/render.sh <DOMAIN> <LE_EMAIL>
 #
 # Example:
-#   ./scripts/render.sh 132.226.10.55 me@example.com | kubectl apply -f -
+#   ./scripts/render.sh 1989v.com me@example.com | kubectl apply -f -
 #
-# IP-dashed 규약: nip.io 는 a-b-c-d.nip.io 형태로 dashed IP 를 정적 A 레코드로
-# 풀어준다. 점/대시 모두 지원하지만 대시가 SNI 호스트네임에 더 안전.
+# Ingress 는 commerce.<DOMAIN> 단일 host 에 path 라우팅. DNS A 레코드
+# (commerce, argocd 서브도메인) 가 OCI public IP 로 사전 설정돼 있어야 한다.
 
 set -euo pipefail
 
 if [[ $# -lt 2 ]]; then
-  echo "Usage: $0 <PUBLIC_IP> <LE_EMAIL>" >&2
-  echo "  PUBLIC_IP: OCI VM 의 public IPv4" >&2
+  echo "Usage: $0 <DOMAIN> <LE_EMAIL>" >&2
+  echo "  DOMAIN   : 베이스 도메인 (예: 1989v.com)" >&2
   echo "  LE_EMAIL : Let's Encrypt 등록 이메일 (만료 알림용)" >&2
   exit 1
 fi
 
-PUBLIC_IP="$1"
+DOMAIN="$1"
 LE_EMAIL="$2"
-IP_DASHED="${PUBLIC_IP//./-}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OVERLAY_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 kubectl kustomize "${OVERLAY_DIR}" \
-  | sed -e "s/__OCI_IP_DASHED__/${IP_DASHED}/g" \
+  | sed -e "s/__DOMAIN__/${DOMAIN}/g" \
         -e "s/__OCI_LE_EMAIL__/${LE_EMAIL}/g"

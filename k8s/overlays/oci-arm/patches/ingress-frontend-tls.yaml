@@ -21,10 +21,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - commerce.__OCI_IP_DASHED__.nip.io
+        - commerce.__DOMAIN__
       secretName: frontend-nipio-tls
   rules:
-    - host: commerce.__OCI_IP_DASHED__.nip.io
+    - host: commerce.__DOMAIN__
       http:
         paths:
           - path: /gifticon/?(.*)

@@ -1,5 +1,6 @@
 # Let's Encrypt Production — 실제 trusted 인증서. Rate limit (50 certs/주/등록 도메인).
-# nip.io 는 Public Suffix List 에 등재되어 있어 각 서브도메인이 독립 도메인 취급 → 사실상 무제한.
+# 단일 베이스 도메인 (예: 1989v.com) 에 commerce/argocd 서브도메인만 쓰므로
+# 50 cert/주 한도는 사실상 무한 — duplicate cert 발급은 5/주 제한 주의.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:

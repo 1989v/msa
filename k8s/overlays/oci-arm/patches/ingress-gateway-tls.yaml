@@ -1,13 +1,13 @@
 # gateway ingress 에 host + TLS 추가.
 #
-# 단일 hostname `commerce.<IP-DASHED>.nip.io` 으로 모든 path 통합:
+# 단일 hostname `commerce.<DOMAIN>` 으로 모든 path 통합:
 #   /api/...      → gateway (REST)
 #   /sse/...      → gateway (SSE)
 #   /ws/...       → gateway (WebSocket)
 #   /svc/...      → gateway (actuator proxy)
 #   /actuator/... → gateway (own actuator)
 #
-# render.sh 가 __OCI_IP_DASHED__ 를 실제 IP-dashed 로 치환한다.
+# render.sh / install.sh 가 __DOMAIN__ 를 실제 도메인 (예: 1989v.com) 로 치환.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -21,10 +21,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - commerce.__OCI_IP_DASHED__.nip.io
+        - commerce.__DOMAIN__
       secretName: gateway-nipio-tls
   rules:
-    - host: commerce.__OCI_IP_DASHED__.nip.io
+    - host: commerce.__DOMAIN__
       http:
         paths:
           - path: /api(/.*)?

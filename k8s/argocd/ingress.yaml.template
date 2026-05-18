@@ -1,5 +1,5 @@
-# Argo CD UI Ingress — argocd.<IP-DASHED>.nip.io 로 외부 노출 + Let's Encrypt TLS.
-# install.sh 가 __OCI_IP_DASHED__ / __OCI_LE_EMAIL__ 를 치환.
+# Argo CD UI Ingress — argocd.<DOMAIN> 로 외부 노출 + Let's Encrypt TLS.
+# install.sh 가 __DOMAIN__ / __OCI_LE_EMAIL__ 를 치환.
 #
 # argocd-server 는 values.yaml 에서 server.insecure=true → ingress 가 TLS 종단.
 apiVersion: networking.k8s.io/v1
@@ -18,10 +18,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - argocd.__OCI_IP_DASHED__.nip.io
+        - argocd.__DOMAIN__
       secretName: argocd-tls
   rules:
-    - host: argocd.__OCI_IP_DASHED__.nip.io
+    - host: argocd.__DOMAIN__
       http:
         paths:
           - path: /

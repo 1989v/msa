@@ -6,8 +6,8 @@ OCI Ampere A1 24GB 환경에서 메모리 최소화 (704Mi 한도 합) 로 GitOp
 
 - `values.yaml` — Helm chart values (server/repo/controller/redis 리소스 한도)
 - `application.yaml` — commerce 플랫폼 sync 정의 (`__GITHUB_REPO_URL__`,
-  `__OCI_IP_DASHED__`, `__OCI_LE_EMAIL__` 치환)
-- `ingress.yaml.template` — UI ingress (cert-manager TLS, `__OCI_IP_DASHED__` 치환)
+  `__DOMAIN__`, `__OCI_LE_EMAIL__` 치환)
+- `ingress.yaml.template` — UI ingress (cert-manager TLS, `__DOMAIN__` 치환)
 - `install.sh` — 일괄 설치 스크립트
 
 ## 사전 조건
@@ -15,6 +15,8 @@ OCI Ampere A1 24GB 환경에서 메모리 최소화 (704Mi 한도 합) 로 GitOp
 1. `scripts/oci-bootstrap.sh` 완료 (k3s + ingress-nginx + cert-manager)
 2. **OCIR Auth Token 발급**: OCI Console → User Settings → Auth Tokens
 3. Tenancy **Object Storage namespace** 확인 (Profile → Tenancy 페이지)
+4. **DNS A 레코드 등록**: `commerce.<DOMAIN>` / `argocd.<DOMAIN>` → OCI public IP
+   (Cloudflare 권장, DNS-only / gray cloud)
 
 ## 설치
 
@@ -23,7 +25,7 @@ OCIR_REGION=ap-seoul-1 \
 OCIR_NAMESPACE=<tenancy-namespace> \
 OCIR_USERNAME="<tenancy-namespace>/<oci-username>" \
 OCIR_TOKEN='<auth-token>' \
-./k8s/argocd/install.sh <PUBLIC_IP> <LE_EMAIL> <GIT_REPO_URL>
+./k8s/argocd/install.sh <PUBLIC_IP> <LE_EMAIL> <GIT_REPO_URL> <DOMAIN>
 
 # 예시
 OCIR_REGION=ap-seoul-1 \
@@ -31,7 +33,7 @@ OCIR_NAMESPACE=kgdcommerce \
 OCIR_USERNAME='kgdcommerce/me@example.com' \
 OCIR_TOKEN='xxxxxxx' \
 ./k8s/argocd/install.sh 132.226.10.55 me@example.com \
-  https://github.com/kgd/msa.git
+  https://github.com/kgd/msa.git 1989v.com
 ```
 
 > federated user (OCI IAM Identity Domain) 면 username 형식이
@@ -42,8 +44,8 @@ OCIR_TOKEN='xxxxxxx' \
 2. 기존 ServiceAccount 에 `imagePullSecrets` 부착
 3. Helm 차트 설치 (`argo/argo-cd`, namespace `argocd`)
 4. `Application/commerce` CRD apply — main 브랜치의 `k8s/overlays/oci-arm` 감시
-   (`spec.source.kustomize.patches` 로 nip.io host / Let's Encrypt email 주입)
-5. UI ingress apply + Let's Encrypt TLS 발급 대기
+   (`spec.source.kustomize.patches` 로 도메인 host / Let's Encrypt email 주입)
+5. UI ingress (`argocd.<DOMAIN>`) apply + Let's Encrypt TLS 발급 대기
 6. 초기 admin 비밀번호 출력
 
 `oci-arm` overlay 는 모든 앱 Deployment/CronJob Pod spec 에
@@ -55,7 +57,7 @@ SA patch CronJob 은 만들지 않는다.
 ### UI 접속
 
 ```
-https://argocd.<IP-DASHED>.nip.io/
+https://argocd.<DOMAIN>/
   ID  : admin
   PW  : (install.sh 출력값)
 ```
@@ -63,7 +65,7 @@ https://argocd.<IP-DASHED>.nip.io/
 ### CLI 로그인
 
 ```bash
-argocd login argocd.<IP-DASHED>.nip.io --username admin --password <PASSWORD>
+argocd login argocd.<DOMAIN> --username admin --password <PASSWORD>
 argocd app list
 argocd app sync commerce
 ```
@@ -123,15 +125,14 @@ kubectl -n argocd logs deploy/argocd-repo-server --tail=50
 argocd app get commerce --refresh
 ```
 
-### Ingress host 에 `__OCI_IP_DASHED__` 가 남음
+### Ingress host 에 `__DOMAIN__` 가 남음
 
 Argo CD 는 `k8s/overlays/oci-arm/scripts/render.sh` 를 실행하지 않고
-`kustomization.yaml` 을 직접 렌더링한다. `commerce.__OCI_IP_DASHED__.nip.io`
-에러가 나면 `Application/commerce` 에 설치 시점의 inline Kustomize patch 가
-없는 상태다.
+`kustomization.yaml` 을 직접 렌더링한다. `commerce.__DOMAIN__` 에러가 나면
+`Application/commerce` 에 설치 시점의 inline Kustomize patch 가 없는 상태다.
 
 ```bash
-./k8s/argocd/install.sh <PUBLIC_IP> <LE_EMAIL> <GIT_REPO_URL>
+./k8s/argocd/install.sh <PUBLIC_IP> <LE_EMAIL> <GIT_REPO_URL> <DOMAIN>
 ```
 
 또는 `Application/commerce` 의 `spec.source.kustomize.patches` 에 gateway /
@@ -152,8 +153,9 @@ resources:
 
 그리고 `k8s/argocd/application.yaml` 의 `kustomize.patches` 에서 staging email
 patch entry 도 같이 제거. 첫 cert 발급 디버깅 시 staging 으로 먼저 검증하고
-싶을 때만 다시 활성. Let's Encrypt prod 의 rate limit (호스트당 50 cert/주)
-은 nip.io 서브도메인이 각각 독립 도메인 취급되어 실질 무제한.
+싶을 때만 다시 활성. Let's Encrypt prod 의 rate limit (등록 도메인당 50 cert/주)
+은 베이스 도메인(예: `1989v.com`) 단위로 적용되며, 우리는 `commerce` /
+`argocd` 두 서브도메인만 쓰므로 실질 영향 없음.
 
 ### Drift / SelfHeal 비활성화 임시
 

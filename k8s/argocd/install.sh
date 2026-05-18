@@ -7,16 +7,20 @@
 #   OCIR_NAMESPACE=<tenancy-namespace> \
 #   OCIR_USERNAME=<tenancy-namespace>/<oci-username> \
 #   OCIR_TOKEN=<auth-token> \
-#   ./install.sh <PUBLIC_IP> <LE_EMAIL> <GITHUB_REPO_URL>
+#   ./install.sh <PUBLIC_IP> <LE_EMAIL> <GITHUB_REPO_URL> <DOMAIN>
 
 set -euo pipefail
 
-if [[ $# -lt 3 ]]; then
+if [[ $# -lt 4 ]]; then
   cat <<EOF
-Usage: $0 <PUBLIC_IP> <LE_EMAIL> <GITHUB_REPO_URL>
+Usage: $0 <PUBLIC_IP> <LE_EMAIL> <GITHUB_REPO_URL> <DOMAIN>
   PUBLIC_IP       : OCI VM public IPv4
   LE_EMAIL        : Let's Encrypt 등록 이메일
   GITHUB_REPO_URL : Argo CD 가 sync 할 Git repo (HTTPS 또는 SSH)
+  DOMAIN          : 베이스 도메인 (예: 1989v.com)
+                    → commerce.<DOMAIN> 과 argocd.<DOMAIN> 로 라우팅된다.
+                    Cloudflare DNS 등에 A 레코드 (commerce, argocd) 가
+                    PUBLIC_IP 로 미리 설정돼 있어야 한다.
 
 환경변수 (OCIR pull secret 생성용):
   OCIR_REGION     : OCI region key (예: ap-seoul-1)
@@ -31,7 +35,7 @@ fi
 PUBLIC_IP="$1"
 LE_EMAIL="$2"
 GITHUB_REPO_URL="$3"
-IP_DASHED="${PUBLIC_IP//./-}"
+DOMAIN="$4"
 
 # OCIR 환경변수 검증
 : "${OCIR_REGION:?Need OCIR_REGION (예: ap-seoul-1)}"
@@ -97,19 +101,19 @@ ok "Helm 설치 완료"
 #───────────────────────────────────────────────────────────────────────────────
 # 3. Application CRD 적용 — commerce 플랫폼 sync 시작
 #───────────────────────────────────────────────────────────────────────────────
-log "Application CRD 적용 (repo: $GITHUB_REPO_URL)"
+log "Application CRD 적용 (repo: $GITHUB_REPO_URL, domain: $DOMAIN)"
 sed -e "s|__GITHUB_REPO_URL__|$GITHUB_REPO_URL|g" \
-    -e "s|__OCI_IP_DASHED__|$IP_DASHED|g" \
+    -e "s|__DOMAIN__|$DOMAIN|g" \
     -e "s|__OCI_LE_EMAIL__|$LE_EMAIL|g" \
   "$SCRIPT_DIR/application.yaml" | kubectl apply -f -
 ok "Application 등록"
 
 #───────────────────────────────────────────────────────────────────────────────
-# 4. UI Ingress — argocd.<IP-DASHED>.nip.io + cert-manager TLS
+# 4. UI Ingress — argocd.<DOMAIN> + cert-manager TLS
 #───────────────────────────────────────────────────────────────────────────────
-log "UI Ingress 적용 (host: argocd.${IP_DASHED}.nip.io)"
-sed -e "s/__OCI_IP_DASHED__/$IP_DASHED/g" \
-    -e "s/__OCI_LE_EMAIL__/$LE_EMAIL/g" \
+log "UI Ingress 적용 (host: argocd.${DOMAIN})"
+sed -e "s|__DOMAIN__|$DOMAIN|g" \
+    -e "s|__OCI_LE_EMAIL__|$LE_EMAIL|g" \
     "$SCRIPT_DIR/ingress.yaml.template" | kubectl apply -f -
 ok "Ingress 적용"
 
@@ -132,7 +136,7 @@ cat <<EOF
 ╭─────────────────────────────────────────────────────────────────╮
 │  ✅ Argo CD 설치 완료                                            │
 ├─────────────────────────────────────────────────────────────────┤
-│  UI URL    : https://argocd.${IP_DASHED}.nip.io
+│  UI URL    : https://argocd.${DOMAIN}
 │  Username  : admin
 │  Password  : ${PASSWORD}
 │  Repository: ${GITHUB_REPO_URL}
