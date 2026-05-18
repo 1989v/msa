@@ -108,9 +108,19 @@ spec:
         factor: 2
         maxDuration: 5m
 
-  # cert-manager 가 자동 채우는 secret(*-tls) 의 diff 무시
+  # 운영에 영향 없는 cosmetic drift 무시 — sync 상태를 Healthy 로 유지.
   ignoreDifferences:
+    # cert-manager 가 자동 채우는 secret(*-tls) 의 diff
     - group: ""
       kind: Secret
       jsonPointers:
         - /data
+    # K8s 가 StatefulSet 적용 시 자동 추가하는 기본 필드 (volumeClaimTemplates
+    # 의 volumeMode/creationTimestamp/status 등). 6 StatefulSet (mysql, redis,
+    # kafka, elasticsearch, clickhouse, quant-postgres) 가 영구 OutOfSync 표시
+    # 되는 원인. volumeClaimTemplates 자체 변경 (PVC 사이즈 등) 은 Argo CD
+    # 가 못 잡으므로 변경 시엔 수동 kubectl apply 필요.
+    - group: apps
+      kind: StatefulSet
+      jsonPointers:
+        - /spec/volumeClaimTemplates
