@@ -1,0 +1,30 @@
+# Let's Encrypt Production — DNS01 challenge via Cloudflare API.
+#
+# Cloudflare proxied (orange cloud) 모드에선 HTTP01 challenge 가 동작 안 한다
+# (LE 의 /.well-known/acme-challenge 접근이 CF edge 에서 가로채짐). DNS01 은
+# DNS TXT 레코드 등록으로 검증해서 proxy 모드 무관하게 발급 가능.
+#
+# 사전 조건: commerce ns 의 secret `cloudflare-api-token-secret` 에 Cloudflare
+# API token (Zone:DNS:Edit 권한, 해당 zone scope) 이 `api-token` key 로 등록.
+#   kubectl -n cert-manager create secret generic cloudflare-api-token-secret \
+#     --from-literal=api-token=<TOKEN>
+#
+# 사용: 새 Certificate 또는 Ingress 의 cluster-issuer annotation 을
+# `letsencrypt-prod-dns01` 로 지정. 기존 HTTP01 issuer (letsencrypt-prod) 와
+# 공존 가능 — host 별로 선택해서 쓰면 됨.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod-dns01
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: __OCI_LE_EMAIL__
+    privateKeySecretRef:
+      name: letsencrypt-prod-dns01-account
+    solvers:
+      - dns01:
+          cloudflare:
+            apiTokenSecretRef:
+              name: cloudflare-api-token-secret
+              key: api-token

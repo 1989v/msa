@@ -20,14 +20,15 @@ spec:
       # inline patches 로 주입한다. install.sh 가 __DOMAIN__ /
       # __OCI_LE_EMAIL__ / __GITHUB_REPO_URL__ 를 sed 로 치환.
       patches:
-        # commerce 통합 Ingress — 6 host (rules + tls) 각각 __DOMAIN__ 치환.
+        # commerce 통합 Ingress — 7 host (rules + tls) 각각 __DOMAIN__ 치환.
         # rules / tls 순서는 ingresses/commerce-platform.yaml 의 정의 순서:
         #   0: <DOMAIN> (root, portal-fe)
         #   1: admin.<DOMAIN>
         #   2: quant.<DOMAIN>
         #   3: gft.<DOMAIN>
         #   4: agent.<DOMAIN>
-        #   5: api.<DOMAIN>
+        #   5: api.<DOMAIN>   (Cloudflare proxy ON, REST 위주)
+        #   6: rt.<DOMAIN>    (Cloudflare proxy OFF, WS/SSE bypass)
         - target:
             group: networking.k8s.io
             kind: Ingress
@@ -52,6 +53,9 @@ spec:
               path: /spec/rules/5/host
               value: api.__DOMAIN__
             - op: replace
+              path: /spec/rules/6/host
+              value: rt.__DOMAIN__
+            - op: replace
               path: /spec/tls/0/hosts/0
               value: __DOMAIN__
             - op: replace
@@ -69,6 +73,18 @@ spec:
             - op: replace
               path: /spec/tls/5/hosts/0
               value: api.__DOMAIN__
+            - op: replace
+              path: /spec/tls/6/hosts/0
+              value: rt.__DOMAIN__
+        # DNS01 issuer 에도 이메일 주입 (CF proxy 활성 시 사용).
+        - target:
+            group: cert-manager.io
+            kind: ClusterIssuer
+            name: letsencrypt-prod-dns01
+          patch: |-
+            - op: replace
+              path: /spec/acme/email
+              value: __OCI_LE_EMAIL__
         - target:
             group: cert-manager.io
             kind: ClusterIssuer

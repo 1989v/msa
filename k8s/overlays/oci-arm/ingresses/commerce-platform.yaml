@@ -6,10 +6,13 @@
 #   quant.<DOMAIN>              → quant-fe
 #   gft.<DOMAIN>                → gifticon-fe
 #   agent.<DOMAIN>              → agent-viewer-fe
-#   api.<DOMAIN>                → gateway (REST/WS/SSE 전용)
+#   api.<DOMAIN>                → gateway (REST 위주, Cloudflare proxy ON)
+#   rt.<DOMAIN>      (신규)    → gateway (WS+SSE bypass, CF proxy OFF)
 #
 # 각 FE host 는 root path "/" 가 자기 FE 로 가고, /api · /ws · /sse · /actuator
 # · /svc 는 모두 gateway 로 proxy (FE 코드에서 same-origin 호출 유지).
+# rt.<DOMAIN> 은 WS/SSE 전용 bypass — CF 100s timeout + 버퍼링 회피용.
+# FE 코드는 VITE_WS_URL / VITE_SSE_URL 환경변수로 rt host 직접 호출.
 #
 # render.sh / install.sh 가 __DOMAIN__ 를 실제 도메인 (예: 1989v.com) 로 치환.
 # Argo CD 경로에서는 Application/commerce 의 spec.source.kustomize.patches 가
@@ -39,6 +42,8 @@ spec:
       secretName: agent-tls
     - hosts: [api.__DOMAIN__]
       secretName: api-tls
+    - hosts: [rt.__DOMAIN__]
+      secretName: rt-tls
   rules:
     # ─── portal-fe (root domain) ───
     - host: __DOMAIN__
@@ -150,8 +155,18 @@ spec:
           - path: /
             pathType: Prefix
             backend: { service: { name: agent-viewer-fe, port: { name: http } } }
-    # ─── gateway API 전용 host ───
+    # ─── gateway API 전용 host (REST 위주, Cloudflare proxy ON) ───
     - host: api.__DOMAIN__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+    # ─── gateway WS/SSE bypass host (Cloudflare proxy OFF) ───
+    # CF 의 100s WS idle timeout + SSE 버퍼링 회피. FE 코드가 직접 호출
+    # (VITE_WS_URL / VITE_SSE_URL 환경변수). cert 는 DNS01 challenge 권장
+    # (api 와 같은 zone 의 다른 host 라 같은 letsencrypt-prod issuer 사용 가능).
+    - host: rt.__DOMAIN__
       http:
         paths:
           - path: /

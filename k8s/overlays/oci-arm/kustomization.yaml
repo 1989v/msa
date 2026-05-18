@@ -27,7 +27,11 @@ resources:
   - ../k3s-lite
   - cert-manager/cluster-issuer-staging.yaml
   - cert-manager/cluster-issuer-prod.yaml
-  # 통합 Ingress — 6 host (root + admin/quant/gft/agent/api) + TLS.
+  # DNS01 issuer (Cloudflare provider) — CF proxy 모드에서도 동작.
+  # 사전: kubectl -n cert-manager 에 cloudflare-api-token-secret 등록 필요.
+  - cert-manager/cluster-issuer-prod-dns01.yaml
+  # 통합 Ingress — 7 host (root + admin/quant/gft/agent/api/rt) + TLS.
+  # rt.* 는 WebSocket/SSE 전용 bypass host (Cloudflare proxy off).
   # base 의 단일 path-routed Ingress 2개 (frontend, gateway) 는 아래 $patch:
   # delete 로 무력화.
   - ingresses/commerce-platform.yaml

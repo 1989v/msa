@@ -18,6 +18,21 @@ spring:
       # Spring Cloud 2025.1 (Oakwood): routes 경로가 server.webflux.routes 로 이동.
       server:
         webflux:
+          # rt.<DOMAIN> (Cloudflare bypass host for WS/SSE) 가 FE host
+          # (1989v.com, admin/quant/gft/agent.1989v.com) 와 cross-origin 이므로
+          # CORS allow-origin 필요. 정확한 host list 만 허용 — wildcard 금지.
+          globalcors:
+            corsConfigurations:
+              "[/**]":
+                allowedOriginPatterns:
+                  - "https://1989v.com"
+                  - "https://*.1989v.com"
+                  - "http://localhost:*"          # 로컬 dev FE
+                allowedMethods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+                allowedHeaders: ["*"]
+                exposedHeaders: ["X-Request-Id", "Authorization"]
+                allowCredentials: true
+                maxAge: 3600
           routes:
             - id: analytics-service
               uri: http://analytics:8090
