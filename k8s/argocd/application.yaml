@@ -20,19 +20,18 @@ spec:
       # inline patches 로 주입한다. install.sh 가 __DOMAIN__ /
       # __OCI_LE_EMAIL__ / __GITHUB_REPO_URL__ 를 sed 로 치환.
       patches:
-        # commerce 통합 Ingress — 7 host (rules + tls) 각각 __DOMAIN__ 치환.
-        # rules / tls 순서는 ingresses/commerce-platform.yaml 의 정의 순서:
+        # commerce-proxied Ingress — 6 host (CF proxy ON, CF Origin CA cert).
+        # rules / tls hosts[N] 순서:
         #   0: <DOMAIN> (root, portal-fe)
         #   1: admin.<DOMAIN>
         #   2: quant.<DOMAIN>
         #   3: gft.<DOMAIN>
         #   4: agent.<DOMAIN>
-        #   5: api.<DOMAIN>   (Cloudflare proxy ON, REST 위주)
-        #   6: rt.<DOMAIN>    (Cloudflare proxy OFF, WS/SSE bypass)
+        #   5: api.<DOMAIN>
         - target:
             group: networking.k8s.io
             kind: Ingress
-            name: commerce
+            name: commerce-proxied
           patch: |-
             - op: replace
               path: /spec/rules/0/host
@@ -53,38 +52,35 @@ spec:
               path: /spec/rules/5/host
               value: api.__DOMAIN__
             - op: replace
-              path: /spec/rules/6/host
-              value: rt.__DOMAIN__
-            - op: replace
               path: /spec/tls/0/hosts/0
               value: __DOMAIN__
             - op: replace
-              path: /spec/tls/1/hosts/0
+              path: /spec/tls/0/hosts/1
               value: admin.__DOMAIN__
             - op: replace
-              path: /spec/tls/2/hosts/0
+              path: /spec/tls/0/hosts/2
               value: quant.__DOMAIN__
             - op: replace
-              path: /spec/tls/3/hosts/0
+              path: /spec/tls/0/hosts/3
               value: gft.__DOMAIN__
             - op: replace
-              path: /spec/tls/4/hosts/0
+              path: /spec/tls/0/hosts/4
               value: agent.__DOMAIN__
             - op: replace
-              path: /spec/tls/5/hosts/0
+              path: /spec/tls/0/hosts/5
               value: api.__DOMAIN__
-            - op: replace
-              path: /spec/tls/6/hosts/0
-              value: rt.__DOMAIN__
-        # DNS01 issuer 에도 이메일 주입 (CF proxy 활성 시 사용).
+        # commerce-rt Ingress — rt.<DOMAIN>, CF proxy OFF, LE HTTP01 cert.
         - target:
-            group: cert-manager.io
-            kind: ClusterIssuer
-            name: letsencrypt-prod-dns01
+            group: networking.k8s.io
+            kind: Ingress
+            name: commerce-rt
           patch: |-
             - op: replace
-              path: /spec/acme/email
-              value: __OCI_LE_EMAIL__
+              path: /spec/rules/0/host
+              value: rt.__DOMAIN__
+            - op: replace
+              path: /spec/tls/0/hosts/0
+              value: rt.__DOMAIN__
         - target:
             group: cert-manager.io
             kind: ClusterIssuer
