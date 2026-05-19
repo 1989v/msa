@@ -46,6 +46,16 @@ analytics:
     product-cache-ttl: 7200  # 2h in seconds
     keyword-cache-ttl: 7200
     stats-cache-ttl: 3600   # 1h in seconds
+  # ADR-0050 Phase 2 — CTR/CVR Bayesian smoothing (default off)
+  smoothing:
+    enabled: false
+    alpha: 1.0
+    beta: 9.0
+  # ADR-0050 Phase 2 — GMV 7d/30d 누적 (default off; 활성화 전 V002 마이그레이션 필수)
+  gmv-aggregation:
+    enabled: false
+    short-window: P7D
+    long-window: P30D
 
 management:
   endpoints:

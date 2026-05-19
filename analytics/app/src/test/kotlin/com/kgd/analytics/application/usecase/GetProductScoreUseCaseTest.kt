@@ -17,7 +17,8 @@ class GetProductScoreUseCaseTest : BehaviorSpec({
 
     val productScore = ProductScore(
         productId = 1L, impressions = 100, clicks = 10, orders = 1,
-        ctr = 0.1, cvr = 0.1, popularityScore = 0.5, updatedAt = Instant.now()
+        ctr = 0.1, cvr = 0.1, ctrRaw = 0.1, cvrRaw = 0.1,
+        popularityScore = 0.5, gmv1h = 0.0, updatedAt = Instant.now()
     )
 
     Given("상품 스코어 조회") {

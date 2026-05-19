@@ -31,7 +31,9 @@ class AnalyticsStreamTopology(
     private val productScoreRepository: ProductScoreRepositoryPort,
     private val keywordScoreRepository: KeywordScoreRepositoryPort,
     private val scoreCache: ScoreCachePort,
-    private val kafkaTemplate: KafkaTemplate<String, String>
+    private val kafkaTemplate: KafkaTemplate<String, String>,
+    private val smoothingProperties: SmoothingProperties,
+    private val gmvAggregationProperties: GmvAggregationProperties
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -79,17 +81,25 @@ class AnalyticsStreamTopology(
                         productId = productId,
                         impressions = metrics.impressions,
                         clicks = metrics.clicks,
-                        orders = metrics.orders
+                        orders = metrics.orders,
+                        gmv1h = metrics.gmv,
+                        smoothing = smoothingProperties.toConfig()
                     )
 
                     scoreCache.cacheProductScore(score)
                     productScoreRepository.save(score)
+
+                    val (gmv7d, gmv30d) = aggregateGmv(productId)
 
                     val updateEvent = ScoreUpdateEvent(
                         productId = productId,
                         popularityScore = score.popularityScore,
                         ctr = score.ctr,
                         cvr = score.cvr,
+                        ctrRaw = score.ctrRaw,
+                        cvrRaw = score.cvrRaw,
+                        gmv7d = gmv7d,
+                        gmv30d = gmv30d,
                         updatedAt = score.updatedAt.toEpochMilli()
                     )
                     kafkaTemplate.send(
@@ -99,8 +109,8 @@ class AnalyticsStreamTopology(
                     )
 
                     log.debug(
-                        "Product score computed: productId={}, ctr={}, cvr={}",
-                        productId, score.ctr, score.cvr
+                        "Product score computed: productId={}, ctr={} (raw={}), cvr={} (raw={}), gmv7d={}, gmv30d={}",
+                        productId, score.ctr, score.ctrRaw, score.cvr, score.cvrRaw, gmv7d, gmv30d
                     )
                 } catch (e: Exception) {
                     log.error("Failed to process product metrics: key={}", windowedKey.key(), e)
@@ -144,5 +154,21 @@ class AnalyticsStreamTopology(
                     log.error("Failed to process keyword metrics: key={}", windowedKey.key(), e)
                 }
             }
+    }
+
+    /**
+     * GMV 7d/30d 합 조회. 외부화된 윈도우 기간으로 ClickHouse `product_scores.gmv_1h` 합산.
+     * `enabled=false` 거나 조회 실패 시 0.0 fallback (검색 측 ranking 에는 weight 0 으로 무시됨).
+     */
+    private fun aggregateGmv(productId: Long): Pair<Double, Double> {
+        if (!gmvAggregationProperties.enabled) return 0.0 to 0.0
+        return try {
+            val gmv7d = productScoreRepository.findGmvSince(productId, gmvAggregationProperties.shortWindow)
+            val gmv30d = productScoreRepository.findGmvSince(productId, gmvAggregationProperties.longWindow)
+            gmv7d to gmv30d
+        } catch (e: Exception) {
+            log.warn("GMV aggregation failed, fallback to 0: productId={}, {}", productId, e.message)
+            0.0 to 0.0
+        }
     }
 }

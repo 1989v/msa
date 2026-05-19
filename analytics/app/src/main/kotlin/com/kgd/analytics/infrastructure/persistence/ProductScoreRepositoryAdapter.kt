@@ -5,6 +5,8 @@ import com.kgd.analytics.domain.port.ProductScoreRepositoryPort
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 import java.sql.Timestamp
+import java.time.Duration
+import java.time.Instant
 import javax.sql.DataSource
 
 @Repository
@@ -17,8 +19,9 @@ class ProductScoreRepositoryAdapter(
             conn.prepareStatement(
                 """
                 INSERT INTO analytics.product_scores
-                (product_id, impressions, clicks, orders, ctr, cvr, popularity_score, window_start, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                (product_id, impressions, clicks, orders, ctr, cvr, ctr_raw, cvr_raw,
+                 popularity_score, gmv_1h, window_start, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """.trimIndent()
             ).use { ps ->
                 ps.setLong(1, score.productId)
@@ -27,9 +30,12 @@ class ProductScoreRepositoryAdapter(
                 ps.setLong(4, score.orders)
                 ps.setDouble(5, score.ctr)
                 ps.setDouble(6, score.cvr)
-                ps.setDouble(7, score.popularityScore)
-                ps.setTimestamp(8, Timestamp.from(score.updatedAt))
-                ps.setTimestamp(9, Timestamp.from(score.updatedAt))
+                ps.setDouble(7, score.ctrRaw)
+                ps.setDouble(8, score.cvrRaw)
+                ps.setDouble(9, score.popularityScore)
+                ps.setDouble(10, score.gmv1h)
+                ps.setTimestamp(11, Timestamp.from(score.updatedAt))
+                ps.setTimestamp(12, Timestamp.from(score.updatedAt))
                 ps.executeUpdate()
             }
         }
@@ -39,7 +45,8 @@ class ProductScoreRepositoryAdapter(
         dataSource.connection.use { conn ->
             conn.prepareStatement(
                 """
-                SELECT product_id, impressions, clicks, orders, ctr, cvr, popularity_score, updated_at
+                SELECT product_id, impressions, clicks, orders, ctr, cvr, ctr_raw, cvr_raw,
+                       popularity_score, gmv_1h, updated_at
                 FROM analytics.product_scores
                 WHERE product_id = ?
                 ORDER BY updated_at DESC
@@ -59,7 +66,8 @@ class ProductScoreRepositoryAdapter(
         dataSource.connection.use { conn ->
             conn.prepareStatement(
                 """
-                SELECT product_id, impressions, clicks, orders, ctr, cvr, popularity_score, updated_at
+                SELECT product_id, impressions, clicks, orders, ctr, cvr, ctr_raw, cvr_raw,
+                       popularity_score, gmv_1h, updated_at
                 FROM analytics.product_scores
                 WHERE product_id IN ($placeholders)
                 ORDER BY product_id, updated_at DESC
@@ -77,6 +85,24 @@ class ProductScoreRepositoryAdapter(
         }
     }
 
+    override fun findGmvSince(productId: Long, duration: Duration): Double {
+        val since = Instant.now().minus(duration)
+        dataSource.connection.use { conn ->
+            conn.prepareStatement(
+                """
+                SELECT sum(gmv_1h) AS gmv_sum
+                FROM analytics.product_scores
+                WHERE product_id = ? AND window_start >= ?
+                """.trimIndent()
+            ).use { ps ->
+                ps.setLong(1, productId)
+                ps.setTimestamp(2, Timestamp.from(since))
+                val rs = ps.executeQuery()
+                return if (rs.next()) rs.getDouble("gmv_sum") else 0.0
+            }
+        }
+    }
+
     private fun mapProductScore(rs: ResultSet): ProductScore = ProductScore(
         productId = rs.getLong("product_id"),
         impressions = rs.getLong("impressions"),
@@ -84,7 +110,10 @@ class ProductScoreRepositoryAdapter(
         orders = rs.getLong("orders"),
         ctr = rs.getDouble("ctr"),
         cvr = rs.getDouble("cvr"),
+        ctrRaw = rs.getDouble("ctr_raw"),
+        cvrRaw = rs.getDouble("cvr_raw"),
         popularityScore = rs.getDouble("popularity_score"),
+        gmv1h = rs.getDouble("gmv_1h"),
         updatedAt = rs.getTimestamp("updated_at").toInstant()
     )
 }
