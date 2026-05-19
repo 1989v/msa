@@ -1,0 +1,75 @@
+# Open Questions — Search Quality Improvements
+# spec id: 2026-05-19-search-quality-improvements
+# convention: status=open|closed, owner=user|claude, decided_at=YYYY-MM-DD, decision=...
+
+questions:
+  - id: Q1
+    topic: smoothing-location
+    status: open
+    question: |
+      베이지안 스무딩 산출을 (a) analytics 서비스 (현재 score.updated 발행 책임) 에서
+      처리할 것인지, (b) search 측 ES script_score 에서 처리할 것인지?
+    options:
+      - (a) analytics — single source of truth, search 는 그대로 사용. 단 batch lag 영향
+      - (b) search ES script — real-time, raw 값을 받아 매 쿼리시 계산. 단 script_score CPU 비용
+    recommendation: (a) analytics — ADR-0017 책임 분리 원칙 + script_score CPU 부담 회피
+
+  - id: Q2
+    topic: judgment-set-source
+    status: open
+    question: |
+      Phase 3 평가 인프라의 judgment set 을 어떻게 채울 것인가?
+      (a) 약지도 only (로그 기반: reservation=3, addwish=2, click=1)
+      (b) 수동 라벨링 only (어드민 UI 후속 필요)
+      (c) 하이브리드 (약지도 부트스트랩 → 수동 보정)
+    recommendation: (c) — 초기 50 queries 약지도 자동 + 정기 spot-check 수동 보정
+
+  - id: Q3
+    topic: scope-types
+    status: open
+    question: |
+      FR-2.1 다중 scope MAB 에서 본 레포에 즉시 추가할 scope 종류는?
+      현재 ProductEsDocument 는 categoryId 만 보유. brand/sellerId 신규 필드 추가 필요.
+    options:
+      - 최소: category 만 (현재 유지)
+      - 추가 1: category + brand
+      - 추가 2: category + brand + price-tier (가격대 분기)
+    recommendation: 추가 1 (category + brand) — product 도메인 모델 변경 최소화
+
+  - id: Q4
+    topic: gmv-window
+    status: open
+    question: |
+      GMV 신호의 집계 윈도우는?
+      (a) 7일 (트렌드 반응 우선)
+      (b) 30일 (안정성 우선)
+      (c) 듀얼 (gmv7d / gmv30d 둘 다 적재 후 weight 분리)
+    recommendation: (c) 듀얼 — 운영 중 A/B 가능, 추가 코드 비용 작음
+
+  - id: Q5
+    topic: side-by-side-ui-host
+    status: open
+    question: |
+      Side-by-side 비교 UI 를 어디 FE 에 배치할까?
+      (a) admin-fe — ADMIN 권한 자연스러움
+      (b) 신규 search-debug-fe — 분리 운영
+      (c) portal-fe 내부 admin section
+    recommendation: (a) admin-fe — 추가 FE 비용 회피
+
+  - id: Q6
+    topic: implementation-scope
+    status: open
+    question: |
+      PHASE 5 User Approval Gate 에서 어디까지 implement 진행할까?
+      Phase 1 (quick wins): tiebreaker + CVR 가중치 + freshness boost
+      Phase 2 (signal expansion): GMV 신호 + 베이지안 스무딩
+      Phase 3 (MAB expansion): 다중 scope BanditKey + seller diversity
+      Phase 4 (eval infra): NDCG/MRR job + side-by-side UI + 쿼리 빌더
+    recommendation: Phase 1 + 2 까지를 1차 implement. Phase 3 은 별도 spec 단위 진행, Phase 4 는 우선순위 협의
+
+  - id: Q7
+    topic: ota-domain-split
+    status: closed
+    decided_at: 2026-05-19
+    decision: 본 spec 은 commerce 일반화. OTA 도메인 (region/attraction/synonyms) 은 별도 spec.
+    rationale: 사용자가 PHASE 0 Ambiguity Resolution 단계에서 "본 레포 search 서비스에 맞춰" 선택.
