@@ -12,6 +12,10 @@ data class ProductDocument(
     val popularityScore: Double = 0.0,
     val ctr: Double = 0.0,
     val cvr: Double = 0.0,
+    val ctrRaw: Double = 0.0,
+    val cvrRaw: Double = 0.0,
+    val gmv7d: Double = 0.0,
+    val gmv30d: Double = 0.0,
     val scoreUpdatedAt: Long = 0,
     val categoryId: String? = null
 )

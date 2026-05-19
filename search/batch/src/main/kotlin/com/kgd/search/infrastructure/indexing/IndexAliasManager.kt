@@ -41,6 +41,11 @@ class IndexAliasManager(private val esClient: ElasticsearchClient) {
                    m.properties("popularityScore") { p -> p.double_ { it } }
                    m.properties("ctr") { p -> p.double_ { it } }
                    m.properties("cvr") { p -> p.double_ { it } }
+                   // ADR-0050 Phase 2 — raw 디버그 값 + GMV signal
+                   m.properties("ctrRaw") { p -> p.double_ { it } }
+                   m.properties("cvrRaw") { p -> p.double_ { it } }
+                   m.properties("gmv7d") { p -> p.double_ { it } }
+                   m.properties("gmv30d") { p -> p.double_ { it } }
                    m.properties("scoreUpdatedAt") { p -> p.long_ { it } }
                }
         }

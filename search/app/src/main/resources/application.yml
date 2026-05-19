@@ -43,6 +43,16 @@ search:
   ranking:
     popularity-weight: 10.0
     ctr-weight: 5.0
+    # ADR-0050 Phase 1/2 — 모두 default 0 (점진 활성화)
+    cvr-weight: 0.0
+    gmv7d-weight: 0.0
+    gmv30d-weight: 0.0
+    freshness:
+      weight: 0.0          # 0 이면 gauss decay 함수 미적용
+      origin: now
+      scale: 14d
+      offset: 0d
+      decay: 0.5
   # ADR-0043 — Bandit / Thompson Sampling rerank
   bandit:
     enabled: true

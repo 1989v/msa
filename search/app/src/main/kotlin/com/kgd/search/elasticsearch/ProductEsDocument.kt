@@ -19,6 +19,10 @@ data class ProductEsDocument(
     @Field(type = FieldType.Double) val popularityScore: Double = 0.0,
     @Field(type = FieldType.Double) val ctr: Double = 0.0,
     @Field(type = FieldType.Double) val cvr: Double = 0.0,
+    @Field(type = FieldType.Double) val ctrRaw: Double = 0.0,
+    @Field(type = FieldType.Double) val cvrRaw: Double = 0.0,
+    @Field(type = FieldType.Double) val gmv7d: Double = 0.0,
+    @Field(type = FieldType.Double) val gmv30d: Double = 0.0,
     @Field(type = FieldType.Long) val scoreUpdatedAt: Long = 0,
     @Field(type = FieldType.Keyword) val categoryId: String? = null
 ) {
@@ -32,6 +36,10 @@ data class ProductEsDocument(
             popularityScore = doc.popularityScore,
             ctr = doc.ctr,
             cvr = doc.cvr,
+            ctrRaw = doc.ctrRaw,
+            cvrRaw = doc.cvrRaw,
+            gmv7d = doc.gmv7d,
+            gmv30d = doc.gmv30d,
             scoreUpdatedAt = doc.scoreUpdatedAt,
             categoryId = doc.categoryId
         )
@@ -46,6 +54,10 @@ data class ProductEsDocument(
         popularityScore = popularityScore,
         ctr = ctr,
         cvr = cvr,
+        ctrRaw = ctrRaw,
+        cvrRaw = cvrRaw,
+        gmv7d = gmv7d,
+        gmv30d = gmv30d,
         scoreUpdatedAt = scoreUpdatedAt,
         categoryId = categoryId
     )
