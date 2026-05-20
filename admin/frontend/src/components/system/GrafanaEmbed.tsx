@@ -112,16 +112,16 @@ export function GrafanaEmbed({ baseUrl = DEFAULT_GRAFANA_URL }: GrafanaEmbedProp
               {d.label}
             </Button>
           ))}
-          <Button asChild variant="outline" size="sm">
-            <a
-              href={baseUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="gap-1 inline-flex items-center"
-            >
+          <a
+            href={baseUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex"
+          >
+            <Button variant="outline" size="sm" className="gap-1 inline-flex items-center">
               열기 <ExternalLink className="h-3 w-3" />
-            </a>
-          </Button>
+            </Button>
+          </a>
         </div>
       </div>
       <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">

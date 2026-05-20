@@ -54,7 +54,7 @@ export function ServiceSummary({ services }: ServiceSummaryProps) {
           )}
           {unknownCount > 0 && (
             <Badge
-              variant="secondary"
+              variant="outline"
               style={{
                 background: 'var(--ko-surface-2)',
                 color: 'var(--ko-text-secondary)',

@@ -27,7 +27,7 @@ export function OAuthCallbackPage() {
     login(dummyJwt);
     navigate('/admin', { replace: true }); return;
 
-    loginWithOAuth(provider, code)
+    loginWithOAuth(provider!, code!)
       .then((result) => {
         login(result.accessToken);
         navigate('/admin', { replace: true });

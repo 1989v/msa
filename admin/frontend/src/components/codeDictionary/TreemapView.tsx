@@ -99,7 +99,9 @@ export default function TreemapView({ data, onTileClick }: TreemapViewProps) {
     >
       <ResponsiveContainer width="100%" height="100%">
         <Treemap
-          data={tree.children}
+          // recharts v3 Treemap expects readonly TreemapDataType[] (with string index sig).
+          // 우리 모델은 nested + ts-safe 라서 명시적으로 cast.
+          data={tree.children as unknown as readonly Record<string, unknown>[]}
           dataKey="size"
           aspectRatio={aspectRatio}
           stroke="rgba(120,120,140,0.35)"

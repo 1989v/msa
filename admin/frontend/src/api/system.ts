@@ -19,20 +19,8 @@ const SERVICES = [
   { name: 'experiment', port: 8091 },
 ];
 
-interface EurekaAppsResponse {
-  applications?: {
-    application?: Array<{
-      name: string;
-      instance: Array<{
-        instanceId: string;
-        hostName: string;
-        port: { $: number };
-        status: string;
-        lastUpdatedTimestamp: number;
-      }>;
-    }>;
-  };
-}
+// ADR-0019 Phase 1b (2026-04-10) 에서 Discovery 제거됨. EurekaAppsResponse interface 도
+// 함께 삭제. UI 호환을 위한 stub 만 유지.
 
 // Eureka 호환 stub — ADR-0019 Phase 1b 에서 Discovery 제거됨. 항상 빈 배열 반환.
 export async function fetchEurekaApps(): Promise<EurekaApp[]> {
