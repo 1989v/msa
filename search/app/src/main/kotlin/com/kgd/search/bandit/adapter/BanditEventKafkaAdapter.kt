@@ -8,6 +8,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 
+/**
+ * Bandit impression/click 이벤트 발행. ADR-0050 Phase 3 — payload 에 `scope` 필드를 채워
+ * analytics consumer 가 Redis key prefix 를 그대로 사용하도록 한다.
+ *
+ * 추후 확장: `extraScopes` 필드로 brand 등 추가 scope 동시 발행 (현재 search 측은 단일 scope).
+ */
 @Component
 class BanditEventKafkaAdapter(
     private val kafkaTemplate: KafkaTemplate<String, String>,
@@ -19,7 +25,7 @@ class BanditEventKafkaAdapter(
     override fun recordImpression(event: ImpressionEvent) {
         val payload = ImpressionPayload(
             searchId = event.searchId,
-            categoryId = event.key.categoryId,
+            scope = event.key.scope,
             productId = event.key.productId,
             position = event.position,
             userId = event.userId,
@@ -31,7 +37,7 @@ class BanditEventKafkaAdapter(
     override fun recordClick(event: ClickEvent) {
         val payload = ClickPayload(
             searchId = event.searchId,
-            categoryId = event.key.categoryId,
+            scope = event.key.scope,
             productId = event.key.productId,
             position = event.position,
             userId = event.userId,
@@ -49,7 +55,7 @@ class BanditEventKafkaAdapter(
 
     data class ImpressionPayload(
         val searchId: String,
-        val categoryId: String,
+        val scope: String,
         val productId: String,
         val position: Int,
         val userId: String?,
@@ -58,7 +64,7 @@ class BanditEventKafkaAdapter(
 
     data class ClickPayload(
         val searchId: String,
-        val categoryId: String,
+        val scope: String,
         val productId: String,
         val position: Int,
         val userId: String?,

@@ -42,7 +42,7 @@ class SearchController(
             banditEventPort.recordImpression(
                 ImpressionEvent(
                     searchId = request.searchId,
-                    key = BanditKey.of(item.categoryId, item.productId),
+                    key = BanditKey.category(item.categoryId, item.productId),
                     position = item.position,
                     userId = request.userId
                 )
@@ -60,7 +60,7 @@ class SearchController(
         banditEventPort.recordClick(
             ClickEvent(
                 searchId = request.searchId,
-                key = BanditKey.of(request.categoryId, request.productId),
+                key = BanditKey.category(request.categoryId, request.productId),
                 position = request.position,
                 userId = request.userId
             )

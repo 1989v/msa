@@ -2,6 +2,9 @@ package com.kgd.search.application.product.service
 
 import com.kgd.search.application.product.usecase.SearchProductUseCase
 import com.kgd.search.bandit.BanditProperties
+import com.kgd.search.bandit.DiversityProperties
+import com.kgd.search.bandit.MultiScopeBanditBlender
+import com.kgd.search.bandit.SellerDiversityReranker
 import com.kgd.search.bandit.ThompsonReranker
 import com.kgd.search.domain.bandit.port.BanditStatePort
 import com.kgd.search.domain.product.model.ProductDocument
@@ -21,8 +24,10 @@ class SearchProductServiceTest : BehaviorSpec({
     val searchPort = mockk<ProductSearchPort>()
     val banditStatePort = mockk<BanditStatePort>()
     every { banditStatePort.fetchBatch(any()) } returns emptyMap()
-    val reranker = ThompsonReranker(BanditProperties(enabled = false), banditStatePort)
-    val service = SearchProductService(searchPort, reranker)
+    val banditProps = BanditProperties(enabled = false)
+    val reranker = ThompsonReranker(banditProps, MultiScopeBanditBlender(banditProps, banditStatePort))
+    val diversity = SellerDiversityReranker(DiversityProperties(enabled = false))
+    val service = SearchProductService(searchPort, reranker, diversity)
 
     beforeEach { clearMocks(searchPort) }
 

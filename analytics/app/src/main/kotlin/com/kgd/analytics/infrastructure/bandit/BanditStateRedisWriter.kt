@@ -5,13 +5,14 @@ import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Repository
 
 /**
- * Bandit state writer. ADR-0043 의 Redis hash schema 를 atomic 으로 누적.
+ * Bandit state writer. ADR-0050 Phase 3 — 다중 scope 일반화 후 key 포맷:
  *
- *   KEY:    bandit:state:{categoryId}:{productId}
+ *   KEY:    bandit:state:{scope}:{productId}
+ *           ex: bandit:state:category:elec:p1  ·  bandit:state:brand:samsung:p1
  *   FIELDS: clicks (long), impressions (long), lastTs (epoch ms)
  *
- * HINCRBY 가 atomic 이라 별도 락 불필요. 같은 (searchId, productId) 의 중복 이벤트 방어는
- * 상위에서 Redis SET `bandit:seen:{searchId}:{productId}` (짧은 TTL) 로 best-effort.
+ * HINCRBY 가 atomic 이라 별도 락 불필요. (searchId, scope, productId, kind) 의 중복 방어는
+ * Redis SET `bandit:seen:{kind}:{searchId}:{productId}` (짧은 TTL) 로 best-effort.
  */
 @Repository
 class BanditStateRedisWriter(
@@ -19,16 +20,16 @@ class BanditStateRedisWriter(
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
-    fun incrementImpression(categoryId: String, productId: String, ts: Long) {
-        val key = redisKey(categoryId, productId)
+    fun incrementImpression(scope: String, productId: String, ts: Long) {
+        val key = redisKey(scope, productId)
         runCatching {
             redis.opsForHash<String, String>().increment(key, FIELD_IMPRESSIONS, 1L)
             redis.opsForHash<String, String>().put(key, FIELD_LAST_TS, ts.toString())
         }.onFailure { log.warn("Bandit impression write failed key={}: {}", key, it.message) }
     }
 
-    fun incrementClick(categoryId: String, productId: String, ts: Long) {
-        val key = redisKey(categoryId, productId)
+    fun incrementClick(scope: String, productId: String, ts: Long) {
+        val key = redisKey(scope, productId)
         runCatching {
             redis.opsForHash<String, String>().increment(key, FIELD_CLICKS, 1L)
             redis.opsForHash<String, String>().put(key, FIELD_LAST_TS, ts.toString())
@@ -53,7 +54,7 @@ class BanditStateRedisWriter(
         private const val FIELD_LAST_TS = "lastTs"
         private const val DEDUP_TTL_SECONDS = 300L
 
-        fun redisKey(categoryId: String, productId: String): String =
-            "bandit:state:$categoryId:$productId"
+        fun redisKey(scope: String, productId: String): String =
+            "bandit:state:$scope:$productId"
     }
 }

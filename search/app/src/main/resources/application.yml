@@ -65,3 +65,20 @@ search:
     session-cache-seconds: 60
     # category-priors:
     #   "fashion-women": "5.0,45.0"
+    # ADR-0050 Phase 3 — 다중 scope blend. 비어 있으면 category 단일 scope (legacy 동일).
+    # 예시 (활성화 시): brand 신호 추가 + category 와 7:3 가중치
+    # scopes:
+    #   - name: category
+    #     weight: 0.7
+    #     prior-alpha: 1.0
+    #     prior-beta: 9.0
+    #   - name: brand
+    #     weight: 0.3
+    #     prior-alpha: 1.0
+    #     prior-beta: 9.0
+  # ADR-0050 Phase 3 — Seller diversity rerank (default off)
+  diversity:
+    enabled: false
+    max-per-seller: 3
+    top-k: 20
+    seller-key: category

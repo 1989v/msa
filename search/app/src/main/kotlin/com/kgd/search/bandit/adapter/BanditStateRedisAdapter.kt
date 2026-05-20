@@ -9,11 +9,12 @@ import org.springframework.stereotype.Repository
 import java.time.Instant
 
 /**
- * Redis hash schema:
- *   KEY:    bandit:state:{categoryId}:{productId}
+ * Redis hash schema (ADR-0050 Phase 3 일반화):
+ *   KEY:    bandit:state:{scope}:{productId}
+ *           ex: bandit:state:category:elec:p1  ·  bandit:state:brand:samsung:p1
  *   FIELDS: clicks (long), impressions (long), lastTs (epoch ms)
  *
- * Atomic update is HINCRBY (write 측은 analytics 가 담당, 본 어댑터는 read 전용).
+ * Atomic update 은 analytics 측 BanditStateRedisWriter 가 HINCRBY 로 수행. 본 adapter 는 read 전용.
  */
 @Repository
 class BanditStateRedisAdapter(
@@ -63,6 +64,6 @@ class BanditStateRedisAdapter(
         private const val FIELD_IMPRESSIONS = "impressions"
         private const val FIELD_LAST_TS = "lastTs"
 
-        fun redisKey(key: BanditKey): String = "bandit:state:${key.categoryId}:${key.productId}"
+        fun redisKey(key: BanditKey): String = "bandit:state:${key.scope}:${key.productId}"
     }
 }

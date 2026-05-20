@@ -17,12 +17,16 @@ class ThompsonRerankerTest : BehaviorSpec({
     fun doc(id: String, cat: String = "elec") =
         ProductDocument(id = id, name = "n-$id", price = BigDecimal.ONE, status = "ACTIVE", categoryId = cat)
 
+    fun blender(props: BanditProperties, port: BanditStatePort): MultiScopeBanditBlender =
+        MultiScopeBanditBlender(props, port)
+
     given("ThompsonReranker") {
 
         `when`("enabled=false 면") {
             then("ES 결과를 그대로 반환한다") {
                 val statePort = mockk<BanditStatePort>(relaxed = true)
-                val reranker = ThompsonReranker(BanditProperties(enabled = false), statePort)
+                val props = BanditProperties(enabled = false)
+                val reranker = ThompsonReranker(props, blender(props, statePort))
                 val scored = listOf(doc("a") to 5.0, doc("b") to 3.0, doc("c") to 1.0)
                 reranker.rerank(scored).map { it.first.id } shouldBe listOf("a", "b", "c")
             }
@@ -32,10 +36,8 @@ class ThompsonRerankerTest : BehaviorSpec({
             then("ES 순서가 보존된다 (rerank 무력화)") {
                 val statePort = mockk<BanditStatePort>()
                 every { statePort.fetchBatch(any()) } returns emptyMap()
-                val reranker = ThompsonReranker(
-                    BanditProperties(enabled = true, hybridWeight = 1.0, topN = 100),
-                    statePort
-                )
+                val props = BanditProperties(enabled = true, hybridWeight = 1.0, topN = 100)
+                val reranker = ThompsonReranker(props, blender(props, statePort))
                 val scored = listOf(doc("a") to 5.0, doc("b") to 3.0, doc("c") to 1.0)
                 reranker.rerank(scored).map { it.first.id } shouldBe listOf("a", "b", "c")
             }
@@ -45,10 +47,8 @@ class ThompsonRerankerTest : BehaviorSpec({
             then("그래도 결과 size 는 같고 모든 doc 가 포함된다 (graceful degradation)") {
                 val statePort = mockk<BanditStatePort>()
                 every { statePort.fetchBatch(any()) } returns emptyMap()
-                val reranker = ThompsonReranker(
-                    BanditProperties(enabled = true, hybridWeight = 0.5, topN = 100),
-                    statePort
-                )
+                val props = BanditProperties(enabled = true, hybridWeight = 0.5, topN = 100)
+                val reranker = ThompsonReranker(props, blender(props, statePort))
                 val scored = listOf(doc("a") to 5.0, doc("b") to 3.0, doc("c") to 1.0)
                 val out = reranker.rerank(scored)
                 out shouldHaveSize 3
@@ -60,10 +60,8 @@ class ThompsonRerankerTest : BehaviorSpec({
             then("앞 topN 만 rerank 되고 나머지는 원순서 유지") {
                 val statePort = mockk<BanditStatePort>()
                 every { statePort.fetchBatch(any()) } returns emptyMap()
-                val reranker = ThompsonReranker(
-                    BanditProperties(enabled = true, topN = 2, hybridWeight = 1.0),
-                    statePort
-                )
+                val props = BanditProperties(enabled = true, topN = 2, hybridWeight = 1.0)
+                val reranker = ThompsonReranker(props, blender(props, statePort))
                 val scored = (1..5).map { doc("p$it") to it.toDouble() }
                     .sortedByDescending { it.second }
                 val out = reranker.rerank(scored)
@@ -87,17 +85,15 @@ class ThompsonRerankerTest : BehaviorSpec({
                         }
                     }
                 }
-                val reranker = ThompsonReranker(
-                    BanditProperties(
-                        enabled = true,
-                        hybridWeight = 0.0,  // 순수 TS 효과만 검증
-                        impressionThreshold = 0,
-                        priorAlpha = 1.0,
-                        priorBeta = 9.0,
-                        decayLambdaPerDay = 0.0
-                    ),
-                    statePort
+                val props = BanditProperties(
+                    enabled = true,
+                    hybridWeight = 0.0,  // 순수 TS 효과만 검증
+                    impressionThreshold = 0,
+                    priorAlpha = 1.0,
+                    priorBeta = 9.0,
+                    decayLambdaPerDay = 0.0
                 )
+                val reranker = ThompsonReranker(props, blender(props, statePort))
                 val scored = listOf(doc("strong") to 1.0, doc("weak") to 1.0)
                 val trials = 200
                 var strongOnTop = 0
