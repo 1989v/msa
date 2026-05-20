@@ -7,7 +7,7 @@ Proposed (2026-05-20) — **draft only**, 결정 미확정
 
 ADR-0050 의 4 Phase 가 모두 출고된 상태 (2026-05-20). 다음 한계가 남는다:
 
-1. **컨텍스트 학습 부재** — ADR-0050 Phase 3 의 multi-scope MAB 는 *static weighted blend*. 사용자/세션 컨텍스트 (시간대, 디바이스, 이전 클릭 sequence, OTA 의 경우 출발일/인원수 등) 를 학습에 활용 못 함.
+1. **컨텍스트 학습 부재** — ADR-0050 Phase 3 의 multi-scope MAB 는 *static weighted blend*. 사용자/세션 컨텍스트 (시간대, 디바이스, 이전 클릭 sequence, 가격대, 카테고리 친밀도 등) 를 학습에 활용 못 함.
 2. **LTR (Learning-to-Rank) 미도입** — 오프라인 학습 기반 ranking 모델 부재. NDCG/MRR 평가 인프라 (Phase 4) 는 갖췄으나 모델 학습 파이프라인 없음.
 3. **Vector / Semantic search 부재** — `nori` BM25 만 사용. 동의어/오타/문맥 의미 매칭 한계. study 19/8~9 (vector + RRF) 가 이론으로만 존재.
 
@@ -60,7 +60,7 @@ ADR-0050 의 4 Phase 가 모두 출고된 상태 (2026-05-20). 다음 한계가 
 **언제**: 트랙 A/B 와 독립. study 19/8~11 이 이론적으로 완비됨.
 
 **무엇**:
-- 텍스트 임베딩: ONNX export 된 multilingual-e5-small (commerce 다국어 가정)
+- 텍스트 임베딩: ONNX export 된 ko-sroberta 계열 (한국어 우선) 또는 multilingual-e5-small
 - ES 인덱스 매핑: `dense_vector` field + HNSW
 - 하이브리드 검색: RRF (Reciprocal Rank Fusion) 로 BM25 + vector 결합
 - 평가: 같은 query / judgment set 에서 BM25 vs RRF 의 NDCG 비교
@@ -78,7 +78,7 @@ ADR-0050 의 4 Phase 가 모두 출고된 상태 (2026-05-20). 다음 한계가 
 |---|---|
 | **단일 큰 ADR 로 통합** | 세 트랙은 독립 진행 가능 + 의사결정 시점이 다름. 단일 ADR 은 결정 늦춤. 기각. |
 | **즉시 트랙 A/B/C 모두 시작** | 평가 인프라가 막 가동된 상태 (ADR-0050 Phase 4) → 효과 측정 데이터 없음. 6개월 운영 데이터 누적 후 진행 권장. 기각. |
-| **트랙 C (vector) 우선 도입** | semantic search 가 OTA 도메인 동의어 문제 (깜란↔나트랑) 해결에 직접 기여. 단, judgment set 없으면 객관 평가 불가 → ADR-0050 Phase 4 가 선행. 후속 ADR 자체 결정. |
+| **트랙 C (vector) 우선 도입** | semantic search 가 동의어 / 오타 / 의미 매칭 문제 해결에 직접 기여. 단, judgment set 없으면 객관 평가 불가 → ADR-0050 Phase 4 가 선행. 후속 ADR 자체 결정. |
 
 ## Consequences
 
@@ -90,7 +90,7 @@ ADR-0050 의 4 Phase 가 모두 출고된 상태 (2026-05-20). 다음 한계가 
 ### Negative / Risk
 - **운영 복잡도 ↑↑** — 모델 학습 파이프라인 / vector store / 컨텍스트 hashing 모두 신규 인프라
 - **평가 잣대의 self-fulfilling** — judgment set 이 BM25 의 click-through 로 만들어졌으면 vector/LTR 의 효과가 underestimate 됨
-- **사용자 도메인 학습 부담** — 사용자가 추천/LTR 알고리즘 디테일 약함 (`user_recsys_experience.md`). 외부 자문 또는 학습 비용 명시 필요
+- **학습 인프라 부담** — LTR / contextual bandit / vector store 의 각 분야가 독립 운영 노하우를 요구. 외부 자문 또는 학습 비용 명시 필요
 - **search vs recommendation 책임 모호** — Wide&Deep / DLRM 같은 모델은 추천 측 자산 (ADR-0047/0048). 본 ADR 의 LTR (LambdaMART) 와 명확히 분리 필요
 
 ## 후속 ADR 후보

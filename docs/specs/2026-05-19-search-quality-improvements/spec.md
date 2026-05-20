@@ -399,7 +399,7 @@ Body: { "indexName": "products", "esQuery": { ... ES native JSON ... } }
 
 ## 8. 본 spec 이 다루지 않는 것 (Out of Scope)
 
-- OTA 도메인 (region/attraction/synonyms/package) — 별도 spec
 - LinUCB / Wide&Deep / DLRM — ADR-0043 Phase 3, ADR-0047
 - Vector / Semantic search — ADR-0008 후속
+- 도메인 특화 동의어 / synonyms graph 운영 자동화 — Phase 4 후속
 - 검색 자동완성 / 오타교정 (study/19/36 참조)

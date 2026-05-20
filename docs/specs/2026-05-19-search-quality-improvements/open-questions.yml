@@ -66,10 +66,3 @@ questions:
       Phase 3 (MAB expansion): 다중 scope BanditKey + seller diversity
       Phase 4 (eval infra): NDCG/MRR job + side-by-side UI + 쿼리 빌더
     recommendation: Phase 1 + 2 까지를 1차 implement. Phase 3 은 별도 spec 단위 진행, Phase 4 는 우선순위 협의
-
-  - id: Q7
-    topic: ota-domain-split
-    status: closed
-    decided_at: 2026-05-19
-    decision: 본 spec 은 commerce 일반화. OTA 도메인 (region/attraction/synonyms) 은 별도 spec.
-    rationale: 사용자가 PHASE 0 Ambiguity Resolution 단계에서 "본 레포 search 서비스에 맞춰" 선택.

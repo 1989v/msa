@@ -7,7 +7,7 @@
 ## D1. 완성도 (Completeness)
 - ✅ 5개 영역 (신호확장 / MAB확장 / 평가 / 디버그UI / 운영) 모두 다룸
 - ✅ 마이그레이션 시나리오, 롤백 시나리오, 의존성 명시
-- ✅ Out of Scope 명확 (OTA 도메인, LinUCB, Vector)
+- ✅ Out of Scope 명확 (LinUCB, Vector, synonyms graph 운영 자동화)
 - ⚠️ Phase 3 의 product `brand` 필드 합의 절차가 spec 외부 의존 → tasks.md 에서 명시적 task 로 분리 필요
 - 판정: **PASS**
 

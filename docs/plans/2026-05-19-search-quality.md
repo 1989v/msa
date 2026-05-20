@@ -47,7 +47,6 @@
 | Q4 GMV 윈도우 | 7d + 30d 듀얼 (운영 중 A/B 가능) |
 | Q5 UI host | admin-fe (권한/추가비용) |
 | Q6 implement 범위 | PHASE 5 user approval 에서 확정 (1차 추천: P1+P2) |
-| Q7 OTA 도메인 | 본 spec 범위 제외, 별도 spec |
 
 ## 리스크 / 완화
 
@@ -58,14 +57,6 @@
 | 약지도 self-fulfilling | 분기별 50개 query 수동 보정 (P4-T9 운영 가이드) |
 | Redis MAB state 메모리 ↑ | TTL/LRU 정책 P3-T4 선행 |
 | product 도메인 협의 지연 | P3 별도 트랙 — P1/P2/P4 평가 인프라부터 진행 가능 |
-
-## OTA 도메인 (사용자 컨텍스트) 분리 항목
-
-| 항목 | 매핑 |
-|---|---|
-| 지역별 MAB | `scope=region:{id}` (Phase 3 일반화 기반) — region 도메인 모델 신설 시 즉시 활용 |
-| 여행사 다양성 | seller diversity (Phase 3) 직접 적용 |
-| 명소 검색 / 패키지 프리텍스트 / 동의어 (깜란↔나트랑) | OTA 도메인 신규 spec — 본 plan 범위 외 |
 
 ## 출처 (코드 증거)
 

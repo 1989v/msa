@@ -42,7 +42,7 @@
 
 ### FR-2.1 다중 Scope MAB
 - 현재 `BanditKey(categoryId, productId)` 를 `BanditKey(scope: String, productId: String)` 로 일반화
-- `scope` 값 후보: `category:{id}`, `region:{id}`, `brand:{id}`, `_default_`
+- `scope` 값 후보: `category:{id}`, `brand:{id}`, `_default_` (확장 가능)
 - 동일 productId 에 대해 **여러 scope 의 state 를 병렬 조회 → blend** (가중 평균)
 - 외부화: `BanditProperties.scopes: List<ScopeConfig>` — 각 scope 별 weight, priors
 
@@ -97,14 +97,14 @@
 
 - **Latency**: ADR-0025 Tier 1 P99 200ms 유지. function_score 함수 추가, diversity rerank, 다중 scope MAB blend 가 추가됨 — 모두 top-N rerank 라 ES 쿼리 단계가 아닌 in-memory 처리로 흡수. 측정 후 회귀 발생 시 weight 비활성화 fallback.
 - **Backward compatibility**: 모든 신규 weight default = 0 또는 enabled=false → 단계적 활성화.
-- **Domain coverage**: 사용자가 OTA 도메인 컨텍스트(지역 MAB, 명소, 깜란/나트랑 동의어 등) 를 본 레포에 반영하려면 도메인 모델(region/attraction 신규 모델) 부터 별도 spec 필요 — 본 spec 은 일반화된 `scope` 메커니즘만 제공.
+- **Domain coverage**: 본 spec 은 commerce 일반 도메인 한정. 추가 scope (예: 가격대 / region 등) 를 활용하려면 product 도메인 모델 확장이 선행 — 일반화된 `scope` 메커니즘은 이미 갖춰져 있음.
 - **Test rule**: 도메인 모듈 BehaviorSpec + MockK (CLAUDE.md), 베이지안 스무딩 / freshness gauss 같은 수학 로직은 unit + property test.
 
 ## 6. 범위 제외 (Out of Scope)
 
-- 패키지 검색 / 명소 기반 검색 / OTA 도메인 동의어 — 별도 spec
 - LinUCB / Wide&Deep / DLRM 본격 도입 — ADR-0043 Phase 3, ADR-0047
 - Vector / Semantic search — ADR-0008 후속, study/19/08 ~ 11 참조
+- 도메인 특화 동의어 / synonyms graph 운영 자동화 — Phase 4 후속
 - 어드민 FE 의 judgment set 라벨링 UI — Phase 4 후속 (Phase 3 은 CSV 업로드만 지원)
 
 ## 7. 성공 기준 (Success Criteria)
