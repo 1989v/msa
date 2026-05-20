@@ -37,7 +37,7 @@ spring:
             - id: analytics-service
               uri: http://analytics:8090
               predicates:
-                - Path=/api/v1/scores/**, /api/v1/analytics/**
+                - Path=/api/v1/scores/**, /api/v1/analytics/**, /api/v1/search/judgments/**
             - id: experiment-service
               uri: http://experiment:8091
               predicates:
