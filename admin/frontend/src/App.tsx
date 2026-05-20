@@ -11,6 +11,8 @@ import { OrdersPage } from '@/pages/OrdersPage';
 import { CodeDictionaryPage } from '@/pages/CodeDictionaryPage';
 import { QuantAssetCatalogPage } from '@/pages/QuantAssetCatalogPage';
 import { ProfilePage } from '@/pages/ProfilePage';
+import { SearchDebugPage } from '@/pages/SearchDebugPage';
+import { SearchQueryBuilderPage } from '@/pages/SearchQueryBuilderPage';
 
 export default function App() {
   return (
@@ -26,6 +28,8 @@ export default function App() {
         <Route path="orders" element={<OrdersPage />} />
         <Route path="code-dictionary" element={<CodeDictionaryPage />} />
         <Route path="quant/assets" element={<QuantAssetCatalogPage />} />
+        <Route path="search-debug" element={<SearchDebugPage />} />
+        <Route path="search-debug/query-builder" element={<SearchQueryBuilderPage />} />
         <Route path="profile" element={<ProfilePage />} />
       </Route>
     </Routes>

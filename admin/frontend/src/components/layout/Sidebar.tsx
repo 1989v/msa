@@ -13,6 +13,8 @@ import {
   Eye,
   BookMarked,
   Coins,
+  Search,
+  Sliders,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +34,9 @@ const navItems: NavItem[] = [
   { label: '주문 관리', icon: ClipboardList, to: '/admin/orders', enabled: true },
   { label: '코드 사전', icon: BookOpen, to: '/admin/code-dictionary', enabled: true },
   { label: '퀀트 자산', icon: Coins, to: '/admin/quant/assets', enabled: true },
+  // ADR-0050 Phase 4 UI — 검색 디버그 + 쿼리 빌더
+  { label: '검색 디버그', icon: Search, to: '/admin/search-debug', enabled: true },
+  { label: '검색 쿼리 빌더', icon: Sliders, to: '/admin/search-debug/query-builder', enabled: true },
   { label: '프로필', icon: User, to: '/admin/profile', enabled: true },
   { label: '시스템', icon: Monitor, to: '/admin/system', enabled: true },
 ];
