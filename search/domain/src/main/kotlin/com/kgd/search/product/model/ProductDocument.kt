@@ -17,5 +17,6 @@ data class ProductDocument(
     val gmv7d: Double = 0.0,
     val gmv30d: Double = 0.0,
     val scoreUpdatedAt: Long = 0,
-    val categoryId: String? = null
+    val categoryId: String? = null,
+    val brand: String? = null
 )

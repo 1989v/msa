@@ -24,7 +24,8 @@ data class ProductEsDocument(
     @Field(type = FieldType.Double) val gmv7d: Double = 0.0,
     @Field(type = FieldType.Double) val gmv30d: Double = 0.0,
     @Field(type = FieldType.Long) val scoreUpdatedAt: Long = 0,
-    @Field(type = FieldType.Keyword) val categoryId: String? = null
+    @Field(type = FieldType.Keyword) val categoryId: String? = null,
+    @Field(type = FieldType.Keyword) val brand: String? = null
 ) {
     companion object {
         fun fromDomain(doc: ProductDocument) = ProductEsDocument(
@@ -41,7 +42,8 @@ data class ProductEsDocument(
             gmv7d = doc.gmv7d,
             gmv30d = doc.gmv30d,
             scoreUpdatedAt = doc.scoreUpdatedAt,
-            categoryId = doc.categoryId
+            categoryId = doc.categoryId,
+            brand = doc.brand
         )
     }
 
@@ -59,6 +61,7 @@ data class ProductEsDocument(
         gmv7d = gmv7d,
         gmv30d = gmv30d,
         scoreUpdatedAt = scoreUpdatedAt,
-        categoryId = categoryId
+        categoryId = categoryId,
+        brand = brand
     )
 }

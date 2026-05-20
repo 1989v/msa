@@ -8,13 +8,20 @@ class Product private constructor(
     var price: Money,
     var stock: Int,
     var status: ProductStatus,
+    var brand: String? = null,
     val createdAt: LocalDateTime = LocalDateTime.now()
 ) {
     companion object {
-        fun create(name: String, price: Money, stock: Int): Product {
+        fun create(name: String, price: Money, stock: Int, brand: String? = null): Product {
             require(name.isNotBlank()) { "상품명은 비어있을 수 없습니다" }
             require(stock >= 0) { "재고는 0 이상이어야 합니다" }
-            return Product(name = name, price = price, stock = stock, status = ProductStatus.ACTIVE)
+            return Product(
+                name = name,
+                price = price,
+                stock = stock,
+                status = ProductStatus.ACTIVE,
+                brand = brand?.takeIf { it.isNotBlank() }
+            )
         }
 
         fun restore(
@@ -23,9 +30,18 @@ class Product private constructor(
             price: Money,
             stock: Int,
             status: ProductStatus,
-            createdAt: LocalDateTime
+            createdAt: LocalDateTime,
+            brand: String? = null
         ): Product =
-            Product(id = id, name = name, price = price, stock = stock, status = status, createdAt = createdAt)
+            Product(
+                id = id,
+                name = name,
+                price = price,
+                stock = stock,
+                status = status,
+                brand = brand?.takeIf { it.isNotBlank() },
+                createdAt = createdAt
+            )
     }
 
     fun deactivate() {
@@ -38,11 +54,12 @@ class Product private constructor(
         this.stock = availableQty
     }
 
-    fun update(name: String? = null, price: Money? = null) {
+    fun update(name: String? = null, price: Money? = null, brand: String? = null) {
         name?.let {
             require(it.isNotBlank()) { "상품명은 비어있을 수 없습니다" }
             this.name = it
         }
         price?.let { this.price = it }
+        brand?.let { this.brand = it.takeIf { v -> v.isNotBlank() } }
     }
 }

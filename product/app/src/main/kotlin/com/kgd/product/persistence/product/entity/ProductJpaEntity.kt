@@ -22,11 +22,14 @@ class ProductJpaEntity(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: ProductStatus,
+    @Column(length = 100)
+    var brand: String? = null,
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now()
 ) {
-    fun toDomain(): Product = Product.restore(id, name, Money(price), stock, status, createdAt)
+    fun toDomain(): Product =
+        Product.restore(id, name, Money(price), stock, status, createdAt, brand)
 
     companion object {
         fun fromDomain(product: Product) = ProductJpaEntity(
@@ -35,6 +38,7 @@ class ProductJpaEntity(
             price = product.price.amount,
             stock = product.stock,
             status = product.status,
+            brand = product.brand,
             createdAt = product.createdAt
         )
     }

@@ -92,8 +92,8 @@ class MultiScopeBanditBlender(
             else -> BanditKey.custom(cfg.name, scopeIdFromDoc(cfg.name, doc), doc.id)
         }
 
-    /** ProductDocument 에 brand 필드가 추가되면 여기서 노출. 현재는 미존재 → null. */
-    private fun extractBrand(doc: ProductDocument): String? = null
+    /** ProductDocument.brand 가 ADR-0050 Phase 3 (T1) 에서 도입됨. brand-scope MAB 자연 활성화. */
+    private fun extractBrand(doc: ProductDocument): String? = doc.brand
 
     /** custom scope 의 id 추출. 현재 hook 만 제공, 실제 추출 로직은 도메인 확장 시 구현. */
     private fun scopeIdFromDoc(scopeName: String, doc: ProductDocument): String? = null

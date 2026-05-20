@@ -46,7 +46,7 @@ class SellerDiversityReranker(
     private fun sellerKeyOf(doc: ProductDocument): String =
         when (properties.sellerKey) {
             DiversityProperties.SELLER_KEY_CATEGORY -> doc.categoryId ?: SELLER_KEY_DEFAULT
-            DiversityProperties.SELLER_KEY_BRAND -> SELLER_KEY_DEFAULT // ProductDocument 에 brand 추가 후 교체
+            DiversityProperties.SELLER_KEY_BRAND -> doc.brand ?: SELLER_KEY_DEFAULT
             else -> SELLER_KEY_DEFAULT
         }
 

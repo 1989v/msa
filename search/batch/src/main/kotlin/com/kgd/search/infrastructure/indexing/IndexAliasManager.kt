@@ -38,6 +38,8 @@ class IndexAliasManager(private val esClient: ElasticsearchClient) {
                    }
                    // ADR-0043 — Bandit arm 키. legacy doc 에 없을 수 있어 nullable.
                    m.properties("categoryId") { p -> p.keyword { it } }
+                   // ADR-0050 Phase 3 — brand 신호 (seller diversity + brand-scope MAB)
+                   m.properties("brand") { p -> p.keyword { it } }
                    m.properties("popularityScore") { p -> p.double_ { it } }
                    m.properties("ctr") { p -> p.double_ { it } }
                    m.properties("cvr") { p -> p.double_ { it } }

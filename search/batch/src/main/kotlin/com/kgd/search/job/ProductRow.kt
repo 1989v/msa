@@ -9,5 +9,6 @@ data class ProductRow(
     val price: BigDecimal,
     val stock: Int,
     val status: String,
+    val brand: String?,
     val createdAt: LocalDateTime
 )

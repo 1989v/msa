@@ -26,6 +26,7 @@ class ProductRepositoryAdapter(
                 e.price = product.price.amount
                 e.stock = product.stock
                 e.status = product.status
+                e.brand = product.brand
             }
         } else {
             ProductJpaEntity.fromDomain(product)

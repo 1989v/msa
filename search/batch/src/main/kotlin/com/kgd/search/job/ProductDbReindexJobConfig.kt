@@ -53,7 +53,7 @@ class ProductDbReindexJobConfig(
     fun productJdbcReader() = run {
         val provider = SqlPagingQueryProviderFactoryBean().apply {
             setDataSource(productDataSource)
-            setSelectClause("SELECT id, name, price, stock, status, created_at")
+            setSelectClause("SELECT id, name, price, stock, status, brand, created_at")
             setFromClause("FROM products")
             setSortKeys(mapOf("id" to Order.ASCENDING))
         }
@@ -69,6 +69,7 @@ class ProductDbReindexJobConfig(
                     price = rs.getBigDecimal("price"),
                     stock = rs.getInt("stock"),
                     status = rs.getString("status"),
+                    brand = rs.getString("brand"),
                     createdAt = rs.getTimestamp("created_at").toLocalDateTime()
                 )
             }
@@ -83,6 +84,7 @@ class ProductDbReindexJobConfig(
                 name = row.name,
                 price = row.price,
                 status = row.status,
+                brand = row.brand,
                 createdAt = row.createdAt
             )
         }
