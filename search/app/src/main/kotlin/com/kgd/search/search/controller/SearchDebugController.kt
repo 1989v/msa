@@ -13,9 +13,10 @@ import com.kgd.search.bandit.MultiScopeBanditBlender
 import com.kgd.search.bandit.SellerDiversityReranker
 import com.kgd.search.bandit.ThompsonReranker
 import com.kgd.search.domain.product.model.ProductDocument
-import com.kgd.search.domain.product.port.ProductSearchPort
 import com.kgd.search.infrastructure.elasticsearch.ProductEsDocument
 import com.kgd.search.infrastructure.elasticsearch.RankingProperties
+import com.kgd.search.infrastructure.elasticsearch.RankingQueryBuilder
+import com.kgd.search.infrastructure.elasticsearch.RankingVariantsProperties
 import org.slf4j.LoggerFactory
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
@@ -46,13 +47,14 @@ import org.springframework.http.HttpStatus
 @RestController
 @RequestMapping("/api/v1/search/debug")
 class SearchDebugController(
-    private val searchPort: ProductSearchPort,
     private val rankingProperties: RankingProperties,
+    private val rankingVariants: RankingVariantsProperties,
     private val banditProperties: BanditProperties,
     private val diversityProperties: DiversityProperties,
     private val thompsonReranker: ThompsonReranker,
     private val sellerDiversityReranker: SellerDiversityReranker,
     private val blender: MultiScopeBanditBlender,
+    private val queryBuilder: RankingQueryBuilder,
     private val elasticsearchOperations: ElasticsearchOperations
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -67,8 +69,15 @@ class SearchDebugController(
     ): ApiResponse<DebugResponse> {
         requireAdmin(roles)
         val pageable = PageRequest.of(0, topK)
-        val scored = searchPort.searchScored(query, pageable)
-        val originalDocs = scored.content.map { it.document to it.esScore }
+        // variant 분기: "live" 또는 매핑 없는 이름은 default RankingProperties.
+        val effectiveProps = if (variant == "live") rankingProperties
+            else rankingVariants.variants[variant] ?: rankingProperties
+
+        val hits = elasticsearchOperations.search(
+            queryBuilder.build(query, pageable, effectiveProps),
+            ProductEsDocument::class.java
+        )
+        val originalDocs = hits.searchHits.map { it.content.toDomain() to it.score.toDouble() }
 
         val afterThompson = thompsonReranker.rerank(originalDocs)
         val afterDiversity = sellerDiversityReranker.rerank(afterThompson)
@@ -94,12 +103,12 @@ class SearchDebugController(
                     gmv30d = doc.gmv30d
                 ),
                 weights = WeightSnapshot(
-                    popularity = rankingProperties.popularityWeight,
-                    ctr = rankingProperties.ctrWeight,
-                    cvr = rankingProperties.cvrWeight,
-                    gmv7d = rankingProperties.gmv7dWeight,
-                    gmv30d = rankingProperties.gmv30dWeight,
-                    freshness = rankingProperties.freshness.weight
+                    popularity = effectiveProps.popularityWeight,
+                    ctr = effectiveProps.ctrWeight,
+                    cvr = effectiveProps.cvrWeight,
+                    gmv7d = effectiveProps.gmv7dWeight,
+                    gmv30d = effectiveProps.gmv30dWeight,
+                    freshness = effectiveProps.freshness.weight
                 ),
                 banditSample = banditSamples[doc.id]
             )
@@ -109,10 +118,10 @@ class SearchDebugController(
             DebugResponse(
                 variant = variant,
                 query = query,
-                totalElements = scored.totalElements,
+                totalElements = hits.totalHits,
                 results = results,
                 config = ConfigSnapshot(
-                    ranking = rankingProperties,
+                    ranking = effectiveProps,
                     bandit = BanditSnapshot(
                         enabled = banditProperties.enabled,
                         topN = banditProperties.topN,

@@ -3,6 +3,7 @@ package com.kgd.search
 import com.kgd.search.bandit.BanditProperties
 import com.kgd.search.bandit.DiversityProperties
 import com.kgd.search.infrastructure.elasticsearch.RankingProperties
+import com.kgd.search.infrastructure.elasticsearch.RankingVariantsProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -11,6 +12,7 @@ import org.springframework.kafka.annotation.EnableKafka
 @SpringBootApplication
 @EnableConfigurationProperties(
     RankingProperties::class,
+    RankingVariantsProperties::class,
     BanditProperties::class,
     DiversityProperties::class
 )

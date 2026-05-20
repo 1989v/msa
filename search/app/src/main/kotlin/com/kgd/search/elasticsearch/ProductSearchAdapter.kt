@@ -1,18 +1,11 @@
 package com.kgd.search.infrastructure.elasticsearch
 
-import co.elastic.clients.elasticsearch._types.SortOptions
-import co.elastic.clients.elasticsearch._types.SortOrder
-import co.elastic.clients.elasticsearch._types.Time
-import co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorModifier
-import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
-import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
 import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.domain.product.model.ScoredProductDocument
 import com.kgd.search.domain.product.port.ProductSearchPort
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
-import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
 import org.springframework.data.elasticsearch.core.SearchHits
 import org.springframework.stereotype.Component
@@ -20,7 +13,8 @@ import org.springframework.stereotype.Component
 @Component
 class ProductSearchAdapter(
     private val elasticsearchOperations: ElasticsearchOperations,
-    private val rankingProperties: RankingProperties
+    private val rankingProperties: RankingProperties,
+    private val queryBuilder: RankingQueryBuilder
 ) : ProductSearchPort {
 
     override fun search(keyword: String, pageable: Pageable): Page<ProductDocument> {
@@ -36,103 +30,7 @@ class ProductSearchAdapter(
     }
 
     private fun executeSearch(keyword: String, pageable: Pageable): SearchHits<ProductEsDocument> {
-        val query = NativeQuery.builder()
-            .withQuery { q ->
-                q.functionScore { fs ->
-                    fs.query { inner ->
-                        inner.bool { b ->
-                            b.must { m ->
-                                m.match { mt ->
-                                    mt.field("name").query(keyword)
-                                }
-                            }
-                            b.filter { f ->
-                                f.term { t ->
-                                    t.field("status").value("ACTIVE")
-                                }
-                            }
-                        }
-                    }
-
-                    fs.functions { fn ->
-                        fn.fieldValueFactor { fvf ->
-                            fvf.field("popularityScore")
-                                .factor(rankingProperties.popularityWeight)
-                                .modifier(FieldValueFactorModifier.Log1p)
-                                .missing(0.0)
-                        }
-                        fn.weight(1.0)
-                    }
-                    fs.functions { fn ->
-                        fn.fieldValueFactor { fvf ->
-                            fvf.field("ctr")
-                                .factor(rankingProperties.ctrWeight)
-                                .modifier(FieldValueFactorModifier.Log1p)
-                                .missing(0.0)
-                        }
-                        fn.weight(1.0)
-                    }
-                    if (rankingProperties.cvrWeight > 0.0) {
-                        fs.functions { fn ->
-                            fn.fieldValueFactor { fvf ->
-                                fvf.field("cvr")
-                                    .factor(rankingProperties.cvrWeight)
-                                    .modifier(FieldValueFactorModifier.Log1p)
-                                    .missing(0.0)
-                            }
-                            fn.weight(1.0)
-                        }
-                    }
-                    if (rankingProperties.gmv7dWeight > 0.0) {
-                        fs.functions { fn ->
-                            fn.fieldValueFactor { fvf ->
-                                fvf.field("gmv7d")
-                                    .factor(rankingProperties.gmv7dWeight)
-                                    .modifier(FieldValueFactorModifier.Log1p)
-                                    .missing(0.0)
-                            }
-                            fn.weight(1.0)
-                        }
-                    }
-                    if (rankingProperties.gmv30dWeight > 0.0) {
-                        fs.functions { fn ->
-                            fn.fieldValueFactor { fvf ->
-                                fvf.field("gmv30d")
-                                    .factor(rankingProperties.gmv30dWeight)
-                                    .modifier(FieldValueFactorModifier.Log1p)
-                                    .missing(0.0)
-                            }
-                            fn.weight(1.0)
-                        }
-                    }
-                    if (rankingProperties.freshness.weight > 0.0) {
-                        val freshness = rankingProperties.freshness
-                        fs.functions { fn ->
-                            fn.gauss { g ->
-                                g.date { d ->
-                                    d.field("createdAt")
-                                        .placement { p ->
-                                            p.origin(freshness.origin)
-                                                .scale(Time.of { it.time(freshness.scale) })
-                                                .offset(Time.of { it.time(freshness.offset) })
-                                                .decay(freshness.decay)
-                                        }
-                                }
-                            }
-                            fn.weight(freshness.weight)
-                        }
-                    }
-
-                    fs.scoreMode(FunctionScoreMode.Sum)
-                    fs.boostMode(FunctionBoostMode.Sum)
-                }
-            }
-            .withSort(
-                SortOptions.of { s -> s.score { it.order(SortOrder.Desc) } },
-                SortOptions.of { s -> s.field { f -> f.field("id").order(SortOrder.Asc) } }
-            )
-            .withPageable(pageable)
-            .build()
+        val query = queryBuilder.build(keyword, pageable, rankingProperties)
         return elasticsearchOperations.search(query, ProductEsDocument::class.java)
     }
 }
