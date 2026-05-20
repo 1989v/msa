@@ -5,3 +5,4 @@ resources:
   - serviceaccount.yaml
   - deployment.yaml
   - service.yaml
+  - cronjob-eval.yaml

@@ -1,0 +1,97 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "title": "Search Quality — ADR-0050",
+  "uid": "search-quality",
+  "schemaVersion": 38,
+  "version": 1,
+  "tags": ["search", "ranking", "adr-0050"],
+  "templating": {
+    "list": [
+      {
+        "name": "variant",
+        "label": "Eval Variant",
+        "type": "query",
+        "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+        "query": "SELECT DISTINCT variant FROM analytics.search_eval_results ORDER BY variant",
+        "refresh": 1,
+        "multi": true,
+        "includeAll": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "NDCG@10 (per variant)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "rawSql": "SELECT toStartOfHour(ts) AS time, variant, avg(ndcg10) AS avg_ndcg FROM analytics.search_eval_results WHERE variant IN ($variant) AND ts >= now() - INTERVAL 30 DAY GROUP BY time, variant ORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "MRR (per variant)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "rawSql": "SELECT toStartOfHour(ts) AS time, variant, avg(mrr) AS avg_mrr FROM analytics.search_eval_results WHERE variant IN ($variant) AND ts >= now() - INTERVAL 30 DAY GROUP BY time, variant ORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "MAP@10 (per variant)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "rawSql": "SELECT toStartOfHour(ts) AS time, variant, avg(map10) AS avg_map FROM analytics.search_eval_results WHERE variant IN ($variant) AND ts >= now() - INTERVAL 30 DAY GROUP BY time, variant ORDER BY time"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Queries Evaluated (last 24h)",
+      "gridPos": { "x": 12, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "rawSql": "SELECT count(DISTINCT query) AS queries FROM analytics.search_eval_results WHERE variant IN ($variant) AND ts >= now() - INTERVAL 1 DAY"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Judgment Set Size",
+      "gridPos": { "x": 18, "y": 8, "w": 6, "h": 4 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "rawSql": "SELECT count(DISTINCT (query, product_id)) AS judgments FROM analytics.search_judgments"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Bottom-10 NDCG queries (last eval)",
+      "gridPos": { "x": 0, "y": 16, "w": 24, "h": 8 },
+      "datasource": { "type": "grafana-clickhouse-datasource", "uid": "clickhouse" },
+      "targets": [
+        {
+          "rawSql": "SELECT query, ndcg10, mrr, map10 FROM analytics.search_eval_results WHERE variant IN ($variant) AND ts >= now() - INTERVAL 1 DAY ORDER BY ndcg10 ASC LIMIT 10"
+        }
+      ]
+    }
+  ]
+}

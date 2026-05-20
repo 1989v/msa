@@ -1,0 +1,51 @@
+# ADR-0050 Phase 4 — Grafana alert rules (provisioning yaml).
+# 적용: Grafana provisioning 디렉토리에 마운트 (`/etc/grafana/provisioning/alerting/`).
+#
+# Alert 정책:
+#  - NDCG@10 의 7일 평균이 baseline 대비 -5% 하락 시 Slack 알림 (variant=baseline 기준)
+#  - search.score.update.lag 가 5min 초과 시 ops 채널
+
+apiVersion: 1
+
+groups:
+  - name: search-quality
+    folder: Search
+    interval: 5m
+    rules:
+      - uid: search-ndcg-degradation
+        title: "Search NDCG@10 degradation"
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: clickhouse
+            model:
+              rawSql: |
+                WITH
+                  (SELECT avg(ndcg10) FROM analytics.search_eval_results
+                   WHERE variant = 'baseline' AND ts BETWEEN now() - INTERVAL 14 DAY AND now() - INTERVAL 7 DAY) AS baseline_avg,
+                  (SELECT avg(ndcg10) FROM analytics.search_eval_results
+                   WHERE variant = 'baseline' AND ts >= now() - INTERVAL 7 DAY) AS recent_avg
+                SELECT (baseline_avg - recent_avg) / baseline_avg AS degradation
+                WHERE baseline_avg > 0 AND (baseline_avg - recent_avg) / baseline_avg > 0.05
+        for: 1h
+        annotations:
+          summary: "Search NDCG@10 (variant=baseline) dropped >5% week-over-week"
+          runbook_url: "https://wiki.internal/search/runbook/ndcg-drop"
+        labels:
+          severity: warning
+          team: search
+
+      - uid: search-score-lag-high
+        title: "Search score update lag high"
+        condition: B
+        data:
+          - refId: B
+            datasourceUid: prometheus
+            model:
+              expr: search_score_update_lag_seconds > 300
+        for: 10m
+        annotations:
+          summary: "search:consumer of analytics.score.updated lag > 5min"
+        labels:
+          severity: warning
+          team: search

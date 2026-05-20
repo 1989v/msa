@@ -18,6 +18,8 @@ dependencies {
     implementation(libs.hikaricp)
     runtimeOnly(libs.h2)
     runtimeOnly(libs.mysql.connector)
+    // ADR-0050 Phase 4 — eval 잡이 ClickHouse 의 judgments / eval_results 사용
+    implementation(libs.clickhouse.jdbc)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.kotest.runner.junit5)
