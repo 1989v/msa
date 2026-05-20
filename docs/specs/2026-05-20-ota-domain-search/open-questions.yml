@@ -1,0 +1,68 @@
+# Open Questions — OTA Domain Search
+# spec id: 2026-05-20-ota-domain-search
+
+questions:
+  - id: Q1
+    topic: repo-split
+    status: open
+    question: |
+      OTA 도메인을 commerce 레포 안 모듈로 추가할 것인가, 별도 sibling 레포로 분리할 것인가?
+    options:
+      - (a) commerce 내 모듈 — search/bandit 인프라 재사용 자연
+      - (b) 별도 레포 — commerce 정체성 보존 + OTA 자체 진화 자유
+    recommendation: (b) — 본 commerce 은 GA 단계 아니므로 OTA 가 별도 진화 가능. ADR-0050 의 인프라는 jar 로 추출 + 두 레포 공용
+
+  - id: Q2
+    topic: region-source
+    status: open
+    question: |
+      Region taxonomy 출처는?
+    options:
+      - 자체 관리 (admin UI CRUD)
+      - 외부 API (Naver/Kakao Local)
+      - hybrid (외부 seed + 자체 보정)
+    recommendation: hybrid — 동남아 destination 은 외부 API 한계 명확, 자체 seed 필수
+
+  - id: Q3
+    topic: synonyms-management
+    status: open
+    question: |
+      Synonyms 관리 방식?
+    options:
+      - synonyms.txt 정적 파일 (배포 시 ConfigMap mount)
+      - DB + reload API (운영 중 변경 가능, 어드민 UI 필요)
+      - 하이브리드
+    recommendation: synonyms.txt 시작 → 운영 안정화 후 DB 기반으로 점진 이전
+
+  - id: Q4
+    topic: attraction-data-source
+    status: open
+    question: |
+      Attraction 데이터 출처?
+    options:
+      - 자체 등록
+      - Foursquare/Google Places import
+      - 운영자 큐레이션
+    recommendation: 자체 등록 (소수 큐레이션) → 후속에 외부 API import
+
+  - id: Q5
+    topic: package-rollout
+    status: open
+    question: |
+      Package 도입 시점?
+    options:
+      - OTA-1/2 안정화 후 즉시 (D+30)
+      - OTA-3 attraction 후 (D+60+)
+      - 비즈니스 메트릭 (통검 프리텍스트 유입량) 충족 후
+    recommendation: 메트릭 기반 — package 검색 트래픽 비중 측정 후 결정
+
+  - id: Q6
+    topic: ml-query-understanding
+    status: open
+    question: |
+      ML 베이스 query understanding 도입 priority?
+    options:
+      - OTA-3 attraction 이후 (자연 흐름)
+      - ADR-0050 P3 (LinUCB) 안정화 후
+      - 별도 추천 모델링 협업 트랙으로 분리
+    recommendation: 별도 트랙 — 본 spec 범위 외, ADR-00XX (T6) 에서 별도 ADR
