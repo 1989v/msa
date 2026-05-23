@@ -37,10 +37,19 @@ if k3d cluster list 2>/dev/null | grep -q "^${CLUSTER_NAME}"; then
     log "Cluster '$CLUSTER_NAME' already exists — reusing."
 else
     log "Creating k3d cluster '$CLUSTER_NAME'..."
+    # NOTE: 인프라 host-access 포트는 k8s/infra/local/host-access/ 의 LoadBalancer
+    # Services 와 짝을 이룬다. 포트 변경 시 양쪽 모두 수정해야 함.
     k3d cluster create "$CLUSTER_NAME" \
         --k3s-arg "--disable=traefik@server:*" \
         --port "80:80@loadbalancer" \
         --port "443:443@loadbalancer" \
+        --port "13306:13306@loadbalancer" \
+        --port "15432:15432@loadbalancer" \
+        --port "16379:16379@loadbalancer" \
+        --port "19200:19200@loadbalancer" \
+        --port "18123:18123@loadbalancer" \
+        --port "19000:19000@loadbalancer" \
+        --port "19092:19092@loadbalancer" \
         --agents 0 \
         --wait
 fi
@@ -104,6 +113,12 @@ build_fe agent-viewer-fe    agent-viewer/front/Dockerfile       agent-viewer/fro
 log "Applying k3s-lite overlay..."
 kubectl apply -k k8s/overlays/k3s-lite 2>&1 | grep -c "created\|configured"
 
+# k3d 전용 host-access (LoadBalancer Services for MySQL/Redis/ES/...).
+# overlay 가 아닌 별도 apply — oci-arm 이 k3s-lite 를 상속받기 때문에 overlay 에 두면
+# OCI 인터넷 노출 환경에도 따라가서 보안 사고 위험. 자세히는 k8s/infra/local/host-access/README.md.
+log "Applying host-access (k3d-only LoadBalancer infra exposure)..."
+kubectl apply -k k8s/infra/local/host-access 2>&1 | grep -c "created\|configured" || true
+
 # ─── 5.5. Restore MySQL data from last snapshot ─────────
 # Wait for MySQL to be ready first
 log "Waiting for MySQL pod..."
@@ -154,6 +169,15 @@ echo "   Quant            http://localhost/quant/"
 echo "   Gifticon         http://localhost/gifticon/"
 echo "   Agent Viewer     http://localhost/agent-viewer/"
 echo "   API (gateway)    http://localhost/api/"
+echo ""
+echo " Infra (host-access, see k8s/infra/local/host-access/README.md):"
+echo "   MySQL            127.0.0.1:13306   (root / localroot)"
+echo "   Postgres (quant) 127.0.0.1:15432   (quant / quant / quant)"
+echo "   Redis            127.0.0.1:16379"
+echo "   Elasticsearch    http://127.0.0.1:19200"
+echo "   ClickHouse HTTP  http://127.0.0.1:18123   (analytics / analytics)"
+echo "   ClickHouse TCP   127.0.0.1:19000"
+echo "   Kafka            127.0.0.1:19092   (EXTERNAL listener)"
 echo ""
 echo " 정리:  k3d cluster delete $CLUSTER_NAME"
 echo " 도움:  scripts/k3d-up.sh --help"

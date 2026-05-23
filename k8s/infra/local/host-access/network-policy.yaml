@@ -1,0 +1,54 @@
+# default-deny-all + commerce-platform 라벨 기반 allow rule 만으론
+# kube-system 의 svclb-* (klipper-lb) DaemonSet 이 infra pod 에 ingress 못 한다.
+# 이 정책이 그 갭을 메운다. LOCAL 전용.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-loadbalancer-to-infra
+  namespace: commerce
+  labels:
+    app.kubernetes.io/component: host-access
+spec:
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/name
+        operator: In
+        values:
+          - mysql
+          - redis
+          - kafka
+          - elasticsearch
+          - clickhouse
+          - quant-postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    # LoadBalancer external traffic — kube-proxy 가 노드 IP 로 SNAT 하기 때문에
+    # podSelector 로는 잡히지 않는다. 외부 CIDR 전체 허용 (LOCAL 전용이라 OK).
+    # 보안이 필요한 환경에서는 회사 VPN CIDR 등으로 좁힐 것.
+    - from:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+        # Cluster-internal svclb DaemonSet (혹시 DNAT 안 거치는 경로용 보강)
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchExpressions:
+              - key: svccontroller.k3s.cattle.io/svcname
+                operator: Exists
+      ports:
+        # MySQL
+        - { protocol: TCP, port: 3306 }
+        # Postgres (quant)
+        - { protocol: TCP, port: 5432 }
+        # Redis
+        - { protocol: TCP, port: 6379 }
+        # Elasticsearch HTTP
+        - { protocol: TCP, port: 9200 }
+        # ClickHouse HTTP + native
+        - { protocol: TCP, port: 8123 }
+        - { protocol: TCP, port: 9000 }
+        # Kafka EXTERNAL listener
+        - { protocol: TCP, port: 19092 }

@@ -11,3 +11,7 @@ resources:
   - elasticsearch
   - clickhouse
   - quant-postgres
+# host-access 는 base 에서 의도적으로 제외한다.
+# k8s/overlays/k3s-lite 에서만 명시적으로 include → oci-arm/prod-k8s 는 자동으로 미포함.
+# 이유: oci-arm 은 인터넷 노출 환경이라 MySQL/Redis 등 LoadBalancer 노출 시 보안 사고 직결.
+# 자세한 가이드 → k8s/infra/local/host-access/README.md § Prod 환경 에서는

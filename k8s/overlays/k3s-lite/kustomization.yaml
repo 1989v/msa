@@ -19,6 +19,10 @@ resources:
   # CNI 가 NetworkPolicy 지원해야 적용됨 (k3d 기본 Flannel 은 silent no-op → Calico/Cilium 권장).
   # 활성화 후 k8s/base/network-policy/README.md 의 smoke test 4단계 실행 필수.
   - ../../base/network-policy
+  # NOTE: host-access (LoadBalancer Services for MySQL/Redis/ES/...) 는 base 에도 이 overlay 에도
+  # 포함하지 않는다. oci-arm 이 이 overlay 를 상속받기 때문 — 인터넷 노출 환경에 LoadBalancer 로
+  # MySQL/Redis 를 띄우면 보안 사고 직결.
+  # k3d 로컬에서는 scripts/k3d-up.sh 가 별도로 `kubectl apply -k k8s/infra/local/host-access` 실행.
 
 patches:
   # Global resource reduction — halves the base requests/limits for
