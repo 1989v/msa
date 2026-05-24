@@ -34,7 +34,11 @@ spec:
         app.kubernetes.io/part-of: commerce-platform
     spec:
       containers:
-        - name: cloudflared
+        # name: app 인 이유 — oci-arm 의 java-tool-options patch 가 `name: app`
+        # container 에 strategic merge 로 env 주입. 이름이 다르면 patch 가 새
+        # container 를 append 해서 image 없는 컨테이너가 생기고 sync 실패함.
+        # cloudflared 는 go 바이너리라 주입된 JAVA_TOOL_OPTIONS 무시 → 무해.
+        - name: app
           image: cloudflare/cloudflared:2025.2.0
           imagePullPolicy: IfNotPresent
           args:
