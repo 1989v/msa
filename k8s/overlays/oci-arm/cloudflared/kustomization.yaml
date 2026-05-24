@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# cloudflared — Cloudflare Zero Trust Tunnel connector.
+# oci-arm overlay 전용. k3s-lite (k3d 로컬) 에는 미적용.
+#
+# Secret(`cloudflared-tunnel-token`) 은 git 에 두지 않고 OCI 에서 수동 등록:
+#   kubectl -n commerce create secret generic cloudflared-tunnel-token \
+#     --from-literal=token='eyJhIjoi...'
+#
+# Public Hostname / TCP route / Access policy 는 Cloudflare Zero Trust
+# dashboard 에서 별도 관리. manifest 에는 cloudflared connector 만 둔다.
+namespace: commerce
+resources:
+  - deployment.yaml
+  - network-policy.yaml

@@ -1,0 +1,93 @@
+# cloudflared — Cloudflare Zero Trust Tunnel connector.
+#
+# OCI 인스턴스에 inbound 포트를 열지 않고, cloudflared 가 Cloudflare 엣지로
+# outbound 터널을 맺어 외부 접근 경로를 만든다. Public Hostname / TCP route
+# / Access policy 는 Cloudflare Zero Trust dashboard 에서 별도 관리.
+#
+# Replica 2 로 떠서 단일 노드여도 connector 끊김 시 빠르게 fail over.
+# (Tunnel 1개 = 여러 connector 동시 연결 허용.)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflared
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: cloudflared
+    app.kubernetes.io/component: zero-trust-tunnel
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cloudflared
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cloudflared
+        app.kubernetes.io/component: zero-trust-tunnel
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      containers:
+        - name: cloudflared
+          image: cloudflare/cloudflared:2025.2.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - tunnel
+            - --no-autoupdate
+            - --metrics
+            - 0.0.0.0:2000
+            - run
+          env:
+            - name: TUNNEL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: cloudflared-tunnel-token
+                  key: token
+          ports:
+            - name: metrics
+              containerPort: 2000
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 2000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /ready
+              port: 2000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            failureThreshold: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 65532
+            capabilities:
+              drop: ["ALL"]
+      # 단일 노드 OCI 에서도 두 replica 가 서로 다른 pod 로 분리되게 (안티-친화도).
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: cloudflared

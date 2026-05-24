@@ -116,21 +116,36 @@ gateway 로 proxy 한다 → FE 코드는 same-origin `/api/*` 호출 유지, CO
 JVM heap 보정: `JAVA_TOOL_OPTIONS=-XX:MaxRAMPercentage=60.0` 전 백엔드 주입 →
 512Mi 컨테이너 = ~300Mi heap, 384Mi 컨테이너 = ~230Mi heap. nginx 는 변수 무시.
 
-**총 한도 합산:**
+**메모리 한도 합산 — always-on 기준 (CronJob 별도):**
 
-| 그룹 | 메모리 한도 합 |
-|---|---|
-| 백엔드 21종 (XL/L/M/S/XS 차등) | ~13.0 Gi |
-| FE 5종 (96Mi) | ~0.5 Gi |
-| 인프라 (MySQL/Redis/Kafka/ES/ClickHouse/Postgres) | ~6.75 Gi |
-| k3s + ingress-nginx + cert-manager + 시스템 | ~2.3 Gi |
-| **합계** | **~22.6 Gi** ✓ (24Gi 안에 ~1.4Gi 여유) |
+| 그룹 | 메모리 한도 합 | 점유 패턴 |
+|---|---|---|
+| 백엔드 21종 (XL/L/M/S/XS 차등) | ~13.0 Gi | always-on |
+| FE 5종 (96Mi) | ~0.5 Gi | always-on |
+| cloudflared (Zero Trust Tunnel, 128Mi × 2 replica) | ~0.25 Gi | always-on |
+| 인프라 6종 (MySQL/Redis/Kafka/ES/ClickHouse/Postgres) | ~6.75 Gi | always-on |
+| k3s + ingress-nginx + cert-manager + 시스템 | ~2.3 Gi | always-on |
+| **always-on 합계** | **~22.8 Gi** | **여유 ~1.2 Gi** |
+
+**CronJob (스케줄에 따른 일시 점유, scheduler 가 노드 capacity 체크 시 비포함):**
+
+| 그룹 | 메모리 한도 합 | 동시 트리거 burst |
+|---|---|---|
+| CronJob 12종 (quant-ingest-*, search-eval-daily) | ~6.75 Gi (명목) | 매시 정각 1m+5m+30m+hourly 4개 동시 ≈ 2 Gi 일시 점유 |
+
+K8s scheduler 는 requests 합 (~13.7 Gi) 로만 노드 capacity 체크 → scheduling 안전.
+limits 가 노드 capacity 를 명목상 초과해도 cgroup burst 허용; CronJob 들의
+실사용량이 limits 보다 작아 일반적으로 OOM 안 남. 만약 OOM 발생하면 해당
+CronJob 의 limits 를 실측 기반으로 축소.
 
 CPU 4 OCPU: cold start 시 1~2분간 high CPU (모든 JVM warmup 동시 발생).
 이후 idle 은 1 OCPU 이하. 운영용이 아닌 데모/포트폴리오 용도라 수용 가능.
 
 특정 서비스가 OOM 나면 해당 tier 패치만 수정 (예: chatbot 이 부족하면
 S(512) → M(768) 로 승격). 글로벌 default 는 건드리지 말 것.
+
+> ⚠️ **여유 1.2 Gi 가 빠듯**. 신규 always-on 서비스 추가 시 이 표 재계산 필수.
+> CronJob 추가는 비교적 자유롭지만 동시 트리거 burst 만 주의.
 
 ## 트러블슈팅
 

@@ -34,6 +34,10 @@ resources:
   # base 의 단일 path-routed Ingress 2개 (frontend, gateway) 는 아래 $patch:
   # delete 로 무력화.
   - ingresses/commerce-platform.yaml
+  # cloudflared — Zero Trust Tunnel connector. Public Hostname / TCP route /
+  # Access policy 는 Cloudflare dashboard 에서 관리. tunnel 토큰 Secret 은
+  # cf-origin-ca-tls 와 동일하게 OCI 에서 수동 등록 (git 미포함).
+  - cloudflared
 patches:
   # ─── base 의 path-routed Ingress 2개 제거 (subdomain 라우팅으로 대체) ────────
   - patch: |-
