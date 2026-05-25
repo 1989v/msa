@@ -39,6 +39,37 @@ resources:
   # cf-origin-ca-tls 와 동일하게 OCI 에서 수동 등록 (git 미포함).
   - cloudflared
 patches:
+  # ─── Kafka EXTERNAL listener — WARP 통한 외부 접근용 (kafka-ui macOS docker 등) ─
+  # base 의 advertised 는 host-access(k3s-lite) 검증용 localhost:19092.
+  # oci-arm 에선 외부 client 가 reconnect 시 사용할 public hostname 으로 교체.
+  # CLIENT/INTERNAL listener 는 cluster-internal 그대로 (Spring Boot 서비스 영향 없음).
+  - target:
+      kind: StatefulSet
+      name: kafka
+    patch: |-
+      apiVersion: apps/v1
+      kind: StatefulSet
+      metadata:
+        name: kafka
+      spec:
+        template:
+          spec:
+            containers:
+              - name: kafka
+                env:
+                  - name: KAFKA_CFG_ADVERTISED_LISTENERS
+                    value: "CLIENT://kafka:9092,INTERNAL://kafka:29092,EXTERNAL://kafka.1989v.com:19092"
+  # Kafka service 에 19092 port 추가 (Cloudflare Tunnel → cloudflared → kafka:19092).
+  - target:
+      kind: Service
+      name: kafka
+    patch: |-
+      - op: add
+        path: /spec/ports/-
+        value:
+          name: external
+          port: 19092
+          targetPort: 19092
   # ─── base 의 path-routed Ingress 2개 제거 (subdomain 라우팅으로 대체) ────────
   - patch: |-
       $patch: delete
