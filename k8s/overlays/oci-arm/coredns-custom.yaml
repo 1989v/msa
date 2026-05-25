@@ -1,0 +1,46 @@
+# K3s CoreDNS 확장 — coredns-custom ConfigMap.
+#
+# K3s 는 kube-system/coredns-custom ConfigMap 을 자동 import 한다.
+# 여기에 추가한 rewrite 룰은 메인 Corefile 의 plugin chain 에 merge 되어
+# CoreDNS 재시작 없이도 곧 반영 (실제 적용까지 ~1분).
+#
+# 목적: WARP private hostname route 가 mysql.1989v.com 같은 public 도메인을
+# Cloudflare Tunnel 로 보내면, cloudflared pod 가 그 hostname 을 origin 으로
+# resolve 해야 한다. Hostname route 자체엔 service URL 필드가 없어서 cloudflared
+# 의 DNS resolver 가 처리해야 함. K3s CoreDNS rewrite 로 7개 hostname →
+# 실제 cluster service FQDN 매핑.
+#
+# 적용:
+#   sudo k3s kubectl apply -f k8s/overlays/oci-arm/coredns-custom.yaml
+#
+# 검증 (cloudflared pod 안에서):
+#   nslookup mysql.1989v.com   → cluster IP (10.43.x.x) 응답
+#
+# 제거:
+#   sudo k3s kubectl -n kube-system delete configmap coredns-custom
+#
+# NOTE: ArgoCD application 이 commerce namespace 만 관리하므로 이 ConfigMap 은
+# 자동 sync 안 됨. 1회 수동 apply 필요. 한 번 등록되면 K3s 재시작에도 유지.
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/component: dns-rewrite
+    app.kubernetes.io/part-of: oci-arm-overlay
+data:
+  # K3s CoreDNS Corefile 구조:
+  #   .:53 { ... ; import /etc/coredns/custom/*.override }   ← 메인 server block 내부
+  #   import /etc/coredns/custom/*.server                    ← 별도 server block
+  #
+  # rewrite plugin 은 메인 server block 안의 plugin chain 에 들어가야 하므로
+  # *.override 파일로 정의 (*.server 는 별도 server block 용).
+  msa-warp.override: |
+    rewrite name mysql.1989v.com    mysql-product-master.commerce.svc.cluster.local
+    rewrite name postgres.1989v.com quant-postgres.commerce.svc.cluster.local
+    rewrite name redis.1989v.com    redis.commerce.svc.cluster.local
+    rewrite name kafka.1989v.com    kafka.commerce.svc.cluster.local
+    rewrite name ch.1989v.com       clickhouse.commerce.svc.cluster.local
+    rewrite name es.1989v.com       elasticsearch.commerce.svc.cluster.local
