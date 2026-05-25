@@ -553,10 +553,11 @@ DataGrip (macOS)
 
 | 매니페스트 | 역할 | 적용 방식 |
 |------------|------|-----------|
-| `cloudflared/deployment.yaml` | Tunnel connector 2 replica (image 2025.7.0+ 필수 — private hostname routing 지원 최소 버전) | ArgoCD 자동 sync (commerce ns) |
-| `cloudflared/network-policy.yaml` | egress CF엣지 + cluster-internal infra 허용 | ArgoCD 자동 sync |
-| `coredns-custom.yaml` | `mysql.1989v.com → mysql-product-master.commerce.svc.cluster.local` 등 7개 rewrite | **수동 apply** (kube-system ns) |
-| `sysctl-tuning/daemonset.yaml` | 노드 `net.core.rmem_max=7.5MB` 적용 (QUIC 권장값) | **수동 apply** (kube-system ns) |
+| `cloudflared/deployment.yaml` | Tunnel connector 2 replica (image **2026.5.0** — private hostname routing 안정 버전. 최소 2025.7.0+) | ArgoCD 자동 sync (commerce ns) |
+| `cloudflared/network-policy.yaml` | (1) cloudflared egress 허용 (2) **cloudflared → 인프라 6종 ingress 허용** — base/network-policy 의 `allow-app-to-clickhouse` 등이 좁아서 cloudflared 매치 안 되는 갭 보강 | ArgoCD 자동 sync |
+| `coredns-custom.yaml` | `mysql.1989v.com → mysql-product-master.commerce.svc.cluster.local` 등 6개 rewrite — cloudflared 가 origin 으로 resolve | **수동 apply** (kube-system ns) |
+| `sysctl-tuning/daemonset.yaml` | 노드 `net.core.rmem_max=7.5MB` 적용 (QUIC 권장값) — fallback flag 안 쓰고 표준 MASQUE 동작 | **수동 apply** (kube-system ns) |
+| `kustomization.yaml` (Kafka patch) | Kafka EXTERNAL listener advertised 를 `kafka.1989v.com:19092` 로, service 에 19092 port 추가 | ArgoCD 자동 sync |
 
 수동 apply (OCI 인스턴스에서 1회):
 
@@ -629,9 +630,16 @@ unset TOKEN
 
 **Zero Trust → 액세스 제어 → 응용 프로그램 → 응용 프로그램 추가 → 자체 호스팅 및 프라이빗 → 프라이빗 대상**
 
-각 인프라마다:
-- 응용 프로그램 이름: `mysql` / `postgres` / ...
-- 프라이빗 호스트 이름 추가: `<hostname>:<port>` (예: `mysql.1989v.com:3306`)
+| 응용 프로그램 | 개인 호스트 이름 |
+|------------|----------------|
+| `mysql` | `mysql.1989v.com:3306` |
+| `postgres` | `postgres.1989v.com:5432` |
+| `redis` | `redis.1989v.com:6379` |
+| `kafka` | `kafka.1989v.com:19092` |
+| `ch` | `ch.1989v.com:8123` + `ch.1989v.com:9000` (한 응용 프로그램에 개인 호스트 이름 2개) |
+| `es` | `es.1989v.com:9200` |
+
+공통 설정:
 - 정책: `allow-me` (Include Emails = 본인 이메일) — 처음 만들고 이후 응용 프로그램은 "현재 정책 추가" 로 재사용
 - 인증: **Cloudflare One Client로 인증 켬**
 
@@ -665,6 +673,31 @@ mysql -h mysql.1989v.com -P 3306 -u root -plocalroot \
 DataGrip / DBeaver: `Host = <hostname>.1989v.com`, `Port = <port>`, Driver properties
 에 `sslMode=DISABLED` + `allowPublicKeyRetrieval=true`. (dev 환경 한정 — prod 운영
 시엔 mysql TLS 셋업 후 `sslMode=VERIFY_CA` 표준.)
+
+#### Web UI 도구 (Kibana, Kafka UI) — 로컬 docker
+
+WARP 가 켜져있고 macOS 가 cluster hostname 으로 접근 가능하면 그대로 connect:
+
+```bash
+# Kibana — Elasticsearch UI
+docker run -d --name kibana --restart unless-stopped \
+  -e ELASTICSEARCH_HOSTS=http://es.1989v.com:9200 \
+  -p 5601:5601 \
+  docker.elastic.co/kibana/kibana:8.13.0
+# → http://localhost:5601
+
+# Kafka UI (Provectus) — Kafka 토픽 관리
+docker run -d --name kafka-ui --restart unless-stopped \
+  -e KAFKA_CLUSTERS_0_NAME=oci \
+  -e KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka.1989v.com:19092 \
+  -p 8080:8080 \
+  provectuslabs/kafka-ui:latest
+# → http://localhost:8080
+```
+
+> docker container 가 WARP 라우팅 못 받으면 `--network host` 추가. Kafka 의
+> `bootstrap.servers` 가 외부 hostname 으로 응답하려면 advertised listener 가
+> `kafka.1989v.com:19092` 로 설정돼있어야 함 (oci-arm overlay patch 에서 처리).
 
 ### 5.6 트러블슈팅 — 표준 컨벤션 유지하며 진단
 
@@ -700,7 +733,86 @@ sudo k3s kubectl -n kube-system delete daemonset sysctl-tuning
 
 ---
 
-## 6. 참고 문서
+## 6. HTTP 서비스 Zero Trust Access — admin / argocd
+
+§5 가 TCP 인프라 (mysql/postgres/...) 의 외부 접근을 다뤘다면, §6 은 **HTTP 서비스 (관리자 UI)** 에 인증 게이트 추가. 표준 패턴:
+
+- §5 는 WARP private hostname routing (TCP) — `cloudflared` 가 받음
+- §6 는 일반 Cloudflare proxied HTTPS — ingress-nginx 가 받고 **Access 가 인증 페이지로 redirect**
+
+### 6.1 어디에 적용하나 — 신중하게 선택
+
+| FE/서비스 | hostname | Access 적용 | 이유 |
+|----------|----------|-----------|------|
+| portal-fe | `1989v.com` (root) | ❌ | 공개 진입 페이지 (포트폴리오) |
+| **admin-fe** | `admin.1989v.com` | ✅ | 관리자 페이지 (config 변경, 잡 트리거) |
+| **argocd** | `argocd.1989v.com` | ✅ | 모든 cluster 권한, 가장 sensitive |
+| quant-fe | `quant.1989v.com` | △ 보류 | 금전적 영향 — 운영 단계에서 적용 검토 |
+| agent-viewer-fe | `agent.1989v.com` | △ 보류 | 내부 디버깅 |
+| gifticon-fe | `gft.1989v.com` | ❌ | 공유 그룹용 |
+| gateway API | `api.1989v.com` | ❌ | JWT 자체 인증 유지. Access 적용 시 외부 호출 깨질 위험 |
+| `rt.*` (WebSocket/SSE) | `rt.1989v.com` | ❌ | long-lived connection — Access 호환성 별도 검증 필요 |
+
+→ 1차로 **admin-fe + argocd 2개만** 적용. 나머지는 운영 단계에서 검토.
+
+### 6.2 셋업 (각 hostname 당 ~5분, dashboard 만)
+
+매니페스트 변경 없음 — 기존 Cloudflare proxied ingress 위에 Access 정책만 얹는다.
+
+**Zero Trust → 액세스 제어 → 응용 프로그램 → 응용 프로그램 추가 → 자체 호스팅 및 프라이빗 → 공개 호스트 이름**
+
+| 응용 프로그램 이름 | 공개 호스트 이름 |
+|------------------|-----------------|
+| `admin` | subdomain=`admin`, domain=`1989v.com`, path=비워두기 |
+| `argocd` | subdomain=`argocd`, domain=`1989v.com`, path=비워두기 |
+
+공통 설정:
+- 정책: `allow-me` (Include Emails = 본인 이메일) — 재사용
+- 인증: **Cloudflare One Client로 인증** — **끔** (HTTP 는 브라우저 인증 자동 redirect 로 충분)
+- MFA 탭 / 브라우저 렌더링 등: 건드리지 X
+
+### 6.3 검증
+
+WARP 없이도 (또는 켜져있어도) 브라우저로:
+
+```
+https://admin.1989v.com
+https://argocd.1989v.com
+```
+
+→ Cloudflare Access 인증 페이지 자동 redirect → 본인 이메일 입력 → 일회용 PIN → 통과 → 원래 페이지.
+
+**24시간 세션** 유지 (5.3.3 의 글로벌 세션 기간). 그 후 재인증.
+
+### 6.4 cleanup
+
+```
+Zero Trust → 액세스 제어 → 응용 프로그램 → admin / argocd → 삭제
+```
+
+매니페스트/ingress 는 그대로 유지됨 (Access 정책 레이어만 제거).
+
+### 6.5 TCP (§5) vs HTTP (§6) 차이
+
+| | §5 — TCP | §6 — HTTP |
+|---|---------|----------|
+| 응용 프로그램 type | 프라이빗 (Private hostname) | 공개 (Public hostname) |
+| 인증 redirect | 브라우저 X (raw TCP) | 브라우저 자동 |
+| Cloudflare One Client 토글 | **켬 필수** | 끔 (브라우저 인증으로 충분) |
+| WARP 필요 | **필수** (CGNAT 라우팅) | 불필요 (공개 IP) |
+| 모바일/외부 디바이스 접근 | WARP 설치 디바이스만 | 어디서든 브라우저로 |
+| Tunnel | cloudflared connector | ingress-nginx (기존) |
+
+### 6.6 추후 적용 후보
+
+별도 task 로 진행:
+- `quant.1989v.com` — Phase 3 운영 시점
+- `agent.1989v.com` — 내부 디버깅 UI 강화 필요 시
+- `api.1989v.com/admin/**` 만 path-based Access — gateway API path 분리 후
+
+---
+
+## 7. 참고 문서
 
 - [ADR-0019: K8s 마이그레이션 결정 기록](../adr/ADR-0019-k8s-migration.md)
 - [k8s/base/ 서비스 매니페스트](../../k8s/base/)
