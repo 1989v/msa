@@ -520,7 +520,187 @@ kubectl -n commerce describe pod gateway-xxx | grep SPRING_APPLICATION_JSON
 
 ---
 
-## 5. 참고 문서
+## 5. OCI 외부 접근 — Cloudflare Zero Trust Tunnel
+
+OCI Ampere A1 (oci-arm overlay) 에 떠있는 인프라(MySQL/Redis/Kafka/ES/ClickHouse/Postgres)
+에 macOS DBeaver/DataGrip 등에서 안전하게 접속하기 위한 표준 셋업.
+
+**핵심 원칙**: OCI inbound port 는 80/443 외 모두 닫고 (host-access prune됨),
+Cloudflare Tunnel + WARP private hostname routing 으로 인증된 외부 접근만 허용.
+**fallback flag (예: `--protocol=http2`) 또는 SSL 우회는 사용 금지** — 표준 default
+동작(MASQUE/QUIC) 유지 + 환경(노드 sysctl) 정공법 fix.
+
+### 5.1 아키텍처
+
+```
+DataGrip (macOS)
+  → mysql.1989v.com:3306
+  → WARP (Cloudflare One Client) 가 DNS 가로채서 100.80.x.x CGNAT 응답
+  → 가상 IP 패킷을 Cloudflare 엣지로 라우팅 (MASQUE/QUIC)
+  → Cloudflare Tunnel 통해 OCI cloudflared pod 로
+  → cloudflared 가 mysql.1989v.com 을 origin 으로 resolve (CoreDNS rewrite)
+  → mysql-product-master.commerce.svc.cluster.local:3306
+```
+
+**보안 게이트 3중**:
+1. OCI VCN Security List 가 13306 등 inbound 차단 (host-access manifest 자체가 base 에서 제외됨)
+2. Cloudflare Access policy `allow-me` 가 본인 이메일만 허용
+3. Cloudflare Tunnel 이 outbound-only (OCI → Cloudflare 엣지)
+
+### 5.2 사전 셋업 (1회, git 매니페스트로 관리)
+
+다음 매니페스트가 `k8s/overlays/oci-arm/` 에 있고 git source of truth:
+
+| 매니페스트 | 역할 | 적용 방식 |
+|------------|------|-----------|
+| `cloudflared/deployment.yaml` | Tunnel connector 2 replica (image 2025.7.0+ 필수 — private hostname routing 지원 최소 버전) | ArgoCD 자동 sync (commerce ns) |
+| `cloudflared/network-policy.yaml` | egress CF엣지 + cluster-internal infra 허용 | ArgoCD 자동 sync |
+| `coredns-custom.yaml` | `mysql.1989v.com → mysql-product-master.commerce.svc.cluster.local` 등 7개 rewrite | **수동 apply** (kube-system ns) |
+| `sysctl-tuning/daemonset.yaml` | 노드 `net.core.rmem_max=7.5MB` 적용 (QUIC 권장값) | **수동 apply** (kube-system ns) |
+
+수동 apply (OCI 인스턴스에서 1회):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/1989v/msa/main/k8s/overlays/oci-arm/coredns-custom.yaml \
+  | sudo k3s kubectl apply -f -
+curl -fsSL https://raw.githubusercontent.com/1989v/msa/main/k8s/overlays/oci-arm/sysctl-tuning/daemonset.yaml \
+  | sudo k3s kubectl apply -f -
+sudo k3s kubectl -n kube-system rollout restart deployment coredns
+```
+
+Tunnel 토큰 Secret (`cloudflared-tunnel-token`) 도 OCI 에서 1회 수동 등록
+(git 미포함, `cf-origin-ca-tls` 와 동일 패턴):
+
+```bash
+read -s -r TOKEN   # Cloudflare dashboard 에서 발급한 eyJhIjoi... 토큰 붙여넣기
+sudo k3s kubectl -n commerce create secret generic cloudflared-tunnel-token \
+  --from-literal=token="$TOKEN"
+unset TOKEN
+```
+
+### 5.3 Cloudflare dashboard 셋업 (1회)
+
+#### 5.3.1 Tunnel 생성
+
+**Zero Trust → 네트워크 → 커넥터 → 커넥터 만들기**
+- Connector type: **Cloudflared**
+- Tunnel name: `msa` (또는 환경별 — `msa-prod` / `msa-dev`)
+- 토큰 발급 → 위 5.2 의 Secret 등록에 사용
+
+#### 5.3.2 Hostname Route 등록 (인프라 갯수만큼)
+
+**Zero Trust → 네트워크 → 경로 → 호스트 이름 경로 → 추가**
+
+| Hostname | Tunnel | Virtual network |
+|----------|--------|----------------|
+| `mysql.1989v.com` | msa | default |
+| `postgres.1989v.com` | msa | default |
+| `redis.1989v.com` | msa | default |
+| `kafka.1989v.com` | msa | default |
+| `ch.1989v.com` | msa | default |
+| `es.1989v.com` | msa | default |
+
+> Service URL 필드 없음 — cloudflared 가 hostname 그대로 받아서 CoreDNS rewrite 로 cluster service 해석.
+
+#### 5.3.3 Access 설정 (글로벌)
+
+**Zero Trust → 액세스 제어 → Access 설정**
+
+- **Cloudflare One Client 인증** 섹션:
+  - "Cloudflare One Client 세션을 사용한 인증 사용" **켬**
+  - "모든 애플리케이션에 대해 클라이언트 인증 활성화" **켬**
+  - 세션 기간: `8 hours` (운영 정책에 맞게 8-24 hours)
+
+#### 5.3.4 ID 공급자 + 디바이스 등록 권한
+
+**Zero Trust → 통합 → ID 공급자**: **일회용 PIN (One-time PIN)** 추가
+
+**Zero Trust → 디바이스 → 관리 → 정책 / 로그인 방법**:
+- 정책: Include Emails = 본인 이메일
+- 로그인 방법: 일회용 PIN
+
+#### 5.3.5 Gateway Proxy
+
+**Zero Trust → 트래픽 정책 → 트래픽 설정 → 프록시 및 검사**:
+- Secure Web Gateway proxy: 켬
+- TCP / UDP / ICMP: 모두 켬
+
+#### 5.3.6 Access Application (인프라 갯수만큼)
+
+**Zero Trust → 액세스 제어 → 응용 프로그램 → 응용 프로그램 추가 → 자체 호스팅 및 프라이빗 → 프라이빗 대상**
+
+각 인프라마다:
+- 응용 프로그램 이름: `mysql` / `postgres` / ...
+- 프라이빗 호스트 이름 추가: `<hostname>:<port>` (예: `mysql.1989v.com:3306`)
+- 정책: `allow-me` (Include Emails = 본인 이메일) — 처음 만들고 이후 응용 프로그램은 "현재 정책 추가" 로 재사용
+- 인증: **Cloudflare One Client로 인증 켬**
+
+#### 5.3.7 WARP Split Tunnel
+
+**Zero Trust → 디바이스 → 디바이스 프로필 → 일반 프로필 → Configure → Split Tunnels**:
+- Mode: **IP 및 도메인 포함** (Include mode)
+- IP: `100.80.0.0/16` (Cloudflare CGNAT 가상 IP 대역)
+- Host: `<team>.cloudflareaccess.com` (예: `1989v.cloudflareaccess.com`) — **인증 페이지도 WARP 라우팅 보장 필수**
+
+### 5.4 클라이언트 셋업 (macOS, 사용자 1회)
+
+```bash
+brew install --cask cloudflare-warp
+```
+
+WARP 메뉴바 클릭 → **Cloudflare One Client** 모드 선택 → Team name 입력 (예: `1989v`)
+→ 브라우저 IdP 인증 (일회용 PIN) → 통과.
+
+### 5.5 검증
+
+```bash
+warp-cli connect
+sleep 30
+nslookup mysql.1989v.com   # Address 가 100.80.X.X 여야 정상
+
+mysql -h mysql.1989v.com -P 3306 -u root -plocalroot \
+  --ssl-mode=DISABLED --protocol=TCP -e "SELECT VERSION();"
+```
+
+DataGrip / DBeaver: `Host = <hostname>.1989v.com`, `Port = <port>`, Driver properties
+에 `sslMode=DISABLED` + `allowPublicKeyRetrieval=true`. (dev 환경 한정 — prod 운영
+시엔 mysql TLS 셋업 후 `sslMode=VERIFY_CA` 표준.)
+
+### 5.6 트러블슈팅 — 표준 컨벤션 유지하며 진단
+
+증상 별 진단:
+
+| 증상 | 원인 | 표준 fix (fallback 금지) |
+|------|------|------|
+| `nslookup` 이 `100.80.x.x` 아니라 public anycast | WARP 가 DNS 가로채기 못 함 | Split Tunnel Include 에 `100.80.0.0/16` 등록 확인 |
+| `dig @127.0.2.2 mysql.X` → REFUSED | cloudflared 가 private hostname routing 미지원 (구버전) | cloudflared 2025.7.0+ 로 업그레이드 (`deployment.yaml` image tag) |
+| `cloudflared` 로그에 `failed to sufficiently increase receive buffer size` | QUIC UDP buffer 부족 | sysctl-tuning DaemonSet 적용 확인 (`net.core.rmem_max=7500000`) |
+| 인증 페이지에서 `Error: Please enable WARP` | Split Tunnel 이 인증 도메인 우회 | Split Tunnel Include 에 `<team>.cloudflareaccess.com` 추가 |
+| mysql `Lost connection ... reading initial communication packet` | 위 3번 + Access 정책 미통과 조합 | 위 fix 들 다 적용 + `warp-cli disconnect; warp-cli connect` |
+| 매 8시간마다 재인증 알림 | Cloudflare One Client 세션 만료 | 정상. 부담스러우면 5.3.3 세션 기간 24 hours 로 |
+
+### 5.7 cleanup
+
+```bash
+# K8s 측
+sudo k3s kubectl -n commerce delete secret cloudflared-tunnel-token
+sudo k3s kubectl -n kube-system delete configmap coredns-custom
+sudo k3s kubectl -n kube-system delete daemonset sysctl-tuning
+# ArgoCD 가 cloudflared deployment + NetworkPolicy 는 자동 sync 로 관리
+
+# Cloudflare 측 (dashboard)
+# Tunnels → msa → Delete
+# Routes → Hostname routes → 항목 삭제
+# Access > Applications → 각 응용 프로그램 삭제
+```
+
+자세히는:
+- [`k8s/overlays/oci-arm/cloudflared/README.md`](../../k8s/overlays/oci-arm/cloudflared/README.md)
+- [`k8s/overlays/oci-arm/README.md`](../../k8s/overlays/oci-arm/README.md)
+
+---
+
+## 6. 참고 문서
 
 - [ADR-0019: K8s 마이그레이션 결정 기록](../adr/ADR-0019-k8s-migration.md)
 - [k8s/base/ 서비스 매니페스트](../../k8s/base/)
@@ -528,6 +708,8 @@ kubectl -n commerce describe pod gateway-xxx | grep SPRING_APPLICATION_JSON
 - [k8s/infra/prod/ 운영 인프라](../../k8s/infra/prod/README.md)
 - [k8s/overlays/k3s-lite/ 로컬 overlay](../../k8s/overlays/k3s-lite/README.md)
 - [k8s/overlays/prod-k8s/ 운영 overlay](../../k8s/overlays/prod-k8s/README.md)
+- [k8s/overlays/oci-arm/ OCI Ampere overlay](../../k8s/overlays/oci-arm/README.md)
 - [k8s/infra/prod/backup/ 백업 CronJob](../../k8s/infra/prod/backup/README.md)
 - [.github/workflows/ CI/CD 워크플로](../../.github/workflows/README.md)
+- [Cloudflare private hostname routing 공식 docs](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/private-net/cloudflared/connect-private-hostname/)
 - [레거시 docker-compose 스냅샷](https://github.com/1989v/msa/tree/backup/docker-compose-snapshot) (필요 시 참조)
