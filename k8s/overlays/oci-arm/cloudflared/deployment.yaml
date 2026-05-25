@@ -39,7 +39,10 @@ spec:
         # container 를 append 해서 image 없는 컨테이너가 생기고 sync 실패함.
         # cloudflared 는 go 바이너리라 주입된 JAVA_TOOL_OPTIONS 무시 → 무해.
         - name: app
-          image: cloudflare/cloudflared:2025.2.0
+          # 2025.7.0+ 이상 필수 — private hostname routing 지원 최소 버전.
+          # docs: cloudflare-one/networks/connectors/cloudflare-tunnel/private-net/
+          #       cloudflared/connect-private-hostname/
+          image: cloudflare/cloudflared:2026.5.0
           imagePullPolicy: IfNotPresent
           args:
             - tunnel
