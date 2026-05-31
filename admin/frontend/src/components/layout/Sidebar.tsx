@@ -42,16 +42,29 @@ const navItems: NavItem[] = [
   { label: '시스템', icon: Monitor, to: '/system', enabled: true },
 ];
 
-// 외부 SPA / 서비스 진입점 — ingress 가 path-prefix 로 라우팅 (frontend-ingress.yaml).
-// 운영 도메인 분리 시 to 를 절대 URL 로 교체.
-// 차팅은 ADR-0036 P2-T20 (2026-05-02) 에서 quant 로 흡수 완료 → /quant/charts 로 대체.
+// 외부 SPA / 서비스 진입점.
+// 서브도메인 모델(oci-arm, admin.<apex>)에서는 형제 FE 가 각자 서브도메인에 산다
+// (quant.<apex>, gft.<apex>, agent.<apex>, portal=<apex>) → 절대 URL 로 이동해야 함.
+// path-prefix 모델(로컬 portal-fe 단일 SPA)에서는 상대경로 fallback.
+// hostname 이 admin.<apex> 형태면 서브도메인 모델로 판단해 apex 를 도출, 아니면 fallback.
+// 차팅은 ADR-0036 P2-T20 (2026-05-02) 에서 quant 로 흡수 완료 → quant 의 /charts 로 대체.
+function externalUrl(sub: string, subdomainPath: string, relativeFallback: string): string {
+  if (typeof window === 'undefined') return relativeFallback;
+  const parts = window.location.hostname.split('.');
+  // admin.<apex...> (apex 최소 2 라벨) 일 때만 서브도메인 모델로 간주.
+  if (parts.length < 3 || parts[0] !== 'admin') return relativeFallback;
+  const apex = parts.slice(1).join('.');
+  const host = sub ? `${sub}.${apex}` : apex;
+  return `${window.location.protocol}//${host}${subdomainPath}`;
+}
+
 const externalServices: NavItem[] = [
-  { label: '분할매매', icon: Coins, to: '/quant/', enabled: true, external: true },
-  { label: '차트 분석', icon: TrendingUp, to: '/quant/charts', enabled: true, external: true },
-  { label: '기프티콘', icon: Gift, to: '/gifticon/', enabled: true, external: true },
-  { label: '에이전트 뷰어', icon: Eye, to: '/agent-viewer/', enabled: true, external: true },
-  // 2026-05-05: code-dictionary FE 가 portal-fe 단일 SPA 의 메인 콘텐츠로 통합되어 root / 진입.
-  { label: '코드 딕셔너리', icon: BookMarked, to: '/', enabled: true, external: true },
+  { label: '분할매매', icon: Coins, to: externalUrl('quant', '/', '/quant/'), enabled: true, external: true },
+  { label: '차트 분석', icon: TrendingUp, to: externalUrl('quant', '/charts', '/quant/charts'), enabled: true, external: true },
+  { label: '기프티콘', icon: Gift, to: externalUrl('gft', '/', '/gifticon/'), enabled: true, external: true },
+  { label: '에이전트 뷰어', icon: Eye, to: externalUrl('agent', '/', '/agent-viewer/'), enabled: true, external: true },
+  // 2026-05-05: code-dictionary FE 가 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 → portal(apex) root 진입.
+  { label: '코드 딕셔너리', icon: BookMarked, to: externalUrl('', '/', '/'), enabled: true, external: true },
 ];
 
 interface SidebarProps {
