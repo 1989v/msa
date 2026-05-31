@@ -64,7 +64,7 @@ export function ServiceSummary({ services }: ServiceSummaryProps) {
             </Badge>
           )}
           <Link
-            to="/admin/system"
+            to="/system"
             className="text-xs underline"
             style={{ color: 'var(--ko-text-muted)' }}
           >

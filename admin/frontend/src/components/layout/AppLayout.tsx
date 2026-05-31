@@ -10,11 +10,11 @@ export function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (!isAdmin) {
-    return <Navigate to="/admin/unauthorized" replace />;
+    return <Navigate to="/unauthorized" replace />;
   }
 
   return (

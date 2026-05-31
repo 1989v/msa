@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { LoginPage } from '@/pages/LoginPage';
 import { OAuthCallbackPage } from '@/pages/OAuthCallbackPage';
@@ -18,12 +18,11 @@ import { SearchJudgmentsPage } from '@/pages/SearchJudgmentsPage';
 export default function App() {
   return (
     <Routes>
-      {/* 서브도메인 루트(admin.<domain>/) 접속 시 /admin 으로 — 앱 라우트가 전부 /admin prefix */}
-      <Route path="/" element={<Navigate to="/admin" replace />} />
-      <Route path="/admin/login" element={<LoginPage />} />
-      <Route path="/admin/oauth/callback" element={<OAuthCallbackPage />} />
-      <Route path="/admin/unauthorized" element={<UnauthorizedPage />} />
-      <Route path="/admin" element={<AppLayout />}>
+      {/* 전용 서브도메인(admin.<domain>) 루트 서빙 — prefix 없이 / 가 곧 대시보드 */}
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
+      <Route path="/unauthorized" element={<UnauthorizedPage />} />
+      <Route path="/" element={<AppLayout />}>
         <Route index element={<DashboardPage />} />
         <Route path="system" element={<SystemPage />} />
         <Route path="members" element={<MembersPage />} />

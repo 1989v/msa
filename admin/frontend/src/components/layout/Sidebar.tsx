@@ -28,18 +28,18 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: '대시보드', icon: LayoutDashboard, to: '/admin', enabled: true },
-  { label: '회원 관리', icon: Users, to: '/admin/members', enabled: true },
-  { label: '상품 관리', icon: Package, to: '/admin/products', enabled: true },
-  { label: '주문 관리', icon: ClipboardList, to: '/admin/orders', enabled: true },
-  { label: '코드 사전', icon: BookOpen, to: '/admin/code-dictionary', enabled: true },
-  { label: '퀀트 자산', icon: Coins, to: '/admin/quant/assets', enabled: true },
+  { label: '대시보드', icon: LayoutDashboard, to: '/', enabled: true },
+  { label: '회원 관리', icon: Users, to: '/members', enabled: true },
+  { label: '상품 관리', icon: Package, to: '/products', enabled: true },
+  { label: '주문 관리', icon: ClipboardList, to: '/orders', enabled: true },
+  { label: '코드 사전', icon: BookOpen, to: '/code-dictionary', enabled: true },
+  { label: '퀀트 자산', icon: Coins, to: '/quant/assets', enabled: true },
   // ADR-0050 Phase 4 UI — 검색 디버그 + 쿼리 빌더
-  { label: '검색 디버그', icon: Search, to: '/admin/search-debug', enabled: true },
-  { label: '검색 쿼리 빌더', icon: Sliders, to: '/admin/search-debug/query-builder', enabled: true },
-  { label: '검색 평가 라벨', icon: BookMarked, to: '/admin/search-debug/judgments', enabled: true },
-  { label: '프로필', icon: User, to: '/admin/profile', enabled: true },
-  { label: '시스템', icon: Monitor, to: '/admin/system', enabled: true },
+  { label: '검색 디버그', icon: Search, to: '/search-debug', enabled: true },
+  { label: '검색 쿼리 빌더', icon: Sliders, to: '/search-debug/query-builder', enabled: true },
+  { label: '검색 평가 라벨', icon: BookMarked, to: '/search-debug/judgments', enabled: true },
+  { label: '프로필', icon: User, to: '/profile', enabled: true },
+  { label: '시스템', icon: Monitor, to: '/system', enabled: true },
 ];
 
 // 외부 SPA / 서비스 진입점 — ingress 가 path-prefix 로 라우팅 (frontend-ingress.yaml).
@@ -106,7 +106,7 @@ function renderNavItem(item: NavItem, collapsed: boolean) {
   if (item.external) {
     return (
       <a
-        key={item.to}
+        key={`ext:${item.label}`}
         href={item.to}
         className={cn(
           'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',
@@ -130,7 +130,7 @@ function renderNavItem(item: NavItem, collapsed: boolean) {
     <NavLink
       key={item.to}
       to={item.to}
-      end={item.to === '/admin'}
+      end={item.to === '/'}
       className={({ isActive }) =>
         cn(
           'flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors',

@@ -25,12 +25,12 @@ export function OAuthCallbackPage() {
     // TODO: OAuth bypass — 실제 연동 시 아래 3줄 제거하고 loginWithOAuth 블록 활성화
     const dummyJwt = `header.${btoa(JSON.stringify({ userId: '1', roles: ['ROLE_ADMIN'], type: 'access', exp: Math.floor(Date.now() / 1000) + 3600, iat: Math.floor(Date.now() / 1000) }))}.signature`;
     login(dummyJwt);
-    navigate('/admin', { replace: true }); return;
+    navigate('/', { replace: true }); return;
 
     loginWithOAuth(provider!, code!)
       .then((result) => {
         login(result.accessToken);
-        navigate('/admin', { replace: true });
+        navigate('/', { replace: true });
       })
       .catch(() => {
         setError('로그인에 실패했습니다. 다시 시도해주세요.');
@@ -42,7 +42,7 @@ export function OAuthCallbackPage() {
       <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center">
         <div className="text-center space-y-4">
           <p className="text-red-400">{error}</p>
-          <a href="/admin/login" className="text-sm text-zinc-400 underline">
+          <a href="/login" className="text-sm text-zinc-400 underline">
             로그인 페이지로 돌아가기
           </a>
         </div>
