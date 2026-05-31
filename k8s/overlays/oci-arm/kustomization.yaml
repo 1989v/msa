@@ -158,7 +158,7 @@ patches:
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
-    newTag: "9040922"
+    newTag: 2da5f16
   - name: commerce/agent-viewer-api
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-api
     newTag: b0eff16
