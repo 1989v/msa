@@ -10,7 +10,7 @@ spring:
       password: ${MYSQL_PASSWORD:product_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
       hikari:
-        maximum-pool-size: 10
+        maximum-pool-size: 5
         minimum-idle: 2
     replica:
       jdbc-url: jdbc:mysql://localhost:3317/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
@@ -18,7 +18,7 @@ spring:
       password: ${MYSQL_PASSWORD:product_password}
       driver-class-name: com.mysql.cj.jdbc.Driver
       hikari:
-        maximum-pool-size: 10
+        maximum-pool-size: 5
         minimum-idle: 2
   jpa:
     hibernate:

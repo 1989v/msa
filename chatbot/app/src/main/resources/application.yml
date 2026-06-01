@@ -11,7 +11,7 @@ spring:
     password: ${MYSQL_PASSWORD:commerce_password}
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: 5
       minimum-idle: 2
   jpa:
     hibernate:
