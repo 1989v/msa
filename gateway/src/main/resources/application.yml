@@ -42,12 +42,13 @@ spring:
               uri: http://experiment:8091
               predicates:
                 - Path=/api/v1/experiments/**
-            # T4.1 — Code Dictionary 서비스 (IT 개념 사전 + OpenSearch 검색/시각화 + 서비스 카탈로그)
+            # T4.1 — Code Dictionary 서비스 (IT 개념 사전 + Elasticsearch 검색/시각화 + 서비스 카탈로그)
             # /api/v1/search 와 /api/v1/services 도 동일 백엔드 (portal-fe 의 axios 호출 호환).
+            # idea#17 — /api/v1/portfolio/** 도 code-dictionary 내부 포트폴리오 모듈로 라우트.
             - id: code-dictionary-service
               uri: http://code-dictionary:8089
               predicates:
-                - Path=/api/v1/concepts/**, /api/v1/index/**, /api/v1/search/**, /api/v1/services/**
+                - Path=/api/v1/concepts/**, /api/v1/index/**, /api/v1/search/**, /api/v1/services/**, /api/v1/portfolio/**
             # TG-P2-13 — Quant SSE (long-lived). 반드시 REST 라우트보다 위에 두어
             # 더 구체적인 경로 패턴이 먼저 매칭되게 한다.
             - id: quant-paper-sse
@@ -64,16 +65,11 @@ spring:
                 - Path=/api/v1/strategies/**, /api/v1/dashboard/**, /api/v1/leaderboard/**, /api/v1/runs/**, /api/v1/signal-strategies/**, /api/v1/charts/**, /api/v1/learn/**, /api/v1/quant/**, /api/v1/discover/**
 
             # === Backend REST 라우트 (admin / 일반 클라이언트용) ===
-            # 백엔드 컨트롤러는 /api/products, /api/orders, /api/auth, /api/members 사용 (no v1).
-            - id: product-service
-              uri: http://product:8081
-              predicates: [Path=/api/products/**]
-            - id: order-service
-              uri: http://order:8082
-              predicates: [Path=/api/orders/**]
-            - id: auth-service
-              uri: http://auth:8087
-              predicates: [Path=/api/auth/**]
+            # product/order/auth 는 GatewayRouteConfig.kt 의 RouteLocator 가 인증필터(userConfig 등)
+            # 와 함께 동일 path 를 정의하므로 여기서 제거 (무인증 중복 라우트 = shadowing 리스크).
+            # member 는 GatewayRouteConfig 가 /api/members/me 만 커버 → admin 의 /api/members(목록),
+            # /api/members/stats/** 는 아래 라우트가 유일 커버. ⚠️ 현재 무인증 — 추후 GatewayRouteConfig
+            # 로 옮겨 adminConfig 적용 후 제거 필요 (admin 데이터 인증 경계).
             - id: member-service
               uri: http://member:8093
               predicates: [Path=/api/members/**]
@@ -84,47 +80,47 @@ spring:
             # gateway 자체 actuator 는 /actuator/health (routes 무관, Spring Boot 가 직접 노출).
             - id: actuator-product
               uri: http://product:8081
-              predicates: [Path=/svc/product/actuator/**]
+              predicates: [Path=/svc/product/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-order
               uri: http://order:8082
-              predicates: [Path=/svc/order/actuator/**]
+              predicates: [Path=/svc/order/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-search
               uri: http://search:8083
-              predicates: [Path=/svc/search/actuator/**]
+              predicates: [Path=/svc/search/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-auth
               uri: http://auth:8087
-              predicates: [Path=/svc/auth/actuator/**]
+              predicates: [Path=/svc/auth/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-code-dictionary
               uri: http://code-dictionary:8089
-              predicates: [Path=/svc/code-dictionary/actuator/**]
+              predicates: [Path=/svc/code-dictionary/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-member
               uri: http://member:8093
-              predicates: [Path=/svc/member/actuator/**]
+              predicates: [Path=/svc/member/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-gifticon
               uri: http://gifticon:8086
-              predicates: [Path=/svc/gifticon/actuator/**]
+              predicates: [Path=/svc/gifticon/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-wishlist
               uri: http://wishlist:8095
-              predicates: [Path=/svc/wishlist/actuator/**]
+              predicates: [Path=/svc/wishlist/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-quant
               uri: http://quant:8094
-              predicates: [Path=/svc/quant/actuator/**]
+              predicates: [Path=/svc/quant/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-analytics
               uri: http://analytics:8090
-              predicates: [Path=/svc/analytics/actuator/**]
+              predicates: [Path=/svc/analytics/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-experiment
               uri: http://experiment:8091
-              predicates: [Path=/svc/experiment/actuator/**]
+              predicates: [Path=/svc/experiment/actuator/health]
               filters: [StripPrefix=2]
 
 server:
