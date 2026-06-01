@@ -170,43 +170,43 @@ images:
     newTag: "9040922"
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 80920eb
+    newTag: 9f6bb01
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
-    newTag: 80920eb
+    newTag: 9f6bb01
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: a6539f1
+    newTag: 9f6bb01
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
     newTag: 80920eb
   - name: commerce/fulfillment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/fulfillment
-    newTag: 80920eb
+    newTag: 9f6bb01
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
     newTag: 8be7a62
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
-    newTag: 842e5a5
+    newTag: 9f6bb01
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 80920eb
   - name: commerce/inventory
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/inventory
-    newTag: 80920eb
+    newTag: 9f6bb01
   - name: commerce/member
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/member
-    newTag: 80920eb
+    newTag: 9f6bb01
   - name: commerce/order
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/order
-    newTag: 80920eb
+    newTag: 9f6bb01
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: 80920eb
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
-    newTag: "9040922"
+    newTag: 9f6bb01
   - name: commerce/quant
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
     newTag: 80920eb
@@ -236,7 +236,7 @@ images:
     newTag: "9040922"
   - name: commerce/warehouse
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/warehouse
-    newTag: 80920eb
+    newTag: 9f6bb01
   - name: commerce/wishlist
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/wishlist
-    newTag: 80920eb
+    newTag: 9f6bb01
