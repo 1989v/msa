@@ -185,7 +185,7 @@ images:
     newTag: 80920eb
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: "9040922"
+    newTag: 8be7a62
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
     newTag: 842e5a5
