@@ -29,6 +29,8 @@ docs/
 │   └── charting.md
 ├── conventions/               ← 코딩/운영 컨벤션
 │   ├── package-structure.md
+│   ├── kotlin-style.md
+│   ├── jpa-persistence.md
 │   ├── testing.md
 │   ├── api-format.md
 │   └── kafka-topics.md

@@ -64,6 +64,21 @@
         "*/src/main/kotlin/*messaging*",
         "*/domain/src/main/kotlin/*domain*"
       ]
+    },
+    {
+      "doc": "docs/conventions/kotlin-style.md",
+      "sources": [
+        "*/src/main/kotlin/*",
+        "*/domain/src/main/kotlin/*"
+      ]
+    },
+    {
+      "doc": "docs/conventions/jpa-persistence.md",
+      "sources": [
+        "*/src/main/kotlin/*persistence*",
+        "*/src/main/kotlin/*JpaEntity.kt",
+        "*/src/main/kotlin/*QueryRepository.kt"
+      ]
     }
   ],
 

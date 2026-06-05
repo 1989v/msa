@@ -47,6 +47,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **API 응답 포맷**: `ApiResponse<T>` → `docs/architecture/api-response.md`
 - **Common 기능 로드**: Auto-Configuration (`kgd.common.*`) → `docs/architecture/common-features.md`
 - **코드 생성 컨벤션**: 네이밍, DI 방향, 도메인 패턴 → `docs/conventions/code-convention.md`
+- **Kotlin 코드 스타일 & 리팩터링**: 관용구, null/불변, 애너테이션 순서, 코드 스멜 렌즈, behavior-preserving 정리 → `docs/conventions/kotlin-style.md`
+- **JPA 영속성 컨벤션**: enum STRING, FK-as-ID / 연관관계 정책, Flyway+validate, Querydsl 조회 → `docs/conventions/jpa-persistence.md`
 - **멱등성 패턴**: Kafka Consumer 중복 처리 방어 → `docs/conventions/idempotent-consumer.md` (실천 가이드, ADR-0012/0029)
 - **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
 - **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md` (스크립트) · `k8s/infra/prod/backup/` (CronJob 래퍼)
