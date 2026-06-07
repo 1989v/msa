@@ -32,7 +32,7 @@ Proposed
 |---|---|---|---|
 | **ADR** | `docs/adr/` | **되돌리기 어려운 구조 결정**. 시스템 구성 요소 (서비스, 모듈), 그 경계, 그들 간 통신/데이터 모델, 배포/보안 모델에 본질적 영향. 되돌리려면 다수 PR + 다수 팀 조정 필요 | 사실상 immutable (Superseded 로만 변경) |
 | **Conventions** | `docs/conventions/` | **코드 / 설계 작성 규칙**. 따르지 않아도 시스템은 동작하지만, 일관성 / 가독성 / 유지보수성에 영향. 코드 리뷰의 베이스라인 | living (필요 시 자유롭게 갱신) |
-| **Standards** | `docs/standards/` (필요 시 신설) 또는 `agent-os/standards/` (agent 행동) | **도구 / 프로세스 / 검증 정책**. 저장 위치, 필수 산출물, 자동화 규칙, 검증 절차 | living |
+| **Standards** | `docs/standards/` (필요 시 신설) 또는 `docs/standards/` (agent 행동) | **도구 / 프로세스 / 검증 정책**. 저장 위치, 필수 산출물, 자동화 규칙, 검증 절차 | living |
 | **Operations** | `docs/ops/` (필요 시 신설) 또는 conventions 부록 | **운영 SLA / 측정 데이터 기반 living 문서**. production 측정에 따라 분기마다 갱신 | living, 측정 데이터에 따름 |
 
 ### 2. ADR 적격 판단 기준 (체크리스트)
@@ -48,7 +48,7 @@ Proposed
 
 체크 0~1개:
 - 코드 작성 규칙이면 → `docs/conventions/{topic}.md`
-- 도구 / 프로세스 / 검증이면 → `docs/standards/{topic}.md` (신설) 또는 `agent-os/standards/{topic}.md`
+- 도구 / 프로세스 / 검증이면 → `docs/standards/{topic}.md` (신설) 또는 `docs/standards/{topic}.md`
 - 운영 SLA / 측정 기반이면 → `docs/ops/{topic}.md` (신설) 또는 conventions 부록
 
 ### 3. 혼합 결정의 분해 원칙

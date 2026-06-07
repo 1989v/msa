@@ -317,7 +317,7 @@ CREATE TABLE message (
 문서 카테고리 매핑:
 ├── architecture → docs/architecture/*.md
 ├── adr          → docs/adr/ADR-*.md
-├── standard     → agent-os/standards/**/*.md
+├── standard     → docs/standards/**/*.md
 ├── guide        → CLAUDE.md, docs/plans/*.md
 └── spec         → docs/specs/**/spec.md
 ```
@@ -433,7 +433,7 @@ chatbot:
     categories:
       architecture: docs/architecture
       adr: docs/adr
-      standard: agent-os/standards
+      standard: docs/standards
       guide: "CLAUDE.md,docs/plans"
     es-upgrade-threshold-bytes: 1048576  # 1MB
   conversation:

@@ -16,7 +16,7 @@
 - [ ] **Conventions** 변경 — 코드 / 설계 작성 규칙
   → `docs/conventions/<topic>.md` 갱신
 - [ ] **Standards** 변경 — 도구 / 프로세스 / 검증 정책
-  → `docs/standards/<topic>.md` 또는 `agent-os/standards/<topic>.md` 갱신
+  → `docs/standards/<topic>.md` 또는 `docs/standards/<topic>.md` 갱신
 - [ ] 분류 불필요 (단순 기능 / 버그 수정)
 
 > 분류 판단 기준 → `docs/adr/ADR-0026-docs-taxonomy.md` §2

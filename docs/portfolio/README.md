@@ -42,7 +42,7 @@ Kubernetes 네이티브 배포, 이벤트 기반 통신, 장애 대비 패턴을
 | CI/CD | GitHub Actions (build, test, Jib push to GHCR) |
 | Test | Kotest 5.9.1 BehaviorSpec, MockK |
 | Frontend | React 19, Vite, Three.js, D3 Force-3D |
-| AI/Agent | Claude Code harness, agent-os standards, skill system |
+| AI/Agent | Claude Code harness, docs standards, skill system |
 
 ---
 

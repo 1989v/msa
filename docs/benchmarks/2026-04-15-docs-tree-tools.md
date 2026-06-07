@@ -74,7 +74,7 @@
 |---|---|---|---|
 | 문서 생성 | `ai/plugins/hns/commands/doc-gen.md` + `agents/doc-gen-agent.md` | 수동 (`/hns:doc-gen`) | 템플릿 기반 CLAUDE.md + docs/ 초기화 |
 | GC (drift/dead) | `ai/plugins/hns/commands/gc.md` + `agents/gc-agent.md` | 수동 (`/hns:gc`) | dead code / doc drift / rule violation / stale harness |
-| Doc Gardening 표준 | `agent-os/standards/agent-behavior/doc-gardening.md` | 구현 성공 후 수동 | `git diff` → standards 매칭 → 보고 |
+| Doc Gardening 표준 | `docs/standards/agent-behavior.md` | 구현 성공 후 수동 | `git diff` → standards 매칭 → 보고 |
 | 재인덱싱 | `.claude/skills/reindex/SKILL.md` | 수동 | code-dictionary 재인덱싱 |
 | Portfolio 갱신 | `.claude/skills/portfolio-gen/SKILL.md` | 수동 | 기술 포트폴리오 재생성 |
 | PostToolUse 훅 | `.claude/hooks/hnsf-automation.json` | spec.md / tasks.md Write 시 | 체크리스트 주입 (드리프트 탐지 아님) |
@@ -160,7 +160,7 @@
 
 **제안**:
 - `doc_impact_scan.py` 는 **비-LLM fast path**. Python 만 있으면 됨
-- `agent-os/standards/agent-behavior/doc-gardening.md` 의 수동 절차를 이 스크립트로 대체
+- `docs/standards/agent-behavior.md` 의 수동 절차를 이 스크립트로 대체
 - `/hns:gc` 실행 시 내부적으로 먼저 `doc_impact_scan` 을 호출하도록 파이프라인화
 
 **영향 범위**:
@@ -201,7 +201,7 @@
 | Reusable workflow + caller template 패턴 | MSA 는 단일 모노레포. 멀티-리포 오케스트레이션 불필요 |
 | `docs/index.yml` YAML 레지스트리 | 우리는 `docs/index.md` + 서비스 CLAUDE.md 계층으로 동일 기능 제공. 중복 도입 시 두 개의 SOT 위험 |
 | glossary-engine / tacit-knowledge-engine | code-dictionary 서비스가 이미 동일 역할. 통합 불필요 |
-| `AGENTS.md` 루트 도입 | 우리는 `CLAUDE.md` 단일 진입점 + `agent-os/standards/` 로 충분. AGENTS.md 추가는 SOT 분산 |
+| `AGENTS.md` 루트 도입 | 우리는 `CLAUDE.md` 단일 진입점 + `docs/standards/` 로 충분. AGENTS.md 추가는 SOT 분산 |
 | 8-layer doctor 전부 이식 | Layer 8 (git drift) 만 유용. 나머지는 우리 환경에 과함 |
 | quality-gc (Mon cron) | stale-doc-update + doctor-gardening 으로 대부분 커버. MSA 는 월 1회 수동 `/hns:gc` 로 충분 |
 
@@ -243,7 +243,7 @@
 1. `ai/plugins/hns/scripts/doc_impact_scan.py` + `docs_map_generator.py` vendor
 2. 루트 `docs/docs-map.yml` policy skeleton 생성 (ignore 만 설정)
 3. `--bootstrap` 실행 → `docs/docs-map.lock.yml` 초기 커밋
-4. `agent-os/standards/agent-behavior/doc-gardening.md` 업데이트 — 매뉴얼 → 스크립트 호출 절차
+4. `docs/standards/agent-behavior.md` 업데이트 — 매뉴얼 → 스크립트 호출 절차
 
 **Phase 2 — GC 강화 (로컬 실행 기반)**
 5. `/hns:gc` 가 내부적으로 `doc_impact_scan` → `docs_map_generator` 순으로 호출
@@ -279,7 +279,7 @@
 - `/Users/gideok-kwon/IdeaProjects/msa/ai/plugins/hns/commands/gc.md`
 - `/Users/gideok-kwon/IdeaProjects/msa/ai/plugins/hns/agents/gc-agent.md`
 - `/Users/gideok-kwon/IdeaProjects/msa/ai/plugins/hns/agents/doc-gen-agent.md`
-- `/Users/gideok-kwon/IdeaProjects/msa/agent-os/standards/agent-behavior/doc-gardening.md`
+- `/Users/gideok-kwon/IdeaProjects/msa/docs/standards/agent-behavior.md`
 - `/Users/gideok-kwon/IdeaProjects/msa/.claude/hooks/hnsf-automation.json`
 - `/Users/gideok-kwon/IdeaProjects/msa/.claude/hooks/adr-check.sh`
 - `/Users/gideok-kwon/IdeaProjects/msa/.github/workflows/ci.yml`

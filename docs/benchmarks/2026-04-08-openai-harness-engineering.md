@@ -2,7 +2,7 @@
 
 **Source:** 캐슬 AI YouTube — "OpenAI는 하네스 엔지니어링을 어떻게 할까?"
 **원본:** [OpenAI: Harness Engineering](https://openai.com/index/harness-engineering/)
-**Comparison against:** MSA Commerce Platform harness (agent-os + CLAUDE.md + hooks)
+**Comparison against:** MSA Commerce Platform harness (docs + CLAUDE.md + hooks)
 
 ---
 
@@ -12,7 +12,7 @@
 |-------------|-----------------|---------|-----|
 | 1. Observation Capabilities (관찰 능력) | ai-debugger IO 캡처 | 40% | UI 검증, 빌드 결과 자동 피드백 루프 부족 |
 | 2. Strategic Context Management (계층적 컨텍스트) | CLAUDE.md + docs/ 계층 | 80% | AGENTS.md 미사용, 서비스별 컨텍스트 파일 부재 |
-| 3. Repository-Embedded Knowledge (레포 내 지식) | agent-os/ + docs/ + ADR | 90% | 거의 완벽, 일부 암묵지 남아있을 수 있음 |
+| 3. Repository-Embedded Knowledge (레포 내 지식) | docs/ + docs/ + ADR | 90% | 거의 완벽, 일부 암묵지 남아있을 수 있음 |
 | 4. Comprehensible Architecture (이해 가능한 구조) | Clean Architecture + 표준 기술스택 | 85% | 양호, 모듈 간 의존성 시각화 부재 |
 | 5. Continuous Garbage Collection (지속적 정리) | doc-gardening + /hns:gc | 70% | 주기적 자동 실행 없음, 에이전트 생성 코드 품질 감사 부재 |
 
@@ -49,7 +49,7 @@
 #### 현재 하네스
 - ✅ CLAUDE.md가 진입점 역할 (필수 규칙 + 네비게이션 맵)
 - ✅ docs/ 계층 구조로 상세 문서 분리
-- ✅ agent-os/ 에 행동 표준 분리
+- ✅ docs/ 에 행동 표준 분리
 - ⚠️ AGENTS.md 미사용 — CLAUDE.md가 모든 역할 수행 (OpenAI는 명시적으로 분리)
 - ❌ 서비스별 로컬 AGENTS.md 없음 (product/, order/ 등에 서비스 특화 컨텍스트 없음)
 
@@ -67,9 +67,9 @@
 - 레포 = 단일 진실 소스(Single Source of Truth)
 
 #### 현재 하네스
-- ✅ agent-os/product/mission.md — 프로젝트 미션/비전
-- ✅ agent-os/product/tech-stack.md — 기술 스택 명세
-- ✅ agent-os/standards/ — 행동 규칙, 코딩 표준
+- ✅ docs/product/mission.md — 프로젝트 미션/비전
+- ✅ docs/product/tech-stack.md — 기술 스택 명세
+- ✅ docs/standards/ — 행동 규칙, 코딩 표준
 - ✅ docs/adr/ — 아키텍처 결정 기록 (21개)
 - ✅ docs/architecture/ — 11개 아키텍처 문서
 - ✅ 서비스별 docs/ — 각 서비스 디렉토리 내 문서 (ADR-0016)
@@ -117,7 +117,7 @@
 
 #### 권장 채택 항목
 - **[D1] 주기적 GC 스케줄**: `/schedule` 또는 cron 훅으로 주 1회 `/hns:gc` 자동 실행 → 결과 리포트 생성
-- **[D2] PR 크기 가이드라인**: agent-os/standards/에 "작은 PR을 빠르게 머지" 원칙 추가 — 에이전트가 큰 변경을 분할하도록 유도
+- **[D2] PR 크기 가이드라인**: docs/standards/에 "작은 PR을 빠르게 머지" 원칙 추가 — 에이전트가 큰 변경을 분할하도록 유도
 - **[D3] 에이전트 생성 코드 태깅**: Co-Authored-By 태그를 활용한 에이전트 생성 코드 추적 및 주기적 품질 리뷰
 
 ---

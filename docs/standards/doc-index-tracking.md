@@ -5,7 +5,7 @@
 
 ## Context
 
-- `/hns:gc`, `/hns:doc-gen`, `agent-os/standards/agent-behavior/doc-gardening.md` 는 모두 수동 트리거. 소스 변경이 관련 문서에 반영되었는지 **기계적으로 검증할 방법이 없다**.
+- `/hns:gc`, `/hns:doc-gen`, `docs/standards/agent-behavior.md` 는 모두 수동 트리거. 소스 변경이 관련 문서에 반영되었는지 **기계적으로 검증할 방법이 없다**.
 - 문서 드리프트가 주로 발견되는 시점은 리뷰/온보딩 — 즉 이미 부패한 뒤.
 - 다수의 서비스 × 각자 `{service}/docs/` + 루트 `docs/adr|architecture|conventions|specs` 구조라, 사람 눈으로 drift 를 stationary 하게 추적하기 어렵다.
 - `doc-gardening.md` 의 "코드가 SOT, 문서는 결과물" 원칙은 유지하되, 그 원칙이 실제로 지켜지는지 확인할 **검증 아티팩트** 가 필요하다.
@@ -123,9 +123,9 @@ Phase 3b 보류 사유: coverage 0% 상태에서 자동 PR 은 신호 대 잡음
 
 ## References
 
-- `agent-os/standards/agent-behavior/doc-gardening.md` (본 표준에 따라 개정됨)
-- `agent-os/standards/agent-behavior/core-rules.md` (탐색 우선 원칙)
-- `agent-os/standards/agent-behavior/confirmation.md` (L3 승인 프로세스)
+- `docs/standards/agent-behavior.md` (본 표준에 따라 개정됨)
+- `docs/standards/agent-behavior.md` (탐색 우선 원칙)
+- `docs/standards/agent-behavior.md` (L3 승인 프로세스)
 - `docs/benchmarks/2026-04-15-docs-tree-tools.md` (내부 벤치마크 참고)
 - `docs/standards/service-local-docs.md` (서비스 계층 문서 구조)
 - 본 표준의 거버넌스: ADR-0026 docs taxonomy

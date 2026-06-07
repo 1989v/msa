@@ -133,7 +133,7 @@ Inventory ──kafka──→ Fulfillment ──kafka──→ Order
 - **22개 ADR**로 모든 아키텍처 결정 추적 (`docs/adr/`)
 - ADR 충돌 시 구현 중단 → 확인 요청
 - 구조 변경 시 ADR 신규 작성 필수
-- Agent 하네스가 ADR 위반 자동 탐지 (`agent-os/standards/`)
+- Agent 하네스가 ADR 위반 자동 탐지 (`docs/standards/`)
 
 ---
 

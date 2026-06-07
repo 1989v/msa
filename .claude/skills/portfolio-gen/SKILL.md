@@ -57,7 +57,7 @@ docs/portfolio/
 - 프론트엔드 서비스 (code-dictionary-fe, admin, charting-fe)
 - Python 서비스 (charting)
 - `common/` 공통 라이브러리
-- `agent-os/` AI 하네스
+- `docs/` AI 하네스
 - `ideabank/` 아이디어 파이프라인
 - `docs/specs/`, `docs/plans/` 스펙 & 계획
 

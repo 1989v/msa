@@ -9,7 +9,7 @@
 AI 코드 에이전트의 품질과 안전성을 보장하는 하네스 프레임워크.
 
 ```
-agent-os/
+docs/
 ├── config.yml                    # 모드 설정 (quality | efficient)
 ├── product/
 │   ├── mission.md                # 프로젝트 미션 정의
@@ -138,7 +138,7 @@ PRD 보완 (status: refined → ready)
 - ADR 기반 아키텍처 거버넌스 (hook으로 위반 탐지)
 - 컨텍스트 윈도우 컴팩션 관리
 - 서비스별 컨텍스트 파일 (per-service CLAUDE.md)
-- 계층적 표준 (agent-os/)
+- 계층적 표준 (docs/)
 
 **gstack이 가진 것 (우리에게 필요한)**:
 - P1: Persistent Learning System (JSONL + confidence scoring)
@@ -161,4 +161,4 @@ Agent OS Standards ──→ 스킬 시스템 ──→ 코드 생성/수정
 
 ---
 
-*Code references: `agent-os/` · `ideabank/` · `docs/benchmarks/` · `.claude/` (skill definitions)*
+*Code references: `docs/` · `ideabank/` · `docs/benchmarks/` · `.claude/` (skill definitions)*

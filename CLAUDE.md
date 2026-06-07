@@ -66,11 +66,11 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 
 ## Agent Behavior
 
-- 리스크 분류 & 검증 루프 → `agent-os/standards/agent-behavior/confirmation.md`
-- 구현 후 리뷰 → `agent-os/standards/agent-behavior/self-review.md`
-- 문서 동기화 → `agent-os/standards/agent-behavior/doc-gardening.md`
-- 탐색 우선, 증거 기반 → `agent-os/standards/agent-behavior/core-rules.md`
-- 컴팩션 복구 → `agent-os/standards/agent-behavior/compaction.md`
+- 리스크 분류 & 검증 루프 → `docs/standards/agent-behavior.md`
+- 구현 후 리뷰 → `docs/standards/agent-behavior.md`
+- 문서 동기화 → `docs/standards/agent-behavior.md`
+- 탐색 우선, 증거 기반 → `docs/standards/agent-behavior.md`
+- 컴팩션 복구 → `docs/standards/agent-behavior.md`
 - ADR 검토 후 구현, 충돌 시 중단 후 확인 요청
 
 ---
@@ -104,8 +104,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | ADRs (플랫폼) | `docs/adr/` |
 | Feature specs | `docs/specs/` |
 | Conventions | `docs/conventions/` |
-| Standards | `agent-os/standards/` |
-| Product context | `agent-os/product/` |
+| Standards | `docs/standards/` |
+| Product context | `docs/product/` |
 | Study notes (백엔드 시니어 학습 노트) | `study/` — 19 주제 / 355 파일 / ~107K 줄. entry: `study/CLAUDE.md`, master index: `study/docs/00-INDEX.md`, ADR 후보: `study/docs/00-ADR-CANDIDATES.md` |
 
 ### 서비스별 문서

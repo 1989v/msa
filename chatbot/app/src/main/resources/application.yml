@@ -65,7 +65,7 @@ chatbot:
     categories:
       architecture: docs/architecture
       adr: docs/adr
-      standard: agent-os/standards
+      standard: docs/standards
       guide: CLAUDE.md
   conversation:
     context-window-max-tokens: 10000

@@ -107,7 +107,7 @@
   "_protected_docs_note": "자동 편집 대상에서 제외. ADR/standards/CLAUDE.md 는 자동 수정 금지.",
   "protected_docs": [
     "docs/adr/**",
-    "agent-os/standards/**",
+    "docs/standards/**",
     "**/CLAUDE.md"
   ]
 }

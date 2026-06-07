@@ -23,7 +23,7 @@
     {
       "id": "session-3",
       "name": "Harness Scaffold 초기화",
-      "description": "프로젝트에 harness-scaffold 플러그인 설정 및 agent-os 표준 생성",
+      "description": "프로젝트에 harness-scaffold 플러그인 설정 및 docs 표준 생성",
       "status": "completed",
       "color": "#3fb950",
       "agentIds": ["scaffolding-agent", "spec-initializer", "spec-shaper"],

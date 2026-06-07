@@ -110,7 +110,7 @@ CRDT 학습 자체가 도움 되는 부분.
 ## 학습 후 즉시 가능한 체크리스트
 
 - [ ] **ADR-NNNN 작성** — 위 초안 기반, 트리거 조건 4개 명시
-- [ ] **agent-os/standards 에 분산 sync 패턴 가이드** — CRDT 외에도 Saga, Outbox, CDC 비교
+- [ ] **docs/standards 에 분산 sync 패턴 가이드** — CRDT 외에도 Saga, Outbox, CDC 비교
 - [ ] **multi-region 운영 시 CRDT 후보 매핑 문서** — 위 표를 그대로 활용
 - [ ] **면접 19번 회독** — 학습 직후 + 1주일 + 2주일
 

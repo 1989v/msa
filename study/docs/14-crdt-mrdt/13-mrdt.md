@@ -212,7 +212,7 @@ ideabank: 사용자가 PRD 초안 → bs 통해 다듬음 → 최종
   → 일종의 versioned 데이터, MRDT 후보
   → 단, 단일 사용자 단일 디바이스라면 git 으로 충분
 
-agent-os/standards: 문서 변경 history
+docs/standards: 문서 변경 history
   → git 이 그대로 답
 
 charting: chart spec 의 변경 이력
