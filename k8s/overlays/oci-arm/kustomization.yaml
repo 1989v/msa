@@ -164,7 +164,7 @@ images:
     newTag: b0eff16
   - name: commerce/agent-viewer-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-fe
-    newTag: "6367585"
+    newTag: 2ddd6fd
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
     newTag: "9040922"
@@ -173,7 +173,7 @@ images:
     newTag: 9f6bb01
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
-    newTag: 9f6bb01
+    newTag: 2ddd6fd
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
     newTag: 9f6bb01
