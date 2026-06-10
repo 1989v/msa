@@ -2,7 +2,7 @@ package com.kgd.analytics.infrastructure.messaging
 
 import com.kgd.analytics.domain.port.EventRepositoryPort
 import com.kgd.common.analytics.AnalyticsEvent
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 class EventIngestionConsumer(
     private val eventRepository: EventRepositoryPort
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val buffer = mutableListOf<AnalyticsEvent>()
     private val bufferLock = Any()
 
@@ -38,7 +38,7 @@ class EventIngestionConsumer(
             eventRepository.saveEvents(buffer.toList())
             buffer.clear()
         } catch (e: Exception) {
-            log.error("Failed to flush {} events to ClickHouse", buffer.size, e)
+            log.error(e) { "Failed to flush ${buffer.size} events to ClickHouse" }
         }
     }
 }

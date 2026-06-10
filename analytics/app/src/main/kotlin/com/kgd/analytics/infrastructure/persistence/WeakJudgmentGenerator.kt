@@ -1,6 +1,6 @@
 package com.kgd.analytics.infrastructure.persistence
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -27,12 +27,12 @@ class WeakJudgmentGenerator(
     @Value("\${analytics.judgment.weak.enabled:false}") private val enabled: Boolean,
     @Value("\${analytics.judgment.weak.lookback-days:30}") private val lookbackDays: Int
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @Scheduled(cron = "\${analytics.judgment.weak.cron:0 0 3 * * *}")
     fun generate() {
         if (!enabled) {
-            log.debug("Weak judgment generator disabled")
+            log.debug { "Weak judgment generator disabled" }
             return
         }
         runCatching {
@@ -63,7 +63,7 @@ class WeakJudgmentGenerator(
                     )
                 }
             }
-            log.info("Weak judgment generated: lookbackDays={}", lookbackDays)
-        }.onFailure { log.error("Weak judgment generation failed", it) }
+            log.info { "Weak judgment generated: lookbackDays=$lookbackDays" }
+        }.onFailure { log.error(it) { "Weak judgment generation failed" } }
     }
 }

@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.messaging
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
 import org.springframework.data.elasticsearch.core.document.Document
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates
@@ -14,7 +14,7 @@ class ProductScoreUpdateConsumer(
     private val elasticsearchOperations: ElasticsearchOperations,
     private val objectMapper: ObjectMapper
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @KafkaListener(
         topics = ["analytics.score.updated"],
@@ -38,9 +38,9 @@ class ProductScoreUpdateConsumer(
                 .build()
 
             elasticsearchOperations.update(updateQuery, IndexCoordinates.of("products"))
-            log.debug("Updated product score in ES: productId={}", event.productId)
+            log.debug { "Updated product score in ES: productId=${event.productId}" }
         } catch (e: Exception) {
-            log.error("Failed to update product score in ES: {}", message, e)
+            log.error(e) { "Failed to update product score in ES: $message" }
         }
     }
 }

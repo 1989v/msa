@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.fulfillment.application.fulfillment.usecase.CreateFulfillmentUseCase
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -22,7 +22,7 @@ class FulfillmentEventConsumer(
     private val idempotentEventHandler: IdempotentEventHandler,
     private val idempotentMetrics: IdempotentMetrics,
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @KafkaListener(
         topics = ["inventory.stock.reserved"],
@@ -36,11 +36,11 @@ class FulfillmentEventConsumer(
         val orderId = node.get("orderId").asLong()
         val warehouseId = node.get("warehouseId").asLong()
 
-        log.info("Received stock reserved event: orderId={}, warehouseId={}", orderId, warehouseId)
+        log.info { "Received stock reserved event: orderId=$orderId, warehouseId=$warehouseId" }
 
         val eventUuid = parseEventId(rawEventId)
         if (eventUuid == null) {
-            log.warn("missing eventId topic={} — graceful degrade, executing without dedup", record.topic())
+            log.warn { "missing eventId topic=${record.topic()} — graceful degrade, executing without dedup" }
             idempotentMetrics.missingId(CONSUMER_GROUP)
             createFulfillmentUseCase.execute(
                 CreateFulfillmentUseCase.Command(
@@ -48,7 +48,7 @@ class FulfillmentEventConsumer(
                     warehouseId = warehouseId,
                 )
             )
-            log.info("Fulfillment created for orderId={} (no idempotency check)", orderId)
+            log.info { "Fulfillment created for orderId=$orderId (no idempotency check)" }
             return
         }
 
@@ -59,7 +59,7 @@ class FulfillmentEventConsumer(
                     warehouseId = warehouseId,
                 )
             )
-            log.info("Fulfillment created for orderId={}", orderId)
+            log.info { "Fulfillment created for orderId=$orderId" }
         }
     }
 
@@ -69,7 +69,7 @@ class FulfillmentEventConsumer(
     private fun parseEventId(raw: String?): UUID? = try {
         raw?.takeIf { it.isNotBlank() }?.let(UUID::fromString)
     } catch (e: IllegalArgumentException) {
-        log.warn("Invalid eventId format, skipping idempotency check: raw={}", raw)
+        log.warn { "Invalid eventId format, skipping idempotency check: raw=$raw" }
         null
     }
 

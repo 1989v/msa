@@ -1,7 +1,7 @@
 package com.kgd.agentviewer.scanner
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.io.File
 import java.time.Instant
@@ -9,7 +9,7 @@ import java.time.Instant
 @Component
 class ClaudeScanner(private val objectMapper: ObjectMapper) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val claudeDir = File(System.getProperty("user.home"), ".claude/projects")
 
     // Claude pricing (per 1M tokens, in cents)
@@ -44,7 +44,7 @@ class ClaudeScanner(private val objectMapper: ObjectMapper) {
             try {
                 parseSessionFile(file, projectPath, projectName)
             } catch (e: Exception) {
-                log.debug("Failed to parse {}: {}", file.name, e.message)
+                log.debug { "Failed to parse ${file.name}: ${e.message}" }
                 null
             }
         }

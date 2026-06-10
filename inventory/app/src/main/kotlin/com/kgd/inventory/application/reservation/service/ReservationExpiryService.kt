@@ -7,7 +7,7 @@ import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
 import com.kgd.inventory.application.reservation.usecase.ExpireReservationsUseCase
 import com.kgd.inventory.domain.reservation.event.ReservationEvent
 import com.kgd.inventory.infrastructure.metrics.InventoryMetrics
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -25,13 +25,13 @@ class ReservationExpiryService(
     private val inventoryMetrics: InventoryMetrics? = null,
 ) : ExpireReservationsUseCase {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @Scheduled(fixedDelayString = "\${inventory.reservation.expiry-check-interval-ms:60000}")
     fun scheduledExpiry() {
         val count = execute()
         if (count > 0) {
-            log.info("Expired {} reservations", count)
+            log.info { "Expired $count reservations" }
         }
     }
 
@@ -71,7 +71,7 @@ class ReservationExpiryService(
                 inventoryMetrics?.incrementReservationExpired(reservation.warehouseId)
                 count++
             } catch (e: Exception) {
-                log.error("Failed to expire reservation id={}", reservation.id, e)
+                log.error(e) { "Failed to expire reservation id=${reservation.id}" }
             }
         }
         return count

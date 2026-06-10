@@ -2,7 +2,7 @@ package com.kgd.product.application.product.service
 
 import com.kgd.product.application.product.port.ProductRepositoryPort
 import com.kgd.product.application.product.usecase.SyncProductStockUseCase
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -12,15 +12,15 @@ class ProductStockSyncService(
     private val productRepository: ProductRepositoryPort,
 ) : SyncProductStockUseCase {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     override fun execute(command: SyncProductStockUseCase.Command) {
         val product = productRepository.findById(command.productId) ?: run {
-            log.warn("Product not found for stock sync: productId={}", command.productId)
+            log.warn { "Product not found for stock sync: productId=${command.productId}" }
             return
         }
         product.syncStock(command.availableQty)
         productRepository.save(product)
-        log.info("Stock synced: productId={}, availableQty={}", command.productId, command.availableQty)
+        log.info { "Stock synced: productId=${command.productId}, availableQty=${command.availableQty}" }
     }
 }

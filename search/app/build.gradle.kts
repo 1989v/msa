@@ -14,6 +14,8 @@ dependencies {
     implementation(libs.spring.kafka)
     implementation(libs.spring.cloud.loadbalancer)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    // kotlin-logging 람다 로깅 (ADR-0021)
+    implementation(libs.kotlin.logging)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
 }

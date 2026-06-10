@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.search.domain.bandit.model.ClickEvent
 import com.kgd.search.domain.bandit.model.ImpressionEvent
 import com.kgd.search.domain.bandit.port.BanditEventPort
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
 
@@ -20,7 +20,7 @@ class BanditEventKafkaAdapter(
     private val objectMapper: ObjectMapper
 ) : BanditEventPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     override fun recordImpression(event: ImpressionEvent) {
         val payload = ImpressionPayload(
@@ -49,7 +49,7 @@ class BanditEventKafkaAdapter(
     private fun publish(topic: String, payload: Any, partitionKey: String) {
         val json = objectMapper.writeValueAsString(payload)
         kafkaTemplate.send(topic, partitionKey, json).whenComplete { _, err ->
-            if (err != null) log.error("Kafka publish fail topic={} key={}: {}", topic, partitionKey, err.message)
+            if (err != null) log.error(err) { "Kafka publish fail topic=$topic key=$partitionKey: ${err.message}" }
         }
     }
 

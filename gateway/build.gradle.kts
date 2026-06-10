@@ -14,6 +14,8 @@ dependencies {
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
     implementation("io.micrometer:micrometer-registry-prometheus")
+    // kotlin-logging 람다 로깅 (ADR-0021)
+    implementation(libs.kotlin.logging)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.reactor.test)

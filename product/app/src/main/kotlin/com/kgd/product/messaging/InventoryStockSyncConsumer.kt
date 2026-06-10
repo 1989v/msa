@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.product.application.product.usecase.SyncProductStockUseCase
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -35,7 +35,7 @@ class InventoryStockSyncConsumer(
     private val idempotentEventHandler: IdempotentEventHandler,
     private val idempotentMetrics: IdempotentMetrics,
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @KafkaListener(
         topics = [
@@ -47,7 +47,7 @@ class InventoryStockSyncConsumer(
         containerFactory = "kafkaListenerContainerFactory",
     )
     fun onInventoryStockChanged(record: ConsumerRecord<String, String>) {
-        log.info("Received inventory stock event: topic={}, key={}", record.topic(), record.key())
+        log.info { "Received inventory stock event: topic=${record.topic()}, key=${record.key()}" }
 
         val node = objectMapper.readTree(record.value())
         val productId = node.get("productId").asLong()
@@ -55,7 +55,7 @@ class InventoryStockSyncConsumer(
         val rawEventId = node.get("eventId")?.asText().orEmpty()
 
         if (availableQty == null) {
-            log.warn("availableQty not found in event payload, skipping stock sync: productId={}", productId)
+            log.warn { "availableQty not found in event payload, skipping stock sync: productId=$productId" }
             return
         }
 
@@ -63,7 +63,7 @@ class InventoryStockSyncConsumer(
         if (eventId == null) {
             // ADR-0029 §4 graceful degrade — eventId 누락 시 멱등 검사 skip + 메트릭 노출.
             // syncProductStockUseCase 가 idempotent assignment 이므로 데이터 안전.
-            log.warn("missing eventId topic={} — graceful degrade, executing without dedup", record.topic())
+            log.warn { "missing eventId topic=${record.topic()} — graceful degrade, executing without dedup" }
             idempotentMetrics.missingId(CONSUMER_GROUP)
             syncStock(productId, availableQty)
             return
@@ -86,7 +86,7 @@ class InventoryStockSyncConsumer(
     private fun parseEventId(raw: String): UUID? = try {
         raw.takeIf { it.isNotBlank() }?.let(UUID::fromString)
     } catch (e: IllegalArgumentException) {
-        log.warn("Invalid eventId format, falling back to graceful degrade: raw={}", raw)
+        log.warn { "Invalid eventId format, falling back to graceful degrade: raw=$raw" }
         null
     }
 

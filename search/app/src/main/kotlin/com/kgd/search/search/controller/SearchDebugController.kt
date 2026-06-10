@@ -17,7 +17,7 @@ import com.kgd.search.infrastructure.elasticsearch.ProductEsDocument
 import com.kgd.search.infrastructure.elasticsearch.RankingProperties
 import com.kgd.search.infrastructure.elasticsearch.RankingQueryBuilder
 import com.kgd.search.infrastructure.elasticsearch.RankingVariantsProperties
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
@@ -57,7 +57,7 @@ class SearchDebugController(
     private val queryBuilder: RankingQueryBuilder,
     private val elasticsearchOperations: ElasticsearchOperations
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @GetMapping
     fun debug(
@@ -244,7 +244,7 @@ class SearchDebugController(
                 }
                 fn.weight(config.weight)
             }
-            else -> log.warn("Unknown function score type: {}", config.type)
+            else -> log.warn { "Unknown function score type: ${config.type}" }
         }
     }
 

@@ -14,6 +14,8 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.spring.kafka)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    // kotlin-logging 람다 로깅 (ADR-0021)
+    implementation(libs.kotlin.logging)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)

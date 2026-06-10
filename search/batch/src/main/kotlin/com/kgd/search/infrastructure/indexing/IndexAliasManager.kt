@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.indexing
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter
 @Component
 class IndexAliasManager(private val esClient: ElasticsearchClient) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val timestampFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
 
     /** 새 타임스탬프 색인명 생성: products_20260309120000 */
@@ -51,7 +51,7 @@ class IndexAliasManager(private val esClient: ElasticsearchClient) {
                    m.properties("scoreUpdatedAt") { p -> p.long_ { it } }
                }
         }
-        log.info("Created index: {}", indexName)
+        log.info { "Created index: $indexName" }
     }
 
     /**
@@ -70,7 +70,7 @@ class IndexAliasManager(private val esClient: ElasticsearchClient) {
             req.actions { a -> a.add { ad -> ad.index(newIndexName).alias(alias) } }
             req
         }
-        log.info("Alias '{}' → '{}' (removed {} old)", alias, newIndexName, aliasedIndices.size)
+        log.info { "Alias '$alias' → '$newIndexName' (removed ${aliasedIndices.size} old)" }
 
         // 이름 prefix 기반 전체 스캔 — alias 가 빠진 옛 인덱스도 retention 정리
         val allTimestamped = listIndicesByPrefix("${alias}_")
@@ -79,7 +79,7 @@ class IndexAliasManager(private val esClient: ElasticsearchClient) {
             .drop(maxRetention)
             .forEach { oldIndex ->
                 esClient.indices().delete { d -> d.index(oldIndex) }
-                log.info("Deleted old index: {}", oldIndex)
+                log.info { "Deleted old index: $oldIndex" }
             }
     }
 

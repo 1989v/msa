@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.eval
 
 import com.kgd.search.domain.eval.JudgmentLoadPort
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.sql.DriverManager
 
@@ -10,7 +10,7 @@ class ClickHouseJudgmentLoader(
     private val properties: EvalProperties
 ) : JudgmentLoadPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     /**
      * 같은 (query, product_id) 가 여러 source 로 있을 수 있어 최대 relevance 채택.
@@ -39,8 +39,7 @@ class ClickHouseJudgmentLoader(
                 }
             }
         }
-        log.info("Loaded judgments: queries={}, total_pairs={}",
-            out.size, out.values.sumOf { it.size })
+        log.info { "Loaded judgments: queries=${out.size}, total_pairs=${out.values.sumOf { it.size }}" }
         return out
     }
 }

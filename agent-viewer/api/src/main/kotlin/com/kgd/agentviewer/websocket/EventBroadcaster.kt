@@ -2,7 +2,7 @@ package com.kgd.agentviewer.websocket
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.agentviewer.model.WebSocketEvent
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
@@ -11,17 +11,17 @@ import java.util.concurrent.CopyOnWriteArrayList
 @Component
 class EventBroadcaster(private val objectMapper: ObjectMapper) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val sessions = CopyOnWriteArrayList<WebSocketSession>()
 
     fun addSession(session: WebSocketSession) {
         sessions.add(session)
-        log.info("WebSocket connected: {} (total: {})", session.id, sessions.size)
+        log.info { "WebSocket connected: ${session.id} (total: ${sessions.size})" }
     }
 
     fun removeSession(session: WebSocketSession) {
         sessions.remove(session)
-        log.info("WebSocket disconnected: {} (total: {})", session.id, sessions.size)
+        log.info { "WebSocket disconnected: ${session.id} (total: ${sessions.size})" }
     }
 
     fun broadcast(event: WebSocketEvent) {
@@ -33,7 +33,7 @@ class EventBroadcaster(private val objectMapper: ObjectMapper) {
                     session.sendMessage(message)
                 }
             } catch (e: Exception) {
-                log.warn("Failed to send to {}: {}", session.id, e.message)
+                log.warn { "Failed to send to ${session.id}: ${e.message}" }
                 sessions.remove(session)
             }
         }

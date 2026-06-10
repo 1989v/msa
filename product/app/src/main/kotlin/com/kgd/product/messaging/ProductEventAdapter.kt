@@ -4,7 +4,7 @@ import com.kgd.product.application.product.port.ProductEventPort
 import com.kgd.product.domain.product.model.Product
 import com.kgd.product.infrastructure.messaging.event.ProductCreatedEvent
 import com.kgd.product.infrastructure.messaging.event.ProductUpdatedEvent
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.stereotype.Component
@@ -16,7 +16,7 @@ class ProductEventAdapter(
     @Value("\${kafka.topics.product-updated}") private val updatedTopic: String
 ) : ProductEventPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     override fun publishProductCreated(product: Product) {
         val event = ProductCreatedEvent(
@@ -28,8 +28,8 @@ class ProductEventAdapter(
         )
         kafkaTemplate.send(createdTopic, product.id.toString(), event)
             .whenComplete { _, ex ->
-                if (ex != null) log.error("Failed to publish ProductCreatedEvent: productId={}", product.id, ex)
-                else log.info("Published ProductCreatedEvent: productId={}", product.id)
+                if (ex != null) log.error(ex) { "Failed to publish ProductCreatedEvent: productId=${product.id}" }
+                else log.info { "Published ProductCreatedEvent: productId=${product.id}" }
             }
     }
 
@@ -43,8 +43,8 @@ class ProductEventAdapter(
         )
         kafkaTemplate.send(updatedTopic, product.id.toString(), event)
             .whenComplete { _, ex ->
-                if (ex != null) log.error("Failed to publish ProductUpdatedEvent: productId={}", product.id, ex)
-                else log.info("Published ProductUpdatedEvent: productId={}", product.id)
+                if (ex != null) log.error(ex) { "Failed to publish ProductUpdatedEvent: productId=${product.id}" }
+                else log.info { "Published ProductUpdatedEvent: productId=${product.id}" }
             }
     }
 }

@@ -6,7 +6,7 @@ import com.kgd.search.domain.eval.JudgmentLoadPort
 import com.kgd.search.domain.eval.RankingExecutionPort
 import com.kgd.search.domain.eval.RankingMetrics
 import com.kgd.search.infrastructure.eval.EvalProperties
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.batch.core.job.Job
 import org.springframework.batch.core.job.builder.JobBuilder
 import org.springframework.batch.core.repository.JobRepository
@@ -39,7 +39,7 @@ class SearchEvaluationJobConfig(
     private val evalResultPort: EvalResultPort,
     private val properties: EvalProperties
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     companion object {
         const val JOB_NAME = "searchEvaluationJob"
@@ -57,7 +57,7 @@ class SearchEvaluationJobConfig(
         StepBuilder(STEP_NAME, jobRepository)
             .tasklet({ _, _ ->
                 if (!properties.enabled) {
-                    log.info("Search eval job disabled (search.eval.enabled=false) — skip")
+                    log.info { "Search eval job disabled (search.eval.enabled=false) — skip" }
                     return@tasklet RepeatStatus.FINISHED
                 }
                 executeEvaluation()
@@ -68,7 +68,7 @@ class SearchEvaluationJobConfig(
     private fun executeEvaluation() {
         val judgments = judgmentLoadPort.loadAll()
         if (judgments.isEmpty()) {
-            log.warn("No judgments found — skipping eval")
+            log.warn { "No judgments found — skipping eval" }
             return
         }
         val evalId = UUID.randomUUID().toString()
@@ -87,6 +87,6 @@ class SearchEvaluationJobConfig(
             )
         }
         evalResultPort.saveAll(results)
-        log.info("Search eval done: evalId={}, variant={}, queries={}", evalId, properties.variant, results.size)
+        log.info { "Search eval done: evalId=$evalId, variant=${properties.variant}, queries=${results.size}" }
     }
 }

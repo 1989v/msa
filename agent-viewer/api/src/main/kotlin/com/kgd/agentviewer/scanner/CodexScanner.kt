@@ -1,7 +1,7 @@
 package com.kgd.agentviewer.scanner
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.io.File
 import java.time.Instant
@@ -9,7 +9,7 @@ import java.time.Instant
 @Component
 class CodexScanner(private val objectMapper: ObjectMapper) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val codexSessionDir = File(System.getProperty("user.home"), ".codex/sessions")
 
     fun scan(): List<ScannedSession> {
@@ -25,7 +25,7 @@ class CodexScanner(private val objectMapper: ObjectMapper) {
             try {
                 parseSessionFile(file)
             } catch (e: Exception) {
-                log.debug("Failed to parse codex file {}: {}", file.name, e.message)
+                log.debug { "Failed to parse codex file ${file.name}: ${e.message}" }
                 null
             }
         }

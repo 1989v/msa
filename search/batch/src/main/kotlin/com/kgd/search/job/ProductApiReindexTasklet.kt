@@ -4,8 +4,8 @@ import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.infrastructure.client.ProductApiClient
 import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
-import org.slf4j.LoggerFactory
 import org.springframework.batch.core.step.StepContribution
 import org.springframework.batch.core.scope.context.ChunkContext
 import org.springframework.batch.core.step.tasklet.Tasklet
@@ -22,7 +22,7 @@ class ProductApiReindexTasklet(
     private val aliasManager: IndexAliasManager
 ) : Tasklet {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @Value("\${search.index.alias:products}")
     private lateinit var indexAlias: String
@@ -33,7 +33,7 @@ class ProductApiReindexTasklet(
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus =
         runBlocking {
             val newIndexName = aliasManager.createTimestampedIndexName(indexAlias)
-            log.info("Starting full reindex (API) → {}", newIndexName)
+            log.info { "Starting full reindex (API) → $newIndexName" }
 
             aliasManager.createIndex(newIndexName)
 
@@ -59,7 +59,7 @@ class ProductApiReindexTasklet(
                     totalIndexed++
                 }
 
-                log.info("Processed page {}/{}: {} products", page + 1, totalPages, response.products.size)
+                log.info { "Processed page ${page + 1}/$totalPages: ${response.products.size} products" }
                 page++
             } while (page < totalPages)
 
@@ -67,7 +67,7 @@ class ProductApiReindexTasklet(
             bulkProcessor.flush()
 
             aliasManager.updateAliasAndCleanup(indexAlias, newIndexName)
-            log.info("Reindex complete: {} docs indexed, {} errors", totalIndexed, bulkProcessor.errorCount.get())
+            log.info { "Reindex complete: $totalIndexed docs indexed, ${bulkProcessor.errorCount.get()} errors" }
 
             RepeatStatus.FINISHED
         }

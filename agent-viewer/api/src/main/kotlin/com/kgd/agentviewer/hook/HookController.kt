@@ -4,7 +4,7 @@ import com.kgd.agentviewer.model.EventType
 import com.kgd.agentviewer.model.WebSocketEvent
 import com.kgd.agentviewer.store.InMemoryStateStore
 import com.kgd.agentviewer.websocket.EventBroadcaster
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -16,13 +16,13 @@ class HookController(
     private val stateStore: InMemoryStateStore,
     private val broadcaster: EventBroadcaster
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @PostMapping("/session-start")
     fun sessionStart(@RequestBody body: Map<String, Any?>) {
         val sessionId = body["session_id"] as? String ?: return
         val cwd = body["cwd"] as? String
-        log.info("Session started: {} (cwd: {})", sessionId, cwd)
+        log.info { "Session started: $sessionId (cwd: $cwd)" }
         val session = stateStore.startSession(sessionId)
         session.cwd = cwd
         session.name = cwd?.substringAfterLast('/')
@@ -40,7 +40,7 @@ class HookController(
     @PostMapping("/session-end")
     fun sessionEnd(@RequestBody body: Map<String, Any?>) {
         val sessionId = body["session_id"] as? String ?: return
-        log.info("Session ended: {}", sessionId)
+        log.info { "Session ended: $sessionId" }
         val session = stateStore.endSession(sessionId)
         broadcaster.broadcast(WebSocketEvent(
             type = EventType.SESSION_END,
@@ -53,7 +53,7 @@ class HookController(
         val sessionId = body["session_id"] as? String ?: return
         val agentId = body["agent_id"] as? String ?: return
         val agentType = body["agent_type"] as? String ?: "unknown"
-        log.info("Subagent started: {} (type: {}, session: {})", agentId, agentType, sessionId)
+        log.info { "Subagent started: $agentId (type: $agentType, session: $sessionId)" }
         val subagent = stateStore.addSubagent(sessionId, agentId, agentType)
         broadcaster.broadcast(WebSocketEvent(
             type = EventType.SUBAGENT_START,
@@ -70,7 +70,7 @@ class HookController(
     fun subagentStop(@RequestBody body: Map<String, Any?>) {
         val agentId = body["agent_id"] as? String ?: return
         val lastMessage = body["last_assistant_message"] as? String
-        log.info("Subagent stopped: {}", agentId)
+        log.info { "Subagent stopped: $agentId" }
         val subagent = stateStore.stopSubagent(agentId, lastMessage)
         broadcaster.broadcast(WebSocketEvent(
             type = EventType.SUBAGENT_STOP,
@@ -89,7 +89,7 @@ class HookController(
         val taskId = body["task_id"] as? String ?: "task-${System.currentTimeMillis()}"
         val subject = body["subject"] as? String
         val description = body["description"] as? String
-        log.info("Task created: {} (session: {})", taskId, sessionId)
+        log.info { "Task created: $taskId (session: $sessionId)" }
         val task = stateStore.addTask(sessionId, taskId, subject, description)
         broadcaster.broadcast(WebSocketEvent(
             type = EventType.TASK_CREATED,
@@ -105,7 +105,7 @@ class HookController(
     @PostMapping("/task-completed")
     fun taskCompleted(@RequestBody body: Map<String, Any?>) {
         val taskId = body["task_id"] as? String ?: return
-        log.info("Task completed: {}", taskId)
+        log.info { "Task completed: $taskId" }
         val task = stateStore.completeTask(taskId)
         broadcaster.broadcast(WebSocketEvent(
             type = EventType.TASK_COMPLETED,

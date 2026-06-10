@@ -1,6 +1,6 @@
 package com.kgd.gateway.filter
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cloud.gateway.filter.GatewayFilterChain
 import org.springframework.cloud.gateway.filter.GlobalFilter
 import org.springframework.core.Ordered
@@ -13,7 +13,7 @@ import java.time.Instant
 @Component
 class RequestLoggingFilter : GlobalFilter, Ordered {
 
-    private val log = LoggerFactory.getLogger(RequestLoggingFilter::class.java)
+    private val log = KotlinLogging.logger {}
 
     override fun getOrder(): Int = Ordered.HIGHEST_PRECEDENCE
 
@@ -26,7 +26,7 @@ class RequestLoggingFilter : GlobalFilter, Ordered {
         return chain.filter(exchange).doFinally {
             val duration = Duration.between(start, Instant.now()).toMillis()
             val statusCode = exchange.response.statusCode?.value() ?: 0
-            log.info("[$method] $uri → $statusCode (${duration}ms)")
+            log.info { "[$method] $uri → $statusCode (${duration}ms)" }
         }
     }
 }

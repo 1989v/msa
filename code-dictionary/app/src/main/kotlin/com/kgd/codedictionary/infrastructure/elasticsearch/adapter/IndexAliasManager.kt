@@ -13,7 +13,7 @@ import co.elastic.clients.elasticsearch._types.analysis.TokenFilterDefinition
 import co.elastic.clients.elasticsearch._types.analysis.Tokenizer
 import co.elastic.clients.elasticsearch._types.analysis.TokenizerDefinition
 import co.elastic.clients.elasticsearch._types.mapping.Property
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -22,7 +22,7 @@ import java.time.format.DateTimeFormatter
 class IndexAliasManager(
     private val elasticsearchClient: ElasticsearchClient
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val timestampFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
 
     fun createTimestampedIndexName(alias: String): String =
@@ -169,7 +169,7 @@ class IndexAliasManager(
                         .properties("indexed_at", Property.of { p -> p.date { d -> d } })
                 }
         }
-        log.info("Created index: {}", indexName)
+        log.info { "Created index: $indexName" }
     }
 
     /**
@@ -187,7 +187,7 @@ class IndexAliasManager(
             req.actions { a -> a.add { ad -> ad.index(newIndexName).alias(alias) } }
             req
         }
-        log.info("Alias '{}' → '{}' (removed {} old)", alias, newIndexName, aliasedIndices.size)
+        log.info { "Alias '$alias' → '$newIndexName' (removed ${aliasedIndices.size} old)" }
 
         // 이름 prefix 로 모든 timestamped 인덱스를 스캔 → 최신 maxRetention 개만 보관, 나머지 삭제
         val allTimestamped = listIndicesByPrefix("${alias}_")
@@ -196,7 +196,7 @@ class IndexAliasManager(
             .drop(maxRetention)
             .forEach { oldIndex ->
                 elasticsearchClient.indices().delete { d -> d.index(oldIndex) }
-                log.info("Deleted old index: {}", oldIndex)
+                log.info { "Deleted old index: $oldIndex" }
             }
     }
 

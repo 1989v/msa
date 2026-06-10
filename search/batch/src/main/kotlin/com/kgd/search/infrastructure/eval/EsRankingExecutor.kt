@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.eval
 
 import com.kgd.search.domain.eval.RankingExecutionPort
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations
 import org.springframework.data.elasticsearch.core.SearchHit
@@ -22,7 +22,7 @@ class EsRankingExecutor(
     private val elasticsearchOperations: ElasticsearchOperations
 ) : RankingExecutionPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     override fun searchTopK(query: String, k: Int): List<String> {
         val nq = NativeQuery.builder()
@@ -39,7 +39,7 @@ class EsRankingExecutor(
             elasticsearchOperations.search(nq, Map::class.java, IndexCoordinates.of("products"))
                 .searchHits
                 .mapNotNull { hit: SearchHit<Map<*, *>> -> hit.id }
-        }.onFailure { log.warn("ES search failed for query='{}': {}", query, it.message) }
+        }.onFailure { log.warn { "ES search failed for query='$query': ${it.message}" } }
             .getOrDefault(emptyList())
     }
 }

@@ -15,6 +15,8 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.spring.kafka)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    // kotlin-logging 람다 로깅 (ADR-0021)
+    implementation(libs.kotlin.logging)
     // ADR-0029 PR-3a: Flyway 도입 (Hibernate ddl-auto=validate 와 결합해 스키마 변경은 Flyway 단독 책임)
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")

@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.client
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 class ProductApiClient(
     @Qualifier("productWebClient") private val webClient: WebClient
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     data class ProductDto(
         val id: Long,
@@ -31,7 +31,7 @@ class ProductApiClient(
     )
 
     suspend fun fetchPage(page: Int, size: Int = 100): ProductPageResponse {
-        log.debug("Fetching products: page={}, size={}", page, size)
+        log.debug { "Fetching products: page=$page, size=$size" }
 
         val response = webClient.get()
             .uri("/api/products?page=$page&size=$size")

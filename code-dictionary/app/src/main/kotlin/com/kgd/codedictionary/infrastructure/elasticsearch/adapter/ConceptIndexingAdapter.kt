@@ -10,7 +10,7 @@ import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import com.kgd.codedictionary.application.search.port.ConceptIndexingPort
 import com.kgd.codedictionary.domain.concept.model.Concept
 import com.kgd.codedictionary.domain.index.model.ConceptIndex
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.time.format.DateTimeFormatter
@@ -21,7 +21,7 @@ class ConceptIndexingAdapter(
     @Value("\${elasticsearch.index-name:concept-index}") private val aliasName: String
 ) : ConceptIndexingPort {
 
-    private val log = LoggerFactory.getLogger(ConceptIndexingAdapter::class.java)
+    private val log = KotlinLogging.logger {}
 
     override fun indexConceptIndex(concept: Concept, conceptIndex: ConceptIndex) {
         val document = buildDocument(concept, conceptIndex)
@@ -30,7 +30,7 @@ class ConceptIndexingAdapter(
                 .id(docId(concept, conceptIndex))
                 .document(document)
         }
-        log.debug("Indexed concept '{}' at '{}'", concept.conceptId, conceptIndex.location.filePath)
+        log.debug { "Indexed concept '${concept.conceptId}' at '${conceptIndex.location.filePath}'" }
     }
 
     override fun deleteByConceptId(conceptId: String) {
@@ -42,7 +42,7 @@ class ConceptIndexingAdapter(
                     }
                 }
         }
-        log.info("Deleted documents for conceptId '{}'", conceptId)
+        log.info { "Deleted documents for conceptId '$conceptId'" }
     }
 
     override fun bulkIndex(targetIndex: String, entries: List<Pair<Concept, ConceptIndex>>) {
@@ -65,12 +65,12 @@ class ConceptIndexingAdapter(
 
         if (response.errors()) {
             val errorItems = response.items().filter { it.error() != null }
-            log.error("Bulk indexing had {} errors out of {} (index={})", errorItems.size, entries.size, targetIndex)
+            log.error { "Bulk indexing had ${errorItems.size} errors out of ${entries.size} (index=$targetIndex)" }
             errorItems.take(5).forEach { item ->
-                log.error("  error: id={}, reason={}", item.id(), item.error()?.reason())
+                log.error { "  error: id=${item.id()}, reason=${item.error()?.reason()}" }
             }
         } else {
-            log.info("Bulk indexed {} docs into '{}'", entries.size, targetIndex)
+            log.info { "Bulk indexed ${entries.size} docs into '$targetIndex'" }
         }
     }
 
@@ -82,7 +82,7 @@ class ConceptIndexingAdapter(
             .filter { it.contains(",") }
 
         if (synonymRules.isEmpty()) {
-            log.info("No valid synonym rules to update on '{}', skipping", targetIndex)
+            log.info { "No valid synonym rules to update on '$targetIndex', skipping" }
             return
         }
 
@@ -119,9 +119,9 @@ class ConceptIndexingAdapter(
                         }
                     }
             }
-            log.info("Updated synonym filter on '{}' with {} rules", targetIndex, synonymRules.size)
+            log.info { "Updated synonym filter on '$targetIndex' with ${synonymRules.size} rules" }
         } catch (e: Exception) {
-            log.warn("Failed to update synonyms on '{}': {}", targetIndex, e.message)
+            log.warn { "Failed to update synonyms on '$targetIndex': ${e.message}" }
         } finally {
             elasticsearchClient.indices().open { o -> o.index(targetIndex) }
         }

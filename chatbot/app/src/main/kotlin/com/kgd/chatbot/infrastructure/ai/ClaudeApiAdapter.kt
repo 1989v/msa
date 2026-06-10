@@ -6,12 +6,12 @@ import com.kgd.chatbot.application.chat.port.AiModelResponse
 import com.kgd.chatbot.config.ChatbotProperties
 import com.kgd.chatbot.domain.exception.AiModelException
 import com.kgd.chatbot.domain.model.MessageRole
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.math.BigDecimal
@@ -23,7 +23,7 @@ class ClaudeApiAdapter(
     private val properties: ChatbotProperties
 ) : AiModelPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     private val semaphore = Semaphore(properties.ai.maxConcurrent)
 
@@ -66,7 +66,7 @@ class ClaudeApiAdapter(
             } catch (e: AiModelException) {
                 throw e
             } catch (e: Exception) {
-                log.error("Claude API 호출 실패", e)
+                log.error(e) { "Claude API 호출 실패" }
                 throw AiModelException(e.message ?: "알 수 없는 오류")
             }
         }

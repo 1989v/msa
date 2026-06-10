@@ -9,6 +9,7 @@ import com.kgd.analytics.domain.port.ScoreCachePort
 import com.kgd.analytics.infrastructure.messaging.ScoreUpdateEvent
 import com.kgd.common.analytics.AnalyticsEvent
 import com.kgd.common.analytics.EventType
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.common.serialization.Serdes
 import org.apache.kafka.common.utils.Bytes
 import org.apache.kafka.streams.StreamsBuilder
@@ -18,7 +19,6 @@ import org.apache.kafka.streams.kstream.KStream
 import org.apache.kafka.streams.kstream.Materialized
 import org.apache.kafka.streams.kstream.TimeWindows
 import org.apache.kafka.streams.state.WindowStore
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.support.serializer.JsonSerde
@@ -35,7 +35,7 @@ class AnalyticsStreamTopology(
     private val smoothingProperties: SmoothingProperties,
     private val gmvAggregationProperties: GmvAggregationProperties
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     companion object {
         const val INPUT_TOPIC = "analytics.event.collected"
@@ -108,12 +108,12 @@ class AnalyticsStreamTopology(
                         objectMapper.writeValueAsString(updateEvent)
                     )
 
-                    log.debug(
-                        "Product score computed: productId={}, ctr={} (raw={}), cvr={} (raw={}), gmv7d={}, gmv30d={}",
-                        productId, score.ctr, score.ctrRaw, score.cvr, score.cvrRaw, gmv7d, gmv30d
-                    )
+                    log.debug {
+                        "Product score computed: productId=$productId, ctr=${score.ctr} (raw=${score.ctrRaw}), " +
+                            "cvr=${score.cvr} (raw=${score.cvrRaw}), gmv7d=$gmv7d, gmv30d=$gmv30d"
+                    }
                 } catch (e: Exception) {
-                    log.error("Failed to process product metrics: key={}", windowedKey.key(), e)
+                    log.error(e) { "Failed to process product metrics: key=${windowedKey.key()}" }
                 }
             }
 
@@ -149,9 +149,9 @@ class AnalyticsStreamTopology(
                     scoreCache.cacheKeywordScore(score)
                     keywordScoreRepository.save(score)
 
-                    log.debug("Keyword score computed: keyword={}, score={}", keyword, score.score)
+                    log.debug { "Keyword score computed: keyword=$keyword, score=${score.score}" }
                 } catch (e: Exception) {
-                    log.error("Failed to process keyword metrics: key={}", windowedKey.key(), e)
+                    log.error(e) { "Failed to process keyword metrics: key=${windowedKey.key()}" }
                 }
             }
     }
@@ -167,7 +167,7 @@ class AnalyticsStreamTopology(
             val gmv30d = productScoreRepository.findGmvSince(productId, gmvAggregationProperties.longWindow)
             gmv7d to gmv30d
         } catch (e: Exception) {
-            log.warn("GMV aggregation failed, fallback to 0: productId={}, {}", productId, e.message)
+            log.warn { "GMV aggregation failed, fallback to 0: productId=$productId, ${e.message}" }
             0.0 to 0.0
         }
     }

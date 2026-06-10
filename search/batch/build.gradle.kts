@@ -20,6 +20,8 @@ dependencies {
     runtimeOnly(libs.mysql.connector)
     // ADR-0050 Phase 4 — eval 잡이 ClickHouse 의 judgments / eval_results 사용
     implementation(libs.clickhouse.jdbc)
+    // kotlin-logging 람다 로깅 (ADR-0021)
+    implementation(libs.kotlin.logging)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.kotest.runner.junit5)

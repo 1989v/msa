@@ -5,10 +5,10 @@ import com.kgd.chatbot.application.chat.usecase.AskQuestionUseCase
 import com.kgd.chatbot.config.ChatbotProperties
 import com.kgd.chatbot.domain.model.ChannelType
 import com.kgd.chatbot.domain.model.UserRole
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
@@ -27,7 +27,7 @@ class SlackEventController(
     private val notificationAdapters: List<ChannelNotificationPort>,
     private val properties: ChatbotProperties
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val scope = CoroutineScope(Dispatchers.Default)
 
     @PostMapping("/events")
@@ -103,7 +103,7 @@ class SlackEventController(
 
                 slackAdapter?.sendMessage(externalChannelId, result.answer)
             } catch (e: Exception) {
-                log.error("Slack 메시지 처리 실패: channel={}, user={}", channel, userId, e)
+                log.error(e) { "Slack 메시지 처리 실패: channel=$channel, user=$userId" }
             }
         }
     }
@@ -120,7 +120,7 @@ class SlackEventController(
             val expected = "v0=${hash.joinToString("") { "%02x".format(it) }}"
             expected == signature
         } catch (e: Exception) {
-            log.warn("Slack 서명 검증 실패", e)
+            log.warn(e) { "Slack 서명 검증 실패" }
             false
         }
     }

@@ -1,7 +1,7 @@
 package com.kgd.analytics.infrastructure.bandit
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 
@@ -11,7 +11,7 @@ class SearchImpressionConsumer(
     private val banditStateRedisWriter: BanditStateRedisWriter
 ) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @KafkaListener(
         topics = ["search.impression.logged"],
@@ -20,11 +20,11 @@ class SearchImpressionConsumer(
     )
     fun consume(message: String) {
         val payload = runCatching { objectMapper.readValue(message, ImpressionPayload::class.java) }
-            .onFailure { log.warn("Bad impression payload: {}", it.message) }
+            .onFailure { log.warn { "Bad impression payload: ${it.message}" } }
             .getOrNull() ?: return
 
         if (!banditStateRedisWriter.markSeen(payload.searchId, payload.productId, "imp")) {
-            log.debug("Duplicate impression searchId={} productId={}", payload.searchId, payload.productId)
+            log.debug { "Duplicate impression searchId=${payload.searchId} productId=${payload.productId}" }
             return
         }
         banditStateRedisWriter.incrementImpression(payload.effectiveScope(), payload.productId, payload.ts)

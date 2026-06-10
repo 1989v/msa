@@ -4,7 +4,7 @@ import com.kgd.search.domain.bandit.model.BanditKey
 import com.kgd.search.domain.bandit.model.BanditState
 import com.kgd.search.domain.bandit.port.BanditStatePort
 import com.kgd.search.domain.product.model.ProductDocument
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.time.Clock
 import java.time.Instant
@@ -27,7 +27,7 @@ class MultiScopeBanditBlender(
     private val banditStatePort: BanditStatePort,
     private val clock: Clock = Clock.systemUTC()
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     /**
      * 각 product 에 대해 blended Thompson sample 을 반환. 0..1 범위.
@@ -48,7 +48,7 @@ class MultiScopeBanditBlender(
         // scope 별 batch fetch (각각 별도 호출 — Redis MGET 균등 부하)
         val perScopeStates: Map<ScopeConfig, Map<BanditKey, BanditState>> = perScopeKeys.mapValues { (cfg, keys) ->
             runCatching { banditStatePort.fetchBatch(keys) }
-                .onFailure { log.warn("scope={} fetchBatch failed, prior-only: {}", cfg.name, it.message) }
+                .onFailure { log.warn { "scope=${cfg.name} fetchBatch failed, prior-only: ${it.message}" } }
                 .getOrDefault(emptyMap())
         }
 

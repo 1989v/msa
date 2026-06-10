@@ -7,7 +7,7 @@ import com.kgd.order.domain.order.model.Order
 import com.kgd.order.infrastructure.messaging.event.OrderCancelledEvent
 import com.kgd.order.infrastructure.messaging.event.OrderCompletedEvent
 import com.kgd.order.infrastructure.messaging.event.OrderItemEvent
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
@@ -25,7 +25,7 @@ class OrderEventAdapter(
     @Value("\${kafka.topics.order-cancelled}") private val cancelledTopic: String,
 ) : OrderEventPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     override fun publishOrderCompleted(order: Order) {
         val orderId = requireNotNull(order.id) { "주문 ID 가 없는 상태에서 이벤트 발행이 호출되었습니다" }
@@ -48,7 +48,7 @@ class OrderEventAdapter(
             eventType = completedTopic,
             payload = objectMapper.writeValueAsString(event),
         )
-        log.info("Enqueued OrderCompletedEvent to outbox: orderId={}", orderId)
+        log.info { "Enqueued OrderCompletedEvent to outbox: orderId=$orderId" }
     }
 
     override fun publishOrderCancelled(order: Order) {
@@ -63,6 +63,6 @@ class OrderEventAdapter(
             eventType = cancelledTopic,
             payload = objectMapper.writeValueAsString(event),
         )
-        log.info("Enqueued OrderCancelledEvent to outbox: orderId={}", orderId)
+        log.info { "Enqueued OrderCancelledEvent to outbox: orderId=$orderId" }
     }
 }

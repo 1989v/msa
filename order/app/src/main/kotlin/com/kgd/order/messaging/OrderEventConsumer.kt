@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.order.application.order.service.OrderTransactionalService
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -27,7 +27,7 @@ class OrderEventConsumer(
     private val idempotentMetrics: IdempotentMetrics,
 ) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @KafkaListener(
         topics = ["inventory.reservation.expired"],
@@ -35,7 +35,7 @@ class OrderEventConsumer(
         containerFactory = "kafkaListenerContainerFactory",
     )
     fun onReservationExpired(record: ConsumerRecord<String, String>) {
-        log.info("Received reservation expired event: key={}", record.key())
+        log.info { "Received reservation expired event: key=${record.key()}" }
 
         val node = objectMapper.readTree(record.value())
         val rawEventId = node.get("eventId")?.asText().orEmpty()
@@ -44,10 +44,9 @@ class OrderEventConsumer(
         val eventId = parseEventId(rawEventId)
         if (eventId == null) {
             // ADR-0029 §4 graceful degrade — eventId 누락 시 멱등 검사 skip + 메트릭 노출.
-            log.warn(
-                "missing eventId topic=inventory.reservation.expired — graceful degrade, executing without dedup raw={}",
-                rawEventId,
-            )
+            log.warn {
+                "missing eventId topic=inventory.reservation.expired — graceful degrade, executing without dedup raw=$rawEventId"
+            }
             idempotentMetrics.missingId(CONSUMER_GROUP)
             cancelOrder(orderId)
             return
@@ -59,9 +58,9 @@ class OrderEventConsumer(
     }
 
     private fun cancelOrder(orderId: Long) {
-        log.info("Cancelling order due to reservation expiry: orderId={}", orderId)
+        log.info { "Cancelling order due to reservation expiry: orderId=$orderId" }
         orderTransactionalService.cancelOrder(orderId)
-        log.info("Order cancelled due to reservation expiry: orderId={}", orderId)
+        log.info { "Order cancelled due to reservation expiry: orderId=$orderId" }
     }
 
     private fun parseEventId(raw: String): UUID? =

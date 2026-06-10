@@ -3,7 +3,7 @@ package com.kgd.gateway.filter
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.common.analytics.BucketAssigner
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cloud.gateway.filter.GatewayFilterChain
 import org.springframework.cloud.gateway.filter.GlobalFilter
 import org.springframework.core.Ordered
@@ -18,7 +18,7 @@ class ExperimentAssignmentFilter(
     private val objectMapper: ObjectMapper
 ) : GlobalFilter, Ordered {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     companion object {
         const val ACTIVE_EXPERIMENTS_KEY = "experiment:active-list"
@@ -46,7 +46,7 @@ class ExperimentAssignmentFilter(
                 chain.filter(exchange.mutate().request(mutatedRequest.build()).build())
             }
             .onErrorResume { e ->
-                log.warn("Experiment assignment failed, proceeding without assignments", e)
+                log.warn(e) { "Experiment assignment failed, proceeding without assignments" }
                 chain.filter(exchange)
             }
     }
@@ -57,7 +57,7 @@ class ExperimentAssignmentFilter(
                 try {
                     objectMapper.readValue(json, object : TypeReference<List<ActiveExperiment>>() {})
                 } catch (e: Exception) {
-                    log.warn("Failed to parse active experiments from Redis", e)
+                    log.warn(e) { "Failed to parse active experiments from Redis" }
                     emptyList()
                 }
             }

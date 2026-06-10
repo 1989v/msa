@@ -2,8 +2,8 @@ package com.kgd.inventory.infrastructure.admission
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.servlet.http.HttpServletResponse
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
@@ -24,7 +24,7 @@ class AdmissionControlFilter(
     private val maxConcurrentReservations: Long,
 ) : OncePerRequestFilter() {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     companion object {
         private const val ACTIVE_RESERVATIONS_KEY = "inventory:active-reservations"
@@ -42,7 +42,7 @@ class AdmissionControlFilter(
         }
 
         if (redisTemplate == null) {
-            log.debug("Redis unavailable, bypassing admission control")
+            log.debug { "Redis unavailable, bypassing admission control" }
             filterChain.doFilter(request, response)
             return
         }
@@ -50,7 +50,7 @@ class AdmissionControlFilter(
         val current = try {
             redisTemplate.opsForValue().increment(ACTIVE_RESERVATIONS_KEY) ?: 0
         } catch (e: Exception) {
-            log.warn("Redis increment failed, bypassing admission control: {}", e.message)
+            log.warn { "Redis increment failed, bypassing admission control: ${e.message}" }
             filterChain.doFilter(request, response)
             return
         }
@@ -58,10 +58,7 @@ class AdmissionControlFilter(
         try {
             if (current > maxConcurrentReservations) {
                 decrementSafely()
-                log.warn(
-                    "Admission control rejected: current={}, max={}",
-                    current, maxConcurrentReservations
-                )
+                log.warn { "Admission control rejected: current=$current, max=$maxConcurrentReservations" }
                 response.status = HTTP_TOO_MANY_REQUESTS
                 response.contentType = "application/json"
                 response.characterEncoding = "UTF-8"
@@ -83,7 +80,7 @@ class AdmissionControlFilter(
         try {
             redisTemplate?.opsForValue()?.decrement(ACTIVE_RESERVATIONS_KEY)
         } catch (e: Exception) {
-            log.warn("Redis decrement failed: {}", e.message)
+            log.warn { "Redis decrement failed: ${e.message}" }
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.kgd.analytics.infrastructure.bandit
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Repository
 
@@ -18,14 +18,14 @@ import org.springframework.stereotype.Repository
 class BanditStateRedisWriter(
     private val redis: StringRedisTemplate
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     fun incrementImpression(scope: String, productId: String, ts: Long) {
         val key = redisKey(scope, productId)
         runCatching {
             redis.opsForHash<String, String>().increment(key, FIELD_IMPRESSIONS, 1L)
             redis.opsForHash<String, String>().put(key, FIELD_LAST_TS, ts.toString())
-        }.onFailure { log.warn("Bandit impression write failed key={}: {}", key, it.message) }
+        }.onFailure { log.warn { "Bandit impression write failed key=$key: ${it.message}" } }
     }
 
     fun incrementClick(scope: String, productId: String, ts: Long) {
@@ -33,7 +33,7 @@ class BanditStateRedisWriter(
         runCatching {
             redis.opsForHash<String, String>().increment(key, FIELD_CLICKS, 1L)
             redis.opsForHash<String, String>().put(key, FIELD_LAST_TS, ts.toString())
-        }.onFailure { log.warn("Bandit click write failed key={}: {}", key, it.message) }
+        }.onFailure { log.warn { "Bandit click write failed key=$key: ${it.message}" } }
     }
 
     /**

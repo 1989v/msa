@@ -7,7 +7,7 @@ import com.kgd.order.application.order.port.ProductPort
 import com.kgd.order.application.order.usecase.GetOrderUseCase
 import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.domain.order.exception.OrderNotFoundException
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 
 @Service
@@ -17,7 +17,7 @@ class OrderService(
     private val productPort: ProductPort,
 ) : PlaceOrderUseCase, GetOrderUseCase {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     /**
      * Places an order with the following transaction flow:
@@ -39,10 +39,10 @@ class OrderService(
                     "비활성 상품은 주문할 수 없습니다: productId=${item.productId}"
                 )
             }
-            log.debug(
-                "상품 검증 완료: productId={}, name={}, price={}, clientPrice={}",
-                item.productId, productInfo.name, productInfo.price, item.unitPrice
-            )
+            log.debug {
+                "상품 검증 완료: productId=${item.productId}, name=${productInfo.name}, " +
+                    "price=${productInfo.price}, clientPrice=${item.unitPrice}"
+            }
         }
 
         // Phase 1: Save PENDING order (short transaction, immediately committed)
@@ -53,7 +53,7 @@ class OrderService(
         val paymentResult = try {
             paymentPort.requestPayment(orderId, pendingOrder.totalAmount.amount)
         } catch (e: Exception) {
-            log.error("Payment failed for orderId={}, cancelling order", orderId, e)
+            log.error(e) { "Payment failed for orderId=$orderId, cancelling order" }
             orderTransactionalService.cancelOrder(orderId)
             throw BusinessException(ErrorCode.EXTERNAL_API_ERROR, "결제 서비스 호출 실패: ${e.message}")
         }
@@ -68,7 +68,7 @@ class OrderService(
                 status = completed.status.name
             )
         } else {
-            log.warn("Payment returned non-SUCCESS status={} for orderId={}", paymentResult.status, orderId)
+            log.warn { "Payment returned non-SUCCESS status=${paymentResult.status} for orderId=$orderId" }
             orderTransactionalService.cancelOrder(orderId)
             throw BusinessException(ErrorCode.EXTERNAL_API_ERROR, "결제 실패: ${paymentResult.status}")
         }

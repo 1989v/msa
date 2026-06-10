@@ -1,7 +1,7 @@
 package com.kgd.gateway.filter
 
 import com.kgd.gateway.security.JwtTokenValidator
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cloud.gateway.filter.GatewayFilter
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory
 import org.springframework.data.redis.core.ReactiveRedisTemplate
@@ -20,7 +20,7 @@ class AuthenticationGatewayFilter(
         val requiredRoles: List<String> = emptyList()
     )
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     override fun apply(config: Config): GatewayFilter = GatewayFilter { exchange, chain ->
         val request = exchange.request
@@ -28,7 +28,7 @@ class AuthenticationGatewayFilter(
         val token = jwtTokenValidator.extractFromHeader(authHeader)
 
         if (token == null) {
-            log.warn("Missing or invalid Authorization header: {}", request.uri)
+            log.warn { "Missing or invalid Authorization header: ${request.uri}" }
             exchange.response.statusCode = HttpStatus.UNAUTHORIZED
             return@GatewayFilter exchange.response.setComplete()
         }
@@ -38,13 +38,13 @@ class AuthenticationGatewayFilter(
             .onErrorReturn(false)
             .flatMap { isBlacklisted ->
                 if (isBlacklisted) {
-                    log.warn("Blacklisted token used: {}", request.uri)
+                    log.warn { "Blacklisted token used: ${request.uri}" }
                     exchange.response.statusCode = HttpStatus.UNAUTHORIZED
                     exchange.response.setComplete()
                 } else {
                     val claims = jwtTokenValidator.validateAndExtract(token)
                     if (claims == null) {
-                        log.warn("Invalid JWT token: {}", request.uri)
+                        log.warn { "Invalid JWT token: ${request.uri}" }
                         exchange.response.statusCode = HttpStatus.UNAUTHORIZED
                         exchange.response.setComplete()
                     } else {
@@ -57,7 +57,7 @@ class AuthenticationGatewayFilter(
                         if (config.requiredRoles.isNotEmpty() &&
                             !hasRequiredRole(roles, config.requiredRoles)
                         ) {
-                            log.warn("Insufficient role for {}: has={}, required={}", request.uri, roles, config.requiredRoles)
+                            log.warn { "Insufficient role for ${request.uri}: has=$roles, required=${config.requiredRoles}" }
                             exchange.response.statusCode = HttpStatus.FORBIDDEN
                             return@flatMap exchange.response.setComplete()
                         }

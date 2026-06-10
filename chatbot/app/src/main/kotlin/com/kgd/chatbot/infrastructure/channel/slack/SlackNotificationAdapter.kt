@@ -3,9 +3,9 @@ package com.kgd.chatbot.infrastructure.channel.slack
 import com.kgd.chatbot.application.chat.port.ChannelNotificationPort
 import com.kgd.chatbot.config.ChatbotProperties
 import com.kgd.chatbot.domain.model.ChannelType
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
@@ -16,7 +16,7 @@ class SlackNotificationAdapter(
     private val properties: ChatbotProperties
 ) : ChannelNotificationPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     override val supportedChannelType = ChannelType.SLACK
 
@@ -46,7 +46,7 @@ class SlackNotificationAdapter(
                     .retrieve()
                     .body(Map::class.java)
             } catch (e: Exception) {
-                log.error("Slack 메시지 전송 실패: channel={}", externalChannelId, e)
+                log.error(e) { "Slack 메시지 전송 실패: channel=$externalChannelId" }
             }
         }
     }

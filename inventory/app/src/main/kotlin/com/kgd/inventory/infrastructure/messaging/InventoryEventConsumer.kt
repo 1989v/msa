@@ -11,8 +11,8 @@ import com.kgd.inventory.infrastructure.messaging.event.FulfillmentShippedEvent
 import com.kgd.inventory.infrastructure.messaging.event.OrderCancelledEvent
 import com.kgd.inventory.infrastructure.messaging.event.OrderCompletedEvent
 import com.kgd.inventory.infrastructure.metrics.InventoryMetrics
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
@@ -45,7 +45,7 @@ class InventoryEventConsumer(
     @Autowired(required = false)
     private val inventoryMetrics: InventoryMetrics? = null,
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     /**
      * ADR-0029 PR-8a — `ReserveStockUseCase` 자연 멱등 보강 후 common helper 이관.
@@ -59,12 +59,12 @@ class InventoryEventConsumer(
         containerFactory = "kafkaListenerContainerFactory",
     )
     fun onOrderCompleted(record: ConsumerRecord<String, String>) {
-        log.info("Received order.order.completed: key={}", record.key())
+        log.info { "Received order.order.completed: key=${record.key()}" }
 
         val event = objectMapper.readValue(record.value(), OrderCompletedEvent::class.java)
         val eventUuid = parseEventId(event.eventId)
         if (eventUuid == null) {
-            log.warn("missing eventId topic={} — graceful degrade, executing without dedup", record.topic())
+            log.warn { "missing eventId topic=${record.topic()} — graceful degrade, executing without dedup" }
             idempotentMetrics.missingId(CONSUMER_GROUP)
             reserveItems(event)
             return
@@ -77,7 +77,7 @@ class InventoryEventConsumer(
 
     private fun reserveItems(event: OrderCompletedEvent) {
         if (event.items.isEmpty()) {
-            log.warn("Order {} has no items, skipping reservation", event.orderId)
+            log.warn { "Order ${event.orderId} has no items, skipping reservation" }
             return
         }
 
@@ -90,7 +90,7 @@ class InventoryEventConsumer(
                     qty = item.quantity,
                 )
             )
-            log.info("Reserved stock: orderId={}, productId={}, qty={}", event.orderId, item.productId, item.quantity)
+            log.info { "Reserved stock: orderId=${event.orderId}, productId=${item.productId}, qty=${item.quantity}" }
         }
     }
 
@@ -100,12 +100,12 @@ class InventoryEventConsumer(
         containerFactory = "kafkaListenerContainerFactory",
     )
     fun onFulfillmentShipped(record: ConsumerRecord<String, String>) {
-        log.info("Received fulfillment.order.shipped: key={}", record.key())
+        log.info { "Received fulfillment.order.shipped: key=${record.key()}" }
 
         val event = objectMapper.readValue(record.value(), FulfillmentShippedEvent::class.java)
         val eventUuid = parseEventId(event.eventId)
         if (eventUuid == null) {
-            log.warn("missing eventId topic={} — graceful degrade, executing without dedup", record.topic())
+            log.warn { "missing eventId topic=${record.topic()} — graceful degrade, executing without dedup" }
             idempotentMetrics.missingId(CONSUMER_GROUP)
             confirmStock(event.orderId)
             return
@@ -122,12 +122,12 @@ class InventoryEventConsumer(
         containerFactory = "kafkaListenerContainerFactory",
     )
     fun onFulfillmentCancelled(record: ConsumerRecord<String, String>) {
-        log.info("Received fulfillment.order.cancelled: key={}", record.key())
+        log.info { "Received fulfillment.order.cancelled: key=${record.key()}" }
 
         val event = objectMapper.readValue(record.value(), FulfillmentCancelledEvent::class.java)
         val eventUuid = parseEventId(event.eventId)
         if (eventUuid == null) {
-            log.warn("missing eventId topic={} — graceful degrade, executing without dedup", record.topic())
+            log.warn { "missing eventId topic=${record.topic()} — graceful degrade, executing without dedup" }
             idempotentMetrics.missingId(CONSUMER_GROUP)
             releaseStock(event.orderId, reason = null)
             return
@@ -160,12 +160,12 @@ class InventoryEventConsumer(
         containerFactory = "kafkaListenerContainerFactory",
     )
     fun onOrderCancelled(record: ConsumerRecord<String, String>) {
-        log.info("Received order.order.cancelled: key={}", record.key())
+        log.info { "Received order.order.cancelled: key=${record.key()}" }
 
         val event = objectMapper.readValue(record.value(), OrderCancelledEvent::class.java)
         val eventUuid = parseEventId(event.eventId)
         if (eventUuid == null) {
-            log.warn("missing eventId topic={} — graceful degrade, executing without dedup", record.topic())
+            log.warn { "missing eventId topic=${record.topic()} — graceful degrade, executing without dedup" }
             idempotentMetrics.missingId(CONSUMER_GROUP)
             releaseStock(event.orderId, reason = event.reason)
             recordCancellationLatency(event)
@@ -200,13 +200,13 @@ class InventoryEventConsumer(
         )
 
         if (results.isEmpty()) {
-            log.warn("No active reservations found for orderId={}", orderId)
+            log.warn { "No active reservations found for orderId=$orderId" }
         } else {
             results.forEach { result ->
-                log.info(
-                    "Confirmed stock: orderId={}, productId={}, availableQty={}, reservedQty={}",
-                    orderId, result.productId, result.availableQty, result.reservedQty,
-                )
+                log.info {
+                    "Confirmed stock: orderId=$orderId, productId=${result.productId}, " +
+                        "availableQty=${result.availableQty}, reservedQty=${result.reservedQty}"
+                }
             }
         }
     }
@@ -218,25 +218,25 @@ class InventoryEventConsumer(
 
         if (results.isEmpty()) {
             if (reason != null) {
-                log.warn(
-                    "No active reservations found for orderId={}, reason={} (already released or fulfillment cascaded first)",
-                    orderId, reason,
-                )
+                log.warn {
+                    "No active reservations found for orderId=$orderId, reason=$reason " +
+                        "(already released or fulfillment cascaded first)"
+                }
             } else {
-                log.warn("No active reservations found for orderId={}", orderId)
+                log.warn { "No active reservations found for orderId=$orderId" }
             }
         } else {
             results.forEach { result ->
                 if (reason != null) {
-                    log.info(
-                        "Released stock (order cancelled, reason={}): orderId={}, productId={}, availableQty={}, reservedQty={}",
-                        reason, orderId, result.productId, result.availableQty, result.reservedQty,
-                    )
+                    log.info {
+                        "Released stock (order cancelled, reason=$reason): orderId=$orderId, " +
+                            "productId=${result.productId}, availableQty=${result.availableQty}, reservedQty=${result.reservedQty}"
+                    }
                 } else {
-                    log.info(
-                        "Released stock: orderId={}, productId={}, availableQty={}, reservedQty={}",
-                        orderId, result.productId, result.availableQty, result.reservedQty,
-                    )
+                    log.info {
+                        "Released stock: orderId=$orderId, productId=${result.productId}, " +
+                            "availableQty=${result.availableQty}, reservedQty=${result.reservedQty}"
+                    }
                 }
             }
         }
@@ -248,7 +248,7 @@ class InventoryEventConsumer(
     private fun parseEventId(raw: String?): UUID? = try {
         raw?.takeIf { it.isNotBlank() }?.let(UUID::fromString)
     } catch (e: IllegalArgumentException) {
-        log.warn("Invalid eventId format, skipping idempotency check: raw={}", raw)
+        log.warn { "Invalid eventId format, skipping idempotency check: raw=$raw" }
         null
     }
 

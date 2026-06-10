@@ -6,8 +6,8 @@ import com.kgd.order.application.order.port.PaymentPort
 import com.kgd.order.application.order.port.PaymentResult
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry
 import io.github.resilience4j.kotlin.circuitbreaker.executeSuspendFunction
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -19,7 +19,7 @@ class PaymentAdapter(
     private val circuitBreakerRegistry: CircuitBreakerRegistry
 ) : PaymentPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val circuitBreaker = circuitBreakerRegistry.circuitBreaker("payment-service")
 
     override suspend fun requestPayment(orderId: Long, amount: BigDecimal): PaymentResult {

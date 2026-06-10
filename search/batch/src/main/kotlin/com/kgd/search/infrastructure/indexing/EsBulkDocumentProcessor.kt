@@ -8,8 +8,8 @@ import co.elastic.clients.elasticsearch._helpers.bulk.BulkListener
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.search.domain.product.model.ProductDocument
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
@@ -21,7 +21,7 @@ class EsBulkDocumentProcessor(
     private val objectMapper: ObjectMapper
 ) : DisposableBean {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     val processedCount = AtomicLong(0)
     val errorCount = AtomicLong(0)
@@ -63,7 +63,7 @@ class EsBulkDocumentProcessor(
 
     private fun primaryListener() = object : BulkListener<Void> {
         override fun beforeBulk(executionId: Long, request: BulkRequest, contexts: MutableList<Void?>) {
-            log.debug("Sending bulk: {} operations", request.operations().size)
+            log.debug { "Sending bulk: ${request.operations().size} operations" }
         }
 
         override fun afterBulk(executionId: Long, request: BulkRequest, contexts: MutableList<Void?>, response: BulkResponse) {
@@ -71,9 +71,9 @@ class EsBulkDocumentProcessor(
                 if (item.error() != null) Pair(idx, item) else null
             }
             if (failedOps.isNotEmpty()) {
-                log.error("{} items failed — sending to retry ingester", failedOps.size)
+                log.error { "${failedOps.size} items failed — sending to retry ingester" }
                 failedOps.forEach { (idx, item) ->
-                    log.error("Failed: reason={}", item.error()?.reason())
+                    log.error { "Failed: reason=${item.error()?.reason()}" }
                     retryIngester.add(request.operations()[idx])
                 }
                 errorCount.addAndGet(failedOps.size.toLong())
@@ -82,7 +82,7 @@ class EsBulkDocumentProcessor(
         }
 
         override fun afterBulk(executionId: Long, request: BulkRequest, contexts: MutableList<Void?>, failure: Throwable) {
-            log.error("Bulk request failed: {}", failure.message, failure)
+            log.error(failure) { "Bulk request failed: ${failure.message}" }
             errorCount.addAndGet(request.operations().size.toLong())
         }
     }
@@ -92,12 +92,12 @@ class EsBulkDocumentProcessor(
 
         override fun afterBulk(executionId: Long, request: BulkRequest, contexts: MutableList<Void?>, response: BulkResponse) {
             val failed = response.items().count { it.error() != null }
-            if (failed > 0) log.error("Retry still failed: {} items", failed)
-            else log.info("Retry succeeded: {} items", response.items().size)
+            if (failed > 0) log.error { "Retry still failed: $failed items" }
+            else log.info { "Retry succeeded: ${response.items().size} items" }
         }
 
         override fun afterBulk(executionId: Long, request: BulkRequest, contexts: MutableList<Void?>, failure: Throwable) {
-            log.error("Retry bulk request failed: {}", failure.message, failure)
+            log.error(failure) { "Retry bulk request failed: ${failure.message}" }
         }
     }
 

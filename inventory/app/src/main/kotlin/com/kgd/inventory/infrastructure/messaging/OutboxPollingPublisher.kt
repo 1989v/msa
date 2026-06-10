@@ -3,7 +3,7 @@ package com.kgd.inventory.infrastructure.messaging
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.kgd.inventory.infrastructure.persistence.outbox.repository.OutboxJpaRepository
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.scheduling.annotation.Scheduled
@@ -17,14 +17,14 @@ class OutboxPollingPublisher(
     private val kafkaTemplate: KafkaTemplate<String, Any>,
     private val objectMapper: ObjectMapper,
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @Scheduled(fixedDelayString = "\${inventory.outbox.polling-interval-ms:1000}")
     fun publishPendingEvents() {
         val events = outboxRepository.findAllByStatusOrderByCreatedAtAsc("PENDING")
         if (events.isEmpty()) return
 
-        log.debug("Found {} pending outbox events", events.size)
+        log.debug { "Found ${events.size} pending outbox events" }
 
         for (event in events) {
             try {
@@ -35,16 +35,16 @@ class OutboxPollingPublisher(
                 kafkaTemplate.send(event.eventType, event.aggregateId.toString(), enrichedPayload)
                     .whenComplete { _, ex ->
                         if (ex != null) {
-                            log.error("Failed to publish outbox event id={}, type={}", event.id, event.eventType, ex)
+                            log.error(ex) { "Failed to publish outbox event id=${event.id}, type=${event.eventType}" }
                         } else {
                             event.status = "PUBLISHED"
                             event.publishedAt = LocalDateTime.now()
                             outboxRepository.save(event)
-                            log.info("Published outbox event: id={}, type={}, aggregateId={}", event.id, event.eventType, event.aggregateId)
+                            log.info { "Published outbox event: id=${event.id}, type=${event.eventType}, aggregateId=${event.aggregateId}" }
                         }
                     }
             } catch (e: Exception) {
-                log.error("Failed to publish outbox event id={}, type={}", event.id, event.eventType, e)
+                log.error(e) { "Failed to publish outbox event id=${event.id}, type=${event.eventType}" }
             }
         }
     }

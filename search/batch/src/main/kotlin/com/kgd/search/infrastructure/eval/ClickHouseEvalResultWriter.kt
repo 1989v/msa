@@ -2,7 +2,7 @@ package com.kgd.search.infrastructure.eval
 
 import com.kgd.search.domain.eval.EvalResult
 import com.kgd.search.domain.eval.EvalResultPort
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component
 import java.sql.DriverManager
 import java.sql.Timestamp
@@ -12,7 +12,7 @@ class ClickHouseEvalResultWriter(
     private val properties: EvalProperties
 ) : EvalResultPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     override fun saveAll(results: List<EvalResult>) {
         if (results.isEmpty()) return
@@ -45,6 +45,6 @@ class ClickHouseEvalResultWriter(
                 ps.executeBatch()
             }
         }
-        log.info("Persisted eval results: count={}, variant={}", results.size, results.first().variant)
+        log.info { "Persisted eval results: count=${results.size}, variant=${results.first().variant}" }
     }
 }

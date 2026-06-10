@@ -1,6 +1,6 @@
 package com.kgd.analytics.infrastructure.persistence
 
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Repository
 import java.sql.Timestamp
 import java.time.Instant
@@ -21,7 +21,7 @@ import javax.sql.DataSource
 class JudgmentRepositoryAdapter(
     private val dataSource: DataSource
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     fun upsertManual(query: String, productId: String, relevance: Int, weight: Double = 1.0) {
         require(relevance in 0..3) { "relevance must be in 0..3: $relevance" }
@@ -44,7 +44,7 @@ class JudgmentRepositoryAdapter(
                 ps.executeUpdate()
             }
         }
-        log.info("Manual judgment upserted: query='{}', productId={}, relevance={}", query, productId, relevance)
+        log.info { "Manual judgment upserted: query='$query', productId=$productId, relevance=$relevance" }
     }
 
     fun list(queryFilter: String?, limit: Int = 100, offset: Int = 0): List<JudgmentRow> {

@@ -7,7 +7,7 @@ import com.kgd.codedictionary.application.search.port.ConceptSearchPort
 import com.kgd.codedictionary.application.search.port.SearchHit
 import com.kgd.codedictionary.application.search.port.SearchResponse
 import com.kgd.codedictionary.application.search.port.SuggestHit
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
@@ -17,7 +17,7 @@ class ConceptSearchAdapter(
     @Value("\${elasticsearch.index-name:concept-index}") private val indexName: String
 ) : ConceptSearchPort {
 
-    private val log = LoggerFactory.getLogger(ConceptSearchAdapter::class.java)
+    private val log = KotlinLogging.logger {}
 
     override fun search(query: String, category: String?, level: String?, from: Int, size: Int): SearchResponse {
         val filters = mutableListOf<Query>()
@@ -95,7 +95,7 @@ class ConceptSearchAdapter(
         val totalHits = response.hits().total()?.value() ?: 0L
         val maxScore = response.hits().maxScore()?.toFloat()
 
-        log.debug("Search for '{}' returned {} hits (total: {})", query, hits.size, totalHits)
+        log.debug { "Search for '$query' returned ${hits.size} hits (total: $totalHits)" }
 
         return SearchResponse(
             hits = hits,

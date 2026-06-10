@@ -3,8 +3,8 @@ package com.kgd.chatbot.infrastructure.knowledge
 import com.kgd.chatbot.application.chat.port.KnowledgeChunk
 import com.kgd.chatbot.application.chat.port.KnowledgeSourcePort
 import com.kgd.chatbot.config.ChatbotProperties
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
-import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.nio.file.Files
@@ -16,7 +16,7 @@ class FileSystemKnowledgeAdapter(
     private val properties: ChatbotProperties
 ) : KnowledgeSourcePort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     private data class Document(
         val title: String,
@@ -38,7 +38,7 @@ class FileSystemKnowledgeAdapter(
     override fun reload() {
         val docsRoot = Path.of(properties.knowledge.docsRoot)
         if (!docsRoot.exists()) {
-            log.warn("문서 루트 디렉토리가 없습니다: {}", docsRoot)
+            log.warn { "문서 루트 디렉토리가 없습니다: $docsRoot" }
             return
         }
 
@@ -60,7 +60,7 @@ class FileSystemKnowledgeAdapter(
         }
 
         documents = loaded
-        log.info("문서 로드 완료: {} 파일, {} 카테고리", loaded.size, getCategories().size)
+        log.info { "문서 로드 완료: ${loaded.size} 파일, ${getCategories().size} 카테고리" }
     }
 
     override fun search(query: String, maxResults: Int): List<KnowledgeChunk> {
@@ -115,7 +115,7 @@ class FileSystemKnowledgeAdapter(
                 )
             )
         } catch (e: Exception) {
-            log.warn("파일 로드 실패: {}", file, e)
+            log.warn(e) { "파일 로드 실패: $file" }
         }
     }
 

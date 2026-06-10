@@ -12,6 +12,8 @@ dependencies {
     implementation(libs.kotlin.reflect)
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    // kotlin-logging 람다 로깅 (ADR-0021)
+    implementation(libs.kotlin.logging)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.runner.junit5)

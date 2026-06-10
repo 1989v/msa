@@ -20,6 +20,8 @@ dependencies {
     implementation(libs.resilience4j.circuitbreaker)
     implementation(libs.resilience4j.kotlin)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    // kotlin-logging 람다 로깅 (ADR-0021)
+    implementation(libs.kotlin.logging)
     // ADR-0032 PR-2 — Order Outbox 도입을 위한 Flyway 마이그레이션 (V20260502_001__create_outbox_event.sql)
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")

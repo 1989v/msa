@@ -1,7 +1,7 @@
 package com.kgd.analytics.infrastructure.bandit
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 
@@ -11,7 +11,7 @@ class SearchClickConsumer(
     private val banditStateRedisWriter: BanditStateRedisWriter
 ) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @KafkaListener(
         topics = ["search.click.logged"],
@@ -20,11 +20,11 @@ class SearchClickConsumer(
     )
     fun consume(message: String) {
         val payload = runCatching { objectMapper.readValue(message, ClickPayload::class.java) }
-            .onFailure { log.warn("Bad click payload: {}", it.message) }
+            .onFailure { log.warn { "Bad click payload: ${it.message}" } }
             .getOrNull() ?: return
 
         if (!banditStateRedisWriter.markSeen(payload.searchId, payload.productId, "click")) {
-            log.debug("Duplicate click searchId={} productId={}", payload.searchId, payload.productId)
+            log.debug { "Duplicate click searchId=${payload.searchId} productId=${payload.productId}" }
             return
         }
         banditStateRedisWriter.incrementClick(payload.effectiveScope(), payload.productId, payload.ts)

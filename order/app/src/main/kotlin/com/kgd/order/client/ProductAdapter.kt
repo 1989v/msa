@@ -6,8 +6,8 @@ import com.kgd.order.application.order.port.ProductInfo
 import com.kgd.order.application.order.port.ProductPort
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry
 import io.github.resilience4j.kotlin.circuitbreaker.executeSuspendFunction
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -20,7 +20,7 @@ class ProductAdapter(
     private val circuitBreakerRegistry: CircuitBreakerRegistry,
 ) : ProductPort {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val circuitBreaker = circuitBreakerRegistry.circuitBreaker("product-service")
 
     override suspend fun validateProduct(productId: Long): ProductInfo {
@@ -39,7 +39,7 @@ class ProductAdapter(
             } catch (e: BusinessException) {
                 throw e
             } catch (e: Exception) {
-                log.error("상품 서비스 호출 실패: productId={}", productId, e)
+                log.error(e) { "상품 서비스 호출 실패: productId=$productId" }
                 throw BusinessException(ErrorCode.EXTERNAL_API_ERROR, "상품 서비스 호출 실패: ${e.message}")
             }
         }

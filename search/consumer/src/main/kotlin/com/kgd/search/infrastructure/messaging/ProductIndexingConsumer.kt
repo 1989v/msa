@@ -2,7 +2,7 @@ package com.kgd.search.infrastructure.messaging
 
 import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component
 class ProductIndexingConsumer(
     private val bulkProcessor: EsBulkDocumentProcessor
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     @Value("\${search.index.alias:products}")
     private lateinit var indexAlias: String
@@ -22,7 +22,7 @@ class ProductIndexingConsumer(
         containerFactory = "productEventListenerContainerFactory"
     )
     fun consume(event: ProductIndexEvent) {
-        log.info("Received product event: productId={}, brand={}", event.productId, event.brand)
+        log.info { "Received product event: productId=${event.productId}, brand=${event.brand}" }
         try {
             bulkProcessor.processDocument(
                 indexAlias,
@@ -36,7 +36,7 @@ class ProductIndexingConsumer(
                 )
             )
         } catch (e: Exception) {
-            log.error("Failed to enqueue product: productId={}", event.productId, e)
+            log.error(e) { "Failed to enqueue product: productId=${event.productId}" }
             throw e  // Spring Kafka ExponentialBackOff retry
         }
     }

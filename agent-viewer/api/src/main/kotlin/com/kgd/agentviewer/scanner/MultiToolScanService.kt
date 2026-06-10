@@ -3,7 +3,7 @@ package com.kgd.agentviewer.scanner
 import com.kgd.agentviewer.model.EventType
 import com.kgd.agentviewer.model.WebSocketEvent
 import com.kgd.agentviewer.websocket.EventBroadcaster
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
@@ -14,7 +14,7 @@ class MultiToolScanService(
     private val codexScanner: CodexScanner,
     private val broadcaster: EventBroadcaster
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val lastScan = ConcurrentHashMap<String, ScannedSession>()
 
     fun scanAll(): List<ScannedSession> {

@@ -1,7 +1,7 @@
 package com.kgd.common.exception
 
 import com.kgd.common.response.ApiResponse
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -12,11 +12,11 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
-    private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
+    private val log = KotlinLogging.logger {}
 
     @ExceptionHandler(BusinessException::class)
     fun handleBusinessException(e: BusinessException): ResponseEntity<ApiResponse<Nothing>> {
-        log.warn("Business exception: ${e.errorCode} - ${e.message}")
+        log.warn { "Business exception: ${e.errorCode} - ${e.message}" }
         val status = when (e.errorCode) {
             ErrorCode.NOT_FOUND -> HttpStatus.NOT_FOUND
             ErrorCode.UNAUTHORIZED -> HttpStatus.UNAUTHORIZED
@@ -37,7 +37,7 @@ class GlobalExceptionHandler {
             .firstOrNull()
             ?.let { "${it.field}: ${it.defaultMessage}" }
             ?: "Validation failed"
-        log.warn("Validation failed: $message")
+        log.warn { "Validation failed: $message" }
         return ResponseEntity.badRequest().body(
             ApiResponse.error("INVALID_INPUT", message)
         )
@@ -52,7 +52,7 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception::class)
     fun handleGenericException(e: Exception): ResponseEntity<ApiResponse<Nothing>> {
-        log.error("Unhandled exception", e)
+        log.error(e) { "Unhandled exception" }
         return ResponseEntity.internalServerError().body(ApiResponse.error(ErrorCode.INTERNAL_ERROR))
     }
 }

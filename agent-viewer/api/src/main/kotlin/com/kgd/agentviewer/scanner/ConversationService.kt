@@ -1,7 +1,7 @@
 package com.kgd.agentviewer.scanner
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import java.io.File
 
@@ -17,7 +17,7 @@ data class ConversationMessage(
 @Service
 class ConversationService(private val objectMapper: ObjectMapper) {
 
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
     private val claudeDir = File(System.getProperty("user.home"), ".claude/projects")
 
     fun getConversation(projectPath: String): List<ConversationMessage> {

@@ -7,7 +7,7 @@ import com.kgd.codedictionary.application.sync.dto.IndexSyncJob
 import com.kgd.codedictionary.domain.index.model.CodeLocation
 import com.kgd.codedictionary.domain.index.model.ConceptIndex
 import com.kgd.codedictionary.infrastructure.elasticsearch.adapter.IndexAliasManager
-import org.slf4j.LoggerFactory
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Pageable
 import org.springframework.scheduling.annotation.Async
@@ -23,7 +23,7 @@ class SyncService(
     @Value("\${elasticsearch.index-name:concept-index}") private val alias: String,
     @Value("\${elasticsearch.retention:2}") private val retention: Int
 ) {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val log = KotlinLogging.logger {}
 
     /** 동기 트리거 — jobId 즉시 반환, 백그라운드에서 실행됨 */
     fun submit(): IndexSyncJob {
@@ -49,7 +49,7 @@ class SyncService(
         try {
             // 1. 새 인덱스 생성
             aliasManager.createIndex(newIndex)
-            log.info("[{}] new index created: {}", jobId, newIndex)
+            log.info { "[$jobId] new index created: $newIndex" }
 
             // 2. synonym 적용 (close/open 사이클)
             val concepts = conceptRepository.findAllWithSynonyms()
@@ -72,14 +72,14 @@ class SyncService(
             indexingPort.bulkIndex(newIndex, codeEntries)
             indexingPort.bulkIndex(newIndex, conceptOnlyEntries)
             val total = codeEntries.size + conceptOnlyEntries.size
-            log.info("[{}] bulk indexed {} docs ({} code + {} concept-only)", jobId, total, codeEntries.size, conceptOnlyEntries.size)
+            log.info { "[$jobId] bulk indexed $total docs (${codeEntries.size} code + ${conceptOnlyEntries.size} concept-only)" }
 
             // 4. atomic alias swap + 옛 인덱스 retention 정리
             aliasManager.swapAlias(alias, newIndex, retention)
             jobRegistry.markSuccess(jobId, total)
-            log.info("[{}] sync completed: alias '{}' → '{}'", jobId, alias, newIndex)
+            log.info { "[$jobId] sync completed: alias '$alias' → '$newIndex'" }
         } catch (e: Exception) {
-            log.error("[{}] sync failed: {}", jobId, e.message, e)
+            log.error(e) { "[$jobId] sync failed: ${e.message}" }
             jobRegistry.markFailed(jobId, e.message ?: e.javaClass.simpleName)
         }
     }

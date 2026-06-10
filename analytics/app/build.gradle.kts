@@ -17,6 +17,8 @@ dependencies {
     implementation(libs.clickhouse.http)
     implementation(libs.hikaricp)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+    // kotlin-logging 람다 로깅 (ADR-0021)
+    implementation(libs.kotlin.logging)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.kafka.streams.test)
