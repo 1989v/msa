@@ -62,3 +62,25 @@ migrate to the Operator's native `PerconaServerMySQLBackup` and
 `PerconaServerMySQLBackupSchedule` CRs for push-button backup and
 PITR. XtraBackup semantics are identical, so the scheduling can flip
 without changing the backup target.
+
+## Secrets (required before apply)
+
+`commerce-mysql-secrets` 는 manifest 에 평문으로 두지 않는다. apply 전에
+SealedSecret 으로 생성한다 (`k8s/infra/prod/sealed-secrets/README.md`):
+
+```bash
+kubectl -n commerce create secret generic commerce-mysql-secrets \
+    --from-literal=root='...' \
+    --from-literal=xtrabackup='...' \
+    --from-literal=monitor='...' \
+    --from-literal=clusteradmin='...' \
+    --from-literal=operator='...' \
+    --from-literal=orchestrator='...' \
+    --from-literal=replication='...' \
+    --dry-run=client -o yaml \
+  | kubeseal --format=yaml \
+  > k8s/infra/prod/sealed-secrets/commerce-mysql-secrets-sealed.yaml
+```
+
+Secret 이 없으면 operator 는 secret 대기 상태로 명시적으로 멈춘다 —
+약한 placeholder 값으로 조용히 기동되는 것보다 안전하다.

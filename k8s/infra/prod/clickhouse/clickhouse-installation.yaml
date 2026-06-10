@@ -6,7 +6,8 @@ metadata:
 spec:
   configuration:
     users:
-      analytics/password: analytics    # replace via SealedSecret
+      # 평문 password 금지 — commerce-clickhouse-secrets 는 SealedSecret 으로 공급 (README 참조)
+      analytics/k8s_secret_password: commerce/commerce-clickhouse-secrets/analytics-password
       analytics/networks/ip:
         - "::/0"
         - "0.0.0.0/0"
@@ -18,6 +19,9 @@ spec:
     clusters:
       - name: commerce
         layout:
+          # 의도된 싱글턴 (1 shard × 1 replica = 인스턴스 1개, 데이터 중복 없음).
+          # analytics 데이터는 Kafka 재처리로 복구 가능하다는 전제. HA 가 필요해지면
+          # shardsCount 확장 전에 ReplicatedMergeTree 스키마 전환이 선행돼야 한다.
           shardsCount: 1
           replicasCount: 1
   templates:

@@ -1,0 +1,18 @@
+# FE(nginx 정적 서빙) 는 JVM 사이징(resources.yaml: 1Gi/2CPU)이 과하다.
+# resources.yaml 뒤에 적용되어 FE 만 소형 티어로 덮어쓴다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi

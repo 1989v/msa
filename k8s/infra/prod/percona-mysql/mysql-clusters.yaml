@@ -37,21 +37,10 @@ spec:
     image: percona/percona-xtrabackup:8.0
     storages: {}
 ---
-# Placeholder root Secret. Replace with a SealedSecret before apply.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: commerce-mysql-secrets
-  namespace: commerce
-type: Opaque
-stringData:
-  root: REPLACE_WITH_SEALED_SECRET
-  xtrabackup: REPLACE_WITH_SEALED_SECRET
-  monitor: REPLACE_WITH_SEALED_SECRET
-  clusteradmin: REPLACE_WITH_SEALED_SECRET
-  operator: REPLACE_WITH_SEALED_SECRET
-  orchestrator: REPLACE_WITH_SEALED_SECRET
-  replication: REPLACE_WITH_SEALED_SECRET
+# `commerce-mysql-secrets` 는 이 파일에 두지 않는다 — 평문 placeholder 가 그대로
+# 적용되는 사고를 막기 위해 SealedSecret 으로만 공급한다 (없으면 operator 가
+# secret 대기 상태로 멈춰 명시적으로 실패한다). 생성 방법: README.md 참조.
+# 필요 키: root, xtrabackup, monitor, clusteradmin, operator, orchestrator, replication
 ---
 # Service aliases for each per-service database hostname in
 # application-kubernetes.yml. The selector points at Percona's

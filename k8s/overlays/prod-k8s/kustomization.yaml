@@ -39,6 +39,19 @@ patches:
       kind: Deployment
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"
 
+  # FE tier: nginx 정적 서빙은 JVM 사이징이 과해서 소형 티어로 재덮어쓰기
+  # (resources.yaml 뒤에 와야 한다 — patch 적용 순서가 우선순위).
+  - path: patches/resources-fe.yaml
+    target:
+      kind: Deployment
+      name: ".*-fe"
+
+  # 이미지 신뢰성: prod 는 항상 레지스트리에서 pull.
+  - path: patches/image-pull-policy.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+
   # Ingress TLS: switch to HTTPS with cert-manager.
   - path: patches/ingress-tls.yaml
     target:

@@ -1,0 +1,20 @@
+# nginx 기반 FE + 비 JVM 서비스(recommendation-ann) 하드닝.
+# stock nginx:alpine 은 master 가 root 로 :80 바인딩 후 worker 를 드랍하므로
+# runAsNonRoot 는 불가 — 대신 최소 capability 집합으로 제한한다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+              add: ["CHOWN", "DAC_OVERRIDE", "SETGID", "SETUID", "NET_BIND_SERVICE"]

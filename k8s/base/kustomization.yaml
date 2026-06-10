@@ -37,3 +37,15 @@ resources:
   - admin-fe
   - quant-fe
   - frontend-ingress.yaml
+
+patches:
+  # Pod 하드닝 (모든 환경 공통). JVM 은 Jib user 1000 전제로 runAsNonRoot,
+  # nginx FE / 비 JVM 은 최소 capability 집합. 대상은 anchored regex 매칭.
+  - path: patches/securitycontext-jvm.yaml
+    target:
+      kind: Deployment
+      name: "(gateway|product|order|search|search-consumer|search-batch|auth|member|wishlist|gifticon|inventory|fulfillment|warehouse|analytics|experiment|chatbot|code-dictionary|agent-viewer-api|quant|recommendation)"
+  - path: patches/securitycontext-web.yaml
+    target:
+      kind: Deployment
+      name: "(portal-fe|gifticon-fe|agent-viewer-fe|admin-fe|quant-fe|recommendation-ann)"

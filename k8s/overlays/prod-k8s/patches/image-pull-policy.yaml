@@ -1,0 +1,12 @@
+# prod 는 항상 레지스트리 기준으로 pull — 노드에 캐시된 stale 이미지로
+# 기동되는 것을 차단한다 (base 는 로컬 import 워크플로 때문에 IfNotPresent).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          imagePullPolicy: Always

@@ -1,0 +1,22 @@
+# JVM(Jib) 서비스 공통 하드닝. Jib convention 이 user=1000:1000 으로 이미지를
+# 굽기 때문에 (buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts)
+# runAsNonRoot 강제가 안전하다. JVM 은 capability 가 필요 없다 (8080 비특권 포트).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: app
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
