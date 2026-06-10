@@ -19,20 +19,27 @@ class MemberJpaEntity(
     val id: Long? = null,
     @Column(nullable = false, length = 255)
     val email: String,
-    @Column(nullable = false, length = 100)
-    var name: String,
+    name: String,
     @Enumerated(EnumType.STRING)
     @Column(name = "sso_provider", nullable = false, length = 20)
     val ssoProvider: SsoProvider,
     @Column(name = "sso_provider_id", nullable = false, length = 255)
     val ssoProviderId: String,
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var status: MemberStatus = MemberStatus.ACTIVE,
+    status: MemberStatus = MemberStatus.ACTIVE,
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now()
 ) {
+    @Column(nullable = false, length = 100)
+    var name: String = name
+        private set
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var status: MemberStatus = status
+        private set
+
+
     fun toDomain(): Member = Member.restore(
         id = id,
         email = email,

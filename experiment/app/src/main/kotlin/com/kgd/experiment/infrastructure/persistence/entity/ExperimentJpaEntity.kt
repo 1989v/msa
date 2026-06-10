@@ -10,33 +10,47 @@ import java.time.LocalDateTime
 class ExperimentJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-
-    @Column(nullable = false)
-    var name: String,
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    var description: String,
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    var status: ExperimentStatus,
-
-    @Column(nullable = false)
-    var trafficPercentage: Int,
-
-    @Column
-    var startDate: LocalDateTime? = null,
-
-    @Column
-    var endDate: LocalDateTime? = null,
+    name: String,
+    description: String,
+    status: ExperimentStatus,
+    trafficPercentage: Int,
+    startDate: LocalDateTime? = null,
+    endDate: LocalDateTime? = null,
 
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
+    variants: MutableList<VariantJpaEntity> = mutableListOf()
+) {
+    @Column(nullable = false)
+    var name: String = name
+        private set
+
+    @Column(nullable = false, columnDefinition = "TEXT")
+    var description: String = description
+        private set
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    var status: ExperimentStatus = status
+        private set
+
+    @Column(nullable = false)
+    var trafficPercentage: Int = trafficPercentage
+        private set
+
+    @Column
+    var startDate: LocalDateTime? = startDate
+        private set
+
+    @Column
+    var endDate: LocalDateTime? = endDate
+        private set
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "experiment_id")
-    var variants: MutableList<VariantJpaEntity> = mutableListOf()
-) {
+    var variants: MutableList<VariantJpaEntity> = variants
+        private set
+
     fun toDomain(): Experiment = Experiment(
         id = id,
         name = name,

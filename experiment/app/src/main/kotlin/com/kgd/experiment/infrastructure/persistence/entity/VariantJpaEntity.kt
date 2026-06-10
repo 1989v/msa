@@ -8,16 +8,22 @@ import jakarta.persistence.*
 class VariantJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
+    name: String,
+    weight: Int,
+    configJson: String = "{}"
+) {
+    @Column(nullable = false)
+    var name: String = name
+        private set
 
     @Column(nullable = false)
-    var name: String,
-
-    @Column(nullable = false)
-    var weight: Int,
+    var weight: Int = weight
+        private set
 
     @Column(columnDefinition = "TEXT")
-    var configJson: String = "{}"
-) {
+    var configJson: String = configJson
+        private set
+
     fun toDomain(): Variant = Variant(
         id = id,
         name = name,

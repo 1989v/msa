@@ -21,13 +21,7 @@ class ProductRepositoryAdapter(
         val entity = if (id != null) {
             jpaRepository.findById(id).orElseThrow {
                 com.kgd.product.domain.product.exception.ProductNotFoundException(id)
-            }.also { e ->
-                e.name = product.name
-                e.price = product.price.amount
-                e.stock = product.stock
-                e.status = product.status
-                e.brand = product.brand
-            }
+            }.also { it.update(product) }
         } else {
             ProductJpaEntity.fromDomain(product)
         }

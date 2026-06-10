@@ -15,13 +15,17 @@ class FulfillmentOrderJpaEntity(
     val orderId: Long,
     @Column(nullable = false)
     val warehouseId: Long,
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var status: FulfillmentStatus,
+    status: FulfillmentStatus,
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now()
 ) {
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var status: FulfillmentStatus = status
+        private set
+
+
     fun toDomain(): FulfillmentOrder = FulfillmentOrder.restore(
         id = id,
         orderId = orderId,

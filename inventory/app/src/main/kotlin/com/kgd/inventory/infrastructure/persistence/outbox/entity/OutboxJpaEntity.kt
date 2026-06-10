@@ -30,11 +30,23 @@ class OutboxJpaEntity(
     @Column(nullable = false, columnDefinition = "JSON")
     val payload: String,
 
-    @Column(nullable = false, length = 20)
-    var status: String = "PENDING",
+    status: String = "PENDING",
 
     @Column(nullable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
-    var publishedAt: LocalDateTime? = null,
-)
+    publishedAt: LocalDateTime? = null,
+) {
+    @Column(nullable = false, length = 20)
+    var status: String = status
+        private set
+
+    var publishedAt: LocalDateTime? = publishedAt
+        private set
+
+    /** 발행 완료 마킹 — PENDING → PUBLISHED 상태 전이 (entity-mutation.md) */
+    fun markPublished() {
+        status = "PUBLISHED"
+        publishedAt = LocalDateTime.now()
+    }
+}

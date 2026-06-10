@@ -16,10 +16,17 @@ class OrderItemJpaEntity(
     val quantity: Int,
     @Column(nullable = false, precision = 19, scale = 2)
     val unitPrice: BigDecimal,
+    order: OrderJpaEntity? = null
+) {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
-    var order: OrderJpaEntity? = null
-) {
+    var order: OrderJpaEntity? = order
+        private set
+
+    fun assignOrder(order: OrderJpaEntity) {
+        this.order = order
+    }
+
     fun toDomain(): OrderItem = OrderItem.restore(id, productId, quantity, Money(unitPrice))
 
     companion object {

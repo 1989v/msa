@@ -42,17 +42,24 @@ import java.util.UUID
 @Table(name = "processed_event")
 @IdClass(ProcessedEventId::class)
 class ProcessedEventJpaEntity(
+    eventId: UUID = UUID.randomUUID(),
+    consumerGroup: String = "",
+    processedAt: Instant = Instant.now(),
+) {
     @Id
     @Column(name = "event_id", columnDefinition = "BINARY(16)", nullable = false)
-    var eventId: UUID = UUID.randomUUID(),
+    var eventId: UUID = eventId
+        private set
 
     @Id
     @Column(name = "consumer_group", nullable = false, length = 64)
-    var consumerGroup: String = "",
+    var consumerGroup: String = consumerGroup
+        private set
 
     @Column(name = "processed_at", nullable = false)
-    var processedAt: Instant = Instant.now(),
-)
+    var processedAt: Instant = processedAt
+        private set
+}
 
 /**
  * Composite PK ID class for [ProcessedEventJpaEntity]. JPA 요구사항 — Serializable + equals/hashCode.

@@ -14,23 +14,55 @@ class ConceptIndexJpaEntity(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "concept_id", nullable = false)
     val concept: ConceptJpaEntity,
-    @Column(nullable = false, length = 500)
-    var filePath: String,
-    @Column(nullable = false)
-    var lineStart: Int,
-    @Column(nullable = false)
-    var lineEnd: Int,
-    @Column(columnDefinition = "TEXT")
-    var codeSnippet: String?,
-    @Column(length = 1000)
-    var gitUrl: String?,
-    @Column(columnDefinition = "TEXT")
-    var description: String?,
-    @Column(length = 40)
-    var gitCommitHash: String?,
+    filePath: String,
+    lineStart: Int,
+    lineEnd: Int,
+    codeSnippet: String?,
+    gitUrl: String?,
+    description: String?,
+    gitCommitHash: String?,
     @Column(nullable = false)
     val indexedAt: LocalDateTime = LocalDateTime.now()
 ) {
+    @Column(nullable = false, length = 500)
+    var filePath: String = filePath
+        private set
+
+    @Column(nullable = false)
+    var lineStart: Int = lineStart
+        private set
+
+    @Column(nullable = false)
+    var lineEnd: Int = lineEnd
+        private set
+
+    @Column(columnDefinition = "TEXT")
+    var codeSnippet: String? = codeSnippet
+        private set
+
+    @Column(length = 1000)
+    var gitUrl: String? = gitUrl
+        private set
+
+    @Column(columnDefinition = "TEXT")
+    var description: String? = description
+        private set
+
+    @Column(length = 40)
+    var gitCommitHash: String? = gitCommitHash
+        private set
+
+    /** 전체 동기화 — 도메인 모델 기준으로 영속 상태를 덮어쓴다 (entity-mutation.md) */
+    fun update(conceptIndex: ConceptIndex) {
+        filePath = conceptIndex.location.filePath
+        lineStart = conceptIndex.location.lineStart
+        lineEnd = conceptIndex.location.lineEnd
+        codeSnippet = conceptIndex.codeSnippet
+        gitUrl = conceptIndex.location.gitUrl
+        description = conceptIndex.description
+        gitCommitHash = conceptIndex.gitCommitHash
+    }
+
     fun toDomain(): ConceptIndex = ConceptIndex.restore(
         id = id,
         conceptId = concept.conceptId,

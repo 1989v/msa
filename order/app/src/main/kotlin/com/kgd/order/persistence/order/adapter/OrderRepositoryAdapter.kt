@@ -16,7 +16,7 @@ class OrderRepositoryAdapter(
         val id = order.id
         val entity = if (id != null) {
             jpaRepository.findByIdWithItems(id)
-                ?.also { it.status = order.status }
+                ?.also { it.changeStatus(order.status) }
                 ?: throw OrderNotFoundException(id)
         } else {
             OrderJpaEntity.fromDomain(order)

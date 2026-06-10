@@ -5,8 +5,6 @@ import com.kgd.codedictionary.domain.concept.model.Concept
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
 import com.kgd.codedictionary.infrastructure.persistence.concept.entity.ConceptJpaEntity
-import com.kgd.codedictionary.infrastructure.persistence.concept.entity.ConceptRelationJpaEntity
-import com.kgd.codedictionary.infrastructure.persistence.concept.entity.ConceptSynonymJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.concept.repository.ConceptJpaRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -18,42 +16,16 @@ class ConceptRepositoryAdapter(
 ) : ConceptRepositoryPort {
 
     override fun save(concept: Concept): Concept {
+        val relationTargets = concept.relatedConceptIds
+            .mapNotNull { jpaRepository.findByConceptId(it) }
+
         val id = concept.id
         val entity = if (id != null) {
             jpaRepository.findById(id).orElseThrow {
                 IllegalArgumentException("Concept not found: $id")
-            }.also { e ->
-                e.name = concept.name
-                e.category = concept.category.name
-                e.level = concept.level.name
-                e.description = concept.description
-
-                e.synonyms.clear()
-                concept.synonyms.forEach { synonym ->
-                    e.synonyms.add(ConceptSynonymJpaEntity(synonym = synonym, concept = e))
-                }
-
-                e.relations.clear()
-                concept.relatedConceptIds.forEach { relatedConceptId ->
-                    val targetEntity = jpaRepository.findByConceptId(relatedConceptId)
-                    if (targetEntity != null) {
-                        e.relations.add(
-                            ConceptRelationJpaEntity(sourceConcept = e, targetConcept = targetEntity)
-                        )
-                    }
-                }
-            }
+            }.also { it.update(concept, relationTargets) }
         } else {
-            val newEntity = ConceptJpaEntity.fromDomain(concept)
-            concept.relatedConceptIds.forEach { relatedConceptId ->
-                val targetEntity = jpaRepository.findByConceptId(relatedConceptId)
-                if (targetEntity != null) {
-                    newEntity.relations.add(
-                        ConceptRelationJpaEntity(sourceConcept = newEntity, targetConcept = targetEntity)
-                    )
-                }
-            }
-            newEntity
+            ConceptJpaEntity.fromDomain(concept, relationTargets)
         }
         return jpaRepository.save(entity).toDomain()
     }

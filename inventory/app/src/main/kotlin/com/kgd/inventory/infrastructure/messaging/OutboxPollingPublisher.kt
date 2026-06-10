@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import java.time.LocalDateTime
 
 @Component
 @ConditionalOnProperty(name = ["outbox.polling.enabled"], havingValue = "true", matchIfMissing = true)
@@ -37,8 +36,7 @@ class OutboxPollingPublisher(
                         if (ex != null) {
                             log.error(ex) { "Failed to publish outbox event id=${event.id}, type=${event.eventType}" }
                         } else {
-                            event.status = "PUBLISHED"
-                            event.publishedAt = LocalDateTime.now()
+                            event.markPublished()
                             outboxRepository.save(event)
                             log.info { "Published outbox event: id=${event.id}, type=${event.eventType}, aggregateId=${event.aggregateId}" }
                         }

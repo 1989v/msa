@@ -24,9 +24,7 @@ class ConversationJpaEntity(
     @Column(nullable = false, length = 20)
     val userRole: UserRole,
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var status: ConversationStatus = ConversationStatus.ACTIVE,
+    status: ConversationStatus = ConversationStatus.ACTIVE,
 
     @OneToMany(mappedBy = "conversation", cascade = [CascadeType.ALL], orphanRemoval = true)
     @OrderBy("createdAt ASC")
@@ -35,9 +33,31 @@ class ConversationJpaEntity(
     @Column(nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),
 
-    @Column(nullable = false)
-    var lastActiveAt: Instant = Instant.now()
+    lastActiveAt: Instant = Instant.now()
 ) {
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var status: ConversationStatus = status
+        private set
+
+    @Column(nullable = false)
+    var lastActiveAt: Instant = lastActiveAt
+        private set
+
+    /** 전체 동기화 — 도메인 모델 기준으로 영속 상태를 덮어쓴다 (entity-mutation.md) */
+    fun update(conversation: Conversation) {
+        status = conversation.status
+        lastActiveAt = conversation.lastActiveAt
+        syncMessages(conversation)
+    }
+
+    private fun syncMessages(conversation: Conversation) {
+        val existingIds = messages.mapNotNull { it.id }.toSet()
+        conversation.messages
+            .filter { it.id == null || it.id !in existingIds }
+            .forEach { messages.add(MessageJpaEntity.fromDomain(it, this)) }
+    }
+
     fun toDomain(): Conversation = Conversation.restore(
         id = id!!,
         channelType = channelType,

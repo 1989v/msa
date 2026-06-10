@@ -24,15 +24,7 @@ class ConceptIndexRepositoryAdapter(
         val entity = if (id != null) {
             jpaRepository.findById(id).orElseThrow {
                 IllegalArgumentException("ConceptIndex not found: $id")
-            }.also { e ->
-                e.filePath = conceptIndex.location.filePath
-                e.lineStart = conceptIndex.location.lineStart
-                e.lineEnd = conceptIndex.location.lineEnd
-                e.codeSnippet = conceptIndex.codeSnippet
-                e.gitUrl = conceptIndex.location.gitUrl
-                e.description = conceptIndex.description
-                e.gitCommitHash = conceptIndex.gitCommitHash
-            }
+            }.also { it.update(conceptIndex) }
         } else {
             ConceptIndexJpaEntity.fromDomain(conceptIndex, conceptEntity)
         }

@@ -20,18 +20,12 @@ import java.time.LocalDateTime
 class ServiceJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    @Column(nullable = false, unique = true, length = 50)
-    var code: String,
-    @Column(nullable = false, length = 100)
-    var name: String,
-    @Column(nullable = false, length = 500)
-    var description: String,
-    @Column
-    var port: Int?,
-    @Column(name = "is_private", nullable = false)
-    var isPrivate: Boolean,
-    @Column(name = "display_order", nullable = false)
-    var displayOrder: Int,
+    code: String,
+    name: String,
+    description: String,
+    port: Int?,
+    isPrivate: Boolean,
+    displayOrder: Int,
     @OneToMany(mappedBy = "service", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     @OrderBy("displayOrder ASC")
     val concepts: MutableList<ServiceConceptJpaEntity> = mutableListOf(),
@@ -42,6 +36,30 @@ class ServiceJpaEntity(
     @Column(nullable = false)
     var updatedAt: LocalDateTime = LocalDateTime.now()
 ) {
+    @Column(nullable = false, unique = true, length = 50)
+    var code: String = code
+        private set
+
+    @Column(nullable = false, length = 100)
+    var name: String = name
+        private set
+
+    @Column(nullable = false, length = 500)
+    var description: String = description
+        private set
+
+    @Column
+    var port: Int? = port
+        private set
+
+    @Column(name = "is_private", nullable = false)
+    var isPrivate: Boolean = isPrivate
+        private set
+
+    @Column(name = "display_order", nullable = false)
+    var displayOrder: Int = displayOrder
+        private set
+
     fun toDomain(): Service = Service.restore(
         id = id,
         code = code,

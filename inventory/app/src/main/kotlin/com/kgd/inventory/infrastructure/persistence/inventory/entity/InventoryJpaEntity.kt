@@ -21,16 +21,23 @@ class InventoryJpaEntity(
     @Column(nullable = false)
     val warehouseId: Long,
 
-    @Column(nullable = false)
-    var availableQty: Int,
+    availableQty: Int,
 
-    @Column(nullable = false)
-    var reservedQty: Int,
+    reservedQty: Int,
 
     @Version
     @Column(nullable = false)
     var version: Long = 0,
 ) {
+    @Column(nullable = false)
+    var availableQty: Int = availableQty
+        private set
+
+    @Column(nullable = false)
+    var reservedQty: Int = reservedQty
+        private set
+
+
     fun toDomain(): Inventory = Inventory.restore(
         id = id!!,
         productId = productId,

@@ -28,8 +28,7 @@ class ReservationJpaEntity(
     @Column(nullable = false)
     val qty: Int,
 
-    @Column(nullable = false, length = 20)
-    var status: String,
+    status: String,
 
     @Column(nullable = false)
     val expiredAt: LocalDateTime,
@@ -37,6 +36,11 @@ class ReservationJpaEntity(
     @Column(nullable = false)
     val createdAt: LocalDateTime,
 ) {
+    @Column(nullable = false, length = 20)
+    var status: String = status
+        private set
+
+
     fun toDomain(): Reservation = Reservation.restore(
         id = id!!,
         orderId = orderId,

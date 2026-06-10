@@ -13,15 +13,22 @@ class OrderJpaEntity(
     val id: Long? = null,
     @Column(nullable = false, length = 100)
     val userId: String,
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var status: OrderStatus,
+    status: OrderStatus,
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now(),
     @OneToMany(mappedBy = "order", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val items: MutableList<OrderItemJpaEntity> = mutableListOf()
 ) {
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var status: OrderStatus = status
+        private set
+
+    fun changeStatus(status: OrderStatus) {
+        this.status = status
+    }
+
     fun toDomain(): Order = Order.restore(
         id = id,
         userId = userId,
@@ -39,7 +46,7 @@ class OrderJpaEntity(
                 createdAt = order.createdAt
             )
             val itemEntities = order.items.map { item ->
-                OrderItemJpaEntity.fromDomain(item).also { it.order = entity }
+                OrderItemJpaEntity.fromDomain(item).also { it.assignOrder(entity) }
             }
             entity.items.addAll(itemEntities)
             return entity
