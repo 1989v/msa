@@ -1,4 +1,4 @@
-import { useRef, useCallback, useImperativeHandle, forwardRef } from 'react';
+import { useRef, useCallback, useEffect, useImperativeHandle, forwardRef } from 'react';
 import ForceGraph3DComponent from 'react-force-graph-3d';
 import * as THREE from 'three';
 import type { GraphNode, GraphLink, GraphRenderer } from '../../types/graph';
@@ -122,6 +122,25 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
         }
       },
     }));
+
+    /* ---- Engine setup: controls / camera / d3 forces ---- */
+    // react-force-graph 에는 onEngineReady prop 이 없어 mount 후 ref 로 직접 설정한다
+    useEffect(() => {
+      if (!fgRef.current) return;
+      const controls = fgRef.current.controls();
+      if (controls) {
+        controls.zoomSpeed = 2.5;
+        controls.rotateSpeed = 0.8;
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.12;
+      }
+      fgRef.current.cameraPosition({ x: 0, y: 0, z: 720 }, { x: 0, y: 0, z: 0 }, 0);
+
+      const fg = fgRef.current;
+      fg.d3Force('cluster', clusterForce(nodes));
+      fg.d3Force('charge')?.strength(-450);
+      fg.d3Force('link')?.distance(200);
+    }, [nodes]);
 
     /* ---- Custom 3D bubble sprite (no glow, no glassmorphism) ---- */
     const nodeThreeObject = useCallback(
@@ -259,22 +278,6 @@ const ForceGraph3D = forwardRef<GraphRenderer, ForceGraph3DProps>(
         d3VelocityDecay={0.35}
         warmupTicks={80}
         cooldownTime={3000}
-        onEngineReady={() => {
-          if (!fgRef.current) return;
-          const controls = fgRef.current.controls();
-          if (controls) {
-            controls.zoomSpeed = 2.5;
-            controls.rotateSpeed = 0.8;
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.12;
-          }
-          fgRef.current.cameraPosition({ x: 0, y: 0, z: 720 }, { x: 0, y: 0, z: 0 }, 0);
-
-          const fg = fgRef.current;
-          fg.d3Force('cluster', clusterForce(nodes));
-          fg.d3Force('charge')?.strength(-450);
-          fg.d3Force('link')?.distance(200);
-        }}
       />
     );
   },
