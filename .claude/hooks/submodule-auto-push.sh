@@ -40,9 +40,17 @@ fi
 REL_PATH="${FILE_PATH#$SUB_ABS/}"
 git -C "$SUB_ABS" add -A >/dev/null 2>&1
 git -C "$SUB_ABS" commit -m "auto: update $REL_PATH" >/dev/null 2>&1 || exit 0
-git -C "$SUB_ABS" push origin HEAD >/dev/null 2>&1 || true
 
-# Update submodule pointer in parent repo
+# Capture push result — was silently swallowed before, causing 35-commit local-only state in 2026-05-22 session
+PUSH_OK=1
+git -C "$SUB_ABS" push origin HEAD >/dev/null 2>&1 || PUSH_OK=0
+
+# Update submodule pointer in parent repo (regardless of push outcome — local commit is real)
 git -C "$REPO_ROOT" add "$SUBMODULE" >/dev/null 2>&1
 
-echo '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Submodule '"$SUBMODULE"' auto-committed and pushed."}}'
+if [ "$PUSH_OK" = "1" ]; then
+  echo '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"Submodule '"$SUBMODULE"' auto-committed and pushed."}}'
+else
+  # Surface the failure explicitly so the agent knows to investigate
+  echo '{"hookSpecificOutput":{"hookEventName":"PostToolUse","additionalContext":"⚠ Submodule '"$SUBMODULE"' auto-committed but PUSH FAILED. Diagnose with: cd '"$SUB_ABS"' && git push origin HEAD"}}'
+fi

@@ -58,3 +58,6 @@ docker/nginx/ssl/*.key
 docker/nginx/ssl/*.crt
 docs/verify/
 .qa/
+
+# skill-quality-eval artifacts (when SKILL_EVAL_GOLDSET_ROOT not set)
+goldset/
