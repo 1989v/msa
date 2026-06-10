@@ -1,0 +1,21 @@
+CREATE TABLE portfolio_card (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    summary VARCHAR(500),
+    body MEDIUMTEXT NOT NULL,
+    period_start DATE,
+    period_end DATE,
+    role VARCHAR(100),
+    impact INT NOT NULL DEFAULT 5,
+    visibility VARCHAR(16) NOT NULL DEFAULT 'PUBLIC',
+    tags JSON,
+    keywords JSON,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_portfolio_visibility (visibility),
+    INDEX idx_portfolio_impact (impact),
+    INDEX idx_portfolio_period_end (period_end),
+    INDEX idx_portfolio_created_at (created_at),
+    CONSTRAINT chk_portfolio_impact CHECK (impact BETWEEN 1 AND 10),
+    CONSTRAINT chk_portfolio_visibility CHECK (visibility IN ('PUBLIC', 'PRIVATE'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
