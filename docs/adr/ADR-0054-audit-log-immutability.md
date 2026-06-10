@@ -1,4 +1,4 @@
-# ADR-0026 audit_log 불변성 + ClickHouse RBAC 분리
+# ADR-0054 audit_log 불변성 + ClickHouse RBAC 분리
 
 ## Status
 Proposed

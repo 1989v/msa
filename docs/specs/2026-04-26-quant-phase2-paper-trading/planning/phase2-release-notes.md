@@ -3,7 +3,7 @@
 
 **릴리즈 일자**: 2026-04-27
 **스펙**: [quant-phase2-paper-trading](.)
-**ADR**: [ADR-0024](../../../adr/ADR-0024-quant-service.md) (Errata) + [ADR-0025](../../../adr/ADR-0025-market-data-hub.md) + [ADR-0026](../../../adr/ADR-0026-audit-log-immutability.md) + [ADR-0027](../../../adr/ADR-0027-oci-vault-kek-envelope-encryption.md) (모두 Proposed)
+**ADR**: [ADR-0024](../../../adr/ADR-0024-quant-service.md) (Errata) + [ADR-0053](../../../adr/ADR-0053-market-data-hub.md) + [ADR-0054](../../../adr/ADR-0054-audit-log-immutability.md) + [ADR-0027](../../../adr/ADR-0027-oci-vault-kek-envelope-encryption.md) (모두 Proposed)
 
 ---
 

@@ -2,7 +2,7 @@
 # Tasks — Chatbot Service
 
 > Spec: `docs/specs/2026-04-07-chatbot-service/spec.md`
-> ADR: `docs/adr/ADR-0015-chatbot-service.md`
+> ADR: `docs/adr/ADR-0052-chatbot-service.md`
 
 ---
 

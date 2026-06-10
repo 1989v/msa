@@ -43,7 +43,7 @@
 ## Excluded
 - **agent-viewer** — `api` 모듈만 존재, 자체 도메인 없음 (다른 BC의 viewer)
 - **common** — 인프라 공통, 도메인 어휘 없음
-- **gateway, discovery** — Spring Cloud 인프라
+- **gateway** — 인프라 (K8s DNS 라우팅; discovery/Eureka 는 ADR-0019 에서 제거됨)
 
 ## How to Use
 

@@ -1,4 +1,4 @@
-# ADR-0025 MarketDataHub: SharedFlow primary + Kafka fan-out
+# ADR-0053 MarketDataHub: SharedFlow primary + Kafka fan-out
 
 ## Status
 Proposed

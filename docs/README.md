@@ -7,48 +7,27 @@
 ```
 docs/
 ├── README.md                  ← 이 파일 (문서 색인)
-├── architecture/              ← 아키텍처 설계 문서
-│   ├── 00.clean-architecture.md
-│   ├── platform-overview.md
-│   ├── service-boundary.md
-│   ├── communication.md
-│   ├── data-strategy.md
-│   ├── resilience-strategy.md
-│   └── cdc-pipeline.md
-├── adr/                       ← Architecture Decision Records
-│   ├── _template.md
-│   ├── ADR-0001 ~ ADR-0009   (커머스 플랫폼)
-│   └── ADR-001 ~ ADR-004     (차팅 서비스)
-├── services/                  ← 서비스별 기술 문서
-│   ├── product.md
-│   ├── order.md
-│   ├── search.md
-│   ├── gateway.md
-│   ├── discovery.md
-│   ├── common.md
-│   └── charting.md
-├── conventions/               ← 코딩/운영 컨벤션
-│   ├── package-structure.md
-│   ├── kotlin-style.md
-│   ├── jpa-persistence.md
-│   ├── testing.md
-│   ├── api-format.md
-│   └── kafka-topics.md
-├── runbooks/                  ← 운영 가이드
-│   ├── README.md              (핵심 구동 명령 요약)
-│   ├── k8s-deployment.md      (K8s / k3s 배포 전체 가이드)
-│   ├── local-dev-setup.md     (로컬 개발: bare-metal + k3d)
-│   └── docker-infra.md        (레거시 compose 안내 / 백업 브랜치 포인터)
-├── study/                     ← 학습/개념 정리
-│   ├── git-submodule.md
-│   └── database-backup-concepts.md
-└── plans/                     ← 구현 계획서
-    ├── 2026-03-02-msa-commerce-platform.md
-    ├── 2026-03-09-search-batch-db-reader.md
-    ├── 2026-03-09-search-pipeline.md
-    ├── 2026-03-10-pattern-chart-ui-design.md
-    └── 2026-03-10-pattern-chart-ui.md
+├── architecture/              ← 아키텍처 설계 문서 (clean-architecture, module-structure,
+│                                 platform-overview, k8s-deployment-model, kafka-convention …)
+├── adr/                       ← Architecture Decision Records (ADR-0001 ~)
+├── conventions/               ← 코딩 컨벤션 (kotlin-style, jpa-persistence, logging,
+│                                 entity-mutation, transactional-usage, frontend-design …)
+├── standards/                 ← 프로세스/도구 표준 (test-rules, design-md, agent-behavior,
+│                                 doc-index-tracking …)
+├── specs/                     ← 피처 스펙 ({date}-{feature}/planning/…)
+├── plans/                     ← 구현 계획서
+├── product/                   ← 프로덕트 컨텍스트 (mission, glossary …)
+├── runbooks/                  ← 운영 가이드 (k8s-deployment, local-dev-setup, oci-ops-journal …)
+├── retrospectives/            ← 세션 회고
+├── study/                     ← 학습/개념 정리 (위치 정책은 ADR-0026 참조)
+├── portfolio/                 ← 기술 포트폴리오 (portfolio-gen 산출물)
+├── backup/ · benchmarks/ · assets/ · site/
 ```
+
+> 서비스별 기술 문서는 `docs/services/` 가 아니라 **각 서비스 디렉토리의
+> `CLAUDE.md` + `docs/`** 에 있다 (ADR-0016 service-local docs).
+> 차팅 서비스는 ADR-0036 에서 quant 로 통합 후 제거됨 (2026-05-02),
+> discovery(Eureka) 는 ADR-0019 K8s 전환에서 제거됨.
 
 ## Quick Links
 
@@ -68,11 +47,11 @@ docs/
 
 ## ADR Numbering
 
-- `ADR-0001` ~ `ADR-0009`: 커머스 플랫폼 핵심 결정 (4자리 번호)
-- `ADR-001` ~ `ADR-004`: 차팅 서비스 결정 (3자리 번호, 별도 도메인)
-
-새 ADR 작성 시 `_template.md`를 복사하여 사용한다.
-커머스 플랫폼 ADR은 `ADR-0010`부터, 차팅 서비스 ADR은 `ADR-005`부터 이어간다.
+- `ADR-0001` ~ : 커머스 플랫폼 결정 (4자리 번호, 단일 시퀀스)
+- 새 ADR 작성 시 `_template.md` 를 복사하고, **반드시 `ls docs/adr/ | sort | tail` 로
+  마지막 번호를 확인한 뒤 +1** 한다 (번호 중복 사고 방지 — 2026-06-10 에 0015/0025/0026
+  3쌍 충돌을 0052~0054 로 정리한 전례가 있다).
+- 서비스 특화 ADR 은 해당 서비스의 `docs/adr/` 에 둔다 (예: `quant/docs/adr/`).
 
 ## Governance
 

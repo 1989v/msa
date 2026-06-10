@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-06-10 — 거버넌스 정리와 함께 승격)
 
 **Date**: 2026-04-26
 **Authors**: kgd

@@ -87,8 +87,8 @@
 ### 문서
 - [x] [Phase 2 Spec](../../docs/specs/2026-04-26-quant-phase2-paper-trading/planning/spec.md)
 - [x] [Phase 2 Requirements](../../docs/specs/2026-04-26-quant-phase2-paper-trading/planning/requirements.md)
-- [x] [ADR-0025 MarketDataHub](../../docs/adr/ADR-0025-market-data-hub.md)
-- [x] [ADR-0026 audit immutability](../../docs/adr/ADR-0026-audit-log-immutability.md)
+- [x] [ADR-0053 MarketDataHub](../../docs/adr/ADR-0053-market-data-hub.md)
+- [x] [ADR-0054 audit immutability](../../docs/adr/ADR-0054-audit-log-immutability.md)
 - [x] [ADR-0027 OCI Vault KEK](../../docs/adr/ADR-0027-oci-vault-kek-envelope-encryption.md)
 - [x] [ADR-0024 Errata (빗썸 JWT)](../../docs/adr/ADR-0024-quant-service.md)
 - [x] [key-rotation-sop.md](key-rotation-sop.md) — KEK 회전 SOP

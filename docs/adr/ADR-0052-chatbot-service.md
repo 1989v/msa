@@ -1,4 +1,4 @@
-# ADR-0015 Chatbot Service 도입
+# ADR-0052 Chatbot Service 도입
 
 ## Status
 Proposed
