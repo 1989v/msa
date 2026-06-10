@@ -229,6 +229,25 @@ jobs:
           username: ${{ secrets.OCIR_USERNAME }}
           password: ${{ secrets.OCIR_TOKEN }}
 
+      # ───── 테스트 게이트: 변경된 JVM 서비스만 (이미지 push 전 필수) ─────────
+      - name: ./gradlew test (변경된 JVM 서비스만)
+        if: ${{ steps.changes.outputs.jvm_services != '' }}
+        run: |
+          set -euo pipefail
+          TASKS=""
+          for svc in ${{ steps.changes.outputs.jvm_services }}; do
+            case "$svc" in
+              gateway)            TASKS+=" :gateway:test" ;;
+              search)             TASKS+=" :search:app:test :search:domain:test" ;;
+              search-batch)       TASKS+=" :search:batch:test" ;;
+              search-consumer)    TASKS+=" :search:consumer:test" ;;
+              agent-viewer-api)   TASKS+=" :agent-viewer:api:test" ;;
+              *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
+            esac
+          done
+          echo "── Gradle test tasks: $TASKS"
+          ./gradlew --no-daemon --max-workers=1 $TASKS
+
       # ───── JVM 이미지: 변경된 서비스만 Jib 빌드 (arm64, serial) ─────────────
       - name: ./gradlew jib (변경된 JVM 서비스만)
         if: ${{ steps.changes.outputs.jvm_services != '' }}
