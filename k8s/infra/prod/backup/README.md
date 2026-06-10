@@ -75,3 +75,23 @@ The `docker/backup/scripts/` tree continues to be the source of
 truth — modify scripts there, rebuild the image, and push. Phase 6
 (the compose teardown) keeps these scripts in the repo because this
 image build needs them.
+
+## Secrets (required before apply)
+
+`backup-secret` 은 평문 manifest 로 두지 않는다. apply 전에 SealedSecret 으로 생성:
+
+```bash
+kubectl -n commerce create secret generic backup-secret \
+    --from-literal=MYSQL_ROOT_PASSWORD='...' \
+    --from-literal=MYSQL_BACKUP_PASSWORD='...' \
+    --from-literal=AWS_ACCESS_KEY_ID='...' \
+    --from-literal=AWS_SECRET_ACCESS_KEY='...' \
+    --from-literal=ALERT_WEBHOOK_URL='' \
+    --dry-run=client -o yaml \
+  | kubeseal --format=yaml \
+  > k8s/infra/prod/sealed-secrets/backup-secret-sealed.yaml
+```
+
+Secret 이 없으면 백업 CronJob pod 는 CreateContainerConfigError 로 명시적으로
+실패한다 — placeholder 값으로 조용히 도는 것보다 안전하다.
+백업 실패/정체 알람은 `k8s/infra/prod/monitoring/backup-alerts.yaml` 이 감시한다.

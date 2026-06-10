@@ -3,7 +3,9 @@ kind: Kustomization
 namespace: commerce
 resources:
   - configmap-env.yaml
-  - secret.yaml
+  # backup-secret 은 평문 placeholder 사고 방지를 위해 SealedSecret 으로만 공급한다
+  # (README.md / k8s/infra/prod/sealed-secrets/README.md). 없으면 CronJob pod 가
+  # CreateContainerConfigError 로 명시적으로 실패한다.
   - pvc.yaml
   - cronjob-full.yaml
   - cronjob-binlog.yaml

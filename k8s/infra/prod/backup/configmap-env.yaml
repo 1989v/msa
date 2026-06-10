@@ -24,4 +24,6 @@ data:
   MYSQL_BACKUP_USER: "root"
   GIFTICON_IMAGES_DIR: "/app/storage/gifticon-images"
   FULL_BACKUP_RETENTION_DAYS: "7"
-  BINLOG_RETENTION_DAYS: "2"
+  # binlog 은 PITR 윈도우 — 풀백업 보관(7일)과 맞춰야 임의 시점 복구가 성립한다.
+  # 2일이면 3일 이전 풀백업 + binlog replay 조합이 불가능했다.
+  BINLOG_RETENTION_DAYS: "7"

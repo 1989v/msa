@@ -1,0 +1,46 @@
+# 백업 CronJob 실패/정체 알람. 백업은 조용히 죽는 게 최악이라
+# (S3 credential 만료, PVC full 등) kube-state-metrics 기반으로 감시한다.
+# idempotent-alerts.yaml 과 동일 패턴 — release 라벨로 chart ruleSelector 매칭.
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: backup-jobs
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: backup-jobs.rules
+      interval: 60s
+      rules:
+        - alert: BackupJobFailed
+          expr: |
+            max by (job_name) (kube_job_status_failed{namespace="commerce", job_name=~"backup-(full|binlog)-.*"}) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "백업 Job 실패: {{ $labels.job_name }}"
+            description: "commerce 네임스페이스의 백업 Job 이 실패했다. kubectl -n commerce logs job/{{ $labels.job_name }} 확인."
+
+        - alert: FullBackupStale
+          # 풀백업은 일 1회 — 26시간 내 성공이 없으면 RPO 위반.
+          expr: |
+            time() - max(kube_cronjob_status_last_successful_time{namespace="commerce", cronjob="backup-full"}) > 26 * 3600
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "풀백업 26시간 이상 정체"
+            description: "backup-full CronJob 의 마지막 성공이 26시간을 넘었다. PITR 베이스가 깨진다."
+
+        - alert: BinlogBackupStale
+          # binlog 아카이브는 시간당 1회 — 3시간 정체면 PITR 윈도우 손실.
+          expr: |
+            time() - max(kube_cronjob_status_last_successful_time{namespace="commerce", cronjob="backup-binlog"}) > 3 * 3600
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "binlog 아카이브 3시간 이상 정체"
+            description: "backup-binlog CronJob 의 마지막 성공이 3시간을 넘었다. 장애 시 PITR 복구 지점이 그만큼 뒤로 밀린다."
