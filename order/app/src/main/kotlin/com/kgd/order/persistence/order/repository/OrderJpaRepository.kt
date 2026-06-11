@@ -11,6 +11,9 @@ interface OrderJpaRepository : JpaRepository<OrderJpaEntity, Long> {
     @Query("SELECT o FROM OrderJpaEntity o JOIN FETCH o.items WHERE o.id = :id")
     fun findByIdWithItems(id: Long): OrderJpaEntity?
 
+    @Query("SELECT DISTINCT o FROM OrderJpaEntity o JOIN FETCH o.items WHERE o.userId = :userId ORDER BY o.createdAt DESC")
+    fun findAllByUserIdWithItems(userId: String): List<OrderJpaEntity>
+
     // === Admin dashboard 집계 (read-only) ===
 
     fun countByCreatedAtAfter(from: LocalDateTime): Long

@@ -49,6 +49,11 @@
   font-family: inherit;
 }
 
+a.gnb-menu-item {
+  display: inline-block;
+  text-decoration: none;
+}
+
 .gnb-menu-item:hover {
   color: #e0e0e0;
   background: rgba(108, 99, 255, 0.12);

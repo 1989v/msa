@@ -36,6 +36,17 @@ interface ServiceCatalogProps {
   onConceptClick: (conceptId: string) => void;
 }
 
+// 정적 엔트리 — 커머스 쇼핑 플로우 데모 (포털 SPA 내 /shop 라우트, LIVE).
+// API(/api/v1/services) 응답과 동일한 ServiceItem 구조를 따른다.
+const SHOP_DEMO_SERVICE: ServiceItem = {
+  code: 'shop-demo',
+  name: '커머스 쇼핑 (데모)',
+  description: '상품 검색 → 주문 → 주문내역 — order/inventory/fulfillment Saga 데모',
+  port: null,
+  isPrivate: false,
+  concepts: ['saga-pattern', 'event-driven-architecture', 'idempotency'],
+};
+
 export default function ServiceCatalog({ onConceptClick }: ServiceCatalogProps) {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +88,30 @@ export default function ServiceCatalog({ onConceptClick }: ServiceCatalogProps) 
         {error && <div className="service-catalog-status">{error}</div>}
         {!loading && !error && (
           <div className="service-catalog-grid">
+            <div key={SHOP_DEMO_SERVICE.code} className="service-card">
+              <ListRow
+                avatar={<span>{abbr(SHOP_DEMO_SERVICE.name)}</span>}
+                primary={SHOP_DEMO_SERVICE.name}
+                secondary={SHOP_DEMO_SERVICE.description}
+                value="LIVE"
+                href="/shop"
+              />
+              <div className="service-concepts">
+                {SHOP_DEMO_SERVICE.concepts.map((concept) => {
+                  const color = CONCEPT_COLORS[concept] ?? '#6c63ff';
+                  return (
+                    <button
+                      key={concept}
+                      className="service-concept-chip"
+                      style={{ background: `${color}20`, color, borderColor: `${color}44` }}
+                      onClick={() => handleConceptClick(concept)}
+                    >
+                      {concept}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             {services.map((service) => (
               <div key={service.code} className="service-card">
                 <ListRow

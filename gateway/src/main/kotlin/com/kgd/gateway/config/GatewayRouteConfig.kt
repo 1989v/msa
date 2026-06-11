@@ -7,6 +7,7 @@ import org.springframework.cloud.gateway.route.RouteLocator
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 
 @Configuration
 class GatewayRouteConfig(
@@ -55,8 +56,15 @@ class GatewayRouteConfig(
                     }
                     .uri("http://member:8093")
             }
-            // Product Service (ROLE_USER+ for read, ROLE_SELLER+ for write handled at service level)
-            .route("product-service") { r ->
+            // Product Service — 상품 브라우징(GET)은 비로그인 공개 (커머스 표준: 탐색은 public, 주문은 인증)
+            .route("product-service-read") { r ->
+                r.method(HttpMethod.GET)
+                    .and().path("/api/products/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri("http://product:8081")
+            }
+            // Product Service 쓰기 (ROLE_SELLER+ 검증은 service level 의 X-User-Roles 로 처리)
+            .route("product-service-write") { r ->
                 r.path("/api/products/**")
                     .filters { f ->
                         f.filter(authFilter.apply(userConfig()))
@@ -91,13 +99,11 @@ class GatewayRouteConfig(
                     }
                     .uri("http://wishlist:8095")
             }
-            // Search Service (ROLE_USER+)
+            // Search Service — 상품 검색/이벤트 수집은 비로그인 공개 (userId 는 optional 필드).
+            // debug API 는 /api/v1/search/debug 로 gateway 비노출 경로라 영향 없음.
             .route("search-service") { r ->
                 r.path("/api/search/**")
-                    .filters { f ->
-                        f.filter(authFilter.apply(userConfig()))
-                            .stripPrefix(0)
-                    }
+                    .filters { f -> f.stripPrefix(0) }
                     .uri("http://search:8083")
             }
             // Inventory Service — Rate Limiter 적용 (ROLE_SELLER+)

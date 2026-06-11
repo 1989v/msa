@@ -26,4 +26,7 @@ class OrderRepositoryAdapter(
 
     override fun findById(id: Long): Order? =
         jpaRepository.findByIdWithItems(id)?.toDomain()
+
+    override fun findAllByUserId(userId: String): List<Order> =
+        jpaRepository.findAllByUserIdWithItems(userId).map { it.toDomain() }
 }

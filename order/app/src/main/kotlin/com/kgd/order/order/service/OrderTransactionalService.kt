@@ -55,4 +55,7 @@ class OrderTransactionalService(
 
     @Transactional(readOnly = true)
     fun findById(id: Long): Order? = repositoryPort.findById(id)
+
+    @Transactional(readOnly = true)
+    fun findAllByUserId(userId: String): List<Order> = repositoryPort.findAllByUserId(userId)
 }

@@ -4,6 +4,7 @@ import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.order.application.order.port.PaymentPort
 import com.kgd.order.application.order.port.ProductPort
+import com.kgd.order.application.order.usecase.GetMyOrdersUseCase
 import com.kgd.order.application.order.usecase.GetOrderUseCase
 import com.kgd.order.application.order.usecase.PlaceOrderUseCase
 import com.kgd.order.domain.order.exception.OrderNotFoundException
@@ -15,7 +16,7 @@ class OrderService(
     private val orderTransactionalService: OrderTransactionalService,
     private val paymentPort: PaymentPort,
     private val productPort: ProductPort,
-) : PlaceOrderUseCase, GetOrderUseCase {
+) : PlaceOrderUseCase, GetOrderUseCase, GetMyOrdersUseCase {
 
     private val log = KotlinLogging.logger {}
 
@@ -83,4 +84,21 @@ class OrderService(
             status = order.status.name
         )
     }
+
+    override fun execute(userId: String): List<GetMyOrdersUseCase.Result> =
+        orderTransactionalService.findAllByUserId(userId).map { order ->
+            GetMyOrdersUseCase.Result(
+                orderId = requireNotNull(order.id),
+                totalAmount = order.totalAmount.amount,
+                status = order.status.name,
+                createdAt = order.createdAt,
+                items = order.items.map { item ->
+                    GetMyOrdersUseCase.Item(
+                        productId = item.productId,
+                        quantity = item.quantity,
+                        unitPrice = item.unitPrice.amount,
+                    )
+                },
+            )
+        }
 }

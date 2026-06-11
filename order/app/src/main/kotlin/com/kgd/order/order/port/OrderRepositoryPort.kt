@@ -5,4 +5,5 @@ import com.kgd.order.domain.order.model.Order
 interface OrderRepositoryPort {
     fun save(order: Order): Order
     fun findById(id: Long): Order?
+    fun findAllByUserId(userId: String): List<Order>
 }

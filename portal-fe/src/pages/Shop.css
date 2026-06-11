@@ -1,0 +1,522 @@
+/*
+ * Shop pages — DESIGN.md 토큰(--ko-*)만 사용 (tokens.css 는 main.tsx 에서 전역 로드).
+ * 모바일 우선 / max-width 1280 컨테이너 / 카드 radius lg(12) / 버튼·입력 radius md(8)
+ * / touch target ≥44px / 숫자 tabular-nums.
+ */
+
+.shop-page {
+  min-height: 100vh;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  font-family: var(--ko-font-family);
+}
+
+.shop-container {
+  max-width: 1280px; /* DESIGN.md layout.max_width.content */
+  margin: 0 auto;
+  padding: var(--ko-space-5) var(--ko-space-4) var(--ko-space-12);
+}
+
+.shop-container-narrow {
+  max-width: 480px; /* DESIGN.md layout.max_width.mobile_app */
+}
+
+.shop-page-title {
+  font-size: var(--ko-text-2xl);
+  font-weight: var(--ko-weight-bold);
+  margin-bottom: var(--ko-space-4);
+}
+
+/* ── 검색 바 ─────────────────────────────────────────── */
+
+.shop-search-form {
+  display: flex;
+  gap: var(--ko-space-2);
+  margin-bottom: var(--ko-space-5);
+}
+
+.shop-search-input {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 var(--ko-space-4);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--ko-radius-md);
+  font-size: var(--ko-text-base);
+  font-family: inherit;
+}
+
+.shop-search-input::placeholder {
+  color: var(--ko-text-muted);
+}
+
+.shop-search-input:focus-visible {
+  outline: 2px solid var(--ko-accent-primary);
+  outline-offset: 1px;
+  border-color: var(--ko-accent-primary);
+}
+
+/* ── 버튼 (DESIGN.md §7 PrimaryButton 상태 매트릭스) ──── */
+
+.shop-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--ko-space-5);
+  background: var(--ko-accent-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--ko-radius-md);
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.shop-btn-primary:hover {
+  background: var(--ko-accent-primary-hover);
+}
+
+.shop-btn-primary:active {
+  background: var(--ko-accent-primary-active);
+}
+
+.shop-btn-primary:focus-visible {
+  outline: 2px solid var(--ko-accent-primary);
+  outline-offset: 2px;
+}
+
+.shop-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.shop-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 var(--ko-space-4);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--ko-radius-md);
+  font-size: var(--ko-text-sm);
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.shop-btn-secondary:hover {
+  background: var(--ko-surface-2);
+}
+
+.shop-btn-secondary:focus-visible {
+  outline: 2px solid var(--ko-accent-primary);
+  outline-offset: 2px;
+}
+
+.shop-btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 상품 그리드 ─────────────────────────────────────── */
+
+.shop-product-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ko-space-3);
+}
+
+@media (min-width: 640px) {
+  .shop-product-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .shop-product-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.shop-product-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-4);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg); /* 카드 12px */
+  text-align: left;
+  font-family: inherit;
+  color: var(--ko-text-primary);
+  cursor: pointer;
+  transition: background var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+button.shop-product-card {
+  width: 100%;
+}
+
+.shop-product-card:hover {
+  background: var(--ko-surface-2);
+}
+
+.shop-product-card:focus-visible {
+  outline: 2px solid var(--ko-accent-primary);
+  outline-offset: 2px;
+}
+
+.shop-product-card.is-disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.shop-product-card.is-disabled:hover {
+  background: var(--ko-surface-1);
+}
+
+.shop-product-name {
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-product-price {
+  font-size: var(--ko-text-xl);
+  font-weight: var(--ko-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-product-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+}
+
+/* ── 배지 / 칩 (radius full) ─────────────────────────── */
+
+.shop-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--ko-space-2);
+  border-radius: var(--ko-radius-full);
+  font-size: var(--ko-text-xs);
+  font-weight: var(--ko-weight-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-badge-stock {
+  background: var(--ko-surface-3);
+  color: var(--ko-text-secondary);
+}
+
+.shop-badge-soldout {
+  background: var(--ko-surface-3);
+  color: var(--ko-text-muted);
+}
+
+.shop-badge-inactive {
+  background: var(--ko-surface-3);
+  color: var(--ko-text-muted);
+}
+
+/* 주문 상태 배지 — P/L(profit/loss) 색상은 전략 성과 전용이므로 사용하지 않음 (DESIGN.md §8) */
+.shop-badge-pending {
+  /* warning 토큰: caution / pending 역할 */
+  background: var(--ko-status-warning-bg);
+  color: var(--ko-status-warning);
+}
+
+.shop-badge-completed {
+  /* secondary 토큰: positive 톤 (P/L 아님) */
+  background: var(--ko-surface-3);
+  color: var(--ko-accent-secondary);
+}
+
+.shop-badge-cancelled {
+  /* muted 톤 */
+  background: var(--ko-surface-3);
+  color: var(--ko-text-muted);
+}
+
+/* ── 상태 (로딩 / 빈 / 에러) ─────────────────────────── */
+
+.shop-status {
+  padding: var(--ko-space-10) 0;
+  text-align: center;
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+}
+
+.shop-status-error {
+  color: var(--ko-status-warning);
+}
+
+.shop-skeleton-card {
+  height: 116px;
+  border-radius: var(--ko-radius-lg);
+  background: var(--ko-surface-1);
+  animation: shop-skeleton-pulse 1.2s var(--ko-ease-in-out) infinite;
+}
+
+@keyframes shop-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shop-skeleton-card {
+    animation: none;
+  }
+}
+
+/* ── 페이지네이션 ────────────────────────────────────── */
+
+.shop-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ko-space-3);
+  margin-top: var(--ko-space-6);
+}
+
+.shop-pagination-info {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 상품 상세 ───────────────────────────────────────── */
+
+.shop-detail-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+  padding: var(--ko-space-5);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+}
+
+.shop-detail-name {
+  font-size: var(--ko-text-xl);
+  font-weight: var(--ko-weight-bold);
+}
+
+.shop-detail-price {
+  font-size: var(--ko-text-3xl);
+  font-weight: var(--ko-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+}
+
+.shop-detail-label {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.shop-detail-total {
+  font-size: var(--ko-text-xl);
+  font-weight: var(--ko-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 수량 스테퍼 */
+.shop-stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--ko-radius-md);
+  overflow: hidden;
+}
+
+.shop-stepper-btn {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  border: none;
+  font-size: var(--ko-text-lg);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.shop-stepper-btn:hover {
+  background: var(--ko-surface-3);
+}
+
+.shop-stepper-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.shop-stepper-value {
+  min-width: 56px;
+  text-align: center;
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 주문 결과 패널 */
+.shop-order-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-5);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+}
+
+.shop-order-result-title {
+  font-size: var(--ko-text-lg);
+  font-weight: var(--ko-weight-bold);
+}
+
+.shop-inline-error {
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border-radius: var(--ko-radius-md);
+  background: var(--ko-status-warning-bg);
+  color: var(--ko-status-warning);
+  font-size: var(--ko-text-sm);
+}
+
+/* ── 주문 내역 ───────────────────────────────────────── */
+
+.shop-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+}
+
+.shop-order-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-4);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+}
+
+.shop-order-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-2);
+}
+
+.shop-order-date {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-order-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-3);
+  background: var(--ko-surface-2);
+  border-radius: var(--ko-radius-md);
+}
+
+.shop-order-item-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ko-space-2);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.shop-order-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shop-order-total-value {
+  font-size: var(--ko-text-lg);
+  font-weight: var(--ko-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── 로그인 ──────────────────────────────────────────── */
+
+.shop-login-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-5);
+  padding: var(--ko-space-8) var(--ko-space-5);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+  margin-top: var(--ko-space-10);
+  text-align: center;
+}
+
+.shop-login-title {
+  font-size: var(--ko-text-xl);
+  font-weight: var(--ko-weight-bold);
+}
+
+.shop-login-desc {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.shop-login-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+}
+
+.shop-login-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--ko-radius-md);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.shop-login-btn:hover {
+  background: var(--ko-surface-3);
+}
+
+.shop-login-btn:focus-visible {
+  outline: 2px solid var(--ko-accent-primary);
+  outline-offset: 2px;
+}
