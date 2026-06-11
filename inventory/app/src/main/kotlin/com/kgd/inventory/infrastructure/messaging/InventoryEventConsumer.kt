@@ -82,15 +82,16 @@ class InventoryEventConsumer(
         }
 
         for (item in event.items) {
-            reserveStockUseCase.execute(
+            // warehouseId = null → WarehouseSelector 가 가용 재고 기준으로 창고 자동 선택
+            val result = reserveStockUseCase.execute(
                 ReserveStockUseCase.Command(
                     orderId = event.orderId,
                     productId = item.productId,
-                    warehouseId = 1L,
+                    warehouseId = null,
                     qty = item.quantity,
                 )
             )
-            log.info { "Reserved stock: orderId=${event.orderId}, productId=${item.productId}, qty=${item.quantity}" }
+            log.info { "Reserved stock: orderId=${event.orderId}, productId=${item.productId}, qty=${item.quantity}, reservationId=${result.reservationId}" }
         }
     }
 

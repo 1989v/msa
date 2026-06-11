@@ -105,6 +105,61 @@ class InventoryServiceTest : BehaviorSpec({
         }
     }
 
+    // 창고 자동 선택 (warehouseId = null) — 주문 이벤트 경로
+    given("창고 미지정 재고 예약 시") {
+        `when`("여러 창고에 재고가 있으면") {
+            then("가용 재고가 가장 많은 창고가 자동 선택되어야 한다") {
+                val warehouse1 = Inventory.restore(1L, 100L, 1L, 10, 0, 0L)
+                val warehouse2 = Inventory.restore(2L, 100L, 2L, 50, 0, 0L)
+                val savedInventory = Inventory.restore(2L, 100L, 2L, 45, 5, 1L)
+                val reservation = Reservation.restore(
+                    1L, 10L, 100L, 2L, 5, ReservationStatus.ACTIVE,
+                    LocalDateTime.now().plusMinutes(30), LocalDateTime.now(),
+                )
+
+                every { reservationRepository.findActiveByOrderIdAndProductId(10L, 100L) } returns null
+                every { inventoryRepository.findAllByProductId(100L) } returns listOf(warehouse1, warehouse2)
+                every { inventoryRepository.save(any()) } returns savedInventory
+                every { reservationRepository.save(any()) } returns reservation
+
+                val result = service.execute(ReserveStockUseCase.Command(10L, 100L, null, 5))
+
+                result.reservationId shouldBe 1L
+                result.availableQty shouldBe 45
+                // warehouse2 (가용 50) 가 선택되어 차감됨
+                verify(exactly = 1) {
+                    inventoryRepository.save(match { it.warehouseId == 2L })
+                }
+                verify(exactly = 1) { outboxPort.save("Inventory", 2L, "inventory.stock.reserved", any()) }
+            }
+        }
+        `when`("어떤 창고도 요청 수량을 충족하지 못하면") {
+            then("InsufficientStockException이 발생해야 한다") {
+                val warehouse1 = Inventory.restore(1L, 100L, 1L, 3, 0, 0L)
+                val warehouse2 = Inventory.restore(2L, 100L, 2L, 4, 0, 0L)
+
+                every { reservationRepository.findActiveByOrderIdAndProductId(10L, 100L) } returns null
+                every { inventoryRepository.findAllByProductId(100L) } returns listOf(warehouse1, warehouse2)
+
+                shouldThrow<InsufficientStockException> {
+                    service.execute(ReserveStockUseCase.Command(10L, 100L, null, 5))
+                }
+                verify(exactly = 0) { outboxPort.save(any(), any(), any(), any()) }
+            }
+        }
+        `when`("어느 창고에도 재고 row 가 없으면") {
+            then("BusinessException(NOT_FOUND)이 발생해야 한다") {
+                every { reservationRepository.findActiveByOrderIdAndProductId(10L, 999L) } returns null
+                every { inventoryRepository.findAllByProductId(999L) } returns emptyList()
+
+                shouldThrow<BusinessException> {
+                    service.execute(ReserveStockUseCase.Command(10L, 999L, null, 5))
+                }
+                verify(exactly = 0) { outboxPort.save(any(), any(), any(), any()) }
+            }
+        }
+    }
+
     given("재고 해제 시") {
         `when`("유효한 예약이 있으면") {
             then("예약이 취소되고 재고가 복구되어야 한다") {

@@ -15,7 +15,9 @@ import com.kgd.inventory.application.inventory.usecase.ReleaseStockByOrderUseCas
 import com.kgd.inventory.application.inventory.usecase.ReleaseStockUseCase
 import com.kgd.inventory.application.inventory.usecase.ReserveStockUseCase
 import com.kgd.inventory.domain.inventory.event.InventoryEvent
+import com.kgd.inventory.domain.inventory.exception.InsufficientStockException
 import com.kgd.inventory.domain.inventory.model.Inventory
+import com.kgd.inventory.domain.inventory.service.WarehouseSelector
 import com.kgd.inventory.domain.reservation.model.Reservation
 import com.kgd.inventory.domain.reservation.model.ReservationStatus
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -70,28 +72,19 @@ class InventoryService(
             )
         }
 
-        // Redis fast-path: 사전 검증 (재고 부족 시 DB 접근 없이 빠르게 실패)
-        cachePort?.let { cache ->
-            val cacheResult = cache.reserveStock(command.productId, command.warehouseId, command.qty)
-            if (cacheResult == null) {
-                log.debug { "Redis fast-path: 재고 부족 (productId=${command.productId}, warehouseId=${command.warehouseId}, qty=${command.qty})" }
-                // Redis에서 부족 판정이지만 DB가 SSOT이므로 DB로 진행 (캐시가 오래됐을 수 있음)
-            }
-        }
-
-        val inventory = inventoryRepository.findByProductIdAndWarehouseId(command.productId, command.warehouseId)
-            ?: throw BusinessException(ErrorCode.NOT_FOUND, "재고를 찾을 수 없습니다: productId=${command.productId}, warehouseId=${command.warehouseId}")
+        val inventory = resolveInventoryForReserve(command)
+        val warehouseId = inventory.warehouseId
 
         inventory.reserve(command.qty)
         val savedInventory = inventoryRepository.save(inventory)
 
         // Redis 캐시 동기화 (DB 결과 기준)
-        syncCache(command.productId, command.warehouseId, savedInventory)
+        syncCache(command.productId, warehouseId, savedInventory)
 
         val reservation = Reservation.create(
             orderId = command.orderId,
             productId = command.productId,
-            warehouseId = command.warehouseId,
+            warehouseId = warehouseId,
             qty = command.qty,
             ttlMinutes = RESERVATION_TTL_MINUTES,
         )
@@ -104,7 +97,7 @@ class InventoryService(
 
         val event = InventoryEvent.StockReserved(
             productId = command.productId,
-            warehouseId = command.warehouseId,
+            warehouseId = warehouseId,
             qty = command.qty,
             orderId = command.orderId,
             availableQty = savedInventory.getAvailableQty(),
@@ -304,6 +297,47 @@ class InventoryService(
                 reservedQty = savedInventory.getReservedQty(),
             )
         }
+    }
+
+    /**
+     * 예약 대상 재고를 해석한다.
+     * - 창고 명시 (`warehouseId != null`): Redis fast-path 사전 검증 후 해당 창고 재고 조회.
+     * - 창고 미지정 (`warehouseId == null`): [WarehouseSelector] 정책으로 자동 선택
+     *   (주문 이벤트 경로 — InventoryEventConsumer). 선택과 차감이 같은 TX 안에서 일어나
+     *   선택 후 재고 변동 race 는 optimistic lock (version) 으로 방어된다.
+     */
+    private fun resolveInventoryForReserve(command: ReserveStockUseCase.Command): Inventory {
+        val warehouseId = command.warehouseId
+            ?: return selectWarehouseInventory(command.productId, command.qty)
+
+        // Redis fast-path: 사전 검증 (재고 부족 시 DB 접근 없이 빠르게 실패)
+        cachePort?.let { cache ->
+            val cacheResult = cache.reserveStock(command.productId, warehouseId, command.qty)
+            if (cacheResult == null) {
+                log.debug { "Redis fast-path: 재고 부족 (productId=${command.productId}, warehouseId=$warehouseId, qty=${command.qty})" }
+                // Redis에서 부족 판정이지만 DB가 SSOT이므로 DB로 진행 (캐시가 오래됐을 수 있음)
+            }
+        }
+
+        return inventoryRepository.findByProductIdAndWarehouseId(command.productId, warehouseId)
+            ?: throw BusinessException(ErrorCode.NOT_FOUND, "재고를 찾을 수 없습니다: productId=${command.productId}, warehouseId=$warehouseId")
+    }
+
+    private fun selectWarehouseInventory(productId: Long, qty: Int): Inventory {
+        val candidates = inventoryRepository.findAllByProductId(productId)
+        if (candidates.isEmpty()) {
+            throw BusinessException(ErrorCode.NOT_FOUND, "재고를 찾을 수 없습니다: productId=$productId")
+        }
+        val selected = WarehouseSelector.select(candidates, qty)
+        if (selected == null) {
+            val best = candidates.maxBy { it.getAvailableQty() }
+            throw InsufficientStockException(productId, best.warehouseId, qty, best.getAvailableQty())
+        }
+        log.info {
+            "창고 자동 선택: productId=$productId, qty=$qty → warehouseId=${selected.warehouseId} " +
+                "(available=${selected.getAvailableQty()}, candidates=${candidates.size})"
+        }
+        return selected
     }
 
     private fun syncCache(productId: Long, warehouseId: Long, inventory: Inventory) {
