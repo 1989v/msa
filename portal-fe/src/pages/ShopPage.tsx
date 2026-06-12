@@ -4,10 +4,12 @@ import ShopHeader from '../components/ShopHeader';
 import {
   fetchProducts,
   searchProducts,
+  suggestProducts,
   postImpressions,
   postClick,
   type ProductSummary,
   type SearchProduct,
+  type ProductSuggestion,
   extractErrorMessage,
 } from '../api/shopApi';
 import { getUserId } from '../auth/auth';
@@ -129,7 +131,32 @@ export default function ShopPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setSuggestions([]);
     setKeyword(keywordInput.trim());
+    setPage(0);
+  };
+
+  // 자동완성 — 200ms 디바운스, 제출된 검색어와 같으면 생략
+  const [suggestions, setSuggestions] = useState<ProductSuggestion[]>([]);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  useEffect(() => {
+    const q = keywordInput.trim();
+    if (q.length < 1 || q === keyword) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      suggestProducts(q)
+        .then((items) => setSuggestions(items))
+        .catch(() => setSuggestions([])); // 자동완성 실패는 조용히 무시
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [keywordInput, keyword]);
+
+  const handleSuggestionSelect = (name: string) => {
+    setKeywordInput(name);
+    setSuggestions([]);
+    setKeyword(name);
     setPage(0);
   };
 
@@ -163,14 +190,40 @@ export default function ShopPage() {
         <h1 className="shop-page-title">상품 둘러보기</h1>
 
         <form className="shop-search-form" onSubmit={handleSubmit} role="search">
-          <input
-            type="search"
-            className="shop-search-input"
-            placeholder="상품명으로 검색"
-            value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            aria-label="상품 검색"
-          />
+          <div className="shop-search-input-wrap">
+            <input
+              type="search"
+              className="shop-search-input"
+              placeholder="상품명으로 검색"
+              value={keywordInput}
+              onChange={(e) => setKeywordInput(e.target.value)}
+              onFocus={() => setSuggestOpen(true)}
+              onBlur={() => setSuggestOpen(false)}
+              aria-label="상품 검색"
+              aria-expanded={suggestOpen && suggestions.length > 0}
+              aria-controls="shop-suggest-list"
+              role="combobox"
+            />
+            {suggestOpen && suggestions.length > 0 && (
+              <ul className="shop-suggest-list" id="shop-suggest-list" role="listbox">
+                {suggestions.map((s) => (
+                  <li key={s.id} role="option" aria-selected="false">
+                    <button
+                      type="button"
+                      className="shop-suggest-item"
+                      // onMouseDown: input blur 보다 먼저 실행되어야 선택이 동작
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        handleSuggestionSelect(s.name);
+                      }}
+                    >
+                      {s.name}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <button type="submit" className="shop-btn-primary">
             검색
           </button>

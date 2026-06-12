@@ -2,6 +2,7 @@ package com.kgd.search.presentation.search.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.search.application.product.usecase.SearchProductUseCase
+import com.kgd.search.application.product.usecase.SuggestProductUseCase
 import com.kgd.search.domain.bandit.model.BanditKey
 import com.kgd.search.domain.bandit.model.ClickEvent
 import com.kgd.search.domain.bandit.model.ImpressionEvent
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/search")
 class SearchController(
     private val searchProductUseCase: SearchProductUseCase,
+    private val suggestProductUseCase: SuggestProductUseCase,
     private val banditEventPort: BanditEventPort
 ) {
 
@@ -26,10 +28,21 @@ class SearchController(
     fun searchProducts(
         @RequestParam keyword: String,
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) userId: String?
     ): ApiResponse<SearchProductUseCase.Result> {
-        val result = searchProductUseCase.execute(SearchProductUseCase.Query(keyword, page, size))
+        val result = searchProductUseCase.execute(SearchProductUseCase.Query(keyword, page, size, userId))
         return ApiResponse.success(result)
+    }
+
+    /** 상품명 자동완성 — 검색창 입력 중 prefix 매칭 (ACTIVE 상품, 인기도 부스트). */
+    @GetMapping("/products/suggest")
+    fun suggestProducts(
+        @RequestParam q: String,
+        @RequestParam(defaultValue = "8") size: Int
+    ): ApiResponse<List<SuggestProductUseCase.Suggestion>> {
+        if (q.isBlank()) return ApiResponse.success(emptyList())
+        return ApiResponse.success(suggestProductUseCase.execute(q, size.coerceIn(1, 20)))
     }
 
     /**

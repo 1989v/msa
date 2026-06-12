@@ -68,6 +68,13 @@ search:
   #       gmv7d-weight: 2.0
   ranking-variants:
     variants: {}
+  # 온라인 A/B — experiment 서비스 bucket assignment 로 variant 할당.
+  # 활성화: experiment 서비스에 실험 등록 후 enabled=true + id 지정.
+  # variant 키는 ranking-variants.variants 키와 일치해야 하며, 미정의 키(control)는 기본 ranking.
+  experiment:
+    enabled: false
+    id: 0
+    url: http://experiment:8091
   # ADR-0043 — Bandit / Thompson Sampling rerank
   bandit:
     enabled: true

@@ -8,7 +8,9 @@ interface SearchProductUseCase {
     data class Query(
         val keyword: String,
         val page: Int = 0,
-        val size: Int = 20
+        val size: Int = 20,
+        /** 온라인 A/B variant 할당용. null 이면 실험 미참여 (기본 ranking). */
+        val userId: String? = null
     )
 
     data class ProductSearchResult(
@@ -29,6 +31,8 @@ interface SearchProductUseCase {
         val products: List<ProductSearchResult>,
         val totalElements: Long,
         val totalPages: Int,
-        val currentPage: Int
+        val currentPage: Int,
+        /** 적용된 온라인 A/B variant (실험 미참여 시 null) — 분석 차원 태깅용. */
+        val variant: String? = null
     )
 }

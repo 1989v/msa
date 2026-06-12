@@ -224,6 +224,18 @@ export const searchProducts = async (
   return res.data.data;
 };
 
+export interface ProductSuggestion {
+  id: string;
+  name: string;
+}
+
+export const suggestProducts = async (q: string, size = 8): Promise<ProductSuggestion[]> => {
+  const res = await api.get<ApiResponse<ProductSuggestion[]>>('/api/search/products/suggest', {
+    params: { q, size },
+  });
+  return res.data.data;
+};
+
 export const postImpressions = async (body: ImpressionsRequest): Promise<void> => {
   await api.post('/api/search/impressions', body);
 };

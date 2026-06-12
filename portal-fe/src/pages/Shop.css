@@ -57,6 +57,48 @@
   border-color: var(--ko-accent-primary);
 }
 
+.shop-search-input-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+}
+
+/* 자동완성 드롭다운 — popover 이므로 shadow lg 허용 (DESIGN.md §5) */
+.shop-suggest-list {
+  position: absolute;
+  top: calc(100% + var(--ko-space-1));
+  left: 0;
+  right: 0;
+  z-index: 30;
+  margin: 0;
+  padding: var(--ko-space-1) 0;
+  list-style: none;
+  background: var(--ko-surface-2);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-md);
+  box-shadow: var(--ko-shadow-lg);
+  overflow: hidden;
+}
+
+.shop-suggest-item {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--ko-space-2) var(--ko-space-4);
+  background: none;
+  border: none;
+  color: var(--ko-text-primary);
+  font-size: var(--ko-text-sm);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shop-suggest-item:hover,
+.shop-suggest-item:focus-visible {
+  background: var(--ko-surface-3);
+}
+
 /* ── 버튼 (DESIGN.md §7 PrimaryButton 상태 매트릭스) ──── */
 
 .shop-btn-primary {
