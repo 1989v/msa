@@ -2,8 +2,9 @@ name: ci
 
 # PR/main 머지 전 사전 검증.
 #
-# 세 job (병렬):
+# 네 job (병렬):
 #   - compile-gate       : Kotlin/Java 컴파일 검증 (test 는 미포함)
+#   - test-gate          : 변경된 JVM 서비스만 ./gradlew test (PR 전용)
 #   - yaml-validate      : application*.yml syntax + duplicate key 검증
 #   - kustomize-validate : k8s overlay 렌더 검증
 #
@@ -11,8 +12,10 @@ name: ci
 # duplicate top-level key (예: spring: 블록 두 번). compile-gate 는 yml 을
 # 안 읽어서 못 잡음.
 #
-# 무거운 test/jib 는 images.yml 이 main push 시 수행. 솔로 환경 + public runner
-# 무료라 PR 단계엔 빠른 게이트만.
+# test-gate 는 "PR 단계엔 빠른 게이트만" 원칙을 유지하기 위해 전체가 아닌
+# 변경된 서비스의 테스트만 실행한다 (images.yml 의 변경 감지와 동일 매핑).
+# common/buildSrc 등 공유 의존성 변경 시에만 전체 JVM 테스트.
+# 전체 test/jib 는 images.yml 이 main push 시 수행.
 
 on:
   pull_request:
@@ -71,6 +74,117 @@ jobs:
 
       - name: ./gradlew compileKotlin compileJava
         run: ./gradlew compileKotlin compileJava --no-daemon
+
+  test-gate:
+    name: Changed-services test (PR only)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 30
+    steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            msa
+            msa-auth
+            msa-gifticon
+
+      - name: Checkout (with merge-base history)
+        uses: actions/checkout@v4
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          submodules: false
+          fetch-depth: 0
+
+      - name: Init build-required submodules (auth, gifticon)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          git config --global \
+            url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf \
+            "https://github.com/"
+          git submodule update --init --recursive -- auth gifticon
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: ./gradlew test (변경된 JVM 서비스만)
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+
+          # 서비스 → 테스트 태스크 매핑은 images.yml 의 매핑과 동일하게 유지할 것
+          ALL_JVM="gateway product order search search-batch search-consumer auth member wishlist gifticon analytics experiment code-dictionary inventory fulfillment warehouse chatbot quant recommendation agent-viewer-api"
+
+          CHANGED_FILES=$(git diff --name-only "$BASE_SHA"...HEAD)
+          echo "── 변경 파일 ($(echo "$CHANGED_FILES" | wc -l) 개):"
+          echo "$CHANGED_FILES" | sed 's/^/   /'
+
+          if echo "$CHANGED_FILES" | grep -qE '^(common/|buildSrc/|gradle/|build\.gradle\.kts$|settings\.gradle\.kts$|gradle\.properties$)'; then
+            echo "→ 공유 의존성 변경 감지 — 전체 JVM 테스트"
+            SVCS="$ALL_JVM"
+          else
+            SVCS=""
+            while IFS= read -r file; do
+              [[ -z "$file" ]] && continue
+              case "$file" in
+                gateway/*)                                 SVCS+=" gateway" ;;
+                product/*)                                 SVCS+=" product" ;;
+                order/*)                                   SVCS+=" order" ;;
+                search/app/*|search/domain/*)              SVCS+=" search" ;;
+                search/batch/*)                            SVCS+=" search-batch" ;;
+                search/consumer/*)                         SVCS+=" search-consumer" ;;
+                auth|auth/*)                               SVCS+=" auth" ;;
+                member/*)                                  SVCS+=" member" ;;
+                wishlist/*)                                SVCS+=" wishlist" ;;
+                gifticon|gifticon/app/*|gifticon/domain/*) SVCS+=" gifticon" ;;
+                inventory/*)                               SVCS+=" inventory" ;;
+                fulfillment/*)                             SVCS+=" fulfillment" ;;
+                warehouse/*)                               SVCS+=" warehouse" ;;
+                analytics/*)                               SVCS+=" analytics" ;;
+                experiment/*)                              SVCS+=" experiment" ;;
+                code-dictionary/*)                         SVCS+=" code-dictionary" ;;
+                chatbot/*)                                 SVCS+=" chatbot" ;;
+                quant/app/*|quant/domain/*)                SVCS+=" quant" ;;
+                recommendation/app/*|recommendation/domain/*) SVCS+=" recommendation" ;;
+                agent-viewer/api/*)                        SVCS+=" agent-viewer-api" ;;
+              esac
+            done <<< "$CHANGED_FILES"
+          fi
+
+          SVCS=$(echo "$SVCS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          if [[ -z "${SVCS// /}" ]]; then
+            echo "→ JVM 서비스 변경 없음 — 테스트 스킵"
+            exit 0
+          fi
+
+          TASKS=""
+          for svc in $SVCS; do
+            case "$svc" in
+              gateway)            TASKS+=" :gateway:test" ;;
+              search)             TASKS+=" :search:app:test :search:domain:test" ;;
+              search-batch)       TASKS+=" :search:batch:test" ;;
+              search-consumer)    TASKS+=" :search:consumer:test" ;;
+              agent-viewer-api)   TASKS+=" :agent-viewer:api:test" ;;
+              *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
+            esac
+          done
+
+          echo "── Gradle test tasks: $TASKS"
+          # shellcheck disable=SC2086
+          ./gradlew $TASKS --no-daemon --continue
 
   yaml-validate:
     name: application*.yml syntax check

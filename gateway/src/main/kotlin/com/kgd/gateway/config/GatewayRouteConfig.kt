@@ -28,9 +28,38 @@ class GatewayRouteConfig(
         requiredRoles = listOf("ROLE_ADMIN")
     )
 
+    /**
+     * Swagger UI 집계 대상 — 서비스명 → 내부 URI (springdoc webmvc-ui 보유 서비스).
+     * `/api/docs/specs/{service}` 가 각 서비스의 `/v3/api-docs` 로 프록시되고,
+     * gateway 의 springdoc UI (`/api/docs`) 가 이 spec 들을 드롭다운으로 노출한다.
+     */
+    private val openApiServices = mapOf(
+        "product" to "http://product:8081",
+        "order" to "http://order:8082",
+        "search" to "http://search:8083",
+        "inventory" to "http://inventory:8085",
+        "gifticon" to "http://gifticon:8086",
+        "auth" to "http://auth:8087",
+        "fulfillment" to "http://fulfillment:8088",
+        "warehouse" to "http://warehouse:8090",
+        "recommendation" to "http://recommendation:8092",
+        "member" to "http://member:8093",
+        "wishlist" to "http://wishlist:8095",
+    )
+
     @Bean
     fun routeLocator(builder: RouteLocatorBuilder): RouteLocator =
         builder.routes()
+            // OpenAPI spec 프록시 (public — API 문서)
+            .apply {
+                openApiServices.forEach { (service, uri) ->
+                    route("openapi-$service") { r ->
+                        r.path("/api/docs/specs/$service")
+                            .filters { f -> f.setPath("/v3/api-docs") }
+                            .uri(uri)
+                    }
+                }
+            }
             // Auth Service (no authentication required)
             .route("auth-service") { r ->
                 r.path("/api/auth/**")

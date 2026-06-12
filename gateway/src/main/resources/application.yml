@@ -138,6 +138,40 @@ kgd:
       enabled: true
       aes-enabled: false
 
+# Swagger UI 집계 — /api/docs 에서 서비스별 OpenAPI spec 드롭다운 탐색.
+# spec 은 GatewayRouteConfig 의 /api/docs/specs/{service} 프록시 라우트 경유.
+# 모든 경로가 /api/* 라 ingress 의 gateway prefix (/api) 안에서 그대로 동작한다.
+springdoc:
+  api-docs:
+    enabled: false   # gateway 자체 컨트롤러 spec 은 불필요 (집계 전용)
+  webjars:
+    prefix: /api/webjars
+  swagger-ui:
+    path: /api/docs
+    urls:
+      - name: product
+        url: /api/docs/specs/product
+      - name: order
+        url: /api/docs/specs/order
+      - name: search
+        url: /api/docs/specs/search
+      - name: inventory
+        url: /api/docs/specs/inventory
+      - name: gifticon
+        url: /api/docs/specs/gifticon
+      - name: auth
+        url: /api/docs/specs/auth
+      - name: fulfillment
+        url: /api/docs/specs/fulfillment
+      - name: warehouse
+        url: /api/docs/specs/warehouse
+      - name: recommendation
+        url: /api/docs/specs/recommendation
+      - name: member
+        url: /api/docs/specs/member
+      - name: wishlist
+        url: /api/docs/specs/wishlist
+
 management:
   endpoints:
     web:
