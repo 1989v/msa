@@ -1,0 +1,28 @@
+# ADR-0056 Part 1 — 상품 시드 샘플 (정규화 산출물 예시).
+# 한 줄 = 한 상품. {name, price(KRW>0), stock, brand, description, category}
+# 실제 적재는 normalize.py 가 식약처(#15064909)+참가격(#3043385)+OFF 로 생성한 products.jsonl 을 사용.
+# 이 샘플은 키 없이도 파이프라인을 즉시 돌려볼 수 있게 손수 구성한 현실적 한국 상품 24종.
+{"name":"농심 신라면 멀티팩 (120g x5)","price":3980,"stock":250,"brand":"농심","description":"얼큰한 국물의 국민 라면. 120g 5개입 멀티팩.","category":"식품>면류"}
+{"name":"오뚜기 진라면 매운맛 (120g x5)","price":3380,"stock":300,"brand":"오뚜기","description":"깊고 진한 매운맛 봉지라면 5개입.","category":"식품>면류"}
+{"name":"서울우유 1A 우유 1L","price":2980,"stock":180,"brand":"서울우유","description":"1등급 원유로 만든 신선한 흰우유 1L.","category":"식품>유제품"}
+{"name":"매일 바이오 플레인 요구르트 450g","price":3290,"stock":120,"brand":"매일유업","description":"프로바이오틱스가 살아있는 떠먹는 요구르트.","category":"식품>유제품"}
+{"name":"코카콜라 500ml","price":2000,"stock":400,"brand":"코카콜라","description":"오리지널 탄산음료 500ml 페트.","category":"음료>탄산"}
+{"name":"동원 라이트스탠다드 참치캔 (100g x3)","price":6900,"stock":200,"brand":"동원F&B","description":"담백한 살코기 참치 100g 3캔 묶음.","category":"식품>통조림"}
+{"name":"CJ 햇반 즉석밥 (210g x6)","price":7980,"stock":220,"brand":"CJ제일제당","description":"갓 지은 밥맛 그대로의 즉석밥 6개입.","category":"식품>즉석밥"}
+{"name":"해태 홈런볼 초코 46g","price":1980,"stock":260,"brand":"해태제과","description":"부드러운 슈에 초코크림을 채운 과자.","category":"식품>과자"}
+{"name":"롯데 빼빼로 오리지널 54g","price":1700,"stock":280,"brand":"롯데웰푸드","description":"막대 과자에 초콜릿을 입힌 스테디셀러.","category":"식품>과자"}
+{"name":"오뚜기 옛날 참기름 320ml","price":8900,"stock":90,"brand":"오뚜기","description":"100% 참깨로 압착한 고소한 참기름.","category":"식품>조미료"}
+{"name":"청정원 햇살담은 양조간장 진간장 1.7L","price":7200,"stock":80,"brand":"대상 청정원","description":"요리에 두루 쓰는 양조 진간장 대용량.","category":"식품>조미료"}
+{"name":"유한킴벌리 크리넥스 데코 화장지 30m 30롤","price":18900,"stock":70,"brand":"유한킴벌리","description":"3겹 천연펄프 두루마리 화장지 30롤.","category":"생활용품>화장지"}
+{"name":"P&G 다우니 섬유유연제 청량한 아침 1L","price":9900,"stock":110,"brand":"P&G","description":"오래 지속되는 향의 고농축 섬유유연제.","category":"생활용품>세탁"}
+{"name":"애경 케라시스 데일리 클리닝 샴푸 600ml","price":6500,"stock":130,"brand":"애경산업","description":"두피를 청결하게 가꿔주는 데일리 샴푸.","category":"뷰티>헤어"}
+{"name":"LG생활건강 페리오 토탈7 치약 (100g x3)","price":5400,"stock":150,"brand":"LG생활건강","description":"7가지 구강 고민 케어 치약 3개입.","category":"생활용품>구강"}
+{"name":"아모레퍼시픽 려 자양윤모 한방 샴푸 400ml","price":11900,"stock":85,"brand":"아모레퍼시픽","description":"한방 성분으로 모발에 힘을 더하는 샴푸.","category":"뷰티>헤어"}
+{"name":"스타벅스 하우스 블렌드 원두 200g","price":12500,"stock":95,"brand":"스타벅스","description":"균형 잡힌 풍미의 미디엄 로스트 원두.","category":"음료>커피"}
+{"name":"맥심 모카골드 마일드 커피믹스 100T","price":13900,"stock":140,"brand":"동서식품","description":"부드러운 맛의 국민 커피믹스 100스틱.","category":"음료>커피"}
+{"name":"종가집 포기김치 3.5kg","price":21900,"stock":60,"brand":"대상 종가집","description":"국산 배추로 담근 깊은 맛의 포기김치.","category":"식품>김치"}
+{"name":"풀무원 국산콩 두부 부침용 300g","price":2480,"stock":160,"brand":"풀무원","description":"100% 국산 콩으로 만든 부침용 두부.","category":"식품>두부"}
+{"name":"위키북스 클린 아키텍처 (로버트 C. 마틴)","price":28000,"stock":40,"brand":"위키북스","description":"소프트웨어 구조와 설계의 원칙을 다룬 개발 필독서.","category":"도서>IT"}
+{"name":"인사이트 이펙티브 코틀린","price":32000,"stock":35,"brand":"인사이트","description":"코틀린 관용구와 모범 사례를 정리한 안내서.","category":"도서>IT"}
+{"name":"삼성전자 갤럭시 버즈3 블루투스 이어폰","price":179000,"stock":50,"brand":"삼성전자","description":"노이즈 캔슬링을 지원하는 무선 이어버드.","category":"가전>음향"}
+{"name":"샤오미 미밴드9 스마트밴드","price":45900,"stock":75,"brand":"샤오미","description":"건강·운동 트래킹용 가성비 스마트밴드.","category":"가전>웨어러블"}
