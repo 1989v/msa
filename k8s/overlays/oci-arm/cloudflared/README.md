@@ -42,7 +42,7 @@ Tunnel 클릭 → **Public Hostnames** 탭에서 hostname 마다 1개씩 등록.
 | `kafka` | `<DOMAIN>` | TCP | `kafka.commerce.svc.cluster.local:19092` | Kafka UI / kcat |
 | `ch` | `<DOMAIN>` | HTTP | `http://clickhouse.commerce.svc.cluster.local:8123` | ClickHouse HTTP |
 | `ch-tcp` | `<DOMAIN>` | TCP | `clickhouse.commerce.svc.cluster.local:9000` | ClickHouse Native |
-| `es` | `<DOMAIN>` | HTTP | `http://elasticsearch.commerce.svc.cluster.local:9200` | Elasticsearch / Kibana |
+| `es` | `<DOMAIN>` | HTTP | `http://opensearch.commerce.svc.cluster.local:9200` | OpenSearch / Dashboards (ADR-0055) |
 
 > **MySQL hostname 주의**: read 만 할 거면 `mysql-product-replica` 등 service 이름으로 분리해서 매핑 가능. 단순화 위해 master 1개만 매핑해도 OK.
 
