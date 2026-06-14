@@ -29,6 +29,17 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # 오픈데이터 시드 — 기본 비활성. place-seed ConfigMap 생성 후 PLACE_SEED_ENABLED=true 로 1회 적재(멱등).
+            - name: PLACE_SEED_ENABLED
+              value: "false"
+            - name: PLACE_SEED_REGIONS_PATH
+              value: "/seed/regions.jsonl"
+            - name: PLACE_SEED_POIS_PATH
+              value: "/seed/pois.jsonl"
+          volumeMounts:
+            - name: seed
+              mountPath: /seed
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
@@ -53,3 +64,12 @@ spec:
               memory: 512Mi
             limits:
               memory: 1Gi
+      volumes:
+        # 시드 JSONL 주입 (optional — 없어도 부팅 가능). 활성화 시 operator 가 ConfigMap 생성:
+        #   kubectl create configmap place-seed -n commerce \
+        #     --from-file=regions.jsonl=tools/seed/place/regions.sample.jsonl \
+        #     --from-file=pois.jsonl=tools/seed/place/pois.sample.jsonl
+        - name: seed
+          configMap:
+            name: place-seed
+            optional: true

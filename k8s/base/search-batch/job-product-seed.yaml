@@ -1,0 +1,54 @@
+# ADR-0056 Part 1 — 상품 오픈데이터 시드 적재 Job (one-shot, 수동 apply).
+# kustomization 에 포함하지 않는다 (apply -k 마다 재실행/충돌 방지). 적재 시:
+#   1) ConfigMap 생성:
+#      kubectl create configmap product-seed -n commerce \
+#        --from-file=products.jsonl=tools/seed/products/products.sample.jsonl
+#   2) Job 실행:
+#      kubectl apply -f k8s/base/search-batch/job-product-seed.yaml
+#   3) 재실행 시: kubectl delete job product-seed -n commerce 후 다시 apply
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: product-seed
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: search-batch
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: seed
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: search-batch
+        app.kubernetes.io/part-of: commerce-platform
+        app.kubernetes.io/component: seed
+    spec:
+      restartPolicy: Never
+      enableServiceLinks: false
+      containers:
+        - name: seed
+          image: commerce/search-batch:latest
+          imagePullPolicy: IfNotPresent
+          args:
+            - "--spring.batch.job.name=productSeedIngestJob"
+            - "--reindex.source=seed"
+          env:
+            - name: REINDEX_SOURCE
+              value: "seed"
+            - name: SEED_PATH
+              value: "/seed/products.jsonl"
+            - name: PRODUCT_SERVICE_URL
+              value: "http://product:8081"
+          volumeMounts:
+            - name: seed
+              mountPath: /seed
+              readOnly: true
+          resources:
+            requests: { cpu: 100m, memory: 512Mi }
+            limits: { memory: 1Gi }
+      volumes:
+        - name: seed
+          configMap:
+            name: product-seed
