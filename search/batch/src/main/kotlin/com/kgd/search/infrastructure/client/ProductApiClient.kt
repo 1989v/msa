@@ -21,6 +21,9 @@ class ProductApiClient(
         val price: BigDecimal,
         val status: String,
         val stock: Int,
+        val brand: String? = null,
+        val description: String? = null,
+        val category: String? = null,
         val createdAt: LocalDateTime
     )
 
@@ -51,6 +54,9 @@ class ProductApiClient(
                 price = BigDecimal(p["price"].toString()),
                 status = p["status"] as String,
                 stock = (p["stock"] as? Number)?.toInt() ?: 0,
+                brand = p["brand"] as? String,
+                description = p["description"] as? String,
+                category = p["category"] as? String,
                 createdAt = p["createdAt"]?.toString()?.let { LocalDateTime.parse(it) }
                     ?: LocalDateTime.now()
             )

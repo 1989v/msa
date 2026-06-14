@@ -22,7 +22,7 @@ class ProductIndexingConsumer(
         containerFactory = "productEventListenerContainerFactory"
     )
     fun consume(event: ProductIndexEvent) {
-        log.info { "Received product event: productId=${event.productId}, brand=${event.brand}" }
+        log.info { "Received product event: productId=${event.productId}, category=${event.category}, brand=${event.brand}" }
         try {
             bulkProcessor.processDocument(
                 indexAlias,
@@ -32,6 +32,8 @@ class ProductIndexingConsumer(
                     price = event.price,
                     status = event.status,
                     brand = event.brand,
+                    description = event.description,
+                    category = event.category,
                     createdAt = event.eventTime
                 )
             )

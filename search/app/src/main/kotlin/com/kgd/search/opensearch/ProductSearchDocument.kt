@@ -29,7 +29,9 @@ data class ProductSearchDocument(
     val gmv30d: Double = 0.0,
     val scoreUpdatedAt: Long = 0,
     val categoryId: String? = null,
-    val brand: String? = null
+    val brand: String? = null,
+    val description: String? = null,
+    val category: String? = null
 ) {
     companion object {
         fun fromDomain(doc: ProductDocument) = ProductSearchDocument(
@@ -47,7 +49,9 @@ data class ProductSearchDocument(
             gmv30d = doc.gmv30d,
             scoreUpdatedAt = doc.scoreUpdatedAt,
             categoryId = doc.categoryId,
-            brand = doc.brand
+            brand = doc.brand,
+            description = doc.description,
+            category = doc.category
         )
     }
 
@@ -66,6 +70,8 @@ data class ProductSearchDocument(
         gmv30d = gmv30d,
         scoreUpdatedAt = scoreUpdatedAt,
         categoryId = categoryId,
-        brand = brand
+        brand = brand,
+        description = description,
+        category = category
     )
 }

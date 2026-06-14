@@ -9,5 +9,7 @@ data class ProductIndexEvent(
     val price: BigDecimal,
     val status: String,
     val brand: String? = null,
+    val description: String? = null,
+    val category: String? = null,
     val eventTime: LocalDateTime
 )

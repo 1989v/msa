@@ -12,6 +12,8 @@
   "mappings": {
     "properties": {
       "name": { "type": "text", "analyzer": "nori_analyzer" },
+      "description": { "type": "text", "analyzer": "nori_analyzer" },
+      "category": { "type": "keyword" },
       "status": { "type": "keyword" },
       "price": { "type": "double" },
       "createdAt": { "type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss" },

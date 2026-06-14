@@ -19,6 +19,8 @@ interface SearchProductUseCase {
         val price: BigDecimal,
         val status: String,
         val categoryId: String? = null,
+        val category: String? = null,
+        val description: String? = null,
         val position: Int = 0
     )
 

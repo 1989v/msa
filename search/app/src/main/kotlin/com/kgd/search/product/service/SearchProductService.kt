@@ -37,6 +37,8 @@ class SearchProductService(
                 price = doc.price,
                 status = doc.status,
                 categoryId = doc.categoryId,
+                category = doc.category,
+                description = doc.description,
                 position = pageable.pageNumber * pageable.pageSize + idx
             )
         }

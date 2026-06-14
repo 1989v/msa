@@ -53,6 +53,9 @@ class ProductApiReindexTasklet(
                             name = product.name,
                             price = product.price,
                             status = product.status,
+                            brand = product.brand,
+                            description = product.description,
+                            category = product.category,
                             createdAt = product.createdAt
                         )
                     )
