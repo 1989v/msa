@@ -1,5 +1,5 @@
 # code-dictionary needs more memory than the 512Mi k3s-lite default
-# (Spring Boot + JPA + Elasticsearch client + Flyway + QueryDSL).
+# (Spring Boot + JPA + OpenSearch client + Flyway + QueryDSL).
 apiVersion: apps/v1
 kind: Deployment
 metadata:

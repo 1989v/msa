@@ -1,17 +1,19 @@
-package com.kgd.search.infrastructure.elasticsearch
+package com.kgd.search.infrastructure.opensearch
 
-import co.elastic.clients.elasticsearch._types.SortOptions
-import co.elastic.clients.elasticsearch._types.SortOrder
-import co.elastic.clients.elasticsearch._types.Time
-import co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorModifier
-import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
-import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
+import org.opensearch.client.json.JsonData
+import org.opensearch.client.opensearch._types.FieldValue
+import org.opensearch.client.opensearch._types.SortOptions
+import org.opensearch.client.opensearch._types.SortOrder
+import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
+import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
+import org.opensearch.client.opensearch._types.query_dsl.FunctionScoreMode
+import org.opensearch.client.opensearch.core.SearchRequest
 import org.springframework.data.domain.Pageable
-import org.springframework.data.elasticsearch.client.elc.NativeQuery
 import org.springframework.stereotype.Component
 
 /**
- * ADR-0050 Phase 4 — RankingProperties 가 주어졌을 때 동일 로직으로 NativeQuery 를 빌드.
+ * ADR-0050 Phase 4 — RankingProperties 가 주어졌을 때 동일 로직으로 SearchRequest 를 빌드.
+ * ADR-0055 — Spring Data `NativeQuery` 에서 opensearch-java `SearchRequest` 로 전환 (쿼리 의미 동일).
  *
  * 호출자:
  *  - ProductSearchAdapter (live, default RankingProperties)
@@ -22,83 +24,82 @@ import org.springframework.stereotype.Component
 @Component
 class RankingQueryBuilder {
 
-    fun build(keyword: String, pageable: Pageable, props: RankingProperties): NativeQuery =
-        NativeQuery.builder()
-            .withQuery { q ->
+    fun build(indexName: String, keyword: String, pageable: Pageable, props: RankingProperties): SearchRequest =
+        SearchRequest.Builder()
+            .index(indexName)
+            .query { q ->
                 q.functionScore { fs ->
                     fs.query { inner ->
                         inner.bool { b ->
-                            b.must { m -> m.match { it.field("name").query(keyword) } }
-                            b.filter { f -> f.term { it.field("status").value("ACTIVE") } }
+                            b.must { m -> m.match { it.field("name").query(FieldValue.of(keyword)) } }
+                            b.filter { f -> f.term { it.field("status").value(FieldValue.of("ACTIVE")) } }
                         }
                     }
 
                     fs.functions { fn ->
                         fn.fieldValueFactor { fvf ->
                             fvf.field("popularityScore")
-                                .factor(props.popularityWeight)
+                                .factor(props.popularityWeight.toFloat())
                                 .modifier(FieldValueFactorModifier.Log1p)
                                 .missing(0.0)
                         }
-                        fn.weight(1.0)
+                        fn.weight(1.0f)
                     }
                     fs.functions { fn ->
                         fn.fieldValueFactor { fvf ->
                             fvf.field("ctr")
-                                .factor(props.ctrWeight)
+                                .factor(props.ctrWeight.toFloat())
                                 .modifier(FieldValueFactorModifier.Log1p)
                                 .missing(0.0)
                         }
-                        fn.weight(1.0)
+                        fn.weight(1.0f)
                     }
                     if (props.cvrWeight > 0.0) {
                         fs.functions { fn ->
                             fn.fieldValueFactor { fvf ->
                                 fvf.field("cvr")
-                                    .factor(props.cvrWeight)
+                                    .factor(props.cvrWeight.toFloat())
                                     .modifier(FieldValueFactorModifier.Log1p)
                                     .missing(0.0)
                             }
-                            fn.weight(1.0)
+                            fn.weight(1.0f)
                         }
                     }
                     if (props.gmv7dWeight > 0.0) {
                         fs.functions { fn ->
                             fn.fieldValueFactor { fvf ->
                                 fvf.field("gmv7d")
-                                    .factor(props.gmv7dWeight)
+                                    .factor(props.gmv7dWeight.toFloat())
                                     .modifier(FieldValueFactorModifier.Log1p)
                                     .missing(0.0)
                             }
-                            fn.weight(1.0)
+                            fn.weight(1.0f)
                         }
                     }
                     if (props.gmv30dWeight > 0.0) {
                         fs.functions { fn ->
                             fn.fieldValueFactor { fvf ->
                                 fvf.field("gmv30d")
-                                    .factor(props.gmv30dWeight)
+                                    .factor(props.gmv30dWeight.toFloat())
                                     .modifier(FieldValueFactorModifier.Log1p)
                                     .missing(0.0)
                             }
-                            fn.weight(1.0)
+                            fn.weight(1.0f)
                         }
                     }
                     if (props.freshness.weight > 0.0) {
                         val freshness = props.freshness
                         fs.functions { fn ->
                             fn.gauss { g ->
-                                g.date { d ->
-                                    d.field("createdAt")
-                                        .placement { p ->
-                                            p.origin(freshness.origin)
-                                                .scale(Time.of { it.time(freshness.scale) })
-                                                .offset(Time.of { it.time(freshness.offset) })
-                                                .decay(freshness.decay)
-                                        }
-                                }
+                                g.field("createdAt")
+                                    .placement { p ->
+                                        p.origin(JsonData.of(freshness.origin))
+                                            .scale(JsonData.of(freshness.scale))
+                                            .offset(JsonData.of(freshness.offset))
+                                            .decay(freshness.decay)
+                                    }
                             }
-                            fn.weight(freshness.weight)
+                            fn.weight(freshness.weight.toFloat())
                         }
                     }
 
@@ -106,10 +107,11 @@ class RankingQueryBuilder {
                     fs.boostMode(FunctionBoostMode.Sum)
                 }
             }
-            .withSort(
+            .sort(
                 SortOptions.of { s -> s.score { it.order(SortOrder.Desc) } },
                 SortOptions.of { s -> s.field { f -> f.field("id").order(SortOrder.Asc) } }
             )
-            .withPageable(pageable)
+            .from(pageable.offset.toInt())
+            .size(pageable.pageSize)
             .build()
 }

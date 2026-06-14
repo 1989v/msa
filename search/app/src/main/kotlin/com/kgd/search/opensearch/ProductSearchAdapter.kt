@@ -1,31 +1,35 @@
-package com.kgd.search.infrastructure.elasticsearch
+package com.kgd.search.infrastructure.opensearch
 
-import co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorModifier
-import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
 import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.domain.product.model.ScoredProductDocument
 import com.kgd.search.domain.product.port.ProductSearchPort
+import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.opensearch._types.FieldValue
+import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
+import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
+import org.opensearch.client.opensearch.core.SearchRequest
+import org.opensearch.client.opensearch.core.SearchResponse
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
-import org.springframework.data.elasticsearch.client.elc.NativeQuery
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations
-import org.springframework.data.elasticsearch.core.SearchHits
 import org.springframework.stereotype.Component
 
 @Component
 class ProductSearchAdapter(
-    private val elasticsearchOperations: ElasticsearchOperations,
+    private val client: OpenSearchClient,
     private val rankingProperties: RankingProperties,
     private val rankingVariants: RankingVariantsProperties,
     private val queryBuilder: RankingQueryBuilder
 ) : ProductSearchPort {
 
+    companion object {
+        const val INDEX = "products"
+    }
+
     override fun search(keyword: String, pageable: Pageable): Page<ProductDocument> {
-        val hits = executeSearch(keyword, pageable, rankingProperties)
-        val content = hits.searchHits.map { it.content.toDomain() }
-        return PageImpl(content, pageable, hits.totalHits)
+        val response = executeSearch(keyword, pageable, rankingProperties)
+        val content = response.hits().hits().mapNotNull { it.source()?.toDomain() }
+        return PageImpl(content, pageable, response.hits().total()?.value() ?: 0L)
     }
 
     override fun searchScored(
@@ -35,9 +39,11 @@ class ProductSearchAdapter(
     ): Page<ScoredProductDocument> {
         // 미정의 variant 키 (control 등) 는 기본 ranking 으로 fallback
         val props = rankingVariant?.let { rankingVariants.variants[it] } ?: rankingProperties
-        val hits = executeSearch(keyword, pageable, props)
-        val content = hits.searchHits.map { ScoredProductDocument(it.content.toDomain(), it.score.toDouble()) }
-        return PageImpl(content, pageable, hits.totalHits)
+        val response = executeSearch(keyword, pageable, props)
+        val content = response.hits().hits().mapNotNull { hit ->
+            hit.source()?.let { ScoredProductDocument(it.toDomain(), hit.score() ?: 0.0) }
+        }
+        return PageImpl(content, pageable, response.hits().total()?.value() ?: 0L)
     }
 
     /**
@@ -45,39 +51,40 @@ class ProductSearchAdapter(
      * + popularityScore 부스트. nori 분석 기반이라 별도 매핑 변경 없이 동작한다.
      */
     override fun suggest(prefix: String, size: Int): List<ProductDocument> {
-        val query = NativeQuery.builder()
-            .withQuery { q ->
+        val request = SearchRequest.Builder()
+            .index(INDEX)
+            .query { q ->
                 q.functionScore { fs ->
                     fs.query { inner ->
                         inner.bool { b ->
                             b.must { m -> m.matchBoolPrefix { it.field("name").query(prefix) } }
-                            b.filter { f -> f.term { it.field("status").value("ACTIVE") } }
+                            b.filter { f -> f.term { it.field("status").value(FieldValue.of("ACTIVE")) } }
                         }
                     }
                     fs.functions { fn ->
                         fn.fieldValueFactor { fvf ->
                             fvf.field("popularityScore")
-                                .factor(1.0)
+                                .factor(1.0f)
                                 .modifier(FieldValueFactorModifier.Log1p)
                                 .missing(0.0)
                         }
-                        fn.weight(1.0)
+                        fn.weight(1.0f)
                     }
                     fs.boostMode(FunctionBoostMode.Sum)
                 }
             }
-            .withPageable(PageRequest.of(0, size))
+            .size(size)
             .build()
-        return elasticsearchOperations.search(query, ProductEsDocument::class.java)
-            .searchHits.map { it.content.toDomain() }
+        return client.search(request, ProductSearchDocument::class.java)
+            .hits().hits().mapNotNull { it.source()?.toDomain() }
     }
 
     private fun executeSearch(
         keyword: String,
         pageable: Pageable,
         props: RankingProperties,
-    ): SearchHits<ProductEsDocument> {
-        val query = queryBuilder.build(keyword, pageable, props)
-        return elasticsearchOperations.search(query, ProductEsDocument::class.java)
+    ): SearchResponse<ProductSearchDocument> {
+        val request = queryBuilder.build(INDEX, keyword, pageable, props)
+        return client.search(request, ProductSearchDocument::class.java)
     }
 }

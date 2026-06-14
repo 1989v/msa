@@ -34,14 +34,13 @@ spring:
     url: jdbc:mysql://localhost:3338/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
     user: ${MYSQL_USER:code_dictionary_user}
     password: ${MYSQL_PASSWORD:code_dictionary_password}
-  elasticsearch:
-    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
 
 server:
   port: 8089
   shutdown: graceful
 
-elasticsearch:
+opensearch:
+  uris: ${OPENSEARCH_URIS:http://localhost:9200}
   index-name: concept-index
   retention: 2
 

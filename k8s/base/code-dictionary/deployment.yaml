@@ -29,8 +29,8 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
-            - name: ELASTICSEARCH_URIS
-              value: "http://elasticsearch:9200"
+            - name: OPENSEARCH_URIS
+              value: "http://opensearch:9200"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

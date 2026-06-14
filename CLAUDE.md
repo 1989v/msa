@@ -116,7 +116,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 |--------|-----------|------|
 | product | `product/CLAUDE.md` | SSOT, Kafka 발행 |
 | order | `order/CLAUDE.md` | 결제 연동, 상태 전이 |
-| search | `search/CLAUDE.md` | ES 인덱싱, 4개 모듈 |
+| search | `search/CLAUDE.md` | OpenSearch 인덱싱, 4개 모듈 |
 | gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting, K8s DNS 라우팅 |
 | common | `common/CLAUDE.md` | 공유 라이브러리 |
 | analytics | `analytics/CLAUDE.md` | 이벤트 수집, 스코어 산출 (Kafka Streams + ClickHouse) |
@@ -168,7 +168,7 @@ ingress-nginx 의 longer-prefix-first 매칭 → sub-FE prefix 가 portal-fe 의
   kubectl apply -k k8s/overlays/k3s-lite
   scripts/image-import.sh --all     # 빌드한 이미지 tar 주입
   ```
-- 인프라 최소 세트: MySQL/Redis/Kafka/Elasticsearch/OpenSearch/ClickHouse 단일 인스턴스 (k8s/infra/local/)
+- 인프라 최소 세트: MySQL/Redis/Kafka/OpenSearch/ClickHouse 단일 인스턴스 (k8s/infra/local/)
 - Redis는 standalone으로 배포되며, 클러스터 모드를 요구하는 5개 서비스(gateway, product, gifticon, analytics, experiment)는 overlay에서 `SPRING_APPLICATION_JSON`으로 standalone 전환됨
 
 ## Deployment Modes (ADR-0019)

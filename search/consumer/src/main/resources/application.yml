@@ -3,10 +3,11 @@ spring:
     name: search-consumer
   lifecycle:
     timeout-per-shutdown-phase: 30s
-  elasticsearch:
-    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+opensearch:
+  uris: ${OPENSEARCH_URIS:http://localhost:9200}
 
 kafka:
   consumer:

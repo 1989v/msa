@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.messaging
 
 import com.kgd.search.domain.product.model.ProductDocument
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.annotation.KafkaListener
@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class ProductIndexingConsumer(
-    private val bulkProcessor: EsBulkDocumentProcessor
+    private val bulkProcessor: OsBulkDocumentProcessor
 ) {
     private val log = KotlinLogging.logger {}
 

@@ -1,10 +1,10 @@
-# ADR-0031 §1 (table) — 백엔드 → Elasticsearch :9200
+# ADR-0031 §1 (table) — 백엔드 → OpenSearch :9200 (ADR-0055)
 #
 # search 계열 서비스 (search, search-batch, search-consumer) 와 code-dictionary 가
-# Elasticsearch 를 호출한다 (code-dictionary 는 OS → ES 통합 완료, Nori plugin 사용).
+# OpenSearch 를 호출한다 (search + code-dictionary 공용, Nori plugin 사용 — ADR-0055).
 #
 # 라벨 선택 근거:
-#   - k8s/infra/local/elasticsearch/service.yaml:8 (app.kubernetes.io/name=elasticsearch)
+#   - k8s/infra/local/opensearch/service.yaml:8 (app.kubernetes.io/name=opensearch)
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -16,7 +16,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: elasticsearch
+      app.kubernetes.io/name: opensearch
   policyTypes:
     - Ingress
   ingress:
@@ -24,6 +24,6 @@ spec:
         - podSelector:
             matchExpressions:
               - { key: app.kubernetes.io/part-of, operator: In, values: [commerce-platform] }
-              - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, elasticsearch, clickhouse] }
+              - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, opensearch, clickhouse] }
       ports:
         - { port: 9200, protocol: TCP }

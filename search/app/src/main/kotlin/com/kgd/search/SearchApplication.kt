@@ -3,8 +3,8 @@ package com.kgd.search
 import com.kgd.search.bandit.BanditProperties
 import com.kgd.search.bandit.DiversityProperties
 import com.kgd.search.infrastructure.client.SearchExperimentProperties
-import com.kgd.search.infrastructure.elasticsearch.RankingProperties
-import com.kgd.search.infrastructure.elasticsearch.RankingVariantsProperties
+import com.kgd.search.infrastructure.opensearch.RankingProperties
+import com.kgd.search.infrastructure.opensearch.RankingVariantsProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication

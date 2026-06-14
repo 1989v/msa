@@ -1,6 +1,6 @@
 package com.kgd.search.job
 
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -12,7 +12,7 @@ import org.springframework.batch.core.job.parameters.JobParameters
 
 class ReindexJobExecutionListenerTest : BehaviorSpec({
     val aliasManager = mockk<IndexAliasManager>()
-    val bulkProcessor = mockk<EsBulkDocumentProcessor>()
+    val bulkProcessor = mockk<OsBulkDocumentProcessor>()
     val listener = ReindexJobExecutionListener(aliasManager, bulkProcessor, "products")
 
     beforeEach { clearMocks(aliasManager, bulkProcessor) }

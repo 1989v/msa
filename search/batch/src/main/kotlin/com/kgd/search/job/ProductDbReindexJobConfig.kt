@@ -2,7 +2,7 @@ package com.kgd.search.job
 
 import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.infrastructure.config.ProductDataSourceConfig
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import org.springframework.batch.core.job.Job
 import org.springframework.batch.core.step.Step
@@ -28,7 +28,7 @@ class ProductDbReindexJobConfig(
     private val transactionManager: PlatformTransactionManager,
     @Qualifier("productDataSource") private val productDataSource: DataSource,
     private val aliasManager: IndexAliasManager,
-    private val bulkProcessor: EsBulkDocumentProcessor,
+    private val bulkProcessor: OsBulkDocumentProcessor,
     @Value("\${search.batch.index-alias:products}") private val indexAlias: String,
     @Value("\${search.batch.page-size:100}") private val pageSize: Int
 ) {

@@ -22,6 +22,8 @@ caffeine = "3.1.8"
 ta4j = "0.18"
 multik = "0.2.3"
 javaUuidGenerator = "5.1.0"
+opensearch-java = "3.8.0"
+httpclient5 = "5.4.1"
 
 [libraries]
 # Spring Boot Starters
@@ -93,9 +95,9 @@ spring-batch-test = { module = "org.springframework.batch:spring-batch-test" }
 # HikariCP
 hikaricp = { module = "com.zaxxer:HikariCP" }
 
-# Elasticsearch
-spring-data-elasticsearch = { module = "org.springframework.data:spring-data-elasticsearch" }
-spring-boot-starter-data-elasticsearch = { module = "org.springframework.boot:spring-boot-starter-data-elasticsearch" }
+# OpenSearch (ADR-0055 — ES 에서 전환, raw 클라이언트 + HttpClient5 transport)
+opensearch-java = { module = "org.opensearch.client:opensearch-java", version.ref = "opensearch-java" }
+httpclient5 = { module = "org.apache.httpcomponents.client5:httpclient5", version.ref = "httpclient5" }
 
 # Test
 kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }

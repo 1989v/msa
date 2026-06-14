@@ -1,7 +1,7 @@
 package com.kgd.search.job
 
 import com.kgd.search.domain.product.model.ProductDocument
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import io.kotest.core.spec.style.BehaviorSpec
 import io.mockk.*
 import org.springframework.batch.core.job.JobExecution
@@ -13,7 +13,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 class ProductEsItemWriterTest : BehaviorSpec({
-    val bulkProcessor = mockk<EsBulkDocumentProcessor>()
+    val bulkProcessor = mockk<OsBulkDocumentProcessor>()
     val writer = ProductEsItemWriter(bulkProcessor)
 
     beforeEach {

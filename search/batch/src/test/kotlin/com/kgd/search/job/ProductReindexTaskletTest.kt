@@ -2,7 +2,7 @@ package com.kgd.search.job
 
 import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.infrastructure.client.ProductApiClient
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 
 class ProductReindexTaskletTest : BehaviorSpec({
     val productApiClient = mockk<ProductApiClient>()
-    val bulkProcessor = mockk<EsBulkDocumentProcessor>(relaxed = true)
+    val bulkProcessor = mockk<OsBulkDocumentProcessor>(relaxed = true)
     val aliasManager = mockk<IndexAliasManager>(relaxed = true)
 
     fun createTasklet(): ProductApiReindexTasklet {

@@ -1,17 +1,17 @@
 package com.kgd.search.infrastructure.indexing
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldStartWith
 import io.mockk.clearMocks
 import io.mockk.mockk
+import org.opensearch.client.opensearch.OpenSearchClient
 
 class IndexAliasManagerTest : BehaviorSpec({
-    val esClient = mockk<ElasticsearchClient>(relaxed = true)
-    val manager = IndexAliasManager(esClient)
+    val osClient = mockk<OpenSearchClient>(relaxed = true)
+    val manager = IndexAliasManager(osClient)
 
-    beforeEach { clearMocks(esClient) }
+    beforeEach { clearMocks(osClient) }
 
     given("타임스탬프 색인명 생성 시") {
         `when`("alias 이름이 주어지면") {

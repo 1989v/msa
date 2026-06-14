@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.messaging
 
 import com.kgd.search.domain.product.model.ProductDocument
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -16,7 +16,7 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 class ProductIndexingConsumerTest : BehaviorSpec({
-    val bulkProcessor = mockk<EsBulkDocumentProcessor>(relaxed = true)
+    val bulkProcessor = mockk<OsBulkDocumentProcessor>(relaxed = true)
     val consumer = ProductIndexingConsumer(bulkProcessor)
 
     // inject @Value field via reflection

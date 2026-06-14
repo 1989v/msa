@@ -1,0 +1,30 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "name": { "type": "text", "analyzer": "nori_analyzer" },
+      "status": { "type": "keyword" },
+      "price": { "type": "double" },
+      "createdAt": { "type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss" },
+      "categoryId": { "type": "keyword" },
+      "brand": { "type": "keyword" },
+      "popularityScore": { "type": "double" },
+      "ctr": { "type": "double" },
+      "cvr": { "type": "double" },
+      "ctrRaw": { "type": "double" },
+      "cvrRaw": { "type": "double" },
+      "gmv7d": { "type": "double" },
+      "gmv30d": { "type": "double" },
+      "scoreUpdatedAt": { "type": "long" }
+    }
+  }
+}

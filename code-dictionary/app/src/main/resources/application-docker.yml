@@ -9,5 +9,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-  elasticsearch:
-    uris: http://elasticsearch:9200
+
+opensearch:
+  uris: http://opensearch:9200

@@ -1,14 +1,14 @@
 package com.kgd.search.job
 
 import com.kgd.search.domain.product.model.ProductDocument
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import org.springframework.batch.core.listener.StepExecutionListener
 import org.springframework.batch.core.step.StepExecution
 import org.springframework.batch.infrastructure.item.Chunk
 import org.springframework.batch.infrastructure.item.ItemWriter
 
 class ProductEsItemWriter(
-    private val bulkProcessor: EsBulkDocumentProcessor
+    private val bulkProcessor: OsBulkDocumentProcessor
 ) : ItemWriter<ProductDocument>, StepExecutionListener {
 
     private lateinit var newIndexName: String

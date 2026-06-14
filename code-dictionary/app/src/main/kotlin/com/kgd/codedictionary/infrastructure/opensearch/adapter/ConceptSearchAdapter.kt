@@ -1,8 +1,8 @@
-package com.kgd.codedictionary.infrastructure.elasticsearch.adapter
+package com.kgd.codedictionary.infrastructure.opensearch.adapter
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient
-import co.elastic.clients.elasticsearch._types.query_dsl.Query
-import co.elastic.clients.json.JsonData
+import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.opensearch._types.query_dsl.Query
+import org.opensearch.client.json.JsonData
 import com.kgd.codedictionary.application.search.port.ConceptSearchPort
 import com.kgd.codedictionary.application.search.port.SearchHit
 import com.kgd.codedictionary.application.search.port.SearchResponse
@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component
 
 @Component
 class ConceptSearchAdapter(
-    private val elasticsearchClient: ElasticsearchClient,
-    @Value("\${elasticsearch.index-name:concept-index}") private val indexName: String
+    private val openSearchClient: OpenSearchClient,
+    @Value("\${opensearch.index-name:concept-index}") private val indexName: String
 ) : ConceptSearchPort {
 
     private val log = KotlinLogging.logger {}
@@ -44,7 +44,7 @@ class ConceptSearchAdapter(
             )
         }
 
-        val response = elasticsearchClient.search({ s ->
+        val response = openSearchClient.search({ s ->
             s.index(indexName)
                 .query { q ->
                     q.bool { b ->
@@ -105,7 +105,7 @@ class ConceptSearchAdapter(
     }
 
     override fun suggest(query: String, size: Int): List<SuggestHit> {
-        val response = elasticsearchClient.search({ s ->
+        val response = openSearchClient.search({ s ->
             s.index(indexName)
                 .query { q ->
                     q.bool { b ->

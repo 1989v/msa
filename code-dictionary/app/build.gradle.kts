@@ -23,7 +23,11 @@ dependencies {
     runtimeOnly("org.flywaydb:flyway-mysql")
     // Spring Boot 4 split Flyway autoconfig into its own module
     implementation("org.springframework.boot:spring-boot-flyway")
-    implementation(libs.spring.boot.starter.data.elasticsearch)
+    implementation(libs.opensearch.java)
+    implementation(libs.httpclient5)
+    // opensearch-java JacksonJsonpMapper 가 Kotlin data class / java.time 을 (역)직렬화할 때 필요
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     // Treemap stats endpoint — Caffeine in-memory cache (spec.md §7)
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation(libs.caffeine)

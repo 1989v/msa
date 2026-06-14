@@ -46,7 +46,7 @@ spec:
                   - mysql
                   - redis
                   - kafka
-                  - elasticsearch
+                  - opensearch
                   - clickhouse
                   - quant-postgres
       ports:
@@ -84,7 +84,7 @@ spec:
           - mysql
           - redis
           - kafka
-          - elasticsearch
+          - opensearch
           - clickhouse
           - quant-postgres
   policyTypes:
@@ -99,6 +99,6 @@ spec:
         - { protocol: TCP, port: 5432 }   # postgres
         - { protocol: TCP, port: 6379 }   # redis
         - { protocol: TCP, port: 19092 }  # kafka EXTERNAL (외부 macOS docker client 용)
-        - { protocol: TCP, port: 9200 }   # elasticsearch
+        - { protocol: TCP, port: 9200 }   # opensearch
         - { protocol: TCP, port: 8123 }   # clickhouse http
         - { protocol: TCP, port: 9000 }   # clickhouse native

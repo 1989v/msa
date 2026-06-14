@@ -3,8 +3,6 @@ spring:
     name: search-service
   lifecycle:
     timeout-per-shutdown-phase: 30s
-  elasticsearch:
-    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -38,6 +36,9 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+opensearch:
+  uris: ${OPENSEARCH_URIS:http://localhost:9200}
 
 search:
   ranking:

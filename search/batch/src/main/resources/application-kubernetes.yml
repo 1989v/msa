@@ -1,8 +1,6 @@
-spring:
-  elasticsearch:
-    uris: http://elasticsearch:9200
+opensearch:
+  uris: http://opensearch:9200
 
 product:
   service:
     url: http://product:8081
-

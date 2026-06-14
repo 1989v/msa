@@ -1,26 +1,26 @@
-package com.kgd.codedictionary.infrastructure.elasticsearch.adapter
+package com.kgd.codedictionary.infrastructure.opensearch.adapter
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient
-import co.elastic.clients.elasticsearch._types.analysis.Analyzer
-import co.elastic.clients.elasticsearch._types.analysis.CustomAnalyzer
-import co.elastic.clients.elasticsearch._types.analysis.EdgeNGramTokenizer
-import co.elastic.clients.elasticsearch._types.analysis.NoriDecompoundMode
-import co.elastic.clients.elasticsearch._types.analysis.NoriPartOfSpeechTokenFilter
-import co.elastic.clients.elasticsearch._types.analysis.NoriTokenizer
-import co.elastic.clients.elasticsearch._types.analysis.TokenChar
-import co.elastic.clients.elasticsearch._types.analysis.TokenFilter
-import co.elastic.clients.elasticsearch._types.analysis.TokenFilterDefinition
-import co.elastic.clients.elasticsearch._types.analysis.Tokenizer
-import co.elastic.clients.elasticsearch._types.analysis.TokenizerDefinition
-import co.elastic.clients.elasticsearch._types.mapping.Property
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.opensearch._types.analysis.Analyzer
+import org.opensearch.client.opensearch._types.analysis.CustomAnalyzer
+import org.opensearch.client.opensearch._types.analysis.EdgeNGramTokenizer
+import org.opensearch.client.opensearch._types.analysis.NoriDecompoundMode
+import org.opensearch.client.opensearch._types.analysis.NoriPartOfSpeechTokenFilter
+import org.opensearch.client.opensearch._types.analysis.NoriTokenizer
+import org.opensearch.client.opensearch._types.analysis.TokenChar
+import org.opensearch.client.opensearch._types.analysis.TokenFilter
+import org.opensearch.client.opensearch._types.analysis.TokenFilterDefinition
+import org.opensearch.client.opensearch._types.analysis.Tokenizer
+import org.opensearch.client.opensearch._types.analysis.TokenizerDefinition
+import org.opensearch.client.opensearch._types.mapping.Property
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Component
 class IndexAliasManager(
-    private val elasticsearchClient: ElasticsearchClient
+    private val openSearchClient: OpenSearchClient
 ) {
     private val log = KotlinLogging.logger {}
     private val timestampFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
@@ -29,7 +29,7 @@ class IndexAliasManager(
         "${alias}_${LocalDateTime.now().format(timestampFormatter)}"
 
     fun createIndex(indexName: String) {
-        elasticsearchClient.indices().create { c ->
+        openSearchClient.indices().create { c ->
             c.index(indexName)
                 .settings { s ->
                     s.analysis { a ->
@@ -178,8 +178,8 @@ class IndexAliasManager(
     fun swapAlias(alias: String, newIndexName: String, maxRetention: Int = 2) {
         val aliasedIndices = getIndicesForAlias(alias)
 
-        elasticsearchClient.indices().updateAliases { req ->
-            // ES Java client: actions(lambda) 는 단건 액션을 만들기 때문에
+        openSearchClient.indices().updateAliases { req ->
+            // opensearch-java client: actions(lambda) 는 단건 액션을 만들기 때문에
             // 여러 액션을 등록하려면 매 액션마다 .actions{} 를 별도 호출해야 함
             aliasedIndices.forEach { oldIndex ->
                 req.actions { a -> a.remove { r -> r.index(oldIndex).alias(alias) } }
@@ -195,18 +195,20 @@ class IndexAliasManager(
             .sortedDescending()
             .drop(maxRetention)
             .forEach { oldIndex ->
-                elasticsearchClient.indices().delete { d -> d.index(oldIndex) }
+                openSearchClient.indices().delete { d -> d.index(oldIndex) }
                 log.info { "Deleted old index: $oldIndex" }
             }
     }
 
     private fun getIndicesForAlias(alias: String): List<String> =
         runCatching {
-            elasticsearchClient.indices().getAlias { it.name(alias) }.aliases().keys.toList()
+            // opensearch-java: GetAliasResponse 는 DictionaryResponse — aliases() 대신 result()
+            openSearchClient.indices().getAlias { it.name(alias) }.result().keys.toList()
         }.getOrElse { emptyList() }
 
     private fun listIndicesByPrefix(prefix: String): List<String> =
         runCatching {
-            elasticsearchClient.indices().get { it.index("${prefix}*") }.indices().keys.toList()
+            // opensearch-java: GetIndexResponse 도 DictionaryResponse — indices() 대신 result()
+            openSearchClient.indices().get { it.index("${prefix}*") }.result().keys.toList()
         }.getOrElse { emptyList() }
 }

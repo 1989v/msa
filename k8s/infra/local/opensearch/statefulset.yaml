@@ -1,27 +1,25 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: elasticsearch
+  name: opensearch
   namespace: commerce
   labels:
-    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/name: opensearch
     app.kubernetes.io/part-of: commerce-platform
 spec:
-  serviceName: elasticsearch-headless
+  serviceName: opensearch-headless
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: elasticsearch
+      app.kubernetes.io/name: opensearch
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: elasticsearch
+        app.kubernetes.io/name: opensearch
     spec:
       terminationGracePeriodSeconds: 30
       initContainers:
-        # Single-node ES 8 refuses to start with the default vm.max_map_count
-        # on macOS/Linux. The host setting is managed by the cluster, but we
-        # also disable ML and security to keep the image small and stateless.
+        # Single-node OpenSearch 도 ES 와 동일하게 vm.max_map_count 하한이 필요.
         - name: increase-vm-max-map
           image: busybox:1.36
           command: ["sh", "-c", "sysctl -w vm.max_map_count=262144 || true"]
@@ -29,21 +27,19 @@ spec:
             privileged: true
             runAsUser: 0
       containers:
-        - name: elasticsearch
-          # ES 9.x — Spring Boot 4.x 의 ES 9.x co-located client 와 정렬.
-          # 8.15.3 ↔ 9.x client 는 media-type 헤더 호환성 문제로 search service 가 DOWN.
-          image: docker.elastic.co/elasticsearch/elasticsearch:9.0.0
+        - name: opensearch
+          # ADR-0055 — ES 9.0.0 에서 전환. opensearch-java 3.8.0 클라이언트와 정렬.
+          image: opensearchproject/opensearch:3.3.0
           imagePullPolicy: IfNotPresent
-          # Korean nori analyzer 플러그인 보장 — code-dictionary 가 Nori tokenizer 사용
-          # (search 서비스는 미사용, 단일 ES 클러스터 공유)
+          # Korean nori analyzer 플러그인 보장 — search(products) + code-dictionary 공용
           command:
             - bash
             - -c
             - |
-              if ! /usr/share/elasticsearch/bin/elasticsearch-plugin list | grep -q analysis-nori; then
-                /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch analysis-nori
+              if ! /usr/share/opensearch/bin/opensearch-plugin list | grep -q analysis-nori; then
+                /usr/share/opensearch/bin/opensearch-plugin install --batch analysis-nori
               fi
-              exec /usr/local/bin/docker-entrypoint.sh elasticsearch
+              exec /usr/share/opensearch/opensearch-docker-entrypoint.sh opensearch
           ports:
             - name: http
               containerPort: 9200
@@ -52,11 +48,12 @@ spec:
           env:
             - name: discovery.type
               value: "single-node"
-            - name: xpack.security.enabled
-              value: "false"
-            - name: xpack.ml.enabled
-              value: "false"
-            - name: ES_JAVA_OPTS
+            # 로컬 단일노드 — security plugin off (ES 의 xpack.security.enabled=false 등가)
+            - name: DISABLE_SECURITY_PLUGIN
+              value: "true"
+            - name: DISABLE_INSTALL_DEMO_CONFIG
+              value: "true"
+            - name: OPENSEARCH_JAVA_OPTS
               value: "-Xms512m -Xmx512m"
             - name: cluster.name
               value: "commerce-local"
@@ -80,7 +77,7 @@ spec:
               memory: 1536Mi
           volumeMounts:
             - name: data
-              mountPath: /usr/share/elasticsearch/data
+              mountPath: /usr/share/opensearch/data
   volumeClaimTemplates:
     - metadata:
         name: data

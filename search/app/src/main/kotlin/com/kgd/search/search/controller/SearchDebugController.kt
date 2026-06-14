@@ -1,11 +1,5 @@
 package com.kgd.search.presentation.search.controller
 
-import co.elastic.clients.elasticsearch._types.SortOptions
-import co.elastic.clients.elasticsearch._types.SortOrder
-import co.elastic.clients.elasticsearch._types.Time
-import co.elastic.clients.elasticsearch._types.query_dsl.FieldValueFactorModifier
-import co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode
-import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreMode
 import com.kgd.common.response.ApiResponse
 import com.kgd.search.bandit.BanditProperties
 import com.kgd.search.bandit.DiversityProperties
@@ -13,15 +7,22 @@ import com.kgd.search.bandit.MultiScopeBanditBlender
 import com.kgd.search.bandit.SellerDiversityReranker
 import com.kgd.search.bandit.ThompsonReranker
 import com.kgd.search.domain.product.model.ProductDocument
-import com.kgd.search.infrastructure.elasticsearch.ProductEsDocument
-import com.kgd.search.infrastructure.elasticsearch.RankingProperties
-import com.kgd.search.infrastructure.elasticsearch.RankingQueryBuilder
-import com.kgd.search.infrastructure.elasticsearch.RankingVariantsProperties
+import com.kgd.search.infrastructure.opensearch.ProductSearchDocument
+import com.kgd.search.infrastructure.opensearch.RankingProperties
+import com.kgd.search.infrastructure.opensearch.RankingQueryBuilder
+import com.kgd.search.infrastructure.opensearch.RankingVariantsProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.opensearch.client.json.JsonData
+import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.opensearch._types.FieldValue
+import org.opensearch.client.opensearch._types.SortOptions
+import org.opensearch.client.opensearch._types.SortOrder
+import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
+import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
+import org.opensearch.client.opensearch._types.query_dsl.FunctionScoreMode
+import org.opensearch.client.opensearch._types.query_dsl.FunctionScoreQuery
+import org.opensearch.client.opensearch.core.SearchRequest
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.elasticsearch.client.elc.NativeQuery
-import org.springframework.data.elasticsearch.core.ElasticsearchOperations
-import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -40,7 +41,7 @@ import org.springframework.http.HttpStatus
  * - POST /api/v1/search/debug/raw-query
  *     관리자가 직접 ES Native query (JSON) 를 던져서 결과 확인
  * - GET  /api/v1/search/debug/fields
- *     ProductEsDocument 필드 메타 (admin-fe query builder 토글 생성용)
+ *     ProductSearchDocument 필드 메타 (admin-fe query builder 토글 생성용)
  *
  * 권한: ADMIN. Gateway 측 인증 필터 + @PreAuthorize.
  */
@@ -55,7 +56,7 @@ class SearchDebugController(
     private val sellerDiversityReranker: SellerDiversityReranker,
     private val blender: MultiScopeBanditBlender,
     private val queryBuilder: RankingQueryBuilder,
-    private val elasticsearchOperations: ElasticsearchOperations
+    private val client: OpenSearchClient
 ) {
     private val log = KotlinLogging.logger {}
 
@@ -73,11 +74,12 @@ class SearchDebugController(
         val effectiveProps = if (variant == "live") rankingProperties
             else rankingVariants.variants[variant] ?: rankingProperties
 
-        val hits = elasticsearchOperations.search(
-            queryBuilder.build(query, pageable, effectiveProps),
-            ProductEsDocument::class.java
+        val response = client.search(
+            queryBuilder.build("products", query, pageable, effectiveProps),
+            ProductSearchDocument::class.java
         )
-        val originalDocs = hits.searchHits.map { it.content.toDomain() to it.score.toDouble() }
+        val originalDocs = response.hits().hits()
+            .mapNotNull { hit -> hit.source()?.let { it.toDomain() to (hit.score() ?: 0.0) } }
 
         val afterThompson = thompsonReranker.rerank(originalDocs)
         val afterDiversity = sellerDiversityReranker.rerank(afterThompson)
@@ -118,7 +120,7 @@ class SearchDebugController(
             DebugResponse(
                 variant = variant,
                 query = query,
-                totalElements = hits.totalHits,
+                totalElements = response.hits().total()?.value() ?: 0L,
                 results = results,
                 config = ConfigSnapshot(
                     ranking = effectiveProps,
@@ -147,13 +149,14 @@ class SearchDebugController(
         requireAdmin(roles)
         require(request.indexName in ALLOWED_INDICES) { "indexName not allowed: ${request.indexName}" }
 
-        val nq = NativeQuery.builder()
-            .withQuery { q ->
+        val searchRequest = SearchRequest.Builder()
+            .index(request.indexName)
+            .query { q ->
                 q.functionScore { fs ->
                     fs.query { inner ->
                         inner.bool { b ->
-                            b.must { m -> m.match { it.field("name").query(request.query) } }
-                            b.filter { f -> f.term { it.field("status").value("ACTIVE") } }
+                            b.must { m -> m.match { it.field("name").query(FieldValue.of(request.query)) } }
+                            b.filter { f -> f.term { it.field("status").value(FieldValue.of("ACTIVE")) } }
                             b
                         }
                     }
@@ -162,26 +165,28 @@ class SearchDebugController(
                     fs.boostMode(FunctionBoostMode.Sum)
                 }
             }
-            .withSort(
+            .sort(
                 SortOptions.of { s -> s.score { it.order(SortOrder.Desc) } },
                 SortOptions.of { s -> s.field { f -> f.field("id").order(SortOrder.Asc) } }
             )
-            .withPageable(PageRequest.of(0, request.topK))
+            .from(0)
+            .size(request.topK)
             .build()
 
-        val hits = elasticsearchOperations.search(nq, ProductEsDocument::class.java, IndexCoordinates.of(request.indexName))
+        val response = client.search(searchRequest, ProductSearchDocument::class.java)
+        val docs = response.hits().hits()
+            .mapNotNull { hit -> hit.source()?.let { it.toDomain() to (hit.score() ?: 0.0) } }
         return ApiResponse.success(
             RawQueryResponse(
-                totalElements = hits.totalHits,
-                results = hits.searchHits.mapIndexed { idx, h ->
-                    val doc = h.content.toDomain()
+                totalElements = response.hits().total()?.value() ?: 0L,
+                results = docs.mapIndexed { idx, (doc, score) ->
                     ScoredItem(
                         rank = idx,
                         id = doc.id,
                         name = doc.name,
                         categoryId = doc.categoryId,
-                        esScore = h.score.toDouble(),
-                        finalScore = h.score.toDouble(),
+                        esScore = score,
+                        finalScore = score,
                         features = FeatureBreakdown(
                             popularityScore = doc.popularityScore,
                             ctr = doc.ctr,
@@ -217,32 +222,30 @@ class SearchDebugController(
     }
 
     private fun applyFunctionScore(
-        fs: co.elastic.clients.elasticsearch._types.query_dsl.FunctionScoreQuery.Builder,
+        fs: FunctionScoreQuery.Builder,
         config: FunctionScoreSpec
     ) {
         when (config.type) {
             "fieldValueFactor" -> fs.functions { fn ->
                 fn.fieldValueFactor { fvf ->
                     fvf.field(config.field)
-                        .factor(config.weight)
+                        .factor(config.weight.toFloat())
                         .modifier(FieldValueFactorModifier.Log1p)
                         .missing(0.0)
                 }
-                fn.weight(1.0)
+                fn.weight(1.0f)
             }
             "gauss" -> fs.functions { fn ->
-                fn.gauss { g: co.elastic.clients.elasticsearch._types.query_dsl.DecayFunction.Builder ->
-                    g.date { d ->
-                        d.field(config.field)
-                            .placement { p ->
-                                p.origin(config.origin ?: "now")
-                                    .scale(Time.of { it.time(config.scale ?: "14d") })
-                                    .offset(Time.of { it.time(config.offset ?: "0d") })
-                                    .decay(config.decay ?: 0.5)
-                            }
-                    }
+                fn.gauss { g ->
+                    g.field(config.field)
+                        .placement { p ->
+                            p.origin(JsonData.of(config.origin ?: "now"))
+                                .scale(JsonData.of(config.scale ?: "14d"))
+                                .offset(JsonData.of(config.offset ?: "0d"))
+                                .decay(config.decay ?: 0.5)
+                        }
                 }
-                fn.weight(config.weight)
+                fn.weight(config.weight.toFloat())
             }
             else -> log.warn { "Unknown function score type: ${config.type}" }
         }

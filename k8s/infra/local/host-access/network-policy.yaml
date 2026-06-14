@@ -18,7 +18,7 @@ spec:
           - mysql
           - redis
           - kafka
-          - elasticsearch
+          - opensearch
           - clickhouse
           - quant-postgres
   policyTypes:
@@ -45,7 +45,7 @@ spec:
         - { protocol: TCP, port: 5432 }
         # Redis
         - { protocol: TCP, port: 6379 }
-        # Elasticsearch HTTP
+        # OpenSearch HTTP
         - { protocol: TCP, port: 9200 }
         # ClickHouse HTTP + native
         - { protocol: TCP, port: 8123 }

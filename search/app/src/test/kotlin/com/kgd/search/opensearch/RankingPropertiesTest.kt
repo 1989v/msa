@@ -1,4 +1,4 @@
-package com.kgd.search.infrastructure.elasticsearch
+package com.kgd.search.infrastructure.opensearch
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe

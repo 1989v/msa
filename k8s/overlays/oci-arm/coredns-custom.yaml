@@ -43,4 +43,4 @@ data:
     rewrite name redis.1989v.com    redis.commerce.svc.cluster.local
     rewrite name kafka.1989v.com    kafka.commerce.svc.cluster.local
     rewrite name ch.1989v.com       clickhouse.commerce.svc.cluster.local
-    rewrite name es.1989v.com       elasticsearch.commerce.svc.cluster.local
+    rewrite name es.1989v.com       opensearch.commerce.svc.cluster.local

@@ -7,7 +7,11 @@ dependencies {
     implementation(project(":search:domain"))
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.actuator)
-    implementation(libs.spring.boot.starter.data.elasticsearch)
+    implementation(libs.opensearch.java)
+    implementation(libs.httpclient5)
+    // ADR-0055 — opensearch-java JacksonJsonpMapper 의 Kotlin data class / java.time 직렬화
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation(libs.spring.boot.starter.batch)
     // Spring Boot 4.0: starter-batch 만으로는 DataSource/TransactionManager auto-config 가
     // 활성화되지 않아 명시적으로 starter-jdbc 를 추가한다 (BatchTransactionManagerConfig 의

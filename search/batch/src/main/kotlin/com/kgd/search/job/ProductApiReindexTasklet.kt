@@ -2,7 +2,7 @@ package com.kgd.search.job
 
 import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.infrastructure.client.ProductApiClient
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.runBlocking
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component
 @ConditionalOnProperty(name = ["reindex.source"], havingValue = "api", matchIfMissing = true)
 class ProductApiReindexTasklet(
     private val productApiClient: ProductApiClient,
-    private val bulkProcessor: EsBulkDocumentProcessor,
+    private val bulkProcessor: OsBulkDocumentProcessor,
     private val aliasManager: IndexAliasManager
 ) : Tasklet {
 

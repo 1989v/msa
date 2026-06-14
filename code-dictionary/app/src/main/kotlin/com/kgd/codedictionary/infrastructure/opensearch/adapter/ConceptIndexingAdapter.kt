@@ -1,12 +1,12 @@
-package com.kgd.codedictionary.infrastructure.elasticsearch.adapter
+package com.kgd.codedictionary.infrastructure.opensearch.adapter
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient
-import co.elastic.clients.elasticsearch._types.analysis.Analyzer
-import co.elastic.clients.elasticsearch._types.analysis.CustomAnalyzer
-import co.elastic.clients.elasticsearch._types.analysis.SynonymGraphTokenFilter
-import co.elastic.clients.elasticsearch._types.analysis.TokenFilter
-import co.elastic.clients.elasticsearch._types.analysis.TokenFilterDefinition
-import co.elastic.clients.elasticsearch.core.bulk.BulkOperation
+import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.opensearch._types.analysis.Analyzer
+import org.opensearch.client.opensearch._types.analysis.CustomAnalyzer
+import org.opensearch.client.opensearch._types.analysis.SynonymGraphTokenFilter
+import org.opensearch.client.opensearch._types.analysis.TokenFilter
+import org.opensearch.client.opensearch._types.analysis.TokenFilterDefinition
+import org.opensearch.client.opensearch.core.bulk.BulkOperation
 import com.kgd.codedictionary.application.search.port.ConceptIndexingPort
 import com.kgd.codedictionary.domain.concept.model.Concept
 import com.kgd.codedictionary.domain.index.model.ConceptIndex
@@ -17,15 +17,15 @@ import java.time.format.DateTimeFormatter
 
 @Component
 class ConceptIndexingAdapter(
-    private val elasticsearchClient: ElasticsearchClient,
-    @Value("\${elasticsearch.index-name:concept-index}") private val aliasName: String
+    private val openSearchClient: OpenSearchClient,
+    @Value("\${opensearch.index-name:concept-index}") private val aliasName: String
 ) : ConceptIndexingPort {
 
     private val log = KotlinLogging.logger {}
 
     override fun indexConceptIndex(concept: Concept, conceptIndex: ConceptIndex) {
         val document = buildDocument(concept, conceptIndex)
-        elasticsearchClient.index { i ->
+        openSearchClient.index { i ->
             i.index(aliasName)
                 .id(docId(concept, conceptIndex))
                 .document(document)
@@ -34,7 +34,7 @@ class ConceptIndexingAdapter(
     }
 
     override fun deleteByConceptId(conceptId: String) {
-        elasticsearchClient.deleteByQuery { d ->
+        openSearchClient.deleteByQuery { d ->
             d.index(aliasName)
                 .query { q ->
                     q.term { t ->
@@ -59,7 +59,7 @@ class ConceptIndexingAdapter(
             }
         }
 
-        val response = elasticsearchClient.bulk { b ->
+        val response = openSearchClient.bulk { b ->
             b.index(targetIndex).operations(operations)
         }
 
@@ -86,9 +86,9 @@ class ConceptIndexingAdapter(
             return
         }
 
-        elasticsearchClient.indices().close { c -> c.index(targetIndex) }
+        openSearchClient.indices().close { c -> c.index(targetIndex) }
         try {
-            elasticsearchClient.indices().putSettings { s ->
+            openSearchClient.indices().putSettings { s ->
                 s.index(targetIndex)
                     .settings { settings ->
                         settings.analysis { a ->
@@ -123,7 +123,7 @@ class ConceptIndexingAdapter(
         } catch (e: Exception) {
             log.warn { "Failed to update synonyms on '$targetIndex': ${e.message}" }
         } finally {
-            elasticsearchClient.indices().open { o -> o.index(targetIndex) }
+            openSearchClient.indices().open { o -> o.index(targetIndex) }
         }
     }
 

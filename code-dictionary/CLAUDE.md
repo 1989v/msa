@@ -23,7 +23,7 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 
 - Clean Architecture: presentation → application(port) → infrastructure(adapter)
 - 영속성: MySQL + Flyway (`db/migration/V1~V5`), Querydsl 조회 (`{Entity}QueryRepository`)
-- 검색: OpenSearch/Elasticsearch 색인 (`infrastructure/elasticsearch`)
+- 검색: OpenSearch 색인 (`infrastructure/opensearch`, ADR-0055)
 - 캐시: `infrastructure/cache`
 
 ## Domains

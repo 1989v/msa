@@ -7,7 +7,7 @@
 #   127.0.0.1:13306 → mysql
 #   127.0.0.1:15432 → quant-postgres
 #   127.0.0.1:16379 → redis
-#   127.0.0.1:19200 → elasticsearch
+#   127.0.0.1:19200 → opensearch
 #   127.0.0.1:18123 → clickhouse (HTTP)
 #   127.0.0.1:19000 → clickhouse (native TCP)
 #   127.0.0.1:19092 → kafka (EXTERNAL listener, statefulset 에서 별도 advertise)
@@ -69,15 +69,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: elasticsearch-host
+  name: opensearch-host
   namespace: commerce
   labels:
-    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/name: opensearch
     app.kubernetes.io/component: host-access
 spec:
   type: LoadBalancer
   selector:
-    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/name: opensearch
   ports:
     - name: http
       port: 19200

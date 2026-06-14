@@ -1,4 +1,4 @@
-package com.kgd.search.infrastructure.elasticsearch
+package com.kgd.search.infrastructure.opensearch
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

@@ -308,7 +308,7 @@ jobs:
               k8s/infra/local/mysql \
               k8s/infra/local/redis \
               k8s/infra/local/kafka \
-              k8s/infra/local/elasticsearch \
+              k8s/infra/local/opensearch \
               k8s/infra/local/clickhouse \
               k8s/infra/prod/backup \
               k8s/infra/prod/monitoring/dashboards \

@@ -5,7 +5,7 @@ kind: Kustomization
 #
 # This overlay intentionally does NOT pull in k8s/infra/local/ because
 # production uses Operator-managed infrastructure (Strimzi Kafka,
-# Percona MySQL, ECK Elasticsearch, Altinity ClickHouse, real Redis
+# Percona MySQL, OpenSearch Operator, Altinity ClickHouse, real Redis
 # cluster, kube-prometheus-stack) that lives under k8s/infra/prod/ and
 # lands in Phase 4.
 #

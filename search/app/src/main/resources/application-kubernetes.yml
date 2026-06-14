@@ -1,6 +1,6 @@
 spring:
-  elasticsearch:
-    uris: http://elasticsearch:9200
   kafka:
     bootstrap-servers: kafka:29092
 
+opensearch:
+  uris: http://opensearch:9200

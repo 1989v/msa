@@ -1,6 +1,6 @@
 package com.kgd.search.job
 
-import com.kgd.search.infrastructure.indexing.EsBulkDocumentProcessor
+import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.batch.core.BatchStatus
@@ -9,7 +9,7 @@ import org.springframework.batch.core.listener.JobExecutionListener
 
 class ReindexJobExecutionListener(
     private val aliasManager: IndexAliasManager,
-    private val bulkProcessor: EsBulkDocumentProcessor,
+    private val bulkProcessor: OsBulkDocumentProcessor,
     private val indexAlias: String
 ) : JobExecutionListener {
 

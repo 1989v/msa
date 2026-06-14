@@ -8,7 +8,7 @@ resources:
   - mysql
   - redis
   - kafka
-  - elasticsearch
+  - opensearch
   - clickhouse
   - quant-postgres
 # host-access 는 base 에서 의도적으로 제외한다.
