@@ -15,7 +15,10 @@ data class ProductListResponse(
         val price: BigDecimal,
         val status: String,
         val stock: Int,
-        val createdAt: LocalDateTime
+        val createdAt: LocalDateTime,
+        val brand: String? = null,
+        val description: String? = null,
+        val category: String? = null
     )
 
     companion object {
@@ -27,7 +30,10 @@ data class ProductListResponse(
                     price = p.price,
                     status = p.status,
                     stock = p.stock,
-                    createdAt = p.createdAt
+                    createdAt = p.createdAt,
+                    brand = p.brand,
+                    description = p.description,
+                    category = p.category
                 )
             },
             totalElements = result.totalElements,

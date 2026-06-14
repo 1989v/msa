@@ -4,6 +4,7 @@ import com.kgd.product.application.product.usecase.CreateProductUseCase
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
+import jakarta.validation.constraints.Size
 import java.math.BigDecimal
 
 data class CreateProductRequest(
@@ -12,7 +13,20 @@ data class CreateProductRequest(
     @field:Positive(message = "가격은 0보다 커야 합니다")
     val price: BigDecimal,
     @field:Min(value = 0, message = "재고는 0 이상이어야 합니다")
-    val stock: Int
+    val stock: Int,
+    @field:Size(max = 100, message = "브랜드는 100자 이하여야 합니다")
+    val brand: String? = null,
+    @field:Size(max = 2000, message = "설명은 2000자 이하여야 합니다")
+    val description: String? = null,
+    @field:Size(max = 100, message = "카테고리는 100자 이하여야 합니다")
+    val category: String? = null
 ) {
-    fun toCommand() = CreateProductUseCase.Command(name = name, price = price, stock = stock)
+    fun toCommand() = CreateProductUseCase.Command(
+        name = name,
+        price = price,
+        stock = stock,
+        brand = brand,
+        description = description,
+        category = category
+    )
 }

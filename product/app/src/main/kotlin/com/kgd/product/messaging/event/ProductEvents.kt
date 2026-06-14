@@ -11,6 +11,8 @@ data class ProductCreatedEvent(
     val price: BigDecimal,
     val status: String,
     val brand: String? = null,
+    val description: String? = null,
+    val category: String? = null,
     val eventTime: LocalDateTime = LocalDateTime.now()
 )
 
@@ -21,5 +23,7 @@ data class ProductUpdatedEvent(
     val price: BigDecimal,
     val status: String,
     val brand: String? = null,
+    val description: String? = null,
+    val category: String? = null,
     val eventTime: LocalDateTime = LocalDateTime.now()
 )

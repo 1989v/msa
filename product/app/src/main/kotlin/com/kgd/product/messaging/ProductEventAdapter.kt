@@ -24,7 +24,9 @@ class ProductEventAdapter(
             name = product.name,
             price = product.price.amount,
             status = product.status.name,
-            brand = product.brand
+            brand = product.brand,
+            description = product.description,
+            category = product.category
         )
         kafkaTemplate.send(createdTopic, product.id.toString(), event)
             .whenComplete { _, ex ->
@@ -39,7 +41,9 @@ class ProductEventAdapter(
             name = product.name,
             price = product.price.amount,
             status = product.status.name,
-            brand = product.brand
+            brand = product.brand,
+            description = product.description,
+            category = product.category
         )
         kafkaTemplate.send(updatedTopic, product.id.toString(), event)
             .whenComplete { _, ex ->

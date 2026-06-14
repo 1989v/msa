@@ -10,16 +10,19 @@ data class ProductResponse(
     val name: String,
     val price: BigDecimal,
     val stock: Int,
-    val status: String
+    val status: String,
+    val brand: String? = null,
+    val description: String? = null,
+    val category: String? = null
 ) {
     companion object {
         fun from(result: CreateProductUseCase.Result) =
-            ProductResponse(result.id, result.name, result.price, result.stock, result.status)
+            ProductResponse(result.id, result.name, result.price, result.stock, result.status, result.brand, result.description, result.category)
 
         fun from(result: GetProductUseCase.Result) =
-            ProductResponse(result.id, result.name, result.price, result.stock, result.status)
+            ProductResponse(result.id, result.name, result.price, result.stock, result.status, result.brand, result.description, result.category)
 
         fun from(result: UpdateProductUseCase.Result) =
-            ProductResponse(result.id, result.name, result.price, result.stock, result.status)
+            ProductResponse(result.id, result.name, result.price, result.stock, result.status, result.brand, result.description, result.category)
     }
 }

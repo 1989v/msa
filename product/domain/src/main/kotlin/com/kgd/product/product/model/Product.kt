@@ -9,10 +9,19 @@ class Product private constructor(
     var stock: Int,
     var status: ProductStatus,
     var brand: String? = null,
+    var description: String? = null,
+    var category: String? = null,
     val createdAt: LocalDateTime = LocalDateTime.now()
 ) {
     companion object {
-        fun create(name: String, price: Money, stock: Int, brand: String? = null): Product {
+        fun create(
+            name: String,
+            price: Money,
+            stock: Int,
+            brand: String? = null,
+            description: String? = null,
+            category: String? = null
+        ): Product {
             require(name.isNotBlank()) { "상품명은 비어있을 수 없습니다" }
             require(stock >= 0) { "재고는 0 이상이어야 합니다" }
             return Product(
@@ -20,7 +29,9 @@ class Product private constructor(
                 price = price,
                 stock = stock,
                 status = ProductStatus.ACTIVE,
-                brand = brand?.takeIf { it.isNotBlank() }
+                brand = brand?.takeIf { it.isNotBlank() },
+                description = description?.takeIf { it.isNotBlank() },
+                category = category?.takeIf { it.isNotBlank() }
             )
         }
 
@@ -31,7 +42,9 @@ class Product private constructor(
             stock: Int,
             status: ProductStatus,
             createdAt: LocalDateTime,
-            brand: String? = null
+            brand: String? = null,
+            description: String? = null,
+            category: String? = null
         ): Product =
             Product(
                 id = id,
@@ -40,6 +53,8 @@ class Product private constructor(
                 stock = stock,
                 status = status,
                 brand = brand?.takeIf { it.isNotBlank() },
+                description = description?.takeIf { it.isNotBlank() },
+                category = category?.takeIf { it.isNotBlank() },
                 createdAt = createdAt
             )
     }
@@ -54,12 +69,20 @@ class Product private constructor(
         this.stock = availableQty
     }
 
-    fun update(name: String? = null, price: Money? = null, brand: String? = null) {
+    fun update(
+        name: String? = null,
+        price: Money? = null,
+        brand: String? = null,
+        description: String? = null,
+        category: String? = null
+    ) {
         name?.let {
             require(it.isNotBlank()) { "상품명은 비어있을 수 없습니다" }
             this.name = it
         }
         price?.let { this.price = it }
         brand?.let { this.brand = it.takeIf { v -> v.isNotBlank() } }
+        description?.let { this.description = it.takeIf { v -> v.isNotBlank() } }
+        category?.let { this.category = it.takeIf { v -> v.isNotBlank() } }
     }
 }

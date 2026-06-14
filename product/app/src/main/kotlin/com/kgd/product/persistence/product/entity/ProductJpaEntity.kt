@@ -18,6 +18,8 @@ class ProductJpaEntity(
     stock: Int,
     status: ProductStatus,
     brand: String? = null,
+    description: String? = null,
+    category: String? = null,
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     val createdAt: LocalDateTime = LocalDateTime.now()
@@ -43,6 +45,14 @@ class ProductJpaEntity(
     var brand: String? = brand
         private set
 
+    @Column(length = 2000)
+    var description: String? = description
+        private set
+
+    @Column(length = 100)
+    var category: String? = category
+        private set
+
     /** 전체 동기화 — 도메인 모델 기준으로 영속 상태를 덮어쓴다 (entity-mutation.md) */
     fun update(product: Product) {
         name = product.name
@@ -50,10 +60,12 @@ class ProductJpaEntity(
         stock = product.stock
         status = product.status
         brand = product.brand
+        description = product.description
+        category = product.category
     }
 
     fun toDomain(): Product =
-        Product.restore(id, name, Money(price), stock, status, createdAt, brand)
+        Product.restore(id, name, Money(price), stock, status, createdAt, brand, description, category)
 
     companion object {
         fun fromDomain(product: Product) = ProductJpaEntity(
@@ -63,6 +75,8 @@ class ProductJpaEntity(
             stock = product.stock,
             status = product.status,
             brand = product.brand,
+            description = product.description,
+            category = product.category,
             createdAt = product.createdAt
         )
     }
