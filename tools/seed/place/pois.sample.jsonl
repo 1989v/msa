@@ -1,0 +1,19 @@
+# ADR-0056 Part 2 — POI 시드 샘플 (소상공인 상가정보 형식 모사).
+# 한 줄 = 한 POI. {source, sourceKey, name, latitude, longitude, categoryMajor, categoryMid, categorySub?, roadAddress?, jibunAddress?}
+# 강남구 일대에 군집 — GET /api/places/nearby?lat=37.5172&lng=127.0473&radiusKm=2 로 거리순 확인 가능.
+{"source":"SANGGA","sourceKey":"SAMPLE-0001","name":"강남교자 본점","latitude":37.4981,"longitude":127.0276,"categoryMajor":"음식","categoryMid":"한식","categorySub":"국수/만두","roadAddress":"서울 강남구 강남대로 지하 396"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0002","name":"봉피양 역삼점","latitude":37.5008,"longitude":127.0365,"categoryMajor":"음식","categoryMid":"한식","categorySub":"냉면/평양면","roadAddress":"서울 강남구 테헤란로 152"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0003","name":"블루보틀 삼성","latitude":37.5089,"longitude":127.0606,"categoryMajor":"음식","categoryMid":"카페","categorySub":"커피전문점","roadAddress":"서울 강남구 영동대로 416"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0004","name":"스시조 선릉","latitude":37.5046,"longitude":127.0492,"categoryMajor":"음식","categoryMid":"일식","categorySub":"초밥","roadAddress":"서울 강남구 선릉로 428"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0005","name":"하노이의아침 강남","latitude":37.4995,"longitude":127.0301,"categoryMajor":"음식","categoryMid":"아시안","categorySub":"베트남음식","roadAddress":"서울 강남구 강남대로 102길 23"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0006","name":"이태리재 청담","latitude":37.5246,"longitude":127.0524,"categoryMajor":"음식","categoryMid":"양식","categorySub":"이탈리아음식","roadAddress":"서울 강남구 도산대로 87길 31"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0007","name":"신사동 가로수길 베이커리","latitude":37.5205,"longitude":127.0227,"categoryMajor":"음식","categoryMid":"카페","categorySub":"제과/베이커리","roadAddress":"서울 강남구 가로수길 43"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0008","name":"역삼 본가 설렁탕","latitude":37.5012,"longitude":127.0367,"categoryMajor":"음식","categoryMid":"한식","categorySub":"탕/찌개","roadAddress":"서울 강남구 역삼로 165"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0009","name":"교대 곱창골목 양대창","latitude":37.4934,"longitude":127.0145,"categoryMajor":"음식","categoryMid":"한식","categorySub":"곱창/막창","roadAddress":"서울 서초구 서초대로 51길 12"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0010","name":"청담 마라궁 중식","latitude":37.5191,"longitude":127.0533,"categoryMajor":"음식","categoryMid":"중식","categorySub":"중화요리","roadAddress":"서울 강남구 학동로 426"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0011","name":"삼성동 포차거리 호프","latitude":37.5117,"longitude":127.0589,"categoryMajor":"음식","categoryMid":"주점","categorySub":"호프/맥주","roadAddress":"서울 강남구 봉은사로 524"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0012","name":"압구정 떡볶이","latitude":37.5274,"longitude":127.0286,"categoryMajor":"음식","categoryMid":"분식","categorySub":"떡볶이","roadAddress":"서울 강남구 압구정로 30길 9"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0013","name":"교보문고 강남점","latitude":37.5043,"longitude":127.0246,"categoryMajor":"소매","categoryMid":"서적/문구","categorySub":"서점","roadAddress":"서울 서초구 강남대로 465"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0014","name":"안다즈 서울 강남","latitude":37.5247,"longitude":127.0234,"categoryMajor":"숙박","categoryMid":"호텔","categorySub":"관광호텔","roadAddress":"서울 강남구 논현로 854"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0015","name":"광화문 미진 본점","latitude":37.5707,"longitude":126.9772,"categoryMajor":"음식","categoryMid":"한식","categorySub":"국수/막국수","roadAddress":"서울 종로구 종로 19"}
+{"source":"SANGGA","sourceKey":"SAMPLE-0016","name":"명동교자 본점","latitude":37.5633,"longitude":126.9855,"categoryMajor":"음식","categoryMid":"한식","categorySub":"국수/만두","roadAddress":"서울 중구 명동10길 29"}

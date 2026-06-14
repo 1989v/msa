@@ -1,0 +1,36 @@
+{
+  "settings": {
+    "index": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "refresh_interval": "30s"
+    },
+    "analysis": {
+      "tokenizer": {
+        "poi_nori_tokenizer": { "type": "nori_tokenizer", "decompound_mode": "mixed" }
+      },
+      "analyzer": {
+        "poi_ko": {
+          "type": "custom",
+          "tokenizer": "poi_nori_tokenizer",
+          "filter": ["nori_part_of_speech", "lowercase"]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "name": {
+        "type": "text",
+        "analyzer": "poi_ko",
+        "fields": { "raw": { "type": "keyword" } }
+      },
+      "categoryMajor": { "type": "keyword" },
+      "categoryMid": { "type": "keyword" },
+      "address": { "type": "text", "analyzer": "poi_ko" },
+      "location": { "type": "geo_point", "ignore_malformed": true },
+      "status": { "type": "keyword" }
+    }
+  }
+}

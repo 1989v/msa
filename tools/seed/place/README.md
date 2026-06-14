@@ -35,8 +35,26 @@ python3 normalize_regions.py --from-sample --out regions.jsonl
 # 실제 GeoNames 덤프로 전세계 도시 5000개:
 python3 normalize_regions.py --out regions.jsonl --max-cities 5000
 
-# pois — 상가정보 (Phase 3, normalize_pois.py)
+# pois — 소상공인 상가정보. 키 없이 즉시 샘플(강남 일대 16종):
+python3 normalize_pois.py --from-sample --out pois.jsonl
+# data.go.kr 키로 강남구청 반경 2km 음식점(I2):
+python3 normalize_pois.py --cx 127.0473 --cy 37.5172 --radius 2000 --inds I2 --out pois.jsonl
 ```
+
+POI JSONL 한 줄 스키마:
+`{source, sourceKey, name, latitude, longitude, categoryMajor?, categoryMid?, categorySub?, roadAddress?, jibunAddress?}`
+
+## 근처검색 (nearby)
+
+적재 후 `place` 가 `poi` OpenSearch 인덱스(geo_point)에 색인하므로 거리순 검색이 가능하다:
+
+```bash
+# 강남구청 반경 2km 음식점, 거리 오름차순
+curl "http://localhost:8096/api/places/nearby?lat=37.5172&lng=127.0473&radiusKm=2&category=음식"
+# 게이트웨이 경유 (public): GET http://<gw>/api/places/nearby?...
+```
+
+응답은 `distanceKm`(haversine)로 가까운 순 정렬된다.
 
 regions JSONL 한 줄 스키마:
 `{level, name, nameKo?, countryCode?, admin1Code?, geonamesId, parentGeonamesId?, latitude?, longitude?, population?}`
