@@ -1,0 +1,18 @@
+# ADR-0056 Part 2 — 행정 지리 계층 시드 샘플 (GeoNames 기반).
+# 한 줄 = 한 지역. parentGeonamesId 로 상위 노드(geonamesId)와 연결.
+# 적재 순서는 PlaceSeedRunner 가 level(CONTINENT→COUNTRY→REGION→CITY)로 보장.
+{"level":"CONTINENT","name":"Asia","nameKo":"아시아","geonamesId":6255147}
+{"level":"CONTINENT","name":"Europe","nameKo":"유럽","geonamesId":6255148}
+{"level":"CONTINENT","name":"North America","nameKo":"북아메리카","geonamesId":6255149}
+{"level":"COUNTRY","name":"South Korea","nameKo":"대한민국","countryCode":"KR","geonamesId":1835841,"parentGeonamesId":6255147,"latitude":36.5,"longitude":127.75}
+{"level":"COUNTRY","name":"Japan","nameKo":"일본","countryCode":"JP","geonamesId":1861060,"parentGeonamesId":6255147,"latitude":36.0,"longitude":138.0}
+{"level":"COUNTRY","name":"United States","nameKo":"미국","countryCode":"US","geonamesId":6252001,"parentGeonamesId":6255149,"latitude":39.76,"longitude":-98.5}
+{"level":"REGION","name":"Seoul","nameKo":"서울특별시","countryCode":"KR","admin1Code":"11","geonamesId":1835847,"parentGeonamesId":1835841,"latitude":37.5664,"longitude":126.9997}
+{"level":"REGION","name":"Busan","nameKo":"부산광역시","countryCode":"KR","admin1Code":"26","geonamesId":1838519,"parentGeonamesId":1835841,"latitude":35.1796,"longitude":129.0756}
+{"level":"REGION","name":"Tokyo","nameKo":"도쿄도","countryCode":"JP","admin1Code":"40","geonamesId":1850147,"parentGeonamesId":1861060,"latitude":35.6895,"longitude":139.6917}
+{"level":"REGION","name":"New York","nameKo":"뉴욕주","countryCode":"US","admin1Code":"NY","geonamesId":5128638,"parentGeonamesId":6252001,"latitude":43.0,"longitude":-75.0}
+{"level":"CITY","name":"Seoul","nameKo":"서울","countryCode":"KR","admin1Code":"11","geonamesId":1835848,"parentGeonamesId":1835847,"latitude":37.566,"longitude":126.9784,"population":10349312}
+{"level":"CITY","name":"Gangnam-gu","nameKo":"강남구","countryCode":"KR","admin1Code":"11","geonamesId":1845604,"parentGeonamesId":1835847,"latitude":37.5172,"longitude":127.0473,"population":561052}
+{"level":"CITY","name":"Busan","nameKo":"부산","countryCode":"KR","admin1Code":"26","geonamesId":1838524,"parentGeonamesId":1838519,"latitude":35.1028,"longitude":129.0403,"population":3678555}
+{"level":"CITY","name":"Tokyo","nameKo":"도쿄","countryCode":"JP","admin1Code":"40","geonamesId":1850144,"parentGeonamesId":1850147,"latitude":35.6895,"longitude":139.6917,"population":8336599}
+{"level":"CITY","name":"New York City","nameKo":"뉴욕","countryCode":"US","admin1Code":"NY","geonamesId":5128581,"parentGeonamesId":5128638,"latitude":40.7143,"longitude":-74.006,"population":8175133}

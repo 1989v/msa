@@ -37,5 +37,7 @@ include(
     "quant:domain",
     "quant:app",
     "recommendation:domain",
-    "recommendation:app"
+    "recommendation:app",
+    "place:domain",
+    "place:app"
 )

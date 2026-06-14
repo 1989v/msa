@@ -45,6 +45,7 @@ class GatewayRouteConfig(
         "recommendation" to "http://recommendation:8092",
         "member" to "http://member:8093",
         "wishlist" to "http://wishlist:8095",
+        "place" to "http://place:8096",
     )
 
     @Bean
@@ -172,6 +173,21 @@ class GatewayRouteConfig(
                 r.path("/api/v1/recommendations/**")
                     .filters { f -> f.stripPrefix(0) }
                     .uri("http://recommendation:8092")
+            }
+            // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN.
+            .route("place-service-read") { r ->
+                r.method(HttpMethod.GET)
+                    .and().path("/api/places/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri("http://place:8096")
+            }
+            .route("place-service-write") { r ->
+                r.path("/api/places/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri("http://place:8096")
             }
             .build()
 }
