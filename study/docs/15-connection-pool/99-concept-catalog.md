@@ -95,9 +95,11 @@ sources:
 
 | 모델 | 공식 | 상태 |
 |---|---|---|
-| HikariCP wiki 권장 | `pool_size = ((core_count × 2) + effective_spindle_count)` | ✅ |
-| **Little's Law** | `concurrent = throughput × latency` (#12 cross) | 🟡 |
-| **Brett Wooldridge** 의 small-pool 철학 | "큰 풀이 더 빠를 거라는 직관은 틀림" | ✅ |
+| HikariCP wiki 권장 (성능 시작점) | `pool_size = ((core_count × 2) + effective_spindle_count)` | ✅ |
+| **deadlock 회피 최소 (HikariCP 문서)** | `pool = Tn × (Cm − 1) + 1` — 사이즈용 아닌 *교착 진단*용 | ✅ (07 §또 하나의 공식) |
+| Goetz (JCIP §8.2) 일반화 (보충) | `N = N_cpu × U_cpu × (1 + W/C)` — PG 공식은 W/C≈1 특수해 | ✅ (07 §×2 는 왜 2) |
+| **Little's Law** (진단 도구) | `TPS = active / 쿼리시간` — 풀부족 vs 쿼리느림 구별 (#12 cross) | ✅ (07 §Little's Law) |
+| **Brett Wooldridge** 의 small-pool 철학 / USL | "큰 풀이 더 빠를 거라는 직관은 틀림" | ✅ |
 | Saturation 측정 | active threads + queue 시간 | 🟡 |
 
 ### C. Spring DataSource 통합
