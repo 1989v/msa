@@ -93,8 +93,10 @@ tier(arm64)** 이므로 footprint 를 가볍게 유지해야 한다.
 - **R4** `category` vs 기존 search `categoryId` 중복 — `category`(신규 keyword) 채택, `categoryId`
   는 미사용 유지(추후 정리).
 - **R5** place 는 `place_db` 스키마 + (k8s)`mysql-place` DNS 필요 — 인프라 provisioning 선행.
-- **R6** 가격 정규화: 참가격 join 미구현 시 식약처 품목에 카테고리 기반 합성가 부여(문서화) — 추후
-  참가격 fuzzy join 으로 대체.
+- **R6 (해소)** 참가격 join 구현 완료 — `normalize.py --source {chamgagyeok|join}`. 참가격
+  `getProductInfoSvc`(상품명/소분류) + `getProductPriceInfoSvc`(실판매가, 조사일=금요일 fallback,
+  판매점 중앙값)로 실가격을 채우고 식약처 품목명에 fuzzy 매칭. 미매칭만 합성가(또는 `--no-synthetic`
+  제외). 잔여: 라이브 키로 매치율 측정.
 
 ## 실행 (구현 완료)
 

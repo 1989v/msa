@@ -22,7 +22,7 @@ DB 직삽입이 아니라 **Create API 경유**라 Kafka→OpenSearch 색인까�
 | 소스 | data.go.kr | 제공 필드 | 라이선스 |
 |------|-----------|-----------|----------|
 | 식약처 식품(첨가물)품목제조보고 | #15064909 (식품안전나라 svc `I1250`) | 품목명, 제조사, 식품유형 | 이용허락범위 **제한없음** |
-| 한국소비자원 참가격 | #3043385 | 상품명, 판매가격, 제조사, 판매처 | KOGL 제1유형(출처표시) |
+| 한국소비자원 참가격 | #3043385 (openapi.price.go.kr) | `getProductInfoSvc`(goodName/소분류) + `getProductPriceInfoSvc`(실판매가 goodPrice) | KOGL 제1유형(출처표시) |
 | Open Food Facts Korea | — | 바코드, 이미지, 카테고리 | ODbL (enrichment-only, 원본 미보관) |
 
 > 원천 raw 응답은 레포에 커밋하지 않는다. **정규화된 `products.jsonl` 만** 적재에 사용.
@@ -30,14 +30,28 @@ DB 직삽입이 아니라 **Create API 경유**라 Kafka→OpenSearch 색인까�
 
 ## 1) 정규화 (로컬, 1회성)
 
-```bash
-# 키 없이 — 동봉 샘플(24종)로 즉시 생성
-python3 normalize.py --from-sample --out products.jsonl
+`--source` 로 가격 출처를 선택한다(키는 data.go.kr #3043385 의 **Encoding 서비스키**, 추가 인코딩 금지):
 
-# data.go.kr 키로 식약처 품목 수집 (가격은 참가격 join 전까지 카테고리 합성가)
-export DATA_GO_KR_KEY='...(디코딩 서비스키)...'
-python3 normalize.py --out products.jsonl --limit 2000
+```bash
+export DATA_GO_KR_KEY='...(Encoding 서비스키)...'
+
+# (A) 참가격 단독 — 100% 실판매가 생필품 카탈로그
+python3 normalize.py --source chamgagyeok --out products.jsonl
+
+# (B) 기본 join — 식약처 품목명(볼륨) + 참가격 실가격 fuzzy 조인
+#     매칭=실가격, 미매칭=카테고리 합성가
+python3 normalize.py --source join --limit 2000 --out products.jsonl
+
+# (B') 실가격만 — 미매칭 행 제외 (식약처∩참가격)
+python3 normalize.py --source join --no-synthetic --out products.jsonl
+
+# (C) 키 없이 — 동봉 샘플(24종)
+python3 normalize.py --from-sample --out products.jsonl
 ```
+
+**참가격 가격 메커니즘**: `getProductPriceInfoSvc` 는 조사일(`goodInspectDay`, **매주 금요일**)만 유효 →
+미지정 시 최근 금요일들을 역순으로 자동 탐색. goodId 별로 여러 판매점 가격의 **중앙값**을 대표가로 사용.
+응답은 XML(평문 HTTP, 점 포함 컨테이너 태그)이라 expat 의존 없는 정규식 파서로 처리.
 
 출력 한 줄 = 한 상품: `{"name","price","stock","brand","description","category"}` (price>0 필수 — Money 불변식).
 
