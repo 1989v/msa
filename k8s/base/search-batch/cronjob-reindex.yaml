@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: search-reindex
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: search-batch
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: reindex
+spec:
+  # ADR-0058 — 전체 재색인(alias swap, 무중단). productApiReindexJob 이
+  # product API 를 페이지네이션 풀-스캔하여 OpenSearch 인덱스를 재구축한다.
+  #
+  # 기본 suspend: 매핑 변경 후 온디맨드 실행을 전제로 정의만 해 둔다.
+  #   온디맨드:  kubectl -n commerce create job --from=cronjob/search-reindex search-reindex-manual
+  #   주기화:    suspend: false 로 전환 (schedule 은 주 1회 일요일 03:00 UTC 예시 — 조정 가능)
+  suspend: true
+  schedule: "0 3 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: search-batch
+            app.kubernetes.io/component: reindex
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: reindex
+              image: commerce/search-batch:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                - "--spring.batch.job.name=productApiReindexJob"
+              env:
+                - name: OPENSEARCH_URIS
+                  value: "http://opensearch:9200"
+                - name: PRODUCT_SERVICE_URL
+                  value: "http://product:8081"
+              resources:
+                requests: { cpu: 100m, memory: 512Mi }
+                limits:   { memory: 1Gi }

@@ -121,8 +121,7 @@ patches:
     #     (gifticon/fulfillment 는 k3s-lite 의 동일값 명시 패치 보유)
 
     target: {kind: Deployment, name: experiment}
-  - path: patches/resources-s-512mi.yaml
-    target: {kind: Deployment, name: search-batch}
+  # ADR-0058 — search-batch 는 CronJob(Deployment 아님). resource 패치 대상 제외.
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: search-consumer}
   - path: patches/resources-s-512mi.yaml
