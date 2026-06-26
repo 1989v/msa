@@ -1,30 +1,19 @@
+// ADR-0058 — inventory:app: 얇은 deployable aggregator.
+// 도메인 로직은 feature 라이브러리에 있고, 여기는 @SpringBootApplication + 통합 yml 만.
+// (배포 단위 이름은 아직 inventory — Phase 4 에서 order/fulfillment 폴드 후 commerce:app 으로 리네임)
 plugins {
     alias(libs.plugins.kotlin.spring)
-    alias(libs.plugins.kotlin.jpa)
-    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.spring.boot)
 }
 
 dependencies {
-    implementation(project(":inventory:domain"))
-    implementation(project(":warehouse:feature")) // ADR-0058: commerce 폴드 (warehouse feature 라이브러리)
-    implementation(project(":common"))
-    implementation(libs.kotlin.logging)
+    implementation(project(":inventory:feature"))
+    implementation(project(":warehouse:feature")) // co-deploy (commerce 모듈러 모놀리스)
+    // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
-    implementation(libs.spring.boot.starter.data.jpa)
-    implementation(libs.spring.boot.starter.data.redis)
-    implementation(libs.spring.boot.starter.validation)
-    implementation(libs.spring.boot.starter.actuator)
-    implementation("io.micrometer:micrometer-registry-prometheus")
-    implementation(libs.spring.kafka)
-    implementation(libs.springdoc.openapi.starter.webmvc.ui)
-    // ADR-0029 PR-3a: Flyway 도입 (Hibernate ddl-auto=validate 와 결합해 스키마 변경은 Flyway 단독 책임)
-    implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-mysql")
-    runtimeOnly(libs.mysql.connector)
 
     testImplementation(libs.spring.boot.starter.test)
-    testImplementation(libs.spring.kafka.test)
+    testImplementation(libs.spring.boot.starter.data.jpa) // dual-DS 테스트가 JpaRepository 타입 참조
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.testcontainers.junit) // ADR-0058: dual-datasource context-load 검증
     testImplementation(libs.testcontainers.mysql)

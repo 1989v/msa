@@ -19,6 +19,7 @@ include(
     "code-dictionary:domain",
     "code-dictionary:app",
     "inventory:domain",
+    "inventory:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (비-bootable)
     "inventory:app",
     "fulfillment:domain",
     "fulfillment:app",
