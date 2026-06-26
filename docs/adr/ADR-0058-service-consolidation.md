@@ -37,12 +37,15 @@ agent-viewer)에 도달했다. 단일 노드(OCI Ampere A1 free tier) 기준 문
 
 | 그룹 | 병합 대상 | 효과 |
 |---|---|---|
-| **commerce** | order + inventory + fulfillment + warehouse | 사가(order→inventory→fulfillment) **in-process 이벤트화**, Kafka 홉·결과적정합성 제거 |
+| **commerce** | order + inventory + fulfillment + warehouse | 바운디드 컨텍스트 간 사가는 **Kafka 유지**(in-process 미전환) — 디커플링·재분리 가능성·outbox at-least-once 내구성 보존. 사가 코드 무변경 |
 | **engagement** | recommendation + experiment | (analytics 는 Worker 로 분리 유지) |
 | **identity** | auth + member | ⚠️ auth 는 private submodule(1989v) — submodule 경계 정리 선행 |
 
 `:domain` 모듈·패키지·DB 스키마는 분리 유지(바운디드 컨텍스트 보존), JVM/Spring 컨텍스트/
-Kafka 컨슈머/커넥션풀만 공유. 그룹 내부 이벤트는 in-process, 그룹 간은 Kafka 유지.
+커넥션풀만 공유. **서로 다른 바운디드 컨텍스트 간 통신(사가)은 같은 JVM 이라도 Kafka 를 유지**한다 —
+in-process @EventListener 로 전환하면 코드 결합이 생겨 재분리가 어렵고 기존 outbox 의 at-least-once
+내구성을 잃는다. 모듈러 모놀리스의 목적은 모듈 경계를 메시징으로 강제하는 것이므로, 전환 대신
+"모듈러 모놀리스라 (in-process 대신) Kafka 이벤트 유지" 주석으로 의도를 명시한다.
 
 **분리 유지**: gateway(WebFlux 리액티브, 서블릿/JPA 와 혼재 금지), product(카탈로그 SSOT),
 search-api(OpenSearch 전용 + P99 SLA), quant(22k LOC, 도메인 단절), chatbot·code-dictionary·
@@ -67,7 +70,7 @@ gifticon·agent-viewer(도메인 단절 사이드앱).
 ## Consequences
 
 - (+) 상주 JVM 약 20 → ~12–13 + ephemeral CronJob. 고정 오버헤드 ~3–5GB 회수.
-- (+) 그룹 내부 Kafka 홉 소멸 → 결과적정합성 복잡도·브로커 왕복 감소.
+- (+) 사가 코드 무변경(Kafka 유지) → 폴드가 순수 co-deployment, 동작·내구성 변화 0, 재분리 용이.
 - (−) 병합 그룹은 독립 배포·독립 스케일·장애 격리 상실(1인·단일노드에선 수용 가능).
 - (−) auth submodule 경계로 identity 병합은 마찰 → 후순위.
 - 롤아웃은 페이즈별 커밋: ① search ② commerce ③ engagement ④ identity ⑤ infra.
