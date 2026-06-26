@@ -1,26 +1,15 @@
+// ADR-0058 — fulfillment:app: 얇은 deployable aggregator (2b — standalone 유지).
+// 2c 에서 commerce(inventory:app)로 fold + fulfillment:app 제거 예정.
 plugins {
     alias(libs.plugins.kotlin.spring)
-    alias(libs.plugins.kotlin.jpa)
-    alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.spring.boot)
 }
 
 dependencies {
-    implementation(project(":fulfillment:domain"))
-    implementation(project(":common"))
+    implementation(project(":fulfillment:feature"))
     implementation(libs.spring.boot.starter.web)
+    // FulfillmentApplication 의 @EntityScan/@EnableJpaRepositories 컴파일용
     implementation(libs.spring.boot.starter.data.jpa)
-    implementation(libs.spring.boot.starter.validation)
-    implementation(libs.spring.boot.starter.actuator)
-    implementation("io.micrometer:micrometer-registry-prometheus")
-    implementation(libs.spring.kafka)
-    implementation(libs.springdoc.openapi.starter.webmvc.ui)
-    // kotlin-logging 람다 로깅 (ADR-0021)
-    implementation(libs.kotlin.logging)
-    // ADR-0029 PR-3a: Flyway 도입 (Hibernate ddl-auto=validate 와 결합해 스키마 변경은 Flyway 단독 책임)
-    implementation("org.flywaydb:flyway-core")
-    implementation("org.flywaydb:flyway-mysql")
-    runtimeOnly(libs.mysql.connector)
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.kafka.test)
