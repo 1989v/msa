@@ -13,16 +13,9 @@ import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
 import org.springframework.orm.jpa.JpaTransactionManager
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.transaction.PlatformTransactionManager
-import org.springframework.transaction.support.TransactionSynchronizationManager
+import com.kgd.common.persistence.DataSourceType
+import com.kgd.common.persistence.ReadReplicaRoutingDataSource
 import javax.sql.DataSource
-
-enum class DataSourceType { MASTER, REPLICA }
-
-class RoutingDataSource : org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource() {
-    override fun determineCurrentLookupKey(): DataSourceType =
-        if (TransactionSynchronizationManager.isCurrentTransactionReadOnly())
-            DataSourceType.REPLICA else DataSourceType.MASTER
-}
 
 /**
  * ADR-0058 — commerce 모듈러 모놀리스(스키마 4개 유지).
@@ -52,7 +45,7 @@ class DataSourceConfig {
     fun routingDataSource(
         @Qualifier("masterDataSource") master: DataSource,
         @Qualifier("replicaDataSource") replica: DataSource
-    ): DataSource = RoutingDataSource().apply {
+    ): DataSource = ReadReplicaRoutingDataSource().apply {
         setTargetDataSources(mapOf(
             DataSourceType.MASTER to master,
             DataSourceType.REPLICA to replica

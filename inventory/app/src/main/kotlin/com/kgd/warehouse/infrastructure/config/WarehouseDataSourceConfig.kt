@@ -1,7 +1,7 @@
 package com.kgd.warehouse.infrastructure.config
 
-import com.kgd.inventory.infrastructure.config.DataSourceType
-import com.kgd.inventory.infrastructure.config.RoutingDataSource
+import com.kgd.common.persistence.DataSourceType
+import com.kgd.common.persistence.ReadReplicaRoutingDataSource
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -42,7 +42,7 @@ class WarehouseDataSourceConfig {
     fun warehouseRoutingDataSource(
         @Qualifier("warehouseMasterDataSource") master: DataSource,
         @Qualifier("warehouseReplicaDataSource") replica: DataSource,
-    ): DataSource = RoutingDataSource().apply {
+    ): DataSource = ReadReplicaRoutingDataSource().apply {
         setTargetDataSources(mapOf(
             DataSourceType.MASTER to master,
             DataSourceType.REPLICA to replica,
