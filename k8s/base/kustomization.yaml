@@ -20,7 +20,7 @@ resources:
   - gifticon
   - inventory
   - fulfillment
-  - warehouse
+  # ADR-0058: warehouse 는 inventory(commerce) 로 폴드 — 별도 Deployment 없음 (스키마 warehouse_db 는 유지)
   - analytics
   - experiment
   - chatbot
@@ -44,7 +44,7 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|product|order|search|search-consumer|auth|member|wishlist|gifticon|inventory|fulfillment|warehouse|analytics|experiment|chatbot|code-dictionary|agent-viewer-api|quant|recommendation)"
+      name: "(gateway|product|order|search|search-consumer|auth|member|wishlist|gifticon|inventory|fulfillment|analytics|experiment|chatbot|code-dictionary|agent-viewer-api|quant|recommendation)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment

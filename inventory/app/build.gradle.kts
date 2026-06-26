@@ -7,6 +7,7 @@ plugins {
 
 dependencies {
     implementation(project(":inventory:domain"))
+    implementation(project(":warehouse:domain")) // ADR-0058: commerce 폴드 (warehouse 도메인)
     implementation(project(":common"))
     implementation(libs.kotlin.logging)
     implementation(libs.spring.boot.starter.web)

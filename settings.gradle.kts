@@ -22,8 +22,7 @@ include(
     "inventory:app",
     "fulfillment:domain",
     "fulfillment:app",
-    "warehouse:domain",
-    "warehouse:app",
+    "warehouse:domain", // ADR-0058: warehouse:app 은 inventory:app(→commerce) 으로 폴드, 도메인만 유지
     "chatbot:domain",
     "chatbot:app",
     "analytics:domain",

@@ -126,7 +126,7 @@ jobs:
           set -euo pipefail
 
           # 서비스 → 테스트 태스크 매핑은 images.yml 의 매핑과 동일하게 유지할 것
-          ALL_JVM="gateway product order search search-batch search-consumer auth member wishlist gifticon analytics experiment code-dictionary inventory fulfillment warehouse chatbot quant recommendation agent-viewer-api"
+          ALL_JVM="gateway product order search search-batch search-consumer auth member wishlist gifticon analytics experiment code-dictionary inventory fulfillment chatbot quant recommendation agent-viewer-api"
 
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA"...HEAD)
           echo "── 변경 파일 ($(echo "$CHANGED_FILES" | wc -l) 개):"
@@ -152,7 +152,6 @@ jobs:
                 gifticon|gifticon/app/*|gifticon/domain/*) SVCS+=" gifticon" ;;
                 inventory/*)                               SVCS+=" inventory" ;;
                 fulfillment/*)                             SVCS+=" fulfillment" ;;
-                warehouse/*)                               SVCS+=" warehouse" ;;
                 analytics/*)                               SVCS+=" analytics" ;;
                 experiment/*)                              SVCS+=" experiment" ;;
                 code-dictionary/*)                         SVCS+=" code-dictionary" ;;

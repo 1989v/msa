@@ -140,8 +140,6 @@ patches:
   - path: patches/resources-xs-384mi.yaml
     target: {kind: Deployment, name: inventory}
   - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: warehouse}
-  - path: patches/resources-xs-384mi.yaml
     target: {kind: Deployment, name: agent-viewer-api}
   # ─── Tier FE (96Mi) — nginx static ────────────────────────────────────────
   - path: patches/resources-fe-96mi.yaml
@@ -232,9 +230,6 @@ images:
     newTag: 5ebf81b
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
-    newTag: 5ebf81b
-  - name: commerce/warehouse
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/warehouse
     newTag: 5ebf81b
   - name: commerce/wishlist
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/wishlist
