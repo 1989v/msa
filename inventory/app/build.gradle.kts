@@ -26,6 +26,8 @@ dependencies {
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.kafka.test)
     testImplementation(libs.kotest.extensions.spring)
+    testImplementation(libs.testcontainers.junit) // ADR-0058: dual-datasource context-load 검증
+    testImplementation(libs.testcontainers.mysql)
 }
 
 tasks.bootJar {
