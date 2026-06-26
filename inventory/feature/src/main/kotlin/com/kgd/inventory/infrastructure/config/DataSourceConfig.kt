@@ -65,8 +65,11 @@ class DataSourceConfig {
         builder: EntityManagerFactoryBuilder,
         @Qualifier("dataSource") dataSource: DataSource,
     ): LocalContainerEntityManagerFactoryBean =
+        // inventory 는 자체 outbox(com.kgd.inventory...outbox, table outbox_event)를 사용한다.
+        // common 의 OutboxEntity 는 fulfillment/order 의 전용 EMF 가 관리하므로 여기선 스캔하지 않는다
+        // (com.kgd.common 을 넣으면 common OutboxEntity 가 inventory_db 에 매핑되어 prod validate 실패).
         builder.dataSource(dataSource)
-            .packages("com.kgd.inventory", "com.kgd.common")
+            .packages("com.kgd.inventory")
             .persistenceUnit("inventory")
             .build()
 
