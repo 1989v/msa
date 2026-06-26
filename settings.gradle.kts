@@ -22,7 +22,8 @@ include(
     "inventory:app",
     "fulfillment:domain",
     "fulfillment:app",
-    "warehouse:domain", // ADR-0058: warehouse:app 은 inventory:app(→commerce) 으로 폴드, 도메인만 유지
+    "warehouse:domain",
+    "warehouse:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (구 warehouse:app, 비-bootable)
     "chatbot:domain",
     "chatbot:app",
     "analytics:domain",
