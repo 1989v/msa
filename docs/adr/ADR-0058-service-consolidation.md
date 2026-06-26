@@ -67,6 +67,43 @@ gifticon·agent-viewer(도메인 단절 사이드앱).
   커머스 코어와 단절된 중량 컴포넌트. OCI 가 커머스 데모라면 제외가 가장 큰 RAM 회수.
 - quant-ingest 는 이미 CronJob(ephemeral) — 조치 불요.
 
+## Modular Monolith 컨벤션 (reversibility — 모든 폴드에 항상 적용)
+
+자원 확보 시 **한 줄도 안 고치고 재분리**가 가능하도록, 도메인을 폴드할 때 아래를 표준으로 지킨다.
+
+### 런타임은 단일 프로세스 (자원 절감의 본질 — 오해 금지)
+
+`:feature` 모듈 분리는 **빌드타임 조직화일 뿐**이다. `commerce:app` 1개 bootJar =
+**1 JVM = 1 API 서버**(단일 `@SpringBootApplication`·단일 Spring 컨텍스트·단일 Tomcat·단일 JVM
+고정비). feature 들은 한 프로세스에 링크된 라이브러리(여느 의존 jar 와 동일). 따라서 도메인 N개가
+JVM 고정비를 **1벌만** 부담 → 절감 목적 그대로. (스키마 분리에 따른 datasource별 커넥션풀만 한
+JVM 안에서 N벌 — 풀 사이즈로 조절. 별도 JVM N개보다 훨씬 저렴.)
+
+### 구조: feature 라이브러리 + 얇은 aggregator
+
+- `{domain}:domain` — 순수 도메인 (불변).
+- `{domain}:feature` — 컨트롤러·서비스·어댑터·Kafka 리스너 + **도메인별** DataSourceConfig + outbox.
+  **`@SpringBootApplication` main / bootJar 없음** (순수 라이브러리).
+- `commerce:app` — bootable 1개: `@SpringBootApplication` + N개 feature 의존 + 통합 application.yml
+  (도메인별 datasource 블록) + @Primary datasource 지정.
+
+### 불변식 (재분리 가능성을 구조로 보장)
+
+1. **모듈 간 직접 빈 주입 금지** — 컨텍스트 간 통신은 Kafka(또는 HTTP)로만. `{domain}:feature` 는
+   다른 feature 를 **의존하지 않는다** → 교차 import 가 **컴파일 에러로 차단**(결합 구조적 불가).
+2. 컨텍스트 간 이벤트는 **같은 JVM 이라도 Kafka 유지**(in-process @EventListener 전환 금지).
+3. **스키마·datasource·EMF·TM·outbox 는 도메인별 분리**(공유 금지). 도메인 `@Transactional` 은
+   자기 TM 한정자(`@Transactional("xxxTransactionManager")`)를 명시.
+4. 도메인별 application.yml 블록은 **자기 완결적**(복사 한 번으로 추출 가능).
+
+### 재분리 체크리스트 (`{domain}` 떼어내기 — "쉬움"의 정의)
+
+1. `{domain}:app` 신규(얇음): `@SpringBootApplication` + bootJar + `{domain}:feature` 의존 +
+   자기 datasource 블록만 담은 application.yml.
+2. `commerce:app` 에서 `{domain}:feature` 의존·yml 블록 제거.
+3. k8s `{domain}` Deployment 복원 + gateway 라우트 repoint.
+4. 끝 — `{domain}:feature`·DB(`{domain}_db`)·Kafka 토픽·outbox **무변경**, 데이터 이관 0.
+
 ## Consequences
 
 - (+) 상주 JVM 약 20 → ~12–13 + ephemeral CronJob. 고정 오버헤드 ~3–5GB 회수.
