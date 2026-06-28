@@ -38,6 +38,24 @@ spring:
         hikari:
           maximum-pool-size: 3
           minimum-idle: 1
+    # ADR-0058: commerce 폴드 — fulfillment 도메인 전용 datasource(스키마 격리, 전용 outbox/idempotency).
+    fulfillment:
+      master:
+        jdbc-url: jdbc:mysql://${FULFILLMENT_DB_MASTER:localhost:3330}/fulfillment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${FULFILLMENT_MYSQL_USER:fulfillment_user}
+        password: ${FULFILLMENT_MYSQL_PASSWORD:fulfillment_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${FULFILLMENT_DB_REPLICA:localhost:3331}/fulfillment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${FULFILLMENT_MYSQL_USER:fulfillment_user}
+        password: ${FULFILLMENT_MYSQL_PASSWORD:fulfillment_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
   jpa:
     hibernate:
       ddl-auto: validate

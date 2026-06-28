@@ -16,7 +16,7 @@ import java.util.UUID
 class JpaProcessedEventRepositoryAdapterTest : BehaviorSpec({
 
     Given("JpaProcessedEventRepositoryAdapter") {
-        val jpa = mockk<ProcessedEventJpaRepository>()
+        val jpa = mockk<FulfillmentProcessedEventJpaRepository>()
         val adapter = JpaProcessedEventRepositoryAdapter(jpa)
         val eventId = UUID.randomUUID()
         val group = "fulfillment-service"

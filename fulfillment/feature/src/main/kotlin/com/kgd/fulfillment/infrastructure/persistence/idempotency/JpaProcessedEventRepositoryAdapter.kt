@@ -15,9 +15,9 @@ import java.util.UUID
  * Phase 3 (PR-5) 에서 [com.kgd.fulfillment.infrastructure.messaging.FulfillmentEventConsumer] 가
  * 본 Port 를 통해 [com.kgd.common.messaging.IdempotentEventHandler] 를 사용하도록 wire-up 된다.
  */
-@Component
+@Component("fulfillmentProcessedEventRepositoryAdapter")
 class JpaProcessedEventRepositoryAdapter(
-    private val jpa: ProcessedEventJpaRepository,
+    private val jpa: FulfillmentProcessedEventJpaRepository,
 ) : ProcessedEventRepositoryPort {
 
     override fun existsBy(eventId: UUID, consumerGroup: String): Boolean =

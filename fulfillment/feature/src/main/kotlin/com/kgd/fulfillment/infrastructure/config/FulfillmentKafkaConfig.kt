@@ -16,14 +16,19 @@ import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 import org.springframework.util.backoff.FixedBackOff
 
+/**
+ * ADR-0058 — commerce 모듈러 모놀리스에서 inventory 의 KafkaConfig 와 빈 이름이 충돌하지 않도록
+ * 모든 빈을 `fulfillment` 프리픽스로 등록한다(도메인 전용). 동작은 기존과 동일.
+ * 재분리 시 그대로 fulfillment 와 함께 이동.
+ */
 @Configuration
-class KafkaConfig {
+class FulfillmentKafkaConfig {
 
     @Value("\${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapServers: String
 
     @Bean
-    fun producerFactory(): ProducerFactory<String, Any> {
+    fun fulfillmentProducerFactory(): ProducerFactory<String, Any> {
         val props = mapOf(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
@@ -36,11 +41,13 @@ class KafkaConfig {
     }
 
     @Bean
-    fun kafkaTemplate(producerFactory: ProducerFactory<String, Any>): KafkaTemplate<String, Any> =
-        KafkaTemplate(producerFactory)
+    fun fulfillmentKafkaTemplate(
+        @org.springframework.beans.factory.annotation.Qualifier("fulfillmentProducerFactory")
+        producerFactory: ProducerFactory<String, Any>,
+    ): KafkaTemplate<String, Any> = KafkaTemplate(producerFactory)
 
     @Bean
-    fun consumerFactory(): ConsumerFactory<String, String> {
+    fun fulfillmentConsumerFactory(): ConsumerFactory<String, String> {
         val props = mapOf(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
             ConsumerConfig.GROUP_ID_CONFIG to "fulfillment-service",
@@ -53,8 +60,10 @@ class KafkaConfig {
     }
 
     @Bean
-    fun kafkaListenerContainerFactory(
+    fun fulfillmentKafkaListenerContainerFactory(
+        @org.springframework.beans.factory.annotation.Qualifier("fulfillmentConsumerFactory")
         consumerFactory: ConsumerFactory<String, String>,
+        @org.springframework.beans.factory.annotation.Qualifier("fulfillmentKafkaTemplate")
         kafkaTemplate: KafkaTemplate<String, Any>,
     ): ConcurrentKafkaListenerContainerFactory<String, String> =
         ConcurrentKafkaListenerContainerFactory<String, String>().apply {
@@ -65,7 +74,6 @@ class KafkaConfig {
                     DeadLetterPublishingRecoverer(kafkaTemplate),
                     FixedBackOff(1000L, 3L),
                 ).apply {
-                    // ADR-0015 §2: 비즈니스 예외와 입력 검증 예외는 재시도 무의미 → 즉시 DLT.
                     addNotRetryableExceptions(
                         BusinessException::class.java,
                         IllegalArgumentException::class.java,

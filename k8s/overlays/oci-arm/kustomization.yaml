@@ -177,9 +177,6 @@ images:
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
     newTag: 5ebf81b
-  - name: commerce/fulfillment
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/fulfillment
-    newTag: 5ebf81b
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
     newTag: 5ebf81b

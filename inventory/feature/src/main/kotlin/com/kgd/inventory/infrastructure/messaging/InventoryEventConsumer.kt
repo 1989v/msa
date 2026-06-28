@@ -38,6 +38,7 @@ class InventoryEventConsumer(
     private val confirmStockByOrderUseCase: ConfirmStockByOrderUseCase,
     private val releaseStockByOrderUseCase: ReleaseStockByOrderUseCase,
     private val objectMapper: ObjectMapper,
+    @org.springframework.beans.factory.annotation.Qualifier("inventoryIdempotentEventHandler")
     private val idempotentEventHandler: IdempotentEventHandler,
     private val idempotentMetrics: IdempotentMetrics,
     // ADR-0032 Phase 3 / PR-4 — order.cancelled → inventory release latency 메트릭.

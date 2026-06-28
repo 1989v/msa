@@ -14,9 +14,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional
+@Transactional("fulfillmentTransactionManager") // ADR-0058: commerce 모놀리스에서 fulfillment 전용 TM
 class FulfillmentService(
     private val fulfillmentRepository: FulfillmentRepositoryPort,
+    @org.springframework.beans.factory.annotation.Qualifier("fulfillmentOutboxPort")
     private val outboxPort: OutboxPort,
     private val objectMapper: ObjectMapper
 ) : CreateFulfillmentUseCase, TransitionFulfillmentUseCase, GetFulfillmentUseCase {
@@ -89,14 +90,14 @@ class FulfillmentService(
         )
     }
 
-    @Transactional(readOnly = true)
+    @Transactional("fulfillmentTransactionManager", readOnly = true)
     override fun findById(id: Long): GetFulfillmentUseCase.Result {
         val fulfillmentOrder = fulfillmentRepository.findById(id)
             ?: throw FulfillmentNotFoundException(id)
         return toResult(fulfillmentOrder)
     }
 
-    @Transactional(readOnly = true)
+    @Transactional("fulfillmentTransactionManager", readOnly = true)
     override fun findByOrderId(orderId: Long): GetFulfillmentUseCase.Result {
         val fulfillments = fulfillmentRepository.findAllByOrderId(orderId)
         val fulfillmentOrder = fulfillments.firstOrNull()
@@ -104,7 +105,7 @@ class FulfillmentService(
         return toResult(fulfillmentOrder)
     }
 
-    @Transactional(readOnly = true)
+    @Transactional("fulfillmentTransactionManager", readOnly = true)
     override fun findAllByOrderId(orderId: Long): List<GetFulfillmentUseCase.Result> {
         return fulfillmentRepository.findAllByOrderId(orderId).map { toResult(it) }
     }

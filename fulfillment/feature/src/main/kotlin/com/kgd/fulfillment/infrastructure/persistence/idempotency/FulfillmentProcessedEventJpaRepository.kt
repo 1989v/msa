@@ -16,7 +16,7 @@ import java.time.Instant
  * [deleteByProcessedAtBefore] 는 ADR-0029 Verification Follow-up §1 의 7일 retention 스케줄러
  * ([com.kgd.common.messaging.IdempotentEventCleanupScheduler]) 가 사용한다. 호출 시 트랜잭션 필수.
  */
-interface ProcessedEventJpaRepository : JpaRepository<ProcessedEventJpaEntity, ProcessedEventId> {
+interface FulfillmentProcessedEventJpaRepository : JpaRepository<ProcessedEventJpaEntity, ProcessedEventId> {
 
     @Modifying
     @Query("DELETE FROM ProcessedEventJpaEntity p WHERE p.processedAt < :cutoff")

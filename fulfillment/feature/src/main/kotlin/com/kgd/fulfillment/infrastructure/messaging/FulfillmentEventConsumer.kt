@@ -19,6 +19,7 @@ import java.util.UUID
 class FulfillmentEventConsumer(
     private val createFulfillmentUseCase: CreateFulfillmentUseCase,
     private val objectMapper: ObjectMapper,
+    @org.springframework.beans.factory.annotation.Qualifier("fulfillmentIdempotentEventHandler")
     private val idempotentEventHandler: IdempotentEventHandler,
     private val idempotentMetrics: IdempotentMetrics,
 ) {
@@ -27,7 +28,7 @@ class FulfillmentEventConsumer(
     @KafkaListener(
         topics = ["inventory.stock.reserved"],
         groupId = CONSUMER_GROUP,
-        containerFactory = "kafkaListenerContainerFactory",
+        containerFactory = "fulfillmentKafkaListenerContainerFactory",
     )
     fun onStockReserved(record: ConsumerRecord<String, String>) {
         val message = record.value()
