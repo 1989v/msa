@@ -1,5 +1,6 @@
 package com.kgd.inventory
 
+import com.kgd.commerce.CommerceApplication
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -28,7 +29,7 @@ private val dockerAvailable: Boolean =
 fun commerceDockerAvailable(): Boolean = dockerAvailable
 
 @org.springframework.boot.test.context.SpringBootTest(
-    classes = [InventoryApplication::class],
+    classes = [CommerceApplication::class],
     webEnvironment = org.springframework.boot.test.context.SpringBootTest.WebEnvironment.NONE,
     properties = [
         "spring.kafka.listener.auto-startup=false",

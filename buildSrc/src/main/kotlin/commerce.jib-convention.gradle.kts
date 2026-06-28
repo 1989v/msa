@@ -32,7 +32,7 @@ val mainClassByImage: Map<String, String> = mapOf(
     "member" to "com.kgd.member.MemberApplicationKt",
     "wishlist" to "com.kgd.wishlist.WishlistApplicationKt",
     "gifticon" to "com.kgd.gifticon.GifticonApplicationKt",
-    "inventory" to "com.kgd.inventory.InventoryApplicationKt",
+    "commerce" to "com.kgd.commerce.CommerceApplicationKt",
     "analytics" to "com.kgd.analytics.AnalyticsApplicationKt",
     "experiment" to "com.kgd.experiment.ExperimentApplicationKt",
     "chatbot" to "com.kgd.chatbot.ChatbotApplicationKt",

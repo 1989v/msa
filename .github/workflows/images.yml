@@ -78,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          ALL_JVM="gateway product search search-batch search-consumer auth member wishlist gifticon analytics experiment code-dictionary inventory chatbot quant recommendation agent-viewer-api"
+          ALL_JVM="gateway product search search-batch search-consumer auth member wishlist gifticon analytics experiment code-dictionary commerce chatbot quant recommendation agent-viewer-api"
           ALL_DOCKER="admin-fe gifticon-fe agent-viewer-fe portal-fe quant-fe quant-ingest recommendation-ml recommendation-ann"
 
           # 강제 rebuild 트리거
@@ -133,7 +133,7 @@ jobs:
               wishlist/*)                                JVM_SVCS+=" wishlist" ;;
               gifticon|gifticon/app/*|gifticon/domain/*) JVM_SVCS+=" gifticon" ;;
               gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
-              inventory/*)                               JVM_SVCS+=" inventory" ;;
+              inventory/*|warehouse/*|fulfillment/*|order/*|commerce/*)                               JVM_SVCS+=" commerce" ;;
               analytics/*)                               JVM_SVCS+=" analytics" ;;
               experiment/*)                              JVM_SVCS+=" experiment" ;;
               code-dictionary/*)                         JVM_SVCS+=" code-dictionary" ;;

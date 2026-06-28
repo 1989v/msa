@@ -117,9 +117,9 @@ spec:
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: inventory
+  name: commerce
 spec:
-  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: inventory }
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: commerce }
   minReplicas: 2
   maxReplicas: 6
   metrics:

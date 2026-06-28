@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: inventory
+  name: commerce
   namespace: commerce
   labels:
-    app.kubernetes.io/name: inventory
+    app.kubernetes.io/name: commerce
     app.kubernetes.io/part-of: commerce-platform
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: inventory
+      app.kubernetes.io/name: commerce
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: inventory
+        app.kubernetes.io/name: commerce
         app.kubernetes.io/part-of: commerce-platform
     spec:
-      serviceAccountName: inventory
+      serviceAccountName: commerce
       terminationGracePeriodSeconds: 45
       containers:
         - name: app
-          image: commerce/inventory:latest
+          image: commerce/commerce:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http

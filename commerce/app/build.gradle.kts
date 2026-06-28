@@ -22,5 +22,5 @@ dependencies {
 }
 
 tasks.bootJar {
-    archiveBaseName.set("inventory")
+    archiveBaseName.set("commerce")
 }

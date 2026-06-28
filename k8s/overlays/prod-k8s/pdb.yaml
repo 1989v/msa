@@ -86,12 +86,12 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: inventory
+  name: commerce
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: inventory
+      app.kubernetes.io/name: commerce
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
