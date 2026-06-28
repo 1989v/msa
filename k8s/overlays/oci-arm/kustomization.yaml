@@ -137,7 +137,8 @@ patches:
     target: {kind: Deployment, name: member}
   - path: patches/resources-xs-384mi.yaml
     target: {kind: Deployment, name: wishlist}
-  - path: patches/resources-xs-384mi.yaml
+  # ADR-0058: commerce(4-도메인 모놀리스)는 XL — 단일 inventory 의 xs(384Mi)로는 즉시 OOM.
+  - path: patches/resources-xl-1200mi.yaml
     target: {kind: Deployment, name: commerce}
   - path: patches/resources-xs-384mi.yaml
     target: {kind: Deployment, name: agent-viewer-api}

@@ -48,8 +48,10 @@ spec:
               exec:
                 command: ["sh", "-c", "sleep 5"]
           resources:
+            # ADR-0058: 4-도메인 commerce 모놀리스(order+inventory+fulfillment+warehouse) — 4 EMF/풀 + 4 도메인
+            # 워킹셋이라 단일 도메인 대비 상향. (제거된 3개 Deployment 가 쓰던 메모리에서 충당 — 순감)
             requests:
-              cpu: 100m
-              memory: 512Mi
+              cpu: 200m
+              memory: 768Mi
             limits:
-              memory: 1Gi
+              memory: 1536Mi

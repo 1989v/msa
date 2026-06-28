@@ -52,4 +52,15 @@ class OrderMessagingConfig {
         @Qualifier("orderIdempotentTxTemplate") transactionTemplate: TransactionTemplate,
         metrics: IdempotentMetrics,
     ): IdempotentEventHandler = IdempotentEventHandler(port, transactionTemplate, metrics)
+
+    // ADR-0058: 도메인별 retention cleanup (전용 port 바인딩).
+    @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+        prefix = "kgd.common.messaging.idempotent.cleanup", name = ["enabled"], havingValue = "true",
+    )
+    fun orderIdempotentEventCleanupScheduler(
+        @Qualifier("orderProcessedEventRepositoryAdapter") port: ProcessedEventRepositoryPort,
+        properties: com.kgd.common.messaging.IdempotentEventCleanupProperties,
+    ): com.kgd.common.messaging.IdempotentEventCleanupScheduler =
+        com.kgd.common.messaging.IdempotentEventCleanupScheduler(port, properties)
 }

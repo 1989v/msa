@@ -106,7 +106,13 @@ patches:
       kind: Deployment
       name: gifticon
 
-  # ADR-0058: fulfillment 은 commerce(inventory)로 폴드 — 별도 resource 패치 불요.
+  # ADR-0058: commerce 는 order+inventory+fulfillment+warehouse 4-도메인 모놀리스 →
+  # 글로벌 reduce(768Mi) 로는 4 EMF/풀 워킹셋 부족. 1280Mi 로 상향.
+  - path: patches/commerce-resources.yaml
+    target:
+      kind: Deployment
+      name: commerce
+
   # quant Phase 2: replicas=1 강제 (Recreate) + KMS local + outbox kafka-relay enable
   # + Telegram dispatcher disabled (Bot Token 미설정 시) — TG-P2-15
   - path: patches/quant-phase2.yaml

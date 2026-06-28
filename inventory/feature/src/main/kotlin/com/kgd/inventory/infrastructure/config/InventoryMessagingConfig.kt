@@ -31,4 +31,15 @@ class InventoryMessagingConfig {
         @Qualifier("inventoryIdempotentTxTemplate") transactionTemplate: TransactionTemplate,
         metrics: IdempotentMetrics,
     ): IdempotentEventHandler = IdempotentEventHandler(port, transactionTemplate, metrics)
+
+    // ADR-0058: commerce 모놀리스에서 도메인별 retention cleanup (common 단일 스케줄러는 다중 port 로 모호 → 전용).
+    @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(
+        prefix = "kgd.common.messaging.idempotent.cleanup", name = ["enabled"], havingValue = "true",
+    )
+    fun inventoryIdempotentEventCleanupScheduler(
+        @Qualifier("jpaProcessedEventRepositoryAdapter") port: ProcessedEventRepositoryPort,
+        properties: com.kgd.common.messaging.IdempotentEventCleanupProperties,
+    ): com.kgd.common.messaging.IdempotentEventCleanupScheduler =
+        com.kgd.common.messaging.IdempotentEventCleanupScheduler(port, properties)
 }

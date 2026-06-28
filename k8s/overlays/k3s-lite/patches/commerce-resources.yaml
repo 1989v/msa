@@ -1,0 +1,17 @@
+# ADR-0058: commerce 4-도메인 모놀리스 — 글로벌 resources-reduce(768Mi limit) 로는 4 EMF/풀 + 4 도메인
+# 워킹셋에 부족. 1280Mi 로 상향. (제거된 order/fulfillment/warehouse Deployment 메모리에서 충당.)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: commerce
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            requests:
+              cpu: 150m
+              memory: 640Mi
+            limits:
+              memory: 1280Mi

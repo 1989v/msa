@@ -39,6 +39,8 @@ fun commerceDockerAvailable(): Boolean = dockerAvailable
         "management.health.redis.enabled=false",
         "spring.data.redis.host=localhost",
         "spring.kafka.bootstrap-servers=localhost:9092",
+        // 도메인별 cleanup 스케줄러가 다중 port 로 모호하지 않은지(k8s 경로) 검증.
+        "kgd.common.messaging.idempotent.cleanup.enabled=true",
     ],
 )
 @org.junit.jupiter.api.condition.EnabledIf(
@@ -68,6 +70,10 @@ class CommerceContextLoadSpec(
                 ctx.containsBean("orderOutboxPollingPublisher").shouldBeTrue()
                 ctx.containsBean("orderIdempotentEventHandler").shouldBeTrue()
                 ctx.containsBean("inventoryIdempotentEventHandler").shouldBeTrue()
+                // 도메인별 retention cleanup 스케줄러 (common 단일 스케줄러의 다중-port 모호성 회피)
+                ctx.containsBean("inventoryIdempotentEventCleanupScheduler").shouldBeTrue()
+                ctx.containsBean("fulfillmentIdempotentEventCleanupScheduler").shouldBeTrue()
+                ctx.containsBean("orderIdempotentEventCleanupScheduler").shouldBeTrue()
             }
     }
 }) {
