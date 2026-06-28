@@ -82,9 +82,10 @@ spring:
               uri: http://product:8081
               predicates: [Path=/svc/product/actuator/health]
               filters: [StripPrefix=2]
-            - id: actuator-order
-              uri: http://order:8082
-              predicates: [Path=/svc/order/actuator/health]
+            # ADR-0058: order/inventory/fulfillment/warehouse 는 commerce 로 폴드 — 단일 actuator
+            - id: actuator-commerce
+              uri: http://commerce:8085
+              predicates: [Path=/svc/commerce/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-search
               uri: http://search:8083

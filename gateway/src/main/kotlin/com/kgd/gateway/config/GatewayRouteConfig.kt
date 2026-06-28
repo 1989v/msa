@@ -35,13 +35,13 @@ class GatewayRouteConfig(
      */
     private val openApiServices = mapOf(
         "product" to "http://product:8081",
-        "order" to "http://order:8082",
+        "order" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "search" to "http://search:8083",
-        "inventory" to "http://inventory:8085",
+        "inventory" to "http://commerce:8085",
         "gifticon" to "http://gifticon:8086",
         "auth" to "http://auth:8087",
-        "fulfillment" to "http://fulfillment:8088",
-        "warehouse" to "http://warehouse:8090",
+        "fulfillment" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
+        "warehouse" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "recommendation" to "http://recommendation:8092",
         "member" to "http://member:8093",
         "wishlist" to "http://wishlist:8095",
@@ -108,7 +108,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://order:8082")
+                    .uri("http://commerce:8085")
             }
             // Gifticon Service (ROLE_USER+)
             .route("gifticon-service") { r ->
@@ -147,7 +147,7 @@ class GatewayRouteConfig(
                             }
                             .stripPrefix(0)
                     }
-                    .uri("http://inventory:8085")
+                    .uri("http://commerce:8085")
             }
             // Fulfillment Service (ROLE_SELLER+)
             .route("fulfillment-service") { r ->
@@ -156,16 +156,16 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(sellerConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://fulfillment:8088")
+                    .uri("http://commerce:8085")
             }
-            // Warehouse Service (ROLE_SELLER+)
+            // Warehouse (ADR-0058: commerce 폴드 — inventory:app 이 warehouse 엔드포인트 서빙)
             .route("warehouse-service") { r ->
                 r.path("/api/warehouses/**")
                     .filters { f ->
                         f.filter(authFilter.apply(sellerConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://warehouse:8090")
+                    .uri("http://commerce:8085")
             }
             // Recommendation Service — ADR-0044 Phase 1 (인증 불필요, 메인 페이지 비로그인 사용자도 호출)
             .route("recommendation-service") { r ->
