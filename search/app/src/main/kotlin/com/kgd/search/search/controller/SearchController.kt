@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -29,9 +30,12 @@ class SearchController(
         @RequestParam keyword: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-        @RequestParam(required = false) userId: String?
+        @RequestHeader(value = HEADER_USER_ID, required = false) userId: String?,
+        @RequestHeader(value = HEADER_ANONYMOUS_ID, required = false) anonymousId: String?
     ): ApiResponse<SearchProductUseCase.Result> {
-        val result = searchProductUseCase.execute(SearchProductUseCase.Query(keyword, page, size, userId))
+        val result = searchProductUseCase.execute(
+            SearchProductUseCase.Query(keyword, page, size, userId, anonymousId)
+        )
         return ApiResponse.success(result)
     }
 
@@ -50,14 +54,19 @@ class SearchController(
      */
     @PostMapping("/impressions")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    fun reportImpressions(@RequestBody request: ImpressionsRequest): ApiResponse<Unit> {
+    fun reportImpressions(
+        @RequestHeader(value = HEADER_USER_ID, required = false) userId: String?,
+        @RequestHeader(value = HEADER_ANONYMOUS_ID, required = false) anonymousId: String?,
+        @RequestBody request: ImpressionsRequest
+    ): ApiResponse<Unit> {
         request.items.forEach { item ->
             banditEventPort.recordImpression(
                 ImpressionEvent(
                     searchId = request.searchId,
                     key = BanditKey.category(item.categoryId, item.productId),
                     position = item.position,
-                    userId = request.userId
+                    userId = userId,
+                    anonymousId = anonymousId
                 )
             )
         }
@@ -69,13 +78,18 @@ class SearchController(
      */
     @PostMapping("/clicks")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    fun reportClick(@RequestBody request: ClickRequest): ApiResponse<Unit> {
+    fun reportClick(
+        @RequestHeader(value = HEADER_USER_ID, required = false) userId: String?,
+        @RequestHeader(value = HEADER_ANONYMOUS_ID, required = false) anonymousId: String?,
+        @RequestBody request: ClickRequest
+    ): ApiResponse<Unit> {
         banditEventPort.recordClick(
             ClickEvent(
                 searchId = request.searchId,
                 key = BanditKey.category(request.categoryId, request.productId),
                 position = request.position,
-                userId = request.userId
+                userId = userId,
+                anonymousId = anonymousId
             )
         )
         return ApiResponse.success()
@@ -83,7 +97,6 @@ class SearchController(
 
     data class ImpressionsRequest(
         val searchId: String,
-        val userId: String?,
         val items: List<ImpressionItem>
     )
 
@@ -95,9 +108,15 @@ class SearchController(
 
     data class ClickRequest(
         val searchId: String,
-        val userId: String?,
         val categoryId: String?,
         val productId: String,
         val position: Int
     )
+
+    companion object {
+        /** gateway 가 JWT 에서 주입하는 로그인 식별자 헤더. */
+        const val HEADER_USER_ID = "X-User-Id"
+        /** gateway 가 헤더/쿠키에서 해소·forward 하는 익명 식별자 헤더 (ADR-0057). */
+        const val HEADER_ANONYMOUS_ID = "X-Anonymous-Id"
+    }
 }

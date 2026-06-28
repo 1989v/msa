@@ -29,6 +29,7 @@ class BanditEventKafkaAdapter(
             productId = event.key.productId,
             position = event.position,
             userId = event.userId,
+            anonymousId = event.anonymousId,
             ts = event.occurredAt.toEpochMilli()
         )
         publish(TOPIC_IMPRESSION, payload, partitionKey = event.key.productId)
@@ -41,6 +42,7 @@ class BanditEventKafkaAdapter(
             productId = event.key.productId,
             position = event.position,
             userId = event.userId,
+            anonymousId = event.anonymousId,
             ts = event.occurredAt.toEpochMilli()
         )
         publish(TOPIC_CLICK, payload, partitionKey = event.key.productId)
@@ -59,6 +61,7 @@ class BanditEventKafkaAdapter(
         val productId: String,
         val position: Int,
         val userId: String?,
+        val anonymousId: String?,
         val ts: Long
     )
 
@@ -68,6 +71,7 @@ class BanditEventKafkaAdapter(
         val productId: String,
         val position: Int,
         val userId: String?,
+        val anonymousId: String?,
         val ts: Long
     )
 

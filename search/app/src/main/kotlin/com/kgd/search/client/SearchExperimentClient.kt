@@ -26,16 +26,20 @@ class SearchExperimentClient(
         }
     )
 
-    fun getVariant(experimentId: Long, userId: String): String? {
+    /**
+     * @param assignmentKey 버킷팅 식별자 — 로그인 시 userId, 비로그인 시 anonymousId (ADR-0057).
+     *   experiment 서비스의 assignment 엔드포인트 쿼리 파라미터명(`userId`)은 그 서비스의 계약이라 유지한다.
+     */
+    fun getVariant(experimentId: Long, assignmentKey: String): String? {
         return try {
             val response = restTemplate.getForObject(
-                "${properties.url}/api/v1/experiments/$experimentId/assignment?userId=$userId",
+                "${properties.url}/api/v1/experiments/$experimentId/assignment?userId=$assignmentKey",
                 AssignmentApiResponse::class.java,
             )
             val variant = response?.data?.variant
             if (variant.isNullOrBlank()) null else variant
         } catch (e: Exception) {
-            log.debug { "experiment 호출 실패 (id=$experimentId, userId=$userId): ${e.message}" }
+            log.debug { "experiment 호출 실패 (id=$experimentId, key=$assignmentKey): ${e.message}" }
             null
         }
     }

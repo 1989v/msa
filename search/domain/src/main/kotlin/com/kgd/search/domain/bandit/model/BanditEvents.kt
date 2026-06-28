@@ -7,6 +7,7 @@ data class ImpressionEvent(
     val key: BanditKey,
     val position: Int,
     val userId: String?,
+    val anonymousId: String? = null,
     val occurredAt: Instant = Instant.now()
 )
 
@@ -15,5 +16,6 @@ data class ClickEvent(
     val key: BanditKey,
     val position: Int,
     val userId: String?,
+    val anonymousId: String? = null,
     val occurredAt: Instant = Instant.now()
 )

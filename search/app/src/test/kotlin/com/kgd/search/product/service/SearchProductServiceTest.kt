@@ -92,13 +92,41 @@ class SearchProductServiceTest : BehaviorSpec({
                 verify(exactly = 1) { searchPort.searchScored("테스트", pageable, "experiment_a") }
             }
         }
-        `when`("비로그인 사용자(userId=null)면") {
+        `when`("로그인 식별자 없이 anonymousId 만 주어지면 (비로그인)") {
+            then("anonymousId 로 variant 가 할당되어 실험에 참여해야 한다 (ADR-0057)") {
+                val pageable = PageRequest.of(0, 20)
+                every { experimentClient.getVariant(1L, "anon-abc123") } returns "experiment_b"
+                every { searchPort.searchScored("테스트", pageable, "experiment_b") } returns
+                    PageImpl(emptyList(), pageable, 0)
+
+                val result = service(experimentEnabled = true)
+                    .execute(SearchProductUseCase.Query("테스트", 0, 20, userId = null, anonymousId = "anon-abc123"))
+
+                result.variant shouldBe "experiment_b"
+                verify(exactly = 1) { experimentClient.getVariant(1L, "anon-abc123") }
+            }
+        }
+        `when`("userId 와 anonymousId 가 둘 다 주어지면") {
+            then("userId 가 우선되어 버킷팅 키로 쓰여야 한다") {
+                val pageable = PageRequest.of(0, 20)
+                every { experimentClient.getVariant(1L, "user-1") } returns "experiment_a"
+                every { searchPort.searchScored("테스트", pageable, "experiment_a") } returns
+                    PageImpl(emptyList(), pageable, 0)
+
+                service(experimentEnabled = true)
+                    .execute(SearchProductUseCase.Query("테스트", 0, 20, userId = "user-1", anonymousId = "anon-abc123"))
+
+                verify(exactly = 1) { experimentClient.getVariant(1L, "user-1") }
+                verify(exactly = 0) { experimentClient.getVariant(1L, "anon-abc123") }
+            }
+        }
+        `when`("식별자가 둘 다 없으면 (userId=null, anonymousId=null)") {
             then("experiment 호출 없이 기본 ranking 으로 동작해야 한다") {
                 val pageable = PageRequest.of(0, 20)
                 every { searchPort.searchScored("테스트", pageable, null) } returns PageImpl(emptyList(), pageable, 0)
 
                 val result = service(experimentEnabled = true)
-                    .execute(SearchProductUseCase.Query("테스트", 0, 20, userId = null))
+                    .execute(SearchProductUseCase.Query("테스트", 0, 20, userId = null, anonymousId = null))
 
                 result.variant.shouldBeNull()
                 verify(exactly = 0) { experimentClient.getVariant(any(), any()) }

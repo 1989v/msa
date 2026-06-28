@@ -1,6 +1,7 @@
 package com.kgd.gateway.config
 
 import com.kgd.gateway.filter.AuthenticationGatewayFilter
+import com.kgd.gateway.filter.IdentityResolutionGatewayFilter
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver
 import org.springframework.cloud.gateway.filter.ratelimit.RedisRateLimiter
 import org.springframework.cloud.gateway.route.RouteLocator
@@ -12,6 +13,7 @@ import org.springframework.http.HttpMethod
 @Configuration
 class GatewayRouteConfig(
     private val authFilter: AuthenticationGatewayFilter,
+    private val identityFilter: IdentityResolutionGatewayFilter,
     private val userKeyResolver: KeyResolver,
     private val redisRateLimiter: RedisRateLimiter,
 ) {
@@ -128,11 +130,15 @@ class GatewayRouteConfig(
                     }
                     .uri("http://wishlist:8095")
             }
-            // Search Service — 상품 검색/이벤트 수집은 비로그인 공개 (userId 는 optional 필드).
+            // Search Service — 상품 검색/이벤트 수집은 비로그인 공개. identityFilter 가 optional 인증으로
+            // X-User-Id(JWT 있을 때) + X-Anonymous-Id(헤더/쿠키 해소·발급) 를 주입한다 (ADR-0057).
             // debug API 는 /api/v1/search/debug 로 gateway 비노출 경로라 영향 없음.
             .route("search-service") { r ->
                 r.path("/api/search/**")
-                    .filters { f -> f.stripPrefix(0) }
+                    .filters { f ->
+                        f.filter(identityFilter.apply(IdentityResolutionGatewayFilter.Config()))
+                            .stripPrefix(0)
+                    }
                     .uri("http://search:8083")
             }
             // Inventory Service — Rate Limiter 적용 (ROLE_SELLER+)

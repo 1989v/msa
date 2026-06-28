@@ -22,7 +22,7 @@ class SearchProductService(
 
     override fun execute(query: SearchProductUseCase.Query): SearchProductUseCase.Result {
         val pageable = PageRequest.of(query.page, query.size)
-        val variant = resolveVariant(query.userId)
+        val variant = resolveVariant(query.assignmentKey)
         val scored = searchPort.searchScored(query.keyword, pageable, variant)
 
         val afterThompson = thompsonReranker.rerank(
@@ -55,12 +55,13 @@ class SearchProductService(
         searchPort.suggest(prefix, size).map { SuggestProductUseCase.Suggestion(id = it.id, name = it.name) }
 
     /**
-     * 온라인 A/B variant 해석. 실험 비활성 또는 비로그인 사용자는 미참여 (null = 기본 ranking).
+     * 온라인 A/B variant 해석. 실험 비활성 또는 식별자(assignmentKey)가 없으면 미참여 (null = 기본 ranking).
+     * assignmentKey 는 userId ?: anonymousId 로, 비로그인 사용자도 익명 식별자로 실험에 참여한다 (ADR-0057).
      * variant 키가 `search.ranking-variants.variants` 에 없으면 (control 등) 어댑터가
      * 기본 ranking 으로 fallback 하되, 결과에는 variant 가 그대로 태깅되어 분석 차원으로 쓰인다.
      */
-    private fun resolveVariant(userId: String?): String? {
-        if (!experimentProperties.enabled || userId.isNullOrBlank()) return null
-        return experimentClient.getVariant(experimentProperties.id, userId)
+    private fun resolveVariant(assignmentKey: String?): String? {
+        if (!experimentProperties.enabled || assignmentKey.isNullOrBlank()) return null
+        return experimentClient.getVariant(experimentProperties.id, assignmentKey)
     }
 }
