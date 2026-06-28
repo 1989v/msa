@@ -77,10 +77,6 @@ patches:
     target:
       kind: Deployment
       name: code-dictionary
-  - path: patches/redis-standalone-order.yaml
-    target:
-      kind: Deployment
-      name: order
   - path: patches/redis-standalone-search.yaml
     target:
       kind: Deployment
@@ -110,11 +106,12 @@ patches:
       kind: Deployment
       name: gifticon
 
-  # fulfillment: 글로벌 512Mi limit 부족 → OOMKilled. 768Mi 로 상향.
-  - path: patches/fulfillment-resources.yaml
+  # ADR-0058: commerce 는 order+inventory+fulfillment+warehouse 4-도메인 모놀리스 →
+  # 글로벌 reduce(768Mi) 로는 4 EMF/풀 워킹셋 부족. 1280Mi 로 상향.
+  - path: patches/commerce-resources.yaml
     target:
       kind: Deployment
-      name: fulfillment
+      name: commerce
 
   # quant Phase 2: replicas=1 강제 (Recreate) + KMS local + outbox kafka-relay enable
   # + Telegram dispatcher disabled (Bot Token 미설정 시) — TG-P2-15

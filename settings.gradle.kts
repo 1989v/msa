@@ -6,7 +6,7 @@ include(
     "product:domain",
     "product:app",
     "order:domain",
-    "order:app",
+    "order:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (inventory:app 이 흡수)
     "search:domain",
     "search:app",
     "search:consumer",
@@ -19,11 +19,12 @@ include(
     "code-dictionary:domain",
     "code-dictionary:app",
     "inventory:domain",
-    "inventory:app",
+    "inventory:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (비-bootable)
+    "commerce:app",
     "fulfillment:domain",
-    "fulfillment:app",
+    "fulfillment:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (inventory:app 이 흡수)
     "warehouse:domain",
-    "warehouse:app",
+    "warehouse:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (구 warehouse:app, 비-bootable)
     "chatbot:domain",
     "chatbot:app",
     "analytics:domain",

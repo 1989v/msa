@@ -26,16 +26,6 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: order
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: order
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
   name: search
 spec:
   minAvailable: 1
@@ -96,32 +86,12 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: inventory
+  name: commerce
 spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: inventory
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: fulfillment
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: fulfillment
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: warehouse
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: warehouse
+      app.kubernetes.io/name: commerce
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
