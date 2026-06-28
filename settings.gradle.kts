@@ -6,7 +6,7 @@ include(
     "product:domain",
     "product:app",
     "order:domain",
-    "order:app",
+    "order:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (inventory:app 이 흡수)
     "search:domain",
     "search:app",
     "search:consumer",

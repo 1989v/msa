@@ -56,6 +56,24 @@ spring:
         hikari:
           maximum-pool-size: 3
           minimum-idle: 1
+    # ADR-0058: commerce 폴드 — order 도메인 전용 datasource(스키마 격리, 전용 outbox/idempotency).
+    order:
+      master:
+        jdbc-url: jdbc:mysql://${ORDER_DB_MASTER:localhost:3326}/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${ORDER_MYSQL_USER:order_user}
+        password: ${ORDER_MYSQL_PASSWORD:order_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${ORDER_DB_REPLICA:localhost:3327}/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${ORDER_MYSQL_USER:order_user}
+        password: ${ORDER_MYSQL_PASSWORD:order_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
   jpa:
     hibernate:
       ddl-auto: validate
@@ -89,6 +107,17 @@ kafka:
     stock-released: inventory.stock.released
     stock-confirmed: inventory.stock.confirmed
     reservation-expired: inventory.reservation.expired
+    # ADR-0058: order 도메인 폴드 — order 발행 토픽
+    order-completed: order.order.completed
+    order-cancelled: order.order.cancelled
+
+# ADR-0058: order 도메인이 호출하는 외부 서비스 URL (commerce 폴드)
+product:
+  service:
+    url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
+payment:
+  service:
+    url: ${PAYMENT_SERVICE_URL:http://localhost:9090}
 
 outbox:
   polling:

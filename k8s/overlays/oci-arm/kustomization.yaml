@@ -192,9 +192,6 @@ images:
   - name: commerce/member
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/member
     newTag: 5ebf81b
-  - name: commerce/order
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/order
-    newTag: 5ebf81b
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: 5ebf81b

@@ -56,13 +56,16 @@ class CommerceContextLoadSpec(
                     "inventoryEntityManagerFactory", "inventoryTransactionManager",
                     "warehouseEntityManagerFactory", "warehouseTransactionManager",
                     "fulfillmentEntityManagerFactory", "fulfillmentTransactionManager",
+                    "orderEntityManagerFactory", "orderTransactionManager",
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
 
-                // fulfillment 전용 outbox/idempotency (fulfillment TM 바인딩)
+                // 도메인별 전용 outbox/idempotency (각자 TM 바인딩)
                 ctx.containsBean("fulfillmentOutboxPort").shouldBeTrue()
                 ctx.containsBean("fulfillmentOutboxPollingPublisher").shouldBeTrue()
                 ctx.containsBean("fulfillmentIdempotentEventHandler").shouldBeTrue()
-                // inventory 전용 idempotency (inventory TM 바인딩)
+                ctx.containsBean("orderOutboxPort").shouldBeTrue()
+                ctx.containsBean("orderOutboxPollingPublisher").shouldBeTrue()
+                ctx.containsBean("orderIdempotentEventHandler").shouldBeTrue()
                 ctx.containsBean("inventoryIdempotentEventHandler").shouldBeTrue()
             }
     }
@@ -83,6 +86,7 @@ class CommerceContextLoadSpec(
                         conn.createStatement().use {
                             it.execute("CREATE DATABASE IF NOT EXISTS warehouse_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS fulfillment_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS order_db")
                         }
                     }
                 }
@@ -97,6 +101,7 @@ class CommerceContextLoadSpec(
             val inv = mysql.jdbcUrl
             val wh = inv.replace("/inventory_db", "/warehouse_db")
             val ful = inv.replace("/inventory_db", "/fulfillment_db")
+            val ord = inv.replace("/inventory_db", "/order_db")
             // inventory (master/replica)
             for (role in listOf("master", "replica")) {
                 registry.add("spring.datasource.$role.jdbc-url") { inv }
@@ -111,6 +116,10 @@ class CommerceContextLoadSpec(
                 registry.add("spring.datasource.fulfillment.$role.username") { mysql.username }
                 registry.add("spring.datasource.fulfillment.$role.password") { mysql.password }
                 registry.add("spring.datasource.fulfillment.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
+                registry.add("spring.datasource.order.$role.jdbc-url") { ord }
+                registry.add("spring.datasource.order.$role.username") { mysql.username }
+                registry.add("spring.datasource.order.$role.password") { mysql.password }
+                registry.add("spring.datasource.order.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             }
         }
     }

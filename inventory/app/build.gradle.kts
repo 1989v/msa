@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":inventory:feature"))
     implementation(project(":warehouse:feature")) // co-deploy (commerce 모듈러 모놀리스)
     implementation(project(":fulfillment:feature")) // co-deploy (commerce 모듈러 모놀리스)
+    implementation(project(":order:feature")) // co-deploy (commerce 모듈러 모놀리스)
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
 
