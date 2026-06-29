@@ -175,21 +175,21 @@ images:
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
     newTag: 5ebf81b
+  - name: commerce/commerce
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
+    newTag: 5ebf81b
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
     newTag: 5ebf81b
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 5ebf81b
+    newTag: ab3e948
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
     newTag: 5ebf81b
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 80920eb
-  - name: commerce/commerce
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 5ebf81b
   - name: commerce/member
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/member
     newTag: 5ebf81b
