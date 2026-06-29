@@ -143,8 +143,14 @@ kgd:
 # spec 은 GatewayRouteConfig 의 /api/docs/specs/{service} 프록시 라우트 경유.
 # 모든 경로가 /api/* 라 ingress 의 gateway prefix (/api) 안에서 그대로 동작한다.
 springdoc:
+  # ⚠️ api-docs.enabled=false 로 두면 springdoc auto-config 빈이 통째로 backoff 되어
+  # swagger-ui welcome/config 컨트롤러까지 미등록(404) + webjars.prefix 도 무시됨.
+  # 집계 UI 를 살리려면 활성(default) 유지. gateway 는 @RestController 가 없어 자체
+  # /v3/api-docs 는 비어있으니 무해. (UI 만 끄려면 springdoc.swagger-ui.enabled=false 사용)
   api-docs:
-    enabled: false   # gateway 자체 컨트롤러 spec 은 불필요 (집계 전용)
+    # swagger-ui 가 드롭다운 urls 를 가져오는 swagger-config endpoint 를 /api 밑으로 이동.
+    # ingress 는 /api 만 gateway 로 보내므로 default /v3/api-docs/swagger-config 는 외부서 미도달(404).
+    path: /api/v3/api-docs
   webjars:
     prefix: /api/webjars
   swagger-ui:
