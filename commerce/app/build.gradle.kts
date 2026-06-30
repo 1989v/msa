@@ -25,3 +25,12 @@ dependencies {
 tasks.bootJar {
     archiveBaseName.set("commerce")
 }
+
+// 웹 게임 아케이드(#23) — game:web 브라우저 번들(game.js + index.html)을 정적 리소스로 패키징.
+// commerce:app 이 /game/ 으로 서빙(API 는 /api/v1/game/**). game:web 변경 시에만 재빌드(up-to-date).
+tasks.named<org.gradle.language.jvm.tasks.ProcessResources>("processResources") {
+    dependsOn(":game:web:jsBrowserDistribution")
+    from(project(":game:web").layout.buildDirectory.dir("dist/js/productionExecutable")) {
+        into("static/game")
+    }
+}

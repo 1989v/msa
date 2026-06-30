@@ -20,6 +20,7 @@ dependencies {
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
+    testImplementation(libs.testcontainers.junit) // 라이브 E2E — 실제 Redis 컨테이너
 }
 
 // 라이브러리 — 실행 가능 JAR 아님(commerce:app 이 조립).
