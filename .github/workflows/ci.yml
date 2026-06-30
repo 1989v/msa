@@ -175,6 +175,9 @@ jobs:
               search-batch)       TASKS+=" :search:batch:test" ;;
               search-consumer)    TASKS+=" :search:consumer:test" ;;
               agent-viewer-api)   TASKS+=" :agent-viewer:api:test" ;;
+              # ADR-0058: commerce 는 aggregator(:commerce:app)만 있고 :commerce:domain 없음 →
+              # 폴드된 4 도메인/feature 테스트를 직접 지정 (default 의 :commerce:domain:test 는 미존재 → CI 실패).
+              commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test" ;;
               *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
             esac
           done
