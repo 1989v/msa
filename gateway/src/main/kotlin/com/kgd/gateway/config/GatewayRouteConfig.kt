@@ -173,5 +173,12 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri("http://recommendation:8092")
             }
+            // Game Arcade (#23) — 비로그인 공개(게스트 플레이). 경쟁 랭킹은 app-level 닉네임 게이트.
+            // commerce:app 에 폴드된 game:feature 가 서빙.
+            .route("game-service") { r ->
+                r.path("/api/v1/game/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri("http://commerce:8085")
+            }
             .build()
 }
