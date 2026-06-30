@@ -18,6 +18,18 @@ subprojects {
     group = if (parent == null || parent == rootProject) "com.kgd" else "com.kgd.${parent!!.name}"
     version = "0.0.1-SNAPSHOT"
 
+    // ADR-0058: 중첩 feature/domain 모듈은 leaf 이름이 전부 feature/domain → archivesName 미설정 시
+    // jar 가 동명(feature-*-plain.jar / domain-*-plain.jar). commerce:app(4 도메인 폴드)의 bootJar 가
+    // BOOT-INF/lib 에 동명을 여럿 넣어 "duplicate" 로 실패한다. 부모 경로로 jar 이름을 고유화.
+    // (jib 기본 exploded 경로는 project 모듈을 클래스로 적재해 영향 없음 — 이미지 빌드는 정상.)
+    if (name == "feature" || name == "domain") {
+        plugins.withType<org.gradle.api.plugins.BasePlugin> {
+            extensions.configure<org.gradle.api.plugins.BasePluginExtension>("base") {
+                archivesName.set("${parent!!.name}-$name")
+            }
+        }
+    }
+
     repositories {
         mavenCentral()
     }
