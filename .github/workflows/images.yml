@@ -11,7 +11,7 @@ on:
         required: false
         default: ""
       rebuild_all:
-        description: "변경 감지 무시하고 28개 전부 재빌드"
+        description: "변경 감지 무시하고 전 서비스 재빌드 (ADR-0058 commerce 폴드 후 JVM 17 + FE 8 = 25)"
         required: false
         default: "false"
 
