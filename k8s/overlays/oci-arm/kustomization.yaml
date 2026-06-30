@@ -156,76 +156,76 @@ patches:
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
-    newTag: fa2c422
+    newTag: a4a1b48
   - name: commerce/agent-viewer-api
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-api
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/agent-viewer-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-fe
-    newTag: 2ddd6fd
+    newTag: a4a1b48
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: ab3e948
+    newTag: a4a1b48
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
-    newTag: 80920eb
+    newTag: a4a1b48
   - name: commerce/member
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/member
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/quant
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
-    newTag: "6367585"
+    newTag: a4a1b48
   - name: commerce/quant-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-ingest
-    newTag: 80920eb
+    newTag: a4a1b48
   - name: commerce/recommendation
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/recommendation-ann
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ann
-    newTag: 80920eb
+    newTag: a4a1b48
   - name: commerce/recommendation-ml
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ml
-    newTag: 80920eb
+    newTag: a4a1b48
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/wishlist
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/wishlist
-    newTag: 5ebf81b
+    newTag: a4a1b48
