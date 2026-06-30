@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":order:feature")) // co-deploy (commerce 모듈러 모놀리스)
     implementation(project(":member:feature")) // ADR-0058 round 2: member 도메인 폴드
     implementation(project(":wishlist:feature")) // ADR-0058 round 2: wishlist 도메인 폴드
+    implementation(project(":game:feature")) // 웹 게임 아케이드(#23) co-deploy — Redis 전용, Tier B in-JVM(추가 프로세스 0)
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
 

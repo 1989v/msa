@@ -38,5 +38,10 @@ include(
     "quant:domain",
     "quant:app",
     "recommendation:domain",
-    "recommendation:app"
+    "recommendation:app",
+    // 웹 게임 아케이드(#23, ADR-0058 commerce:app 폴드)
+    "game:sim",     // KMP 결정적 sim-core (jvm: Tier B / js: 브라우저)
+    "game:domain",  // 순수 백엔드 도메인 + 포트 + Tier A/B 검증 규칙
+    "game:feature", // commerce:app 폴드 — Redis 전용 인프라 + 컨트롤러
+    "game:web"      // Kotlin/JS 브라우저 클라이언트 — game:sim js 코어 소비
 )

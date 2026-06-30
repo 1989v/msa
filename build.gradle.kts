@@ -1,5 +1,8 @@
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
+    // 웹 게임 아케이드(#23) KMP sim-core — 루트에서 버전 1회 해소(apply false)해야 서브프로젝트가
+    // "plugin already on classpath with unknown version" 없이 적용 가능.
+    alias(libs.plugins.kotlin.multiplatform) apply false
     alias(libs.plugins.kotlin.spring) apply false
     alias(libs.plugins.kotlin.jpa) apply false
     alias(libs.plugins.kotlin.kapt) apply false
@@ -8,13 +11,11 @@ plugins {
 }
 
 subprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
-    apply(plugin = "io.spring.dependency-management")
-
     // ADR-0058: nested submodule(:svc:domain / :svc:app) 의 leaf 이름이 전부 domain/app 으로
     // 동일 → 단일 group 이면 com.kgd:domain 좌표 충돌로 한 app 이 두 도메인을 동시에 의존할 때
     // (commerce 모듈러 모놀리스) Gradle 이 하나로 합쳐버린다. group 을 부모 경로로 고유화한다.
     // 이미지명은 jib-convention 이 Gradle 경로에서 파생하므로 group 변경의 영향 없음.
+    // (group/version/repositories 는 KMP 모듈 포함 전 모듈 공통)
     group = if (parent == null || parent == rootProject) "com.kgd" else "com.kgd.${parent!!.name}"
     version = "0.0.1-SNAPSHOT"
 
@@ -33,6 +34,13 @@ subprojects {
     repositories {
         mavenCentral()
     }
+
+    // 웹 게임 아케이드(#23): KMP 모듈은 kotlin.multiplatform 을 자체 적용하며 일괄 kotlin.jvm 과
+    // 상호배타다. 따라서 아래 JVM/Spring 전용 설정에서 제외한다(모듈 자체 build.gradle.kts 가 구성).
+    if (path in setOf(":game:sim", ":game:web")) return@subprojects
+
+    apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "io.spring.dependency-management")
 
     pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
         extensions.configure<org.gradle.api.plugins.JavaPluginExtension>("java") {
