@@ -1,42 +1,31 @@
+/* ADR-0058 R3 FE 통합 — portal-fe 를 @kgd/design-system 토큰으로 표준화.
+ * 옛 시맨틱 var(--bg/--text/…)를 --ko-* 토큰으로 브릿지 → 하드코딩 hex 제거 + dark-trading 통일.
+ * 라이트/다크 prefers-color-scheme 오버라이드 제거 (design-system 은 dark default).
+ * tokens.css 는 main.tsx 가 index.css 보다 먼저 import 하므로 여기서 --ko-* 참조 가능. */
 :root {
-  --bg: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --text: #1a1a2e;
-  --text-secondary: #6b7280;
-  --border: #e5e7eb;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --code-bg: #f3f4f6;
-  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  --bg: var(--ko-surface-0);
+  --bg-secondary: var(--ko-surface-1);
+  --text: var(--ko-text-primary);
+  --text-secondary: var(--ko-text-secondary);
+  --border: var(--ko-border-subtle);
+  --accent: var(--ko-accent-primary);
+  --accent-hover: var(--ko-accent-primary-hover);
+  --code-bg: var(--ko-surface-1);
+  --card-shadow: 0 1px 3px oklch(0 0 0 / 0.3);
+  --sans: var(--ko-font-family);
+  --mono: var(--ko-font-mono);
 
-  /* Code Dictionary Treemap level color tokens (cool -> warm sequential, OKLCH) */
-  /* spec.md §6.2 — chroma fixed near 0.01, lightness varies for sequential encoding (WCAG AA) */
+  /* Code Dictionary Treemap level color tokens (sequential, OKLCH) — code-dictionary 전용 유지 */
   --ko-level-beginner: oklch(0.85 0.01 220);
   --ko-level-intermediate: oklch(0.70 0.012 90);
   --ko-level-advanced: oklch(0.55 0.015 30);
-  --focus-ring: 2px solid oklch(0.50 0.15 240);
+  --focus-ring: var(--ko-focus-ring);
 
   font-family: var(--sans);
   font-size: 16px;
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f172a;
-    --bg-secondary: #1e293b;
-    --text: #e2e8f0;
-    --text-secondary: #94a3b8;
-    --border: #334155;
-    --accent: #60a5fa;
-    --accent-hover: #3b82f6;
-    --code-bg: #1e293b;
-    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -112,7 +101,7 @@ body {
 }
 
 .search-input:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--ko-accent-primary);
   outline-offset: 2px;
 }
 
@@ -159,7 +148,7 @@ body {
 }
 
 .filter-select:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--ko-accent-primary);
   outline-offset: 2px;
 }
 
@@ -315,18 +304,10 @@ body {
   padding: 12px 16px;
   margin-bottom: 16px;
   border-radius: 8px;
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: var(--ko-status-loss-bg);
+  color: var(--ko-status-loss);
+  border: 1px solid var(--ko-status-loss);
   font-size: 0.9rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  .error-message {
-    background: #450a0a;
-    color: #fca5a5;
-    border-color: #7f1d1d;
-  }
 }
 
 /* Pagination */
@@ -472,7 +453,7 @@ body {
 }
 
 .search-input-floating:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--ko-accent-primary);
   outline-offset: 2px;
 }
 
