@@ -56,26 +56,6 @@ spec:
 apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
-  name: member
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: member
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
-  name: wishlist
-spec:
-  minAvailable: 1
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: wishlist
----
-apiVersion: policy/v1
-kind: PodDisruptionBudget
-metadata:
   name: gifticon
 spec:
   minAvailable: 1

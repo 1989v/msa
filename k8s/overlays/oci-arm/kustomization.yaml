@@ -133,10 +133,6 @@ patches:
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: chatbot}
   # ─── Tier XS (384Mi) — 최소 CRUD ─────────────────────────────────────────
-  - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: member}
-  - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: wishlist}
   # ADR-0058: commerce(4-도메인 모놀리스)는 XL — 단일 inventory 의 xs(384Mi)로는 즉시 OOM.
   - path: patches/resources-xl-1200mi.yaml
     target: {kind: Deployment, name: commerce}
@@ -190,9 +186,6 @@ images:
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: a4a1b48
-  - name: commerce/member
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/member
-    newTag: a4a1b48
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: a4a1b48
@@ -225,7 +218,4 @@ images:
     newTag: a4a1b48
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
-    newTag: a4a1b48
-  - name: commerce/wishlist
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/wishlist
     newTag: a4a1b48

@@ -60,6 +60,8 @@ class CommerceContextLoadSpec(
                     "warehouseEntityManagerFactory", "warehouseTransactionManager",
                     "fulfillmentEntityManagerFactory", "fulfillmentTransactionManager",
                     "orderEntityManagerFactory", "orderTransactionManager",
+                    "memberEntityManagerFactory", "memberTransactionManager",
+                    "wishlistEntityManagerFactory", "wishlistTransactionManager",
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
 
                 // 도메인별 전용 outbox/idempotency (각자 TM 바인딩)
@@ -94,6 +96,8 @@ class CommerceContextLoadSpec(
                             it.execute("CREATE DATABASE IF NOT EXISTS warehouse_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS fulfillment_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS order_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS member_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS wishlist_db")
                         }
                     }
                 }
@@ -109,6 +113,8 @@ class CommerceContextLoadSpec(
             val wh = inv.replace("/inventory_db", "/warehouse_db")
             val ful = inv.replace("/inventory_db", "/fulfillment_db")
             val ord = inv.replace("/inventory_db", "/order_db")
+            val mem = inv.replace("/inventory_db", "/member_db")
+            val wish = inv.replace("/inventory_db", "/wishlist_db")
             // inventory (master/replica)
             for (role in listOf("master", "replica")) {
                 registry.add("spring.datasource.$role.jdbc-url") { inv }
@@ -127,6 +133,14 @@ class CommerceContextLoadSpec(
                 registry.add("spring.datasource.order.$role.username") { mysql.username }
                 registry.add("spring.datasource.order.$role.password") { mysql.password }
                 registry.add("spring.datasource.order.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
+                registry.add("spring.datasource.member.$role.jdbc-url") { mem }
+                registry.add("spring.datasource.member.$role.username") { mysql.username }
+                registry.add("spring.datasource.member.$role.password") { mysql.password }
+                registry.add("spring.datasource.member.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
+                registry.add("spring.datasource.wishlist.$role.jdbc-url") { wish }
+                registry.add("spring.datasource.wishlist.$role.username") { mysql.username }
+                registry.add("spring.datasource.wishlist.$role.password") { mysql.password }
+                registry.add("spring.datasource.wishlist.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             }
         }
     }

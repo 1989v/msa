@@ -74,6 +74,42 @@ spring:
         hikari:
           maximum-pool-size: 3
           minimum-idle: 1
+    # ADR-0058 round 2 — member 도메인 전용 datasource(스키마 격리).
+    member:
+      master:
+        jdbc-url: jdbc:mysql://${MEMBER_DB_MASTER:localhost:3356}/member_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${MEMBER_MYSQL_USER:member_user}
+        password: ${MEMBER_MYSQL_PASSWORD:member_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${MEMBER_DB_REPLICA:localhost:3357}/member_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${MEMBER_MYSQL_USER:member_user}
+        password: ${MEMBER_MYSQL_PASSWORD:member_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+    # ADR-0058 round 2 — wishlist 도메인 전용 datasource(스키마 격리, Kafka consumer).
+    wishlist:
+      master:
+        jdbc-url: jdbc:mysql://${WISHLIST_DB_MASTER:localhost:3366}/wishlist_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${WISHLIST_MYSQL_USER:wishlist_user}
+        password: ${WISHLIST_MYSQL_PASSWORD:wishlist_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${WISHLIST_DB_REPLICA:localhost:3367}/wishlist_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${WISHLIST_MYSQL_USER:wishlist_user}
+        password: ${WISHLIST_MYSQL_PASSWORD:wishlist_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
   jpa:
     hibernate:
       ddl-auto: validate

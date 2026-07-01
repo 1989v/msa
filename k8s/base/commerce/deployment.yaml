@@ -48,10 +48,10 @@ spec:
               exec:
                 command: ["sh", "-c", "sleep 5"]
           resources:
-            # ADR-0058: 4-도메인 commerce 모놀리스(order+inventory+fulfillment+warehouse) — 4 EMF/풀 + 4 도메인
-            # 워킹셋이라 단일 도메인 대비 상향. (제거된 3개 Deployment 가 쓰던 메모리에서 충당 — 순감)
+            # ADR-0058 R2: 6-도메인 commerce 모놀리스(order+inventory+fulfillment+warehouse+member+wishlist)
+            # — 6 EMF/풀 워킹셋. 제거된 6개 Deployment 메모리에서 충당(순감).
             requests:
               cpu: 200m
-              memory: 768Mi
+              memory: 896Mi
             limits:
-              memory: 1536Mi
+              memory: 1792Mi

@@ -71,7 +71,7 @@ spring:
             # /api/members/stats/** 는 아래 라우트가 유일 커버. ⚠️ 현재 무인증 — 추후 GatewayRouteConfig
             # 로 옮겨 adminConfig 적용 후 제거 필요 (admin 데이터 인증 경계).
             - id: member-service
-              uri: http://member:8093
+              uri: http://commerce:8085
               predicates: [Path=/api/members/**]
 
             # === Actuator 프록시 라우트 (admin 서비스 health 표시용) ===
@@ -100,7 +100,7 @@ spring:
               predicates: [Path=/svc/code-dictionary/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-member
-              uri: http://member:8093
+              uri: http://commerce:8085
               predicates: [Path=/svc/member/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-gifticon
@@ -108,7 +108,7 @@ spring:
               predicates: [Path=/svc/gifticon/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-wishlist
-              uri: http://wishlist:8095
+              uri: http://commerce:8085
               predicates: [Path=/svc/wishlist/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-quant

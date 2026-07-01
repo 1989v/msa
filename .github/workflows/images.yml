@@ -78,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          ALL_JVM="gateway product search search-batch search-consumer auth member wishlist gifticon analytics experiment code-dictionary commerce chatbot quant recommendation agent-viewer-api"
+          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation agent-viewer-api"
           ALL_DOCKER="admin-fe gifticon-fe agent-viewer-fe portal-fe quant-fe quant-ingest recommendation-ml recommendation-ann"
 
           # 강제 rebuild 트리거
@@ -129,11 +129,9 @@ jobs:
               search/batch/*)                            JVM_SVCS+=" search-batch" ;;
               search/consumer/*)                         JVM_SVCS+=" search-consumer" ;;
               auth|auth/*)                               JVM_SVCS+=" auth" ;;
-              member/*)                                  JVM_SVCS+=" member" ;;
-              wishlist/*)                                JVM_SVCS+=" wishlist" ;;
               gifticon|gifticon/app/*|gifticon/domain/*) JVM_SVCS+=" gifticon" ;;
               gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
-              inventory/*|warehouse/*|fulfillment/*|order/*|commerce/*)                               JVM_SVCS+=" commerce" ;;
+              inventory/*|warehouse/*|fulfillment/*|order/*|member/*|wishlist/*|commerce/*)           JVM_SVCS+=" commerce" ;;
               analytics/*)                               JVM_SVCS+=" analytics" ;;
               experiment/*)                              JVM_SVCS+=" experiment" ;;
               code-dictionary/*)                         JVM_SVCS+=" code-dictionary" ;;
@@ -241,7 +239,7 @@ jobs:
               agent-viewer-api)   TASKS+=" :agent-viewer:api:test" ;;
               # ADR-0058: commerce 는 aggregator(:commerce:app)만 있고 :commerce:domain 없음 →
               # 폴드된 4 도메인/feature 테스트를 직접 지정 (default 의 :commerce:domain:test 는 미존재 → CI 실패).
-              commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test" ;;
+              commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
               *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
             esac
           done
