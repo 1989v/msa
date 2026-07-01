@@ -23,7 +23,6 @@ resources:
   - experiment
   - chatbot
   - code-dictionary
-  - agent-viewer-api
   - quant
   - quant-ingest
   - recommendation
@@ -31,7 +30,6 @@ resources:
   # Frontend + non-JVM services (Phase 7 extension)
   - portal-fe
   - gifticon-fe
-  - agent-viewer-fe
   - admin-fe
   - quant-fe
   - frontend-ingress.yaml
@@ -42,8 +40,8 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|experiment|chatbot|code-dictionary|agent-viewer-api|quant|recommendation)"
+      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|experiment|chatbot|code-dictionary|quant|recommendation)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment
-      name: "(portal-fe|gifticon-fe|agent-viewer-fe|admin-fe|quant-fe|recommendation-ann)"
+      name: "(portal-fe|gifticon-fe|admin-fe|quant-fe|recommendation-ann)"

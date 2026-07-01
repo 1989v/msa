@@ -136,8 +136,6 @@ patches:
   # ADR-0058: commerce(4-도메인 모놀리스)는 XL — 단일 inventory 의 xs(384Mi)로는 즉시 OOM.
   - path: patches/resources-xl-1200mi.yaml
     target: {kind: Deployment, name: commerce}
-  - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: agent-viewer-api}
   # ─── Tier FE (96Mi) — nginx static ────────────────────────────────────────
   - path: patches/resources-fe-96mi.yaml
     target: {kind: Deployment, name: portal-fe}
@@ -147,17 +145,9 @@ patches:
     target: {kind: Deployment, name: quant-fe}
   - path: patches/resources-fe-96mi.yaml
     target: {kind: Deployment, name: gifticon-fe}
-  - path: patches/resources-fe-96mi.yaml
-    target: {kind: Deployment, name: agent-viewer-fe}
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
-    newTag: a4a1b48
-  - name: commerce/agent-viewer-api
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-api
-    newTag: e080a50
-  - name: commerce/agent-viewer-fe
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-fe
     newTag: a4a1b48
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics

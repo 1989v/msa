@@ -23,7 +23,6 @@ spec:
         values:
           - admin-fe
           - gifticon-fe
-          - agent-viewer-fe
           - portal-fe
           - quant-fe
   policyTypes:

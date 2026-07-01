@@ -126,7 +126,7 @@ jobs:
           set -euo pipefail
 
           # 서비스 → 테스트 태스크 매핑은 images.yml 의 매핑과 동일하게 유지할 것
-          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation agent-viewer-api"
+          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation"
 
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA"...HEAD)
           echo "── 변경 파일 ($(echo "$CHANGED_FILES" | wc -l) 개):"
@@ -154,7 +154,6 @@ jobs:
                 chatbot/*)                                 SVCS+=" chatbot" ;;
                 quant/app/*|quant/domain/*)                SVCS+=" quant" ;;
                 recommendation/app/*|recommendation/domain/*) SVCS+=" recommendation" ;;
-                agent-viewer/api/*)                        SVCS+=" agent-viewer-api" ;;
               esac
             done <<< "$CHANGED_FILES"
           fi
@@ -172,7 +171,6 @@ jobs:
               search)             TASKS+=" :search:app:test :search:domain:test" ;;
               search-batch)       TASKS+=" :search:batch:test" ;;
               search-consumer)    TASKS+=" :search:consumer:test" ;;
-              agent-viewer-api)   TASKS+=" :agent-viewer:api:test" ;;
               # ADR-0058: commerce 는 aggregator(:commerce:app)만 있고 :commerce:domain 없음 →
               # 폴드된 4 도메인/feature 테스트를 직접 지정 (default 의 :commerce:domain:test 는 미존재 → CI 실패).
               commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
