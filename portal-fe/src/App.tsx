@@ -9,7 +9,7 @@ import ShopLoginPage from './pages/ShopLoginPage';
 import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 
 // ADR-0058 R3 FE 통합 — 흡수될 sub-app 슬롯 (lazy). P2 에서 실제 앱 라우터로 교체.
-const AdminApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.AdminApp })));
+const AdminApp = lazy(() => import('./apps/admin/App'));
 const QuantApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.QuantApp })));
 const GifticonApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.GifticonApp })));
 const AgentViewerApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.AgentViewerApp })));
