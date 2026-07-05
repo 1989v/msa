@@ -85,6 +85,15 @@ patches:
       metadata:
         name: gateway
         namespace: commerce
+  # k3s-lite 의 로컬 게임 서브도메인(nip.io 127.0.0.1) 제거 — oci-arm 은
+  # commerce-proxied 의 game.<DOMAIN> host 가 담당.
+  - patch: |-
+      $patch: delete
+      apiVersion: networking.k8s.io/v1
+      kind: Ingress
+      metadata:
+        name: game-host-local
+        namespace: commerce
   # ─── JVM tuning (모든 Deployment 에 주입, nginx 컨테이너는 무시함) ────────
   - path: patches/java-tool-options.yaml
     target:

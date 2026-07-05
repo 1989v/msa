@@ -19,6 +19,9 @@ resources:
   # CNI 가 NetworkPolicy 지원해야 적용됨 (k3d 기본 Flannel 은 silent no-op → Calico/Cilium 권장).
   # 활성화 후 k8s/base/network-policy/README.md 의 smoke test 4단계 실행 필수.
   - ../../base/network-policy
+  # 게임 아케이드(#23) 로컬 서브도메인 — game.127.0.0.1.nip.io → gateway.
+  # oci-arm 은 자체 subdomain ingress(game.<DOMAIN>)를 쓰므로 상속 시 $patch: delete 로 제외.
+  - game-host-ingress.yaml
   # NOTE: host-access (LoadBalancer Services for MySQL/Redis/ES/...) 는 base 에도 이 overlay 에도
   # 포함하지 않는다. oci-arm 이 이 overlay 를 상속받기 때문 — 인터넷 노출 환경에 LoadBalancer 로
   # MySQL/Redis 를 띄우면 보안 사고 직결.

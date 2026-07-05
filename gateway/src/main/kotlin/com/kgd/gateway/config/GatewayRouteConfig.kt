@@ -180,5 +180,18 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri("http://commerce:8085")
             }
+            // Game Arcade 정적 클라이언트 — game.<domain> 서브도메인 (ingress 가 game host 전체를
+            // gateway 로 보냄 → netpol 변경 없이 02/03 정책 재사용).
+            // path 를 정적 엔트리 allowlist 로 한정: /api/** 는 여기 안 걸리고 위의 표준 path
+            // 라우트(인증 포함)로 흐른다 — game host 로 인증 우회 불가.
+            // prefixPath 로 commerce 의 정적 번들 위치(/game/**)에 매핑:
+            //   game.<d>/        → commerce /game/        (welcome forward → index.html)
+            //   game.<d>/game.js → commerce /game/game.js
+            .route("game-client") { r ->
+                r.host("game.**")
+                    .and().path("/", "/index.html", "/*.js", "/*.js.map", "/assets/**", "/favicon.ico")
+                    .filters { f -> f.prefixPath("/game") }
+                    .uri("http://commerce:8085")
+            }
             .build()
 }

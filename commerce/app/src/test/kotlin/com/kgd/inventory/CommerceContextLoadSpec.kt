@@ -80,7 +80,7 @@ class CommerceContextLoadSpec(
                 // 웹 게임 아케이드(#23) — game:feature(Redis 전용)가 commerce:app 에 충돌 없이 폴드되는지.
                 // Tier B 리플레이는 game:sim(jvm) 으로 in-JVM(추가 프로세스 0).
                 listOf(
-                    "gameController", "startSessionService", "submitScoreService",
+                    "gameController", "gameWebConfig", "startSessionService", "submitScoreService",
                     "redisLeaderboard", "redisSessionStore", "inMemoryGameRegistry", "hmacSessionTokenService",
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
             }

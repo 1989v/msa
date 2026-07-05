@@ -16,6 +16,9 @@
 #   quant.<DOMAIN>              → quant-fe    [proxied]
 #   gft.<DOMAIN>                → gifticon-fe [proxied]
 #   api.<DOMAIN>                → gateway (REST 위주) [proxied]
+#   game.<DOMAIN>               → gateway (게임 아케이드 #23) [proxied]
+#     └ 정적 클라는 gateway 의 game-client Host 라우트가 commerce /game/** 로 프록시,
+#       /api/** 는 표준 path 라우트(인증 포함) — netpol 변경 없이 02/03 재사용.
 #   rt.<DOMAIN>                 → gateway (WS+SSE) [bypass]
 #
 # FE host (proxied) 의 /api · /ws · /sse · /actuator · /svc 는 모두 gateway 로
@@ -44,6 +47,7 @@ spec:
         - quant.__DOMAIN__
         - gft.__DOMAIN__
         - api.__DOMAIN__
+        - game.__DOMAIN__
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
@@ -136,6 +140,15 @@ spec:
             backend: { service: { name: gifticon-fe, port: { name: http } } }
     # ─── gateway API 전용 host (REST 위주) ───
     - host: api.__DOMAIN__
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+    # ─── 게임 아케이드 host (#23) — 전체를 gateway 로 (api host 와 동일 형태) ───
+    # gateway 내부 분기: /api/** → 표준 path 라우트(인증 포함), 정적 엔트리 →
+    # game-client Host 라우트(prefixPath /game) → commerce. FE 디플로이 추가 없음.
+    - host: game.__DOMAIN__
       http:
         paths:
           - path: /
