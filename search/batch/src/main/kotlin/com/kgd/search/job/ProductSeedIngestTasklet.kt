@@ -1,6 +1,6 @@
 package com.kgd.search.job
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.kgd.search.infrastructure.client.ProductApiClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.batch.core.scope.context.ChunkContext
@@ -28,12 +28,15 @@ import java.nio.file.Path
 @ConditionalOnProperty(name = ["reindex.source"], havingValue = "seed")
 class ProductSeedIngestTasklet(
     private val productApiClient: ProductApiClient,
-    private val objectMapper: ObjectMapper,
     @Value("\${seed.path:/seed/products.jsonl}") private val seedPath: String,
     @Value("\${seed.chunk-size:500}") private val chunkSize: Int
 ) : Tasklet {
 
     private val log = KotlinLogging.logger {}
+
+    // Boot 4 컨텍스트의 ObjectMapper 는 Kotlin data class Creator 를 못 찾아
+    // ("no Creators" — 로컬 E2E 에서 확인) 자체 Kotlin 모듈 매퍼를 사용한다.
+    private val objectMapper = jacksonObjectMapper()
 
     override fun execute(contribution: StepContribution, chunkContext: ChunkContext): RepeatStatus {
         val path = Path.of(seedPath)

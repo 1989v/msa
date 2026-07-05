@@ -31,7 +31,16 @@ data class ProductIndexDocument(
     val categoryId: String? = null,
     val brand: String? = null,
     val description: String? = null,
-    val category: String? = null
+    val category: String? = null,
+    val energyKcal: Double? = null,
+    val carbohydrateG: Double? = null,
+    val proteinG: Double? = null,
+    val fatG: Double? = null,
+    val sugarG: Double? = null,
+    val sodiumMg: Double? = null,
+    val ingredients: String? = null,
+    val originCountry: String? = null,
+    val itemReportNo: String? = null
 ) {
     companion object {
         fun fromDomain(doc: ProductDocument) = ProductIndexDocument(
@@ -51,7 +60,16 @@ data class ProductIndexDocument(
             categoryId = doc.categoryId,
             brand = doc.brand,
             description = doc.description,
-            category = doc.category
+            category = doc.category,
+            energyKcal = doc.energyKcal,
+            carbohydrateG = doc.carbohydrateG,
+            proteinG = doc.proteinG,
+            fatG = doc.fatG,
+            sugarG = doc.sugarG,
+            sodiumMg = doc.sodiumMg,
+            ingredients = doc.ingredients,
+            originCountry = doc.originCountry,
+            itemReportNo = doc.itemReportNo
         )
     }
 }

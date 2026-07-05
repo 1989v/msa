@@ -53,7 +53,11 @@ class ProductDbReindexJobConfig(
     fun productJdbcReader() = run {
         val provider = SqlPagingQueryProviderFactoryBean().apply {
             setDataSource(productDataSource)
-            setSelectClause("SELECT id, name, price, stock, status, brand, description, category, created_at")
+            setSelectClause(
+                "SELECT id, name, price, stock, status, brand, description, category, " +
+                    "energy_kcal, carbohydrate_g, protein_g, fat_g, sugar_g, sodium_mg, " +
+                    "ingredients, origin_country, item_report_no, created_at"
+            )
             setFromClause("FROM products")
             setSortKeys(mapOf("id" to Order.ASCENDING))
         }
@@ -63,6 +67,8 @@ class ProductDbReindexJobConfig(
             .queryProvider(provider.`object`)
             .pageSize(pageSize)
             .rowMapper { rs, _ ->
+                // getDouble 은 NULL 을 0.0 으로 뭉개므로 getObject 로 nullable 유지
+                fun nullableDouble(column: String): Double? = (rs.getObject(column) as? Number)?.toDouble()
                 ProductRow(
                     id = rs.getLong("id"),
                     name = rs.getString("name"),
@@ -72,6 +78,15 @@ class ProductDbReindexJobConfig(
                     brand = rs.getString("brand"),
                     description = rs.getString("description"),
                     category = rs.getString("category"),
+                    energyKcal = nullableDouble("energy_kcal"),
+                    carbohydrateG = nullableDouble("carbohydrate_g"),
+                    proteinG = nullableDouble("protein_g"),
+                    fatG = nullableDouble("fat_g"),
+                    sugarG = nullableDouble("sugar_g"),
+                    sodiumMg = nullableDouble("sodium_mg"),
+                    ingredients = rs.getString("ingredients"),
+                    originCountry = rs.getString("origin_country"),
+                    itemReportNo = rs.getString("item_report_no"),
                     createdAt = rs.getTimestamp("created_at").toLocalDateTime()
                 )
             }
@@ -89,6 +104,15 @@ class ProductDbReindexJobConfig(
                 brand = row.brand,
                 description = row.description,
                 category = row.category,
+                energyKcal = row.energyKcal,
+                carbohydrateG = row.carbohydrateG,
+                proteinG = row.proteinG,
+                fatG = row.fatG,
+                sugarG = row.sugarG,
+                sodiumMg = row.sodiumMg,
+                ingredients = row.ingredients,
+                originCountry = row.originCountry,
+                itemReportNo = row.itemReportNo,
                 createdAt = row.createdAt
             )
         }

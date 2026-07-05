@@ -12,5 +12,14 @@ data class ProductRow(
     val brand: String?,
     val description: String?,
     val category: String?,
+    val energyKcal: Double?,
+    val carbohydrateG: Double?,
+    val proteinG: Double?,
+    val fatG: Double?,
+    val sugarG: Double?,
+    val sodiumMg: Double?,
+    val ingredients: String?,
+    val originCountry: String?,
+    val itemReportNo: String?,
     val createdAt: LocalDateTime
 )

@@ -24,6 +24,15 @@ class ProductApiClient(
         val brand: String? = null,
         val description: String? = null,
         val category: String? = null,
+        val energyKcal: Double? = null,
+        val carbohydrateG: Double? = null,
+        val proteinG: Double? = null,
+        val fatG: Double? = null,
+        val sugarG: Double? = null,
+        val sodiumMg: Double? = null,
+        val ingredients: String? = null,
+        val originCountry: String? = null,
+        val itemReportNo: String? = null,
         val createdAt: LocalDateTime
     )
 
@@ -40,7 +49,16 @@ class ProductApiClient(
         val stock: Int = 0,
         val brand: String? = null,
         val description: String? = null,
-        val category: String? = null
+        val category: String? = null,
+        val energyKcal: Double? = null,
+        val carbohydrateG: Double? = null,
+        val proteinG: Double? = null,
+        val fatG: Double? = null,
+        val sugarG: Double? = null,
+        val sodiumMg: Double? = null,
+        val ingredients: String? = null,
+        val originCountry: String? = null,
+        val itemReportNo: String? = null
     )
 
     /**
@@ -78,6 +96,7 @@ class ProductApiClient(
 
         @Suppress("UNCHECKED_CAST")
         val products = (data["products"] as? List<Map<String, Any>> ?: emptyList()).map { p ->
+            fun nullableDouble(key: String): Double? = (p[key] as? Number)?.toDouble()
             ProductDto(
                 id = (p["id"] as Number).toLong(),
                 name = p["name"] as String,
@@ -87,6 +106,15 @@ class ProductApiClient(
                 brand = p["brand"] as? String,
                 description = p["description"] as? String,
                 category = p["category"] as? String,
+                energyKcal = nullableDouble("energyKcal"),
+                carbohydrateG = nullableDouble("carbohydrateG"),
+                proteinG = nullableDouble("proteinG"),
+                fatG = nullableDouble("fatG"),
+                sugarG = nullableDouble("sugarG"),
+                sodiumMg = nullableDouble("sodiumMg"),
+                ingredients = p["ingredients"] as? String,
+                originCountry = p["originCountry"] as? String,
+                itemReportNo = p["itemReportNo"] as? String,
                 createdAt = p["createdAt"]?.toString()?.let { LocalDateTime.parse(it) }
                     ?: LocalDateTime.now()
             )

@@ -21,6 +21,7 @@ data class ProductCreatedEvent(
     val sodiumMg: Double? = null,
     val ingredients: String? = null,
     val originCountry: String? = null,
+    val itemReportNo: String? = null,
     val eventTime: LocalDateTime = LocalDateTime.now()
 )
 
@@ -41,5 +42,6 @@ data class ProductUpdatedEvent(
     val sodiumMg: Double? = null,
     val ingredients: String? = null,
     val originCountry: String? = null,
+    val itemReportNo: String? = null,
     val eventTime: LocalDateTime = LocalDateTime.now()
 )

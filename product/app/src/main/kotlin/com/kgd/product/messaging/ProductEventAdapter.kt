@@ -34,7 +34,8 @@ class ProductEventAdapter(
             sugarG = product.sugarG,
             sodiumMg = product.sodiumMg,
             ingredients = product.ingredients,
-            originCountry = product.originCountry
+            originCountry = product.originCountry,
+            itemReportNo = product.itemReportNo
         )
         kafkaTemplate.send(createdTopic, product.id.toString(), event)
             .whenComplete { _, ex ->
@@ -59,7 +60,8 @@ class ProductEventAdapter(
             sugarG = product.sugarG,
             sodiumMg = product.sodiumMg,
             ingredients = product.ingredients,
-            originCountry = product.originCountry
+            originCountry = product.originCountry,
+            itemReportNo = product.itemReportNo
         )
         kafkaTemplate.send(updatedTopic, product.id.toString(), event)
             .whenComplete { _, ex ->

@@ -36,10 +36,11 @@ class ProductSearchAdapter(
         keyword: String,
         pageable: Pageable,
         rankingVariant: String?,
+        filters: ProductSearchPort.Filters,
     ): Page<ScoredProductDocument> {
         // 미정의 variant 키 (control 등) 는 기본 ranking 으로 fallback
         val props = rankingVariant?.let { rankingVariants.variants[it] } ?: rankingProperties
-        val response = executeSearch(keyword, pageable, props)
+        val response = executeSearch(keyword, pageable, props, filters)
         val content = response.hits().hits().mapNotNull { hit ->
             hit.source()?.let { ScoredProductDocument(it.toDomain(), hit.score() ?: 0.0) }
         }
@@ -83,8 +84,9 @@ class ProductSearchAdapter(
         keyword: String,
         pageable: Pageable,
         props: RankingProperties,
+        filters: ProductSearchPort.Filters = ProductSearchPort.Filters.NONE,
     ): SearchResponse<ProductSearchDocument> {
-        val request = queryBuilder.build(INDEX, keyword, pageable, props)
+        val request = queryBuilder.build(INDEX, keyword, pageable, props, filters)
         return client.search(request, ProductSearchDocument::class.java)
     }
 }
