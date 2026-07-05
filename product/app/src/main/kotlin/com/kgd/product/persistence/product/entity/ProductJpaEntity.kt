@@ -67,19 +67,19 @@ class ProductJpaEntity(
     var energyKcal: Double? = energyKcal
         private set
 
-    @Column
+    @Column(name = "carbohydrate_g")  // 끝자리 단일 대문자는 Hibernate 암묵 네이밍이 '_' 없이 붙임 → 마이그레이션과 명시 정합
     var carbohydrateG: Double? = carbohydrateG
         private set
 
-    @Column
+    @Column(name = "protein_g")  // 끝자리 단일 대문자는 Hibernate 암묵 네이밍이 '_' 없이 붙임 → 마이그레이션과 명시 정합
     var proteinG: Double? = proteinG
         private set
 
-    @Column
+    @Column(name = "fat_g")  // 끝자리 단일 대문자는 Hibernate 암묵 네이밍이 '_' 없이 붙임 → 마이그레이션과 명시 정합
     var fatG: Double? = fatG
         private set
 
-    @Column
+    @Column(name = "sugar_g")  // 끝자리 단일 대문자는 Hibernate 암묵 네이밍이 '_' 없이 붙임 → 마이그레이션과 명시 정합
     var sugarG: Double? = sugarG
         private set
 
