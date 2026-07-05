@@ -19,7 +19,8 @@
 
 ## Key Rules
 
-- Product 는 **카탈로그(이름/가격/카테고리/상태) 의 SSOT**. **재고(stock) 는 Inventory 서비스가 SSOT** — 재고 조회/변경은 Inventory 를 통해 (ADR-0013)
+- Product 는 **카탈로그(이름/가격/카테고리/상태 + 영양·원재료·원산지, ADR-0059) 의 SSOT**. **재고(stock) 는 Inventory 서비스가 SSOT** — 재고 조회/변경은 Inventory 를 통해 (ADR-0013)
+- 영양 필드는 100g 기준·nullable — 오픈데이터(#15100066) 품목제조보고번호 조인, 미매칭 null (추정 채움 금지)
 - Kafka 발행 토픽: `product.item.created`, `product.item.updated`
 - Search 서비스가 위 토픽을 소비하여 ES 인덱싱 — 토픽 스키마 변경 시 Search Consumer 영향 확인 필수
 

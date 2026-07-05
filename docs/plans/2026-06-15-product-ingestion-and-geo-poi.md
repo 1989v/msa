@@ -31,6 +31,14 @@
 - `place` Deployment 에 optional `place-seed` ConfigMap 볼륨 + PLACE_SEED_ENABLED(기본 false).
 - 네트워크폴리시는 라벨 기반이라 place 자동 포함. 이 ADR/plan/place CLAUDE.md.
 
+## Phase 5 — 영양/원재료/원산지 enrichment (ADR-0059, 칼로리 계산기 기반)
+
+- product 에 영양 9필드(100g 기준, nullable) + `V20260703_001` + `@Column` 네이밍 명시. ✅ `49b840a`+`df83d9c`
+- search 색인 9필드 + `minKcal`/`maxKcal` hard filter + `id: keyword` 매핑 보완. ✅ `2ff60f3`+`01f88ff`
+- normalize.py: 영양표준(#15100066) 품목보고번호 exact join(CSV/API 이중화) + C002 원재료 + MFDS_KEY 분리. ✅ `db5716e`
+- 런타임 실버그 픽스: Boot4 Kafka 리스너 3종(`bbe23e8`), httpcore5 정렬(`faf6b07`), tasklet Jackson.
+- 로컬 E2E 검증: seed 24건 → Kafka → OpenSearch, `keyword=김치&maxKcal=100` 등 필터 4케이스 통과.
+
 ## 적재 운영 (요약)
 
 ```bash
