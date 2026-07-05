@@ -45,7 +45,16 @@ class ProductService(
             status = product.status.name,
             brand = product.brand,
             description = product.description,
-            category = product.category
+            category = product.category,
+            energyKcal = product.energyKcal,
+            carbohydrateG = product.carbohydrateG,
+            proteinG = product.proteinG,
+            fatG = product.fatG,
+            sugarG = product.sugarG,
+            sodiumMg = product.sodiumMg,
+            ingredients = product.ingredients,
+            originCountry = product.originCountry,
+            itemReportNo = product.itemReportNo
         )
     }
 
@@ -56,7 +65,16 @@ class ProductService(
             price = command.price?.let { Money(it) },
             brand = command.brand,
             description = command.description,
-            category = command.category
+            category = command.category,
+            energyKcal = command.energyKcal,
+            carbohydrateG = command.carbohydrateG,
+            proteinG = command.proteinG,
+            fatG = command.fatG,
+            sugarG = command.sugarG,
+            sodiumMg = command.sodiumMg,
+            ingredients = command.ingredients,
+            originCountry = command.originCountry,
+            itemReportNo = command.itemReportNo
         )
         // Transaction commits when save() returns
         val saved = transactionalService.save(product)
@@ -70,7 +88,16 @@ class ProductService(
             status = saved.status.name,
             brand = saved.brand,
             description = saved.description,
-            category = saved.category
+            category = saved.category,
+            energyKcal = saved.energyKcal,
+            carbohydrateG = saved.carbohydrateG,
+            proteinG = saved.proteinG,
+            fatG = saved.fatG,
+            sugarG = saved.sugarG,
+            sodiumMg = saved.sodiumMg,
+            ingredients = saved.ingredients,
+            originCountry = saved.originCountry,
+            itemReportNo = saved.itemReportNo
         )
     }
 
@@ -88,7 +115,16 @@ class ProductService(
                     createdAt = product.createdAt,
                     brand = product.brand,
                     description = product.description,
-                    category = product.category
+                    category = product.category,
+                    energyKcal = product.energyKcal,
+                    carbohydrateG = product.carbohydrateG,
+                    proteinG = product.proteinG,
+                    fatG = product.fatG,
+                    sugarG = product.sugarG,
+                    sodiumMg = product.sodiumMg,
+                    ingredients = product.ingredients,
+                    originCountry = product.originCountry,
+                    itemReportNo = product.itemReportNo
                 )
             },
             totalElements = page.totalElements,
@@ -102,7 +138,16 @@ class ProductService(
         stock = stock,
         brand = brand,
         description = description,
-        category = category
+        category = category,
+        energyKcal = energyKcal,
+        carbohydrateG = carbohydrateG,
+        proteinG = proteinG,
+        fatG = fatG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
+        ingredients = ingredients,
+        originCountry = originCountry,
+        itemReportNo = itemReportNo
     )
 
     private fun Product.toCreateResult() = CreateProductUseCase.Result(
@@ -113,6 +158,15 @@ class ProductService(
         status = status.name,
         brand = brand,
         description = description,
-        category = category
+        category = category,
+        energyKcal = energyKcal,
+        carbohydrateG = carbohydrateG,
+        proteinG = proteinG,
+        fatG = fatG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
+        ingredients = ingredients,
+        originCountry = originCountry,
+        itemReportNo = itemReportNo
     )
 }

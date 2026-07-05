@@ -18,7 +18,16 @@ data class ProductListResponse(
         val createdAt: LocalDateTime,
         val brand: String? = null,
         val description: String? = null,
-        val category: String? = null
+        val category: String? = null,
+        val energyKcal: Double? = null,
+        val carbohydrateG: Double? = null,
+        val proteinG: Double? = null,
+        val fatG: Double? = null,
+        val sugarG: Double? = null,
+        val sodiumMg: Double? = null,
+        val ingredients: String? = null,
+        val originCountry: String? = null,
+        val itemReportNo: String? = null
     )
 
     companion object {
@@ -33,7 +42,16 @@ data class ProductListResponse(
                     createdAt = p.createdAt,
                     brand = p.brand,
                     description = p.description,
-                    category = p.category
+                    category = p.category,
+                    energyKcal = p.energyKcal,
+                    carbohydrateG = p.carbohydrateG,
+                    proteinG = p.proteinG,
+                    fatG = p.fatG,
+                    sugarG = p.sugarG,
+                    sodiumMg = p.sodiumMg,
+                    ingredients = p.ingredients,
+                    originCountry = p.originCountry,
+                    itemReportNo = p.itemReportNo
                 )
             },
             totalElements = result.totalElements,

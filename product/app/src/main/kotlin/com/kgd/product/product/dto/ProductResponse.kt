@@ -13,16 +13,76 @@ data class ProductResponse(
     val status: String,
     val brand: String? = null,
     val description: String? = null,
-    val category: String? = null
+    val category: String? = null,
+    val energyKcal: Double? = null,
+    val carbohydrateG: Double? = null,
+    val proteinG: Double? = null,
+    val fatG: Double? = null,
+    val sugarG: Double? = null,
+    val sodiumMg: Double? = null,
+    val ingredients: String? = null,
+    val originCountry: String? = null,
+    val itemReportNo: String? = null
 ) {
     companion object {
-        fun from(result: CreateProductUseCase.Result) =
-            ProductResponse(result.id, result.name, result.price, result.stock, result.status, result.brand, result.description, result.category)
+        fun from(result: CreateProductUseCase.Result) = ProductResponse(
+            id = result.id,
+            name = result.name,
+            price = result.price,
+            stock = result.stock,
+            status = result.status,
+            brand = result.brand,
+            description = result.description,
+            category = result.category,
+            energyKcal = result.energyKcal,
+            carbohydrateG = result.carbohydrateG,
+            proteinG = result.proteinG,
+            fatG = result.fatG,
+            sugarG = result.sugarG,
+            sodiumMg = result.sodiumMg,
+            ingredients = result.ingredients,
+            originCountry = result.originCountry,
+            itemReportNo = result.itemReportNo
+        )
 
-        fun from(result: GetProductUseCase.Result) =
-            ProductResponse(result.id, result.name, result.price, result.stock, result.status, result.brand, result.description, result.category)
+        fun from(result: GetProductUseCase.Result) = ProductResponse(
+            id = result.id,
+            name = result.name,
+            price = result.price,
+            stock = result.stock,
+            status = result.status,
+            brand = result.brand,
+            description = result.description,
+            category = result.category,
+            energyKcal = result.energyKcal,
+            carbohydrateG = result.carbohydrateG,
+            proteinG = result.proteinG,
+            fatG = result.fatG,
+            sugarG = result.sugarG,
+            sodiumMg = result.sodiumMg,
+            ingredients = result.ingredients,
+            originCountry = result.originCountry,
+            itemReportNo = result.itemReportNo
+        )
 
-        fun from(result: UpdateProductUseCase.Result) =
-            ProductResponse(result.id, result.name, result.price, result.stock, result.status, result.brand, result.description, result.category)
+        fun from(result: UpdateProductUseCase.Result) = ProductResponse(
+            id = result.id,
+            name = result.name,
+            price = result.price,
+            stock = result.stock,
+            status = result.status,
+            brand = result.brand,
+            description = result.description,
+            category = result.category,
+            energyKcal = result.energyKcal,
+            carbohydrateG = result.carbohydrateG,
+            proteinG = result.proteinG,
+            fatG = result.fatG,
+            sugarG = result.sugarG,
+            sodiumMg = result.sodiumMg,
+            ingredients = result.ingredients,
+            originCountry = result.originCountry,
+            itemReportNo = result.itemReportNo
+        )
     }
 }

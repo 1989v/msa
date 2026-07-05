@@ -13,6 +13,14 @@ data class ProductCreatedEvent(
     val brand: String? = null,
     val description: String? = null,
     val category: String? = null,
+    val energyKcal: Double? = null,
+    val carbohydrateG: Double? = null,
+    val proteinG: Double? = null,
+    val fatG: Double? = null,
+    val sugarG: Double? = null,
+    val sodiumMg: Double? = null,
+    val ingredients: String? = null,
+    val originCountry: String? = null,
     val eventTime: LocalDateTime = LocalDateTime.now()
 )
 
@@ -25,5 +33,13 @@ data class ProductUpdatedEvent(
     val brand: String? = null,
     val description: String? = null,
     val category: String? = null,
+    val energyKcal: Double? = null,
+    val carbohydrateG: Double? = null,
+    val proteinG: Double? = null,
+    val fatG: Double? = null,
+    val sugarG: Double? = null,
+    val sodiumMg: Double? = null,
+    val ingredients: String? = null,
+    val originCountry: String? = null,
     val eventTime: LocalDateTime = LocalDateTime.now()
 )

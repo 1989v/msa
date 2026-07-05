@@ -26,7 +26,15 @@ class ProductEventAdapter(
             status = product.status.name,
             brand = product.brand,
             description = product.description,
-            category = product.category
+            category = product.category,
+            energyKcal = product.energyKcal,
+            carbohydrateG = product.carbohydrateG,
+            proteinG = product.proteinG,
+            fatG = product.fatG,
+            sugarG = product.sugarG,
+            sodiumMg = product.sodiumMg,
+            ingredients = product.ingredients,
+            originCountry = product.originCountry
         )
         kafkaTemplate.send(createdTopic, product.id.toString(), event)
             .whenComplete { _, ex ->
@@ -43,7 +51,15 @@ class ProductEventAdapter(
             status = product.status.name,
             brand = product.brand,
             description = product.description,
-            category = product.category
+            category = product.category,
+            energyKcal = product.energyKcal,
+            carbohydrateG = product.carbohydrateG,
+            proteinG = product.proteinG,
+            fatG = product.fatG,
+            sugarG = product.sugarG,
+            sodiumMg = product.sodiumMg,
+            ingredients = product.ingredients,
+            originCountry = product.originCountry
         )
         kafkaTemplate.send(updatedTopic, product.id.toString(), event)
             .whenComplete { _, ex ->
