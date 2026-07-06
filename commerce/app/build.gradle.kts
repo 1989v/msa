@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":order:feature")) // co-deploy (commerce 모듈러 모놀리스)
     implementation(project(":member:feature")) // ADR-0058 round 2: member 도메인 폴드
     implementation(project(":wishlist:feature")) // ADR-0058 round 2: wishlist 도메인 폴드
+    implementation(project(":game:feature")) // 웹 게임 아케이드(#23) co-deploy — Redis 전용, Tier B in-JVM(추가 프로세스 0)
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
 
@@ -25,4 +26,13 @@ dependencies {
 
 tasks.bootJar {
     archiveBaseName.set("commerce")
+}
+
+// 웹 게임 아케이드(#23) — game:web 브라우저 번들(game.js + index.html)을 정적 리소스로 패키징.
+// commerce:app 이 /game/ 으로 서빙(API 는 /api/v1/game/**). game:web 변경 시에만 재빌드(up-to-date).
+tasks.named<org.gradle.language.jvm.tasks.ProcessResources>("processResources") {
+    dependsOn(":game:web:jsBrowserDistribution")
+    from(project(":game:web").layout.buildDirectory.dir("dist/js/productionExecutable")) {
+        into("static/game")
+    }
 }

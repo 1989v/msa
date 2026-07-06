@@ -1,0 +1,29 @@
+# 게임 아케이드 (#23) — 로컬 k3d 전용 서브도메인 ingress.
+#
+# oci-arm 의 game.<DOMAIN> 과 동일한 형태(host 전체 → gateway)를 로컬에서 재현한다.
+# game.127.0.0.1.nip.io 는 공용 nip.io DNS 가 127.0.0.1 로 풀어주므로 hosts 편집 불필요
+# (k3d serverlb 가 host 80/443 을 노출).
+#
+# base 의 host-less path ingress 와 공존: nginx 는 Host 가 정확히 일치하는 server block 을
+# 우선하므로 이 host 로 온 요청만 여기 걸린다. /api/** 는 gateway 표준 path 라우트(인증 포함),
+# 정적 엔트리는 gateway 의 game-client Host 라우트가 commerce /game/** 로 프록시.
+#
+# oci-arm 은 자체 subdomain ingress 를 쓰므로 kustomization 에서 $patch: delete 로 제외.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: game-host-local
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: game.127.0.0.1.nip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
