@@ -1,6 +1,6 @@
 # ADR-0059 — Game Platform (게임 카탈로그 + 플레이 + 광고) 도입
 
-- Status: Proposed
+- Status: Accepted (2026-07-06, MVP 우선 — ads 는 후속 페이즈)
 - Date: 2026-07-06
 - Supersedes: 없음 / Relates: ADR-0058(서비스 토폴로지 통합), ADR-0019(K8s 전환), ADR-0012/0029(멱등성), ADR-0025(Latency Budget)
 - Spec: `docs/specs/2026-07-06-game-platform-entities-design.md` (엔티티 상세)

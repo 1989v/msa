@@ -9,7 +9,11 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 | Gradle path | 역할 |
 |---|---|
 | `:code-dictionary:domain` | Pure Kotlin 도메인 (concept, portfolio) |
-| `:code-dictionary:app` | Spring Boot 앱 (port 8089) |
+| `:code-dictionary:app` | Spring Boot 앱 (port 8089) — **game:feature 호스트** (ADR-0059 폴드, `game/CLAUDE.md` 참조) |
+
+> game 도메인은 전용 datasource(`game_db`)/EMF/TM/Flyway(`gamedb/migration`)를 갖는 별도 바운디드
+> 컨텍스트다. code-dictionary 리포지토리는 `CodeDictionaryJpaConfig` 가 명시 등록한다
+> (game 의 `@EnableJpaRepositories` 로 Boot 자동 구성이 back-off 하기 때문).
 
 ## Commands
 

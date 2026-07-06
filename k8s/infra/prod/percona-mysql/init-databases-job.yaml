@@ -20,6 +20,7 @@ data:
     CREATE DATABASE IF NOT EXISTS fulfillment_db     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS warehouse_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS code_dictionary_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS game_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS experiment_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
     -- Users and grants: passwords come from SealedSecrets in prod,

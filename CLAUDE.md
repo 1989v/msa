@@ -126,12 +126,14 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | quant | `quant/CLAUDE.md` | 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS + Phase 3 실매매 (ADR-0033/0036/0037, Phase 3 코어 구현 완료, 거래소 어댑터 4종 wire-up 후 Beta) |
 | auth | (CLAUDE.md 미작성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) — 서비스 코드 존재 |
 | gifticon | (CLAUDE.md 미작성) | 기프티콘 관리, 공유 그룹 — 서비스 코드 존재 |
-| code-dictionary | `code-dictionary/CLAUDE.md` | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD + 포트폴리오 카드. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반) |
+| code-dictionary | `code-dictionary/CLAUDE.md` | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD + 포트폴리오 카드. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반). **game:feature 호스트** (ADR-0059) |
+| game | `game/CLAUDE.md` | 게임 플랫폼 — 카탈로그(태그/큐레이션/평점) + 플레이 세션 + HOUSE 광고(후속). `:game:domain`+`:game:feature` 라이브러리로 code-dictionary:app 에 폴드, FE 는 portal-fe `/games/*` (ADR-0059) |
 | inventory | (CLAUDE.md 미작성) | 재고 관리, 예약 — 서비스 코드 존재 |
 | fulfillment | (CLAUDE.md 미작성) | 주문 풀필먼트 — 서비스 코드 존재 |
 | warehouse | (CLAUDE.md 미작성) | 창고 관리 — 서비스 코드 존재 |
 | chatbot | (CLAUDE.md 미작성) | 대화형 AI — 서비스 코드 존재 |
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
+| place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보) 적재 (ADR-0056) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
 
