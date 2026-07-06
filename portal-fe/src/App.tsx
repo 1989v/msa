@@ -10,6 +10,9 @@ import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 
 // ADR-0058 R3 FE 통합 — 흡수될 sub-app 슬롯 (lazy). P2 에서 실제 앱 라우터로 교체.
 const AdminApp = lazy(() => import('./apps/admin/App'));
+// ADR-0059 — 게임 플랫폼 (game:feature API 는 code-dictionary 와 동일 오리진)
+const GamesPage = lazy(() => import('./pages/games/GamesPage'));
+const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
 const QuantApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.QuantApp })));
 const GifticonApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.GifticonApp })));
 const AgentViewerApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.AgentViewerApp })));
@@ -27,6 +30,8 @@ function App() {
           <Route path="/shop/orders" element={<MyOrdersPage />} />
           <Route path="/shop/login" element={<ShopLoginPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
+          <Route path="/games" element={<GamesPage />} />
+          <Route path="/games/:slug" element={<GameDetailPage />} />
 
           {/* 흡수 sub-app 슬롯 (P2 통합 대상) */}
           <Route path="/admin/*" element={<AdminApp />} />

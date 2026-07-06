@@ -37,6 +37,11 @@ export default function GNB({ onSearchFocus }: GNBProps) {
               쇼핑
             </a>
           </li>
+          <li>
+            <a className="gnb-menu-item" href="/games">
+              게임
+            </a>
+          </li>
         </ul>
         <button className="gnb-search-btn" onClick={onSearchFocus} aria-label="검색">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
