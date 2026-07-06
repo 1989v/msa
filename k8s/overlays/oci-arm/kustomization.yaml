@@ -94,6 +94,30 @@ patches:
       metadata:
         name: game-host-local
         namespace: commerce
+  # ─── game hmac-secret (#23) — 공개 레포의 코드 기본키 차단 ───────────────────
+  # 세션 토큰(HMAC-SHA256) 서명키. Secret 은 git 미포함, OCI 에서 수동 등록
+  # (cloudflared-tunnel-token 패턴):
+  #   kubectl -n commerce create secret generic game-security \
+  #     --from-literal=hmac-secret="$(openssl rand -base64 32)"
+  # optional 없음(required) = Secret 미등록 시 새 파드 fail-fast — 공개된 기본키로
+  # 조용히 뜨는 침묵 실패 방지. 로컬(k3s-lite)은 코드 기본값 사용이라 미적용.
+  - target:
+      kind: Deployment
+      name: commerce
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: commerce
+      spec:
+        template:
+          spec:
+            containers:
+              - name: app
+                env:
+                  - name: GAME_SECURITY_HMAC_SECRET   # → game.security.hmac-secret (relaxed binding)
+                    valueFrom:
+                      secretKeyRef: {name: game-security, key: hmac-secret}
   # ─── JVM tuning (모든 Deployment 에 주입, nginx 컨테이너는 무시함) ────────
   - path: patches/java-tool-options.yaml
     target:
