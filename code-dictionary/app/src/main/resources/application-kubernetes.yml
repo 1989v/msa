@@ -4,6 +4,14 @@ spring:
       jdbc-url: jdbc:mysql://mysql-code-dictionary-master:3306/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
     replica:
       jdbc-url: jdbc:mysql://mysql-code-dictionary-master:3306/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+    # ADR-0059: game_db 는 code-dictionary 와 같은 MySQL 인스턴스의 별도 스키마
+    game:
+      master:
+        jdbc-url: jdbc:mysql://${GAME_DB_MASTER:mysql-code-dictionary-master:3306}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+      replica:
+        jdbc-url: jdbc:mysql://${GAME_DB_REPLICA:mysql-code-dictionary-master:3306}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
   flyway:
     enabled: true
     url: jdbc:mysql://mysql-code-dictionary-master:3306/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true

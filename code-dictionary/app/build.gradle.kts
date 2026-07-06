@@ -9,6 +9,7 @@ plugins {
 
 dependencies {
     implementation(project(":code-dictionary:domain"))
+    implementation(project(":game:feature")) // ADR-0059: 게임 플랫폼 co-deploy (모듈러 모놀리스)
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)

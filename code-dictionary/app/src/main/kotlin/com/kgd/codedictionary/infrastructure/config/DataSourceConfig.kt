@@ -1,7 +1,7 @@
 package com.kgd.codedictionary.infrastructure.config
 
 import com.querydsl.jpa.impl.JPAQueryFactory
-import jakarta.persistence.EntityManager
+import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
+import org.springframework.orm.jpa.SharedEntityManagerCreator
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.sql.DataSource
 
@@ -49,7 +50,9 @@ class DataSourceConfig {
     fun dataSource(@Qualifier("routingDataSource") routingDataSource: DataSource): DataSource =
         LazyConnectionDataSourceProxy(routingDataSource)
 
+    // ADR-0059: game EMF 추가로 EntityManager 타입 주입이 모호해져 기본 EMF 를 명시 바인딩
     @Bean
-    fun jpaQueryFactory(entityManager: EntityManager): JPAQueryFactory =
-        JPAQueryFactory(entityManager)
+    fun jpaQueryFactory(
+        @Qualifier("entityManagerFactory") emf: EntityManagerFactory,
+    ): JPAQueryFactory = JPAQueryFactory(SharedEntityManagerCreator.createSharedEntityManager(emf))
 }
