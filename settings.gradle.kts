@@ -18,6 +18,8 @@ include(
     "auth:app",
     "code-dictionary:domain",
     "code-dictionary:app",
+    "game:domain",
+    "game:feature", // ADR-0059: 게임 플랫폼 라이브러리 (code-dictionary:app 이 흡수, 비-bootable)
     "inventory:domain",
     "inventory:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (비-bootable)
     "commerce:app",
