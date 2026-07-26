@@ -31,6 +31,13 @@ spec:
               value: "kubernetes"
             - name: OPENSEARCH_URIS
               value: "http://opensearch:9200"
+            # ADR-0059 — 폴드된 game 도메인: 전용 스키마(game_db) + 세션 이벤트 발행
+            - name: GAME_DB_MASTER
+              value: "mysql-code-dictionary-master:3306"
+            - name: GAME_DB_REPLICA
+              value: "mysql-code-dictionary-master:3306"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

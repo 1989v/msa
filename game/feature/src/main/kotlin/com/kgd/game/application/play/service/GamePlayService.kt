@@ -7,7 +7,6 @@ import com.kgd.game.application.play.dto.SessionEndedDto
 import com.kgd.game.application.play.dto.SessionStartedDto
 import com.kgd.game.application.play.port.GameEventPort
 import com.kgd.game.domain.play.model.DeviceType
-
 import org.springframework.stereotype.Service
 
 /**

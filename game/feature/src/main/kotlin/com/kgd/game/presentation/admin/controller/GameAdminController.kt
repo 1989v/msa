@@ -7,6 +7,7 @@ import com.kgd.game.application.catalog.service.GameAdminService
 import com.kgd.game.application.catalog.service.GameStatusAction
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.EngineType
+import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import jakarta.validation.Valid
@@ -175,7 +176,7 @@ class GameAdminController(
         return ApiResponse.success(collection.toResponse())
     }
 
-    private fun com.kgd.game.domain.catalog.model.GameCollection.toResponse() = CollectionResponse(
+    private fun GameCollection.toResponse() = CollectionResponse(
         slug = slug,
         title = title,
         type = type,

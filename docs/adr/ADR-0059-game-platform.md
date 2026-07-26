@@ -58,6 +58,15 @@ ADR-0058 불변식 준수 — 재분리 가능성 보장:
   집행은 provider 위임)를 HOUSE 로 먼저 검증한다.
 - rewarded 보상은 `idempotency_key` 기반 1회 보장 (idempotent-consumer 패턴, ADR-0012/0029).
 
+### 3-1) 인증 경계 — 게스트 허용 라우트
+
+게임은 비로그인 플레이가 기본이므로 gateway 라우트를 인증 수준별로 분리한다:
+`game-admin`(ROLE_ADMIN) / `game-rating`(ROLE_USER+) / `game-session`(게스트 허용) / `game-catalog`(공개).
+
+세션은 로그인 사용자만 식별하면 되므로 `AuthenticationGatewayFilter.Config(required=false)` 를
+도입했다 — 토큰이 없으면 401 대신 **클라이언트가 보낸 신원 헤더를 제거하고** 익명 통과시킨다
+(헤더 제거가 없으면 `X-User-Id` 위조로 타인 명의 세션이 생성될 수 있다).
+
 ### 4) FE: portal-fe nested lazy route (`/games/*`)
 
 admin 흡수(FE 통합 P2, 2026-07-06 merge)와 동일 패턴 — 별도 sub-FE 를 만들지 않고

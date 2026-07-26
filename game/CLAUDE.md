@@ -14,14 +14,18 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 
 ```bash
 ./gradlew :game:domain:test              # 도메인 테스트 (Spring context 없음)
+./gradlew :game:feature:test             # 서비스 단위(MockK) + 스키마 통합(Testcontainers MySQL)
 ./gradlew :game:feature:build            # feature 라이브러리 빌드
 ./gradlew :code-dictionary:app:build     # 호스트 앱 빌드 (game 포함)
 ```
 
+> `GameSchemaIntegrationSpec` 은 실제 MySQL 로 Flyway 적용 + `ddl-auto=validate` 매핑 검증 +
+> Querydsl 정렬/태그/유사게임 SQL 을 확인한다 (Docker 없으면 skip).
+
 ## Architecture (ADR-0059)
 
 - 배치: `game:feature` → `code-dictionary:app` 마운트. 재분리는 ADR-0058 체크리스트 4단계 (feature·DB·토픽 무변경)
-- 영속성: MySQL `game_db` 스키마 격리 + **전용 Flyway** (`classpath:gamedb/migration` — 호스트 기본 Flyway 의 `db/migration` 재귀 스캔과 충돌 방지)
+- 영속성: MySQL `game_db` 스키마 격리 + **전용 Flyway** (`GameFlywayMigrator`, `classpath:gamedb/migration` — 호스트 기본 Flyway 의 `db/migration` 재귀 스캔과 충돌 방지). 토글은 `game.flyway.enabled`, EMF 는 `@DependsOn("gameFlyway")` 로 마이그레이션 선행을 보장
 - 트랜잭션: `@Transactional(transactionManager = "gameTransactionManager")` 필수 (기본 TM 은 code-dictionary 소유)
 - Querydsl: `@Qualifier("gameJpaQueryFactory")` (기본 `jpaQueryFactory` 는 code-dictionary EMF 바인딩)
 - Kafka: `game.session.started` / `game.session.ended` 발행 (수신: analytics, fire-and-forget). 발행은 트랜잭션 밖 (GamePlayService 파사드 / GamePlayCommand 분리)
@@ -45,6 +49,10 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | `POST /api/v1/games/{slug}/sessions`, `PATCH .../{sessionKey}` | 세션 시작(게스트 OK)/종료 |
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
 | `POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN) |
+
+게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 4개 라우트로 나뉜다 — 좁은 경로가 먼저
+선언되어야 `games/**` 에 가려지지 않는다: `game-admin`(ADMIN) → `game-rating`(USER+) →
+`game-session`(게스트 허용 = `Config(required=false)`) → `game-catalog`(공개).
 
 ## Key Rules
 

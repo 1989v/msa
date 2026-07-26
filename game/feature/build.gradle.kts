@@ -25,6 +25,9 @@ dependencies {
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
     testImplementation(libs.mockk)
+    // ADR-0059: 실제 MySQL 로 Flyway 마이그레이션 + 엔티티 매핑(validate) + Querydsl SQL 검증
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.mysql)
 }
 
 tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") { enabled = false }

@@ -58,7 +58,7 @@ class GameRepositoryAdapter(
 
     /** Game.tags(json 스냅샷) → game_tag_map(조회용 정규화 뷰) 동기화 */
     private fun syncTagMap(gameId: Long, tags: List<String>) {
-        tagMapRepository.deleteByGameId(gameId)
+        tagMapRepository.deleteAllByGameId(gameId)
         if (tags.isNotEmpty()) {
             tagMapRepository.saveAll(tags.map { GameTagMapJpaEntity(gameId = gameId, tagSlug = it) })
         }

@@ -10,6 +10,7 @@ import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameCollection
+import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import org.springframework.stereotype.Service
@@ -61,7 +62,9 @@ class GameAdminService(
                 tags = command.tags,
             )
         )
-        return GameDetailDto.of(game, null)
+        // 통계 row 를 생성 시점에 만들어 둔다 — 첫 플레이가 동시에 들어와도 insert 경합이 없다.
+        val stats = game.id?.let { statsRepository.save(GameStats.init(it)) }
+        return GameDetailDto.of(game, stats)
     }
 
     fun updateMetadata(

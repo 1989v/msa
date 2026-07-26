@@ -10,6 +10,7 @@ import {
   type GameSummary,
 } from '../../api/gameApi';
 import { fetchGraphData } from '../../api/searchApi';
+import { isLoggedIn } from '../../auth/auth';
 import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
@@ -161,6 +162,7 @@ export default function GameDetailPage() {
 
       <section className="game-rating-section" aria-label="평점 남기기">
         <h2 className="games-collection-title">이 게임 어땠나요?</h2>
+        {!isLoggedIn() && <p className="games-status">평점 등록은 로그인이 필요합니다.</p>}
         <div className="game-rating-scores">
           {SCORES.map((score) => (
             <button
