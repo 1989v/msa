@@ -5,11 +5,15 @@ import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
+import org.springframework.boot.jpa.EntityManagerFactoryBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
+import org.springframework.orm.jpa.JpaTransactionManager
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean
 import org.springframework.orm.jpa.SharedEntityManagerCreator
+import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.sql.DataSource
 
@@ -50,8 +54,32 @@ class DataSourceConfig {
     fun dataSource(@Qualifier("routingDataSource") routingDataSource: DataSource): DataSource =
         LazyConnectionDataSourceProxy(routingDataSource)
 
-    // ADR-0059: game EMF 추가로 EntityManager 타입 주입이 모호해져 기본 EMF 를 명시 바인딩
+    /**
+     * ADR-0059 — game:feature 가 자체 `LocalContainerEntityManagerFactoryBean` 을 등록하면
+     * Boot 의 EMF 자동 구성이 back-off 하므로(=`entityManagerFactory` 빈 소멸), code-dictionary
+     * 도메인의 EMF/TM 도 명시 정의한다. 이름을 기본값 그대로 두어 기존 `@Transactional`·
+     * Spring Data 기본 참조가 그대로 동작한다.
+     */
     @Bean
+    @Primary
+    fun entityManagerFactory(
+        builder: EntityManagerFactoryBuilder,
+        @Qualifier("dataSource") dataSource: DataSource,
+    ): LocalContainerEntityManagerFactoryBean =
+        builder.dataSource(dataSource)
+            .packages("com.kgd.codedictionary")
+            .persistenceUnit("code-dictionary")
+            .build()
+
+    @Bean
+    @Primary
+    fun transactionManager(
+        @Qualifier("entityManagerFactory") emf: EntityManagerFactory,
+    ): PlatformTransactionManager = JpaTransactionManager(emf)
+
+    // game 도 자체 QueryFactory 를 두므로(@Qualifier("gameJpaQueryFactory")) 호스트 쪽을 기본으로 지정
+    @Bean
+    @Primary
     fun jpaQueryFactory(
         @Qualifier("entityManagerFactory") emf: EntityManagerFactory,
     ): JPAQueryFactory = JPAQueryFactory(SharedEntityManagerCreator.createSharedEntityManager(emf))

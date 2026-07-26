@@ -36,6 +36,10 @@ dependencies {
     implementation(libs.kotlin.logging)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
+    // ADR-0059: code-dictionary + game 폴드 컨텍스트 로드 검증 (빈 충돌 / 이중 Flyway)
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.mysql)
+    testImplementation(project(":game:feature"))
 }
 
 tasks.bootJar {
