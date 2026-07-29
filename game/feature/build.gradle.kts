@@ -9,10 +9,12 @@ plugins {
 
 dependencies {
     implementation(project(":game:domain"))
+    implementation(project(":game:sim")) // #23 흡수: GameModule/SnakeGame — Tier B 검증
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
+    implementation(libs.spring.boot.starter.data.redis) // #23 흡수: 리더보드 ZSET/세션
     implementation(libs.querydsl.jpa) { artifact { classifier = "jakarta" } }
     kapt(libs.querydsl.apt) { artifact { classifier = "jakarta" } }
     implementation(libs.spring.kafka)

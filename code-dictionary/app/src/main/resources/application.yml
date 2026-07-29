@@ -41,6 +41,12 @@ spring:
           minimum-idle: 1
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  # #23 아케이드 흡수 — 리더보드 ZSET / 세션 / 리플레이 저장소 (k3s-lite 는 오버레이가 standalone 주입)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: none
@@ -71,6 +77,9 @@ game:
     topics:
       session-started: game.session.started
       session-ended: game.session.ended
+  # #23 아케이드 흡수 — 세션 토큰 HMAC. prod 는 Secret 주입 필수(기본값은 로컬 전용).
+  security:
+    hmac-secret: ${GAME_HMAC_SECRET:dev-secret-change-me-in-prod}
 
 management:
   endpoints:

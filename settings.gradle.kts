@@ -18,6 +18,8 @@ include(
     "auth:app",
     "code-dictionary:domain",
     "code-dictionary:app",
+    "game:sim",     // #23 흡수: KMP 결정적 sim-core (jvm: Tier B 리플레이 / js: 브라우저)
+    "game:web",     // #23 흡수: Kotlin/JS 브라우저 클라이언트 (game:sim js 코어 소비)
     "game:domain",
     "game:feature", // ADR-0059: 게임 플랫폼 라이브러리 (code-dictionary:app 이 흡수, 비-bootable)
     "inventory:domain",
