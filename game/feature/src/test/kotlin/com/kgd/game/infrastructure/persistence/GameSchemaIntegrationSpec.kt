@@ -1,6 +1,7 @@
 package com.kgd.game.infrastructure.persistence
 
 import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.infrastructure.config.GameDataSourceConfig
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameJpaRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameQueryRepository
@@ -65,11 +66,14 @@ class GameSchemaIntegrationSpec(
 
     Given("game 전용 Flyway 가 적용된 game_db") {
         When("마이그레이션이 끝나면") {
-            Then("V2 시드의 내장 게임 4종과 태그 매핑이 적재된다")
+            Then("V2 내장 게임 4종 + V3 아케이드 2종과 태그 매핑이 적재된다")
                 .config(enabledIf = { dockerAvailable }) {
-                    gameRepository.count() shouldBe 4
+                    gameRepository.count() shouldBe 6
                     gameRepository.findBySlug("concept-memory")?.tags shouldBe
                         listOf("puzzle", "memory", "education", "casual")
+                    // #23 흡수분은 정적 자산을 iframe 으로 임베드한다
+                    gameRepository.findBySlug("snake")?.entryUrl shouldBe "/games/snake/index.html"
+                    gameRepository.findBySlug("overworld-quest")?.loadType shouldBe LoadType.IFRAME
                     tagMapRepository.count().toInt() shouldBeGreaterThan 0
                 }
         }
@@ -79,7 +83,7 @@ class GameSchemaIntegrationSpec(
                 .config(enabledIf = { dockerAvailable }) {
                     GameSort.entries.forEach { sort ->
                         queryRepository.search(tag = null, sort = sort, pageable = pageable)
-                            .totalElements shouldBe 4
+                            .totalElements shouldBe 6
                     }
                 }
         }

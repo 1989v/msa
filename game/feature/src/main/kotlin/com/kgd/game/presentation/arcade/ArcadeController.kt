@@ -41,7 +41,7 @@ class ArcadeController(
         if (registry.module(req.gameId) == null) {
             return ApiResponse.error("UNKNOWN_GAME", "unknown game: ${req.gameId}")
         }
-        val started = startSession.start(req.gameId, req.daily, today())
+        val started = startSession.start(req.gameId, req.daily == true, today())
         return ApiResponse.success(
             StartSessionResponse(started.sessionId.value, started.gameId, started.seed, started.dailyDate, started.token),
         )

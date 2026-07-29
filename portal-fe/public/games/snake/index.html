@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Web Game Arcade — Snake</title>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      margin: 0; padding: 24px;
+      background: #0b0e17; color: #e8eaf0;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    h1 { font-size: 22px; margin: 0 0 2px; }
+    .sub { color: #8b93a7; margin: 0 0 20px; font-size: 13px; }
+    .row { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+    canvas { background: #0f1420; border: 1px solid #232a3b; border-radius: 8px; }
+    .side { min-width: 240px; }
+    label { display: block; font-size: 13px; color: #b6bccd; margin-bottom: 10px; }
+    input { background: #0f1420; border: 1px solid #2a3145; color: #e8eaf0; border-radius: 6px; padding: 6px 8px; width: 140px; }
+    .btns { display: flex; gap: 8px; margin-bottom: 12px; }
+    button { background: #3b82f6; color: white; border: 0; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 13px; }
+    button:hover { background: #2f6fe0; }
+    #status { font-size: 13px; color: #aeb6ca; min-height: 18px; }
+    h3 { font-size: 14px; margin: 16px 0 8px; color: #b6bccd; }
+    table { border-collapse: collapse; width: 100%; font-size: 13px; }
+    th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #1c2233; }
+    th { color: #8b93a7; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <h1>🐍 Snake — Web Game Arcade</h1>
+  <p class="sub">결정적 KMP 코어 + 서버 리플레이(Tier B) 검증 데모 · 아이디어 #23</p>
+  <div class="row">
+    <canvas id="board" width="360" height="360"></canvas>
+    <div class="side">
+      <label>닉네임<br/><input id="nick" placeholder="anon" maxlength="16"/></label>
+      <div class="btns">
+        <button id="startFree">자유 플레이</button>
+        <button id="startDaily">데일리 챌린지</button>
+      </div>
+      <p id="status"></p>
+      <h3>리더보드 (전체)</h3>
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>

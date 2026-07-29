@@ -53,13 +53,15 @@ class CodeDictionaryContextLoadSpec(
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
             }
 
-        Then("game 마이그레이션은 game_db 에만 적용되어 시드 4종이 조회된다")
+        Then("game 마이그레이션은 game_db 에만 적용되어 시드 6종이 조회된다")
             .config(enabledIf = { dockerAvailable }) {
                 val gameRepository = ctx.getBean(
                     com.kgd.game.infrastructure.persistence.catalog.repository.GameJpaRepository::class.java
                 )
-                gameRepository.count() shouldBe 4
+                // V2 내장 퀴즈 4종 + V3 아케이드 2종(#23 흡수)
+                gameRepository.count() shouldBe 6
                 gameRepository.findBySlug("concept-cascade")?.title shouldBe "Concept Cascade"
+                gameRepository.findBySlug("snake")?.title shouldBe "Snake Arcade"
             }
     }
 }) {

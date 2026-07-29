@@ -7,8 +7,10 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 
 | Gradle path | 역할 |
 |---|---|
-| `:game:domain` | Pure Kotlin 도메인 (catalog, play) |
-| `:game:feature` | 라이브러리(비-bootable) — 컨트롤러·서비스·JPA·Kafka + 전용 datasource(`game_db`)/EMF/TM/Flyway |
+| `:game:sim` | **KMP 결정적 sim-core** (jvm: Tier B 리플레이 검증 / js: 브라우저 플레이). 루트 `subprojects` 의 kotlin.jvm 일괄 적용에서 카브아웃 (#23 흡수) |
+| `:game:domain` | Pure Kotlin 도메인 (catalog, play, **arcade**) |
+| `:game:feature` | 라이브러리(비-bootable) — 컨트롤러·서비스·JPA·Kafka + 전용 datasource(`game_db`)/EMF/TM/Flyway + **arcade Redis 저장소** |
+| `:game:web` | Kotlin/JS 브라우저 클라이언트(Snake). 산출물은 portal-fe `public/games/snake/` 로 복사해 서빙 (#23 흡수) |
 
 ## Commands
 
@@ -38,6 +40,7 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | catalog | Game(상태머신 DRAFT→REVIEW→BETA→PUBLISHED⇄SUSPENDED, `isMonetizable`=PUBLISHED+SDK), GameTag(+map), GameStats(1:1 프로젝션), GameCollection(MANUAL/TRENDING/NEW/TAG_BASED) |
 | play | GamePlaySession(게스트 허용), GameRating(1인 1표, 1~10) |
 | ads | **후속 페이즈** — AdPlacement/AdPolicy/RewardGrant 설계 완료 (spec §4.3), 미구현 |
+| arcade | #23 흡수분 — 세션 토큰(HMAC) · 리플레이 제출 · **Tier A/B 검증**(서버가 결정적 sim 을 재실행해 점수 위조 거부) · Redis 리더보드/데일리 챌린지. API 는 `/api/v1/games/arcade/**` |
 
 ## API Endpoints (요약)
 
@@ -49,6 +52,7 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | `POST /api/v1/games/{slug}/sessions`, `PATCH .../{sessionKey}` | 세션 시작(게스트 OK)/종료 |
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
 | `POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN) |
+| `/api/v1/games/arcade/{catalog,sessions,scores,leaderboard,daily}` | #23 아케이드 — 세션 발급/점수 제출(검증)/리더보드. `games/**` 하위라 게이트웨이 라우트 추가 없음 |
 
 게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 4개 라우트로 나뉜다 — 좁은 경로가 먼저
 선언되어야 `games/**` 에 가려지지 않는다: `game-admin`(ADMIN) → `game-rating`(USER+) →
@@ -66,3 +70,14 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 - ADR: `docs/adr/ADR-0059-game-platform.md`
 - 설계(엔티티/ads 페이즈 포함): `docs/specs/2026-07-06-game-platform-entities-design.md`
 - 시드: `game/feature/src/main/resources/gamedb/migration/V2__seed_internal_games.sql` (portal-fe 퀴즈 4종 등록)
+
+## 정적 게임 자산 (#23 흡수)
+
+캔버스 게임은 **portal-fe 정적 자산**으로 서빙한다 — 별도 nginx 파드를 만들지 않아 리소스 증가가 0이다.
+
+| slug | 자산 | 비고 |
+|---|---|---|
+| `snake` | `portal-fe/public/games/snake/` | `./gradlew :game:web:jsBrowserDistribution` 산출물(game.js/index.html) 복사 |
+| `overworld-quest` | `portal-fe/public/games/overworld-quest/index.html` | 단일 HTML(31KB, 외부 의존 0). 원본 파일명이 상표를 연상시켜 중립 명칭으로 등록 |
+
+Snake 클라이언트를 고친 뒤에는 `jsBrowserDistribution` 을 다시 돌려 산출물을 복사해야 반영된다.

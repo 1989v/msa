@@ -2,7 +2,8 @@ package com.kgd.game.presentation.arcade
 
 data class StartSessionRequest(
     val gameId: String,
-    val daily: Boolean = false,
+    // 필드 누락 시 500 대신 기본값이 적용되도록 non-primitive 로 둔다
+    val daily: Boolean? = false,
 )
 
 data class StartSessionResponse(

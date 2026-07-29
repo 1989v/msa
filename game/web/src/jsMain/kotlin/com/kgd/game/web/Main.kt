@@ -12,7 +12,7 @@ import org.w3c.dom.HTMLElement
 import org.w3c.dom.events.KeyboardEvent
 import kotlin.math.round
 
-private const val API = "/api/v1/game"
+private const val API = "/api/v1/games/arcade"
 private const val GAME_ID = "snake"
 private const val GRID = 20
 private const val CELL = 18
