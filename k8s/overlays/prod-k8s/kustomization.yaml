@@ -57,3 +57,21 @@ patches:
     target:
       kind: Ingress
       name: gateway
+
+  # DB 자격증명: 사용자명은 application.yml 기본값(= init Job 이 만드는 계정)을 그대로 쓰고,
+  # 비밀번호만 `commerce-app-db-secrets` 에서 주입한다 (평문 기본 비밀번호로 prod 기동 방지).
+  # 키 목록과 봉인 절차는 k8s/infra/prod/percona-mysql/README.md 참조.
+  - path: patches/db-password-product.yaml
+    target: { kind: Deployment, name: product }
+  - path: patches/db-password-auth.yaml
+    target: { kind: Deployment, name: auth }
+  - path: patches/db-password-chatbot.yaml
+    target: { kind: Deployment, name: chatbot }
+  - path: patches/db-password-gifticon.yaml
+    target: { kind: Deployment, name: gifticon }
+  - path: patches/db-password-experiment.yaml
+    target: { kind: Deployment, name: experiment }
+  - path: patches/db-password-code-dictionary.yaml
+    target: { kind: Deployment, name: code-dictionary }
+  - path: patches/db-password-commerce.yaml
+    target: { kind: Deployment, name: commerce }

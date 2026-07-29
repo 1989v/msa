@@ -20,8 +20,9 @@ scripts/image-import.sh --fe                            # FE 5종 docker build +
 scripts/image-import.sh --all-images                    # 위 둘을 한 방에 (jib + FE)
 
 # Production deployment (managed K8s)
-kubectl apply -k k8s/infra/prod                         # Operator 기반 인프라
-kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB + TLS
+# 선행: Operator/Helm 설치 + SealedSecret 3종 (k8s/infra/prod/sealed-secrets/README.md)
+kubectl apply -k k8s/infra/prod                         # Operator CR + DB/계정 init Job
+kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB + TLS + DB 비밀번호 주입
 ```
 
 과거 `docker compose` 기반 경로는 ADR-0019 Phase 6에서 제거됨.

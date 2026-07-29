@@ -1,7 +1,10 @@
-# One-shot Job that creates the 12 per-service databases and users
-# after the Percona cluster is Ready. The SQL is identical to
-# k8s/infra/local/mysql/configmap-init.yaml. Applied once after
-# mysql-clusters.yaml converges.
+# One-shot Job that creates the per-service databases, application users
+# and grants after the Percona cluster is Ready. The database list mirrors
+# k8s/infra/local/mysql/configmap-init.yaml; the difference is that prod
+# passwords come from the sealed `commerce-app-db-secrets` Secret instead
+# of the plaintext defaults baked into each service's application.yml.
+# Applied once after mysql-clusters.yaml converges. Re-running it is safe
+# (idempotent) and is how credential rotation is applied.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -22,13 +25,22 @@ data:
     CREATE DATABASE IF NOT EXISTS code_dictionary_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS game_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS experiment_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-    -- Users and grants: passwords come from SealedSecrets in prod,
-    -- not from this ConfigMap. The Secret entries are mounted as
-    -- env vars in the Job spec below, then substituted into the SQL
-    -- via shell before piping into mysql.
-
-    -- See README.md for the SealedSecret authoring workflow.
+  # <database>:<user>:<password env var> — 사용자명은 각 서비스 application.yml 의
+  # 기본값과 일치해야 한다(그래야 배포 측은 비밀번호만 주입하면 된다).
+  users.txt: |
+    product_db:product_user:PRODUCT_PASSWORD
+    order_db:order_user:ORDER_PASSWORD
+    auth_db:auth_user:AUTH_PASSWORD
+    chatbot_db:commerce_user:CHATBOT_PASSWORD
+    member_db:member_user:MEMBER_PASSWORD
+    wishlist_db:wishlist_user:WISHLIST_PASSWORD
+    gifticon_db:gifticon_user:GIFTICON_PASSWORD
+    inventory_db:inventory_user:INVENTORY_PASSWORD
+    fulfillment_db:fulfillment_user:FULFILLMENT_PASSWORD
+    warehouse_db:warehouse_user:WAREHOUSE_PASSWORD
+    code_dictionary_db:code_dictionary_user:CODE_DICTIONARY_PASSWORD
+    game_db:game_user:GAME_PASSWORD
+    experiment_db:commerce:EXPERIMENT_PASSWORD
 ---
 apiVersion: batch/v1
 kind: Job
@@ -49,6 +61,12 @@ spec:
                 secretKeyRef:
                   name: commerce-mysql-secrets
                   key: root
+          # 서비스별 애플리케이션 계정 비밀번호 (SealedSecret — README.md 참조).
+          # Secret 이 없으면 pod 는 CreateContainerConfigError 로 명시적으로 실패한다:
+          # 약한 기본 비밀번호로 조용히 기동되는 것보다 안전하다.
+          envFrom:
+            - secretRef:
+                name: commerce-app-db-secrets
           command:
             - sh
             - -c
@@ -58,7 +76,32 @@ spec:
               until mysql -h commerce-mysql-router -u root -p"$MYSQL_ROOT_PASSWORD" -e "SELECT 1" >/dev/null 2>&1; do
                 sleep 3
               done
+
               mysql -h commerce-mysql-router -u root -p"$MYSQL_ROOT_PASSWORD" < /init/init.sql
+              echo "databases created"
+
+              # 사용자/권한은 비밀번호가 Secret 에서 와야 하므로 셸에서 조립한다.
+              # CREATE + ALTER 조합이라 재실행 시 비밀번호 로테이션으로 동작한다.
+              : > /tmp/users.sql
+              while IFS=: read -r db user pw_var; do
+                [ -n "$db" ] || continue
+                pw=$(printenv "$pw_var" || true)
+                if [ -z "$pw" ]; then
+                  echo "ERROR: $pw_var is empty — seal it into commerce-app-db-secrets (see README.md)" >&2
+                  exit 1
+                fi
+                # SQL 문자열 리터럴 이스케이프 (작은따옴표 이중화)
+                esc=$(printf '%s' "$pw" | sed "s/'/''/g")
+                cat >> /tmp/users.sql <<SQL
+              CREATE USER IF NOT EXISTS '$user'@'%' IDENTIFIED BY '$esc';
+              ALTER USER '$user'@'%' IDENTIFIED BY '$esc';
+              GRANT ALL PRIVILEGES ON \`$db\`.* TO '$user'@'%';
+              SQL
+              done < /init/users.txt
+              echo "FLUSH PRIVILEGES;" >> /tmp/users.sql
+
+              mysql -h commerce-mysql-router -u root -p"$MYSQL_ROOT_PASSWORD" < /tmp/users.sql
+              echo "users and grants applied"
           volumeMounts:
             - name: sql
               mountPath: /init

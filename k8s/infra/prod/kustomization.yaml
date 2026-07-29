@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Operator 기반 프로덕션 인프라 일괄 apply (ADR-0019 Phase 4).
+#
+#   kubectl apply -k k8s/infra/prod
+#
+# 전제: Operator / Helm 차트는 각 하위 README 로 **먼저** 설치한다
+# (Percona / Strimzi / OpenSearch / Altinity / kube-prometheus-stack /
+# cert-manager / sealed-secrets). 여기 모인 것은 그 Operator 들이 조정할 CR 과
+# 부속 리소스뿐이다 — CRD 가 없으면 apply 는 명시적으로 실패한다.
+#
+# 의도적으로 제외:
+#   - */values.yaml            → Helm 차트 입력값 (kubectl 대상 아님)
+#   - sealed-secrets/*         → 클러스터별로 봉인한 SealedSecret 을 개별 apply
+#   - monitoring/dashboards    → monitoring 네임스페이스, 별도 kustomization
+#                                (kubectl apply -k k8s/infra/prod/monitoring/dashboards)
+#
+# 네임스페이스는 각 매니페스트가 자체 선언한다 (ClusterIssuer 는 클러스터 스코프,
+# PrometheusRule/ServiceMonitor 는 monitoring). 여기서 일괄 지정하지 않는다.
+
+resources:
+  - percona-mysql/mysql-clusters.yaml
+  - percona-mysql/init-databases-job.yaml
+  - strimzi/kafka-cluster.yaml
+  - strimzi/kafka-topics.yaml
+  - opensearch/opensearch-cluster.yaml
+  - clickhouse/clickhouse-installation.yaml
+  - cert-manager/cluster-issuer.yaml
+  - monitoring/servicemonitor-apps.yaml
+  - monitoring/backup-alerts.yaml
+  - monitoring/idempotent-alerts.yaml
+  - monitoring/order-cancellation-alerts.yaml
+  - backup
