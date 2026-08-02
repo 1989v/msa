@@ -199,9 +199,21 @@ class GatewayRouteConfig(
                     }
                     .uri(CODE_DICTIONARY_URI)
             }
-            // 플레이 세션은 게스트 허용 — 로그인 사용자만 X-User-Id 로 식별
+            // 클라우드 세이브 — 인증 필수 (X-Device-Id 리스는 서비스에서 판정)
+            .route("game-save") { r ->
+                r.path("/api/v1/games/*/save")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 플레이 세션·로그라이크 런은 게스트 허용 — 로그인 사용자만 X-User-Id 로 식별
             .route("game-session") { r ->
-                r.path("/api/v1/games/*/sessions", "/api/v1/games/*/sessions/**")
+                r.path(
+                    "/api/v1/games/*/sessions", "/api/v1/games/*/sessions/**",
+                    "/api/v1/games/*/runs", "/api/v1/games/*/runs/**",
+                )
                     .filters { f ->
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
