@@ -29,7 +29,12 @@ interface GameTagMapJpaRepository : JpaRepository<GameTagMapJpaEntity, Long> {
     fun deleteAllByGameId(gameId: Long)
 }
 
-interface GameStatsJpaRepository : JpaRepository<GameStatsJpaEntity, Long>
+interface GameStatsJpaRepository : JpaRepository<GameStatsJpaEntity, Long> {
+    /** 주간 트렌딩 리셋 — 스케줄러 전용 벌크 업데이트 */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update GameStatsJpaEntity s set s.weeklyPlayCount = 0 where s.weeklyPlayCount > 0")
+    fun resetAllWeekly(): Int
+}
 
 interface GameCollectionJpaRepository : JpaRepository<GameCollectionJpaEntity, Long> {
     fun findBySlug(slug: String): GameCollectionJpaEntity?
