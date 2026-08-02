@@ -66,9 +66,9 @@ class GameSchemaIntegrationSpec(
 
     Given("game 전용 Flyway 가 적용된 game_db") {
         When("마이그레이션이 끝나면") {
-            Then("V2 내장 게임 4종 + V3 아케이드 2종과 태그 매핑이 적재된다")
+            Then("V2 내장 4종 + V3 아케이드 2종 + V7 신규 2종과 태그 매핑이 적재된다")
                 .config(enabledIf = { dockerAvailable }) {
-                    gameRepository.count() shouldBe 6
+                    gameRepository.count() shouldBe 8
                     gameRepository.findBySlug("concept-memory")?.tags shouldBe
                         listOf("puzzle", "memory", "education", "casual")
                     // #23 흡수분은 정적 자산을 iframe 으로 임베드한다
@@ -83,7 +83,7 @@ class GameSchemaIntegrationSpec(
                 .config(enabledIf = { dockerAvailable }) {
                     GameSort.entries.forEach { sort ->
                         queryRepository.search(tag = null, genre = null, sort = sort, pageable = pageable)
-                            .totalElements shouldBe 6
+                            .totalElements shouldBe 8
                     }
                 }
         }

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Depth Delver</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c1424; color:#eee; font-family:'Courier New',monospace; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; user-select:none; }
+  #wrap { position:relative; border:4px solid #1a2238; border-radius:8px; overflow:hidden; box-shadow:0 0 40px rgba(0,0,0,.6); }
+  canvas { display:block; background:#0c1424; image-rendering:pixelated; }
+  #hud { position:absolute; top:8px; left:10px; display:flex; gap:14px; font-size:13px; font-weight:bold; pointer-events:none; text-shadow:1px 1px 0 #000; }
+  #hud span { background:rgba(0,0,0,.45); padding:2px 10px; border-radius:10px; }
+  .panel { position:absolute; inset:0; background:rgba(10,14,28,.94); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; z-index:10; padding:20px; }
+  .panel h1 { color:#ffd54a; font-size:24px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:13px; color:#ccc; line-height:1.7; max-width:460px; }
+  .panel button { background:#ffd54a; color:#0c1424; border:0; padding:10px 24px; font-weight:bold; font-size:14px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  .panel button:disabled { opacity:.4; cursor:default; }
+  .shopRow { display:flex; gap:10px; align-items:center; font-size:13px; }
+  .shopRow button { padding:6px 14px; font-size:12px; }
+  #saveStatus { font-size:11px; color:#8a93a8; }
+  #info { margin-top:10px; font-size:11px; color:#667; text-align:center; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="800" height="480"></canvas>
+  <div id="hud" hidden>
+    <span id="hpTxt"></span><span id="atkTxt"></span><span id="goldTxt"></span><span id="floorTxt"></span>
+  </div>
+  <div class="panel" id="menu">
+    <h1>⛏ Depth Delver</h1>
+    <p>시드는 서버가 발급한다 — 같은 런은 언제나 같은 던전. 죽으면 런은 소모되지만,
+       모은 골드로 <b>영구 강화</b>를 사서 다음 런에 더 강해진다.</p>
+    <div class="shopRow"><span id="hpLvTxt"></span><button id="buyHp">HP 강화</button></div>
+    <div class="shopRow"><span id="atkLvTxt"></span><button id="buyAtk">ATK 강화</button></div>
+    <div class="shopRow"><span id="metaGoldTxt"></span></div>
+    <div id="saveStatus"></div>
+    <button id="startBtn">▶ 런 시작</button>
+  </div>
+  <div class="panel" id="endPanel" hidden>
+    <h1 id="endTitle"></h1>
+    <p id="endDesc"></p>
+    <button id="backBtn">메타 화면으로</button>
+  </div>
+</div>
+<div id="info">이동: 방향키/WASD · 적과 부딪히면 공격 · &gt; 계단으로 다음 층 · 6층 클리어 시 승리</div>
+<script>
+'use strict';
+const API = '/api/v1/games/depth-delver';
+const W = 40, H = 24, T = 20;
+const cv = document.getElementById('cv'), cx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+
+/* ── 결정적 RNG (mulberry32) — 서버 발급 시드만 사용 ── */
+function rngOf(seed) {
+  let s = seed >>> 0;
+  return function() {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = s;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const ri = (rng, n) => Math.floor(rng() * n);
+
+/* ── 플랫폼 연동: 인증(portal localStorage 공유) + 기기 식별 ── */
+const token = () => localStorage.getItem('portal_access_token');
+function deviceId() {
+  let id = localStorage.getItem('kgd_device_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('kgd_device_id', id); }
+  return id;
+}
+async function api(path, opt = {}) {
+  const headers = { 'Content-Type': 'application/json', 'X-Device-Id': deviceId(), ...(opt.headers || {}) };
+  const t = token();
+  if (t) headers['Authorization'] = 'Bearer ' + t;
+  const res = await fetch(API + path, { ...opt, headers });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.success === false) throw new Error(body?.error?.code || res.status);
+  return body.data;
+}
+
+/* ── 메타 (영구 강화) — 로그인 시 클라우드 세이브, 게스트는 세션 한정 ── */
+let meta = { gold: 0, hpLv: 0, atkLv: 0 };
+let saveVersion = 0, cloud = false;
+const hpCost = () => 50 * Math.pow(2, meta.hpLv);
+const atkCost = () => 60 * Math.pow(2, meta.atkLv);
+
+async function loadMeta() {
+  if (!token()) { $('saveStatus').textContent = '게스트 모드 — 강화는 이 탭에서만 유지됩니다 (로그인 시 클라우드 세이브)'; return; }
+  try {
+    const s = await api('/save');
+    if (s.data) meta = { gold: 0, hpLv: 0, atkLv: 0, ...s.data };
+    saveVersion = s.version;
+    cloud = true;
+    $('saveStatus').textContent = '☁ 클라우드 세이브 연결됨 (v' + saveVersion + ')';
+  } catch (e) {
+    $('saveStatus').textContent = e.message === 'FORBIDDEN'
+      ? '⚠ 다른 기기에서 세이브 사용 중 — 잠시 후 새로고침 하세요'
+      : '세이브 로드 실패: ' + e.message;
+  }
+}
+async function persistMeta() {
+  if (!cloud) return;
+  try {
+    const s = await api('/save', { method: 'PUT', body: JSON.stringify({ data: meta, version: saveVersion }) });
+    saveVersion = s.version;
+    $('saveStatus').textContent = '☁ 저장됨 (v' + saveVersion + ')';
+  } catch (e) {
+    if (e.message === 'INVALID_INPUT') { await loadMeta(); $('saveStatus').textContent += ' — 버전 충돌, 재동기화됨'; }
+    else $('saveStatus').textContent = '저장 실패: ' + e.message;
+  }
+}
+
+/* ── 던전 생성 — 룸 배치 + 순차 통로 (시드 결정적) ── */
+function genFloor(seed, floor) {
+  const rng = rngOf((seed ^ Math.imul(floor, 2654435761)) >>> 0);
+  const map = Array.from({ length: H }, () => Array(W).fill(1)); // 1=wall
+  const rooms = [];
+  for (let i = 0; i < 60 && rooms.length < 7 + Math.min(floor, 4); i++) {
+    const w = 4 + ri(rng, 6), h = 3 + ri(rng, 4);
+    const x = 1 + ri(rng, W - w - 2), y = 1 + ri(rng, H - h - 2);
+    if (rooms.some(r => x < r.x + r.w + 1 && r.x < x + w + 1 && y < r.y + r.h + 1 && r.y < y + h + 1)) continue;
+    rooms.push({ x, y, w, h });
+    for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) map[yy][xx] = 0;
+  }
+  const cxOf = r => ({ x: r.x + (r.w >> 1), y: r.y + (r.h >> 1) });
+  for (let i = 1; i < rooms.length; i++) {
+    let a = cxOf(rooms[i - 1]), b = cxOf(rooms[i]);
+    for (let x = Math.min(a.x, b.x); x <= Math.max(a.x, b.x); x++) map[a.y][x] = 0;
+    for (let y = Math.min(a.y, b.y); y <= Math.max(a.y, b.y); y++) map[y][b.x] = 0;
+  }
+  const spots = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (map[y][x] === 0) spots.push({ x, y });
+  const take = () => spots.splice(ri(rng, spots.length), 1)[0];
+  const start = cxOf(rooms[0]);
+  const stairs = cxOf(rooms[rooms.length - 1]);
+  const enemies = [];
+  for (let i = 0; i < 3 + floor * 2; i++) {
+    const p = take();
+    if (Math.abs(p.x - start.x) + Math.abs(p.y - start.y) < 6) continue;
+    enemies.push({ x: p.x, y: p.y, hp: 2 + floor, atk: 1 + (floor >> 1) });
+  }
+  const golds = Array.from({ length: 4 + floor }, () => ({ ...take(), amt: 5 + ri(rng, 10) + floor * 2 }));
+  const potions = Array.from({ length: 2 }, () => take());
+  return { map, start, stairs, enemies, golds, potions };
+}
+
+/* ── 런 상태 ── */
+let run = null; // {runKey, seed}
+let G = null;   // 현재 층 상태
+
+function newFloor(floor) {
+  const f = genFloor(run.seed, floor);
+  const maxHp = 20 + meta.hpLv * 20;
+  G = { floor, ...f, player: { ...f.start, hp: maxHp, maxHp, atk: 3 + meta.atkLv, gold: 0 } };
+}
+
+async function startRun() {
+  $('startBtn').disabled = true;
+  try {
+    run = await api('/runs', { method: 'POST' });
+    G = null;
+    newFloor(1);
+    $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false;
+    draw();
+  } catch (e) { $('saveStatus').textContent = '런 시작 실패: ' + e.message; }
+  $('startBtn').disabled = false;
+}
+
+async function endRun(outcome, desc) {
+  $('hud').hidden = true;
+  $('endTitle').textContent = outcome === 'CLEAR' ? '🏆 던전 정복!' : '💀 사망…';
+  const earned = G.player.gold;
+  meta.gold += earned;
+  $('endDesc').textContent = desc + ' 획득 골드 ' + earned + ' → 금고에 적립.';
+  $('endPanel').hidden = false;
+  try { await api('/runs/' + run.runKey + '/consume', { method: 'POST', body: JSON.stringify({ outcome }) }); } catch (_) { /* 소모 실패는 무시 */ }
+  await persistMeta();
+}
+
+/* ── 턴 진행 ── */
+function tryMove(dx, dy) {
+  if (!G) return;
+  const p = G.player, nx = p.x + dx, ny = p.y + dy;
+  if (G.map[ny]?.[nx] !== 0) return;
+  const enemy = G.enemies.find(e => e.x === nx && e.y === ny);
+  if (enemy) {
+    enemy.hp -= p.atk;
+    if (enemy.hp <= 0) { G.enemies = G.enemies.filter(e => e !== enemy); p.gold += 3; }
+  } else {
+    p.x = nx; p.y = ny;
+    const gi = G.golds.findIndex(g => g.x === nx && g.y === ny);
+    if (gi >= 0) { p.gold += G.golds[gi].amt; G.golds.splice(gi, 1); }
+    const pi = G.potions.findIndex(o => o.x === nx && o.y === ny);
+    if (pi >= 0) { p.hp = Math.min(p.maxHp, p.hp + 10); G.potions.splice(pi, 1); }
+    if (nx === G.stairs.x && ny === G.stairs.y) {
+      if (G.floor >= 6) { endRun('CLEAR', '지하 6층까지 모두 정복했다!'); return; }
+      const hp = p.hp, gold = p.gold;
+      newFloor(G.floor + 1);
+      G.player.hp = Math.min(G.player.maxHp, hp + 5); G.player.gold = gold;
+      draw(); return;
+    }
+  }
+  enemyTurn();
+  if (G.player.hp <= 0) { endRun('DEATH', G.floor + '층에서 쓰러졌다.'); return; }
+  draw();
+}
+
+function enemyTurn() {
+  const p = G.player;
+  for (const e of G.enemies) {
+    const dist = Math.abs(e.x - p.x) + Math.abs(e.y - p.y);
+    if (dist === 1) { p.hp -= e.atk; continue; }
+    if (dist > 8) continue;
+    const dx = Math.sign(p.x - e.x), dy = Math.sign(p.y - e.y);
+    const cand = Math.abs(p.x - e.x) >= Math.abs(p.y - e.y) ? [[dx, 0], [0, dy]] : [[0, dy], [dx, 0]];
+    for (const [mx, my] of cand) {
+      const nx = e.x + mx, ny = e.y + my;
+      if (G.map[ny]?.[nx] === 0 && !(nx === p.x && ny === p.y) && !G.enemies.some(o => o !== e && o.x === nx && o.y === ny)) {
+        e.x = nx; e.y = ny; break;
+      }
+    }
+  }
+}
+
+/* ── 렌더 ── */
+function draw() {
+  cx.fillStyle = '#0c1424'; cx.fillRect(0, 0, cv.width, cv.height);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    cx.fillStyle = G.map[y][x] === 1 ? '#1a2238' : '#243049';
+    cx.fillRect(x * T, y * T, T - 1, T - 1);
+  }
+  const cell = (x, y, s) => { cx.fillText(s, x * T + T / 2, y * T + T / 2 + 1); };
+  cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.font = '14px monospace';
+  cell(G.stairs.x, G.stairs.y, '＞');
+  for (const g of G.golds) cell(g.x, g.y, '💰');
+  for (const o of G.potions) cell(o.x, o.y, '🧪');
+  for (const e of G.enemies) cell(e.x, e.y, '👾');
+  cell(G.player.x, G.player.y, '🧑‍🚀');
+  $('hpTxt').textContent = '❤ ' + G.player.hp + '/' + G.player.maxHp;
+  $('atkTxt').textContent = '⚔ ' + G.player.atk;
+  $('goldTxt').textContent = '💰 ' + G.player.gold;
+  $('floorTxt').textContent = 'B' + G.floor + 'F';
+}
+
+/* ── 메타 UI ── */
+function renderMeta() {
+  $('hpLvTxt').textContent = 'HP Lv.' + meta.hpLv + ' (+' + meta.hpLv * 20 + ') — ' + hpCost() + 'G';
+  $('atkLvTxt').textContent = 'ATK Lv.' + meta.atkLv + ' (+' + meta.atkLv + ') — ' + atkCost() + 'G';
+  $('metaGoldTxt').textContent = '보유 골드: ' + meta.gold + 'G';
+  $('buyHp').disabled = meta.gold < hpCost();
+  $('buyAtk').disabled = meta.gold < atkCost();
+}
+$('buyHp').onclick = async () => { if (meta.gold >= hpCost()) { meta.gold -= hpCost(); meta.hpLv++; renderMeta(); await persistMeta(); } };
+$('buyAtk').onclick = async () => { if (meta.gold >= atkCost()) { meta.gold -= atkCost(); meta.atkLv++; renderMeta(); await persistMeta(); } };
+$('startBtn').onclick = startRun;
+$('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false; renderMeta(); };
+
+const KEYS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
+addEventListener('keydown', ev => {
+  if (!$('menu').hidden || !$('endPanel').hidden) return;
+  const d = KEYS[ev.key]; if (d) { ev.preventDefault(); tryMove(d[0], d[1]); }
+});
+
+loadMeta().then(renderMeta);
+renderMeta();
+</script>
+</body>
+</html>

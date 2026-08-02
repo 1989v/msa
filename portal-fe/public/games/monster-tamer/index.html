@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Monster Tamer</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#0c1424; color:#eee; font-family:'Courier New',monospace; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; user-select:none; }
+  #wrap { position:relative; border:4px solid #1a2238; border-radius:8px; overflow:hidden; box-shadow:0 0 40px rgba(0,0,0,.6); width:800px; }
+  canvas { display:block; background:#2e5d33; image-rendering:pixelated; }
+  #hud { position:absolute; top:8px; left:10px; display:flex; gap:12px; font-size:12px; font-weight:bold; pointer-events:none; text-shadow:1px 1px 0 #000; }
+  #hud span { background:rgba(0,0,0,.5); padding:2px 10px; border-radius:10px; }
+  .panel { position:absolute; inset:0; background:rgba(10,14,28,.94); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; z-index:10; padding:20px; }
+  .panel h1 { color:#ffd54a; font-size:24px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:13px; color:#ccc; line-height:1.7; max-width:480px; }
+  button { background:#ffd54a; color:#0c1424; border:0; padding:9px 20px; font-weight:bold; font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button:disabled { opacity:.4; cursor:default; }
+  .starters { display:flex; gap:12px; }
+  .starters button { display:flex; flex-direction:column; gap:4px; padding:12px 18px; }
+  #battle { position:absolute; inset:0; background:linear-gradient(#28406b,#182643); display:none; flex-direction:column; z-index:5; }
+  #battle.on { display:flex; }
+  .bRow { flex:1; display:flex; align-items:center; justify-content:space-around; }
+  .mon { text-align:center; }
+  .mon .sprite { font-size:56px; filter:drop-shadow(2px 3px 2px rgba(0,0,0,.5)); }
+  .hpBar { width:170px; height:10px; background:#0c1424; border-radius:5px; overflow:hidden; margin:6px auto 2px; border:1px solid #000; }
+  .hpBar i { display:block; height:100%; background:#22c55e; transition:width .25s; }
+  .mon .label { font-size:12px; font-weight:bold; text-shadow:1px 1px 0 #000; }
+  #bLog { min-height:38px; font-size:12px; color:#ffd54a; text-align:center; padding:4px 12px; text-shadow:1px 1px 0 #000; }
+  #bBtns { display:flex; gap:8px; justify-content:center; padding:0 12px 14px; flex-wrap:wrap; }
+  #saveStatus { font-size:11px; color:#8a93a8; }
+  #info { margin-top:10px; font-size:11px; color:#667; text-align:center; line-height:1.6; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="800" height="440"></canvas>
+  <div id="hud" hidden><span id="partyTxt"></span><span id="dexTxt"></span><span id="ballTxt"></span></div>
+  <div id="battle">
+    <div class="bRow">
+      <div class="mon"><div class="sprite" id="mySprite"></div><div class="hpBar"><i id="myHp"></i></div><div class="label" id="myLabel"></div></div>
+      <div class="mon"><div class="sprite" id="foeSprite"></div><div class="hpBar"><i id="foeHp"></i></div><div class="label" id="foeLabel"></div></div>
+    </div>
+    <div id="bLog"></div>
+    <div id="bBtns"></div>
+  </div>
+  <div class="panel" id="menu">
+    <h1>🐾 Monster Tamer</h1>
+    <p>풀숲을 걸으면 야생 몬스터가 나타난다. 배틀은 <b>서버 sim 코어와 같은 공식</b>(타입 상성 ×2/×0.5,
+       STAB ×1.5)으로 계산된다. 약하게 만든 뒤 볼을 던져 포획하고 도감을 채우자.</p>
+    <p id="starterHint">스타터를 선택하세요:</p>
+    <div class="starters" id="starterBtns"></div>
+    <div id="saveStatus"></div>
+  </div>
+</div>
+<div id="info">이동: 방향키/WASD · 풀숲(🌿)에서 조우 · 포획볼은 배틀 승리마다 +1</div>
+<script>
+'use strict';
+const API = '/api/v1/games/monster-tamer';
+const W = 25, H = 13, T = 32;
+const cv = document.getElementById('cv'), cx = cv.getContext('2d');
+const $ = id => document.getElementById(id);
+
+/* ── 도감 데이터 — game:sim SampleDex 와 동일 공식/오리지널 크리처 ── */
+const CHART = { // 공격타입 → { 방어타입: 배율% }
+  FLAME: { LEAF: 200, AQUA: 50, STONE: 50 }, AQUA: { FLAME: 200, STONE: 200, LEAF: 50 },
+  LEAF: { AQUA: 200, STONE: 200, FLAME: 50 }, SPARK: { AQUA: 200, LEAF: 50, STONE: 50 },
+  STONE: { FLAME: 200, SPARK: 200, AQUA: 50, LEAF: 50 }, NORMAL: {},
+};
+const mult = (atk, def) => (CHART[atk] && CHART[atk][def]) || 100;
+const TACKLE = { name: '몸통박치기', type: 'NORMAL', power: 40, acc: 100 };
+const DEX = {
+  flarepup: { name: '플레어펍', emoji: '🦊', type: 'FLAME', hp: 39, atk: 52, def: 43, spd: 65, moves: [{ name: '불꽃깨물기', type: 'FLAME', power: 55, acc: 95 }, TACKLE] },
+  aquafin:  { name: '아쿠아핀', emoji: '🐟', type: 'AQUA',  hp: 44, atk: 48, def: 65, spd: 43, moves: [{ name: '거품제트', type: 'AQUA', power: 55, acc: 95 }, TACKLE] },
+  leafling: { name: '리플링',   emoji: '🦎', type: 'LEAF',  hp: 45, atk: 49, def: 49, spd: 45, moves: [{ name: '덩굴채찍', type: 'LEAF', power: 55, acc: 95 }, TACKLE] },
+  sparklit: { name: '스파클릿', emoji: '🐭', type: 'SPARK', hp: 35, atk: 55, def: 40, spd: 90, moves: [{ name: '스파크', type: 'SPARK', power: 50, acc: 100 }, TACKLE] },
+  pebblun:  { name: '페블런',   emoji: '🐢', type: 'STONE', hp: 50, atk: 45, def: 80, spd: 25, moves: [{ name: '돌던지기', type: 'STONE', power: 50, acc: 90 }, TACKLE] },
+  moppit:   { name: '몹핏',     emoji: '🐹', type: 'NORMAL', hp: 48, atk: 45, def: 45, spd: 50, moves: [{ name: '박치기', type: 'NORMAL', power: 55, acc: 95 }, TACKLE] },
+};
+const WILD = ['sparklit', 'pebblun', 'moppit', 'flarepup', 'aquafin', 'leafling'];
+const statOf = (base, lv) => ({ maxHp: Math.floor(base.hp * lv / 50) + lv + 10, atk: Math.floor(base.atk * lv / 50) + 5, def: Math.floor(base.def * lv / 50) + 5, spd: Math.floor(base.spd * lv / 50) + 5 });
+
+/* ── 플랫폼 연동 (세이브: 로그인 시 클라우드 / 게스트 localStorage) ── */
+const token = () => localStorage.getItem('portal_access_token');
+function deviceId() {
+  let id = localStorage.getItem('kgd_device_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('kgd_device_id', id); }
+  return id;
+}
+async function api(path, opt = {}) {
+  const headers = { 'Content-Type': 'application/json', 'X-Device-Id': deviceId(), ...(opt.headers || {}) };
+  const t = token();
+  if (t) headers['Authorization'] = 'Bearer ' + t;
+  const res = await fetch(API + path, { ...opt, headers });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.success === false) throw new Error(body?.error?.code || res.status);
+  return body.data;
+}
+let saveVersion = 0, cloud = false;
+const LOCAL_KEY = 'monster_tamer_save';
+async function loadSave() {
+  if (token()) {
+    try {
+      const s = await api('/save');
+      cloud = true; saveVersion = s.version;
+      $('saveStatus').textContent = '☁ 클라우드 세이브 연결됨 (v' + saveVersion + ')';
+      return s.data;
+    } catch (e) {
+      $('saveStatus').textContent = e.message === 'FORBIDDEN' ? '⚠ 다른 기기에서 세이브 사용 중' : '세이브 로드 실패: ' + e.message;
+      return null;
+    }
+  }
+  $('saveStatus').textContent = '게스트 모드 — 이 브라우저에만 저장됩니다 (로그인 시 클라우드 세이브)';
+  try { return JSON.parse(localStorage.getItem(LOCAL_KEY)); } catch (_) { return null; }
+}
+async function persist() {
+  const data = { party: S.party, dex: [...S.dex], balls: S.balls, pos: { x: S.x, y: S.y } };
+  if (!cloud) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); return; }
+  try {
+    const s = await api('/save', { method: 'PUT', body: JSON.stringify({ data, version: saveVersion }) });
+    saveVersion = s.version;
+  } catch (e) {
+    if (e.message === 'INVALID_INPUT') { const re = await api('/save'); saveVersion = re.version; }
+  }
+}
+
+/* ── 오버월드 (고정 레이아웃 + 풀숲) ── */
+const rand = () => Math.random();
+const map = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => {
+  if (x === 0 || y === 0 || x === W - 1 || y === H - 1) return 2;             // 나무 경계
+  if ((x % 7 === 3 && y % 5 !== 2) || (y % 6 === 4 && x % 9 === 6)) return 2; // 나무 군락
+  if ((x > 3 && x < 10 && y > 2 && y < 6) || (x > 14 && x < 22 && y > 6 && y < 11) || (x > 5 && x < 12 && y > 8 && y < 12)) return 1; // 풀숲
+  return 0;
+}));
+const S = { x: 2, y: 2, party: [], dex: new Set(), balls: 3 };
+
+function mkMon(id, lv) {
+  const st = statOf(DEX[id], lv);
+  return { id, lv, exp: 0, hp: st.maxHp, ...st };
+}
+
+/* ── 배틀 — sim.battle 과 동일 데미지 공식 ── */
+let B = null;
+function dmg(a, d, aMon, dMon, move) {
+  if (rand() * 100 >= move.acc) return 0;
+  let v = Math.floor(Math.floor((2 * a.lv / 5 + 2) * move.power * a.atk / d.def) / 50) + 2;
+  if (move.type === DEX[aMon].type) v = Math.floor(v * 150 / 100);
+  v = Math.floor(v * mult(move.type, DEX[dMon].type) / 100);
+  v = Math.floor(v * (85 + Math.floor(rand() * 16)) / 100);
+  return Math.max(v, 1);
+}
+function startBattle() {
+  const wildId = WILD[Math.floor(rand() * WILD.length)];
+  const myLv = S.party[0].lv;
+  const foe = mkMon(wildId, Math.max(2, myLv - 2 + Math.floor(rand() * 5)));
+  B = { my: S.party[0], foe, over: false };
+  $('battle').classList.add('on');
+  log('야생의 ' + DEX[wildId].name + ' (Lv.' + foe.lv + ') 이(가) 나타났다!');
+  renderBattle();
+}
+function log(t) { $('bLog').textContent = t; }
+function renderBattle() {
+  const my = B.my, foe = B.foe;
+  $('mySprite').textContent = DEX[my.id].emoji;
+  $('foeSprite').textContent = DEX[foe.id].emoji;
+  $('myHp').style.width = Math.max(0, my.hp / my.maxHp * 100) + '%';
+  $('foeHp').style.width = Math.max(0, foe.hp / foe.maxHp * 100) + '%';
+  $('myLabel').textContent = DEX[my.id].name + ' Lv.' + my.lv + ' (' + my.hp + '/' + my.maxHp + ')';
+  $('foeLabel').textContent = DEX[foe.id].name + ' Lv.' + foe.lv;
+  const btns = $('bBtns'); btns.innerHTML = '';
+  if (B.over) { const b = document.createElement('button'); b.textContent = '계속'; b.onclick = endBattle; btns.appendChild(b); return; }
+  DEX[my.id].moves.forEach((mv, i) => {
+    const b = document.createElement('button');
+    b.textContent = mv.name + ' (' + mv.type + ' ' + mv.power + ')';
+    b.onclick = () => turn(i);
+    btns.appendChild(b);
+  });
+  const ball = document.createElement('button');
+  ball.textContent = '🔴 포획 (' + S.balls + ')';
+  ball.disabled = S.balls <= 0;
+  ball.onclick = throwBall;
+  btns.appendChild(ball);
+  const runB = document.createElement('button'); runB.textContent = '도망'; runB.onclick = endBattle; btns.appendChild(runB);
+}
+function foeStrike() {
+  const foeMove = DEX[B.foe.id].moves[Math.floor(rand() * DEX[B.foe.id].moves.length)];
+  const v = dmg(B.foe, B.my, B.foe.id, B.my.id, foeMove);
+  B.my.hp -= v;
+  if (B.my.hp <= 0) { B.my.hp = 0; B.over = true; log('내 ' + DEX[B.my.id].name + ' 이(가) 쓰러졌다… 회복 후 재도전!'); }
+}
+function turn(moveIdx) {
+  const myMove = DEX[B.my.id].moves[moveIdx];
+  const first = B.my.spd >= B.foe.spd ? 'my' : 'foe';
+  const acts = first === 'my' ? ['my', 'foe'] : ['foe', 'my'];
+  for (const side of acts) {
+    if (B.over) break;
+    if (side === 'my') {
+      const v = dmg(B.my, B.foe, B.my.id, B.foe.id, myMove);
+      B.foe.hp -= v;
+      log(v > 0 ? DEX[B.my.id].name + '의 ' + myMove.name + '! ' + v + ' 데미지' + (mult(myMove.type, DEX[B.foe.id].type) > 100 ? ' — 효과가 굉장했다!' : '') : '공격이 빗나갔다!');
+      if (B.foe.hp <= 0) { B.foe.hp = 0; B.over = true; winBattle(); }
+    } else foeStrike();
+  }
+  renderBattle();
+}
+function winBattle() {
+  const gained = 12 + B.foe.lv * 4;
+  B.my.exp += gained; S.balls += 1;
+  let msg = '승리! EXP +' + gained + ', 볼 +1.';
+  while (B.my.exp >= B.my.lv * 20) {
+    B.my.exp -= B.my.lv * 20; B.my.lv += 1;
+    const st = statOf(DEX[B.my.id], B.my.lv);
+    const gain = st.maxHp - B.my.maxHp;
+    Object.assign(B.my, st); B.my.hp = Math.min(st.maxHp, B.my.hp + gain);
+    msg += ' 레벨 업 → Lv.' + B.my.lv + '!';
+  }
+  log(msg);
+}
+function throwBall() {
+  S.balls -= 1;
+  const rate = (1 - B.foe.hp / B.foe.maxHp) * 0.7 + 0.15;
+  if (rand() < rate) {
+    S.dex.add(B.foe.id);
+    if (S.party.length < 3) { S.party.push(B.foe); log(DEX[B.foe.id].name + ' 을(를) 잡았다! 파티에 합류.'); }
+    else log(DEX[B.foe.id].name + ' 을(를) 잡았다! 도감에 기록됨.');
+    B.over = true;
+  } else { log('앗, 빠져나왔다!'); foeStrike(); }
+  renderBattle();
+}
+function endBattle() {
+  $('battle').classList.remove('on');
+  B = null;
+  S.party.forEach(m => { m.hp = Math.max(m.hp, Math.floor(m.maxHp * 0.3)); }); // 자연 회복 최소선
+  hud(); draw(); persist();
+}
+
+/* ── 오버월드 렌더/이동 ── */
+function draw() {
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    cx.fillStyle = ['#3f7a45', '#2e5d33', '#1d3a24'][map[y][x]];
+    cx.fillRect(x * T, y * T, T, T);
+    if (map[y][x] === 1) { cx.font = '18px monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText('🌿', x * T + T / 2, y * T + T / 2); }
+    if (map[y][x] === 2) { cx.font = '22px monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText('🌲', x * T + T / 2, y * T + T / 2); }
+  }
+  cx.font = '22px monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+  cx.fillText('🧑‍🌾', S.x * T + T / 2, S.y * T + T / 2);
+}
+function hud() {
+  $('partyTxt').textContent = S.party.map(m => DEX[m.id].emoji + 'Lv' + m.lv).join(' ') || '파티 없음';
+  $('dexTxt').textContent = '📖 ' + S.dex.size + '/' + Object.keys(DEX).length;
+  $('ballTxt').textContent = '🔴 ' + S.balls;
+}
+function move(dx, dy) {
+  const nx = S.x + dx, ny = S.y + dy;
+  if (map[ny]?.[nx] === undefined || map[ny][nx] === 2) return;
+  S.x = nx; S.y = ny; draw();
+  if (map[ny][nx] === 1 && rand() < 0.12 && S.party.some(m => m.hp > 0)) {
+    if (S.party[0].hp <= 0) S.party.push(S.party.shift()); // 기절 몬스터는 후열로
+    startBattle();
+  }
+}
+const KEYS = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
+addEventListener('keydown', ev => {
+  if (B || !$('menu').hidden) return;
+  const d = KEYS[ev.key]; if (d) { ev.preventDefault(); move(d[0], d[1]); }
+});
+
+/* ── 시작 ── */
+function begin(saved) {
+  if (saved && saved.party?.length) {
+    S.party = saved.party; S.dex = new Set(saved.dex || []); S.balls = saved.balls ?? 3;
+    if (saved.pos) { S.x = saved.pos.x; S.y = saved.pos.y; }
+    enterWorld();
+    return;
+  }
+  ['flarepup', 'aquafin', 'leafling'].forEach(id => {
+    const b = document.createElement('button');
+    b.innerHTML = '<span style="font-size:28px">' + DEX[id].emoji + '</span>' + DEX[id].name + '<small>' + DEX[id].type + '</small>';
+    b.onclick = () => { S.party = [mkMon(id, 5)]; S.dex = new Set([id]); enterWorld(); persist(); };
+    $('starterBtns').appendChild(b);
+  });
+}
+function enterWorld() {
+  $('menu').hidden = true; $('hud').hidden = false;
+  hud(); draw();
+}
+loadSave().then(begin);
+</script>
+</body>
+</html>
