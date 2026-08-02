@@ -147,3 +147,37 @@ export async function rateGame(slug: string, score: number): Promise<RatingResul
   const res = await api.put<ApiResponse<RatingResult>>(`/api/v1/games/${slug}/rating`, { score });
   return res.data.data;
 }
+
+export interface HouseCreative {
+  title: string | null;
+  body: string | null;
+  href: string | null;
+  emoji: string | null;
+}
+
+export interface AdPlacement {
+  placementKey: string;
+  adType: string;
+  provider: string;
+  creatives: HouseCreative[];
+}
+
+const DEVICE_ID_KEY = 'kgd_device_id';
+
+/** 세이브 리스·광고 frequency 의 subject 로 쓰는 기기 식별자 (localStorage 지속) */
+export function getDeviceId(): string {
+  let id = localStorage.getItem(DEVICE_ID_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(DEVICE_ID_KEY, id);
+  }
+  return id;
+}
+
+/** frequency cap 에 걸리면 null (배너 미노출) */
+export async function fetchAdPlacement(placementKey: string): Promise<AdPlacement | null> {
+  const res = await api.get<ApiResponse<AdPlacement | null>>(
+    `/api/v1/ads/placements/${placementKey}?subject=${encodeURIComponent(getDeviceId())}`,
+  );
+  return res.data.data;
+}

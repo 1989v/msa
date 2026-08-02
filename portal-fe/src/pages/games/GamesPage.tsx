@@ -11,6 +11,7 @@ import {
   type GameTag,
 } from '../../api/gameApi';
 import GameCard from './GameCard';
+import HouseBanner from './HouseBanner';
 import './Games.css';
 
 const SORTS: { key: GameSortKey; label: string }[] = [
@@ -71,6 +72,8 @@ export default function GamesPage() {
         <h1 className="games-title">Games</h1>
         <p className="games-subtitle">코드베이스 개념으로 만든 미니게임 아케이드</p>
       </header>
+
+      <HouseBanner placementKey="game-list-banner" />
 
       <div className="games-toolbar" role="toolbar" aria-label="게임 필터">
         <div className="games-sorts">

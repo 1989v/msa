@@ -226,5 +226,14 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // 광고 슬롯/보상 (HOUSE, ADR-0059 §3) — 게스트 허용, 로그인 시 X-User-Id 식별
+            .route("game-ads") { r ->
+                r.path("/api/v1/ads/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             .build()
 }
