@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import type { GameSummary } from '../../api/gameApi';
+import { GENRE_LABELS, type GameSummary } from '../../api/gameApi';
 
 const COVER_HUES = [245, 180, 145, 25, 300, 75];
 
@@ -24,7 +24,10 @@ export default function GameCard({ game }: { game: GameSummary }) {
         </span>
       </div>
       <div className="game-card-body">
-        <h3 className="game-card-title">{game.title}</h3>
+        <h3 className="game-card-title">
+          {game.title}
+          <span className="game-card-genre">{GENRE_LABELS[game.genre] ?? game.genre}</span>
+        </h3>
         <div className="game-card-meta">
           {game.ratingCount > 0 ? (
             <span className="game-card-rating">★ {game.ratingAvg.toFixed(1)}</span>

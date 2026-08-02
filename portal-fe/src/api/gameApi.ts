@@ -34,6 +34,16 @@ export interface PageResponse<T> {
 
 export type GameLoadType = 'IFRAME' | 'INTERNAL_ROUTE';
 export type GameSortKey = 'trending' | 'new' | 'top';
+export type GameGenre = 'ARCADE' | 'ACTION' | 'PUZZLE' | 'RPG' | 'EDUCATION' | 'CASUAL';
+
+export const GENRE_LABELS: Record<GameGenre, string> = {
+  ARCADE: '아케이드',
+  ACTION: '액션',
+  PUZZLE: '퍼즐',
+  RPG: 'RPG',
+  EDUCATION: '학습',
+  CASUAL: '캐주얼',
+};
 
 export interface GameSummary {
   id: number;
@@ -43,6 +53,7 @@ export interface GameSummary {
   loadType: GameLoadType;
   supportsMobile: boolean;
   status: string;
+  genre: GameGenre;
   tags: string[];
   playCount: number;
   ratingAvg: number;
@@ -87,12 +98,14 @@ export interface RatingResult {
 
 export async function listGames(params: {
   tag?: string;
+  genre?: GameGenre;
   sort?: GameSortKey;
   page?: number;
   size?: number;
 }): Promise<PageResponse<GameSummary>> {
   const search = new URLSearchParams();
   if (params.tag) search.set('tag', params.tag);
+  if (params.genre) search.set('genre', params.genre);
   if (params.sort) search.set('sort', params.sort);
   search.set('page', String(params.page ?? 0));
   search.set('size', String(params.size ?? 24));

@@ -3,7 +3,9 @@ import {
   fetchGameCollections,
   fetchGameTags,
   listGames,
+  GENRE_LABELS,
   type GameCollection,
+  type GameGenre,
   type GameSummary,
   type GameSortKey,
   type GameTag,
@@ -17,18 +19,33 @@ const SORTS: { key: GameSortKey; label: string }[] = [
   { key: 'top', label: '평점' },
 ];
 
+const GENRES = Object.entries(GENRE_LABELS) as [GameGenre, string][];
+
+/** 큐레이션 행 간 중복 제거 — 한 게임은 첫 노출 행에만 남기고, 비어버린 행은 숨긴다 */
+function dedupeCollections(collections: GameCollection[]): GameCollection[] {
+  const seen = new Set<string>();
+  return collections
+    .map((col) => {
+      const games = col.games.filter((g) => !seen.has(g.slug));
+      games.forEach((g) => seen.add(g.slug));
+      return { ...col, games };
+    })
+    .filter((col) => col.games.length > 0);
+}
+
 export default function GamesPage() {
   const [collections, setCollections] = useState<GameCollection[]>([]);
   const [tags, setTags] = useState<GameTag[]>([]);
   const [games, setGames] = useState<GameSummary[]>([]);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [genre, setGenre] = useState<GameGenre | null>(null);
   const [sort, setSort] = useState<GameSortKey>('trending');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   useEffect(() => {
     Promise.allSettled([fetchGameCollections(), fetchGameTags()]).then(([c, t]) => {
-      if (c.status === 'fulfilled') setCollections(c.value.filter((col) => col.games.length > 0));
+      if (c.status === 'fulfilled') setCollections(dedupeCollections(c.value));
       if (t.status === 'fulfilled') setTags(t.value);
     });
   }, []);
@@ -36,14 +53,17 @@ export default function GamesPage() {
   useEffect(() => {
     setLoading(true);
     setError(false);
-    listGames({ tag: activeTag ?? undefined, sort, size: 48 })
+    listGames({ tag: activeTag ?? undefined, genre: genre ?? undefined, sort, size: 48 })
       .then((page) => setGames(page.content))
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [activeTag, sort]);
+  }, [activeTag, genre, sort]);
 
   // 필터가 걸리면 큐레이션 행 대신 그리드만 노출
-  const showCollections = useMemo(() => !activeTag && sort === 'trending', [activeTag, sort]);
+  const showCollections = useMemo(
+    () => !activeTag && !genre && sort === 'trending',
+    [activeTag, genre, sort],
+  );
 
   return (
     <div className="games-page">
@@ -61,6 +81,23 @@ export default function GamesPage() {
               onClick={() => setSort(s.key)}
             >
               {s.label}
+            </button>
+          ))}
+        </div>
+        <div className="games-genres" role="group" aria-label="장르 카테고리">
+          <button
+            className={`game-genre-btn ${genre === null ? 'active' : ''}`}
+            onClick={() => setGenre(null)}
+          >
+            전체
+          </button>
+          {GENRES.map(([key, label]) => (
+            <button
+              key={key}
+              className={`game-genre-btn ${genre === key ? 'active' : ''}`}
+              onClick={() => setGenre(genre === key ? null : key)}
+            >
+              {label}
             </button>
           ))}
         </div>
@@ -96,7 +133,9 @@ export default function GamesPage() {
         ))}
 
       <section className="games-all" aria-label="전체 게임">
-        <h2 className="games-collection-title">{activeTag ? `#${activeTag}` : '전체 게임'}</h2>
+        <h2 className="games-collection-title">
+          {activeTag ? `#${activeTag}` : genre ? GENRE_LABELS[genre] : '전체 게임'}
+        </h2>
         {loading && <p className="games-status">불러오는 중…</p>}
         {error && <p className="games-status">게임 목록을 불러오지 못했습니다.</p>}
         {!loading && !error && games.length === 0 && <p className="games-status">조건에 맞는 게임이 없습니다.</p>}

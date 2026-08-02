@@ -23,6 +23,7 @@ class Game private constructor(
     var developerName: String,
     var sdkIntegrated: Boolean,
     var status: GameStatus,
+    var genre: Genre,
     var tags: List<String>,
     var releasedAt: Instant?,
     var contentUpdatedAt: Instant?
@@ -43,6 +44,7 @@ class Game private constructor(
             supportsMobile: Boolean = true,
             developerName: String,
             sdkIntegrated: Boolean = false,
+            genre: Genre = Genre.CASUAL,
             tags: List<String> = emptyList()
         ): Game {
             require(SLUG_PATTERN.matches(slug)) { "slug는 소문자/숫자/하이픈 형식이어야 합니다: $slug" }
@@ -63,6 +65,7 @@ class Game private constructor(
                 developerName = developerName,
                 sdkIntegrated = sdkIntegrated,
                 status = GameStatus.DRAFT,
+                genre = genre,
                 tags = tags,
                 releasedAt = null,
                 contentUpdatedAt = null
@@ -84,6 +87,7 @@ class Game private constructor(
             developerName: String,
             sdkIntegrated: Boolean,
             status: GameStatus,
+            genre: Genre,
             tags: List<String>,
             releasedAt: Instant?,
             contentUpdatedAt: Instant?
@@ -102,6 +106,7 @@ class Game private constructor(
             developerName = developerName,
             sdkIntegrated = sdkIntegrated,
             status = status,
+            genre = genre,
             tags = tags,
             releasedAt = releasedAt,
             contentUpdatedAt = contentUpdatedAt
@@ -134,7 +139,8 @@ class Game private constructor(
         coverUrl: String? = null,
         orientation: Orientation? = null,
         supportsMobile: Boolean? = null,
-        developerName: String? = null
+        developerName: String? = null,
+        genre: Genre? = null
     ) {
         title?.let {
             require(it.isNotBlank()) { "title은 비어있을 수 없습니다" }
@@ -145,6 +151,7 @@ class Game private constructor(
         coverUrl?.let { this.coverUrl = it }
         orientation?.let { this.orientation = it }
         supportsMobile?.let { this.supportsMobile = it }
+        genre?.let { this.genre = it }
         developerName?.let {
             require(it.isNotBlank()) { "developerName은 비어있을 수 없습니다" }
             this.developerName = it

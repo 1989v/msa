@@ -2,6 +2,7 @@ package com.kgd.game.infrastructure.persistence.catalog.repository
 
 import com.kgd.game.application.catalog.service.GameSort
 import com.kgd.game.domain.catalog.model.GameStatus
+import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.infrastructure.persistence.catalog.entity.GameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.entity.QGameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.entity.QGameStatsJpaEntity
@@ -24,8 +25,9 @@ class GameQueryRepository(
     private val game = QGameJpaEntity.gameJpaEntity
     private val stats = QGameStatsJpaEntity.gameStatsJpaEntity
 
-    fun search(tag: String?, sort: GameSort, pageable: Pageable): Page<GameJpaEntity> {
+    fun search(tag: String?, genre: Genre?, sort: GameSort, pageable: Pageable): Page<GameJpaEntity> {
         val condition = BooleanBuilder(game.status.eq(GameStatus.PUBLISHED))
+        genre?.let { condition.and(game.genre.eq(it)) }
         if (!tag.isNullOrBlank()) {
             val tagMap = QGameTagMapJpaEntity.gameTagMapJpaEntity
             condition.and(

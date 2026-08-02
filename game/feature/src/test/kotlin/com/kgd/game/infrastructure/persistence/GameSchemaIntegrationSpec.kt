@@ -82,7 +82,7 @@ class GameSchemaIntegrationSpec(
             Then("TRENDING/NEW/TOP 쿼리가 모두 MySQL 에서 실행된다")
                 .config(enabledIf = { dockerAvailable }) {
                     GameSort.entries.forEach { sort ->
-                        queryRepository.search(tag = null, sort = sort, pageable = pageable)
+                        queryRepository.search(tag = null, genre = null, sort = sort, pageable = pageable)
                             .totalElements shouldBe 6
                     }
                 }
@@ -91,9 +91,9 @@ class GameSchemaIntegrationSpec(
         When("태그로 필터링하면") {
             Then("해당 태그를 가진 게임만 반환된다")
                 .config(enabledIf = { dockerAvailable }) {
-                    queryRepository.search(tag = "memory", sort = GameSort.TRENDING, pageable = pageable)
+                    queryRepository.search(tag = "memory", genre = null, sort = GameSort.TRENDING, pageable = pageable)
                         .content.map { it.slug } shouldBe listOf("concept-memory")
-                    queryRepository.search(tag = "education", sort = GameSort.TRENDING, pageable = pageable)
+                    queryRepository.search(tag = "education", genre = null, sort = GameSort.TRENDING, pageable = pageable)
                         .totalElements shouldBe 4
                 }
         }

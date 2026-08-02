@@ -9,6 +9,7 @@ import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.GameTag
+import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.infrastructure.persistence.catalog.entity.GameCollectionJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.entity.GameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.entity.GameStatsJpaEntity
@@ -50,8 +51,8 @@ class GameRepositoryAdapter(
 
     override fun existsBySlug(slug: String): Boolean = jpaRepository.existsBySlug(slug)
 
-    override fun search(tag: String?, sort: GameSort, pageable: Pageable): Page<Game> =
-        queryRepository.search(tag, sort, pageable).map { it.toDomain() }
+    override fun search(tag: String?, genre: Genre?, sort: GameSort, pageable: Pageable): Page<Game> =
+        queryRepository.search(tag, genre, sort, pageable).map { it.toDomain() }
 
     override fun findSimilar(gameId: Long, limit: Int): List<Game> =
         queryRepository.findSimilar(gameId, limit).map { it.toDomain() }

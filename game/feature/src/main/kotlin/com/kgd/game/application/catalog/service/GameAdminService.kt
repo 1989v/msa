@@ -11,6 +11,7 @@ import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.GameStats
+import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import org.springframework.stereotype.Service
@@ -30,6 +31,7 @@ data class CreateGameCommand(
     val supportsMobile: Boolean,
     val developerName: String,
     val sdkIntegrated: Boolean,
+    val genre: Genre,
     val tags: List<String>,
 )
 
@@ -59,6 +61,7 @@ class GameAdminService(
                 supportsMobile = command.supportsMobile,
                 developerName = command.developerName,
                 sdkIntegrated = command.sdkIntegrated,
+                genre = command.genre,
                 tags = command.tags,
             )
         )
@@ -76,6 +79,7 @@ class GameAdminService(
         orientation: Orientation?,
         supportsMobile: Boolean?,
         developerName: String?,
+        genre: Genre?,
     ): GameDetailDto {
         val game = findGame(slug)
         game.updateMetadata(
@@ -86,6 +90,7 @@ class GameAdminService(
             orientation = orientation,
             supportsMobile = supportsMobile,
             developerName = developerName,
+            genre = genre,
         )
         return saveAndToDto(game)
     }

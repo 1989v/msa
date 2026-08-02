@@ -11,6 +11,7 @@ import com.kgd.game.application.catalog.port.GameTagRepositoryPort
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.Game
+import com.kgd.game.domain.catalog.model.Genre
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
@@ -29,8 +30,8 @@ class GameQueryService(
         private const val SIMILAR_LIMIT = 8
     }
 
-    fun list(tag: String?, sort: GameSort, page: Int, size: Int): Page<GameSummaryDto> {
-        val games = gameRepository.search(tag, sort, PageRequest.of(page, size))
+    fun list(tag: String?, genre: Genre?, sort: GameSort, page: Int, size: Int): Page<GameSummaryDto> {
+        val games = gameRepository.search(tag, genre, sort, PageRequest.of(page, size))
         val statsByGameId = statsOf(games.content)
         return games.map { GameSummaryDto.of(it, statsByGameId[it.id]) }
     }
@@ -72,7 +73,7 @@ class GameQueryService(
         }
 
     private fun pageOf(sort: GameSort, tag: String? = null): List<Game> =
-        gameRepository.search(tag, sort, PageRequest.of(0, COLLECTION_SIZE)).content
+        gameRepository.search(tag, null, sort, PageRequest.of(0, COLLECTION_SIZE)).content
 
     /** DRAFT/REVIEW/SUSPENDED 는 존재 여부 은닉 — NOT_FOUND */
     private fun findVisibleGame(slug: String): Game {

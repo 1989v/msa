@@ -5,6 +5,7 @@ import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.GameTag
+import com.kgd.game.domain.catalog.model.Genre
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
@@ -15,7 +16,7 @@ interface GameRepositoryPort {
     fun existsBySlug(slug: String): Boolean
 
     /** 공개 리스트 — PUBLISHED 만 노출 */
-    fun search(tag: String?, sort: GameSort, pageable: Pageable): Page<Game>
+    fun search(tag: String?, genre: Genre?, sort: GameSort, pageable: Pageable): Page<Game>
 
     /** 태그 교집합 수 기준 유사 게임 (PUBLISHED 만) */
     fun findSimilar(gameId: Long, limit: Int): List<Game>

@@ -7,6 +7,7 @@ import com.kgd.game.application.catalog.dto.GameSummaryDto
 import com.kgd.game.application.catalog.dto.GameTagDto
 import com.kgd.game.application.catalog.service.GameQueryService
 import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.domain.catalog.model.Genre
 import org.springframework.data.domain.Page
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -23,11 +24,14 @@ class GameController(
     @GetMapping
     fun list(
         @RequestParam(required = false) tag: String?,
+        @RequestParam(required = false) genre: String?,
         @RequestParam(required = false) sort: String?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "24") size: Int,
     ): ApiResponse<Page<GameSummaryDto>> =
-        ApiResponse.success(gameQueryService.list(tag, GameSort.parse(sort), page, size.coerceAtMost(100)))
+        ApiResponse.success(
+            gameQueryService.list(tag, Genre.parse(genre), GameSort.parse(sort), page, size.coerceAtMost(100))
+        )
 
     @GetMapping("/collections")
     fun collections(): ApiResponse<List<GameCollectionDto>> =

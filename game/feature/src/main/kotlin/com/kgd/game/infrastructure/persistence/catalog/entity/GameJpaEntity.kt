@@ -3,6 +3,7 @@ package com.kgd.game.infrastructure.persistence.catalog.entity
 import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameStatus
+import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import com.kgd.game.infrastructure.persistence.converter.StringListJsonConverter
@@ -43,6 +44,7 @@ class GameJpaEntity(
     developerName: String,
     sdkIntegrated: Boolean,
     status: GameStatus,
+    genre: Genre,
     tags: List<String> = emptyList(),
     releasedAt: Instant?,
     contentUpdatedAt: Instant?,
@@ -95,6 +97,11 @@ class GameJpaEntity(
     var status: GameStatus = status
         private set
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 16)
+    var genre: Genre = genre
+        private set
+
     @Convert(converter = StringListJsonConverter::class)
     @Column(columnDefinition = "json")
     var tags: List<String> = tags
@@ -120,6 +127,7 @@ class GameJpaEntity(
         developerName = game.developerName
         sdkIntegrated = game.sdkIntegrated
         status = game.status
+        genre = game.genre
         tags = game.tags
         releasedAt = game.releasedAt
         contentUpdatedAt = game.contentUpdatedAt
@@ -140,6 +148,7 @@ class GameJpaEntity(
         developerName = developerName,
         sdkIntegrated = sdkIntegrated,
         status = status,
+        genre = genre,
         tags = tags,
         releasedAt = releasedAt,
         contentUpdatedAt = contentUpdatedAt,
@@ -161,6 +170,7 @@ class GameJpaEntity(
             developerName = game.developerName,
             sdkIntegrated = game.sdkIntegrated,
             status = game.status,
+            genre = game.genre,
             tags = game.tags,
             releasedAt = game.releasedAt,
             contentUpdatedAt = game.contentUpdatedAt,

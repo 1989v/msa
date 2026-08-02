@@ -7,6 +7,7 @@ import com.kgd.game.application.play.port.PlaySessionRepositoryPort
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.catalog.exception.GameNotPlayableException
 import com.kgd.game.domain.catalog.model.EngineType
+import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.LoadType
@@ -39,6 +40,7 @@ class GamePlayCommandTest : BehaviorSpec({
             developerName = "kgd",
             sdkIntegrated = false,
             status = com.kgd.game.domain.catalog.model.GameStatus.PUBLISHED,
+            genre = Genre.CASUAL,
             tags = listOf("puzzle"),
             releasedAt = Instant.parse("2026-07-01T00:00:00Z"),
             contentUpdatedAt = null,

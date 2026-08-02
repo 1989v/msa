@@ -8,6 +8,7 @@ import com.kgd.game.application.catalog.service.GameStatusAction
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.GameCollection
+import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import jakarta.validation.Valid
@@ -32,6 +33,7 @@ data class CreateGameRequest(
     val supportsMobile: Boolean = true,
     @field:NotBlank val developerName: String,
     val sdkIntegrated: Boolean = false,
+    val genre: Genre = Genre.CASUAL,
     val tags: List<String> = emptyList(),
 )
 
@@ -43,6 +45,7 @@ data class UpdateGameMetadataRequest(
     val orientation: Orientation? = null,
     val supportsMobile: Boolean? = null,
     val developerName: String? = null,
+    val genre: Genre? = null,
 )
 
 data class UpdateGameContentRequest(
@@ -104,6 +107,7 @@ class GameAdminController(
                     supportsMobile = request.supportsMobile,
                     developerName = request.developerName,
                     sdkIntegrated = request.sdkIntegrated,
+                    genre = request.genre,
                     tags = request.tags,
                 )
             )
@@ -124,6 +128,7 @@ class GameAdminController(
                 orientation = request.orientation,
                 supportsMobile = request.supportsMobile,
                 developerName = request.developerName,
+                genre = request.genre,
             )
         )
 

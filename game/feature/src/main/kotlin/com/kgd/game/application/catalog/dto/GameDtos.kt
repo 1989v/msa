@@ -6,6 +6,7 @@ import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.GameTag
+import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import java.time.Instant
@@ -18,6 +19,7 @@ data class GameSummaryDto(
     val loadType: LoadType,
     val supportsMobile: Boolean,
     val status: GameStatus,
+    val genre: Genre,
     val tags: List<String>,
     val playCount: Long,
     val ratingAvg: Double,
@@ -32,6 +34,7 @@ data class GameSummaryDto(
             loadType = game.loadType,
             supportsMobile = game.supportsMobile,
             status = game.status,
+            genre = game.genre,
             tags = game.tags,
             playCount = stats?.playCount ?: 0,
             ratingAvg = stats?.averageRating() ?: 0.0,
@@ -55,6 +58,7 @@ data class GameDetailDto(
     val developerName: String,
     val sdkIntegrated: Boolean,
     val status: GameStatus,
+    val genre: Genre,
     val tags: List<String>,
     val releasedAt: Instant?,
     val contentUpdatedAt: Instant?,
@@ -78,6 +82,7 @@ data class GameDetailDto(
             developerName = game.developerName,
             sdkIntegrated = game.sdkIntegrated,
             status = game.status,
+            genre = game.genre,
             tags = game.tags,
             releasedAt = game.releasedAt,
             contentUpdatedAt = game.contentUpdatedAt,
