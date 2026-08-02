@@ -1,15 +1,14 @@
 package com.kgd.game.presentation.play.controller
 
-import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.play.service.GameRunService
 import com.kgd.game.application.play.service.GameSaveService
-import jakarta.validation.Valid
-import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.PositiveOrZero
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -19,10 +18,14 @@ import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-data class SaveStateResponse(val data: JsonNode?, val version: Long)
+/**
+ * 세이브 data 는 게임이 정의하는 불투명 JSON object — 서버는 스키마를 해석하지 않는다.
+ * 바디 변환은 프레임워크(Jackson 3)가 하므로 순수 Map 으로 받고, 저장용 직렬화만 Jackson 2 로 수행.
+ */
+data class SaveStateResponse(val data: Map<String, Any?>?, val version: Long)
 
 data class SaveRequest(
-    @field:NotNull val data: JsonNode,
+    val data: Map<String, Any?> = emptyMap(),
     @field:PositiveOrZero val version: Long = 0,
 )
 
@@ -32,17 +35,15 @@ data class RunResponse(val runKey: String, val seed: Long, val status: String, v
 
 data class ConsumeRunRequest(val outcome: String? = null)
 
-/**
- * 클라우드 세이브(인증 필수 + X-Device-Id 리스) / 로그라이크 런(게스트 허용).
- * 세이브 data 는 게임이 정의하는 불투명 JSON — 서버는 스키마를 해석하지 않는다.
- */
+/** 클라우드 세이브(인증 필수 + X-Device-Id 리스) / 로그라이크 런(게스트 허용) */
 @RestController
 @RequestMapping("/api/v1/games/{slug}")
 class GameSaveController(
     private val gameSaveService: GameSaveService,
     private val gameRunService: GameRunService,
-    private val objectMapper: ObjectMapper,
 ) {
+    private val mapper = ObjectMapper()
+    private val mapType = object : TypeReference<Map<String, Any?>>() {}
 
     @GetMapping("/save")
     fun load(
@@ -53,7 +54,7 @@ class GameSaveController(
         val snapshot = gameSaveService.load(slug, requireMember(userId), deviceId)
         return ApiResponse.success(
             SaveStateResponse(
-                data = snapshot?.let { objectMapper.readTree(it.data) },
+                data = snapshot?.let { mapper.readValue(it.data, mapType) },
                 version = snapshot?.version ?: 0,
             )
         )
@@ -70,10 +71,12 @@ class GameSaveController(
             slug = slug,
             memberId = requireMember(userId),
             holder = deviceId,
-            data = objectMapper.writeValueAsString(request.data),
+            data = mapper.writeValueAsString(request.data),
             expectedVersion = request.version,
         )
-        return ApiResponse.success(SaveStateResponse(data = objectMapper.readTree(saved.data), version = saved.version))
+        return ApiResponse.success(
+            SaveStateResponse(data = mapper.readValue(saved.data, mapType), version = saved.version)
+        )
     }
 
     @PostMapping("/runs")
