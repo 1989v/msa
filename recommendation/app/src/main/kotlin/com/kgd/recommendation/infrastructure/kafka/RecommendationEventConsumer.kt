@@ -65,5 +65,6 @@ class RecommendationEventConsumer(
         EventType.ADD_TO_CART -> "addwish"
         EventType.ORDER_COMPLETE -> "reservation"
         EventType.SEARCH_KEYWORD, EventType.PAGE_VIEW -> null  // item-aware 신호 아님
+        EventType.GAME_SESSION_START, EventType.GAME_SESSION_END -> null  // 게임 세션은 상품 추천 신호 아님
     }
 }
