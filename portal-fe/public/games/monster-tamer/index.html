@@ -1405,13 +1405,13 @@ function renderMenu() {
 function heldMenu(m) {
   const body = $('menuBody'); body.innerHTML = '';
   const back = document.createElement('button'); back.className = 'ghost'; back.textContent = t('← 뒤로','← Back'); back.onclick = () => renderMenu(); body.appendChild(back);
-  Object.keys(HELD).forEach(k => { for (let t = 3; t >= 1; t--) {
-    const n = S.items[heldKey(k, t)] || 0; if (!n) continue;
+  Object.keys(HELD).forEach(k => { for (let tier = 3; tier >= 1; tier--) {
+    const n = S.items[heldKey(k, tier)] || 0; if (!n) continue;
     const r = document.createElement('div'); r.className = 'menuRow';
-    r.innerHTML = '<span style="font-size:20px">' + HELD[k].emoji + '</span><span class="grow"><b>' + HELD[k].name + TIER_MARK[t - 1] + '</b> × ' + n +
-      '<small>' + TIER_NAME[t - 1] + ' · ' + heldEffect(k, t) + '</small></span>';
+    r.innerHTML = '<span style="font-size:20px">' + HELD[k].emoji + '</span><span class="grow"><b>' + HELD[k].name + TIER_MARK[tier - 1] + '</b> × ' + n +
+      '<small>' + TIER_NAME[tier - 1] + ' · ' + heldEffect(k, tier) + '</small></span>';
     const b = document.createElement('button'); b.textContent = t('장착','Equip');
-    b.onclick = () => { S.items[heldKey(k, t)] = n - 1; m.held = k; m.heldTier = t; recalcStats(m); toast(heldLabel(k, t) + ' 장착'); persist(true); renderMenu(); };
+    b.onclick = () => { S.items[heldKey(k, tier)] = n - 1; m.held = k; m.heldTier = tier; recalcStats(m); toast(heldLabel(k, tier) + t(' 장착',' equipped')); persist(true); renderMenu(); };
     r.appendChild(b); body.appendChild(r);
   } });
   if (!body.querySelector('.menuRow')) { const p = document.createElement('p'); p.style.cssText = 'font-size:12px;color:#8a93a8'; p.textContent = '보유한 장착 도구가 없습니다 — 필드 🎁 상자나 🔨합성으로 얻을 수 있습니다.'; body.appendChild(p); }
@@ -1435,18 +1435,18 @@ function renderCraft(body) {
   });
   const hp = document.createElement('p'); hp.style.cssText = 'font-size:11px;color:#8a93a8;text-align:center;margin-top:6px';
   hp.textContent = '도구 승급 — 같은 도구 2개 + 재료로 한 단계 위 도구를 만든다'; body.appendChild(hp);
-  Object.keys(HELD).forEach(k => { for (let t = 1; t <= 2; t++) {
-    const have = S.items[heldKey(k, t)] || 0;
-    const need = t === 1 ? { shard:3 } : { core:2 };
+  Object.keys(HELD).forEach(k => { for (let tier = 1; tier <= 2; tier++) {
+    const have = S.items[heldKey(k, tier)] || 0;
+    const need = tier === 1 ? { shard:3 } : { core:2 };
     const ok = have >= 2 && Object.entries(need).every(([mk, n]) => (S.items[mk] || 0) >= n);
-    const el = row('<span style="font-size:19px">' + HELD[k].emoji + '</span><span class="grow"><b>' + HELD[k].name + TIER_MARK[t - 1] + ' ×2 → ' + HELD[k].name + TIER_MARK[t] + '</b>' +
-      '<small>' + heldEffect(k, t) + ' → ' + heldEffect(k, t + 1) + ' · 보유 ' + have + '/2 · ' +
+    const el = row('<span style="font-size:19px">' + HELD[k].emoji + '</span><span class="grow"><b>' + HELD[k].name + TIER_MARK[tier - 1] + ' ×2 → ' + HELD[k].name + TIER_MARK[tier] + '</b>' +
+      '<small>' + heldEffect(k, tier) + ' → ' + heldEffect(k, tier + 1) + t(' · 보유 ',' · have ') + have + '/2 · ' +
       Object.entries(need).map(([mk, n]) => itemLabel(mk) + '×' + n + ' (' + (S.items[mk] || 0) + ')').join('') + '</small></span>');
     if (ok) el.classList.add('on');
     const b = document.createElement('button'); b.textContent = t('승급','Upgrade'); b.disabled = !ok;
-    b.onclick = () => { S.items[heldKey(k, t)] -= 2; Object.entries(need).forEach(([mk, n]) => { S.items[mk] -= n; });
-      S.items[heldKey(k, t + 1)] = (S.items[heldKey(k, t + 1)] || 0) + 1;
-      SFX.evolve(); toast('🔨 ' + HELD[k].name + TIER_MARK[t] + ' 완성!'); persist(true); renderMenu(); };
+    b.onclick = () => { S.items[heldKey(k, tier)] -= 2; Object.entries(need).forEach(([mk, n]) => { S.items[mk] -= n; });
+      S.items[heldKey(k, tier + 1)] = (S.items[heldKey(k, tier + 1)] || 0) + 1;
+      SFX.evolve(); toast('🔨 ' + HELD[k].name + TIER_MARK[tier] + t(' 완성!',' complete!')); persist(true); renderMenu(); };
     el.appendChild(b);
   } });
 }
@@ -1779,8 +1779,8 @@ function pickFoeMove(m) {
   const usable = m.moves.filter(mv => mv.pp > 0);
   if (!usable.length) return MOVES.struggle;
   let mv = usable[ri(usable.length)];
-  // 첫 대결은 상성 기술을 덜 쓴다 — 정면 승부로도 아슬아슬하게 이길 수 있도록
-  if (B && B.tutorial && rand() < 0.78) {
+  // 첫 대결은 상성 기술을 쓰지 않는다 — 승패가 AI 주사위가 아니라 플레이어 선택으로 갈리도록
+  if (B && B.tutorial) {
     const weak = usable.filter(x => MOVES[x.id].type !== DEX[m.id].type);
     if (weak.length) mv = weak[ri(weak.length)];
   }
@@ -1805,6 +1805,13 @@ function applyMove(a, d, move, toPlayer, dodgeMul) {
   msg += ' ' + monName(a) + '의 ' + move.name + '! ' + r.v + t(' 데미지',' dmg');
   if (r.crit) msg += t(' 급소!',' Critical hit!');
   if (r.e > 100) msg += t(' 효과가 굉장했다!',' It is super effective!'); else if (r.e < 100) msg += t(' 효과가 별로였다…',' Not very effective...');
+  if (B && B.tutorial && a === B.my && r.e < 100 && !B.hintType) {
+    B.hintType = true;
+    const alt = B.my.moves.map(mv => MOVES[mv.id]).find(mv => mv.power && eff(mv.type, DEX[B.foe.id].type) >= 100);
+    if (alt) setTimeout(() => toast(t(
+      '💡 이 기술은 상대 타입에 반감된다 — 「' + alt.name + '」 처럼 반감되지 않는 기술이 더 아프다!',
+      '💡 That move is resisted — a neutral move like "' + alt.name + '" hits much harder!')), 500);
+  }
   return msg;
 }
 function foeTurn(dodgeMul, move) {
@@ -1885,9 +1892,9 @@ function resolveQte(pressed) {
   if (!B || !B.qte) return;
   clearTimeout(B.qteTimer);
   const q = B.qte; B.qte = null;
-  const t = performance.now();
+  const now = performance.now();
   const ok = pressed === q.want;
-  const perfect = ok && Math.abs(t - q.impactAt) <= COUNTER_MS;
+  const perfect = ok && Math.abs(now - q.impactAt) <= COUNTER_MS;
   let msg = '', counter = 0;
   if (perfect) {
     SFX.crit();
