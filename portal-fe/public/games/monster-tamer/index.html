@@ -10,13 +10,14 @@
   body { background:#0c1424; color:#eee; font-family:'Courier New',monospace; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; user-select:none; }
   #wrap { position:relative; border:4px solid #1a2238; border-radius:8px; overflow:hidden; box-shadow:0 0 40px rgba(0,0,0,.6); width:800px; }
   canvas { display:block; background:#1d3a24; image-rendering:pixelated; }
-  #hud { position:absolute; top:8px; left:10px; display:flex; gap:10px; font-size:12px; font-weight:bold; pointer-events:none; text-shadow:1px 1px 0 #000; z-index:2; }
-  #hud span { background:rgba(0,0,0,.55); padding:2px 10px; border-radius:10px; }
+  #hud { position:absolute; top:8px; left:10px; display:flex; gap:8px; font-size:12px; font-weight:bold; pointer-events:none; text-shadow:1px 1px 0 #000; z-index:2; }
+  #hud span { background:rgba(0,0,0,.55); padding:2px 9px; border-radius:10px; }
   #zoneTag { position:absolute; top:8px; right:10px; background:rgba(0,0,0,.55); padding:3px 12px; border-radius:10px; font-size:12px; font-weight:bold; z-index:2; }
+  #toast { position:absolute; bottom:56px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,.7); padding:4px 14px; border-radius:12px; font-size:12px; z-index:7; transition:opacity .4s; opacity:0; pointer-events:none; }
   .panel { position:absolute; inset:0; background:rgba(10,14,28,.95); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; z-index:10; padding:20px; }
   .panel h1 { color:#ffd54a; font-size:26px; text-shadow:2px 2px 0 #000; }
-  .panel p { font-size:13px; color:#ccc; line-height:1.7; max-width:520px; }
-  button { background:#ffd54a; color:#0c1424; border:0; padding:9px 20px; font-weight:bold; font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  .panel p { font-size:13px; color:#ccc; line-height:1.7; max-width:540px; }
+  button { background:#ffd54a; color:#0c1424; border:0; padding:9px 18px; font-weight:bold; font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
   button:disabled { opacity:.4; cursor:default; }
   button.ghost { background:#2c3550; color:#eee; }
   .starters { display:flex; gap:12px; }
@@ -36,15 +37,21 @@
   .mon .label { font-size:12px; font-weight:bold; text-shadow:1px 1px 0 #000; }
   #bLog { min-height:40px; font-size:13px; color:#ffd54a; text-align:center; padding:4px 14px; text-shadow:1px 1px 0 #000; }
   #bBtns { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; padding:0 14px 14px; }
-  #bBtns button { padding:10px 6px; font-size:12px; }
+  #bBtns button { padding:9px 5px; font-size:12px; }
   #bBtns button small { display:block; font-weight:normal; color:#4a3a00; font-size:10px; }
+  #bBtns button.ghost small { color:#8a93a8; }
 
-  /* 다이얼로그 / 상점 */
+  /* 다이얼로그 / 상점 / 메뉴 */
   #dialog { position:absolute; left:12px; right:12px; bottom:12px; background:rgba(6,10,22,.94); border:2px solid #ffd54a; border-radius:10px; padding:12px 16px; font-size:13px; line-height:1.7; z-index:8; }
   #dialog .next { color:#8a93a8; font-size:11px; text-align:right; }
-  #shop { position:absolute; inset:0; background:rgba(10,14,28,.95); display:none; flex-direction:column; align-items:center; justify-content:center; gap:10px; z-index:9; }
-  #shop.on { display:flex; }
-  .shopRow { display:flex; gap:10px; align-items:center; font-size:13px; width:360px; justify-content:space-between; }
+  .overlay { position:absolute; inset:0; background:rgba(10,14,28,.95); display:none; flex-direction:column; align-items:center; padding:22px; gap:8px; z-index:9; overflow:auto; }
+  .overlay.on { display:flex; }
+  .overlay h2 { color:#ffd54a; font-size:18px; margin-bottom:4px; }
+  .menuRow { display:flex; gap:8px; align-items:center; font-size:12px; width:600px; justify-content:space-between; background:#141d33; border:1px solid #2c3550; border-radius:8px; padding:8px 12px; }
+  .menuRow.sel { border-color:#ffd54a; }
+  .menuRow .grow { flex:1; text-align:left; line-height:1.5; }
+  .menuRow small { color:#8a93a8; display:block; }
+  .tabs { display:flex; gap:8px; margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -52,6 +59,7 @@
   <canvas id="cv" width="800" height="480"></canvas>
   <div id="hud" hidden><span id="partyTxt"></span><span id="dexTxt"></span><span id="goldTxt"></span><span id="badgeTxt"></span></div>
   <div id="zoneTag" hidden></div>
+  <div id="toast"></div>
 
   <div id="battle">
     <div class="bRow">
@@ -64,12 +72,28 @@
 
   <div id="dialog" hidden><div id="dialogText"></div><div class="next">Z / Enter ▶</div></div>
 
-  <div id="shop"><h1 style="color:#ffd54a">🏪 상점</h1><div id="shopRows"></div><div class="shopRow"><span id="shopGold"></span><button class="ghost" id="shopClose">나가기</button></div></div>
+  <div class="overlay" id="menu">
+    <h2>메뉴 <small style="color:#8a93a8;font-size:11px">(X 로 닫기)</small></h2>
+    <div class="tabs">
+      <button id="tabParty">🔁 몬스터</button>
+      <button id="tabBag" class="ghost">🎒 가방</button>
+      <button id="tabSave" class="ghost">💾 저장</button>
+      <button id="menuClose" class="ghost">닫기</button>
+    </div>
+    <div id="menuBody" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+
+  <div class="overlay" id="shop">
+    <h2>🏪 상점</h2>
+    <div id="shopRows" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <div class="menuRow"><span id="shopGold"></span><button class="ghost" id="shopClose">나가기</button></div>
+  </div>
 
   <div class="panel" id="title">
     <h1>🐾 Monster Tamer</h1>
-    <p>테이머가 되어 대륙을 여행하자. 초원·숲·동굴·호수를 지나 화산의 챔피언을 꺾는 것이 목표.
-       존마다 다른 몬스터가 살고, 수호자를 이겨야 다음 지역의 관문이 열린다.</p>
+    <p>지역을 넘나들며 몬스터를 수집·육성하고, 각 지역의 수호자를 꺾어 챔피언에 도전하자.
+       기술에는 PP가 있고, 몬스터센터(🏥)에서 파티 전체의 HP·PP 를 회복할 수 있다.
+       파티 전원이 경험치를 나눠 받는다.</p>
     <div style="display:flex; gap:10px;">
       <button id="continueBtn" hidden>▶ 이어하기</button>
       <button id="newBtn" class="ghost">새 게임</button>
@@ -83,7 +107,7 @@
     <div class="starters" id="starterBtns"></div>
   </div>
 </div>
-<div id="info">이동: 방향키/WASD(꾹 누르면 연속 이동) · 말걸기/확인: Z 또는 Enter · 🌿 조우 · 🛏 회복 · 🏪 상점 · 관문(🚧)은 수호자 격파 시 개방</div>
+<div id="info">이동: 방향키/WASD 홀드 · 확인/말걸기: Z·Enter · 메뉴(몬스터/가방/저장): <b>X</b> · 🏥 몬스터센터 = HP/PP 회복 · 지역 경계의 ▸ 를 밟으면 이동</div>
 <script>
 'use strict';
 const API = '/api/v1/games/monster-tamer';
@@ -93,7 +117,7 @@ const $ = id => document.getElementById(id);
 const rand = () => Math.random();
 const ri = n => Math.floor(rand() * n);
 
-/* ═══════════ 도감 — 오리지널 크리처 (sim.battle 동일 공식) ═══════════ */
+/* ═══════════ 기술 (PP 포함) / 도감 ═══════════ */
 const CHART = {
   FLAME: { LEAF:200, AQUA:50, STONE:50 }, AQUA: { FLAME:200, STONE:200, LEAF:50 },
   LEAF: { AQUA:200, STONE:200, FLAME:50 }, SPARK: { AQUA:200, LEAF:50, STONE:50 },
@@ -101,27 +125,27 @@ const CHART = {
 };
 const mult = (a, d) => (CHART[a] && CHART[a][d]) || 100;
 const MOVES = {
-  tackle:   { name:'몸통박치기', type:'NORMAL', power:40,  acc:100 },
-  scratch:  { name:'할퀴기',     type:'NORMAL', power:45,  acc:100 },
-  headbutt: { name:'박치기',     type:'NORMAL', power:65,  acc:95 },
-  slam:     { name:'내려찍기',   type:'NORMAL', power:80,  acc:85 },
-  ember:    { name:'불꽃세례',   type:'FLAME',  power:45,  acc:100 },
-  firefang: { name:'불꽃깨물기', type:'FLAME',  power:65,  acc:95 },
-  flameburst:{ name:'화염방사',  type:'FLAME',  power:90,  acc:90 },
-  bubble:   { name:'거품',       type:'AQUA',   power:45,  acc:100 },
-  waterjet: { name:'거품제트',   type:'AQUA',   power:65,  acc:95 },
-  torrent:  { name:'급류',       type:'AQUA',   power:90,  acc:90 },
-  vine:     { name:'덩굴채찍',   type:'LEAF',   power:45,  acc:100 },
-  leafblade:{ name:'리프블레이드', type:'LEAF', power:65,  acc:95 },
-  solarbeam:{ name:'솔라빔',     type:'LEAF',   power:95,  acc:85 },
-  spark:    { name:'스파크',     type:'SPARK',  power:50,  acc:100 },
-  bolt:     { name:'번개엄니',   type:'SPARK',  power:70,  acc:95 },
-  thunder:  { name:'벼락',       type:'SPARK',  power:95,  acc:80 },
-  pebble:   { name:'돌던지기',   type:'STONE',  power:50,  acc:95 },
-  rockroll: { name:'바위굴리기', type:'STONE',  power:70,  acc:90 },
-  landslide:{ name:'낙석',       type:'STONE',  power:90,  acc:85 },
+  struggle: { name:'발버둥',     type:'NORMAL', power:35,  acc:100, pp:Infinity },
+  tackle:   { name:'몸통박치기', type:'NORMAL', power:40,  acc:100, pp:35 },
+  scratch:  { name:'할퀴기',     type:'NORMAL', power:45,  acc:100, pp:35 },
+  headbutt: { name:'박치기',     type:'NORMAL', power:65,  acc:95,  pp:15 },
+  slam:     { name:'내려찍기',   type:'NORMAL', power:80,  acc:85,  pp:10 },
+  ember:    { name:'불꽃세례',   type:'FLAME',  power:45,  acc:100, pp:25 },
+  firefang: { name:'불꽃깨물기', type:'FLAME',  power:65,  acc:95,  pp:15 },
+  flameburst:{ name:'화염방사',  type:'FLAME',  power:90,  acc:90,  pp:8 },
+  bubble:   { name:'거품',       type:'AQUA',   power:45,  acc:100, pp:25 },
+  waterjet: { name:'거품제트',   type:'AQUA',   power:65,  acc:95,  pp:15 },
+  torrent:  { name:'급류',       type:'AQUA',   power:90,  acc:90,  pp:8 },
+  vine:     { name:'덩굴채찍',   type:'LEAF',   power:45,  acc:100, pp:25 },
+  leafblade:{ name:'리프블레이드', type:'LEAF', power:65,  acc:95,  pp:15 },
+  solarbeam:{ name:'솔라빔',     type:'LEAF',   power:95,  acc:85,  pp:8 },
+  spark:    { name:'스파크',     type:'SPARK',  power:50,  acc:100, pp:25 },
+  bolt:     { name:'번개엄니',   type:'SPARK',  power:70,  acc:95,  pp:15 },
+  thunder:  { name:'벼락',       type:'SPARK',  power:95,  acc:80,  pp:8 },
+  pebble:   { name:'돌던지기',   type:'STONE',  power:50,  acc:95,  pp:25 },
+  rockroll: { name:'바위굴리기', type:'STONE',  power:70,  acc:90,  pp:15 },
+  landslide:{ name:'낙석',       type:'STONE',  power:90,  acc:85,  pp:8 },
 };
-// learn: [레벨, 기술id] — 최근 4개 유지
 const DEX = {
   flarepup: { name:'플레어펍', emoji:'🦊', type:'FLAME', hp:39, atk:52, def:43, spd:65,
     learn:[[1,'scratch'],[1,'ember'],[9,'firefang'],[15,'headbutt']], evolveTo:'flarehound', evolveLv:16 },
@@ -149,98 +173,196 @@ const DEX = {
     learn:[[1,'scratch'],[1,'ember'],[10,'firefang'],[18,'flameburst']] },
 };
 const statOf = (b, lv) => ({ maxHp:Math.floor(b.hp*lv/50)+lv+10, atk:Math.floor(b.atk*lv/50)+5, def:Math.floor(b.def*lv/50)+5, spd:Math.floor(b.spd*lv/50)+5 });
-function movesAt(id, lv) {
-  return DEX[id].learn.filter(([l]) => l <= lv).map(([, m]) => m).slice(-4);
+const mkMove = id => ({ id, pp: MOVES[id].pp, maxPp: MOVES[id].pp });
+function moveIdsAt(id, lv) { return DEX[id].learn.filter(([l]) => l <= lv).map(([, m]) => m).slice(-4); }
+function syncMoves(m) { // 레벨 기준 기술 목록 갱신 — 기존 PP 유지
+  const ids = moveIdsAt(m.id, m.lv);
+  m.moves = ids.map(id => m.moves?.find(x => x.id === id) || mkMove(id));
 }
 function mkMon(id, lv) {
   const st = statOf(DEX[id], lv);
-  return { id, lv, exp:0, hp:st.maxHp, ...st, moves: movesAt(id, lv) };
+  const m = { id, lv, exp:0, hp:st.maxHp, ...st, moves:[] };
+  syncMoves(m);
+  return m;
 }
+const fullRest = m => { m.hp = m.maxHp; m.moves.forEach(mv => { mv.pp = mv.maxPp; }); };
 
-/* ═══════════ 아이템 ═══════════ */
 const ITEMS = {
-  potion:      { name:'포션',     emoji:'🧪', desc:'HP +25',  price:80 },
-  superpotion: { name:'슈퍼포션', emoji:'💉', desc:'HP +60',  price:250 },
-  ball:        { name:'테이머볼', emoji:'🔴', desc:'포획 시도', price:100 },
+  potion:      { name:'포션',       emoji:'🧪', desc:'HP +25',   price:80 },
+  superpotion: { name:'슈퍼포션',   emoji:'💉', desc:'HP +60',   price:250 },
+  ether:       { name:'PP에테르',   emoji:'🫧', desc:'기술 1개 PP +10', price:200 },
+  ball:        { name:'테이머볼',   emoji:'🔴', desc:'포획 시도', price:100 },
   greatball:   { name:'그레이트볼', emoji:'🟣', desc:'포획 확률 ↑', price:300 },
 };
 
-/* ═══════════ 월드 — 시나리오 존 6개 (68x48, 카메라 스크롤) ═══════════ */
-const W = 68, H = 48;
-// 타일: 0 길 1 풀숲 2 숲벽 3 물 4 회복 5 상점 6 아이템 7 관문 8 동굴바닥 9 동굴벽
-const TILE_WALK = new Set([0, 1, 4, 5, 6, 8]);
-let map, zones, npcs, gates, itemSpots;
-
-function buildWorld() {
-  map = Array.from({ length: H }, () => Array(W).fill(2));
-  const rect = (x, y, w, h, t) => { for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) if (map[yy]?.[xx] !== undefined) map[yy][xx] = t; };
-  const grass = (x, y, w, h) => { for (let yy = y; yy < y + h; yy++) for (let xx = x; xx < x + w; xx++) if ((xx + yy) % 3 !== 0) map[yy][xx] = 1; };
-
-  // ── 마을 (남서) ──
-  rect(2, 36, 16, 10, 0);
-  map[38][5] = 4;  // 🛏 회복
-  map[38][10] = 5; // 🏪 상점
-  // ── 1번 초원 (마을 동쪽) ──
-  rect(18, 38, 26, 6, 0); grass(20, 39, 8, 4); grass(32, 38, 9, 5);
-  // ── 숲 (초원 북쪽) ──
-  rect(40, 20, 24, 22, 0); grass(42, 24, 9, 7); grass(54, 30, 8, 8); grass(44, 34, 7, 6);
-  rect(40, 38, 4, 4, 0); // 초원-숲 연결
-  // ── 동굴 (북동) ──
-  rect(46, 4, 18, 12, 9); rect(48, 5, 14, 10, 8);
-  rect(52, 16, 4, 4, 8); // 숲-동굴 연결로
-  rect(52, 14, 2, 2, 8); // 동굴 남쪽 벽 개구부 (입구)
-  // ── 호수 (북서) ──
-  rect(4, 4, 34, 14, 0); rect(8, 6, 18, 8, 3); grass(28, 6, 8, 10);
-  rect(4, 18, 6, 18, 0); grass(4, 22, 5, 8); // 호수-마을 서쪽 연결로
-  // ── 화산 정상 (호수 동쪽 위, 최종) ──
-  rect(38, 2, 6, 2, 0); rect(30, 2, 8, 2, 0);
-
-  zones = [
-    { name:'🏘 시작 마을', x0:0, y0:34, x1:19, y1:47, lv:[0,0], pool:[] },
-    { name:'🌾 1번 초원', x0:18, y0:36, x1:45, y1:47, lv:[2,4], pool:['moppit','sparklit','mossbug'] },
-    { name:'🌲 미스트 숲', x0:39, y0:18, x1:67, y1:43, lv:[6,9], pool:['mossbug','leafling','moppit','sparklit'] },
-    { name:'🕳 이글 동굴', x0:44, y0:0, x1:67, y1:17, lv:[10,13], pool:['pebblun','sparklit','cinderimp'] },
-    { name:'🌊 미러 호수', x0:0, y0:0, x1:43, y1:33, lv:[12,16], pool:['dewpip','aquafin','moppit'] },
-    { name:'🌋 화산 어귀', x0:28, y0:0, x1:43, y1:5, lv:[15,18], pool:['cinderimp','flarepup','pebblun'] },
-  ];
-
-  // 관문: [x, y, 필요 배지 수, 안내]
-  gates = [
-    { x:40, y:39, need:0, label:'1번 초원 → 미스트 숲' },          // 항상 열림(안내용) — need 0
-    { x:53, y:17, need:1, label:'숲의 수호자를 이겨야 동굴에 들어갈 수 있다' },
-    { x:9,  y:34, need:2, label:'동굴의 수호자를 이겨야 호수로 갈 수 있다' },
-    { x:38, y:3,  need:3, label:'호수의 수호자를 이겨야 화산에 오를 수 있다' },
-  ];
-  gates.forEach(g => { map[g.y][g.x] = 7; });
-
-  // 수호자(보스) NPC — 배틀 승리 시 배지
-  npcs = [
-    { x:60, y:36, emoji:'🧝', name:'숲의 수호자 실바', badge:1, gold:400,
+/* ═══════════ 지역 맵 (ASCII) — # 나무 r 바위 C 동굴벽 . 길 , 꽃 g 풀숲 c 동굴 w 물 H 센터 s 상점 ═══════════ */
+const MAPS = {
+  village: {
+    name:'🏘 테이머 마을', pool:[], lv:[0,0],
+    rows:[
+      '############################',
+      '#,,..,,......,,,....##,,,..#',
+      '#..######..######....,,,,..#',
+      '#..#....#..#....#..,,......#',
+      '#..######..######..........#',
+      '#..........................#',
+      '#...H..........s...,,,.....#',
+      '#..........................#',
+      '#,,........................#',
+      '#...,,......,,.............#',
+      '#..........................#',
+      '#..........................#',
+      '#,,,....,,.........,,......#',
+      '############################',
+    ],
+    exits:[ { x:27, y:10, dir:'▸', to:'route1', tx:1, ty:8, need:0 } ],
+    npcs:[ { x:14, y:8, emoji:'👴', name:'촌장', lines:['잘 왔네, 테이머! 동쪽(▸)으로 나가면 1번 초원일세.', '🏥 몬스터센터에서 HP와 기술 PP를 회복할 수 있네.', 'X 키로 메뉴를 열어 파티 순서를 바꾸고 저장도 할 수 있지.'] } ],
+    items:[],
+  },
+  route1: {
+    name:'🌾 1번 초원', pool:['moppit','sparklit','mossbug'], lv:[2,4],
+    rows:[
+      '####################################',
+      '#,,....##....,,,......##......,,,..#',
+      '#.ggg..##..gggggg......gggg........#',
+      '#.ggg......gggggg..ww..gggg...ggg..#',
+      '#.ggggg....gg......ww.........ggg..#',
+      '#...gg............www..............#',
+      '#.........,,......ww......gggg.....#',
+      '#..###.............................#',
+      '..............H....................#',
+      '#..###..gggg............ggggg......#',
+      '#.......gggg....,,,.....ggggg.......',
+      '#.......gg..............ggg........#',
+      '#,,.........####...................#',
+      '####################################',
+    ],
+    exits:[
+      { x:0, y:8, dir:'◂', to:'village', tx:26, ty:10, need:0 },
+      { x:35, y:10, dir:'▸', to:'forest', tx:1, ty:16, need:0 },
+    ],
+    npcs:[],
+    items:[ { x:5, y:3, item:'potion' }, { x:30, y:10, item:'ball' } ],
+  },
+  forest: {
+    name:'🌲 미스트 숲', pool:['mossbug','leafling','moppit','sparklit'], lv:[6,9],
+    rows:[
+      '####################################',
+      '#....##....,,.......##.....gggg....#',
+      '#.gg.##..gggggg..##.##..gg.gggg..###',
+      '#.gg.....gggggg..##.....gg.......###',
+      '#.ggg.##.....##..##..#####..ggg....#',
+      '#.....##.gg..##......#...#..ggg....#',
+      '#..##.....gg.##..###.#.H.#.........#',
+      '#..##..##.....#..###.#...#.###.....#',
+      '#......##.ggg.......................',
+      '#.####.....ggg..##.....##..###..gg.#',
+      '#.#..#..##......##.gg..##.......gg.#',
+      '#.#..#..##..gg..##.gg......##......#',
+      '#.####......gg........###..##..,,..#',
+      '#........##.....gggg..###..........#',
+      '#..gggg..##..,,.gggg........##.....#',
+      '#..gggg......,,.......##....##..gg.#',
+      '......gg....##........##........gg.#',
+      '#........##....................,,..#',
+      '####################################',
+    ],
+    exits:[
+      { x:0, y:16, dir:'◂', to:'route1', tx:34, ty:10, need:0 },
+      { x:35, y:8, dir:'▸', to:'cave', tx:1, ty:9, need:1 },
+    ],
+    npcs:[ { x:24, y:13, emoji:'🧝', name:'숲의 수호자 실바', badge:1, gold:400,
       party:[{ id:'leafling', lv:9 }, { id:'mossbug', lv:10 }],
-      lines:['이 숲의 몬스터들이 네 실력을 시험할 것이다.', '숲의 수호자 실바가 승부를 걸어왔다!'] },
-    { x:56, y:6, emoji:'⛏', name:'동굴의 수호자 록', badge:2, gold:800,
+      lines:['이 숲의 몬스터들이 네 실력을 시험할 것이다.', '숲의 수호자 실바가 승부를 걸어왔다!'] } ],
+    items:[ { x:32, y:4, item:'superpotion' }, { x:13, y:11, item:'greatball' }, { x:4, y:14, item:'ether' } ],
+  },
+  cave: {
+    name:'🕳 이글 동굴', pool:['pebblun','sparklit','cinderimp'], lv:[10,13],
+    rows:[
+      'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+      'CccccCCCCcccccccCCCCCcccccccccxC'.replaceAll('x','c'),
+      'Ccc..cccccc.ccccccc..ccccCCCcccC',
+      'CccC.CCCCcc.CCCCCcc.CCCcc...cccC',
+      'Ccc..cc..cc......cc.Ccccc.H.cccC',
+      'Cc.cccc..cccccCC.cc.Ccccc...cccC',
+      'Cc.CCCCC.CCCCcCC.cc..cccccccccxC'.replaceAll('x','c'),
+      'Cc.......cccccCC.ccC.CCCCCCCCccC',
+      'CcCCCCCC.cccccCC.ccC.ccccccccccC',
+      '..cccccc.cccccCC....ccccCCCCCccC',
+      'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC',
+    ],
+    exits:[
+      { x:0, y:9, dir:'◂', to:'forest', tx:34, ty:8, need:0 },
+      { x:31, y:1, dir:'▸', to:'lake', tx:34, ty:9, need:2 },
+    ],
+    npcs:[ { x:22, y:8, emoji:'⛏', name:'동굴의 수호자 록', badge:2, gold:800,
       party:[{ id:'pebblun', lv:13 }, { id:'sparklit', lv:12 }, { id:'pebblun', lv:14 }],
-      lines:['바위는 불꽃을 삼킨다. 각오는 됐나?', '동굴의 수호자 록이 승부를 걸어왔다!'] },
-    { x:30, y:9, emoji:'🧜', name:'호수의 수호자 마리나', badge:3, gold:1500,
+      lines:['바위는 불꽃을 삼킨다. 각오는 됐나?', '동굴의 수호자 록이 승부를 걸어왔다!'] } ],
+    items:[ { x:7, y:4, item:'superpotion' }, { x:29, y:2, item:'greatball' }, { x:13, y:8, item:'ether' } ],
+  },
+  lake: {
+    name:'🌊 미러 호수', pool:['dewpip','aquafin','moppit'], lv:[12,16],
+    rows:[
+      '####################################',
+      '#,,......gggg...........,,,........#',
+      '#........gggg......................#',
+      '#..wwwwwwwwwwwwwwwww....ggggg......#',
+      '#..wwwwwwwwwwwwwwwwwww..ggggg......#',
+      '#..wwwwwwwwwwwwwwwwwww.............#',
+      '#..wwwwwwwwwwwwwwwwwww......H......#',
+      '#..wwwwwwwwwwwwwwwww...............#',
+      '#....wwwwwwwwwwwww.......gggg......#',
+      '#........................gggg.......',
+      '#..ggggg...........,,....gg........#',
+      '#..ggggg..,,,......................#',
+      '#..ggg.............................#',
+      '####################################',
+    ],
+    exits:[
+      { x:35, y:9, dir:'▸', to:'cave', tx:30, ty:1, need:0 },
+      { x:20, y:0, dir:'▴', to:'volcano', tx:13, ty:11, need:3 },
+    ],
+    npcs:[ { x:27, y:4, emoji:'🧜', name:'호수의 수호자 마리나', badge:3, gold:1500,
       party:[{ id:'dewpip', lv:15 }, { id:'aquafin', lv:16 }, { id:'aquarex', lv:17 }],
-      lines:['호수의 깊이를 아는 자만이 화산에 오른다.', '호수의 수호자 마리나가 승부를 걸어왔다!'] },
-    { x:31, y:2, emoji:'👑', name:'챔피언 이그니스', badge:4, gold:5000,
-      party:[{ id:'cinderimp', lv:18 }, { id:'boulder_ph', lv:0 }, { id:'flarehound', lv:20 }].filter(m => DEX[m.id]),
-      lines:['여기까지 온 테이머는 오랜만이군. 전력으로 상대해주지!', '챔피언 이그니스와의 최종 결전!'] },
-    { x:7, y:41, emoji:'👴', name:'촌장', lines:['동쪽 초원부터 시작하게. 풀숲을 꾹 밟으며 걸으면 몬스터가 나온다네.', '수호자 4명을 모두 이기면 자네가 챔피언일세.'] },
-  ];
-
-  itemSpots = [
-    { x:24, y:40, item:'potion' }, { x:37, y:39, item:'ball' },
-    { x:47, y:26, item:'potion' }, { x:58, y:33, item:'greatball' }, { x:45, y:40, item:'superpotion' },
-    { x:50, y:7, item:'superpotion' }, { x:61, y:12, item:'greatball' },
-    { x:30, y:12, item:'superpotion' }, { x:34, y:8, item:'greatball' }, { x:6, y:24, item:'potion' },
-  ];
-  itemSpots.forEach(s => { map[s.y][s.x] = 6; });
+      lines:['호수의 깊이를 아는 자만이 화산에 오른다.', '호수의 수호자 마리나가 승부를 걸어왔다!'] } ],
+    items:[ { x:30, y:11, item:'superpotion' }, { x:5, y:11, item:'ether' }, { x:12, y:1, item:'greatball' } ],
+  },
+  volcano: {
+    name:'🌋 이그니스 화산', pool:['cinderimp','flarepup','pebblun'], lv:[15,18],
+    rows:[
+      'rrrrrrrrrrrrrrrrrrrrrrrrrrrr',
+      'rcc.....ccc....ccc......ccrr',
+      'rc..rrr.....rr.....rrr...crr',
+      'rc.rrccc.gg.rr.ggg.rrrc..crr',
+      'rc.rrccc.gg.rr.ggg...rc..crr',
+      'rc.rr....cc.rr.....rrrc..crr',
+      'rc.rrrrr.cc.rrrrrr.rrrc..crr',
+      'rc.......cc........H..c..crr',
+      'rccrrrrrrrrrrrrrrrrrrrc..crr',
+      'rcc.gg....ccc...gg.......crr',
+      'rrc.gg.rr.ccc.r.gg.rr.rrrcrr',
+      'rrc....rr.....r....rr....crr',
+      'rrrrrrrrrrrrrrrrrrrrrrrrrrrr',
+    ],
+    exits:[ { x:13, y:12, dir:'▾', to:'lake', tx:20, ty:1, need:0 } ],
+    npcs:[ { x:5, y:1, emoji:'👑', name:'챔피언 이그니스', badge:4, gold:5000,
+      party:[{ id:'cinderimp', lv:18 }, { id:'flarehound', lv:20 }],
+      lines:['여기까지 온 테이머는 오랜만이군. 전력으로 상대해주지!', '챔피언 이그니스와의 최종 결전!'] } ],
+    items:[ { x:24, y:9, item:'superpotion' } ],
+  },
+};
+// exit 위치는 열린 타일로 강제
+for (const m of Object.values(MAPS)) {
+  m.grid = m.rows.map(r => r.split(''));
+  const W = Math.max(...m.grid.map(r => r.length));
+  m.grid.forEach(r => { while (r.length < W) r.push(m === MAPS.cave ? 'C' : '#'); });
+  m.W = W; m.H = m.grid.length;
+  m.exits.forEach(e => { m.grid[e.y][e.x] = '.'; });
+  m.items.forEach(s => { m.grid[s.y][s.x] = '.'; });
 }
-const zoneAt = (x, y) => zones.findLast(z => x >= z.x0 && x <= z.x1 && y >= z.y0 && y <= z.y1) || zones[0];
+const WALKABLE = new Set(['.', ',', 'g', 'c', 'H', 's']);
 
-/* ═══════════ 플랫폼 연동 (클라우드/로컬 세이브 + 이어하기) ═══════════ */
+/* ═══════════ 플랫폼 연동 (세이브) ═══════════ */
 const token = () => localStorage.getItem('portal_access_token');
 function deviceId() {
   let id = localStorage.getItem('kgd_device_id');
@@ -256,115 +378,159 @@ async function api(path, opt = {}) {
   if (!res.ok || !body || body.success === false) throw new Error(body?.error?.code || res.status);
   return body.data;
 }
-let saveVersion = 0, cloud = false;
-const LOCAL_KEY = 'monster_tamer_save_v2';
+let saveVersion = 0, cloud = false, lastSavedAt = null;
+const LOCAL_KEY = 'monster_tamer_save_v3';
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg; el.style.opacity = 1;
+  clearTimeout(toast._t); toast._t = setTimeout(() => { el.style.opacity = 0; }, 1600);
+}
 async function loadSave() {
   if (token()) {
     try {
       const s = await api('/save');
       cloud = true; saveVersion = s.version;
       $('saveStatus').textContent = '☁ 클라우드 세이브 (v' + saveVersion + ')';
-      return s.data && s.data.v === 2 ? s.data : null;
+      return s.data && s.data.v === 3 ? s.data : null;
     } catch (e) {
       $('saveStatus').textContent = e.message === 'FORBIDDEN' ? '⚠ 다른 기기에서 세이브 사용 중' : '세이브 로드 실패: ' + e.message;
       return null;
     }
   }
   $('saveStatus').textContent = '게스트 모드 — 이 브라우저에만 저장 (로그인 시 클라우드 세이브)';
-  try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); return d && d.v === 2 ? d : null; } catch (_) { return null; }
+  try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); return d && d.v === 3 ? d : null; } catch (_) { return null; }
 }
-async function persist() {
-  const data = { v:2, party:S.party, dex:[...S.dex], items:S.items, gold:S.gold, badges:S.badges, pos:{ x:S.x, y:S.y } };
-  if (!cloud) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); return; }
+async function persist(silent) {
+  const data = { v:3, party:S.party, dex:[...S.dex], items:S.items, gold:S.gold, badges:S.badges,
+    map:S.map, pos:{ x:P.tx, y:P.ty }, taken:S.taken };
+  lastSavedAt = new Date();
+  if (!cloud) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); if (!silent) toast('💾 저장됨 (브라우저)'); return; }
   try {
     const s = await api('/save', { method:'PUT', body:JSON.stringify({ data, version:saveVersion }) });
     saveVersion = s.version;
+    if (!silent) toast('☁ 저장됨 (v' + saveVersion + ')');
   } catch (e) {
     if (e.message === 'INVALID_INPUT') { const re = await api('/save'); saveVersion = re.version; }
+    else if (!silent) toast('저장 실패: ' + e.message);
   }
 }
 
 /* ═══════════ 상태 ═══════════ */
 const S = {
-  mode:'title', x:8, y:41, dir:[0,1],
+  mode:'title', map:'village',
   party:[], dex:new Set(), gold:500, badges:[],
-  items:{ potion:2, superpotion:0, ball:5, greatball:0 },
-  stepCool:0,
+  items:{ potion:2, superpotion:0, ether:1, ball:5, greatball:0 },
+  taken:{}, // 맵별 획득한 아이템 인덱스
 };
+const P = { tx:5, ty:8, px:0, py:0, dir:[0,1], moving:false, prog:0, turnT:0 };
+const curMap = () => MAPS[S.map];
+const tileAt = (x, y) => curMap().grid[y]?.[x];
 
-/* ═══════════ 이동 — 키 홀드 + rAF 루프 ═══════════ */
-const held = new Set();
+/* ═══════════ 이동 — 픽셀 보간 + 방향 전환 후 이동 ═══════════ */
+const held = [];
 const KEYMAP = { ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0], w:[0,-1], s:[0,1], a:[-1,0], d:[1,0] };
 addEventListener('keydown', ev => {
   const k = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key;
-  if (KEYMAP[k]) { ev.preventDefault(); held.add(k); }
-  if ((ev.key === 'z' || ev.key === 'Z' || ev.key === 'Enter') && S.mode === 'world') interact();
-  if ((ev.key === 'z' || ev.key === 'Z' || ev.key === 'Enter') && S.mode === 'dialog') advanceDialog();
+  if (KEYMAP[k]) { ev.preventDefault(); if (!held.includes(k)) held.unshift(k); }
+  if ((ev.key === 'z' || ev.key === 'Z' || ev.key === 'Enter')) {
+    if (S.mode === 'world') interact();
+    else if (S.mode === 'dialog') advanceDialog();
+  }
+  if ((ev.key === 'x' || ev.key === 'X' || ev.key === 'Escape')) {
+    if (S.mode === 'world') openMenu();
+    else if (S.mode === 'menu') closeMenu();
+  }
 });
 addEventListener('keyup', ev => {
   const k = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key;
-  held.delete(k);
+  const i = held.indexOf(k); if (i >= 0) held.splice(i, 1);
 });
-addEventListener('blur', () => held.clear());
+addEventListener('blur', () => { held.length = 0; });
 
-const STEP_MS = 145;
-let last = 0;
+const MOVE_MS = 190, TURN_MS = 70;
+let last = performance.now();
 function loop(ts) {
   requestAnimationFrame(loop);
-  const dt = ts - last; last = ts;
-  if (S.mode !== 'world') return;
-  S.stepCool -= dt;
-  if (S.stepCool <= 0) {
-    for (const k of held) { // 마지막으로 누른 키 우선
-      const d = KEYMAP[k];
-      if (d) { step(d[0], d[1]); S.stepCool = STEP_MS; break; }
-    }
-  }
+  const dt = Math.min(50, ts - last); last = ts;
+  if (S.mode !== 'world' && S.mode !== 'dialog') return;
+  if (S.mode === 'world') updateMove(dt);
+  draw();
 }
 requestAnimationFrame(loop);
 
-function step(dx, dy) {
-  S.dir = [dx, dy];
-  const nx = S.x + dx, ny = S.y + dy;
-  const t = map[ny]?.[nx];
-  if (t === undefined) return;
-  if (npcs.some(n => n.x === nx && n.y === ny)) { draw(); return; } // NPC 는 Z 로 대화
-  if (t === 7) { // 관문
-    const g = gates.find(g => g.x === nx && g.y === ny);
-    if (g && S.badges.length < g.need) { showDialog(['🚧 ' + g.label + ' (배지 ' + g.need + '개 필요, 현재 ' + S.badges.length + ')']); return; }
-    S.x = nx; S.y = ny; afterStep(); return;
+function updateMove(dt) {
+  if (P.moving) {
+    P.prog += dt / MOVE_MS;
+    if (P.prog >= 1) {
+      P.prog = 0; P.moving = false;
+      P.tx = P.ntx; P.ty = P.nty;
+      arrive();
+      if (S.mode === 'world') tryStep(); // 홀드 시 끊김 없이 연속 이동
+    }
+  } else {
+    if (P.turnT > 0) { P.turnT -= dt; return; }
+    tryStep();
   }
-  if (!TILE_WALK.has(t)) return;
-  S.x = nx; S.y = ny;
-  afterStep();
 }
-function afterStep() {
-  const t = map[S.y][S.x];
-  if (t === 4) { S.party.forEach(m => { m.hp = m.maxHp; }); showDialog(['🛏 파티가 모두 회복되었다!']); persist(); }
-  else if (t === 5) { openShop(); }
-  else if (t === 6) {
-    const spot = itemSpots.find(s => s.x === S.x && s.y === S.y && !s.taken);
-    if (spot) { spot.taken = true; map[S.y][S.x] = 0; S.items[spot.item] = (S.items[spot.item] || 0) + 1; showDialog(['💊 ' + ITEMS[spot.item].name + ' 을(를) 손에 넣었다!']); persist(); }
-  } else if (t === 1 || t === 8) {
-    const z = zoneAt(S.x, S.y);
-    if (z.pool.length && rand() < (t === 8 ? 0.10 : 0.13) && S.party.some(m => m.hp > 0)) { startWild(z); return; }
+function tryStep() {
+  const k = held.find(k => KEYMAP[k]);
+  if (!k) return;
+  const d = KEYMAP[k];
+  if (P.dir[0] !== d[0] || P.dir[1] !== d[1]) { P.dir = d; P.turnT = TURN_MS; return; } // 먼저 방향 전환
+  const nx = P.tx + d[0], ny = P.ty + d[1];
+  const m = curMap();
+  const ex = m.exits.find(e => e.x === nx && e.y === ny);
+  if (ex && S.badges.length < ex.need) { showDialog(['🚧 배지 ' + ex.need + '개가 필요하다. (현재 ' + S.badges.length + ')']); return; }
+  if (m.npcs.some(n => n.x === nx && n.y === ny && !(n.badge && S.badges.includes(n.badge)))) return;
+  const t = tileAt(nx, ny);
+  if (t === undefined || !WALKABLE.has(t)) return;
+  P.ntx = nx; P.nty = ny; P.moving = true; P.prog = 0;
+}
+function arrive() {
+  const m = curMap();
+  const ex = m.exits.find(e => e.x === P.tx && e.y === P.ty);
+  if (ex) { transition(ex); return; }
+  const t = tileAt(P.tx, P.ty);
+  if (t === 'H') {
+    S.party.forEach(fullRest);
+    showDialog(['🏥 몬스터센터: 파티의 HP와 PP가 모두 회복되었습니다!']);
+    persist(true); hud();
+    return;
   }
-  draw(); hud();
+  if (t === 's') { openShop(); return; }
+  const spotIdx = m.items.findIndex(s => s.x === P.tx && s.y === P.ty);
+  if (spotIdx >= 0 && !(S.taken[S.map] || []).includes(spotIdx)) {
+    (S.taken[S.map] = S.taken[S.map] || []).push(spotIdx);
+    const it = m.items[spotIdx].item;
+    S.items[it] = (S.items[it] || 0) + 1;
+    showDialog(['💊 ' + ITEMS[it].name + ' 을(를) 손에 넣었다!']);
+    persist(true);
+    return;
+  }
+  if ((t === 'g' || t === 'c') && m.pool.length && rand() < (t === 'c' ? 0.10 : 0.12) && S.party.some(x => x.hp > 0)) {
+    startWild(m);
+  }
+  hud();
+}
+function transition(ex) {
+  S.map = ex.to;
+  P.tx = ex.tx; P.ty = ex.ty; P.moving = false; P.prog = 0;
+  toast('➜ ' + curMap().name);
+  persist(true); hud();
 }
 function interact() {
-  const [dx, dy] = S.dir;
-  const n = npcs.find(n => (n.x === S.x + dx && n.y === S.y + dy) || (n.x === S.x && n.y === S.y));
+  const m = curMap();
+  const fx = P.tx + P.dir[0], fy = P.ty + P.dir[1];
+  const n = m.npcs.find(n => (n.x === fx && n.y === fy) || (n.x === P.tx && n.y === P.ty));
   if (!n) return;
   if (n.badge && S.badges.includes(n.badge)) { showDialog([n.name + ': 훌륭한 승부였다. 앞으로 나아가라!']); return; }
-  if (n.badge) {
-    showDialog([n.lines[0], n.lines[1]], () => startTrainer(n));
-  } else showDialog(n.lines);
+  if (n.badge) showDialog([n.lines[0], n.lines[1]], () => startTrainer(n));
+  else showDialog(n.lines);
 }
 
 /* ═══════════ 다이얼로그 ═══════════ */
-let dialogQueue = [], dialogDone = null, prevMode = 'world';
+let dialogQueue = [], dialogDone = null;
 function showDialog(lines, done) {
-  prevMode = S.mode === 'dialog' ? prevMode : S.mode;
   dialogQueue = [...lines]; dialogDone = done || null;
   S.mode = 'dialog';
   $('dialog').hidden = false;
@@ -373,32 +539,125 @@ function showDialog(lines, done) {
 function advanceDialog() {
   if (dialogQueue.length) { $('dialogText').textContent = dialogQueue.shift(); return; }
   $('dialog').hidden = true;
-  S.mode = prevMode === 'dialog' ? 'world' : prevMode;
   const cb = dialogDone; dialogDone = null;
-  if (cb) cb(); else { S.mode = 'world'; draw(); hud(); }
+  S.mode = 'world';
+  if (cb) cb();
+  hud();
+}
+
+/* ═══════════ 오버월드 메뉴 — 몬스터(순서/상태) · 가방 · 저장 ═══════════ */
+let menuTab = 'party', reorderIdx = -1;
+function openMenu() { S.mode = 'menu'; menuTab = 'party'; reorderIdx = -1; $('menu').classList.add('on'); renderMenu(); }
+function closeMenu() { $('menu').classList.remove('on'); S.mode = 'world'; hud(); }
+$('menuClose').onclick = closeMenu;
+$('tabParty').onclick = () => { menuTab = 'party'; reorderIdx = -1; renderMenu(); };
+$('tabBag').onclick = () => { menuTab = 'bag'; renderMenu(); };
+$('tabSave').onclick = () => { menuTab = 'save'; renderMenu(); };
+function tabStyle() {
+  $('tabParty').className = menuTab === 'party' ? '' : 'ghost';
+  $('tabBag').className = menuTab === 'bag' ? '' : 'ghost';
+  $('tabSave').className = menuTab === 'save' ? '' : 'ghost';
+}
+function renderMenu() {
+  tabStyle();
+  const body = $('menuBody'); body.innerHTML = '';
+  if (menuTab === 'party') {
+    const hint = document.createElement('p');
+    hint.style.cssText = 'font-size:11px;color:#8a93a8';
+    hint.textContent = reorderIdx < 0 ? '[순서] 를 누른 뒤 바꿀 위치의 몬스터를 선택하세요. 맨 위가 선봉입니다.' : '어느 몬스터와 자리를 바꿀까요?';
+    body.appendChild(hint);
+    S.party.forEach((m, i) => {
+      const row = document.createElement('div');
+      row.className = 'menuRow' + (i === reorderIdx ? ' sel' : '');
+      const moves = m.moves.map(mv => MOVES[mv.id].name + ' ' + mv.pp + '/' + mv.maxPp).join(' · ');
+      row.innerHTML = '<span style="font-size:24px">' + DEX[m.id].emoji + '</span>' +
+        '<span class="grow"><b>' + DEX[m.id].name + '</b> Lv.' + m.lv + ' — HP ' + m.hp + '/' + m.maxHp +
+        ' · EXP ' + m.exp + '/' + (m.lv * 22) +
+        '<small>' + DEX[m.id].type + ' · ATK ' + m.atk + ' DEF ' + m.def + ' SPD ' + m.spd + '</small>' +
+        '<small>' + moves + '</small></span>';
+      const btn = document.createElement('button');
+      if (reorderIdx < 0) { btn.textContent = '순서'; btn.onclick = () => { reorderIdx = i; renderMenu(); }; }
+      else { btn.textContent = i === reorderIdx ? '취소' : '여기로'; btn.onclick = () => {
+        if (i !== reorderIdx) { const t = S.party[i]; S.party[i] = S.party[reorderIdx]; S.party[reorderIdx] = t; persist(true); }
+        reorderIdx = -1; renderMenu();
+      }; }
+      row.appendChild(btn); body.appendChild(row);
+    });
+  } else if (menuTab === 'bag') {
+    for (const [key, it] of Object.entries(ITEMS)) {
+      const n = S.items[key] || 0;
+      const row = document.createElement('div');
+      row.className = 'menuRow';
+      row.innerHTML = '<span style="font-size:20px">' + it.emoji + '</span><span class="grow"><b>' + it.name + '</b> × ' + n + '<small>' + it.desc + '</small></span>';
+      if ((key === 'potion' || key === 'superpotion' || key === 'ether') && n > 0) {
+        const b = document.createElement('button'); b.textContent = '사용';
+        b.onclick = () => useItemMenu(key);
+        row.appendChild(b);
+      }
+      body.appendChild(row);
+    }
+  } else {
+    const rows = [
+      ['저장 위치', cloud ? '☁ 클라우드 (서버, 기기 간 공유)' : '이 브라우저 (로그인하면 클라우드로 전환)'],
+      ['마지막 저장', lastSavedAt ? lastSavedAt.toLocaleTimeString() : '아직 없음'],
+      ['자동 저장', '지역 이동 · 배틀 종료 · 센터 회복 · 아이템 획득 시'],
+    ];
+    for (const [k, v] of rows) {
+      const row = document.createElement('div'); row.className = 'menuRow';
+      row.innerHTML = '<span class="grow"><b>' + k + '</b><small>' + v + '</small></span>';
+      body.appendChild(row);
+    }
+    const b = document.createElement('button'); b.textContent = '💾 지금 저장';
+    b.onclick = () => { persist(false); renderMenu(); };
+    body.appendChild(b);
+  }
+}
+function useItemMenu(key) {
+  const body = $('menuBody'); body.innerHTML = '';
+  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = '← 가방으로';
+  back.onclick = () => renderMenu();
+  body.appendChild(back);
+  S.party.forEach(m => {
+    const row = document.createElement('div'); row.className = 'menuRow';
+    row.innerHTML = '<span style="font-size:22px">' + DEX[m.id].emoji + '</span><span class="grow"><b>' + DEX[m.id].name + '</b> HP ' + m.hp + '/' + m.maxHp + '</span>';
+    if (key === 'ether') {
+      m.moves.forEach(mv => {
+        const b = document.createElement('button');
+        b.textContent = MOVES[mv.id].name + ' ' + mv.pp + '/' + mv.maxPp;
+        b.disabled = mv.pp >= mv.maxPp;
+        b.onclick = () => { mv.pp = Math.min(mv.maxPp, mv.pp + 10); S.items[key]--; toast('PP +10'); persist(true); renderMenu(); };
+        row.appendChild(b);
+      });
+    } else {
+      const b = document.createElement('button'); b.textContent = '회복';
+      b.disabled = m.hp >= m.maxHp || m.hp <= 0;
+      b.onclick = () => {
+        m.hp = Math.min(m.maxHp, m.hp + (key === 'superpotion' ? 60 : 25));
+        S.items[key]--; toast(ITEMS[key].name + ' 사용'); persist(true); renderMenu();
+      };
+      row.appendChild(b);
+    }
+    body.appendChild(row);
+  });
 }
 
 /* ═══════════ 상점 ═══════════ */
-function openShop() {
-  S.mode = 'shop';
-  $('shop').classList.add('on');
-  renderShop();
-}
+function openShop() { S.mode = 'shop'; $('shop').classList.add('on'); renderShop(); }
 function renderShop() {
   const rows = $('shopRows'); rows.innerHTML = '';
   for (const [key, it] of Object.entries(ITEMS)) {
-    const row = document.createElement('div'); row.className = 'shopRow';
-    row.innerHTML = '<span>' + it.emoji + ' ' + it.name + ' <small style="color:#8a93a8">' + it.desc + '</small></span><span>' + it.price + 'G</span>';
+    const row = document.createElement('div'); row.className = 'menuRow';
+    row.innerHTML = '<span>' + it.emoji + ' ' + it.name + ' <small>' + it.desc + '</small></span><span>' + it.price + 'G</span>';
     const b = document.createElement('button'); b.textContent = '구매 (보유 ' + (S.items[key] || 0) + ')';
     b.disabled = S.gold < it.price;
-    b.onclick = () => { S.gold -= it.price; S.items[key] = (S.items[key] || 0) + 1; hud(); renderShop(); persist(); };
+    b.onclick = () => { S.gold -= it.price; S.items[key] = (S.items[key] || 0) + 1; hud(); renderShop(); persist(true); };
     row.appendChild(b); rows.appendChild(row);
   }
   $('shopGold').textContent = '💰 ' + S.gold + 'G';
 }
-$('shopClose').onclick = () => { $('shop').classList.remove('on'); S.mode = 'world'; S.y += 1; draw(); };
+$('shopClose').onclick = () => { $('shop').classList.remove('on'); S.mode = 'world'; P.ty += 1; };
 
-/* ═══════════ 배틀 ═══════════ */
+/* ═══════════ 배틀 (PP + 경험치 셰어) ═══════════ */
 let B = null;
 function dmg(a, d, move) {
   if (rand() * 100 >= move.acc) return 0;
@@ -408,10 +667,10 @@ function dmg(a, d, move) {
   v = Math.floor(v * (85 + ri(16)) / 100);
   return Math.max(v, 1);
 }
-function firstAlive() { return S.party.find(m => m.hp > 0); }
-function startWild(zone) {
-  const id = zone.pool[ri(zone.pool.length)];
-  const lv = zone.lv[0] + ri(zone.lv[1] - zone.lv[0] + 1);
+const firstAlive = () => S.party.find(m => m.hp > 0);
+function startWild(m) {
+  const id = m.pool[ri(m.pool.length)];
+  const lv = m.lv[0] + ri(m.lv[1] - m.lv[0] + 1);
   B = { my:firstAlive(), foe:mkMon(id, lv), wild:true, over:false, menu:'root' };
   S.mode = 'battle';
   $('battle').classList.add('on');
@@ -427,7 +686,14 @@ function startTrainer(npc) {
   renderBattle();
 }
 function log(t) { $('bLog').textContent = t; }
-function hpPct(m) { return Math.max(0, m.hp / m.maxHp * 100); }
+const hpPct = m => Math.max(0, m.hp / m.maxHp * 100);
+function pickMove(m) { // 사용할 기술 (PP 소진 시 발버둥)
+  const usable = m.moves.filter(mv => mv.pp > 0);
+  if (!usable.length) return { ...MOVES.struggle, _struggle:true };
+  const mv = usable[ri(usable.length)];
+  mv.pp -= 1;
+  return MOVES[mv.id];
+}
 function renderBattle() {
   const { my, foe } = B;
   $('mySprite').textContent = DEX[my.id].emoji;
@@ -437,8 +703,9 @@ function renderBattle() {
   $('myLabel').textContent = DEX[my.id].name + ' Lv.' + my.lv + ' (' + my.hp + '/' + my.maxHp + ')';
   $('foeLabel').textContent = DEX[foe.id].name + ' Lv.' + foe.lv + (B.wild ? '' : ' [' + B.trainer.name + ']');
   const btns = $('bBtns'); btns.innerHTML = '';
-  const add = (label, fn, disabled, sub) => {
+  const add = (label, fn, disabled, sub, ghost) => {
     const b = document.createElement('button');
+    if (ghost) b.className = 'ghost';
     b.innerHTML = label + (sub ? '<small>' + sub + '</small>' : '');
     b.disabled = !!disabled; b.onclick = fn; btns.appendChild(b); return b;
   };
@@ -449,27 +716,30 @@ function renderBattle() {
     add('🔁 몬스터', () => { B.menu = 'party'; renderBattle(); });
     add('🏃 도주', tryRun, !B.wild, B.wild ? '' : '트레이너전');
   } else if (B.menu === 'fight') {
-    B.my.moves.forEach(mid => {
-      const mv = MOVES[mid];
-      add(mv.name, () => turn({ kind:'move', move:mv }), false, mv.type + ' ' + mv.power);
+    const noPp = B.my.moves.every(mv => mv.pp <= 0);
+    B.my.moves.forEach(mv => {
+      const def = MOVES[mv.id];
+      add(def.name, () => turn({ kind:'move', slot:mv }), mv.pp <= 0, def.type + ' ' + def.power + ' · PP ' + mv.pp + '/' + mv.maxPp);
     });
-    add('← 돌아가기', () => { B.menu = 'root'; renderBattle(); });
+    if (noPp) add('발버둥', () => turn({ kind:'move', slot:null }), false, 'PP 소진 시 사용');
+    add('← 돌아가기', () => { B.menu = 'root'; renderBattle(); }, false, '', true);
   } else if (B.menu === 'bag') {
     for (const [key, it] of Object.entries(ITEMS)) {
       const n = S.items[key] || 0;
       const isBall = key === 'ball' || key === 'greatball';
+      if (key === 'ether') continue; // 에테르는 오버월드 메뉴에서
       add(it.emoji + ' ' + it.name, () => turn({ kind:isBall ? 'ball' : 'heal', item:key }), n <= 0 || (isBall && !B.wild), '보유 ' + n + (isBall && !B.wild ? ' · 야생 전용' : ''));
     }
-    add('← 돌아가기', () => { B.menu = 'root'; renderBattle(); });
+    add('← 돌아가기', () => { B.menu = 'root'; renderBattle(); }, false, '', true);
   } else if (B.menu === 'party') {
     S.party.forEach(m => {
       add(DEX[m.id].emoji + ' ' + DEX[m.id].name, () => turn({ kind:'switch', to:m }), m === B.my || m.hp <= 0, 'Lv.' + m.lv + ' ' + m.hp + '/' + m.maxHp);
     });
-    add('← 돌아가기', () => { B.menu = 'root'; renderBattle(); });
+    add('← 돌아가기', () => { B.menu = 'root'; renderBattle(); }, false, '', true);
   }
 }
 function foeStrike() {
-  const foeMove = MOVES[B.foe.moves[ri(B.foe.moves.length)]];
+  const foeMove = pickMove(B.foe);
   const v = dmg(B.foe, B.my, foeMove);
   B.my.hp = Math.max(0, B.my.hp - v);
   if (B.my.hp <= 0) {
@@ -506,30 +776,36 @@ function turn(action) {
     log('가랏, ' + DEX[B.my.id].name + '!');
     foeStrike(); renderBattle(); return;
   }
-  // move — 속도순
-  const myFirst = my.spd >= foe.spd;
-  const acts = myFirst ? ['my', 'foe'] : ['foe', 'my'];
+  // move
+  let myMove;
+  if (action.slot) { action.slot.pp -= 1; myMove = MOVES[action.slot.id]; }
+  else myMove = MOVES.struggle;
+  const acts = my.spd >= foe.spd ? ['my', 'foe'] : ['foe', 'my'];
   for (const side of acts) {
     if (B.over || my.hp <= 0 || foe.hp <= 0) break;
     if (side === 'my') {
-      const v = dmg(my, foe, action.move);
+      const v = dmg(my, foe, myMove);
       foe.hp = Math.max(0, foe.hp - v);
-      log(v > 0 ? DEX[my.id].name + '의 ' + action.move.name + '! ' + v + ' 데미지' + (mult(action.move.type, DEX[foe.id].type) > 100 ? ' — 효과가 굉장했다!' : mult(action.move.type, DEX[foe.id].type) < 100 ? ' — 효과가 별로였다…' : '') : DEX[my.id].name + '의 공격이 빗나갔다!');
+      log(v > 0 ? DEX[my.id].name + '의 ' + myMove.name + '! ' + v + ' 데미지' + (mult(myMove.type, DEX[foe.id].type) > 100 ? ' — 효과가 굉장했다!' : mult(myMove.type, DEX[foe.id].type) < 100 ? ' — 효과가 별로였다…' : '') : DEX[my.id].name + '의 공격이 빗나갔다!');
       if (foe.hp <= 0) winFoe();
     } else foeStrike();
   }
-  if (!B.over && my.hp > 0 && foe.hp <= 0) { /* winFoe 처리됨 */ }
   renderBattle();
 }
 function winFoe() {
-  const gained = 14 + B.foe.lv * 5;
+  const base = 14 + B.foe.lv * 5;
   const goldGained = B.wild ? 10 + B.foe.lv * 3 : 0;
-  B.my.exp += gained; S.gold += goldGained;
-  let msg = DEX[B.foe.id].name + ' 을(를) 쓰러뜨렸다! EXP +' + gained + (goldGained ? ', 💰+' + goldGained : '');
-  msg += levelCheck(B.my);
+  S.gold += goldGained;
+  let msg = DEX[B.foe.id].name + ' 격파! EXP +' + base + (goldGained ? ', 💰+' + goldGained : '');
+  // 경험치 셰어 — 선두(전투 참가) 100%, 나머지 생존 파티 50%
+  for (const m of S.party) {
+    if (m.hp <= 0) continue;
+    m.exp += m === B.my ? base : Math.floor(base / 2);
+    msg += levelCheck(m);
+  }
   if (!B.wild && B.queue.length) {
     B.foe = B.queue.shift();
-    msg += ' — ' + B.trainer.name + ' 이(가) ' + DEX[B.foe.id].name + ' 을(를) 내보냈다!';
+    msg += ' — ' + B.trainer.name + ' 의 ' + DEX[B.foe.id].name + ' 등장!';
     log(msg); return;
   }
   if (!B.wild) {
@@ -545,29 +821,30 @@ function levelCheck(m) {
     m.exp -= m.lv * 22; m.lv += 1;
     const st = statOf(DEX[m.id], m.lv);
     const gain = st.maxHp - m.maxHp;
-    Object.assign(m, st); m.hp = Math.min(st.maxHp, m.hp + gain);
-    msg += ' ⬆ Lv.' + m.lv + '!';
-    const newMoves = movesAt(m.id, m.lv);
-    const learned = newMoves.find(x => !m.moves.includes(x));
-    m.moves = newMoves;
-    if (learned) msg += ' ✨' + MOVES[learned].name + ' 습득!';
-    const base = DEX[m.id];
-    if (base.evolveTo && m.lv >= base.evolveLv) {
+    Object.assign(m, { maxHp:st.maxHp, atk:st.atk, def:st.def, spd:st.spd });
+    m.hp = Math.min(st.maxHp, m.hp + gain);
+    msg += ' ⬆' + DEX[m.id].name + ' Lv.' + m.lv;
+    const before = m.moves.map(x => x.id);
+    syncMoves(m);
+    const learned = m.moves.find(x => !before.includes(x.id));
+    if (learned) msg += ' ✨' + MOVES[learned.id].name;
+    const baseDef = DEX[m.id];
+    if (baseDef.evolveTo && m.lv >= baseDef.evolveLv) {
       const ratio = m.hp / m.maxHp;
-      m.id = base.evolveTo;
+      m.id = baseDef.evolveTo;
       const est = statOf(DEX[m.id], m.lv);
-      Object.assign(m, est); m.hp = Math.max(1, Math.floor(est.maxHp * ratio));
-      m.moves = movesAt(m.id, m.lv);
+      Object.assign(m, { maxHp:est.maxHp, atk:est.atk, def:est.def, spd:est.spd });
+      m.hp = Math.max(1, Math.floor(est.maxHp * ratio));
+      syncMoves(m);
       S.dex.add(m.id);
-      msg += ' 🌟 ' + DEX[m.id].name + ' 으로 진화!';
+      msg += ' 🌟' + DEX[m.id].name + ' 진화!';
     }
   }
   return msg;
 }
 function tryRun() {
   if (rand() < 0.7) { B.over = true; B.ran = true; log('무사히 도망쳤다!'); }
-  else log('도망칠 수 없었다!');
-  if (!B.ran) foeStrike();
+  else { log('도망칠 수 없었다!'); foeStrike(); }
   renderBattle();
 }
 function endBattle() {
@@ -575,37 +852,65 @@ function endBattle() {
   $('battle').classList.remove('on');
   B = null; S.mode = 'world';
   if (lost) {
-    S.party.forEach(m => { m.hp = m.maxHp; });
-    S.x = 8; S.y = 41; // 마을 회귀
+    S.party.forEach(fullRest);
+    S.map = 'village'; P.tx = 5; P.ty = 8; P.moving = false;
   }
-  hud(); draw(); persist();
+  hud(); persist(true);
   if (champion) showDialog(['🏆 챔피언을 꺾었다! 당신이 새로운 챔피언입니다!', '도감 ' + S.dex.size + '/' + Object.keys(DEX).length + ' — 남은 몬스터도 모두 수집해 보세요.']);
 }
 
-/* ═══════════ 렌더 (카메라 스크롤) ═══════════ */
-const TILE_STYLE = { 0:'#3f7a45', 1:'#2e5d33', 2:'#1d3a24', 3:'#28587a', 4:'#3f7a45', 5:'#3f7a45', 6:'#3f7a45', 7:'#5a4a2a', 8:'#4a4038', 9:'#2a241e' };
-const TILE_EMOJI = { 1:'🌿', 2:'🌲', 3:'🌊', 4:'🛏', 5:'🏪', 6:'💊', 7:'🚧', 9:'⛰' };
+/* ═══════════ 렌더 — 카메라 + 픽셀 보간 + 걸음 바운스 ═══════════ */
+const TILE_STYLE = { '#':'#1d3a24', '.':'#3f7a45', ',':'#3f7a45', 'g':'#2e5d33', 'w':'#28587a', 'c':'#4a4038', 'C':'#2a241e', 'r':'#3a3330', 'H':'#3f7a45', 's':'#3f7a45' };
+const TILE_EMOJI = { '#':'🌲', ',':'🌼', 'g':'🌿', 'w':'🌊', 'C':'⛰', 'r':'🪨', 'H':'🏥', 's':'🏪' };
+function playerPix() {
+  const bx = P.tx, by = P.ty;
+  if (!P.moving) return { x:bx * T, y:by * T, bob:0 };
+  const fx = bx + (P.ntx - bx) * P.prog, fy = by + (P.nty - by) * P.prog;
+  return { x:fx * T, y:fy * T, bob:Math.sin(P.prog * Math.PI) * 3 };
+}
 function draw() {
-  const camX = Math.max(0, Math.min(W - VIEW_W, S.x - (VIEW_W >> 1)));
-  const camY = Math.max(0, Math.min(H - VIEW_H, S.y - (VIEW_H >> 1)));
+  const m = curMap();
+  const pp = playerPix();
+  const camX = Math.max(0, Math.min(m.W * T - VIEW_W * T, pp.x - (VIEW_W >> 1) * T));
+  const camY = Math.max(0, Math.min(m.H * T - VIEW_H * T, pp.y - (VIEW_H >> 1) * T));
   cx.clearRect(0, 0, cv.width, cv.height);
   cx.textAlign = 'center'; cx.textBaseline = 'middle';
-  for (let vy = 0; vy < VIEW_H; vy++) for (let vx = 0; vx < VIEW_W; vx++) {
-    const x = camX + vx, y = camY + vy, t = map[y]?.[x] ?? 2;
-    cx.fillStyle = TILE_STYLE[t] || '#000';
-    cx.fillRect(vx * T, vy * T, T, T);
+  const x0 = Math.floor(camX / T), y0 = Math.floor(camY / T);
+  for (let vy = y0; vy <= y0 + VIEW_H; vy++) for (let vx = x0; vx <= x0 + VIEW_W; vx++) {
+    const t = m.grid[vy]?.[vx] ?? (S.map === 'cave' ? 'C' : '#');
+    const sx = vx * T - camX, sy = vy * T - camY;
+    cx.fillStyle = TILE_STYLE[t] || '#1d3a24';
+    cx.fillRect(sx, sy, T, T);
     const e = TILE_EMOJI[t];
-    if (e) { cx.font = (t === 2 || t === 9 ? '22px' : '18px') + ' monospace'; cx.fillText(e, vx * T + T / 2, vy * T + T / 2 + 1); }
-  }
-  cx.font = '22px monospace';
-  for (const n of npcs) {
-    if (n.badge && S.badges.includes(n.badge)) continue;
-    if (n.x >= camX && n.x < camX + VIEW_W && n.y >= camY && n.y < camY + VIEW_H) {
-      cx.fillText(n.emoji, (n.x - camX) * T + T / 2, (n.y - camY) * T + T / 2);
+    if (e) {
+      cx.font = (t === '#' || t === 'C' || t === 'r' ? '22px' : t === ',' ? '13px' : '17px') + ' monospace';
+      cx.fillText(e, sx + T / 2, sy + T / 2 + 1);
     }
   }
-  cx.fillText('🧑‍🌾', (S.x - camX) * T + T / 2, (S.y - camY) * T + T / 2);
-  $('zoneTag').textContent = zoneAt(S.x, S.y).name;
+  // 출구 화살표
+  cx.font = '15px monospace'; cx.fillStyle = '#ffd54a';
+  for (const ex of m.exits) {
+    const locked = S.badges.length < ex.need;
+    cx.fillText(locked ? '🚧' : ex.dir, ex.x * T - camX + T / 2, ex.y * T - camY + T / 2);
+  }
+  // 아이템
+  cx.font = '16px monospace';
+  m.items.forEach((s, i) => {
+    if (!(S.taken[S.map] || []).includes(i)) cx.fillText('💊', s.x * T - camX + T / 2, s.y * T - camY + T / 2);
+  });
+  // NPC
+  cx.font = '22px monospace';
+  for (const n of m.npcs) {
+    if (n.badge && S.badges.includes(n.badge)) continue;
+    cx.fillText(n.emoji, n.x * T - camX + T / 2, n.y * T - camY + T / 2);
+  }
+  // 플레이어 (그림자 + 바운스)
+  const px = pp.x - camX + T / 2, py = pp.y - camY + T / 2;
+  cx.fillStyle = 'rgba(0,0,0,.3)';
+  cx.beginPath(); cx.ellipse(px, py + 11, 9, 4, 0, 0, Math.PI * 2); cx.fill();
+  cx.font = '22px monospace';
+  cx.fillText(P.dir[1] === -1 ? '🧑‍🌾' : P.dir[0] === -1 ? '🚶' : P.dir[0] === 1 ? '🚶‍➡️' : '🧑‍🌾', px, py - pp.bob);
+  $('zoneTag').textContent = m.name;
 }
 function hud() {
   $('partyTxt').textContent = S.party.map(m => DEX[m.id].emoji + m.lv).join(' ') || '-';
@@ -619,7 +924,7 @@ function enterWorld() {
   $('title').hidden = true; $('starterPanel').hidden = true;
   $('hud').hidden = false; $('zoneTag').hidden = false;
   S.mode = 'world';
-  hud(); draw();
+  hud();
 }
 function newGame() {
   $('title').hidden = true; $('starterPanel').hidden = false;
@@ -628,26 +933,29 @@ function newGame() {
     const b = document.createElement('button');
     b.innerHTML = '<span style="font-size:30px">' + DEX[id].emoji + '</span>' + DEX[id].name + '<small>' + DEX[id].type + ' · Lv.16 진화</small>';
     b.onclick = () => {
-      Object.assign(S, { party:[mkMon(id, 5)], dex:new Set([id]), gold:500, badges:[], items:{ potion:2, superpotion:0, ball:5, greatball:0 }, x:8, y:41 });
-      buildWorld(); enterWorld(); persist();
-      showDialog(['촌장: 잘 왔네, 테이머! 동쪽 초원부터 모험을 시작하게.', '🛏 침대는 회복, 🏪 는 상점일세. 수호자 4명을 모두 꺾어보게!']);
+      Object.assign(S, { party:[mkMon(id, 5)], dex:new Set([id]), gold:500, badges:[],
+        items:{ potion:2, superpotion:0, ether:1, ball:5, greatball:0 }, taken:{}, map:'village' });
+      Object.assign(P, { tx:5, ty:8, moving:false, prog:0, dir:[0,1] });
+      enterWorld(); persist(true);
+      showDialog(['촌장: 잘 왔네, 테이머! 동쪽(▸)으로 나가 초원부터 시작하게.', '🏥 는 HP·PP 회복, X 키는 메뉴(순서 변경·가방·저장)일세.']);
     };
     box.appendChild(b);
   });
 }
 function continueGame(saved) {
-  buildWorld();
-  S.party = saved.party.map(m => ({ ...m, moves: m.moves && m.moves.length ? m.moves : movesAt(m.id, m.lv) }));
+  S.party = saved.party.map(m => { const x = { ...m }; if (!x.moves?.[0]?.id) syncMoves(x); return x; });
   S.dex = new Set(saved.dex || []);
-  S.items = { potion:0, superpotion:0, ball:0, greatball:0, ...(saved.items || {}) };
+  S.items = { potion:0, superpotion:0, ether:0, ball:0, greatball:0, ...(saved.items || {}) };
   S.gold = saved.gold ?? 500;
   S.badges = saved.badges || [];
-  if (saved.pos) { S.x = saved.pos.x; S.y = saved.pos.y; }
-  if (!TILE_WALK.has(map[S.y]?.[S.x] ?? 2)) { S.x = 8; S.y = 41; }
+  S.taken = saved.taken || {};
+  S.map = MAPS[saved.map] ? saved.map : 'village';
+  const pos = saved.pos || { x:5, y:8 };
+  Object.assign(P, { tx:pos.x, ty:pos.y, moving:false, prog:0, dir:[0,1] });
+  if (!WALKABLE.has(tileAt(P.tx, P.ty))) { S.map = 'village'; P.tx = 5; P.ty = 8; }
   enterWorld();
 }
 loadSave().then(saved => {
-  buildWorld();
   if (saved && saved.party?.length) {
     $('continueBtn').hidden = false;
     $('continueBtn').onclick = () => continueGame(saved);
