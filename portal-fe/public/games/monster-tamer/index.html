@@ -6,6 +6,8 @@
 <title>Monster Tamer</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
+  /* .panel/#hud 의 display 선언이 UA 의 [hidden]{display:none} 을 덮어쓰므로 명시 복원 */
+  [hidden] { display:none !important; }
   body { background:#0c1424; color:#eee; font-family:'Courier New',monospace; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; user-select:none; }
   #wrap { position:relative; border:4px solid #1a2238; border-radius:8px; overflow:hidden; box-shadow:0 0 40px rgba(0,0,0,.6); width:800px; }
   canvas { display:block; background:#2e5d33; image-rendering:pixelated; }
