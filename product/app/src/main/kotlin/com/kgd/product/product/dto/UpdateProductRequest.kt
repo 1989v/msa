@@ -22,7 +22,7 @@ data class UpdateProductRequest(
     @field:Size(max = 100, message = "카테고리는 100자 이하여야 합니다")
     val category: String? = null,
 
-    // 영양성분 100g 기준 (ADR-0059) — null 은 미변경
+    // 영양성분 100g 기준 (ADR-0060) — null 은 미변경
     @field:PositiveOrZero(message = "에너지(kcal)는 0 이상이어야 합니다")
     val energyKcal: Double? = null,
     @field:PositiveOrZero(message = "탄수화물(g)은 0 이상이어야 합니다")

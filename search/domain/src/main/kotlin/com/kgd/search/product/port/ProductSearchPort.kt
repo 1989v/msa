@@ -16,7 +16,7 @@ interface ProductSearchPort {
      * 도메인은 키만 통과시키고, 키 → ranking 설정 매핑은 어댑터가 담당한다.
      * null 또는 미정의 키 = 기본 ranking.
      *
-     * [filters] 는 점수와 무관한 hard filter (ADR-0059 — 칼로리 범위 등).
+     * [filters] 는 점수와 무관한 hard filter (ADR-0060 — 칼로리 범위 등).
      */
     fun searchScored(
         keyword: String,

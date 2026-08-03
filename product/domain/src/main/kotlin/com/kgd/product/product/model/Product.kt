@@ -11,7 +11,7 @@ class Product private constructor(
     var brand: String? = null,
     var description: String? = null,
     var category: String? = null,
-    // 영양성분 (100g 기준, ADR-0059) — 오픈데이터 미매칭 시 null (추정 채움 금지)
+    // 영양성분 (100g 기준, ADR-0060) — 오픈데이터 미매칭 시 null (추정 채움 금지)
     var energyKcal: Double? = null,
     var carbohydrateG: Double? = null,
     var proteinG: Double? = null,

@@ -31,7 +31,7 @@
 - `place` Deployment 에 optional `place-seed` ConfigMap 볼륨 + PLACE_SEED_ENABLED(기본 false).
 - 네트워크폴리시는 라벨 기반이라 place 자동 포함. 이 ADR/plan/place CLAUDE.md.
 
-## Phase 5 — 영양/원재료/원산지 enrichment (ADR-0059, 칼로리 계산기 기반)
+## Phase 5 — 영양/원재료/원산지 enrichment (ADR-0060, 칼로리 계산기 기반)
 
 - product 에 영양 9필드(100g 기준, nullable) + `V20260703_001` + `@Column` 네이밍 명시. ✅ `49b840a`+`df83d9c`
 - search 색인 9필드 + `minKcal`/`maxKcal` hard filter + `id: keyword` 매핑 보완. ✅ `2ff60f3`+`01f88ff`

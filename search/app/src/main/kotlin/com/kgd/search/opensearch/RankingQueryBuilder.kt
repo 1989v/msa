@@ -40,7 +40,7 @@ class RankingQueryBuilder {
                         inner.bool { b ->
                             b.must { m -> m.match { it.field("name").query(FieldValue.of(keyword)) } }
                             b.filter { f -> f.term { it.field("status").value(FieldValue.of("ACTIVE")) } }
-                            // ADR-0059 — 에너지(kcal/100g) hard filter. 점수 계산과 무관한 filter context.
+                            // ADR-0060 — 에너지(kcal/100g) hard filter. 점수 계산과 무관한 filter context.
                             if (!filters.isEmpty()) {
                                 b.filter { f ->
                                     f.range { r ->

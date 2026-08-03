@@ -62,7 +62,7 @@ class ProductJpaEntity(
     var category: String? = category
         private set
 
-    /** 영양성분 100g 기준 (ADR-0059) — 오픈데이터 미매칭 시 null */
+    /** 영양성분 100g 기준 (ADR-0060) — 오픈데이터 미매칭 시 null */
     @Column
     var energyKcal: Double? = energyKcal
         private set

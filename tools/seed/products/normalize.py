@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ADR-0056/0059 — 오픈데이터 → 상품 시드(JSONL) 정규화기.
+"""ADR-0056/0060 — 오픈데이터 → 상품 시드(JSONL) 정규화기.
 
 상품명(식약처)·가격(한국소비자원 참가격)·카테고리에 더해, 영양성분(식약처 영양 표준데이터)·
 원재료(식약처 C002)를 품목제조보고번호로 조인하여 search:batch 의 ProductSeedIngestTasklet 이
@@ -490,7 +490,7 @@ def _emit(out: Path, rows: list[dict]) -> int:
                 "description": str(desc)[:2000] if desc else None,
                 "category": str(r.get("category") or "")[:100] or None,
             }
-            # 영양/원재료/원산지/조인키 — 값 있는 필드만 (ADR-0059)
+            # 영양/원재료/원산지/조인키 — 값 있는 필드만 (ADR-0060)
             for f in NUTRITION_FIELDS:
                 if r.get(f) is not None:
                     payload[f] = r[f]
@@ -523,7 +523,7 @@ def main() -> int:
     ap.add_argument("--inspect-day", help="참가격 조사일 YYYYMMDD(금요일). 미지정 시 최근 금요일 자동 탐색")
     ap.add_argument("--from-sample", action="store_true", help="--source sample 과 동일")
     ap.add_argument("--no-synthetic", action="store_true", help="참가격 미매칭(실가격 없음) 행을 합성가 대신 제외")
-    # 영양/원재료 (ADR-0059)
+    # 영양/원재료 (ADR-0060)
     ap.add_argument("--nutrition-csv", help="#15100066 CSV 파일 경로 (한글 헤더 파싱, API 대신 사용 — 권장)")
     ap.add_argument("--no-nutrition", action="store_true", help="영양 조인 생략")
     ap.add_argument("--nutrition-limit", type=int, default=20000, help="영양 API 최대 수집 행수")

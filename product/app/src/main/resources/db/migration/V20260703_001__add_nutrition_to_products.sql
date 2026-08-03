@@ -1,4 +1,4 @@
--- ADR-0059 — 식품 영양성분/원재료/원산지 enrichment.
+-- ADR-0060 — 식품 영양성분/원재료/원산지 enrichment.
 -- 영양 수치는 전국통합식품영양성분(가공식품) 표준데이터(#15100066, 100g 기준) 를
 -- 품목제조보고번호(item_report_no) exact join 으로 부착한다. 매칭 실패 시 NULL(추정 채움 금지).
 -- 원재료(ingredients)는 식약처 C002 텍스트, 원산지(origin_country)는 영양DB 원산지국명 best-effort.

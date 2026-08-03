@@ -24,7 +24,7 @@ class SearchController(
     private val banditEventPort: BanditEventPort
 ) {
 
-    /** [minKcal]/[maxKcal] 은 100g 기준 에너지(kcal) 범위 필터 (ADR-0059 — 칼로리 계산기/저칼로리 탐색). */
+    /** [minKcal]/[maxKcal] 은 100g 기준 에너지(kcal) 범위 필터 (ADR-0060 — 칼로리 계산기/저칼로리 탐색). */
     @GetMapping("/products")
     fun searchProducts(
         @RequestParam keyword: String,

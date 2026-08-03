@@ -21,7 +21,7 @@ data class ProductDocument(
     val brand: String? = null,
     val description: String? = null,
     val category: String? = null,
-    // 영양성분 100g 기준 (ADR-0059) — 오픈데이터 미매칭 시 null
+    // 영양성분 100g 기준 (ADR-0060) — 오픈데이터 미매칭 시 null
     val energyKcal: Double? = null,
     val carbohydrateG: Double? = null,
     val proteinG: Double? = null,

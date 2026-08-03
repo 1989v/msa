@@ -1,4 +1,4 @@
-# ADR-0059 식품 영양성분/원재료/원산지 enrichment — 칼로리 계산기 데이터 기반
+# ADR-0060 식품 영양성분/원재료/원산지 enrichment — 칼로리 계산기 데이터 기반
 
 ## Status
 
@@ -12,7 +12,7 @@ Accepted (2026-07-05)
   잠재 버그 2건(§부수 픽스) 발견·수정.
 - **ADR-0013** (Inventory SSOT) — 불변. 영양은 카탈로그 속성으로 product SSOT 에 귀속.
 
-> 번호 주의: main 에 ADR-0057(검색 A/B identity)·ADR-0058(commerce 모듈러 모놀리스)이 존재하여 0059 부여.
+> 번호 주의: 최초 0059 로 작성했으나 main 의 ADR-0059(game platform)가 선점하여 **0060 으로 재번호** (2026-08-03, main 통합 시).
 
 ---
 

@@ -11,7 +11,7 @@ interface SearchProductUseCase {
         val size: Int = 20,
         /** 온라인 A/B variant 할당용. null 이면 실험 미참여 (기본 ranking). */
         val userId: String? = null,
-        /** 영양 필터 (ADR-0059) — 에너지 kcal/100g 범위. null 이면 미적용. */
+        /** 영양 필터 (ADR-0060) — 에너지 kcal/100g 범위. null 이면 미적용. */
         val minKcal: Double? = null,
         val maxKcal: Double? = null
     )

@@ -1,4 +1,4 @@
-# ADR-0056/0059 — 상품 시드 샘플 (정규화 산출물 예시).
+# ADR-0056/0060 — 상품 시드 샘플 (정규화 산출물 예시).
 # 한 줄 = 한 상품. {name, price(KRW>0), stock, brand, description, category,
 #                  energyKcal..sodiumMg(100g 기준), ingredients, originCountry}
 # 실제 적재는 normalize.py 가 식약처(#15064909)+참가격(#3043385)+영양표준(#15100066)으로 생성.
