@@ -15,6 +15,10 @@ class GatewayRouteConfig(
     private val userKeyResolver: KeyResolver,
     private val redisRateLimiter: RedisRateLimiter,
 ) {
+    private companion object {
+        // ADR-0059: game:feature 가 code-dictionary:app 에 폴드되어 같은 포트를 공유
+        const val CODE_DICTIONARY_URI = "http://code-dictionary:8089"
+    }
 
     private fun userConfig() = AuthenticationGatewayFilter.Config(
         requiredRoles = listOf("ROLE_USER", "ROLE_SELLER", "ROLE_ADMIN")
@@ -28,6 +32,9 @@ class GatewayRouteConfig(
         requiredRoles = listOf("ROLE_ADMIN")
     )
 
+    /** 게스트 허용 — 토큰이 있으면 식별하고, 없으면 익명으로 통과 (ADR-0059 게임 세션) */
+    private fun optionalUserConfig() = AuthenticationGatewayFilter.Config(required = false)
+
     /**
      * Swagger UI 집계 대상 — 서비스명 → 내부 URI (springdoc webmvc-ui 보유 서비스).
      * `/api/docs/specs/{service}` 가 각 서비스의 `/v3/api-docs` 로 프록시되고,
@@ -35,17 +42,16 @@ class GatewayRouteConfig(
      */
     private val openApiServices = mapOf(
         "product" to "http://product:8081",
-        "order" to "http://order:8082",
+        "order" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "search" to "http://search:8083",
-        "inventory" to "http://inventory:8085",
+        "inventory" to "http://commerce:8085",
         "gifticon" to "http://gifticon:8086",
         "auth" to "http://auth:8087",
-        "fulfillment" to "http://fulfillment:8088",
-        "warehouse" to "http://warehouse:8090",
+        "fulfillment" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
+        "warehouse" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "recommendation" to "http://recommendation:8092",
-        "member" to "http://member:8093",
-        "wishlist" to "http://wishlist:8095",
-        "place" to "http://place:8096",
+        "member" to "http://commerce:8085",
+        "wishlist" to "http://commerce:8085",
     )
 
     @Bean
@@ -84,7 +90,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://member:8093")
+                    .uri("http://commerce:8085")
             }
             // Product Service — 상품 브라우징(GET)은 비로그인 공개 (커머스 표준: 탐색은 public, 주문은 인증)
             .route("product-service-read") { r ->
@@ -109,7 +115,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://order:8082")
+                    .uri("http://commerce:8085")
             }
             // Gifticon Service (ROLE_USER+)
             .route("gifticon-service") { r ->
@@ -127,7 +133,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://wishlist:8095")
+                    .uri("http://commerce:8085")
             }
             // Search Service — 상품 검색/이벤트 수집은 비로그인 공개 (userId 는 optional 필드).
             // debug API 는 /api/v1/search/debug 로 gateway 비노출 경로라 영향 없음.
@@ -148,7 +154,7 @@ class GatewayRouteConfig(
                             }
                             .stripPrefix(0)
                     }
-                    .uri("http://inventory:8085")
+                    .uri("http://commerce:8085")
             }
             // Fulfillment Service (ROLE_SELLER+)
             .route("fulfillment-service") { r ->
@@ -157,16 +163,16 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(sellerConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://fulfillment:8088")
+                    .uri("http://commerce:8085")
             }
-            // Warehouse Service (ROLE_SELLER+)
+            // Warehouse (ADR-0058: commerce 폴드 — inventory:app 이 warehouse 엔드포인트 서빙)
             .route("warehouse-service") { r ->
                 r.path("/api/warehouses/**")
                     .filters { f ->
                         f.filter(authFilter.apply(sellerConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://warehouse:8090")
+                    .uri("http://commerce:8085")
             }
             // Recommendation Service — ADR-0044 Phase 1 (인증 불필요, 메인 페이지 비로그인 사용자도 호출)
             .route("recommendation-service") { r ->
@@ -174,7 +180,62 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri("http://recommendation:8092")
             }
-            // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN.
+            // === ADR-0059 Game 플랫폼 (code-dictionary:app 에 폴드) ===
+            // 인증 수준이 다른 3종을 분리하며, 좁은 경로를 먼저 선언해야 games/** 에 가려지지 않는다.
+            .route("game-admin") { r ->
+                r.path("/api/v1/admin/games/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 평점은 1인 1표 — 인증 필수
+            .route("game-rating") { r ->
+                r.path("/api/v1/games/*/rating")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 클라우드 세이브 — 인증 필수 (X-Device-Id 리스는 서비스에서 판정)
+            .route("game-save") { r ->
+                r.path("/api/v1/games/*/save")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 플레이 세션·로그라이크 런은 게스트 허용 — 로그인 사용자만 X-User-Id 로 식별
+            .route("game-session") { r ->
+                r.path(
+                    "/api/v1/games/*/sessions", "/api/v1/games/*/sessions/**",
+                    "/api/v1/games/*/runs", "/api/v1/games/*/runs/**",
+                )
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 카탈로그 조회 (리스트/상세/유사/컬렉션/태그) — 공개
+            .route("game-catalog") { r ->
+                r.path("/api/v1/games/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 광고 슬롯/보상 (HOUSE, ADR-0059 §3) — 게스트 허용, 로그인 시 X-User-Id 식별
+            .route("game-ads") { r ->
+                r.path("/api/v1/ads/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
             .route("place-service-read") { r ->
                 r.method(HttpMethod.GET)
                     .and().path("/api/places/**")

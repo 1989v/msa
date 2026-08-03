@@ -7,6 +7,7 @@ import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFac
 import org.springframework.data.redis.core.ReactiveRedisTemplate
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 
@@ -17,7 +18,13 @@ class AuthenticationGatewayFilter(
 ) : AbstractGatewayFilterFactory<AuthenticationGatewayFilter.Config>(Config::class.java) {
 
     data class Config(
-        val requiredRoles: List<String> = emptyList()
+        val requiredRoles: List<String> = emptyList(),
+        /**
+         * false 면 토큰이 없거나 유효하지 않아도 401 대신 **익명으로 통과**시킨다
+         * (게스트 허용 엔드포인트에서 로그인 사용자만 식별하려는 용도).
+         * 이때 클라이언트가 보낸 신원 헤더는 제거되므로 위조가 불가능하다.
+         */
+        val required: Boolean = true
     )
 
     private val log = KotlinLogging.logger {}
@@ -27,10 +34,15 @@ class AuthenticationGatewayFilter(
         val authHeader = request.headers.getFirst(HttpHeaders.AUTHORIZATION)
         val token = jwtTokenValidator.extractFromHeader(authHeader)
 
-        if (token == null) {
-            log.warn { "Missing or invalid Authorization header: ${request.uri}" }
+        fun reject(reason: String): Mono<Void> {
+            if (!config.required) return chain.filter(exchange.mutate().request(asAnonymous(request)).build())
+            log.warn { "$reason: ${request.uri}" }
             exchange.response.statusCode = HttpStatus.UNAUTHORIZED
-            return@GatewayFilter exchange.response.setComplete()
+            return exchange.response.setComplete()
+        }
+
+        if (token == null) {
+            return@GatewayFilter reject("Missing or invalid Authorization header")
         }
 
         // JWT 블랙리스트 체크 (Fail-Open 정책: Redis 장애 시 허용)
@@ -38,15 +50,11 @@ class AuthenticationGatewayFilter(
             .onErrorReturn(false)
             .flatMap { isBlacklisted ->
                 if (isBlacklisted) {
-                    log.warn { "Blacklisted token used: ${request.uri}" }
-                    exchange.response.statusCode = HttpStatus.UNAUTHORIZED
-                    exchange.response.setComplete()
+                    reject("Blacklisted token used")
                 } else {
                     val claims = jwtTokenValidator.validateAndExtract(token)
                     if (claims == null) {
-                        log.warn { "Invalid JWT token: ${request.uri}" }
-                        exchange.response.statusCode = HttpStatus.UNAUTHORIZED
-                        exchange.response.setComplete()
+                        reject("Invalid JWT token")
                     } else {
                         val userId = claims.get("userId", String::class.java) ?: ""
                         @Suppress("UNCHECKED_CAST")
@@ -71,6 +79,12 @@ class AuthenticationGatewayFilter(
                 }
             }
     }
+
+    /** 클라이언트가 직접 넣은 신원 헤더를 제거 — 익명 통과 시 X-User-Id 위조 방지 */
+    private fun asAnonymous(request: ServerHttpRequest): ServerHttpRequest =
+        request.mutate()
+            .headers { it.remove("X-User-Id"); it.remove("X-User-Roles") }
+            .build()
 
     private fun hasRequiredRole(userRoles: List<String>, requiredRoles: List<String>): Boolean {
         // ROLE_ADMIN은 모든 역할을 포함

@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+/* @kgd/design-system 토큰을 admin 전체 body 에 적용 (sample 2 다크 네이비 톤) */
+html.dark body {
+  background-color: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+}
+
+/*
+ * Code Dictionary Treemap level color tokens (cool -> warm sequential, OKLCH)
+ * Spec: docs/specs/2026-05-05-code-dictionary-treemap/planning/spec.md §6.2
+ *
+ * chroma fixed near 0.01 (sequential encoding via lightness, WCAG AA)
+ */
+:root {
+  --ko-level-beginner: oklch(0.85 0.01 220);
+  --ko-level-intermediate: oklch(0.70 0.012 90);
+  --ko-level-advanced: oklch(0.55 0.015 30);
+  --focus-ring: 2px solid oklch(0.50 0.15 240);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ko-treemap-tile,
+  .ko-chip,
+  .ko-tab-btn {
+    transition: none !important;
+    transform: none !important;
+    animation: none !important;
+  }
+}

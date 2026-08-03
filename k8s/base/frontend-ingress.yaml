@@ -33,13 +33,6 @@ spec:
                 name: gifticon-fe
                 port:
                   name: http
-          - path: /agent-viewer/?(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: agent-viewer-fe
-                port:
-                  name: http
           - path: /admin/?(.*)
             pathType: ImplementationSpecific
             backend:

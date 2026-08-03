@@ -90,12 +90,34 @@ import_one() {
         k3d)
             echo "→ k3d image import $(basename "$tar") → cluster $cluster"
             k3d image import "$tar" -c "$cluster"
+            retag_latest_k3d "$tar" "$cluster"
             ;;
         kind)
             echo "→ kind load image-archive $(basename "$tar") → cluster $cluster"
             kind load image-archive "$tar" --name "$cluster"
             ;;
     esac
+}
+
+# Jib 은 project.version(예: 0.0.1-SNAPSHOT) 태그로 tar 를 만들지만 k8s manifest 는
+# :latest 를 참조한다 — 임포트 후 노드 containerd 에서 :latest 로 재태깅해 간극을 없앤다.
+retag_latest_k3d() {
+    local tar="$1"
+    local cluster="$2"
+    local repo_tag
+    repo_tag=$(tar -xOf "$tar" manifest.json 2>/dev/null \
+        | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["RepoTags"][0])' 2>/dev/null) || return 0
+    [[ -n "$repo_tag" ]] || return 0
+    local repo="${repo_tag%:*}"
+    local tag="${repo_tag##*:}"
+    [[ "$tag" == "latest" ]] && return 0
+    local src="docker.io/${repo}:${tag}"
+    local dst="docker.io/${repo}:latest"
+    local node
+    for node in $(docker ps --format '{{.Names}}' | grep -E "^k3d-${cluster}-(server|agent)-[0-9]+$"); do
+        echo "→ retag ${src} → ${dst} (${node})"
+        docker exec "$node" ctr -n k8s.io images tag --force "$src" "$dst" >/dev/null
+    done
 }
 
 import_image_ref() {

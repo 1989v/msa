@@ -20,6 +20,33 @@ spring:
       hikari:
         maximum-pool-size: 5
         minimum-idle: 2
+    # ADR-0059: game 도메인 전용 datasource(스키마 격리). Flyway 는 GameDataSourceConfig 의
+    # 전용 빈(classpath:gamedb/migration)이 수행 — 아래 spring.flyway 와 별개.
+    game:
+      master:
+        jdbc-url: jdbc:mysql://${GAME_DB_MASTER:localhost:3338}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+        username: ${GAME_MYSQL_USER:game_user}
+        password: ${GAME_MYSQL_PASSWORD:game_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${GAME_DB_REPLICA:localhost:3338}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+        username: ${GAME_MYSQL_USER:game_user}
+        password: ${GAME_MYSQL_PASSWORD:game_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  # #23 아케이드 흡수 — 리더보드 ZSET / 세션 / 리플레이 저장소 (k3s-lite 는 오버레이가 standalone 주입)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: none
@@ -43,6 +70,16 @@ opensearch:
   uris: ${OPENSEARCH_URIS:http://localhost:9200}
   index-name: concept-index
   retention: 2
+
+# ADR-0059: 게임 세션 이벤트 토픽 (수신: analytics)
+game:
+  kafka:
+    topics:
+      session-started: game.session.started
+      session-ended: game.session.ended
+  # #23 아케이드 흡수 — 세션 토큰 HMAC. prod 는 Secret 주입 필수(기본값은 로컬 전용).
+  security:
+    hmac-secret: ${GAME_HMAC_SECRET:dev-secret-change-me-in-prod}
 
 management:
   endpoints:

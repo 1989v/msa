@@ -5,11 +5,13 @@ import com.kgd.analytics.infrastructure.streaming.SmoothingProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
+import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication(scanBasePackages = ["com.kgd.analytics", "com.kgd.common"])
 @EnableConfigurationProperties(SmoothingProperties::class, GmvAggregationProperties::class)
 @EnableScheduling
+@EnableKafka // @KafkaListener 활성화 — Streams(@EnableKafkaStreams)와 별개로 필요
 class AnalyticsApplication
 
 fun main(args: Array<String>) {

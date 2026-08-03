@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Overworld Quest</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 100vh; font-family: 'Courier New', monospace; color: #eee; user-select: none;
+  }
+  #gameWrap {
+    position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.6);
+    border: 4px solid #16213e; border-radius: 8px; overflow: hidden;
+  }
+  canvas { display: block; image-rendering: pixelated; background: #4a7c3a; }
+  #hud {
+    position: absolute; top: 10px; left: 10px;
+    display: flex; flex-direction: column; gap: 6px; pointer-events: none;
+  }
+  #hearts, #manabar { display: flex; gap: 3px; align-items: center; }
+  .heart { font-size: 20px; filter: drop-shadow(1px 1px 1px rgba(0,0,0,0.5)); }
+  .pip { width: 12px; height: 12px; border-radius: 2px; background: #2a3a5a; border:1px solid #14203a; }
+  .pip.full { background: #4aa3ff; }
+  #gold {
+    background: rgba(0,0,0,0.45); padding: 2px 10px; border-radius: 12px;
+    font-size: 14px; font-weight: bold; width: fit-content;
+  }
+  #zone {
+    position:absolute; top:10px; right:12px; background: rgba(0,0,0,0.45);
+    padding:3px 12px; border-radius:12px; font-size:13px; font-weight:bold;
+  }
+  #hint {
+    position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+    background: rgba(0,0,0,0.6); padding:5px 14px; border-radius:12px;
+    font-size:13px; color:#ffd54a; white-space:nowrap;
+  }
+  #info { margin-top: 12px; font-size: 12px; color: #999; text-align: center; line-height: 1.7; max-width:640px; }
+  .panel {
+    position:absolute; inset:0; background: rgba(10,12,25,0.92);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; text-align:center; z-index:10; padding:20px;
+  }
+  .panel h1 { font-size: 26px; color: #ffd54a; text-shadow: 2px 2px 0 #000; }
+  .panel h2 { font-size: 20px; color: #ffd54a; }
+  .panel p { font-size: 14px; color: #ddd; max-width: 420px; line-height: 1.7; }
+  .panel button {
+    background: #ffd54a; color: #1a1a2e; border: none; padding: 11px 26px;
+    font-size: 15px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: inherit;
+  }
+  .panel button:hover { transform: scale(1.04); }
+  .shopItem {
+    display:flex; justify-content:space-between; align-items:center; gap:30px;
+    width: 360px; padding:8px 16px; border-radius:8px; font-size:14px;
+    background: rgba(255,255,255,0.05); border:2px solid transparent;
+  }
+  .shopItem.sel { border-color:#ffd54a; background: rgba(255,213,74,0.12); }
+  .shopItem .price { color:#ffd54a; font-weight:bold; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="gameWrap">
+  <canvas id="game" width="640" height="480"></canvas>
+  <div id="hud">
+    <div id="hearts"></div>
+    <div id="manabar"></div>
+    <div id="gold">🪙 <span id="goldCount">0</span></div>
+  </div>
+  <div id="zone">🌿 평원</div>
+  <div id="hint"></div>
+
+  <!-- 시작 -->
+  <div id="startPanel" class="panel">
+    <h1>🗡️ 오픈월드 모험</h1>
+    <p>섬을 탐험하고, 동굴 던전을 정복하고, 보스를 물리치세요!<br><br>
+    <b>이동</b> WASD/방향키 · <b>검</b> Space · <b>파이어볼</b> Q · <b>힐</b> E<br>
+    <b>상점/대화</b> F · <b>인벤토리</b> I · <b>포션</b> 1(체력)/2(마나)</p>
+    <button id="startBtn">모험 시작</button>
+  </div>
+
+  <!-- 상점 -->
+  <div id="shopPanel" class="panel hidden">
+    <h2>🛒 상점</h2>
+    <div id="shopList"></div>
+    <p style="font-size:12px;color:#aaa">↑↓ 선택 · Enter 구매 · F/Esc 닫기</p>
+  </div>
+
+  <!-- 인벤토리 -->
+  <div id="invPanel" class="panel hidden">
+    <h2>🎒 인벤토리</h2>
+    <div id="invList" style="font-size:15px; line-height:2.2;"></div>
+    <p style="font-size:12px;color:#aaa">I/Esc 닫기 · 1 체력포션 · 2 마나포션</p>
+  </div>
+
+  <!-- 결과 -->
+  <div id="endPanel" class="panel hidden">
+    <h1 id="endTitle"></h1>
+    <p id="endText"></p>
+    <button id="endBtn">다시 시작</button>
+  </div>
+</div>
+<div id="info">
+  WASD 이동 · Space 검 · Q 파이어볼 · E 힐 · F 상점/대화·던전입구 · I 인벤토리 · 1/2 포션 사용
+</div>
+
+<script>
+/* =========================================================================
+   Overworld Quest — 오픈월드 액션 RPG (단일 HTML)
+   포함: 절차적 오버월드 / BSP 던전 / A* 길찾기 / 상점·인벤토리·마법 / Tiled 로더
+   ========================================================================= */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const VW = canvas.width, VH = canvas.height;
+const TILE = 32;
+
+// ---------- 타일 정의 ----------
+const T = { GRASS:0, GRASS2:1, WATER:2, TREE:3, SAND:4, FLOWER:5, ROCK:6, CAVE:7,
+            FLOOR:8, WALL:9, EXIT:10 };
+const SOLID = new Set([T.WATER, T.TREE, T.ROCK, T.WALL]);
+const tileColors = {
+  [T.GRASS]:'#5a9c44',[T.GRASS2]:'#4f8e3c',[T.WATER]:'#3a7ca5',[T.TREE]:'#3a6b2e',
+  [T.SAND]:'#d9c48a',[T.FLOWER]:'#6aac54',[T.ROCK]:'#8a8a8a',[T.CAVE]:'#2b2b3a',
+  [T.FLOOR]:'#5a4a3a',[T.WALL]:'#2e2620',[T.EXIT]:'#7ec850'
+};
+
+// ---------- 값 노이즈 ----------
+function makeNoise(w,h,scale,seed){
+  let r=seed; const rand=()=>{r=(r*9301+49297)%233280;return r/233280;};
+  const gw=Math.ceil(w/scale)+2, gh=Math.ceil(h/scale)+2, grid=[];
+  for(let y=0;y<gh;y++){grid[y]=[];for(let x=0;x<gw;x++)grid[y][x]=rand();}
+  const out=[];
+  for(let y=0;y<h;y++){out[y]=[];for(let x=0;x<w;x++){
+    const gx=x/scale,gy=y/scale,x0=~~gx,y0=~~gy,fx=gx-x0,fy=gy-y0;
+    const t=grid[y0][x0]+(grid[y0][x0+1]-grid[y0][x0])*fx;
+    const b=grid[y0+1][x0]+(grid[y0+1][x0+1]-grid[y0+1][x0])*fx;
+    out[y][x]=t+(b-t)*fy;
+  }}
+  return out;
+}
+
+/* =========================================================================
+   맵 컨테이너 — 절차생성 또는 Tiled JSON 둘 다 받을 수 있는 구조
+   ========================================================================= */
+function makeMap(w,h,tiles){ return {w,h,tiles}; }
+
+// --- 오버월드(섬) 절차 생성 ---
+let caveEntrances = [];
+function generateOverworld(){
+  const W=70,H=70;
+  const elev=makeNoise(W,H,8,Math.random()*99999|0);
+  const moist=makeNoise(W,H,6,Math.random()*99999|0);
+  const detail=makeNoise(W,H,3,Math.random()*99999|0);
+  const tiles=[];
+  for(let y=0;y<H;y++){tiles[y]=[];for(let x=0;x<W;x++){
+    const edge=Math.min(x,y,W-1-x,H-1-y);
+    const e=elev[y][x]-Math.max(0,(4-edge))*0.18;
+    let t;
+    if(e<0.32)t=T.WATER;
+    else if(e<0.38)t=T.SAND;
+    else{const m=moist[y][x],d=detail[y][x];
+      if(m>0.62&&d>0.55)t=T.TREE;
+      else if(m>0.7)t=T.ROCK;
+      else if(d>0.78)t=T.FLOWER;
+      else if(d<0.25)t=T.GRASS2; else t=T.GRASS;}
+    tiles[y][x]=t;
+  }}
+  // 스폰 평지
+  for(let y=H/2-3;y<H/2+3;y++)for(let x=W/2-3;x<W/2+3;x++)tiles[~~y][~~x]=T.GRASS;
+  // 동굴 입구 3개 배치 (스폰에서 떨어진 풀밭에)
+  caveEntrances=[]; let placed=0,tries=0;
+  while(placed<3&&tries<4000){tries++;
+    const x=~~(Math.random()*W),y=~~(Math.random()*H);
+    if(SOLID.has(tiles[y][x]))continue;
+    if(Math.hypot(x-W/2,y-H/2)<14)continue;
+    tiles[y][x]=T.CAVE;
+    caveEntrances.push({x,y,id:placed});
+    placed++;
+  }
+  return makeMap(W,H,tiles);
+}
+
+/* --- Tiled JSON 로더 ---
+   Tiled 에디터(.tmj/JSON)에서 내보낸 맵을 그대로 받을 수 있는 함수.
+   기대 형식 예시:
+   { width, height, layers:[{ name, data:[gid,gid,...] }] }
+   gid 값을 우리 타일 enum(T)으로 매핑해서 사용한다.
+   실제 프로젝트에선 fetch('map.tmj')로 불러와 loadTiledMap(json) 호출. */
+function loadTiledMap(json, gidToTile){
+  const layer = json.layers.find(l=>l.data) || json.layers[0];
+  const W=json.width, H=json.height, flat=layer.data, tiles=[];
+  for(let y=0;y<H;y++){tiles[y]=[];for(let x=0;x<W;x++){
+    const gid=flat[y*W+x];
+    tiles[y][x] = (gidToTile && gid in gidToTile) ? gidToTile[gid] : T.GRASS;
+  }}
+  return makeMap(W,H,tiles);
+}
+
+// --- BSP 던전 생성 ---
+function generateDungeon(level){
+  const W=44,H=34;
+  const tiles=[];
+  for(let y=0;y<H;y++){tiles[y]=[];for(let x=0;x<W;x++)tiles[y][x]=T.WALL;}
+  // BSP 분할
+  const leaves=[]; 
+  function split(x,y,w,h,depth){
+    if(depth<=0 || (w<14&&h<14)){ leaves.push({x,y,w,h}); return; }
+    const horiz = w<h ? false : (h<w ? true : Math.random()<0.5);
+    if(horiz){ const c=~~(w*(0.4+Math.random()*0.2)); split(x,y,c,h,depth-1); split(x+c,y,w-c,h,depth-1);}
+    else { const c=~~(h*(0.4+Math.random()*0.2)); split(x,y,w,c,depth-1); split(x,y+c,w,h-c,depth-1);}
+  }
+  split(1,1,W-2,H-2,4);
+  const rooms=[];
+  for(const lf of leaves){
+    const rw=Math.max(5,~~(lf.w*(0.6+Math.random()*0.3)));
+    const rh=Math.max(5,~~(lf.h*(0.6+Math.random()*0.3)));
+    const rx=lf.x+~~(Math.random()*(lf.w-rw));
+    const ry=lf.y+~~(Math.random()*(lf.h-rh));
+    for(let y=ry;y<ry+rh;y++)for(let x=rx;x<rx+rw;x++)tiles[y][x]=T.FLOOR;
+    rooms.push({cx:~~(rx+rw/2), cy:~~(ry+rh/2)});
+  }
+  // 복도로 방 연결
+  for(let i=1;i<rooms.length;i++){
+    const a=rooms[i-1],b=rooms[i];
+    for(let x=Math.min(a.cx,b.cx);x<=Math.max(a.cx,b.cx);x++){tiles[a.cy][x]=T.FLOOR;tiles[a.cy+1]&&(tiles[a.cy+1][x]=T.FLOOR);}
+    for(let y=Math.min(a.cy,b.cy);y<=Math.max(a.cy,b.cy);y++){tiles[y][b.cx]=T.FLOOR;tiles[y][b.cx+1]!==undefined&&(tiles[y][b.cx+1]=T.FLOOR);}
+  }
+  // 출구 타일(첫 방)
+  const start=rooms[0]; tiles[start.cy][start.cx]=T.EXIT;
+  const boss=rooms[rooms.length-1]; // 마지막 방 = 보스
+  return { map:makeMap(W,H,tiles), rooms, start, bossRoom:boss };
+}
+
+/* =========================================================================
+   A* 길찾기 (격자 기반)
+   ========================================================================= */
+function astar(map, sx, sy, gx, gy, maxIter=400){
+  if(sx===gx&&sy===gy) return [];
+  const W=map.w,H=map.h;
+  const key=(x,y)=>y*W+x;
+  const open=[{x:sx,y:sy,g:0,f:0,p:null}];
+  const seen=new Map(); seen.set(key(sx,sy),0);
+  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+  let iter=0;
+  while(open.length && iter++<maxIter){
+    // 최소 f 노드 선택
+    let bi=0; for(let i=1;i<open.length;i++) if(open[i].f<open[bi].f) bi=i;
+    const cur=open.splice(bi,1)[0];
+    if(cur.x===gx&&cur.y===gy){
+      const path=[]; let n=cur; while(n.p){path.push({x:n.x,y:n.y}); n=n.p;}
+      return path.reverse();
+    }
+    for(const[dx,dy]of dirs){
+      const nx=cur.x+dx,ny=cur.y+dy;
+      if(nx<0||ny<0||nx>=W||ny>=H)continue;
+      if(SOLID.has(map.tiles[ny][nx]))continue;
+      const ng=cur.g+1, k=key(nx,ny);
+      if(seen.has(k)&&seen.get(k)<=ng)continue;
+      seen.set(k,ng);
+      const h=Math.abs(nx-gx)+Math.abs(ny-gy);
+      open.push({x:nx,y:ny,g:ng,f:ng+h,p:cur});
+    }
+  }
+  return null;
+}
+
+/* =========================================================================
+   게임 상태
+   ========================================================================= */
+const SHOP_ITEMS=[
+  {name:'❤️ 체력 포션', desc:'체력 4 회복', price:15, key:'hpPotion'},
+  {name:'💧 마나 포션', desc:'마나 4 회복', price:12, key:'mpPotion'},
+  {name:'💗 하트 그릇', desc:'최대 체력 +2', price:40, key:'maxHp'},
+  {name:'🔮 마나 수정', desc:'최대 마나 +2', price:35, key:'maxMp'},
+  {name:'⚔️ 검 강화', desc:'검 데미지 +1', price:50, key:'swordUp'}
+];
+
+let world, dungeon, curMap, mode;       // mode: 'overworld' | 'dungeon'
+let player, enemies, items, projectiles, npc, boss;
+let keys={}, running=false, savedOverworldPos=null, dungeonsCleared=0;
+let frame=0, shopSel=0;
+
+function newPlayer(){
+  return { x:0,y:0,w:20,h:20,speed:2.6,dir:'down',
+    hp:6,maxHp:6,mp:4,maxMp:4,gold:0,attacking:0,attackCd:0,invuln:0,
+    swordDmg:1, healCd:0, fireCd:0,
+    inv:{hpPotion:1, mpPotion:1} };
+}
+
+function enterOverworld(){
+  mode='overworld'; curMap=world;
+  if(savedOverworldPos){player.x=savedOverworldPos.x;player.y=savedOverworldPos.y;}
+  else{player.x=world.w*TILE/2; player.y=world.h*TILE/2;}
+  spawnOverworld();
+  document.getElementById('zone').textContent='🌿 평원';
+}
+
+function spawnOverworld(){
+  enemies=[]; items=[]; projectiles=[];
+  // 적
+  let placed=0,tries=0;
+  while(placed<18&&tries<3000){tries++;
+    const x=~~(Math.random()*world.w),y=~~(Math.random()*world.h);
+    if(SOLID.has(world.tiles[y][x])||world.tiles[y][x]===T.CAVE)continue;
+    const px=x*TILE+16,py=y*TILE+16;
+    if(Math.hypot(px-player.x,py-player.y)<160)continue;
+    enemies.push(makeEnemy(px,py,Math.random()<0.55?'slime':'bat'));
+    placed++;
+  }
+  // 코인
+  placed=0;tries=0;
+  while(placed<12&&tries<3000){tries++;
+    const x=~~(Math.random()*world.w),y=~~(Math.random()*world.h);
+    if(SOLID.has(world.tiles[y][x])||world.tiles[y][x]===T.CAVE)continue;
+    items.push({x:x*TILE+16,y:y*TILE+16,type:'coin',bob:Math.random()*6});
+    placed++;
+  }
+  // 상점 NPC (스폰 근처)
+  npc={x:world.w*TILE/2+96, y:world.h*TILE/2, type:'shop'};
+}
+
+function enterDungeon(){
+  savedOverworldPos={x:player.x,y:player.y};
+  const d=generateDungeon(dungeonsCleared);
+  dungeon=d; curMap=d.map; mode='dungeon';
+  player.x=d.start.cx*TILE+16; player.y=d.start.cy*TILE+16;
+  enemies=[]; items=[]; projectiles=[]; npc=null;
+  // 일반 적
+  for(const r of d.rooms){
+    if(r===d.bossRoom||r===d.start)continue;
+    const n=1+~~(Math.random()*2);
+    for(let i=0;i<n;i++) enemies.push(makeEnemy(r.cx*TILE+16+(Math.random()*40-20), r.cy*TILE+16+(Math.random()*40-20), Math.random()<0.5?'slime':'bat'));
+    if(Math.random()<0.6) items.push({x:r.cx*TILE+16,y:r.cy*TILE+16,type:'coin',bob:0});
+  }
+  // 보스
+  boss=makeEnemy(d.bossRoom.cx*TILE+16, d.bossRoom.cy*TILE+16, 'boss');
+  enemies.push(boss);
+  document.getElementById('zone').textContent='🕯️ 던전';
+}
+
+function makeEnemy(x,y,type){
+  const base={x,y,w:22,h:22,type,hitCd:0,wanderX:0,wanderY:0,wanderT:0,
+    knockX:0,knockY:0,path:null,pathT:0};
+  if(type==='slime') return {...base,hp:2,maxHp:2,speed:0.7,dmg:1};
+  if(type==='bat') return {...base,hp:1,maxHp:1,speed:1.4,dmg:1};
+  if(type==='boss') return {...base,hp:14,maxHp:14,speed:0.9,w:40,h:40,dmg:2};
+}
+
+/* =========================================================================
+   입력
+   ========================================================================= */
+addEventListener('keydown',e=>{
+  const k=e.key.toLowerCase(); keys[k]=true;
+  if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();
+  if(!running) return;
+  // 패널 토글
+  if(k==='i'){ toggleInventory(); return; }
+  if(k==='escape'){ closePanels(); return; }
+  if(k==='f'){ handleInteract(); return; }
+  if(shopOpen){ shopKey(k); return; }
+  if(k==='1'){ usePotion('hpPotion'); }
+  if(k==='2'){ usePotion('mpPotion'); }
+});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;});
+
+/* =========================================================================
+   상호작용 / 상점 / 인벤토리
+   ========================================================================= */
+let shopOpen=false, invOpen=false;
+function handleInteract(){
+  if(shopOpen){ closePanels(); return; }
+  // 동굴 입구
+  if(mode==='overworld'){
+    const tx=~~(player.x/TILE),ty=~~(player.y/TILE);
+    if(world.tiles[ty][tx]===T.CAVE){ enterDungeon(); return; }
+    // 상점 NPC
+    if(npc && Math.hypot(npc.x-player.x,npc.y-player.y)<46){ openShop(); return; }
+  }
+  if(mode==='dungeon'){
+    const tx=~~(player.x/TILE),ty=~~(player.y/TILE);
+    if(curMap.tiles[ty][tx]===T.EXIT){ enterOverworld(); }
+  }
+}
+function openShop(){ shopOpen=true; running_pause=true; shopSel=0; renderShop();
+  document.getElementById('shopPanel').classList.remove('hidden'); }
+function closePanels(){ shopOpen=false; invOpen=false; running_pause=false;
+  document.getElementById('shopPanel').classList.add('hidden');
+  document.getElementById('invPanel').classList.add('hidden'); }
+function toggleInventory(){ if(invOpen){closePanels();return;} invOpen=true; running_pause=true;
+  renderInv(); document.getElementById('invPanel').classList.remove('hidden'); }
+let running_pause=false;
+
+function shopKey(k){
+  if(k==='w'||k==='arrowup'){shopSel=(shopSel-1+SHOP_ITEMS.length)%SHOP_ITEMS.length;renderShop();}
+  if(k==='s'||k==='arrowdown'){shopSel=(shopSel+1)%SHOP_ITEMS.length;renderShop();}
+  if(k==='enter'){buyItem(SHOP_ITEMS[shopSel]);}
+}
+function buyItem(it){
+  if(player.gold<it.price) return;
+  player.gold-=it.price;
+  if(it.key==='hpPotion')player.inv.hpPotion++;
+  if(it.key==='mpPotion')player.inv.mpPotion++;
+  if(it.key==='maxHp'){player.maxHp+=2;player.hp=player.maxHp;}
+  if(it.key==='maxMp'){player.maxMp+=2;player.mp=player.maxMp;}
+  if(it.key==='swordUp')player.swordDmg++;
+  updateHud(); renderShop();
+}
+function renderShop(){
+  const list=document.getElementById('shopList'); list.innerHTML='';
+  SHOP_ITEMS.forEach((it,i)=>{
+    const d=document.createElement('div');
+    d.className='shopItem'+(i===shopSel?' sel':'');
+    d.innerHTML=`<span>${it.name}<br><span style="font-size:11px;color:#aaa">${it.desc}</span></span><span class="price">🪙${it.price}</span>`;
+    list.appendChild(d);
+  });
+  const g=document.createElement('div'); g.style.marginTop='8px'; g.style.color='#ffd54a';
+  g.textContent=`보유 골드: 🪙${player.gold}`; list.appendChild(g);
+}
+function renderInv(){
+  const l=document.getElementById('invList');
+  l.innerHTML=`❤️ 체력 포션 × ${player.inv.hpPotion}<br>💧 마나 포션 × ${player.inv.mpPotion}<br>
+    ⚔️ 검 데미지: ${player.swordDmg}<br>🪙 골드: ${player.gold}<br>🏰 클리어한 던전: ${dungeonsCleared}`;
+}
+function usePotion(type){
+  if(type==='hpPotion'&&player.inv.hpPotion>0&&player.hp<player.maxHp){
+    player.inv.hpPotion--; player.hp=Math.min(player.maxHp,player.hp+4); updateHud();
+  }
+  if(type==='mpPotion'&&player.inv.mpPotion>0&&player.mp<player.maxMp){
+    player.inv.mpPotion--; player.mp=Math.min(player.maxMp,player.mp+4); updateHud();
+  }
+  if(invOpen)renderInv();
+}
+
+/* =========================================================================
+   업데이트
+   ========================================================================= */
+function isSolidAt(px,py){
+  const tx=~~(px/TILE),ty=~~(py/TILE);
+  if(tx<0||ty<0||tx>=curMap.w||ty>=curMap.h)return true;
+  return SOLID.has(curMap.tiles[ty][tx]);
+}
+function rectOverlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
+
+function update(){
+  if(!running||running_pause)return;
+  frame++;
+  if(player.mp<player.maxMp && frame%90===0) player.mp++; // 마나 재생
+
+  // 이동
+  let dx=0,dy=0;
+  if(keys['w']||keys['arrowup'])dy-=1;
+  if(keys['s']||keys['arrowdown'])dy+=1;
+  if(keys['a']||keys['arrowleft'])dx-=1;
+  if(keys['d']||keys['arrowright'])dx+=1;
+  if(dx||dy){
+    const len=Math.hypot(dx,dy);dx/=len;dy/=len;
+    if(Math.abs(dx)>Math.abs(dy))player.dir=dx>0?'right':'left';
+    else player.dir=dy>0?'down':'up';
+    const nx=player.x+dx*player.speed,ny=player.y+dy*player.speed,hw=8,hh=8;
+    if(!isSolidAt(nx-hw,player.y-hh)&&!isSolidAt(nx+hw,player.y-hh)&&!isSolidAt(nx-hw,player.y+hh)&&!isSolidAt(nx+hw,player.y+hh))player.x=nx;
+    if(!isSolidAt(player.x-hw,ny-hh)&&!isSolidAt(player.x+hw,ny-hh)&&!isSolidAt(player.x-hw,ny+hh)&&!isSolidAt(player.x+hw,ny+hh))player.y=ny;
+  }
+  // 검
+  if(keys[' ']&&player.attackCd<=0){player.attacking=14;player.attackCd=26;}
+  if(player.attacking>0)player.attacking--;
+  if(player.attackCd>0)player.attackCd--;
+  if(player.invuln>0)player.invuln--;
+  if(player.fireCd>0)player.fireCd--;
+  if(player.healCd>0)player.healCd--;
+
+  // 파이어볼 (Q)
+  if(keys['q']&&player.fireCd<=0&&player.mp>=2){
+    player.mp-=2; player.fireCd=24;
+    const vel={up:[0,-5],down:[0,5],left:[-5,0],right:[5,0]}[player.dir];
+    projectiles.push({x:player.x,y:player.y,vx:vel[0],vy:vel[1],life:60,dmg:2});
+    updateHud();
+  }
+  // 힐 (E)
+  if(keys['e']&&player.healCd<=0&&player.mp>=3&&player.hp<player.maxHp){
+    player.mp-=3; player.healCd=40; player.hp=Math.min(player.maxHp,player.hp+2); updateHud();
+  }
+
+  // 검 히트박스
+  let sword=null;
+  if(player.attacking>6){
+    const r=30;
+    if(player.dir==='up')sword={x:player.x-16,y:player.y-r-6,w:32,h:r};
+    if(player.dir==='down')sword={x:player.x-16,y:player.y+6,w:32,h:r};
+    if(player.dir==='left')sword={x:player.x-r-6,y:player.y-16,w:r,h:32};
+    if(player.dir==='right')sword={x:player.x+6,y:player.y-16,w:r,h:32};
+  }
+
+  // 투사체
+  for(const p of projectiles){
+    p.x+=p.vx;p.y+=p.vy;p.life--;
+    if(isSolidAt(p.x,p.y))p.life=0;
+    for(const en of enemies){
+      if(en.hp>0&&Math.hypot(en.x-p.x,en.y-p.y)<en.w/2+5){
+        damageEnemy(en,p.dmg,p.x,p.y); p.life=0; break;
+      }
+    }
+  }
+  projectiles=projectiles.filter(p=>p.life>0);
+
+  // 적
+  for(const en of enemies){
+    if(en.hp<=0)continue;
+    const dist=Math.hypot(player.x-en.x,player.y-en.y);
+    let mx=0,my=0;
+    const aggroRange=en.type==='boss'?400:220;
+    if(dist<aggroRange){
+      // A* 길찾기 (주기적 재계산)
+      en.pathT--;
+      if(en.pathT<=0){
+        en.path=astar(curMap,~~(en.x/TILE),~~(en.y/TILE),~~(player.x/TILE),~~(player.y/TILE));
+        en.pathT=24+(~~(Math.random()*12));
+      }
+      if(en.path&&en.path.length){
+        const next=en.path[0];
+        const tx=next.x*TILE+16,ty=next.y*TILE+16;
+        const d2=Math.hypot(tx-en.x,ty-en.y);
+        if(d2<6)en.path.shift();
+        else{mx=(tx-en.x)/d2;my=(ty-en.y)/d2;}
+      }else{ // 경로 없으면 직진
+        mx=(player.x-en.x)/dist;my=(player.y-en.y)/dist;
+      }
+    }else{ // 배회
+      en.wanderT--;
+      if(en.wanderT<=0){const a=Math.random()*6.28;en.wanderX=Math.cos(a);en.wanderY=Math.sin(a);en.wanderT=50+Math.random()*60;}
+      mx=en.wanderX*0.5;my=en.wanderY*0.5;
+    }
+    if(en.knockX||en.knockY){mx+=en.knockX;my+=en.knockY;en.knockX*=0.8;en.knockY*=0.8;
+      if(Math.abs(en.knockX)<0.1)en.knockX=0;if(Math.abs(en.knockY)<0.1)en.knockY=0;}
+    const nx=en.x+mx*en.speed,ny=en.y+my*en.speed;
+    if(!isSolidAt(nx,en.y))en.x=nx;
+    if(!isSolidAt(en.x,ny))en.y=ny;
+    if(en.hitCd>0)en.hitCd--;
+
+    // 검 피격
+    if(sword&&rectOverlap(sword,{x:en.x-en.w/2,y:en.y-en.h/2,w:en.w,h:en.h})&&en.hitCd<=0){
+      damageEnemy(en,player.swordDmg,en.x,en.y);
+    }
+    // 플레이어 피격
+    if(dist<en.w/2+10&&player.invuln<=0){
+      player.hp-=en.dmg;player.invuln=60;
+      const kd=dist||1;player.x+=(player.x-en.x)/kd*10;player.y+=(player.y-en.y)/kd*10;
+      updateHud();
+      if(player.hp<=0){endGame(false);}
+    }
+  }
+
+  // 아이템
+  for(const it of items){
+    if(it.got)continue; it.bob+=0.12;
+    if(Math.hypot(player.x-it.x,player.y-it.y)<22){
+      it.got=true;
+      if(it.type==='coin'){player.gold+=5;}
+      else if(it.type==='heart'&&player.hp<player.maxHp)player.hp++;
+      updateHud();
+    }
+  }
+  items=items.filter(it=>!it.got);
+
+  // 보스 처치 → 던전 클리어
+  if(mode==='dungeon'&&boss&&boss.hp<=0&&!boss.cleared){
+    boss.cleared=true; dungeonsCleared++;
+    player.gold+=50;
+    // 보스 위치에 출구 생성
+    const bx=~~(boss.x/TILE),by=~~(boss.y/TILE); curMap.tiles[by][bx]=T.EXIT;
+    items.push({x:boss.x,y:boss.y-20,type:'heart',bob:0});
+    showHint('🏆 보스 처치! 골드 +50 · 출구로 나가세요');
+    if(dungeonsCleared>=3){ setTimeout(()=>endGame(true),200); }
+  }
+  updateHint();
+  updateHud();
+}
+
+function damageEnemy(en,dmg,fx,fy){
+  en.hp-=dmg; en.hitCd=18;
+  const kd=Math.hypot(en.x-player.x,en.y-player.y)||1;
+  en.knockX=(en.x-player.x)/kd*4; en.knockY=(en.y-player.y)/kd*4;
+  if(en.hp<=0&&en.type!=='boss'){
+    player.gold+= en.type==='slime'?3:2;
+    if(Math.random()<0.4)items.push({x:en.x,y:en.y,type:'heart',bob:0});
+  }
+}
+
+/* =========================================================================
+   HUD / 힌트
+   ========================================================================= */
+function updateHud(){
+  const hc=document.getElementById('hearts');hc.innerHTML='';
+  for(let i=0;i<player.maxHp;i+=2){
+    const f=player.hp-i,ch=f>=2?'❤️':(f===1?'💔':'🖤');
+    const s=document.createElement('span');s.className='heart';s.textContent=ch;hc.appendChild(s);
+  }
+  const mb=document.getElementById('manabar');mb.innerHTML='';
+  for(let i=0;i<player.maxMp;i++){
+    const p=document.createElement('span');p.className='pip'+(i<player.mp?' full':'');mb.appendChild(p);
+  }
+  document.getElementById('goldCount').textContent=player.gold;
+}
+let hintText='',hintTimer=0;
+function showHint(t){hintText=t;hintTimer=180;}
+function updateHint(){
+  const el=document.getElementById('hint');
+  if(hintTimer>0){hintTimer--;el.textContent=hintText;return;}
+  // 컨텍스트 힌트
+  let h='';
+  if(mode==='overworld'){
+    const tx=~~(player.x/TILE),ty=~~(player.y/TILE);
+    if(world.tiles[ty]&&world.tiles[ty][tx]===T.CAVE)h='F: 던전 입장';
+    else if(npc&&Math.hypot(npc.x-player.x,npc.y-player.y)<46)h='F: 상점 열기';
+  }else if(mode==='dungeon'){
+    const tx=~~(player.x/TILE),ty=~~(player.y/TILE);
+    if(curMap.tiles[ty]&&curMap.tiles[ty][tx]===T.EXIT)h='F: 던전 나가기';
+  }
+  el.textContent=h;
+}
+
+/* =========================================================================
+   렌더링 (카메라 + 컬링)
+   ========================================================================= */
+function render(){
+  let camX=player.x-VW/2,camY=player.y-VH/2;
+  camX=Math.max(0,Math.min(camX,curMap.w*TILE-VW));
+  camY=Math.max(0,Math.min(camY,curMap.h*TILE-VH));
+  ctx.fillStyle = mode==='dungeon'?'#15131f':'#4a7c3a';
+  ctx.fillRect(0,0,VW,VH);
+
+  const x0=~~(camX/TILE),y0=~~(camY/TILE),x1=Math.ceil((camX+VW)/TILE),y1=Math.ceil((camY+VH)/TILE);
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+    if(x<0||y<0||x>=curMap.w||y>=curMap.h)continue;
+    const t=curMap.tiles[y][x],sx=x*TILE-camX,sy=y*TILE-camY;
+    ctx.fillStyle=tileColors[t];ctx.fillRect(sx,sy,TILE,TILE);
+    if(t===T.WATER){ctx.fillStyle='rgba(255,255,255,0.12)';ctx.fillRect(sx+4,sy+6,10,3);ctx.fillRect(sx+18,sy+18,8,3);}
+    if(t===T.TREE){ctx.fillStyle='#2d5523';ctx.beginPath();ctx.arc(sx+16,sy+14,13,0,7);ctx.fill();ctx.fillStyle='#6b4423';ctx.fillRect(sx+13,sy+22,6,8);}
+    if(t===T.FLOWER){ctx.fillStyle='#e84a5f';ctx.fillRect(sx+8,sy+10,4,4);ctx.fillStyle='#ffd54a';ctx.fillRect(sx+20,sy+18,4,4);}
+    if(t===T.ROCK){ctx.fillStyle='#6e6e6e';ctx.beginPath();ctx.arc(sx+16,sy+18,10,0,7);ctx.fill();}
+    if(t===T.CAVE){ctx.fillStyle='#000';ctx.beginPath();ctx.arc(sx+16,sy+18,11,Math.PI,0);ctx.fill();ctx.fillStyle='#1a1a26';ctx.fillRect(sx+6,sy+18,20,10);ctx.fillStyle='#ffd54a';ctx.font='10px monospace';ctx.textAlign='center';ctx.fillText('▼',sx+16,sy+8);}
+    if(t===T.WALL){ctx.fillStyle='rgba(0,0,0,0.3)';ctx.fillRect(sx,sy,TILE,4);ctx.fillStyle='#3a322a';ctx.fillRect(sx+2,sy+6,12,8);ctx.fillRect(sx+18,sy+18,12,8);}
+    if(t===T.EXIT){ctx.fillStyle='#fff';ctx.font='18px serif';ctx.textAlign='center';ctx.fillText('🚪',sx+16,sy+24);}
+  }
+
+  // NPC
+  if(npc){const sx=npc.x-camX,sy=npc.y-camY;
+    ctx.fillStyle='#9b59b6';ctx.fillRect(sx-10,sy-4,20,14);
+    ctx.fillStyle='#e8b88a';ctx.fillRect(sx-7,sy-14,14,11);
+    ctx.fillStyle='#5a2d82';ctx.fillRect(sx-9,sy-18,18,5);
+    ctx.fillStyle='#ffd54a';ctx.font='14px serif';ctx.textAlign='center';ctx.fillText('🛒',sx,sy-22);
+  }
+
+  // 아이템
+  for(const it of items){const sx=it.x-camX,sy=it.y-camY+Math.sin(it.bob)*3;
+    if(it.type==='coin'){ctx.fillStyle='#ffd54a';ctx.beginPath();ctx.arc(sx,sy,7,0,7);ctx.fill();ctx.fillStyle='#d4a017';ctx.fillRect(sx-2,sy-4,4,8);}
+    else{ctx.fillStyle='#e84a5f';ctx.font='16px serif';ctx.textAlign='center';ctx.fillText('♥',sx,sy+5);}
+  }
+
+  // 투사체
+  for(const p of projectiles){const sx=p.x-camX,sy=p.y-camY;
+    ctx.fillStyle='#ff6b35';ctx.beginPath();ctx.arc(sx,sy,6,0,7);ctx.fill();
+    ctx.fillStyle='#ffd54a';ctx.beginPath();ctx.arc(sx,sy,3,0,7);ctx.fill();
+  }
+
+  // 적
+  for(const en of enemies){
+    if(en.hp<=0)continue;const sx=en.x-camX,sy=en.y-camY,flash=en.hitCd>9;
+    if(en.type==='slime'){ctx.fillStyle=flash?'#fff':'#7ed957';ctx.beginPath();ctx.ellipse(sx,sy+4,11,9,0,0,7);ctx.fill();ctx.fillStyle='#000';ctx.fillRect(sx-5,sy,3,3);ctx.fillRect(sx+3,sy,3,3);}
+    else if(en.type==='bat'){ctx.fillStyle=flash?'#fff':'#6a4c93';ctx.beginPath();ctx.arc(sx,sy,9,0,7);ctx.fill();ctx.fillStyle='#4a2c73';ctx.beginPath();ctx.moveTo(sx-9,sy);ctx.lineTo(sx-16,sy-5);ctx.lineTo(sx-9,sy-4);ctx.fill();ctx.beginPath();ctx.moveTo(sx+9,sy);ctx.lineTo(sx+16,sy-5);ctx.lineTo(sx+9,sy-4);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(sx-4,sy-2,2,2);ctx.fillRect(sx+2,sy-2,2,2);}
+    else if(en.type==='boss'){ctx.fillStyle=flash?'#fff':'#c0392b';ctx.beginPath();ctx.arc(sx,sy,20,0,7);ctx.fill();ctx.fillStyle='#7a1f15';ctx.fillRect(sx-22,sy-8,8,16);ctx.fillRect(sx+14,sy-8,8,16);ctx.fillStyle='#ffd54a';ctx.fillRect(sx-9,sy-5,5,5);ctx.fillRect(sx+4,sy-5,5,5);ctx.fillStyle='#000';ctx.fillRect(sx-7,sy-3,2,2);ctx.fillRect(sx+6,sy-3,2,2);
+      // 보스 체력바
+      ctx.fillStyle='#000';ctx.fillRect(sx-22,sy-32,44,5);ctx.fillStyle='#e84a5f';ctx.fillRect(sx-21,sy-31,42*(en.hp/en.maxHp),3);}
+  }
+
+  // 플레이어
+  const psx=player.x-camX,psy=player.y-camY;
+  if(!(player.invuln>0&&~~(player.invuln/4)%2)){
+    ctx.fillStyle='#3a7c4a';ctx.fillRect(psx-10,psy-2,20,12);
+    ctx.fillStyle='#e8b88a';ctx.fillRect(psx-7,psy-12,14,11);
+    ctx.fillStyle='#8b6f47';ctx.fillRect(psx-8,psy-14,16,4);
+    ctx.fillStyle='#000';
+    if(player.dir==='down'){ctx.fillRect(psx-4,psy-7,2,2);ctx.fillRect(psx+2,psy-7,2,2);}
+    if(player.dir==='up'){ctx.fillStyle='#8b6f47';ctx.fillRect(psx-7,psy-12,14,8);}
+    if(player.dir==='left')ctx.fillRect(psx-5,psy-7,2,2);
+    if(player.dir==='right')ctx.fillRect(psx+3,psy-7,2,2);
+  }
+  if(player.attacking>6){
+    ctx.fillStyle='#dfe6e9';let sx,sy,sw,sh;
+    if(player.dir==='up'){sx=psx-2;sy=psy-34;sw=4;sh=26;}
+    if(player.dir==='down'){sx=psx-2;sy=psy+8;sw=4;sh=26;}
+    if(player.dir==='left'){sx=psx-34;sy=psy-2;sw=26;sh=4;}
+    if(player.dir==='right'){sx=psx+8;sy=psy-2;sw=26;sh=4;}
+    ctx.fillRect(sx,sy,sw,sh);
+  }
+}
+
+/* =========================================================================
+   게임 시작/종료
+   ========================================================================= */
+function startGame(){
+  world=generateOverworld();
+  player=newPlayer();
+  dungeonsCleared=0; savedOverworldPos=null; boss=null;
+  enterOverworld();
+  running=true; running_pause=false; shopOpen=false; invOpen=false;
+  document.getElementById('startPanel').classList.add('hidden');
+  document.getElementById('endPanel').classList.add('hidden');
+  updateHud(); showHint('동굴 ▼ 을 찾아 던전 3곳을 정복하세요!');
+}
+function endGame(victory){
+  running=false;
+  document.getElementById('endTitle').textContent=victory?'🏆 완전 정복!':'💀 쓰러졌다...';
+  document.getElementById('endText').innerHTML=victory
+    ? `던전 3곳을 모두 정복했어요! 진정한 영웅이군요.<br>보유 골드: 🪙${player.gold}`
+    : `체력이 모두 소진됐어요.<br>정복한 던전: ${dungeonsCleared} / 3`;
+  document.getElementById('endPanel').classList.remove('hidden');
+}
+document.getElementById('startBtn').addEventListener('click',startGame);
+document.getElementById('endBtn').addEventListener('click',startGame);
+
+/* =========================================================================
+   루프
+   ========================================================================= */
+function loop(){update();render();requestAnimationFrame(loop);}
+world=generateOverworld(); player=newPlayer(); curMap=world; mode='overworld';
+player.x=world.w*TILE/2; player.y=world.h*TILE/2; enemies=[];items=[];projectiles=[];npc=null;
+render(); loop();
+</script>
+</body>
+</html>

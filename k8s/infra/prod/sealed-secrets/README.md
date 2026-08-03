@@ -51,10 +51,21 @@ kubectl -n kube-system delete secret -l sealedsecrets.bitnami.com/sealed-secrets
 # existing sealed secrets remain decryptable for 30 days of overlap.
 ```
 
+## Required before `kubectl apply -k k8s/infra/prod`
+
+| SealedSecret | 내용 | 없으면 |
+|---|---|---|
+| `commerce-mysql-secrets` | Percona operator 계정(root/xtrabackup/monitor/…) | operator 가 대기 상태로 정지 |
+| `commerce-app-db-secrets` | 서비스별 DB 비밀번호 13종 (`percona-mysql/README.md`) | init Job pod 가 `CreateContainerConfigError` 로 실패 |
+| `backup-secret` | 백업 스토리지 자격증명 | 백업 CronJob 이 실패 |
+
+셋 다 평문 placeholder 를 두지 않는다 — 없으면 조용히 약한 값으로 뜨는
+대신 **명시적으로 실패**하는 쪽을 택했다.
+
 ## Migration note
 
 Every placeholder Secret referenced by Phase 3c's `prod-k8s` overlay
-(MySQL credentials, Redis password, ClickHouse credentials, JWT keys,
-OAuth client secrets) must be re-sealed here before running in
-production. Until that migration is done, leave the overlay's
-plaintext defaults in place.
+(Redis password, ClickHouse credentials, JWT keys, OAuth client
+secrets) must be re-sealed here before running in production. Until
+that migration is done, leave the overlay's plaintext defaults in
+place. MySQL 자격증명은 위 표대로 이미 Secret 전용으로 전환됐다.

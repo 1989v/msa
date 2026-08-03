@@ -121,8 +121,7 @@ patches:
     #     (gifticon/fulfillment 는 k3s-lite 의 동일값 명시 패치 보유)
 
     target: {kind: Deployment, name: experiment}
-  - path: patches/resources-s-512mi.yaml
-    target: {kind: Deployment, name: search-batch}
+  # ADR-0058 — search-batch 는 CronJob(Deployment 아님). resource 패치 대상 제외.
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: search-consumer}
   - path: patches/resources-s-512mi.yaml
@@ -134,16 +133,9 @@ patches:
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: chatbot}
   # ─── Tier XS (384Mi) — 최소 CRUD ─────────────────────────────────────────
-  - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: member}
-  - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: wishlist}
-  - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: inventory}
-  - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: warehouse}
-  - path: patches/resources-xs-384mi.yaml
-    target: {kind: Deployment, name: agent-viewer-api}
+  # ADR-0058: commerce(4-도메인 모놀리스)는 XL — 단일 inventory 의 xs(384Mi)로는 즉시 OOM.
+  - path: patches/resources-xl-1200mi.yaml
+    target: {kind: Deployment, name: commerce}
   # ─── Tier FE (96Mi) — nginx static ────────────────────────────────────────
   - path: patches/resources-fe-96mi.yaml
     target: {kind: Deployment, name: portal-fe}
@@ -153,90 +145,67 @@ patches:
     target: {kind: Deployment, name: quant-fe}
   - path: patches/resources-fe-96mi.yaml
     target: {kind: Deployment, name: gifticon-fe}
-  - path: patches/resources-fe-96mi.yaml
-    target: {kind: Deployment, name: agent-viewer-fe}
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
-    newTag: fa2c422
-  - name: commerce/agent-viewer-api
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-api
-    newTag: 5ebf81b
-  - name: commerce/agent-viewer-fe
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/agent-viewer-fe
-    newTag: 2ddd6fd
+    newTag: a4a1b48
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 5ebf81b
+    newTag: e080a50
+  - name: commerce/commerce
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
+    newTag: e080a50
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
-    newTag: 5ebf81b
-  - name: commerce/fulfillment
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/fulfillment
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
-    newTag: 80920eb
-  - name: commerce/inventory
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/inventory
-    newTag: 5ebf81b
-  - name: commerce/member
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/member
-    newTag: 5ebf81b
-  - name: commerce/order
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/order
-    newTag: 5ebf81b
+    newTag: a4a1b48
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 5ebf81b
+    newTag: c04fef4
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/quant
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
-    newTag: "6367585"
+    newTag: a4a1b48
   - name: commerce/quant-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-ingest
-    newTag: 80920eb
+    newTag: a4a1b48
   - name: commerce/recommendation
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/recommendation-ann
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ann
-    newTag: 80920eb
+    newTag: a4a1b48
   - name: commerce/recommendation-ml
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ml
-    newTag: 80920eb
+    newTag: a4a1b48
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 5ebf81b
+    newTag: e080a50
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
-    newTag: 5ebf81b
-  - name: commerce/warehouse
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/warehouse
-    newTag: 5ebf81b
-  - name: commerce/wishlist
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/wishlist
-    newTag: 5ebf81b
+    newTag: e080a50

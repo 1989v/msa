@@ -26,6 +26,9 @@
 | `analytics.bandit.state.snapshot` | analytics | (선택) monitoring | <!-- ADR-0043 -->
 | `analytics.score.updated` | analytics | search | <!-- ADR-0017 -->
 | `analytics.event.collected` | (multi) | analytics | <!-- ADR-0017 -->
+| `game.session.started` | game (code-dictionary:app 폴드) | analytics | <!-- ADR-0059 -->
+| `game.session.ended` | game (code-dictionary:app 폴드) | analytics | <!-- ADR-0059 -->
+| `game.ad.logged` | game — ads 페이즈에서 발행 예정 | analytics (예정) | <!-- ADR-0059 -->
 
 Consumer groups (ADR-0043):
 - `analytics-bandit-impression` (`search.impression.logged` 수신)

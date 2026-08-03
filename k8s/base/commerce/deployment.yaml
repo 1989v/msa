@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: commerce
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: commerce
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: commerce
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: commerce
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      serviceAccountName: commerce
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: commerce/commerce:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8085
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          resources:
+            # ADR-0058 R2: 6-도메인 commerce 모놀리스(order+inventory+fulfillment+warehouse+member+wishlist)
+            # — 6 EMF/풀 워킹셋. 제거된 6개 Deployment 메모리에서 충당(순감).
+            requests:
+              cpu: 200m
+              memory: 896Mi
+            limits:
+              memory: 1792Mi

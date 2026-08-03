@@ -25,7 +25,6 @@ val serviceImageName: String = project.path
 val mainClassByImage: Map<String, String> = mapOf(
     "gateway" to "com.kgd.gateway.GatewayApplicationKt",
     "product" to "com.kgd.product.ProductApplicationKt",
-    "order" to "com.kgd.order.OrderApplicationKt",
     "search" to "com.kgd.search.SearchApplicationKt",
     "search-consumer" to "com.kgd.search.SearchConsumerApplicationKt",
     "search-batch" to "com.kgd.search.SearchBatchApplicationKt",
@@ -33,9 +32,7 @@ val mainClassByImage: Map<String, String> = mapOf(
     "member" to "com.kgd.member.MemberApplicationKt",
     "wishlist" to "com.kgd.wishlist.WishlistApplicationKt",
     "gifticon" to "com.kgd.gifticon.GifticonApplicationKt",
-    "inventory" to "com.kgd.inventory.InventoryApplicationKt",
-    "fulfillment" to "com.kgd.fulfillment.FulfillmentApplicationKt",
-    "warehouse" to "com.kgd.warehouse.WarehouseApplicationKt",
+    "commerce" to "com.kgd.commerce.CommerceApplicationKt",
     "analytics" to "com.kgd.analytics.AnalyticsApplicationKt",
     "experiment" to "com.kgd.experiment.ExperimentApplicationKt",
     "chatbot" to "com.kgd.chatbot.ChatbotApplicationKt",

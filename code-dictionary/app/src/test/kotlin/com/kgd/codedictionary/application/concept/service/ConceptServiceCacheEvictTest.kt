@@ -10,6 +10,7 @@ import com.kgd.codedictionary.domain.concept.model.Concept
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
 import com.kgd.codedictionary.fixture.ConceptFixture
+import com.kgd.testsupport.ConceptCacheTestContext
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -18,13 +19,8 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.verify
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.cache.CacheManager
-import org.springframework.cache.annotation.EnableCaching
-import org.springframework.cache.caffeine.CaffeineCacheManager
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.ComponentScan
 import org.springframework.test.annotation.DirtiesContext
 
 /**
@@ -33,14 +29,15 @@ import org.springframework.test.annotation.DirtiesContext
  * - 목적: Spring `@CacheEvict` 프록시가 정상 동작하여 CUD 후 `conceptCategoryStats` 캐시가 초기화되는지 검증.
  * - 전략: 최소 Spring context + MockK 로 outbound port 격리.
  *   - `@EnableCaching` + Caffeine `CacheManager` 빈을 직접 등록 (실제 `CacheConfig` import 회피 — JPA/Flyway 차단).
- *   - `@SpringBootTest(classes = ...)` 로 ConceptService / GraphService 만 ComponentScan.
+ *   - 컨텍스트 정의는 앱 스캔 밖의 [ConceptCacheTestContext] — 앱 패키지 안에 두면 전체 컨텍스트
+ *     기동 시 `cacheManager` 가 중복 정의된다.
  * - 검증 방법:
  *   1. GraphService 호출 시 캐시 적재 (실제 cache.get)
  *   2. CUD 호출 후 캐시 비어있음 (`cache.get(key)` null)
  *   3. 두 번째 GraphService 호출 시 repository 가 재호출됨
  */
 @SpringBootTest(
-    classes = [ConceptServiceCacheEvictTest.Ctx::class],
+    classes = [ConceptCacheTestContext::class],
     properties = [
         "spring.main.web-application-type=none",
     ],
@@ -183,31 +180,4 @@ class ConceptServiceCacheEvictTest(
 }) {
     override fun extensions() = listOf(SpringExtension)
 
-    /**
-     * 최소 Spring context — 실제 production CacheConfig / 자동설정을 import 하지 않고
-     * 캐시 + ComponentScan 만 활성화하여 JPA / Flyway / DataSource 부팅을 회피한다.
-     *
-     * - `ConceptService`, `GraphService` 만 ComponentScan 으로 등록
-     * - `ConceptRepositoryPort`, `ConceptIndexRepositoryPort` 는 MockK 로 빈 등록
-     */
-    @SpringBootConfiguration
-    @EnableCaching
-    @ComponentScan(
-        basePackageClasses = [
-            ConceptService::class,
-            GraphService::class,
-        ],
-    )
-    open class Ctx {
-
-        @Bean
-        open fun cacheManager(): CacheManager =
-            CaffeineCacheManager("conceptCategoryStats")
-
-        @Bean
-        open fun conceptRepositoryPort(): ConceptRepositoryPort = io.mockk.mockk(relaxed = false)
-
-        @Bean
-        open fun conceptIndexRepositoryPort(): ConceptIndexRepositoryPort = io.mockk.mockk(relaxed = false)
-    }
 }

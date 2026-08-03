@@ -7,5 +7,6 @@ spring:
       host: redis-1
       port: 6379
   kafka:
-    bootstrap-servers: kafka:29092
+    # CLIENT 리스너(9092) — 29092(INTERNAL)는 브로커 간 용도이며 NetworkPolicy(allow-app-to-kafka)도 9092만 허용
+    bootstrap-servers: kafka:9092
 

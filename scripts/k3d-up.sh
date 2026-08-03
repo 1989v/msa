@@ -140,7 +140,7 @@ if [[ "$MODE" == "core" ]]; then
     log "Scaling down non-core services..."
     for svc in chatbot analytics experiment code-dictionary \
                search-batch search-consumer agent-viewer-api \
-               inventory fulfillment warehouse member wishlist gifticon \
+               inventory member wishlist gifticon \
                portal-fe gifticon-fe agent-viewer-fe; do
         kubectl -n commerce scale deploy/$svc --replicas=0 2>/dev/null || true
     done

@@ -35,6 +35,9 @@ spec:
             - --character-set-server=utf8mb4
             - --collation-server=utf8mb4_unicode_ci
             - --default-authentication-plugin=mysql_native_password
+            # 공유 단일 인스턴스에 서비스 ~15개의 커넥션풀이 붙는다 — 기본 151로는
+            # 재배포(신구 파드 풀 공존) 시 고갈되므로 상향 (game 폴드 롤아웃에서 실측)
+            - --max-connections=500
           readinessProbe:
             exec:
               command:

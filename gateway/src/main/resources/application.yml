@@ -71,7 +71,7 @@ spring:
             # /api/members/stats/** 는 아래 라우트가 유일 커버. ⚠️ 현재 무인증 — 추후 GatewayRouteConfig
             # 로 옮겨 adminConfig 적용 후 제거 필요 (admin 데이터 인증 경계).
             - id: member-service
-              uri: http://member:8093
+              uri: http://commerce:8085
               predicates: [Path=/api/members/**]
 
             # === Actuator 프록시 라우트 (admin 서비스 health 표시용) ===
@@ -82,9 +82,10 @@ spring:
               uri: http://product:8081
               predicates: [Path=/svc/product/actuator/health]
               filters: [StripPrefix=2]
-            - id: actuator-order
-              uri: http://order:8082
-              predicates: [Path=/svc/order/actuator/health]
+            # ADR-0058: order/inventory/fulfillment/warehouse 는 commerce 로 폴드 — 단일 actuator
+            - id: actuator-commerce
+              uri: http://commerce:8085
+              predicates: [Path=/svc/commerce/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-search
               uri: http://search:8083
@@ -99,7 +100,7 @@ spring:
               predicates: [Path=/svc/code-dictionary/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-member
-              uri: http://member:8093
+              uri: http://commerce:8085
               predicates: [Path=/svc/member/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-gifticon
@@ -107,7 +108,7 @@ spring:
               predicates: [Path=/svc/gifticon/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-wishlist
-              uri: http://wishlist:8095
+              uri: http://commerce:8085
               predicates: [Path=/svc/wishlist/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-quant
@@ -142,8 +143,14 @@ kgd:
 # spec 은 GatewayRouteConfig 의 /api/docs/specs/{service} 프록시 라우트 경유.
 # 모든 경로가 /api/* 라 ingress 의 gateway prefix (/api) 안에서 그대로 동작한다.
 springdoc:
+  # ⚠️ api-docs.enabled=false 로 두면 springdoc auto-config 빈이 통째로 backoff 되어
+  # swagger-ui welcome/config 컨트롤러까지 미등록(404) + webjars.prefix 도 무시됨.
+  # 집계 UI 를 살리려면 활성(default) 유지. gateway 는 @RestController 가 없어 자체
+  # /v3/api-docs 는 비어있으니 무해. (UI 만 끄려면 springdoc.swagger-ui.enabled=false 사용)
   api-docs:
-    enabled: false   # gateway 자체 컨트롤러 spec 은 불필요 (집계 전용)
+    # swagger-ui 가 드롭다운 urls 를 가져오는 swagger-config endpoint 를 /api 밑으로 이동.
+    # ingress 는 /api 만 gateway 로 보내므로 default /v3/api-docs/swagger-config 는 외부서 미도달(404).
+    path: /api/v3/api-docs
   webjars:
     prefix: /api/webjars
   swagger-ui:

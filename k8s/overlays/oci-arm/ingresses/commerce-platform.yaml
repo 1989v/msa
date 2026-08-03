@@ -15,7 +15,6 @@
 #   admin.<DOMAIN>              → admin-fe    [proxied]
 #   quant.<DOMAIN>              → quant-fe    [proxied]
 #   gft.<DOMAIN>                → gifticon-fe [proxied]
-#   agent.<DOMAIN>              → agent-viewer-fe [proxied]
 #   api.<DOMAIN>                → gateway (REST 위주) [proxied]
 #   rt.<DOMAIN>                 → gateway (WS+SSE) [bypass]
 #
@@ -44,7 +43,6 @@ spec:
         - admin.__DOMAIN__
         - quant.__DOMAIN__
         - gft.__DOMAIN__
-        - agent.__DOMAIN__
         - api.__DOMAIN__
       secretName: cf-origin-ca-tls
   rules:
@@ -136,28 +134,6 @@ spec:
           - path: /
             pathType: Prefix
             backend: { service: { name: gifticon-fe, port: { name: http } } }
-    # ─── agent-viewer-fe (agent.<DOMAIN>) ───
-    - host: agent.__DOMAIN__
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /ws
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /sse
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /actuator
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /svc
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /
-            pathType: Prefix
-            backend: { service: { name: agent-viewer-fe, port: { name: http } } }
     # ─── gateway API 전용 host (REST 위주) ───
     - host: api.__DOMAIN__
       http:
