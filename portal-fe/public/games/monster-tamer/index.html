@@ -810,6 +810,11 @@ function buildRegion(def) {
   const openSpots = [];
   for (let y = 2; y < H - 2; y++) for (let x = 2; x < W - 2; x++) if (inMain(x, y)) openSpots.push({ x, y });
   const takeSpot = () => openSpots.splice(Math.floor(rng() * openSpots.length), 1)[0];
+  /** 사방이 모두 걸을 수 있는 자리 — 시설 앞에서 지형에 갇히는 것을 막는다 */
+  const takeClearSpot = () => {
+    const i = openSpots.findIndex(p => [[1,0],[-1,0],[0,1],[0,-1]].every(([dx, dy]) => walkNow(g[p.y + dy]?.[p.x + dx])));
+    return i >= 0 ? openSpots.splice(i, 1)[0] : takeSpot();
+  };
   const exits = def.exits.map(e => {
     const left = e.dir === '◂';
     const side = openSpots.filter(p => left ? p.x < W * 0.4 : p.x > W * 0.6);
@@ -820,10 +825,10 @@ function buildRegion(def) {
     for (let i = 0; i < W; i++) { g[ey][x] = th.ground; if (inMain(x + step, ey)) break; x += step; if (x <= 0 || x >= W - 1) break; }
     return { x:ex, y:ey, dir:e.dir, to:e.to, need:e.need };
   });
-  if (def.center) { const p = takeSpot(); g[p.y][p.x] = 'H'; }
-  if (def.shop) { const p = takeSpot(); g[p.y][p.x] = 's'; }
+  if (def.center) { const p = takeClearSpot(); g[p.y][p.x] = 'H'; }
+  if (def.shop) { const p = takeClearSpot(); g[p.y][p.x] = 's'; }
   const npcs = [];
-  if (def.gym !== undefined) { const p = takeSpot(); g[p.y][p.x] = 'G'; def.gymAt = { x:p.x, y:p.y }; }
+  if (def.gym !== undefined) { const p = takeClearSpot(); g[p.y][p.x] = 'G'; def.gymAt = { x:p.x, y:p.y }; }
   // 트레이너 — 맵 크기에 비례해 배치 (넓어진 맵에 맞춰 증량)
   const trainerCount = (def.trainers || 0) + Math.floor(W * H / 700);
   for (let i = 0; i < trainerCount; i++) {
@@ -1119,6 +1124,14 @@ function tryStep() {
   }
   P.ntx = nx; P.nty = ny; P.moving = true; P.prog = 0;
 }
+/** 시설 타일 밖으로 나설 수 있는 인접 칸 — 없으면 그 자리에 선다 */
+function exitSpot(map, x, y) {
+  for (const [dx, dy] of [[0,1],[0,-1],[1,0],[-1,0]]) {
+    const c = map.grid[y + dy]?.[x + dx];
+    if (c !== undefined && WALKABLE.has(c) && c !== 'G' && c !== 'H' && c !== 'D') return { x:x + dx, y:y + dy };
+  }
+  return { x, y };
+}
 const cleared = n => (n.badge && S.badges.includes(n.badge)) || (n.trainerId && S.beaten.has(n.trainerId));
 function checkSight() {
   const m = curMap();
@@ -1182,8 +1195,9 @@ function arrive() {
     const door = m.exits.find(e => e.x === P.tx && e.y === P.ty);
     if (door) { goMap(door.to, door.tx, door.ty); return; }
   }
-  if (tHere === 'D' && m.isGym) { const back = MAPS[m.gymOf]; const at = REGION_DEFS.find(d => d.key === m.gymOf).gymAt;
-    goMap(m.gymOf, at.x, at.y + 1); return; }
+  if (tHere === 'D' && m.isGym) { const at = REGION_DEFS.find(d => d.key === m.gymOf).gymAt;
+    const out = exitSpot(MAPS[m.gymOf], at.x, at.y);
+    goMap(m.gymOf, out.x, out.y); return; }
   if (gymTick()) return;
   const ex = m.exits.find(e => e.x === P.tx && e.y === P.ty);
   if (ex) { const dst = MAPS[ex.to]; const back = dst.exits.find(e => e.to === S.map);
@@ -1653,7 +1667,7 @@ function renderShop() {
   }
   $('shopGold').textContent = '💰 ' + S.gold + 'G';
 }
-function closeShop() { $('shop').classList.remove('on'); S.mode = 'world'; P.ty += 1; }
+function closeShop() { $('shop').classList.remove('on'); S.mode = 'world'; }
 $('shopClose').onclick = closeShop;
 
 /* ═══════════ 배틀 ═══════════ */
