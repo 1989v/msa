@@ -24,14 +24,19 @@ class SearchController(
     private val banditEventPort: BanditEventPort
 ) {
 
+    /** [minKcal]/[maxKcal] 은 100g 기준 에너지(kcal) 범위 필터 (ADR-0060 — 칼로리 계산기/저칼로리 탐색). */
     @GetMapping("/products")
     fun searchProducts(
         @RequestParam keyword: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int,
-        @RequestParam(required = false) userId: String?
+        @RequestParam(required = false) userId: String?,
+        @RequestParam(required = false) minKcal: Double?,
+        @RequestParam(required = false) maxKcal: Double?
     ): ApiResponse<SearchProductUseCase.Result> {
-        val result = searchProductUseCase.execute(SearchProductUseCase.Query(keyword, page, size, userId))
+        val result = searchProductUseCase.execute(
+            SearchProductUseCase.Query(keyword, page, size, userId, minKcal = minKcal, maxKcal = maxKcal)
+        )
         return ApiResponse.success(result)
     }
 

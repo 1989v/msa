@@ -29,7 +29,18 @@ data class ProductSearchDocument(
     val gmv30d: Double = 0.0,
     val scoreUpdatedAt: Long = 0,
     val categoryId: String? = null,
-    val brand: String? = null
+    val brand: String? = null,
+    val description: String? = null,
+    val category: String? = null,
+    val energyKcal: Double? = null,
+    val carbohydrateG: Double? = null,
+    val proteinG: Double? = null,
+    val fatG: Double? = null,
+    val sugarG: Double? = null,
+    val sodiumMg: Double? = null,
+    val ingredients: String? = null,
+    val originCountry: String? = null,
+    val itemReportNo: String? = null
 ) {
     companion object {
         fun fromDomain(doc: ProductDocument) = ProductSearchDocument(
@@ -47,7 +58,18 @@ data class ProductSearchDocument(
             gmv30d = doc.gmv30d,
             scoreUpdatedAt = doc.scoreUpdatedAt,
             categoryId = doc.categoryId,
-            brand = doc.brand
+            brand = doc.brand,
+            description = doc.description,
+            category = doc.category,
+            energyKcal = doc.energyKcal,
+            carbohydrateG = doc.carbohydrateG,
+            proteinG = doc.proteinG,
+            fatG = doc.fatG,
+            sugarG = doc.sugarG,
+            sodiumMg = doc.sodiumMg,
+            ingredients = doc.ingredients,
+            originCountry = doc.originCountry,
+            itemReportNo = doc.itemReportNo
         )
     }
 
@@ -66,6 +88,17 @@ data class ProductSearchDocument(
         gmv30d = gmv30d,
         scoreUpdatedAt = scoreUpdatedAt,
         categoryId = categoryId,
-        brand = brand
+        brand = brand,
+        description = description,
+        category = category,
+        energyKcal = energyKcal,
+        carbohydrateG = carbohydrateG,
+        proteinG = proteinG,
+        fatG = fatG,
+        sugarG = sugarG,
+        sodiumMg = sodiumMg,
+        ingredients = ingredients,
+        originCountry = originCountry,
+        itemReportNo = itemReportNo
     )
 }

@@ -18,5 +18,17 @@ data class ProductDocument(
     val gmv30d: Double = 0.0,
     val scoreUpdatedAt: Long = 0,
     val categoryId: String? = null,
-    val brand: String? = null
+    val brand: String? = null,
+    val description: String? = null,
+    val category: String? = null,
+    // 영양성분 100g 기준 (ADR-0060) — 오픈데이터 미매칭 시 null
+    val energyKcal: Double? = null,
+    val carbohydrateG: Double? = null,
+    val proteinG: Double? = null,
+    val fatG: Double? = null,
+    val sugarG: Double? = null,
+    val sodiumMg: Double? = null,
+    val ingredients: String? = null,
+    val originCountry: String? = null,
+    val itemReportNo: String? = null
 )

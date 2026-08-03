@@ -23,7 +23,8 @@ class SearchProductService(
     override fun execute(query: SearchProductUseCase.Query): SearchProductUseCase.Result {
         val pageable = PageRequest.of(query.page, query.size)
         val variant = resolveVariant(query.userId)
-        val scored = searchPort.searchScored(query.keyword, pageable, variant)
+        val filters = ProductSearchPort.Filters(minKcal = query.minKcal, maxKcal = query.maxKcal)
+        val scored = searchPort.searchScored(query.keyword, pageable, variant, filters)
 
         val afterThompson = thompsonReranker.rerank(
             scored.content.map { it.document to it.esScore }
@@ -37,6 +38,16 @@ class SearchProductService(
                 price = doc.price,
                 status = doc.status,
                 categoryId = doc.categoryId,
+                category = doc.category,
+                description = doc.description,
+                energyKcal = doc.energyKcal,
+                carbohydrateG = doc.carbohydrateG,
+                proteinG = doc.proteinG,
+                fatG = doc.fatG,
+                sugarG = doc.sugarG,
+                sodiumMg = doc.sodiumMg,
+                ingredients = doc.ingredients,
+                originCountry = doc.originCountry,
                 position = pageable.pageNumber * pageable.pageSize + idx
             )
         }

@@ -5,6 +5,8 @@ import com.kgd.product.application.product.usecase.CreateProductUseCase
 import com.kgd.product.application.product.usecase.GetAllProductsUseCase
 import com.kgd.product.application.product.usecase.GetProductUseCase
 import com.kgd.product.application.product.usecase.UpdateProductUseCase
+import com.kgd.product.presentation.product.dto.BulkCreateProductRequest
+import com.kgd.product.presentation.product.dto.BulkCreateProductResponse
 import com.kgd.product.presentation.product.dto.CreateProductRequest
 import com.kgd.product.presentation.product.dto.ProductListResponse
 import com.kgd.product.presentation.product.dto.ProductResponse
@@ -28,6 +30,14 @@ class ProductController(
     fun createProduct(@Valid @RequestBody request: CreateProductRequest): ApiResponse<ProductResponse> {
         val result = createProductUseCase.execute(request.toCommand())
         return ApiResponse.success(ProductResponse.from(result))
+    }
+
+    /** 대량 적재 — ETL 시드 경로. 청크 단위 N건을 한 트랜잭션으로 저장 후 건별 이벤트 발행. */
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/bulk")
+    fun createProductsBulk(@Valid @RequestBody request: BulkCreateProductRequest): ApiResponse<BulkCreateProductResponse> {
+        val results = createProductUseCase.executeBulk(request.products.map { it.toCommand() })
+        return ApiResponse.success(BulkCreateProductResponse.from(results))
     }
 
     @GetMapping

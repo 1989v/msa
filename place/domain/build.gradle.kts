@@ -1,0 +1,8 @@
+// Pure domain module — no Spring/JPA annotations in source.
+// Depends on common only for shared exception base classes (BusinessException, ErrorCode).
+dependencies {
+    implementation(project(":common"))
+
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
+}

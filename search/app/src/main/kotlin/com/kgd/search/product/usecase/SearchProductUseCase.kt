@@ -10,7 +10,10 @@ interface SearchProductUseCase {
         val page: Int = 0,
         val size: Int = 20,
         /** 온라인 A/B variant 할당용. null 이면 실험 미참여 (기본 ranking). */
-        val userId: String? = null
+        val userId: String? = null,
+        /** 영양 필터 (ADR-0060) — 에너지 kcal/100g 범위. null 이면 미적용. */
+        val minKcal: Double? = null,
+        val maxKcal: Double? = null
     )
 
     data class ProductSearchResult(
@@ -19,6 +22,16 @@ interface SearchProductUseCase {
         val price: BigDecimal,
         val status: String,
         val categoryId: String? = null,
+        val category: String? = null,
+        val description: String? = null,
+        val energyKcal: Double? = null,
+        val carbohydrateG: Double? = null,
+        val proteinG: Double? = null,
+        val fatG: Double? = null,
+        val sugarG: Double? = null,
+        val sodiumMg: Double? = null,
+        val ingredients: String? = null,
+        val originCountry: String? = null,
         val position: Int = 0
     )
 

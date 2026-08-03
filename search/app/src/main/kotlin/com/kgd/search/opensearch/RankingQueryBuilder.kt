@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.opensearch
 
+import com.kgd.search.domain.product.port.ProductSearchPort
 import org.opensearch.client.json.JsonData
 import org.opensearch.client.opensearch._types.FieldValue
 import org.opensearch.client.opensearch._types.SortOptions
@@ -24,7 +25,13 @@ import org.springframework.stereotype.Component
 @Component
 class RankingQueryBuilder {
 
-    fun build(indexName: String, keyword: String, pageable: Pageable, props: RankingProperties): SearchRequest =
+    fun build(
+        indexName: String,
+        keyword: String,
+        pageable: Pageable,
+        props: RankingProperties,
+        filters: ProductSearchPort.Filters = ProductSearchPort.Filters.NONE,
+    ): SearchRequest =
         SearchRequest.Builder()
             .index(indexName)
             .query { q ->
@@ -33,6 +40,18 @@ class RankingQueryBuilder {
                         inner.bool { b ->
                             b.must { m -> m.match { it.field("name").query(FieldValue.of(keyword)) } }
                             b.filter { f -> f.term { it.field("status").value(FieldValue.of("ACTIVE")) } }
+                            // ADR-0060 — 에너지(kcal/100g) hard filter. 점수 계산과 무관한 filter context.
+                            if (!filters.isEmpty()) {
+                                b.filter { f ->
+                                    f.range { r ->
+                                        r.field("energyKcal")
+                                        filters.minKcal?.let { r.gte(JsonData.of(it)) }
+                                        filters.maxKcal?.let { r.lte(JsonData.of(it)) }
+                                        r
+                                    }
+                                }
+                            }
+                            b
                         }
                     }
 

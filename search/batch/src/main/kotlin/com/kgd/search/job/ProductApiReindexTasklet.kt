@@ -53,6 +53,18 @@ class ProductApiReindexTasklet(
                             name = product.name,
                             price = product.price,
                             status = product.status,
+                            brand = product.brand,
+                            description = product.description,
+                            category = product.category,
+                            energyKcal = product.energyKcal,
+                            carbohydrateG = product.carbohydrateG,
+                            proteinG = product.proteinG,
+                            fatG = product.fatG,
+                            sugarG = product.sugarG,
+                            sodiumMg = product.sodiumMg,
+                            ingredients = product.ingredients,
+                            originCountry = product.originCountry,
+                            itemReportNo = product.itemReportNo,
                             createdAt = product.createdAt
                         )
                     )

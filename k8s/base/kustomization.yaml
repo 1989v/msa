@@ -27,6 +27,7 @@ resources:
   - quant-ingest
   - recommendation
   - recommendation-ann
+  - place
   # Frontend + non-JVM services (Phase 7 extension)
   - portal-fe
   - gifticon-fe
@@ -40,7 +41,7 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|experiment|chatbot|code-dictionary|quant|recommendation)"
+      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|experiment|chatbot|code-dictionary|quant|recommendation|place)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment

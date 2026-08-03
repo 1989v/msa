@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: place
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: place
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: place
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      serviceAccountName: place
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: commerce/place:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8096
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            # 오픈데이터 시드 — 기본 비활성. place-seed ConfigMap 생성 후 PLACE_SEED_ENABLED=true 로 1회 적재(멱등).
+            - name: PLACE_SEED_ENABLED
+              value: "false"
+            - name: PLACE_SEED_REGIONS_PATH
+              value: "/seed/regions.jsonl"
+            - name: PLACE_SEED_POIS_PATH
+              value: "/seed/pois.jsonl"
+          volumeMounts:
+            - name: seed
+              mountPath: /seed
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        # 시드 JSONL 주입 (optional — 없어도 부팅 가능). 활성화 시 operator 가 ConfigMap 생성:
+        #   kubectl create configmap place-seed -n commerce \
+        #     --from-file=regions.jsonl=tools/seed/place/regions.sample.jsonl \
+        #     --from-file=pois.jsonl=tools/seed/place/pois.sample.jsonl
+        - name: seed
+          configMap:
+            name: place-seed
+            optional: true

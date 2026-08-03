@@ -24,7 +24,18 @@ class ProductEventAdapter(
             name = product.name,
             price = product.price.amount,
             status = product.status.name,
-            brand = product.brand
+            brand = product.brand,
+            description = product.description,
+            category = product.category,
+            energyKcal = product.energyKcal,
+            carbohydrateG = product.carbohydrateG,
+            proteinG = product.proteinG,
+            fatG = product.fatG,
+            sugarG = product.sugarG,
+            sodiumMg = product.sodiumMg,
+            ingredients = product.ingredients,
+            originCountry = product.originCountry,
+            itemReportNo = product.itemReportNo
         )
         kafkaTemplate.send(createdTopic, product.id.toString(), event)
             .whenComplete { _, ex ->
@@ -39,7 +50,18 @@ class ProductEventAdapter(
             name = product.name,
             price = product.price.amount,
             status = product.status.name,
-            brand = product.brand
+            brand = product.brand,
+            description = product.description,
+            category = product.category,
+            energyKcal = product.energyKcal,
+            carbohydrateG = product.carbohydrateG,
+            proteinG = product.proteinG,
+            fatG = product.fatG,
+            sugarG = product.sugarG,
+            sodiumMg = product.sodiumMg,
+            ingredients = product.ingredients,
+            originCountry = product.originCountry,
+            itemReportNo = product.itemReportNo
         )
         kafkaTemplate.send(updatedTopic, product.id.toString(), event)
             .whenComplete { _, ex ->

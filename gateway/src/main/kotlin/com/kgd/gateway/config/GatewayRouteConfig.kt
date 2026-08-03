@@ -235,5 +235,20 @@ class GatewayRouteConfig(
                     }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
+            .route("place-service-read") { r ->
+                r.method(HttpMethod.GET)
+                    .and().path("/api/places/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri("http://place:8096")
+            }
+            .route("place-service-write") { r ->
+                r.path("/api/places/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri("http://place:8096")
+            }
             .build()
 }

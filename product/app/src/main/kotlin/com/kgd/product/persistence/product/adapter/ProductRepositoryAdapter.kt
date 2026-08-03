@@ -28,6 +28,9 @@ class ProductRepositoryAdapter(
         return jpaRepository.save(entity).toDomain()
     }
 
+    override fun saveAll(products: List<Product>): List<Product> =
+        jpaRepository.saveAll(products.map { ProductJpaEntity.fromDomain(it) }).map { it.toDomain() }
+
     override fun findById(id: Long): Product? =
         jpaRepository.findById(id).orElse(null)?.toDomain()
 

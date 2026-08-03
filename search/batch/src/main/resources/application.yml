@@ -52,8 +52,14 @@ management:
     readinessstate:
       enabled: true
 
-# 색인 소스 선택: api(기본) | db
+# 색인 소스 선택: api(기본) | db | seed
 # api: Product REST API를 통해 소싱 (서비스 경계 준수, 운영 중 사용)
 # db: mysql-product-replica 직접 리드 (ADR-0009 예외, 초기 색인/DR 복구)
+# seed: tools/seed/products 정규화 JSONL 을 product Create API(/bulk)로 적재 (ADR-0056 오픈데이터 시드)
 reindex:
   source: ${REINDEX_SOURCE:api}
+
+# 오픈데이터 상품 시드 (reindex.source=seed 전용)
+seed:
+  path: ${SEED_PATH:/seed/products.jsonl}
+  chunk-size: ${SEED_CHUNK_SIZE:500}

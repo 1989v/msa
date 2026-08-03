@@ -20,6 +20,9 @@ class ProductTransactionalService(
 ) {
     fun save(product: Product): Product = productRepository.save(product)
 
+    /** 대량 적재 — 청크 전체를 한 트랜잭션으로 저장 (커밋 후 호출부에서 이벤트 발행) */
+    fun saveAll(products: List<Product>): List<Product> = productRepository.saveAll(products)
+
     @Transactional(readOnly = true)
     fun findById(id: Long): Product = productRepository.findById(id)
         ?: throw ProductNotFoundException(id)
