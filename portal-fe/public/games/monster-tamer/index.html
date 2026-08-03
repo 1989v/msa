@@ -59,6 +59,10 @@
   #bBtns button { padding:9px 5px; font-size:12px; }
   #bBtns button small { display:block; font-weight:normal; color:#4a3a00; font-size:10px; }
   #bBtns button.ghost small { color:#8a93a8; }
+  .qteBar { position:relative; height:9px; background:#3c4250; border-radius:5px; margin-top:5px; overflow:hidden; }
+  .qteBar i { display:block; height:100%; width:0; background:linear-gradient(90deg,#38c95a,#e8b81f,#e04a3a); animation:qteFill linear forwards; }
+  .qteBar u { position:absolute; top:-2px; width:6px; height:13px; background:#fff; box-shadow:0 0 6px #fff; }
+  @keyframes qteFill { from { width:0; } to { width:100%; } }
 
   #dialog { position:absolute; left:12px; right:12px; bottom:12px; background:rgba(6,10,22,.95); border:2px solid #ffd54a; border-radius:10px; padding:12px 16px; font-size:13px; line-height:1.7; z-index:8; }
   #dialog .next { color:#8a93a8; font-size:11px; text-align:right; }
@@ -534,6 +538,13 @@ const RECIPES = [
 const itemLabel = k => MATERIALS[k] ? MATERIALS[k].emoji + ' ' + MATERIALS[k].name : ITEMS[k] ? ITEMS[k].emoji + ' ' + ITEMS[k].name : k;
 const canCraft = r => Object.entries(r.need).every(([k, n]) => (S.items[k] || 0) >= n);
 const BALL_MULT = { ball:1, greatball:1.5, ultraball:2 };
+/* 배틀 가방 — 유형은 고정 번호(외워서 누를 수 있게), 유형 안의 아이템은 가방 순서 */
+const ITEM_CATS = [
+  { key:'heal', name:'회복', emoji:'🧪', kind:'heal', items:['potion', 'superpotion'] },
+  { key:'seal', name:'봉인구', emoji:'🎴', kind:'ball', items:['ball', 'greatball', 'ultraball'] },
+  { key:'cure', name:'상태회복', emoji:'🩹', kind:'cure', items:['fullheal'] },
+  { key:'misc', name:'기타', emoji:'🫧', kind:'heal', items:['ether'] },
+];
 
 /* ═══════════ 12 지역 — 컨셉 타입 + 레벨대 ═══════════ */
 const REGION_DEFS = [
@@ -1394,7 +1405,11 @@ function handleBattleKey(ev) {
   const btns = [...$('bBtns').querySelectorAll('button')];
   const click = i => { const b = btns[i]; if (b && !b.disabled) b.click(); };
   if (B.over) { if (k === 'z' || k === 'Z' || k === 'Enter' || k === ' ') click(0); return; }
-  if (k === 'Escape' || k === 'Backspace') { if (B.menu !== 'root') { B.menu = 'root'; SFX.select(); renderBattle(); } return; }
+  if (k === 'Escape' || k === 'Backspace') {
+    if (B.menu.startsWith('bag:')) { B.menu = 'bag'; SFX.select(); renderBattle(); }
+    else if (B.menu !== 'root') { B.menu = 'root'; SFX.select(); renderBattle(); }
+    return;
+  }
   const lower = k.toLowerCase();
   if (B.menu === 'root') {
     if (lower === 'a') return click(0);
@@ -1448,13 +1463,19 @@ function renderBattle() {
     if (noPp) add('발버둥', () => turn({ kind:'move', slot:null }), false, 'PP 소진');
     add('← 뒤로', () => { B.menu = 'root'; renderBattle(); }, false, '[Esc]', true);
   } else if (B.menu === 'bag') {
-    let i = 0;
-    for (const [key, it] of Object.entries(ITEMS)) {
-      if (key === 'ether' || STONES[key]) continue;
-      const n = S.items[key] || 0, isBall = !!BALL_MULT[key];
-      add('[' + (++i) + '] ' + it.emoji + ' ' + it.name, () => turn({ kind:isBall ? 'ball' : key === 'fullheal' ? 'cure' : 'heal', item:key }), n <= 0 || (isBall && !B.wild), '보유 ' + n + (isBall && !B.wild ? ' · 야생' : ''));
-    }
-    add('← 뒤로', () => { B.menu = 'root'; renderBattle(); }, false, '[Esc]', true);
+    ITEM_CATS.forEach((c, i) => {
+      const total = c.items.reduce((a, k) => a + (S.items[k] || 0), 0);
+      add('[' + (i + 1) + '] ' + c.emoji + ' ' + c.name, () => { B.menu = 'bag:' + c.key; renderBattle(); },
+        total <= 0 || (c.kind === 'ball' && !B.wild), '보유 ' + total + (c.kind === 'ball' && !B.wild ? ' · 야생 전용' : ''));
+    });
+  } else if (B.menu.startsWith('bag:')) {
+    const cat = ITEM_CATS.find(c => c.key === B.menu.slice(4));
+    cat.items.forEach((key, i) => {
+      const it = ITEMS[key], n = S.items[key] || 0;
+      const kind = key === 'ether' ? 'ppheal' : cat.kind;
+      add('[' + (i + 1) + '] ' + it.emoji + ' ' + it.name, () => turn({ kind, item:key }), n <= 0, it.desc + ' · 보유 ' + n);
+    });
+    add('← 뒤로', () => { B.menu = 'bag'; renderBattle(); }, false, '[Esc]', true);
   } else if (B.menu === 'party') {
     S.party.forEach((m, i) => add('[' + (i + 1) + '] ' + DEX[m.id].emoji + ' ' + monName(m), () => turn({ kind:'switch', to:m }), m === B.my || m.hp <= 0, 'Lv.' + m.lv + ' ' + m.hp + '/' + m.maxHp));
     add('← 뒤로', () => { B.menu = 'root'; renderBattle(); }, false, '[Esc]', true);
@@ -1489,7 +1510,8 @@ function applyMove(a, d, move, toPlayer, dodgeMul) {
   const r = dmg(a, d, move, toPlayer);
   if (r.immune) return msg + ' ' + monName(a) + '의 ' + move.name + ' — 효과가 없는 것 같다…';
   if (r.miss) return msg + ' ' + monName(a) + '의 ' + move.name + ' — 빗나갔다!';
-  if (dodgeMul !== undefined) r.v = Math.max(dodgeMul < 1 ? 1 : 1, Math.floor(r.v * dodgeMul));
+  if (dodgeMul !== undefined) r.v = dodgeMul === 0 ? 0 : Math.max(1, Math.floor(r.v * dodgeMul));
+  if (r.v === 0 && dodgeMul === 0) return msg + ' ' + monName(a) + '의 ' + move.name + ' — 완전히 흘려냈다!';
   d.hp = Math.max(0, d.hp - r.v);
   r.crit ? SFX.crit() : SFX.hit();
   msg += ' ' + monName(a) + '의 ' + move.name + '! ' + r.v + ' 데미지';
@@ -1497,8 +1519,8 @@ function applyMove(a, d, move, toPlayer, dodgeMul) {
   if (r.e > 100) msg += ' 효과가 굉장했다!'; else if (r.e < 100) msg += ' 효과가 별로였다…';
   return msg;
 }
-function foeTurn(dodgeMul) {
-  const msg = applyMove(B.foe, B.my, pickFoeMove(B.foe), true, dodgeMul);
+function foeTurn(dodgeMul, move) {
+  const msg = applyMove(B.foe, B.my, move || pickFoeMove(B.foe), true, dodgeMul);
   if (B.my.hp <= 0) {
     SFX.faint();
     const next = S.party.find(m => m.hp > 0);
@@ -1507,26 +1529,60 @@ function foeTurn(dodgeMul) {
   }
   return msg;
 }
-/* ── 실시간 회피 QTE — 적 공격 예고 → 방향키 타이밍 입력 ── */
+/* ── 실시간 회피/반격 QTE ──
+   적 기술의 "유형"이 대응키를 결정한다: 지면계=점프(↑) · 원거리/브레스=가드(↓) · 돌진계=사이드스텝(←/→)
+   임팩트 순간(±100ms)에 정확히 누르면 회피를 넘어 **반격**까지 들어간다. */
 const QTE_DIRS = { ArrowLeft:'←', ArrowRight:'→', ArrowUp:'↑', ArrowDown:'↓' };
-const QTE_ACTION = { '←':'좌로 회피', '→':'우로 회피', '↑':'점프 회피', '↓':'가드' };
-function startQte(after) {
-  const want = ['←','→','↑','↓'][ri(4)];
-  const spd = Math.min(1, B.foe.spd / Math.max(1, B.my.spd));
-  const window = Math.max(360, 760 - Math.floor(spd * 220));   // 상대가 빠를수록 창이 좁다
-  B.qte = { want, after, until:performance.now() + window, window };
-  beep(880, 0.06, 'square', 0.05);
+const QTE_ACTION = { '←':'좌로 사이드스텝', '→':'우로 사이드스텝', '↑':'점프', '↓':'가드' };
+const ATTACK_TELL = {
+  GROUND:'🪨 지면이 갈라진다', ROCK:'🪨 바위가 쏟아진다',
+  FIRE:'🔥 화염이 뿜어진다', WATER:'💧 물줄기가 쏟아진다', GRASS:'🌿 덩굴이 뻗어온다', ELECTRIC:'⚡ 전격이 번뜩인다',
+  ICE:'❄ 냉기가 몰아친다', PSYCHIC:'🔮 염파가 밀려온다', DRAGON:'🐉 용의 숨결이 온다', FLYING:'🕊 급강하해 온다',
+  NORMAL:'💢 몸통으로 돌진한다', FIGHT:'👊 주먹을 내지른다', BUG:'🐛 달려든다', POISON:'☠ 독을 뿜으며 달려든다', GHOST:'👻 그림자가 스며든다',
+};
+const COUNTER_MS = 100;   // 임팩트 ±100ms = 반격 성공
+function dirForMove(move) {
+  if (!move.power) return '↑';                                  // 상태이상 기술 — 백스텝으로 회피
+  const t = move.type;
+  if (t === 'GROUND' || t === 'ROCK') return '↑';               // 지면계 — 점프
+  if (SPECIAL_TYPES.has(t) || t === 'FLYING') return '↓';       // 원거리/브레스/급강하 — 가드
+  return rand() < 0.5 ? '←' : '→';                              // 돌진계 — 사이드스텝
+}
+/** 1단계 — 내 공격 결과를 보여준 뒤, 상대가 무슨 기술을 쓰는지 알린다 (입력 잠금) */
+function announceFoeMove(prevMsg) {
+  const move = pickFoeMove(B.foe);
+  B.qtePhase = 'announce';
+  B.turnMsg = prevMsg || '';
+  $('bBtns').innerHTML = '';
+  $('bLog').innerHTML = (B.turnMsg ? '<span style="color:#4a5568">' + B.turnMsg + '</span><br>' : '') +
+    '<b>' + monName(B.foe) + ' 이(가) ' + typeTag(move.type) + '<b>' + move.name + '</b> 을(를) 사용한다!</b> ' +
+    '<small style="color:#6b7280">…준비 자세를 잡는다</small>';
+  beep(440, 0.07, 'square', 0.045);
+  setTimeout(() => { if (B && B.qtePhase === 'announce') { B.qtePhase = null; startQte(move); } }, 850);
+}
+function startQte(move) {
+  const want = dirForMove(move);
+  const spd = Math.min(1.4, B.foe.spd / Math.max(1, B.my.spd));
+  const window = Math.max(340, 780 - Math.floor(spd * 240));     // 상대가 빠를수록 창이 좁다
+  const now = performance.now();
+  B.qte = { want, move, startAt:now, impactAt:now + window, window };
+  beep(880, 0.05, 'square', 0.05);
+  beep(1320, 0.06, 'square', 0.05, window / 1000);               // 임팩트 순간 신호음
   renderQtePrompt();
-  B.qteTimer = setTimeout(() => resolveQte(null), window);
+  B.qteTimer = setTimeout(() => resolveQte(null), window + COUNTER_MS);
 }
 function renderQtePrompt() {
   if (!B.qte) return;
-  $('bLog').innerHTML = '<b style="color:#c02020">⚠ ' + monName(B.foe) + ' 의 공격이 온다!</b> — <b style="font-size:20px">' + B.qte.want + '</b> 키를 눌러 ' +
-    QTE_ACTION[B.qte.want] + '! <small style="color:#6b7280">(' + B.qte.window + 'ms)</small>';
+  const q = B.qte;
+  $('bLog').innerHTML =
+    '<b style="color:#c02020">⚠ ' + q.move.name + ' — ' + (ATTACK_TELL[q.move.type] || '공격해 온다') + '!</b> ' +
+    '<b style="font-size:19px">' + q.want + '</b> 로 <b>' + QTE_ACTION[q.want] + '</b> ' +
+    '<small style="color:#6b7280">· 임팩트에 맞춰 누르면 반격(±' + COUNTER_MS + 'ms)</small>' +
+    '<div class="qteBar"><i style="animation-duration:' + q.window + 'ms"></i><u style="left:calc(100% - 6px)"></u></div>';
   const btns = $('bBtns'); btns.innerHTML = '';
   ['←','↑','↓','→'].forEach(d => {
     const b = document.createElement('button');
-    b.className = d === B.qte.want ? '' : 'ghost';
+    b.className = 'ghost';
     b.innerHTML = d + '<small>' + QTE_ACTION[d] + '</small>';
     b.onclick = () => resolveQte(d);
     btns.appendChild(b);
@@ -1536,12 +1592,23 @@ function resolveQte(pressed) {
   if (!B || !B.qte) return;
   clearTimeout(B.qteTimer);
   const q = B.qte; B.qte = null;
+  const t = performance.now();
   const ok = pressed === q.want;
-  let msg = '';
-  if (ok) { SFX.crit(); msg = '💨 ' + QTE_ACTION[q.want] + ' 성공! 피해를 크게 줄였다! '; }
-  else if (pressed) { msg = '❌ 잘못된 방향! '; }
+  const perfect = ok && Math.abs(t - q.impactAt) <= COUNTER_MS;
+  let msg = '', counter = 0;
+  if (perfect) {
+    SFX.crit();
+    // 반격 — 내 턴과 별개의 소량 피해 (자기 타입 보정 포함)
+    const cm = { name:'반격', type:DEX[B.my.id].type, power:45, acc:100 };
+    const r = dmg(B.my, B.foe, cm, false);
+    counter = r.miss || r.immune ? 0 : Math.max(1, Math.floor(r.v * 0.6));
+    B.foe.hp = Math.max(0, B.foe.hp - counter);
+    msg = '⚡ 카운터! 완벽한 타이밍 — 공격을 흘리고 ' + counter + ' 반격 피해! ';
+  } else if (ok) { SFX.hit(); msg = '💨 ' + QTE_ACTION[q.want] + ' 성공! 피해를 크게 줄였다! '; }
+  else if (pressed) { msg = '❌ 대응이 어긋났다! '; }
   else { msg = '⏱ 반응이 늦었다! '; }
-  msg += foeTurn(ok ? 0.2 : 1);
+  msg += foeTurn(perfect ? 0 : ok ? 0.2 : 1, q.move);
+  if (counter && B.foe.hp <= 0 && !B.over) { SFX.faint(); msg += winFoe(); }
   if (B.pendingMine && !B.over && B.my.hp > 0 && B.foe.hp > 0) {
     const before = $('bLog').textContent;
     B.pendingMine(); void before;
@@ -1572,12 +1639,18 @@ function turn(action) {
       if (foe.shiny) dropUnique('✨이로치 포획');
       B.over = true; renderBattle(); return;
     }
-    log('앗, 빠져나왔다! (성공률 ' + Math.round(rate * 100) + '%)' + foeTurn()); renderBattle(); return;
+    afterPlayerAction('앗, 빠져나왔다! (성공률 ' + Math.round(rate * 100) + '%)'); return;
   }
   if (action.kind === 'heal') { S.items[action.item] -= 1; const amt = action.item === 'superpotion' ? 90 : 30;
-    my.hp = Math.min(my.maxHp, my.hp + amt); SFX.heal(); log(ITEMS[action.item].name + '! HP +' + amt + foeTurn()); renderBattle(); return; }
-  if (action.kind === 'cure') { S.items[action.item] -= 1; my.status = null; SFX.heal(); log('만병통치약! 상태이상 회복.' + foeTurn()); renderBattle(); return; }
-  if (action.kind === 'switch') { B.my = action.to; log('가랏, ' + monName(B.my) + '!' + foeTurn()); renderBattle(); return; }
+    my.hp = Math.min(my.maxHp, my.hp + amt); SFX.heal(); afterPlayerAction(ITEMS[action.item].name + ' 사용! HP +' + amt); return; }
+  if (action.kind === 'ppheal') {
+    S.items[action.item] -= 1;
+    const low = my.moves.filter(mv => mv.pp < mv.maxPp).sort((a, b) => a.pp - b.pp)[0];
+    if (low) low.pp = Math.min(low.maxPp, low.pp + 10);
+    SFX.heal(); afterPlayerAction('PP에테르! ' + (low ? MOVES[low.id].name + ' PP +10' : '효과가 없었다')); return;
+  }
+  if (action.kind === 'cure') { S.items[action.item] -= 1; my.status = null; SFX.heal(); afterPlayerAction('만병통치약! 상태이상 회복.'); return; }
+  if (action.kind === 'switch') { B.my = action.to; afterPlayerAction('가랏, ' + monName(B.my) + '!'); return; }
   let myMove;
   if (action.slot) { action.slot.pp -= 1; myMove = MOVES[action.slot.id]; } else myMove = MOVES.struggle;
   let msg = '';
@@ -1588,9 +1661,12 @@ function turn(action) {
   };
   const iAmFaster = effSpd(my) >= effSpd(foe);
   if (iAmFaster) mine();
-  if (!B.over && foe.hp > 0 && my.hp > 0) {           // 적 공격 → 회피 QTE
+  if (!B.over && foe.hp > 0 && my.hp > 0) {           // 내 공격 결과 → 상대 기술 예고 → 회피 QTE
     B.pendingMine = iAmFaster ? null : mine;          // 후공이면 QTE 뒤에 내 공격
-    log(msg.trim()); B.qteMsg = msg; startQte(); return;
+    log(msg.trim());
+    setTimeout(() => { if (B && !B.over) announceFoeMove(msg.trim()); }, 800);
+    renderBattle(); $('bBtns').innerHTML = '';
+    return;
   }
   if (!B.over) {
     msg += statusTick(my); msg += statusTick(foe);
@@ -1663,7 +1739,15 @@ function levelCheck(m) {
   if (m.lv >= 99) m.exp = expForLevel(99);
   return msg;
 }
-function tryRun() { if (rand() < 0.75) { B.over = true; log('무사히 도망쳤다!'); } else log('도망칠 수 없었다!' + foeTurn()); renderBattle(); }
+function tryRun() {
+  if (rand() < 0.75) { B.over = true; log('무사히 도망쳤다!'); renderBattle(); }
+  else afterPlayerAction('도망칠 수 없었다!');
+}
+/** 내 행동 결과를 보여준 뒤 상대 기술 예고 → QTE 로 넘긴다 */
+function afterPlayerAction(msg) {
+  log(msg); renderBattle(); $('bBtns').innerHTML = '';
+  setTimeout(() => { if (B && !B.over) announceFoeMove(msg); }, 700);
+}
 function ascend() {
   S.ascension += 1; S.badges = []; S.taken = {}; S.beaten = new Set(); S.map = 'village';
   const st = MAPS.village.start; P.tx = st.x; P.ty = st.y; P.moving = false;
