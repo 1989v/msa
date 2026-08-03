@@ -149,6 +149,9 @@
       <button id="newBtn" class="ghost">새 게임</button>
     </div>
     <div id="saveStatus"></div>
+    <div style="display:flex;gap:6px;margin-top:4px">
+      <button id="langKo" class="ghost">🇰🇷 한국어</button><button id="langEn" class="ghost">🇺🇸 English</button>
+    </div>
   </div>
 
   <div class="panel" id="starterPanel" hidden>
@@ -171,6 +174,14 @@ function mulberry(seed) {
   let s = seed >>> 0;
   return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 }
+
+/* ═══════════ i18n — 한국어 / English ═══════════ */
+const LANG = { cur: localStorage.getItem('mt_lang') || ((navigator.language || '').startsWith('ko') ? 'ko' : 'en') };
+/** t('한국어','English') — 두 언어를 나란히 두고 현재 언어를 고른다 */
+const t = (ko, en) => LANG.cur === 'en' ? en : ko;
+const pick = o => (o && typeof o === 'object' && 'ko' in o) ? t(o.ko, o.en) : o;
+function setLang(l) { LANG.cur = l; localStorage.setItem('mt_lang', l); location.reload(); }
+
 const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 
 /* ═══════════ 사운드 (WebAudio, 외부 파일 없음) ═══════════ */
@@ -201,7 +212,8 @@ const SFX = {
 
 /* ═══════════ 15 타입 ═══════════ */
 const TYPES = ['NORMAL','FIRE','WATER','GRASS','ELECTRIC','ICE','FIGHT','POISON','GROUND','FLYING','PSYCHIC','BUG','ROCK','GHOST','DRAGON'];
-const TYPE_KO = { NORMAL:'노말', FIRE:'불꽃', WATER:'물', GRASS:'풀', ELECTRIC:'전기', ICE:'얼음', FIGHT:'격투', POISON:'독', GROUND:'땅', FLYING:'비행', PSYCHIC:'에스퍼', BUG:'벌레', ROCK:'바위', GHOST:'고스트', DRAGON:'드래곤' };
+const TYPE_NAMES = { NORMAL:['노말','Normal'], FIRE:['불꽃','Fire'], WATER:['물','Water'], GRASS:['풀','Grass'], ELECTRIC:['전기','Electric'], ICE:['얼음','Ice'], FIGHT:['격투','Fighting'], POISON:['독','Poison'], GROUND:['땅','Ground'], FLYING:['비행','Flying'], PSYCHIC:['에스퍼','Psychic'], BUG:['벌레','Bug'], ROCK:['바위','Rock'], GHOST:['고스트','Ghost'], DRAGON:['드래곤','Dragon'] };
+const TYPE_KO = new Proxy({}, { get:(_, k) => { const v = TYPE_NAMES[k]; return v ? t(v[0], v[1]) : k; } });
 const TYPE_COLOR = { NORMAL:'#a8a878', FIRE:'#f0802f', WATER:'#3a7ae8', GRASS:'#4aa84a', ELECTRIC:'#f0c020', ICE:'#77ccdd', FIGHT:'#c03028', POISON:'#a040a0', GROUND:'#d8b048', FLYING:'#9a88f0', PSYCHIC:'#f05888', BUG:'#a8b820', ROCK:'#b8a038', GHOST:'#6858a8', DRAGON:'#7038f8' };
 const SPECIAL_TYPES = new Set(['FIRE','WATER','GRASS','ELECTRIC','ICE','PSYCHIC','DRAGON']);
 const CHART = {
@@ -224,7 +236,7 @@ const CHART = {
 const eff = (a, d) => (CHART[a] && CHART[a][d] !== undefined ? CHART[a][d] : 100);
 
 /* ═══════════ 기술 ═══════════ */
-const TYPE_MOVE_NAMES = {
+const TYPE_MOVE_NAMES_KO = {
   NORMAL:['몸통박치기','할퀴기','박치기','대돌진'], FIRE:['불꽃세례','화염이빨','화염방사','대분화'],
   WATER:['물총','거품제트','급류','하이드로펌프'], GRASS:['덩굴채찍','잎날가르기','리프블레이드','솔라빔'],
   ELECTRIC:['전기충격','스파크','번개엄니','벼락'], ICE:['서리바람','얼음이빨','냉동빔','블리자드'],
@@ -234,56 +246,67 @@ const TYPE_MOVE_NAMES = {
   ROCK:['돌떨구기','바위굴리기','스톤샤워','스톤에지'], GHOST:['원념','섀도펀치','섀도볼','나이트헤드'],
   DRAGON:['용의숨결','용의날개','드래곤클로','역린'],
 };
+const TYPE_MOVE_NAMES_EN = {
+  NORMAL:['Tackle','Scratch','Headbutt','Giga Charge'], FIRE:['Ember','Fire Fang','Flamethrower','Eruption'],
+  WATER:['Water Gun','Aqua Jet','Torrent','Hydro Blast'], GRASS:['Vine Whip','Leaf Cut','Leaf Blade','Solar Beam'],
+  ELECTRIC:['Thunder Shock','Spark','Volt Fang','Thunderbolt'], ICE:['Frost Wind','Ice Fang','Freeze Beam','Blizzard'],
+  FIGHT:['Combo Punch','Rock Break','Tile Smash','Close Combat'], POISON:['Poison Sting','Sludge Hit','Toxic Spike','Sludge Bomb'],
+  GROUND:['Sand Toss','Earth Press','Earthquake','Terra Force'], FLYING:['Wing Attack','Sky Dive','Swift Return','Tempest'],
+  PSYCHIC:['Psywave','Mirage Beam','Psychokinesis','Mind Break'], BUG:['Bug Bite','Needle Shot','Scissor Cross','Megahorn'],
+  ROCK:['Rock Throw','Rock Roll','Rock Shower','Stone Edge'], GHOST:['Grudge','Shadow Punch','Shadow Ball','Night Head'],
+  DRAGON:['Dragon Breath','Dragon Wing','Dragon Claw','Outrage'],
+};
+const TYPE_MOVE_NAMES = new Proxy({}, { get:(_, k) => t(TYPE_MOVE_NAMES_KO[k], TYPE_MOVE_NAMES_EN[k]) });
 const TIER = [[40,100,30],[60,95,20],[85,95,10],[110,85,5]];
-const MOVES = { struggle:{ name:'발버둥', type:'NORMAL', power:40, acc:100, pp:Infinity } };
+const MOVES = { struggle:{ name:t(t('발버둥','Struggle'),'Struggle'), type:'NORMAL', power:40, acc:100, pp:Infinity } };
 TYPES.forEach(t => TYPE_MOVE_NAMES[t].forEach((name, i) => { MOVES[t.toLowerCase() + i] = { name, type:t, power:TIER[i][0], acc:TIER[i][1], pp:TIER[i][2] }; }));
 Object.assign(MOVES, {
-  poisonpowder:{ name:'독가루', type:'POISON', power:0, acc:75, pp:20, status:'PSN' },
-  stunspore:{ name:'마비가루', type:'ELECTRIC', power:0, acc:75, pp:20, status:'PAR' },
-  sleeppowder:{ name:'수면가루', type:'GRASS', power:0, acc:70, pp:15, status:'SLP' },
-  willowisp:{ name:'도깨비불', type:'FIRE', power:0, acc:80, pp:15, status:'BRN' },
-  icyglare:{ name:'서리눈빛', type:'ICE', power:0, acc:70, pp:10, status:'FRZ' },
-  hypnosis:{ name:'최면술', type:'PSYCHIC', power:0, acc:65, pp:20, status:'SLP' },
+  poisonpowder:{ name:t('독가루','Poison Powder'), type:'POISON', power:0, acc:75, pp:20, status:'PSN' },
+  stunspore:{ name:t('마비가루','Stun Spore'), type:'ELECTRIC', power:0, acc:75, pp:20, status:'PAR' },
+  sleeppowder:{ name:t('수면가루','Sleep Powder'), type:'GRASS', power:0, acc:70, pp:15, status:'SLP' },
+  willowisp:{ name:t('도깨비불','Will-o-Wisp'), type:'FIRE', power:0, acc:80, pp:15, status:'BRN' },
+  icyglare:{ name:t('서리눈빛','Icy Glare'), type:'ICE', power:0, acc:70, pp:10, status:'FRZ' },
+  hypnosis:{ name:t('최면술','Hypnosis'), type:'PSYCHIC', power:0, acc:65, pp:20, status:'SLP' },
 });
 const STATUS_MOVE_BY_TYPE = { POISON:'poisonpowder', ELECTRIC:'stunspore', GRASS:'sleeppowder', FIRE:'willowisp', ICE:'icyglare', PSYCHIC:'hypnosis' };
-const STATUS_KO = { PSN:'독', BRN:'화상', PAR:'마비', SLP:'수면', FRZ:'동상' };
+const STATUS_KO = new Proxy({}, { get:(_, k) => ({ PSN:t('독','PSN'), BRN:t('화상','BRN'), PAR:t('마비','PAR'), SLP:t('수면','SLP'), FRZ:t('동상','FRZ') })[k] });
 
 /* ═══════════ 102종 ═══════════ */
 const FAMILIES = [
-  ['FIRE',['플레어펍','🦊'],['플레어하운드','🐺'],['이그니펜리르','🐕'],310],
-  ['WATER',['아쿠아핀','🐟'],['아쿠아렉스','🦈'],['리바이어스','🐋'],310],
-  ['GRASS',['리플링','🦎'],['리프드레이크','🐉'],['가이아드레이크','🦕'],310],
-  ['ELECTRIC',['스파클릿','🐭'],['볼티마우스','🐹'],['템페스타','🦡'],300],
-  ['NORMAL',['몹핏','🐰'],['몹라빗','🐇'],['로드해어','🦘'],290],
-  ['ROCK',['페블런','🐢'],['볼더백','🦔'],['타이탄셸','🦏'],320],
-  ['BUG',['모스버그','🐛'],['카본모스','🦋'],['임페리얼모스','🪲'],280],
-  ['FLYING',['스카이윙','🐦'],['갤윙','🦅'],['템페스트론','🦤'],300],
-  ['ICE',['글래시킷','🐧'],['프로스트베어','🐻'],['글레이시온드','🦭'],310],
-  ['GHOST',['레이스','👻'],['팬텀로드','💀'],['에테르가이스트','🎃'],300],
-  ['POISON',['톡시드','🐍'],['베놈코일','🦂'],['하이드록스','🕷'],295],
-  ['GROUND',['듄링','🦫'],['샌드골렘','🐗'],['테라모스','🦣'],315],
-  ['PSYCHIC',['마인드립','🐙'],['사이코드','🦑'],['오라클마인드','🧿'],305],
-  ['FIGHT',['너클몽','🐒'],['아이언핏','🦍'],['그랜드마스터','🥋'],305],
-  ['DRAGON',['드레이코','🦎'],['드래고닉','🐲'],['에인션트웜','🐉'],340],
-  ['WATER',['듀핍','🦆'],['타이드덕','🦢'],['오션소어','🐳'],290],
-  ['FIRE',['신더임프','🦂'],['블레이즈데몬','😈'],['인페르날','👹'],300],
-  ['GRASS',['스프라우틀','🌱'],['블룸가드','🌻'],['월드트리','🌳'],285],
-  ['ELECTRIC',['플럭스버드','🐤'],['썬더피닉스','🦜'],['라이트닝로드','⚡'],295],
-  ['NORMAL',['펠릿','🐱'],['캣라이온','🐈'],['로얄펠린','🦁'],300],
-  ['ICE',['스노볼','⛄'],['아이스가디언','🧊'],['페르마프로스트','🏔'],290],
-  ['ROCK',['크리스탈렛','💎'],['프리즘락','🔮'],['제네시스코어','🌌'],300],
-  ['BUG',['스팅어','🐝'],['호넷킹','🐞'],['아포칼립스','🦗'],285],
-  ['GROUND',['버로우','🐀'],['어스몰','🦦'],['콘티넨탈','🦛'],295],
-  ['FIGHT',['키커','🦵'],['스트라이커','🤺'],['챔피언핏','🏆'],295],
-  ['PSYCHIC',['드림릿','🌙'],['루나사이커','🌛'],['코스믹드림','✨'],290],
-  ['GHOST',['미스트','🌫'],['섀도클록','🕯'],['보이드로드','🕳'],295],
-  ['POISON',['슬러지','🫧'],['톡시크림','🧪'],['플레이그','☣'],290],
-  ['FLYING',['브리즐','🕊'],['갈레폰','🪁'],['스카이엠퍼러','🛸'],290],
-  ['DRAGON',['위름','🐛'],['서펜타','🐍'],['월드서펜트','🌀'],330],
-  ['WATER',['코럴핀','🐠'],['리프가드','🐡'],['아비스가드','🦞'],295],
-  ['FIRE',['엠버캣','😺'],['플레임라이온','🦁'],['솔라리온','☀'],305],
-  ['NORMAL',['에코버드','🦉'],['미믹아울','🦚'],['에테르아울','🕊'],285],
-  ['ICE',['프로즌핀','🐟'],['빙하수호','🐋'],['앱솔루트제로','❄'],300],
+  ['FIRE',['플레어펍','Flarepup','🦊'],['플레어하운드','Flarehound','🐺'],['이그니펜리르','Ignifenrir','🐕'],310],
+  ['WATER',['아쿠아핀','Aquafin','🐟'],['아쿠아렉스','Aquarex','🦈'],['리바이어스','Leviathus','🐋'],310],
+  ['GRASS',['리플링','Leafling','🦎'],['리프드레이크','Leafdrake','🐉'],['가이아드레이크','Gaiadrake','🦕'],310],
+  ['ELECTRIC',['스파클릿','Sparklit','🐭'],['볼티마우스','Voltimouse','🐹'],['템페스타','Tempesta','🦡'],300],
+  ['NORMAL',['몹핏','Moppit','🐰'],['몹라빗','Mopprabbit','🐇'],['로드해어','Lordhare','🦘'],290],
+  ['ROCK',['페블런','Pebblun','🐢'],['볼더백','Boulderback','🦔'],['타이탄셸','Titanshell','🦏'],320],
+  ['BUG',['모스버그','Mossbug','🐛'],['카본모스','Carbonmoth','🦋'],['임페리얼모스','Imperialmoth','🪲'],280],
+  ['FLYING',['스카이윙','Skywing','🐦'],['갤윙','Galewing','🦅'],['템페스트론','Tempestron','🦤'],300],
+  ['ICE',['글래시킷','Glacikit','🐧'],['프로스트베어','Frostbear','🐻'],['글레이시온드','Glacierond','🦭'],310],
+  ['GHOST',['레이스','Wraithe','👻'],['팬텀로드','Phantomlord','💀'],['에테르가이스트','Aethergeist','🎃'],300],
+  ['POISON',['톡시드','Toxid','🐍'],['베놈코일','Venomcoil','🦂'],['하이드록스','Hydrox','🕷'],295],
+  ['GROUND',['듄링','Duneling','🦫'],['샌드골렘','Sandgolem','🐗'],['테라모스','Terramoth','🦣'],315],
+  ['PSYCHIC',['마인드립','Mindrip','🐙'],['사이코드','Psycode','🦑'],['오라클마인드','Oraclemind','🧿'],305],
+  ['FIGHT',['너클몽','Knucklemon','🐒'],['아이언핏','Ironfist','🦍'],['그랜드마스터','Grandmaster','🥋'],305],
+  ['DRAGON',['드레이코','Dreiko','🦎'],['드래고닉','Dragonic','🐲'],['에인션트웜','Ancientwyrm','🐉'],340],
+  ['WATER',['듀핍','Dewpip','🦆'],['타이드덕','Tideduck','🦢'],['오션소어','Oceansoar','🐳'],290],
+  ['FIRE',['신더임프','Cinderimp','🦂'],['블레이즈데몬','Blazedemon','😈'],['인페르날','Infernal','👹'],300],
+  ['GRASS',['스프라우틀','Sproutle','🌱'],['블룸가드','Bloomguard','🌻'],['월드트리','Worldtree','🌳'],285],
+  ['ELECTRIC',['플럭스버드','Fluxbird','🐤'],['썬더피닉스','Thunderphoenix','🦜'],['라이트닝로드','Lightningrod','⚡'],295],
+  ['NORMAL',['펠릿','Pellit','🐱'],['캣라이온','Catlion','🐈'],['로얄펠린','Royalfeline','🦁'],300],
+  ['ICE',['스노볼','Snowball','⛄'],['아이스가디언','Iceguardian','🧊'],['페르마프로스트','Permafrost','🏔'],290],
+  ['ROCK',['크리스탈렛','Crystallet','💎'],['프리즘락','Prismrock','🔮'],['제네시스코어','Genesiscore','🌌'],300],
+  ['BUG',['스팅어','Stinger','🐝'],['호넷킹','Hornetking','🐞'],['아포칼립스','Apocalypse','🦗'],285],
+  ['GROUND',['버로우','Burrow','🐀'],['어스몰','Earthmole','🦦'],['콘티넨탈','Continental','🦛'],295],
+  ['FIGHT',['키커','Kicker','🦵'],['스트라이커','Striker','🤺'],['챔피언핏','Championfist','🏆'],295],
+  ['PSYCHIC',['드림릿','Dreamlet','🌙'],['루나사이커','Lunapsyker','🌛'],['코스믹드림','Cosmicdream','✨'],290],
+  ['GHOST',['미스트','Mistle','🌫'],['섀도클록','Shadowclock','🕯'],['보이드로드','Voidlord','🕳'],295],
+  ['POISON',['슬러지','Sludgy','🫧'],['톡시크림','Toxicream','🧪'],['플레이그','Plague','☣'],290],
+  ['FLYING',['브리즐','Breezle','🕊'],['갈레폰','Galephon','🪁'],['스카이엠퍼러','Skyemperor','🛸'],290],
+  ['DRAGON',['위름','Wyrm','🐛'],['서펜타','Serpenta','🐍'],['월드서펜트','Worldserpent','🌀'],330],
+  ['WATER',['코럴핀','Coralfin','🐠'],['리프가드','Reefguard','🐡'],['아비스가드','Abyssguard','🦞'],295],
+  ['FIRE',['엠버캣','Embercat','😺'],['플레임라이온','Flamelion','🦁'],['솔라리온','Solarion','☀'],305],
+  ['NORMAL',['에코버드','Echobird','🦉'],['미믹아울','Mimicowl','🦚'],['에테르아울','Aetherowl','🕊'],285],
+  ['ICE',['프로즌핀','Frozenfin','🐟'],['빙하수호','Glacierguard','🐋'],['앱솔루트제로','AbsoluteZero','❄'],300],
 ];
 const DEX = {};
 (function buildDex() {
@@ -299,7 +322,7 @@ const DEX = {};
       }[type];
       const raw = bias.map(b => b * (0.9 + r() * 0.2)), sum = raw.reduce((a, b) => a + b, 0);
       const al = raw.map(v => Math.round(bst * v / sum));
-      DEX[id] = { id, no:fi * 3 + si + 1, name:st[0], emoji:st[1], type, family:fi, stage:si,
+      DEX[id] = { id, no:fi * 3 + si + 1, name:t(st[0], st[1]), emoji:st[2], type, family:fi, stage:si,
         hp:al[0], atk:al[1], def:al[2], spc:al[3], spd:al[4],
         baseExp:60 + si * 32, catchRate:si === 0 ? 190 : si === 1 ? 100 : 45,
         flying:type === 'FLYING' || (type === 'DRAGON' && si > 0),
@@ -435,18 +458,18 @@ const RESEARCH_STEP = 50, RESEARCH_MAX = 5;
 const researchStage = id => Math.min(RESEARCH_MAX, Math.floor((S.research[id] || 0) / RESEARCH_STEP));
 const researchMult = id => 1 + 0.04 * researchStage(id);
 const TOTEMS = {
-  ember:{ name:'불꽃 유물', emoji:'🔥', effect:'✨이로치 출현률 ×2' }, luck:{ name:'행운 유물', emoji:'🍀', effect:'유니크 드롭 ×2' },
-  growth:{ name:'성장 유물', emoji:'🌱', effect:'경험치 +25%' }, gold:{ name:'황금 유물', emoji:'💰', effect:'골드 +50%' },
-  catch:{ name:'포획 유물', emoji:'🎯', effect:'포획률 상승' }, guard:{ name:'수호 유물', emoji:'🛡', effect:'받는 피해 -12%' },
+  ember:{ name:t('불꽃 유물','Ember Relic'), emoji:'🔥', effect:t('✨이로치 출현률 ×2','Shiny rate x2') }, luck:{ name:t('행운 유물','Luck Relic'), emoji:'🍀', effect:'유니크 드롭 ×2' },
+  growth:{ name:t('성장 유물','Growth Relic'), emoji:'🌱', effect:'경험치 +25%' }, gold:{ name:t('황금 유물','Gold Relic'), emoji:'💰', effect:'골드 +50%' },
+  catch:{ name:t('포획 유물','Capture Relic'), emoji:'🎯', effect:t('포획률 상승','Higher seal rate') }, guard:{ name:t('수호 유물','Guard Relic'), emoji:'🛡', effect:t('받는 피해 -12%','Damage taken -12%') },
 };
-const UNIQUES = { crown:{ name:'왕관 조각', emoji:'👑', effect:'파티 ATK +5%' }, prism:{ name:'프리즘 코어', emoji:'💎', effect:'파티 HP +8%' }, fang:{ name:'고대의 송곳니', emoji:'🦷', effect:'파티 SPD +8%' } };
+const UNIQUES = { crown:{ name:t('왕관 조각','Crown Fragment'), emoji:'👑', effect:t('파티 ATK +5%','Party ATK +5%') }, prism:{ name:t('프리즘 코어','Prism Core'), emoji:'💎', effect:t('파티 HP +8%','Party HP +8%') }, fang:{ name:t('고대의 송곳니','Ancient Fang'), emoji:'🦷', effect:t('파티 SPD +8%','Party SPD +8%') } };
 /* 장착 도구 — 3등급(일반 / + / ★). 합성으로 승급 */
 const HELD = {
-  power:{ name:'힘의 뿔', emoji:'🔱', stat:'ATK', bonus:[0.12, 0.25, 0.42] },
-  guard:{ name:'수호 갑주', emoji:'🛡', stat:'DEF', bonus:[0.12, 0.25, 0.42] },
-  focus:{ name:'집중 렌즈', emoji:'🔎', stat:'SPC', bonus:[0.12, 0.25, 0.42] },
-  swift:{ name:'질풍 깃털', emoji:'🪶', stat:'SPD', bonus:[0.12, 0.25, 0.42] },
-  luckyegg:{ name:'행운의 알', emoji:'🥚', stat:'EXP', bonus:[0.5, 0.9, 1.5] },
+  power:{ name:t('힘의 뿔','Power Horn'), emoji:'🔱', stat:'ATK', bonus:[0.12, 0.25, 0.42] },
+  guard:{ name:t('수호 갑주','Guard Armor'), emoji:'🛡', stat:'DEF', bonus:[0.12, 0.25, 0.42] },
+  focus:{ name:t('집중 렌즈','Focus Lens'), emoji:'🔎', stat:'SPC', bonus:[0.12, 0.25, 0.42] },
+  swift:{ name:t('질풍 깃털','Swift Feather'), emoji:'🪶', stat:'SPD', bonus:[0.12, 0.25, 0.42] },
+  luckyegg:{ name:t('행운의 알','Lucky Egg'), emoji:'🥚', stat:'EXP', bonus:[0.5, 0.9, 1.5] },
 };
 const TIER_MARK = ['', '+', '★'];
 const TIER_NAME = ['일반', '고급', '전설'];
@@ -455,24 +478,24 @@ const heldLabel = (k, t) => HELD[k].emoji + ' ' + HELD[k].name + TIER_MARK[t - 1
 const heldEffect = (k, t) => HELD[k].stat + ' +' + Math.round(HELD[k].bonus[t - 1] * 100) + '%';
 /* 전리품 — 격파한 몬스터의 타입에 따라 나오며, 상인에게 팔아 돈을 번다 */
 const LOOT = {
-  hide:{ name:'질긴 가죽', emoji:'🟫', price:55, types:['NORMAL','FIGHT'] },
-  fang:{ name:'날카로운 엄니', emoji:'🦷', price:80, types:['FIRE','DRAGON'] },
-  scale:{ name:'물빛 비늘', emoji:'🐚', price:70, types:['WATER','ICE'] },
-  leafex:{ name:'잎사귀 진액', emoji:'🍃', price:60, types:['GRASS','BUG'] },
-  sparkcell:{ name:'전하 세포', emoji:'🔋', price:90, types:['ELECTRIC'] },
-  oreshard:{ name:'광석 파편', emoji:'⛏', price:75, types:['ROCK','GROUND'] },
-  ectoplasm:{ name:'영체 잔재', emoji:'🫧', price:110, types:['GHOST','PSYCHIC'] },
-  venomsac:{ name:'독주머니', emoji:'🧫', price:85, types:['POISON'] },
-  plume:{ name:'바람깃털', emoji:'🪶', price:65, types:['FLYING'] },
+  hide:{ name:t('질긴 가죽','Tough Hide'), emoji:'🟫', price:55, types:['NORMAL','FIGHT'] },
+  fang:{ name:t('날카로운 엄니','Sharp Fang'), emoji:'🦷', price:80, types:['FIRE','DRAGON'] },
+  scale:{ name:t('물빛 비늘','Aqua Scale'), emoji:'🐚', price:70, types:['WATER','ICE'] },
+  leafex:{ name:t('잎사귀 진액','Leaf Extract'), emoji:'🍃', price:60, types:['GRASS','BUG'] },
+  sparkcell:{ name:t('전하 세포','Charge Cell'), emoji:'🔋', price:90, types:['ELECTRIC'] },
+  oreshard:{ name:t('광석 파편','Ore Shard'), emoji:'⛏', price:75, types:['ROCK','GROUND'] },
+  ectoplasm:{ name:t('영체 잔재','Ectoplasm'), emoji:'🫧', price:110, types:['GHOST','PSYCHIC'] },
+  venomsac:{ name:t('독주머니','Venom Sac'), emoji:'🧫', price:85, types:['POISON'] },
+  plume:{ name:t('바람깃털','Wind Plume'), emoji:'🪶', price:65, types:['FLYING'] },
 };
 const LOOT_BY_TYPE = {};
 Object.entries(LOOT).forEach(([k, v]) => v.types.forEach(t => { LOOT_BY_TYPE[t] = k; }));
 const lootPrice = (k, stage) => Math.floor(LOOT[k].price * (1 + stage * 0.8));
 /* 합성 재료 — 전투에서만 얻는다 */
 const MATERIALS = {
-  shard:{ name:'몬스터 조각', emoji:'🔩', desc:'야생 격파 시 가끔 획득' },
-  core:{ name:'응축 정수', emoji:'🔷', desc:'트레이너·보스 격파 시 획득' },
-  relicdust:{ name:'유물 가루', emoji:'🌟', desc:'✨이로치·보스에게서만' },
+  shard:{ name:t('몬스터 조각','Monster Shard'), emoji:'🔩', desc:t('야생 격파 시 가끔 획득','Sometimes from wild wins') },
+  core:{ name:t('응축 정수','Condensed Core'), emoji:'🔷', desc:t('트레이너·보스 격파 시 획득','From trainers and bosses') },
+  relicdust:{ name:t('유물 가루','Relic Dust'), emoji:'🌟', desc:t('✨이로치·보스에게서만','Only from shinies and bosses') },
 };
 const STONES = { firestone:'FIRE', waterstone:'WATER', thunderstone:'ELECTRIC', leafstone:'GRASS' };
 const totemKinds = () => Object.keys(TOTEMS).filter(k => (S.totems[k] || 0) > 0).length;
@@ -539,26 +562,26 @@ const typeTag = t => '<span class="typeTag" style="background:' + TYPE_COLOR[t] 
 
 /* ═══════════ 비전서 · 아이템 ═══════════ */
 const HMS = {
-  surf:{ name:'비전서: 파도타기', emoji:'📘', type:'WATER', tile:'w', desc:'물 위를 건넌다' },
-  cut:{ name:'비전서: 베기', emoji:'📗', type:'GRASS', tile:'b', desc:'덤불을 벤다' },
-  rocksmash:{ name:'비전서: 바위깨기', emoji:'📙', type:'FIGHT', tile:'B', desc:'금 간 바위를 부순다' },
-  fly:{ name:'비전서: 하늘날기', emoji:'📕', type:'FLYING', desc:'방문 지역으로 날아간다' },
+  surf:{ name:t('비전서: 파도타기','HM: Surf'), emoji:'📘', type:'WATER', tile:'w', desc:t('물 위를 건넌다','Cross water') },
+  cut:{ name:t('비전서: 베기','HM: Cut'), emoji:'📗', type:'GRASS', tile:'b', desc:t('덤불을 벤다','Cut bushes') },
+  rocksmash:{ name:t('비전서: 바위깨기','HM: Rock Smash'), emoji:'📙', type:'FIGHT', tile:'B', desc:t('금 간 바위를 부순다','Smash cracked rocks') },
+  fly:{ name:t('비전서: 하늘날기','HM: Fly'), emoji:'📕', type:'FLYING', desc:t('방문 지역으로 날아간다','Fly to visited areas') },
 };
 const canLearnHm = (m, k) => HMS[k].type === 'FLYING' ? !!DEX[m.id].flying : DEX[m.id].type === HMS[k].type;
 const hasField = k => S.party.some(m => (m.field || []).includes(k));
 /* unlock = 상점 진열에 필요한 배지 수 (초반 과잉 해금 방지) */
 const ITEMS = {
-  potion:{ name:'포션', emoji:'🧪', desc:'HP +30', price:100, unlock:0 },
-  ball:{ name:'봉인 부적', emoji:'🎴', desc:'몬스터를 부적에 봉인', price:150, unlock:0 },
-  superpotion:{ name:'슈퍼포션', emoji:'💉', desc:'HP +90', price:350, unlock:1 },
-  greatball:{ name:'봉인 주문서', emoji:'📜', desc:'봉인 성공률 1.5배', price:600, unlock:2 },
-  fullheal:{ name:'만병통치약', emoji:'🩹', desc:'상태이상 회복', price:450, unlock:2 },
-  ether:{ name:'PP에테르', emoji:'🫧', desc:'기술 PP +10', price:700, unlock:3 },
-  ultraball:{ name:'봉인의 인장', emoji:'🧿', desc:'봉인 성공률 2배', price:1400, unlock:4 },
-  firestone:{ name:'불꽃의 돌', emoji:'🔥', desc:'불꽃 2단계 즉시 진화', price:4000, unlock:5 },
-  waterstone:{ name:'물의 돌', emoji:'💧', desc:'물 2단계 즉시 진화', price:4000, unlock:5 },
-  thunderstone:{ name:'천둥의 돌', emoji:'⚡', desc:'전기 2단계 즉시 진화', price:4000, unlock:5 },
-  leafstone:{ name:'잎의 돌', emoji:'🍃', desc:'풀 2단계 즉시 진화', price:4000, unlock:5 },
+  potion:{ name:t('포션','Potion'), emoji:'🧪', desc:t('HP +30','HP +30'), price:100, unlock:0 },
+  ball:{ name:t('봉인 부적','Seal Charm'), emoji:'🎴', desc:t('몬스터를 부적에 봉인','Seal a monster into a charm'), price:150, unlock:0 },
+  superpotion:{ name:t('슈퍼포션','Super Potion'), emoji:'💉', desc:t('HP +90','HP +90'), price:350, unlock:1 },
+  greatball:{ name:t('봉인 주문서','Seal Scroll'), emoji:'📜', desc:t('봉인 성공률 1.5배','Seal rate x1.5'), price:600, unlock:2 },
+  fullheal:{ name:t('만병통치약','Full Heal'), emoji:'🩹', desc:t('상태이상 회복','Cure status'), price:450, unlock:2 },
+  ether:{ name:t('PP에테르','Ether'), emoji:'🫧', desc:t('기술 PP +10','Restore 10 PP'), price:700, unlock:3 },
+  ultraball:{ name:t('봉인의 인장','Seal Sigil'), emoji:'🧿', desc:t('봉인 성공률 2배','Seal rate x2'), price:1400, unlock:4 },
+  firestone:{ name:t('불꽃의 돌','Fire Stone'), emoji:'🔥', desc:t('불꽃 2단계 즉시 진화','Evolve stage-2 Fire'), price:4000, unlock:5 },
+  waterstone:{ name:t('물의 돌','Water Stone'), emoji:'💧', desc:t('물 2단계 즉시 진화','Evolve stage-2 Water'), price:4000, unlock:5 },
+  thunderstone:{ name:t('천둥의 돌','Thunder Stone'), emoji:'⚡', desc:t('전기 2단계 즉시 진화','Evolve stage-2 Electric'), price:4000, unlock:5 },
+  leafstone:{ name:t('잎의 돌','Leaf Stone'), emoji:'🍃', desc:t('풀 2단계 즉시 진화','Evolve stage-2 Grass'), price:4000, unlock:5 },
 };
 /* 합성 레시피 — 재료는 전투 드랍, 상위 아이템은 합성이 주 경로 */
 const RECIPES = [
@@ -577,7 +600,7 @@ const canCraft = r => Object.entries(r.need).every(([k, n]) => (S.items[k] || 0)
 const BALL_MULT = { ball:1, greatball:1.5, ultraball:2 };
 /* 배틀 가방 — 유형은 고정 번호(외워서 누를 수 있게), 유형 안의 아이템은 가방 순서 */
 const ITEM_CATS = [
-  { key:'heal', name:'회복', emoji:'🧪', kind:'heal', items:['potion', 'superpotion'] },
+  { key:'heal', name:t('회복','Heal'), emoji:'🧪', kind:'heal', items:['potion', 'superpotion'] },
   { key:'seal', name:'봉인구', emoji:'🎴', kind:'ball', items:['ball', 'greatball', 'ultraball'] },
   { key:'cure', name:'상태회복', emoji:'🩹', kind:'cure', items:['fullheal'] },
   { key:'misc', name:'기타', emoji:'🫧', kind:'heal', items:['ether'] },
@@ -585,22 +608,22 @@ const ITEM_CATS = [
 
 /* ═══════════ 12 지역 — 컨셉 타입 + 레벨대 ═══════════ */
 const REGION_DEFS = [
-  { key:'village', name:'🏘 테이머 마을', seed:101, lv:[0,0], noWild:true, types:['NORMAL'], theme:'field', handmade:'village' },
-  { key:'route1', name:'🌾 1번 초원', w:46, h:34, seed:202, lv:[4,8], types:['NORMAL','BUG','GRASS','FLYING'], theme:'field', center:true, trainers:3, exits:[{ dir:'◂', to:'village', need:0 }, { dir:'▸', to:'forest', need:0 }] },
-  { key:'forest', name:'🌲 미스트 숲', w:52, h:40, seed:303, lv:[11,16], types:['GRASS','BUG','POISON','FLYING'], theme:'forest', center:true, gym:0, hm:'cut', trainers:3, exits:[{ dir:'◂', to:'route1', need:0 }, { dir:'▸', to:'cave', need:1 }] },
-  { key:'cave', name:'🕳 이글 동굴', w:50, h:38, seed:404, lv:[19,25], types:['ROCK','GROUND','FIGHT','ELECTRIC'], theme:'cave', center:true, gym:1, hm:'rocksmash', trainers:3, exits:[{ dir:'◂', to:'forest', need:0 }, { dir:'▸', to:'lake', need:2 }] },
-  { key:'lake', name:'🌊 미러 호수', w:54, h:40, seed:505, lv:[28,35], types:['WATER','ICE','FLYING','BUG'], theme:'lake', center:true, shop:true, gym:2, hm:'surf', car:true, trainers:3, exits:[{ dir:'◂', to:'cave', need:0 }, { dir:'▸', to:'ruins', need:3 }] },
-  { key:'ruins', name:'🏛 잊혀진 폐허', w:52, h:40, seed:606, lv:[38,46], types:['GHOST','PSYCHIC','POISON','ROCK'], theme:'ruins', center:true, gym:3, trainers:4, exits:[{ dir:'◂', to:'lake', need:0 }, { dir:'▸', to:'tundra', need:4 }] },
-  { key:'tundra', name:'❄ 서리 설원', w:56, h:42, seed:707, lv:[49,57], types:['ICE','WATER','NORMAL','FLYING'], theme:'tundra', center:true, shop:true, box:true, hm:'fly', trainers:4, exits:[{ dir:'◂', to:'ruins', need:0 }, { dir:'▸', to:'desert', need:4 }] },
-  { key:'desert', name:'🏜 열사 사막', w:56, h:42, seed:808, lv:[58,66], types:['GROUND','ROCK','FIRE','POISON'], theme:'desert', center:true, gym:4, trainers:4, exits:[{ dir:'◂', to:'tundra', need:0 }, { dir:'▸', to:'canyon', need:5 }] },
-  { key:'canyon', name:'⛰ 천공 협곡', w:58, h:44, seed:909, lv:[67,74], types:['ROCK','FLYING','FIGHT','GROUND'], theme:'rock', center:true, gym:5, trainers:4, exits:[{ dir:'◂', to:'desert', need:0 }, { dir:'▸', to:'skyisle', need:6 }] },
-  { key:'skyisle', name:'☁ 하늘 섬', w:54, h:40, seed:1010, lv:[75,82], types:['FLYING','PSYCHIC','ELECTRIC','DRAGON'], theme:'sky', center:true, shop:true, gym:6, trainers:4, exits:[{ dir:'◂', to:'canyon', need:0 }, { dir:'▸', to:'volcano', need:7 }] },
-  { key:'volcano', name:'🌋 이그니스 화산', w:56, h:42, seed:1111, lv:[83,90], types:['FIRE','ROCK','DRAGON','GROUND'], theme:'volcano', center:true, gym:7, trainers:3, exits:[{ dir:'◂', to:'skyisle', need:0 }, { dir:'▸', to:'abyss', need:8 }] },
-  { key:'abyss', name:'🕯 심연의 문', w:52, h:40, seed:1212, lv:[91,97], types:['GHOST','DRAGON','PSYCHIC','POISON'], theme:'cave', center:true, gym:8, exits:[{ dir:'◂', to:'volcano', need:0 }] },
+  { key:'village', name:t('🏘 테이머 마을','🏘 Tamer Village'), seed:101, lv:[0,0], noWild:true, types:['NORMAL'], theme:'field', handmade:'village' },
+  { key:'route1', name:t('🌾 1번 초원','🌾 Route 1'), w:46, h:34, seed:202, lv:[4,8], types:['NORMAL','BUG','GRASS','FLYING'], theme:'field', center:true, trainers:3, exits:[{ dir:'◂', to:'village', need:0 }, { dir:'▸', to:'forest', need:0 }] },
+  { key:'forest', name:t('🌲 미스트 숲','🌲 Mist Forest'), w:52, h:40, seed:303, lv:[11,16], types:['GRASS','BUG','POISON','FLYING'], theme:'forest', center:true, gym:0, hm:'cut', trainers:3, exits:[{ dir:'◂', to:'route1', need:0 }, { dir:'▸', to:'cave', need:1 }] },
+  { key:'cave', name:t('🕳 이글 동굴','🕳 Eagle Cave'), w:50, h:38, seed:404, lv:[19,25], types:['ROCK','GROUND','FIGHT','ELECTRIC'], theme:'cave', center:true, gym:1, hm:'rocksmash', trainers:3, exits:[{ dir:'◂', to:'forest', need:0 }, { dir:'▸', to:'lake', need:2 }] },
+  { key:'lake', name:t('🌊 미러 호수','🌊 Mirror Lake'), w:54, h:40, seed:505, lv:[28,35], types:['WATER','ICE','FLYING','BUG'], theme:'lake', center:true, shop:true, gym:2, hm:'surf', car:true, trainers:3, exits:[{ dir:'◂', to:'cave', need:0 }, { dir:'▸', to:'ruins', need:3 }] },
+  { key:'ruins', name:t('🏛 잊혀진 폐허','🏛 Lost Ruins'), w:52, h:40, seed:606, lv:[38,46], types:['GHOST','PSYCHIC','POISON','ROCK'], theme:'ruins', center:true, gym:3, trainers:4, exits:[{ dir:'◂', to:'lake', need:0 }, { dir:'▸', to:'tundra', need:4 }] },
+  { key:'tundra', name:t('❄ 서리 설원','❄ Frost Tundra'), w:56, h:42, seed:707, lv:[49,57], types:['ICE','WATER','NORMAL','FLYING'], theme:'tundra', center:true, shop:true, box:true, hm:'fly', trainers:4, exits:[{ dir:'◂', to:'ruins', need:0 }, { dir:'▸', to:'desert', need:4 }] },
+  { key:'desert', name:t('🏜 열사 사막','🏜 Blazing Desert'), w:56, h:42, seed:808, lv:[58,66], types:['GROUND','ROCK','FIRE','POISON'], theme:'desert', center:true, gym:4, trainers:4, exits:[{ dir:'◂', to:'tundra', need:0 }, { dir:'▸', to:'canyon', need:5 }] },
+  { key:'canyon', name:t('⛰ 천공 협곡','⛰ Sky Canyon'), w:58, h:44, seed:909, lv:[67,74], types:['ROCK','FLYING','FIGHT','GROUND'], theme:'rock', center:true, gym:5, trainers:4, exits:[{ dir:'◂', to:'desert', need:0 }, { dir:'▸', to:'skyisle', need:6 }] },
+  { key:'skyisle', name:t('☁ 하늘 섬','☁ Sky Isle'), w:54, h:40, seed:1010, lv:[75,82], types:['FLYING','PSYCHIC','ELECTRIC','DRAGON'], theme:'sky', center:true, shop:true, gym:6, trainers:4, exits:[{ dir:'◂', to:'canyon', need:0 }, { dir:'▸', to:'volcano', need:7 }] },
+  { key:'volcano', name:t('🌋 이그니스 화산','🌋 Ignis Volcano'), w:56, h:42, seed:1111, lv:[83,90], types:['FIRE','ROCK','DRAGON','GROUND'], theme:'volcano', center:true, gym:7, trainers:3, exits:[{ dir:'◂', to:'skyisle', need:0 }, { dir:'▸', to:'abyss', need:8 }] },
+  { key:'abyss', name:t('🕯 심연의 문','🕯 Abyss Gate'), w:52, h:40, seed:1212, lv:[91,97], types:['GHOST','DRAGON','PSYCHIC','POISON'], theme:'cave', center:true, gym:8, exits:[{ dir:'◂', to:'volcano', need:0 }] },
 ];
 /* 체육관 — 지역마다 하나, 퍼즐 유형과 관장이 다르다 */
 const GYM_PUZZLES = ['maze', 'pacman', 'ice', 'warp', 'gauntlet', 'maze', 'ice', 'pacman', 'gauntlet'];
-const PUZZLE_KO = { maze:'🌀 미로', pacman:'👾 추격전', ice:'🧊 빙판 미끄럼', warp:'🌌 순간이동', gauntlet:'⚔ 연전 복도' };
+const PUZZLE_KO = new Proxy({}, { get:(_, k) => ({ maze:t('🌀 미로','🌀 Maze'), pacman:t('👾 추격전','👾 Chase'), ice:t('🧊 빙판 미끄럼','🧊 Ice Slide'), warp:t('🌌 순간이동','🌌 Warp'), gauntlet:t('⚔ 연전 복도','⚔ Gauntlet') })[k] });
 const PUZZLE_HINT = {
   maze:'갈림길 미로 — 막다른 길에 트레이너가 숨어 있다. 관장실은 가장 깊은 곳.',
   pacman:'흩어진 결정(◦)을 모두 모아야 관장실 문이 열린다. 순찰자(👾)에게 닿으면 배틀!',
@@ -622,22 +645,24 @@ const THEME = {
   volcano:{ wall:'r', ground:'c', grass:'g', deco:',', rock:'B', pondChance:0 },
 };
 const BOSSES = [
-  { emoji:'🧝', name:'숲의 수호자 실바', totem:'growth', gold:600, count:3 },
-  { emoji:'⛏', name:'동굴의 수호자 록', totem:'guard', gold:1200, count:3 },
-  { emoji:'🧜', name:'호수의 수호자 마리나', totem:'catch', gold:2000, count:4 },
-  { emoji:'🗿', name:'폐허의 수호자 오벨', totem:'luck', gold:3000, count:4 },
-  { emoji:'🐍', name:'사막의 수호자 두네', totem:'gold', gold:4500, count:4 },
-  { emoji:'🦅', name:'협곡의 수호자 갈레', totem:null, gold:6000, count:5 },
-  { emoji:'🧙', name:'하늘의 현자 아스트라', totem:null, gold:8000, count:5 },
-  { emoji:'👑', name:'챔피언 이그니스', totem:'ember', gold:15000, count:6 },
-  { emoji:'🕯', name:'심연의 문지기', totem:null, gold:30000, count:6, ascend:true },
+  { emoji:'🧝', name:t('숲의 수호자 실바','Silva, Forest Warden'), totem:'growth', gold:600, count:3 },
+  { emoji:'⛏', name:t('동굴의 수호자 록','Rock, Cave Warden'), totem:'guard', gold:1200, count:3 },
+  { emoji:'🧜', name:t('호수의 수호자 마리나','Marina, Lake Warden'), totem:'catch', gold:2000, count:4 },
+  { emoji:'🗿', name:t('폐허의 수호자 오벨','Obel, Ruins Warden'), totem:'luck', gold:3000, count:4 },
+  { emoji:'🐍', name:t('사막의 수호자 두네','Dune, Desert Warden'), totem:'gold', gold:4500, count:4 },
+  { emoji:'🦅', name:t('협곡의 수호자 갈레','Gale, Canyon Warden'), totem:null, gold:6000, count:5 },
+  { emoji:'🧙', name:t('하늘의 현자 아스트라','Astra, Sky Sage'), totem:null, gold:8000, count:5 },
+  { emoji:'👑', name:t('챔피언 이그니스','Champion Ignis'), totem:'ember', gold:15000, count:6 },
+  { emoji:'🕯', name:t('심연의 문지기','Abyss Gatekeeper'), totem:null, gold:30000, count:6, ascend:true },
 ];
 const TRAINER_NAMES = ['탐험가 리오','수집가 미나','등산객 태오','낚시꾼 준','연구원 하나','방랑자 카이','사냥꾼 별','견습생 루'];
 /* ── 라이벌 — 내 스타터에 상성 우위인 타입으로 시작한다 ── */
-const RIVAL_NAME = '라이벌 제트';
+const RIVAL_NAME = t('라이벌 제트', 'Rival Jett');
 const COUNTER_STARTER = { FIRE:'m1_0', WATER:'m2_0', GRASS:'m0_0' };   // 불꽃←물, 물←풀, 풀←불꽃
 const RIVAL_STAGES = [
-  { map:'route1', need:0, lv:8, count:2, gold:400, lines:['벌써 파트너를 골랐다고? 나도 마침 좋은 녀석을 얻었지.', '네 선택의 약점을 찌를 녀석이야 — 실력 좀 보자!'] },
+  { map:'route1', need:0, lv:0, count:1, gold:400, tutorial:true,
+    lines:[t('벌써 파트너를 골랐다고? 나도 마침 좋은 녀석을 얻었지.','Already picked a partner? I got a good one too.'),
+           t('같은 레벨이지만 상성은 내가 유리해 — 그래도 이길 수 있겠어?','Same level, but the type matchup favors me. Think you can still win?')] },
   { map:'forest', need:1, lv:18, count:3, gold:900, lines:['배지 하나로 우쭐대는 건 아니겠지?', '이 숲을 나가려면 나를 넘어야 해!'] },
   { map:'lake', need:2, lv:34, count:4, gold:1800, lines:['호수의 수호자보다 내가 먼저다.', '그동안 얼마나 강해졌는지 보여줘!'] },
   { map:'ruins', need:4, lv:48, count:5, gold:3000, lines:['이 폐허에서 고대의 힘을 찾고 있었어.', '너에게 시험해보지!'] },
@@ -648,7 +673,7 @@ const RIVAL_STAGES = [
 ];
 /* ── 손으로 만든 맵 — 내 집 + 마을 (n=집문 L=연구소 H=센터 s=상점) ── */
 const HAND_MAPS = {
-  home:{ name:'🛏 내 방', wall:'#', rows:[
+  home:{ name:t('🛏 내 방','🛏 My Room'), wall:'#', rows:[
     '###########',
     '#....#....#',
     '#.🛏.#.📺.#'.replace(/[🛏📺]/g, '.'),
@@ -665,7 +690,7 @@ const HAND_MAPS = {
       '엄마: 몸조심하고… 힘들면 언제든 돌아오렴.'] }],
     exits:[{ tile:'D', to:'village', tx:9, ty:16 }],
     start:{ x:2, y:3 } },
-  village:{ name:'🏘 테이머 마을', wall:'#', rows:[
+  village:{ name:t('🏘 테이머 마을','🏘 Tamer Village'), wall:'#', rows:[
     '##############################',
     '#,,......................,,,.#',
     '#..#######....#########......#',
@@ -816,7 +841,7 @@ function buildRegion(def) {
       if (d > bestD) { bestD = d; best = p; }
     }
     const idx = openSpots.indexOf(best); if (idx >= 0) openSpots.splice(idx, 1);
-    npcs.push({ x:best.x, y:best.y, emoji:'🧙', name:'신비한 상인', merchant:true, dist:bestD });
+    npcs.push({ x:best.x, y:best.y, emoji:'🧙', name:t('신비한 상인','Mysterious Merchant'), merchant:true, dist:bestD });
   }
   const items = [];
   const pool = ['potion','superpotion','ether','greatball','fullheal','ultraball','firestone','waterstone','thunderstone','leafstone'];
@@ -950,7 +975,7 @@ async function loadSave() {
       return s.data && s.data.v === 6 ? s.data : null;
     } catch (e) { $('saveStatus').textContent = e.message === 'FORBIDDEN' ? '⚠ 다른 기기에서 세이브 사용 중' : '세이브 로드 실패: ' + e.message; return null; }
   }
-  $('saveStatus').textContent = '게스트 모드 — 이 브라우저에만 저장 (로그인 시 클라우드)';
+  $('saveStatus').textContent = t('게스트 모드 — 이 브라우저에만 저장 (로그인 시 클라우드)','Guest mode — saved to this browser only (sign in for cloud saves)');
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); return d && d.v === 6 ? d : null; } catch (_) { return null; }
 }
 async function persist(silent) {
@@ -1160,13 +1185,22 @@ function spawnRival() {
   const at = spots[0] || { x:P.tx, y:P.ty - 1 };
   m.npcs.push({ ...at, emoji:'🧑‍🎤', name:RIVAL_NAME, rival:true, stage:S.rivalStage,
     trainerId:'rival_' + S.rivalStage, count:st.count, gold:st.gold, lvBase:st.lv, types:m.types,
-    lines:st.lines, final:st.final, sight:0, dir:[0,1] });
-  toast('❗ ' + RIVAL_NAME + ' 이(가) 앞을 가로막았다!');
+    lines:st.lines, final:st.final, tutorial:st.tutorial, sight:0, dir:[0,1] });
+  toast('❗ ' + RIVAL_NAME + t(' 이(가) 앞을 가로막았다!', ' blocks your path!'));
   SFX.encounter();
 }
 /** 라이벌 파티 — 카운터 스타터 계열 + 지역 타입 몬스터 */
 function rivalTeam(npc) {
   const rng = mulberry(hashStr('rival' + npc.stage) + S.ascension * 13);
+  if (npc.tutorial) {                                  // 첫 대결 — 내 선봉과 같은 레벨의 1:1
+    const my = firstAlive() || S.party[0];
+    const foe = mkMon(S.rival || 'm1_0', my.lv);
+    ['maxHp','atk','def','spc','spd'].forEach(k => { foe[k] = Math.max(1, Math.floor(foe[k] * 0.92)); });
+    foe.spd = Math.max(1, Math.min(foe.spd, my.spd - 1));   // 선공은 항상 플레이어 — 승부를 한 턴 차로 만든다
+    foe.hp = foe.maxHp;
+    foe.moves = foe.moves.slice(0, 2);
+    return [foe];
+  }
   const lv = Math.min(99, npc.lvBase + S.ascension * 8);
   const base = S.rival || 'm1_0';
   let starter = base;
@@ -1266,12 +1300,12 @@ function renderMenu() {
         '<small>' + m.moves.map(mv => MOVES[mv.id].name + '(' + mv.pp + ')').join(' · ') + ((m.field || []).length ? ' · 📖' + m.field.map(k => HMS[k].name.split(': ')[1]).join(',') : '') + '</small></span>');
       if (i === reorderIdx) r.classList.add('sel');
       const btn = document.createElement('button');
-      if (reorderIdx < 0) { btn.textContent = '순서'; btn.onclick = () => { reorderIdx = i; renderMenu(); }; }
-      else { btn.textContent = i === reorderIdx ? '취소' : '여기로'; btn.onclick = () => {
+      if (reorderIdx < 0) { btn.textContent = t('순서','Order'); btn.onclick = () => { reorderIdx = i; renderMenu(); }; }
+      else { btn.textContent = i === reorderIdx ? t('취소','Cancel') : t('여기로','Swap here'); btn.onclick = () => {
         if (i !== reorderIdx) { const t = S.party[i]; S.party[i] = S.party[reorderIdx]; S.party[reorderIdx] = t; persist(true); }
         reorderIdx = -1; renderMenu(); }; }
       r.appendChild(btn);
-      const hb = document.createElement('button'); hb.className = 'ghost'; hb.textContent = m.held ? '해제' : '장착';
+      const hb = document.createElement('button'); hb.className = 'ghost'; hb.textContent = m.held ? t('해제','Unequip') : t('장착','Equip');
       hb.onclick = () => {
         if (m.held) { const k = heldKey(m.held, m.heldTier || 1); S.items[k] = (S.items[k] || 0) + 1; m.held = null; m.heldTier = 0; recalcStats(m); renderMenu(); persist(true); }
         else heldMenu(m);
@@ -1287,7 +1321,7 @@ function renderMenu() {
       const r = row(spriteImg(m, 40) + '<span class="grow"><small style="display:inline;color:#8a93a8">' + dexNo(m.id) + '</small> <b>' + monName(m) + '</b> Lv.' + m.lv + ' ' + typeTag(DEX[m.id].type) +
         '<small>HP ' + m.hp + '/' + m.maxHp + ' · ATK ' + m.atk + ' DEF ' + m.def + ' SPC ' + m.spc + ' SPD ' + m.spd + '</small></span>');
       const b = document.createElement('button');
-      b.textContent = S.party.length < PARTY_MAX ? '파티에 넣기' : '교체';
+      b.textContent = S.party.length < PARTY_MAX ? t('파티에 넣기','To party') : t('교체','Swap');
       b.onclick = () => {
         if (S.party.length < PARTY_MAX) { S.party.push(...S.box.splice(i, 1)); persist(true); renderMenu(); }
         else swapMenu(i);
@@ -1298,8 +1332,8 @@ function renderMenu() {
     for (const [key, it] of Object.entries(ITEMS)) {
       const n = S.items[key] || 0; if (!n && !['potion','ball'].includes(key)) continue;
       const r = row('<span style="font-size:20px">' + it.emoji + '</span><span class="grow"><b>' + it.name + '</b> × ' + n + '<small>' + it.desc + '</small></span>');
-      if (['potion','superpotion','ether','fullheal'].includes(key) && n > 0) { const b = document.createElement('button'); b.textContent = '사용'; b.onclick = () => useItemMenu(key); r.appendChild(b); }
-      if (STONES[key] && n > 0) { const b = document.createElement('button'); b.textContent = '사용'; b.onclick = () => stoneMenu(key); r.appendChild(b); }
+      if (['potion','superpotion','ether','fullheal'].includes(key) && n > 0) { const b = document.createElement('button'); b.textContent = t('사용','Use'); b.onclick = () => useItemMenu(key); r.appendChild(b); }
+      if (STONES[key] && n > 0) { const b = document.createElement('button'); b.textContent = t('사용','Use'); b.onclick = () => stoneMenu(key); r.appendChild(b); }
     }
     for (const key of Object.keys(HELD)) for (let t = 1; t <= 3; t++) {
       const n = S.items[heldKey(key, t)] || 0; if (!n) continue;
@@ -1319,8 +1353,8 @@ function renderMenu() {
       const r = row('<span style="font-size:20px">' + (n || learners.length ? h.emoji : '❔') + '</span><span class="grow"><b>' + (n || learners.length ? h.name : '??? 비전서') + '</b>' + (n ? ' × ' + n : '') +
         '<small>' + (n || learners.length ? h.desc : '어딘가에 숨겨져 있다') + (learners.length ? ' · 습득: ' + learners.map(m => DEX[m.id].name).join(', ') : '') + '</small></span>');
       if (learners.length) r.classList.add('on');
-      if (n > 0) { const b = document.createElement('button'); b.textContent = '가르치기'; b.onclick = () => teachHmMenu(key); r.appendChild(b); }
-      if (key === 'fly' && learners.length) { const b = document.createElement('button'); b.textContent = '🕊 날기'; b.onclick = () => flyMenu(); r.appendChild(b); }
+      if (n > 0) { const b = document.createElement('button'); b.textContent = t('가르치기','Teach'); b.onclick = () => teachHmMenu(key); r.appendChild(b); }
+      if (key === 'fly' && learners.length) { const b = document.createElement('button'); b.textContent = t('🕊 날기','🕊 Fly'); b.onclick = () => flyMenu(); r.appendChild(b); }
     }
     if (S.car) row('<span style="font-size:20px">🚙</span><span class="grow"><b>오프로더</b><small>C 키로 탑승/하차 — 이동 속도 약 2배</small></span>');
   } else if (menuTab === 'craft') {
@@ -1356,7 +1390,7 @@ function renderMenu() {
           '<span class="grow"><b style="color:#8a93a8;font-weight:normal">' + dexNo(id) + '</b> <b>' + (seen ? d.name : '???') + '</b> ' + (seen ? typeTag(d.type) : '') + (S.dex.has(id) ? '📖' : '') +
           '<small>' + (d.stage === 0 ? '기본' : d.stage === 1 ? '2단계' : '최종') + (seen ? ' · 격파 ' + cnt + ' · ' + '▮'.repeat(st) + '▯'.repeat(RESEARCH_MAX - st) + ' +' + (st * 4) + '%' : '') + '</small></span>');
         if (S.dex.has(id)) r.classList.add('on');
-        const b = document.createElement('button'); b.className = 'ghost'; b.textContent = '상세'; b.disabled = !seen;
+        const b = document.createElement('button'); b.className = 'ghost'; b.textContent = t('상세','Detail'); b.disabled = !seen;
         b.onclick = () => { dexPick = id; renderMenu(); }; r.appendChild(b);
       });
     });
@@ -1365,18 +1399,18 @@ function renderMenu() {
      ['시각', clockStr() + ' · ' + (isNight() ? '🌙 밤 (고스트/독/에스퍼 출현, ✨×1.3)' : '☀ 낮')],
      ['저장 위치', cloud ? '☁ 클라우드' : '이 브라우저'],
      ['마지막 저장', lastSavedAt ? lastSavedAt.toLocaleTimeString() : '아직 없음']].forEach(([k, v]) => row('<span class="grow"><b>' + k + '</b><small>' + v + '</small></span>'));
-    const b = document.createElement('button'); b.textContent = '💾 지금 저장'; b.onclick = () => { persist(false); renderMenu(); }; body.appendChild(b);
+    const b = document.createElement('button'); b.textContent = t('💾 지금 저장','💾 Save now'); b.onclick = () => { persist(false); renderMenu(); }; body.appendChild(b);
   }
 }
 function heldMenu(m) {
   const body = $('menuBody'); body.innerHTML = '';
-  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = '← 뒤로'; back.onclick = () => renderMenu(); body.appendChild(back);
+  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = t('← 뒤로','← Back'); back.onclick = () => renderMenu(); body.appendChild(back);
   Object.keys(HELD).forEach(k => { for (let t = 3; t >= 1; t--) {
     const n = S.items[heldKey(k, t)] || 0; if (!n) continue;
     const r = document.createElement('div'); r.className = 'menuRow';
     r.innerHTML = '<span style="font-size:20px">' + HELD[k].emoji + '</span><span class="grow"><b>' + HELD[k].name + TIER_MARK[t - 1] + '</b> × ' + n +
       '<small>' + TIER_NAME[t - 1] + ' · ' + heldEffect(k, t) + '</small></span>';
-    const b = document.createElement('button'); b.textContent = '장착';
+    const b = document.createElement('button'); b.textContent = t('장착','Equip');
     b.onclick = () => { S.items[heldKey(k, t)] = n - 1; m.held = k; m.heldTier = t; recalcStats(m); toast(heldLabel(k, t) + ' 장착'); persist(true); renderMenu(); };
     r.appendChild(b); body.appendChild(r);
   } });
@@ -1394,7 +1428,7 @@ function renderCraft(body) {
     const el = row('<span class="grow"><b>' + itemLabel(r.out) + '</b><small>재료: ' +
       Object.entries(r.need).map(([k, n]) => itemLabel(k) + '×' + n + ' (' + (S.items[k] || 0) + ')').join(' + ') + '</small></span>');
     if (ok) el.classList.add('on');
-    const b = document.createElement('button'); b.textContent = '합성'; b.disabled = !ok;
+    const b = document.createElement('button'); b.textContent = t('합성','Craft'); b.disabled = !ok;
     b.onclick = () => { Object.entries(r.need).forEach(([k, n]) => { S.items[k] -= n; }); S.items[r.out] = (S.items[r.out] || 0) + 1;
       SFX.evolve(); toast('🔨 ' + itemLabel(r.out) + ' 합성 완료!'); persist(true); renderMenu(); };
     el.appendChild(b);
@@ -1409,7 +1443,7 @@ function renderCraft(body) {
       '<small>' + heldEffect(k, t) + ' → ' + heldEffect(k, t + 1) + ' · 보유 ' + have + '/2 · ' +
       Object.entries(need).map(([mk, n]) => itemLabel(mk) + '×' + n + ' (' + (S.items[mk] || 0) + ')').join('') + '</small></span>');
     if (ok) el.classList.add('on');
-    const b = document.createElement('button'); b.textContent = '승급'; b.disabled = !ok;
+    const b = document.createElement('button'); b.textContent = t('승급','Upgrade'); b.disabled = !ok;
     b.onclick = () => { S.items[heldKey(k, t)] -= 2; Object.entries(need).forEach(([mk, n]) => { S.items[mk] -= n; });
       S.items[heldKey(k, t + 1)] = (S.items[heldKey(k, t + 1)] || 0) + 1;
       SFX.evolve(); toast('🔨 ' + HELD[k].name + TIER_MARK[t] + ' 완성!'); persist(true); renderMenu(); };
@@ -1418,25 +1452,25 @@ function renderCraft(body) {
 }
 function swapMenu(boxIdx) {
   const body = $('menuBody'); body.innerHTML = '';
-  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = '← 뒤로'; back.onclick = () => renderMenu(); body.appendChild(back);
+  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = t('← 뒤로','← Back'); back.onclick = () => renderMenu(); body.appendChild(back);
   const p = document.createElement('p'); p.style.cssText = 'font-size:11px;color:#8a93a8'; p.textContent = '보관소의 ' + monName(S.box[boxIdx]) + ' 와 교체할 파티 몬스터를 선택'; body.appendChild(p);
   S.party.forEach((m, i) => {
     const r = document.createElement('div'); r.className = 'menuRow';
     r.innerHTML = spriteImg(m, 38) + '<span class="grow"><b>' + monName(m) + '</b> Lv.' + m.lv + '</span>';
-    const b = document.createElement('button'); b.textContent = '교체';
+    const b = document.createElement('button'); b.textContent = t('교체','Swap');
     b.onclick = () => { const t = S.party[i]; S.party[i] = S.box[boxIdx]; S.box[boxIdx] = t; toast('교체 완료'); persist(true); menuTab = 'box'; renderMenu(); };
     r.appendChild(b); body.appendChild(r);
   });
 }
 function stoneMenu(key) {
   const type = STONES[key], body = $('menuBody'); body.innerHTML = '';
-  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = '← 가방으로'; back.onclick = () => renderMenu(); body.appendChild(back);
+  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = t('← 가방으로','← Bag'); back.onclick = () => renderMenu(); body.appendChild(back);
   const p = document.createElement('p'); p.style.cssText = 'font-size:11px;color:#8a93a8'; p.textContent = ITEMS[key].name + ' — ' + TYPE_KO[type] + ' 타입 2단계 몬스터를 레벨 조건 없이 최종형으로 진화'; body.appendChild(p);
   S.party.forEach(m => {
     const d = DEX[m.id], ok = d.type === type && d.stage === 1 && d.evolveTo;
     const r = document.createElement('div'); r.className = 'menuRow';
     r.innerHTML = spriteImg(m, 38) + '<span class="grow"><b>' + monName(m) + '</b> Lv.' + m.lv + ' ' + typeTag(d.type) + '<small>' + (ok ? DEX[d.evolveTo].name + ' 으로 진화 가능' : '조건 불충족') + '</small></span>';
-    const b = document.createElement('button'); b.textContent = '사용'; b.disabled = !ok;
+    const b = document.createElement('button'); b.textContent = t('사용','Use'); b.disabled = !ok;
     b.onclick = () => { S.items[key]--; m.id = d.evolveTo; recalcStats(m); syncMoves(m); S.dex.add(m.id); SFX.evolve();
       toast('🌟 ' + DEX[m.id].name + ' 으로 진화!'); persist(true); renderMenu(); };
     r.appendChild(b); body.appendChild(r);
@@ -1444,30 +1478,30 @@ function stoneMenu(key) {
 }
 function teachHmMenu(key) {
   const h = HMS[key], body = $('menuBody'); body.innerHTML = '';
-  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = '← 가방으로'; back.onclick = () => renderMenu(); body.appendChild(back);
+  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = t('← 가방으로','← Bag'); back.onclick = () => renderMenu(); body.appendChild(back);
   S.party.forEach(m => {
     const ok = canLearnHm(m, key), has = (m.field || []).includes(key);
     const r = document.createElement('div'); r.className = 'menuRow' + (has ? ' on' : '');
     r.innerHTML = spriteImg(m, 38) + '<span class="grow"><b>' + monName(m) + '</b> ' + typeTag(DEX[m.id].type) + '<small>' + (has ? '이미 습득' : ok ? '습득 가능' : '타입 불일치') + '</small></span>';
-    const b = document.createElement('button'); b.textContent = has ? '습득함' : '가르치기'; b.disabled = !ok || has;
+    const b = document.createElement('button'); b.textContent = has ? t('습득함','Learned') : t('가르치기','Teach'); b.disabled = !ok || has;
     b.onclick = () => { m.field = [...(m.field || []), key]; S.hms[key]--; SFX.level(); toast(DEX[m.id].name + ' 이(가) ' + h.name.split(': ')[1] + ' 습득!'); persist(true); renderMenu(); };
     r.appendChild(b); body.appendChild(r);
   });
 }
 function flyMenu() {
   const body = $('menuBody'); body.innerHTML = '';
-  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = '← 가방으로'; back.onclick = () => renderMenu(); body.appendChild(back);
+  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = t('← 가방으로','← Bag'); back.onclick = () => renderMenu(); body.appendChild(back);
   Object.entries(MAPS).forEach(([key, m]) => {
     if (!S.visited[key]) return;
     const r = document.createElement('div'); r.className = 'menuRow' + (key === S.map ? ' sel' : '');
     r.innerHTML = '<span class="grow"><b>' + m.name + '</b><small>' + (key === S.map ? '현재 위치' : '야생 Lv.' + (m.lv[0] + S.ascension * 8) + '~' + (m.lv[1] + S.ascension * 8)) + '</small></span>';
-    const b = document.createElement('button'); b.textContent = '날아가기'; b.disabled = key === S.map;
+    const b = document.createElement('button'); b.textContent = t('날아가기','Fly here'); b.disabled = key === S.map;
     b.onclick = () => { closeMenu(); goMap(key, m.start.x, m.start.y); SFX.select(); }; r.appendChild(b); body.appendChild(r);
   });
 }
 function renderDexDetail(body, id) {
   const d = DEX[id], cnt = S.research[id] || 0, st = researchStage(id);
-  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = '← 도감 목록'; back.onclick = () => { dexPick = null; renderMenu(); }; body.appendChild(back);
+  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = t('← 도감 목록','← Dex list'); back.onclick = () => { dexPick = null; renderMenu(); }; body.appendChild(back);
   const row = h => { const x = document.createElement('div'); x.className = 'menuRow'; x.innerHTML = h; body.appendChild(x); return x; };
   const owned = S.party.concat(S.box).filter(m => m.id === id);
   const chain = [0, 1, 2].map(si => DEX['m' + d.family + '_' + si]);
@@ -1495,7 +1529,7 @@ function renderDexDetail(body, id) {
 }
 function useItemMenu(key) {
   const body = $('menuBody'); body.innerHTML = '';
-  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = '← 가방으로'; back.onclick = () => renderMenu(); body.appendChild(back);
+  const back = document.createElement('button'); back.className = 'ghost'; back.textContent = t('← 가방으로','← Bag'); back.onclick = () => renderMenu(); body.appendChild(back);
   S.party.forEach(m => {
     const r = document.createElement('div'); r.className = 'menuRow';
     r.innerHTML = spriteImg(m, 38) + '<span class="grow"><b>' + monName(m) + '</b> HP ' + m.hp + '/' + m.maxHp + (m.status ? ' <span class="st ' + m.status + '">' + STATUS_KO[m.status] + '</span>' : '') + '</span>';
@@ -1503,9 +1537,9 @@ function useItemMenu(key) {
       const b = document.createElement('button'); b.textContent = MOVES[mv.id].name + ' ' + mv.pp; b.disabled = mv.pp >= mv.maxPp;
       b.onclick = () => { mv.pp = Math.min(mv.maxPp, mv.pp + 10); S.items[key]--; SFX.heal(); persist(true); renderMenu(); }; r.appendChild(b);
     });
-    else if (key === 'fullheal') { const b = document.createElement('button'); b.textContent = '치료'; b.disabled = !m.status;
+    else if (key === 'fullheal') { const b = document.createElement('button'); b.textContent = t('치료','Cure'); b.disabled = !m.status;
       b.onclick = () => { m.status = null; S.items[key]--; SFX.heal(); persist(true); renderMenu(); }; r.appendChild(b); }
-    else { const b = document.createElement('button'); b.textContent = '회복'; b.disabled = m.hp >= m.maxHp;
+    else { const b = document.createElement('button'); b.textContent = t('회복','Heal'); b.disabled = m.hp >= m.maxHp;
       b.onclick = () => { m.hp = Math.min(m.maxHp, m.hp + (key === 'superpotion' ? 90 : 30)); S.items[key]--; SFX.heal(); persist(true); renderMenu(); }; r.appendChild(b); }
     body.appendChild(r);
   });
@@ -1527,7 +1561,7 @@ function renderShop() {
   head.textContent = title + (shopKind === 'merchant' ? ' — 희귀 물품과 전리품 고가 매입(×1.5)' : shopKind === 'center' ? ' — 기본 물품만 취급 (조금 비쌈)' : '');
   rows.appendChild(head);
   const tabs = document.createElement('div'); tabs.className = 'tabs'; tabs.style.marginBottom = '4px';
-  [['buy', '🛒 사기'], ['sell', '💰 팔기']].forEach(([k, label]) => {
+  [['buy', t('🛒 사기','🛒 Buy')], ['sell', t('💰 팔기','💰 Sell')]].forEach(([k, label]) => {
     const b = document.createElement('button'); b.className = shopTab === k ? '' : 'ghost'; b.textContent = label;
     b.onclick = () => { shopTab = k; SFX.select(); renderShop(); }; tabs.appendChild(b);
   });
@@ -1546,7 +1580,7 @@ function renderShop() {
         ? '<span style="color:#4a5568">🔒 ??? <small>배지 ' + it.unlock + '개부터 입고</small></span><span style="color:#4a5568">-</span>'
         : '<span>' + it.emoji + ' ' + it.name + ' <small>' + it.desc + '</small></span><span>' + price + 'G</span>';
       if (!locked) {
-        const b = document.createElement('button'); b.textContent = '구매 (' + (S.items[key] || 0) + ')'; b.disabled = S.gold < price;
+        const b = document.createElement('button'); b.textContent = t('구매 (','Buy (') + (S.items[key] || 0) + ')'; b.disabled = S.gold < price;
         b.onclick = () => { S.gold -= price; S.items[key] = (S.items[key] || 0) + 1; SFX.select(); hud(); renderShop(); persist(true); };
         row.appendChild(b);
       }
@@ -1561,9 +1595,9 @@ function renderShop() {
       const n = S.items['loot_' + k], unit = Math.floor(LOOT[k].price * lootBuyMul());
       const row = document.createElement('div'); row.className = 'menuRow';
       row.innerHTML = '<span>' + LOOT[k].emoji + ' ' + LOOT[k].name + ' × ' + n + '</span><span>' + unit + 'G / 개</span>';
-      const b1 = document.createElement('button'); b1.className = 'ghost'; b1.textContent = '1개 팔기';
+      const b1 = document.createElement('button'); b1.className = 'ghost'; b1.textContent = t('1개 팔기','Sell 1');
       b1.onclick = () => { S.items['loot_' + k]--; S.gold += unit; SFX.select(); hud(); renderShop(); persist(true); };
-      const b2 = document.createElement('button'); b2.textContent = '전부 (' + (unit * n) + 'G)';
+      const b2 = document.createElement('button'); b2.textContent = t('전부 (','All (') + (unit * n) + 'G)';
       b2.onclick = () => { S.gold += unit * n; S.items['loot_' + k] = 0; SFX.catch(); hud(); renderShop(); persist(true); };
       row.appendChild(b1); row.appendChild(b2); rows.appendChild(row);
     });
@@ -1608,17 +1642,21 @@ function startWild(m, pool) {
   if (shiny) { S.shinyCount++; SFX.shiny(); } else SFX.encounter();
   B = { my:firstAlive(), foe, wild:true, over:false, menu:'root' };
   S.mode = 'battle'; $('battle').classList.add('on');
-  log(shiny ? '✨✨ 색이 다른 ' + dexNo(id) + ' ' + DEX[id].name + ' (Lv.' + foe.lv + ') 이(가) 나타났다! 극히 희귀하다!'
-    : '야생의 ' + dexNo(id) + ' ' + DEX[id].name + ' (Lv.' + foe.lv + ') 이(가) 나타났다!');
+  log(shiny ? t('✨✨ 색이 다른 ' + dexNo(id) + ' ' + DEX[id].name + ' (Lv.' + foe.lv + ') 이(가) 나타났다! 극히 희귀하다!','✨✨ A SHINY ' + dexNo(id) + ' ' + DEX[id].name + ' (Lv.' + foe.lv + ') appeared! Extremely rare!')
+    : t('야생의 ' + dexNo(id) + ' ' + DEX[id].name + ' (Lv.' + foe.lv + ') 이(가) 나타났다!','A wild ' + dexNo(id) + ' ' + DEX[id].name + ' (Lv.' + foe.lv + ') appeared!'));
   renderBattle();
 }
 function startTrainer(npc) {
   if (npc.rival) {
-    B = { my:firstAlive(), trainer:npc, queue:rivalTeam(npc), wild:false, over:false, menu:'root' };
+    B = { my:firstAlive(), trainer:npc, queue:rivalTeam(npc), wild:false, over:false, menu:'root', tutorial:!!npc.tutorial };
     B.foe = B.queue.shift();
     S.mode = 'battle'; $('battle').classList.add('on'); SFX.encounter();
-    log(npc.name + ' 이(가) ' + DEX[B.foe.id].name + ' 을(를) 내보냈다!');
-    renderBattle(); return;
+    log(npc.name + t(' 이(가) ', ' sent out ') + DEX[B.foe.id].name + t(' 을(를) 내보냈다!', '!'));
+    renderBattle();
+    if (npc.tutorial) setTimeout(() => toast(t(
+      '💡 같은 레벨이지만 상성이 불리하다 — 회피/반격을 한 번만 성공시켜도 승부가 기운다!',
+      '💡 Same level, but the matchup is against you — one successful dodge or counter can decide it!')), 700);
+    return;
   }
   const rng = mulberry(hashStr(npc.trainerId || npc.name) + S.ascension * 7);
   const bump = S.ascension * 8;
@@ -1682,6 +1720,11 @@ function renderBattle() {
   $('myHpTxt').textContent = 'HP ' + my.hp + ' / ' + my.maxHp;
   const need = expForLevel(my.lv + 1) - expForLevel(my.lv), got = my.exp - expForLevel(my.lv);
   $('myExp').style.width = Math.max(0, Math.min(100, got / need * 100)) + '%';
+  if (B.tutorial && !B.hintPotion && my.hp > 0 && my.hp / my.maxHp < 0.55) {
+    B.hintPotion = true;
+    setTimeout(() => toast(t('🧪 HP가 절반 이하다! [I] → [1] 회복 → [1] 포션 으로 회복하자',
+      '🧪 HP below half! Press [I] → [1] Healing → [1] Potion to recover')), 400);
+  }
   const btns = $('bBtns'); btns.innerHTML = '';
   const add = (label, fn, disabled, sub, ghost) => {
     const b = document.createElement('button');
@@ -1689,18 +1732,18 @@ function renderBattle() {
     b.innerHTML = label + (sub ? '<small>' + sub + '</small>' : '');
     b.disabled = !!disabled; b.onclick = () => { SFX.select(); fn(); }; btns.appendChild(b);
   };
-  if (B.over) { add('계속 ▶', endBattle); return; }
+  if (B.over) { add(t('계속 ▶','Continue ▶'), endBattle); return; }
   if (B.menu === 'root') {
-    add('⚔ 싸운다', () => { B.menu = 'fight'; renderBattle(); }, false, '[A] 또는 [K]');
-    add('🎒 가방', () => { B.menu = 'bag'; renderBattle(); }, false, '[I]');
-    add('🔁 몬스터', () => { B.menu = 'party'; renderBattle(); }, false, '[M]');
-    add('🏃 도주', tryRun, !B.wild, B.wild ? '[R]' : '트레이너전');
+    add(t('⚔ 싸운다','⚔ Fight'), () => { B.menu = 'fight'; renderBattle(); }, false, t('[A] 또는 [K]','[A] or [K]'));
+    add(t('🎒 가방','🎒 Bag'), () => { B.menu = 'bag'; renderBattle(); }, false, '[I]');
+    add(t(t('🔁 몬스터','🔁 Party'),'🔁 Party'), () => { B.menu = 'party'; renderBattle(); }, false, '[M]');
+    add(t('🏃 도주','🏃 Run'), tryRun, !B.wild, B.wild ? '[R]' : t('트레이너전','Trainer battle'));
   } else if (B.menu === 'fight') {
     const noPp = B.my.moves.every(mv => mv.pp <= 0);
     B.my.moves.forEach((mv, i) => { const def = MOVES[mv.id];
       add('[' + (i + 1) + '] ' + def.name, () => turn({ kind:'move', slot:mv }), mv.pp <= 0, TYPE_KO[def.type] + ' ' + (def.power || '상태') + ' · PP' + mv.pp + '/' + mv.maxPp); });
-    if (noPp) add('발버둥', () => turn({ kind:'move', slot:null }), false, 'PP 소진');
-    add('← 뒤로', () => { B.menu = 'root'; renderBattle(); }, false, '[Esc]', true);
+    if (noPp) add(t('발버둥','Struggle'), () => turn({ kind:'move', slot:null }), false, 'PP 소진');
+    add(t('← 뒤로','← Back'), () => { B.menu = 'root'; renderBattle(); }, false, '[Esc]', true);
   } else if (B.menu === 'bag') {
     ITEM_CATS.forEach((c, i) => {
       const total = c.items.reduce((a, k) => a + (S.items[k] || 0), 0);
@@ -1714,10 +1757,10 @@ function renderBattle() {
       const kind = key === 'ether' ? 'ppheal' : cat.kind;
       add('[' + (i + 1) + '] ' + it.emoji + ' ' + it.name, () => turn({ kind, item:key }), n <= 0, it.desc + ' · 보유 ' + n);
     });
-    add('← 뒤로', () => { B.menu = 'bag'; renderBattle(); }, false, '[Esc]', true);
+    add(t('← 뒤로','← Back'), () => { B.menu = 'bag'; renderBattle(); }, false, '[Esc]', true);
   } else if (B.menu === 'party') {
     S.party.forEach((m, i) => add('[' + (i + 1) + '] ' + DEX[m.id].emoji + ' ' + monName(m), () => turn({ kind:'switch', to:m }), m === B.my || m.hp <= 0, 'Lv.' + m.lv + ' ' + m.hp + '/' + m.maxHp));
-    add('← 뒤로', () => { B.menu = 'root'; renderBattle(); }, false, '[Esc]', true);
+    add(t('← 뒤로','← Back'), () => { B.menu = 'root'; renderBattle(); }, false, '[Esc]', true);
   }
 }
 function statusTick(m) {
@@ -1735,27 +1778,33 @@ const effSpd = m => m.status === 'PAR' ? Math.floor(m.spd / 4) : m.spd;
 function pickFoeMove(m) {
   const usable = m.moves.filter(mv => mv.pp > 0);
   if (!usable.length) return MOVES.struggle;
-  const mv = usable[ri(usable.length)]; mv.pp -= 1; return MOVES[mv.id];
+  let mv = usable[ri(usable.length)];
+  // 첫 대결은 상성 기술을 덜 쓴다 — 정면 승부로도 아슬아슬하게 이길 수 있도록
+  if (B && B.tutorial && rand() < 0.78) {
+    const weak = usable.filter(x => MOVES[x.id].type !== DEX[m.id].type);
+    if (weak.length) mv = weak[ri(weak.length)];
+  }
+  mv.pp -= 1; return MOVES[mv.id];
 }
 function applyMove(a, d, move, toPlayer, dodgeMul) {
   const act = canAct(a); if (!act.ok) return act.msg;
   let msg = act.msg;
   if (!move.power) {
-    if (rand() * 100 >= move.acc) return msg + ' ' + monName(a) + '의 ' + move.name + ' — 빗나갔다!';
+    if (rand() * 100 >= move.acc) return msg + ' ' + monName(a) + '의 ' + move.name + t(' — 빗나갔다!',' — it missed!');
     if (d.status) return msg + ' ' + monName(a) + '의 ' + move.name + ' — 효과가 없었다.';
     d.status = move.status;
     return msg + ' ' + monName(a) + '의 ' + move.name + '! ' + monName(d) + ' 은(는) ' + STATUS_KO[move.status] + ' 상태!';
   }
   const r = dmg(a, d, move, toPlayer);
-  if (r.immune) return msg + ' ' + monName(a) + '의 ' + move.name + ' — 효과가 없는 것 같다…';
-  if (r.miss) return msg + ' ' + monName(a) + '의 ' + move.name + ' — 빗나갔다!';
+  if (r.immune) return msg + ' ' + monName(a) + '의 ' + move.name + t(' — 효과가 없는 것 같다…',' — it had no effect...');
+  if (r.miss) return msg + ' ' + monName(a) + '의 ' + move.name + t(' — 빗나갔다!',' — it missed!');
   if (dodgeMul !== undefined) r.v = dodgeMul === 0 ? 0 : Math.max(1, Math.floor(r.v * dodgeMul));
-  if (r.v === 0 && dodgeMul === 0) return msg + ' ' + monName(a) + '의 ' + move.name + ' — 완전히 흘려냈다!';
+  if (r.v === 0 && dodgeMul === 0) return msg + ' ' + monName(a) + '의 ' + move.name + t(' — 완전히 흘려냈다!',' — completely deflected!');
   d.hp = Math.max(0, d.hp - r.v);
   r.crit ? SFX.crit() : SFX.hit();
-  msg += ' ' + monName(a) + '의 ' + move.name + '! ' + r.v + ' 데미지';
-  if (r.crit) msg += ' 급소!';
-  if (r.e > 100) msg += ' 효과가 굉장했다!'; else if (r.e < 100) msg += ' 효과가 별로였다…';
+  msg += ' ' + monName(a) + '의 ' + move.name + '! ' + r.v + t(' 데미지',' dmg');
+  if (r.crit) msg += t(' 급소!',' Critical hit!');
+  if (r.e > 100) msg += t(' 효과가 굉장했다!',' It is super effective!'); else if (r.e < 100) msg += t(' 효과가 별로였다…',' Not very effective...');
   return msg;
 }
 function foeTurn(dodgeMul, move) {
@@ -1763,8 +1812,8 @@ function foeTurn(dodgeMul, move) {
   if (B.my.hp <= 0) {
     SFX.faint();
     const next = S.party.find(m => m.hp > 0);
-    if (next) { B.my = next; return msg + ' — 쓰러졌다! ' + monName(next) + ' 등장!'; }
-    B.over = true; B.lost = true; return msg + ' — 전멸… 마을에서 눈을 떴다.';
+    if (next) { B.my = next; return msg + t(' — 쓰러졌다! ',' — fainted! ') + monName(next) + t(' 등장!',' is sent out!'); }
+    B.over = true; B.lost = true; return msg + t(' — 전멸… 마을에서 눈을 떴다.',' — party wiped... you wake up in the village.');
   }
   return msg;
 }
@@ -1772,7 +1821,7 @@ function foeTurn(dodgeMul, move) {
    적 기술의 "유형"이 대응키를 결정한다: 지면계=점프(↑) · 원거리/브레스=가드(↓) · 돌진계=사이드스텝(←/→)
    임팩트 순간(±100ms)에 정확히 누르면 회피를 넘어 **반격**까지 들어간다. */
 const QTE_DIRS = { ArrowLeft:'←', ArrowRight:'→', ArrowUp:'↑', ArrowDown:'↓' };
-const QTE_ACTION = { '←':'좌로 사이드스텝', '→':'우로 사이드스텝', '↑':'점프', '↓':'가드' };
+const QTE_ACTION = { '←':t('좌로 사이드스텝','Sidestep left'), '→':t('우로 사이드스텝','Sidestep right'), '↑':t('점프','Jump'), '↓':t('가드','Guard') };
 const ATTACK_TELL = {
   GROUND:'🪨 지면이 갈라진다', ROCK:'🪨 바위가 쏟아진다',
   FIRE:'🔥 화염이 뿜어진다', WATER:'💧 물줄기가 쏟아진다', GRASS:'🌿 덩굴이 뻗어온다', ELECTRIC:'⚡ 전격이 번뜩인다',
@@ -1847,10 +1896,10 @@ function resolveQte(pressed) {
     const r = dmg(B.my, B.foe, cm, false);
     counter = r.miss || r.immune ? 0 : Math.max(1, Math.floor(r.v * 0.6));
     B.foe.hp = Math.max(0, B.foe.hp - counter);
-    msg = '⚡ 카운터! 완벽한 타이밍 — 공격을 흘리고 ' + counter + ' 반격 피해! ';
-  } else if (ok) { SFX.hit(); msg = '💨 ' + QTE_ACTION[q.want] + ' 성공! 피해를 크게 줄였다! '; }
-  else if (pressed) { msg = '❌ 대응이 어긋났다! '; }
-  else { msg = '⏱ 반응이 늦었다! '; }
+    msg = t('⚡ 카운터! 완벽한 타이밍 — 공격을 흘리고 ','⚡ COUNTER! Perfect timing — deflected and dealt ') + counter + t(' 반격 피해! ',' counter damage! ');
+  } else if (ok) { SFX.hit(); msg = '💨 ' + QTE_ACTION[q.want] + t(' 성공! 피해를 크게 줄였다! ',' success! Damage greatly reduced! '); }
+  else if (pressed) { msg = t('❌ 대응이 어긋났다! ','❌ Wrong reaction! '); }
+  else { msg = t('⏱ 반응이 늦었다! ','⏱ Too slow! '); }
   msg += foeTurn(perfect ? 0 : ok ? 0.2 : 1, q.move);
   if (counter && B.foe.hp <= 0 && !B.over) { SFX.faint(); msg += winFoe(); }
   if (B.pendingMine && !B.over && B.my.hp > 0 && B.foe.hp > 0) {
@@ -1861,7 +1910,7 @@ function resolveQte(pressed) {
   B.pendingMine = null; B.lastMineMsg = '';
   if (!B.over) {
     msg += statusTick(B.my); msg += statusTick(B.foe);
-    if (B.my.hp <= 0) { const n = S.party.find(m => m.hp > 0); if (n) { B.my = n; msg += ' ' + monName(n) + ' 등장!'; } else { B.over = true; B.lost = true; msg += ' 전멸…'; } }
+    if (B.my.hp <= 0) { const n = S.party.find(m => m.hp > 0); if (n) { B.my = n; msg += ' ' + monName(n) + t(' 등장!',' is sent out!'); } else { B.over = true; B.lost = true; msg += ' 전멸…'; } }
     if (B.foe.hp <= 0 && !B.over) msg += winFoe();
   }
   log(msg.trim());
@@ -1883,7 +1932,7 @@ function turn(action) {
       if (foe.shiny) dropUnique('✨이로치 포획');
       B.over = true; renderBattle(); return;
     }
-    afterPlayerAction('앗, 빠져나왔다! (성공률 ' + Math.round(rate * 100) + '%)'); return;
+    afterPlayerAction(t('앗, 빠져나왔다! (성공률 ','It broke free! (rate ') + Math.round(rate * 100) + '%)'); return;
   }
   if (action.kind === 'heal') { S.items[action.item] -= 1; const amt = action.item === 'superpotion' ? 90 : 30;
     my.hp = Math.min(my.maxHp, my.hp + amt); SFX.heal(); afterPlayerAction(ITEMS[action.item].name + ' 사용! HP +' + amt); return; }
@@ -1894,7 +1943,7 @@ function turn(action) {
     SFX.heal(); afterPlayerAction('PP에테르! ' + (low ? MOVES[low.id].name + ' PP +10' : '효과가 없었다')); return;
   }
   if (action.kind === 'cure') { S.items[action.item] -= 1; my.status = null; SFX.heal(); afterPlayerAction('만병통치약! 상태이상 회복.'); return; }
-  if (action.kind === 'switch') { B.my = action.to; afterPlayerAction('가랏, ' + monName(B.my) + '!'); return; }
+  if (action.kind === 'switch') { B.my = action.to; afterPlayerAction(t('가랏, ','Go, ') + monName(B.my) + '!'); return; }
   let myMove;
   if (action.slot) { action.slot.pp -= 1; myMove = MOVES[action.slot.id]; } else myMove = MOVES.struggle;
   let msg = '';
@@ -1914,7 +1963,7 @@ function turn(action) {
   }
   if (!B.over) {
     msg += statusTick(my); msg += statusTick(foe);
-    if (my.hp <= 0) { const n = S.party.find(m => m.hp > 0); if (n) { B.my = n; msg += ' ' + monName(n) + ' 등장!'; } else { B.over = true; B.lost = true; msg += ' 전멸…'; } }
+    if (my.hp <= 0) { const n = S.party.find(m => m.hp > 0); if (n) { B.my = n; msg += ' ' + monName(n) + t(' 등장!',' is sent out!'); } else { B.over = true; B.lost = true; msg += ' 전멸…'; } }
     if (foe.hp <= 0 && !B.over) msg += winFoe();
   }
   log(msg.trim()); renderBattle();
@@ -1930,7 +1979,7 @@ function winFoe() {
   const before = researchStage(B.foe.id);
   S.research[B.foe.id] = (S.research[B.foe.id] || 0) + 1;
   const after = researchStage(B.foe.id);
-  let msg = ' ' + monName(B.foe) + ' 격파!';
+  let msg = ' ' + monName(B.foe) + t(' 격파!',' defeated!');
   if (after > before) { recalcParty(); msg += ' 🔬' + fd.name + ' 리서치 ' + after + '단계!'; }
   if (B.foe.shiny) { dropUnique('✨이로치 격파'); addMat('relicdust', 1 + ri(2)); }
   // 합성 재료 + 전리품 드랍
@@ -1946,7 +1995,7 @@ function winFoe() {
   const L = B.foe.lv;
   const share = Math.max(6, Math.floor((3 * L * L + 3 * L + 1) / 10 * (fd.baseExp / 90) * (B.wild ? 1 : 1.6) * (1 + (S.totems.growth ? 0.25 : 0))));
   S.gold += Math.floor((B.wild ? 12 + B.foe.lv * 5 : 0) * goldMult());
-  msg += ' EXP +' + share + ' (전원)';
+  msg += ' EXP +' + share + t(' (전원)',' (all)');
   B.expLog = B.expLog || {};
   alive.forEach(m => {
     const key = S.party.indexOf(m);
@@ -1959,7 +2008,7 @@ function winFoe() {
     ['hp','atk','def','spc','spd'].forEach(k => { m.se[k] = Math.min(65535, m.se[k] + fd[k]); });
     msg += levelCheck(m);
   });
-  if (!B.wild && B.queue.length) { B.foe = B.queue.shift(); return msg + ' — ' + B.trainer.name + ' 의 ' + DEX[B.foe.id].name + ' 등장!'; }
+  if (!B.wild && B.queue.length) { B.foe = B.queue.shift(); return msg + ' — ' + B.trainer.name + ' 의 ' + DEX[B.foe.id].name + t(' 등장!',' is sent out!'); }
   if (!B.wild) {
     const t = B.trainer;
     if (t.badge && !S.badges.includes(t.badge)) S.badges.push(t.badge);
@@ -2000,8 +2049,8 @@ function levelCheck(m) {
   return msg;
 }
 function tryRun() {
-  if (rand() < 0.75) { B.over = true; log('무사히 도망쳤다!'); renderBattle(); }
-  else afterPlayerAction('도망칠 수 없었다!');
+  if (rand() < 0.75) { B.over = true; log(t('무사히 도망쳤다!','Got away safely!')); renderBattle(); }
+  else afterPlayerAction(t('도망칠 수 없었다!','Could not escape!'));
 }
 /** 내 행동 결과를 보여준 뒤 상대 기술 예고 → QTE 로 넘긴다 */
 function afterPlayerAction(msg) {
@@ -2023,7 +2072,7 @@ function ascend() {
     const r = document.createElement('div'); r.className = 'menuRow';
     r.innerHTML = spriteImg(m, 42) + '<span class="grow"><b>' + monName(m) + '</b> Lv.' + m.lv + ' ' + typeTag(DEX[m.id].type) +
       '<small>현재 ⭐' + (m.grade || 0) + ' 단계 · HP ' + m.maxHp + ' ATK ' + m.atk + '</small></span>';
-    const b = document.createElement('button'); b.textContent = '⭐ 강화';
+    const b = document.createElement('button'); b.textContent = t('⭐ 강화','⭐ Empower');
     b.onclick = () => { m.grade = (m.grade || 0) + 1; recalcStats(m); SFX.evolve(); toast('⭐ ' + monName(m) + ' 이(가) ' + m.grade + '단계 강화되었다!'); closeMenu(); persist(true); };
     r.appendChild(b); body.appendChild(r);
   });
@@ -2054,7 +2103,7 @@ function showExpResults(entries, done) {
   S.mode = 'result';
   const ov = $('result'); ov.classList.add('on');
   const leveled = entries.filter(e => e.mon.lv > e.fromLv).length;
-  $('resultTitle').textContent = '전투 결과' + (leveled ? ' — ⬆ ' + leveled + '마리 레벨 업!' : '');
+  $('resultTitle').textContent = t('전투 결과','Battle Result') + (leveled ? ' — ⬆ ' + leveled + t('마리 레벨 업!',' leveled up!') : '');
   const body = $('resultBody'); body.innerHTML = '';
   entries.forEach((e, i) => {
     const m = e.mon;
@@ -2095,7 +2144,7 @@ function animateExpRow(row, e, startPct, endPct) {
         step++; lvNum.textContent = e.fromLv + step;
         row.classList.add('up');
         const lu = row.querySelector('.lvUp');
-        lu.textContent = '⬆ Lv.' + (e.fromLv + step) + ' 달성!' +
+        lu.textContent = t('⬆ Lv.','⬆ Lv.') + (e.fromLv + step) + t(' 달성!',' reached!') +
           (step === levels && e.mon.id !== (e.evolvedFrom || e.mon.id) ? '' : '');
         lu.classList.add('show');
         bar.style.transition = 'none'; bar.style.width = '0%';
@@ -2183,7 +2232,7 @@ function newGame() {
     const d = DEX[id];
     const b = document.createElement('button');
     b.innerHTML = '<img src="' + spriteDataUrl(id, false) + '" style="width:64px;height:64px">' + dexNo(id) + ' ' + d.name +
-      '<small>' + TYPE_KO[d.type] + ' · 종족값 ' + (d.hp + d.atk + d.def + d.spc + d.spd) + '</small>';
+      '<small>' + TYPE_KO[d.type] + t(' · 종족값 ',' · BST ') + (d.hp + d.atk + d.def + d.spc + d.spd) + '</small>';
     b.onclick = () => {
       Object.assign(S, { party:[], box:[], dex:new Set([id]), gold:1000, badges:[],
         items:{ potion:3, superpotion:0, fullheal:1, ether:1, ball:5, greatball:0, ultraball:0 },
@@ -2196,9 +2245,9 @@ function newGame() {
       Object.assign(P, { tx:st.x, ty:st.y, moving:false, prog:0, dir:[0,1] });
       SFX.level(); enterWorld(); persist(true);
       showDialog([
-        '…아침이다. 침대에서 일어나 ' + DEX[id].name + ' 와(과) 눈을 맞춘다.',
-        '오늘부터 테이머로서의 여행이 시작된다. 라이벌은 벌써 ' + DEX[COUNTER_STARTER[DEX[id].type]].name + ' 을(를) 골라 떠났다고 한다.',
-        '방을 나가 마을 사람들과 이야기해 보자. 아래쪽 🚪 문으로 나갈 수 있다.']);
+        t('…아침이다. 침대에서 일어나 ' + DEX[id].name + ' 와(과) 눈을 맞춘다.','...Morning. You wake up and meet eyes with your ' + DEX[id].name + '.'),
+        t('오늘부터 테이머로서의 여행이 시작된다. 라이벌은 벌써 ' + DEX[COUNTER_STARTER[DEX[id].type]].name + ' 을(를) 골라 떠났다고 한다.','Your journey as a Tamer begins today. Your rival already left with ' + DEX[COUNTER_STARTER[DEX[id].type]].name + '.'),
+        t('방을 나가 마을 사람들과 이야기해 보자. 아래쪽 🚪 문으로 나갈 수 있다.','Head out and talk to the villagers. Use the 🚪 door below.')]);
     };
     box.appendChild(b);
   });
@@ -2224,6 +2273,36 @@ function continueGame(saved) {
   if (!canPass(tileAt(P.tx, P.ty))) { const st = MAPS[S.map].start; P.tx = st.x; P.ty = st.y; }
   recalcParty(); enterWorld();
 }
+/* ── 정적 UI 문자열 언어 적용 ── */
+(function applyStaticLang() {
+  const set = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
+  document.documentElement.lang = LANG.cur;
+  set('tabParty', t('🔁 몬스터','🔁 Party')); set('tabBag', t('🎒 가방','🎒 Bag'));
+  set('tabCraft', t('🔨 합성','🔨 Craft')); set('tabTotem', t('🗿 유물','🗿 Relics'));
+  set('tabDex', t('📖 도감','📖 Dex')); set('tabBox', t('📦 보관소','📦 Box'));
+  set('tabSave', t('💾 저장','💾 Save')); set('menuClose', t('닫기','Close'));
+  set('shopClose', t('나가기','Exit')); set('resultClose', t('확인 [Z]','OK [Z]'));
+  set('resultTitle', t('전투 결과','Battle Result'));
+  set('newBtn', t('새 게임','New Game')); set('continueBtn', t('▶ 이어하기','▶ Continue'));
+  const menuH2 = document.querySelector('#menu h2');
+  if (menuH2) menuH2.innerHTML = t('메뉴','Menu') + ' <small style="color:#8a93a8;font-size:11px">(' + t('X 로 닫기','X to close') + ')</small>';
+  const shopH2 = document.querySelector('#shop h2'); if (shopH2) shopH2.textContent = t('🏪 상점','🏪 Shop');
+  const titleP = document.querySelector('#title p');
+  if (titleP) titleP.innerHTML = t(
+    '15타입 · 물리/특수 · 상태이상 · 개체값/노력치 · Lv.99 — 102종을 수집하고 3단 진화시키자.<br>12개 대륙에 안개가 걷히고, 낮과 밤에 다른 몬스터가 나타난다. 수호자 9명 너머엔 각성 회차가 있다.',
+    '15 types · physical/special · status · IVs & stat EXP · Lv.99 — collect 102 species across three-stage evolutions.<br>Fog lifts as you explore 12 regions; day and night bring different monsters. Beyond 9 wardens lies the Ascension loop.');
+  const stP = document.querySelector('#starterPanel p');
+  if (stP) stP.textContent = t('첫 파트너를 고르세요. Lv.16 · Lv.36 에 진화합니다.', 'Choose your first partner. Evolves at Lv.16 and Lv.36.');
+  const stH1 = document.querySelector('#starterPanel h1');
+  if (stH1) stH1.textContent = t('스타터 선택','Choose a Starter');
+  set('info', t(
+    '필드 — 이동: 방향키/WASD · 확인: Z·Enter · 메뉴: <b>X</b> · 탈것: <b>C</b> · 🏟 체육관 입장<br>배틀 — <b>A</b> 싸운다 / <b>I</b> 가방 / <b>M</b> 몬스터 / <b>R</b> 도주 · <b>K</b>→<b>1~4</b> 스킬 · 적 공격 예고 시 <b>방향키</b>로 회피!',
+    'Field — Move: Arrows/WASD · Confirm: Z/Enter · Menu: <b>X</b> · Ride: <b>C</b> · 🏟 Enter gym<br>Battle — <b>A</b> Fight / <b>I</b> Bag / <b>M</b> Party / <b>R</b> Run · <b>K</b>→<b>1-4</b> moves · Dodge with <b>arrow keys</b> when telegraphed!'));
+  $('langKo').className = LANG.cur === 'ko' ? '' : 'ghost';
+  $('langEn').className = LANG.cur === 'en' ? '' : 'ghost';
+  $('langKo').onclick = () => setLang('ko');
+  $('langEn').onclick = () => setLang('en');
+})();
 loadSave().then(saved => {
   if (saved && saved.party?.length) { $('continueBtn').hidden = false; $('continueBtn').onclick = () => continueGame(saved); }
   $('newBtn').onclick = newGame;
