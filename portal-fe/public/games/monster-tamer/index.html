@@ -63,6 +63,9 @@
   .qteBar i { display:block; height:100%; width:0; background:linear-gradient(90deg,#38c95a,#e8b81f,#e04a3a); animation:qteFill linear forwards; }
   .qteBar u { position:absolute; top:-2px; width:6px; height:13px; background:#fff; box-shadow:0 0 6px #fff; }
   @keyframes qteFill { from { width:0; } to { width:100%; } }
+  /* 페인트 — 중간에 멈칫하는 리듬이라 눈으로 봐야 한다 */
+  .qteBar.feint i { animation-name:qteFeint; }
+  @keyframes qteFeint { 0% { width:0; } 55% { width:62%; } 68% { width:64%; } 100% { width:100%; } }
   /* 전투 결과 — 경험치 게이지 */
   .expRow { display:flex; align-items:center; gap:10px; width:620px; background:#141d33; border:1px solid #2c3550; border-radius:8px; padding:8px 12px; }
   .expRow.up { border-color:#ffd54a; box-shadow:0 0 12px rgba(255,213,74,.25); }
@@ -582,7 +585,7 @@ const ITEM_CATS = [
 
 /* ═══════════ 12 지역 — 컨셉 타입 + 레벨대 ═══════════ */
 const REGION_DEFS = [
-  { key:'village', name:'🏘 테이머 마을', w:38, h:30, seed:101, lv:[0,0], noWild:true, types:['NORMAL'], theme:'field', center:true, shop:true, box:true, exits:[{ dir:'▸', to:'route1', need:0 }] },
+  { key:'village', name:'🏘 테이머 마을', seed:101, lv:[0,0], noWild:true, types:['NORMAL'], theme:'field', handmade:'village' },
   { key:'route1', name:'🌾 1번 초원', w:46, h:34, seed:202, lv:[4,8], types:['NORMAL','BUG','GRASS','FLYING'], theme:'field', center:true, trainers:3, exits:[{ dir:'◂', to:'village', need:0 }, { dir:'▸', to:'forest', need:0 }] },
   { key:'forest', name:'🌲 미스트 숲', w:52, h:40, seed:303, lv:[11,16], types:['GRASS','BUG','POISON','FLYING'], theme:'forest', center:true, gym:0, hm:'cut', trainers:3, exits:[{ dir:'◂', to:'route1', need:0 }, { dir:'▸', to:'cave', need:1 }] },
   { key:'cave', name:'🕳 이글 동굴', w:50, h:38, seed:404, lv:[19,25], types:['ROCK','GROUND','FIGHT','ELECTRIC'], theme:'cave', center:true, gym:1, hm:'rocksmash', trainers:3, exits:[{ dir:'◂', to:'forest', need:0 }, { dir:'▸', to:'lake', need:2 }] },
@@ -643,8 +646,91 @@ const RIVAL_STAGES = [
   { map:'abyss', need:8, lv:96, count:6, gold:20000, final:true,
     lines:['심연까지 따라왔다… 결국 너와 나, 둘 중 하나군.', '마지막이다. 전력으로 간다!'] },
 ];
+/* ── 손으로 만든 맵 — 내 집 + 마을 (n=집문 L=연구소 H=센터 s=상점) ── */
+const HAND_MAPS = {
+  home:{ name:'🛏 내 방', wall:'#', rows:[
+    '###########',
+    '#....#....#',
+    '#.🛏.#.📺.#'.replace(/[🛏📺]/g, '.'),
+    '#....#....#',
+    '#.........#',
+    '#...####..#',
+    '#...#..#..#',
+    '#........,#',
+    '#####D#####',
+  ], deco:[{ x:2, y:2, e:'🛏' }, { x:8, y:2, e:'🖥' }, { x:5, y:6, e:'📦' }],
+    npcs:[{ x:8, y:5, emoji:'👩', name:'엄마', lines:[
+      '엄마: 잘 잤니? 오늘부터 테이머 여행이구나!',
+      '엄마: 박사님이 연구소에서 기다리신다더라. 마을 북쪽이야.',
+      '엄마: 몸조심하고… 힘들면 언제든 돌아오렴.'] }],
+    exits:[{ tile:'D', to:'village', tx:9, ty:16 }],
+    start:{ x:2, y:3 } },
+  village:{ name:'🏘 테이머 마을', wall:'#', rows:[
+    '##############################',
+    '#,,......................,,,.#',
+    '#..#######....#########......#',
+    '#..#.....#....#.......#..,,..#',
+    '#..#..L..#....#...H...#......#',
+    '#..#######....#########......#',
+    '#....LL..........HH..........#',
+    '#............................#',
+    '#..,,....................,,..#',
+    '#....#######....########.....#',
+    '#....#.....#....#......#.....#',
+    '#....#..s..#....#......#..,,.#',
+    '#....#######....###DD###.....#',
+    '#.......ss.........DD........#',
+    '#............................#',
+    '#..,,.................,,,....#',
+    '#............................▸',
+    '#....w w.....................#',
+    '#...www......,,,.............#',
+    '#....w.......................#',
+    '##############################',
+  ],
+    npcs:[
+      { x:6, y:6, emoji:'🧑‍🔬', name:'오크 박사', lab:true, lines:[
+        '박사: 왔구나! 이 대륙엔 9곳의 체육관이 있고, 각 관장이 배지를 가지고 있네.',
+        '박사: 배지를 모으면 심연의 문이 열리지. 그리고… 자네 라이벌도 방금 출발했다네.',
+        '박사: 동쪽(▸)으로 나가면 1번 초원일세. 풀숲에서 몬스터를 만날 수 있어.'] },
+      { x:18, y:6, emoji:'👩‍⚕️', name:'간호사', lines:[
+        '간호사: 몬스터센터(🏥)는 언제든 무료로 회복해 드려요.',
+        '간호사: 옆 매점에서 기본 물품도 팔고, 전리품도 매입한답니다.'] },
+      { x:9, y:13, emoji:'🧑‍🌾', name:'상점 주인', lines:[
+        '주인: 몬스터를 쓰러뜨리면 전리품이 나와. 그걸 팔면 꽤 벌이가 되지.',
+        '주인: 외딴 곳에 숨어 사는 신비한 상인은 1.5배로 쳐준다더군.'] },
+      { x:24, y:8, emoji:'🧒', name:'꼬마', lines:[
+        '꼬마: 형아! 트레이너랑 눈이 마주치면 바로 배틀이래요!',
+        '꼬마: 붉은 점이 트레이너 시야래요. 조심하세요!'] },
+      { x:5, y:16, emoji:'👴', name:'노인', lines:[
+        '노인: 밤이 되면 낮에 없던 몬스터가 나온다네. 고스트나 독 타입 말이야.',
+        '노인: 아주 드물게 색이 다른 녀석(✨)도 있다지… 평생 한 번 볼까 말까야.'] },
+      { x:22, y:17, emoji:'🎣', name:'낚시꾼', lines:[
+        '낚시꾼: 물 위는 파도타기를 배운 물 타입 몬스터가 있어야 건널 수 있어.',
+        '낚시꾼: 비전서는 각 지역 구석에 숨겨져 있다더군.'] },
+    ],
+    exits:[{ tile:'▸', to:'route1', tx:1, ty:8, dir:'▸', need:0 }, { tile:'D', to:'home', tx:5, ty:7 }],
+    start:{ x:9, y:16 } },
+};
+function buildHandmade(key, def) {
+  const hm = HAND_MAPS[key];
+  const grid = hm.rows.map(r => r.split(''));
+  const W = Math.max(...grid.map(r => r.length)), H = grid.length;
+  grid.forEach(r => { while (r.length < W) r.push(hm.wall); });
+  const exits = [];
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const c = grid[y][x];
+    const ex = hm.exits.find(e => e.tile === c);
+    if (ex) { exits.push({ x, y, dir:ex.dir || '🚪', to:ex.to, tx:ex.tx, ty:ex.ty, need:0 }); grid[y][x] = c === '▸' ? '.' : 'D'; }
+    if (c === 'L' || c === 's' || c === 'H') { /* 건물 표식은 그대로 렌더 */ }
+  }
+  return { ...def, key, name:hm.name, grid, W, H, wall:hm.wall, exits,
+    npcs:(hm.npcs || []).map(n => ({ ...n })), items:[], deco:hm.deco || [],
+    poolDay:[], poolNight:[], lv:[0, 0], types:['NORMAL'], start:hm.start, handmade:true, noWild:true };
+}
 const MAPS = {};
 function buildRegion(def) {
+  if (def.handmade) return buildHandmade(def.handmade, def);
   const rng = mulberry(def.seed), th = THEME[def.theme], W = def.w, H = def.h;
   const g = Array.from({ length:H }, () => Array(W).fill(th.wall));
   const blobs = [];
@@ -815,6 +901,7 @@ function gymTrainer(def, gi, p, i, rng) {
     sight:3, count:2 + Math.floor(rng() * 2), gold:150 + def.lv[1] * 25, lvBase:def.lv[1], types:def.types };
 }
 REGION_DEFS.forEach(d => { MAPS[d.key] = buildRegion(d); });
+MAPS.home = buildHandmade('home', { key:'home', seed:1, theme:'field' });
 REGION_DEFS.forEach(d => { if (d.gym !== undefined) MAPS['gym_' + d.key] = buildGym(d); });
 // 지역 컨셉(타입) + 레벨대에 맞는 야생 풀
 REGION_DEFS.forEach(d => {
@@ -837,6 +924,7 @@ REGION_DEFS.forEach(d => {
   m.poolNight = [...m.poolDay, ...nightExtra.filter(Boolean)];
 });
 const WALKABLE = new Set(['.', ',', 'g', 'c', 'H', 's', 'G', 'D', 'o', 'i', 'W']);
+const BUILDING = new Set(['L']);   // 연구소 등 건물 벽 — 통행 불가, 앞에서 말 걸기
 const FIELD_TILE = { w:'surf', b:'cut', B:'rocksmash' };
 const canPass = t => t !== undefined && (WALKABLE.has(t) || (FIELD_TILE[t] && hasField(FIELD_TILE[t])));
 
@@ -1017,6 +1105,10 @@ function arrive() {
   const tHere = tileAt(P.tx, P.ty);
   if (tHere === 'G') { const gk = 'gym_' + S.map; if (MAPS[gk]) { const gm = MAPS[gk];
     showDialog([gm.name + ' — ' + PUZZLE_KO[gm.puzzle], PUZZLE_HINT[gm.puzzle]], () => goMap(gk, gm.start.x, gm.start.y)); return; } }
+  if (tHere === 'D' && m.handmade) {
+    const door = m.exits.find(e => e.x === P.tx && e.y === P.ty);
+    if (door) { goMap(door.to, door.tx, door.ty); return; }
+  }
   if (tHere === 'D' && m.isGym) { const back = MAPS[m.gymOf]; const at = REGION_DEFS.find(d => d.key === m.gymOf).gymAt;
     goMap(m.gymOf, at.x, at.y + 1); return; }
   if (gymTick()) return;
@@ -1096,6 +1188,8 @@ function interact() {
   if (!n) return;
   if (n.merchant) { showDialog(['🧙 신비한 상인: 이런 외진 곳까지 오다니… 좋은 물건이 있네.',
     '전리품은 다른 곳보다 1.5배로 쳐주지. 희귀품도 있고.'], () => openShop('merchant')); return; }
+  // 마을 주민 등 — 배틀하지 않는 대화 전용 NPC
+  if (!n.trainerId && !n.rival && !n.boss && n.lines) { SFX.select(); showDialog(n.lines); return; }
   if (cleared(n)) { showDialog([n.name + ': 훌륭한 승부였다!']); return; }
   if (n.gymLeader && m.puzzle === 'pacman' && m.grid.flat().includes('o')) {
     showDialog(['🔒 관장: 아직 결정이 남아 있군. 전부 모아 오면 상대해주지.',
@@ -1703,14 +1797,19 @@ function announceFoeMove(prevMsg) {
     '<b>' + monName(B.foe) + ' 이(가) ' + typeTag(move.type) + '<b>' + move.name + '</b> 을(를) 사용한다!</b> ' +
     '<small style="color:#6b7280">…준비 자세를 잡는다</small>';
   beep(440, 0.07, 'square', 0.045);
-  setTimeout(() => { if (B && B.qtePhase === 'announce') { B.qtePhase = null; startQte(move); } }, 850);
+  // 예고 길이를 매번 무작위화 — "n초 뒤에 누르면 된다" 패턴 암기 방지
+  const delay = 480 + ri(950);
+  setTimeout(() => { if (B && B.qtePhase === 'announce') { B.qtePhase = null; startQte(move); } }, delay);
 }
 function startQte(move) {
   const want = dirForMove(move);
   const spd = Math.min(1.4, B.foe.spd / Math.max(1, B.my.spd));
-  const window = Math.max(340, 780 - Math.floor(spd * 240));     // 상대가 빠를수록 창이 좁다
+  // 임팩트까지의 시간도 매번 흔든다(±35%) — 게이지를 눈으로 보고 맞춰야 한다
+  const base = Math.max(340, 780 - Math.floor(spd * 240));
+  const window = Math.round(base * (0.68 + rand() * 0.7));
+  const feint = rand() < 0.22;                                   // 페인트 — 임팩트 직전에 한 번 멈칫
   const now = performance.now();
-  B.qte = { want, move, startAt:now, impactAt:now + window, window };
+  B.qte = { want, move, startAt:now, impactAt:now + window, window, feint };
   beep(880, 0.05, 'square', 0.05);
   beep(1320, 0.06, 'square', 0.05, window / 1000);               // 임팩트 순간 신호음
   renderQtePrompt();
@@ -1722,8 +1821,8 @@ function renderQtePrompt() {
   $('bLog').innerHTML =
     '<b style="color:#c02020">⚠ ' + q.move.name + ' — ' + (ATTACK_TELL[q.move.type] || '공격해 온다') + '!</b> ' +
     '<b style="font-size:19px">' + q.want + '</b> 로 <b>' + QTE_ACTION[q.want] + '</b> ' +
-    '<small style="color:#6b7280">· 임팩트에 맞춰 누르면 반격(±' + COUNTER_MS + 'ms)</small>' +
-    '<div class="qteBar"><i style="animation-duration:' + q.window + 'ms"></i><u style="left:calc(100% - 6px)"></u></div>';
+    '<small style="color:#6b7280">· 게이지가 끝에 닿는 순간 = 반격(±' + COUNTER_MS + 'ms)' + (q.feint ? ' · <b style="color:#c02020">페인트 주의!</b>' : '') + '</small>' +
+    '<div class="qteBar' + (q.feint ? ' feint' : '') + '"><i style="animation-duration:' + q.window + 'ms"></i><u style="left:calc(100% - 6px)"></u></div>';
   const btns = $('bBtns'); btns.innerHTML = '';
   ['←','↑','↓','→'].forEach(d => {
     const b = document.createElement('button');
@@ -2016,7 +2115,8 @@ function animateExpRow(row, e, startPct, endPct) {
 
 /* ═══════════ 렌더 ═══════════ */
 const TILE_STYLE = { '#':'#1d3a24', '.':'#3f7a45', ',':'#3f7a45', 'g':'#2e5d33', 'w':'#28587a', 'c':'#4a4038', 'C':'#241f1a', 'r':'#3a3330', 'H':'#3f7a45', 's':'#3f7a45', 'b':'#2a4d2f', 'B':'#4a4038', 'G':'#5a4a80', 'D':'#5a4a80', 'o':'#4a4038', 'i':'#6fa8c8', 'W':'#3a2f5a' };
-const TILE_EMOJI = { '#':'🌲', ',':'🌼', 'g':'🌿', 'w':'🌊', 'C':'⛰', 'r':'🪨', 'H':'🏥', 's':'🏪', 'b':'🌳', 'B':'🗿', 'G':'🏟', 'D':'🚪', 'o':'◦', 'i':'🧊', 'W':'🌀' };
+const TILE_EMOJI = { '#':'🌲', ',':'🌼', 'g':'🌿', 'w':'🌊', 'C':'⛰', 'r':'🪨', 'H':'🏥', 's':'🏪', 'b':'🌳', 'B':'🗿', 'G':'🏟', 'D':'🚪', 'o':'◦', 'i':'🧊', 'W':'🌀', 'L':'🔬' };
+const TILE_STYLE_EXTRA = { 'L':'#4a4a6a' };
 function playerPix() {
   if (!P.moving) return { x:P.tx * T, y:P.ty * T, bob:0 };
   const fx = P.tx + (P.ntx - P.tx) * P.prog, fy = P.ty + (P.nty - P.ty) * P.prog;
@@ -2032,7 +2132,7 @@ function draw() {
   for (let vy = y0; vy <= y0 + VIEW_H; vy++) for (let vx = x0; vx <= x0 + VIEW_W; vx++) {
     if (!set.has(vx + ',' + vy)) continue;
     const t = m.grid[vy]?.[vx] ?? m.wall, sx = vx * T - camX, sy = vy * T - camY;
-    cx.fillStyle = TILE_STYLE[t] || '#1d3a24'; cx.fillRect(sx, sy, T, T);
+    cx.fillStyle = TILE_STYLE[t] || TILE_STYLE_EXTRA[t] || '#1d3a24'; cx.fillRect(sx, sy, T, T);
     const e = TILE_EMOJI[t];
     if (e) { cx.font = (t === '#' || t === 'C' || t === 'r' ? '22px' : t === ',' ? '13px' : '17px') + ' monospace'; cx.fillStyle = '#fff'; cx.fillText(e, sx + T / 2, sy + T / 2 + 1); }
     if (Math.max(Math.abs(vx - P.tx), Math.abs(vy - P.ty)) > SIGHT) { cx.fillStyle = 'rgba(5,8,15,.55)'; cx.fillRect(sx, sy, T, T); }
@@ -2043,6 +2143,7 @@ function draw() {
   cx.font = '16px monospace';
   m.items.forEach((s, i) => { if (!(S.taken[S.map] || []).includes(i) && vis(s.x, s.y))
     cx.fillText(s.hm ? HMS[s.hm].emoji : s.car ? '🚙' : s.held ? '🎁' : '💊', s.x * T - camX + T / 2, s.y * T - camY + T / 2); });
+  if (m.deco) { cx.font = '20px monospace'; m.deco.forEach(d => { if (vis(d.x, d.y)) cx.fillText(d.e, d.x * T - camX + T / 2, d.y * T - camY + T / 2); }); }
   cx.font = '22px monospace';
   for (const n of m.npcs) if (!cleared(n) && vis(n.x, n.y)) {
     cx.fillText(n.emoji, n.x * T - camX + T / 2, n.y * T - camY + T / 2);
@@ -2090,14 +2191,14 @@ function newGame() {
         hms:{}, visited:{ village:1 }, explored:{}, beaten:new Set(), minutes:8 * 60, car:false, driving:false, pendingLearn:[],
         rival:COUNTER_STARTER[DEX[id].type], rivalStage:0 });
       S.party = [mkMon(id, 5, { mine:true })];
-      const st = MAPS.village.start;
+      S.map = 'home'; S.visited.home = 1;
+      const st = MAPS.home.start;
       Object.assign(P, { tx:st.x, ty:st.y, moving:false, prog:0, dir:[0,1] });
       SFX.level(); enterWorld(); persist(true);
       showDialog([
-        '박사: 자네가 오늘부터 테이머로군. 이 대륙엔 9명의 수호자와 그들의 체육관이 있네.',
-        '박사: 배지를 모아 심연의 문을 열고, 세계의 정점에 서는 것이 자네의 여정일세.',
-        '박사: 아 그리고… 마침 자네 또래가 한 명 더 있었지. ' + DEX[COUNTER_STARTER[DEX[id].type]].name + ' 을(를) 골라 갔네 — 자네 파트너의 약점을 찌르는 타입이야.',
-        '조작: 지역 경계 ▸ 이동 · 눈 마주친 트레이너와 배틀 · 🏥 회복/매점 · 🧙 외딴 곳의 상인 · C 탈것 · X 메뉴']);
+        '…아침이다. 침대에서 일어나 ' + DEX[id].name + ' 와(과) 눈을 맞춘다.',
+        '오늘부터 테이머로서의 여행이 시작된다. 라이벌은 벌써 ' + DEX[COUNTER_STARTER[DEX[id].type]].name + ' 을(를) 골라 떠났다고 한다.',
+        '방을 나가 마을 사람들과 이야기해 보자. 아래쪽 🚪 문으로 나갈 수 있다.']);
     };
     box.appendChild(b);
   });
@@ -2117,7 +2218,7 @@ function continueGame(saved) {
   S.pendingLearn = [];
   S.explored = {};
   for (const [k, arr] of Object.entries(saved.explored || {})) S.explored[k] = new Set(arr);
-  S.map = MAPS[saved.map] ? saved.map : 'village';
+  S.map = MAPS[saved.map] ? saved.map : 'home';
   const pos = saved.pos || MAPS[S.map].start;
   Object.assign(P, { tx:pos.x, ty:pos.y, moving:false, prog:0, dir:[0,1] });
   if (!canPass(tileAt(P.tx, P.ty))) { const st = MAPS[S.map].start; P.tx = st.x; P.ty = st.y; }
