@@ -1,7 +1,7 @@
 package com.kgd.game.application.ads.service
 
 import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.kgd.game.application.ads.port.AdFrequencyPort
 import com.kgd.game.application.ads.port.AdPlacementRepositoryPort
 import com.kgd.game.application.ads.port.AdPolicyRepositoryPort
@@ -43,7 +43,8 @@ class AdService(
     private val gameRepository: GameRepositoryPort,
     private val rewardCommand: RewardCommand,
 ) {
-    private val mapper = ObjectMapper()
+    // Kotlin data class 역직렬화에는 KotlinModule 필수 — plain ObjectMapper 는 조용히 실패한다
+    private val mapper = jacksonObjectMapper()
     private val creativesType = object : TypeReference<List<HouseCreativeDto>>() {}
 
     /** 노출 가능하면 슬롯+크리에이티브, frequency cap 에 걸리면 null (FE 는 슬롯 미노출) */

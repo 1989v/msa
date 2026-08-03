@@ -22,7 +22,8 @@
 - ClickHouse 단독 소유 (analytics DB)
 - Kafka Streams로 준실시간 스코어 산출 (1시간 윈도우)
 - Redis 캐시: 스코어 TTL 2h, 정규화 stats TTL 1h
-- 이벤트 소비 토픽: `analytics.event.collected`
+- 이벤트 소비 토픽: `analytics.event.collected`, `game.session.started`, `game.session.ended` (ADR-0059 — ClickHouse events 적재)
+- Kafka 접속은 `kafka:9092`(CLIENT) — 29092(INTERNAL)는 NetworkPolicy 가 차단, `@EnableKafka` 필수(@KafkaListener 활성화)
 - 스코어 발행 토픽: `analytics.score.updated`
 
 ## Docs
