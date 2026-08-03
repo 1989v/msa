@@ -63,6 +63,19 @@
   .qteBar i { display:block; height:100%; width:0; background:linear-gradient(90deg,#38c95a,#e8b81f,#e04a3a); animation:qteFill linear forwards; }
   .qteBar u { position:absolute; top:-2px; width:6px; height:13px; background:#fff; box-shadow:0 0 6px #fff; }
   @keyframes qteFill { from { width:0; } to { width:100%; } }
+  /* 전투 결과 — 경험치 게이지 */
+  .expRow { display:flex; align-items:center; gap:10px; width:620px; background:#141d33; border:1px solid #2c3550; border-radius:8px; padding:8px 12px; }
+  .expRow.up { border-color:#ffd54a; box-shadow:0 0 12px rgba(255,213,74,.25); }
+  .expRow img { width:44px; height:44px; image-rendering:pixelated; }
+  .expRow .info { flex:1; }
+  .expRow .top { display:flex; justify-content:space-between; font-size:12px; font-weight:bold; }
+  .expRow .gainTxt { color:#3aa8e8; opacity:0; transition:opacity .3s; }
+  .expRow .gainTxt.show { opacity:1; }
+  .expRow .lvUp { color:#ffd54a; font-size:11px; opacity:0; transform:translateY(4px); transition:all .35s; }
+  .expRow .lvUp.show { opacity:1; transform:translateY(0); }
+  .expTrack { height:10px; background:#0c1424; border:1px solid #2c3550; border-radius:5px; overflow:hidden; margin-top:5px; }
+  .expTrack i { display:block; height:100%; width:0; background:linear-gradient(90deg,#2b7fd4,#4fc3f7); transition:width .6s cubic-bezier(.3,.9,.4,1); }
+  .expTrack i.flash { background:linear-gradient(90deg,#ffd54a,#fff3a0); }
 
   #dialog { position:absolute; left:12px; right:12px; bottom:12px; background:rgba(6,10,22,.95); border:2px solid #ffd54a; border-radius:10px; padding:12px 16px; font-size:13px; line-height:1.7; z-index:8; }
   #dialog .next { color:#8a93a8; font-size:11px; text-align:right; }
@@ -110,6 +123,12 @@
       <button id="menuClose" class="ghost">닫기</button>
     </div>
     <div id="menuBody" style="display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
+
+  <div class="overlay" id="result">
+    <h2 id="resultTitle">전투 결과</h2>
+    <div id="resultBody" style="display:flex;flex-direction:column;gap:6px;"></div>
+    <button id="resultClose">확인 [Z]</button>
   </div>
 
   <div class="overlay" id="shop">
@@ -431,6 +450,21 @@ const TIER_NAME = ['일반', '고급', '전설'];
 const heldKey = (k, t) => 'held_' + k + '_' + t;
 const heldLabel = (k, t) => HELD[k].emoji + ' ' + HELD[k].name + TIER_MARK[t - 1];
 const heldEffect = (k, t) => HELD[k].stat + ' +' + Math.round(HELD[k].bonus[t - 1] * 100) + '%';
+/* 전리품 — 격파한 몬스터의 타입에 따라 나오며, 상인에게 팔아 돈을 번다 */
+const LOOT = {
+  hide:{ name:'질긴 가죽', emoji:'🟫', price:55, types:['NORMAL','FIGHT'] },
+  fang:{ name:'날카로운 엄니', emoji:'🦷', price:80, types:['FIRE','DRAGON'] },
+  scale:{ name:'물빛 비늘', emoji:'🐚', price:70, types:['WATER','ICE'] },
+  leafex:{ name:'잎사귀 진액', emoji:'🍃', price:60, types:['GRASS','BUG'] },
+  sparkcell:{ name:'전하 세포', emoji:'🔋', price:90, types:['ELECTRIC'] },
+  oreshard:{ name:'광석 파편', emoji:'⛏', price:75, types:['ROCK','GROUND'] },
+  ectoplasm:{ name:'영체 잔재', emoji:'🫧', price:110, types:['GHOST','PSYCHIC'] },
+  venomsac:{ name:'독주머니', emoji:'🧫', price:85, types:['POISON'] },
+  plume:{ name:'바람깃털', emoji:'🪶', price:65, types:['FLYING'] },
+};
+const LOOT_BY_TYPE = {};
+Object.entries(LOOT).forEach(([k, v]) => v.types.forEach(t => { LOOT_BY_TYPE[t] = k; }));
+const lootPrice = (k, stage) => Math.floor(LOOT[k].price * (1 + stage * 0.8));
 /* 합성 재료 — 전투에서만 얻는다 */
 const MATERIALS = {
   shard:{ name:'몬스터 조각', emoji:'🔩', desc:'야생 격파 시 가끔 획득' },
@@ -596,6 +630,19 @@ const BOSSES = [
   { emoji:'🕯', name:'심연의 문지기', totem:null, gold:30000, count:6, ascend:true },
 ];
 const TRAINER_NAMES = ['탐험가 리오','수집가 미나','등산객 태오','낚시꾼 준','연구원 하나','방랑자 카이','사냥꾼 별','견습생 루'];
+/* ── 라이벌 — 내 스타터에 상성 우위인 타입으로 시작한다 ── */
+const RIVAL_NAME = '라이벌 제트';
+const COUNTER_STARTER = { FIRE:'m1_0', WATER:'m2_0', GRASS:'m0_0' };   // 불꽃←물, 물←풀, 풀←불꽃
+const RIVAL_STAGES = [
+  { map:'route1', need:0, lv:8, count:2, gold:400, lines:['벌써 파트너를 골랐다고? 나도 마침 좋은 녀석을 얻었지.', '네 선택의 약점을 찌를 녀석이야 — 실력 좀 보자!'] },
+  { map:'forest', need:1, lv:18, count:3, gold:900, lines:['배지 하나로 우쭐대는 건 아니겠지?', '이 숲을 나가려면 나를 넘어야 해!'] },
+  { map:'lake', need:2, lv:34, count:4, gold:1800, lines:['호수의 수호자보다 내가 먼저다.', '그동안 얼마나 강해졌는지 보여줘!'] },
+  { map:'ruins', need:4, lv:48, count:5, gold:3000, lines:['이 폐허에서 고대의 힘을 찾고 있었어.', '너에게 시험해보지!'] },
+  { map:'desert', need:5, lv:65, count:6, gold:5000, lines:['모래 폭풍을 넘어왔군… 끈질기네.', '이번엔 안 봐준다!'] },
+  { map:'volcano', need:7, lv:88, count:6, gold:9000, lines:['챔피언 자리는 내 것이야.', '여기서 끝내주마!'] },
+  { map:'abyss', need:8, lv:96, count:6, gold:20000, final:true,
+    lines:['심연까지 따라왔다… 결국 너와 나, 둘 중 하나군.', '마지막이다. 전력으로 간다!'] },
+];
 const MAPS = {};
 function buildRegion(def) {
   const rng = mulberry(def.seed), th = THEME[def.theme], W = def.w, H = def.h;
@@ -672,6 +719,18 @@ function buildRegion(def) {
       name:TRAINER_NAMES[Math.floor(rng() * TRAINER_NAMES.length)], trainerId:def.key + '_' + i,
       dir:[[1,0],[-1,0],[0,1],[0,-1]][Math.floor(rng() * 4)], sight:4,
       count:2 + Math.floor(rng() * 2), gold:80 + def.lv[1] * 22, lvBase:def.lv[1] - 1, types:def.types });
+  }
+  // 🧙 신비한 상인 — 센터·상점·출구에서 가장 먼 외딴 곳에 숨어 있다
+  if (!def.noWild && openSpots.length) {
+    const anchors = [...exits.map(e => ({ x:e.x, y:e.y }))];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (g[y][x] === 'H' || g[y][x] === 's') anchors.push({ x, y });
+    let best = openSpots[0], bestD = -1;
+    for (const p of openSpots) {
+      const d = Math.min(...anchors.map(a => Math.abs(a.x - p.x) + Math.abs(a.y - p.y)));
+      if (d > bestD) { bestD = d; best = p; }
+    }
+    const idx = openSpots.indexOf(best); if (idx >= 0) openSpots.splice(idx, 1);
+    npcs.push({ x:best.x, y:best.y, emoji:'🧙', name:'신비한 상인', merchant:true, dist:bestD });
   }
   const items = [];
   const pool = ['potion','superpotion','ether','greatball','fullheal','ultraball','firestone','waterstone','thunderstone','leafstone'];
@@ -812,7 +871,7 @@ async function persist(silent) {
   const data = { v:6, party:S.party, box:S.box, dex:[...S.dex], items:S.items, gold:S.gold, badges:S.badges,
     map:S.map, pos:{ x:P.tx, y:P.ty }, taken:S.taken, totems:S.totems, uniques:S.uniques, research:S.research,
     ascension:S.ascension, shinyCount:S.shinyCount, hms:S.hms, visited:S.visited, explored,
-    beaten:[...S.beaten], minutes:S.minutes, car:S.car };
+    beaten:[...S.beaten], minutes:S.minutes, car:S.car, rival:S.rival, rivalStage:S.rivalStage };
   lastSavedAt = new Date();
   if (!cloud) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); if (!silent) toast('💾 저장됨 (브라우저)'); return; }
   try { const s = await api('/save', { method:'PUT', body:JSON.stringify({ data, version:saveVersion }) }); saveVersion = s.version; if (!silent) toast('☁ 저장됨 (v' + saveVersion + ')'); }
@@ -825,7 +884,7 @@ const S = {
   items:{ potion:3, superpotion:0, fullheal:1, ether:1, ball:5, greatball:0, ultraball:0 },
   taken:{}, totems:{}, uniques:{}, research:{}, ascension:0, shinyCount:0,
   hms:{}, visited:{ village:1 }, explored:{}, beaten:new Set(), minutes:8 * 60, car:false, driving:false,
-  pendingLearn:[],
+  pendingLearn:[], rival:null, rivalStage:0,
 };
 const P = { tx:5, ty:5, dir:[0,1], moving:false, prog:0 };
 const curMap = () => MAPS[S.map];
@@ -854,7 +913,10 @@ addEventListener('keydown', ev => {
   if (S.mode === 'battle') { handleBattleKey(ev); return; }
   const k = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key;
   if (KEYMAP[k]) { ev.preventDefault(); if (!held.includes(k)) held.unshift(k); }
-  if (ev.key === 'z' || ev.key === 'Z' || ev.key === 'Enter') { if (S.mode === 'world') interact(); else if (S.mode === 'dialog') advanceDialog(); }
+  if (ev.key === 'z' || ev.key === 'Z' || ev.key === 'Enter') {
+    if (S.mode === 'result') { ev.preventDefault(); if (S.resultClose) S.resultClose(); return; }
+    if (S.mode === 'world') interact(); else if (S.mode === 'dialog') advanceDialog();
+  }
   if (ev.key === 'x' || ev.key === 'X' || ev.key === 'Escape') { if (S.mode === 'world') openMenu(); else if (S.mode === 'menu') closeMenu(); }
   if ((ev.key === 'c' || ev.key === 'C') && S.mode === 'world' && S.car) {
     S.driving = !S.driving; SFX.select(); toast(S.driving ? '🚙 오프로더 탑승! 이동이 빨라진다' : '🚶 하차');
@@ -964,8 +1026,8 @@ function arrive() {
   const t = tileAt(P.tx, P.ty);
   if (t === 'H') { S.party.forEach(fullRest); S.box.forEach(fullRest); SFX.heal();
     showDialog(['🏥 몬스터센터: 파티가 모두 회복되었습니다!' + (S.box.length ? ' (보관소 ' + S.box.length + '마리도 회복)' : ''),
-      '📦 보관소는 메뉴(X) → 보관소 탭에서 교체할 수 있습니다.']); persist(true); hud(); return; }
-  if (t === 's') { openShop(); return; }
+      '옆 매점에서 기본 물품을 팔고, 전리품도 매입합니다.'], () => openShop('center')); persist(true); hud(); return; }
+  if (t === 's') { openShop('shop'); return; }
   const idx = m.items.findIndex(s => s.x === P.tx && s.y === P.ty);
   if (idx >= 0 && !(S.taken[S.map] || []).includes(idx)) {
     (S.taken[S.map] = S.taken[S.map] || []).push(idx);
@@ -992,17 +1054,54 @@ function goMap(to, tx, ty) {
   S.map = to; P.tx = tx; P.ty = ty; P.moving = false; P.prog = 0;
   if (!canPass(tileAt(tx, ty))) { const st = MAPS[to].start; P.tx = st.x; P.ty = st.y; }
   S.visited[to] = 1; reveal(); toast('➜ ' + curMap().name); persist(true); hud();
+  spawnRival();
+}
+/** 라이벌 등장 — 조건을 만족한 지역에 입구 근처로 나타난다 */
+function spawnRival() {
+  const m = curMap();
+  if (m.isGym) return;
+  const st = RIVAL_STAGES[S.rivalStage];
+  if (!st || st.map !== S.map || S.badges.length < st.need) return;
+  if (m.npcs.some(n => n.rival)) return;
+  const spots = [[0,1],[1,0],[0,-1],[-1,0],[1,1],[-1,-1]].map(([dx, dy]) => ({ x:P.tx + dx, y:P.ty + dy }))
+    .filter(p => canPass(tileAt(p.x, p.y)) && !m.npcs.some(n => n.x === p.x && n.y === p.y));
+  const at = spots[0] || { x:P.tx, y:P.ty - 1 };
+  m.npcs.push({ ...at, emoji:'🧑‍🎤', name:RIVAL_NAME, rival:true, stage:S.rivalStage,
+    trainerId:'rival_' + S.rivalStage, count:st.count, gold:st.gold, lvBase:st.lv, types:m.types,
+    lines:st.lines, final:st.final, sight:0, dir:[0,1] });
+  toast('❗ ' + RIVAL_NAME + ' 이(가) 앞을 가로막았다!');
+  SFX.encounter();
+}
+/** 라이벌 파티 — 카운터 스타터 계열 + 지역 타입 몬스터 */
+function rivalTeam(npc) {
+  const rng = mulberry(hashStr('rival' + npc.stage) + S.ascension * 13);
+  const lv = Math.min(99, npc.lvBase + S.ascension * 8);
+  const base = S.rival || 'm1_0';
+  let starter = base;
+  const chain = [0, 1, 2].map(si => 'm' + DEX[base].family + '_' + si);
+  if (lv >= 36) starter = chain[2]; else if (lv >= 16) starter = chain[1];
+  const team = [];
+  for (let i = 0; i < npc.count - 1; i++) {
+    const cands = SPECIES.filter(s => npc.types.includes(DEX[s].type) && DEX[s].stage >= (lv > 40 ? 1 : 0));
+    const id = cands[Math.floor(rng() * cands.length)] || SPECIES[Math.floor(rng() * SPECIES.length)];
+    team.push(mkMon(id, Math.max(2, lv - 2 + ri(3))));
+  }
+  team.push(mkMon(starter, lv + 2));                    // 에이스는 마지막
+  return team;
 }
 function interact() {
   const m = curMap();
   const fx = P.tx + P.dir[0], fy = P.ty + P.dir[1];
   const n = m.npcs.find(n => (n.x === fx && n.y === fy) || (n.x === P.tx && n.y === P.ty));
   if (!n) return;
+  if (n.merchant) { showDialog(['🧙 신비한 상인: 이런 외진 곳까지 오다니… 좋은 물건이 있네.',
+    '전리품은 다른 곳보다 1.5배로 쳐주지. 희귀품도 있고.'], () => openShop('merchant')); return; }
   if (cleared(n)) { showDialog([n.name + ': 훌륭한 승부였다!']); return; }
   if (n.gymLeader && m.puzzle === 'pacman' && m.grid.flat().includes('o')) {
     showDialog(['🔒 관장: 아직 결정이 남아 있군. 전부 모아 오면 상대해주지.',
       '남은 결정 ' + m.grid.flat().filter(c => c === 'o').length + '개']); return;
   }
+  if (n.rival) { showDialog([RIVAL_NAME + ': ' + n.lines[0], RIVAL_NAME + ': ' + n.lines[1]], () => startTrainer(n)); return; }
   if (n.gymLeader) { showDialog(['🏟 ' + n.name + ': 여기까지 온 실력, 확인해보겠다!', PUZZLE_KO[m.puzzle] + ' 를 돌파한 자여 — 전력으로 상대한다!'], () => startTrainer(n)); return; }
   showDialog([n.name + ': 승부다!'], () => startTrainer(n));
 }
@@ -1317,24 +1416,63 @@ function useItemMenu(key) {
     body.appendChild(r);
   });
 }
-function openShop() { S.mode = 'shop'; $('shop').classList.add('on'); renderShop(); }
+/* 상점 — kind: 'shop'(일반) | 'center'(센터 간이) | 'merchant'(신비 상인, 고가 매입·희귀 재고) */
+let shopKind = 'shop', shopTab = 'buy';
+function openShop(kind) { shopKind = kind || 'shop'; shopTab = 'buy'; S.mode = 'shop'; $('shop').classList.add('on'); renderShop(); }
+function shopStock() {
+  if (shopKind === 'center') return ['potion', 'ball', 'fullheal'];                 // 센터 간이 판매
+  if (shopKind === 'merchant') return ['superpotion', 'greatball', 'ultraball', 'ether', 'firestone', 'waterstone', 'thunderstone', 'leafstone'];
+  return Object.keys(ITEMS);
+}
+const shopPriceMul = () => shopKind === 'center' ? 1.2 : shopKind === 'merchant' ? 1.35 : 1;
+const lootBuyMul = () => shopKind === 'merchant' ? 1.5 : 1;                          // 상인은 전리품을 비싸게 산다
 function renderShop() {
   const rows = $('shopRows'); rows.innerHTML = '';
-  const p = document.createElement('p'); p.style.cssText = 'font-size:11px;color:#8a93a8;text-align:center';
-  p.textContent = '배지를 모을수록 상위 물품이 입고됩니다 (현재 배지 ' + S.badges.length + ') · 상위 아이템은 🔨합성이 더 빠릅니다';
-  rows.appendChild(p);
-  for (const [key, it] of Object.entries(ITEMS)) {
-    const row = document.createElement('div'); row.className = 'menuRow';
-    const locked = S.badges.length < (it.unlock || 0);
-    row.innerHTML = locked
-      ? '<span style="color:#4a5568">🔒 ??? <small>배지 ' + it.unlock + '개부터 입고</small></span><span style="color:#4a5568">-</span>'
-      : '<span>' + it.emoji + ' ' + it.name + ' <small>' + it.desc + '</small></span><span>' + it.price + 'G</span>';
-    if (!locked) {
-      const b = document.createElement('button'); b.textContent = '구매 (' + (S.items[key] || 0) + ')'; b.disabled = S.gold < it.price;
-      b.onclick = () => { S.gold -= it.price; S.items[key] = (S.items[key] || 0) + 1; SFX.select(); hud(); renderShop(); persist(true); };
-      row.appendChild(b);
-    }
-    rows.appendChild(row);
+  const title = shopKind === 'center' ? '🏥 센터 매점' : shopKind === 'merchant' ? '🧙 신비한 상인' : '🏪 상점';
+  const head = document.createElement('p'); head.style.cssText = 'font-size:12px;color:#ffd54a;text-align:center;font-weight:bold';
+  head.textContent = title + (shopKind === 'merchant' ? ' — 희귀 물품과 전리품 고가 매입(×1.5)' : shopKind === 'center' ? ' — 기본 물품만 취급 (조금 비쌈)' : '');
+  rows.appendChild(head);
+  const tabs = document.createElement('div'); tabs.className = 'tabs'; tabs.style.marginBottom = '4px';
+  [['buy', '🛒 사기'], ['sell', '💰 팔기']].forEach(([k, label]) => {
+    const b = document.createElement('button'); b.className = shopTab === k ? '' : 'ghost'; b.textContent = label;
+    b.onclick = () => { shopTab = k; SFX.select(); renderShop(); }; tabs.appendChild(b);
+  });
+  rows.appendChild(tabs);
+
+  if (shopTab === 'buy') {
+    const note = document.createElement('p'); note.style.cssText = 'font-size:11px;color:#8a93a8;text-align:center';
+    note.textContent = '배지 ' + S.badges.length + '개 — 배지를 모을수록 상위 물품이 입고됩니다';
+    rows.appendChild(note);
+    shopStock().forEach(key => {
+      const it = ITEMS[key]; if (!it) return;
+      const locked = S.badges.length < (it.unlock || 0);
+      const price = Math.floor(it.price * shopPriceMul());
+      const row = document.createElement('div'); row.className = 'menuRow';
+      row.innerHTML = locked
+        ? '<span style="color:#4a5568">🔒 ??? <small>배지 ' + it.unlock + '개부터 입고</small></span><span style="color:#4a5568">-</span>'
+        : '<span>' + it.emoji + ' ' + it.name + ' <small>' + it.desc + '</small></span><span>' + price + 'G</span>';
+      if (!locked) {
+        const b = document.createElement('button'); b.textContent = '구매 (' + (S.items[key] || 0) + ')'; b.disabled = S.gold < price;
+        b.onclick = () => { S.gold -= price; S.items[key] = (S.items[key] || 0) + 1; SFX.select(); hud(); renderShop(); persist(true); };
+        row.appendChild(b);
+      }
+      rows.appendChild(row);
+    });
+  } else {
+    const owned = Object.keys(LOOT).filter(k => (S.items['loot_' + k] || 0) > 0);
+    const note = document.createElement('p'); note.style.cssText = 'font-size:11px;color:#8a93a8;text-align:center';
+    note.textContent = owned.length ? '몬스터에게서 얻은 전리품을 팔아 자금을 마련하세요' + (shopKind === 'merchant' ? ' (상인 매입가 ×1.5)' : '') : '팔 수 있는 전리품이 없습니다 — 야생 몬스터를 쓰러뜨리면 얻습니다';
+    rows.appendChild(note);
+    owned.forEach(k => {
+      const n = S.items['loot_' + k], unit = Math.floor(LOOT[k].price * lootBuyMul());
+      const row = document.createElement('div'); row.className = 'menuRow';
+      row.innerHTML = '<span>' + LOOT[k].emoji + ' ' + LOOT[k].name + ' × ' + n + '</span><span>' + unit + 'G / 개</span>';
+      const b1 = document.createElement('button'); b1.className = 'ghost'; b1.textContent = '1개 팔기';
+      b1.onclick = () => { S.items['loot_' + k]--; S.gold += unit; SFX.select(); hud(); renderShop(); persist(true); };
+      const b2 = document.createElement('button'); b2.textContent = '전부 (' + (unit * n) + 'G)';
+      b2.onclick = () => { S.gold += unit * n; S.items['loot_' + k] = 0; SFX.catch(); hud(); renderShop(); persist(true); };
+      row.appendChild(b1); row.appendChild(b2); rows.appendChild(row);
+    });
   }
   $('shopGold').textContent = '💰 ' + S.gold + 'G';
 }
@@ -1381,6 +1519,13 @@ function startWild(m, pool) {
   renderBattle();
 }
 function startTrainer(npc) {
+  if (npc.rival) {
+    B = { my:firstAlive(), trainer:npc, queue:rivalTeam(npc), wild:false, over:false, menu:'root' };
+    B.foe = B.queue.shift();
+    S.mode = 'battle'; $('battle').classList.add('on'); SFX.encounter();
+    log(npc.name + ' 이(가) ' + DEX[B.foe.id].name + ' 을(를) 내보냈다!');
+    renderBattle(); return;
+  }
   const rng = mulberry(hashStr(npc.trainerId || npc.name) + S.ascension * 7);
   const bump = S.ascension * 8;
   const team = [];
@@ -1689,16 +1834,27 @@ function winFoe() {
   let msg = ' ' + monName(B.foe) + ' 격파!';
   if (after > before) { recalcParty(); msg += ' 🔬' + fd.name + ' 리서치 ' + after + '단계!'; }
   if (B.foe.shiny) { dropUnique('✨이로치 격파'); addMat('relicdust', 1 + ri(2)); }
-  // 합성 재료 드랍
+  // 합성 재료 + 전리품 드랍
   if (B.wild) { if (rand() < 0.22) addMat('shard', 1); if (rand() < 0.03) addMat('core', 1); }
+  const lootKey = LOOT_BY_TYPE[fd.type];
+  if (lootKey) {
+    const n = B.wild ? (rand() < 0.7 ? 1 : 0) + (rand() < 0.15 ? 1 : 0) : 2 + ri(3);
+    if (n) { S.items['loot_' + lootKey] = (S.items['loot_' + lootKey] || 0) + n;
+      msg += ' ' + LOOT[lootKey].emoji + LOOT[lootKey].name + '×' + n; }
+  }
   const alive = S.party.filter(m => m.hp > 0);
   // 동레벨 상대 10마리 ≈ 1레벨 — 필요 경험치((L+1)³-L³)의 1/10 을 파티 전원에게 동일 지급
   const L = B.foe.lv;
   const share = Math.max(6, Math.floor((3 * L * L + 3 * L + 1) / 10 * (fd.baseExp / 90) * (B.wild ? 1 : 1.6) * (1 + (S.totems.growth ? 0.25 : 0))));
   S.gold += Math.floor((B.wild ? 12 + B.foe.lv * 5 : 0) * goldMult());
   msg += ' EXP +' + share + ' (전원)';
+  B.expLog = B.expLog || {};
   alive.forEach(m => {
-    m.exp += Math.floor(share * (m.held === 'luckyegg' ? 1 + HELD.luckyegg.bonus[(m.heldTier || 1) - 1] : 1));
+    const key = S.party.indexOf(m);
+    const rec = B.expLog[key] || (B.expLog[key] = { mon:m, gained:0, fromLv:m.lv, fromExp:m.exp, learned:[], evolvedFrom:null });
+    const got = Math.floor(share * (m.held === 'luckyegg' ? 1 + HELD.luckyegg.bonus[(m.heldTier || 1) - 1] : 1));
+    rec.gained += got;
+    m.exp += got;
     // 노력치(스탯 경험치) — 쓰러뜨린 상대의 종족값 누적
     m.se = m.se || { hp:0, atk:0, def:0, spc:0, spd:0 };
     ['hp','atk','def','spc','spd'].forEach(k => { m.se[k] = Math.min(65535, m.se[k] + fd[k]); });
@@ -1715,6 +1871,7 @@ function winFoe() {
     addMat('core', coreN); msg += ' 🔷정수+' + coreN;
     if (t.boss) { addMat('relicdust', 2); msg += ' 🌟유물가루+2'; }
     if (t.totem && !S.totems[t.totem]) { S.totems[t.totem] = 1; recalcParty(); msg += ' 🗿' + TOTEMS[t.totem].name + ' 획득!'; }
+    if (t.rival) { S.rivalStage = Math.max(S.rivalStage, t.stage + 1); B.rivalBeaten = t; msg += ' — ' + RIVAL_NAME + ' 을(를) 이겼다!'; }
     if (t.ascend) B.ascend = true;
   }
   B.over = true;
@@ -1722,6 +1879,7 @@ function winFoe() {
 }
 function levelCheck(m) {
   let msg = '';
+  const rec = B && B.expLog ? Object.values(B.expLog).find(e => e.mon === m) : null;
   while (m.lv < 99 && m.exp >= expForLevel(m.lv + 1)) {
     m.lv += 1;
     const prev = m.maxHp; recalcStats(m); m.hp = Math.min(m.maxHp, m.hp + (m.maxHp - prev));
@@ -1730,11 +1888,14 @@ function levelCheck(m) {
     const learnNow = DEX[m.id].learn.filter(([l]) => l === m.lv).map(([, id]) => id);
     learnNow.forEach(nid => {
       if (m.moves.some(x => x.id === nid)) return;
-      if (m.moves.length < 4) { m.moves.push(mkMove(nid)); msg += ' ✨' + MOVES[nid].name + ' 습득!'; }
+      if (m.moves.length < 4) { m.moves.push(mkMove(nid)); msg += ' ✨' + MOVES[nid].name + ' 습득!'; if (rec) rec.learned.push(nid); }
       else { S.pendingLearn.push({ mon:m, move:nid }); msg += ' 📘' + MOVES[nid].name + ' 학습 대기'; }
     });
     const d = DEX[m.id];
-    if (d.evolveTo && m.lv >= d.evolveLv) { m.id = d.evolveTo; recalcStats(m); syncMoves(m); S.dex.add(m.id); SFX.evolve(); msg += ' 🌟' + DEX[m.id].name + ' 진화!'; }
+    if (d.evolveTo && m.lv >= d.evolveLv) {
+      if (rec && !rec.evolvedFrom) rec.evolvedFrom = m.id;
+      m.id = d.evolveTo; recalcStats(m); syncMoves(m); S.dex.add(m.id); SFX.evolve(); msg += ' 🌟' + DEX[m.id].name + ' 진화!';
+    }
   }
   if (m.lv >= 99) m.exp = expForLevel(99);
   return msg;
@@ -1769,11 +1930,88 @@ function ascend() {
   });
 }
 function endBattle() {
-  const lost = B.lost, doAsc = B.ascend;
+  const lost = B.lost, doAsc = B.ascend, expLog = B.expLog, rivalBeaten = B.rivalBeaten;
   $('battle').classList.remove('on'); B = null; S.mode = 'world';
   if (lost) { S.party.forEach(fullRest); S.map = 'village'; const st = MAPS.village.start; P.tx = st.x; P.ty = st.y; P.moving = false; reveal(); }
   hud(); persist(true);
-  if (doAsc) ascend(); else processPending();
+  const after = () => {
+    if (rivalBeaten) {
+      const nextSt = RIVAL_STAGES[S.rivalStage];
+      const lines = rivalBeaten.final
+        ? [RIVAL_NAME + ': …내가 졌다. 네가 심연의 문을 열 자격이 있어.',
+           RIVAL_NAME + ': 문 너머에서 기다리는 게 뭐든, 너라면 넘을 거야. 가라!']
+        : [RIVAL_NAME + ': 큭… 이번엔 내가 밀렸군.',
+           RIVAL_NAME + ': 다음엔 안 진다. ' + (nextSt ? nextSt.map === 'abyss' ? '심연에서 보자!' : '기다리고 있겠어!' : '또 보자!')];
+      showDialog(lines, () => { if (doAsc) ascend(); else processPending(); });
+      return;
+    }
+    if (doAsc) ascend(); else processPending();
+  };
+  const entries = expLog ? Object.values(expLog).filter(e => e.gained > 0) : [];
+  if (!lost && entries.length) showExpResults(entries, after); else after();
+}
+/* ── 전투 결과 — 파티별 경험치 게이지 애니메이션 ── */
+function showExpResults(entries, done) {
+  S.mode = 'result';
+  const ov = $('result'); ov.classList.add('on');
+  const leveled = entries.filter(e => e.mon.lv > e.fromLv).length;
+  $('resultTitle').textContent = '전투 결과' + (leveled ? ' — ⬆ ' + leveled + '마리 레벨 업!' : '');
+  const body = $('resultBody'); body.innerHTML = '';
+  entries.forEach((e, i) => {
+    const m = e.mon;
+    const row = document.createElement('div'); row.className = 'expRow';
+    const startPct = e.fromLv >= 99 ? 100
+      : Math.max(0, Math.min(100, (e.fromExp - expForLevel(e.fromLv)) / (expForLevel(e.fromLv + 1) - expForLevel(e.fromLv)) * 100));
+    const endPct = m.lv >= 99 ? 100
+      : Math.max(0, Math.min(100, (m.exp - expForLevel(m.lv)) / (expForLevel(m.lv + 1) - expForLevel(m.lv)) * 100));
+    row.innerHTML =
+      '<img src="' + spriteDataUrl(m.id, m.shiny) + '">' +
+      '<div class="info">' +
+        '<div class="top"><span>' + monName(m) + ' <small style="color:#8a93a8">Lv.<b class="lvNum">' + e.fromLv + '</b></small></span>' +
+        '<span class="gainTxt">+' + e.gained + ' EXP</span></div>' +
+        '<div class="expTrack"><i style="width:' + startPct + '%"></i></div>' +
+        '<div class="lvUp"></div>' +
+      '</div>';
+    body.appendChild(row);
+    setTimeout(() => animateExpRow(row, e, startPct, endPct), 220 * i + 120);
+  });
+  const finish = () => {
+    if (S.mode !== 'result') return;
+    ov.classList.remove('on'); S.mode = 'world'; hud();
+    if (done) done();
+  };
+  $('resultClose').onclick = finish;
+  S.resultClose = finish;
+}
+function animateExpRow(row, e, startPct, endPct) {
+  const bar = row.querySelector('.expTrack i'), lvNum = row.querySelector('.lvNum');
+  row.querySelector('.gainTxt').classList.add('show');
+  const levels = e.mon.lv - e.fromLv;
+  let step = 0;
+  const run = () => {
+    if (step < levels) {                       // 레벨업 — 100% 까지 채우고 리셋
+      bar.style.width = '100%';
+      setTimeout(() => {
+        bar.classList.add('flash'); SFX.level();
+        step++; lvNum.textContent = e.fromLv + step;
+        row.classList.add('up');
+        const lu = row.querySelector('.lvUp');
+        lu.textContent = '⬆ Lv.' + (e.fromLv + step) + ' 달성!' +
+          (step === levels && e.mon.id !== (e.evolvedFrom || e.mon.id) ? '' : '');
+        lu.classList.add('show');
+        bar.style.transition = 'none'; bar.style.width = '0%';
+        requestAnimationFrame(() => { bar.style.transition = ''; bar.classList.remove('flash'); run(); });
+      }, 640);
+    } else {
+      bar.style.width = endPct + '%';
+      const lu = row.querySelector('.lvUp');
+      const extra = [];
+      if (e.learned.length) extra.push('✨ ' + e.learned.map(id => MOVES[id].name).join(', ') + ' 습득');
+      if (e.evolvedFrom) extra.push('🌟 ' + DEX[e.evolvedFrom].name + ' → ' + DEX[e.mon.id].name + ' 진화!');
+      if (extra.length) { lu.textContent = (lu.textContent ? lu.textContent + ' · ' : '') + extra.join(' · '); lu.classList.add('show'); row.classList.add('up'); }
+    }
+  };
+  requestAnimationFrame(run);
 }
 
 /* ═══════════ 렌더 ═══════════ */
@@ -1849,14 +2087,17 @@ function newGame() {
       Object.assign(S, { party:[], box:[], dex:new Set([id]), gold:1000, badges:[],
         items:{ potion:3, superpotion:0, fullheal:1, ether:1, ball:5, greatball:0, ultraball:0 },
         taken:{}, totems:{}, uniques:{}, research:{}, ascension:0, shinyCount:0, map:'village',
-        hms:{}, visited:{ village:1 }, explored:{}, beaten:new Set(), minutes:8 * 60, car:false, driving:false, pendingLearn:[] });
+        hms:{}, visited:{ village:1 }, explored:{}, beaten:new Set(), minutes:8 * 60, car:false, driving:false, pendingLearn:[],
+        rival:COUNTER_STARTER[DEX[id].type], rivalStage:0 });
       S.party = [mkMon(id, 5, { mine:true })];
       const st = MAPS.village.start;
       Object.assign(P, { tx:st.x, ty:st.y, moving:false, prog:0, dir:[0,1] });
       SFX.level(); enterWorld(); persist(true);
-      showDialog(['여정 시작! 지역 경계의 ▸ 를 밟으면 다음 지역으로 이동한다.',
-        '트레이너와 눈이 마주치면(붉은 점) 배틀이 시작된다. 🏥 는 회복 + 📦보관소.',
-        '낮과 밤에 나타나는 몬스터가 다르다. C 키는 탈것, X 키는 메뉴.']);
+      showDialog([
+        '박사: 자네가 오늘부터 테이머로군. 이 대륙엔 9명의 수호자와 그들의 체육관이 있네.',
+        '박사: 배지를 모아 심연의 문을 열고, 세계의 정점에 서는 것이 자네의 여정일세.',
+        '박사: 아 그리고… 마침 자네 또래가 한 명 더 있었지. ' + DEX[COUNTER_STARTER[DEX[id].type]].name + ' 을(를) 골라 갔네 — 자네 파트너의 약점을 찌르는 타입이야.',
+        '조작: 지역 경계 ▸ 이동 · 눈 마주친 트레이너와 배틀 · 🏥 회복/매점 · 🧙 외딴 곳의 상인 · C 탈것 · X 메뉴']);
     };
     box.appendChild(b);
   });
@@ -1871,6 +2112,8 @@ function continueGame(saved) {
   S.ascension = saved.ascension || 0; S.shinyCount = saved.shinyCount || 0;
   S.hms = saved.hms || {}; S.visited = saved.visited || { village:1 };
   S.beaten = new Set(saved.beaten || []); S.minutes = saved.minutes ?? 8 * 60; S.car = !!saved.car; S.driving = false;
+  S.rival = saved.rival || COUNTER_STARTER[DEX[(saved.party || [{ id:'m0_0' }])[0].id].type] || 'm1_0';
+  S.rivalStage = saved.rivalStage || 0;
   S.pendingLearn = [];
   S.explored = {};
   for (const [k, arr] of Object.entries(saved.explored || {})) S.explored[k] = new Set(arr);
