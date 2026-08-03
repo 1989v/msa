@@ -145,6 +145,20 @@ patches:
     target: {kind: Deployment, name: quant-fe}
   - path: patches/resources-fe-96mi.yaml
     target: {kind: Deployment, name: gifticon-fe}
+  # ─── place (ADR-0056) — DB provisioning 전까지 비활성 가드 ─────────────────
+  # place_db/mysql-place 미구성 + OCIR place 이미지 미등재 상태에서 Argo sync 시
+  # crashloop/ImagePull 방지. 활성화 절차: place_db 생성 → OCIR 이미지 push →
+  # images: 에 commerce/place 추가 → 본 패치 제거.
+  - target:
+      kind: Deployment
+      name: place
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: place
+      spec:
+        replicas: 0
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
