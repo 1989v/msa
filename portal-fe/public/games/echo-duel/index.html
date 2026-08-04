@@ -46,8 +46,8 @@
     <h1>🔔 메아리 결투</h1>
     <p>"시장에 가면~" 놀이의 결투판. <b>앞사람이 남긴 메아리(방향 절차)를 그대로 되풀이하고,
        끝에 하나를 더 얹는다</b>. 절차는 점점 길어지고, 먼저 틀리거나 시간을 넘긴 쪽이 진다.</p>
-    <p style="font-size:11px">🎭 <b>2인 결투</b>: 한 키보드로 번갈아 — P1 · P2 모두 방향키/WASD 사용<br>
-       🔮 <b>혼자 수련</b>: 정령이 들려주는 메아리를 따라 외운다 — 최고 길이 기록</p>
+    <p style="font-size:11px">🎭 <b>2인 결투</b>: 한 키보드 동시 파지 — <b>P1 은 방향키</b>, <b>P2 는 WASD</b>. 상대 키는 먹히지 않는다<br>
+       🔮 <b>혼자 수련</b>: 정령이 들려주는 메아리를 따라 외운다 — 최고 길이 기록 (방향키/WASD 모두)</p>
     <div class="row">
       <button id="duoBtn">🎭 2인 결투</button>
       <button id="soloBtn" class="ghost">🔮 혼자 수련</button>
@@ -69,8 +69,8 @@
     </div>
   </div>
 </div>
-<div id="info">방향키 / WASD 로 입력 · 자기 차례에 <b>지금까지의 절차를 그대로</b> 누르고 <b>마지막에 하나를 추가</b><br>
-  절차가 길어질수록 제한 시간이 짧아진다 · 틀리거나 시간 초과 = 패배</div>
+<div id="info">결투: <b>P1 방향키 · P2 WASD</b> — 자기 차례에 <b>절차를 그대로</b> 누르고 <b>하나를 추가</b> · 수련: 아무 키나<br>
+  절차가 길어질수록 제한 시간이 짧아진다 · 틀리거나 시간 초과 = 패배 · 상대 키를 눌러도 무효(실수 아님)</div>
 <script>
 'use strict';
 const API = '/api/v1/games/echo-duel';
@@ -188,8 +188,13 @@ function soloGrow() {
 function playerName() { return G.turn === 0 ? 'P1' : 'P2'; }
 
 /* ── 입력 처리 ── */
-function pressDir(d) {
+function pressDir(d, src) {
   if (!running || !G) return;
+  // 결투: P1 은 방향키만, P2 는 WASD 만 — 상대 키는 조용히 무시해 오입력 사고를 막는다
+  if (G.duo && src && ((G.turn === 0 && src !== 'arrow') || (G.turn === 1 && src !== 'wasd'))) {
+    hintWrongKeys(G.turn);
+    return;
+  }
   if (G.phase === 'input') {                       // 절차 재현 중
     if (d === G.seq[G.pos]) {
       flash(d, false); beep(d);
@@ -211,11 +216,13 @@ function pressDir(d) {
     G.turn = 1 - G.turn;
     G.pos = 0;
     G.phase = 'handoff';
-    banner(playerName() + ' 차례 — ' + G.seq.length + '수를 되풀이하라');
-    setTimeout(() => { if (running && G.phase === 'handoff') { G.phase = 'input'; startTimer(); } }, 900);
+    banner(playerName() + ' 차례!');
+    setTimeout(() => { if (running && G.phase === 'handoff') { G.phase = 'input'; startTimer(); } }, 420);
   }
 }
 function flash(d, bad) { G.flash = d; G.flashT = 0.28; G.flashBad = bad; }
+let wrongKeyT = 0;
+function hintWrongKeys(turn) { wrongKeyT = 1.1; }
 function fail(d) {
   if (!running) return;                          // 이미 끝났다 — 중복 발화 방지
   flash(d === undefined ? G.seq[G.pos] : d, true);
@@ -292,9 +299,17 @@ function draw() {
     cx.fillStyle = G.timer / G.timerMax > 0.35 ? '#9a7ae0' : '#e0913f';
     cx.fillRect(cxp - 150, VH - 34, w, 9);
   }
+  if (wrongKeyT > 0) {
+    wrongKeyT -= 0.016;
+    cx.font = 'bold 13px monospace'; cx.fillStyle = '#e0913f';
+    cx.fillText(G.turn === 0 ? '지금은 P1 차례 — 방향키!' : '지금은 P2 차례 — WASD!', cxp, VH - 52);
+  } else if (G.duo && (G.phase === 'input' || G.phase === 'add')) {
+    cx.font = 'bold 12px monospace'; cx.fillStyle = 'rgba(200,176,255,.55)';
+    cx.fillText(G.turn === 0 ? 'P1 — 방향키' : 'P2 — WASD', cxp, VH - 52);
+  }
   $('modeTxt').textContent = G.duo ? '🎭 2인 결투' : '🔮 혼자 수련';
   $('lenTxt').textContent = '🔔 메아리 ' + G.seq.length + '수';
-  $('turnTxt').textContent = G.duo ? (G.turn === 0 ? '🟣 P1' : '🔵 P2') : '라운드 ' + G.round;
+  $('turnTxt').textContent = G.duo ? (G.turn === 0 ? '🟣 P1 (방향키)' : '🔵 P2 (WASD)') : '라운드 ' + G.round;
 }
 
 /* ── 종료 ── */
@@ -326,13 +341,15 @@ function loop() {
   draw();
 }
 requestAnimationFrame(loop);
-const DIR_KEYS = { ArrowUp:0, ArrowRight:1, ArrowDown:2, ArrowLeft:3, w:0, d:1, s:2, a:3 };
+const ARROW_KEYS = { ArrowUp:0, ArrowRight:1, ArrowDown:2, ArrowLeft:3 };
+const WASD_KEYS = { w:0, d:1, s:2, a:3 };
 addEventListener('keydown', ev => {
   audio();
   if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(ev.key)) ev.preventDefault();
   const c = ev.code || '';
   const k = c.startsWith('Key') ? c.slice(3).toLowerCase() : ev.key;
-  if (DIR_KEYS[k] !== undefined) pressDir(DIR_KEYS[k]);
+  if (ARROW_KEYS[k] !== undefined) pressDir(ARROW_KEYS[k], 'arrow');
+  else if (WASD_KEYS[k] !== undefined) pressDir(WASD_KEYS[k], 'wasd');
 });
 // 패드 클릭/터치도 지원
 cv.addEventListener('click', ev => {
