@@ -211,7 +211,7 @@ let bannerT = 0, shake = 0;
 
 function newGame() {
   G = {
-    gold: 260, wave: 0, phase: 'prep', prepT: 6,
+    gold: 320, wave: 0, phase: 'prep', prepT: 8,
     gateHp: 300, gateMax: 300,
     dmgLv: 0, gateLv: 0,
     towers: [], foes: [], shots: [], bombs: [], parts: [],
@@ -235,7 +235,7 @@ function popText(x, y, text, color) { G.parts.push({ x, y, vx:0, vy:-30, life:1,
 function startWave() {
   G.wave++; G.phase = 'wave';
   const w = G.wave, q = [];
-  const n = 6 + w * 2;
+  const n = 4 + w * 2;
   for (let i = 0; i < n; i++) {
     let kind = 'grunt';
     const r = rnd();
@@ -305,8 +305,9 @@ function update(dt) {
       for (const f of G.foes) { const q = (f.x - t.x) ** 2 + (f.y - t.y) ** 2; if (q < bd) { bd = q; best = f; } }
       if (best) { t.cd = 0.75;
         for (let i = 0; i < t.archers; i++) {
-          const ang = Math.atan2(best.y - t.y, best.x - t.x) + (rnd() - 0.5) * 0.12;
-          G.shots.push({ x:t.x, y:t.y - 20, vx:Math.cos(ang)*380, vy:Math.sin(ang)*380, dmg:arrowDmg(), life:0.9 });
+          const sy = t.y - 20;                             // 발사 위치 기준으로 조준해야 아래쪽 적도 맞는다
+          const ang = Math.atan2(best.y - sy, best.x - t.x) + (rnd() - 0.5) * 0.10;
+          G.shots.push({ x:t.x, y:sy, vx:Math.cos(ang)*380, vy:Math.sin(ang)*380, dmg:arrowDmg(), life:1.1 });
         }
       }
     }

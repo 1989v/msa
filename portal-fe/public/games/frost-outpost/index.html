@@ -185,6 +185,17 @@ function burst(x, y, color, n, spd) {
 function popText(x, y, text, color) { G.parts.push({ x, y, vx:0, vy:-28, life:1, text, color }); }
 const bKey = (gx, gy) => gx + ',' + gy;
 const blockedTile = (gx, gy) => ROCK.has(bKey(gx, gy)) || G.buildings.has(bKey(gx, gy)) || baseTiles.has(bKey(gx, gy));
+/** 반경 코너 4점 + 중심을 샘플링해 막고 있는 셀을 찾는다 — 대각선으로 벽 틈을 파고들 수 없다 */
+function blockInfoAt(px2, py2, r) {
+  for (const [ox, oy] of [[0,0],[-r,-r],[r,-r],[-r,r],[r,r]]) {
+    const gx = Math.floor((px2 + ox) / T), gy = Math.floor((py2 + oy) / T);
+    const k = bKey(gx, gy);
+    if (baseTiles.has(k)) return { type:'base', k, gx, gy };
+    if (G.buildings.has(k)) return { type:'bld', k, gx, gy };
+    if (ROCK.has(k)) return { type:'rock', k, gx, gy };
+  }
+  return null;
+}
 
 /* ── 습격 ── */
 function startRaid() {
@@ -259,27 +270,32 @@ function update(dt) {
           popText(prey.x, prey.y - 12, '광부 사망!', '#ff6b6b'); } }
       continue;
     }
-    const nx = f.x + dx / d * f.spd * dt, ny = f.y + dy / d * f.spd * dt;
-    const gx = Math.floor(nx / T), gy = Math.floor(ny / T);
-    const k = bKey(gx, gy);
-    if (baseTiles.has(k)) {                                  // 본부 도달 — 두들긴다
-      if (f.cd <= 0) { f.cd = 0.8; G.baseHp -= f.dmg; shake = Math.max(shake, 4);
-        burst(nx, ny, '#6ab8d6', 5, 90);
-        if (G.baseHp <= 0) { G.baseHp = 0; endGame(false); return; } }
-    } else if (G.buildings.has(k)) {                         // 건물이 막는다 — 부순다
-      if (f.cd <= 0) {
-        f.cd = 0.8;
-        const b = G.buildings.get(k);
+    // 축 분리 이동 + 반경 충돌 — 방벽과 같은 픽셀 선상이면 반드시 막히고, 막은 구조물을 두들긴다
+    const rr = f.r * 0.75;
+    const hitStructure = bi => {
+      if (f.cd > 0) return;
+      f.cd = 0.8;
+      if (bi.type === 'base') {
+        G.baseHp -= f.dmg; shake = Math.max(shake, 4);
+        burst(f.x, f.y, '#6ab8d6', 5, 90);
+        if (G.baseHp <= 0) { G.baseHp = 0; endGame(false); }
+      } else if (bi.type === 'bld') {
+        const b = G.buildings.get(bi.k);
         b.hp -= f.dmg * (f.big ? 2 : 1);
-        burst(gx * T + T/2, gy * T + T/2, '#8a9aa8', 4, 70);
-        if (b.hp <= 0) { G.buildings.delete(k); burst(gx * T + T/2, gy * T + T/2, '#8a9aa8', 16, 150); shake = 7; }
+        burst(bi.gx * T + T/2, bi.gy * T + T/2, '#8a9aa8', 4, 70);
+        if (b.hp <= 0) { G.buildings.delete(bi.k); burst(bi.gx * T + T/2, bi.gy * T + T/2, '#8a9aa8', 16, 150); shake = 7; }
       }
-    } else if (ROCK.has(k)) {                                // 바위 — 축을 나눠 미끄러진다
-      const gx2 = Math.floor((f.x + dx / d * f.spd * dt) / T), gyKeep = Math.floor(f.y / T);
-      if (!blockedTile(gx2, gyKeep)) f.x += dx / d * f.spd * dt;
-      else { const gxKeep = Math.floor(f.x / T), gy2 = Math.floor((f.y + dy / d * f.spd * dt) / T);
-        if (!blockedTile(gxKeep, gy2)) f.y += dy / d * f.spd * dt; }
-    } else { f.x = nx; f.y = ny; }
+    };
+    // 스폰 직후 가장자리 바위에 겹친 경우 — 이미 겹친 셀은 빠져나가는 이동을 막지 않는다
+    const cur = blockInfoAt(f.x, f.y, rr);
+    const nx = f.x + dx / d * f.spd * dt;
+    let bi = blockInfoAt(nx, f.y, rr);
+    if (!bi || (cur && bi.k === cur.k)) f.x = nx; else hitStructure(bi);
+    if (G.baseHp <= 0) return;
+    const ny = f.y + dy / d * f.spd * dt;
+    bi = blockInfoAt(f.x, ny, rr);
+    if (!bi || (cur && bi.k === cur.k)) f.y = ny; else hitStructure(bi);
+    if (G.baseHp <= 0) return;
   }
 
   // 포탑

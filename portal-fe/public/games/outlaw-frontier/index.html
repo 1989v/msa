@@ -311,7 +311,8 @@ function buildZone() {
   }
   if (z.boss) spawnFoe('boss', WORLD_W - 180, VH / 2);
   for (let i = 0; i < 4 + ri(3); i++)
-    G.crates.push({ x: 360 + rnd() * (WORLD_W - 500), y: 60 + rnd() * (WORLD_H - 120), hp: 12 });
+    G.crates.push({ x: 360 + rnd() * (WORLD_W - 500), y: 60 + rnd() * (WORLD_H - 120), hp: 12,
+      golden: rnd() < 0.08 });                             // 이스터에그 — 황금 마차: 매복 없이 잭팟
   banner('제' + (G.zone + 1) + '구역 — ' + z.name);
 }
 function spawnFoe(kind, x, y) {
@@ -438,9 +439,12 @@ function update(dt) {
       const c = G.crates.find(o => Math.abs(o.x - s.x) < 15 && Math.abs(o.y - s.y) < 15);
       if (c) { c.hp -= s.dmg; G.shots = G.shots.filter(o => o !== s);
         if (c.hp <= 0) {
-          burst(c.x, c.y, '#8d5a35', 14, 140);
+          burst(c.x, c.y, c.golden ? '#ffd98a' : '#8d5a35', c.golden ? 26 : 14, 160);
           G.crates = G.crates.filter(o => o !== c);
-          if (rnd() < 0.55) {                                 // 구조물은 함정 — 매복이 튀어나온다
+          if (c.golden) {                                     // 황금 마차 — 무조건 대박
+            const g = 80 + ri(80); G.gold += g;
+            popText(c.x, c.y - 16, '💰 황금 마차! +' + g + '$', '#ffe08a');
+          } else if (rnd() < 0.55) {                          // 구조물은 함정 — 매복이 튀어나온다
             popText(c.x, c.y - 14, '매복!', '#ff6b6b');
             const pool = ZONES[G.zone].pool;
             for (let i = 0; i < 2 + ri(2); i++) spawnFoe(pool[ri(pool.length)], c.x + (rnd()-0.5)*70, c.y + (rnd()-0.5)*70);
@@ -489,7 +493,14 @@ function draw() {
     cx.font = 'bold 12px monospace'; cx.textAlign = 'center'; cx.fillStyle = '#ffd98a';
     cx.fillText('▶ 야영지', gx, VH / 2 - 26);
   }
-  for (const c of G.crates) cx.drawImage(crateSprite(), c.x - camX - 15, c.y - 17);
+  for (const c of G.crates) {
+    cx.drawImage(crateSprite(), c.x - camX - 15, c.y - 17);
+    if (c.golden) {
+      cx.fillStyle = 'rgba(255,217,138,.30)'; cx.fillRect(c.x - camX - 15, c.y - 17, 30, 30);
+      cx.font = '11px monospace'; cx.textAlign = 'center';
+      cx.fillText('✨', c.x - camX + 12, c.y - 14 + Math.sin(nowMs() / 200) * 2);
+    }
+  }
   // 적
   for (const f of G.foes) {
     const sx = f.x - camX; if (sx < -60 || sx > VW + 60) continue;
@@ -613,11 +624,17 @@ async function startRun() {
 }
 async function endRun(outcome, desc) {
   running = false; $('hud').hidden = true; $('camp').hidden = true;
-  const earned = Math.floor(G.gold * 0.35) + G.zone * 40;
+  let earned = Math.floor(G.gold * 0.35) + G.zone * 40;
+  let extra = '';
+  if (outcome === 'CLEAR' && G.deaths === 0) {             // 동료를 하나도 잃지 않았다
+    earned = Math.floor(earned * 1.25);
+    extra = ' 🏅 무사고 여정 — 보상 +25%!';
+    meta.noDeath = (meta.noDeath || 0) + 1;
+  }
   meta.bank += earned;
   meta.best = Math.max(meta.best, G.zone + 1);
   $('endTitle').textContent = outcome === 'CLEAR' ? '🏆 무법지대 평정!' : '💀 여정 종료';
-  $('endDesc').textContent = desc + ' 제' + (G.zone + 1) + '구역까지 도달. 현상금 ' + earned + '$ 를 은행에 넣었다.';
+  $('endDesc').textContent = desc + extra + ' 제' + (G.zone + 1) + '구역까지 도달. 현상금 ' + earned + '$ 를 은행에 넣었다.';
   $('endPanel').hidden = false;
   if (run) { try { await api('/runs/' + run.runKey + '/consume', { method:'POST', body:JSON.stringify({ outcome: outcome === 'CLEAR' ? 'CLEAR' : 'DEATH' }) }); } catch (_) {} }
   await persistMeta();
