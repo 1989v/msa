@@ -178,7 +178,7 @@ images:
     newTag: 88bb760
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 88bb760
+    newTag: 33d9c02
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 88bb760
