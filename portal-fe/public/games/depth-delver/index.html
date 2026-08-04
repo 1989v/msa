@@ -454,6 +454,8 @@ function update(dt) {
     if (Math.abs(ix) > Math.abs(iy)) p.dir = ix > 0 ? 1 : 3; else p.dir = iy > 0 ? 0 : 2;
     p.anim += dt * 9;
   } else p.anim = 0;
+  // 공격키를 누르고 있으면 이동 중에도 계속 휘두른다 (쿨다운은 playerAttack 이 관리)
+  if (keys.has('z') || keys.has(' ')) playerAttack();
   p.frame = (ix || iy) ? 1 + (Math.floor(p.anim) % 2) : 0;
 
   // 구르기 — 짧은 무적 + 가속
@@ -587,8 +589,8 @@ function draw() {
   cx.fillText(open ? '▼ B' + (G.floor + 1) + 'F' : '🔒 적 ' + G.foes.length, ssx, ssy - 34);
   cx.restore();
   // 항아리 / 상자 / 드랍
-  for (const q of G.pots) if (!q.broken) cx.drawImage(potSprite(), q.x - 16, q.y - 20);
-  for (const c of G.chests) cx.drawImage(chestSprite(c.open), c.x - 16, c.y - 18);
+  for (const q of G.pots) if (!q.broken) cx.drawImage(potSprite(), q.x - cam.x - 16, q.y - cam.y - 20);
+  for (const c of G.chests) cx.drawImage(chestSprite(c.open), c.x - cam.x - 16, c.y - cam.y - 18);
   for (const d of G.drops) {
     cx.font = '18px monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
     cx.fillText('❤', d.x - cam.x, d.y - cam.y + Math.sin(tm * 5) * 3);

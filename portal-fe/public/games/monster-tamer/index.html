@@ -366,74 +366,143 @@ function shade(hex, amt) {
   const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, Math.round(v + amt))));
   return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
 }
+/**
+ * 절차 생성 픽셀아트 — 24×24 셀 그리드에 그린 뒤 자동 외곽선 + 상하 림 셰이딩을 입힌다.
+ * 종족 ID 해시로 체형/귀/꼬리/장식이 결정되고, 종족값 성향(atk/def/spc/spd)이 부위를 추가한다.
+ */
 function drawCreature(g, d, shiny) {
-  const r = mulberry(hashStr(d.id));
-  const hue = shiny ? 140 : 0;
+  const rng = mulberry(hashStr(d.id + 'px'));
+  const R = n => Math.floor(rng() * n);
   const base = shiny ? shade(TYPE_COLOR[d.type], 55) : TYPE_COLOR[d.type];
-  const dark = shade(base, -55), light = shade(base, 48), belly = shade(base, 78);
-  const S = 96, cxp = S / 2, ground = S - 8;
+  const pal = {
+    body: base, dark: shade(base, -40), light: shade(base, 42),
+    belly: shade(base, 80), outline: shade(base, -115),
+    eyeW: '#ffffff', eyeP: d.stage === 2 ? '#38100e' : '#10141c', horn: shade(base, -22),
+  };
+  const N = 24, CELL = 4, GY = 21, CX = 12;
+  const grid = Array.from({ length: N }, () => Array(N).fill(null));
+  const face = [];                              // 얼굴은 셰이딩을 입히지 않는다
+  const put = (x, y, c) => { x = Math.round(x); y = Math.round(y);
+    if (x >= 0 && x < N && y >= 0 && y < N && c) grid[y][x] = c; };
+  const fput = (x, y, c) => face.push([Math.round(x), Math.round(y), c]);
+  const ell = (ex, ey, rx, ry, c) => {
+    for (let y = Math.floor(ey - ry); y <= Math.ceil(ey + ry); y++)
+      for (let x = Math.floor(ex - rx); x <= Math.ceil(ex + rx); x++)
+        if (((x - ex) / rx) ** 2 + ((y - ey) / ry) ** 2 <= 1.05) put(x, y, c);
+  };
+  const rect = (x, y, w, h, c) => { for (let yy = 0; yy < h; yy++) for (let xx = 0; xx < w; xx++) put(x + xx, y + yy, c); };
+  const tri = (x0, y0, x1, y1, x2, y2, c) => {
+    const A = (ax, ay, bx, by, px2, py2) => (bx - ax) * (py2 - ay) - (by - ay) * (px2 - ax);
+    const mnx = Math.floor(Math.min(x0, x1, x2)), mxx = Math.ceil(Math.max(x0, x1, x2));
+    const mny = Math.floor(Math.min(y0, y1, y2)), mxy = Math.ceil(Math.max(y0, y1, y2));
+    for (let y = mny; y <= mxy; y++) for (let x = mnx; x <= mxx; x++) {
+      const b1 = A(x0, y0, x1, y1, x, y), b2 = A(x1, y1, x2, y2, x, y), b3 = A(x2, y2, x0, y0, x, y);
+      if ((b1 >= 0 && b2 >= 0 && b3 >= 0) || (b1 <= 0 && b2 <= 0 && b3 <= 0)) put(x, y, c);
+    }
+  };
   const shape = hashStr(d.id + 'shape') % 6;
-  const scale = 0.72 + d.stage * 0.13;
-  const bodyR = 20 * scale, headR = 13 * scale;
-  const px = (x, y, w, h, c) => { g.fillStyle = c; g.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
-  const ell = (x, y, rx, ry, c) => { g.fillStyle = c; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g.fill(); };
-  const outline = (fn) => { g.save(); g.strokeStyle = dark; g.lineWidth = 2.5; fn(); g.restore(); };
-  g.clearRect(0, 0, S, S);
-  // 그림자
-  ell(cxp, ground + 2, bodyR * 1.05, 4.5, 'rgba(0,0,0,.22)');
-  const bodyY = ground - bodyR * 0.95;
+  const sc = [0.8, 0.95, 1.1][d.stage];
+  const earKind = R(3), tailKind = R(3);
+  let fx2 = CX, fy2 = 10, eyeGap = 2;           // 얼굴 위치
 
-  if (shape === 0 || shape === 5) {            // 둥근형 / 블롭
-    ell(cxp, bodyY, bodyR, bodyR * (shape === 5 ? 0.95 : 1.05), base);
-    ell(cxp, bodyY + bodyR * 0.35, bodyR * 0.62, bodyR * 0.5, belly);
-    ell(cxp, bodyY - bodyR * 0.85, headR, headR * 0.92, light);
-  } else if (shape === 1) {                    // 직립형
-    ell(cxp, bodyY, bodyR * 0.8, bodyR * 1.15, base);
-    ell(cxp, bodyY + bodyR * 0.3, bodyR * 0.5, bodyR * 0.62, belly);
-    px(cxp - bodyR * 0.95, bodyY - bodyR * 0.2, bodyR * 0.36, bodyR * 0.9, base);   // 팔
-    px(cxp + bodyR * 0.6, bodyY - bodyR * 0.2, bodyR * 0.36, bodyR * 0.9, base);
-    ell(cxp, bodyY - bodyR * 1.05, headR, headR, light);
-  } else if (shape === 2) {                    // 뱀형
-    g.strokeStyle = base; g.lineWidth = bodyR * 0.8; g.lineCap = 'round';
-    g.beginPath(); g.moveTo(cxp - bodyR, ground - 4);
-    g.quadraticCurveTo(cxp + bodyR * 1.2, ground - bodyR * 1.1, cxp - bodyR * 0.3, ground - bodyR * 1.9);
-    g.stroke();
-    ell(cxp - bodyR * 0.3, ground - bodyR * 2.1, headR, headR * 0.85, light);
-  } else if (shape === 3) {                    // 사족보행
-    ell(cxp, bodyY, bodyR * 1.15, bodyR * 0.72, base);
-    [-0.75, -0.3, 0.3, 0.75].forEach(o => px(cxp + bodyR * o - 2.5, bodyY + bodyR * 0.5, 5, bodyR * 0.62, dark));
-    ell(cxp, bodyY + bodyR * 0.2, bodyR * 0.7, bodyR * 0.36, belly);
-    ell(cxp + bodyR * 0.95, bodyY - bodyR * 0.55, headR, headR * 0.9, light);
-  } else {                                     // 비행형
-    ell(cxp, bodyY, bodyR * 0.78, bodyR * 0.95, base);
-    g.fillStyle = light;
-    g.beginPath(); g.moveTo(cxp - bodyR * 0.6, bodyY - bodyR * 0.2);
-    g.lineTo(cxp - bodyR * 2.0, bodyY - bodyR * 0.95); g.lineTo(cxp - bodyR * 0.5, bodyY + bodyR * 0.45); g.fill();
-    g.beginPath(); g.moveTo(cxp + bodyR * 0.6, bodyY - bodyR * 0.2);
-    g.lineTo(cxp + bodyR * 2.0, bodyY - bodyR * 0.95); g.lineTo(cxp + bodyR * 0.5, bodyY + bodyR * 0.45); g.fill();
-    ell(cxp, bodyY - bodyR * 0.95, headR, headR * 0.9, light);
+  if (shape === 0 || shape === 5) {             // 라운드형 / 블롭 — 머리가 곧 몸
+    const r = Math.round(7 * sc);
+    const squash = shape === 5 ? 0.78 : 1;
+    ell(CX, GY - r * squash, r, r * squash, pal.body);
+    ell(CX, GY - r * squash * 0.55, r * 0.55, r * squash * 0.42, pal.belly);
+    rect(CX - r + 1, GY - 1, 3, 2, pal.dark); rect(CX + r - 4, GY - 1, 3, 2, pal.dark);   // 발
+    if (shape === 0) { rect(CX - r - 1, GY - r, 2, 3, pal.body); rect(CX + r, GY - r, 2, 3, pal.body); } // 팔
+    fx2 = CX; fy2 = GY - r * squash - (shape === 5 ? -1 : 1); eyeGap = Math.max(2, Math.round(r * 0.4));
+    // 귀
+    if (shape === 0) {
+      if (earKind === 0) { tri(CX - r + 1, fy2 - 2, CX - r - 2, fy2 - 6 - d.stage, CX - r + 4, fy2 - 4, pal.body);
+        tri(CX + r - 1, fy2 - 2, CX + r + 2, fy2 - 6 - d.stage, CX + r - 4, fy2 - 4, pal.body); }
+      else if (earKind === 1) { ell(CX - r + 1, fy2 - 3, 2, 2, pal.body); ell(CX + r - 1, fy2 - 3, 2, 2, pal.body); }
+    }
+    fy2 = GY - r * squash * 1.1;
+  } else if (shape === 1) {                     // 직립형
+    const bw = Math.round(4.6 * sc), bh = Math.round(6.4 * sc), hr = Math.round(4.2 * sc);
+    ell(CX, GY - bh, bw, bh, pal.body);
+    ell(CX, GY - bh + 1, bw * 0.55, bh * 0.55, pal.belly);
+    rect(CX - bw - 1, GY - bh - 1, 2, Math.round(bh * 0.9), pal.body);                    // 팔
+    rect(CX + bw, GY - bh - 1, 2, Math.round(bh * 0.9), pal.body);
+    rect(CX - bw + 1, GY - 1, 3, 2, pal.dark); rect(CX + bw - 3, GY - 1, 3, 2, pal.dark); // 발
+    ell(CX, GY - bh * 2 + 1, hr, hr, pal.body);
+    fx2 = CX; fy2 = GY - bh * 2 + 1; eyeGap = 2;
+    if (earKind === 0) { tri(CX - hr + 1, fy2 - hr + 1, CX - hr - 1, fy2 - hr - 3 - d.stage, CX - hr + 3, fy2 - hr + 2, pal.body);
+      tri(CX + hr - 1, fy2 - hr + 1, CX + hr + 1, fy2 - hr - 3 - d.stage, CX + hr - 3, fy2 - hr + 2, pal.body); }
+  } else if (shape === 2) {                     // 뱀형 — S자 코일
+    const r = Math.round(2.6 * sc);
+    ell(CX + 1, GY - r, 6 * sc, r + 1, pal.body);                                          // 아래 코일
+    ell(CX - 2, GY - r * 3 - 1, 4.6 * sc, r, pal.body);                                    // 중간 코일
+    ell(CX + 2, GY - r * 5 - 1, 3.2 * sc, r, pal.body);                                    // 위 코일
+    ell(CX + 3, GY - r * 6.6 - 1, Math.round(3 * sc), Math.round(2.6 * sc), pal.body);     // 머리
+    tri(CX + 7 * sc, GY - r, CX + 9 * sc, GY - r - 3, CX + 6 * sc, GY - r - 2, pal.belly); // 꼬리 끝
+    fx2 = CX + 3; fy2 = GY - r * 6.6 - 1; eyeGap = 2;
+  } else if (shape === 3) {                     // 사족보행 — 오른쪽을 본다
+    const bw = Math.round(6.4 * sc), bh = Math.round(3.6 * sc), hr = Math.round(3.4 * sc);
+    ell(CX - 1, GY - bh - 2, bw, bh, pal.body);
+    ell(CX - 1, GY - bh - 1, bw * 0.62, bh * 0.55, pal.belly);
+    [-0.72, -0.28, 0.3, 0.72].forEach(o => rect(Math.round(CX - 1 + bw * o) - 1, GY - 3, 2, 4, pal.dark));
+    ell(CX + bw - 1, GY - bh * 2 - 2, hr, hr * 0.9, pal.body);                             // 머리
+    rect(CX + bw + hr - 2, GY - bh * 2 - 2, 2, 2, pal.body);                               // 주둥이
+    fx2 = CX + bw - 1; fy2 = GY - bh * 2 - 2; eyeGap = 2;
+    if (earKind !== 2) { tri(fx2 - 2, fy2 - hr + 1, fx2 - 3, fy2 - hr - 2 - d.stage, fx2, fy2 - hr + 1, pal.body);
+      tri(fx2 + 2, fy2 - hr + 1, fx2 + 3, fy2 - hr - 2 - d.stage, fx2, fy2 - hr + 1, pal.body); }
+    // 꼬리
+    if (tailKind === 0) tri(CX - bw - 1, GY - bh - 3, CX - bw - 4, GY - bh - 6 - d.stage, CX - bw + 1, GY - bh - 1, pal.body);
+    else rect(CX - bw - 3, GY - bh - 3, 3, 2, pal.body);
+  } else {                                      // 비행형
+    const bw = Math.round(3.4 * sc), bh = Math.round(4.6 * sc);
+    ell(CX, GY - bh - 3, bw, bh, pal.body);
+    ell(CX, GY - bh - 2, bw * 0.6, bh * 0.55, pal.belly);
+    tri(CX - bw, GY - bh - 4, CX - bw - 6 - d.stage, GY - bh - 8 - d.stage, CX - bw - 1, GY - bh + 1, pal.light);  // 날개
+    tri(CX + bw, GY - bh - 4, CX + bw + 6 + d.stage, GY - bh - 8 - d.stage, CX + bw + 1, GY - bh + 1, pal.light);
+    rect(CX - 2, GY - 2, 2, 2, pal.dark); rect(CX + 1, GY - 2, 2, 2, pal.dark);            // 발톱
+    fx2 = CX; fy2 = GY - bh * 2 - 1; eyeGap = 2;
+    ell(CX, fy2, Math.round(3.2 * sc), Math.round(2.8 * sc), pal.body);
   }
-  const headX = shape === 3 ? cxp + bodyR * 0.95 : shape === 2 ? cxp - bodyR * 0.3 : cxp;
-  const headY = shape === 3 ? bodyY - bodyR * 0.55 : shape === 2 ? ground - bodyR * 2.1 : bodyY - bodyR * (shape === 1 ? 1.05 : shape === 4 ? 0.95 : 0.85);
-  // 부위 — 종족값 성향
-  if (d.atk >= d.def && d.atk > 60) {          // 뿔
-    g.fillStyle = shade(base, -20);
-    [-0.5, 0.5].forEach(o => { g.beginPath(); g.moveTo(headX + headR * o, headY - headR * 0.7);
-      g.lineTo(headX + headR * o * 1.5, headY - headR * (1.5 + d.stage * 0.25)); g.lineTo(headX + headR * o * 0.15, headY - headR * 0.75); g.fill(); });
+
+  // 종족값 성향 부위
+  if (d.atk >= d.def && d.atk > 60)             // 뿔 — 머리 위로 짧고 굵게 (화면 밖으로 뻗지 않게)
+    tri(fx2 - 2, fy2 - 2, fx2, Math.max(2, fy2 - 5 - d.stage), fx2 + 2, fy2 - 2, pal.horn);
+  if (d.def > d.atk && d.def > 65)              // 등갑 하이라이트
+    for (let x = -2; x <= 2; x++) put(fx2 + x, fy2 - 3, pal.light);
+  if (d.spd > 75 && shape !== 2)                // 스피드 지느러미 꼬리
+    tri(CX - 8, GY - 6, CX - 11, GY - 9 - d.stage, CX - 7, GY - 3, pal.light);
+  if (d.stage >= 1 && shape !== 5)              // 등 가시
+    for (let i = 0; i < d.stage + 1; i++) put(CX - 3 + i * 2, fy2 + 4 + (shape === 3 ? 2 : 0), pal.dark);
+
+  // ── 자동 외곽선 + 림 셰이딩 ──
+  const out = grid.map(row => row.slice());
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    if (grid[y][x]) {
+      if (!(grid[y - 1] && grid[y - 1][x])) out[y][x] = shade(grid[y][x], 26);             // 윗면 — 밝게
+      else if (!(grid[y + 1] && grid[y + 1][x])) out[y][x] = shade(grid[y][x], -26);       // 아랫면 — 어둡게
+    } else if ([[1,0],[-1,0],[0,1],[0,-1]].some(([dx2, dy2]) => grid[y + dy2] && grid[y + dy2][x + dx2]))
+      out[y][x] = pal.outline;                                                             // 실루엣 외곽선
   }
-  if (d.def > d.atk && d.def > 65) ell(cxp, bodyY, bodyR * 0.95, bodyR * 0.72, 'rgba(255,255,255,.14)');  // 갑각 광택
-  if (d.spc > 70) { ell(headX, headY - headR * 1.05, 3.2, 3.2, '#fff'); ell(headX, headY - headR * 1.05, 2.2, 2.2, light); }  // 보석
-  if (d.spd > 75) { g.strokeStyle = light; g.lineWidth = 2; g.beginPath(); g.moveTo(cxp - bodyR * 1.1, bodyY + bodyR * 0.1); g.lineTo(cxp - bodyR * 1.9, bodyY + bodyR * 0.55); g.stroke(); }  // 꼬리
-  // 눈
-  const eyeY = headY - headR * 0.05, eo = headR * 0.42;
-  ell(headX - eo, eyeY, 3.4, 3.9, '#fff'); ell(headX + eo, eyeY, 3.4, 3.9, '#fff');
-  const pupil = d.stage === 2 ? '#3a1010' : '#101018';
-  ell(headX - eo + 0.6, eyeY + 0.4, 2, 2.4, pupil); ell(headX + eo + 0.6, eyeY + 0.4, 2, 2.4, pupil);
-  ell(headX - eo + 1.3, eyeY - 1, 0.9, 0.9, '#fff'); ell(headX + eo + 1.3, eyeY - 1, 0.9, 0.9, '#fff');
-  // 입
-  g.strokeStyle = dark; g.lineWidth = 1.6; g.beginPath();
-  g.moveTo(headX - 3, headY + headR * 0.45); g.quadraticCurveTo(headX, headY + headR * 0.72, headX + 3, headY + headR * 0.45); g.stroke();
-  if (shiny) { g.globalCompositeOperation = 'overlay'; g.fillStyle = 'rgba(255,225,120,.35)'; g.fillRect(0, 0, S, S); g.globalCompositeOperation = 'source-over'; }
+  // ── 얼굴 (셰이딩 제외) ──
+  const putF = (x, y, c) => { x = Math.round(x); y = Math.round(y);
+    if (x >= 0 && x < N && y >= 0 && y < N) out[y][x] = c; };
+  [-1, 1].forEach(side => {
+    const ex2 = fx2 + side * eyeGap;
+    putF(ex2, fy2 - 1, pal.eyeW); putF(ex2, fy2, pal.eyeW);
+    putF(ex2 + (side > 0 ? 0 : 0), fy2, pal.eyeP);                                         // 동공
+    if (d.stage === 2) putF(ex2 + side, fy2 - 2, pal.outline);                             // 날카로운 눈매
+  });
+  putF(fx2, fy2 + 2, pal.outline);                                                         // 입
+  if (d.spc > 70) { putF(fx2, fy2 - 3, pal.eyeW); }                                        // 이마 보석 광점
+
+  // ── 렌더 ──
+  const S = 96;
+  g.clearRect(0, 0, S, S);
+  g.fillStyle = 'rgba(0,0,0,.22)';
+  g.beginPath(); g.ellipse(48, 90, 26 * sc + 4, 4.5, 0, 0, Math.PI * 2); g.fill();
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++)
+    if (out[y][x]) { g.fillStyle = out[y][x]; g.fillRect(x * CELL, y * CELL, CELL, CELL); }
+  if (shiny) { g.globalCompositeOperation = 'overlay'; g.fillStyle = 'rgba(255,225,120,.35)';
+    g.fillRect(0, 0, S, S); g.globalCompositeOperation = 'source-over'; }
 }
 function spriteCanvas(id, shiny) {
   const key = id + (shiny ? '_s' : '');
