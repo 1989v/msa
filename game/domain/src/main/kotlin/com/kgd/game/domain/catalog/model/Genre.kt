@@ -10,6 +10,7 @@ enum class Genre {
     PUZZLE,
     RPG,
     EDUCATION,
+    STRATEGY,
     CASUAL;
 
     companion object {

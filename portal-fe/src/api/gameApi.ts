@@ -34,7 +34,7 @@ export interface PageResponse<T> {
 
 export type GameLoadType = 'IFRAME' | 'INTERNAL_ROUTE';
 export type GameSortKey = 'trending' | 'new' | 'top';
-export type GameGenre = 'ARCADE' | 'ACTION' | 'PUZZLE' | 'RPG' | 'EDUCATION' | 'CASUAL';
+export type GameGenre = 'ARCADE' | 'ACTION' | 'PUZZLE' | 'RPG' | 'EDUCATION' | 'STRATEGY' | 'CASUAL';
 
 export const GENRE_LABELS: Record<GameGenre, string> = {
   ARCADE: '아케이드',
@@ -42,6 +42,7 @@ export const GENRE_LABELS: Record<GameGenre, string> = {
   PUZZLE: '퍼즐',
   RPG: 'RPG',
   EDUCATION: '학습',
+  STRATEGY: '전략',
   CASUAL: '캐주얼',
 };
 
