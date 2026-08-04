@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { GENRE_LABELS, type GameSummary } from '../../api/gameApi';
 
@@ -11,6 +12,9 @@ function coverHue(slug: string): number {
 
 export default function GameCard({ game }: { game: GameSummary }) {
   const hue = coverHue(game.slug);
+  // 썸네일 로드 실패 시 기존 그라디언트 + 이니셜 커버로 폴백
+  const [thumbFailed, setThumbFailed] = useState(false);
+  const showThumb = !!game.thumbnailUrl && !thumbFailed;
   return (
     <Link to={`/games/${game.slug}`} className="game-card" aria-label={`${game.title} 상세로 이동`}>
       <div
@@ -19,9 +23,19 @@ export default function GameCard({ game }: { game: GameSummary }) {
           background: `linear-gradient(135deg, oklch(0.34 0.09 ${hue}), oklch(0.22 0.05 ${(hue + 40) % 360}))`,
         }}
       >
-        <span className="game-card-initial" aria-hidden>
-          {game.title.slice(0, 1)}
-        </span>
+        {showThumb ? (
+          <img
+            className="game-card-thumb"
+            src={game.thumbnailUrl}
+            alt=""
+            loading="lazy"
+            onError={() => setThumbFailed(true)}
+          />
+        ) : (
+          <span className="game-card-initial" aria-hidden>
+            {game.title.slice(0, 1)}
+          </span>
+        )}
       </div>
       <div className="game-card-body">
         <h3 className="game-card-title">
