@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>메아리 결투</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0e0c18; color:#eae6f4; font-family:'Courier New',monospace; display:flex; flex-direction:column;
+         align-items:center; justify-content:center; min-height:100vh; user-select:none; }
+  #wrap { position:relative; border:4px solid #262040; border-radius:10px; overflow:hidden; box-shadow:0 0 48px rgba(0,0,0,.7); }
+  canvas { display:block; background:#141021; }
+  #hud { position:absolute; top:8px; left:10px; right:10px; display:flex; gap:8px; font-size:12px; font-weight:bold;
+         pointer-events:none; text-shadow:1px 1px 0 #000; }
+  #hud .tag { background:rgba(10,8,18,.65); padding:3px 10px; border-radius:10px; }
+  #hud .grow { flex:1; }
+  #banner { position:absolute; top:34%; left:0; right:0; text-align:center; font-size:26px; font-weight:bold;
+            color:#c8b0ff; text-shadow:3px 3px 0 #000; pointer-events:none; opacity:0; transition:opacity .3s; }
+  #banner.on { opacity:1; }
+  .panel { position:absolute; inset:0; background:rgba(11,9,18,.96); display:flex; flex-direction:column; align-items:center;
+           justify-content:center; gap:12px; text-align:center; z-index:10; padding:20px; }
+  .panel h1 { color:#c8b0ff; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c6c0d8; line-height:1.75; max-width:530px; }
+  .panel button { background:#9a7ae0; color:#140f24; border:0; padding:9px 22px; font-weight:bold; font-size:13px;
+                  border-radius:7px; cursor:pointer; font-family:inherit; }
+  .panel button.ghost { background:#262040; color:#eae6f4; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #saveStatus { font-size:10.5px; color:#8a84a0; }
+  #info { margin-top:9px; font-size:11px; color:#5f5a74; text-align:center; line-height:1.7; }
+  input { background:#191430; border:1px solid #262040; color:#eae6f4; border-radius:6px; padding:6px 9px;
+          font-family:inherit; font-size:12px; letter-spacing:1px; width:165px; text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="840" height="480"></canvas>
+  <div id="hud" hidden>
+    <span class="tag" id="modeTxt"></span>
+    <span class="tag" id="lenTxt"></span>
+    <span class="grow"></span>
+    <span class="tag" id="turnTxt"></span>
+  </div>
+  <div id="banner"></div>
+  <div class="panel" id="menu">
+    <h1>🔔 메아리 결투</h1>
+    <p>"시장에 가면~" 놀이의 결투판. <b>앞사람이 남긴 메아리(방향 절차)를 그대로 되풀이하고,
+       끝에 하나를 더 얹는다</b>. 절차는 점점 길어지고, 먼저 틀리거나 시간을 넘긴 쪽이 진다.</p>
+    <p style="font-size:11px">🎭 <b>2인 결투</b>: 한 키보드로 번갈아 — P1 · P2 모두 방향키/WASD 사용<br>
+       🔮 <b>혼자 수련</b>: 정령이 들려주는 메아리를 따라 외운다 — 최고 길이 기록</p>
+    <div class="row">
+      <button id="duoBtn">🎭 2인 결투</button>
+      <button id="soloBtn" class="ghost">🔮 혼자 수련</button>
+    </div>
+    <div id="saveStatus"></div>
+    <div class="row">
+      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+    </div>
+    <div class="row"><span id="codeShow" style="font-size:11px;color:#c8b0ff;letter-spacing:2px"></span></div>
+    <div class="row"><span id="bestTxt" style="font-size:12px;color:#8a84a0"></span></div>
+  </div>
+  <div class="panel" id="endPanel" hidden>
+    <h1 id="endTitle"></h1>
+    <p id="endDesc"></p>
+    <div class="row">
+      <button id="againBtn">한 판 더</button>
+      <button id="backBtn" class="ghost">처음으로</button>
+    </div>
+  </div>
+</div>
+<div id="info">방향키 / WASD 로 입력 · 자기 차례에 <b>지금까지의 절차를 그대로</b> 누르고 <b>마지막에 하나를 추가</b><br>
+  절차가 길어질수록 제한 시간이 짧아진다 · 틀리거나 시간 초과 = 패배</div>
+<script>
+'use strict';
+const API = '/api/v1/games/echo-duel';
+const cv = document.getElementById('cv'), cx = cv.getContext('2d');
+const VW = cv.width, VH = cv.height;
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const rnd = () => Math.random(), ri = n => Math.floor(Math.random() * n);
+
+/* ── 플랫폼 연동 (이어하기 코드 세이브) ── */
+const token = () => localStorage.getItem('portal_access_token');
+function deviceId() {
+  let id = localStorage.getItem('kgd_device_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('kgd_device_id', id); }
+  return id;
+}
+async function api(path, opt = {}) {
+  const headers = { 'Content-Type':'application/json', 'X-Device-Id':deviceId(), ...(opt.headers || {}) };
+  const tk = token(); if (tk) headers['Authorization'] = 'Bearer ' + tk;
+  const res = await fetch(API + path, { ...opt, headers });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.success === false) throw new Error(body?.error?.code || res.status);
+  return body.data;
+}
+const CODE_KEY = 'echo_duel_code', LOCAL_KEY = 'echo_duel_save';
+let saveCode = localStorage.getItem(CODE_KEY) || null, saveVersion = 0;
+const fmtCode = c => c ? c.replace(/(.{4})(?=.)/g, '$1-') : '';
+let meta = { soloBest: 0, p1Wins: 0, p2Wins: 0, longest: 0 };
+function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
+function bestLabel() {
+  const parts = [];
+  if (meta.soloBest) parts.push('수련 최고 ' + meta.soloBest + '수');
+  if (meta.p1Wins || meta.p2Wins) parts.push('결투 P1 ' + meta.p1Wins + '승 · P2 ' + meta.p2Wins + '승');
+  if (meta.longest) parts.push('최장 메아리 ' + meta.longest + '수');
+  return parts.join('  ·  ');
+}
+async function loadMeta(codeOverride) {
+  const code = codeOverride || saveCode;
+  if (token() || code) {
+    try {
+      const s = await api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''));
+      saveVersion = s.version;
+      if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+      if (s.data) meta = { soloBest:0, p1Wins:0, p2Wins:0, longest:0, ...s.data };
+      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      showCode(); return true;
+    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+  }
+  try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
+  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  showCode(); return true;
+}
+async function persistMeta() {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(meta));
+  try {
+    const s = await api('/save', { method:'PUT', body:JSON.stringify({ data:meta, version:saveVersion, code:saveCode }) });
+    saveVersion = s.version;
+    if (s.code && s.code !== saveCode) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+    showCode();
+  } catch (e) {
+    if (e.message === 'INVALID_INPUT') {
+      try {
+        const re = await api('/save' + (!token() && saveCode ? '?code=' + encodeURIComponent(saveCode) : ''));
+        saveVersion = re.version;
+        const s2 = await api('/save', { method:'PUT', body:JSON.stringify({ data:meta, version:saveVersion, code:saveCode }) });
+        saveVersion = s2.version;
+      } catch (_) {}
+    }
+  }
+}
+
+/* ── 사운드 — 방향별 4음 (사이먼 스타일) ── */
+let AC = null;
+const audio = () => { if (!AC) try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {} };
+function beep(dir, dur = 0.16, bad = false) {
+  if (!AC) return;
+  const o = AC.createOscillator(), g = AC.createGain();
+  o.frequency.value = bad ? 110 : [392, 523, 659, 784][dir];   // G4 C5 E5 G5
+  o.type = bad ? 'sawtooth' : 'sine';
+  g.gain.setValueAtTime(0.16, AC.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+  o.connect(g); g.connect(AC.destination);
+  o.start(); o.stop(AC.currentTime + dur);
+}
+
+/* ── 상태 ── */
+// dir: 0=↑ 1=→ 2=↓ 3=←
+const DIRS = [
+  { name:'↑', color:'#6ad1a0', dark:'#2c6b4e', x:0, y:-1 },
+  { name:'→', color:'#6aa8e8', dark:'#2c4f78', x:1, y:0 },
+  { name:'↓', color:'#e8c05a', dark:'#7a6224', x:0, y:1 },
+  { name:'←', color:'#e07a7a', dark:'#732e2e', x:-1, y:0 },
+];
+let G = null, running = false, bannerT = 0;
+function banner(text) { $('banner').textContent = text; $('banner').classList.add('on'); bannerT = 1400; }
+
+function newGame(duo) {
+  G = {
+    duo, seq: [], pos: 0, turn: 0,
+    phase: duo ? 'input' : 'show',    // duo 첫 차례는 곧바로 '추가'부터
+    showIdx: 0, showT: 0.8,
+    flash: -1, flashT: 0, flashBad: false,
+    timer: 0, timerMax: 0, round: 1,
+  };
+  if (duo) { G.phase = 'add'; startTimer(); banner('P1 — 첫 메아리를 남겨라'); }
+  else { soloGrow(); banner('정령의 메아리를 외워라'); }
+}
+const inputTime = () => Math.max(1.1, 3.2 - G.seq.length * 0.09);
+function startTimer() { G.timerMax = inputTime(); G.timer = G.timerMax; }
+function soloGrow() {
+  G.seq.push(ri(4));
+  G.phase = 'show'; G.showIdx = 0; G.showT = 0.55;
+  G.round = G.seq.length;
+}
+function playerName() { return G.turn === 0 ? 'P1' : 'P2'; }
+
+/* ── 입력 처리 ── */
+function pressDir(d) {
+  if (!running || !G) return;
+  if (G.phase === 'input') {                       // 절차 재현 중
+    if (d === G.seq[G.pos]) {
+      flash(d, false); beep(d);
+      G.pos++;
+      startTimer();
+      if (G.pos >= G.seq.length) {
+        if (G.duo) { G.phase = 'add'; startTimer(); }
+        else {                                      // 수련 — 한 바퀴 성공, 다음 라운드
+          G.phase = 'show';
+          setTimeout(() => { if (running) soloGrow(); }, 550);
+          G.phase = 'wait';
+        }
+      }
+    } else fail(d);
+  } else if (G.phase === 'add') {                  // 결투 — 새 메아리 추가
+    flash(d, false); beep(d, 0.22);
+    G.seq.push(d);
+    meta.longest = Math.max(meta.longest, G.seq.length);
+    G.turn = 1 - G.turn;
+    G.pos = 0;
+    G.phase = 'handoff';
+    banner(playerName() + ' 차례 — ' + G.seq.length + '수를 되풀이하라');
+    setTimeout(() => { if (running && G.phase === 'handoff') { G.phase = 'input'; startTimer(); } }, 900);
+  }
+}
+function flash(d, bad) { G.flash = d; G.flashT = 0.28; G.flashBad = bad; }
+function fail(d) {
+  if (!running) return;                          // 이미 끝났다 — 중복 발화 방지
+  flash(d === undefined ? G.seq[G.pos] : d, true);
+  beep(0, 0.5, true);
+  running = false;
+  setTimeout(() => endGame(), 700);
+}
+
+/* ── 갱신/렌더 ── */
+function update(dt) {
+  if (G.flashT > 0) G.flashT -= dt;
+  if (G.phase === 'show') {                        // 수련 — 정령이 순서를 들려준다
+    G.showT -= dt;
+    if (G.showT <= 0) {
+      if (G.showIdx < G.seq.length) {
+        flash(G.seq[G.showIdx], false); beep(G.seq[G.showIdx]);
+        G.showIdx++;
+        G.showT = Math.max(0.28, 0.6 - G.seq.length * 0.012);
+      } else { G.phase = 'input'; G.pos = 0; startTimer(); }
+    }
+  } else if (G.phase === 'input' || G.phase === 'add') {
+    G.timer -= dt;
+    if (G.timer <= 0) fail();
+  }
+  if (bannerT > 0) { bannerT -= dt * 1000; if (bannerT <= 0) $('banner').classList.remove('on'); }
+}
+function draw() {
+  cx.fillStyle = '#141021'; cx.fillRect(0, 0, VW, VH);
+  const t = performance.now() / 1000;
+  // 은은한 배경 별
+  for (let i = 0; i < 40; i++) {
+    const x = (i * 137) % VW, y = (i * 97) % VH;
+    cx.fillStyle = 'rgba(200,176,255,' + (0.05 + 0.05 * Math.sin(t * 2 + i)) + ')';
+    cx.fillRect(x, y, 2, 2);
+  }
+  const cxp = VW / 2, cyp = VH / 2 + 12, R = 118, PAD = 74;
+  // 4방향 패드 (다이아몬드)
+  DIRS.forEach((D, i) => {
+    const px2 = cxp + D.x * R, py2 = cyp + D.y * R;
+    const active = G && G.flash === i && G.flashT > 0;
+    const col = active ? (G.flashBad ? '#e04a4a' : D.color) : D.dark;
+    cx.save();
+    cx.translate(px2, py2);
+    if (active) { cx.shadowColor = col; cx.shadowBlur = 34; }
+    cx.fillStyle = col;
+    cx.beginPath(); cx.roundRect(-PAD/2, -PAD/2, PAD, PAD, 14); cx.fill();
+    cx.shadowBlur = 0;
+    cx.fillStyle = active ? '#141021' : 'rgba(234,230,244,.75)';
+    cx.font = 'bold 30px monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillText(D.name, 0, 2);
+    cx.restore();
+  });
+  if (!G) return;
+  // 중앙 — 현재 상태
+  cx.textAlign = 'center'; cx.textBaseline = 'middle';
+  cx.font = 'bold 17px monospace'; cx.fillStyle = '#c8b0ff';
+  const label = G.phase === 'show' ? '👁 외워라' : G.phase === 'add' ? '➕ 하나 추가' :
+                G.phase === 'input' ? '🔁 되풀이' : '…';
+  cx.fillText(label, cxp, cyp - 8);
+  cx.font = 'bold 13px monospace'; cx.fillStyle = '#8a84a0';
+  cx.fillText(G.duo ? playerName() + ' 차례' : '라운드 ' + G.round, cxp, cyp + 16);
+  // 진행 점 — 절차 길이와 현재 위치
+  const n = G.seq.length, dotW = Math.min(18, (VW - 120) / Math.max(1, n));
+  const x0 = cxp - (n * dotW) / 2;
+  for (let i = 0; i < n; i++) {
+    const done = (G.phase === 'input' && i < G.pos) || (G.phase === 'show' && i < G.showIdx);
+    cx.fillStyle = done ? '#9a7ae0' : 'rgba(200,176,255,.22)';
+    cx.beginPath(); cx.arc(x0 + i * dotW + dotW/2, 66, Math.min(6, dotW * 0.32), 0, 7); cx.fill();
+  }
+  // 타이머 바
+  if ((G.phase === 'input' || G.phase === 'add') && G.timerMax > 0) {
+    const w = 300 * (G.timer / G.timerMax);
+    cx.fillStyle = 'rgba(10,8,18,.6)'; cx.fillRect(cxp - 150, VH - 34, 300, 9);
+    cx.fillStyle = G.timer / G.timerMax > 0.35 ? '#9a7ae0' : '#e0913f';
+    cx.fillRect(cxp - 150, VH - 34, w, 9);
+  }
+  $('modeTxt').textContent = G.duo ? '🎭 2인 결투' : '🔮 혼자 수련';
+  $('lenTxt').textContent = '🔔 메아리 ' + G.seq.length + '수';
+  $('turnTxt').textContent = G.duo ? (G.turn === 0 ? '🟣 P1' : '🔵 P2') : '라운드 ' + G.round;
+}
+
+/* ── 종료 ── */
+let ended = false;
+async function endGame() {
+  if (ended) return; ended = true;
+  $('hud').hidden = true;
+  if (G.duo) {
+    const winner = G.turn === 0 ? 'P2' : 'P1';    // 현재 차례가 틀렸으니 상대 승
+    if (winner === 'P1') meta.p1Wins++; else meta.p2Wins++;
+    $('endTitle').textContent = '🏆 ' + winner + ' 승리!';
+    $('endDesc').textContent = playerName() + ' 이(가) ' + G.seq.length + '수에서 메아리를 놓쳤다. ' + bestLabel();
+  } else {
+    const score = Math.max(0, G.seq.length - 1);
+    meta.soloBest = Math.max(meta.soloBest, score);
+    $('endTitle').textContent = '💫 수련 종료';
+    $('endDesc').textContent = score + '수까지 따라 외웠다. ' + bestLabel();
+  }
+  $('endPanel').hidden = false;
+  await persistMeta();
+}
+
+/* ── 루프 / 입력 ── */
+let last = performance.now();
+function loop() {
+  requestAnimationFrame(loop);
+  const now = performance.now(), dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (G && running) update(dt);
+  draw();
+}
+requestAnimationFrame(loop);
+const DIR_KEYS = { ArrowUp:0, ArrowRight:1, ArrowDown:2, ArrowLeft:3, w:0, d:1, s:2, a:3 };
+addEventListener('keydown', ev => {
+  audio();
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(ev.key)) ev.preventDefault();
+  const c = ev.code || '';
+  const k = c.startsWith('Key') ? c.slice(3).toLowerCase() : ev.key;
+  if (DIR_KEYS[k] !== undefined) pressDir(DIR_KEYS[k]);
+});
+// 패드 클릭/터치도 지원
+cv.addEventListener('click', ev => {
+  audio();
+  const r = cv.getBoundingClientRect();
+  const x = (ev.clientX - r.left) * (VW / r.width), y = (ev.clientY - r.top) * (VH / r.height);
+  const cxp = VW / 2, cyp = VH / 2 + 12, R = 118;
+  DIRS.forEach((D, i) => {
+    if (Math.abs(x - (cxp + D.x * R)) < 40 && Math.abs(y - (cyp + D.y * R)) < 40) pressDir(i);
+  });
+});
+
+function start(duo) {
+  newGame(duo); running = true; ended = false;
+  $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false;
+}
+$('duoBtn').onclick = () => start(true);
+$('soloBtn').onclick = () => start(false);
+$('againBtn').onclick = () => start(G.duo);
+$('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false; $('bestTxt').textContent = bestLabel(); };
+$('codeLoadBtn').onclick = async () => {
+  const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (raw.length < 8) return;
+  if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw); $('bestTxt').textContent = bestLabel(); showCode(); }
+};
+loadMeta().then(() => { $('bestTxt').textContent = bestLabel(); });
+</script>
+</body>
+</html>
