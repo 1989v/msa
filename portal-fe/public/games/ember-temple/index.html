@@ -339,13 +339,19 @@ function draw() {
       cx.fillText('패턴을 보라… ' + G.lockT.toFixed(1), VW / 2, OY - 10 < 20 ? 24 : OY - 10);
     }
   }
-  // 플레이어
+  // 플레이어 — 픽셀 탐험가
   const ppx = OX + G.player.px * T + T/2, ppy = OY + G.player.py * T + T/2;
   cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(ppx, ppy + 13, 11, 4, 0, 0, 7); cx.fill();
-  cx.fillStyle = G.safeT > 0 && Math.floor(G.safeT * 10) % 2 ? 'rgba(240,224,212,.5)' : '#f0e0d4';
-  cx.fillRect(ppx - 8, ppy - 14, 16, 22);
-  cx.fillStyle = '#4a9ad6'; cx.fillRect(ppx - 8, ppy - 2, 16, 10);
-  cx.fillStyle = '#241a0e'; cx.fillRect(ppx - 4, ppy - 9, 3, 3); cx.fillRect(ppx + 2, ppy - 9, 3, 3);
+  cx.save();
+  if (G.safeT > 0 && Math.floor(G.safeT * 10) % 2) cx.globalAlpha = 0.45;
+  cx.fillStyle = '#c8a24a'; cx.fillRect(ppx - 9, ppy - 16, 18, 5);          // 탐험가 모자
+  cx.fillStyle = '#a8823a'; cx.fillRect(ppx - 11, ppy - 12, 22, 2);
+  cx.fillStyle = '#f0c49a'; cx.fillRect(ppx - 7, ppy - 10, 14, 8);          // 얼굴
+  cx.fillStyle = '#241a0e'; cx.fillRect(ppx - 4, ppy - 8, 3, 3); cx.fillRect(ppx + 2, ppy - 8, 3, 3);
+  cx.fillStyle = '#8a4a2c'; cx.fillRect(ppx - 8, ppy - 2, 16, 10);          // 가죽 조끼
+  cx.fillStyle = '#6b3820'; cx.fillRect(ppx - 8, ppy + 4, 16, 4);
+  cx.fillStyle = '#3a2c1e'; cx.fillRect(ppx - 6, ppy + 8, 5, 4); cx.fillRect(ppx + 1, ppy + 8, 5, 4);
+  cx.restore();
   for (const q of G.parts) {
     cx.globalAlpha = clamp(q.life, 0, 1);
     cx.fillStyle = q.color; cx.fillRect(q.x, q.y, q.size, q.size);
