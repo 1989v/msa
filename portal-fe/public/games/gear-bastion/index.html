@@ -170,6 +170,52 @@ const FOES = {
   colossus: { name:'거대골렘', hp:750, spd:32, bounty:120, r:20, color:'#c25a3a' },
 };
 const MAX_WAVE = 25;
+/* ── 골렘 픽셀 스프라이트 ── */
+const SPR = new Map();
+function spr(key, w, h, paint) {
+  let c = SPR.get(key); if (c) return c;
+  c = document.createElement('canvas'); c.width = w; c.height = h;
+  paint(c.getContext('2d')); SPR.set(key, c); return c;
+}
+const px = (g, x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+const shade2 = (hex, amt) => {
+  const n = parseInt(hex.slice(1), 16);
+  const c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, v + amt)));
+  return '#' + c.map(v => v.toString(16).padStart(2, '0')).join('');
+};
+function golemSprite(kind) {
+  const d = FOES[kind];
+  return spr('g' + kind, 32, 32, g => {
+    const body = d.color, dark = shade2(body, -40), light = shade2(body, 36);
+    px(g, 7, 29, 18, 3, 'rgba(0,0,0,.35)');
+    if (kind === 'wing') {
+      px(g, 3, 8, 9, 6, light); px(g, 20, 8, 9, 6, light);                  // 날개
+      px(g, 5, 12, 7, 4, shade2(body, 12)); px(g, 20, 12, 7, 4, shade2(body, 12));
+      px(g, 10, 8, 12, 12, body); px(g, 10, 8, 12, 3, light);
+      px(g, 13, 12, 2, 3, '#ffe08a'); px(g, 18, 12, 2, 3, '#ffe08a');
+      px(g, 12, 20, 3, 4, dark); px(g, 17, 20, 3, 4, dark);
+    } else if (kind === 'colossus') {
+      px(g, 5, 1, 22, 15, body); px(g, 5, 1, 22, 4, light);
+      px(g, 9, 6, 5, 5, '#ffd54a'); px(g, 19, 6, 5, 5, '#ffd54a');
+      px(g, 11, 8, 2, 2, '#1b0e0a'); px(g, 21, 8, 2, 2, '#1b0e0a');
+      px(g, 3, 16, 26, 10, dark); px(g, 7, 18, 18, 3, shade2(body, -12));
+      px(g, 1, 6, 5, 14, body); px(g, 26, 6, 5, 14, body);                  // 팔
+      px(g, 6, 26, 8, 5, dark); px(g, 18, 26, 8, 5, dark);
+      px(g, 14, 2, 4, 3, '#66e0ff');                                        // 코어
+    } else {
+      const w2 = kind === 'husk' ? 20 : kind === 'swift' ? 12 : 16;
+      const x0 = (32 - w2) / 2;
+      px(g, x0, 6, w2, 16, body); px(g, x0, 6, w2, 4, light); px(g, x0, 18, w2, 4, dark);
+      px(g, x0 + 2, 11, 2, 3, '#ffe08a'); px(g, x0 + w2 - 4, 11, 2, 3, '#ffe08a');
+      // 리벳
+      px(g, x0 + 1, 8, 1, 1, dark); px(g, x0 + w2 - 2, 8, 1, 1, dark);
+      px(g, x0 + 1, 16, 1, 1, light); px(g, x0 + w2 - 2, 16, 1, 1, light);
+      if (kind === 'husk') { px(g, x0 - 3, 9, 4, 10, shade2(body, -20)); px(g, x0 + w2 - 1, 9, 4, 10, shade2(body, -20)); }
+      px(g, x0 + 2, 22, 4, 6, dark); px(g, x0 + w2 - 6, 22, 4, 6, dark);
+      if (kind === 'swift') { px(g, x0 + 2, 28, 4, 2, light); px(g, x0 + w2 - 6, 28, 4, 2, light); }
+    }
+  });
+}
 let G = null, running = false, buildKind = 'bolt', selected = null;
 let bannerT = 0, shake = 0;
 
@@ -343,19 +389,10 @@ function draw() {
   // 골렘
   for (const f of G.foes) {
     cx.save(); if (f.hurt > 0) cx.filter = 'brightness(2.3)';
-    const d = FOES[f.kind];
-    if (f.air) {
-      cx.fillStyle = d.color;
-      cx.beginPath(); cx.ellipse(f.x, f.y + Math.sin(performance.now()/180 + f.x) * 3, f.r + 2, f.r - 2, 0, 0, 7); cx.fill();
-      cx.fillStyle = 'rgba(255,255,255,.5)';
-      cx.beginPath(); cx.ellipse(f.x - f.r, f.y, 6, 3, 0.5, 0, 7); cx.fill();
-      cx.beginPath(); cx.ellipse(f.x + f.r, f.y, 6, 3, -0.5, 0, 7); cx.fill();
-    } else {
-      cx.fillStyle = d.color; cx.fillRect(f.x - f.r, f.y - f.r, f.r * 2, f.r * 2);
-      cx.fillStyle = 'rgba(0,0,0,.3)'; cx.fillRect(f.x - f.r, f.y + f.r - 4, f.r * 2, 4);
-      cx.fillStyle = '#ffd54a'; cx.fillRect(f.x - 4, f.y - 4, 3, 3); cx.fillRect(f.x + 2, f.y - 4, 3, 3);
-      if (f.slowT > 0) { cx.fillStyle = 'rgba(154,220,240,.45)'; cx.fillRect(f.x - f.r, f.y - f.r, f.r * 2, f.r * 2); }
-    }
+    const sc2 = f.kind === 'colossus' ? 1.7 : 1;
+    const bobY = f.air ? Math.sin(performance.now() / 180 + f.x) * 3 : 0;
+    cx.drawImage(golemSprite(f.kind), f.x - 16 * sc2, f.y - 17 * sc2 + bobY, 32 * sc2, 32 * sc2);
+    if (f.slowT > 0) { cx.fillStyle = 'rgba(154,220,240,.4)'; cx.fillRect(f.x - f.r, f.y - f.r, f.r * 2, f.r * 2); }
     cx.restore();
     if (f.hp < f.maxHp) {
       const w = f.kind === 'colossus' ? 56 : 24;

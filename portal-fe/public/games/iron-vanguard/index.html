@@ -128,6 +128,79 @@ async function persistMeta() {
   }
 }
 
+/* ── 픽셀 스프라이트 ── */
+const SPR = new Map();
+function spr(key, w, h, paint) {
+  let c = SPR.get(key); if (c) return c;
+  c = document.createElement('canvas'); c.width = w; c.height = h;
+  paint(c.getContext('2d')); SPR.set(key, c); return c;
+}
+const px = (g, x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+function allySprite(kind) {
+  return spr('a' + kind, 30, 34, g => {
+    px(g, 7, 31, 16, 3, 'rgba(0,0,0,.35)');
+    const skin = '#f0c49a';
+    if (kind === 'knight') {
+      px(g, 8, 1, 14, 7, '#aebccd'); px(g, 10, 4, 10, 3, '#12161f');       // 투구+눈가리개
+      px(g, 12, 5, 2, 2, '#8fd0ff'); px(g, 17, 5, 2, 2, '#8fd0ff');
+      px(g, 7, 8, 16, 13, '#8fa8c8'); px(g, 7, 15, 16, 3, '#5c718c');      // 갑주
+      px(g, 2, 9, 6, 12, '#c8d4e0'); px(g, 3, 11, 4, 8, '#4a9ad6');        // 방패
+      px(g, 23, 8, 3, 12, '#9aa3b5'); px(g, 22, 6, 5, 3, '#c8d4e0');       // 검
+      px(g, 9, 21, 5, 8, '#3a465a'); px(g, 16, 21, 5, 8, '#3a465a');
+      px(g, 9, 28, 5, 3, '#2c3644'); px(g, 16, 28, 5, 3, '#2c3644');
+    } else if (kind === 'archer') {
+      px(g, 8, 1, 14, 6, '#3d6b4a'); px(g, 6, 5, 18, 3, '#2c5038');        // 후드
+      px(g, 10, 7, 10, 6, skin); px(g, 12, 9, 2, 2, '#1b1b1b'); px(g, 16, 9, 2, 2, '#1b1b1b');
+      px(g, 8, 13, 14, 10, '#8fc89a'); px(g, 8, 19, 14, 3, '#4a7a56');
+      px(g, 24, 4, 2, 22, '#8a6a3c');                                       // 활대
+      px(g, 23, 4, 1, 1, '#e8e6dd'); px(g, 26, 26, 1, 1, '#e8e6dd');
+      px(g, 3, 12, 4, 9, '#6b4a2c');                                        // 화살통
+      px(g, 9, 23, 5, 6, '#4a5a48'); px(g, 16, 23, 5, 6, '#4a5a48');
+      px(g, 9, 28, 5, 3, '#38443a'); px(g, 16, 28, 5, 3, '#38443a');
+    } else {                                                                 // priest
+      px(g, 9, 1, 12, 5, '#f0e6c8');                                        // 두건
+      px(g, 10, 6, 10, 6, skin); px(g, 12, 8, 2, 2, '#1b1b1b'); px(g, 16, 8, 2, 2, '#1b1b1b');
+      px(g, 7, 12, 16, 17, '#e8d48a'); px(g, 7, 24, 16, 5, '#c8b060');      // 로브
+      px(g, 12, 14, 6, 8, '#f0e6c8');
+      px(g, 24, 2, 2, 24, '#8a6a3c'); px(g, 22, 0, 6, 5, '#ffd54a');        // 지팡이+보주
+    }
+  });
+}
+function foeSprite(kind) {
+  return spr('f' + kind, 34, 34, g => {
+    const d = FOE_DEFS[kind];
+    px(g, 8, 31, 18, 3, 'rgba(0,0,0,.35)');
+    if (kind === 'wolf') {
+      px(g, 6, 16, 20, 9, d.color); px(g, 22, 11, 9, 8, d.color);
+      px(g, 28, 13, 2, 2, '#ffd54a'); px(g, 22, 8, 3, 4, d.color); px(g, 27, 8, 3, 4, d.color);
+      px(g, 7, 25, 4, 6, d.color); px(g, 20, 25, 4, 6, d.color);
+      px(g, 1, 14, 6, 4, d.color);                                          // 꼬리
+    } else if (kind === 'giant') {
+      px(g, 6, 1, 22, 12, d.color); px(g, 11, 5, 4, 4, '#ffd54a'); px(g, 20, 5, 4, 4, '#ffd54a');
+      px(g, 3, 13, 28, 13, '#5a4c3c'); px(g, 3, 21, 28, 5, '#453a2e');
+      px(g, 0, 14, 4, 11, d.color); px(g, 30, 14, 4, 11, d.color);
+      px(g, 7, 26, 8, 6, '#453a2e'); px(g, 19, 26, 8, 6, '#453a2e');
+    } else if (kind === 'shaman') {
+      px(g, 8, 1, 18, 6, '#5a3a7a'); px(g, 11, -1, 12, 4, '#5a3a7a');       // 뿔달린 두건
+      px(g, 11, 7, 12, 6, '#c8a8e0'); px(g, 13, 9, 2, 2, '#3a1a5a'); px(g, 19, 9, 2, 2, '#3a1a5a');
+      px(g, 8, 13, 18, 15, d.color); px(g, 8, 23, 18, 5, '#6a4a98');
+      px(g, 27, 3, 2, 22, '#8a6a3c'); px(g, 25, 0, 6, 5, '#66e0ff');
+    } else if (kind === 'berserk') {
+      px(g, 9, 1, 16, 8, d.color); px(g, 12, 4, 3, 3, '#fff'); px(g, 20, 4, 3, 3, '#fff');
+      px(g, 13, 5, 1, 1, '#000'); px(g, 21, 5, 1, 1, '#000');
+      px(g, 7, 9, 20, 13, '#8a3a2e'); px(g, 7, 17, 20, 5, '#6a2c22');
+      px(g, 2, 10, 6, 10, d.color); px(g, 27, 6, 6, 16, '#6b6455');         // 도끼팔
+      px(g, 9, 22, 6, 8, '#4a2c24'); px(g, 19, 22, 6, 8, '#4a2c24');
+    } else {                                                                 // spear
+      px(g, 10, 2, 14, 6, '#6b5636'); px(g, 11, 8, 12, 6, '#e0b48a');
+      px(g, 13, 10, 2, 2, '#1b1b1b'); px(g, 19, 10, 2, 2, '#1b1b1b');
+      px(g, 9, 14, 16, 11, d.color); px(g, 9, 21, 16, 4, '#7a5c3e');
+      px(g, 27, 0, 2, 28, '#8a6a3c'); px(g, 26, 0, 4, 5, '#c8ccd4');        // 창
+      px(g, 11, 25, 5, 6, '#4a3a2c'); px(g, 18, 25, 5, 6, '#4a3a2c');
+    }
+  });
+}
+
 /* ── 유닛 정의 ── */
 const ALLY_DEFS = {
   knight: { name:'기사',  emoji:'🛡', hp:240, dmg:15, rate:0.85, range:30,  spd:96,  r:14, color:'#8fa8c8' },
@@ -326,11 +399,8 @@ function draw() {
         cx.beginPath(); cx.arc(a.x, a.y, a.range, 0, 7); cx.stroke(); }
     }
     cx.save(); if (a.hurt > 0) cx.filter = 'brightness(2.3)';
-    cx.fillStyle = a.color;
-    cx.beginPath(); cx.arc(a.x, a.y, a.r, 0, 7); cx.fill();
+    cx.drawImage(allySprite(a.kind), a.x - 15, a.y - 19);
     cx.restore();
-    cx.font = (a.r + 4) + 'px monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
-    cx.fillText(a.emoji, a.x, a.y + 1);
     cx.fillStyle = 'rgba(0,0,0,.55)'; cx.fillRect(a.x - 15, a.y - a.r - 10, 30, 4);
     cx.fillStyle = a.hp / a.maxHp > 0.35 ? '#6bd18a' : '#e0913f';
     cx.fillRect(a.x - 15, a.y - a.r - 10, 30 * (a.hp / a.maxHp), 4);
@@ -339,11 +409,8 @@ function draw() {
   // 적
   for (const f of G.foes) {
     cx.save(); if (f.hurt > 0) cx.filter = 'brightness(2.3)';
-    const d = FOE_DEFS[f.kind];
-    cx.fillStyle = d.color;
-    if (f.kind === 'wolf') { cx.beginPath(); cx.ellipse(f.x, f.y, f.r + 3, f.r - 2, 0, 0, 7); cx.fill(); }
-    else { cx.fillRect(f.x - f.r, f.y - f.r, f.r * 2, f.r * 2); }
-    cx.fillStyle = '#ffd54a'; cx.fillRect(f.x - 4, f.y - 4, 3, 3); cx.fillRect(f.x + 2, f.y - 4, 3, 3);
+    const sc2 = f.kind === 'giant' ? 1.8 : 1;
+    cx.drawImage(foeSprite(f.kind), f.x - 17 * sc2, f.y - 19 * sc2, 34 * sc2, 34 * sc2);
     cx.restore();
     if (f.hp < f.maxHp) {
       const w = f.kind === 'giant' ? 52 : 24;
