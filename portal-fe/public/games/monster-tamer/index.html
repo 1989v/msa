@@ -521,6 +521,95 @@ function spriteDataUrl(id, shiny) {
   return url;
 }
 
+/* ═══════════ 오버월드 캐릭터 — 방향별 걸음 프레임 픽셀 스프라이트 ═══════════ */
+const OW_CACHE = new Map();
+function owSprite(key, w, h, paint) {
+  let c = OW_CACHE.get(key); if (c) return c;
+  c = document.createElement('canvas'); c.width = w; c.height = h;
+  paint(c.getContext('2d')); OW_CACHE.set(key, c); return c;
+}
+const opx = (g, x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+/** 주인공 — dir 0아래 1옆(왼쪽은 반전) 2위, frame 0정지/1·2걷기 */
+function heroSprite(dir, frame) {
+  return owSprite('hero' + dir + frame, 26, 30, g => {
+    const skin = '#f4c9a0', cap = '#d94f4f', capD = '#a83a3a', hair = '#4a3020',
+          shirt = '#3a6ea8', pants = '#2c3e50', shoe = '#5b3d24', pack = '#c9a441';
+    const bob = frame === 1 ? 1 : frame === 2 ? -1 : 0;
+    const legL = frame === 1 ? 2 : 0, legR = frame === 2 ? 2 : 0;
+    if (dir === 0) {                       // 정면
+      opx(g, 6, 1 + bob, 14, 5, cap); opx(g, 5, 5 + bob, 16, 2, capD);
+      opx(g, 7, 7 + bob, 12, 7, skin);
+      opx(g, 9, 9 + bob, 2, 2, '#1b1b1b'); opx(g, 15, 9 + bob, 2, 2, '#1b1b1b');
+      opx(g, 6, 14 + bob, 14, 9, shirt);
+      opx(g, 4, 15 + bob, 3, 7, skin); opx(g, 19, 15 + bob, 3, 7, skin);
+      opx(g, 8, 23, 4, 5 - legL, pants); opx(g, 14, 23, 4, 5 - legR, pants);
+      opx(g, 8, 27 - legL, 4, 2, shoe); opx(g, 14, 27 - legR, 4, 2, shoe);
+    } else if (dir === 2) {                // 뒤 — 배낭
+      opx(g, 6, 1 + bob, 14, 6, cap);
+      opx(g, 7, 7 + bob, 12, 6, hair);
+      opx(g, 6, 13 + bob, 14, 10, shirt);
+      opx(g, 8, 15 + bob, 10, 7, pack); opx(g, 9, 17 + bob, 8, 1, '#8a6a2c');
+      opx(g, 8, 23, 4, 5 - legL, pants); opx(g, 14, 23, 4, 5 - legR, pants);
+      opx(g, 8, 27 - legL, 4, 2, shoe); opx(g, 14, 27 - legR, 4, 2, shoe);
+    } else {                               // 옆
+      opx(g, 7, 1 + bob, 14, 5, cap); opx(g, 15, 4 + bob, 7, 2, capD);
+      opx(g, 9, 7 + bob, 10, 7, skin);
+      opx(g, 15, 9 + bob, 2, 2, '#1b1b1b');
+      opx(g, 8, 14 + bob, 12, 9, shirt);
+      opx(g, 6, 15 + bob, 3, 7, pack);     // 옆모습 배낭 끈
+      opx(g, 17, 15 + bob, 3, 7, skin);
+      opx(g, 9, 23, 4, 5 - legL, pants); opx(g, 14, 23, 4, 5 - legR, pants);
+      opx(g, 9, 27 - legL, 4, 2, shoe); opx(g, 14, 27 - legR, 4, 2, shoe);
+    }
+  });
+}
+/** NPC — 역할별 실루엣 + 해시 색상 */
+function npcSprite(seedStr, role) {
+  const key = 'npc' + role + hashStr(seedStr) % 97;
+  return owSprite(key, 26, 30, g => {
+    const r = mulberry(hashStr(seedStr));
+    const hues = ['#5a8a4a','#7a5aa8','#a8825a','#4a7a8a','#a85a6a','#8a8a4a'];
+    const shirt = role === 'leader' ? '#c9a441' : role === 'rival' ? '#5a4a8a'
+                : role === 'merchant' ? '#6b4a8a' : hues[Math.floor(r() * hues.length)];
+    const skin = '#f0c49a', pants = '#3a3f4c', shoe = '#4a3524';
+    const hairC = ['#4a3020','#1b1b1b','#8a6a2c','#6b4a2a'][Math.floor(r() * 4)];
+    opx(g, 7, 7, 12, 7, skin);
+    opx(g, 9, 9, 2, 2, '#1b1b1b'); opx(g, 15, 9, 2, 2, '#1b1b1b');
+    if (role === 'leader') { opx(g, 6, 0, 14, 4, '#ffd54a'); opx(g, 8, -1, 2, 3, '#ffd54a'); opx(g, 12, -1, 2, 3, '#ffd54a'); opx(g, 16, -1, 2, 3, '#ffd54a'); }
+    else if (role === 'rival') { opx(g, 5, 2, 16, 5, hairC); opx(g, 4, 0, 4, 4, hairC); opx(g, 12, -1, 4, 5, hairC); opx(g, 19, 1, 4, 4, hairC); }
+    else if (role === 'merchant') { opx(g, 4, 2, 18, 5, '#3a2a5a'); opx(g, 8, -2, 10, 5, '#3a2a5a'); }
+    else if (role === 'trainer') { opx(g, 6, 2, 14, 5, hairC); opx(g, 5, 5, 16, 2, '#d94f4f'); }
+    else opx(g, 6, 2, 14, 6, hairC);
+    opx(g, 6, 14, 14, 9, shirt);
+    if (role === 'leader' || role === 'merchant') opx(g, 5, 14, 16, 12, shirt);   // 로브
+    opx(g, 4, 15, 3, 7, skin); opx(g, 19, 15, 3, 7, skin);
+    opx(g, 8, 23, 4, 4, pants); opx(g, 14, 23, 4, 4, pants);
+    opx(g, 8, 27, 4, 2, shoe); opx(g, 14, 27, 4, 2, shoe);
+  });
+}
+/** 오프로더 / 파도타기 */
+function carSprite(flip) {
+  return owSprite('car' + (flip ? 'L' : 'R'), 34, 24, g => {
+    if (flip) { g.translate(34, 0); g.scale(-1, 1); }
+    opx(g, 2, 8, 30, 9, '#c0392b'); opx(g, 6, 3, 16, 7, '#e05545');
+    opx(g, 8, 4, 6, 5, '#bde0f0');
+    opx(g, 2, 8, 30, 2, '#8a2a20');
+    opx(g, 5, 15, 8, 8, '#1b1b1b'); opx(g, 22, 15, 8, 8, '#1b1b1b');
+    opx(g, 7, 17, 4, 4, '#5a5a62'); opx(g, 24, 17, 4, 4, '#5a5a62');
+  });
+}
+function surfSprite(frame) {
+  return owSprite('surf' + frame, 26, 30, g => {
+    const bob = frame % 2 ? 1 : 0;
+    opx(g, 3, 24 + bob, 20, 4, '#e8cc70'); opx(g, 3, 24 + bob, 20, 1, '#fff3b0');   // 보드
+    opx(g, 7, 3 + bob, 12, 5, '#d94f4f');
+    opx(g, 8, 8 + bob, 10, 6, '#f4c9a0');
+    opx(g, 10, 10 + bob, 2, 2, '#1b1b1b'); opx(g, 14, 10 + bob, 2, 2, '#1b1b1b');
+    opx(g, 7, 14 + bob, 12, 8, '#3a6ea8');
+    opx(g, 8, 22 + bob, 4, 3, '#2c3e50'); opx(g, 14, 22 + bob, 4, 3, '#2c3e50');
+  });
+}
+
 /* ═══════════ 성장 (1세대 DV/노력치) ═══════════ */
 const expForLevel = lv => lv * lv * lv;
 const dvRoll = () => ({ hp:ri(16), atk:ri(16), def:ri(16), spc:ri(16), spd:ri(16) });
@@ -2411,19 +2500,36 @@ function draw() {
   m.items.forEach((s, i) => { if (!(S.taken[S.map] || []).includes(i) && vis(s.x, s.y))
     cx.fillText(s.hm ? HMS[s.hm].emoji : s.car ? '🚙' : s.held ? '🎁' : '💊', s.x * T - camX + T / 2, s.y * T - camY + T / 2); });
   if (m.deco) { cx.font = '20px monospace'; m.deco.forEach(d => { if (vis(d.x, d.y)) cx.fillText(d.e, d.x * T - camX + T / 2, d.y * T - camY + T / 2); }); }
-  cx.font = '22px monospace';
   for (const n of m.npcs) if (!cleared(n) && vis(n.x, n.y)) {
-    cx.fillText(n.emoji, n.x * T - camX + T / 2, n.y * T - camY + T / 2);
-    if (n.trainerId) { cx.font = '11px monospace'; cx.fillStyle = 'rgba(255,80,80,.75)';
+    const nx2 = n.x * T - camX + T / 2, ny2 = n.y * T - camY + T / 2;
+    cx.fillStyle = 'rgba(0,0,0,.28)'; cx.beginPath(); cx.ellipse(nx2, ny2 + 11, 8, 3.5, 0, 0, Math.PI * 2); cx.fill();
+    const role = n.rival ? 'rival' : (n.gymLeader || n.boss) ? 'leader' : n.merchant ? 'merchant'
+               : n.trainerId ? 'trainer' : 'villager';
+    const spr = npcSprite((n.name || '') + (n.trainerId || ''), role);
+    cx.save();
+    if (n.dir && n.dir[0] === -1) { cx.translate(nx2, 0); cx.scale(-1, 1); cx.translate(-nx2, 0); }
+    cx.drawImage(spr, nx2 - 13, ny2 - 18);
+    cx.restore();
+    if (n.trainerId) { cx.font = '11px monospace'; cx.fillStyle = 'rgba(255,80,80,.75)'; cx.textAlign = 'center';
       for (let i = 1; i <= n.sight; i++) { const tx2 = n.x + n.dir[0] * i, ty2 = n.y + n.dir[1] * i;
         if (!canPass(tileAt(tx2, ty2))) break;
         if (vis(tx2, ty2)) cx.fillText('·', tx2 * T - camX + T / 2, ty2 * T - camY + T / 2); }
-      cx.fillStyle = '#fff'; cx.font = '22px monospace'; }
+      cx.fillStyle = '#fff'; }
   }
   const px = pp.x - camX + T / 2, py = pp.y - camY + T / 2;
   cx.fillStyle = 'rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(px, py + 11, 9, 4, 0, 0, Math.PI * 2); cx.fill();
-  cx.font = '22px monospace'; cx.fillStyle = '#fff';
-  cx.fillText(S.driving ? '🚙' : tileAt(P.tx, P.ty) === 'w' ? '🏄' : P.dir[0] === -1 ? '🚶' : P.dir[0] === 1 ? '🚶‍➡️' : '🧑‍🌾', px, py - pp.bob);
+  const frame = P.moving ? 1 + (Math.floor(P.prog * 2) % 2) : 0;   // 걸음 2프레임
+  if (S.driving) {
+    cx.drawImage(carSprite(P.dir[0] === -1), px - 17, py - 14);
+  } else if (tileAt(P.tx, P.ty) === 'w') {
+    cx.drawImage(surfSprite(frame), px - 13, py - 18);
+  } else {
+    const d4 = P.dir[1] === 1 ? 0 : P.dir[1] === -1 ? 2 : 1;       // 왼쪽은 옆모습 반전
+    cx.save();
+    if (P.dir[0] === -1) { cx.translate(px, 0); cx.scale(-1, 1); cx.translate(-px, 0); }
+    cx.drawImage(heroSprite(d4, frame), px - 13, py - 18);
+    cx.restore();
+  }
   if (isNight()) { cx.fillStyle = 'rgba(20,28,80,.30)'; cx.fillRect(0, 0, cv.width, cv.height); }
   $('zoneTag').textContent = m.name + (isNight() ? ' 🌙' : ' ☀');
 }

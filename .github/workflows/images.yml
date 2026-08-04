@@ -134,7 +134,8 @@ jobs:
               inventory/*|warehouse/*|fulfillment/*|order/*|member/*|wishlist/*|commerce/*)           JVM_SVCS+=" commerce" ;;
               analytics/*)                               JVM_SVCS+=" analytics" ;;
               experiment/*)                              JVM_SVCS+=" experiment" ;;
-              code-dictionary/*)                         JVM_SVCS+=" code-dictionary" ;;
+              # ADR-0059: game 모듈은 code-dictionary:app 에 폴드 — game 변경 = code-dictionary 리빌드
+              code-dictionary/*|game/*)                  JVM_SVCS+=" code-dictionary" ;;
               chatbot/*)                                 JVM_SVCS+=" chatbot" ;;
               quant/app/*|quant/domain/*|quant/glossary*)JVM_SVCS+=" quant" ;;
               quant/frontend/*)                          DOCKER_SVCS+=" quant-fe" ;;
