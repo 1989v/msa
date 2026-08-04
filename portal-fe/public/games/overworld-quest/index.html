@@ -674,10 +674,13 @@ function render(){
       ctx.fillStyle='#000';ctx.fillRect(sx-22,sy-32,44,5);ctx.fillStyle='#e84a5f';ctx.fillRect(sx-21,sy-31,42*(en.hp/en.maxHp),3);}
   }
 
-  // 플레이어
+  // 플레이어 — 그림자 + 외곽선 + 셰이딩
   const psx=player.x-camX,psy=player.y-camY;
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(psx,psy+11,10,3.5,0,0,Math.PI*2);ctx.fill();
   if(!(player.invuln>0&&~~(player.invuln/4)%2)){
+    ctx.fillStyle='#1d2a1f';ctx.fillRect(psx-11,psy-15,22,28);
     ctx.fillStyle='#3a7c4a';ctx.fillRect(psx-10,psy-2,20,12);
+    ctx.fillStyle='#2c5e38';ctx.fillRect(psx-10,psy+6,20,4);
     ctx.fillStyle='#e8b88a';ctx.fillRect(psx-7,psy-12,14,11);
     ctx.fillStyle='#8b6f47';ctx.fillRect(psx-8,psy-14,16,4);
     ctx.fillStyle='#000';
