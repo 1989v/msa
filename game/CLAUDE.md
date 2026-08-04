@@ -52,7 +52,7 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | `GET /api/v1/games/{slug}`, `/{slug}/similar` | 상세(BETA 노출 허용) / 태그 교집합 유사 게임 |
 | `POST /api/v1/games/{slug}/sessions`, `PATCH .../{sessionKey}` | 세션 시작(게스트 OK)/종료 |
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
-| `GET/PUT /api/v1/games/{slug}/save` | 클라우드 세이브 — 인증 + `X-Device-Id` 리스(1h). PUT 은 `{data, version}` 낙관적 저장 |
+| `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 읽기는 잠그지 않고 쓰기만 `X-Device-Id` 리스(1h) — 코드 제시 요청은 리스를 넘겨받는다(기기 분실 복구) |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
 | `POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN) |
 | `/api/v1/games/arcade/{catalog,sessions,scores,leaderboard,daily}` | #23 아케이드 — 세션 발급/점수 제출(검증)/리더보드. `games/**` 하위라 게이트웨이 라우트 추가 없음 |
@@ -60,8 +60,11 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 
 게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 6개 라우트로 나뉜다 — 좁은 경로가 먼저
 선언되어야 `games/**` 에 가려지지 않는다: `game-admin`(ADMIN) → `game-rating`(USER+) →
-`game-save`(USER+) → `game-session`(게스트 허용 = `Config(required=false)`, sessions+runs) →
+`game-save`(게스트 허용 + Rate Limiter — 익명 쓰기 방어) → `game-session`(게스트 허용, sessions+runs) →
 `game-catalog`(공개) → `game-ads`(`/api/v1/ads/**`, 게스트 허용).
+
+> CI 주의: game 모듈 변경은 `code-dictionary` 이미지 리빌드로 이어져야 한다 —
+> `.github/workflows/images.yml` 의 `game/*` 경로 매핑 (ADR-0059 폴드).
 
 ## Key Rules
 
