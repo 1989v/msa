@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>화염 신전</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#140a08; color:#f0e0d4; font-family:'Courier New',monospace; display:flex; flex-direction:column;
+         align-items:center; justify-content:center; min-height:100vh; user-select:none; }
+  #wrap { position:relative; border:4px solid #3a1e14; border-radius:10px; overflow:hidden; box-shadow:0 0 48px rgba(0,0,0,.75); }
+  canvas { display:block; background:#1e100c; }
+  #hud { position:absolute; top:8px; left:10px; right:10px; display:flex; gap:8px; font-size:12px; font-weight:bold;
+         pointer-events:none; text-shadow:1px 1px 0 #000; }
+  #hud .tag { background:rgba(16,8,6,.65); padding:3px 10px; border-radius:10px; }
+  #hud .grow { flex:1; }
+  #banner { position:absolute; top:40%; left:0; right:0; text-align:center; font-size:26px; font-weight:bold;
+            color:#ffb066; text-shadow:3px 3px 0 #000; pointer-events:none; opacity:0; transition:opacity .3s; }
+  #banner.on { opacity:1; }
+  .panel { position:absolute; inset:0; background:rgba(16,8,6,.96); display:flex; flex-direction:column; align-items:center;
+           justify-content:center; gap:12px; text-align:center; z-index:10; padding:20px; }
+  .panel h1 { color:#ffb066; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#d8c0b0; line-height:1.75; max-width:520px; }
+  .panel button { background:#e07a3c; color:#241008; border:0; padding:9px 22px; font-weight:bold; font-size:13px;
+                  border-radius:7px; cursor:pointer; font-family:inherit; }
+  .panel button.ghost { background:#3a1e14; color:#f0e0d4; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #saveStatus { font-size:10.5px; color:#a08878; }
+  #info { margin-top:9px; font-size:11px; color:#7a6050; text-align:center; line-height:1.7; }
+  input { background:#241410; border:1px solid #3a1e14; color:#f0e0d4; border-radius:6px; padding:6px 9px;
+          font-family:inherit; font-size:12px; letter-spacing:1px; width:165px; text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="840" height="480"></canvas>
+  <div id="hud" hidden>
+    <span class="tag" id="stageTxt"></span>
+    <span class="tag" id="deathTxt"></span>
+    <span class="grow"></span>
+    <span class="tag" id="timeTxt"></span>
+  </div>
+  <div id="banner"></div>
+  <div class="panel" id="menu">
+    <h1>🌋 화염 신전</h1>
+    <p>고대 신전의 바닥이 불을 뿜는다. <b>붉게 달아오르는 칸</b>이 곧 터질 자리다 —
+       읽고, 피하고, <b>오른쪽 출구</b>까지 건너가라. 닿으면 그 자리에서 재가 되어 <b>스테이지 처음</b>부터.
+       <b>8스테이지</b>, 죽음은 세되 끝은 없다.</p>
+    <div id="saveStatus"></div>
+    <div class="row">
+      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+    </div>
+    <div class="row"><span id="codeShow" style="font-size:11px;color:#ffb066;letter-spacing:2px"></span></div>
+    <div class="row"><span id="bestTxt" style="font-size:12px;color:#a08878"></span></div>
+    <button id="startBtn">▶ 신전 진입</button>
+  </div>
+  <div class="panel" id="endPanel" hidden>
+    <h1 id="endTitle"></h1>
+    <p id="endDesc"></p>
+    <button id="backBtn">처음으로</button>
+  </div>
+</div>
+<div id="info">이동: 방향키/WASD (누르고 있으면 연속 이동) · 붉은 예고 → 폭발 · 초록 출구 칸에 닿으면 다음 스테이지</div>
+<script>
+'use strict';
+const API = '/api/v1/games/ember-temple';
+const cv = document.getElementById('cv'), cx = cv.getContext('2d');
+const VW = cv.width, VH = cv.height;
+const COLS = 19, ROWS = 11, T = 42;
+const OX = (VW - COLS * T) / 2, OY = (VH - ROWS * T) / 2;
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const rnd = () => Math.random(), ri = n => Math.floor(Math.random() * n);
+
+/* ── 플랫폼 연동 (이어하기 코드 세이브) ── */
+const token = () => localStorage.getItem('portal_access_token');
+function deviceId() {
+  let id = localStorage.getItem('kgd_device_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('kgd_device_id', id); }
+  return id;
+}
+async function api(path, opt = {}) {
+  const headers = { 'Content-Type':'application/json', 'X-Device-Id':deviceId(), ...(opt.headers || {}) };
+  const tk = token(); if (tk) headers['Authorization'] = 'Bearer ' + tk;
+  const res = await fetch(API + path, { ...opt, headers });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.success === false) throw new Error(body?.error?.code || res.status);
+  return body.data;
+}
+const CODE_KEY = 'ember_temple_code', LOCAL_KEY = 'ember_temple_save';
+let saveCode = localStorage.getItem(CODE_KEY) || null, saveVersion = 0;
+const fmtCode = c => c ? c.replace(/(.{4})(?=.)/g, '$1-') : '';
+let meta = { bestStage: 0, bestDeaths: null, bestTime: null, clears: 0 };
+function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
+function bestLabel() {
+  if (!meta.bestStage) return '';
+  let s = '최고 기록 스테이지 ' + meta.bestStage;
+  if (meta.clears) s += ' · 클리어 ' + meta.clears + '회 (죽음 ' + meta.bestDeaths + ' · ' + Math.round(meta.bestTime) + 's)';
+  return s;
+}
+async function loadMeta(codeOverride) {
+  const code = codeOverride || saveCode;
+  if (token() || code) {
+    try {
+      const s = await api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''));
+      saveVersion = s.version;
+      if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+      if (s.data) meta = { bestStage:0, bestDeaths:null, bestTime:null, clears:0, ...s.data };
+      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      showCode(); return true;
+    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+  }
+  try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
+  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  showCode(); return true;
+}
+async function persistMeta() {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(meta));
+  try {
+    const s = await api('/save', { method:'PUT', body:JSON.stringify({ data:meta, version:saveVersion, code:saveCode }) });
+    saveVersion = s.version;
+    if (s.code && s.code !== saveCode) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+    showCode();
+  } catch (e) {
+    if (e.message === 'INVALID_INPUT') {
+      try {
+        const re = await api('/save' + (!token() && saveCode ? '?code=' + encodeURIComponent(saveCode) : ''));
+        saveVersion = re.version;
+        const s2 = await api('/save', { method:'PUT', body:JSON.stringify({ data:meta, version:saveVersion, code:saveCode }) });
+        saveVersion = s2.version;
+      } catch (_) {}
+    }
+  }
+}
+
+/* ── 스테이지 패턴 — beat 마다 예고할 칸을 돌려준다 ── */
+const key = (x, y) => x + ',' + y;
+const STAGE_DEFS = [
+  { name:'가로 물결', interval:0.95, warn:0.75,
+    cells:(b) => { const out = []; const col = b % (COLS + 3);
+      for (let y = 0; y < ROWS; y++) for (let dx = 0; dx < 2; dx++)
+        if (col + dx < COLS && (y + b) % 3 !== 0) out.push([col + dx, y]);
+      return out; } },
+  { name:'세로 파도', interval:0.9, warn:0.72,
+    cells:(b) => { const out = []; const row = b % (ROWS + 2);
+      for (let x = 0; x < COLS; x++) for (let dy = 0; dy < 2; dy++)
+        if (row + dy < ROWS && (x + b) % 4 !== 0) out.push([x, row + dy]);
+      return out; } },
+  { name:'격자 맥동', interval:1.05, warn:0.8,
+    cells:(b) => { const out = [];
+      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++)
+        if ((x + y) % 2 === b % 2) out.push([x, y]);
+      return out; } },
+  { name:'불의 비', interval:0.55, warn:0.7,
+    cells:(b) => { const out = []; const n = 14 + Math.min(b, 18);
+      for (let i = 0; i < n; i++) out.push([ri(COLS), ri(ROWS)]);
+      return out; } },
+  { name:'심장 고동', interval:1.0, warn:0.75,
+    cells:(b) => { const out = []; const cxg = Math.floor(COLS/2), cyg = Math.floor(ROWS/2);
+      const r = b % 10;
+      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+        const d = Math.max(Math.abs(x - cxg), Math.abs(y - cyg));
+        if (d === r || d === r - 4) out.push([x, y]);
+      }
+      return out; } },
+  { name:'추적하는 낙인', interval:0.8, warn:0.72,
+    cells:(b, p) => { const out = [];
+      for (let i = -2; i <= 2; i++) { out.push([p.x + i, p.y]); out.push([p.x, p.y + i]); }
+      const n = 8;
+      for (let i = 0; i < n; i++) out.push([ri(COLS), ri(ROWS)]);
+      return out.filter(([x, y]) => x >= 0 && x < COLS && y >= 0 && y < ROWS); } },
+  { name:'사선 해일', interval:0.7, warn:0.68,
+    cells:(b) => { const out = []; const d0 = b % (COLS + ROWS + 4);
+      for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++)
+        if (x + y === d0 || x + y === d0 - 2 || (COLS - 1 - x) + y === d0 - 1) out.push([x, y]);
+      return out; } },
+  { name:'심판', interval:0.62, warn:0.62,
+    cells:(b, p) => { const out = []; const n = 12 + Math.min(b, 14);
+      for (let i = 0; i < n; i++) out.push([ri(COLS), ri(ROWS)]);
+      if (b % 2 === 0) for (let i = -1; i <= 1; i++) { out.push([p.x + i, p.y]); out.push([p.x, p.y + i]); }
+      return out.filter(([x, y]) => x >= 0 && x < COLS && y >= 0 && y < ROWS); } },
+];
+let G = null, running = false, bannerT = 0, shake = 0;
+
+function newGame() {
+  G = { stage: 0, deaths: 0, time: 0, player: { x:0, y:Math.floor(ROWS/2), px:0, py:0 },
+    blasts: [], parts: [], beat: 0, beatT: 0.8, moveCd: 0, safeT: 1.2 };
+  G.player.px = G.player.x; G.player.py = G.player.y;
+}
+function banner(text) { $('banner').textContent = text; $('banner').classList.add('on'); bannerT = 1500; }
+function burst(x, y, color, n, spd) {
+  for (let i = 0; i < n; i++) {
+    const a = rnd() * Math.PI * 2, s = spd * (0.4 + rnd() * 0.8);
+    G.parts.push({ x, y, vx:Math.cos(a)*s, vy:Math.sin(a)*s, life:1, color, size:2 + rnd()*3 });
+  }
+}
+function startStage() {
+  G.stage++;
+  G.player.x = 0; G.player.y = Math.floor(ROWS / 2);
+  G.blasts = []; G.beat = 0; G.beatT = 1.1; G.safeT = 1.3;
+  banner('제' + G.stage + '실 — ' + STAGE_DEFS[G.stage - 1].name);
+}
+function respawn() {
+  G.deaths++;
+  burst(OX + G.player.x * T + T/2, OY + G.player.y * T + T/2, '#ffb066', 22, 190);
+  shake = 10;
+  G.player.x = 0; G.player.y = Math.floor(ROWS / 2);
+  G.blasts = []; G.beat = 0; G.beatT = 1.0; G.safeT = 1.3;
+}
+
+/* ── 갱신 ── */
+const keys = new Set();
+function update(dt) {
+  G.time += dt;
+  G.safeT = Math.max(0, G.safeT - dt);
+  const def = STAGE_DEFS[G.stage - 1];
+  // 비트 스케줄러
+  G.beatT -= dt;
+  if (G.beatT <= 0) {
+    G.beatT = def.interval;
+    G.beat++;
+    const cells = def.cells(G.beat, G.player);
+    const seen = new Set();
+    const uniq = cells.filter(([x, y]) => { const k = key(x, y);
+      if (seen.has(k) || x === 0 && Math.abs(y - Math.floor(ROWS/2)) <= 1 && G.safeT > 0) return false;
+      seen.add(k); return true; });
+    G.blasts.push({ cells: uniq, boomAt: def.warn, boomFor: 0.30, t: 0 });
+  }
+  for (const b of [...G.blasts]) {
+    const wasWarn = b.t < b.boomAt;
+    b.t += dt;
+    if (wasWarn && b.t >= b.boomAt) {
+      for (const [x, y] of b.cells) {
+        burst(OX + x * T + T/2, OY + y * T + T/2, rnd() < 0.5 ? '#ff8a3c' : '#ffd066', 3, 90);
+      }
+      shake = Math.max(shake, 3);
+    }
+    if (b.t >= b.boomAt && b.t < b.boomAt + b.boomFor) {
+      if (G.safeT <= 0 && b.cells.some(([x, y]) => x === G.player.x && y === G.player.y)) { respawn(); return; }
+    }
+    if (b.t >= b.boomAt + b.boomFor) G.blasts = G.blasts.filter(o => o !== b);
+  }
+  // 이동
+  G.moveCd = Math.max(0, G.moveCd - dt);
+  if (G.moveCd <= 0) {
+    let dx = 0, dy = 0;
+    if (keys.has('ArrowLeft') || keys.has('a')) dx = -1;
+    else if (keys.has('ArrowRight') || keys.has('d')) dx = 1;
+    else if (keys.has('ArrowUp') || keys.has('w')) dy = -1;
+    else if (keys.has('ArrowDown') || keys.has('s')) dy = 1;
+    if (dx || dy) {
+      const nx = clamp(G.player.x + dx, 0, COLS - 1), ny = clamp(G.player.y + dy, 0, ROWS - 1);
+      if (nx !== G.player.x || ny !== G.player.y) { G.player.x = nx; G.player.y = ny; G.moveCd = 0.11; }
+    }
+  }
+  // 부드러운 표시 위치
+  G.player.px += (G.player.x - G.player.px) * Math.min(1, dt * 22);
+  G.player.py += (G.player.y - G.player.py) * Math.min(1, dt * 22);
+  // 출구 도달
+  if (G.player.x === COLS - 1) {
+    if (G.stage >= STAGE_DEFS.length) { endGame(); return; }
+    startStage();
+  }
+  for (const q of [...G.parts]) {
+    q.x += q.vx * dt; q.y += q.vy * dt; q.vy += 200 * dt; q.life -= dt * 1.9;
+    if (q.life <= 0) G.parts = G.parts.filter(o => o !== q);
+  }
+  shake = Math.max(0, shake - dt * 32);
+  if (bannerT > 0) { bannerT -= dt * 1000; if (bannerT <= 0) $('banner').classList.remove('on'); }
+}
+
+/* ── 렌더 ── */
+function draw() {
+  const sx = shake ? (rnd() - 0.5) * shake : 0, sy = shake ? (rnd() - 0.5) * shake : 0;
+  cx.save(); cx.translate(sx, sy);
+  cx.fillStyle = '#1e100c'; cx.fillRect(-8, -8, VW + 16, VH + 16);
+  // 바닥
+  for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+    const gx = OX + x * T, gy = OY + y * T;
+    cx.fillStyle = ((x + y) & 1) ? '#3a241a' : '#402a1e';
+    cx.fillRect(gx, gy, T - 2, T - 2);
+    if (x === COLS - 1) {                                    // 출구
+      cx.fillStyle = 'rgba(110,220,140,.35)'; cx.fillRect(gx, gy, T - 2, T - 2);
+    }
+  }
+  // 용암 예고 / 폭발
+  for (const b of G.blasts) {
+    const warn = b.t < b.boomAt;
+    for (const [x, y] of b.cells) {
+      const gx = OX + x * T, gy = OY + y * T;
+      if (warn) {
+        const p = b.t / b.boomAt;
+        cx.fillStyle = 'rgba(255,' + Math.floor(140 - p * 90) + ',40,' + (0.25 + p * 0.4) + ')';
+        cx.fillRect(gx, gy, T - 2, T - 2);
+        cx.strokeStyle = 'rgba(255,120,50,' + (0.5 + p * 0.5) + ')'; cx.lineWidth = 2;
+        cx.strokeRect(gx + 2, gy + 2, T - 6, T - 6);
+      } else {
+        cx.fillStyle = '#ff9a3c'; cx.fillRect(gx - 1, gy - 1, T, T);
+        cx.fillStyle = '#ffe08a'; cx.fillRect(gx + 6, gy + 6, T - 14, T - 14);
+      }
+    }
+  }
+  cx.font = 'bold 11px monospace'; cx.textAlign = 'center'; cx.fillStyle = '#8fe0a0';
+  cx.fillText('출구 ▶', OX + (COLS - 1) * T + T/2, OY - 8);
+  // 플레이어
+  const ppx = OX + G.player.px * T + T/2, ppy = OY + G.player.py * T + T/2;
+  cx.fillStyle = 'rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(ppx, ppy + 13, 11, 4, 0, 0, 7); cx.fill();
+  cx.fillStyle = G.safeT > 0 && Math.floor(G.safeT * 10) % 2 ? 'rgba(240,224,212,.5)' : '#f0e0d4';
+  cx.fillRect(ppx - 8, ppy - 14, 16, 22);
+  cx.fillStyle = '#4a9ad6'; cx.fillRect(ppx - 8, ppy - 2, 16, 10);
+  cx.fillStyle = '#241a0e'; cx.fillRect(ppx - 4, ppy - 9, 3, 3); cx.fillRect(ppx + 2, ppy - 9, 3, 3);
+  for (const q of G.parts) {
+    cx.globalAlpha = clamp(q.life, 0, 1);
+    cx.fillStyle = q.color; cx.fillRect(q.x, q.y, q.size, q.size);
+    cx.globalAlpha = 1;
+  }
+  cx.restore();
+  $('stageTxt').textContent = '🌋 제' + G.stage + '실/' + STAGE_DEFS.length + ' — ' + STAGE_DEFS[G.stage - 1].name;
+  $('deathTxt').textContent = '💀 ' + G.deaths;
+  $('timeTxt').textContent = '⏱ ' + Math.floor(G.time) + 's';
+}
+
+/* ── 입력 ── */
+const codeChar = ev => { const c = ev.code || ''; return c.startsWith('Key') ? c.slice(3).toLowerCase() : ev.key; };
+addEventListener('keydown', ev => {
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(ev.key)) ev.preventDefault();
+  keys.add(codeChar(ev));
+});
+addEventListener('keyup', ev => keys.delete(codeChar(ev)));
+addEventListener('blur', () => keys.clear());
+
+/* ── 시작/종료 ── */
+function startGame() {
+  newGame(); running = true;
+  $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false;
+  startStage();
+}
+async function endGame() {
+  running = false; $('hud').hidden = true;
+  meta.bestStage = Math.max(meta.bestStage, G.stage);
+  meta.clears = (meta.clears || 0) + 1;
+  if (meta.bestDeaths === null || G.deaths < meta.bestDeaths) meta.bestDeaths = G.deaths;
+  if (meta.bestTime === null || G.time < meta.bestTime) meta.bestTime = G.time;
+  $('endTitle').textContent = '🏆 신전 탈출!';
+  $('endDesc').textContent = '8개의 방을 모두 건넜다 — 죽음 ' + G.deaths + '회 · ' + Math.round(G.time) + '초. ' + bestLabel();
+  $('endPanel').hidden = false;
+  await persistMeta();
+}
+// 중도 포기 없음 — 죽음은 리스폰이므로 게임오버 화면이 따로 없다. 스테이지 도달 기록만 갱신.
+addEventListener('beforeunload', () => {
+  if (running && G) { meta.bestStage = Math.max(meta.bestStage, G.stage); localStorage.setItem(LOCAL_KEY, JSON.stringify(meta)); }
+});
+let last = performance.now();
+function loop() {
+  requestAnimationFrame(loop);
+  const t = performance.now(), dt = Math.min(0.05, (t - last) / 1000); last = t;
+  if (!running || !G) return;
+  update(dt);
+  if (running && G) draw();
+}
+requestAnimationFrame(loop);
+$('startBtn').onclick = startGame;
+$('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false; $('bestTxt').textContent = bestLabel(); };
+$('codeLoadBtn').onclick = async () => {
+  const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (raw.length < 8) return;
+  if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw); $('bestTxt').textContent = bestLabel(); showCode(); }
+};
+loadMeta().then(() => { $('bestTxt').textContent = bestLabel(); });
+</script>
+</body>
+</html>
