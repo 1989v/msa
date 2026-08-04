@@ -39,6 +39,11 @@ resources:
   # cf-origin-ca-tls 와 동일하게 OCI 에서 수동 등록 (git 미포함).
   - cloudflared
 patches:
+  # 모든 Deployment — 단일 노드라 surge 불가: 자리 비운 뒤 교체
+  - path: patches/rolling-no-surge.yaml
+    target:
+      kind: Deployment
+
   # ─── Kafka EXTERNAL listener — WARP 통한 외부 접근용 (kafka-ui macOS docker 등) ─
   # base 의 advertised 는 host-access(k3s-lite) 검증용 localhost:19092.
   # oci-arm 에선 외부 client 가 reconnect 시 사용할 public hostname 으로 교체.
