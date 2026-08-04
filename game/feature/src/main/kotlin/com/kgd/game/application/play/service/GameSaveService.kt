@@ -23,27 +23,44 @@ class GameSaveService(
     private val saveCommand: GameSaveCommand,
 ) {
     companion object {
-        /** 로드 후 1시간 동안 같은 holder(기기)만 로드/저장 가능 — 멀티기기 동시 조작 방어 */
+/** 저장 후 1시간 동안 같은 holder(기기)만 저장 가능 — 멀티기기 동시 쓰기 방어 */
         private val LEASE_TTL: Duration = Duration.ofHours(1)
         private const val MAX_SAVE_BYTES = 64 * 1024
     }
 
-    fun load(slug: String, memberId: Long, holder: String): SaveSnapshot? {
+    /**
+     * 로그인 사용자는 memberId 로, 게스트는 이어하기 코드로 자기 세이브를 찾는다.
+     * 읽기는 잠그지 않는다 — 브라우저를 잃고 코드로 복구하는 경로가 이전 기기의 리스에 막히면 안 된다.
+     */
+    fun load(slug: String, memberId: Long?, code: String?, holder: String): SaveSnapshot? {
         val gameId = resolveGameId(slug)
-        acquireLeaseOrThrow(gameId, memberId, holder)
-        return saveCommand.find(gameId, memberId)
+        subjectOf(memberId, code) ?: return null                    // 신원이 없으면 불러올 세이브도 없다
+        return if (memberId != null) saveCommand.find(gameId, memberId)
+        else saveCommand.findByCode(gameId, requireNotNull(code))
     }
 
-    fun store(slug: String, memberId: Long, holder: String, data: String, expectedVersion: Long): SaveSnapshot {
+    fun store(
+        slug: String,
+        memberId: Long?,
+        code: String?,
+        holder: String,
+        data: String,
+        expectedVersion: Long,
+    ): SaveSnapshot {
         val gameId = resolveGameId(slug)
         val size = data.toByteArray(Charsets.UTF_8).size
         if (size > MAX_SAVE_BYTES) throw SaveTooLargeException(size = size, limit = MAX_SAVE_BYTES)
-        acquireLeaseOrThrow(gameId, memberId, holder)
-        return saveCommand.upsert(gameId, memberId, data, expectedVersion)
+        // 코드가 아직 없는 첫 저장은 잠글 대상이 없다 — 발급 후부터 리스가 걸린다.
+        // 코드로 식별된 요청은 코드 자체가 자격 증명이라 이전 기기의 리스를 넘겨받는다.
+        subjectOf(memberId, code)?.let { acquireLeaseOrThrow(gameId, it, holder, takeover = memberId == null) }
+        return saveCommand.upsert(gameId, memberId, code, data, expectedVersion)
     }
 
-    private fun acquireLeaseOrThrow(gameId: Long, memberId: Long, holder: String) {
-        if (!saveLease.tryAcquire(gameId, memberId, holder, LEASE_TTL)) throw SaveLockedException()
+    private fun subjectOf(memberId: Long?, code: String?): String? =
+        memberId?.toString() ?: code?.takeIf { it.isNotBlank() }?.uppercase()
+
+    private fun acquireLeaseOrThrow(gameId: Long, subject: String, holder: String, takeover: Boolean = false) {
+        if (!saveLease.tryAcquire(gameId, subject, holder, LEASE_TTL, takeover)) throw SaveLockedException()
     }
 
     private fun resolveGameId(slug: String): Long {
@@ -62,7 +79,10 @@ class GameSaveCommand(
     @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
     fun find(gameId: Long, memberId: Long): SaveSnapshot? = saveRepository.find(gameId, memberId)
 
+    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    fun findByCode(gameId: Long, code: String): SaveSnapshot? = saveRepository.findByCode(gameId, code)
+
     @Transactional(transactionManager = "gameTransactionManager")
-    fun upsert(gameId: Long, memberId: Long, data: String, expectedVersion: Long): SaveSnapshot =
-        saveRepository.upsert(gameId, memberId, data, expectedVersion)
+    fun upsert(gameId: Long, memberId: Long?, code: String?, data: String, expectedVersion: Long): SaveSnapshot =
+        saveRepository.upsert(gameId, memberId, code, data, expectedVersion)
 }

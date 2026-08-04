@@ -13,6 +13,7 @@ import com.kgd.game.infrastructure.persistence.play.repository.GameSaveDataJpaRe
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
+import java.security.SecureRandom
 import java.time.Duration
 
 @Repository
@@ -20,25 +21,55 @@ class GameSaveRepositoryAdapter(
     private val jpaRepository: GameSaveDataJpaRepository,
 ) : GameSaveRepositoryPort {
 
-    override fun find(gameId: Long, memberId: Long): SaveSnapshot? =
-        jpaRepository.findByGameIdAndMemberId(gameId, memberId)
-            ?.let { SaveSnapshot(data = it.data, version = it.version) }
+    private companion object {
+        /** 사람이 옮겨 적기 쉽도록 모양이 헷갈리는 글자(0/O, 1/I/L)를 뺀 알파벳 */
+        const val CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+        const val CODE_LENGTH = 12
+        const val CODE_ATTEMPTS = 8
+    }
 
-    override fun upsert(gameId: Long, memberId: Long, data: String, expectedVersion: Long): SaveSnapshot {
-        val existing = jpaRepository.findByGameIdAndMemberId(gameId, memberId)
+    override fun find(gameId: Long, memberId: Long): SaveSnapshot? =
+        jpaRepository.findByGameIdAndMemberId(gameId, memberId)?.toSnapshot()
+
+    override fun findByCode(gameId: Long, code: String): SaveSnapshot? =
+        jpaRepository.findByGameIdAndSaveCode(gameId, code.normalizeCode())?.toSnapshot()
+
+    override fun upsert(gameId: Long, memberId: Long?, code: String?, data: String, expectedVersion: Long): SaveSnapshot {
+        val normalized = code?.normalizeCode()
+        val existing = memberId?.let { jpaRepository.findByGameIdAndMemberId(gameId, it) }
+            ?: normalized?.let { jpaRepository.findByGameIdAndSaveCode(gameId, it) }
+
         if (existing == null) {
             if (expectedVersion != 0L) throw SaveVersionConflictException(expected = expectedVersion, actual = 0L)
-            val saved = jpaRepository.save(GameSaveDataJpaEntity(gameId = gameId, memberId = memberId, data = data))
-            return SaveSnapshot(data = saved.data, version = saved.version)
+            val saved = jpaRepository.save(
+                GameSaveDataJpaEntity(gameId = gameId, memberId = memberId, saveCode = issueCode(), data = data)
+            )
+            return saved.toSnapshot()
         }
         if (existing.version != expectedVersion) {
             throw SaveVersionConflictException(expected = expectedVersion, actual = existing.version)
         }
         existing.updateData(data)
-        val saved = jpaRepository.saveAndFlush(existing)
-        return SaveSnapshot(data = saved.data, version = saved.version)
+        return jpaRepository.saveAndFlush(existing).toSnapshot()
     }
+
+    /** 충돌하면 다시 뽑는다 — 12자리 31진이라 실제 충돌은 사실상 없다 */
+    private fun issueCode(): String {
+        repeat(CODE_ATTEMPTS) {
+            val candidate = (1..CODE_LENGTH)
+                .map { CODE_ALPHABET[SecureRandom().nextInt(CODE_ALPHABET.length)] }
+                .joinToString("")
+            if (!jpaRepository.existsBySaveCode(candidate)) return candidate
+        }
+        error("이어하기 코드 발급에 실패했습니다")
+    }
+
+    private fun GameSaveDataJpaEntity.toSnapshot() =
+        SaveSnapshot(data = data, version = version, code = saveCode)
 }
+
+/** 입력 코드 정규화 — 대소문자와 구분용 하이픈/공백을 무시한다 */
+fun String.normalizeCode(): String = uppercase().filter { it.isLetterOrDigit() }
 
 @Repository
 class GameRunRepositoryAdapter(
@@ -66,13 +97,13 @@ class RedisSaveLeaseStore(
     private val redis: StringRedisTemplate,
 ) : SaveLeasePort {
 
-    private fun key(gameId: Long, memberId: Long) = "game:save:lease:$gameId:$memberId"
+    private fun key(gameId: Long, subject: String) = "game:save:lease:$gameId:$subject"
 
-    override fun tryAcquire(gameId: Long, memberId: Long, holder: String, ttl: Duration): Boolean {
-        val k = key(gameId, memberId)
+    override fun tryAcquire(gameId: Long, subject: String, holder: String, ttl: Duration, takeover: Boolean): Boolean {
+        val k = key(gameId, subject)
         if (redis.opsForValue().setIfAbsent(k, holder, ttl) == true) return true
-        if (redis.opsForValue().get(k) == holder) {
-            redis.expire(k, ttl)
+        if (takeover || redis.opsForValue().get(k) == holder) {
+            redis.opsForValue().set(k, holder, ttl)
             return true
         }
         return false

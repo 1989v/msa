@@ -16,6 +16,8 @@ interface GameRatingJpaRepository : JpaRepository<GameRatingJpaEntity, Long> {
 
 interface GameSaveDataJpaRepository : JpaRepository<GameSaveDataJpaEntity, Long> {
     fun findByGameIdAndMemberId(gameId: Long, memberId: Long): GameSaveDataJpaEntity?
+    fun findByGameIdAndSaveCode(gameId: Long, saveCode: String): GameSaveDataJpaEntity?
+    fun existsBySaveCode(saveCode: String): Boolean
 }
 
 interface GameRunJpaRepository : JpaRepository<GameRunJpaEntity, Long> {

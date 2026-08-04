@@ -51,25 +51,46 @@ class GameSaveServiceTest : BehaviorSpec({
     }
 
     given("세이브 로드 시") {
-        `when`("다른 기기가 리스를 점유 중이면") {
-            then("SaveLockedException이 발생해야 한다") {
+        `when`("다른 기기가 리스를 점유 중이어도") {
+            then("읽기는 막히지 않아야 한다 (코드 복구 경로 보장)") {
                 val lease = mockk<SaveLeasePort>()
-                every { lease.tryAcquire(1L, 7L, any(), any()) } returns false
+                every { lease.tryAcquire(any(), any(), any(), any(), any()) } returns false
+                val saveRepository = mockk<GameSaveRepositoryPort>()
+                every { saveRepository.find(1L, 7L) } returns SaveSnapshot("{}", 2L, "CODE12345678")
 
-                shouldThrow<SaveLockedException> {
-                    serviceWith(lease).load("roguelike", memberId = 7L, holder = "device-b")
-                }
+                serviceWith(lease, saveRepository)
+                    .load("roguelike", memberId = 7L, code = null, holder = "device-b")?.version shouldBe 2L
             }
         }
 
-        `when`("리스를 획득하고 세이브가 없으면") {
+        `when`("세이브가 없으면") {
             then("null을 반환해야 한다 (신규 유저)") {
-                val lease = mockk<SaveLeasePort>()
-                every { lease.tryAcquire(1L, 7L, any(), any()) } returns true
+                val lease = mockk<SaveLeasePort>(relaxed = true)
                 val saveRepository = mockk<GameSaveRepositoryPort>()
                 every { saveRepository.find(1L, 7L) } returns null
 
-                serviceWith(lease, saveRepository).load("roguelike", 7L, "device-a") shouldBe null
+                serviceWith(lease, saveRepository).load("roguelike", 7L, null, "device-a") shouldBe null
+            }
+        }
+
+        `when`("게스트가 이어하기 코드를 제시하면") {
+            then("코드로 세이브를 찾아야 한다") {
+                val lease = mockk<SaveLeasePort>(relaxed = true)
+                val saveRepository = mockk<GameSaveRepositoryPort>()
+                every { saveRepository.findByCode(1L, "ABCD2345WXYZ") } returns
+                    SaveSnapshot(data = """{"floor":5}""", version = 4L, code = "ABCD2345WXYZ")
+
+                val result = serviceWith(lease, saveRepository)
+                    .load("roguelike", memberId = null, code = "ABCD2345WXYZ", holder = "device-a")
+                result?.version shouldBe 4L
+                result?.code shouldBe "ABCD2345WXYZ"
+            }
+        }
+
+        `when`("신원(로그인/코드)이 전혀 없으면") {
+            then("불러올 세이브가 없어 null을 반환해야 한다") {
+                val lease = mockk<SaveLeasePort>(relaxed = true)
+                serviceWith(lease).load("roguelike", memberId = null, code = null, holder = "device-a") shouldBe null
             }
         }
     }
@@ -78,10 +99,10 @@ class GameSaveServiceTest : BehaviorSpec({
         `when`("64KB를 초과하면") {
             then("SaveTooLargeException이 발생해야 한다") {
                 val lease = mockk<SaveLeasePort>()
-                every { lease.tryAcquire(any(), any(), any(), any()) } returns true
+                every { lease.tryAcquire(any(), any(), any(), any(), any()) } returns true
 
                 shouldThrow<SaveTooLargeException> {
-                    serviceWith(lease).store("roguelike", 7L, "device-a", "x".repeat(64 * 1024 + 1), 0)
+                    serviceWith(lease).store("roguelike", 7L, null, "device-a", "x".repeat(64 * 1024 + 1), 0)
                 }
             }
         }
@@ -89,13 +110,27 @@ class GameSaveServiceTest : BehaviorSpec({
         `when`("리스 보유 + 버전이 맞으면") {
             then("업서트 결과를 반환해야 한다") {
                 val lease = mockk<SaveLeasePort>()
-                every { lease.tryAcquire(1L, 7L, "device-a", any()) } returns true
+                every { lease.tryAcquire(1L, "7", "device-a", any(), any()) } returns true
                 val saveRepository = mockk<GameSaveRepositoryPort>()
-                every { saveRepository.upsert(1L, 7L, """{"floor":3}""", 2L) } returns
-                    SaveSnapshot(data = """{"floor":3}""", version = 3L)
+                every { saveRepository.upsert(1L, 7L, null, """{"floor":3}""", 2L) } returns
+                    SaveSnapshot(data = """{"floor":3}""", version = 3L, code = "CODE12345678")
 
-                val result = serviceWith(lease, saveRepository).store("roguelike", 7L, "device-a", """{"floor":3}""", 2L)
+                val result = serviceWith(lease, saveRepository)
+                    .store("roguelike", 7L, null, "device-a", """{"floor":3}""", 2L)
                 result.version shouldBe 3L
+            }
+        }
+
+        `when`("게스트의 첫 저장이면") {
+            then("리스 없이 저장되고 이어하기 코드가 발급되어야 한다") {
+                val lease = mockk<SaveLeasePort>()
+                val saveRepository = mockk<GameSaveRepositoryPort>()
+                every { saveRepository.upsert(1L, null, null, """{"floor":1}""", 0L) } returns
+                    SaveSnapshot(data = """{"floor":1}""", version = 1L, code = "NEWCODE23456")
+
+                val result = serviceWith(lease, saveRepository)
+                    .store("roguelike", null, null, "device-a", """{"floor":1}""", 0L)
+                result.code shouldBe "NEWCODE23456"
             }
         }
     }

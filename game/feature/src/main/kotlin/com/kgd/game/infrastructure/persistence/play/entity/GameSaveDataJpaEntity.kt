@@ -12,7 +12,10 @@ import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.LocalDateTime
 
-/** 클라우드 세이브 — 게임이 정의하는 불투명 JSON blob, @Version 낙관적 락 (설계 §4.2) */
+/**
+ * 클라우드 세이브 — 게임이 정의하는 불투명 JSON blob, @Version 낙관적 락 (설계 §4.2).
+ * 로그인 사용자는 memberId 로, 게스트는 saveCode 로 자기 세이브를 찾는다.
+ */
 @Entity
 @Table(
     name = "game_save_data",
@@ -23,8 +26,11 @@ class GameSaveDataJpaEntity(
     val id: Long? = null,
     @Column(name = "game_id", nullable = false)
     val gameId: Long,
-    @Column(name = "member_id", nullable = false)
-    val memberId: Long,
+    @Column(name = "member_id")
+    val memberId: Long? = null,
+    /** 이어하기 코드 — 브라우저 저장소를 잃어도 이 코드로 복구한다 */
+    @Column(name = "save_code", length = 16, unique = true)
+    val saveCode: String? = null,
     data: String,
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

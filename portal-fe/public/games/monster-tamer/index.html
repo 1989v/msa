@@ -149,6 +149,12 @@
       <button id="newBtn" class="ghost">새 게임</button>
     </div>
     <div id="saveStatus"></div>
+    <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off"
+             style="background:#0f1626;border:1px solid #2a3550;color:#e6ebf5;border-radius:7px;padding:7px 10px;
+                    font-family:inherit;font-size:12px;letter-spacing:1px;width:170px;text-transform:uppercase">
+      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+    </div>
     <div style="display:flex;gap:6px;margin-top:4px">
       <button id="langKo" class="ghost">🇰🇷 한국어</button><button id="langEn" class="ghost">🇺🇸 English</button>
     </div>
@@ -1001,16 +1007,36 @@ async function api(path, opt = {}) {
 }
 let saveVersion = 0, cloud = false, lastSavedAt = null;
 const LOCAL_KEY = 'monster_tamer_save_v6';
+const CODE_KEY = 'monster_tamer_code';
+/** 서버가 발급한 이어하기 코드 — 브라우저 저장소가 사라져도 이 코드로 복구한다 */
+let saveCode = localStorage.getItem(CODE_KEY) || null;
+const fmtCode = c => c ? c.replace(/(.{4})(?=.)/g, '$1-') : '';
+function setCode(c) {
+  if (!c || c === saveCode) return;
+  saveCode = c; localStorage.setItem(CODE_KEY, c);
+  const el = $('codeTxt'); if (el) el.textContent = fmtCode(c);
+}
 function toast(msg) { const el = $('toast'); el.textContent = msg; el.style.opacity = 1; clearTimeout(toast._t); toast._t = setTimeout(() => { el.style.opacity = 0; }, 2600); }
-async function loadSave() {
-  if (token()) {
+/** 서버 세이브를 우선 사용하고, 통신이 안 되면 브라우저 사본으로 떨어진다 */
+async function loadSave(codeOverride) {
+  const code = codeOverride || saveCode;
+  if (token() || code) {
     try {
-      const s = await api('/save'); cloud = true; saveVersion = s.version;
-      $('saveStatus').textContent = '☁ 클라우드 세이브 (v' + saveVersion + ')';
-      return s.data && s.data.v === 6 ? s.data : null;
-    } catch (e) { $('saveStatus').textContent = e.message === 'FORBIDDEN' ? '⚠ 다른 기기에서 세이브 사용 중' : '세이브 로드 실패: ' + e.message; return null; }
+      const s = await api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''));
+      cloud = true; saveVersion = s.version; setCode(s.code);
+      $('saveStatus').textContent = t('☁ 서버 세이브 (v' + saveVersion + ')','☁ Server save (v' + saveVersion + ')');
+      if (s.data && s.data.v === 6) return s.data;
+      if (codeOverride) toast(t('그 코드로 저장된 세이브가 없습니다','No save found for that code'));
+      return null;
+    } catch (e) {
+      $('saveStatus').textContent = e.message === 'FORBIDDEN'
+        ? t('⚠ 다른 기기에서 세이브 사용 중','⚠ Save in use on another device')
+        : t('세이브 로드 실패: ','Save load failed: ') + e.message;
+      if (codeOverride) return null;
+    }
   }
-  $('saveStatus').textContent = t('게스트 모드 — 이 브라우저에만 저장 (로그인 시 클라우드)','Guest mode — saved to this browser only (sign in for cloud saves)');
+  cloud = false;
+  $('saveStatus').textContent = t('브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다','Local save — a resume code is issued when you save');
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); return d && d.v === 6 ? d : null; } catch (_) { return null; }
 }
 async function persist(silent) {
@@ -1021,9 +1047,24 @@ async function persist(silent) {
     ascension:S.ascension, shinyCount:S.shinyCount, hms:S.hms, visited:S.visited, explored,
     beaten:[...S.beaten], minutes:S.minutes, car:S.car, rival:S.rival, rivalStage:S.rivalStage };
   lastSavedAt = new Date();
-  if (!cloud) { localStorage.setItem(LOCAL_KEY, JSON.stringify(data)); if (!silent) toast('💾 저장됨 (브라우저)'); return; }
-  try { const s = await api('/save', { method:'PUT', body:JSON.stringify({ data, version:saveVersion }) }); saveVersion = s.version; if (!silent) toast('☁ 저장됨 (v' + saveVersion + ')'); }
-  catch (e) { if (e.message === 'INVALID_INPUT') { const re = await api('/save'); saveVersion = re.version; } else if (!silent) toast('저장 실패: ' + e.message); }
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(data));      // 서버가 죽어도 이 사본으로는 이어갈 수 있다
+  try {
+    const s = await api('/save', { method:'PUT', body:JSON.stringify({ data, version:saveVersion, code:saveCode }) });
+    saveVersion = s.version; cloud = true;
+    const fresh = !saveCode && s.code;
+    setCode(s.code);
+    if (fresh) toast(t('🔑 이어하기 코드 발급: ','🔑 Resume code issued: ') + fmtCode(saveCode) + t(' — 메뉴에서 확인/복사',' — see it in the menu'));
+    else if (!silent) toast(t('☁ 저장됨 (v','☁ Saved (v') + saveVersion + ')');
+  } catch (e) {
+    if (e.message === 'INVALID_INPUT') {                       // 버전 충돌 — 재동기화 후 한 번 더
+      try {
+        const re = await api('/save' + (!token() && saveCode ? '?code=' + encodeURIComponent(saveCode) : ''));
+        saveVersion = re.version;
+        const s2 = await api('/save', { method:'PUT', body:JSON.stringify({ data, version:saveVersion, code:saveCode }) });
+        saveVersion = s2.version; setCode(s2.code);
+      } catch (_) { if (!silent) toast(t('저장 충돌 — 다시 시도하세요','Save conflict — try again')); }
+    } else if (!silent) toast(t('서버 저장 실패(브라우저에는 저장됨): ','Server save failed (kept locally): ') + e.message);
+  }
 }
 
 /* ═══════════ 상태 ═══════════ */
@@ -1463,6 +1504,18 @@ function renderMenu() {
      ['저장 위치', cloud ? '☁ 클라우드' : '이 브라우저'],
      ['마지막 저장', lastSavedAt ? lastSavedAt.toLocaleTimeString() : '아직 없음']].forEach(([k, v]) => row('<span class="grow"><b>' + k + '</b><small>' + v + '</small></span>'));
     const b = document.createElement('button'); b.textContent = t('💾 지금 저장','💾 Save now'); b.onclick = () => { persist(false); renderMenu(); }; body.appendChild(b);
+    // 이어하기 코드 — 이 코드만 있으면 다른 브라우저/기기에서도 복구된다
+    const cr = document.createElement('div'); cr.className = 'menuRow';
+    cr.innerHTML = '<span class="grow"><b>🔑 ' + t('이어하기 코드','Resume code') + '</b><small id="codeTxt" style="letter-spacing:2px;font-size:13px;color:#ffd54a">' +
+      (saveCode ? fmtCode(saveCode) : t('아직 없음 — 한 번 저장하면 발급됩니다','none yet — save once to get one')) + '</small>' +
+      '<small>' + t('브라우저 기록이 지워져도 이 코드로 복구할 수 있습니다. 적어두세요.',
+                    'Keeps your save recoverable even if this browser is wiped. Write it down.') + '</small></span>';
+    if (saveCode) {
+      const cb = document.createElement('button'); cb.textContent = t('복사','Copy');
+      cb.onclick = () => { navigator.clipboard?.writeText(saveCode); toast(t('코드를 복사했습니다','Code copied')); };
+      cr.appendChild(cb);
+    }
+    body.appendChild(cr);
   }
 }
 function heldMenu(m) {
@@ -2401,6 +2454,12 @@ function continueGame(saved) {
 })();
 loadSave().then(saved => {
   if (saved && saved.party?.length) { $('continueBtn').hidden = false; $('continueBtn').onclick = () => continueGame(saved); }
+  $('codeLoadBtn').onclick = async () => {
+    const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (raw.length < 8) { toast(t('코드를 정확히 입력하세요','Enter the full code')); return; }
+    const d = await loadSave(raw);
+    if (d && d.party?.length) { setCode(raw); continueGame(d); }
+  };
   $('newBtn').onclick = newGame;
 });
 </script>

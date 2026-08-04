@@ -199,11 +199,16 @@ class GatewayRouteConfig(
                     }
                     .uri(CODE_DICTIONARY_URI)
             }
-            // 클라우드 세이브 — 인증 필수 (X-Device-Id 리스는 서비스에서 판정)
+            // 클라우드 세이브 — 게스트 허용(이어하기 코드로 식별). 익명 쓰기라 Rate Limiter 를 건다
             .route("game-save") { r ->
                 r.path("/api/v1/games/*/save")
                     .filters { f ->
-                        f.filter(authFilter.apply(userConfig()))
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(userKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
                             .stripPrefix(0)
                     }
                     .uri(CODE_DICTIONARY_URI)
