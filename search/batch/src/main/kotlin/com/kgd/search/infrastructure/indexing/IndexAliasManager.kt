@@ -1,10 +1,12 @@
 package com.kgd.search.infrastructure.indexing
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
-import jakarta.json.JsonObject
 import org.opensearch.client.json.JsonpDeserializer
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.mapping.TypeMapping
+import org.opensearch.client.opensearch.indices.CreateIndexRequest
 import org.opensearch.client.opensearch.indices.IndexSettings
 import org.springframework.stereotype.Component
 import java.io.StringReader
@@ -16,6 +18,12 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
 
     private val log = KotlinLogging.logger {}
     private val timestampFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+
+    // 리소스 JSON 을 settings/mappings 로 쪼개기 위한 로컬 파서.
+    // 클라이언트 mapper 의 jsonProvider().createReader(DOM) 는 opensearch-java 3.8 의
+    // JacksonJsonProvider 가 UnsupportedOperationException 을 던져 사용 불가 (로컬 E2E 확인)
+    // — 스트리밍 createParser 경로만 지원되므로 분해는 Jackson 트리로 수행한다.
+    private val jsonSplitter = ObjectMapper()
 
     companion object {
         /** settings/mappings 의 SSOT (ADR-0055) — nori 분석기 + 필드 매핑 전체. */
@@ -35,14 +43,15 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
      */
     fun createIndex(indexName: String) {
         val definition = loadIndexDefinition()
-        val settings = definition.getJsonObject("settings").parseAs(IndexSettings._DESERIALIZER)
-        val mappings = definition.getJsonObject("mappings").parseAs(TypeMapping._DESERIALIZER)
+        val settings = definition.required("settings").parseAs(IndexSettings._DESERIALIZER)
+        val mappings = definition.required("mappings").parseAs(TypeMapping._DESERIALIZER)
 
-        osClient.indices().create { req ->
-            req.index(indexName)
-               .settings(settings)
-               .mappings(mappings)
-        }
+        val request = CreateIndexRequest.Builder()
+            .index(indexName)
+            .settings(settings)
+            .mappings(mappings)
+            .build()
+        osClient.indices().create(request)
         log.info { "Created index: $indexName" }
     }
 
@@ -85,16 +94,17 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
             osClient.indices().get { it.index("${prefix}*") }.result().keys.toList()
         }.getOrElse { emptyList() }
 
-    private fun loadIndexDefinition(): JsonObject {
+    private fun loadIndexDefinition(): JsonNode {
         val stream = requireNotNull(javaClass.getResourceAsStream(INDEX_DEFINITION_RESOURCE)) {
             "Index definition resource not found: $INDEX_DEFINITION_RESOURCE"
         }
-        return stream.use { s ->
-            osClient._transport().jsonpMapper().jsonProvider().createReader(s).readObject()
-        }
+        return stream.use { jsonSplitter.readTree(it) }
     }
 
-    private fun <T> JsonObject.parseAs(deserializer: JsonpDeserializer<T>): T {
+    private fun JsonNode.required(key: String): JsonNode =
+        requireNotNull(get(key)) { "'$key' 누락 — $INDEX_DEFINITION_RESOURCE 정의 확인" }
+
+    private fun <T> JsonNode.parseAs(deserializer: JsonpDeserializer<T>): T {
         val mapper = osClient._transport().jsonpMapper()
         return mapper.jsonProvider().createParser(StringReader(toString())).use { parser ->
             deserializer.deserialize(parser, mapper)
