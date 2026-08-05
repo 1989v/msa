@@ -21,8 +21,10 @@ kind: Kustomization
 #      - DNS-only (gray cloud) 1종: rt — WS/SSE 가 CF 100s timeout 을 피해야 해서
 #        의도적으로 우회. 이 레코드가 origin IP 를 공개하므로 origin-lockdown
 #        (Authenticated Origin Pull) 이 필요하다 → origin-lockdown/README.md
-#      - argocd 레코드는 두지 않는다. GitOps 콘솔은 Cloudflare Zero Trust Tunnel
-#        뒤에서만 접근 (k8s/argocd/README.md)
+#      - argocd 는 origin IP 를 가리키는 A 레코드를 두지 않는다. GitOps 콘솔은
+#        Cloudflare Zero Trust Tunnel 뒤에서만 접근 (k8s/argocd/README.md).
+#        터널 Public Hostname 등록 시 Cloudflare 가 자동 생성하는 CNAME
+#        (<tunnel-id>.cfargotunnel.com, proxied) 은 정상이며 필수 — 지우지 말 것.
 #   2. ./k8s/overlays/oci-arm/scripts/render.sh <DOMAIN> <LE_EMAIL> | kubectl apply -f -
 #      (또는 Argo CD 사용 시 ./k8s/argocd/install.sh ... <DOMAIN>)
 #   3. cert-manager 가 ClusterIssuer 로 letsencrypt-prod 발급 (수 초~수 분, host 마다 별개 cert)

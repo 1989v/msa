@@ -22,7 +22,10 @@ OCI Ampere A1 24GB 환경에서 메모리 최소화 (704Mi 한도 합) 로 GitOp
 4. **DNS 레코드 등록** (OCI public IP):
    - proxied (orange cloud): `@` (root), `admin`, `quant`, `gft`, `game`, `api`
    - DNS-only (gray cloud): `rt` — WS/SSE 가 CF 100s timeout 을 피해야 해서 의도적 우회
-   - `argocd` 는 등록하지 않는다 (위 참조). 이미 있으면 삭제할 것.
+   - `argocd` 는 **origin IP 를 가리키는 A 레코드**를 두지 않는다 (위 참조).
+     이미 있으면 삭제할 것 — 남아 있으면 Zero Trust 를 건너뛰고 origin 으로 직행한다.
+     단, 터널 Public Hostname 을 등록하면 Cloudflare 가 `<tunnel-id>.cfargotunnel.com`
+     으로 향하는 CNAME(proxied)을 자동 생성한다. **이건 정상이며 필수 레코드다.**
 
 ## 설치
 

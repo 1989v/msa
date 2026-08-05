@@ -79,7 +79,9 @@ cloudflared 는 `commerce` ns 라 argocd ns 로 나가는 egress 허용이 필�
 `cloudflared/network-policy.yaml` 에 argocd namespaceSelector 규칙을 추가하되, egress 정책이
 DNAT 전후 어느 포트를 보는지가 CNI 마다 달라 80(Service)/8080(Pod)을 모두 연다.
 
-`argocd` DNS A 레코드는 삭제한다 — 남겨두면 Zero Trust 를 건너뛰고 origin 으로 직행한다.
+origin IP 를 가리키는 `argocd` A 레코드는 삭제한다 — 남겨두면 Zero Trust 를 건너뛰고
+origin 으로 직행한다. 반면 터널 Public Hostname 등록 시 Cloudflare 가 자동 생성하는
+`<tunnel-id>.cfargotunnel.com` CNAME(proxied)은 정상이며 필수다.
 
 ### 3) `/actuator` 는 어느 host 에도 두지 않는다
 
@@ -106,6 +108,40 @@ portal-fe 서비스 카탈로그가 사용하며, `health` 한 endpoint 만 노�
 
 Ingress 의 host 와 TLS host 를 DNS 실제값(`game.`)에 맞춘다. `cf-origin-ca-tls` 는
 `*.1989v.com` 와일드카드(2041-05 만료)라 별도 발급 없이 커버된다.
+
+## 적용 결과 및 후속 발견 (2026-08-06)
+
+### 매니페스트에서 지워도 클러스터 잔재는 남는다
+
+`ingress.yaml.template` 을 레포에서 삭제해도, 과거 `install.sh` 가 **직접 apply** 한
+`argocd-server` Ingress 는 클러스터에 그대로 남아 있었다. Argo CD 의 `Application/commerce`
+는 `k8s/overlays/oci-arm` 만 추적하므로 argocd ns 의 이 리소스는 **추적 대상이 아니고,
+따라서 prune 되지 않는다.** 80일 된 이 잔재가 origin IP 직행 + `Host: argocd.<DOMAIN>`
+으로 Access 를 우회해 Argo UI 를 200 으로 열어두고 있던 실제 구멍이었다. SSH 로 수동
+삭제 후 origin 직행 404 / CF 경유 Access 302 를 확인했다.
+
+교훈: **GitOps 미추적 네임스페이스에 스크립트로 apply 한 리소스는 레포에서 지운다고
+사라지지 않는다.** 노출면을 줄이는 변경은 매니페스트 삭제와 클러스터 실물 확인을
+반드시 짝으로 수행한다.
+
+### 배포 검증 (Argo sync 후 실측)
+
+| 대상 | 결과 |
+|---|---|
+| `argocd.<DOMAIN>` | CF 경유 302(Access) / origin 직행 404 |
+| `api.<DOMAIN>/actuator/prometheus` | 404 |
+| `<DOMAIN>/actuator/prometheus` | 200 이지만 portal-fe SPA 셸(text/html) — 메트릭 아님 |
+| `<DOMAIN>/svc/product/actuator/health` | 200 (의도적 유지) |
+| `<DOMAIN>/.well-known/security.txt` | 200 text/plain |
+| origin 직행 `Host: <DOMAIN>` | 200 — **AOP 미활성 상태, 예정대로** |
+
+### 도메인 실값 커밋으로의 전환
+
+본 ADR 과 별개로, `commerce-platform.yaml` 의 `__DOMAIN__` 치환 방식은 폐기되고 실값
+커밋으로 전환됐다(2026-08-05). `Application/commerce` 의 인라인 인덱스 패치가 host 추가
+시 인덱스 드리프트를 일으켜 sync 침묵 정지를 2회 유발했기 때문이다. 결과적으로 host
+추가 절차가 "ingress 파일 append → push" 로 단순해졌고, 본 ADR 의 노출면 축소 변경도
+같은 파일에서 함께 관리된다.
 
 ## Consequences
 
