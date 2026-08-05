@@ -28,8 +28,10 @@
 # portal-fe 서비스 카탈로그가 쓰는 헬스 표시는 gateway 의 `/svc/<service>/actuator/health`
 # 라우트가 담당 — health 한 endpoint 만 노출하므로 이건 의도적으로 유지.
 #
-# install.sh / Application/commerce 의 kustomize.patches 가 __DOMAIN__ 를
-# 실제 도메인 (예: 1989v.com) 로 치환한다.
+# 도메인은 실값(1989v.com)으로 커밋한다 — GitOps 표준(환경별 overlay 에 concrete 값).
+# 과거 1989v.com 템플릿 + Application 인라인 인덱스 패치 방식은 host 추가 시
+# 인덱스 드리프트로 sync 침묵 정지를 2회 유발해 폐기 (2026-08-05).
+# host 추가 절차: 이 파일에 append → push → Argo 자동 반영 (Application 수정 불필요).
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -45,16 +47,16 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - __DOMAIN__
-        - admin.__DOMAIN__
-        - quant.__DOMAIN__
-        - gft.__DOMAIN__
-        - api.__DOMAIN__
-        - game.__DOMAIN__
+        - 1989v.com
+        - admin.1989v.com
+        - quant.1989v.com
+        - gft.1989v.com
+        - api.1989v.com
+        - game.1989v.com
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
-    - host: __DOMAIN__
+    - host: 1989v.com
       http:
         paths:
           - path: /api
@@ -73,7 +75,7 @@ spec:
             pathType: Prefix
             backend: { service: { name: portal-fe, port: { name: http } } }
     # ─── admin-fe ───
-    - host: admin.__DOMAIN__
+    - host: admin.1989v.com
       http:
         paths:
           - path: /api
@@ -92,7 +94,7 @@ spec:
             pathType: Prefix
             backend: { service: { name: admin-fe, port: { name: http } } }
     # ─── quant-fe ───
-    - host: quant.__DOMAIN__
+    - host: quant.1989v.com
       http:
         paths:
           - path: /api
@@ -111,7 +113,7 @@ spec:
             pathType: Prefix
             backend: { service: { name: quant-fe, port: { name: http } } }
     # ─── gifticon-fe (gft.<DOMAIN>) ───
-    - host: gft.__DOMAIN__
+    - host: gft.1989v.com
       http:
         paths:
           - path: /api
@@ -131,7 +133,7 @@ spec:
             backend: { service: { name: gifticon-fe, port: { name: http } } }
     # ─── gateway API 전용 host (REST 위주) ───
     # root catch-all 대신 명시 prefix — `/` 로 열어두면 /actuator 가 다시 노출된다.
-    - host: api.__DOMAIN__
+    - host: api.1989v.com
       http:
         paths:
           - path: /api
@@ -147,7 +149,7 @@ spec:
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
     # ─── game (game.<DOMAIN>) — portal-fe 가 host 인식해 루트에서 게임 허브 렌더 ───
-    - host: game.__DOMAIN__
+    - host: game.1989v.com
       http:
         paths:
           - path: /api
@@ -179,11 +181,11 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-    - hosts: [rt.__DOMAIN__]
+    - hosts: [rt.1989v.com]
       secretName: rt-tls
   rules:
     # ─── gateway WS/SSE bypass host (Cloudflare proxy OFF) ───
-    - host: rt.__DOMAIN__
+    - host: rt.1989v.com
       http:
         paths:
           - path: /
