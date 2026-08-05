@@ -49,8 +49,8 @@ spec:
         - admin.__DOMAIN__
         - quant.__DOMAIN__
         - gft.__DOMAIN__
-        - game.__DOMAIN__
         - api.__DOMAIN__
+        - game.__DOMAIN__
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
@@ -129,6 +129,23 @@ spec:
           - path: /
             pathType: Prefix
             backend: { service: { name: gifticon-fe, port: { name: http } } }
+    # ─── gateway API 전용 host (REST 위주) ───
+    # root catch-all 대신 명시 prefix — `/` 로 열어두면 /actuator 가 다시 노출된다.
+    - host: api.__DOMAIN__
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /ws
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /sse
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /svc
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
     # ─── game (game.<DOMAIN>) — portal-fe 가 host 인식해 루트에서 게임 허브 렌더 ───
     - host: game.__DOMAIN__
       http:
@@ -148,23 +165,6 @@ spec:
           - path: /
             pathType: Prefix
             backend: { service: { name: portal-fe, port: { name: http } } }
-    # ─── gateway API 전용 host (REST 위주) ───
-    # root catch-all 대신 명시 prefix — `/` 로 열어두면 /actuator 가 다시 노출된다.
-    - host: api.__DOMAIN__
-      http:
-        paths:
-          - path: /api
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /ws
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /sse
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /svc
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
