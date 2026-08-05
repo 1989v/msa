@@ -7,16 +7,22 @@ OCI Ampere A1 24GB 환경에서 메모리 최소화 (704Mi 한도 합) 로 GitOp
 - `values.yaml` — Helm chart values (server/repo/controller/redis 리소스 한도)
 - `application.yaml` — commerce 플랫폼 sync 정의 (`__GITHUB_REPO_URL__`,
   `__DOMAIN__`, `__OCI_LE_EMAIL__` 치환)
-- `ingress.yaml.template` — UI ingress (cert-manager TLS, `__DOMAIN__` 치환)
 - `install.sh` — 일괄 설치 스크립트
+
+> **UI 는 public Ingress 로 노출하지 않는다** (ADR-0061). GitOps 콘솔이 인터넷에
+> 직접 보이면 로그인 화면과 정확한 버전이 익명에게 공개돼 크레덴셜 공격과 신규
+> CVE 의 1순위 표적이 되고, 뚫리면 클러스터 전체 장악으로 직결된다. 접근은
+> port-forward 또는 Cloudflare Zero Trust Tunnel + Access policy 로만 한다.
 
 ## 사전 조건
 
 1. `scripts/oci-bootstrap.sh` 완료 (k3s + ingress-nginx + cert-manager)
 2. **OCIR Auth Token 발급**: OCI Console → User Settings → Auth Tokens
 3. Tenancy **Object Storage namespace** 확인 (Profile → Tenancy 페이지)
-4. **DNS A 레코드 등록** (7종, 모두 OCI public IP / Cloudflare DNS-only):
-   `@` (root), `admin`, `quant`, `gft`, `agent`, `api`, `argocd`
+4. **DNS 레코드 등록** (OCI public IP):
+   - proxied (orange cloud): `@` (root), `admin`, `quant`, `gft`, `game`, `api`
+   - DNS-only (gray cloud): `rt` — WS/SSE 가 CF 100s timeout 을 피해야 해서 의도적 우회
+   - `argocd` 는 등록하지 않는다 (위 참조). 이미 있으면 삭제할 것.
 
 ## 설치
 
@@ -56,18 +62,35 @@ SA patch CronJob 은 만들지 않는다.
 
 ### UI 접속
 
+**a) port-forward (기본 — 추가 설정 없음)**
+
+```bash
+kubectl -n argocd port-forward svc/argocd-server 8080:80
+# → http://localhost:8080   ID: admin / PW: (install.sh 출력값)
 ```
-https://argocd.<DOMAIN>/
-  ID  : admin
-  PW  : (install.sh 출력값)
-```
+
+**b) Cloudflare Zero Trust (상시 접근이 필요할 때)**
+
+`k8s/overlays/oci-arm/cloudflared/README.md` 의 Public Hostname 표에 `argocd`
+행을 등록하고 Access policy(본인 이메일 1개)를 건다. cloudflared 가 argocd ns
+로 나가는 egress 는 `cloudflared/network-policy.yaml` 에 이미 열려 있다.
 
 ### CLI 로그인
 
+port-forward 를 띄운 상태에서:
+
 ```bash
-argocd login argocd.<DOMAIN> --username admin --password <PASSWORD>
+argocd login localhost:8080 --username admin --password <PASSWORD> --insecure
 argocd app list
 argocd app sync commerce
+```
+
+Zero Trust hostname 으로 붙일 때는 브라우저 SSO 를 못 타므로 Access
+**Service Token** 을 발급해 헤더로 넘긴다:
+
+```bash
+argocd login argocd.<DOMAIN> --username admin --password <PASSWORD> \
+  --header "CF-Access-Client-Id: <id>,CF-Access-Client-Secret: <secret>"
 ```
 
 ### 동기화 확인
@@ -155,8 +178,8 @@ resources:
 그리고 `k8s/argocd/application.yaml` 의 `kustomize.patches` 에서 staging email
 patch entry 도 같이 제거. 첫 cert 발급 디버깅 시 staging 으로 먼저 검증하고
 싶을 때만 다시 활성. Let's Encrypt prod 의 rate limit (등록 도메인당 50 cert/주)
-은 베이스 도메인(예: `1989v.com`) 단위로 적용되며, 우리는 `commerce` /
-`argocd` 두 서브도메인만 쓰므로 실질 영향 없음.
+은 베이스 도메인(예: `1989v.com`) 단위로 적용되며, Let's Encrypt 를 쓰는 host 는
+`rt` 하나뿐(나머지 proxied host 는 Cloudflare Origin CA)이므로 실질 영향 없음.
 
 ### Drift / SelfHeal 비활성화 임시
 

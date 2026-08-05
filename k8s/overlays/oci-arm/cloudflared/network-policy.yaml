@@ -57,6 +57,17 @@ spec:
         - { protocol: TCP, port: 8123 }
         - { protocol: TCP, port: 9000 }
         - { protocol: TCP, port: 19092 }
+    # cluster-internal: Argo CD UI — GitOps 콘솔은 public Ingress 대신 Zero Trust
+    # Tunnel + Access policy 뒤에서만 연다 (k8s/argocd/README.md).
+    # 80(Service) / 8080(Pod) 둘 다 허용: egress 정책이 DNAT 전후 어느 포트를
+    # 보는지가 CNI 구현마다 달라서, 한쪽만 열면 환경에 따라 조용히 막힌다.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: argocd
+      ports:
+        - { protocol: TCP, port: 80 }
+        - { protocol: TCP, port: 8080 }
     # DNS (cluster CoreDNS)
     - to:
         - namespaceSelector:

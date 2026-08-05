@@ -109,25 +109,12 @@ sed -e "s|__GITHUB_REPO_URL__|$GITHUB_REPO_URL|g" \
 ok "Application 등록"
 
 #───────────────────────────────────────────────────────────────────────────────
-# 4. UI Ingress — argocd.<DOMAIN> + cert-manager TLS
+# 4. 초기 admin 비번 출력
 #───────────────────────────────────────────────────────────────────────────────
-log "UI Ingress 적용 (host: argocd.${DOMAIN})"
-sed -e "s|__DOMAIN__|$DOMAIN|g" \
-    -e "s|__OCI_LE_EMAIL__|$LE_EMAIL|g" \
-    "$SCRIPT_DIR/ingress.yaml.template" | kubectl apply -f -
-ok "Ingress 적용"
-
-#───────────────────────────────────────────────────────────────────────────────
-# 5. cert 발급 대기 (최대 5분)
-#───────────────────────────────────────────────────────────────────────────────
-log "TLS 인증서 발급 대기..."
-kubectl -n argocd wait --for=condition=Ready \
-  certificate/argocd-tls --timeout=300s 2>/dev/null \
-  || echo "  (Ready 시점은 cert-manager describe 로 확인)"
-
-#───────────────────────────────────────────────────────────────────────────────
-# 6. 초기 admin 비번 출력
-#───────────────────────────────────────────────────────────────────────────────
+# UI 는 public Ingress 로 노출하지 않는다 — GitOps 콘솔이 인터넷에서 직접
+# 보이면 로그인 화면과 정확한 버전이 공개돼 크레덴셜 공격/신규 CVE 의 표적이
+# 되고, 클러스터 전체 장악으로 이어진다. Cloudflare Zero Trust Tunnel +
+# Access policy 뒤에 두거나 port-forward 로 접근한다 (README.md).
 PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d 2>/dev/null || echo "<not-found>")
 
@@ -136,7 +123,7 @@ cat <<EOF
 ╭─────────────────────────────────────────────────────────────────╮
 │  ✅ Argo CD 설치 완료                                            │
 ├─────────────────────────────────────────────────────────────────┤
-│  UI URL    : https://argocd.${DOMAIN}
+│  UI 접근   : public Ingress 없음 — Zero Trust 또는 port-forward
 │  Username  : admin
 │  Password  : ${PASSWORD}
 │  Repository: ${GITHUB_REPO_URL}
@@ -145,11 +132,16 @@ cat <<EOF
 
 다음 단계:
 
-1) UI 접속 → admin 비밀번호 변경 (User Info → Update Password)
-2) Application 동기화 상태 확인:
+1) UI 접속 (둘 중 하나):
+   a) 즉시  : kubectl -n argocd port-forward svc/argocd-server 8080:80
+              → http://localhost:8080
+   b) 상시  : Cloudflare Zero Trust Tunnel 에 argocd.${DOMAIN} Public Hostname
+              등록 + Access policy (절차는 README.md)
+2) admin 비밀번호 변경 (User Info → Update Password)
+3) Application 동기화 상태 확인:
      kubectl -n argocd get applications
      watch -n 5 'kubectl -n commerce get pods | head -30'
-3) 초기 비밀번호 secret 회수 (선택):
+4) 초기 비밀번호 secret 회수 (선택):
      kubectl -n argocd delete secret argocd-initial-admin-secret
 
 리소스 점유 확인:

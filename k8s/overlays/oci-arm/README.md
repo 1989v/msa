@@ -2,8 +2,18 @@
 
 Single-node k3s 배포용 overlay. 베이스는 `k3s-lite` 이고 그 위에 커스텀 도메인
 기반 host 라우팅 (FE 별 subdomain) + cert-manager 기반 Let's Encrypt TLS 를
-얹는다. 7개 DNS A 레코드 (`@`, admin, quant, gft, agent, api, argocd) 가 OCI
-public IP 로 설정돼 있으면 자동으로 cert 발급.
+얹는다.
+
+DNS 레코드는 전부 OCI public IP 를 가리킨다:
+
+| 레코드 | Cloudflare | TLS | 비고 |
+|---|---|---|---|
+| `@`, `admin`, `quant`, `gft`, `game`, `api` | proxied (orange) | CF Origin CA (수동 등록 `cf-origin-ca-tls`) | WAF/rate limit 적용 |
+| `rt` | DNS-only (gray) | Let's Encrypt (cert-manager 자동 발급) | WS/SSE — CF 100s timeout 회피용 의도적 우회 |
+
+`argocd` 레코드는 두지 않는다 — GitOps 콘솔은 Zero Trust Tunnel 뒤에서만 연다
+(ADR-0061). `rt` 가 origin IP 를 공개하므로 Cloudflare 우회를 막으려면
+`origin-lockdown/README.md` 의 Authenticated Origin Pull 활성화가 필요하다.
 
 ## 사전 요구사항 (OCI VM 안에서)
 

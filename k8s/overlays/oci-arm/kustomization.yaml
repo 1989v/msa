@@ -4,7 +4,7 @@ kind: Kustomization
 #
 # 베이스: k3s-lite (이미 리소스 절감 + Redis standalone + ClickHouse 메모리 상향 적용)
 # 위에 다음을 더 얹는다:
-#   - 커스텀 도메인 기반 host 라우팅 (FE 별 subdomain — admin/quant/gft/agent/api)
+#   - 커스텀 도메인 기반 host 라우팅 (FE 별 subdomain — admin/quant/gft/game/api)
 #   - cert-manager + Let's Encrypt HTTP01 challenge
 #   - 24GB / 4 OCPU 안에서 전체 서비스 셋 가동
 #
@@ -15,7 +15,14 @@ kind: Kustomization
 #   - FE: docker buildx build --platform linux/arm64
 #
 # 적용 절차 (요약):
-#   1. DNS A 레코드 7종 등록: @(root), admin, quant, gft, agent, api, argocd → OCI public IP
+#   1. DNS 레코드 등록 → OCI public IP
+#      - proxied (orange cloud) 6종: @(root), admin, quant, gft, game, api
+#        Cloudflare 를 반드시 경유해야 WAF/rate limit 가 걸린다.
+#      - DNS-only (gray cloud) 1종: rt — WS/SSE 가 CF 100s timeout 을 피해야 해서
+#        의도적으로 우회. 이 레코드가 origin IP 를 공개하므로 origin-lockdown
+#        (Authenticated Origin Pull) 이 필요하다 → origin-lockdown/README.md
+#      - argocd 레코드는 두지 않는다. GitOps 콘솔은 Cloudflare Zero Trust Tunnel
+#        뒤에서만 접근 (k8s/argocd/README.md)
 #   2. ./k8s/overlays/oci-arm/scripts/render.sh <DOMAIN> <LE_EMAIL> | kubectl apply -f -
 #      (또는 Argo CD 사용 시 ./k8s/argocd/install.sh ... <DOMAIN>)
 #   3. cert-manager 가 ClusterIssuer 로 letsencrypt-prod 발급 (수 초~수 분, host 마다 별개 cert)
@@ -28,7 +35,7 @@ resources:
   - cert-manager/cluster-issuer-staging.yaml
   - cert-manager/cluster-issuer-prod.yaml
   # Ingress 2개:
-  # - commerce-proxied: 6 host (root + admin/quant/gft/agent/api) — CF proxy
+  # - commerce-proxied: 6 host (root + admin/quant/gft/game/api) — CF proxy
   #   활성, secretName 은 수동 등록한 cf-origin-ca-tls (CF Origin CA 15년 cert).
   # - commerce-rt: rt.* — CF proxy 미사용 (WS/SSE bypass), Let's Encrypt HTTP01.
   # base 의 단일 path-routed Ingress 2개 (frontend, gateway) 는 아래 $patch:
@@ -38,7 +45,16 @@ resources:
   # Access policy 는 Cloudflare dashboard 에서 관리. tunnel 토큰 Secret 은
   # cf-origin-ca-tls 와 동일하게 OCI 에서 수동 등록 (git 미포함).
   - cloudflared
+  # Cloudflare Authenticated Origin Pull 용 CA. Secret 만으로는 동작 변화 없음
+  # (검증은 아래 patches 의 aop-patch 가 붙을 때 시작). origin-lockdown/README.md
+  - origin-lockdown/cloudflare-origin-pull-ca.yaml
 patches:
+  # ─── Origin lockdown (Cloudflare 우회 차단) ────────────────────────────────
+  # ⚠️ Cloudflare 대시보드 SSL/TLS > Origin Server > Authenticated Origin Pulls
+  #    를 먼저 ON 한 뒤에 주석 해제할 것. 순서를 뒤집으면 proxied host 6종이
+  #    전부 400 이 된다. 절차/검증/롤백 → origin-lockdown/README.md
+  # - path: origin-lockdown/aop-patch.yaml
+  #   target: {kind: Ingress, name: commerce-proxied}
   # 모든 Deployment — 단일 노드라 surge 불가: 자리 비운 뒤 교체
   - path: patches/rolling-no-surge.yaml
     target:

@@ -1,0 +1,21 @@
+# commerce-proxied Ingress 에 Cloudflare Authenticated Origin Pull(mTLS) 강제.
+#
+# 이 패치가 붙으면 origin 은 Cloudflare 클라이언트 인증서를 제시하지 않은 TLS
+# 연결을 400 으로 끊는다. 즉 `curl -H "Host: 1989v.com" https://<OCI_IP>/` 로
+# WAF / rate limit / Bot Fight 를 우회하던 경로가 막힌다.
+#
+# ⚠️ 활성화 순서를 지킬 것 — Cloudflare 대시보드에서 Authenticated Origin Pulls
+#    를 켜기 전에 이 패치가 먼저 sync 되면 proxied host 6종이 전부 400 이 된다.
+#    절차는 README.md 참조.
+#
+# commerce-rt(rt.<DOMAIN>)는 대상이 아니다 — CF proxy 를 의도적으로 우회하는
+# WS/SSE host 라 클라이언트가 CF 인증서를 가질 수 없다.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: commerce-proxied
+  namespace: commerce
+  annotations:
+    nginx.ingress.kubernetes.io/auth-tls-secret: "commerce/cf-origin-pull-ca"
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+    nginx.ingress.kubernetes.io/auth-tls-verify-depth: "1"

@@ -43,6 +43,11 @@ Tunnel 클릭 → **Public Hostnames** 탭에서 hostname 마다 1개씩 등록.
 | `ch` | `<DOMAIN>` | HTTP | `http://clickhouse.commerce.svc.cluster.local:8123` | ClickHouse HTTP |
 | `ch-tcp` | `<DOMAIN>` | TCP | `clickhouse.commerce.svc.cluster.local:9000` | ClickHouse Native |
 | `es` | `<DOMAIN>` | HTTP | `http://opensearch.commerce.svc.cluster.local:9200` | OpenSearch / Dashboards (ADR-0055) |
+| `argocd` | `<DOMAIN>` | HTTP | `http://argocd-server.argocd.svc.cluster.local:80` | Argo CD UI (ADR-0061) |
+
+> **Argo CD 주의**: 이 hostname 은 public Ingress 를 대체한다. `argocd.<DOMAIN>` 의 DNS A 레코드가 남아 있으면 Zero Trust 를 건너뛰고 origin 으로 직행하므로, Tunnel 등록 전에 **기존 A 레코드를 반드시 삭제**할 것. cloudflared 는 `commerce` ns 라 argocd ns 로 나가는 egress 허용이 필요한데, 이는 `network-policy.yaml` 에 이미 포함돼 있다.
+>
+> CLI(`argocd login`)는 Access 로 보호된 hostname 에 대해 브라우저 SSO 를 못 타므로, **Service Token** 을 발급해 `--header "CF-Access-Client-Id: ...,CF-Access-Client-Secret: ..."` 로 붙이거나 `kubectl port-forward` 를 쓴다.
 
 > **MySQL hostname 주의**: read 만 할 거면 `mysql-product-replica` 등 service 이름으로 분리해서 매핑 가능. 단순화 위해 master 1개만 매핑해도 OK.
 
@@ -57,7 +62,7 @@ Tunnel 클릭 → **Public Hostnames** 탭에서 hostname 마다 1개씩 등록.
   - Action: Allow
   - Rule: `Emails` = 본인 이메일 1개
 
-7개 hostname 모두 동일 정책이면 **Application Group** 으로 묶어서 한 번에 적용 가능.
+8개 hostname 모두 동일 정책이면 **Application Group** 으로 묶어서 한 번에 적용 가능.
 
 ### 6. WARP 설치 + Zero Trust 연동 (클라이언트 측)
 

@@ -1,0 +1,7 @@
+> RFC 9116 취약점 공개 창구. 갱신 시 Expires 를 반드시 미래로 밀 것 —
+> 만료된 security.txt 는 스캐너가 무효로 취급한다.
+
+Contact: mailto:1989v@naver.com
+Expires: 2027-08-06T00:00:00.000Z
+Preferred-Languages: ko, en
+Canonical: https://1989v.com/.well-known/security.txt
