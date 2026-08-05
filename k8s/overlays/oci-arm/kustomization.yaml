@@ -51,12 +51,15 @@ resources:
   # (검증은 아래 patches 의 aop-patch 가 붙을 때 시작). origin-lockdown/README.md
   - origin-lockdown/cloudflare-origin-pull-ca.yaml
 patches:
-  # ─── Origin lockdown (Cloudflare 우회 차단) ────────────────────────────────
-  # ⚠️ Cloudflare 대시보드 SSL/TLS > Origin Server > Authenticated Origin Pulls
-  #    를 먼저 ON 한 뒤에 주석 해제할 것. 순서를 뒤집으면 proxied host 6종이
-  #    전부 400 이 된다. 절차/검증/롤백 → origin-lockdown/README.md
-  # - path: origin-lockdown/aop-patch.yaml
-  #   target: {kind: Ingress, name: commerce-proxied}
+  # ─── Origin lockdown (Cloudflare 우회 차단) — 활성 (2026-08-06) ────────────
+  # 선행 조건 충족: Cloudflare SSL/TLS > Origin Server > Authenticated Origin
+  # Pulls 의 **전역(Global)** 이 ON — CF 가 공유 클라이언트 인증서를 제시하며,
+  # 아래 패치가 origin 에서 그걸 검증한다. 전역을 끄면 proxied host 6종이 전부
+  # 400 이 되므로 대시보드와 이 패치는 항상 같이 켜고 같이 끈다.
+  # 커스텀 인증서(존 레벨/호스트명별)로 올릴 때는 origin-lockdown 의 CA Secret 도
+  # 본인 CA 로 교체해야 한다. 검증/롤백 → origin-lockdown/README.md
+  - path: origin-lockdown/aop-patch.yaml
+    target: {kind: Ingress, name: commerce-proxied}
   # 모든 Deployment — 단일 노드라 surge 불가: 자리 비운 뒤 교체
   - path: patches/rolling-no-surge.yaml
     target:
