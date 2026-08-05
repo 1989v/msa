@@ -18,9 +18,15 @@
 #   api.<DOMAIN>                → gateway (REST 위주) [proxied]
 #   rt.<DOMAIN>                 → gateway (WS+SSE) [bypass]
 #
-# FE host (proxied) 의 /api · /ws · /sse · /actuator · /svc 는 모두 gateway 로
-# proxy (same-origin 호출 유지). FE 코드가 WS/SSE 만 rt.<DOMAIN> 직접 호출
-# 하려면 VITE_WS_URL / VITE_SSE_URL 환경변수 설정 (Phase 4).
+# FE host (proxied) 의 /api · /ws · /sse · /svc 는 모두 gateway 로 proxy
+# (same-origin 호출 유지). FE 코드가 WS/SSE 만 rt.<DOMAIN> 직접 호출 하려면
+# VITE_WS_URL / VITE_SSE_URL 환경변수 설정 (Phase 4).
+#
+# `/actuator` 는 어느 host 에도 두지 않는다 — 익명에게 /actuator/prometheus 전량과
+# 내부 클래스명이 새기 때문. Prometheus 는 ServiceMonitor 로 cluster-internal
+# scrape 하고(k8s/infra/prod/monitoring), probe 는 Pod IP 로 직접 친다.
+# portal-fe 서비스 카탈로그가 쓰는 헬스 표시는 gateway 의 `/svc/<service>/actuator/health`
+# 라우트가 담당 — health 한 endpoint 만 노출하므로 이건 의도적으로 유지.
 #
 # install.sh / Application/commerce 의 kustomize.patches 가 __DOMAIN__ 를
 # 실제 도메인 (예: 1989v.com) 로 치환한다.
@@ -43,7 +49,7 @@ spec:
         - admin.__DOMAIN__
         - quant.__DOMAIN__
         - gft.__DOMAIN__
-        - games.__DOMAIN__
+        - game.__DOMAIN__
         - api.__DOMAIN__
       secretName: cf-origin-ca-tls
   rules:
@@ -58,9 +64,6 @@ spec:
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /sse
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /actuator
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /svc
@@ -82,9 +85,6 @@ spec:
           - path: /sse
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
-          - path: /actuator
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
           - path: /svc
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
@@ -102,9 +102,6 @@ spec:
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /sse
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
-          - path: /actuator
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /svc
@@ -126,17 +123,14 @@ spec:
           - path: /sse
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
-          - path: /actuator
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
           - path: /svc
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /
             pathType: Prefix
             backend: { service: { name: gifticon-fe, port: { name: http } } }
-    # ─── games (games.<DOMAIN>) — portal-fe 가 host 인식해 루트에서 게임 허브 렌더 ───
-    - host: games.__DOMAIN__
+    # ─── game (game.<DOMAIN>) — portal-fe 가 host 인식해 루트에서 게임 허브 렌더 ───
+    - host: game.__DOMAIN__
       http:
         paths:
           - path: /api
@@ -148,9 +142,6 @@ spec:
           - path: /sse
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
-          - path: /actuator
-            pathType: Prefix
-            backend: { service: { name: gateway, port: { name: http } } }
           - path: /svc
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
@@ -158,10 +149,20 @@ spec:
             pathType: Prefix
             backend: { service: { name: portal-fe, port: { name: http } } }
     # ─── gateway API 전용 host (REST 위주) ───
+    # root catch-all 대신 명시 prefix — `/` 로 열어두면 /actuator 가 다시 노출된다.
     - host: api.__DOMAIN__
       http:
         paths:
-          - path: /
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /ws
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /sse
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /svc
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
 ---

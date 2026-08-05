@@ -17,8 +17,8 @@ const QuantApp = lazy(() => import('./shell/placeholders').then((m) => ({ defaul
 const GifticonApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.GifticonApp })));
 const AgentViewerApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.AgentViewerApp })));
 
-// games.<domain> 서브도메인 — 동일 portal-fe 번들을 서빙하되 루트가 게임 허브 (ADR-0059)
-const isGamesHost = window.location.hostname.split('.')[0] === 'games';
+// game.<domain> 서브도메인 — 동일 portal-fe 번들을 서빙하되 루트가 게임 허브 (ADR-0059)
+const isGamesHost = window.location.hostname.split('.')[0] === 'game';
 
 function App() {
   return (
