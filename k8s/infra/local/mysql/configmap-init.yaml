@@ -23,6 +23,7 @@ data:
     CREATE DATABASE IF NOT EXISTS warehouse_db       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS code_dictionary_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS game_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS place_db           CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS experiment_db      CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS quant        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -38,6 +39,7 @@ data:
     CREATE USER IF NOT EXISTS 'warehouse_user'@'%'        IDENTIFIED BY 'warehouse_password';
     CREATE USER IF NOT EXISTS 'code_dictionary_user'@'%'  IDENTIFIED BY 'code_dictionary_password';
     CREATE USER IF NOT EXISTS 'game_user'@'%'             IDENTIFIED BY 'game_password';
+    CREATE USER IF NOT EXISTS 'place_user'@'%'            IDENTIFIED BY 'place_password';
     CREATE USER IF NOT EXISTS 'quant'@'%'           IDENTIFIED BY 'quant';
     CREATE USER IF NOT EXISTS 'commerce'@'%'              IDENTIFIED BY '';
 
@@ -53,6 +55,7 @@ data:
     GRANT ALL PRIVILEGES ON warehouse_db.*       TO 'warehouse_user'@'%';
     GRANT ALL PRIVILEGES ON code_dictionary_db.* TO 'code_dictionary_user'@'%';
     GRANT ALL PRIVILEGES ON game_db.*            TO 'game_user'@'%';
+    GRANT ALL PRIVILEGES ON place_db.*           TO 'place_user'@'%';
     GRANT ALL PRIVILEGES ON experiment_db.*      TO 'commerce'@'%';
     GRANT ALL PRIVILEGES ON quant.*        TO 'quant'@'%';
 

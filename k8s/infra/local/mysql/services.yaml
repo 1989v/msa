@@ -173,3 +173,13 @@ metadata:
 spec:
   selector: { app.kubernetes.io/name: mysql }
   ports: [{ name: mysql, port: 3306, targetPort: 3306 }]
+---
+# place (ADR-0056) — 단일 datasource 라 master/replica 구분 없음
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-place
+  namespace: commerce
+spec:
+  selector: { app.kubernetes.io/name: mysql }
+  ports: [{ name: mysql, port: 3306, targetPort: 3306 }]

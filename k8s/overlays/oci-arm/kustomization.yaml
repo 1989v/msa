@@ -150,9 +150,13 @@ patches:
   - path: patches/resources-fe-96mi.yaml
     target: {kind: Deployment, name: gifticon-fe}
   # ─── place (ADR-0056) — DB provisioning 전까지 비활성 가드 ─────────────────
-  # place_db/mysql-place 미구성 + OCIR place 이미지 미등재 상태에서 Argo sync 시
-  # crashloop/ImagePull 방지. 활성화 절차: place_db 생성 → OCIR 이미지 push →
-  # images: 에 commerce/place 추가 → 본 패치 제거.
+  # OCIR 이미지·images: 항목은 CI 가 등재 완료. 남은 활성화 절차:
+  #   1) 운영 MySQL 에 1회 수동 SQL (기존 데이터 볼륨이라 init 스크립트 미실행):
+  #      kubectl exec -n commerce mysql-0 -- mysql -uroot -p$MYSQL_ROOT_PASSWORD -e \
+  #        "CREATE DATABASE IF NOT EXISTS place_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; \
+  #         CREATE USER IF NOT EXISTS 'place_user'@'%' IDENTIFIED BY 'place_password'; \
+  #         GRANT ALL PRIVILEGES ON place_db.* TO 'place_user'@'%'; FLUSH PRIVILEGES;"
+  #   2) 본 replicas=0 패치 제거 → Argo sync (mysql-place Service 는 infra 매니페스트로 자동 적용)
   - target:
       kind: Deployment
       name: place
