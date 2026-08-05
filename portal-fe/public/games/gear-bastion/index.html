@@ -164,12 +164,25 @@ for (let i = 1; i < WAYPOINTS.length; i++) {
 const wpPix = WAYPOINTS.map(([x, y]) => ({ x: x * T + T/2, y: y * T + T/2 }));
 
 /* ── 포탑 정의 ── */
+/**
+ * 강화(★)는 포탑마다 다른 축이 자란다:
+ *   볼트 = 공격력 + 연사속도 · 캐넌 = 공격력 + 폭발 반경 · 서리 = 사거리 + 감속 강도/지속 · 스파크 = 연쇄 수
+ */
 const TURRETS = {
-  bolt:   { name:'볼트',   emoji:'🔩', cost:70,  dmg:8,  rate:0.45, range:130, air:true,  color:'#8fb8d6' },
-  cannon: { name:'캐넌',   emoji:'💣', cost:120, dmg:24, rate:1.35, range:140, air:false, splash:55, color:'#d69a5a' },
-  frost:  { name:'서리',   emoji:'❄',  cost:90,  dmg:4,  rate:0.8,  range:125, air:true,  slow:0.45, slowT:1.6, color:'#9adcf0' },
-  spark:  { name:'스파크', emoji:'⚡', cost:140, dmg:13, rate:0.9,  range:130, air:true,  chain:3, color:'#f0e08a' },
+  bolt:   { name:'볼트',   emoji:'🔩', cost:70,  dmg:8,  rate:0.45, range:130, air:true,  color:'#8fb8d6',
+            up: lv => ({ dmg: 8 * Math.pow(1.45, lv), rate: 0.45 * Math.pow(0.86, lv) }),
+            upDesc: lv => '공 ' + Math.round(8 * Math.pow(1.45, lv)) + ' · 연사 ' + (0.45 * Math.pow(0.86, lv)).toFixed(2) + 's' },
+  cannon: { name:'캐넌',   emoji:'💣', cost:120, dmg:24, rate:1.35, range:140, air:false, splash:55, color:'#d69a5a',
+            up: lv => ({ dmg: 24 * Math.pow(1.5, lv), splash: 55 + lv * 16 }),
+            upDesc: lv => '공 ' + Math.round(24 * Math.pow(1.5, lv)) + ' · 반경 ' + (55 + lv * 16) },
+  frost:  { name:'서리',   emoji:'❄',  cost:90,  dmg:4,  rate:0.8,  range:125, air:true,  slow:0.45, slowT:1.6, color:'#9adcf0',
+            up: lv => ({ dmg: 4 + lv, range: 125 * (1 + lv * 0.22), slowMul: 0.55 - lv * 0.07, slowT: 1.6 + lv * 0.5 }),
+            upDesc: lv => '사거리 ' + Math.round(125 * (1 + lv * 0.22)) + ' · 감속 ' + Math.round((1 - (0.55 - lv * 0.07)) * 100) + '% · ' + (1.6 + lv * 0.5).toFixed(1) + 's' },
+  spark:  { name:'스파크', emoji:'⚡', cost:140, dmg:13, rate:0.9,  range:130, air:true,  chain:3, color:'#f0e08a',
+            up: lv => ({ dmg: 13 * Math.pow(1.25, lv), chain: 3 + lv }),
+            upDesc: lv => '공 ' + Math.round(13 * Math.pow(1.25, lv)) + ' · 연쇄 ' + (3 + lv) + '체' },
 };
+const turretStat = t => ({ ...TURRETS[t.kind], ...TURRETS[t.kind].up(t.lv) });
 const FOES = {
   crawler:  { name:'기는골렘', hp:30, spd:68,  bounty:6,  r:12, color:'#8a7a5c' },
   swift:    { name:'질주골렘', hp:19, spd:122, bounty:7,  r:10, color:'#6ab88a' },
@@ -243,7 +256,7 @@ function popText(x, y, text, color) { G.parts.push({ x, y, vx:0, vy:-28, life:1,
 function startWave() {
   G.wave++; G.phase = 'wave';
   const w = G.wave, q = [];
-  const n = 8 + w * 2;
+  const n = 9 + w * 3;
   for (let i = 0; i < n; i++) {
     let kind = 'crawler';
     const r = rnd();
@@ -257,7 +270,7 @@ function startWave() {
   banner('웨이브 ' + w + (w % 5 === 0 ? ' — 거대골렘!' : ''));
 }
 function spawnFoe(kind) {
-  const d = FOES[kind], sc = 1 + (G.wave - 1) * 0.17;
+  const d = FOES[kind], sc = 1 + (G.wave - 1) * 0.24;
   const f = { kind, hp: Math.round(d.hp * sc), maxHp: Math.round(d.hp * sc), spd: d.spd, baseSpd: d.spd,
     bounty: d.bounty, r: d.r, air: !!d.air, wp: 1, slowT: 0, hurt: 0 };
   if (f.air) { f.x = -14; f.y = 40 + rnd() * (VH - 120); }     // 비행 — 출구로 직선
@@ -272,7 +285,7 @@ function update(dt) {
     G.spawnT -= dt;
     if (G.spawnT <= 0) { G.spawnT = 0.5; spawnFoe(G.spawnQueue.shift()); }
   } else if (!G.foes.length) {
-    const bonus = 30 + G.wave * 8;
+    const bonus = 24 + G.wave * 6;
     G.gold += bonus; popText(VW/2, 200, '웨이브 클리어! +' + bonus + '$', '#d6bcf0');
     if (G.wave >= MAX_WAVE) { endGame(true); return; }
     G.phase = 'prep'; G.prepT = 8;
@@ -280,7 +293,7 @@ function update(dt) {
   // 골렘 이동
   for (const f of [...G.foes]) {
     f.hurt = Math.max(0, f.hurt - dt);
-    if (f.slowT > 0) { f.slowT -= dt; f.spd = f.baseSpd * 0.55; } else f.spd = f.baseSpd;
+    if (f.slowT > 0) { f.slowT -= dt; f.spd = f.baseSpd * (f.slowMul || 0.55); } else f.spd = f.baseSpd;
     let target;
     if (f.air) target = { x: VW + 20, y: wpPix[wpPix.length-1].y };
     else target = wpPix[f.wp];
@@ -293,8 +306,8 @@ function update(dt) {
   for (const t of G.turrets) {
     t.cd -= dt;
     if (t.cd > 0) continue;
-    const def = TURRETS[t.kind];
-    const range = def.range * (1 + t.lv * 0.1);
+    const st = turretStat(t);
+    const range = st.range;
     let best = null, bd = range * range, bestProg = -1;
     for (const f of G.foes) {
       if (f.air && !def.air) continue;
@@ -304,10 +317,9 @@ function update(dt) {
       if (prog > bestProg) { bestProg = prog; best = f; }
     }
     if (best) {
-      t.cd = def.rate;
+      t.cd = st.rate;
       t.angle = Math.atan2(best.y - t.y, best.x - t.x);
-      const dmg = Math.round(def.dmg * Math.pow(1.65, t.lv));
-      G.shots.push({ x:t.x, y:t.y, target:best, spd:460, dmg, kind:t.kind, def });
+      G.shots.push({ x:t.x, y:t.y, target:best, spd:460, dmg: Math.round(st.dmg), kind:t.kind, def: st });
     }
   }
   // 탄 — 유도
@@ -348,7 +360,7 @@ function update(dt) {
 }
 function hitFoe(f, dmg, def) {
   f.hp -= dmg; f.hurt = 0.14;
-  if (def.slow) f.slowT = def.slowT;
+  if (def.slow) { f.slowT = def.slowT; f.slowMul = def.slowMul || 0.55; }
   if (f.hp <= 0 && G.foes.includes(f)) {
     G.gold += f.bounty;
     burst(f.x, f.y, FOES[f.kind].color, 10, 130);
@@ -383,7 +395,7 @@ function draw() {
     const def = TURRETS[t.kind];
     if (t === selected) {
       cx.strokeStyle = 'rgba(214,188,240,.4)'; cx.lineWidth = 1.5;
-      cx.beginPath(); cx.arc(t.x, t.y, def.range * (1 + t.lv * 0.1), 0, 7); cx.stroke();
+      cx.beginPath(); cx.arc(t.x, t.y, turretStat(t).range, 0, 7); cx.stroke();
     }
     cx.fillStyle = '#3c3450'; cx.fillRect(t.x - 15, t.y - 15, 30, 30);
     cx.fillStyle = def.color; cx.fillRect(t.x - 11, t.y - 11, 22, 22);
@@ -435,7 +447,7 @@ function draw() {
     const def = TURRETS[selected.kind];
     const upCost = Math.round(def.cost * 0.7 * (selected.lv + 1));
     $('selInfo').textContent = def.emoji + ' ' + def.name + ' ★' + selected.lv +
-      ' · 공 ' + Math.round(def.dmg * Math.pow(1.65, selected.lv));
+      ' · ' + def.upDesc(selected.lv) + (selected.lv < 3 ? '  →  ' + def.upDesc(selected.lv + 1) : '');
     $('upBtn').hidden = false; $('sellBtn').hidden = false;
     $('upBtn').textContent = selected.lv >= 3 ? 'MAX' : '⬆ 강화 ' + upCost + '$';
     $('upBtn').disabled = selected.lv >= 3 || G.gold < upCost;
@@ -491,6 +503,8 @@ async function endGame(win) {
   running = false; $('hud').hidden = true; $('bar').hidden = true;
   meta.best = Math.max(meta.best, G.wave);
   if (win) meta.clears = (meta.clears || 0) + 1;
+  GameRank.submit('gear-bastion', G.wave * 1000 + (win ? 500 : 0), '웨이브 ' + G.wave + (win ? ' 클리어' : ''))
+    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
   $('endTitle').textContent = win ? '🏆 요새 사수!' : '💥 요새 함락…';
   $('endDesc').textContent = (win ? '25웨이브를 모두 막아냈다!' : '웨이브 ' + G.wave + ' 에서 방어선이 무너졌다.') +
     ' 최고 기록 웨이브 ' + meta.best + (meta.clears ? ' · 클리어 ' + meta.clears + '회' : '');
@@ -516,6 +530,11 @@ $('codeLoadBtn').onclick = async () => {
     $('bestTxt').textContent = meta.best ? '최고 기록 웨이브 ' + meta.best : ''; showCode(); }
 };
 loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 기록 웨이브 ' + meta.best : ''; });
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('gear-bastion');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>
 </body>
 </html>

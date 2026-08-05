@@ -100,7 +100,10 @@
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
-    <button id="backBtn">야영지로</button>
+    <div class="row">
+      <button id="againBtn">🔁 재도전</button>
+      <button id="backBtn">야영지로</button>
+    </div>
   </div>
 </div>
 <div id="info">이동 방향키/WASD · 동료는 사거리 안 적을 <b>자동 사격</b> · 야영지에서 고용/합성/치료<br>
@@ -641,6 +644,8 @@ async function endRun(outcome, desc) {
   }
   meta.bank += earned;
   meta.best = Math.max(meta.best, G.zone + 1);
+  GameRank.submit('outlaw-frontier', (G.zone + 1) * 100000 + earned, '제' + (G.zone + 1) + '구역 · ' + earned + '$')
+    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
   $('endTitle').textContent = outcome === 'CLEAR' ? '🏆 무법지대 평정!' : '💀 여정 종료';
   $('endDesc').textContent = desc + extra + ' 제' + (G.zone + 1) + '구역까지 도달. 현상금 ' + earned + '$ 를 은행에 넣었다.';
   $('endPanel').hidden = false;
@@ -680,6 +685,7 @@ $('buyDmg').onclick = async () => { if (meta.bank < dmgCost()) return; meta.bank
 $('buyHpUp').onclick = async () => { if (meta.bank < hpUpCost()) return; meta.bank -= hpUpCost(); meta.hpLv++; renderMeta(); await persistMeta(); };
 $('startBtn').onclick = startRun;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false; renderMeta(); };
+$('againBtn').onclick = () => { $('endPanel').hidden = true; startRun(); };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
@@ -689,5 +695,10 @@ $('codeLoadBtn').onclick = async () => {
 loadMeta().then(renderMeta);
 </script>
 <script src="../lib/touch.js"></script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('outlaw-frontier');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
+</script>
 </body>
 </html>

@@ -494,6 +494,8 @@ async function endGame(win) {
   running = false; $('hud').hidden = true; $('bar').hidden = true;
   meta.best = Math.max(meta.best, G.wave);
   if (win) meta.clears = (meta.clears || 0) + 1;
+  GameRank.submit('gate-holdout', G.wave * 1000 + (win ? 500 : 0), '제' + G.wave + '라운드' + (win ? ' 클리어' : ''))
+    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
   $('endTitle').textContent = win ? '🏆 성문 사수!' : '💥 성문 함락…';
   $('endDesc').textContent = (win ? '20라운드를 모두 버텨냈다!' : '제' + G.wave + '라운드에서 성문이 뚫렸다.') +
     ' 최고 기록 제' + meta.best + '라운드' + (meta.clears ? ' · 클리어 ' + meta.clears + '회' : '');
@@ -519,6 +521,11 @@ $('codeLoadBtn').onclick = async () => {
     $('bestTxt').textContent = meta.best ? '최고 기록 제' + meta.best + '라운드' : ''; showCode(); }
 };
 loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 기록 제' + meta.best + '라운드' : ''; });
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('gate-holdout');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>
 </body>
 </html>

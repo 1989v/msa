@@ -333,6 +333,8 @@ async function endGame() {
   } else {
     const score = Math.max(0, G.seq.length - 1);
     meta.soloBest = Math.max(meta.soloBest, score);
+    GameRank.submit('echo-duel', score * 1000, score + '수')
+      .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
     $('endTitle').textContent = '💫 수련 종료';
     $('endDesc').textContent = score + '수까지 따라 외웠다. ' + bestLabel();
   }
@@ -384,6 +386,11 @@ $('codeLoadBtn').onclick = async () => {
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw); $('bestTxt').textContent = bestLabel(); showCode(); }
 };
 loadMeta().then(() => { $('bestTxt').textContent = bestLabel(); });
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('echo-duel');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>
 </body>
 </html>

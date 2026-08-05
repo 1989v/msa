@@ -4,6 +4,7 @@ import com.kgd.game.infrastructure.persistence.play.entity.GamePlaySessionJpaEnt
 import com.kgd.game.infrastructure.persistence.play.entity.GameRatingJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameRunJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameSaveDataJpaEntity
+import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface GamePlaySessionJpaRepository : JpaRepository<GamePlaySessionJpaEntity, Long> {
@@ -22,4 +23,10 @@ interface GameSaveDataJpaRepository : JpaRepository<GameSaveDataJpaEntity, Long>
 
 interface GameRunJpaRepository : JpaRepository<GameRunJpaEntity, Long> {
     fun findByRunKey(runKey: String): GameRunJpaEntity?
+}
+
+interface GameScoreJpaRepository : JpaRepository<GameScoreJpaEntity, Long> {
+    fun findByGameIdAndNickname(gameId: Long, nickname: String): GameScoreJpaEntity?
+    fun findTop50ByGameIdOrderByScoreDescUpdatedAtAsc(gameId: Long): List<GameScoreJpaEntity>
+    fun countByGameIdAndScoreGreaterThan(gameId: Long, score: Long): Long
 }

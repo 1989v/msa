@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>황금 대장간</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#140f0a; color:#f0e6d4; font-family:'Courier New',monospace; display:flex; flex-direction:column;
+         align-items:center; justify-content:flex-start; min-height:100vh; user-select:none; padding:14px 0; }
+  #wrap { width:min(560px, 100vw); }
+  h1 { color:#ffd54a; font-size:22px; text-align:center; text-shadow:2px 2px 0 #000; margin:6px 0 2px; }
+  #sub { text-align:center; font-size:11px; color:#a8967a; margin-bottom:10px; }
+  #forge { display:block; margin:0 auto; background:#1e1610; border:4px solid #3a2c1c; border-radius:12px;
+           cursor:pointer; touch-action:manipulation; width:min(340px, 92vw); }
+  #stats { display:flex; gap:8px; justify-content:center; margin:10px 0; font-size:13px; font-weight:bold; flex-wrap:wrap; }
+  #stats span { background:rgba(255,213,74,.08); border:1px solid #3a2c1c; padding:4px 12px; border-radius:9px; }
+  .shop { display:flex; flex-direction:column; gap:6px; padding:0 12px; }
+  .shop button { display:flex; justify-content:space-between; align-items:center; gap:8px; text-align:left;
+                 background:#241a10; border:1px solid #4a3826; color:#f0e6d4; padding:9px 12px; border-radius:8px;
+                 cursor:pointer; font-family:inherit; font-size:12px; }
+  .shop button:disabled { opacity:.38; cursor:default; }
+  .shop button b { display:block; font-size:13px; }
+  .shop button small { color:#a8967a; font-size:10.5px; }
+  .shop button .price { color:#ffd54a; font-weight:bold; white-space:nowrap; }
+  #prestigeBtn { background:#3a2050 !important; border-color:#6a4a90 !important; }
+  #saveRow { display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; margin:12px 0 4px; }
+  #saveRow input { background:#241a10; border:1px solid #4a3826; color:#f0e6d4; border-radius:6px; padding:6px 9px;
+          font-family:inherit; font-size:12px; letter-spacing:1px; width:160px; text-transform:uppercase; }
+  #saveRow button { background:#3a2c1c; color:#f0e6d4; border:0; padding:7px 12px; border-radius:6px;
+                    cursor:pointer; font-family:inherit; font-size:11px; }
+  #saveStatus, #codeShow { text-align:center; font-size:10.5px; color:#a8967a; margin-top:3px; }
+  #codeShow { color:#ffd54a; letter-spacing:2px; }
+  #menu { padding:0 12px; }
+  #toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); background:rgba(20,12,6,.92);
+           padding:8px 18px; border-radius:9px; font-size:12px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:99; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1>⚒ 황금 대장간</h1>
+  <div id="sub">모루를 두드려 금을 벼려라 — 잠든 사이에도 화로는 식지 않는다</div>
+  <canvas id="forge" width="340" height="230"></canvas>
+  <div id="stats">
+    <span id="goldTxt"></span><span id="rateTxt"></span><span id="tapTxt"></span><span id="starTxt"></span>
+  </div>
+  <div class="shop" id="shop"></div>
+  <div id="saveRow">
+    <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
+    <button id="codeLoadBtn">🔑 코드로 불러오기</button>
+  </div>
+  <div id="codeShow"></div>
+  <div id="saveStatus"></div>
+  <div id="menu"></div>
+</div>
+<div id="toast"></div>
+<script>
+'use strict';
+const API = '/api/v1/games/golden-forge';
+const $ = id => document.getElementById(id);
+const cv = $('forge'), cx = cv.getContext('2d');
+
+/* ── 플랫폼 연동 (이어하기 코드 세이브) ── */
+const token = () => localStorage.getItem('portal_access_token');
+function deviceId() {
+  let id = localStorage.getItem('kgd_device_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('kgd_device_id', id); }
+  return id;
+}
+async function api(path, opt = {}) {
+  const headers = { 'Content-Type':'application/json', 'X-Device-Id':deviceId(), ...(opt.headers || {}) };
+  const tk = token(); if (tk) headers['Authorization'] = 'Bearer ' + tk;
+  const res = await fetch(API + path, { ...opt, headers });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.success === false) throw new Error(body?.error?.code || res.status);
+  return body.data;
+}
+const CODE_KEY = 'golden_forge_code', LOCAL_KEY = 'golden_forge_save';
+let saveCode = localStorage.getItem(CODE_KEY) || null, saveVersion = 0;
+const fmtCode = c => c ? c.replace(/(.{4})(?=.)/g, '$1-') : '';
+function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
+function toast(msg) { const el = $('toast'); el.textContent = msg; el.style.opacity = 1;
+  clearTimeout(toast._t); toast._t = setTimeout(() => { el.style.opacity = 0; }, 2400); }
+
+/* ── 상태 — lifetime(누적 생산)이 랭킹 점수 ── */
+let S = null;
+const fresh = () => ({ v:1, gold:0, lifetime:0, stars:0, tapLv:0, lastTs:Date.now(),
+  gear: { hammer:0, bellows:0, golem:0, forge2:0, dragon:0 } });
+const GEARS = {
+  hammer: { name:'자동 망치',   emoji:'🔨', base:25,     growth:1.15, rate:1,    desc:'초당 +1' },
+  bellows:{ name:'풀무 도제',   emoji:'🌬', base:220,    growth:1.16, rate:8,    desc:'초당 +8' },
+  golem:  { name:'화강암 골렘', emoji:'🗿', base:1900,   growth:1.17, rate:55,   desc:'초당 +55' },
+  forge2: { name:'쌍둥이 화로', emoji:'🔥', base:16000,  growth:1.18, rate:380,  desc:'초당 +380' },
+  dragon: { name:'화룡의 숨결', emoji:'🐉', base:140000, growth:1.20, rate:2600, desc:'초당 +2,600' },
+};
+const starMul = () => 1 + S.stars * 0.25;                       // 별의 담금질 — 회차 영구 배수
+const tapPower = () => Math.ceil((1 + S.tapLv * S.tapLv) * starMul());
+const gearCost = k => Math.ceil(GEARS[k].base * Math.pow(GEARS[k].growth, S.gear[k]));
+const tapCost = () => Math.ceil(50 * Math.pow(1.6, S.tapLv));
+const totalRate = () => Object.keys(GEARS).reduce((a, k) => a + GEARS[k].rate * S.gear[k], 0) * starMul();
+const prestigeReq = () => 1000000 * Math.pow(4, S.stars);
+const fmt = n => n >= 1e12 ? (n/1e12).toFixed(2)+'T' : n >= 1e9 ? (n/1e9).toFixed(2)+'B'
+             : n >= 1e6 ? (n/1e6).toFixed(2)+'M' : n >= 1e3 ? (n/1e3).toFixed(1)+'K' : Math.floor(n).toString();
+
+function gain(n) { S.gold += n; S.lifetime += n; }
+
+/* ── 세이브 ── */
+async function loadSave(codeOverride) {
+  const code = codeOverride || saveCode;
+  if (token() || code) {
+    try {
+      const s = await api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''));
+      saveVersion = s.version;
+      if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      showCode();
+      if (s.data && s.data.v === 1) return s.data;
+      if (codeOverride) toast('그 코드로 저장된 세이브가 없다');
+      return null;
+    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return null; }
+  }
+  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급된다';
+  showCode();
+  try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); return d && d.v === 1 ? d : null; } catch (_) { return null; }
+}
+let persistT = 0;
+async function persist() {
+  S.lastTs = Date.now();
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(S));
+  try {
+    const s = await api('/save', { method:'PUT', body:JSON.stringify({ data:S, version:saveVersion, code:saveCode }) });
+    saveVersion = s.version;
+    const fresh2 = !saveCode && s.code;
+    if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+    if (fresh2) toast('🔑 이어하기 코드 발급: ' + fmtCode(saveCode));
+    showCode();
+  } catch (e) {
+    if (e.message === 'INVALID_INPUT') {
+      try {
+        const re = await api('/save' + (!token() && saveCode ? '?code=' + encodeURIComponent(saveCode) : ''));
+        saveVersion = re.version;
+        const s2 = await api('/save', { method:'PUT', body:JSON.stringify({ data:S, version:saveVersion, code:saveCode }) });
+        saveVersion = s2.version;
+      } catch (_) {}
+    }
+  }
+}
+
+/* ── 렌더 — 화로/모루/불꽃 픽셀 ── */
+let sparks = [], hammerT = 0, autoHammerT = 0;
+function draw(ts) {
+  requestAnimationFrame(draw);
+  const t = ts / 1000;
+  cx.fillStyle = '#1e1610'; cx.fillRect(0, 0, 340, 230);
+  // 화로
+  const fl = 0.7 + Math.sin(t * 7) * 0.3;
+  const g = cx.createRadialGradient(70, 150, 8, 70, 150, 90 * fl);
+  g.addColorStop(0, 'rgba(255,150,60,.5)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  cx.fillStyle = g; cx.fillRect(0, 40, 180, 190);
+  cx.fillStyle = '#3a2c1c'; cx.fillRect(28, 110, 84, 90);
+  cx.fillStyle = '#241a10'; cx.fillRect(38, 130, 64, 56);
+  cx.fillStyle = '#ff8a3c'; cx.fillRect(44, 152 - fl * 10, 52, 34 + fl * 10);
+  cx.fillStyle = '#ffd54a'; cx.fillRect(54, 164 - fl * 8, 32, 22 + fl * 8);
+  // 모루
+  cx.fillStyle = '#4a4a52'; cx.fillRect(180, 150, 110, 20);
+  cx.fillStyle = '#5c5c66'; cx.fillRect(170, 144, 130, 10);
+  cx.fillStyle = '#3a3a42'; cx.fillRect(210, 170, 50, 34);
+  // 달궈진 주괴
+  cx.fillStyle = '#ffb35c'; cx.fillRect(216, 132, 42, 12);
+  // 망치 (탭/자동 스윙)
+  const swing = Math.max(hammerT, autoHammerT);
+  cx.save();
+  cx.translate(268, 118);
+  cx.rotate(-0.9 + (1 - swing) * 0.9);
+  cx.fillStyle = '#6b4a2c'; cx.fillRect(-4, -52, 8, 52);
+  cx.fillStyle = '#8a8a94'; cx.fillRect(-16, -70, 32, 22);
+  cx.restore();
+  hammerT = Math.max(0, hammerT - 0.08); autoHammerT = Math.max(0, autoHammerT - 0.05);
+  // 불똥
+  sparks = sparks.filter(p => (p.life -= 0.03) > 0);
+  sparks.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.25;
+    cx.globalAlpha = p.life; cx.fillStyle = p.c; cx.fillRect(p.x, p.y, 3, 3); cx.globalAlpha = 1; });
+  cx.fillStyle = '#a8967a'; cx.font = '11px monospace'; cx.textAlign = 'center';
+  cx.fillText('⚒ 모루를 두드려라 (탭/클릭)', 170, 222);
+}
+function burst(x, y, n) {
+  for (let i = 0; i < n; i++) sparks.push({ x, y, vx:(Math.random()-0.5)*5, vy:-Math.random()*4-1,
+    life:1, c: Math.random() < 0.5 ? '#ffd54a' : '#ff8a3c' });
+}
+
+/* ── UI ── */
+function renderShop() {
+  const shop = $('shop');
+  shop.innerHTML = '';
+  const tapBtn = document.createElement('button');
+  tapBtn.innerHTML = '<span><b>🔨 담금질 숙련 Lv.' + S.tapLv + '</b><small>탭당 +' + fmt(tapPower()) + '</small></span>' +
+    '<span class="price">' + fmt(tapCost()) + 'G</span>';
+  tapBtn.disabled = S.gold < tapCost();
+  tapBtn.onclick = () => { if (S.gold < tapCost()) return; S.gold -= tapCost(); S.tapLv++; renderShop(); persistSoon(); };
+  shop.appendChild(tapBtn);
+  Object.entries(GEARS).forEach(([k, gr]) => {
+    const b = document.createElement('button');
+    b.innerHTML = '<span><b>' + gr.emoji + ' ' + gr.name + ' × ' + S.gear[k] + '</b><small>' + gr.desc +
+      ' (보유 초당 +' + fmt(gr.rate * S.gear[k] * starMul()) + ')</small></span>' +
+      '<span class="price">' + fmt(gearCost(k)) + 'G</span>';
+    b.disabled = S.gold < gearCost(k);
+    b.onclick = () => { if (S.gold < gearCost(k)) return; S.gold -= gearCost(k); S.gear[k]++; renderShop(); persistSoon(); };
+    shop.appendChild(b);
+  });
+  const pr = document.createElement('button');
+  pr.id = 'prestigeBtn';
+  const can = S.lifetime >= prestigeReq();
+  pr.innerHTML = '<span><b>✨ 별의 담금질 (' + S.stars + '⭐)</b><small>누적 ' + fmt(prestigeReq()) +
+    'G 달성 시 — 전부 리셋하고 영구 생산 +25%</small></span>' +
+    '<span class="price">' + (can ? '가능!' : fmt(S.lifetime) + '/' + fmt(prestigeReq())) + '</span>';
+  pr.disabled = !can;
+  pr.onclick = () => {
+    if (S.lifetime < prestigeReq()) return;
+    const stars = S.stars + 1, lifetime = S.lifetime;
+    S = fresh(); S.stars = stars; S.lifetime = lifetime;
+    toast('✨ 별의 담금질! 영구 배수 ×' + starMul().toFixed(2));
+    renderShop(); persist();
+  };
+  shop.appendChild(pr);
+}
+function hud() {
+  $('goldTxt').textContent = '💰 ' + fmt(S.gold) + 'G';
+  $('rateTxt').textContent = '⏱ 초당 ' + fmt(totalRate());
+  $('tapTxt').textContent = '🔨 탭당 ' + fmt(tapPower());
+  $('starTxt').textContent = '⭐ ' + S.stars + ' (×' + starMul().toFixed(2) + ')';
+}
+let persistTimer = null;
+function persistSoon() { clearTimeout(persistTimer); persistTimer = setTimeout(persist, 2500); }
+
+/* ── 루프 ── */
+cv.addEventListener('pointerdown', () => {
+  gain(tapPower());
+  hammerT = 1; burst(237, 136, 7);
+  hud();
+  persistSoon();
+});
+setInterval(() => {
+  if (!S) return;
+  const r = totalRate();
+  if (r > 0) { gain(r / 2); if (Math.random() < 0.4) { autoHammerT = 1; burst(237, 136, 3); } }
+  hud();
+  // 상점 버튼 활성화 갱신 (도배 방지로 2틱마다)
+  if ((persistT = (persistT + 1) % 4) === 0) renderShop();
+}, 500);
+setInterval(() => { if (S) persist(); }, 30000);               // 30초마다 자동 저장
+addEventListener('beforeunload', () => { if (S) { S.lastTs = Date.now(); localStorage.setItem(LOCAL_KEY, JSON.stringify(S)); } });
+// 랭킹 — 누적 생산량 제출 (저장 주기에 맞춰)
+setInterval(() => {
+  if (S && S.lifetime >= 1000 && window.GameRank)
+    GameRank.submit('golden-forge', Math.floor(S.lifetime), '⭐' + S.stars + ' · 누적 ' + fmt(S.lifetime) + 'G');
+}, 60000);
+
+/* ── 시작 (오프라인 수익 포함) ── */
+$('codeLoadBtn').onclick = async () => {
+  const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (raw.length < 8) return;
+  const d = await loadSave(raw);
+  if (d) { saveCode = raw; localStorage.setItem(CODE_KEY, raw); boot(d); }
+};
+function boot(saved) {
+  S = saved || fresh();
+  if (saved && saved.lastTs) {
+    const away = Math.min(60 * 60 * 8, (Date.now() - saved.lastTs) / 1000);   // 오프라인 최대 8시간
+    const earned = Math.floor(totalRate.call(null) * 0 + (Object.keys(GEARS).reduce((a, k) => a + GEARS[k].rate * S.gear[k], 0) * (1 + S.stars * 0.25)) * away);
+    if (earned > 0) { gain(earned); toast('💤 자리 비운 사이 화로가 ' + fmt(earned) + 'G 를 벼려뒀다 (' + Math.round(away/60) + '분)'); }
+  }
+  hud(); renderShop();
+}
+loadSave().then(boot);
+requestAnimationFrame(draw);
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
+(function(){ var el = document.createElement('div'); el.style.cssText='max-width:340px;margin:10px auto;text-align:left;background:rgba(0,0,0,.25);border-radius:8px;padding:9px 12px';
+  document.getElementById('menu').appendChild(el); GameRank.panel('golden-forge', el); })();
+</script>
+</body>
+</html>

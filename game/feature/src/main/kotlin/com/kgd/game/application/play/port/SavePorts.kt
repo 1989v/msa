@@ -38,3 +38,12 @@ interface SaveLeasePort {
      */
     fun tryAcquire(gameId: Long, subject: String, holder: String, ttl: Duration, takeover: Boolean = false): Boolean
 }
+
+/** 랭킹 항목 — rank 는 조회 시점 계산 */
+data class ScoreEntry(val rank: Int, val nickname: String, val score: Long, val detail: String?)
+
+interface GameScoreRepositoryPort {
+    /** 닉네임당 최고 기록 upsert. 반영 여부와 현재 순위를 돌려준다 */
+    fun submit(gameId: Long, nickname: String, score: Long, detail: String?): Pair<Boolean, Int>
+    fun top(gameId: Long, limit: Int): List<ScoreEntry>
+}

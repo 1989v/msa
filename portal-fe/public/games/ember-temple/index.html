@@ -390,6 +390,9 @@ async function endGame() {
   running = false; $('hud').hidden = true;
   meta.bestStage = Math.max(meta.bestStage, G.stage);
   meta.clears = (meta.clears || 0) + 1;
+  GameRank.submit('ember-temple', Math.max(1, 1000000 - G.deaths * 5000 - Math.floor(G.time) * 10),
+    G.deaths + '💀 · ' + Math.round(G.time) + 's')
+    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
   if (meta.bestDeaths === null || G.deaths < meta.bestDeaths) meta.bestDeaths = G.deaths;
   if (meta.bestTime === null || G.time < meta.bestTime) meta.bestTime = G.time;
   $('endTitle').textContent = '🏆 신전 탈출!';
@@ -420,5 +423,10 @@ $('codeLoadBtn').onclick = async () => {
 loadMeta().then(() => { $('bestTxt').textContent = bestLabel(); });
 </script>
 <script src="../lib/touch.js"></script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('ember-temple');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
+</script>
 </body>
 </html>

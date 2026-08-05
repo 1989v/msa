@@ -66,9 +66,10 @@ class GameSchemaIntegrationSpec(
 
     Given("game 전용 Flyway 가 적용된 game_db") {
         When("마이그레이션이 끝나면") {
-            Then("V2 내장 4종 + V3 아케이드 2종 + V7 신규 2종과 태그 매핑이 적재된다")
+            Then("초기 시드(V2 내장 4종 + V3 아케이드 2종 + V7 신규 2종)와 태그 매핑이 적재된다")
                 .config(enabledIf = { dockerAvailable }) {
-                    gameRepository.count() shouldBe 8
+                    // 시드는 마이그레이션마다 늘어난다 — 최초 시드 8종을 하한으로 검증
+                    (gameRepository.count() >= 8) shouldBe true
                     gameRepository.findBySlug("concept-memory")?.tags shouldBe
                         listOf("puzzle", "memory", "education", "casual")
                     // #23 흡수분은 정적 자산을 iframe 으로 임베드한다
@@ -82,8 +83,8 @@ class GameSchemaIntegrationSpec(
             Then("TRENDING/NEW/TOP 쿼리가 모두 MySQL 에서 실행된다")
                 .config(enabledIf = { dockerAvailable }) {
                     GameSort.entries.forEach { sort ->
-                        queryRepository.search(tag = null, genre = null, sort = sort, pageable = pageable)
-                            .totalElements shouldBe 8
+                        (queryRepository.search(tag = null, genre = null, sort = sort, pageable = pageable)
+                            .totalElements >= 8) shouldBe true
                     }
                 }
         }

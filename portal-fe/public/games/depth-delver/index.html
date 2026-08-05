@@ -76,7 +76,10 @@
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
-    <button id="backBtn">메타 화면으로</button>
+    <div class="shopRow" style="gap:8px">
+      <button id="againBtn">🔁 재도전</button>
+      <button id="backBtn">메타 화면으로</button>
+    </div>
   </div>
 </div>
 <div id="info">이동 방향키/WASD · 공격 <b>Z / Space</b>(누르고 있으면 연속) · 구르기 <b>Shift</b>(무적)<br>
@@ -439,6 +442,8 @@ async function endRun(outcome, desc) {
     meta.perfect = (meta.perfect || 0) + 1;
   }
   meta.gold += earned;
+  GameRank.submit('depth-delver', G.floor * 100000 + earned, 'B' + G.floor + 'F · ' + earned + 'G')
+    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
   $('endDesc').textContent = desc + extra + ' 획득 골드 ' + earned + ' → 금고에 적립.' +
     (meta.perfect ? ' (무결점 ' + meta.perfect + '회)' : '');
   $('endPanel').hidden = false;
@@ -961,6 +966,7 @@ $('buyAtk').onclick = buy(atkCost, 'atkLv');
 $('buySpd').onclick = buy(spdCost, 'spdLv');
 $('startBtn').onclick = startRun;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false; renderMeta(); };
+$('againBtn').onclick = () => { $('endPanel').hidden = true; startRun(); };   // 로그라이크 — 바로 재도전
 
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -970,5 +976,10 @@ $('codeLoadBtn').onclick = async () => {
 loadMeta().then(renderMeta);
 </script>
 <script src="../lib/touch.js" data-actions="KeyZ:⚔,ShiftLeft:🌀"></script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('depth-delver');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
+</script>
 </body>
 </html>

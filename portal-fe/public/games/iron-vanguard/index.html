@@ -475,6 +475,8 @@ async function endGame(win) {
   running = false; $('hud').hidden = true;
   meta.best = Math.max(meta.best, G.stage);
   if (win) meta.clears = (meta.clears || 0) + 1;
+  GameRank.submit('iron-vanguard', G.stage * 1000 + (win ? 500 : 0), '스테이지 ' + G.stage + (win ? ' 클리어' : ''))
+    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
   $('endTitle').textContent = win ? '🏆 결사대 개선!' : '💀 결사대 전멸…';
   $('endDesc').textContent = (win ? STAGES.length + '스테이지를 모두 돌파했다!' : '스테이지 ' + G.stage + ' 에서 전멸했다.') +
     ' 최고 기록 스테이지 ' + meta.best + (meta.clears ? ' · 클리어 ' + meta.clears + '회' : '');
@@ -500,6 +502,11 @@ $('codeLoadBtn').onclick = async () => {
     $('bestTxt').textContent = meta.best ? '최고 기록 스테이지 ' + meta.best : ''; showCode(); }
 };
 loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 기록 스테이지 ' + meta.best : ''; });
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('iron-vanguard');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>
 </body>
 </html>

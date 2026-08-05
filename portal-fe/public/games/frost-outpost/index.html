@@ -475,6 +475,8 @@ async function endGame(win) {
   running = false; $('hud').hidden = true; $('bar').hidden = true;
   meta.bestSec = Math.max(meta.bestSec, Math.floor(G.time));
   if (win) meta.clears = (meta.clears || 0) + 1;
+  GameRank.submit('frost-outpost', Math.floor(G.time), fmtT(Math.floor(G.time)) + (win ? ' 생존 성공' : ''))
+    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
   $('endTitle').textContent = win ? '🏆 구조대 도착!' : '💥 전초기지 함락…';
   $('endDesc').textContent = (win ? '12분을 버텨 구조대가 도착했다!' : fmtT(G.time) + ' 만에 본부가 무너졌다.') +
     ' 최고 기록 ' + fmtT(meta.bestSec) + (meta.clears ? ' · 생존 성공 ' + meta.clears + '회' : '');
@@ -500,6 +502,11 @@ $('codeLoadBtn').onclick = async () => {
     $('bestTxt').textContent = meta.bestSec ? '최고 기록 ' + fmtT(meta.bestSec) : ''; showCode(); }
 };
 loadMeta().then(() => { $('bestTxt').textContent = meta.bestSec ? '최고 기록 ' + fmtT(meta.bestSec) : ''; });
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('frost-outpost');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>
 </body>
 </html>

@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>동굴 활강</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0a0e16; color:#e2e8f0; font-family:'Courier New',monospace; display:flex; flex-direction:column;
+         align-items:center; justify-content:center; min-height:100vh; user-select:none; }
+  #wrap { position:relative; border:4px solid #1c2434; border-radius:10px; overflow:hidden; box-shadow:0 0 48px rgba(0,0,0,.7); }
+  canvas { display:block; background:#0e1420; touch-action:manipulation; }
+  #hud { position:absolute; top:8px; left:10px; right:10px; display:flex; gap:8px; font-size:13px; font-weight:bold;
+         pointer-events:none; text-shadow:1px 1px 0 #000; }
+  #hud .tag { background:rgba(6,10,18,.6); padding:3px 11px; border-radius:10px; }
+  #hud .grow { flex:1; }
+  .panel { position:absolute; inset:0; background:rgba(8,12,20,.94); display:flex; flex-direction:column; align-items:center;
+           justify-content:center; gap:11px; text-align:center; z-index:10; padding:20px; }
+  .panel h1 { color:#8fd0ff; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#bccadc; line-height:1.75; max-width:460px; }
+  .panel button { background:#4a9ad6; color:#0a1420; border:0; padding:9px 22px; font-weight:bold; font-size:13px;
+                  border-radius:7px; cursor:pointer; font-family:inherit; }
+  .panel button.ghost { background:#1c2434; color:#e2e8f0; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #saveStatus { font-size:10.5px; color:#7a8aa0; }
+  #info { margin-top:9px; font-size:11px; color:#5a6a80; text-align:center; }
+  input { background:#121a28; border:1px solid #1c2434; color:#e2e8f0; border-radius:6px; padding:6px 9px;
+          font-family:inherit; font-size:12px; letter-spacing:1px; width:160px; text-transform:uppercase; }
+  @media (max-width: 900px), (pointer: coarse) {
+    #wrap { width: 100vw; border-width: 0; border-radius: 0; }
+    canvas { width: 100%; height: auto; }
+    #info { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="840" height="480"></canvas>
+  <div id="hud" hidden>
+    <span class="tag" id="distTxt"></span>
+    <span class="tag" id="gemTxt"></span>
+    <span class="grow"></span>
+    <span class="tag" id="bestHudTxt"></span>
+  </div>
+  <div class="panel" id="menu">
+    <h1>🦇 동굴 활강</h1>
+    <p><b>탭/클릭/스페이스를 누르면 날개를 친다.</b> 놓으면 가라앉는다.
+       좁아지는 동굴을 최대한 멀리 활강하라 — 벽·종유석에 닿으면 끝. 💎 수정을 먹으면 보너스.</p>
+    <div id="saveStatus"></div>
+    <div class="row">
+      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+    </div>
+    <div class="row"><span id="codeShow" style="font-size:11px;color:#8fd0ff;letter-spacing:2px"></span></div>
+    <div class="row"><span id="bestTxt" style="font-size:12px;color:#7a8aa0"></span></div>
+    <button id="startBtn">▶ 활강 시작</button>
+  </div>
+  <div class="panel" id="endPanel" hidden>
+    <h1 id="endTitle"></h1>
+    <p id="endDesc"></p>
+    <div class="row">
+      <button id="againBtn">🔁 재도전</button>
+      <button id="backBtn" class="ghost">처음으로</button>
+    </div>
+  </div>
+</div>
+<div id="info">탭 / 클릭 / Space = 날갯짓 · 멀리 갈수록 동굴이 좁고 빨라진다</div>
+<script>
+'use strict';
+const API = '/api/v1/games/cave-glide';
+const cv = document.getElementById('cv'), cx = cv.getContext('2d');
+const VW = cv.width, VH = cv.height;
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const rnd = () => Math.random();
+
+/* ── 플랫폼 연동 (이어하기 코드 세이브) ── */
+const token = () => localStorage.getItem('portal_access_token');
+function deviceId() {
+  let id = localStorage.getItem('kgd_device_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('kgd_device_id', id); }
+  return id;
+}
+async function api(path, opt = {}) {
+  const headers = { 'Content-Type':'application/json', 'X-Device-Id':deviceId(), ...(opt.headers || {}) };
+  const tk = token(); if (tk) headers['Authorization'] = 'Bearer ' + tk;
+  const res = await fetch(API + path, { ...opt, headers });
+  const body = await res.json().catch(() => null);
+  if (!res.ok || !body || body.success === false) throw new Error(body?.error?.code || res.status);
+  return body.data;
+}
+const CODE_KEY = 'cave_glide_code', LOCAL_KEY = 'cave_glide_save';
+let saveCode = localStorage.getItem(CODE_KEY) || null, saveVersion = 0;
+const fmtCode = c => c ? c.replace(/(.{4})(?=.)/g, '$1-') : '';
+let meta = { best: 0, runs: 0 };
+function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
+async function loadMeta(codeOverride) {
+  const code = codeOverride || saveCode;
+  if (token() || code) {
+    try {
+      const s = await api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''));
+      saveVersion = s.version;
+      if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+      if (s.data) meta = { best:0, runs:0, ...s.data };
+      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      showCode(); return true;
+    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+  }
+  try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
+  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급된다';
+  showCode(); return true;
+}
+async function persistMeta() {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(meta));
+  try {
+    const s = await api('/save', { method:'PUT', body:JSON.stringify({ data:meta, version:saveVersion, code:saveCode }) });
+    saveVersion = s.version;
+    if (s.code && s.code !== saveCode) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+    showCode();
+  } catch (e) {
+    if (e.message === 'INVALID_INPUT') {
+      try {
+        const re = await api('/save' + (!token() && saveCode ? '?code=' + encodeURIComponent(saveCode) : ''));
+        saveVersion = re.version;
+        const s2 = await api('/save', { method:'PUT', body:JSON.stringify({ data:meta, version:saveVersion, code:saveCode }) });
+        saveVersion = s2.version;
+      } catch (_) {}
+    }
+  }
+}
+
+/* ── 상태 ── */
+let G = null, running = false, flapping = false;
+function newGame() {
+  G = { x: 0, y: VH / 2, vy: 0, dist: 0, gems: 0,
+    segs: [], parts: [], stalact: [], gemsArr: [], segX: 0, over: false };
+  // 초기 동굴 통로
+  let top = 90, bot = VH - 90;
+  for (let i = 0; i < 60; i++) G.segs.push(seg(i * 20, top, bot));
+  G.segX = 60 * 20;
+}
+let lastTop = 100, lastBot = 380;
+function seg(x, top, bot) { lastTop = top; lastBot = bot; return { x, top, bot }; }
+function extendCave() {
+  const diff = Math.min(1, G.dist / 3000);                 // 0→1 난이도
+  const gapMin = 190 - diff * 95;                          // 통로 폭 190 → 95
+  const wander = 26 + diff * 26;
+  while (G.segX < G.x + VW + 100) {
+    let top = clamp(lastTop + (rnd() - 0.5) * wander, 30, VH - 30 - gapMin);
+    let bot = clamp(top + gapMin + rnd() * 60, top + gapMin, VH - 24);
+    G.segs.push(seg(G.segX, top, bot));
+    // 종유석/석순 장애물
+    if (rnd() < 0.06 + diff * 0.10) {
+      const fromTop = rnd() < 0.5;
+      G.stalact.push({ x: G.segX, y: fromTop ? top : bot, len: 34 + rnd() * (40 + diff * 46), top: fromTop });
+    }
+    if (rnd() < 0.12) G.gemsArr.push({ x: G.segX + 8, y: top + 30 + rnd() * (bot - top - 60), got: false });
+    G.segX += 20;
+  }
+  while (G.segs.length && G.segs[0].x < G.x - 40) G.segs.shift();
+  G.stalact = G.stalact.filter(s => s.x > G.x - 40);
+  G.gemsArr = G.gemsArr.filter(g => g.x > G.x - 40);
+}
+
+/* ── 갱신 ── */
+function update(dt) {
+  const diff = Math.min(1, G.dist / 3000);
+  const speed = 190 + diff * 210;
+  G.x += speed * dt;
+  G.dist = Math.floor(G.x / 10);
+  G.vy += (flapping ? -1350 : 950) * dt;
+  G.vy = clamp(G.vy, -330, 430);
+  G.y += G.vy * dt;
+  extendCave();
+  // 충돌 — 현재 x 의 세그먼트
+  const px2 = G.x + 130;
+  const s = G.segs.find(s2 => s2.x <= px2 && px2 < s2.x + 20);
+  if (s && (G.y - 10 < s.top || G.y + 10 > s.bot)) return die();
+  for (const st of G.stalact) {
+    if (Math.abs(st.x + 9 - px2) < 16) {
+      if (st.top && G.y - 8 < st.y + st.len) return die();
+      if (!st.top && G.y + 8 > st.y - st.len) return die();
+    }
+  }
+  for (const g of G.gemsArr) {
+    if (!g.got && Math.abs(g.x - px2) < 18 && Math.abs(g.y - G.y) < 20) {
+      g.got = true; G.gems++;
+      for (let i = 0; i < 8; i++) G.parts.push({ x: g.x - G.x, y: g.y, vx:(rnd()-0.5)*150, vy:(rnd()-0.5)*150, life:1, c:'#7ad8f0' });
+    }
+  }
+  if (flapping && rnd() < 0.5) G.parts.push({ x: 122, y: G.y + 8, vx: -120 - rnd()*60, vy: 40 + rnd()*50, life: 0.7, c:'#4a5a74' });
+  G.parts = G.parts.filter(p => (p.life -= dt * 1.8) > 0);
+  G.parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; });
+}
+function die() {
+  G.over = true; running = false;
+  meta.runs++;
+  const score = G.dist + G.gems * 50;
+  const newBest = score > meta.best;
+  meta.best = Math.max(meta.best, score);
+  $('endTitle').textContent = newBest ? '🏆 신기록!' : '💥 추락…';
+  $('endDesc').textContent = G.dist + 'm 활강 · 💎' + G.gems + ' → 점수 ' + score.toLocaleString() +
+    ' (최고 ' + meta.best.toLocaleString() + ')';
+  $('endPanel').hidden = false; $('hud').hidden = true;
+  GameRank.submit('cave-glide', score, G.dist + 'm · 💎' + G.gems)
+    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
+  persistMeta();
+}
+
+/* ── 렌더 ── */
+function draw(ts) {
+  requestAnimationFrame(draw);
+  if (!G) return;
+  if (running) update(Math.min(0.04, (ts - (draw.last || ts)) / 1000));
+  draw.last = ts;
+  const t = ts / 1000;
+  cx.fillStyle = '#0e1420'; cx.fillRect(0, 0, VW, VH);
+  // 원경 결정
+  cx.fillStyle = 'rgba(60,90,140,.10)';
+  for (let i = 0; i < 12; i++) {
+    const bx = (i * 190 - (G.x * 0.35) % 190 + 190) % (VW + 120) - 60;
+    cx.beginPath(); cx.moveTo(bx, VH); cx.lineTo(bx + 45, VH - 130 - (i % 3) * 60); cx.lineTo(bx + 90, VH); cx.fill();
+  }
+  // 동굴 벽
+  cx.fillStyle = '#1c2434';
+  G.segs.forEach(s => {
+    const sx = s.x - G.x;
+    cx.fillRect(sx, 0, 21, s.top);
+    cx.fillRect(sx, s.bot, 21, VH - s.bot);
+  });
+  cx.fillStyle = '#141a28';
+  G.segs.forEach(s => {
+    const sx = s.x - G.x;
+    cx.fillRect(sx, s.top - 7, 21, 7); cx.fillRect(sx, s.bot, 21, 7);
+  });
+  // 종유석/석순
+  cx.fillStyle = '#2a3448';
+  G.stalact.forEach(s => {
+    const sx = s.x - G.x + 9;
+    cx.beginPath();
+    if (s.top) { cx.moveTo(sx - 13, s.y); cx.lineTo(sx, s.y + s.len); cx.lineTo(sx + 13, s.y); }
+    else { cx.moveTo(sx - 13, s.y); cx.lineTo(sx, s.y - s.len); cx.lineTo(sx + 13, s.y); }
+    cx.fill();
+  });
+  // 수정
+  G.gemsArr.forEach(g => {
+    if (g.got) return;
+    const gx = g.x - G.x, gy = g.y + Math.sin(t * 4 + g.x) * 4;
+    cx.fillStyle = '#7ad8f0';
+    cx.beginPath(); cx.moveTo(gx, gy - 10); cx.lineTo(gx + 8, gy); cx.lineTo(gx, gy + 10); cx.lineTo(gx - 8, gy); cx.fill();
+    cx.fillStyle = '#c8f0fa'; cx.fillRect(gx - 1, gy - 5, 2, 6);
+  });
+  // 파티클
+  G.parts.forEach(p => { cx.globalAlpha = clamp(p.life, 0, 1); cx.fillStyle = p.c; cx.fillRect(p.x, p.y, 3, 3); cx.globalAlpha = 1; });
+  // 활강 박쥐 — 픽셀
+  const py2 = G.y, wing = flapping ? Math.sin(t * 26) : Math.sin(t * 7) * 0.4;
+  cx.save(); cx.translate(130, py2);
+  cx.rotate(clamp(G.vy / 700, -0.5, 0.6));
+  cx.fillStyle = '#5c4a8a';
+  cx.beginPath(); cx.moveTo(-4, -3); cx.lineTo(-26, -3 - wing * 15); cx.lineTo(-8, 4); cx.fill();  // 왼 날개
+  cx.beginPath(); cx.moveTo(6, -3); cx.lineTo(24, -3 - wing * 15); cx.lineTo(8, 4); cx.fill();     // 오른 날개
+  cx.fillStyle = '#7a68b0'; cx.fillRect(-8, -7, 18, 15);                                            // 몸통
+  cx.fillStyle = '#5c4a8a'; cx.fillRect(-8, 3, 18, 5);
+  cx.fillStyle = '#ffd54a'; cx.fillRect(3, -4, 3, 3);                                               // 눈
+  cx.fillStyle = '#7a68b0'; cx.fillRect(-3, -11, 4, 5); cx.fillRect(5, -11, 4, 5);                  // 귀
+  cx.restore();
+  if (running) {
+    $('distTxt').textContent = '🦇 ' + G.dist + 'm';
+    $('gemTxt').textContent = '💎 ' + G.gems;
+    $('bestHudTxt').textContent = '🏆 ' + meta.best.toLocaleString();
+  }
+}
+requestAnimationFrame(draw);
+
+/* ── 입력 ── */
+const press = on => { flapping = on; };
+addEventListener('keydown', ev => { if (ev.key === ' ' || ev.code === 'Space') { ev.preventDefault(); press(true); } });
+addEventListener('keyup', ev => { if (ev.key === ' ' || ev.code === 'Space') press(false); });
+cv.addEventListener('pointerdown', ev => { ev.preventDefault(); press(true); });
+addEventListener('pointerup', () => press(false));
+addEventListener('blur', () => press(false));
+
+function start() {
+  newGame(); running = true; flapping = false;
+  $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false;
+}
+$('startBtn').onclick = start;
+$('againBtn').onclick = start;
+$('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
+  $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() + ' · ' + meta.runs + '회 활강' : ''; };
+$('codeLoadBtn').onclick = async () => {
+  const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (raw.length < 8) return;
+  if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
+    $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() : ''; showCode(); }
+};
+loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() + ' · ' + meta.runs + '회 활강' : ''; });
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('cave-glide');
+GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
+</script>
+</body>
+</html>
