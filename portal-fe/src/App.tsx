@@ -17,13 +17,16 @@ const QuantApp = lazy(() => import('./shell/placeholders').then((m) => ({ defaul
 const GifticonApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.GifticonApp })));
 const AgentViewerApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.AgentViewerApp })));
 
+// games.<domain> 서브도메인 — 동일 portal-fe 번들을 서빙하되 루트가 게임 허브 (ADR-0059)
+const isGamesHost = window.location.hostname.split('.')[0] === 'games';
+
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Suspense fallback={<div style={{ padding: 32, color: 'var(--ko-text-muted)' }}>로딩…</div>}>
         <Routes>
           {/* portal 자체 (코드사전/포트폴리오/커머스) */}
-          <Route path="/" element={<SearchPage />} />
+          <Route path="/" element={isGamesHost ? <GamesPage /> : <SearchPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/products/:id" element={<ShopProductDetailPage />} />
