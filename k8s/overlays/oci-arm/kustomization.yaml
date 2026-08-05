@@ -200,7 +200,7 @@ images:
     newTag: a4a1b48
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 67e0e41
+    newTag: 044601e
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 88bb760
@@ -227,7 +227,7 @@ images:
     newTag: 88bb760
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 88bb760
+    newTag: 044601e
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: 88bb760
