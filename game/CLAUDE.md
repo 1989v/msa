@@ -86,6 +86,10 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | slug | 자산 | 비고 |
 |---|---|---|
 | `snake` | `portal-fe/public/games/snake/` | `./gradlew :game:web:jsBrowserDistribution` 산출물(game.js/index.html) 복사 |
-| `overworld-quest` | `portal-fe/public/games/overworld-quest/index.html` | 단일 HTML(31KB, 외부 의존 0). 원본 파일명이 상표를 연상시켜 중립 명칭으로 등록 |
+| `overworld-quest` | `portal-fe/public/games/overworld-quest/index.html` | 단일 HTML, 외부 의존 0. 원본 파일명이 상표를 연상시켜 중립 명칭으로 등록 |
+| `monster-tamer` `depth-delver` `outlaw-frontier` `gate-holdout` `gear-bastion` `iron-vanguard` `ember-temple` `frost-outpost` `echo-duel` | `portal-fe/public/games/<slug>/index.html` | 단일 HTML 자체 완결 게임 9종 (V7~V13 시드). 이어하기 코드 세이브 공용 |
+
+캔버스 게임 공용 정적 자산: `portal-fe/public/games/lib/touch.js` (모바일 가상 터치패드 —
+KeyboardEvent 합성이라 게임별 입력 코드 무변경), `portal-fe/public/games/thumbs/shots/` (실플레이 캡처 썸네일).
 
 Snake 클라이언트를 고친 뒤에는 `jsBrowserDistribution` 을 다시 돌려 산출물을 복사해야 반영된다.

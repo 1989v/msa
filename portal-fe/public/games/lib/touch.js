@@ -43,7 +43,8 @@
   document.head.appendChild(css);
 
   function bind(btn, code) {
-    var down = function (ev) { ev.preventDefault(); fire('keydown', code); };
+    var down = function (ev) { ev.preventDefault(); fire('keydown', code);
+      if (navigator.vibrate) navigator.vibrate(8); };
     var up = function (ev) { ev.preventDefault(); fire('keyup', code); };
     btn.addEventListener('touchstart', down, { passive: false });
     btn.addEventListener('touchend', up, { passive: false });
