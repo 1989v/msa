@@ -32,6 +32,14 @@
   .shopRow button { padding:6px 14px; font-size:12px; }
   #saveStatus { font-size:11px; color:#8a93a8; }
   #info { margin-top:10px; font-size:11px; color:#667; text-align:center; line-height:1.7; }
+
+  /* 모바일 — 캔버스를 화면 폭에 맞추고 오버레이 UI 를 키운다 */
+  @media (max-width: 900px), (pointer: coarse) {
+    #wrap { width: 100vw; max-width: 100vw; border-width: 0; border-radius: 0; }
+    canvas { width: 100%; height: auto; }
+    #info { display: none; }
+    #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
+  }
 </style>
 </head>
 <body>
@@ -961,5 +969,6 @@ $('codeLoadBtn').onclick = async () => {
 };
 loadMeta().then(renderMeta);
 </script>
+<script src="../lib/touch.js" data-actions="KeyZ:⚔,ShiftLeft:🌀"></script>
 </body>
 </html>

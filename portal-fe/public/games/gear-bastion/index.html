@@ -36,6 +36,14 @@
   #info { margin-top:9px; font-size:11px; color:#665f78; text-align:center; line-height:1.7; }
   input { background:#171320; border:1px solid #2c2440; color:#e6e0f0; border-radius:6px; padding:6px 9px;
           font-family:inherit; font-size:12px; letter-spacing:1px; width:165px; text-transform:uppercase; }
+
+  /* 모바일 — 캔버스를 화면 폭에 맞추고 오버레이 UI 를 키운다 */
+  @media (max-width: 900px), (pointer: coarse) {
+    #wrap { width: 100vw; max-width: 100vw; border-width: 0; border-radius: 0; }
+    canvas { width: 100%; height: auto; }
+    #info { display: none; }
+    #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
+  }
 </style>
 </head>
 <body>
