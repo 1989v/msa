@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>강철 결사대</title>
+<title data-i18n="title">강철 결사대</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -39,6 +39,7 @@
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
 </style>
+<script src="../lib/i18n.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -51,29 +52,114 @@
   </div>
   <div id="banner"></div>
   <div class="panel" id="menu">
-    <h1>⚔ 강철 결사대</h1>
-    <p>보급도 지원도 없다 — <b>주어진 넷</b>으로 몰려오는 무리를 잡아내라.
-       <b>유닛을 클릭(또는 1~4)해 선택</b>하고, 땅을 클릭해 움직인다. 서 있는 유닛은 사거리 안 적을 자동 공격한다.
-       궁수는 <b>치고 빠지고</b>, 기사가 막고, 사제가 살린다. 죽은 대원은 돌아오지 않는다. <b>10스테이지</b>.</p>
+    <h1 data-i18n="menu.title">⚔ 강철 결사대</h1>
+    <p><span data-i18n="menu.d1">보급도 지원도 없다 — </span><b data-i18n="menu.d2">주어진 넷</b><span data-i18n="menu.d3">으로 몰려오는 무리를 잡아내라.
+       </span><b data-i18n="menu.d4">유닛을 클릭(또는 1~4)해 선택</b><span data-i18n="menu.d5">하고, 땅을 클릭해 움직인다. 서 있는 유닛은 사거리 안 적을 자동 공격한다.
+       궁수는 </span><b data-i18n="menu.d6">치고 빠지고</b><span data-i18n="menu.d7">, 기사가 막고, 사제가 살린다. 죽은 대원은 돌아오지 않는다. </span><b data-i18n="menu.d8">10스테이지</b>.</p>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="ph.code" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btn.codeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#8fd0ff;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#7a8aa0"></span></div>
-    <button id="startBtn">▶ 출정</button>
+    <button id="startBtn" data-i18n="btn.start">▶ 출정</button>
   </div>
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
-    <button id="backBtn">처음으로</button>
+    <button id="backBtn" data-i18n="btn.back">처음으로</button>
   </div>
 </div>
-<div id="info">유닛 클릭/1~4 = 선택 · 땅 클릭 = 이동 (이동 중엔 공격 불가 — 멈춰야 쏜다) · Esc = 선택 해제<br>
-  스테이지 사이에 생존자는 절반 회복 · 🛡 기사: 근접 방벽 · 🏹 궁수 ×2: 원거리 · ✚ 사제: 주변 치유</div>
+<div id="info"><span data-i18n="info1">유닛 클릭/1~4 = 선택 · 땅 클릭 = 이동 (이동 중엔 공격 불가 — 멈춰야 쏜다) · Esc = 선택 해제</span><br>
+  <span data-i18n="info2">스테이지 사이에 생존자는 절반 회복 · 🛡 기사: 근접 방벽 · 🏹 궁수 ×2: 원거리 · ✚ 사제: 주변 치유</span></div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    'title': '강철 결사대',
+    'menu.title': '⚔ 강철 결사대',
+    'menu.d1': '보급도 지원도 없다 — ',
+    'menu.d2': '주어진 넷',
+    'menu.d3': '으로 몰려오는 무리를 잡아내라. ',
+    'menu.d4': '유닛을 클릭(또는 1~4)해 선택',
+    'menu.d5': '하고, 땅을 클릭해 움직인다. 서 있는 유닛은 사거리 안 적을 자동 공격한다. 궁수는 ',
+    'menu.d6': '치고 빠지고',
+    'menu.d7': ', 기사가 막고, 사제가 살린다. 죽은 대원은 돌아오지 않는다. ',
+    'menu.d8': '10스테이지',
+    'ph.code': '이어하기 코드',
+    'btn.codeLoad': '🔑 코드로 불러오기',
+    'btn.start': '▶ 출정',
+    'btn.back': '처음으로',
+    'info1': '유닛 클릭/1~4 = 선택 · 땅 클릭 = 이동 (이동 중엔 공격 불가 — 멈춰야 쏜다) · Esc = 선택 해제',
+    'info2': '스테이지 사이에 생존자는 절반 회복 · 🛡 기사: 근접 방벽 · 🏹 궁수 ×2: 원거리 · ✚ 사제: 주변 치유',
+    'save.server': '☁ 서버 세이브 (v{n})',
+    'save.fail': '세이브 로드 실패: {n}',
+    'save.local': '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
+    'best': '최고 기록 스테이지 {n}',
+    'ally.knight': '기사',
+    'ally.archer': '궁수',
+    'ally.priest': '사제',
+    'foe.wolf': '늑대',
+    'foe.spear': '창병',
+    'foe.berserk': '광전사',
+    'foe.shaman': '무당',
+    'foe.giant': '거인',
+    'stage.start': '스테이지 {n} / {m}',
+    'stage.heal': '생존자 절반 회복',
+    'ally.down': '{n} 전사…',
+    'hud.stage': '⚔ 스테이지 {n}/{m}',
+    'end.win': '🏆 결사대 개선!',
+    'end.lose': '💀 결사대 전멸…',
+    'end.winDesc': '{n}스테이지를 모두 돌파했다!',
+    'end.loseDesc': '스테이지 {n} 에서 전멸했다.',
+    'end.best': ' 최고 기록 스테이지 {n}',
+    'end.clears': ' · 클리어 {n}회',
+    'rank.applied': ' 🏆 랭킹 {n}위!',
+  },
+  en: {
+    'title': 'Iron Vanguard',
+    'menu.title': '⚔ Iron Vanguard',
+    'menu.d1': 'No supplies, no reinforcements — cut down the horde with ',
+    'menu.d2': 'the four you have',
+    'menu.d3': '. ',
+    'menu.d4': 'Click a unit (or press 1-4) to select it',
+    'menu.d5': ', then click the ground to move. A unit that stands still auto-attacks anything in range. Archers ',
+    'menu.d6': 'hit and run',
+    'menu.d7': ', the knight holds the line, the priest keeps them alive. The fallen never come back. ',
+    'menu.d8': '10 stages',
+    'ph.code': 'Continue code',
+    'btn.codeLoad': '🔑 Load by code',
+    'btn.start': '▶ March out',
+    'btn.back': 'Back to menu',
+    'info1': 'Click a unit / 1-4 = select · Click ground = move (no attacking while moving — stop to shoot) · Esc = deselect',
+    'info2': 'Survivors heal half between stages · 🛡 Knight: melee wall · 🏹 Archer ×2: ranged · ✚ Priest: heals nearby',
+    'save.server': '☁ Server save (v{n})',
+    'save.fail': 'Save load failed: {n}',
+    'save.local': 'Browser save — saving issues a continue code',
+    'best': 'Best: stage {n}',
+    'ally.knight': 'Knight',
+    'ally.archer': 'Archer',
+    'ally.priest': 'Priest',
+    'foe.wolf': 'Wolf',
+    'foe.spear': 'Spearman',
+    'foe.berserk': 'Berserker',
+    'foe.shaman': 'Shaman',
+    'foe.giant': 'Giant',
+    'stage.start': 'Stage {n} / {m}',
+    'stage.heal': 'Survivors heal half',
+    'ally.down': '{n} has fallen…',
+    'hud.stage': '⚔ Stage {n}/{m}',
+    'end.win': '🏆 The vanguard returns!',
+    'end.lose': '💀 The vanguard is gone…',
+    'end.winDesc': 'You broke through all {n} stages!',
+    'end.loseDesc': 'Wiped out on stage {n}.',
+    'end.best': ' Best: stage {n}',
+    'end.clears': ' · {n} clears',
+    'rank.applied': ' 🏆 Rank #{n}!',
+  },
+});
+const TR = GameI18n.t;
 const API = '/api/v1/games/iron-vanguard';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height;
@@ -109,12 +195,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { best:0, clears:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('save.server').replace('{n}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('save.fail').replace('{n}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  $('saveStatus').textContent = TR('save.local');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -211,16 +297,16 @@ function foeSprite(kind) {
 
 /* ── 유닛 정의 ── */
 const ALLY_DEFS = {
-  knight: { name:'기사',  emoji:'🛡', hp:240, dmg:15, rate:0.85, range:30,  spd:96,  r:14, color:'#8fa8c8' },
-  archer: { name:'궁수',  emoji:'🏹', hp:85,  dmg:11, rate:0.62, range:195, spd:108, r:11, color:'#8fc89a' },
-  priest: { name:'사제',  emoji:'✚',  hp:95,  dmg:0,  rate:0.8,  range:150, spd:102, r:11, color:'#e8d48a', heal:13 },
+  knight: { name:TR('ally.knight'), emoji:'🛡', hp:240, dmg:15, rate:0.85, range:30,  spd:96,  r:14, color:'#8fa8c8' },
+  archer: { name:TR('ally.archer'), emoji:'🏹', hp:85,  dmg:11, rate:0.62, range:195, spd:108, r:11, color:'#8fc89a' },
+  priest: { name:TR('ally.priest'), emoji:'✚',  hp:95,  dmg:0,  rate:0.8,  range:150, spd:102, r:11, color:'#e8d48a', heal:13 },
 };
 const FOE_DEFS = {
-  wolf:    { name:'늑대',   hp:26,  dmg:6,  rate:0.8, range:24, spd:130, r:12, color:'#7a7268' },
-  spear:   { name:'창병',   hp:55,  dmg:9,  rate:0.9, range:34, spd:78,  r:13, color:'#a8825a' },
-  berserk: { name:'광전사', hp:110, dmg:16, rate:1.0, range:28, spd:88,  r:14, color:'#c25a4a' },
-  shaman:  { name:'무당',   hp:45,  dmg:10, rate:1.7, range:170, spd:60, r:12, color:'#9a6ac8', shoot:true },
-  giant:   { name:'거인',   hp:600, dmg:30, rate:1.4, range:40, spd:52,  r:22, color:'#6a5a48' },
+  wolf:    { name:TR('foe.wolf'),    hp:26,  dmg:6,  rate:0.8, range:24, spd:130, r:12, color:'#7a7268' },
+  spear:   { name:TR('foe.spear'),   hp:55,  dmg:9,  rate:0.9, range:34, spd:78,  r:13, color:'#a8825a' },
+  berserk: { name:TR('foe.berserk'), hp:110, dmg:16, rate:1.0, range:28, spd:88,  r:14, color:'#c25a4a' },
+  shaman:  { name:TR('foe.shaman'),  hp:45,  dmg:10, rate:1.7, range:170, spd:60, r:12, color:'#9a6ac8', shoot:true },
+  giant:   { name:TR('foe.giant'),   hp:600, dmg:30, rate:1.4, range:40, spd:52,  r:22, color:'#6a5a48' },
 };
 const STAGES = [
   { wolf:5 },
@@ -263,7 +349,7 @@ function startStage() {
   // 스폰 순서 섞기
   for (let i = q.length - 1; i > 0; i--) { const j = ri(i + 1); [q[i], q[j]] = [q[j], q[i]]; }
   G.spawnQueue = q; G.spawnT = 0.5;
-  banner('스테이지 ' + G.stage + ' / ' + STAGES.length);
+  banner(TR('stage.start').replace('{n}', G.stage).replace('{m}', STAGES.length));
 }
 function spawnFoe(kind) {
   const d = FOE_DEFS[kind], sc = 1 + (G.stage - 1) * 0.09;
@@ -287,7 +373,7 @@ function update(dt) {
     if (G.stageClearT > 1.4) {
       G.stageClearT = 0;
       G.allies.forEach(a => { a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.5); a.order = null; });
-      popText(VW/2, 180, '생존자 절반 회복', '#8fc89a');
+      popText(VW/2, 180, TR('stage.heal'), '#8fc89a');
       startStage();
     }
   }
@@ -378,7 +464,7 @@ function hurtAlly(a, dmg, fx, fy) {
   burst(a.x, a.y, '#ff6b6b', 6, 100);
   if (a.hp <= 0) {
     burst(a.x, a.y, '#ffffff', 18, 160); shake = 10;
-    popText(a.x, a.y - 16, a.name + ' 전사…', '#ff6b6b');
+    popText(a.x, a.y - 16, TR('ally.down').replace('{n}', a.name), '#ff6b6b');
     const idx = G.allies.indexOf(a);
     G.allies = G.allies.filter(o => o !== a);
     if (selectedIdx === idx) selectedIdx = -1;
@@ -440,7 +526,7 @@ function draw() {
     cx.globalAlpha = 1;
   }
   cx.restore();
-  $('stageTxt').textContent = '⚔ 스테이지 ' + G.stage + '/' + STAGES.length;
+  $('stageTxt').textContent = TR('hud.stage').replace('{n}', G.stage).replace('{m}', STAGES.length);
   $('foeCnt').textContent = '👹 ' + (G.foes.length + G.spawnQueue.length);
   $('unitTxt').textContent = G.allies.map((a, i) =>
     (i === selectedIdx ? '[' : '') + a.emoji + Math.ceil(a.hp) + (i === selectedIdx ? ']' : '')).join(' ');
@@ -476,10 +562,10 @@ async function endGame(win) {
   meta.best = Math.max(meta.best, G.stage);
   if (win) meta.clears = (meta.clears || 0) + 1;
   GameRank.submit('iron-vanguard', G.stage * 1000 + (win ? 500 : 0), '스테이지 ' + G.stage + (win ? ' 클리어' : ''))
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
-  $('endTitle').textContent = win ? '🏆 결사대 개선!' : '💀 결사대 전멸…';
-  $('endDesc').textContent = (win ? STAGES.length + '스테이지를 모두 돌파했다!' : '스테이지 ' + G.stage + ' 에서 전멸했다.') +
-    ' 최고 기록 스테이지 ' + meta.best + (meta.clears ? ' · 클리어 ' + meta.clears + '회' : '');
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
+  $('endTitle').textContent = win ? TR('end.win') : TR('end.lose');
+  $('endDesc').textContent = (win ? TR('end.winDesc').replace('{n}', STAGES.length) : TR('end.loseDesc').replace('{n}', G.stage)) +
+    TR('end.best').replace('{n}', meta.best) + (meta.clears ? TR('end.clears').replace('{n}', meta.clears) : '');
   $('endPanel').hidden = false;
   await persistMeta();
 }
@@ -494,14 +580,14 @@ function loop() {
 requestAnimationFrame(loop);
 $('startBtn').onclick = startGame;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
-  $('bestTxt').textContent = meta.best ? '최고 기록 스테이지 ' + meta.best : ''; };
+  $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
-    $('bestTxt').textContent = meta.best ? '최고 기록 스테이지 ' + meta.best : ''; showCode(); }
+    $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; showCode(); }
 };
-loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 기록 스테이지 ' + meta.best : ''; });
+loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; });
 </script>
 <script src="../lib/rank.js"></script>
 <script>

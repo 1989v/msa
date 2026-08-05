@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>혹한 전초기지</title>
+<title data-i18n="title">혹한 전초기지</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -45,6 +45,7 @@
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
 </style>
+<script src="../lib/i18n.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -58,36 +59,119 @@
   </div>
   <div id="banner"></div>
   <div id="bar" hidden>
-    <button id="mWall">🧱 방벽 25$</button>
-    <button id="mTurret">🔫 포탑 90$</button>
-    <button id="mDemol">⛏ 철거</button>
+    <button id="mWall" data-i18n="mode.wall">🧱 방벽 25$</button>
+    <button id="mTurret" data-i18n="mode.turret">🔫 포탑 90$</button>
+    <button id="mDemol" data-i18n="mode.demol">⛏ 철거</button>
     <span style="flex:1"></span>
     <button id="hireBtn"></button>
   </div>
   <div class="panel" id="menu">
-    <h1>❄ 혹한 전초기지</h1>
-    <p>눈보라 너머에서 서리 늑대 무리가 몰려온다. <b>광부가 수정을 캐서</b> 자금을 만들고,
-       세 개의 <b>협곡 입구를 방벽과 포탑으로 틀어막아라</b>. 수정은 유한하다 — 아껴 쓰고, 버텨라.
-       본부가 무너지기 전에 <b>12분</b>을 살아남으면 승리.</p>
+    <h1 data-i18n="menu.title">❄ 혹한 전초기지</h1>
+    <p><span data-i18n="menu.d1">눈보라 너머에서 서리 늑대 무리가 몰려온다. </span><b data-i18n="menu.d2">광부가 수정을 캐서</b><span data-i18n="menu.d3"> 자금을 만들고,
+       세 개의 </span><b data-i18n="menu.d4">협곡 입구를 방벽과 포탑으로 틀어막아라</b><span data-i18n="menu.d5">. 수정은 유한하다 — 아껴 쓰고, 버텨라.
+       본부가 무너지기 전에 </span><b data-i18n="menu.d6">12분</b><span data-i18n="menu.d7">을 살아남으면 승리.</span></p>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="ph.code" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btn.codeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#a0d8ec;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#7a92a4"></span></div>
-    <button id="startBtn">▶ 개척 시작</button>
+    <button id="startBtn" data-i18n="btn.start">▶ 개척 시작</button>
   </div>
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
-    <button id="backBtn">처음으로</button>
+    <button id="backBtn" data-i18n="btn.back">처음으로</button>
   </div>
 </div>
-<div id="info">모드 선택 후 빈 칸 클릭 → 건설 · 철거 모드로 건물 클릭 → 절반 환불 · 습격은 왼쪽/위/아래 협곡에서 온다<br>
-  💎 수정은 캘수록 줄어든다 · 광부가 물리면 도망친다 — 입구를 막는 게 먼저다</div>
+<div id="info"><span data-i18n="info1">모드 선택 후 빈 칸 클릭 → 건설 · 철거 모드로 건물 클릭 → 절반 환불 · 습격은 왼쪽/위/아래 협곡에서 온다</span><br>
+  <span data-i18n="info2">💎 수정은 캘수록 줄어든다 · 광부가 물리면 도망친다 — 입구를 막는 게 먼저다</span></div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    'title': '혹한 전초기지',
+    'menu.title': '❄ 혹한 전초기지',
+    'menu.d1': '눈보라 너머에서 서리 늑대 무리가 몰려온다. ',
+    'menu.d2': '광부가 수정을 캐서',
+    'menu.d3': ' 자금을 만들고, 세 개의 ',
+    'menu.d4': '협곡 입구를 방벽과 포탑으로 틀어막아라',
+    'menu.d5': '. 수정은 유한하다 — 아껴 쓰고, 버텨라. 본부가 무너지기 전에 ',
+    'menu.d6': '12분',
+    'menu.d7': '을 살아남으면 승리.',
+    'ph.code': '이어하기 코드',
+    'btn.codeLoad': '🔑 코드로 불러오기',
+    'btn.start': '▶ 개척 시작',
+    'btn.back': '처음으로',
+    'mode.wall': '🧱 방벽 25$',
+    'mode.turret': '🔫 포탑 90$',
+    'mode.demol': '⛏ 철거',
+    'info1': '모드 선택 후 빈 칸 클릭 → 건설 · 철거 모드로 건물 클릭 → 절반 환불 · 습격은 왼쪽/위/아래 협곡에서 온다',
+    'info2': '💎 수정은 캘수록 줄어든다 · 광부가 물리면 도망친다 — 입구를 막는 게 먼저다',
+    'save.server': '☁ 서버 세이브 (v{n})',
+    'save.fail': '세이브 로드 실패: {n}',
+    'save.local': '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
+    'best': '최고 기록 {n}',
+    'dir.left': '왼쪽',
+    'dir.up': '위쪽',
+    'dir.down': '아래쪽',
+    'raid.banner': '❄ 제{n}차 습격 — {s} 협곡!',
+    'miner.down': '광부 사망!',
+    'hud.fight': '⚔ 교전 중 ({n})',
+    'hud.next': '❄ 다음 습격 {n}s',
+    'btn.hire': '⛏ 광부 고용 70$ ({n}/6)',
+    'banner.start': '협곡 입구를 막아라!',
+    'end.win': '🏆 구조대 도착!',
+    'end.lose': '💥 전초기지 함락…',
+    'end.winDesc': '12분을 버텨 구조대가 도착했다!',
+    'end.loseDesc': '{n} 만에 본부가 무너졌다.',
+    'end.best': ' 최고 기록 {n}',
+    'end.clears': ' · 생존 성공 {n}회',
+    'rank.applied': ' 🏆 랭킹 {n}위!',
+  },
+  en: {
+    'title': 'Frost Outpost',
+    'menu.title': '❄ Frost Outpost',
+    'menu.d1': 'Frost wolves are pouring out of the blizzard. ',
+    'menu.d2': 'Miners cut crystal',
+    'menu.d3': ' to fund the outpost — then ',
+    'menu.d4': 'seal all three canyon mouths with walls and turrets',
+    'menu.d5': '. The crystal is finite, so spend it well and hold on. Survive ',
+    'menu.d6': '12 minutes',
+    'menu.d7': ' before HQ falls and you win.',
+    'ph.code': 'Continue code',
+    'btn.codeLoad': '🔑 Load by code',
+    'btn.start': '▶ Break ground',
+    'btn.back': 'Back to menu',
+    'mode.wall': '🧱 Wall $25',
+    'mode.turret': '🔫 Turret $90',
+    'mode.demol': '⛏ Demolish',
+    'info1': 'Pick a mode, click an empty tile → build · Demolish mode + building → half refund · Raids come from the west, north and south canyons',
+    'info2': '💎 Crystal runs out as you mine it · Bitten miners flee — seal the mouths first',
+    'save.server': '☁ Server save (v{n})',
+    'save.fail': 'Save load failed: {n}',
+    'save.local': 'Browser save — saving issues a continue code',
+    'best': 'Best: {n}',
+    'dir.left': 'west',
+    'dir.up': 'north',
+    'dir.down': 'south',
+    'raid.banner': '❄ Raid {n} — {s} canyon!',
+    'miner.down': 'Miner down!',
+    'hud.fight': '⚔ In combat ({n})',
+    'hud.next': '❄ Next raid {n}s',
+    'btn.hire': '⛏ Hire miner $70 ({n}/6)',
+    'banner.start': 'Seal the canyon mouths!',
+    'end.win': '🏆 Rescue has arrived!',
+    'end.lose': '💥 Outpost overrun…',
+    'end.winDesc': 'You held 12 minutes and the rescue team arrived!',
+    'end.loseDesc': 'HQ fell after {n}.',
+    'end.best': ' Best: {n}',
+    'end.clears': ' · {n} survivals',
+    'rank.applied': ' 🏆 Rank #{n}!',
+  },
+});
+const TR = GameI18n.t;
 const API = '/api/v1/games/frost-outpost';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height, T = 40, COLS = 21, ROWS = 12;
@@ -124,12 +208,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { bestSec:0, clears:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('save.server').replace('{n}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('save.fail').replace('{n}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  $('saveStatus').textContent = TR('save.local');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -220,7 +304,8 @@ function startRaid() {
       dmg: big ? 22 : 8, spd: big ? 46 : 72, r: big ? 17 : 11, big,
       cd: 0, hurt: 0 });
   }
-  banner('❄ 제' + G.raid + '차 습격 — ' + (gate.dir[0] ? '왼쪽' : gate.dir[1] > 0 ? '위쪽' : '아래쪽') + ' 협곡!');
+  banner(TR('raid.banner').replace('{n}', G.raid)
+    .replace('{s}', TR(gate.dir[0] ? 'dir.left' : gate.dir[1] > 0 ? 'dir.up' : 'dir.down')));
 }
 
 /* ── 갱신 ── */
@@ -275,7 +360,7 @@ function update(dt) {
     if (prey && d < f.r + 10) {
       if (f.cd <= 0) { f.cd = 0.8; prey.hp -= f.dmg; prey.hurt = 0.2; burst(prey.x, prey.y, '#ff6b6b', 5, 90);
         if (prey.hp <= 0) { burst(prey.x, prey.y, '#e2ecf4', 12, 130); G.miners = G.miners.filter(o => o !== prey);
-          popText(prey.x, prey.y - 12, '광부 사망!', '#ff6b6b'); } }
+          popText(prey.x, prey.y - 12, TR('miner.down'), '#ff6b6b'); } }
       continue;
     }
     // 축 분리 이동 + 반경 충돌 — 방벽과 같은 픽셀 선상이면 반드시 막히고, 막은 구조물을 두들긴다
@@ -430,9 +515,11 @@ function draw() {
   cx.restore();
   $('goldTxt').textContent = '💰 ' + Math.floor(G.gold) + '$';
   $('timeTxt').textContent = '⏱ ' + fmtT(G.time) + ' / ' + fmtT(WIN_SEC);
-  $('raidTxt').textContent = G.foes.length ? '⚔ 교전 중 (' + G.foes.length + ')' : '❄ 다음 습격 ' + Math.ceil(G.raidT) + 's';
+  $('raidTxt').textContent = G.foes.length
+    ? TR('hud.fight').replace('{n}', G.foes.length)
+    : TR('hud.next').replace('{n}', Math.ceil(G.raidT));
   $('baseTxt').textContent = '🏭 ' + Math.ceil(G.baseHp) + '/' + G.baseMax + '   ⛏ ' + G.miners.length;
-  $('hireBtn').textContent = '⛏ 광부 고용 70$ (' + G.miners.length + '/6)';
+  $('hireBtn').textContent = TR('btn.hire').replace('{n}', G.miners.length);
   $('hireBtn').disabled = G.gold < 70 || G.miners.length >= 6;
 }
 
@@ -469,17 +556,17 @@ cv.addEventListener('click', ev => {
 function startGame() {
   newGame(); running = true; setMode('wall');
   $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false; $('bar').hidden = false;
-  banner('협곡 입구를 막아라!');
+  banner(TR('banner.start'));
 }
 async function endGame(win) {
   running = false; $('hud').hidden = true; $('bar').hidden = true;
   meta.bestSec = Math.max(meta.bestSec, Math.floor(G.time));
   if (win) meta.clears = (meta.clears || 0) + 1;
   GameRank.submit('frost-outpost', Math.floor(G.time), fmtT(Math.floor(G.time)) + (win ? ' 생존 성공' : ''))
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
-  $('endTitle').textContent = win ? '🏆 구조대 도착!' : '💥 전초기지 함락…';
-  $('endDesc').textContent = (win ? '12분을 버텨 구조대가 도착했다!' : fmtT(G.time) + ' 만에 본부가 무너졌다.') +
-    ' 최고 기록 ' + fmtT(meta.bestSec) + (meta.clears ? ' · 생존 성공 ' + meta.clears + '회' : '');
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
+  $('endTitle').textContent = win ? TR('end.win') : TR('end.lose');
+  $('endDesc').textContent = (win ? TR('end.winDesc') : TR('end.loseDesc').replace('{n}', fmtT(G.time))) +
+    TR('end.best').replace('{n}', fmtT(meta.bestSec)) + (meta.clears ? TR('end.clears').replace('{n}', meta.clears) : '');
   $('endPanel').hidden = false;
   await persistMeta();
 }
@@ -494,14 +581,14 @@ function loop() {
 requestAnimationFrame(loop);
 $('startBtn').onclick = startGame;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
-  $('bestTxt').textContent = meta.bestSec ? '최고 기록 ' + fmtT(meta.bestSec) : ''; };
+  $('bestTxt').textContent = meta.bestSec ? TR('best').replace('{n}', fmtT(meta.bestSec)) : ''; };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
-    $('bestTxt').textContent = meta.bestSec ? '최고 기록 ' + fmtT(meta.bestSec) : ''; showCode(); }
+    $('bestTxt').textContent = meta.bestSec ? TR('best').replace('{n}', fmtT(meta.bestSec)) : ''; showCode(); }
 };
-loadMeta().then(() => { $('bestTxt').textContent = meta.bestSec ? '최고 기록 ' + fmtT(meta.bestSec) : ''; });
+loadMeta().then(() => { $('bestTxt').textContent = meta.bestSec ? TR('best').replace('{n}', fmtT(meta.bestSec)) : ''; });
 </script>
 <script src="../lib/rank.js"></script>
 <script>

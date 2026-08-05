@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>동굴 활강</title>
+<title data-i18n="title">동굴 활강</title>
+<script src="../lib/i18n.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -44,30 +45,75 @@
     <span class="tag" id="bestHudTxt"></span>
   </div>
   <div class="panel" id="menu">
-    <h1>🦇 동굴 활강</h1>
-    <p><b>탭/클릭/스페이스를 누르면 날개를 친다.</b> 놓으면 가라앉는다.
-       좁아지는 동굴을 최대한 멀리 활강하라 — 벽·종유석에 닿으면 끝. 💎 수정을 먹으면 보너스.</p>
+    <h1 data-i18n="h1">🦇 동굴 활강</h1>
+    <p><b data-i18n="desc1">탭/클릭/스페이스를 누르면 날개를 친다.</b><span data-i18n="desc2"> 놓으면 가라앉는다.
+       좁아지는 동굴을 최대한 멀리 활강하라 — 벽·종유석에 닿으면 끝. 💎 수정을 먹으면 보너스.</span></p>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btnCodeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#8fd0ff;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#7a8aa0"></span></div>
-    <button id="startBtn">▶ 활강 시작</button>
+    <button id="startBtn" data-i18n="btnStart">▶ 활강 시작</button>
   </div>
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
     <div class="row">
-      <button id="againBtn">🔁 재도전</button>
-      <button id="backBtn" class="ghost">처음으로</button>
+      <button id="againBtn" data-i18n="btnAgain">🔁 재도전</button>
+      <button id="backBtn" class="ghost" data-i18n="btnBack">처음으로</button>
     </div>
   </div>
 </div>
-<div id="info">탭 / 클릭 / Space = 날갯짓 · 멀리 갈수록 동굴이 좁고 빨라진다</div>
+<div id="info" data-i18n="info">탭 / 클릭 / Space = 날갯짓 · 멀리 갈수록 동굴이 좁고 빨라진다</div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    title: '동굴 활강',
+    h1: '🦇 동굴 활강',
+    desc1: '탭/클릭/스페이스를 누르면 날개를 친다.',
+    desc2: ' 놓으면 가라앉는다. 좁아지는 동굴을 최대한 멀리 활강하라 — 벽·종유석에 닿으면 끝. 💎 수정을 먹으면 보너스.',
+    phCode: '이어하기 코드',
+    btnCodeLoad: '🔑 코드로 불러오기',
+    btnStart: '▶ 활강 시작',
+    btnAgain: '🔁 재도전',
+    btnBack: '처음으로',
+    info: '탭 / 클릭 / Space = 날갯짓 · 멀리 갈수록 동굴이 좁고 빨라진다',
+    saveCloud: '☁ 서버 세이브 (v{v})',
+    saveFail: '세이브 로드 실패: {e}',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급된다',
+    endNewBest: '🏆 신기록!',
+    endDead: '💥 추락…',
+    endDesc: '{d}m 활강 · 💎{g} → 점수 {s} (최고 {b})',
+    rankMsg: ' 🏆 랭킹 {n}위!',
+    bestFull: '최고 점수 {s} · {r}회 활강',
+    bestShort: '최고 점수 {s}',
+  },
+  en: {
+    title: 'Cave Glide',
+    h1: '🦇 Cave Glide',
+    desc1: 'Tap / click / hold Space to flap.',
+    desc2: ' Let go and you sink. Glide as far as you can down the narrowing cave — touching a wall or a stalactite ends the run. 💎 Crystals are bonus points.',
+    phCode: 'Continue code',
+    btnCodeLoad: '🔑 Load from code',
+    btnStart: '▶ Start gliding',
+    btnAgain: '🔁 Retry',
+    btnBack: 'Main menu',
+    info: 'Tap / Click / Space = flap · The farther you go, the tighter and faster the cave',
+    saveCloud: '☁ Cloud save (v{v})',
+    saveFail: 'Save load failed: {e}',
+    saveLocal: 'Browser save — saving issues a continue code',
+    endNewBest: '🏆 New record!',
+    endDead: '💥 Crashed…',
+    endDesc: '{d}m glided · 💎{g} → score {s} (best {b})',
+    rankMsg: ' 🏆 Rank #{n}!',
+    bestFull: 'Best score {s} · {r} runs',
+    bestShort: 'Best score {s}',
+  },
+});
+var TR = GameI18n.t;
 const API = '/api/v1/games/cave-glide';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height;
@@ -103,12 +149,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { best:0, runs:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('saveCloud').replace('{v}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('saveFail').replace('{e}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급된다';
+  $('saveStatus').textContent = TR('saveLocal');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -199,12 +245,12 @@ function die() {
   const score = G.dist + G.gems * 50;
   const newBest = score > meta.best;
   meta.best = Math.max(meta.best, score);
-  $('endTitle').textContent = newBest ? '🏆 신기록!' : '💥 추락…';
-  $('endDesc').textContent = G.dist + 'm 활강 · 💎' + G.gems + ' → 점수 ' + score.toLocaleString() +
-    ' (최고 ' + meta.best.toLocaleString() + ')';
+  $('endTitle').textContent = newBest ? TR('endNewBest') : TR('endDead');
+  $('endDesc').textContent = TR('endDesc').replace('{d}', G.dist).replace('{g}', G.gems)
+    .replace('{s}', score.toLocaleString()).replace('{b}', meta.best.toLocaleString());
   $('endPanel').hidden = false; $('hud').hidden = true;
   GameRank.submit('cave-glide', score, G.dist + 'm · 💎' + G.gems)
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rankMsg').replace('{n}', r.rank); });
   persistMeta();
 }
 
@@ -288,14 +334,14 @@ function start() {
 $('startBtn').onclick = start;
 $('againBtn').onclick = start;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
-  $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() + ' · ' + meta.runs + '회 활강' : ''; };
+  $('bestTxt').textContent = meta.best ? TR('bestFull').replace('{s}', meta.best.toLocaleString()).replace('{r}', meta.runs) : ''; };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
-    $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() : ''; showCode(); }
+    $('bestTxt').textContent = meta.best ? TR('bestShort').replace('{s}', meta.best.toLocaleString()) : ''; showCode(); }
 };
-loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() + ' · ' + meta.runs + '회 활강' : ''; });
+loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('bestFull').replace('{s}', meta.best.toLocaleString()).replace('{r}', meta.runs) : ''; });
 </script>
 <script src="../lib/rank.js"></script>
 <script>

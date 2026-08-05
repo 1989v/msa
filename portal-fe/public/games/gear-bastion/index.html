@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>태엽 포탑</title>
+<title data-i18n="title">태엽 포탑</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -45,6 +45,7 @@
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
 </style>
+<script src="../lib/i18n.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -68,28 +69,135 @@
     <button id="waveBtn"></button>
   </div>
   <div class="panel" id="menu">
-    <h1>⚙ 태엽 포탑</h1>
-    <p>태엽 골렘 군단이 정해진 길을 따라 요새로 행진한다. 길가에 <b>포탑을 세워</b> 통과를 막아라.
-       <b>비행 골렘은 길을 무시하고 직선으로</b> 날아온다 — 대공이 되는 포탑을 섞어야 한다. <b>25웨이브</b>를 막으면 승리.</p>
-    <p style="font-size:11px">🔩 볼트: 빠른 단발(대공 O) · 💣 캐넌: 범위 폭발(대공 X) · ❄ 서리: 감속(대공 O) · ⚡ 스파크: 3연쇄(대공 O)</p>
+    <h1 data-i18n="menu.title">⚙ 태엽 포탑</h1>
+    <p><span data-i18n="menu.d1">태엽 골렘 군단이 정해진 길을 따라 요새로 행진한다. 길가에 </span><b data-i18n="menu.d2">포탑을 세워</b><span data-i18n="menu.d3"> 통과를 막아라.
+       </span><b data-i18n="menu.d4">비행 골렘은 길을 무시하고 직선으로</b><span data-i18n="menu.d5"> 날아온다 — 대공이 되는 포탑을 섞어야 한다. </span><b data-i18n="menu.d6">25웨이브</b><span data-i18n="menu.d7">를 막으면 승리.</span></p>
+    <p style="font-size:11px" data-i18n="menu.tips">🔩 볼트: 빠른 단발(대공 O) · 💣 캐넌: 범위 폭발(대공 X) · ❄ 서리: 감속(대공 O) · ⚡ 스파크: 3연쇄(대공 O)</p>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="ph.code" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btn.codeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#d6bcf0;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#8a83a0"></span></div>
-    <button id="startBtn">▶ 방어 시작</button>
+    <button id="startBtn" data-i18n="btn.start">▶ 방어 시작</button>
   </div>
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
-    <button id="backBtn">처음으로</button>
+    <button id="backBtn" data-i18n="btn.back">처음으로</button>
   </div>
 </div>
-<div id="info">포탑 종류 선택 후 빈 칸 클릭 → 건설 · 지은 포탑 클릭 → 강화/판매 · 골렘이 끝까지 가면 생명 -1 (거대 골렘 -5)</div>
+<div id="info" data-i18n="info">포탑 종류 선택 후 빈 칸 클릭 → 건설 · 지은 포탑 클릭 → 강화/판매 · 골렘이 끝까지 가면 생명 -1 (거대 골렘 -5)</div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    'title': '태엽 포탑',
+    'menu.title': '⚙ 태엽 포탑',
+    'menu.d1': '태엽 골렘 군단이 정해진 길을 따라 요새로 행진한다. 길가에 ',
+    'menu.d2': '포탑을 세워',
+    'menu.d3': ' 통과를 막아라. ',
+    'menu.d4': '비행 골렘은 길을 무시하고 직선으로',
+    'menu.d5': ' 날아온다 — 대공이 되는 포탑을 섞어야 한다. ',
+    'menu.d6': '25웨이브',
+    'menu.d7': '를 막으면 승리.',
+    'menu.tips': '🔩 볼트: 빠른 단발(대공 O) · 💣 캐넌: 범위 폭발(대공 X) · ❄ 서리: 감속(대공 O) · ⚡ 스파크: 3연쇄(대공 O)',
+    'ph.code': '이어하기 코드',
+    'btn.codeLoad': '🔑 코드로 불러오기',
+    'btn.start': '▶ 방어 시작',
+    'btn.back': '처음으로',
+    'info': '포탑 종류 선택 후 빈 칸 클릭 → 건설 · 지은 포탑 클릭 → 강화/판매 · 골렘이 끝까지 가면 생명 -1 (거대 골렘 -5)',
+    'save.server': '☁ 서버 세이브 (v{n})',
+    'save.fail': '세이브 로드 실패: {n}',
+    'save.local': '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
+    'best': '최고 기록 웨이브 {n}',
+    't.bolt': '볼트',
+    't.cannon': '캐넌',
+    't.frost': '서리',
+    't.spark': '스파크',
+    'up.bolt': '공 {d} · 연사 {r}s',
+    'up.cannon': '공 {d} · 반경 {r}',
+    'up.frost': '사거리 {r} · 감속 {s}% · {t}s',
+    'up.spark': '공 {d} · 연쇄 {c}체',
+    'foe.crawler': '기는골렘',
+    'foe.swift': '질주골렘',
+    'foe.husk': '중장골렘',
+    'foe.wing': '비행골렘',
+    'foe.colossus': '거대골렘',
+    'wave.start': '웨이브 {n}',
+    'wave.boss': ' — 거대골렘!',
+    'wave.clear': '웨이브 클리어! +{n}$',
+    'map.exit': '요새 →',
+    'hud.prep': '⏳ 웨이브 {n} 까지 {s}s',
+    'hud.wave': '⚙ 웨이브 {n}/{m} — 남은 골렘 {c}',
+    'btn.up': '⬆ 강화 {c}$',
+    'btn.sell': '판매 +{c}$',
+    'btn.waveNow': '▶ 바로 소환 +12$',
+    'btn.waveOn': '⚙ 교전 중',
+    'banner.start': '길가에 포탑을 세워라!',
+    'end.win': '🏆 요새 사수!',
+    'end.lose': '💥 요새 함락…',
+    'end.winDesc': '25웨이브를 모두 막아냈다!',
+    'end.loseDesc': '웨이브 {n} 에서 방어선이 무너졌다.',
+    'end.best': ' 최고 기록 웨이브 {n}',
+    'end.clears': ' · 클리어 {n}회',
+    'rank.applied': ' 🏆 랭킹 {n}위!',
+  },
+  en: {
+    'title': 'Gear Bastion',
+    'menu.title': '⚙ Gear Bastion',
+    'menu.d1': 'A legion of clockwork golems marches along a fixed path toward the fortress. ',
+    'menu.d2': 'Line the path with turrets',
+    'menu.d3': ' and stop them. ',
+    'menu.d4': 'Flying golems ignore the path and cut straight across',
+    'menu.d5': ' — mix in turrets that can hit air. Hold ',
+    'menu.d6': '25 waves',
+    'menu.d7': ' to win.',
+    'menu.tips': '🔩 Bolt: fast single shot (anti-air) · 💣 Cannon: splash blast (ground only) · ❄ Frost: slows (anti-air) · ⚡ Spark: 3-target chain (anti-air)',
+    'ph.code': 'Continue code',
+    'btn.codeLoad': '🔑 Load by code',
+    'btn.start': '▶ Start defense',
+    'btn.back': 'Back to menu',
+    'info': 'Pick a turret, click an empty tile → build · Click a built turret → upgrade/sell · A golem reaching the end costs 1 life (colossus 5)',
+    'save.server': '☁ Server save (v{n})',
+    'save.fail': 'Save load failed: {n}',
+    'save.local': 'Browser save — saving issues a continue code',
+    'best': 'Best: wave {n}',
+    't.bolt': 'Bolt',
+    't.cannon': 'Cannon',
+    't.frost': 'Frost',
+    't.spark': 'Spark',
+    'up.bolt': 'ATK {d} · rate {r}s',
+    'up.cannon': 'ATK {d} · radius {r}',
+    'up.frost': 'Range {r} · slow {s}% · {t}s',
+    'up.spark': 'ATK {d} · chain {c}',
+    'foe.crawler': 'Crawler',
+    'foe.swift': 'Sprinter',
+    'foe.husk': 'Husk',
+    'foe.wing': 'Winged',
+    'foe.colossus': 'Colossus',
+    'wave.start': 'Wave {n}',
+    'wave.boss': ' — Colossus!',
+    'wave.clear': 'Wave cleared! +${n}',
+    'map.exit': 'Fortress →',
+    'hud.prep': '⏳ Wave {n} in {s}s',
+    'hud.wave': '⚙ Wave {n}/{m} — golems left {c}',
+    'btn.up': '⬆ Upgrade ${c}',
+    'btn.sell': 'Sell +${c}',
+    'btn.waveNow': '▶ Summon now +$12',
+    'btn.waveOn': '⚙ In combat',
+    'banner.start': 'Line the path with turrets!',
+    'end.win': '🏆 Fortress held!',
+    'end.lose': '💥 Fortress overrun…',
+    'end.winDesc': 'You stopped all 25 waves!',
+    'end.loseDesc': 'The line broke on wave {n}.',
+    'end.best': ' Best: wave {n}',
+    'end.clears': ' · {n} clears',
+    'rank.applied': ' 🏆 Rank #{n}!',
+  },
+});
+const TR = GameI18n.t;
 const API = '/api/v1/games/gear-bastion';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height, T = 40, COLS = 21, ROWS = 12;
@@ -125,12 +233,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { best:0, clears:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('save.server').replace('{n}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('save.fail').replace('{n}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  $('saveStatus').textContent = TR('save.local');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -169,26 +277,26 @@ const wpPix = WAYPOINTS.map(([x, y]) => ({ x: x * T + T/2, y: y * T + T/2 }));
  *   볼트 = 공격력 + 연사속도 · 캐넌 = 공격력 + 폭발 반경 · 서리 = 사거리 + 감속 강도/지속 · 스파크 = 연쇄 수
  */
 const TURRETS = {
-  bolt:   { name:'볼트',   emoji:'🔩', cost:70,  dmg:8,  rate:0.45, range:130, air:true,  color:'#8fb8d6',
+  bolt:   { name:TR('t.bolt'),   emoji:'🔩', cost:70,  dmg:8,  rate:0.45, range:130, air:true,  color:'#8fb8d6',
             up: lv => ({ dmg: 8 * Math.pow(1.45, lv), rate: 0.45 * Math.pow(0.86, lv) }),
-            upDesc: lv => '공 ' + Math.round(8 * Math.pow(1.45, lv)) + ' · 연사 ' + (0.45 * Math.pow(0.86, lv)).toFixed(2) + 's' },
-  cannon: { name:'캐넌',   emoji:'💣', cost:120, dmg:24, rate:1.35, range:140, air:false, splash:55, color:'#d69a5a',
+            upDesc: lv => TR('up.bolt').replace('{d}', Math.round(8 * Math.pow(1.45, lv))).replace('{r}', (0.45 * Math.pow(0.86, lv)).toFixed(2)) },
+  cannon: { name:TR('t.cannon'), emoji:'💣', cost:120, dmg:24, rate:1.35, range:140, air:false, splash:55, color:'#d69a5a',
             up: lv => ({ dmg: 24 * Math.pow(1.5, lv), splash: 55 + lv * 16 }),
-            upDesc: lv => '공 ' + Math.round(24 * Math.pow(1.5, lv)) + ' · 반경 ' + (55 + lv * 16) },
-  frost:  { name:'서리',   emoji:'❄',  cost:90,  dmg:4,  rate:0.8,  range:125, air:true,  slow:0.45, slowT:1.6, color:'#9adcf0',
+            upDesc: lv => TR('up.cannon').replace('{d}', Math.round(24 * Math.pow(1.5, lv))).replace('{r}', 55 + lv * 16) },
+  frost:  { name:TR('t.frost'),  emoji:'❄',  cost:90,  dmg:4,  rate:0.8,  range:125, air:true,  slow:0.45, slowT:1.6, color:'#9adcf0',
             up: lv => ({ dmg: 4 + lv, range: 125 * (1 + lv * 0.22), slowMul: 0.55 - lv * 0.07, slowT: 1.6 + lv * 0.5 }),
-            upDesc: lv => '사거리 ' + Math.round(125 * (1 + lv * 0.22)) + ' · 감속 ' + Math.round((1 - (0.55 - lv * 0.07)) * 100) + '% · ' + (1.6 + lv * 0.5).toFixed(1) + 's' },
-  spark:  { name:'스파크', emoji:'⚡', cost:140, dmg:13, rate:0.9,  range:130, air:true,  chain:3, color:'#f0e08a',
+            upDesc: lv => TR('up.frost').replace('{r}', Math.round(125 * (1 + lv * 0.22))).replace('{s}', Math.round((1 - (0.55 - lv * 0.07)) * 100)).replace('{t}', (1.6 + lv * 0.5).toFixed(1)) },
+  spark:  { name:TR('t.spark'),  emoji:'⚡', cost:140, dmg:13, rate:0.9,  range:130, air:true,  chain:3, color:'#f0e08a',
             up: lv => ({ dmg: 13 * Math.pow(1.25, lv), chain: 3 + lv }),
-            upDesc: lv => '공 ' + Math.round(13 * Math.pow(1.25, lv)) + ' · 연쇄 ' + (3 + lv) + '체' },
+            upDesc: lv => TR('up.spark').replace('{d}', Math.round(13 * Math.pow(1.25, lv))).replace('{c}', 3 + lv) },
 };
 const turretStat = t => ({ ...TURRETS[t.kind], ...TURRETS[t.kind].up(t.lv) });
 const FOES = {
-  crawler:  { name:'기는골렘', hp:30, spd:68,  bounty:6,  r:12, color:'#8a7a5c' },
-  swift:    { name:'질주골렘', hp:19, spd:122, bounty:7,  r:10, color:'#6ab88a' },
-  husk:     { name:'중장골렘', hp:95, spd:44,  bounty:14, r:15, color:'#7a6a8c' },
-  wing:     { name:'비행골렘', hp:42, spd:82,  bounty:12, r:11, color:'#b58fd6', air:true },
-  colossus: { name:'거대골렘', hp:750, spd:32, bounty:120, r:20, color:'#c25a3a' },
+  crawler:  { name:TR('foe.crawler'),  hp:30, spd:68,  bounty:6,  r:12, color:'#8a7a5c' },
+  swift:    { name:TR('foe.swift'),    hp:19, spd:122, bounty:7,  r:10, color:'#6ab88a' },
+  husk:     { name:TR('foe.husk'),     hp:95, spd:44,  bounty:14, r:15, color:'#7a6a8c' },
+  wing:     { name:TR('foe.wing'),     hp:42, spd:82,  bounty:12, r:11, color:'#b58fd6', air:true },
+  colossus: { name:TR('foe.colossus'), hp:750, spd:32, bounty:120, r:20, color:'#c25a3a' },
 };
 const MAX_WAVE = 25;
 /* ── 골렘 픽셀 스프라이트 ── */
@@ -267,7 +375,7 @@ function startWave() {
   }
   if (w % 5 === 0) q.push('colossus');
   G.spawnQueue = q; G.spawnT = 0;
-  banner('웨이브 ' + w + (w % 5 === 0 ? ' — 거대골렘!' : ''));
+  banner(TR('wave.start').replace('{n}', w) + (w % 5 === 0 ? TR('wave.boss') : ''));
 }
 function spawnFoe(kind) {
   const d = FOES[kind], sc = 1 + (G.wave - 1) * 0.24;
@@ -286,7 +394,7 @@ function update(dt) {
     if (G.spawnT <= 0) { G.spawnT = 0.5; spawnFoe(G.spawnQueue.shift()); }
   } else if (!G.foes.length) {
     const bonus = 24 + G.wave * 6;
-    G.gold += bonus; popText(VW/2, 200, '웨이브 클리어! +' + bonus + '$', '#d6bcf0');
+    G.gold += bonus; popText(VW/2, 200, TR('wave.clear').replace('{n}', bonus), '#d6bcf0');
     if (G.wave >= MAX_WAVE) { endGame(true); return; }
     G.phase = 'prep'; G.prepT = 8;
   }
@@ -389,7 +497,7 @@ function draw() {
   // 출구
   cx.fillStyle = '#b08fd6'; cx.fillRect(VW - 8, 9 * T, 8, T);
   cx.font = 'bold 11px monospace'; cx.textAlign = 'center'; cx.fillStyle = '#d6bcf0';
-  cx.fillText('요새 →', VW - 34, 9 * T - 6);
+  cx.fillText(TR('map.exit'), VW - 34, 9 * T - 6);
   // 포탑
   for (const t of G.turrets) {
     const def = TURRETS[t.kind];
@@ -434,8 +542,8 @@ function draw() {
   // HUD
   $('goldTxt').textContent = '💰 ' + Math.floor(G.gold) + '$';
   $('waveTxt').textContent = G.phase === 'prep'
-    ? '⏳ 웨이브 ' + (G.wave + 1) + ' 까지 ' + Math.ceil(G.prepT) + 's'
-    : '⚙ 웨이브 ' + G.wave + '/' + MAX_WAVE + ' — 남은 골렘 ' + (G.foes.length + G.spawnQueue.length);
+    ? TR('hud.prep').replace('{n}', G.wave + 1).replace('{s}', Math.ceil(G.prepT))
+    : TR('hud.wave').replace('{n}', G.wave).replace('{m}', MAX_WAVE).replace('{c}', G.foes.length + G.spawnQueue.length);
   $('lifeTxt').textContent = '❤ ' + G.lives;
   Object.entries(TURRETS).forEach(([k, d]) => {
     const b = $('t' + k[0].toUpperCase() + k.slice(1));
@@ -449,11 +557,11 @@ function draw() {
     $('selInfo').textContent = def.emoji + ' ' + def.name + ' ★' + selected.lv +
       ' · ' + def.upDesc(selected.lv) + (selected.lv < 3 ? '  →  ' + def.upDesc(selected.lv + 1) : '');
     $('upBtn').hidden = false; $('sellBtn').hidden = false;
-    $('upBtn').textContent = selected.lv >= 3 ? 'MAX' : '⬆ 강화 ' + upCost + '$';
+    $('upBtn').textContent = selected.lv >= 3 ? 'MAX' : TR('btn.up').replace('{c}', upCost);
     $('upBtn').disabled = selected.lv >= 3 || G.gold < upCost;
-    $('sellBtn').textContent = '판매 +' + sellValue(selected) + '$';
+    $('sellBtn').textContent = TR('btn.sell').replace('{c}', sellValue(selected));
   } else { $('selInfo').textContent = ''; $('upBtn').hidden = true; $('sellBtn').hidden = true; }
-  $('waveBtn').textContent = G.phase === 'prep' ? '▶ 바로 소환 +12$' : '⚙ 교전 중';
+  $('waveBtn').textContent = G.phase === 'prep' ? TR('btn.waveNow') : TR('btn.waveOn');
   $('waveBtn').disabled = G.phase !== 'prep';
 }
 const sellValue = t => Math.round(TURRETS[t.kind].cost * 0.7 * (1 + t.lv * 0.6));
@@ -497,17 +605,17 @@ cv.addEventListener('click', ev => {
 function startGame() {
   newGame(); running = true; selected = null;
   $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false; $('bar').hidden = false;
-  banner('길가에 포탑을 세워라!');
+  banner(TR('banner.start'));
 }
 async function endGame(win) {
   running = false; $('hud').hidden = true; $('bar').hidden = true;
   meta.best = Math.max(meta.best, G.wave);
   if (win) meta.clears = (meta.clears || 0) + 1;
   GameRank.submit('gear-bastion', G.wave * 1000 + (win ? 500 : 0), '웨이브 ' + G.wave + (win ? ' 클리어' : ''))
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
-  $('endTitle').textContent = win ? '🏆 요새 사수!' : '💥 요새 함락…';
-  $('endDesc').textContent = (win ? '25웨이브를 모두 막아냈다!' : '웨이브 ' + G.wave + ' 에서 방어선이 무너졌다.') +
-    ' 최고 기록 웨이브 ' + meta.best + (meta.clears ? ' · 클리어 ' + meta.clears + '회' : '');
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
+  $('endTitle').textContent = win ? TR('end.win') : TR('end.lose');
+  $('endDesc').textContent = (win ? TR('end.winDesc') : TR('end.loseDesc').replace('{n}', G.wave)) +
+    TR('end.best').replace('{n}', meta.best) + (meta.clears ? TR('end.clears').replace('{n}', meta.clears) : '');
   $('endPanel').hidden = false;
   await persistMeta();
 }
@@ -522,14 +630,14 @@ function loop() {
 requestAnimationFrame(loop);
 $('startBtn').onclick = startGame;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
-  $('bestTxt').textContent = meta.best ? '최고 기록 웨이브 ' + meta.best : ''; };
+  $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
-    $('bestTxt').textContent = meta.best ? '최고 기록 웨이브 ' + meta.best : ''; showCode(); }
+    $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; showCode(); }
 };
-loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 기록 웨이브 ' + meta.best : ''; });
+loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; });
 </script>
 <script src="../lib/rank.js"></script>
 <script>

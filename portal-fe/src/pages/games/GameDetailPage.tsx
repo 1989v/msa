@@ -1,9 +1,12 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
+  displayDescription,
+  displayTitle,
   endGameSession,
   fetchGameDetail,
   fetchSimilarGames,
+  getGameLang,
   rateGame,
   startGameSession,
   type GameDetail,
@@ -119,7 +122,7 @@ export default function GameDetailPage() {
 
       <div className="game-detail-head">
         <div>
-          <h1 className="games-title">{game.title}</h1>
+          <h1 className="games-title">{displayTitle(game, getGameLang())}</h1>
           <div className="game-detail-meta">
             {game.ratingCount > 0 && (
               <span className="game-card-rating">
@@ -142,7 +145,7 @@ export default function GameDetailPage() {
       <section className="game-stage" aria-label="게임 플레이 영역">
         {!playing ? (
           <div className="game-stage-idle">
-            <p className="game-stage-desc">{game.description}</p>
+            <p className="game-stage-desc">{displayDescription(game, getGameLang())}</p>
             <button className="game-play-btn" onClick={handlePlay}>
               ▶ 플레이
             </button>

@@ -453,3 +453,40 @@
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   }
 }
+
+.games-lang-toggle {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 12px;
+  vertical-align: middle;
+  border: 1px solid var(--border, rgba(128, 128, 128, 0.35));
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.games-lang-btn {
+  padding: 3px 10px;
+  font-size: 0.55em;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.55;
+}
+
+.games-lang-btn.active {
+  opacity: 1;
+  background: var(--accent, rgba(120, 120, 255, 0.25));
+  font-weight: 700;
+}
+
+.games-genre-section {
+  margin-top: 18px;
+}
+
+.games-genre-count {
+  margin-left: 8px;
+  font-size: 0.7em;
+  opacity: 0.5;
+  font-weight: 400;
+}

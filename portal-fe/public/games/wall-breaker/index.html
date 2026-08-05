@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>성벽 파쇄</title>
+<title data-i18n="title">성벽 파쇄</title>
+<script src="../lib/i18n.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -44,31 +45,94 @@
     <span class="tag" id="lifeTxt"></span>
   </div>
   <div class="panel" id="menu">
-    <h1>🏰 성벽 파쇄</h1>
-    <p>공성추 구슬로 <b>성벽을 무너뜨려라.</b> 마우스/터치로 발판을 움직여 구슬을 받는다.
-       금간 벽돌은 1방, 석벽은 2방, 강철은 3방. 떨어지는 <b>보급품</b>을 받으면 강해진다.</p>
-    <p style="font-size:11px">🟢 발판 확장 · 🔵 구슬 분열 · 🟡 관통탄 · 🔴 저속</p>
+    <h1 data-i18n="h1">🏰 성벽 파쇄</h1>
+    <p><span data-i18n="desc1">공성추 구슬로 </span><b data-i18n="desc2">성벽을 무너뜨려라.</b><span data-i18n="desc3"> 마우스/터치로 발판을 움직여 구슬을 받는다.
+       금간 벽돌은 1방, 석벽은 2방, 강철은 3방. 떨어지는 </span><b data-i18n="desc4">보급품</b><span data-i18n="desc5">을 받으면 강해진다.</span></p>
+    <p style="font-size:11px" data-i18n="powerups">🟢 발판 확장 · 🔵 구슬 분열 · 🟡 관통탄 · 🔴 저속</p>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btnCodeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#e8c05a;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#a89870"></span></div>
-    <button id="startBtn">▶ 공성 시작</button>
+    <button id="startBtn" data-i18n="btnStart">▶ 공성 시작</button>
   </div>
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
     <div class="row">
-      <button id="againBtn">🔁 재도전</button>
-      <button id="backBtn" class="ghost">처음으로</button>
+      <button id="againBtn" data-i18n="btnAgain">🔁 재도전</button>
+      <button id="backBtn" class="ghost" data-i18n="btnBack">처음으로</button>
     </div>
   </div>
 </div>
-<div id="info">마우스 이동 / 터치 드래그 = 발판 · 구슬을 놓치면 생명 -1 (3개) · 층을 다 부수면 다음 성벽</div>
+<div id="info" data-i18n="info">마우스 이동 / 터치 드래그 = 발판 · 구슬을 놓치면 생명 -1 (3개) · 층을 다 부수면 다음 성벽</div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    title: '성벽 파쇄',
+    h1: '🏰 성벽 파쇄',
+    desc1: '공성추 구슬로 ',
+    desc2: '성벽을 무너뜨려라.',
+    desc3: ' 마우스/터치로 발판을 움직여 구슬을 받는다. 금간 벽돌은 1방, 석벽은 2방, 강철은 3방. 떨어지는 ',
+    desc4: '보급품',
+    desc5: '을 받으면 강해진다.',
+    powerups: '🟢 발판 확장 · 🔵 구슬 분열 · 🟡 관통탄 · 🔴 저속',
+    phCode: '이어하기 코드',
+    btnCodeLoad: '🔑 코드로 불러오기',
+    btnStart: '▶ 공성 시작',
+    btnAgain: '🔁 재도전',
+    btnBack: '처음으로',
+    info: '마우스 이동 / 터치 드래그 = 발판 · 구슬을 놓치면 생명 -1 (3개) · 층을 다 부수면 다음 성벽',
+    saveCloud: '☁ 서버 세이브 (v{v})',
+    saveFail: '세이브 로드 실패: {e}',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급된다',
+    dropWide: '🟢 발판 확장',
+    dropMulti: '🔵 구슬 분열',
+    dropPierce: '🟡 관통탄 6초',
+    dropSlow: '🔴 저속 7초',
+    endTitle: '💥 공성 실패…',
+    endDesc: '{l}번째 성벽에서 멈췄다 — 점수 {s} (최고 {b})',
+    rankMsg: ' 🏆 랭킹 {n}위!',
+    launchHint: '클릭/탭 하면 발사',
+    hudLevel: '🏰 {l}번째 성벽',
+    bestFull: '최고 점수 {s} · {l}번째 성벽',
+    bestShort: '최고 점수 {s}',
+  },
+  en: {
+    title: 'Wall Breaker',
+    h1: '🏰 Wall Breaker',
+    desc1: 'Swing the siege ball and ',
+    desc2: 'bring the wall down.',
+    desc3: ' Move the cart with the mouse or your finger to bounce the ball back. Cracked bricks take 1 hit, stone 2, steel 3. Catch the falling ',
+    desc4: 'supply drops',
+    desc5: ' to power up.',
+    powerups: '🟢 Wider cart · 🔵 Split ball · 🟡 Piercing shot · 🔴 Slow motion',
+    phCode: 'Continue code',
+    btnCodeLoad: '🔑 Load from code',
+    btnStart: '▶ Begin the siege',
+    btnAgain: '🔁 Retry',
+    btnBack: 'Main menu',
+    info: 'Mouse move / touch drag = cart · Dropping the ball costs a life (3 total) · Clear a wall to face the next',
+    saveCloud: '☁ Cloud save (v{v})',
+    saveFail: 'Save load failed: {e}',
+    saveLocal: 'Browser save — saving issues a continue code',
+    dropWide: '🟢 Wider cart',
+    dropMulti: '🔵 Split ball',
+    dropPierce: '🟡 Piercing shot 6s',
+    dropSlow: '🔴 Slow motion 7s',
+    endTitle: '💥 Siege failed…',
+    endDesc: 'Stopped at wall {l} — score {s} (best {b})',
+    rankMsg: ' 🏆 Rank #{n}!',
+    launchHint: 'Click / tap to launch',
+    hudLevel: '🏰 Wall {l}',
+    bestFull: 'Best score {s} · wall {l}',
+    bestShort: 'Best score {s}',
+  },
+});
+var TR = GameI18n.t;
 const API = '/api/v1/games/wall-breaker';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height;
@@ -104,12 +168,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { best:0, bestLv:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('saveCloud').replace('{v}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('saveFail').replace('{e}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급된다';
+  $('saveStatus').textContent = TR('saveLocal');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -234,7 +298,7 @@ function update(dt) {
   }
 }
 function applyDrop(kind) {
-  if (kind === 'wide') { G.paddle.w = Math.min(190, G.paddle.w + 34); toastMini('🟢 발판 확장'); }
+  if (kind === 'wide') { G.paddle.w = Math.min(190, G.paddle.w + 34); toastMini(TR('dropWide')); }
   if (kind === 'multi') {
     const src = G.balls[0] || mkBall();
     for (let i = 0; i < 2; i++) {
@@ -242,10 +306,10 @@ function applyDrop(kind) {
       const sp = ballSpeed();
       G.balls.push({ x: src.x, y: src.y, vx: Math.cos(a)*sp, vy: Math.sin(a)*sp, stuck: false });
     }
-    toastMini('🔵 구슬 분열');
+    toastMini(TR('dropMulti'));
   }
-  if (kind === 'pierce') { G.pierce = 6; toastMini('🟡 관통탄 6초'); }
-  if (kind === 'slow') { G.slow = 7; toastMini('🔴 저속 7초'); }
+  if (kind === 'pierce') { G.pierce = 6; toastMini(TR('dropPierce')); }
+  if (kind === 'slow') { G.slow = 7; toastMini(TR('dropSlow')); }
 }
 let miniT = 0, miniMsg = '';
 function toastMini(m) { miniMsg = m; miniT = 1.6; }
@@ -256,12 +320,12 @@ function endGame(win) {
   running = false;
   meta.best = Math.max(meta.best, G.score);
   meta.bestLv = Math.max(meta.bestLv, G.level);
-  $('endTitle').textContent = '💥 공성 실패…';
-  $('endDesc').textContent = G.level + '번째 성벽에서 멈췄다 — 점수 ' + G.score.toLocaleString() +
-    ' (최고 ' + meta.best.toLocaleString() + ')';
+  $('endTitle').textContent = TR('endTitle');
+  $('endDesc').textContent = TR('endDesc').replace('{l}', G.level)
+    .replace('{s}', G.score.toLocaleString()).replace('{b}', meta.best.toLocaleString());
   $('endPanel').hidden = false; $('hud').hidden = true;
   GameRank.submit('wall-breaker', G.score, G.level + '번째 성벽')
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rankMsg').replace('{n}', r.rank); });
   persistMeta();
 }
 
@@ -307,13 +371,13 @@ function draw(ts) {
   G.parts.forEach(p => { cx.globalAlpha = clamp(p.life, 0, 1); cx.fillStyle = p.c; cx.fillRect(p.x, p.y, 3, 3); cx.globalAlpha = 1; });
   if (!G.launched && running) {
     cx.fillStyle = '#a89870'; cx.font = 'bold 13px monospace'; cx.textAlign = 'center';
-    cx.fillText('클릭/탭 하면 발사', VW/2, 300);
+    cx.fillText(TR('launchHint'), VW/2, 300);
   }
   if (miniT > 0) { miniT -= 0.016;
     cx.fillStyle = 'rgba(232,192,90,' + Math.min(1, miniT) + ')'; cx.font = 'bold 15px monospace'; cx.textAlign = 'center';
     cx.fillText(miniMsg, VW/2, 330); }
   $('scoreTxt').textContent = '⚔ ' + G.score.toLocaleString();
-  $('lvTxt').textContent = '🏰 ' + G.level + '번째 성벽';
+  $('lvTxt').textContent = TR('hudLevel').replace('{l}', G.level);
   $('lifeTxt').textContent = '🛞 ' + '●'.repeat(Math.max(0, G.lives));
 }
 requestAnimationFrame(draw);
@@ -334,14 +398,14 @@ function start() {
 $('startBtn').onclick = start;
 $('againBtn').onclick = start;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
-  $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() + ' · ' + meta.bestLv + '번째 성벽' : ''; };
+  $('bestTxt').textContent = meta.best ? TR('bestFull').replace('{s}', meta.best.toLocaleString()).replace('{l}', meta.bestLv) : ''; };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
-    $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() : ''; showCode(); }
+    $('bestTxt').textContent = meta.best ? TR('bestShort').replace('{s}', meta.best.toLocaleString()) : ''; showCode(); }
 };
-loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 점수 ' + meta.best.toLocaleString() + ' · ' + meta.bestLv + '번째 성벽' : ''; });
+loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('bestFull').replace('{s}', meta.best.toLocaleString()).replace('{l}', meta.bestLv) : ''; });
 </script>
 <script src="../lib/rank.js"></script>
 <script>

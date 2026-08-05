@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>메아리 결투</title>
+<title data-i18n="title">메아리 결투</title>
+<script src="../lib/i18n.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -51,19 +52,19 @@
   </div>
   <div id="banner"></div>
   <div class="panel" id="menu">
-    <h1>🔔 메아리 결투</h1>
-    <p>"시장에 가면~" 놀이의 결투판. <b>앞사람이 남긴 메아리(방향 절차)를 그대로 되풀이하고,
-       끝에 하나를 더 얹는다</b>. 절차는 점점 길어지고, 먼저 틀리거나 시간을 넘긴 쪽이 진다.</p>
-    <p style="font-size:11px">🎭 <b>2인 결투</b>: 한 키보드 동시 파지 — <b>P1 은 방향키</b>, <b>P2 는 WASD</b>. 상대 키는 먹히지 않는다<br>
-       🔮 <b>혼자 수련</b>: 정령이 들려주는 메아리를 따라 외운다 — 최고 길이 기록 (방향키/WASD 모두)</p>
+    <h1 data-i18n="gameTitle">🔔 메아리 결투</h1>
+    <p><span data-i18n="desc1">"시장에 가면~" 놀이의 결투판. </span><b data-i18n="desc2">앞사람이 남긴 메아리(방향 절차)를 그대로 되풀이하고,
+       끝에 하나를 더 얹는다</b><span data-i18n="desc3">. 절차는 점점 길어지고, 먼저 틀리거나 시간을 넘긴 쪽이 진다.</span></p>
+    <p style="font-size:11px">🎭 <b data-i18n="modeDuoName">2인 결투</b><span data-i18n="modeDuoDesc">: 한 키보드 동시 파지 — </span><b data-i18n="modeDuoP1">P1 은 방향키</b>, <b data-i18n="modeDuoP2">P2 는 WASD</b><span data-i18n="modeDuoTail">. 상대 키는 먹히지 않는다</span><br>
+       🔮 <b data-i18n="modeSoloName">혼자 수련</b><span data-i18n="modeSoloDesc">: 정령이 들려주는 메아리를 따라 외운다 — 최고 길이 기록 (방향키/WASD 모두)</span></p>
     <div class="row">
-      <button id="duoBtn">🎭 2인 결투</button>
-      <button id="soloBtn" class="ghost">🔮 혼자 수련</button>
+      <button id="duoBtn" data-i18n="btnDuo">🎭 2인 결투</button>
+      <button id="soloBtn" class="ghost" data-i18n="btnSolo">🔮 혼자 수련</button>
     </div>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btnCodeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#c8b0ff;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#8a84a0"></span></div>
@@ -72,15 +73,130 @@
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
     <div class="row">
-      <button id="againBtn">한 판 더</button>
-      <button id="backBtn" class="ghost">처음으로</button>
+      <button id="againBtn" data-i18n="btnAgain">한 판 더</button>
+      <button id="backBtn" class="ghost" data-i18n="btnBack">처음으로</button>
     </div>
   </div>
 </div>
-<div id="info">결투: <b>P1 방향키 · P2 WASD</b> — 자기 차례에 <b>절차를 그대로</b> 누르고 <b>하나를 추가</b> · 수련: 아무 키나<br>
-  절차가 길어질수록 제한 시간이 짧아진다 · 틀리거나 시간 초과 = 패배 · 상대 키를 눌러도 무효(실수 아님)</div>
+<div id="info"><span data-i18n="info1">결투: </span><b data-i18n="info2">P1 방향키 · P2 WASD</b><span data-i18n="info3"> — 자기 차례에 </span><b data-i18n="info4">절차를 그대로</b><span data-i18n="info5"> 누르고 </span><b data-i18n="info6">하나를 추가</b><span data-i18n="info7"> · 수련: 아무 키나</span><br>
+  <span data-i18n="info8">절차가 길어질수록 제한 시간이 짧아진다 · 틀리거나 시간 초과 = 패배 · 상대 키를 눌러도 무효(실수 아님)</span></div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    title: '메아리 결투',
+    gameTitle: '🔔 메아리 결투',
+    desc1: '"시장에 가면~" 놀이의 결투판. ',
+    desc2: '앞사람이 남긴 메아리(방향 절차)를 그대로 되풀이하고, 끝에 하나를 더 얹는다',
+    desc3: '. 절차는 점점 길어지고, 먼저 틀리거나 시간을 넘긴 쪽이 진다.',
+    modeDuoName: '2인 결투',
+    modeDuoDesc: ': 한 키보드 동시 파지 — ',
+    modeDuoP1: 'P1 은 방향키',
+    modeDuoP2: 'P2 는 WASD',
+    modeDuoTail: '. 상대 키는 먹히지 않는다',
+    modeSoloName: '혼자 수련',
+    modeSoloDesc: ': 정령이 들려주는 메아리를 따라 외운다 — 최고 길이 기록 (방향키/WASD 모두)',
+    btnDuo: '🎭 2인 결투',
+    btnSolo: '🔮 혼자 수련',
+    phCode: '이어하기 코드',
+    btnCodeLoad: '🔑 코드로 불러오기',
+    btnAgain: '한 판 더',
+    btnBack: '처음으로',
+    info1: '결투: ',
+    info2: 'P1 방향키 · P2 WASD',
+    info3: ' — 자기 차례에 ',
+    info4: '절차를 그대로',
+    info5: ' 누르고 ',
+    info6: '하나를 추가',
+    info7: ' · 수련: 아무 키나',
+    info8: '절차가 길어질수록 제한 시간이 짧아진다 · 틀리거나 시간 초과 = 패배 · 상대 키를 눌러도 무효(실수 아님)',
+    bestSolo: '수련 최고 {n}수',
+    bestDuel: '결투 P1 {a}승 · P2 {b}승',
+    bestLongest: '최장 메아리 {n}수',
+    saveCloud: '☁ 서버 세이브 (v{v})',
+    saveFail: '세이브 로드 실패: {e}',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
+    bannerFirst: 'P1 — 첫 메아리를 남겨라',
+    bannerMemorize: '정령의 메아리를 외워라',
+    bannerTurn: '{p} 차례!',
+    phaseShow: '👁 외워라',
+    phaseAdd: '➕ 하나 추가',
+    phaseInput: '🔁 되풀이',
+    turnOf: '{p} 차례',
+    roundN: '라운드 {n}',
+    wrongP1: '지금은 P1 차례 — 방향키!',
+    wrongP2: '지금은 P2 차례 — WASD!',
+    hintP1: 'P1 — 방향키',
+    hintP2: 'P2 — WASD',
+    hudDuo: '🎭 2인 결투',
+    hudSolo: '🔮 혼자 수련',
+    hudLen: '🔔 메아리 {n}수',
+    hudTurnP1: '🟣 P1 (방향키)',
+    hudTurnP2: '🔵 P2 (WASD)',
+    endWin: '🏆 {p} 승리!',
+    endDuoDesc: '{p} 이(가) {n}수에서 메아리를 놓쳤다. ',
+    endSoloTitle: '💫 수련 종료',
+    endSoloDesc: '{n}수까지 따라 외웠다. ',
+    rankMsg: ' 🏆 랭킹 {n}위!',
+  },
+  en: {
+    title: 'Echo Duel',
+    gameTitle: '🔔 Echo Duel',
+    desc1: 'A duel twist on the "I went to market" memory game. ',
+    desc2: 'Repeat the echo (the direction sequence) your rival left, then add one more step at the end',
+    desc3: '. The sequence keeps growing — the first to slip or run out of time loses.',
+    modeDuoName: '2P Duel',
+    modeDuoDesc: ': share one keyboard — ',
+    modeDuoP1: 'P1 uses the arrow keys',
+    modeDuoP2: 'P2 uses WASD',
+    modeDuoTail: ". The rival's keys do nothing",
+    modeSoloName: 'Solo Training',
+    modeSoloDesc: ': follow the echo the spirit plays — longest run is recorded (arrows or WASD)',
+    btnDuo: '🎭 2P Duel',
+    btnSolo: '🔮 Solo Training',
+    phCode: 'Continue code',
+    btnCodeLoad: '🔑 Load from code',
+    btnAgain: 'Play again',
+    btnBack: 'Main menu',
+    info1: 'Duel: ',
+    info2: 'P1 arrows · P2 WASD',
+    info3: ' — on your turn ',
+    info4: 'repeat the sequence',
+    info5: ' then ',
+    info6: 'add one step',
+    info7: ' · Training: any keys',
+    info8: "Longer sequences get shorter timers · A wrong step or a timeout is a loss · The rival's keys are ignored (not a miss)",
+    bestSolo: 'Training best {n}',
+    bestDuel: 'Duel P1 {a}W · P2 {b}W',
+    bestLongest: 'Longest echo {n}',
+    saveCloud: '☁ Cloud save (v{v})',
+    saveFail: 'Save load failed: {e}',
+    saveLocal: 'Browser save — saving issues a continue code',
+    bannerFirst: 'P1 — leave the first echo',
+    bannerMemorize: "Memorize the spirit's echo",
+    bannerTurn: "{p}'s turn!",
+    phaseShow: '👁 Watch',
+    phaseAdd: '➕ Add one',
+    phaseInput: '🔁 Repeat',
+    turnOf: "{p}'s turn",
+    roundN: 'Round {n}',
+    wrongP1: "It's P1's turn — arrow keys!",
+    wrongP2: "It's P2's turn — WASD!",
+    hintP1: 'P1 — arrows',
+    hintP2: 'P2 — WASD',
+    hudDuo: '🎭 2P Duel',
+    hudSolo: '🔮 Solo Training',
+    hudLen: '🔔 Echo {n}',
+    hudTurnP1: '🟣 P1 (arrows)',
+    hudTurnP2: '🔵 P2 (WASD)',
+    endWin: '🏆 {p} wins!',
+    endDuoDesc: '{p} lost the echo at step {n}. ',
+    endSoloTitle: '💫 Training over',
+    endSoloDesc: 'Echoed {n} steps. ',
+    rankMsg: ' 🏆 Rank #{n}!',
+  },
+});
+var TR = GameI18n.t;
 const API = '/api/v1/games/echo-duel';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height;
@@ -110,9 +226,9 @@ let meta = { soloBest: 0, p1Wins: 0, p2Wins: 0, longest: 0 };
 function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
 function bestLabel() {
   const parts = [];
-  if (meta.soloBest) parts.push('수련 최고 ' + meta.soloBest + '수');
-  if (meta.p1Wins || meta.p2Wins) parts.push('결투 P1 ' + meta.p1Wins + '승 · P2 ' + meta.p2Wins + '승');
-  if (meta.longest) parts.push('최장 메아리 ' + meta.longest + '수');
+  if (meta.soloBest) parts.push(TR('bestSolo').replace('{n}', meta.soloBest));
+  if (meta.p1Wins || meta.p2Wins) parts.push(TR('bestDuel').replace('{a}', meta.p1Wins).replace('{b}', meta.p2Wins));
+  if (meta.longest) parts.push(TR('bestLongest').replace('{n}', meta.longest));
   return parts.join('  ·  ');
 }
 async function loadMeta(codeOverride) {
@@ -123,12 +239,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { soloBest:0, p1Wins:0, p2Wins:0, longest:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('saveCloud').replace('{v}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('saveFail').replace('{e}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  $('saveStatus').textContent = TR('saveLocal');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -183,8 +299,8 @@ function newGame(duo) {
     flash: -1, flashT: 0, flashBad: false,
     timer: 0, timerMax: 0, round: 1,
   };
-  if (duo) { G.phase = 'add'; startTimer(); banner('P1 — 첫 메아리를 남겨라'); }
-  else { soloGrow(); banner('정령의 메아리를 외워라'); }
+  if (duo) { G.phase = 'add'; startTimer(); banner(TR('bannerFirst')); }
+  else { soloGrow(); banner(TR('bannerMemorize')); }
 }
 const inputTime = () => Math.max(1.1, 3.2 - G.seq.length * 0.09);
 function startTimer() { G.timerMax = inputTime(); G.timer = G.timerMax; }
@@ -224,7 +340,7 @@ function pressDir(d, src) {
     G.turn = 1 - G.turn;
     G.pos = 0;
     G.phase = 'handoff';
-    banner(playerName() + ' 차례!');
+    banner(TR('bannerTurn').replace('{p}', playerName()));
     setTimeout(() => { if (running && G.phase === 'handoff') { G.phase = 'input'; startTimer(); } }, 420);
   }
 }
@@ -287,11 +403,11 @@ function draw() {
   // 중앙 — 현재 상태
   cx.textAlign = 'center'; cx.textBaseline = 'middle';
   cx.font = 'bold 17px monospace'; cx.fillStyle = '#c8b0ff';
-  const label = G.phase === 'show' ? '👁 외워라' : G.phase === 'add' ? '➕ 하나 추가' :
-                G.phase === 'input' ? '🔁 되풀이' : '…';
+  const label = G.phase === 'show' ? TR('phaseShow') : G.phase === 'add' ? TR('phaseAdd') :
+                G.phase === 'input' ? TR('phaseInput') : '…';
   cx.fillText(label, cxp, cyp - 8);
   cx.font = 'bold 13px monospace'; cx.fillStyle = '#8a84a0';
-  cx.fillText(G.duo ? playerName() + ' 차례' : '라운드 ' + G.round, cxp, cyp + 16);
+  cx.fillText(G.duo ? TR('turnOf').replace('{p}', playerName()) : TR('roundN').replace('{n}', G.round), cxp, cyp + 16);
   // 진행 점 — 절차 길이와 현재 위치
   const n = G.seq.length, dotW = Math.min(18, (VW - 120) / Math.max(1, n));
   const x0 = cxp - (n * dotW) / 2;
@@ -310,14 +426,14 @@ function draw() {
   if (wrongKeyT > 0) {
     wrongKeyT -= 0.016;
     cx.font = 'bold 13px monospace'; cx.fillStyle = '#e0913f';
-    cx.fillText(G.turn === 0 ? '지금은 P1 차례 — 방향키!' : '지금은 P2 차례 — WASD!', cxp, VH - 52);
+    cx.fillText(G.turn === 0 ? TR('wrongP1') : TR('wrongP2'), cxp, VH - 52);
   } else if (G.duo && (G.phase === 'input' || G.phase === 'add')) {
     cx.font = 'bold 12px monospace'; cx.fillStyle = 'rgba(200,176,255,.55)';
-    cx.fillText(G.turn === 0 ? 'P1 — 방향키' : 'P2 — WASD', cxp, VH - 52);
+    cx.fillText(G.turn === 0 ? TR('hintP1') : TR('hintP2'), cxp, VH - 52);
   }
-  $('modeTxt').textContent = G.duo ? '🎭 2인 결투' : '🔮 혼자 수련';
-  $('lenTxt').textContent = '🔔 메아리 ' + G.seq.length + '수';
-  $('turnTxt').textContent = G.duo ? (G.turn === 0 ? '🟣 P1 (방향키)' : '🔵 P2 (WASD)') : '라운드 ' + G.round;
+  $('modeTxt').textContent = G.duo ? TR('hudDuo') : TR('hudSolo');
+  $('lenTxt').textContent = TR('hudLen').replace('{n}', G.seq.length);
+  $('turnTxt').textContent = G.duo ? (G.turn === 0 ? TR('hudTurnP1') : TR('hudTurnP2')) : TR('roundN').replace('{n}', G.round);
 }
 
 /* ── 종료 ── */
@@ -328,15 +444,15 @@ async function endGame() {
   if (G.duo) {
     const winner = G.turn === 0 ? 'P2' : 'P1';    // 현재 차례가 틀렸으니 상대 승
     if (winner === 'P1') meta.p1Wins++; else meta.p2Wins++;
-    $('endTitle').textContent = '🏆 ' + winner + ' 승리!';
-    $('endDesc').textContent = playerName() + ' 이(가) ' + G.seq.length + '수에서 메아리를 놓쳤다. ' + bestLabel();
+    $('endTitle').textContent = TR('endWin').replace('{p}', winner);
+    $('endDesc').textContent = TR('endDuoDesc').replace('{p}', playerName()).replace('{n}', G.seq.length) + bestLabel();
   } else {
     const score = Math.max(0, G.seq.length - 1);
     meta.soloBest = Math.max(meta.soloBest, score);
     GameRank.submit('echo-duel', score * 1000, score + '수')
-      .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
-    $('endTitle').textContent = '💫 수련 종료';
-    $('endDesc').textContent = score + '수까지 따라 외웠다. ' + bestLabel();
+      .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rankMsg').replace('{n}', r.rank); });
+    $('endTitle').textContent = TR('endSoloTitle');
+    $('endDesc').textContent = TR('endSoloDesc').replace('{n}', score) + bestLabel();
   }
   $('endPanel').hidden = false;
   await persistMeta();

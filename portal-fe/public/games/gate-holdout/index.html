@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>성문 사수</title>
+<title data-i18n="title">성문 사수</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -45,6 +45,7 @@
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
 </style>
+<script src="../lib/i18n.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -57,37 +58,140 @@
   </div>
   <div id="banner"></div>
   <div id="bar" hidden>
-    <button id="mBuild">🏰 망루 120$</button>
-    <button id="mArcher">🏹 궁수 55$</button>
-    <button id="mRepair">🔧 수리 지정</button>
+    <button id="mBuild" data-i18n="mode.build">🏰 망루 120$</button>
+    <button id="mArcher" data-i18n="mode.archer">🏹 궁수 55$</button>
+    <button id="mRepair" data-i18n="mode.repair">🔧 수리 지정</button>
     <span style="flex:1"></span>
     <button id="upDmg"></button>
     <button id="upGate"></button>
     <button id="waveBtn"></button>
   </div>
   <div class="panel" id="menu">
-    <h1>🏰 성문 사수</h1>
-    <p>야만족 무리가 성문으로 몰려온다. 길목에 <b>망루를 세우고 궁수를 채워</b> 막아라.
-       망루는 부서진다 — <b>수리공을 지정해</b> 버티는 것이 핵심이다. 성문이 뚫리면 끝. <b>20라운드</b>를 버티면 승리.</p>
+    <h1 data-i18n="menu.title">🏰 성문 사수</h1>
+    <p><span data-i18n="menu.d1">야만족 무리가 성문으로 몰려온다. 길목에 </span><b data-i18n="menu.d2">망루를 세우고 궁수를 채워</b><span data-i18n="menu.d3"> 막아라.
+       망루는 부서진다 — </span><b data-i18n="menu.d4">수리공을 지정해</b><span data-i18n="menu.d5"> 버티는 것이 핵심이다. 성문이 뚫리면 끝. </span><b data-i18n="menu.d6">20라운드</b><span data-i18n="menu.d7">를 버티면 승리.</span></p>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="ph.code" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btn.codeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#ffd98a;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#8a93a8"></span></div>
-    <button id="startBtn">▶ 방어 시작</button>
+    <button id="startBtn" data-i18n="btn.start">▶ 방어 시작</button>
   </div>
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
-    <button id="backBtn">처음으로</button>
+    <button id="backBtn" data-i18n="btn.back">처음으로</button>
   </div>
 </div>
-<div id="info">🏰 망루 모드로 빈 터 클릭 → 건설 · 🏹 궁수 모드로 망루 클릭 → 배치(최대 4) · 🔧 수리 모드로 망루 클릭 → 수리공 파견<br>
-  수리는 초당 3$ 를 쓴다 · 파쇄자는 건물에 2배 피해 · 라운드 사이에 정비하라</div>
+<div id="info"><span data-i18n="info1">🏰 망루 모드로 빈 터 클릭 → 건설 · 🏹 궁수 모드로 망루 클릭 → 배치(최대 4) · 🔧 수리 모드로 망루 클릭 → 수리공 파견</span><br>
+  <span data-i18n="info2">수리는 초당 3$ 를 쓴다 · 파쇄자는 건물에 2배 피해 · 라운드 사이에 정비하라</span></div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    'title': '성문 사수',
+    'menu.title': '🏰 성문 사수',
+    'menu.d1': '야만족 무리가 성문으로 몰려온다. 길목에 ',
+    'menu.d2': '망루를 세우고 궁수를 채워',
+    'menu.d3': ' 막아라. 망루는 부서진다 — ',
+    'menu.d4': '수리공을 지정해',
+    'menu.d5': ' 버티는 것이 핵심이다. 성문이 뚫리면 끝. ',
+    'menu.d6': '20라운드',
+    'menu.d7': '를 버티면 승리.',
+    'ph.code': '이어하기 코드',
+    'btn.codeLoad': '🔑 코드로 불러오기',
+    'btn.start': '▶ 방어 시작',
+    'btn.back': '처음으로',
+    'mode.build': '🏰 망루 120$',
+    'mode.archer': '🏹 궁수 55$',
+    'mode.repair': '🔧 수리 지정',
+    'info1': '🏰 망루 모드로 빈 터 클릭 → 건설 · 🏹 궁수 모드로 망루 클릭 → 배치(최대 4) · 🔧 수리 모드로 망루 클릭 → 수리공 파견',
+    'info2': '수리는 초당 3$ 를 쓴다 · 파쇄자는 건물에 2배 피해 · 라운드 사이에 정비하라',
+    'save.server': '☁ 서버 세이브 (v{n})',
+    'save.fail': '세이브 로드 실패: {n}',
+    'save.local': '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
+    'best': '최고 기록 제{n}라운드',
+    'foe.grunt': '그런트',
+    'foe.runner': '질주자',
+    'foe.brute': '파쇄자',
+    'foe.lobber': '투척병',
+    'foe.boss': '전쟁군주',
+    'wave.start': '제{n}라운드',
+    'wave.boss': ' — 전쟁군주 출현!',
+    'wave.clear': '라운드 정리! +{n}$',
+    'tower.down': '망루 붕괴!',
+    'hud.prep': '⏳ 제{n}라운드까지 {s}s',
+    'hud.wave': '⚔ 제{n}라운드 — 남은 적 {c}',
+    'hud.gate': '🚪 성문 {a}/{b}',
+    'btn.upDmg': '⚔ 화살 Lv.{lv} ({c}$)',
+    'btn.upGate': '🚪 성문 보강 ({c}$)',
+    'btn.waveNow': '▶ 바로 시작 +15$',
+    'btn.waveOn': '⚔ 교전 중',
+    'pop.archer': '🏹 배치',
+    'pop.repair': '🔧 수리 지정',
+    'banner.start': '길목에 망루를 세워라!',
+    'end.win': '🏆 성문 사수!',
+    'end.lose': '💥 성문 함락…',
+    'end.winDesc': '20라운드를 모두 버텨냈다!',
+    'end.loseDesc': '제{n}라운드에서 성문이 뚫렸다.',
+    'end.best': ' 최고 기록 제{n}라운드',
+    'end.clears': ' · 클리어 {n}회',
+    'rank.applied': ' 🏆 랭킹 {n}위!',
+  },
+  en: {
+    'title': 'Gate Holdout',
+    'menu.title': '🏰 Gate Holdout',
+    'menu.d1': 'A barbarian horde is charging the gate. ',
+    'menu.d2': 'Build towers and man them with archers',
+    'menu.d3': ' to hold the line. Towers break — ',
+    'menu.d4': 'assign a repairman',
+    'menu.d5': ' to keep them standing. If the gate falls, it is over. Survive ',
+    'menu.d6': '20 rounds',
+    'menu.d7': ' to win.',
+    'ph.code': 'Continue code',
+    'btn.codeLoad': '🔑 Load by code',
+    'btn.start': '▶ Start defense',
+    'btn.back': 'Back to menu',
+    'mode.build': '🏰 Tower $120',
+    'mode.archer': '🏹 Archer $55',
+    'mode.repair': '🔧 Repair order',
+    'info1': '🏰 Tower mode + empty plot → build · 🏹 Archer mode + tower → station (max 4) · 🔧 Repair mode + tower → send repairman',
+    'info2': 'Repairs burn $3 per second · Wreckers deal double damage to buildings · Regroup between rounds',
+    'save.server': '☁ Server save (v{n})',
+    'save.fail': 'Save load failed: {n}',
+    'save.local': 'Browser save — saving issues a continue code',
+    'best': 'Best: round {n}',
+    'foe.grunt': 'Grunt',
+    'foe.runner': 'Sprinter',
+    'foe.brute': 'Wrecker',
+    'foe.lobber': 'Bomber',
+    'foe.boss': 'Warlord',
+    'wave.start': 'Round {n}',
+    'wave.boss': ' — the Warlord arrives!',
+    'wave.clear': 'Round cleared! +${n}',
+    'tower.down': 'Tower destroyed!',
+    'hud.prep': '⏳ Round {n} in {s}s',
+    'hud.wave': '⚔ Round {n} — enemies left {c}',
+    'hud.gate': '🚪 Gate {a}/{b}',
+    'btn.upDmg': '⚔ Arrows Lv.{lv} (${c})',
+    'btn.upGate': '🚪 Reinforce gate (${c})',
+    'btn.waveNow': '▶ Start now +$15',
+    'btn.waveOn': '⚔ In combat',
+    'pop.archer': '🏹 Stationed',
+    'pop.repair': '🔧 Repair set',
+    'banner.start': 'Raise towers along the path!',
+    'end.win': '🏆 Gate held!',
+    'end.lose': '💥 Gate breached…',
+    'end.winDesc': 'You held all 20 rounds!',
+    'end.loseDesc': 'The gate fell on round {n}.',
+    'end.best': ' Best: round {n}',
+    'end.clears': ' · {n} clears',
+    'rank.applied': ' 🏆 Rank #{n}!',
+  },
+});
+const TR = GameI18n.t;
 const API = '/api/v1/games/gate-holdout';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height;
@@ -123,12 +227,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { best:0, clears:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('save.server').replace('{n}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('save.fail').replace('{n}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  $('saveStatus').textContent = TR('save.local');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -207,11 +311,11 @@ const SLOTS = [
 ];
 const GATE_X = 800;
 const FOE_DEFS = {
-  grunt:  { name:'그런트',  hp:26, spd:62, dmg:7,  bounty:8,  r:13 },
-  runner: { name:'질주자',  hp:15, spd:118, dmg:5, bounty:6,  r:12 },
-  brute:  { name:'파쇄자',  hp:95, spd:38, dmg:16, bounty:26, r:15, wreck:2 },   // 건물 2배
-  lobber: { name:'투척병',  hp:36, spd:52, dmg:9,  bounty:18, r:13, range:150, cd:2.1 },
-  boss:   { name:'전쟁군주', hp:650, spd:34, dmg:34, bounty:280, r:20, wreck:2 },
+  grunt:  { name:TR('foe.grunt'),  hp:26, spd:62, dmg:7,  bounty:8,  r:13 },
+  runner: { name:TR('foe.runner'), hp:15, spd:118, dmg:5, bounty:6,  r:12 },
+  brute:  { name:TR('foe.brute'),  hp:95, spd:38, dmg:16, bounty:26, r:15, wreck:2 },   // 건물 2배
+  lobber: { name:TR('foe.lobber'), hp:36, spd:52, dmg:9,  bounty:18, r:13, range:150, cd:2.1 },
+  boss:   { name:TR('foe.boss'),   hp:650, spd:34, dmg:34, bounty:280, r:20, wreck:2 },
 };
 const MAX_WAVE = 20;
 let G = null, running = false, mode = 'archer';
@@ -254,7 +358,7 @@ function startWave() {
   }
   if (w % 10 === 0) q.push('boss');
   G.spawnQueue = q; G.spawnT = 0;
-  banner('제' + w + '라운드' + (w % 10 === 0 ? ' — 전쟁군주 출현!' : ''));
+  banner(TR('wave.start').replace('{n}', w) + (w % 10 === 0 ? TR('wave.boss') : ''));
 }
 function spawnFoe(kind) {
   const d = FOE_DEFS[kind], sc = 1 + (G.wave - 1) * 0.13;
@@ -276,7 +380,7 @@ function update(dt) {
       if (G.spawnT <= 0) { G.spawnT = 0.55; spawnFoe(G.spawnQueue.shift()); }
     } else if (!G.foes.length) {
       const bonus = 45 + G.wave * 12;
-      G.gold += bonus; popText(VW/2, 200, '라운드 정리! +' + bonus + '$', '#ffd98a');
+      G.gold += bonus; popText(VW/2, 200, TR('wave.clear').replace('{n}', bonus), '#ffd98a');
       if (G.wave >= MAX_WAVE) { endGame(true); return; }
       G.phase = 'prep'; G.prepT = 9;
     }
@@ -366,7 +470,7 @@ function damageTower(t, dmg) {
   t.hp -= dmg; shake = Math.max(shake, 3);
   if (t.hp <= 0) {
     burst(t.x, t.y, '#7a7f8c', 20, 170); shake = 9;
-    popText(t.x, t.y - 30, '망루 붕괴!', '#ff6b6b');
+    popText(t.x, t.y - 30, TR('tower.down'), '#ff6b6b');
     G.towers = G.towers.filter(o => o !== t);
   }
 }
@@ -440,14 +544,14 @@ function draw() {
   // HUD
   $('goldTxt').textContent = '💰 ' + Math.floor(G.gold) + '$';
   $('waveTxt').textContent = G.phase === 'prep'
-    ? '⏳ 제' + (G.wave + 1) + '라운드까지 ' + Math.ceil(G.prepT) + 's'
-    : '⚔ 제' + G.wave + '라운드 — 남은 적 ' + (G.foes.length + G.spawnQueue.length);
-  $('gateTxt').textContent = '🚪 성문 ' + Math.ceil(G.gateHp) + '/' + G.gateMax;
-  $('upDmg').textContent = '⚔ 화살 Lv.' + G.dmgLv + ' (' + dmgCost() + '$)';
+    ? TR('hud.prep').replace('{n}', G.wave + 1).replace('{s}', Math.ceil(G.prepT))
+    : TR('hud.wave').replace('{n}', G.wave).replace('{c}', G.foes.length + G.spawnQueue.length);
+  $('gateTxt').textContent = TR('hud.gate').replace('{a}', Math.ceil(G.gateHp)).replace('{b}', G.gateMax);
+  $('upDmg').textContent = TR('btn.upDmg').replace('{lv}', G.dmgLv).replace('{c}', dmgCost());
   $('upDmg').disabled = G.gold < dmgCost();
-  $('upGate').textContent = '🚪 성문 보강 (' + gateCost() + '$)';
+  $('upGate').textContent = TR('btn.upGate').replace('{c}', gateCost());
   $('upGate').disabled = G.gold < gateCost();
-  $('waveBtn').textContent = G.phase === 'prep' ? '▶ 바로 시작 +15$' : '⚔ 교전 중';
+  $('waveBtn').textContent = G.phase === 'prep' ? TR('btn.waveNow') : TR('btn.waveOn');
   $('waveBtn').disabled = G.phase !== 'prep';
 }
 
@@ -479,8 +583,8 @@ cv.addEventListener('click', ev => {
   } else {
     const t = G.towers.find(t => Math.abs(t.x - x) < 30 && Math.abs(t.y - y) < 36);
     if (!t) return;
-    if (mode === 'archer' && t.archers < 4 && G.gold >= 55) { G.gold -= 55; t.archers++; popText(t.x, t.y - 52, '🏹 배치', '#ffd98a'); }
-    if (mode === 'repair') { G.worker.target = t; popText(t.x, t.y - 52, '🔧 수리 지정', '#e0b83c'); }
+    if (mode === 'archer' && t.archers < 4 && G.gold >= 55) { G.gold -= 55; t.archers++; popText(t.x, t.y - 52, TR('pop.archer'), '#ffd98a'); }
+    if (mode === 'repair') { G.worker.target = t; popText(t.x, t.y - 52, TR('pop.repair'), '#e0b83c'); }
   }
 });
 
@@ -488,17 +592,17 @@ cv.addEventListener('click', ev => {
 async function startGame() {
   newGame(); running = true; setMode('archer');
   $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false; $('bar').hidden = false;
-  banner('길목에 망루를 세워라!');
+  banner(TR('banner.start'));
 }
 async function endGame(win) {
   running = false; $('hud').hidden = true; $('bar').hidden = true;
   meta.best = Math.max(meta.best, G.wave);
   if (win) meta.clears = (meta.clears || 0) + 1;
   GameRank.submit('gate-holdout', G.wave * 1000 + (win ? 500 : 0), '제' + G.wave + '라운드' + (win ? ' 클리어' : ''))
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
-  $('endTitle').textContent = win ? '🏆 성문 사수!' : '💥 성문 함락…';
-  $('endDesc').textContent = (win ? '20라운드를 모두 버텨냈다!' : '제' + G.wave + '라운드에서 성문이 뚫렸다.') +
-    ' 최고 기록 제' + meta.best + '라운드' + (meta.clears ? ' · 클리어 ' + meta.clears + '회' : '');
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
+  $('endTitle').textContent = win ? TR('end.win') : TR('end.lose');
+  $('endDesc').textContent = (win ? TR('end.winDesc') : TR('end.loseDesc').replace('{n}', G.wave)) +
+    TR('end.best').replace('{n}', meta.best) + (meta.clears ? TR('end.clears').replace('{n}', meta.clears) : '');
   $('endPanel').hidden = false;
   await persistMeta();
 }
@@ -513,14 +617,14 @@ function loop() {
 requestAnimationFrame(loop);
 $('startBtn').onclick = startGame;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
-  $('bestTxt').textContent = meta.best ? '최고 기록 제' + meta.best + '라운드' : ''; };
+  $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
-    $('bestTxt').textContent = meta.best ? '최고 기록 제' + meta.best + '라운드' : ''; showCode(); }
+    $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; showCode(); }
 };
-loadMeta().then(() => { $('bestTxt').textContent = meta.best ? '최고 기록 제' + meta.best + '라운드' : ''; });
+loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; });
 </script>
 <script src="../lib/rank.js"></script>
 <script>

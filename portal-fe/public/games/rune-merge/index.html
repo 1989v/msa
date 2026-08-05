@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>룬 합성</title>
+<title data-i18n="title">룬 합성</title>
+<script src="../lib/i18n.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -31,25 +32,68 @@
 </style>
 </head>
 <body>
-<h1>🔮 룬 합성</h1>
-<div id="sub">같은 룬을 밀어 합쳐 고대의 문양을 완성하라</div>
+<h1 data-i18n="h1">🔮 룬 합성</h1>
+<div id="sub" data-i18n="sub">같은 룬을 밀어 합쳐 고대의 문양을 완성하라</div>
 <div id="stats"><span id="scoreTxt"></span><span id="bestTxt"></span><span id="tileTxt"></span></div>
 <canvas id="board" width="400" height="400"></canvas>
 <div id="btns">
-  <button id="newBtn">새 게임</button>
-  <button id="undoBtn" class="ghost">↩ 무르기 (1회)</button>
+  <button id="newBtn" data-i18n="btnNew">새 게임</button>
+  <button id="undoBtn" class="ghost" data-i18n="undoInit">↩ 무르기 (1회)</button>
 </div>
 <div id="saveRow">
-  <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-  <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+  <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
+  <button id="codeLoadBtn" class="ghost" data-i18n="btnCodeLoad">🔑 코드로 불러오기</button>
 </div>
 <div id="codeShow"></div>
 <div id="saveStatus"></div>
 <div id="menu"></div>
-<div id="info">방향키/WASD 또는 스와이프 · 같은 룬이 만나면 한 단계 위로 · 4096룬 완성이 목표</div>
+<div id="info" data-i18n="info">방향키/WASD 또는 스와이프 · 같은 룬이 만나면 한 단계 위로 · 4096룬 완성이 목표</div>
 <div id="toast"></div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    title: '룬 합성',
+    h1: '🔮 룬 합성',
+    sub: '같은 룬을 밀어 합쳐 고대의 문양을 완성하라',
+    btnNew: '새 게임',
+    undoInit: '↩ 무르기 (1회)',
+    phCode: '이어하기 코드',
+    btnCodeLoad: '🔑 코드로 불러오기',
+    info: '방향키/WASD 또는 스와이프 · 같은 룬이 만나면 한 단계 위로 · 4096룬 완성이 목표',
+    saveCloud: '☁ 서버 세이브 (v{v})',
+    saveFail: '세이브 로드 실패: {e}',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급된다',
+    codeIssued: '🔑 이어하기 코드 발급: {c}',
+    gameOver: '💫 더 밀 곳이 없다 — 점수 {n}',
+    rankMsg: '🏆 랭킹 {n}위!',
+    hudScore: '점수 {n}',
+    hudBest: '최고 {n}',
+    hudTile: '룬 {n}',
+    undoN: '↩ 무르기 ({n}회)',
+  },
+  en: {
+    title: 'Rune Merge',
+    h1: '🔮 Rune Merge',
+    sub: 'Slide matching runes together to complete the ancient sigil',
+    btnNew: 'New game',
+    undoInit: '↩ Undo (1 left)',
+    phCode: 'Continue code',
+    btnCodeLoad: '🔑 Load from code',
+    info: 'Arrows/WASD or swipe · Matching runes fuse one tier up · Reach the 4096 rune to win',
+    saveCloud: '☁ Cloud save (v{v})',
+    saveFail: 'Save load failed: {e}',
+    saveLocal: 'Browser save — saving issues a continue code',
+    codeIssued: '🔑 Continue code issued: {c}',
+    gameOver: '💫 No moves left — score {n}',
+    rankMsg: '🏆 Rank #{n}!',
+    hudScore: 'Score {n}',
+    hudBest: 'Best {n}',
+    hudTile: 'Rune {n}',
+    undoN: '↩ Undo ({n} left)',
+  },
+});
+var TR = GameI18n.t;
 const API = '/api/v1/games/rune-merge';
 const $ = id => document.getElementById(id);
 const cv = $('board'), cx = cv.getContext('2d');
@@ -83,11 +127,11 @@ async function loadMeta(codeOverride) {
       const s = await api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''));
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('saveCloud').replace('{v}', saveVersion);
       showCode(); return s.data;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return null; }
+    } catch (e) { $('saveStatus').textContent = TR('saveFail').replace('{e}', e.message); if (codeOverride) return null; }
   }
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급된다';
+  $('saveStatus').textContent = TR('saveLocal');
   showCode();
   try { return JSON.parse(localStorage.getItem(LOCAL_KEY)); } catch (_) { return null; }
 }
@@ -99,7 +143,7 @@ async function persistMeta() {
     saveVersion = s.version;
     const fresh = !saveCode && s.code;
     if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
-    if (fresh) toast('🔑 이어하기 코드 발급: ' + fmtCode(saveCode));
+    if (fresh) toast(TR('codeIssued').replace('{c}', fmtCode(saveCode)));
     showCode();
   } catch (e) {
     if (e.message === 'INVALID_INPUT') {
@@ -219,9 +263,9 @@ function isOver() {
 function maxTile() { return Math.max(...G.flat()); }
 function endGame() {
   over = true;
-  toast('💫 더 밀 곳이 없다 — 점수 ' + score.toLocaleString());
+  toast(TR('gameOver').replace('{n}', score.toLocaleString()));
   GameRank.submit('rune-merge', score, '최고 룬 ' + val(maxTile()))
-    .then(r => { if (r && r.applied) toast('🏆 랭킹 ' + r.rank + '위!'); });
+    .then(r => { if (r && r.applied) toast(TR('rankMsg').replace('{n}', r.rank)); });
   persistMeta();
 }
 $('undoBtn').onclick = () => {
@@ -271,10 +315,10 @@ function roundRect(x, y, w, h, r) {
   cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath();
 }
 function hud() {
-  $('scoreTxt').textContent = '점수 ' + score.toLocaleString();
-  $('bestTxt').textContent = '최고 ' + best.toLocaleString();
-  $('tileTxt').textContent = '룬 ' + (maxTile() ? val(maxTile()) : 0);
-  $('undoBtn').textContent = '↩ 무르기 (' + undoLeft + '회)';
+  $('scoreTxt').textContent = TR('hudScore').replace('{n}', score.toLocaleString());
+  $('bestTxt').textContent = TR('hudBest').replace('{n}', best.toLocaleString());
+  $('tileTxt').textContent = TR('hudTile').replace('{n}', maxTile() ? val(maxTile()) : 0);
+  $('undoBtn').textContent = TR('undoN').replace('{n}', undoLeft);
 }
 
 /* ── 입력: 키 + 스와이프 ── */
@@ -304,6 +348,8 @@ function restore(d) {
   else newGame();
 }
 loadMeta().then(d => { if (d && d.v === 1) restore(d); else newGame(); });
+// 무르기 버튼은 정적 사전(data-i18n)과 hud() 양쪽이 쓴다 — 사전 치환이 늦게 끝나는 경우 실제 횟수로 되돌린다
+if (document.readyState === 'loading') addEventListener('DOMContentLoaded', () => { if (G) hud(); });
 requestAnimationFrame(draw);
 </script>
 <script src="../lib/rank.js"></script>

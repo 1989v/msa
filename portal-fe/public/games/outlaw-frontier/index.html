@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>황야의 무법자</title>
+<title data-i18n="gameTitle">황야의 무법자</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -49,6 +49,7 @@
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
 </style>
+<script src="../lib/i18n.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -63,53 +64,125 @@
   <div id="banner"></div>
 
   <div class="panel" id="menu">
-    <h1>🤠 황야의 무법자</h1>
-    <p>떠돌이 한 명으로 시작해 <b>무법지대를 서쪽으로 밀고 나간다</b>. 쓰러뜨린 현상범의 현상금으로 동료를 모으고,
-       <b>둘을 갈아 넣어 상위 등급을 도박</b>한다. 동료가 죽으면 <b>사망 점수</b>가 쌓이고, 한계를 넘으면 그대로 끝이다.</p>
+    <h1 data-i18n="menuTitle">🤠 황야의 무법자</h1>
+    <p data-i18n="menuDesc"></p>
     <div class="row">
-      <div class="card"><span id="dmgTxt"></span><button id="buyDmg">구입</button></div>
+      <div class="card"><span id="dmgTxt"></span><button id="buyDmg" data-i18n="buy">구입</button></div>
     </div>
     <div class="row">
-      <div class="card"><span id="hpUpTxt"></span><button id="buyHpUp">구입</button></div>
+      <div class="card"><span id="hpUpTxt"></span><button id="buyHpUp" data-i18n="buy">구입</button></div>
     </div>
     <div class="row"><span id="bankTxt"></span></div>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="codePh" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="codeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#ffd98a;letter-spacing:2px"></span></div>
-    <button id="startBtn">▶ 출발</button>
+    <button id="startBtn" data-i18n="startBtn">▶ 출발</button>
   </div>
 
   <div class="panel" id="camp" hidden>
-    <h1>🏕 야영지</h1>
+    <h1 data-i18n="campTitle">🏕 야영지</h1>
     <p id="campDesc"></p>
     <div class="row"><span id="campGold"></span></div>
-    <h2>동료</h2>
+    <h2 data-i18n="squadHdr">동료</h2>
     <div id="squadList"></div>
-    <p style="font-size:11px">합성할 동료 <b>둘</b>을 고르면 등급을 도박한다 — 등급이 높을수록 성공 확률이 오른다.</p>
+    <p style="font-size:11px" data-i18n="combineHint"></p>
     <div class="row">
-      <button id="recruitBtn">🤝 떠돌이 고용</button>
-      <button id="combineBtn" disabled>🎲 합성</button>
-      <button id="healBtn">💊 치료</button>
+      <button id="recruitBtn" data-i18n="recruitPlain">🤝 떠돌이 고용</button>
+      <button id="combineBtn" disabled data-i18n="combinePlain">🎲 합성</button>
+      <button id="healBtn" data-i18n="healPlain">💊 치료</button>
     </div>
-    <div class="row"><button id="marchBtn">▶ 서쪽으로</button></div>
+    <div class="row"><button id="marchBtn" data-i18n="marchBtn">▶ 서쪽으로</button></div>
   </div>
 
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
     <div class="row">
-      <button id="againBtn">🔁 재도전</button>
-      <button id="backBtn">야영지로</button>
+      <button id="againBtn" data-i18n="againBtn">🔁 재도전</button>
+      <button id="backBtn" data-i18n="backBtn">야영지로</button>
     </div>
   </div>
 </div>
-<div id="info">이동 방향키/WASD · 동료는 사거리 안 적을 <b>자동 사격</b> · 야영지에서 고용/합성/치료<br>
-  구조물을 부수면 매복이 나온다 — 무리하지 말 것</div>
+<div id="info"><span data-i18n="infoMove"></span><b data-i18n="infoAuto"></b><span data-i18n="infoCamp"></span><br>
+  <span data-i18n="infoAmbush"></span></div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    gameTitle: '황야의 무법자', menuTitle: '🤠 황야의 무법자',
+    menuDesc: '떠돌이 한 명으로 시작해 무법지대를 서쪽으로 밀고 나간다. 쓰러뜨린 현상범의 현상금으로 동료를 모으고, 둘을 갈아 넣어 상위 등급을 도박한다. 동료가 죽으면 사망 점수가 쌓이고, 한계를 넘으면 그대로 끝이다.',
+    buy: '구입', codePh: '이어하기 코드', codeLoad: '🔑 코드로 불러오기', startBtn: '▶ 출발',
+    campTitle: '🏕 야영지', squadHdr: '동료',
+    combineHint: '합성할 동료 둘을 고르면 등급을 도박한다 — 등급이 높을수록 성공 확률이 오른다.',
+    recruitPlain: '🤝 떠돌이 고용', combinePlain: '🎲 합성', healPlain: '💊 치료',
+    marchBtn: '▶ 서쪽으로', againBtn: '🔁 재도전', backBtn: '야영지로',
+    infoMove: '이동 방향키/WASD · 동료는 사거리 안 적을 ', infoAuto: '자동 사격',
+    infoCamp: ' · 야영지에서 고용/합성/치료',
+    infoAmbush: '구조물을 부수면 매복이 나온다 — 무리하지 말 것',
+    codeShow: '🔑 이어하기 코드  ',
+    saveCloud: '☁ 서버 세이브 (v{v})', saveSaved: '☁ 저장됨 (v{v})',
+    saveLoadFail: '세이브 로드 실패: {e}', saveServerFail: '서버 저장 실패(브라우저에는 저장됨)',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
+    t1: '떠돌이', t2: '총잡이', t3: '명사수', t4: '현상금 사냥꾼', t5: '무법자', t6: '전설의 건맨',
+    z1: '메마른 초원', z2: '버려진 광산', z3: '붉은 협곡', z4: '모래 폭풍', z5: '무법자 소굴', z6: '종착역',
+    zoneBanner: '제{n}구역 — {z}', zoneCleared: '구역 정리 완료 — 서쪽 야영지로',
+    died: '사망!', ambush: '매복!', goldWagon: '💰 황금 마차! +{g}$', campMarker: '▶ 야영지',
+    squadTxt: '🤠 {n}명 ({s}★)',
+    wipeDesc: '동료가 모두 쓰러졌다.', deathScoreDesc: '사망 점수 한계를 넘었다.',
+    bossClearDesc: '두목을 쓰러뜨리고 무법지대를 평정했다!', allClearDesc: '무법지대 끝까지 밀어냈다!',
+    campDesc: '제{n}구역을 정리했다. 다음은 {z} — 준비를 끝내고 떠나자.',
+    campGold: '💰 {g}$    💀 사망 점수 {d}/{m}',
+    chipStat: 'HP {hp}/{max} · 공 {dmg}',
+    recruitBtn: '🤝 떠돌이 고용 ({c}$)', healBtn: '💊 전원 치료 ({c}$)',
+    combineBtn: '🎲 합성 ({s})', combinePick: '🎲 합성 — 둘을 고르세요',
+    combineUp: '🎉 {n} 탄생! {s}', combineFail: '💥 실패… {n}',
+    noDeathBonus: ' 🏅 무사고 여정 — 보상 +25%!', rankSuffix: ' 🏆 랭킹 {n}위!',
+    endClear: '🏆 무법지대 평정!', endOver: '💀 여정 종료',
+    endSummary: ' 제{n}구역까지 도달. 현상금 {g}$ 를 은행에 넣었다.',
+    dmgLabel: '사격 훈련 Lv.{lv}', dmgEffect: '공격 +{p}%',
+    hpLabel: '강골 Lv.{lv}', hpEffect: '체력 +{p}%',
+    bankTxt: '🏦 은행 {g}$   ·   최고 기록 제{n}구역',
+  },
+  en: {
+    gameTitle: 'Outlaw Frontier', menuTitle: '🤠 Outlaw Frontier',
+    menuDesc: 'Start with a lone drifter and push the badlands westward. Bounties from the outlaws you drop hire new hands, and you can gamble two of them away for a higher rank. Every hand you lose adds death points — cross the limit and the ride is over.',
+    buy: 'Buy', codePh: 'Continue code', codeLoad: '🔑 Load by code', startBtn: '▶ Ride Out',
+    campTitle: '🏕 Camp', squadHdr: 'Posse',
+    combineHint: 'Pick two hands to fuse and gamble their rank — the higher the rank, the better the odds.',
+    recruitPlain: '🤝 Hire Drifter', combinePlain: '🎲 Fuse', healPlain: '💊 Heal',
+    marchBtn: '▶ Head West', againBtn: '🔁 Retry', backBtn: 'To Camp',
+    infoMove: 'Move Arrows/WASD · Your posse ', infoAuto: 'auto-fires',
+    infoCamp: ' at foes in range · Hire / fuse / heal at camp',
+    infoAmbush: 'Smashing crates can spring an ambush — do not push your luck',
+    codeShow: '🔑 Continue code  ',
+    saveCloud: '☁ Cloud save (v{v})', saveSaved: '☁ Saved (v{v})',
+    saveLoadFail: 'Save load failed: {e}', saveServerFail: 'Cloud save failed (kept in browser)',
+    saveLocal: 'Browser save — a continue code is issued when you save',
+    t1: 'Drifter', t2: 'Gunhand', t3: 'Sharpshooter', t4: 'Bounty Hunter', t5: 'Outlaw', t6: 'Legendary Gunslinger',
+    z1: 'Parched Prairie', z2: 'Abandoned Mine', z3: 'Red Canyon', z4: 'Sandstorm', z5: 'Outlaw Den', z6: 'End of the Line',
+    zoneBanner: 'Zone {n} — {z}', zoneCleared: 'Zone cleared — camp lies west',
+    died: 'Down!', ambush: 'Ambush!', goldWagon: '💰 Gold wagon! +{g}$', campMarker: '▶ Camp',
+    squadTxt: '🤠 {n} ({s}★)',
+    wipeDesc: 'Your whole posse went down.', deathScoreDesc: 'Death points passed the limit.',
+    bossClearDesc: 'You dropped the boss and tamed the badlands!', allClearDesc: 'Pushed clear through the badlands!',
+    campDesc: 'Zone {n} is clear. Next up: {z} — gear up and move out.',
+    campGold: '💰 {g}$    💀 Death points {d}/{m}',
+    chipStat: 'HP {hp}/{max} · ATK {dmg}',
+    recruitBtn: '🤝 Hire Drifter ({c}$)', healBtn: '💊 Heal All ({c}$)',
+    combineBtn: '🎲 Fuse ({s})', combinePick: '🎲 Fuse — pick two',
+    combineUp: '🎉 {n} born! {s}', combineFail: '💥 Failed… {n}',
+    noDeathBonus: ' 🏅 No losses — reward +25%!', rankSuffix: ' 🏆 Rank #{n}!',
+    endClear: '🏆 Badlands Tamed!', endOver: '💀 Ride Over',
+    endSummary: ' Reached zone {n}. Banked {g}$ in bounties.',
+    dmgLabel: 'Marksmanship Lv.{lv}', dmgEffect: 'Attack +{p}%',
+    hpLabel: 'Toughness Lv.{lv}', hpEffect: 'HP +{p}%',
+    bankTxt: '🏦 Bank {g}$   ·   Best zone {n}',
+  },
+});
+const TR = GameI18n.t;
 const API = '/api/v1/games/outlaw-frontier';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height;
@@ -140,7 +213,7 @@ const fmtCode = c => c ? c.replace(/(.{4})(?=.)/g, '$1-') : '';
 let meta = { bank: 0, dmgLv: 0, hpLv: 0, best: 0 };
 
 function showCode() {
-  $('codeShow').textContent = saveCode ? '🔑 이어하기 코드  ' + fmtCode(saveCode) : '';
+  $('codeShow').textContent = saveCode ? TR('codeShow') + fmtCode(saveCode) : '';
 }
 async function loadMeta(codeOverride) {
   const code = codeOverride || saveCode;
@@ -150,15 +223,15 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { bank:0, dmgLv:0, hpLv:0, best:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('saveCloud').replace('{v}', saveVersion);
       showCode(); return true;
     } catch (e) {
-      $('saveStatus').textContent = '세이브 로드 실패: ' + e.message;
+      $('saveStatus').textContent = TR('saveLoadFail').replace('{e}', e.message);
       if (codeOverride) return false;
     }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  $('saveStatus').textContent = TR('saveLocal');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -167,7 +240,7 @@ async function persistMeta() {
     const s = await api('/save', { method:'PUT', body:JSON.stringify({ data:meta, version:saveVersion, code:saveCode }) });
     saveVersion = s.version;
     if (s.code && s.code !== saveCode) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
-    $('saveStatus').textContent = '☁ 저장됨 (v' + saveVersion + ')';
+    $('saveStatus').textContent = TR('saveSaved').replace('{v}', saveVersion);
     showCode();
   } catch (e) {
     if (e.message === 'INVALID_INPUT') {
@@ -177,18 +250,18 @@ async function persistMeta() {
         const s2 = await api('/save', { method:'PUT', body:JSON.stringify({ data:meta, version:saveVersion, code:saveCode }) });
         saveVersion = s2.version;
       } catch (_) {}
-    } else $('saveStatus').textContent = '서버 저장 실패(브라우저에는 저장됨)';
+    } else $('saveStatus').textContent = TR('saveServerFail');
   }
 }
 
 /* ═══════════ 등급 — 합성으로 올라간다 ═══════════ */
 const TIERS = [
-  { star:1, name:'떠돌이',       hp:26,  dmg:4,  rate:0.62, range:132, spd:74, color:'#9d8b6f' },
-  { star:2, name:'총잡이',       hp:40,  dmg:7,  rate:0.55, range:150, spd:76, color:'#c9a06a' },
-  { star:3, name:'명사수',       hp:58,  dmg:11, rate:0.47, range:176, spd:78, color:'#8fb8d6' },
-  { star:4, name:'현상금 사냥꾼', hp:82,  dmg:17, rate:0.40, range:196, spd:80, color:'#b58fd6' },
-  { star:5, name:'무법자',       hp:118, dmg:26, rate:0.34, range:214, spd:84, color:'#e0913f' },
-  { star:6, name:'전설의 건맨',   hp:170, dmg:40, rate:0.27, range:238, spd:88, color:'#ffd54a' },
+  { star:1, name:TR('t1'), hp:26,  dmg:4,  rate:0.62, range:132, spd:74, color:'#9d8b6f' },
+  { star:2, name:TR('t2'), hp:40,  dmg:7,  rate:0.55, range:150, spd:76, color:'#c9a06a' },
+  { star:3, name:TR('t3'), hp:58,  dmg:11, rate:0.47, range:176, spd:78, color:'#8fb8d6' },
+  { star:4, name:TR('t4'), hp:82,  dmg:17, rate:0.40, range:196, spd:80, color:'#b58fd6' },
+  { star:5, name:TR('t5'), hp:118, dmg:26, rate:0.34, range:214, spd:84, color:'#e0913f' },
+  { star:6, name:TR('t6'), hp:170, dmg:40, rate:0.27, range:238, spd:88, color:'#ffd54a' },
 ];
 
 /**
@@ -216,12 +289,12 @@ const FOES = {
   boss:    { name:'열차강도 두목', hp:900, dmg:22, spd:46, r:26, bounty:600, color:'#8e2f2f', ai:'boss' },
 };
 const ZONES = [
-  { name:'메마른 초원', bg:'#c9a06a', bg2:'#bd9560', pool:['coyote','coyote','bandit'], n:9 },
-  { name:'버려진 광산', bg:'#a8845a', bg2:'#9c7a52', pool:['coyote','bandit','bandit','brute'], n:11 },
-  { name:'붉은 협곡',   bg:'#b8724a', bg2:'#a96843', pool:['bandit','brute','dynamite'], n:13 },
-  { name:'모래 폭풍',   bg:'#caa878', bg2:'#bd9d6e', pool:['bandit','dynamite','sharp'], n:15 },
-  { name:'무법자 소굴', bg:'#8e6a4a', bg2:'#836243', pool:['brute','sharp','dynamite'], n:17 },
-  { name:'종착역',      bg:'#7a5540', bg2:'#6f4d3a', pool:['brute','sharp'], n:8, boss:true },
+  { name:TR('z1'), bg:'#c9a06a', bg2:'#bd9560', pool:['coyote','coyote','bandit'], n:9 },
+  { name:TR('z2'), bg:'#a8845a', bg2:'#9c7a52', pool:['coyote','bandit','bandit','brute'], n:11 },
+  { name:TR('z3'), bg:'#b8724a', bg2:'#a96843', pool:['bandit','brute','dynamite'], n:13 },
+  { name:TR('z4'), bg:'#caa878', bg2:'#bd9d6e', pool:['bandit','dynamite','sharp'], n:15 },
+  { name:TR('z5'), bg:'#8e6a4a', bg2:'#836243', pool:['brute','sharp','dynamite'], n:17 },
+  { name:TR('z6'), bg:'#7a5540', bg2:'#6f4d3a', pool:['brute','sharp'], n:8, boss:true },
 ];
 const DEATH_LIMIT = 12;
 
@@ -324,7 +397,7 @@ function buildZone() {
   for (let i = 0; i < 4 + ri(3); i++)
     G.crates.push({ x: 360 + rnd() * (WORLD_W - 500), y: 60 + rnd() * (WORLD_H - 120), hp: 12,
       golden: rnd() < 0.08 });                             // 이스터에그 — 황금 마차: 매복 없이 잭팟
-  banner('제' + (G.zone + 1) + '구역 — ' + z.name);
+  banner(TR('zoneBanner').replace('{n}', G.zone + 1).replace('{z}', z.name));
 }
 function spawnFoe(kind, x, y) {
   const f = FOES[kind];
@@ -350,7 +423,7 @@ function killFoe(f) {
   burst(f.x, f.y, f.kind === 'boss' ? '#ffd54a' : '#c25a3a', f.kind === 'boss' ? 40 : 12, 180);
   if (f.kind === 'boss') { G.bossDown = true; shake = 16; }
   G.foes = G.foes.filter(o => o !== f);
-  if (!G.foes.length) { G.cleared = true; banner('구역 정리 완료 — 서쪽 야영지로'); }
+  if (!G.foes.length) { G.cleared = true; banner(TR('zoneCleared')); }
 }
 function hurtAlly(a, dmg, fx, fy) {
   a.hp -= dmg; a.hurt = 0.22;
@@ -358,11 +431,11 @@ function hurtAlly(a, dmg, fx, fy) {
   if (a.hp <= 0) {
     G.deaths += Math.max(1, a.star - 1) || 1;
     burst(a.x, a.y, '#ffffff', 16, 150);
-    popText(a.x, a.y - 14, '사망!', '#ff6b6b');
+    popText(a.x, a.y - 14, TR('died'), '#ff6b6b');
     G.squad = G.squad.filter(o => o !== a);
     shake = 11;
-    if (!G.squad.length) { endRun('WIPE', '동료가 모두 쓰러졌다.'); return; }
-    if (G.deaths >= DEATH_LIMIT) { endRun('DEATH_SCORE', '사망 점수 한계를 넘었다.'); }
+    if (!G.squad.length) { endRun('WIPE', TR('wipeDesc')); return; }
+    if (G.deaths >= DEATH_LIMIT) { endRun('DEATH_SCORE', TR('deathScoreDesc')); }
   }
 }
 
@@ -434,7 +507,7 @@ function update(dt) {
         burst(f.x, f.y, '#ff9a3c', 26, 220); shake = 12;
         for (const a of [...G.squad]) if (Math.hypot(a.x - f.x, a.y - f.y) < 62) hurtAlly(a, f.dmg, f.x, f.y);
         G.foes = G.foes.filter(o => o !== f);
-        if (!G.foes.length) { G.cleared = true; banner('구역 정리 완료 — 서쪽 야영지로'); }
+        if (!G.foes.length) { G.cleared = true; banner(TR('zoneCleared')); }
       }
     }
   }
@@ -454,9 +527,9 @@ function update(dt) {
           G.crates = G.crates.filter(o => o !== c);
           if (c.golden) {                                     // 황금 마차 — 무조건 대박
             const g = 80 + ri(80); G.gold += g;
-            popText(c.x, c.y - 16, '💰 황금 마차! +' + g + '$', '#ffe08a');
+            popText(c.x, c.y - 16, TR('goldWagon').replace('{g}', g), '#ffe08a');
           } else if (rnd() < 0.55) {                          // 구조물은 함정 — 매복이 튀어나온다
-            popText(c.x, c.y - 14, '매복!', '#ff6b6b');
+            popText(c.x, c.y - 14, TR('ambush'), '#ff6b6b');
             const pool = ZONES[G.zone].pool;
             for (let i = 0; i < 2 + ri(2); i++) spawnFoe(pool[ri(pool.length)], c.x + (rnd()-0.5)*70, c.y + (rnd()-0.5)*70);
           } else { const g = 15 + ri(25); G.gold += g; popText(c.x, c.y - 14, '+' + g + '$', '#ffd98a'); }
@@ -502,7 +575,7 @@ function draw() {
     const gx = WORLD_W - 60 - camX;
     cx.drawImage(campSprite(), gx - 17, VH / 2 - 17);
     cx.font = 'bold 12px monospace'; cx.textAlign = 'center'; cx.fillStyle = '#ffd98a';
-    cx.fillText('▶ 야영지', gx, VH / 2 - 26);
+    cx.fillText(TR('campMarker'), gx, VH / 2 - 26);
   }
   for (const c of G.crates) {
     cx.drawImage(crateSprite(), c.x - camX - 15, c.y - 17);
@@ -554,7 +627,7 @@ function draw() {
 
   $('goldTxt').textContent = '💰 ' + G.gold + '$';
   $('zoneTxt').textContent = '🏜 ' + (G.zone + 1) + '/' + ZONES.length + ' ' + z.name;
-  $('squadTxt').textContent = '🤠 ' + G.squad.length + '명 (' + G.squad.reduce((a, b) => a + b.star, 0) + '★)';
+  $('squadTxt').textContent = TR('squadTxt').replace('{n}', G.squad.length).replace('{s}', G.squad.reduce((a, b) => a + b.star, 0));
   $('deathTxt').textContent = '💀 ' + G.deaths + '/' + DEATH_LIMIT;
 }
 
@@ -562,23 +635,23 @@ function draw() {
 let sel = [];
 function openCamp() {
   running = false; $('hud').hidden = true; sel = [];
-  if (G.bossDown) { endRun('CLEAR', '두목을 쓰러뜨리고 무법지대를 평정했다!'); return; }
-  $('campDesc').textContent = '제' + (G.zone + 1) + '구역을 정리했다. 다음은 ' +
-    (ZONES[G.zone + 1] ? ZONES[G.zone + 1].name : '종착역') + ' — 준비를 끝내고 떠나자.';
+  if (G.bossDown) { endRun('CLEAR', TR('bossClearDesc')); return; }
+  $('campDesc').textContent = TR('campDesc').replace('{n}', G.zone + 1)
+    .replace('{z}', ZONES[G.zone + 1] ? ZONES[G.zone + 1].name : TR('z6'));
   $('camp').hidden = false;
   renderCamp();
 }
 const recruitCost = () => 40 + G.squad.length * 26;
 const healCost = () => 30 + G.zone * 12;
 function renderCamp() {
-  $('campGold').textContent = '💰 ' + G.gold + '$    💀 사망 점수 ' + G.deaths + '/' + DEATH_LIMIT;
+  $('campGold').textContent = TR('campGold').replace('{g}', G.gold).replace('{d}', G.deaths).replace('{m}', DEATH_LIMIT);
   const list = $('squadList'); list.innerHTML = '';
   G.squad.forEach(a => {
     const t = TIERS[a.star - 1];
     const el = document.createElement('div');
     el.className = 'unitChip' + (sel.includes(a) ? ' sel' : '');
     el.innerHTML = '<b>' + t.name + '</b><i>' + '★'.repeat(a.star) + '</i>' +
-      '<small>HP ' + a.hp + '/' + a.maxHp + ' · 공 ' + allyDmg(a) + '</small>';
+      '<small>' + TR('chipStat').replace('{hp}', a.hp).replace('{max}', a.maxHp).replace('{dmg}', allyDmg(a)) + '</small>';
     el.onclick = () => {
       if (sel.includes(a)) sel = sel.filter(o => o !== a);
       else if (sel.length < 2) sel.push(a);
@@ -586,13 +659,13 @@ function renderCamp() {
     };
     list.appendChild(el);
   });
-  $('recruitBtn').textContent = '🤝 떠돌이 고용 (' + recruitCost() + '$)';
+  $('recruitBtn').textContent = TR('recruitBtn').replace('{c}', recruitCost());
   $('recruitBtn').disabled = G.gold < recruitCost();
-  $('healBtn').textContent = '💊 전원 치료 (' + healCost() + '$)';
+  $('healBtn').textContent = TR('healBtn').replace('{c}', healCost());
   $('healBtn').disabled = G.gold < healCost() || G.squad.every(a => a.hp >= a.maxHp);
   $('combineBtn').disabled = sel.length !== 2;
   $('combineBtn').textContent = sel.length === 2
-    ? '🎲 합성 (' + sel.map(a => '★'.repeat(a.star)).join(' + ') + ')' : '🎲 합성 — 둘을 고르세요';
+    ? TR('combineBtn').replace('{s}', sel.map(a => '★'.repeat(a.star)).join(' + ')) : TR('combinePick');
 }
 $('recruitBtn').onclick = () => {
   if (G.gold < recruitCost()) return;
@@ -611,15 +684,15 @@ $('combineBtn').onclick = () => {
   G.squad.push(born);
   sel = [];
   const best = Math.max(a.star, b.star);
-  banner(out > best ? '🎉 ' + TIERS[out - 1].name + ' 탄생! ' + '★'.repeat(out)
+  banner(out > best ? TR('combineUp').replace('{n}', TIERS[out - 1].name).replace('{s}', '★'.repeat(out))
        : out === best ? '— ' + TIERS[out - 1].name + ' ' + '★'.repeat(out)
-       : '💥 실패… ' + TIERS[out - 1].name);
+       : TR('combineFail').replace('{n}', TIERS[out - 1].name));
   renderCamp();
 };
 $('marchBtn').onclick = () => {
   $('camp').hidden = true;
   G.zone++;
-  if (G.zone >= ZONES.length) { endRun('CLEAR', '무법지대 끝까지 밀어냈다!'); return; }
+  if (G.zone >= ZONES.length) { endRun('CLEAR', TR('allClearDesc')); return; }
   buildZone();
   $('hud').hidden = false; running = true;
 };
@@ -639,15 +712,15 @@ async function endRun(outcome, desc) {
   let extra = '';
   if (outcome === 'CLEAR' && G.deaths === 0) {             // 동료를 하나도 잃지 않았다
     earned = Math.floor(earned * 1.25);
-    extra = ' 🏅 무사고 여정 — 보상 +25%!';
+    extra = TR('noDeathBonus');
     meta.noDeath = (meta.noDeath || 0) + 1;
   }
   meta.bank += earned;
   meta.best = Math.max(meta.best, G.zone + 1);
   GameRank.submit('outlaw-frontier', (G.zone + 1) * 100000 + earned, '제' + (G.zone + 1) + '구역 · ' + earned + '$')
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
-  $('endTitle').textContent = outcome === 'CLEAR' ? '🏆 무법지대 평정!' : '💀 여정 종료';
-  $('endDesc').textContent = desc + extra + ' 제' + (G.zone + 1) + '구역까지 도달. 현상금 ' + earned + '$ 를 은행에 넣었다.';
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rankSuffix').replace('{n}', r.rank); });
+  $('endTitle').textContent = outcome === 'CLEAR' ? TR('endClear') : TR('endOver');
+  $('endDesc').textContent = desc + extra + TR('endSummary').replace('{n}', G.zone + 1).replace('{g}', earned);
   $('endPanel').hidden = false;
   if (run) { try { await api('/runs/' + run.runKey + '/consume', { method:'POST', body:JSON.stringify({ outcome: outcome === 'CLEAR' ? 'CLEAR' : 'DEATH' }) }); } catch (_) {} }
   await persistMeta();
@@ -675,9 +748,11 @@ addEventListener('blur', () => keys.clear());
 const dmgCost = () => 90 * Math.pow(2, meta.dmgLv);
 const hpUpCost = () => 110 * Math.pow(2, meta.hpLv);
 function renderMeta() {
-  $('dmgTxt').innerHTML = '<b>사격 훈련 Lv.' + meta.dmgLv + '</b> — 공격 +' + (meta.dmgLv * 12) + '%<small>' + dmgCost() + '$</small>';
-  $('hpUpTxt').innerHTML = '<b>강골 Lv.' + meta.hpLv + '</b> — 체력 +' + (meta.hpLv * 12) + '%<small>' + hpUpCost() + '$</small>';
-  $('bankTxt').textContent = '🏦 은행 ' + meta.bank + '$   ·   최고 기록 제' + (meta.best || 0) + '구역';
+  $('dmgTxt').innerHTML = '<b>' + TR('dmgLabel').replace('{lv}', meta.dmgLv) + '</b> — ' +
+    TR('dmgEffect').replace('{p}', meta.dmgLv * 12) + '<small>' + dmgCost() + '$</small>';
+  $('hpUpTxt').innerHTML = '<b>' + TR('hpLabel').replace('{lv}', meta.hpLv) + '</b> — ' +
+    TR('hpEffect').replace('{p}', meta.hpLv * 12) + '<small>' + hpUpCost() + '$</small>';
+  $('bankTxt').textContent = TR('bankTxt').replace('{g}', meta.bank).replace('{n}', meta.best || 0);
   $('buyDmg').disabled = meta.bank < dmgCost();
   $('buyHpUp').disabled = meta.bank < hpUpCost();
 }

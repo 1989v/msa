@@ -34,7 +34,16 @@ export interface PageResponse<T> {
 
 export type GameLoadType = 'IFRAME' | 'INTERNAL_ROUTE';
 export type GameSortKey = 'trending' | 'new' | 'top';
-export type GameGenre = 'ARCADE' | 'ACTION' | 'PUZZLE' | 'RPG' | 'EDUCATION' | 'STRATEGY' | 'CASUAL';
+export type GameGenre =
+  | 'ARCADE'
+  | 'ACTION'
+  | 'PUZZLE'
+  | 'RPG'
+  | 'EDUCATION'
+  | 'STRATEGY'
+  | 'DEFENSE'
+  | 'VERSUS'
+  | 'CASUAL';
 
 export const GENRE_LABELS: Record<GameGenre, string> = {
   ARCADE: '아케이드',
@@ -43,13 +52,56 @@ export const GENRE_LABELS: Record<GameGenre, string> = {
   RPG: 'RPG',
   EDUCATION: '학습',
   STRATEGY: '전략',
+  DEFENSE: '디펜스',
+  VERSUS: '대전',
   CASUAL: '캐주얼',
 };
+
+export const GENRE_LABELS_EN: Record<GameGenre, string> = {
+  ARCADE: 'Arcade',
+  ACTION: 'Action',
+  PUZZLE: 'Puzzle',
+  RPG: 'RPG',
+  EDUCATION: 'Education',
+  STRATEGY: 'Strategy',
+  DEFENSE: 'Defense',
+  VERSUS: 'Versus',
+  CASUAL: 'Casual',
+};
+
+export type GameLang = 'ko' | 'en';
+
+/** 게임 언어 — localStorage('game_lang') → 브라우저 언어. iframe 게임(lib/i18n.js)과 같은 키를 공유한다. */
+export function getGameLang(): GameLang {
+  const stored = localStorage.getItem('game_lang');
+  if (stored === 'ko' || stored === 'en') return stored;
+  return /^ko/i.test(navigator.language || '') ? 'ko' : 'en';
+}
+
+export function setGameLang(lang: GameLang): void {
+  localStorage.setItem('game_lang', lang);
+}
+
+export function genreLabel(genre: GameGenre, lang: GameLang): string {
+  return (lang === 'en' ? GENRE_LABELS_EN : GENRE_LABELS)[genre] ?? genre;
+}
+
+export function displayTitle(game: { title: string; titleEn: string | null }, lang: GameLang): string {
+  return lang === 'en' && game.titleEn ? game.titleEn : game.title;
+}
+
+export function displayDescription(
+  game: { description: string; descriptionEn: string | null },
+  lang: GameLang,
+): string {
+  return lang === 'en' && game.descriptionEn ? game.descriptionEn : game.description;
+}
 
 export interface GameSummary {
   id: number;
   slug: string;
   title: string;
+  titleEn: string | null;
   thumbnailUrl: string;
   loadType: GameLoadType;
   supportsMobile: boolean;
@@ -63,6 +115,7 @@ export interface GameSummary {
 
 export interface GameDetail extends GameSummary {
   description: string;
+  descriptionEn: string | null;
   coverUrl: string | null;
   engineType: string;
   entryUrl: string;

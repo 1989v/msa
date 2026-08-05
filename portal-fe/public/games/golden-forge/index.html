@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>황금 대장간</title>
+<title data-i18n="title">황금 대장간</title>
+<script src="../lib/i18n.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -39,16 +40,16 @@
 </head>
 <body>
 <div id="wrap">
-  <h1>⚒ 황금 대장간</h1>
-  <div id="sub">모루를 두드려 금을 벼려라 — 잠든 사이에도 화로는 식지 않는다</div>
+  <h1 data-i18n="h1">⚒ 황금 대장간</h1>
+  <div id="sub" data-i18n="sub">모루를 두드려 금을 벼려라 — 잠든 사이에도 화로는 식지 않는다</div>
   <canvas id="forge" width="340" height="230"></canvas>
   <div id="stats">
     <span id="goldTxt"></span><span id="rateTxt"></span><span id="tapTxt"></span><span id="starTxt"></span>
   </div>
   <div class="shop" id="shop"></div>
   <div id="saveRow">
-    <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-    <button id="codeLoadBtn">🔑 코드로 불러오기</button>
+    <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
+    <button id="codeLoadBtn" data-i18n="btnCodeLoad">🔑 코드로 불러오기</button>
   </div>
   <div id="codeShow"></div>
   <div id="saveStatus"></div>
@@ -57,6 +58,75 @@
 <div id="toast"></div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    title: '황금 대장간',
+    h1: '⚒ 황금 대장간',
+    sub: '모루를 두드려 금을 벼려라 — 잠든 사이에도 화로는 식지 않는다',
+    phCode: '이어하기 코드',
+    btnCodeLoad: '🔑 코드로 불러오기',
+    gearHammer: '자동 망치',
+    gearHammerDesc: '초당 +1',
+    gearBellows: '풀무 도제',
+    gearBellowsDesc: '초당 +8',
+    gearGolem: '화강암 골렘',
+    gearGolemDesc: '초당 +55',
+    gearForge2: '쌍둥이 화로',
+    gearForge2Desc: '초당 +380',
+    gearDragon: '화룡의 숨결',
+    gearDragonDesc: '초당 +2,600',
+    saveCloud: '☁ 서버 세이브 (v{v})',
+    saveNoCode: '그 코드로 저장된 세이브가 없다',
+    saveFail: '세이브 로드 실패: {e}',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급된다',
+    codeIssued: '🔑 이어하기 코드 발급: {c}',
+    canvasHint: '⚒ 모루를 두드려라 (탭/클릭)',
+    tapLv: '🔨 담금질 숙련 Lv.{n}',
+    tapPer: '탭당 +{n}',
+    gearOwned: ' (보유 초당 +{n})',
+    prestigeName: '✨ 별의 담금질 ({n}⭐)',
+    prestigeDesc: '누적 {n}G 달성 시 — 전부 리셋하고 영구 생산 +25%',
+    prestigeReady: '가능!',
+    prestigeToast: '✨ 별의 담금질! 영구 배수 ×{n}',
+    hudRate: '⏱ 초당 {n}',
+    hudTap: '🔨 탭당 {n}',
+    offline: '💤 자리 비운 사이 화로가 {g}G 를 벼려뒀다 ({m}분)',
+  },
+  en: {
+    title: 'Golden Forge',
+    h1: '⚒ Golden Forge',
+    sub: 'Hammer the anvil into gold — the fire never cools while you sleep',
+    phCode: 'Continue code',
+    btnCodeLoad: '🔑 Load from code',
+    gearHammer: 'Auto Hammer',
+    gearHammerDesc: '+1/sec',
+    gearBellows: 'Bellows Apprentice',
+    gearBellowsDesc: '+8/sec',
+    gearGolem: 'Granite Golem',
+    gearGolemDesc: '+55/sec',
+    gearForge2: 'Twin Furnace',
+    gearForge2Desc: '+380/sec',
+    gearDragon: "Dragon's Breath",
+    gearDragonDesc: '+2,600/sec',
+    saveCloud: '☁ Cloud save (v{v})',
+    saveNoCode: 'No save found for that code',
+    saveFail: 'Save load failed: {e}',
+    saveLocal: 'Browser save — saving issues a continue code',
+    codeIssued: '🔑 Continue code issued: {c}',
+    canvasHint: '⚒ Strike the anvil (tap/click)',
+    tapLv: '🔨 Tempering Lv.{n}',
+    tapPer: '+{n} per tap',
+    gearOwned: ' (owned: +{n}/sec)',
+    prestigeName: '✨ Star Tempering ({n}⭐)',
+    prestigeDesc: 'At {n}G lifetime — reset everything for +25% permanent output',
+    prestigeReady: 'Ready!',
+    prestigeToast: '✨ Star Tempering! Permanent multiplier ×{n}',
+    hudRate: '⏱ {n}/sec',
+    hudTap: '🔨 {n}/tap',
+    offline: '💤 The forge kept working while you were away: {g}G ({m} min)',
+  },
+});
+var TR = GameI18n.t;
 const API = '/api/v1/games/golden-forge';
 const $ = id => document.getElementById(id);
 const cv = $('forge'), cx = cv.getContext('2d');
@@ -88,11 +158,11 @@ let S = null;
 const fresh = () => ({ v:1, gold:0, lifetime:0, stars:0, tapLv:0, lastTs:Date.now(),
   gear: { hammer:0, bellows:0, golem:0, forge2:0, dragon:0 } });
 const GEARS = {
-  hammer: { name:'자동 망치',   emoji:'🔨', base:25,     growth:1.15, rate:1,    desc:'초당 +1' },
-  bellows:{ name:'풀무 도제',   emoji:'🌬', base:220,    growth:1.16, rate:8,    desc:'초당 +8' },
-  golem:  { name:'화강암 골렘', emoji:'🗿', base:1900,   growth:1.17, rate:55,   desc:'초당 +55' },
-  forge2: { name:'쌍둥이 화로', emoji:'🔥', base:16000,  growth:1.18, rate:380,  desc:'초당 +380' },
-  dragon: { name:'화룡의 숨결', emoji:'🐉', base:140000, growth:1.20, rate:2600, desc:'초당 +2,600' },
+  hammer: { name:'gearHammer',  emoji:'🔨', base:25,     growth:1.15, rate:1,    desc:'gearHammerDesc' },
+  bellows:{ name:'gearBellows', emoji:'🌬', base:220,    growth:1.16, rate:8,    desc:'gearBellowsDesc' },
+  golem:  { name:'gearGolem',   emoji:'🗿', base:1900,   growth:1.17, rate:55,   desc:'gearGolemDesc' },
+  forge2: { name:'gearForge2',  emoji:'🔥', base:16000,  growth:1.18, rate:380,  desc:'gearForge2Desc' },
+  dragon: { name:'gearDragon',  emoji:'🐉', base:140000, growth:1.20, rate:2600, desc:'gearDragonDesc' },
 };
 const starMul = () => 1 + S.stars * 0.25;                       // 별의 담금질 — 회차 영구 배수
 const tapPower = () => Math.ceil((1 + S.tapLv * S.tapLv) * starMul());
@@ -113,14 +183,14 @@ async function loadSave(codeOverride) {
       const s = await api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''));
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('saveCloud').replace('{v}', saveVersion);
       showCode();
       if (s.data && s.data.v === 1) return s.data;
-      if (codeOverride) toast('그 코드로 저장된 세이브가 없다');
+      if (codeOverride) toast(TR('saveNoCode'));
       return null;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return null; }
+    } catch (e) { $('saveStatus').textContent = TR('saveFail').replace('{e}', e.message); if (codeOverride) return null; }
   }
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급된다';
+  $('saveStatus').textContent = TR('saveLocal');
   showCode();
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); return d && d.v === 1 ? d : null; } catch (_) { return null; }
 }
@@ -133,7 +203,7 @@ async function persist() {
     saveVersion = s.version;
     const fresh2 = !saveCode && s.code;
     if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
-    if (fresh2) toast('🔑 이어하기 코드 발급: ' + fmtCode(saveCode));
+    if (fresh2) toast(TR('codeIssued').replace('{c}', fmtCode(saveCode)));
     showCode();
   } catch (e) {
     if (e.message === 'INVALID_INPUT') {
@@ -182,7 +252,7 @@ function draw(ts) {
   sparks.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.25;
     cx.globalAlpha = p.life; cx.fillStyle = p.c; cx.fillRect(p.x, p.y, 3, 3); cx.globalAlpha = 1; });
   cx.fillStyle = '#a8967a'; cx.font = '11px monospace'; cx.textAlign = 'center';
-  cx.fillText('⚒ 모루를 두드려라 (탭/클릭)', 170, 222);
+  cx.fillText(TR('canvasHint'), 170, 222);
 }
 function burst(x, y, n) {
   for (let i = 0; i < n; i++) sparks.push({ x, y, vx:(Math.random()-0.5)*5, vy:-Math.random()*4-1,
@@ -194,15 +264,16 @@ function renderShop() {
   const shop = $('shop');
   shop.innerHTML = '';
   const tapBtn = document.createElement('button');
-  tapBtn.innerHTML = '<span><b>🔨 담금질 숙련 Lv.' + S.tapLv + '</b><small>탭당 +' + fmt(tapPower()) + '</small></span>' +
+  tapBtn.innerHTML = '<span><b>' + TR('tapLv').replace('{n}', S.tapLv) + '</b><small>' +
+    TR('tapPer').replace('{n}', fmt(tapPower())) + '</small></span>' +
     '<span class="price">' + fmt(tapCost()) + 'G</span>';
   tapBtn.disabled = S.gold < tapCost();
   tapBtn.onclick = () => { if (S.gold < tapCost()) return; S.gold -= tapCost(); S.tapLv++; renderShop(); persistSoon(); };
   shop.appendChild(tapBtn);
   Object.entries(GEARS).forEach(([k, gr]) => {
     const b = document.createElement('button');
-    b.innerHTML = '<span><b>' + gr.emoji + ' ' + gr.name + ' × ' + S.gear[k] + '</b><small>' + gr.desc +
-      ' (보유 초당 +' + fmt(gr.rate * S.gear[k] * starMul()) + ')</small></span>' +
+    b.innerHTML = '<span><b>' + gr.emoji + ' ' + TR(gr.name) + ' × ' + S.gear[k] + '</b><small>' + TR(gr.desc) +
+      TR('gearOwned').replace('{n}', fmt(gr.rate * S.gear[k] * starMul())) + '</small></span>' +
       '<span class="price">' + fmt(gearCost(k)) + 'G</span>';
     b.disabled = S.gold < gearCost(k);
     b.onclick = () => { if (S.gold < gearCost(k)) return; S.gold -= gearCost(k); S.gear[k]++; renderShop(); persistSoon(); };
@@ -211,23 +282,23 @@ function renderShop() {
   const pr = document.createElement('button');
   pr.id = 'prestigeBtn';
   const can = S.lifetime >= prestigeReq();
-  pr.innerHTML = '<span><b>✨ 별의 담금질 (' + S.stars + '⭐)</b><small>누적 ' + fmt(prestigeReq()) +
-    'G 달성 시 — 전부 리셋하고 영구 생산 +25%</small></span>' +
-    '<span class="price">' + (can ? '가능!' : fmt(S.lifetime) + '/' + fmt(prestigeReq())) + '</span>';
+  pr.innerHTML = '<span><b>' + TR('prestigeName').replace('{n}', S.stars) + '</b><small>' +
+    TR('prestigeDesc').replace('{n}', fmt(prestigeReq())) + '</small></span>' +
+    '<span class="price">' + (can ? TR('prestigeReady') : fmt(S.lifetime) + '/' + fmt(prestigeReq())) + '</span>';
   pr.disabled = !can;
   pr.onclick = () => {
     if (S.lifetime < prestigeReq()) return;
     const stars = S.stars + 1, lifetime = S.lifetime;
     S = fresh(); S.stars = stars; S.lifetime = lifetime;
-    toast('✨ 별의 담금질! 영구 배수 ×' + starMul().toFixed(2));
+    toast(TR('prestigeToast').replace('{n}', starMul().toFixed(2)));
     renderShop(); persist();
   };
   shop.appendChild(pr);
 }
 function hud() {
   $('goldTxt').textContent = '💰 ' + fmt(S.gold) + 'G';
-  $('rateTxt').textContent = '⏱ 초당 ' + fmt(totalRate());
-  $('tapTxt').textContent = '🔨 탭당 ' + fmt(tapPower());
+  $('rateTxt').textContent = TR('hudRate').replace('{n}', fmt(totalRate()));
+  $('tapTxt').textContent = TR('hudTap').replace('{n}', fmt(tapPower()));
   $('starTxt').textContent = '⭐ ' + S.stars + ' (×' + starMul().toFixed(2) + ')';
 }
 let persistTimer = null;
@@ -268,7 +339,7 @@ function boot(saved) {
   if (saved && saved.lastTs) {
     const away = Math.min(60 * 60 * 8, (Date.now() - saved.lastTs) / 1000);   // 오프라인 최대 8시간
     const earned = Math.floor(totalRate.call(null) * 0 + (Object.keys(GEARS).reduce((a, k) => a + GEARS[k].rate * S.gear[k], 0) * (1 + S.stars * 0.25)) * away);
-    if (earned > 0) { gain(earned); toast('💤 자리 비운 사이 화로가 ' + fmt(earned) + 'G 를 벼려뒀다 (' + Math.round(away/60) + '분)'); }
+    if (earned > 0) { gain(earned); toast(TR('offline').replace('{g}', fmt(earned)).replace('{m}', Math.round(away/60))); }
   }
   hud(); renderShop();
 }

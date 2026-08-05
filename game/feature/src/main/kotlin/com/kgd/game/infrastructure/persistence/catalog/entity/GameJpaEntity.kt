@@ -30,6 +30,8 @@ class GameJpaEntity(
     val slug: String,
     title: String,
     description: String,
+    titleEn: String?,
+    descriptionEn: String?,
     thumbnailUrl: String,
     coverUrl: String?,
     @Enumerated(EnumType.STRING)
@@ -61,6 +63,14 @@ class GameJpaEntity(
 
     @Column(nullable = false, columnDefinition = "TEXT")
     var description: String = description
+        private set
+
+    @Column(name = "title_en", length = 200)
+    var titleEn: String? = titleEn
+        private set
+
+    @Column(name = "description_en", columnDefinition = "TEXT")
+    var descriptionEn: String? = descriptionEn
         private set
 
     @Column(name = "thumbnail_url", nullable = false, length = 500)
@@ -119,6 +129,8 @@ class GameJpaEntity(
     fun update(game: Game) {
         title = game.title
         description = game.description
+        titleEn = game.titleEn
+        descriptionEn = game.descriptionEn
         thumbnailUrl = game.thumbnailUrl
         coverUrl = game.coverUrl
         entryUrl = game.entryUrl
@@ -138,6 +150,8 @@ class GameJpaEntity(
         slug = slug,
         title = title,
         description = description,
+        titleEn = titleEn,
+        descriptionEn = descriptionEn,
         thumbnailUrl = thumbnailUrl,
         coverUrl = coverUrl,
         engineType = engineType,
@@ -160,6 +174,8 @@ class GameJpaEntity(
             slug = game.slug,
             title = game.title,
             description = game.description,
+            titleEn = game.titleEn,
+            descriptionEn = game.descriptionEn,
             thumbnailUrl = game.thumbnailUrl,
             coverUrl = game.coverUrl,
             engineType = game.engineType,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { GENRE_LABELS, type GameSummary } from '../../api/gameApi';
+import { displayTitle, genreLabel, getGameLang, type GameLang, type GameSummary } from '../../api/gameApi';
 
 const COVER_HUES = [245, 180, 145, 25, 300, 75];
 
@@ -10,13 +10,15 @@ function coverHue(slug: string): number {
   return COVER_HUES[Math.abs(hash) % COVER_HUES.length];
 }
 
-export default function GameCard({ game }: { game: GameSummary }) {
+export default function GameCard({ game, lang }: { game: GameSummary; lang?: GameLang }) {
   const hue = coverHue(game.slug);
+  const gameLang = lang ?? getGameLang();
+  const title = displayTitle(game, gameLang);
   // 썸네일 로드 실패 시 기존 그라디언트 + 이니셜 커버로 폴백
   const [thumbFailed, setThumbFailed] = useState(false);
   const showThumb = !!game.thumbnailUrl && !thumbFailed;
   return (
-    <Link to={`/games/${game.slug}`} className="game-card" aria-label={`${game.title} 상세로 이동`}>
+    <Link to={`/games/${game.slug}`} className="game-card" aria-label={title}>
       <div
         className="game-card-cover"
         style={{
@@ -33,20 +35,20 @@ export default function GameCard({ game }: { game: GameSummary }) {
           />
         ) : (
           <span className="game-card-initial" aria-hidden>
-            {game.title.slice(0, 1)}
+            {title.slice(0, 1)}
           </span>
         )}
       </div>
       <div className="game-card-body">
         <h3 className="game-card-title">
-          {game.title}
-          <span className="game-card-genre">{GENRE_LABELS[game.genre] ?? game.genre}</span>
+          {title}
+          <span className="game-card-genre">{genreLabel(game.genre, gameLang)}</span>
         </h3>
         <div className="game-card-meta">
           {game.ratingCount > 0 ? (
             <span className="game-card-rating">★ {game.ratingAvg.toFixed(1)}</span>
           ) : (
-            <span className="game-card-rating muted">평가 없음</span>
+            <span className="game-card-rating muted">{gameLang === 'en' ? 'No ratings' : '평가 없음'}</span>
           )}
           <span className="game-card-plays">{game.playCount.toLocaleString()} plays</span>
         </div>

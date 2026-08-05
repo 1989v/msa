@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>화염 신전</title>
+<title data-i18n="title">화염 신전</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -39,6 +39,7 @@
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
 </style>
+<script src="../lib/i18n.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -51,28 +52,113 @@
   </div>
   <div id="banner"></div>
   <div class="panel" id="menu">
-    <h1>🌋 화염 신전</h1>
-    <p>고대 신전의 바닥이 불을 뿜는다. <b>붉게 달아오르는 칸</b>이 곧 터질 자리다 —
-       읽고, 피하고, <b>오른쪽 출구</b>까지 건너가라. 닿으면 그 자리에서 재가 되어 <b>스테이지 처음</b>부터.
-       <b>8스테이지</b>, 죽음은 세되 끝은 없다.</p>
+    <h1 data-i18n="menu.title">🌋 화염 신전</h1>
+    <p><span data-i18n="menu.d1">고대 신전의 바닥이 불을 뿜는다. </span><b data-i18n="menu.d2">붉게 달아오르는 칸</b><span data-i18n="menu.d3">이 곧 터질 자리다 —
+       읽고, 피하고, </span><b data-i18n="menu.d4">오른쪽 출구</b><span data-i18n="menu.d5">까지 건너가라. 닿으면 그 자리에서 재가 되어 </span><b data-i18n="menu.d6">스테이지 처음</b><span data-i18n="menu.d7">부터.
+       </span><b data-i18n="menu.d8">8스테이지</b><span data-i18n="menu.d9">, 죽음은 세되 끝은 없다.</span></p>
     <div id="saveStatus"></div>
     <div class="row">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off">
-      <button id="codeLoadBtn" class="ghost">🔑 코드로 불러오기</button>
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="ph.code" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btn.codeLoad">🔑 코드로 불러오기</button>
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#ffb066;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#a08878"></span></div>
-    <button id="startBtn">▶ 신전 진입</button>
+    <button id="startBtn" data-i18n="btn.start">▶ 신전 진입</button>
   </div>
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
-    <button id="backBtn">처음으로</button>
+    <button id="backBtn" data-i18n="btn.back">처음으로</button>
   </div>
 </div>
-<div id="info">이동: 방향키/WASD (누르고 있으면 연속 이동) · 붉은 예고 → 폭발 · 초록 출구 칸에 닿으면 다음 스테이지</div>
+<div id="info" data-i18n="info">이동: 방향키/WASD (누르고 있으면 연속 이동) · 붉은 예고 → 폭발 · 초록 출구 칸에 닿으면 다음 스테이지</div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    'title': '화염 신전',
+    'menu.title': '🌋 화염 신전',
+    'menu.d1': '고대 신전의 바닥이 불을 뿜는다. ',
+    'menu.d2': '붉게 달아오르는 칸',
+    'menu.d3': '이 곧 터질 자리다 — 읽고, 피하고, ',
+    'menu.d4': '오른쪽 출구',
+    'menu.d5': '까지 건너가라. 닿으면 그 자리에서 재가 되어 ',
+    'menu.d6': '스테이지 처음',
+    'menu.d7': '부터. ',
+    'menu.d8': '8스테이지',
+    'menu.d9': ', 죽음은 세되 끝은 없다.',
+    'ph.code': '이어하기 코드',
+    'btn.codeLoad': '🔑 코드로 불러오기',
+    'btn.start': '▶ 신전 진입',
+    'btn.back': '처음으로',
+    'info': '이동: 방향키/WASD (누르고 있으면 연속 이동) · 붉은 예고 → 폭발 · 초록 출구 칸에 닿으면 다음 스테이지',
+    'save.server': '☁ 서버 세이브 (v{n})',
+    'save.fail': '세이브 로드 실패: {n}',
+    'save.local': '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
+    'best': '최고 기록 스테이지 {n}',
+    'best.clears': ' · 클리어 {c}회 (죽음 {d} · {t}s)',
+    'stage.1': '가로 물결',
+    'stage.2': '세로 파도',
+    'stage.3': '격자 맥동',
+    'stage.4': '불의 비',
+    'stage.5': '심장 고동',
+    'stage.6': '추적하는 낙인',
+    'stage.7': '사선 해일',
+    'stage.8': '심판',
+    'stage.enter': '제{n}실 — {s}',
+    'exit.r': '출구 ▶',
+    'exit.l': '◀ 출구',
+    'exit.u': '▲ 출구',
+    'exit.d': '▼ 출구',
+    'lock': '패턴을 보라… {n}',
+    'hud.stage': '🌋 제{n}실/{m} — {s}',
+    'end.win': '🏆 신전 탈출!',
+    'end.desc': '8개의 방을 모두 건넜다 — 죽음 {d}회 · {t}초. ',
+    'rank.applied': ' 🏆 랭킹 {n}위!',
+  },
+  en: {
+    'title': 'Ember Temple',
+    'menu.title': '🌋 Ember Temple',
+    'menu.d1': 'The floor of the ancient temple breathes fire. ',
+    'menu.d2': 'Tiles glowing red',
+    'menu.d3': ' are about to erupt — read them, dodge, and cross to ',
+    'menu.d4': 'the exit',
+    'menu.d5': '. One touch burns you to ash and sends you back to the ',
+    'menu.d6': 'start of the stage',
+    'menu.d7': '. ',
+    'menu.d8': '8 stages',
+    'menu.d9': ' — deaths are counted, but never final.',
+    'ph.code': 'Continue code',
+    'btn.codeLoad': '🔑 Load by code',
+    'btn.start': '▶ Enter the temple',
+    'btn.back': 'Back to menu',
+    'info': 'Move: arrow keys / WASD (hold to keep moving) · Red warning → blast · Step on the green exit tile for the next stage',
+    'save.server': '☁ Server save (v{n})',
+    'save.fail': 'Save load failed: {n}',
+    'save.local': 'Browser save — saving issues a continue code',
+    'best': 'Best: stage {n}',
+    'best.clears': ' · {c} clears ({d} deaths · {t}s)',
+    'stage.1': 'Rolling Wave',
+    'stage.2': 'Vertical Surge',
+    'stage.3': 'Lattice Pulse',
+    'stage.4': 'Rain of Fire',
+    'stage.5': 'Heartbeat',
+    'stage.6': 'Hunting Brand',
+    'stage.7': 'Diagonal Tide',
+    'stage.8': 'Judgment',
+    'stage.enter': 'Chamber {n} — {s}',
+    'exit.r': 'EXIT ▶',
+    'exit.l': '◀ EXIT',
+    'exit.u': '▲ EXIT',
+    'exit.d': '▼ EXIT',
+    'lock': 'Read the pattern… {n}',
+    'hud.stage': '🌋 Chamber {n}/{m} — {s}',
+    'end.win': '🏆 Temple escaped!',
+    'end.desc': 'You crossed all 8 chambers — {d} deaths · {t}s. ',
+    'rank.applied': ' 🏆 Rank #{n}!',
+  },
+});
+const TR = GameI18n.t;
 const API = '/api/v1/games/ember-temple';
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
 const VW = cv.width, VH = cv.height;
@@ -104,8 +190,8 @@ let meta = { bestStage: 0, bestDeaths: null, bestTime: null, clears: 0 };
 function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
 function bestLabel() {
   if (!meta.bestStage) return '';
-  let s = '최고 기록 스테이지 ' + meta.bestStage;
-  if (meta.clears) s += ' · 클리어 ' + meta.clears + '회 (죽음 ' + meta.bestDeaths + ' · ' + Math.round(meta.bestTime) + 's)';
+  let s = TR('best').replace('{n}', meta.bestStage);
+  if (meta.clears) s += TR('best.clears').replace('{c}', meta.clears).replace('{d}', meta.bestDeaths).replace('{t}', Math.round(meta.bestTime));
   return s;
 }
 async function loadMeta(codeOverride) {
@@ -116,12 +202,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { bestStage:0, bestDeaths:null, bestTime:null, clears:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('save.server').replace('{n}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('save.fail').replace('{n}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  $('saveStatus').textContent = TR('save.local');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -146,26 +232,26 @@ async function persistMeta() {
 /* ── 스테이지 패턴 — beat 마다 예고할 칸을 돌려준다 ── */
 const key = (x, y) => x + ',' + y;
 const STAGE_DEFS = [
-  { name:'가로 물결', interval:0.95, warn:0.75,
+  { name:TR('stage.1'), interval:0.95, warn:0.75,
     cells:(b) => { const out = []; const col = b % (COLS + 3);
       for (let y = 0; y < ROWS; y++) for (let dx = 0; dx < 2; dx++)
         if (col + dx < COLS && (y + b) % 3 !== 0) out.push([col + dx, y]);
       return out; } },
-  { name:'세로 파도', interval:0.9, warn:0.72,
+  { name:TR('stage.2'), interval:0.9, warn:0.72,
     cells:(b) => { const out = []; const row = b % (ROWS + 2);
       for (let x = 0; x < COLS; x++) for (let dy = 0; dy < 2; dy++)
         if (row + dy < ROWS && (x + b) % 4 !== 0) out.push([x, row + dy]);
       return out; } },
-  { name:'격자 맥동', interval:1.05, warn:0.8,
+  { name:TR('stage.3'), interval:1.05, warn:0.8,
     cells:(b) => { const out = [];
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++)
         if ((x + y) % 2 === b % 2) out.push([x, y]);
       return out; } },
-  { name:'불의 비', interval:0.55, warn:0.7,
+  { name:TR('stage.4'), interval:0.55, warn:0.7,
     cells:(b) => { const out = []; const n = 14 + Math.min(b, 18);
       for (let i = 0; i < n; i++) out.push([ri(COLS), ri(ROWS)]);
       return out; } },
-  { name:'심장 고동', interval:1.0, warn:0.75,
+  { name:TR('stage.5'), interval:1.0, warn:0.75,
     cells:(b) => { const out = []; const cxg = Math.floor(COLS/2), cyg = Math.floor(ROWS/2);
       const r = b % 10;
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
@@ -173,18 +259,18 @@ const STAGE_DEFS = [
         if (d === r || d === r - 4) out.push([x, y]);
       }
       return out; } },
-  { name:'추적하는 낙인', interval:0.8, warn:0.72,
+  { name:TR('stage.6'), interval:0.8, warn:0.72,
     cells:(b, p) => { const out = [];
       for (let i = -2; i <= 2; i++) { out.push([p.x + i, p.y]); out.push([p.x, p.y + i]); }
       const n = 8;
       for (let i = 0; i < n; i++) out.push([ri(COLS), ri(ROWS)]);
       return out.filter(([x, y]) => x >= 0 && x < COLS && y >= 0 && y < ROWS); } },
-  { name:'사선 해일', interval:0.7, warn:0.68,
+  { name:TR('stage.7'), interval:0.7, warn:0.68,
     cells:(b) => { const out = []; const d0 = b % (COLS + ROWS + 4);
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++)
         if (x + y === d0 || x + y === d0 - 2 || (COLS - 1 - x) + y === d0 - 1) out.push([x, y]);
       return out; } },
-  { name:'심판', interval:0.62, warn:0.62,
+  { name:TR('stage.8'), interval:0.62, warn:0.62,
     cells:(b, p) => { const out = []; const n = 12 + Math.min(b, 14);
       for (let i = 0; i < n; i++) out.push([ri(COLS), ri(ROWS)]);
       if (b % 2 === 0) for (let i = -1; i <= 1; i++) { out.push([p.x + i, p.y]); out.push([p.x, p.y + i]); }
@@ -222,7 +308,7 @@ function startStage() {
   G.blasts = []; G.beat = 0; G.beatT = 0.6;
   G.lockT = 1.2;                                        // 잠깐 묶어두고 화염 패턴을 먼저 보여준다
   G.safeT = G.lockT + 1.2;
-  banner('제' + G.stage + '실 — ' + STAGE_DEFS[G.stage - 1].name);
+  banner(TR('stage.enter').replace('{n}', G.stage).replace('{s}', STAGE_DEFS[G.stage - 1].name));
 }
 const isExit = (x, y) => {
   const e = G.exit;
@@ -338,13 +424,13 @@ function draw() {
   {
     const e = G.exit, mid = (e.from + e.to) / 2;
     cx.font = 'bold 12px monospace'; cx.textAlign = 'center'; cx.fillStyle = '#8fe0a0';
-    if (e.side === 0) cx.fillText('출구 ▶', OX + COLS * T - 30, OY + mid * T + T/2 - 22);
-    else if (e.side === 1) cx.fillText('◀ 출구', OX + 30, OY + mid * T + T/2 - 22);
-    else if (e.side === 2) cx.fillText('▲ 출구', OX + mid * T + T/2, OY + 14);
-    else cx.fillText('▼ 출구', OX + mid * T + T/2, OY + ROWS * T - 14);
+    if (e.side === 0) cx.fillText(TR('exit.r'), OX + COLS * T - 30, OY + mid * T + T/2 - 22);
+    else if (e.side === 1) cx.fillText(TR('exit.l'), OX + 30, OY + mid * T + T/2 - 22);
+    else if (e.side === 2) cx.fillText(TR('exit.u'), OX + mid * T + T/2, OY + 14);
+    else cx.fillText(TR('exit.d'), OX + mid * T + T/2, OY + ROWS * T - 14);
     if (G.lockT > 0) {
       cx.font = 'bold 22px monospace'; cx.fillStyle = '#ffd066';
-      cx.fillText('패턴을 보라… ' + G.lockT.toFixed(1), VW / 2, OY - 10 < 20 ? 24 : OY - 10);
+      cx.fillText(TR('lock').replace('{n}', G.lockT.toFixed(1)), VW / 2, OY - 10 < 20 ? 24 : OY - 10);
     }
   }
   // 플레이어 — 픽셀 탐험가
@@ -366,7 +452,7 @@ function draw() {
     cx.globalAlpha = 1;
   }
   cx.restore();
-  $('stageTxt').textContent = '🌋 제' + G.stage + '실/' + STAGE_DEFS.length + ' — ' + STAGE_DEFS[G.stage - 1].name;
+  $('stageTxt').textContent = TR('hud.stage').replace('{n}', G.stage).replace('{m}', STAGE_DEFS.length).replace('{s}', STAGE_DEFS[G.stage - 1].name);
   $('deathTxt').textContent = '💀 ' + G.deaths;
   $('timeTxt').textContent = '⏱ ' + Math.floor(G.time) + 's';
 }
@@ -392,11 +478,11 @@ async function endGame() {
   meta.clears = (meta.clears || 0) + 1;
   GameRank.submit('ember-temple', Math.max(1, 1000000 - G.deaths * 5000 - Math.floor(G.time) * 10),
     G.deaths + '💀 · ' + Math.round(G.time) + 's')
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
   if (meta.bestDeaths === null || G.deaths < meta.bestDeaths) meta.bestDeaths = G.deaths;
   if (meta.bestTime === null || G.time < meta.bestTime) meta.bestTime = G.time;
-  $('endTitle').textContent = '🏆 신전 탈출!';
-  $('endDesc').textContent = '8개의 방을 모두 건넜다 — 죽음 ' + G.deaths + '회 · ' + Math.round(G.time) + '초. ' + bestLabel();
+  $('endTitle').textContent = TR('end.win');
+  $('endDesc').textContent = TR('end.desc').replace('{d}', G.deaths).replace('{t}', Math.round(G.time)) + bestLabel();
   $('endPanel').hidden = false;
   await persistMeta();
 }

@@ -11,6 +11,8 @@ enum class Genre {
     RPG,
     EDUCATION,
     STRATEGY,
+    DEFENSE,
+    VERSUS,
     CASUAL;
 
     companion object {

@@ -41,6 +41,7 @@
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
 </style>
+<script src="../lib/i18n.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -57,35 +58,105 @@
   <div id="banner"></div>
   <div class="panel" id="menu">
     <h1>⛏ Depth Delver</h1>
-    <p>시드는 서버가 발급한다 — 같은 런은 언제나 같은 던전. 죽으면 런은 소모되지만,
-       모은 골드로 <b>영구 강화</b>를 사서 다음 런에 더 강해진다.</p>
-    <div class="shopRow"><span id="hpLvTxt"></span><button id="buyHp">체력 강화</button></div>
-    <div class="shopRow"><span id="atkLvTxt"></span><button id="buyAtk">공격 강화</button></div>
-    <div class="shopRow"><span id="spdLvTxt"></span><button id="buySpd">신속 강화</button></div>
+    <p data-i18n="menuDesc"></p>
+    <div class="shopRow"><span id="hpLvTxt"></span><button id="buyHp" data-i18n="buyHp">체력 강화</button></div>
+    <div class="shopRow"><span id="atkLvTxt"></span><button id="buyAtk" data-i18n="buyAtk">공격 강화</button></div>
+    <div class="shopRow"><span id="spdLvTxt"></span><button id="buySpd" data-i18n="buySpd">신속 강화</button></div>
     <div class="shopRow"><span id="metaGoldTxt"></span></div>
     <div id="saveStatus"></div>
     <div class="shopRow" style="gap:6px">
-      <input id="codeInput" placeholder="이어하기 코드" maxlength="18" autocomplete="off"
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="codePh" maxlength="18" autocomplete="off"
              style="background:#101828;border:1px solid #2a3550;color:#eee;border-radius:6px;padding:6px 9px;
                     font-family:inherit;font-size:12px;letter-spacing:1px;width:160px;text-transform:uppercase">
-      <button id="codeLoadBtn" style="background:#16203a;color:#eee">🔑 코드로 불러오기</button>
+      <button id="codeLoadBtn" style="background:#16203a;color:#eee" data-i18n="codeLoad">🔑 코드로 불러오기</button>
     </div>
     <div id="codeShow" style="font-size:11px;color:#ffd54a;letter-spacing:2px"></div>
-    <button id="startBtn">▶ 런 시작</button>
+    <button id="startBtn" data-i18n="startBtn">▶ 런 시작</button>
   </div>
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc"></p>
     <div class="shopRow" style="gap:8px">
-      <button id="againBtn">🔁 재도전</button>
-      <button id="backBtn">메타 화면으로</button>
+      <button id="againBtn" data-i18n="againBtn">🔁 재도전</button>
+      <button id="backBtn" data-i18n="backBtn">메타 화면으로</button>
     </div>
   </div>
 </div>
-<div id="info">이동 방향키/WASD · 공격 <b>Z / Space</b>(누르고 있으면 연속) · 구르기 <b>Shift</b>(무적)<br>
-  층의 적을 모두 잡으면 <b>계단이 열린다</b> · ⚔ 제단에서 무기 교체 · 🗿 유물은 보스와 상자에서 · 수상한 벽은 때려 보라</div>
+<div id="info"><span data-i18n="infoMove"></span><b>Z / Space</b><span data-i18n="infoAtk"></span><b>Shift</b><span data-i18n="infoRoll"></span><br>
+  <span data-i18n="infoClear"></span><b data-i18n="infoStairs"></b><span data-i18n="infoTips"></span></div>
 <script>
 'use strict';
+GameI18n.init({
+  ko: {
+    menuDesc: '시드는 서버가 발급한다 — 같은 런은 언제나 같은 던전. 죽으면 런은 소모되지만, 모은 골드로 영구 강화를 사서 다음 런에 더 강해진다.',
+    buyHp: '체력 강화', buyAtk: '공격 강화', buySpd: '신속 강화',
+    codePh: '이어하기 코드', codeLoad: '🔑 코드로 불러오기', startBtn: '▶ 런 시작',
+    againBtn: '🔁 재도전', backBtn: '메타 화면으로',
+    infoMove: '이동 방향키/WASD · 공격 ', infoAtk: '(누르고 있으면 연속) · 구르기 ', infoRoll: '(무적)',
+    infoClear: '층의 적을 모두 잡으면 ', infoStairs: '계단이 열린다',
+    infoTips: ' · ⚔ 제단에서 무기 교체 · 🗿 유물은 보스와 상자에서 · 수상한 벽은 때려 보라',
+    saveCloud: '☁ 서버 세이브 (v{v})', saveSaved: '☁ 저장됨 (v{v})',
+    saveLoadFail: '세이브 로드 실패: {e}', saveConflict: '저장 충돌 — 다시 시도하세요',
+    saveServerFail: '서버 저장 실패(브라우저에는 저장됨)',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
+    runStartFail: '런 시작 실패: {e}',
+    wSword: '기사의 검', wBow: '사냥꾼의 활', wWhip: '가시 채찍', wHammer: '거인의 망치',
+    rFang: '흡혈 송곳니', rFangD: '처치 시 20% 확률로 ❤ 회복',
+    rGlass: '유리 대포', rGlassD: '공격 +60% · 최대 HP -2',
+    rBoots: '바람 장화', rBootsD: '이동 속도 +18%',
+    rThorn: '가시 갑옷', rThornD: '접촉 피해를 반사한다',
+    rGold: '황금 부적', rGoldD: '골드 획득 +35%',
+    rWard: '수호 원석', rWardD: '층마다 첫 피격 무효',
+    rHour: '사신의 모래시계', rHourD: '구르기 쿨다운 -40%',
+    deepest: ' — 최심부', stairsOpen: '계단이 열렸다!', secretFound: '🕳 숨겨진 방을 발견했다!',
+    goldSlime: '💰 황금 슬라임! +{g}G', wardProc: '🔮 수호!', critterCheer: '🦊 플레어펍의 응원! +2❤',
+    noHitBonus: '🏅 무피격 답파 +{g}G',
+    endClear: '🏆 던전 정복!', endDeath: '💀 사망…',
+    clearDesc: '지하 6층까지 모두 정복했다!', diedOnFloor: '{n}층에서 쓰러졌다.',
+    perfectBonus: ' 🏅 무결점 답파 — 보상 +10%!', goldEarned: ' 획득 골드 {g} → 금고에 적립.',
+    perfectCount: ' (무결점 {n}회)', rankSuffix: ' 🏆 랭킹 {n}위!',
+    foeLeft: '🔒 적 {n}', cleared: '✅ 클리어',
+    hpLvTxt: '체력 Lv.{lv} (최대 {v}) — {c}G',
+    atkLvTxt: '공격 Lv.{lv} (피해 {v}) — {c}G',
+    spdLvTxt: '신속 Lv.{lv} (속도 {v}) — {c}G',
+    vault: '💰 금고: {g}G',
+  },
+  en: {
+    menuDesc: 'The server issues the seed — the same run is always the same dungeon. Dying burns the run, but the gold you bank buys permanent upgrades for the next one.',
+    buyHp: 'Upgrade HP', buyAtk: 'Upgrade Attack', buySpd: 'Upgrade Speed',
+    codePh: 'Continue code', codeLoad: '🔑 Load by code', startBtn: '▶ Start Run',
+    againBtn: '🔁 Retry', backBtn: 'Back to Upgrades',
+    infoMove: 'Move Arrows/WASD · Attack ', infoAtk: ' (hold to keep swinging) · Roll ', infoRoll: ' (invincible)',
+    infoClear: 'Clear every foe on the floor and ', infoStairs: 'the stairs open',
+    infoTips: ' · ⚔ Swap weapons at altars · 🗿 Relics come from bosses and chests · Try hitting suspicious walls',
+    saveCloud: '☁ Cloud save (v{v})', saveSaved: '☁ Saved (v{v})',
+    saveLoadFail: 'Save load failed: {e}', saveConflict: 'Save conflict — please try again',
+    saveServerFail: 'Cloud save failed (kept in browser)',
+    saveLocal: 'Browser save — a continue code is issued when you save',
+    runStartFail: 'Run start failed: {e}',
+    wSword: "Knight's Sword", wBow: "Hunter's Bow", wWhip: 'Thorn Whip', wHammer: "Giant's Hammer",
+    rFang: 'Vampiric Fang', rFangD: '20% chance to heal ❤ on kill',
+    rGlass: 'Glass Cannon', rGlassD: 'Attack +60% · Max HP -2',
+    rBoots: 'Wind Boots', rBootsD: 'Move speed +18%',
+    rThorn: 'Thorn Armor', rThornD: 'Reflects contact damage',
+    rGold: 'Golden Charm', rGoldD: 'Gold gain +35%',
+    rWard: 'Warding Stone', rWardD: 'Negates the first hit on each floor',
+    rHour: "Reaper's Hourglass", rHourD: 'Roll cooldown -40%',
+    deepest: ' — The Depths', stairsOpen: 'The stairs are open!', secretFound: '🕳 Found a hidden room!',
+    goldSlime: '💰 Golden Slime! +{g}G', wardProc: '🔮 Warded!', critterCheer: '🦊 Flarepup cheers you on! +2❤',
+    noHitBonus: '🏅 Flawless floor +{g}G',
+    endClear: '🏆 Dungeon Conquered!', endDeath: '💀 You Died…',
+    clearDesc: 'Cleared all the way down to B6F!', diedOnFloor: 'Fell on floor B{n}F.',
+    perfectBonus: ' 🏅 Untouched run — reward +10%!', goldEarned: ' Earned {g} gold → banked in the vault.',
+    perfectCount: ' (untouched x{n})', rankSuffix: ' 🏆 Rank #{n}!',
+    foeLeft: '🔒 Foes {n}', cleared: '✅ Clear',
+    hpLvTxt: 'HP Lv.{lv} (max {v}) — {c}G',
+    atkLvTxt: 'Attack Lv.{lv} (dmg {v}) — {c}G',
+    spdLvTxt: 'Speed Lv.{lv} (spd {v}) — {c}G',
+    vault: '💰 Vault: {g}G',
+  },
+});
+const TR = GameI18n.t;
 const API = '/api/v1/games/depth-delver';
 const TW = 40, TH = 26, T = 40;                       // 타일 맵 크기 / 타일 픽셀
 const cv = document.getElementById('cv'), cx = cv.getContext('2d');
@@ -143,12 +214,12 @@ async function loadMeta(codeOverride) {
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
       if (s.data) meta = { gold:0, hpLv:0, atkLv:0, spdLv:0, perfect:0, secrets:0, ...s.data };
-      $('saveStatus').textContent = '☁ 서버 세이브 (v' + saveVersion + ')';
+      $('saveStatus').textContent = TR('saveCloud').replace('{v}', saveVersion);
       showCode(); return true;
-    } catch (e) { $('saveStatus').textContent = '세이브 로드 실패: ' + e.message; if (codeOverride) return false; }
+    } catch (e) { $('saveStatus').textContent = TR('saveLoadFail').replace('{e}', e.message); if (codeOverride) return false; }
   }
   try { const d = JSON.parse(localStorage.getItem(LOCAL_KEY)); if (d) meta = { ...meta, ...d }; } catch (_) {}
-  $('saveStatus').textContent = '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다';
+  $('saveStatus').textContent = TR('saveLocal');
   showCode(); return true;
 }
 async function persistMeta() {
@@ -157,7 +228,7 @@ async function persistMeta() {
     const s = await api('/save', { method:'PUT', body: JSON.stringify({ data: meta, version: saveVersion, code: saveCode }) });
     saveVersion = s.version;
     if (s.code && s.code !== saveCode) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
-    $('saveStatus').textContent = '☁ 저장됨 (v' + saveVersion + ')';
+    $('saveStatus').textContent = TR('saveSaved').replace('{v}', saveVersion);
     showCode();
   } catch (e) {
     if (e.message === 'INVALID_INPUT') {
@@ -166,8 +237,8 @@ async function persistMeta() {
         saveVersion = re.version;
         const s2 = await api('/save', { method:'PUT', body: JSON.stringify({ data: meta, version: saveVersion, code: saveCode }) });
         saveVersion = s2.version;
-      } catch (_) { $('saveStatus').textContent = '저장 충돌 — 다시 시도하세요'; }
-    } else $('saveStatus').textContent = '서버 저장 실패(브라우저에는 저장됨)';
+      } catch (_) { $('saveStatus').textContent = TR('saveConflict'); }
+    } else $('saveStatus').textContent = TR('saveServerFail');
   }
 }
 
@@ -270,20 +341,20 @@ const stairSprite = () => sprite('stair', 40, 40, g => {
 
 /* ═══════════ 무기 — 층마다 제단에서 교체 ═══════════ */
 const WEAPONS = {
-  sword:  { name:'기사의 검',    emoji:'🗡', rate:0.28, dmgMul:1.0,  kind:'arc',  reach:26, hitR:22 },
-  bow:    { name:'사냥꾼의 활',  emoji:'🏹', rate:0.48, dmgMul:0.85, kind:'shot', speed:440 },
-  whip:   { name:'가시 채찍',    emoji:'🔗', rate:0.22, dmgMul:0.62, kind:'line', reach:70, hitR:12 },
-  hammer: { name:'거인의 망치',  emoji:'🔨', rate:0.62, dmgMul:1.9,  kind:'arc',  reach:32, hitR:30 },
+  sword:  { name:TR('wSword'),  emoji:'🗡', rate:0.28, dmgMul:1.0,  kind:'arc',  reach:26, hitR:22 },
+  bow:    { name:TR('wBow'),    emoji:'🏹', rate:0.48, dmgMul:0.85, kind:'shot', speed:440 },
+  whip:   { name:TR('wWhip'),   emoji:'🔗', rate:0.22, dmgMul:0.62, kind:'line', reach:70, hitR:12 },
+  hammer: { name:TR('wHammer'), emoji:'🔨', rate:0.62, dmgMul:1.9,  kind:'arc',  reach:32, hitR:30 },
 };
 /* ═══════════ 유물 — 런 한정 패시브 ═══════════ */
 const RELICS = {
-  fang:  { name:'흡혈 송곳니',    emoji:'🩸', desc:'처치 시 20% 확률로 ❤ 회복' },
-  glass: { name:'유리 대포',      emoji:'💎', desc:'공격 +60% · 최대 HP -2' },
-  boots: { name:'바람 장화',      emoji:'👢', desc:'이동 속도 +18%' },
-  thorn: { name:'가시 갑옷',      emoji:'🌵', desc:'접촉 피해를 반사한다' },
-  gold:  { name:'황금 부적',      emoji:'🪙', desc:'골드 획득 +35%' },
-  ward:  { name:'수호 원석',      emoji:'🔮', desc:'층마다 첫 피격 무효' },
-  hour:  { name:'사신의 모래시계', emoji:'⏳', desc:'구르기 쿨다운 -40%' },
+  fang:  { name:TR('rFang'),  emoji:'🩸', desc:TR('rFangD') },
+  glass: { name:TR('rGlass'), emoji:'💎', desc:TR('rGlassD') },
+  boots: { name:TR('rBoots'), emoji:'👢', desc:TR('rBootsD') },
+  thorn: { name:TR('rThorn'), emoji:'🌵', desc:TR('rThornD') },
+  gold:  { name:TR('rGold'),  emoji:'🪙', desc:TR('rGoldD') },
+  ward:  { name:TR('rWard'),  emoji:'🔮', desc:TR('rWardD') },
+  hour:  { name:TR('rHour'),  emoji:'⏳', desc:TR('rHourD') },
 };
 const gmul = () => G.relics.includes('gold') ? 1.35 : 1;
 const wDmg = () => Math.max(1, Math.round(G.player.atk * WEAPONS[G.weapon].dmgMul * (G.relics.includes('glass') ? 1.6 : 1)));
@@ -417,7 +488,7 @@ function newFloor(floor, carry) {
     const others = Object.keys(WEAPONS).filter(k => k !== G.weapon);
     G.altar.weapon = others[Math.floor(Math.random() * others.length)];
   }
-  banner('B' + floor + 'F' + (f.isBoss ? ' — 최심부' : ''));
+  banner('B' + floor + 'F' + (f.isBoss ? TR('deepest') : ''));
 }
 function banner(text) { $('banner').textContent = text; $('banner').classList.add('on'); bannerT = 1500; }
 
@@ -428,24 +499,24 @@ async function startRun() {
     newFloor(1, null);
     $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false;
     running = true;
-  } catch (e) { $('saveStatus').textContent = '런 시작 실패: ' + e.message; }
+  } catch (e) { $('saveStatus').textContent = TR('runStartFail').replace('{e}', e.message); }
   $('startBtn').disabled = false;
 }
 async function endRun(outcome, desc) {
   running = false;
   $('hud').hidden = true;
-  $('endTitle').textContent = outcome === 'CLEAR' ? '🏆 던전 정복!' : '💀 사망…';
+  $('endTitle').textContent = outcome === 'CLEAR' ? TR('endClear') : TR('endDeath');
   let earned = G.player.gold, extra = '';
   if (outcome === 'CLEAR' && G.runHits === 0) {            // 한 대도 맞지 않았다
     earned = Math.floor(earned * 1.1);
-    extra = ' 🏅 무결점 답파 — 보상 +10%!';
+    extra = TR('perfectBonus');
     meta.perfect = (meta.perfect || 0) + 1;
   }
   meta.gold += earned;
   GameRank.submit('depth-delver', G.floor * 100000 + earned, 'B' + G.floor + 'F · ' + earned + 'G')
-    .then(r => { if (r && r.applied) $('endDesc').textContent += ' 🏆 랭킹 ' + r.rank + '위!'; });
-  $('endDesc').textContent = desc + extra + ' 획득 골드 ' + earned + ' → 금고에 적립.' +
-    (meta.perfect ? ' (무결점 ' + meta.perfect + '회)' : '');
+    .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rankSuffix').replace('{n}', r.rank); });
+  $('endDesc').textContent = desc + extra + TR('goldEarned').replace('{g}', earned) +
+    (meta.perfect ? TR('perfectCount').replace('{n}', meta.perfect) : '');
   $('endPanel').hidden = false;
   try { await api('/runs/' + run.runKey + '/consume', { method:'POST', body: JSON.stringify({ outcome }) }); } catch (_) { /* 소모 실패는 무시 */ }
   await persistMeta();
@@ -507,7 +578,7 @@ function damageFoe(f, dmg, fromX, fromY) {
     const g = Math.round(f.score * gmul());
     G.player.gold += g;
     if (f.kind === 'gslime') {                             // 이스터에그 — 대박
-      popText(f.x, f.y - 20, '💰 황금 슬라임! +' + g + 'G', '#ffe08a');
+      popText(f.x, f.y - 20, TR('goldSlime').replace('{g}', g), '#ffe08a');
       for (let i = 0; i < 3; i++) G.drops.push({ x:f.x + (Math.random()-0.5)*40, y:f.y + (Math.random()-0.5)*40, kind:'heart' });
     }
     if (f.kind === 'boss') grantRelic();                   // 보스는 유물을 남긴다
@@ -517,7 +588,7 @@ function damageFoe(f, dmg, fromX, fromY) {
     }
     if (Math.random() < 0.14) G.drops.push({ x:f.x, y:f.y, kind:'heart' });
     G.foes = G.foes.filter(o => o !== f);
-    if (!G.foes.length) banner('계단이 열렸다!');
+    if (!G.foes.length) banner(TR('stairsOpen'));
   }
 }
 function hurtPlayer(dmg, fromX, fromY, src) {
@@ -525,7 +596,7 @@ function hurtPlayer(dmg, fromX, fromY, src) {
   if (p.inv > 0 || p.roll > 0) return;
   if (G.relics.includes('ward') && !G.wardUsed) {          // 층당 1회 무효
     G.wardUsed = true; p.inv = 0.9;
-    popText(p.x, p.y - 20, '🔮 수호!', '#c8b0ff');
+    popText(p.x, p.y - 20, TR('wardProc'), '#c8b0ff');
     burst(p.x, p.y, '#c8b0ff', 10, 120);
     return;
   }
@@ -536,7 +607,7 @@ function hurtPlayer(dmg, fromX, fromY, src) {
   p.kbx = Math.cos(a) * 200; p.kby = Math.sin(a) * 200; p.kb = 0.16;
   burst(p.x, p.y, '#ff4d4d', 10, 140);
   shake = 9;
-  if (p.hp <= 0) { p.hp = 0; endRun('DEATH', G.floor + '층에서 쓰러졌다.'); }
+  if (p.hp <= 0) { p.hp = 0; endRun('DEATH', TR('diedOnFloor').replace('{n}', G.floor)); }
 }
 
 /* ═══════════ 적 AI ═══════════ */
@@ -563,7 +634,7 @@ function foeThink(f, dt) {
     if (f.life <= 0) {
       burst(f.x, f.y, '#ffe08a', 10, 120);
       G.foes = G.foes.filter(o => o !== f);
-      if (!G.foes.length) banner('계단이 열렸다!');
+      if (!G.foes.length) banner(TR('stairsOpen'));
       return;
     }
     if (d < 300) moveEnt(f, -dx / d * f.spd * dt, -dy / d * f.spd * dt);
@@ -598,7 +669,7 @@ function breakSecret() {
   G.chests.push({ x: sc.bx * T + T/2, y: sc.by * T + T/2, open:false, relic:true });
   burst(sc.x * T + T/2, sc.y * T + T/2, '#8d93a2', 22, 180);
   shake = 10;
-  banner('🕳 숨겨진 방을 발견했다!');
+  banner(TR('secretFound'));
   meta.secrets = (meta.secrets || 0) + 1;
 }
 
@@ -713,7 +784,7 @@ function update(dt) {
     G.critter.y += Math.sin(G.critter.t * 2.3) * 26 * dt;
     if (dist2(G.critter, p) < (p.r + 14) ** 2) {
       p.hp = Math.min(p.maxHp, p.hp + 2);
-      popText(G.critter.x, G.critter.y - 18, '🦊 플레어펍의 응원! +2❤', '#ffb066');
+      popText(G.critter.x, G.critter.y - 18, TR('critterCheer'), '#ffb066');
       burst(G.critter.x, G.critter.y, '#ffb066', 16, 130);
       G.critter = null;
     }
@@ -723,9 +794,9 @@ function update(dt) {
     if (G.floorHits === 0) {                               // 무피격 층 — 보너스
       const b = Math.round((15 + G.floor * 10) * gmul());
       p.gold += b;
-      popText(p.x, p.y - 22, '🏅 무피격 답파 +' + b + 'G', '#ffe08a');
+      popText(p.x, p.y - 22, TR('noHitBonus').replace('{g}', b), '#ffe08a');
     }
-    if (G.floor >= 6) { endRun('CLEAR', '지하 6층까지 모두 정복했다!'); return; }
+    if (G.floor >= 6) { endRun('CLEAR', TR('clearDesc')); return; }
     newFloor(G.floor + 1, { hp: Math.min(p.maxHp, p.hp + 1), gold: p.gold,
       weapon: G.weapon, relics: G.relics, runHits: G.runHits });
     return;
@@ -794,7 +865,7 @@ function draw() {
   cx.beginPath(); cx.arc(ssx, ssy, 26 + pulse * 5, 0, 7); cx.stroke();
   cx.font = 'bold 12px monospace'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
   cx.fillStyle = open ? '#7dffbe' : '#95a0b8';
-  cx.fillText(open ? '▼ B' + (G.floor + 1) + 'F' : '🔒 적 ' + G.foes.length, ssx, ssy - 34);
+  cx.fillText(open ? '▼ B' + (G.floor + 1) + 'F' : TR('foeLeft').replace('{n}', G.foes.length), ssx, ssy - 34);
   cx.restore();
   // 항아리 / 상자 / 드랍
   for (const q of G.pots) if (!q.broken) cx.drawImage(potSprite(), q.x - cam.x - 16, q.y - cam.y - 20);
@@ -913,7 +984,7 @@ function draw() {
   $('hearts').textContent = '❤'.repeat(full) + (half ? '💔' : '') + '🖤'.repeat(Math.max(0, empty));
   $('goldTxt').textContent = '💰 ' + p.gold;
   $('floorTxt').textContent = 'B' + G.floor + 'F';
-  $('foeTxt').textContent = G.foes.length ? '👾 ' + G.foes.length : '✅ 클리어';
+  $('foeTxt').textContent = G.foes.length ? '👾 ' + G.foes.length : TR('cleared');
   $('wepTxt').textContent = WEAPONS[G.weapon].emoji + ' ' + WEAPONS[G.weapon].name;
   $('relicTxt').textContent = G.relics.length ? G.relics.map(k => RELICS[k].emoji).join('') : '🗿 —';
 }
@@ -948,10 +1019,10 @@ addEventListener('blur', () => keys.clear());
 
 /* ═══════════ 메타 UI ═══════════ */
 function renderMeta() {
-  $('hpLvTxt').textContent = '체력 Lv.' + meta.hpLv + ' (최대 ' + (6 + meta.hpLv * 2) + ') — ' + hpCost() + 'G';
-  $('atkLvTxt').textContent = '공격 Lv.' + meta.atkLv + ' (피해 ' + (2 + meta.atkLv) + ') — ' + atkCost() + 'G';
-  $('spdLvTxt').textContent = '신속 Lv.' + meta.spdLv + ' (속도 ' + (132 + meta.spdLv * 14) + ') — ' + spdCost() + 'G';
-  $('metaGoldTxt').textContent = '💰 금고: ' + meta.gold + 'G';
+  $('hpLvTxt').textContent = TR('hpLvTxt').replace('{lv}', meta.hpLv).replace('{v}', 6 + meta.hpLv * 2).replace('{c}', hpCost());
+  $('atkLvTxt').textContent = TR('atkLvTxt').replace('{lv}', meta.atkLv).replace('{v}', 2 + meta.atkLv).replace('{c}', atkCost());
+  $('spdLvTxt').textContent = TR('spdLvTxt').replace('{lv}', meta.spdLv).replace('{v}', 132 + meta.spdLv * 14).replace('{c}', spdCost());
+  $('metaGoldTxt').textContent = TR('vault').replace('{g}', meta.gold);
   $('buyHp').disabled = meta.gold < hpCost();
   $('buyAtk').disabled = meta.gold < atkCost();
   $('buySpd').disabled = meta.gold < spdCost();

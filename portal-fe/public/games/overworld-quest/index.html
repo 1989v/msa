@@ -68,6 +68,7 @@
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
 </style>
+<script src="../lib/i18n.js"></script>
 </head>
 <body>
 <div id="gameWrap">
@@ -77,48 +78,101 @@
     <div id="manabar"></div>
     <div id="gold">🪙 <span id="goldCount">0</span></div>
   </div>
-  <div id="zone">🌿 평원</div>
+  <div id="zone" data-i18n="zonePlain">🌿 평원</div>
   <div id="hint"></div>
 
   <!-- 시작 -->
   <div id="startPanel" class="panel">
-    <h1>🗡️ 오픈월드 모험</h1>
-    <p>섬을 탐험하고, 동굴 던전을 정복하고, 보스를 물리치세요!<br><br>
-    <b>이동</b> WASD/방향키 · <b>검</b> Space · <b>파이어볼</b> Q · <b>힐</b> E<br>
-    <b>상점/대화</b> F · <b>인벤토리</b> I · <b>포션</b> 1(체력)/2(마나)</p>
-    <button id="startBtn">모험 시작</button>
+    <h1 data-i18n="gameTitle">🗡️ 오픈월드 모험</h1>
+    <p><span data-i18n="introLine"></span><br><br>
+    <b data-i18n="ctlMove"></b><span data-i18n="ctlMoveV"></span><b data-i18n="ctlSword"></b><span data-i18n="ctlSwordV"></span><b data-i18n="ctlFire"></b><span data-i18n="ctlFireV"></span><b data-i18n="ctlHeal"></b><span data-i18n="ctlHealV"></span><br>
+    <b data-i18n="ctlShop"></b><span data-i18n="ctlShopV"></span><b data-i18n="ctlInv"></b><span data-i18n="ctlInvV"></span><b data-i18n="ctlPotion"></b><span data-i18n="ctlPotionV"></span></p>
+    <button id="startBtn" data-i18n="startBtn">모험 시작</button>
   </div>
 
   <!-- 상점 -->
   <div id="shopPanel" class="panel hidden">
-    <h2>🛒 상점</h2>
+    <h2 data-i18n="shopTitle">🛒 상점</h2>
     <div id="shopList"></div>
-    <p style="font-size:12px;color:#aaa">↑↓ 선택 · Enter 구매 · F/Esc 닫기</p>
+    <p style="font-size:12px;color:#aaa" data-i18n="shopKeys"></p>
   </div>
 
   <!-- 인벤토리 -->
   <div id="invPanel" class="panel hidden">
-    <h2>🎒 인벤토리</h2>
+    <h2 data-i18n="invTitle">🎒 인벤토리</h2>
     <div id="invList" style="font-size:15px; line-height:2.2;"></div>
-    <p style="font-size:12px;color:#aaa">I/Esc 닫기 · 1 체력포션 · 2 마나포션</p>
+    <p style="font-size:12px;color:#aaa" data-i18n="invKeys"></p>
   </div>
 
   <!-- 결과 -->
   <div id="endPanel" class="panel hidden">
     <h1 id="endTitle"></h1>
     <p id="endText"></p>
-    <button id="endBtn">다시 시작</button>
+    <button id="endBtn" data-i18n="restartBtn">다시 시작</button>
   </div>
 </div>
-<div id="info">
-  WASD 이동 · Space 검 · Q 파이어볼 · E 힐 · F 상점/대화·던전입구 · I 인벤토리 · 1/2 포션 사용
-</div>
+<div id="info" data-i18n="infoLine"></div>
 
 <script>
 /* =========================================================================
    Overworld Quest — 오픈월드 액션 RPG (단일 HTML)
    포함: 절차적 오버월드 / BSP 던전 / A* 길찾기 / 상점·인벤토리·마법 / Tiled 로더
    ========================================================================= */
+GameI18n.init({
+  ko: {
+    gameTitle: '🗡️ 오픈월드 모험', startBtn: '모험 시작', restartBtn: '다시 시작',
+    introLine: '섬을 탐험하고, 동굴 던전을 정복하고, 보스를 물리치세요!',
+    ctlMove: '이동', ctlMoveV: ' WASD/방향키 · ', ctlSword: '검', ctlSwordV: ' Space · ',
+    ctlFire: '파이어볼', ctlFireV: ' Q · ', ctlHeal: '힐', ctlHealV: ' E',
+    ctlShop: '상점/대화', ctlShopV: ' F · ', ctlInv: '인벤토리', ctlInvV: ' I · ',
+    ctlPotion: '포션', ctlPotionV: ' 1(체력)/2(마나)',
+    infoLine: 'WASD 이동 · Space 검 · Q 파이어볼 · E 힐 · F 상점/대화·던전입구 · I 인벤토리 · 1/2 포션 사용',
+    shopTitle: '🛒 상점', shopKeys: '↑↓ 선택 · Enter 구매 · F/Esc 닫기',
+    invTitle: '🎒 인벤토리', invKeys: 'I/Esc 닫기 · 1 체력포션 · 2 마나포션',
+    zonePlain: '🌿 평원', zoneDungeon: '🕯️ 던전',
+    itHp: '❤️ 체력 포션', itHpD: '체력 4 회복',
+    itMp: '💧 마나 포션', itMpD: '마나 4 회복',
+    itMaxHp: '💗 하트 그릇', itMaxHpD: '최대 체력 +2',
+    itMaxMp: '🔮 마나 수정', itMaxMpD: '최대 마나 +2',
+    itSword: '⚔️ 검 강화', itSwordD: '검 데미지 +1',
+    shopGold: '보유 골드: 🪙{g}',
+    invHp: '❤️ 체력 포션 × {n}', invMp: '💧 마나 포션 × {n}', invSword: '⚔️ 검 데미지: {n}',
+    invGold: '🪙 골드: {n}', invCleared: '🏰 클리어한 던전: {n}',
+    hintStart: '동굴 ▼ 을 찾아 던전 3곳을 정복하세요!',
+    hintBoss: '🏆 보스 처치! 골드 +50 · 출구로 나가세요',
+    hintEnterDungeon: 'F: 던전 입장', hintOpenShop: 'F: 상점 열기', hintExitDungeon: 'F: 던전 나가기',
+    endWin: '🏆 완전 정복!', endLose: '💀 쓰러졌다...',
+    endWinLine: '던전 3곳을 모두 정복했어요! 진정한 영웅이군요.',
+    endLoseLine: '체력이 모두 소진됐어요.', endCleared: '정복한 던전: {n} / 3',
+  },
+  en: {
+    gameTitle: '🗡️ Overworld Quest', startBtn: 'Start Adventure', restartBtn: 'Play Again',
+    introLine: 'Explore the island, clear the cave dungeons, and take down the bosses!',
+    ctlMove: 'Move', ctlMoveV: ' WASD/Arrows · ', ctlSword: 'Sword', ctlSwordV: ' Space · ',
+    ctlFire: 'Fireball', ctlFireV: ' Q · ', ctlHeal: 'Heal', ctlHealV: ' E',
+    ctlShop: 'Shop/Talk', ctlShopV: ' F · ', ctlInv: 'Inventory', ctlInvV: ' I · ',
+    ctlPotion: 'Potions', ctlPotionV: ' 1(HP)/2(MP)',
+    infoLine: 'WASD move · Space sword · Q fireball · E heal · F shop/talk/cave · I inventory · 1/2 potions',
+    shopTitle: '🛒 Shop', shopKeys: '↑↓ select · Enter buy · F/Esc close',
+    invTitle: '🎒 Inventory', invKeys: 'I/Esc close · 1 HP potion · 2 MP potion',
+    zonePlain: '🌿 Plains', zoneDungeon: '🕯️ Dungeon',
+    itHp: '❤️ Health Potion', itHpD: 'Restore 4 HP',
+    itMp: '💧 Mana Potion', itMpD: 'Restore 4 MP',
+    itMaxHp: '💗 Heart Container', itMaxHpD: 'Max HP +2',
+    itMaxMp: '🔮 Mana Crystal', itMaxMpD: 'Max MP +2',
+    itSword: '⚔️ Sword Upgrade', itSwordD: 'Sword damage +1',
+    shopGold: 'Gold: 🪙{g}',
+    invHp: '❤️ Health Potion × {n}', invMp: '💧 Mana Potion × {n}', invSword: '⚔️ Sword damage: {n}',
+    invGold: '🪙 Gold: {n}', invCleared: '🏰 Dungeons cleared: {n}',
+    hintStart: 'Find the caves ▼ and clear all 3 dungeons!',
+    hintBoss: '🏆 Boss down! +50 gold · head for the exit',
+    hintEnterDungeon: 'F: Enter dungeon', hintOpenShop: 'F: Open shop', hintExitDungeon: 'F: Leave dungeon',
+    endWin: '🏆 Fully Conquered!', endLose: '💀 You fell...',
+    endWinLine: 'You cleared all 3 dungeons! A true hero.',
+    endLoseLine: 'You ran out of health.', endCleared: 'Dungeons cleared: {n} / 3',
+  },
+});
+const TR = GameI18n.t;
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const VW = canvas.width, VH = canvas.height;
@@ -278,11 +332,11 @@ function astar(map, sx, sy, gx, gy, maxIter=400){
    게임 상태
    ========================================================================= */
 const SHOP_ITEMS=[
-  {name:'❤️ 체력 포션', desc:'체력 4 회복', price:15, key:'hpPotion'},
-  {name:'💧 마나 포션', desc:'마나 4 회복', price:12, key:'mpPotion'},
-  {name:'💗 하트 그릇', desc:'최대 체력 +2', price:40, key:'maxHp'},
-  {name:'🔮 마나 수정', desc:'최대 마나 +2', price:35, key:'maxMp'},
-  {name:'⚔️ 검 강화', desc:'검 데미지 +1', price:50, key:'swordUp'}
+  {name:TR('itHp'), desc:TR('itHpD'), price:15, key:'hpPotion'},
+  {name:TR('itMp'), desc:TR('itMpD'), price:12, key:'mpPotion'},
+  {name:TR('itMaxHp'), desc:TR('itMaxHpD'), price:40, key:'maxHp'},
+  {name:TR('itMaxMp'), desc:TR('itMaxMpD'), price:35, key:'maxMp'},
+  {name:TR('itSword'), desc:TR('itSwordD'), price:50, key:'swordUp'}
 ];
 
 let world, dungeon, curMap, mode;       // mode: 'overworld' | 'dungeon'
@@ -302,7 +356,7 @@ function enterOverworld(){
   if(savedOverworldPos){player.x=savedOverworldPos.x;player.y=savedOverworldPos.y;}
   else{player.x=world.w*TILE/2; player.y=world.h*TILE/2;}
   spawnOverworld();
-  document.getElementById('zone').textContent='🌿 평원';
+  document.getElementById('zone').textContent=TR('zonePlain');
 }
 
 function spawnOverworld(){
@@ -345,7 +399,7 @@ function enterDungeon(){
   // 보스
   boss=makeEnemy(d.bossRoom.cx*TILE+16, d.bossRoom.cy*TILE+16, 'boss');
   enemies.push(boss);
-  document.getElementById('zone').textContent='🕯️ 던전';
+  document.getElementById('zone').textContent=TR('zoneDungeon');
 }
 
 function makeEnemy(x,y,type){
@@ -424,12 +478,13 @@ function renderShop(){
     list.appendChild(d);
   });
   const g=document.createElement('div'); g.style.marginTop='8px'; g.style.color='#ffd54a';
-  g.textContent=`보유 골드: 🪙${player.gold}`; list.appendChild(g);
+  g.textContent=TR('shopGold').replace('{g}',player.gold); list.appendChild(g);
 }
 function renderInv(){
   const l=document.getElementById('invList');
-  l.innerHTML=`❤️ 체력 포션 × ${player.inv.hpPotion}<br>💧 마나 포션 × ${player.inv.mpPotion}<br>
-    ⚔️ 검 데미지: ${player.swordDmg}<br>🪙 골드: ${player.gold}<br>🏰 클리어한 던전: ${dungeonsCleared}`;
+  l.innerHTML=TR('invHp').replace('{n}',player.inv.hpPotion)+'<br>'+TR('invMp').replace('{n}',player.inv.mpPotion)+'<br>'+
+    TR('invSword').replace('{n}',player.swordDmg)+'<br>'+TR('invGold').replace('{n}',player.gold)+'<br>'+
+    TR('invCleared').replace('{n}',dungeonsCleared);
 }
 function usePotion(type){
   if(type==='hpPotion'&&player.inv.hpPotion>0&&player.hp<player.maxHp){
@@ -578,7 +633,7 @@ function update(){
     // 보스 위치에 출구 생성
     const bx=~~(boss.x/TILE),by=~~(boss.y/TILE); curMap.tiles[by][bx]=T.EXIT;
     items.push({x:boss.x,y:boss.y-20,type:'heart',bob:0});
-    showHint('🏆 보스 처치! 골드 +50 · 출구로 나가세요');
+    showHint(TR('hintBoss'));
     if(dungeonsCleared>=3){ setTimeout(()=>endGame(true),200); }
   }
   updateHint();
@@ -619,11 +674,11 @@ function updateHint(){
   let h='';
   if(mode==='overworld'){
     const tx=~~(player.x/TILE),ty=~~(player.y/TILE);
-    if(world.tiles[ty]&&world.tiles[ty][tx]===T.CAVE)h='F: 던전 입장';
-    else if(npc&&Math.hypot(npc.x-player.x,npc.y-player.y)<46)h='F: 상점 열기';
+    if(world.tiles[ty]&&world.tiles[ty][tx]===T.CAVE)h=TR('hintEnterDungeon');
+    else if(npc&&Math.hypot(npc.x-player.x,npc.y-player.y)<46)h=TR('hintOpenShop');
   }else if(mode==='dungeon'){
     const tx=~~(player.x/TILE),ty=~~(player.y/TILE);
-    if(curMap.tiles[ty]&&curMap.tiles[ty][tx]===T.EXIT)h='F: 던전 나가기';
+    if(curMap.tiles[ty]&&curMap.tiles[ty][tx]===T.EXIT)h=TR('hintExitDungeon');
   }
   el.textContent=h;
 }
@@ -718,14 +773,14 @@ function startGame(){
   running=true; running_pause=false; shopOpen=false; invOpen=false;
   document.getElementById('startPanel').classList.add('hidden');
   document.getElementById('endPanel').classList.add('hidden');
-  updateHud(); showHint('동굴 ▼ 을 찾아 던전 3곳을 정복하세요!');
+  updateHud(); showHint(TR('hintStart'));
 }
 function endGame(victory){
   running=false;
-  document.getElementById('endTitle').textContent=victory?'🏆 완전 정복!':'💀 쓰러졌다...';
+  document.getElementById('endTitle').textContent=victory?TR('endWin'):TR('endLose');
   document.getElementById('endText').innerHTML=victory
-    ? `던전 3곳을 모두 정복했어요! 진정한 영웅이군요.<br>보유 골드: 🪙${player.gold}`
-    : `체력이 모두 소진됐어요.<br>정복한 던전: ${dungeonsCleared} / 3`;
+    ? TR('endWinLine')+'<br>'+TR('shopGold').replace('{g}',player.gold)
+    : TR('endLoseLine')+'<br>'+TR('endCleared').replace('{n}',dungeonsCleared);
   document.getElementById('endPanel').classList.remove('hidden');
 }
 document.getElementById('startBtn').addEventListener('click',startGame);
