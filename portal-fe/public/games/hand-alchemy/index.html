@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">족보 연성소</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:radial-gradient(1100px 560px at 50% -10%, #131d33, #0c1424) #0c1424; color:#e6ecf2;
+         font-family:'Courier New',monospace; display:flex; flex-direction:column; align-items:center;
+         min-height:100vh; user-select:none; -webkit-user-select:none; touch-action:manipulation;
+         padding:12px 10px 30px; overflow-x:hidden; }
+  #game { width:100%; max-width:560px; display:flex; flex-direction:column; align-items:center; }
+
+  /* ── HUD ── */
+  #hud { width:100%; background:#1a2238; border:1px solid #2c3550; border-radius:10px; padding:8px 10px 9px; }
+  .hrow { display:flex; align-items:center; gap:8px; }
+  .ante { color:#d4a24e; font-weight:bold; font-size:14px; }
+  .goldtxt { color:#eab308; font-weight:bold; font-size:13px; }
+  .sp { flex:1; }
+  button.mini { background:#222b44; color:#c2cedc; border:0; border-radius:6px; padding:5px 9px;
+                font-size:11px; cursor:pointer; font-family:inherit; }
+  .bar-bg { height:13px; background:#0c1424; border:1px solid #2c3550; border-radius:7px;
+            overflow:hidden; margin:7px 0 4px; }
+  #scoreBar { height:100%; width:0%; background:linear-gradient(90deg,#0ea5e9,#22c55e); transition:width .4s; }
+  .score-nums { font-size:12px; color:#8e9db0; }
+  #scoreTxt { color:#e6ecf2; font-weight:bold; font-size:15px; }
+  .pills { margin-top:5px; flex-wrap:wrap; }
+  .pill { background:#0c1424; border:1px solid #2c3550; border-radius:12px; padding:3px 10px; font-size:11px; color:#8e9db0; }
+  .pill b { font-size:12px; }
+  .p-play b { color:#0ea5e9; } .p-disc b { color:#eab308; } .p-deck b { color:#c2cedc; }
+
+  /* ── 시약 슬롯 ── */
+  #rgRow { display:flex; gap:6px; justify-content:center; margin:8px 0 3px; }
+  .rg-slot { width:46px; height:46px; background:#1a2238; border:1px solid #2c3550; border-radius:9px;
+             display:flex; align-items:center; justify-content:center; font-size:21px; cursor:pointer; position:relative; }
+  .rg-slot.empty { border-style:dashed; opacity:.32; cursor:default; }
+  .rg-slot .stk { position:absolute; bottom:0; right:3px; font-size:9.5px; color:#d4a24e; font-weight:bold; }
+  #rgTip { font-size:11px; color:#c2cedc; background:#10182b; border:1px solid #3a4763; border-radius:7px;
+           padding:6px 10px; margin:3px 0 2px; max-width:480px; line-height:1.55; text-align:center; }
+  #rgTip b { color:#d4a24e; }
+
+  /* ── 연성대(계산 영역) ── */
+  #playArea { width:100%; min-height:122px; border:1px dashed #2c3550; border-radius:10px; padding:7px 8px;
+              margin:6px 0; display:flex; flex-direction:column; gap:5px; align-items:center; cursor:pointer; }
+  #playedCards { display:flex; gap:4px; min-height:0; }
+  .pcard { width:38px; height:52px; background:linear-gradient(160deg,#f4f7fb,#dce4ef); border-radius:5px;
+           display:flex; flex-direction:column; align-items:center; justify-content:center;
+           font-weight:bold; font-size:13px; line-height:1.1; box-shadow:0 2px 5px rgba(0,0,0,.45); }
+  .pcard span { font-size:12px; }
+  #calcSteps { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
+  .stepc { font-size:10.5px; padding:2px 7px; border-radius:4px; background:#0c1424; border:1px solid #2c3550;
+           opacity:0; transform:translateY(5px); transition:opacity .25s, transform .25s; }
+  .stepc.on { opacity:1; transform:none; }
+  .c-base { color:#e6ecf2; border-color:#d4a24e; }
+  .c-pts { color:#0ea5e9; } .c-mult { color:#ef4444; } .c-times { color:#d4a24e; }
+  .c-gold { color:#eab308; } .c-rank { color:#22c55e; }
+  #calcOut { min-height:26px; font-size:14px; display:flex; align-items:baseline; gap:8px; }
+  #calcExpr { color:#c2cedc; }
+  #calcTotal { color:#d4a24e; font-size:21px; font-weight:bold; }
+
+  /* ── 족보 미리보기 ── */
+  #previewBar { width:100%; min-height:33px; display:flex; align-items:center; justify-content:center; gap:9px;
+                font-size:12px; color:#c2cedc; background:#10182b; border:1px solid #2c3550; border-radius:8px;
+                padding:5px 10px; text-align:center; flex-wrap:wrap; }
+  .pv-name { color:#d4a24e; font-weight:bold; }
+  .pv-tot { color:#22c55e; font-weight:bold; }
+  .dim { color:#8e9db0; }
+
+  /* ── 손패 부채꼴 ── */
+  #handFan { position:relative; height:152px; width:100%; margin-top:3px; }
+  .card { position:absolute; bottom:10px; width:64px; height:92px;
+          background:linear-gradient(160deg,#f4f7fb,#dce4ef); border:2px solid #9aa5ba; border-radius:8px;
+          cursor:pointer; transition:transform .16s, box-shadow .16s, border-color .16s;
+          box-shadow:0 3px 10px rgba(0,0,0,.5); }
+  .card .rk { position:absolute; top:4px; left:6px; font-size:15px; font-weight:bold; line-height:1.05; text-align:center; }
+  .card .rk span { display:block; font-size:11px; }
+  .card .big { position:absolute; bottom:5px; right:7px; font-size:24px; }
+  .cR { color:#ef4444; } .cB { color:#232a3d; }
+  .card.sel { border-color:#d4a24e; box-shadow:0 0 14px rgba(212,162,78,.55), 0 3px 10px rgba(0,0,0,.5); }
+  .card .gem { position:absolute; top:5px; right:6px; width:9px; height:9px; border-radius:50%; box-shadow:0 0 5px currentColor; }
+  .gem.gild { background:#d4a24e; color:#d4a24e; }
+  .gem.seal { background:#ef4444; color:#ef4444; }
+  .gem.holy { background:#22c55e; color:#22c55e; }
+
+  /* ── 액션 버튼 ── */
+  .acts { display:flex; gap:10px; margin-top:5px; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:12px 20px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button.act:disabled { opacity:.35; cursor:default; }
+  button.act.ghost { background:#222b44; color:#e6ecf2; }
+  .act.play { background:#0ea5e9; }
+  .act.disc { background:#eab308; color:#241c02; }
+
+  /* ── 토스트 ── */
+  #toast { position:fixed; top:52px; left:50%; transform:translateX(-50%); background:rgba(20,26,44,.96);
+           border:1px solid #d4a24e; color:#ffe0a3; padding:6px 15px; border-radius:8px; font-size:12px;
+           z-index:60; opacity:0; transition:opacity .3s; pointer-events:none; white-space:nowrap; }
+  #toast.on { opacity:1; }
+
+  /* ── 패널 공통 ── */
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:12px; text-align:center; z-index:10;
+           padding:20px 14px; overflow:auto; }
+  .panel h1 { color:#d4a24e; font-size:24px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:480px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .stat { background:#1a2238; border-radius:8px; padding:8px 14px; font-size:11.5px; color:#8e9db0; }
+  .stat b { color:#0ea5e9; font-size:17px; display:block; }
+
+  /* ── 상점 ── */
+  .gbreak { font-size:12px; color:#c2cedc; line-height:1.9; background:#1a2238; border-radius:8px; padding:7px 16px; }
+  .gbreak b { color:#eab308; }
+  .shop-gold { font-size:16px; color:#eab308; font-weight:bold; }
+  .shop-sec { font-size:11px; color:#8e9db0; }
+  .rg-chips { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; max-width:520px; }
+  .own-rg { background:#1a2238; border:1px solid #2c3550; border-radius:8px; padding:6px 10px; font-size:11px;
+            cursor:pointer; display:flex; gap:6px; align-items:center; }
+  .own-rg b { color:#d4a24e; }
+  .own-rg i { color:#8e9db0; font-style:normal; }
+  .offer-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; max-width:520px; }
+  .offer { width:152px; background:#1a2238; border:1px solid #3a4763; border-radius:10px; padding:9px 8px;
+           display:flex; flex-direction:column; gap:4px; align-items:center; text-align:center; }
+  .offer .ic { font-size:22px; }
+  .offer .nm { font-size:12px; font-weight:bold; color:#d4a24e; }
+  .offer .ds { font-size:10.5px; color:#c2cedc; line-height:1.45; min-height:30px; }
+  .offer button { background:#0ea5e9; color:#04121c; border:0; border-radius:6px; padding:6px 12px;
+                  font-size:11px; font-weight:bold; cursor:pointer; font-family:inherit; }
+  .offer button:disabled { opacity:.35; cursor:default; }
+  .shop-msg { min-height:17px; font-size:11.5px; color:#eab308; }
+
+  /* ── 기록서 ── */
+  #bookTable { width:100%; max-width:360px; background:#1a2238; border-radius:8px; padding:9px 14px; }
+  .bkrow { display:grid; grid-template-columns:1fr 30px 92px 44px; gap:4px; font-size:11.5px; line-height:2;
+           align-items:center; }
+  .bkrow span:first-child { text-align:left; }
+  .bkrow span { text-align:right; }
+  .bk-h span { color:#8e9db0; border-bottom:1px solid #2c3550; }
+  .bkrow b { color:#d4a24e; }
+
+  @media (max-width:520px) {
+    .card { width:56px; height:80px; }
+    .card .rk { font-size:13px; } .card .rk span { font-size:10px; }
+    .card .big { font-size:20px; }
+    #handFan { height:134px; }
+    button.act { padding:11px 16px; font-size:12px; }
+    .offer { width:140px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="game" hidden>
+  <div id="hud">
+    <div class="hrow">
+      <span id="anteTxt" class="ante"></span>
+      <span id="goldTxt" class="goldtxt"></span>
+      <span class="sp"></span>
+      <button class="mini" id="bookBtn">📖</button>
+      <button class="mini" id="sortBtn"></button>
+    </div>
+    <div class="bar-bg"><div id="scoreBar"></div></div>
+    <div class="hrow score-nums"><span id="scoreTxt">0</span><span id="targetTxt"></span></div>
+    <div class="hrow pills">
+      <span class="pill p-play"><span data-i18n="handsLbl">연성</span> <b id="handsTxt">4</b></span>
+      <span class="pill p-disc"><span data-i18n="discardsLbl">폐기</span> <b id="discTxt">3</b></span>
+      <span class="pill p-deck">🎴 <b id="deckTxt">44</b></span>
+    </div>
+  </div>
+
+  <div id="rgRow"></div>
+  <div id="rgTip" hidden></div>
+
+  <div id="playArea">
+    <div id="playedCards"></div>
+    <div id="calcSteps"></div>
+    <div id="calcOut"><span id="calcExpr"></span><span id="calcTotal"></span></div>
+  </div>
+
+  <div id="previewBar"></div>
+  <div id="handFan"></div>
+
+  <div class="acts">
+    <button class="act play" id="playBtn" data-i18n="playBtn">⚗ 연성</button>
+    <button class="act disc" id="discardBtn" data-i18n="discardBtn">♻ 폐기</button>
+  </div>
+</div>
+
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">⚗ 족보 연성소</h1>
+  <p data-i18n="menuDesc">52장의 덱, 8장의 손패. 최대 5장을 골라 족보를 연성해 안테마다 치솟는 목표 점수를 넘겨라.</p>
+  <p class="small" data-i18n="menuSub">라운드당 연성 4회 · 폐기 3회 · 시약 슬롯 5칸</p>
+  <div class="row">
+    <button class="act" id="startBtn" data-i18n="startBtn">▶ 연성 시작</button>
+  </div>
+</div>
+
+<div class="panel" id="shopPanel" hidden>
+  <h1 data-i18n="shopTitle">⚗ 연금 상점</h1>
+  <div id="goldBreak" class="gbreak"></div>
+  <div class="shop-gold">🪙 <b id="shopGoldTxt">0</b></div>
+  <div class="shop-sec" data-i18n="ownedLbl">보유 시약 (탭하면 판매)</div>
+  <div id="ownRow" class="rg-chips"></div>
+  <div class="shop-sec" data-i18n="offerLbl">시약 진열대</div>
+  <div id="offerRow" class="offer-row"></div>
+  <div class="row">
+    <button class="act ghost" id="packBtn"></button>
+    <button class="act ghost" id="rerollBtn"></button>
+  </div>
+  <div id="packRow" class="offer-row" hidden></div>
+  <div id="shopMsg" class="shop-msg"></div>
+  <button class="act" id="nextBtn" data-i18n="nextBtn">다음 안테 ▶</button>
+</div>
+
+<div class="panel" id="bookPanel" hidden>
+  <h1 data-i18n="bookTitle">📖 연성 기록서</h1>
+  <p class="small" data-i18n="bookHint">같은 족보를 3회 연성할 때마다 레벨 +1 — 기본점과 배수가 성장한다</p>
+  <div id="bookTable"></div>
+  <button class="act ghost" id="bookClose" data-i18n="close">닫기</button>
+</div>
+
+<div class="panel" id="winPanel" hidden>
+  <h1 data-i18n="winTitle">🏆 안테 8 완수!</h1>
+  <p data-i18n="winDesc">연성의 대가에 올랐다. 엔드리스로 더 갈 것인가, 여기서 기록을 남길 것인가.</p>
+  <div class="row">
+    <button class="act" id="endlessBtn" data-i18n="endlessBtn">♾ 엔드리스 계속</button>
+    <button class="act ghost" id="finishBtn" data-i18n="finishBtn">🏁 기록 남기기</button>
+  </div>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <h1 id="endTitle"></h1>
+  <p id="endDesc" class="small"></p>
+  <div class="row">
+    <div class="stat"><b id="endAnte">0</b><span data-i18n="statAnte">도달 안테</span></div>
+    <div class="stat"><b id="endBest">0</b><span data-i18n="statBest">최고 연성</span></div>
+    <div class="stat"><b id="endScore">0</b><span data-i18n="statScore">최종 점수</span></div>
+  </div>
+  <div class="row">
+    <button class="act" id="againBtn" data-i18n="againBtn">🔄 다시 도전</button>
+    <button class="act ghost" id="backBtn" data-i18n="backBtn">처음으로</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '⚗ 족보 연성소', menuTitle: '⚗ 족보 연성소',
+    menuDesc: '52장의 덱, 8장의 손패. 최대 5장을 골라 족보를 연성해 안테마다 치솟는 목표 점수를 넘겨라. 상점에서 시약을 모아 시너지를 빚고, 같은 족보를 반복해 기록서를 키워라. 안테 8을 넘으면 연성의 대가.',
+    menuSub: '라운드당 연성 4회 · 폐기 3회 · 시약 슬롯 5칸',
+    startBtn: '▶ 연성 시작',
+    anteTag: '안테 {a}/8', anteEndless: '안테 {a} ∞',
+    handsLbl: '연성', discardsLbl: '폐기',
+    playBtn: '⚗ 연성', discardBtn: '♻ 폐기',
+    sortRank: '랭크순', sortSuit: '무늬순',
+    selHint: '카드를 골라라 (최대 5장)', expected: '예상',
+    maxSel: '최대 5장까지', needSel: '카드를 먼저 골라라',
+    stPts: '점수', stMult: '배수', stGold: '골드', stRank: '랭크 합',
+    levelUp: '📖 {h} Lv{lv} 달성!', targetMet: '🎯 목표 달성!',
+    ashProc: '🌫 잿빛 촉매 +30', crucibleProc: '🏺 도가니 불씨 +1',
+    roundIntro: '안테 {a} · 목표 {t}점',
+    shopTitle: '⚗ 연금 상점',
+    brBase: '클리어 보상', brHands: '남은 연성 보너스', brInterest: '이자',
+    ownedLbl: '보유 시약 (탭하면 판매)', offerLbl: '시약 진열대',
+    buy: '구매', sell: '판매',
+    packBtn: '🎴 카드 강화팩', rerollBtn: '🎲 리롤', nextBtn: '다음 안테 ▶',
+    slotsFull: '시약 슬롯이 가득 찼다 — 먼저 판매하라', noGold: '골드가 부족하다',
+    packPick: '강화를 하나 골라라 (4🪙)', packNone: '강화할 카드가 없다',
+    packDone: '{c} 카드에 {e} 부여!',
+    enh_gild: '금박', enhd_gild: '득점 시 점수 +30',
+    enh_seal: '봉인', enhd_seal: '득점 시 배수 +3',
+    enh_holy: '성수', enhd_holy: '득점 시 골드 +1',
+    bookTitle: '📖 연성 기록서',
+    bookHint: '같은 족보를 3회 연성할 때마다 레벨 +1 — 기본점과 배수가 성장한다',
+    bkHand: '족보', bkPow: '기본점×배수', bkCnt: '연성', close: '닫기',
+    winTitle: '🏆 안테 8 완수!',
+    winDesc: '연성의 대가에 올랐다. 엔드리스로 더 갈 것인가, 여기서 기록을 남길 것인가.',
+    endlessBtn: '♾ 엔드리스 계속', finishBtn: '🏁 기록 남기기',
+    endWin: '🏆 연성의 대가', endLose: '💥 연성 실패',
+    endLoseDesc: '안테 {a}의 목표를 넘지 못했다',
+    statAnte: '도달 안테', statBest: '최고 연성', statScore: '최종 점수',
+    againBtn: '🔄 다시 도전', backBtn: '처음으로',
+    detail: '안테 {a}, 최고 연성 {b}점',
+    h0: '하이카드', h1: '원페어', h2: '투페어', h3: '트리플', h4: '스트레이트',
+    h5: '플러시', h6: '풀하우스', h7: '포카드', h8: '스트레이트 플러시',
+    rg_mercury: '수은 방울', rgd_mercury: '연성에 페어가 포함되면 배수 +2',
+    rg_ash: '잿빛 촉매', rgd_ash: '폐기할 때마다 라운드 점수 +30',
+    rg_goldratio: '황금 비율', rgd_goldratio: '연성한 하트 1장당 점수 +15',
+    rg_distill: '증류기', rgd_distill: '라운드의 마지막 연성은 배수 ×2',
+    rg_shard: '철학자의 파편', rgd_shard: '스트레이트 계열 연성 시 배수 +4',
+    rg_crucible: '도가니', rgd_crucible: '폐기 1회마다 불씨 +1, 다음 연성에 불씨×50점을 더하고 소진',
+    rg_tincture: '심홍 팅크', rgd_tincture: '연성한 다이아 1장당 골드 +1',
+    rg_graphite: '흑연 결정', rgd_graphite: '연성한 스페이드 1장당 배수 +1',
+    rg_salt: '푸른 소금', rgd_salt: '연성한 클럽 1장당 점수 +20',
+    rg_lead: '납의 심장', rgd_lead: '5장을 연성하면 배수 +3',
+    rg_feather: '깃털 용액', rgd_feather: '3장 이하를 연성하면 배수 +4',
+    rg_dragon: '용의 재', rgd_dragon: '풀하우스·포카드 연성 시 점수 +80',
+    rg_solvent: '만능 용매', rgd_solvent: '모든 연성 점수 +25',
+    rg_dew: '현자의 이슬', rgd_dew: '라운드 첫 연성은 배수 ×1.5',
+    rg_regia: '왕수', rgd_regia: '연성한 J·Q·K 1장당 배수 +1',
+    rg_homunc: '호문쿨루스', rgd_homunc: '라운드 시작마다 골드 +2',
+    rg_sigil: '연금 인장', rgd_sigil: '연성한 족보의 레벨만큼 배수 +',
+    rg_flask: '텅 빈 플라스크', rgd_flask: '남은 폐기 1회당 배수 +1',
+    rg_cinnabar: '진사 가루', rgd_cinnabar: '연성한 A 1장당 점수 +40',
+    rg_aeon: '영겁의 모래', rgd_aeon: '상점 리롤이 항상 무료',
+  },
+  en: {
+    title: '⚗ Hand Alchemy', menuTitle: '⚗ Hand Alchemy',
+    menuDesc: 'A 52-card deck, an 8-card hand. Alchemize up to 5 cards into poker hands to beat each soaring ante target. Collect reagents in the shop, grow your hands in the ledger, and survive all 8 antes.',
+    menuSub: '4 casts + 3 discards per round · 5 reagent slots',
+    startBtn: '▶ Start Run',
+    anteTag: 'Ante {a}/8', anteEndless: 'Ante {a} ∞',
+    handsLbl: 'Cast', discardsLbl: 'Toss',
+    playBtn: '⚗ Cast', discardBtn: '♻ Discard',
+    sortRank: 'Rank', sortSuit: 'Suit',
+    selHint: 'Pick cards (up to 5)', expected: 'est.',
+    maxSel: 'Up to 5 cards', needSel: 'Select cards first',
+    stPts: 'Pts', stMult: 'Mult', stGold: 'Gold', stRank: 'Rank sum',
+    levelUp: '📖 {h} reached Lv{lv}!', targetMet: '🎯 Target met!',
+    ashProc: '🌫 Ash Catalyst +30', crucibleProc: '🏺 Crucible ember +1',
+    roundIntro: 'Ante {a} · target {t}',
+    shopTitle: '⚗ Alchemy Shop',
+    brBase: 'Clear reward', brHands: 'Unused casts', brInterest: 'Interest',
+    ownedLbl: 'Your reagents (tap to sell)', offerLbl: 'Reagent shelf',
+    buy: 'Buy', sell: 'Sell',
+    packBtn: '🎴 Card pack', rerollBtn: '🎲 Reroll', nextBtn: 'Next ante ▶',
+    slotsFull: 'Slots full — sell one first', noGold: 'Not enough gold',
+    packPick: 'Pick one enhancement (4🪙)', packNone: 'No cards left to enhance',
+    packDone: '{e} applied to {c}!',
+    enh_gild: 'Gilding', enhd_gild: '+30 pts when scored',
+    enh_seal: 'Seal', enhd_seal: '+3 mult when scored',
+    enh_holy: 'Holy Water', enhd_holy: '+1 gold when scored',
+    bookTitle: '📖 Alchemy Ledger',
+    bookHint: 'Every 3 casts of a hand: level +1 — base and mult grow',
+    bkHand: 'Hand', bkPow: 'Base×Mult', bkCnt: 'Casts', close: 'Close',
+    winTitle: '🏆 Ante 8 cleared!',
+    winDesc: 'You are a master alchemist. Go endless, or bank your record here.',
+    endlessBtn: '♾ Go endless', finishBtn: '🏁 Bank record',
+    endWin: '🏆 Master Alchemist', endLose: '💥 The alchemy failed',
+    endLoseDesc: 'The target of ante {a} was out of reach',
+    statAnte: 'Antes cleared', statBest: 'Best cast', statScore: 'Final score',
+    againBtn: '🔄 Run again', backBtn: 'Menu',
+    detail: 'Ante {a}, best cast {b}',
+    h0: 'High Card', h1: 'Pair', h2: 'Two Pair', h3: 'Three of a Kind', h4: 'Straight',
+    h5: 'Flush', h6: 'Full House', h7: 'Four of a Kind', h8: 'Straight Flush',
+    rg_mercury: 'Mercury Drop', rgd_mercury: 'Mult +2 if the cast contains a pair',
+    rg_ash: 'Ash Catalyst', rgd_ash: '+30 round score on every discard',
+    rg_goldratio: 'Golden Ratio', rgd_goldratio: '+15 pts per Heart cast',
+    rg_distill: 'Distiller', rgd_distill: 'The final cast of the round gets ×2 mult',
+    rg_shard: "Philosopher's Shard", rgd_shard: 'Mult +4 on straights',
+    rg_crucible: 'Crucible', rgd_crucible: 'Each discard stores an ember; next cast gains 50 pts per ember',
+    rg_tincture: 'Crimson Tincture', rgd_tincture: '+1 gold per Diamond cast',
+    rg_graphite: 'Graphite Crystal', rgd_graphite: '+1 mult per Spade cast',
+    rg_salt: 'Azure Salt', rgd_salt: '+20 pts per Club cast',
+    rg_lead: 'Heart of Lead', rgd_lead: 'Mult +3 when casting 5 cards',
+    rg_feather: 'Feather Solution', rgd_feather: 'Mult +4 when casting 3 or fewer',
+    rg_dragon: "Dragon's Ash", rgd_dragon: '+80 pts on full house / four of a kind',
+    rg_solvent: 'Universal Solvent', rgd_solvent: '+25 pts on every cast',
+    rg_dew: "Sage's Dew", rgd_dew: 'First cast each round gets ×1.5 mult',
+    rg_regia: 'Aqua Regia', rgd_regia: '+1 mult per face card cast',
+    rg_homunc: 'Homunculus', rgd_homunc: '+2 gold at the start of each round',
+    rg_sigil: 'Alchemic Sigil', rgd_sigil: 'Mult + the cast hand ledger level',
+    rg_flask: 'Empty Flask', rgd_flask: '+1 mult per unused discard',
+    rg_cinnabar: 'Cinnabar Powder', rgd_cinnabar: '+40 pts per Ace cast',
+    rg_aeon: 'Sands of Aeon', rgd_aeon: 'Shop rerolls are always free',
+  },
+});
+var TR = GameI18n.t;
+function fmt(s, m) { return s.replace(/\{(\w+)\}/g, function (_, k) { return m[k]; }); }
+
+// ==== core: constants · deck · hand evaluation · scoring ====
+
+var SLUG = 'hand-alchemy';
+var SUIT_CH = ['♠', '♥', '♦', '♣'];
+var SUIT_RED = [false, true, true, false];
+var HAND_SIZE = 8, MAX_SEL = 5, SLOTS = 5, PLAYS = 4, DISCARDS = 3;
+var PACK_COST = 4;
+var TARGETS = [300, 700, 1500, 3000, 6000, 11000, 20000, 35000];
+
+// 족보 테이블 — base×mult + 레벨 성장폭 (3회 연성마다 Lv+1)
+var HANDS = [
+  { base: 5,   mult: 1, lvB: 10, lvM: 1 },  // 하이카드
+  { base: 10,  mult: 2, lvB: 15, lvM: 1 },  // 원페어
+  { base: 20,  mult: 2, lvB: 20, lvM: 1 },  // 투페어
+  { base: 30,  mult: 3, lvB: 25, lvM: 2 },  // 트리플
+  { base: 40,  mult: 4, lvB: 30, lvM: 2 },  // 스트레이트
+  { base: 45,  mult: 4, lvB: 30, lvM: 2 },  // 플러시
+  { base: 55,  mult: 4, lvB: 35, lvM: 2 },  // 풀하우스
+  { base: 70,  mult: 7, lvB: 40, lvM: 3 },  // 포카드
+  { base: 100, mult: 8, lvB: 50, lvM: 4 },  // 스트레이트 플러시
+];
+
+function rankLabel(r) { return r === 14 ? 'A' : r === 13 ? 'K' : r === 12 ? 'Q' : r === 11 ? 'J' : String(r); }
+function cardLabel(c) { return SUIT_CH[c.suit] + rankLabel(c.rank); }
+function suitCount(cards, s) { var n = 0, i; for (i = 0; i < cards.length; i++) if (cards[i].suit === s) n++; return n; }
+
+// 시약 20종 — fx(ctx)는 연성 점수 훅. ash/crucible/homunc/aeon 은 플로우에서 id 로 처리
+var REAGENTS = [
+  { id: 'mercury', icon: '💧', price: 4, fx: function (c) {
+      if ([1, 2, 3, 6, 7].indexOf(c.hIdx) >= 0) { c.mult += 2; c.step('💧 ' + TR('stMult') + ' +2', 'mult'); } } },
+  { id: 'ash', icon: '🌫', price: 5 },
+  { id: 'goldratio', icon: '📐', price: 5, fx: function (c) {
+      var n = suitCount(c.cards, 1);
+      if (n) { c.pts += 15 * n; c.step('📐 ' + TR('stPts') + ' +' + (15 * n), 'pts'); } } },
+  { id: 'distill', icon: '⚗', price: 7, fx: function (c) {
+      if (c.handsLeft === 1) { c.times *= 2; c.step('⚗ ' + TR('stMult') + ' ×2', 'times'); } } },
+  { id: 'shard', icon: '🔺', price: 6, fx: function (c) {
+      if (c.hIdx === 4 || c.hIdx === 8) { c.mult += 4; c.step('🔺 ' + TR('stMult') + ' +4', 'mult'); } } },
+  { id: 'crucible', icon: '🏺', price: 5, fx: function (c) {
+      if (c.crucible > 0) {
+        c.pts += 50 * c.crucible; c.usedCrucible = true;
+        c.step('🏺 ' + TR('stPts') + ' +' + (50 * c.crucible), 'pts');
+      } } },
+  { id: 'tincture', icon: '🩸', price: 5, fx: function (c) {
+      var n = suitCount(c.cards, 2);
+      if (n) { c.gold += n; c.step('🩸 ' + TR('stGold') + ' +' + n, 'gold'); } } },
+  { id: 'graphite', icon: '⬛', price: 6, fx: function (c) {
+      var n = suitCount(c.cards, 0);
+      if (n) { c.mult += n; c.step('⬛ ' + TR('stMult') + ' +' + n, 'mult'); } } },
+  { id: 'salt', icon: '🧂', price: 5, fx: function (c) {
+      var n = suitCount(c.cards, 3);
+      if (n) { c.pts += 20 * n; c.step('🧂 ' + TR('stPts') + ' +' + (20 * n), 'pts'); } } },
+  { id: 'lead', icon: '🖤', price: 5, fx: function (c) {
+      if (c.cards.length === 5) { c.mult += 3; c.step('🖤 ' + TR('stMult') + ' +3', 'mult'); } } },
+  { id: 'feather', icon: '🕊', price: 5, fx: function (c) {
+      if (c.cards.length <= 3) { c.mult += 4; c.step('🕊 ' + TR('stMult') + ' +4', 'mult'); } } },
+  { id: 'dragon', icon: '🐉', price: 6, fx: function (c) {
+      if (c.hIdx === 6 || c.hIdx === 7) { c.pts += 80; c.step('🐉 ' + TR('stPts') + ' +80', 'pts'); } } },
+  { id: 'solvent', icon: '🧪', price: 4, fx: function (c) {
+      c.pts += 25; c.step('🧪 ' + TR('stPts') + ' +25', 'pts'); } },
+  { id: 'dew', icon: '💠', price: 6, fx: function (c) {
+      if (c.handsUsed === 0) { c.times *= 1.5; c.step('💠 ' + TR('stMult') + ' ×1.5', 'times'); } } },
+  { id: 'regia', icon: '👑', price: 6, fx: function (c) {
+      var n = 0, i;
+      for (i = 0; i < c.cards.length; i++) if (c.cards[i].rank >= 11 && c.cards[i].rank <= 13) n++;
+      if (n) { c.mult += n; c.step('👑 ' + TR('stMult') + ' +' + n, 'mult'); } } },
+  { id: 'homunc', icon: '🧿', price: 5 },
+  { id: 'sigil', icon: '🔯', price: 7, fx: function (c) {
+      c.mult += c.lv; c.step('🔯 ' + TR('stMult') + ' +' + c.lv, 'mult'); } },
+  { id: 'flask', icon: '🍶', price: 5, fx: function (c) {
+      if (c.discardsLeft > 0) { c.mult += c.discardsLeft; c.step('🍶 ' + TR('stMult') + ' +' + c.discardsLeft, 'mult'); } } },
+  { id: 'cinnabar', icon: '🔴', price: 5, fx: function (c) {
+      var n = 0, i;
+      for (i = 0; i < c.cards.length; i++) if (c.cards[i].rank === 14) n++;
+      if (n) { c.pts += 40 * n; c.step('🔴 ' + TR('stPts') + ' +' + (40 * n), 'pts'); } } },
+  { id: 'aeon', icon: '⏳', price: 4 },
+];
+
+var S = null; // 런 상태
+
+function hasRg(id) {
+  for (var i = 0; i < S.owned.length; i++) if (S.owned[i].id === id) return true;
+  return false;
+}
+function handLevel(i) { return 1 + Math.floor(S.playCounts[i] / 3); }
+
+function makeDeck() {
+  var d = [], id = 0, s, r;
+  for (s = 0; s < 4; s++) for (r = 2; r <= 14; r++) d.push({ id: id++, suit: s, rank: r, enh: null });
+  return d;
+}
+function shuffle(a) {
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function evalHand(cards) {
+  var i, cnt = {}, suits = {}, ranks = [];
+  for (i = 0; i < cards.length; i++) {
+    cnt[cards[i].rank] = (cnt[cards[i].rank] || 0) + 1;
+    suits[cards[i].suit] = (suits[cards[i].suit] || 0) + 1;
+  }
+  var groups = [], k;
+  for (k in cnt) { groups.push(cnt[k]); ranks.push(+k); }
+  groups.sort(function (a, b) { return b - a; });
+  ranks.sort(function (a, b) { return a - b; });
+  var flush = false;
+  if (cards.length === 5) for (k in suits) if (suits[k] === 5) flush = true;
+  var straight = false;
+  if (cards.length === 5 && ranks.length === 5) {
+    if (ranks[4] - ranks[0] === 4) straight = true;
+    else if (ranks[0] === 2 && ranks[1] === 3 && ranks[2] === 4 && ranks[3] === 5 && ranks[4] === 14) straight = true; // A-2-3-4-5
+  }
+  if (straight && flush) return 8;
+  if (groups[0] === 4) return 7;
+  if (groups[0] === 3 && groups[1] === 2) return 6;
+  if (flush) return 5;
+  if (straight) return 4;
+  if (groups[0] === 3) return 3;
+  if (groups[0] === 2 && groups[1] === 2) return 2;
+  if (groups[0] === 2) return 1;
+  return 0;
+}
+
+// 점수 = floor(기본점 × 배수 × 곱배수) + 랭크 합. 상태를 바꾸지 않아 미리보기에도 그대로 쓴다.
+function computePlay(cards) {
+  var hIdx = evalHand(cards), h = HANDS[hIdx], lv = handLevel(hIdx);
+  var steps = [];
+  var ctx = {
+    cards: cards, hIdx: hIdx, lv: lv,
+    pts: h.base + (lv - 1) * h.lvB, mult: h.mult + (lv - 1) * h.lvM, times: 1, gold: 0,
+    handsLeft: S.handsLeft, discardsLeft: S.discardsLeft, handsUsed: S.handsUsed,
+    crucible: S.crucible, usedCrucible: false, step: null,
+  };
+  ctx.step = function (txt, cls) { steps.push({ t: txt, c: cls, p: ctx.pts, m: ctx.mult, x: ctx.times }); };
+  ctx.step(TR('h' + hIdx) + ' Lv' + lv, 'base');
+  var rankSum = 0, i, g = 0, sl = 0, ho = 0;
+  for (i = 0; i < cards.length; i++) {
+    rankSum += cards[i].rank;
+    if (cards[i].enh === 'gild') g++;
+    else if (cards[i].enh === 'seal') sl++;
+    else if (cards[i].enh === 'holy') ho++;
+  }
+  if (g) { ctx.pts += 30 * g; ctx.step('✨ ' + TR('stPts') + ' +' + (30 * g), 'pts'); }
+  if (sl) { ctx.mult += 3 * sl; ctx.step('🔻 ' + TR('stMult') + ' +' + (3 * sl), 'mult'); }
+  if (ho) { ctx.gold += ho; ctx.step('🪙 ' + TR('stGold') + ' +' + ho, 'gold'); }
+  for (i = 0; i < S.owned.length; i++) if (S.owned[i].fx) S.owned[i].fx(ctx);
+  var subtotal = Math.floor(ctx.pts * ctx.mult * ctx.times);
+  var total = subtotal + rankSum;
+  steps.push({ t: TR('stRank') + ' +' + rankSum, c: 'rank', p: ctx.pts, m: ctx.mult, x: ctx.times });
+  return {
+    hIdx: hIdx, lv: lv, pts: ctx.pts, mult: ctx.mult, times: ctx.times, gold: ctx.gold,
+    rankSum: rankSum, subtotal: subtotal, total: total, steps: steps, usedCrucible: ctx.usedCrucible,
+  };
+}
+function trimX(x) { return Math.round(x * 10) / 10; }
+
+// ==== render: hud · reagents · fan · preview · calc ====
+
+function el(id) { return document.getElementById(id); }
+
+function renderAll() { renderHud(); renderReagents(); renderHand(); renderPreview(); }
+
+function renderHud() {
+  el('anteTxt').textContent = fmt(TR(S.ante > 8 ? 'anteEndless' : 'anteTag'), { a: S.ante });
+  el('goldTxt').textContent = '🪙 ' + S.gold;
+  el('scoreTxt').textContent = S.roundScore.toLocaleString();
+  el('targetTxt').textContent = ' / ' + S.target.toLocaleString();
+  el('scoreBar').style.width = Math.min(100, S.roundScore / S.target * 100) + '%';
+  el('handsTxt').textContent = S.handsLeft;
+  el('discTxt').textContent = S.discardsLeft;
+  el('deckTxt').textContent = S.drawPile.length;
+  el('playBtn').disabled = S.lock || !S.handsLeft;
+  el('discardBtn').disabled = S.lock || !S.discardsLeft;
+  el('sortBtn').textContent = TR(S.sortMode === 'rank' ? 'sortRank' : 'sortSuit');
+}
+
+var tipId = null;
+function renderReagents() {
+  var row = el('rgRow');
+  row.innerHTML = '';
+  for (var i = 0; i < SLOTS; i++) {
+    var r = S.owned[i];
+    var d = document.createElement('div');
+    d.className = 'rg-slot' + (r ? '' : ' empty');
+    if (r) {
+      d.innerHTML = r.icon +
+        (r.id === 'crucible' && S.crucible > 0 ? '<span class="stk">' + S.crucible + '</span>' : '');
+      (function (rr) { d.onclick = function () { toggleTip(rr); }; })(r);
+    }
+    row.appendChild(d);
+  }
+}
+function toggleTip(r) {
+  var tip = el('rgTip');
+  if (tipId === r.id) { tip.hidden = true; tipId = null; return; }
+  tipId = r.id;
+  tip.innerHTML = '<b>' + r.icon + ' ' + TR('rg_' + r.id) + '</b> — ' + TR('rgd_' + r.id);
+  tip.hidden = false;
+}
+
+function renderHand() {
+  var fan = el('handFan');
+  fan.innerHTML = '';
+  var n = S.hand.length;
+  if (!n) return;
+  var cw = window.innerWidth < 520 ? 56 : 64;
+  var W = fan.clientWidth || 320;
+  var spacing = n > 1 ? Math.min(cw * 0.78, (W - cw - 8) / (n - 1)) : 0;
+  var x0 = (W - (spacing * (n - 1) + cw)) / 2;
+  for (var i = 0; i < n; i++) {
+    (function (c, i) {
+      var d = document.createElement('div');
+      var off = i - (n - 1) / 2;
+      var sel = S.sel.indexOf(c.id) >= 0;
+      d.className = 'card' + (SUIT_RED[c.suit] ? ' cR' : ' cB') + (sel ? ' sel' : '');
+      d.style.left = (x0 + i * spacing) + 'px';
+      d.style.zIndex = i + 1;
+      var dy = Math.abs(off) * Math.abs(off) * 1.6 + (sel ? -24 : 0);
+      d.style.transform = 'rotate(' + (off * 4) + 'deg) translateY(' + dy + 'px)';
+      d.innerHTML = '<div class="rk">' + rankLabel(c.rank) + '<span>' + SUIT_CH[c.suit] + '</span></div>' +
+        '<div class="big">' + SUIT_CH[c.suit] + '</div>' +
+        (c.enh ? '<div class="gem ' + c.enh + '"></div>' : '');
+      d.onclick = function () { toggleSel(c.id); };
+      fan.appendChild(d);
+    })(S.hand[i], i);
+  }
+}
+
+function toggleSel(id) {
+  if (S.lock) return;
+  var i = S.sel.indexOf(id);
+  if (i >= 0) S.sel.splice(i, 1);
+  else {
+    if (S.sel.length >= MAX_SEL) { toast(TR('maxSel')); return; }
+    S.sel.push(id);
+  }
+  renderHand();
+  renderPreview();
+}
+function selCards() {
+  var out = [], i;
+  for (i = 0; i < S.hand.length; i++) if (S.sel.indexOf(S.hand[i].id) >= 0) out.push(S.hand[i]);
+  return out;
+}
+
+function renderPreview() {
+  var pv = el('previewBar');
+  var cards = selCards();
+  if (!cards.length) { pv.innerHTML = '<span class="dim">' + TR('selHint') + '</span>'; return; }
+  var r = computePlay(cards);
+  pv.innerHTML = '<span class="pv-name">' + TR('h' + r.hIdx) + ' Lv' + r.lv + '</span>' +
+    '<span>' + r.pts + ' × ' + trimX(r.mult) + (r.times !== 1 ? ' × ' + trimX(r.times) : '') +
+    ' + ' + r.rankSum + '</span>' +
+    '<span class="pv-tot">' + TR('expected') + ' ' + r.total.toLocaleString() + '</span>';
+}
+
+var toastTimer = null;
+function toast(txt) {
+  var t = el('toast');
+  t.textContent = txt;
+  t.className = 'on';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.className = ''; }, 1700);
+}
+
+function clearCalc() {
+  el('playedCards').innerHTML = '';
+  el('calcSteps').innerHTML = '';
+  el('calcExpr').textContent = '';
+  el('calcTotal').textContent = '';
+}
+
+// 단계 애니메이션 — 칩이 순서대로 켜지고 수식이 갱신된 뒤 총점이 카운트업. 연성대 탭 = 스킵
+var anim = null;
+function showPlayAnim(cards, res, done) {
+  var pc = el('playedCards'), html = '', i;
+  for (i = 0; i < cards.length; i++) {
+    html += '<div class="pcard ' + (SUIT_RED[cards[i].suit] ? 'cR' : 'cB') + '">' +
+      rankLabel(cards[i].rank) + '<span>' + SUIT_CH[cards[i].suit] + '</span></div>';
+  }
+  pc.innerHTML = html;
+  var st = el('calcSteps');
+  st.innerHTML = '';
+  var chips = [];
+  for (i = 0; i < res.steps.length; i++) {
+    var sp = document.createElement('span');
+    sp.className = 'stepc c-' + res.steps[i].c;
+    sp.textContent = res.steps[i].t;
+    st.appendChild(sp);
+    chips.push(sp);
+  }
+  var expr = el('calcExpr'), tot = el('calcTotal');
+  expr.textContent = ''; tot.textContent = '';
+  function setExpr(s) {
+    expr.textContent = s.p + ' × ' + trimX(s.m) + (s.x !== 1 ? ' × ' + trimX(s.x) : '') +
+      (s.c === 'rank' ? ' + ' + res.rankSum : '');
+  }
+  var finished = false;
+  function fin() { anim = null; done(); }
+  function finish() {
+    if (finished) return;
+    finished = true;
+    var t0 = Date.now(), dur = 550;
+    function tick() {
+      var k = Math.min(1, (Date.now() - t0) / dur);
+      tot.textContent = '= ' + Math.floor(res.total * (k * (2 - k))).toLocaleString();
+      if (k < 1) requestAnimationFrame(tick);
+      else setTimeout(fin, 320);
+    }
+    tick();
+  }
+  var idx = 0;
+  var iv = setInterval(function () {
+    if (idx >= chips.length) { clearInterval(iv); finish(); return; }
+    chips[idx].className += ' on';
+    setExpr(res.steps[idx]);
+    idx++;
+  }, 300);
+  anim = { skip: function () {
+    clearInterval(iv);
+    for (var j = 0; j < chips.length; j++) if (chips[j].className.indexOf(' on') < 0) chips[j].className += ' on';
+    if (res.steps.length) setExpr(res.steps[res.steps.length - 1]);
+    if (finished) return;
+    finished = true;
+    tot.textContent = '= ' + res.total.toLocaleString();
+    setTimeout(fin, 150);
+  } };
+}
+
+// ==== flow: round lifecycle · play/discard · run end ====
+
+function targetFor(ante) {
+  if (ante <= 8) return TARGETS[ante - 1];
+  var t = TARGETS[7];
+  for (var i = 8; i < ante; i++) t = Math.round(t * 1.8 / 500) * 500; // 엔드리스: ×1.8, 500 단위 반올림
+  return t;
+}
+
+function startRun() {
+  S = {
+    ante: 1, cleared: 0, gold: 4, bestPlay: 0, endless: false, submitted: false,
+    playCounts: [0, 0, 0, 0, 0, 0, 0, 0, 0], owned: [], deck: makeDeck(),
+    target: 0, roundScore: 0, handsLeft: 0, discardsLeft: 0, handsUsed: 0, crucible: 0,
+    drawPile: [], hand: [], sel: [], sortMode: 'rank', lock: false,
+    offers: [], rerollCost: 2, lastBreak: null, packChoices: null, packRowOpen: false,
+  };
+  el('menu').hidden = true;
+  el('endPanel').hidden = true;
+  el('winPanel').hidden = true;
+  el('shopPanel').hidden = true;
+  el('bookPanel').hidden = true;
+  el('game').hidden = false;
+  startRound();
+}
+
+function startRound() {
+  S.target = targetFor(S.ante);
+  S.roundScore = 0;
+  S.handsLeft = PLAYS;
+  S.discardsLeft = DISCARDS;
+  S.handsUsed = 0;
+  S.crucible = 0;
+  S.drawPile = shuffle(S.deck.slice());
+  S.hand = [];
+  S.sel = [];
+  S.lock = false;
+  if (hasRg('homunc')) S.gold += 2;
+  draw(HAND_SIZE);
+  el('rgTip').hidden = true;
+  tipId = null;
+  clearCalc();
+  renderAll();
+  toast(fmt(TR('roundIntro'), { a: S.ante, t: S.target.toLocaleString() }));
+}
+
+function draw(n) {
+  while (n-- > 0 && S.drawPile.length && S.hand.length < HAND_SIZE) S.hand.push(S.drawPile.pop());
+  sortHand();
+}
+function sortHand() {
+  S.hand.sort(function (a, b) {
+    if (S.sortMode === 'rank') return b.rank - a.rank || a.suit - b.suit;
+    return a.suit - b.suit || b.rank - a.rank;
+  });
+}
+function removeSel() {
+  var keep = [], i;
+  for (i = 0; i < S.hand.length; i++) if (S.sel.indexOf(S.hand[i].id) < 0) keep.push(S.hand[i]);
+  S.hand = keep;
+  S.sel = [];
+}
+
+function doPlay() {
+  if (S.lock || !S.handsLeft) return;
+  var cards = selCards();
+  if (!cards.length) { toast(TR('needSel')); return; }
+  S.lock = true;
+  renderHud();
+  var res = computePlay(cards);
+  removeSel();
+  renderHand();
+  renderPreview();
+  showPlayAnim(cards, res, function () {
+    S.roundScore += res.total;
+    S.gold += res.gold;
+    if (res.usedCrucible) S.crucible = 0;
+    S.playCounts[res.hIdx]++;
+    var nl = handLevel(res.hIdx);
+    if (nl > res.lv) toast(fmt(TR('levelUp'), { h: TR('h' + res.hIdx), lv: nl }));
+    if (res.total > S.bestPlay) S.bestPlay = res.total;
+    S.handsUsed++;
+    S.handsLeft--;
+    draw(cards.length);
+    renderAll();
+    if (S.roundScore >= S.target) roundClear();
+    else if (!S.handsLeft) endRun(false);
+    else { S.lock = false; renderHud(); }
+  });
+}
+
+function doDiscard() {
+  if (S.lock || !S.discardsLeft) return;
+  var cards = selCards();
+  if (!cards.length) { toast(TR('needSel')); return; }
+  S.discardsLeft--;
+  if (hasRg('crucible')) { S.crucible++; toast(TR('crucibleProc')); }
+  if (hasRg('ash')) { S.roundScore += 30; toast(TR('ashProc')); }
+  removeSel();
+  draw(cards.length);
+  renderAll();
+  if (S.roundScore >= S.target) roundClear();
+}
+
+function roundClear() {
+  S.lock = true;
+  renderHud();
+  S.cleared++;
+  toast(TR('targetMet'));
+  var base = 6, hb = S.handsLeft * 2, itr = Math.min(5, Math.floor(S.gold / 5));
+  S.gold += base + hb + itr;
+  S.lastBreak = { base: base, hands: hb, interest: itr };
+  setTimeout(function () {
+    if (S.ante === 8 && !S.endless) el('winPanel').hidden = false;
+    else openShop();
+  }, 900);
+}
+
+function endRun(won) {
+  S.lock = true;
+  var score = S.cleared * 5000 + S.bestPlay;
+  el('endTitle').textContent = TR(won ? 'endWin' : 'endLose');
+  el('endDesc').textContent = won ? '' : fmt(TR('endLoseDesc'), { a: S.ante });
+  el('endAnte').textContent = S.cleared;
+  el('endBest').textContent = S.bestPlay.toLocaleString();
+  el('endScore').textContent = score.toLocaleString();
+  if (!S.submitted && score > 0) {
+    S.submitted = true;
+    GameRank.submit(SLUG, score, fmt(TR('detail'), { a: S.cleared, b: S.bestPlay }));
+  }
+  el('winPanel').hidden = true;
+  el('endPanel').hidden = false;
+}
+
+// ==== shop · panels · wiring ====
+
+function shopMsg(t) { el('shopMsg').textContent = t; }
+
+function openShop() {
+  var b = S.lastBreak;
+  function line(l, v) { return '<div>' + l + ' <b>+' + v + '🪙</b></div>'; }
+  el('goldBreak').innerHTML = line(TR('brBase'), b.base) + line(TR('brHands'), b.hands) +
+    (b.interest ? line(TR('brInterest'), b.interest) : '');
+  S.rerollCost = hasRg('aeon') ? 0 : 2;
+  S.offers = rollOffers();
+  S.packChoices = null;
+  S.packRowOpen = false;
+  el('packRow').hidden = true;
+  shopMsg('');
+  renderShop();
+  el('shopPanel').hidden = false;
+}
+
+function rollOffers() {
+  var pool = [], i;
+  for (i = 0; i < REAGENTS.length; i++) if (!hasRg(REAGENTS[i].id)) pool.push(REAGENTS[i]);
+  return shuffle(pool).slice(0, 2);
+}
+
+function renderShop() {
+  el('shopGoldTxt').textContent = S.gold;
+  var own = el('ownRow'), i;
+  own.innerHTML = '';
+  for (i = 0; i < S.owned.length; i++) {
+    (function (r, idx) {
+      var d = document.createElement('div');
+      d.className = 'own-rg';
+      d.innerHTML = r.icon + ' <b>' + TR('rg_' + r.id) + '</b><i>' + TR('sell') + ' +' + Math.floor(r.price / 2) + '🪙</i>';
+      d.title = TR('rgd_' + r.id);
+      d.onclick = function () { sellOwned(idx); };
+      own.appendChild(d);
+    })(S.owned[i], i);
+  }
+  var off = el('offerRow');
+  off.innerHTML = '';
+  for (i = 0; i < S.offers.length; i++) {
+    (function (r, idx) {
+      var d = document.createElement('div');
+      d.className = 'offer';
+      d.innerHTML = '<div class="ic">' + r.icon + '</div><div class="nm">' + TR('rg_' + r.id) + '</div>' +
+        '<div class="ds">' + TR('rgd_' + r.id) + '</div>';
+      var b = document.createElement('button');
+      b.textContent = TR('buy') + ' ' + r.price + '🪙';
+      b.disabled = S.gold < r.price;
+      b.onclick = function () { buyOffer(idx); };
+      d.appendChild(b);
+      off.appendChild(d);
+    })(S.offers[i], i);
+  }
+  el('packBtn').textContent = TR('packBtn') + ' ' + PACK_COST + '🪙';
+  el('rerollBtn').textContent = TR('rerollBtn') + ' ' + S.rerollCost + '🪙';
+  if (S.packRowOpen) renderPack();
+}
+
+function buyOffer(idx) {
+  var r = S.offers[idx];
+  if (S.owned.length >= SLOTS) { shopMsg(TR('slotsFull')); return; }
+  if (S.gold < r.price) { shopMsg(TR('noGold')); return; }
+  S.gold -= r.price;
+  S.owned.push(r);
+  S.offers.splice(idx, 1);
+  if (r.id === 'aeon') S.rerollCost = 0;
+  shopMsg('');
+  renderShop();
+}
+function sellOwned(idx) {
+  var r = S.owned[idx];
+  S.gold += Math.floor(r.price / 2);
+  S.owned.splice(idx, 1);
+  if (r.id === 'aeon' && S.rerollCost === 0) S.rerollCost = 2;
+  renderShop();
+}
+function reroll() {
+  if (S.gold < S.rerollCost) { shopMsg(TR('noGold')); return; }
+  S.gold -= S.rerollCost;
+  if (S.rerollCost > 0) S.rerollCost++;
+  S.offers = rollOffers();
+  renderShop();
+}
+
+// 강화팩 — 무작위 카드 3장 × 강화 3종 조합 중 하나를 골라 부여
+function openPack() {
+  S.packRowOpen = !S.packRowOpen;
+  el('packRow').hidden = !S.packRowOpen;
+  if (S.packRowOpen) {
+    if (!S.packChoices) S.packChoices = rollPack();
+    renderPack();
+    shopMsg(TR('packPick'));
+  } else shopMsg('');
+}
+function rollPack() {
+  var free = [], i;
+  for (i = 0; i < S.deck.length; i++) if (!S.deck[i].enh) free.push(S.deck[i]);
+  shuffle(free);
+  var enhs = shuffle(['gild', 'seal', 'holy']);
+  var out = [];
+  for (i = 0; i < 3 && i < free.length; i++) out.push({ enh: enhs[i % 3], card: free[i] });
+  return out;
+}
+function renderPack() {
+  var pr = el('packRow'), i;
+  pr.innerHTML = '';
+  if (!S.packChoices.length) { pr.innerHTML = '<div class="shop-msg">' + TR('packNone') + '</div>'; return; }
+  for (i = 0; i < S.packChoices.length; i++) {
+    (function (ch, idx) {
+      var d = document.createElement('div');
+      d.className = 'offer';
+      d.innerHTML = '<div class="ic ' + (SUIT_RED[ch.card.suit] ? 'cR' : '') + '">' + cardLabel(ch.card) + '</div>' +
+        '<div class="nm">' + TR('enh_' + ch.enh) + '</div>' +
+        '<div class="ds">' + TR('enhd_' + ch.enh) + '</div>';
+      var b = document.createElement('button');
+      b.textContent = TR('buy') + ' ' + PACK_COST + '🪙';
+      b.disabled = S.gold < PACK_COST;
+      b.onclick = function () { pickPack(idx); };
+      d.appendChild(b);
+      pr.appendChild(d);
+    })(S.packChoices[i], i);
+  }
+}
+function pickPack(idx) {
+  if (S.gold < PACK_COST) { shopMsg(TR('noGold')); return; }
+  var ch = S.packChoices[idx];
+  S.gold -= PACK_COST;
+  ch.card.enh = ch.enh;
+  shopMsg(fmt(TR('packDone'), { c: cardLabel(ch.card), e: TR('enh_' + ch.enh) }));
+  S.packChoices = rollPack();
+  renderShop();
+}
+
+function nextRound() {
+  el('shopPanel').hidden = true;
+  S.ante++;
+  startRound();
+}
+
+function renderBook() {
+  var html = '<div class="bkrow bk-h"><span>' + TR('bkHand') + '</span><span>Lv</span><span>' +
+    TR('bkPow') + '</span><span>' + TR('bkCnt') + '</span></div>';
+  for (var i = 8; i >= 0; i--) {
+    var lv = handLevel(i);
+    var b = HANDS[i].base + (lv - 1) * HANDS[i].lvB;
+    var m = HANDS[i].mult + (lv - 1) * HANDS[i].lvM;
+    html += '<div class="bkrow"><span>' + TR('h' + i) + '</span><b>' + lv + '</b><span>' +
+      b + ' × ' + m + '</span><span>' + S.playCounts[i] + '</span></div>';
+  }
+  el('bookTable').innerHTML = html;
+}
+
+el('startBtn').onclick = startRun;
+el('againBtn').onclick = startRun;
+el('backBtn').onclick = function () {
+  el('endPanel').hidden = true;
+  el('game').hidden = true;
+  el('menu').hidden = false;
+};
+el('playBtn').onclick = doPlay;
+el('discardBtn').onclick = doDiscard;
+el('sortBtn').onclick = function () {
+  S.sortMode = S.sortMode === 'rank' ? 'suit' : 'rank';
+  sortHand();
+  renderHand();
+  renderHud();
+};
+el('bookBtn').onclick = function () { renderBook(); el('bookPanel').hidden = false; };
+el('bookClose').onclick = function () { el('bookPanel').hidden = true; };
+el('endlessBtn').onclick = function () {
+  S.endless = true;
+  el('winPanel').hidden = true;
+  openShop();
+};
+el('finishBtn').onclick = function () { endRun(true); };
+el('nextBtn').onclick = nextRound;
+el('packBtn').onclick = openPack;
+el('rerollBtn').onclick = reroll;
+el('playArea').onclick = function () { if (anim) anim.skip(); };
+window.addEventListener('resize', function () { if (S && !el('game').hidden) renderHand(); });
+</script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('hand-alchemy');</script>
+</body>
+</html>

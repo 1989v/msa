@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">원소 순례자</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; min-height:100vh; user-select:none; padding:12px 8px 30px; }
+  h1.top { font-size:19px; color:#0ea5e9; margin:4px 0 2px; text-shadow:1px 1px 0 #000; }
+  .sub { font-size:11px; color:#8e9db0; margin-bottom:8px; }
+  .scr { width:100%; max-width:470px; }
+  .hrow { display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:12.5px; }
+  button { font-family:inherit; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:11px 16px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; }
+  button.ghost { background:#222b44; color:#e6ecf2; }
+  button.mini { background:#222b44; color:#e6ecf2; border:1px solid #2c3550; border-radius:7px;
+                padding:4px 9px; font-size:11.5px; cursor:pointer; }
+  button:disabled { opacity:.4; cursor:default; }
+
+  #hud { margin-bottom:8px; }
+  #relicRow { display:flex; gap:5px; flex-wrap:wrap; min-height:18px; font-size:14px; margin-top:4px; }
+  #relicRow span { cursor:help; }
+
+  /* ── 맵 ── */
+  .mapHead { font-size:13px; color:#c2cedc; margin-bottom:6px; text-align:center; }
+  #mapWrap { position:relative; height:560px; background:#0e1730; border:1px solid #222b44; border-radius:12px; }
+  #mapEdges { position:absolute; inset:0; width:100%; height:100%; }
+  .mnode { position:absolute; transform:translate(-50%,-50%); width:46px; height:46px; border-radius:50%;
+           background:#1a2238; border:2px solid #2c3550; color:#e6ecf2; font-size:19px; cursor:default;
+           display:flex; align-items:center; justify-content:center; }
+  .mnode.done { opacity:.35; }
+  .mnode.cur  { border-color:#eab308; box-shadow:0 0 9px #eab30866; }
+  .mnode.open { border-color:#0ea5e9; box-shadow:0 0 9px #0ea5e955; cursor:pointer; animation:pulse 1.3s infinite; }
+  @keyframes pulse { 50% { transform:translate(-50%,-50%) scale(1.13); } }
+
+  /* ── 전투 ── */
+  #combatScr { display:flex; flex-direction:column; gap:8px; }
+  #foes { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .foe { background:#1a2238; border:2px solid #2c3550; border-radius:11px; padding:8px 7px 7px;
+         min-width:118px; flex:1; max-width:152px; text-align:center; cursor:pointer; }
+  .foe .fn { font-size:11.5px; font-weight:bold; }
+  .foe .fic { font-size:24px; line-height:1.25; }
+  .foe.tgt { border-color:#ef4444; box-shadow:0 0 10px #ef444466; }
+  .foe.dead { opacity:.22; pointer-events:none; }
+  .intent { font-size:12px; color:#eab308; min-height:16px; }
+  .bar { height:8px; background:#0c1424; border-radius:4px; overflow:hidden; margin:4px 0 3px; }
+  .bar i { display:block; height:100%; background:#22c55e; }
+  .bar.fhp i { background:#ef4444; }
+  .hpline { font-size:10.5px; color:#c2cedc; }
+  .sts { font-size:10px; display:flex; gap:3px; flex-wrap:wrap; justify-content:center; min-height:15px; }
+  .sts span { background:#0c1424; border-radius:4px; padding:1px 4px; cursor:help; }
+  #playerBox { background:#1a2238; border-radius:11px; padding:8px 11px; }
+  #resRow { display:flex; gap:9px; justify-content:center; font-size:14px; }
+  .rdot { opacity:.22; }
+  .rdot.on { opacity:1; text-shadow:0 0 7px currentColor; }
+  #combatMsg { min-height:17px; text-align:center; font-size:12px; color:#eab308; }
+  #hand { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; min-height:96px; }
+  .card { width:31%; min-width:98px; max-width:132px; background:#1a2238; border:2px solid #2c3550;
+          border-top-width:4px; border-radius:9px; padding:5px 7px 6px; cursor:pointer; position:relative;
+          text-align:left; }
+  .card .co { position:absolute; top:3px; right:6px; font-size:11px; color:#eab308; }
+  .card .nm { font-size:11.5px; font-weight:bold; margin:2px 0 3px; padding-right:22px; }
+  .card .dc { font-size:10px; color:#c2cedc; line-height:1.45; }
+  .card.fire  { border-top-color:#f97316; }
+  .card.frost { border-top-color:#38bdf8; }
+  .card.earth { border-top-color:#a3e635; }
+  .card.void  { border-top-color:#a855f7; }
+  .card.r1 .nm { color:#0ea5e9; }
+  .card.r2 .nm { color:#eab308; }
+  .card.sel { border-color:#eab308; transform:translateY(-4px); }
+  .card.off { opacity:.45; }
+  .card .cnt { position:absolute; bottom:3px; right:6px; font-size:10px; color:#8e9db0; }
+  #pileTxt { font-size:11px; color:#8e9db0; }
+
+  /* ── 패널 ── */
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:12px; text-align:center; z-index:10;
+           padding:20px 14px; overflow:auto; }
+  .panel h1 { color:#0ea5e9; font-size:23px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:440px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .rules { text-align:left; font-size:11.5px; color:#c2cedc; line-height:2; max-width:420px; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .pickRow { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; max-width:460px; }
+  .stat { background:#1a2238; border-radius:8px; padding:8px 14px; font-size:12px; }
+  .stat b { color:#0ea5e9; font-size:17px; display:block; }
+  #deckList { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; max-width:460px;
+              max-height:56vh; overflow:auto; padding:4px; }
+  .shopItem { display:flex; align-items:center; gap:9px; background:#1a2238; border-radius:9px;
+              padding:7px 11px; font-size:12px; width:100%; max-width:400px; text-align:left; }
+  .shopItem .pr { margin-left:auto; color:#eab308; font-weight:bold; white-space:nowrap; }
+  .shopItem.off { opacity:.4; }
+  #tLine { font-size:14px; background:#1a2238; border-radius:10px; padding:14px 18px; max-width:400px; line-height:1.7; }
+
+  #toast { position:fixed; bottom:76px; left:50%; transform:translateX(-50%); background:#1a2238;
+           border:1px solid #0ea5e9; color:#e6ecf2; padding:7px 14px; border-radius:8px; font-size:12px;
+           z-index:60; transition:opacity .3s; opacity:0; pointer-events:none; max-width:92%; text-align:center; }
+
+  @media (max-width:400px) {
+    .card { min-width:88px; }
+    .foe { min-width:104px; }
+    #mapWrap { height:500px; }
+  }
+</style>
+</head>
+<body>
+<h1 class="top" data-i18n="title">원소 순례자</h1>
+<div class="sub" data-i18n="tagline">4원소 덱빌딩 로그라이크</div>
+
+<div id="hud" class="scr" hidden>
+  <div class="hrow">
+    <span id="hpTxt"></span><span id="goldTxt"></span><span id="posTxt"></span>
+    <button class="mini" id="deckBtn">📖 0</button>
+  </div>
+  <div id="relicRow"></div>
+</div>
+
+<div id="mapScr" class="scr" hidden>
+  <div class="mapHead"><span data-i18n="mapTitle">순례길</span> · <span id="mapActTxt"></span></div>
+  <div id="mapWrap">
+    <svg id="mapEdges" viewBox="0 0 100 100" preserveAspectRatio="none"></svg>
+    <div id="mapNodes"></div>
+  </div>
+</div>
+
+<div id="combatScr" class="scr" hidden>
+  <div id="foes"></div>
+  <div id="playerBox">
+    <div class="hrow">
+      <span data-i18n="you">순례자</span>
+      <span id="pHpTxt"></span><span id="pBlkTxt"></span><span id="energyTxt"></span>
+    </div>
+    <div class="bar"><i id="pHpBar"></i></div>
+    <div class="sts" id="pSts"></div>
+  </div>
+  <div id="resRow">
+    <span class="rdot" id="rd-fire" style="color:#f97316">🔥</span>
+    <span class="rdot" id="rd-frost" style="color:#38bdf8">❄</span>
+    <span class="rdot" id="rd-earth" style="color:#a3e635">🌿</span>
+    <span class="rdot" id="rd-void" style="color:#a855f7">🌀</span>
+  </div>
+  <div id="combatMsg"></div>
+  <div id="hand"></div>
+  <div class="hrow">
+    <span id="pileTxt"></span>
+    <button class="act" id="endTurnBtn" data-i18n="endTurn">턴 종료 ▶</button>
+  </div>
+</div>
+
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">🧭 원소 순례자</h1>
+  <p data-i18n="menuDesc">네 원소의 힘을 모아 3막의 순례길을 완주하라.</p>
+  <div class="rules">
+    <div data-i18n="rule1">⚡ 에너지 3 · 손패 5장 — 카드 탭으로 사용</div>
+    <div data-i18n="rule2">🔗 공명: 한 턴에 원소 2종 +2블록 · 3종 전체 3피해 · 4종 에너지 +1</div>
+    <div data-i18n="rule3">👁 적 의도(⚔공격 · 🛡방어 · ☠상태이상)를 읽고 대응</div>
+    <div data-i18n="rule4">🏕 모닥불 회복·정화 · 🛒 상인 · 🎁 보물 유물</div>
+  </div>
+  <button class="act" id="startBtn" data-i18n="startBtn">▶ 순례 시작</button>
+</div>
+
+<div class="panel" id="rewardPanel" hidden>
+  <h1 data-i18n="rewardTitle">🎉 승리!</h1>
+  <p id="rwGold"></p>
+  <p id="rwRelic"></p>
+  <p class="small" data-i18n="pickCard">카드 1장 선택 (탭) — 스킵 가능</p>
+  <div class="pickRow" id="rwCards"></div>
+  <button class="act ghost" id="skipBtn" data-i18n="skip">건너뛰기</button>
+</div>
+
+<div class="panel" id="campPanel" hidden>
+  <h1 data-i18n="campTitle">🏕 모닥불</h1>
+  <p data-i18n="campDesc">불가에 앉아 잠시 숨을 고른다. 무엇을 할까?</p>
+  <div class="row">
+    <button class="act" id="restBtn" data-i18n="rest">😴 휴식 — 최대 HP 30% 회복</button>
+    <button class="act ghost" id="purifyBtn" data-i18n="purify">🕯 정화 — 카드 1장 제거</button>
+  </div>
+</div>
+
+<div class="panel" id="shopPanel" hidden>
+  <h1 data-i18n="shopTitle">🛒 떠돌이 상인</h1>
+  <p class="small" id="shopGoldTxt"></p>
+  <div class="pickRow" id="shopList" style="flex-direction:column;align-items:center"></div>
+  <button class="act ghost" id="leaveBtn" data-i18n="leave">떠나기</button>
+</div>
+
+<div class="panel" id="treasurePanel" hidden>
+  <h1 data-i18n="treasureTitle">🎁 보물 상자</h1>
+  <div id="tLine"></div>
+  <button class="act" id="takeBtn" data-i18n="take">가져가기</button>
+</div>
+
+<div class="panel" id="deckPanel" hidden>
+  <h1 data-i18n="deckTitle">📖 내 덱</h1>
+  <p class="small" id="deckModeTxt"></p>
+  <div id="deckList"></div>
+  <button class="act ghost" id="deckCloseBtn" data-i18n="close">닫기</button>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <h1 id="endTitle"></h1>
+  <p id="endDetail"></p>
+  <div class="row" id="endStats"></div>
+  <div class="row">
+    <button class="act" id="againBtn" data-i18n="againBtn">▶ 새 순례</button>
+    <button class="act ghost" id="backBtn" data-i18n="backBtn">처음으로</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '🧭 원소 순례자', menuTitle: '🧭 원소 순례자', tagline: '4원소 덱빌딩 로그라이크',
+    menuDesc: '네 원소의 힘을 모아 3막의 순례길을 완주하라. 덱을 쌓고, 유물을 모으고, 같은 턴에 여러 원소를 엮어 공명을 일으켜라.',
+    rule1: '⚡ 에너지 3 · 손패 5장 — 카드 탭으로 사용',
+    rule2: '🔗 공명: 한 턴에 원소 2종 +2블록 · 3종 전체 3피해 · 4종 에너지 +1',
+    rule3: '👁 적 의도(⚔공격 · 🛡방어 · ☠상태이상)를 읽고 대응',
+    rule4: '🏕 모닥불 회복·정화 · 🛒 상인 · 🎁 보물 유물',
+    startBtn: '▶ 순례 시작', againBtn: '▶ 새 순례', backBtn: '처음으로',
+    mapTitle: '순례길', you: '🧭 순례자', endTurn: '턴 종료 ▶',
+    targetHint: '🎯 대상을 탭하라', notEnough: '에너지가 부족하다',
+    drawLbl: '뽑을', discLbl: '버림',
+    res2: '🔗 공명×2 · 블록 +', res3: '🔗 공명×3 · 전체 피해 ', res4: '🔗 공명×4 · 에너지 +',
+    st_vuln: '취약 — 받는 피해 +50%', st_weak: '약화 — 주는 피해 -25%', st_psn: '중독 — 턴마다 피해',
+    st_burn: '화상 — 턴마다 피해', st_thorn: '가시 — 공격한 적 반사 피해', st_fort: '성장 — 턴 종료마다 블록', st_str: '힘 — 공격력 증가',
+    rewardTitle: '🎉 승리!', pickCard: '카드 1장 선택 (탭) — 스킵 가능', skip: '건너뛰기', relicGet: '유물 획득',
+    campTitle: '🏕 모닥불', campDesc: '불가에 앉아 잠시 숨을 고른다. 무엇을 할까?',
+    rest: '😴 휴식 — 최대 HP 30% 회복', purify: '🕯 정화 — 카드 1장 제거',
+    shopTitle: '🛒 떠돌이 상인', removeSvc: '🗑 카드 제거 서비스', leave: '떠나기', noGold: '골드가 부족하다', sold: '품절',
+    treasureTitle: '🎁 보물 상자', take: '가져가기', allOwned: '상자는 비어 있었다… 대신 골드 +50',
+    deckTitle: '📖 내 덱', close: '닫기', removeMode: '제거할 카드를 탭하라',
+    endWin: '🏆 순례 완수!', endDie: '💀 순례가 끝났다',
+    scoreLabel: '점수', floorsLabel: '오른 층', elitesLabel: '엘리트', bossesLabel: '보스',
+    actMove: '다음 막으로 — HP 25% 회복', healed: '회복 +', removed: '카드를 제거했다',
+  },
+  en: {
+    title: '🧭 Element Pilgrim', menuTitle: '🧭 Element Pilgrim', tagline: '4-element deckbuilding roguelike',
+    menuDesc: 'Gather the four elements and finish a three-act pilgrimage. Build your deck, collect relics, and weave elements in a single turn to trigger resonance.',
+    rule1: '⚡ 3 energy · 5-card hand — tap a card to play',
+    rule2: '🔗 Resonance: 2 elements +2 Block · 3 = 3 dmg to all · 4 = +1 Energy',
+    rule3: '👁 Read enemy intents (⚔ attack · 🛡 block · ☠ debuff)',
+    rule4: '🏕 Campfire heal/purge · 🛒 Merchant · 🎁 Treasure relics',
+    startBtn: '▶ Begin Pilgrimage', againBtn: '▶ New Run', backBtn: 'Menu',
+    mapTitle: 'Pilgrim Road', you: '🧭 Pilgrim', endTurn: 'End Turn ▶',
+    targetHint: '🎯 Tap a target', notEnough: 'Not enough energy',
+    drawLbl: 'Draw', discLbl: 'Disc',
+    res2: '🔗 Resonance×2 · Block +', res3: '🔗 Resonance×3 · AoE ', res4: '🔗 Resonance×4 · Energy +',
+    st_vuln: 'Vulnerable — takes +50% damage', st_weak: 'Weak — deals -25% damage', st_psn: 'Poison — damage each turn',
+    st_burn: 'Burn — damage each turn', st_thorn: 'Thorns — reflect damage', st_fort: 'Growth — gain Block each turn end', st_str: 'Strength — stronger attacks',
+    rewardTitle: '🎉 Victory!', pickCard: 'Pick one card (tap) — skippable', skip: 'Skip', relicGet: 'Relic found',
+    campTitle: '🏕 Campfire', campDesc: 'You sit by the fire and catch your breath. What now?',
+    rest: '😴 Rest — heal 30% of max HP', purify: '🕯 Purify — remove a card',
+    shopTitle: '🛒 Wandering Merchant', removeSvc: '🗑 Card removal', leave: 'Leave', noGold: 'Not enough gold', sold: 'Sold out',
+    treasureTitle: '🎁 Treasure Chest', take: 'Take it', allOwned: 'The chest was empty… +50 gold instead',
+    deckTitle: '📖 My Deck', close: 'Close', removeMode: 'Tap a card to remove it',
+    endWin: '🏆 Pilgrimage Complete!', endDie: '💀 The pilgrimage ends',
+    scoreLabel: 'Score', floorsLabel: 'Floors', elitesLabel: 'Elites', bossesLabel: 'Bosses',
+    actMove: 'Next act — healed 25% HP', healed: 'Healed +', removed: 'Card removed',
+  },
+});
+var TR = GameI18n.t;
+var SLUG = 'element-pilgrim';
+
+function N(o) { return GameI18n.lang === 'en' ? o.en : o.ko; }
+function el(id) { return document.getElementById(id); }
+function rnd(n) { return Math.floor(Math.random() * n); }
+function shuffle(a) {
+  for (var i = a.length - 1; i > 0; i--) { var j = rnd(i + 1), t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+var S = null; // 런 상태
+var C = null; // 전투 상태
+function hasRelic(id) { return !!S && S.relics.indexOf(id) >= 0; }
+
+var toastTimer = null;
+function toast(msg) {
+  var t = el('toast');
+  t.textContent = msg;
+  t.style.opacity = '1';
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.style.opacity = '0'; }, 1700);
+}
+
+/* ══════════ 데이터 — 카드 40종 (4원소 × 10, 희귀도 rar 0/1/2) ══════════
+ * 키: dmg 피해(hits 연타, aoe 전체) / burn 화상 / vuln 취약 / weak 약화
+ *     blk 블록 / draw 드로우 / eng 에너지 / thorn 가시 / fort 성장(턴 종료 블록)
+ *     hp 희생(HP 소모) / heal 회복 / exh 소멸 / sp 특수(전용 설명 spKo/spEn)   */
+var CARDS = [
+  // 화염 — 공격 / 화상
+  { id: 'f1', el: 'fire', rar: 0, cost: 1, ko: '불꽃 화살', en: 'Flame Bolt', dmg: 6 },
+  { id: 'f2', el: 'fire', rar: 0, cost: 0, ko: '잉걸불', en: 'Ember', dmg: 3, burn: 2 },
+  { id: 'f3', el: 'fire', rar: 0, cost: 1, ko: '화염 채찍', en: 'Fire Lash', dmg: 4, hits: 2 },
+  { id: 'f4', el: 'fire', rar: 0, cost: 1, ko: '작열', en: 'Scorch', burn: 4 },
+  { id: 'f5', el: 'fire', rar: 0, cost: 1, ko: '화산 파편', en: 'Volcanic Shard', dmg: 5, aoe: 1 },
+  { id: 'f6', el: 'fire', rar: 1, cost: 2, ko: '불의 춤', en: 'Fire Dance', dmg: 5, hits: 3 },
+  { id: 'f7', el: 'fire', rar: 1, cost: 1, ko: '연쇄 발화', en: 'Chain Ignite', dmg: 7, sp: 'chain',
+    spKo: '피해 7 · 화상 상태면 화상 +3', spEn: 'Deal 7 · +3 Burn if target burns' },
+  { id: 'f8', el: 'fire', rar: 1, cost: 2, ko: '백열', en: 'Incandescence', burn: 6, vuln: 1, aoe: 1 },
+  { id: 'f9', el: 'fire', rar: 2, cost: 3, ko: '유성 낙하', en: 'Meteor', dmg: 18, vuln: 2 },
+  { id: 'f10', el: 'fire', rar: 2, cost: 2, ko: '겁화', en: 'Conflagration', dmg: 6, sp: 'dblburn',
+    spKo: '피해 6 · 대상의 화상 2배', spEn: 'Deal 6 · double target Burn' },
+  // 서리 — 방어 / 둔화
+  { id: 's1', el: 'frost', rar: 0, cost: 1, ko: '서리 방패', en: 'Frost Shield', blk: 6 },
+  { id: 's2', el: 'frost', rar: 0, cost: 1, ko: '냉기 조각', en: 'Ice Shard', dmg: 5, weak: 1 },
+  { id: 's3', el: 'frost', rar: 0, cost: 1, ko: '성에', en: 'Rime', blk: 4, draw: 1 },
+  { id: 's4', el: 'frost', rar: 0, cost: 1, ko: '눈보라', en: 'Flurry', dmg: 3, weak: 1, aoe: 1 },
+  { id: 's5', el: 'frost', rar: 0, cost: 2, ko: '얼음 갑주', en: 'Ice Armor', blk: 11 },
+  { id: 's6', el: 'frost', rar: 1, cost: 1, ko: '혹한', en: 'Deep Chill', weak: 2, aoe: 1, blk: 3 },
+  { id: 's7', el: 'frost', rar: 1, cost: 2, ko: '빙벽', en: 'Glacier Wall', blk: 9, draw: 1 },
+  { id: 's8', el: 'frost', rar: 1, cost: 2, ko: '고드름 창', en: 'Icicle Lance', dmg: 9, weak: 2 },
+  { id: 's9', el: 'frost', rar: 2, cost: 3, ko: '절대 영도', en: 'Absolute Zero', dmg: 12, weak: 2, aoe: 1, exh: 1 },
+  { id: 's10', el: 'frost', rar: 2, cost: 2, ko: '겨울의 가호', en: "Winter's Grace", blk: 8, heal: 3, draw: 1 },
+  // 대지 — 블록 성장 / 가시
+  { id: 'e1', el: 'earth', rar: 0, cost: 1, ko: '돌팔매', en: 'Stone Sling', dmg: 5, blk: 2 },
+  { id: 'e2', el: 'earth', rar: 0, cost: 1, ko: '흙벽', en: 'Earthen Wall', blk: 5, fort: 1 },
+  { id: 'e3', el: 'earth', rar: 0, cost: 1, ko: '가시덤불', en: 'Bramble', thorn: 2 },
+  { id: 'e4', el: 'earth', rar: 0, cost: 2, ko: '암석 강타', en: 'Rock Smash', dmg: 9, blk: 3 },
+  { id: 'e5', el: 'earth', rar: 0, cost: 1, ko: '지반 다지기', en: 'Bedrock', blk: 4, thorn: 1 },
+  { id: 'e6', el: 'earth', rar: 1, cost: 2, ko: '화강암 피부', en: 'Granite Skin', fort: 3 },
+  { id: 'e7', el: 'earth', rar: 1, cost: 2, ko: '산사태', en: 'Landslide', sp: 'blockDmg',
+    spKo: '현재 블록만큼 피해', spEn: 'Deal damage equal to your Block' },
+  { id: 'e8', el: 'earth', rar: 1, cost: 1, ko: '가시 갑옷', en: 'Thorn Mail', blk: 5, thorn: 2 },
+  { id: 'e9', el: 'earth', rar: 2, cost: 3, ko: '대지의 품', en: 'Gaia Embrace', blk: 10, fort: 3, exh: 1 },
+  { id: 'e10', el: 'earth', rar: 2, cost: 2, ko: '지진', en: 'Earthquake', dmg: 11, aoe: 1, blk: 4 },
+  // 공허 — 드로우 / 에너지 / 희생
+  { id: 'v1', el: 'void', rar: 0, cost: 0, ko: '심연 응시', en: 'Abyss Gaze', draw: 2, exh: 1 },
+  { id: 'v2', el: 'void', rar: 0, cost: 1, ko: '어둠 침식', en: 'Dark Erosion', dmg: 7, hp: 2 },
+  { id: 'v3', el: 'void', rar: 0, cost: 1, ko: '별빛 흡수', en: 'Star Siphon', draw: 2 },
+  { id: 'v4', el: 'void', rar: 0, cost: 1, ko: '공허 균열', en: 'Void Rift', dmg: 6, draw: 1 },
+  { id: 'v5', el: 'void', rar: 0, cost: 0, ko: '무의 손길', en: 'Null Touch', eng: 1, hp: 3, exh: 1 },
+  { id: 'v6', el: 'void', rar: 1, cost: 1, ko: '영혼 태우기', en: 'Soul Burn', dmg: 10, hp: 3 },
+  { id: 'v7', el: 'void', rar: 1, cost: 1, ko: '차원 문', en: 'Rift Gate', eng: 2, exh: 1 },
+  { id: 'v8', el: 'void', rar: 1, cost: 1, ko: '암흑 계약', en: 'Dark Pact', draw: 3, hp: 3 },
+  { id: 'v9', el: 'void', rar: 2, cost: 2, ko: '공허의 심장', en: 'Void Heart', eng: 2, draw: 2, hp: 4, exh: 1 },
+  { id: 'v10', el: 'void', rar: 2, cost: 2, ko: '소멸', en: 'Annihilate', dmg: 20, hp: 5, exh: 1 },
+];
+var CARD = {};
+(function () { for (var i = 0; i < CARDS.length; i++) CARD[CARDS[i].id] = CARDS[i]; })();
+
+var ELIC = { fire: '🔥', frost: '❄', earth: '🌿', void: '🌀' };
+var STARTER = ['f1', 'f1', 'f2', 's1', 's1', 'e1', 'e2', 'e3', 'v3', 'v4'];
+
+function cardDesc(c) {
+  if (c.sp) return GameI18n.lang === 'en' ? c.spEn : c.spKo;
+  var en = GameI18n.lang === 'en', p = [];
+  var all = c.aoe ? (en ? ' (all)' : ' (전체)') : '';
+  if (c.dmg) p.push((en ? 'Deal ' : '피해 ') + c.dmg + (c.hits > 1 ? '×' + c.hits : '') + all);
+  if (c.burn) p.push((en ? 'Burn ' : '화상 ') + c.burn + all);
+  if (c.vuln) p.push((en ? 'Vuln ' : '취약 ') + c.vuln + all);
+  if (c.weak) p.push((en ? 'Weak ' : '약화 ') + c.weak + all);
+  if (c.blk) p.push((en ? 'Block ' : '블록 ') + c.blk);
+  if (c.thorn) p.push((en ? 'Thorns ' : '가시 ') + c.thorn);
+  if (c.fort) p.push((en ? 'Growth ' : '성장 ') + c.fort);
+  if (c.draw) p.push((en ? 'Draw ' : '드로우 ') + c.draw);
+  if (c.eng) p.push((en ? 'Energy +' : '에너지 +') + c.eng);
+  if (c.heal) p.push((en ? 'Heal ' : '회복 ') + c.heal);
+  if (c.hp) p.push('HP -' + c.hp);
+  if (c.exh) p.push(en ? 'Exhaust' : '소멸');
+  return p.join(' · ');
+}
+function needsTarget(c) {
+  return !c.aoe && !!(c.dmg || c.burn || c.vuln || c.weak || c.sp === 'blockDmg');
+}
+function cardHtml(c, extraCls, cnt) {
+  return '<div class="card ' + c.el + ' r' + c.rar + (extraCls ? ' ' + extraCls : '') + '">' +
+    '<span class="co">' + c.cost + '⚡</span>' +
+    '<div class="nm">' + ELIC[c.el] + ' ' + N(c) + '</div>' +
+    '<div class="dc">' + cardDesc(c) + '</div>' +
+    (cnt > 1 ? '<span class="cnt">×' + cnt + '</span>' : '') + '</div>';
+}
+
+/* ══════════ 유물 12종 ══════════ */
+var RELICS = [
+  { id: 'ember', ic: '🧿', ko: '잿불 부적', en: 'Ember Charm', dKo: '화염 카드의 화상 +1', dEn: 'Fire cards apply +1 Burn' },
+  { id: 'crystal', ic: '💠', ko: '서리 결정', en: 'Frost Crystal', dKo: '턴 시작 시 블록 2', dEn: 'Gain 2 Block at turn start' },
+  { id: 'seed', ic: '🌰', ko: '대지의 씨앗', en: 'Earth Seed', dKo: '전투 시작 시 성장 1', dEn: 'Start combat with 1 Growth' },
+  { id: 'shard', ic: '🔮', ko: '공허 조각', en: 'Void Shard', dKo: '매 턴 드로우 +1', dEn: 'Draw +1 each turn' },
+  { id: 'flask', ic: '🍶', ko: '순례자의 물병', en: 'Pilgrim Flask', dKo: '전투 승리 시 HP 4 회복', dEn: 'Heal 4 HP after each victory' },
+  { id: 'prism', ic: '🔷', ko: '공명 프리즘', en: 'Resonance Prism', dKo: '원소 공명 보너스 2배', dEn: 'Resonance bonuses doubled' },
+  { id: 'compass', ic: '🧭', ko: '황금 나침반', en: 'Gold Compass', dKo: '전투 보상 골드 +15', dEn: '+15 gold from battles' },
+  { id: 'amulet', ic: '📿', ko: '가시 목걸이', en: 'Thorn Amulet', dKo: '전투 시작 시 가시 2', dEn: 'Start combat with 2 Thorns' },
+  { id: 'heart', ic: '💗', ko: '심장석', en: 'Heartstone', dKo: '획득 시 최대 HP +10', dEn: '+10 Max HP on pickup' },
+  { id: 'glass', ic: '⏳', ko: '모래시계', en: 'Hourglass', dKo: '매 전투 첫 턴 에너지 +1', dEn: '+1 Energy on the first turn' },
+  { id: 'scroll', ic: '📜', ko: '학자의 두루마리', en: 'Scholar Scroll', dKo: '상점 가격 30% 할인', dEn: 'Shop prices -30%' },
+  { id: 'lava', ic: '🌋', ko: '용암 심장', en: 'Lava Heart', dKo: '매 턴 첫 공격 피해 +3', dEn: 'First attack each turn +3 damage' },
+];
+var RELIC = {};
+(function () { for (var i = 0; i < RELICS.length; i++) RELIC[RELICS[i].id] = RELICS[i]; })();
+
+/* ══════════ 적 — 일반 6 / 엘리트 2 / 보스 3 (행동 로테이션) ══════════
+ * 행동 키: atk 공격(n 연타) / blk 방어 / str 힘 버프 / psn 중독 / wk 약화 / vu 취약 */
+var FOES = {
+  wolf:   { ko: '재 늑대', en: 'Ash Wolf', ic: '🐺', hp: 16, mv: [{ atk: 6 }, { atk: 4, wk: 1 }, { atk: 7 }] },
+  bat:    { ko: '서리 박쥐', en: 'Frost Bat', ic: '🦇', hp: 12, mv: [{ atk: 5, wk: 1 }, { psn: 3 }, { atk: 6 }] },
+  golem:  { ko: '이끼 골렘', en: 'Moss Golem', ic: '🗿', hp: 24, mv: [{ blk: 6, atk: 4 }, { atk: 8 }, { blk: 9 }] },
+  sprout: { ko: '공허 새싹', en: 'Void Sprout', ic: '🌱', hp: 18, mv: [{ psn: 4 }, { atk: 6 }, { str: 2, blk: 4 }] },
+  magma:  { ko: '용암 정령', en: 'Magma Sprite', ic: '🔥', hp: 22, mv: [{ atk: 9 }, { atk: 3, psn: 3 }, { atk: 5, vu: 1 }] },
+  knight: { ko: '흑요석 기사', en: 'Obsidian Knight', ic: '♞', hp: 30, mv: [{ atk: 11 }, { blk: 8, str: 1 }, { atk: 7, vu: 1 }] },
+  cobra:  { ko: '쌍두 코브라', en: 'Twin Cobra', ic: '🐍', hp: 44, elite: 1, mv: [{ psn: 5 }, { atk: 9 }, { atk: 6, wk: 2 }] },
+  giant:  { ko: '폭풍 거인', en: 'Storm Giant', ic: '🌩', hp: 56, elite: 1, mv: [{ atk: 12 }, { blk: 10, str: 2 }, { atk: 8, vu: 2 }] },
+  cinder: { ko: '잿더미 군주', en: 'Cinder Lord', ic: '👹', hp: 80, boss: 1, mv: [{ atk: 7, psn: 2 }, { atk: 12 }, { blk: 10, str: 2 }] },
+  glacier:{ ko: '빙하 여왕', en: 'Glacier Queen', ic: '👸', hp: 105, boss: 1, mv: [{ atk: 10, wk: 2 }, { blk: 14, str: 2 }, { atk: 16 }] },
+  abyss:  { ko: '심연의 눈', en: 'Abyss Eye', ic: '👁', hp: 130, boss: 1, mv: [{ atk: 9, psn: 4 }, { atk: 20 }, { blk: 12, str: 3 }] },
+};
+var ENC = {
+  1: { fight: [['wolf'], ['bat'], ['golem'], ['wolf', 'bat']], boss: 'cinder' },
+  2: { fight: [['sprout'], ['magma'], ['golem', 'bat'], ['sprout', 'wolf']], boss: 'glacier' },
+  3: { fight: [['knight'], ['magma', 'sprout'], ['knight', 'bat'], ['magma', 'magma']], boss: 'abyss' },
+};
+var ELITE_POOL = ['cobra', 'giant'];
+
+// 보상 카드 3장 — 노드 종류별 희귀도 확률
+function pickRewardCards(kind) {
+  var out = [], guard = 0;
+  while (out.length < 3 && guard++ < 200) {
+    var r = Math.random(), rar;
+    if (kind === 'boss') rar = r < 0.5 ? 2 : 1;
+    else if (kind === 'elite') rar = r < 0.15 ? 2 : r < 0.55 ? 1 : 0;
+    else rar = r < 0.05 ? 2 : r < 0.3 ? 1 : 0;
+    var pool = [];
+    for (var i = 0; i < CARDS.length; i++) if (CARDS[i].rar === rar) pool.push(CARDS[i].id);
+    var pick = pool[rnd(pool.length)];
+    if (out.indexOf(pick) < 0) out.push(pick);
+  }
+  return out;
+}
+function unownedRelic() {
+  var pool = [];
+  for (var i = 0; i < RELICS.length; i++) if (S.relics.indexOf(RELICS[i].id) < 0) pool.push(RELICS[i].id);
+  return pool.length ? pool[rnd(pool.length)] : null;
+}
+function gainRelic(id) {
+  S.relics.push(id);
+  if (id === 'heart') { S.maxHp += 10; S.hp += 10; }
+  renderHud();
+}
+
+/* ══════════ 맵 — 막당 8층 분기 트리 (아래→위) ══════════ */
+var LAYERS = 8;
+var NODE_IC = { fight: '⚔', elite: '💀', camp: '🏕', shop: '🛒', gift: '🎁', boss: '👑' };
+
+function nodeType(i) {
+  if (i === LAYERS - 1) return 'boss';
+  if (i === 0 || i === 1) return 'fight';
+  if (i === LAYERS - 2) return Math.random() < 0.5 ? 'camp' : 'fight';
+  var r = Math.random();
+  if (r < 0.14) return 'elite';
+  if (r < 0.30) return 'camp';
+  if (r < 0.43) return 'shop';
+  if (r < 0.56) return 'gift';
+  return 'fight';
+}
+function ensureType(lay, t) {
+  for (var i = 2; i < LAYERS - 1; i++)
+    for (var k = 0; k < lay[i].length; k++) if (lay[i][k].t === t) return;
+  var tries = 0;
+  while (tries++ < 60) {
+    var li = 2 + rnd(LAYERS - 3), row = lay[li], ni = rnd(row.length);
+    if (row[ni].t === 'fight') { row[ni].t = t; return; }
+  }
+}
+function pushLink(node, j) { if (node.links.indexOf(j) < 0) node.links.push(j); }
+
+function genMap() {
+  var widths = [2], i, k;
+  for (i = 1; i < LAYERS - 1; i++) widths.push(2 + (Math.random() < 0.45 ? 1 : 0));
+  widths.push(1);
+  var lay = [];
+  for (i = 0; i < LAYERS; i++) {
+    var row = [];
+    for (k = 0; k < widths[i]; k++) row.push({ t: nodeType(i), links: [] });
+    lay.push(row);
+  }
+  ensureType(lay, 'camp'); ensureType(lay, 'shop'); ensureType(lay, 'gift');
+  for (i = 0; i < LAYERS - 1; i++) {
+    var w1 = widths[i], w2 = widths[i + 1];
+    for (k = 0; k < w1; k++) {
+      var c = w1 === 1 ? 0 : Math.round(k * (w2 - 1) / (w1 - 1));
+      pushLink(lay[i][k], c);
+      if (Math.random() < 0.45 && c + 1 <= w2 - 1) pushLink(lay[i][k], c + 1);
+      if (Math.random() < 0.3 && c - 1 >= 0) pushLink(lay[i][k], c - 1);
+    }
+    for (var j = 0; j < w2; j++) {
+      var ok = false;
+      for (k = 0; k < w1; k++) if (lay[i][k].links.indexOf(j) >= 0) ok = true;
+      if (!ok) pushLink(lay[i][w2 === 1 ? rnd(w1) : Math.min(w1 - 1, Math.round(j * (w1 - 1) / (w2 - 1)))], j);
+    }
+  }
+  S.map = lay;
+  S.chosen = [];
+}
+
+function nodeXY(li, ni) {
+  var w = S.map[li].length;
+  return { x: (ni + 1) * 100 / (w + 1), y: 92 - li * (84 / (LAYERS - 1)) };
+}
+
+function renderMap() {
+  el('mapActTxt').textContent = GameI18n.lang === 'en' ? 'Act ' + S.act + '/3' : S.act + '막 / 3막';
+  var svg = el('mapEdges'), nd = el('mapNodes');
+  var sh = '', i, k, j;
+  for (i = 0; i < LAYERS - 1; i++) {
+    for (k = 0; k < S.map[i].length; k++) {
+      var a = nodeXY(i, k);
+      for (j = 0; j < S.map[i][k].links.length; j++) {
+        var b = nodeXY(i + 1, S.map[i][k].links[j]);
+        var hot = S.floor === i && S.chosen[i] === k;
+        sh += '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y +
+          '" stroke="' + (hot ? '#0ea5e9' : '#2c3550') + '" stroke-width="' + (hot ? 2 : 1) +
+          '" vector-effect="non-scaling-stroke"/>';
+      }
+    }
+  }
+  svg.innerHTML = sh;
+  nd.innerHTML = '';
+  for (i = 0; i < LAYERS; i++) {
+    for (k = 0; k < S.map[i].length; k++) {
+      var p = nodeXY(i, k), n = S.map[i][k];
+      var btn = document.createElement('button');
+      btn.className = 'mnode';
+      btn.style.left = p.x + '%';
+      btn.style.top = p.y + '%';
+      btn.textContent = NODE_IC[n.t];
+      if (i <= S.floor) {
+        btn.className += S.chosen[i] === k ? (i === S.floor ? ' cur' : ' done') : ' done';
+      } else if (openAt(i, k)) {
+        btn.className += ' open';
+        (function (li, ni) { btn.onclick = function () { enterNode(li, ni); }; })(i, k);
+      }
+      nd.appendChild(btn);
+    }
+  }
+}
+function openAt(li, ni) {
+  if (S.floor < 0) return li === 0;
+  if (li !== S.floor + 1) return false;
+  return S.map[S.floor][S.chosen[S.floor]].links.indexOf(ni) >= 0;
+}
+
+function showMap() {
+  el('combatScr').hidden = true;
+  el('mapScr').hidden = false;
+  renderHud();
+  renderMap();
+}
+
+function enterNode(li, ni) {
+  S.floor = li;
+  S.chosen[li] = ni;
+  S.floors++;
+  renderHud();
+  var t = S.map[li][ni].t;
+  if (t === 'fight' || t === 'elite' || t === 'boss') {
+    el('mapScr').hidden = true;
+    startCombat(t);
+  } else if (t === 'camp') {
+    renderMap();
+    el('campPanel').hidden = false;
+  } else if (t === 'shop') {
+    renderMap();
+    openShop();
+  } else if (t === 'gift') {
+    renderMap();
+    openTreasure();
+  }
+}
+
+/* ══════════ HUD / 덱 패널 ══════════ */
+function fmtPos() {
+  if (S.floor < 0) return GameI18n.lang === 'en' ? 'Act ' + S.act : S.act + '막';
+  return GameI18n.lang === 'en' ? 'Act ' + S.act + ' · F' + (S.floor + 1) : S.act + '막 ' + (S.floor + 1) + '층';
+}
+function renderHud() {
+  el('hpTxt').textContent = '❤ ' + S.hp + '/' + S.maxHp;
+  el('goldTxt').textContent = '🪙 ' + S.gold;
+  el('posTxt').textContent = fmtPos();
+  el('deckBtn').textContent = '📖 ' + S.deck.length;
+  var rr = el('relicRow');
+  rr.innerHTML = '';
+  for (var i = 0; i < S.relics.length; i++) {
+    var r = RELIC[S.relics[i]], sp = document.createElement('span');
+    sp.textContent = r.ic;
+    sp.title = N(r) + ' — ' + (GameI18n.lang === 'en' ? r.dEn : r.dKo);
+    rr.appendChild(sp);
+  }
+}
+function heal(n) { S.hp = Math.min(S.maxHp, S.hp + n); renderHud(); }
+
+var deckMode = null; // null 보기 / 'camp' 'shop' 제거 모드
+function openDeck(mode) {
+  deckMode = mode || null;
+  el('deckModeTxt').textContent = deckMode ? TR('removeMode') : '';
+  var list = el('deckList');
+  list.innerHTML = '';
+  var counts = {}, order = [], i;
+  for (i = 0; i < S.deck.length; i++) {
+    if (!counts[S.deck[i]]) { counts[S.deck[i]] = 0; order.push(S.deck[i]); }
+    counts[S.deck[i]]++;
+  }
+  order.sort(function (a, b) {
+    var ca = CARD[a], cb = CARD[b];
+    if (ca.el !== cb.el) return ca.el < cb.el ? -1 : 1;
+    if (ca.rar !== cb.rar) return ca.rar - cb.rar;
+    return ca.cost - cb.cost;
+  });
+  for (i = 0; i < order.length; i++) {
+    (function (id) {
+      var wrap = document.createElement('div');
+      wrap.innerHTML = cardHtml(CARD[id], '', counts[id]);
+      var cardEl = wrap.firstChild;
+      if (deckMode) cardEl.onclick = function () { removeCardFromDeck(id); };
+      list.appendChild(cardEl);
+    })(order[i]);
+  }
+  el('deckPanel').hidden = false;
+}
+function removeCardFromDeck(id) {
+  var i = S.deck.indexOf(id);
+  if (i < 0) return;
+  S.deck.splice(i, 1);
+  toast(TR('removed') + ' — ' + N(CARD[id]));
+  el('deckPanel').hidden = true;
+  if (deckMode === 'camp') { deckMode = null; showMap(); }
+  else if (deckMode === 'shop') { deckMode = null; shopRemoveDone(); }
+  renderHud();
+}
+
+/* ══════════ 전투 ══════════ */
+function makeFoe(fid) {
+  var d = FOES[fid];
+  var hpMul = d.boss ? 1 : 1 + 0.45 * (S.act - 1);
+  var atkAdd = d.boss ? 0 : 2 * (S.act - 1);
+  return { d: d, hp: Math.round(d.hp * hpMul), maxHp: Math.round(d.hp * hpMul),
+    atkAdd: atkAdd, blk: 0, str: 0, vuln: 0, weak: 0, burn: 0, mi: rnd(d.mv.length), dead: false };
+}
+function aliveFoes() {
+  var out = [];
+  for (var i = 0; i < C.foes.length; i++) if (!C.foes[i].dead) out.push(C.foes[i]);
+  return out;
+}
+
+function startCombat(kind) {
+  var ids;
+  if (kind === 'boss') ids = [ENC[S.act].boss];
+  else if (kind === 'elite') ids = [ELITE_POOL[rnd(ELITE_POOL.length)]];
+  else { var pool = ENC[S.act].fight; ids = pool[rnd(pool.length)]; }
+  C = {
+    kind: kind, foes: [], drawP: shuffle(S.deck.slice()), hand: [], discP: [], exhP: [],
+    energy: 0, turn: 0, elems: {}, elemCnt: 0, firstAtk: true, sel: -1, lock: false, over: false,
+    pBlk: 0, pSts: { vuln: 0, weak: 0, psn: 0, thorn: 0, fort: 0 },
+  };
+  for (var i = 0; i < ids.length; i++) C.foes.push(makeFoe(ids[i]));
+  if (hasRelic('seed')) C.pSts.fort += 1;
+  if (hasRelic('amulet')) C.pSts.thorn += 2;
+  el('combatScr').hidden = false;
+  startTurn();
+}
+
+function draw(n) {
+  for (var i = 0; i < n; i++) {
+    if (!C.drawP.length) { C.drawP = shuffle(C.discP); C.discP = []; }
+    if (!C.drawP.length || C.hand.length >= 10) return;
+    C.hand.push(C.drawP.pop());
+  }
+}
+
+function startTurn() {
+  C.turn++;
+  C.pBlk = hasRelic('crystal') ? 2 : 0;
+  C.energy = 3 + (C.turn === 1 && hasRelic('glass') ? 1 : 0);
+  C.elems = {}; C.elemCnt = 0; C.firstAtk = true; C.sel = -1;
+  if (C.pSts.psn > 0) {
+    S.hp -= C.pSts.psn; C.pSts.psn--;
+    if (S.hp <= 0) { die(); return; }
+  }
+  draw(5 + (hasRelic('shard') ? 1 : 0));
+  renderCombat();
+}
+
+function hitFoe(f, amt) {
+  // 공격 피해 — 약화(플레이어)/취약(적) 반영 후 블록 관통
+  var v = Math.floor(amt * (C.pSts.weak > 0 ? 0.75 : 1) * (f.vuln > 0 ? 1.5 : 1));
+  rawHitFoe(f, v);
+}
+function rawHitFoe(f, v) {
+  var b = Math.min(f.blk, v);
+  f.blk -= b;
+  f.hp -= v - b;
+  if (f.hp <= 0) { f.hp = 0; f.dead = true; }
+}
+function noteElem(elName) {
+  if (C.elems[elName]) return;
+  C.elems[elName] = 1;
+  C.elemCnt++;
+  var m = hasRelic('prism') ? 2 : 1, i;
+  if (C.elemCnt === 2) { C.pBlk += 2 * m; toast(TR('res2') + 2 * m); }
+  else if (C.elemCnt === 3) {
+    var af = aliveFoes();
+    for (i = 0; i < af.length; i++) rawHitFoe(af[i], 3 * m);
+    toast(TR('res3') + 3 * m);
+  } else if (C.elemCnt === 4) { C.energy += m; toast(TR('res4') + m); }
+}
+
+function onCardTap(i) {
+  if (C.lock || C.over) return;
+  var c = CARD[C.hand[i]];
+  if (c.cost > C.energy) { toast(TR('notEnough')); return; }
+  if (needsTarget(c) && aliveFoes().length > 1) {
+    C.sel = C.sel === i ? -1 : i;
+    renderCombat();
+    return;
+  }
+  playCard(i, needsTarget(c) ? aliveFoes()[0] : null);
+}
+function onFoeTap(fi) {
+  if (C.lock || C.over || C.sel < 0) return;
+  var f = C.foes[fi];
+  if (f.dead) return;
+  var i = C.sel;
+  C.sel = -1;
+  playCard(i, f);
+}
+
+function playCard(i, target) {
+  var id = C.hand[i], c = CARD[id], k;
+  C.energy -= c.cost;
+  C.hand.splice(i, 1);
+  (c.exh ? C.exhP : C.discP).push(id);
+  if (c.hp) {
+    S.hp -= c.hp;
+    if (S.hp <= 0) { die(); return; }
+  }
+  var isAtk = !!(c.dmg || c.sp === 'blockDmg');
+  var bonus = isAtk && C.firstAtk && hasRelic('lava') ? 3 : 0;
+  if (isAtk) C.firstAtk = false;
+  var tgts = c.aoe ? aliveFoes() : target && !target.dead ? [target] : [];
+  if (c.dmg) {
+    var hits = c.hits || 1;
+    for (k = 0; k < tgts.length; k++)
+      for (var h = 0; h < hits; h++) if (!tgts[k].dead) hitFoe(tgts[k], c.dmg + bonus);
+  }
+  if (c.sp === 'blockDmg' && tgts.length && !tgts[0].dead) hitFoe(tgts[0], C.pBlk + bonus);
+  var burnAmt = (c.burn || 0) + (c.burn && c.el === 'fire' && hasRelic('ember') ? 1 : 0);
+  for (k = 0; k < tgts.length; k++) {
+    var f = tgts[k];
+    if (f.dead) continue;
+    if (burnAmt) f.burn += burnAmt;
+    if (c.vuln) f.vuln += c.vuln;
+    if (c.weak) f.weak += c.weak;
+    if (c.sp === 'chain' && f.burn > 0) f.burn += 3 + (hasRelic('ember') ? 1 : 0);
+    if (c.sp === 'dblburn') f.burn *= 2;
+  }
+  if (c.blk) C.pBlk += c.blk;
+  if (c.thorn) C.pSts.thorn += c.thorn;
+  if (c.fort) C.pSts.fort += c.fort;
+  if (c.eng) C.energy += c.eng;
+  if (c.heal) heal(c.heal);
+  if (c.draw) draw(c.draw);
+  noteElem(c.el);
+  renderHud();
+  if (!aliveFoes().length) { victory(); return; }
+  renderCombat();
+}
+
+function endTurn() {
+  if (C.lock || C.over) return;
+  C.sel = -1;
+  C.pBlk += C.pSts.fort; // 성장 — 턴 종료 블록이라 적 턴까지 유지
+  while (C.hand.length) C.discP.push(C.hand.pop());
+  if (C.pSts.vuln > 0) C.pSts.vuln--;
+  if (C.pSts.weak > 0) C.pSts.weak--;
+  enemyPhase();
+}
+
+function foeAct(f) {
+  f.blk = 0;
+  if (f.burn > 0) {
+    f.hp -= f.burn; f.burn--;
+    if (f.hp <= 0) { f.hp = 0; f.dead = true; return; }
+  }
+  var m = f.d.mv[f.mi % f.d.mv.length];
+  if (m.atk) {
+    var n = m.n || 1;
+    for (var h = 0; h < n; h++) {
+      var amt = Math.floor((m.atk + f.atkAdd + f.str) * (f.weak > 0 ? 0.75 : 1) * (C.pSts.vuln > 0 ? 1.5 : 1));
+      var b = Math.min(C.pBlk, amt);
+      C.pBlk -= b;
+      S.hp -= amt - b;
+      if (C.pSts.thorn > 0) {
+        rawHitFoe(f, C.pSts.thorn);
+        if (f.dead) break;
+      }
+      if (S.hp <= 0) return;
+    }
+  }
+  if (m.blk) f.blk += m.blk;
+  if (m.str) f.str += m.str;
+  if (m.psn) C.pSts.psn += m.psn;
+  if (m.wk) C.pSts.weak += m.wk;
+  if (m.vu) C.pSts.vuln += m.vu;
+  f.mi++;
+  if (f.vuln > 0) f.vuln--;
+  if (f.weak > 0) f.weak--;
+}
+
+function enemyPhase() {
+  C.lock = true;
+  renderCombat();
+  var list = aliveFoes(), i = 0;
+  function step() {
+    if (!C || C.over) return;
+    if (S.hp <= 0) { die(); return; }
+    if (i >= list.length) {
+      C.lock = false;
+      if (!aliveFoes().length) { victory(); return; }
+      startTurn();
+      return;
+    }
+    if (!list[i].dead) foeAct(list[i]);
+    i++;
+    renderHud();
+    renderCombat();
+    if (S.hp <= 0) { die(); return; }
+    setTimeout(step, 420);
+  }
+  setTimeout(step, 320);
+}
+
+/* ── 전투 렌더 ── */
+function intentTxt(f) {
+  var m = f.d.mv[f.mi % f.d.mv.length], p = [];
+  if (m.atk) {
+    var amt = Math.floor((m.atk + f.atkAdd + f.str) * (f.weak > 0 ? 0.75 : 1) * (C.pSts.vuln > 0 ? 1.5 : 1));
+    p.push('⚔' + amt + (m.n > 1 ? '×' + m.n : ''));
+  }
+  if (m.blk) p.push('🛡' + m.blk);
+  if (m.str) p.push('💪+' + m.str);
+  if (m.psn) p.push('☠' + m.psn);
+  if (m.wk) p.push('🌫' + m.wk);
+  if (m.vu) p.push('💔' + m.vu);
+  return p.join(' ');
+}
+function stsHtml(list) {
+  var h = '';
+  for (var i = 0; i < list.length; i++) {
+    var s = list[i];
+    if (s.v > 0) h += '<span title="' + TR(s.k) + '">' + s.ic + s.v + '</span>';
+  }
+  return h;
+}
+function renderCombat() {
+  if (!C) return;
+  var fw = el('foes');
+  fw.innerHTML = '';
+  for (var i = 0; i < C.foes.length; i++) {
+    (function (f, fi) {
+      var d = document.createElement('div');
+      d.className = 'foe' + (f.dead ? ' dead' : '') + (C.sel >= 0 && !f.dead ? ' tgt' : '');
+      d.innerHTML = '<div class="fn">' + N(f.d) + '</div>' +
+        '<div class="fic">' + f.d.ic + '</div>' +
+        '<div class="intent">' + (f.dead ? '' : intentTxt(f)) + '</div>' +
+        '<div class="bar fhp"><i style="width:' + (f.hp / f.maxHp * 100) + '%"></i></div>' +
+        '<div class="hpline">' + f.hp + '/' + f.maxHp + (f.blk ? ' 🛡' + f.blk : '') + '</div>' +
+        '<div class="sts">' + stsHtml([
+          { k: 'st_vuln', ic: '💔', v: f.vuln }, { k: 'st_weak', ic: '🌫', v: f.weak },
+          { k: 'st_burn', ic: '🔥', v: f.burn }, { k: 'st_str', ic: '💪', v: f.str },
+        ]) + '</div>';
+      d.onclick = function () { onFoeTap(fi); };
+      fw.appendChild(d);
+    })(C.foes[i], i);
+  }
+  el('pHpTxt').textContent = '❤ ' + S.hp + '/' + S.maxHp;
+  el('pBlkTxt').textContent = '🛡 ' + C.pBlk;
+  el('energyTxt').textContent = '⚡ ' + C.energy;
+  el('pHpBar').style.width = Math.max(0, S.hp / S.maxHp * 100) + '%';
+  el('pSts').innerHTML = stsHtml([
+    { k: 'st_vuln', ic: '💔', v: C.pSts.vuln }, { k: 'st_weak', ic: '🌫', v: C.pSts.weak },
+    { k: 'st_psn', ic: '☠', v: C.pSts.psn }, { k: 'st_thorn', ic: '🌵', v: C.pSts.thorn },
+    { k: 'st_fort', ic: '🌿', v: C.pSts.fort },
+  ]);
+  var els = ['fire', 'frost', 'earth', 'void'];
+  for (var e = 0; e < 4; e++)
+    el('rd-' + els[e]).className = 'rdot' + (C.elems[els[e]] ? ' on' : '');
+  var hand = el('hand');
+  hand.innerHTML = '';
+  for (var h = 0; h < C.hand.length; h++) {
+    (function (hi) {
+      var c = CARD[C.hand[hi]];
+      var wrap = document.createElement('div');
+      wrap.innerHTML = cardHtml(c, (C.sel === hi ? 'sel' : '') + (c.cost > C.energy ? ' off' : ''), 1);
+      var cardEl = wrap.firstChild;
+      cardEl.onclick = function () { onCardTap(hi); };
+      hand.appendChild(cardEl);
+    })(h);
+  }
+  el('pileTxt').textContent = TR('drawLbl') + ' ' + C.drawP.length + ' · ' + TR('discLbl') + ' ' + C.discP.length;
+  el('combatMsg').textContent = C.sel >= 0 ? TR('targetHint') : '';
+  el('endTurnBtn').disabled = C.lock;
+}
+
+/* ══════════ 승리 보상 ══════════ */
+var pendingBoss = false;
+function victory() {
+  C.over = true;
+  var kind = C.kind;
+  var gold = kind === 'boss' ? 70 + rnd(21) : kind === 'elite' ? 35 + rnd(16) : 15 + rnd(11);
+  if (hasRelic('compass')) gold += 15;
+  S.gold += gold;
+  if (kind === 'elite') S.elites++;
+  if (kind === 'boss') S.bosses++;
+  if (hasRelic('flask')) heal(4);
+  renderHud();
+  if (kind === 'boss' && S.act === 3) { winRun(); return; }
+  var relicId = null;
+  if (kind === 'elite' || kind === 'boss') {
+    relicId = unownedRelic();
+    if (relicId) gainRelic(relicId);
+  }
+  pendingBoss = kind === 'boss';
+  el('rwGold').textContent = '🪙 +' + gold;
+  var r = relicId ? RELIC[relicId] : null;
+  el('rwRelic').textContent = r ? TR('relicGet') + ': ' + r.ic + ' ' + N(r) : '';
+  var box = el('rwCards');
+  box.innerHTML = '';
+  var picks = pickRewardCards(kind);
+  for (var i = 0; i < picks.length; i++) {
+    (function (id) {
+      var wrap = document.createElement('div');
+      wrap.innerHTML = cardHtml(CARD[id], '', 1);
+      var cardEl = wrap.firstChild;
+      cardEl.onclick = function () { S.deck.push(id); closeReward(); };
+      box.appendChild(cardEl);
+    })(picks[i]);
+  }
+  el('rewardPanel').hidden = false;
+}
+function closeReward() {
+  el('rewardPanel').hidden = true;
+  C = null;
+  el('combatScr').hidden = true;
+  if (pendingBoss) { pendingBoss = false; nextAct(); }
+  else showMap();
+}
+function nextAct() {
+  S.act++;
+  S.floor = -1;
+  heal(Math.floor(S.maxHp * 0.25));
+  genMap();
+  showMap();
+  toast(TR('actMove'));
+}
+
+/* ══════════ 상점 ══════════ */
+var shop = null;
+function price(base) { return hasRelic('scroll') ? Math.round(base * 0.7) : base; }
+function openShop() {
+  shop = { cards: pickRewardCards('elite'), relic: unownedRelic(), bought: {}, removed: false };
+  renderShop();
+  el('shopPanel').hidden = false;
+}
+function renderShop() {
+  el('shopGoldTxt').textContent = '🪙 ' + S.gold;
+  var list = el('shopList');
+  list.innerHTML = '';
+  var prices = [50, 75, 110], i;
+  function addRow(html, pr, off, fn) {
+    var d = document.createElement('div');
+    d.className = 'shopItem' + (off ? ' off' : '');
+    d.innerHTML = html + '<span class="pr">' + (off ? TR('sold') : pr + 'G') + '</span>';
+    if (!off) d.onclick = fn;
+    list.appendChild(d);
+  }
+  for (i = 0; i < shop.cards.length; i++) {
+    (function (id, idx) {
+      var c = CARD[id], pr = price(prices[c.rar]);
+      addRow('<span>' + ELIC[c.el] + ' <b>' + N(c) + '</b> <span style="color:#8e9db0">' + c.cost + '⚡ ' +
+        cardDesc(c) + '</span></span>', pr, shop.bought[idx], function () {
+          if (S.gold < pr) { toast(TR('noGold')); return; }
+          S.gold -= pr;
+          S.deck.push(id);
+          shop.bought[idx] = true;
+          renderHud(); renderShop();
+        });
+    })(shop.cards[i], i);
+  }
+  if (shop.relic) {
+    (function (rid) {
+      var r = RELIC[rid], pr = price(160);
+      addRow('<span>' + r.ic + ' <b>' + N(r) + '</b> <span style="color:#8e9db0">' +
+        (GameI18n.lang === 'en' ? r.dEn : r.dKo) + '</span></span>', pr, shop.bought.relic, function () {
+          if (S.gold < pr) { toast(TR('noGold')); return; }
+          S.gold -= pr;
+          gainRelic(rid);
+          shop.bought.relic = true;
+          renderShop();
+        });
+    })(shop.relic);
+  }
+  var rmPr = price(75);
+  addRow('<span>' + TR('removeSvc') + '</span>', rmPr, shop.removed, function () {
+    if (S.gold < rmPr) { toast(TR('noGold')); return; }
+    el('shopPanel').hidden = true;
+    openDeck('shop');
+  });
+}
+function shopRemoveDone() {
+  S.gold -= price(75);
+  shop.removed = true;
+  renderHud(); renderShop();
+  el('shopPanel').hidden = false;
+}
+
+/* ══════════ 보물 ══════════ */
+var pendingRelic = null;
+function openTreasure() {
+  pendingRelic = unownedRelic();
+  var r = pendingRelic ? RELIC[pendingRelic] : null;
+  el('tLine').innerHTML = r
+    ? r.ic + ' <b>' + N(r) + '</b><br><span style="font-size:11.5px;color:#8e9db0">' +
+      (GameI18n.lang === 'en' ? r.dEn : r.dKo) + '</span>'
+    : TR('allOwned');
+  el('treasurePanel').hidden = false;
+}
+
+/* ══════════ 런 라이프사이클 ══════════ */
+function newRun() {
+  S = { act: 1, hp: 70, maxHp: 70, gold: 60, deck: STARTER.slice(), relics: [],
+    floors: 0, elites: 0, bosses: 0, floor: -1, chosen: [], map: null };
+  C = null;
+  genMap();
+  el('menu').hidden = true;
+  el('endPanel').hidden = true;
+  el('hud').hidden = false;
+  showMap();
+}
+function score() { return S.floors * 100 + S.elites * 200 + S.bosses * 500; }
+function showEnd(won) {
+  var detail = won ? '3막 보스 격파' : S.act + '막 ' + Math.max(1, S.floor + 1) + '층';
+  GameRank.submit(SLUG, score(), detail);
+  el('endTitle').textContent = won ? TR('endWin') : TR('endDie');
+  el('endDetail').textContent = detail;
+  var st = el('endStats');
+  st.innerHTML = '';
+  var rows = [
+    [score(), TR('scoreLabel')], [S.floors, TR('floorsLabel')],
+    [S.elites, TR('elitesLabel')], [S.bosses, TR('bossesLabel')],
+  ];
+  for (var i = 0; i < rows.length; i++) {
+    var d = document.createElement('div');
+    d.className = 'stat';
+    d.innerHTML = '<b>' + rows[i][0] + '</b>' + rows[i][1];
+    st.appendChild(d);
+  }
+  el('endPanel').hidden = false;
+}
+function winRun() { if (C) C.over = true; showEnd(true); }
+function die() {
+  if (C) C.over = true;
+  if (S.hp < 0) S.hp = 0;
+  renderHud();
+  showEnd(false);
+}
+
+/* ══════════ 배선 ══════════ */
+el('startBtn').onclick = newRun;
+el('againBtn').onclick = newRun;
+el('backBtn').onclick = function () {
+  el('endPanel').hidden = true;
+  el('hud').hidden = true;
+  el('mapScr').hidden = true;
+  el('combatScr').hidden = true;
+  el('menu').hidden = false;
+};
+el('endTurnBtn').onclick = endTurn;
+el('deckBtn').onclick = function () { if (S) openDeck(null); };
+el('deckCloseBtn').onclick = function () {
+  el('deckPanel').hidden = true;
+  if (deckMode === 'camp') el('campPanel').hidden = false;
+  else if (deckMode === 'shop') el('shopPanel').hidden = false;
+  deckMode = null;
+};
+el('skipBtn').onclick = closeReward;
+el('restBtn').onclick = function () {
+  var n = Math.floor(S.maxHp * 0.3);
+  heal(n);
+  toast(TR('healed') + n);
+  el('campPanel').hidden = true;
+  showMap();
+};
+el('purifyBtn').onclick = function () {
+  el('campPanel').hidden = true;
+  openDeck('camp');
+};
+el('leaveBtn').onclick = function () {
+  el('shopPanel').hidden = true;
+  shop = null;
+  showMap();
+};
+el('takeBtn').onclick = function () {
+  if (pendingRelic) gainRelic(pendingRelic);
+  else S.gold += 50;
+  pendingRelic = null;
+  el('treasurePanel').hidden = true;
+  showMap();
+};
+</script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('element-pilgrim');</script>
+</body>
+</html>
