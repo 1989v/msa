@@ -62,6 +62,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **문서-소스 추적**: `doc_map.py` / `doc_scan.py`, `docs/doc-index.json` 정책, `docs/doc-index.lock.json` 검증 → `docs/standards/doc-index-tracking.md`
 - **Latency Budget**: latency 를 설계 입력으로 강제 + Tier 1 P99 SLA + 측정 표준 → `docs/adr/ADR-0025-latency-budget.md` (실천: `docs/conventions/latency-budget.md`)
 - **docs 분류 정책**: ADR vs Conventions vs Standards 의 정의 / 판단 기준 / 분해 원칙 / redirect 표준 → `docs/adr/ADR-0026-docs-taxonomy.md`
+- **SEO / 검색 유입**: 빌드타임 프리렌더, 언어(`/en`)·장르(`/games/genre/*`) URL 승격, 호스트별 robots/sitemap, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 게임 타이틀/설명 문구는 여기서만 고친다
 
 ---
 

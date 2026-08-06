@@ -13,6 +13,8 @@
     /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
+    /* src/seo/copy.mjs — 프리렌더 스크립트와 공유하는 SEO 카피 SSOT */
+    "allowJs": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,

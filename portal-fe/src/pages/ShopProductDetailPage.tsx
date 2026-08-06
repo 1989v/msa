@@ -10,6 +10,8 @@ import {
 } from '../api/shopApi';
 import { isLoggedIn } from '../auth/auth';
 import { formatWon } from './shopFormat';
+import { portalTitle, portalUrl } from '../seo/copy.mjs';
+import { useSeo } from '../seo/useSeo';
 import './Shop.css';
 
 export default function ShopProductDetailPage() {
@@ -19,6 +21,11 @@ export default function ShopProductDetailPage() {
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  useSeo({
+    title: product ? portalTitle(`${product.name} — 스토어`) : '',
+    description: product ? `${product.name} — ${formatWon(product.price)}. MSA 커머스 데모 스토어에서 주문 플로우를 확인해 보세요.` : undefined,
+    canonical: id ? portalUrl(`/shop/products/${id}`) : undefined,
+  });
   const [error, setError] = useState<string | null>(null);
 
   const [quantity, setQuantity] = useState(1);

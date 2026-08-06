@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, type ReactElement } from 'react';
 import SearchPage from './pages/SearchPage';
 import PortfolioPage from './pages/PortfolioPage';
 import ShopPage from './pages/ShopPage';
@@ -25,10 +25,15 @@ const isApexProd = window.location.hostname === '1989v.com';
 
 function GameHostRedirect() {
   const { pathname, search, hash } = window.location;
-  window.location.replace(
-    `https://game.1989v.com${pathname === '/games' ? '/' : pathname}${search}${hash}`,
-  );
+  // 허브(/games, /en/games)는 게임 호스트에서 루트(/, /en)가 정규 주소다
+  const target = pathname === '/games' ? '/' : pathname === '/en/games' ? '/en' : pathname;
+  window.location.replace(`https://game.1989v.com${target}${search}${hash}`);
   return null;
+}
+
+/** 게임 라우트 — apex 프로덕션에서는 게임 호스트로 보내고, 그 외에는 그대로 렌더 */
+function gameRoute(element: ReactElement) {
+  return isApexProd ? <GameHostRedirect /> : element;
 }
 
 function App() {
@@ -44,11 +49,14 @@ function App() {
           <Route path="/shop/orders" element={<MyOrdersPage />} />
           <Route path="/shop/login" element={<ShopLoginPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
-          <Route path="/games" element={isApexProd ? <GameHostRedirect /> : <GamesPage />} />
-          <Route
-            path="/games/:slug"
-            element={isApexProd ? <GameHostRedirect /> : <GameDetailPage />}
-          />
+          {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
+          <Route path="/games" element={gameRoute(<GamesPage />)} />
+          <Route path="/games/genre/:genre" element={gameRoute(<GamesPage />)} />
+          <Route path="/games/:slug" element={gameRoute(<GameDetailPage />)} />
+          <Route path="/en" element={gameRoute(<GamesPage />)} />
+          <Route path="/en/games" element={gameRoute(<GamesPage />)} />
+          <Route path="/en/games/genre/:genre" element={gameRoute(<GamesPage />)} />
+          <Route path="/en/games/:slug" element={gameRoute(<GameDetailPage />)} />
 
           {/* 흡수 sub-app 슬롯 (P2 통합 대상) */}
           <Route path="/admin/*" element={<AdminApp />} />

@@ -9,7 +9,8 @@ COPY . .
 # axios baseURL = "" → relative path 로 같은 origin 의 /api/... 호출.
 ENV VITE_API_URL=""
 # Skip tsc type-check (pre-existing TS errors in ForceGraph3D.tsx).
-RUN npx vite build --base /
+# 프리렌더는 공개 게임 API 를 읽어 SEO 정적 페이지를 찍는다 — 실패해도 빌드는 통과한다.
+RUN npx vite build --base / && node scripts/prerender-seo.mjs
 
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html

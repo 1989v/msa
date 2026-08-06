@@ -1,17 +1,31 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   displayDescription,
   displayTitle,
   endGameSession,
   fetchGameDetail,
   fetchSimilarGames,
-  getGameLang,
+  genreLabel,
   rateGame,
   startGameSession,
   type GameDetail,
+  type GameLang,
   type GameSummary,
 } from '../../api/gameApi';
+import {
+  BRAND,
+  breadcrumbJsonLd,
+  detailMeta,
+  gameDetailUrl,
+  gamePath,
+  gameUrl,
+  genreSlug,
+  hreflangAlternates,
+  socialImage,
+  videoGameJsonLd,
+} from '../../seo/copy.mjs';
+import { useSeo } from '../../seo/useSeo';
 import { fetchGraphData } from '../../api/searchApi';
 import { isLoggedIn } from '../../auth/auth';
 import type { GraphNode } from '../../types/graph';
@@ -42,8 +56,13 @@ function InternalGamePlayer({ slug }: { slug: string }) {
   );
 }
 
+/** 허브 경로 — game 서브도메인에서는 루트가, 그 외 호스트에서는 /games 가 허브다 */
+const HUB_SUB = window.location.hostname.split('.')[0] === 'game' ? '' : '/games';
+
 export default function GameDetailPage() {
   const { slug = '' } = useParams();
+  const { pathname } = useLocation();
+  const lang: GameLang = pathname.startsWith('/en/') ? 'en' : 'ko';
   const [game, setGame] = useState<GameDetail | null>(null);
   const [similar, setSimilar] = useState<GameSummary[]>([]);
   const [playing, setPlaying] = useState(false);
@@ -99,12 +118,46 @@ export default function GameDetailPage() {
     }
   };
 
+  const canonical = gameDetailUrl(lang, slug);
+  const meta = game ? detailMeta(lang, game) : null;
+  useSeo(
+    game && meta
+      ? {
+          title: meta.title,
+          description: meta.description,
+          canonical,
+          lang,
+          image: socialImage(game),
+          alternates: hreflangAlternates(`/games/${slug}`),
+          jsonLd: [
+            videoGameJsonLd(lang, game),
+            breadcrumbJsonLd(lang, [
+              { name: lang === 'en' ? 'Games' : '게임', url: gameUrl(lang) },
+              {
+                name: genreLabel(game.genre, lang),
+                url: gameUrl(lang, `/games/genre/${genreSlug(game.genre)}`),
+              },
+              { name: meta.heading, url: canonical },
+            ]),
+          ],
+        }
+      : notFound
+        ? {
+            title: lang === 'en' ? `Game not found | ${BRAND}` : `게임을 찾을 수 없습니다 | ${BRAND}`,
+            lang,
+            noindex: true,
+          }
+        : { title: '', lang }, // 로딩 중 — 프리렌더된 메타를 유지
+  );
+
   if (notFound) {
     return (
       <div className="games-page">
-        <p className="games-status">게임을 찾을 수 없습니다.</p>
-        <Link className="games-back" to="/games">
-          ← 게임 목록으로
+        <p className="games-status">
+          {lang === 'en' ? 'Game not found.' : '게임을 찾을 수 없습니다.'}
+        </p>
+        <Link className="games-back" to={gamePath(lang, HUB_SUB)}>
+          {lang === 'en' ? '← Back to all games' : '← 게임 목록으로'}
         </Link>
       </div>
     );
@@ -114,15 +167,21 @@ export default function GameDetailPage() {
 
   return (
     <div className="games-page">
-      <nav className="games-breadcrumb">
-        <Link className="games-back" to="/games">
-          ← Games
+      <nav className="games-breadcrumb" aria-label={lang === 'en' ? 'Breadcrumb' : '탐색 경로'}>
+        <Link className="games-back" to={gamePath(lang, HUB_SUB)}>
+          ← {lang === 'en' ? 'Games' : '게임'}
+        </Link>
+        <Link
+          className="games-back"
+          to={gamePath(lang, `/games/genre/${genreSlug(game.genre)}`)}
+        >
+          {genreLabel(game.genre, lang)}
         </Link>
       </nav>
 
       <div className="game-detail-head">
         <div>
-          <h1 className="games-title">{displayTitle(game, getGameLang())}</h1>
+          <h1 className="games-title">{displayTitle(game, lang)}</h1>
           <div className="game-detail-meta">
             {game.ratingCount > 0 && (
               <span className="game-card-rating">
@@ -145,7 +204,7 @@ export default function GameDetailPage() {
       <section className="game-stage" aria-label="게임 플레이 영역">
         {!playing ? (
           <div className="game-stage-idle">
-            <p className="game-stage-desc">{displayDescription(game, getGameLang())}</p>
+            <p className="game-stage-desc">{displayDescription(game, lang)}</p>
             <button className="game-play-btn" onClick={handlePlay}>
               ▶ 플레이
             </button>
@@ -164,7 +223,9 @@ export default function GameDetailPage() {
       </section>
 
       <section className="game-rating-section" aria-label="평점 남기기">
-        <h2 className="games-collection-title">이 게임 어땠나요?</h2>
+        <h2 className="games-collection-title">
+          {lang === 'en' ? 'Rate this game' : '이 게임 어땠나요?'}
+        </h2>
         {!isLoggedIn() && <p className="games-status">평점 등록은 로그인이 필요합니다.</p>}
         <div className="game-rating-scores">
           {SCORES.map((score) => (
@@ -183,10 +244,12 @@ export default function GameDetailPage() {
 
       {similar.length > 0 && (
         <section className="games-collection" aria-label="비슷한 게임">
-          <h2 className="games-collection-title">More Games Like This</h2>
+          <h2 className="games-collection-title">
+            {lang === 'en' ? 'More Games Like This' : '비슷한 게임 더 보기'}
+          </h2>
           <div className="games-row">
             {similar.map((s) => (
-              <GameCard key={s.slug} game={s} />
+              <GameCard key={s.slug} game={s} lang={lang} />
             ))}
           </div>
         </section>

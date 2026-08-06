@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ShopHeader from '../components/ShopHeader';
+import { portalTitle, portalUrl } from '../seo/copy.mjs';
+import { useSeo } from '../seo/useSeo';
 import {
   fetchProducts,
   searchProducts,
@@ -65,6 +67,11 @@ function fromSearch(p: SearchProduct): DisplayProduct {
 }
 
 export default function ShopPage() {
+  useSeo({
+    title: portalTitle('스토어'),
+    description: 'MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다.',
+    canonical: portalUrl('/shop'),
+  });
   const navigate = useNavigate();
   const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState(''); // 제출된 검색어

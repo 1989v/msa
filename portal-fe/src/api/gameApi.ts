@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAccessToken } from '../auth/auth';
+import { GENRE_LABELS_EN, GENRE_LABELS_KO } from '../seo/copy.mjs';
 
 // VITE_API_URL 이 빈 문자열이면 same-origin relative path 사용 (운영 / K8s ingress 경유).
 // game API 는 code-dictionary:app 에 폴드되어 있어 동일 오리진(8089)이다 (ADR-0059).
@@ -45,29 +46,9 @@ export type GameGenre =
   | 'VERSUS'
   | 'CASUAL';
 
-export const GENRE_LABELS: Record<GameGenre, string> = {
-  ARCADE: '아케이드',
-  ACTION: '액션',
-  PUZZLE: '퍼즐',
-  RPG: 'RPG',
-  EDUCATION: '학습',
-  STRATEGY: '전략',
-  DEFENSE: '디펜스',
-  VERSUS: '대전',
-  CASUAL: '캐주얼',
-};
-
-export const GENRE_LABELS_EN: Record<GameGenre, string> = {
-  ARCADE: 'Arcade',
-  ACTION: 'Action',
-  PUZZLE: 'Puzzle',
-  RPG: 'RPG',
-  EDUCATION: 'Education',
-  STRATEGY: 'Strategy',
-  DEFENSE: 'Defense',
-  VERSUS: 'Versus',
-  CASUAL: 'Casual',
-};
+// 장르 라벨은 SEO 카피와 같은 문자열을 써야 해 seo/copy.mjs 를 단일 원본으로 삼는다
+export const GENRE_LABELS = GENRE_LABELS_KO as Record<GameGenre, string>;
+export { GENRE_LABELS_EN };
 
 export type GameLang = 'ko' | 'en';
 

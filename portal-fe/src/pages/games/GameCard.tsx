@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { displayTitle, genreLabel, getGameLang, type GameLang, type GameSummary } from '../../api/gameApi';
+import { gamePath } from '../../seo/copy.mjs';
 
 const COVER_HUES = [245, 180, 145, 25, 300, 75];
 
@@ -18,7 +19,7 @@ export default function GameCard({ game, lang }: { game: GameSummary; lang?: Gam
   const [thumbFailed, setThumbFailed] = useState(false);
   const showThumb = !!game.thumbnailUrl && !thumbFailed;
   return (
-    <Link to={`/games/${game.slug}`} className="game-card" aria-label={title}>
+    <Link to={gamePath(gameLang, `/games/${game.slug}`)} className="game-card">
       <div
         className="game-card-cover"
         style={{
@@ -29,7 +30,7 @@ export default function GameCard({ game, lang }: { game: GameSummary; lang?: Gam
           <img
             className="game-card-thumb"
             src={game.thumbnailUrl}
-            alt=""
+            alt={`${title} ${gameLang === 'en' ? 'game screenshot' : '게임 스크린샷'}`}
             loading="lazy"
             onError={() => setThumbFailed(true)}
           />

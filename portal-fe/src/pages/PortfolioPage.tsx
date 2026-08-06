@@ -6,6 +6,8 @@ import {
   type PortfolioCardSummary,
   type PortfolioSort,
 } from '../api/portfolioApi';
+import { portalTitle, portalUrl } from '../seo/copy.mjs';
+import { useSeo } from '../seo/useSeo';
 import './PortfolioPage.css';
 
 function formatPeriod(start: string | null, end: string | null): string {
@@ -21,6 +23,12 @@ function errorMessage(err: unknown, fallback: string): string {
 }
 
 export default function PortfolioPage() {
+  useSeo({
+    title: portalTitle('포트폴리오'),
+    description:
+      'MSA 커머스 플랫폼을 직접 설계·구현하며 쌓은 백엔드 엔지니어링 포트폴리오 — 서비스 분리, 이벤트 기반 연동, 검색·추천, 쿠버네티스 운영 사례.',
+    canonical: portalUrl('/portfolio'),
+  });
   const [cards, setCards] = useState<PortfolioCardSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

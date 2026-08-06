@@ -9,6 +9,8 @@ import TreemapPanel from '../components/panels/TreemapPanel';
 import TreemapSection from '../components/graph/TreemapSection';
 import DetailSidePanel from '../components/DetailSidePanel';
 import GNB from '../components/GNB';
+import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
+import { useSeo } from '../seo/useSeo';
 import HeroSection from '../components/HeroSection';
 import CategoryChips from '../components/CategoryChips';
 import PopularConcepts from '../components/PopularConcepts';
@@ -21,6 +23,13 @@ import type { GraphRenderer, GraphNode } from '../types/graph';
 import type { Category } from '../types/index';
 
 export default function SearchPage() {
+  useSeo({
+    title: portalTitle(''),
+    description:
+      '코드베이스에서 추출한 IT 개념을 트리맵·그래프로 탐색하는 개념 사전. 백엔드 아키텍처 포트폴리오와 MSA 서비스 카탈로그를 함께 제공합니다.',
+    canonical: portalUrl('/'),
+    jsonLd: [websiteJsonLd()],
+  });
   const { data, loading, error } = useGraphData();
   const graphRef = useRef<GraphRenderer>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);

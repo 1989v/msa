@@ -3,9 +3,12 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loginWithProvider, extractErrorMessage } from '../api/shopApi';
 import { LOGIN_NEXT_KEY, getOAuthRedirectUri, type OAuthProvider } from '../auth/auth';
 import { useAuth } from '../auth/useAuth';
+import { portalTitle } from '../seo/copy.mjs';
+import { useSeo } from '../seo/useSeo';
 import './Shop.css';
 
 export default function ShopOAuthCallbackPage() {
+  useSeo({ title: portalTitle('로그인 처리 중'), noindex: true });
   const { login } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

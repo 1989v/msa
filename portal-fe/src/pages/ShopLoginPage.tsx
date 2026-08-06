@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import ShopHeader from '../components/ShopHeader';
+import { portalTitle, portalUrl } from '../seo/copy.mjs';
+import { useSeo } from '../seo/useSeo';
 import {
   LOGIN_NEXT_KEY,
   buildGoogleAuthUrl,
@@ -20,6 +22,7 @@ function startOAuth(authUrl: string, next: string | null) {
 }
 
 export default function ShopLoginPage() {
+  useSeo({ title: portalTitle('로그인'), canonical: portalUrl('/shop/login'), noindex: true });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const next = searchParams.get('next');

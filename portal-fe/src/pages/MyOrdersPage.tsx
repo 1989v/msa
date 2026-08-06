@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import ShopHeader from '../components/ShopHeader';
+import { portalTitle, portalUrl } from '../seo/copy.mjs';
+import { useSeo } from '../seo/useSeo';
 import {
   fetchMyOrders,
   extractErrorMessage,
@@ -26,6 +28,7 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
 };
 
 export default function MyOrdersPage() {
+  useSeo({ title: portalTitle('주문 내역'), canonical: portalUrl('/shop/orders'), noindex: true });
   const navigate = useNavigate();
   const [orders, setOrders] = useState<MyOrder[] | null>(null);
   const [loading, setLoading] = useState(true);

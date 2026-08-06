@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   fetchGameCollections,
   fetchGameTags,
   listGames,
   genreLabel,
-  getGameLang,
   setGameLang,
   GENRE_LABELS,
   type GameCollection,
@@ -14,6 +14,19 @@ import {
   type GameSortKey,
   type GameTag,
 } from '../../api/gameApi';
+import {
+  breadcrumbJsonLd,
+  collectionPageJsonLd,
+  gamePath,
+  gameUrl,
+  genreFromSlug,
+  genreMeta,
+  genreSlug,
+  hreflangAlternates,
+  hubMeta,
+  itemListJsonLd,
+} from '../../seo/copy.mjs';
+import { useSeo } from '../../seo/useSeo';
 import GameCard from './GameCard';
 import HouseBanner from './HouseBanner';
 import './Games.css';
@@ -42,6 +55,9 @@ const GENRE_ORDER: GameGenre[] = [
 
 const GENRES = Object.keys(GENRE_LABELS) as GameGenre[];
 
+/** 허브 경로 — game 서브도메인에서는 루트가, 그 외 호스트에서는 /games 가 허브다 */
+const HUB_SUB = window.location.hostname.split('.')[0] === 'game' ? '' : '/games';
+
 /** 큐레이션 행 간 중복 제거 — 한 게임은 첫 노출 행에만 남기고, 비어버린 행은 숨긴다 */
 function dedupeCollections(collections: GameCollection[]): GameCollection[] {
   const seen = new Set<string>();
@@ -55,15 +71,21 @@ function dedupeCollections(collections: GameCollection[]): GameCollection[] {
 }
 
 export default function GamesPage() {
+  const { pathname } = useLocation();
+  const { genre: genreParam } = useParams();
+  const navigate = useNavigate();
   const [collections, setCollections] = useState<GameCollection[]>([]);
   const [tags, setTags] = useState<GameTag[]>([]);
   const [games, setGames] = useState<GameSummary[]>([]);
   const [activeTag, setActiveTag] = useState<string | null>(null);
-  const [genre, setGenre] = useState<GameGenre | null>(null);
   const [sort, setSort] = useState<GameSortKey>('trending');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [lang, setLang] = useState<GameLang>(getGameLang());
+
+  // 언어와 장르는 URL 이 원본 — 검색엔진이 색인할 수 있는 상태만 주소로 승격한다.
+  // (정렬·태그는 같은 게임 목록의 재배열이라 중복 콘텐츠가 되므로 로컬 상태로 둔다)
+  const lang: GameLang = pathname === '/en' || pathname.startsWith('/en/') ? 'en' : 'ko';
+  const genre = genreFromSlug(genreParam) as GameGenre | null;
 
   const L = UI[lang];
   const SORTS: { key: GameSortKey; label: string }[] = [
@@ -109,16 +131,46 @@ export default function GamesPage() {
     }));
   }, [activeTag, genre, games]);
 
+  const seoSub = genre ? `/games/genre/${genreSlug(genre)}` : '';
+  const meta = genre ? genreMeta(lang, genre, games) : hubMeta(lang, games.length);
+  const canonical = gameUrl(lang, seoSub);
+  useSeo({
+    // 목록이 오기 전에는 프리렌더된 메타를 유지한다 — "게임 0종" 스냅샷이 색인되면 안 된다
+    title: loading && games.length === 0 ? '' : meta.title,
+    description: meta.description,
+    canonical,
+    lang,
+    alternates: hreflangAlternates(seoSub),
+    jsonLd: [
+      collectionPageJsonLd(lang, meta, canonical),
+      ...(games.length > 0 ? [itemListJsonLd(lang, games.slice(0, 30))] : []),
+      ...(genre
+        ? [
+            breadcrumbJsonLd(lang, [
+              { name: lang === 'en' ? 'Games' : '게임', url: gameUrl(lang) },
+              { name: meta.heading, url: canonical },
+            ]),
+          ]
+        : []),
+    ],
+  });
+
   function switchLang(next: GameLang) {
+    // iframe 게임(public/games/lib/i18n.js)이 같은 localStorage 키를 읽는다
     setGameLang(next);
-    setLang(next);
+    const sub = genre
+      ? `/games/genre/${genreSlug(genre)}`
+      : pathname.endsWith('/games')
+        ? '/games'
+        : '';
+    navigate(gamePath(next, sub));
   }
 
   return (
     <div className="games-page">
       <header className="games-header">
         <h1 className="games-title">
-          Games
+          {meta.heading}
           <span className="games-lang-toggle" role="group" aria-label="Language">
             {(['ko', 'en'] as GameLang[]).map((key) => (
               <button
@@ -148,23 +200,24 @@ export default function GamesPage() {
             </button>
           ))}
         </div>
-        <div className="games-genres" role="group" aria-label={L.genreLabel}>
-          <button
+        {/* 장르는 링크 — 크롤러가 장르 랜딩 페이지를 따라갈 수 있어야 한다 (버튼은 못 따라감) */}
+        <nav className="games-genres" aria-label={L.genreLabel}>
+          <Link
             className={`game-genre-btn ${genre === null ? 'active' : ''}`}
-            onClick={() => setGenre(null)}
+            to={gamePath(lang, HUB_SUB)}
           >
             {L.all}
-          </button>
+          </Link>
           {GENRES.map((key) => (
-            <button
+            <Link
               key={key}
               className={`game-genre-btn ${genre === key ? 'active' : ''}`}
-              onClick={() => setGenre(genre === key ? null : key)}
+              to={genre === key ? gamePath(lang, HUB_SUB) : gamePath(lang, `/games/genre/${genreSlug(key)}`)}
             >
               {genreLabel(key, lang)}
-            </button>
+            </Link>
           ))}
-        </div>
+        </nav>
         <div className="games-tags">
           <button
             className={`game-tag-filter ${activeTag === null ? 'active' : ''}`}
@@ -205,7 +258,9 @@ export default function GamesPage() {
           ? genreSections.map((section) => (
               <div key={section.key} className="games-genre-section">
                 <h2 className="games-collection-title">
-                  {genreLabel(section.key, lang)}
+                  <Link to={gamePath(lang, `/games/genre/${genreSlug(section.key)}`)}>
+                    {genreLabel(section.key, lang)}
+                  </Link>
                   <span className="games-genre-count">{section.games.length}</span>
                 </h2>
                 <div className="games-grid">
