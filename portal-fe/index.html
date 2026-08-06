@@ -5,6 +5,21 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Google Analytics (GA4) — SPA 라우트 전환은 향상된 측정(History API)이 자동 집계.
+         game.1989v.com 도 같은 번들이라 hostname 차원으로 분리 조회 가능. -->
+    <script
+      async
+      src="https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN"
+    ></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() {
+        dataLayer.push(arguments);
+      }
+      gtag("js", new Date());
+      gtag("config", "G-5EE8XW7JHN");
+    </script>
+
     <title>kgd.dev — 풀스택 백엔드 엔지니어 포털</title>
     <meta
       name="description"
