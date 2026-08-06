@@ -90,11 +90,13 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | `monster-tamer` `depth-delver` `outlaw-frontier` `gate-holdout` `gear-bastion` `iron-vanguard` `ember-temple` `frost-outpost` `echo-duel` | `portal-fe/public/games/<slug>/index.html` | 단일 HTML 자체 완결 게임 9종 (V7~V13 시드). 이어하기 코드 세이브 공용 |
 | `golden-forge` `rune-merge` `cave-glide` `wall-breaker` | `portal-fe/public/games/<slug>/index.html` | 캐주얼 팩 4종 (V16 시드). 방치형/2048 머지/원버튼/벽돌깨기 |
 | `crimson-ravine` `storm-corridor` `dice-citadel` `rift-front` | `portal-fe/public/games/<slug>/index.html` | 유즈맵 팩 2차 (V18 시드). 오토배틀/탄막 회피/랜덤 머지 디펜스/미니 AoS — 세이브 없음, 랭킹+재도전만 |
+| `word-warden` `quad-weave` `pixel-mine` `royal-grid` `number-garden` | `portal-fe/public/games/<slug>/index.html` | 데일리 퍼즐 팩 (V19 시드). 한글 워들/Connections/노노그램/퀸 배치/스도쿠 — KST 날짜 시드(`lib/daily.js`), 스트릭+이모지 공유, 유일해 클라이언트 생성(퀸 배치는 변이 수리, 스도쿠는 파기 검증). 썸네일은 `thumbs/daily/*.svg` |
 
 캔버스 게임 공용 정적 자산 (`portal-fe/public/games/lib/`):
 - `touch.js` — 모바일 가상 터치패드. KeyboardEvent 합성이라 게임별 입력 코드 무변경
 - `rank.js` — 랭킹 위젯. `GameRank.autoPanel(slug)`(#menu 하단 TOP10), `submit(slug, score, detail)`, `copyButton(getCode)`(이어하기 코드 📋 복사)
 - `i18n.js` — 글로벌 한/영. localStorage('game_lang') → navigator.language 자동, 우상단 토글 자동 부착. 게임은 `GameI18n.init({ko,en})` + `TR()` + `data-i18n`. 카탈로그(제목/설명)는 `title_en`/`description_en` 컬럼(V17)
+- `daily.js` — 데일리 퍼즐 공용. KST 자정 롤오버 날짜 시드(`seed`/`rng`/`shuffle`), 연속 출석 스트릭, 오늘 결과 저장(재제출 방지), 다음 퍼즐 카운트다운, 이모지 결과 공유
 - `thumbs/shots/` — 실플레이 캡처 썸네일 (320×180)
 
 Snake 클라이언트를 고친 뒤에는 `jsBrowserDistribution` 을 다시 돌려 산출물을 복사해야 반영된다.

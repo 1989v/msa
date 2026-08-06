@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">
+  <rect width="320" height="180" fill="#0c1424"/>
+  <g font-family="AppleSDGothicNeo,Malgun Gothic,sans-serif" font-weight="bold" text-anchor="middle" font-size="13">
+    <rect x="24" y="22" width="272" height="30" rx="7" fill="#eab308"/>
+    <text x="160" y="42" fill="#241c02">깍두기 · 백김치 · 열무김치 · 총각김치</text>
+    <g fill="#1a2238">
+      <rect x="24" y="60" width="64" height="30" rx="7"/><rect x="93" y="60" width="64" height="30" rx="7"/>
+      <rect x="163" y="60" width="64" height="30" rx="7"/><rect x="232" y="60" width="64" height="30" rx="7"/>
+      <rect x="24" y="96" width="64" height="30" rx="7"/><rect x="93" y="96" width="64" height="30" rx="7"/>
+      <rect x="163" y="96" width="64" height="30" rx="7"/><rect x="232" y="96" width="64" height="30" rx="7"/>
+    </g>
+    <g fill="#c2cedc">
+      <text x="56" y="80">도</text><text x="125" y="80">개</text><text x="195" y="80">걸</text><text x="264" y="80">모</text>
+      <text x="56" y="116">눈치</text><text x="125" y="116">눈금</text><text x="195" y="116">눈썹</text><text x="264" y="116">참새</text>
+    </g>
+    <text x="160" y="164" font-size="15" fill="#0ea5e9">🧵 넉 줄 묶기 — 숨은 공통점 넷</text>
+  </g>
+</svg>

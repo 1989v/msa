@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">하루 한 판</title>
+<script src="../lib/i18n.js"></script>
+<script src="../lib/daily.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; min-height:100vh; user-select:none; padding:14px 8px 30px;
+         touch-action:manipulation; }
+  h1.top { font-size:19px; color:#0ea5e9; margin:6px 0 2px; text-shadow:1px 1px 0 #000; }
+  .sub { font-size:11px; color:#8e9db0; margin-bottom:10px; }
+  #board { display:grid; border:3px solid #2c3550; border-radius:6px; overflow:hidden; }
+  .cell { width:var(--cs); height:var(--cs); display:flex; align-items:center; justify-content:center;
+          font-size:calc(var(--cs) * .55); cursor:pointer; position:relative;
+          border:1px solid rgba(12,20,36,.55); }
+  .cell.err::after { content:''; position:absolute; inset:2px; border:2px solid #ef4444; border-radius:5px; }
+  #ctl { display:flex; gap:8px; margin:14px 0 4px; align-items:center; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:11px 18px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#222b44; color:#e6ecf2; }
+  #timerTxt { font-size:13px; color:#c2cedc; min-width:48px; text-align:center; }
+  #hint { font-size:11px; color:#8e9db0; text-align:center; line-height:1.7; max-width:420px; }
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:13px; text-align:center; z-index:10; padding:20px; overflow:auto; }
+  .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:480px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .stat { background:#1a2238; border-radius:8px; padding:8px 14px; font-size:12px; }
+  .stat b { color:#0ea5e9; font-size:17px; display:block; }
+</style>
+</head>
+<body>
+<h1 class="top" data-i18n="title">👑 하루 한 판</h1>
+<div class="sub"><span id="dayTag"></span> · <span id="timerTxt">0:00</span></div>
+
+<div id="board"></div>
+<div id="ctl">
+  <button class="act ghost" id="resetBtn" data-i18n="resetBtn">↺ 비우기</button>
+</div>
+<div id="hint" data-i18n="hintLine">탭: 빈칸 → ✖ → 👑 · 색 영역마다 👑 하나 · 같은 행/열 금지 · 대각선으로 맞닿기 금지</div>
+
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">👑 하루 한 판</h1>
+  <p data-i18n="menuDesc">여덟 색 영역에 여왕을 한 명씩 앉혀라. 같은 행·열에 둘일 수 없고,
+    대각선으로 맞닿아도 안 된다. 답은 단 하나 — 논리만으로 풀린다.</p>
+  <p class="small" id="menuStreak"></p>
+  <button class="act" id="startBtn" data-i18n="startBtn">▶ 오늘의 판</button>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <h1 data-i18n="win">🎉 여왕 등극!</h1>
+  <div class="row">
+    <div class="stat"><b id="endStreak">0</b><span data-i18n="streakLabel">연속 출석</span></div>
+    <div class="stat"><b id="endTime">0:00</b><span data-i18n="timeLabel">클리어 시간</span></div>
+  </div>
+  <p class="small"><span data-i18n="next">다음 판까지</span> <b id="cdown"></b></p>
+  <div class="row">
+    <button class="act" id="shareBtn" data-i18n="shareBtn">📤 결과 공유</button>
+    <button class="act ghost" id="backBtn" data-i18n="backBtn">처음으로</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '👑 하루 한 판', menuTitle: '👑 하루 한 판',
+    menuDesc: '여덟 색 영역에 여왕을 한 명씩 앉혀라. 같은 행·열에 둘일 수 없고, 대각선으로 맞닿아도 안 된다. 답은 단 하나 — 논리만으로 풀린다.',
+    startBtn: '▶ 오늘의 판', resetBtn: '↺ 비우기', win: '🎉 여왕 등극!',
+    hintLine: '탭: 빈칸 → ✖ → 👑 · 색 영역마다 👑 하나 · 같은 행/열 금지 · 대각선으로 맞닿기 금지',
+    streakLabel: '연속 출석', timeLabel: '클리어 시간', next: '다음 판까지',
+    shareBtn: '📤 결과 공유', backBtn: '처음으로',
+  },
+  en: {
+    title: '👑 Royal Grid', menuTitle: '👑 Royal Grid',
+    menuDesc: 'Seat exactly one queen in each color region. No two share a row or column, and none may touch diagonally. There is a single solution — pure logic wins.',
+    startBtn: '▶ Daily Board', resetBtn: '↺ Clear', win: '🎉 Long live the queens!',
+    hintLine: 'Tap: empty → ✖ → 👑 · one 👑 per color · no shared row/column · no diagonal touch',
+    streakLabel: 'Day streak', timeLabel: 'Clear time', next: 'Next board in',
+    shareBtn: '📤 Share', backBtn: 'Menu',
+  },
+});
+var TR = GameI18n.t;
+
+var SLUG = 'royal-grid', EPOCH = '2026-08-07', N = 8;
+var REGION_COLORS = ['#7c3aed', '#0e7490', '#b45309', '#15803d', '#be185d', '#4d7c0f', '#1d4ed8', '#a16207'];
+
+var region, state, startTs, timerIv, over;
+
+/** 인접(퀸끼리 상하좌우+대각 맞닿기) 검사용 */
+function touching(r1, c1, r2, c2) {
+  return Math.abs(r1 - r2) <= 1 && Math.abs(c1 - c2) <= 1;
+}
+
+/** 해 탐색 (최대 2개 수집) — 행 단위 백트래킹. 반환: 해 배열(행→열) */
+function solve2(reg) {
+  var sols = [];
+  var colUsed = new Array(N).fill(false);
+  var regUsed = new Array(N).fill(false);
+  var placed = [];
+  function walk(r) {
+    if (sols.length >= 2) return;
+    if (r === N) { sols.push(placed.slice()); return; }
+    for (var c = 0; c < N; c++) {
+      if (colUsed[c] || regUsed[reg[r][c]]) continue;
+      if (r > 0 && Math.abs(placed[r - 1] - c) <= 1) continue;
+      colUsed[c] = true; regUsed[reg[r][c]] = true; placed[r] = c;
+      walk(r + 1);
+      colUsed[c] = false; regUsed[reg[r][c]] = false;
+    }
+    placed.length = r;
+  }
+  walk(0);
+  return sols;
+}
+function countSolutions(reg) { return solve2(reg).length; }
+
+/** cell 을 제외해도 영역 g 가 연결 상태인지 (변이 수리의 계약 조건) */
+function staysConnected(reg, g, exR, exC) {
+  var cells = [];
+  for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) {
+    if (reg[r][c] === g && !(r === exR && c === exC)) cells.push(r * N + c);
+  }
+  if (!cells.length) return false;
+  var seen = {}; seen[cells[0]] = true;
+  var q = [cells[0]], inSet = {};
+  cells.forEach(function (i) { inSet[i] = true; });
+  while (q.length) {
+    var cur = q.pop(), cr = Math.floor(cur / N), cc = cur % N;
+    [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(function (d) {
+      var ni = (cr + d[0]) * N + (cc + d[1]);
+      if (cr + d[0] >= 0 && cr + d[0] < N && cc + d[1] >= 0 && cc + d[1] < N &&
+          inSet[ni] && !seen[ni]) { seen[ni] = true; q.push(ni); }
+    });
+  }
+  return Object.keys(seen).length === cells.length;
+}
+
+/** 퀸 배치(행당 1, 열 유일, 연속 행 대각 금지) 하나 뽑기 */
+function sampleQueens(rand) {
+  var cols;
+  for (var tries = 0; tries < 500; tries++) {
+    cols = GameDaily.shuffle([0, 1, 2, 3, 4, 5, 6, 7], rand).slice();
+    var ok = true;
+    for (var r = 1; r < N; r++) if (Math.abs(cols[r] - cols[r - 1]) <= 1) { ok = false; break; }
+    if (ok) return cols;
+  }
+  return null;
+}
+
+/**
+ * 퀸 시드에서 영역을 성장시켜 8분할 → 유일해면 채택.
+ * 균등 블롭 성장은 유일해가 극히 드물어(실측 ~1/580), 영역 크기를 강하게 편중시킨다 —
+ * 1~3칸짜리 작은 영역이 퀸을 강하게 고정해 유일해 확률이 크게 오른다.
+ */
+function generate() {
+  var rand = GameDaily.rng(GameDaily.seed(SLUG));
+  var DIRS = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+  var reg;
+  for (var attempt = 0; attempt < 300; attempt++) {
+    var queens = sampleQueens(rand);
+    if (!queens) continue;
+    reg = [];
+    for (var r = 0; r < N; r++) reg.push(new Array(N).fill(-1));
+    for (r = 0; r < N; r++) reg[r][queens[r]] = r;
+    var sizes = GameDaily.shuffle([1, 2, 3, 5, 8, 12, 16, 17], rand);
+    var count = new Array(N).fill(1);
+    // 라운드로빈 성장 — 목표 크기 미달 영역만 인접 빈 칸으로 확장
+    var progress = true;
+    while (progress) {
+      progress = false;
+      for (var g = 0; g < N; g++) {
+        if (count[g] >= sizes[g]) continue;
+        var options = [];
+        for (var rr = 0; rr < N; rr++) for (var cc = 0; cc < N; cc++) {
+          if (reg[rr][cc] !== g) continue;
+          for (var d = 0; d < 4; d++) {
+            var nr = rr + DIRS[d][0], nc = cc + DIRS[d][1];
+            if (nr >= 0 && nr < N && nc >= 0 && nc < N && reg[nr][nc] < 0) options.push([nr, nc]);
+          }
+        }
+        if (!options.length) continue;
+        var pick = options[Math.floor(rand() * options.length)];
+        reg[pick[0]][pick[1]] = g;
+        count[g]++;
+        progress = true;
+      }
+    }
+    // 남은 칸은 인접 영역에 흡수
+    var leftover = true;
+    while (leftover) {
+      leftover = false;
+      for (rr = 0; rr < N; rr++) for (cc = 0; cc < N; cc++) {
+        if (reg[rr][cc] >= 0) continue;
+        var neigh = [];
+        for (d = 0; d < 4; d++) {
+          var ar = rr + DIRS[d][0], ac = cc + DIRS[d][1];
+          if (ar >= 0 && ar < N && ac >= 0 && ac < N && reg[ar][ac] >= 0) neigh.push(reg[ar][ac]);
+        }
+        if (neigh.length) { reg[rr][cc] = neigh[Math.floor(rand() * neigh.length)]; }
+        else leftover = true;
+      }
+    }
+    // 변이 수리 — 해가 둘이면 대안 해 B 의 퀸 칸을 이웃 영역으로 넘겨 B 를 죽인다.
+    // 그 칸은 첫 해 A 의 퀸이 아니므로(A[r]≠B[r]) A 는 살아남는다 → 반복하면 유일해로 수렴.
+    for (var mut = 0; mut < 64; mut++) {
+      var sols = solve2(reg);
+      if (sols.length === 1) return reg;
+      var A = sols[0], B = sols[1];
+      var rows = GameDaily.shuffle(Array.from({ length: N }, function (_, i) { return i; }), rand);
+      var carved = false;
+      for (var ri = 0; ri < N && !carved; ri++) {
+        var row = rows[ri];
+        if (A[row] === B[row]) continue;
+        var bc = B[row], bg = reg[row][bc];
+        if (!staysConnected(reg, bg, row, bc)) continue;
+        var hs = GameDaily.shuffle(DIRS.slice(), rand);
+        for (d = 0; d < 4; d++) {
+          var hr = row + hs[d][0], hc = bc + hs[d][1];
+          if (hr < 0 || hr >= N || hc < 0 || hc >= N || reg[hr][hc] === bg) continue;
+          reg[row][bc] = reg[hr][hc];
+          carved = true;
+          break;
+        }
+      }
+      if (!carved) break; // 수리 불가 — 다음 attempt
+    }
+  }
+  return reg; // 통계상 도달하지 않음 — 마지막 시도로 폴백
+}
+
+function begin() {
+  region = generate();
+  state = [];
+  for (var r = 0; r < N; r++) state.push(new Array(N).fill(0)); // 0 빈칸 1 ✖ 2 👑
+  over = false;
+  startTs = Date.now();
+  clearInterval(timerIv);
+  timerIv = setInterval(function () {
+    document.getElementById('timerTxt').textContent =
+      GameDaily.fmtTime(Math.floor((Date.now() - startTs) / 1000));
+  }, 500);
+  document.getElementById('menu').hidden = true;
+  document.getElementById('endPanel').hidden = true;
+  sizeCells();
+  render();
+}
+
+function sizeCells() {
+  var avail = Math.min(440, window.innerWidth - 20);
+  document.body.style.setProperty('--cs', Math.floor(avail / N) + 'px');
+}
+
+function conflicts() {
+  var bad = {};
+  var qs = [];
+  for (var r = 0; r < N; r++) for (var c = 0; c < N; c++) if (state[r][c] === 2) qs.push([r, c]);
+  for (var i = 0; i < qs.length; i++) {
+    for (var j = i + 1; j < qs.length; j++) {
+      var a = qs[i], b = qs[j];
+      var clash = a[0] === b[0] || a[1] === b[1] ||
+        region[a[0]][a[1]] === region[b[0]][b[1]] || touching(a[0], a[1], b[0], b[1]);
+      if (clash) { bad[a[0] + '_' + a[1]] = true; bad[b[0] + '_' + b[1]] = true; }
+    }
+  }
+  return { queens: qs, bad: bad };
+}
+
+function render() {
+  var b = document.getElementById('board');
+  b.style.gridTemplateColumns = 'repeat(' + N + ', var(--cs))';
+  b.innerHTML = '';
+  var cf = conflicts();
+  for (var r = 0; r < N; r++) {
+    for (var c = 0; c < N; c++) {
+      var d = document.createElement('div');
+      d.className = 'cell' + (cf.bad[r + '_' + c] ? ' err' : '');
+      d.style.background = REGION_COLORS[region[r][c]] + (state[r][c] === 2 ? '' : 'cc');
+      d.textContent = state[r][c] === 2 ? '👑' : state[r][c] === 1 ? '✖' : '';
+      if (state[r][c] === 1) d.style.color = 'rgba(12,20,36,.75)';
+      (function (rr, cc2) {
+        d.onclick = function () {
+          if (over) return;
+          state[rr][cc2] = (state[rr][cc2] + 1) % 3;
+          render();
+          checkWin();
+        };
+      })(r, c);
+      b.appendChild(d);
+    }
+  }
+}
+
+function checkWin() {
+  var cf = conflicts();
+  if (cf.queens.length !== N || Object.keys(cf.bad).length) return;
+  // 영역 커버 확인 (충돌 검사에 영역 중복이 포함되므로 개수만 맞으면 됨)
+  finish();
+}
+
+function finish() {
+  over = true;
+  clearInterval(timerIv);
+  var sec = Math.floor((Date.now() - startTs) / 1000);
+  document.getElementById('endTime').textContent = GameDaily.fmtTime(sec);
+  var st = GameDaily.recordClear(SLUG);
+  document.getElementById('endStreak').textContent = st.streak;
+  if (!GameDaily.result(SLUG)) {
+    GameDaily.saveResult(SLUG, { sec: sec });
+    var score = Math.max(100, 5000 - sec * 3);
+    GameRank.submit(SLUG, score, '#' + GameDaily.dayNumber(EPOCH) + ' ' + GameDaily.fmtTime(sec));
+  }
+  document.getElementById('endPanel').hidden = false;
+}
+
+document.getElementById('startBtn').onclick = function () {
+  var prev = GameDaily.result(SLUG);
+  begin();
+  if (prev) {
+    over = true;
+    clearInterval(timerIv);
+    document.getElementById('endTime').textContent = GameDaily.fmtTime(prev.sec || 0);
+    document.getElementById('endStreak').textContent = GameDaily.streak(SLUG).streak;
+    document.getElementById('endPanel').hidden = false;
+  }
+};
+document.getElementById('resetBtn').onclick = function () {
+  if (over) return;
+  for (var r = 0; r < N; r++) state[r].fill(0);
+  render();
+};
+document.getElementById('backBtn').onclick = function () {
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('menu').hidden = false;
+  refreshMenu();
+};
+document.getElementById('shareBtn').onclick = function () {
+  var sec = GameDaily.result(SLUG) ? GameDaily.result(SLUG).sec : 0;
+  GameDaily.share(TR('title') + ' #' + GameDaily.dayNumber(EPOCH) + ' 👑 ' + GameDaily.fmtTime(sec) +
+    '\nhttps://game.1989v.com/games/royal-grid/', this);
+};
+
+function refreshMenu() {
+  var st = GameDaily.streak(SLUG);
+  document.getElementById('menuStreak').textContent =
+    '#' + GameDaily.dayNumber(EPOCH) + ' · 🔥 ' + st.streak + ' (best ' + st.best + ')';
+}
+document.getElementById('dayTag').textContent = '#' + GameDaily.dayNumber(EPOCH);
+refreshMenu();
+GameDaily.countdown(document.getElementById('cdown'));
+window.addEventListener('resize', function () { if (region) { sizeCells(); render(); } });
+</script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('royal-grid');</script>
+</body>
+</html>

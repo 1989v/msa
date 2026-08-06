@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">낱말 파수꾼</title>
+<script src="../lib/i18n.js"></script>
+<script src="../lib/daily.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; min-height:100vh; user-select:none; padding:14px 10px 30px; }
+  h1.top { font-size:19px; color:#0ea5e9; margin:6px 0 2px; text-shadow:1px 1px 0 #000; }
+  .sub { font-size:11px; color:#8e9db0; margin-bottom:10px; }
+  #board { display:flex; flex-direction:column; gap:6px; margin:8px 0 12px; }
+  .g-row { display:flex; gap:8px; }
+  .syl { width:112px; height:64px; background:#1a2238; border:2px solid #2c3550; border-radius:8px;
+         display:flex; align-items:stretch; overflow:hidden; }
+  .syl .big { flex:1.1; display:flex; align-items:center; justify-content:center; font-size:30px; font-weight:bold; }
+  .syl .parts { flex:1; display:flex; flex-direction:column; }
+  .syl .parts span { flex:1; display:flex; align-items:center; justify-content:center; font-size:12px;
+                     font-weight:bold; border-left:1px solid #0c1424; }
+  .ok  { background:#22c55e; color:#06230f; }
+  .near{ background:#eab308; color:#241c02; }
+  .miss{ background:#2c3550; color:#8e9db0; }
+  #inRow { display:flex; gap:8px; align-items:center; margin-bottom:10px; }
+  #guessIn { width:150px; height:46px; background:#1a2238; border:2px solid #0ea5e9; border-radius:8px;
+             color:#e6ecf2; font-size:24px; text-align:center; font-family:inherit; }
+  #guessIn:disabled { opacity:.4; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:12px 18px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#222b44; color:#e6ecf2; }
+  #jamoBoard { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; max-width:420px; margin-bottom:8px; }
+  #jamoBoard span { min-width:26px; padding:5px 4px; text-align:center; font-size:13px; font-weight:bold;
+                    background:#1a2238; border-radius:5px; color:#c2cedc; }
+  #msg { min-height:20px; font-size:12.5px; color:#eab308; margin-bottom:6px; text-align:center; }
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:13px; text-align:center; z-index:10; padding:20px; overflow:auto; }
+  .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:480px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .stat { background:#1a2238; border-radius:8px; padding:8px 14px; font-size:12px; }
+  .stat b { color:#0ea5e9; font-size:17px; display:block; }
+  #shareGrid { font-size:15px; line-height:1.35; letter-spacing:1px; }
+  @media (max-width:520px) {
+    .syl { width:96px; height:58px; } .syl .big { font-size:26px; }
+    #guessIn { width:120px; font-size:20px; }
+  }
+</style>
+</head>
+<body>
+<h1 class="top" data-i18n="title">🛡 낱말 파수꾼</h1>
+<div class="sub"><span id="dayTag"></span> · <span data-i18n="streak">연속</span> <b id="streakTxt">0</b>🔥</div>
+
+<div id="board"></div>
+
+<div id="inRow">
+  <input id="guessIn" maxlength="2" autocomplete="off" data-i18n-ph="ph">
+  <button class="act" id="submitBtn" data-i18n="submit">확인</button>
+</div>
+<div id="msg"></div>
+<div id="jamoBoard"></div>
+
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">🛡 낱말 파수꾼</h1>
+  <p data-i18n="menuDesc">두 글자 우리말을 여섯 번 안에 맞혀라. 글자마다 초성·중성·종성이 따로 채점된다 —
+    초록은 제자리, 노랑은 다른 자리에 존재, 회색은 없음.</p>
+  <p class="small" id="menuStreak"></p>
+  <div class="row">
+    <button class="act" id="startBtn" data-i18n="startBtn">▶ 오늘의 낱말</button>
+    <button class="act ghost" id="practiceBtn" data-i18n="practiceBtn">♾ 무한 연습</button>
+  </div>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <h1 id="endTitle"></h1>
+  <p id="endWord"></p>
+  <div id="shareGrid"></div>
+  <div class="row">
+    <div class="stat"><b id="endStreak">0</b><span data-i18n="streakLabel">연속 출석</span></div>
+    <div class="stat"><b id="endTime">0:00</b><span data-i18n="timeLabel">클리어 시간</span></div>
+  </div>
+  <p class="small"><span data-i18n="next">다음 낱말까지</span> <b id="cdown"></b></p>
+  <div class="row">
+    <button class="act" id="shareBtn" data-i18n="shareBtn">📤 결과 공유</button>
+    <button class="act" id="againBtn" data-i18n="practiceBtn" hidden>♾ 무한 연습</button>
+    <button class="act ghost" id="backBtn" data-i18n="backBtn">처음으로</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '🛡 낱말 파수꾼', menuTitle: '🛡 낱말 파수꾼',
+    menuDesc: '두 글자 우리말을 여섯 번 안에 맞혀라. 글자마다 초성·중성·종성이 따로 채점된다 — 초록은 제자리, 노랑은 다른 자리에 존재, 회색은 없음.',
+    startBtn: '▶ 오늘의 낱말', practiceBtn: '♾ 무한 연습', submit: '확인', ph: '두 글자',
+    streak: '연속', streakLabel: '연속 출석', timeLabel: '클리어 시간', next: '다음 낱말까지',
+    shareBtn: '📤 결과 공유', backBtn: '처음으로',
+    needTwo: '완성된 두 글자 한글로 입력하세요', win: '🎉 파수꾼의 승리!', lose: '아쉽다 — 정답은',
+    already: '오늘 낱말은 이미 클리어! 무한 연습을 즐겨라', practiceTag: '연습',
+  },
+  en: {
+    title: '🛡 Word Warden', menuTitle: '🛡 Word Warden',
+    menuDesc: 'Guess the two-syllable Korean word in six tries. Each syllable is scored by its jamo parts — green in place, yellow elsewhere, gray absent. (Korean input required)',
+    startBtn: '▶ Daily Word', practiceBtn: '♾ Practice', submit: 'Go', ph: '2 syllables',
+    streak: 'Streak', streakLabel: 'Day streak', timeLabel: 'Clear time', next: 'Next word in',
+    shareBtn: '📤 Share', backBtn: 'Menu',
+    needTwo: 'Type two complete hangul syllables', win: '🎉 The warden prevails!', lose: 'The word was',
+    already: 'Daily already cleared — enjoy practice mode', practiceTag: 'practice',
+  },
+});
+var TR = GameI18n.t;
+
+var SLUG = 'word-warden', EPOCH = '2026-08-07', TRIES = 6;
+
+// 정답 은행 — 일상 2음절 명사 (추측 입력은 사전 검증 없이 허용)
+var WORDS = ('가방 가을 가족 강물 거울 거품 겨울 고래 거미 공원 과일 과자 구름 국수 궁전 그늘 그림 극장 기린 기차 ' +
+  '김밥 김치 꽃밭 나무 나비 낙타 낚시 난로 날개 냄비 노래 노을 놀이 농부 눈물 늑대 다리 달빛 담요 당근 ' +
+  '도장 도시 도끼 돌담 동굴 동전 두부 딸기 떡국 마늘 마당 마차 만두 말굽 매미 머리 먼지 모래 모자 목장 ' +
+  '무늬 문어 물결 미로 바다 바람 바위 박쥐 반지 발톱 방패 배꼽 백조 버섯 번개 벌집 별빛 보리 보석 봄비 ' +
+  '부엌 북극 불꽃 붕어 비늘 비단 빙하 사과 사슴 사탕 산길 살구 상자 새벽 서리 성벽 소금 소라 소풍 손금 ' +
+  '솔잎 수박 수염 숲길 시내 시장 신발 쌀밥 안개 앵두 야영 약초 양파 어둠 언덕 얼음 여름 여우 연못 연필 ' +
+  '엽서 영웅 오리 옹기 온천 요정 왕관 요새 용암 우물 우산 운하 우박 월식 유리 은하 이슬 인형 자석 장작 ' +
+  '장미 장터 절벽 젓갈 정원 제비 조개 종이 주먹 죽순 지도 지붕 지혜 진주 짚신 참새 창문 책상 천둥 철새 ' +
+  '초원 촛불 축제 치즈 침대 칼날 콩밭 큰길 탈춤 태양 토끼 파도 파랑 편지 폭포 표범 풀잎 풍선 하늘 하마 ' +
+  '항구 해변 햇살 향기 헛간 협곡 호박 호수 홍수 화산 화살 황금 화분 후추 흙길 희망').split(' ');
+
+var CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+var JUNG = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+var JONG = ' ㄱㄲㄳㄴㄵㄶㄷㄹㄺㄻㄼㄽㄾㄿㅀㅁㅂㅄㅅㅆㅇㅈㅊㅋㅌㅍㅎ';
+
+function decompose(word) {
+  // 2음절 → 자모 6슬롯 [초,중,종,초,중,종] (종성 없으면 ' ')
+  var out = [];
+  for (var i = 0; i < 2; i++) {
+    var code = word.charCodeAt(i) - 0xAC00;
+    out.push(CHO[Math.floor(code / 588)], JUNG[Math.floor((code % 588) / 28)], JONG[code % 28]);
+  }
+  return out;
+}
+function isHangulSyl(ch) { var c = ch.charCodeAt(0); return c >= 0xAC00 && c <= 0xD7A3; }
+
+var answer, ansJamo, rowIdx, practice, startTs, jamoState = {}, shareRows = [];
+
+function pickDaily() {
+  var n = GameDaily.dayNumber(EPOCH);
+  return WORDS[((n * 7919) % WORDS.length + WORDS.length) % WORDS.length];
+}
+function pickRandom() { return WORDS[Math.floor(Math.random() * WORDS.length)]; }
+
+function buildBoard() {
+  var b = document.getElementById('board');
+  b.innerHTML = '';
+  for (var r = 0; r < TRIES; r++) {
+    var row = document.createElement('div'); row.className = 'g-row';
+    for (var s = 0; s < 2; s++) {
+      var syl = document.createElement('div'); syl.className = 'syl';
+      syl.innerHTML = '<div class="big"></div><div class="parts"><span></span><span></span><span></span></div>';
+      row.appendChild(syl);
+    }
+    b.appendChild(row);
+  }
+}
+
+function begin(isPractice) {
+  practice = isPractice;
+  answer = isPractice ? pickRandom() : pickDaily();
+  ansJamo = decompose(answer);
+  rowIdx = 0; jamoState = {}; shareRows = [];
+  startTs = Date.now();
+  buildBoard();
+  renderJamo();
+  document.getElementById('menu').hidden = true;
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('msg').textContent = '';
+  var input = document.getElementById('guessIn');
+  input.disabled = false; input.value = ''; input.focus();
+}
+
+function grade(gJamo) {
+  // 표준 워들 채점 (자모 6슬롯, 수량 인지)
+  var res = new Array(6).fill('miss');
+  var pool = {};
+  for (var i = 0; i < 6; i++) {
+    if (gJamo[i] === ansJamo[i]) res[i] = 'ok';
+    else pool[ansJamo[i]] = (pool[ansJamo[i]] || 0) + 1;
+  }
+  for (i = 0; i < 6; i++) {
+    if (res[i] === 'ok') continue;
+    if (pool[gJamo[i]] > 0) { res[i] = 'near'; pool[gJamo[i]]--; }
+  }
+  return res;
+}
+
+function renderJamo() {
+  var el = document.getElementById('jamoBoard');
+  el.innerHTML = '';
+  var order = (CHO + JUNG).split('');
+  var seenExtra = Object.keys(jamoState).filter(function (j) { return order.indexOf(j) < 0; });
+  order.concat(seenExtra).forEach(function (j) {
+    if (j === ' ') return;
+    var st = jamoState[j];
+    if (!st) return;                     // 아직 안 쓴 자모는 표시하지 않아 보드가 가볍다
+    var sp = document.createElement('span');
+    sp.textContent = j; sp.className = st;
+    el.appendChild(sp);
+  });
+}
+
+function submitGuess() {
+  var input = document.getElementById('guessIn');
+  var g = input.value.trim();
+  var msg = document.getElementById('msg');
+  if (g.length !== 2 || !isHangulSyl(g[0]) || !isHangulSyl(g[1])) {
+    msg.textContent = TR('needTwo'); return;
+  }
+  msg.textContent = '';
+  var gJamo = decompose(g);
+  var res = grade(gJamo);
+  var row = document.getElementById('board').children[rowIdx];
+  var shareRow = '';
+  for (var s = 0; s < 2; s++) {
+    var syl = row.children[s];
+    syl.querySelector('.big').textContent = g[s];
+    var parts = syl.querySelectorAll('.parts span');
+    for (var p = 0; p < 3; p++) {
+      var idx = s * 3 + p, j = gJamo[idx], st = res[idx];
+      parts[p].textContent = j === ' ' ? '·' : j;
+      parts[p].className = st;
+      shareRow += st === 'ok' ? '🟩' : st === 'near' ? '🟨' : '⬛';
+      if (j !== ' ') {
+        var rank = { miss: 0, near: 1, ok: 2 };
+        if (!jamoState[j] || rank[jamoState[j]] < rank[st]) jamoState[j] = st;
+      }
+    }
+  }
+  shareRows.push(shareRow);
+  renderJamo();
+  rowIdx++;
+  input.value = '';
+  var won = res.every(function (r) { return r === 'ok'; });
+  if (won || rowIdx >= TRIES) finish(won);
+  else input.focus();
+}
+
+function finish(won) {
+  document.getElementById('guessIn').disabled = true;
+  var sec = Math.floor((Date.now() - startTs) / 1000);
+  var end = document.getElementById('endPanel');
+  document.getElementById('endTitle').textContent = won ? TR('win') : '💧';
+  document.getElementById('endWord').textContent =
+    (won ? '' : TR('lose') + ' ') + '「' + answer + '」' + (practice ? ' (' + TR('practiceTag') + ')' : '');
+  document.getElementById('shareGrid').innerHTML = shareRows.join('<br>');
+  document.getElementById('endTime').textContent = GameDaily.fmtTime(sec);
+  document.getElementById('againBtn').hidden = false;
+
+  if (!practice) {
+    var st = won ? GameDaily.recordClear(SLUG) : GameDaily.streak(SLUG);
+    document.getElementById('endStreak').textContent = st.streak;
+    if (!GameDaily.result(SLUG)) {
+      GameDaily.saveResult(SLUG, { won: won, tries: rowIdx, sec: sec, grid: shareRows });
+      if (won) {
+        var score = Math.max(100, 6000 - (rowIdx - 1) * 800 - sec * 2);
+        GameRank.submit(SLUG, score, '#' + GameDaily.dayNumber(EPOCH) + ' ' + rowIdx + '/6 ' + GameDaily.fmtTime(sec));
+      }
+    }
+  } else {
+    document.getElementById('endStreak').textContent = GameDaily.streak(SLUG).streak;
+  }
+  end.hidden = false;
+}
+
+function shareText() {
+  var n = GameDaily.dayNumber(EPOCH);
+  var head = TR('title') + ' #' + n + ' ' +
+    (shareRows.length && shareRows[shareRows.length - 1].indexOf('⬛') < 0 &&
+     shareRows[shareRows.length - 1].indexOf('🟨') < 0 ? rowIdx : 'X') + '/6';
+  return head + '\n' + shareRows.join('\n') + '\nhttps://game.1989v.com/games/word-warden/';
+}
+
+document.getElementById('startBtn').onclick = function () {
+  var prev = GameDaily.result(SLUG);
+  if (prev) {
+    // 이미 클리어한 날 — 결과 화면 재표시
+    shareRows = prev.grid || []; rowIdx = prev.tries; practice = false;
+    answer = pickDaily();
+    document.getElementById('menu').hidden = true;
+    document.getElementById('msg').textContent = TR('already');
+    buildBoard();
+    finishReplay(prev);
+    return;
+  }
+  begin(false);
+};
+function finishReplay(prev) {
+  document.getElementById('guessIn').disabled = true;
+  document.getElementById('endTitle').textContent = prev.won ? TR('win') : '💧';
+  document.getElementById('endWord').textContent = '「' + answer + '」';
+  document.getElementById('shareGrid').innerHTML = (prev.grid || []).join('<br>');
+  document.getElementById('endTime').textContent = GameDaily.fmtTime(prev.sec || 0);
+  document.getElementById('endStreak').textContent = GameDaily.streak(SLUG).streak;
+  document.getElementById('againBtn').hidden = false;
+  document.getElementById('endPanel').hidden = false;
+}
+document.getElementById('practiceBtn').onclick = function () { begin(true); };
+document.getElementById('againBtn').onclick = function () { begin(true); };
+document.getElementById('submitBtn').onclick = submitGuess;
+document.getElementById('guessIn').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') { e.preventDefault(); submitGuess(); }
+});
+document.getElementById('backBtn').onclick = function () {
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('menu').hidden = false;
+  refreshMenu();
+};
+document.getElementById('shareBtn').onclick = function () {
+  GameDaily.share(shareText(), this);
+};
+
+function refreshMenu() {
+  var st = GameDaily.streak(SLUG);
+  document.getElementById('menuStreak').textContent =
+    '#' + GameDaily.dayNumber(EPOCH) + ' · 🔥 ' + st.streak + ' (best ' + st.best + ')';
+  document.getElementById('streakTxt').textContent = st.streak;
+}
+document.getElementById('dayTag').textContent = '#' + GameDaily.dayNumber(EPOCH);
+refreshMenu();
+GameDaily.countdown(document.getElementById('cdown'));
+</script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('word-warden');</script>
+</body>
+</html>
