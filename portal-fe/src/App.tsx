@@ -19,6 +19,17 @@ const AgentViewerApp = lazy(() => import('./shell/placeholders').then((m) => ({ 
 
 // game.<domain> 서브도메인 — 동일 portal-fe 번들을 서빙하되 루트가 게임 허브 (ADR-0059)
 const isGamesHost = window.location.hostname.split('.')[0] === 'game';
+// apex 의 /games 는 game 서브도메인으로 정리 — 게임 주소를 하나로 고정.
+// localhost/k3d 등 개발 환경은 서브도메인이 없으므로 apex 프로덕션에서만 보낸다.
+const isApexProd = window.location.hostname === '1989v.com';
+
+function GameHostRedirect() {
+  const { pathname, search, hash } = window.location;
+  window.location.replace(
+    `https://game.1989v.com${pathname === '/games' ? '/' : pathname}${search}${hash}`,
+  );
+  return null;
+}
 
 function App() {
   return (
@@ -33,8 +44,11 @@ function App() {
           <Route path="/shop/orders" element={<MyOrdersPage />} />
           <Route path="/shop/login" element={<ShopLoginPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
-          <Route path="/games" element={<GamesPage />} />
-          <Route path="/games/:slug" element={<GameDetailPage />} />
+          <Route path="/games" element={isApexProd ? <GameHostRedirect /> : <GamesPage />} />
+          <Route
+            path="/games/:slug"
+            element={isApexProd ? <GameHostRedirect /> : <GameDetailPage />}
+          />
 
           {/* 흡수 sub-app 슬롯 (P2 통합 대상) */}
           <Route path="/admin/*" element={<AdminApp />} />
