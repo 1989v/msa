@@ -231,6 +231,17 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // 온라인 대전 릴레이 (raw WebSocket) — 게스트 허용. 브라우저 WebSocket 은 Authorization
+            // 헤더를 붙일 수 없어 항상 익명 경로를 타고, 필터는 클라이언트가 위조한 신원 헤더를 벗긴다.
+            // Spring Cloud Gateway 는 http:// URI 로도 Upgrade 를 프록시한다 (WebsocketRoutingFilter).
+            .route("game-relay-ws") { r ->
+                r.path("/ws/games/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // 광고 슬롯/보상 (HOUSE, ADR-0059 §3) — 게스트 허용, 로그인 시 X-User-Id 식별
             .route("game-ads") { r ->
                 r.path("/api/v1/ads/**")

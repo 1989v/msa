@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.data.redis) // #23 흡수: 리더보드 ZSET/세션
+    implementation(libs.spring.boot.starter.websocket) // 온라인 대전 릴레이 (/ws/games/{slug})
     implementation(libs.querydsl.jpa) { artifact { classifier = "jakarta" } }
     kapt(libs.querydsl.apt) { artifact { classifier = "jakarta" } }
     implementation(libs.spring.kafka)

@@ -57,12 +57,31 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
 | `POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN) |
 | `/api/v1/games/arcade/{catalog,sessions,scores,leaderboard,daily}` | #23 아케이드 — 세션 발급/점수 제출(검증)/리더보드. `games/**` 하위라 게이트웨이 라우트 추가 없음 |
+| `WS /ws/games/{slug}` | 온라인 대전 릴레이 (raw WebSocket, 게스트). 아래 "온라인 대전 릴레이" 참조 |
 | `GET /api/v1/ads/placements/{key}?subject=`, `POST /api/v1/ads/rewards`(+`/{key}/complete`) | HOUSE 배너 슬롯(cap 시 data=null) / rewarded 보상 발급·완료(멱등) |
 
-게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 6개 라우트로 나뉜다 — 좁은 경로가 먼저
+게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 7개 라우트로 나뉜다 — 좁은 경로가 먼저
 선언되어야 `games/**` 에 가려지지 않는다: `game-admin`(ADMIN) → `game-rating`(USER+) →
 `game-save`(게스트 허용 + Rate Limiter — 익명 쓰기 방어) → `game-session`(게스트 허용, sessions+runs) →
-`game-catalog`(공개) → `game-ads`(`/api/v1/ads/**`, 게스트 허용).
+`game-catalog`(공개) → `game-relay-ws`(`/ws/games/**`, 게스트 허용) → `game-ads`(`/api/v1/ads/**`, 게스트 허용).
+
+## 온라인 대전 릴레이 (`com.kgd.game.infrastructure.ws`)
+
+`/ws/games/{slug}` — raw WebSocket + JSON 한 줄. STOMP 미사용(구독 토픽·프레임 헤더가 불필요하고
+게임 클라이언트가 단일 HTML 이라 stomp.js 의존을 얹지 않는다).
+
+| 방향 | 메시지 |
+|---|---|
+| C→S | `{"t":"join","room":"<code>\|null","nick":"…"}` · `{"t":"move","d":{…}}` · `{"t":"leave"}` · `{"t":"ping"}` |
+| S→C | `{"t":"joined","room":"ABC123","seat":0}` · `{"t":"start","seed":123,"players":["…","…"]}` · `{"t":"move","seat":1,"d":{…}}` · `{"t":"opponentLeft"}` · `{"t":"error","code":"…"}` · `{"t":"pong"}` · `{"t":"ping"}`(유휴 확인) |
+
+- **권위 없는 릴레이** — `move` 의 `d` 는 열어보지 않고 상대에게 그대로 전달한다. 규칙 검증이 필요한
+  종목이 생기면 그 종목 전용 권위 레이어를 릴레이 위에 따로 얹는다
+- 매칭: `room` 지정 시 그 코드로 get-or-create(친구 초대), `null` 이면 같은 슬러그 대기열 자동 매칭
+- 상한: 메시지 4KB · 20 msg/s(초과 시 close) · 동시 방 200 · 유휴 60초 ping / 90초 종료
+- 방 상태는 **in-memory**(ConcurrentHashMap) — 단일 노드 · 호스트 1 레플리카 전제. 레플리카를 늘릴 때
+  방 코드 sticky routing 또는 Redis pub/sub 을 넣는다 (지금 넣으면 구독자가 자기 자신뿐)
+- 다른 게임 온라인화: 서버 변경 0 — 클라이언트가 `/ws/games/<slug>` 로 붙어 `d` 스키마만 정하면 된다
 
 > CI 주의: game 모듈 변경은 `code-dictionary` 이미지 리빌드로 이어져야 한다 —
 > `.github/workflows/images.yml` 의 `game/*` 경로 매핑 (ADR-0059 폴드).
@@ -88,7 +107,7 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 |---|---|---|
 | `snake` | `portal-fe/public/games/snake/` | `./gradlew :game:web:jsBrowserDistribution` 산출물(game.js/index.html) 복사 |
 | `overworld-quest` | `portal-fe/public/games/overworld-quest/index.html` | 단일 HTML, 외부 의존 0. 원본 파일명이 상표를 연상시켜 중립 명칭으로 등록 |
-| `monster-tamer` `depth-delver` `outlaw-frontier` `gate-holdout` `gear-bastion` `iron-vanguard` `ember-temple` `frost-outpost` `echo-duel` | `portal-fe/public/games/<slug>/index.html` | 단일 HTML 자체 완결 게임 9종 (V7~V13 시드). 이어하기 코드 세이브 공용 |
+| `monster-tamer` `depth-delver` `outlaw-frontier` `gate-holdout` `gear-bastion` `iron-vanguard` `ember-temple` `frost-outpost` `echo-duel` | `portal-fe/public/games/<slug>/index.html` | 단일 HTML 자체 완결 게임 9종 (V7~V13 시드). 이어하기 코드 세이브 공용. `echo-duel` 은 **온라인 대전 모드** 보유 — 릴레이 첫 적용작 |
 | `golden-forge` `rune-merge` `cave-glide` `wall-breaker` | `portal-fe/public/games/<slug>/index.html` | 캐주얼 팩 4종 (V16 시드). 방치형/2048 머지/원버튼/벽돌깨기 |
 | `crimson-ravine` `storm-corridor` `dice-citadel` `rift-front` | `portal-fe/public/games/<slug>/index.html` | 유즈맵 팩 2차 (V18 시드). 오토배틀/탄막 회피/랜덤 머지 디펜스/미니 AoS — 세이브 없음, 랭킹+재도전만 |
 | `word-warden` `quad-weave` `pixel-mine` `royal-grid` `number-garden` | `portal-fe/public/games/<slug>/index.html` | 데일리 퍼즐 팩 (V19 시드). 한글 워들/Connections/노노그램/퀸 배치/스도쿠 — KST 날짜 시드(`lib/daily.js`), 스트릭+이모지 공유, 유일해 클라이언트 생성(퀸 배치는 변이 수리, 스도쿠는 파기 검증). 썸네일은 `thumbs/daily/*.svg` |
