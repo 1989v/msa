@@ -1,11 +1,13 @@
-# ADR-0031 §5.8 — 백엔드 → Kafka (9092)
+# ADR-0031 §5.8 — 백엔드 → Kafka (9092 CLIENT + 29092 INTERNAL)
 #
-# commerce ns 의 Spring Boot 백엔드만 kafka:9092 (CLIENT listener) 호출 허용.
-# 29092 (INTERNAL) / 9093 (CONTROLLER) 는 broker 자기 자신만 사용 → 외부 허용 X.
+# commerce ns 의 Spring Boot 백엔드만 kafka 호출 허용.
+# application-kubernetes.yml 프로파일이 kafka:29092 (INTERNAL listener) 로 bootstrap
+# 하므로 29092 도 앱 대상이다 (9092 만 열면 publish/consume 전면 차단 — 2026-08-07 실측).
+# 9093 (CONTROLLER) 은 broker 자기 자신만 사용 → 외부 허용 X.
 #
 # 라벨 선택 근거:
 #   - k8s/infra/local/kafka/statefulset.yaml:7 (app.kubernetes.io/name=kafka)
-#   - k8s/infra/local/kafka/service.yaml:13 (port 9092 = CLIENT)
+#   - k8s/infra/local/kafka/service.yaml (9092 = CLIENT, 29092 = INTERNAL)
 #
 # prod 비고: Strimzi Kafka 는 strimzi.io/cluster=commerce 라벨을 쓰므로
 # prod overlay 에서 selector 한 줄 추가 필요 (Phase 2 작업).
@@ -31,3 +33,4 @@ spec:
               - { key: app.kubernetes.io/name, operator: NotIn, values: [mysql, redis, kafka, opensearch, clickhouse] }
       ports:
         - { port: 9092, protocol: TCP }
+        - { port: 29092, protocol: TCP }
