@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="gameTitle">🌊 표류 대륙</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; justify-content:center; min-height:100vh;
+         user-select:none; touch-action:manipulation; }
+  #wrap { position:relative; border:4px solid #222b44; border-radius:10px; overflow:hidden;
+          box-shadow:0 0 48px rgba(0,0,0,.72); }
+  canvas { display:block; background:#0a1020; max-width:100%; }
+
+  /* ── HUD ── */
+  #hud { position:absolute; top:8px; left:10px; right:10px; display:flex; flex-direction:column;
+         gap:5px; pointer-events:none; font-size:11px; text-shadow:1px 1px 0 #000; }
+  .bars { display:flex; flex-direction:column; gap:3px; width:190px; }
+  .bar { height:9px; background:rgba(8,11,17,.72); border-radius:5px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:100%; transform-origin:left; transition:transform .12s; }
+  #hpFill { background:#ef4444; } #mpFill { background:#0ea5e9; } #xpFill { background:#eab308; }
+  #bossBar { position:absolute; top:8px; left:50%; transform:translateX(-50%); width:min(420px,72%);
+             height:12px; background:rgba(8,11,17,.8); border:1px solid #3a4763; border-radius:6px;
+             overflow:hidden; }
+  #bossFill { display:block; height:100%; width:100%; background:#a855f7; transform-origin:left; }
+  #skills { position:absolute; bottom:10px; left:10px; display:flex; gap:7px; pointer-events:none; }
+  #skills span { width:38px; height:38px; border-radius:8px; background:rgba(8,11,17,.72);
+                 border:2px solid #2c3550; display:flex; align-items:center; justify-content:center;
+                 font-size:15px; font-weight:bold; }
+  #skills span.cool { opacity:.32; border-color:#1a2238; }
+
+  /* ── 안내 ── */
+  #banner { position:absolute; top:34%; left:0; right:0; text-align:center; font-size:24px;
+            font-weight:bold; color:#0ea5e9; text-shadow:3px 3px 0 #000; pointer-events:none;
+            opacity:0; transition:opacity .3s; padding:0 14px; }
+  #banner.on { opacity:1; }
+  #hint { position:absolute; bottom:58px; left:50%; transform:translateX(-50%); font-size:11.5px;
+          background:rgba(8,11,17,.85); padding:5px 12px; border-radius:7px; color:#c2cedc;
+          opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; }
+  #hint.on { opacity:1; }
+  #prompt { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); font-size:12px;
+            background:rgba(14,165,233,.9); color:#04121c; font-weight:bold; padding:5px 13px;
+            border-radius:7px; pointer-events:none; }
+
+  /* ── 패널 공통 ── */
+  .panel { position:absolute; inset:0; background:rgba(9,13,24,.96); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:12px; text-align:center; z-index:10;
+           padding:20px; overflow:auto; }
+  .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel h2 { color:#0ea5e9; font-size:17px; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:520px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .panel button { background:#0ea5e9; color:#04121c; border:0; padding:9px 20px; font-weight:bold;
+                  font-size:13px; border-radius:7px; cursor:pointer; font-family:inherit; }
+  .panel button.ghost { background:#222b44; color:#e6ecf2; }
+  .panel button:disabled { opacity:.32; cursor:default; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+
+  /* ── 대화 ── */
+  #dlg { justify-content:flex-end; background:rgba(9,13,24,.55); }
+  #dlgBox { width:min(560px,94%); background:#1a2238; border:2px solid #2c3550; border-radius:10px;
+            padding:14px 16px; text-align:left; }
+  #dlgHead { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+  #dlgIcon { font-size:26px; }
+  #dlgName { color:#0ea5e9; font-weight:bold; font-size:14px; }
+  #dlgText { font-size:13px; line-height:1.85; color:#e6ecf2; min-height:52px; }
+  #dlgChoices { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
+  #dlgChoices button { background:#222b44; color:#e6ecf2; text-align:left; font-size:12px;
+                       padding:8px 12px; width:100%; }
+
+  /* ── 목록형 패널 ── */
+  .board { width:min(620px,96%); background:#1a2238; border:2px solid #2c3550; border-radius:10px;
+           padding:14px; text-align:left; max-height:74%; overflow:auto; }
+  #invGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:10px; }
+  #invGrid button { background:#222b44; border:2px solid #2c3550; border-radius:8px; aspect-ratio:1;
+                    font-size:19px; cursor:pointer; color:#e6ecf2; font-family:inherit; padding:0; }
+  #invGrid button.sel { border-color:#0ea5e9; }
+  #invDetail { font-size:12px; color:#c2cedc; line-height:1.7; min-height:48px; }
+  #equipList, #statList, #questList, #shopList { font-size:12px; color:#c2cedc; line-height:1.9; }
+  #shopList button, #equipList button { background:#0ea5e9; color:#04121c; border:0; border-radius:5px;
+                                        padding:3px 9px; font-size:11px; font-weight:bold; cursor:pointer;
+                                        font-family:inherit; margin-left:6px; }
+  #treeGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+  #treeGrid button { background:#222b44; border:2px solid #2c3550; border-radius:8px; padding:9px 6px;
+                     font-size:11px; color:#e6ecf2; cursor:pointer; font-family:inherit; line-height:1.5; }
+  #treeGrid button.owned { border-color:#22c55e; background:#16351f; }
+  #treeGrid button:disabled { opacity:.38; cursor:default; }
+  .two { display:flex; gap:12px; flex-wrap:wrap; }
+  .two > div { flex:1; min-width:180px; }
+
+  #info { margin-top:9px; font-size:11px; color:#5d6a7a; text-align:center; line-height:1.7; padding:0 12px; }
+
+  @media (max-width: 900px), (pointer: coarse) {
+    #wrap { width:100vw; max-width:100vw; border-width:0; border-radius:0; }
+    canvas { width:100%; height:auto; }
+    #info { display:none; }
+    .panel button { padding:11px 18px; font-size:13.5px; }
+    #skills span { width:44px; height:44px; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="880" height="520"></canvas>
+
+  <div id="hud" hidden>
+    <div class="bars">
+      <div class="bar"><i id="hpFill"></i></div>
+      <div class="bar"><i id="mpFill"></i></div>
+      <div class="bar"><i id="xpFill"></i></div>
+    </div>
+  </div>
+  <div id="bossBar" hidden><i id="bossFill"></i></div>
+  <div id="skills" hidden>
+    <span id="cdDash">⇢</span><span id="cdWhirl">🌀</span><span id="cdTide">🌊</span>
+  </div>
+  <div id="banner"></div>
+  <div id="hint"></div>
+  <div id="prompt" hidden></div>
+
+  <!-- 시작 -->
+  <div class="panel" id="menu">
+    <h1 data-i18n="gameTitle">🌊 표류 대륙</h1>
+    <p data-i18n="tagline">난파선에서 눈을 떴다. 등대는 아직 꺼져 있다.</p>
+    <p class="small" data-i18n="menuFoot">WASD 이동 · Space 공격 · Shift 회피 · Q/E 스킬 · F 상호작용 · I 가방</p>
+    <div class="row">
+      <button id="startBtn" data-i18n="newBtn">새 여정</button>
+      <button id="contBtn" class="ghost" data-i18n="contBtn">이어하기</button>
+    </div>
+    <div class="row">
+      <button id="importBtn" class="ghost" data-i18n="importBtn">📂 파일 불러오기</button>
+      <input id="importFile" type="file" accept="application/json" hidden>
+    </div>
+  </div>
+
+  <!-- 사망 -->
+  <div class="panel" id="endPanel" hidden>
+    <h1 id="endTitle"></h1>
+    <p id="endDesc" style="white-space:pre-line"></p>
+    <div class="row">
+      <button id="againBtn" data-i18n="againBtn">🔁 마을에서 다시</button>
+      <button id="backBtn" class="ghost" data-i18n="backBtn">처음으로</button>
+    </div>
+  </div>
+
+  <!-- 대화 -->
+  <div class="panel" id="dlg" hidden>
+    <div id="dlgBox">
+      <div id="dlgHead"><span id="dlgIcon">🙂</span><span id="dlgName"></span></div>
+      <div id="dlgText"></div>
+      <div id="dlgChoices"></div>
+    </div>
+  </div>
+
+  <!-- 가방 -->
+  <div class="panel" id="panelInv" hidden>
+    <h2 data-i18n="invTitle">🎒 가방</h2>
+    <div class="board">
+      <div class="two">
+        <div>
+          <div id="invGrid"></div>
+          <div id="invDetail"></div>
+        </div>
+        <div>
+          <div id="equipList"></div>
+          <div id="statList" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+  </div>
+
+  <!-- 스킬트리 -->
+  <div class="panel" id="panelTree" hidden>
+    <h2 data-i18n="skillTitle">🌿 기술의 나무</h2>
+    <div class="board"><div id="treeGrid"></div></div>
+    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+  </div>
+
+  <!-- 퀘스트 -->
+  <div class="panel" id="panelQuest" hidden>
+    <h2 data-i18n="questTitle">📜 여정 일지</h2>
+    <div class="board"><div id="questList"></div></div>
+    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+  </div>
+
+  <!-- 상점 -->
+  <div class="panel" id="panelShop" hidden>
+    <h2 data-i18n="shopTitle">🛒 상점</h2>
+    <div class="board"><div id="shopList"></div></div>
+    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+  </div>
+
+  <!-- 여관 -->
+  <div class="panel" id="panelInn" hidden>
+    <h2 data-i18n="innTitle">🛏️ 표착항 여관</h2>
+    <div class="row">
+      <button id="innRestBtn" data-i18n="restBtn">휴식 (30 금화)</button>
+    </div>
+    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+  </div>
+
+  <!-- 일시정지 -->
+  <div class="panel" id="panelPause" hidden>
+    <h2 data-i18n="pauseTitle">⏸ 잠시 멈춤</h2>
+    <div class="row">
+      <button id="pauseResume" data-i18n="resumeBtn">계속하기</button>
+      <button id="pauseSave" class="ghost" data-i18n="saveBtn">💾 저장</button>
+    </div>
+    <div class="row">
+      <button id="pauseExport" class="ghost" data-i18n="exportBtn">⬇ 내보내기</button>
+      <button id="pauseQuit" class="ghost" data-i18n="backBtn">처음으로</button>
+    </div>
+  </div>
+</div>
+
+<div id="info" data-i18n="menuFoot">WASD 이동 · Space 공격 · Shift 회피 · Q/E 스킬 · F 상호작용 · I 가방</div>
+
+<script src="js/content.js"></script>
+<script src="js/world.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/core.js"></script>
+<script src="../lib/touch.js"></script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('drift-continent');</script>
+</body>
+</html>
