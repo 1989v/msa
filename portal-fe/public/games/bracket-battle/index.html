@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">⚔️ 급식 대전</title>
+<script src="../lib/i18n.js"></script>
+<script src="../lib/daily.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; min-height:100vh; user-select:none; padding:14px 10px 30px; }
+  h1.top { font-size:19px; color:#0ea5e9; margin:6px 0 2px; text-shadow:1px 1px 0 #000; }
+  .sub { font-size:11px; color:#8e9db0; margin-bottom:10px; text-align:center; }
+
+  #gameArea { display:flex; flex-direction:column; align-items:center; width:100%; }
+  #roundLabel { font-size:13px; color:#c2cedc; margin:6px 0 8px; text-align:center; }
+  #roundLabel b { color:#0ea5e9; }
+  .bar { width:100%; max-width:640px; height:8px; background:#1a2238; border-radius:4px;
+         overflow:hidden; margin-bottom:16px; }
+  .bar i { display:block; height:100%; width:0; background:#0ea5e9; border-radius:4px; transition:width .3s; }
+
+  #arena { display:flex; gap:14px; width:100%; max-width:640px; align-items:stretch; }
+  .card { flex:1 1 0; min-width:0; background:#1a2238; border:2px solid #2c3550; border-radius:14px;
+          padding:24px 14px 20px; cursor:pointer; text-align:center; display:flex; flex-direction:column;
+          align-items:center; gap:8px; animation:deal .28s ease;
+          transition:transform .3s, opacity .3s, border-color .3s, background-color .15s; }
+  .card:hover { background:#222b44; border-color:#0ea5e9; }
+  .card .em { font-size:52px; line-height:1.15; }
+  .card .nm { font-size:18px; }
+  .card .nm2 { font-size:11px; color:#8e9db0; }
+  .card .ds { font-size:12px; color:#c2cedc; line-height:1.5; }
+  .card.win { border-color:#22c55e; background:#1a2238; transform:scale(1.07); }
+  .card.lose { opacity:.12; transform:scale(.9); }
+  @keyframes deal { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  .vs { width:46px; height:46px; border-radius:50%; background:#eab308; color:#241c02; font-weight:bold;
+        display:flex; align-items:center; justify-content:center; align-self:center; flex:0 0 auto;
+        font-size:15px; box-shadow:0 0 14px rgba(234,179,8,.35); }
+  .hint { font-size:11px; color:#8e9db0; margin-top:14px; }
+
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; z-index:10;
+           overflow:auto; padding:20px; }
+  .pwrap { margin:auto; display:flex; flex-direction:column; align-items:center; gap:13px;
+           text-align:center; width:100%; max-width:540px; }
+  .pwrap h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .pwrap p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:480px; }
+  .pwrap p.small { font-size:11px; color:#8e9db0; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:12px 18px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#222b44; color:#e6ecf2; }
+
+  .packs { display:grid; grid-template-columns:repeat(2, minmax(140px, 220px)); gap:10px;
+           justify-content:center; width:100%; }
+  button.pack { background:#1a2238; border:2px solid #2c3550; border-radius:12px; padding:14px 10px;
+                cursor:pointer; color:#e6ecf2; font-family:inherit; display:flex; flex-direction:column;
+                gap:4px; align-items:center; }
+  button.pack:hover { background:#222b44; border-color:#0ea5e9; }
+  .pack .pk-em { font-size:30px; }
+  .pack b { font-size:14px; }
+  .pack .pk-en { font-size:10.5px; color:#8e9db0; }
+  .pack .pk-n { font-size:10.5px; color:#0ea5e9; }
+
+  .hof { background:#1a2238; border-radius:10px; padding:10px 16px 12px; min-width:250px; max-width:100%; }
+  .hof h2 { font-size:12.5px; color:#eab308; margin-bottom:7px; }
+  .hof-row { font-size:12px; color:#c2cedc; line-height:1.9; display:flex; gap:6px;
+             justify-content:center; flex-wrap:wrap; }
+  .hof-row em { color:#8e9db0; font-style:normal; }
+  .hof-empty { font-size:11.5px; color:#8e9db0; line-height:1.7; }
+
+  #champEm { font-size:58px; line-height:1.15; }
+  #champNm { font-size:22px; color:#22c55e; font-weight:bold; }
+  #champSub { font-size:11.5px; color:#8e9db0; }
+  #champDs { font-size:12.5px; color:#c2cedc; }
+  .medal { font-size:12.5px; color:#c2cedc; }
+  .medal b { color:#eab308; }
+  .pathBox { background:#1a2238; border-radius:10px; padding:10px 16px 12px; font-size:12px;
+             max-width:100%; }
+  .pathBox b { color:#0ea5e9; display:block; margin-bottom:6px; font-size:12px; }
+  #pathList { color:#c2cedc; line-height:1.9; }
+
+  @media (max-width:640px) {
+    #arena { flex-direction:column; gap:10px; }
+    .vs { margin:-4px auto; width:40px; height:40px; font-size:13px; }
+    .card { padding:16px 12px 14px; }
+    .card .em { font-size:44px; }
+    .hint { display:none; }
+  }
+</style>
+</head>
+<body>
+<h1 class="top" data-i18n="title">⚔️ 급식 대전</h1>
+<div class="sub" data-i18n="sub">이상형 월드컵 — 최후의 1픽을 가려라</div>
+
+<div id="gameArea" hidden>
+  <div id="roundLabel"></div>
+  <div class="bar"><i id="barFill"></i></div>
+  <div id="arena">
+    <div class="card" id="card0"></div>
+    <div class="vs">VS</div>
+    <div class="card" id="card1"></div>
+  </div>
+  <div class="hint" data-i18n="hint">←/→ 키로도 선택할 수 있다</div>
+</div>
+
+<div class="panel" id="menu">
+  <div class="pwrap">
+    <h1 data-i18n="menuTitle">⚔️ 급식 대전</h1>
+    <p data-i18n="menuDesc">32강 토너먼트. 매 라운드 두 항목 중 더 끌리는 쪽을 탭 —
+      끝까지 살아남는 최애를 가려라.</p>
+    <p class="small" data-i18n="pickPack">주제 팩 선택</p>
+    <div class="packs" id="packGrid"></div>
+    <div class="hof">
+      <h2 data-i18n="hofTitle">🏆 나의 명예의 전당</h2>
+      <div id="hofList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <div class="pwrap">
+    <h1 data-i18n="champTitle">🏆 우승</h1>
+    <div id="champEm"></div>
+    <div id="champNm"></div>
+    <div id="champSub"></div>
+    <div id="champDs"></div>
+    <p class="medal" id="runnerLine"></p>
+    <p class="medal" id="semiLine"></p>
+    <div class="pathBox">
+      <b data-i18n="pathTitle">🧭 우승까지의 대진 경로</b>
+      <div id="pathList"></div>
+    </div>
+    <div class="row">
+      <button class="act" id="shareBtn" data-i18n="shareBtn">📤 결과 공유</button>
+      <button class="act" id="againBtn" data-i18n="againBtn">🔁 같은 팩 한 판 더</button>
+      <button class="act ghost" id="backBtn" data-i18n="backBtn">처음으로</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '⚔️ 급식 대전', menuTitle: '⚔️ 급식 대전',
+    sub: '이상형 월드컵 — 최후의 1픽을 가려라',
+    menuDesc: '32강 토너먼트. 매 라운드 두 항목 중 더 끌리는 쪽을 탭 — 끝까지 살아남는 최애를 가려라.',
+    pickPack: '주제 팩 선택', items32: '32개 항목',
+    hofTitle: '🏆 나의 명예의 전당', hofEmpty: '아직 우승 기록이 없다 — 첫 대전을 시작해보자',
+    hint: '←/→ 키로도 선택할 수 있다', final: '결승',
+    champTitle: '🏆 우승', runnerUp: '🥈 준우승', semi: '🎖 4강', pathTitle: '🧭 우승까지의 대진 경로',
+    shareBtn: '📤 결과 공유', againBtn: '🔁 같은 팩 한 판 더', backBtn: '처음으로', winCnt: '회 우승',
+  },
+  en: {
+    title: '⚔️ Bracket Battle', menuTitle: '⚔️ Bracket Battle',
+    sub: 'Pick-one world cup — crown your favorite',
+    menuDesc: 'A 32-item tournament. Each round, tap the one you crave more — the last one standing is your true pick.',
+    pickPack: 'Choose a theme pack', items32: '32 items',
+    hofTitle: '🏆 My Hall of Fame', hofEmpty: 'No champions yet — start your first battle',
+    hint: 'You can also pick with the ←/→ keys', final: 'Final',
+    champTitle: '🏆 Champion', runnerUp: '🥈 Runner-up', semi: '🎖 Semifinalists', pathTitle: '🧭 Road to the crown',
+    shareBtn: '📤 Share', againBtn: '🔁 Same pack again', backBtn: 'Menu', winCnt: ' wins',
+  },
+});
+var TR = GameI18n.t;
+
+var SHARE_URL = 'https://game.1989v.com/games/bracket-battle/';
+var HOF_KEY = 'bracket_battle_hof';
+
+// 항목: [ko 이름, en 이름, 이모지, 한 줄 소개(ko 기준)]
+var PACKS = [
+{ id: 'lunch', em: '🍱', ko: '급식 메뉴', en: 'School Lunch', items: [
+  ['제육볶음', 'Spicy Pork Stir-fry', '🐷', '매콤달콤 밥도둑의 제왕'],
+  ['돈까스', 'Pork Cutlet', '🍖', '바삭한 옷 입은 급식 스타'],
+  ['미역국', 'Seaweed Soup', '🥣', '생일날 더 반가운 국'],
+  ['스파게티', 'Spaghetti', '🍝', '양식 데이의 주인공'],
+  ['카레라이스', 'Curry Rice', '🍛', '노란 행복 한 그릇'],
+  ['짜장밥', 'Jjajang Rice', '🥡', '춘장의 진한 유혹'],
+  ['불고기', 'Bulgogi', '🥩', '달큰한 국민 소고기'],
+  ['닭갈비', 'Dak-galbi', '🍗', '매콤한 닭볶음의 정석'],
+  ['김치볶음밥', 'Kimchi Fried Rice', '🔥', '계란후라이 얹으면 완성'],
+  ['갈비탕', 'Short Rib Soup', '🍲', '뽀얀 국물의 품격'],
+  ['육개장', 'Yukgaejang', '🌶️', '얼큰함으로 승부한다'],
+  ['함박스테이크', 'Hamburg Steak', '🍔', '소스 듬뿍 경양식 로망'],
+  ['탕수육', 'Sweet & Sour Pork', '🍍', '부먹 찍먹 논쟁의 근원'],
+  ['치킨마요덮밥', 'Chicken Mayo Bowl', '🐔', '마요 폭포 아래 치킨'],
+  ['순두부찌개', 'Soft Tofu Stew', '🥘', '보들보들 얼큰 순두부'],
+  ['된장찌개', 'Soybean Paste Stew', '🫕', '구수함의 원조'],
+  ['부대찌개', 'Budae-jjigae', '🥓', '햄과 라면사리의 축제'],
+  ['오므라이스', 'Omurice', '🍳', '노란 이불 덮은 볶음밥'],
+  ['잡채', 'Japchae', '🍜', '잔칫날 단골 당면 볶음'],
+  ['갈비찜', 'Braised Ribs', '🦴', '급식실 환호성 유발자'],
+  ['생선까스', 'Fish Cutlet', '🐟', '타르타르 소스와 단짝'],
+  ['메추리알장조림', 'Braised Quail Eggs', '🥚', '짭조름 윤기 알알이'],
+  ['떡갈비', 'Tteok-galbi', '🍘', '동그란 한입 고기 폭탄'],
+  ['김치전', 'Kimchi Pancake', '🥞', '비 오는 날 급식 감성'],
+  ['만둣국', 'Dumpling Soup', '🥟', '왕만두 동동 뜨끈한 국'],
+  ['비빔밥', 'Bibimbap', '🥗', '고추장에 슥슥 비벼서'],
+  ['유부초밥', 'Inari Rice', '🍙', '새콤달콤 한입 도시락'],
+  ['계란찜', 'Steamed Egg', '🍮', '보들보들 폭신 구름'],
+  ['닭볶음탕', 'Spicy Chicken Stew', '🥵', '국물에 밥 비비는 맛'],
+  ['크림수프', 'Cream Soup', '🥛', '양식 데이 오프닝'],
+  ['마파두부', 'Mapo Tofu', '🌋', '밥 위에 끼얹는 마법'],
+  ['미트볼조림', 'Glazed Meatballs', '🧆', '케첩 소스 동글 미트볼'],
+]},
+{ id: 'night', em: '🌙', ko: '야식', en: 'Late-night Bites', items: [
+  ['후라이드치킨', 'Fried Chicken', '🍗', '치킨은 언제나 옳다'],
+  ['양념치킨', 'Yangnyeom Chicken', '🍯', '달콤매콤 양념의 마법'],
+  ['간장치킨', 'Soy Garlic Chicken', '🐔', '짭조름 감칠맛 끝판왕'],
+  ['파닭', 'Green Onion Chicken', '🌿', '파 산더미 아래 치킨'],
+  ['곱창', 'Gopchang', '🥘', '고소함이 곱절인 밤의 왕'],
+  ['막창', 'Makchang', '🍖', '쫄깃 고소 불맛 한 점'],
+  ['닭발', 'Spicy Chicken Feet', '🦶', '스트레스 리셋 매운맛'],
+  ['닭똥집', 'Chicken Gizzards', '🐓', '오독오독 씹는 재미'],
+  ['족발', 'Jokbal', '🐖', '쫄깃 야들 콜라겐 폭탄'],
+  ['불족발', 'Fire Jokbal', '🔥', '맵찔이 출입금지 구역'],
+  ['보쌈', 'Bossam', '🥬', '수육 한 점 김치 한 장'],
+  ['피자', 'Pizza', '🍕', '치즈가 늘어나는 밤'],
+  ['라면', 'Ramyeon', '🍜', '새벽을 부르는 국물'],
+  ['불닭볶음면', 'Buldak Ramen', '🥵', '도전 정신을 깨우는 맛'],
+  ['짜파게티', 'Jjapaghetti', '🍝', '일요일엔 내가 요리사'],
+  ['군만두', 'Fried Dumplings', '🥟', '겉바속촉 육즙 가득'],
+  ['치즈볼', 'Cheese Balls', '🧀', '단짠 쭉쭉 늘어나는 볼'],
+  ['감자튀김', 'French Fries', '🍟', '바삭함은 배신하지 않는다'],
+  ['햄버거', 'Burger', '🍔', '두 손 가득 야식 클래식'],
+  ['삼겹살', 'Samgyeopsal', '🥓', '지글지글 구이의 왕'],
+  ['오돌뼈', 'Odolppyeo', '🦴', '오독오독 매콤 별미'],
+  ['골뱅이무침', 'Spicy Whelk Salad', '🐚', '새콤매콤 소면과 함께'],
+  ['찜닭', 'Jjimdak', '🍲', '간장 베이스 단짠 찜'],
+  ['닭꼬치', 'Chicken Skewer', '🍢', '한 손 야식의 정석'],
+  ['양꼬치', 'Lamb Skewers', '🐑', '쯔란 향 가득 불향 꼬치'],
+  ['마라탕', 'Malatang', '🌶️', '혀가 얼얼 중독의 맛'],
+  ['마라샹궈', 'Mala Xiang Guo', '🥡', '골라 담는 마라 볶음'],
+  ['모둠회', 'Sashimi Platter', '🐟', '야밤의 바다 한 상'],
+  ['초밥', 'Sushi', '🍣', '실패 없는 한 점의 행복'],
+  ['육회', 'Yukhoe', '🥩', '참기름 향 고소한 생고기'],
+  ['감자탕', 'Gamjatang', '🥔', '뼈 사이 살 바르는 재미'],
+  ['편의점도시락', 'Convenience Meal Box', '🍱', '야근 전사의 한 끼'],
+]},
+{ id: 'bunsik', em: '🍢', ko: '분식', en: 'Bunsik (Street Food)', items: [
+  ['떡볶이', 'Tteokbokki', '🌶️', '분식의 심장, 국민 매콤'],
+  ['로제떡볶이', 'Rose Tteokbokki', '🌹', '크림을 입은 순한 반전'],
+  ['라볶이', 'Rabokki', '🥘', '라면과 떡의 콜라보'],
+  ['김밥', 'Gimbap', '🍙', '소풍의 영원한 주역'],
+  ['충무김밥', 'Chungmu Gimbap', '🍱', '오징어무침과 찰떡궁합'],
+  ['꼬마김밥', 'Mini Gimbap', '🤏', '한입에 쏙, 중독 주의'],
+  ['순대', 'Sundae', '🐷', '쫀득 당면 소울푸드'],
+  ['어묵', 'Eomuk', '🍥', '국물은 셀프 무한리필'],
+  ['김말이튀김', 'Fried Seaweed Roll', '🌯', '떡볶이 국물에 풍덩'],
+  ['오징어튀김', 'Fried Squid', '🦑', '통통한 다리의 유혹'],
+  ['야채튀김', 'Veggie Fritters', '🥕', '바삭 한 조각의 정'],
+  ['새우튀김', 'Fried Shrimp', '🍤', '꼬리까지 바삭하게'],
+  ['납작만두', 'Flat Dumplings', '🥞', '대구가 낳은 겸손한 맛'],
+  ['찐만두', 'Steamed Dumplings', '🥟', '김이 모락모락 왕만두'],
+  ['떡꼬치', 'Tteok Skewer', '🍡', '달콤매콤 소스 듬뿍'],
+  ['소떡소떡', 'Sotteok Sotteok', '🍢', '소세지 떡 소세지 떡'],
+  ['옛날핫도그', 'Korean Hot Dog', '🌭', '설탕 듬뿍 추억의 맛'],
+  ['길거리토스트', 'Street Toast', '🍞', '양배추 계란의 기적'],
+  ['계란빵', 'Egg Bread', '🥚', '겨울 손난로 겸 간식'],
+  ['붕어빵', 'Bungeoppang', '🐠', '머리부터? 꼬리부터?'],
+  ['호떡', 'Hotteok', '🥮', '설탕 시럽 화상 주의'],
+  ['호두과자', 'Walnut Cakes', '🌰', '휴게소의 지배자'],
+  ['쫄면', 'Jjolmyeon', '🍜', '새콤매콤 쫄깃한 반항아'],
+  ['우동', 'Udon', '🥢', '통통 면발 뜨끈 국물'],
+  ['잔치국수', 'Janchi Noodles', '🎉', '잔치 없어도 국수는 있다'],
+  ['칼국수', 'Kalguksu', '🔪', '손칼질 면발의 위엄'],
+  ['수제비', 'Sujebi', '☁️', '구름 같은 반죽 조각'],
+  ['물냉면', 'Mul-naengmyeon', '🧊', '살얼음 육수 한 사발'],
+  ['닭강정', 'Dakgangjeong', '🍗', '달콤바삭 한입 치킨'],
+  ['핫바', 'Hot Bar', '🐟', '어묵의 프리미엄 진화'],
+  ['주먹밥', 'Rice Ball', '🍘', '알찬 한 덩이 주먹 불끈'],
+  ['치즈스틱', 'Cheese Sticks', '🧀', '겉바속쫀 치즈 폭발'],
+]},
+{ id: 'dev', em: '💻', ko: '개발자 간식', en: 'Dev Snacks', items: [
+  ['아메리카노', 'Americano', '☕', '개발자의 공식 연료'],
+  ['콜드브루', 'Cold Brew', '🧊', '천천히 내린 카페인 폭탄'],
+  ['카페라떼', 'Cafe Latte', '🥛', '부드러운 카페인 한 잔'],
+  ['에너지드링크', 'Energy Drink', '⚡', '배포 전날 밤의 동반자'],
+  ['콜라', 'Cola', '🥤', '치명적인 탄산의 유혹'],
+  ['제로콜라', 'Zero Cola', '0️⃣', '죄책감을 뺀 그 맛'],
+  ['탄산수', 'Sparkling Water', '💧', '맑고 따가운 리프레시'],
+  ['이온음료', 'Sports Drink', '🏃', '디버깅도 수분 보충부터'],
+  ['과일스무디', 'Fruit Smoothie', '🍓', '갈아 만든 달콤 휴식'],
+  ['비타민음료', 'Vitamin Drink', '💊', '야근 회복 물약'],
+  ['곰젤리', 'Gummy Bears', '🧸', '쫀득쫀득 당 충전'],
+  ['초콜릿', 'Chocolate', '🍫', '뇌를 깨우는 달콤함'],
+  ['민트초코', 'Mint Choco', '🍃', '치약이냐 진리냐 논쟁'],
+  ['감자칩', 'Potato Chips', '🥔', '바스락 소리 ASMR'],
+  ['콘칩', 'Corn Chips', '🌽', '고소함이 팡팡'],
+  ['팝콘', 'Popcorn', '🍿', '코드리뷰 관전 필수템'],
+  ['프레첼', 'Pretzel', '🥨', '짭짤한 꼬임의 미학'],
+  ['견과류믹스', 'Mixed Nuts', '🥜', '머리 좋아지는 한 줌'],
+  ['육포', 'Beef Jerky', '🥩', '씹을수록 나오는 감칠맛'],
+  ['스트링치즈', 'String Cheese', '🧀', '결대로 찢는 재미'],
+  ['아이스크림', 'Ice Cream', '🍦', '녹기 전에 먹어야 해'],
+  ['도넛', 'Donut', '🍩', '구멍까지 달콤한 원'],
+  ['쿠키', 'Cookie', '🍪', '쿠키는 지우지 마세요'],
+  ['마카롱', 'Macaron', '🌈', '앙증맞은 당 덩어리'],
+  ['브라우니', 'Brownie', '🟫', '꾸덕함의 밀도 최댓값'],
+  ['카스텔라', 'Castella', '🍰', '폭신폭신 달걀빵 귀족'],
+  ['삼각김밥', 'Triangle Gimbap', '🔺', '편의점 최애 삼각형'],
+  ['컵라면', 'Cup Ramyeon', '🥣', '3분이 만드는 기적'],
+  ['단백질바', 'Protein Bar', '💪', '근손실 방지 간식'],
+  ['그래놀라', 'Granola', '🌾', '바삭 건강한 척하기'],
+  ['바나나', 'Banana', '🍌', '원터치 오픈 천연 간식'],
+  ['그릭요거트', 'Greek Yogurt', '🐄', '꾸덕 단백질 디저트'],
+]},
+];
+
+function readHof() {
+  try { return JSON.parse(localStorage.getItem(HOF_KEY) || '{}'); } catch (e) { return {}; }
+}
+function writeHof(o) {
+  try { localStorage.setItem(HOF_KEY, JSON.stringify(o)); } catch (e) { /* 저장 불가 환경 무시 */ }
+}
+
+var pack, cur, nxt, mi, log, curA, curB, locked = false, finalChamp, finalRunner;
+
+function nameOf(it) { return GameI18n.lang === 'ko' ? it[0] : it[1]; }
+function subNameOf(it) { return GameI18n.lang === 'ko' ? it[1] : it[0]; }
+function packNameOf(p) { return GameI18n.lang === 'ko' ? p.ko : p.en; }
+function roundTag(size) {
+  if (size === 2) return TR('final');
+  return GameI18n.lang === 'ko' ? size + '강' : 'Round of ' + size;
+}
+
+function begin(p) {
+  pack = p;
+  cur = GameDaily.shuffle(p.items.slice(), Math.random);
+  nxt = []; mi = 0; log = []; locked = false;
+  document.getElementById('menu').hidden = true;
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('gameArea').hidden = false;
+  showMatch();
+}
+
+function renderCard(el, it) {
+  el.className = 'card';
+  el.innerHTML = '<span class="em">' + it[2] + '</span>' +
+    '<b class="nm">' + nameOf(it) + '</b>' +
+    '<span class="nm2">' + subNameOf(it) + '</span>' +
+    '<span class="ds">' + it[3] + '</span>';
+  // 같은 keyframes 재생을 위해 애니메이션 리셋
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = '';
+}
+
+function showMatch() {
+  curA = cur[mi * 2];
+  curB = cur[mi * 2 + 1];
+  renderCard(document.getElementById('card0'), curA);
+  renderCard(document.getElementById('card1'), curB);
+  document.getElementById('roundLabel').innerHTML =
+    pack.em + ' ' + packNameOf(pack) + ' · <b>' + roundTag(cur.length) + '</b> ' +
+    (mi + 1) + '/' + (cur.length / 2);
+  document.getElementById('barFill').style.width = Math.round(log.length / 31 * 100) + '%';
+}
+
+function pick(i) {
+  if (locked || document.getElementById('gameArea').hidden) return;
+  locked = true;
+  var winner = i === 0 ? curA : curB;
+  var loser = i === 0 ? curB : curA;
+  log.push({ r: cur.length, w: winner, l: loser });
+  document.getElementById('card' + i).className = 'card win';
+  document.getElementById('card' + (1 - i)).className = 'card lose';
+  setTimeout(function () {
+    nxt.push(winner);
+    mi++;
+    if (mi * 2 >= cur.length) { cur = nxt; nxt = []; mi = 0; }
+    if (cur.length === 1) { finish(cur[0]); return; }
+    locked = false;
+    showMatch();
+  }, 550);
+}
+
+function finish(champ) {
+  finalChamp = champ;
+  finalRunner = log[log.length - 1].l;
+  document.getElementById('gameArea').hidden = true;
+
+  var hof = readHof();
+  var key = pack.id + '|' + champ[0];
+  hof[key] = (hof[key] || 0) + 1;
+  writeHof(hof);
+
+  document.getElementById('champEm').textContent = champ[2];
+  document.getElementById('champNm').textContent = nameOf(champ);
+  document.getElementById('champSub').textContent = subNameOf(champ);
+  document.getElementById('champDs').textContent = champ[3];
+  document.getElementById('runnerLine').innerHTML =
+    '<b>' + TR('runnerUp') + '</b> — ' + finalRunner[2] + ' ' + nameOf(finalRunner);
+
+  var semis = [];
+  for (var i = 0; i < log.length; i++) {
+    if (log[i].r === 4) semis.push(log[i].l[2] + ' ' + nameOf(log[i].l));
+  }
+  document.getElementById('semiLine').innerHTML = '<b>' + TR('semi') + '</b> — ' + semis.join(' · ');
+
+  var lines = [];
+  for (var j = 0; j < log.length; j++) {
+    if (log[j].w === champ) {
+      lines.push(roundTag(log[j].r) + ' vs ' + log[j].l[2] + ' ' + nameOf(log[j].l));
+    }
+  }
+  document.getElementById('pathList').innerHTML = lines.join('<br>');
+  document.getElementById('endPanel').hidden = false;
+}
+
+function shareText() {
+  if (GameI18n.lang === 'ko') {
+    return '🏆 급식 대전 [' + pack.ko + '] 우승: ' + finalChamp[0] +
+      ' (준우승 ' + finalRunner[0] + ')\n' + SHARE_URL;
+  }
+  return '🏆 Bracket Battle [' + pack.en + '] Champion: ' + finalChamp[1] +
+    ' (Runner-up ' + finalRunner[1] + ')\n' + SHARE_URL;
+}
+
+function renderHof() {
+  var el = document.getElementById('hofList');
+  var hof = readHof();
+  var keys = Object.keys(hof);
+  keys.sort(function (a, b) { return hof[b] - hof[a]; });
+  keys = keys.slice(0, 5);
+  if (!keys.length) {
+    el.innerHTML = '<div class="hof-empty">' + TR('hofEmpty') + '</div>';
+    return;
+  }
+  var medals = ['🥇', '🥈', '🥉', '🏅', '🏅'];
+  var html = '';
+  for (var i = 0; i < keys.length; i++) {
+    var sep = keys[i].indexOf('|');
+    var pid = keys[i].slice(0, sep), ko = keys[i].slice(sep + 1);
+    var p = null, it = null;
+    for (var a = 0; a < PACKS.length; a++) if (PACKS[a].id === pid) p = PACKS[a];
+    if (!p) continue;
+    for (var b = 0; b < p.items.length; b++) if (p.items[b][0] === ko) it = p.items[b];
+    if (!it) continue;
+    html += '<div class="hof-row">' + medals[i] + ' ' + it[2] + ' <b>' + nameOf(it) + '</b>' +
+      ' ×' + hof[keys[i]] + TR('winCnt') + ' <em>(' + packNameOf(p) + ')</em></div>';
+  }
+  el.innerHTML = html || '<div class="hof-empty">' + TR('hofEmpty') + '</div>';
+}
+
+function buildMenu() {
+  var g = document.getElementById('packGrid');
+  g.innerHTML = '';
+  for (var i = 0; i < PACKS.length; i++) {
+    (function (p) {
+      var btn = document.createElement('button');
+      btn.className = 'pack';
+      btn.innerHTML = '<span class="pk-em">' + p.em + '</span><b>' + packNameOf(p) + '</b>' +
+        '<span class="pk-en">' + (GameI18n.lang === 'ko' ? p.en : p.ko) + '</span>' +
+        '<span class="pk-n">' + TR('items32') + '</span>';
+      btn.onclick = function () { begin(p); };
+      g.appendChild(btn);
+    })(PACKS[i]);
+  }
+  renderHof();
+}
+
+document.getElementById('card0').onclick = function () { pick(0); };
+document.getElementById('card1').onclick = function () { pick(1); };
+document.addEventListener('keydown', function (e) {
+  if (document.getElementById('gameArea').hidden) return;
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); pick(0); }
+  else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); pick(1); }
+});
+document.getElementById('againBtn').onclick = function () { begin(pack); };
+document.getElementById('backBtn').onclick = function () {
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('gameArea').hidden = true;
+  document.getElementById('menu').hidden = false;
+  buildMenu();
+};
+document.getElementById('shareBtn').onclick = function () {
+  GameDaily.share(shareText(), this);
+};
+
+buildMenu();
+</script>
+</body>
+</html>

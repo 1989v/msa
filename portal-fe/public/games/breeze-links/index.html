@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-i18n="title">바람 골프장</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#dbe6f2; font-family:'Courier New',monospace; display:flex; flex-direction:column;
+         align-items:center; justify-content:center; min-height:100vh; user-select:none; }
+  #wrap { position:relative; border:4px solid #1a2238; border-radius:10px; overflow:hidden; box-shadow:0 0 48px rgba(0,0,0,.72); }
+  canvas { display:block; background:#0c1424; max-width:100%; touch-action:none; }
+  #hud { position:absolute; top:8px; left:10px; right:56px; display:flex; gap:8px; font-size:12px; font-weight:bold;
+         pointer-events:none; text-shadow:1px 1px 0 #000; flex-wrap:wrap; }
+  #hud .tag { background:rgba(6,10,20,.72); padding:3px 10px; border-radius:10px; white-space:nowrap; }
+  #hud .grow { flex:1; }
+  #banner { position:absolute; top:34%; left:0; right:0; text-align:center; pointer-events:none;
+            opacity:0; transition:opacity .3s; padding:0 12px; }
+  #banner.on { opacity:1; }
+  #bMain { font-size:26px; font-weight:bold; color:#7cd6ff; text-shadow:3px 3px 0 #000; }
+  #bSub { font-size:13px; font-weight:bold; color:#dbe6f2; text-shadow:2px 2px 0 #000; margin-top:6px; }
+  #bar { position:absolute; left:0; right:0; bottom:0; display:flex; gap:8px; padding:7px 9px; background:rgba(6,10,20,.9);
+         font-size:11px; align-items:center; flex-wrap:wrap; }
+  #bar button { background:#1a2238; color:#dbe6f2; border:1px solid #2c3a5c; padding:6px 11px; border-radius:6px;
+                cursor:pointer; font-family:inherit; font-size:11px; font-weight:bold; }
+  #bar .grow { flex:1; }
+  #barHint { color:#7288a8; font-size:10.5px; text-align:right; }
+  .panel { position:absolute; inset:0; background:rgba(8,13,26,.96); display:flex; flex-direction:column; align-items:center;
+           justify-content:center; gap:11px; text-align:center; z-index:10; padding:20px; overflow-y:auto; }
+  .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2d2e6; line-height:1.75; max-width:540px; }
+  .panel p.sub { font-size:11px; color:#7c92ac; }
+  .panel button { background:#0ea5e9; color:#051018; border:0; padding:9px 22px; font-weight:bold; font-size:13px;
+                  border-radius:7px; cursor:pointer; font-family:inherit; }
+  .panel button.ghost { background:#1a2238; color:#dbe6f2; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #info { margin-top:9px; font-size:11px; color:#4c5c74; text-align:center; line-height:1.7; padding:0 12px; }
+  table.sc { border-collapse:collapse; margin:2px auto; }
+  table.sc th, table.sc td { border:1px solid #2a3654; padding:3px 6px; font-size:11px; min-width:23px; text-align:center; }
+  table.sc th { background:#141c30; color:#8fa3c8; font-weight:bold; }
+  table.sc td { color:#dbe6f2; }
+  td.scU { color:#22c55e; font-weight:bold; }
+  td.scO { color:#ef4444; }
+  td.scA { color:#eab308; font-weight:bold; }
+
+  /* 모바일 — 캔버스를 화면 폭에 맞추고 탭 대상을 키운다 */
+  @media (max-width: 900px), (pointer: coarse) {
+    #wrap { width:100vw; max-width:100vw; border-width:0; border-radius:0; }
+    canvas { width:100%; height:auto; }
+    #info { display:none; }
+    #bar button, .panel button { padding:10px 14px; font-size:13px; }
+    #barHint { flex-basis:100%; text-align:left; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="860" height="480"></canvas>
+  <div id="hud" hidden>
+    <span class="tag" id="holeTxt"></span>
+    <span class="tag" id="strokeTxt"></span>
+    <span class="grow"></span>
+    <span class="tag" id="totalTxt"></span>
+    <span class="tag" id="windTxt"></span>
+  </div>
+  <div id="banner"><div id="bMain"></div><div id="bSub"></div></div>
+  <div id="bar" hidden>
+    <button id="cardBtn" data-i18n="cardBtn">📋 스코어카드</button>
+    <span class="grow"></span>
+    <span id="barHint" data-i18n="barHint">공에서 반대쪽으로 드래그했다 놓으면 퍼팅</span>
+  </div>
+  <div class="panel" id="menu">
+    <h1 data-i18n="menuTitle">⛳ 바람 골프장</h1>
+    <p data-i18n="menuDesc">탑다운 미니 골프 18홀.</p>
+    <p class="sub" data-i18n="menuTerrain">🏖 모래 · 🧊 얼음 · 💧 물 · ⬆ 경사 · ⚡ 부스터 · 🌀 터널 · ◼ 왕복 블록</p>
+    <p class="sub" data-i18n="menuRule">파 대비 −1 버디 · −2 이글 · 홀당 최대 파+4타(픽업)</p>
+    <p class="sub" id="bestTxt"></p>
+    <button id="startBtn" data-i18n="startBtn">▶ 라운드 시작</button>
+  </div>
+  <div class="panel" id="endPanel" hidden>
+    <h1 id="endTitle"></h1>
+    <p id="endDesc"></p>
+    <p id="endScore"></p>
+    <div id="endCard"></div>
+    <div class="row">
+      <button id="againBtn" data-i18n="againBtn">⛳ 다시 라운드</button>
+      <button id="backBtn" class="ghost" data-i18n="backBtn">처음으로</button>
+    </div>
+  </div>
+  <div class="panel" id="cardPanel" hidden>
+    <h1 data-i18n="cardTitle">📋 스코어카드</h1>
+    <div id="cardBox"></div>
+    <button id="cardClose" class="ghost" data-i18n="closeBtn">닫기</button>
+  </div>
+</div>
+<div id="info" data-i18n="infoLine">공에서 드래그 = 조준 · 놓기 = 퍼팅 · 당긴 거리 = 파워 · C = 스코어카드 · ESC = 조준 취소</div>
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '바람 골프장',
+    menuTitle: '⛳ 바람 골프장',
+    menuDesc: '탑다운 미니 골프 18홀. 공에서 반대쪽으로 드래그해 당겼다 놓으면 퍼팅 — 멀리 당길수록 세게 굴러간다. ' +
+              '홀마다 바람이 다르게 불어 공이 구르는 내내 밀린다. 우상단 나침반을 읽고 바람을 계산해 최소 타수로 완주하라.',
+    menuTerrain: '🏖 모래: 급감속 · 🧊 얼음: 안 멈춘다 · 💧 물: +1타 후 직전 위치 · ⬆ 경사: 화살표 방향 가속 · ' +
+                 '⚡ 부스터 · 🌀 터널 워프 · ◼ 왕복 블록',
+    menuRule: '파 대비 −1 버디 · −2 이글 · 홀인원은 통산 기록에 남는다 · 홀당 최대 파+4타(픽업) · 총 파 67',
+    startBtn: '▶ 라운드 시작',
+    againBtn: '⛳ 다시 라운드',
+    backBtn: '처음으로',
+    infoLine: '공에서 드래그 = 조준 · 놓기 = 퍼팅 · 당긴 거리 = 파워 · C = 스코어카드 · ESC = 조준 취소',
+    barHint: '공에서 반대쪽으로 드래그했다 놓으면 퍼팅',
+    cardBtn: '📋 스코어카드',
+    cardTitle: '📋 스코어카드',
+    closeBtn: '닫기',
+    thHole: '홀', thPar: '파', thScore: '타수', thOut: 'OUT', thIn: 'IN', thTot: 'TOT',
+    hudHole: '⛳ 홀 {n}/18 · 파{p}',
+    hudStroke: '이번 홀 {s}타',
+    hudTotal: '합계 {s}타 ({d})',
+    windLine: '💨 {dir} {pips}',
+    holeBanner: '{n}번 홀 · 파{p}',
+    windBanner: '바람 {dir} {pips}',
+    badgeAce: '🌟 홀인원!!',
+    badgeAlba: '🌠 알바트로스!',
+    badgeEagle: '🦅 이글!',
+    badgeBirdie: '🐦 버디!',
+    badgePar: '● 파',
+    badgeBogey: '보기',
+    badgeDouble: '더블 보기',
+    badgeOver: '+{n}타',
+    badgePickup: '픽업 (파+4)',
+    resultSub: '{s}타 · 파{p}',
+    waterMsg: '💧 풍덩! +1타 — 직전 위치로',
+    pickupMsg: '최대 타수 도달 — 픽업',
+    endTitle: '🏁 라운드 종료',
+    endSum: '총 {s}타 · 파 {p} 대비 {d}',
+    endAce: ' · 이번 라운드 홀인원 {n}회!',
+    newBest: ' 🏆 신기록!',
+    endScore: '점수 {pts}점',
+    bestLine: '🏆 최고 기록 {s}타 ({d}) · 통산 홀인원 {a}회',
+    noBest: '아직 완주 기록이 없다 — 첫 라운드를 돌아보자',
+    detailFmt: '{d} ({s}타)',
+    rankMsg: ' 🏆 랭킹 {n}위!',
+  },
+  en: {
+    title: 'Breeze Links',
+    menuTitle: '⛳ Breeze Links',
+    menuDesc: 'Top-down mini golf, 18 holes. Drag away from the ball and release to putt — the farther you pull, the harder ' +
+              'it rolls. Every hole has its own wind that keeps pushing the ball while it rolls. Read the compass in the ' +
+              'top-right corner and play the breeze to finish in as few strokes as possible.',
+    menuTerrain: '🏖 Sand: heavy braking · 🧊 Ice: barely stops · 💧 Water: +1 stroke, back to last spot · ' +
+                 '⬆ Slope: accelerates along the arrows · ⚡ Booster · 🌀 Tunnel warp · ◼ Patrol block',
+    menuRule: '−1 birdie · −2 eagle vs par · Holes-in-one are kept as a lifetime tally · Max par+4 per hole (pickup) · Course par 67',
+    startBtn: '▶ Start Round',
+    againBtn: '⛳ New Round',
+    backBtn: 'Back to Menu',
+    infoLine: 'Drag from the ball = aim · Release = putt · Pull length = power · C = scorecard · ESC = cancel aim',
+    barHint: 'Pull away from the ball and release to putt',
+    cardBtn: '📋 Scorecard',
+    cardTitle: '📋 Scorecard',
+    closeBtn: 'Close',
+    thHole: 'Hole', thPar: 'Par', thScore: 'Score', thOut: 'OUT', thIn: 'IN', thTot: 'TOT',
+    hudHole: '⛳ Hole {n}/18 · Par {p}',
+    hudStroke: 'This hole: {s}',
+    hudTotal: 'Total {s} ({d})',
+    windLine: '💨 {dir} {pips}',
+    holeBanner: 'Hole {n} · Par {p}',
+    windBanner: 'Wind {dir} {pips}',
+    badgeAce: '🌟 HOLE-IN-ONE!!',
+    badgeAlba: '🌠 Albatross!',
+    badgeEagle: '🦅 Eagle!',
+    badgeBirdie: '🐦 Birdie!',
+    badgePar: '● Par',
+    badgeBogey: 'Bogey',
+    badgeDouble: 'Double Bogey',
+    badgeOver: '+{n}',
+    badgePickup: 'Pickup (par+4)',
+    resultSub: '{s} strokes · Par {p}',
+    waterMsg: '💧 Splash! +1 stroke — back to last spot',
+    pickupMsg: 'Stroke limit reached — pickup',
+    endTitle: '🏁 Round Complete',
+    endSum: '{s} strokes · {d} vs par {p}',
+    endAce: ' · {n} hole-in-one this round!',
+    newBest: ' 🏆 New best!',
+    endScore: 'Score {pts}',
+    bestLine: '🏆 Best round {s} strokes ({d}) · Lifetime aces {a}',
+    noBest: 'No finished round yet — play your first 18!',
+    detailFmt: '{d} ({s} strokes)',
+    rankMsg: ' 🏆 Rank #{n}!',
+  },
+});
+var TR = GameI18n.t;
+function TX(key, vals) {
+  return TR(key).replace(/\{(\w+)\}/g, function (m, name) { return vals[name]; });
+}
+
+var cv = document.getElementById('cv'), cx = cv.getContext('2d');
+var VW = cv.width, VH = cv.height;
+function $(id) { return document.getElementById(id); }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function rnd() { return Math.random(); }
+
+/* ── 규칙 상수 ── */
+var BALL_R = 6, CUP_R = 11, MAX_DRAG = 150, MAX_SPD = 640;
+var FR_GRASS = 200, FR_SAND = 700, FR_ICE = 30;
+var SLOPE_ACC = 130, BOOST_ACC = 950, WIND_ACC = 15;
+var SINK_SPD = 180, LIP_SPD = 340, STOP_SPD = 10, REST = 0.82;
+var BEST_KEY = 'breeze_links_best', ACE_KEY = 'breeze_links_aces';
+
+/* ── 18홀 데이터 ──
+ * walls: 폴리곤(꼭짓점 평면 배열) — [0]이 외곽 경계, 나머지는 내부 장애벽
+ * sand/ice/water: [x,y,w,h] · slope/boost: [x,y,w,h,dx,dy]
+ * mov: [cx,cy,w,h,ax,ay,range,spd,phase] · tun: [ax,ay,bx,by] · wind: [각도(도),세기 1~3]
+ */
+function rp(x, y, w, h) { return [x, y, x + w, y, x + w, y + h, x, y + h]; }
+/*HOLES-START*/
+var HOLES = [
+  { par: 3, tee: [140, 240], cup: [720, 240], wind: [0, 1],
+    walls: [rp(70, 180, 720, 120)] },
+  { par: 3, tee: [140, 140], cup: [500, 340], wind: [90, 1],
+    walls: [[70, 80, 560, 80, 560, 400, 440, 400, 440, 200, 70, 200]] },
+  { par: 3, tee: [140, 250], cup: [720, 250], wind: [180, 1],
+    walls: [rp(70, 180, 720, 140)], sand: [[350, 180, 160, 140]] },
+  { par: 4, tee: [140, 240], cup: [700, 240], wind: [270, 1],
+    walls: [rp(70, 60, 720, 360), rp(300, 60, 40, 240), rp(520, 180, 40, 240)],
+    slope: [[360, 180, 150, 230, 0, 1]] },
+  { par: 3, tee: [140, 250], cup: [720, 250], wind: [90, 2],
+    walls: [rp(70, 180, 720, 140)], ice: [[300, 180, 260, 140]] },
+  { par: 4, tee: [140, 250], cup: [720, 250], wind: [0, 2],
+    walls: [rp(70, 140, 720, 220)], water: [[360, 140, 140, 120], [360, 300, 140, 60]] },
+  { par: 3, tee: [140, 250], cup: [720, 250], wind: [0, 1],
+    walls: [rp(70, 180, 720, 140)], boost: [[300, 180, 70, 140, 1, 0]], sand: [[390, 180, 230, 140]] },
+  { par: 4, tee: [140, 250], cup: [720, 250], wind: [180, 1],
+    walls: [rp(70, 160, 720, 180)], mov: [[430, 250, 34, 90, 0, 1, 40, 1.2, 0]] },
+  { par: 3, tee: [140, 240], cup: [700, 240], wind: [0, 1],
+    walls: [rp(70, 80, 720, 320), rp(410, 80, 40, 320)], tun: [[300, 240, 540, 240]] },
+  { par: 4, tee: [140, 250], cup: [710, 250], wind: [315, 3],
+    walls: [rp(70, 120, 720, 260)], sand: [[280, 120, 130, 130], [470, 250, 130, 130]] },
+  { par: 3, tee: [140, 250], cup: [720, 250], wind: [90, 2],
+    walls: [rp(70, 200, 720, 100)], ice: [[250, 200, 400, 100]] },
+  { par: 4, tee: [140, 250], cup: [710, 250], wind: [180, 2],
+    walls: [rp(70, 120, 720, 260)], water: [[280, 120, 120, 170], [520, 210, 120, 170]] },
+  { par: 5, tee: [140, 120], cup: [730, 370], wind: [270, 2],
+    walls: [rp(70, 60, 720, 360), rp(250, 60, 40, 260), rp(450, 160, 40, 260), rp(630, 60, 40, 260)],
+    slope: [[300, 60, 140, 360, 0, 1], [500, 60, 120, 360, 0, 1]] },
+  { par: 4, tee: [140, 250], cup: [720, 250], wind: [0, 2],
+    walls: [rp(70, 160, 720, 180)], sand: [[640, 160, 70, 80]],
+    mov: [[350, 250, 32, 90, 0, 1, 40, 1.3, 0], [540, 250, 32, 90, 0, 1, 40, 1.3, 3.1]] },
+  { par: 3, tee: [140, 250], cup: [730, 250], wind: [90, 1],
+    walls: [rp(70, 100, 720, 300)],
+    water: [[540, 150, 250, 70], [540, 280, 250, 70], [540, 220, 60, 60]],
+    tun: [[280, 250, 640, 250]] },
+  { par: 5, tee: [140, 120], cup: [730, 120], wind: [0, 2],
+    walls: [rp(70, 60, 720, 360), rp(280, 60, 40, 240), rp(540, 180, 40, 240)],
+    boost: [[330, 300, 60, 120, 1, 0]], sand: [[400, 240, 140, 180]] },
+  { par: 4, tee: [140, 250], cup: [720, 250], wind: [270, 2],
+    walls: [rp(70, 180, 720, 140)], ice: [[250, 180, 420, 140]],
+    mov: [[460, 250, 32, 88, 0, 1, 24, 1.5, 0]] },
+  { par: 5, tee: [140, 120], cup: [730, 350], wind: [135, 3],
+    walls: [rp(70, 60, 720, 360), rp(300, 180, 40, 240)],
+    water: [[420, 60, 120, 150]], slope: [[560, 180, 110, 170, 0, 1]],
+    mov: [[640, 300, 34, 80, 0, 1, 40, 1.3, 0]], tun: [[150, 380, 690, 120]] },
+];
+/*HOLES-END*/
+var PAR_TOTAL = 0;
+for (var pi = 0; pi < HOLES.length; pi++) PAR_TOTAL += HOLES[pi].par;
+
+var DIR_CH = ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'];
+function windDirCh(a) { return DIR_CH[Math.round(((a % 360) + 360) % 360 / 45) % 8]; }
+function windPips(s) { var t = '', i; for (i = 0; i < 3; i++) t += i < s ? '●' : '○'; return t; }
+function diffStr(d) { return d === 0 ? 'E' : (d > 0 ? '+' + d : String(d)); }
+
+/* ── 상태 ── */
+var G = null, running = false, bannerT = 0;
+var hole = null, bgCv = null;
+
+function banner(main, sub, color, dur) {
+  $('bMain').textContent = main;
+  $('bMain').style.color = color || '#7cd6ff';
+  $('bSub').textContent = sub || '';
+  $('banner').classList.add('on');
+  bannerT = dur || 1600;
+}
+
+function newGame() {
+  G = { hi: 0, scores: [], cur: 0, state: 'aim', t: 0,
+        ball: { x: 0, y: 0, vx: 0, vy: 0 }, lastShot: [0, 0],
+        tunCd: 0, sinkT: 0, sinkFrom: null, resT: 0, picked: false,
+        drag: null, parts: [], wp: [], aces: 0 };
+  for (var i = 0; i < 18; i++) G.scores.push(null);
+}
+
+function loadHole(i) {
+  G.hi = i; hole = HOLES[i];
+  G.cur = 0; G.state = 'aim'; G.tunCd = 0; G.picked = false;
+  G.ball.x = hole.tee[0]; G.ball.y = hole.tee[1]; G.ball.vx = 0; G.ball.vy = 0;
+  G.lastShot = [hole.tee[0], hole.tee[1]];
+  G.parts = [];
+  initWind();
+  buildStatic();
+  banner(TX('holeBanner', { n: i + 1, p: hole.par }),
+         TX('windBanner', { dir: windDirCh(hole.wind[0]), pips: windPips(hole.wind[1]) }), '#7cd6ff', 2000);
+}
+
+function initWind() {
+  G.wp = [];
+  var n = 8 + hole.wind[1] * 7, i;
+  for (i = 0; i < n; i++) G.wp.push({ x: rnd() * VW, y: rnd() * VH, ph: rnd() * 6.28 });
+}
+
+/* ── 정적 배경 (홀 로드마다 캐시) ── */
+var seed = 1;
+function srnd() { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+function tracePoly(g, p) {
+  g.moveTo(p[0], p[1]);
+  for (var j = 2; j < p.length; j += 2) g.lineTo(p[j], p[j + 1]);
+  g.closePath();
+}
+function polyBounds(p) {
+  var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, j;
+  for (j = 0; j < p.length; j += 2) {
+    if (p[j] < x0) x0 = p[j]; if (p[j] > x1) x1 = p[j];
+    if (p[j + 1] < y0) y0 = p[j + 1]; if (p[j + 1] > y1) y1 = p[j + 1];
+  }
+  return [x0, y0, x1, y1];
+}
+function buildStatic() {
+  bgCv = document.createElement('canvas'); bgCv.width = VW; bgCv.height = VH;
+  var g = bgCv.getContext('2d'), i, j, z;
+  seed = 987654321 + G.hi * 7919;
+
+  // 코스 밖 — 다크 네이비
+  g.fillStyle = '#0c1424'; g.fillRect(0, 0, VW, VH);
+  for (var yy = 0; yy < VH; yy += 16) for (var xx = 0; xx < VW; xx += 16)
+    if (((xx / 16) + (yy / 16)) % 2 === 1) { g.fillStyle = 'rgba(255,255,255,.012)'; g.fillRect(xx, yy, 16, 16); }
+
+  // 페어웨이 — 외곽 폴리곤 클립 후 잔디
+  var outer = hole.walls[0], bb = polyBounds(outer);
+  g.save();
+  g.beginPath(); tracePoly(g, outer); g.clip();
+  g.fillStyle = '#1a3a2f'; g.fillRect(bb[0], bb[1], bb[2] - bb[0], bb[3] - bb[1]);
+  for (i = 0; i * 26 < bb[3] - bb[1]; i++) {
+    if (i % 2 === 0) continue;
+    g.fillStyle = '#183628'; g.fillRect(bb[0], bb[1] + i * 26, bb[2] - bb[0], 26);
+  }
+  var blades = ['#1e4536', '#153327', '#224b3a', '#16382c'];
+  for (i = 0; i < 900; i++) {
+    var gx = bb[0] + srnd() * (bb[2] - bb[0]), gy = bb[1] + srnd() * (bb[3] - bb[1]);
+    g.fillStyle = blades[Math.floor(srnd() * blades.length)];
+    g.fillRect(gx, gy, 2, 2);
+    if (srnd() < 0.35) g.fillRect(gx + 2, gy - 1, 1, 3);
+  }
+  g.fillStyle = 'rgba(255,255,255,.05)';
+  g.font = 'bold 110px "Courier New",monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(String(G.hi + 1), (bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2 + 6);
+  g.restore();
+
+  // 지형 존
+  var arr = hole.sand || [];
+  for (i = 0; i < arr.length; i++) {
+    z = arr[i];
+    g.fillStyle = '#3d3524'; g.fillRect(z[0], z[1], z[2], z[3]);
+    g.strokeStyle = '#241f12'; g.lineWidth = 2; g.strokeRect(z[0] + 1, z[1] + 1, z[2] - 2, z[3] - 2);
+    for (j = 0; j < z[2] * z[3] / 90; j++) {
+      g.fillStyle = srnd() < 0.5 ? '#554a2c' : '#2c2718';
+      g.fillRect(z[0] + srnd() * (z[2] - 3), z[1] + srnd() * (z[3] - 3), 2, 2);
+    }
+  }
+  arr = hole.ice || [];
+  for (i = 0; i < arr.length; i++) {
+    z = arr[i];
+    g.fillStyle = '#20455e'; g.fillRect(z[0], z[1], z[2], z[3]);
+    g.strokeStyle = '#12283a'; g.lineWidth = 2; g.strokeRect(z[0] + 1, z[1] + 1, z[2] - 2, z[3] - 2);
+    g.strokeStyle = 'rgba(159,212,232,.30)'; g.lineWidth = 1;
+    for (j = 0; j < z[2] / 34; j++) {
+      var sx = z[0] + 10 + j * 34;
+      g.beginPath(); g.moveTo(sx, z[1] + 6); g.lineTo(sx + 16, z[1] + z[3] - 6); g.stroke();
+    }
+  }
+  arr = hole.water || [];
+  for (i = 0; i < arr.length; i++) {
+    z = arr[i];
+    g.fillStyle = '#0e2c48'; g.fillRect(z[0], z[1], z[2], z[3]);
+    g.strokeStyle = '#081b30'; g.lineWidth = 2; g.strokeRect(z[0] + 1, z[1] + 1, z[2] - 2, z[3] - 2);
+  }
+  arr = hole.slope || [];
+  for (i = 0; i < arr.length; i++) {
+    z = arr[i];
+    g.fillStyle = 'rgba(8,13,26,.28)'; g.fillRect(z[0], z[1], z[2], z[3]);
+    g.strokeStyle = 'rgba(255,255,255,.10)'; g.lineWidth = 1;
+    g.setLineDash([5, 4]); g.strokeRect(z[0] + 1, z[1] + 1, z[2] - 2, z[3] - 2); g.setLineDash([]);
+  }
+  arr = hole.boost || [];
+  for (i = 0; i < arr.length; i++) {
+    z = arr[i];
+    g.fillStyle = '#0d3050'; g.fillRect(z[0], z[1], z[2], z[3]);
+    g.strokeStyle = 'rgba(14,165,233,.55)'; g.lineWidth = 2; g.strokeRect(z[0] + 1, z[1] + 1, z[2] - 2, z[3] - 2);
+  }
+
+  // 내부 장애벽 채움
+  for (i = 1; i < hole.walls.length; i++) {
+    g.beginPath(); tracePoly(g, hole.walls[i]);
+    g.fillStyle = '#1a2238'; g.fill();
+  }
+  // 벽 스트로크 (외곽 + 내부 공통)
+  g.lineJoin = 'round';
+  for (i = 0; i < hole.walls.length; i++) {
+    g.beginPath(); tracePoly(g, hole.walls[i]);
+    g.strokeStyle = '#0a1120'; g.lineWidth = 11; g.stroke();
+    g.strokeStyle = '#233457'; g.lineWidth = 6; g.stroke();
+    g.strokeStyle = '#3a4c7a'; g.lineWidth = 1.5; g.stroke();
+  }
+
+  // 터널 링
+  arr = hole.tun || [];
+  for (i = 0; i < arr.length; i++) {
+    z = arr[i];
+    for (j = 0; j < 2; j++) {
+      var tx = z[j * 2], ty = z[j * 2 + 1];
+      g.fillStyle = '#05080f';
+      g.beginPath(); g.arc(tx, ty, 14, 0, 7); g.fill();
+      g.strokeStyle = '#eab308'; g.lineWidth = 2.5;
+      g.beginPath(); g.arc(tx, ty, 15, 0, 7); g.stroke();
+    }
+  }
+
+  // 컵 + 티 마커
+  g.fillStyle = 'rgba(14,165,233,.16)';
+  g.beginPath(); g.arc(hole.cup[0], hole.cup[1], 15, 0, 7); g.fill();
+  g.fillStyle = '#040910';
+  g.beginPath(); g.arc(hole.cup[0], hole.cup[1], 10, 0, 7); g.fill();
+  g.strokeStyle = '#2a3a5c'; g.lineWidth = 2;
+  g.beginPath(); g.arc(hole.cup[0], hole.cup[1], 10, 0, 7); g.stroke();
+  g.strokeStyle = 'rgba(255,255,255,.16)'; g.lineWidth = 1.5;
+  g.strokeRect(hole.tee[0] - 10, hole.tee[1] - 10, 20, 20);
+  g.fillStyle = 'rgba(255,255,255,.25)';
+  g.fillRect(hole.tee[0] - 8, hole.tee[1] - 8, 3, 3); g.fillRect(hole.tee[0] + 5, hole.tee[1] + 5, 3, 3);
+}
+
+/* ── 지형 판정 ── */
+function inRect(x, y, r) { return x >= r[0] && x <= r[0] + r[2] && y >= r[1] && y <= r[1] + r[3]; }
+function frictionAt(x, y) {
+  var i, arr = hole.sand || [];
+  for (i = 0; i < arr.length; i++) if (inRect(x, y, arr[i])) return FR_SAND;
+  arr = hole.ice || [];
+  for (i = 0; i < arr.length; i++) if (inRect(x, y, arr[i])) return FR_ICE;
+  return FR_GRASS;
+}
+function movRect(m, t) {
+  var mx = m[0] + m[4] * Math.sin(t * m[7] + m[8]) * m[6];
+  var my = m[1] + m[5] * Math.sin(t * m[7] + m[8]) * m[6];
+  return [mx - m[2] / 2, my - m[3] / 2, m[2], m[3]];
+}
+
+/* ── 충돌 ── */
+function collideWalls(b) {
+  var i, j, poly, n, r = BALL_R;
+  for (i = 0; i < hole.walls.length; i++) {
+    poly = hole.walls[i]; n = poly.length;
+    for (j = 0; j < n; j += 2) {
+      var ax = poly[j], ay = poly[j + 1], bx = poly[(j + 2) % n], by = poly[(j + 3) % n];
+      var dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
+      var t = len2 > 0 ? clamp(((b.x - ax) * dx + (b.y - ay) * dy) / len2, 0, 1) : 0;
+      var px2 = ax + dx * t, py2 = ay + dy * t;
+      var ox = b.x - px2, oy = b.y - py2, d2 = ox * ox + oy * oy;
+      if (d2 >= r * r) continue;
+      var d = Math.sqrt(d2) || 0.001, nx = ox / d, ny = oy / d;
+      b.x = px2 + nx * r; b.y = py2 + ny * r;
+      var vn = b.vx * nx + b.vy * ny;
+      if (vn < 0) {
+        b.vx -= (1 + REST) * vn * nx; b.vy -= (1 + REST) * vn * ny;
+        if (-vn > 150) wallDust(b.x, b.y);
+      }
+    }
+  }
+}
+function collideBlocks(b) {
+  var arr = hole.mov || [], i, r = BALL_R;
+  for (i = 0; i < arr.length; i++) {
+    var rc = movRect(arr[i], G.t);
+    var cx2 = clamp(b.x, rc[0], rc[0] + rc[2]), cy2 = clamp(b.y, rc[1], rc[1] + rc[3]);
+    var ox = b.x - cx2, oy = b.y - cy2, d2 = ox * ox + oy * oy;
+    if (d2 >= r * r) continue;
+    var nx, ny;
+    if (d2 < 0.0001) {                       // 중심이 블록 내부 — 최소 침투 축으로 밀어낸다
+      var lft = b.x - rc[0], rgt = rc[0] + rc[2] - b.x, top = b.y - rc[1], bot = rc[1] + rc[3] - b.y;
+      var mn = Math.min(lft, rgt, top, bot);
+      nx = mn === lft ? -1 : mn === rgt ? 1 : 0;
+      ny = nx !== 0 ? 0 : (mn === top ? -1 : 1);
+      b.x = nx !== 0 ? (nx < 0 ? rc[0] - r : rc[0] + rc[2] + r) : b.x;
+      b.y = ny !== 0 ? (ny < 0 ? rc[1] - r : rc[1] + rc[3] + r) : b.y;
+    } else {
+      var d = Math.sqrt(d2); nx = ox / d; ny = oy / d;
+      b.x = cx2 + nx * r; b.y = cy2 + ny * r;
+    }
+    var vn = b.vx * nx + b.vy * ny;
+    if (vn < 0) { b.vx -= 1.8 * vn * nx; b.vy -= 1.8 * vn * ny; }
+  }
+}
+function wallDust(x, y) {
+  for (var i = 0; i < 4; i++) {
+    var a = rnd() * 6.28, s = 40 + rnd() * 60;
+    G.parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 0.6, color: '#8fa3c8', size: 2, grav: 0 });
+  }
+}
+function burst(x, y, color, n, spd) {
+  for (var i = 0; i < n; i++) {
+    var a = rnd() * 6.28, s = spd * (0.35 + rnd() * 0.85);
+    G.parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, color: color, size: 2 + rnd() * 3, grav: 160 });
+  }
+}
+function popText(x, y, text, color) { G.parts.push({ x: x, y: y, vx: 0, vy: -26, life: 1, text: text, color: color, grav: 0 }); }
+function ringFx(x, y, color, r) { G.parts.push({ x: x, y: y, vx: 0, vy: 0, life: 1, ring: r, color: color, grav: 0 }); }
+function confetti(x, y) {
+  var cols = ['#eab308', '#0ea5e9', '#22c55e', '#f2f5f8'];
+  for (var i = 0; i < 26; i++) {
+    var a = rnd() * 6.28, s = 90 + rnd() * 160;
+    G.parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 60, life: 1.2,
+                   color: cols[Math.floor(rnd() * cols.length)], size: 2 + rnd() * 3, grav: 240 });
+  }
+}
+
+/* ── 홀 진행 ── */
+function shoot(dirX, dirY, power) {
+  G.cur++;
+  G.lastShot = [G.ball.x, G.ball.y];
+  var spd = power / MAX_DRAG * MAX_SPD;
+  G.ball.vx = dirX * spd; G.ball.vy = dirY * spd;
+  G.state = 'roll';
+  burst(G.ball.x, G.ball.y, '#c8d8ea', 5, 70);
+}
+function splash(x, y) {
+  burst(x, y, '#4aa8e8', 18, 130);
+  ringFx(x, y, '#4aa8e8', 30);
+  G.cur++;
+  popText(x, y - 14, '+1', '#ef4444');
+  banner(TR('waterMsg'), '', '#4aa8e8', 1400);
+  G.ball.x = G.lastShot[0]; G.ball.y = G.lastShot[1];
+  G.ball.vx = 0; G.ball.vy = 0;
+  if (G.cur >= hole.par + 4) finishHole(hole.par + 4, true);
+  else G.state = 'aim';
+}
+function sinkStart() {
+  G.state = 'sink'; G.sinkT = 0;
+  G.sinkFrom = [G.ball.x, G.ball.y];
+  ringFx(hole.cup[0], hole.cup[1], '#eab308', 26);
+}
+function badgeFor(s, par, picked) {
+  if (picked) return { t: TR('badgePickup'), c: '#ef4444' };
+  if (s === 1) return { t: TR('badgeAce'), c: '#eab308' };
+  var d = s - par;
+  if (d <= -3) return { t: TR('badgeAlba'), c: '#eab308' };
+  if (d === -2) return { t: TR('badgeEagle'), c: '#eab308' };
+  if (d === -1) return { t: TR('badgeBirdie'), c: '#22c55e' };
+  if (d === 0) return { t: TR('badgePar'), c: '#7cd6ff' };
+  if (d === 1) return { t: TR('badgeBogey'), c: '#eab308' };
+  if (d === 2) return { t: TR('badgeDouble'), c: '#ef8a4a' };
+  return { t: TX('badgeOver', { n: d }), c: '#ef4444' };
+}
+function finishHole(strokes, picked) {
+  G.scores[G.hi] = strokes;
+  if (!picked && strokes === 1) {
+    G.aces++;
+    var tot = parseInt(localStorage.getItem(ACE_KEY) || '0', 10) + 1;
+    localStorage.setItem(ACE_KEY, String(tot));
+  }
+  var bd = badgeFor(strokes, hole.par, picked);
+  banner(bd.t, TX('resultSub', { s: strokes, p: hole.par }), bd.c, 1900);
+  if (!picked && strokes <= hole.par - 1) confetti(hole.cup[0], hole.cup[1]);
+  if (picked) banner(TR('pickupMsg'), TX('resultSub', { s: strokes, p: hole.par }), '#ef4444', 1900);
+  G.state = 'result'; G.resT = 2.0;
+}
+function nextHole() {
+  if (G.hi >= 17) { endGame(); return; }
+  loadHole(G.hi + 1);
+}
+
+/* ── 물리 업데이트 ── */
+function updateBall(dt) {
+  var b = G.ball;
+  var w = hole.wind, wa = w[0] * Math.PI / 180;
+  var wax = Math.cos(wa) * w[1] * WIND_ACC, way = Math.sin(wa) * w[1] * WIND_ACC;
+  var sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  var steps = Math.max(1, Math.ceil(sp * dt / 3)), k, i;
+  var sdt = dt / steps;
+  for (k = 0; k < steps; k++) {
+    // 가속 — 바람(시그니처) + 경사 + 부스터
+    b.vx += wax * sdt; b.vy += way * sdt;
+    var arr = hole.slope || [];
+    for (i = 0; i < arr.length; i++) if (inRect(b.x, b.y, arr[i])) {
+      b.vx += arr[i][4] * SLOPE_ACC * sdt; b.vy += arr[i][5] * SLOPE_ACC * sdt;
+    }
+    arr = hole.boost || [];
+    for (i = 0; i < arr.length; i++) if (inRect(b.x, b.y, arr[i])) {
+      b.vx += arr[i][4] * BOOST_ACC * sdt; b.vy += arr[i][5] * BOOST_ACC * sdt;
+      if (rnd() < 0.3) G.parts.push({ x: b.x, y: b.y, vx: -arr[i][4] * 60, vy: -arr[i][5] * 60, life: 0.5, color: '#7cd6ff', size: 2, grav: 0 });
+    }
+    // 마찰
+    sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+    if (sp > 0) {
+      var fr = frictionAt(b.x, b.y);
+      var ns = Math.max(0, sp - fr * sdt);
+      b.vx *= ns / sp; b.vy *= ns / sp;
+      sp = ns;
+    }
+    b.x += b.vx * sdt; b.y += b.vy * sdt;
+    collideWalls(b);
+    collideBlocks(b);
+    // 물
+    var wz = hole.water || [];
+    for (i = 0; i < wz.length; i++) if (inRect(b.x, b.y, wz[i])) { splash(b.x, b.y); return; }
+    // 터널 워프
+    if (G.tunCd > 0) G.tunCd -= sdt;
+    var tn = hole.tun || [];
+    for (i = 0; i < tn.length; i++) {
+      var z = tn[i], j, hitJ = -1;
+      if (G.tunCd <= 0) {
+        for (j = 0; j < 2; j++) {
+          var ddx = b.x - z[j * 2], ddy = b.y - z[j * 2 + 1];
+          if (ddx * ddx + ddy * ddy < 13 * 13) { hitJ = j; break; }
+        }
+      }
+      if (hitJ >= 0) {
+        var o = 1 - hitJ;
+        burst(b.x, b.y, '#eab308', 8, 90);
+        b.x = z[o * 2]; b.y = z[o * 2 + 1];
+        burst(b.x, b.y, '#eab308', 8, 90);
+        G.tunCd = 0.55;
+      }
+    }
+    // 컵 — 흡입 / 립아웃 / 지나침
+    var cdx = b.x - hole.cup[0], cdy = b.y - hole.cup[1];
+    if (cdx * cdx + cdy * cdy < CUP_R * CUP_R) {
+      sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+      if (sp < SINK_SPD) { sinkStart(); return; }
+      if (sp < LIP_SPD) {                    // 립아웃 — 컵 가장자리에 튕겨 나간다
+        var cd = Math.sqrt(cdx * cdx + cdy * cdy) || 0.001;
+        var nx = cdx / cd, ny = cdy / cd;
+        b.x = hole.cup[0] + nx * (CUP_R + 1); b.y = hole.cup[1] + ny * (CUP_R + 1);
+        var tx2 = -ny, ty2 = nx;
+        var vt = b.vx * tx2 + b.vy * ty2;
+        b.vx = (nx * sp * 0.4 + tx2 * (vt > 0 ? 1 : -1) * sp * 0.45);
+        b.vy = (ny * sp * 0.4 + ty2 * (vt > 0 ? 1 : -1) * sp * 0.45);
+        ringFx(hole.cup[0], hole.cup[1], '#ef4444', 16);
+      }
+    }
+  }
+  // 정지 판정
+  sp = Math.sqrt(b.vx * b.vx + b.vy * b.vy);
+  if (sp < STOP_SPD) {
+    b.vx = 0; b.vy = 0;
+    if (G.cur >= hole.par + 4) finishHole(hole.par + 4, true);
+    else G.state = 'aim';
+  } else if (sp > 130 && rnd() < 0.4) {
+    G.parts.push({ x: b.x, y: b.y, vx: 0, vy: 0, life: 0.4, color: 'rgba(220,232,244,.5)', size: 2, grav: 0 });
+  }
+}
+
+function update(dt) {
+  G.t += dt;
+  if (G.state === 'roll') updateBall(dt);
+  else if (G.state === 'sink') {
+    G.sinkT += dt * 2.2;
+    if (G.sinkT >= 1) { G.sinkT = 1; finishHole(G.cur, false); }
+  } else if (G.state === 'result') {
+    G.resT -= dt;
+    if (G.resT <= 0) nextHole();
+  } else {
+    // aim/drag 중에도 왕복 블록이 공을 밀어낼 수 있다
+    collideBlocks(G.ball); collideWalls(G.ball);
+  }
+  // 바람 입자
+  var w = hole.wind, wa = w[0] * Math.PI / 180, ws = 34 + w[1] * 30, i;
+  for (i = 0; i < G.wp.length; i++) {
+    var p = G.wp[i];
+    p.x += Math.cos(wa) * ws * dt; p.y += Math.sin(wa) * ws * dt + Math.sin(G.t * 2 + p.ph) * 8 * dt;
+    if (p.x < -20) p.x += VW + 40; if (p.x > VW + 20) p.x -= VW + 40;
+    if (p.y < -20) p.y += VH + 40; if (p.y > VH + 20) p.y -= VH + 40;
+  }
+  // 파티클
+  var alive = [];
+  for (i = 0; i < G.parts.length; i++) {
+    var pa = G.parts[i];
+    pa.x += pa.vx * dt; pa.y += pa.vy * dt;
+    pa.vy += (pa.grav || 0) * dt;
+    pa.life -= dt * (pa.text ? 1.0 : pa.ring ? 2.6 : 2.0);
+    if (pa.life > 0) alive.push(pa);
+  }
+  G.parts = alive;
+  if (bannerT > 0) { bannerT -= dt * 1000; if (bannerT <= 0) $('banner').classList.remove('on'); }
+}
+
+/* ── 렌더 ── */
+function draw(now) {
+  cx.drawImage(bgCv, 0, 0);
+  var i, j, z, arr, t = G.t;
+
+  // 물 파문 (애니메이션)
+  arr = hole.water || [];
+  cx.strokeStyle = 'rgba(14,165,233,.28)'; cx.lineWidth = 1;
+  for (i = 0; i < arr.length; i++) {
+    z = arr[i];
+    for (j = 0; j < z[3] / 22; j++) {
+      var wy = z[1] + 10 + j * 22 + Math.sin(t * 1.6 + j) * 2;
+      if (wy > z[1] + z[3] - 4) continue;
+      cx.beginPath();
+      cx.moveTo(z[0] + 6, wy);
+      cx.bezierCurveTo(z[0] + z[2] * 0.33, wy + 3, z[0] + z[2] * 0.66, wy - 3, z[0] + z[2] - 6, wy);
+      cx.stroke();
+    }
+  }
+  // 경사 화살표
+  arr = hole.slope || [];
+  for (i = 0; i < arr.length; i++) drawArrows(arr[i], 'rgba(255,255,255,.30)', 30, t * 26);
+  // 부스터 셰브론
+  arr = hole.boost || [];
+  for (i = 0; i < arr.length; i++) drawArrows(arr[i], 'rgba(124,214,255,.85)', 22, t * 90);
+  // 터널 소용돌이
+  arr = hole.tun || [];
+  for (i = 0; i < arr.length; i++) {
+    z = arr[i];
+    for (j = 0; j < 2; j++) {
+      var tx = z[j * 2], ty = z[j * 2 + 1];
+      cx.strokeStyle = 'rgba(234,179,8,.6)'; cx.lineWidth = 2;
+      cx.beginPath(); cx.arc(tx, ty, 8, t * 3 + j * 3, t * 3 + j * 3 + 3.6); cx.stroke();
+      cx.beginPath(); cx.arc(tx, ty, 4.5, -t * 4, -t * 4 + 3.2); cx.stroke();
+    }
+  }
+  // 왕복 블록
+  arr = hole.mov || [];
+  for (i = 0; i < arr.length; i++) {
+    var rc = movRect(arr[i], t);
+    cx.fillStyle = '#0a1120'; cx.fillRect(rc[0] - 2, rc[1] - 2, rc[2] + 4, rc[3] + 4);
+    cx.fillStyle = '#1a2238'; cx.fillRect(rc[0], rc[1], rc[2], rc[3]);
+    cx.fillStyle = 'rgba(234,179,8,.4)';
+    cx.fillRect(rc[0], rc[1], rc[2], 4); cx.fillRect(rc[0], rc[1] + rc[3] - 4, rc[2], 4);
+    cx.fillStyle = 'rgba(255,255,255,.10)'; cx.fillRect(rc[0] + 3, rc[1] + 6, 2, rc[3] - 12);
+  }
+  // 깃발
+  var fx = hole.cup[0], fy = hole.cup[1];
+  cx.strokeStyle = '#c8d2e0'; cx.lineWidth = 2;
+  cx.beginPath(); cx.moveTo(fx, fy - 2); cx.lineTo(fx, fy - 34); cx.stroke();
+  var wv = Math.sin(t * 3) * 3;
+  cx.fillStyle = '#ef4444';
+  cx.beginPath(); cx.moveTo(fx + 1, fy - 34); cx.lineTo(fx + 17 + wv, fy - 28); cx.lineTo(fx + 1, fy - 22);
+  cx.closePath(); cx.fill();
+
+  // 공
+  var b = G.ball;
+  if (G.state === 'sink') {
+    var k = G.sinkT, bx2 = G.sinkFrom[0] + (fx - G.sinkFrom[0]) * k, by2 = G.sinkFrom[1] + (fy - G.sinkFrom[1]) * k;
+    drawBall(bx2, by2, BALL_R * (1 - k * 0.85));
+  } else if (G.state !== 'result') {
+    drawBall(b.x, b.y, BALL_R);
+    if (G.state === 'aim' && !G.drag) {
+      var pu = 0.5 + Math.sin(now / 260) * 0.3;
+      cx.strokeStyle = 'rgba(14,165,233,' + pu.toFixed(2) + ')'; cx.lineWidth = 1.5;
+      cx.beginPath(); cx.arc(b.x, b.y, 11 + Math.sin(now / 260) * 2, 0, 7); cx.stroke();
+    }
+  }
+  // 조준선
+  if (G.drag) drawAim();
+  // 파티클
+  for (i = 0; i < G.parts.length; i++) {
+    var pa = G.parts[i];
+    cx.globalAlpha = clamp(pa.life, 0, 1);
+    if (pa.ring) {
+      cx.strokeStyle = pa.color; cx.lineWidth = 2;
+      cx.beginPath(); cx.arc(pa.x, pa.y, pa.ring * (1.25 - pa.life), 0, 7); cx.stroke();
+    } else if (pa.text) {
+      cx.font = 'bold 14px monospace'; cx.textAlign = 'center';
+      cx.fillStyle = '#000'; cx.fillText(pa.text, pa.x + 1, pa.y + 1);
+      cx.fillStyle = pa.color; cx.fillText(pa.text, pa.x, pa.y);
+    } else {
+      cx.fillStyle = pa.color; cx.fillRect(pa.x, pa.y, pa.size, pa.size);
+    }
+    cx.globalAlpha = 1;
+  }
+  // 바람 입자
+  var wa = hole.wind[0] * Math.PI / 180, wl = 8 + hole.wind[1] * 5;
+  cx.strokeStyle = 'rgba(159,200,232,.14)'; cx.lineWidth = 1.5;
+  for (i = 0; i < G.wp.length; i++) {
+    var p = G.wp[i];
+    cx.beginPath(); cx.moveTo(p.x, p.y);
+    cx.lineTo(p.x - Math.cos(wa) * wl, p.y - Math.sin(wa) * wl); cx.stroke();
+  }
+  drawCompass();
+  updateHud();
+}
+function drawArrows(z, color, gap, off) {
+  cx.save();
+  cx.beginPath(); cx.rect(z[0], z[1], z[2], z[3]); cx.clip();
+  cx.fillStyle = color;
+  var dx = z[4], dy = z[5], o = off % gap, i, j;
+  for (i = 0; i * gap < z[2] + gap; i++) for (j = 0; j * gap < z[3] + gap; j++) {
+    var ax = z[0] + i * gap + gap / 2 + dx * (o - gap), ay = z[1] + j * gap + gap / 2 + dy * (o - gap);
+    cx.save(); cx.translate(ax, ay); cx.rotate(Math.atan2(dy, dx));
+    cx.beginPath(); cx.moveTo(5, 0); cx.lineTo(-3, -5); cx.lineTo(-1, 0); cx.lineTo(-3, 5);
+    cx.closePath(); cx.fill();
+    cx.restore();
+  }
+  cx.restore();
+}
+function drawBall(x, y, r) {
+  cx.fillStyle = 'rgba(0,0,0,.35)';
+  cx.beginPath(); cx.ellipse(x + 2, y + 3, r, r * 0.6, 0, 0, 7); cx.fill();
+  cx.fillStyle = '#eef3f8';
+  cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill();
+  cx.fillStyle = '#ffffff';
+  cx.beginPath(); cx.arc(x - r * 0.3, y - r * 0.35, r * 0.32, 0, 7); cx.fill();
+  cx.strokeStyle = 'rgba(10,17,32,.5)'; cx.lineWidth = 1;
+  cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.stroke();
+}
+function drawAim() {
+  var b = G.ball, dx = b.x - G.drag.x, dy = b.y - G.drag.y;
+  var len = Math.sqrt(dx * dx + dy * dy);
+  if (len < 2) return;
+  var pw = clamp(len, 0, MAX_DRAG), nx = dx / len, ny = dy / len;
+  var col = pw < 55 ? '#22c55e' : pw < 105 ? '#eab308' : '#ef4444';
+  // 당김 밴드
+  cx.strokeStyle = 'rgba(255,255,255,.18)'; cx.lineWidth = 2;
+  cx.beginPath(); cx.moveTo(b.x, b.y); cx.lineTo(b.x - nx * pw, b.y - ny * pw); cx.stroke();
+  // 발사 방향 화살표
+  var ex = b.x + nx * pw * 1.05, ey = b.y + ny * pw * 1.05;
+  cx.strokeStyle = col; cx.lineWidth = 3; cx.setLineDash([8, 6]);
+  cx.beginPath(); cx.moveTo(b.x, b.y); cx.lineTo(ex, ey); cx.stroke();
+  cx.setLineDash([]);
+  cx.fillStyle = col;
+  cx.save(); cx.translate(ex, ey); cx.rotate(Math.atan2(ny, nx));
+  cx.beginPath(); cx.moveTo(10, 0); cx.lineTo(-4, -7); cx.lineTo(-4, 7); cx.closePath(); cx.fill();
+  cx.restore();
+  // 파워 게이지
+  cx.fillStyle = 'rgba(6,10,20,.7)'; cx.fillRect(b.x - 22, b.y + 14, 44, 7);
+  cx.fillStyle = col; cx.fillRect(b.x - 20, b.y + 15.5, 40 * (pw / MAX_DRAG), 4);
+}
+function drawCompass() {
+  var ccx = VW - 46, ccy = 86, w = hole.wind, a = w[0] * Math.PI / 180;
+  cx.fillStyle = 'rgba(26,34,56,.88)';
+  cx.beginPath(); cx.arc(ccx, ccy, 22, 0, 7); cx.fill();
+  cx.strokeStyle = '#2c3a5c'; cx.lineWidth = 2;
+  cx.beginPath(); cx.arc(ccx, ccy, 22, 0, 7); cx.stroke();
+  cx.save(); cx.translate(ccx, ccy); cx.rotate(a);
+  var puls = 1 + Math.sin(G ? G.t * 4 : 0) * 0.08;
+  cx.fillStyle = '#0ea5e9';
+  cx.beginPath(); cx.moveTo(13 * puls, 0); cx.lineTo(-8, -8); cx.lineTo(-4, 0); cx.lineTo(-8, 8);
+  cx.closePath(); cx.fill();
+  cx.restore();
+  for (var i = 0; i < 3; i++) {
+    cx.fillStyle = i < w[1] ? '#0ea5e9' : '#2c3a5c';
+    cx.beginPath(); cx.arc(ccx - 12 + i * 12, ccy + 30, 3, 0, 7); cx.fill();
+  }
+}
+function completedTotals() {
+  var s = 0, p = 0, i;
+  for (i = 0; i < 18; i++) if (G.scores[i] !== null) { s += G.scores[i]; p += HOLES[i].par; }
+  return { s: s, p: p };
+}
+function updateHud() {
+  $('holeTxt').textContent = TX('hudHole', { n: G.hi + 1, p: hole.par });
+  $('strokeTxt').textContent = TX('hudStroke', { s: G.cur });
+  var ct = completedTotals(), d = ct.s - ct.p;
+  $('totalTxt').textContent = TX('hudTotal', { s: ct.s, d: diffStr(d) });
+  $('totalTxt').style.color = d < 0 ? '#22c55e' : d > 0 ? '#ef8a8a' : '#dbe6f2';
+  $('windTxt').textContent = TX('windLine', { dir: windDirCh(hole.wind[0]), pips: windPips(hole.wind[1]) });
+}
+
+/* ── 스코어카드 ── */
+function scClass(s, par) {
+  if (s === 1) return 'scA';
+  if (s < par) return 'scU';
+  if (s > par) return 'scO';
+  return '';
+}
+function cardTable(a, b, sumKey, withTot) {
+  var h1 = '<tr><th>' + TR('thHole') + '</th>', h2 = '<tr><th>' + TR('thPar') + '</th>', h3 = '<tr><th>' + TR('thScore') + '</th>';
+  var ps = 0, ss = 0, done = 0, i;
+  for (i = a; i <= b; i++) {
+    var hh = HOLES[i - 1], sc = G.scores[i - 1];
+    h1 += '<th>' + i + '</th>';
+    h2 += '<td>' + hh.par + '</td>';
+    ps += hh.par;
+    if (sc !== null) {
+      h3 += '<td class="' + scClass(sc, hh.par) + '">' + sc + '</td>';
+      ss += sc; done++;
+    } else {
+      h3 += '<td>' + (running && G.hi === i - 1 ? '·' : '-') + '</td>';
+    }
+  }
+  h1 += '<th>' + TR(sumKey) + '</th>';
+  h2 += '<td>' + ps + '</td>';
+  h3 += '<td>' + (done > 0 ? ss : '-') + '</td>';
+  if (withTot) {
+    var ct = completedTotals();
+    h1 += '<th>' + TR('thTot') + '</th>';
+    h2 += '<td>' + PAR_TOTAL + '</td>';
+    h3 += '<td>' + (ct.s > 0 ? ct.s : '-') + '</td>';
+  }
+  return '<table class="sc">' + h1 + '</tr>' + h2 + '</tr>' + h3 + '</tr></table>';
+}
+function cardHtml() { return cardTable(1, 9, 'thOut', false) + cardTable(10, 18, 'thIn', true); }
+function openCard() { $('cardBox').innerHTML = cardHtml(); $('cardPanel').hidden = false; }
+function closeCard() { $('cardPanel').hidden = true; }
+
+/* ── 입력 ── */
+function canvasPoint(ev) {
+  var r = cv.getBoundingClientRect();
+  return { x: (ev.clientX - r.left) * (VW / r.width), y: (ev.clientY - r.top) * (VH / r.height) };
+}
+cv.addEventListener('pointerdown', function (ev) {
+  if (!running || G.state !== 'aim') return;
+  ev.preventDefault();
+  var p = canvasPoint(ev);
+  var dx = p.x - G.ball.x, dy = p.y - G.ball.y;
+  if (dx * dx + dy * dy > 70 * 70) return;
+  G.drag = { x: p.x, y: p.y };
+  G.state = 'drag';
+  try { cv.setPointerCapture(ev.pointerId); } catch (e) {}
+});
+cv.addEventListener('pointermove', function (ev) {
+  if (!running || G.state !== 'drag' || !G.drag) return;
+  ev.preventDefault();
+  var p = canvasPoint(ev);
+  G.drag.x = p.x; G.drag.y = p.y;
+});
+cv.addEventListener('pointerup', function (ev) {
+  if (!running || G.state !== 'drag' || !G.drag) return;
+  ev.preventDefault();
+  var p = canvasPoint(ev);
+  var dx = G.ball.x - p.x, dy = G.ball.y - p.y;
+  var len = Math.sqrt(dx * dx + dy * dy);
+  G.drag = null;
+  if (len < 14) { G.state = 'aim'; return; }
+  var pw = clamp(len, 0, MAX_DRAG);
+  shoot(dx / len, dy / len, pw);
+});
+cv.addEventListener('pointercancel', function () {
+  if (G && G.state === 'drag') { G.drag = null; G.state = 'aim'; }
+});
+cv.addEventListener('contextmenu', function (ev) { ev.preventDefault(); });
+window.addEventListener('keydown', function (ev) {
+  if (ev.code === 'KeyC' && running) {
+    ev.preventDefault();
+    if ($('cardPanel').hidden) openCard(); else closeCard();
+  } else if (ev.code === 'Escape') {
+    if (!$('cardPanel').hidden) closeCard();
+    else if (G && G.state === 'drag') { G.drag = null; G.state = 'aim'; }
+  }
+});
+$('cardBtn').onclick = openCard;
+$('cardClose').onclick = closeCard;
+
+/* ── 시작 / 종료 ── */
+function showBest() {
+  var best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+  var aces = parseInt(localStorage.getItem(ACE_KEY) || '0', 10);
+  $('bestTxt').textContent = best > 0
+    ? TX('bestLine', { s: best, d: diffStr(best - PAR_TOTAL), a: aces })
+    : TR('noBest');
+}
+function startGame() {
+  newGame(); running = true;
+  $('menu').hidden = true; $('endPanel').hidden = true; $('cardPanel').hidden = true;
+  $('hud').hidden = false; $('bar').hidden = false;
+  loadHole(0);
+}
+function endGame() {
+  running = false;
+  $('hud').hidden = true; $('bar').hidden = true;
+  $('banner').classList.remove('on'); bannerT = 0;
+  var total = 0, i;
+  for (i = 0; i < 18; i++) total += G.scores[i];
+  var diff = total - PAR_TOTAL;
+  var pts = Math.max(100, 10000 - diff * 400 - total * 20);
+  var best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10);
+  var isBest = best === 0 || total < best;
+  if (isBest) localStorage.setItem(BEST_KEY, String(total));
+  $('endTitle').textContent = TR('endTitle');
+  var sum = TX('endSum', { s: total, p: PAR_TOTAL, d: diffStr(diff) });
+  if (G.aces > 0) sum += TX('endAce', { n: G.aces });
+  if (isBest) sum += TR('newBest');
+  $('endDesc').textContent = sum;
+  $('endScore').textContent = TX('endScore', { pts: pts.toLocaleString() });
+  $('endCard').innerHTML = cardHtml();
+  $('endPanel').hidden = false;
+  GameRank.submit('breeze-links', pts, TX('detailFmt', { d: diffStr(diff), s: total }))
+    .then(function (r) {
+      if (r && r.applied) $('endScore').textContent += TX('rankMsg', { n: r.rank });
+    });
+}
+
+var last = performance.now();
+function loop() {
+  requestAnimationFrame(loop);
+  var now = performance.now(), dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (!running || !G) return;
+  if (!$('cardPanel').hidden) return;         // 스코어카드 열림 = 일시정지
+  update(dt);
+  if (running && G) draw(now);
+}
+requestAnimationFrame(loop);
+showBest();
+$('startBtn').onclick = startGame;
+$('againBtn').onclick = startGame;
+$('backBtn').onclick = function () { $('endPanel').hidden = true; $('menu').hidden = false; showBest(); };
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('breeze-links');
+</script>
+</body>
+</html>

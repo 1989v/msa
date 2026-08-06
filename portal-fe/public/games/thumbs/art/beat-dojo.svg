@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">
+  <rect width="320" height="180" fill="#0c1424"/>
+  <rect x="14" y="14" width="86" height="76" fill="#101a30" stroke="#1a2238" stroke-width="3"/>
+  <rect x="220" y="14" width="86" height="76" fill="#101a30" stroke="#1a2238" stroke-width="3"/>
+  <rect y="120" width="320" height="60" fill="#101828"/>
+  <!-- 북 -->
+  <circle cx="96" cy="84" r="42" fill="#1a2238" stroke="#263354" stroke-width="5"/>
+  <path d="M69 57 L123 111 M123 57 L69 111" stroke="#ef4444" stroke-width="4" fill="none"/>
+  <circle cx="96" cy="84" r="9" fill="#0ea5e9"/>
+  <!-- 북채 -->
+  <path d="M120 40 L156 66" stroke="#eab308" stroke-width="5" stroke-linecap="round"/>
+  <!-- 파동 -->
+  <g fill="none" stroke="#0ea5e9" stroke-linecap="round">
+    <path d="M152 56 a40 40 0 0 1 0 56" stroke-width="4" opacity=".9"/>
+    <path d="M170 46 a54 54 0 0 1 0 76" stroke-width="3.5" opacity=".55"/>
+    <path d="M188 36 a68 68 0 0 1 0 96" stroke-width="3" opacity=".3"/>
+  </g>
+  <!-- 노트 레인 -->
+  <line x1="208" y1="84" x2="308" y2="84" stroke="#1a2238" stroke-width="3"/>
+  <circle cx="224" cy="84" r="9" fill="#0ea5e9"/>
+  <circle cx="254" cy="84" r="7" fill="#22c55e"/>
+  <circle cx="280" cy="84" r="7" fill="#eab308"/>
+  <circle cx="302" cy="84" r="6" fill="#ef4444"/>
+  <text x="160" y="166" font-family="monospace" font-size="21" font-weight="bold" fill="#eab308" text-anchor="middle">박자 도장</text>
+</svg>

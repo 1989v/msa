@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">⚫ 오목 사범</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; min-height:100vh; user-select:none;
+         -webkit-user-select:none; padding:14px 10px 30px; }
+  h1.top { font-size:19px; color:#0ea5e9; margin:6px 0 2px; text-shadow:1px 1px 0 #000; }
+  .sub { font-size:11px; color:#8e9db0; margin-bottom:10px; min-height:14px; }
+  #cv { display:block; background:#1a2238; border:2px solid #2c3550; border-radius:10px;
+        touch-action:manipulation; cursor:pointer; width:min(94vw, 560px); height:auto;
+        -webkit-tap-highlight-color:transparent; }
+  #msg { min-height:20px; font-size:12.5px; color:#eab308; margin:9px 0 7px; text-align:center; }
+  .ctrl { display:flex; gap:8px; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:12px 18px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#222b44; color:#e6ecf2; }
+  button.act:disabled { opacity:.35; cursor:default; }
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:13px; text-align:center; z-index:10;
+           padding:20px; overflow:auto; }
+  .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:480px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .row { display:flex; gap:8px; align-items:stretch; flex-wrap:wrap; justify-content:center; }
+  .lvBtn { display:flex; flex-direction:column; gap:4px; width:172px; padding:13px 12px;
+           background:#1a2238; border:2px solid #2c3550; border-radius:10px; color:#e6ecf2;
+           font-family:inherit; cursor:pointer; text-align:center; }
+  .lvBtn:hover { background:#222b44; border-color:#0ea5e9; }
+  .lvBtn b { font-size:15px; }
+  .lvBtn .d { font-size:10.5px; color:#8e9db0; line-height:1.55; }
+  .lvBtn .wl { font-size:11px; margin-top:2px; }
+  .stat { background:#1a2238; border-radius:8px; padding:8px 14px; font-size:12px; }
+  .stat b { color:#0ea5e9; font-size:17px; display:block; }
+  @media (max-width:520px) { .lvBtn { width:100%; max-width:300px; } }
+</style>
+</head>
+<body>
+<h1 class="top" data-i18n="title">⚫ 오목 사범</h1>
+<div class="sub" id="subTxt"></div>
+
+<canvas id="cv" width="620" height="620"></canvas>
+<div id="msg"></div>
+<div class="ctrl">
+  <button class="act ghost" id="undoBtn" data-i18n="undo">↩ 무르기</button>
+  <button class="act ghost" id="menuBtn" data-i18n="menuBtn">≡ 메뉴</button>
+</div>
+
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">⚫ 오목 사범</h1>
+  <p data-i18n="menuDesc">15×15 오목판에서 AI 사범과 겨룬다. 당신이 흑돌 선수 — 가로·세로·대각으로
+    다섯 돌을 먼저 이어라. 모바일은 첫 탭 미리보기, 둘째 탭 확정. 무르기는 판마다 한 번.</p>
+  <p class="small" id="menuStats"></p>
+  <div class="row">
+    <button class="lvBtn" id="lv0"></button>
+    <button class="lvBtn" id="lv1"></button>
+    <button class="lvBtn" id="lv2"></button>
+  </div>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <h1 id="endTitle"></h1>
+  <p id="endInfo"></p>
+  <div class="row">
+    <div class="stat"><b id="endScore">0</b><span data-i18n="scoreLabel">점수</span></div>
+    <div class="stat"><b id="endStreak">0</b><span data-i18n="streakLabel">연승</span></div>
+    <div class="stat"><b id="endRecord">0</b><span data-i18n="recordLabel">전적</span></div>
+  </div>
+  <div class="row">
+    <button class="act" id="againBtn" data-i18n="againBtn">⚔ 다시 대국</button>
+    <button class="act ghost" id="backBtn" data-i18n="backBtn">처음으로</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '⚫ 오목 사범', menuTitle: '⚫ 오목 사범',
+    menuDesc: '15×15 오목판에서 AI 사범과 겨룬다. 당신이 흑돌 선수 — 가로·세로·대각으로 다섯 돌을 먼저 이어라. 모바일은 첫 탭 미리보기, 둘째 탭 확정. 무르기는 판마다 한 번.',
+    lv0: '수련생', lv1: '사범', lv2: '명인',
+    lv0d: '한 수 탐욕 + 가끔 변덕', lv1d: '정확한 한 수 읽기', lv2d: '두 수 앞을 내다본다',
+    base: '기본', pts: '점', wSuf: '승', lSuf: '패',
+    undo: '↩ 무르기', menuBtn: '≡ 메뉴',
+    yourTurn: '당신 차례 — 흑돌', aiTurn: 'AI가 수를 읽는 중…', tapConfirm: '같은 곳을 한 번 더 탭하면 착수',
+    undone: '한 수 물렀다 — 이번 판 무르기 소진',
+    win: '🏆 승리!', lose: '패배 — 설욕을 준비하라', draw: '무승부',
+    movesLabel: '수순', scoreLabel: '점수', streakLabel: '연승', recordLabel: '전적',
+    againBtn: '⚔ 다시 대국', backBtn: '처음으로',
+    beat0: '수련생 격파', beat1: '사범 격파', beat2: '명인 격파',
+  },
+  en: {
+    title: '⚫ Stone Sage', menuTitle: '⚫ Stone Sage',
+    menuDesc: 'Duel the AI sage on a 15×15 gomoku board. You play black and move first — connect five in a row. On touch: first tap previews, second tap confirms. One undo per game.',
+    lv0: 'Apprentice', lv1: 'Sage', lv2: 'Grandmaster',
+    lv0d: 'Greedy one move + whims', lv1d: 'Exact one-move reading', lv2d: 'Reads two moves ahead',
+    base: 'base', pts: ' pts', wSuf: 'W', lSuf: 'L',
+    undo: '↩ Undo', menuBtn: '≡ Menu',
+    yourTurn: 'Your move — black', aiTurn: 'AI is thinking…', tapConfirm: 'Tap the same spot again to place',
+    undone: 'Move taken back — undo spent',
+    win: '🏆 Victory!', lose: 'Defeat — prepare your revenge', draw: 'Draw',
+    movesLabel: 'moves', scoreLabel: 'Score', streakLabel: 'Streak', recordLabel: 'Record',
+    againBtn: '⚔ Rematch', backBtn: 'Menu',
+    beat0: 'Beat Apprentice', beat1: 'Beat Sage', beat2: 'Beat Grandmaster',
+  },
+});
+var TR = GameI18n.t;
+var SLUG = 'stone-sage';
+
+// === ENGINE (순수 로직 — DOM 미사용) ===
+var N = 15;
+var FIVE = 10000000;
+var DIRS = [[1, 0], [0, 1], [1, 1], [1, -1]];
+
+function newBoard() {
+  var bd = [], x, y, row;
+  for (y = 0; y < N; y++) { row = []; for (x = 0; x < N; x++) row.push(0); bd.push(row); }
+  return bd;
+}
+function inB(x, y) { return x >= 0 && y >= 0 && x < N && y < N; }
+
+// 연속 길이 + 열린 끝 개수 → 패턴 점수 (열린4=10만, 닫힌4/열린3=1만, 열린2=500 …)
+function lineScore(len, open) {
+  if (len >= 5) return FIVE;                        // 장목(6+) 포함 승리
+  if (open === 0) return 0;
+  if (len === 4) return open === 2 ? 100000 : 10000;
+  if (len === 3) return open === 2 ? 10000 : 1000;
+  if (len === 2) return open === 2 ? 500 : 100;
+  return open === 2 ? 30 : 10;
+}
+
+// 빈 칸 (x,y)에 side 돌을 놓았을 때 4방향 패턴 점수 합
+function scoreAt(bd, x, y, side) {
+  var total = 0, d, dx, dy, len, open, cx, cy;
+  for (d = 0; d < 4; d++) {
+    dx = DIRS[d][0]; dy = DIRS[d][1];
+    len = 1; open = 0;
+    cx = x + dx; cy = y + dy;
+    while (inB(cx, cy) && bd[cy][cx] === side) { len++; cx += dx; cy += dy; }
+    if (inB(cx, cy) && bd[cy][cx] === 0) open++;
+    cx = x - dx; cy = y - dy;
+    while (inB(cx, cy) && bd[cy][cx] === side) { len++; cx -= dx; cy -= dy; }
+    if (inB(cx, cy) && bd[cy][cx] === 0) open++;
+    total += lineScore(len, open);
+  }
+  return total;
+}
+
+// 후보수: 기존 돌 주변 2칸(체비쇼프) 이내의 빈 칸
+function listCands(bd) {
+  var out = [], seen = {}, x, y, dx, dy, nx, ny, k;
+  for (y = 0; y < N; y++) for (x = 0; x < N; x++) {
+    if (!bd[y][x]) continue;
+    for (dy = -2; dy <= 2; dy++) for (dx = -2; dx <= 2; dx++) {
+      nx = x + dx; ny = y + dy;
+      if (!inB(nx, ny) || bd[ny][nx]) continue;
+      k = ny * N + nx;
+      if (!seen[k]) { seen[k] = 1; out.push({ x: nx, y: ny }); }
+    }
+  }
+  return out;
+}
+
+// 동점 타이브레이크용 중앙 선호 + 미세 지터 (패턴 점수 최소 간격 10보다 훨씬 작게)
+function centerBias(x, y) {
+  return (14 - Math.abs(x - 7) - Math.abs(y - 7)) * 0.02 + Math.random() * 0.01;
+}
+
+// 상대 최선 응수의 "공격" 가치 (5목 완성 응수가 있으면 FIVE 고정).
+// 수비 이득을 응수 가치에 섞으면 내 위협수가 "상대에게 좋은 수를 준다"로 오판되어
+// 미니맥스가 위협 생성을 회피한다 — 공격 점수만 본다.
+function bestReplyScore(bd, side) {
+  var cands = listCands(bd), best = 0, i, a;
+  for (i = 0; i < cands.length; i++) {
+    a = scoreAt(bd, cands[i].x, cands[i].y, side);
+    if (a >= FIVE) return FIVE;
+    if (a > best) best = a;
+  }
+  return best;
+}
+
+/**
+ * AI 착수 결정.
+ *   lvl 0 수련생: 1수 탐욕(공격+수비 합산) + 점수 노이즈
+ *   lvl 1 사범:   즉승/즉방 스캔 → 정확한 1수 탐욕
+ *   lvl 2 명인:   즉승/즉방 스캔 → 미니맥스 깊이 2 (내 후보 상위 10수 가지치기)
+ */
+function aiMove(bd, lvl, me) {
+  var opp = 3 - me;
+  var cands = listCands(bd);
+  if (!cands.length) return { x: 7, y: 7 };
+  var scored = [], winC = null, blockC = null, blockOwn = -1;
+  var i, c, atk, def, v;
+  for (i = 0; i < cands.length; i++) {
+    c = cands[i];
+    atk = scoreAt(bd, c.x, c.y, me);
+    def = scoreAt(bd, c.x, c.y, opp);
+    if (atk >= FIVE && !winC) winC = c;
+    if (def >= FIVE && atk > blockOwn) { blockOwn = atk; blockC = c; }
+    scored.push({ x: c.x, y: c.y, v: atk + def * 0.9 + centerBias(c.x, c.y), atk: atk });
+  }
+  if (lvl >= 1) {
+    if (winC) return winC;                          // 즉시 승리수
+    if (blockC) return blockC;                      // 상대 5목 저지
+  }
+  if (lvl === 0) {
+    var best = null, bv = -1;
+    for (i = 0; i < scored.length; i++) {
+      v = scored[i].v * (0.75 + Math.random() * 0.5);
+      if (v > bv) { bv = v; best = scored[i]; }
+    }
+    return best;
+  }
+  scored.sort(function (a, b) { return b.v - a.v; });
+  if (lvl === 1) return scored[0];
+  var top = scored.slice(0, 10);
+  var bestM = top[0], bestVal = -Infinity, m, reply;
+  for (i = 0; i < top.length; i++) {
+    m = top[i];
+    bd[m.y][m.x] = me;
+    reply = bestReplyScore(bd, opp);
+    bd[m.y][m.x] = 0;
+    // 열린4 확보 + 상대 즉승 없음 → 한쪽을 막아도 5목이 남는 필승수
+    if (m.atk >= 100000 && reply < FIVE) return m;
+    v = m.v - reply * 0.9;
+    if (v > bestVal) { bestVal = v; bestM = m; }
+  }
+  return bestM;
+}
+
+// 방금 놓인 (x,y)를 지나는 5목 이상 라인 → [[x,y]…] | null
+function winLine(bd, x, y) {
+  var side = bd[y][x], d, dx, dy, cells, cx, cy;
+  for (d = 0; d < 4; d++) {
+    dx = DIRS[d][0]; dy = DIRS[d][1];
+    cells = [[x, y]];
+    cx = x + dx; cy = y + dy;
+    while (inB(cx, cy) && bd[cy][cx] === side) { cells.push([cx, cy]); cx += dx; cy += dy; }
+    cx = x - dx; cy = y - dy;
+    while (inB(cx, cy) && bd[cy][cx] === side) { cells.unshift([cx, cy]); cx -= dx; cy -= dy; }
+    if (cells.length >= 5) return cells;
+  }
+  return null;
+}
+// === UI ===
+
+function $(id) { return document.getElementById(id); }
+var cv = $('cv'), ctx = cv.getContext('2d');
+var M = 30, CELL = 40, R = 17;
+var STARS = [[3, 3], [3, 11], [11, 3], [11, 11], [7, 7]];
+
+var LEVELS = [
+  { base: 1000, color: '#22c55e' },
+  { base: 3000, color: '#0ea5e9' },
+  { base: 8000, color: '#eab308' },
+];
+var LS_STREAK = 'stone-sage_streak', LS_REC = 'stone-sage_record';
+
+var bd = newBoard(), hist = [], lvl = 1, gameId = 0;
+var running = false, over = false, aiThinking = false, undoUsed = false;
+var pending = null, hover = null, hoverKey = '', winCells = null, thinkMs = 0;
+var streak = parseInt(localStorage.getItem(LS_STREAK), 10) || 0;
+
+function loadRec() { try { return JSON.parse(localStorage.getItem(LS_REC)) || {}; } catch (e) { return {}; } }
+function recFor(l) { return loadRec()[l] || { w: 0, l: 0 }; }
+function addRec(l, won) {
+  var r = loadRec(), e = r[l] || { w: 0, l: 0 };
+  if (won) e.w++; else e.l++;
+  r[l] = e;
+  localStorage.setItem(LS_REC, JSON.stringify(r));
+}
+
+function msg(s) { $('msg').textContent = s; }
+function updateSub() {
+  $('subTxt').textContent = running
+    ? TR('lv' + lvl) + ' · ' + TR('movesLabel') + ' ' + hist.length + ' · 🔥' + streak
+    : '🔥 ' + streak;
+}
+function updateUndoBtn() {
+  $('undoBtn').disabled = undoUsed || !running || over || aiThinking || hist.length < 2;
+}
+
+function drawStone(x, y, side, alpha) {
+  var px = M + x * CELL, py = M + y * CELL;
+  ctx.globalAlpha = alpha;
+  var g = ctx.createRadialGradient(px - 5, py - 6, 2, px, py, R);
+  if (side === 1) { g.addColorStop(0, '#39445c'); g.addColorStop(1, '#0b0e13'); }
+  else { g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#e6ecf2'); }
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(px, py, R, 0, Math.PI * 2); ctx.fill();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = side === 1 ? '#4a5878' : 'rgba(12,20,36,.5)';
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function draw() {
+  var i, x, y, px, py;
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.strokeStyle = '#3a4763'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (i = 0; i < N; i++) {
+    var p = M + i * CELL + 0.5;
+    ctx.moveTo(M + 0.5, p); ctx.lineTo(M + (N - 1) * CELL + 0.5, p);
+    ctx.moveTo(p, M + 0.5); ctx.lineTo(p, M + (N - 1) * CELL + 0.5);
+  }
+  ctx.stroke();
+  ctx.fillStyle = '#3a4763';
+  for (i = 0; i < STARS.length; i++) {
+    ctx.beginPath();
+    ctx.arc(M + STARS[i][0] * CELL, M + STARS[i][1] * CELL, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (pending) {                                    // 탭 1회차: 십자 미리보기 커서
+    px = M + pending.x * CELL; py = M + pending.y * CELL;
+    ctx.strokeStyle = 'rgba(14,165,233,.45)'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(M, py); ctx.lineTo(M + (N - 1) * CELL, py);
+    ctx.moveTo(px, M); ctx.lineTo(px, M + (N - 1) * CELL);
+    ctx.stroke();
+    drawStone(pending.x, pending.y, 1, 0.5);
+  } else if (hover) {
+    drawStone(hover.x, hover.y, 1, 0.35);
+  }
+  for (y = 0; y < N; y++) for (x = 0; x < N; x++) {
+    if (bd[y][x]) drawStone(x, y, bd[y][x], 1);
+  }
+  var last = hist.length ? hist[hist.length - 1] : null;
+  if (last && !winCells) {
+    ctx.fillStyle = '#0ea5e9';
+    ctx.beginPath();
+    ctx.arc(M + last.x * CELL, M + last.y * CELL, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  if (winCells) {
+    var f = winCells[0], e = winCells[winCells.length - 1];
+    ctx.strokeStyle = 'rgba(34,197,94,.85)'; ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(M + f[0] * CELL, M + f[1] * CELL);
+    ctx.lineTo(M + e[0] * CELL, M + e[1] * CELL);
+    ctx.stroke();
+    ctx.strokeStyle = '#22c55e';
+    for (i = 0; i < winCells.length; i++) {
+      ctx.beginPath();
+      ctx.arc(M + winCells[i][0] * CELL, M + winCells[i][1] * CELL, R + 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+}
+
+function evCell(ev) {
+  var r = cv.getBoundingClientRect();
+  var px = (ev.clientX - r.left) * (cv.width / r.width);
+  var py = (ev.clientY - r.top) * (cv.height / r.height);
+  var x = Math.round((px - M) / CELL), y = Math.round((py - M) / CELL);
+  return inB(x, y) ? { x: x, y: y } : null;
+}
+
+function playerPlace(c) {
+  bd[c.y][c.x] = 1;
+  hist.push({ x: c.x, y: c.y, s: 1 });
+  pending = null; hover = null; hoverKey = '';
+  updateSub(); updateUndoBtn();
+  var wl = winLine(bd, c.x, c.y);
+  if (wl) { winCells = wl; draw(); finish('win'); return; }
+  if (hist.length >= N * N) { draw(); finish('draw'); return; }
+  draw();
+  aiTurn();
+}
+
+function aiTurn() {
+  var gid = gameId;
+  aiThinking = true;
+  updateUndoBtn();
+  msg(TR('aiTurn'));
+  setTimeout(function () {
+    if (gid !== gameId || !running) return;
+    var t0 = Date.now();
+    var m = aiMove(bd, lvl, 2);
+    thinkMs = Date.now() - t0;
+    setTimeout(function () {                        // 최소 연출 딜레이 (즉답 방지)
+      if (gid !== gameId || !running) return;
+      bd[m.y][m.x] = 2;
+      hist.push({ x: m.x, y: m.y, s: 2 });
+      aiThinking = false;
+      updateSub(); updateUndoBtn();
+      var wl = winLine(bd, m.x, m.y);
+      if (wl) { winCells = wl; draw(); finish('lose'); return; }
+      if (hist.length >= N * N) { draw(); finish('draw'); return; }
+      draw();
+      msg(TR('yourTurn'));
+    }, Math.max(0, 260 - thinkMs));
+  }, 60);
+}
+
+function finish(result) {
+  over = true; pending = null; hover = null; hoverKey = '';
+  aiThinking = false;
+  updateUndoBtn();
+  var mv = hist.length, score = 0;
+  if (result === 'win') {
+    score = Math.max(100, LEVELS[lvl].base - mv * 10);
+    streak++;
+    addRec(lvl, true);
+    GameRank.submit(SLUG, score, TR('beat' + lvl));
+  } else if (result === 'lose') {
+    streak = 0;
+    addRec(lvl, false);
+  }
+  localStorage.setItem(LS_STREAK, String(streak));
+  var t = $('endTitle');
+  t.textContent = TR(result);
+  t.style.color = result === 'win' ? '#22c55e' : result === 'lose' ? '#ef4444' : '#eab308';
+  $('endInfo').textContent = TR('lv' + lvl) + ' · ' + TR('movesLabel') + ' ' + mv;
+  $('endScore').textContent = score ? score.toLocaleString() : '—';
+  $('endStreak').textContent = streak;
+  var r = recFor(lvl);
+  $('endRecord').textContent = r.w + TR('wSuf') + ' ' + r.l + TR('lSuf');
+  msg('');
+  updateSub();
+  setTimeout(function () { if (over) $('endPanel').hidden = false; },
+    result === 'draw' ? 400 : 1000);                // 승리 라인을 잠시 보여준 뒤 패널
+}
+
+function startGame(l) {
+  gameId++;
+  lvl = l;
+  bd = newBoard(); hist = [];
+  running = true; over = false; aiThinking = false; undoUsed = false;
+  pending = null; hover = null; hoverKey = ''; winCells = null;
+  $('menu').hidden = true;
+  $('endPanel').hidden = true;
+  msg(TR('yourTurn'));
+  updateSub(); updateUndoBtn(); draw();
+}
+
+function toMenu() {
+  running = false; over = false; aiThinking = false;
+  pending = null; hover = null; hoverKey = ''; winCells = null;
+  $('endPanel').hidden = true;
+  $('menu').hidden = false;
+  refreshMenu();
+}
+
+function refreshMenu() {
+  var totW = 0, totL = 0, i, r;
+  for (i = 0; i < 3; i++) {
+    r = recFor(i);
+    totW += r.w; totL += r.l;
+    $('lv' + i).innerHTML =
+      '<b style="color:' + LEVELS[i].color + '">' + TR('lv' + i) + '</b>' +
+      '<span class="d">' + TR('lv' + i + 'd') + '<br>' + TR('base') + ' ' +
+      LEVELS[i].base.toLocaleString() + TR('pts') + '</span>' +
+      '<span class="wl"><span style="color:#22c55e">' + r.w + TR('wSuf') + '</span> · ' +
+      '<span style="color:#ef4444">' + r.l + TR('lSuf') + '</span></span>';
+  }
+  $('menuStats').textContent = '🔥 ' + TR('streakLabel') + ' ' + streak + ' · ' +
+    TR('recordLabel') + ' ' + totW + TR('wSuf') + ' ' + totL + TR('lSuf');
+  updateSub();
+}
+
+cv.addEventListener('pointerdown', function (ev) {
+  ev.preventDefault();
+  if (!running || over || aiThinking) return;
+  var c = evCell(ev);
+  if (!c || bd[c.y][c.x]) {
+    if (pending) { pending = null; draw(); msg(TR('yourTurn')); }
+    return;
+  }
+  if (ev.pointerType === 'touch') {                 // 오배치 방지: 1탭 미리보기 → 2탭 확정
+    if (pending && pending.x === c.x && pending.y === c.y) playerPlace(c);
+    else { pending = c; draw(); msg(TR('tapConfirm')); }
+  } else {
+    playerPlace(c);                                 // 데스크톱은 클릭 즉시
+  }
+});
+cv.addEventListener('pointermove', function (ev) {
+  if (ev.pointerType !== 'mouse' || !running || over || aiThinking) return;
+  var c = evCell(ev);
+  var k = c && !bd[c.y][c.x] ? c.x + ':' + c.y : '';
+  if (k === hoverKey) return;
+  hoverKey = k;
+  hover = k ? c : null;
+  draw();
+});
+cv.addEventListener('pointerleave', function () {
+  if (hover) { hover = null; hoverKey = ''; draw(); }
+});
+
+$('undoBtn').onclick = function () {
+  if (undoUsed || !running || over || aiThinking || hist.length < 2) return;
+  var a = hist.pop(), b = hist.pop();               // AI 수 + 내 수 한 쌍
+  bd[a.y][a.x] = 0; bd[b.y][b.x] = 0;
+  undoUsed = true; pending = null; winCells = null;
+  updateSub(); updateUndoBtn(); draw();
+  msg(TR('undone'));
+};
+$('lv0').onclick = function () { startGame(0); };
+$('lv1').onclick = function () { startGame(1); };
+$('lv2').onclick = function () { startGame(2); };
+$('againBtn').onclick = function () { startGame(lvl); };
+$('backBtn').onclick = toMenu;
+$('menuBtn').onclick = toMenu;
+
+refreshMenu();
+draw();
+</script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('stone-sage');</script>
+</body>
+</html>

@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">용사 파견소</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#dbe4f5; font-family:'Courier New',monospace; display:flex; flex-direction:column;
+         align-items:center; justify-content:flex-start; min-height:100vh; user-select:none; padding:14px 0; }
+  #wrap { width:min(560px, 100vw); }
+  h1 { color:#0ea5e9; font-size:22px; text-align:center; text-shadow:2px 2px 0 #000; margin:6px 0 2px; }
+  #sub { text-align:center; font-size:11px; color:#8b98b8; margin-bottom:12px; }
+  .panel { background:#111a30; border:1px solid #2a3452; border-radius:12px; padding:18px 14px; margin:0 12px;
+           display:flex; flex-direction:column; gap:10px; align-items:center; text-align:center; }
+  .panel p { font-size:12.5px; line-height:1.75; color:#a9b6d3; max-width:480px; }
+  .panel .howto { font-size:11px; color:#8b98b8; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; }
+  button.big { background:#0ea5e9; color:#04121f; border:0; padding:12px 26px; border-radius:8px; font-weight:bold;
+               font-family:inherit; font-size:14px; cursor:pointer; min-height:46px; }
+  button.ghost { background:#232c48; color:#dbe4f5; border:1px solid #2a3452; padding:8px 12px; border-radius:7px;
+                 font-family:inherit; font-size:11.5px; cursor:pointer; min-height:38px; }
+  #saveRow input { background:#0c1424; border:1px solid #2a3452; color:#dbe4f5; border-radius:6px; padding:8px 9px;
+                   font-family:inherit; font-size:12px; letter-spacing:1px; width:160px; text-transform:uppercase; }
+  #saveStatus { font-size:10.5px; color:#8b98b8; }
+  #codeShow { font-size:11px; color:#eab308; letter-spacing:2px; }
+  #hud { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; font-size:13px; font-weight:bold; margin:4px 0 10px; }
+  #hud span { background:rgba(14,165,233,.08); border:1px solid #2a3452; border-radius:9px; padding:5px 12px; }
+  #tabs { display:flex; gap:6px; padding:0 12px; margin-bottom:8px; }
+  #tabs button { flex:1; background:#1a2238; border:1px solid #2a3452; color:#a9b6d3; padding:10px 2px; border-radius:8px;
+                 font-family:inherit; font-size:11.5px; cursor:pointer; min-height:44px; }
+  #tabs button.on { background:#0ea5e9; color:#04121f; border-color:#0ea5e9; font-weight:bold; }
+  .tabPage { display:flex; flex-direction:column; gap:7px; padding:0 12px 14px; }
+  .card { background:#1a2238; border:1px solid #2a3452; border-radius:10px; padding:10px 12px; display:flex;
+          justify-content:space-between; align-items:center; gap:10px; text-align:left; }
+  .card .cl { flex:1; min-width:0; }
+  .card b { font-size:13px; display:block; }
+  .card small { display:block; color:#8b98b8; font-size:10.5px; line-height:1.65; }
+  .card small.timer { color:#eab308; }
+  .card small.firstHint { color:#22c55e; }
+  .card button { background:#0ea5e9; color:#04121f; border:0; border-radius:7px; padding:9px 14px; font-family:inherit;
+                 font-weight:bold; font-size:12px; cursor:pointer; min-height:40px; white-space:nowrap; }
+  .card button:disabled { opacity:.35; cursor:default; }
+  .card button.dangerB { background:transparent; color:#ef4444; border:1px solid #ef4444; font-weight:normal;
+                         padding:6px 10px; min-height:32px; font-size:11px; }
+  .bar { height:6px; background:#0c1424; border-radius:3px; overflow:hidden; margin-top:4px; width:100%; }
+  .bar i { display:block; height:100%; background:#22c55e; }
+  .ov { position:fixed; inset:0; background:rgba(5,9,20,.86); display:flex; align-items:center; justify-content:center;
+        z-index:50; padding:14px; }
+  .ovCard { background:#1a2238; border:1px solid #2a3452; border-radius:12px; padding:16px 14px; width:min(480px, 96vw);
+            max-height:88vh; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+  .ovCard h2 { color:#0ea5e9; font-size:16px; text-align:center; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+  .chip { background:#0c1424; border:2px solid #2a3452; border-radius:8px; padding:7px 9px; font-size:11px;
+          cursor:pointer; min-width:96px; text-align:left; font-family:inherit; color:#dbe4f5; }
+  .chip.sel { border-color:#0ea5e9; background:#12263c; }
+  .chip b { display:block; font-size:12px; }
+  .statBox { background:#0c1424; border-radius:8px; padding:9px 11px; font-size:11.5px; line-height:1.8; text-align:left; }
+  .repLbl { font-size:12px; display:flex; gap:6px; align-items:center; justify-content:center; cursor:pointer; }
+  #bookGrid { display:grid; grid-template-columns:58px repeat(4, 1fr); gap:5px; }
+  .bkCell { background:#1a2238; border:1px solid #2a3452; border-radius:7px; padding:8px 2px; text-align:center;
+            font-size:12px; color:#4a5670; }
+  .bkCell.got { color:#dbe4f5; }
+  .bkHead { background:transparent; border:0; font-size:10.5px; color:#8b98b8; padding:6px 2px; }
+  #sumBody { text-align:left; font-size:13px; line-height:2.1; }
+  #offBody { text-align:left; font-size:11.5px; line-height:1.9; }
+  #offBody .away { color:#8b98b8; font-size:10.5px; margin-bottom:6px; }
+  #offBody .lvups { color:#22c55e; margin-top:6px; }
+  #toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); background:rgba(6,10,22,.94);
+           border:1px solid #2a3452; padding:8px 18px; border-radius:9px; font-size:12px; opacity:0;
+           transition:opacity .3s; pointer-events:none; z-index:99; max-width:92vw; }
+  .gold { color:#eab308; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1 data-i18n="h1">🛡 용사 파견소</h1>
+  <div id="sub" data-i18n="sub">용사를 고용해 던전으로 — 잠든 사이에도 원정대는 걷는다</div>
+
+  <div id="menu" class="panel">
+    <p data-i18n="menuDesc"></p>
+    <p class="howto" data-i18n="menuHow"></p>
+    <div id="saveStatus"></div>
+    <div class="row" id="saveRow">
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btnCodeLoad">🔑 코드로 불러오기</button>
+    </div>
+    <div id="codeShow"></div>
+    <button id="startBtn" class="big" data-i18n="startBtn">▶ 파견소 입장</button>
+  </div>
+
+  <div id="game" hidden>
+    <div id="hud"><span id="goldTxt"></span><span id="fameTxt"></span><span id="heroTxt"></span></div>
+    <div id="tabs">
+      <button data-tab="dg" class="on" data-i18n="tabDg">⚔ 던전</button>
+      <button data-tab="hero" data-i18n="tabHero">👥 용사</button>
+      <button data-tab="fac" data-i18n="tabFac">🏛 시설</button>
+      <button data-tab="book" data-i18n="tabBook">📖 도감</button>
+      <button id="sumBtn" data-i18n="btnSummary">📊 요약</button>
+    </div>
+    <div id="tab-dg" class="tabPage"></div>
+    <div id="tab-hero" class="tabPage" hidden></div>
+    <div id="tab-fac" class="tabPage" hidden></div>
+    <div id="tab-book" class="tabPage" hidden></div>
+  </div>
+
+  <div id="summary" class="panel" hidden>
+    <h2 style="color:#0ea5e9" data-i18n="sumHdr">📊 파견소 요약</h2>
+    <div id="sumBody"></div>
+    <div class="row">
+      <button id="contBtn" class="big" data-i18n="contBtn">▶ 계속</button>
+      <button id="backBtn" class="ghost" data-i18n="backBtn">메뉴로</button>
+    </div>
+  </div>
+</div>
+
+<div id="dgOv" class="ov" hidden><div class="ovCard" id="dgOvCard"></div></div>
+<div id="offOv" class="ov" hidden>
+  <div class="ovCard">
+    <h2 data-i18n="offHdr">💤 귀환 보고</h2>
+    <div id="offBody"></div>
+    <button id="offOk" class="big" data-i18n="offOk">정산 받기</button>
+  </div>
+</div>
+<div id="toast"></div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '용사 파견소',
+    h1: '🛡 용사 파견소',
+    sub: '용사를 고용해 던전으로 — 잠든 사이에도 원정대는 걷는다',
+    menuDesc: '길드 접수대 앞, 모험을 갈망하는 용사들이 줄을 섰다. 골드로 용사를 고용하고 여섯 던전에 파견하라. 파견은 실제 시간으로 흐르고, 접속을 끊어도 원정대는 멈추지 않는다 — 돌아오면 귀환 보고에서 골드·경험치·명성을 정산받는다.',
+    menuHow: '⚔ 파티 1~3명 · 전투력이 높을수록 성공률과 보상 상승 · 실패해도 절반 보상 · 🏦 금고를 키우면 오프라인 정산 상한이 늘어난다',
+    phCode: '이어하기 코드',
+    btnCodeLoad: '🔑 코드로 불러오기',
+    startBtn: '▶ 파견소 입장',
+    saveCloud: '☁ 서버 세이브 (v{v})',
+    saveNoCode: '그 코드로 저장된 세이브가 없다',
+    saveFail: '세이브 로드 실패: {e}',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급된다',
+    codeIssued: '🔑 이어하기 코드 발급: {c}',
+    tabDg: '⚔ 던전', tabHero: '👥 용사', tabFac: '🏛 시설', tabBook: '📖 도감', btnSummary: '📊 요약',
+    hudGold: '💰 {g}G', hudFame: '🏅 명성 {f}', hudHeroes: '👥 {n}/{m}',
+    cls0: '검사', cls1: '궁수', cls2: '마법사', cls3: '성직자',
+    gr0: '견습', gr1: '숙련', gr2: '정예', gr3: '영웅', gr4: '전설',
+    dg0: '슬라임 평원', dg1: '고블린 광산', dg2: '서리 동굴', dg3: '용암 회랑', dg4: '망령의 탑', dg5: '심연',
+    dgMeta: '⏱ {t} · 권장 전투력 {r}',
+    dgReward: '💰{g} · ✨{x} XP · 🏅{f}',
+    dgFirst: '🎁 첫 클리어 보너스 대기',
+    dgBusyLine: '⏳ 귀환까지 {t} — {p}',
+    dgRepeatTag: ' 🔁',
+    dgGo: '파견', dgRecall: '회수',
+    recallAsk: '파견을 중단할까? 보상은 없다.',
+    pickHdr: '{d} — 파견 파티 (1~3명)',
+    noIdle: '대기 중인 용사가 없다 — 고용하거나 귀환을 기다려라',
+    partyLine: '⚔ 파티 전투력 {p} / 권장 {r}',
+    rateLine: '성공률 {s}% = min(90×{p}/{r}, 95) + 궁수 {a}×4%p (상한 97 · 하한 5)',
+    expLine: '성공 시 💰{g} · ✨{x} XP · 🏅{f} — 실패 시 절반 (성직자 동행 60%)',
+    repToggle: '🔁 반복 파견 — 귀환 즉시 재출발',
+    btnGo: '🚀 파견', btnClose: '닫기',
+    heroIdle: '대기', heroBusy: '⏳ 파견 중',
+    heroPow: '전투력 {n}',
+    lvTxt: '{n} Lv.{l}',
+    btnFire: '방출 +{g}G',
+    fireAsk: '「{n}」 을(를) 방출하고 {g}G 를 회수할까?',
+    btnHire: '🎲 용사 고용 ({g}G)',
+    hireRates: '견습 50% · 숙련 30% · 정예 14% · 영웅 5% · 전설 1%',
+    hireFull: '숙소가 가득 찼다 — 숙소를 확장하라',
+    hireGet: '🎉 [{g}] {c} 「{n}」 합류!',
+    hireNewBook: ' ✨ 도감 신규!',
+    facTrain: '🏋 훈련소', facTrainDesc: '경험치 획득 ×{m} → ×{n}', facTrainCur: '경험치 획득 ×{m}',
+    facVault: '🏦 금고', facVaultDesc: '오프라인 정산 상한 {h}시간 → {n}시간', facVaultCur: '오프라인 정산 상한 {h}시간',
+    facHouse: '🏠 숙소', facHouseDesc: '용사 최대 {h}명 → {n}명', facHouseCur: '용사 최대 {h}명',
+    facLv: 'Lv.{n}', facMax: 'MAX',
+    btnUp: '⬆ {g}G',
+    bookHdr: '📖 도감 {c}/20 — 직업×등급 수집',
+    bookBonus: '수집 보너스: 파티 전투력 +{n}%',
+    sumHdr: '📊 파견소 요약',
+    sumFame: '🏅 명성 {n}',
+    sumClear: '⚔ 파견 {n}회 — 성공 {s} · 실패 {f}',
+    sumBook: '📖 도감 {n}/20 (전투력 +{b}%)',
+    sumLegend: '🌟 전설 용사 {n}명',
+    sumGold: '💰 보유 {g}G · 용사 {h}명',
+    backBtn: '메뉴로', contBtn: '▶ 계속',
+    offHdr: '💤 귀환 보고',
+    offAway: '{m}분 자리 비움 · 정산 상한 {h}시간 (금고 Lv.{v})',
+    offLine: '{d} — {n}회 귀환 (성공 {s}) 💰{g} · ✨{x} · 🏅{f}',
+    offOk: '정산 받기',
+    tSettleWin: '✅ {d} 귀환 — 성공! 💰{g} 🏅{f}',
+    tSettleFail: '💥 {d} 귀환 — 실패… 절반 보상 💰{g}',
+    tFirst: '🎁 {d} 첫 클리어! 보너스 💰{g} · 🏅{f}',
+    tLvUp: '⬆ {n} Lv.{l}!',
+    tNoGold: '골드가 부족하다',
+    tNeedParty: '파견할 용사를 골라라',
+    tPartyMax: '파티는 최대 3명',
+    tBusyDg: '이미 파견 중인 던전이다',
+  },
+  en: {
+    title: 'Hero Dispatch',
+    h1: '🛡 Hero Dispatch',
+    sub: 'Hire heroes, send them to dungeons — the expedition marches while you sleep',
+    menuDesc: 'Adventurers queue at the guild desk, hungry for glory. Hire heroes with gold and dispatch them to six dungeons. Expeditions run in real time and never stop while you are away — settle gold, XP and fame in the return report when you come back.',
+    menuHow: '⚔ Party of 1-3 · higher power means higher success rate and rewards · failure still pays half · 🏦 upgrade the vault to raise the offline settlement cap',
+    phCode: 'Continue code',
+    btnCodeLoad: '🔑 Load from code',
+    startBtn: '▶ Enter the Guild',
+    saveCloud: '☁ Cloud save (v{v})',
+    saveNoCode: 'No save found for that code',
+    saveFail: 'Save load failed: {e}',
+    saveLocal: 'Browser save — saving issues a continue code',
+    codeIssued: '🔑 Continue code issued: {c}',
+    tabDg: '⚔ Dungeon', tabHero: '👥 Heroes', tabFac: '🏛 Guild', tabBook: '📖 Codex', btnSummary: '📊 Stats',
+    hudGold: '💰 {g}G', hudFame: '🏅 Fame {f}', hudHeroes: '👥 {n}/{m}',
+    cls0: 'Swordsman', cls1: 'Archer', cls2: 'Mage', cls3: 'Priest',
+    gr0: 'Novice', gr1: 'Adept', gr2: 'Elite', gr3: 'Heroic', gr4: 'Legend',
+    dg0: 'Slime Plains', dg1: 'Goblin Mine', dg2: 'Frost Cavern', dg3: 'Lava Corridor', dg4: 'Wraith Tower', dg5: 'The Abyss',
+    dgMeta: '⏱ {t} · Rec. power {r}',
+    dgReward: '💰{g} · ✨{x} XP · 🏅{f}',
+    dgFirst: '🎁 First-clear bonus waiting',
+    dgBusyLine: '⏳ Returns in {t} — {p}',
+    dgRepeatTag: ' 🔁',
+    dgGo: 'Send', dgRecall: 'Recall',
+    recallAsk: 'Abort the expedition? No rewards.',
+    pickHdr: '{d} — Party (1-3)',
+    noIdle: 'No idle heroes — hire more or wait for a return',
+    partyLine: '⚔ Party power {p} / recommended {r}',
+    rateLine: 'Success {s}% = min(90×{p}/{r}, 95) + archers {a}×4%p (cap 97 · floor 5)',
+    expLine: 'On success 💰{g} · ✨{x} XP · 🏅{f} — half on failure (60% with a priest)',
+    repToggle: '🔁 Repeat dispatch — restart on return',
+    btnGo: '🚀 Dispatch', btnClose: 'Close',
+    heroIdle: 'Idle', heroBusy: '⏳ Dispatched',
+    heroPow: 'Power {n}',
+    lvTxt: '{n} Lv.{l}',
+    btnFire: 'Release +{g}G',
+    fireAsk: 'Release "{n}" and reclaim {g}G?',
+    btnHire: '🎲 Hire a Hero ({g}G)',
+    hireRates: 'Novice 50% · Adept 30% · Elite 14% · Heroic 5% · Legend 1%',
+    hireFull: 'The lodge is full — expand it first',
+    hireGet: '🎉 [{g}] {c} "{n}" joined!',
+    hireNewBook: ' ✨ New codex entry!',
+    facTrain: '🏋 Training Ground', facTrainDesc: 'XP gain ×{m} → ×{n}', facTrainCur: 'XP gain ×{m}',
+    facVault: '🏦 Vault', facVaultDesc: 'Offline settlement cap {h}h → {n}h', facVaultCur: 'Offline settlement cap {h}h',
+    facHouse: '🏠 Lodge', facHouseDesc: 'Max heroes {h} → {n}', facHouseCur: 'Max heroes {h}',
+    facLv: 'Lv.{n}', facMax: 'MAX',
+    btnUp: '⬆ {g}G',
+    bookHdr: '📖 Codex {c}/20 — class × grade collection',
+    bookBonus: 'Collection bonus: party power +{n}%',
+    sumHdr: '📊 Guild Summary',
+    sumFame: '🏅 Fame {n}',
+    sumClear: '⚔ {n} expeditions — {s} won · {f} failed',
+    sumBook: '📖 Codex {n}/20 (power +{b}%)',
+    sumLegend: '🌟 Legend heroes: {n}',
+    sumGold: '💰 {g}G on hand · {h} heroes',
+    backBtn: 'To Menu', contBtn: '▶ Continue',
+    offHdr: '💤 Return Report',
+    offAway: 'Away {m} min · settlement cap {h}h (Vault Lv.{v})',
+    offLine: '{d} — {n} returns ({s} won) 💰{g} · ✨{x} · 🏅{f}',
+    offOk: 'Collect',
+    tSettleWin: '✅ {d} returned — success! 💰{g} 🏅{f}',
+    tSettleFail: '💥 {d} returned — failed… half rewards 💰{g}',
+    tFirst: '🎁 {d} first clear! Bonus 💰{g} · 🏅{f}',
+    tLvUp: '⬆ {n} Lv.{l}!',
+    tNoGold: 'Not enough gold',
+    tNeedParty: 'Pick heroes to dispatch',
+    tPartyMax: 'Party is capped at 3',
+    tBusyDg: 'That dungeon already has an expedition',
+  },
+});
+var TR = GameI18n.t;
+var API = '/api/v1/games/hero-dispatch';
+function $(id) { return document.getElementById(id); }
+function ri(n) { return Math.floor(Math.random() * n); }
+function T(key, map) {
+  var s = TR(key);
+  if (map) { for (var k in map) s = s.split('{' + k + '}').join(map[k]); }
+  return s;
+}
+function fmt(n) {
+  return n >= 1e12 ? (n / 1e12).toFixed(2) + 'T' : n >= 1e9 ? (n / 1e9).toFixed(2) + 'B'
+       : n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : Math.floor(n).toString();
+}
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function fmtT(sec) {
+  sec = Math.max(0, Math.ceil(sec));
+  var h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return h > 0 ? h + ':' + pad(m) + ':' + pad(s) : m + ':' + pad(s);
+}
+function toast(msg) {
+  var el = $('toast');
+  el.textContent = msg; el.style.opacity = 1;
+  clearTimeout(toast._t); toast._t = setTimeout(function () { el.style.opacity = 0; }, 2600);
+}
+
+/* ── 플랫폼 연동 (서버 세이브 + 이어하기 코드) ── */
+function token() { return localStorage.getItem('portal_access_token'); }
+function deviceId() {
+  var id = localStorage.getItem('kgd_device_id');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('kgd_device_id', id); }
+  return id;
+}
+function api(path, opt) {
+  opt = opt || {};
+  var headers = { 'Content-Type': 'application/json', 'X-Device-Id': deviceId() };
+  if (opt.headers) { for (var k in opt.headers) headers[k] = opt.headers[k]; }
+  var tk = token(); if (tk) headers['Authorization'] = 'Bearer ' + tk;
+  var init = { method: opt.method || 'GET', headers: headers };
+  if (opt.body) init.body = opt.body;
+  return fetch(API + path, init).then(function (res) {
+    return res.json().catch(function () { return null; }).then(function (body) {
+      if (!res.ok || !body || body.success === false) {
+        throw new Error((body && body.error && body.error.code) || res.status);
+      }
+      return body.data;
+    });
+  });
+}
+var CODE_KEY = 'hero_dispatch_code', LOCAL_KEY = 'hero_dispatch_save';
+var saveCode = localStorage.getItem(CODE_KEY) || null, saveVersion = 0;
+function fmtCode(c) { return c ? c.replace(/(.{4})(?=.)/g, '$1-') : ''; }
+function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
+
+function loadSave(codeOverride) {
+  var code = codeOverride || saveCode;
+  if (token() || code) {
+    return api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''))
+      .then(function (s) {
+        saveVersion = s.version;
+        if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+        $('saveStatus').textContent = T('saveCloud', { v: saveVersion });
+        showCode();
+        if (s.data && s.data.v === 1) return s.data;
+        if (codeOverride) toast(TR('saveNoCode'));
+        return null;
+      })
+      .catch(function (e) {
+        $('saveStatus').textContent = T('saveFail', { e: e.message });
+        if (codeOverride) return null;
+        return loadLocal();
+      });
+  }
+  return Promise.resolve(loadLocal());
+}
+function loadLocal() {
+  $('saveStatus').textContent = TR('saveLocal');
+  showCode();
+  try {
+    var d = JSON.parse(localStorage.getItem(LOCAL_KEY));
+    return d && d.v === 1 ? d : null;
+  } catch (_) { return null; }
+}
+function persist() {
+  if (!S) return;
+  S.lastTs = Date.now();
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(S));
+  api('/save', { method: 'PUT', body: JSON.stringify({ data: S, version: saveVersion, code: saveCode }) })
+    .then(function (s) {
+      saveVersion = s.version;
+      var freshCode = !saveCode && s.code;
+      if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+      if (freshCode) toast(T('codeIssued', { c: fmtCode(saveCode) }));
+      showCode();
+    })
+    .catch(function (e) {
+      if (e.message !== 'INVALID_INPUT') return;
+      api('/save' + (!token() && saveCode ? '?code=' + encodeURIComponent(saveCode) : ''))
+        .then(function (re) {
+          saveVersion = re.version;
+          return api('/save', { method: 'PUT', body: JSON.stringify({ data: S, version: saveVersion, code: saveCode }) });
+        })
+        .then(function (s2) { saveVersion = s2.version; })
+        .catch(function () {});
+    });
+}
+var persistTimer = null;
+function persistSoon() { clearTimeout(persistTimer); persistTimer = setTimeout(persist, 2500); }
+
+/* ── 정적 데이터 ── */
+var CLS = [
+  { e: '⚔', pw: 1.15 },   // 검사 — 전투력 +15%
+  { e: '🏹', pw: 1.0 },    // 궁수 — 성공률 +4%p
+  { e: '🔮', pw: 1.0 },    // 마법사 — 골드 +10%
+  { e: '📿', pw: 0.9 },    // 성직자 — 경험치 +15%, 실패 보상 60%
+];
+var GRADE = [
+  { c: '#9ca3af', base: 8,   refund: 10 },
+  { c: '#22c55e', base: 18,  refund: 30 },
+  { c: '#0ea5e9', base: 40,  refund: 100 },
+  { c: '#a78bfa', base: 90,  refund: 350 },
+  { c: '#eab308', base: 200, refund: 1200 },
+];
+var GACHA = [50, 30, 14, 5, 1];
+var DG = [
+  { k: 'dg0', e: '🟢', dur: 60,   req: 15,   gold: 25,   xp: 15,   fame: 1 },
+  { k: 'dg1', e: '⛏', dur: 300,  req: 45,   gold: 130,  xp: 70,   fame: 3 },
+  { k: 'dg2', e: '❄', dur: 900,  req: 120,  gold: 450,  xp: 220,  fame: 8 },
+  { k: 'dg3', e: '🌋', dur: 1800, req: 300,  gold: 1100, xp: 520,  fame: 18 },
+  { k: 'dg4', e: '👻', dur: 3600, req: 700,  gold: 2600, xp: 1200, fame: 40 },
+  { k: 'dg5', e: '🕳', dur: 7200, req: 1600, gold: 6500, xp: 2900, fame: 90 },
+];
+var NAME_A = {
+  ko: ['아르', '벨라', '카이', '세드', '로암', '미르', '두란', '에리', '샤렌', '볼드', '이젠', '타로', '헤른', '나일', '오르', '펠린', '그란', '루엔'],
+  en: ['Ar', 'Bella', 'Kai', 'Sed', 'Roam', 'Mir', 'Duran', 'Eri', 'Sharen', 'Bold', 'Izen', 'Taro', 'Hern', 'Nile', 'Or', 'Pelin', 'Gran', 'Luen'],
+};
+var NAME_B = {
+  ko: ['덴', '칸', '네아', '도르', '린', '드', '반', '엘', '가르', '온', '디아', '무르', '란', '셀', '트', '티스', '움', '바'],
+  en: ['den', 'kan', 'nea', 'dor', 'rin', 'd', 'van', 'el', 'gar', 'on', 'dia', 'mur', 'ran', 'sel', 't', 'tis', 'um', 'va'],
+};
+
+/* ── 상태 ── */
+var S = null;
+var fameDirty = false;
+function fresh() {
+  return {
+    v: 1, gold: 150, fame: 0, hires: 0, seq: 2, clears: 0, wins: 0, fails: 0,
+    heroes: [{ id: 1, n: [ri(NAME_A.ko.length), ri(NAME_B.ko.length)], cls: 0, grade: 0, lv: 1, xp: 0 }],
+    disp: [], fac: { train: 0, vault: 0, house: 0 }, book: { '0_0': 1 }, first: {}, lastTs: Date.now(),
+  };
+}
+function heroName(h) {
+  var lg = (window.GameI18n && GameI18n.lang) === 'en' ? 'en' : 'ko';
+  return NAME_A[lg][h.n[0] % NAME_A[lg].length] + NAME_B[lg][h.n[1] % NAME_B[lg].length];
+}
+function heroById(id) {
+  for (var i = 0; i < S.heroes.length; i++) if (S.heroes[i].id === id) return S.heroes[i];
+  return null;
+}
+function xpNeed(lv) { return Math.round(60 * Math.pow(lv, 1.5)); }
+function power(h) { return Math.floor(GRADE[h.grade].base * CLS[h.cls].pw * (1 + 0.15 * (h.lv - 1))); }
+function bookCount() { var c = 0; for (var k in S.book) c++; return c; }
+function partyPower(ids) {
+  var sum = 0;
+  for (var i = 0; i < ids.length; i++) { var h = heroById(ids[i]); if (h) sum += power(h); }
+  return Math.floor(sum * (1 + bookCount() / 100));         // 도감 수집 보너스 +1%/종
+}
+function trainMul() { return 1 + 0.25 * S.fac.train; }
+function vaultH() { return 2 + 2 * S.fac.vault; }
+function maxHeroes() { return 8 + S.fac.house; }
+function hireCost() { return Math.round(100 * Math.pow(1.28, S.hires)); }
+function legendCount() {
+  var c = 0;
+  for (var i = 0; i < S.heroes.length; i++) if (S.heroes[i].grade === 4) c++;
+  return c;
+}
+function busySet() {
+  var m = {};
+  for (var i = 0; i < S.disp.length; i++) {
+    for (var j = 0; j < S.disp[i].ids.length; j++) m[S.disp[i].ids[j]] = true;
+  }
+  return m;
+}
+function idleHeroes() {
+  var b = busySet(), out = [];
+  for (var i = 0; i < S.heroes.length; i++) if (!b[S.heroes[i].id]) out.push(S.heroes[i]);
+  return out;
+}
+function dispOf(dg) {
+  for (var i = 0; i < S.disp.length; i++) if (S.disp[i].dg === dg) return S.disp[i];
+  return null;
+}
+function clsCount(ids, cls) {
+  var c = 0;
+  for (var i = 0; i < ids.length; i++) { var h = heroById(ids[i]); if (h && h.cls === cls) c++; }
+  return c;
+}
+/* 성공률 = clamp(round(90 × 파티전투력/권장), 5, 95) + 궁수×4%p (최대 3명, 총 상한 97) */
+function successRate(pp, dg, archers) {
+  var base = Math.round(90 * pp / DG[dg].req);
+  if (base > 95) base = 95;
+  if (base < 5) base = 5;
+  var r = base + 4 * Math.min(archers, 3);
+  return r > 97 ? 97 : r;
+}
+function overMul(pp, dg) {
+  var over = pp / DG[dg].req - 1;
+  return 1 + 0.5 * Math.min(Math.max(over, 0), 1);          // 권장 초과분 — 최대 +50%
+}
+function grantXp(h, amt) {
+  var ups = 0;
+  h.xp += amt;
+  while (h.lv < 60 && h.xp >= xpNeed(h.lv)) { h.xp -= xpNeed(h.lv); h.lv++; ups++; }
+  return ups;
+}
+function dgName(i) { return DG[i].e + ' ' + TR(DG[i].k); }
+function partyNames(ids) {
+  var out = [];
+  for (var i = 0; i < ids.length; i++) { var h = heroById(ids[i]); if (h) out.push(heroName(h)); }
+  return out.join(', ');
+}
+
+/* ── 파견 정산 — 온라인 틱과 오프라인 복귀가 같은 경로를 쓴다 ── */
+function runOnce(d, res) {
+  var g = DG[d.dg];
+  var archers = clsCount(d.ids, 1), mages = clsCount(d.ids, 2), priests = clsCount(d.ids, 3);
+  var pp = partyPower(d.ids);
+  var win = Math.random() * 100 < successRate(pp, d.dg, archers);
+  var mult = overMul(pp, d.dg);
+  var gold = Math.round(g.gold * mult * (1 + 0.1 * mages));
+  var xp = Math.round(g.xp * mult * trainMul() * (1 + 0.15 * priests));
+  if (!win) {
+    var fr = priests > 0 ? 0.6 : 0.5;
+    gold = Math.round(gold * fr); xp = Math.round(xp * fr);
+  }
+  S.gold += gold; S.clears++;
+  res.runs++; res.gold += gold; res.xp += xp;
+  for (var i = 0; i < d.ids.length; i++) {
+    var h = heroById(d.ids[i]);
+    if (h && grantXp(h, xp) > 0) res.lvups.push(T('lvTxt', { n: heroName(h), l: h.lv }));
+  }
+  if (win) {
+    S.wins++; S.fame += g.fame;
+    res.wins++; res.fame += g.fame;
+    if (!S.first[d.dg]) {
+      S.first[d.dg] = 1;
+      var bg = g.gold * 4, bf = g.fame * 5;                 // 첫 클리어 보너스
+      S.gold += bg; S.fame += bf;
+      res.gold += bg; res.fame += bf;
+      res.first = true; res.firstGold = bg; res.firstFame = bf;
+    }
+  } else {
+    S.fails++;
+  }
+}
+function settleAll(capSec, refTs) {
+  var out = [], now = Date.now();
+  for (var i = S.disp.length - 1; i >= 0; i--) {
+    var d = S.disp[i], durMs = DG[d.dg].dur * 1000;
+    var allow = now;
+    if (capSec != null && refTs != null) {
+      allow = refTs + capSec * 1000;                        // 금고 상한 — 오프라인 정산 가능 시간
+      var firstEnd = d.startTs + durMs;
+      if (firstEnd <= now && firstEnd > allow) allow = firstEnd;   // 첫 귀환은 항상 보장
+      if (allow > now) allow = now;
+    }
+    var runs = Math.floor((allow - d.startTs) / durMs);
+    if (runs <= 0) continue;
+    if (!d.rep) runs = 1;
+    if (runs > 1000) runs = 1000;
+    var res = { dg: d.dg, runs: 0, wins: 0, gold: 0, xp: 0, fame: 0, first: false, firstGold: 0, firstFame: 0, lvups: [] };
+    for (var r = 0; r < runs; r++) runOnce(d, res);
+    if (d.rep) d.startTs = now - ((allow - d.startTs) % durMs);
+    else S.disp.splice(i, 1);
+    out.push(res);
+  }
+  if (out.length) fameDirty = true;
+  return out;
+}
+
+/* ── 랭킹 — 명성이 점수 ── */
+function submitRank() {
+  if (window.GameRank && S && S.fame > 0) {
+    GameRank.submit('hero-dispatch', S.fame, '명성 ' + S.fame + ', 전설 ' + legendCount() + '명');
+  }
+}
+setInterval(function () {
+  if (S && fameDirty) { fameDirty = false; submitRank(); }
+}, 20000);
+
+/* ── UI 공통 ── */
+function bindList(root, attr, fn) {
+  var list = root.querySelectorAll('[' + attr + ']');
+  for (var i = 0; i < list.length; i++) {
+    (function (btn) {
+      btn.onclick = function () { fn(parseInt(btn.getAttribute(attr), 10)); };
+    })(list[i]);
+  }
+}
+function hud() {
+  $('goldTxt').textContent = T('hudGold', { g: fmt(S.gold) });
+  $('fameTxt').textContent = T('hudFame', { f: fmt(S.fame) });
+  $('heroTxt').textContent = T('hudHeroes', { n: S.heroes.length, m: maxHeroes() });
+}
+var activeTab = 'dg';
+var TAB_IDS = ['dg', 'hero', 'fac', 'book'];
+function showTab(t) {
+  activeTab = t;
+  var btns = $('tabs').querySelectorAll('button[data-tab]');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].className = btns[i].getAttribute('data-tab') === t ? 'on' : '';
+  }
+  for (var j = 0; j < TAB_IDS.length; j++) $('tab-' + TAB_IDS[j]).hidden = TAB_IDS[j] !== t;
+  renderTab(t);
+}
+function renderTab(t) {
+  if (t === 'dg') renderDungeons();
+  else if (t === 'hero') renderHeroes();
+  else if (t === 'fac') renderFacilities();
+  else if (t === 'book') renderBook();
+}
+function renderAll() { hud(); renderTab(activeTab); }
+
+/* ── 던전 탭 ── */
+function renderDungeons() {
+  var el = $('tab-dg'), now = Date.now(), html = '';
+  for (var i = 0; i < DG.length; i++) {
+    var g = DG[i], d = dispOf(i);
+    html += '<div class="card"><div class="cl">';
+    html += '<b>' + g.e + ' ' + TR(g.k) + (d && d.rep ? TR('dgRepeatTag') : '') + '</b>';
+    html += '<small>' + T('dgMeta', { t: fmtT(g.dur), r: g.req }) + '</small>';
+    html += '<small>' + T('dgReward', { g: fmt(g.gold), x: fmt(g.xp), f: g.fame }) + '</small>';
+    if (d) {
+      var remain = (d.startTs + g.dur * 1000 - now) / 1000;
+      html += '<small class="timer">' + T('dgBusyLine', { t: fmtT(remain), p: partyNames(d.ids) }) + '</small>';
+    } else if (!S.first[i]) {
+      html += '<small class="firstHint">' + TR('dgFirst') + '</small>';
+    }
+    html += '</div>';
+    if (d) html += '<button class="dangerB" data-recall="' + i + '">' + TR('dgRecall') + '</button>';
+    else html += '<button data-open="' + i + '">' + TR('dgGo') + '</button>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+  bindList(el, 'data-open', openDg);
+  bindList(el, 'data-recall', recallDg);
+}
+function recallDg(i) {
+  var d = dispOf(i);
+  if (!d || !confirm(TR('recallAsk'))) return;
+  S.disp.splice(S.disp.indexOf(d), 1);
+  renderAll(); persistSoon();
+}
+
+/* ── 파견 오버레이 ── */
+var ovDg = -1, ovSel = [], ovRep = false;
+function openDg(i) {
+  if (dispOf(i)) { toast(TR('tBusyDg')); return; }
+  ovDg = i; ovSel = []; ovRep = false;
+  renderDgOv();
+  $('dgOv').hidden = false;
+}
+function closeOv() { $('dgOv').hidden = true; ovDg = -1; }
+function renderDgOv() {
+  var g = DG[ovDg], idle = idleHeroes(), html = '';
+  html += '<h2>' + T('pickHdr', { d: dgName(ovDg) }) + '</h2>';
+  html += '<div style="text-align:center;font-size:11px;color:#8b98b8">' +
+          T('dgMeta', { t: fmtT(g.dur), r: g.req }) + '</div>';
+  if (!idle.length) {
+    html += '<p style="text-align:center;font-size:12px;color:#8b98b8">' + TR('noIdle') + '</p>';
+  } else {
+    html += '<div class="chips">';
+    for (var i = 0; i < idle.length; i++) {
+      var h = idle[i], sel = ovSel.indexOf(h.id) >= 0;
+      html += '<button type="button" class="chip' + (sel ? ' sel' : '') + '" data-pick="' + h.id + '">' +
+        '<b>' + CLS[h.cls].e + ' ' + heroName(h) + '</b>' +
+        '<span style="color:' + GRADE[h.grade].c + '">' + TR('gr' + h.grade) + '</span> Lv.' + h.lv +
+        ' · ' + T('heroPow', { n: power(h) }) + '</button>';
+    }
+    html += '</div>';
+  }
+  var pp = partyPower(ovSel);
+  var archers = clsCount(ovSel, 1), mages = clsCount(ovSel, 2), priests = clsCount(ovSel, 3);
+  var rate = successRate(pp, ovDg, archers);
+  var mult = overMul(pp, ovDg);
+  html += '<div class="statBox">';
+  html += T('partyLine', { p: pp, r: g.req }) + '<br>';
+  html += (ovSel.length ? T('rateLine', { s: rate, p: pp, r: g.req, a: Math.min(archers, 3) }) : '—') + '<br>';
+  html += T('expLine', {
+    g: fmt(Math.round(g.gold * mult * (1 + 0.1 * mages))),
+    x: fmt(Math.round(g.xp * mult * trainMul() * (1 + 0.15 * priests))),
+    f: g.fame,
+  });
+  html += '</div>';
+  html += '<label class="repLbl"><input type="checkbox" id="repChk"' + (ovRep ? ' checked' : '') + '> ' +
+          TR('repToggle') + '</label>';
+  html += '<div class="row">' +
+          '<button class="big" id="dgGoBtn"' + (ovSel.length ? '' : ' disabled') + '>' + TR('btnGo') + '</button>' +
+          '<button class="ghost" id="dgCloseBtn">' + TR('btnClose') + '</button></div>';
+  $('dgOvCard').innerHTML = html;
+  bindList($('dgOvCard'), 'data-pick', togglePick);
+  var chk = $('repChk');
+  if (chk) chk.onchange = function () { ovRep = chk.checked; };
+  $('dgGoBtn').onclick = doDispatch;
+  $('dgCloseBtn').onclick = closeOv;
+}
+function togglePick(id) {
+  var at = ovSel.indexOf(id);
+  if (at >= 0) ovSel.splice(at, 1);
+  else if (ovSel.length >= 3) { toast(TR('tPartyMax')); return; }
+  else ovSel.push(id);
+  renderDgOv();
+}
+function doDispatch() {
+  if (!ovSel.length) { toast(TR('tNeedParty')); return; }
+  if (dispOf(ovDg)) { toast(TR('tBusyDg')); return; }
+  S.disp.push({ dg: ovDg, ids: ovSel.slice(), startTs: Date.now(), rep: ovRep });
+  closeOv();
+  renderAll(); persistSoon();
+}
+
+/* ── 용사 탭 ── */
+function renderHeroes() {
+  var el = $('tab-hero'), busy = busySet(), html = '';
+  html += '<div class="card"><div class="cl">' +
+    '<b class="gold">' + T('btnHire', { g: fmt(hireCost()) }) + '</b>' +
+    '<small>' + TR('hireRates') + '</small>' +
+    '<small>' + T('hudHeroes', { n: S.heroes.length, m: maxHeroes() }) + '</small></div>' +
+    '<button id="hireBtn"' + (S.gold < hireCost() || S.heroes.length >= maxHeroes() ? ' disabled' : '') + '>🎲</button></div>';
+  var sorted = S.heroes.slice().sort(function (a, b) { return b.grade - a.grade || b.lv - a.lv; });
+  for (var i = 0; i < sorted.length; i++) {
+    var h = sorted[i], b = busy[h.id], need = xpNeed(h.lv);
+    var pct = Math.min(100, Math.round(h.xp / need * 100));
+    html += '<div class="card"><div class="cl">';
+    html += '<b>' + CLS[h.cls].e + ' ' + heroName(h) +
+      ' <span style="color:' + GRADE[h.grade].c + '">[' + TR('gr' + h.grade) + ']</span></b>';
+    html += '<small>' + TR('cls' + h.cls) + ' · Lv.' + h.lv + ' · ' + T('heroPow', { n: power(h) }) +
+      ' · ' + (b ? TR('heroBusy') : TR('heroIdle')) + '</small>';
+    html += '<small>✨ ' + fmt(h.xp) + '/' + fmt(need) + '</small>';
+    html += '<div class="bar"><i style="width:' + pct + '%"></i></div>';
+    html += '</div>';
+    if (!b) html += '<button class="dangerB" data-fire="' + h.id + '">' +
+      T('btnFire', { g: GRADE[h.grade].refund }) + '</button>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+  var hb = $('hireBtn');
+  if (hb) hb.onclick = hire;
+  bindList(el, 'data-fire', fireHero);
+}
+function hire() {
+  if (S.heroes.length >= maxHeroes()) { toast(TR('hireFull')); return; }
+  var c = hireCost();
+  if (S.gold < c) { toast(TR('tNoGold')); return; }
+  S.gold -= c; S.hires++;
+  var roll = Math.random() * 100, acc = 0, gr = 0;
+  for (var i = 0; i < GACHA.length; i++) { acc += GACHA[i]; if (roll < acc) { gr = i; break; } }
+  var cls = ri(4);
+  var h = { id: S.seq++, n: [ri(NAME_A.ko.length), ri(NAME_B.ko.length)], cls: cls, grade: gr, lv: 1, xp: 0 };
+  S.heroes.push(h);
+  var bk = cls + '_' + gr, isNew = !S.book[bk];
+  S.book[bk] = 1;
+  toast(T('hireGet', { g: TR('gr' + gr), c: TR('cls' + cls), n: heroName(h) }) + (isNew ? TR('hireNewBook') : ''));
+  renderAll(); persistSoon();
+}
+function fireHero(id) {
+  var h = heroById(id);
+  if (!h || busySet()[id]) return;
+  var refund = GRADE[h.grade].refund;
+  if (!confirm(T('fireAsk', { n: heroName(h), g: refund }))) return;
+  S.gold += refund;
+  S.heroes.splice(S.heroes.indexOf(h), 1);
+  renderAll(); persistSoon();
+}
+
+/* ── 시설 탭 ── */
+var FAC = [
+  { key: 'train', name: 'facTrain', max: 10,
+    cost: function (l) { return Math.round(250 * Math.pow(2, l)); },
+    desc: function (l, atMax) {
+      return atMax ? T('facTrainCur', { m: (1 + 0.25 * l).toFixed(2) })
+                   : T('facTrainDesc', { m: (1 + 0.25 * l).toFixed(2), n: (1 + 0.25 * (l + 1)).toFixed(2) });
+    } },
+  { key: 'vault', name: 'facVault', max: 5,
+    cost: function (l) { return Math.round(400 * Math.pow(2.4, l)); },
+    desc: function (l, atMax) {
+      return atMax ? T('facVaultCur', { h: 2 + 2 * l })
+                   : T('facVaultDesc', { h: 2 + 2 * l, n: 2 + 2 * (l + 1) });
+    } },
+  { key: 'house', name: 'facHouse', max: 4,
+    cost: function (l) { return Math.round(600 * Math.pow(2.8, l)); },
+    desc: function (l, atMax) {
+      return atMax ? T('facHouseCur', { h: 8 + l })
+                   : T('facHouseDesc', { h: 8 + l, n: 8 + l + 1 });
+    } },
+];
+function renderFacilities() {
+  var el = $('tab-fac'), html = '';
+  for (var i = 0; i < FAC.length; i++) {
+    var f = FAC[i], lv = S.fac[f.key], atMax = lv >= f.max;
+    html += '<div class="card"><div class="cl">';
+    html += '<b>' + TR(f.name) + ' ' + T('facLv', { n: lv }) + '</b>';
+    html += '<small>' + f.desc(lv, atMax) + '</small>';
+    html += '</div>';
+    if (atMax) html += '<button disabled>' + TR('facMax') + '</button>';
+    else html += '<button data-up="' + i + '"' + (S.gold < f.cost(lv) ? ' disabled' : '') + '>' +
+      T('btnUp', { g: fmt(f.cost(lv)) }) + '</button>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+  bindList(el, 'data-up', upgradeFac);
+}
+function upgradeFac(i) {
+  var f = FAC[i], lv = S.fac[f.key];
+  if (lv >= f.max) return;
+  var c = f.cost(lv);
+  if (S.gold < c) { toast(TR('tNoGold')); return; }
+  S.gold -= c; S.fac[f.key]++;
+  renderAll(); persistSoon();
+}
+
+/* ── 도감 탭 ── */
+function renderBook() {
+  var el = $('tab-book'), html = '';
+  html += '<div class="card"><div class="cl">' +
+    '<b>' + T('bookHdr', { c: bookCount() }) + '</b>' +
+    '<small>' + T('bookBonus', { n: bookCount() }) + '</small></div></div>';
+  html += '<div id="bookGrid">';
+  html += '<div class="bkCell bkHead"></div>';
+  for (var c = 0; c < 4; c++) html += '<div class="bkCell bkHead">' + CLS[c].e + ' ' + TR('cls' + c) + '</div>';
+  for (var g = 0; g < 5; g++) {
+    html += '<div class="bkCell bkHead" style="color:' + GRADE[g].c + '">' + TR('gr' + g) + '</div>';
+    for (var c2 = 0; c2 < 4; c2++) {
+      var got = S.book[c2 + '_' + g];
+      html += got ? '<div class="bkCell got" style="border-color:' + GRADE[g].c + '">' + CLS[c2].e + '</div>'
+                  : '<div class="bkCell">?</div>';
+    }
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+/* ── 요약 패널 ── */
+function renderSummary() {
+  $('sumBody').innerHTML =
+    T('sumFame', { n: fmt(S.fame) }) + '<br>' +
+    T('sumClear', { n: fmt(S.clears), s: fmt(S.wins), f: fmt(S.fails) }) + '<br>' +
+    T('sumBook', { n: bookCount(), b: bookCount() }) + '<br>' +
+    T('sumLegend', { n: legendCount() }) + '<br>' +
+    T('sumGold', { g: fmt(S.gold), h: S.heroes.length });
+}
+
+/* ── 오프라인 정산 팝업 ── */
+function showOffModal(results, awaySec) {
+  var html = '<div class="away">' +
+    T('offAway', { m: Math.round(awaySec / 60), h: vaultH(), v: S.fac.vault }) + '</div>';
+  var lvups = [];
+  for (var i = 0; i < results.length; i++) {
+    var r = results[i];
+    html += '<div>' + T('offLine', {
+      d: dgName(r.dg), n: r.runs, s: r.wins, g: fmt(r.gold), x: fmt(r.xp), f: r.fame,
+    }) + (r.first ? ' 🎁' : '') + '</div>';
+    lvups = lvups.concat(r.lvups);
+  }
+  if (lvups.length) {
+    html += '<div class="lvups">⬆ ' + lvups.slice(0, 6).join(', ') + (lvups.length > 6 ? ' …' : '') + '</div>';
+  }
+  $('offBody').innerHTML = html;
+  $('offOv').hidden = false;
+}
+
+/* ── 화면 전환 ── */
+$('startBtn').onclick = function () {
+  $('menu').hidden = true; $('summary').hidden = true; $('game').hidden = false;
+  renderAll();
+};
+$('sumBtn').onclick = function () {
+  renderSummary(); submitRank();
+  $('game').hidden = true; $('summary').hidden = false;
+};
+$('contBtn').onclick = function () {
+  $('summary').hidden = true; $('game').hidden = false;
+  renderAll();
+};
+$('backBtn').onclick = function () {
+  $('summary').hidden = true; $('game').hidden = true; $('menu').hidden = false;
+};
+$('offOk').onclick = function () {
+  $('offOv').hidden = true;
+  submitRank();
+  renderAll();
+};
+(function () {
+  var btns = $('tabs').querySelectorAll('button[data-tab]');
+  for (var i = 0; i < btns.length; i++) {
+    (function (b) { b.onclick = function () { showTab(b.getAttribute('data-tab')); }; })(btns[i]);
+  }
+})();
+
+/* ── 틱 — 온라인 귀환 정산 + 타이머 갱신 ── */
+setInterval(function () {
+  if (!S) return;
+  var results = settleAll(null, null);
+  if (results.length) {
+    for (var i = 0; i < results.length; i++) {
+      var r = results[i];
+      if (r.first) toast(T('tFirst', { d: dgName(r.dg), g: fmt(r.firstGold), f: r.firstFame }));
+      else if (r.wins > 0) toast(T('tSettleWin', { d: dgName(r.dg), g: fmt(r.gold), f: r.fame }));
+      else toast(T('tSettleFail', { d: dgName(r.dg), g: fmt(r.gold) }));
+    }
+    renderAll(); persistSoon();
+  } else if (!$('game').hidden && activeTab === 'dg' && $('dgOv').hidden) {
+    renderDungeons();                                       // 카드 타이머 초 단위 갱신
+  }
+  if (S) hud();
+}, 1000);
+setInterval(function () { if (S) persist(); }, 30000);      // 30초마다 자동 저장
+addEventListener('beforeunload', function () {
+  if (S) { S.lastTs = Date.now(); localStorage.setItem(LOCAL_KEY, JSON.stringify(S)); }
+});
+
+/* ── 시작 — 오프라인 파견 정산 포함 ── */
+$('codeLoadBtn').onclick = function () {
+  var raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (raw.length < 8) return;
+  loadSave(raw).then(function (d) {
+    if (d) { saveCode = raw; localStorage.setItem(CODE_KEY, raw); boot(d); }
+  });
+};
+function boot(saved) {
+  S = (saved && saved.v === 1) ? saved : fresh();
+  if (saved && saved.lastTs) {
+    var awaySec = (Date.now() - saved.lastTs) / 1000;
+    var results = settleAll(vaultH() * 3600, saved.lastTs);
+    if (results.length && awaySec > 60) showOffModal(results, awaySec);
+    if (results.length) { fameDirty = true; persistSoon(); }
+  }
+  hud(); renderAll();
+}
+loadSave().then(boot);
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+'use strict';
+GameRank.copyButton(function () { return typeof saveCode !== 'undefined' ? saveCode : null; });
+GameRank.autoPanel('hero-dispatch');
+</script>
+</body>
+</html>

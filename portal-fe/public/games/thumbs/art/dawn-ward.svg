@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">
+  <defs>
+    <radialGradient id="dwLight" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fde68a" stop-opacity="0.5"/>
+      <stop offset="0.55" stop-color="#eab308" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#eab308" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="dwDawn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c1424"/>
+      <stop offset="0.62" stop-color="#122036"/>
+      <stop offset="0.85" stop-color="#3a3a4a"/>
+      <stop offset="1" stop-color="#eab308" stop-opacity="0.55"/>
+    </linearGradient>
+    <radialGradient id="dwWard" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#22c55e" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#22c55e" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="320" height="180" fill="#0c1424"/>
+  <!-- 여명이 스미는 지평선 -->
+  <rect y="96" width="320" height="84" fill="url(#dwDawn)" opacity="0.8"/>
+  <!-- 숲 실루엣 -->
+  <g fill="#08101f">
+    <path d="M0 130 l14 -46 14 46 z"/>
+    <path d="M20 132 l16 -58 16 58 z"/>
+    <path d="M262 132 l17 -60 17 60 z"/>
+    <path d="M292 130 l14 -44 14 44 z"/>
+    <rect x="12" y="126" width="4" height="14"/>
+    <rect x="34" y="128" width="5" height="14"/>
+    <rect x="277" y="128" width="5" height="14"/>
+    <rect x="303" y="126" width="4" height="14"/>
+  </g>
+  <!-- 어둠 속의 눈빛들 -->
+  <g fill="#ef4444">
+    <rect x="24" y="96" width="3" height="3"/><rect x="31" y="96" width="3" height="3"/>
+    <rect x="52" y="118" width="2.5" height="2.5"/><rect x="58" y="118" width="2.5" height="2.5"/>
+    <rect x="284" y="102" width="3" height="3"/><rect x="291" y="102" width="3" height="3"/>
+  </g>
+  <g fill="#eab308">
+    <rect x="252" y="66" width="2.5" height="2.5"/><rect x="258" y="66" width="2.5" height="2.5"/>
+    <rect x="70" y="60" width="2.5" height="2.5"/><rect x="76" y="60" width="2.5" height="2.5"/>
+  </g>
+  <!-- 플레이어 광원 -->
+  <circle cx="160" cy="104" r="66" fill="url(#dwLight)"/>
+  <circle cx="160" cy="104" r="46" fill="none" stroke="#eab308" stroke-opacity="0.3" stroke-dasharray="4 5"/>
+  <!-- 등불지기 -->
+  <g>
+    <ellipse cx="160" cy="122" rx="12" ry="4" fill="#070c18" opacity="0.6"/>
+    <rect x="154" y="86" width="12" height="5" fill="#26325a"/>
+    <rect x="152" y="90" width="16" height="6" fill="#1a2238"/>
+    <rect x="155" y="93" width="10" height="4" fill="#0a1020"/>
+    <rect x="156" y="94" width="2.5" height="2.5" fill="#7dd8ff"/>
+    <rect x="161" y="94" width="2.5" height="2.5" fill="#7dd8ff"/>
+    <rect x="151" y="97" width="18" height="15" fill="#232f52"/>
+    <rect x="151" y="108" width="18" height="3" fill="#0ea5e9"/>
+    <rect x="158" y="100" width="4" height="5" fill="#eab308"/>
+    <rect x="153" y="112" width="5" height="8" fill="#141c36"/>
+    <rect x="162" y="112" width="5" height="8" fill="#141c36"/>
+  </g>
+  <!-- 활과 날아가는 화살 -->
+  <path d="M172 96 a11 11 0 0 1 0 16" fill="none" stroke="#a16207" stroke-width="3"/>
+  <line x1="174" y1="97" x2="174" y2="111" stroke="#cbd5e1" stroke-width="1.2"/>
+  <g stroke="#7dd8ff" stroke-width="2.5">
+    <line x1="184" y1="102" x2="212" y2="98"/>
+    <line x1="222" y1="96" x2="244" y2="92"/>
+  </g>
+  <path d="M252 90 l-9 -1 3 6 z" fill="#7dd8ff"/>
+  <!-- 결계석 -->
+  <circle cx="58" cy="132" r="30" fill="url(#dwWard)"/>
+  <g>
+    <rect x="48" y="112" width="20" height="34" rx="3" fill="#232c47" stroke="#070c18" stroke-width="2"/>
+    <rect x="51" y="115" width="6" height="28" fill="#2c3550"/>
+    <text x="58" y="134" font-family="monospace" font-size="14" font-weight="bold" fill="#22c55e" text-anchor="middle">✦</text>
+    <path d="M58 106 a24 24 0 0 1 22 16" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <!-- 반딧불 -->
+  <g fill="#eab308">
+    <rect x="118" y="52" width="2.5" height="2.5" opacity="0.8"/>
+    <rect x="206" y="44" width="2" height="2" opacity="0.6"/>
+    <rect x="96" y="140" width="2" height="2" opacity="0.7"/>
+    <rect x="228" y="132" width="2.5" height="2.5" opacity="0.8"/>
+  </g>
+  <text x="160" y="30" font-family="monospace" font-size="21" font-weight="bold" fill="#0ea5e9" text-anchor="middle">새벽 결계</text>
+  <text x="160" y="44" font-family="monospace" font-size="9" fill="#7c8ab0" text-anchor="middle">DAWN WARD · 10:00 SURVIVAL</text>
+</svg>

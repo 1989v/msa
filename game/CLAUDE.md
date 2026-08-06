@@ -91,6 +91,7 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | `golden-forge` `rune-merge` `cave-glide` `wall-breaker` | `portal-fe/public/games/<slug>/index.html` | 캐주얼 팩 4종 (V16 시드). 방치형/2048 머지/원버튼/벽돌깨기 |
 | `crimson-ravine` `storm-corridor` `dice-citadel` `rift-front` | `portal-fe/public/games/<slug>/index.html` | 유즈맵 팩 2차 (V18 시드). 오토배틀/탄막 회피/랜덤 머지 디펜스/미니 AoS — 세이브 없음, 랭킹+재도전만 |
 | `word-warden` `quad-weave` `pixel-mine` `royal-grid` `number-garden` | `portal-fe/public/games/<slug>/index.html` | 데일리 퍼즐 팩 (V19 시드). 한글 워들/Connections/노노그램/퀸 배치/스도쿠 — KST 날짜 시드(`lib/daily.js`), 스트릭+이모지 공유, 유일해 클라이언트 생성(퀸 배치는 변이 수리, 스도쿠는 파기 검증). 썸네일은 `thumbs/daily/*.svg` |
+| `block-burst` `crate-shift` `mine-pioneer` `stone-sage` `rope-works` `acid-rain` `word-chain` `bracket-battle` `abyss-drill` `cog-foundry` `hero-dispatch` `starlight-farm` `alley-pool` `breeze-links` `beat-dojo` `dawn-ward` `serpent-legion` | `portal-fe/public/games/<slug>/index.html` | 확장 팩 1차 17종 (V20 시드). 퍼즐/보드·한국 특화(타자·끝말잇기)·방치형·물리 스포츠·리듬·서바이버. 썸네일은 `thumbs/art/*.svg`. 방치형(`abyss-drill` `hero-dispatch` `starlight-farm`)은 golden-forge 와 동일한 이어하기 코드 세이브. `bracket-battle` 만 랭킹 미사용(결과 공유형, `sdk_integrated=0`) |
 
 캔버스 게임 공용 정적 자산 (`portal-fe/public/games/lib/`):
 - `touch.js` — 모바일 가상 터치패드. KeyboardEvent 합성이라 게임별 입력 코드 무변경

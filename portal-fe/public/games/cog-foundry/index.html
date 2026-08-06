@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">태엽 공방</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex; flex-direction:column;
+         align-items:center; justify-content:center; min-height:100vh; user-select:none; }
+  #wrap { position:relative; border:4px solid #1a2238; border-radius:10px; overflow:hidden; box-shadow:0 0 48px rgba(0,0,0,.72); }
+  canvas { display:block; background:#0c1424; cursor:pointer; max-width:100%; touch-action:none; }
+  #hud { position:absolute; top:7px; left:10px; right:56px; display:flex; gap:7px; font-size:12px; font-weight:bold;
+         pointer-events:none; text-shadow:1px 1px 0 #000; flex-wrap:wrap; }
+  #hud .tag { background:rgba(10,16,31,.72); padding:3px 9px; border-radius:10px; white-space:nowrap; }
+  #hud .grow { flex:1; }
+  #goalTxt { color:#d4a24e; }
+  #bar { position:absolute; left:0; right:0; bottom:0; display:flex; gap:5px; padding:6px 8px; background:rgba(10,16,31,.92);
+         font-size:11px; align-items:center; flex-wrap:wrap; }
+  #bar button { background:#1a2238; color:#e6ecf2; border:1px solid #2b3a5c; padding:6px 9px; border-radius:6px;
+                cursor:pointer; font-family:inherit; font-size:11px; font-weight:bold; }
+  #bar button.sel { background:#0ea5e9; color:#06121f; border-color:#7dd3fc; }
+  #bar button:disabled { opacity:.35; cursor:default; }
+  #bar .sep { width:1px; height:20px; background:#2b3a5c; margin:0 2px; }
+  #bar .grow { flex:1; }
+  #bar #quitBtn { border-color:#d4a24e; color:#d4a24e; }
+  #banner { position:absolute; top:34%; left:0; right:0; text-align:center; font-size:22px; font-weight:bold;
+            color:#d4a24e; text-shadow:3px 3px 0 #000; pointer-events:none; opacity:0; transition:opacity .3s; padding:0 12px; }
+  #banner.on { opacity:1; }
+  .panel { position:absolute; inset:0; background:rgba(9,14,26,.96); display:flex; flex-direction:column; align-items:center;
+           justify-content:center; gap:12px; text-align:center; z-index:10; padding:20px; overflow-y:auto; }
+  .panel h1 { color:#d4a24e; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.75; max-width:560px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .panel button { background:#d4a24e; color:#1a1204; border:0; padding:9px 22px; font-weight:bold; font-size:13px;
+                  border-radius:7px; cursor:pointer; font-family:inherit; }
+  .panel button.ghost { background:#1a2238; color:#e6ecf2; border:1px solid #2b3a5c; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #lvGrid { display:grid; grid-template-columns:repeat(4, 92px); gap:9px; }
+  #lvGrid button { padding:9px 4px; font-size:12px; line-height:1.5; background:#1a2238; color:#e6ecf2;
+                   border:1px solid #2b3a5c; }
+  #lvGrid button .st { display:block; font-size:11px; color:#eab308; letter-spacing:1px; }
+  #lvGrid button:disabled { opacity:.4; }
+  #lvGrid button.done { border-color:#22c55e; }
+  #endStars { font-size:30px; letter-spacing:6px; color:#eab308; text-shadow:2px 2px 0 #000; }
+  #info { margin-top:9px; font-size:11px; color:#5d6a7a; text-align:center; line-height:1.7; padding:0 12px; }
+  @media (max-width: 900px), (pointer: coarse) {
+    #wrap { width:100vw; max-width:100vw; border-width:0; border-radius:0; }
+    canvas { width:100%; height:auto; }
+    #info { display:none; }
+    #bar button, .panel button { padding:9px 11px; font-size:12px; }
+    #lvGrid { grid-template-columns:repeat(4, 76px); gap:7px; }
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="860" height="480"></canvas>
+  <div id="hud" hidden>
+    <span class="tag" id="lvTxt"></span>
+    <span class="tag" id="goalTxt"></span>
+    <span class="grow"></span>
+    <span class="tag" id="toolTxt"></span>
+  </div>
+  <div id="banner"></div>
+  <div id="bar" hidden>
+    <button id="beltBtn"></button>
+    <button id="furnBtn"></button>
+    <button id="asmBtn"></button>
+    <button id="spltBtn"></button>
+    <button id="brdgBtn"></button>
+    <button id="erasBtn"></button>
+    <span class="sep"></span>
+    <button id="rotBtn"></button>
+    <span class="sep"></span>
+    <button id="pauseBtn"></button>
+    <button id="spdBtn"></button>
+    <span class="grow"></span>
+    <button id="quitBtn"></button>
+  </div>
+  <div class="panel" id="menu">
+    <h1 data-i18n="menuTitle">⚙ 태엽 공방</h1>
+    <p data-i18n="menuDesc">광석 배출구에서 쏟아지는 원료를 컨베이어로 실어 납품 상자까지 흘려보내라.</p>
+    <p class="small" data-i18n="menuTools">▶ 컨베이어 · 🔥 용광로 · ⚙ 조립기 · ⑂ 분배기 · ⿻ 다리</p>
+    <p class="small" data-i18n="menuScore">레벨 16개 · 도구를 아낄수록 별 ★3 · 점수 = 클리어×800 + 별×300</p>
+    <button id="startBtn" data-i18n="startBtn">▶ 공방 열기</button>
+  </div>
+  <div class="panel" id="levelPanel" hidden>
+    <h1 data-i18n="selectTitle">레벨 선택</h1>
+    <div id="lvGrid"></div>
+    <button id="lvBackBtn" class="ghost" data-i18n="lvBackBtn">← 처음으로</button>
+  </div>
+  <div class="panel" id="endPanel" hidden>
+    <h1 id="endTitle"></h1>
+    <div id="endStars"></div>
+    <p id="endDesc"></p>
+    <div class="row">
+      <button id="againBtn"></button>
+      <button id="selectBtn" class="ghost" data-i18n="selectBtn">레벨 선택</button>
+      <button id="backBtn" class="ghost" data-i18n="backBtn">처음으로</button>
+    </div>
+  </div>
+</div>
+<div id="info" data-i18n="infoLine">1~6 도구 선택 · R 회전 · 클릭/드래그 배치 · Space 일시정지 · F 배속</div>
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '태엽 공방',
+    menuTitle: '⚙ 태엽 공방',
+    menuDesc: '광석 배출구에서 쏟아지는 원료를 컨베이어에 실어 납품 상자까지 흘려보내라. ' +
+              '용광로는 철광을 철판으로 제련하고, 조립기는 철판과 구리선을 부품으로 조립한다. ' +
+              '흐름이 끊기면 원료는 바닥에 떨어져 사라진다 — 16개 레벨의 주문을 모두 납품하라.',
+    menuTools: '▶ 컨베이어(회전) · 🔥 용광로(철광→철판) · ⚙ 조립기(철판+구리선→부품) · ⑂ 분배기(교대 출력) · ⿻ 다리(교차)',
+    menuScore: '레벨 16개 · 도구를 아낄수록 별 ★3 · 점수 = 클리어 레벨×800 + 총 별×300',
+    startBtn: '▶ 공방 열기',
+    selectTitle: '레벨 선택',
+    lvBackBtn: '← 처음으로',
+    backBtn: '처음으로',
+    selectBtn: '레벨 선택',
+    nextBtn: '▶ 다음 레벨',
+    replayBtn: '↻ 다시 플레이',
+    infoLine: '1~6 도구 선택 · R 회전 · 클릭/드래그 배치 · 같은 도구 클릭 = 회전 · Space 일시정지 · F 배속',
+    lvLabel: '레벨 {n}',
+    hudLevel: '⚙ 레벨 {n}/{max}',
+    hudTools: '🔧 도구 {n}개 · ★3 ≤{par}',
+    toolBelt: '▶ 컨베이어',
+    toolFurn: '🔥 용광로',
+    toolAsm: '⚙ 조립기',
+    toolSplt: '⑂ 분배기',
+    toolBrdg: '⿻ 다리',
+    toolEras: '✖ 지우개',
+    rotBtn: '↻ 회전 {a}',
+    pauseBtn: '⏸ 정지',
+    resumeBtn: '▶ 재개',
+    spdBtn: '⏩ x{n}',
+    quitBtn: '☰ 레벨',
+    itemOre: '철광', itemPlate: '철판', itemWire: '구리선', itemPart: '부품',
+    clearTitle: '⚙ 레벨 {n} 클리어!',
+    clearDesc: '도구 {t}개 사용 · 진행 {c}/16 · 총 별 {s} · 점수 {score}점',
+    allClearDesc: '공방의 모든 주문을 납품했다! 총 별 {s} · 점수 {score}점',
+    rankMsg: ' 🏆 랭킹 {n}위!',
+    hint1: '컨베이어로 배출구와 납품 상자를 일직선으로 이어라',
+    hint2: '컨베이어를 회전(R)시켜 모퉁이를 만들어라',
+    hint3: '두 광맥의 흐름을 한 상자로 합쳐라 — 컨베이어는 자연 합류한다',
+    hint4: '라인 중간에 용광로를 놓으면 철광이 철판이 된다',
+    hint5: '벽을 돌아가는 경로를 찾아라',
+    hint6: '두 라인을 각각 제련하라',
+    hint7: '구리선은 가공 없이 배송만 — 미로를 뚫어라',
+    hint8: '조립기는 철판+구리선을 받아 부품을 만든다. 두 흐름을 서로 다른 면으로 넣어라',
+    hint9: '조립 라인을 벽 너머로 우회시켜라',
+    hint10: '다리를 쓰면 두 흐름이 교차할 수 있다',
+    hint11: '제련 라인과 배송 라인을 교차시켜라',
+    hint12: '분배기는 두 방향으로 번갈아 내보낸다',
+    hint13: '용광로 하나는 느리다 — 둘로 나눠 제련 후 합류시켜라',
+    hint14: '분배기로 철판과 구리선을 두 조립기에 나눠라',
+    hint15: '교차·분배·조립을 모두 조합하라',
+    hint16: '최종 시험 — 부품과 철판을 동시에 납품하라',
+  },
+  en: {
+    title: 'Cog Foundry',
+    menuTitle: '⚙ Cog Foundry',
+    menuDesc: 'Load the ore pouring out of the vents onto conveyor belts and carry it to the delivery crates. ' +
+              'Furnaces smelt ore into plates, assemblers combine a plate and a wire into a cog part. ' +
+              'Anything that runs off a broken line falls and is lost — fill all 16 work orders.',
+    menuTools: '▶ Belt (rotatable) · 🔥 Furnace (ore→plate) · ⚙ Assembler (plate+wire→part) · ⑂ Splitter (alternating) · ⿻ Bridge (crossing)',
+    menuScore: '16 levels · Fewer tools = up to ★3 · Score = levels cleared×800 + total stars×300',
+    startBtn: '▶ Open the Foundry',
+    selectTitle: 'Select Level',
+    lvBackBtn: '← Back to Menu',
+    backBtn: 'Back to Menu',
+    selectBtn: 'Level Select',
+    nextBtn: '▶ Next Level',
+    replayBtn: '↻ Replay',
+    infoLine: '1-6 pick tool · R rotate · Click/drag to place · Click same tool = rotate · Space pause · F speed',
+    lvLabel: 'Level {n}',
+    hudLevel: '⚙ Level {n}/{max}',
+    hudTools: '🔧 Tools {n} · ★3 ≤{par}',
+    toolBelt: '▶ Belt',
+    toolFurn: '🔥 Furnace',
+    toolAsm: '⚙ Assembler',
+    toolSplt: '⑂ Splitter',
+    toolBrdg: '⿻ Bridge',
+    toolEras: '✖ Eraser',
+    rotBtn: '↻ Rotate {a}',
+    pauseBtn: '⏸ Pause',
+    resumeBtn: '▶ Resume',
+    spdBtn: '⏩ x{n}',
+    quitBtn: '☰ Levels',
+    itemOre: 'Ore', itemPlate: 'Plate', itemWire: 'Wire', itemPart: 'Part',
+    clearTitle: '⚙ Level {n} Clear!',
+    clearDesc: 'Used {t} tools · Progress {c}/16 · Stars {s} · Score {score}',
+    allClearDesc: 'Every work order shipped! Total stars {s} · Score {score}',
+    rankMsg: ' 🏆 Rank #{n}!',
+    hint1: 'Link the vent to the crate with a straight belt line',
+    hint2: 'Rotate belts (R) to build a corner',
+    hint3: 'Merge two ore flows into one crate — belts join naturally',
+    hint4: 'Drop a furnace mid-line to smelt ore into plates',
+    hint5: 'Find a route around the wall',
+    hint6: 'Smelt each line separately',
+    hint7: 'Wire needs no processing — thread the maze',
+    hint8: 'The assembler eats a plate + a wire; feed the two flows into different faces',
+    hint9: 'Detour the assembly line past the walls',
+    hint10: 'A bridge lets two flows cross',
+    hint11: 'Cross the smelting line with the delivery line',
+    hint12: 'A splitter alternates between two outputs',
+    hint13: 'One furnace is slow — split into two, smelt, then merge',
+    hint14: 'Split the plates and the wire across two assemblers',
+    hint15: 'Combine crossing, splitting and assembly',
+    hint16: 'Final exam — ship parts and plates at once',
+  },
+});
+var TR = GameI18n.t;
+function TX(key, vals) {
+  return TR(key).replace(/\{(\w+)\}/g, function (m, name) { return vals[name]; });
+}
+var cv = document.getElementById('cv'), cx = cv.getContext('2d');
+var VW = cv.width, VH = cv.height;
+function $(id) { return document.getElementById(id); }
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+function rnd() { return Math.random(); }
+cx.imageSmoothingEnabled = false;
+
+/* ── 격자 기하 ── */
+var COLS = 12, ROWS = 8, CELL = 50;
+var GX = Math.floor((VW - COLS * CELL) / 2), GY = 36;
+var DX = [1, 0, -1, 0], DY = [0, 1, 0, -1];      // 0=동 1=남 2=서 3=북
+var ARROWS = ['→', '↓', '←', '↑'];
+var MAX_LEVEL = 16;
+
+/* ── 규칙 상수 ── */
+var ITEM_SPD = 2.0;          // 셀/초
+var FURN_T = 1.0, ASM_T = 1.2;
+var STAR2_SLACK = 5;         // par+5 까지 별 2개
+var MAX_ITEMS = 220;
+
+/* ── 아이템 ── */
+var ITEMS = {
+  ore:   { icon: '🪨', nameKey: 'itemOre',   body: '#8a8f98', dark: '#565c66', spot: '#6d737d' },
+  plate: { icon: '▤',  nameKey: 'itemPlate', body: '#b8c4d4', dark: '#7e8ba0', spot: '#dce6f2' },
+  wire:  { icon: '➰', nameKey: 'itemWire',  body: '#c47a3c', dark: '#8a5226', spot: '#e8a86a' },
+  part:  { icon: '⚙',  nameKey: 'itemPart',  body: '#d4a24e', dark: '#96702e', spot: '#f0cf8a' },
+};
+
+/* ── 도구 ── */
+var TOOLS = ['belt', 'furn', 'asm', 'splt', 'brdg', 'eras'];
+var TOOL_BTN = { belt: 'beltBtn', furn: 'furnBtn', asm: 'asmBtn', splt: 'spltBtn', brdg: 'brdgBtn', eras: 'erasBtn' };
+var TOOL_KEY = { belt: 'toolBelt', furn: 'toolFurn', asm: 'toolAsm', splt: 'toolSplt', brdg: 'toolBrdg', eras: 'toolEras' };
+
+/* ── 레벨 데이터 ──
+ * src: [col,row,dir,item,period]  sink: [col,row,item,need]  wall: [col,row]
+ * par: 별 3개 기준 도구 수 · allow: 사용 가능 도구 */
+var LEVELS = [
+  { src: [[0, 3, 0, 'ore', 2.0]], sink: [[11, 3, 'ore', 5]], wall: [],
+    par: 10, allow: ['belt'] },
+  { src: [[0, 1, 0, 'ore', 2.0]], sink: [[11, 6, 'ore', 6]], wall: [],
+    par: 15, allow: ['belt'] },
+  { src: [[0, 3, 0, 'ore', 2.2], [0, 4, 0, 'ore', 2.2]], sink: [[11, 3, 'ore', 8]], wall: [],
+    par: 20, allow: ['belt'] },
+  { src: [[0, 3, 0, 'ore', 2.2]], sink: [[11, 3, 'plate', 5]], wall: [],
+    par: 10, allow: ['belt', 'furn'] },
+  { src: [[0, 1, 0, 'ore', 2.2]], sink: [[11, 6, 'plate', 6]],
+    wall: [[5, 0], [5, 1], [5, 2], [5, 3], [5, 4], [5, 5]],
+    par: 15, allow: ['belt', 'furn'] },
+  { src: [[0, 2, 0, 'ore', 1.8], [0, 5, 0, 'ore', 1.8]],
+    sink: [[11, 2, 'plate', 5], [11, 5, 'plate', 5]], wall: [],
+    par: 20, allow: ['belt', 'furn'] },
+  { src: [[0, 4, 0, 'wire', 1.8]], sink: [[11, 4, 'wire', 8]],
+    wall: [[3, 3], [3, 4], [3, 5], [3, 6], [3, 7], [7, 0], [7, 1], [7, 2], [7, 3], [7, 4]],
+    par: 16, allow: ['belt', 'furn'] },
+  { src: [[0, 2, 0, 'ore', 2.2], [0, 5, 0, 'wire', 2.2]], sink: [[11, 3, 'part', 4]], wall: [],
+    par: 20, allow: ['belt', 'furn', 'asm'] },
+  { src: [[0, 2, 0, 'ore', 2.2], [0, 6, 0, 'wire', 2.2]], sink: [[11, 4, 'part', 5]],
+    wall: [[6, 1], [6, 2], [6, 3], [6, 4], [9, 4], [9, 5], [9, 6], [9, 7]],
+    par: 26, allow: ['belt', 'furn', 'asm'] },
+  { src: [[0, 3, 0, 'ore', 1.9], [5, 0, 1, 'wire', 1.9]],
+    sink: [[11, 3, 'ore', 6], [5, 7, 'wire', 6]], wall: [],
+    par: 15, allow: ['belt', 'furn', 'asm', 'brdg'] },
+  { src: [[0, 2, 0, 'ore', 2.0], [7, 0, 1, 'wire', 2.0]],
+    sink: [[11, 2, 'plate', 6], [7, 7, 'wire', 6]], wall: [],
+    par: 15, allow: ['belt', 'furn', 'asm', 'brdg'] },
+  { src: [[0, 3, 0, 'ore', 1.3]], sink: [[11, 1, 'ore', 5], [11, 6, 'ore', 5]], wall: [],
+    par: 19, allow: ['belt', 'furn', 'asm', 'brdg', 'splt'] },
+  { src: [[0, 4, 0, 'ore', 1.1]], sink: [[11, 4, 'plate', 10]], wall: [],
+    par: 20, allow: ['belt', 'furn', 'asm', 'brdg', 'splt'] },
+  { src: [[0, 1, 0, 'ore', 1.4], [0, 6, 0, 'wire', 1.4]],
+    sink: [[11, 2, 'part', 4], [11, 5, 'part', 4]], wall: [],
+    par: 34, allow: ['belt', 'furn', 'asm', 'brdg', 'splt'] },
+  { src: [[0, 2, 0, 'ore', 1.6], [6, 0, 1, 'wire', 1.6]],
+    sink: [[11, 4, 'part', 5], [6, 7, 'wire', 5]],
+    wall: [[3, 4], [4, 4], [8, 1], [8, 2]],
+    par: 24, allow: ['belt', 'furn', 'asm', 'brdg', 'splt'] },
+  { src: [[0, 1, 0, 'ore', 1.5], [0, 6, 0, 'ore', 1.5], [6, 0, 1, 'wire', 1.7]],
+    sink: [[11, 3, 'part', 8], [11, 5, 'plate', 6]],
+    wall: [[4, 3], [4, 4], [9, 1], [9, 2]],
+    par: 42, allow: ['belt', 'furn', 'asm', 'brdg', 'splt'] },
+];
+
+/* ── 진행 저장 ── */
+var PROG_KEY = 'cog-foundry:progress';
+function loadStars() {
+  try {
+    var raw = JSON.parse(localStorage.getItem(PROG_KEY) || '[]');
+    var out = [], i;
+    for (i = 0; i < MAX_LEVEL; i++) out.push(clamp(raw[i] | 0, 0, 3));
+    return out;
+  } catch (e) { var z = [], j; for (j = 0; j < MAX_LEVEL; j++) z.push(0); return z; }
+}
+function saveStars(stars) { localStorage.setItem(PROG_KEY, JSON.stringify(stars)); }
+function clearedCount(stars) {
+  var n = 0, i;
+  for (i = 0; i < MAX_LEVEL; i++) if (stars[i] > 0) n++;
+  return n;
+}
+function totalStars(stars) {
+  var n = 0, i;
+  for (i = 0; i < MAX_LEVEL; i++) n += stars[i];
+  return n;
+}
+function totalScore(stars) { return clearedCount(stars) * 800 + totalStars(stars) * 300; }
+function unlockedUpTo(stars) {
+  var i;
+  for (i = 0; i < MAX_LEVEL; i++) if (stars[i] === 0) return i;
+  return MAX_LEVEL - 1;
+}
+/* ── 상태 ── */
+var G = null, running = false, bannerT = 0;
+var tool = 'belt', rot = 0, speed = 1, paused = false;
+var hover = null, painting = false, lastCell = null;
+
+function inGrid(c, r) { return c >= 0 && c < COLS && r >= 0 && r < ROWS; }
+function cellAt(c, r) { return inGrid(c, r) ? G.grid[r][c] : null; }
+function cxOf(c) { return GX + c * CELL + CELL / 2; }
+function cyOf(r) { return GY + r * CELL + CELL / 2; }
+
+function newGame(li) {
+  var L = LEVELS[li], grid = [], r, c, i;
+  for (r = 0; r < ROWS; r++) { grid.push([]); for (c = 0; c < COLS; c++) grid[r].push(null); }
+  for (i = 0; i < L.wall.length; i++) grid[L.wall[i][1]][L.wall[i][0]] = { k: 'wall' };
+  for (i = 0; i < L.src.length; i++) {
+    var s = L.src[i];
+    grid[s[1]][s[0]] = { k: 'src', d: s[2], item: s[3], period: s[4], t: 1.0 };
+  }
+  for (i = 0; i < L.sink.length; i++) {
+    var k = L.sink[i];
+    grid[k[1]][k[0]] = { k: 'sink', item: k[2], need: k[3], got: 0 };
+  }
+  G = { li: li, grid: grid, items: [], parts: [], cleared: false, clearT: 0 };
+  speed = 1; paused = false;
+  if (L.allow.indexOf(tool) < 0 && tool !== 'eras') tool = 'belt';
+}
+
+function toolCount() {
+  var n = 0, r, c, m;
+  for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+    m = G.grid[r][c];
+    if (m && m.k !== 'wall' && m.k !== 'src' && m.k !== 'sink') n++;
+  }
+  return n;
+}
+
+function banner(text) {
+  var el = $('banner');
+  el.textContent = text;
+  el.style.fontSize = text.length > 30 ? '15px' : '22px';
+  el.classList.add('on');
+  bannerT = text.length > 30 ? 3200 : 1700;
+}
+
+/* ── 파티클 ── */
+function burst(x, y, color, n, spd) {
+  var i, a, s;
+  for (i = 0; i < n; i++) {
+    a = rnd() * Math.PI * 2; s = spd * (0.35 + rnd() * 0.85);
+    G.parts.push({ x: x, y: y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1,
+                   color: color, size: 2 + rnd() * 3, grav: 210 });
+  }
+}
+function popText(x, y, text, color) {
+  G.parts.push({ x: x, y: y, vx: 0, vy: -26, life: 1, text: text, color: color, grav: 0 });
+}
+
+/* ── 아이템 흐름 ── */
+function spawnItem(c, r, dir, type) {
+  var nc = c + DX[dir], nr = r + DY[dir];
+  if (!inGrid(nc, nr)) return;
+  if (G.items.length >= MAX_ITEMS) return;
+  G.items.push({ type: type, fc: c, fr: r, tc: nc, tr: nr, dir: dir, t: 0 });
+}
+function killItem(it, x, y) {
+  var i = G.items.indexOf(it);
+  if (i >= 0) G.items.splice(i, 1);
+  burst(x, y, ITEMS[it.type].dark, 7, 90);
+}
+function absorbItem(it) {
+  var i = G.items.indexOf(it);
+  if (i >= 0) G.items.splice(i, 1);
+}
+function hop(it, dir) {
+  var nc = it.tc + DX[dir], nr = it.tr + DY[dir];
+  it.fc = it.tc; it.fr = it.tr; it.dir = dir; it.t = 0;
+  it.tc = nc; it.tr = nr;
+}
+
+/** 목적 셀 도착 — 기계 종류에 따라 흡수/변환/재출발/소멸 */
+function arrive(it) {
+  var x = cxOf(it.tc), y = cyOf(it.tr);
+  if (!inGrid(it.tc, it.tr)) { killItem(it, x, y); return; }
+  var m = G.grid[it.tr][it.tc];
+  if (!m) { killItem(it, x, y); return; }
+  if (m.k === 'belt') { hop(it, m.d); return; }
+  if (m.k === 'brdg') { hop(it, it.dir); return; }
+  if (m.k === 'splt') {
+    var out = m.flip ? (m.d + 1) % 4 : m.d;
+    m.flip = !m.flip;
+    hop(it, out); return;
+  }
+  if (m.k === 'furn') {
+    if (m.busy) { killItem(it, x, y); return; }   // 가공 중 — 막힘
+    m.busy = { item: it.type, t: FURN_T };
+    absorbItem(it); return;
+  }
+  if (m.k === 'asm') {
+    if (it.type === 'plate' && m.plates < 3) { m.plates++; absorbItem(it); return; }
+    if (it.type === 'wire' && m.wires < 3) { m.wires++; absorbItem(it); return; }
+    killItem(it, x, y); return;                    // 잘못된 재료 / 버퍼 초과
+  }
+  if (m.k === 'sink') {
+    if (it.type === m.item) {
+      absorbItem(it);
+      if (m.got < m.need) m.got++;
+      burst(x, y, '#22c55e', 9, 110);
+      popText(x, y - 14, '+1', '#22c55e');
+      checkClear();
+    } else killItem(it, x, y);
+    return;
+  }
+  killItem(it, x, y);                              // 벽 / 배출구 등
+}
+
+function checkClear() {
+  var r, c, m;
+  for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+    m = G.grid[r][c];
+    if (m && m.k === 'sink' && m.got < m.need) return;
+  }
+  if (!G.cleared) { G.cleared = true; G.clearT = 0.9; }
+}
+
+function update(dt) {
+  if (G.cleared) {
+    G.clearT -= dt;
+    if (G.clearT <= 0) { onClear(); return; }
+  }
+  var sim = paused || G.cleared ? 0 : dt * speed;
+
+  if (sim > 0) {
+    var r, c, m;
+    for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+      m = G.grid[r][c];
+      if (!m) continue;
+      if (m.k === 'src') {
+        m.t -= sim;
+        if (m.t <= 0) { m.t += m.period; spawnItem(c, r, m.d, m.item); }
+      } else if (m.k === 'furn' && m.busy) {
+        m.busy.t -= sim;
+        if (m.busy.t <= 0) {
+          var out = m.busy.item === 'ore' ? 'plate' : m.busy.item;
+          m.busy = null;
+          spawnItem(c, r, m.d, out);
+        }
+      } else if (m.k === 'asm') {
+        if (m.craft > 0) {
+          m.craft -= sim;
+          if (m.craft <= 0) { m.craft = 0; spawnItem(c, r, m.d, 'part'); }
+        } else if (m.plates >= 1 && m.wires >= 1) {
+          m.plates--; m.wires--; m.craft = ASM_T;
+        }
+      }
+    }
+    var i, it;
+    for (i = G.items.length - 1; i >= 0; i--) {
+      it = G.items[i];
+      it.t += sim * ITEM_SPD;
+      if (it.t >= 1) { it.t = 1; arrive(it); }
+    }
+  }
+
+  var j, pa;
+  for (j = G.parts.length - 1; j >= 0; j--) {
+    pa = G.parts[j];
+    pa.x += pa.vx * dt; pa.y += pa.vy * dt;
+    pa.vy += (pa.grav || 0) * dt;
+    pa.life -= dt * (pa.text ? 1.0 : 2.1);
+    if (pa.life <= 0) G.parts.splice(j, 1);
+  }
+  if (bannerT > 0) { bannerT -= dt * 1000; if (bannerT <= 0) $('banner').classList.remove('on'); }
+}
+
+/* ── 배치 ── */
+function allowed(kind) { return LEVELS[G.li].allow.indexOf(kind) >= 0; }
+function placeAt(c, r, isTap) {
+  if (!inGrid(c, r) || G.cleared) return;
+  var m = G.grid[r][c];
+  if (tool === 'eras') {
+    if (m && m.k !== 'wall' && m.k !== 'src' && m.k !== 'sink') {
+      G.grid[r][c] = null;
+      burst(cxOf(c), cyOf(r), '#8e9db0', 8, 100);
+    }
+    return;
+  }
+  if (!allowed(tool)) return;
+  if (!m) {
+    if (tool === 'belt') G.grid[r][c] = { k: 'belt', d: rot };
+    else if (tool === 'furn') G.grid[r][c] = { k: 'furn', d: rot, busy: null };
+    else if (tool === 'asm') G.grid[r][c] = { k: 'asm', d: rot, plates: 0, wires: 0, craft: 0 };
+    else if (tool === 'splt') G.grid[r][c] = { k: 'splt', d: rot, flip: false };
+    else if (tool === 'brdg') G.grid[r][c] = { k: 'brdg' };
+    burst(cxOf(c), cyOf(r), '#d4a24e', 6, 80);
+  } else if (isTap && m.k === tool && m.d !== undefined) {
+    m.d = (m.d + 1) % 4;                            // 같은 도구 재클릭 = 회전
+    if (m.k === 'splt') m.flip = false;
+  }
+}
+
+/* ── 입력 ── */
+function canvasCell(ev) {
+  var rect = cv.getBoundingClientRect();
+  var x = (ev.clientX - rect.left) * (VW / rect.width);
+  var y = (ev.clientY - rect.top) * (VH / rect.height);
+  return { c: Math.floor((x - GX) / CELL), r: Math.floor((y - GY) / CELL) };
+}
+cv.addEventListener('pointerdown', function (ev) {
+  if (!running) return;
+  ev.preventDefault();
+  var p = canvasCell(ev);
+  placeAt(p.c, p.r, true);
+  painting = true; lastCell = p;
+  if (cv.setPointerCapture) { try { cv.setPointerCapture(ev.pointerId); } catch (e) {} }
+});
+cv.addEventListener('pointermove', function (ev) {
+  if (!running) return;
+  var p = canvasCell(ev);
+  hover = inGrid(p.c, p.r) ? p : null;
+  if (!painting || !lastCell) return;
+  if (p.c === lastCell.c && p.r === lastCell.r) return;
+  var adj = Math.abs(p.c - lastCell.c) + Math.abs(p.r - lastCell.r) === 1;
+  if (adj && tool === 'belt' && inGrid(p.c, p.r)) {
+    var d = p.c > lastCell.c ? 0 : p.c < lastCell.c ? 2 : p.r > lastCell.r ? 1 : 3;
+    rot = d;
+    var prev = cellAt(lastCell.c, lastCell.r);
+    if (prev && prev.k === 'belt') prev.d = d;      // 드래그 경로를 따라 방향 정렬
+    placeAt(p.c, p.r, false);
+  } else if (tool === 'eras') {
+    placeAt(p.c, p.r, false);
+  }
+  lastCell = p;
+});
+window.addEventListener('pointerup', function () { painting = false; lastCell = null; });
+cv.addEventListener('pointerleave', function () { hover = null; });
+
+window.addEventListener('keydown', function (ev) {
+  if (!running) return;
+  var idx = ['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(ev.code);
+  if (idx >= 0) { selectTool(TOOLS[idx]); return; }
+  if (ev.code === 'KeyR') { ev.preventDefault(); rot = (rot + 1) % 4; syncBar(); }
+  else if (ev.code === 'Space') { ev.preventDefault(); togglePause(); }
+  else if (ev.code === 'KeyF') { ev.preventDefault(); cycleSpeed(); }
+  else if (ev.code === 'Escape') { tool = 'belt'; syncBar(); }
+});
+
+function selectTool(kind) {
+  if (kind !== 'eras' && !allowed(kind)) return;
+  tool = kind; syncBar();
+}
+function togglePause() { paused = !paused; syncBar(); }
+function cycleSpeed() { speed = speed === 1 ? 2 : speed === 2 ? 4 : 1; syncBar(); }
+/* ── 배경 캐시 (타일 + 벽 + 배출구/상자 받침) ── */
+var bgCv = null;
+function px(g, x, y, w, h, col) { g.fillStyle = col; g.fillRect(x, y, w, h); }
+function buildBg() {
+  bgCv = document.createElement('canvas'); bgCv.width = VW; bgCv.height = VH;
+  var g = bgCv.getContext('2d'), r, c, x, y, i;
+  g.imageSmoothingEnabled = false;
+  px(g, 0, 0, VW, VH, '#0c1424');
+  for (i = 0; i < 90; i++) {                        // 공방 바닥 리벳
+    x = (i * 97) % VW; y = (i * 53) % VH;
+    px(g, x, y, 2, 2, 'rgba(212,162,78,.05)');
+  }
+  for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+    x = GX + c * CELL; y = GY + r * CELL;
+    px(g, x, y, CELL, CELL, '#0a101f');
+    px(g, x + 1, y + 1, CELL - 2, CELL - 2, (c + r) % 2 ? '#151d33' : '#17203a');
+    px(g, x + 1, y + 1, CELL - 2, 1, 'rgba(255,255,255,.04)');
+  }
+  var L = LEVELS[G.li];
+  for (i = 0; i < L.wall.length; i++) {             // 벽 — 리벳 박힌 강철 블록
+    c = L.wall[i][0]; r = L.wall[i][1];
+    x = GX + c * CELL; y = GY + r * CELL;
+    px(g, x + 1, y + 1, CELL - 2, CELL - 2, '#232b36');
+    px(g, x + 1, y + 1, CELL - 2, 3, '#39434f');
+    px(g, x + 1, y + CELL - 5, CELL - 2, 4, '#161c24');
+    px(g, x + 5, y + 5, 3, 3, '#4a5561'); px(g, x + CELL - 8, y + 5, 3, 3, '#4a5561');
+    px(g, x + 5, y + CELL - 8, 3, 3, '#4a5561'); px(g, x + CELL - 8, y + CELL - 8, 3, 3, '#4a5561');
+  }
+  for (i = 0; i < L.src.length; i++) {              // 배출구 받침 — 놋쇠 테 광산 수갱
+    c = L.src[i][0]; r = L.src[i][1];
+    x = GX + c * CELL; y = GY + r * CELL;
+    px(g, x + 1, y + 1, CELL - 2, CELL - 2, '#1c1710');
+    px(g, x + 3, y + 3, CELL - 6, CELL - 6, '#d4a24e');
+    px(g, x + 6, y + 6, CELL - 12, CELL - 12, '#120d07');
+    px(g, x + 6, y + 6, CELL - 12, 2, '#000');
+  }
+  for (i = 0; i < L.sink.length; i++) {             // 납품 상자 받침 — 나무 크레이트
+    c = L.sink[i][0]; r = L.sink[i][1];
+    x = GX + c * CELL; y = GY + r * CELL;
+    px(g, x + 1, y + 1, CELL - 2, CELL - 2, '#3a2c18');
+    px(g, x + 3, y + 3, CELL - 6, CELL - 6, '#57431f');
+    px(g, x + 3, y + 3, CELL - 6, 3, '#6f5729');
+    px(g, x + 3, y + CELL - 7, CELL - 6, 4, '#2c2112');
+    px(g, x + 3, y + Math.floor(CELL / 2) - 2, CELL - 6, 3, '#3a2c18');
+  }
+}
+
+/* ── 기계 렌더 (셀 중심 기준, d 방향 회전) ── */
+function drawRotated(c, r, d, paint) {
+  cx.save();
+  cx.translate(cxOf(c), cyOf(r));
+  cx.rotate(d * Math.PI / 2);
+  paint();
+  cx.restore();
+}
+function beltLane(now, active) {
+  var h = CELL - 14;
+  px(cx, -CELL / 2 + 3, -h / 2, CELL - 6, h, '#1a2238');
+  px(cx, -CELL / 2 + 3, -h / 2, CELL - 6, 2, '#2b3a5c');
+  px(cx, -CELL / 2 + 3, h / 2 - 2, CELL - 6, 2, '#0a101f');
+  var off = active ? (now / 260 * speed) % 12 : 0, k;
+  for (k = -CELL / 2 + 4 - 12 + off; k < CELL / 2 - 4; k += 12) {
+    if (k < -CELL / 2 + 2) continue;
+    cx.fillStyle = 'rgba(212,162,78,.75)';
+    cx.beginPath();
+    cx.moveTo(k, -h / 2 + 4); cx.lineTo(k + 6, 0); cx.lineTo(k, h / 2 - 4);
+    cx.lineTo(k + 3, h / 2 - 4); cx.lineTo(k + 9, 0); cx.lineTo(k + 3, -h / 2 + 4);
+    cx.closePath(); cx.fill();
+  }
+}
+function outNozzle() {
+  px(cx, CELL / 2 - 7, -5, 6, 10, '#d4a24e');
+  px(cx, CELL / 2 - 7, -5, 6, 2, '#f0cf8a');
+}
+function drawMachine(c, r, m, now) {
+  var x = GX + c * CELL, y = GY + r * CELL, fl;
+  if (m.k === 'belt') {
+    drawRotated(c, r, m.d, function () { beltLane(now, !paused); });
+  } else if (m.k === 'brdg') {
+    drawRotated(c, r, 0, function () { beltLane(now, !paused); });
+    px(cx, x + CELL / 2 - 8, y + 4, 16, CELL - 8, '#0a101f');
+    drawRotated(c, r, 1, function () {
+      var h = 12;
+      px(cx, -CELL / 2 + 4, -h / 2, CELL - 8, h, '#232b36');
+      px(cx, -CELL / 2 + 4, -h / 2, CELL - 8, 2, '#39434f');
+      px(cx, -CELL / 2 + 4, h / 2 - 2, CELL - 8, 2, '#10151c');
+    });
+  } else if (m.k === 'furn') {
+    drawRotated(c, r, m.d, function () {
+      px(cx, -CELL / 2 + 4, -CELL / 2 + 6, CELL - 8, CELL - 12, '#3a2a1e');
+      px(cx, -CELL / 2 + 4, -CELL / 2 + 6, CELL - 8, 3, '#5c4430');
+      px(cx, -CELL / 2 + 4, CELL / 2 - 9, CELL - 8, 3, '#20150e');
+      outNozzle();
+      fl = m.busy ? 0.65 + 0.35 * Math.sin(now / 60) : 0.18;
+      px(cx, -9, -8, 18, 14, '#1a0d06');
+      cx.globalAlpha = fl;
+      px(cx, -7, -6, 14, 10, '#ef4444');
+      px(cx, -5, -4, 10, 6, '#f97316');
+      px(cx, -3, -3, 6, 3, '#eab308');
+      cx.globalAlpha = 1;
+      px(cx, -CELL / 2 + 8, -CELL / 2 + 2, 7, 6, '#232b36');   // 굴뚝
+    });
+    if (m.busy) {
+      cx.globalAlpha = 0.5;
+      px(cx, x + 10 + Math.sin(now / 300) * 2, y + 2 - ((now / 90) % 8), 4, 4, '#8e9db0');
+      cx.globalAlpha = 1;
+    }
+  } else if (m.k === 'asm') {
+    drawRotated(c, r, m.d, function () {
+      px(cx, -CELL / 2 + 4, -CELL / 2 + 4, CELL - 8, CELL - 8, '#24304a');
+      px(cx, -CELL / 2 + 4, -CELL / 2 + 4, CELL - 8, 3, '#3a4a6c');
+      px(cx, -CELL / 2 + 4, CELL / 2 - 7, CELL - 8, 3, '#141d33');
+      outNozzle();
+    });
+    var ang = m.craft > 0 ? now / 200 : 0, t, a;
+    cx.save(); cx.translate(cxOf(c), cyOf(r)); cx.rotate(ang);
+    cx.fillStyle = '#d4a24e';
+    for (t = 0; t < 4; t++) { a = t * Math.PI / 2; px(cx, Math.cos(a) * 8 - 2, Math.sin(a) * 8 - 2, 5, 5, '#d4a24e'); }
+    cx.beginPath(); cx.arc(0, 0, 7, 0, 7); cx.fill();
+    cx.fillStyle = '#24304a'; cx.beginPath(); cx.arc(0, 0, 3, 0, 7); cx.fill();
+    cx.restore();
+    for (t = 0; t < m.plates; t++) px(cx, x + 6, y + CELL - 9 - t * 5, 6, 3, '#b8c4d4');
+    for (t = 0; t < m.wires; t++) px(cx, x + CELL - 12, y + CELL - 9 - t * 5, 6, 3, '#c47a3c');
+  } else if (m.k === 'splt') {
+    drawRotated(c, r, m.d, function () {
+      px(cx, -CELL / 2 + 4, -CELL / 2 + 4, CELL - 8, CELL - 8, '#1e2c44');
+      px(cx, -CELL / 2 + 4, -CELL / 2 + 4, CELL - 8, 3, '#31456a');
+      cx.fillStyle = m.flip ? 'rgba(212,162,78,.35)' : '#d4a24e';   // 직진 출구
+      cx.beginPath(); cx.moveTo(8, -6); cx.lineTo(18, 0); cx.lineTo(8, 6); cx.closePath(); cx.fill();
+      cx.fillStyle = m.flip ? '#d4a24e' : 'rgba(212,162,78,.35)';   // 우회전 출구
+      cx.beginPath(); cx.moveTo(-6, 8); cx.lineTo(0, 18); cx.lineTo(6, 8); cx.closePath(); cx.fill();
+      cx.fillStyle = '#0ea5e9';
+      cx.beginPath(); cx.arc(0, 0, 4, 0, 7); cx.fill();
+    });
+  }
+}
+function drawSrcSink(c, r, m, now) {
+  var x = cxOf(c), y = cyOf(r), pulse;
+  if (m.k === 'src') {
+    drawItemIcon(m.item, x, y - 4, 1);
+    pulse = 1 - clamp(m.t / m.period, 0, 1);
+    cx.strokeStyle = 'rgba(212,162,78,' + (0.25 + pulse * 0.6).toFixed(2) + ')';
+    cx.lineWidth = 2;
+    cx.strokeRect(x - CELL / 2 + 3, y - CELL / 2 + 3, CELL - 6, CELL - 6);
+    cx.fillStyle = '#d4a24e';
+    cx.beginPath();
+    cx.moveTo(x + DX[m.d] * 14 - DY[m.d] * 5, y + DY[m.d] * 14 - DX[m.d] * 5);
+    cx.lineTo(x + DX[m.d] * 21, y + DY[m.d] * 21);
+    cx.lineTo(x + DX[m.d] * 14 + DY[m.d] * 5, y + DY[m.d] * 14 + DX[m.d] * 5);
+    cx.closePath(); cx.fill();
+  } else {
+    drawItemIcon(m.item, x, y - 7, 1);
+    var done = m.got >= m.need;
+    cx.font = 'bold 11px monospace'; cx.textAlign = 'center';
+    cx.fillStyle = '#000'; cx.fillText(m.got + '/' + m.need, x + 1, y + 15);
+    cx.fillStyle = done ? '#22c55e' : '#eab308';
+    cx.fillText(m.got + '/' + m.need, x, y + 14);
+    if (done) {
+      cx.strokeStyle = 'rgba(34,197,94,' + (0.5 + 0.3 * Math.sin(now / 200)).toFixed(2) + ')';
+      cx.lineWidth = 2;
+      cx.strokeRect(x - CELL / 2 + 2, y - CELL / 2 + 2, CELL - 4, CELL - 4);
+    }
+  }
+}
+function drawItemIcon(type, x, y, scale) {
+  var I = ITEMS[type], s = scale || 1;
+  cx.save(); cx.translate(x, y); cx.scale(s, s);
+  if (type === 'ore') {
+    px(cx, -6, -4, 12, 9, I.dark);
+    px(cx, -5, -6, 9, 9, I.body);
+    px(cx, -3, -5, 3, 2, I.spot); px(cx, 1, -1, 2, 2, I.dark);
+  } else if (type === 'plate') {
+    px(cx, -7, -5, 14, 10, I.dark);
+    px(cx, -6, -6, 12, 10, I.body);
+    px(cx, -6, -6, 12, 2, I.spot);
+  } else if (type === 'wire') {
+    cx.strokeStyle = I.body; cx.lineWidth = 3;
+    cx.beginPath(); cx.arc(0, 0, 5, 0, 7); cx.stroke();
+    cx.strokeStyle = I.spot; cx.lineWidth = 1;
+    cx.beginPath(); cx.arc(0, 0, 5, 0.6, 2.2); cx.stroke();
+    px(cx, 3, -2, 4, 2, I.body);
+  } else {
+    var t, a;
+    cx.fillStyle = I.body;
+    for (t = 0; t < 4; t++) {
+      a = t * Math.PI / 2 + Math.PI / 4;
+      px(cx, Math.cos(a) * 5 - 2, Math.sin(a) * 5 - 2, 4, 4, I.body);
+    }
+    cx.beginPath(); cx.arc(0, 0, 5, 0, 7); cx.fill();
+    cx.fillStyle = I.spot; px(cx, -4, -4, 3, 2, I.spot);
+    cx.fillStyle = '#1a2238'; cx.beginPath(); cx.arc(0, 0, 2, 0, 7); cx.fill();
+  }
+  cx.restore();
+}
+
+/* ── 렌더 ── */
+function draw(now) {
+  cx.drawImage(bgCv, 0, 0);
+  var r, c, m, i, it, x, y;
+  for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+    m = G.grid[r][c];
+    if (m && m.k !== 'wall' && m.k !== 'src' && m.k !== 'sink') drawMachine(c, r, m, now);
+  }
+  for (i = 0; i < G.items.length; i++) {
+    it = G.items[i];
+    x = cxOf(it.fc) + (cxOf(it.tc) - cxOf(it.fc)) * it.t;
+    y = cyOf(it.fr) + (cyOf(it.tr) - cyOf(it.fr)) * it.t;
+    cx.fillStyle = 'rgba(0,0,0,.35)';
+    cx.fillRect(x - 6, y + 5, 12, 3);
+    drawItemIcon(it.type, x, y, 1);
+  }
+  for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+    m = G.grid[r][c];
+    if (m && (m.k === 'src' || m.k === 'sink')) drawSrcSink(c, r, m, now);
+  }
+  if (hover && !G.cleared) {                        // 배치 미리보기
+    m = cellAt(hover.c, hover.r);
+    x = GX + hover.c * CELL; y = GY + hover.r * CELL;
+    if (tool === 'eras') {
+      if (m && m.k !== 'wall' && m.k !== 'src' && m.k !== 'sink') {
+        cx.fillStyle = 'rgba(239,68,68,.3)';
+        cx.fillRect(x + 1, y + 1, CELL - 2, CELL - 2);
+      }
+    } else if (!m && allowed(tool)) {
+      cx.globalAlpha = 0.45;
+      var ghost = tool === 'belt' ? { k: 'belt', d: rot }
+        : tool === 'furn' ? { k: 'furn', d: rot, busy: null }
+        : tool === 'asm' ? { k: 'asm', d: rot, plates: 0, wires: 0, craft: 0 }
+        : tool === 'splt' ? { k: 'splt', d: rot, flip: false }
+        : { k: 'brdg' };
+      drawMachine(hover.c, hover.r, ghost, now);
+      cx.globalAlpha = 1;
+      cx.strokeStyle = '#0ea5e9'; cx.lineWidth = 1;
+      cx.strokeRect(x + 1, y + 1, CELL - 2, CELL - 2);
+    }
+  }
+  for (i = 0; i < G.parts.length; i++) {
+    var pa = G.parts[i];
+    cx.globalAlpha = clamp(pa.life, 0, 1);
+    if (pa.text) {
+      cx.font = 'bold 13px monospace'; cx.textAlign = 'center';
+      cx.fillStyle = '#000'; cx.fillText(pa.text, pa.x + 1, pa.y + 1);
+      cx.fillStyle = pa.color; cx.fillText(pa.text, pa.x, pa.y);
+    } else {
+      cx.fillStyle = pa.color; cx.fillRect(pa.x, pa.y, pa.size, pa.size);
+    }
+    cx.globalAlpha = 1;
+  }
+  if (paused) {
+    cx.fillStyle = 'rgba(12,20,36,.45)';
+    cx.fillRect(GX, GY, COLS * CELL, ROWS * CELL);
+  }
+  syncHud();
+}
+
+function syncHud() {
+  var L = LEVELS[G.li];
+  $('lvTxt').textContent = TX('hudLevel', { n: G.li + 1, max: MAX_LEVEL });
+  var parts = [], r, c, m;
+  for (r = 0; r < ROWS; r++) for (c = 0; c < COLS; c++) {
+    m = G.grid[r][c];
+    if (m && m.k === 'sink') parts.push(ITEMS[m.item].icon + TR(ITEMS[m.item].nameKey) + ' ' + m.got + '/' + m.need);
+  }
+  $('goalTxt').textContent = parts.join(' · ');
+  $('toolTxt').textContent = TX('hudTools', { n: toolCount(), par: L.par });
+}
+function syncBar() {
+  var i, k, btn;
+  for (i = 0; i < TOOLS.length; i++) {
+    k = TOOLS[i]; btn = $(TOOL_BTN[k]);
+    btn.textContent = TR(TOOL_KEY[k]);
+    btn.className = tool === k ? 'sel' : '';
+    btn.hidden = k !== 'eras' && k !== 'belt' && G && !allowed(k);
+  }
+  $('rotBtn').textContent = TX('rotBtn', { a: ARROWS[rot] });
+  $('pauseBtn').textContent = paused ? TR('resumeBtn') : TR('pauseBtn');
+  $('spdBtn').textContent = TX('spdBtn', { n: speed });
+  $('quitBtn').textContent = TR('quitBtn');
+}
+
+/* ── 레벨 흐름 ── */
+function startLevel(li) {
+  newGame(li); buildBg(); running = true;
+  $('menu').hidden = true; $('levelPanel').hidden = true; $('endPanel').hidden = true;
+  $('hud').hidden = false; $('bar').hidden = false;
+  syncBar();
+  banner(TR('hint' + (li + 1)));
+}
+function starsFor(used, par) { return used <= par ? 3 : used <= par + STAR2_SLACK ? 2 : 1; }
+
+function onClear() {
+  running = false; hover = null; painting = false;
+  $('hud').hidden = true; $('bar').hidden = true;
+  $('banner').classList.remove('on'); bannerT = 0;
+  var li = G.li, used = toolCount(), earned = starsFor(used, LEVELS[li].par);
+  var stars = loadStars(), improved = earned > stars[li];
+  if (improved) { stars[li] = earned; saveStars(stars); }
+  var c = clearedCount(stars), s = totalStars(stars), score = totalScore(stars);
+  $('endTitle').textContent = TX('clearTitle', { n: li + 1 });
+  var sTxt = '', i;
+  for (i = 0; i < 3; i++) sTxt += i < earned ? '★' : '☆';
+  $('endStars').textContent = sTxt;
+  $('endDesc').textContent = (c >= MAX_LEVEL ? TX('allClearDesc', { s: s, score: score }) + ' '
+    : '') + TX('clearDesc', { t: used, c: c, s: s, score: score });
+  var hasNext = li + 1 < MAX_LEVEL;
+  $('againBtn').textContent = hasNext ? TR('nextBtn') : TR('replayBtn');
+  $('againBtn').onclick = function () { startLevel(hasNext ? li + 1 : li); };
+  $('endPanel').hidden = false;
+  if (improved) {
+    GameRank.submit('cog-foundry', score, '레벨 ' + c + '/16 ⭐' + s)
+      .then(function (res) {
+        if (res && res.applied) $('endDesc').textContent += TX('rankMsg', { n: res.rank });
+      });
+  }
+}
+
+function buildLevelGrid() {
+  var grid = $('lvGrid'), stars = loadStars(), open = unlockedUpTo(stars), i;
+  grid.innerHTML = '';
+  for (i = 0; i < MAX_LEVEL; i++) {
+    var b = document.createElement('button'), st = '', j;
+    for (j = 0; j < 3; j++) st += j < stars[i] ? '★' : '☆';
+    b.innerHTML = TX('lvLabel', { n: i + 1 }) + '<span class="st">' + (i <= open ? st : '🔒') + '</span>';
+    b.disabled = i > open;
+    if (stars[i] > 0) b.className = 'done';
+    (function (li) { b.onclick = function () { startLevel(li); }; })(i);
+    grid.appendChild(b);
+  }
+}
+function openLevels() {
+  running = false;
+  $('menu').hidden = true; $('endPanel').hidden = true;
+  $('hud').hidden = true; $('bar').hidden = true;
+  buildLevelGrid();
+  $('levelPanel').hidden = false;
+}
+function openMenu() {
+  running = false;
+  $('levelPanel').hidden = true; $('endPanel').hidden = true;
+  $('hud').hidden = true; $('bar').hidden = true;
+  $('menu').hidden = false;
+}
+
+/* ── 루프 ── */
+var last = performance.now();
+function loop() {
+  requestAnimationFrame(loop);
+  var now = performance.now(), dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  if (!running || !G) return;
+  update(dt);
+  if (running && G) draw(now);
+}
+requestAnimationFrame(loop);
+
+$('startBtn').onclick = openLevels;
+$('lvBackBtn').onclick = openMenu;
+$('selectBtn').onclick = openLevels;
+$('backBtn').onclick = openMenu;
+$('quitBtn').onclick = openLevels;
+$('beltBtn').onclick = function () { selectTool('belt'); };
+$('furnBtn').onclick = function () { selectTool('furn'); };
+$('asmBtn').onclick = function () { selectTool('asm'); };
+$('spltBtn').onclick = function () { selectTool('splt'); };
+$('brdgBtn').onclick = function () { selectTool('brdg'); };
+$('erasBtn').onclick = function () { selectTool('eras'); };
+$('rotBtn').onclick = function () { rot = (rot + 1) % 4; syncBar(); };
+$('pauseBtn').onclick = togglePause;
+$('spdBtn').onclick = cycleSpeed;
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.autoPanel('cog-foundry');
+</script>
+</body>
+</html>

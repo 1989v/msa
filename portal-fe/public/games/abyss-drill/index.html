@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">심연 시추장</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#dbe4f0; font-family:'Courier New',monospace; display:flex; flex-direction:column;
+         align-items:center; justify-content:flex-start; min-height:100vh; user-select:none; padding:14px 0; }
+  #wrap { width:min(560px, 100vw); }
+  #wrap h1 { color:#0ea5e9; font-size:22px; text-align:center; text-shadow:2px 2px 0 #000; margin:6px 0 2px; }
+  #sub { text-align:center; font-size:11px; color:#7d8ba3; margin-bottom:10px; }
+  #rig { display:block; margin:0 auto; background:#0c1424; border:4px solid #1a2238; border-radius:12px;
+         cursor:pointer; touch-action:manipulation; width:min(340px, 92vw); }
+  #stats { display:flex; gap:8px; justify-content:center; margin:10px 0; font-size:13px; font-weight:bold; flex-wrap:wrap; }
+  #stats span { background:#1a2238; border:1px solid #222b44; padding:4px 12px; border-radius:9px; }
+  .shop { display:flex; flex-direction:column; gap:6px; padding:0 12px; }
+  .shop button { display:flex; justify-content:space-between; align-items:center; gap:8px; text-align:left;
+                 background:#1a2238; border:1px solid #222b44; color:#dbe4f0; padding:10px 12px; border-radius:8px;
+                 cursor:pointer; font-family:inherit; font-size:12px; min-height:44px; }
+  .shop button:not(:disabled):hover { background:#222b44; }
+  .shop button:disabled { opacity:.38; cursor:default; }
+  .shop button b { display:block; font-size:13px; }
+  .shop button small { color:#7d8ba3; font-size:10.5px; }
+  .shop button .price { color:#0ea5e9; font-weight:bold; white-space:nowrap; }
+  #prestigeBtn:not(:disabled) { border-color:#22c55e !important; }
+  #prestigeBtn:not(:disabled) .price { color:#22c55e; }
+  #codeShow, #saveStatus { text-align:center; font-size:10.5px; color:#7d8ba3; margin-top:6px; }
+  #codeShow { color:#eab308; letter-spacing:2px; }
+  .panel { position:fixed; inset:0; background:rgba(12,20,36,.97); z-index:30; overflow-y:auto;
+           display:flex; flex-direction:column; align-items:center; gap:12px; padding:26px 18px; text-align:center; }
+  .panel > :first-child { margin-top:auto; }
+  .panel > :last-child { margin-bottom:auto; }
+  .panel h1 { color:#0ea5e9; font-size:24px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#b9c5d8; line-height:1.75; max-width:480px; }
+  .panel p.small { font-size:11px; color:#7d8ba3; }
+  .panel button { background:#0ea5e9; color:#04121e; border:0; padding:11px 22px; font-weight:bold; font-size:13px;
+                  border-radius:7px; cursor:pointer; font-family:inherit; }
+  .panel button.ghost { background:#1a2238; color:#dbe4f0; border:1px solid #222b44; }
+  .panel button:hover { filter:brightness(1.12); }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #saveRow { display:flex; gap:8px; justify-content:center; align-items:center; flex-wrap:wrap; }
+  #saveRow input { background:#1a2238; border:1px solid #222b44; color:#dbe4f0; border-radius:6px; padding:9px;
+                   font-family:inherit; font-size:12px; letter-spacing:1px; width:160px; text-transform:uppercase; }
+  #saveRow button { background:#222b44; color:#dbe4f0; border:0; padding:9px 12px; border-radius:6px;
+                    cursor:pointer; font-family:inherit; font-size:11px; }
+  #offPanel, #prestigePanel { z-index:40; }
+  #toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); background:rgba(12,20,36,.94);
+           border:1px solid #222b44; padding:8px 18px; border-radius:9px; font-size:12px; opacity:0;
+           transition:opacity .3s; pointer-events:none; z-index:99; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <h1 data-i18n="h1">🕳 심연 시추장</h1>
+  <div id="sub" data-i18n="sub">드릴은 멈추지 않는다 — 깊이 팔수록 광석은 쏟아진다</div>
+  <canvas id="rig" width="340" height="300"></canvas>
+  <div id="stats">
+    <span id="depthTxt"></span><span id="oreTxt"></span><span id="rateTxt"></span><span id="crysTxt"></span>
+  </div>
+  <div class="shop" id="shop"></div>
+  <div id="codeShow"></div>
+  <div id="saveStatus"></div>
+</div>
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">🕳 심연 시추장</h1>
+  <p data-i18n="menuDesc">자동 드릴이 쉼 없이 심연을 파고든다.</p>
+  <p class="small" data-i18n="menuHint">1,000m부터 별빛 융해(환생)</p>
+  <button id="startBtn">▶ 시추 시작</button>
+  <div id="saveRow">
+    <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
+    <button id="codeLoadBtn" data-i18n="btnCodeLoad">🔑 코드로 불러오기</button>
+  </div>
+</div>
+<div class="panel" id="offPanel" hidden>
+  <h1 data-i18n="offTitle">💤 부재 정산</h1>
+  <p id="offDesc"></p>
+  <button id="offOkBtn" data-i18n="offOk">⛏ 시추 계속</button>
+</div>
+<div class="panel" id="prestigePanel" hidden>
+  <h1 data-i18n="prTitle">🌌 별빛 융해</h1>
+  <p id="prGain"></p>
+  <p id="prScore"></p>
+  <p class="small" id="prRank"></p>
+  <p class="small" data-i18n="prNote">드릴이 별빛을 머금었다</p>
+  <div class="row">
+    <button id="againBtn" data-i18n="againBtn">⛏ 다시 시추</button>
+    <button id="backBtn" class="ghost" data-i18n="backBtn">처음으로</button>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '심연 시추장',
+    h1: '🕳 심연 시추장',
+    sub: '드릴은 멈추지 않는다 — 깊이 팔수록 광석은 쏟아진다',
+    menuTitle: '🕳 심연 시추장',
+    menuDesc: '자동 드릴이 쉼 없이 심연을 파고든다. 심도가 깊어질수록 초당 광석 수입이 커지고, ' +
+              '500m마다 낯선 지층이 모습을 드러낸다. 화면을 탭해 드릴을 부스트하고, 광석으로 장비를 키워라.',
+    menuHint: '1,000m부터 별빛 융해(환생) — 심도를 녹여 심연 결정 🔮을 얻고 영구 배수를 쌓는다. ' +
+              '자리를 비운 사이에도 승강기가 광석을 실어 올린다 (기본 8시간).',
+    startNew: '▶ 시추 시작',
+    startCont: '▶ 이어서 시추',
+    phCode: '이어하기 코드',
+    btnCodeLoad: '🔑 코드로 불러오기',
+    codeLoaded: '☁ 세이브를 불러왔다',
+    saveCloud: '☁ 서버 세이브 (v{v})',
+    saveNoCode: '그 코드로 저장된 세이브가 없다',
+    saveFail: '세이브 로드 실패: {e}',
+    saveLocal: '브라우저 저장 — 저장하면 이어하기 코드가 발급된다',
+    codeIssued: '🔑 이어하기 코드 발급: {c}',
+    hudRate: '⏱ 초당 {n}',
+    upBit: '드릴 날', upBitDesc: '시추 속도 ×1.25 — 현재 ×{n}',
+    upEngine: '엔진', upEngineDesc: '광석 수입 ×1.22 — 현재 ×{n}',
+    upCool: '냉각수', upCoolDesc: '부스트 게이지 최대 {n}초',
+    upRobot: '자동화 로봇', upRobotDesc: '초당 부스트 +{n}초 자동 충전',
+    upLift: '화물 승강기', upLiftDesc: '오프라인 정산 상한 {n}시간',
+    prestigeName: '🌌 별빛 융해 ({n}🔮)',
+    prestigeDesc: '{m}m부터 — 심도를 리셋하고 심연 결정 획득 (결정당 전체 +10%)',
+    prestigeReady: '+{c}🔮 융해!',
+    strataToast: '🪨 {name} 도달! 첫 도달 보너스 +{n}',
+    canvasHint: '⛏ 탭 = 드릴 부스트 ×3',
+    offTitle: '💤 부재 정산',
+    offDesc: '{m}분 자리를 비운 사이 승강기가 광석 {n}을 실어 올렸다',
+    offCap: '(승강기 상한 {h}시간 적용)',
+    offOk: '⛏ 시추 계속',
+    prTitle: '🌌 별빛 융해',
+    prGain: '심연 결정 +{c}🔮 — 영구 배수 ×{m}',
+    prScore: '🏆 점수 {s} 제출 — 심도 {d}m · 환생 {n}회',
+    prRank: '현재 {r}위!',
+    prNote: '드릴이 별빛을 머금었다 — 시추 속도와 광석 수입이 영구히 빨라진다',
+    againBtn: '⛏ 다시 시추',
+    backBtn: '처음으로',
+    s0: '표토', s1: '점토층', s2: '암반', s3: '화석층', s4: '지하수맥',
+    s5: '수정층', s6: '마그마', s7: '흑요암', s8: '심해 공동', s9: '공허',
+  },
+  en: {
+    title: 'Abyss Drill',
+    h1: '🕳 Abyss Drill',
+    sub: 'The drill never stops — the deeper you go, the richer the ore',
+    menuTitle: '🕳 Abyss Drill',
+    menuDesc: 'An automated drill bores into the abyss around the clock. Deeper depth means more ore per second, ' +
+              'and every 500m reveals a strange new stratum. Tap the screen to boost the drill and spend ore on gear.',
+    menuHint: 'From 1,000m you can Starlight Melt (rebirth) — melt your depth into Abyss Crystals 🔮 for a permanent ' +
+              'multiplier. The cargo lift keeps hauling ore while you are away (8h base).',
+    startNew: '▶ Start Drilling',
+    startCont: '▶ Continue Drilling',
+    phCode: 'Continue code',
+    btnCodeLoad: '🔑 Load from code',
+    codeLoaded: '☁ Save loaded',
+    saveCloud: '☁ Cloud save (v{v})',
+    saveNoCode: 'No save found for that code',
+    saveFail: 'Save load failed: {e}',
+    saveLocal: 'Browser save — saving issues a continue code',
+    codeIssued: '🔑 Continue code issued: {c}',
+    hudRate: '⏱ {n}/sec',
+    upBit: 'Drill Bit', upBitDesc: 'Drill speed ×1.25 — now ×{n}',
+    upEngine: 'Engine', upEngineDesc: 'Ore income ×1.22 — now ×{n}',
+    upCool: 'Coolant', upCoolDesc: 'Boost gauge up to {n}s',
+    upRobot: 'Auto Robot', upRobotDesc: 'Auto-refills +{n}s boost per second',
+    upLift: 'Cargo Lift', upLiftDesc: 'Offline earning cap {n}h',
+    prestigeName: '🌌 Starlight Melt ({n}🔮)',
+    prestigeDesc: 'From {m}m — reset depth for Abyss Crystals (+10% everything each)',
+    prestigeReady: '+{c}🔮 Melt!',
+    strataToast: '🪨 Reached {name}! First-visit bonus +{n}',
+    canvasHint: '⛏ Tap = drill boost ×3',
+    offTitle: '💤 Away Report',
+    offDesc: 'While you were away for {m} min the lift hauled up {n} ore',
+    offCap: '(capped by the {h}h lift limit)',
+    offOk: '⛏ Keep Drilling',
+    prTitle: '🌌 Starlight Melt',
+    prGain: 'Abyss Crystals +{c}🔮 — permanent multiplier ×{m}',
+    prScore: '🏆 Score {s} submitted — depth {d}m · rebirth ×{n}',
+    prRank: 'Rank #{r}!',
+    prNote: 'The drill drank the starlight — speed and income are permanently faster',
+    againBtn: '⛏ Drill Again',
+    backBtn: 'Back to Menu',
+    s0: 'Topsoil', s1: 'Clay Bed', s2: 'Bedrock', s3: 'Fossil Bed', s4: 'Aquifer',
+    s5: 'Crystal Vein', s6: 'Magma Belt', s7: 'Obsidian Crust', s8: 'Abyssal Hollow', s9: 'The Void',
+  },
+});
+var TR = GameI18n.t;
+var API = '/api/v1/games/abyss-drill';
+function $(id) { return document.getElementById(id); }
+var cv = $('rig'), cx = cv.getContext('2d');
+var W = 340, H = 300, CX = 170, HEADY = 96, PXM = 1.1;
+
+/* ── 플랫폼 연동 (이어하기 코드 세이브) ── */
+function token() { return localStorage.getItem('portal_access_token'); }
+function deviceId() {
+  var id = localStorage.getItem('kgd_device_id');
+  if (!id) {
+    id = (crypto && crypto.randomUUID) ? crypto.randomUUID()
+       : String(Date.now()) + '-' + Math.random().toString(16).slice(2);
+    localStorage.setItem('kgd_device_id', id);
+  }
+  return id;
+}
+function api(path, opt) {
+  opt = opt || {};
+  var headers = { 'Content-Type': 'application/json', 'X-Device-Id': deviceId() };
+  var k;
+  for (k in (opt.headers || {})) headers[k] = opt.headers[k];
+  var tk = token();
+  if (tk) headers['Authorization'] = 'Bearer ' + tk;
+  var init = { method: opt.method || 'GET', headers: headers };
+  if (opt.body) init.body = opt.body;
+  return fetch(API + path, init).then(function (res) {
+    return res.json().then(function (b) { return { res: res, body: b }; },
+                           function () { return { res: res, body: null }; });
+  }).then(function (x) {
+    if (!x.res.ok || !x.body || x.body.success === false) {
+      throw new Error((x.body && x.body.error && x.body.error.code) || x.res.status);
+    }
+    return x.body.data;
+  });
+}
+var CODE_KEY = 'abyss_drill_code', LOCAL_KEY = 'abyss_drill_save';
+var saveCode = localStorage.getItem(CODE_KEY) || null, saveVersion = 0;
+function fmtCode(c) { return c ? c.replace(/(.{4})(?=.)/g, '$1-') : ''; }
+function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
+function toast(msg) {
+  var el = $('toast');
+  el.textContent = msg; el.style.opacity = 1;
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function () { el.style.opacity = 0; }, 2600);
+}
+
+/* ── 상태 · 밸런스 ── */
+var S = null, running = false, boostT = 0, tickN = 0;
+var PRESTIGE_MIN = 1000;
+function fresh() {
+  return { v: 1, depth: 0, best: 0, ore: 0, crystals: 0, prestiges: 0, strataMax: 0,
+           up: { bit: 0, engine: 0, cool: 0, robot: 0, lift: 0 }, lastTs: Date.now() };
+}
+var UPKEYS = ['bit', 'engine', 'cool', 'robot', 'lift'];
+var UPS = {
+  bit:    { emoji: '⛏', base: 25,  growth: 1.7,  name: 'upBit',    desc: 'upBitDesc' },
+  engine: { emoji: '⚙', base: 50,  growth: 1.6,  name: 'upEngine', desc: 'upEngineDesc' },
+  cool:   { emoji: '💧', base: 80,  growth: 1.6,  name: 'upCool',   desc: 'upCoolDesc' },
+  robot:  { emoji: '🤖', base: 200, growth: 2.0,  name: 'upRobot',  desc: 'upRobotDesc' },
+  lift:   { emoji: '🛗', base: 400, growth: 2.1,  name: 'upLift',   desc: 'upLiftDesc' },
+};
+/* 지층 — 500m 단위, 색/바위색 */
+var STRATA = [
+  { key: 's0', c: '#2e3a28', r: '#44543a' },
+  { key: 's1', c: '#40332a', r: '#584639' },
+  { key: 's2', c: '#333a46', r: '#48525f' },
+  { key: 's3', c: '#413c2c', r: '#5a533d' },
+  { key: 's4', c: '#1c3a4c', r: '#2a566e' },
+  { key: 's5', c: '#372b52', r: '#4f4177' },
+  { key: 's6', c: '#47201c', r: '#6b2e24' },
+  { key: 's7', c: '#22222e', r: '#333344' },
+  { key: 's8', c: '#122433', r: '#1d3a51' },
+  { key: 's9', c: '#180e28', r: '#2a1a47' },
+];
+function crystalMul() { return 1 + S.crystals * 0.1; }
+function stratumIdx(d) { return Math.min(STRATA.length - 1, Math.floor(d / 500)); }
+function stratumMul() { return Math.pow(1.3, stratumIdx(S.depth)); }
+function hardness(d) { return Math.pow(2, d / 400); }          // 400m마다 지반 2배 단단 — 환생의 벽
+function bitMul() { return Math.pow(1.25, S.up.bit); }
+function engMul() { return Math.pow(1.22, S.up.engine); }
+function boostMax() { return 2 + S.up.cool * 1.2; }
+function robotFill() { return 0.08 * S.up.robot; }
+function speed() { return 0.5 * bitMul() * crystalMul() * (boostT > 0 ? 3 : 1) / hardness(S.depth); }
+function orePerSec() { return (1 + S.depth * 0.03) * engMul() * stratumMul() * crystalMul(); }
+function upCost(k) { return Math.ceil(UPS[k].base * Math.pow(UPS[k].growth, S.up[k])); }
+function liftCapH() { return 8 + S.up.lift * 4; }
+function crystalGain() { return S.depth >= PRESTIGE_MIN ? Math.floor(Math.sqrt(S.depth / 10)) : 0; }
+function scoreNow() { return Math.floor(S.best) + S.prestiges * 500; }
+function fmt(n) {
+  n = Math.floor(n);
+  if (n >= 1e12) return (n / 1e12).toFixed(1) + 'T';
+  if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+  if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+  return String(n);
+}
+
+/* ── 세이브 (golden-forge 패턴 — 서버 이어하기 코드 + localStorage 이중화) ── */
+function localFallback() {
+  $('saveStatus').textContent = TR('saveLocal');
+  showCode();
+  try {
+    var d = JSON.parse(localStorage.getItem(LOCAL_KEY));
+    return d && d.v === 1 ? d : null;
+  } catch (_) { return null; }
+}
+function loadSave(codeOverride) {
+  var code = codeOverride || saveCode;
+  if (token() || code) {
+    return api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''))
+      .then(function (s) {
+        saveVersion = s.version;
+        if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+        $('saveStatus').textContent = TR('saveCloud').replace('{v}', saveVersion);
+        showCode();
+        if (s.data && s.data.v === 1) return s.data;
+        if (codeOverride) toast(TR('saveNoCode'));
+        return null;
+      })
+      .catch(function (e) {
+        $('saveStatus').textContent = TR('saveFail').replace('{e}', e.message);
+        if (codeOverride) return null;
+        return localFallback();
+      });
+  }
+  return Promise.resolve(localFallback());
+}
+function persist() {
+  S.lastTs = Date.now();
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(S));
+  return api('/save', { method: 'PUT', body: JSON.stringify({ data: S, version: saveVersion, code: saveCode }) })
+    .then(function (s) {
+      saveVersion = s.version;
+      var freshCode = !saveCode && s.code;
+      if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
+      if (freshCode) toast(TR('codeIssued').replace('{c}', fmtCode(saveCode)));
+      showCode();
+    })
+    .catch(function (e) {
+      if (e.message !== 'INVALID_INPUT') return;
+      // 버전 충돌 — 서버 버전 재조회 후 1회 재시도
+      return api('/save' + (!token() && saveCode ? '?code=' + encodeURIComponent(saveCode) : ''))
+        .then(function (re) {
+          saveVersion = re.version;
+          return api('/save', { method: 'PUT', body: JSON.stringify({ data: S, version: saveVersion, code: saveCode }) });
+        })
+        .then(function (s2) { saveVersion = s2.version; })
+        .catch(function () {});
+    });
+}
+var persistTimer = null;
+function persistSoon() { clearTimeout(persistTimer); persistTimer = setTimeout(persist, 2500); }
+
+/* ── 렌더 — 시추공 단면 (지층 스크롤 + 드릴) ── */
+var sparks = [], spin = 0;
+function frac(x) { return x - Math.floor(x); }
+function burst(x, y, n) {
+  for (var i = 0; i < n; i++) {
+    sparks.push({ x: x, y: y, vx: (Math.random() - 0.5) * 5, vy: -Math.random() * 3.5 - 1,
+                  life: 1, c: Math.random() < 0.5 ? '#0ea5e9' : '#eab308' });
+  }
+}
+function bitPath() {
+  cx.beginPath();
+  cx.moveTo(CX - 14, HEADY); cx.lineTo(CX + 14, HEADY); cx.lineTo(CX, HEADY + 20);
+  cx.closePath();
+}
+function draw() {
+  requestAnimationFrame(draw);
+  var d = S ? S.depth : 0;
+  var topM = d - HEADY / PXM, botM = d + (H - HEADY) / PXM;
+  cx.fillStyle = '#0c1424'; cx.fillRect(0, 0, W, H);                       // 하늘/기저
+  // 지층 밴드
+  var i0 = Math.max(0, Math.floor(topM / 500)), i1 = Math.max(0, Math.floor(botM / 500)), i;
+  for (i = i0; i <= i1; i++) {
+    var st = STRATA[Math.min(9, i)];
+    var y0 = Math.max(0, HEADY + (i * 500 - d) * PXM);
+    var y1 = (i >= 9) ? H : Math.min(H, HEADY + ((i + 1) * 500 - d) * PXM);
+    if (y1 > y0) { cx.fillStyle = st.c; cx.fillRect(0, y0, W, y1 - y0); }
+    if (i >= 9) break;
+  }
+  // 바위 (심도 기반 결정적 배치)
+  var k0 = Math.max(0, Math.floor(topM / 24)), k1 = Math.floor(botM / 24), kk;
+  for (kk = k0; kk <= k1; kk++) {
+    var m = kk * 24 + 12;
+    if (m < 0) continue;
+    var stR = STRATA[Math.min(9, Math.floor(m / 500))];
+    var h1 = frac(Math.sin(kk * 127.1) * 43758.5), h2 = frac(Math.sin(kk * 311.7) * 12543.3);
+    var rx = 12 + h1 * (W - 34), ry = HEADY + (m - d) * PXM + (h2 - 0.5) * 20;
+    cx.fillStyle = stR.r;
+    cx.fillRect(rx, ry, 5 + h2 * 5, 4 + h1 * 4);
+    if (Math.floor(m / 500) === 6) { cx.fillStyle = 'rgba(239,68,68,.55)'; cx.fillRect(rx + 2, ry + 2, 3, 3); }
+  }
+  // 지표면 + 데릭 (얕을 때만 보임)
+  var surfY = HEADY - d * PXM;
+  if (surfY > 0) {
+    cx.fillStyle = '#3f5a3a'; cx.fillRect(0, surfY - 3, W, 3);
+    cx.strokeStyle = '#4c5a74'; cx.lineWidth = 5;
+    cx.beginPath(); cx.moveTo(CX - 26, surfY); cx.lineTo(CX, surfY - 58); cx.lineTo(CX + 26, surfY); cx.stroke();
+    cx.lineWidth = 1;
+  }
+  // 시추공 (파낸 구멍)
+  var shTop = Math.max(0, surfY);
+  if (HEADY > shTop) {
+    cx.fillStyle = '#0b1120'; cx.fillRect(CX - 23, shTop, 46, HEADY - shTop);
+    cx.fillStyle = '#222b44';
+    cx.fillRect(CX - 23, shTop, 3, HEADY - shTop); cx.fillRect(CX + 20, shTop, 3, HEADY - shTop);
+  }
+  // 100m 마커
+  cx.strokeStyle = 'rgba(219,228,240,.13)'; cx.fillStyle = 'rgba(219,228,240,.45)';
+  cx.font = '10px monospace'; cx.textAlign = 'left';
+  var mm = Math.max(100, Math.ceil(topM / 100) * 100);
+  for (; mm <= botM; mm += 100) {
+    var my = HEADY + (mm - d) * PXM;
+    cx.beginPath(); cx.moveTo(0, my); cx.lineTo(W, my); cx.stroke();
+    cx.fillText(fmt(mm) + 'm', 6, my - 3);
+  }
+  // 파이프 (심도에 따라 커플링이 흘러내리는 모션)
+  cx.fillStyle = '#4c5a74'; cx.fillRect(CX - 7, 0, 14, HEADY - 8);
+  cx.fillStyle = '#3b4763';
+  var off = (d * PXM) % 26, py;
+  for (py = -off; py < HEADY - 10; py += 26) { if (py > -5) cx.fillRect(CX - 7, py, 14, 4); }
+  // 드릴 헤드 + 날
+  cx.fillStyle = '#8a93a8'; cx.fillRect(CX - 16, HEADY - 10, 32, 12);
+  spin += 0.06 + (boostT > 0 ? 0.35 : (running ? 0.12 : 0));
+  if (boostT > 0) {
+    var g = cx.createRadialGradient(CX, HEADY + 12, 4, CX, HEADY + 12, 46);
+    g.addColorStop(0, 'rgba(34,197,94,.4)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    cx.fillStyle = g; cx.fillRect(CX - 50, HEADY - 38, 100, 100);
+  }
+  bitPath();
+  cx.fillStyle = boostT > 0 ? '#22c55e' : '#8a93a8';
+  cx.fill();
+  cx.save(); bitPath(); cx.clip();
+  cx.fillStyle = 'rgba(12,20,36,.55)';
+  var so = (spin * 10) % 8, sy;
+  for (sy = HEADY - 8 + so; sy < HEADY + 20; sy += 8) cx.fillRect(CX - 14, sy, 28, 3);
+  cx.restore();
+  // 불똥
+  if (running && S) {
+    if (boostT > 0 && Math.random() < 0.35) burst(CX + (Math.random() - 0.5) * 20, HEADY + 14, 2);
+    else if (Math.random() < 0.05) burst(CX + (Math.random() - 0.5) * 20, HEADY + 14, 1);
+  }
+  sparks = sparks.filter(function (p) { return (p.life -= 0.03) > 0; });
+  sparks.forEach(function (p) {
+    p.x += p.vx; p.y += p.vy; p.vy += 0.22;
+    cx.globalAlpha = p.life; cx.fillStyle = p.c; cx.fillRect(p.x, p.y, 3, 3); cx.globalAlpha = 1;
+  });
+  // 부스트 게이지
+  var bm = S ? boostMax() : 2;
+  cx.fillStyle = '#1a2238'; cx.fillRect(20, H - 24, W - 40, 8);
+  cx.fillStyle = '#22c55e'; cx.fillRect(20, H - 24, (W - 40) * Math.min(1, boostT / bm), 8);
+  // 지층 이름 + 힌트
+  if (S) {
+    cx.fillStyle = '#dbe4f0'; cx.font = 'bold 12px monospace'; cx.textAlign = 'center';
+    cx.fillText(TR(STRATA[stratumIdx(S.depth)].key) + '  ' + Math.floor(S.depth).toLocaleString() + 'm', CX, 18);
+  }
+  cx.fillStyle = '#7d8ba3'; cx.font = '10px monospace'; cx.textAlign = 'center';
+  cx.fillText(TR('canvasHint'), CX, H - 6);
+}
+
+/* ── UI ── */
+function hud() {
+  $('depthTxt').textContent = '🕳 ' + fmt(S.depth) + 'm';
+  $('oreTxt').textContent = '🪨 ' + fmt(S.ore);
+  $('rateTxt').textContent = TR('hudRate').replace('{n}', fmt(orePerSec()));
+  $('crysTxt').textContent = '🔮 ' + S.crystals + ' (×' + crystalMul().toFixed(1) + ')';
+}
+function upDescText(k) {
+  if (k === 'bit') return TR('upBitDesc').replace('{n}', bitMul().toFixed(2));
+  if (k === 'engine') return TR('upEngineDesc').replace('{n}', engMul().toFixed(2));
+  if (k === 'cool') return TR('upCoolDesc').replace('{n}', boostMax().toFixed(1));
+  if (k === 'robot') return TR('upRobotDesc').replace('{n}', robotFill().toFixed(2));
+  return TR('upLiftDesc').replace('{n}', liftCapH());
+}
+function renderShop() {
+  var shop = $('shop');
+  shop.innerHTML = '';
+  UPKEYS.forEach(function (k) {
+    var u = UPS[k];
+    var b = document.createElement('button');
+    b.innerHTML = '<span><b>' + u.emoji + ' ' + TR(u.name) + ' Lv.' + S.up[k] + '</b><small>' +
+      upDescText(k) + '</small></span><span class="price">' + fmt(upCost(k)) + '</span>';
+    b.disabled = S.ore < upCost(k);
+    b.onclick = function () {
+      var cost = upCost(k);
+      if (S.ore < cost) return;
+      S.ore -= cost; S.up[k] += 1;
+      renderShop(); hud(); persistSoon();
+    };
+    shop.appendChild(b);
+  });
+  var pb = document.createElement('button');
+  pb.id = 'prestigeBtn';
+  var can = S.depth >= PRESTIGE_MIN;
+  pb.innerHTML = '<span><b>' + TR('prestigeName').replace('{n}', S.crystals) + '</b><small>' +
+    TR('prestigeDesc').replace('{m}', PRESTIGE_MIN.toLocaleString()) + '</small></span>' +
+    '<span class="price">' + (can ? TR('prestigeReady').replace('{c}', crystalGain())
+                                  : fmt(S.depth) + '/' + fmt(PRESTIGE_MIN) + 'm') + '</span>';
+  pb.disabled = !can;
+  pb.onclick = doPrestige;
+  shop.appendChild(pb);
+}
+function setStartLabel() {
+  var cont = S && (S.depth > 0 || S.ore > 0 || S.prestiges > 0);
+  $('startBtn').textContent = TR(cont ? 'startCont' : 'startNew');
+}
+
+/* ── 지층 첫 도달 보너스 ── */
+function strataBonus(idx) {
+  var bonus = Math.round(80 * Math.pow(2.5, idx));
+  S.ore += bonus;
+  toast(TR('strataToast').replace('{name}', TR(STRATA[idx].key)).replace('{n}', fmt(bonus)));
+  burst(CX, HEADY + 14, 12);
+}
+
+/* ── 환생 — 별빛 융해 ── */
+function doPrestige() {
+  if (S.depth < PRESTIGE_MIN) return;
+  var gained = crystalGain();
+  var keepB = Math.max(S.best, S.depth);
+  var keepC = S.crystals + gained, keepP = S.prestiges + 1;
+  S = fresh();
+  S.crystals = keepC; S.prestiges = keepP; S.best = keepB;
+  boostT = 0;
+  var score = scoreNow();
+  var detail = '심도 ' + Math.floor(keepB) + 'm, 환생 ' + keepP + '회';
+  $('prGain').textContent = TR('prGain').replace('{c}', gained).replace('{m}', crystalMul().toFixed(1));
+  $('prScore').textContent = TR('prScore').replace('{s}', score.toLocaleString())
+    .replace('{d}', Math.floor(keepB).toLocaleString()).replace('{n}', keepP);
+  $('prRank').textContent = '';
+  if (window.GameRank) {
+    GameRank.submit('abyss-drill', score, detail).then(function (res) {
+      if (res && res.rank) $('prRank').textContent = TR('prRank').replace('{r}', res.rank);
+    });
+  }
+  running = false;
+  $('prestigePanel').hidden = false;
+  hud(); renderShop(); persist();
+}
+$('againBtn').onclick = function () { $('prestigePanel').hidden = true; running = true; };
+$('backBtn').onclick = function () {
+  $('prestigePanel').hidden = true;
+  running = false;
+  setStartLabel();
+  $('menu').hidden = false;
+};
+
+/* ── 탭 부스트 (+진동) ── */
+cv.addEventListener('pointerdown', function () {
+  if (!S || !running) return;
+  boostT = Math.min(boostMax(), boostT + 0.6);
+  var dig = 0.3 * bitMul() * crystalMul() / hardness(S.depth);   // 즉발 수동 시추
+  S.depth += dig;
+  if (S.depth > S.best) S.best = S.depth;
+  if (navigator.vibrate) navigator.vibrate(10);
+  burst(CX + (Math.random() - 0.5) * 24, HEADY + 12, 5);
+  hud(); persistSoon();
+});
+
+/* ── 루프 ── */
+setInterval(function () {
+  if (!S || !running) return;
+  var dt = 0.5;
+  if (boostT > 0) boostT -= dt;
+  boostT = Math.min(boostMax(), Math.max(0, boostT + robotFill() * dt));
+  S.depth += speed() * dt;
+  if (S.depth > S.best) S.best = S.depth;
+  var idx = stratumIdx(S.depth), i;
+  if (idx > S.strataMax) {
+    for (i = S.strataMax + 1; i <= idx; i++) strataBonus(i);
+    S.strataMax = idx;
+  }
+  S.ore += orePerSec() * dt;
+  hud();
+  if ((tickN = (tickN + 1) % 4) === 0) renderShop();             // 버튼 활성화 갱신 (2초마다)
+}, 500);
+setInterval(function () { if (S && running) persist(); }, 30000);  // 30초 자동 저장
+addEventListener('beforeunload', function () {
+  if (!S) return;
+  if (running) S.lastTs = Date.now();
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(S));
+});
+
+/* ── 시작 — 오프라인 정산은 시추 재개 시점에 (메뉴 대기 시간도 포함) ── */
+$('startBtn').onclick = function () {
+  var now = Date.now();
+  var capSec = liftCapH() * 3600;
+  var away = Math.min(capSec, Math.max(0, (now - (S.lastTs || now)) / 1000));
+  var earned = Math.floor(orePerSec() * away);
+  S.lastTs = now;
+  $('menu').hidden = true;
+  if (away >= 120 && earned > 0) {
+    S.ore += earned;
+    var msg = TR('offDesc').replace('{m}', String(Math.round(away / 60))).replace('{n}', fmt(earned));
+    if (away >= capSec) msg += ' ' + TR('offCap').replace('{h}', liftCapH());
+    $('offDesc').textContent = msg;
+    $('offPanel').hidden = false;
+  } else {
+    running = true;
+  }
+  hud(); renderShop(); persistSoon();
+};
+$('offOkBtn').onclick = function () { $('offPanel').hidden = true; running = true; };
+$('codeLoadBtn').onclick = function () {
+  var raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (raw.length < 8) return;
+  loadSave(raw).then(function (d) {
+    if (d) {
+      saveCode = raw;
+      localStorage.setItem(CODE_KEY, raw);
+      boot(d);
+      toast(TR('codeLoaded'));
+    }
+  });
+};
+function boot(saved) {
+  S = (saved && saved.up) ? saved : fresh();
+  boostT = 0; running = false;
+  $('offPanel').hidden = true;
+  $('prestigePanel').hidden = true;
+  $('menu').hidden = false;
+  setStartLabel(); hud(); renderShop();
+}
+loadSave().then(boot);
+requestAnimationFrame(draw);
+</script>
+<script src="../lib/rank.js"></script>
+<script>
+GameRank.copyButton(function () { return typeof saveCode !== 'undefined' ? saveCode : null; });
+GameRank.autoPanel('abyss-drill');
+</script>
+</body>
+</html>

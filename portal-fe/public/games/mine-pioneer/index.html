@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">💣 지뢰 개척단</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; min-height:100vh; user-select:none; padding:14px 8px 30px;
+         touch-action:manipulation; }
+  h1.top { font-size:19px; color:#0ea5e9; margin:6px 0 2px; text-shadow:1px 1px 0 #000; }
+  .sub { font-size:11px; color:#8e9db0; margin-bottom:10px; text-align:center; }
+  #hud { display:flex; gap:7px; flex-wrap:wrap; justify-content:center; margin-bottom:10px; }
+  .chip { background:#1a2238; border-radius:8px; padding:6px 10px; font-size:12px; color:#c2cedc; }
+  .chip b { color:#0ea5e9; }
+  #lifeTxt { color:#ef4444; letter-spacing:2px; }
+  #board { display:grid; gap:1px; background:#0c1424; border:2px solid #2c3550; border-radius:6px;
+           touch-action:none; -webkit-touch-callout:none; }
+  .cell { width:var(--cs); height:var(--cs); background:#2c3550; display:flex; align-items:center;
+          justify-content:center; font-size:calc(var(--cs) * .52); font-weight:bold; cursor:pointer; }
+  .cell.o { background:#1a2238; cursor:default; }
+  .cell:not(.o):hover { filter:brightness(1.18); }
+  .cell.f, .cell.x { font-size:calc(var(--cs) * .5); }
+  .cell.x { box-shadow:inset 0 0 0 2px #ef4444; }
+  .cell.dead { background:#ef4444; }
+  .cell.safe { color:#22c55e; font-size:calc(var(--cs) * .72); }
+  .n1 { color:#0ea5e9; } .n2 { color:#22c55e; } .n3 { color:#ef4444; } .n4 { color:#c084fc; }
+  .n5 { color:#eab308; } .n6 { color:#2dd4bf; } .n7 { color:#f97316; } .n8 { color:#e6ecf2; }
+  #msg { min-height:20px; font-size:12.5px; color:#eab308; margin:8px 0 2px; text-align:center; }
+  #ctl { display:flex; gap:8px; margin:4px 0; align-items:center; flex-wrap:wrap; justify-content:center; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:12px 18px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#222b44; color:#e6ecf2; }
+  button.tool { background:#222b44; color:#e6ecf2; border:2px solid #2c3550; padding:10px 14px;
+                border-radius:8px; font-family:inherit; font-weight:bold; font-size:13px; cursor:pointer; }
+  button.tool.on { border-color:#0ea5e9; background:#2c3550; }
+  button.tool:disabled { opacity:.4; cursor:default; }
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:13px; text-align:center; z-index:10; padding:20px; overflow:auto; }
+  .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:480px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .stat { background:#1a2238; border-radius:8px; padding:8px 14px; font-size:12px; }
+  .stat b { color:#0ea5e9; font-size:17px; display:block; }
+</style>
+</head>
+<body>
+<h1 class="top" data-i18n="title">💣 지뢰 개척단</h1>
+<div class="sub" data-i18n="ctlHint">탭=열기 · 길게 누르기=깃발 · 데스크톱: 좌클릭/우클릭</div>
+
+<div id="hud">
+  <div class="chip">💣 <b id="mineTxt">0</b></div>
+  <div class="chip">⏱ <b id="timeTxt">0:00</b></div>
+  <div class="chip" id="boardChip"><span data-i18n="boardLabel">판</span> <b id="boardTxt">1</b></div>
+  <div class="chip" id="lifeChip"><b id="lifeTxt">♥♥♥</b></div>
+</div>
+
+<div id="board"></div>
+<div id="msg"></div>
+
+<div id="ctl">
+  <button class="tool on" id="openTool">⛏ <span data-i18n="modeOpen">열기</span></button>
+  <button class="tool" id="flagTool">🚩 <span data-i18n="modeFlag">깃발</span></button>
+  <button class="tool" id="scanTool" hidden>📡 <span data-i18n="scanBtn">스캔</span> <b id="scanTxt">×1</b></button>
+</div>
+
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">💣 지뢰 개척단</h1>
+  <p data-i18n="menuDesc">지뢰밭을 뚫고 나아가는 연속 돌파 로그라이트. 판을 깰 때마다 다음 판의 지뢰가 늘어난다
+    (9×9 → 14×14). 목숨은 3개 — 지뢰를 밟으면 목숨 1을 잃고 그 칸은 깃발로 봉인된 채 계속된다.
+    판마다 스캔 1회로 3×3 영역의 안전 여부를 밝힐 수 있다. 판 사이에 퇴각하면 남은 목숨이 보너스 점수가 된다.</p>
+  <p class="small" data-i18n="scoreHint">점수 = 돌파한 판 ×500 + 남은 목숨 ×300 − 시간(초)</p>
+  <p class="small" id="bestTxt"></p>
+  <div class="row">
+    <button class="act" id="pioneerBtn" data-i18n="pioneerBtn">▶ 개척 출정</button>
+  </div>
+  <div class="row">
+    <button class="act ghost" id="easyBtn" data-i18n="easyBtn">클래식 초급 9×9</button>
+    <button class="act ghost" id="midBtn" data-i18n="midBtn">클래식 중급 16×16</button>
+  </div>
+</div>
+
+<div class="panel" id="clearPanel" hidden>
+  <h1 id="clearTitle"></h1>
+  <p id="clearInfo"></p>
+  <div class="row">
+    <div class="stat"><b id="clearScore">0</b><span data-i18n="curScore">현재 점수</span></div>
+    <div class="stat"><b id="clearLives">♥♥♥</b><span data-i18n="statLives">남은 목숨</span></div>
+    <div class="stat"><b id="clearTime">0:00</b><span data-i18n="statTime">걸린 시간</span></div>
+  </div>
+  <p class="small" data-i18n="scoreHint">점수 = 돌파한 판 ×500 + 남은 목숨 ×300 − 시간(초)</p>
+  <div class="row">
+    <button class="act" id="nextBtn" data-i18n="nextBtn">▶ 계속 개척</button>
+    <button class="act ghost" id="retreatBtn" data-i18n="retreatBtn">🏳 퇴각 — 점수 확정</button>
+  </div>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <h1 id="endTitle"></h1>
+  <div class="row">
+    <div class="stat" id="chipBoards"><b id="endBoards">0</b><span data-i18n="statBoards">돌파한 판</span></div>
+    <div class="stat" id="chipLives"><b id="endLives">♡♡♡</b><span data-i18n="statLives">남은 목숨</span></div>
+    <div class="stat"><b id="endTime">0:00</b><span data-i18n="statTime">걸린 시간</span></div>
+    <div class="stat" id="chipScore"><b id="endScore">0</b><span data-i18n="statScore">점수</span></div>
+  </div>
+  <div class="row">
+    <button class="act" id="againBtn" data-i18n="againBtn">⟲ 다시 도전</button>
+    <button class="act ghost" id="backBtn" data-i18n="backBtn">처음으로</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '💣 지뢰 개척단', menuTitle: '💣 지뢰 개척단',
+    menuDesc: '지뢰밭을 뚫고 나아가는 연속 돌파 로그라이트. 판을 깰 때마다 다음 판의 지뢰가 늘어난다 (9×9 → 14×14). 목숨은 3개 — 지뢰를 밟으면 목숨 1을 잃고 그 칸은 깃발로 봉인된 채 계속된다. 판마다 스캔 1회로 3×3 영역의 안전 여부를 밝힐 수 있다. 판 사이에 퇴각하면 남은 목숨이 보너스 점수가 된다.',
+    ctlHint: '탭=열기 · 길게 누르기=깃발 · 데스크톱: 좌클릭/우클릭',
+    scoreHint: '점수 = 돌파한 판 ×500 + 남은 목숨 ×300 − 시간(초)',
+    pioneerBtn: '▶ 개척 출정', easyBtn: '클래식 초급 9×9 · 💣10', midBtn: '클래식 중급 16×16 · 💣40',
+    modeOpen: '열기', modeFlag: '깃발', scanBtn: '스캔', boardLabel: '판',
+    lifeLost: '💥 지뢰! 목숨 -1 — 그 칸은 봉인됐다', scanArm: '📡 스캔할 지점을 탭하세요',
+    scanFirst: '스캔은 첫 칸을 연 뒤에 쓸 수 있다', scanDone: '📡 스캔 완료 — 지뢰는 🚩, 안전은 •',
+    clearTitle: '🎉 {n}판 돌파!', nextInfo: '다음 판: {s}×{s} · 💣 {m}',
+    curScore: '현재 점수', nextBtn: '▶ 계속 개척', retreatBtn: '🏳 퇴각 — 점수 확정',
+    endDead: '💥 개척단 전멸…', endRetreat: '🏳 무사 귀환!', endWin: '🎉 소해 완료!', endLose: '💥 펑! 다음 기회에',
+    statBoards: '돌파한 판', statLives: '남은 목숨', statTime: '걸린 시간', statScore: '점수',
+    againBtn: '⟲ 다시 도전', backBtn: '처음으로',
+    bestLine: '🏅 최고 기록: {s}점 · {n}판 돌파', bestNone: '아직 기록 없음 — 첫 출정을 떠나라!',
+  },
+  en: {
+    title: '💣 Mine Pioneer', menuTitle: '💣 Mine Pioneer',
+    menuDesc: 'A run-based roguelite across ever-deadlier minefields. Each cleared board adds mines to the next (9×9 up to 14×14). You carry 3 lives — stepping on a mine costs one and seals that cell with a flag. Once per board, scan a 3×3 area to reveal what is safe. Retreat between boards to bank your remaining lives as bonus score.',
+    ctlHint: 'Tap=open · Long-press=flag · Desktop: left/right click',
+    scoreHint: 'Score = boards ×500 + lives ×300 − time (sec)',
+    pioneerBtn: '▶ Pioneer Run', easyBtn: 'Classic Easy 9×9 · 💣10', midBtn: 'Classic Medium 16×16 · 💣40',
+    modeOpen: 'Open', modeFlag: 'Flag', scanBtn: 'Scan', boardLabel: 'Board',
+    lifeLost: '💥 Mine! -1 life — the cell is sealed', scanArm: '📡 Tap a spot to scan',
+    scanFirst: 'Open a first cell before scanning', scanDone: '📡 Scan complete — mines 🚩, safe •',
+    clearTitle: '🎉 Board {n} cleared!', nextInfo: 'Next board: {s}×{s} · 💣 {m}',
+    curScore: 'Current score', nextBtn: '▶ Push on', retreatBtn: '🏳 Retreat — bank score',
+    endDead: '💥 The expedition falls…', endRetreat: '🏳 Safe return!', endWin: '🎉 Field cleared!', endLose: '💥 Boom! Better luck next time',
+    statBoards: 'Boards cleared', statLives: 'Lives left', statTime: 'Time', statScore: 'Score',
+    againBtn: '⟲ Try again', backBtn: 'Menu',
+    bestLine: '🏅 Best: {s} pts · {n} boards', bestNone: 'No record yet — set out on your first run!',
+  },
+});
+var TR = GameI18n.t;
+
+var SLUG = 'mine-pioneer', BEST_KEY = 'mine-pioneer_best', LONG_MS = 400;
+
+var mode, rows, cols, mineCnt;
+var mineG, adjG, stG, safeG;          // stG: 0 숨김 1 열림 2 깃발 3 봉인(밟은 지뢰)
+var placed, flags, safeLeft, lives, boardNo, cleared;
+var elapsed = 0, segStart = 0, clockOn = false, timerIv = null;
+var playing = false, flagMode = false, scanMode = false, scansLeft = 0, deadCell = null;
+var classicCfg = null, msgTimer = null;
+
+var boardEl = document.getElementById('board');
+var msgEl = document.getElementById('msg');
+
+function fmtTime(s) { return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+function fill2d(v) {
+  var g = [], r, c;
+  for (r = 0; r < rows; r++) { g.push([]); for (c = 0; c < cols; c++) g[r].push(v); }
+  return g;
+}
+// 개척 모드 진행: 판마다 지뢰 +2 (최대 40), 지뢰 수에 맞춰 9×9 → 12×12 → 14×14 확장
+function boardCfg(n) {
+  var m = Math.min(40, 10 + (n - 1) * 2);
+  var s = m <= 16 ? 9 : (m <= 28 ? 12 : 14);
+  return { rows: s, cols: s, mines: m };
+}
+function eachNb(r, c, fn) {
+  for (var dr = -1; dr <= 1; dr++) for (var dc = -1; dc <= 1; dc++) {
+    if (dr === 0 && dc === 0) continue;
+    var rr = r + dr, cc = c + dc;
+    if (rr >= 0 && cc >= 0 && rr < rows && cc < cols) fn(rr, cc);
+  }
+}
+function heartsStr() {
+  var s = '', i;
+  for (i = 0; i < 3; i++) s += i < lives ? '♥' : '♡';
+  return s;
+}
+function flashMsg(t) {
+  msgEl.textContent = t;
+  clearTimeout(msgTimer);
+  if (t) msgTimer = setTimeout(function () { msgEl.textContent = ''; }, 2400);
+}
+
+function startClock() { segStart = Date.now(); clockOn = true; clearInterval(timerIv); timerIv = setInterval(tick, 500); tick(); }
+function pauseClock() {
+  if (!clockOn) return;
+  elapsed += Date.now() - segStart; clockOn = false;
+  clearInterval(timerIv); tick();
+}
+function totalSec() { return Math.floor((elapsed + (clockOn ? Date.now() - segStart : 0)) / 1000); }
+function tick() { document.getElementById('timeTxt').textContent = fmtTime(totalSec()); }
+
+function startRun(m, cfg) {
+  mode = m; cleared = 0; boardNo = 1;
+  lives = m === 'pioneer' ? 3 : 1;
+  elapsed = 0;
+  document.getElementById('menu').hidden = true;
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('clearPanel').hidden = true;
+  startBoard(cfg);
+  startClock();
+}
+
+function startBoard(cfg) {
+  rows = cfg.rows; cols = cfg.cols; mineCnt = cfg.mines;
+  mineG = fill2d(0); adjG = fill2d(0); stG = fill2d(0); safeG = fill2d(0);
+  placed = false; flags = 0; safeLeft = rows * cols - mineCnt;
+  scansLeft = mode === 'pioneer' ? 1 : 0;
+  scanMode = false; flagMode = false; deadCell = null; playing = true;
+  flashMsg('');
+  sizeCells(); render(); updateHud(); updateTools();
+}
+
+// 첫 클릭 안전 보장 — 클릭 칸을 제외하고 지뢰 배치
+function placeMines(sr, sc) {
+  var pool = [], r, c, i;
+  for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) if (!(r === sr && c === sc)) pool.push(r * cols + c);
+  for (i = 0; i < mineCnt; i++) {
+    var j = i + Math.floor(Math.random() * (pool.length - i));
+    var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
+    mineG[Math.floor(pool[i] / cols)][pool[i] % cols] = 1;
+  }
+  for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) {
+    if (mineG[r][c]) continue;
+    var n = 0;
+    eachNb(r, c, function (rr, cc) { if (mineG[rr][cc]) n++; });
+    adjG[r][c] = n;
+  }
+  placed = true;
+}
+
+function floodOpen(r, c) {
+  var stack = [[r, c]];
+  while (stack.length) {
+    var p = stack.pop(), rr = p[0], cc = p[1];
+    if (stG[rr][cc] !== 0) continue;
+    stG[rr][cc] = 1; safeLeft--;
+    if (adjG[rr][cc] === 0) {
+      eachNb(rr, cc, function (nr, nc) { if (stG[nr][nc] === 0 && !mineG[nr][nc]) stack.push([nr, nc]); });
+    }
+  }
+}
+
+function openCell(r, c) {
+  if (!playing || stG[r][c] !== 0) return;
+  if (!placed) placeMines(r, c);
+  if (mineG[r][c]) { hitMine(r, c); return; }
+  floodOpen(r, c);
+  render(); updateHud();
+  if (safeLeft === 0) boardDone();
+}
+
+function toggleFlag(r, c) {
+  if (!playing || stG[r][c] === 1 || stG[r][c] === 3) return;
+  if (stG[r][c] === 2) { stG[r][c] = 0; flags--; }
+  else { stG[r][c] = 2; flags++; }
+  render(); updateHud();
+}
+
+function revealMines() {
+  for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+    if (mineG[r][c] && stG[r][c] === 0) stG[r][c] = 1;
+  }
+}
+
+function hitMine(r, c) {
+  if (navigator.vibrate) navigator.vibrate([70, 40, 90]);
+  if (mode === 'classic') {
+    deadCell = [r, c]; stG[r][c] = 1;
+    playing = false; pauseClock(); revealMines(); render();
+    setTimeout(function () { showEndClassic(false); }, 700);
+    return;
+  }
+  lives--;
+  stG[r][c] = 3; flags++;      // 밟은 지뢰는 깃발 봉인 — 카운터에도 반영
+  flashMsg(TR('lifeLost'));
+  render(); updateHud();
+  if (lives <= 0) {
+    playing = false; pauseClock(); revealMines(); render();
+    setTimeout(function () { endRun(false); }, 700);
+  }
+}
+
+// 스캔: 3×3 안전 여부 공개 — 지뢰는 자동 깃발, 안전한 숨김 칸은 • 표시
+function scanAt(r, c) {
+  if (scansLeft <= 0) return;
+  if (!placed) { scanMode = false; updateTools(); flashMsg(TR('scanFirst')); return; }
+  for (var dr = -1; dr <= 1; dr++) for (var dc = -1; dc <= 1; dc++) {
+    var rr = r + dr, cc = c + dc;
+    if (rr < 0 || cc < 0 || rr >= rows || cc >= cols) continue;
+    if (mineG[rr][cc]) { if (stG[rr][cc] === 0) { stG[rr][cc] = 2; flags++; } }
+    else if (stG[rr][cc] === 0) safeG[rr][cc] = 1;
+  }
+  scansLeft = 0; scanMode = false;
+  if (navigator.vibrate) navigator.vibrate(25);
+  flashMsg(TR('scanDone'));
+  render(); updateHud(); updateTools();
+}
+
+function boardDone() {
+  playing = false; pauseClock();
+  cleared++;
+  for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) {
+    if (mineG[r][c] && stG[r][c] === 0) { stG[r][c] = 2; flags++; }
+  }
+  render(); updateHud();
+  if (mode === 'classic') { setTimeout(function () { showEndClassic(true); }, 550); return; }
+  setTimeout(showClearPanel, 550);
+}
+
+function runScore() { return Math.max(0, cleared * 500 + lives * 300 - totalSec()); }
+
+function showClearPanel() {
+  var next = boardCfg(boardNo + 1);
+  document.getElementById('clearTitle').textContent = TR('clearTitle').replace('{n}', boardNo);
+  document.getElementById('clearInfo').textContent =
+    TR('nextInfo').replace(/\{s\}/g, next.rows).replace('{m}', next.mines);
+  document.getElementById('clearScore').textContent = runScore().toLocaleString();
+  document.getElementById('clearLives').textContent = heartsStr();
+  document.getElementById('clearTime').textContent = fmtTime(totalSec());
+  document.getElementById('clearPanel').hidden = false;
+}
+
+function loadBest() {
+  try {
+    var v = JSON.parse(localStorage.getItem(BEST_KEY));
+    return v && typeof v.score === 'number' ? v : null;
+  } catch (e) { return null; }
+}
+
+// 점수 = 돌파한 판 × 500 + 남은 목숨 × 300 − 총 시간(초)
+function endRun(retreated) {
+  var score = runScore();
+  var b = loadBest();
+  if (!b || score > b.score) {
+    try { localStorage.setItem(BEST_KEY, JSON.stringify({ score: score, boards: cleared })); } catch (e) {}
+  }
+  document.getElementById('endTitle').textContent = retreated ? TR('endRetreat') : TR('endDead');
+  document.getElementById('chipBoards').style.display = '';
+  document.getElementById('chipLives').style.display = '';
+  document.getElementById('chipScore').style.display = '';
+  document.getElementById('endBoards').textContent = cleared;
+  document.getElementById('endLives').textContent = heartsStr();
+  document.getElementById('endTime').textContent = fmtTime(totalSec());
+  document.getElementById('endScore').textContent = score.toLocaleString();
+  if (score > 0) GameRank.submit(SLUG, score, '판 ' + cleared + ', ♥' + lives);
+  document.getElementById('endPanel').hidden = false;
+}
+
+function showEndClassic(won) {
+  document.getElementById('endTitle').textContent = won ? TR('endWin') : TR('endLose');
+  document.getElementById('chipBoards').style.display = 'none';
+  document.getElementById('chipLives').style.display = 'none';
+  document.getElementById('chipScore').style.display = 'none';
+  document.getElementById('endTime').textContent = fmtTime(totalSec());
+  document.getElementById('endPanel').hidden = false;
+}
+
+function sizeCells() {
+  var avail = Math.min(620, window.innerWidth - 12);
+  var cs = Math.floor((avail - 6 - (cols - 1)) / cols);
+  cs = Math.min(cs, Math.floor((window.innerHeight - 240) / rows), 34);
+  document.body.style.setProperty('--cs', Math.max(17, cs) + 'px');
+}
+
+function render() {
+  boardEl.style.gridTemplateColumns = 'repeat(' + cols + ', var(--cs))';
+  var html = '', r, c;
+  for (r = 0; r < rows; r++) for (c = 0; c < cols; c++) {
+    var st = stG[r][c], cls = 'cell', txt = '';
+    if (st === 1) {
+      if (mineG[r][c]) {
+        cls += ' o m' + (deadCell && deadCell[0] === r && deadCell[1] === c ? ' dead' : '');
+        txt = '💣';
+      } else {
+        var n = adjG[r][c];
+        cls += ' o' + (n ? ' n' + n : '');
+        txt = n || '';
+      }
+    } else if (st === 2) { cls += ' f'; txt = '🚩'; }
+    else if (st === 3) { cls += ' x'; txt = '💥'; }
+    else if (safeG[r][c]) { cls += ' safe'; txt = '•'; }
+    html += '<div class="' + cls + '" data-r="' + r + '" data-c="' + c + '">' + txt + '</div>';
+  }
+  boardEl.innerHTML = html;
+}
+
+function updateHud() {
+  document.getElementById('mineTxt').textContent = mineCnt - flags;
+  document.getElementById('boardChip').hidden = mode !== 'pioneer';
+  document.getElementById('lifeChip').hidden = mode !== 'pioneer';
+  document.getElementById('boardTxt').textContent = boardNo;
+  document.getElementById('lifeTxt').textContent = heartsStr();
+}
+
+function updateTools() {
+  document.getElementById('openTool').className = 'tool' + (!flagMode && !scanMode ? ' on' : '');
+  document.getElementById('flagTool').className = 'tool' + (flagMode && !scanMode ? ' on' : '');
+  var sc = document.getElementById('scanTool');
+  sc.hidden = mode !== 'pioneer';
+  sc.className = 'tool' + (scanMode ? ' on' : '');
+  sc.disabled = scansLeft <= 0;
+  document.getElementById('scanTxt').textContent = '×' + scansLeft;
+}
+
+// ── 입력: 탭=열기, 400ms 길게=깃발(진동), 우클릭=깃발, 하단 모드 토글 ──
+var pressTimer = null, pressRC = null, longFired = false, startX = 0, startY = 0, lastTouch = 0;
+
+function cellAt(e) {
+  var t = e.target;
+  while (t && t !== boardEl) {
+    if (t.classList && t.classList.contains('cell')) return t;
+    t = t.parentNode;
+  }
+  return null;
+}
+boardEl.addEventListener('pointerdown', function (e) {
+  if (e.pointerType === 'touch') lastTouch = Date.now();
+  if (!playing || e.button === 2) return;
+  var cell = cellAt(e);
+  if (!cell) return;
+  pressRC = [+cell.getAttribute('data-r'), +cell.getAttribute('data-c')];
+  startX = e.clientX; startY = e.clientY; longFired = false;
+  clearTimeout(pressTimer);
+  pressTimer = setTimeout(function () {
+    longFired = true;
+    if (navigator.vibrate) navigator.vibrate(30);
+    if (pressRC) toggleFlag(pressRC[0], pressRC[1]);
+  }, LONG_MS);
+  e.preventDefault();
+});
+boardEl.addEventListener('pointermove', function (e) {
+  if (!pressRC) return;
+  if (Math.abs(e.clientX - startX) > 12 || Math.abs(e.clientY - startY) > 12) {
+    clearTimeout(pressTimer); pressRC = null;
+  }
+});
+window.addEventListener('pointerup', function (e) {
+  clearTimeout(pressTimer);
+  if (e.pointerType === 'touch') lastTouch = Date.now();
+  if (!pressRC) return;
+  var rc = pressRC; pressRC = null;
+  if (longFired) { longFired = false; return; }
+  if (!playing) return;
+  if (scanMode) { scanAt(rc[0], rc[1]); return; }
+  if (flagMode) { toggleFlag(rc[0], rc[1]); return; }
+  openCell(rc[0], rc[1]);
+});
+boardEl.addEventListener('pointercancel', function () { clearTimeout(pressTimer); pressRC = null; });
+boardEl.addEventListener('contextmenu', function (e) {
+  e.preventDefault();
+  if (!playing || Date.now() - lastTouch < 800) return;   // 터치 길게 누르기와 중복 방지
+  var cell = cellAt(e);
+  if (cell) toggleFlag(+cell.getAttribute('data-r'), +cell.getAttribute('data-c'));
+});
+
+document.getElementById('openTool').onclick = function () { flagMode = false; scanMode = false; updateTools(); };
+document.getElementById('flagTool').onclick = function () { flagMode = true; scanMode = false; updateTools(); };
+document.getElementById('scanTool').onclick = function () {
+  if (!playing || scansLeft <= 0) return;
+  scanMode = !scanMode;
+  if (scanMode) { flagMode = false; flashMsg(TR('scanArm')); }
+  updateTools();
+};
+
+document.getElementById('pioneerBtn').onclick = function () { startRun('pioneer', boardCfg(1)); };
+document.getElementById('easyBtn').onclick = function () {
+  classicCfg = { rows: 9, cols: 9, mines: 10 }; startRun('classic', classicCfg);
+};
+document.getElementById('midBtn').onclick = function () {
+  classicCfg = { rows: 16, cols: 16, mines: 40 }; startRun('classic', classicCfg);
+};
+document.getElementById('nextBtn').onclick = function () {
+  boardNo++;
+  document.getElementById('clearPanel').hidden = true;
+  startBoard(boardCfg(boardNo));
+  startClock();
+};
+document.getElementById('retreatBtn').onclick = function () {
+  document.getElementById('clearPanel').hidden = true;
+  endRun(true);
+};
+document.getElementById('againBtn').onclick = function () {
+  document.getElementById('endPanel').hidden = true;
+  if (mode === 'pioneer') startRun('pioneer', boardCfg(1));
+  else startRun('classic', classicCfg);
+};
+document.getElementById('backBtn').onclick = function () {
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('clearPanel').hidden = true;
+  document.getElementById('menu').hidden = false;
+  refreshMenu();
+};
+
+function refreshMenu() {
+  var b = loadBest();
+  document.getElementById('bestTxt').textContent = b
+    ? TR('bestLine').replace('{s}', b.score.toLocaleString()).replace('{n}', b.boards)
+    : TR('bestNone');
+}
+window.addEventListener('resize', function () { if (rows) sizeCells(); });
+refreshMenu();
+</script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('mine-pioneer');</script>
+</body>
+</html>

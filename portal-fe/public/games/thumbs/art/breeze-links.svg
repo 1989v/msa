@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">
+  <rect width="320" height="180" fill="#0c1424"/>
+  <!-- 페어웨이 -->
+  <rect x="24" y="38" width="272" height="96" rx="10" fill="#1a3a2f"/>
+  <rect x="24" y="64" width="272" height="22" fill="#183628"/>
+  <rect x="24" y="108" width="272" height="22" fill="#183628"/>
+  <rect x="24" y="38" width="272" height="96" rx="10" fill="none" stroke="#233457" stroke-width="5"/>
+  <!-- 모래 벙커 -->
+  <ellipse cx="150" cy="112" rx="26" ry="12" fill="#3d3524" stroke="#241f12" stroke-width="2"/>
+  <!-- 홀컵 + 깃발 -->
+  <ellipse cx="246" cy="96" rx="11" ry="5" fill="#040910" stroke="#2a3a5c" stroke-width="2"/>
+  <rect x="244" y="46" width="3" height="50" fill="#c8d2e0"/>
+  <path d="M247 46 L282 55 L247 64 Z" fill="#ef4444"/>
+  <!-- 공 + 조준선 -->
+  <circle cx="70" cy="96" r="8" fill="#eef3f8"/>
+  <circle cx="67" cy="93" r="2.5" fill="#ffffff"/>
+  <path d="M84 96 L110 96 M118 96 L144 96 M152 96 L178 96 M186 96 L206 96" stroke="#eab308" stroke-width="3" stroke-linecap="round"/>
+  <path d="M206 90 L220 96 L206 102 Z" fill="#eab308"/>
+  <!-- 바람 스트릭 -->
+  <g stroke="#0ea5e9" stroke-width="2.5" stroke-linecap="round" opacity=".75">
+    <path d="M40 22 q14 -6 28 0 q10 4 20 -2"/>
+    <path d="M210 26 q14 -6 28 0 q10 4 20 -2"/>
+    <path d="M120 158 q14 -6 28 0 q10 4 20 -2"/>
+  </g>
+  <text x="160" y="172" font-family="monospace" font-size="17" font-weight="bold" fill="#7cd6ff" text-anchor="middle">바람 골프장</text>
+</svg>

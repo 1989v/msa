@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c1424"/><stop offset="70%" stop-color="#13203a"/><stop offset="100%" stop-color="#1a2238"/>
+    </linearGradient>
+    <linearGradient id="flag" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#0b7bb0"/>
+    </linearGradient>
+  </defs>
+  <rect width="320" height="180" fill="url(#sky)"/>
+  <!-- 별 -->
+  <g fill="#dbe4f5" opacity=".7">
+    <rect x="30" y="18" width="2" height="2"/><rect x="74" y="34" width="2" height="2"/>
+    <rect x="132" y="14" width="2" height="2"/><rect x="208" y="26" width="2" height="2"/>
+    <rect x="262" y="16" width="2" height="2"/><rect x="292" y="42" width="2" height="2"/>
+    <rect x="176" y="40" width="2" height="2"/><rect x="48" y="52" width="2" height="2"/>
+  </g>
+  <circle cx="272" cy="34" r="15" fill="#dbe4f5" opacity=".25"/>
+  <circle cx="277" cy="30" r="13" fill="url(#sky)"/>
+  <!-- 던전 산맥 실루엣 -->
+  <path d="M0 128 L52 78 L96 128 Z" fill="#0a1120" opacity=".9"/>
+  <path d="M70 132 L140 60 L206 132 Z" fill="#0d1526"/>
+  <path d="M186 130 L246 82 L306 130 Z" fill="#0a1120" opacity=".9"/>
+  <!-- 던전 입구 -->
+  <path d="M128 132 L128 104 Q140 90 152 104 L152 132 Z" fill="#04080f"/>
+  <path d="M132 132 L132 106 Q140 96 148 106 L148 132 Z" fill="#2a3452"/>
+  <path d="M135 132 L135 108 Q140 101 145 108 L145 132 Z" fill="#04080f"/>
+  <!-- 지면 -->
+  <rect y="128" width="320" height="52" fill="#111a30"/>
+  <rect y="128" width="320" height="4" fill="#2a3452"/>
+  <!-- 길드 깃발 -->
+  <g>
+    <rect x="212" y="52" width="4" height="80" fill="#2a3452"/>
+    <rect x="210" y="48" width="8" height="6" rx="2" fill="#eab308"/>
+    <path d="M216 56 L272 56 L258 72 L272 88 L216 88 Z" fill="url(#flag)"/>
+    <path d="M228 64 L232 78 M240 78 L244 64 M236 66 L236 76" stroke="#dbe4f5" stroke-width="3" fill="none"/>
+  </g>
+  <!-- 용사 — 검과 방패 -->
+  <g transform="translate(78 84)">
+    <rect x="10" y="-4" width="16" height="10" rx="3" fill="#2a3452"/>
+    <rect x="12" y="6" width="12" height="11" fill="#e8c49a"/>
+    <rect x="13" y="9" width="3" height="3" fill="#0c1424"/><rect x="20" y="9" width="3" height="3" fill="#0c1424"/>
+    <rect x="8" y="17" width="20" height="20" fill="#0ea5e9"/>
+    <rect x="8" y="27" width="20" height="4" fill="#2a3452"/>
+    <rect x="28" y="20" width="8" height="12" rx="3" fill="#eab308"/>
+    <rect x="30" y="23" width="4" height="6" fill="#b8860b"/>
+    <rect x="2" y="2" width="4" height="30" fill="#8b98b8"/>
+    <rect x="0" y="0" width="8" height="5" fill="#eab308"/>
+    <rect x="10" y="37" width="6" height="10" fill="#232c48"/><rect x="20" y="37" width="6" height="10" fill="#232c48"/>
+  </g>
+  <!-- 파견 행렬 실루엣 -->
+  <g fill="#232c48">
+    <rect x="34" y="112" width="8" height="14"/><rect x="33" y="108" width="10" height="6" rx="2"/>
+    <rect x="50" y="114" width="7" height="12"/><rect x="49" y="110" width="9" height="5" rx="2"/>
+    <rect x="290" y="112" width="8" height="14"/><rect x="289" y="108" width="10" height="6" rx="2"/>
+  </g>
+  <text x="160" y="162" font-family="monospace" font-size="20" font-weight="bold" fill="#dbe4f5" text-anchor="middle">용사 파견소</text>
+  <text x="160" y="175" font-family="monospace" font-size="9" fill="#8b98b8" text-anchor="middle">IDLE DUNGEON GUILD</text>
+</svg>

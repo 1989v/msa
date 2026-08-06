@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">블록 폭파</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  :root { --cell:min(44px, calc((100vw - 60px)/8)); --gap:3px; --mini:calc(var(--cell)*.5); }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; min-height:100vh; user-select:none;
+         -webkit-user-select:none; -webkit-touch-callout:none; touch-action:manipulation;
+         padding:14px 10px 30px; }
+  h1.top { font-size:19px; color:#0ea5e9; margin:6px 0 2px; text-shadow:1px 1px 0 #000; }
+  .sub { font-size:11px; color:#8e9db0; margin-bottom:8px; }
+
+  #hud { display:flex; gap:8px; margin:4px 0 2px; }
+  .hstat { background:#1a2238; border-radius:8px; padding:6px 12px; font-size:10.5px;
+           color:#8e9db0; text-align:center; min-width:76px; }
+  .hstat b { display:block; color:#e6ecf2; font-size:16px; }
+  #scoreTxt { color:#0ea5e9; }
+  #streakTxt { color:#eab308; }
+
+  #fx { min-height:22px; font-size:13px; font-weight:bold; color:#eab308; text-align:center;
+        margin:4px 0 6px; opacity:0; }
+  @keyframes fxUp { 0%{opacity:0;transform:translateY(8px)} 15%{opacity:1;transform:none}
+                    75%{opacity:1} 100%{opacity:0} }
+  #fx.show { animation:fxUp 1.5s ease forwards; }
+
+  #board { display:grid; grid-template-columns:repeat(8, var(--cell)); grid-auto-rows:var(--cell);
+           gap:var(--gap); padding:8px; background:#1a2238; border-radius:10px; }
+  .cell { background:#0c1424; border-radius:4px; }
+  .c1 { background:#0ea5e9; } .c2 { background:#22c55e; } .c3 { background:#eab308; }
+  .c4 { background:#ef4444; } .c5 { background:#6366f1; }
+  .cell.c1, .cell.c2, .cell.c3, .cell.c4, .cell.c5 { box-shadow:inset 0 -3px 0 rgba(0,0,0,.28); }
+  .pv-ok  { box-shadow:inset 0 0 0 999px rgba(14,165,233,.38) !important; }
+  .pv-bad { box-shadow:inset 0 0 0 999px rgba(239,68,68,.42) !important; }
+  @keyframes pop { from { transform:scale(.55); } to { transform:scale(1); } }
+  .pop { animation:pop .14s ease-out; }
+  @keyframes burst { 0% { filter:brightness(1.4); } 45% { filter:brightness(2.4); transform:scale(1.12); }
+                     100% { filter:brightness(2); transform:scale(.15); opacity:0; } }
+  .burst { animation:burst .32s ease-in forwards; }
+
+  #tray { display:flex; gap:12px; margin-top:14px; justify-content:center; }
+  .slot { width:calc(var(--mini)*3 + 18px); height:calc(var(--mini)*3 + 18px); background:#1a2238;
+          border-radius:10px; display:flex; align-items:center; justify-content:center;
+          touch-action:none; cursor:grab; }
+  .mcell { border-radius:3px; }
+  .slot.lift .mcell { opacity:.2; }
+  @keyframes deadPulse { 0%,100% { outline-color:rgba(239,68,68,.9); }
+                         50% { outline-color:rgba(239,68,68,.2); } }
+  .slot.dead { outline:2px solid #ef4444; outline-offset:-2px; animation:deadPulse 1.1s ease-in-out infinite; }
+  .slot.dead .mcell { filter:grayscale(.75) brightness(.55); }
+  .gcell { box-shadow:inset 0 -3px 0 rgba(0,0,0,.28); border-radius:5px; }
+  #trayHint { font-size:10.5px; color:#8e9db0; margin-top:8px; }
+
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:13px; text-align:center; z-index:10;
+           padding:20px; overflow:auto; }
+  .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:480px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .stat { background:#1a2238; border-radius:8px; padding:8px 14px; font-size:12px; }
+  .stat b { color:#0ea5e9; font-size:17px; display:block; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:12px 18px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#222b44; color:#e6ecf2; }
+  button.act:hover { filter:brightness(1.1); }
+</style>
+</head>
+<body>
+<h1 class="top" data-i18n="title">💥 블록 폭파</h1>
+<div class="sub" data-i18n="subTitle">줄을 채워 폭파하라</div>
+
+<div id="hud">
+  <div class="hstat"><span data-i18n="score">점수</span><b id="scoreTxt">0</b></div>
+  <div class="hstat"><span data-i18n="best">최고</span><b id="bestTxt">0</b></div>
+  <div class="hstat"><span data-i18n="streakLabel">연속 폭파</span><b id="streakTxt">0</b></div>
+</div>
+<div id="fx"></div>
+
+<div id="board"></div>
+
+<div id="tray">
+  <div class="slot" id="slot0"></div>
+  <div class="slot" id="slot1"></div>
+  <div class="slot" id="slot2"></div>
+</div>
+<div id="trayHint" data-i18n="trayHint">조각을 끌어 보드에 놓아라</div>
+
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">💥 블록 폭파</h1>
+  <p data-i18n="menuDesc">8×8 보드에 조각을 끌어다 놓아라. 가로줄이나 세로줄이 가득 차면 폭파!
+    여러 줄 동시 폭파와 연속 폭파 스트릭으로 점수가 치솟는다. 어떤 조각도 놓을 수 없으면 게임 오버.</p>
+  <p class="small" id="menuBest"></p>
+  <div class="row">
+    <button class="act" id="startBtn" data-i18n="startBtn">▶ 시작</button>
+  </div>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <h1 id="endTitle"></h1>
+  <div class="row">
+    <div class="stat"><b id="endScore">0</b><span data-i18n="finalScore">최종 점수</span></div>
+    <div class="stat"><b id="endBest">0</b><span data-i18n="bestLabel">최고 기록</span></div>
+    <div class="stat"><b id="endCombo">0</b><span data-i18n="comboLabel">최고 콤보</span></div>
+  </div>
+  <div class="row">
+    <button class="act" id="againBtn" data-i18n="againBtn">↻ 다시 도전</button>
+    <button class="act ghost" id="backBtn" data-i18n="backBtn">처음으로</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '💥 블록 폭파', menuTitle: '💥 블록 폭파', subTitle: '줄을 채워 폭파하라',
+    menuDesc: '8×8 보드에 조각을 끌어다 놓아라. 가로줄이나 세로줄이 가득 차면 폭파! ' +
+      '여러 줄 동시 폭파와 연속 폭파 스트릭으로 점수가 치솟는다. 어떤 조각도 놓을 수 없으면 게임 오버.',
+    startBtn: '▶ 시작', againBtn: '↻ 다시 도전', backBtn: '처음으로',
+    score: '점수', best: '최고', streakLabel: '연속 폭파', trayHint: '조각을 끌어 보드에 놓아라',
+    gameOver: '💥 게임 오버', newBest: '🏆 신기록!',
+    finalScore: '최종 점수', bestLabel: '최고 기록', comboLabel: '최고 콤보',
+    burstTail: '줄 폭파!', burstTailPl: '줄 폭파!', streakTag: '스트릭',
+  },
+  en: {
+    title: '💥 Block Burst', menuTitle: '💥 Block Burst', subTitle: 'Fill lines, blow them up',
+    menuDesc: 'Drag pieces onto the 8×8 board. Fill a full row or column to burst it! ' +
+      'Multi-line bursts and back-to-back burst streaks send your score soaring. ' +
+      'No room left for any piece — game over.',
+    startBtn: '▶ Start', againBtn: '↻ Play Again', backBtn: 'Menu',
+    score: 'Score', best: 'Best', streakLabel: 'Burst streak', trayHint: 'Drag a piece onto the board',
+    gameOver: '💥 Game Over', newBest: '🏆 New Best!',
+    finalScore: 'Final score', bestLabel: 'Best score', comboLabel: 'Max combo',
+    burstTail: ' line burst!', burstTailPl: ' lines burst!', streakTag: 'streak',
+  },
+});
+var TR = GameI18n.t;
+
+var SLUG = 'block-burst', SIZE = 8, BEST_KEY = 'block-burst_best', COLORS = 5;
+
+// ── 조각 정의 ────────────────────────────────────────────────────────────────
+// cells: [행,열] 오프셋(정규화). w: 조각 가중치(회전 수로 나눠 배분 — 작은 조각일수록 흔하다).
+var BASE = [
+  { cells: [[0,0]], w: 8, rot: 1 },                                          // 1×1
+  { cells: [[0,0],[0,1]], w: 10, rot: 2 },                                   // 도미노
+  { cells: [[0,0],[0,1],[0,2]], w: 9, rot: 2 },                              // 3직선
+  { cells: [[0,0],[0,1],[1,0],[1,1]], w: 9, rot: 1 },                        // 2×2
+  { cells: [[0,0],[1,0],[1,1]], w: 8, rot: 4 },                              // 꺾임 3
+  { cells: [[0,0],[1,0],[2,0],[2,1]], w: 6, rot: 4 },                        // L
+  { cells: [[0,0],[0,1],[0,2],[1,1]], w: 6, rot: 4 },                        // T
+  { cells: [[0,1],[0,2],[1,0],[1,1]], w: 4, rot: 2 },                        // S
+  { cells: [[0,0],[0,1],[1,1],[1,2]], w: 4, rot: 2 },                        // Z
+  { cells: [[0,0],[1,0],[2,0],[2,1],[2,2]], w: 4, rot: 4 },                  // 큰 L (5칸)
+  { cells: [[0,1],[1,0],[1,1],[1,2],[2,1]], w: 3, rot: 1 },                  // 십자
+  { cells: [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]], w: 2, rot: 1 }, // 3×3
+];
+
+function normCells(cells) {
+  var minR = 99, minC = 99, i;
+  for (i = 0; i < cells.length; i++) {
+    if (cells[i][0] < minR) minR = cells[i][0];
+    if (cells[i][1] < minC) minC = cells[i][1];
+  }
+  var out = [];
+  for (i = 0; i < cells.length; i++) out.push([cells[i][0] - minR, cells[i][1] - minC]);
+  return out;
+}
+function rot90(cells) {
+  var maxR = 0, i;
+  for (i = 0; i < cells.length; i++) if (cells[i][0] > maxR) maxR = cells[i][0];
+  var out = [];
+  for (i = 0; i < cells.length; i++) out.push([cells[i][1], maxR - cells[i][0]]);
+  return normCells(out);
+}
+function makeShape(cells, wt) {
+  var h = 0, w = 0, i;
+  for (i = 0; i < cells.length; i++) {
+    if (cells[i][0] + 1 > h) h = cells[i][0] + 1;
+    if (cells[i][1] + 1 > w) w = cells[i][1] + 1;
+  }
+  return { cells: cells, h: h, w: w, wt: wt };
+}
+
+var SHAPES = [], TOTAL_W = 0;
+(function buildShapes() {
+  var b, i, r, cells;
+  for (i = 0; i < BASE.length; i++) {
+    b = BASE[i];
+    cells = normCells(b.cells);
+    for (r = 0; r < b.rot; r++) {
+      SHAPES.push(makeShape(cells, b.w / b.rot));
+      TOTAL_W += b.w / b.rot;
+      cells = rot90(cells);
+    }
+  }
+})();
+function randShape() {
+  var r = Math.random() * TOTAL_W, i;
+  for (i = 0; i < SHAPES.length; i++) { r -= SHAPES[i].wt; if (r <= 0) return SHAPES[i]; }
+  return SHAPES[SHAPES.length - 1];
+}
+
+// ── 상태 ────────────────────────────────────────────────────────────────────
+var board = [], tray = [null, null, null];
+var score = 0, best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0;
+var streak = 0, maxCombo = 0, colorCursor = Math.floor(Math.random() * COLORS);
+var busy = false, over = true;
+
+var boardEl = document.getElementById('board');
+var cellsEl = [], slotEls = [
+  document.getElementById('slot0'), document.getElementById('slot1'), document.getElementById('slot2'),
+];
+
+(function buildBoard() {
+  for (var i = 0; i < SIZE * SIZE; i++) {
+    var d = document.createElement('div');
+    d.className = 'cell';
+    boardEl.appendChild(d);
+    cellsEl.push(d);
+  }
+})();
+
+function canPlace(sh, r, c) {
+  if (r < 0 || c < 0 || r + sh.h > SIZE || c + sh.w > SIZE) return false;
+  for (var i = 0; i < sh.cells.length; i++) {
+    if (board[r + sh.cells[i][0]][c + sh.cells[i][1]]) return false;
+  }
+  return true;
+}
+function anyFit(sh) {
+  for (var r = 0; r <= SIZE - sh.h; r++) {
+    for (var c = 0; c <= SIZE - sh.w; c++) if (canPlace(sh, r, c)) return true;
+  }
+  return false;
+}
+function findLines() {
+  var rows = [], cols = [], r, c, full;
+  for (r = 0; r < SIZE; r++) {
+    full = true;
+    for (c = 0; c < SIZE; c++) if (!board[r][c]) { full = false; break; }
+    if (full) rows.push(r);
+  }
+  for (c = 0; c < SIZE; c++) {
+    full = true;
+    for (r = 0; r < SIZE; r++) if (!board[r][c]) { full = false; break; }
+    if (full) cols.push(c);
+  }
+  return { rows: rows, cols: cols, n: rows.length + cols.length };
+}
+
+// ── 렌더 ────────────────────────────────────────────────────────────────────
+function renderBoard() {
+  for (var r = 0; r < SIZE; r++) {
+    for (var c = 0; c < SIZE; c++) {
+      var v = board[r][c];
+      cellsEl[r * SIZE + c].className = 'cell' + (v ? ' c' + v : '');
+    }
+  }
+}
+function renderTray() {
+  for (var i = 0; i < 3; i++) {
+    var el = slotEls[i], t = tray[i];
+    el.innerHTML = '';
+    el.classList.remove('dead', 'lift');
+    if (!t) continue;
+    var wrap = document.createElement('div');
+    wrap.style.display = 'grid';
+    wrap.style.gridTemplateColumns = 'repeat(' + t.shape.w + ', var(--mini))';
+    wrap.style.gridAutoRows = 'var(--mini)';
+    wrap.style.gap = '2px';
+    for (var j = 0; j < t.shape.cells.length; j++) {
+      var d = document.createElement('div');
+      d.className = 'mcell c' + t.color;
+      d.style.gridRowStart = t.shape.cells[j][0] + 1;
+      d.style.gridColumnStart = t.shape.cells[j][1] + 1;
+      wrap.appendChild(d);
+    }
+    el.appendChild(wrap);
+    if (!over && !anyFit(t.shape)) el.classList.add('dead');   // 게임오버 직전 경고
+  }
+}
+function renderHud() {
+  document.getElementById('scoreTxt').textContent = score;
+  document.getElementById('bestTxt').textContent = Math.max(best, score);
+  document.getElementById('streakTxt').textContent = streak;
+}
+function showFx(text) {
+  var el = document.getElementById('fx');
+  el.classList.remove('show');
+  void el.offsetWidth;                                          // 애니메이션 재시작
+  el.textContent = text;
+  el.classList.add('show');
+}
+
+// ── 진행 ────────────────────────────────────────────────────────────────────
+function refillTray() {
+  colorCursor = (colorCursor + 1) % COLORS;
+  for (var i = 0; i < 3; i++) {
+    tray[i] = { shape: randShape(), color: ((colorCursor + i) % COLORS) + 1 };
+  }
+}
+
+function place(slot, r, c) {
+  var t = tray[slot], sh = t.shape, i, j;
+  tray[slot] = null;
+  for (i = 0; i < sh.cells.length; i++) board[r + sh.cells[i][0]][c + sh.cells[i][1]] = t.color;
+  score += sh.cells.length;                                     // 배치 점수 = 칸수
+
+  var lines = findLines();
+  renderBoard();
+  for (i = 0; i < sh.cells.length; i++) {
+    cellsEl[(r + sh.cells[i][0]) * SIZE + c + sh.cells[i][1]].classList.add('pop');
+  }
+  renderTray();
+
+  if (lines.n > 0) {
+    streak++;
+    if (lines.n > maxCombo) maxCombo = lines.n;
+    var base = 100 * lines.n * (lines.n + 1) / 2;               // 1줄 100, 2줄 300, 3줄 600…
+    var bonus = streak > 1 ? (streak - 1) * 50 : 0;             // 연속 턴 폭파 스트릭 보너스
+    score += base + bonus;
+    showFx(lines.n + TR(lines.n > 1 ? 'burstTailPl' : 'burstTail') + ' +' + (base + bonus) +
+      (streak > 1 ? ' · ' + TR('streakTag') + ' ×' + streak : ''));
+
+    var burstIdx = [];
+    for (i = 0; i < lines.rows.length; i++) {
+      for (j = 0; j < SIZE; j++) burstIdx.push(lines.rows[i] * SIZE + j);
+    }
+    for (i = 0; i < lines.cols.length; i++) {
+      for (j = 0; j < SIZE; j++) burstIdx.push(j * SIZE + lines.cols[i]);
+    }
+    for (i = 0; i < burstIdx.length; i++) cellsEl[burstIdx[i]].classList.add('burst');
+    for (i = 0; i < lines.rows.length; i++) {
+      for (j = 0; j < SIZE; j++) board[lines.rows[i]][j] = 0;
+    }
+    for (i = 0; i < lines.cols.length; i++) {
+      for (j = 0; j < SIZE; j++) board[j][lines.cols[i]] = 0;
+    }
+    busy = true;
+    setTimeout(function () { busy = false; renderBoard(); afterTurn(); }, 340);
+  } else {
+    streak = 0;
+    afterTurn();
+  }
+  renderHud();
+}
+
+function afterTurn() {
+  if (!tray[0] && !tray[1] && !tray[2]) refillTray();
+  renderTray();
+  var any = false, alive = 0, i;
+  for (i = 0; i < 3; i++) {
+    if (tray[i]) { any = true; if (anyFit(tray[i].shape)) alive++; }
+  }
+  if (any && alive === 0) gameOver();
+}
+
+function gameOver() {
+  if (over) return;                                             // 중복 제출 방어
+  over = true;
+  var isBest = score > best;
+  if (isBest) { best = score; localStorage.setItem(BEST_KEY, String(best)); }
+  GameRank.submit(SLUG, score, '최고 콤보 ' + maxCombo);
+  setTimeout(function () {
+    document.getElementById('endTitle').textContent = TR(isBest ? 'newBest' : 'gameOver');
+    document.getElementById('endScore').textContent = score;
+    document.getElementById('endBest').textContent = best;
+    document.getElementById('endCombo').textContent = maxCombo;
+    document.getElementById('endPanel').hidden = false;
+  }, 520);
+}
+
+function newGame() {
+  var r, c;
+  board = [];
+  for (r = 0; r < SIZE; r++) { board.push([]); for (c = 0; c < SIZE; c++) board[r].push(0); }
+  score = 0; streak = 0; maxCombo = 0;
+  busy = false; over = false;
+  colorCursor = Math.floor(Math.random() * COLORS);
+  refillTray();
+  renderBoard(); renderTray(); renderHud();
+  document.getElementById('fx').textContent = '';
+  document.getElementById('menu').hidden = true;
+  document.getElementById('endPanel').hidden = true;
+}
+
+// ── 드래그 (포인터 이벤트) ───────────────────────────────────────────────────
+var drag = null;
+
+function clearPreview() {
+  for (var i = 0; i < cellsEl.length; i++) cellsEl[i].classList.remove('pv-ok', 'pv-bad');
+}
+
+function updatePreview(gx, gy) {
+  clearPreview();
+  drag.valid = false;
+  var sh = drag.shape;
+  var gr = Math.round((gy - drag.originTop) / drag.step);
+  var gc = Math.round((gx - drag.originLeft) / drag.step);
+  if (gr <= -sh.h || gr >= SIZE || gc <= -sh.w || gc >= SIZE) return;  // 보드 밖
+  var ok = canPlace(sh, gr, gc), i, r, c;
+  for (i = 0; i < sh.cells.length; i++) {
+    r = gr + sh.cells[i][0]; c = gc + sh.cells[i][1];
+    if (r < 0 || c < 0 || r >= SIZE || c >= SIZE) continue;
+    cellsEl[r * SIZE + c].classList.add(ok ? 'pv-ok' : 'pv-bad');
+  }
+  if (ok) { drag.valid = true; drag.gr = gr; drag.gc = gc; }
+}
+
+function moveGhost(ev) {
+  var gx = ev.clientX - drag.ghostW / 2;
+  var gy = ev.clientY - drag.ghostH - drag.lift;
+  drag.ghost.style.transform = 'translate(' + gx + 'px,' + gy + 'px)';
+  updatePreview(gx, gy);
+}
+
+function endDrag() {
+  if (!drag) return;
+  if (drag.valid) place(drag.slot, drag.gr, drag.gc);
+  else renderTray();
+  clearPreview();
+  if (drag.ghost.parentNode) drag.ghost.parentNode.removeChild(drag.ghost);
+  drag = null;
+}
+
+function attachDrag(slotEl, idx) {
+  slotEl.addEventListener('pointerdown', function (ev) {
+    if (drag || busy || over || !tray[idx]) return;
+    ev.preventDefault();
+    var t = tray[idx], sh = t.shape;
+    var r0 = cellsEl[0].getBoundingClientRect();
+    var r1 = cellsEl[1].getBoundingClientRect();
+    var step = r1.left - r0.left;
+    var cellPx = step - 3;
+
+    var g = document.createElement('div');
+    g.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none;z-index:99;opacity:.9;' +
+      'display:grid;gap:3px;will-change:transform;' +
+      'grid-template-columns:repeat(' + sh.w + ',' + cellPx + 'px);grid-auto-rows:' + cellPx + 'px';
+    for (var i = 0; i < sh.cells.length; i++) {
+      var d = document.createElement('div');
+      d.className = 'gcell c' + t.color;
+      d.style.gridRowStart = sh.cells[i][0] + 1;
+      d.style.gridColumnStart = sh.cells[i][1] + 1;
+      g.appendChild(d);
+    }
+    document.body.appendChild(g);
+
+    drag = {
+      slot: idx, shape: sh, ghost: g, step: step,
+      ghostW: sh.w * step - 3, ghostH: sh.h * step - 3,
+      lift: ev.pointerType === 'touch' ? 42 : 8,                 // 터치는 손가락 위로 띄운다
+      originLeft: r0.left, originTop: r0.top,
+      valid: false, gr: 0, gc: 0,
+    };
+    slotEl.classList.add('lift');
+    slotEl.setPointerCapture(ev.pointerId);
+    moveGhost(ev);
+  });
+  slotEl.addEventListener('pointermove', function (ev) {
+    if (!drag || drag.slot !== idx) return;
+    ev.preventDefault();
+    moveGhost(ev);
+  });
+  slotEl.addEventListener('pointerup', function () {
+    if (drag && drag.slot === idx) endDrag();
+  });
+  slotEl.addEventListener('pointercancel', function () {
+    if (drag && drag.slot === idx) { drag.valid = false; endDrag(); }
+  });
+}
+attachDrag(slotEls[0], 0);
+attachDrag(slotEls[1], 1);
+attachDrag(slotEls[2], 2);
+document.getElementById('tray').addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+// ── 버튼 / 메뉴 ─────────────────────────────────────────────────────────────
+function refreshMenu() {
+  document.getElementById('menuBest').textContent = best > 0 ? '🏆 ' + TR('best') + ' ' + best : '';
+  renderHud();
+}
+document.getElementById('startBtn').onclick = newGame;
+document.getElementById('againBtn').onclick = newGame;
+document.getElementById('backBtn').onclick = function () {
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('menu').hidden = false;
+  refreshMenu();
+};
+refreshMenu();
+</script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('block-burst');</script>
+</body>
+</html>

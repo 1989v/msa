@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">창고 대이동</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#0c1424; color:#e6ecf2; font-family:'Courier New',monospace; display:flex;
+         flex-direction:column; align-items:center; min-height:100vh; user-select:none;
+         padding:12px 10px 30px; touch-action:manipulation; }
+  h1.top { font-size:19px; color:#0ea5e9; margin:4px 0 2px; text-shadow:1px 1px 0 #000; }
+  .sub { font-size:11.5px; color:#8e9db0; margin-bottom:10px; }
+  .sub b { color:#e6ecf2; }
+  #board { display:grid; gap:2px; background:#1a2238; border:3px solid #2c3550; border-radius:10px;
+           padding:6px; margin-bottom:10px; touch-action:none; }
+  .cell { width:var(--cell,40px); height:var(--cell,40px); display:flex; align-items:center;
+          justify-content:center; border-radius:5px; font-size:calc(var(--cell,40px)*.62); line-height:1; }
+  .c-floor { background:#222b44; }
+  .c-wall  { background:#2c3550; }
+  .c-goal  { background:#222b44; box-shadow:inset 0 0 0 2px #eab308; }
+  .c-goal.c-done { box-shadow:inset 0 0 0 2px #22c55e; background:rgba(34,197,94,.14); }
+  .c-void  { background:transparent; }
+  #ctl { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; justify-content:center; }
+  button.act { background:#0ea5e9; color:#04121c; border:0; padding:11px 16px; font-weight:bold;
+               font-size:13px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  button.ghost { background:#222b44; color:#e6ecf2; }
+  .hint { font-size:11px; color:#8e9db0; text-align:center; max-width:420px; line-height:1.6; }
+  .panel { position:fixed; inset:0; background:rgba(9,13,24,.97); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:13px; text-align:center; z-index:10;
+           padding:20px; overflow:auto; }
+  .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:480px; }
+  .panel p.small { font-size:11px; color:#8e9db0; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .stat { background:#1a2238; border-radius:8px; padding:8px 14px; font-size:12px; }
+  .stat b { color:#0ea5e9; font-size:17px; display:block; }
+  #lvGrid { display:grid; grid-template-columns:repeat(6,52px); gap:6px; }
+  #lvGrid button { width:52px; height:52px; border-radius:8px; border:2px solid #2c3550; background:#1a2238;
+                   color:#e6ecf2; font-family:inherit; font-size:14px; font-weight:bold; cursor:pointer;
+                   display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+  #lvGrid button small { font-size:9px; font-weight:normal; color:#8e9db0; }
+  #lvGrid button.open { border-color:#0ea5e9; }
+  #lvGrid button.done { border-color:#22c55e; }
+  #lvGrid button.done small { color:#22c55e; }
+  #lvGrid button.lock { opacity:.4; cursor:default; }
+  @media (max-width:420px) { #lvGrid { grid-template-columns:repeat(6,46px); }
+    #lvGrid button { width:46px; height:46px; font-size:12px; } }
+</style>
+</head>
+<body>
+<h1 class="top" data-i18n="title">📦 창고 대이동</h1>
+<div class="sub"><span data-i18n="lvLabel">레벨</span> <b id="lvNum">1</b>/24 ·
+  <span data-i18n="movesLabel">이동</span> <b id="moveNum">0</b> ·
+  <span data-i18n="bestLabel">최소</span> <b id="bestNum">-</b></div>
+
+<div id="board"></div>
+
+<div id="ctl">
+  <button class="act ghost" id="undoBtn" data-i18n="undo">↩ 무르기 (Z)</button>
+  <button class="act ghost" id="resetBtn" data-i18n="reset">⟲ 리셋 (R)</button>
+  <button class="act ghost" id="levelsBtn" data-i18n="levels">☰ 레벨 (Esc)</button>
+</div>
+<div class="hint" data-i18n="hint">화살표·WASD 또는 스와이프로 이동 — 상자📦를 모두 목표칸 위로 밀어 올려라. 상자는 밀 수만 있고 당길 수 없다.</div>
+
+<div class="panel" id="menu">
+  <h1 data-i18n="menuTitle">📦 창고 대이동</h1>
+  <p data-i18n="menuDesc">고전 소코반 — 상자를 밀어(당기기 불가) 모든 목표칸을 채우면 클리어.
+    한 수 무르기와 리셋은 무제한. 레벨을 깨면 다음 레벨이 열린다.</p>
+  <p class="small" id="progressTxt"></p>
+  <div id="lvGrid"></div>
+  <div class="row">
+    <button class="act" id="startBtn" data-i18n="startBtn">▶ 이어하기</button>
+    <button class="act ghost" id="resumeBtn" data-i18n="resumeBtn" hidden>↩ 계속하기</button>
+  </div>
+</div>
+
+<div class="panel" id="endPanel" hidden>
+  <h1 id="endTitle"></h1>
+  <p class="small" id="endSub"></p>
+  <div class="row">
+    <div class="stat"><b id="endMoves">0</b><span data-i18n="usedMoves">사용한 이동</span></div>
+    <div class="stat"><b id="endBest">0</b><span data-i18n="bestMoves">최소 기록</span></div>
+    <div class="stat"><b id="endScore">0</b><span data-i18n="scoreLabel">총점</span></div>
+  </div>
+  <div class="row">
+    <button class="act" id="nextBtn" data-i18n="nextBtn">다음 레벨 ▶</button>
+    <button class="act ghost" id="againBtn" data-i18n="againBtn">⟲ 다시 도전</button>
+    <button class="act ghost" id="backBtn" data-i18n="backBtn">레벨 선택</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '📦 창고 대이동', menuTitle: '📦 창고 대이동',
+    menuDesc: '고전 소코반 — 상자를 밀어(당기기 불가) 모든 목표칸을 채우면 클리어. 한 수 무르기와 리셋은 무제한. 레벨을 깨면 다음 레벨이 열린다.',
+    startBtn: '▶ 이어하기', lvLabel: '레벨', movesLabel: '이동', bestLabel: '최소',
+    undo: '↩ 무르기 (Z)', reset: '⟲ 리셋 (R)', levels: '☰ 레벨 (Esc)',
+    hint: '화살표·WASD 또는 스와이프로 이동 — 상자📦를 모두 목표칸 위로 밀어 올려라. 상자는 밀 수만 있고 당길 수 없다.',
+    clearTitle: '📦 레벨 클리어!', allClearTitle: '🏆 창고 완전 정복!',
+    endSub: '레벨', usedMoves: '사용한 이동', bestMoves: '최소 기록', scoreLabel: '총점',
+    nextBtn: '다음 레벨 ▶', againBtn: '⟲ 다시 도전', backBtn: '레벨 선택', resumeBtn: '↩ 계속하기',
+    cleared: '클리어', scoreWord: '점수',
+  },
+  en: {
+    title: '📦 Crate Shift', menuTitle: '📦 Crate Shift',
+    menuDesc: 'Classic sokoban — push crates (no pulling) onto every target tile to clear. Unlimited undo and reset. Clearing a level unlocks the next.',
+    startBtn: '▶ Continue', lvLabel: 'Level', movesLabel: 'Moves', bestLabel: 'Best',
+    undo: '↩ Undo (Z)', reset: '⟲ Reset (R)', levels: '☰ Levels (Esc)',
+    hint: 'Move with arrows/WASD or swipe — push every crate onto a target tile. Crates can only be pushed, never pulled.',
+    clearTitle: '📦 Level clear!', allClearTitle: '🏆 Warehouse conquered!',
+    endSub: 'Level', usedMoves: 'Moves used', bestMoves: 'Best record', scoreLabel: 'Score',
+    nextBtn: 'Next level ▶', againBtn: '⟲ Retry', backBtn: 'Level select', resumeBtn: '↩ Resume',
+    cleared: 'Cleared', scoreWord: 'Score',
+  },
+});
+var TR = GameI18n.t;
+
+var SLUG = 'crate-shift', STORE_KEY = 'crate_shift_progress', TOTAL = 24;
+
+// #벽 @플레이어 $상자 .목표 *상자온목표 +플레이어온목표 (전 레벨 BFS 솔버로 가해성 검증됨)
+var LEVELS = [
+  ['#######', '#     #', '# @$. #', '#     #', '#######'],
+  ['#######', '#     #', '#  *  #', '# $.  #', '#  @  #', '#######'],
+  ['#######', '#  .  #', '#     #', '#  $  #', '#  @  #', '#######'],
+  ['#######', '###   #', '# @$  #', '###  ##', '### .##', '#######'],
+  ['########', '#      #', '# @$ . #', '# $  . #', '#      #', '########'],
+  ['########', '#   #  #', '# @ $ .#', '#   #  #', '#  $   #', '#  .   #', '########'],
+  ['#######', '#.   .#', '# $ $ #', '#  @  #', '#     #', '#######'],
+  ['########', '#      #', '# $$$  #', '# ...  #', '#  @   #', '########'],
+  ['#########', '#       #', '#.   $  #', '#.  $   #', '#.   $  #', '#   @   #', '#########'],
+  ['#########', '# .   . #', '#   .   #', '#  $$$  #', '#   @   #', '#       #', '#########'],
+  ['#########', '#       #', '# @$  # #', '#  ## # #', '#  #  . #', '#       #', '#########'],
+  ['########', '#   #  #', '#   $ .#', '#   #  #', '# $@  .#', '#   #  #', '#   $ .#', '#   #  #', '########'],
+  ['#########', '#       #', '#   .   #', '#   $   #', '# .$@$. #', '#   $   #', '#   .   #', '#########'],
+  ['#########', '#   #   #', '# $ # . #', '#@      #', '# $   . #', '#       #', '# $ # . #', '#   #   #', '#########'],
+  ['#########', '#       #', '# $ $ $ #', '#   @   #', '####.####', '####.####', '####.####', '#########'],
+  ['#########', '#       #', '# $$ $$ #', '#   @   #', '##.###.##', '##.###.##', '#########'],
+  ['##########', '#        #', '# $$$$   #', '#  ..    #', '#  ..#   #', '#   @    #', '##########'],
+  ['#########', '#       #', '# $ $   #', '#      .#', '# $ $  .#', '#      .#', '#  @   .#', '#########'],
+  ['#########', '#.     .#', '#       #', '#  $ $  #', '#   @   #', '#  $ $  #', '#       #', '#.     .#', '#########'],
+  ['#########', '#   #   #', '# $ @ $ #', '#  ...  #', '##  .  ##', '# $   $ #', '#   #   #', '#########'],
+  ['#########', '#       #', '# $$ $$ #', '#   @   #', '####.####', '####.####', '####.####', '####.####', '#########'],
+  ['########', '#      #', '# #### #', '# #..# #', '# #..# #', '# #  # #', '# $$$$ #', '#  @   #', '########'],
+  ['#########', '#  ##   #', '# $..   #', '#  ..#  #', '#  ## $ #', '# $   $ #', '#   @   #', '#########'],
+  ['#########', '#   #   #', '# $ # . #', '# @ #   #', '# $   . #', '#   #   #', '# $ # . #', '#   #   #', '#########'],
+];
+
+// ---- 진행 저장 ----
+function loadStore() {
+  try {
+    var s = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+    if (s && typeof s === 'object' && s.best) return s;
+  } catch (e) { /* 손상 시 초기화 */ }
+  return { best: {} };
+}
+var store = loadStore();
+function saveStore() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
+function clearedCount() { return Object.keys(store.best).length; }
+function totalBest() {
+  var sum = 0;
+  Object.keys(store.best).forEach(function (k) { sum += store.best[k]; });
+  return sum;
+}
+function totalScore() { return clearedCount() * 1000 - totalBest(); }
+function isUnlocked(i) { return i === 0 || store.best[i - 1] != null; }
+function firstOpenLevel() {
+  for (var i = 0; i < TOTAL; i++) if (store.best[i] == null) return isUnlocked(i) ? i : 0;
+  return TOTAL - 1;
+}
+
+// ---- 게임 상태 ----
+var G = null;              // {idx,W,H,wall[],goal[],boxes{},player,hist[],won}
+var cellEls = [];
+
+function parseLevel(idx) {
+  var rows = LEVELS[idx], H = rows.length, W = 0, r, c;
+  for (r = 0; r < H; r++) W = Math.max(W, rows[r].length);
+  var wall = [], goal = [], boxes = {}, player = 0;
+  for (r = 0; r < H; r++) {
+    for (c = 0; c < W; c++) {
+      var ch = rows[r][c] || '#', k = r * W + c;
+      wall[k] = ch === '#';
+      goal[k] = ch === '.' || ch === '*' || ch === '+';
+      if (ch === '$' || ch === '*') boxes[k] = 1;
+      if (ch === '@' || ch === '+') player = k;
+    }
+  }
+  return { idx: idx, W: W, H: H, wall: wall, goal: goal, boxes: boxes, player: player, hist: [], won: false };
+}
+
+function fitCells() {
+  if (!G) return;
+  var vw = Math.min(window.innerWidth, 560) - 40;
+  var vh = window.innerHeight - 250;
+  var size = Math.min(Math.floor(vw / G.W), Math.floor(vh / G.H), 50);
+  if (!(size >= 24)) size = 24;
+  document.getElementById('board').style.setProperty('--cell', size + 'px');
+}
+
+function buildBoard() {
+  var b = document.getElementById('board');
+  b.innerHTML = '';
+  b.style.gridTemplateColumns = 'repeat(' + G.W + ',var(--cell,40px))';
+  cellEls = [];
+  for (var k = 0; k < G.W * G.H; k++) {
+    var d = document.createElement('div');
+    d.className = 'cell';
+    b.appendChild(d);
+    cellEls.push(d);
+  }
+  fitCells();
+}
+
+function render() {
+  for (var k = 0; k < cellEls.length; k++) {
+    var el = cellEls[k], cls = 'cell', txt = '';
+    if (G.wall[k]) { cls += ' c-wall'; txt = '🧱'; }
+    else {
+      cls += G.goal[k] ? ' c-goal' : ' c-floor';
+      if (G.boxes[k]) { txt = '📦'; if (G.goal[k]) cls += ' c-done'; }
+      else if (G.player === k) txt = '🙂';
+      else if (G.goal[k]) txt = '🎯';
+    }
+    el.className = cls;
+    el.textContent = txt;
+  }
+  document.getElementById('lvNum').textContent = G.idx + 1;
+  document.getElementById('moveNum').textContent = G.hist.length;
+  var best = store.best[G.idx];
+  document.getElementById('bestNum').textContent = best != null ? best : '-';
+}
+
+function openLevel(idx) {
+  G = parseLevel(idx);
+  buildBoard();
+  render();
+  document.getElementById('menu').hidden = true;
+  document.getElementById('endPanel').hidden = true;
+}
+
+function boxKeys() { return Object.keys(G.boxes).map(Number); }
+function allDone() {
+  var bs = boxKeys();
+  for (var i = 0; i < bs.length; i++) if (!G.goal[bs[i]]) return false;
+  return bs.length > 0;
+}
+
+function tryMove(dr, dc) {
+  if (!G || G.won) return;
+  var d = dr * G.W + dc;
+  var to = G.player + d;
+  if (G.wall[to]) return;
+  var snap = null;
+  if (G.boxes[to]) {
+    var beyond = to + d;
+    if (G.wall[beyond] || G.boxes[beyond]) return;
+    snap = { p: G.player, b: to, t: beyond };
+    delete G.boxes[to];
+    G.boxes[beyond] = 1;
+  } else {
+    snap = { p: G.player, b: -1, t: -1 };
+  }
+  G.player = to;
+  G.hist.push(snap);
+  render();
+  if (snap.b >= 0 && allDone()) {
+    G.won = true;
+    setTimeout(finishLevel, 150);
+  }
+}
+
+function undo() {
+  if (!G || G.won || !G.hist.length) return;
+  var s = G.hist.pop();
+  if (s.b >= 0) { delete G.boxes[s.t]; G.boxes[s.b] = 1; }
+  G.player = s.p;
+  render();
+}
+
+function resetLevel() {
+  if (!G || G.won) return;
+  openLevel(G.idx);
+}
+
+function finishLevel() {
+  var moves = G.hist.length;
+  var prevScore = totalScore();
+  var prev = store.best[G.idx];
+  if (prev == null || moves < prev) {
+    store.best[G.idx] = moves;
+    saveStore();
+  }
+  var score = totalScore();
+  var done = clearedCount();
+  if (score > prevScore) {
+    GameRank.submit(SLUG, score, '레벨 ' + done + '/' + TOTAL);
+  }
+  document.getElementById('endTitle').textContent = done >= TOTAL ? TR('allClearTitle') : TR('clearTitle');
+  document.getElementById('endSub').textContent = TR('endSub') + ' ' + (G.idx + 1) + '/' + TOTAL;
+  document.getElementById('endMoves').textContent = moves;
+  document.getElementById('endBest').textContent = store.best[G.idx];
+  document.getElementById('endScore').textContent = score.toLocaleString();
+  document.getElementById('nextBtn').hidden = G.idx >= TOTAL - 1;
+  document.getElementById('endPanel').hidden = false;
+}
+
+// ---- 메뉴 / 레벨 선택 ----
+function renderMenu() {
+  document.getElementById('progressTxt').textContent =
+    TR('cleared') + ' ' + clearedCount() + '/' + TOTAL + ' · ' + TR('scoreWord') + ' ' + totalScore().toLocaleString();
+  var grid = document.getElementById('lvGrid');
+  grid.innerHTML = '';
+  var mk = function (i) {
+    var btn = document.createElement('button');
+    var best = store.best[i];
+    if (best != null) {
+      btn.className = 'done';
+      btn.innerHTML = (i + 1) + '<small>✓' + best + '</small>';
+    } else if (isUnlocked(i)) {
+      btn.className = 'open';
+      btn.textContent = i + 1;
+    } else {
+      btn.className = 'lock';
+      btn.textContent = '🔒';
+      btn.disabled = true;
+    }
+    btn.onclick = function () { openLevel(i); };
+    grid.appendChild(btn);
+  };
+  for (var i = 0; i < TOTAL; i++) mk(i);
+}
+function showMenu() {
+  renderMenu();
+  document.getElementById('resumeBtn').hidden = !(G && !G.won);
+  document.getElementById('endPanel').hidden = true;
+  document.getElementById('menu').hidden = false;
+}
+function resumeGame() {
+  if (G && !G.won) document.getElementById('menu').hidden = true;
+}
+
+document.getElementById('startBtn').onclick = function () { openLevel(firstOpenLevel()); };
+document.getElementById('resumeBtn').onclick = resumeGame;
+document.getElementById('undoBtn').onclick = undo;
+document.getElementById('resetBtn').onclick = resetLevel;
+document.getElementById('levelsBtn').onclick = showMenu;
+document.getElementById('nextBtn').onclick = function () { openLevel(Math.min(G.idx + 1, TOTAL - 1)); };
+document.getElementById('againBtn').onclick = function () { openLevel(G.idx); };
+document.getElementById('backBtn').onclick = showMenu;
+
+// ---- 입력: 키보드(가상 터치패드 포함) ----
+window.addEventListener('keydown', function (e) {
+  var menuOpen = !document.getElementById('menu').hidden;
+  var endOpen = !document.getElementById('endPanel').hidden;
+  if (menuOpen && e.code === 'Escape') { e.preventDefault(); resumeGame(); return; }
+  if (menuOpen || endOpen) return;
+  switch (e.code) {
+    case 'ArrowUp': case 'KeyW': e.preventDefault(); tryMove(-1, 0); break;
+    case 'ArrowDown': case 'KeyS': e.preventDefault(); tryMove(1, 0); break;
+    case 'ArrowLeft': case 'KeyA': e.preventDefault(); tryMove(0, -1); break;
+    case 'ArrowRight': case 'KeyD': e.preventDefault(); tryMove(0, 1); break;
+    case 'KeyZ': case 'KeyU': e.preventDefault(); undo(); break;
+    case 'KeyR': e.preventDefault(); resetLevel(); break;
+    case 'Escape': e.preventDefault(); showMenu(); break;
+  }
+});
+
+// ---- 입력: 스와이프 ----
+var swipe = null;
+document.getElementById('board').addEventListener('pointerdown', function (e) {
+  swipe = { x: e.clientX, y: e.clientY };
+});
+window.addEventListener('pointerup', function (e) {
+  if (!swipe) return;
+  var dx = e.clientX - swipe.x, dy = e.clientY - swipe.y;
+  swipe = null;
+  if (!document.getElementById('menu').hidden || !document.getElementById('endPanel').hidden) return;
+  if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return;
+  if (Math.abs(dx) > Math.abs(dy)) tryMove(0, dx > 0 ? 1 : -1);
+  else tryMove(dy > 0 ? 1 : -1, 0);
+});
+
+window.addEventListener('resize', fitCells);
+
+// 부팅: 이어할 레벨을 뒤에 깔아두고 메뉴 표시
+G = parseLevel(firstOpenLevel());
+buildBoard();
+render();
+renderMenu();
+</script>
+<script src="../lib/touch.js" data-actions="KeyZ:↩,KeyR:⟲"></script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('crate-shift');</script>
+</body>
+</html>

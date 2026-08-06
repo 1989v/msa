@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">
+  <rect width="320" height="180" fill="#0c1424"/>
+  <circle cx="160" cy="80" r="74" fill="none" stroke="#1a2238" stroke-width="3"/>
+  <g fill="none" stroke-width="11" stroke-linecap="round">
+    <path d="M60 120 Q110 60 170 96 T268 62" stroke="#22c55e"/>
+    <path d="M70 46 Q124 34 158 58" stroke="#eab308" stroke-width="8"/>
+    <path d="M212 128 Q248 116 268 128" stroke="#a855f7" stroke-width="8"/>
+  </g>
+  <circle cx="268" cy="62" r="8" fill="#22c55e"/><circle cx="270" cy="59" r="2" fill="#0c1424"/>
+  <g fill="#0ea5e9">
+    <circle cx="104" cy="98" r="3"/><circle cx="196" cy="70" r="3"/><circle cx="140" cy="126" r="3"/>
+    <circle cx="232" cy="94" r="3"/><circle cx="88" cy="66" r="3"/>
+  </g>
+  <text x="160" y="168" font-family="AppleSDGothicNeo,Malgun Gothic,sans-serif" font-weight="bold" font-size="15" fill="#22c55e" text-anchor="middle">🐍 뱀 군단전 — 16마리의 배틀로얄</text>
+</svg>

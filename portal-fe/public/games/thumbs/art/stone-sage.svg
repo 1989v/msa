@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">
+  <rect width="320" height="180" fill="#0c1424"/>
+  <g transform="translate(168,24)">
+    <rect x="-14" y="-14" width="160" height="160" rx="8" fill="#1a2238" stroke="#2c3550" stroke-width="2"/>
+    <path stroke="#3a4763" stroke-width="1" fill="none" d="M0 0H132M0 22H132M0 44H132M0 66H132M0 88H132M0 110H132M0 132H132M0 0V132M22 0V132M44 0V132M66 0V132M88 0V132M110 0V132M132 0V132"/>
+    <circle cx="66" cy="66" r="3" fill="#3a4763"/>
+    <g fill="#e6ecf2" stroke="#0c1424" stroke-opacity=".5" stroke-width="1.5">
+      <circle cx="22" cy="22" r="9"/><circle cx="44" cy="66" r="9"/>
+      <circle cx="66" cy="44" r="9"/><circle cx="88" cy="88" r="9"/>
+    </g>
+    <g fill="#0b0e13" stroke="#4a5878" stroke-width="1.5">
+      <circle cx="22" cy="110" r="9"/><circle cx="44" cy="88" r="9"/>
+      <circle cx="66" cy="66" r="9"/><circle cx="88" cy="44" r="9"/>
+      <circle cx="110" cy="22" r="9"/>
+    </g>
+    <line x1="22" y1="110" x2="110" y2="22" stroke="#22c55e" stroke-width="3" stroke-opacity=".85"/>
+    <circle cx="66" cy="66" r="3.5" fill="#0ea5e9"/>
+  </g>
+  <circle cx="66" cy="52" r="8" fill="#0b0e13" stroke="#4a5878" stroke-width="1.5"/>
+  <circle cx="92" cy="52" r="8" fill="#e6ecf2" stroke="#0c1424" stroke-opacity=".5" stroke-width="1.5"/>
+  <text x="81" y="94" font-family="monospace" font-size="21" font-weight="bold" fill="#000" text-anchor="middle" transform="translate(2,2)">오목 사범</text>
+  <text x="81" y="94" font-family="monospace" font-size="21" font-weight="bold" fill="#e6ecf2" text-anchor="middle">오목 사범</text>
+  <text x="81" y="116" font-family="monospace" font-size="11" fill="#0ea5e9" text-anchor="middle">vs AI · 五</text>
+</svg>

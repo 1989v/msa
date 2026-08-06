@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180">
+  <rect width="320" height="180" fill="#0c1424"/>
+  <g stroke="#2c3550" stroke-width="3" fill="none">
+    <path d="M12 42 H32 V70 H52 M12 98 H32 V70"/>
+    <path d="M308 42 H288 V70 H268 M308 98 H288 V70"/>
+  </g>
+  <g font-family="AppleSDGothicNeo,Malgun Gothic,sans-serif" font-weight="bold" text-anchor="middle">
+    <rect x="54" y="32" width="86" height="76" rx="10" fill="#1a2238" stroke="#0ea5e9" stroke-width="2.5"/>
+    <text x="97" y="84" font-size="38">🍗</text>
+    <rect x="180" y="32" width="86" height="76" rx="10" fill="#1a2238" stroke="#ef4444" stroke-width="2.5"/>
+    <text x="223" y="84" font-size="38">🍕</text>
+    <circle cx="160" cy="70" r="20" fill="#eab308"/>
+    <text x="160" y="76" font-size="15" fill="#241c02">VS</text>
+    <text x="160" y="146" font-size="18" fill="#0ea5e9">⚔️ 급식 대전</text>
+    <text x="160" y="166" font-size="11" fill="#8e9db0">이상형 월드컵 — 최후의 1픽</text>
+  </g>
+</svg>
