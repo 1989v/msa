@@ -26,6 +26,8 @@ spec:
         metadata:
           labels:
             app.kubernetes.io/name: search-batch
+            # part-of 누락 시 default-deny 에서 egress 미허용 → opensearch/product 접근 불가
+            app.kubernetes.io/part-of: commerce-platform
             app.kubernetes.io/component: reindex
         spec:
           restartPolicy: OnFailure
@@ -35,6 +37,8 @@ spec:
               image: commerce/search-batch:latest
               imagePullPolicy: IfNotPresent
               args:
+                # 기본값(enabled=false)이면 웹서버만 뜨고 잡이 실행되지 않는다
+                - "--spring.batch.job.enabled=true"
                 - "--spring.batch.job.name=productApiReindexJob"
               env:
                 - name: OPENSEARCH_URIS

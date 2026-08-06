@@ -252,3 +252,8 @@ images:
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: 88bb760
+  # 인프라 이미지 — default-deny egress 라 기동 래퍼의 nori 다운로드가 불가.
+  # analysis-nori 베이크 이미지로 교체 (docker/opensearch/Dockerfile, 수동 빌드·푸시)
+  - name: opensearchproject/opensearch
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/opensearch-nori
+    newTag: "3.3.0"
