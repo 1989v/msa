@@ -116,7 +116,7 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | `drift-continent` | `portal-fe/public/games/drift-continent/` (**다중 파일**) | 플래그십 오픈월드 RPG P1 (V22 시드, `BETA`). 유일하게 단일 HTML 이 아니다 — `index.html` + `js/{content,world,battle,ui,core}.js` 를 일반 script 태그로 순차 로드(ES module 금지, iframe 동일 오리진 보장). 세이브는 **IndexedDB**(이어하기 코드는 64KB 상한이라 부적합). 월드는 청크 스트리밍 구조라 P3 절차 생성이 그 위에 얹힌다. 장기 트랙이므로 P2~P4 는 `docs/product/2026-08-06-game-expansion-research.md` 3장 참조 |
 
 캔버스 게임 공용 정적 자산 (`portal-fe/public/games/lib/`):
-- `touch.js` — 모바일 가상 터치패드. KeyboardEvent 합성이라 게임별 입력 코드 무변경
+- `touch.js` — 모바일 조작·레이아웃 엔진. **원형 아날로그 조이스틱**(한 손가락 360°, 8방향 KeyboardEvent 합성이라 게임별 입력 코드 무변경 — 대각선은 인접 두 키 동시) + 액션 버튼 + **레이아웃 fit**(게임 화면 상단 정렬, 하단 조작 영역 `--vt-pad-h` 확보, 가로/세로 비율 유지 contain). `canvas.width/height` **속성은 절대 건드리지 않는다**(인라인 style 만) — 게임 좌표계 보존이 12종 공용의 불변식. 옵션 `data-actions`(기존) `data-nodpad`(기존) `data-dirkeys="wasd"` `data-stick="fixed|floating|off"` `data-fit="0"`. API `GameTouch.axis()/pressed()/setVisible()/refit()/on()` — 비터치에서도 no-op 스텁이 있어 게임 쪽 가드 불필요
 - `rank.js` — 랭킹 위젯. `GameRank.autoPanel(slug)`(#menu 하단 TOP10), `submit(slug, score, detail)`, `copyButton(getCode)`(이어하기 코드 📋 복사)
 - `i18n.js` — 글로벌 한/영. localStorage('game_lang') → navigator.language 자동, 우상단 토글 자동 부착. 게임은 `GameI18n.init({ko,en})` + `TR()` + `data-i18n`. 카탈로그(제목/설명)는 `title_en`/`description_en` 컬럼(V17)
 - `daily.js` — 데일리 퍼즐 공용. KST 자정 롤오버 날짜 시드(`seed`/`rng`/`shuffle`), 연속 출석 스트릭, 오늘 결과 저장(재제출 방지), 다음 퍼즐 카운트다운, 이모지 결과 공유
