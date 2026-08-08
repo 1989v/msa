@@ -30,11 +30,11 @@
   #zoneTxt { color:#a3b3c7; }
   #spBadge { color:#22c55e; font-weight:bold; }
   #curseTxt { color:#c4b5fd; font-weight:bold; }
-  #hpTxt, #mpTxt { color:#8e9db0; font-size:10px; }
+  #hpTxt, #mpTxt { color:#aab8ca; font-size:10px; }
   #questTrack { color:#e6ecf2; font-size:10.5px; max-width:min(420px,62%); }
   #mercBar { display:flex; align-items:center; gap:5px; width:150px; font-size:10px; }
   #mercBar .bar { flex:1; height:6px; }
-  #mercTxt { color:#94a3b8; }
+  #mercTxt { color:#aab8ca; }
 
   #bossBar { position:absolute; top:8px; left:50%; transform:translateX(-50%); width:min(420px,72%);
              text-align:center; pointer-events:none; }
@@ -55,7 +55,7 @@
             opacity:0; transition:opacity .3s; padding:0 14px; line-height:1.4; }
   #banner.on { opacity:1; }
   #hint { position:absolute; bottom:58px; left:50%; transform:translateX(-50%); font-size:11.5px;
-          background:rgba(8,11,17,.85); padding:5px 12px; border-radius:7px; color:#c2cedc;
+          background:rgba(8,11,17,.85); padding:5px 12px; border-radius:7px; color:#d3dde9;
           opacity:0; transition:opacity .25s; pointer-events:none; max-width:88%; text-align:center; }
   #hint.on { opacity:1; }
   #stepBar { position:absolute; top:8px; left:50%; transform:translateX(-50%); font-size:11.5px;
@@ -71,14 +71,14 @@
            padding:18px; overflow:auto; }
   .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
   .panel h2 { color:#0ea5e9; font-size:17px; }
-  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:560px; }
-  .panel p.small { font-size:11px; color:#8e9db0; }
+  .panel p { font-size:12.5px; color:#d3dde9; line-height:1.8; max-width:560px; }
+  .panel p.small { font-size:11px; color:#aab8ca; }
   .panel button { background:#0ea5e9; color:#04121c; border:0; padding:9px 20px; font-weight:bold;
                   font-size:13px; border-radius:7px; cursor:pointer; font-family:inherit; }
   .panel button.ghost { background:#222b44; color:#e6ecf2; }
   .panel button:disabled { opacity:.32; cursor:default; }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
-  .dim { color:#5d6a7a; font-size:11.5px; }
+  .dim { color:#8fa0b4; font-size:11.5px; }
 
   /* ── 대화 ── */
   #dlg { justify-content:flex-end; background:rgba(9,13,24,.55); }
@@ -107,14 +107,14 @@
   #invGrid .slot.has { cursor:pointer; }
   #invGrid .slot.sel { border-color:#0ea5e9; }
   #invGrid .qty { position:absolute; right:3px; bottom:2px; font-size:9.5px; color:#fde68a; }
-  #invDetail { font-size:12px; color:#c2cedc; line-height:1.7; min-height:60px; }
+  #invDetail { font-size:12px; color:#d3dde9; line-height:1.7; min-height:60px; }
   #invDetail .dName { color:#e6ecf2; font-weight:bold; }
-  #invDetail .dDesc { color:#8e9db0; font-size:11px; margin:3px 0 6px; }
+  #invDetail .dDesc { color:#aab8ca; font-size:11px; margin:3px 0 6px; }
   #invDetail .dActs { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
   #invDetail button { font-size:11px; padding:4px 10px; }
   .eqRow, .stRow { display:flex; justify-content:space-between; gap:10px; font-size:11.5px;
-                   padding:3px 0; color:#c2cedc; }
-  .eqSlot { color:#5d6a7a; }
+                   padding:3px 0; color:#d3dde9; }
+  .eqSlot { color:#8fa0b4; }
   .stRow b { color:#e6ecf2; }
   .stRow.warn b { color:#c4b5fd; }
   .sep { height:1px; background:#2c3550; margin:6px 0; }
@@ -128,8 +128,8 @@
            display:flex; flex-direction:column; gap:2px; text-align:center; }
   .tnode .tIcon { font-size:16px; }
   .tnode .tName { font-weight:bold; }
-  .tnode .tDesc { color:#8e9db0; }
-  .tnode .tNote { color:#eab308; font-size:9.5px; }
+  .tnode .tDesc { color:#aab8ca; }
+  .tnode .tNote { color:#f2c744; font-size:10.5px; }
   .tnode.owned { border-color:#22c55e; background:#16351f; }
   .tnode.can { border-color:#0ea5e9; }
   .tnode:disabled { opacity:.42; cursor:default; }
@@ -149,12 +149,12 @@
   .qBadge { margin-left:auto; font-size:10px; color:#0c1424; background:#7dd3fc;
             border-radius:4px; padding:1px 6px; }
   .qRow.ready .qBadge { background:#22c55e; }
-  .qRow.done .qBadge { background:#5d6a7a; }
+  .qRow.done .qBadge { background:#8fa0b4; }
   .qRow.open .qBadge { background:#eab308; }
-  .qDesc { font-size:11px; color:#8e9db0; line-height:1.6; margin-top:3px; }
+  .qDesc { font-size:11px; color:#aab8ca; line-height:1.6; margin-top:3px; }
   .qArea { font-size:10.5px; color:#7dd3fc; margin-top:2px; }
-  .qProg { font-size:10.5px; color:#c2cedc; margin-top:2px; }
-  .bNote { font-size:10.5px; color:#5d6a7a; margin-top:2px; }
+  .qProg { font-size:10.5px; color:#d3dde9; margin-top:2px; }
+  .bNote { font-size:10.5px; color:#8fa0b4; margin-top:2px; }
   .bActs { display:flex; gap:6px; margin-top:6px; }
   .bActs button { font-size:11px; padding:4px 12px; }
 
@@ -163,7 +163,7 @@
                        border-bottom:1px solid #222b44; }
   .sIcon, .mIcon { font-size:20px; width:26px; text-align:center; }
   .sBody, .mBody { flex:1; display:flex; flex-direction:column; gap:1px; font-size:12px; }
-  .sBody i, .mBody i { font-style:normal; font-size:10.5px; color:#8e9db0; }
+  .sBody i, .mBody i { font-style:normal; font-size:10.5px; color:#aab8ca; }
   .sPrice { color:#fde68a; font-size:11.5px; }
   .shopRow button, .mercCur button { font-size:11px; padding:4px 11px; }
   .mercCur { flex-wrap:wrap; }
@@ -180,8 +180,8 @@
   .clsName { font-size:14px; font-weight:bold; }
   .clsTip { font-size:10.5px; color:#7dd3fc; }
   .clsDesc { font-size:11px; color:#a3b3c7; line-height:1.55; }
-  .clsStats { font-size:10px; color:#8e9db0; }
-  .clsSkills { font-size:10px; color:#c2cedc; line-height:1.5; }
+  .clsStats { font-size:10.5px; color:#aab8ca; }
+  .clsSkills { font-size:10px; color:#d3dde9; line-height:1.5; }
   .clsGo { margin-top:5px; font-size:11px; color:#04121c; background:#0ea5e9; border-radius:6px;
            padding:4px 0; text-align:center; font-weight:bold; }
   .clsCard:disabled { opacity:.4; cursor:default; }
@@ -192,7 +192,7 @@
            width:min(62vh,min(620px,92vw)); height:auto; aspect-ratio:1; }
   #mapInfo { font-size:11px; color:#a3b3c7; }
 
-  #info { margin-top:9px; font-size:11px; color:#5d6a7a; text-align:center; line-height:1.7; padding:0 12px; }
+  #info { margin-top:9px; font-size:11px; color:#8fa0b4; text-align:center; line-height:1.7; padding:0 12px; }
 
   @media (max-width: 900px), (pointer: coarse) {
     #wrap { width:100vw; max-width:100vw; border-width:0; border-radius:0; }

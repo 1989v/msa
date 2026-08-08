@@ -1182,30 +1182,66 @@ var W = {
     g.strokeStyle = 'rgba(226,240,255,.55)'; g.lineWidth = 1;
     g.strokeRect(ox + half * cell + 0.5, oy + half * cell + 0.5, cell - 1, cell - 1);
 
-    /* 플레이어 — 청크 칸이 아니라 청크 안의 실제 위치까지 반영한다 */
-    var inx = (px - pcx * CPX) / CPX, iny = (py - pcy * CPX) / CPX;
-    var mx = ox + (half + inx) * cell, my = oy + (half + iny) * cell;
-    g.fillStyle = '#0c1424';
-    g.beginPath(); g.arc(mx, my, Math.max(2.6, cell * 0.24), 0, 6.2832); g.fill();
-    g.fillStyle = '#e6ecf2';
-    g.beginPath(); g.arc(mx, my, Math.max(1.6, cell * 0.16), 0, 6.2832); g.fill();
-
-    /* 표착항 — 창 안이면 점, 밖이면 가장자리 화살표 */
+    /* 표착항 — 창 안이면 집 표식, 밖이면 가장자리 화살표.
+       플레이어보다 먼저 그려 겹칠 때 내 위치가 위로 오게 한다. */
     var hx = ox + (HCX - pcx + half) * cell + cell / 2;
     var hy = oy + (HCY - pcy + half) * cell + cell / 2;
-    g.fillStyle = '#eab308';
     if (HCX >= pcx - half && HCX <= pcx + half && HCY >= pcy - half && HCY <= pcy + half) {
-      g.beginPath(); g.arc(hx, hy, Math.max(2, cell * 0.3), 0, 6.2832); g.fill();
+      var hr = Math.max(4.5, cell * 0.42);
+      g.fillStyle = 'rgba(8,11,17,.85)';
+      g.beginPath(); g.arc(hx, hy, hr + 1.5, 0, 6.2832); g.fill();
+      g.fillStyle = '#eab308';
+      g.beginPath(); g.arc(hx, hy, hr, 0, 6.2832); g.fill();
+      g.fillStyle = '#1a1408';
+      g.font = 'bold ' + Math.round(hr * 1.7) + "px 'Courier New',monospace";
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText('⌂', hx, hy + 0.5);
+      g.textAlign = 'left'; g.textBaseline = 'alphabetic';
     } else {
+      /* 가장자리 방향 화살표. 날개 각도는 좁아야 화살표로 읽힌다 —
+         넓히면 삼각형이 지도를 통째로 덮는다. */
       var h = this.harborPx();
       var a = Math.atan2(h.y - py, h.x - px);
-      var cxp = ox + size / 2, cyp = oy + size / 2, rad = size / 2 - 4;
+      var cxp = ox + size / 2, cyp = oy + size / 2, rad = size / 2 - 5;
+      var tipX = cxp + Math.cos(a) * rad, tipY = cyp + Math.sin(a) * rad;
+      var WING = 0.42, BACK = 11;
+      g.fillStyle = 'rgba(8,11,17,.8)';
+      g.beginPath(); g.arc(tipX, tipY, 7, 0, 6.2832); g.fill();
+      g.fillStyle = '#eab308';
       g.beginPath();
-      g.moveTo(cxp + Math.cos(a) * rad, cyp + Math.sin(a) * rad);
-      g.lineTo(cxp + Math.cos(a + 2.5) * (rad - 7), cyp + Math.sin(a + 2.5) * (rad - 7));
-      g.lineTo(cxp + Math.cos(a - 2.5) * (rad - 7), cyp + Math.sin(a - 2.5) * (rad - 7));
+      g.moveTo(tipX, tipY);
+      g.lineTo(cxp + Math.cos(a + WING) * (rad - BACK), cyp + Math.sin(a + WING) * (rad - BACK));
+      g.lineTo(cxp + Math.cos(a - WING) * (rad - BACK), cyp + Math.sin(a - WING) * (rad - BACK));
       g.closePath(); g.fill();
     }
+
+    /* 플레이어 — 청크 칸이 아니라 청크 안의 실제 위치까지 반영.
+       어느 지형 색 위에서도 튀도록 어두운 테두리 + 흰 점 + 바라보는 방향 쐐기. */
+    var inx = (px - pcx * CPX) / CPX, iny = (py - pcy * CPX) / CPX;
+    var mx = ox + (half + inx) * cell, my = oy + (half + iny) * cell;
+    var pr = Math.max(3.6, cell * 0.3);
+    var pf = (S && S.p) || null;
+    if (pf && (pf.fx || pf.fy)) {
+      var fa = Math.atan2(pf.fy, pf.fx);
+      g.fillStyle = 'rgba(8,11,17,.9)';
+      g.beginPath();
+      g.moveTo(mx + Math.cos(fa) * (pr + 6), my + Math.sin(fa) * (pr + 6));
+      g.lineTo(mx + Math.cos(fa + 0.7) * (pr + 1), my + Math.sin(fa + 0.7) * (pr + 1));
+      g.lineTo(mx + Math.cos(fa - 0.7) * (pr + 1), my + Math.sin(fa - 0.7) * (pr + 1));
+      g.closePath(); g.fill();
+      g.fillStyle = '#38bdf8';
+      g.beginPath();
+      g.moveTo(mx + Math.cos(fa) * (pr + 4.5), my + Math.sin(fa) * (pr + 4.5));
+      g.lineTo(mx + Math.cos(fa + 0.6) * pr, my + Math.sin(fa + 0.6) * pr);
+      g.lineTo(mx + Math.cos(fa - 0.6) * pr, my + Math.sin(fa - 0.6) * pr);
+      g.closePath(); g.fill();
+    }
+    g.fillStyle = '#0c1424';
+    g.beginPath(); g.arc(mx, my, pr + 1.6, 0, 6.2832); g.fill();
+    g.fillStyle = '#38bdf8';
+    g.beginPath(); g.arc(mx, my, pr, 0, 6.2832); g.fill();
+    g.fillStyle = '#ffffff';
+    g.beginPath(); g.arc(mx, my, Math.max(1.8, pr * 0.5), 0, 6.2832); g.fill();
 
     /* 표착항까지 거리(타일) + 현재 티어 */
     var hp = this.harborPx();
