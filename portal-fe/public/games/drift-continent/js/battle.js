@@ -125,10 +125,36 @@ function spawnEnemy(type, x, y, chunkKey, id, unique) {
   return e;
 }
 
+/* 표착항에서 먼 청크일수록 적이 강해진다 — 티어별 능력치 정의를 만들어 캐시한다 */
+var TIER_MUL = [1, 1, 1.25, 1.6, 2.05, 2.6];
+var tierDefs = {};
+
+function defFor(type, tier) {
+  var base = DC.ENEMIES[type];
+  var mul = TIER_MUL[tier] || 1;
+  if (!base || mul === 1) return base;
+  var k = type + '@' + tier;
+  if (tierDefs[k]) return tierDefs[k];
+  var d = {};
+  for (var p in base) if (Object.prototype.hasOwnProperty.call(base, p)) d[p] = base[p];
+  d.hp = Math.round(base.hp * mul);
+  d.atk = Math.round(base.atk * (1 + (mul - 1) * 0.7));
+  d.def = Math.round(base.def * (1 + (mul - 1) * 0.6));
+  d.xp = Math.round(base.xp * (1 + (mul - 1) * 0.8));
+  d.gold = Math.round(base.gold * (1 + (mul - 1) * 0.8));
+  d.tier = tier;
+  tierDefs[k] = d;
+  return d;
+}
+
 function spawnChunk(ch) {
   for (var i = 0; i < ch.spawns.length; i++) {
     var s = ch.spawns[i];
-    spawnEnemy(s.t, ch.ox + s.tx * W.TILE + 16, ch.oy + s.ty * W.TILE + 16, ch.key, s.id, s.unique);
+    var e = spawnEnemy(s.t, ch.ox + s.tx * W.TILE + 16, ch.oy + s.ty * W.TILE + 16, ch.key, s.id, s.unique);
+    if (e && s.tier > 1) {
+      e.d = defFor(s.t, s.tier);
+      e.max = e.d.hp; e.hp = e.d.hp;
+    }
   }
 }
 

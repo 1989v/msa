@@ -72,26 +72,34 @@ var Store = (function () {
 })();
 
 /* ══════════════════════════ 상태 ══════════════════════════ */
+var SAVE_V = 2;            // 2 — 시드 기반 대륙 (seed / seen 추가, 지상 좌표계 이동)
+
 function newState() {
+  var start = W.spawnPoint();
   var st = {
-    v: 1,
+    v: SAVE_V,
+    seed: W.newSeed(),
     p: {
       lv: 1, xp: 0, sp: 0, str: 4, agi: 4, vit: 4, wil: 4,
       hp: 72, mp: 40, gold: 20,
       bag: [{ id: 'potion', n: 2 }],
       equip: { weapon: 'rusty_dagger', armor: 'quilt_coat', trinket: null },
       tree: {},
-      x: 16 * 32 + 16, y: 22 * 32 + 16, fx: 0, fy: 1,
+      x: start.x, y: start.y, fx: 0, fy: 1,
     },
     region: 'drift', zone: 'harbor',
-    quests: {}, flags: {}, kills: 0, deepest: 0, visited: { harbor: 1 },
+    quests: {}, flags: {}, kills: 0, deepest: 0, visited: { harbor: 1 }, seen: {},
     play: 0, savedAt: 0,
   };
   DC.QUEST_ORDER.forEach(function (id) { st.quests[id] = { state: 0, prog: 0 }; });
   return st;
 }
 
-/** 저장본이 구버전이어도 빠진 필드를 메워 부팅되게 한다 */
+/**
+ * 저장본이 구버전이어도 빠진 필드를 메워 부팅되게 한다.
+ * v1(4×3 고정 격자) 세이브는 시드가 없으므로 기본 대륙을 쓰고,
+ * 지상 좌표는 표착항 앵커 기준으로 평행이동해 옛 위치를 그대로 이어간다.
+ */
 function normalize(st) {
   var base = newState();
   if (!st || !st.p) return base;
@@ -100,11 +108,25 @@ function normalize(st) {
   });
   st.flags = st.flags || {};
   st.visited = st.visited || {};
+  st.seen = st.seen || {};
   st.quests = st.quests || {};
   DC.QUEST_ORDER.forEach(function (id) { if (!st.quests[id]) st.quests[id] = { state: 0, prog: 0 }; });
   st.p.bag = st.p.bag || [];
   st.p.tree = st.p.tree || {};
   st.p.equip = st.p.equip || base.p.equip;
+
+  if (!st.seed) st.seed = W.DEFAULT_SEED;
+  if (!st.v || st.v < SAVE_V) {
+    if (st.region === 'drift') {
+      st.p.x = (st.p.x || 0) + W.HCX * W.CPX;
+      st.p.y = (st.p.y || 0) + W.HCY * W.CPX;
+    }
+    st.v = SAVE_V;
+  }
+  if (st.region === 'drift') {
+    st.p.x = Math.max(24, Math.min(W.WCOLS * W.CPX - 24, st.p.x));
+    st.p.y = Math.max(24, Math.min(W.WROWS * W.CPX - 24, st.p.y));
+  }
   return st;
 }
 
@@ -366,8 +388,9 @@ function onDeath() {
 
 function respawn() {
   var st = B.stats(S.p);
+  var inn = W.innPoint();
   S.p.hp = st.maxHp; S.p.mp = st.maxMp;
-  S.region = 'drift'; S.p.x = 7 * 32 + 16; S.p.y = 13 * 32 + 16;
+  S.region = 'drift'; S.p.x = inn.x; S.p.y = inn.y;
   B.clearAll(); B.attach(S.p);
   W.enter('drift', S.p.x, S.p.y);
   W.takeLoaded().forEach(B.spawnChunk); W.takeUnloaded();
@@ -480,6 +503,8 @@ function labelFor(o) {
   if (o.kind === 'npc') return DC.tx(DC.NPCS[o.npc].n);
   if (o.kind === 'chest') return o.opened ? null : TR('hintChest');
   if (o.kind === 'herb') return TR('hintHerb');
+  if (o.kind === 'statue') return o.used ? null : TR('hintStatue');
+  if (o.kind === 'spring') return TR('hintSpring');
   if (o.kind === 'gate') return o.open ? null : TR('hintLocked');
   if (o.kind === 'portal') return o.up ? (o.to === 'drift' ? TR('hintExit') : TR('hintStairsUp')) : TR('hintStairsDown');
   return null;
@@ -510,6 +535,25 @@ function interact() {
   }
   if (o.kind === 'herb') {
     if (giveItem('herb', 1)) W.removeObj(o);
+    return;
+  }
+  /* 석상 — 대륙 깊숙이 갈수록 큰 경험치를 한 번만 준다 */
+  if (o.kind === 'statue') {
+    if (o.used) return;
+    o.used = true;
+    S.flags['statue_' + o.id] = true;
+    gainXp(60 * (o.tier || 1));
+    B.burst(o.x, o.y, 20, '#a78bfa', 170, 3);
+    DC.UI.hint(TR('hintStatueRead'), 3);
+    saveNow(false);
+    return;
+  }
+  /* 맑은 샘 — 원정 중 보급점. 소모되지 않는다 */
+  if (o.kind === 'spring') {
+    var stt = B.stats(S.p);
+    S.p.hp = stt.maxHp; S.p.mp = stt.maxMp;
+    B.burst(o.x, o.y, 18, '#7dd3fc', 150, 3);
+    DC.UI.hint(TR('hintSpringDrink'), 2.4);
     return;
   }
   if (o.kind === 'gate') {
@@ -650,6 +694,20 @@ function drawObjects(c) {
         g.fillStyle = '#2b3347'; g.beginPath(); g.arc(x, y, 15, 0, 6.2832); g.fill();
         g.fillStyle = '#0b2a44'; g.beginPath(); g.arc(x, y, 10, 0, 6.2832); g.fill();
         break;
+      case 'statue':
+        g.fillStyle = '#39415c'; g.fillRect(x - 11, y + 4, 22, 7);
+        g.fillStyle = o.used ? '#4b5573' : '#8b7fd4';
+        g.fillRect(x - 7, y - 16, 14, 20);
+        g.fillStyle = o.used ? '#39415c' : '#c4b5fd';
+        g.beginPath(); g.arc(x, y - 19, 6, 0, 6.2832); g.fill();
+        break;
+      case 'spring':
+        g.fillStyle = 'rgba(125,211,252,.16)';
+        g.beginPath(); g.arc(x, y, 22, 0, 6.2832); g.fill();
+        g.fillStyle = '#0b2a44'; g.beginPath(); g.arc(x, y, 13, 0, 6.2832); g.fill();
+        g.fillStyle = 'rgba(125,211,252,.5)';
+        g.beginPath(); g.arc(x, y - 2, 6, 0, 6.2832); g.fill();
+        break;
       case 'lighthouse':
         g.fillStyle = 'rgba(234,179,8,' + (S.flags.boss_down ? 0.5 : 0.10) + ')';
         g.beginPath(); g.arc(x, y, 42, 0, 6.2832); g.fill();
@@ -737,6 +795,8 @@ function render() {
   drawObjects(c);
   B.draw(g, c, time);
   if (W.isDungeon()) drawVignette();
+  /* 대륙이 넓어 길을 잃기 쉽다 — 지상에선 항상 간이 지도 + 표착항 나침반을 띄운다 */
+  W.drawMinimap(g, VW - 140, 12, 128, p.x, p.y);
 }
 
 var last = 0;

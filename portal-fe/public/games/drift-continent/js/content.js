@@ -68,6 +68,10 @@ DC.STR = {
     hintNeedQuest: '아직 들어갈 이유가 없다 — 촌장에게 물어보자',
     hintHerb: 'F — 약초를 캔다',
     hintChest: 'F — 상자를 연다',
+    hintStatue: 'F — 석상의 글귀를 읽는다',
+    hintStatueRead: '오래된 글귀가 머릿속에 들어온다',
+    hintSpring: 'F — 샘물을 마신다',
+    hintSpringDrink: '차가운 물이 몸을 되살린다',
     hintStairsDown: 'F — 아래로 내려간다',
     hintStairsUp: 'F — 위로 올라간다',
     hintExit: 'F — 밖으로 나간다',
@@ -127,6 +131,10 @@ DC.STR = {
     hintNeedQuest: 'No reason to go in yet — ask the chief',
     hintHerb: 'F — gather herb',
     hintChest: 'F — open chest',
+    hintStatue: 'F — read the standing stone',
+    hintStatueRead: 'The old inscription settles into your mind',
+    hintSpring: 'F — drink from the spring',
+    hintSpringDrink: 'The cold water brings you back',
     hintStairsDown: 'F — descend',
     hintStairsUp: 'F — ascend',
     hintExit: 'F — step outside',
@@ -323,6 +331,7 @@ DC.MAX_LEVEL = 20;
 DC.SHOPS = {
   smith: ['drift_sword', 'tide_saber', 'leather_vest', 'chain_mail'],
   herbalist: ['potion', 'potion_hi', 'elixir', 'castaway_charm'],
+  wanderer: ['potion_hi', 'elixir', 'castaway_charm', 'tide_saber', 'chain_mail'],
 };
 
 /* ══════════════════════════ 퀘스트 ══════════════════════════ */
@@ -460,6 +469,32 @@ DC.NPCS = {
         c: [
           { t: { ko: '쉬어가겠습니다', en: 'I will rest' }, act: 'inn' },
           { t: { ko: '고맙습니다', en: 'Thank you' }, act: 'end' },
+        ],
+      },
+    },
+  },
+
+  /* 야생 상인 — 대륙 각지 랜드마크에 결정적으로 배치된다 */
+  wanderer: {
+    icon: '🧳', color: '#a78bfa',
+    n: { ko: '떠돌이 짐꾼', en: 'The Wandering Packman' },
+    root: function () { return 'intro'; },
+    nodes: {
+      intro: {
+        t: { ko: '사람이네. 이 안쪽에서 사람을 보는 건 두 달 만이야. 짐은 무겁고 갈 길은 머니, 값은 항구와 같이 쳐주지.',
+          en: 'A person. First one I have seen this far in for two months. The pack is heavy and the road is long — harbor prices, same as always.' },
+        c: [
+          { t: { ko: '물건을 보여주세요', en: 'Show me your wares' }, act: 'shop:wanderer' },
+          { t: { ko: '여기서 뭘 하고 있습니까?', en: 'What are you doing out here?' }, to: 'why' },
+          { t: { ko: '가던 길 가겠습니다', en: 'I will move on' }, act: 'end' },
+        ],
+      },
+      why: {
+        t: { ko: '대륙은 자네 생각보다 훨씬 크네. 표착항은 가장자리야. 안쪽으로 갈수록 옛 사람들이 세운 석상이 나오고, 그 아래엔 대개 갱도가 있지 — 들어갈 땐 돌아올 길부터 세어 두게.',
+          en: 'This continent runs far wider than you think. The harbor is its edge. Go inward and you find standing stones the old folk raised — and under them, delves. Count your way back before you go down.' },
+        c: [
+          { t: { ko: '물건을 보여주세요', en: 'Show me your wares' }, act: 'shop:wanderer' },
+          { t: { ko: '새겨두죠', en: 'I will remember' }, act: 'end' },
         ],
       },
     },
@@ -603,6 +638,12 @@ DC.NPCS = {
 /* ══════════════════════════ 지역 이름 ══════════════════════════ */
 DC.ZONES = {
   harbor: { ko: '표착항', en: 'Castaway Harbor' },
+  shoal: { ko: '얕은 여울', en: 'Pale Shoals' },
+  tundra: { ko: '서리 벌판', en: 'Rime Flats' },
+  desert: { ko: '마른 모래벌', en: 'Parched Sands' },
+  ash: { ko: '잿빛 황무지', en: 'Cinder Waste' },
+  peak: { ko: '검은 봉우리', en: 'Black Spires' },
+  delve: { ko: '무너진 갱도', en: 'Collapsed Delve' },
   coast: { ko: '소금 해안길', en: 'Salt Coast Road' },
   marsh: { ko: '소금 습지', en: 'Brine Marsh' },
   cape: { ko: '등대 곶', en: 'Beacon Cape' },
