@@ -159,6 +159,27 @@ DC.STR = {
     mapYou: '현재 위치', mapHarbor: '표착항', mapCape: '등대 곶',
     mapDelve: '갱도', mapUnseen: '미답', mapGoal: '이번 목표',
     mapFoot: 'M / Esc 닫기 · +/- 확대·축소',
+    mapWp: '웨이포인트', mapWpOff: '미발견 웨이포인트', mapWarpBtn: '🚩 이동',
+
+    /* 웨이포인트 */
+    warpTitle: '🚩 웨이포인트',
+    warpDesc: '한 번 새긴 비석 사이는 건너뛸 수 있다. 처음 가는 길은 두 발로.',
+    warpNone: '아직 새긴 비석이 없다',
+    warpHere: '지금 여기',
+    warpGo: '이동',
+    warpCount: '새긴 비석 {n}곳',
+    warpReady: '여기서 다른 비석으로 갈 수 있다',
+    warpNeedStone: '비석 앞에 서 있어야 떠날 수 있다',
+    warpFoe: '적이 가까이 있다 — 지금은 떠날 수 없다',
+    warpPoor: '뱃삯이 모자란다',
+    warpDone: '{n} 에 내려섰다',
+    warpDist: '{n}청크 · 🪙{g}',
+    warpGoalNote: '★ 이번 목표에 가장 가까운 비석 — {n} ({d}청크)',
+    warpGoalNone: '★ 이번 목표 근처엔 아직 새긴 비석이 없다',
+    wpFound: '🚩 {n} — 비석에 이름을 새겼다 ({c}곳)',
+    hintWaypointNew: 'F — 비석에 이름을 새긴다',
+    hintWaypointUse: 'F — 비석에서 길을 고른다',
+    charmHome: '표착항의 불빛이 몸을 끌어당긴다',
 
     /* 오프닝 · 튜토리얼 */
     tutSkip: '(안내를 건너뛴다)',
@@ -295,6 +316,26 @@ DC.STR = {
     mapYou: 'You', mapHarbor: 'Harbor', mapCape: 'Beacon Cape',
     mapDelve: 'Delve', mapUnseen: 'Unseen', mapGoal: 'Current goal',
     mapFoot: 'M / Esc to close · +/- to zoom',
+    mapWp: 'Waystone', mapWpOff: 'Uncarved waystone', mapWarpBtn: '🚩 Travel',
+
+    warpTitle: '🚩 Waystones',
+    warpDesc: 'You may skip between stones you have carved. New ground is walked.',
+    warpNone: 'You have carved no stones yet',
+    warpHere: 'You are here',
+    warpGo: 'Travel',
+    warpCount: '{n} stones carved',
+    warpNeedStone: 'You must stand at a stone to leave',
+    warpReady: 'From here you may take any carved road',
+    warpFoe: 'Something is close — you cannot leave now',
+    warpPoor: 'Not enough for the passage',
+    warpDone: 'You step down at {n}',
+    warpDist: '{n} chunks · 🪙{g}',
+    warpGoalNote: '★ Nearest stone to your goal — {n} ({d} chunks)',
+    warpGoalNone: '★ No carved stone near your current goal yet',
+    wpFound: '🚩 {n} — you cut your name into the stone ({c} total)',
+    hintWaypointNew: 'F — carve your name into the stone',
+    hintWaypointUse: 'F — choose a road from the stone',
+    charmHome: 'The harbor light pulls you back',
 
     tutSkip: '(skip the lesson)',
     tutStart: 'Teach me',
@@ -444,6 +485,12 @@ DC.ITEMS = {
     slot: 'use', icon: '🫙', cleanse: true, heal: 20, price: 45, stack: 5,
     n: { ko: '소금 연고', en: 'Brine Salve' },
     d: { ko: '한기를 씻어낸다. 체력 20 회복.', en: 'Washes off the chill. Restores 20 HP.' },
+  },
+  home_charm: {
+    slot: 'use', icon: '🪬', price: 55, stack: 5, warpHome: true,
+    n: { ko: '귀환 부적', en: 'Homing Charm' },
+    d: { ko: '어디서든 표착항으로 돌아간다. 적이 가까이 있으면 실이 끊긴다.',
+      en: 'Takes you back to Castaway Harbor from anywhere. The thread snaps if something is close.' },
   },
   herb: {
     slot: 'mat', icon: '🌿', price: 8, stack: 20,
@@ -833,8 +880,37 @@ DC.MAX_LEVEL = 30;
 DC.SHOPS = {
   smith: ['drift_sword', 'tide_saber', 'drift_bow', 'reef_longbow', 'drift_rod', 'tide_rod',
     'leather_vest', 'chain_mail'],
-  herbalist: ['potion', 'potion_hi', 'elixir', 'salve', 'castaway_charm'],
-  wanderer: ['potion_hi', 'elixir', 'salve', 'castaway_charm', 'tide_saber', 'reef_longbow', 'tide_rod', 'chain_mail'],
+  herbalist: ['potion', 'potion_hi', 'elixir', 'salve', 'home_charm', 'castaway_charm'],
+  wanderer: ['potion_hi', 'elixir', 'salve', 'home_charm', 'castaway_charm', 'tide_saber', 'reef_longbow', 'tide_rod', 'chain_mail'],
+};
+
+/* ══════════════════════════ 웨이포인트 이름 ══════════════════════════
+ * 비석 하나하나에 대사를 붙일 수는 없으니 두 낱말을 좌표 해시로 조합한다.
+ * 목록에는 청크 좌표가 함께 나오므로 이름이 겹쳐도 헷갈리지 않는다.
+ * ────────────────────────────────────────────────────────────────── */
+DC.WP_WORDS = {
+  a: [
+    { ko: '소금', en: 'Salt' }, { ko: '서리', en: 'Rime' }, { ko: '잿빛', en: 'Cinder' },
+    { ko: '안개', en: 'Fog' }, { ko: '오래된', en: 'Old' }, { ko: '바람', en: 'Wind' },
+    { ko: '검은', en: 'Black' }, { ko: '부서진', en: 'Broken' }, { ko: '물결', en: 'Tide' },
+    { ko: '마른', en: 'Dry' }, { ko: '이끼', en: 'Moss' }, { ko: '별', en: 'Star' },
+  ],
+  b: [
+    { ko: '이정표', en: 'Marker' }, { ko: '노두', en: 'Outcrop' }, { ko: '디딤돌', en: 'Steppingstone' },
+    { ko: '표석', en: 'Waystone' }, { ko: '초소', en: 'Post' }, { ko: '문턱', en: 'Threshold' },
+    { ko: '갈림돌', en: 'Fork Stone' }, { ko: '눈금돌', en: 'Tally Stone' },
+  ],
+};
+
+/** 웨이포인트 정의 → 표시 이름. 앵커 둘은 지역 이름을 그대로 쓴다 */
+DC.wpName = function (w) {
+  if (!w) return '';
+  if (w.wid === 'home') return DC.tx(DC.ZONES.harbor);
+  if (w.wid === 'cape') return DC.tx(DC.ZONES.cape);
+  var A = DC.WP_WORDS.a, Bw = DC.WP_WORDS.b;
+  var a = A[Math.floor((w.n1 || 0) * A.length) % A.length];
+  var b = Bw[Math.floor((w.n2 || 0) * Bw.length) % Bw.length];
+  return DC.tx(a) + ' ' + DC.tx(b);
 };
 
 /* ══════════════════════════ 메인 스토리 (8챕터) ══════════════════════════

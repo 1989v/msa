@@ -26,7 +26,7 @@ var hintT = 0, bannerT = 0;
 var shownHints = {};
 
 var PANELS = ['panelInv', 'panelTree', 'panelQuest', 'panelShop', 'panelInn', 'panelPause',
-  'panelBoard', 'panelMerc', 'panelAdv', 'panelMap', 'dlg'];
+  'panelBoard', 'panelMerc', 'panelAdv', 'panelMap', 'panelWarp', 'dlg'];
 
 /* ══════════════════════════ HUD ══════════════════════════ */
 function hud() {
@@ -759,16 +759,67 @@ function drawMap() {
   var c = DC.curChapter(S);
   set('mapInfo', (c ? '★ ' + txt(c.n) + ' — ' + txt(c.area) : '') +
     '  ·  ' + span + '×' + span);
+  set('mapWpInfo', goalWaypoint(G.waypointList()));
   var lg = $('mapLegend');
   if (lg) {
     lg.innerHTML =
       '<span style="color:#ffffff">●</span> ' + TR('mapYou') +
       ' &nbsp; <span style="color:#eab308">⌂</span> ' + TR('mapHarbor') +
       ' &nbsp; <span style="color:#7dd3fc">☗</span> ' + TR('mapCape') +
+      ' &nbsp; <span style="color:#38bdf8">◆</span> ' + TR('mapWp') +
+      ' &nbsp; <span style="color:#2a4a63">◆</span> ' + TR('mapWpOff') +
       ' &nbsp; <span style="color:#c084fc">■</span> ' + TR('mapDelve') +
       ' &nbsp; <span style="color:#22c55e">◎</span> ' + TR('mapGoal') +
       ' &nbsp; <span style="color:#121a2a">■</span> ' + TR('mapUnseen');
   }
+}
+
+/* ══════════════════════════ 웨이포인트 ══════════════════════════
+ * F(비석 앞)와 지도의 「이동」 버튼이 같은 패널을 연다.
+ * 목록 자체는 어디서든 열람할 수 있고, 실제 출발만 비석 앞으로 제한된다 —
+ * 다음 목적지를 지도 보며 고르는 동선을 막지 않으려는 절충.
+ * ────────────────────────────────────────────────────────────────── */
+function openWarp() { show('panelWarp'); renderWarp(); }
+
+/** 이번 챕터 목표에 가장 가까운 활성 비석 — 재도전 동선을 짧게 만든다 */
+function goalWaypoint(rows) {
+  var m = chapterMark();
+  if (!m || !rows.length) return '';
+  var best = null, bd = Infinity;
+  rows.forEach(function (r) {
+    var d;
+    if (m.cx != null) d = Math.max(Math.abs(r.cx - m.cx), Math.abs(r.cy - m.cy));
+    else if (m.tier) { if (r.tier < m.tier) return; d = r.dist; }
+    else return;
+    if (d < bd) { bd = d; best = r; }
+  });
+  return best ? DC.sub(TR('warpGoalNote'), { n: best.name, d: bd }) : TR('warpGoalNone');
+}
+
+function renderWarp() {
+  var rows = G.waypointList();
+  var block = G.warpBlock(true);
+  set('warpNote', DC.sub(TR('warpCount'), { n: rows.length }) + ' · ' + TR(block || 'warpReady'));
+  set('warpGoal', goalWaypoint(rows));
+
+  var list = $('warpList'); if (!list) return;
+  list.innerHTML = '';
+  if (!rows.length) { list.appendChild(dim(TR('warpNone'))); return; }
+  rows.forEach(function (r) {
+    var row = document.createElement('div');
+    row.className = 'shopRow';
+    row.innerHTML = '<span class="sIcon">🚩</span>' +
+      '<span class="sBody"><b>' + esc(r.name) + '</b>' +
+      '<i>(' + r.cx + ',' + r.cy + ') · T' + r.tier + '</i></span>' +
+      '<span class="sPrice">' +
+      (r.here ? TR('warpHere') : DC.sub(TR('warpDist'), { n: r.dist, g: r.cost })) + '</span>';
+    var b = document.createElement('button');
+    b.textContent = TR('warpGo');
+    b.disabled = r.here || !!block || S.p.gold < r.cost;
+    b.onclick = function () { if (!G.warpTo(r.wid)) { renderWarp(); hud(); } };
+    row.appendChild(b);
+    list.appendChild(row);
+  });
 }
 
 /* ══════════════════════════ 일시정지 ══════════════════════════ */
@@ -792,6 +843,7 @@ DC.UI = {
     var pq = $('pauseQuit'); if (pq) pq.onclick = function () { G.toMenu(); };
     var zi = $('mapIn'); if (zi) zi.onclick = function () { mapZoomBy(1); };
     var zo = $('mapOut'); if (zo) zo.onclick = function () { mapZoomBy(-1); };
+    var mw = $('mapWarp'); if (mw) mw.onclick = function () { openWarp(); };
   },
   bind: function (state) { S = state; shownHints = {}; },
   hud: hud, bossBar: bossBar, tickFx: tickFx,
@@ -800,6 +852,7 @@ DC.UI = {
   openDialog: openDialog, openShop: openShop, openInv: openInv,
   openTree: openTree, openQuests: openQuests, openInn: openInn, openPause: openPause,
   openBoard: openBoard, openMerc: openMerc, openAdv: openAdv, openMap: openMap,
+  openWarp: openWarp,
   renderClasses: renderClasses,
   selectedClass: function () { return selCls; },
   mapZoom: mapZoomBy,
@@ -813,6 +866,7 @@ DC.UI = {
     else if (open === 'panelMerc') renderMerc();
     else if (open === 'panelAdv') renderAdv();
     else if (open === 'panelMap') drawMap();
+    else if (open === 'panelWarp') renderWarp();
     hud();
   },
 };

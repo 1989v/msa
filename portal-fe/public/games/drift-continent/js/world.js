@@ -251,6 +251,71 @@ function landmarkAt(cx, cy) {
   return { kind: kind, tx: tx, ty: ty, cx: cx, cy: cy, tier: tierAt(cx, cy) };
 }
 
+/* ══════════════════════════ 웨이포인트 ══════════════════════════
+ * 대륙이 32×32 청크라 한쪽 끝에서 반대쪽까지 걸으면 수 분이 걸린다.
+ * 웨이포인트는 "이미 걸어서 열어 둔 구간"만 건너뛰게 해 준다 —
+ * 찾아가서 직접 새겨야(F) 목록에 오르므로 첫 답사는 언제나 두 발로 한다.
+ *
+ *  · 표착항 / 등대 곶은 손제작 앵커 (표착항은 시작부터 활성, 곶은 3장 진행으로 열린다)
+ *  · 나머지는 랜드마크와 같은 좌표 해시로 대륙 전역에 흩어진다
+ *  · 랜드마크가 있는 청크는 비운다 — 같은 자리를 두 구조물이 다투지 않게
+ * ────────────────────────────────────────────────────────────────── */
+
+/* 청크당 확률. 0.04 → 평균 최근접 간격 ≈ 2.5청크(≈2,560px) — 걸어서 20초 안쪽 */
+var WP_RATE = 0.04;
+var HOME_WT = { tx: 21, ty: 13 };      // 표착항 광장 북동
+var CAPE_WT = { tx: 20, ty: 14 };      // 등대 곶 계단 옆
+
+function anchorWp(wid, cx, cy, t) {
+  return {
+    wid: wid, cx: cx, cy: cy, tx: t.tx, ty: t.ty,
+    tier: tierAt(cx, cy), anchor: true, n1: 0, n2: 0,
+  };
+}
+
+/** 청크 좌표 + 시드만으로 결정되는 웨이포인트 (없으면 null) */
+function waypointAt(cx, cy) {
+  if (!inWorld(cx, cy)) return null;
+  if (cx === HCX && cy === HCY) return anchorWp('home', HCX, HCY, HOME_WT);
+  if (cx === CAPE_CX && cy === CAPE_CY) return anchorWp('cape', CAPE_CX, CAPE_CY, CAPE_WT);
+  if (biomeAt(cx, cy) === 'shoal') return null;      // 물뿐인 여울엔 세울 자리가 없다
+  if (landmarkAt(cx, cy)) return null;
+  var h = hash2(cx, cy, (wseed ^ 0x6A09E667) | 0);
+  if (h >= WP_RATE) return null;
+
+  var tx = 5 + Math.floor(hash2(cx + 419, cy - 953, wseed | 0) * (CS - 10));
+  var ty = 5 + Math.floor(hash2(cx - 733, cy + 227, wseed | 0) * (CS - 10));
+  if (tx >= 12 && tx <= 20) tx = tx < 16 ? 9 : 23;   // 십자 도로를 덮지 않게 비킨다
+  if (ty >= 12 && ty <= 20) ty = ty < 16 ? 9 : 23;
+  return {
+    wid: cx + ',' + cy, cx: cx, cy: cy, tx: tx, ty: ty, tier: tierAt(cx, cy),
+    n1: hash2(cx + 1301, cy + 77, (wseed ^ 0x1F83D9AB) | 0),
+    n2: hash2(cx - 601, cy - 149, (wseed ^ 0x5BE0CD19) | 0),
+  };
+}
+
+/** 저장된 id("home" · "cape" · "cx,cy") → 웨이포인트 정의 */
+function waypointOf(wid) {
+  if (wid === 'home') return anchorWp('home', HCX, HCY, HOME_WT);
+  if (wid === 'cape') return anchorWp('cape', CAPE_CX, CAPE_CY, CAPE_WT);
+  if (typeof wid !== 'string') return null;
+  var p = wid.split(',');
+  var cx = parseInt(p[0], 10), cy = parseInt(p[1], 10);
+  if (isNaN(cx) || isNaN(cy)) return null;
+  var w = waypointAt(cx, cy);
+  return w && !w.anchor ? w : null;
+}
+
+/** 도착 지점 — 비석 바로 아래 칸 (재출발할 수 있게 상호작용 범위 안이다) */
+function waypointPx(wid) {
+  var w = waypointOf(wid);
+  if (!w) return null;
+  return {
+    x: w.cx * CPX + w.tx * TILE + TILE / 2,
+    y: w.cy * CPX + (w.ty + 1) * TILE + TILE / 2,
+  };
+}
+
 /** 티어가 오를수록 값어치가 커지는 보물 — 멀리 갈 이유 */
 function lootFor(tier, rich) {
   var l = [];
@@ -435,6 +500,7 @@ function genField(region, cx, cy, ch) {
   }
 
   genLandmark(ch, cx, cy, rnd);
+  var wp = genWaypoint(ch, cx, cy);
 
   /* 적 스폰 — 도로/마을에서 떨어진 지점. 티어만큼 수·종류·능력치가 오른다 */
   if (!b.safe) {
@@ -450,6 +516,8 @@ function genField(region, cx, cy, ch) {
           var sx = 2 + Math.floor(rnd() * (CS - 4)), sy = 2 + Math.floor(rnd() * (CS - 4));
           if (SOLID[ch.tiles[sy * CS + sx]]) continue;
           if (Math.abs(sx - 16) < 4 && Math.abs(sy - 16) < 4) continue;
+          /* 비석 둘레는 비워 둔다 — 도착하자마자 적에 둘러싸여 못 떠나는 일이 없게 */
+          if (wp && Math.abs(sx - wp.tx) < 7 && Math.abs(sy - wp.ty) < 7) continue;
           ch.spawns.push({
             t: pair[0], tx: sx, ty: sy, tier: tier,
             id: 's_' + ch.key + '_' + pi + '_' + k,
@@ -460,6 +528,24 @@ function genField(region, cx, cy, ch) {
       }
     });
   }
+}
+
+/**
+ * 웨이포인트 비석 — 돌 단 5×5 + 남쪽 진입로.
+ * 앵커(표착항·등대 곶)는 각자 마을/곶 생성기가 자기 자리에 심으므로 여기선 자리만 알려준다.
+ * 반환값은 적 스폰 회피에 쓰인다.
+ */
+function genWaypoint(ch, cx, cy) {
+  var wp = waypointAt(cx, cy);
+  if (!wp || wp.anchor) return wp;
+  var x = wp.tx, y = wp.ty;
+  setRect(ch, x - 2, y - 2, 5, 5, T.STONE);
+  setRect(ch, x - 1, y + 3, 3, 2, T.PATH);
+  ch.objs.push({
+    kind: 'waypoint', tx: x, ty: y, wid: wp.wid,
+    cx: cx, cy: cy, tier: wp.tier, n1: wp.n1, n2: wp.n2,
+  });
+  return wp;
 }
 
 /* 랜드마크 — 청크 해시로 결정되는 소규모 명소 */
@@ -585,6 +671,10 @@ function genHarbor(ch) {
   /* 오브젝트 — 각자 자리에 */
   ch.objs.push({ kind: 'bonfire', tx: 16, ty: 16 });
   ch.objs.push({ kind: 'board', tx: 12, ty: 12, id: 'harbor_board' });
+  ch.objs.push({
+    kind: 'waypoint', tx: HOME_WT.tx, ty: HOME_WT.ty, wid: 'home',
+    cx: HCX, cy: HCY, tier: 1, anchor: true,
+  });
   ch.objs.push({ kind: 'well', tx: 11, ty: 19 });
   for (i = 0; i < HARBOR_NPCS.length; i++) {
     ch.objs.push({ kind: 'npc', npc: HARBOR_NPCS[i].npc, tx: HARBOR_NPCS[i].tx, ty: HARBOR_NPCS[i].ty });
@@ -598,8 +688,13 @@ function genCape(ch) {
   setRect(ch, 12, 4, 9, 9, T.WALL);
   setRect(ch, 14, 6, 5, 5, T.CARPET);
   setRect(ch, 15, 13, 3, 3, T.STONE);
+  setRect(ch, 19, 13, 3, 3, T.STONE);
   ch.tiles[13 * CS + 16] = T.STONE;
   ch.objs.push({ kind: 'lighthouse', tx: 16, ty: 8 });
+  ch.objs.push({
+    kind: 'waypoint', tx: CAPE_WT.tx, ty: CAPE_WT.ty, wid: 'cape',
+    cx: CAPE_CX, cy: CAPE_CY, tier: tierAt(CAPE_CX, CAPE_CY), anchor: true,
+  });
   ch.objs.push({ kind: 'portal', tx: 16, ty: 12, to: 'f1', px: 16 * 32 + 16, py: 27 * 32 + 16, down: true, gateQuest: 'm3_signal' });
 }
 
@@ -860,6 +955,13 @@ function carve(ch, x0, y0, x1, y1) {
   }
 }
 
+/** 지도 위 웨이포인트 표식 — 마름모. 랜드마크 사각형과 한눈에 구분된다 */
+function diamond(g, cx, cy, r) {
+  g.beginPath();
+  g.moveTo(cx, cy - r); g.lineTo(cx + r, cy); g.lineTo(cx, cy + r); g.lineTo(cx - r, cy);
+  g.closePath(); g.fill();
+}
+
 /* ══════════════════════════ 런타임 (스트리밍 / 충돌 / 렌더) ══════════════════════════ */
 
 var S = null;                 // 게임 상태 (flags 참조용)
@@ -888,6 +990,7 @@ function applyState(ch) {
     var o = ch.objs[i];
     if (o.kind === 'chest' && flags['chest_' + o.id]) o.opened = true;
     if (o.kind === 'statue' && flags['statue_' + o.id]) o.used = true;
+    if (o.kind === 'waypoint') o.lit = !!(S.wp && S.wp[o.wid]);
     if (o.kind === 'gate' && flags['gate_' + o.id]) {
       o.open = true;
       setRect(ch, o.tx - 1, o.ty, 3, 1, T.STONE);
@@ -951,6 +1054,11 @@ var W = {
   tierAt: tierAt,
   landmarkAt: landmarkAt,
   buildChunk: buildChunk,
+
+  WP_RATE: WP_RATE,
+  waypointAt: waypointAt,
+  waypointOf: waypointOf,
+  waypointPx: waypointPx,
 
   /** 표착항 앞 광장 — 새 여정의 시작 좌표 */
   spawnPoint: function () {
@@ -1175,6 +1283,11 @@ var W = {
           g.fillStyle = lm.kind === 'delve' ? '#a855f7' : '#f8fafc';
           g.fillRect(x + cell * 0.38, y + cell * 0.38, cell * 0.26, cell * 0.26);
         }
+        var wp = waypointAt(cx, cy);
+        if (wp && !wp.anchor) {
+          g.fillStyle = (S && S.wp && S.wp[wp.wid]) ? '#38bdf8' : 'rgba(56,189,248,.30)';
+          diamond(g, x + cell / 2, y + cell / 2, Math.max(2.2, cell * 0.24));
+        }
       }
     }
 
@@ -1296,6 +1409,18 @@ var W = {
           var s = Math.max(2, cell * 0.24);
           g.fillRect(x + (cell - s) / 2, y + (cell - s) / 2, s, s);
         }
+        /* 웨이포인트 — 새긴 것은 밝은 마름모, 아직 못 새긴 것은 흐린 윤곽만 */
+        var wp = waypointAt(cx, cy);
+        if (wp && !wp.anchor) {
+          var lit = !!(S && S.wp && S.wp[wp.wid]);
+          var wr = Math.max(2.6, cell * 0.3);
+          g.fillStyle = lit ? '#38bdf8' : 'rgba(56,189,248,.22)';
+          diamond(g, x + cell / 2, y + cell / 2, wr);
+          if (lit) {
+            g.fillStyle = '#e0f2fe';
+            diamond(g, x + cell / 2, y + cell / 2, wr * 0.42);
+          }
+        }
       }
     }
 
@@ -1331,6 +1456,14 @@ var W = {
 
     markAt(HCX, HCY, '#eab308', '⌂', true);
     markAt(CAPE_CX, CAPE_CY, '#7dd3fc', '☗', true);
+
+    /* 앵커 웨이포인트 — 집·등대 표식 아래에 마름모를 얹어 활성 여부를 알린다 */
+    [['home', HCX, HCY], ['cape', CAPE_CX, CAPE_CY]].forEach(function (a) {
+      if (a[1] < c0x || a[2] < c0y || a[1] >= c0x + span || a[2] >= c0y + span) return;
+      g.fillStyle = (S && S.wp && S.wp[a[0]]) ? '#38bdf8' : 'rgba(56,189,248,.22)';
+      diamond(g, ox + (a[1] - c0x + 0.5) * cell,
+        oy + (a[2] - c0y + 0.5) * cell + Math.max(5, cell * 0.62), Math.max(2.6, cell * 0.24));
+    });
 
     /* 현재 청크 + 청크 안 실제 위치 */
     var pxi = ox + (pcx - c0x) * cell, pyi = oy + (pcy - c0y) * cell;

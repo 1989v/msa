@@ -351,13 +351,25 @@
     <h2 data-i18n="mapTitle">🗺 대륙 지도</h2>
     <canvas id="mapCv" width="620" height="620"></canvas>
     <p class="small" id="mapInfo"></p>
+    <p class="small" id="mapWpInfo" style="color:#7dd3fc"></p>
     <p class="small" id="mapLegend"></p>
     <div class="row">
       <button id="mapOut" class="ghost" data-i18n="mapZoomOut">－ 축소</button>
       <button id="mapIn" class="ghost" data-i18n="mapZoomIn">＋ 확대</button>
+      <button id="mapWarp" data-i18n="mapWarpBtn">🚩 이동</button>
       <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
     </div>
     <p class="small" data-i18n="mapFoot">M / Esc 닫기 · +/- 확대·축소</p>
+  </div>
+
+  <!-- 웨이포인트 이동 -->
+  <div class="panel" id="panelWarp" hidden>
+    <h2 data-i18n="warpTitle">🚩 웨이포인트</h2>
+    <p class="small" data-i18n="warpDesc">한 번 새긴 비석 사이는 건너뛸 수 있다. 처음 가는 길은 두 발로.</p>
+    <p class="small" id="warpNote"></p>
+    <p class="small" id="warpGoal" style="color:#22c55e"></p>
+    <div class="board"><div id="warpList"></div></div>
+    <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
   </div>
 
   <!-- 여관 -->

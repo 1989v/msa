@@ -78,8 +78,8 @@ var Store = (function () {
 })();
 
 /* ══════════════════════════ 상태 ══════════════════════════ */
-/* 2 — 시드 기반 대륙 · 3 — 직업/전직/동료/메인 챕터/카운터 */
-var SAVE_V = 3;
+/* 2 — 시드 기반 대륙 · 3 — 직업/전직/동료/메인 챕터/카운터 · 4 — 웨이포인트 */
+var SAVE_V = 4;
 
 function clone(o) {
   var c = {};
@@ -106,7 +106,9 @@ function newState(cls) {
     },
     region: 'drift', zone: 'harbor',
     quests: {}, flags: {},
-    counters: { maxTier: 1, delves: 0, statues: 0 },
+    /* 새긴 웨이포인트 — 표착항만 처음부터 열려 있다 */
+    wp: { home: 1 },
+    counters: { maxTier: 1, delves: 0, statues: 0, waypoints: 1 },
     kills: 0, deepest: 0, visited: { harbor: 1 }, seen: {},
     play: 0, savedAt: 0,
   };
@@ -152,11 +154,18 @@ function normalize(st) {
     if (typeof p[k] !== 'number') p[k] = DC.CLASSES[p.cls].stats[k];
   });
 
+  /* 웨이포인트 — v3 이하 세이브는 표착항만 활성인 상태로 시작한다.
+     이미 등대에 들어간 세이브라면 곶 비석은 스토리로 열린 것으로 본다 */
+  if (!st.wp || typeof st.wp !== 'object') st.wp = { home: 1 };
+  st.wp.home = 1;
+  if (st.flags.entered_lighthouse) st.wp.cape = 1;
+
   /* 카운터 */
   st.counters = st.counters || {};
   ['maxTier', 'delves', 'statues'].forEach(function (k) {
     if (typeof st.counters[k] !== 'number') st.counters[k] = base.counters[k];
   });
+  st.counters.waypoints = Object.keys(st.wp).length;
 
   var oldSave = !st.v || st.v < 3;
 
@@ -797,6 +806,12 @@ function useItem(slot) {
   var s = S.p.bag[slot]; if (!s) return false;
   var it = DC.ITEMS[s.id];
   if (!it || it.slot !== 'use') return false;
+  /* 귀환 부적 — 이동에 실패하면 소모하지 않는다 */
+  if (it.warpHome) {
+    if (!warpHome()) return false;
+    s.n--; if (s.n <= 0) S.p.bag.splice(slot, 1);
+    return true;
+  }
   var st = B.stats(S.p);
   if (it.cleanse && S.p.curse > 0) {
     S.p.curse = 0;
@@ -831,11 +846,126 @@ function enterRegion(to, px, py) {
   B.attach(S.p);
   S.zone = W.zoneKey(px, py);
   S.visited[S.zone] = 1;
-  if (to === 'f1') S.flags.entered_lighthouse = true;
+  if (to === 'f1') {
+    S.flags.entered_lighthouse = true;
+    openWaypoint('cape', true);    // 3장 진행으로 곶 비석이 열린다
+  }
   if (FLOOR_NO[to]) S.deepest = Math.max(S.deepest, FLOOR_NO[to]);
   DC.UI.banner(fmt('zoneEnter', { n: DC.tx(DC.ZONES[S.zone] || {}) }), 2.0);
   snapCam();
   saveNow(false);
+}
+
+/* ══════════════════════════ 웨이포인트 ══════════════════════════
+ * 비용·제약 (탐험을 지우지 않으려는 최소 장치)
+ *  1. 출발은 비석 앞에서만 — 아무 데서나 튀지 못하니 "처음 가는 길"은 늘 두 발로 간다
+ *  2. 적이 가까이 있으면 불가 — 전투 도주 악용 차단 (귀환 부적도 같은 규칙을 탄다)
+ *  3. 금화 소액, 거리 비례 — 여관 숙박(30) 언저리라 부담은 아니되 공짜도 아니다
+ * 쿨다운은 넣지 않았다. 1·2 로 이미 남용 경로가 막혀 있어 HUD 만 복잡해진다.
+ * ────────────────────────────────────────────────────────────────── */
+var WARP_SAFE_R = 200;             // 이 반경 안에 적이 있으면 떠날 수 없다
+var WARP_BASE = 6, WARP_PER_CHUNK = 2;
+
+function wpName(wid) { return DC.wpName(W.waypointOf(wid)); }
+
+/**
+ * 새 비석 등록 — 발견 연출 + 소액 경험치. 이미 있으면 false.
+ * noBanner 는 스토리로 저절로 열리는 경우용 — 지역 진입 배너를 덮지 않게 한다.
+ */
+function openWaypoint(wid, noBanner) {
+  if (!S.wp) S.wp = { home: 1 };
+  if (S.wp[wid]) return false;
+  var w = W.waypointOf(wid);
+  if (!w) return false;
+  S.wp[wid] = 1;
+  S.counters.waypoints = Object.keys(S.wp).length;
+  var name = DC.wpName(w);
+  if (!noBanner) {
+    B.burst(S.p.x, S.p.y, 24, '#38bdf8', 200, 4);
+    DC.UI.banner('🚩 ' + name, 2.4);
+  }
+  DC.UI.hint(fmt('wpFound', { n: name, c: S.counters.waypoints }), 3.4);
+  gainXp(20 * (w.tier || 1));
+  submitScore();
+  saveNow(false);
+  return true;
+}
+
+/** 지금 서 있는 비석의 id (없으면 null) — 출발 가능 여부의 근거 */
+function atWaypoint() {
+  for (var i = 0; i < objsCache.length; i++) {
+    var o = objsCache[i];
+    if (o.kind !== 'waypoint' || !(S.wp && S.wp[o.wid])) continue;
+    if (Math.hypot(o.x - S.p.x, o.y - S.p.y) < 56) return o.wid;
+  }
+  return null;
+}
+
+/** 이동을 막는 사유 키 (없으면 null) */
+function warpBlock(needStone) {
+  if (B.boss()) return 'warpFoe';
+  if (B.nearest(S.p.x, S.p.y, WARP_SAFE_R)) return 'warpFoe';
+  if (needStone && !atWaypoint()) return 'warpNeedStone';
+  return null;
+}
+
+/** 뱃삯 — 현재 청크에서 목적지까지의 체비셰프 청크 거리에 비례 */
+function warpCost(wid) {
+  var w = W.waypointOf(wid);
+  if (!w) return 0;
+  return WARP_BASE + WARP_PER_CHUNK * warpDist(wid);
+}
+function warpDist(wid) {
+  var w = W.waypointOf(wid);
+  if (!w) return 0;
+  var pcx = Math.floor(S.p.x / W.CPX), pcy = Math.floor(S.p.y / W.CPX);
+  if (!W.isField()) { pcx = W.HCX; pcy = W.HCY; }
+  return Math.max(Math.abs(w.cx - pcx), Math.abs(w.cy - pcy));
+}
+
+/** 활성 비석 목록 — 현재 위치 기준 거리순 */
+function waypointList() {
+  var out = [];
+  Object.keys(S.wp || {}).forEach(function (wid) {
+    var w = W.waypointOf(wid);
+    if (!w) return;
+    out.push({
+      wid: wid, cx: w.cx, cy: w.cy, tier: w.tier,
+      name: DC.wpName(w), dist: warpDist(wid), cost: warpCost(wid),
+      here: W.isField() && atWaypoint() === wid,
+    });
+  });
+  out.sort(function (a, b) { return a.dist - b.dist; });
+  return out;
+}
+
+/** 비석 → 비석 이동. free 는 귀환 부적처럼 뱃삯 없이 움직이는 경로 */
+function warpTo(wid, free) {
+  if (!S.wp || !S.wp[wid]) return false;
+  var reason = warpBlock(!free);
+  if (reason) { DC.UI.hint(TR(reason), 2.8); return false; }
+  var px = W.waypointPx(wid);
+  if (!px) return false;
+  var cost = free ? 0 : warpCost(wid);
+  if (S.p.gold < cost) { DC.UI.hint(TR('warpPoor'), 2.6); return false; }
+  S.p.gold -= cost;
+  B.burst(S.p.x, S.p.y, 28, '#38bdf8', 220, 4);
+  DC.UI.closeAll();
+  paused = false;
+  enterRegion('drift', px.x, px.y);
+  B.burst(px.x, px.y, 22, '#7dd3fc', 190, 3);
+  DC.UI.banner('🚩 ' + wpName(wid), 2.2);
+  DC.UI.hint(fmt('warpDone', { n: wpName(wid) }), 2.6);
+  return true;
+}
+
+/** 귀환 부적 — 어디서든(던전 안에서도) 표착항으로. 적 근처 제약은 동일하다 */
+function warpHome() {
+  var reason = warpBlock(false);
+  if (reason) { DC.UI.hint(TR(reason), 2.8); return false; }
+  if (!warpTo('home', true)) return false;
+  DC.UI.hint(TR('charmHome'), 2.6);
+  return true;
 }
 
 /* ══════════════════════════ 상호작용 ══════════════════════════ */
@@ -847,6 +977,9 @@ function labelFor(o) {
   if (o.kind === 'spring') return TR('hintSpring');
   if (o.kind === 'bonfire') return TR('hintBonfire');
   if (o.kind === 'board') return TR('hintBoard');
+  if (o.kind === 'waypoint') {
+    return (S.wp && S.wp[o.wid]) ? TR('hintWaypointUse') : TR('hintWaypointNew');
+  }
   if (o.kind === 'gate') return o.open ? null : TR('hintLocked');
   if (o.kind === 'portal') return o.up ? (o.to === 'drift' ? TR('hintExit') : TR('hintStairsUp')) : TR('hintStairsDown');
   return null;
@@ -908,6 +1041,13 @@ function interact() {
     S.p.hp = stt.maxHp; S.p.mp = stt.maxMp;
     B.burst(o.x, o.y, 18, '#7dd3fc', 150, 3);
     DC.UI.hint(TR('hintSpringDrink'), 2.4);
+    return;
+  }
+  /* 웨이포인트 — 처음이면 새기고, 이미 새겼으면 길 목록을 연다 */
+  if (o.kind === 'waypoint') {
+    if (!(S.wp && S.wp[o.wid])) { o.lit = true; openWaypoint(o.wid); return; }
+    paused = true;
+    DC.UI.openWarp();
     return;
   }
   if (o.kind === 'gate') {
@@ -1121,6 +1261,31 @@ function drawObjects(c) {
         g.fillStyle = 'rgba(125,211,252,.5)';
         g.beginPath(); g.arc(x, y - 2, 6, 0, 6.2832); g.fill();
         break;
+      /* 웨이포인트 비석 — 새기면 위쪽 룬에 불이 들어온다 */
+      case 'waypoint':
+        var lit = !!(S.wp && S.wp[o.wid]);
+        if (lit) {
+          var pulse = 1 + Math.sin(time * 2.4 + x * 0.05) * 0.10;
+          g.fillStyle = 'rgba(56,189,248,.13)';
+          g.beginPath(); g.arc(x, y - 4, 34 * pulse, 0, 6.2832); g.fill();
+        }
+        g.fillStyle = 'rgba(0,0,0,.35)';
+        g.beginPath(); g.ellipse(x, y + 13, 13, 5, 0, 0, 6.2832); g.fill();
+        g.fillStyle = '#39415c';
+        g.fillRect(x - 12, y + 6, 24, 7);
+        g.fillStyle = lit ? '#5b7ba8' : '#3d4560';
+        g.beginPath();
+        g.moveTo(x - 7, y + 7); g.lineTo(x - 5, y - 20); g.lineTo(x + 5, y - 20); g.lineTo(x + 7, y + 7);
+        g.closePath(); g.fill();
+        g.fillStyle = lit ? '#7dd3fc' : '#2b3347';
+        g.beginPath();
+        g.moveTo(x, y - 15); g.lineTo(x + 5, y - 8); g.lineTo(x, y - 1); g.lineTo(x - 5, y - 8);
+        g.closePath(); g.fill();
+        if (lit) {
+          g.fillStyle = '#e0f2fe';
+          g.beginPath(); g.arc(x, y - 8, 2.2, 0, 6.2832); g.fill();
+        }
+        break;
       case 'lighthouse':
         g.fillStyle = 'rgba(234,179,8,' + (S.flags.boss_down ? 0.5 : 0.10) + ')';
         g.beginPath(); g.arc(x, y, 42, 0, 6.2832); g.fill();
@@ -1280,6 +1445,9 @@ DC.Game = {
   saveNow: saveNow, loadGame: loadGame, exportFile: exportFile, importFile: importFile,
   toMenu: toMenu, newGame: newGame, respawn: respawn, interact: interact,
   enterRegion: enterRegion, gainXp: gainXp, score: score,
+  waypointList: waypointList, warpTo: warpTo, warpCost: warpCost, warpDist: warpDist,
+  warpBlock: warpBlock, atWaypoint: atWaypoint, openWaypoint: openWaypoint,
+  wpName: wpName,
   startAs: function (cls) { newGame(cls); },
   healAt: healAt, healFee: healFee,
   hireMerc: hireMerc, trainMerc: trainMerc, reviveMerc: reviveMerc, dismissMerc: dismissMerc,
