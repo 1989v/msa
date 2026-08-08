@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">
+  <defs>
+    <linearGradient id="ssBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c1424"/>
+      <stop offset="1" stop-color="#111a2e"/>
+    </linearGradient>
+    <clipPath id="ssLens">
+      <circle cx="222" cy="74" r="40"/>
+    </clipPath>
+  </defs>
+
+  <rect width="320" height="180" fill="url(#ssBg)"/>
+
+  <!-- 그림판: 격자 종이 -->
+  <rect x="14" y="14" width="196" height="128" rx="9" fill="#1a2238" stroke="#2c3550" stroke-width="2"/>
+  <g stroke="#243050" stroke-width="1">
+    <path d="M46 16 V140 M78 16 V140 M110 16 V140 M142 16 V140 M174 16 V140"/>
+    <path d="M16 46 H208 M16 78 H208 M16 110 H208"/>
+  </g>
+
+  <!-- 그려지는 중인 그림: 집 + 해 + 나무 -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M46 108 L46 74 L74 54 L102 74 L102 108 Z" stroke="#e6ecf2" stroke-width="3.5"/>
+    <path d="M64 108 L64 88 L84 88 L84 108" stroke="#eab308" stroke-width="3"/>
+    <circle cx="170" cy="42" r="13" stroke="#eab308" stroke-width="3"/>
+    <g stroke="#eab308" stroke-width="2.5">
+      <path d="M170 22 V15"/><path d="M170 62 V69"/><path d="M150 42 H143"/><path d="M190 42 H197"/>
+    </g>
+    <path d="M132 110 V84" stroke="#8e9db0" stroke-width="4"/>
+    <circle cx="132" cy="74" r="16" stroke="#22c55e" stroke-width="3.5"/>
+    <path d="M24 118 Q60 112 96 118 T170 118" stroke="#0ea5e9" stroke-width="3"/>
+  </g>
+
+  <!-- 붓 끝: 지금 그리는 점 -->
+  <circle cx="170" cy="118" r="4.5" fill="#0ea5e9"/>
+  <path d="M170 118 L196 146 L188 152 L166 124 Z" fill="#8e9db0"/>
+  <path d="M196 146 L206 158 L188 152 Z" fill="#e6ecf2"/>
+
+  <!-- 팔레트 -->
+  <g>
+    <circle cx="26" cy="156" r="6.5" fill="#e6ecf2"/>
+    <circle cx="44" cy="156" r="6.5" fill="#0ea5e9"/>
+    <circle cx="62" cy="156" r="6.5" fill="#22c55e"/>
+    <circle cx="80" cy="156" r="6.5" fill="#eab308"/>
+    <circle cx="98" cy="156" r="6.5" fill="#ef4444"/>
+    <circle cx="116" cy="156" r="6.5" fill="#8e9db0"/>
+  </g>
+
+  <!-- 돋보기 -->
+  <circle cx="222" cy="74" r="44" fill="#0c1424" opacity="0.85"/>
+  <g clip-path="url(#ssLens)">
+    <rect x="182" y="34" width="80" height="80" fill="#101b30"/>
+    <path d="M196 96 L196 66 L222 48 L248 66 L248 96 Z" fill="none" stroke="#e6ecf2" stroke-width="4"/>
+    <path d="M212 96 L212 78 L232 78 L232 96" fill="none" stroke="#eab308" stroke-width="3.5"/>
+  </g>
+  <circle cx="222" cy="74" r="40" fill="none" stroke="#0ea5e9" stroke-width="5"/>
+  <circle cx="222" cy="74" r="46" fill="none" stroke="#2c3550" stroke-width="3"/>
+  <path d="M252 106 L284 140" stroke="#8e9db0" stroke-width="11" stroke-linecap="round"/>
+  <path d="M252 106 L284 140" stroke="#c2cedc" stroke-width="4" stroke-linecap="round"/>
+
+  <!-- 물음표: 맞히는 쪽 -->
+  <text x="290" y="40" font-family="monospace" font-size="30" font-weight="bold" fill="#22c55e" text-anchor="middle">?</text>
+  <text x="268" y="24" font-family="monospace" font-size="17" font-weight="bold" fill="#eab308" text-anchor="middle">?</text>
+
+  <!-- 타이틀 -->
+  <text x="112" y="176" font-family="monospace" font-size="21" font-weight="bold" fill="#000" text-anchor="middle" transform="translate(2,2)">그림 탐정단</text>
+  <text x="112" y="176" font-family="monospace" font-size="21" font-weight="bold" fill="#e6ecf2" text-anchor="middle">그림 탐정단</text>
+  <text x="252" y="176" font-family="monospace" font-size="10" fill="#0ea5e9" text-anchor="middle">2인 온라인 · 90초</text>
+</svg>
