@@ -109,6 +109,45 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
             }
         }
 
+        `when`("게스트 허용 라우트(required=false)에 클라이언트가 신원 헤더를 위조해 보내면") {
+            then("X-User-Id / X-User-Roles 를 벗겨내고 익명으로 통과시켜야 한다") {
+                val exchangeSlot = slot<ServerWebExchange>()
+                every { chain.filter(capture(exchangeSlot)) } returns Mono.empty()
+
+                val request = MockServerHttpRequest.get("/api/v1/games/snake/sessions")
+                    .header("X-User-Id", "999")
+                    .header("X-User-Roles", "ROLE_ADMIN")
+                    .build()
+                val exchange = MockServerWebExchange.from(request)
+
+                val gatewayFilter = filter.apply(AuthenticationGatewayFilter.Config(required = false))
+                StepVerifier.create(gatewayFilter.filter(exchange, chain))
+                    .verifyComplete()
+
+                exchange.response.statusCode shouldBe null
+                exchangeSlot.captured.request.headers["X-User-Id"] shouldBe null
+                exchangeSlot.captured.request.headers["X-User-Roles"] shouldBe null
+            }
+        }
+
+        `when`("인증 필수 라우트에 토큰 없이 신원 헤더만 위조해 보내면") {
+            then("헤더는 무시되고 401 이어야 한다") {
+                val request = MockServerHttpRequest.get("/api/members/stats/count")
+                    .header("X-User-Id", "999")
+                    .header("X-User-Roles", "ROLE_ADMIN")
+                    .build()
+                val exchange = MockServerWebExchange.from(request)
+
+                val gatewayFilter = filter.apply(
+                    AuthenticationGatewayFilter.Config(requiredRoles = listOf("ROLE_ADMIN"))
+                )
+                StepVerifier.create(gatewayFilter.filter(exchange, chain))
+                    .verifyComplete()
+
+                exchange.response.statusCode shouldBe HttpStatus.UNAUTHORIZED
+            }
+        }
+
         `when`("Redis가 예외를 던지면 (Fail-Open)") {
             then("요청을 허용하고 체인을 진행해야 한다") {
                 val token = jwtUtil.generateAccessToken("user-1", listOf("USER"))

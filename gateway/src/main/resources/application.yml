@@ -64,15 +64,9 @@ spring:
               predicates:
                 - Path=/api/v1/strategies/**, /api/v1/dashboard/**, /api/v1/leaderboard/**, /api/v1/runs/**, /api/v1/signal-strategies/**, /api/v1/charts/**, /api/v1/learn/**, /api/v1/quant/**, /api/v1/discover/**
 
-            # === Backend REST 라우트 (admin / 일반 클라이언트용) ===
-            # product/order/auth 는 GatewayRouteConfig.kt 의 RouteLocator 가 인증필터(userConfig 등)
-            # 와 함께 동일 path 를 정의하므로 여기서 제거 (무인증 중복 라우트 = shadowing 리스크).
-            # member 는 GatewayRouteConfig 가 /api/members/me 만 커버 → admin 의 /api/members(목록),
-            # /api/members/stats/** 는 아래 라우트가 유일 커버. ⚠️ 현재 무인증 — 추후 GatewayRouteConfig
-            # 로 옮겨 adminConfig 적용 후 제거 필요 (admin 데이터 인증 경계).
-            - id: member-service
-              uri: http://commerce:8085
-              predicates: [Path=/api/members/**]
+            # 인증이 필요한 백엔드 REST 라우트(product/order/auth/member/…)는 여기가 아니라
+            # GatewayRouteConfig.kt 의 RouteLocator 에 인증필터와 함께 둔다. 같은 path 를 여기에
+            # 무인증으로 겹쳐 두면 어느 쪽이 이길지 보장되지 않는다 (property·DSL 라우트 모두 order 0).
 
             # === Actuator 프록시 라우트 (admin 서비스 health 표시용) ===
             # 사용: /svc/<service>/actuator/health → http://<service>:<port>/actuator/health

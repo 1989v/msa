@@ -67,13 +67,8 @@ class GatewayRouteConfig(
                     }
                 }
             }
-            // Auth Service (no authentication required)
-            .route("auth-service") { r ->
-                r.path("/api/auth/**")
-                    .filters { f -> f.stripPrefix(0) }
-                    .uri("http://auth:8087")
-            }
-            // Auth Role Management (ADMIN only)
+            // Auth Role Management (ADMIN only) — auth 서비스에 자체 권한 검증이 없어 여기가 유일한
+            // 경계다. 공개 라우트인 /api/auth/** 보다 먼저 선언해야 가려지지 않는다.
             .route("auth-roles") { r ->
                 r.path("/api/auth/roles/**")
                     .filters { f ->
@@ -82,7 +77,23 @@ class GatewayRouteConfig(
                     }
                     .uri("http://auth:8087")
             }
-            // Member Service — /api/members/sso (내부 전용, gateway 비노출)
+            // Auth Service — 로그인/갱신/로그아웃 (no authentication required)
+            .route("auth-service") { r ->
+                r.path("/api/auth/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri("http://auth:8087")
+            }
+            // Member Service — /api/members/sso 는 내부 전용(auth 가 서비스 간 호출)이라 라우트 없음.
+            // 목록 API(/api/members)는 member 에 구현체가 없으므로 라우트를 두지 않는다 — 없는 경로는 404.
+            // 회원 카운트는 admin 대시보드 전용 (ROLE_ADMIN)
+            .route("member-stats") { r ->
+                r.path("/api/members/stats/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri("http://commerce:8085")
+            }
             // Member Service — /api/members/me (ROLE_USER+)
             .route("member-service") { r ->
                 r.path("/api/members/me/**", "/api/members/me")
