@@ -49,8 +49,8 @@ class AnalyticsEventTest : BehaviorSpec({
 
     Given("EventType") {
         When("모든 이벤트 유형을 확인하면") {
-            Then("6가지 유형이 존재한다") {
-                EventType.entries.size shouldBe 6
+            Then("8가지 유형이 존재한다") {
+                EventType.entries.size shouldBe 8
             }
         }
     }

@@ -65,6 +65,10 @@ fun delete(@PathVariable id: Long) {
 - `GlobalExceptionHandler` (common 모듈)가 최종 에러 변환 담당
 - `BusinessException` 기반 에러 코드 매핑
 - ExceptionHandler는 `ResponseEntity<ApiResponse<T>>` 사용 허용 (동적 HTTP 상태 코드 매핑 필요)
+- Spring 이 자체 상태코드를 실어 던지는 예외(`ErrorResponse` 구현체 — 매핑 없는 경로 404,
+  미지원 메서드 405, `ResponseStatusException` 등)는 generic catch 로 넘어가기 전에
+  그 상태코드 그대로 통과시킨다. 본문은 `ProblemDetail` 이 아니라 기존 `ApiResponse` 포맷 +
+  `ErrorCode` 어휘를 유지한다 (요청 경로·예외 클래스명 노출 금지)
 
 ## HTTP Status Codes
 

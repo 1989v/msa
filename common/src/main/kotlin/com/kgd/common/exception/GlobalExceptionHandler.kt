@@ -3,7 +3,9 @@ package com.kgd.common.exception
 import com.kgd.common.response.ApiResponse
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
+import org.springframework.web.ErrorResponse
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -52,7 +54,42 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception::class)
     fun handleGenericException(e: Exception): ResponseEntity<ApiResponse<Nothing>> {
+        if (e is ErrorResponse) return handleSpringErrorResponse(e)
         log.error(e) { "Unhandled exception" }
         return ResponseEntity.internalServerError().body(ApiResponse.error(ErrorCode.INTERNAL_ERROR))
+    }
+
+    /**
+     * Spring 이 스스로 상태코드를 실어 던지는 예외를 그 상태코드 그대로 통과시킨다.
+     *
+     * 매핑 없는 경로(`NoResourceFoundException` / `NoHandlerFoundException`), 미지원 메서드
+     * (`HttpRequestMethodNotSupportedException`), `ResponseStatusException` 등이 모두
+     * `ErrorResponse` 구현체다. 이들을 잡지 않으면 generic catch 로 흘러 404/405/403 이 500 이 된다.
+     * 예외 타입을 하나씩 나열하는 대신 인터페이스로 한 번에 처리한다 — `ErrorResponse` 는 Throwable 이
+     * 아니라 `@ExceptionHandler` 대상 타입이 될 수 없으므로 generic 핸들러 안에서 분기한다.
+     *
+     * 본문은 Spring 의 `ProblemDetail`(detail 에 요청 경로가 담긴다) 대신 기존 `ApiResponse` 포맷과
+     * [ErrorCode] 어휘만 사용한다 — 응답 포맷을 유지하면서 경로·클래스명 노출도 막는다.
+     */
+    private fun <T> handleSpringErrorResponse(e: T): ResponseEntity<ApiResponse<Nothing>>
+        where T : Throwable, T : ErrorResponse {
+        val status = e.statusCode
+        if (status.is5xxServerError) {
+            log.error(e) { "Server error ${status.value()}: ${e.javaClass.simpleName}" }
+        } else {
+            log.warn { "Client error ${status.value()}: ${e.javaClass.simpleName}" }
+        }
+        return ResponseEntity.status(status)
+            // 405 의 Allow, 415 의 Accept 처럼 상태코드에 규격상 딸린 헤더를 보존한다.
+            .headers(e.headers)
+            .body(ApiResponse.error(toErrorCode(status)))
+    }
+
+    private fun toErrorCode(status: HttpStatusCode): ErrorCode = when {
+        status.value() == HttpStatus.NOT_FOUND.value() -> ErrorCode.NOT_FOUND
+        status.value() == HttpStatus.UNAUTHORIZED.value() -> ErrorCode.UNAUTHORIZED
+        status.value() == HttpStatus.FORBIDDEN.value() -> ErrorCode.FORBIDDEN
+        status.is4xxClientError -> ErrorCode.INVALID_INPUT
+        else -> ErrorCode.INTERNAL_ERROR
     }
 }
