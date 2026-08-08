@@ -18,14 +18,31 @@
   /* ── HUD ── */
   #hud { position:absolute; top:8px; left:10px; right:10px; display:flex; flex-direction:column;
          gap:5px; pointer-events:none; font-size:11px; text-shadow:1px 1px 0 #000; }
-  .bars { display:flex; flex-direction:column; gap:3px; width:190px; }
-  .bar { height:9px; background:rgba(8,11,17,.72); border-radius:5px; overflow:hidden; }
-  .bar i { display:block; height:100%; width:100%; transform-origin:left; transition:transform .12s; }
+  .bars { display:flex; flex-direction:column; gap:3px; width:200px; }
+  .bar { height:9px; background:rgba(8,11,17,.72); border-radius:5px; overflow:hidden;
+         border:1px solid rgba(44,53,80,.8); }
+  .bar i { display:block; height:100%; width:100%; transition:width .12s; }
   #hpFill { background:#ef4444; } #mpFill { background:#0ea5e9; } #xpFill { background:#eab308; }
+  .hudLine { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+  #lvTxt { color:#eab308; font-weight:bold; }
+  #clsTxt { color:#7dd3fc; }
+  #goldTxt { color:#fde68a; }
+  #zoneTxt { color:#a3b3c7; }
+  #spBadge { color:#22c55e; font-weight:bold; }
+  #curseTxt { color:#c4b5fd; font-weight:bold; }
+  #hpTxt, #mpTxt { color:#8e9db0; font-size:10px; }
+  #questTrack { color:#e6ecf2; font-size:10.5px; max-width:min(420px,62%); }
+  #mercBar { display:flex; align-items:center; gap:5px; width:150px; font-size:10px; }
+  #mercBar .bar { flex:1; height:6px; }
+  #mercTxt { color:#94a3b8; }
+
   #bossBar { position:absolute; top:8px; left:50%; transform:translateX(-50%); width:min(420px,72%);
-             height:12px; background:rgba(8,11,17,.8); border:1px solid #3a4763; border-radius:6px;
-             overflow:hidden; }
-  #bossFill { display:block; height:100%; width:100%; background:#a855f7; transform-origin:left; }
+             text-align:center; pointer-events:none; }
+  #bossName { display:block; font-size:11px; color:#fca5a5; text-shadow:1px 1px 0 #000; margin-bottom:3px; }
+  #bossTrack { height:12px; background:rgba(8,11,17,.8); border:1px solid #3a4763; border-radius:6px;
+               overflow:hidden; }
+  #bossFill { display:block; height:100%; width:100%; background:#a855f7; }
+
   #skills { position:absolute; bottom:10px; left:10px; display:flex; gap:7px; pointer-events:none; }
   #skills span { width:38px; height:38px; border-radius:8px; background:rgba(8,11,17,.72);
                  border:2px solid #2c3550; display:flex; align-items:center; justify-content:center;
@@ -33,72 +50,163 @@
   #skills span.cool { opacity:.32; border-color:#1a2238; }
 
   /* ── 안내 ── */
-  #banner { position:absolute; top:34%; left:0; right:0; text-align:center; font-size:24px;
+  #banner { position:absolute; top:32%; left:0; right:0; text-align:center; font-size:22px;
             font-weight:bold; color:#0ea5e9; text-shadow:3px 3px 0 #000; pointer-events:none;
-            opacity:0; transition:opacity .3s; padding:0 14px; }
+            opacity:0; transition:opacity .3s; padding:0 14px; line-height:1.4; }
   #banner.on { opacity:1; }
   #hint { position:absolute; bottom:58px; left:50%; transform:translateX(-50%); font-size:11.5px;
           background:rgba(8,11,17,.85); padding:5px 12px; border-radius:7px; color:#c2cedc;
-          opacity:0; transition:opacity .25s; pointer-events:none; white-space:nowrap; }
+          opacity:0; transition:opacity .25s; pointer-events:none; max-width:88%; text-align:center; }
   #hint.on { opacity:1; }
+  #stepBar { position:absolute; top:8px; left:50%; transform:translateX(-50%); font-size:11.5px;
+             background:rgba(34,197,94,.16); border:1px solid rgba(34,197,94,.5); color:#bbf7d0;
+             padding:4px 12px; border-radius:7px; pointer-events:none; max-width:80%; text-align:center; }
   #prompt { position:absolute; bottom:12px; left:50%; transform:translateX(-50%); font-size:12px;
             background:rgba(14,165,233,.9); color:#04121c; font-weight:bold; padding:5px 13px;
             border-radius:7px; pointer-events:none; }
 
   /* ── 패널 공통 ── */
   .panel { position:absolute; inset:0; background:rgba(9,13,24,.96); display:flex; flex-direction:column;
-           align-items:center; justify-content:center; gap:12px; text-align:center; z-index:10;
-           padding:20px; overflow:auto; }
+           align-items:center; justify-content:center; gap:11px; text-align:center; z-index:10;
+           padding:18px; overflow:auto; }
   .panel h1 { color:#0ea5e9; font-size:25px; text-shadow:2px 2px 0 #000; }
   .panel h2 { color:#0ea5e9; font-size:17px; }
-  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:520px; }
+  .panel p { font-size:12.5px; color:#c2cedc; line-height:1.8; max-width:560px; }
   .panel p.small { font-size:11px; color:#8e9db0; }
   .panel button { background:#0ea5e9; color:#04121c; border:0; padding:9px 20px; font-weight:bold;
                   font-size:13px; border-radius:7px; cursor:pointer; font-family:inherit; }
   .panel button.ghost { background:#222b44; color:#e6ecf2; }
   .panel button:disabled { opacity:.32; cursor:default; }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .dim { color:#5d6a7a; font-size:11.5px; }
 
   /* ── 대화 ── */
   #dlg { justify-content:flex-end; background:rgba(9,13,24,.55); }
-  #dlgBox { width:min(560px,94%); background:#1a2238; border:2px solid #2c3550; border-radius:10px;
+  #dlgBox { width:min(580px,96%); background:#1a2238; border:2px solid #2c3550; border-radius:10px;
             padding:14px 16px; text-align:left; }
   #dlgHead { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
   #dlgIcon { font-size:26px; }
   #dlgName { color:#0ea5e9; font-weight:bold; font-size:14px; }
-  #dlgText { font-size:13px; line-height:1.85; color:#e6ecf2; min-height:52px; }
+  #dlgText { font-size:13px; line-height:1.85; color:#e6ecf2; min-height:52px; white-space:pre-line; }
   #dlgChoices { display:flex; flex-direction:column; gap:6px; margin-top:10px; }
-  #dlgChoices button { background:#222b44; color:#e6ecf2; text-align:left; font-size:12px;
-                       padding:8px 12px; width:100%; }
+  #dlgChoices button.choice { background:#222b44; color:#e6ecf2; text-align:left; font-size:12px;
+                              padding:9px 12px; width:100%; line-height:1.5; }
+  #dlgChoices button.choice b { color:#0ea5e9; margin-right:7px; }
 
   /* ── 목록형 패널 ── */
-  .board { width:min(620px,96%); background:#1a2238; border:2px solid #2c3550; border-radius:10px;
-           padding:14px; text-align:left; max-height:74%; overflow:auto; }
-  #invGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:10px; }
-  #invGrid button { background:#222b44; border:2px solid #2c3550; border-radius:8px; aspect-ratio:1;
-                    font-size:19px; cursor:pointer; color:#e6ecf2; font-family:inherit; padding:0; }
-  #invGrid button.sel { border-color:#0ea5e9; }
-  #invDetail { font-size:12px; color:#c2cedc; line-height:1.7; min-height:48px; }
-  #equipList, #statList, #questList, #shopList { font-size:12px; color:#c2cedc; line-height:1.9; }
-  #shopList button, #equipList button { background:#0ea5e9; color:#04121c; border:0; border-radius:5px;
-                                        padding:3px 9px; font-size:11px; font-weight:bold; cursor:pointer;
-                                        font-family:inherit; margin-left:6px; }
-  #treeGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
-  #treeGrid button { background:#222b44; border:2px solid #2c3550; border-radius:8px; padding:9px 6px;
-                     font-size:11px; color:#e6ecf2; cursor:pointer; font-family:inherit; line-height:1.5; }
-  #treeGrid button.owned { border-color:#22c55e; background:#16351f; }
-  #treeGrid button:disabled { opacity:.38; cursor:default; }
+  .board { width:min(660px,97%); background:#1a2238; border:2px solid #2c3550; border-radius:10px;
+           padding:14px; text-align:left; max-height:70vh; overflow:auto; }
   .two { display:flex; gap:12px; flex-wrap:wrap; }
-  .two > div { flex:1; min-width:180px; }
+  .two > div { flex:1; min-width:190px; }
+
+  /* 가방 */
+  #invGrid { display:grid; grid-template-columns:repeat(5,1fr); gap:6px; margin-bottom:10px; }
+  #invGrid .slot { background:#222b44; border:2px solid #2c3550; border-radius:8px; aspect-ratio:1;
+                   position:relative; display:flex; align-items:center; justify-content:center;
+                   font-size:19px; color:#e6ecf2; }
+  #invGrid .slot.has { cursor:pointer; }
+  #invGrid .slot.sel { border-color:#0ea5e9; }
+  #invGrid .qty { position:absolute; right:3px; bottom:2px; font-size:9.5px; color:#fde68a; }
+  #invDetail { font-size:12px; color:#c2cedc; line-height:1.7; min-height:60px; }
+  #invDetail .dName { color:#e6ecf2; font-weight:bold; }
+  #invDetail .dDesc { color:#8e9db0; font-size:11px; margin:3px 0 6px; }
+  #invDetail .dActs { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  #invDetail button { font-size:11px; padding:4px 10px; }
+  .eqRow, .stRow { display:flex; justify-content:space-between; gap:10px; font-size:11.5px;
+                   padding:3px 0; color:#c2cedc; }
+  .eqSlot { color:#5d6a7a; }
+  .stRow b { color:#e6ecf2; }
+  .stRow.warn b { color:#c4b5fd; }
+  .sep { height:1px; background:#2c3550; margin:6px 0; }
+
+  /* 기술의 나무 */
+  #treeGrid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .treeCol { display:flex; flex-direction:column; gap:6px; }
+  .treeHead { font-size:11.5px; color:#7dd3fc; text-align:center; padding-bottom:2px; }
+  .tnode { background:#222b44; border:2px solid #2c3550; border-radius:8px; padding:8px 6px;
+           font-size:10.5px; color:#e6ecf2; cursor:pointer; font-family:inherit; line-height:1.45;
+           display:flex; flex-direction:column; gap:2px; text-align:center; }
+  .tnode .tIcon { font-size:16px; }
+  .tnode .tName { font-weight:bold; }
+  .tnode .tDesc { color:#8e9db0; }
+  .tnode .tNote { color:#eab308; font-size:9.5px; }
+  .tnode.owned { border-color:#22c55e; background:#16351f; }
+  .tnode.can { border-color:#0ea5e9; }
+  .tnode:disabled { opacity:.42; cursor:default; }
+
+  /* 일지 · 게시판 */
+  .qGroup { font-size:11px; color:#7dd3fc; margin:10px 0 5px; padding-bottom:3px;
+            border-bottom:1px solid #2c3550; }
+  .qGroup:first-child { margin-top:0; }
+  .qRow { border-left:3px solid #2c3550; padding:6px 0 6px 9px; margin-bottom:7px; }
+  .qRow.main { border-left-color:#eab308; }
+  .qRow.repeat { border-left-color:#22c55e; }
+  .qRow.ready { background:rgba(34,197,94,.08); }
+  .qRow.done { opacity:.5; }
+  .qTop { display:flex; align-items:center; gap:6px; font-size:12.5px; color:#e6ecf2; }
+  .qCh { color:#eab308; font-size:10.5px; }
+  .qKind { color:#7dd3fc; }
+  .qBadge { margin-left:auto; font-size:10px; color:#0c1424; background:#7dd3fc;
+            border-radius:4px; padding:1px 6px; }
+  .qRow.ready .qBadge { background:#22c55e; }
+  .qRow.done .qBadge { background:#5d6a7a; }
+  .qRow.open .qBadge { background:#eab308; }
+  .qDesc { font-size:11px; color:#8e9db0; line-height:1.6; margin-top:3px; }
+  .qArea { font-size:10.5px; color:#7dd3fc; margin-top:2px; }
+  .qProg { font-size:10.5px; color:#c2cedc; margin-top:2px; }
+  .bNote { font-size:10.5px; color:#5d6a7a; margin-top:2px; }
+  .bActs { display:flex; gap:6px; margin-top:6px; }
+  .bActs button { font-size:11px; padding:4px 12px; }
+
+  /* 상점 · 용병 */
+  .shopRow, .mercCur { display:flex; align-items:center; gap:9px; padding:7px 0;
+                       border-bottom:1px solid #222b44; }
+  .sIcon, .mIcon { font-size:20px; width:26px; text-align:center; }
+  .sBody, .mBody { flex:1; display:flex; flex-direction:column; gap:1px; font-size:12px; }
+  .sBody i, .mBody i { font-style:normal; font-size:10.5px; color:#8e9db0; }
+  .sPrice { color:#fde68a; font-size:11.5px; }
+  .shopRow button, .mercCur button { font-size:11px; padding:4px 11px; }
+  .mercCur { flex-wrap:wrap; }
+  .mercCur .bActs { width:100%; }
+
+  /* 직업 · 전직 카드 */
+  #classGrid, #advList { display:flex; gap:9px; flex-wrap:wrap; justify-content:center;
+                         width:min(780px,98%); }
+  .clsCard { flex:1 1 210px; max-width:250px; background:#161e33; border:2px solid #2c3550;
+             border-radius:10px; padding:11px 10px; display:flex; flex-direction:column; gap:4px;
+             text-align:left; cursor:pointer; font-family:inherit; color:#e6ecf2; }
+  .clsCard.sel { background:#1b2742; box-shadow:0 0 0 2px rgba(14,165,233,.35); }
+  .clsIcon { font-size:24px; }
+  .clsName { font-size:14px; font-weight:bold; }
+  .clsTip { font-size:10.5px; color:#7dd3fc; }
+  .clsDesc { font-size:11px; color:#a3b3c7; line-height:1.55; }
+  .clsStats { font-size:10px; color:#8e9db0; }
+  .clsSkills { font-size:10px; color:#c2cedc; line-height:1.5; }
+  .clsGo { margin-top:5px; font-size:11px; color:#04121c; background:#0ea5e9; border-radius:6px;
+           padding:4px 0; text-align:center; font-weight:bold; }
+  .clsCard:disabled { opacity:.4; cursor:default; }
+  #advNote { color:#fca5a5; font-size:11.5px; }
+
+  /* 지도 */
+  #mapCv { background:#080c16; border:2px solid #2c3550; border-radius:10px;
+           width:min(62vh,min(620px,92vw)); height:auto; aspect-ratio:1; }
+  #mapInfo { font-size:11px; color:#a3b3c7; }
 
   #info { margin-top:9px; font-size:11px; color:#5d6a7a; text-align:center; line-height:1.7; padding:0 12px; }
 
   @media (max-width: 900px), (pointer: coarse) {
     #wrap { width:100vw; max-width:100vw; border-width:0; border-radius:0; }
-    canvas { width:100%; height:auto; }
+    canvas#cv { width:100%; height:auto; }
     #info { display:none; }
+    .panel { padding:12px; gap:9px; }
     .panel button { padding:11px 18px; font-size:13.5px; }
     #skills span { width:44px; height:44px; }
+    #dlgChoices button.choice { padding:12px; font-size:13px; }
+    .bActs button, .shopRow button, .mercCur button { padding:9px 14px; font-size:12.5px; }
+    #invGrid { grid-template-columns:repeat(4,1fr); }
+    .clsCard { flex:1 1 100%; max-width:none; }
+    #treeGrid { gap:5px; }
+    .board { max-height:66vh; }
   }
 </style>
 </head>
@@ -112,31 +220,49 @@
       <div class="bar"><i id="mpFill"></i></div>
       <div class="bar"><i id="xpFill"></i></div>
     </div>
+    <div class="hudLine">
+      <span id="hpTxt"></span><span id="mpTxt"></span>
+    </div>
+    <div class="hudLine">
+      <span id="lvTxt"></span><span id="clsTxt"></span><span id="goldTxt"></span>
+      <span id="zoneTxt"></span><span id="spBadge"></span><span id="curseTxt"></span>
+    </div>
+    <div id="mercBar" hidden>
+      <span id="mercIcon"></span><div class="bar"><i id="mercFill"></i></div><span id="mercTxt"></span>
+    </div>
+    <div class="hudLine"><span id="questTrack"></span></div>
   </div>
-  <div id="bossBar" hidden><i id="bossFill"></i></div>
+
+  <div id="bossBar" hidden>
+    <span id="bossName"></span>
+    <div id="bossTrack"><i id="bossFill"></i></div>
+  </div>
+
   <div id="skills" hidden>
-    <span id="cdDash">⇢</span><span id="cdWhirl">🌀</span><span id="cdTide">🌊</span>
+    <span id="cdDash">⇢</span><span id="cdS1">🌀</span><span id="cdS2">🛡️</span><span id="cdS3" hidden>✨</span>
   </div>
+
   <div id="banner"></div>
   <div id="hint"></div>
+  <div id="stepBar" hidden></div>
   <div id="prompt" hidden></div>
 
-  <!-- 시작 -->
+  <!-- 시작 · 직업 선택 -->
   <div class="panel" id="menu">
     <h1 data-i18n="gameTitle">🌊 표류 대륙</h1>
     <p data-i18n="tagline">난파선에서 눈을 떴다. 등대는 아직 꺼져 있다.</p>
-    <p class="small" data-i18n="menuFoot">WASD 이동 · Space 공격 · Shift 회피 · Q/E 스킬 · F 상호작용 · I 가방</p>
+    <h2 data-i18n="classTitle">⚔ 어떤 손으로 살아남을 것인가</h2>
+    <div id="classGrid"></div>
     <div class="row">
       <button id="startBtn" data-i18n="newBtn">새 여정</button>
       <button id="contBtn" class="ghost" data-i18n="contBtn">이어하기</button>
-    </div>
-    <div class="row">
       <button id="importBtn" class="ghost" data-i18n="importBtn">📂 파일 불러오기</button>
       <input id="importFile" type="file" accept="application/json" hidden>
     </div>
+    <p class="small" data-i18n="menuFoot">WASD 이동 · Space 공격 · Shift 회피 · Q/E/R 기술 · F 상호작용 · I 가방 · M 지도</p>
   </div>
 
-  <!-- 사망 -->
+  <!-- 사망 · 종료 -->
   <div class="panel" id="endPanel" hidden>
     <h1 id="endTitle"></h1>
     <p id="endDesc" style="white-space:pre-line"></p>
@@ -170,28 +296,68 @@
         </div>
       </div>
     </div>
-    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+    <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
   </div>
 
-  <!-- 스킬트리 -->
+  <!-- 기술트리 -->
   <div class="panel" id="panelTree" hidden>
     <h2 data-i18n="skillTitle">🌿 기술의 나무</h2>
+    <p class="small"><span id="treeCls"></span> · <span id="spTxt"></span></p>
     <div class="board"><div id="treeGrid"></div></div>
-    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+    <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
   </div>
 
-  <!-- 퀘스트 -->
+  <!-- 일지 -->
   <div class="panel" id="panelQuest" hidden>
     <h2 data-i18n="questTitle">📜 여정 일지</h2>
     <div class="board"><div id="questList"></div></div>
-    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+    <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
+  </div>
+
+  <!-- 의뢰 게시판 -->
+  <div class="panel" id="panelBoard" hidden>
+    <h2 data-i18n="boardTitle">📋 의뢰 게시판</h2>
+    <div class="board"><div id="boardList"></div></div>
+    <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
   </div>
 
   <!-- 상점 -->
   <div class="panel" id="panelShop" hidden>
     <h2 data-i18n="shopTitle">🛒 상점</h2>
+    <p class="small"><span id="shopGold"></span></p>
     <div class="board"><div id="shopList"></div></div>
-    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
+    <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
+  </div>
+
+  <!-- 용병 대기소 -->
+  <div class="panel" id="panelMerc" hidden>
+    <h2 data-i18n="mercTitle">🎖 용병 대기소</h2>
+    <p class="small"><span id="mercGold"></span></p>
+    <div class="board"><div id="mercList"></div></div>
+    <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
+  </div>
+
+  <!-- 갈림길 (전직) -->
+  <div class="panel" id="panelAdv" hidden>
+    <h2 data-i18n="advTitle">🌗 갈림길</h2>
+    <p class="small" data-i18n="advDesc">한 번 고르면 되돌릴 수 없다. 신중히.</p>
+    <p class="small" id="advNote"></p>
+    <div id="advList"></div>
+    <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
+  </div>
+
+  <!-- 확대 지도 -->
+  <div class="panel" id="panelMap" hidden>
+    <h2 data-i18n="mapTitle">🗺 대륙 지도</h2>
+    <canvas id="mapCv" width="620" height="620"></canvas>
+    <p class="small" id="mapInfo"></p>
+    <p class="small" id="mapLegend"></p>
+    <div class="row">
+      <button id="mapOut" class="ghost" data-i18n="mapZoomOut">－ 축소</button>
+      <button id="mapIn" class="ghost" data-i18n="mapZoomIn">＋ 확대</button>
+      <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
+    </div>
+    <p class="small" data-i18n="mapFoot">M / Esc 닫기 · +/- 확대·축소</p>
   </div>
 
   <!-- 여관 -->
@@ -199,8 +365,8 @@
     <h2 data-i18n="innTitle">🛏️ 표착항 여관</h2>
     <div class="row">
       <button id="innRestBtn" data-i18n="restBtn">휴식 (30 금화)</button>
+      <button class="ghost" data-close data-i18n="closeBtn">닫기 (Esc)</button>
     </div>
-    <p class="small" data-i18n="closeBtn">닫기 (Esc)</p>
   </div>
 
   <!-- 일시정지 -->
@@ -217,14 +383,14 @@
   </div>
 </div>
 
-<div id="info" data-i18n="menuFoot">WASD 이동 · Space 공격 · Shift 회피 · Q/E 스킬 · F 상호작용 · I 가방</div>
+<div id="info" data-i18n="menuFoot">WASD 이동 · Space 공격 · Shift 회피 · Q/E/R 기술 · F 상호작용 · I 가방 · M 지도</div>
 
 <script src="js/content.js"></script>
 <script src="js/world.js"></script>
 <script src="js/battle.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/core.js"></script>
-<script src="../lib/touch.js"></script>
+<script src="../lib/touch.js" data-actions="Space:⚔,KeyF:💬,KeyQ:✦,KeyE:✧,KeyR:★"></script>
 <script src="../lib/rank.js"></script>
 <script>GameRank.autoPanel('drift-continent');</script>
 </body>

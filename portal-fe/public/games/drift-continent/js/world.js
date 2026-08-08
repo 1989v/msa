@@ -312,7 +312,7 @@ var FLOORS = {
     ],
     objs: [
       { kind: 'portal', tx: 16, ty: 28, to: 'f1', px: 16 * 32 + 16, py: 7 * 32 + 48, up: true },
-      { kind: 'chest', tx: 12, ty: 6, id: 'c_f2_sword', loot: ['beacon_steel'] },
+      { kind: 'chest', tx: 12, ty: 6, id: 'c_f2_sword', loot: ['cls:beacon'] },
       { kind: 'chest', tx: 27, ty: 21, id: 'c_f2_pot', loot: ['potion_hi', 'potion_hi', 'gold:80'] },
       { kind: 'portal', tx: 19, ty: 6, to: 'f3', px: 16 * 32 + 16, py: 27 * 32 + 16, down: true },
     ],
@@ -516,29 +516,80 @@ function genLandmark(ch, cx, cy, rnd) {
   }
 }
 
-/* 표착항 — 손으로 배치한 거점 마을 */
+/* ══════════════════════════ 표착항 ══════════════════════════
+ * 손으로 배치한 거점 마을. 야영지 구조로 공간이 읽히게 짰다.
+ *
+ *   · 울타리(WALL)가 마을을 감싸고 동서남북 4곳만 열려 있다
+ *   · 십자 도로가 그 문을 통과해 청크 밖으로 이어진다 (이웃 청크와 연결 보장)
+ *   · 가운데 돌 광장, 광장 한복판에 화톳불 — 곁에 있으면 체력·의지가 서서히 찬다
+ *   · 각 일꾼이 자기 자리를 갖는다: 여관 / 대장간 / 촌장 집 / 약초 노점 /
+ *     치유소 / 용병 대기소, 그리고 광장에 의뢰 게시판과 갈림길 무녀
+ *   · 건물 문에서 도로까지 판자길(PATH)이 이어져 동선이 눈에 보인다
+ * ────────────────────────────────────────────────────────────────── */
+var HARBOR_NPCS = [
+  { npc: 'innkeeper', tx: 5, ty: 9 },     // 여관 앞
+  { npc: 'chief', tx: 12, ty: 9 },        // 촌장 집 앞
+  { npc: 'herbalist', tx: 20, ty: 9 },    // 약초 노점 앞
+  { npc: 'smith', tx: 26, ty: 9 },        // 대장간 앞
+  { npc: 'healer', tx: 5, ty: 23 },       // 치유소 앞
+  { npc: 'captain', tx: 26, ty: 23 },     // 용병 대기소 앞
+  { npc: 'steward', tx: 13, ty: 13 },     // 의뢰 게시판 옆
+  { npc: 'oracle', tx: 20, ty: 20 },      // 광장 남동
+  { npc: 'elder', tx: 18, ty: 13 },       // 화톳불 곁 (오프닝에서 걸어온다)
+];
+
 function genHarbor(ch) {
-  setRect(ch, 10, 10, 13, 13, T.WOOD);          // 중앙 광장
+  var i;
+
+  /* 울타리 — 청크 안쪽 테두리, 십자 도로 자리만 비운다 */
+  for (i = 1; i <= 30; i++) {
+    var gap = (i >= 15 && i <= 17);
+    if (!gap) {
+      ch.tiles[1 * CS + i] = T.WALL;
+      ch.tiles[30 * CS + i] = T.WALL;
+      ch.tiles[i * CS + 1] = T.WALL;
+      ch.tiles[i * CS + 30] = T.WALL;
+    }
+  }
+
+  /* 십자 도로 — 청크를 관통해 이웃과 이어진다 */
   setRect(ch, 15, 0, 3, CS, T.PATH);
   setRect(ch, 0, 15, CS, 3, T.PATH);
+
+  /* 중앙 광장 (모서리를 깎아 팔각으로) */
+  setRect(ch, 9, 9, 14, 14, T.STONE);
+  setRect(ch, 9, 9, 2, 2, T.SAND); setRect(ch, 21, 9, 2, 2, T.SAND);
+  setRect(ch, 9, 21, 2, 2, T.SAND); setRect(ch, 21, 21, 2, 2, T.SAND);
+
+  /* 화톳불 자리 — 흙바닥 원 */
+  setRect(ch, 14, 14, 5, 5, T.PATH);
 
   function building(x, y, w, h, doorX, doorY) {
     setRect(ch, x, y, w, h, T.WALL);
     setRect(ch, x + 1, y + 1, w - 2, h - 2, T.CARPET);
     ch.tiles[doorY * CS + doorX] = T.WOOD;
   }
-  building(4, 5, 7, 6, 7, 10);      // 여관
-  building(20, 5, 7, 6, 23, 10);    // 대장간
-  building(3, 20, 6, 5, 6, 20);     // 약초 노점
-  building(21, 20, 7, 6, 24, 20);   // 촌장 집
+  /** 문에서 광장·도로까지 이어지는 판자길 */
+  function walk(x, y0, y1) { setRect(ch, x, y0, 1, y1 - y0 + 1, T.PATH); }
 
-  ch.objs.push({ kind: 'npc', npc: 'innkeeper', tx: 7, ty: 12 });
-  ch.objs.push({ kind: 'npc', npc: 'smith', tx: 23, ty: 12 });
-  ch.objs.push({ kind: 'npc', npc: 'herbalist', tx: 6, ty: 19 });
-  ch.objs.push({ kind: 'npc', npc: 'chief', tx: 24, ty: 19 });
-  ch.objs.push({ kind: 'npc', npc: 'elder', tx: 12, ty: 24 });
-  ch.objs.push({ kind: 'well', tx: 13, ty: 13 });
-  ch.objs.push({ kind: 'chest', tx: 26, ty: 27, id: 'c_harbor', loot: ['potion', 'gold:30'] });
+  building(2, 2, 7, 6, 5, 7);        // 여관 (북서)
+  building(10, 2, 5, 6, 12, 7);      // 촌장 집 (북중)
+  building(18, 2, 5, 6, 20, 7);      // 약초 노점 (북중동)
+  building(23, 2, 7, 6, 26, 7);      // 대장간 (북동)
+  building(2, 24, 7, 6, 5, 24);      // 치유소 (남서)
+  building(23, 24, 7, 6, 26, 24);    // 용병 대기소 (남동)
+
+  walk(5, 8, 14); walk(12, 8, 8); walk(20, 8, 8); walk(26, 8, 14);
+  walk(5, 18, 23); walk(26, 18, 23);
+
+  /* 오브젝트 — 각자 자리에 */
+  ch.objs.push({ kind: 'bonfire', tx: 16, ty: 16 });
+  ch.objs.push({ kind: 'board', tx: 12, ty: 12, id: 'harbor_board' });
+  ch.objs.push({ kind: 'well', tx: 11, ty: 19 });
+  for (i = 0; i < HARBOR_NPCS.length; i++) {
+    ch.objs.push({ kind: 'npc', npc: HARBOR_NPCS[i].npc, tx: HARBOR_NPCS[i].tx, ty: HARBOR_NPCS[i].ty });
+  }
+  ch.objs.push({ kind: 'chest', tx: 27, ty: 20, id: 'c_harbor', loot: ['potion', 'gold:30'] });
 }
 
 /* 등대 곶 — 던전 입구 */
@@ -549,7 +600,7 @@ function genCape(ch) {
   setRect(ch, 15, 13, 3, 3, T.STONE);
   ch.tiles[13 * CS + 16] = T.STONE;
   ch.objs.push({ kind: 'lighthouse', tx: 16, ty: 8 });
-  ch.objs.push({ kind: 'portal', tx: 16, ty: 12, to: 'f1', px: 16 * 32 + 16, py: 27 * 32 + 16, down: true, gateQuest: 'main_light' });
+  ch.objs.push({ kind: 'portal', tx: 16, ty: 12, to: 'f1', px: 16 * 32 + 16, py: 27 * 32 + 16, down: true, gateQuest: 'm3_signal' });
 }
 
 /* 던전 층 — 방 + 복도 카빙 */
@@ -905,10 +956,18 @@ var W = {
   spawnPoint: function () {
     return { x: HCX * CPX + 16 * TILE + 16, y: HCY * CPX + 22 * TILE + 16 };
   },
-  /** 부활 지점 — 여관 앞 */
+  /** 부활 지점 — 여관 문 앞 판자길 */
   innPoint: function () {
-    return { x: HCX * CPX + 7 * TILE + 16, y: HCY * CPX + 13 * TILE + 16 };
+    return { x: HCX * CPX + 5 * TILE + 16, y: HCY * CPX + 10 * TILE + 16 };
   },
+  /** 화톳불 — 표착항 광장 한복판 */
+  bonfirePx: function () {
+    return { x: HCX * CPX + 16 * TILE + 16, y: HCY * CPX + 16 * TILE + 16 };
+  },
+  capePx: function () {
+    return { x: CAPE_CX * CPX + CPX / 2, y: CAPE_CY * CPX + CPX / 2 };
+  },
+  CAPE_CX: CAPE_CX, CAPE_CY: CAPE_CY,
   harborPx: function () {
     return { x: HCX * CPX + CPX / 2, y: HCY * CPX + CPX / 2 };
   },
@@ -994,7 +1053,11 @@ var W = {
     return true;
   },
 
-  /** 가시 청크의 오브젝트를 모두 순회 */
+  /**
+   * 가시 청크의 오브젝트를 모두 순회.
+   * ax/ay 가 있으면 타일 자리 대신 그 절대 좌표를 쓴다 — 오프닝에서 장로가
+   * 플레이어 쪽으로 걸어오는 것처럼 오브젝트를 움직여야 할 때 사용한다.
+   */
   objects: function () {
     var out = [];
     for (var k in loaded) {
@@ -1002,13 +1065,23 @@ var W = {
       var ch = loaded[k];
       for (var i = 0; i < ch.objs.length; i++) {
         var o = ch.objs[i];
-        o.x = ch.ox + o.tx * TILE + TILE / 2;
-        o.y = ch.oy + o.ty * TILE + TILE / 2;
+        if (o.ax != null) { o.x = o.ax; o.y = o.ay; }
+        else {
+          o.x = ch.ox + o.tx * TILE + TILE / 2;
+          o.y = ch.oy + o.ty * TILE + TILE / 2;
+        }
         o.chunk = k;
         out.push(o);
       }
     }
     return out;
+  },
+
+  /** 홈 좌표(타일 자리)의 절대 픽셀 — 걸어간 오브젝트를 되돌릴 때 쓴다 */
+  homePx: function (obj) {
+    var ch = loaded[obj.chunk];
+    if (!ch) return { x: obj.x, y: obj.y };
+    return { x: ch.ox + obj.tx * TILE + TILE / 2, y: ch.oy + obj.ty * TILE + TILE / 2 };
   },
 
   /** 채집물처럼 소모되는 오브젝트 제거 (청크 재로드 시 다시 생성된다) */
@@ -1105,9 +1178,17 @@ var W = {
       }
     }
 
-    /* 플레이어 */
+    /* 현재 청크 강조 */
+    g.strokeStyle = 'rgba(226,240,255,.55)'; g.lineWidth = 1;
+    g.strokeRect(ox + half * cell + 0.5, oy + half * cell + 0.5, cell - 1, cell - 1);
+
+    /* 플레이어 — 청크 칸이 아니라 청크 안의 실제 위치까지 반영한다 */
+    var inx = (px - pcx * CPX) / CPX, iny = (py - pcy * CPX) / CPX;
+    var mx = ox + (half + inx) * cell, my = oy + (half + iny) * cell;
+    g.fillStyle = '#0c1424';
+    g.beginPath(); g.arc(mx, my, Math.max(2.6, cell * 0.24), 0, 6.2832); g.fill();
     g.fillStyle = '#e6ecf2';
-    g.fillRect(ox + half * cell + cell * 0.28, oy + half * cell + cell * 0.28, cell * 0.44, cell * 0.44);
+    g.beginPath(); g.arc(mx, my, Math.max(1.6, cell * 0.16), 0, 6.2832); g.fill();
 
     /* 표착항 — 창 안이면 점, 밖이면 가장자리 화살표 */
     var hx = ox + (HCX - pcx + half) * cell + cell / 2;
@@ -1137,6 +1218,97 @@ var W = {
     g.textAlign = 'right';
     g.fillText('T' + tierAt(pcx, pcy), ox + size, oy + size + 12);
     g.textAlign = 'left';
+  },
+
+  /** 확대 지도가 쓰는 배율 단계 — 청크 span */
+  MAP_SPANS: [15, 29, 41],
+
+  /**
+   * 확대 지도 — 별도 캔버스에 전체 대륙을 크게 그린다.
+   * span 이 대륙보다 넓으면 세계 전체를 가운데 정렬해 담는다.
+   * goal 은 이번 챕터 목표 표시({cx,cy} 또는 {tier:n}) — 없으면 생략.
+   */
+  drawWorldMap: function (g, w, h, px, py, span, goal) {
+    var size = Math.min(w, h);
+    var ox = (w - size) / 2, oy = (h - size) / 2;
+    var cell = size / span;
+    var pcx = Math.floor(px / CPX), pcy = Math.floor(py / CPX);
+    var seen = (S && S.seen) || {};
+
+    /* 창의 좌상단 청크 — 세계가 창보다 작으면 가운데 정렬, 크면 플레이어 추적 */
+    var c0x, c0y;
+    if (span >= WCOLS) c0x = Math.floor((WCOLS - span) / 2);
+    else c0x = Math.max(0, Math.min(WCOLS - span, pcx - ((span - 1) >> 1)));
+    if (span >= WROWS) c0y = Math.floor((WROWS - span) / 2);
+    else c0y = Math.max(0, Math.min(WROWS - span, pcy - ((span - 1) >> 1)));
+
+    g.fillStyle = '#080c16';
+    g.fillRect(0, 0, w, h);
+
+    var i, j, cx, cy, x, y;
+    for (j = 0; j < span; j++) {
+      for (i = 0; i < span; i++) {
+        cx = c0x + i; cy = c0y + j;
+        x = ox + i * cell; y = oy + j * cell;
+        if (!inWorld(cx, cy)) { g.fillStyle = '#05080f'; g.fillRect(x, y, cell + 0.5, cell + 0.5); continue; }
+        if (!seen[cx + ',' + cy]) { g.fillStyle = '#121a2a'; g.fillRect(x, y, cell + 0.5, cell + 0.5); continue; }
+        g.fillStyle = (BIOME[biomeAt(cx, cy)] || BIOME.coast).map;
+        g.fillRect(x, y, cell + 0.5, cell + 0.5);
+        var lm = landmarkAt(cx, cy);
+        if (lm) {
+          g.fillStyle = lm.kind === 'delve' ? '#c084fc' : 'rgba(248,250,252,.85)';
+          var s = Math.max(2, cell * 0.24);
+          g.fillRect(x + (cell - s) / 2, y + (cell - s) / 2, s, s);
+        }
+      }
+    }
+
+    /* 티어 경계 — 목표가 "얼마나 멀리" 인 챕터에서 길잡이가 된다 */
+    g.strokeStyle = 'rgba(148,163,184,.20)'; g.lineWidth = 1;
+    [2, 5, 9, 13].forEach(function (d) {
+      var rx = ox + (HCX - d - c0x) * cell, ry = oy + (HCY - d - c0y) * cell;
+      g.strokeRect(rx, ry, (d * 2 + 1) * cell, (d * 2 + 1) * cell);
+    });
+
+    function markAt(mcx, mcy, color, glyph, ring) {
+      if (mcx < c0x || mcy < c0y || mcx >= c0x + span || mcy >= c0y + span) return;
+      var gx = ox + (mcx - c0x + 0.5) * cell, gy = oy + (mcy - c0y + 0.5) * cell;
+      if (ring) {
+        g.strokeStyle = color; g.lineWidth = 2;
+        g.beginPath(); g.arc(gx, gy, Math.max(5, cell * 0.6), 0, 6.2832); g.stroke();
+      }
+      g.fillStyle = color;
+      g.font = 'bold ' + Math.max(9, Math.min(15, cell * 0.8)) + "px 'Courier New',monospace";
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      g.fillText(glyph, gx, gy);
+      g.textAlign = 'left'; g.textBaseline = 'alphabetic';
+    }
+
+    /* 목표 표시 */
+    if (goal && goal.tier) {
+      var d2 = [0, 2, 5, 9, 13][Math.min(4, goal.tier - 1)] + 1;
+      g.strokeStyle = 'rgba(34,197,94,.75)'; g.lineWidth = 2;
+      g.strokeRect(ox + (HCX - d2 - c0x) * cell, oy + (HCY - d2 - c0y) * cell,
+        (d2 * 2 + 1) * cell, (d2 * 2 + 1) * cell);
+    }
+    if (goal && goal.cx != null) markAt(goal.cx, goal.cy, '#22c55e', '◎', true);
+
+    markAt(HCX, HCY, '#eab308', '⌂', true);
+    markAt(CAPE_CX, CAPE_CY, '#7dd3fc', '☗', true);
+
+    /* 현재 청크 + 청크 안 실제 위치 */
+    var pxi = ox + (pcx - c0x) * cell, pyi = oy + (pcy - c0y) * cell;
+    g.strokeStyle = 'rgba(226,240,255,.8)'; g.lineWidth = 2;
+    g.strokeRect(pxi, pyi, cell, cell);
+    var mx = ox + (pcx - c0x + (px - pcx * CPX) / CPX) * cell;
+    var my = oy + (pcy - c0y + (py - pcy * CPX) / CPX) * cell;
+    g.fillStyle = '#0c1424';
+    g.beginPath(); g.arc(mx, my, Math.max(4, cell * 0.3), 0, 6.2832); g.fill();
+    g.fillStyle = '#ffffff';
+    g.beginPath(); g.arc(mx, my, Math.max(2.4, cell * 0.19), 0, 6.2832); g.fill();
+
+    g.strokeStyle = '#2c3550'; g.lineWidth = 1;
+    g.strokeRect(ox + 0.5, oy + 0.5, size - 1, size - 1);
   },
 };
 

@@ -1,7 +1,7 @@
 'use strict';
 (function () {
 /**
- * 표류 대륙 — 코어: 루프 / 입력 / 카메라 / 세이브 / 진행(퀘스트·성장·상호작용).
+ * 표류 대륙 — 코어: 루프 / 입력 / 카메라 / 세이브 / 진행(챕터·성장·상호작용) / 오프닝.
  *
  * 세이브는 IndexedDB 자동저장(30초 + 주요 이벤트) + 여관 수동 저장 + 파일 내보내기/가져오기.
  * 이어하기 코드(서버 세이브)는 64KB 상한이라 이 게임에는 쓰지 않는다.
@@ -23,6 +23,12 @@ var time = 0;              // 누적 게임 시간(초)
 var autoT = 0;             // 자동저장 타이머
 var cam = { x: 0, y: 0 };
 var nearObj = null;        // F 로 상호작용 가능한 오브젝트
+
+/* 미니맵 위치 — 렌더와 탭 판정이 같은 값을 쓴다 */
+var MM = { size: 128, pad: 12 };
+function mmRect() {
+  return { x: VW - 140 - 4, y: MM.pad - 4, w: MM.size + 8, h: MM.size + 22 };
+}
 
 function $(id) { return document.getElementById(id); }
 function fmt(key, vars) { return DC.sub(TR(key), vars); }
@@ -72,37 +78,54 @@ var Store = (function () {
 })();
 
 /* ══════════════════════════ 상태 ══════════════════════════ */
-var SAVE_V = 2;            // 2 — 시드 기반 대륙 (seed / seen 추가, 지상 좌표계 이동)
+/* 2 — 시드 기반 대륙 · 3 — 직업/전직/동료/메인 챕터/카운터 */
+var SAVE_V = 3;
 
-function newState() {
+function clone(o) {
+  var c = {};
+  for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) c[k] = o[k];
+  return c;
+}
+
+function newState(cls) {
+  cls = DC.CLASSES[cls] ? cls : DC.DEFAULT_CLASS;
+  var cd = DC.CLASSES[cls];
   var start = W.spawnPoint();
   var st = {
     v: SAVE_V,
     seed: W.newSeed(),
     p: {
-      lv: 1, xp: 0, sp: 0, str: 4, agi: 4, vit: 4, wil: 4,
-      hp: 72, mp: 40, gold: 20,
-      bag: [{ id: 'potion', n: 2 }],
-      equip: { weapon: 'rusty_dagger', armor: 'quilt_coat', trinket: null },
-      tree: {},
+      cls: cls, adv: null,
+      lv: 1, xp: 0, sp: 0,
+      str: cd.stats.str, agi: cd.stats.agi, vit: cd.stats.vit, wil: cd.stats.wil,
+      hp: 1, mp: 1, gold: 20, curse: 0,
+      bag: cd.bag.map(clone),
+      equip: clone(cd.equip),
+      tree: {}, merc: null,
       x: start.x, y: start.y, fx: 0, fy: 1,
     },
     region: 'drift', zone: 'harbor',
-    quests: {}, flags: {}, kills: 0, deepest: 0, visited: { harbor: 1 }, seen: {},
+    quests: {}, flags: {},
+    counters: { maxTier: 1, delves: 0, statues: 0 },
+    kills: 0, deepest: 0, visited: { harbor: 1 }, seen: {},
     play: 0, savedAt: 0,
   };
-  DC.QUEST_ORDER.forEach(function (id) { st.quests[id] = { state: 0, prog: 0 }; });
+  DC.QUEST_ORDER.forEach(function (id) { st.quests[id] = { state: 0, prog: 0, done: 0, base: 0 }; });
+  var sts = B.stats(st.p);
+  st.p.hp = sts.maxHp; st.p.mp = sts.maxMp;
   return st;
 }
 
 /**
  * 저장본이 구버전이어도 빠진 필드를 메워 부팅되게 한다.
- * v1(4×3 고정 격자) 세이브는 시드가 없으므로 기본 대륙을 쓰고,
- * 지상 좌표는 표착항 앵커 기준으로 평행이동해 옛 위치를 그대로 이어간다.
+ *  v1 (4×3 고정 격자) — 시드가 없으므로 기본 대륙을 쓰고 지상 좌표를 표착항 기준으로 평행이동
+ *  v2 (시드 대륙, 직업 없음) — 기사로 폴백. 옛 메인 퀘스트 2종을 챕터 3·4 로 이관하고,
+ *     이미 마을을 벗어난 진행이므로 오프닝(챕터 1·2)은 완료 처리해 다시 재생되지 않게 한다.
  */
 function normalize(st) {
-  var base = newState();
+  var base = newState(st && st.p && st.p.cls);
   if (!st || !st.p) return base;
+
   ['region', 'zone', 'kills', 'deepest', 'play'].forEach(function (k) {
     if (st[k] === undefined) st[k] = base[k];
   });
@@ -110,23 +133,80 @@ function normalize(st) {
   st.visited = st.visited || {};
   st.seen = st.seen || {};
   st.quests = st.quests || {};
-  DC.QUEST_ORDER.forEach(function (id) { if (!st.quests[id]) st.quests[id] = { state: 0, prog: 0 }; });
-  st.p.bag = st.p.bag || [];
-  st.p.tree = st.p.tree || {};
-  st.p.equip = st.p.equip || base.p.equip;
+
+  /* 플레이어 — 직업 계열 필드 폴백 */
+  var p = st.p;
+  p.cls = DC.CLASSES[p.cls] ? p.cls : DC.DEFAULT_CLASS;
+  if (!p.adv || !(DC.ADVANCES[p.adv] && DC.ADVANCES[p.adv].from === p.cls)) p.adv = null;
+  if (!p.merc || !DC.MERCS[p.merc.id]) p.merc = null;
+  if (p.merc) {
+    p.merc.lv = Math.max(1, Math.min(DC.MERC_MAXLV, p.merc.lv || 1));
+    if (typeof p.merc.hp !== 'number') p.merc.hp = DC.mercStat(p.merc.id, p.merc.lv).hp;
+    p.merc.down = p.merc.down || 0;
+  }
+  p.curse = p.curse || 0;
+  p.bag = p.bag || [];
+  p.tree = p.tree || {};
+  p.equip = p.equip || clone(DC.CLASSES[p.cls].equip);
+  ['str', 'agi', 'vit', 'wil'].forEach(function (k) {
+    if (typeof p[k] !== 'number') p[k] = DC.CLASSES[p.cls].stats[k];
+  });
+
+  /* 카운터 */
+  st.counters = st.counters || {};
+  ['maxTier', 'delves', 'statues'].forEach(function (k) {
+    if (typeof st.counters[k] !== 'number') st.counters[k] = base.counters[k];
+  });
+
+  var oldSave = !st.v || st.v < 3;
+
+  /* 옛 메인 퀘스트 2종 → 챕터 3 · 4 로 이관 */
+  if (st.quests.main_light && !st.quests.m3_signal) st.quests.m3_signal = st.quests.main_light;
+  if (st.quests.main_keeper && !st.quests.m4_keeper) st.quests.m4_keeper = st.quests.main_keeper;
+  delete st.quests.main_light;
+  delete st.quests.main_keeper;
+
+  DC.QUEST_ORDER.forEach(function (id) {
+    var q = st.quests[id];
+    if (!q) { st.quests[id] = { state: 0, prog: 0, done: 0, base: 0 }; return; }
+    if (typeof q.state !== 'number') q.state = 0;
+    if (typeof q.prog !== 'number') q.prog = 0;
+    if (typeof q.done !== 'number') q.done = 0;
+    if (typeof q.base !== 'number') q.base = 0;
+  });
+
+  if (oldSave) {
+    /* 이미 마을 밖으로 나간 세이브다 — 오프닝은 끝난 것으로 본다 */
+    st.flags.tutorial_done = true;
+    st.flags.intro_seen = true;
+    st.flags.tut_started = true;
+    st.quests.m1_awake.state = 3;
+    st.quests.m2_fence.state = 3;
+    if (st.flags.entered_lighthouse && st.quests.m3_signal.state === 0) st.quests.m3_signal.state = 3;
+    if (st.flags.boss_down) {
+      st.quests.m3_signal.state = 3;
+      st.quests.m4_keeper.state = Math.max(st.quests.m4_keeper.state, 2);
+    }
+  }
 
   if (!st.seed) st.seed = W.DEFAULT_SEED;
-  if (!st.v || st.v < SAVE_V) {
+  if (!st.v || st.v < 2) {
     if (st.region === 'drift') {
       st.p.x = (st.p.x || 0) + W.HCX * W.CPX;
       st.p.y = (st.p.y || 0) + W.HCY * W.CPX;
     }
-    st.v = SAVE_V;
   }
+  st.v = SAVE_V;
+
   if (st.region === 'drift') {
     st.p.x = Math.max(24, Math.min(W.WCOLS * W.CPX - 24, st.p.x));
     st.p.y = Math.max(24, Math.min(W.WROWS * W.CPX - 24, st.p.y));
   }
+  var sts = B.stats(st.p);
+  if (typeof st.p.hp !== 'number' || st.p.hp <= 0) st.p.hp = sts.maxHp;
+  if (typeof st.p.mp !== 'number') st.p.mp = sts.maxMp;
+  st.p.hp = Math.min(st.p.hp, sts.maxHp);
+  st.p.mp = Math.min(st.p.mp, sts.maxMp);
   return st;
 }
 
@@ -169,7 +249,13 @@ function removeItem(id, n) {
   }
   return n === 0;
 }
+/** 보상 토큰 해석 — "gold:120" 은 금화, "cls:beacon" 은 직업별 등대 무기 */
+function resolveItem(id) {
+  if (id === 'cls:beacon') return DC.classDef(S.p).beacon;
+  return id;
+}
 function giveItem(id, n) {
+  id = resolveItem(id);
   if (id.indexOf('gold:') === 0) {
     S.p.gold += parseInt(id.slice(5), 10);
     DC.UI.hint(fmt('hintGot', { n: '🪙' + id.slice(5) }));
@@ -181,6 +267,13 @@ function giveItem(id, n) {
 }
 
 /* ══════════════════════════ 성장 ══════════════════════════ */
+/** 레벨업 시 오를 능력치 — 직업(그리고 전직) 성장표를 순환한다 */
+function growStat(lv) {
+  var a = DC.advOf(S.p);
+  var table = (a && a.grow) || DC.classDef(S.p).grow;
+  return table[(lv - 2) % table.length];
+}
+
 function gainXp(n) {
   var p = S.p;
   p.xp += n;
@@ -188,8 +281,8 @@ function gainXp(n) {
   while (p.lv < DC.MAX_LEVEL && p.xp >= DC.xpNeed(p.lv)) {
     p.xp -= DC.xpNeed(p.lv);
     p.lv++; p.sp++;
-    p.vit++;
-    if (p.lv % 3 === 0) p.wil++; else if (p.lv % 3 === 1) p.str++; else p.agi++;
+    p[growStat(p.lv)]++;
+    if (p.lv % 2 === 0) p.vit++;
     leveled = true;
   }
   if (leveled) {
@@ -207,13 +300,12 @@ function gainXp(n) {
 function learn(id) {
   var p = S.p;
   if (p.sp <= 0 || p.tree[id]) return false;
-  var node = null, i;
-  for (i = 0; i < DC.TREE.length; i++) if (DC.TREE[i].id === id) node = DC.TREE[i];
-  if (!node || p.lv < node.reqLv) return false;
+  var node = DC.treeNode(id);
+  if (!node || node.cls !== DC.classOf(p) || p.lv < node.reqLv) return false;
   if (node.tier > 0) {
-    var prev = null;
-    for (i = 0; i < DC.TREE.length; i++) {
-      if (DC.TREE[i].line === node.line && DC.TREE[i].tier === node.tier - 1) prev = DC.TREE[i];
+    var list = DC.treeOf(p), prev = null;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].line === node.line && list[i].tier === node.tier - 1) prev = list[i];
     }
     if (!prev || !p.tree[prev.id]) return false;
   }
@@ -223,25 +315,132 @@ function learn(id) {
   return true;
 }
 
+/* ══════════════════════════ 전직 ══════════════════════════ */
+function canAdvance() {
+  return !S.p.adv && S.p.lv >= DC.ADV_LEVEL && DC.qs(S, DC.ADV_QUEST) === 3;
+}
+function advance(id) {
+  var a = DC.ADVANCES[id];
+  if (!a || a.from !== DC.classOf(S.p) || !canAdvance()) return false;
+  S.p.adv = id;
+  S.p.cd3 = 0;
+  var st = B.stats(S.p);
+  S.p.hp = st.maxHp; S.p.mp = st.maxMp;
+  B.burst(S.p.x, S.p.y, 40, a.color, 250, 5);
+  DC.UI.banner(a.icon + ' ' + DC.tx(a.n), 2.6);
+  DC.UI.hint(fmt('advTaken', { n: DC.tx(a.n) }), 3.4);
+  DC.UI.hintOnce('skillR', TR('hintSkillR'));
+  saveNow(false);
+  return true;
+}
+
+/* ══════════════════════════ 동료 ══════════════════════════ */
+function hireMerc(id) {
+  var d = DC.MERCS[id];
+  if (!d) return false;
+  if (S.p.merc) { DC.UI.hint(TR('mercBusy')); return false; }
+  if (S.p.gold < d.cost) { DC.UI.hint(TR('goldShort')); return false; }
+  S.p.gold -= d.cost;
+  S.p.merc = { id: id, lv: 1, hp: DC.mercStat(id, 1).hp, down: 0 };
+  B.syncMerc();
+  DC.UI.hint(fmt('mercHired', { n: DC.tx(d.n) }), 3);
+  saveNow(false);
+  return true;
+}
+function trainMerc() {
+  var m = S.p.merc; if (!m) return false;
+  if (m.lv >= DC.MERC_MAXLV) { DC.UI.hint(TR('mercMax')); return false; }
+  var cost = DC.mercUpCost(m.lv);
+  if (S.p.gold < cost) { DC.UI.hint(TR('goldShort')); return false; }
+  S.p.gold -= cost;
+  m.lv++;
+  m.hp = DC.mercStat(m.id, m.lv).hp;
+  B.syncMerc();
+  DC.UI.hint(fmt('mercUpDone', { n: DC.tx(DC.MERCS[m.id].n) }));
+  saveNow(false);
+  return true;
+}
+function reviveMerc() {
+  var m = S.p.merc; if (!m) return false;
+  if (S.p.gold < DC.MERC_REVIVE_COST) { DC.UI.hint(TR('goldShort')); return false; }
+  S.p.gold -= DC.MERC_REVIVE_COST;
+  B.reviveMerc();
+  DC.UI.hint(fmt('mercBack', { n: DC.tx(DC.MERCS[m.id].n) }));
+  saveNow(false);
+  return true;
+}
+function dismissMerc() {
+  var m = S.p.merc; if (!m) return false;
+  DC.UI.hint(fmt('mercLeft', { n: DC.tx(DC.MERCS[m.id].n) }));
+  S.p.merc = null;
+  B.syncMerc();
+  saveNow(false);
+  return true;
+}
+
+/* ══════════════════════════ 치유사 ══════════════════════════ */
+function healFee() {
+  if (DC.qs(S, 'm4_keeper') === 3) return 0;
+  return S.p.gold < 10 ? 0 : 10;
+}
+/** 대화 한 번으로 체력·의지 전회복 + 한기 해제 + 동료 회복 */
+function healAt() {
+  var fee = healFee();
+  if (fee > 0) S.p.gold -= fee;
+  var st = B.stats(S.p);
+  var had = S.p.curse > 0;
+  S.p.curse = 0;
+  st = B.stats(S.p);
+  S.p.hp = st.maxHp; S.p.mp = st.maxMp;
+  B.healMerc();
+  B.burst(S.p.x, S.p.y, 22, '#22c55e', 170, 3);
+  DC.UI.hint(had ? TR('healClean') : TR('healDone'), 2.6);
+  tutMark('town');
+  saveNow(false);
+  return true;
+}
+
 /* ══════════════════════════ 퀘스트 ══════════════════════════ */
 function acceptQuest(id) {
-  var q = S.quests[id];
-  if (!q || q.state !== 0) return;
+  var q = S.quests[id], def = DC.QUESTS[id];
+  if (!q || !def || q.state !== 0) return;
   q.state = 1; q.prog = 0;
-  DC.UI.hint(fmt('hintQuestNew', { n: DC.tx(DC.QUESTS[id].n) }), 3.2);
+  if (def.goal.type === 'counter' && def.goal.rel) q.base = S.counters[def.goal.key] || 0;
+  var pre = def.kind === 'main' ? fmt('chapterNew', { n: def.ch, t: DC.tx(def.n) }) : DC.tx(def.n);
+  DC.UI.hint(fmt('hintQuestNew', { n: pre }), 3.2);
+  if (def.kind === 'main') DC.UI.banner('★ ' + fmt('chapterNew', { n: def.ch, t: DC.tx(def.n) }), 2.4);
+  checkQuests();
   saveNow(false);
 }
 
 function turnInQuest(id) {
   var q = S.quests[id], def = DC.QUESTS[id];
-  if (!q || q.state !== 2) return;
+  if (!q || !def || q.state !== 2) return;
   if (def.goal.type === 'collect') removeItem(def.goal.item, def.goal.count);
-  q.state = 3;
+
   S.p.gold += def.reward.gold || 0;
-  (def.reward.items || []).forEach(function (it) { addItem(it, 1); });
+  (def.reward.items || []).forEach(function (it) { addItem(resolveItem(it), 1); });
   gainXp(def.reward.xp || 0);
-  DC.UI.hint(fmt('hintQuestDone', { n: DC.tx(def.n) }), 3.2);
-  DC.UI.banner('✅ ' + DC.tx(def.n), 1.8);
+
+  if (def.kind === 'repeat') {
+    /* 상시 의뢰 — 다시 받을 수 있게 되돌린다 */
+    q.state = 0; q.prog = 0; q.done = (q.done || 0) + 1;
+    q.base = S.counters[def.goal.key] || 0;
+    DC.UI.hint(fmt('hintQuestDone', { n: DC.tx(def.n) }), 3.0);
+  } else {
+    q.state = 3;
+    DC.UI.hint(fmt('hintQuestDone', { n: DC.tx(def.n) }), 3.2);
+    if (def.kind === 'main') {
+      DC.UI.banner(fmt('chapterEnd', { n: def.ch, t: DC.tx(def.n) }), 2.8);
+      B.burst(S.p.x, S.p.y, 30, '#eab308', 210, 4);
+      if (def.outro) setTimeout(function () { DC.UI.hint(DC.tx(def.outro), 4.0); }, 900);
+      if (id === DC.MAIN_ORDER[DC.MAIN_ORDER.length - 1]) {
+        setTimeout(clearGame, 2400);
+      }
+    } else {
+      DC.UI.banner('✅ ' + DC.tx(def.n), 1.8);
+    }
+  }
   submitScore();
   saveNow(false);
 }
@@ -253,8 +452,13 @@ function checkQuests() {
     if (!q || q.state !== 1) return;
     var goal = DC.QUESTS[id].goal, ok = false;
     if (goal.type === 'flag') ok = !!S.flags[goal.flag];
-    else if (goal.type === 'kill') ok = (q.prog || 0) >= goal.count;
+    else if (goal.type === 'kill' || goal.type === 'killAny') ok = (q.prog || 0) >= goal.count;
     else if (goal.type === 'collect') ok = countItem(goal.item) >= goal.count;
+    else if (goal.type === 'tier') ok = (S.counters.maxTier || 1) >= goal.tier;
+    else if (goal.type === 'counter') {
+      var cur = S.counters[goal.key] || 0;
+      ok = (goal.rel ? cur - (q.base || 0) : cur) >= goal.count;
+    }
     if (ok) {
       q.state = 2;
       DC.UI.hint('📜 ' + DC.tx(DC.QUESTS[id].n) + ' — ' + TR('qReady'), 3.0);
@@ -264,20 +468,135 @@ function checkQuests() {
 
 function questsDone() {
   var n = 0;
-  DC.QUEST_ORDER.forEach(function (id) { if (S.quests[id].state === 3) n++; });
+  DC.QUEST_ORDER.forEach(function (id) {
+    var q = S.quests[id];
+    if (!q) return;
+    if (q.state === 3) n++;
+    n += q.done || 0;
+  });
   return n;
+}
+
+/* ══════════════════════════ 오프닝 · 튜토리얼 ══════════════════════════
+ * 장로가 플레이어에게 걸어와 대화를 열고, 그 대화가 1챕터의 시작점이 된다.
+ * 튜토리얼은 모달이 아니다 — 게임은 계속 굴러가고, 각 단계는 플레이어가
+ * 실제로 그 조작을 해내야 다음으로 넘어간다.
+ * ────────────────────────────────────────────────────────────────── */
+var intro = null;          // { phase: 'approach'|'return', obj, home }
+var tut = null;            // { i, moved }
+
+function findHarborNpc(id) {
+  var objs = W.objects();
+  for (var i = 0; i < objs.length; i++) {
+    if (objs[i].kind === 'npc' && objs[i].npc === id) return objs[i];
+  }
+  return null;
+}
+
+function maybeStartIntro() {
+  if (S.flags.intro_seen || S.flags.tutorial_done) return;
+  var obj = findHarborNpc('elder');
+  if (!obj) return;
+  S.flags.intro_seen = true;
+  obj.ax = obj.x; obj.ay = obj.y;
+  intro = { phase: 'approach', obj: obj, home: { x: obj.x, y: obj.y } };
+  DC.UI.step(TR('tutStart'));
+}
+
+function stepIntro(dt) {
+  if (!intro) return;
+  var o = intro.obj, p = S.p;
+  if (intro.phase === 'approach') {
+    var dx = p.x - o.ax, dy = p.y - o.ay, d = Math.hypot(dx, dy);
+    /* 플레이어가 마을을 벗어나면 쫓아가지 않는다 — 자리로 돌아가고 대화는 F 로 시작한다 */
+    if (d > 620 || !W.isField() || W.zoneKey(p.x, p.y) !== 'harbor') {
+      intro.phase = 'return';
+      return;
+    }
+    if (d > 40) {
+      var v = Math.min(150, 90 + d * 0.25) * dt;
+      o.ax += (dx / d) * v; o.ay += (dy / d) * v;
+      return;
+    }
+    intro.phase = 'return';
+    paused = true;
+    if (!DC.UI.openDialog('elder')) paused = false;
+    return;
+  }
+  /* 대화 뒤 자기 자리로 돌아간다 */
+  var hx = intro.home.x - o.ax, hy = intro.home.y - o.ay, hd = Math.hypot(hx, hy);
+  if (hd < 6) { o.ax = null; o.ay = null; intro = null; return; }
+  var vv = 110 * dt;
+  o.ax += (hx / hd) * Math.min(vv, hd);
+  o.ay += (hy / hd) * Math.min(vv, hd);
+}
+
+function startTutorial() {
+  S.flags.tut_started = true;
+  acceptQuest('m1_awake');
+  tut = { i: 0, moved: 0 };
+  showTutStep();
+  saveNow(false);
+}
+function skipTutorial() {
+  S.flags.tut_started = true;
+  acceptQuest('m1_awake');
+  tut = null;
+  S.flags.tutorial_done = true;
+  DC.UI.step('');
+  DC.UI.hint(TR('tutSkipped'), 2.4);
+  checkQuests();
+  saveNow(false);
+}
+function showTutStep() {
+  if (!tut) { DC.UI.step(''); return; }
+  var s = DC.TUTORIAL[tut.i];
+  if (!s) { DC.UI.step(''); return; }
+  DC.UI.step(TR(s.hint));
+  DC.UI.hint(TR(s.hint), 3.0);
+}
+/** 튜토리얼 단계 완료 신호 — 지금 요구하는 단계와 같을 때만 넘어간다 */
+function tutMark(id) {
+  if (!tut) return;
+  var s = DC.TUTORIAL[tut.i];
+  if (!s || s.id !== id) return;
+  tut.i++;
+  B.burst(S.p.x, S.p.y, 10, '#22c55e', 130, 3);
+  if (tut.i >= DC.TUTORIAL.length) {
+    tut = null;
+    S.flags.tutorial_done = true;
+    DC.UI.step(TR('tutDone'));
+    DC.UI.banner('✔ ' + TR('tutDone'), 2.4);
+    checkQuests();
+    saveNow(false);
+    return;
+  }
+  showTutStep();
+}
+
+function tutTick(dt) {
+  if (!tut) return;
+  var s = DC.TUTORIAL[tut.i];
+  if (!s) return;
+  if (s.id === 'move') {
+    var sp = Math.hypot(S.p.x - (tut.lx == null ? S.p.x : tut.lx), S.p.y - (tut.ly == null ? S.p.y : tut.ly));
+    tut.moved += sp;
+    tut.lx = S.p.x; tut.ly = S.p.y;
+    if (tut.moved > 130) tutMark('move');
+  }
 }
 
 /* ══════════════════════════ 점수 ══════════════════════════ */
 function score() {
   var visited = Object.keys(S.visited).length;
   return Math.round(
-    S.p.lv * 60 + questsDone() * 220 + S.kills * 4 +
-    S.deepest * 150 + visited * 40 + (S.flags.boss_down ? 600 : 0)
+    S.p.lv * 60 + DC.chaptersDone(S) * 320 + questsDone() * 90 + S.kills * 4 +
+    S.deepest * 150 + visited * 40 + (S.counters.maxTier || 1) * 120 +
+    (S.flags.boss_down ? 600 : 0)
   );
 }
 function scoreDetail() {
-  return 'Lv' + S.p.lv + ' · Q' + questsDone() + ' · K' + S.kills;
+  return 'Lv' + S.p.lv + ' · C' + DC.chaptersDone(S) + ' · K' + S.kills;
 }
 var lastSubmit = 0;
 function submitScore() {
@@ -347,20 +666,27 @@ function beginWith(state) {
   S.zone = W.zoneKey(S.p.x, S.p.y);
   lastSubmit = 0;
   running = true; paused = false;
+  intro = null; tut = null;
   DC.UI.closeAll();
+  DC.UI.step('');
   ['menu', 'endPanel'].forEach(function (id) { var el = $(id); if (el) el.hidden = true; });
   var h = $('hud'); if (h) h.hidden = false;
+  var sk = $('skills'); if (sk) sk.hidden = false;
   snapCam();
+  refreshObjs();
   DC.UI.hud();
   DC.UI.hintOnce('move', TR('hintMove'));
+  maybeStartIntro();
 }
 
-function newGame() { beginWith(newState()); }
+function newGame(cls) { beginWith(newState(cls || (DC.UI.selectedClass && DC.UI.selectedClass()))); }
 
 function toMenu() {
   running = false; paused = false;
   DC.UI.closeAll();
+  DC.UI.step('');
   var h = $('hud'); if (h) h.hidden = true;
+  var sk = $('skills'); if (sk) sk.hidden = true;
   var e = $('endPanel'); if (e) e.hidden = true;
   var m = $('menu'); if (m) m.hidden = false;
   var bb = $('bossBar'); if (bb) bb.hidden = true;
@@ -373,7 +699,10 @@ function endPanel(titleKey, descKey) {
   p.hidden = false;
   set('endTitle', TR(titleKey));
   set('endDesc', TR(descKey) + '\n' +
-    fmt('resultLine', { lv: S.p.lv, q: questsDone(), k: S.kills, s: score() }));
+    fmt('resultLine', {
+      lv: S.p.lv, c: DC.chaptersDone(S), ct: DC.MAIN_COUNT,
+      q: questsDone(), k: S.kills, s: score(),
+    }));
   var again = $('againBtn');
   if (again) again.textContent = TR('againBtn');
 }
@@ -389,7 +718,7 @@ function onDeath() {
 function respawn() {
   var st = B.stats(S.p);
   var inn = W.innPoint();
-  S.p.hp = st.maxHp; S.p.mp = st.maxMp;
+  S.p.hp = st.maxHp; S.p.mp = st.maxMp; S.p.curse = 0;
   S.region = 'drift'; S.p.x = inn.x; S.p.y = inn.y;
   B.clearAll(); B.attach(S.p);
   W.enter('drift', S.p.x, S.p.y);
@@ -409,16 +738,19 @@ function clearGame() {
 
 /* ══════════════════════════ 여관 · 상거래 ══════════════════════════ */
 function rest() {
-  var free = DC.qs(S, 'main_keeper') === 3;
+  var free = DC.qs(S, 'm4_keeper') === 3;
   if (!free) {
     if (S.p.gold < 30) { DC.UI.hint(TR('goldShort')); return; }
     S.p.gold -= 30;
   }
+  S.p.curse = 0;
   var st = B.stats(S.p);
   S.p.hp = st.maxHp; S.p.mp = st.maxMp;
+  B.healMerc();
   DC.UI.closeAll();
   paused = false;
   DC.UI.banner('🛏️ ' + TR('restDone'), 2.0);
+  tutMark('town');
   submitScore();
   saveNow(true);
 }
@@ -426,9 +758,11 @@ function rest() {
 function buy(id) {
   var it = DC.ITEMS[id];
   if (!it || S.p.gold < it.price) { DC.UI.hint(TR('goldShort')); return false; }
+  if (it.cls && it.cls !== DC.classOf(S.p)) { DC.UI.hint(TR('wrongClass')); return false; }
   if (!addItem(id, 1)) { DC.UI.hint(TR('invFull')); return false; }
   S.p.gold -= it.price;
   DC.UI.hint(TR('bought') + ' — ' + it.icon + ' ' + DC.tx(it.n));
+  tutMark('town');
   saveNow(false);
   return true;
 }
@@ -447,6 +781,7 @@ function equip(slot) {
   var s = S.p.bag[slot]; if (!s) return false;
   var it = DC.ITEMS[s.id];
   if (!it || (it.slot !== 'weapon' && it.slot !== 'armor' && it.slot !== 'trinket')) return false;
+  if (it.cls && it.cls !== DC.classOf(S.p)) { DC.UI.hint(TR('wrongClass')); return false; }
   var old = S.p.equip[it.slot];
   S.p.equip[it.slot] = s.id;
   S.p.bag.splice(slot, 1);
@@ -463,6 +798,11 @@ function useItem(slot) {
   var it = DC.ITEMS[s.id];
   if (!it || it.slot !== 'use') return false;
   var st = B.stats(S.p);
+  if (it.cleanse && S.p.curse > 0) {
+    S.p.curse = 0;
+    DC.UI.hint(TR('healClean'), 2.2);
+    st = B.stats(S.p);
+  }
   if (it.heal) { S.p.hp = Math.min(st.maxHp, S.p.hp + it.heal); B.popup(S.p.x, S.p.y - 26, '+' + it.heal, '#22c55e'); }
   if (it.mana) { S.p.mp = Math.min(st.maxMp, S.p.mp + it.mana); B.popup(S.p.x, S.p.y - 26, '+' + it.mana, '#7dd3fc'); }
   s.n--; if (s.n <= 0) S.p.bag.splice(slot, 1);
@@ -471,7 +811,7 @@ function useItem(slot) {
 
 /** 단축키(1/2)로 회복약 즉시 사용 */
 function quickUse(kind) {
-  var want = kind === 'hp' ? ['potion_hi', 'potion'] : ['elixir'];
+  var want = kind === 'hp' ? ['potion_hi', 'potion', 'salve'] : ['elixir'];
   for (var w = 0; w < want.length; w++) {
     for (var i = 0; i < S.p.bag.length; i++) {
       if (S.p.bag[i].id === want[w]) { useItem(i); return; }
@@ -505,13 +845,15 @@ function labelFor(o) {
   if (o.kind === 'herb') return TR('hintHerb');
   if (o.kind === 'statue') return o.used ? null : TR('hintStatue');
   if (o.kind === 'spring') return TR('hintSpring');
+  if (o.kind === 'bonfire') return TR('hintBonfire');
+  if (o.kind === 'board') return TR('hintBoard');
   if (o.kind === 'gate') return o.open ? null : TR('hintLocked');
   if (o.kind === 'portal') return o.up ? (o.to === 'drift' ? TR('hintExit') : TR('hintStairsUp')) : TR('hintStairsDown');
   return null;
 }
 
 function findNear() {
-  var objs = W.objects(), best = null, bd = 46;
+  var objs = objsCache, best = null, bd = 46;
   for (var i = 0; i < objs.length; i++) {
     var o = objs[i];
     if (!labelFor(o)) continue;
@@ -524,10 +866,21 @@ function findNear() {
 function interact() {
   var o = nearObj;
   if (!o) return;
-  if (o.kind === 'npc') { paused = true; DC.UI.openDialog(o.npc); return; }
+  tutMark('interact');
+  if (o.kind === 'npc') { paused = true; if (!DC.UI.openDialog(o.npc)) paused = false; return; }
+  if (o.kind === 'board') { paused = true; DC.UI.openBoard(); return; }
+  if (o.kind === 'bonfire') {
+    var stb = B.stats(S.p);
+    S.p.hp = stb.maxHp; S.p.mp = stb.maxMp;
+    B.burst(o.x, o.y - 6, 20, '#f97316', 160, 3);
+    DC.UI.hint(TR('hintBonfireOn'), 2.6);
+    saveNow(true);
+    return;
+  }
   if (o.kind === 'chest') {
     o.opened = true;
     S.flags['chest_' + o.id] = true;
+    if (String(o.id).indexOf('md_') === 0) S.counters.delves = (S.counters.delves || 0) + 1;
     (o.loot || []).forEach(function (l) { giveItem(l, 1); });
     B.burst(o.x, o.y, 14, '#eab308', 150, 3);
     saveNow(false);
@@ -542,6 +895,7 @@ function interact() {
     if (o.used) return;
     o.used = true;
     S.flags['statue_' + o.id] = true;
+    S.counters.statues = (S.counters.statues || 0) + 1;
     gainXp(60 * (o.tier || 1));
     B.burst(o.x, o.y, 20, '#a78bfa', 170, 3);
     DC.UI.hint(TR('hintStatueRead'), 3);
@@ -574,9 +928,10 @@ function interact() {
 
 /* ══════════════════════════ 입력 ══════════════════════════ */
 var keys = {}, edge = {};
-var IN = { ax: 0, ay: 0, attackEdge: false, dashEdge: false, s1Edge: false, s2Edge: false };
+var IN = { ax: 0, ay: 0, attackEdge: false, dashEdge: false, s1Edge: false, s2Edge: false, s3Edge: false };
 
-var PANEL_KEYS = { KeyI: 'openInv', KeyT: 'openTree', KeyL: 'openQuests' };
+var PANEL_KEYS = { KeyI: 'openInv', KeyT: 'openTree', KeyL: 'openQuests', KeyM: 'openMap' };
+var CLOSE_KEYS = { Escape: 1, KeyI: 1, KeyT: 1, KeyL: 1, KeyM: 1 };
 
 window.addEventListener('keydown', function (ev) {
   var c = ev.code;
@@ -587,14 +942,24 @@ window.addEventListener('keydown', function (ev) {
   if (!running) return;
 
   if (DC.UI.isOpen()) {
-    if (c === 'Escape' || c === 'KeyI' || c === 'KeyT' || c === 'KeyL') { DC.UI.closeAll(); paused = false; return; }
+    if (DC.UI.openPanel() === 'panelMap') {
+      if (c === 'Equal' || c === 'NumpadAdd') { DC.UI.mapZoom(-1); return; }
+      if (c === 'Minus' || c === 'NumpadSubtract') { DC.UI.mapZoom(1); return; }
+    }
+    if (CLOSE_KEYS[c]) { DC.UI.closeAll(); paused = false; return; }
     var n = c.indexOf('Digit') === 0 ? parseInt(c.slice(5), 10) : 0;
     if (n && DC.UI.dialogKey(n)) return;
     return;
   }
 
   if (c === 'Escape') { paused = true; DC.UI.openPause(); return; }
-  if (PANEL_KEYS[c]) { paused = true; DC.UI[PANEL_KEYS[c]](); return; }
+  if (PANEL_KEYS[c]) {
+    paused = true;
+    DC.UI[PANEL_KEYS[c]]();
+    if (c === 'KeyI') tutMark('bag');
+    if (c === 'KeyT') tutMark('tree');
+    return;
+  }
   if (c === 'KeyF') { interact(); return; }
   if (c === 'Digit1') { quickUse('hp'); return; }
   if (c === 'Digit2') { quickUse('mp'); return; }
@@ -605,17 +970,39 @@ window.addEventListener('blur', function () {
   Object.keys(keys).forEach(function (k) { keys[k] = false; });
 }, false);
 
+/* 미니맵을 두드리면 확대 지도가 열린다 (모바일 진입점) */
+if (cv && cv.addEventListener) {
+  cv.addEventListener('pointerdown', function (ev) {
+    if (!running || DC.UI.isOpen() || W.isDungeon()) return;
+    var r = cv.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    var x = (ev.clientX - r.left) * (VW / r.width);
+    var y = (ev.clientY - r.top) * (VH / r.height);
+    var m = mmRect();
+    if (x < m.x || y < m.y || x > m.x + m.w || y > m.y + m.h) return;
+    ev.preventDefault();
+    paused = true;
+    DC.UI.openMap();
+  }, false);
+}
+
 function readInput() {
   var ax = 0, ay = 0;
   if (keys.KeyA || keys.ArrowLeft) ax -= 1;
   if (keys.KeyD || keys.ArrowRight) ax += 1;
   if (keys.KeyW || keys.ArrowUp) ay -= 1;
   if (keys.KeyS || keys.ArrowDown) ay += 1;
+  /* 모바일 아날로그 스틱이 있으면 그 값을 우선한다 */
+  if (window.GameTouch) {
+    var a = GameTouch.axis();
+    if (a && a.mag > 0) { ax = a.x; ay = a.y; }
+  }
   IN.ax = ax; IN.ay = ay;
   IN.attackEdge = !!(edge.Space || edge.KeyJ);
   IN.dashEdge = !!(edge.ShiftLeft || edge.ShiftRight || edge.KeyK);
   IN.s1Edge = !!edge.KeyQ;
   IN.s2Edge = !!edge.KeyE;
+  IN.s3Edge = !!edge.KeyR;
   return IN;
 }
 
@@ -661,6 +1048,32 @@ function drawObjects(c) {
           g.fillText(nm, x, y - 33);
         }
         g.textAlign = 'left';
+        break;
+      case 'bonfire':
+        var fl = 1 + Math.sin(time * 7 + x) * 0.12;
+        g.fillStyle = 'rgba(249,115,22,.13)';
+        g.beginPath(); g.arc(x, y, 74 * fl, 0, 6.2832); g.fill();
+        g.fillStyle = 'rgba(249,115,22,.20)';
+        g.beginPath(); g.arc(x, y, 40 * fl, 0, 6.2832); g.fill();
+        g.fillStyle = '#3b2c1e';
+        g.fillRect(x - 14, y + 4, 28, 6);
+        g.fillRect(x - 10, y - 2, 20, 5);
+        g.fillStyle = '#f97316';
+        g.beginPath();
+        g.moveTo(x, y - 24 * fl); g.lineTo(x + 10, y + 4); g.lineTo(x - 10, y + 4);
+        g.closePath(); g.fill();
+        g.fillStyle = '#fde68a';
+        g.beginPath();
+        g.moveTo(x, y - 13 * fl); g.lineTo(x + 5, y + 4); g.lineTo(x - 5, y + 4);
+        g.closePath(); g.fill();
+        break;
+      case 'board':
+        g.fillStyle = '#3b2c1e'; g.fillRect(x - 3, y + 2, 6, 12);
+        g.fillStyle = '#6b4f1d'; g.fillRect(x - 16, y - 18, 32, 22);
+        g.fillStyle = '#d6c9a8'; g.fillRect(x - 13, y - 15, 12, 8);
+        g.fillRect(x + 2, y - 15, 11, 7);
+        g.fillRect(x - 13, y - 5, 9, 6);
+        g.fillStyle = '#0c1424'; g.fillRect(x - 11, y - 13, 8, 1); g.fillRect(x + 4, y - 13, 7, 1);
         break;
       case 'chest':
         g.fillStyle = o.opened ? '#3a3524' : '#6b4f1d';
@@ -735,6 +1148,23 @@ function drawVignette() {
 /* ══════════════════════════ 프레임 ══════════════════════════ */
 var hudTick = 0;
 
+/** 화톳불 곁은 안전지대 — 서서히 회복된다 */
+function bonfireAura(dt) {
+  if (!W.isField()) return;
+  var p = S.p, near = false;
+  for (var i = 0; i < objsCache.length; i++) {
+    var o = objsCache[i];
+    if (o.kind !== 'bonfire') continue;
+    if (Math.hypot(o.x - p.x, o.y - p.y) < 150) { near = true; break; }
+  }
+  if (!near) return;
+  var st = B.stats(p);
+  p.hp = Math.min(st.maxHp, p.hp + st.maxHp * 0.09 * dt);
+  p.mp = Math.min(st.maxMp, p.mp + st.maxMp * 0.09 * dt);
+  if (p.curse > 0) p.curse = Math.max(0, p.curse - dt * 3);
+  DC.UI.hintOnce('bonfire', TR('hintBonfireOn'));
+}
+
 function step(dt) {
   var p = S.p;
   time += dt; S.play += dt;
@@ -745,12 +1175,19 @@ function step(dt) {
   W.takeLoaded().forEach(B.spawnChunk);
   W.takeUnloaded().forEach(B.despawnChunk);
   refreshObjs();
+  stepIntro(dt);
   nearObj = findNear();
+  bonfireAura(dt);
+  tutTick(dt);
 
   var z = W.zoneKey(p.x, p.y);
   if (z && z !== S.zone) {
     S.zone = z; S.visited[z] = 1;
     DC.UI.banner(fmt('zoneEnter', { n: DC.tx(DC.ZONES[z] || {}) }), 1.6);
+  }
+  if (W.isField()) {
+    var tier = W.tierAtPx(p.x, p.y);
+    if (tier > (S.counters.maxTier || 1)) S.counters.maxTier = tier;
   }
 
   checkQuests();
@@ -773,6 +1210,7 @@ function teachHints() {
   if (p.hp < st.maxHp) DC.UI.hintOnce('dash', TR('hintDash'));
   if (p.lv >= 2) DC.UI.hintOnce('skill', TR('hintSkill'));
   if (nearObj && nearObj.kind === 'npc') DC.UI.hintOnce('talk', TR('hintTalk'));
+  if (W.isField() && p.lv >= 3) DC.UI.hintOnce('map', TR('hintMap'));
 }
 
 function showPrompt() {
@@ -796,7 +1234,7 @@ function render() {
   B.draw(g, c, time);
   if (W.isDungeon()) drawVignette();
   /* 대륙이 넓어 길을 잃기 쉽다 — 지상에선 항상 간이 지도 + 표착항 나침반을 띄운다 */
-  W.drawMinimap(g, VW - 140, 12, 128, p.x, p.y);
+  W.drawMinimap(g, VW - 140, MM.pad, MM.size, p.x, p.y);
 }
 
 var last = 0;
@@ -816,16 +1254,17 @@ function onKill(e) {
   S.p.gold += e.d.gold;
   DC.QUEST_ORDER.forEach(function (id) {
     var q = S.quests[id], def = DC.QUESTS[id];
-    if (q.state === 1 && def.goal.type === 'kill' && def.goal.enemy === e.t) q.prog = (q.prog || 0) + 1;
+    if (!q || q.state !== 1) return;
+    if (def.goal.type === 'kill' && def.goal.enemy === e.t) q.prog = (q.prog || 0) + 1;
+    else if (def.goal.type === 'killAny') q.prog = (q.prog || 0) + 1;
   });
   gainXp(e.d.xp);
+  tutMark('kill');
   if (e.d.boss) {
     S.flags.boss_down = true;
-    var mk = S.quests.main_keeper;
-    if (mk.state === 1) mk.state = 2;
-    turnInQuest('main_keeper');
-    DC.UI.banner('🔥 ' + TR('clearTitle'), 3);
-    setTimeout(clearGame, 1800);
+    DC.UI.banner('🔥 ' + DC.tx({ ko: '등롱에 불이 붙었다', en: 'The lantern catches' }), 3);
+    checkQuests();
+    saveNow(false);
   }
 }
 
@@ -841,6 +1280,13 @@ DC.Game = {
   saveNow: saveNow, loadGame: loadGame, exportFile: exportFile, importFile: importFile,
   toMenu: toMenu, newGame: newGame, respawn: respawn, interact: interact,
   enterRegion: enterRegion, gainXp: gainXp, score: score,
+  startAs: function (cls) { newGame(cls); },
+  healAt: healAt, healFee: healFee,
+  hireMerc: hireMerc, trainMerc: trainMerc, reviveMerc: reviveMerc, dismissMerc: dismissMerc,
+  advance: advance, canAdvance: canAdvance,
+  startTutorial: startTutorial, skipTutorial: skipTutorial,
+  tutorialStep: function () { return tut ? DC.TUTORIAL[tut.i] : null; },
+  introActive: function () { return !!intro; },
   resume: function () { paused = false; },
   state: function () { return S; },
   setState: function (st) { beginWith(normalize(st)); },
@@ -851,8 +1297,16 @@ DC.Game = {
   isRunning: function () { return running; },
 };
 
-B.init(W, null, { onKill: onKill, onDeath: onDeath, onBossPhase: onBossPhase,
-  onNoMp: function () { DC.UI.hintOnce('nomp', TR('hintNoMp')); } });
+B.init(W, null, {
+  onKill: onKill, onDeath: onDeath, onBossPhase: onBossPhase,
+  onNoMp: function () { DC.UI.hintOnce('nomp', TR('hintNoMp')); },
+  onAct: function (kind) { if (kind === 'attack') tutMark('attack'); else if (kind === 'dash') tutMark('dash'); },
+  onCurse: function () { DC.UI.hint(TR('curseOn'), 3); },
+  onMercDown: function (id, secs) {
+    DC.UI.hint(fmt('mercDown', { n: DC.tx(DC.MERCS[id].n), s: Math.ceil(secs) }), 3);
+  },
+  onMercUp: function (id) { DC.UI.hint(fmt('mercBack', { n: DC.tx(DC.MERCS[id].n) }), 2.4); },
+});
 DC.UI.init(null, DC.Game);
 
 (function boot() {
@@ -874,6 +1328,7 @@ DC.UI.init(null, DC.Game);
   }
   b = $('backBtn'); if (b) b.onclick = function () { toMenu(); };
   b = $('againBtn'); if (b) b.onclick = function () { respawn(); };
+  if (DC.UI.renderClasses) DC.UI.renderClasses();
   requestAnimationFrame(frame);
 })();
 })();
