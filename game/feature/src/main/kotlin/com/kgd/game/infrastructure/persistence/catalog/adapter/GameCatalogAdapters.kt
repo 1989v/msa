@@ -1,13 +1,17 @@
 package com.kgd.game.infrastructure.persistence.catalog.adapter
 
+import com.kgd.game.application.catalog.dto.AdminGameSummaryDto
+import com.kgd.game.application.catalog.port.GameAdminQueryPort
 import com.kgd.game.application.catalog.port.GameCollectionRepositoryPort
 import com.kgd.game.application.catalog.port.GameRepositoryPort
+import com.kgd.game.application.catalog.port.GameSearchCriteria
 import com.kgd.game.application.catalog.port.GameStatsRepositoryPort
 import com.kgd.game.application.catalog.port.GameTagRepositoryPort
 import com.kgd.game.application.catalog.service.GameSort
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.GameStats
+import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.GameTag
 import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.infrastructure.persistence.catalog.entity.GameCollectionJpaEntity
@@ -23,6 +27,7 @@ import com.kgd.game.infrastructure.persistence.catalog.repository.GameTagMapJpaR
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
+import java.time.ZoneId
 
 @Repository
 class GameRepositoryAdapter(
@@ -30,6 +35,11 @@ class GameRepositoryAdapter(
     private val queryRepository: GameQueryRepository,
     private val tagMapRepository: GameTagMapJpaRepository,
 ) : GameRepositoryPort {
+
+    companion object {
+        /** 공개 리스트 불변식 — PUBLISHED 외 상태는 어떤 경로로도 공개 목록에 실리지 않는다 */
+        private val PUBLIC_STATUSES = setOf(GameStatus.PUBLISHED)
+    }
 
     override fun save(game: Game): Game {
         val id = game.id
@@ -52,7 +62,9 @@ class GameRepositoryAdapter(
     override fun existsBySlug(slug: String): Boolean = jpaRepository.existsBySlug(slug)
 
     override fun search(tag: String?, genre: Genre?, sort: GameSort, pageable: Pageable): Page<Game> =
-        queryRepository.search(tag, genre, sort, pageable).map { it.toDomain() }
+        queryRepository
+            .search(GameSearchCriteria(tag = tag, genre = genre, statuses = PUBLIC_STATUSES, sort = sort), pageable)
+            .map { it.toDomain() }
 
     override fun findSimilar(gameId: Long, limit: Int): List<Game> =
         queryRepository.findSimilar(gameId, limit).map { it.toDomain() }
@@ -64,6 +76,37 @@ class GameRepositoryAdapter(
             tagMapRepository.saveAll(tags.map { GameTagMapJpaEntity(gameId = gameId, tagSlug = it) })
         }
     }
+}
+
+@Repository
+class GameAdminQueryAdapter(
+    private val queryRepository: GameQueryRepository,
+    private val statsJpaRepository: GameStatsJpaRepository,
+) : GameAdminQueryPort {
+
+    override fun search(criteria: GameSearchCriteria, pageable: Pageable): Page<AdminGameSummaryDto> {
+        val page = queryRepository.search(criteria, pageable)
+        val statsByGameId = statsJpaRepository
+            .findAllById(page.content.mapNotNull { it.id })
+            .associateBy { it.gameId }
+        return page.map { entity -> entity.toAdminSummary(statsByGameId[entity.id]?.toDomain()) }
+    }
+
+    private fun GameJpaEntity.toAdminSummary(stats: GameStats?) = AdminGameSummaryDto(
+        id = id ?: 0,
+        slug = slug,
+        title = title,
+        titleEn = titleEn,
+        thumbnailUrl = thumbnailUrl,
+        status = status,
+        genre = genre,
+        tags = tags,
+        playCount = stats?.playCount ?: 0,
+        ratingAvg = stats?.averageRating() ?: 0.0,
+        ratingCount = stats?.ratingCount ?: 0,
+        // @UpdateTimestamp 이 JVM 기본 존으로 찍으므로 같은 존으로 되돌린다
+        updatedAt = updatedAt.atZone(ZoneId.systemDefault()).toInstant(),
+    )
 }
 
 @Repository

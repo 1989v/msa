@@ -9,5 +9,10 @@ enum class GameStatus {
     REVIEW,
     BETA,
     PUBLISHED,
-    SUSPENDED
+    SUSPENDED;
+
+    companion object {
+        fun parse(value: String?): GameStatus? =
+            value?.let { raw -> entries.firstOrNull { it.name.equals(raw, ignoreCase = true) } }
+    }
 }

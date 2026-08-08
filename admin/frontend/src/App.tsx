@@ -9,6 +9,7 @@ import { MembersPage } from '@/pages/MembersPage';
 import { ProductsPage } from '@/pages/ProductsPage';
 import { OrdersPage } from '@/pages/OrdersPage';
 import { CodeDictionaryPage } from '@/pages/CodeDictionaryPage';
+import { GamesPage } from '@/pages/GamesPage';
 import { QuantAssetCatalogPage } from '@/pages/QuantAssetCatalogPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { SearchDebugPage } from '@/pages/SearchDebugPage';
@@ -29,6 +30,7 @@ export default function App() {
         <Route path="products" element={<ProductsPage />} />
         <Route path="orders" element={<OrdersPage />} />
         <Route path="code-dictionary" element={<CodeDictionaryPage />} />
+        <Route path="games" element={<GamesPage />} />
         <Route path="quant/assets" element={<QuantAssetCatalogPage />} />
         <Route path="search-debug" element={<SearchDebugPage />} />
         <Route path="search-debug/query-builder" element={<SearchQueryBuilderPage />} />

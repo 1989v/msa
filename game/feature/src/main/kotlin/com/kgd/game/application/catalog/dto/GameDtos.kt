@@ -45,6 +45,25 @@ data class GameSummaryDto(
     }
 }
 
+/**
+ * 어드민 목록 행 — 공개 요약과 달리 상태 무관으로 조회되고 수정일을 함께 노출한다
+ * (운영자가 "언제 바꿨는지"로 행을 찾는다).
+ */
+data class AdminGameSummaryDto(
+    val id: Long,
+    val slug: String,
+    val title: String,
+    val titleEn: String?,
+    val thumbnailUrl: String,
+    val status: GameStatus,
+    val genre: Genre,
+    val tags: List<String>,
+    val playCount: Long,
+    val ratingAvg: Double,
+    val ratingCount: Long,
+    val updatedAt: Instant,
+)
+
 data class GameDetailDto(
     val id: Long,
     val slug: String,

@@ -74,6 +74,8 @@ class GameAdminService(
         slug: String,
         title: String?,
         description: String?,
+        titleEn: String?,
+        descriptionEn: String?,
         thumbnailUrl: String?,
         coverUrl: String?,
         orientation: Orientation?,
@@ -85,6 +87,8 @@ class GameAdminService(
         game.updateMetadata(
             title = title,
             description = description,
+            titleEn = titleEn,
+            descriptionEn = descriptionEn,
             thumbnailUrl = thumbnailUrl,
             coverUrl = coverUrl,
             orientation = orientation,

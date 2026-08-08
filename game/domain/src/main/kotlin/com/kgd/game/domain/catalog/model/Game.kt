@@ -145,6 +145,8 @@ class Game private constructor(
     fun updateMetadata(
         title: String? = null,
         description: String? = null,
+        titleEn: String? = null,
+        descriptionEn: String? = null,
         thumbnailUrl: String? = null,
         coverUrl: String? = null,
         orientation: Orientation? = null,
@@ -157,6 +159,9 @@ class Game private constructor(
             this.title = it
         }
         description?.let { this.description = it }
+        // 영문 필드는 SEO 색인/소셜 카드 입력이다. 공백 문자열을 그대로 두면 빈 메타가 찍히므로 null 로 눕힌다.
+        titleEn?.let { this.titleEn = it.ifBlank { null } }
+        descriptionEn?.let { this.descriptionEn = it.ifBlank { null } }
         thumbnailUrl?.let { this.thumbnailUrl = it }
         coverUrl?.let { this.coverUrl = it }
         orientation?.let { this.orientation = it }

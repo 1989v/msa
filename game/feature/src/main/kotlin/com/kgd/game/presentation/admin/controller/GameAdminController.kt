@@ -1,23 +1,30 @@
 package com.kgd.game.presentation.admin.controller
 
 import com.kgd.common.response.ApiResponse
+import com.kgd.game.application.catalog.dto.AdminGameSummaryDto
 import com.kgd.game.application.catalog.dto.GameDetailDto
 import com.kgd.game.application.catalog.service.CreateGameCommand
+import com.kgd.game.application.catalog.service.GameAdminQueryService
 import com.kgd.game.application.catalog.service.GameAdminService
+import com.kgd.game.application.catalog.service.GameSort
 import com.kgd.game.application.catalog.service.GameStatusAction
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.GameCollection
+import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import org.springframework.data.domain.Page
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 data class CreateGameRequest(
@@ -37,9 +44,12 @@ data class CreateGameRequest(
     val tags: List<String> = emptyList(),
 )
 
+/** null = 미변경. `titleEn`/`descriptionEn` 은 공백을 보내면 비워진다 (SEO 메타 입력). */
 data class UpdateGameMetadataRequest(
     val title: String? = null,
     val description: String? = null,
+    val titleEn: String? = null,
+    val descriptionEn: String? = null,
     val thumbnailUrl: String? = null,
     val coverUrl: String? = null,
     val orientation: Orientation? = null,
@@ -88,7 +98,35 @@ data class CollectionResponse(
 @RequestMapping("/api/v1/admin/games")
 class GameAdminController(
     private val gameAdminService: GameAdminService,
+    private val gameAdminQueryService: GameAdminQueryService,
 ) {
+
+    /** 상태 무관 전체 목록 — 공개 리스트(PUBLISHED 전용)로는 볼 수 없는 게임을 운영자가 다룬다 */
+    @GetMapping
+    fun list(
+        @RequestParam(required = false) q: String?,
+        @RequestParam(required = false) status: String?,
+        @RequestParam(required = false) genre: String?,
+        @RequestParam(required = false) tag: String?,
+        @RequestParam(required = false) sort: String?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+    ): ApiResponse<Page<AdminGameSummaryDto>> =
+        ApiResponse.success(
+            gameAdminQueryService.list(
+                q = q,
+                status = GameStatus.parse(status),
+                genre = Genre.parse(genre),
+                tag = tag,
+                sort = GameSort.parseAdmin(sort),
+                page = page,
+                size = size.coerceAtMost(100),
+            )
+        )
+
+    @GetMapping("/{slug}")
+    fun detail(@PathVariable slug: String): ApiResponse<GameDetailDto> =
+        ApiResponse.success(gameAdminQueryService.detail(slug))
 
     @PostMapping
     fun create(@Valid @RequestBody request: CreateGameRequest): ApiResponse<GameDetailDto> =
@@ -123,6 +161,8 @@ class GameAdminController(
                 slug = slug,
                 title = request.title,
                 description = request.description,
+                titleEn = request.titleEn,
+                descriptionEn = request.descriptionEn,
                 thumbnailUrl = request.thumbnailUrl,
                 coverUrl = request.coverUrl,
                 orientation = request.orientation,

@@ -1,13 +1,20 @@
 package com.kgd.game.infrastructure.persistence
 
+import com.kgd.game.application.catalog.port.GameSearchCriteria
 import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.domain.catalog.model.EngineType
+import com.kgd.game.domain.catalog.model.GameStatus
+import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
+import com.kgd.game.domain.catalog.model.Orientation
 import com.kgd.game.infrastructure.config.GameDataSourceConfig
+import com.kgd.game.infrastructure.persistence.catalog.entity.GameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameJpaRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameQueryRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameTagMapJpaRepository
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
@@ -41,6 +48,33 @@ private val dockerAvailable: Boolean =
 
 @Suppress("unused")
 fun isGameDockerAvailable(): Boolean = dockerAvailable
+
+private const val DRAFT_SLUG = "zz-admin-draft-fixture"
+
+/** 시드는 전부 PUBLISHED 라 상태 무관 조회를 확증하려면 비공개 상태 행을 직접 하나 심어야 한다 */
+private fun draftFixture() = GameJpaEntity(
+    slug = DRAFT_SLUG,
+    title = "어드민 초안 픽스처",
+    description = "상태 무관 조회 검증용",
+    titleEn = "Admin Draft Fixture",
+    descriptionEn = null,
+    thumbnailUrl = "/thumbs/draft.png",
+    coverUrl = null,
+    engineType = EngineType.HTML5,
+    loadType = LoadType.IFRAME,
+    entryUrl = "/games/$DRAFT_SLUG/index.html",
+    orientation = Orientation.BOTH,
+    supportsMobile = true,
+    developerName = "kgd",
+    sdkIntegrated = false,
+    status = GameStatus.DRAFT,
+    genre = Genre.STRATEGY,
+    releasedAt = null,
+    contentUpdatedAt = null,
+)
+
+private fun publicCriteria(tag: String? = null, sort: GameSort = GameSort.TRENDING) =
+    GameSearchCriteria(tag = tag, statuses = setOf(GameStatus.PUBLISHED), sort = sort)
 
 @SpringBootTest(
     classes = [GameSchemaIntegrationSpec.Ctx::class],
@@ -80,11 +114,10 @@ class GameSchemaIntegrationSpec(
         }
 
         When("정렬별 공개 리스트를 조회하면") {
-            Then("TRENDING/NEW/TOP 쿼리가 모두 MySQL 에서 실행된다")
+            Then("공개/어드민 정렬 쿼리가 모두 MySQL 에서 실행된다")
                 .config(enabledIf = { dockerAvailable }) {
                     GameSort.entries.forEach { sort ->
-                        (queryRepository.search(tag = null, genre = null, sort = sort, pageable = pageable)
-                            .totalElements >= 8) shouldBe true
+                        (queryRepository.search(publicCriteria(sort = sort), pageable).totalElements >= 8) shouldBe true
                     }
                 }
         }
@@ -92,11 +125,71 @@ class GameSchemaIntegrationSpec(
         When("태그로 필터링하면") {
             Then("해당 태그를 가진 게임만 반환된다")
                 .config(enabledIf = { dockerAvailable }) {
-                    queryRepository.search(tag = "memory", genre = null, sort = GameSort.TRENDING, pageable = pageable)
+                    queryRepository.search(publicCriteria(tag = "memory"), pageable)
                         .content.map { it.slug } shouldBe listOf("concept-memory")
                     // 정확 개수 대신 하한 — 시드 팩이 늘 때마다 깨지는 단언을 피한다
-                    (queryRepository.search(tag = "education", genre = null, sort = GameSort.TRENDING, pageable = pageable)
+                    (queryRepository.search(publicCriteria(tag = "education"), pageable)
                         .totalElements >= 4) shouldBe true
+                }
+        }
+
+        When("어드민이 상태 무관으로 조회하면") {
+            Then("공개 목록에 없는 DRAFT 도 보이고, 공개 목록은 그대로 PUBLISHED 만 남는다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val draft = gameRepository.save(draftFixture())
+                    try {
+                        val adminSlugs = queryRepository
+                            .search(GameSearchCriteria(sort = GameSort.UPDATED), PageRequest.of(0, 200))
+                            .content.map { it.slug }
+                        adminSlugs shouldContain DRAFT_SLUG
+
+                        val publicSlugs = queryRepository
+                            .search(publicCriteria(sort = GameSort.UPDATED), PageRequest.of(0, 200))
+                            .content.map { it.slug }
+                        publicSlugs shouldNotContain DRAFT_SLUG
+                    } finally {
+                        gameRepository.delete(draft)
+                    }
+                }
+
+            Then("검색어·상태·장르 필터와 페이징·정렬이 각각 동작한다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val draft = gameRepository.save(draftFixture())
+                    try {
+                        // 검색어 — 슬러그/제목 부분일치
+                        queryRepository.search(GameSearchCriteria(q = "admin-draft"), pageable)
+                            .content.map { it.slug } shouldBe listOf(DRAFT_SLUG)
+                        queryRepository.search(GameSearchCriteria(q = "픽스처"), pageable)
+                            .content.map { it.slug } shouldBe listOf(DRAFT_SLUG)
+
+                        // 상태 필터
+                        queryRepository.search(GameSearchCriteria(statuses = setOf(GameStatus.DRAFT)), pageable)
+                            .content.map { it.slug } shouldBe listOf(DRAFT_SLUG)
+
+                        // 장르 필터
+                        val strategy = queryRepository
+                            .search(GameSearchCriteria(genre = Genre.STRATEGY), PageRequest.of(0, 200)).content
+                        strategy.map { it.genre }.toSet() shouldBe setOf(Genre.STRATEGY)
+                        strategy.map { it.slug } shouldContain DRAFT_SLUG
+
+                        // 페이징 — 같은 정렬에서 1페이지와 2페이지가 겹치지 않는다
+                        val first = queryRepository.search(GameSearchCriteria(sort = GameSort.TITLE), PageRequest.of(0, 5))
+                        val second = queryRepository.search(GameSearchCriteria(sort = GameSort.TITLE), PageRequest.of(1, 5))
+                        first.content.size shouldBe 5
+                        first.content.map { it.slug }.intersect(second.content.map { it.slug }.toSet()) shouldBe emptySet()
+
+                        // 정렬 — created/updated 는 내림차순 (제목 정렬은 DB collation 소관이라 실행만 확인)
+                        val created = queryRepository
+                            .search(GameSearchCriteria(sort = GameSort.CREATED), PageRequest.of(0, 200)).content
+                            .map { it.createdAt }
+                        created shouldBe created.sortedDescending()
+                        val updated = queryRepository
+                            .search(GameSearchCriteria(sort = GameSort.UPDATED), PageRequest.of(0, 200)).content
+                            .map { it.updatedAt }
+                        updated shouldBe updated.sortedDescending()
+                    } finally {
+                        gameRepository.delete(draft)
+                    }
                 }
         }
 

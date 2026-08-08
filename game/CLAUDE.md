@@ -55,7 +55,7 @@ CrazyGames 모델의 웹 게임 플랫폼 — 게임 카탈로그(태그/큐레�
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
 | `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 읽기는 잠그지 않고 쓰기만 `X-Device-Id` 리스(1h) — 코드 제시 요청은 리스를 넘겨받는다(기기 분실 복구) |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
-| `POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN) |
+| `GET/POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN). `GET`(목록 `?q=&status=&genre=&tag=&sort=created\|updated\|title\|playCount`, 상세)은 **상태 무관** — 공개 API 로는 보이지 않는 DRAFT/REVIEW/SUSPENDED 를 백오피스에서 다룬다. 화면은 admin-fe `/games` |
 | `/api/v1/games/arcade/{catalog,sessions,scores,leaderboard,daily}` | #23 아케이드 — 세션 발급/점수 제출(검증)/리더보드. `games/**` 하위라 게이트웨이 라우트 추가 없음 |
 | `WS /ws/games/{slug}` | 온라인 대전 릴레이 (raw WebSocket, 게스트). 아래 "온라인 대전 릴레이" 참조 |
 | `GET /api/v1/ads/placements/{key}?subject=`, `POST /api/v1/ads/rewards`(+`/{key}/complete`) | HOUSE 배너 슬롯(cap 시 data=null) / rewarded 보상 발급·완료(멱등) |

@@ -1,8 +1,8 @@
 package com.kgd.game.infrastructure.persistence.catalog.repository
 
+import com.kgd.game.application.catalog.port.GameSearchCriteria
 import com.kgd.game.application.catalog.service.GameSort
 import com.kgd.game.domain.catalog.model.GameStatus
-import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.infrastructure.persistence.catalog.entity.GameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.entity.QGameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.entity.QGameStatsJpaEntity
@@ -17,7 +17,10 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Repository
 
-/** 공개 리스트/유사 게임 조회 — 무거운 조회는 Querydsl QueryRepository (jpa-persistence.md §5) */
+/**
+ * 카탈로그 목록/유사 게임 조회 — 무거운 조회는 Querydsl QueryRepository (jpa-persistence.md §5).
+ * 공개 리스트와 어드민 리스트가 같은 쿼리를 쓰고 [GameSearchCriteria.statuses] 로만 갈린다.
+ */
 @Repository
 class GameQueryRepository(
     @Qualifier("gameJpaQueryFactory") private val queryFactory: JPAQueryFactory,
@@ -25,15 +28,23 @@ class GameQueryRepository(
     private val game = QGameJpaEntity.gameJpaEntity
     private val stats = QGameStatsJpaEntity.gameStatsJpaEntity
 
-    fun search(tag: String?, genre: Genre?, sort: GameSort, pageable: Pageable): Page<GameJpaEntity> {
-        val condition = BooleanBuilder(game.status.eq(GameStatus.PUBLISHED))
-        genre?.let { condition.and(game.genre.eq(it)) }
-        if (!tag.isNullOrBlank()) {
+    fun search(criteria: GameSearchCriteria, pageable: Pageable): Page<GameJpaEntity> {
+        val condition = BooleanBuilder()
+        if (criteria.statuses.isNotEmpty()) condition.and(game.status.`in`(criteria.statuses))
+        criteria.genre?.let { condition.and(game.genre.eq(it)) }
+        criteria.q?.takeIf { it.isNotBlank() }?.let { keyword ->
+            condition.and(
+                game.slug.containsIgnoreCase(keyword)
+                    .or(game.title.containsIgnoreCase(keyword))
+                    .or(game.titleEn.containsIgnoreCase(keyword))
+            )
+        }
+        if (!criteria.tag.isNullOrBlank()) {
             val tagMap = QGameTagMapJpaEntity.gameTagMapJpaEntity
             condition.and(
                 JPAExpressions.selectOne()
                     .from(tagMap)
-                    .where(tagMap.gameId.eq(game.id), tagMap.tagSlug.eq(tag))
+                    .where(tagMap.gameId.eq(game.id), tagMap.tagSlug.eq(criteria.tag))
                     .exists()
             )
         }
@@ -42,7 +53,7 @@ class GameQueryRepository(
             .leftJoin(stats).on(stats.gameId.eq(game.id))
             .where(condition)
 
-        val ordered = when (sort) {
+        val ordered = when (criteria.sort) {
             GameSort.TRENDING -> query.orderBy(stats.weeklyPlayCount.coalesce(0L).desc(), game.id.desc())
             GameSort.NEW -> query.orderBy(game.releasedAt.desc().nullsLast(), game.id.desc())
             GameSort.TOP -> query.orderBy(
@@ -55,6 +66,10 @@ class GameQueryRepository(
                 stats.ratingCount.coalesce(0L).desc(),
                 game.id.desc(),
             )
+            GameSort.CREATED -> query.orderBy(game.createdAt.desc(), game.id.desc())
+            GameSort.UPDATED -> query.orderBy(game.updatedAt.desc(), game.id.desc())
+            GameSort.TITLE -> query.orderBy(game.title.asc(), game.id.asc())
+            GameSort.PLAY_COUNT -> query.orderBy(stats.playCount.coalesce(0L).desc(), game.id.desc())
         }
 
         val content = ordered
