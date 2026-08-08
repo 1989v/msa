@@ -349,7 +349,26 @@ jobs:
           UPDATED_COUNT=$(echo "${{ steps.changes.outputs.kustomize_services }}" | tr ' ' '\n' | wc -l)
           SVCS="${{ steps.changes.outputs.kustomize_services }}"
           git commit -m "ci: bump ${UPDATED_COUNT} service image tag(s) to ${{ steps.meta.outputs.tag }} [skip ci]" -m "Services: ${SVCS}"
-          git push
+
+          # 사람이 빌드 중에 push 하면 non-fast-forward 로 밀린다. 그러면 이미지는 OCIR 에
+          # 올라갔는데 태그만 누락돼 "배포된 줄 아는" 상태가 된다(2026-08-06·08 두 차례 발생).
+          # rebase 재시도로 흡수한다 — 우리가 건드리는 파일은 kustomization 한 개뿐이라
+          # 충돌 나면 그건 동시 태그 변경이므로 재시도가 옳다.
+          for attempt in 1 2 3 4 5; do
+            if git push; then
+              echo "manifest push OK (attempt ${attempt})"
+              exit 0
+            fi
+            echo "push rejected — rebase 후 재시도 (${attempt}/5)"
+            git pull --rebase --autostash origin main || {
+              echo "::error::rebase 충돌 — 수동 확인 필요"
+              git rebase --abort || true
+              exit 1
+            }
+            sleep $((attempt * 3))
+          done
+          echo "::error::5회 재시도 후에도 manifest push 실패 — 이미지는 OCIR 에 있으니 수동 bump 필요"
+          exit 1
 
       - name: Summary
         if: ${{ steps.changes.outputs.kustomize_services != '' }}

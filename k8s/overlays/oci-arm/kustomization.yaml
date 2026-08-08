@@ -194,7 +194,7 @@ images:
     newTag: 9ca7a7b
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 88bb760
+    newTag: "33817b4"
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
     newTag: 88bb760
@@ -206,7 +206,7 @@ images:
     newTag: 1ec83ed
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 88bb760
+    newTag: "33817b4"
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
     newTag: 88bb760
