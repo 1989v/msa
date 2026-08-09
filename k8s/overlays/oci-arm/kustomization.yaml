@@ -314,6 +314,9 @@ images:
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 91c095a
+  - name: commerce/place
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place
+    newTag: e94f6e7
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: 91c095a
