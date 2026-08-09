@@ -81,3 +81,10 @@ a.gnb-menu-item {
   color: #6c63ff;
   background: rgba(108, 99, 255, 0.12);
 }
+
+.gnb-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}

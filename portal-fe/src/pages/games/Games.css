@@ -117,6 +117,12 @@
 }
 
 .game-genre-btn {
+  /* 크롤러가 따라갈 수 있게 <a> 로 렌더한다(ADR-0062) — 칩처럼 보여야 하므로
+     앵커 기본 스타일(밑줄)을 지우고 폰트/정렬을 버튼과 맞춘다. */
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font-family: inherit;
   border: 1px solid var(--ko-border-default);
   background: var(--ko-surface-2);
   color: var(--ko-text-primary);
@@ -502,4 +508,11 @@
   font-size: 0.7em;
   opacity: 0.5;
   font-weight: 400;
+}
+
+/* 게임 화면 우측 상단 컨트롤 — GNB 가 없는 화면의 로그인 진입점 */
+.games-topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 0 0;
 }

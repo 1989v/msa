@@ -26,6 +26,7 @@ import {
   videoGameJsonLd,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
+import AuthButton from '../../components/AuthButton';
 import { fetchGraphData } from '../../api/searchApi';
 import { isLoggedIn } from '../../auth/auth';
 import type { GraphNode } from '../../types/graph';
@@ -167,6 +168,9 @@ export default function GameDetailPage() {
 
   return (
     <div className="games-page">
+      <div className="games-topbar">
+        <AuthButton />
+      </div>
       <nav className="games-breadcrumb" aria-label={lang === 'en' ? 'Breadcrumb' : '탐색 경로'}>
         <Link className="games-back" to={gamePath(lang, HUB_SUB)}>
           ← {lang === 'en' ? 'Games' : '게임'}

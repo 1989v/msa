@@ -27,6 +27,7 @@ import {
   itemListJsonLd,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
+import AuthButton from '../../components/AuthButton';
 import GameCard from './GameCard';
 import HouseBanner from './HouseBanner';
 import './Games.css';
@@ -168,6 +169,10 @@ export default function GamesPage() {
 
   return (
     <div className="games-page">
+      {/* 게임 화면은 GNB 를 렌더하지 않는다 — 로그인 진입점을 여기에도 둔다 */}
+      <div className="games-topbar">
+        <AuthButton />
+      </div>
       <header className="games-header">
         <h1 className="games-title">
           {meta.heading}

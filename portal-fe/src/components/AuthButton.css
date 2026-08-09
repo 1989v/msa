@@ -1,0 +1,26 @@
+.auth-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 5px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  border-radius: 9999px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.auth-btn:hover {
+  background: rgba(148, 163, 184, 0.14);
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.auth-btn:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: 2px;
+}

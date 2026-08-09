@@ -41,7 +41,7 @@ export default function ShopLoginPage() {
         <section className="shop-login-card">
           <div>
             <h1 className="shop-login-title">로그인</h1>
-            <p className="shop-login-desc">주문하려면 소셜 계정으로 로그인해주세요.</p>
+            <p className="shop-login-desc">소셜 계정으로 로그인하면 주문·평점 등 회원 기능을 쓸 수 있습니다.</p>
           </div>
           <div className="shop-login-buttons">
             <button
