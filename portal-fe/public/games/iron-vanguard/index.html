@@ -38,6 +38,15 @@
     #info { display: none; }
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
+#barracks{width:100%;margin:6px 0 2px;padding:8px 10px;border:1px solid #2a3a52;border-radius:8px;background:#111a28;text-align:left}
+.bk-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#cfe0f5;margin-bottom:6px}
+#medalTxt{color:#e8c86a;font-size:12px}
+.bk-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;color:#9fb3cc}
+.bk-row .bk-name{flex:1}
+.bk-row .bk-lv{color:#8fd0ff;font-variant-numeric:tabular-nums}
+.bk-row button{padding:2px 8px;font-size:11px;min-width:64px}
+.bk-row button:disabled{opacity:.4;cursor:default}
+.bk-note{font-size:11px;color:#6f8099;margin-top:6px}
 </style>
 <script src="../lib/i18n.js"></script>
 </head>
@@ -63,6 +72,14 @@
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#8fd0ff;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#7a8aa0"></span></div>
+    <div id="barracks">
+      <div class="bk-head">
+        <b data-i18n="bk.title">🏰 병영</b>
+        <span id="medalTxt"></span>
+      </div>
+      <div id="bkList"></div>
+      <div class="bk-note" data-i18n="bk.note">출정마다 훈장을 얻는다. 패배해도 남는다.</div>
+    </div>
     <button id="startBtn" data-i18n="btn.start">▶ 출정</button>
   </div>
   <div class="panel" id="endPanel" hidden>
@@ -78,6 +95,18 @@
 GameI18n.init({
   ko: {
     'title': '강철 결사대',
+    'bk.title': '🏰 병영',
+    'bk.note': '출정마다 훈장을 얻는다. 패배해도 남는다 — 다음 출정이 더 강해진다.',
+    'bk.medal': '🎖 훈장 {n}',
+    'bk.hp': '병영 증축 (체력)',
+    'bk.dmg': '무기고 (공격)',
+    'bk.heal': '의무대 (스테이지 회복)',
+    'bk.crew': '증원 (궁수 추가)',
+    'bk.max': '최대',
+    'bk.buy': '{n} 훈장',
+    'bk.earn': '🎖 훈장 +{n}',
+    'stage.revive': '{n} 복귀',
+
     'menu.title': '⚔ 강철 결사대',
     'menu.d1': '보급도 지원도 없다 — ',
     'menu.d2': '주어진 넷',
@@ -85,14 +114,14 @@ GameI18n.init({
     'menu.d4': '유닛을 클릭(또는 1~4)해 선택',
     'menu.d5': '하고, 땅을 클릭해 움직인다. 서 있는 유닛은 사거리 안 적을 자동 공격한다. 궁수는 ',
     'menu.d6': '치고 빠지고',
-    'menu.d7': ', 기사가 막고, 사제가 살린다. 죽은 대원은 돌아오지 않는다. ',
+    'menu.d7': ', 기사가 막고, 사제가 살린다. 스테이지를 넘길 때마다 쓰러진 대원 한 명이 절반 체력으로 복귀한다. ',
     'menu.d8': '10스테이지',
     'ph.code': '이어하기 코드',
     'btn.codeLoad': '🔑 코드로 불러오기',
     'btn.start': '▶ 출정',
     'btn.back': '처음으로',
     'info1': '유닛 클릭/1~4 = 선택 · 땅 클릭 = 이동 (이동 중엔 공격 불가 — 멈춰야 쏜다) · Esc = 선택 해제',
-    'info2': '스테이지 사이에 생존자는 절반 회복 · 🛡 기사: 근접 방벽 · 🏹 궁수 ×2: 원거리 · ✚ 사제: 주변 치유',
+    'info2': '스테이지 사이 회복 + 쓰러진 대원 1명 복귀 · 🛡 기사: 근접 방벽 · 🏹 궁수: 원거리 · ✚ 사제: 주변 치유 · 병영 강화는 출정 사이에 남는다',
     'save.server': '☁ 서버 세이브 (v{n})',
     'save.fail': '세이브 로드 실패: {n}',
     'save.local': '브라우저 저장 — 저장하면 이어하기 코드가 발급됩니다',
@@ -106,7 +135,7 @@ GameI18n.init({
     'foe.shaman': '무당',
     'foe.giant': '거인',
     'stage.start': '스테이지 {n} / {m}',
-    'stage.heal': '생존자 절반 회복',
+    'stage.heal': '부대 재정비',
     'ally.down': '{n} 전사…',
     'hud.stage': '⚔ 스테이지 {n}/{m}',
     'end.win': '🏆 결사대 개선!',
@@ -119,6 +148,18 @@ GameI18n.init({
   },
   en: {
     'title': 'Iron Vanguard',
+    'bk.title': '🏰 Barracks',
+    'bk.note': 'Every sortie earns medals. They stay after a loss — the next run starts stronger.',
+    'bk.medal': '🎖 {n} medals',
+    'bk.hp': 'Barracks (HP)',
+    'bk.dmg': 'Armory (Damage)',
+    'bk.heal': 'Field Medics (Stage heal)',
+    'bk.crew': 'Reinforcement (Extra archer)',
+    'bk.max': 'MAX',
+    'bk.buy': '{n} medals',
+    'bk.earn': '🎖 +{n} medals',
+    'stage.revive': '{n} returns',
+
     'menu.title': '⚔ Iron Vanguard',
     'menu.d1': 'No supplies, no reinforcements — cut down the horde with ',
     'menu.d2': 'the four you have',
@@ -126,14 +167,14 @@ GameI18n.init({
     'menu.d4': 'Click a unit (or press 1-4) to select it',
     'menu.d5': ', then click the ground to move. A unit that stands still auto-attacks anything in range. Archers ',
     'menu.d6': 'hit and run',
-    'menu.d7': ', the knight holds the line, the priest keeps them alive. The fallen never come back. ',
+    'menu.d7': ', the knight holds the line, the priest keeps them alive. One fallen soldier returns at half HP each stage. ',
     'menu.d8': '10 stages',
     'ph.code': 'Continue code',
     'btn.codeLoad': '🔑 Load by code',
     'btn.start': '▶ March out',
     'btn.back': 'Back to menu',
     'info1': 'Click a unit / 1-4 = select · Click ground = move (no attacking while moving — stop to shoot) · Esc = deselect',
-    'info2': 'Survivors heal half between stages · 🛡 Knight: melee wall · 🏹 Archer ×2: ranged · ✚ Priest: heals nearby',
+    'info2': 'Heal between stages + one fallen returns · 🛡 Knight: melee wall · 🏹 Archer: ranged · ✚ Priest: heals nearby · Barracks upgrades persist between runs',
     'save.server': '☁ Server save (v{n})',
     'save.fail': 'Save load failed: {n}',
     'save.local': 'Browser save — saving issues a continue code',
@@ -147,7 +188,7 @@ GameI18n.init({
     'foe.shaman': 'Shaman',
     'foe.giant': 'Giant',
     'stage.start': 'Stage {n} / {m}',
-    'stage.heal': 'Survivors heal half',
+    'stage.heal': 'Squad regroups',
     'ally.down': '{n} has fallen…',
     'hud.stage': '⚔ Stage {n}/{m}',
     'end.win': '🏆 The vanguard returns!',
@@ -185,7 +226,21 @@ async function api(path, opt = {}) {
 const CODE_KEY = 'iron_vanguard_code', LOCAL_KEY = 'iron_vanguard_save';
 let saveCode = localStorage.getItem(CODE_KEY) || null, saveVersion = 0;
 const fmtCode = c => c ? c.replace(/(.{4})(?=.)/g, '$1-') : '';
-let meta = { best: 0, clears: 0 };
+let meta = { best: 0, clears: 0, medals: 0, up: { hp: 0, dmg: 0, heal: 0, crew: 0 } };
+
+/* ── 병영: 출정 사이에만 남는 영구 강화 ──────────────────────────────────
+   패배해도 훈장은 남는다 — 로그라이트의 "죽어도 전진" 축. 런 안에서는 아무것도
+   강해지지 않으므로(스테이지 사이 회복이 전부) 반복 도전의 보상은 여기에만 둔다. */
+const UPGRADES = [
+  { key:'hp',   max:5, cost:l => 3 + l * 2, label:'bk.hp'   },
+  { key:'dmg',  max:5, cost:l => 4 + l * 2, label:'bk.dmg'  },
+  { key:'heal', max:5, cost:l => 3 + l * 2, label:'bk.heal' },
+  { key:'crew', max:2, cost:l => 8 + l * 6, label:'bk.crew' },
+];
+const upLv = k => (meta.up && meta.up[k]) || 0;
+const allyHpMul = () => 1 + upLv('hp') * 0.08;
+const allyDmgMul = () => 1 + upLv('dmg') * 0.06;
+const stageHealRatio = () => 0.6 + upLv('heal') * 0.06;
 function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
 async function loadMeta(codeOverride) {
   const code = codeOverride || saveCode;
@@ -194,7 +249,7 @@ async function loadMeta(codeOverride) {
       const s = await api('/save' + (!token() && code ? '?code=' + encodeURIComponent(code) : ''));
       saveVersion = s.version;
       if (s.code) { saveCode = s.code; localStorage.setItem(CODE_KEY, s.code); }
-      if (s.data) meta = { best:0, clears:0, ...s.data };
+      if (s.data) meta = { best:0, clears:0, medals:0, up:{ hp:0, dmg:0, heal:0, crew:0 }, ...s.data, up:{ hp:0, dmg:0, heal:0, crew:0, ...(s.data.up || {}) } };
       $('saveStatus').textContent = TR('save.server').replace('{n}', saveVersion);
       showCode(); return true;
     } catch (e) { $('saveStatus').textContent = TR('save.fail').replace('{n}', e.message); if (codeOverride) return false; }
@@ -325,13 +380,18 @@ let bannerT = 0, shake = 0;
 
 function mkAlly(kind, x, y) {
   const d = ALLY_DEFS[kind];
-  return { kind, ...d, x, y, hp:d.hp, maxHp:d.hp, cd:0, hurt:0, order:null };
+  const maxHp = Math.round(d.hp * allyHpMul());
+  return { kind, ...d, x, y, hp:maxHp, maxHp, dmg:Math.round(d.dmg * allyDmgMul()),
+    heal:d.heal ? Math.round(d.heal * allyDmgMul()) : d.heal, cd:0, hurt:0, order:null };
 }
 function newGame() {
-  G = { stage: 0, allies: [
-      mkAlly('knight', 380, 240), mkAlly('archer', 320, 190),
-      mkAlly('archer', 320, 290), mkAlly('priest', 280, 240),
-    ], foes: [], shots: [], parts: [], spawnQueue: [], spawnT: 0, stageClearT: 0 };
+  const allies = [
+    mkAlly('knight', 380, 240), mkAlly('archer', 320, 190),
+    mkAlly('archer', 320, 290), mkAlly('priest', 280, 240),
+  ];
+  for (let i = 0; i < upLv('crew'); i++) allies.push(mkAlly('archer', 292, 214 + i * 52));
+  const roster = allies.map(a => ({ kind:a.kind, x:a.x, y:a.y }));
+  G = { stage: 0, allies, roster, foes: [], shots: [], parts: [], spawnQueue: [], spawnT: 0, stageClearT: 0 };
 }
 function banner(text) { $('banner').textContent = text; $('banner').classList.add('on'); bannerT = 1600; }
 function burst(x, y, color, n, spd) {
@@ -341,6 +401,26 @@ function burst(x, y, color, n, spd) {
   }
 }
 function popText(x, y, text, color) { G.parts.push({ x, y, vx:0, vy:-28, life:1, text, color }); }
+
+/** 편성 대비 빠진 자리 하나를 절반 체력으로 되돌린다. 전멸했다면 이미 패배 처리라 여기 오지 않는다. */
+function reviveOne() {
+  const alive = {};
+  G.allies.forEach(a => { alive[a.kind] = (alive[a.kind] || 0) + 1; });
+  const need = {};
+  G.roster.forEach(r => { need[r.kind] = (need[r.kind] || 0) + 1; });
+  const slot = G.roster.find(r => {
+    const have = alive[r.kind] || 0;
+    if (have >= need[r.kind]) return false;
+    alive[r.kind] = have + 1;
+    return true;
+  });
+  if (!slot) return;
+  const a = mkAlly(slot.kind, slot.x, slot.y);
+  a.hp = Math.round(a.maxHp * 0.5);
+  G.allies.push(a);
+  popText(a.x, a.y - 20, TR('stage.revive').replace('{n}', a.name), '#8fd0ff');
+  burst(a.x, a.y, '#8fd0ff', 14, 120);
+}
 
 function startStage() {
   G.stage++;
@@ -352,13 +432,15 @@ function startStage() {
   banner(TR('stage.start').replace('{n}', G.stage).replace('{m}', STAGES.length));
 }
 function spawnFoe(kind) {
-  const d = FOE_DEFS[kind], sc = 1 + (G.stage - 1) * 0.09;
+  // 체력과 공격력을 같은 계수로 올리면 후반이 급격히 벽이 된다 — 아군은 런 안에서
+  // 전혀 강해지지 않기 때문. 공격력 증가폭을 체력의 절반 이하로 낮춘다.
+  const d = FOE_DEFS[kind], sc = 1 + (G.stage - 1) * 0.07, dmgSc = 1 + (G.stage - 1) * 0.04;
   // 가장자리 4방향 중 무작위
   const side = ri(4);
   const x = side === 0 ? -16 : side === 1 ? VW + 16 : rnd() * VW;
   const y = side === 2 ? -16 : side === 3 ? VH + 16 : rnd() * VH;
   G.foes.push({ kind, x, y, hp: Math.round(d.hp * sc), maxHp: Math.round(d.hp * sc),
-    dmg: Math.round(d.dmg * sc), rate: d.rate, range: d.range, spd: d.spd, r: d.r,
+    dmg: Math.round(d.dmg * dmgSc), rate: d.rate, range: d.range, spd: d.spd, r: d.r,
     shoot: !!d.shoot, cd: rnd() * 0.5, hurt: 0 });
 }
 
@@ -372,8 +454,11 @@ function update(dt) {
     G.stageClearT += dt;
     if (G.stageClearT > 1.4) {
       G.stageClearT = 0;
-      G.allies.forEach(a => { a.hp = Math.min(a.maxHp, a.hp + a.maxHp * 0.5); a.order = null; });
+      G.allies.forEach(a => { a.hp = Math.min(a.maxHp, a.hp + a.maxHp * stageHealRatio()); a.order = null; });
       popText(VW/2, 180, TR('stage.heal'), '#8fc89a');
+      // 한 명이 쓰러지면 남은 화력이 줄어 다음 스테이지도 무너지는 연쇄가 생긴다.
+      // 스테이지마다 한 명씩 절반 체력으로 돌려보내 그 나선만 끊는다(전멸은 그대로 패배).
+      reviveOne();
       startStage();
     }
   }
@@ -557,16 +642,48 @@ function startGame() {
   $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false;
   startStage();
 }
+function renderBarracks() {
+  $('medalTxt').textContent = TR('bk.medal').replace('{n}', meta.medals || 0);
+  $('bkList').innerHTML = '';
+  UPGRADES.forEach(u => {
+    const lv = upLv(u.key), maxed = lv >= u.max, cost = u.cost(lv);
+    const row = document.createElement('div');
+    row.className = 'bk-row';
+    const name = document.createElement('span');
+    name.className = 'bk-name'; name.textContent = TR(u.label);
+    const lvTxt = document.createElement('span');
+    lvTxt.className = 'bk-lv'; lvTxt.textContent = lv + '/' + u.max;
+    const btn = document.createElement('button');
+    btn.className = 'ghost';
+    btn.textContent = maxed ? TR('bk.max') : TR('bk.buy').replace('{n}', cost);
+    btn.disabled = maxed || (meta.medals || 0) < cost;
+    btn.onclick = () => {
+      if (btn.disabled) return;
+      meta.medals -= cost;
+      meta.up[u.key] = lv + 1;
+      renderBarracks();
+      persistMeta();
+    };
+    row.append(name, lvTxt, btn);
+    $('bkList').appendChild(row);
+  });
+}
+
 async function endGame(win) {
   running = false; $('hud').hidden = true;
   meta.best = Math.max(meta.best, G.stage);
   if (win) meta.clears = (meta.clears || 0) + 1;
+  // 진 출정도 보상한다 — 반복 도전이 곧 강화가 되어야 재도전 동기가 생긴다.
+  const earned = G.stage + (win ? 5 : 0);
+  meta.medals = (meta.medals || 0) + earned;
   GameRank.submit('iron-vanguard', G.stage * 1000 + (win ? 500 : 0), '스테이지 ' + G.stage + (win ? ' 클리어' : ''))
     .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
   $('endTitle').textContent = win ? TR('end.win') : TR('end.lose');
   $('endDesc').textContent = (win ? TR('end.winDesc').replace('{n}', STAGES.length) : TR('end.loseDesc').replace('{n}', G.stage)) +
     TR('end.best').replace('{n}', meta.best) + (meta.clears ? TR('end.clears').replace('{n}', meta.clears) : '');
+  $('endDesc').textContent += ' ' + TR('bk.earn').replace('{n}', earned);
   $('endPanel').hidden = false;
+  renderBarracks();
   await persistMeta();
 }
 let last = performance.now();
@@ -580,14 +697,14 @@ function loop() {
 requestAnimationFrame(loop);
 $('startBtn').onclick = startGame;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
-  $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; };
+  $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; renderBarracks(); };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
-    $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; showCode(); }
+    $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; showCode(); renderBarracks(); }
 };
-loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; });
+loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; renderBarracks(); });
 </script>
 <script src="../lib/rank.js"></script>
 <script>
