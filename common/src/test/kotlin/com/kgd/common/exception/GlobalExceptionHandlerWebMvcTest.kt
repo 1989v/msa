@@ -134,6 +134,42 @@ class GlobalExceptionHandlerWebMvcTest : BehaviorSpec({
             }
         }
 
+        `when`("본문 JSON 이 깨져 있으면(HttpMessageNotReadableException)") {
+            then("400 + INVALID_INPUT — 500 이 아니어야 한다") {
+                val res = mockMvc.perform(
+                    post("/api/v1/probe/validate")
+                        .contentType("application/json")
+                        .content("""{"name":"""),
+                ).andReturn().response
+
+                res.status shouldBe 400
+                res.contentAsString shouldContain "\"code\":\"INVALID_INPUT\""
+            }
+
+            then("파서 내부 구조·클래스명이 본문에 노출되지 않는다") {
+                val body = mockMvc.perform(
+                    post("/api/v1/probe/validate")
+                        .contentType("application/json")
+                        .content("""{"name":"""),
+                ).andReturn().response.contentAsString
+
+                body shouldNotContain "Exception"
+                body shouldNotContain "com.fasterxml"
+                body shouldNotContain "ProbeBody"
+            }
+        }
+
+        `when`("본문이 아예 비어 있으면") {
+            then("400 + INVALID_INPUT") {
+                val res = mockMvc.perform(
+                    post("/api/v1/probe/validate").contentType("application/json"),
+                ).andReturn().response
+
+                res.status shouldBe 400
+                res.contentAsString shouldContain "\"code\":\"INVALID_INPUT\""
+            }
+        }
+
         `when`("진짜 예상치 못한 예외가 발생하면") {
             then("여전히 500 + INTERNAL_ERROR 이고 내부 메시지를 노출하지 않는다") {
                 val res = mockMvc.perform(get("/api/v1/probe/boom")).andReturn().response

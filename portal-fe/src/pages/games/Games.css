@@ -179,6 +179,19 @@
   color: var(--ko-text-primary);
 }
 
+/* 장르 섹션 제목은 장르 랜딩으로 가는 링크다(ADR-0062). 스타일을 주지 않으면
+   브라우저 기본 앵커(파란색 + 밑줄)로 떨어져 제목이 깨져 보인다. */
+.games-collection-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.games-collection-title a:hover,
+.games-collection-title a:focus-visible {
+  color: var(--ko-accent-primary);
+  text-decoration: underline;
+}
+
 .games-row {
   display: grid;
   grid-auto-flow: column;

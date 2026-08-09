@@ -193,6 +193,10 @@ class GameAdminController(
     ): ApiResponse<GameDetailDto> =
         ApiResponse.success(gameAdminService.changeStatus(slug, request.action))
 
+    @GetMapping("/collections")
+    fun listCollections(): ApiResponse<List<CollectionResponse>> =
+        ApiResponse.success(gameAdminService.listCollections().map { it.toResponse() })
+
     @PostMapping("/collections")
     fun createCollection(@Valid @RequestBody request: CreateCollectionRequest): ApiResponse<CollectionResponse> {
         val collection = gameAdminService.createCollection(

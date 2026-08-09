@@ -19,6 +19,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import org.springframework.data.domain.PageImpl
 import java.time.Instant
 
 class GameQueryServiceTest : BehaviorSpec({
@@ -116,6 +117,62 @@ class GameQueryServiceTest : BehaviorSpec({
                 collections.size shouldBe 1
                 collections[0].games.map { it.slug } shouldBe listOf("beta", "alpha")
                 collections[0].games[0].ratingAvg shouldBe 0.0
+            }
+        }
+
+        `when`("MANUAL 컬렉션에 공개 불가 상태 게임이 섞여 있으면") {
+            then("공개 목록에서 빠진다 — findByIds 는 상태를 거르지 않는다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val collectionRepository = mockk<GameCollectionRepositoryPort>()
+                val tagRepository = mockk<GameTagRepositoryPort>()
+                val service = GameQueryService(gameRepository, statsRepository, tagRepository, collectionRepository)
+
+                every { collectionRepository.findActive() } returns listOf(
+                    GameCollection.restore(
+                        id = 1L, slug = "editors-pick", title = "Editor's Pick",
+                        type = CollectionType.MANUAL, tagSlug = null, displayOrder = 1,
+                        active = true, gameIds = listOf(1L, 2L),
+                    )
+                )
+                every { gameRepository.findByIds(listOf(1L, 2L)) } returns listOf(
+                    gameWith(1L, "alpha", GameStatus.PUBLISHED),
+                    gameWith(2L, "hidden", GameStatus.DRAFT),
+                )
+                every { statsRepository.findByGameIds(listOf(1L)) } returns emptyList()
+
+                service.collections()[0].games.map { it.slug } shouldBe listOf("alpha")
+            }
+        }
+
+        `when`("자동 산출 컬렉션(TRENDING)에 gameIds 가 있으면") {
+            then("그 게임들이 맨 앞에 고정되고 나머지는 산출 순서대로 이어진다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val collectionRepository = mockk<GameCollectionRepositoryPort>()
+                val tagRepository = mockk<GameTagRepositoryPort>()
+                val service = GameQueryService(gameRepository, statsRepository, tagRepository, collectionRepository)
+
+                every { collectionRepository.findActive() } returns listOf(
+                    GameCollection.restore(
+                        id = 2L, slug = "trending", title = "지금 인기",
+                        type = CollectionType.TRENDING, tagSlug = null, displayOrder = 2,
+                        active = true, gameIds = listOf(3L),
+                    )
+                )
+                every { gameRepository.findByIds(listOf(3L)) } returns
+                    listOf(gameWith(3L, "pinned", GameStatus.PUBLISHED))
+                every { gameRepository.search(null, null, GameSort.TRENDING, any()) } returns
+                    PageImpl(
+                        listOf(
+                            gameWith(1L, "top", GameStatus.PUBLISHED),
+                            // 고정된 게임이 산출 목록에도 있으면 중복되지 않아야 한다
+                            gameWith(3L, "pinned", GameStatus.PUBLISHED),
+                        )
+                    )
+                every { statsRepository.findByGameIds(any()) } returns emptyList()
+
+                service.collections()[0].games.map { it.slug } shouldBe listOf("pinned", "top")
             }
         }
     }

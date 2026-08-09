@@ -22,6 +22,7 @@ import type {
   GameStatusAction,
   Genre,
 } from '@/api/games';
+import { CollectionsPanel } from '@/pages/games/CollectionsPanel';
 import { DataTable } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
 import { Dialog } from '@/components/ui/dialog';
@@ -301,6 +302,8 @@ function GameEditForm({ detail, onClose }: { detail: AdminGameDetail; onClose: (
 
       <SeoNotice />
 
+      <CollectionsPanel />
+
       <div className="flex justify-end gap-2 pt-1">
         <Button type="button" variant="outline" onClick={onClose}>취소</Button>
         <Button type="submit" disabled={saveMutation.isPending}>
@@ -439,6 +442,8 @@ export function GamesPage() {
       </div>
 
       <SeoNotice />
+
+      <CollectionsPanel />
 
       {error && (
         <div

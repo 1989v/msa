@@ -123,6 +123,8 @@ class GameAdminService(
         return saveAndToDto(game)
     }
 
+    fun listCollections(): List<GameCollection> = collectionRepository.findAll()
+
     fun createCollection(
         slug: String,
         title: String,

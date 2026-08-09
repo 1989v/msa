@@ -56,6 +56,9 @@ interface GameTagRepositoryPort {
 
 interface GameCollectionRepositoryPort {
     fun findActive(): List<GameCollection>
+
+    /** 어드민 편집용 — 비활성 컬렉션도 보여야 다시 켤 수 있다. */
+    fun findAll(): List<GameCollection>
     fun findBySlug(slug: String): GameCollection?
     fun save(collection: GameCollection): GameCollection
 }

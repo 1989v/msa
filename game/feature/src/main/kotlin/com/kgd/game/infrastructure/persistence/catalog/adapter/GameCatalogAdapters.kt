@@ -148,6 +148,9 @@ class GameCollectionRepositoryAdapter(
     override fun findActive(): List<GameCollection> =
         jpaRepository.findByActiveTrueOrderByDisplayOrderAsc().map { it.toDomain() }
 
+    override fun findAll(): List<GameCollection> =
+        jpaRepository.findAllByOrderByDisplayOrderAsc().map { it.toDomain() }
+
     override fun findBySlug(slug: String): GameCollection? = jpaRepository.findBySlug(slug)?.toDomain()
 
     override fun save(collection: GameCollection): GameCollection {

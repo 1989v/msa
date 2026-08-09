@@ -127,3 +127,38 @@ export async function fetchGameTags(): Promise<GameTag[]> {
   const res = await apiClient.get<ApiResponse<GameTag[]>>('/api/v1/games/tags');
   return res.data.data ?? [];
 }
+
+// ─── 컬렉션 (게임 목록 노출 구성) ────────────────────────────────────────────
+// MANUAL 만 게임을 직접 고른다. TRENDING/NEW 는 통계·날짜로 서버가 채우고,
+// TAG_BASED 는 tagSlug 로 채우므로 어드민은 제목·순서·활성만 만진다.
+export type CollectionType = 'MANUAL' | 'TRENDING' | 'NEW' | 'TAG_BASED';
+
+export interface AdminCollection {
+  slug: string;
+  title: string;
+  type: CollectionType;
+  tagSlug: string | null;
+  displayOrder: number;
+  active: boolean;
+  gameIds: number[];
+}
+
+export interface CollectionUpdateInput {
+  title?: string;
+  displayOrder?: number;
+  active?: boolean;
+  gameIds?: number[];
+}
+
+export async function fetchCollections(): Promise<AdminCollection[]> {
+  const res = await apiClient.get<ApiResponse<AdminCollection[]>>(`${ADMIN_BASE}/collections`);
+  return res.data.data ?? [];
+}
+
+export async function updateCollection(
+  slug: string,
+  input: CollectionUpdateInput,
+): Promise<AdminCollection> {
+  const res = await apiClient.put<ApiResponse<AdminCollection>>(`${ADMIN_BASE}/collections/${slug}`, input);
+  return res.data.data;
+}

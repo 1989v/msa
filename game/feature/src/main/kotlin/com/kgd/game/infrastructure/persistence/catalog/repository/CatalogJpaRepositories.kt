@@ -39,4 +39,5 @@ interface GameStatsJpaRepository : JpaRepository<GameStatsJpaEntity, Long> {
 interface GameCollectionJpaRepository : JpaRepository<GameCollectionJpaEntity, Long> {
     fun findBySlug(slug: String): GameCollectionJpaEntity?
     fun findByActiveTrueOrderByDisplayOrderAsc(): List<GameCollectionJpaEntity>
+    fun findAllByOrderByDisplayOrderAsc(): List<GameCollectionJpaEntity>
 }

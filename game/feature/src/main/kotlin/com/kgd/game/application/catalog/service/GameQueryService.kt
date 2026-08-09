@@ -55,13 +55,11 @@ class GameQueryService(
     fun collections(): List<GameCollectionDto> =
         collectionRepository.findActive().map { collection ->
             val games = when (collection.type) {
-                CollectionType.MANUAL -> {
-                    val byId = gameRepository.findByIds(collection.gameIds).associateBy { it.id }
-                    collection.gameIds.mapNotNull { byId[it] }
-                }
-                CollectionType.TRENDING -> pageOf(sort = GameSort.TRENDING)
-                CollectionType.NEW -> pageOf(sort = GameSort.NEW)
-                CollectionType.TAG_BASED -> pageOf(sort = GameSort.TRENDING, tag = collection.tagSlug)
+                CollectionType.MANUAL -> pickedGames(collection.gameIds)
+                CollectionType.TRENDING -> pinnedThen(collection.gameIds, pageOf(sort = GameSort.TRENDING))
+                CollectionType.NEW -> pinnedThen(collection.gameIds, pageOf(sort = GameSort.NEW))
+                CollectionType.TAG_BASED ->
+                    pinnedThen(collection.gameIds, pageOf(sort = GameSort.TRENDING, tag = collection.tagSlug))
             }
             val statsByGameId = statsOf(games)
             GameCollectionDto(
@@ -74,6 +72,28 @@ class GameQueryService(
 
     private fun pageOf(sort: GameSort, tag: String? = null): List<Game> =
         gameRepository.search(tag, null, sort, PageRequest.of(0, COLLECTION_SIZE)).content
+
+    /**
+     * 어드민이 고른 순서 그대로. `findByIds` 는 상태를 거르지 않으므로 여기서 공개 가능 여부를 확인한다 —
+     * 확인하지 않으면 DRAFT/SUSPENDED 게임이 공개 컬렉션에 실린다.
+     */
+    private fun pickedGames(gameIds: List<Long>): List<Game> {
+        if (gameIds.isEmpty()) return emptyList()
+        val byId = gameRepository.findByIds(gameIds).filter { it.isPlayable() }.associateBy { it.id }
+        return gameIds.mapNotNull { byId[it] }
+    }
+
+    /**
+     * 자동 산출 컬렉션(인기/신규/태그)에서 `gameIds` 는 **맨 앞에 고정할 게임** 목록으로 쓴다.
+     * 순위는 통계가 정하되 운영자가 특정 게임을 앞세울 수 있어야 해서, 컬럼을 새로 만들지 않고
+     * MANUAL 이 쓰던 자리를 이 의미로 재사용한다.
+     */
+    private fun pinnedThen(pinnedIds: List<Long>, computed: List<Game>): List<Game> {
+        if (pinnedIds.isEmpty()) return computed
+        val pinned = pickedGames(pinnedIds)
+        val pinnedSet = pinned.mapNotNull { it.id }.toSet()
+        return (pinned + computed.filterNot { it.id in pinnedSet }).take(COLLECTION_SIZE)
+    }
 
     /** DRAFT/REVIEW/SUSPENDED 는 존재 여부 은닉 — NOT_FOUND */
     private fun findVisibleGame(slug: String): Game {

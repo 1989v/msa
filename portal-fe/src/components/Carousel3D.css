@@ -31,6 +31,9 @@
   opacity: 1;
   filter: none;
   z-index: 10;
+  /* 패널이 거의 전체 화면을 차지해 sticky GNB 가 상단을 덮는다 — 패널 타이틀이 잘리던 원인. */
+  padding-top: var(--gnb-height, 56px);
+  box-sizing: border-box;
 }
 
 .carousel-slide.prev {

@@ -9,7 +9,7 @@
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
-  padding: 8px 40px 8px 12px;
+  padding: 8px 12px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
@@ -71,10 +71,10 @@
 }
 
 .ko-chip-strip-arrow {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
+  /* absolute 로 띄우면 스크롤이 끝에 있지 않을 때 칩 위를 덮어 라벨이 잘린다
+     (오른쪽 padding 은 스크롤 끝에서만 효과가 있다). 플렉스 아이템으로 자리를 차지하게 한다. */
+  flex: 0 0 auto;
+  margin-left: 4px;
   width: 32px;
   height: 32px;
   border-radius: 16px;

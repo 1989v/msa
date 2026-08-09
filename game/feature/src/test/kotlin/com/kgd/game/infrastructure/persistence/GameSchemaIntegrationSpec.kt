@@ -125,8 +125,9 @@ class GameSchemaIntegrationSpec(
         When("태그로 필터링하면") {
             Then("해당 태그를 가진 게임만 반환된다")
                 .config(enabledIf = { dockerAvailable }) {
-                    queryRepository.search(publicCriteria(tag = "memory"), pageable)
-                        .content.map { it.slug } shouldBe listOf("concept-memory")
+                    // V25 에서 태그를 플레이 속성 축으로 정리 — 'memory' 같은 파편 태그는 제거됐다.
+                    queryRepository.search(publicCriteria(tag = "open-world"), pageable)
+                        .content.map { it.slug } shouldBe listOf("drift-continent")
                     // 정확 개수 대신 하한 — 시드 팩이 늘 때마다 깨지는 단언을 피한다
                     (queryRepository.search(publicCriteria(tag = "education"), pageable)
                         .totalElements >= 4) shouldBe true

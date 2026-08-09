@@ -5,6 +5,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.ErrorResponse
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
@@ -49,6 +50,21 @@ class GlobalExceptionHandler {
     fun handleTypeMismatch(e: MethodArgumentTypeMismatchException): ResponseEntity<ApiResponse<Nothing>> {
         return ResponseEntity.badRequest().body(
             ApiResponse.error("INVALID_INPUT", "파라미터 타입이 올바르지 않습니다: ${e.name}")
+        )
+    }
+
+    /**
+     * 읽을 수 없는 요청 본문(깨진 JSON, 타입 불일치, 본문 누락)은 클라이언트 잘못이므로 400 이다.
+     *
+     * `MethodArgumentNotValidException` 과 달리 이 예외는 `ErrorResponse` 구현체가 아니라
+     * generic catch 로 흘러 500 이 됐다 — 없는 경로가 500 이던 것과 같은 계열의 결함.
+     * 원인 메시지는 파서 내부 구조·클래스명을 노출하므로 응답에 싣지 않는다.
+     */
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleUnreadableBody(e: HttpMessageNotReadableException): ResponseEntity<ApiResponse<Nothing>> {
+        log.warn { "Unreadable request body: ${e.mostSpecificCause.javaClass.simpleName}" }
+        return ResponseEntity.badRequest().body(
+            ApiResponse.error("INVALID_INPUT", "요청 본문을 읽을 수 없습니다")
         )
     }
 
