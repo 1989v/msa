@@ -263,18 +263,18 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "9"
-  # ─── place (ADR-0056) — DB provisioning 전까지 비활성 가드 ─────────────────
-  # OCIR 이미지·images: 항목은 CI 가 등재 완료. 남은 활성화 절차:
-  #   1) place_db / place_user — **완료 (2026-08-09)**. 수동 생성 유저는 반드시 native
-  #      password 로 만들 것: 서버 플래그 없는 세션은 caching_sha2 로 만들어져
-  #      mysql-connector 8 이 못 붙는다.
-  #        CREATE USER 'place_user'@'%' IDENTIFIED WITH mysql_native_password BY '...'
-  #   2) OCIR 이미지 — CI 에 place 등록 완료(2026-08-09). 그 전까지 images: 항목이 없어
-  #      commerce/place:latest 를 Docker Hub 에서 당기려다 실패하는 상태였다.
-  #      비활성 가드(replicas: 0)는 이미지가 올라온 뒤 제거했다 — 순서를 바꾸면
-  #      ImagePullBackOff 로 해당 sync-wave 가 멈춰 뒤 웨이브까지 정지한다.
-  #   3) NetworkPolicy 는 라벨 기반이라 place 를 자동 포함하고, mysql-place Service 와
-  #      게이트웨이 place 라우트도 이미 있다 (별도 조치 불필요).
+    # ─── place (ADR-0056) — DB provisioning 전까지 비활성 가드 ─────────────────
+    # OCIR 이미지·images: 항목은 CI 가 등재 완료. 남은 활성화 절차:
+    #   1) place_db / place_user — **완료 (2026-08-09)**. 수동 생성 유저는 반드시 native
+    #      password 로 만들 것: 서버 플래그 없는 세션은 caching_sha2 로 만들어져
+    #      mysql-connector 8 이 못 붙는다.
+    #        CREATE USER 'place_user'@'%' IDENTIFIED WITH mysql_native_password BY '...'
+    #   2) OCIR 이미지 — CI 에 place 등록 완료(2026-08-09). 그 전까지 images: 항목이 없어
+    #      commerce/place:latest 를 Docker Hub 에서 당기려다 실패하는 상태였다.
+    #      비활성 가드(replicas: 0)는 이미지가 올라온 뒤 제거했다 — 순서를 바꾸면
+    #      ImagePullBackOff 로 해당 sync-wave 가 멈춰 뒤 웨이브까지 정지한다.
+    #   3) NetworkPolicy 는 라벨 기반이라 place 를 자동 포함하고, mysql-place Service 와
+    #      게이트웨이 place 라우트도 이미 있다 (별도 조치 불필요).
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
@@ -308,7 +308,7 @@ images:
     newTag: 91c095a
   - name: commerce/place
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place
-    newTag: e94f6e7
+    newTag: c9a3160
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: 91c095a
