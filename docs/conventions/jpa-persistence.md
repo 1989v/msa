@@ -100,8 +100,14 @@ DDL 의 단일 소유자는 Flyway 마이그레이션(`db/migration`)이다. Hib
 >    다를 수 있다)
 > 2. 차이를 메우는 마이그레이션을 추가하거나 `baseline-version` 을 실제 상태에 맞춘다
 > 3. `spring-boot-flyway` 를 추가하고 스테이징에서 검증
-> 4. `ddl-auto` 를 `validate` 로 내린다 (지금은 k3s-lite 의 `ddl-auto-update` 패치가
->    오버레이 상속으로 운영까지 `update` 를 주입하고 있다 — 이 패치도 함께 걷어낸다)
+> 4. `ddl-auto` 를 `validate` 로 올린다
+>
+> **1차 조치는 끝났다 (2026-08-09)**: 운영(oci-arm)은 `ddl-auto: none` 으로 얼렸다.
+> `update` 는 배포할 때마다 조용히 컬럼을 붙여 드리프트를 보이지 않게 만드는 게 문제의
+> 핵심이었다. `validate` 가 최종 목표지만 지금 스키마와 엔티티가 어긋나 있으면 **기동이
+> 막히므로**, Flyway 배선 전에는 위험하다. `none` 은 스키마를 얼리고 어긋남을 런타임
+> 오류로 드러낸다 — 조용하지만은 않다. 로컬(k3s-lite)은 MySQL init 이 서비스별 스키마를
+> 채우지 않으므로 `update` 를 유지한다.
 >
 > 신규 모듈이 같은 함정에 빠지는 것은 루트 `build.gradle.kts` 의 `verifyFlywayWiring`
 > 태스크가 막는다(`check` 에 연결돼 `./gradlew build` 에서 실패). 위 7종은 그 안에

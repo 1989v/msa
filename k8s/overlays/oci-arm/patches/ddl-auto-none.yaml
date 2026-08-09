@@ -1,0 +1,29 @@
+# 운영에서는 Hibernate 가 스키마를 만지지 않는다.
+#
+# k3s-lite 의 ddl-auto-update 패치("Local smoke-test only" 라고 스스로 적어둔 그것)가
+# 오버레이 상속으로 운영까지 `update` 를 주입하고 있었다. 그 결과 운영 스키마 14개 중
+# 12개가 Hibernate 산물이 됐고 레포의 Flyway 마이그레이션은 실행된 적이 없다
+# (2026-08-09 실측 — jpa-persistence.md 경고 블록 참조).
+#
+# `none` 인 이유:
+# - `update` 는 배포할 때마다 조용히 컬럼을 붙인다. 드리프트가 눈에 안 보이는 게 문제의 핵심
+# - `validate` 가 컨벤션상 목표지만, 지금 스키마와 엔티티가 어긋나 있으면 **기동이 막힌다**.
+#   Flyway 배선 전에 켜기엔 위험이 크다
+# - `none` 은 스키마를 얼린다. 어긋남은 런타임 쿼리 오류로 드러나므로 조용하지 않다
+#
+# 목표 상태: 서비스별로 Flyway 를 배선(spring-boot-flyway + baseline 대조)한 뒤 `validate`.
+# 진행 상황은 루트 build.gradle.kts 의 flywayNotWiredYet 목록이 추적한다.
+#
+# strategic merge 는 env 를 name 으로 병합하므로 상속된 `update` 를 이 값이 덮어쓴다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "none"

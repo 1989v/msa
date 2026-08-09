@@ -115,6 +115,11 @@ patches:
     target:
       kind: Deployment
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+  # ─── 운영은 Hibernate 가 스키마를 만지지 않는다 (k3s-lite 의 update 를 덮어쓴다) ──
+  - path: patches/ddl-auto-none.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
   # ─── OCIR pull secret (모든 앱 Pod spec 에 명시) ───────────────────────────
   - path: patches/image-pull-secret-deployment.yaml
     target:
