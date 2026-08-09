@@ -297,10 +297,19 @@ jobs:
               exit 1
             fi
             echo "── docker buildx build → $REGISTRY/$svc:$TAG"
+            # FE 는 OAuth client_id 를 빌드 타임에 굽는다(Vite 는 런타임 주입이 안 된다).
+            # 시크릿 미설정이면 빈 값으로 빌드돼 로그인 버튼만 비활성 — 빌드는 실패시키지 않는다.
+            BUILD_ARGS=()
+            case "$svc" in
+              admin-fe|portal-fe)
+                BUILD_ARGS+=(--build-arg "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}")
+                ;;
+            esac
             docker buildx build \
               --platform linux/arm64 \
               -f "$ctx/Dockerfile" \
               -t "$REGISTRY/$svc:$TAG" \
+              "${BUILD_ARGS[@]}" \
               --push \
               "$ctx"
           done

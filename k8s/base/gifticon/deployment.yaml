@@ -29,6 +29,10 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # auth 가 발급한 JWT 를 검증하려면 auth 와 같은 키여야 한다 (optional — 없으면 로컬 기본값)
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: platform-jwt, key: secret, optional: true }
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

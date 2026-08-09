@@ -29,6 +29,27 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # JWT 서명 키 — gateway 와 **같은 값**이어야 한다. 다르면 auth 가 발급한 토큰을
+            # gateway 가 검증할 수 없어 전 API 가 401 이 된다 (2026-08-09 어드민 로그인 장애).
+            # optional: true — 시크릿이 없으면 application.yml 의 로컬 기본값으로 기동한다.
+            # 없다고 파드를 못 뜨게 하면 시크릿 생성 전 클러스터가 통째로 멈춘다.
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: platform-jwt, key: secret, optional: true }
+            - name: GOOGLE_CLIENT_ID
+              valueFrom:
+                secretKeyRef: { name: oauth-google, key: client-id, optional: true }
+            - name: GOOGLE_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef: { name: oauth-google, key: client-secret, optional: true }
+            # 최초 관리자 — 역할 부여 API 가 ROLE_ADMIN 을 요구해 생기는 교착을 끊는 유일한 경로.
+            # 이 레포는 공개라 이메일을 매니페스트에 두지 않는다:
+            #   kubectl -n commerce create secret generic auth-bootstrap \
+            #     --from-literal=admin-emails='you@example.com'
+            # 첫 관리자 로그인 뒤에는 시크릿을 지워도 된다(이후는 역할 부여 API 로 운영).
+            - name: AUTH_BOOTSTRAP_ADMIN_EMAILS
+              valueFrom:
+                secretKeyRef: { name: auth-bootstrap, key: admin-emails, optional: true }
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
