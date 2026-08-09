@@ -13,6 +13,7 @@ interface GamePlaySessionJpaRepository : JpaRepository<GamePlaySessionJpaEntity,
 
 interface GameRatingJpaRepository : JpaRepository<GameRatingJpaEntity, Long> {
     fun findByGameIdAndMemberId(gameId: Long, memberId: Long): GameRatingJpaEntity?
+    fun findByGameIdAndDeviceId(gameId: Long, deviceId: String): GameRatingJpaEntity?
 }
 
 interface GameSaveDataJpaRepository : JpaRepository<GameSaveDataJpaEntity, Long> {

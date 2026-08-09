@@ -55,15 +55,24 @@ class GamePlayController(
     ): ApiResponse<SessionEndedDto> =
         ApiResponse.success(gamePlayService.endSession(sessionKey))
 
-    /** 평점 upsert — 인증 필수 (1인 1표) */
+    /**
+     * 평점 upsert — 회원은 1인 1표, 비로그인은 **기기 1표**.
+     * 게임 호스트에 로그인 진입점이 없어 로그인 필수 규칙이 기능을 죽이고 있었다.
+     * 기기 표는 저장소를 비우면 우회되므로 조작 방지 장치가 아니다 — 참여를 여는 쪽을 택했고,
+     * 표 수를 함께 노출해 표본이 작은 평점이 스스로 드러나게 한다.
+     */
     @PutMapping("/rating")
     fun rate(
         @PathVariable slug: String,
         @RequestHeader("X-User-Id", required = false) userId: String?,
+        @RequestHeader("X-Device-Id", required = false) deviceId: String?,
         @Valid @RequestBody request: RateRequest,
     ): ApiResponse<RatingResultDto> {
         val memberId = userId?.toLongOrNull()
-            ?: throw BusinessException(ErrorCode.UNAUTHORIZED, "평점 등록은 로그인이 필요합니다")
-        return ApiResponse.success(gamePlayService.rate(slug, memberId, request.score))
+        val device = deviceId?.trim()?.takeIf { it.isNotEmpty() && it.length <= 64 }
+        if (memberId == null && device == null) {
+            throw BusinessException(ErrorCode.INVALID_INPUT, "평점 등록에는 회원 또는 기기 식별자가 필요합니다")
+        }
+        return ApiResponse.success(gamePlayService.rate(slug, memberId, device, request.score))
     }
 }

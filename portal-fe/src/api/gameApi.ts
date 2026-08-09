@@ -178,8 +178,16 @@ export async function endGameSession(slug: string, sessionKey: string): Promise<
   await api.patch(`/api/v1/games/${slug}/sessions/${sessionKey}`);
 }
 
+/**
+ * 평점 — 로그인하면 회원 1표, 아니면 기기 1표.
+ * 기기 식별자는 세이브 리스·광고 frequency 와 같은 값을 쓴다(별도 식별자를 늘리지 않는다).
+ */
 export async function rateGame(slug: string, score: number): Promise<RatingResult> {
-  const res = await api.put<ApiResponse<RatingResult>>(`/api/v1/games/${slug}/rating`, { score });
+  const res = await api.put<ApiResponse<RatingResult>>(
+    `/api/v1/games/${slug}/rating`,
+    { score },
+    { headers: { 'X-Device-Id': getDeviceId() } },
+  );
   return res.data.data;
 }
 

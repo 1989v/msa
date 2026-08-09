@@ -114,7 +114,7 @@ export default function GameDetailPage() {
       setRatingMessage(`평가 완료 — 평균 ${result.ratingAvg.toFixed(1)}점 (${result.ratingCount.toLocaleString()}표)`);
       setGame((prev) => (prev ? { ...prev, ratingAvg: result.ratingAvg, ratingCount: result.ratingCount } : prev));
     } catch {
-      setRatingMessage('평점 등록에는 로그인이 필요합니다.');
+      setRatingMessage('평점 등록에 실패했습니다 — 잠시 후 다시 시도해 주세요.');
     }
   };
 
@@ -226,7 +226,9 @@ export default function GameDetailPage() {
         <h2 className="games-collection-title">
           {lang === 'en' ? 'Rate this game' : '이 게임 어땠나요?'}
         </h2>
-        {!isLoggedIn() && <p className="games-status">평점 등록은 로그인이 필요합니다.</p>}
+        {!isLoggedIn() && (
+          <p className="games-status">로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.</p>
+        )}
         <div className="game-rating-scores">
           {SCORES.map((score) => (
             <button

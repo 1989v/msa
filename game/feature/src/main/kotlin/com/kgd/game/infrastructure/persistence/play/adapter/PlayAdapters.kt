@@ -39,6 +39,9 @@ class GameRatingRepositoryAdapter(
     override fun findByGameIdAndMemberId(gameId: Long, memberId: Long): GameRating? =
         jpaRepository.findByGameIdAndMemberId(gameId, memberId)?.toDomain()
 
+    override fun findByGameIdAndDeviceId(gameId: Long, deviceId: String): GameRating? =
+        jpaRepository.findByGameIdAndDeviceId(gameId, deviceId)?.toDomain()
+
     override fun save(rating: GameRating): GameRating {
         val id = rating.id
         val entity = if (id != null) {

@@ -58,5 +58,6 @@ class GamePlayService(
         return SessionEndedDto(sessionKey = session.sessionKey, durationSec = durationSec)
     }
 
-    fun rate(slug: String, memberId: Long, score: Int): RatingResultDto = playCommand.rate(slug, memberId, score)
+    fun rate(slug: String, memberId: Long?, deviceId: String?, score: Int): RatingResultDto =
+        playCommand.rate(slug, memberId, deviceId, score)
 }

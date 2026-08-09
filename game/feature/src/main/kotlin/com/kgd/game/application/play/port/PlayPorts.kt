@@ -12,6 +12,7 @@ interface PlaySessionRepositoryPort {
 
 interface GameRatingRepositoryPort {
     fun findByGameIdAndMemberId(gameId: Long, memberId: Long): GameRating?
+    fun findByGameIdAndDeviceId(gameId: Long, deviceId: String): GameRating?
     fun save(rating: GameRating): GameRating
 }
 

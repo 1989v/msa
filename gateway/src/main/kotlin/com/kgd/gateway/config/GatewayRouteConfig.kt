@@ -201,11 +201,17 @@ class GatewayRouteConfig(
                     }
                     .uri(CODE_DICTIONARY_URI)
             }
-            // 평점은 1인 1표 — 인증 필수
+            // 평점 — 회원은 1인 1표, 비로그인은 기기 1표(X-Device-Id). 게임 호스트에 로그인
+            // 진입점이 없어 인증 필수 규칙이 기능을 죽이고 있었다. 익명 쓰기라 Rate Limiter 를 건다.
             .route("game-rating") { r ->
                 r.path("/api/v1/games/*/rating")
                     .filters { f ->
-                        f.filter(authFilter.apply(userConfig()))
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(userKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
                             .stripPrefix(0)
                     }
                     .uri(CODE_DICTIONARY_URI)

@@ -123,7 +123,7 @@ class GamePlayCommandTest : BehaviorSpec({
                 every { statsRepository.findByGameId(1L) } returns GameStats.init(1L)
                 every { statsRepository.save(any()) } answers { firstArg() }
 
-                val result = command.rate("concept-memory", memberId = 7L, score = 9)
+                val result = command.rate("concept-memory", memberId = 7L, deviceId = null, score = 9)
 
                 result.score shouldBe 9
                 result.ratingCount shouldBe 1
@@ -140,12 +140,12 @@ class GamePlayCommandTest : BehaviorSpec({
 
                 val stats = GameStats.restore(gameId = 1L, playCount = 5, ratingSum = 9, ratingCount = 1, weeklyPlayCount = 5)
                 every { gameRepository.findBySlug("concept-memory") } returns publishedGame()
-                every { ratingRepository.findByGameIdAndMemberId(1L, 7L) } returns GameRating.restore(3L, 1L, 7L, 9)
+                every { ratingRepository.findByGameIdAndMemberId(1L, 7L) } returns GameRating.restore(3L, 1L, 7L, null, 9)
                 every { ratingRepository.save(any()) } answers { firstArg() }
                 every { statsRepository.findByGameId(1L) } returns stats
                 every { statsRepository.save(any()) } answers { firstArg() }
 
-                val result = command.rate("concept-memory", memberId = 7L, score = 5)
+                val result = command.rate("concept-memory", memberId = 7L, deviceId = null, score = 5)
 
                 result.ratingCount shouldBe 1
                 result.ratingAvg shouldBe 5.0

@@ -63,13 +63,20 @@ class GamePlayCommand(
     }
 
     @Transactional(transactionManager = "gameTransactionManager")
-    fun rate(slug: String, memberId: Long, score: Int): RatingResultDto {
+    /** 회원이면 회원 표, 아니면 기기 표. 둘 다 재투표는 기존 표를 덮어써 표 수를 늘리지 않는다. */
+    fun rate(slug: String, memberId: Long?, deviceId: String?, score: Int): RatingResultDto {
         val game = findPlayableGame(slug)
         val gameId = requireNotNull(game.id) { "영속화된 게임에는 id가 있어야 합니다" }
 
-        val existing = ratingRepository.findByGameIdAndMemberId(gameId, memberId)
+        val existing = if (memberId != null) {
+            ratingRepository.findByGameIdAndMemberId(gameId, memberId)
+        } else {
+            ratingRepository.findByGameIdAndDeviceId(gameId, requireNotNull(deviceId))
+        }
         val oldScore = existing?.score
-        val rating = existing?.apply { changeScore(score) } ?: GameRating.create(gameId, memberId, score)
+        val rating = existing?.apply { changeScore(score) }
+            ?: if (memberId != null) GameRating.byMember(gameId, memberId, score)
+            else GameRating.byDevice(gameId, requireNotNull(deviceId), score)
         ratingRepository.save(rating)
 
         val stats = statsRepository.findByGameId(gameId) ?: GameStats.init(gameId)

@@ -1,17 +1,11 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
-import path from 'path';
 
-// FE 통합(ADR-0058 R3): portal-fe = 통합 셸. sub-app(admin 등)은 src/apps/<app> 로 흡수,
-// @<app> alias 로 내부 import 격리. Tailwind v4 는 흡수된 admin 컴포넌트용 — @import "tailwindcss"
-// 를 포함한 각 앱 index.css 를 그 앱 진입점(App.tsx)에서 import → lazy 청크에 번들.
+// portal-fe = 공개 포털 셸. 어드민은 ADR-0063 에서 분리돼 admin.* 단일 호스트로 갔다
+// (그때 @admin alias 도 함께 사라졌다). Tailwind v4 는 남은 흡수 컴포넌트용.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  resolve: {
-    alias: {
-    },
-  },
   server: {
     port: 5174,
     proxy: {
