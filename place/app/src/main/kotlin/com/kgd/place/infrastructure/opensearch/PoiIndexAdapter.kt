@@ -2,10 +2,12 @@ package com.kgd.place.infrastructure.opensearch
 
 import com.kgd.place.application.poi.port.PoiIndexPort
 import com.kgd.place.domain.poi.model.PoiDocument
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
-import jakarta.json.JsonObject
 import org.opensearch.client.json.JsonpDeserializer
 import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.opensearch._types.OpenSearchException
 import org.opensearch.client.opensearch._types.mapping.TypeMapping
 import org.opensearch.client.opensearch.core.bulk.BulkOperation
 import org.opensearch.client.opensearch.indices.IndexSettings
@@ -16,6 +18,7 @@ import java.io.StringReader
 @Component
 class PoiIndexAdapter(
     private val osClient: OpenSearchClient,
+    private val objectMapper: ObjectMapper,
     @Value("\${place.poi.index:poi}") private val indexName: String,
 ) : PoiIndexPort {
 
@@ -26,14 +29,13 @@ class PoiIndexAdapter(
     }
 
     override fun ensureIndex() {
-        val exists = osClient.indices().exists { it.index(indexName) }.value()
-        if (exists) {
+        if (indexExists()) {
             log.info { "poi 인덱스 이미 존재: $indexName" }
             return
         }
         val definition = loadIndexDefinition()
-        val settings = definition.getJsonObject("settings").parseAs(IndexSettings._DESERIALIZER)
-        val mappings = definition.getJsonObject("mappings").parseAs(TypeMapping._DESERIALIZER)
+        val settings = definition.required("settings").parseAs(IndexSettings._DESERIALIZER)
+        val mappings = definition.required("mappings").parseAs(TypeMapping._DESERIALIZER)
         osClient.indices().create { req -> req.index(indexName).settings(settings).mappings(mappings) }
         log.info { "poi 인덱스 생성: $indexName" }
     }
@@ -54,16 +56,32 @@ class PoiIndexAdapter(
         if (failed > 0) log.error { "poi bulk 색인 실패 $failed/${ops.size}건" }
     }
 
-    private fun loadIndexDefinition(): JsonObject {
+    /**
+     * `indices().exists()` 는 인덱스가 없을 때 false 가 아니라 404 예외를 던진다.
+     * 없음을 없음으로 읽지 않으면 정작 아래 create 에 도달하지 못해 인덱스가 영영 생기지 않는다.
+     */
+    private fun indexExists(): Boolean =
+        try {
+            osClient.indices().exists { it.index(indexName) }.value()
+        } catch (e: OpenSearchException) {
+            if (e.status() == 404) false else throw e
+        }
+
+    /**
+     * 정의 파일은 Jackson 으로 읽는다 — JacksonJsonpMapper 의 jsonProvider 는
+     * createReader(InputStream) 를 지원하지 않는다(createParser 만 구현). search 쪽 구현과 동일한 방식.
+     */
+    private fun loadIndexDefinition(): JsonNode {
         val stream = requireNotNull(javaClass.getResourceAsStream(INDEX_DEFINITION_RESOURCE)) {
             "Index definition resource not found: $INDEX_DEFINITION_RESOURCE"
         }
-        return stream.use { s ->
-            osClient._transport().jsonpMapper().jsonProvider().createReader(s).readObject()
-        }
+        return stream.use { objectMapper.readTree(it) }
     }
 
-    private fun <T> JsonObject.parseAs(deserializer: JsonpDeserializer<T>): T {
+    private fun JsonNode.required(key: String): JsonNode =
+        requireNotNull(get(key)) { "'$key' 누락 — $INDEX_DEFINITION_RESOURCE 정의 확인" }
+
+    private fun <T> JsonNode.parseAs(deserializer: JsonpDeserializer<T>): T {
         val mapper = osClient._transport().jsonpMapper()
         return mapper.jsonProvider().createParser(StringReader(toString())).use { parser ->
             deserializer.deserialize(parser, mapper)
