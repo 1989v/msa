@@ -81,6 +81,32 @@ DDL 의 단일 소유자는 Flyway 마이그레이션(`db/migration`)이다. Hib
 | 슬라이스 테스트(H2) | `create-drop` 허용 |
 | 금지 | 실 환경 `update` / `create` (schema drift) |
 
+> [!WARNING] 현재 운영은 이 규칙을 지키지 못하고 있다 (2026-08-09 실측)
+> 운영 스키마 14개 중 **`flyway_schema_history` 가 있는 것은 2개뿐**(`code_dictionary_db`,
+> `game_db`)이다. 나머지는 전부 Hibernate 가 만든 스키마이고, 레포의 마이그레이션 파일은
+> 한 번도 실행된 적이 없다.
+>
+> **원인**: Spring Boot 4 부터 Flyway 자동설정이 `org.springframework.boot:spring-boot-flyway`
+> 모듈로 분리됐다. `org.flywaydb:flyway-core` 만 선언하면 **아무 경고 없이 마이그레이션이
+> 실행되지 않는다** — 앱은 정상 기동하고 `ddl-auto=update` 가 스키마를 대신 만들어버려
+> 한참 뒤에야 드러난다. 그 모듈을 선언한 건 `code-dictionary:app` 하나뿐이고,
+> `game_db` 는 같은 앱 안의 명시적 `GameFlywayMigrator` 덕에 이력이 남았다.
+>
+> **영향 모듈**(마이그레이션 보유 + 자동설정 부재): product · order · quant · recommendation ·
+> place · inventory · fulfillment.
+>
+> **되돌리는 순서** — 서비스마다 개별로:
+> 1. 운영 스키마와 마이그레이션이 만들 스키마를 대조한다 (Hibernate 산 스키마는 인덱스·타입이
+>    다를 수 있다)
+> 2. 차이를 메우는 마이그레이션을 추가하거나 `baseline-version` 을 실제 상태에 맞춘다
+> 3. `spring-boot-flyway` 를 추가하고 스테이징에서 검증
+> 4. `ddl-auto` 를 `validate` 로 내린다 (지금은 k3s-lite 의 `ddl-auto-update` 패치가
+>    오버레이 상속으로 운영까지 `update` 를 주입하고 있다 — 이 패치도 함께 걷어낸다)
+>
+> 신규 모듈이 같은 함정에 빠지는 것은 루트 `build.gradle.kts` 의 `verifyFlywayWiring`
+> 태스크가 막는다(`check` 에 연결돼 `./gradlew build` 에서 실패). 위 7종은 그 안에
+> **명시적 부채 목록**으로 적혀 있고, 고친 서비스를 목록에서 지우는 것이 완료 기준이다.
+
 `open-in-view` 는 끈다. 영속성 컨텍스트를 뷰 렌더링까지 끌고 가지 않고, 필요한 데이터는 트랜잭션 경계 안에서 조회를 끝낸다.
 
 ## 4. 영속성 컨텍스트
