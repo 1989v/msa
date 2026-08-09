@@ -177,19 +177,92 @@ patches:
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"
   # ─── Argo sync wave — 전체 롤아웃을 배치로 직렬화 ─────────────────────────
   # 공유 의존성(common/) 변경이나 version tag 푸시는 전 서비스의 이미지 태그를 한
-  # 커밋에 올린다. 웨이브가 없으면 21개가 동시에 재기동해 단일 노드가 죽는다.
-  # Argo 는 웨이브 N 의 리소스가 Healthy 가 될 때까지 N+1 을 시작하지 않으므로,
-  # 변경 규모와 무관하게 동시 기동 수가 웨이브 크기로 묶인다.
+  # 커밋에 올린다. 웨이브가 없으면 20개가 동시에 재기동해 단일 노드가 죽는다.
+  # Argo 는 웨이브 N 이 Healthy 가 될 때까지 N+1 을 시작하지 않으므로, 변경 규모와
+  # 무관하게 동시 기동 수가 웨이브 크기로 묶인다.
   # 변경 없는 리소스는 즉시 Healthy 라 평소 단일 서비스 배포에는 영향이 없다.
   # wave 0(기본) = 인프라 StatefulSet + cloudflared.
-  - path: patches/sync-wave-1.yaml
-    target: {kind: Deployment, name: "^(gateway|portal-fe|code-dictionary|commerce)$"}
-  - path: patches/sync-wave-2.yaml
-    target: {kind: Deployment, name: "^(admin-fe|quant-fe|gifticon-fe|agent-viewer-fe|auth)$"}
-  - path: patches/sync-wave-3.yaml
-    target: {kind: Deployment, name: "^(product|search|gifticon|experiment|place|agent-viewer-api)$"}
-  - path: patches/sync-wave-4.yaml
-    target: {kind: Deployment, name: "^(analytics|quant|chatbot|recommendation|recommendation-ann|search-consumer)$"}
+  #
+  # **웨이브 크기 = 무료 티어 예산에서 역산한다.** 4 OCPU 중 인프라 StatefulSet 6종과
+  # k3s/kubelet/ingress 가 상시 쓰는 몫을 빼면 롤아웃에 쓸 수 있는 건 약 2 코어.
+  # cpu 상한이 1 코어이므로 **JVM 은 웨이브당 2개**가 상한이다.
+  # 2026-08-09 실측: 웨이브당 4개(=4코어, 100%)로 잡았더니 CoreDNS 가 굶어
+  # UnknownHostException → crashloop. 사이트는 살아 있었지만 롤아웃이 정체했다.
+  # nginx(FE) 는 기동 비용이 무시할 수준이라 한 웨이브에 묶어도 된다.
+  - target: {kind: Deployment, name: "^(gateway|portal-fe)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "1"
+  - target: {kind: Deployment, name: "^(code-dictionary|commerce)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "2"
+  # nginx 3종 — 기동 비용 미미
+  - target: {kind: Deployment, name: "^(admin-fe|quant-fe|gifticon-fe|agent-viewer-fe)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "3"
+  - target: {kind: Deployment, name: "^(auth|product)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "4"
+  - target: {kind: Deployment, name: "^(search|gifticon)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "5"
+  - target: {kind: Deployment, name: "^(experiment|place|agent-viewer-api)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "6"
+  # 무거운 백그라운드 — 마지막에 둬서 늦거나 실패해도 트래픽 경로를 막지 않는다
+  - target: {kind: Deployment, name: "^(analytics|quant)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "7"
+  - target: {kind: Deployment, name: "^(chatbot|recommendation)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "8"
+  - target: {kind: Deployment, name: "^(recommendation-ann|search-consumer)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "9"
   # ─── place (ADR-0056) — DB provisioning 전까지 비활성 가드 ─────────────────
   # OCIR 이미지·images: 항목은 CI 가 등재 완료. 남은 활성화 절차:
   #   1) 운영 MySQL 에 1회 수동 SQL (기존 데이터 볼륨이라 init 스크립트 미실행):

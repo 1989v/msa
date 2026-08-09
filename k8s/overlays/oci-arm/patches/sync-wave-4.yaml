@@ -1,8 +1,0 @@
-# Argo sync wave 4 — 무거운 백그라운드 워크로드. 마지막에 둬서, 이들이 늦게 뜨거나
-# 실패해도 앞 웨이브(사용자 트래픽 경로)의 롤아웃을 막지 않는다.
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: placeholder
-  annotations:
-    argocd.argoproj.io/sync-wave: "4"

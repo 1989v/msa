@@ -1,7 +1,0 @@
-# Argo sync wave 1 — 사이트가 뜨는 최소 집합. 이 웨이브가 Healthy 가 된 뒤에야 2 가 시작된다.
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: placeholder
-  annotations:
-    argocd.argoproj.io/sync-wave: "1"
