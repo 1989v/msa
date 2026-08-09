@@ -5,7 +5,10 @@ const KAKAO_CLIENT_ID = import.meta.env.VITE_KAKAO_CLIENT_ID ?? '';
 
 // ⚠️ 이 값은 Kakao/Google OAuth 앱 콘솔의 Authorized Redirect URI 와 정확히 일치해야 함.
 // 변경 시 양쪽 provider 콘솔도 같이 갱신 (불일치 시 redirect_uri_mismatch).
-export const OAUTH_REDIRECT_URI = window.location.origin + '/oauth/callback';
+//
+// portal-fe 에서 어드민은 `/admin/*` 아래에 마운트된다. `/oauth/callback` 은 쇼핑 플로우가
+// 이미 쓰고 있으므로(App.tsx: ShopOAuthCallbackPage) 어드민 콜백은 반드시 `/admin` 을 붙인다.
+export const OAUTH_REDIRECT_URI = window.location.origin + '/admin/oauth/callback';
 
 export function getGoogleOAuthUrl(): string {
   const params = new URLSearchParams({

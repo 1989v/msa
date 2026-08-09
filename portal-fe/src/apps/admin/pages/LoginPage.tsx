@@ -12,7 +12,7 @@ export function LoginPage() {
   useEffect(() => {
     if (isAuthenticated) {
       if (isAdmin) {
-        navigate('/', { replace: true });
+        navigate('/admin', { replace: true });
       } else {
         navigate('/admin/unauthorized', { replace: true });
       }

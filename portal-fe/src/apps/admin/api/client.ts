@@ -1,7 +1,7 @@
 import axios from 'axios';
-import { BYPASS_AUTH } from '@admin/lib/auth-bypass';
 
 const TOKEN_KEY = 'admin_token';
+const LOGIN_PATH = '/admin/login';
 
 export const apiClient = axios.create({
   baseURL: '',
@@ -21,13 +21,11 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // 만료·위조·역할 박탈 등 서버가 거부한 토큰은 즉시 버리고 로그인으로 되돌린다.
     if (error.response?.status === 401) {
-      // ⚠️ TEMPORARY: BYPASS_AUTH 모드에서는 401 → /login redirect 가
-      // dashboard ↔ login 무한 루프를 만든다 (LoginPage 가 BYPASS 감지하면
-      // 다시 / 로 navigate 해서 또 401). BYPASS 면 단순 reject.
-      if (!BYPASS_AUTH) {
-        localStorage.removeItem(TOKEN_KEY);
-        window.location.href = '/login';
+      localStorage.removeItem(TOKEN_KEY);
+      if (window.location.pathname !== LOGIN_PATH) {
+        window.location.href = LOGIN_PATH;
       }
     }
     return Promise.reject(error);
