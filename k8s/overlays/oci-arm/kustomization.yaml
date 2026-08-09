@@ -197,7 +197,7 @@ images:
     newTag: 91c095a
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 91c095a
+    newTag: b97c144
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
     newTag: 91c095a
