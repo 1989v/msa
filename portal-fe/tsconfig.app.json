@@ -8,7 +8,6 @@
     "types": ["vite/client"],
     "skipLibCheck": true,
     "baseUrl": ".",
-    "paths": { "@admin/*": ["./src/apps/admin/*"] },
 
     /* Bundler mode */
     "moduleResolution": "bundler",

@@ -10,7 +10,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      '@admin': path.resolve(__dirname, './src/apps/admin'),
     },
   },
   server: {

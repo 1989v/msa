@@ -9,7 +9,6 @@ import ShopLoginPage from './pages/ShopLoginPage';
 import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 
 // ADR-0058 R3 FE 통합 — 흡수될 sub-app 슬롯 (lazy). P2 에서 실제 앱 라우터로 교체.
-const AdminApp = lazy(() => import('./apps/admin/App'));
 // ADR-0059 — 게임 플랫폼 (game:feature API 는 code-dictionary 와 동일 오리진)
 const GamesPage = lazy(() => import('./pages/games/GamesPage'));
 const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
@@ -36,6 +35,11 @@ function gameRoute(element: ReactElement) {
   return isApexProd ? <GameHostRedirect /> : element;
 }
 
+function AdminHostRedirect() {
+  window.location.replace('https://admin.1989v.com' + window.location.pathname.replace(/^\/admin/, ''));
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
@@ -59,7 +63,9 @@ function App() {
           <Route path="/en/games/:slug" element={gameRoute(<GameDetailPage />)} />
 
           {/* 흡수 sub-app 슬롯 (P2 통합 대상) */}
-          <Route path="/admin/*" element={<AdminApp />} />
+          {/* 어드민은 admin.1989v.com 한 곳뿐이다 — 공개 포털 번들에 어드민 코드를 넣지
+              않는다(2026-08-09, ADR-0063). 기존 링크만 정식 호스트로 넘긴다. */}
+          <Route path="/admin/*" element={<AdminHostRedirect />} />
           <Route path="/quant/*" element={<QuantApp />} />
           <Route path="/gifticon/*" element={<GifticonApp />} />
           <Route path="/agent-viewer/*" element={<AgentViewerApp />} />
