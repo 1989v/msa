@@ -83,7 +83,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation"
+          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation place"
           ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest recommendation-ml recommendation-ann"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
@@ -160,6 +160,7 @@ jobs:
               # ADR-0059: game 모듈은 code-dictionary:app 에 폴드 — game 변경 = code-dictionary 리빌드
               code-dictionary/*|game/*)                  JVM_SVCS+=" code-dictionary" ;;
               chatbot/*)                                 JVM_SVCS+=" chatbot" ;;
+              place/*)                                   JVM_SVCS+=" place" ;;
               quant/app/*|quant/domain/*|quant/glossary*)JVM_SVCS+=" quant" ;;
               quant/frontend/*)                          DOCKER_SVCS+=" quant-fe" ;;
               quant/ingest/*)                            DOCKER_SVCS+=" quant-ingest" ;;
