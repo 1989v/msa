@@ -15,7 +15,7 @@ export function OAuthCallbackPage() {
     called.current = true;
 
     const code = searchParams.get('code');
-    const provider = searchParams.get('state'); // 'google' or 'kakao', set in auth.ts
+    const provider = searchParams.get('state'); // 'google' — auth.ts 가 state 로 실어 보낸다
 
     if (!code || !provider) {
       setError('인증 코드가 없습니다.');

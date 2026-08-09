@@ -50,3 +50,29 @@ spec:
               app.kubernetes.io/name: search-batch
       ports:
         - { port: http, protocol: TCP }
+---
+# auth → commerce : SSO 로그인 시 회원 조회/생성(POST /api/members/sso).
+# default-deny 아래서 백엔드 간 통신은 명시 허용이 없으면 막힌다 — gateway→백엔드만 열려 있어
+# auth 가 commerce 로 나가지 못했고, 구글 인증을 통과하고도 콜백에서 로그인이 실패했다
+# (2026-08-09. 증상은 Connection refused 라 앱 장애처럼 보였다).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-auth-to-commerce
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: commerce
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: auth
+      ports:
+        - { port: http, protocol: TCP }

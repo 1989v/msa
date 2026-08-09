@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { getGoogleOAuthUrl, getKakaoOAuthUrl } from '@/api/auth';
+import { getGoogleOAuthUrl } from '@/api/auth';
 
 export function LoginPage() {
   const { isAuthenticated, isAdmin } = useAuth();
@@ -36,16 +36,6 @@ export function LoginPage() {
                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
               </svg>
               Google로 로그인
-            </Button>
-          </a>
-          <a href={getKakaoOAuthUrl()} className="block">
-            <Button
-              className="w-full gap-2 bg-yellow-400 text-zinc-900 hover:bg-yellow-500 dark:bg-yellow-400 dark:text-zinc-900 dark:hover:bg-yellow-500"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.72 1.63 5.12 4.1 6.54-.18.66-.64 2.39-.73 2.76-.11.46.17.45.36.33.14-.09 2.29-1.55 3.22-2.18.32.05.65.07.98.07 5.52 0 10-3.34 10-7.32C20 6.34 17.52 3 12 3z" fill="currentColor"/>
-              </svg>
-              Kakao로 로그인
             </Button>
           </a>
         </div>
