@@ -1,0 +1,24 @@
+# CPU 상한 — 단일 노드(4 OCPU)에서 한 파드가 노드를 통째로 점유하지 못하게 한다.
+#
+# memory 만 제한하고 cpu 는 열어두면, 다수 서비스가 동시에 콜드스타트할 때 JVM 들이
+# JIT/GC 스레드로 런큐를 채워 노드가 응답 불능이 된다(2026-08-09 load 32). 상한을 걸면
+# 같은 상황이 "느려짐"으로 끝난다 — 여기에 sync-wave 배치와 startupProbe 가 겹쳐 3중 방어.
+#
+# 부수 효과가 본질에 가깝다: cpu quota 가 없으면 컨테이너 인식 JVM 이 노드 코어 수(4)를
+# 그대로 읽어 스레드 풀을 그만큼 잡는다. quota 를 걸면 availableProcessors 가 상한을
+# 따라가므로 서비스당 기동 스레드 수도 함께 줄어든다.
+#
+# nginx(FE) 도 함께 걸리지만 실사용이 상한 근처에 가지 않아 무해하다.
+# 이 패치는 tier 별 memory 패치보다 뒤에 적용된다 (strategic merge 로 limits 맵 병합).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          resources:
+            limits:
+              cpu: "1"

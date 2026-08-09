@@ -1,0 +1,7 @@
+# Argo sync wave 2 — 나머지 FE + 로그인 경로.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"

@@ -1,0 +1,7 @@
+# Argo sync wave 3 — 도메인 API.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"

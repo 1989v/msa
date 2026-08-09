@@ -4,6 +4,10 @@
 # 이 128Mi 미만이 되어 Spring Boot 4 + outbox poller 가 OOM. 60% 로 올려서
 # 512Mi → ~300Mi heap, 384Mi → ~230Mi heap 확보.
 #
+# 코어 수는 여기서 만지지 않는다 — cpu-cap.yaml 의 cgroup 상한만으로 충분하다.
+# Java 10+ 는 컨테이너 인식이 기본이라 cpu quota 에서 availableProcessors 를 도출하므로,
+# -XX:ActiveProcessorCount 로 다른 값을 강제하면 상한과 스레드 수가 어긋나기만 한다.
+#
 # nginx 컨테이너(FE) 는 env 변수 무시 → 함께 적용해도 무해.
 # kustomize 의 strategic merge 는 env 리스트에 append 하므로 base 의 기존 env
 # 와 충돌 없음.

@@ -170,6 +170,26 @@ patches:
     target: {kind: Deployment, name: quant-fe}
   - path: patches/resources-fe-96mi.yaml
     target: {kind: Deployment, name: gifticon-fe}
+  # ─── CPU 상한 (tier memory 패치 뒤에 적용 — limits 맵 병합) ────────────────
+  - path: patches/cpu-cap.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+  # ─── Argo sync wave — 전체 롤아웃을 배치로 직렬화 ─────────────────────────
+  # 공유 의존성(common/) 변경이나 version tag 푸시는 전 서비스의 이미지 태그를 한
+  # 커밋에 올린다. 웨이브가 없으면 21개가 동시에 재기동해 단일 노드가 죽는다.
+  # Argo 는 웨이브 N 의 리소스가 Healthy 가 될 때까지 N+1 을 시작하지 않으므로,
+  # 변경 규모와 무관하게 동시 기동 수가 웨이브 크기로 묶인다.
+  # 변경 없는 리소스는 즉시 Healthy 라 평소 단일 서비스 배포에는 영향이 없다.
+  # wave 0(기본) = 인프라 StatefulSet + cloudflared.
+  - path: patches/sync-wave-1.yaml
+    target: {kind: Deployment, name: "^(gateway|portal-fe|code-dictionary|commerce)$"}
+  - path: patches/sync-wave-2.yaml
+    target: {kind: Deployment, name: "^(admin-fe|quant-fe|gifticon-fe|agent-viewer-fe|auth)$"}
+  - path: patches/sync-wave-3.yaml
+    target: {kind: Deployment, name: "^(product|search|gifticon|experiment|place|agent-viewer-api)$"}
+  - path: patches/sync-wave-4.yaml
+    target: {kind: Deployment, name: "^(analytics|quant|chatbot|recommendation|recommendation-ann|search-consumer)$"}
   # ─── place (ADR-0056) — DB provisioning 전까지 비활성 가드 ─────────────────
   # OCIR 이미지·images: 항목은 CI 가 등재 완료. 남은 활성화 절차:
   #   1) 운영 MySQL 에 1회 수동 SQL (기존 데이터 볼륨이라 init 스크립트 미실행):
