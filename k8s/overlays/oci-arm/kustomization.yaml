@@ -316,7 +316,7 @@ images:
     newTag: b369d9c
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: be425a8
+    newTag: a4f33ab
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: b369d9c
