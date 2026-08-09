@@ -197,7 +197,7 @@ images:
     newTag: "33817b4"
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 88bb760
+    newTag: 160caf0
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
     newTag: 88bb760
@@ -215,7 +215,7 @@ images:
     newTag: b985812
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
-    newTag: 88bb760
+    newTag: 160caf0
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: a4a1b48
