@@ -290,7 +290,7 @@ images:
     newTag: b369d9c
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: b369d9c
+    newTag: be425a8
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: b369d9c
@@ -299,7 +299,7 @@ images:
     newTag: b369d9c
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: b369d9c
+    newTag: be425a8
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
     newTag: b369d9c
@@ -311,7 +311,7 @@ images:
     newTag: b369d9c
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: b369d9c
+    newTag: be425a8
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: b369d9c
