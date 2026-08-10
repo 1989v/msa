@@ -29,7 +29,7 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: false
   # ADR-0029 PR-7: Flyway baseline 도입. Hibernate ddl-auto=validate 와 결합해 스키마 변경은 Flyway 단독 책임.
-  # baseline-on-migrate=true + baseline-version=1 로 기존 운영 DB(이미 ddl-auto 가 만든 products 테이블 보유) 보호.
+  # baseline-on-migrate 로 기존 운영 DB(ddl-auto 가 만든 products 테이블 보유)를 기준선으로 삼는다.
   # 신규 마이그레이션:
   #   - V1__create_products_table.sql                    (legacy baseline, IF NOT EXISTS 로 신규 DB 호환)
   #   - V20260502_010__create_processed_event.sql        (ADR-0029 PR-7, §6 표준 스키마 — product 측 신규 도입)
@@ -42,7 +42,7 @@ spring:
     #  docs/conventions/jpa-persistence.md). 실제 스키마가 **전 마이그레이션 적용 상태와
     # 동일함을 대조 확인**했으므로 최신 버전을 기준선으로 잡고 이후 버전부터 적용한다.
     # baseline-version 은 이력 테이블이 없을 때 한 번만 쓰인다 — 이후엔 무시되므로 갱신 불필요.
-    baseline-version: 20260703.001
+    baseline-version: "20260703.001"   # 따옴표 필수 — YAML 이 숫자로 읽으면 지수표기(2.02607E7)가 돼 Flyway 가 거부한다
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   data:
