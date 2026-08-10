@@ -286,43 +286,43 @@ images:
     newTag: b369d9c
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: be425a8
+    newTag: 5055b26
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: be425a8
+    newTag: 5055b26
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 91c095a
   - name: commerce/place
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: a4f33ab
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/quant
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: 91c095a
@@ -331,7 +331,7 @@ images:
     newTag: 91c095a
   - name: commerce/recommendation
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/recommendation-ann
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ann
     newTag: 91c095a
@@ -340,13 +340,13 @@ images:
     newTag: 91c095a
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: b369d9c
+    newTag: 5055b26
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
-    newTag: b369d9c
+    newTag: 5055b26
   # 인프라 이미지 — default-deny egress 라 기동 래퍼의 nori 다운로드가 불가.
   # analysis-nori 베이크 이미지로 교체 (docker/opensearch/Dockerfile, 수동 빌드·푸시)
   - name: opensearchproject/opensearch
