@@ -102,7 +102,13 @@ DDL 의 단일 소유자는 Flyway 마이그레이션(`db/migration`)이다. Hib
 > 3. `spring-boot-flyway` 를 추가하고 스테이징에서 검증
 > 4. `ddl-auto` 를 `validate` 로 올린다
 >
-> **1차 조치는 끝났다 (2026-08-09)**: 운영(oci-arm)은 `ddl-auto: none` 으로 얼렸다.
+> **배선 완료 (2026-08-10)**: 아래 "되돌리는 순서"를 7종 전부에 적용했다. 남은 것은
+> `validate` 승격뿐이며, 그 전에 한 사이클 관찰한다. 실행 경로는 둘이다 —
+> 단독 앱은 `spring-boot-flyway` 자동설정, **폴드된 앱은 `ScopedFlywayMigrator`**(한
+> 클래스패스에 도메인별 `V1__…` 이 공존해 자동설정으로는 버전이 충돌한다).
+> `recommendation` 의 `db/migration-clickhouse` 는 Flyway 미지원 대상이라 의도적 제외다.
+>
+> **1차 조치 (2026-08-09)**: 운영(oci-arm)은 `ddl-auto: none` 으로 얼렸다.
 > `update` 는 배포할 때마다 조용히 컬럼을 붙여 드리프트를 보이지 않게 만드는 게 문제의
 > 핵심이었다. `validate` 가 최종 목표지만 지금 스키마와 엔티티가 어긋나 있으면 **기동이
 > 막히므로**, Flyway 배선 전에는 위험하다. `none` 은 스키마를 얼리고 어긋남을 런타임

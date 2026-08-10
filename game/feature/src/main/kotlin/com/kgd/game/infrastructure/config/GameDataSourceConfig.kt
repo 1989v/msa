@@ -1,11 +1,10 @@
 package com.kgd.game.infrastructure.config
 
+import com.kgd.common.persistence.ScopedFlywayMigrator
 import com.kgd.common.persistence.DataSourceType
 import com.kgd.common.persistence.ReadReplicaRoutingDataSource
 import com.querydsl.jpa.impl.JPAQueryFactory
 import jakarta.persistence.EntityManagerFactory
-import org.flywaydb.core.Flyway
-import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -70,7 +69,13 @@ class GameDataSourceConfig {
     fun gameFlyway(
         @Qualifier("gameMasterDataSource") dataSource: DataSource,
         @Value("\${game.flyway.enabled:true}") enabled: Boolean,
-    ): GameFlywayMigrator = GameFlywayMigrator(dataSource, enabled)
+    ): ScopedFlywayMigrator = ScopedFlywayMigrator(
+        dataSource = dataSource,
+        location = "classpath:gamedb/migration",
+        enabled = enabled,
+        // game_db 는 처음부터 Flyway 가 만들었다 — 기준선 없이 전부 적용한다.
+        baselineVersion = null,
+    )
 
     // 마이그레이션이 EMF 생성(스키마 검증)보다 먼저 끝나야 한다 — Boot 의 Flyway 자동 구성이
     // 걸어주는 의존을 직접 선언한다. 비활성일 때도 빈은 존재하므로 @DependsOn 이 항상 성립.
@@ -96,22 +101,3 @@ class GameDataSourceConfig {
     ): JPAQueryFactory = JPAQueryFactory(SharedEntityManagerCreator.createSharedEntityManager(emf))
 }
 
-/**
- * game_db 마이그레이션 실행기. Boot 의 `FlywayMigrationInitializer` 와 같은 역할이며,
- * 빈 존재 자체로 [GameDataSourceConfig.gameEntityManagerFactory] 의 선행 조건이 된다.
- */
-class GameFlywayMigrator(
-    private val dataSource: DataSource,
-    private val enabled: Boolean,
-) : InitializingBean {
-
-    override fun afterPropertiesSet() {
-        if (!enabled) return
-        Flyway.configure()
-            .dataSource(dataSource)
-            .locations("classpath:gamedb/migration")
-            .baselineOnMigrate(false)
-            .load()
-            .migrate()
-    }
-}

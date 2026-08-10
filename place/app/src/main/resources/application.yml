@@ -23,7 +23,12 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: true
-    baseline-version: 0
+    # 운영 스키마는 Hibernate ddl-auto=update 가 만든 것이라 Flyway 이력이 없다
+    # (Boot 4 에서 자동설정 모듈이 분리된 걸 놓쳐 마이그레이션이 실행된 적이 없었다 —
+    #  docs/conventions/jpa-persistence.md). 실제 스키마가 **전 마이그레이션 적용 상태와
+    # 동일함을 대조 확인**했으므로 최신 버전을 기준선으로 잡고 이후 버전부터 적용한다.
+    # baseline-version 은 이력 테이블이 없을 때 한 번만 쓰인다 — 이후엔 무시되므로 갱신 불필요.
+    baseline-version: 2
 
 opensearch:
   uris: ${OPENSEARCH_URIS:http://localhost:9200}

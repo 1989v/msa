@@ -1,5 +1,8 @@
 package com.kgd.order.infrastructure.config
 
+import org.springframework.context.annotation.DependsOn
+import org.springframework.beans.factory.annotation.Value
+import com.kgd.common.persistence.ScopedFlywayMigrator
 import com.kgd.common.persistence.DataSourceType
 import com.kgd.common.persistence.ReadReplicaRoutingDataSource
 import jakarta.persistence.EntityManagerFactory
@@ -55,7 +58,22 @@ class OrderDataSourceConfig {
         @Qualifier("orderRoutingDataSource") routingDataSource: DataSource,
     ): DataSource = LazyConnectionDataSourceProxy(routingDataSource)
 
+    // 폴드된 앱(ADR-0058)이라 Boot 의 Flyway 자동설정을 쓸 수 없다 — primary datasource 하나에
+    // classpath:db/migration 전부를 적용해 도메인 간 버전이 충돌한다. 전용 location 으로 직접 돌린다.
+    // baseline: 운영 스키마가 Hibernate 산물이라 이력이 없다. 정의와 실제가 일치함을 대조 확인했다.
     @Bean
+    fun orderFlyway(
+        @Qualifier("orderMasterDataSource") dataSource: DataSource,
+        @Value("\${order.flyway.enabled:true}") enabled: Boolean,
+    ): ScopedFlywayMigrator = ScopedFlywayMigrator(
+        dataSource = dataSource,
+        location = "classpath:orderdb/migration",
+        enabled = enabled,
+        baselineVersion = "20260502.002",
+    )
+
+    @Bean
+    @DependsOn("orderFlyway")
     fun orderEntityManagerFactory(
         builder: EntityManagerFactoryBuilder,
         @Qualifier("orderDataSource") dataSource: DataSource,

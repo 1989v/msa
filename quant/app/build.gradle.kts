@@ -25,6 +25,8 @@ dependencies {
     // TG-07.7: kotlin-logging 람다 로깅 (ADR-0021)
     implementation(libs.kotlin.logging)
     // TG-08: Flyway MySQL 마이그레이션 (V001__init.sql)
+    // Boot 4 는 Flyway 자동설정을 이 모듈로 분리했다 — 없으면 마이그레이션이 조용히 건너뛰어진다
+    implementation("org.springframework.boot:spring-boot-flyway")
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-mysql")
     runtimeOnly(libs.mysql.connector)

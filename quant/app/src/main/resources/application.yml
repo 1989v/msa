@@ -26,7 +26,11 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
-    baseline-version: 0
+    # 운영 스키마는 Hibernate ddl-auto=update 가 만든 것이라 이력이 없다. 대조 결과 정의 20개 중
+    # **엔티티가 없는 3개**만 빠져 있었고(V001 의 "스키마만 사전 마련" 대상), 그 3개는
+    # V20260810_001 이 IF NOT EXISTS 로 보강한다. 그래서 기준선은 그 직전 최신 버전이다.
+    # baseline-version 은 이력 테이블이 없을 때 한 번만 쓰인다 — 이후엔 무시되므로 갱신 불필요.
+    baseline-version: 20260507.001
   # TG-P2-11: Redis Token Bucket Rate Limiter (운영에서만 활성화). Phase 1/Phase 2-backtest 는 Redis 미연결.
   data:
     redis:

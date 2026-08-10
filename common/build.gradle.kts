@@ -4,6 +4,10 @@ plugins {
 }
 
 dependencies {
+    // ScopedFlywayMigrator 전용 — 이 라이브러리가 flyway 를 전 서비스에 끌고 가지 않도록
+    // compileOnly. 실제로 쓰는 모듈은 자기 build.gradle.kts 에 flyway-core 를 이미 갖고 있다.
+    compileOnly("org.flywaydb:flyway-core")
+
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.webflux)
     implementation("org.springframework.boot:spring-boot-webclient")

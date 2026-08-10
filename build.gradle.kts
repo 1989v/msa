@@ -101,36 +101,41 @@ subprojects {
  * Spring Boot 4 부터 Flyway 자동설정이 `spring-boot-flyway` 모듈로 분리됐다.
  * `org.flywaydb:flyway-core` 만 선언하면 **아무 경고 없이 마이그레이션이 그냥 실행되지 않는다** —
  * 앱은 정상 기동하고 `ddl-auto` 가 스키마를 만들어버려 한참 뒤에야 드러난다.
- * 실제로 운영 스키마 14개 중 12개가 이 상태였다(2026-08-09 실측: flyway_schema_history 부재).
+ * 실제로 운영 스키마 15개 중 13개가 이 상태였다(2026-08-09 실측: flyway_schema_history 부재).
  *
- * 아래 목록은 **이미 그 상태로 배포된 서비스들**이다. 각 서비스의 실제 스키마와 마이그레이션을
- * 대조해 baseline 을 잡은 뒤 자동설정 모듈을 넣고 이 목록에서 지운다.
- * 신규 서비스가 같은 함정에 빠지는 것은 이 검사가 막는다.
+ * 마이그레이션을 실행하는 길은 둘이고, 둘 중 하나는 있어야 한다:
+ *   1. `spring-boot-flyway` 자동설정 — 단독 앱의 정상 경로
+ *   2. `ScopedFlywayMigrator` 직접 등록 — 폴드된 앱(ADR-0058)의 경로.
+ *      한 클래스패스에 도메인별 `V1__…` 이 공존해 자동설정으로는 버전이 충돌한다.
+ *
+ * ClickHouse 처럼 Flyway 가 지원하지 않는 대상은 `db/migration-clickhouse` 같은 별도 이름을
+ * 쓰고 파일 상단에 적용 방법을 적어 둔다 — 이 검사는 `migration` 디렉터리의 .sql 만 본다.
  */
-val flywayNotWiredYet = setOf(
-    "product", "order", "quant", "recommendation", "place", "inventory", "fulfillment",
-)
+val flywayNotWiredYet = emptySet<String>()
 
 val verifyFlywayWiring by tasks.registering {
     group = "verification"
-    description = "마이그레이션을 가진 모듈이 Boot 4 Flyway 자동설정 모듈을 선언했는지 확인"
+    description = "마이그레이션을 가진 모듈이 Flyway 를 실제로 실행하는지 확인"
     doLast {
         val offenders = subprojects.filter { sp ->
-            val hasMigrations = sp.file("src/main/resources/db/migration")
-                .listFiles { f -> f.name.endsWith(".sql") }?.isNotEmpty() == true
+            val res = sp.file("src/main/resources")
+            val hasMigrations = res.walkTopDown()
+                .any { it.isFile && it.extension == "sql" && it.parentFile.name == "migration" }
             if (!hasMigrations) return@filter false
-            val declared = sp.configurations.findByName("runtimeClasspath")
+            val autoConfigured = sp.configurations.findByName("runtimeClasspath")
                 ?.allDependencies
                 ?.any { it.group == "org.springframework.boot" && it.name == "spring-boot-flyway" } == true
-            !declared && sp.parent?.name !in flywayNotWiredYet
+            val explicitMigrator = sp.file("src/main/kotlin").walkTopDown()
+                .any { it.isFile && it.extension == "kt" && it.readText().contains("ScopedFlywayMigrator") }
+            !(autoConfigured || explicitMigrator) && sp.name !in flywayNotWiredYet
         }
         if (offenders.isNotEmpty()) {
             throw GradleException(
                 offenders.joinToString(
                     prefix = "Flyway 마이그레이션이 실행되지 않는 모듈:\n  ",
                     separator = "\n  ",
-                    postfix = "\n\nBoot 4 는 flyway-core 만으로 자동설정이 붙지 않는다. " +
-                        "implementation(\"org.springframework.boot:spring-boot-flyway\") 를 추가할 것.",
+                    postfix = "\n\n단독 앱이면 implementation(\"org.springframework.boot:spring-boot-flyway\") 를, " +
+                        "폴드된 앱이면 ScopedFlywayMigrator 빈을 추가할 것.",
                 ) { it.path },
             )
         }
