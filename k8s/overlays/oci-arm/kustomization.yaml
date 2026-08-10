@@ -295,7 +295,7 @@ images:
     newTag: 5055b26
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 5055b26
+    newTag: 1fe43f0
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 5055b26
@@ -316,7 +316,7 @@ images:
     newTag: 5055b26
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: a4f33ab
+    newTag: 1fe43f0
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 5055b26
