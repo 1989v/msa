@@ -1,5 +1,6 @@
 package com.kgd.game.application.play.port
 
+import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.domain.play.model.GameRun
 import java.time.Duration
 
@@ -43,7 +44,7 @@ interface SaveLeasePort {
 data class ScoreEntry(val rank: Int, val nickname: String, val score: Long, val detail: String?)
 
 interface GameScoreRepositoryPort {
-    /** 닉네임당 최고 기록 upsert. 반영 여부와 현재 순위를 돌려준다 */
-    fun submit(gameId: Long, nickname: String, score: Long, detail: String?): Pair<Boolean, Int>
-    fun top(gameId: Long, limit: Int): List<ScoreEntry>
+    /** 트랙 안에서 닉네임당 최고 기록 upsert. 반영 여부와 그 트랙 내 순위를 돌려준다 */
+    fun submit(gameId: Long, track: ScoreTrack, nickname: String, score: Long, detail: String?): Pair<Boolean, Int>
+    fun top(gameId: Long, track: ScoreTrack, limit: Int): List<ScoreEntry>
 }

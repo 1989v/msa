@@ -21,6 +21,7 @@
       nickPh: '닉네임 (2~16자)', nickSave: '저장', nickSaved: '✅ 저장됨',
       pending: '닉네임을 정하면 이번 기록({n})이 등록된다', submitted: '✅ 랭킹 등록 — {n}위',
       submitFail: '랭킹 등록 실패 — 잠시 후 다시 시도',
+      trackBase: '무강화', trackModded: '강화',
     },
     en: {
       askNick: 'Nickname for the leaderboard (2-16 chars)', top10: '🏆 TOP 10', loading: '🏆 Loading leaderboard…',
@@ -29,6 +30,7 @@
       nickPh: 'Nickname (2-16 chars)', nickSave: 'Save', nickSaved: '✅ Saved',
       pending: 'Set a nickname to submit this score ({n})', submitted: '✅ Ranked #{n}',
       submitFail: 'Could not submit — try again shortly',
+      trackBase: 'No upgrades', trackModded: 'Upgraded',
     },
   };
   function L(key) {
@@ -45,6 +47,15 @@
   var pending = null;   // { slug, score, detail } — 닉네임이 정해지면 자동 제출
   var listeners = [];
 
+  /**
+   * 랭킹 트랙 — 영구 강화를 하나라도 산 상태면 MODDED, 아니면 BASE.
+   * 강화가 붙은 게임에서 점수가 실력이 아니라 누적 플레이타임을 재게 되는 걸 막으려고
+   * 보드를 나눈다. 강화 엔진(lib/meta.js)이 없는 게임은 항상 BASE 다.
+   */
+  function currentTrack() {
+    return (window.GameMeta && GameMeta.isUpgraded && GameMeta.isUpgraded()) ? 'MODDED' : 'BASE';
+  }
+
   function nickname() { return localStorage.getItem(NICK_KEY); }
 
   function setNickname(raw) {
@@ -60,7 +71,9 @@
     return fetch('/api/v1/games/' + slug + '/scores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname: nickname(), score: Math.floor(score), detail: detail || null }),
+      body: JSON.stringify({
+        nickname: nickname(), score: Math.floor(score), detail: detail || null, track: currentTrack(),
+      }),
     }).then(function (r) { return r.json(); })
       .then(function (b) {
         var d = b && b.success ? b.data : null;
@@ -84,10 +97,11 @@
   var noteEl = null;
   function note(text) { if (noteEl) noteEl.textContent = text; }
 
-  function panel(slug, el) {
+  function panel(slug, el, track) {
     if (!el) return;
+    var tr = track || currentTrack();
     el.innerHTML = '<div style="opacity:.6;font-size:11px">' + L('loading') + '</div>';
-    fetch('/api/v1/games/' + slug + '/leaderboard?limit=10')
+    fetch('/api/v1/games/' + slug + '/leaderboard?limit=10&track=' + tr)
       .then(function (r) { return r.json(); })
       .then(function (b) {
         var rows = (b && b.success && b.data) || [];
@@ -109,6 +123,27 @@
         el.innerHTML = html;
       })
       .catch(function () { el.innerHTML = '<div style="opacity:.5;font-size:11px">' + L('fail') + '</div>'; });
+  }
+
+  /** 무강화 / 강화 보드 전환 탭. 지금 내 런이 속한 트랙이 기본 선택된다. */
+  function trackTabs(onPick, active) {
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;gap:4px;margin:0 0 5px';
+    [['BASE', L('trackBase')], ['MODDED', L('trackModded')]].forEach(function (pair) {
+      var b = document.createElement('button');
+      b.textContent = pair[1];
+      b.dataset.track = pair[0];
+      b.style.cssText = 'flex:1;padding:3px 6px;font-size:10.5px;border-radius:5px;border:0;cursor:pointer;' +
+        'font-family:inherit;background:rgba(255,255,255,.08);color:inherit;opacity:.55';
+      b.onclick = function () {
+        [].forEach.call(wrap.children, function (c) { c.style.opacity = '.55'; c.style.fontWeight = '400'; });
+        b.style.opacity = '1'; b.style.fontWeight = '700';
+        onPick(pair[0]);
+      };
+      if (pair[0] === active) { b.style.opacity = '1'; b.style.fontWeight = '700'; }
+      wrap.appendChild(b);
+    });
+    return wrap;
   }
 
   /** 닉네임 인라인 편집기 — 모달을 쓰지 않아 sandbox iframe 에서도 동작한다. */
@@ -158,15 +193,21 @@
       menu.appendChild(el);
 
       var board = document.createElement('div');
-      el.appendChild(nickEditor(function () { panel(slug, board); }));
+      var shown = currentTrack();
+      el.appendChild(nickEditor(function () { panel(slug, board, shown); }));
       noteEl = document.createElement('div');
       noteEl.style.cssText = 'font-size:11px;color:#8fd0ff;min-height:14px;margin:2px 0 4px';
       el.appendChild(noteEl);
+      // 강화 엔진이 붙은 게임만 보드가 둘이다 — 없는 게임에 빈 탭을 보여주지 않는다.
+      if (window.GameMeta) {
+        var tabs = trackTabs(function (tr) { shown = tr; panel(slug, board, tr); }, shown);
+        el.appendChild(tabs);
+      }
       el.appendChild(board);
-      panel(slug, board);
+      panel(slug, board, shown);
       // 종료 화면에서 돌아올 때 갱신
       var back = document.getElementById('backBtn');
-      if (back) back.addEventListener('click', function () { setTimeout(function () { panel(slug, board); }, 200); });
+      if (back) back.addEventListener('click', function () { setTimeout(function () { panel(slug, board, shown); }, 200); });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount);
     else mount();

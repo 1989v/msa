@@ -1,7 +1,10 @@
 package com.kgd.game.infrastructure.persistence.play.entity
 
 import jakarta.persistence.Column
+import com.kgd.game.domain.play.model.ScoreTrack
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -11,11 +14,13 @@ import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.LocalDateTime
 
-/** 게임별 랭킹 — 닉네임당 최고 기록 1행 (더 높은 점수일 때만 갱신) */
+/** 게임별 랭킹 — **트랙 안에서** 닉네임당 최고 기록 1행 (더 높은 점수일 때만 갱신) */
 @Entity
 @Table(
     name = "game_score",
-    uniqueConstraints = [UniqueConstraint(name = "uk_score_game_nick", columnNames = ["game_id", "nickname"])],
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_score_game_track_nick", columnNames = ["game_id", "track", "nickname"]),
+    ],
 )
 class GameScoreJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +29,9 @@ class GameScoreJpaEntity(
     val gameId: Long,
     @Column(nullable = false, length = 24)
     val nickname: String,
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 8)
+    val track: ScoreTrack = ScoreTrack.BASE,
     score: Long,
     detail: String?,
     @CreationTimestamp

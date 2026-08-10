@@ -1,5 +1,6 @@
 package com.kgd.game.infrastructure.persistence.play.adapter
 
+import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.application.play.port.GameRunRepositoryPort
 import com.kgd.game.application.play.port.GameSaveRepositoryPort
 import com.kgd.game.application.play.port.SaveLeasePort
@@ -119,21 +120,29 @@ class GameScoreRepositoryAdapter(
     private val jpaRepository: GameScoreJpaRepository,
 ) : GameScoreRepositoryPort {
 
-    override fun submit(gameId: Long, nickname: String, score: Long, detail: String?): Pair<Boolean, Int> {
-        val existing = jpaRepository.findByGameIdAndNickname(gameId, nickname)
+    override fun submit(
+        gameId: Long,
+        track: ScoreTrack,
+        nickname: String,
+        score: Long,
+        detail: String?,
+    ): Pair<Boolean, Int> {
+        val existing = jpaRepository.findByGameIdAndTrackAndNickname(gameId, track, nickname)
         val applied = if (existing == null) {
-            jpaRepository.save(GameScoreJpaEntity(gameId = gameId, nickname = nickname, score = score, detail = detail))
+            jpaRepository.save(
+                GameScoreJpaEntity(gameId = gameId, track = track, nickname = nickname, score = score, detail = detail),
+            )
             true
         } else {
             existing.updateIfHigher(score, detail).also { if (it) jpaRepository.saveAndFlush(existing) }
         }
         val best = if (applied) score else existing!!.score
-        val rank = jpaRepository.countByGameIdAndScoreGreaterThan(gameId, best).toInt() + 1
+        val rank = jpaRepository.countByGameIdAndTrackAndScoreGreaterThan(gameId, track, best).toInt() + 1
         return applied to rank
     }
 
-    override fun top(gameId: Long, limit: Int): List<ScoreEntry> =
-        jpaRepository.findTop50ByGameIdOrderByScoreDescUpdatedAtAsc(gameId)
+    override fun top(gameId: Long, track: ScoreTrack, limit: Int): List<ScoreEntry> =
+        jpaRepository.findTop50ByGameIdAndTrackOrderByScoreDescUpdatedAtAsc(gameId, track)
             .take(limit)
             .mapIndexed { i, e -> ScoreEntry(rank = i + 1, nickname = e.nickname, score = e.score, detail = e.detail) }
 }

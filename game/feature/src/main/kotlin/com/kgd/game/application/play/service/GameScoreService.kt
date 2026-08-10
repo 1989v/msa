@@ -6,6 +6,7 @@ import com.kgd.game.application.play.port.ScoreEntry
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
+import com.kgd.game.domain.play.model.ScoreTrack
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -21,17 +22,17 @@ class GameScoreService(
     }
 
     @Transactional(transactionManager = "gameTransactionManager")
-    fun submit(slug: String, nickname: String, score: Long, detail: String?): Pair<Boolean, Int> {
+    fun submit(slug: String, track: ScoreTrack, nickname: String, score: Long, detail: String?): Pair<Boolean, Int> {
         val gameId = resolveGameId(slug)
         val nick = nickname.trim()
         if (!NICK_REGEX.matches(nick)) throw BusinessException(ErrorCode.INVALID_INPUT, "닉네임은 2~16자 (문자/숫자/공백/._-)")
         if (score !in 0..MAX_SCORE) throw BusinessException(ErrorCode.INVALID_INPUT, "점수 범위 오류")
-        return scoreRepository.submit(gameId, nick, score, detail?.take(64))
+        return scoreRepository.submit(gameId, track, nick, score, detail?.take(64))
     }
 
     @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
-    fun leaderboard(slug: String, limit: Int): List<ScoreEntry> =
-        scoreRepository.top(resolveGameId(slug), limit.coerceIn(1, 50))
+    fun leaderboard(slug: String, track: ScoreTrack, limit: Int): List<ScoreEntry> =
+        scoreRepository.top(resolveGameId(slug), track, limit.coerceIn(1, 50))
 
     private fun resolveGameId(slug: String): Long {
         val game = gameRepository.findBySlug(slug) ?: throw GameNotFoundException(slug)

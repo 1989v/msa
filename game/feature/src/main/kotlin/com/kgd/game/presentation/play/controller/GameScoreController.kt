@@ -1,5 +1,6 @@
 package com.kgd.game.presentation.play.controller
 
+import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.play.port.ScoreEntry
 import com.kgd.game.application.play.service.GameScoreService
@@ -18,6 +19,8 @@ data class ScoreSubmitRequest(
     @field:NotBlank val nickname: String = "",
     @field:PositiveOrZero val score: Long = 0,
     val detail: String? = null,
+    /** 영구 강화를 적용한 런이면 "MODDED" — 생략하면 BASE */
+    val track: String? = null,
 )
 
 data class ScoreSubmitResponse(val applied: Boolean, val rank: Int)
@@ -33,7 +36,8 @@ class GameScoreController(
         @PathVariable slug: String,
         @Valid @RequestBody request: ScoreSubmitRequest,
     ): ApiResponse<ScoreSubmitResponse> {
-        val (applied, rank) = gameScoreService.submit(slug, request.nickname, request.score, request.detail)
+        val (applied, rank) =
+            gameScoreService.submit(slug, ScoreTrack.from(request.track), request.nickname, request.score, request.detail)
         return ApiResponse.success(ScoreSubmitResponse(applied = applied, rank = rank))
     }
 
@@ -41,5 +45,7 @@ class GameScoreController(
     fun leaderboard(
         @PathVariable slug: String,
         @RequestParam(defaultValue = "10") limit: Int,
-    ): ApiResponse<List<ScoreEntry>> = ApiResponse.success(gameScoreService.leaderboard(slug, limit))
+        @RequestParam(required = false) track: String?,
+    ): ApiResponse<List<ScoreEntry>> =
+        ApiResponse.success(gameScoreService.leaderboard(slug, ScoreTrack.from(track), limit))
 }

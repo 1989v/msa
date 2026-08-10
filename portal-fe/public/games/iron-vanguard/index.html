@@ -38,15 +38,6 @@
     #info { display: none; }
     #bar button, .panel button { padding: 10px 14px; font-size: 13px; }
   }
-#barracks{width:100%;margin:6px 0 2px;padding:8px 10px;border:1px solid #2a3a52;border-radius:8px;background:#111a28;text-align:left}
-.bk-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#cfe0f5;margin-bottom:6px}
-#medalTxt{color:#e8c86a;font-size:12px}
-.bk-row{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12px;color:#9fb3cc}
-.bk-row .bk-name{flex:1}
-.bk-row .bk-lv{color:#8fd0ff;font-variant-numeric:tabular-nums}
-.bk-row button{padding:2px 8px;font-size:11px;min-width:64px}
-.bk-row button:disabled{opacity:.4;cursor:default}
-.bk-note{font-size:11px;color:#8e9db0;margin-top:6px}
 </style>
 <link rel="stylesheet" href="../lib/menu.css">
 <script src="../lib/i18n.js"></script>
@@ -73,14 +64,6 @@
     </div>
     <div class="row"><span id="codeShow" style="font-size:11px;color:#8fd0ff;letter-spacing:2px"></span></div>
     <div class="row"><span id="bestTxt" style="font-size:12px;color:#93a3b8"></span></div>
-    <div id="barracks">
-      <div class="bk-head">
-        <b data-i18n="bk.title">🏰 병영</b>
-        <span id="medalTxt"></span>
-      </div>
-      <div id="bkList"></div>
-      <div class="bk-note" data-i18n="bk.note">출정마다 훈장을 얻는다. 패배해도 남는다.</div>
-    </div>
     <button id="startBtn" data-i18n="btn.start">▶ 출정</button>
   </div>
   <div class="panel" id="endPanel" hidden>
@@ -229,18 +212,10 @@ let saveCode = localStorage.getItem(CODE_KEY) || null, saveVersion = 0;
 const fmtCode = c => c ? c.replace(/(.{4})(?=.)/g, '$1-') : '';
 let meta = { best: 0, clears: 0, medals: 0, up: { hp: 0, dmg: 0, heal: 0, crew: 0 } };
 
-/* ── 병영: 출정 사이에만 남는 영구 강화 ──────────────────────────────────
-   패배해도 훈장은 남는다 — 로그라이트의 "죽어도 전진" 축. 런 안에서는 아무것도
-   강해지지 않으므로(스테이지 사이 회복이 전부) 반복 도전의 보상은 여기에만 둔다. */
-const UPGRADES = [
-  { key:'hp',   max:5, cost:l => 3 + l * 2, label:'bk.hp'   },
-  { key:'dmg',  max:5, cost:l => 4 + l * 2, label:'bk.dmg'  },
-  { key:'heal', max:5, cost:l => 3 + l * 2, label:'bk.heal' },
-  { key:'crew', max:2, cost:l => 8 + l * 6, label:'bk.crew' },
-];
-const upLv = k => (meta.up && meta.up[k]) || 0;
-const allyHpMul = () => 1 + upLv('hp') * 0.08;
-const allyDmgMul = () => 1 + upLv('dmg') * 0.06;
+/* 병영 — 출정 사이에만 남는 영구 강화. 표만 선언하고 적립·구매·UI 는 lib/meta.js 가 맡는다. */
+const upLv = k => GameMeta.level(k);
+const allyHpMul = () => GameMeta.mul('hp', 0.08);
+const allyDmgMul = () => GameMeta.mul('dmg', 0.06);
 const stageHealRatio = () => 0.6 + upLv('heal') * 0.06;
 function showCode() { $('codeShow').textContent = saveCode ? '🔑 ' + fmtCode(saveCode) : ''; }
 async function loadMeta(codeOverride) {
@@ -643,40 +618,12 @@ function startGame() {
   $('menu').hidden = true; $('endPanel').hidden = true; $('hud').hidden = false;
   startStage();
 }
-function renderBarracks() {
-  $('medalTxt').textContent = TR('bk.medal').replace('{n}', meta.medals || 0);
-  $('bkList').innerHTML = '';
-  UPGRADES.forEach(u => {
-    const lv = upLv(u.key), maxed = lv >= u.max, cost = u.cost(lv);
-    const row = document.createElement('div');
-    row.className = 'bk-row';
-    const name = document.createElement('span');
-    name.className = 'bk-name'; name.textContent = TR(u.label);
-    const lvTxt = document.createElement('span');
-    lvTxt.className = 'bk-lv'; lvTxt.textContent = lv + '/' + u.max;
-    const btn = document.createElement('button');
-    btn.className = 'ghost';
-    btn.textContent = maxed ? TR('bk.max') : TR('bk.buy').replace('{n}', cost);
-    btn.disabled = maxed || (meta.medals || 0) < cost;
-    btn.onclick = () => {
-      if (btn.disabled) return;
-      meta.medals -= cost;
-      meta.up[u.key] = lv + 1;
-      renderBarracks();
-      persistMeta();
-    };
-    row.append(name, lvTxt, btn);
-    $('bkList').appendChild(row);
-  });
-}
-
 async function endGame(win) {
   running = false; $('hud').hidden = true;
   meta.best = Math.max(meta.best, G.stage);
   if (win) meta.clears = (meta.clears || 0) + 1;
   // 진 출정도 보상한다 — 반복 도전이 곧 강화가 되어야 재도전 동기가 생긴다.
-  const earned = G.stage + (win ? 5 : 0);
-  meta.medals = (meta.medals || 0) + earned;
+  const earned = GameMeta.award(G.stage + (win ? 5 : 0));
   GameRank.submit('iron-vanguard', G.stage * 1000 + (win ? 500 : 0), '스테이지 ' + G.stage + (win ? ' 클리어' : ''))
     .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
   $('endTitle').textContent = win ? TR('end.win') : TR('end.lose');
@@ -684,7 +631,7 @@ async function endGame(win) {
     TR('end.best').replace('{n}', meta.best) + (meta.clears ? TR('end.clears').replace('{n}', meta.clears) : '');
   $('endDesc').textContent += ' ' + TR('bk.earn').replace('{n}', earned);
   $('endPanel').hidden = false;
-  renderBarracks();
+  GameMeta.render();
   await persistMeta();
 }
 let last = performance.now();
@@ -698,20 +645,34 @@ function loop() {
 requestAnimationFrame(loop);
 $('startBtn').onclick = startGame;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false;
-  $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; renderBarracks(); };
+  $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; GameMeta.render(); };
 $('codeLoadBtn').onclick = async () => {
   const raw = ($('codeInput').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (raw.length < 8) return;
   if (await loadMeta(raw)) { saveCode = raw; localStorage.setItem(CODE_KEY, raw);
-    $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; showCode(); renderBarracks(); }
+    $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; showCode(); GameMeta.render(); }
 };
-loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; renderBarracks(); });
+loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('best').replace('{n}', meta.best) : ''; GameMeta.render(); });
 </script>
 <!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
      입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
 <script src="../lib/touch.js" data-stick="off"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'iron-vanguard',
+  title: { ko: '🏰 병영', en: '🏰 Barracks' },
+  currency: { ko: '훈장', en: 'medals', icon: '🎖' },
+  upgrades: [
+    { key:'hp',   max:5, cost:l => 3 + l * 2, label:{ ko:'병영 증축 (체력)',      en:'Barracks (HP)' } },
+    { key:'dmg',  max:5, cost:l => 4 + l * 2, label:{ ko:'무기고 (공격)',          en:'Armory (Damage)' } },
+    { key:'heal', max:5, cost:l => 3 + l * 2, label:{ ko:'의무대 (스테이지 회복)', en:'Field Medics' } },
+    { key:'crew', max:2, cost:l => 8 + l * 6, label:{ ko:'증원 (궁수 추가)',       en:'Reinforcement' } },
+  ],
+  load: () => meta,
+  save: () => persistMeta(),
+});
 GameRank.autoPanel('iron-vanguard');
 GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>

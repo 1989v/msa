@@ -1,5 +1,6 @@
 package com.kgd.game.infrastructure.persistence.play.repository
 
+import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.infrastructure.persistence.play.entity.GamePlaySessionJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameRatingJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameRunJpaEntity
@@ -27,7 +28,7 @@ interface GameRunJpaRepository : JpaRepository<GameRunJpaEntity, Long> {
 }
 
 interface GameScoreJpaRepository : JpaRepository<GameScoreJpaEntity, Long> {
-    fun findByGameIdAndNickname(gameId: Long, nickname: String): GameScoreJpaEntity?
-    fun findTop50ByGameIdOrderByScoreDescUpdatedAtAsc(gameId: Long): List<GameScoreJpaEntity>
-    fun countByGameIdAndScoreGreaterThan(gameId: Long, score: Long): Long
+    fun findByGameIdAndTrackAndNickname(gameId: Long, track: ScoreTrack, nickname: String): GameScoreJpaEntity?
+    fun findTop50ByGameIdAndTrackOrderByScoreDescUpdatedAtAsc(gameId: Long, track: ScoreTrack): List<GameScoreJpaEntity>
+    fun countByGameIdAndTrackAndScoreGreaterThan(gameId: Long, track: ScoreTrack, score: Long): Long
 }
