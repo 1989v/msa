@@ -62,7 +62,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **문서-소스 추적**: `doc_map.py` / `doc_scan.py`, `docs/doc-index.json` 정책, `docs/doc-index.lock.json` 검증 → `docs/standards/doc-index-tracking.md`
 - **Latency Budget**: latency 를 설계 입력으로 강제 + Tier 1 P99 SLA + 측정 표준 → `docs/adr/ADR-0025-latency-budget.md` (실천: `docs/conventions/latency-budget.md`)
 - **docs 분류 정책**: ADR vs Conventions vs Standards 의 정의 / 판단 기준 / 분해 원칙 / redirect 표준 → `docs/adr/ADR-0026-docs-taxonomy.md`
-- **이력서 사이트**: `resume.1989v.com` — DB(마크다운) 서빙 + 공개 토글 + 제출처별 토큰 게이트 + 열람 기록 → `docs/adr/ADR-0064-resume-site-gated-serving.md`. **본문 원본은 레포가 아니라 이력서 볼트**(파일 기반)이고 DB는 사본이다 — 사이트/어드민에서 직접 고치면 볼트 재생성 때 되돌아간다
+- **이력서 사이트**: `resume.1989v.com` — DB(마크다운) 서빙 + 공개 토글 + 제출처별 토큰 게이트 + 열람 기록 → `docs/adr/ADR-0064-resume-site-gated-serving.md`. **본문은 레포가 아니라 DB가 원본**이고 어드민에서 편집한다 (공개 레포에 이력서 원문을 두면 게이트가 무의미해진다). 초기 데이터만 이력서 볼트에서 가져왔고, 이후 볼트와 사이트는 독립적으로 갱신된다
 - **SEO / 검색 유입**: 빌드타임 프리렌더, 언어(`/en`)·장르(`/games/genre/*`) URL 승격, 호스트별 robots/sitemap, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 게임 타이틀/설명 문구는 여기서만 고친다
 
 ---

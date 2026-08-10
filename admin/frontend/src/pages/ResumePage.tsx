@@ -115,7 +115,7 @@ export function ResumePage() {
         <div>
           <h1 className="text-xl font-semibold">이력서</h1>
           <p className="text-sm text-zinc-500">
-            본문 원본은 이력서 볼트다. 여기서 고친 내용은 볼트를 다시 뽑을 때 덮어써진다.
+            resume.1989v.com 에 서빙되는 본문의 원본이다. 여기서 고친 내용이 곧 사이트 내용이다.
           </p>
         </div>
         {message && <span className="text-sm text-zinc-500">{message}</span>}
@@ -183,7 +183,7 @@ export function ResumePage() {
               {documents.length === 0 && (
                 <tr>
                   <td colSpan={7} className="py-4 text-center text-zinc-500">
-                    아직 문서가 없습니다. 볼트의 exports 를 아래에 붙여넣어 등록하세요.
+                    아직 문서가 없습니다. 아래에 마크다운을 붙여넣어 등록하세요.
                   </td>
                 </tr>
               )}
@@ -223,7 +223,7 @@ export function ResumePage() {
           </div>
           <textarea
             className="h-64 w-full rounded-md border border-zinc-300 bg-transparent p-3 font-mono text-xs dark:border-zinc-700"
-            placeholder="마크다운 본문 — 볼트 exports 파일 내용을 그대로 붙여넣습니다"
+            placeholder="마크다운 본문"
             value={draft.bodyMarkdown}
             onChange={(e) => setDraft({ ...draft, bodyMarkdown: e.target.value })}
           />
