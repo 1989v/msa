@@ -35,9 +35,9 @@
   .song .sname { font-weight:bold; font-size:14px; }
   .song .sbpm { color:#0ea5e9; font-size:11px; font-weight:bold; }
   .song .sbest { grid-column:2 / span 2; font-size:10.5px; color:#8a98b0; }
-  #hint { font-size:10.5px; color:#7a8aa0; }
+  #hint { font-size:10.5px; color:#93a3b8; }
   #endGrade { font-size:15px; font-weight:bold; color:#eab308; }
-  #info { margin-top:9px; font-size:11px; color:#5a6a80; text-align:center; }
+  #info { margin-top:9px; font-size:11px; color:#8e9db0; text-align:center; }
   @media (max-width: 900px), (pointer: coarse) {
     #wrap { width:100vw; border-width:0; border-radius:0; }
     canvas { width:100%; height:auto; }
@@ -654,6 +654,9 @@ $('againBtn').onclick = function () { startSong(songIdx); };
 $('backBtn').onclick = function () { $('endPanel').hidden = true; buildMenu(); $('menu').hidden = false; };
 buildMenu();
 </script>
+<!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
+     입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
+<script src="../lib/touch.js" data-stick="off"></script>
 <script src="../lib/rank.js"></script>
 <script>
 GameRank.autoPanel('beat-dojo');

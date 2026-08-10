@@ -464,6 +464,31 @@
     padding: 32px 16px 48px;
   }
 
+  /* 플레이 영역은 화면을 최대한 쓴다.
+     고정 560px 은 세로 긴 화면에서 캔버스 위아래로 죽은 공간을 만들고(실측 151px씩),
+     그만큼 캔버스가 작아지며 하단 조작부가 게임 화면에서 멀어진다.
+     dvh 를 쓰는 이유: 모바일 브라우저 주소창이 접히고 펴져도 높이가 튀지 않는다. */
+  .game-stage {
+    min-height: 0;
+    /* 페이지 좌우 패딩(16px)을 상쇄해 폭을 전부 준다 */
+    margin-left: -16px;
+    margin-right: -16px;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+
+  .game-stage-frame {
+    min-height: 320px;
+    /* 상단 헤더·브레드크럼이 차지하는 만큼을 빼고 남는 세로를 전부 준다 */
+    height: max(320px, calc(100dvh - 170px));
+  }
+
+  .game-stage-idle {
+    min-height: 0;
+    padding: 28px 20px;
+  }
+
   .games-row {
     grid-auto-columns: 160px;
   }

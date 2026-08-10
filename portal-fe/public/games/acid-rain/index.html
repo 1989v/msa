@@ -32,7 +32,7 @@
   .panel button.ghost { background:#2c3550; color:#e6ecf2; }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
   #bestLine { color:#eab308; }
-  #info { margin-top:9px; font-size:11px; color:#5d6a7a; text-align:center; line-height:1.7; padding:0 12px; }
+  #info { margin-top:9px; font-size:11px; color:#8fa0b4; text-align:center; line-height:1.7; padding:0 12px; }
   /* 하단 고정 입력줄 — 게임 중 항상 떠 있어 모바일 키보드가 유지된다 */
   #inputBar { position:fixed; left:0; right:0; bottom:0; z-index:20; display:flex; justify-content:center;
               background:#1a2238; border-top:2px solid #0ea5e9;
@@ -638,6 +638,9 @@ $('backBtn').onclick = function () {
   updateBestLine();
 };
 </script>
+<!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
+     입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
+<script src="../lib/touch.js" data-stick="off"></script>
 <script src="../lib/rank.js"></script>
 <script>
 GameRank.autoPanel('acid-rain');

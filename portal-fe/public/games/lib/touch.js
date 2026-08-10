@@ -182,6 +182,15 @@
     'body.vt-fit{justify-content:flex-start!important;',
     'padding-bottom:calc(var(--vt-pad-h) + env(safe-area-inset-bottom))!important;',
     'overflow-x:hidden}',
+    /* 메뉴·결과 패널은 게임 래퍼 안에 inset:0 으로 까는 관용구다(47/52 게임 공통).
+       fit 이 캔버스를 폭에 맞춰 줄이면 래퍼도 같이 줄고, overflow:hidden 이면 패널 내용이
+       잘려 버튼이 화면 밖으로 사라진다 — 모바일에서 "화면이 잘린다"의 실제 원인.
+       뷰포트 기준으로 띄워 래퍼 클리핑을 벗어나고, 넘치면 스크롤시킨다.
+       justify-content 를 flex-start 로 되돌리는 게 핵심 — center 인 채로 넘치면
+       위쪽 내용이 스크롤로도 닿지 않는다. */
+    'body.vt-fit .panel:not([hidden]){position:fixed;inset:0;max-height:100dvh;',
+    'overflow-y:auto;overscroll-behavior:contain;justify-content:flex-start!important;',
+    'padding-top:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}',
   ].join('');
   (D.head || D.documentElement).appendChild(style);
 
@@ -401,8 +410,11 @@
     // 좁은 터치 화면에서만 레이아웃에 개입한다 (태블릿 가로/데스크톱 터치는 원본 유지)
     var narrow = Math.min(v.w, v.h) <= 860;
     var fitOn = fitOpt && narrow;
-    // 세로: 하단에 조작 영역을 실제로 비운다 / 가로: 화면이 짧으므로 코너 오버레이로 얹는다
-    var padH = (fitOn && !land) ? Math.round(clamp(v.h * 0.28, BASE_R * 2 + 28, 232)) : 0;
+    // 세로: 하단에 조작 영역을 실제로 비운다 / 가로: 화면이 짧으므로 코너 오버레이로 얹는다.
+    // **비울 게 없으면 비우지 않는다** — 조이스틱도 액션도 없는(레이아웃만 쓰는) 게임에서
+    // 화면의 28% 를 빈 채로 남겨 게임이 작아지고 아래가 텅 비어 보였다.
+    var hasControls = stickMode !== 'off' || actEls.length > 0;
+    var padH = (fitOn && !land && hasControls) ? Math.round(clamp(v.h * 0.28, BASE_R * 2 + 28, 232)) : 0;
 
     D.documentElement.style.setProperty('--vt-pad-h', padH + 'px');
     D.body.classList.add('vt-touch');

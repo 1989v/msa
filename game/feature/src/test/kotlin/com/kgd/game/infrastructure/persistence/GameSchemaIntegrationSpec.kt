@@ -104,8 +104,9 @@ class GameSchemaIntegrationSpec(
                 .config(enabledIf = { dockerAvailable }) {
                     // 시드는 마이그레이션마다 늘어난다 — 최초 시드 8종을 하한으로 검증
                     (gameRepository.count() >= 8) shouldBe true
-                    gameRepository.findBySlug("concept-memory")?.tags shouldBe
-                        listOf("puzzle", "memory", "education", "casual")
+                    // V25 에서 태그를 플레이 속성 축으로 정리하고(genre 중복 제거) V27 이 역정규화된
+                    // game.tags 를 map 과 다시 맞춘다 — 이 단언이 그 동기화까지 검증한다.
+                    gameRepository.findBySlug("concept-memory")?.tags shouldBe listOf("education")
                     // #23 흡수분은 정적 자산을 iframe 으로 임베드한다
                     gameRepository.findBySlug("snake")?.entryUrl shouldBe "/games/snake/index.html"
                     gameRepository.findBySlug("overworld-quest")?.loadType shouldBe LoadType.IFRAME

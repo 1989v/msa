@@ -27,6 +27,7 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import AuthButton from '../../components/AuthButton';
+import { useStageFit } from './useStageFit';
 import { fetchGraphData } from '../../api/searchApi';
 import { isLoggedIn } from '../../auth/auth';
 import type { GraphNode } from '../../types/graph';
@@ -67,6 +68,7 @@ export default function GameDetailPage() {
   const [game, setGame] = useState<GameDetail | null>(null);
   const [similar, setSimilar] = useState<GameSummary[]>([]);
   const [playing, setPlaying] = useState(false);
+  const stageFit = useStageFit(playing);
   const [notFound, setNotFound] = useState(false);
   const [myScore, setMyScore] = useState<number | null>(null);
   const [ratingMessage, setRatingMessage] = useState<string | null>(null);
@@ -217,11 +219,13 @@ export default function GameDetailPage() {
           <InternalGamePlayer slug={game.entryUrl} />
         ) : (
           <iframe
+            ref={stageFit.ref}
             className="game-stage-frame"
             src={game.entryUrl}
             title={game.title}
             allow="autoplay; fullscreen; gamepad"
             sandbox="allow-scripts allow-same-origin allow-pointer-lock"
+            style={stageFit.height ? { height: `${stageFit.height}px`, minHeight: 0 } : undefined}
           />
         )}
       </section>

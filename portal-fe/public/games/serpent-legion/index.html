@@ -935,6 +935,9 @@ $('backBtn').onclick = function () {
   $('bestTxt').textContent = best ? TR('bestTxt').replace('{b}', best.toLocaleString()) : '';
 };
 </script>
+<!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
+     입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
+<script src="../lib/touch.js" data-stick="off"></script>
 <script src="../lib/rank.js"></script>
 <script>
 GameRank.autoPanel('serpent-legion');

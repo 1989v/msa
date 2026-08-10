@@ -30,8 +30,8 @@
                   border-radius:7px; cursor:pointer; font-family:inherit; }
   .panel button.ghost { background:#1a2238; color:#dbe4f0; }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
-  #bestTxt { font-size:12px; color:#7a8aa0; }
-  #info { margin-top:9px; font-size:11px; color:#5a6a80; text-align:center; }
+  #bestTxt { font-size:12px; color:#93a3b8; }
+  #info { margin-top:9px; font-size:11px; color:#8e9db0; text-align:center; }
   @media (max-width: 900px), (pointer: coarse) {
     #wrap { width: 100vw; border-width: 0; border-radius: 0; }
     canvas { width: 100%; height: auto; }
@@ -739,6 +739,9 @@ buildTerrain();
 refreshMenuBest();
 requestAnimationFrame(frame);
 </script>
+<!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
+     입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
+<script src="../lib/touch.js" data-stick="off"></script>
 <script src="../lib/rank.js"></script>
 <script>
 GameRank.autoPanel('cliff-climber');

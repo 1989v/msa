@@ -36,7 +36,7 @@
                   border-radius:7px; cursor:pointer; font-family:inherit; }
   .panel button.ghost { background:#28303c; color:#e6ecf2; }
   .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
-  #info { margin-top:9px; font-size:11px; color:#5d6a7a; text-align:center; line-height:1.7; padding:0 12px; }
+  #info { margin-top:9px; font-size:11px; color:#8fa0b4; text-align:center; line-height:1.7; padding:0 12px; }
 
   /* 모바일 — 캔버스를 화면 폭에 맞추고 오버레이 UI 를 키운다 */
   @media (max-width: 900px), (pointer: coarse) {
@@ -850,6 +850,9 @@ $('startBtn').onclick = startGame;
 $('againBtn').onclick = startGame;
 $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = false; };
 </script>
+<!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
+     입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
+<script src="../lib/touch.js" data-stick="off"></script>
 <script src="../lib/rank.js"></script>
 <script>
 GameRank.autoPanel('dice-citadel');
