@@ -261,9 +261,10 @@ var mouse = { x: VW / 2, y: VH / 3 };
 
 function newGame() {
   G = {
-    px: VW / 2, py: VH / 2, hp: 5, maxHp: 5, inv: 0, slowT: 0,
+    px: VW / 2, py: VH / 2, hp: startHp(), maxHp: startHp(), inv: 0, slowT: 0,
     time: 0, over: false, ended: false, win: false, dying: 0, dawnBannered: false,
-    mag: 6, fireCd: 0, reloadT: 0, firing: false, autoAim: IS_TOUCH, aimA: -Math.PI / 2, tgt: null,
+    // G 생성 중이라 magMax() 의 G.runes 를 못 읽는다 — 시작 시점 룬은 0 이므로 직접 계산.
+    mag: 6 + GameMeta.level('quiver'), fireCd: 0, reloadT: 0, firing: false, autoAim: IS_TOUCH, aimA: -Math.PI / 2, tgt: null,
     lightPulse: 0, lvl: 1, xp: 0, need: 6, kills: 0,
     runes: { volley: 0, pierce: 0, ricochet: 0, burn: 0, frost: 0, magup: 0, fastload: 0, light: 0, swift: 0, leech: 0 },
     purge: 0,
@@ -286,10 +287,14 @@ function newGame() {
 }
 
 /* 파생 스탯 */
-function magMax() { return 6 + 2 * G.runes.magup; }
+function magMax() { return (6 + 2 * G.runes.magup) + GameMeta.level('quiver'); }
 function reloadMax() { return 1.5 * Math.pow(0.8, G.runes.fastload); }
 function lightR() { return 150 + 28 * G.runes.light; }
-function moveSpd() { return 168 * (1 + 0.12 * G.runes.swift) * (G.slowT > 0 ? 0.6 : 1); }
+/* 영구 강화(lib/meta.js) — 런 안의 룬 성장과 곱해진다. 룬은 이번 판, 이건 출정 사이. */
+function startHp() { return 5 + GameMeta.level('vigor'); }
+function moveSpd() {
+  return 168 * (1 + 0.12 * G.runes.swift) * GameMeta.mul('stride', 0.04) * (G.slowT > 0 ? 0.6 : 1);
+}
 
 /* ═══════════ 이펙트 ═══════════ */
 function burst(x, y, color, n, spd) {
@@ -454,6 +459,9 @@ function endRun() {
   $('endDesc').textContent = TR('endDesc')
     .replace('{t}', fmt(sec)).replace('{k}', G.kills).replace('{l}', G.lvl).replace('{v}', score.toLocaleString()) +
     TR('endBestSuffix').replace('{b}', best.toLocaleString());
+  // 유물 적립 — 진 판도 보상해야 재도전이 성립한다. 생존 20초당 1, 새벽 도달 보너스.
+  var earned = GameMeta.award(Math.floor(sec / 20) + G.kills / 40 + (G.win ? 8 : 0));
+  if (earned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  🔮 +' : '  🔮 유물 +') + earned;
   $('endPanel').hidden = false; $('hud').hidden = true;
   $('banner').classList.remove('on');
   var detail = G.win ? '새벽 도달' : fmt(sec) + ' 생존';
@@ -1127,8 +1135,19 @@ $('backBtn').onclick = function () {
 };
 </script>
 <script src="../lib/touch.js" data-actions="Space:✦"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'dawn-ward',
+  title: { ko: '🔮 성소', en: '🔮 Sanctum' },
+  currency: { ko: '유물', en: 'relics', icon: '🔮' },
+  upgrades: [
+    { key:'vigor',  max:5, cost:l => 3 + l * 2, label:{ ko:'생명력 (시작 체력 +1)', en:'Vigor (+1 start HP)' } },
+    { key:'quiver', max:4, cost:l => 4 + l * 3, label:{ ko:'전통 (탄창 +1)',        en:'Quiver (+1 magazine)' } },
+    { key:'stride', max:5, cost:l => 3 + l * 2, label:{ ko:'걸음 (이동 +4%)',       en:'Stride (+4% speed)' } },
+  ],
+});
 GameRank.autoPanel('dawn-ward');
 </script>
 </body>

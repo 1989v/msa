@@ -572,7 +572,7 @@ function newGame() {
   clearGrid();
   G = {
     px: 0, py: 0, fx: 1, fy: 0,
-    hp: 100, hpMax: 100, inv: 0,
+    hp: startHp(), hpMax: startHp(), inv: 0,
     time: 0, level: 1, xp: 0, xpNext: xpNeed(1),
     kills: 0, bossKills: 0,
     weapons: [], passives: {},
@@ -1507,6 +1507,9 @@ function refreshHud() {
   if (G.iconsDirty) refreshIcons();
 }
 
+/* 영구 강화 — 런 안의 레벨업(무기·패시브)과는 별개로 출정 사이에만 남는다. */
+function startHp() { return Math.round(100 * GameMeta.mul('hull', 0.08)); }
+
 function endRun() {
   G.ended = true; running = false;
   var sc = calcScore();
@@ -1516,6 +1519,9 @@ function endRun() {
   $('endDesc').textContent = fmt('endDesc', {
     t: fmtTime(G.time), l: G.level, k: G.kills, b: G.bossKills, v: sc.toLocaleString(),
   }) + fmt('endBestSuffix', { s: best.toLocaleString() });
+  // 심해석 적립 — 30초 생존당 1, 보스 처치 2. 져도 남는다.
+  var earned = GameMeta.award(Math.floor(G.time / 30) + G.bossKills * 2);
+  if (earned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  🌑 +' : '  🌑 심해석 +') + earned;
   $('endPanel').hidden = false; $('hud').hidden = true;
   $('banner').classList.remove('on');
   GameRank.submit('midnight-tide', sc, fmt('detail', { t: fmtTime(G.time), l: G.level }))
@@ -1746,8 +1752,19 @@ $('backBtn').onclick = function () {
 };
 </script>
 <script src="../lib/touch.js"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'midnight-tide',
+  title: { ko: '🌑 심연', en: '🌑 Abyss' },
+  currency: { ko: '심해석', en: 'abyssite', icon: '🌑' },
+  upgrades: [
+    { key:'hull',  max:5, cost:l => 3 + l * 2, label:{ ko:'선체 (시작 체력 +8%)',  en:'Hull (+8% start HP)' } },
+    { key:'lure',  max:4, cost:l => 4 + l * 3, label:{ ko:'유인 (경험치 회수 +12%)', en:'Lure (+12% pickup)' } },
+    { key:'omen',  max:3, cost:l => 6 + l * 4, label:{ ko:'전조 (시작 레벨 +1)',    en:'Omen (+1 start level)' } },
+  ],
+});
 GameRank.autoPanel('midnight-tide');
 </script>
 </body>

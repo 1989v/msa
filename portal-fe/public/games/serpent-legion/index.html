@@ -160,7 +160,9 @@ var AMBIENT = 900, MAX_PELLETS = 2600;
 var GAP = 7;                                        // 몸통 세그먼트 고정 간격
 var CELL = 64;                                      // 충돌 공간 그리드 셀 크기
 var SPD = 150, BSPD = 256;
-var START_MASS = 10, BOOST_MIN = 14;                // 이 길이 밑으로는 부스트 불가
+var START_MASS = 10, BOOST_MIN_BASE = 14;           // 이 길이 밑으로는 부스트 불가
+/** 영구 강화(lib/meta.js) — '탄력'이 부스트 가능 하한을 낮춘다 */
+function boostMin() { return BOOST_MIN_BASE - GameMeta.level('sinew'); }
 
 function segsFor(m) { return Math.min(520, 12 + Math.floor(m * 1.05)); }
 function radiusFor(m) { return Math.min(17, 5 + Math.sqrt(m) * 0.34); }
@@ -326,7 +328,8 @@ function newGame() {
   }
   var pa = rnd() * TAU, pd = rnd() * 900;
   var me = makeSnake(false, localStorage.getItem('game_nickname') || TR('you'), 0, -1,
-                     Math.cos(pa) * pd, Math.sin(pa) * pd, START_MASS);
+                     Math.cos(pa) * pd, Math.sin(pa) * pd,
+                     START_MASS + GameMeta.level('brood') * 3);   // 영구 강화는 플레이어에만
   G.player = me; G.snakes.push(me);
   for (var b = 0; b < N_BOTS; b++) spawnBot(10 + rnd() * rnd() * 140);
   for (var p0 = 0; p0 < AMBIENT; p0++) spawnAmbient();
@@ -485,7 +488,7 @@ function botThink(s, dt) {
 
 /* ═══════════ 이동 / 성장 ═══════════ */
 function moveSnake(s, dt) {
-  s.boost = s.wantBoost && s.mass > BOOST_MIN;
+  s.boost = s.wantBoost && s.mass > (s.bot ? BOOST_MIN_BASE : boostMin());
   var spd = s.boost ? BSPD : SPD;
   if (s.boost) {                                                 // 부스트는 길이를 태운다 — 방울을 흘리며
     s.dropT -= dt;
@@ -588,6 +591,9 @@ function endRun() {
     TR('endBestSuffix').replace('{b}', best.toLocaleString());
   $('endPanel').hidden = false;
   $('hud').hidden = true; $('lb').hidden = true; $('feed').hidden = true;
+  // 비늘 적립 — 최종 길이 60당 1, 킬당 1.
+  var earned = GameMeta.award(Math.floor(G.finalLen / 60) + G.player.kills);
+  if (earned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  🐍 +' : '  🐍 비늘 +') + earned;
   $('banner').classList.remove('on');
   GameRank.submit('serpent-legion', score, '길이 ' + G.finalLen + ', ' + G.player.kills + '킬, 최고 ' + G.bestRank + '위')
     .then(function (r) { if (r && r.applied) $('endDesc').textContent += TR('rankApplied').replace('{n}', r.rank); });
@@ -939,8 +945,18 @@ $('backBtn').onclick = function () {
 <!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
      입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
 <script src="../lib/touch.js" data-stick="off"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'serpent-legion',
+  title: { ko: '🐍 둥지', en: '🐍 Nest' },
+  currency: { ko: '비늘', en: 'scales', icon: '🐍' },
+  upgrades: [
+    { key:'brood', max:5, cost:l => 3 + l * 2, label:{ ko:'태생 (시작 길이 +3)',   en:'Brood (+3 start length)' } },
+    { key:'sinew', max:4, cost:l => 4 + l * 3, label:{ ko:'탄력 (부스트 하한 -1)', en:'Sinew (-1 boost floor)' } },
+  ],
+});
 GameRank.autoPanel('serpent-legion');
 </script>
 </body>

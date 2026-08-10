@@ -488,7 +488,7 @@ function buildBg() {
 let G = null, running = false, selected = null, shake = 0, bannerT = 0;
 
 function newGame() {
-  G = { gold: START_GOLD, lives: START_LIFE, wave: 0, phase: 'prep', prepT: PREP_TIME,
+  G = { gold: START_GOLD + GameMeta.level('treasury') * 8, lives: START_LIFE + GameMeta.level('rampart'), wave: 0, phase: 'prep', prepT: PREP_TIME,
         towers: [], foes: [], shots: [], parts: [], queue: [], spawnT: 0, taught: false };
   selected = null; shake = 0;
 }
@@ -832,6 +832,9 @@ function endGame(win) {
   $('endDesc').textContent = win
     ? TX('winDesc', { life: G.lives, score })
     : TX('loseDesc', { n: cleared, score });
+  // 각인 적립 — 돌파한 웨이브당 1, 완주 보너스 6.
+  const earned = GameMeta.award(cleared + (win ? 6 : 0));
+  if (earned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  ⚙ +' : '  ⚙ 각인 +') + earned;
   $('endPanel').hidden = false;
   GameRank.submit('dice-citadel', score, '웨이브 ' + cleared)
     .then(r => { if (r && r.applied) $('endDesc').textContent += TX('rankMsg', { n: r.rank }); });
@@ -854,8 +857,18 @@ $('backBtn').onclick = () => { $('endPanel').hidden = true; $('menu').hidden = f
 <!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
      입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
 <script src="../lib/touch.js" data-stick="off"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'dice-citadel',
+  title: { ko: '⚙ 각인소', en: '⚙ Engravings' },
+  currency: { ko: '각인', en: 'sigils', icon: '⚙' },
+  upgrades: [
+    { key:'treasury', max:5, cost:l => 3 + l * 2, label:{ ko:'금고 (시작 골드 +8)', en:'Treasury (+8 gold)' } },
+    { key:'rampart',  max:4, cost:l => 5 + l * 3, label:{ ko:'성벽 (생명 +1)',      en:'Rampart (+1 life)' } },
+  ],
+});
 GameRank.autoPanel('dice-citadel');
 </script>
 </body>

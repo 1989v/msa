@@ -32,6 +32,72 @@
   var cfg = null;
   var listEl = null;
   var curEl = null;
+  var codeEl = null;
+
+  /* ── 내장 저장소 ──────────────────────────────────────────────────────────
+   * 게임이 이미 세이브를 갖고 있으면(load/save 콜백) 그 그릇에 얹는다.
+   * 없으면 엔진이 직접 맡는다 — 서버 세이브 + 이어하기 코드 + localStorage 폴백.
+   * 게임마다 같은 40줄을 심지 않기 위해서고, 덤으로 세이브가 없던 게임에도
+   * 이어하기 코드가 생긴다. 본문은 서버에서 암호화돼 적재된다(SaveCipher).
+   */
+  var own = { data: null, version: 0, code: null, keyLocal: '', keyCode: '' };
+
+  function token() { return localStorage.getItem('portal_access_token'); }
+
+  function deviceId() {
+    var id = localStorage.getItem('kgd_device_id');
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem('kgd_device_id', id); }
+    return id;
+  }
+
+  function api(path, opts) {
+    var o = opts || {};
+    var h = { 'Content-Type': 'application/json', 'X-Device-Id': deviceId() };
+    if (token()) h.Authorization = 'Bearer ' + token();
+    return fetch('/api/v1/games/' + cfg.slug + path, {
+      method: o.method || 'GET', headers: h, body: o.body,
+    }).then(function (r) {
+      return r.json().then(function (b) {
+        if (!r.ok || !b || !b.success) throw new Error((b && b.error && b.error.code) || 'FAIL');
+        return b.data;
+      });
+    });
+  }
+
+  function fmtCode(c) { return c ? c.replace(/(.{4})(?=.)/g, '$1-') : ''; }
+
+  function showCode() {
+    if (codeEl) codeEl.textContent = own.code ? '🔑 ' + fmtCode(own.code) : '';
+  }
+
+  function ownLoad(codeOverride) {
+    var code = codeOverride || own.code;
+    var q = (!token() && code) ? '?code=' + encodeURIComponent(code) : '';
+    var p = (token() || code) ? api('/save' + q) : Promise.reject(new Error('NO_ID'));
+    return p.then(function (s) {
+      own.version = s.version;
+      if (s.code) { own.code = s.code; localStorage.setItem(own.keyCode, s.code); }
+      if (s.data) own.data = s.data;
+      showCode();
+      return true;
+    }).catch(function () {
+      try { own.data = JSON.parse(localStorage.getItem(own.keyLocal)) || own.data; } catch (_) {}
+      showCode();
+      return false;
+    });
+  }
+
+  function ownSave() {
+    localStorage.setItem(own.keyLocal, JSON.stringify(own.data));
+    return api('/save', {
+      method: 'PUT',
+      body: JSON.stringify({ data: own.data, version: own.version, code: own.code }),
+    }).then(function (s) {
+      own.version = s.version;
+      if (s.code && s.code !== own.code) { own.code = s.code; localStorage.setItem(own.keyCode, s.code); }
+      showCode();
+    }).catch(function () { /* 로컬에는 남았다 — 다음 저장에서 다시 맞춘다 */ });
+  }
 
   function lang() {
     return (window.GameI18n && GameI18n.lang) || 'ko';
@@ -43,7 +109,7 @@
   }
 
   function state() {
-    var m = cfg && cfg.load ? cfg.load() : null;
+    var m = cfg ? (cfg.load ? cfg.load() : own.data) : null;
     if (!m) return null;
     if (typeof m.medals !== 'number') m.medals = 0;
     if (!m.up || typeof m.up !== 'object') m.up = {};
@@ -72,9 +138,13 @@
     var n = Math.max(0, Math.floor(amount || 0));
     if (!m || n <= 0) return 0;
     m.medals += n;
-    if (cfg.save) cfg.save();
+    persist();
     render();
     return n;
+  }
+
+  function persist() {
+    if (cfg.save) cfg.save(); else ownSave();
   }
 
   function costOf(u, lv) {
@@ -90,7 +160,7 @@
     if (m.medals < cost) return false;
     m.medals -= cost;
     m.up[u.key] = lv + 1;
-    if (cfg.save) cfg.save();
+    persist();
     render();
     return true;
   }
@@ -135,6 +205,12 @@
     'cursor:pointer;font-family:inherit;background:rgba(255,255,255,.14);color:inherit;min-width:66px}',
     '#gameMeta .gm-buy:disabled{opacity:.4;cursor:default}',
     '#gameMeta .gm-note{font-size:11px;opacity:.65;margin-top:6px}',
+    '#gameMeta .gm-code{margin-top:7px;padding-top:7px;border-top:1px solid rgba(148,163,184,.18)}',
+    '#gameMeta .gm-code-val{display:block;font-size:11px;letter-spacing:2px;opacity:.8;min-height:14px}',
+    '#gameMeta .gm-code-row{display:flex;gap:6px;margin-top:4px}',
+    '#gameMeta .gm-code-row input{flex:1;min-width:0;min-height:32px;padding:5px 9px;font-size:11px;',
+    'border-radius:6px;border:1px solid rgba(148,163,184,.3);background:rgba(0,0,0,.25);color:inherit;',
+    'font-family:inherit;text-align:center;letter-spacing:1px}',
   ].join('');
 
   function mount(parent) {
@@ -155,27 +231,75 @@
     curEl.className = 'gm-cur';
     head.append(title, curEl);
     listEl = document.createElement('div');
+    // 엔진이 저장을 맡는 게임에는 이어하기 줄도 함께 준다 — 강화가 기기에 갇히지 않게.
+    var codeRow = null;
+    if (!cfg.load) {
+      codeRow = document.createElement('div');
+      codeRow.className = 'gm-code';
+      codeEl = document.createElement('span');
+      codeEl.className = 'gm-code-val';
+      var input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = lang() === 'ko' ? '이어하기 코드' : 'Continue code';
+      input.maxLength = 18;
+      var load = document.createElement('button');
+      load.className = 'gm-buy';
+      load.textContent = lang() === 'ko' ? '불러오기' : 'Load';
+      load.onclick = function () {
+        load.disabled = true;
+        loadByCode(input.value).then(function (ok) {
+          load.textContent = ok ? (lang() === 'ko' ? '✅ 완료' : '✅ Done')
+            : (lang() === 'ko' ? '실패' : 'Failed');
+          setTimeout(function () {
+            load.textContent = lang() === 'ko' ? '불러오기' : 'Load';
+            load.disabled = false;
+          }, 1400);
+        });
+      };
+      var row = document.createElement('div');
+      row.className = 'gm-code-row';
+      row.append(input, load);
+      codeRow.append(codeEl, row);
+    }
+
     var note = document.createElement('div');
     note.className = 'gm-note';
     note.textContent = lang() === 'ko'
       ? '출정마다 쌓인다. 져도 남는다 — 다음 판이 더 강해진다.'
       : 'Earned every run and kept after a loss — the next run starts stronger.';
-    box.append(head, listEl, note);
+    box.append(head, listEl);
+    if (codeRow) box.appendChild(codeRow);
+    box.appendChild(note);
     host.appendChild(box);
     render();
   }
 
   function init(config) {
     cfg = config;
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () { mount(); });
-    } else {
-      mount();
+    var ready = Promise.resolve();
+    if (!cfg.load) {
+      own.keyLocal = cfg.slug + '_meta';
+      own.keyCode = cfg.slug + '_code';
+      own.code = localStorage.getItem(own.keyCode);
+      own.data = { medals: 0, up: {} };
+      ready = ownLoad();
     }
+    function go() { mount(); ready.then(render); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+  }
+
+  /** 이어하기 코드로 다른 기기의 진행도를 가져온다 (엔진이 저장을 맡는 경우) */
+  function loadByCode(raw) {
+    if (cfg.load) return Promise.resolve(false);
+    var code = String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (code.length < 8) return Promise.resolve(false);
+    return ownLoad(code).then(function (ok) { render(); return ok; });
   }
 
   window.GameMeta = {
-    init: init, mount: mount, render: render,
+    init: init, mount: mount, render: render, loadByCode: loadByCode,
     level: level, mul: mul, award: award, isUpgraded: isUpgraded,
+    code: function () { return cfg && !cfg.load ? own.code : null; },
   };
 })();
