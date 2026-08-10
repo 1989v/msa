@@ -37,6 +37,7 @@
   #toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); background:rgba(20,12,6,.92);
            padding:8px 18px; border-radius:9px; font-size:12px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:99; }
 </style>
+<link rel="stylesheet" href="../lib/menu.css">
 </head>
 <body>
 <div id="wrap">
@@ -352,8 +353,7 @@ requestAnimationFrame(draw);
 <script src="../lib/rank.js"></script>
 <script>
 GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
-(function(){ var el = document.createElement('div'); el.style.cssText='max-width:340px;margin:10px auto;text-align:left;background:rgba(0,0,0,.25);border-radius:8px;padding:9px 12px';
-  document.getElementById('menu').appendChild(el); GameRank.panel('golden-forge', el); })();
+GameRank.autoPanel('golden-forge');
 </script>
 </body>
 </html>

@@ -30,6 +30,7 @@
   #toast { position:fixed; top:16px; left:50%; transform:translateX(-50%); background:rgba(16,10,24,.92);
            padding:8px 18px; border-radius:9px; font-size:12px; opacity:0; transition:opacity .3s; pointer-events:none; z-index:99; }
 </style>
+<link rel="stylesheet" href="../lib/menu.css">
 </head>
 <body>
 <h1 data-i18n="h1">🔮 룬 합성</h1>
@@ -358,8 +359,7 @@ requestAnimationFrame(draw);
 <script src="../lib/rank.js"></script>
 <script>
 GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
-(function(){ var el = document.createElement('div'); el.style.cssText='text-align:left;background:rgba(0,0,0,.25);border-radius:8px;padding:9px 12px';
-  document.getElementById('menu').appendChild(el); GameRank.panel('rune-merge', el); })();
+GameRank.autoPanel('rune-merge');
 </script>
 </body>
 </html>
