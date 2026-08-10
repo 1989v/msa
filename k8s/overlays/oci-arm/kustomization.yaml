@@ -319,10 +319,10 @@ images:
     newTag: 1fe43f0
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
-    newTag: 5055b26
+    newTag: 5203d7e
   - name: commerce/quant
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
-    newTag: 5055b26
+    newTag: 5203d7e
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: 91c095a
