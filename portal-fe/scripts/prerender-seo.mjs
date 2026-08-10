@@ -16,6 +16,7 @@ import {
   BRAND,
   GAME_ORIGIN,
   PORTAL_ORIGIN,
+  RESUME_ORIGIN,
   breadcrumbJsonLd,
   collectionPageJsonLd,
   detailMeta,
@@ -41,6 +42,7 @@ const GENRES = ['DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VER
 
 const GAME_HOST = new URL(GAME_ORIGIN).host;
 const PORTAL_HOST = new URL(PORTAL_ORIGIN).host;
+const RESUME_HOST = new URL(RESUME_ORIGIN).host;
 
 main().catch((err) => {
   console.warn(`[seo] 프리렌더 실패 — SPA 만 배포됩니다: ${err.message}`);
@@ -364,6 +366,8 @@ async function writeRobotsAndSitemaps(games) {
   await emit(`seo/${PORTAL_HOST}/sitemap.xml`, sitemapXml(portalEntries));
   await emit(`seo/${GAME_HOST}/robots.txt`, robotsTxt(GAME_ORIGIN));
   await emit(`seo/${PORTAL_HOST}/robots.txt`, robotsTxt(PORTAL_ORIGIN));
+  // 이력서는 색인 대상이 아니다 (ADR-0064). sitemap 도 두지 않는다.
+  await emit(`seo/${RESUME_HOST}/robots.txt`, 'User-agent: *\nDisallow: /\n');
 }
 
 function robotsTxt(origin) {

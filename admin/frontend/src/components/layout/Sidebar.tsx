@@ -16,6 +16,7 @@ import {
   Search,
   Sliders,
   Gamepad2,
+  FileText,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +37,7 @@ const navItems: NavItem[] = [
   { label: '코드 사전', icon: BookOpen, to: '/code-dictionary', enabled: true },
   { label: '게임 카탈로그', icon: Gamepad2, to: '/games', enabled: true },
   { label: '퀀트 자산', icon: Coins, to: '/quant/assets', enabled: true },
+  { label: '이력서', icon: FileText, to: '/resume', enabled: true },
   // ADR-0050 Phase 4 UI — 검색 디버그 + 쿼리 빌더
   { label: '검색 디버그', icon: Search, to: '/search-debug', enabled: true },
   { label: '검색 쿼리 빌더', icon: Sliders, to: '/search-debug/query-builder', enabled: true },

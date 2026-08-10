@@ -1,0 +1,317 @@
+/* 이력서 화면 (ADR-0064). 색상은 DESIGN.md 토큰만 쓴다 — hex 직접 입력 금지.
+   신뢰가 우선인 문서라 장식을 넣지 않는다: 그라데이션·애니메이션·이모지 없음. */
+
+.resume-page {
+  min-height: 100vh;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  font-family: var(--ko-font-family);
+  padding: var(--ko-space-8) var(--ko-space-4) var(--ko-space-16);
+}
+
+.resume-sheet {
+  max-width: 56rem;
+  margin: 0 auto;
+}
+
+.resume-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ko-space-3);
+  text-align: center;
+  color: var(--ko-text-muted);
+}
+
+.resume-closed-title {
+  font-size: var(--ko-text-xl);
+  font-weight: var(--ko-weight-semibold);
+  color: var(--ko-text-secondary);
+}
+
+.resume-closed-body {
+  font-size: var(--ko-text-sm);
+}
+
+.resume-closed-body a {
+  color: var(--ko-accent-primary);
+}
+
+/* ── 본문 (마크다운 렌더 결과) ───────────────────────────────────────────── */
+
+.resume-body {
+  line-height: var(--ko-leading-relaxed);
+  font-size: var(--ko-text-base);
+}
+
+.resume-body h1 {
+  font-size: var(--ko-text-3xl);
+  font-weight: var(--ko-weight-bold);
+  letter-spacing: -0.01em;
+  margin-bottom: var(--ko-space-2);
+}
+
+.resume-body h2 {
+  font-size: var(--ko-text-xl);
+  font-weight: var(--ko-weight-semibold);
+  margin-top: var(--ko-space-10);
+  margin-bottom: var(--ko-space-4);
+  padding-bottom: var(--ko-space-2);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.resume-body h3 {
+  font-size: var(--ko-text-lg);
+  font-weight: var(--ko-weight-semibold);
+  margin-top: var(--ko-space-8);
+  margin-bottom: var(--ko-space-3);
+}
+
+.resume-body p {
+  margin-bottom: var(--ko-space-4);
+  color: var(--ko-text-secondary);
+}
+
+.resume-body strong {
+  color: var(--ko-text-primary);
+  font-weight: var(--ko-weight-semibold);
+}
+
+.resume-body ul {
+  margin: 0 0 var(--ko-space-4);
+  padding-left: var(--ko-space-5);
+  list-style: disc;
+}
+
+.resume-body ol {
+  margin: 0 0 var(--ko-space-4);
+  padding-left: var(--ko-space-5);
+  list-style: decimal;
+}
+
+.resume-body li {
+  margin-bottom: var(--ko-space-2);
+  color: var(--ko-text-secondary);
+}
+
+.resume-body a {
+  color: var(--ko-accent-primary);
+  text-decoration: none;
+}
+
+.resume-body a:hover {
+  text-decoration: underline;
+}
+
+.resume-body em {
+  color: var(--ko-text-muted);
+  font-style: normal;
+}
+
+/* 기여 범위 인용 블록 — 이력서에서 가장 중요한 문단이라 강조는 하되 요란하지 않게 */
+.resume-body blockquote {
+  margin: var(--ko-space-6) 0;
+  padding: var(--ko-space-4) var(--ko-space-5);
+  border-left: 3px solid var(--ko-accent-primary);
+  background: var(--ko-surface-1);
+  border-radius: 0 var(--ko-radius-md) var(--ko-radius-md) 0;
+}
+
+.resume-body blockquote p {
+  margin-bottom: 0;
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-sm);
+}
+
+.resume-body hr {
+  margin: var(--ko-space-10) 0;
+  border: 0;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.resume-body code {
+  font-family: var(--ko-font-mono);
+  font-size: var(--ko-text-sm);
+  padding: 0 var(--ko-space-1);
+  border-radius: var(--ko-radius-sm);
+  background: var(--ko-surface-2);
+}
+
+/* 표 — 좁은 화면에서 페이지가 아니라 표 자신이 가로로 스크롤되게 한다 */
+.resume-body table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  margin-bottom: var(--ko-space-6);
+  font-size: var(--ko-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.resume-body th,
+.resume-body td {
+  padding: var(--ko-space-2) var(--ko-space-3);
+  border-bottom: 1px solid var(--ko-border-subtle);
+  text-align: left;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.resume-body td:last-child,
+.resume-body th:last-child {
+  white-space: normal;
+}
+
+.resume-body th {
+  color: var(--ko-text-muted);
+  font-weight: var(--ko-weight-medium);
+}
+
+.resume-body td {
+  color: var(--ko-text-secondary);
+}
+
+/* ── 상세 링크 ───────────────────────────────────────────────────────────── */
+
+.resume-details {
+  margin-top: var(--ko-space-10);
+}
+
+.resume-details-title {
+  font-size: var(--ko-text-xl);
+  font-weight: var(--ko-weight-semibold);
+  padding-bottom: var(--ko-space-2);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.resume-details-hint {
+  margin: var(--ko-space-3) 0 var(--ko-space-4);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+}
+
+.resume-details-list {
+  display: grid;
+  gap: var(--ko-space-2);
+  list-style: none;
+  padding: 0;
+}
+
+.resume-details-link {
+  display: block;
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-md);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  text-decoration: none;
+  transition: border-color var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.resume-details-link:hover {
+  border-color: var(--ko-accent-primary);
+}
+
+.resume-back {
+  display: inline-block;
+  margin-bottom: var(--ko-space-6);
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+  text-decoration: none;
+}
+
+.resume-back:hover {
+  color: var(--ko-accent-primary);
+}
+
+.resume-actions {
+  max-width: 56rem;
+  margin: var(--ko-space-10) auto 0;
+}
+
+.resume-print {
+  padding: var(--ko-space-2) var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--ko-radius-md);
+  background: transparent;
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+  cursor: pointer;
+}
+
+.resume-print:hover {
+  color: var(--ko-text-primary);
+  border-color: var(--ko-border-strong);
+}
+
+/* ── 인쇄 · PDF 저장 ─────────────────────────────────────────────────────
+   채용 담당자가 PDF 로 뽑는 경우가 많다. 화면 테마와 무관하게 흰 종이 기준으로 고정한다. */
+
+@media print {
+  .resume-page {
+    background: #fff;
+    color: #000;
+    padding: 0;
+    min-height: auto;
+  }
+
+  .resume-body p,
+  .resume-body li,
+  .resume-body td,
+  .resume-body blockquote p {
+    color: #1a1a1a;
+  }
+
+  .resume-body h1,
+  .resume-body h2,
+  .resume-body h3,
+  .resume-body strong {
+    color: #000;
+  }
+
+  .resume-body a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  .resume-actions,
+  .resume-back {
+    display: none;
+  }
+
+  /* 표가 인쇄에서 잘리지 않게 스크롤 컨테이너를 해제한다 */
+  .resume-body table {
+    display: table;
+    overflow: visible;
+    page-break-inside: auto;
+  }
+
+  .resume-body th,
+  .resume-body td {
+    white-space: normal;
+    border-bottom: 1px solid #ccc;
+  }
+
+  .resume-body tr,
+  .resume-body blockquote {
+    page-break-inside: avoid;
+  }
+
+  .resume-body h2,
+  .resume-body h3 {
+    page-break-after: avoid;
+  }
+
+  .resume-body blockquote {
+    background: transparent;
+    border-left: 2px solid #666;
+  }
+
+  .resume-details-link {
+    background: transparent;
+    border-color: #ccc;
+    color: #000;
+  }
+}

@@ -8,6 +8,8 @@
 
 export const GAME_ORIGIN = 'https://game.1989v.com';
 export const PORTAL_ORIGIN = 'https://1989v.com';
+/** 이력서 호스트 (ADR-0064). 색인 대상이 아니다 — robots 로 전면 차단한다. */
+export const RESUME_ORIGIN = 'https://resume.1989v.com';
 export const BRAND = 'kgd Games';
 export const PORTAL_BRAND = 'kgd.dev';
 
@@ -242,6 +244,17 @@ export function portalUrl(path = '/') {
 
 export function portalTitle(name) {
   return name ? `${name} — ${PORTAL_BRAND}` : `${PORTAL_BRAND} — IT 개념 사전 · 백엔드 포트폴리오`;
+}
+
+// ─── 이력서 호스트 ───────────────────────────────────────────────────────────
+
+/**
+ * 탭 제목만 담당한다. 이력서는 검색 노출 대상이 아니므로 description·구조화 데이터를 두지 않는다
+ * (ADR-0064) — 게이트로 닫는 문서를 색인시키는 것은 모순이고, 실명·연락처가 검색결과에 남으면
+ * 되돌리기 어렵다.
+ */
+export function resumeTitle(name) {
+  return name ? `${name} — 권기덕` : '권기덕 — 백엔드 개발자';
 }
 
 export function websiteJsonLd() {

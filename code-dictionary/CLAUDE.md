@@ -36,6 +36,7 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 |---|---|
 | concept | IT 개념 + 코드 참조 색인. `reindex` 스킬이 추출한 개념을 `/api/v1/index` 로 적재 |
 | portfolio | 포트폴리오 카드 (PUBLIC/PRIVATE, impact 1~10). 스펙: `docs/specs/2026-06-10-portfolio-card/` |
+| resume | 이력서 사이트(resume.1989v.com) 문서·공유토큰·열람기록. 본문은 마크다운 TEXT. ADR-0064 |
 
 ## API Endpoints (요약)
 
@@ -46,6 +47,9 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 | `POST /api/v1/index`, `/api/v1/index/sync` | 색인 적재/동기화 (job 상태 조회 포함) |
 | `GET /api/v1/services` | 서비스 카탈로그 |
 | `GET /api/v1/portfolio/cards`, `/cards/{id}` | 포트폴리오 카드 목록/상세 (PUBLIC 만) |
+| `GET /api/v1/resume/status` | 이력서 공개 여부 (게이트 없음 — 메인 진입점 판단용) |
+| `GET /api/v1/resume/overview`, `/documents/{slug}` | 이력서 본문. 토큰 게이트 통과 실패 시 404 |
+| `/api/v1/admin/resume/**` | 문서 CRUD · 공유 토큰 발급/폐기 · 공개 토글 · 열람 기록 (ROLE_ADMIN) |
 
 ## Key Rules
 

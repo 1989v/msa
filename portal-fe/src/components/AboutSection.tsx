@@ -8,6 +8,7 @@ import {
 } from 'recharts';
 import type { GraphStats } from '../types/graph';
 import { CATEGORY_LABELS, type Category } from '../types/index';
+import { useResumeStatus } from '../hooks/useResumeStatus';
 import './AboutSection.css';
 
 interface AboutSectionProps {
@@ -15,6 +16,9 @@ interface AboutSectionProps {
 }
 
 export default function AboutSection({ stats }: AboutSectionProps) {
+  // 구인중 배지와 이력서 링크는 같은 상태를 본다 — 한쪽만 남아 어긋나는 일이 없게 (ADR-0064)
+  const resumeVisible = useResumeStatus();
+
   const radarData = Object.entries(stats.byCategory)
     .map(([cat, count]) => ({
       subject: CATEGORY_LABELS[cat as Category] ?? cat,
@@ -28,10 +32,12 @@ export default function AboutSection({ stats }: AboutSectionProps) {
       <div className="about-inner">
         <div className="about-content">
           <div className="about-profile">
-            <div className="about-open-badge">
-              <span className="about-pulse-dot" />
-              OPEN TO WORK
-            </div>
+            {resumeVisible && (
+              <div className="about-open-badge">
+                <span className="about-pulse-dot" />
+                OPEN TO WORK
+              </div>
+            )}
             <h2 className="about-name">Gideok Kwon</h2>
             <p className="about-title">Backend Engineer</p>
             <p className="about-oneliner">
@@ -60,6 +66,16 @@ export default function AboutSection({ stats }: AboutSectionProps) {
                 <EmailIcon />
                 1989v@naver.com
               </a>
+              {resumeVisible && (
+                <a
+                  className="about-link"
+                  href="https://resume.1989v.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  이력서
+                </a>
+              )}
             </div>
           </div>
 

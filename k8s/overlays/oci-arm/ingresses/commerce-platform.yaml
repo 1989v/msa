@@ -53,6 +53,7 @@ spec:
         - gft.1989v.com
         - api.1989v.com
         - game.1989v.com
+        - resume.1989v.com
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
@@ -148,6 +149,17 @@ spec:
           - path: /svc
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
+    # ─── resume (resume.<DOMAIN>) — portal-fe 가 host 인식해 이력서 화면 렌더 (ADR-0064) ───
+    # 새 Deployment 를 만들지 않는다. 무료 티어 단일 노드라 파드 증설이 곧 용량 압박이다.
+    - host: resume.1989v.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }
     # ─── game (game.<DOMAIN>) — portal-fe 가 host 인식해 루트에서 게임 허브 렌더 ───
     - host: game.1989v.com
       http:

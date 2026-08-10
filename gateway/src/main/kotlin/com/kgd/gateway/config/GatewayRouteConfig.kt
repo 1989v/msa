@@ -268,6 +268,22 @@ class GatewayRouteConfig(
                     }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // === ADR-0064 이력서 사이트 (code-dictionary 소유) ===
+            // 공개 조회는 인증 없이 통과시키고, 열람 가부는 서비스의 토큰 게이트가 판정한다.
+            // 어드민 경로를 먼저 선언해야 공개 라우트에 가려지지 않는다.
+            .route("resume-admin") { r ->
+                r.path("/api/v1/admin/resume/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            .route("resume-public") { r ->
+                r.path("/api/v1/resume/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
             .route("place-service-read") { r ->
                 r.method(HttpMethod.GET)

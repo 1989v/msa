@@ -1,4 +1,5 @@
 import AuthButton from './AuthButton';
+import { useResumeStatus } from '../hooks/useResumeStatus';
 import './GNB.css';
 
 interface GNBProps {
@@ -6,6 +7,9 @@ interface GNBProps {
 }
 
 export default function GNB({ onSearchFocus }: GNBProps) {
+  // 구직 중일 때만 이력서 진입점을 띄운다 (ADR-0064)
+  const resumeVisible = useResumeStatus();
+
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
@@ -43,6 +47,13 @@ export default function GNB({ onSearchFocus }: GNBProps) {
               게임
             </a>
           </li>
+          {resumeVisible && (
+            <li>
+              <a className="gnb-menu-item" href="https://resume.1989v.com">
+                이력서
+              </a>
+            </li>
+          )}
         </ul>
         <div className="gnb-right">
           <AuthButton />
