@@ -10,6 +10,7 @@ import com.kgd.game.application.play.port.ScoreEntry
 import com.kgd.game.domain.play.exception.SaveVersionConflictException
 import com.kgd.game.domain.play.model.GameRun
 import com.kgd.game.infrastructure.persistence.play.entity.GameRunJpaEntity
+import com.kgd.game.infrastructure.persistence.play.SaveCipher
 import com.kgd.game.infrastructure.persistence.play.entity.GameSaveDataJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
 import com.kgd.game.infrastructure.persistence.play.repository.GameRunJpaRepository
@@ -24,6 +25,7 @@ import java.time.Duration
 @Repository
 class GameSaveRepositoryAdapter(
     private val jpaRepository: GameSaveDataJpaRepository,
+    private val cipher: SaveCipher,
 ) : GameSaveRepositoryPort {
 
     private companion object {
@@ -47,14 +49,16 @@ class GameSaveRepositoryAdapter(
         if (existing == null) {
             if (expectedVersion != 0L) throw SaveVersionConflictException(expected = expectedVersion, actual = 0L)
             val saved = jpaRepository.save(
-                GameSaveDataJpaEntity(gameId = gameId, memberId = memberId, saveCode = issueCode(), data = data)
+                GameSaveDataJpaEntity(
+                    gameId = gameId, memberId = memberId, saveCode = issueCode(), data = cipher.encrypt(data),
+                )
             )
             return saved.toSnapshot()
         }
         if (existing.version != expectedVersion) {
             throw SaveVersionConflictException(expected = expectedVersion, actual = existing.version)
         }
-        existing.updateData(data)
+        existing.updateData(cipher.encrypt(data))
         return jpaRepository.saveAndFlush(existing).toSnapshot()
     }
 
@@ -70,7 +74,7 @@ class GameSaveRepositoryAdapter(
     }
 
     private fun GameSaveDataJpaEntity.toSnapshot() =
-        SaveSnapshot(data = data, version = version, code = saveCode)
+        SaveSnapshot(data = cipher.decrypt(data), version = version, code = saveCode)
 }
 
 /** 입력 코드 정규화 — 대소문자와 구분용 하이픈/공백을 무시한다 */

@@ -29,6 +29,11 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # 게임 세이브 at-rest 암호화 키. optional 인 이유는 시크릿 생성 전에 파드가
+            # 못 뜨는 순서 의존을 만들지 않기 위해서다 — 없으면 기본 키로 뜨고 경고를 남긴다.
+            - name: AES_KEY
+              valueFrom:
+                secretKeyRef: { name: platform-aes, key: secret, optional: true }
             - name: OPENSEARCH_URIS
               value: "http://opensearch:9200"
             # ADR-0059 — 폴드된 game 도메인: 전용 스키마(game_db) + 세션 이벤트 발행
