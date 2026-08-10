@@ -322,10 +322,13 @@ const MAX_WAVE = 20;
 let G = null, running = false, mode = 'archer';
 let bannerT = 0, shake = 0;
 
+/* 영구 강화 — 성문 체력은 출정 사이에만 자란다. */
+function gateStart() { return Math.round(300 * GameMeta.mul('gate', 0.10)); }
+
 function newGame() {
   G = {
     gold: 320, wave: 0, phase: 'prep', prepT: 8,
-    gateHp: 300, gateMax: 300,
+    gateHp: gateStart(), gateMax: gateStart(),
     dmgLv: 0, gateLv: 0,
     towers: [], foes: [], shots: [], bombs: [], parts: [],
     worker: { x: 760, y: 440, tx: 760, ty: 440, target: null },
@@ -599,6 +602,9 @@ async function endGame(win) {
   running = false; $('hud').hidden = true; $('bar').hidden = true;
   meta.best = Math.max(meta.best, G.wave);
   if (win) meta.clears = (meta.clears || 0) + 1;
+  // 강철징 적립 — 막아낸 웨이브당 1.
+  const mEarned = GameMeta.award(G.wave);
+  if (mEarned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  🔩 +' : '  🔩 강철징 +') + mEarned;
   GameRank.submit('gate-holdout', G.wave * 1000 + (win ? 500 : 0), '제' + G.wave + '라운드' + (win ? ' 클리어' : ''))
     .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
   $('endTitle').textContent = win ? TR('end.win') : TR('end.lose');
@@ -630,8 +636,19 @@ loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('best').replac
 <!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
      입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
 <script src="../lib/touch.js" data-stick="off"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'gate-holdout',
+  title: { ko: '🔩 대장간', en: '🔩 Forge' },
+  currency: { ko: '강철징', en: 'rivets', icon: '🔩' },
+  upgrades: [
+    { key:'gate', max:5, cost:l => 3 + l * 2, label:{ ko:'성문 보강 (+10%)', en:'Gate (+10% HP)' } },
+  ],
+  load: () => meta,
+  save: () => persistMeta(),
+});
 GameRank.autoPanel('gate-holdout');
 GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>

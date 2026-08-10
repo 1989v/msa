@@ -200,7 +200,8 @@ async function persistMeta() {
 const BW = 60, BH = 22, COLS = 12, PAD_Y = 440;
 let G = null, running = false;
 function newGame() {
-  G = { score: 0, level: 1, lives: 3, paddle: { x: VW/2, w: 110 },
+  G = { score: 0, level: 1, lives: 3 + GameMeta.level('spare'),
+    paddle: { x: VW/2, w: Math.round(110 * GameMeta.mul('span', 0.06)) },
     balls: [], bricks: [], drops: [], parts: [], pierce: 0, slow: 0, launched: false };
   buildLevel();
 }
@@ -325,6 +326,9 @@ function endGame(win) {
   $('endDesc').textContent = TR('endDesc').replace('{l}', G.level)
     .replace('{s}', G.score.toLocaleString()).replace('{b}', meta.best.toLocaleString());
   $('endPanel').hidden = false; $('hud').hidden = true;
+  // 파편 적립 — 돌파 레벨당 1.
+  const mEarned = GameMeta.award(G.level);
+  if (mEarned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  🧱 +' : '  🧱 파편 +') + mEarned;
   GameRank.submit('wall-breaker', G.score, G.level + '번째 성벽')
     .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rankMsg').replace('{n}', r.rank); });
   persistMeta();
@@ -411,8 +415,20 @@ loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('bestFull').re
 <!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
      입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
 <script src="../lib/touch.js" data-stick="off"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'wall-breaker',
+  title: { ko: '🧱 공방', en: '🧱 Workshop' },
+  currency: { ko: '파편', en: 'shards', icon: '🧱' },
+  upgrades: [
+    { key:'spare', max:3, cost:l => 5 + l * 4, label:{ ko:'예비 (생명 +1)',     en:'Spare (+1 life)' } },
+    { key:'span',  max:5, cost:l => 3 + l * 2, label:{ ko:'확장 (패들 +6%)',   en:'Span (+6% paddle)' } },
+  ],
+  load: () => meta,
+  save: () => persistMeta(),
+});
 GameRank.autoPanel('wall-breaker');
 GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>

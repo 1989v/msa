@@ -170,7 +170,8 @@ let G = null, running = false, shake = 0, bannerT = 0, best = 0;
 
 function newGame() {
   G = {
-    px: VW / 2, py: VH - 90, vx: 0, time: 0, phase: 1, shield: 3, inv: 1.4, grace: 1.1,
+    px: VW / 2, py: VH - 90, vx: 0, time: 0, phase: 1,
+    shield: 3 + GameMeta.level('ward'), inv: 1.4, grace: 1.1 + GameMeta.level('foresight') * 0.4,
     over: false, ended: false, dying: 0,
     bul: [], orbs: [], lasers: [], seeds: [], shards: [], parts: [], rings: [], floats: [],
     bolts: null, boltT: 0, flash: 0,
@@ -312,6 +313,9 @@ function endRun() {
     TR('endBestSuffix').replace('{b}', best.toLocaleString());
   $('endPanel').hidden = false; $('hud').hidden = true;
   $('banner').classList.remove('on');
+  // 뇌전석 적립 — 20초 생존당 1. 진 판도 남는다.
+  var mEarned = GameMeta.award(Math.floor(G.time / 20));
+  if (mEarned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  ⚡ +' : '  ⚡ 뇌전석 +') + mEarned;
   GameRank.submit('storm-corridor', score, '페이즈 ' + G.phase)
     .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rankApplied').replace('{n}', r.rank); });
 }
@@ -609,7 +613,10 @@ function draw(now) {
   }
   cx.globalAlpha = 1; cx.textAlign = 'left';
   cx.restore();
-  $('shieldTxt').textContent = '🛡 ' + '◆'.repeat(G.shield) + '◇'.repeat(3 - G.shield);
+  // 빈 칸은 시작 보호막 수를 기준으로 그린다 — 3 을 박아 두면 영구 강화로 늘어난 순간
+  // repeat(음수) 로 터진다(실제로 그렇게 깨졌다).
+  var shieldMax = Math.max(G.shield, 3 + GameMeta.level('ward'));
+  $('shieldTxt').textContent = '🛡 ' + '◆'.repeat(G.shield) + '◇'.repeat(Math.max(0, shieldMax - G.shield));
   $('phaseTxt').textContent = '⚡ ' + TR('phase') + ' ' + G.phase;
   $('timeTxt').textContent = '⏱ ' + Math.floor(G.time) + 's';
 }
@@ -643,8 +650,18 @@ $('backBtn').onclick = () => {
 };
 </script>
 <script src="../lib/touch.js"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'storm-corridor',
+  title: { ko: '⚡ 피뢰침', en: '⚡ Lightning Rod' },
+  currency: { ko: '뇌전석', en: 'voltstone', icon: '⚡' },
+  upgrades: [
+    { key:'ward',      max:4, cost:l => 4 + l * 3, label:{ ko:'보호막 (+1)',        en:'Ward (+1 shield)' } },
+    { key:'foresight', max:3, cost:l => 5 + l * 3, label:{ ko:'예지 (시작 유예 +0.4초)', en:'Foresight (+0.4s grace)' } },
+  ],
+});
 GameRank.autoPanel('storm-corridor');
 </script>
 </body>

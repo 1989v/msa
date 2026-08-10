@@ -180,7 +180,7 @@ async function persistMeta() {
 /* ── 상태 ── */
 let G = null, running = false, flapping = false;
 function newGame() {
-  G = { x: 0, y: VH / 2, vy: 0, dist: 0, gems: 0,
+  G = { x: 0, y: VH / 2, vy: 0, dist: 0, gems: 0, gemMul: GameMeta.mul('lantern', 0.15),
     segs: [], parts: [], stalact: [], gemsArr: [], segX: 0, over: false };
   // 초기 동굴 통로
   let top = 90, bot = VH - 90;
@@ -250,6 +250,9 @@ function die() {
   $('endDesc').textContent = TR('endDesc').replace('{d}', G.dist).replace('{g}', G.gems)
     .replace('{s}', score.toLocaleString()).replace('{b}', meta.best.toLocaleString());
   $('endPanel').hidden = false; $('hud').hidden = true;
+  // 정동석 적립 — 거리 400당 1.
+  const mEarned = GameMeta.award(Math.floor(G.dist / 400));
+  if (mEarned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  💎 +' : '  💎 정동석 +') + mEarned;
   GameRank.submit('cave-glide', score, G.dist + 'm · 💎' + G.gems)
     .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rankMsg').replace('{n}', r.rank); });
   persistMeta();
@@ -347,8 +350,21 @@ loadMeta().then(() => { $('bestTxt').textContent = meta.best ? TR('bestFull').re
 <!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
      입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
 <script src="../lib/touch.js" data-stick="off"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'cave-glide',
+  title: { ko: '💎 정동', en: '💎 Geode' },
+  currency: { ko: '정동석', en: 'geodes', icon: '💎' },
+  upgrades: [
+    { key:'lantern', max:5, cost:l => 3 + l * 2, label:{ ko:'등불 (보석 가치 +15%)', en:'Lantern (+15% gem value)' } },
+    { key:'draft',   max:4, cost:l => 4 + l * 3, label:{ ko:'기류 (통로 +6%)',       en:'Draft (+6% corridor)' } },
+  ],
+  // 이 게임은 이미 세이브 그릇이 있다 — 새 저장 경로를 만들지 않는다.
+  load: () => meta,
+  save: () => persistMeta(),
+});
 GameRank.autoPanel('cave-glide');
 GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>

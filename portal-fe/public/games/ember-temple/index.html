@@ -281,7 +281,8 @@ let G = null, running = false, bannerT = 0, shake = 0;
 
 function newGame() {
   G = { stage: 0, deaths: 0, time: 0, player: { x:0, y:Math.floor(ROWS/2), px:0, py:0 },
-    blasts: [], parts: [], beat: 0, beatT: 0.8, moveCd: 0, safeT: 1.2 };
+    blasts: [], parts: [], beat: 0, beatT: 0.8, moveCd: 0,
+    safeT: 1.2 + GameMeta.level('vigil') * 0.35 };
   G.player.px = G.player.x; G.player.py = G.player.y;
 }
 function banner(text) { $('banner').textContent = text; $('banner').classList.add('on'); bannerT = 1500; }
@@ -477,6 +478,9 @@ async function endGame() {
   running = false; $('hud').hidden = true;
   meta.bestStage = Math.max(meta.bestStage, G.stage);
   meta.clears = (meta.clears || 0) + 1;
+  // 잿불 적립 — 돌파 스테이지당 1, 완주 보너스 5.
+  const mEarned = GameMeta.award(G.stage + 5);
+  if (mEarned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  🔥 +' : '  🔥 잿불 +') + mEarned;
   GameRank.submit('ember-temple', Math.max(1, 1000000 - G.deaths * 5000 - Math.floor(G.time) * 10),
     G.deaths + '💀 · ' + Math.round(G.time) + 's')
     .then(r => { if (r && r.applied) $('endDesc').textContent += TR('rank.applied').replace('{n}', r.rank); });
@@ -510,8 +514,19 @@ $('codeLoadBtn').onclick = async () => {
 loadMeta().then(() => { $('bestTxt').textContent = bestLabel(); });
 </script>
 <script src="../lib/touch.js"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'ember-temple',
+  title: { ko: '🔥 화덕', en: '🔥 Hearth' },
+  currency: { ko: '잿불', en: 'embers', icon: '🔥' },
+  upgrades: [
+    { key:'vigil', max:4, cost:l => 4 + l * 3, label:{ ko:'경계 (시작 안전 +0.35초)', en:'Vigil (+0.35s grace)' } },
+  ],
+  load: () => meta,
+  save: () => persistMeta(),
+});
 GameRank.autoPanel('ember-temple');
 GameRank.copyButton(function(){ return typeof saveCode !== 'undefined' ? saveCode : null; });
 </script>

@@ -163,7 +163,9 @@ function lcg(seed) {
 var WORLD_H = 14400;                 // 절벽 전체 높이(px) ≈ 30화면
 var GROUND_Y = 14280;                // 바닥(고도 0m)
 var PXM = 46;                        // 1m = 46px
-var ROD = 118;                       // 몸-피켈 고정 막대 길이 = 도달 반경
+var ROD_BASE = 118;                  // 몸-피켈 고정 막대 길이 = 도달 반경
+/** 영구 강화(lib/meta.js) — '팔' 은 도달 반경을 늘린다. 출정 사이에만 자란다. */
+var ROD = ROD_BASE;
 var BR = 15;                         // 몸통 반지름
 var GRAV = 1350;
 var K_SPR = 34;                      // 드래그 스프링 강성
@@ -674,6 +676,7 @@ function mmss(t) {
 
 /* ── 시작/종료 ── */
 function start() {
+  ROD = Math.round(ROD_BASE * GameMeta.mul('reach', 0.04));
   bx = SPAWN_X; by = GROUND_Y - BR; bvx = 0; bvy = 0;
   tx = bx; ty = by - ROD;
   anch = false; noGrab = 0; bodyContact = false; summitHit = false;
@@ -704,6 +707,9 @@ function finish(summit) {
   var detail = summit
     ? TR('detailSummit').replace('{t}', mmss(timeS))
     : TR('detailBest').replace('{m}', String(Math.round(peakAlt)));
+  // 암각 적립 — 최고 고도 60m 당 1, 정상 등정 보너스 8.
+  var mEarned = GameMeta.award(Math.floor(peakAlt / 60) + (summit ? 8 : 0));
+  if (mEarned > 0) $('endDesc').textContent += (GameI18n.lang === 'en' ? '  🪨 +' : '  🪨 암각 +') + mEarned;
   GameRank.submit('cliff-climber', sc, detail).then(function (res) {
     if (res && res.applied) $('endDesc').textContent += TR('rankMsg').replace('{n}', res.rank);
   });
@@ -743,8 +749,17 @@ requestAnimationFrame(frame);
 <!-- 레이아웃 전용: 조이스틱 없이 상단 정렬 + 하단 여백 + 캔버스 비율 맞춤만 쓴다.
      입력 방식은 게임이 이미 가진 것을 그대로 둔다. -->
 <script src="../lib/touch.js" data-stick="off"></script>
+<script src="../lib/meta.js"></script>
 <script src="../lib/rank.js"></script>
 <script>
+GameMeta.init({
+  slug: 'cliff-climber',
+  title: { ko: '🪨 베이스캠프', en: '🪨 Base Camp' },
+  currency: { ko: '암각', en: 'crags', icon: '🪨' },
+  upgrades: [
+    { key:'reach', max:5, cost:l => 4 + l * 3, label:{ ko:'팔 (도달 반경 +4%)', en:'Reach (+4% radius)' } },
+  ],
+});
 GameRank.autoPanel('cliff-climber');
 </script>
 </body>
