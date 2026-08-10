@@ -34,7 +34,7 @@ export function useStageFit(active: boolean) {
     }
     const canvas = doc?.querySelector('canvas');
     const width = frame.clientWidth;
-    if (!doc || !canvas || !canvas.width || !canvas.height || !width) {
+    if (!doc || !width) {
       setHeight(null);
       return;
     }
@@ -43,7 +43,9 @@ export function useStageFit(active: boolean) {
     const padH = parseFloat(
       doc.defaultView?.getComputedStyle(doc.documentElement).getPropertyValue('--vt-pad-h') || '0',
     ) || 0;
-    const canvasFit = width / (canvas.width / canvas.height) + padH;
+    // 캔버스 없는 게임(DOM 기반 데일리 퍼즐 등)도 있다 — 그때는 아래 흐름·패널 높이만 쓴다.
+    const canvasFit =
+      canvas && canvas.width && canvas.height ? width / (canvas.width / canvas.height) + padH : 0;
 
     // 떠 있는 패널이 필요로 하는 높이. **scrollHeight 를 쓰는 게 핵심** — 패널은 컨테이너를
     // 덮도록 만들어져 있어(inset:0) 실제 표시 높이는 iframe 높이를 그대로 따라간다.
@@ -59,7 +61,20 @@ export function useStageFit(active: boolean) {
       if (el.scrollHeight > 0) panelNeed = Math.max(panelNeed, el.scrollHeight + 8);
     });
 
-    setHeight(Math.min(MAX_H, Math.max(MIN_H, Math.round(Math.max(canvasFit, panelNeed)))));
+    // 메뉴가 곧 본문인 게임(방치형 상점 목록 등)은 캔버스·패널만 재면 모자라 내용이 잘린다.
+    // body 의 **흐름 자식** 높이 합을 쓴다 — 떠 있는 요소(fixed/absolute)는 제외해야 하고,
+    // scrollHeight 로 컨테이너를 재면 iframe 높이를 따라가 되먹임이 생기므로 쓰지 않는다.
+    // 높이를 **더하지 않고** 가장 아래 자식의 끝을 본다 — 합산은 margin 을 놓쳐 모자란다.
+    let flowNeed = 0;
+    Array.from(doc.body.children).forEach((child) => {
+      const el = child as HTMLElement;
+      const cs = view?.getComputedStyle(el);
+      if (!cs || cs.position === 'fixed' || cs.position === 'absolute' || cs.display === 'none') return;
+      flowNeed = Math.max(flowNeed, el.offsetTop + el.offsetHeight + (parseFloat(cs.marginBottom) || 0));
+    });
+    if (flowNeed > 0) flowNeed += parseFloat(view?.getComputedStyle(doc.body).paddingBottom || '0') || 0;
+
+    setHeight(Math.min(MAX_H, Math.max(MIN_H, Math.round(Math.max(canvasFit, panelNeed, flowNeed)))));
   }, []);
 
   useEffect(() => {
