@@ -6,18 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- Google Analytics (GA4) — SPA 라우트 전환은 향상된 측정(History API)이 자동 집계.
-         game.1989v.com 도 같은 번들이라 hostname 차원으로 분리 조회 가능. -->
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-5EE8XW7JHN"
-    ></script>
+         game.1989v.com 도 같은 번들이라 hostname 차원으로 분리 조회 가능.
+
+         resume 호스트에서는 싣지 않는다. 이력서는 토큰 게이트로 닫고 noindex 로 둔 개인정보
+         문서인데(ADR-0064), 열람 기록을 토큰·경로·시각으로 한정해 놓고 같은 페이지에서 GA 가
+         기기·유입 정보를 내보내면 그 결정이 무의미해진다. 문서 경로(/d/<slug>)까지 리포트에
+         남는다. 한 벌의 index.html 이 모든 호스트를 서빙하므로 여기서 갈라야 한다. -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-      gtag("config", "G-5EE8XW7JHN");
+      (function () {
+        if (location.hostname.split(".")[0] === "resume") return;
+        var id = "G-5EE8XW7JHN";
+        var tag = document.createElement("script");
+        tag.async = true;
+        tag.src = "https://www.googletagmanager.com/gtag/js?id=" + id;
+        document.head.appendChild(tag);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () {
+          window.dataLayer.push(arguments);
+        };
+        window.gtag("js", new Date());
+        window.gtag("config", id);
+      })();
     </script>
 
     <meta name="theme-color" content="#0a0a0a" />
