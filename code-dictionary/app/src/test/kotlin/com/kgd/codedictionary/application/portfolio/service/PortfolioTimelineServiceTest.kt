@@ -35,7 +35,6 @@ class PortfolioTimelineServiceTest : BehaviorSpec({
         position = "백엔드 엔지니어",
         team = "검색팀",
         note = "사내 검색 개편 주도",
-        orderNo = 1,
     )
 
     fun project(title: String, companyId: Long?, start: String?) = ResumeProject(
