@@ -67,11 +67,28 @@ def normalize_from_sample(out: Path) -> int:
     return count
 
 
-def _fetch_country_extras(cc: str, with_ko: bool) -> tuple[dict[int, str], dict[int, tuple[float, float]]]:
-    """국가별 보강 데이터 — (gid→한국어명, gid→좌표).
+def _strip_admin_suffix(name: str) -> str:
+    """PPL↔ADM2 병합 키 — Suwon-si/수원시 → suwon/수원 (영/한 행정 접미사 제거)."""
+    n = name.strip().lower()
+    for suffix in ("-si", "-gun", "-gu", " si", " gun", " gu"):
+        if n.endswith(suffix):
+            n = n[: -len(suffix)]
+            break
+    for suffix in ("특별자치시", "특별자치도", "광역시", "특별시", "시", "군", "구"):
+        if n.endswith(suffix) and len(n) > len(suffix):
+            n = n[: -len(suffix)]
+            break
+    return n.replace(" ", "").replace("-", "")
+
+
+def _fetch_country_extras(
+    cc: str, with_ko: bool
+) -> tuple[dict[int, str], dict[int, tuple[float, float]], list[dict]]:
+    """국가별 보강 데이터 — (gid→한국어명, gid→좌표, ADM2 시군구 전수).
 
     - alternatenames/{CC}.zip : isolanguage=ko 인 이름 (isPreferredName 우선) → nameKo
-    - {CC}.zip (본 덤프)      : admin1 등 좌표가 없는 계층 행의 lat/lng 보강
+    - {CC}.zip (본 덤프)      : 좌표 보강 + ADM2(시군구 행정단위) 전수 —
+      cities15000 은 인구 1.5만 미만 군 단위를 빠뜨리므로 ADM2 로 전수를 보장한다.
     """
     ko_names: dict[int, str] = {}
     if with_ko:
@@ -85,15 +102,25 @@ def _fetch_country_extras(cc: str, with_ko: bool) -> tuple[dict[int, str], dict[
                 ko_names[gid] = name
 
     coords: dict[int, tuple[float, float]] = {}
+    adm2_rows: list[dict] = []
     for line in _fetch_zip_member(f"{cc}.zip", f"{cc}.txt").splitlines():
         c = line.split("\t")
-        if len(c) < 6 or not c[0].isdigit():
+        if len(c) < 15 or not c[0].isdigit():
             continue
+        gid = int(c[0])
         try:
-            coords[int(c[0])] = (float(c[4]), float(c[5]))
+            coords[gid] = (float(c[4]), float(c[5]))
         except ValueError:
             continue
-    return ko_names, coords
+        if c[6] == "A" and c[7] == "ADM2":
+            adm2_rows.append({
+                "level": "CITY", "name": c[1], "countryCode": cc,
+                "admin1Code": c[10] or None, "admin2Code": c[11] or None,
+                "geonamesId": gid,
+                "latitude": coords[gid][0], "longitude": coords[gid][1],
+                "population": int(c[14]) if c[14].isdigit() and c[14] != "0" else None,
+            })
+    return ko_names, coords, adm2_rows
 
 
 def build(out: Path, max_cities: int, country: str | None = None, with_ko: bool = False) -> int:
@@ -160,17 +187,44 @@ def build(out: Path, max_cities: int, country: str | None = None, with_ko: bool 
         })
     rows.extend(city_rows[:max_cities])
 
-    # --country 보강: 한국어명(alternateNames) + 좌표 없는 계층 행(REGION 등) lat/lng
+    # --country 보강: 한국어명 + 좌표 + ADM2(시군구) 전수 병합
     if country:
-        ko_names, coords = _fetch_country_extras(country, with_ko)
+        ko_names, coords, adm2_rows = _fetch_country_extras(country, with_ko)
+
+        def enrich(target: list[dict]) -> None:
+            for r in target:
+                gid = r.get("geonamesId")
+                if not gid:
+                    continue
+                if with_ko and gid in ko_names and not r.get("nameKo"):
+                    r["nameKo"] = ko_names[gid]
+                if r.get("latitude") is None and gid in coords:
+                    r["latitude"], r["longitude"] = coords[gid]
+
+        # 병합 키는 한국어명 우선 — PPL 은 구형 로마자(Wŏnju/Tangjin), ADM2 는 개정
+        # 로마자(Wonju-si/Dangjin-si)라 영문 키가 어긋난다. 국문명 조인을 먼저 한다.
+        enrich(rows)
+        enrich(adm2_rows)
+
+        def merge_key(r: dict) -> tuple:
+            return (r.get("admin1Code"), _strip_admin_suffix(r.get("nameKo") or r["name"]))
+
+        # ADM2 전수를 CITY 로 추가하고, 같은 광역 내 동명 PPL(도시) 행은 병합한다.
+        # 예: PPL 원주 ↔ ADM2 원주시 — ADM2 를 남기고 인구가 없으면 승계.
+        # 광역시(서울 등)는 ADM1 이라 매칭 상대가 없어 PPL 이 그대로 남는다.
+        adm2_by_key = {merge_key(r): r for r in adm2_rows}
+        for r in adm2_rows:
+            r["parentGeonamesId"] = admin1_gid.get(f"{country}.{r['admin1Code']}") or country_gid.get(country)
+        merged_rows: list[dict] = []
         for r in rows:
-            gid = r.get("geonamesId")
-            if not gid:
-                continue
-            if with_ko and gid in ko_names and not r.get("nameKo"):
-                r["nameKo"] = ko_names[gid]
-            if r.get("latitude") is None and gid in coords:
-                r["latitude"], r["longitude"] = coords[gid]
+            if r["level"] == "CITY" and r.get("countryCode") == country:
+                adm2 = adm2_by_key.get(merge_key(r))
+                if adm2 is not None:
+                    if not adm2.get("population") and r.get("population"):
+                        adm2["population"] = r["population"]
+                    continue  # PPL 행은 ADM2 로 대체
+            merged_rows.append(r)
+        rows = merged_rows + adm2_rows
 
     with out.open("w", encoding="utf-8") as dst:
         for r in rows:
