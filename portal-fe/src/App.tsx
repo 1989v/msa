@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Suspense, lazy, type ReactElement } from 'react';
 import SearchPage from './pages/SearchPage';
 import PortfolioPage from './pages/PortfolioPage';
@@ -89,9 +89,6 @@ function App() {
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
           <Route path="/place" element={placeRoute(<PlacePage />)} />
           <Route path="/en/place" element={placeRoute(<PlacePage />)} />
-          {/* 구 /tour 주소 정리 — 출시 직후 개명이라 잔존 링크만 흡수 */}
-          <Route path="/tour" element={<Navigate to="/place" replace />} />
-          <Route path="/en/tour" element={<Navigate to="/en/place" replace />} />
 
           <Route path="/games" element={gameRoute(<GamesPage />)} />
           <Route path="/games/genre/:genre" element={gameRoute(<GamesPage />)} />
