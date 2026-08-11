@@ -65,7 +65,7 @@ class ResumeStructuredAdminService(
                     code = request.code.trim().lowercase(),
                     label = request.label,
                     description = request.description,
-                    orderNo = request.orderNo,
+                    orderNo = request.orderNo ?: 0,
                 ),
             ),
         )
@@ -87,13 +87,13 @@ class ResumeStructuredAdminService(
                 period = period,
                 summary = request.summary,
                 bodyMarkdown = request.bodyMarkdown,
-                metrics = request.metrics,
-                skillIds = request.skillIds,
+                metrics = request.metrics ?: emptyList(),
+                skillIds = request.skillIds ?: emptyList(),
                 detailSlug = request.detailSlug?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },
-                orderNo = request.orderNo,
-                published = request.published,
+                orderNo = request.orderNo ?: 0,
+                published = request.published ?: true,
             ),
-        ).id?.also { projectSkillRepository.replace(it, request.skillIds) }
+        ).id?.also { projectSkillRepository.replace(it, request.skillIds ?: emptyList()) }
     }
 
     @Transactional
@@ -107,7 +107,7 @@ class ResumeStructuredAdminService(
                     id = request.id,
                     label = request.label,
                     note = request.note,
-                    orderNo = request.orderNo,
+                    orderNo = request.orderNo ?: 0,
                 ),
             ),
             // 그룹만 저장하는 경로다 — 소속 기술은 별도 조회에서 채운다
@@ -123,7 +123,7 @@ class ResumeStructuredAdminService(
             id = request.id,
             name = request.name.trim(),
             groupId = request.groupId,
-            orderNo = request.orderNo,
+            orderNo = request.orderNo ?: 0,
         ),
     ).id
 

@@ -17,12 +17,15 @@ class ResumeSkillJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
-    @Column(nullable = false, length = 80, unique = true)
-    val name: String = "",
-
+    name: String = "",
     groupId: Long? = null,
     orderNo: Int = 0,
 ) {
+    /** 노출명. 프로젝트는 id 로 참조하므로 이름을 바꿔도 연결이 끊기지 않는다. */
+    @Column(nullable = false, length = 80, unique = true)
+    var name: String = name
+        private set
+
     /** null 이면 미분류 */
     @Column(name = "group_id")
     var groupId: Long? = groupId
@@ -33,6 +36,7 @@ class ResumeSkillJpaEntity(
         private set
 
     fun update(skill: ResumeSkill) {
+        name = skill.name
         groupId = skill.groupId
         orderNo = skill.orderNo
     }

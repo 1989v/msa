@@ -16,6 +16,8 @@ import com.kgd.codedictionary.infrastructure.persistence.resume.repository.Resum
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeCompanyJpaRepository
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeProjectJpaRepository
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeSkillGroupJpaRepository
+import com.kgd.common.exception.BusinessException
+import com.kgd.common.exception.ErrorCode
 import com.kgd.common.exception.NotFoundException
 import org.springframework.stereotype.Component
 
@@ -134,6 +136,17 @@ class ResumeSkillRepositoryAdapter(
         val existing = skill.id?.let {
             jpaRepository.findById(it).orElseThrow { NotFoundException("ResumeSkill", it) }
         } ?: jpaRepository.findByName(skill.name)
+
+        // 이름을 바꾸는 경우, 그 이름을 이미 다른 기술이 쓰고 있으면 제약 위반으로 죽는다.
+        // 무엇이 문제인지 화면에서 읽히게 미리 걸러낸다.
+        val id = existing?.id
+        if (id != null) {
+            val sameName = jpaRepository.findByName(skill.name)
+            if (sameName != null && sameName.id != id) {
+                throw BusinessException(ErrorCode.INVALID_INPUT, "이미 있는 기술명입니다: ${skill.name}")
+            }
+        }
+
         return if (existing == null) {
             jpaRepository.save(
                 com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSkillJpaEntity.fromDomain(skill),

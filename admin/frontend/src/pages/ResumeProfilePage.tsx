@@ -316,8 +316,22 @@ export function ResumeProfilePage() {
               </div>
               <div className="mt-1 flex flex-wrap gap-1 pl-32">
                 {g.skills.map((sk) => (
-                  <span key={sk.id} className="inline-flex items-center gap-1 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700">
-                    {sk.name}
+                  <span
+                    key={sk.id}
+                    className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs ${
+                      skill.id === sk.id
+                        ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                        : 'border-zinc-300 dark:border-zinc-700'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      className="hover:underline"
+                      title="눌러서 이름 수정"
+                      onClick={() => setSkill({ id: sk.id, name: sk.name, groupId: g.id, orderNo: 0 })}
+                    >
+                      {sk.name}
+                    </button>
                     <button type="button" className="text-zinc-400 hover:text-red-500"
                       onClick={() => run(() => deleteSkill(sk.id), '기술을 삭제했습니다')}>×</button>
                   </span>
@@ -341,8 +355,11 @@ export function ResumeProfilePage() {
             }, '저장했습니다')}>그룹 저장</Button>
           </div>
 
-          <Input placeholder="기술 추가 (예: Kotlin)" value={skill.name}
-            onChange={(e) => setSkill({ ...skill, name: e.target.value })} />
+          <Input
+            placeholder={skill.id ? '기술 이름 수정' : '기술 추가 (예: Kotlin)'}
+            value={skill.name}
+            onChange={(e) => setSkill({ ...skill, name: e.target.value })}
+          />
           <div className="flex gap-2">
             <select className="h-9 flex-1 rounded-md border border-zinc-300 bg-transparent px-2 text-sm dark:border-zinc-700"
               value={skill.groupId ?? ''} onChange={(e) => setSkill({ ...skill, groupId: e.target.value ? Number(e.target.value) : null })}>
@@ -350,9 +367,17 @@ export function ResumeProfilePage() {
               {profile.skills.map((g) => <option key={g.id} value={g.id ?? ''}>{g.label}</option>)}
             </select>
             <Button onClick={() => run(async () => {
-              await upsertSkill({ name: skill.name, groupId: skill.groupId });
+              await upsertSkill({
+                id: skill.id ?? undefined,
+                name: skill.name,
+                groupId: skill.groupId,
+                orderNo: skill.orderNo,
+              });
               setSkill(EMPTY_SKILL);
-            }, '저장했습니다')}>기술 저장</Button>
+            }, '저장했습니다')}>{skill.id ? '이름 저장' : '기술 저장'}</Button>
+            {skill.id && (
+              <Button variant="ghost" onClick={() => setSkill(EMPTY_SKILL)}>취소</Button>
+            )}
           </div>
         </div>
       </Card>

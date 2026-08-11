@@ -153,6 +153,11 @@ data class ResumeSkillGroupDto(
 internal fun YearMonth.format(): String = toString()
 
 // ─── 어드민 요청 ─────────────────────────────────────────────────────────────
+//
+// 선택 필드는 전부 nullable 로 둔다. Spring Boot 4 의 MVC JSON 스택은 Jackson 3 인데
+// Kotlin 모듈이 붙어 있지 않아 **Kotlin 기본 인자값이 적용되지 않는다** — 값이 빠진
+// non-null 필드는 바인딩 자체가 실패한다(400 "요청 본문을 읽을 수 없습니다").
+// 기본값은 코드에서 `?: 0` 으로 정한다. 와이어 포맷이 언어 기능에 기대지 않게 하는 게 맞다.
 
 data class ResumeCompanyUpsertRequest(
     val id: Long? = null,
@@ -169,7 +174,7 @@ data class ResumeCategoryUpsertRequest(
     val code: String,
     val label: String,
     val description: String? = null,
-    val orderNo: Int = 0,
+    val orderNo: Int? = null,
 )
 
 data class ResumeProjectUpsertRequest(
@@ -192,12 +197,12 @@ data class ResumeSkillGroupUpsertRequest(
     val id: Long? = null,
     val label: String,
     val note: String? = null,
-    val orderNo: Int = 0,
+    val orderNo: Int? = null,
 )
 
 data class ResumeSkillUpsertRequest(
     val id: Long? = null,
     val name: String,
     val groupId: Long? = null,
-    val orderNo: Int = 0,
+    val orderNo: Int? = null,
 )
