@@ -7,3 +7,4 @@ resources:
   - cronjob-eval.yaml
   - cronjob-reindex.yaml
   - cronjob-attraction-reindex.yaml
+  - cronjob-region-reindex.yaml

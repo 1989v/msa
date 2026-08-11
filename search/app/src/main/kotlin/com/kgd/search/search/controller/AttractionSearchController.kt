@@ -4,6 +4,7 @@ import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.response.ApiResponse
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
+import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -18,7 +19,19 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/search/attractions")
 class AttractionSearchController(
     private val searchAttractionUseCase: SearchAttractionUseCase,
+    private val suggestAttractionUseCase: SuggestAttractionUseCase,
 ) {
+
+    /** 통합 자동완성 — 지역(도시/광역, 인구 부스트 상단) + 관광지 prefix (ADR-0065). */
+    @GetMapping("/suggest")
+    fun suggest(
+        @RequestParam q: String,
+        @RequestParam(required = false) lang: String?,
+        @RequestParam(defaultValue = "8") size: Int,
+    ): ApiResponse<List<SuggestAttractionUseCase.Suggestion>> {
+        if (q.isBlank()) return ApiResponse.success(emptyList())
+        return ApiResponse.success(suggestAttractionUseCase.execute(q.trim(), lang, size.coerceIn(1, 20)))
+    }
 
     @GetMapping
     fun search(

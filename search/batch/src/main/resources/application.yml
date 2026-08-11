@@ -29,6 +29,7 @@ search:
   index:
     alias: products
     attraction-alias: attractions
+    region-alias: regions
   batch:
     page-size: 100
 

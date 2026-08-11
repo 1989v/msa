@@ -87,4 +87,21 @@ class Region private constructor(
             longitude?.let { require(it in -180.0..180.0) { "경도는 -180~180 범위여야 합니다: $it" } }
         }
     }
+
+    /** 재적재(upsert) 시 원천 최신값으로 전체 동기화 — 자연키(geonamesId)와 id 는 불변 (entity-mutation.md). */
+    fun syncFrom(source: Region) {
+        require(source.geonamesId == geonamesId) {
+            "자연키가 다른 지역으로 동기화할 수 없습니다: ${source.geonamesId} → $geonamesId"
+        }
+        parentId = source.parentId ?: parentId
+        level = source.level
+        name = source.name
+        nameKo = source.nameKo ?: nameKo
+        countryCode = source.countryCode ?: countryCode
+        admin1Code = source.admin1Code ?: admin1Code
+        admin2Code = source.admin2Code ?: admin2Code
+        latitude = source.latitude ?: latitude
+        longitude = source.longitude ?: longitude
+        population = source.population ?: population
+    }
 }

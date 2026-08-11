@@ -5,9 +5,11 @@ import { useQuery } from '@tanstack/react-query';
 import {
   fetchAttraction,
   searchAttractions,
+  suggestPlaces,
   type Attraction,
   type AttractionQuery,
   type PlaceLang,
+  type Suggestion,
 } from '../../api/placeApi';
 import { loadGoogleMaps, mapsApiKey, radiusFromBounds } from './googleMaps';
 import './PlacePage.css';
@@ -35,6 +37,11 @@ const UI = {
       nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
       shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
     } as Record<string, string>,
+    regionLabel: '지역',
+    attractionLabel: '관광지',
+    regionLevels: {
+      CONTINENT: '대륙', COUNTRY: '국가', REGION: '광역', CITY: '도시',
+    } as Record<string, string>,
   },
   en: {
     title: 'K-Tour Map',
@@ -53,6 +60,11 @@ const UI = {
     categories: {
       nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
       shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
+    } as Record<string, string>,
+    regionLabel: 'Region',
+    attractionLabel: 'Attraction',
+    regionLevels: {
+      CONTINENT: 'Continent', COUNTRY: 'Country', REGION: 'Province', CITY: 'City',
     } as Record<string, string>,
   },
 };
@@ -83,6 +95,8 @@ export default function PlacePage() {
 
   const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState('');
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggest, setShowSuggest] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
   const [areaCode, setAreaCode] = useState<string | null>(null);
   const [geo, setGeo] = useState<GeoState | null>(null);
@@ -179,7 +193,43 @@ export default function PlacePage() {
     window.google.maps.event.addListenerOnce(map, 'idle', () => setMapMoved(false));
   }, [data, mapReady]);
 
+  // 통합 자동완성 — 200ms 디바운스, 실패는 조용히 무시 (shop suggest 패턴)
+  useEffect(() => {
+    const q = keywordInput.trim();
+    if (!q) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      suggestPlaces(q, lang, 8)
+        .then((items) => setSuggestions(items))
+        .catch(() => setSuggestions([]));
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [keywordInput, lang]);
+
+  // 지역 레벨별 반경(km) — 선택 시 지도 이동 + 반경 검색 (서버 캡 50km)
+  const REGION_RADIUS: Record<string, number> = { CITY: 15, REGION: 50, COUNTRY: 50, CONTINENT: 50 };
+
+  const pickSuggestion = useCallback((s: Suggestion) => {
+    setShowSuggest(false);
+    setKeywordInput(s.title);
+    if (s.latitude == null || s.longitude == null) return;
+    setKeyword('');
+    setCategory(null);
+    setAreaCode(null);
+    if (s.type === 'REGION') {
+      setGeo({ lat: s.latitude, lng: s.longitude, radiusKm: REGION_RADIUS[s.regionLevel ?? 'CITY'] ?? 15 });
+    } else {
+      setGeo({ lat: s.latitude, lng: s.longitude, radiusKm: 5 });
+      setSelectedId(s.id);
+    }
+    setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const runKeywordSearch = useCallback(() => {
+    setShowSuggest(false);
     setKeyword(keywordInput.trim());
     setGeo(null);
     setPage(0);
@@ -240,13 +290,44 @@ export default function PlacePage() {
             runKeywordSearch();
           }}
         >
-          <input
-            className="place-search-input"
-            value={keywordInput}
-            onChange={(e) => setKeywordInput(e.target.value)}
-            placeholder={L.searchPlaceholder}
-            aria-label={L.searchPlaceholder}
-          />
+          <div className="place-search-box">
+            <input
+              className="place-search-input"
+              value={keywordInput}
+              onChange={(e) => {
+                setKeywordInput(e.target.value);
+                setShowSuggest(true);
+              }}
+              onFocus={() => setShowSuggest(true)}
+              onBlur={() => setTimeout(() => setShowSuggest(false), 150)}
+              placeholder={L.searchPlaceholder}
+              aria-label={L.searchPlaceholder}
+              autoComplete="off"
+            />
+            {showSuggest && suggestions.length > 0 && (
+              <ul className="place-suggest" role="listbox">
+                {suggestions.map((s) => (
+                  <li
+                    key={`${s.type}-${s.id}`}
+                    className="place-suggest-item"
+                    role="option"
+                    aria-selected="false"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      pickSuggestion(s);
+                    }}
+                  >
+                    <span className={`place-suggest-type ${s.type === 'REGION' ? 'region' : ''}`}>
+                      {s.type === 'REGION'
+                        ? (L.regionLevels[s.regionLevel ?? ''] ?? L.regionLabel)
+                        : (s.category ? L.categories[s.category] ?? s.category : L.attractionLabel)}
+                    </span>
+                    <span className="place-suggest-title">{s.title}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <button type="submit" className="place-btn primary">
             {lang === 'ko' ? '검색' : 'Search'}
           </button>

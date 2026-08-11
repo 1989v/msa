@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: region-reindex
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: search-batch
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: reindex
+spec:
+  # ADR-0065 — 행정 지역 재색인(alias swap, 통합 자동완성용). 지역 계층은 거의 안 변해
+  # 정의만 두고 온디맨드로 돌린다:
+  #   kubectl -n commerce create job --from=cronjob/region-reindex region-reindex-manual
+  suspend: true
+  schedule: "45 3 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: search-batch
+            # part-of 누락 시 default-deny 에서 egress 미허용 → opensearch/place 접근 불가
+            app.kubernetes.io/part-of: commerce-platform
+            app.kubernetes.io/component: reindex
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: reindex
+              image: commerce/search-batch:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                # 기본값(enabled=false)이면 웹서버만 뜨고 잡이 실행되지 않는다
+                - "--spring.batch.job.enabled=true"
+                - "--spring.batch.job.name=regionApiReindexJob"
+              env:
+                - name: OPENSEARCH_URIS
+                  value: "http://opensearch:9200"
+                - name: PLACE_SERVICE_URL
+                  value: "http://place:8096"
+              resources:
+                requests: { cpu: 100m, memory: 512Mi }
+                limits:   { memory: 1Gi }

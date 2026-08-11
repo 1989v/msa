@@ -11,6 +11,7 @@ data class CreateRegionRequest(
     @field:NotBlank(message = "지역명은 필수입니다")
     val name: String,
     val parentId: Long? = null,
+    val parentGeonamesId: Long? = null,
     val nameKo: String? = null,
     val countryCode: String? = null,
     val admin1Code: String? = null,
@@ -24,6 +25,7 @@ data class CreateRegionRequest(
         level = level,
         name = name,
         parentId = parentId,
+        parentGeonamesId = parentGeonamesId,
         nameKo = nameKo,
         countryCode = countryCode,
         admin1Code = admin1Code,

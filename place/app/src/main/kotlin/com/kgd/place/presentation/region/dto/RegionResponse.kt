@@ -57,3 +57,10 @@ data class BulkCreateRegionResponse(
             BulkCreateRegionResponse(count = results.size, ids = results.map { it.id })
     }
 }
+
+data class RegionPageResponse(
+    val regions: List<RegionResponse>,
+    val totalElements: Long,
+    val totalPages: Int,
+    val currentPage: Int,
+)

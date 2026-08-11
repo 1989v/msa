@@ -18,8 +18,37 @@ class RegionService(
     override fun execute(command: CreateRegionUseCase.Command): CreateRegionUseCase.Result =
         regionRepository.save(command.toDomain()).toResult()
 
-    override fun executeBulk(commands: List<CreateRegionUseCase.Command>): List<CreateRegionUseCase.Result> =
-        regionRepository.saveAll(commands.map { it.toDomain() }).map { it.toResult() }
+    /**
+     * geonamesId 멱등 upsert + parentGeonamesId 해소 (ADR-0065 지역 계층 적재).
+     * 배치 안에 부모-자식이 섞여 있어도 레벨 순서(CONTINENT→…→CITY)로 처리해
+     * geonamesId→id 맵으로 부모를 연결한다 (PlaceSeedRunner 와 동일 규칙).
+     */
+    override fun executeBulk(commands: List<CreateRegionUseCase.Command>): List<CreateRegionUseCase.Result> {
+        val existingByGeonames = regionRepository
+            .findByGeonamesIdIn(commands.mapNotNull { it.geonamesId } + commands.mapNotNull { it.parentGeonamesId })
+            .filter { it.geonamesId != null }
+            .associateBy { it.geonamesId!! }
+            .toMutableMap()
+
+        val results = mutableListOf<CreateRegionUseCase.Result>()
+        for (level in RegionLevel.values()) {
+            val ofLevel = commands.filter { it.level == level }
+            if (ofLevel.isEmpty()) continue
+
+            val saved = regionRepository.saveAll(
+                ofLevel.map { command ->
+                    val resolvedParentId = command.parentId
+                        ?: command.parentGeonamesId?.let { existingByGeonames[it]?.id }
+                    val incoming = command.toDomain(resolvedParentId)
+                    val existing = command.geonamesId?.let { existingByGeonames[it] }
+                    existing?.apply { syncFrom(incoming) } ?: incoming
+                }
+            )
+            saved.forEach { region -> region.geonamesId?.let { existingByGeonames[it] = region } }
+            results += saved.map { it.toResult() }
+        }
+        return results
+    }
 
     @Transactional(readOnly = true)
     override fun findById(id: Long): GetRegionUseCase.RegionView =
@@ -33,10 +62,14 @@ class RegionService(
     override fun findChildren(parentId: Long): List<GetRegionUseCase.RegionView> =
         regionRepository.findByParentId(parentId).map { it.toView() }
 
-    private fun CreateRegionUseCase.Command.toDomain(): Region = Region.create(
+    @Transactional(readOnly = true)
+    override fun findPage(pageable: org.springframework.data.domain.Pageable): org.springframework.data.domain.Page<GetRegionUseCase.RegionView> =
+        regionRepository.findPage(pageable).map { it.toView() }
+
+    private fun CreateRegionUseCase.Command.toDomain(resolvedParentId: Long? = parentId): Region = Region.create(
         level = level,
         name = name,
-        parentId = parentId,
+        parentId = resolvedParentId,
         nameKo = nameKo,
         countryCode = countryCode,
         admin1Code = admin1Code,

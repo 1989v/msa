@@ -8,4 +8,5 @@ interface RegionJpaRepository : JpaRepository<RegionJpaEntity, Long> {
     fun findByLevel(level: RegionLevel): List<RegionJpaEntity>
     fun findByParentId(parentId: Long): List<RegionJpaEntity>
     fun findByGeonamesId(geonamesId: Long): RegionJpaEntity?
+    fun findByGeonamesIdIn(geonamesIds: Collection<Long>): List<RegionJpaEntity>
 }

@@ -73,6 +73,28 @@ class SearchAttractionServiceTest : BehaviorSpec({
         }
     }
 
+    given("통합 자동완성 시") {
+        `when`("지역과 관광지가 섞여 반환되면") {
+            then("타입·좌표·레벨이 보존되어야 한다") {
+                every { searchPort.suggest("서울", "ko", 8) } returns listOf(
+                    com.kgd.search.domain.attraction.model.SuggestHit(
+                        type = com.kgd.search.domain.attraction.model.SuggestHit.Type.REGION,
+                        id = "10", title = "서울특별시", latitude = 37.56, longitude = 126.99, regionLevel = "CITY",
+                    ),
+                    com.kgd.search.domain.attraction.model.SuggestHit(
+                        type = com.kgd.search.domain.attraction.model.SuggestHit.Type.ATTRACTION,
+                        id = "1", title = "경복궁", latitude = 37.58, longitude = 126.98, category = "history",
+                    ),
+                )
+                val result = service.execute("서울", "ko", 8)
+                result.size shouldBe 2
+                result[0].type shouldBe "REGION"
+                result[0].regionLevel shouldBe "CITY"
+                result[1].category shouldBe "history"
+            }
+        }
+    }
+
     given("관광지 단건 조회 시") {
         `when`("존재하지 않는 id 면") {
             then("null 을 반환해야 한다") {

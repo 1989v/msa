@@ -27,5 +27,12 @@ class RegionRepositoryAdapter(
     override fun findByParentId(parentId: Long): List<Region> =
         jpaRepository.findByParentId(parentId).map { it.toDomain() }
 
+    override fun findByGeonamesIdIn(geonamesIds: Collection<Long>): List<Region> =
+        if (geonamesIds.isEmpty()) emptyList()
+        else jpaRepository.findByGeonamesIdIn(geonamesIds).map { it.toDomain() }
+
+    override fun findPage(pageable: org.springframework.data.domain.Pageable): org.springframework.data.domain.Page<Region> =
+        jpaRepository.findAll(pageable).map { it.toDomain() }
+
     override fun count(): Long = jpaRepository.count()
 }

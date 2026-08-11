@@ -67,3 +67,20 @@ export const fetchAttraction = async (id: string): Promise<Attraction> => {
   const res = await api.get<ApiResponse<Attraction>>(`/api/search/attractions/${id}`);
   return res.data.data;
 };
+
+// 통합 자동완성 — 지역(행정 계층, 인구 부스트 상단) + 관광지 prefix (ADR-0065)
+export interface Suggestion {
+  type: 'REGION' | 'ATTRACTION';
+  id: string;
+  title: string;
+  latitude: number | null;
+  longitude: number | null;
+  regionLevel: 'CONTINENT' | 'COUNTRY' | 'REGION' | 'CITY' | null;
+  category: string | null;
+}
+
+export const suggestPlaces = async (q: string, lang: PlaceLang, size = 8): Promise<Suggestion[]> => {
+  const params = new URLSearchParams({ q, lang, size: String(size) });
+  const res = await api.get<ApiResponse<Suggestion[]>>(`/api/search/attractions/suggest?${params}`);
+  return res.data.data;
+};

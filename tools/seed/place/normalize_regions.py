@@ -67,7 +67,36 @@ def normalize_from_sample(out: Path) -> int:
     return count
 
 
-def build(out: Path, max_cities: int) -> int:
+def _fetch_country_extras(cc: str, with_ko: bool) -> tuple[dict[int, str], dict[int, tuple[float, float]]]:
+    """국가별 보강 데이터 — (gid→한국어명, gid→좌표).
+
+    - alternatenames/{CC}.zip : isolanguage=ko 인 이름 (isPreferredName 우선) → nameKo
+    - {CC}.zip (본 덤프)      : admin1 등 좌표가 없는 계층 행의 lat/lng 보강
+    """
+    ko_names: dict[int, str] = {}
+    if with_ko:
+        for line in _fetch_zip_member(f"alternatenames/{cc}.zip", f"{cc}.txt").splitlines():
+            c = line.split("\t")
+            if len(c) < 4 or c[2] != "ko" or not c[1].isdigit():
+                continue
+            gid, name = int(c[1]), c[3]
+            preferred = len(c) > 4 and c[4] == "1"
+            if preferred or gid not in ko_names:
+                ko_names[gid] = name
+
+    coords: dict[int, tuple[float, float]] = {}
+    for line in _fetch_zip_member(f"{cc}.zip", f"{cc}.txt").splitlines():
+        c = line.split("\t")
+        if len(c) < 6 or not c[0].isdigit():
+            continue
+        try:
+            coords[int(c[0])] = (float(c[4]), float(c[5]))
+        except ValueError:
+            continue
+    return ko_names, coords
+
+
+def build(out: Path, max_cities: int, country: str | None = None, with_ko: bool = False) -> int:
     rows: list[dict] = []
 
     # CONTINENT
@@ -82,18 +111,18 @@ def build(out: Path, max_cities: int) -> int:
         c = line.split("\t")
         if len(c) < 17:
             continue
-        iso, country, continent, gid = c[0], c[4], c[8], c[16]
+        iso, country_name, continent, gid = c[0], c[4], c[8], c[16]
         if not gid.isdigit():
             continue
         gid_i = int(gid)
         country_gid[iso] = gid_i
         cont = CONTINENTS.get(continent)
         rows.append({
-            "level": "COUNTRY", "name": country, "countryCode": iso,
+            "level": "COUNTRY", "name": country_name, "countryCode": iso,
             "geonamesId": gid_i, "parentGeonamesId": cont[0] if cont else None,
         })
 
-    # REGION (admin1CodesASCII.txt): "CC.admin1" → admin1Gid 맵
+    # REGION (admin1CodesASCII.txt): "CC.admin1" → admin1Gid 맵. --country 지정 시 해당 국가만.
     admin1_gid: dict[str, int] = {}
     for line in _fetch("admin1CodesASCII.txt").splitlines():
         c = line.split("\t")
@@ -101,6 +130,8 @@ def build(out: Path, max_cities: int) -> int:
             continue
         code, name, gid = c[0], c[1], int(c[3])
         cc = code.split(".")[0]
+        if country and cc != country:
+            continue
         admin1_gid[code] = gid
         rows.append({
             "level": "REGION", "name": name, "countryCode": cc,
@@ -108,27 +139,42 @@ def build(out: Path, max_cities: int) -> int:
             "geonamesId": gid, "parentGeonamesId": country_gid.get(cc),
         })
 
-    # CITY (cities15000.txt)
-    city_lines = _fetch_zip_member("cities15000.zip", "cities15000.txt").splitlines()
-    for line in city_lines[:max_cities]:
+    # CITY (cities15000.txt). --country 필터를 먼저 적용한 뒤 max_cities 를 자른다.
+    city_rows: list[dict] = []
+    for line in _fetch_zip_member("cities15000.zip", "cities15000.txt").splitlines():
         c = line.split("\t")
         if len(c) < 15 or not c[0].isdigit():
             continue
         gid, name, lat, lon, cc, admin1, pop = (
             int(c[0]), c[1], c[4], c[5], c[8], c[10], c[14],
         )
+        if country and cc != country:
+            continue
         parent = admin1_gid.get(f"{cc}.{admin1}") or country_gid.get(cc)
-        rows.append({
+        city_rows.append({
             "level": "CITY", "name": name, "countryCode": cc, "admin1Code": admin1 or None,
             "geonamesId": gid, "parentGeonamesId": parent,
             "latitude": float(lat) if lat else None,
             "longitude": float(lon) if lon else None,
             "population": int(pop) if pop.isdigit() else None,
         })
+    rows.extend(city_rows[:max_cities])
+
+    # --country 보강: 한국어명(alternateNames) + 좌표 없는 계층 행(REGION 등) lat/lng
+    if country:
+        ko_names, coords = _fetch_country_extras(country, with_ko)
+        for r in rows:
+            gid = r.get("geonamesId")
+            if not gid:
+                continue
+            if with_ko and gid in ko_names and not r.get("nameKo"):
+                r["nameKo"] = ko_names[gid]
+            if r.get("latitude") is None and gid in coords:
+                r["latitude"], r["longitude"] = coords[gid]
 
     with out.open("w", encoding="utf-8") as dst:
         for r in rows:
-            dst.write(json.dumps(r, ensure_ascii=False) + "\n")
+            dst.write(json.dumps({k: v for k, v in r.items() if v is not None}, ensure_ascii=False) + "\n")
     return len(rows)
 
 
@@ -136,6 +182,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="GeoNames → regions.jsonl 정규화기")
     ap.add_argument("--out", default="regions.jsonl")
     ap.add_argument("--max-cities", type=int, default=5000)
+    ap.add_argument("--country", help="ISO 국가코드 (예: KR) — REGION/CITY 를 해당 국가로 한정 + 좌표 보강")
+    ap.add_argument("--with-ko", action="store_true", help="alternateNames 덤프로 한국어명(nameKo) 조인 (--country 필요)")
     ap.add_argument("--from-sample", action="store_true")
     args = ap.parse_args()
     out = Path(args.out)
@@ -146,7 +194,7 @@ def main() -> int:
         return 0
 
     try:
-        n = build(out, args.max_cities)
+        n = build(out, args.max_cities, country=args.country, with_ko=args.with_ko)
         print(f"[geonames] {n} regions → {out}", file=sys.stderr)
     except Exception as e:  # noqa: BLE001
         print(f"GeoNames 다운로드 실패({e}) → 샘플로 폴백", file=sys.stderr)

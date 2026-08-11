@@ -1,6 +1,7 @@
 package com.kgd.search.application.attraction.service
 
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
+import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import org.springframework.data.domain.PageRequest
@@ -9,11 +10,25 @@ import java.util.UUID
 
 /**
  * 관광지 검색 (ADR-0065 P1) — BM25 관련도 + geo 반경/거리순. 랭킹 신호(function_score)는 P2.
+ * 자동완성은 지역(행정 계층)+관광지 통합 (P2 슬라이스 1).
  */
 @Service
 class SearchAttractionService(
     private val attractionSearchPort: AttractionSearchPort,
-) : SearchAttractionUseCase {
+) : SearchAttractionUseCase, SuggestAttractionUseCase {
+
+    override fun execute(prefix: String, lang: String?, size: Int): List<SuggestAttractionUseCase.Suggestion> =
+        attractionSearchPort.suggest(prefix, lang?.takeIf { it.isNotBlank() }, size).map { hit ->
+            SuggestAttractionUseCase.Suggestion(
+                type = hit.type.name,
+                id = hit.id,
+                title = hit.title,
+                latitude = hit.latitude,
+                longitude = hit.longitude,
+                regionLevel = hit.regionLevel,
+                category = hit.category,
+            )
+        }
 
     companion object {
         private const val OVERVIEW_SUMMARY_LENGTH = 200

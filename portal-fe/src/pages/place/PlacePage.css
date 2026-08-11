@@ -342,3 +342,64 @@
     max-height: none;
   }
 }
+
+/* ─── 통합 자동완성 드롭다운 ─── */
+.place-search-box {
+  position: relative;
+  flex: 1;
+}
+
+.place-search-box .place-search-input {
+  width: 100%;
+}
+
+.place-suggest {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-default);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px oklch(0 0 0 / 0.4);
+  overflow: hidden;
+  list-style: none;
+  margin: 0;
+  padding: 0.25rem;
+}
+
+.place-suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+}
+
+.place-suggest-item:hover {
+  background: var(--ko-surface-2);
+}
+
+.place-suggest-type {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--ko-border-subtle);
+  color: var(--ko-text-muted);
+}
+
+.place-suggest-type.region {
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-accent-primary);
+}
+
+.place-suggest-title {
+  color: var(--ko-text-primary);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

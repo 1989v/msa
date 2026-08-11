@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "name": { "type": "text" },
+      "nameKo": { "type": "text", "analyzer": "nori_analyzer" },
+      "level": { "type": "keyword" },
+      "countryCode": { "type": "keyword" },
+      "location": { "type": "geo_point" },
+      "population": { "type": "long" }
+    }
+  }
+}

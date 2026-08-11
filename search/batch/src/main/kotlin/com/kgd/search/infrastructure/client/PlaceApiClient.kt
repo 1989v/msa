@@ -38,6 +38,54 @@ class PlaceApiClient(
         val totalPages: Int
     )
 
+    data class RegionDto(
+        val id: Long,
+        val level: String,
+        val name: String,
+        val nameKo: String? = null,
+        val countryCode: String? = null,
+        val latitude: Double? = null,
+        val longitude: Double? = null,
+        val population: Long? = null,
+    )
+
+    data class RegionPageResponse(
+        val regions: List<RegionDto>,
+        val totalElements: Long,
+        val totalPages: Int
+    )
+
+    suspend fun fetchRegionPage(page: Int, size: Int = 200): RegionPageResponse {
+        val response = webClient.get()
+            .uri("/api/places/regions/page?page=$page&size=$size")
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitSingle()
+
+        @Suppress("UNCHECKED_CAST")
+        val data = response["data"] as? Map<String, Any>
+            ?: throw IllegalStateException("No data field in place region API response")
+
+        @Suppress("UNCHECKED_CAST")
+        val regions = (data["regions"] as? List<Map<String, Any>> ?: emptyList()).map { r ->
+            RegionDto(
+                id = (r["id"] as Number).toLong(),
+                level = r["level"] as String,
+                name = r["name"] as String,
+                nameKo = r["nameKo"] as? String,
+                countryCode = r["countryCode"] as? String,
+                latitude = (r["latitude"] as? Number)?.toDouble(),
+                longitude = (r["longitude"] as? Number)?.toDouble(),
+                population = (r["population"] as? Number)?.toLong(),
+            )
+        }
+        return RegionPageResponse(
+            regions = regions,
+            totalElements = (data["totalElements"] as Number).toLong(),
+            totalPages = (data["totalPages"] as Number).toInt()
+        )
+    }
+
     suspend fun fetchPage(page: Int, size: Int = 100): AttractionPageResponse {
         log.debug { "Fetching attractions: page=$page, size=$size" }
 

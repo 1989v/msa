@@ -1,6 +1,7 @@
 package com.kgd.search.domain.attraction.port
 
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.SuggestHit
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 
@@ -9,6 +10,12 @@ interface AttractionSearchPort {
     fun search(query: SearchQuery, pageable: Pageable): Page<AttractionHit>
 
     fun findById(id: String): AttractionDocument?
+
+    /**
+     * 통합 자동완성 — 지역(인구 부스트, 상위 고정) + 관광지 prefix 매칭.
+     * [lang] 은 관광지 문서 필터이자 지역 표기 언어 선택(ko→nameKo 우선).
+     */
+    fun suggest(prefix: String, lang: String?, size: Int): List<SuggestHit>
 
     /**
      * 키워드가 null/blank 면 필터-only 탐색 (지도 영역 브라우징).

@@ -7,6 +7,7 @@ import com.kgd.place.domain.region.model.RegionLevel
 import com.kgd.place.presentation.region.dto.BulkCreateRegionRequest
 import com.kgd.place.presentation.region.dto.BulkCreateRegionResponse
 import com.kgd.place.presentation.region.dto.CreateRegionRequest
+import com.kgd.place.presentation.region.dto.RegionPageResponse
 import com.kgd.place.presentation.region.dto.RegionResponse
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -42,6 +43,29 @@ class RegionController(
             else -> getRegionUseCase.findByLevel(level ?: RegionLevel.CONTINENT)
         }
         return ApiResponse.success(views.map { RegionResponse.from(it) })
+    }
+
+    /** 전체 페이지 스캔 — search-batch 지역 재색인용 (ADR-0065). */
+    @GetMapping("/page")
+    fun findPage(
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "200") size: Int,
+    ): ApiResponse<RegionPageResponse> {
+        val result = getRegionUseCase.findPage(
+            org.springframework.data.domain.PageRequest.of(
+                page.coerceAtLeast(0),
+                size.coerceIn(1, 500),
+                org.springframework.data.domain.Sort.by("id"),
+            )
+        )
+        return ApiResponse.success(
+            RegionPageResponse(
+                regions = result.content.map { RegionResponse.from(it) },
+                totalElements = result.totalElements,
+                totalPages = result.totalPages,
+                currentPage = result.number,
+            )
+        )
     }
 
     @GetMapping("/{id}")
