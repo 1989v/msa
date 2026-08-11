@@ -1,7 +1,7 @@
 # Place Service
 
-행정 지리 계층(대륙→국가→광역→도시)과 POI(음식점/카페/상점 등)를 오픈데이터로 적재하고
-**geo_distance 근처검색**을 제공하는 서비스 (ADR-0056 Part 2).
+행정 지리 계층(대륙→국가→광역→도시)과 POI(음식점/카페/상점 등), **관광지(Attraction)**를
+오픈데이터로 적재하고 **geo_distance 근처검색**을 제공하는 서비스 (ADR-0056 Part 2, ADR-0065).
 
 ## Modules
 
@@ -32,11 +32,16 @@
 | GET | `/api/places/regions?level=&parentId=` | public | 계층 탐색 |
 | GET | `/api/places/nearby?lat&lng&radiusKm&category&keyword` | public | 반경 내 POI 거리순 |
 | POST | `/api/places/regions`(+`/bulk`), `/api/places/pois`(+`/bulk`) | ADMIN | 적재 |
+| POST | `/api/places/attractions/bulk` | ADMIN | 관광지 멱등 upsert — (contentId, lang) 자연키 (ADR-0065) |
+| GET | `/api/places/attractions?lang=&page=&size=` (+`/{id}`) | public | 페이지 조회 — search-batch 재색인 풀스캔용 |
 
 ## 시드
 
 `place.seed.enabled=true` + `/seed/{regions,pois}.jsonl` 마운트 시 기동 1회 적재(멱등).
 정규화 도구/샘플: `tools/seed/place/`. 소스/라이선스: GeoNames(CC BY 4.0), 상가정보(제한없음).
+
+관광지는 별도 경로 — `tools/seed/tour/`(TourAPI ETL) → bulk API. **Attraction 은 POI 와 달리
+동기 색인하지 않는다** — search-batch `attractionApiReindexJob` 이 일괄 재색인 (ADR-0065).
 
 ## Docs
 

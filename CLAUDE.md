@@ -136,7 +136,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | warehouse | (CLAUDE.md 미작성) | 창고 관리 — 서비스 코드 존재 |
 | chatbot | (CLAUDE.md 미작성) | 대화형 AI — 서비스 코드 존재 |
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
-| place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보) 적재 (ADR-0056) |
+| place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 운영 활성 (2026-08-09) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
 
@@ -145,6 +145,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | Path | FE | 비고 |
 |------|----|------|
 | `/` (root catch-all) | `portal-fe` | MSA 진입점 — 단일 SPA 에 코드딕셔너리(트리맵/그래프/검색) + 포트폴리오 + 서비스 카탈로그 + 어바웃 섹션이 scroll anchor 로 통합 |
+| `/tour`, `/en/tour` | `portal-fe` | K-관광 지도 검색 (ADR-0065) — TourAPI 관광지 국문/영문 + 구글맵. 데이터: place SSOT → search attractions 인덱스 |
 | `resume.1989v.com` | `portal-fe` | 이력서 — 같은 번들·같은 Service, 호스트로 분기. 공개 여부는 DB 설정 + 제출처별 토큰 게이트 (ADR-0064). 색인 대상 아님 |
 | `/admin/*` | `admin-fe` | 백오피스 |
 | `/quant/*` | `quant-fe` | 트레이딩 (Phase 3) |

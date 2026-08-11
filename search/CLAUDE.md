@@ -1,6 +1,7 @@
 # Search Service
 
 OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 전환). CDC + Kafka로 상품 데이터를 비동기 인덱싱.
+관광지(`attractions` 인덱스)는 place SSOT 를 batch 가 일괄 재색인 — Kafka 미경유 (ADR-0065).
 
 ## Modules
 
@@ -9,7 +10,7 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 | `:search:domain` | Pure Kotlin 도메인 (검색 모델, 포트) | — |
 | `:search:app` | REST API 서버 (port 8083) | Deployment (API tier) |
 | `:search:consumer` | Kafka 이벤트 소비 → OpenSearch 인덱싱 (port 8084) | Deployment (Worker tier — 벌크 색인이 쿼리 P99 위협, ADR-0025/0058 로 분리 유지) |
-| `:search:batch` | 전체 리인덱싱 / 오프라인 평가 | **CronJob** (ADR-0058 — 상주 Deployment 제거, `search-reindex`/`search-eval-daily`) |
+| `:search:batch` | 전체 리인덱싱 / 오프라인 평가 | **CronJob** (ADR-0058 — 상주 Deployment 제거, `search-reindex`/`search-eval-daily`/`attraction-reindex`) |
 
 ## Commands
 

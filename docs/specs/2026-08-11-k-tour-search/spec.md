@@ -87,16 +87,20 @@ TourAPI(KorService2/EngService2)
   04-allow-backend-to-backend.yaml 컨벤션). place 는 `part-of` 라벨로 기존 mysql/opensearch NP 자동 수혜.
 - CronJob `attraction-reindex` 는 suspend — 적재 후 온디맨드 실행.
 
-### P1 검증 (완료 조건)
+### P1 검증 (완료 조건) — ✅ 통과 (2026-08-11 운영 실측)
 
 ```bash
 # 샘플 30건 기준 (키 발급 전)
-curl 'https://api.1989v.com/api/places/attractions?lang=ko&size=3'          # SSOT 적재 확인
-curl 'https://api.1989v.com/api/search/attractions?keyword=궁궐&lang=ko'      # 국문 검색
-curl 'https://api.1989v.com/api/search/attractions?keyword=palace&lang=en'  # 영문 검색
-curl 'https://api.1989v.com/api/search/attractions?lat=37.57&lng=126.97&radiusKm=5&sort=distance'  # 근방
-# FE: https://1989v.com/tour 지도에 마커 + 검색 + 상세 패널
+curl 'https://api.1989v.com/api/places/attractions?lang=ko&size=3'          # SSOT — total 30 (ko 20 + en 10) ✅
+curl 'https://api.1989v.com/api/search/attractions?keyword=해수욕장&lang=ko'   # 국문 — nori 복합명사 분해 4건 ✅
+curl 'https://api.1989v.com/api/search/attractions?keyword=야경&lang=ko'      # 국문 — overview 본문 매칭 4건 ✅
+curl 'https://api.1989v.com/api/search/attractions?keyword=palace&lang=en'  # 영문 — 2건 ✅
+curl 'https://api.1989v.com/api/search/attractions?lat=37.5788&lng=126.977&radiusKm=5&sort=distance'  # 근방 6건 거리순 ✅
+# FE: https://1989v.com/tour · /en/tour → 200 ✅ (구글맵은 VITE_GOOGLE_MAPS_KEY 시크릿 등록 후 활성 — 미등록 시 리스트-only)
 ```
+
+> `keyword=궁궐` 은 0건 — 샘플 문서 어휘에 "궁궐" 이 없어 BM25 로는 불가한 사례.
+> 정확히 P2 유사어(synonym) 단계가 푸는 문제로, P2 검증 케이스로 승격한다.
 
 ## P2 (방향 확정, 별도 구현)
 

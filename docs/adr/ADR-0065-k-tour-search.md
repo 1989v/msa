@@ -1,7 +1,7 @@
 # ADR-0065 K-관광 검색 — place SSOT + search 색인, TourAPI 소싱
 
 ## Status
-Proposed (2026-08-11)
+Accepted (2026-08-11) — P1 구현 반영
 
 ## Context
 
