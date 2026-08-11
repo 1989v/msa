@@ -254,7 +254,7 @@ export function portalTitle(name) {
  * 되돌리기 어렵다.
  */
 export function resumeTitle(name) {
-  return name ? `${name} — 권기덕` : '권기덕 — 백엔드 개발자';
+  return name ? `${name} — Resume 권기덕` : 'Resume — 권기덕';
 }
 
 export function websiteJsonLd() {

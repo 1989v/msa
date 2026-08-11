@@ -12,6 +12,8 @@ import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 // ADR-0059 — 게임 플랫폼 (game:feature API 는 code-dictionary 와 동일 오리진)
 const GamesPage = lazy(() => import('./pages/games/GamesPage'));
 const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
+// ADR-0065 — K-관광 지도 검색 (/tour, /en/tour). 구글맵 로더 포함이라 lazy 분리.
+const TourPage = lazy(() => import('./pages/tour/TourPage'));
 // ADR-0064 — 이력서 (resume.<domain>). 공개 포털 번들과 코드가 섞이지 않게 lazy 로 분리한다.
 const ResumePage = lazy(() => import('./pages/resume/ResumePage'));
 const ResumeDetailPage = lazy(() => import('./pages/resume/ResumeDetailPage'));
@@ -65,6 +67,9 @@ function App() {
           <Route path="/shop/login" element={<ShopLoginPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
+          <Route path="/tour" element={<TourPage />} />
+          <Route path="/en/tour" element={<TourPage />} />
+
           <Route path="/games" element={gameRoute(<GamesPage />)} />
           <Route path="/games/genre/:genre" element={gameRoute(<GamesPage />)} />
           <Route path="/games/:slug" element={gameRoute(<GameDetailPage />)} />

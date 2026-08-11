@@ -2,13 +2,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Markdown from '../../components/Markdown';
 import { captureShareToken, fetchResumeOverview, type ResumeOverview } from '../../api/resumeApi';
+import { resumeTitle } from '../../seo/copy.mjs';
+import { useSeo } from '../../seo/useSeo';
 import { hydrateEmails, protectEmails } from './protectEmail';
 import './Resume.css';
+
+/** 게이트에 막혔을 때는 탭 제목도 404 와 같은 말을 해야 한다 */
+export const CLOSED_TITLE = '페이지를 찾을 수 없습니다';
 
 export default function ResumePage() {
   const [overview, setOverview] = useState<ResumeOverview | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'closed'>('loading');
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  // 브라우저가 PDF 머리말에 문서 제목을 찍으므로, 탭 제목이 곧 인쇄물의 머리말이다.
+  useSeo({ title: state === 'closed' ? CLOSED_TITLE : resumeTitle(), noindex: true });
 
   useEffect(() => {
     captureShareToken(window.location.search);
@@ -47,8 +55,8 @@ export default function ResumePage() {
         <Markdown className="resume-body" source={overview.main.bodyMarkdown} transformHtml={transform} />
 
         {overview.details.length > 0 && (
-          <nav className="resume-details" aria-label="상세">
-            <h2 className="resume-details-title">상세</h2>
+          <nav className="resume-details" aria-label="프로젝트 상세">
+            <h2 className="resume-details-title">프로젝트 상세</h2>
             <p className="resume-details-hint">각 항목을 누르면 문제 정의부터 결과까지 확인할 수 있습니다.</p>
             <ul className="resume-details-list">
               {overview.details.map((doc) => (

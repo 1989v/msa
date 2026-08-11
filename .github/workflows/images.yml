@@ -329,6 +329,10 @@ jobs:
                 BUILD_ARGS+=(--build-arg "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}")
                 ;;
             esac
+            # ADR-0065 /tour 구글맵 — 시크릿 미설정이면 지도 없이 리스트-only 폴백
+            if [[ "$svc" == "portal-fe" ]]; then
+              BUILD_ARGS+=(--build-arg "VITE_GOOGLE_MAPS_KEY=${{ secrets.VITE_GOOGLE_MAPS_KEY }}")
+            fi
             docker buildx build \
               --platform linux/arm64 \
               -f "$ctx/Dockerfile" \

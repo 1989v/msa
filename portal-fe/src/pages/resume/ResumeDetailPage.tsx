@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Markdown from '../../components/Markdown';
 import { captureShareToken, fetchResumeDocument, type ResumeDocument } from '../../api/resumeApi';
-import { ResumeClosed } from './ResumePage';
+import { CLOSED_TITLE, ResumeClosed } from './ResumePage';
+import { resumeTitle } from '../../seo/copy.mjs';
+import { useSeo } from '../../seo/useSeo';
 import { hydrateEmails, protectEmails } from './protectEmail';
 import './Resume.css';
 
@@ -11,6 +13,11 @@ export default function ResumeDetailPage() {
   const [document, setDocument] = useState<ResumeDocument | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'closed'>('loading');
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  useSeo({
+    title: state === 'closed' ? CLOSED_TITLE : resumeTitle(document?.title),
+    noindex: true,
+  });
 
   useEffect(() => {
     if (!slug) return;
