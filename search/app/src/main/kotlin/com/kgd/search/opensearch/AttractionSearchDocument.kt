@@ -1,0 +1,50 @@
+package com.kgd.search.infrastructure.opensearch
+
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.kgd.search.domain.attraction.model.AttractionDocument
+import java.time.LocalDateTime
+
+/**
+ * `attractions` 인덱스 문서 (ADR-0065 — jackson 직렬화).
+ * 필드 타입/분석기 정의는 batch 의 `opensearch/attractions-index.json` 이 SSOT.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class AttractionSearchDocument(
+    val id: String,
+    val contentId: String,
+    val lang: String,
+    val title: String,
+    val location: GeoPoint,
+    val address: String? = null,
+    val areaCode: String? = null,
+    val sigunguCode: String? = null,
+    val category: String? = null,
+    val imageUrl: String? = null,
+    val tel: String? = null,
+    val overview: String? = null,
+    val popularity: Long = 0,
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    val modifiedAt: LocalDateTime? = null,
+) {
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    data class GeoPoint(val lat: Double = 0.0, val lon: Double = 0.0)
+
+    fun toDomain(): AttractionDocument = AttractionDocument(
+        id = id,
+        contentId = contentId,
+        lang = lang,
+        title = title,
+        latitude = location.lat,
+        longitude = location.lon,
+        address = address,
+        areaCode = areaCode,
+        sigunguCode = sigunguCode,
+        category = category,
+        imageUrl = imageUrl,
+        tel = tel,
+        overview = overview,
+        popularity = popularity,
+        modifiedAt = modifiedAt,
+    )
+}
