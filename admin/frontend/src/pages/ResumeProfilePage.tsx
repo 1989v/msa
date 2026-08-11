@@ -28,6 +28,7 @@ const EMPTY_PROJECT = {
   endMonth: '',
   summary: '',
   metrics: '',
+  tags: '',
   detailSlug: '',
   orderNo: 0,
   published: true,
@@ -185,7 +186,7 @@ export function ResumeProfilePage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-zinc-500">
-              <tr><th className="py-2 pr-3">제목</th><th className="py-2 pr-3">회사</th><th className="py-2 pr-3">카테고리</th><th className="py-2 pr-3">기간</th><th className="py-2 pr-3">상세</th><th className="py-2 pr-3">공개</th><th className="py-2" /></tr>
+              <tr><th className="py-2 pr-3">제목</th><th className="py-2 pr-3">회사</th><th className="py-2 pr-3">카테고리</th><th className="py-2 pr-3">기간</th><th className="py-2 pr-3">기술 스택</th><th className="py-2 pr-3">상세</th><th className="py-2 pr-3">공개</th><th className="py-2" /></tr>
             </thead>
             <tbody>
               {profile.projects.map((p) => (
@@ -194,20 +195,22 @@ export function ResumeProfilePage() {
                   <td className="py-2 pr-3 text-zinc-500">{p.companyName ?? '개인'}</td>
                   <td className="py-2 pr-3">{p.categoryLabel ?? '—'}</td>
                   <td className="py-2 pr-3 text-zinc-500">{p.startMonth ? `${p.startMonth} ~ ${p.endMonth ?? '현재'}` : '—'}</td>
+                  <td className="py-2 pr-3 text-xs text-zinc-500">{p.tags.length > 0 ? p.tags.join(', ') : '—'}</td>
                   <td className="py-2 pr-3 font-mono text-xs">{p.detailSlug ?? '—'}</td>
                   <td className="py-2 pr-3">{p.published ? 'Y' : 'N'}</td>
                   <td className="py-2 text-right">
                     <Button size="sm" variant="outline" onClick={() => setProject({
                       id: p.id, title: p.title, companyId: p.companyId, categoryId: p.categoryId,
                       startMonth: p.startMonth ?? '', endMonth: p.endMonth ?? '', summary: p.summary ?? '',
-                      metrics: p.metrics.join('\n'), detailSlug: p.detailSlug ?? '', orderNo: p.orderNo, published: p.published,
+                      metrics: p.metrics.join('\n'), tags: p.tags.join(', '),
+                      detailSlug: p.detailSlug ?? '', orderNo: p.orderNo, published: p.published,
                     })}>편집</Button>
                     <Button size="sm" variant="ghost" className="ml-2" onClick={() => p.id && run(() => deleteProject(p.id!), '삭제했습니다')}>삭제</Button>
                   </td>
                 </tr>
               ))}
               {profile.projects.length === 0 && (
-                <tr><td colSpan={7} className="py-4 text-center text-zinc-500">아직 없습니다.</td></tr>
+                <tr><td colSpan={8} className="py-4 text-center text-zinc-500">아직 없습니다.</td></tr>
               )}
             </tbody>
           </table>
@@ -236,6 +239,8 @@ export function ResumeProfilePage() {
           <textarea className="h-24 w-full rounded-md border border-zinc-300 bg-transparent p-2 text-sm dark:border-zinc-700"
             placeholder="성과 지표 — 한 줄에 하나 (예: CTR +3.4%)"
             value={project.metrics} onChange={(e) => setProject({ ...project, metrics: e.target.value })} />
+          <Input placeholder="기술 스택 — 쉼표로 구분 (Kotlin, OpenSearch, Kafka)"
+            value={project.tags} onChange={(e) => setProject({ ...project, tags: e.target.value })} />
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={project.published} onChange={(e) => setProject({ ...project, published: e.target.checked })} />공개
@@ -245,7 +250,8 @@ export function ResumeProfilePage() {
                 id: project.id ?? undefined, title: project.title, companyId: project.companyId,
                 categoryId: project.categoryId, startMonth: blankToNull(project.startMonth),
                 endMonth: blankToNull(project.endMonth), summary: blankToNull(project.summary),
-                metrics: splitList(project.metrics), detailSlug: blankToNull(project.detailSlug),
+                metrics: splitList(project.metrics), tags: splitList(project.tags),
+                detailSlug: blankToNull(project.detailSlug),
                 orderNo: project.orderNo, published: project.published,
               } as never);
               setProject(EMPTY_PROJECT);

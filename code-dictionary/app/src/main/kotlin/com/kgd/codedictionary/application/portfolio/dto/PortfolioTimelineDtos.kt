@@ -20,9 +20,11 @@ data class PortfolioTimelineDto(
 )
 
 /**
- * 재직 구간. 회사명·기간·직무까지만 싣는다.
+ * 재직 구간. 회사명·기간·직무·소속까지 싣는다.
  *
  * `note` 는 자유 서술 필드라 무엇이 적혀 있을지 보장할 수 없어 제외한다.
+ * 반면 `team` 은 소속 조직명이라 형태가 예측 가능하고, 직무만으로는 어느 영역을 맡았는지
+ * 드러나지 않는 경우가 많아 함께 싣는다.
  */
 data class TimelineCompanyDto(
     val name: String,
@@ -30,6 +32,7 @@ data class TimelineCompanyDto(
     val endMonth: String?,
     val ongoing: Boolean,
     val position: String?,
+    val team: String?,
 ) {
     companion object {
         fun from(company: ResumeCompany) = TimelineCompanyDto(
@@ -38,6 +41,7 @@ data class TimelineCompanyDto(
             endMonth = company.period.end?.toString(),
             ongoing = company.period.ongoing,
             position = company.position,
+            team = company.team,
         )
     }
 }

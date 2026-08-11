@@ -99,6 +99,11 @@ function ProjectCard({ project }: { project: ResumeProject }) {
           {project.metrics.map((m) => <li key={m}>{m}</li>)}
         </ul>
       )}
+      {project.tags.length > 0 && (
+        <div className="resume-project-tags">
+          {project.tags.map((t) => <span key={t} className="resume-project-tag">{t}</span>)}
+        </div>
+      )}
     </article>
   );
 }

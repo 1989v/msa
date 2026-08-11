@@ -41,7 +41,11 @@ export default function PortfolioTimeline({ timeline }: PortfolioTimelineProps) 
                   <span className="timeline-company-period">
                     {periodText(c.startMonth, c.endMonth, c.ongoing)}
                   </span>
-                  {c.position && <span className="timeline-company-role">{c.position}</span>}
+                  {(c.position || c.team) && (
+                    <span className="timeline-company-role">
+                      {[c.position, c.team].filter(Boolean).join(' · ')}
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>

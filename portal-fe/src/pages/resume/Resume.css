@@ -495,3 +495,27 @@
     page-break-inside: avoid;
   }
 }
+
+/* 프로젝트에 쓴 기술 — 성과 아래에 칩으로. 읽는 흐름을 끊지 않게 작고 낮은 대비로 둔다 */
+.resume-project-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-1);
+  margin-top: var(--ko-space-2);
+}
+
+.resume-project-tag {
+  padding: 2px var(--ko-space-2);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-sm);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+  font-family: var(--ko-font-mono);
+}
+
+@media print {
+  .resume-project-tag {
+    border-color: #ccc;
+    color: #444;
+  }
+}

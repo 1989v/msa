@@ -29,6 +29,7 @@ export interface TimelineCompany {
   endMonth: string | null;
   ongoing: boolean;
   position: string | null;
+  team: string | null;
 }
 
 export interface TimelineProject {
