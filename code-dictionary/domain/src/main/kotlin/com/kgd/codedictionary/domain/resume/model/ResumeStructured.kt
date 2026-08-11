@@ -33,7 +33,6 @@ data class ResumeCompany(
     val position: String?,
     val team: String?,
     val note: String?,
-    val orderNo: Int,
 ) {
     init {
         if (name.isBlank()) {

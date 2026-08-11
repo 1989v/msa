@@ -41,7 +41,6 @@ data class ResumeCompanyDto(
     val tenureMonths: Int,
     val tenureYears: Int,
     val tenureRemainderMonths: Int,
-    val orderNo: Int,
 ) {
     companion object {
         fun from(company: ResumeCompany, asOf: LocalDate): ResumeCompanyDto {
@@ -58,7 +57,6 @@ data class ResumeCompanyDto(
                 tenureMonths = tenure.totalMonths,
                 tenureYears = tenure.years,
                 tenureRemainderMonths = tenure.months,
-                orderNo = company.orderNo,
             )
         }
     }
@@ -159,7 +157,6 @@ data class ResumeCompanyUpsertRequest(
     val position: String? = null,
     val team: String? = null,
     val note: String? = null,
-    val orderNo: Int = 0,
 )
 
 data class ResumeCategoryUpsertRequest(

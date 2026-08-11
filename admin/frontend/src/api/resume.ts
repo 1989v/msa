@@ -123,7 +123,6 @@ export interface ResumeCompany {
   tenureMonths: number;
   tenureYears: number;
   tenureRemainderMonths: number;
-  orderNo: number;
 }
 
 export interface ResumeCategory {

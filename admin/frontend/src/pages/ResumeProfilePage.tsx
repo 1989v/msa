@@ -17,7 +17,7 @@ import {
 
 const MONTH_HINT = 'YYYY-MM';
 
-const EMPTY_COMPANY = { id: null as number | null, name: '', startMonth: '', endMonth: '', position: '', team: '', orderNo: 0 };
+const EMPTY_COMPANY = { id: null as number | null, name: '', startMonth: '', endMonth: '', position: '', team: '' };
 const EMPTY_CATEGORY = { id: null as number | null, code: '', label: '', description: '', orderNo: 0 };
 const EMPTY_PROJECT = {
   id: null as number | null,
@@ -121,7 +121,7 @@ export function ResumeProfilePage() {
                   <td className="py-2 text-right">
                     <Button size="sm" variant="outline" onClick={() => setCompany({
                       id: c.id, name: c.name, startMonth: c.startMonth, endMonth: c.endMonth ?? '',
-                      position: c.position ?? '', team: c.team ?? '', orderNo: c.orderNo,
+                      position: c.position ?? '', team: c.team ?? '',
                     })}>편집</Button>
                     <Button size="sm" variant="ghost" className="ml-2" onClick={() => c.id && run(() => deleteCompany(c.id!), '삭제했습니다')}>삭제</Button>
                   </td>
@@ -131,22 +131,20 @@ export function ResumeProfilePage() {
           </table>
         </div>
         <div className="mt-4 grid gap-2 border-t border-zinc-200 pt-4 sm:grid-cols-6 dark:border-zinc-800">
+          {/* 순서 입력은 없다 — 경력 표는 시작월 최신순으로 정렬된다 */}
           <Input placeholder="회사명" value={company.name} onChange={(e) => setCompany({ ...company, name: e.target.value })} />
           <Input placeholder={`시작 ${MONTH_HINT}`} value={company.startMonth} onChange={(e) => setCompany({ ...company, startMonth: e.target.value })} />
           <Input placeholder={`종료 ${MONTH_HINT} (비우면 재직중)`} value={company.endMonth} onChange={(e) => setCompany({ ...company, endMonth: e.target.value })} />
           <Input placeholder="직급" value={company.position} onChange={(e) => setCompany({ ...company, position: e.target.value })} />
           <Input placeholder="팀" value={company.team} onChange={(e) => setCompany({ ...company, team: e.target.value })} />
-          <div className="flex gap-2">
-            <Input className="w-16" type="number" value={company.orderNo} onChange={(e) => setCompany({ ...company, orderNo: Number(e.target.value) })} />
-            <Button onClick={() => run(async () => {
-              await upsertCompany({
-                id: company.id ?? undefined, name: company.name, startMonth: company.startMonth,
-                endMonth: blankToNull(company.endMonth), position: blankToNull(company.position),
-                team: blankToNull(company.team), orderNo: company.orderNo,
-              } as never);
-              setCompany(EMPTY_COMPANY);
-            }, '저장했습니다')}>저장</Button>
-          </div>
+          <Button onClick={() => run(async () => {
+            await upsertCompany({
+              id: company.id ?? undefined, name: company.name, startMonth: company.startMonth,
+              endMonth: blankToNull(company.endMonth), position: blankToNull(company.position),
+              team: blankToNull(company.team),
+            } as never);
+            setCompany(EMPTY_COMPANY);
+          }, '저장했습니다')}>저장</Button>
         </div>
       </Card>
 

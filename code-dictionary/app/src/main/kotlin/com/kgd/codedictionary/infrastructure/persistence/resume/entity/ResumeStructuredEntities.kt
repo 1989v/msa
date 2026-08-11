@@ -83,7 +83,6 @@ class ResumeCompanyJpaEntity(
     position: String? = null,
     team: String? = null,
     note: String? = null,
-    orderNo: Int = 0,
 ) {
     @Column(nullable = false, length = 120)
     var name: String = name
@@ -110,10 +109,6 @@ class ResumeCompanyJpaEntity(
     var note: String? = note
         private set
 
-    @Column(name = "order_no", nullable = false)
-    var orderNo: Int = orderNo
-        private set
-
     fun update(company: ResumeCompany) {
         name = company.name
         startMonth = company.period.start.toDate()
@@ -121,7 +116,6 @@ class ResumeCompanyJpaEntity(
         position = company.position
         team = company.team
         note = company.note
-        orderNo = company.orderNo
     }
 
     fun toDomain() = ResumeCompany(
@@ -131,7 +125,6 @@ class ResumeCompanyJpaEntity(
         position = position,
         team = team,
         note = note,
-        orderNo = orderNo,
     )
 
     companion object {
@@ -143,7 +136,6 @@ class ResumeCompanyJpaEntity(
             position = company.position,
             team = company.team,
             note = company.note,
-            orderNo = company.orderNo,
         )
     }
 }

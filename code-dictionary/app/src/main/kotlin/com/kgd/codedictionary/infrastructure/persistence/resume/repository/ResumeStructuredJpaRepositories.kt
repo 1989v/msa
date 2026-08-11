@@ -12,7 +12,8 @@ interface ResumeCategoryJpaRepository : JpaRepository<ResumeCategoryJpaEntity, L
 }
 
 interface ResumeCompanyJpaRepository : JpaRepository<ResumeCompanyJpaEntity, Long> {
-    fun findAllByOrderByOrderNoAsc(): List<ResumeCompanyJpaEntity>
+    /** 경력 표는 최신순이 관례다 — 시작월이 순서를 결정한다 */
+    fun findAllByOrderByStartMonthDesc(): List<ResumeCompanyJpaEntity>
 }
 
 interface ResumeProjectJpaRepository : JpaRepository<ResumeProjectJpaEntity, Long> {

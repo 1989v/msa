@@ -42,7 +42,6 @@ class ResumeStructuredAdminService(
                 position = request.position,
                 team = request.team,
                 note = request.note,
-                orderNo = request.orderNo,
             ),
         )
         return ResumeCompanyDto.from(saved, LocalDate.now())

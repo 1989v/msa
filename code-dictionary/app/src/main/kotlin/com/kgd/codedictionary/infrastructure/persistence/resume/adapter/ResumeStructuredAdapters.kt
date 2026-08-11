@@ -47,7 +47,7 @@ class ResumeCompanyRepositoryAdapter(
 ) : ResumeCompanyRepositoryPort {
 
     override fun findAll(): List<ResumeCompany> =
-        jpaRepository.findAllByOrderByOrderNoAsc().map(ResumeCompanyJpaEntity::toDomain)
+        jpaRepository.findAllByOrderByStartMonthDesc().map(ResumeCompanyJpaEntity::toDomain)
 
     override fun save(company: ResumeCompany): ResumeCompany {
         val existing = company.id?.let {
