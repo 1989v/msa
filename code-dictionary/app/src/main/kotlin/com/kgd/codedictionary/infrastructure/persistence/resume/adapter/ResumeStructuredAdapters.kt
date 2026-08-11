@@ -75,6 +75,10 @@ class ResumeProjectRepositoryAdapter(
     override fun findAllPublished(): List<ResumeProject> =
         jpaRepository.findAllByPublishedTrueOrderByOrderNoAsc().map(ResumeProjectJpaEntity::toDomain)
 
+    override fun findAllPublishedPersonal(): List<ResumeProject> =
+        jpaRepository.findAllByPublishedTrueAndCompanyIdIsNullOrderByOrderNoAsc()
+            .map(ResumeProjectJpaEntity::toDomain)
+
     override fun save(project: ResumeProject): ResumeProject {
         val existing = project.id?.let {
             jpaRepository.findById(it).orElseThrow { NotFoundException("ResumeProject", it) }

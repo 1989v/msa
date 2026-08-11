@@ -284,6 +284,21 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // === ADR-0066 포털 메인 타일 (code-dictionary 소유) ===
+            // 어드민 경로를 먼저 선언해야 공개 라우트에 가려지지 않는다.
+            .route("portal-tiles-admin") { r ->
+                r.path("/api/v1/admin/portal/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            .route("portal-tiles-public") { r ->
+                r.path("/api/v1/portal/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
             .route("place-service-read") { r ->
                 r.method(HttpMethod.GET)
