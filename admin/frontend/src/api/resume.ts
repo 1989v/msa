@@ -101,3 +101,108 @@ export const RESUME_ORIGIN = 'https://resume.1989v.com';
 export function shareUrl(token: string): string {
   return `${RESUME_ORIGIN}/?k=${token}`;
 }
+
+// ─── 구조화 영역 (회사 · 프로젝트 · 카테고리 · 기술스택) ─────────────────────
+
+export interface CareerSummary {
+  totalMonths: number;
+  years: number;
+  months: number;
+  yearsInField: number;
+}
+
+export interface ResumeCompany {
+  id: number | null;
+  name: string;
+  startMonth: string;
+  endMonth: string | null;
+  ongoing: boolean;
+  position: string | null;
+  team: string | null;
+  note: string | null;
+  tenureMonths: number;
+  tenureYears: number;
+  tenureRemainderMonths: number;
+  orderNo: number;
+}
+
+export interface ResumeCategory {
+  id: number | null;
+  code: string;
+  label: string;
+  description: string | null;
+  orderNo: number;
+}
+
+export interface ResumeProject {
+  id: number | null;
+  title: string;
+  companyId: number | null;
+  companyName: string | null;
+  categoryId: number | null;
+  categoryCode: string | null;
+  categoryLabel: string | null;
+  startMonth: string | null;
+  endMonth: string | null;
+  ongoing: boolean;
+  summary: string | null;
+  bodyMarkdown: string | null;
+  metrics: string[];
+  tags: string[];
+  detailSlug: string | null;
+  orderNo: number;
+  published: boolean;
+}
+
+export interface ResumeSkillGroup {
+  id: number | null;
+  label: string;
+  items: string[];
+  note: string | null;
+  orderNo: number;
+}
+
+export interface ResumeProfile {
+  career: CareerSummary;
+  companies: ResumeCompany[];
+  categories: ResumeCategory[];
+  projects: ResumeProject[];
+  skills: ResumeSkillGroup[];
+}
+
+export async function fetchProfile(): Promise<ResumeProfile> {
+  const res = await apiClient.get<ApiResponse<ResumeProfile>>(`${BASE}/profile`);
+  return res.data.data;
+}
+
+export async function upsertCompany(payload: Partial<ResumeCompany> & { name: string; startMonth: string }) {
+  await apiClient.put(`${BASE}/companies`, payload);
+}
+
+export async function deleteCompany(id: number) {
+  await apiClient.delete(`${BASE}/companies/${id}`);
+}
+
+export async function upsertCategory(payload: Partial<ResumeCategory> & { code: string; label: string }) {
+  await apiClient.put(`${BASE}/categories`, payload);
+}
+
+export async function deleteCategory(id: number) {
+  await apiClient.delete(`${BASE}/categories/${id}`);
+}
+
+export async function upsertProject(payload: Partial<ResumeProject> & { title: string }) {
+  await apiClient.put(`${BASE}/projects`, payload);
+}
+
+export async function deleteProject(id: number) {
+  await apiClient.delete(`${BASE}/projects/${id}`);
+}
+
+export async function upsertSkillGroup(payload: Partial<ResumeSkillGroup> & { label: string }) {
+  await apiClient.put(`${BASE}/skill-groups`, payload);
+}
+
+export async function deleteSkillGroup(id: number) {
+  await apiClient.delete(`${BASE}/skill-groups/${id}`);
+}
