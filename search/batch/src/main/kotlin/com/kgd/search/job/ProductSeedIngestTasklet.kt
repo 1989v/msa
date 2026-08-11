@@ -1,6 +1,6 @@
 package com.kgd.search.job
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import com.kgd.search.infrastructure.client.ProductApiClient
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.batch.core.scope.context.ChunkContext

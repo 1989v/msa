@@ -1,7 +1,7 @@
 package com.kgd.search.infrastructure.indexing
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.opensearch.client.json.JsonpDeserializer
 import org.opensearch.client.opensearch.OpenSearchClient

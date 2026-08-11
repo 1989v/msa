@@ -1,6 +1,6 @@
 package com.kgd.search.infrastructure.messaging
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch.core.UpdateRequest

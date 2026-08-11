@@ -1,6 +1,6 @@
 package com.kgd.search.bandit.adapter
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.search.domain.bandit.model.ClickEvent
 import com.kgd.search.domain.bandit.model.ImpressionEvent
 import com.kgd.search.domain.bandit.port.BanditEventPort
