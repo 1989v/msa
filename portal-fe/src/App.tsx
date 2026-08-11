@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Suspense, lazy, type ReactElement } from 'react';
-import SearchPage from './pages/SearchPage';
+import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import ShopPage from './pages/ShopPage';
 import ShopProductDetailPage from './pages/ShopProductDetailPage';
@@ -15,6 +15,9 @@ const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
 // ADR-0065 — K-관광/지리 탐색. place.<domain> 이 정규 주소 (host 인식 루트 라우팅),
 // apex/개발은 /place. 구글맵 로더 포함이라 lazy 분리.
 const PlacePage = lazy(() => import('./pages/place/PlacePage'));
+// ADR-0066 — IT(개념 사전·3D 그래프·트리맵). 메인이 런처가 되면서 three.js 를 쓰지 않게 됐다.
+// eager 로 두면 타일만 보는 방문자도 그래프 엔진을 통째로 받는다.
+const SearchPage = lazy(() => import('./pages/SearchPage'));
 // ADR-0064 — 이력서 (resume.<domain>). 공개 포털 번들과 코드가 섞이지 않게 lazy 로 분리한다.
 const ResumePage = lazy(() => import('./pages/resume/ResumePage'));
 const ResumeDetailPage = lazy(() => import('./pages/resume/ResumeDetailPage'));
@@ -69,13 +72,14 @@ function App() {
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Suspense fallback={<div style={{ padding: 32, color: 'var(--ko-text-muted)' }}>로딩…</div>}>
         <Routes>
-          {/* portal 자체 (코드사전/포트폴리오/커머스) */}
+          {/* apex 루트는 서비스 런처 (ADR-0066). 개념 사전·시각화는 /tech 가 받는다. */}
           <Route
             path="/"
             element={
-              isResumeHost ? <ResumePage /> : isGamesHost ? <GamesPage /> : isPlaceHost ? <PlacePage /> : <SearchPage />
+              isResumeHost ? <ResumePage /> : isGamesHost ? <GamesPage /> : isPlaceHost ? <PlacePage /> : <HomePage />
             }
           />
+          <Route path="/tech" element={<SearchPage />} />
           {/* 이력서 상세 — resume 호스트에만 둔다. apex 에 열어두면 전체공개 상태에서
               색인 대상인 1989v.com 경로로 이력서가 노출된다 (ADR-0064: 이력서는 noindex) */}
           {isResumeHost && <Route path="/d/:slug" element={<ResumeDetailPage />} />}

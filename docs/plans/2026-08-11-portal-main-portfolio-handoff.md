@@ -187,7 +187,9 @@ portal-fe/src/App.tsx                       라우팅 — / 교체, /tech 신설
 portal-fe/src/pages/SearchPage.tsx          → /tech 로 이동 (내용 유지, 퀴즈만 제거)
 portal-fe/src/pages/HomePage.tsx            죽은 파일 — 삭제
 portal-fe/src/components/GNB.tsx            로고 → 1989v + 페이지 부제
-portal-fe/src/components/quiz/              삭제
+portal-fe/src/components/quiz/QuizSection.* 삭제 (나머지 quiz/ 파일은 유지 —
+                                            MemoryGame·FillBlankQuiz·CodeMagnifier·
+                                            ConceptCascade 는 게임 플랫폼이 실제로 서빙한다)
 portal-fe/src/components/graph/             유지 — /tech 에서 계속 사용
 portal-fe/src/components/ServiceCatalog.tsx 백엔드 서비스 목록 — 메인에서 내림
 portal-fe/src/components/AboutSection.tsx   새 메인 하단으로

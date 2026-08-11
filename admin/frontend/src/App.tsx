@@ -17,6 +17,7 @@ import { SearchQueryBuilderPage } from '@/pages/SearchQueryBuilderPage';
 import { SearchJudgmentsPage } from '@/pages/SearchJudgmentsPage';
 import { ResumePage } from '@/pages/ResumePage';
 import { ResumeProfilePage } from '@/pages/ResumeProfilePage';
+import { PortalTilesPage } from '@/pages/PortalTilesPage';
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="quant/assets" element={<QuantAssetCatalogPage />} />
         <Route path="resume" element={<ResumePage />} />
         <Route path="resume/profile" element={<ResumeProfilePage />} />
+        <Route path="portal/tiles" element={<PortalTilesPage />} />
         <Route path="search-debug" element={<SearchDebugPage />} />
         <Route path="search-debug/query-builder" element={<SearchQueryBuilderPage />} />
         <Route path="search-debug/judgments" element={<SearchJudgmentsPage />} />

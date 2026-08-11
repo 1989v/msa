@@ -144,7 +144,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 
 | Path | FE | 비고 |
 |------|----|------|
-| `/` (root catch-all) | `portal-fe` | MSA 진입점 — 단일 SPA 에 코드딕셔너리(트리맵/그래프/검색) + 포트폴리오 + 서비스 카탈로그 + 어바웃 섹션이 scroll anchor 로 통합 |
+| `/` (root catch-all) | `portal-fe` | **서비스 런처** (ADR-0066) — 브랜드 히어로 + 도메인 타일 그리드(DB `portal_tile`, 활성/딤드) + 포트폴리오 타임라인 + About |
+| `/tech` | `portal-fe` | 코드딕셔너리 — 트리맵/그래프/히트맵/검색 + 서비스 카탈로그. 옛 `/` 내용이 그대로 옮겨왔다 (lazy chunk) |
 | `place.1989v.com` | `portal-fe` | K-관광/지리 탐색 (ADR-0065) — TourAPI 관광지 국문(`/`)·영문(`/en`) + 구글맵. game 과 같은 host 인식 루트 라우팅, apex `/place` 는 서브도메인으로 리다이렉트. 데이터: place SSOT → search attractions 인덱스 |
 | `resume.1989v.com` | `portal-fe` | 이력서 — 같은 번들·같은 Service, 호스트로 분기. 공개 여부는 DB 설정 + 제출처별 토큰 게이트 (ADR-0064). 색인 대상 아님 |
 | `/admin/*` | `admin-fe` | 백오피스 |

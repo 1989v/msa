@@ -17,17 +17,16 @@ import PopularConcepts from '../components/PopularConcepts';
 import ServiceCatalog from '../components/ServiceCatalog';
 import AboutSection from '../components/AboutSection';
 import Footer from '../components/Footer';
-import QuizSection from '../components/quiz/QuizSection';
 import { searchConcepts } from '../api/searchApi';
 import type { GraphRenderer, GraphNode } from '../types/graph';
 import type { Category } from '../types/index';
 
 export default function SearchPage() {
   useSeo({
-    title: portalTitle(''),
+    title: portalTitle('IT'),
     description:
       '코드베이스에서 추출한 IT 개념을 트리맵·그래프로 탐색하는 개념 사전. 백엔드 아키텍처 포트폴리오와 MSA 서비스 카탈로그를 함께 제공합니다.',
-    canonical: portalUrl('/'),
+    canonical: portalUrl('/tech'),
     jsonLd: [websiteJsonLd()],
   });
   const { data, loading, error } = useGraphData();
@@ -210,7 +209,7 @@ export default function SearchPage() {
           padding: 24,
         }}
       >
-        <h2 style={{ color: '#f1f5f9', fontSize: 22, fontWeight: 700 }}>kgd.dev</h2>
+        <h2 style={{ color: '#f1f5f9', fontSize: 22, fontWeight: 700 }}>1989v</h2>
         <p style={{ color: '#94a3b8', textAlign: 'center', maxWidth: 480 }}>
           코드 사전 백엔드가 일시적으로 응답하지 않습니다. 다른 서비스는 정상 동작 중입니다.
         </p>
@@ -323,7 +322,7 @@ export default function SearchPage() {
 
   return (
     <div className="viz-page-scroll">
-      <GNB onSearchFocus={handleSearchFocus} />
+      <GNB pageLabel="IT" onSearchFocus={handleSearchFocus} />
 
       <section id="tech">
         <HeroSection stats={data.stats} serviceCount={9} />
@@ -337,8 +336,6 @@ export default function SearchPage() {
         </div>
         <PopularConcepts nodes={data.nodes} onConceptClick={handleSelectConcept} />
       </section>
-
-      <QuizSection nodes={data.nodes} onConceptClick={handleSelectConcept} />
 
       <ServiceCatalog onConceptClick={handleSelectConcept} />
 

@@ -11,7 +11,8 @@ export const PORTAL_ORIGIN = 'https://1989v.com';
 /** 이력서 호스트 (ADR-0064). 색인 대상이 아니다 — robots 로 전면 차단한다. */
 export const RESUME_ORIGIN = 'https://resume.1989v.com';
 export const BRAND = 'kgd Games';
-export const PORTAL_BRAND = 'kgd.dev';
+/** 브랜드는 도메인과 일치시킨다 — place/game/resume 서브도메인이 모두 이 아래다 (ADR-0066) */
+export const PORTAL_BRAND = '1989v';
 
 /** 장르 라벨 — gameApi.ts 가 재수출한다 (장르 추가 시 여기만 고친다) */
 export const GENRE_LABELS_KO = {
@@ -243,7 +244,7 @@ export function portalUrl(path = '/') {
 }
 
 export function portalTitle(name) {
-  return name ? `${name} — ${PORTAL_BRAND}` : `${PORTAL_BRAND} — IT 개념 사전 · 백엔드 포트폴리오`;
+  return name ? `${name} — ${PORTAL_BRAND}` : `${PORTAL_BRAND} — 만든 서비스들`;
 }
 
 // ─── 이력서 호스트 ───────────────────────────────────────────────────────────
@@ -266,7 +267,7 @@ export function websiteJsonLd() {
     inLanguage: 'ko',
     potentialAction: {
       '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${PORTAL_ORIGIN}/?q={search_term_string}` },
+      target: { '@type': 'EntryPoint', urlTemplate: `${PORTAL_ORIGIN}/tech?q={search_term_string}` },
       'query-input': 'required name=search_term_string',
     },
   };

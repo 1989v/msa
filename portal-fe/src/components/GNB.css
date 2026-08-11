@@ -27,9 +27,21 @@
 .gnb-logo {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #6c63ff;
+  color: var(--ko-accent-primary);
   letter-spacing: -0.02em;
   white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--ko-space-2);
+}
+
+/* 브랜드는 하나(1989v)로 두고, 지금 보고 있는 화면의 성격만 옆에 덧댄다 (ADR-0066) */
+.gnb-page-label {
+  font-size: var(--ko-text-sm);
+  font-weight: 500;
+  color: var(--ko-text-muted);
+  letter-spacing: 0;
 }
 
 .gnb-menu {

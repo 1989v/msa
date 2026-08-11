@@ -12,14 +12,15 @@ import { useResumeStatus } from '../hooks/useResumeStatus';
 import './AboutSection.css';
 
 interface AboutSectionProps {
-  stats: GraphStats;
+  /** 개념 그래프 통계. 메인(런처)에는 그래프 데이터가 없어 레이더를 그리지 않는다 (ADR-0066). */
+  stats?: GraphStats;
 }
 
 export default function AboutSection({ stats }: AboutSectionProps) {
   // 구인중 배지와 이력서 링크는 같은 상태를 본다 — 한쪽만 남아 어긋나는 일이 없게 (ADR-0064)
   const resumeVisible = useResumeStatus();
 
-  const radarData = Object.entries(stats.byCategory)
+  const radarData = Object.entries(stats?.byCategory ?? {})
     .map(([cat, count]) => ({
       subject: CATEGORY_LABELS[cat as Category] ?? cat,
       value: count,
@@ -79,6 +80,7 @@ export default function AboutSection({ stats }: AboutSectionProps) {
             </div>
           </div>
 
+          {stats && (
           <div className="about-radar">
             <h3 className="about-radar-title">Tech Radar</h3>
             <p className="about-radar-subtitle">카테고리별 코드 참조 분포</p>
@@ -109,6 +111,7 @@ export default function AboutSection({ stats }: AboutSectionProps) {
               </RadarChart>
             </ResponsiveContainer>
           </div>
+          )}
         </div>
       </div>
     </section>

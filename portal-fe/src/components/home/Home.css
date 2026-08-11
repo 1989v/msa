@@ -1,0 +1,307 @@
+/* ADR-0066 — 메인(서비스 런처) 전용 스타일.
+ * DESIGN.md 토큰만 사용한다. 모바일 우선 + 데스크탑은 max-width 안에서 같은 레이아웃. */
+
+.home-page {
+  min-height: 100vh;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+}
+
+.home-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 var(--ko-space-6);
+}
+
+.home-section {
+  padding: var(--ko-space-16) 0;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.home-section-title {
+  font-size: var(--ko-text-lg);
+  font-weight: 600;
+  margin: 0 0 var(--ko-space-2);
+}
+
+.home-section-desc {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+  margin: 0 0 var(--ko-space-8);
+}
+
+.home-more-link {
+  display: inline-block;
+  margin-top: var(--ko-space-8);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-accent-primary);
+  text-decoration: none;
+}
+
+.home-more-link:hover {
+  text-decoration: underline;
+}
+
+/* ─── 브랜드 히어로 ───────────────────────────────────────────────────────── */
+
+.home-hero {
+  padding: var(--ko-space-16) 0 var(--ko-space-12);
+}
+
+.home-hero-brand {
+  font-size: var(--ko-text-4xl);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0 0 var(--ko-space-3);
+}
+
+.home-hero-lead {
+  font-size: var(--ko-text-base);
+  color: var(--ko-text-secondary);
+  line-height: var(--ko-leading-relaxed);
+  max-width: 44ch;
+  margin: 0;
+}
+
+.home-hero-meta {
+  margin-top: var(--ko-space-5);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── 도메인 타일 ─────────────────────────────────────────────────────────── */
+
+.tile-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ko-space-3);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .tile-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .tile-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.tile {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+  /* 터치 타깃 44px 이상 */
+  min-height: 96px;
+  padding: var(--ko-space-5);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+  background: var(--ko-surface-1);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--ko-duration-fast) var(--ko-ease-out),
+              border-color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.tile-live:hover {
+  background: var(--ko-surface-2);
+  border-color: var(--ko-border-default);
+}
+
+.tile-live:focus-visible {
+  outline: 2px solid var(--ko-accent-primary);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+/* 준비중 — 클릭 대상이 아니라는 걸 색과 커서 양쪽으로 알린다 */
+.tile-soon {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+}
+
+.tile-label {
+  font-size: var(--ko-text-base);
+  font-weight: 600;
+}
+
+.tile-tagline {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+  line-height: var(--ko-leading-normal);
+}
+
+.tile-arrow {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+  flex-shrink: 0;
+}
+
+.tile-live:hover .tile-arrow {
+  color: var(--ko-accent-primary);
+}
+
+.tile-badge {
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding: 2px var(--ko-space-2);
+  border-radius: var(--ko-radius-full);
+  border: 1px solid var(--ko-border-default);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+  white-space: nowrap;
+}
+
+/* ─── 포트폴리오 타임라인 ─────────────────────────────────────────────────── */
+
+.timeline-career {
+  margin-bottom: var(--ko-space-10);
+  padding: var(--ko-space-5);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+  background: var(--ko-surface-1);
+}
+
+.timeline-career-total {
+  display: block;
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: var(--ko-space-3);
+}
+
+.timeline-companies {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+}
+
+.timeline-company {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ko-space-3);
+  font-size: var(--ko-text-sm);
+}
+
+.timeline-company-name {
+  font-weight: 600;
+}
+
+.timeline-company-period {
+  color: var(--ko-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-company-role {
+  color: var(--ko-text-muted);
+}
+
+.timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.timeline-item {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-5) 0;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+@media (min-width: 768px) {
+  .timeline-item {
+    grid-template-columns: 160px 1fr;
+    gap: var(--ko-space-6);
+  }
+}
+
+.timeline-period {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.timeline-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ko-space-2);
+  font-size: var(--ko-text-base);
+  font-weight: 600;
+  margin: 0 0 var(--ko-space-2);
+}
+
+.timeline-category {
+  padding: 2px var(--ko-space-2);
+  border-radius: var(--ko-radius-full);
+  background: var(--ko-accent-primary-bg);
+  color: var(--ko-accent-primary);
+  font-size: var(--ko-text-xs);
+  font-weight: 500;
+}
+
+.timeline-summary {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+  line-height: var(--ko-leading-relaxed);
+  margin: 0;
+}
+
+.timeline-metrics {
+  margin: var(--ko-space-3) 0 0;
+  padding-left: var(--ko-space-5);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.timeline-metrics li {
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-1);
+  margin-top: var(--ko-space-3);
+}
+
+.timeline-tag {
+  padding: 2px var(--ko-space-2);
+  border-radius: var(--ko-radius-full);
+  border: 1px solid var(--ko-border-subtle);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+}
+
+/* ─── 상태 ────────────────────────────────────────────────────────────────── */
+
+.home-status {
+  padding: var(--ko-space-16) 0;
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile {
+    transition: none;
+  }
+}

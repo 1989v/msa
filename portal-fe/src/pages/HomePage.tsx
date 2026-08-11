@@ -1,50 +1,102 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import GNB from '../components/GNB';
+import Footer from '../components/Footer';
+import AboutSection from '../components/AboutSection';
+import TileGrid from '../components/home/TileGrid';
+import PortfolioTimeline from '../components/home/PortfolioTimeline';
+import {
+  fetchPortalTiles,
+  fetchPortfolioTimeline,
+  type PortalTile,
+  type PortfolioTimeline as Timeline,
+} from '../api/portalApi';
+import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
+import { useSeo } from '../seo/useSeo';
+import '../components/home/Home.css';
+
+const GNB_ITEMS = [
+  { label: '서비스', anchor: 'services' },
+  { label: '지나온 것', anchor: 'portfolio' },
+  { label: 'About', anchor: 'about' },
+];
 
 /**
- * HomePage — portal-fe 진입 랜딩.
- * 본인 브랜드 + 주요 메뉴 (코드딕셔너리 / 어바웃 / 서비스 카탈로그) 카드.
+ * 1989v.com 메인 — 브랜드 + 서비스 런처 (ADR-0066).
+ *
+ * 시각화·개념 사전은 여기 없다. IT 타일이 받는 `/tech` 로 옮겼다.
  */
 export default function HomePage() {
-  return (
-    <main className="max-w-5xl mx-auto px-4 py-12">
-      <section className="mb-16 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">
-          kgd.dev — 풀스택 백엔드 엔지니어 포털
-        </h1>
-        <p className="text-lg text-gray-600">
-          코드 딕셔너리 · 포트폴리오 · MSA 서비스 카탈로그
-        </p>
-      </section>
+  useSeo({
+    title: portalTitle(''),
+    description:
+      '직접 설계하고 운영 중인 서비스들 — 한국 관광 검색, 웹 게임 플랫폼, 코드 개념 사전, 커머스 데모. 백엔드 엔지니어 권기덕이 만들고 운영합니다.',
+    canonical: portalUrl('/'),
+    jsonLd: [websiteJsonLd()],
+  });
 
-      <section className="grid md:grid-cols-3 gap-6">
-        <HomeCard
-          to="/dict"
-          title="코드 딕셔너리"
-          desc="IT 개념 사전 + 시각화. OpenSearch 기반 검색."
-        />
-        <HomeCard
-          to="/about"
-          title="어바웃"
-          desc="저(kgd) 의 경력, 기술 스택, 프로젝트 소개."
-        />
-        <HomeCard
-          to="/services"
-          title="서비스 카탈로그"
-          desc="이 MSA 플랫폼의 서비스 목록과 진입점."
-        />
-      </section>
-    </main>
-  );
-}
+  const [tiles, setTiles] = useState<PortalTile[] | null>(null);
+  const [timeline, setTimeline] = useState<Timeline | null>(null);
+  const [failed, setFailed] = useState(false);
 
-function HomeCard({ to, title, desc }: { to: string; title: string; desc: string }) {
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchPortalTiles()
+      .then((data) => {
+        if (!cancelled) setTiles(data);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+
+    // 타임라인은 보조 정보다 — 실패해도 서비스 진입은 막지 않는다.
+    fetchPortfolioTimeline()
+      .then((data) => {
+        if (!cancelled) setTimeline(data);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
-    <Link
-      to={to}
-      className="block p-6 bg-white border border-gray-200 rounded-lg hover:border-blue-400 hover:shadow-md transition"
-    >
-      <h2 className="text-xl font-semibold mb-2 text-gray-900">{title}</h2>
-      <p className="text-sm text-gray-600">{desc}</p>
-    </Link>
+    <div className="home-page">
+      <GNB items={GNB_ITEMS} />
+
+      <header className="home-hero">
+        <div className="home-inner">
+          <h1 className="home-hero-brand">1989v</h1>
+          <p className="home-hero-lead">
+            서비스를 처음부터 끝까지 만듭니다. 도메인을 쪼개고, 검색과 데이터를 붙이고,
+            무료 티어 한 대 위에서 굴러가게 하는 데까지.
+          </p>
+          {timeline && (
+            <p className="home-hero-meta">
+              백엔드 엔지니어 · {timeline.career.yearsInField}년차
+            </p>
+          )}
+        </div>
+      </header>
+
+      {tiles && <TileGrid tiles={tiles} />}
+
+      {!tiles && (
+        <div className="home-inner">
+          <p className="home-status">
+            {failed
+              ? '서비스 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
+              : '불러오는 중…'}
+          </p>
+        </div>
+      )}
+
+      {timeline && <PortfolioTimeline timeline={timeline} />}
+
+      <AboutSection />
+
+      <Footer />
+    </div>
   );
 }

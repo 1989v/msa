@@ -357,7 +357,7 @@ async function writeRobotsAndSitemaps(games) {
     }
   }
 
-  const portalEntries = ['/', '/portfolio', '/shop'].map((path) => ({
+  const portalEntries = ['/', '/tech', '/portfolio', '/shop'].map((path) => ({
     loc: `${PORTAL_ORIGIN}${path}`,
     priority: path === '/' ? '1.0' : '0.6',
   }));
