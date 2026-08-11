@@ -1,0 +1,81 @@
+package com.kgd.search.infrastructure.client
+
+import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.reactor.awaitSingle
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.core.ParameterizedTypeReference
+import org.springframework.stereotype.Component
+import org.springframework.web.reactive.function.client.WebClient
+import java.time.LocalDateTime
+
+@Component
+class PlaceApiClient(
+    @Qualifier("placeWebClient") private val webClient: WebClient
+) {
+    private val log = KotlinLogging.logger {}
+
+    data class AttractionDto(
+        val id: Long,
+        val contentId: String,
+        val lang: String,
+        val title: String,
+        val latitude: Double,
+        val longitude: Double,
+        val address: String? = null,
+        val areaCode: String? = null,
+        val sigunguCode: String? = null,
+        val category: String? = null,
+        val imageUrl: String? = null,
+        val tel: String? = null,
+        val overview: String? = null,
+        val sourceModifiedAt: LocalDateTime? = null,
+        val status: String,
+    )
+
+    data class AttractionPageResponse(
+        val attractions: List<AttractionDto>,
+        val totalElements: Long,
+        val totalPages: Int
+    )
+
+    suspend fun fetchPage(page: Int, size: Int = 100): AttractionPageResponse {
+        log.debug { "Fetching attractions: page=$page, size=$size" }
+
+        val response = webClient.get()
+            .uri("/api/places/attractions?page=$page&size=$size")
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitSingle()
+
+        @Suppress("UNCHECKED_CAST")
+        val data = response["data"] as? Map<String, Any>
+            ?: throw IllegalStateException("No data field in place API response")
+
+        @Suppress("UNCHECKED_CAST")
+        val attractions = (data["attractions"] as? List<Map<String, Any>> ?: emptyList()).map { a ->
+            AttractionDto(
+                id = (a["id"] as Number).toLong(),
+                contentId = a["contentId"] as String,
+                lang = a["lang"] as String,
+                title = a["title"] as String,
+                latitude = (a["latitude"] as Number).toDouble(),
+                longitude = (a["longitude"] as Number).toDouble(),
+                address = a["address"] as? String,
+                areaCode = a["areaCode"] as? String,
+                sigunguCode = a["sigunguCode"] as? String,
+                category = a["category"] as? String,
+                imageUrl = a["imageUrl"] as? String,
+                tel = a["tel"] as? String,
+                overview = a["overview"] as? String,
+                sourceModifiedAt = (a["sourceModifiedAt"] as? String)?.let { LocalDateTime.parse(it) },
+                status = a["status"] as String,
+            )
+        }
+
+        return AttractionPageResponse(
+            attractions = attractions,
+            totalElements = (data["totalElements"] as Number).toLong(),
+            totalPages = (data["totalPages"] as Number).toInt()
+        )
+    }
+}

@@ -38,8 +38,13 @@ class OsBulkDocumentProcessor(
 
     fun processDocument(indexName: String, document: ProductDocument) {
         val doc = ProductIndexDocument.fromDomain(document)
+        processDocument(indexName, doc.id, doc)
+    }
+
+    /** 인덱스 문서 직렬화 형태를 호출자가 준비한 경우 (attractions 등 — ADR-0065). */
+    fun processDocument(indexName: String, id: String, document: Any) {
         val operation = BulkOperation.of { op ->
-            op.index { idx -> idx.index(indexName).id(doc.id).document(doc) }
+            op.index { idx -> idx.index(indexName).id(id).document(document) }
         }
         val toSend = synchronized(primaryBuffer) {
             primaryBuffer.add(operation)

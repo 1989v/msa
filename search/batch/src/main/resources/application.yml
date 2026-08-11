@@ -21,9 +21,14 @@ product:
   service:
     url: ${PRODUCT_SERVICE_URL:http://localhost:8081}
 
+place:
+  service:
+    url: ${PLACE_SERVICE_URL:http://localhost:8096}
+
 search:
   index:
     alias: products
+    attraction-alias: attractions
   batch:
     page-size: 100
 

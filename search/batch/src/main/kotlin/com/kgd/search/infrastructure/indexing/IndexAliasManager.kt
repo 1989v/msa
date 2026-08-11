@@ -27,7 +27,10 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
 
     companion object {
         /** settings/mappings 의 SSOT (ADR-0055) — nori 분석기 + 필드 매핑 전체. */
-        private const val INDEX_DEFINITION_RESOURCE = "/opensearch/products-index.json"
+        const val PRODUCTS_INDEX_DEFINITION = "/opensearch/products-index.json"
+
+        /** 관광지 인덱스 정의 (ADR-0065) — nori + english 서브필드 + geo_point. */
+        const val ATTRACTIONS_INDEX_DEFINITION = "/opensearch/attractions-index.json"
     }
 
     /** 새 타임스탬프 색인명 생성: products_20260309120000 */
@@ -41,8 +44,8 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
      * opensearch-java 3.x 의 `CreateIndexRequest.Builder` 에는 withJson 이 없어
      * settings/mappings 를 각각 `_DESERIALIZER` 로 파싱해 typed builder 에 주입한다.
      */
-    fun createIndex(indexName: String) {
-        val definition = loadIndexDefinition()
+    fun createIndex(indexName: String, definitionResource: String = PRODUCTS_INDEX_DEFINITION) {
+        val definition = loadIndexDefinition(definitionResource)
         val settings = definition.required("settings").parseAs(IndexSettings._DESERIALIZER)
         val mappings = definition.required("mappings").parseAs(TypeMapping._DESERIALIZER)
 
@@ -94,15 +97,15 @@ class IndexAliasManager(private val osClient: OpenSearchClient) {
             osClient.indices().get { it.index("${prefix}*") }.result().keys.toList()
         }.getOrElse { emptyList() }
 
-    private fun loadIndexDefinition(): JsonNode {
-        val stream = requireNotNull(javaClass.getResourceAsStream(INDEX_DEFINITION_RESOURCE)) {
-            "Index definition resource not found: $INDEX_DEFINITION_RESOURCE"
+    private fun loadIndexDefinition(definitionResource: String): JsonNode {
+        val stream = requireNotNull(javaClass.getResourceAsStream(definitionResource)) {
+            "Index definition resource not found: $definitionResource"
         }
         return stream.use { jsonSplitter.readTree(it) }
     }
 
     private fun JsonNode.required(key: String): JsonNode =
-        requireNotNull(get(key)) { "'$key' 누락 — $INDEX_DEFINITION_RESOURCE 정의 확인" }
+        requireNotNull(get(key)) { "'$key' 누락 — 인덱스 정의 리소스 확인" }
 
     private fun <T> JsonNode.parseAs(deserializer: JsonpDeserializer<T>): T {
         val mapper = osClient._transport().jsonpMapper()

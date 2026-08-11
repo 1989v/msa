@@ -1,0 +1,39 @@
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "nori_analyzer": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer"
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "id": { "type": "keyword" },
+      "contentId": { "type": "keyword" },
+      "lang": { "type": "keyword" },
+      "title": {
+        "type": "text", "analyzer": "nori_analyzer",
+        "fields": { "en": { "type": "text", "analyzer": "english" } }
+      },
+      "address": {
+        "type": "text", "analyzer": "nori_analyzer",
+        "fields": { "en": { "type": "text", "analyzer": "english" } }
+      },
+      "overview": {
+        "type": "text", "analyzer": "nori_analyzer",
+        "fields": { "en": { "type": "text", "analyzer": "english" } }
+      },
+      "areaCode": { "type": "keyword" },
+      "sigunguCode": { "type": "keyword" },
+      "category": { "type": "keyword" },
+      "location": { "type": "geo_point" },
+      "imageUrl": { "type": "keyword", "index": false },
+      "tel": { "type": "keyword", "index": false },
+      "popularity": { "type": "long" },
+      "modifiedAt": { "type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss" }
+    }
+  }
+}

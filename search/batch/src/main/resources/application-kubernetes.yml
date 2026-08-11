@@ -4,3 +4,7 @@ opensearch:
 product:
   service:
     url: http://product:8081
+
+place:
+  service:
+    url: http://place:8096

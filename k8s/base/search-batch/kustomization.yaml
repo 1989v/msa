@@ -6,3 +6,4 @@ resources:
   - serviceaccount.yaml
   - cronjob-eval.yaml
   - cronjob-reindex.yaml
+  - cronjob-attraction-reindex.yaml

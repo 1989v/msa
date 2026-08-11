@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: attraction-reindex
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: search-batch
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: reindex
+spec:
+  # ADR-0065 — 관광지 전체 재색인(alias swap). attractionApiReindexJob 이 place API 를
+  # 페이지네이션 풀-스캔하여 attractions 인덱스를 재구축한다.
+  #
+  # 기본 suspend: 적재(bulk upsert) 후 온디맨드 실행을 전제로 정의만 해 둔다.
+  #   온디맨드:  kubectl -n commerce create job --from=cronjob/attraction-reindex attraction-reindex-manual
+  #   주기화:    P2 sync CronJob 도입 시 suspend: false + 주 1회로 전환
+  suspend: true
+  schedule: "30 3 * * 0"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: search-batch
+            # part-of 누락 시 default-deny 에서 egress 미허용 → opensearch/place 접근 불가
+            app.kubernetes.io/part-of: commerce-platform
+            app.kubernetes.io/component: reindex
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: reindex
+              image: commerce/search-batch:latest
+              imagePullPolicy: IfNotPresent
+              args:
+                # 기본값(enabled=false)이면 웹서버만 뜨고 잡이 실행되지 않는다
+                - "--spring.batch.job.enabled=true"
+                - "--spring.batch.job.name=attractionApiReindexJob"
+              env:
+                - name: OPENSEARCH_URIS
+                  value: "http://opensearch:9200"
+                - name: PLACE_SERVICE_URL
+                  value: "http://place:8096"
+              resources:
+                requests: { cpu: 100m, memory: 512Mi }
+                limits:   { memory: 1Gi }
