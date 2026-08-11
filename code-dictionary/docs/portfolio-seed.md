@@ -1,6 +1,7 @@
 # Portfolio — Seed DML 가이드
 
-idea #17 ([PRD](../../ideabank/docs/17-portfolio-showcase.md)) MVP 흐름: 카드는 사용자가 DML 로 직접 적재한다.
+idea #17 PRD(`ideabank/docs/17-portfolio-showcase.md` — 비공개 서브모듈) MVP 흐름:
+카드는 사용자가 DML 로 직접 적재한다.
 어드민 CRUD 화면은 Phase 2 — MVP 에선 본 가이드 대로 INSERT 문을 실행한다.
 
 ## 흐름 (Claude-as-Importer)
