@@ -1,0 +1,29 @@
+> Phase: pre-impl / post-P1
+questions:
+  - id: OQ-1
+    phase: pre-impl
+    status: open
+    q: "TourAPI 활용신청 승인 시점 — data.go.kr 키 발급은 사용자 작업. 발급 전 P1 은 attractions.sample.jsonl 로 E2E."
+    owner: user
+  - id: OQ-2
+    phase: pre-impl
+    status: open
+    q: "Google Maps API 키 발급 + referrer 제한 + 쿼터 캡 설정 — 사용자 작업. 키 전달 방식은 FE 빌드타임 env."
+    owner: user
+  - id: OQ-3
+    phase: post-P1
+    status: open
+    q: "국영문 관광지 쌍 매핑(좌표 근접+이름 유사도) 정확도 — P2 유사어 사전 생성의 입력. 휴리스틱 검증 필요."
+  - id: OQ-4
+    phase: post-P1
+    status: open
+    q: "관광빅데이터 방문자 지표의 데이터셋 선정(중심관광지 커버리지 확인) — P2 popularity 채움의 소스."
+  - id: OQ-5
+    phase: deferred
+    status: deferred
+    q: "벡터 검색 쿼리 타임 인코딩 — 로컬 ETL 임베딩까지는 확정, 쿼리 인코더(ONNX in-pod vs 외부)는 free-tier 마진 재계산 후."
+  - id: OQ-6
+    phase: post-P1
+    status: open
+    q: "Instagram Graph API hashtag — Business 계정 전환 + 앱 리뷰 절차 비용 대비 신호 가치 (P3 게이트)."
+closed: []
