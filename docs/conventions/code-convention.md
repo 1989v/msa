@@ -164,3 +164,25 @@ fun main(args: Array<String>) {
 - Kafka 토픽 컨벤션: `docs/architecture/kafka-convention.md`
 - API 응답 포맷: `docs/conventions/api-format.md`
 - 본 컨벤션의 거버넌스: ADR-0026 docs taxonomy
+
+## 요청 DTO — 선택 필드는 nullable, 기본값은 코드에서
+
+`@RequestBody` 로 받는 DTO 의 선택 필드에 **Kotlin 기본 인자값을 쓰지 않는다.**
+
+```kotlin
+// 나쁨 — 클라이언트가 orderNo 를 생략하면 바인딩이 실패한다
+data class UpsertRequest(val name: String, val orderNo: Int = 0)
+
+// 좋음 — 와이어 계약은 nullable, 기본값은 코드에서
+data class UpsertRequest(val name: String, val orderNo: Int? = null)
+...
+orderNo = request.orderNo ?: 0
+```
+
+**왜**: Spring Boot 4 의 MVC JSON 스택은 Jackson 3 인데 Kotlin 모듈이 기본으로 붙어 있지
+않다. 그러면 Kotlin 기본 인자값이 무시되고, 값이 빠진 non-null 필드는 역직렬화 자체가
+실패한다(400 "요청 본문을 읽을 수 없습니다"). 생략 필드가 전부 nullable 인 DTO 는 우연히
+멀쩡하므로, 문제가 특정 엔드포인트에서만 터져 원인을 찾기 어렵다 (2026-08-11 실제 사고).
+
+와이어 포맷이 언어 기능에 기대면 모듈 구성에 따라 조용히 깨진다. Jackson 3 이관(ADR-0067)
+후에도 이 규칙은 유효하다 — 계약을 명시하는 편이 낫다.
