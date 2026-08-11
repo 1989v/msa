@@ -1,6 +1,6 @@
 package com.kgd.quant.application.discover
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.kgd.quant.infrastructure.config.QuantChartsProperties

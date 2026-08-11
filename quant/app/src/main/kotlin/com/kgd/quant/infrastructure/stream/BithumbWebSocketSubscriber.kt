@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.stream
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.market.MarketDataHub
 import com.kgd.quant.application.port.marketdata.MarketDataSubscriber
 import com.kgd.quant.application.port.marketdata.Symbol

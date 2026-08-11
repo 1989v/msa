@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.exchange
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.port.credential.DecryptedCredential
 import com.kgd.quant.application.port.exchange.AccountBalance
 import com.kgd.quant.application.port.exchange.AssetBalance

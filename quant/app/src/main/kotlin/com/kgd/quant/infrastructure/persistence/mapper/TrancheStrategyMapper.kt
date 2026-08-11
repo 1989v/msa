@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.persistence.mapper
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.domain.common.ExecutionMode
 import com.kgd.quant.domain.common.Percent
 import com.kgd.quant.domain.common.StrategyId

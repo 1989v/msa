@@ -1,6 +1,6 @@
 package com.kgd.quant.application.usecase
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.backtest.BacktestFixtures
 import com.kgd.quant.application.exception.StrategyNotFoundException
 import com.kgd.quant.application.port.marketdata.Bar

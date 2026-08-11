@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.domain.common.Clock
 import com.kgd.quant.infrastructure.persistence.mapper.TrancheStrategyMapper
 import org.springframework.context.annotation.Bean

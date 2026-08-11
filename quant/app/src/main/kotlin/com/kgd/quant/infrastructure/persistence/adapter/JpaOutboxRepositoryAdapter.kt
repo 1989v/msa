@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.port.persistence.OutboxRecord
 import com.kgd.quant.application.port.persistence.OutboxRepositoryPort
 import com.kgd.quant.domain.common.TenantId

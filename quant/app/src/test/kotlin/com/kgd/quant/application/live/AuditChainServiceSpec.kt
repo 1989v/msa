@@ -1,6 +1,6 @@
 package com.kgd.quant.application.live
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.kgd.quant.application.port.persistence.AuditEventRepositoryPort
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.AuditEvent
@@ -29,7 +29,7 @@ class AuditChainServiceSpec : BehaviorSpec({
         val captured = slot<AuditEvent>()
         coEvery { repo.append(capture(captured)) } returns Unit
 
-        val service = AuditChainService(repo, ObjectMapper())
+        val service = AuditChainService(repo, JsonMapper.builder().build())
 
         `when`("payload 키 순서가 반대로 들어와도") {
             val payload1 = mapOf("z" to 1, "a" to 2, "m" to 3)
@@ -65,7 +65,7 @@ class AuditChainServiceSpec : BehaviorSpec({
         `when`("chain 이 정상이면") {
             then("Ok 반환") {
                 val repo = mockk<AuditEventRepositoryPort>(relaxed = true)
-                val mapper = ObjectMapper()
+                val mapper = JsonMapper.builder().build()
                 val service = AuditChainService(repo, mapper)
 
                 val ev1 = AuditEvent.append(tenantId, AuditEventType.ORDER_PLACED, "{\"a\":1}", now, null)

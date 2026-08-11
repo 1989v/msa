@@ -1,6 +1,6 @@
 package com.kgd.quant.presentation.paper
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.market.MarketDataHub
 import com.kgd.quant.application.port.marketdata.Symbol
 import com.kgd.quant.domain.common.TenantId

@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.port.persistence.IndicatorContentRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.learn.ContentId

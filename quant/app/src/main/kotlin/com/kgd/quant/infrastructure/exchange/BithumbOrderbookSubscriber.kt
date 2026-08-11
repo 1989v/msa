@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.exchange
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.chart.OrderbookPort
 import com.kgd.quant.application.port.persistence.AssetCatalogRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
@@ -146,7 +146,7 @@ class BithumbOrderbookSubscriber(
         }
     }
 
-    private fun handleOrderbook(node: com.fasterxml.jackson.databind.JsonNode) {
+    private fun handleOrderbook(node: tools.jackson.databind.JsonNode) {
         val content = node.path("content")
         val list = content.path("list")
         if (!list.isArray || list.size() == 0) return
@@ -175,7 +175,7 @@ class BithumbOrderbookSubscriber(
         }
     }
 
-    private fun handleTransaction(node: com.fasterxml.jackson.databind.JsonNode) {
+    private fun handleTransaction(node: tools.jackson.databind.JsonNode) {
         val content = node.path("content")
         val list = content.path("list")
         if (!list.isArray) return

@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.audit
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.audit.AuditEvent
 import com.kgd.quant.application.audit.AuditLogPublisher
 import com.kgd.quant.infrastructure.metrics.QuantMetrics

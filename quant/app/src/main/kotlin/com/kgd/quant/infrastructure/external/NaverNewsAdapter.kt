@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.external
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.kgd.quant.application.port.persistence.AssetCatalogRepositoryPort

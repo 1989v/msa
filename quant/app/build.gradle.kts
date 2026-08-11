@@ -6,6 +6,8 @@ plugins {
 }
 
 dependencies {
+    // Jackson 3 Kotlin 지원 (ADR-0067) — 없으면 Kotlin 기본 인자값이 무시된다
+    implementation("tools.jackson.module:jackson-module-kotlin")
     implementation(project(":quant:domain"))
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)

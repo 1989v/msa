@@ -1,7 +1,8 @@
 package com.kgd.quant.application.live
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.databind.SerializationFeature
 import com.kgd.quant.application.port.persistence.AuditEventRepositoryPort
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.AuditEvent
@@ -24,10 +25,12 @@ private val log = KotlinLogging.logger {}
 @Service
 class AuditChainService(
     private val repo: AuditEventRepositoryPort,
-    objectMapper: ObjectMapper,
+    objectMapper: JsonMapper,
 ) {
-    private val canonicalMapper: ObjectMapper = objectMapper.copy()
-        .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+    // Jackson 3 의 매퍼는 불변이라 copy() 대신 rebuild() 로 재구성한다 (ADR-0067)
+    private val canonicalMapper: ObjectMapper = objectMapper.rebuild()
+        .enable(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS)
+        .build()
 
     /**
      * payload 를 canonical JSON 으로 직렬화 후 chain 에 append.
