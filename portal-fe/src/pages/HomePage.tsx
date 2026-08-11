@@ -14,11 +14,8 @@ import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import '../components/home/Home.css';
 
-const GNB_ITEMS = [
-  { label: '서비스', anchor: 'services' },
-  { label: '지나온 것', anchor: 'portfolio' },
-  { label: 'About', anchor: 'about' },
-];
+/** About 은 데이터가 없어도 항상 렌더된다 */
+const ABOUT_ITEM = { label: 'About', anchor: 'about' };
 
 /**
  * 1989v.com 메인 — 브랜드 + 서비스 런처 (ADR-0066).
@@ -61,9 +58,20 @@ export default function HomePage() {
     };
   }, []);
 
+  // 실제로 렌더된 섹션만 메뉴에 올린다 — 데이터가 비면 섹션이 통째로 빠지므로,
+  // 고정 메뉴를 두면 눌러도 아무 일이 없는 항목이 남는다.
+  const hasTimeline = Boolean(
+    timeline && (timeline.companies.length > 0 || timeline.projects.length > 0),
+  );
+  const gnbItems = [
+    ...(services && services.length > 0 ? [{ label: '서비스', anchor: 'services' }] : []),
+    ...(hasTimeline ? [{ label: '지나온 것', anchor: 'portfolio' }] : []),
+    ABOUT_ITEM,
+  ];
+
   return (
     <div className="home-page">
-      <GNB items={GNB_ITEMS} />
+      <GNB items={gnbItems} />
 
       <header className="home-hero">
         <div className="home-inner">
