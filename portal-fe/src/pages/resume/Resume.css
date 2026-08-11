@@ -315,3 +315,183 @@
     color: #000;
   }
 }
+
+/* ── 구조화 섹션 (경력 · 프로젝트 · 기술스택) ───────────────────────────── */
+
+/* 마크다운 표와 달리 컴포넌트가 그리므로 스크롤 컨테이너를 직접 씌운다 */
+.resume-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  margin-bottom: var(--ko-space-3);
+}
+
+.resume-table-scroll table {
+  display: table;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ko-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.resume-table-scroll th,
+.resume-table-scroll td {
+  padding: var(--ko-space-2) var(--ko-space-3);
+  border-bottom: 1px solid var(--ko-border-subtle);
+  text-align: left;
+  vertical-align: top;
+}
+
+.resume-table-scroll th {
+  color: var(--ko-text-muted);
+  font-weight: var(--ko-weight-medium);
+  white-space: nowrap;
+}
+
+.resume-table-scroll td {
+  color: var(--ko-text-secondary);
+}
+
+.resume-career-total {
+  margin-bottom: var(--ko-space-6);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.resume-project-group {
+  margin-bottom: var(--ko-space-8);
+}
+
+.resume-project-category {
+  font-size: var(--ko-text-lg);
+  font-weight: var(--ko-weight-semibold);
+  margin-bottom: var(--ko-space-1);
+}
+
+.resume-project-category-desc {
+  margin-bottom: var(--ko-space-3);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+}
+
+.resume-project {
+  padding: var(--ko-space-3) 0;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.resume-project-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--ko-space-2);
+}
+
+.resume-project-title {
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+}
+
+.resume-project-title a {
+  color: var(--ko-text-primary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--ko-accent-primary);
+}
+
+.resume-project-title a:hover {
+  color: var(--ko-accent-primary);
+}
+
+.resume-project-meta {
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.resume-project-summary {
+  margin-top: var(--ko-space-1);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.resume-project-metrics {
+  margin-top: var(--ko-space-2);
+  padding-left: var(--ko-space-5);
+  list-style: disc;
+}
+
+.resume-project-metrics li {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.resume-skills {
+  list-style: none;
+  padding: 0;
+  margin-bottom: var(--ko-space-6);
+}
+
+.resume-skills li {
+  padding: var(--ko-space-2) 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.resume-skills strong {
+  color: var(--ko-text-primary);
+}
+
+.resume-skill-note {
+  color: var(--ko-text-muted);
+}
+
+.resume-print-back {
+  margin-left: var(--ko-space-3);
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+  text-decoration: none;
+}
+
+/* 상세를 이어 붙일 때는 새 장에서 시작한다 */
+.resume-print-detail {
+  margin-top: var(--ko-space-12);
+  padding-top: var(--ko-space-8);
+  border-top: 2px solid var(--ko-border-default);
+}
+
+@media print {
+  .resume-print-detail {
+    page-break-before: always;
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  .resume-table-scroll {
+    overflow: visible;
+  }
+
+  .resume-table-scroll th,
+  .resume-table-scroll td {
+    border-bottom: 1px solid #ccc;
+  }
+
+  .resume-table-scroll td,
+  .resume-career-total,
+  .resume-project-summary,
+  .resume-project-metrics li,
+  .resume-skills li {
+    color: #1a1a1a;
+  }
+
+  .resume-project-title a {
+    color: #000;
+    border-bottom: 0;
+  }
+
+  .resume-project,
+  .resume-project-group {
+    page-break-inside: avoid;
+  }
+}

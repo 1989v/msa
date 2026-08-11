@@ -17,6 +17,7 @@ const TourPage = lazy(() => import('./pages/tour/TourPage'));
 // ADR-0064 — 이력서 (resume.<domain>). 공개 포털 번들과 코드가 섞이지 않게 lazy 로 분리한다.
 const ResumePage = lazy(() => import('./pages/resume/ResumePage'));
 const ResumeDetailPage = lazy(() => import('./pages/resume/ResumeDetailPage'));
+const ResumePrintPage = lazy(() => import('./pages/resume/ResumePrintPage'));
 const QuantApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.QuantApp })));
 const GifticonApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.GifticonApp })));
 const AgentViewerApp = lazy(() => import('./shell/placeholders').then((m) => ({ default: m.AgentViewerApp })));
@@ -60,6 +61,7 @@ function App() {
           {/* 이력서 상세 — resume 호스트에만 둔다. apex 에 열어두면 전체공개 상태에서
               색인 대상인 1989v.com 경로로 이력서가 노출된다 (ADR-0064: 이력서는 noindex) */}
           {isResumeHost && <Route path="/d/:slug" element={<ResumeDetailPage />} />}
+          {isResumeHost && <Route path="/print" element={<ResumePrintPage />} />}
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/products/:id" element={<ShopProductDetailPage />} />

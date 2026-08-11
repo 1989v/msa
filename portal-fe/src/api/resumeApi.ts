@@ -24,9 +24,65 @@ export interface ResumeDocumentSummary {
   updatedAt: string | null;
 }
 
+// ─── 구조화 영역 (ADR-0064) ──────────────────────────────────────────────────
+
+export interface CareerSummary {
+  totalMonths: number;
+  years: number;
+  months: number;
+  yearsInField: number;
+}
+
+export interface ResumeCompany {
+  name: string;
+  startMonth: string;
+  endMonth: string | null;
+  ongoing: boolean;
+  position: string | null;
+  team: string | null;
+  note: string | null;
+  tenureYears: number;
+  tenureRemainderMonths: number;
+}
+
+export interface ResumeCategoryItem {
+  code: string;
+  label: string;
+  description: string | null;
+}
+
+export interface ResumeProject {
+  title: string;
+  companyName: string | null;
+  categoryCode: string | null;
+  startMonth: string | null;
+  endMonth: string | null;
+  ongoing: boolean;
+  summary: string | null;
+  metrics: string[];
+  tags: string[];
+  detailSlug: string | null;
+  orderNo: number;
+}
+
+export interface ResumeSkillGroup {
+  label: string;
+  items: string[];
+  note: string | null;
+}
+
+export interface ResumeProfile {
+  career: CareerSummary;
+  companies: ResumeCompany[];
+  categories: ResumeCategoryItem[];
+  projects: ResumeProject[];
+  skills: ResumeSkillGroup[];
+}
+
 export interface ResumeOverview {
   main: ResumeDocument | null;
   details: ResumeDocumentSummary[];
+  profile: ResumeProfile;
 }
 
 interface ApiResponse<T> {

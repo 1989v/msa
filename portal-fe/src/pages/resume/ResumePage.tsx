@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Markdown from '../../components/Markdown';
+import ResumeBody from './ResumeBody';
 import { captureShareToken, fetchResumeOverview, type ResumeOverview } from '../../api/resumeApi';
 import { resumeTitle } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
@@ -52,7 +52,11 @@ export default function ResumePage() {
   return (
     <div className="resume-page">
       <article className="resume-sheet" ref={bodyRef}>
-        <Markdown className="resume-body" source={overview.main.bodyMarkdown} transformHtml={transform} />
+        <ResumeBody
+          source={overview.main.bodyMarkdown}
+          profile={overview.profile}
+          transformHtml={transform}
+        />
 
         {overview.details.length > 0 && (
           <nav className="resume-details" aria-label="프로젝트 상세">
@@ -73,8 +77,11 @@ export default function ResumePage() {
 
       <div className="resume-actions">
         <button type="button" className="resume-print" onClick={() => window.print()}>
-          인쇄 · PDF 저장
+          이 화면 인쇄
         </button>
+        <a className="resume-print" href="/print">
+          전체 인쇄 (상세 포함)
+        </a>
       </div>
     </div>
   );
