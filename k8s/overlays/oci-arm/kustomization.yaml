@@ -295,7 +295,7 @@ images:
     newTag: 5055b26
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 7b0f188
+    newTag: 52ff56e
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 5055b26
