@@ -11,15 +11,15 @@ interface ApiResponse<T> {
   error: { code: string; message: string } | null;
 }
 
-/** LIVE 진입 가능 / SOON 딤드. HIDDEN 은 서버가 걸러서 여기로 오지 않는다 (ADR-0066). */
-export type TileStatus = 'LIVE' | 'SOON';
+/** OPEN 진입 가능 / PREOPEN 오픈 예정(딤드). HOLD 는 서버가 걸러서 여기로 오지 않는다 (ADR-0066). */
+export type DisplayStatus = 'OPEN' | 'PREOPEN';
 
-export interface PortalTile {
+export interface DisplayService {
   code: string;
   label: string;
   tagline: string | null;
   href: string | null;
-  status: TileStatus;
+  status: DisplayStatus;
   orderNo: number;
 }
 
@@ -54,8 +54,8 @@ export interface PortfolioTimeline {
   categories: TimelineCategory[];
 }
 
-export const fetchPortalTiles = async (): Promise<PortalTile[]> => {
-  const res = await api.get<ApiResponse<PortalTile[]>>('/api/v1/portal/tiles');
+export const fetchDisplayServices = async (): Promise<DisplayService[]> => {
+  const res = await api.get<ApiResponse<DisplayService[]>>('/api/v1/display/services');
   return res.data.data;
 };
 

@@ -96,9 +96,9 @@
 | 포트폴리오 | `/portfolio` | 활성 |
 | 풀필먼트 | — | **준비중(딤드)** — 백엔드만 있고 FE 없음 |
 
-**비노출**: 퀀트 · 기프티콘 · 에이전트뷰어. 프라이빗 서비스이며 `shell/placeholders.tsx`
-껍데기만 있다. 딤드로도 노출하지 않는다 — 껍데기가 많을수록 "진행 중인 게 많다"가 아니라
-"끝맺은 게 없다"로 읽힌다.
+**전시 대상 아님**: 퀀트 · 기프티콘 · 에이전트뷰어. 프라이빗 서비스이며 `shell/placeholders.tsx`
+껍데기만 있다. 딤드로도 노출하지 않고 **테이블에 행도 만들지 않는다** — 껍데기가 많을수록
+"진행 중인 게 많다"가 아니라 "끝맺은 게 없다"로 읽힌다.
 
 기존 `service` 테이블(`/api/v1/services`)은 **백엔드 마이크로서비스 목록**이라 재사용하지
 않는다. `product:8081`·`gateway:8080`·`common`(라이브러리)·`discovery`(ADR-0019에서 삭제됨)가
@@ -128,11 +128,11 @@
 라우트로 옮기고 IT 타일이 받는다. 코드는 그대로 재사용하고 진입 맥락만 바뀐다.
 
 **퀴즈는 제거한다.** 시각화 3종과 달리 데이터 시각화 역량의 증거로 재해석될 여지가 없어
-어디에 두든 같은 감점이다. `components/quiz/` 를 지운다.
+어디에 두든 같은 감점이다. 다만 지우는 것은 `QuizSection` 뿐이다 (§6 참조).
 
 ### 3.7 콘텐츠 소스
 
-**서버 드리븐(DB) + 어드민 CRUD.** 타일 목록·상태를 `portal_tile` 테이블에 두고
+**서버 드리븐(DB) + 어드민 CRUD.** 전시 목록·상태를 `display_service` 테이블에 두고
 admin.1989v.com 에서 관리한다. 서비스가 완성되면 어드민에서 딤드를 풀 수 있다.
 
 ---
@@ -173,9 +173,9 @@ admin.1989v.com 에서 관리한다. 서비스가 완성되면 어드민에서 �
 
 | 항목 | 결정 |
 |---|---|
-| 타일 구성 | 활성 5 + 딤드 1 (풀필먼트). 퀀트·기프티콘·에이전트뷰어는 비노출 |
+| 타일 구성 | OPEN 5 + PREOPEN 1 (풀필먼트). 퀀트·기프티콘·에이전트뷰어는 행 자체를 만들지 않음 |
 | 커머스 타일 | 활성 + "데모" 명시 |
-| 타일 데이터 소스 | DB `portal_tile` + 어드민 CRUD |
+| 타일 데이터 소스 | DB `display_service` + 어드민 CRUD (리소스명은 `display/services` — `tile` 은 표현 형태라 URL·도메인에 쓰지 않는다) |
 | 타임라인 범위 | 개인 프로젝트 + 재직 기간·직무. 회사에서 한 일은 게이트 뒤 |
 
 ---
@@ -195,10 +195,10 @@ portal-fe/src/components/ServiceCatalog.tsx 백엔드 서비스 목록 — 메�
 portal-fe/src/components/AboutSection.tsx   새 메인 하단으로
 portal-fe/src/pages/PortfolioPage.tsx       유지 — 타임라인 항목의 목적지
 
-code-dictionary/app/src/main/resources/db/migration/V9__portal_tile.sql   신규
-code-dictionary/.../presentation/portal/                                  신규 (타일 공개/어드민)
+code-dictionary/app/src/main/resources/db/migration/V9__display_service.sql 신규
+code-dictionary/.../{domain,application,infrastructure,presentation}/display/  신규 (전시 공개/어드민)
 code-dictionary/.../presentation/portfolio/                               타임라인 공개 API 추가
-admin/frontend/src/pages/PortalTilesPage.tsx                              신규
+admin/frontend/src/pages/DisplayServicesPage.tsx                          신규
 
 docs/adr/ADR-0064-resume-site-gated-serving.md   개정 — 재직 기간·직무 공개
 docs/adr/ADR-0066-portal-main-service-launcher.md 신규

@@ -5,11 +5,11 @@ import AboutSection from '../components/AboutSection';
 import TileGrid from '../components/home/TileGrid';
 import PortfolioTimeline from '../components/home/PortfolioTimeline';
 import {
-  fetchPortalTiles,
+  fetchDisplayServices,
   fetchPortfolioTimeline,
-  type PortalTile,
+  type DisplayService,
   type PortfolioTimeline as Timeline,
-} from '../api/portalApi';
+} from '../api/displayApi';
 import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import '../components/home/Home.css';
@@ -34,16 +34,16 @@ export default function HomePage() {
     jsonLd: [websiteJsonLd()],
   });
 
-  const [tiles, setTiles] = useState<PortalTile[] | null>(null);
+  const [services, setServices] = useState<DisplayService[] | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchPortalTiles()
+    fetchDisplayServices()
       .then((data) => {
-        if (!cancelled) setTiles(data);
+        if (!cancelled) setServices(data);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -80,9 +80,9 @@ export default function HomePage() {
         </div>
       </header>
 
-      {tiles && <TileGrid tiles={tiles} />}
+      {services && <TileGrid services={services} />}
 
-      {!tiles && (
+      {!services && (
         <div className="home-inner">
           <p className="home-status">
             {failed

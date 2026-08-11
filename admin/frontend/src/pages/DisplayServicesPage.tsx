@@ -3,26 +3,26 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
-  deleteTile,
-  listTiles,
-  upsertTile,
-  type PortalTile,
-  type TileStatus,
-} from '@/api/portalTiles';
+  deleteDisplayService,
+  listDisplayServices,
+  upsertDisplayService,
+  type DisplayService,
+  type DisplayStatus,
+} from '@/api/displayServices';
 
-const STATUS_LABEL: Record<TileStatus, string> = {
-  LIVE: '활성',
-  SOON: '준비중',
-  HIDDEN: '비노출',
+const STATUS_LABEL: Record<DisplayStatus, string> = {
+  OPEN: '전시 · 진입 가능',
+  PREOPEN: '전시 · 오픈 예정',
+  HOLD: '전시 중지',
 };
 
-const EMPTY_TILE = {
+const EMPTY_FORM = {
   id: null as number | null,
   code: '',
   label: '',
   tagline: '',
   href: '',
-  status: 'SOON' as TileStatus,
+  status: 'PREOPEN' as DisplayStatus,
   orderNo: 0,
 };
 
@@ -32,13 +32,13 @@ function blankToNull(value: string): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function PortalTilesPage() {
-  const [tiles, setTiles] = useState<PortalTile[] | null>(null);
+export function DisplayServicesPage() {
+  const [services, setServices] = useState<DisplayService[] | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY_TILE);
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const reload = useCallback(async () => {
-    setTiles(await listTiles());
+    setServices(await listDisplayServices());
   }, []);
 
   useEffect(() => {
@@ -51,24 +51,24 @@ export function PortalTilesPage() {
       await reload();
       setMessage(ok);
     } catch {
-      setMessage('실패했습니다 — 코드는 소문자·숫자·하이픈만, 활성 타일에는 링크가 필요합니다');
+      setMessage('실패했습니다 — 코드는 소문자·숫자·하이픈만, OPEN 에는 링크가 필요합니다');
     }
   };
 
-  if (!tiles) {
+  if (!services) {
     return <div className="text-sm text-zinc-500">{message ?? '불러오는 중…'}</div>;
   }
 
-  const liveCount = tiles.filter((t) => t.status === 'LIVE').length;
-  const soonCount = tiles.filter((t) => t.status === 'SOON').length;
+  const openCount = services.filter((s) => s.status === 'OPEN').length;
+  const preopenCount = services.filter((s) => s.status === 'PREOPEN').length;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">메인 타일</h1>
+          <h1 className="text-xl font-semibold">메인 전시</h1>
           <p className="text-sm text-zinc-500">
-            1989v.com 메인의 도메인 진입점입니다. 서비스가 완성되면 준비중을 활성으로 바꾸세요.
+            1989v.com 메인에 전시하는 서비스입니다. 완성되면 오픈 예정을 진입 가능으로 바꾸세요.
           </p>
         </div>
         {message && <span className="text-sm text-zinc-500">{message}</span>}
@@ -76,18 +76,18 @@ export function PortalTilesPage() {
 
       <Card className="p-4">
         <div className="flex flex-wrap gap-8">
-          <Stat label="활성" value={`${liveCount}개`} />
-          <Stat label="준비중" value={`${soonCount}개`} />
-          <Stat label="비노출" value={`${tiles.length - liveCount - soonCount}개`} />
+          <Stat label="진입 가능" value={`${openCount}개`} />
+          <Stat label="오픈 예정" value={`${preopenCount}개`} />
+          <Stat label="전시 중지" value={`${services.length - openCount - preopenCount}개`} />
         </div>
         <p className="mt-3 text-xs text-zinc-500">
-          준비중 타일이 많으면 "진행 중인 게 많다"가 아니라 "끝맺은 게 없다"로 읽힙니다.
-          실제 로드맵만 준비중으로 두고, 공개하지 않을 서비스는 비노출로 내리세요.
+          오픈 예정이 많으면 "진행 중인 게 많다"가 아니라 "끝맺은 게 없다"로 읽힙니다.
+          실제 로드맵만 오픈 예정으로 두세요. 전시할 생각이 없는 프라이빗 서비스는 아예 등록하지 않습니다.
         </p>
       </Card>
 
       <Card className="p-4">
-        <h2 className="mb-3 font-medium">타일</h2>
+        <h2 className="mb-3 font-medium">전시 서비스</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-left text-zinc-500">
@@ -102,31 +102,31 @@ export function PortalTilesPage() {
               </tr>
             </thead>
             <tbody>
-              {tiles.map((t) => (
+              {services.map((s) => (
                 <tr
-                  key={t.code}
+                  key={s.code}
                   className={`border-t border-zinc-200 dark:border-zinc-800 ${
-                    t.status === 'HIDDEN' ? 'text-zinc-400' : ''
+                    s.status === 'HOLD' ? 'text-zinc-400' : ''
                   }`}
                 >
-                  <td className="py-2 pr-3 tabular-nums text-zinc-500">{t.orderNo}</td>
-                  <td className="py-2 pr-3 font-medium">{t.label}</td>
-                  <td className="py-2 pr-3 font-mono text-xs text-zinc-500">{t.code}</td>
-                  <td className="py-2 pr-3 text-zinc-500">{t.tagline ?? '—'}</td>
-                  <td className="py-2 pr-3 font-mono text-xs">{t.href ?? '—'}</td>
-                  <td className="py-2 pr-3">{STATUS_LABEL[t.status]}</td>
+                  <td className="py-2 pr-3 tabular-nums text-zinc-500">{s.orderNo}</td>
+                  <td className="py-2 pr-3 font-medium">{s.label}</td>
+                  <td className="py-2 pr-3 font-mono text-xs text-zinc-500">{s.code}</td>
+                  <td className="py-2 pr-3 text-zinc-500">{s.tagline ?? '—'}</td>
+                  <td className="py-2 pr-3 font-mono text-xs">{s.href ?? '—'}</td>
+                  <td className="py-2 pr-3">{STATUS_LABEL[s.status]}</td>
                   <td className="py-2 text-right whitespace-nowrap">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setForm({
-                        id: t.id,
-                        code: t.code,
-                        label: t.label,
-                        tagline: t.tagline ?? '',
-                        href: t.href ?? '',
-                        status: t.status,
-                        orderNo: t.orderNo,
+                        id: s.id,
+                        code: s.code,
+                        label: s.label,
+                        tagline: s.tagline ?? '',
+                        href: s.href ?? '',
+                        status: s.status,
+                        orderNo: s.orderNo,
                       })}
                     >
                       편집
@@ -135,14 +135,14 @@ export function PortalTilesPage() {
                       size="sm"
                       variant="ghost"
                       className="ml-2"
-                      onClick={() => t.id && run(() => deleteTile(t.id!), '삭제했습니다')}
+                      onClick={() => s.id && run(() => deleteDisplayService(s.id!), '삭제했습니다')}
                     >
                       삭제
                     </Button>
                   </td>
                 </tr>
               ))}
-              {tiles.length === 0 && (
+              {services.length === 0 && (
                 <tr><td colSpan={7} className="py-4 text-center text-zinc-500">아직 없습니다.</td></tr>
               )}
             </tbody>
@@ -178,11 +178,11 @@ export function PortalTilesPage() {
             <select
               className="h-9 rounded-md border border-zinc-300 bg-transparent px-2 text-sm dark:border-zinc-700"
               value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value as TileStatus })}
+              onChange={(e) => setForm({ ...form, status: e.target.value as DisplayStatus })}
             >
-              <option value="LIVE">활성</option>
-              <option value="SOON">준비중 (딤드)</option>
-              <option value="HIDDEN">비노출</option>
+              <option value="OPEN">전시 · 진입 가능</option>
+              <option value="PREOPEN">전시 · 오픈 예정 (딤드)</option>
+              <option value="HOLD">전시 중지</option>
             </select>
             <Input
               type="number"
@@ -193,7 +193,7 @@ export function PortalTilesPage() {
           <div className="flex items-center gap-3">
             <Button
               onClick={() => run(async () => {
-                await upsertTile({
+                await upsertDisplayService({
                   id: form.id ?? undefined,
                   code: form.code,
                   label: form.label,
@@ -202,12 +202,12 @@ export function PortalTilesPage() {
                   status: form.status,
                   orderNo: form.orderNo,
                 });
-                setForm(EMPTY_TILE);
+                setForm(EMPTY_FORM);
               }, '저장했습니다')}
             >
               저장
             </Button>
-            <Button variant="ghost" onClick={() => setForm(EMPTY_TILE)}>초기화</Button>
+            <Button variant="ghost" onClick={() => setForm(EMPTY_FORM)}>초기화</Button>
             <span className="text-xs text-zinc-500">
               링크는 상대 경로를 권장합니다 — place/game 은 프로덕션에서 서브도메인으로 자동 이동합니다.
             </span>

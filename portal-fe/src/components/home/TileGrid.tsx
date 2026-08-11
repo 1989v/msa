@@ -1,33 +1,39 @@
-import type { PortalTile } from '../../api/portalApi';
+import type { DisplayService } from '../../api/displayApi';
 import './Home.css';
 
 interface TileGridProps {
-  tiles: PortalTile[];
+  services: DisplayService[];
 }
 
-export default function TileGrid({ tiles }: TileGridProps) {
-  if (tiles.length === 0) return null;
+/**
+ * 전시 서비스를 타일 그리드로 그린다.
+ *
+ * 타일은 여기서만 쓰는 표현 형태다 — 서버는 전시 서비스(display/services)만 알고,
+ * 카드로 그릴지 리스트로 그릴지는 화면이 정한다 (ADR-0066).
+ */
+export default function TileGrid({ services }: TileGridProps) {
+  if (services.length === 0) return null;
 
   return (
     <section id="services" className="home-section">
       <div className="home-inner">
         <h2 className="home-section-title">만든 서비스</h2>
         <p className="home-section-desc">
-          직접 설계하고 운영 중인 서비스입니다. 준비중 표시는 아직 화면이 없다는 뜻입니다.
+          직접 설계하고 운영 중인 서비스입니다. 오픈 예정은 아직 화면이 없다는 뜻입니다.
         </p>
 
         <ul className="tile-grid">
-          {tiles.map((tile) => (
-            <li key={tile.code}>
-              {tile.status === 'LIVE' && tile.href ? (
-                <a className="tile tile-live" href={tile.href}>
-                  <TileBody tile={tile} />
+          {services.map((service) => (
+            <li key={service.code}>
+              {service.status === 'OPEN' && service.href ? (
+                <a className="tile tile-open" href={service.href}>
+                  <TileBody service={service} />
                   <span className="tile-arrow" aria-hidden="true">→</span>
                 </a>
               ) : (
-                <div className="tile tile-soon" aria-disabled="true">
-                  <TileBody tile={tile} />
-                  <span className="tile-badge">준비중</span>
+                <div className="tile tile-preopen" aria-disabled="true">
+                  <TileBody service={service} />
+                  <span className="tile-badge">오픈 예정</span>
                 </div>
               )}
             </li>
@@ -38,11 +44,11 @@ export default function TileGrid({ tiles }: TileGridProps) {
   );
 }
 
-function TileBody({ tile }: { tile: PortalTile }) {
+function TileBody({ service }: { service: DisplayService }) {
   return (
     <span className="tile-body">
-      <span className="tile-label">{tile.label}</span>
-      {tile.tagline && <span className="tile-tagline">{tile.tagline}</span>}
+      <span className="tile-label">{service.label}</span>
+      {service.tagline && <span className="tile-tagline">{service.tagline}</span>}
     </span>
   );
 }

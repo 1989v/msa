@@ -1,4 +1,4 @@
-import type { PortfolioTimeline as Timeline } from '../../api/portalApi';
+import type { PortfolioTimeline as Timeline } from '../../api/displayApi';
 import './Home.css';
 
 /** `2026-06` → `2026.06` */

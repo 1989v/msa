@@ -110,18 +110,18 @@
               border-color var(--ko-duration-fast) var(--ko-ease-out);
 }
 
-.tile-live:hover {
+.tile-open:hover {
   background: var(--ko-surface-2);
   border-color: var(--ko-border-default);
 }
 
-.tile-live:focus-visible {
+.tile-open:focus-visible {
   outline: 2px solid var(--ko-accent-primary);
   outline-offset: var(--ko-focus-ring-offset);
 }
 
-/* 준비중 — 클릭 대상이 아니라는 걸 색과 커서 양쪽으로 알린다 */
-.tile-soon {
+/* 오픈 예정 — 클릭 대상이 아니라는 걸 색과 커서 양쪽으로 알린다 */
+.tile-preopen {
   opacity: 0.55;
   cursor: not-allowed;
 }
@@ -149,7 +149,7 @@
   flex-shrink: 0;
 }
 
-.tile-live:hover .tile-arrow {
+.tile-open:hover .tile-arrow {
   color: var(--ko-accent-primary);
 }
 

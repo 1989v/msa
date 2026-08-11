@@ -1,7 +1,7 @@
-package com.kgd.codedictionary.infrastructure.persistence.portal.entity
+package com.kgd.codedictionary.infrastructure.persistence.display.entity
 
-import com.kgd.codedictionary.domain.portal.model.PortalTile
-import com.kgd.codedictionary.domain.portal.model.TileStatus
+import com.kgd.codedictionary.domain.display.model.DisplayService
+import com.kgd.codedictionary.domain.display.model.DisplayStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -12,8 +12,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 
 @Entity
-@Table(name = "portal_tile")
-class PortalTileJpaEntity(
+@Table(name = "display_service")
+class DisplayServiceJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
@@ -23,7 +23,7 @@ class PortalTileJpaEntity(
     label: String = "",
     tagline: String? = null,
     href: String? = null,
-    status: TileStatus = TileStatus.SOON,
+    status: DisplayStatus = DisplayStatus.PREOPEN,
     orderNo: Int = 0,
 ) {
     @Column(nullable = false, length = 80)
@@ -40,22 +40,22 @@ class PortalTileJpaEntity(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
-    var status: TileStatus = status
+    var status: DisplayStatus = status
         private set
 
     @Column(name = "order_no", nullable = false)
     var orderNo: Int = orderNo
         private set
 
-    fun update(tile: PortalTile) {
-        label = tile.label
-        tagline = tile.tagline
-        href = tile.href
-        status = tile.status
-        orderNo = tile.orderNo
+    fun update(service: DisplayService) {
+        label = service.label
+        tagline = service.tagline
+        href = service.href
+        status = service.status
+        orderNo = service.orderNo
     }
 
-    fun toDomain() = PortalTile(
+    fun toDomain() = DisplayService(
         id = id,
         code = code,
         label = label,
@@ -66,14 +66,14 @@ class PortalTileJpaEntity(
     )
 
     companion object {
-        fun fromDomain(tile: PortalTile) = PortalTileJpaEntity(
-            id = tile.id,
-            code = tile.code,
-            label = tile.label,
-            tagline = tile.tagline,
-            href = tile.href,
-            status = tile.status,
-            orderNo = tile.orderNo,
+        fun fromDomain(service: DisplayService) = DisplayServiceJpaEntity(
+            id = service.id,
+            code = service.code,
+            label = service.label,
+            tagline = service.tagline,
+            href = service.href,
+            status = service.status,
+            orderNo = service.orderNo,
         )
     }
 }

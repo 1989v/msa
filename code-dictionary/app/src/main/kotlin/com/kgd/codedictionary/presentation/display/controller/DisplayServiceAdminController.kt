@@ -1,8 +1,8 @@
-package com.kgd.codedictionary.presentation.portal.controller
+package com.kgd.codedictionary.presentation.display.controller
 
-import com.kgd.codedictionary.application.portal.dto.PortalTileDto
-import com.kgd.codedictionary.application.portal.dto.PortalTileUpsertRequest
-import com.kgd.codedictionary.application.portal.service.PortalTileAdminService
+import com.kgd.codedictionary.application.display.dto.DisplayServiceDto
+import com.kgd.codedictionary.application.display.dto.DisplayServiceUpsertRequest
+import com.kgd.codedictionary.application.display.service.DisplayAdminService
 import com.kgd.common.response.ApiResponse
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -13,25 +13,25 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 메인 타일 관리 API (ADR-0066).
+ * 메인 전시 관리 API (ADR-0066).
  *
  * 인증은 게이트웨이의 admin 경로 ROLE_ADMIN 필터가 담당한다.
  */
 @RestController
-@RequestMapping("/api/v1/admin/portal")
-class PortalTileAdminController(
-    private val adminService: PortalTileAdminService,
+@RequestMapping("/api/v1/admin/display")
+class DisplayServiceAdminController(
+    private val adminService: DisplayAdminService,
 ) {
 
-    @GetMapping("/tiles")
-    fun tiles(): ApiResponse<List<PortalTileDto>> =
-        ApiResponse.success(adminService.allTiles())
+    @GetMapping("/services")
+    fun services(): ApiResponse<List<DisplayServiceDto>> =
+        ApiResponse.success(adminService.allServices())
 
-    @PutMapping("/tiles")
-    fun upsert(@RequestBody request: PortalTileUpsertRequest): ApiResponse<PortalTileDto> =
+    @PutMapping("/services")
+    fun upsert(@RequestBody request: DisplayServiceUpsertRequest): ApiResponse<DisplayServiceDto> =
         ApiResponse.success(adminService.upsert(request))
 
-    @DeleteMapping("/tiles/{id}")
+    @DeleteMapping("/services/{id}")
     fun delete(@PathVariable id: Long): ApiResponse<Unit> {
         adminService.delete(id)
         return ApiResponse.success(Unit)
