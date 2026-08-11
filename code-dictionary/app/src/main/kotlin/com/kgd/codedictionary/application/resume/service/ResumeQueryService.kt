@@ -2,6 +2,7 @@ package com.kgd.codedictionary.application.resume.service
 
 import com.kgd.codedictionary.application.resume.dto.ResumeDocumentDto
 import com.kgd.codedictionary.application.resume.dto.ResumeDocumentSummaryDto
+import com.kgd.codedictionary.application.resume.dto.ResumeProfileDto
 import com.kgd.codedictionary.application.resume.dto.ResumeStatusDto
 import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeDocumentRepositoryPort
@@ -18,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional
 data class ResumeOverview(
     val main: ResumeDocumentDto?,
     val details: List<ResumeDocumentSummaryDto>,
+    /** 경력·프로젝트·기술 스택 — 마크다운의 자리표시자를 채운다 */
+    val profile: ResumeProfileDto,
 )
 
 /**
@@ -32,6 +35,7 @@ class ResumeQueryService(
     private val shareLinkRepository: ResumeShareLinkRepositoryPort,
     private val accessLogRepository: ResumeAccessLogRepositoryPort,
     private val settingRepository: ResumeSettingRepositoryPort,
+    private val profileService: ResumeProfileService,
 ) {
 
     @Transactional(readOnly = true)
@@ -49,7 +53,11 @@ class ResumeQueryService(
             .map(ResumeDocumentSummaryDto::from)
 
         main?.let { accessLogRepository.record(link?.id, it.slug) }
-        return ResumeOverview(main = main?.let(ResumeDocumentDto::from), details = details)
+        return ResumeOverview(
+            main = main?.let(ResumeDocumentDto::from),
+            details = details,
+            profile = profileService.profile(),
+        )
     }
 
     @Transactional

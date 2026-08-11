@@ -1,0 +1,61 @@
+package com.kgd.codedictionary.application.resume.service
+
+import com.kgd.codedictionary.application.resume.dto.CareerSummaryDto
+import com.kgd.codedictionary.application.resume.dto.ResumeCategoryDto
+import com.kgd.codedictionary.application.resume.dto.ResumeCompanyDto
+import com.kgd.codedictionary.application.resume.dto.ResumeProfileDto
+import com.kgd.codedictionary.application.resume.dto.ResumeProjectDto
+import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupDto
+import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeSkillGroupRepositoryPort
+import com.kgd.codedictionary.domain.resume.model.CareerCalculator
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
+
+/**
+ * 구조화 영역 조립 (ADR-0064).
+ *
+ * 게이트 판정은 호출부(ResumeQueryService)가 이미 마쳤다는 전제다 — 여기서는 조립만 한다.
+ */
+@Service
+class ResumeProfileService(
+    private val companyRepository: ResumeCompanyRepositoryPort,
+    private val categoryRepository: ResumeCategoryRepositoryPort,
+    private val projectRepository: ResumeProjectRepositoryPort,
+    private val skillGroupRepository: ResumeSkillGroupRepositoryPort,
+) {
+
+    @Transactional(readOnly = true)
+    fun profile(includeUnpublished: Boolean = false): ResumeProfileDto {
+        val asOf = LocalDate.now()
+        val companies = companyRepository.findAll()
+        val categories = categoryRepository.findAll()
+        val projects = if (includeUnpublished) projectRepository.findAll() else projectRepository.findAllPublished()
+
+        val companyById = companies.associateBy { it.id }
+        val categoryById = categories.associateBy { it.id }
+
+        val tenure = CareerCalculator.tenure(companies.map { it.period }, asOf)
+        return ResumeProfileDto(
+            career = CareerSummaryDto(
+                totalMonths = tenure.totalMonths,
+                years = tenure.years,
+                months = tenure.months,
+                yearsInField = CareerCalculator.yearsInField(companies.map { it.period }, asOf),
+            ),
+            companies = companies.map { ResumeCompanyDto.from(it, asOf) },
+            categories = categories.map(ResumeCategoryDto::from),
+            projects = projects.map { project ->
+                ResumeProjectDto.from(
+                    project = project,
+                    company = project.companyId?.let { companyById[it] },
+                    category = project.categoryId?.let { categoryById[it] },
+                )
+            },
+            skills = skillGroupRepository.findAll().map(ResumeSkillGroupDto::from),
+        )
+    }
+}
