@@ -15,6 +15,9 @@
 #   admin.<DOMAIN>              → admin-fe    [proxied]
 #   quant.<DOMAIN>              → quant-fe    [proxied]
 #   gft.<DOMAIN>                → gifticon-fe [proxied]
+#   game.<DOMAIN>               → portal-fe (게임 허브 루트, ADR-0059) [proxied]
+#   place.<DOMAIN>              → portal-fe (K-관광/지리 탐색 루트, ADR-0065) [proxied]
+#   resume.<DOMAIN>             → portal-fe (이력서, ADR-0064) [proxied]
 #   api.<DOMAIN>                → gateway (REST 위주) [proxied]
 #   rt.<DOMAIN>                 → gateway (WS+SSE) [bypass]
 #
@@ -54,6 +57,7 @@ spec:
         - api.1989v.com
         - game.1989v.com
         - resume.1989v.com
+        - place.1989v.com
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
@@ -162,6 +166,26 @@ spec:
             backend: { service: { name: portal-fe, port: { name: http } } }
     # ─── game (game.<DOMAIN>) — portal-fe 가 host 인식해 루트에서 게임 허브 렌더 ───
     - host: game.1989v.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /ws
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /sse
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /svc
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }
+    # ─── portal-fe (place 호스트 — K-관광/지리 탐색, ADR-0065) ───
+    # game 과 동일하게 portal-fe 한 벌을 host 인식 루트 라우팅으로 서빙.
+    - host: place.1989v.com
       http:
         paths:
           - path: /api

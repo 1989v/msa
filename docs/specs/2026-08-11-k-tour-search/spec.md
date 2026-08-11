@@ -69,9 +69,11 @@ TourAPI(KorService2/EngService2)
   - 도메인/포트 구조는 products 검색과 동일 (`AttractionDocument`, `AttractionSearchPort`,
     `SearchAttractionService`). 랭킹은 P1 은 BM25 관련도 + 결정적 tiebreaker 만.
 
-### 4. portal-fe — K-Tour 지도 검색 UI
+### 4. portal-fe — K-관광/지리 지도 검색 UI
 
-- 라우트: `/tour` (ko) · `/en/tour` (en) — ADR-0062 언어 URL 승격 규칙 준수. root SPA 내 신규 섹션.
+- **정규 주소: `place.1989v.com`** — 독립 기능단위 서브도메인 원칙 + 백엔드 서비스명(place) 통일
+  (2026-08-11 개명, 구 `/tour` 는 `/place` 리다이렉트로 흡수). place 호스트에서 `/`(ko)·`/en`(en),
+  apex/개발에선 `/place`·`/en/place` — ADR-0062 언어 URL 규칙.
 - **Google Maps JS API** (Essentials 무료 한도, 콘솔 쿼터 캡): 마커 + 클러스터링, 결과 리스트 ↔ 마커 연동,
   지도 이동 시 "이 지역 재검색"(bounds 중심 + 반경), "내 주변"(geolocation → nearby).
 - 검색바(키워드) + 카테고리 칩 + 지역(광역) 셀렉트. lang 은 URL 로 결정 (`/tour`=ko, `/en/tour`=en).

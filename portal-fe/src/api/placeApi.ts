@@ -6,12 +6,12 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8089',
 });
 
-export type TourLang = 'ko' | 'en';
+export type PlaceLang = 'ko' | 'en';
 
 export interface Attraction {
   id: string;
   contentId: string;
-  lang: TourLang;
+  lang: PlaceLang;
   title: string;
   category: string | null;
   areaCode: string | null;
@@ -35,7 +35,7 @@ export interface AttractionSearchResult {
 
 export interface AttractionQuery {
   keyword?: string;
-  lang: TourLang;
+  lang: PlaceLang;
   areaCode?: string;
   category?: string;
   lat?: number;

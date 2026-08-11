@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, type ReactElement } from 'react';
 import SearchPage from './pages/SearchPage';
 import PortfolioPage from './pages/PortfolioPage';
@@ -12,8 +12,9 @@ import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 // ADR-0059 — 게임 플랫폼 (game:feature API 는 code-dictionary 와 동일 오리진)
 const GamesPage = lazy(() => import('./pages/games/GamesPage'));
 const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
-// ADR-0065 — K-관광 지도 검색 (/tour, /en/tour). 구글맵 로더 포함이라 lazy 분리.
-const TourPage = lazy(() => import('./pages/tour/TourPage'));
+// ADR-0065 — K-관광/지리 탐색. place.<domain> 이 정규 주소 (host 인식 루트 라우팅),
+// apex/개발은 /place. 구글맵 로더 포함이라 lazy 분리.
+const PlacePage = lazy(() => import('./pages/place/PlacePage'));
 // ADR-0064 — 이력서 (resume.<domain>). 공개 포털 번들과 코드가 섞이지 않게 lazy 로 분리한다.
 const ResumePage = lazy(() => import('./pages/resume/ResumePage'));
 const ResumeDetailPage = lazy(() => import('./pages/resume/ResumeDetailPage'));
@@ -24,6 +25,8 @@ const AgentViewerApp = lazy(() => import('./shell/placeholders').then((m) => ({ 
 
 // game.<domain> 서브도메인 — 동일 portal-fe 번들을 서빙하되 루트가 게임 허브 (ADR-0059)
 const isGamesHost = window.location.hostname.split('.')[0] === 'game';
+// place.<domain> — 같은 portal-fe 번들을 서빙하되 루트가 K-관광/지리 탐색이다 (ADR-0065)
+const isPlaceHost = window.location.hostname.split('.')[0] === 'place';
 // resume.<domain> — 같은 portal-fe 번들을 서빙하되 루트가 이력서다 (ADR-0064)
 const isResumeHost = window.location.hostname.split('.')[0] === 'resume';
 // apex 의 /games 는 game 서브도메인으로 정리 — 게임 주소를 하나로 고정.
@@ -43,6 +46,19 @@ function gameRoute(element: ReactElement) {
   return isApexProd ? <GameHostRedirect /> : element;
 }
 
+function PlaceHostRedirect() {
+  const { pathname, search, hash } = window.location;
+  // 허브(/place, /en/place)는 place 호스트에서 루트(/, /en)가 정규 주소다 (ADR-0065)
+  const target = pathname === '/place' ? '/' : pathname === '/en/place' ? '/en' : pathname;
+  window.location.replace(`https://place.1989v.com${target}${search}${hash}`);
+  return null;
+}
+
+/** place 라우트 — apex 프로덕션에서는 place 호스트로 보내고, 그 외에는 그대로 렌더 */
+function placeRoute(element: ReactElement) {
+  return isApexProd ? <PlaceHostRedirect /> : element;
+}
+
 function AdminHostRedirect() {
   window.location.replace('https://admin.1989v.com' + window.location.pathname.replace(/^\/admin/, ''));
   return null;
@@ -56,7 +72,9 @@ function App() {
           {/* portal 자체 (코드사전/포트폴리오/커머스) */}
           <Route
             path="/"
-            element={isResumeHost ? <ResumePage /> : isGamesHost ? <GamesPage /> : <SearchPage />}
+            element={
+              isResumeHost ? <ResumePage /> : isGamesHost ? <GamesPage /> : isPlaceHost ? <PlacePage /> : <SearchPage />
+            }
           />
           {/* 이력서 상세 — resume 호스트에만 둔다. apex 에 열어두면 전체공개 상태에서
               색인 대상인 1989v.com 경로로 이력서가 노출된다 (ADR-0064: 이력서는 noindex) */}
@@ -69,13 +87,17 @@ function App() {
           <Route path="/shop/login" element={<ShopLoginPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
-          <Route path="/tour" element={<TourPage />} />
-          <Route path="/en/tour" element={<TourPage />} />
+          <Route path="/place" element={placeRoute(<PlacePage />)} />
+          <Route path="/en/place" element={placeRoute(<PlacePage />)} />
+          {/* 구 /tour 주소 정리 — 출시 직후 개명이라 잔존 링크만 흡수 */}
+          <Route path="/tour" element={<Navigate to="/place" replace />} />
+          <Route path="/en/tour" element={<Navigate to="/en/place" replace />} />
 
           <Route path="/games" element={gameRoute(<GamesPage />)} />
           <Route path="/games/genre/:genre" element={gameRoute(<GamesPage />)} />
           <Route path="/games/:slug" element={gameRoute(<GameDetailPage />)} />
-          <Route path="/en" element={gameRoute(<GamesPage />)} />
+          {/* /en 루트는 호스트 성격을 따른다 — place 호스트: K-관광 영문, 그 외: 게임 허브 영문 */}
+          <Route path="/en" element={isPlaceHost ? <PlacePage /> : gameRoute(<GamesPage />)} />
           <Route path="/en/games" element={gameRoute(<GamesPage />)} />
           <Route path="/en/games/genre/:genre" element={gameRoute(<GamesPage />)} />
           <Route path="/en/games/:slug" element={gameRoute(<GameDetailPage />)} />

@@ -7,13 +7,14 @@ import {
   searchAttractions,
   type Attraction,
   type AttractionQuery,
-  type TourLang,
-} from '../../api/tourApi';
+  type PlaceLang,
+} from '../../api/placeApi';
 import { loadGoogleMaps, mapsApiKey, radiusFromBounds } from './googleMaps';
-import './TourPage.css';
+import './PlacePage.css';
 
-// ADR-0065 K-관광 검색 — 관광지 지도 탐색. 데이터 출처: 한국관광공사 TourAPI.
-// /tour(ko) · /en/tour(en) — ADR-0062 언어 URL 규칙.
+// ADR-0065 K-관광/지리 탐색 — 관광지 지도 검색. 데이터 출처: 한국관광공사 TourAPI.
+// place.<domain> 서브도메인이 정규 주소 (game 과 동일한 host 인식 루트 라우팅):
+//   place 호스트: /(ko) · /en(en) — apex/개발: /place · /en/place (ADR-0062 언어 URL 규칙)
 
 const UI = {
   ko: {
@@ -74,10 +75,10 @@ interface GeoState {
   radiusKm: number;
 }
 
-export default function TourPage() {
+export default function PlacePage() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const lang: TourLang = pathname.startsWith('/en') ? 'en' : 'ko';
+  const lang: PlaceLang = pathname.startsWith('/en') ? 'en' : 'ko';
   const L = UI[lang];
 
   const [keywordInput, setKeywordInput] = useState('');
@@ -112,13 +113,13 @@ export default function TourPage() {
   );
 
   const { data, isLoading } = useQuery({
-    queryKey: ['tour-attractions', query],
+    queryKey: ['place-attractions', query],
     queryFn: () => searchAttractions(query),
     staleTime: 60_000,
   });
 
   const { data: selected } = useQuery({
-    queryKey: ['tour-attraction', selectedId],
+    queryKey: ['place-attraction', selectedId],
     queryFn: () => fetchAttraction(selectedId!),
     enabled: selectedId != null,
   });
@@ -202,22 +203,25 @@ export default function TourPage() {
     });
   }, []);
 
-  const switchLang = (next: TourLang) => {
-    if (next !== lang) navigate(next === 'en' ? '/en/tour' : '/tour');
+  const isPlaceHost = window.location.hostname.split('.')[0] === 'place';
+  const switchLang = (next: PlaceLang) => {
+    if (next === lang) return;
+    const base = isPlaceHost ? '' : '/place';
+    navigate(next === 'en' ? `/en${base}` : base || '/');
   };
 
   const attractions = data?.attractions ?? [];
 
   return (
-    <div className="tour-page">
-      <header className="tour-header">
-        <h1 className="tour-title">
+    <div className="place-page">
+      <header className="place-header">
+        <h1 className="place-title">
           {L.title}
-          <span className="tour-lang-toggle" role="group" aria-label="Language">
-            {(['ko', 'en'] as TourLang[]).map((key) => (
+          <span className="place-lang-toggle" role="group" aria-label="Language">
+            {(['ko', 'en'] as PlaceLang[]).map((key) => (
               <button
                 key={key}
-                className={`tour-lang-btn ${lang === key ? 'active' : ''}`}
+                className={`place-lang-btn ${lang === key ? 'active' : ''}`}
                 onClick={() => switchLang(key)}
               >
                 {key === 'ko' ? '한' : 'EN'}
@@ -225,35 +229,35 @@ export default function TourPage() {
             ))}
           </span>
         </h1>
-        <p className="tour-subtitle">{L.subtitle}</p>
+        <p className="place-subtitle">{L.subtitle}</p>
       </header>
 
-      <div className="tour-toolbar">
+      <div className="place-toolbar">
         <form
-          className="tour-search"
+          className="place-search"
           onSubmit={(e) => {
             e.preventDefault();
             runKeywordSearch();
           }}
         >
           <input
-            className="tour-search-input"
+            className="place-search-input"
             value={keywordInput}
             onChange={(e) => setKeywordInput(e.target.value)}
             placeholder={L.searchPlaceholder}
             aria-label={L.searchPlaceholder}
           />
-          <button type="submit" className="tour-btn primary">
+          <button type="submit" className="place-btn primary">
             {lang === 'ko' ? '검색' : 'Search'}
           </button>
-          <button type="button" className="tour-btn" onClick={nearMe}>
+          <button type="button" className="place-btn" onClick={nearMe}>
             {L.nearMe}
           </button>
         </form>
 
-        <div className="tour-filters">
+        <div className="place-filters">
           <button
-            className={`tour-chip ${category == null ? 'active' : ''}`}
+            className={`place-chip ${category == null ? 'active' : ''}`}
             onClick={() => {
               setCategory(null);
               setPage(0);
@@ -264,7 +268,7 @@ export default function TourPage() {
           {CATEGORIES.map((c) => (
             <button
               key={c}
-              className={`tour-chip ${category === c ? 'active' : ''}`}
+              className={`place-chip ${category === c ? 'active' : ''}`}
               onClick={() => {
                 setCategory(category === c ? null : c);
                 setPage(0);
@@ -274,7 +278,7 @@ export default function TourPage() {
             </button>
           ))}
           <select
-            className="tour-area-select"
+            className="place-area-select"
             value={areaCode ?? ''}
             onChange={(e) => {
               setAreaCode(e.target.value || null);
@@ -293,22 +297,22 @@ export default function TourPage() {
         </div>
       </div>
 
-      <div className="tour-body">
-        <section className="tour-list" aria-busy={isLoading}>
-          {attractions.length === 0 && !isLoading && <p className="tour-empty">{L.empty}</p>}
+      <div className="place-body">
+        <section className="place-list" aria-busy={isLoading}>
+          {attractions.length === 0 && !isLoading && <p className="place-empty">{L.empty}</p>}
           {attractions.map((a) => (
-            <TourCard key={a.id} attraction={a} lang={lang} onSelect={() => setSelectedId(a.id)} />
+            <PlaceCard key={a.id} attraction={a} lang={lang} onSelect={() => setSelectedId(a.id)} />
           ))}
           {data && data.totalPages > 1 && (
-            <div className="tour-paging">
-              <button className="tour-btn" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            <div className="place-paging">
+              <button className="place-btn" disabled={page === 0} onClick={() => setPage(page - 1)}>
                 {L.prev}
               </button>
-              <span className="tour-paging-info">
+              <span className="place-paging-info">
                 {data.currentPage + 1} / {data.totalPages}
               </span>
               <button
-                className="tour-btn"
+                className="place-btn"
                 disabled={page + 1 >= data.totalPages}
                 onClick={() => setPage(page + 1)}
               >
@@ -318,37 +322,37 @@ export default function TourPage() {
           )}
         </section>
 
-        <section className="tour-map-wrap">
+        <section className="place-map-wrap">
           {hasMapKey ? (
             <>
-              <div ref={mapDivRef} className="tour-map" role="application" aria-label={L.title} />
+              <div ref={mapDivRef} className="place-map" role="application" aria-label={L.title} />
               {mapMoved && (
-                <button className="tour-btn primary tour-search-area" onClick={searchThisArea}>
+                <button className="place-btn primary place-search-area" onClick={searchThisArea}>
                   {L.searchArea}
                 </button>
               )}
             </>
           ) : (
-            <div className="tour-map tour-map-placeholder">{L.mapKeyMissing}</div>
+            <div className="place-map place-map-placeholder">{L.mapKeyMissing}</div>
           )}
 
           {selected && (
-            <aside className="tour-detail" aria-label={selected.title}>
-              <button className="tour-detail-close" onClick={() => setSelectedId(null)}>
+            <aside className="place-detail" aria-label={selected.title}>
+              <button className="place-detail-close" onClick={() => setSelectedId(null)}>
                 {L.close}
               </button>
               {selected.imageUrl && (
-                <img className="tour-detail-img" src={selected.imageUrl} alt={selected.title} loading="lazy" />
+                <img className="place-detail-img" src={selected.imageUrl} alt={selected.title} loading="lazy" />
               )}
-              <h2 className="tour-detail-title">{selected.title}</h2>
+              <h2 className="place-detail-title">{selected.title}</h2>
               {selected.category && (
-                <span className="tour-chip active">{L.categories[selected.category] ?? selected.category}</span>
+                <span className="place-chip active">{L.categories[selected.category] ?? selected.category}</span>
               )}
-              {selected.address && <p className="tour-detail-addr">{selected.address}</p>}
-              {selected.tel && <p className="tour-detail-tel">{selected.tel}</p>}
-              {selected.overview && <p className="tour-detail-overview">{selected.overview}</p>}
+              {selected.address && <p className="place-detail-addr">{selected.address}</p>}
+              {selected.tel && <p className="place-detail-tel">{selected.tel}</p>}
+              {selected.overview && <p className="place-detail-overview">{selected.overview}</p>}
               <a
-                className="tour-btn primary"
+                className="place-btn primary"
                 href={`https://www.google.com/maps/search/?api=1&query=${selected.latitude},${selected.longitude}`}
                 target="_blank"
                 rel="noreferrer"
@@ -360,37 +364,37 @@ export default function TourPage() {
         </section>
       </div>
 
-      <footer className="tour-footer">{L.source}</footer>
+      <footer className="place-footer">{L.source}</footer>
     </div>
   );
 }
 
-function TourCard({
+function PlaceCard({
   attraction,
   lang,
   onSelect,
 }: {
   attraction: Attraction;
-  lang: TourLang;
+  lang: PlaceLang;
   onSelect: () => void;
 }) {
   const L = UI[lang];
   return (
-    <article className="tour-card" onClick={onSelect} role="button" tabIndex={0}
+    <article className="place-card" onClick={onSelect} role="button" tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onSelect()}>
       {attraction.imageUrl ? (
-        <img className="tour-card-img" src={attraction.imageUrl} alt="" loading="lazy" />
+        <img className="place-card-img" src={attraction.imageUrl} alt="" loading="lazy" />
       ) : (
-        <div className="tour-card-img tour-card-img-empty" aria-hidden />
+        <div className="place-card-img place-card-img-empty" aria-hidden />
       )}
-      <div className="tour-card-body">
-        <h3 className="tour-card-title">{attraction.title}</h3>
-        <p className="tour-card-meta">
+      <div className="place-card-body">
+        <h3 className="place-card-title">{attraction.title}</h3>
+        <p className="place-card-meta">
           {attraction.category && <span>{L.categories[attraction.category] ?? attraction.category}</span>}
           {attraction.distanceKm != null && <span>{attraction.distanceKm.toFixed(1)}km</span>}
         </p>
-        {attraction.address && <p className="tour-card-addr">{attraction.address}</p>}
-        {attraction.overview && <p className="tour-card-overview">{attraction.overview}</p>}
+        {attraction.address && <p className="place-card-addr">{attraction.address}</p>}
+        {attraction.overview && <p className="place-card-overview">{attraction.overview}</p>}
       </div>
     </article>
   );

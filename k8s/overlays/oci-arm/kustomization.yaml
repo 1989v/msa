@@ -16,7 +16,7 @@ kind: Kustomization
 #
 # 적용 절차 (요약):
 #   1. DNS 레코드 등록 → OCI public IP
-#      - proxied (orange cloud) 6종: @(root), admin, quant, gft, game, api
+#      - proxied (orange cloud) 7종: @(root), admin, quant, gft, game, place, api
 #        Cloudflare 를 반드시 경유해야 WAF/rate limit 가 걸린다.
 #      - DNS-only (gray cloud) 1종: rt — WS/SSE 가 CF 100s timeout 을 피해야 해서
 #        의도적으로 우회. 이 레코드가 origin IP 를 공개하므로 origin-lockdown

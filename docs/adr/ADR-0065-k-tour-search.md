@@ -30,8 +30,11 @@ data.go.kr 키 대기). 사용자 요구는 "실제 검색할만한 데이터" �
 5. **ETL 실행 위치 = P1 로컬, P2 CronJob**: egress 하드닝 아래에서 P1 은 로컬 ETL
    (`tools/seed/tour/`) → bulk API (products 트랙에서 검증된 경로). 주기화는 P2 에서 sync
    CronJob + egress NP 한 줄로 승격.
-6. **지도 = Google Maps JS API** (Essentials 무료 한도 + 콘솔 쿼터 캡), FE 는 portal-fe
-   `/tour`·`/en/tour` (ADR-0062 언어 URL 규칙).
+6. **지도 = Google Maps JS API** (Essentials 무료 한도 + 콘솔 쿼터 캡). FE 는 portal-fe 를
+   **`place.<domain>` 서브도메인**으로 서빙 — 독립 기능단위는 서브도메인으로 분리한다는
+   플랫폼 원칙에 따라 game(ADR-0059)과 동일한 host 인식 루트 라우팅. 언어는 `/`(ko)·`/en`(en)
+   (ADR-0062). apex `/place` 는 프로덕션에서 서브도메인으로 리다이렉트, 구 `/tour` 는 `/place` 로
+   흡수. 명칭은 백엔드 서비스명과 통일해 **place** 로 고정 (tour 표기 폐기, 2026-08-11).
 7. **벡터 검색 보류**: 임베딩 생성은 로컬 모델(ETL 타임)로 방향 확정, 쿼리 타임 인코딩은
    free-tier 마진 재계산 후 재개 (open-questions OQ-5).
 
