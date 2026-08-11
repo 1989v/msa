@@ -73,8 +73,12 @@ export function ResumeProfilePage() {
       await action();
       await reload();
       setMessage(ok);
-    } catch {
-      setMessage('실패했습니다 — 기간은 YYYY-MM, 카테고리 코드는 소문자·숫자·하이픈만 가능합니다');
+    } catch (e) {
+      // 서버가 준 메시지를 그대로 보여준다. 뭉뚱그린 안내는 원인을 가린다.
+      const err = e as { response?: { status?: number; data?: { error?: { message?: string } } } };
+      const detail = err.response?.data?.error?.message;
+      const status = err.response?.status;
+      setMessage(detail ? `실패: ${detail}` : `실패했습니다 (HTTP ${status ?? '연결 오류'})`);
     }
   };
 

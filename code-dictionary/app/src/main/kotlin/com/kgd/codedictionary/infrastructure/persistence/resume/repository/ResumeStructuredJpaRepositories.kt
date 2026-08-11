@@ -32,6 +32,7 @@ interface ResumeSkillGroupJpaRepository : JpaRepository<ResumeSkillGroupJpaEntit
 
 interface ResumeSkillJpaRepository : JpaRepository<ResumeSkillJpaEntity, Long> {
     fun findAllByOrderByOrderNoAsc(): List<ResumeSkillJpaEntity>
+    fun findByName(name: String): ResumeSkillJpaEntity?
 }
 
 interface ResumeProjectSkillJpaRepository :

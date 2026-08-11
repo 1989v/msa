@@ -129,9 +129,11 @@ class ResumeSkillRepositoryAdapter(
     override fun save(
         skill: com.kgd.codedictionary.domain.resume.model.ResumeSkill,
     ): com.kgd.codedictionary.domain.resume.model.ResumeSkill {
+        // 이름이 유일 키다. 이미 있는 이름을 다시 넣으면 제약 위반으로 죽는 대신 그 행을 갱신한다 —
+        // 카탈로그에서 "같은 이름 = 같은 기술"이므로 이게 자연스러운 의미다.
         val existing = skill.id?.let {
             jpaRepository.findById(it).orElseThrow { NotFoundException("ResumeSkill", it) }
-        }
+        } ?: jpaRepository.findByName(skill.name)
         return if (existing == null) {
             jpaRepository.save(
                 com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSkillJpaEntity.fromDomain(skill),
