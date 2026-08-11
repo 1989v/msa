@@ -14,7 +14,10 @@
          남는다. 한 벌의 index.html 이 모든 호스트를 서빙하므로 여기서 갈라야 한다. -->
     <script>
       (function () {
-        if (location.hostname.split(".")[0] === "resume") return;
+        var host = location.hostname;
+        // 개발 중 클릭이 실제 리포트에 섞이면 유입 분석이 흐려진다
+        if (host === "localhost" || host === "127.0.0.1") return;
+        if (host.split(".")[0] === "resume") return;
         var id = "G-5EE8XW7JHN";
         var tag = document.createElement("script");
         tag.async = true;
