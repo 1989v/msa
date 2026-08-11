@@ -1,6 +1,6 @@
 package com.kgd.place.infrastructure.seed
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.place.application.poi.port.PoiRepositoryPort
 import com.kgd.place.application.poi.usecase.CreatePoiUseCase
 import com.kgd.place.application.region.port.RegionRepositoryPort

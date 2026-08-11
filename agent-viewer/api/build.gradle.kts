@@ -10,8 +10,7 @@ dependencies {
     implementation(libs.spring.boot.starter.websocket)
     implementation(libs.spring.boot.starter.actuator)
     implementation(libs.kotlin.reflect)
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    implementation("tools.jackson.module:jackson-module-kotlin")
     // kotlin-logging 람다 로깅 (ADR-0021)
     implementation(libs.kotlin.logging)
 

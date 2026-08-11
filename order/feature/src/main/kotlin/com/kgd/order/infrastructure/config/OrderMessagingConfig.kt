@@ -1,6 +1,6 @@
 package com.kgd.order.infrastructure.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.common.messaging.ProcessedEventRepositoryPort

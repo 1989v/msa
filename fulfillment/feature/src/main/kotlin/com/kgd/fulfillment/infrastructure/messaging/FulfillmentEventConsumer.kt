@@ -1,6 +1,6 @@
 package com.kgd.fulfillment.infrastructure.messaging
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.fulfillment.application.fulfillment.usecase.CreateFulfillmentUseCase

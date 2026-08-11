@@ -7,7 +7,7 @@ import java.time.LocalDateTime
  * Inbound event: consumed from order.order.completed topic.
  */
 data class OrderCompletedEvent(
-    val eventId: String = "",
+    val eventId: String? = null,
     val orderId: Long = 0,
     val userId: String = "",
     val totalAmount: BigDecimal = BigDecimal.ZERO,
@@ -37,7 +37,7 @@ data class OrderItemPayload(
  * `fulfillment.order.cancelled` 와의 race 도 자연 멱등 (release no-op) 으로 안전.
  */
 data class OrderCancelledEvent(
-    val eventId: String = "",
+    val eventId: String? = null,
     val orderId: Long = 0,
     val userId: String = "",
     val reason: String = "UNKNOWN",

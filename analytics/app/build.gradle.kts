@@ -4,6 +4,8 @@ plugins {
 }
 
 dependencies {
+    // spring-kafka JsonSerde 경계용 Jackson 2 (ADR-0067)
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation(project(":analytics:domain"))
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)

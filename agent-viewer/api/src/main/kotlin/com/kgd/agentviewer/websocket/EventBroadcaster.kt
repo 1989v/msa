@@ -1,6 +1,6 @@
 package com.kgd.agentviewer.websocket
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.agentviewer.model.WebSocketEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Component

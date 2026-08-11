@@ -1,6 +1,6 @@
 package com.kgd.inventory.application.inventory.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.common.exception.BusinessException
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
 import com.kgd.inventory.application.inventory.port.OutboxPort

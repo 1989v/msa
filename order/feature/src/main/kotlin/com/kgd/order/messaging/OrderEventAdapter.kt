@@ -1,6 +1,6 @@
 package com.kgd.order.infrastructure.messaging
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.order.application.order.port.OrderEventPort
 import com.kgd.order.domain.order.model.Order

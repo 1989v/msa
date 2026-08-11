@@ -1,6 +1,6 @@
 package com.kgd.wishlist.infrastructure.consumer
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.wishlist.application.wishlist.port.WishlistRepositoryPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord

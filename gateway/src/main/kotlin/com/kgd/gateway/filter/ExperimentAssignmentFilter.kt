@@ -1,7 +1,7 @@
 package com.kgd.gateway.filter
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 import com.kgd.common.analytics.BucketAssigner
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cloud.gateway.filter.GatewayFilterChain

@@ -1,6 +1,6 @@
 package com.kgd.common.jackson
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -9,11 +9,11 @@ import org.springframework.context.annotation.Bean
 /**
  * Spring Boot 4.0 ships Jackson 3 (`tools.jackson.*`) as the auto-configured
  * JSON stack, but a lot of the platform code still imports the Jackson 2
- * type `com.fasterxml.jackson.databind.ObjectMapper`. The Spring Boot auto-
+ * type `tools.jackson.databind.ObjectMapper`. The Spring Boot auto-
  * configuration does not provide a bean of that legacy type, so every
  * class with `ObjectMapper` in its constructor (filters, Kafka listeners,
  * Redis serializers) fails to start with
- * `No qualifying bean of type 'com.fasterxml.jackson.databind.ObjectMapper'`.
+ * `No qualifying bean of type 'tools.jackson.databind.ObjectMapper'`.
  *
  * Until the code migrates to `tools.jackson.databind.ObjectMapper`, this
  * auto-configuration bridges the gap by providing the legacy bean.

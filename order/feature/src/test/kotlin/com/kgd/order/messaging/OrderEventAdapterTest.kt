@@ -1,7 +1,6 @@
 package com.kgd.order.infrastructure.messaging
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.order.domain.order.model.Money
 import com.kgd.order.domain.order.model.Order
@@ -22,7 +21,7 @@ import java.time.LocalDateTime
  */
 class OrderEventAdapterTest : BehaviorSpec({
     val outboxPort = mockk<OutboxPort>(relaxed = true)
-    val objectMapper = ObjectMapper().apply { registerModule(JavaTimeModule()) }
+    val objectMapper = jacksonMapperBuilder().build()
     val adapter = OrderEventAdapter(
         outboxPort = outboxPort,
         objectMapper = objectMapper,

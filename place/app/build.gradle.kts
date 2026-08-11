@@ -17,6 +17,8 @@ dependencies {
     // OpenSearch — POI geo_distance 근처검색 (ADR-0056 Part 2, Phase 3)
     implementation(libs.opensearch.java)
     implementation(libs.httpclient5)
+    implementation("tools.jackson.module:jackson-module-kotlin")
+    // opensearch-java 의 JacksonJsonpMapper 가 Jackson 2 로 빌드돼 있어 그 경계에서만 필요하다.
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     // Flyway+validate — 스키마 변경은 Flyway 단독 책임 (jpa-persistence.md)

@@ -1,6 +1,6 @@
 package com.kgd.agentviewer.scanner
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import java.io.File
@@ -103,7 +103,7 @@ class ConversationService(private val objectMapper: ObjectMapper) {
         return deduped
     }
 
-    private fun extractHumanText(content: com.fasterxml.jackson.databind.JsonNode?): String? {
+    private fun extractHumanText(content: tools.jackson.databind.JsonNode?): String? {
         if (content == null) return null
         if (content.isTextual) return content.asText()
         if (content.isArray) {
@@ -119,7 +119,7 @@ class ConversationService(private val objectMapper: ObjectMapper) {
         return null
     }
 
-    private fun extractAssistantText(content: com.fasterxml.jackson.databind.JsonNode?): String? {
+    private fun extractAssistantText(content: tools.jackson.databind.JsonNode?): String? {
         if (content == null) return null
         if (content.isArray) {
             val texts = content

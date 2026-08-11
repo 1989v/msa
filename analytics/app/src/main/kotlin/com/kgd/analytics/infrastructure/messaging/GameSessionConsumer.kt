@@ -1,6 +1,6 @@
 package com.kgd.analytics.infrastructure.messaging
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.analytics.domain.port.EventRepositoryPort
 import com.kgd.common.analytics.AnalyticsEvent
 import com.kgd.common.analytics.EventType

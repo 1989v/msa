@@ -11,6 +11,8 @@ import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.support.serializer.JsonDeserializer
 
+// spring-kafka 의 JsonSerde/JsonSerializer 가 Jackson 2 로 빌드돼 있어 이 경계는
+// Jackson 2 를 유지한다 (ADR-0067). Boot 4 의 Kafka 지원이 Jackson 3 로 올라오면 함께 옮긴다.
 @Configuration
 class KafkaConsumerConfig(
     @Value("\${spring.kafka.bootstrap-servers}") private val bootstrapServers: String

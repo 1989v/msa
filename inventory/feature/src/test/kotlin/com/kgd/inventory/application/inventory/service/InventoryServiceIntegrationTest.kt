@@ -1,7 +1,6 @@
 package com.kgd.inventory.application.inventory.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
 import com.kgd.inventory.application.inventory.port.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
@@ -23,7 +22,7 @@ class InventoryServiceIntegrationTest : BehaviorSpec({
     val inventoryRepository = mockk<InventoryRepositoryPort>()
     val reservationRepository = mockk<ReservationRepositoryPort>()
     val outboxPort = mockk<OutboxPort>(relaxed = true)
-    val objectMapper = ObjectMapper().apply { registerModule(JavaTimeModule()) }
+    val objectMapper = jacksonMapperBuilder().build()
     val service = InventoryService(inventoryRepository, reservationRepository, outboxPort, objectMapper)
 
     beforeEach { clearMocks(inventoryRepository, reservationRepository, outboxPort) }

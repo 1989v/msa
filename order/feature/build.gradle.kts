@@ -6,6 +6,8 @@ plugins {
 }
 
 dependencies {
+    // Kotlin 데이터 클래스 역직렬화 (ADR-0067). 없으면 기본값이 무시되고 non-null 에 null 이 들어간다.
+    implementation("tools.jackson.module:jackson-module-kotlin")
     implementation(project(":order:domain"))
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)

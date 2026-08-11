@@ -1,7 +1,6 @@
 package com.kgd.fulfillment.infrastructure.messaging
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.fulfillment.application.fulfillment.usecase.CreateFulfillmentUseCase
@@ -22,7 +21,7 @@ import java.util.UUID
  */
 class FulfillmentEventConsumerTest : BehaviorSpec({
     val createFulfillmentUseCase = mockk<CreateFulfillmentUseCase>()
-    val objectMapper = ObjectMapper().apply { registerModule(JavaTimeModule()) }
+    val objectMapper = jacksonMapperBuilder().build()
     val idempotentEventHandler = mockk<IdempotentEventHandler>()
     val idempotentMetrics = mockk<IdempotentMetrics>(relaxed = true)
 

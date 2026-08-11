@@ -1,6 +1,6 @@
 package com.kgd.analytics.infrastructure.cache
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.analytics.domain.model.KeywordScore
 import com.kgd.analytics.domain.model.ProductScore
 import com.kgd.analytics.domain.model.ScoreStats

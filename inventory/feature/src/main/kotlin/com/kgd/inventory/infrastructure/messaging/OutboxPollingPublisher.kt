@@ -1,7 +1,7 @@
 package com.kgd.inventory.infrastructure.messaging
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.ObjectNode
 import com.kgd.inventory.infrastructure.persistence.outbox.repository.OutboxJpaRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty

@@ -1,6 +1,6 @@
 package com.kgd.inventory.application.reservation.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
 import com.kgd.inventory.application.inventory.port.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort

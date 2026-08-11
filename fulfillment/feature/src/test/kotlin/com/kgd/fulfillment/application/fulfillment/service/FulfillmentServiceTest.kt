@@ -1,6 +1,6 @@
 package com.kgd.fulfillment.application.fulfillment.service
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.fulfillment.application.fulfillment.port.FulfillmentRepositoryPort
 import com.kgd.fulfillment.application.fulfillment.usecase.CreateFulfillmentUseCase

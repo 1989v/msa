@@ -1,6 +1,6 @@
 package com.kgd.product.infrastructure.messaging
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.product.application.product.usecase.SyncProductStockUseCase
