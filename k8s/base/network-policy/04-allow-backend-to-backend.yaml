@@ -4,6 +4,8 @@
 # 현재 허용되는 페어:
 #   - order → product         (order/.../WebClientConfig.kt:14-18)
 #   - search-batch → product  (productApiReindexJob 페이지 스캔 + seed Job bulk 적재, ADR-0056/0058)
+#   - auth → commerce         (SSO 회원 조회/생성)
+#   - search-batch → place    (attractionApiReindexJob 페이지 풀스캔, ADR-0065)
 #
 # 새 백엔드-백엔드 호출이 추가되면 별도 NetworkPolicy 를 추가한다.
 # 공유 manifest 한 파일에 모아두고 ingress 를 늘리는 방식 (per-target)으로 관리.
@@ -74,5 +76,28 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: auth
+      ports:
+        - { port: http, protocol: TCP }
+---
+# search-batch → place : attractionApiReindexJob 이 관광지 SSOT 를 페이지 풀스캔 (ADR-0065).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-search-batch-to-place
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: place
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: search-batch
       ports:
         - { port: http, protocol: TCP }
