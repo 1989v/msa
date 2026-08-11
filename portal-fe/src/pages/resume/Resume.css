@@ -519,3 +519,63 @@
     color: #444;
   }
 }
+
+/* 기술 칩은 누를 수 있다 — 같은 기술을 쓴 프로젝트만 모아본다 */
+button.resume-project-tag {
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--ko-font-mono);
+}
+
+button.resume-project-tag:hover {
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-accent-primary);
+}
+
+.resume-skill-focus {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-2) var(--ko-space-3);
+  margin-bottom: var(--ko-space-4);
+  border: 1px solid var(--ko-accent-primary);
+  border-radius: var(--ko-radius-md);
+  background: var(--ko-accent-primary-bg);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.resume-skill-focus button {
+  background: transparent;
+  border: 0;
+  color: var(--ko-accent-primary);
+  font-size: var(--ko-text-sm);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@media print {
+  /* 인쇄본에 일부만 담기면 사고다. 필터 안내는 숨기고, 칩은 버튼 티를 없앤다 */
+  .resume-skill-focus {
+    display: none;
+  }
+
+  button.resume-project-tag {
+    border-color: #ccc;
+    color: #444;
+  }
+}
+
+/* 필터에서 빠진 항목 — 화면에서만 감춘다. 인쇄에서는 아래 print 블록이 되살린다 */
+.resume-project.is-filtered-out,
+.resume-project-group.is-filtered-out {
+  display: none;
+}
+
+@media print {
+  .resume-project.is-filtered-out,
+  .resume-project-group.is-filtered-out {
+    display: block;
+  }
+}

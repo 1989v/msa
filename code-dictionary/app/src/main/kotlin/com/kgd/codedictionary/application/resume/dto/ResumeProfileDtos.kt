@@ -94,7 +94,8 @@ data class ResumeProjectDto(
     val summary: String?,
     val bodyMarkdown: String?,
     val metrics: List<String>,
-    val tags: List<String>,
+    /** 카탈로그 기술 참조 — 화면이 이 id 로 같은 기술의 프로젝트를 모아본다 */
+    val skills: List<ResumeSkillRefDto>,
     val detailSlug: String?,
     val orderNo: Int,
     val published: Boolean,
@@ -104,6 +105,7 @@ data class ResumeProjectDto(
             project: ResumeProject,
             company: ResumeCompany?,
             category: ResumeCategory?,
+            skills: List<ResumeSkillRefDto> = emptyList(),
         ) = ResumeProjectDto(
             id = project.id,
             title = project.title,
@@ -118,7 +120,7 @@ data class ResumeProjectDto(
             summary = project.summary,
             bodyMarkdown = project.bodyMarkdown,
             metrics = project.metrics,
-            tags = project.tags,
+            skills = skills,
             detailSlug = project.detailSlug,
             orderNo = project.orderNo,
             published = project.published,
@@ -126,18 +128,21 @@ data class ResumeProjectDto(
     }
 }
 
+/** 기술 한 건의 최소 표현 — 화면이 식별하고 모아보는 데 필요한 만큼만 */
+data class ResumeSkillRefDto(val id: Long, val name: String)
+
 data class ResumeSkillGroupDto(
     val id: Long?,
     val label: String,
-    val items: List<String>,
+    val skills: List<ResumeSkillRefDto>,
     val note: String?,
     val orderNo: Int,
 ) {
     companion object {
-        fun from(group: ResumeSkillGroup) = ResumeSkillGroupDto(
+        fun from(group: ResumeSkillGroup, skills: List<ResumeSkillRefDto>) = ResumeSkillGroupDto(
             id = group.id,
             label = group.label,
-            items = group.items,
+            skills = skills,
             note = group.note,
             orderNo = group.orderNo,
         )
@@ -177,7 +182,7 @@ data class ResumeProjectUpsertRequest(
     val summary: String? = null,
     val bodyMarkdown: String? = null,
     val metrics: List<String> = emptyList(),
-    val tags: List<String> = emptyList(),
+    val skillIds: List<Long> = emptyList(),
     val detailSlug: String? = null,
     val orderNo: Int = 0,
     val published: Boolean = true,
@@ -186,7 +191,13 @@ data class ResumeProjectUpsertRequest(
 data class ResumeSkillGroupUpsertRequest(
     val id: Long? = null,
     val label: String,
-    val items: List<String> = emptyList(),
     val note: String? = null,
+    val orderNo: Int = 0,
+)
+
+data class ResumeSkillUpsertRequest(
+    val id: Long? = null,
+    val name: String,
+    val groupId: Long? = null,
     val orderNo: Int = 0,
 )

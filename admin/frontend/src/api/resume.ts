@@ -147,16 +147,21 @@ export interface ResumeProject {
   summary: string | null;
   bodyMarkdown: string | null;
   metrics: string[];
-  tags: string[];
+  skills: ResumeSkillRef[];
   detailSlug: string | null;
   orderNo: number;
   published: boolean;
 }
 
+export interface ResumeSkillRef {
+  id: number;
+  name: string;
+}
+
 export interface ResumeSkillGroup {
   id: number | null;
   label: string;
-  items: string[];
+  skills: ResumeSkillRef[];
   note: string | null;
   orderNo: number;
 }
@@ -198,8 +203,16 @@ export async function deleteProject(id: number) {
   await apiClient.delete(`${BASE}/projects/${id}`);
 }
 
-export async function upsertSkillGroup(payload: Partial<ResumeSkillGroup> & { label: string }) {
+export async function upsertSkillGroup(payload: { id?: number; label: string; note?: string | null; orderNo?: number }) {
   await apiClient.put(`${BASE}/skill-groups`, payload);
+}
+
+export async function upsertSkill(payload: { id?: number; name: string; groupId?: number | null; orderNo?: number }) {
+  await apiClient.put(`${BASE}/skills`, payload);
+}
+
+export async function deleteSkill(id: number) {
+  await apiClient.delete(`${BASE}/skills/${id}`);
 }
 
 export async function deleteSkillGroup(id: number) {

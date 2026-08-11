@@ -3,6 +3,8 @@ package com.kgd.codedictionary.application.portfolio.service
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
 import com.kgd.codedictionary.domain.resume.model.CareerPeriod
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
 import com.kgd.codedictionary.domain.resume.model.ResumeCompany
@@ -26,7 +28,19 @@ class PortfolioTimelineServiceTest : BehaviorSpec({
     val companyRepository = mockk<ResumeCompanyRepositoryPort>()
     val categoryRepository = mockk<ResumeCategoryRepositoryPort>()
     val projectRepository = mockk<ResumeProjectRepositoryPort>()
-    val service = PortfolioTimelineService(companyRepository, categoryRepository, projectRepository)
+    val skillRepository = mockk<ResumeSkillRepositoryPort>()
+    val projectSkillRepository = mockk<ResumeProjectSkillRepositoryPort>()
+    val service = PortfolioTimelineService(
+        companyRepository,
+        categoryRepository,
+        projectRepository,
+        skillRepository,
+        projectSkillRepository,
+    )
+
+    // 기술 연결은 이 스펙의 관심사가 아니다 — 비어 있어도 공개 범위 판정은 그대로여야 한다
+    every { skillRepository.findAll() } returns emptyList()
+    every { projectSkillRepository.skillIdsByProject() } returns emptyMap()
 
     fun company(name: String, start: String, end: String?) = ResumeCompany(
         id = 1L,
@@ -46,7 +60,7 @@ class PortfolioTimelineServiceTest : BehaviorSpec({
         summary = "요약",
         bodyMarkdown = "본문",
         metrics = listOf("P99 320ms"),
-        tags = listOf("Kotlin"),
+        skillIds = emptyList(),
         detailSlug = "detail-slug",
         orderNo = 1,
         published = true,

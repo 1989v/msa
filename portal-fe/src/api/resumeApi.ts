@@ -60,14 +60,19 @@ export interface ResumeProject {
   ongoing: boolean;
   summary: string | null;
   metrics: string[];
-  tags: string[];
+  skills: ResumeSkillRef[];
   detailSlug: string | null;
   orderNo: number;
 }
 
+export interface ResumeSkillRef {
+  id: number;
+  name: string;
+}
+
 export interface ResumeSkillGroup {
   label: string;
-  items: string[];
+  skills: ResumeSkillRef[];
   note: string | null;
 }
 

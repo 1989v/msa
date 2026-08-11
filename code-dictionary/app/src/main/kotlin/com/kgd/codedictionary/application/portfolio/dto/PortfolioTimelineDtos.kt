@@ -64,7 +64,11 @@ data class TimelineProjectDto(
     val tags: List<String>,
 ) {
     companion object {
-        fun from(project: ResumeProject, category: ResumeCategory?) = TimelineProjectDto(
+        fun from(
+            project: ResumeProject,
+            category: ResumeCategory?,
+            tags: List<String> = emptyList(),
+        ) = TimelineProjectDto(
             title = project.title,
             categoryCode = category?.code,
             startMonth = project.period?.start?.toString(),
@@ -72,7 +76,7 @@ data class TimelineProjectDto(
             ongoing = project.period?.ongoing ?: false,
             summary = project.summary,
             metrics = project.metrics,
-            tags = project.tags,
+            tags = tags,
         )
     }
 }

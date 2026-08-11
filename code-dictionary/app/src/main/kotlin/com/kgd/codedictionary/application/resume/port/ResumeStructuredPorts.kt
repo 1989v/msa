@@ -3,6 +3,7 @@ package com.kgd.codedictionary.application.resume.port
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
 import com.kgd.codedictionary.domain.resume.model.ResumeCompany
 import com.kgd.codedictionary.domain.resume.model.ResumeProject
+import com.kgd.codedictionary.domain.resume.model.ResumeSkill
 import com.kgd.codedictionary.domain.resume.model.ResumeSkillGroup
 
 interface ResumeCategoryRepositoryPort {
@@ -37,4 +38,16 @@ interface ResumeSkillGroupRepositoryPort {
     fun findAll(): List<ResumeSkillGroup>
     fun save(group: ResumeSkillGroup): ResumeSkillGroup
     fun delete(id: Long)
+}
+
+interface ResumeSkillRepositoryPort {
+    fun findAll(): List<ResumeSkill>
+    fun save(skill: ResumeSkill): ResumeSkill
+    fun delete(id: Long)
+}
+
+/** 프로젝트 ↔ 기술 연결. 프로젝트 단위로 통째 교체한다 — 부분 갱신은 순서 유지가 애매하다. */
+interface ResumeProjectSkillRepositoryPort {
+    fun skillIdsByProject(): Map<Long, List<Long>>
+    fun replace(projectId: Long, skillIds: List<Long>)
 }

@@ -3,7 +3,9 @@ package com.kgd.codedictionary.infrastructure.persistence.resume.repository
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeCategoryJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeCompanyJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeProjectJpaEntity
+import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeProjectSkillJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSkillGroupJpaEntity
+import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSkillJpaEntity
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ResumeCategoryJpaRepository : JpaRepository<ResumeCategoryJpaEntity, Long> {
@@ -26,4 +28,14 @@ interface ResumeProjectJpaRepository : JpaRepository<ResumeProjectJpaEntity, Lon
 
 interface ResumeSkillGroupJpaRepository : JpaRepository<ResumeSkillGroupJpaEntity, Long> {
     fun findAllByOrderByOrderNoAsc(): List<ResumeSkillGroupJpaEntity>
+}
+
+interface ResumeSkillJpaRepository : JpaRepository<ResumeSkillJpaEntity, Long> {
+    fun findAllByOrderByOrderNoAsc(): List<ResumeSkillJpaEntity>
+}
+
+interface ResumeProjectSkillJpaRepository :
+    JpaRepository<ResumeProjectSkillJpaEntity, com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeProjectSkillId> {
+    fun findAllByIdProjectId(projectId: Long): List<ResumeProjectSkillJpaEntity>
+    fun deleteAllByIdProjectId(projectId: Long)
 }

@@ -6,10 +6,13 @@ import com.kgd.codedictionary.application.resume.dto.ResumeCompanyDto
 import com.kgd.codedictionary.application.resume.dto.ResumeProfileDto
 import com.kgd.codedictionary.application.resume.dto.ResumeProjectDto
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupDto
+import com.kgd.codedictionary.application.resume.dto.ResumeSkillRefDto
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillGroupRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
 import com.kgd.codedictionary.domain.resume.model.CareerCalculator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,6 +29,8 @@ class ResumeProfileService(
     private val categoryRepository: ResumeCategoryRepositoryPort,
     private val projectRepository: ResumeProjectRepositoryPort,
     private val skillGroupRepository: ResumeSkillGroupRepositoryPort,
+    private val skillRepository: ResumeSkillRepositoryPort,
+    private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
 ) {
 
     @Transactional(readOnly = true)
@@ -37,6 +42,10 @@ class ResumeProfileService(
 
         val companyById = companies.associateBy { it.id }
         val categoryById = categories.associateBy { it.id }
+
+        val skills = skillRepository.findAll()
+        val skillRefById = skills.mapNotNull { s -> s.id?.let { it to ResumeSkillRefDto(it, s.name) } }.toMap()
+        val skillIdsByProject = projectSkillRepository.skillIdsByProject()
 
         val tenure = CareerCalculator.tenure(companies.map { it.period }, asOf)
         return ResumeProfileDto(
@@ -53,9 +62,20 @@ class ResumeProfileService(
                     project = project,
                     company = project.companyId?.let { companyById[it] },
                     category = project.categoryId?.let { categoryById[it] },
+                    skills = project.id
+                        ?.let { skillIdsByProject[it] }
+                        ?.mapNotNull { skillRefById[it] }
+                        ?: emptyList(),
                 )
             },
-            skills = skillGroupRepository.findAll().map(ResumeSkillGroupDto::from),
+            skills = skillGroupRepository.findAll().map { group ->
+                ResumeSkillGroupDto.from(
+                    group = group,
+                    skills = skills
+                        .filter { it.groupId == group.id }
+                        .mapNotNull { s -> s.id?.let { ResumeSkillRefDto(it, s.name) } },
+                )
+            },
         )
     }
 }

@@ -8,6 +8,7 @@ import com.kgd.codedictionary.application.resume.dto.ResumeProfileDto
 import com.kgd.codedictionary.application.resume.dto.ResumeProjectUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupDto
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupUpsertRequest
+import com.kgd.codedictionary.application.resume.dto.ResumeSkillUpsertRequest
 import com.kgd.codedictionary.application.resume.service.ResumeProfileService
 import com.kgd.codedictionary.application.resume.service.ResumeStructuredAdminService
 import com.kgd.common.response.ApiResponse
@@ -74,6 +75,16 @@ class ResumeStructuredAdminController(
     @DeleteMapping("/skill-groups/{id}")
     fun deleteSkillGroup(@PathVariable id: Long): ApiResponse<Unit> {
         adminService.deleteSkillGroup(id)
+        return ApiResponse.success(Unit)
+    }
+
+    @PutMapping("/skills")
+    fun upsertSkill(@RequestBody request: ResumeSkillUpsertRequest): ApiResponse<Map<String, Long?>> =
+        ApiResponse.success(mapOf("id" to adminService.upsertSkill(request)))
+
+    @DeleteMapping("/skills/{id}")
+    fun deleteSkill(@PathVariable id: Long): ApiResponse<Unit> {
+        adminService.deleteSkill(id)
         return ApiResponse.success(Unit)
     }
 }

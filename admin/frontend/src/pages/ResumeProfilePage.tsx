@@ -6,11 +6,13 @@ import {
   deleteCategory,
   deleteCompany,
   deleteProject,
+  deleteSkill,
   deleteSkillGroup,
   fetchProfile,
   upsertCategory,
   upsertCompany,
   upsertProject,
+  upsertSkill,
   upsertSkillGroup,
   type ResumeProfile,
 } from '@/api/resume';
@@ -28,12 +30,13 @@ const EMPTY_PROJECT = {
   endMonth: '',
   summary: '',
   metrics: '',
-  tags: '',
+  skillIds: [] as number[],
   detailSlug: '',
   orderNo: 0,
   published: true,
 };
-const EMPTY_SKILL = { id: null as number | null, label: '', items: '', orderNo: 0 };
+const EMPTY_SKILL_GROUP = { id: null as number | null, label: '', orderNo: 0 };
+const EMPTY_SKILL = { id: null as number | null, name: '', groupId: null as number | null, orderNo: 0 };
 
 /** 빈 문자열은 "값 없음"이다 — 서버에 빈 문자열을 보내면 파싱 오류가 된다. */
 function blankToNull(value: string): string | null {
@@ -54,6 +57,7 @@ export function ResumeProfilePage() {
   const [company, setCompany] = useState(EMPTY_COMPANY);
   const [category, setCategory] = useState(EMPTY_CATEGORY);
   const [project, setProject] = useState(EMPTY_PROJECT);
+  const [skillGroup, setSkillGroup] = useState(EMPTY_SKILL_GROUP);
   const [skill, setSkill] = useState(EMPTY_SKILL);
 
   const reload = useCallback(async () => {
@@ -195,14 +199,14 @@ export function ResumeProfilePage() {
                   <td className="py-2 pr-3 text-zinc-500">{p.companyName ?? '개인'}</td>
                   <td className="py-2 pr-3">{p.categoryLabel ?? '—'}</td>
                   <td className="py-2 pr-3 text-zinc-500">{p.startMonth ? `${p.startMonth} ~ ${p.endMonth ?? '현재'}` : '—'}</td>
-                  <td className="py-2 pr-3 text-xs text-zinc-500">{p.tags.length > 0 ? p.tags.join(', ') : '—'}</td>
+                  <td className="py-2 pr-3 text-xs text-zinc-500">{p.skills.length > 0 ? p.skills.map((s) => s.name).join(', ') : '—'}</td>
                   <td className="py-2 pr-3 font-mono text-xs">{p.detailSlug ?? '—'}</td>
                   <td className="py-2 pr-3">{p.published ? 'Y' : 'N'}</td>
                   <td className="py-2 text-right">
                     <Button size="sm" variant="outline" onClick={() => setProject({
                       id: p.id, title: p.title, companyId: p.companyId, categoryId: p.categoryId,
                       startMonth: p.startMonth ?? '', endMonth: p.endMonth ?? '', summary: p.summary ?? '',
-                      metrics: p.metrics.join('\n'), tags: p.tags.join(', '),
+                      metrics: p.metrics.join('\n'), skillIds: p.skills.map((s) => s.id),
                       detailSlug: p.detailSlug ?? '', orderNo: p.orderNo, published: p.published,
                     })}>편집</Button>
                     <Button size="sm" variant="ghost" className="ml-2" onClick={() => p.id && run(() => deleteProject(p.id!), '삭제했습니다')}>삭제</Button>
@@ -239,8 +243,38 @@ export function ResumeProfilePage() {
           <textarea className="h-24 w-full rounded-md border border-zinc-300 bg-transparent p-2 text-sm dark:border-zinc-700"
             placeholder="성과 지표 — 한 줄에 하나 (예: CTR +3.4%)"
             value={project.metrics} onChange={(e) => setProject({ ...project, metrics: e.target.value })} />
-          <Input placeholder="기술 스택 — 쉼표로 구분 (Kotlin, OpenSearch, Kafka)"
-            value={project.tags} onChange={(e) => setProject({ ...project, tags: e.target.value })} />
+          <div>
+            <div className="mb-1 text-xs text-zinc-500">
+              기술 스택 — 아래 기술 스택 섹션에 등록된 것만 고를 수 있습니다
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {profile.skills.flatMap((g) => g.skills).length === 0 && (
+                <span className="text-xs text-zinc-500">등록된 기술이 없습니다.</span>
+              )}
+              {profile.skills.map((g) =>
+                g.skills.map((sk) => {
+                  const on = project.skillIds.includes(sk.id);
+                  return (
+                    <button
+                      key={sk.id}
+                      type="button"
+                      onClick={() => setProject({
+                        ...project,
+                        skillIds: on
+                          ? project.skillIds.filter((id) => id !== sk.id)
+                          : [...project.skillIds, sk.id],
+                      })}
+                      className={`rounded-md border px-2 py-1 text-xs ${on
+                        ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                        : 'border-zinc-300 text-zinc-500 dark:border-zinc-700'}`}
+                    >
+                      {sk.name}
+                    </button>
+                  );
+                }),
+              )}
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={project.published} onChange={(e) => setProject({ ...project, published: e.target.checked })} />공개
@@ -250,7 +284,7 @@ export function ResumeProfilePage() {
                 id: project.id ?? undefined, title: project.title, companyId: project.companyId,
                 categoryId: project.categoryId, startMonth: blankToNull(project.startMonth),
                 endMonth: blankToNull(project.endMonth), summary: blankToNull(project.summary),
-                metrics: splitList(project.metrics), tags: splitList(project.tags),
+                metrics: splitList(project.metrics), skillIds: project.skillIds,
                 detailSlug: blankToNull(project.detailSlug),
                 orderNo: project.orderNo, published: project.published,
               } as never);
@@ -263,29 +297,58 @@ export function ResumeProfilePage() {
 
       {/* 기술 스택 */}
       <Card className="p-4">
-        <h2 className="mb-3 font-medium">기술 스택</h2>
-        <div className="space-y-2">
+        <h2 className="mb-1 font-medium">기술 스택</h2>
+        <p className="mb-3 text-sm text-zinc-500">
+          여기 등록한 기술만 프로젝트에서 고를 수 있습니다. 같은 기술이 두 이름으로 갈라지지 않게 하는 게 목적입니다.
+        </p>
+
+        <div className="space-y-3">
           {profile.skills.map((g) => (
-            <div key={g.id} className="flex items-start gap-3 border-t border-zinc-200 pt-2 text-sm dark:border-zinc-800">
-              <span className="w-32 shrink-0 font-medium">{g.label}</span>
-              <span className="flex-1 text-zinc-500">{g.items.join(', ')}</span>
-              <Button size="sm" variant="outline" onClick={() => setSkill({ id: g.id, label: g.label, items: g.items.join(', '), orderNo: g.orderNo })}>편집</Button>
-              <Button size="sm" variant="ghost" onClick={() => g.id && run(() => deleteSkillGroup(g.id!), '삭제했습니다')}>삭제</Button>
+            <div key={g.id} className="border-t border-zinc-200 pt-2 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <span className="w-32 shrink-0 text-sm font-medium">{g.label}</span>
+                <Button size="sm" variant="ghost" onClick={() => setSkillGroup({ id: g.id, label: g.label, orderNo: g.orderNo })}>이름 수정</Button>
+                <Button size="sm" variant="ghost" onClick={() => g.id && run(() => deleteSkillGroup(g.id!), '그룹을 삭제했습니다')}>그룹 삭제</Button>
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1 pl-32">
+                {g.skills.map((sk) => (
+                  <span key={sk.id} className="inline-flex items-center gap-1 rounded-md border border-zinc-300 px-2 py-1 text-xs dark:border-zinc-700">
+                    {sk.name}
+                    <button type="button" className="text-zinc-400 hover:text-red-500"
+                      onClick={() => run(() => deleteSkill(sk.id), '기술을 삭제했습니다')}>×</button>
+                  </span>
+                ))}
+                {g.skills.length === 0 && <span className="text-xs text-zinc-500">비어 있음</span>}
+              </div>
             </div>
           ))}
-          {profile.skills.length === 0 && <p className="text-sm text-zinc-500">아직 없습니다.</p>}
+          {profile.skills.length === 0 && <p className="text-sm text-zinc-500">그룹이 없습니다.</p>}
         </div>
-        <div className="mt-4 grid gap-2 border-t border-zinc-200 pt-4 sm:grid-cols-5 dark:border-zinc-800">
-          <Input placeholder="그룹 (예: Language)" value={skill.label} onChange={(e) => setSkill({ ...skill, label: e.target.value })} />
-          <Input className="sm:col-span-3" placeholder="항목 — 쉼표로 구분 (Java, Kotlin, TypeScript)" value={skill.items} onChange={(e) => setSkill({ ...skill, items: e.target.value })} />
+
+        <div className="mt-4 grid gap-2 border-t border-zinc-200 pt-4 sm:grid-cols-4 dark:border-zinc-800">
+          <Input placeholder="그룹 추가/수정 (예: Language)" value={skillGroup.label}
+            onChange={(e) => setSkillGroup({ ...skillGroup, label: e.target.value })} />
           <div className="flex gap-2">
-            <Input className="w-16" type="number" value={skill.orderNo} onChange={(e) => setSkill({ ...skill, orderNo: Number(e.target.value) })} />
+            <Input className="w-16" type="number" value={skillGroup.orderNo}
+              onChange={(e) => setSkillGroup({ ...skillGroup, orderNo: Number(e.target.value) })} />
             <Button onClick={() => run(async () => {
-              await upsertSkillGroup({
-                id: skill.id ?? undefined, label: skill.label, items: splitList(skill.items), orderNo: skill.orderNo,
-              } as never);
+              await upsertSkillGroup({ id: skillGroup.id ?? undefined, label: skillGroup.label, orderNo: skillGroup.orderNo });
+              setSkillGroup(EMPTY_SKILL_GROUP);
+            }, '저장했습니다')}>그룹 저장</Button>
+          </div>
+
+          <Input placeholder="기술 추가 (예: Kotlin)" value={skill.name}
+            onChange={(e) => setSkill({ ...skill, name: e.target.value })} />
+          <div className="flex gap-2">
+            <select className="h-9 flex-1 rounded-md border border-zinc-300 bg-transparent px-2 text-sm dark:border-zinc-700"
+              value={skill.groupId ?? ''} onChange={(e) => setSkill({ ...skill, groupId: e.target.value ? Number(e.target.value) : null })}>
+              <option value="">미분류</option>
+              {profile.skills.map((g) => <option key={g.id} value={g.id ?? ''}>{g.label}</option>)}
+            </select>
+            <Button onClick={() => run(async () => {
+              await upsertSkill({ name: skill.name, groupId: skill.groupId });
               setSkill(EMPTY_SKILL);
-            }, '저장했습니다')}>저장</Button>
+            }, '저장했습니다')}>기술 저장</Button>
           </div>
         </div>
       </Card>

@@ -154,7 +154,6 @@ class ResumeProjectJpaEntity(
     summary: String? = null,
     bodyMarkdown: String? = null,
     metrics: List<String> = emptyList(),
-    tags: List<String> = emptyList(),
     detailSlug: String? = null,
     orderNo: Int = 0,
     published: Boolean = true,
@@ -192,11 +191,6 @@ class ResumeProjectJpaEntity(
     var metrics: List<String> = metrics
         private set
 
-    @Convert(converter = StringListJsonConverter::class)
-    @Column(columnDefinition = "json")
-    var tags: List<String> = tags
-        private set
-
     @Column(name = "detail_slug", length = 80)
     var detailSlug: String? = detailSlug
         private set
@@ -218,7 +212,6 @@ class ResumeProjectJpaEntity(
         summary = project.summary
         bodyMarkdown = project.bodyMarkdown
         metrics = project.metrics
-        tags = project.tags
         detailSlug = project.detailSlug
         orderNo = project.orderNo
         published = project.published
@@ -233,7 +226,7 @@ class ResumeProjectJpaEntity(
         summary = summary,
         bodyMarkdown = bodyMarkdown,
         metrics = metrics,
-        tags = tags,
+        skillIds = emptyList(),
         detailSlug = detailSlug,
         orderNo = orderNo,
         published = published,
@@ -250,7 +243,6 @@ class ResumeProjectJpaEntity(
             summary = project.summary,
             bodyMarkdown = project.bodyMarkdown,
             metrics = project.metrics,
-            tags = project.tags,
             detailSlug = project.detailSlug,
             orderNo = project.orderNo,
             published = project.published,
@@ -265,17 +257,11 @@ class ResumeSkillGroupJpaEntity(
     val id: Long? = null,
 
     label: String = "",
-    items: List<String> = emptyList(),
     note: String? = null,
     orderNo: Int = 0,
 ) {
     @Column(nullable = false, length = 80)
     var label: String = label
-        private set
-
-    @Convert(converter = StringListJsonConverter::class)
-    @Column(columnDefinition = "json", nullable = false)
-    var items: List<String> = items
         private set
 
     @Column(length = 300)
@@ -288,7 +274,6 @@ class ResumeSkillGroupJpaEntity(
 
     fun update(group: ResumeSkillGroup) {
         label = group.label
-        items = group.items
         note = group.note
         orderNo = group.orderNo
     }
@@ -296,7 +281,6 @@ class ResumeSkillGroupJpaEntity(
     fun toDomain() = ResumeSkillGroup(
         id = id,
         label = label,
-        items = items,
         note = note,
         orderNo = orderNo,
     )
@@ -305,7 +289,6 @@ class ResumeSkillGroupJpaEntity(
         fun fromDomain(group: ResumeSkillGroup) = ResumeSkillGroupJpaEntity(
             id = group.id,
             label = group.label,
-            items = group.items,
             note = group.note,
             orderNo = group.orderNo,
         )

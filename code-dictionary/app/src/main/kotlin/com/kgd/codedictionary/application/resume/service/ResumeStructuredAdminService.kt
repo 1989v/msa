@@ -7,14 +7,18 @@ import com.kgd.codedictionary.application.resume.dto.ResumeCompanyUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeProjectUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupDto
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupUpsertRequest
+import com.kgd.codedictionary.application.resume.dto.ResumeSkillUpsertRequest
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillGroupRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
 import com.kgd.codedictionary.domain.resume.model.CareerPeriod
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
 import com.kgd.codedictionary.domain.resume.model.ResumeCompany
 import com.kgd.codedictionary.domain.resume.model.ResumeProject
+import com.kgd.codedictionary.domain.resume.model.ResumeSkill
 import com.kgd.codedictionary.domain.resume.model.ResumeSkillGroup
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
@@ -30,6 +34,8 @@ class ResumeStructuredAdminService(
     private val categoryRepository: ResumeCategoryRepositoryPort,
     private val projectRepository: ResumeProjectRepositoryPort,
     private val skillGroupRepository: ResumeSkillGroupRepositoryPort,
+    private val skillRepository: ResumeSkillRepositoryPort,
+    private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
 ) {
 
     @Transactional
@@ -82,12 +88,12 @@ class ResumeStructuredAdminService(
                 summary = request.summary,
                 bodyMarkdown = request.bodyMarkdown,
                 metrics = request.metrics,
-                tags = request.tags,
+                skillIds = request.skillIds,
                 detailSlug = request.detailSlug?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },
                 orderNo = request.orderNo,
                 published = request.published,
             ),
-        ).id
+        ).id?.also { projectSkillRepository.replace(it, request.skillIds) }
     }
 
     @Transactional
@@ -96,19 +102,33 @@ class ResumeStructuredAdminService(
     @Transactional
     fun upsertSkillGroup(request: ResumeSkillGroupUpsertRequest): ResumeSkillGroupDto =
         ResumeSkillGroupDto.from(
-            skillGroupRepository.save(
+            group = skillGroupRepository.save(
                 ResumeSkillGroup(
                     id = request.id,
                     label = request.label,
-                    items = request.items.map { it.trim() }.filter { it.isNotEmpty() },
                     note = request.note,
                     orderNo = request.orderNo,
                 ),
             ),
+            // 그룹만 저장하는 경로다 — 소속 기술은 별도 조회에서 채운다
+            skills = emptyList(),
         )
 
     @Transactional
     fun deleteSkillGroup(id: Long) = skillGroupRepository.delete(id)
+
+    @Transactional
+    fun upsertSkill(request: ResumeSkillUpsertRequest): Long? = skillRepository.save(
+        ResumeSkill(
+            id = request.id,
+            name = request.name.trim(),
+            groupId = request.groupId,
+            orderNo = request.orderNo,
+        ),
+    ).id
+
+    @Transactional
+    fun deleteSkill(id: Long) = skillRepository.delete(id)
 
     /** 화면에서 `2022-08` 형태로 들어온다. 일자는 받지 않는다 — 이력서에서 의미가 없다. */
     private fun parseMonth(raw: String): YearMonth = try {

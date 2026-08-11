@@ -8,6 +8,8 @@ import com.kgd.codedictionary.application.resume.dto.CareerSummaryDto
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
 import com.kgd.codedictionary.domain.resume.model.CareerCalculator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,6 +29,8 @@ class PortfolioTimelineService(
     private val companyRepository: ResumeCompanyRepositoryPort,
     private val categoryRepository: ResumeCategoryRepositoryPort,
     private val projectRepository: ResumeProjectRepositoryPort,
+    private val skillRepository: ResumeSkillRepositoryPort,
+    private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
 ) {
 
     fun timeline(): PortfolioTimelineDto {
@@ -36,6 +40,8 @@ class PortfolioTimelineService(
         val projects = projectRepository.findAllPublishedPersonal()
 
         val categoryById = categories.associateBy { it.id }
+        val skillNameById = skillRepository.findAll().mapNotNull { s -> s.id?.let { it to s.name } }.toMap()
+        val skillIdsByProject = projectSkillRepository.skillIdsByProject()
         val tenure = CareerCalculator.tenure(companies.map { it.period }, asOf)
 
         return PortfolioTimelineDto(
@@ -52,7 +58,14 @@ class PortfolioTimelineService(
             projects = projects
                 .sortedByDescending { it.period?.start ?: YearMonth.of(MIN_YEAR, 1) }
                 .map { project ->
-                    TimelineProjectDto.from(project, project.categoryId?.let { categoryById[it] })
+                    TimelineProjectDto.from(
+                        project = project,
+                        category = project.categoryId?.let { categoryById[it] },
+                        tags = project.id
+                            ?.let { skillIdsByProject[it] }
+                            ?.mapNotNull { skillNameById[it] }
+                            ?: emptyList(),
+                    )
                 },
             categories = categories.map(TimelineCategoryDto::from),
         )

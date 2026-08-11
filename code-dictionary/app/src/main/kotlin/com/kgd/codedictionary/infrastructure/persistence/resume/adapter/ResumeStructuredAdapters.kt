@@ -116,3 +116,53 @@ class ResumeSkillGroupRepositoryAdapter(
 
     override fun delete(id: Long) = jpaRepository.deleteById(id)
 }
+
+@Component
+class ResumeSkillRepositoryAdapter(
+    private val jpaRepository: com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeSkillJpaRepository,
+) : com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort {
+
+    override fun findAll(): List<com.kgd.codedictionary.domain.resume.model.ResumeSkill> =
+        jpaRepository.findAllByOrderByOrderNoAsc()
+            .map(com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSkillJpaEntity::toDomain)
+
+    override fun save(
+        skill: com.kgd.codedictionary.domain.resume.model.ResumeSkill,
+    ): com.kgd.codedictionary.domain.resume.model.ResumeSkill {
+        val existing = skill.id?.let {
+            jpaRepository.findById(it).orElseThrow { NotFoundException("ResumeSkill", it) }
+        }
+        return if (existing == null) {
+            jpaRepository.save(
+                com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSkillJpaEntity.fromDomain(skill),
+            ).toDomain()
+        } else {
+            existing.update(skill)
+            existing.toDomain()
+        }
+    }
+
+    override fun delete(id: Long) = jpaRepository.deleteById(id)
+}
+
+@Component
+class ResumeProjectSkillRepositoryAdapter(
+    private val jpaRepository: com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeProjectSkillJpaRepository,
+) : com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort {
+
+    override fun skillIdsByProject(): Map<Long, List<Long>> =
+        jpaRepository.findAll()
+            .groupBy({ it.id.projectId }, { it.id.skillId })
+
+    override fun replace(projectId: Long, skillIds: List<Long>) {
+        jpaRepository.deleteAllByIdProjectId(projectId)
+        if (skillIds.isEmpty()) return
+        jpaRepository.saveAll(
+            skillIds.distinct().map {
+                com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeProjectSkillJpaEntity(
+                    com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeProjectSkillId(projectId, it),
+                )
+            },
+        )
+    }
+}
