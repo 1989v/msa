@@ -65,4 +65,5 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 ## Related
 
 - seed: `docs/portfolio-seed.md`, `docs/portfolio-dummy-seed.sql`
+- 이력서 작성 절차: `docs/resume-admin-guide.md` (어드민에서 콘텐츠 채우는 순서·필드·검증)
 - 시각화 스펙: `docs/specs/2026-05-05-code-dictionary-treemap/` (root docs)
