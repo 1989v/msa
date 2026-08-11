@@ -1,7 +1,7 @@
 package com.kgd.game.presentation.play.controller
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.core.type.TypeReference
+import tools.jackson.databind.ObjectMapper
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.play.service.GameRunService
 import com.kgd.game.application.play.service.GameSaveService

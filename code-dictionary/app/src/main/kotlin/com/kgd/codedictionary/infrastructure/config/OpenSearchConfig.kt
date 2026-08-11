@@ -21,6 +21,11 @@ import org.springframework.context.annotation.Configuration
  *
  * LocalDateTime 등 java.time 직렬화는 JavaTimeModule + ISO 문자열
  * (WRITE_DATES_AS_TIMESTAMPS 비활성) 로 고정 — 인덱스 매핑의 date format 과 일치.
+ *
+ * **여기만 Jackson 2 를 쓴다 (ADR-0067).** `JacksonJsonpMapper` 가 opensearch-java 의
+ * 클래스이고 그 라이브러리가 Jackson 2 로 빌드돼 있어 Jackson 3 매퍼를 넘길 수 없다.
+ * 서비스 자체 JSON 은 Jackson 3 이며, 이 경계는 opensearch-java 가 Jackson 3 를 지원할 때
+ * 함께 옮긴다. 그때까지 이 매퍼는 OpenSearch 전송에만 쓰이고 밖으로 새지 않는다.
  */
 @Configuration
 class OpenSearchConfig {

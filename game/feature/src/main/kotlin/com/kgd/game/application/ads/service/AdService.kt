@@ -1,7 +1,7 @@
 package com.kgd.game.application.ads.service
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import tools.jackson.core.type.TypeReference
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import com.kgd.game.application.ads.port.AdFrequencyPort
 import com.kgd.game.application.ads.port.AdPlacementRepositoryPort
 import com.kgd.game.application.ads.port.AdPolicyRepositoryPort

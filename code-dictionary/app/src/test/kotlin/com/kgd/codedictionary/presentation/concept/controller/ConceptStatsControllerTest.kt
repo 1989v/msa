@@ -1,6 +1,6 @@
 package com.kgd.codedictionary.presentation.concept.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import com.kgd.codedictionary.application.concept.service.ConceptService
 import com.kgd.codedictionary.application.graph.dto.CategoryStatsFilter
 import com.kgd.codedictionary.application.graph.dto.TreemapCategoryDto
@@ -18,7 +18,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
 import org.springframework.http.MediaType
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -40,11 +40,11 @@ class ConceptStatsControllerTest : BehaviorSpec({
     val graphService = mockk<GraphService>()
     val conceptService = mockk<ConceptService>(relaxed = true)
     val controller = ConceptController(conceptService, graphService)
-    val objectMapper = ObjectMapper()
+    val objectMapper = JsonMapper.builder().build()
 
     val mockMvc: MockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(GlobalExceptionHandler())
-        .setMessageConverters(MappingJackson2HttpMessageConverter(objectMapper))
+        .setMessageConverters(JacksonJsonHttpMessageConverter(objectMapper))
         .build()
 
     beforeEach { clearMocks(graphService, conceptService) }

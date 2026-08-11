@@ -1,7 +1,7 @@
 package com.kgd.game.infrastructure.ws
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -59,7 +59,7 @@ class GameRelayRegistryTest : BehaviorSpec({
                 val sa = a.first("start")!!
                 val sb = b.first("start")!!
                 sa.path("seed").asInt() shouldBe sb.path("seed").asInt()
-                sa.path("players").map { it.asText() } shouldBe listOf("kgd", "rival")
+                sa.path("players").values().map { it.asString() } shouldBe listOf("kgd", "rival")
             }
             Then("방이 차면 대기열에서 빠져 세 번째는 새 방을 얻는다") {
                 val c = Client("c")

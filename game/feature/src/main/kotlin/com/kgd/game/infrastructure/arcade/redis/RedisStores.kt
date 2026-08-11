@@ -1,6 +1,6 @@
 package com.kgd.game.infrastructure.arcade.redis
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import com.kgd.game.domain.arcade.GameSession
 import com.kgd.game.domain.arcade.Player
 import com.kgd.game.domain.arcade.PlayerId

@@ -1,8 +1,8 @@
 package com.kgd.game.infrastructure.ws
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ObjectNode
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.node.ObjectNode
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -209,7 +209,7 @@ class GameRelayRegistry(
 
         val start = message("start")
         start.put("seed", room.seed)
-        start.set<ObjectNode>("players", players)
+        start.set("players", players)
         val payload = objectMapper.writeValueAsString(start)
         occupants.forEach { it.conn.send(payload) }
     }
@@ -227,7 +227,7 @@ class GameRelayRegistry(
         }
         val out = message("move")
         out.put("seat", peer.seat)
-        out.set<ObjectNode>("d", opaque)
+        out.set("d", opaque)
         val payload = objectMapper.writeValueAsString(out)
         synchronized(room) { room.seats.filterNotNull().filter { it !== peer } }
             .forEach { it.conn.send(payload) }

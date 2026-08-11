@@ -23,7 +23,7 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-mysql")
     runtimeOnly(libs.mysql.connector)
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("tools.jackson.module:jackson-module-kotlin")
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
