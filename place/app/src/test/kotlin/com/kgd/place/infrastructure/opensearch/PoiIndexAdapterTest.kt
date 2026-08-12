@@ -1,6 +1,5 @@
 package com.kgd.place.infrastructure.opensearch
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -40,7 +39,7 @@ class PoiIndexAdapterTest : BehaviorSpec({
             every { indices() } returns indices
             every { _transport() } returns transport
         }
-        adapter = PoiIndexAdapter(client, ObjectMapper(), "poi")
+        adapter = PoiIndexAdapter(client, "poi")
     }
 
     Given("poi 인덱스가 없을 때") {

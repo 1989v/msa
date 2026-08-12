@@ -2,8 +2,8 @@ package com.kgd.place.infrastructure.opensearch
 
 import com.kgd.place.application.poi.port.PoiIndexPort
 import com.kgd.place.domain.poi.model.PoiDocument
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.opensearch.client.json.JsonpDeserializer
 import org.opensearch.client.opensearch.OpenSearchClient
@@ -18,11 +18,15 @@ import java.io.StringReader
 @Component
 class PoiIndexAdapter(
     private val osClient: OpenSearchClient,
-    private val objectMapper: ObjectMapper,
     @Value("\${place.poi.index:poi}") private val indexName: String,
 ) : PoiIndexPort {
 
     private val log = KotlinLogging.logger {}
+
+    // 인덱스 정의 리소스 분해 전용 로컬 파서 (search IndexAliasManager 와 동일 패턴, ADR-0067).
+    // Spring 빈을 주입받지 않는다 — 컨텍스트의 ObjectMapper 는 Jackson 3 타입이라
+    // Jackson 2 타입 주입은 기동 실패를 부른다 (2026-08-12 place 크래시루프 원인).
+    private val jsonSplitter = ObjectMapper()
 
     companion object {
         private const val INDEX_DEFINITION_RESOURCE = "/opensearch/poi-index.json"
@@ -75,7 +79,7 @@ class PoiIndexAdapter(
         val stream = requireNotNull(javaClass.getResourceAsStream(INDEX_DEFINITION_RESOURCE)) {
             "Index definition resource not found: $INDEX_DEFINITION_RESOURCE"
         }
-        return stream.use { objectMapper.readTree(it) }
+        return stream.use { jsonSplitter.readTree(it) }
     }
 
     private fun JsonNode.required(key: String): JsonNode =
