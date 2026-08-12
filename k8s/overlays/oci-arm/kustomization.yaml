@@ -283,7 +283,7 @@ patches:
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
-    newTag: db3b7cd
+    newTag: 1a27df0
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
     newTag: 910ae92
