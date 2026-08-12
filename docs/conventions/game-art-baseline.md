@@ -59,10 +59,16 @@ Spr.draw(cx, foeSprite(f.kind), f.x - cam.x, f.y - cam.y, { flip: f.vx < 0 });
 
 ## 적용 현황
 
-기준 충족: `depth-delver`(기준작) · `crimson-ravine` · `rift-front` · `gate-holdout` ·
-`outlaw-frontier` · `drift-continent` · `iron-vanguard` · `storm-corridor`
+기준 충족: `depth-delver`(기준작) · `drift-continent` · `iron-vanguard` · `cave-glide`
+
+기준에 가까움(외곽선·명암은 있고 접지 또는 굽기가 빠짐): `crimson-ravine` · `rift-front` ·
+`gate-holdout` · `outlaw-frontier` · `storm-corridor` · `spud-arena`
 
 나머지는 노출 순으로 순차 전환한다. 비주류 게임은 전환 대신 정리 대상이므로 목록에 넣지 않는다.
+
+> 계측할 때 **헬퍼 이름으로 세지 말 것**. 처음에 `spriteCache` 같은 식별자를 grep 해서
+> "5종만 굽는다"고 셌는데, 실제로는 게임마다 헬퍼 이름이 달라 절반을 놓쳤다.
+> `createElement('canvas')` + `drawImage` 로 세는 게 맞고, 그 기준으로는 17종이 아무것도 굽지 않는다.
 
 ## 관련
 

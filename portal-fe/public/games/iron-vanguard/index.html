@@ -41,6 +41,7 @@
 </style>
 <link rel="stylesheet" href="../lib/menu.css">
 <script src="../lib/i18n.js"></script>
+<script src="../lib/spr.js"></script>
 </head>
 <body>
 <div id="wrap">
@@ -253,17 +254,11 @@ async function persistMeta() {
   }
 }
 
-/* ── 픽셀 스프라이트 ── */
-const SPR = new Map();
-function spr(key, w, h, paint) {
-  let c = SPR.get(key); if (c) return c;
-  c = document.createElement('canvas'); c.width = w; c.height = h;
-  paint(c.getContext('2d')); SPR.set(key, c); return c;
-}
-const px = (g, x, y, w, h, col) => { g.fillStyle = col; g.fillRect(x, y, w, h); };
+/* ── 픽셀 스프라이트 — 굽기/도트는 공용 킷(lib/spr.js)에 맡긴다 ── */
+const spr = Spr.make;
+const px = Spr.px;
 function allySprite(kind) {
   return spr('a' + kind, 30, 34, g => {
-    px(g, 7, 31, 16, 3, 'rgba(0,0,0,.35)');
     const skin = '#f0c49a';
     if (kind === 'knight') {
       px(g, 8, 1, 14, 7, '#aebccd'); px(g, 10, 4, 10, 3, '#12161f');       // 투구+눈가리개
@@ -289,12 +284,13 @@ function allySprite(kind) {
       px(g, 12, 14, 6, 8, '#f0e6c8');
       px(g, 24, 2, 2, 24, '#8a6a3c'); px(g, 22, 0, 6, 5, '#ffd54a');        // 지팡이+보주
     }
+    Spr.outline(g, 30, 34);
+    Spr.ground(g, 30, 34, { y: 31, rx: 9, ry: 3, alpha: 0.35 });
   });
 }
 function foeSprite(kind) {
   return spr('f' + kind, 34, 34, g => {
     const d = FOE_DEFS[kind];
-    px(g, 8, 31, 18, 3, 'rgba(0,0,0,.35)');
     if (kind === 'wolf') {
       px(g, 6, 16, 20, 9, d.color); px(g, 22, 11, 9, 8, d.color);
       px(g, 28, 13, 2, 2, '#ffd54a'); px(g, 22, 8, 3, 4, d.color); px(g, 27, 8, 3, 4, d.color);
@@ -323,6 +319,8 @@ function foeSprite(kind) {
       px(g, 27, 0, 2, 28, '#8a6a3c'); px(g, 26, 0, 4, 5, '#c8ccd4');        // 창
       px(g, 11, 25, 5, 6, '#4a3a2c'); px(g, 18, 25, 5, 6, '#4a3a2c');
     }
+    Spr.outline(g, 34, 34);
+    Spr.ground(g, 34, 34, { y: 31, rx: 10, ry: 3, alpha: 0.35 });
   });
 }
 

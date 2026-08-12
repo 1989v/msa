@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title data-i18n="title">동굴 활강</title>
 <script src="../lib/i18n.js"></script>
+<script src="../lib/spr.js"></script>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
   [hidden] { display:none !important; }
@@ -259,6 +260,42 @@ function die() {
 }
 
 /* ── 렌더 ── */
+/**
+ * 활강 박쥐 — 날갯짓 각도는 이어지지만 스프라이트는 9단계로 끊어 굽는다.
+ * 매 프레임 삼각형을 다시 그리면 외곽선·명암을 얹을 자리가 없다 (game-art-baseline.md).
+ * 기체 각도(속도에 따른 기울기)는 캐시에 넣지 않고 문맥 회전으로 준다.
+ */
+function batSprite(step) {
+  return Spr.make('bat' + step, 56, 38, g => {
+    const c = 28, m = 19, w = step / 4 - 1;                 // step 0..8 → w -1..1
+    const fur = Spr.pal('#7a68b0'), memb = Spr.pal('#5c4a8a');
+    g.fillStyle = memb.mid;                                 // 날개막
+    g.beginPath(); g.moveTo(c - 4, m - 3); g.lineTo(c - 26, m - 3 - w * 15); g.lineTo(c - 8, m + 4); g.fill();
+    g.beginPath(); g.moveTo(c + 6, m - 3); g.lineTo(c + 24, m - 3 - w * 15); g.lineTo(c + 8, m + 4); g.fill();
+    g.fillStyle = memb.hi;                                  // 날개 앞선 — 두께감
+    g.beginPath(); g.moveTo(c - 4, m - 3); g.lineTo(c - 26, m - 3 - w * 15); g.lineTo(c - 20, m - 1 - w * 12); g.fill();
+    g.beginPath(); g.moveTo(c + 6, m - 3); g.lineTo(c + 24, m - 3 - w * 15); g.lineTo(c + 19, m - 1 - w * 12); g.fill();
+    Spr.px(g, c - 3, m - 11, 4, 5, fur.mid); Spr.px(g, c + 5, m - 11, 4, 5, fur.mid);   // 귀
+    Spr.px(g, c - 8, m - 7, 18, 15, fur.mid);               // 몸통
+    Spr.px(g, c - 8, m - 7, 18, 4, fur.hi);
+    Spr.px(g, c - 8, m + 3, 18, 5, fur.lo);
+    Spr.px(g, c + 3, m - 4, 3, 3, '#ffd54a');               // 눈
+    Spr.outline(g, 56, 38);
+  });
+}
+/** 수정 — 마름모 하나뿐이라 한 번만 굽는다 */
+function gemSprite() {
+  return Spr.make('gem', 22, 26, g => {
+    const c = 11, m = 13, p = Spr.pal('#7ad8f0');
+    g.fillStyle = p.mid;
+    g.beginPath(); g.moveTo(c, m - 10); g.lineTo(c + 8, m); g.lineTo(c, m + 10); g.lineTo(c - 8, m); g.fill();
+    g.fillStyle = p.lo;                                     // 오른쪽 면을 어둡게 — 입체
+    g.beginPath(); g.moveTo(c, m - 10); g.lineTo(c + 8, m); g.lineTo(c, m + 10); g.fill();
+    Spr.px(g, c - 1, m - 5, 2, 6, '#e8fbff');               // 광택
+    Spr.outline(g, 22, 26);
+  });
+}
+
 function draw(ts) {
   requestAnimationFrame(draw);
   if (!G) return;
@@ -296,24 +333,16 @@ function draw(ts) {
   // 수정
   G.gemsArr.forEach(g => {
     if (g.got) return;
-    const gx = g.x - G.x, gy = g.y + Math.sin(t * 4 + g.x) * 4;
-    cx.fillStyle = '#7ad8f0';
-    cx.beginPath(); cx.moveTo(gx, gy - 10); cx.lineTo(gx + 8, gy); cx.lineTo(gx, gy + 10); cx.lineTo(gx - 8, gy); cx.fill();
-    cx.fillStyle = '#c8f0fa'; cx.fillRect(gx - 1, gy - 5, 2, 6);
+    const gy = g.y + Math.sin(t * 4 + g.x) * 4;
+    Spr.draw(cx, gemSprite(), g.x - G.x, gy);
   });
   // 파티클
   G.parts.forEach(p => { cx.globalAlpha = clamp(p.life, 0, 1); cx.fillStyle = p.c; cx.fillRect(p.x, p.y, 3, 3); cx.globalAlpha = 1; });
-  // 활강 박쥐 — 픽셀
-  const py2 = G.y, wing = flapping ? Math.sin(t * 26) : Math.sin(t * 7) * 0.4;
-  cx.save(); cx.translate(130, py2);
+  // 활강 박쥐 — 날갯짓을 9단계로 나눠 구운 스프라이트
+  const wing = flapping ? Math.sin(t * 26) : Math.sin(t * 7) * 0.4;
+  cx.save(); cx.translate(130, G.y);
   cx.rotate(clamp(G.vy / 700, -0.5, 0.6));
-  cx.fillStyle = '#5c4a8a';
-  cx.beginPath(); cx.moveTo(-4, -3); cx.lineTo(-26, -3 - wing * 15); cx.lineTo(-8, 4); cx.fill();  // 왼 날개
-  cx.beginPath(); cx.moveTo(6, -3); cx.lineTo(24, -3 - wing * 15); cx.lineTo(8, 4); cx.fill();     // 오른 날개
-  cx.fillStyle = '#7a68b0'; cx.fillRect(-8, -7, 18, 15);                                            // 몸통
-  cx.fillStyle = '#5c4a8a'; cx.fillRect(-8, 3, 18, 5);
-  cx.fillStyle = '#ffd54a'; cx.fillRect(3, -4, 3, 3);                                               // 눈
-  cx.fillStyle = '#7a68b0'; cx.fillRect(-3, -11, 4, 5); cx.fillRect(5, -11, 4, 5);                  // 귀
+  Spr.draw(cx, batSprite(Math.round((wing + 1) * 4)), 0, 0);
   cx.restore();
   if (running) {
     $('distTxt').textContent = '🦇 ' + G.dist + 'm';
