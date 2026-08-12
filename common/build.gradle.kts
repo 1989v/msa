@@ -4,6 +4,9 @@ plugins {
 }
 
 dependencies {
+    // Kotlin 데이터 클래스 역직렬화 (ADR-0067). 없으면 Kotlin 기본값이 무시되고
+    // 응답/요청에 빠진 non-null 필드에서 역직렬화가 실패한다.
+    implementation("tools.jackson.module:jackson-module-kotlin")
     // ScopedFlywayMigrator 전용 — 이 라이브러리가 flyway 를 전 서비스에 끌고 가지 않도록
     // compileOnly. 실제로 쓰는 모듈은 자기 build.gradle.kts 에 flyway-core 를 이미 갖고 있다.
     compileOnly("org.flywaydb:flyway-core")
