@@ -83,7 +83,17 @@ export function ResumeProfilePage() {
   };
 
   if (!profile) {
-    return <div className="text-sm text-zinc-500">{message ?? '불러오는 중…'}</div>;
+    // 실패했을 때 전체 새로고침 말고 이 자리에서 다시 시도할 수 있어야 한다 (ADR-0068)
+    return (
+      <div className="flex items-center gap-3 text-sm text-zinc-500">
+        <span>{message ?? '불러오는 중…'}</span>
+        {message && (
+          <Button size="sm" variant="outline" onClick={() => { setMessage(null); reload().catch(() => setMessage('불러오지 못했습니다')); }}>
+            다시 시도
+          </Button>
+        )}
+      </div>
+    );
   }
 
   const { career } = profile;
