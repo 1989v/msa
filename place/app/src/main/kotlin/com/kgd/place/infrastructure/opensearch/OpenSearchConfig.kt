@@ -1,11 +1,10 @@
 package com.kgd.place.infrastructure.opensearch
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.cfg.DateTimeFeature
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import org.apache.hc.core5.http.HttpHost
-import org.opensearch.client.json.jackson.JacksonJsonpMapper
+import org.opensearch.client.json.jackson3.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.transport.OpenSearchTransport
 import org.opensearch.client.transport.httpclient5.ApacheHttpClient5TransportBuilder
@@ -25,10 +24,9 @@ class OpenSearchConfig {
 
     @Bean(destroyMethod = "close")
     fun openSearchTransport(): OpenSearchTransport {
-        val mapper = ObjectMapper()
-            .registerKotlinModule()
-            .registerModule(JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+        val mapper = jacksonMapperBuilder()
+            .disable(DateTimeFeature.WRITE_DATES_AS_TIMESTAMPS)
+            .build()
         return ApacheHttpClient5TransportBuilder
             .builder(HttpHost.create(opensearchUri))
             .setMapper(JacksonJsonpMapper(mapper))

@@ -1,6 +1,6 @@
 package com.kgd.analytics.infrastructure.streaming
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import com.kgd.analytics.domain.model.KeywordScore
 import com.kgd.analytics.domain.model.ProductScore
 import com.kgd.analytics.domain.port.KeywordScoreRepositoryPort
@@ -21,7 +21,7 @@ import org.apache.kafka.streams.kstream.TimeWindows
 import org.apache.kafka.streams.state.WindowStore
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.kafka.core.KafkaTemplate
-import org.springframework.kafka.support.serializer.JsonSerde
+import org.springframework.kafka.support.serializer.JacksonJsonSerde
 import org.springframework.stereotype.Component
 import java.time.Duration
 
@@ -35,12 +35,9 @@ class AnalyticsStreamTopology(
     private val gmvAggregationProperties: GmvAggregationProperties
 ) {
     private val log = KotlinLogging.logger {}
-
-    // spring-kafka 의 JsonSerde 가 Jackson 2 로 빌드돼 있어 이 경계는 Jackson 2 를
-    // 로컬로 유지한다 (ADR-0067, KafkaConsumerConfig 와 동일). 빈 주입 금지 —
-    // 컨텍스트의 ObjectMapper 는 Jackson 3 타입이라 주입 시 기동 실패
+    // spring-kafka 의 Jackson 3 직렬화기(JacksonJsonSerde)를 쓴다 (ADR-0067).
     // (2026-08-12 analytics/place 크래시루프 원인).
-    private val objectMapper = ObjectMapper()
+    private val jsonMapper = jacksonMapperBuilder().build()
 
     companion object {
         const val INPUT_TOPIC = "analytics.event.collected"
@@ -50,7 +47,7 @@ class AnalyticsStreamTopology(
 
     @Autowired
     fun buildPipeline(builder: StreamsBuilder) {
-        val eventSerde = JsonSerde(AnalyticsEvent::class.java, objectMapper)
+        val eventSerde = JacksonJsonSerde(AnalyticsEvent::class.java, jsonMapper)
 
         val events: KStream<String, AnalyticsEvent> = builder.stream(
             INPUT_TOPIC,
@@ -76,7 +73,7 @@ class AnalyticsStreamTopology(
                     "product-metrics-store"
                 )
                     .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde(ProductMetrics::class.java, objectMapper))
+                    .withValueSerde(JacksonJsonSerde(ProductMetrics::class.java, jsonMapper))
             )
             .toStream()
             .foreach { windowedKey, metrics ->
@@ -110,7 +107,7 @@ class AnalyticsStreamTopology(
                     kafkaTemplate.send(
                         SCORE_OUTPUT_TOPIC,
                         productId.toString(),
-                        objectMapper.writeValueAsString(updateEvent)
+                        jsonMapper.writeValueAsString(updateEvent)
                     )
 
                     log.debug {
@@ -138,7 +135,7 @@ class AnalyticsStreamTopology(
                     "keyword-metrics-store"
                 )
                     .withKeySerde(Serdes.String())
-                    .withValueSerde(JsonSerde(KeywordMetrics::class.java, objectMapper))
+                    .withValueSerde(JacksonJsonSerde(KeywordMetrics::class.java, jsonMapper))
             )
             .toStream()
             .foreach { windowedKey, metrics ->

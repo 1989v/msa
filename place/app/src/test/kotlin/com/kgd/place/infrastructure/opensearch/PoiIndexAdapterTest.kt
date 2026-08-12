@@ -5,7 +5,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.opensearch.client.json.jackson.JacksonJsonpMapper
+import org.opensearch.client.json.jackson3.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.ErrorCause
 import org.opensearch.client.opensearch._types.ErrorResponse

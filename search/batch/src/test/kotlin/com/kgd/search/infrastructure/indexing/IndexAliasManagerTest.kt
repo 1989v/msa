@@ -1,6 +1,6 @@
 package com.kgd.search.infrastructure.indexing
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import tools.jackson.databind.ObjectMapper
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.maps.shouldContainKey
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -10,7 +10,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import org.opensearch.client.json.jackson.JacksonJsonpMapper
+import org.opensearch.client.json.jackson3.JacksonJsonpMapper
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.mapping.Property
 import org.opensearch.client.opensearch.indices.CreateIndexRequest
@@ -52,7 +52,7 @@ class IndexAliasManagerTest : BehaviorSpec({
             then("settings(nori)/mappings(영양 포함)가 typed 로 파싱되어 요청에 실려야 한다") {
                 val transport = mockk<OpenSearchTransport>()
                 every { osClient._transport() } returns transport
-                every { transport.jsonpMapper() } returns JacksonJsonpMapper(ObjectMapper())
+                every { transport.jsonpMapper() } returns JacksonJsonpMapper()
                 val indices = mockk<OpenSearchIndicesClient>()
                 every { osClient.indices() } returns indices
                 val requestSlot = slot<CreateIndexRequest>()

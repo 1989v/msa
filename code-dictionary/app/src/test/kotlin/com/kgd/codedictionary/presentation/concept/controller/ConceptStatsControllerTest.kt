@@ -1,6 +1,6 @@
 package com.kgd.codedictionary.presentation.concept.controller
 
-import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 import com.kgd.codedictionary.application.concept.service.ConceptService
 import com.kgd.codedictionary.application.graph.dto.CategoryStatsFilter
 import com.kgd.codedictionary.application.graph.dto.TreemapCategoryDto
@@ -40,7 +40,7 @@ class ConceptStatsControllerTest : BehaviorSpec({
     val graphService = mockk<GraphService>()
     val conceptService = mockk<ConceptService>(relaxed = true)
     val controller = ConceptController(conceptService, graphService)
-    val objectMapper = JsonMapper.builder().build()
+    val objectMapper = jacksonMapperBuilder().build()
 
     val mockMvc: MockMvc = MockMvcBuilders.standaloneSetup(controller)
         .setControllerAdvice(GlobalExceptionHandler())

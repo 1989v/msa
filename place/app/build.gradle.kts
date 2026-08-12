@@ -18,9 +18,6 @@ dependencies {
     implementation(libs.opensearch.java)
     implementation(libs.httpclient5)
     implementation("tools.jackson.module:jackson-module-kotlin")
-    // opensearch-java 의 JacksonJsonpMapper 가 Jackson 2 로 빌드돼 있어 그 경계에서만 필요하다.
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     // Flyway+validate — 스키마 변경은 Flyway 단독 책임 (jpa-persistence.md)
     // Boot 4 는 Flyway 자동설정을 이 모듈로 분리했다 — 없으면 마이그레이션이 조용히 건너뛰어진다
     implementation("org.springframework.boot:spring-boot-flyway")

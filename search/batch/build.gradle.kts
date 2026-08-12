@@ -12,9 +12,6 @@ dependencies {
     // ADR-0055 — opensearch-java JacksonJsonpMapper 의 Kotlin data class / java.time 직렬화
     // Jackson 3 (ADR-0067). jsr310 등은 databind 에 내장되어 선언하지 않는다.
     implementation("tools.jackson.module:jackson-module-kotlin")
-    // opensearch-java 의 JacksonJsonpMapper 가 Jackson 2 로 빌드돼 있어 그 경계에서만 필요하다.
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation(libs.spring.boot.starter.batch)
     // Spring Boot 4.0: starter-batch 만으로는 DataSource/TransactionManager auto-config 가
     // 활성화되지 않아 명시적으로 starter-jdbc 를 추가한다 (BatchTransactionManagerConfig 의

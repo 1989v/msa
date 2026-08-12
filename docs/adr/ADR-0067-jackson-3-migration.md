@@ -51,6 +51,31 @@ Spring Boot 4.0.4 는 **Jackson 3(`tools.jackson`)를 MVC JSON 스택으로 자�
 **예외 하나: `jackson-annotations` 는 그대로 `com.fasterxml.jackson.annotation` 이다.**
 `@JsonProperty` 등 애너테이션 임포트는 바꾸지 않는다. 기계적 치환의 가장 흔한 함정이다.
 
+### 정정 (2026-08-12) — 서드파티 경계는 불가피하지 않았다
+
+최초 작성 시 "opensearch-java 와 spring-kafka 가 Jackson 2 로 빌드돼 있어 그 경계는 Jackson 2 를
+유지할 수밖에 없다"고 적었다. **사실이 아니다.** 두 라이브러리 모두 Jackson 3 전용 대체 클래스를
+이미 제공한다.
+
+| 라이브러리 | 레거시(Jackson 2) | Jackson 3 |
+|---|---|---|
+| `opensearch-java` | `json.jackson.JacksonJsonpMapper` | **`json.jackson3.JacksonJsonpMapper`** (3.9.0+) |
+| `spring-kafka` | `JsonSerde` / `JsonDeserializer` | **`JacksonJsonSerde` / `JacksonJsonDeserializer`** |
+
+Spring 이 HTTP 컨버터에서 쓴 명명 규칙(`MappingJackson2...` → `Jackson...`)이 그대로 적용돼 있었는데,
+클래스 하나의 시그니처만 보고 라이브러리 전체가 Jackson 2 에 묶였다고 단정한 것이 원인이다.
+
+**이 오판이 운영 장애로 이어졌다.** 경계를 Jackson 2 로 남긴 채 `common` 의 공유 `ObjectMapper` 빈만
+Jackson 3 로 바꾸는 바람에, 그 빈을 주입받던 `place` 와 `analytics` 가 기동 실패(크래시루프)했다.
+컨텍스트 로딩 테스트가 있는 모듈(gateway)에서는 배포 전에 잡혔지만, 없는 모듈은 배포 후에 드러났다.
+
+교훈은 두 가지다.
+
+1. **라이브러리가 새 세대를 지원하는지 먼저 확인한다.** 클래스 하나가 구세대 타입을 받는다고
+   라이브러리 전체가 묶인 것은 아니다. 보통 새 클래스가 나란히 추가된다
+2. **공유 빈의 타입을 바꾸면 모든 소비자가 함께 가야 한다.** 혼재를 남기면 컴파일은 통과하고
+   기동에서 죽는다. 경계에서 공유 빈을 주입받지 말고 직접 생성하면 이 결합이 끊긴다
+
 ### 순서 — 서비스 단위로 쪼갠다
 
 무료 티어 단일 노드다. 전 서비스 동시 롤아웃은 2026-08-09 전면 장애의 원인이었으므로

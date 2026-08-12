@@ -22,7 +22,7 @@ caffeine = "3.1.8"
 ta4j = "0.18"
 multik = "0.2.3"
 javaUuidGenerator = "5.1.0"
-opensearch-java = "3.8.0"
+opensearch-java = "3.9.0"
 httpclient5 = "5.6"
 
 [libraries]

@@ -9,10 +9,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.ConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory
-import org.springframework.kafka.support.serializer.JsonDeserializer
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer
 
-// spring-kafka 의 JsonSerde/JsonSerializer 가 Jackson 2 로 빌드돼 있어 이 경계는
-// Jackson 2 를 유지한다 (ADR-0067). Boot 4 의 Kafka 지원이 Jackson 3 로 올라오면 함께 옮긴다.
 @Configuration
 class KafkaConsumerConfig(
     @Value("\${spring.kafka.bootstrap-servers}") private val bootstrapServers: String
@@ -23,9 +21,9 @@ class KafkaConsumerConfig(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
             ConsumerConfig.GROUP_ID_CONFIG to "analytics-event-ingestion",
             ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
-            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to JsonDeserializer::class.java,
+            ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG to JacksonJsonDeserializer::class.java,
             ConsumerConfig.AUTO_OFFSET_RESET_CONFIG to "earliest",
-            JsonDeserializer.TRUSTED_PACKAGES to "com.kgd.common.analytics"
+            JacksonJsonDeserializer.TRUSTED_PACKAGES to "com.kgd.common.analytics"
         )
         return DefaultKafkaConsumerFactory(props)
     }
