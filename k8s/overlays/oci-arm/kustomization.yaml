@@ -286,7 +286,7 @@ images:
     newTag: 1a27df0
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 910ae92
+    newTag: 86011a0
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
     newTag: 910ae92
