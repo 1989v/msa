@@ -27,7 +27,6 @@ import java.time.Duration
 
 @Component
 class AnalyticsStreamTopology(
-    private val objectMapper: ObjectMapper,
     private val productScoreRepository: ProductScoreRepositoryPort,
     private val keywordScoreRepository: KeywordScoreRepositoryPort,
     private val scoreCache: ScoreCachePort,
@@ -36,6 +35,12 @@ class AnalyticsStreamTopology(
     private val gmvAggregationProperties: GmvAggregationProperties
 ) {
     private val log = KotlinLogging.logger {}
+
+    // spring-kafka 의 JsonSerde 가 Jackson 2 로 빌드돼 있어 이 경계는 Jackson 2 를
+    // 로컬로 유지한다 (ADR-0067, KafkaConsumerConfig 와 동일). 빈 주입 금지 —
+    // 컨텍스트의 ObjectMapper 는 Jackson 3 타입이라 주입 시 기동 실패
+    // (2026-08-12 analytics/place 크래시루프 원인).
+    private val objectMapper = ObjectMapper()
 
     companion object {
         const val INPUT_TOPIC = "analytics.event.collected"
