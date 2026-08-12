@@ -286,7 +286,7 @@ images:
     newTag: 1a27df0
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 86011a0
+    newTag: 751b475
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
     newTag: 910ae92
@@ -295,7 +295,7 @@ images:
     newTag: 910ae92
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 910ae92
+    newTag: 751b475
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 910ae92
@@ -313,7 +313,7 @@ images:
     newTag: 6a1889c
   - name: commerce/place
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place
-    newTag: 82f50a1
+    newTag: 751b475
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: 82f50a1
@@ -340,7 +340,7 @@ images:
     newTag: 6a1889c
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: 58e6cb6
+    newTag: 751b475
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
     newTag: 910ae92
