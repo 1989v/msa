@@ -55,8 +55,12 @@ class BetaSamplerTest : BehaviorSpec({
                 }
                 val mean = sum / n
                 abs(mean - 0.5).shouldBeLessThan(0.05)
-                // 좁은 Beta(101,901) 대비 극단 샘플이 훨씬 많이 나와야 한다
-                (nearExtremes > n / 20).shouldBe(true)
+                // 좁은 Beta(101,901) 대비 극단 샘플이 훨씬 많이 나와야 한다.
+                // 임계값은 기댓값에서 충분히 떨어뜨린다 — Beta(2,2) 의 꼬리(<0.1 또는 >0.9)
+                // 확률은 5.6% 이므로 n=5000 에서 기댓값 280, σ≈16. 5%(250) 로 잡으면 여유가
+                // 1.8σ 뿐이라 확률적으로 실패한다(실제 CI 에서 발생). 4%(200) 는 약 5σ 로
+                // 안전하면서, 좁은 분포(극단 샘플 사실상 0)와는 여전히 명확히 구분된다.
+                (nearExtremes > n / 25).shouldBe(true)
             }
         }
 
