@@ -316,7 +316,7 @@ images:
     newTag: 910ae92
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: a02f322
+    newTag: 91bae33
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 910ae92
