@@ -73,6 +73,18 @@ export default function GameDetailPage() {
   const [myScore, setMyScore] = useState<number | null>(null);
   const [ratingMessage, setRatingMessage] = useState<string | null>(null);
   const sessionRef = useRef<{ slug: string; key: string } | null>(null);
+  const stageRef = useRef<HTMLElement | null>(null);
+  const immersive = playing && stageFit.immersive;
+
+  // 몰입 중에는 뒤쪽 문서가 스크롤되면 안 된다 — 조이스틱 드래그가 페이지를 끌고 다닌다.
+  useEffect(() => {
+    if (!immersive) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [immersive]);
 
   useEffect(() => {
     setGame(null);
@@ -108,6 +120,34 @@ export default function GameDetailPage() {
     } catch {
       // 세션 기록 실패는 플레이를 막지 않는다
     }
+  };
+
+  const handleClose = () => {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
+    setPlaying(false);
+  };
+
+  /**
+   * 가로 몰입. 전체화면 API 로 브라우저 크롬까지 걷어낸 뒤 가로로 잠근다 —
+   * 세로 그대로 전체화면이 되면 게임만 커지고 얻는 게 없다.
+   * iOS Safari 는 임의 요소 전체화면이 없어 실패하는데, 몰입 오버레이가 이미 뷰포트를
+   * 채우고 있으므로 기기를 돌리면 그대로 가로 배치가 된다.
+   */
+  const toggleFullscreen = () => {
+    const el = stageRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      (screen.orientation as { unlock?: () => void } | undefined)?.unlock?.();
+      document.exitFullscreen().catch(() => undefined);
+      return;
+    }
+    el.requestFullscreen?.()
+      .then(() =>
+        (screen.orientation as unknown as { lock?: (o: string) => Promise<void> })
+          ?.lock?.('landscape')
+          ?.catch(() => undefined),
+      )
+      .catch(() => undefined);
   };
 
   const handleRate = async (score: number) => {
@@ -207,7 +247,27 @@ export default function GameDetailPage() {
         </div>
       </div>
 
-      <section className="game-stage" aria-label="게임 플레이 영역">
+      <section
+        className={`game-stage${immersive ? ' is-immersive' : ''}`}
+        ref={stageRef}
+        aria-label="게임 플레이 영역"
+      >
+        {immersive && (
+          <div className="game-stage-bar">
+            <button className="game-stage-chip" onClick={handleClose} aria-label="게임 닫기">
+              ✕
+            </button>
+            {/* 세로에서는 가로형 캔버스가 폭에 걸려 작아진다 — 가로 전환이 실질적인 해법이라
+                아이콘만 두지 않고 이름을 붙여 눈에 띄게 한다. */}
+            <button
+              className={`game-stage-chip${stageFit.portrait ? ' is-wide' : ''}`}
+              onClick={toggleFullscreen}
+              aria-label="전체화면 가로 전환"
+            >
+              {stageFit.portrait ? '⛶ 크게' : '⛶'}
+            </button>
+          </div>
+        )}
         {!playing ? (
           <div className="game-stage-idle">
             <p className="game-stage-desc">{displayDescription(game, lang)}</p>

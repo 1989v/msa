@@ -412,6 +412,66 @@
   display: block;
 }
 
+/*
+ * 모바일 몰입 모드 — 게임이 화면을 통째로 갖는다.
+ *
+ * 스크롤되는 문서 안에 게임을 끼워 두면 iframe 높이를 누군가 정해야 하는데, 게임 쪽
+ * 레이아웃 엔진도 자기 뷰포트를 보고 배치하므로 둘이 서로를 입력으로 삼아 진동한다
+ * (useStageFit 주석의 실측 참조). 뷰포트 고정 상자를 주면 의존이 한 방향으로만 흐른다.
+ */
+.game-stage.is-immersive {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  min-height: 0;
+  background: #000;
+}
+
+.game-stage.is-immersive .game-stage-frame {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.game-stage.is-immersive .game-stage-idle {
+  height: 100%;
+  min-height: 0;
+}
+
+/* 닫기·전체화면 — 게임 위에 얹히므로 조작부와 겹치지 않게 우상단 작은 칩으로 */
+.game-stage-bar {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 6px);
+  right: calc(env(safe-area-inset-right) + 6px);
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+
+.game-stage-chip.is-wide {
+  width: auto;
+  padding: 0 12px;
+  border-radius: 17px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.game-stage-chip {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 50%;
+  background: rgba(12, 16, 26, 0.6);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
 /* Rating */
 .game-rating-section {
   margin-bottom: 40px;

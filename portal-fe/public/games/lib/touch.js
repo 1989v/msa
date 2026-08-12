@@ -162,7 +162,7 @@
     '#vt-probe{position:absolute;left:0;top:0;width:0;height:0;visibility:hidden;',
     'padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}',
     '#vt-zone{position:absolute;left:0;bottom:0;pointer-events:auto;touch-action:none}',
-    '#vt-zone[hidden]{display:none}',
+    '#vt-zone[hidden],#vt-base[hidden],#vt-acts[hidden]{display:none}',
     '#vt-base{position:absolute;width:' + (BASE_R * 2) + 'px;height:' + (BASE_R * 2) + 'px;',
     'margin:' + -BASE_R + 'px 0 0 ' + -BASE_R + 'px;border-radius:50%;pointer-events:none;',
     'border:2px solid rgba(255,255,255,.22);background:rgba(16,20,34,.5);',
@@ -178,18 +178,26 @@
     'font-size:19px;font-weight:bold;font-family:monospace;line-height:1;padding:0;',
     '-webkit-tap-highlight-color:transparent;transition:transform .06s,background .06s}',
     '#vt-acts button.on{background:rgba(120,140,220,.85);transform:scale(.92)}',
-    /* 레이아웃 엔진 — 게임 화면을 상단으로 붙이고 하단에 조작 영역을 비운다 */
-    'body.vt-fit{justify-content:flex-start!important;',
-    'padding-bottom:calc(var(--vt-pad-h) + env(safe-area-inset-bottom))!important;',
-    'overflow-x:hidden}',
+    /* 레이아웃 엔진 — 본문을 뷰포트에 못 박는다.
+       호스트가 iframe 을 뷰포트 크기로 고정해 주므로 안에서 세로로 자랄 이유가 없고,
+       자라면 그 자체가 버그다(스크롤되는 게임 화면 / 끝없이 늘어나는 바깥 영역).
+       min-height:100vh 를 쓰는 게임이 많아 명시적으로 덮어쓴다. */
+    'body.vt-fit{height:100dvh;min-height:0!important;max-height:100dvh;',
+    'overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;',
+    /* 남는 세로를 위아래로 나눠 게임을 화면 가운데에 둔다. 넘치는 게임(메뉴가 곧 본문인
+       흐름 배치 2종)에서는 center 가 내용 위쪽을 스크롤로도 닿지 않는 곳에 밀어내므로
+       safe 로 시작 정렬로 되돌린다 — 미지원 브라우저는 앞줄이 남는다. */
+    'justify-content:center!important;justify-content:safe center!important;',
+    'padding-bottom:calc(var(--vt-pad-h) + env(safe-area-inset-bottom))!important}',
     /* 메뉴·결과 패널은 게임 래퍼 안에 inset:0 으로 까는 관용구다(47/52 게임 공통).
        fit 이 캔버스를 폭에 맞춰 줄이면 래퍼도 같이 줄고, overflow:hidden 이면 패널 내용이
        잘려 버튼이 화면 밖으로 사라진다 — 모바일에서 "화면이 잘린다"의 실제 원인.
        뷰포트 기준으로 띄워 래퍼 클리핑을 벗어나고, 넘치면 스크롤시킨다.
        justify-content 를 flex-start 로 되돌리는 게 핵심 — center 인 채로 넘치면
        위쪽 내용이 스크롤로도 닿지 않는다. */
-    'body.vt-fit .panel:not([hidden]){position:fixed;inset:0;max-height:100dvh;',
-    'overflow-y:auto;overscroll-behavior:contain;justify-content:flex-start!important;',
+    'body.vt-fit .panel:not([hidden]),body.vt-fit>#menu:not([hidden]){position:fixed;inset:0;',
+    'max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;',
+    'justify-content:flex-start!important;',
     'padding-top:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom))}',
   ].join('');
   (D.head || D.documentElement).appendChild(style);
@@ -410,20 +418,30 @@
     // 좁은 터치 화면에서만 레이아웃에 개입한다 (태블릿 가로/데스크톱 터치는 원본 유지)
     var narrow = Math.min(v.w, v.h) <= 860;
     var fitOn = fitOpt && narrow;
-    // 세로: 하단에 조작 영역을 실제로 비운다 / 가로: 화면이 짧으므로 코너 오버레이로 얹는다.
     // **비울 게 없으면 비우지 않는다** — 조이스틱도 액션도 없는(레이아웃만 쓰는) 게임에서
-    // 화면의 28% 를 빈 채로 남겨 게임이 작아지고 아래가 텅 비어 보였다.
+    // 화면 아래를 빈 채로 남겨 게임이 작아지고 아래가 텅 비어 보였다.
     var hasControls = stickMode !== 'off' || actEls.length > 0;
-    var padH = (fitOn && !land && hasControls) ? Math.round(clamp(v.h * 0.28, BASE_R * 2 + 28, 232)) : 0;
+    var band = (fitOn && !land && hasControls);
 
-    D.documentElement.style.setProperty('--vt-pad-h', padH + 'px');
     D.body.classList.add('vt-touch');
     D.body.classList.toggle('vt-fit', fitOn);
     D.body.classList.toggle('vt-land', land);
 
+    // 세로: 하단에 조작 밴드를 비우고 캔버스는 **남는 영역 가운데**에 둔다.
+    //
+    // 상단에 붙이면 390 폭에서 16:9 캔버스가 217px 뿐이라 조작부까지 400px 가 죽는다
+    // ("컨트롤러가 게임 화면과 너무 멀다"). 그렇다고 조작부를 위로 올리면 엄지가 안 닿는다 —
+    // 조작부는 화면 아래에 있어야 한다. 그래서 **캔버스 쪽을 내려** 남는 여백을 위아래로
+    // 나눈다. 거리는 절반이 되고 캔버스는 여전히 화면 위쪽(중심이 화면의 1/3 지점)에 있다.
+    // 이 비율의 근본 해법은 가로모드다 — 그쪽은 캔버스가 화면을 채우고 조작부가 위에 얹힌다.
+    var padH = band ? Math.round(clamp(v.h * 0.28, BASE_R * 2 + 28, 300)) : 0;
+    D.documentElement.style.setProperty('--vt-pad-h', padH + 'px');
+
+    var cvFit = fitOn ? fitCanvas(v.h - padH, v) : null;
+
     var reach = placeActions(v, land);   // 액션 버튼이 우측에서 차지하는 폭
 
-    // 조이스틱 조작 영역 — 세로는 확보한 여백만큼, 가로는 좌하단 코너. 액션 영역과는 겹치지 않는다.
+    // 조이스틱 조작 영역 — 세로는 밴드 전체, 가로는 좌하단 코너. 액션 영역과는 겹치지 않는다.
     if (zone) {
       // 가로에서는 캔버스 위에 얹히므로 좌하단 코너만큼만 잡는다
       var zwMax = land ? Math.min(v.w * 0.34, 300) : Math.min(v.w * 0.52, 340);
@@ -440,7 +458,6 @@
       }
     }
 
-    var cvFit = fitOn ? fitCanvas(padH, v) : null;
     emit('layout', { padH: padH, landscape: land, canvas: cvFit });
   }
 
@@ -477,8 +494,11 @@
     el.style.bottom = bottom + 'px';
   }
 
-  /** 게임 캔버스를 가용 영역에 비율 유지로 맞춘다. canvas.width/height 속성은 건드리지 않는다. */
-  function fitCanvas(padH, v) {
+  /**
+   * 게임 캔버스를 가용 영역에 비율 유지로 맞춘다. canvas.width/height 속성은 건드리지 않는다.
+   * maxStageH 는 캔버스+주변 크롬이 세로로 쓸 수 있는 상한.
+   */
+  function fitCanvas(maxStageH, v) {
     var cv = D.getElementById('cv');
     if (!cv || cv.tagName !== 'CANVAS') cv = D.querySelector('canvas');
     if (!cv) return null;
@@ -493,19 +513,67 @@
     var top = cvBox.top > 0 ? cvBox.top : 0;
     var frame = stageBox.bottom - cvBox.bottom;
     if (!(frame > 0)) frame = 0;
-    var availW = v.w - safe.l - safe.r;
-    var availH = v.h - safe.b - padH - top - frame - belowHeight(stage);
+    var below = belowHeight(stage);
+    // 캔버스가 자기 테두리를 갖는 경우(snake 는 1px) style.width 에 테두리가 더해져
+    // 뷰포트를 넘는다. box-sizing 을 바꾸면 그림이 눌리므로 가용 폭에서 미리 뺀다.
+    var edge = chromeOf(cv, stage);
+    var availW = v.w - safe.l - safe.r - edge.x;
+    var availH = maxStageH - safe.b - top - frame - below - edge.y;
     if (availW < 80 || availH < 80) return null;
 
     var s = Math.min(availW / cw, availH / ch);
     var w = Math.max(1, Math.floor(cw * s)), h = Math.max(1, Math.floor(ch * s));
+    apply(cv, w, h);
+
+    // 캔버스가 x=0 에서 시작한다는 보장이 없다 — body 패딩으로 밀리거나(stone-sage)
+    // 옆 패널과 같은 행에 놓이기도 한다(snake). 배치 규칙을 게임마다 모델링하는 대신
+    // **한 번 재보고 넘친 만큼 줄인다**. 재귀가 아니라 1회 보정이라 진동하지 않는다.
+    var box = cv.getBoundingClientRect();
+    var over = Math.max(0, box.right - (v.w - safe.r), -box.left + safe.l);
+    if (over > 0 && w > over) {
+      var s2 = (w - over) / w;
+      w = Math.max(1, Math.floor(w * s2));
+      h = Math.max(1, Math.floor(h * s2));
+      apply(cv, w, h);
+    }
+    return { w: w, h: h, top: top, below: frame + below, availW: availW, availH: availH };
+  }
+
+  function apply(cv, w, h) {
     cv.style.width = w + 'px';
     cv.style.height = h + 'px';
     cv.style.maxWidth = 'none';
     cv.style.maxHeight = 'none';
     cv.style.marginLeft = 'auto';
     cv.style.marginRight = 'auto';
-    return { w: w, h: h, availW: availW, availH: availH };
+  }
+
+  /**
+   * 캔버스를 폭에 맞출 때 실제로 못 쓰는 가로 크기.
+   *
+   * 캔버스 자신의 테두리(snake 1px)뿐 아니라 **감싼 래퍼의 테두리**(#wrap 4px 관용구)까지
+   * 더해져야 한다 — 캔버스를 뷰포트 폭 그대로 잡으면 래퍼가 그만큼 밖으로 삐져나간다.
+   * 세로는 cvBox.top 과 frame 이 이미 위아래 크롬을 담고 있어 캔버스 자신만 보면 된다.
+   */
+  function chromeOf(cv, stage) {
+    if (!W.getComputedStyle) return { x: 0, y: 0 };
+    var x = 0, y = 0;
+    for (var n = cv; n; n = n.parentElement) {
+      var cs = W.getComputedStyle(n);
+      var bx = px(cs.borderLeftWidth) + px(cs.borderRightWidth) + px(cs.paddingLeft) + px(cs.paddingRight);
+      if (n === cv) {
+        // 우리가 style.width 를 지정하는 유일한 요소 — border-box 면 그 값에 이미 포함된다
+        if (cs.boxSizing !== 'border-box') {
+          x += bx;
+          y = px(cs.borderTopWidth) + px(cs.borderBottomWidth) + px(cs.paddingTop) + px(cs.paddingBottom);
+        }
+      } else {
+        // 래퍼는 폭이 auto 라 내용에 맞춰 줄어든다 — box-sizing 과 무관하게 바깥으로 더해진다
+        x += bx;
+      }
+      if (n === stage || n === D.body) break;
+    }
+    return { x: x, y: y };
   }
 
   /** body 직속 조상(= 게임 화면 컨테이너)까지 올라간다 */
@@ -530,8 +598,9 @@
     return total;
   }
 
-  /* ────────── 전체화면 패널이 열리면 조이스틱을 비켜준다 ────────── */
+  /* ────────── 전체화면 패널이 열리면 조작부를 비켜준다 ────────── */
   var syncQueued = false;
+  var padHidden = false;
 
   // 게임마다 패널을 숨기는 방식이 다르다 — [hidden] 속성 / .hidden 클래스 / 인라인 display
   function panelOpen() {
@@ -545,20 +614,33 @@
     return false;
   }
 
+  /**
+   * 메뉴·결과 패널이 열려 있는 동안에는 조작부 전체를 치운다.
+   * 예전에는 조이스틱만 숨겨서 액션 버튼이 메뉴 위에 그대로 떠 있었다 — 시작 버튼과 겹쳐
+   * 보이고 눌러도 아무 일이 없다.
+   */
   function syncPanels() {
-    if (!zone) return;
     var hide = panelOpen();
-    if (hide === zone.hasAttribute('hidden')) return;
-    if (hide) {
-      stopStick();
-      zone.setAttribute('hidden', '');
-      base.setAttribute('hidden', '');
-      base.classList.remove('on');
-    } else {
-      zone.removeAttribute('hidden');
-      base.removeAttribute('hidden');
-      if (stickMode === 'fixed') base.classList.add('on');
+    if (hide === padHidden) return;
+    padHidden = hide;
+    if (hide) stopStick();
+    if (zone) {
+      toggleHidden(zone, hide);
+      toggleHidden(base, hide);
+      if (hide) base.classList.remove('on');
+      else if (stickMode === 'fixed') base.classList.add('on');
     }
+    if (actWrap) {
+      toggleHidden(actWrap, hide);
+      if (hide) for (var i = 0; i < actEls.length; i++) {
+        actEls[i].classList.remove('on');
+        release(actEls[i].getAttribute('aria-label'));
+      }
+    }
+  }
+  function toggleHidden(el, hide) {
+    if (hide) el.setAttribute('hidden', '');
+    else el.removeAttribute('hidden');
   }
 
   function scheduleSync() {

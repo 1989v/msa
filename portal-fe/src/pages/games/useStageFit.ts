@@ -4,24 +4,40 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 const MIN_H = 200;
 const MAX_H = 900;
 
+/** 좁은 터치 화면 — 여기서는 게임에 화면을 통째로 준다(몰입 모드). */
+function isImmersiveViewport() {
+  if (typeof window === 'undefined') return false;
+  const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
+  return coarse && Math.min(window.innerWidth, window.innerHeight) <= 860;
+}
+
 /**
- * 게임 iframe 높이를 **내용에 맞춰** 잡는다.
+ * 게임 iframe 의 높이를 정한다. 화면 종류에 따라 **방식이 다르다**.
  *
- * 고정 높이(560px)로 두면 세로 화면에서 가로형 캔버스가 폭에 맞춰 작아지는데 iframe 은 그대로라
- * 위아래로 큰 빈 공간이 남았다(실측 151px씩). 캔버스가 작아 보이고, 하단 조작부가 게임 화면에서
- * 멀어진다 — 모바일 피드백의 두 증상이 같은 원인이다.
+ * ## 모바일: 재지 않는다
  *
- * 두 가지를 함께 본다:
- *  - **캔버스**: 고유 비율(width/height 속성 — 게임 좌표계라 불변)로 `폭 / 비율` 을 계산한다.
- *    iframe 높이에 의존하지 않으므로 높이를 바꿔도 되먹임 진동이 없다.
- *  - **떠 있는 패널**(메뉴·결과 등): 캔버스보다 큰 경우가 있어 캔버스만 재면 잘린다.
- *    패널은 보였다 숨었다 하므로 MutationObserver 로 표시 변화를 따라간다.
+ * 내용을 재서 높이를 정하면 되먹임이 생긴다. 게임 안의 `lib/touch.js` 는 자기 뷰포트
+ * (= iframe 높이)를 보고 캔버스와 조작 영역을 배치하는데, 그 결과를 다시 재서 iframe 높이로
+ * 삼으면 서로가 서로의 입력이 된다. 실측으로 두 종착점이 나왔다:
+ *  - 메뉴에서 패널 높이가 iframe 을 밀어 올려 상한 900px 까지 증가 (캔버스는 217px)
+ *  - 플레이 중에는 218px 로 붕괴 → 게임 쪽에서 390×218 을 **가로모드로 오인** →
+ *    조작 영역을 0 으로 두고 높이에 맞춰 캔버스를 줄인 채 고정
+ * "화면이 세로로 무한히 늘어난다 / 플레이 중 창이 작아진다" 가 같은 원인의 두 얼굴이었다.
  *
- * 비율을 못 읽으면(캔버스 없는 DOM 게임, 크로스 오리진) null 을 돌려 CSS 기본 높이를 쓰게 둔다.
+ * 그래서 모바일에서는 iframe 을 **뷰포트 크기 오버레이**로 띄우고(호출 쪽이 immersive 로
+ * 처리) 높이 계산을 아예 하지 않는다. 게임은 확정된 크기를 받아 그 안에서만 배치한다 —
+ * 의존 방향이 한쪽으로 흐르므로 진동할 여지가 없다.
+ *
+ * ## 데스크톱: 내용에 맞춘다
+ *
+ * 조작 패드가 없어 게임이 뷰포트 높이를 보지 않으므로 되먹임이 없다. 고정 높이(560px)면
+ * 가로형 캔버스 위아래로 빈 공간이 남으므로 캔버스 비율·패널·흐름 내용 중 최대값을 쓴다.
  */
 export function useStageFit(active: boolean) {
   const ref = useRef<HTMLIFrameElement | null>(null);
   const [height, setHeight] = useState<number | null>(null);
+  const [immersive, setImmersive] = useState(isImmersiveViewport);
+  const [portrait, setPortrait] = useState(() => window.innerHeight >= window.innerWidth);
 
   const measure = useCallback(() => {
     const frame = ref.current;
@@ -38,18 +54,11 @@ export function useStageFit(active: boolean) {
       setHeight(null);
       return;
     }
-    // 조작부가 실제로 비워 둔 높이를 그대로 읽는다 — 상수로 추정하면 조작부가 없는 게임에서
-    // 빈 공간이 남고, 있는 게임에서는 잘린다. lib/touch.js 가 --vt-pad-h 로 알려준다.
-    const padH = parseFloat(
-      doc.defaultView?.getComputedStyle(doc.documentElement).getPropertyValue('--vt-pad-h') || '0',
-    ) || 0;
     // 캔버스 없는 게임(DOM 기반 데일리 퍼즐 등)도 있다 — 그때는 아래 흐름·패널 높이만 쓴다.
-    const canvasFit =
-      canvas && canvas.width && canvas.height ? width / (canvas.width / canvas.height) + padH : 0;
+    const canvasFit = canvas && canvas.width && canvas.height ? width / (canvas.width / canvas.height) : 0;
 
     // 떠 있는 패널이 필요로 하는 높이. **scrollHeight 를 쓰는 게 핵심** — 패널은 컨테이너를
     // 덮도록 만들어져 있어(inset:0) 실제 표시 높이는 iframe 높이를 그대로 따라간다.
-    // 그 값으로 iframe 높이를 정하면 잴 때마다 커지는 되먹임이 생긴다.
     // scrollHeight 는 내용이 정하는 값이라 컨테이너 높이와 무관해 고정점이 된다.
     let panelNeed = 0;
     const view = doc.defaultView;
@@ -77,8 +86,22 @@ export function useStageFit(active: boolean) {
     setHeight(Math.min(MAX_H, Math.max(MIN_H, Math.round(Math.max(canvasFit, panelNeed, flowNeed)))));
   }, []);
 
+  // 회전하면 몰입 여부가 바뀔 수 있다 (태블릿 경계)
   useEffect(() => {
-    if (!active) return;
+    const sync = () => {
+      setImmersive(isImmersiveViewport());
+      setPortrait(window.innerHeight >= window.innerWidth);
+    };
+    window.addEventListener('resize', sync);
+    window.addEventListener('orientationchange', sync);
+    return () => {
+      window.removeEventListener('resize', sync);
+      window.removeEventListener('orientationchange', sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!active || immersive) return;
     const frame = ref.current;
     if (!frame) return;
     let observer: MutationObserver | null = null;
@@ -113,7 +136,7 @@ export function useStageFit(active: boolean) {
       window.removeEventListener('resize', schedule);
       window.removeEventListener('orientationchange', schedule);
     };
-  }, [active, measure]);
+  }, [active, immersive, measure]);
 
-  return { ref, height };
+  return { ref, height: immersive ? null : height, immersive, portrait };
 }
