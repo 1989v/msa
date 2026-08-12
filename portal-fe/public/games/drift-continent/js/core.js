@@ -1165,6 +1165,51 @@ function moveCam(dt) {
 var objsCache = [];
 function refreshObjs() { objsCache = W.objects(); }
 
+/**
+ * 마을 사람.
+ *
+ * 예전에는 사각형 두 개 위에 역할 이모지를 띄웠는데, 풀컬러 이모지가 도트 세계에서 혼자
+ * 튀고 캐릭터보다 커 보였다. 이모지를 걷고 **머리 모양으로 역할을 구분**한다 —
+ * 가까이 가면 이름표가 뜨므로 정확한 신원은 그쪽이 책임진다.
+ */
+function npcSprite(color, hat) {
+  return Spr.make('npc|' + color + '|' + hat, 34, 40, function (g) {
+    var c = 17, base = 20;
+    var robe = Spr.pal(color), skin = Spr.pal('#e7d5b0'), hair = Spr.pal('#2b2118');
+    Spr.px(g, c - 6, base + 8, 4, 4, '#2a3550');            // 발
+    Spr.px(g, c + 2, base + 8, 4, 4, '#2a3550');
+    Spr.px(g, c - 8, base - 6, 16, 15, robe.mid);           // 로브
+    Spr.px(g, c - 8, base - 6, 16, 4, robe.hi);
+    Spr.px(g, c - 8, base + 4, 16, 5, robe.lo);
+    Spr.px(g, c - 6, base - 16, 12, 11, skin.mid);          // 얼굴
+    Spr.px(g, c - 6, base - 8, 12, 3, skin.lo);
+    Spr.px(g, c - 4, base - 12, 3, 3, '#0c1424');
+    Spr.px(g, c + 1, base - 12, 3, 3, '#0c1424');
+    if (hat === 0) {                                        // 두건
+      Spr.px(g, c - 7, base - 18, 14, 6, robe.lo);
+      Spr.px(g, c - 8, base - 14, 3, 7, robe.lo);
+      Spr.px(g, c + 5, base - 14, 3, 7, robe.lo);
+    } else if (hat === 1) {                                 // 챙모자
+      Spr.px(g, c - 7, base - 19, 14, 5, hair.mid);
+      Spr.px(g, c - 10, base - 15, 20, 2, hair.lo);
+    } else if (hat === 2) {                                 // 벗겨진 머리 + 흰 수염
+      Spr.px(g, c - 7, base - 18, 14, 4, hair.lo);
+      Spr.px(g, c - 4, base - 7, 8, 3, '#d8d2c4');
+    } else {                                                // 짧은 머리
+      Spr.px(g, c - 7, base - 18, 14, 5, hair.mid);
+      Spr.px(g, c - 7, base - 18, 14, 2, hair.hi);
+    }
+    Spr.outline(g, 34, 40);
+    Spr.ground(g, 34, 40, { y: base + 13, rx: 11, ry: 4.5, alpha: 0.35 });
+  });
+}
+/** 같은 NPC 는 늘 같은 머리 — id 로 고정한다 */
+function npcHat(id) {
+  var h = 0;
+  for (var i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) & 0xffff;
+  return h % 4;
+}
+
 function drawObjects(c) {
   for (var i = 0; i < objsCache.length; i++) {
     var o = objsCache[i];
@@ -1173,12 +1218,8 @@ function drawObjects(c) {
     switch (o.kind) {
       case 'npc':
         var npc = DC.NPCS[o.npc];
-        g.fillStyle = 'rgba(0,0,0,.35)';
-        g.beginPath(); g.ellipse(x, y + 12, 12, 5, 0, 0, 6.2832); g.fill();
-        g.fillStyle = npc.color; g.fillRect(x - 8, y - 6, 16, 17);
-        g.fillStyle = '#e7d5b0'; g.fillRect(x - 6, y - 16, 12, 11);
-        g.font = "15px 'Courier New',monospace"; g.textAlign = 'center';
-        g.fillText(npc.icon, x, y - 18);
+        Spr.draw(g, npcSprite(npc.color, npcHat(o.npc)), x, y);
+        g.textAlign = 'center';
         if (o === nearObj) {
           g.font = "bold 11px 'Courier New',monospace";
           g.fillStyle = 'rgba(0,0,0,.65)';

@@ -1082,14 +1082,33 @@ function updateFx(dt) {
 }
 
 /* ══════════════════════════ 렌더 ══════════════════════════ */
+/** 주인공 몸통 — 직업 색과 시선 방향만 다르므로 조합이 몇 개 안 된다 */
+function playerSprite(cd, look) {
+  return Spr.make('p|' + cd.color + '|' + look, 34, 40, function (g) {
+    var c = 17, base = 20;                       // 발끝이 원점(y=0) 아래로 12px
+    var tunic = Spr.pal(cd.color), skin = Spr.pal('#e7d5b0'), hair = Spr.pal('#1a2238');
+    Spr.px(g, c - 8, base - 6, 16, 16, '#0f1a2e');          // 하의
+    Spr.px(g, c - 8, base + 4, 16, 6, Spr.shade('#0f1a2e', -0.35));
+    Spr.px(g, c - 8, base - 6, 16, 5, tunic.mid);           // 어깨 — 직업 색
+    Spr.px(g, c - 8, base - 6, 16, 2, tunic.hi);
+    Spr.px(g, c - 6, base - 16, 12, 11, skin.mid);          // 얼굴
+    Spr.px(g, c - 6, base - 8, 12, 3, skin.lo);
+    Spr.px(g, c - 7, base - 18, 14, 5, hair.mid);           // 머리
+    Spr.px(g, c - 7, base - 18, 14, 2, hair.hi);
+    Spr.px(g, c - 4 + look * 2, base - 12, 3, 3, '#0c1424');
+    Spr.px(g, c + 1 + look * 2, base - 12, 3, 3, '#0c1424');
+    Spr.outline(g, 34, 40);
+    Spr.ground(g, 34, 40, { y: base + 12, rx: 12, ry: 5, alpha: 0.35 });
+  });
+}
+
 function drawPlayer(g, p, cam, time) {
   var x = Math.round(p.x - cam.x), y = Math.round(p.y - cam.y);
   var cd = DC.classDef(p);
   g.save();
   if (p.iframe > 0 && Math.floor(time * 20) % 2 === 0) g.globalAlpha = 0.45;
 
-  g.fillStyle = 'rgba(0,0,0,.35)';
-  g.beginPath(); g.ellipse(x, y + 12, 12, 5, 0, 0, 6.2832); g.fill();
+  /* 접지 그림자는 스프라이트가 함께 굽는다 (playerSprite) */
 
   /* 성역 · 광란 · 방벽 */
   if (p.sancT > 0) {
@@ -1128,14 +1147,9 @@ function drawPlayer(g, p, cam, time) {
     }
   }
 
-  /* 몸통 — 직업 색 */
-  g.fillStyle = '#0f1a2e'; g.fillRect(x - 8, y - 6, 16, 16);
-  g.fillStyle = cd.color; g.fillRect(x - 8, y - 6, 16, 5);
-  g.fillStyle = '#e7d5b0'; g.fillRect(x - 6, y - 16, 12, 11);
-  g.fillStyle = '#1a2238'; g.fillRect(x - 7, y - 18, 14, 5);
-  g.fillStyle = '#0c1424';
-  g.fillRect(x - 4 + p.fx * 2, y - 12, 3, 3);
-  g.fillRect(x + 1 + p.fx * 2, y - 12, 3, 3);
+  /* 몸통 — 직업 색. 눈 방향만 세 갈래라 그것까지 key 에 넣어 굽는다 */
+  var look = p.fx > 0.3 ? 1 : p.fx < -0.3 ? -1 : 0;
+  Spr.draw(g, playerSprite(cd, look), x, y);
   /* 손에 든 것 */
   g.fillStyle = cd.atk === 'staff' ? '#c4b5fd' : (cd.atk === 'bow' ? '#a3e635' : '#9fb2cc');
   g.fillRect(x - 2 + p.fx * 13, y - 2 + p.fy * 13, 5, 5);
@@ -1146,13 +1160,30 @@ function drawPlayer(g, p, cam, time) {
   g.restore();
 }
 
+/** 동료 — 주인공과 같은 규칙, 한 치수 작게 */
+function allySprite(color, look, flash) {
+  return Spr.make('a|' + color + '|' + look + (flash ? 'F' : ''), 30, 36, function (g) {
+    var c = 15, base = 18;
+    var body = Spr.pal(flash ? '#ffffff' : color), skin = Spr.pal('#e7d5b0');
+    Spr.px(g, c - 7, base - 5, 14, 15, body.mid);
+    Spr.px(g, c - 7, base - 5, 14, 4, body.hi);
+    Spr.px(g, c - 7, base + 6, 14, 4, body.lo);
+    Spr.px(g, c - 5, base - 14, 10, 10, skin.mid);
+    Spr.px(g, c - 5, base - 7, 10, 3, skin.lo);
+    Spr.px(g, c - 3 + look * 2, base - 11, 2, 2, '#0c1424');
+    Spr.px(g, c + 1 + look * 2, base - 11, 2, 2, '#0c1424');
+    Spr.outline(g, 30, 36);
+    Spr.ground(g, 30, 36, { y: base + 11, rx: 10, ry: 4, alpha: 0.3 });
+  });
+}
+
 function drawAlly(g, a, cam, time) {
   var x = Math.round(a.x - cam.x), y = Math.round(a.y - cam.y);
   var def = allyDef(a);
-  g.fillStyle = 'rgba(0,0,0,.3)';
-  g.beginPath(); g.ellipse(x, y + 11, 10, 4, 0, 0, 6.2832); g.fill();
 
   if (a.downT > 0) {
+    g.fillStyle = 'rgba(0,0,0,.3)';
+    g.beginPath(); g.ellipse(x, y + 11, 10, 4, 0, 0, 6.2832); g.fill();
     g.globalAlpha = 0.5;
     g.fillStyle = def.color;
     g.fillRect(x - 11, y + 2, 22, 7);
@@ -1164,13 +1195,9 @@ function drawAlly(g, a, cam, time) {
     return;
   }
   if (a.temp) g.globalAlpha = 0.72;
-  g.fillStyle = a.hurt > 0 ? '#ffffff' : def.color;
-  g.fillRect(x - 7, y - 5, 14, 15);
-  g.fillStyle = '#e7d5b0'; g.fillRect(x - 5, y - 14, 10, 10);
-  g.fillStyle = '#0c1424';
-  g.fillRect(x - 3 + a.fx * 2, y - 11, 2, 2);
-  g.fillRect(x + 1 + a.fx * 2, y - 11, 2, 2);
-  g.fillStyle = def.color;
+  var look = a.fx > 0.3 ? 1 : a.fx < -0.3 ? -1 : 0;
+  Spr.draw(g, allySprite(def.color, look, a.hurt > 0), x, y);
+  g.fillStyle = def.color;                                  // 손에 든 것 — 방향을 따라 돈다
   g.fillRect(x - 1 + a.fx * 11, y - 1 + a.fy * 11, 4, 4);
   g.globalAlpha = 1;
 
@@ -1180,68 +1207,108 @@ function drawAlly(g, a, cam, time) {
   }
 }
 
+/**
+ * 적 몸통 스프라이트 — 종류·팔레트·크기·상태가 같으면 다시 굽지 않는다.
+ *
+ * 예전에는 매 프레임 `fillRect`/`arc` 로 단색 덩어리를 쌓아 적이 "도형"으로 보였다.
+ * 여기서는 명암 3단 + 어두운 외곽선 + 접지 그림자를 얹어 굽는다 (game-art-baseline.md).
+ * 방향을 따라 움직이는 것(활·방패·수호자 구슬)은 굽지 않고 호출 쪽에서 그대로 그린다 —
+ * 각도를 캐시에 넣으면 변형이 폭발한다.
+ */
+function enemySprite(e, flash) {
+  var r = e.r, S = Math.ceil(r * 2) + 18;
+  var alert = e.st === 1 ? 1 : 0, ph = e.phase === 2 ? 1 : 0;
+  var key = 'e|' + e.t + '|' + e.d.body + '|' + e.d.dark + '|' + r + '|' + alert + ph + (flash ? 'F' : '');
+  return Spr.make(key, S, S, function (g) {
+    var c = S / 2;
+    var base = flash ? '#ffffff' : e.d.body;
+    var p = Spr.pal(base), dark = flash ? '#e8e8e8' : e.d.dark;
+    var skin = Spr.pal('#e7d5b0');
+
+    if (e.t === 'slime') {
+      g.fillStyle = p.mid;
+      g.beginPath(); g.ellipse(c, c + 2, r + 1, r - 2, 0, 0, 6.2832); g.fill();
+      g.fillStyle = p.hi;                                   // 위쪽 하이라이트
+      g.beginPath(); g.ellipse(c, c - r * 0.35, r * 0.72, r * 0.34, 0, 0, 6.2832); g.fill();
+      g.fillStyle = p.lo;                                   // 아래 그림자
+      g.beginPath(); g.ellipse(c, c + r * 0.55, r * 0.9, r * 0.3, 0, 0, 6.2832); g.fill();
+      Spr.px(g, c - 6, c - 2, 3, 3, dark); Spr.px(g, c + 3, c - 2, 3, 3, dark);
+    } else if (e.t === 'wolf') {
+      var wb = alert ? Spr.pal('#fca5a5') : p;
+      Spr.px(g, c - r, c - 5, r * 2, 11, wb.mid);
+      Spr.px(g, c - r, c - 5, r * 2, 3, wb.hi);
+      Spr.px(g, c - r, c + 3, r * 2, 3, wb.lo);
+      Spr.px(g, c + r - 4, c - 9, 8, 8, wb.mid);            // 머리(오른쪽 기준, 좌향은 flip)
+      Spr.px(g, c + r - 4, c - 9, 8, 3, wb.hi);
+      Spr.px(g, c - r + 2, c + 5, 3, 5, dark);
+      Spr.px(g, c + r - 5, c + 5, 3, 5, dark);
+      Spr.px(g, c + r - 1, c - 7, 2, 2, '#ef4444');         // 눈
+    } else if (e.t === 'archer') {
+      Spr.px(g, c - 6, c - 6, 12, 14, p.mid);
+      Spr.px(g, c - 6, c - 6, 12, 4, p.hi);
+      Spr.px(g, c - 6, c + 4, 12, 4, p.lo);
+      Spr.px(g, c - 5, c - 14, 10, 9, skin.mid);
+      Spr.px(g, c - 5, c - 8, 10, 3, skin.lo);
+      Spr.px(g, c - 3, c - 11, 2, 2, '#2b2118'); Spr.px(g, c + 1, c - 11, 2, 2, '#2b2118');
+    } else if (e.t === 'shield') {
+      Spr.px(g, c - 8, c - 7, 16, 16, p.mid);
+      Spr.px(g, c - 8, c - 7, 16, 4, p.hi);
+      Spr.px(g, c - 8, c + 5, 16, 4, p.lo);
+      Spr.px(g, c - 5, c - 15, 10, 9, skin.mid);
+      Spr.px(g, c - 5, c - 9, 10, 3, skin.lo);
+      Spr.px(g, c - 3, c - 12, 2, 2, '#2b2118'); Spr.px(g, c + 1, c - 12, 2, 2, '#2b2118');
+    } else if (e.t === 'wraith' || e.t === 'keeper') {
+      var big = e.t === 'keeper';
+      var wp = ph ? Spr.pal('#ef4444') : p;
+      g.globalAlpha = 0.9;
+      g.fillStyle = wp.mid;
+      g.beginPath();
+      g.moveTo(c, c - r - (big ? 10 : 4));
+      g.lineTo(c + r, c + r * 0.7);
+      g.lineTo(c - r, c + r * 0.7);
+      g.closePath(); g.fill();
+      g.fillStyle = wp.hi;                                  // 두건 능선
+      g.beginPath();
+      g.moveTo(c, c - r - (big ? 10 : 4));
+      g.lineTo(c + r * 0.34, c + r * 0.7);
+      g.lineTo(c - r * 0.34, c + r * 0.7);
+      g.closePath(); g.fill();
+      g.globalAlpha = 1;
+      g.fillStyle = '#0c1424';                              // 얼굴 그늘
+      g.beginPath(); g.arc(c, c - r * 0.25, r * 0.55, 0, 6.2832); g.fill();
+      var eye = alert ? '#fde68a' : '#ef4444';
+      Spr.px(g, c - 6, c - r * 0.35, 4, 4, eye);
+      Spr.px(g, c + 2, c - r * 0.35, 4, 4, eye);
+    } else {
+      g.fillStyle = p.mid;
+      g.beginPath(); g.arc(c, c, r, 0, 6.2832); g.fill();
+      g.fillStyle = p.hi;
+      g.beginPath(); g.arc(c, c - r * 0.3, r * 0.6, 0, 6.2832); g.fill();
+    }
+    Spr.outline(g, S, S);
+    Spr.ground(g, S, S, { y: c + r * 0.8, rx: r * 0.85, ry: r * 0.36, alpha: 0.3 });
+  });
+}
+
 function drawEnemy(g, e, cam, time) {
   var x = Math.round(e.x - cam.x), y = Math.round(e.y - cam.y);
   var r = e.r;
-  g.fillStyle = 'rgba(0,0,0,.3)';
-  g.beginPath(); g.ellipse(x, y + r * 0.8, r * 0.85, r * 0.36, 0, 0, 6.2832); g.fill();
 
-  var flash = e.hurt > 0;
-  var body = flash ? '#ffffff' : e.d.body;
+  // 슬라임은 숨쉬듯 눌렸다 펴진다 — 세로 배율만 흔들어 캐시를 나누지 않는다
+  var squash = e.t === 'slime' ? 1 + Math.sin(time * 6 + x) * 0.05 + (e.st === 1 ? -0.06 : 0) : 1;
+  Spr.draw(g, enemySprite(e, e.hurt > 0), x, y, { flip: e.t === 'wolf' && e.fx < 0, scaleY: squash });
 
-  switch (e.t) {
-    case 'slime':
-      var wob = Math.sin(time * 6 + x) * 2 + (e.st === 1 ? -3 : 0);
-      g.fillStyle = body; g.globalAlpha = 0.9;
-      g.beginPath(); g.ellipse(x, y + 2, r + 1, r - 2 + wob * 0.4, 0, 0, 6.2832); g.fill();
-      g.globalAlpha = 1;
-      g.fillStyle = e.d.dark; g.fillRect(x - 6, y - 2, 3, 3); g.fillRect(x + 3, y - 2, 3, 3);
-      break;
-    case 'wolf':
-      g.fillStyle = e.st === 1 ? '#fca5a5' : body;
-      g.fillRect(x - r, y - 5, r * 2, 11);
-      g.fillRect(x + (e.fx >= 0 ? r - 4 : -r - 3), y - 9, 8, 8);
-      g.fillStyle = e.d.dark;
-      g.fillRect(x - r + 2, y + 5, 3, 5); g.fillRect(x + r - 5, y + 5, 3, 5);
-      g.fillStyle = '#ef4444';
-      g.fillRect(x + (e.fx >= 0 ? r - 1 : -r + 1), y - 7, 2, 2);
-      break;
-    case 'archer':
-      g.fillStyle = body; g.fillRect(x - 6, y - 6, 12, 14);
-      g.fillStyle = '#e7d5b0'; g.fillRect(x - 5, y - 14, 10, 9);
-      g.strokeStyle = e.d.dark; g.lineWidth = 2;
-      g.beginPath(); g.arc(x + e.fx * 11, y + e.fy * 11, 8, 0, 6.2832); g.stroke();
-      break;
-    case 'shield':
-      g.fillStyle = body; g.fillRect(x - 8, y - 7, 16, 16);
-      g.fillStyle = '#e7d5b0'; g.fillRect(x - 5, y - 15, 10, 9);
-      g.fillStyle = e.st === 1 ? '#fde68a' : '#cbd5e1';
-      g.fillRect(x + e.fx * 14 - 6, y + e.fy * 14 - 9, 12, 18);
-      g.fillStyle = e.d.dark; g.fillRect(x + e.fx * 14 - 3, y + e.fy * 14 - 4, 6, 8);
-      break;
-    case 'wraith':
-    case 'keeper':
-      var big = e.t === 'keeper';
-      g.globalAlpha = 0.85;
-      g.fillStyle = e.phase === 2 ? '#ef4444' : body;
-      g.beginPath();
-      g.moveTo(x, y - r - (big ? 10 : 4));
-      g.lineTo(x + r, y + r * 0.7);
-      g.lineTo(x - r, y + r * 0.7);
-      g.closePath(); g.fill();
-      g.globalAlpha = 1;
-      g.fillStyle = '#0c1424';
-      g.beginPath(); g.arc(x, y - r * 0.25, r * 0.55, 0, 6.2832); g.fill();
-      g.fillStyle = e.st === 1 ? '#fde68a' : '#ef4444';
-      g.fillRect(x - 6, y - r * 0.35, 4, 4); g.fillRect(x + 2, y - r * 0.35, 4, 4);
-      if (big) {
-        g.fillStyle = 'rgba(234,179,8,.75)';
-        g.beginPath(); g.arc(x + r * 0.9, y, 6 + Math.sin(time * 4) * 1.5, 0, 6.2832); g.fill();
-      }
-      break;
-    default:
-      g.fillStyle = body;
-      g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fill();
+  /* 방향을 따라 도는 부속 — 캐시에 넣으면 각도만큼 변형이 늘어난다 */
+  if (e.t === 'archer') {
+    g.strokeStyle = e.d.dark; g.lineWidth = 2;
+    g.beginPath(); g.arc(x + e.fx * 11, y + e.fy * 11, 8, 0, 6.2832); g.stroke();
+  } else if (e.t === 'shield') {
+    g.fillStyle = e.st === 1 ? '#fde68a' : '#cbd5e1';
+    g.fillRect(x + e.fx * 14 - 6, y + e.fy * 14 - 9, 12, 18);
+    g.fillStyle = e.d.dark; g.fillRect(x + e.fx * 14 - 3, y + e.fy * 14 - 4, 6, 8);
+  } else if (e.t === 'keeper') {
+    g.fillStyle = 'rgba(234,179,8,.75)';
+    g.beginPath(); g.arc(x + r * 0.9, y, 6 + Math.sin(time * 4) * 1.5, 0, 6.2832); g.fill();
   }
   g.globalAlpha = 1;
 
