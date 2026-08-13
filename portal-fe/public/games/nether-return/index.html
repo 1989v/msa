@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title data-i18n="title">황천 회귀</title>
+<script src="../lib/i18n.js"></script>
+<style>
+  @font-face {
+    font-family: 'neodgm';
+    src: url('assets/neodgm.woff2') format('woff2');
+    font-display: swap;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { background:#050409; color:#e8ddc8; font-family:'neodgm','Courier New',monospace;
+         display:flex; flex-direction:column; align-items:center; justify-content:center;
+         min-height:100vh; user-select:none; }
+  #wrap { position:relative; border:4px solid #1c1428; border-radius:10px; overflow:hidden;
+          box-shadow:0 0 64px rgba(120,60,20,.25), 0 0 48px rgba(0,0,0,.8); max-width:1280px; width:100%; }
+  canvas { display:block; background:#050409; width:100%; height:auto; cursor:crosshair; }
+  .panel { position:absolute; inset:0; background:rgba(6,4,12,.93); display:flex; flex-direction:column;
+           align-items:center; justify-content:center; gap:11px; text-align:center; z-index:10;
+           padding:22px; overflow-y:auto; }
+  .panel h1 { color:#ff8a4a; font-size:34px; text-shadow:0 0 24px rgba(255,90,40,.4), 2px 2px 0 #000; letter-spacing:2px; }
+  .panel p { font-size:14px; color:#b8ab94; line-height:1.8; max-width:640px; }
+  .panel button { background:#ff8a4a; color:#1c0e08; border:0; padding:12px 30px; font-weight:bold;
+                  font-size:16px; border-radius:8px; cursor:pointer; font-family:inherit; }
+  .panel button.ghost { background:#241a30; color:#e8ddc8; }
+  #resumeBtn { background:#ffd54a; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  #saveStatus { font-size:11px; color:#8a7f6e; }
+  #story { max-width:620px; font-size:14px; color:#c8b898; line-height:1.8; border:1px solid #2a2038;
+           border-radius:10px; padding:10px 16px; background:rgba(20,12,30,.5); min-height:20px; }
+  #story:empty { display:none; }
+  #story::before { content:'⛵ '; }
+  input { background:#12101f; border:1px solid #2a2038; color:#e8ddc8; border-radius:6px; padding:7px 10px;
+          font-family:inherit; font-size:12px; letter-spacing:1px; width:170px; text-transform:uppercase; }
+  #info { margin-top:9px; font-size:12px; color:#7a7060; text-align:center; line-height:1.8; }
+  details { width:100%; max-width:620px; }
+  details summary { cursor:pointer; font-size:13px; color:#c8a86a; padding:4px; }
+  .proph-row { display:flex; gap:8px; align-items:baseline; font-size:12px; padding:3px 6px;
+               text-align:left; border-bottom:1px solid rgba(148,163,184,.08); }
+  .proph-row.done { opacity:.55; }
+  /* 메뉴 배치 — 인사(스토리)가 강화 상점보다 먼저, 이어하기가 새 탈주보다 먼저 */
+  #menu > #story { order: 2; }
+  #menu > #resumeBtn { order: 7; }
+  #menu > details { order: 6; }
+  .pr-name { color:#e8d8b8; min-width:110px; font-weight:bold; }
+  .pr-desc { flex:1; color:#9a8f7c; }
+  .pr-reward { color:#ffd54a; }
+
+  @media (max-width: 900px), (pointer: coarse) {
+    #wrap { width:100vw; border-width:0; border-radius:0; }
+    #info { display:none; }
+    .panel h1 { font-size:26px; }
+  }
+</style>
+<link rel="stylesheet" href="../lib/menu.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="1280" height="720"></canvas>
+
+  <div class="panel" id="menu">
+    <h1 data-i18n="h1">🔥 황천 회귀</h1>
+    <p><span data-i18n="desc1">저승에 떨어졌다. 돌아가는 길은 하나 — </span><b data-i18n="desc2">베어서 오르는 것</b><span data-i18n="desc3">.
+      방을 제압하고, 문 너머의 보상을 고르고, 신격의 문장으로 강해져라.
+      쓰러지면 처음부터 — 하지만 명전과 강화는 남는다.</span></p>
+    <div id="story"></div>
+    <div id="saveStatus"></div>
+    <div class="row">
+      <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
+      <button id="codeLoadBtn" class="ghost" data-i18n="btnCode">🔑 코드로 불러오기</button>
+    </div>
+    <div class="row"><span id="codeShow" style="font-size:11px;color:#ffd54a;letter-spacing:2px"></span></div>
+    <details>
+      <summary id="prophSummary">📜 뱃사공의 예언</summary>
+      <div id="prophList"></div>
+    </details>
+    <button id="resumeBtn" hidden>▶ 이어서 탈주</button>
+    <button id="startBtn" data-i18n="btnStart">▶ 탈주 시작</button>
+  </div>
+
+  <div class="panel" id="endPanel" hidden>
+    <h1 id="endTitle"></h1>
+    <p id="endDesc"></p>
+    <div class="row">
+      <button id="againBtn" data-i18n="btnAgain">🔁 다시 탈주</button>
+      <button id="backBtn" class="ghost" data-i18n="btnBack">안식처로</button>
+    </div>
+  </div>
+</div>
+<div id="info">
+  <span data-i18n="info1">WASD/방향키 이동 · 마우스 조준 + 좌클릭/Z 공격 · Space 질주(무적) · 우클릭/X 투혼 · Esc 멈춤 · M 음소거</span><br>
+  <span data-i18n="info2">적의 공격에는 반드시 예고가 있다 — 질주로 빠져나가라. 문 위의 문양이 다음 보상이다.</span>
+</div>
+
+<script>
+'use strict';
+GameI18n.init({
+  ko: {
+    title: '황천 회귀', h1: '🔥 황천 회귀',
+    desc1: '저승에 떨어졌다. 돌아가는 길은 하나 — ', desc2: '베어서 오르는 것',
+    desc3: '. 방을 제압하고, 문 너머의 보상을 고르고, 신격의 문장으로 강해져라. 쓰러지면 처음부터 — 하지만 명전과 강화는 남는다.',
+    phCode: '이어하기 코드', btnCode: '🔑 코드로 불러오기',
+    btnStart: '▶ 탈주 시작', btnAgain: '🔁 다시 탈주', btnBack: '안식처로',
+    info1: 'WASD/방향키 이동 · 마우스 조준 + 좌클릭/Z 공격 · Space 질주(무적) · 우클릭/X 투혼 · Esc 멈춤 · M 음소거',
+    info2: '적의 공격에는 반드시 예고가 있다 — 질주로 빠져나가라. 문 위의 문양이 다음 보상이다.',
+  },
+  en: {
+    title: 'Nether Return', h1: '🔥 Nether Return',
+    desc1: 'You fell into the Netherworld. There is one way back — ', desc2: 'cut your way up',
+    desc3: '. Clear chambers, choose your reward at each door, grow strong with divine boons. Death sends you back — but coins and upgrades remain.',
+    phCode: 'Continue code', btnCode: '🔑 Load by code',
+    btnStart: '▶ Begin Escape', btnAgain: '🔁 Escape Again', btnBack: 'To Sanctum',
+    info1: 'WASD/Arrows move · Mouse aim + LMB/Z attack · Space dash (i-frames) · RMB/X cast · Esc pause · M mute',
+    info2: 'Every enemy attack is telegraphed — dash through it. The sigil above each door shows its reward.',
+  },
+});
+</script>
+<script src="js/atlas.js"></script>
+<script src="js/data.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/game.js"></script>
+<script src="../lib/touch.js" data-actions="KeyZ:⚔,Space:💨,KeyX:🔮"></script>
+<script src="../lib/rank.js"></script>
+<script>GameRank.autoPanel('nether-return');</script>
+</body>
+</html>
