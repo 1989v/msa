@@ -910,10 +910,12 @@
     persist();
 
     var mins = (R.time / 60) | 0, secs = (R.time % 60) | 0;
-    var detail = (R.tier + 1) + L('계 ', 'F ') + Math.max(1, R.roomN) + L('방 · 처치 ', 'R · kills ') + R.kills;
+    var where = win ? L('완주', 'CLEAR')
+      : (R.tier + 1) + L('계 ', 'F ') + Math.min(Math.max(1, R.roomN), tierDef().rooms) + L('방', 'R');
+    var detail = where + L(' · 처치 ', ' · kills ') + R.kills;
     $('endTitle').textContent = win ? L('🌅 이승의 빛', '🌅 Light of the Living') : L('💀 그대는 스러졌다', '💀 You Have Fallen');
     $('endDesc').innerHTML =
-      L('도달 ', 'Reached ') + '<b>' + (R.tier + 1) + L('계 ', 'F ') + Math.max(1, R.roomN) + L('방', 'R') + '</b>' +
+      L('도달 ', 'Reached ') + '<b>' + where + '</b>' +
       ' · ' + L('처치 ', 'kills ') + R.kills + ' · ' + mins + ':' + (secs < 10 ? '0' : '') + secs +
       '<br>' + L('문장 ', 'boons ') + R.boons.length + L('개 · 점수 ', ' · score ') + score.toLocaleString() +
       '<br>🪙 <b>+' + earned + '</b> ' + L('명전 — 강화에 쓸 수 있다', 'coins for upgrades');
@@ -1351,6 +1353,8 @@
 
     /* 광원 + 어둠 */
     var lights = [{ x: p.x, y: p.y - 6, r: 70, a: 0.85, c: null }];
+    // 적도 은은히 밝힌다 — 어둠에 묻힌 적에게 맞는 건 불공정이다 (하데스는 적이 항상 보인다)
+    foes.forEach(function (e) { lights.push({ x: e.x, y: e.y - 6, r: e.boss ? 54 : 30, a: 0.55, c: null }); });
     room.torches.forEach(function (tc) {
       lights.push({ x: tc.x, y: tc.y, r: 46 + Math.sin(animT * 9 + tc.x) * 5, a: 0.8, c: t.light });
     });
@@ -1824,4 +1828,17 @@
   }
 
   boot();
+
+  /* 자동화 검증용 훅 — ?nrdebug 로 열었을 때만. 게임 로직에는 관여하지 않는다. */
+  if (location.search.indexOf('nrdebug') >= 0) {
+    window.__NR = {
+      get R() { return R; }, get p() { return p; }, get st() { return st; },
+      get foes() { return foes; }, get state() { return state; }, get room() { return room; },
+      kill: function () { foes.slice().forEach(function (e) { e.hp = 0; killFoe(e); }); },
+      goto: function (tier, roomN) { R.tier = tier; R.roomN = roomN; enterRoom(); },
+      pick: function (i) { applyPick(i); },
+      give: function (k, r) { R.boons.push({ key: k, rar: r || 0 }); buildStats(); },
+      hurt: function (n) { p.iframe = 0; hurtPlayer(n, p.x, p.y - 30); },
+    };
+  }
 })();

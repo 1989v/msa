@@ -147,11 +147,11 @@
 
   /* ── 계층 ──────────────────────────────────────────────────────────────── */
   var TIERS = [
-    { name: { ko: '재의 뜰', en: 'Ashen Court' }, floor: '#8a86a8', mood: 'rgba(10,8,24,.52)',
+    { name: { ko: '재의 뜰', en: 'Ashen Court' }, floor: '#8a86a8', mood: 'rgba(10,8,24,.42)',
       light: '#ff9a5c', roster: ['imp', 'skelet'], boss: 'ogre', rooms: 8 },
-    { name: { ko: '핏빛 회랑', en: 'Crimson Gallery' }, floor: '#a87878', mood: 'rgba(24,6,10,.5)',
+    { name: { ko: '핏빛 회랑', en: 'Crimson Gallery' }, floor: '#a87878', mood: 'rgba(24,6,10,.42)',
       light: '#ff6a4a', roster: ['imp', 'skelet', 'chort', 'orc'], boss: 'bigzomb', rooms: 8 },
-    { name: { ko: '망각의 옥좌', en: 'Throne of Oblivion' }, floor: '#6a8a92', mood: 'rgba(4,14,20,.55)',
+    { name: { ko: '망각의 옥좌', en: 'Throne of Oblivion' }, floor: '#6a8a92', mood: 'rgba(4,14,20,.46)',
       light: '#6ae0ff', roster: ['chort', 'orc', 'wogol', 'necro'], boss: 'demon', rooms: 8 },
   ];
 
