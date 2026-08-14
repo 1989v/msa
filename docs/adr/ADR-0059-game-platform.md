@@ -7,7 +7,7 @@
 
 ## Context
 
-CrazyGames 모델(게임 리스트 + iframe 임베드 플레이 + SDK 중개 광고)의 게임 플랫폼을 도입한다.
+대형 웹게임 포털 모델(게임 리스트 + iframe 임베드 플레이 + SDK 중개 광고)의 게임 플랫폼을 도입한다.
 코드베이스에는 이미 게임성 자산 5종이 존재하나(portal-fe 퀴즈 4종 = React 내장형,
 agent-viewer pixel-office = Canvas/TS, 로컬 전용) 모두 호스트 앱에 하드코딩되어 있어
 "게임 = 등록/발견/플레이/수익화 가능한 콘텐츠 단위"라는 플랫폼 개념이 없다.
@@ -54,7 +54,7 @@ ADR-0058 불변식 준수 — 재분리 가능성 보장:
 - 초기 집행은 **HOUSE**(자체 홍보 배너 — 플랫폼 내 다른 서비스/게임 홍보)만. 외부 네트워크
   (AdSense/GAM) 심사·수익화는 실트래픽 확보 후 별도 결정.
 - 단, 엔티티(`AdPlacement.provider`, `provider_slot_id`)와 SDK 계약(postMessage `ad:*`)은
-  처음부터 네트워크 중립으로 설계 — CrazyGames 와 동형 구조(플랫폼은 슬롯/정책/보상만 소유,
+  처음부터 네트워크 중립으로 설계 — 대형 웹게임 포털 와 동형 구조(플랫폼은 슬롯/정책/보상만 소유,
   집행은 provider 위임)를 HOUSE 로 먼저 검증한다.
 - rewarded 보상은 `idempotency_key` 기반 1회 보장 (idempotent-consumer 패턴, ADR-0012/0029).
 
@@ -75,7 +75,7 @@ INTERNAL_ROUTE 컴포넌트 렌더. ingress 변경 불필요 (portal-fe 가 root
 
 ### 5) 인게임 구매: 스코프 아웃
 
-CrazyGames 도 선별 게임만 지원. 결제 연동은 order 서비스와의 경계 문제가 커서 별도 ADR 전까지 제외.
+대형 웹게임 포털 도 선별 게임만 지원. 결제 연동은 order 서비스와의 경계 문제가 커서 별도 ADR 전까지 제외.
 
 ### 6) Kafka 토픽 (kafka-convention `{service}.{entity}.{event}` 준수)
 

@@ -18,9 +18,9 @@
 | Cascade (개념 분류) | `portal-fe/src/components/quiz/ConceptCascade.tsx` | React 컴포넌트 (내장형, phase 상태머신) | 〃 |
 | Pixel Office | `agent-viewer/front/src/office/` | Canvas + 순수 TS 게임 모듈 (rAF 게임루프, BFS 길찾기, 타일맵/스프라이트) | 로컬 전용 도구 (OCI 배포 제외) |
 
-**시사점**: 기존 게임은 모두 **호스트 앱에 직접 내장된 React/Canvas 코드**다. CrazyGames 방식의 플랫폼이 되려면 "게임 = 독립 배포 가능한 콘텐츠 단위"로 분리되어야 하며, 내장형(INTERNAL_ROUTE)과 iframe 임베드형(IFRAME) 두 로드 방식을 모두 지원하는 것이 기존 자산을 살리는 길이다.
+**시사점**: 기존 게임은 모두 **호스트 앱에 직접 내장된 React/Canvas 코드**다. 대형 웹게임 포털 방식의 플랫폼이 되려면 "게임 = 독립 배포 가능한 콘텐츠 단위"로 분리되어야 하며, 내장형(INTERNAL_ROUTE)과 iframe 임베드형(IFRAME) 두 로드 방식을 모두 지원하는 것이 기존 자산을 살리는 길이다.
 
-## 2. CrazyGames (ragdoll-archers) 실서비스 동작 방식
+## 2. 대형 웹게임 포털 (ragdoll-archers) 실서비스 동작 방식
 
 리서치 결과 (docs.crazygames.com, 게임 페이지 분석):
 
@@ -93,7 +93,7 @@ game 도메인 (:game:domain / :game:feature → code-dictionary:app 호스트)
 | orientation | Enum STRING | `LANDSCAPE` / `PORTRAIT` / `BOTH` |
 | supports_mobile | Boolean | |
 | developer_name | String | 외부 개발사 표기 (내부 게임은 "kgd") |
-| sdk_integrated | Boolean | SDK 통합 여부 — **광고/수익화 게이트** (CrazyGames 모델) |
+| sdk_integrated | Boolean | SDK 통합 여부 — **광고/수익화 게이트** (대형 웹게임 포털 모델) |
 | status | Enum STRING | `DRAFT` → `REVIEW` → `BETA` → `PUBLISHED` → `SUSPENDED` (2단계 런칭 반영: BETA는 수익화 OFF) |
 | released_at / content_updated_at | Instant | 출시일 / 게임 콘텐츠 최종 업데이트 |
 | created_at / updated_at | Instant | BaseTimeEntity |
@@ -119,7 +119,7 @@ game 도메인 (:game:domain / :game:feature → code-dictionary:app 호스트)
 #### GameCollection / GameCollectionItem (홈 큐레이션 행)
 | 엔티티 | 컬럼 | 설명 |
 |--------|------|------|
-| GameCollection | id, slug, title, type(Enum: `MANUAL`/`TRENDING`/`NEW`/`TAG_BASED`), tag_id?, display_order, active | CrazyGames 홈의 행(row) 단위. TRENDING/NEW는 쿼리 기반, MANUAL은 어드민 큐레이션 |
+| GameCollection | id, slug, title, type(Enum: `MANUAL`/`TRENDING`/`NEW`/`TAG_BASED`), tag_id?, display_order, active | 대형 웹게임 포털 홈의 행(row) 단위. TRENDING/NEW는 쿼리 기반, MANUAL은 어드민 큐레이션 |
 | GameCollectionItem | collection_id, game_id, sort_order (unique 복합) | MANUAL 타입일 때만 사용 |
 
 ### 4.2 play
@@ -139,7 +139,7 @@ game 도메인 (:game:domain / :game:feature → code-dictionary:app 호스트)
 | 컬럼 | 설명 |
 |------|------|
 | id, game_id, member_id | `unique(game_id, member_id)` — 1인 1표, 재투표는 UPDATE |
-| score | Int 1~10 (CrazyGames 10점 척도) |
+| score | Int 1~10 (대형 웹게임 포털 10점 척도) |
 
 투표 시 GameStats.rating_sum/count 갱신은 같은 트랜잭션 (동일 서비스 내부이므로 허용, 외부 IO 아님).
 
@@ -158,7 +158,7 @@ game 도메인 (:game:domain / :game:feature → code-dictionary:app 호스트)
 
 ### 4.3 ads
 
-광고 **집행**(실제 크리에이티브 서빙)은 외부 애드 네트워크(AdSense/GAM 등)에 위임하고, 플랫폼은 **배치 슬롯 관리 + 정책 + 보상 멱등 처리 + 이벤트 수집**만 소유한다. (CrazyGames도 자체 애드서버가 아니라 네트워크 중개 구조)
+광고 **집행**(실제 크리에이티브 서빙)은 외부 애드 네트워크(AdSense/GAM 등)에 위임하고, 플랫폼은 **배치 슬롯 관리 + 정책 + 보상 멱등 처리 + 이벤트 수집**만 소유한다. (대형 웹게임 포털도 자체 애드서버가 아니라 네트워크 중개 구조)
 
 #### AdPlacement
 | 컬럼 | 설명 |
@@ -174,7 +174,7 @@ game 도메인 (:game:domain / :game:feature → code-dictionary:app 호스트)
 | 컬럼 | 설명 |
 |------|------|
 | id, ad_type (unique) | 타입별 전역 정책 |
-| min_interval_sec | BANNER=60 (CrazyGames 동일), MIDGAME=180 등 |
+| min_interval_sec | BANNER=60 (대형 웹게임 포털 동일), MIDGAME=180 등 |
 | max_per_session | 세션당 상한 |
 
 정책 판정은 Redis(세션 키 기준 TTL 카운터)로 수행하고, 이 테이블은 정책 값의 SSOT. 어드민에서 수정 가능.
@@ -210,7 +210,7 @@ member_id는 모든 곳에서 FK-as-ID(제약 없는 Long) — member 서비스 
 
 ## 5. 게임 ↔ 플랫폼 SDK 계약 (postMessage)
 
-IFRAME 게임을 위해 CrazyGames SDK와 동형의 최소 계약을 정의한다 (`@kgd/game-sdk` 패키지 후보):
+IFRAME 게임을 위해 대형 웹게임 포털 SDK와 동형의 최소 계약을 정의한다 (`@kgd/game-sdk` 패키지 후보):
 
 | 메시지 | 방향 | 설명 |
 |--------|------|------|
@@ -250,6 +250,6 @@ INTERNAL_ROUTE 게임(기존 퀴즈 4종)은 postMessage 없이 같은 인터페
 
 ## References
 
-- [CrazyGames Documentation](https://docs.crazygames.com/) · [HTML5 SDK](https://docs.crazygames.com/sdk/html5-v2/intro/) · [Video ads](https://docs.crazygames.com/sdk/video-ads/) · [Developer Portal](https://developer.crazygames.com/)
+- [대형 웹게임 포털 Documentation](https://docs.crazygames.com/) · [HTML5 SDK](https://docs.crazygames.com/sdk/html5-v2/intro/) · [Video ads](https://docs.crazygames.com/sdk/video-ads/) · [Developer Portal](https://developer.crazygames.com/)
 - 게임 페이지 분석: [Ragdoll Archers](https://www.crazygames.com/game/ragdoll-archers)
 - 사내 컨벤션: `docs/conventions/jpa-persistence.md`, `docs/conventions/idempotent-consumer.md`, `docs/architecture/kafka-convention.md`, `docs/conventions/entity-mutation.md`

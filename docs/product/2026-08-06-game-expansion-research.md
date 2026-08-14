@@ -12,13 +12,13 @@
 
 | 신호 | 근거 | 시사점 |
 |---|---|---|
-| 데일리 퍼즐이 캐주얼 웹 최대 지분 | Wordle/Connections/NYT Mini 류가 "하루 1문제" 리듬으로 정착 | 리텐션 엔진으로 최우선. 날짜 시드면 서버 비용 0 |
-| 서바이버류 장르 정착 | Vampire Survivors 자체가 HTML5(Phaser) 출신. Brotato·20MTD 등 변형 지속 흥행 | 웹 이식성 증명된 체류시간 장르 |
+| 데일리 퍼즐이 캐주얼 웹 최대 지분 | 단어 추리 데일리 퍼즐/Connections/NYT Mini 류가 "하루 1문제" 리듬으로 정착 | 리텐션 엔진으로 최우선. 날짜 시드면 서버 비용 0 |
+| 서바이버류 장르 정착 | 서바이버류 대표작 자체가 HTML5(Phaser) 출신. Brotato·20MTD 등 변형 지속 흥행 | 웹 이식성 증명된 체류시간 장르 |
 | 로그라이크×덱빌딩×인크리멘탈 하이브리드 | Balatro 가 대표. "런 반복 → 영구 성장" 루프 대세 | 이어하기 코드 인프라와 정확히 맞물림 |
-| 멀티 io 가 포털 최대 트래픽원 | CrazyGames: Shell Shockers/Smash Karts/Skribbl.io | WS 릴레이(rt host) 선행 필요 — 후순위 |
+| 멀티 io 가 포털 최대 트래픽원 | 대형 웹게임 포털: Shell Shockers/Smash Karts/Skribbl.io | WS 릴레이(rt host) 선행 필요 — 후순위 |
 | 웹 30h+ RPG 기술 증명 | CrossCode: impact.js canvas2D(WebGL 미사용)로 30~80시간 액션 RPG | 관건은 기술이 아니라 콘텐츠 전략 |
 
-출처: gamingpromax.com (CrazyGames vs Poki 2026), jayisgames.com (2026 웹 캐주얼 트렌드),
+출처: gamingpromax.com (대형 웹게임 포털 vs Poki 2026), jayisgames.com (2026 웹 캐주얼 트렌드),
 yuanqilife.com (인크리멘탈 2026), choostgames.com (서바이버류 2026),
 radicalfishgames.com (CrossCode 아키텍처/프레스킷).
 
@@ -77,7 +77,7 @@ radicalfishgames.com (CrossCode 아키텍처/프레스킷).
 ## 3. 플래그십 — 오픈월드 RPG "표류 대륙" (가칭, 30시간+)
 
 기술 선례는 CrossCode(canvas2D, 수백 맵, 30~80h). 관건은 1인+AI 개발로 콘텐츠 30시간을
-채우는 전략이며, 답은 손제작 볼륨이 아니라 **시스템 주도 플레이타임**(Terraria/Stardew 모델):
+채우는 전략이며, 답은 손제작 볼륨이 아니라 **시스템 주도 플레이타임**(Terraria/파밍 시뮬 대표작 모델):
 
 - **손제작 코어**: 메인 스토리 8~10시간 — 거점 마을 3~4곳 + 메인 던전 6~8개
 - **절차 생성 스케일아웃**: 시드 기반 오픈월드(Daggerfall 방식), 청크 생성/스트리밍은
