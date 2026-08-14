@@ -1,12 +1,12 @@
 /**
  * 황천 회귀 — 본체: 전투 · AI · 보스 · 룸 진행 · 문장 · 저장 · HUD.
  *
- * 구조 (docs/specs/2026-08-13-nether-return-hades-like.md 가 설계 원본):
+ * 구조 (docs/specs/ 의 nether-return 설계 문서가 원본):
  *   뷰 384×216 을 정수 3배로 1152×648 캔버스에 블릿 — 기사가 화면에서 48×84px 로 큼직하다.
  *   방(아레나)은 뷰보다 크고 모양이 제각각이라 **카메라가 따라간다** — "맵이 하나" 를 없앤 축.
  *   HUD·데미지 숫자는 캔버스 해상도에 직접 그려 글자가 뭉개지지 않는다.
  *
- * 조작 철학: 마우스 조준 없음 — **바라보는 방향으로 벤다**. 대신 하데스처럼 조준 보정이
+ * 조작 철학: 마우스 조준 없음 — **바라보는 방향으로 벤다**. 대신 장르 관례대로 조준 보정이
  * 강하게 붙는다(전방 원뿔 안 최근접 적 스냅). 패드/키보드/터치가 같은 감각을 공유한다.
  *
  * 타격감 불변식 (하나라도 빠지면 이 게임의 존재 이유가 없다):
@@ -408,7 +408,7 @@
     }
   }
 
-  /** 문 = 다음 방을 제압하면 받을 보상의 예고 (하데스 시그니처) */
+  /** 문 = 다음 방을 제압하면 받을 보상의 예고 (로그라이크 문 보상 문법) */
   function rollDoorRewards() {
     var t = tierDef();
     var next = R.roomN + 1;
@@ -685,7 +685,7 @@
     }
   }
 
-  /* ═══════════ 플레이어 행동 — 바라보는 방향 + 하데스식 조준 보정 ═══════════ */
+  /* ═══════════ 플레이어 행동 — 바라보는 방향 + 조준 보정 ═══════════ */
   function aimDir() {
     var f = p.faceDir || { x: p.face, y: 0 };
     var best = null, bd = 1e9;
@@ -1823,7 +1823,7 @@
     var doneN = DATA.PROPH.filter(function (pr) { return S.proph.claimed[pr.id]; }).length;
     $('prophSummary').textContent = L('📜 뱃사공의 예언 ', '📜 Prophecies ') + doneN + ' / ' + DATA.PROPH.length;
 
-    /* 무기고 — 하데스식 무기 선택 + 명전 해금 */
+    /* 무기고 — 무기 선택 + 명전 해금 */
     var wr = $('weaponRow');
     wr.innerHTML = '';
     DATA.WEAPONS.forEach(function (w) {

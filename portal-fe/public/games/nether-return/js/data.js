@@ -129,7 +129,7 @@
       apply: function (st) { st.castCharges += 1; } },
   ];
 
-  /* ── 무기 — 하데스식 무기고. 콤보 프로필이 전투 리듬을 통째로 바꾼다 ────
+  /* ── 무기 — 무기고. 콤보 프로필이 전투 리듬을 통째로 바꾼다 ────
    * unlock: 명전 해금 비용 (0 = 시작 무기). 콤보 t = 휘두름 시간(공속으로 나뉜다).
    */
   var WEAPONS = [
@@ -202,7 +202,7 @@
       light: '#6ae0ff', roster: ['chort', 'orc', 'wogol', 'necro'], boss: 'demon', rooms: 8 },
   ];
 
-  /* ── 예언 목록 (하데스 Fated List) — check(S) 는 세이브를 보고 달성 판정 ── */
+  /* ── 예언 목록 (업적형 체크리스트) — check(S) 는 세이브를 보고 달성 판정 ── */
   var PROPH = [
     { id: 'first_kill', reward: 40, name: { ko: '첫 원혼', en: 'First Soul' },
       desc: { ko: '황천의 원혼을 처음으로 벤다', en: 'Fell your first shade' },
