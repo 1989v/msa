@@ -17,7 +17,9 @@
 
   /* ═══════════ 상수 ═══════════ */
   var CW = 1152, CH = 648;                                // 메인 캔버스
-  var SCALE = 3, VW = CW / SCALE, VH = CH / SCALE;        // 뷰 384×216
+  // 2배 블릿(뷰 576×324) — 3배(384×216)보다 픽셀 밀도 2.25배. 캐릭터는 조금 작아지지만
+  // "해상도가 조악하다"는 피드백이 우선이라 정밀도를 택했다. 정수 배율은 유지(픽셀 아트 왜곡 금지)
+  var SCALE = 2, VW = CW / SCALE, VH = CH / SCALE;
   var TILE = 16;
   var AW = 512, AH = 288;                                 // 현재 아레나 크기 (방마다 다르다)
   var ARENA = { x0: 28, y0: 46, x1: 484, y1: 262 };
@@ -330,8 +332,8 @@
     for (var tx = 5; tx < AW / TILE - 3; tx += 6) room.torches.push({ x: tx * TILE + 8, y: ARENA.y0 - 8 });
     p.x = AW / 2; p.y = ARENA.y1 - 20;
     p.iframe = 0.6;
-    cam.x = clamp(p.x - VW / 2, 0, AW - VW);
-    cam.y = clamp(p.y - VH / 2, 0, AH - VH);
+    cam.x = AW <= VW ? (AW - VW) / 2 : clamp(p.x - VW / 2, 0, AW - VW);
+    cam.y = AH <= VH ? (AH - VH) / 2 : clamp(p.y - VH / 2, 0, AH - VH);
     prerenderFloor();
     FX.music(R.tier);
     if (isBoss) FX.sfx('boss');
@@ -436,7 +438,7 @@
     if (pd.reward === 'heal') { heal(Math.round(st.maxHp * 0.25)); FX.sfx('heal'); }
   }
 
-  /* 바닥 프리렌더 — 크기·장식이 방마다 다르다 */
+  /* 바닥 프리렌더 — "맵이 단조롭다"를 잡는 층위: 길 → 얼룩 → 색조 → 벽·측벽 → AO → 소품 */
   function prerenderFloor() {
     floorCv = document.createElement('canvas');
     floorCv.width = AW; floorCv.height = AH;
@@ -451,48 +453,124 @@
         Atlas.draw(g, 'floor_' + (1 + ((rnd() * 8) | 0)), 0, tx * TILE + 8, ty * TILE + 16);
       }
     }
+    // 통행로 — 아래 입구에서 문까지 어두운 길이 나 있다 (방에 방향성을 준다)
+    var roadX = AW / 2 - TILE;
+    g.fillStyle = 'rgba(0,0,0,.16)';
+    g.fillRect(roadX, ARENA.y0, TILE * 2, ARENA.y1 - ARENA.y0 + 10);
+    g.fillStyle = 'rgba(255,255,255,.03)';
+    g.fillRect(roadX - 1, ARENA.y0, 1, ARENA.y1 - ARENA.y0 + 10);
+    g.fillRect(roadX + TILE * 2, ARENA.y0, 1, ARENA.y1 - ARENA.y0 + 10);
+    // 이끼/핏자국 얼룩 — 계층색 반투명 뭉치
+    var stainC = R.tier === 0 ? 'rgba(90,70,140,.12)' : R.tier === 1 ? 'rgba(150,30,30,.13)' : 'rgba(40,130,140,.12)';
+    for (var sN = 0; sN < 8 + tw / 4; sN++) {
+      var sx2 = ARENA.x0 + rnd() * (ARENA.x1 - ARENA.x0);
+      var sy2 = ARENA.y0 + rnd() * (ARENA.y1 - ARENA.y0);
+      var sr = 10 + rnd() * 22;
+      var sg = g.createRadialGradient(sx2, sy2, 2, sx2, sy2, sr);
+      sg.addColorStop(0, stainC);
+      sg.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = sg;
+      g.beginPath(); g.arc(sx2, sy2, sr, 0, 7); g.fill();
+    }
     // 계층 색조 — multiply 는 타일 질감을 죽였다. overlay 로 색만 얹는다
     g.globalCompositeOperation = 'overlay';
-    g.globalAlpha = 0.65;
+    g.globalAlpha = 0.6;
     g.fillStyle = t.floor;
     g.fillRect(0, 0, AW, AH);
     g.globalAlpha = 1;
     g.globalCompositeOperation = 'source-over';
-    // 벽
+    // 윗벽 (얼굴 있는 벽)
     for (var x = 0; x < tw; x++) {
       Atlas.draw(g, 'wall_mid', 0, x * TILE + 8, ARENA.y0 - 2);
       Atlas.draw(g, 'wall_top_mid', 0, x * TILE + 8, ARENA.y0 - 14);
     }
-    // 배너 — 계층 색 (재의 뜰=빨강, 핏빛=빨강, 옥좌=파랑)
+    // 윗벽 변화 — 배너·구멍·벽기둥을 섞어 벽이 한 패턴으로 반복되지 않게
     var bannerSpr = R.tier === 2 ? 'wall_banner_blue' : 'wall_banner_red';
-    for (var bx = 4; bx < tw - 2; bx += 8) Atlas.draw(g, bannerSpr, 0, bx * TILE + 8, ARENA.y0 - 2);
+    for (var bx = 3; bx < tw - 2; bx += 4) {
+      var kind = (rnd() * 4) | 0;
+      if (kind === 0) Atlas.draw(g, bannerSpr, 0, bx * TILE + 8, ARENA.y0 - 2);
+      else if (kind === 1) Atlas.draw(g, 'wall_hole_1', 0, bx * TILE + 8, ARENA.y0 - 2);
+      else if (kind === 2) {
+        Atlas.draw(g, 'wall_column_mid', 0, bx * TILE + 8, ARENA.y0 - 2);
+        Atlas.draw(g, 'wall_column_top', 0, bx * TILE + 8, ARENA.y0 - 18);
+      }
+    }
+    // 바깥 영역
     g.fillStyle = '#08060d';
     g.fillRect(0, ARENA.y1 + 10, AW, AH - ARENA.y1 - 10);
     g.fillRect(0, 0, ARENA.x0 - 10, AH);
     g.fillRect(ARENA.x1 + 10, 0, AW - ARENA.x1 - 10, AH);
-    // 구덩이 — 이동 불가. 검은 심연 + 가장자리 명암
+    // 측벽 — 좌우 가장자리에 기둥 라인 (전에는 그냥 검은 띠였다)
+    for (var wy = 3; wy < th - 1; wy += 3) {
+      Atlas.draw(g, 'column_mid', 0, ARENA.x0 - 12, wy * TILE + 12);
+      Atlas.draw(g, 'column_top', 0, ARENA.x0 - 12, wy * TILE - 4);
+      Atlas.draw(g, 'column_mid', 0, ARENA.x1 + 12, wy * TILE + 12);
+      Atlas.draw(g, 'column_top', 0, ARENA.x1 + 12, wy * TILE - 4);
+    }
+    // 아랫벽 윗면
+    for (var x2 = 0; x2 < tw; x2++) Atlas.draw(g, 'wall_top_mid', 0, x2 * TILE + 8, ARENA.y1 + 24);
+    // 구덩이 — 검은 심연 + 가장자리 명암
     room.lay.pits.forEach(function (q) {
       var px2 = q[0] * TILE, py2 = q[1] * TILE, pw = q[2] * TILE, ph = q[3] * TILE;
       g.fillStyle = '#030208';
       g.fillRect(px2, py2, pw, ph);
       g.fillStyle = 'rgba(255,255,255,.07)';
       g.fillRect(px2, py2 + ph - 2, pw, 2);
-      g.fillStyle = 'rgba(0,0,0,.5)';
-      g.fillRect(px2, py2, pw, 3);
+      var pg = g.createLinearGradient(0, py2, 0, py2 + Math.min(12, ph));
+      pg.addColorStop(0, 'rgba(0,0,0,.7)');
+      pg.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = pg;
+      g.fillRect(px2, py2, pw, Math.min(12, ph));
     });
-    // 기둥
+    // 기둥 (아레나 내부)
     room.lay.cols.forEach(function (c) {
       Atlas.draw(g, 'column_mid', 0, c[0] * TILE + 8, c[1] * TILE + 16);
       Atlas.draw(g, 'column_top', 0, c[0] * TILE + 8, c[1] * TILE);
+      // 기둥 발치 그림자
+      g.fillStyle = 'rgba(0,0,0,.35)';
+      g.beginPath(); g.ellipse(c[0] * TILE + 8, c[1] * TILE + 17, 8, 3, 0, 0, 7); g.fill();
     });
-    // 해골·잔해 장식
-    var deco = 3 + ((rnd() * 4) | 0);
+    // 소품 — 해골·부서진 상자·빈 궤짝을 밀도 있게
+    var deco = 5 + ((rnd() * 5) | 0) + ((tw / 8) | 0);
     for (var d = 0; d < deco; d++) {
       var dx = ARENA.x0 + 10 + rnd() * (ARENA.x1 - ARENA.x0 - 20);
-      var dy = ARENA.y0 + 10 + rnd() * (ARENA.y1 - ARENA.y0 - 20);
-      if (!solidAt(dx, dy, 6)) Atlas.draw(g, 'skull', 0, dx, dy, { alpha: 0.7 });
+      var dy = ARENA.y0 + 14 + rnd() * (ARENA.y1 - ARENA.y0 - 24);
+      if (solidAt(dx, dy, 8)) continue;
+      var dk = rnd();
+      if (dk < 0.5) Atlas.draw(g, 'skull', 0, dx, dy, { alpha: 0.75 });
+      else if (dk < 0.75) Atlas.draw(g, 'chest_empty_open_anim', 2, dx, dy, { alpha: 0.85 });
+      else { Atlas.draw(g, 'crate', 0, dx, dy, { alpha: 0.8, scale: 0.8 }); }
+      g.fillStyle = 'rgba(0,0,0,.3)';
+      g.beginPath(); g.ellipse(dx, dy + 1, 6, 2, 0, 0, 7); g.fill();
     }
+    // AO — 벽 밑 접지 음영 + 모서리 어둠. 평평하던 방에 깊이를 주는 제일 싼 방법
+    var ao = g.createLinearGradient(0, ARENA.y0 - 2, 0, ARENA.y0 + 16);
+    ao.addColorStop(0, 'rgba(0,0,0,.5)');
+    ao.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = ao;
+    g.fillRect(ARENA.x0 - 8, ARENA.y0 - 2, ARENA.x1 - ARENA.x0 + 16, 18);
+    var aoL = g.createLinearGradient(ARENA.x0 - 6, 0, ARENA.x0 + 14, 0);
+    aoL.addColorStop(0, 'rgba(0,0,0,.4)');
+    aoL.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = aoL;
+    g.fillRect(ARENA.x0 - 6, ARENA.y0, 20, ARENA.y1 - ARENA.y0);
+    var aoR = g.createLinearGradient(ARENA.x1 + 6, 0, ARENA.x1 - 14, 0);
+    aoR.addColorStop(0, 'rgba(0,0,0,.4)');
+    aoR.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = aoR;
+    g.fillRect(ARENA.x1 - 14, ARENA.y0, 20, ARENA.y1 - ARENA.y0);
+    var aoB = g.createLinearGradient(0, ARENA.y1 + 8, 0, ARENA.y1 - 10);
+    aoB.addColorStop(0, 'rgba(0,0,0,.45)');
+    aoB.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = aoB;
+    g.fillRect(ARENA.x0 - 8, ARENA.y1 - 10, ARENA.x1 - ARENA.x0 + 16, 18);
+    // 보스방 — 붉은 카펫 + 배너 열
     if (room.boss) {
+      g.fillStyle = 'rgba(140,20,30,.2)';
+      g.fillRect(AW / 2 - 24, ARENA.y0, 48, ARENA.y1 - ARENA.y0 + 10);
+      g.fillStyle = 'rgba(255,220,150,.06)';
+      g.fillRect(AW / 2 - 26, ARENA.y0, 2, ARENA.y1 - ARENA.y0 + 10);
+      g.fillRect(AW / 2 + 24, ARENA.y0, 2, ARENA.y1 - ARENA.y0 + 10);
       Atlas.draw(g, 'wall_banner_red', 0, AW / 2 - 24, ARENA.y0 - 2);
       Atlas.draw(g, 'wall_banner_red', 0, AW / 2 + 24, ARENA.y0 - 2);
     }
@@ -1262,9 +1340,9 @@
 
     if (Math.random() < dt * 6) FX.ember(cam.x + Math.random() * VW, cam.y + VH - Math.random() * 50, tierDef().light);
 
-    // 카메라 — 플레이어를 부드럽게 따른다
-    var tx2 = clamp(p.x - VW / 2, 0, AW - VW);
-    var ty2 = clamp(p.y - VH / 2 - 8, 0, AH - VH);
+    // 카메라 — 플레이어를 부드럽게 따른다. 뷰보다 작은 방은 가운데에 못 박는다
+    var tx2 = AW <= VW ? (AW - VW) / 2 : clamp(p.x - VW / 2, 0, AW - VW);
+    var ty2 = AH <= VH ? (AH - VH) / 2 : clamp(p.y - VH / 2 - 8, 0, AH - VH);
     cam.x += (tx2 - cam.x) * Math.min(1, dt * 7);
     cam.y += (ty2 - cam.y) * Math.min(1, dt * 7);
   }
@@ -1394,8 +1472,8 @@
     wg.restore();
 
     /* 광원 + 어둠 — 뷰 좌표로 변환해 얹는다 */
-    var lights = [{ x: p.x, y: p.y - 6, r: 78, a: 0.9, c: null }];
-    foes.forEach(function (e) { lights.push({ x: e.x, y: e.y - 6, r: e.boss ? 58 : 32, a: 0.55, c: null }); });
+    var lights = [{ x: p.x, y: p.y - 6, r: 96, a: 0.9, c: null }];
+    foes.forEach(function (e) { lights.push({ x: e.x, y: e.y - 6, r: e.boss ? 64 : 38, a: 0.55, c: null }); });
     room.torches.forEach(function (tc) {
       lights.push({ x: tc.x, y: tc.y, r: 46 + Math.sin(animT * 9 + tc.x) * 5, a: 0.8, c: t.light });
     });

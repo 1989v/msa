@@ -173,6 +173,7 @@
     { key: 'cross', aw: 576, ah: 324, cols: [[17, 9], [18, 10]], pits: [[6, 4, 4, 3], [26, 13, 4, 3]], crates: [], spikes: [[17, 15]] },
     { key: 'den', aw: 448, ah: 252, cols: [[13, 7]], pits: [], crates: [[4, 3], [22, 11]], spikes: [[8, 10], [19, 4]] },
     { key: 'pillars', aw: 640, ah: 324, cols: [[8, 5], [16, 8], [24, 5], [32, 8], [12, 14], [20, 11], [28, 14]], pits: [], crates: [], spikes: [] },
+    { key: 'grand', aw: 832, ah: 396, cols: [[12, 7], [12, 17], [39, 7], [39, 17], [25, 12]], pits: [[20, 5, 3, 3], [29, 16, 3, 3]], crates: [[6, 5], [45, 19]], spikes: [[16, 12], [35, 12]] },
   ];
 
   /* ── 적 — AI 는 game.js 의 kind 스위치, 여기는 수치만 ─────────────────── */
@@ -193,11 +194,11 @@
 
   /* ── 계층 ──────────────────────────────────────────────────────────────── */
   var TIERS = [
-    { name: { ko: '재의 뜰', en: 'Ashen Court' }, floor: '#8a86a8', mood: 'rgba(10,8,24,.42)',
+    { name: { ko: '재의 뜰', en: 'Ashen Court' }, floor: '#8a86a8', mood: 'rgba(10,8,24,.36)',
       light: '#ff9a5c', roster: ['imp', 'skelet'], boss: 'ogre', rooms: 8 },
-    { name: { ko: '핏빛 회랑', en: 'Crimson Gallery' }, floor: '#a87878', mood: 'rgba(24,6,10,.42)',
+    { name: { ko: '핏빛 회랑', en: 'Crimson Gallery' }, floor: '#a87878', mood: 'rgba(24,6,10,.36)',
       light: '#ff6a4a', roster: ['imp', 'skelet', 'chort', 'orc'], boss: 'bigzomb', rooms: 8 },
-    { name: { ko: '망각의 옥좌', en: 'Throne of Oblivion' }, floor: '#6a8a92', mood: 'rgba(4,14,20,.46)',
+    { name: { ko: '망각의 옥좌', en: 'Throne of Oblivion' }, floor: '#6a8a92', mood: 'rgba(4,14,20,.4)',
       light: '#6ae0ff', roster: ['chort', 'orc', 'wogol', 'necro'], boss: 'demon', rooms: 8 },
   ];
 
