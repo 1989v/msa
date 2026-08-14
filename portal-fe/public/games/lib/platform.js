@@ -11,6 +11,9 @@
  *
  * 랭킹: lib/rank.js 위임. 게임 화면을 침범하지 않도록 우하단 🏆 플로팅 버튼 + 오버레이.
  *
+ * 운영 노트: 카탈로그 카피(V시드/UPDATE 마이그레이션)가 바뀌면 portal-fe 를 재빌드해야
+ * 프리렌더 정적 페이지·메타태그에 반영된다 — 프리렌더는 빌드 시점 API 를 읽는다.
+ *
  * 사용 (index.html, 게임 스크립트보다 먼저):
  *   <script src="../lib/rank.js"></script>
  *   <script src="../lib/platform.js"></script>
