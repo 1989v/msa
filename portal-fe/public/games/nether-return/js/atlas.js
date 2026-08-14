@@ -34,6 +34,8 @@
     'coin_anim 288 272 8 8 4',
     'weapon_regular_sword 323 26 10 21', 'weapon_knife 293 18 6 13',
     'weapon_anime_sword 322 81 12 30', 'weapon_big_hammer 291 42 10 37',
+    'weapon_spear 293 177 6 30', 'weapon_duel_sword 325 113 9 30',
+    'wall_hole_1 48 32 16 16', 'skull 288 320 16 16',
     'tiny_zombie_idle_anim 368 16 16 16 4', 'tiny_zombie_run_anim 432 16 16 16 4',
     'imp_idle_anim 368 48 16 16 4', 'imp_run_anim 432 48 16 16 4',
     'skelet_idle_anim 368 80 16 16 4', 'skelet_run_anim 432 80 16 16 4',

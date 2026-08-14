@@ -129,20 +129,66 @@
       apply: function (st) { st.castCharges += 1; } },
   ];
 
+  /* ── 무기 — 하데스식 무기고. 콤보 프로필이 전투 리듬을 통째로 바꾼다 ────
+   * unlock: 명전 해금 비용 (0 = 시작 무기). 콤보 t = 휘두름 시간(공속으로 나뉜다).
+   */
+  var WEAPONS = [
+    { key: 'sword', unlock: 0, spr: 'weapon_regular_sword',
+      name: { ko: '파쇄검', en: 'Sunder Blade' },
+      desc: { ko: '균형 잡힌 3연격 — 마지막 타가 넓게 터진다', en: 'Balanced 3-hit combo with a wide finisher' },
+      combo: [
+        { dmg: 12, arc: 1.75, reach: 30, lunge: 110, t: 0.22 },
+        { dmg: 12, arc: 1.75, reach: 30, lunge: 110, t: 0.22 },
+        { dmg: 19, arc: 2.2, reach: 35, lunge: 150, t: 0.3, finisher: true },
+      ] },
+    { key: 'spear', unlock: 300, spr: 'weapon_spear',
+      name: { ko: '흑창', en: 'Umbral Spear' },
+      desc: { ko: '좁고 길다 — 찌르기 사거리가 검의 1.6배', en: 'Narrow thrusts with 1.6x reach' },
+      combo: [
+        { dmg: 11, arc: 0.85, reach: 48, lunge: 130, t: 0.2 },
+        { dmg: 11, arc: 0.85, reach: 48, lunge: 130, t: 0.2 },
+        { dmg: 22, arc: 1.0, reach: 56, lunge: 190, t: 0.3, finisher: true },
+      ] },
+    { key: 'twin', unlock: 800, spr: 'weapon_duel_sword',
+      name: { ko: '쌍인', en: 'Twin Fangs' },
+      desc: { ko: '짧고 빠른 4연격 — 몰아칠수록 강하다', en: 'Four rapid strikes, relentless up close' },
+      combo: [
+        { dmg: 8, arc: 1.6, reach: 24, lunge: 90, t: 0.15 },
+        { dmg: 8, arc: 1.6, reach: 24, lunge: 90, t: 0.15 },
+        { dmg: 8, arc: 1.6, reach: 24, lunge: 90, t: 0.15 },
+        { dmg: 16, arc: 1.9, reach: 28, lunge: 130, t: 0.24, finisher: true },
+      ] },
+  ];
+
+  /* ── 방 구조 — "맵이 하나"를 없앤다. 크기·모양·구덩이·기둥이 방마다 다르다.
+   * aw/ah = 아레나 크기 (뷰 384×216 보다 크면 카메라가 따라간다).
+   * pits = 이동 불가 구덩이 (타일 rect), cols = 기둥, spikes = 가시.
+   */
+  var LAYOUTS = [
+    { key: 'court', aw: 512, ah: 288, cols: [[10, 6], [10, 11], [21, 6], [21, 11]], pits: [], crates: [[5, 4], [26, 13]], spikes: [] },
+    { key: 'hall', aw: 704, ah: 240, cols: [[14, 7], [22, 7], [30, 7]], pits: [], crates: [[7, 5], [37, 9]], spikes: [[18, 4], [26, 10]] },
+    { key: 'split', aw: 576, ah: 324, cols: [], pits: [[15, 8, 6, 4]], crates: [[4, 4], [31, 15]], spikes: [] },
+    { key: 'quad', aw: 640, ah: 360, cols: [[9, 6], [9, 15], [29, 6], [29, 15]], pits: [[18, 10, 4, 2]], crates: [], spikes: [[5, 11], [34, 11]] },
+    { key: 'lane', aw: 768, ah: 288, cols: [], pits: [[11, 5, 3, 8], [33, 5, 3, 8]], crates: [[23, 8]], spikes: [[19, 4], [27, 13]] },
+    { key: 'cross', aw: 576, ah: 324, cols: [[17, 9], [18, 10]], pits: [[6, 4, 4, 3], [26, 13, 4, 3]], crates: [], spikes: [[17, 15]] },
+    { key: 'den', aw: 448, ah: 252, cols: [[13, 7]], pits: [], crates: [[4, 3], [22, 11]], spikes: [[8, 10], [19, 4]] },
+    { key: 'pillars', aw: 640, ah: 324, cols: [[8, 5], [16, 8], [24, 5], [32, 8], [12, 14], [20, 11], [28, 14]], pits: [], crates: [], spikes: [] },
+  ];
+
   /* ── 적 — AI 는 game.js 의 kind 스위치, 여기는 수치만 ─────────────────── */
   var ENEMIES = {
-    imp:    { spr: 'imp', hp: 26, spd: 92, dmg: 9, r: 5, coin: 2, atkCd: 1.5, tele: 0.35 },
-    skelet: { spr: 'skelet', hp: 22, spd: 62, dmg: 8, r: 5, coin: 2, atkCd: 2.3, tele: 0.4, ranged: true },
-    chort:  { spr: 'chort', hp: 32, spd: 68, dmg: 8, r: 6, coin: 3, atkCd: 2.6, tele: 0.45, ranged: true, spread: 3 },
-    orc:    { spr: 'masked_orc', hp: 58, spd: 50, dmg: 15, r: 7, coin: 4, atkCd: 3.0, tele: 0.55, charger: true },
-    necro:  { spr: 'necromancer', hp: 44, spd: 46, dmg: 9, r: 6, coin: 6, atkCd: 3.4, tele: 0.5, summoner: true },
-    wogol:  { spr: 'wogol', hp: 36, spd: 78, dmg: 11, r: 6, coin: 4, atkCd: 2.0, tele: 0.4, blinker: true },
+    imp:    { spr: 'imp', hp: 30, spd: 100, dmg: 12, r: 5, coin: 2, atkCd: 1.2, tele: 0.32 },
+    skelet: { spr: 'skelet', hp: 26, spd: 66, dmg: 10, r: 5, coin: 2, atkCd: 1.9, tele: 0.38, ranged: true },
+    chort:  { spr: 'chort', hp: 38, spd: 74, dmg: 10, r: 6, coin: 3, atkCd: 2.2, tele: 0.42, ranged: true, spread: 3 },
+    orc:    { spr: 'masked_orc', hp: 68, spd: 54, dmg: 18, r: 7, coin: 4, atkCd: 2.6, tele: 0.5, charger: true },
+    necro:  { spr: 'necromancer', hp: 52, spd: 48, dmg: 11, r: 6, coin: 6, atkCd: 3.0, tele: 0.46, summoner: true },
+    wogol:  { spr: 'wogol', hp: 42, spd: 84, dmg: 13, r: 6, coin: 4, atkCd: 1.7, tele: 0.36, blinker: true },
   };
 
   var BOSSES = {
-    ogre:   { spr: 'ogre', name: { ko: '오거 문지기', en: 'Ogre Gatekeeper' }, hp: 380, spd: 46, r: 12, coin: 60, scale: 1 },
-    bigzomb:{ spr: 'big_zombie', name: { ko: '망자 거인', en: 'Giant of the Dead' }, hp: 640, spd: 40, r: 13, coin: 90, scale: 1.1 },
-    demon:  { spr: 'big_demon', name: { ko: '재의 군주', en: 'Lord of Ash' }, hp: 950, spd: 52, r: 14, coin: 150, scale: 1.25 },
+    ogre:   { spr: 'ogre', name: { ko: '오거 문지기', en: 'Ogre Gatekeeper' }, hp: 520, spd: 52, r: 12, coin: 60, scale: 1 },
+    bigzomb:{ spr: 'big_zombie', name: { ko: '망자 거인', en: 'Giant of the Dead' }, hp: 880, spd: 46, r: 13, coin: 90, scale: 1.1 },
+    demon:  { spr: 'big_demon', name: { ko: '재의 군주', en: 'Lord of Ash' }, hp: 1350, spd: 58, r: 14, coin: 150, scale: 1.25 },
   };
 
   /* ── 계층 ──────────────────────────────────────────────────────────────── */
@@ -153,16 +199,6 @@
       light: '#ff6a4a', roster: ['imp', 'skelet', 'chort', 'orc'], boss: 'bigzomb', rooms: 8 },
     { name: { ko: '망각의 옥좌', en: 'Throne of Oblivion' }, floor: '#6a8a92', mood: 'rgba(4,14,20,.46)',
       light: '#6ae0ff', roster: ['chort', 'orc', 'wogol', 'necro'], boss: 'demon', rooms: 8 },
-  ];
-
-  /* ── 방 템플릿 — 장애물 배치 (타일 단위, 40×22 아레나) ─────────────────── */
-  var TEMPLATES = [
-    { cols: [[10, 7], [10, 14], [29, 7], [29, 14]], crates: [], spikes: [] },
-    { cols: [[19, 10], [20, 10]], crates: [[8, 5], [31, 5], [8, 16], [31, 16]], spikes: [] },
-    { cols: [], crates: [[13, 8], [26, 8], [13, 13], [26, 13]], spikes: [[19, 5], [20, 5], [19, 16], [20, 16]] },
-    { cols: [[8, 11], [31, 11]], crates: [[19, 4], [20, 4]], spikes: [[14, 11], [25, 11]] },
-    { cols: [[12, 6], [27, 6], [12, 15], [27, 15], [19, 10], [20, 11]], crates: [], spikes: [] },
-    { cols: [], crates: [], spikes: [[10, 8], [11, 8], [28, 8], [29, 8], [10, 13], [11, 13], [28, 13], [29, 13]] },
   ];
 
   /* ── 예언 목록 (하데스 Fated List) — check(S) 는 세이브를 보고 달성 판정 ── */
@@ -240,7 +276,7 @@
 
   window.DATA = {
     GODS: GODS, BOONS: BOONS, FORGE: FORGE, RARITY: RARITY,
-    ENEMIES: ENEMIES, BOSSES: BOSSES, TIERS: TIERS, TEMPLATES: TEMPLATES,
+    ENEMIES: ENEMIES, BOSSES: BOSSES, TIERS: TIERS, LAYOUTS: LAYOUTS, WEAPONS: WEAPONS,
     PROPH: PROPH, STORY: STORY, META_UP: META_UP,
     tx: tx, lang: lang,
   };

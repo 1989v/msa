@@ -24,11 +24,13 @@
       life: 2 + Math.random() * 2, max: 4, c: color, sz: 1, g: -4, glow: true });
   }
 
-  /* ── 데미지 숫자 / 자막 (메인 캔버스 좌표 = 월드×2) ── */
+  /* ── 데미지 숫자 / 자막 — 아레나 좌표로 받고, 그릴 때 카메라·배율로 변환 ── */
   var floats = [];
+  var view = { x: 0, y: 0, s: 2 };
+  function setView(camX, camY, scale) { view.x = camX; view.y = camY; view.s = scale; }
   function num(x, y, text, color, big) {
-    floats.push({ x: x * 2 + (Math.random() - 0.5) * 14, y: y * 2 - 8, t: String(text),
-      c: color || '#fff', life: 0.7, max: 0.7, vy: -46, big: big });
+    floats.push({ x: x + (Math.random() - 0.5) * 7, y: y - 4, t: String(text),
+      c: color || '#fff', life: 0.7, max: 0.7, vy: -24, big: big });
   }
 
   /* ── 흔들림 / 히트스톱 / 플래시 ── */
@@ -76,12 +78,13 @@
     g.textAlign = 'center';
     for (var i = 0; i < floats.length; i++) {
       var f = floats[i];
+      var sx = (f.x - view.x) * view.s, sy = (f.y - view.y) * view.s;
       g.globalAlpha = Math.min(1, f.life / f.max * 1.6);
       g.font = (f.big ? 'bold 30px' : 'bold 19px') + ' neodgm, monospace';
       g.fillStyle = '#0008';
-      g.fillText(f.t, f.x + 2, f.y + 2);
+      g.fillText(f.t, sx + 2, sy + 2);
       g.fillStyle = f.c;
-      g.fillText(f.t, f.x, f.y);
+      g.fillText(f.t, sx, sy);
     }
     g.globalAlpha = 1;
     g.textAlign = 'left';
@@ -201,7 +204,8 @@
   }
 
   window.FX = {
-    burst: burst, ember: ember, num: num, shake: shake, hitstop: hitstop, flash: flash,
+    burst: burst, ember: ember, num: num, setView: setView,
+    shake: shake, hitstop: hitstop, flash: flash,
     update: update, consumeStop: consumeStop, drawWorld: drawWorld, drawUI: drawUI,
     drawLights: drawLights,
     audio: audio, sfx: sfx, music: music, musicStop: musicStop,

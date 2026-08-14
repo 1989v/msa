@@ -18,7 +18,7 @@
          min-height:100vh; user-select:none; }
   #wrap { position:relative; border:4px solid #1c1428; border-radius:10px; overflow:hidden;
           box-shadow:0 0 64px rgba(120,60,20,.25), 0 0 48px rgba(0,0,0,.8); max-width:1280px; width:100%; }
-  canvas { display:block; background:#050409; width:100%; height:auto; cursor:crosshair; }
+  canvas { display:block; background:#050409; width:100%; height:auto; }
   .panel { position:absolute; inset:0; background:rgba(6,4,12,.93); display:flex; flex-direction:column;
            align-items:center; justify-content:center; gap:11px; text-align:center; z-index:10;
            padding:22px; overflow-y:auto; }
@@ -42,6 +42,14 @@
   .proph-row { display:flex; gap:8px; align-items:baseline; font-size:12px; padding:3px 6px;
                text-align:left; border-bottom:1px solid rgba(148,163,184,.08); }
   .proph-row.done { opacity:.55; }
+  .wpn-btn { display:flex; flex-direction:column; gap:2px; background:#1a1226; color:#e8ddc8;
+             border:2px solid #2a2038; padding:8px 14px; border-radius:8px; min-width:150px; font-size:13px; }
+  .wpn-btn b { color:#ff8a4a; }
+  .wpn-btn span { font-size:10.5px; color:#9a8f7c; max-width:180px; line-height:1.5; }
+  .wpn-btn.sel { border-color:#ff8a4a; background:#241428; }
+  .wpn-btn.locked { opacity:.7; }
+  .wpn-btn.deny { border-color:#ff3a3a; }
+  #menu > #weaponRow { order: 3; }
   /* 메뉴 배치 — 인사(스토리)가 강화 상점보다 먼저, 이어하기가 새 탈주보다 먼저 */
   #menu > #story { order: 2; }
   #menu > #resumeBtn { order: 7; }
@@ -60,7 +68,7 @@
 </head>
 <body>
 <div id="wrap">
-  <canvas id="cv" width="1280" height="720"></canvas>
+  <canvas id="cv" width="1152" height="648"></canvas>
 
   <div class="panel" id="menu">
     <h1 data-i18n="h1">🔥 황천 회귀</h1>
@@ -68,6 +76,7 @@
       방을 제압하고, 문 너머의 보상을 고르고, 신격의 문장으로 강해져라.
       쓰러지면 처음부터 — 하지만 명전과 강화는 남는다.</span></p>
     <div id="story"></div>
+    <div class="row" id="weaponRow"></div>
     <div id="saveStatus"></div>
     <div class="row">
       <input id="codeInput" placeholder="이어하기 코드" data-i18n-ph="phCode" maxlength="18" autocomplete="off">
@@ -92,7 +101,7 @@
   </div>
 </div>
 <div id="info">
-  <span data-i18n="info1">WASD/방향키 이동 · 마우스 조준 + 좌클릭/Z 공격 · Space 질주(무적) · 우클릭/X 투혼 · Esc 멈춤 · M 음소거</span><br>
+  <span data-i18n="info1">방향키 이동 + Z공격·X투혼·C질주  /  WASD 이동 + J공격·K투혼·L질주 · Space 질주 공용 · 꾹 누르면 연격 · Esc 멈춤 · M 음소거</span><br>
   <span data-i18n="info2">적의 공격에는 반드시 예고가 있다 — 질주로 빠져나가라. 문 위의 문양이 다음 보상이다.</span>
 </div>
 
@@ -105,7 +114,7 @@ GameI18n.init({
     desc3: '. 방을 제압하고, 문 너머의 보상을 고르고, 신격의 문장으로 강해져라. 쓰러지면 처음부터 — 하지만 명전과 강화는 남는다.',
     phCode: '이어하기 코드', btnCode: '🔑 코드로 불러오기',
     btnStart: '▶ 탈주 시작', btnAgain: '🔁 다시 탈주', btnBack: '안식처로',
-    info1: 'WASD/방향키 이동 · 마우스 조준 + 좌클릭/Z 공격 · Space 질주(무적) · 우클릭/X 투혼 · Esc 멈춤 · M 음소거',
+    info1: '방향키 이동 + Z공격·X투혼·C질주  /  WASD 이동 + J공격·K투혼·L질주 · Space 질주 공용 · 꾹 누르면 연격 · Esc 멈춤 · M 음소거',
     info2: '적의 공격에는 반드시 예고가 있다 — 질주로 빠져나가라. 문 위의 문양이 다음 보상이다.',
   },
   en: {
@@ -114,7 +123,7 @@ GameI18n.init({
     desc3: '. Clear chambers, choose your reward at each door, grow strong with divine boons. Death sends you back — but coins and upgrades remain.',
     phCode: 'Continue code', btnCode: '🔑 Load by code',
     btnStart: '▶ Begin Escape', btnAgain: '🔁 Escape Again', btnBack: 'To Sanctum',
-    info1: 'WASD/Arrows move · Mouse aim + LMB/Z attack · Space dash (i-frames) · RMB/X cast · Esc pause · M mute',
+    info1: 'Arrows + Z/X/C  or  WASD + J/K/L (attack/cast/dash) · Space dash · hold to combo · Esc pause · M mute',
     info2: 'Every enemy attack is telegraphed — dash through it. The sigil above each door shows its reward.',
   },
 });
