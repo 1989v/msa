@@ -199,6 +199,13 @@ export function recordRunStart() {
 }
 
 export function recordRunEnd({ won, biomeIndex, roomIndex, kills, shards, boons, timeSec }) {
+  // 플랫폼 랭킹 (통합 어댑터 — 게임 로직과 무관, 없으면 no-op)
+  if (window.PlatformAdapter) {
+    PlatformAdapter.runEnd({
+      score: (won ? 8000 : 0) + biomeIndex * 2000 + roomIndex * 150 + kills * 20,
+      detail: (won ? '완주' : `${biomeIndex + 1}지역 ${roomIndex + 1}방`) + ` · 처치 ${kills}`,
+    });
+  }
   const s = save.stats;
   if (won) {
     s.wins++;

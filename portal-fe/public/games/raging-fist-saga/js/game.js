@@ -20,6 +20,16 @@ const PROJ_STYLE = {
   weapon: { col: '#c0c8d4', col2: '#ffffff' },
 };
 
+
+// 플랫폼 랭킹 제출 (통합 어댑터 — 게임 로직과 무관, 없으면 no-op)
+function reportRun(S, won) {
+  if (!window.PlatformAdapter) return;
+  const stageNames = ['안개 항만', '적열 제련소', '설풍 사원', '심연의 옥좌'];
+  PlatformAdapter.runEnd({
+    score: S.score + (won ? 50000 : 0) + S.stageIdx * 10000,
+    detail: (won ? '완주 · ' : '') + (stageNames[S.stageIdx] || '') + ' · ' + S.score.toLocaleString() + '점',
+  });
+}
 export class Game {
   constructor() {
     this.state = 'title';
@@ -275,7 +285,7 @@ export class Game {
     if (this.state === 'over') {
       this.continueT -= 1 / 60;
       this.updateAmbient();
-      if (this.continueT <= 0) this.state = 'gameover';
+      if (this.continueT <= 0) { this.state = 'gameover'; reportRun(this, false); }
       return;
     }
     if (this.state !== 'play') { this.updateAmbient(); return; }
@@ -417,8 +427,8 @@ export class Game {
   nextStage() {
     const goHidden = this.stageIdx === 2 && this.hidden.scrolls >= 3;
     if (goHidden) { this.loadStage(3); return; }
-    if (this.stageIdx >= 2) { this.state = 'ending'; stopBgm(); playBgm('victory'); return; }
-    if (this.stageIdx === 3) { this.state = 'ending'; return; }
+    if (this.stageIdx >= 2) { this.state = 'ending'; reportRun(this, true); stopBgm(); playBgm('victory'); return; }
+    if (this.stageIdx === 3) { this.state = 'ending'; reportRun(this, true); return; }
     this.loadStage(this.stageIdx + 1);
   }
 
@@ -437,6 +447,7 @@ export class Game {
         this.continueT = 10;
       } else {
         this.state = 'gameover';
+        reportRun(this, false);
       }
     }
   }
