@@ -37,29 +37,37 @@
     return `rgba(${r},${g},${b},${a})`;
   };
 
-  // 자동 외곽선(외측 1px) + 림라이트(윗면 1px) 포스트 — 스프라이트 공통 문법
+  // 자동 외곽선(외측) + 림라이트(윗면) 포스트 — 스프라이트 공통 문법
   NS.outlinePass = (canvas, opts = {}) => {
     const outline = hexToRgb(opts.outline || P.ink);
     const rim = hexToRgb(opts.rim || P.cyan3);
     const rimA = opts.rimAlpha !== undefined ? opts.rimAlpha : 0.75;
+    const ow = opts.outlineW || 1;
     const w = canvas.width, h = canvas.height;
     const g = canvas.getContext('2d');
     const src = g.getImageData(0, 0, w, h);
     const out = g.createImageData(w, h);
     const s = src.data, d = out.data;
     const A = (x, y) => (x < 0 || y < 0 || x >= w || y >= h) ? 0 : s[(y * w + x) * 4 + 3];
+    const nearOpaque = (x, y) => {
+      for (let r = 1; r <= ow; r++) {
+        if (A(x - r, y) > 8 || A(x + r, y) > 8 || A(x, y - r) > 8 || A(x, y + r) > 8) return true;
+        if (r > 1 && (A(x - 1, y - 1) > 8 || A(x + 1, y - 1) > 8 || A(x - 1, y + 1) > 8 || A(x + 1, y + 1) > 8)) return true;
+      }
+      return false;
+    };
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const i = (y * w + x) * 4;
         const a = s[i + 3];
         if (a > 8) {
           d[i] = s[i]; d[i + 1] = s[i + 1]; d[i + 2] = s[i + 2]; d[i + 3] = a;
-          if (A(x, y - 1) <= 8) { // 윗면 림라이트
+          if (A(x, y - 1) <= 8 || A(x, y - 2) <= 8 && ow > 1) { // 윗면 림라이트
             d[i] = Math.round(NS.lerp(s[i], rim[0], rimA));
             d[i + 1] = Math.round(NS.lerp(s[i + 1], rim[1], rimA));
             d[i + 2] = Math.round(NS.lerp(s[i + 2], rim[2], rimA));
           }
-        } else if (A(x - 1, y) > 8 || A(x + 1, y) > 8 || A(x, y - 1) > 8 || A(x, y + 1) > 8) {
+        } else if (nearOpaque(x, y)) {
           d[i] = outline[0]; d[i + 1] = outline[1]; d[i + 2] = outline[2]; d[i + 3] = 255;
         }
       }
@@ -69,11 +77,21 @@
     return canvas;
   };
 
-  // 베이크: fn(g, w, h) 로 그린 뒤 포스트 적용해 캔버스 반환
+  // 베이크: 2× 슈퍼샘플로 그린 뒤 다운스케일 — 곡선/사선의 계단 도트를 제거한 클린 룩.
+  // 정수 렉트(타일 등)는 무손실로 유지된다. post 는 하이레즈에서 적용(가는 외곽선).
   NS.bake = (w, h, fn, opts) => {
+    const RES = 2;
+    const hi = NS.makeCanvas(w * RES, h * RES);
+    const hg = hi.getContext('2d');
+    hg.scale(RES, RES);
+    fn(hg, w, h);
+    if (!opts || opts.post !== false) NS.outlinePass(hi, Object.assign({ outlineW: RES }, opts));
     const c = NS.makeCanvas(w, h);
-    fn(c.getContext('2d'), w, h);
-    if (!opts || opts.post !== false) NS.outlinePass(c, opts);
+    const g = c.getContext('2d');
+    g.imageSmoothingEnabled = true;
+    g.imageSmoothingQuality = 'high';
+    g.drawImage(hi, 0, 0, w, h);
+    c.hi = hi;   // 2× 원본 보존 — 메뉴 초상 등 확대 드로우용
     return c;
   };
 
@@ -96,34 +114,35 @@
     }
   };
 
-  // 캡슐형 리무(limb) — 리그 베이크용 (3톤 명암: 아래 어둡게, 위 밝게)
+  // 캡슐형 리무(limb) — 벡터 스트로크 3톤 (라운드 캡, 계단 없는 클린 렌더)
   NS.limb = (g, x0, y0, x1, y1, w, base, dark, lite) => {
-    const dx = x1 - x0, dy = y1 - y0;
-    const len = Math.max(1, Math.hypot(dx, dy));
-    const steps = Math.ceil(len);
-    for (let i = 0; i <= steps; i++) {
-      const t = i / steps;
-      const cx = x0 + dx * t, cy = y0 + dy * t;
-      const r = w / 2;
-      g.fillStyle = dark;
-      g.fillRect(Math.round(cx - r), Math.round(cy - r), w, w);
-      g.fillStyle = base;
-      g.fillRect(Math.round(cx - r), Math.round(cy - r), w, Math.max(1, w - 1));
-      if (lite) {
-        g.fillStyle = lite;
-        g.fillRect(Math.round(cx - r), Math.round(cy - r), Math.max(1, w - 1), 1);
-      }
-    }
+    const line = (ox, oy, lw, col) => {
+      if (!col) return;
+      g.strokeStyle = col;
+      g.lineWidth = Math.max(1, lw);
+      g.lineCap = 'round';
+      g.beginPath();
+      g.moveTo(x0 + ox, y0 + oy);
+      g.lineTo(x1 + ox, y1 + oy);
+      g.stroke();
+    };
+    line(0.3, 0.5, w, dark || base);       // 하단 셰이드 (아래로 살짝)
+    line(-0.2, -0.3, w - 0.9, base);       // 본체
+    if (lite) line(-0.5, -w * 0.28, Math.max(1, w * 0.34), lite);  // 상단 하이라이트
   };
 
-  // 원판(머리·관절) — 상단 하이라이트 + 하단 셰이드
+  // 원판(머리·관절) — 벡터 아크 3톤
   NS.orb = (g, cx, cy, r, base, dark, lite) => {
-    for (let y = -r; y <= r; y++) {
-      const hw = Math.floor(Math.sqrt(r * r - y * y) + 0.35);
-      const col = y > r * 0.35 ? dark : (y < -r * 0.35 ? lite : base);
+    const disc = (ox, oy, rr, col) => {
+      if (!col || rr <= 0) return;
       g.fillStyle = col;
-      g.fillRect(Math.round(cx - hw), Math.round(cy + y), hw * 2 + 1, 1);
-    }
+      g.beginPath();
+      g.arc(cx + ox, cy + oy, rr, 0, Math.PI * 2);
+      g.fill();
+    };
+    disc(0, 0.2, r, dark || base);
+    disc(-0.2, -0.4, r - 0.7, base);
+    disc(-r * 0.22, -r * 0.3, r * 0.52, lite);
   };
 
   // 셰이딩 박스: 3톤 (상단 lite 1px / 본체 base / 하단 dark)

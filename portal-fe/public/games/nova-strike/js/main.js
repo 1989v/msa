@@ -7,7 +7,7 @@
   const uiCanvas = document.getElementById('ui');
   const g = gameCanvas.getContext('2d');
   const ug = uiCanvas.getContext('2d');
-  g.imageSmoothingEnabled = false;
+  g.imageSmoothingEnabled = true;   // 클린 룩 — 스케일 드로우 안티에일리어싱
 
   let scale = 2, dpr = 1, uiScale = 2;
 

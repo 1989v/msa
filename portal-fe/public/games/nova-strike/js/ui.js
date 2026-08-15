@@ -41,6 +41,17 @@
   CARD.x = (i) => CARD.x0() + i * (CARD.w + CARD.gap);
   CARD.labX = () => CARD.x0() + 4 * (CARD.w + CARD.gap) + 4;
 
+  // 확대 스프라이트 드로우 — 하이레즈 원본이 있으면 그것으로 (흐림 방지)
+  function bigSprite(g, img, sc, ox, oy) {
+    if (img.hi) {
+      g.scale(sc / 2, sc / 2);
+      g.drawImage(img.hi, (ox || -32) * 2, (oy || -64) * 2);
+    } else {
+      g.scale(sc, sc);
+      g.drawImage(img, ox || -32, oy || -64);
+    }
+  }
+
   NS.UI = {
     frame: 0,
 
@@ -96,10 +107,9 @@
       ];
       for (const [img, x, sc, flip] of duo) {
         g.save();
-        g.imageSmoothingEnabled = false;
         g.translate(Math.round(x), Math.round(UIH * 0.96));
-        g.scale(flip ? -sc : sc, sc);
-        g.drawImage(img, -32, -64);
+        g.scale(flip ? -1 : 1, 1);
+        bigSprite(g, img, sc);
         g.restore();
       }
       g.fillStyle = NS.rgba(P.cyan2, 0.06 + 0.03 * Math.sin(this.frame * 0.05));
@@ -116,10 +126,9 @@
         g.save();
         g.translate(Math.round(cx), 246);
         const sc = sel ? 2.5 : 2;
-        g.scale(i === 1 ? -sc : sc, sc);
-        g.imageSmoothingEnabled = false;
+        g.scale(i === 1 ? -1 : 1, 1);
         if (!sel) g.globalAlpha = 0.6;
-        g.drawImage(img, -32, -64);
+        bigSprite(g, img, sc);
         g.restore();
         g.globalAlpha = 1;
       }
@@ -135,11 +144,9 @@
         const spr = NS.Sprites.bosses[defs[i][0]][defs[i][1]][0];
         const sc = Math.min(64 / spr.width, 58 / spr.height);
         g.save();
-        g.imageSmoothingEnabled = false;
         g.translate(Math.round(cx), Math.round(by));
-        g.scale(sc, sc);
         if (locked) g.globalAlpha = 0.25;
-        g.drawImage(spr, -spr.width / 2, -spr.height);
+        bigSprite(g, spr, sc, -spr.width / 2, -spr.height);
         g.restore();
         g.globalAlpha = 1;
       }
@@ -191,6 +198,16 @@
         g.strokeStyle = P.red2;
         g.strokeRect(bx - 2.5, bBot - bH2 + 0.5, 13, bH2);
       }
+      // ── 기력(커맨드) 게이지 ──
+      {
+        const gx = x - 2, gy = yBot + 34, gw = 46, gh = 5;
+        g.fillStyle = 'rgba(9,10,26,0.8)';
+        g.fillRect(gx, gy, gw, gh);
+        g.fillStyle = pl.tp >= 6 ? P.orange3 : P.steel3;
+        g.fillRect(gx + 1, gy + 1, (gw - 2) * (pl.tp / pl.tpMax), gh - 2);
+        g.strokeStyle = P.steel3; g.lineWidth = 1;
+        g.strokeRect(gx + 0.5, gy + 0.5, gw - 1, gh - 1);
+      }
       // 라이프 아이콘
       const li = NS.Sprites.items.oneUp[0];
       for (let i = 0; i < Math.min(5, pl.lives); i++) g.drawImage(li, 10 + i * 14, 8);
@@ -205,7 +222,6 @@
       if (wid && NS.Sprites.bullets[sprMap[wid]]) {
         const spr = NS.Sprites.bullets[sprMap[wid]][Math.floor(this.frame / 8) % 2];
         g.save();
-        g.imageSmoothingEnabled = false;
         g.translate(CX(), 150);
         g.scale(3.4, 3.4);
         g.drawImage(spr, -spr.width / 2, -spr.height / 2);
@@ -257,7 +273,8 @@
       panel(g, s, CX() - 170, 246, 340, 66, { border: NS.rgba(P.steel3, 0.6) });
       text(g, s, '이동 ←→/AD · 점프 Z/K · 공격(홀드=차지) X/J · 대시 C/L', CX(), 266, 10.5, '#c3cbe8', { align: 'center', weight: 500 });
       text(g, s, '무기 전환 Q·E (또는 U·O, 1~4) · 일시정지 ENTER', CX(), 283, 10.5, '#c3cbe8', { align: 'center', weight: 500 });
-      text(g, s, '벽에 붙어 하강 = 월 슬라이드 · 벽에서 점프 = 월 점프 · 대시 중 점프 = 대시 점프', CX(), 300, 9.5, '#8b96bd', { align: 'center', weight: 500 });
+      text(g, s, '벽에 붙어 하강 = 월 슬라이드 · 벽에서 점프 = 월 점프 · 대시 중 점프 = 대시 점프', CX(), 298, 9.5, '#8b96bd', { align: 'center', weight: 500 });
+      text(g, s, '커맨드 기술 (기력 게이지 소모): ↓↘→+공격 = 필살기 · →↓↘+공격 = 대공기', CX(), 311, 9.5, '#ffc44d', { align: 'center', weight: 500 });
       const best = NS.Game.save.totalScore;
       if (best > 0) text(g, s, `누적 베스트 스코어 ${best.toLocaleString()}`, CX(), 336, 10, '#5c6690', { align: 'center', weight: 500 });
     },

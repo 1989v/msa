@@ -299,9 +299,9 @@
             // 굴뚝 + 연기 기둥
             R(g, x + bw / 2 - 3, H - bh - 18, 6, 18, '#1c0a12');
             R(g, x + bw / 2 - 4, H - bh - 22, 8, 5, '#301622');
-            for (let sy = H - bh - 30; sy > H - bh - 78; sy -= 9) {
-              const drift = (H - bh - 30 - sy) * 0.35;
-              NS.orb(g, x + bw / 2 + drift, sy, 5 + drift * 0.35, NS.rgba('#241318', 0.5), NS.rgba('#160a0e', 0.4), NS.rgba('#38202a', 0.4));
+            for (let sy = H - bh - 28; sy > H - bh - 84; sy -= 12) {
+              const drift = (H - bh - 28 - sy) * 0.45;
+              NS.orb(g, x + bw / 2 + drift, sy, 3 + drift * 0.16, NS.rgba('#2a1a20', 0.22), null, NS.rgba('#3a2430', 0.16));
             }
             for (let py = H - bh + 12; py < H - 20; py += 26) {
               R(g, x + 2, py, bw - 4, 4, '#180a10');
@@ -512,13 +512,26 @@
     iceAt(px, py) { return this.charAt(px, py) === 'I'; },
 
     breakTile(tx, ty) {
-      if (this.at(tx, ty) === 'B') {
-        this.set(tx, ty, '.');
-        NS.FX.burst(tx * T + 8, ty * T + 8, 8, { color: [this.theme.block.base, this.theme.block.lite], g: 0.2, spMax: 2.5 });
-        NS.Audio.sfx('explode');
-        return true;
+      if (this.at(tx, ty) !== 'B') return false;
+      // 클러스터 연쇄 파괴 — 인접한 부서지는 블록을 한 번에 (한 칸 구멍으로 통로가 막히는 문제 방지)
+      const stack = [[tx, ty]];
+      const seen = new Set([tx + ',' + ty]);
+      let n = 0;
+      while (stack.length) {
+        const [cx2, cy2] = stack.pop();
+        if (this.at(cx2, cy2) !== 'B') continue;
+        this.set(cx2, cy2, '.');
+        NS.FX.burst(cx2 * T + 8, cy2 * T + 8, 8, {
+          color: [this.theme.block.base, this.theme.block.lite], g: 0.2, spMax: 2.5,
+        });
+        n++;
+        for (const [dx2, dy2] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const k = (cx2 + dx2) + ',' + (cy2 + dy2);
+          if (!seen.has(k)) { seen.add(k); stack.push([cx2 + dx2, cy2 + dy2]); }
+        }
       }
-      return false;
+      if (n > 0) NS.Audio.sfx('explode');
+      return n > 0;
     },
 
     // 붕괴 발판: 밟으면 타이머 후 소멸 → 수 초 후 재생

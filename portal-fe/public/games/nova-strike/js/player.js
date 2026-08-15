@@ -91,8 +91,8 @@
     { id: 'cyclone', name: '사이클론 커터', color: P.green2 },
   ];
   NS.CHAR_INFO = {
-    dusk: { name: '더스크', sub: '방랑 건슬링거', desc: '원거리 연사와 차지 매그넘. 3연사 리볼버, 홀드로 관통 황혼탄.', basicName: '퀵드로우 리볼버', basicColor: P.orange3 },
-    raven: { name: '레이븐', sub: '흑풍 검객', desc: '근접 고화력 3연 콤보와 공중 베기. 홀드 후 놓으면 강참·회전참.', basicName: '흑풍 세이버', basicColor: P.steel5 },
+    dusk: { name: '더스크', sub: '방랑 건슬링거', desc: '리볼버 연사 + 차지 매그넘. ↓↘→공격=팬 파이어(5방향) · →↓↘공격=라이징 배럴(대공).', basicName: '퀵드로우 리볼버', basicColor: P.orange3 },
+    raven: { name: '레이븐', sub: '흑풍 검객', desc: '3연 콤보 + 차지 강참·회전참. ↓↘→공격=참풍파(검기) · →↓↘공격=승천참(무적 대공).', basicName: '흑풍 세이버', basicColor: P.steel5 },
   };
 
   const GRAV = 0.38, TERM = 7.6;
@@ -124,6 +124,7 @@
       NS.WEAPONS[0].color = NS.CHAR_INFO[this.charKey].basicColor;
       this.atkStage = 0; this.atkT = 0; this.chainT = 0; this.atkQueued = false; this.atkKind = 1;
       this.landT = 0; this.skidding = false; this.strideAcc = 0;
+      this.tp = 20; this.tpMax = 20; this.dirHist = []; this.lastDir = 5;
       this.maxHp = 16 + (meta.hearts || 0) * 4 + (meta.shop.maxHp ? 4 : 0) + (meta.shop.maxHp2 ? 4 : 0);
       this.hp = this.maxHp;
       this.ammoMax = 16 + (meta.shop.weaponEff ? 8 : 0);
@@ -188,6 +189,23 @@
 
       const ax = inp.axisX();
       if (ax !== 0 && this.state !== 'dash') this.facing = ax;
+
+      // 커맨드 방향 히스토리 (넘패드 표기, facing 상대 — 6=전방)
+      {
+        const rel = ax * this.facing;   // 1=전방, -1=후방
+        const dn = inp.down('down') ? 1 : 0, up = inp.down('up') ? 1 : 0;
+        let d = 5;
+        if (dn && rel > 0) d = 3; else if (dn && rel < 0) d = 1; else if (dn) d = 2;
+        else if (up && rel > 0) d = 9; else if (up) d = 8;
+        else if (rel > 0) d = 6; else if (rel < 0) d = 4;
+        if (d !== this.lastDir) {
+          this.lastDir = d;
+          if (d !== 5) this.dirHist.push({ d, t: this.idleF });
+          if (this.dirHist.length > 10) this.dirHist.shift();
+        }
+      }
+      // 기력 재생
+      if (this.idleF % 30 === 0 && this.tp < this.tpMax) this.tp++;
 
       // ── 점프 입력 버퍼 ──
       if (inp.pressed('jump')) this.jumpBuf = BUFFER;
@@ -379,10 +397,82 @@
       }
     },
 
+    checkCommand() {
+      const now = this.idleF;
+      const within = (win) => this.dirHist.filter(e => now - e.t <= win).map(e => e.d);
+      const tailRecent = this.dirHist.length && now - this.dirHist[this.dirHist.length - 1].t <= 10;
+      const hasSeq = (arr, pat) => {
+        let i = 0;
+        for (const d of arr) if (d === pat[i]) { i++; if (i === pat.length) return true; }
+        return false;
+      };
+      if (!tailRecent) return null;
+      // 승천/대공 (→↓↘) — 순서 조건(6→2→3)이 걷기 오폭을 막는다
+      if (hasSeq(within(24), [6, 2, 3])) return 'dp';
+      // 파동 (↓↘→ / ↓→ 관용)
+      const q = within(26);
+      if (hasSeq(q, [2, 3, 6]) || hasSeq(q, [2, 6])) return 'qcf';
+      return null;
+    },
+
+    doCommand(cmd) {
+      const dir = this.facing;
+      const mz = this.muzzlePos();
+      if (!this.melee) {
+        if (cmd === 'qcf') {
+          // 팬 파이어 — 5방향 부채 연사
+          this.tp -= 6;
+          this.shootAnim = 18; this.shotCd = 10;
+          NS.Audio.sfx('shot3'); NS.FX.shake(2, 6);
+          NS.FX.muzzle(mz.x, mz.y);
+          for (let i = -2; i <= 2; i++) {
+            const a = i * 0.19;
+            Shots.spawn({ type: 'cmd', sprite: 'buster1', x: mz.x - 6, y: mz.y - 3, w: 12, h: 6, vx: Math.cos(a) * 9 * dir, vy: Math.sin(a) * 9, dmg: 1 });
+          }
+          NS.FX.casing(mz.x - dir * 10, mz.y - 2, dir);
+        } else {
+          // 라이징 배럴 — 대공 상방 3연사 + 백스텝
+          this.tp -= 6;
+          this.shootAnim = 18; this.shotCd = 10;
+          NS.Audio.sfx('shot2'); NS.Audio.sfx('jump');
+          this.vy = Math.min(this.vy, -3.4); this.vx = -dir * 1.6; this.onGround = false;
+          for (let i = 0; i < 3; i++) {
+            const a = -Math.PI / 2 + dir * (0.42 - i * 0.21);
+            Shots.spawn({ type: 'cmd', sprite: 'buster2', x: this.cx - 9, y: this.y - 4, w: 18, h: 12, vx: Math.cos(a) * 9, vy: Math.sin(a) * 9, dmg: 2 });
+          }
+        }
+      } else {
+        if (cmd === 'qcf') {
+          // 참풍파 — 전방 검기
+          this.tp -= 6;
+          this.atkKind = 1; this.atkT = 16;
+          NS.Audio.sfx('slashHeavy'); NS.FX.shake(2, 6);
+          Shots.spawn({ type: 'cmd', sprite: 'wave', x: this.cx + dir * 10 - 13, y: this.cy - 13, w: 26, h: 26, vx: 8.5 * dir, vy: 0, dmg: 4, pierce: true, life: 46 });
+          NS.FX.p({ anim: 'slash', x: this.cx + dir * 24, y: this.cy - 2, life: 9, maxLife: 9, animFps: 3, flip: dir < 0 });
+        } else {
+          // 승천참 — 무적 상승 다단 베기
+          this.tp -= 7;
+          this.atkKind = 3; this.atkT = 20;
+          this.vy = -8; this.onGround = false;
+          this.invuln = Math.max(this.invuln, 14);
+          NS.Audio.sfx('slashHeavy'); NS.Audio.sfx('jump');
+          this.meleeBox(30, 48, 3, { oy: -10 });
+          const self = this;
+          setTimeout(() => { if (self.alive) self.meleeBox(30, 48, 2, { oy: -14 }); }, 130);
+          NS.FX.dust(this.cx - 8, this.y + this.h, -1); NS.FX.dust(this.cx + 8, this.y + this.h, 1);
+        }
+      }
+      this.dirHist = [];
+    },
+
     updateShooting(inp) {
       const holding = inp.down('shoot');
       if (inp.pressed('shoot')) {
-        if (this.melee && this.weapon === 0) this.trySlash();
+        const cmd = this.weapon === 0 ? this.checkCommand() : null;
+        const cost = cmd === 'dp' ? 7 : 6;
+        if (cmd && this.tp >= cost && !(this.shotCd > 0)) {
+          this.doCommand(cmd);
+        } else if (this.melee && this.weapon === 0) this.trySlash();
         else this.fire(0);
       }
       // 근접 콤보 예약 소비
@@ -609,6 +699,7 @@
 
     heal(v) {
       this.hp = Math.min(this.maxHp, this.hp + v);
+      this.tp = Math.min(this.tpMax, this.tp + Math.ceil(v / 4));
       NS.Audio.sfx('heal');
       NS.FX.burst(this.cx, this.cy, 6, { color: [P.green3, P.white], g: -0.05 });
     },
