@@ -284,8 +284,8 @@
       if (r.left || r.right) {
         const side = r.right ? 1 : -1;
         this.vx = 0;
-        // 월 슬라이드 진입 (공중 + 벽 방향 입력 + 하강)
-        if (!this.onGround && this.state !== 'dash' && ax === side && this.vy > 0) {
+        // 월 슬라이드 진입 (공중 + 벽 방향 입력 + 하강, 가상 경계벽 제외)
+        if (!this.onGround && this.state !== 'dash' && ax === side && this.vy > 0 && this.touchingWall(side)) {
           if (this.state !== 'wall') { this.state = 'wall'; this.airDashes = 0; NS.Audio.sfx('wall'); }
           this.wallSide = side;
         }
@@ -318,12 +318,15 @@
         if (hz === 'spike') this.damage(4, NS.sign(this.vx) || this.facing);
         else if (hz === 'lava') this.damage(4, -this.facing);
       }
-      // 낙사
+      // 낙사 / 상단 장외 (맵 최상단 림 위는 정상 플레이 도달 불가 — 장외 처리)
       if (this.y > L.pxH + 40 && this.alive) this.kill();
+      if (this.y + this.h < 8 && this.alive) this.kill();
+      if (this.y < -120) { this.y = -120; if (this.vy < 0) this.vy = 0; }
     },
 
     touchingWall(side) {
       const px = side > 0 ? this.x + this.w + 1 : this.x - 1;
+      if (px <= 0 || px >= NS.Level.pxW) return false;   // 가상 경계벽은 월슬라이드 불가 (무한 등반 방지)
       return NS.Level.solidAt(px, this.y + 6) || NS.Level.solidAt(px, this.y + this.h - 6);
     },
 

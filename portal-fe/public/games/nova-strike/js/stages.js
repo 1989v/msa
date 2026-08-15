@@ -43,10 +43,11 @@
   function bossRoom(B) {
     B.ground(DOOR_COL, ARENA_X1, GY);
     B.fill(ARENA_X1 - 1, 0, 1, H, '%');                          // 우측 끝벽
+    B.fill(DOOR_COL, 0, ARENA_X1 - DOOR_COL, 9, '%');            // 천장 위 통짜 매스 (지붕 워킹 봉쇄)
     B.fill(DOOR_COL, 9, ARENA_X1 - DOOR_COL, 1, '#');            // 천장
     B.fill(DOOR_COL, 10, 1, 14, '#');                            // 문기둥 (개구부 위)
-    B.plat(ARENA_X0 + 4, 25, 3);                                 // 회피용 사이드 플랫폼
-    B.plat(ARENA_X1 - 8, 25, 3);
+    B.plat(ARENA_X0 + 4, 27, 3);                                 // 회피용 사이드 플랫폼 (일반 점프 도달)
+    B.plat(ARENA_X1 - 8, 27, 3);
   }
   const ARENA = { x0: ARENA_X0 * T, y0: GY * T + 32 - NS.VH, x1: ARENA_X1 * T, y1: GY * T };
 
@@ -57,7 +58,7 @@
       name: '마그마 제련구역', bossName: '이그니스 몰록', boss: 'moloch',
       desc: '용광로 컨베이어와 상승 용암. 격파 시 「마그마 버스트」 획득.',
       playerStart: { x: 3 * T, y: 26 * T },
-      lavaChase: { startX: 104 * T, endX: 142 * T, fromY: 33 * T, minY: 18 * T, speed: 0.26 },
+      lavaChase: { startX: 104 * T, endX: 142 * T, fromY: 33 * T, minY: 20 * T, speed: 0.26 },
       build() {
         const B = builder();
         // A. 도입부 — 평지 + 계단
@@ -66,7 +67,7 @@
         B.conveyor(36, GY, 8, 1); B.fill(36, GY + 1, 8, H - GY - 1, '%');
         // B. 용암 지대 — 징검다리
         B.lava(46, 72, 31);
-        B.plat(47, 28, 3); B.plat(52, 26, 3); B.plat(57, 28, 3); B.plat(62, 25, 3); B.plat(67, 27, 3);
+        B.plat(47, 28, 4); B.plat(53, 26, 4); B.plat(59, 28, 4); B.plat(64, 25, 3); B.plat(68, 27, 4);
         // 하트 탱크 루트 (좌측 상단 점프 사다리)
         B.plat(49, 22, 2); B.plat(46, 19, 2); B.plat(52, 17, 4);
         // C. 컨베이어 공장
@@ -78,24 +79,25 @@
         B.breakable(97, 27, 1, 3); B.fill(98, 26, 4, 1, '#'); B.fill(101, 27, 1, 3, '#'); B.fill(98, GY, 3, 1, '#');
         // D. 상승 샤프트 (용암 추격) — 우상향 대시점프 체인
         B.ground(104, 108, 28);
-        B.plat(109, 25, 3); B.plat(113, 22, 3); B.plat(117, 19, 3); B.plat(121, 16, 4);
+        B.ground(108, 142, 31);   // 샤프트 하부 바닥 — 낙하 즉사 대신 용암 압박 + 재등반
+        B.plat(109, 25, 3); B.plat(113, 22, 3); B.plat(117, 19, 3); B.plat(121, 17, 4);
         // 시크릿: 좌측 상단 캡슐 알코브 (부스터 파츠) — 왼쪽 역주행 루트
         B.plat(107, 19, 2); B.plat(102, 16, 3);
         B.wall(99, 10, 16); B.fill(99, 10, 6, 1, '#'); B.plat(100, 13, 4);
         // 상단 회랑 →
-        B.plat(126, 14, 8); B.plat(137, 13, 6);
+        B.plat(126, 15, 8); B.plat(137, 13, 6);
         B.ceilSpikes(126, 132, 8); B.fill(122, 6, 24, 2, '#');
         // E. 하강 + 최종 회랑
         B.plat(146, 17, 3); B.plat(151, 21, 3); B.plat(147, 25, 3);
         B.ground(142, DOOR_COL + 1, GY);
-        B.lava(158, 163, 31); B.clearCol(158, 163, GY); B.lava(158, 163, 31);
+        B.clearCol(158, 163, GY); B.lava(158, 163, 31);
         B.plat(159, 27, 3);
         bossRoom(B);
         return B.rows();
       },
       enemies: [
         ['walker', 16, GY], ['spitter', 26, GY], ['walker', 33, GY],
-        ['wisp', 50, 24], ['spitter', 58, 28], ['wisp', 64, 22],
+        ['spitter', 60, 27], ['wisp', 76, 24],
         ['walker', 80, GY], ['turret', 87, 25], ['bomber', 94, GY],
         ['walker', 128, 13], ['wisp', 133, 10],
         ['bomber', 146, GY], ['shield', 150, GY], ['turret', 156, GY], ['spitter', 160, 26],
@@ -117,22 +119,24 @@
       playerStart: { x: 3 * T, y: 26 * T },
       build() {
         const B = builder();
-        // A. 빙판 도입
+        // A. 빙판 도입 — 상승 계단으로 샤프트 상단 진입
         B.ground(0, 40, GY);
         B.ice(6, GY, 30);
         B.plat(14, 25, 4); B.ice(14, 25, 4);
         B.plat(24, 23, 4);
-        // B. 하강 샤프트 (고드름 + 붕괴 발판)
+        B.plat(32, 20, 4); B.plat(37, 17, 4);
+        // B. 하강 샤프트 (고드름 + 붕괴 발판) — 상단 개방, 지그재그 하강
         B.ground(40, 44, GY);
         B.clearCol(44, 76);
-        B.wall(43, 8, GY + 1); B.fill(40, 6, 36, 2, '#');
+        B.fill(40, 6, 36, 2, '#');
+        B.wall(43, 19, GY + 1);        // 샤프트 좌벽 (상단 개방 — 계단에서 넘어 들어온다)
         B.wall(76, 8, 18);
-        B.plat(46, 12, 4); B.crumble(52, 15, 3); B.plat(58, 18, 4); B.crumble(65, 21, 3); B.plat(70, 24, 4);
+        B.plat(46, 17, 4); B.crumble(52, 20, 3); B.plat(56, 23, 5); B.crumble(63, 26, 3); B.plat(68, 28, 5);
         B.ceilSpikes(50, 74, 8);
         B.spikes(44, 76, 32); B.fill(44, 33, 32, 1, '#');
         B.plat(46, 28, 4); B.plat(60, 29, 4);
         // 하트 탱크: 샤프트 왼쪽 아래 부서지는 벽 뒤
-        B.fill(44, 26, 2, 1, '#'); B.breakable(46, 25, 1, 2); // 접근로
+        B.breakable(46, 25, 1, 2);
         B.wall(44, 22, 27); B.plat(44, 27, 2);
         // C. 연구 회랑 (실내)
         B.ground(76, 116, GY);
@@ -158,7 +162,7 @@
       },
       enemies: [
         ['wisp', 12, 26], ['sentry', 22, GY], ['walker', 30, GY],
-        ['sentry', 48, 28], ['wisp', 62, 24],
+        ['sentry', 48, 27], ['wisp', 62, 24],
         ['turret', 88, 25], ['shield', 96, GY], ['sentry', 106, GY],
         ['wisp', 124, 22], ['glider', 134, 20],
         ['walker', 154, GY], ['bomber', 158, GY], ['sentry', 162, GY], ['wisp', 163, 24],

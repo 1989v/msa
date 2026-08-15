@@ -483,12 +483,8 @@
         }
         // 피격 플래시
         if (e.flash > 0 && e.flash % 2 === 0) {
-          g.globalAlpha = 0.7;
-          g.globalCompositeOperation = 'source-atop';
-          g.globalCompositeOperation = 'source-over';
           g.fillStyle = NS.rgba('#ffffff', 0.55);
           g.fillRect(Math.round(dx), Math.round(dy), img.width, img.height);
-          g.globalAlpha = 1;
         }
       }
     },

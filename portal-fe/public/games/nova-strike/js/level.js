@@ -379,9 +379,8 @@
     },
 
     at(tx, ty) {
-      if (tx < 0 || tx >= this.w) return '#';
-      if (ty < 0) return '.';
-      if (ty >= this.h) return '.';
+      if (tx < 0 || tx >= this.w) return '#';   // 좌우 경계는 전 높이 가상 벽
+      if (ty < 0 || ty >= this.h) return '.';
       return this.grid[ty][tx];
     },
     set(tx, ty, ch) {

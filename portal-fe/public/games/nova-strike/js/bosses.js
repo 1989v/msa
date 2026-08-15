@@ -216,6 +216,7 @@
       this.w = this.def.w; this.h = this.def.h;
       this.subs = [];
       this.pose = 'idle';
+      this.hitboxTop = 0;
       this.x = arena.x1 - 120;
       this.y = arena.y1 - this.def.h - (this.def.hover || 0);
       this.vx = 0; this.vy = 0;
@@ -263,8 +264,9 @@
       this.def.update(this, pl);
       this.clampToArena();
 
-      // 접촉 대미지
-      if (pl.alive && pl.invuln <= 0 && !this.noContact && NS.aabb(pl.x, pl.y, pl.w, pl.h, this.x + 6, this.y + 6, this.w - 12, this.h - 12)) {
+      // 접촉 대미지 (hitboxTop: 돌진 등 웅크린 자세에서 상단 클리어런스 허용)
+      const hbTop = this.hitboxTop || 6;
+      if (pl.alive && pl.invuln <= 0 && !this.noContact && NS.aabb(pl.x, pl.y, pl.w, pl.h, this.x + 6, this.y + hbTop, this.w - 12, this.h - hbTop - 6)) {
         pl.damage(this.contactDmg, NS.sign(pl.cx - this.cx) || 1);
       }
       // 피격
@@ -387,7 +389,7 @@
   const BOSS_DEFS = {
     // ═══ 이그니스 몰록 ═══
     moloch: {
-      name: '이그니스 몰록', sprite: 'moloch', w: 72, h: 80, hp: 56,
+      name: '이그니스 몰록', sprite: 'moloch', w: 72, h: 80, hp: 44,
       weak: 'wind', resist: 'fire', hitInvuln: 10,
       update(b, pl) {
         const groundY = b.arena.y1 - b.h;
@@ -411,7 +413,7 @@
           if (b.t > 90 * speedUp) b.pattern = null;
         } else if (b.pattern === 'slamCharge') {
           if (b.t === 1) { b.pose = 'raise'; NS.Audio.sfx('telegraph'); b.chargeDir = NS.sign(pl.cx - b.cx) || -1; }
-          if (b.t === Math.round(36 * speedUp)) { b.pose = 'slam'; }
+          if (b.t === Math.round(36 * speedUp)) { b.pose = 'slam'; b.hitboxTop = 44; }
           if (b.t > 36 * speedUp && b.t < 100 * speedUp) {
             b.x += b.chargeDir * 3.6;
             if (b.frame % 4 === 0) NS.FX.burst(b.cx - b.chargeDir * 20, b.arena.y1 - 6, 2, { color: [P.orange3, P.red2], up: 1 });
@@ -431,7 +433,12 @@
               });
             }
           }
-          if (b.t > 130 * speedUp) { b.pattern = null; b.pose = 'idle'; }
+          if (b.t > 130 * speedUp) { b.pattern = 'return'; b.pose = 'idle'; b.hitboxTop = 0; b.t = 0; }
+        } else if (b.pattern === 'return') {
+          // 돌진 후 중앙 복귀 — 코너에 눌러앉아 플레이어를 가두지 않는다
+          const mid = (b.arena.x0 + b.arena.x1) / 2;
+          b.x += NS.sign(mid - b.cx) * 1.5;
+          if (Math.abs(b.cx - mid) < 80 || b.t > 160) b.pattern = null;
         } else { // meteor (P2)
           if (b.t === 1) { b.pose = 'raise'; NS.Audio.sfx('warning'); }
           if (b.t === 30) {
@@ -460,7 +467,7 @@
 
     // ═══ 글레이셔 팬텀 ═══
     phantom: {
-      name: '글레이셔 팬텀', sprite: 'phantom', w: 48, h: 68, hp: 52,
+      name: '글레이셔 팬텀', sprite: 'phantom', w: 48, h: 68, hp: 46,
       weak: 'fire', resist: 'ice', hover: 40, hitInvuln: 10,
       init(b) { b.hoverT = 0; b.clones = []; },
       update(b, pl) {
@@ -549,7 +556,7 @@
 
     // ═══ 템페스트 로크 ═══
     roc: {
-      name: '템페스트 로크', sprite: 'roc', w: 90, h: 70, hp: 60,
+      name: '템페스트 로크', sprite: 'roc', w: 90, h: 70, hp: 52,
       weak: 'ice', resist: 'wind', hover: 60, hitInvuln: 10,
       init(b) { b.addTimer = 0; },
       update(b, pl) {

@@ -155,7 +155,8 @@
           st.checkpointsHit[key] = true;
           st.respawn = { x: tx * NS.TILE, y: (ty - 3) * NS.TILE };
           NS.Audio.sfx('checkpoint');
-          this.announce('체크포인트 기록');
+          pl.heal(pl.maxHp);   // 활성화 시 완전 회복
+          this.announce('체크포인트 기록 — 아머 수복');
         }
       }
 
@@ -186,8 +187,8 @@
         }
       }
 
-      // 보스 트리거
-      if (!st.doorClosed && pl.x > (NS.DOOR_COL + 2) * NS.TILE) {
+      // 보스 트리거 (방 내부 높이에서만 — 지붕 위 통과 방지)
+      if (!st.doorClosed && pl.x > (NS.DOOR_COL + 2) * NS.TILE && pl.y > NS.ARENA.y0 + 100) {
         st.doorClosed = true;
         for (let y = 24; y < 30; y++) L.set(NS.DOOR_COL, y, '#');
         NS.Audio.sfx('doorOpen');
@@ -225,6 +226,7 @@
         if (pl.lives > 0) this.respawnPlayer();
         else {
           NS.Audio.jingle('gameover');
+          if (window.PlatformAdapter) PlatformAdapter.runEnd({ score: st.score, detail: { stage: st.id, time: st.time, cleared: false } });
           this.setState('gameover');
         }
       }
@@ -269,6 +271,7 @@
       if (!best || st.score > best.score) this.save.best[st.id] = { time: st.time, score: st.score };
       this.save.totalScore = Object.values(this.save.best).reduce((a, b) => a + b.score, 0);
       this.persist();
+      if (window.PlatformAdapter) PlatformAdapter.runEnd({ score: st.score, detail: { stage: st.id, time: st.time, cleared: true } });
       this.pendingWeapon = first && weaponBy[st.id] ? weaponBy[st.id] : null;
       setTimeoutFrames(this, st.id === 'core' ? 'ending' : (this.pendingWeapon ? 'weaponGet' : 'results'), 140);
       if (st.id === 'core') {
