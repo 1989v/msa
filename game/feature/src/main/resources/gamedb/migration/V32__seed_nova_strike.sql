@@ -6,9 +6,9 @@ INSERT INTO game (slug, title, description, title_en, description_en, thumbnail_
                   genre, tags, released_at, content_updated_at, created_at, updated_at)
 VALUES
     ('nova-strike', '노바 스트라이크',
-     '32비트 세대 런앤건 액션 플랫포머 — 대시·월점프·차지샷 3단으로 궤도 도시의 가디언 3기를 격파하고 보스 무기를 빼앗아 약점 순환을 완성하라. 상승 용암·빙판·상승기류·낙뢰 기믹의 4개 지역, 페이즈 전환 보스 5전(최종 2형태), 하트 탱크·아머 캡슐 숨김 요소와 코어 칩 영구 강화 상점. 스프라이트·배경·BGM 전부 코드 생성(640×360 정수 배율).',
+     '32비트 세대 런앤건 액션 플랫포머 — 건슬링거 「더스크」(리볼버 연사+차지 매그넘)와 검객 「레이븐」(3연 콤보+회전참) 중 헌터를 골라, 대시·월점프로 궤도 도시의 가디언 3기를 격파하고 보스 무기 약점 순환을 완성하라. 상승 용암·빙판·상승기류·낙뢰 기믹의 4개 지역, 페이즈 전환 보스 5전(최종 2형태), 숨김 요소와 코어 칩 영구 강화 상점. 스프라이트·배경·BGM 전부 코드 생성(640×360 정수 배율).',
      'NOVA STRIKE',
-     'A 32-bit-era run-and-gun action platformer. Dash, wall-jump and triple-stage charge shots through four themed zones — rising lava, ice physics, updrafts and lightning — defeat three guardians, steal their weapons to complete the weakness cycle, then face a two-form final boss. Hidden heart tanks, armor capsules and a permanent upgrade shop. Every sprite, backdrop and BGM is generated in code at 640x360 integer scaling.',
+     'A 32-bit-era run-and-gun action platformer. Pick your hunter — Dusk the gunslinger (revolver volleys and charged magnum rounds) or Raven the swordfighter (three-hit combos and spin slashes) — then dash and wall-jump through four themed zones, defeat three guardians and steal their weapons to complete the weakness cycle before a two-form final boss. Hidden upgrades and a permanent chip shop. Every sprite, backdrop and BGM is generated in code at 640x360 integer scaling.',
      '/games/thumbs/shots/nova-strike.png', NULL, 'HTML5', 'IFRAME', '/games/nova-strike/index.html',
      'LANDSCAPE', 0, 'kgd', 1, 'PUBLISHED', 'ACTION', '["leaderboard"]',
      NOW(6), NOW(6), NOW(6), NOW(6));

@@ -122,7 +122,7 @@
           const frames = NS.Sprites.fx[p.anim];
           const fi = Math.min(frames.length - 1, Math.floor((p.maxLife - p.life) / p.animFps));
           const img = frames[fi];
-          g.drawImage(img, Math.round(x - img.width / 2), Math.round(y - img.height / 2));
+          NS.blit(g, img, x - img.width / 2, y - img.height / 2, p.flip);
         } else {
           g.globalAlpha = p.fade ? Math.min(1, p.life / 12) : 1;
           g.fillStyle = p.color;

@@ -63,6 +63,8 @@
     chargeTick: (t, p) => { tone(t, 600 + 700 * (p || 0), 900 + 900 * (p || 0), 0.05, 'square', 0.06 + 0.05 * (p || 0), sfxGain); },
     chargeFull: (t) => { tone(t, 880, 1320, 0.12, 'square', 0.14, sfxGain); tone(t + 0.06, 1320, 1760, 0.1, 'square', 0.12, sfxGain); },
     dash: (t) => { noise(t, 0.16, 0.2, sfxGain, 500, 4500); tone(t, 300, 700, 0.12, 'sawtooth', 0.08, sfxGain); },
+    slash: (t) => { noise(t, 0.11, 0.22, sfxGain, 1600, 7000); tone(t, 760, 260, 0.09, 'sawtooth', 0.1, sfxGain, 'exp'); },
+    slashHeavy: (t) => { noise(t, 0.2, 0.3, sfxGain, 900, 5000); tone(t, 320, 90, 0.2, 'sawtooth', 0.2, sfxGain, 'exp'); tone(t + 0.03, 1200, 400, 0.1, 'square', 0.08, sfxGain, 'exp'); },
     jump: (t) => { tone(t, 300, 620, 0.11, 'square', 0.13, sfxGain); },
     land: (t) => { noise(t, 0.07, 0.14, sfxGain, 0, 900); tone(t, 160, 80, 0.07, 'triangle', 0.2, sfxGain, 'exp'); },
     wall: (t) => { noise(t, 0.05, 0.09, sfxGain, 1200); },

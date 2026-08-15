@@ -17,6 +17,15 @@
         if (s.update) s.update(s);
         s.x += s.vx; s.y += s.vy;
         if (s.gravity) s.vy = Math.min(6, s.vy + s.gravity);
+        // 근접 판정은 지형 통과 + 겹치는 부서지는 블록 파괴
+        if (s.melee) {
+          const T = NS.TILE;
+          for (let ty = Math.floor(s.y / T); ty <= Math.floor((s.y + s.h) / T); ty++)
+            for (let tx = Math.floor(s.x / T); tx <= Math.floor((s.x + s.w) / T); tx++)
+              L.breakTile(tx, ty);
+          if (s.life !== undefined) { s.life--; if (!(s.life > 0)) s.dead = true; }
+          continue;
+        }
         // 지형 충돌
         if (!s.ignoreWall && L.solidAt(s.x + s.w / 2, s.y + s.h / 2)) {
           if (s.onWall) s.onWall(s);
@@ -31,6 +40,7 @@
     },
     draw(g, cx, cy) {
       for (const s of this.list) {
+        if (!s.sprite) continue;   // 근접 히트박스는 그리지 않음 (참격 FX 별도)
         const frames = NS.Sprites.bullets[s.sprite];
         const img = frames[Math.floor(s.frame / 4) % frames.length];
         NS.blit(g, img, s.x + s.w / 2 - img.width / 2 - cx, s.y + s.h / 2 - img.height / 2 - cy, s.vx < 0);
@@ -75,11 +85,15 @@
 
   // ── 무기 정의 ──────────────────────────────────────────
   NS.WEAPONS = [
-    { id: 'buster', name: '노바 버스터', color: P.cyan2, infinite: true },
+    { id: 'basic', name: '퀵드로우 리볼버', color: P.orange3, infinite: true },
     { id: 'magma', name: '마그마 버스트', color: P.orange2 },
     { id: 'frost', name: '프로스트 랜스', color: P.cyan3 },
     { id: 'cyclone', name: '사이클론 커터', color: P.green2 },
   ];
+  NS.CHAR_INFO = {
+    dusk: { name: '더스크', sub: '방랑 건슬링거', desc: '원거리 연사와 차지 매그넘. 3연사 리볼버, 홀드로 관통 황혼탄.', basicName: '퀵드로우 리볼버', basicColor: P.orange3 },
+    raven: { name: '레이븐', sub: '흑풍 검객', desc: '근접 고화력 3연 콤보와 공중 베기. 홀드 후 놓으면 강참·회전참.', basicName: '흑풍 세이버', basicColor: P.steel5 },
+  };
 
   const GRAV = 0.31, TERM = 6.6;
   const RUN = 2.0, DASH = 4.4, DASH_TIME = 26;
@@ -104,6 +118,11 @@
       this.x = x; this.y = y; this.vx = 0; this.vy = 0; this.facing = 1;
       this.state = 'air'; this.onGround = false;
       this.meta = meta;
+      this.charKey = meta.charKey || 'dusk';
+      this.melee = this.charKey === 'raven';
+      NS.WEAPONS[0].name = NS.CHAR_INFO[this.charKey].basicName;
+      NS.WEAPONS[0].color = NS.CHAR_INFO[this.charKey].basicColor;
+      this.atkStage = 0; this.atkT = 0; this.chainT = 0; this.atkQueued = false; this.atkKind = 1;
       this.maxHp = 16 + (meta.hearts || 0) * 4 + (meta.shop.maxHp ? 4 : 0) + (meta.shop.maxHp2 ? 4 : 0);
       this.hp = this.maxHp;
       this.ammoMax = 16 + (meta.shop.weaponEff ? 8 : 0);
@@ -132,10 +151,14 @@
     chargeMid() { return Math.round(this.chargeMax() * 0.4); },
 
     update() {
-      if (this.teleportT > 0) { // 텔레포트 인 연출 — 낙하 빔
+      if (this.teleportT > 0) { // 등장 연출 — 상공 강하 착지
         this.teleportT--;
         if (this.teleportT === 39) NS.Audio.sfx('teleportIn');
-        if (!(this.teleportT > 0)) NS.Audio.sfx('land');
+        if (this.teleportT === 14) {
+          NS.Audio.sfx('land');
+          NS.FX.shake(2, 6);
+          NS.FX.burst(this.cx, this.y + this.h, 8, { color: ['#c0aa88', '#a89068', '#d8c8a8'], up: 1.2, g: 0.12 });
+        }
         return;
       }
       if (this.state === 'dead') { this.deadT++; return; }
@@ -340,7 +363,16 @@
 
     updateShooting(inp) {
       const holding = inp.down('shoot');
-      if (inp.pressed('shoot')) this.fire(0);
+      if (inp.pressed('shoot')) {
+        if (this.melee && this.weapon === 0) this.trySlash();
+        else this.fire(0);
+      }
+      // 근접 콤보 예약 소비
+      if (this.melee) {
+        this.atkT = NS.tick(this.atkT);
+        this.chainT = NS.tick(this.chainT);
+        if (this.atkQueued && !(this.atkT > 2)) { this.atkQueued = false; this.trySlash(); }
+      }
       if (holding && this.weapon === 0) {
         this.chargeT++;
         const mid = this.chargeMid(), max = this.chargeMax();
@@ -348,7 +380,9 @@
         if (this.chargeT > 8 && this.chargeT % 5 === 0) {
           NS.Audio.sfx('chargeTick', Math.min(1, this.chargeT / max));
           const lvl = this.chargeT >= max ? 2 : this.chargeT >= mid ? 1 : 0;
-          const cols = [[P.cyan2, P.cyan3], [P.cyan3, P.white], [P.violet3, P.white, P.cyan3]][lvl];
+          const cols = this.melee
+            ? [[P.steel4, P.steel5], [P.steel5, P.white], [P.orange3, P.white, P.steel5]][lvl]
+            : [[P.orange2, P.orange3], [P.orange3, P.white], [P.yellow, P.white, P.orange3]][lvl];
           const a = NS.rand(0, Math.PI * 2), d = NS.rand(14, 22);
           NS.FX.p({
             x: this.cx + Math.cos(a) * d, y: this.cy + Math.sin(a) * d,
@@ -357,18 +391,84 @@
         }
       } else if (this.chargeT > 0 && this.weapon === 0) {
         const mid = this.chargeMid(), max = this.chargeMax();
-        if (this.chargeT >= max) this.fire(2);
-        else if (this.chargeT >= mid) this.fire(1);
+        if (this.melee) {
+          if (this.chargeT >= max) this.spinSlash();
+          else if (this.chargeT >= mid) this.heavySlash();
+        } else {
+          if (this.chargeT >= max) this.fire(2);
+          else if (this.chargeT >= mid) this.fire(1);
+        }
         this.chargeT = 0;
       } else {
         this.chargeT = 0;
       }
     },
 
+    // ── 레이븐 근접 시스템 ─────────────────────────────────
+    trySlash() {
+      if (this.atkT > 2) { this.atkQueued = true; return; }
+      const dir = this.state === 'wall' ? -this.wallSide : this.facing;
+      if (!this.onGround) {
+        this.atkKind = 'air';
+        this.meleeBox(30, 30, 2, { oy: 8 });
+      } else if (this.state === 'dash') {
+        this.atkKind = 1;
+        this.meleeBox(34, 26, 3, {});
+      } else {
+        this.atkStage = (this.chainT > 0 && this.atkStage < 3) ? this.atkStage + 1 : 1;
+        this.atkKind = this.atkStage;
+        const dmg = this.atkStage === 3 ? 3 : 2;
+        this.meleeBox(30, 26, dmg, { oy: this.atkStage === 3 ? -8 : 0, launch: this.atkStage === 3 });
+        this.vx += dir * 1.2;   // 내딛기
+      }
+      this.atkT = 14;
+      this.chainT = 30;
+      this.shootAnim = 0;
+      NS.Audio.sfx('slash');
+      NS.FX.p({ anim: 'slash', x: this.cx + dir * 22, y: this.cy - 2 + (this.atkKind === 'air' ? 8 : this.atkKind === 3 ? -8 : 0), life: 9, maxLife: 9, animFps: 3, flip: dir < 0 });
+    },
+    heavySlash() {
+      const dir = this.facing;
+      this.atkKind = 2; this.atkT = 16;
+      this.meleeBox(44, 32, 5, {});
+      NS.Audio.sfx('slashHeavy');
+      NS.FX.shake(2, 6);
+      NS.FX.p({ anim: 'slash', x: this.cx + dir * 26, y: this.cy - 2, life: 9, maxLife: 9, animFps: 3, flip: dir < 0 });
+    },
+    spinSlash() {
+      this.atkKind = 'spin'; this.atkT = 20;
+      this.meleeBox(64, 40, 4, { both: true });
+      const self = this;
+      setTimeout(() => { if (self.alive) self.meleeBox(64, 40, 4, { both: true }); }, 150);
+      NS.Audio.sfx('slashHeavy');
+      NS.FX.shake(3, 10);
+      NS.FX.hitstop(3);
+      NS.FX.p({ anim: 'spinArc', x: this.cx, y: this.cy - 2, life: 12, maxLife: 12, animFps: 4 });
+    },
+    meleeBox(w, h, dmg, opts) {
+      const self = this;
+      Shots.spawn({
+        type: 'melee', melee: true, sprite: null, pierce: true, ignoreWall: true,
+        x: 0, y: 0, w, h, dmg, vx: this.facing * 0.001, vy: 0, life: 9,
+        launch: !!opts.launch,
+        update(s) {
+          s.x = opts.both ? self.cx - s.w / 2 : (self.facing > 0 ? self.cx + 4 : self.cx - 4 - s.w);
+          s.y = self.y + self.h / 2 - s.h / 2 + (opts.oy || 0);
+        },
+      });
+      this.meleeBoxInit();
+    },
+    meleeBoxInit() {
+      // 스폰 직후 위치 반영 (update 가 다음 프레임에 돌기 전)
+      const s = Shots.list[Shots.list.length - 1];
+      if (s && s.update) s.update(s);
+    },
+
     muzzlePos() {
-      // 현재 스프라이트 상태 기준 포구 월드 좌표
+      // 현재 스프라이트 상태 기준 포구/발도 월드 좌표
+      const table = NS.Sprites.heroMuzzle[this.charKey] || {};
       const key = this.spriteKey(true);
-      const m = NS.Sprites.heroMuzzle[key] || { x: 53, y: 30 };
+      const m = table[key] || table.default || { x: 56, y: 30 };
       const sx = this.spriteX(), sy = this.spriteY();
       const x = this.facing > 0 ? sx + m.x : sx + 64 - m.x;
       return { x, y: sy + m.y };
@@ -501,10 +601,22 @@
 
     // ── 렌더 ──
     spriteKey(forMuzzle) {
-      const shooting = this.shootAnim > 0 || (this.charging && false);
       if (this.state === 'dead') return 'hurt';
       if (this.state === 'victory') return 'victory';
       if (this.hurtT > 0) return 'hurt';
+      if (this.melee) {
+        if (this.atkT > 0) {
+          const map = { 1: 'atk1', 2: 'atk2', 3: 'atk3', air: 'atkAir', spin: 'atkSpin' };
+          return map[this.atkKind] || 'atk1';
+        }
+        if (this.shootAnim > 0) return this.onGround ? 'atk1' : 'atkAir';   // 특수무기 시전 포즈
+        if (this.state === 'wall') return 'wall';
+        if (this.state === 'dash') return 'dash';
+        if (!this.onGround) return this.vy < -1 ? 'jumpRise' : this.vy > 1.4 ? 'jumpFall' : 'jumpApex';
+        if (Math.abs(this.vx) > 0.3) return 'run';
+        return 'idle';
+      }
+      const shooting = this.shootAnim > 0;
       if (this.state === 'wall') return shooting ? 'wallShoot' : 'wall';
       if (this.state === 'dash') return shooting ? 'dashShoot' : 'dash';
       if (!this.onGround) {
@@ -516,11 +628,13 @@
     },
     spriteNow() {
       const key = this.spriteKey();
-      const frames = NS.Sprites.hero[key];
+      const set = NS.Sprites.heroes[this.charKey];
+      const frames = set[key] || set.idle;
       let fi = 0;
       if (key === 'run' || key === 'runShoot') fi = Math.floor(this.runDist / 7) % 8;
       else if (key === 'idle') fi = Math.floor(this.idleF / 32) % 2;
       else if (key === 'victory') fi = Math.min(1, Math.floor(this.victoryT / 14));
+      else if (key === 'atkSpin') fi = this.atkT > 10 ? 0 : 1;
       const flip = this.facing < 0;
       return { img: frames[Math.min(fi, frames.length - 1)], flip };
     },
@@ -529,14 +643,16 @@
 
     draw(g, cx, cy) {
       if (this.state === 'dead' && this.deadT > 2) return;
-      // 텔레포트 빔
+      // 상공 강하 등장
       if (this.teleportT > 0) {
-        const t = 1 - this.teleportT / 40;
-        const by = NS.lerp(-40, this.y + this.h, Math.min(1, t * 1.6));
-        g.fillStyle = P.cyan2;
-        g.fillRect(Math.round(this.cx - 3 - cx), 0, 6, Math.round(by - cy));
-        g.fillStyle = P.cyan3;
-        g.fillRect(Math.round(this.cx - 1 - cx), 0, 2, Math.round(by - cy));
+        const set = NS.Sprites.heroes[this.charKey];
+        if (this.teleportT > 14) {
+          const t = (40 - this.teleportT) / 26;
+          const dy = (1 - Math.min(1, t)) * -240;
+          NS.blit(g, set.jumpFall[0], this.spriteX() - cx, this.spriteY() + dy - cy, false);
+        } else {
+          NS.blit(g, set.idle[0], this.spriteX() - cx, this.spriteY() - cy, false);
+        }
         return;
       }
       if (this.invuln > 0 && this.hurtT <= 0 && (this.invuln % 6) < 3) return; // 무적 점멸
@@ -549,7 +665,7 @@
         const full = this.chargeT >= this.chargeMax();
         const r = 20 + Math.sin(this.idleF * 0.4) * 3;
         g.globalAlpha = full ? 0.4 : 0.22;
-        g.strokeStyle = full ? P.violet3 : P.cyan3;
+        g.strokeStyle = this.melee ? (full ? P.orange3 : P.steel5) : (full ? P.yellow : P.orange3);
         g.lineWidth = 2;
         g.beginPath();
         g.arc(Math.round(this.cx - cx), Math.round(this.cy - cy), r, 0, Math.PI * 2);

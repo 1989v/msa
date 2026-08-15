@@ -47,10 +47,11 @@
       const G = NS.Game;
       const st = G.state;
       this.frame++;
-      if (['title', 'select', 'shop'].includes(st)) {
+      if (['title', 'charSelect', 'select', 'shop'].includes(st)) {
         this.drawMenuBackdrop(g);
         if (st === 'select') this.drawSelectPortraits(g);
         if (st === 'title') this.drawTitleHero(g);
+        if (st === 'charSelect') this.drawCharPortraits(g);
       } else if (G.stage) {
         if (['stage', 'paused'].includes(st)) this.drawHudPixel(g);
         if (st === 'weaponGet') this.drawWeaponGetPixel(g);
@@ -80,15 +81,40 @@
     },
 
     drawTitleHero(g) {
-      const img = NS.Sprites.hero.idle[Math.floor(this.frame / 40) % 2];
-      g.save();
-      g.imageSmoothingEnabled = false;
-      g.translate(Math.round(NS.VW * 0.82), Math.round(NS.VH * 0.95));
-      g.scale(2.6, 2.6);
-      g.drawImage(img, -32, -64);
-      g.restore();
+      // 현상금 사냥꾼 듀오
+      const duo = [
+        [NS.Sprites.heroes.dusk.idle[Math.floor(this.frame / 40) % 2], NS.VW * 0.76, 2.4, false],
+        [NS.Sprites.heroes.raven.idle[Math.floor(this.frame / 40 + 1) % 2], NS.VW * 0.90, 2.2, true],
+      ];
+      for (const [img, x, sc, flip] of duo) {
+        g.save();
+        g.imageSmoothingEnabled = false;
+        g.translate(Math.round(x), Math.round(NS.VH * 0.96));
+        g.scale(flip ? -sc : sc, sc);
+        g.drawImage(img, -32, -64);
+        g.restore();
+      }
       g.fillStyle = NS.rgba(P.cyan2, 0.06 + 0.03 * Math.sin(this.frame * 0.05));
       g.fillRect(0, 0, NS.VW, NS.VH);
+    },
+
+    drawCharPortraits(g) {
+      const keys = ['dusk', 'raven'];
+      for (let i = 0; i < 2; i++) {
+        const cx = NS.VW / 2 + (i === 0 ? -130 : 130);
+        const sel = NS.Game.charIdx === i;
+        const set = NS.Sprites.heroes[keys[i]];
+        const img = sel ? set.victory[Math.floor(this.frame / 30) % 2] : set.idle[Math.floor(this.frame / 40) % 2];
+        g.save();
+        g.translate(Math.round(cx), 246);
+        const sc = sel ? 2.5 : 2;
+        g.scale(i === 1 ? -sc : sc, sc);
+        g.imageSmoothingEnabled = false;
+        if (!sel) g.globalAlpha = 0.6;
+        g.drawImage(img, -32, -64);
+        g.restore();
+        g.globalAlpha = 1;
+      }
     },
 
     drawSelectPortraits(g) {
@@ -190,6 +216,7 @@
       g.clearRect(0, 0, g.canvas.width, g.canvas.height);
       switch (G.state) {
         case 'title': this.ovTitle(g, s); break;
+        case 'charSelect': this.ovCharSelect(g, s); break;
         case 'select': this.ovSelect(g, s); break;
         case 'shop': this.ovShop(g, s); break;
         case 'stage': this.ovStage(g, s); break;
@@ -220,11 +247,34 @@
       if (Math.floor(t / 30) % 2 === 0)
         text(g, s, 'ENTER 또는 Z — 작전 개시', CX(), 218, 14, '#ffe66d', { align: 'center', glow: 'rgba(255,230,109,0.5)', glowSize: 8 });
       panel(g, s, CX() - 170, 246, 340, 66, { border: NS.rgba(P.steel3, 0.6) });
-      text(g, s, '이동 ←→/AD · 점프 Z/K · 사격(홀드=차지) X/J · 대시 C/L', CX(), 266, 10.5, '#c3cbe8', { align: 'center', weight: 500 });
+      text(g, s, '이동 ←→/AD · 점프 Z/K · 공격(홀드=차지) X/J · 대시 C/L', CX(), 266, 10.5, '#c3cbe8', { align: 'center', weight: 500 });
       text(g, s, '무기 전환 Q·E (또는 U·O, 1~4) · 일시정지 ENTER', CX(), 283, 10.5, '#c3cbe8', { align: 'center', weight: 500 });
       text(g, s, '벽에 붙어 하강 = 월 슬라이드 · 벽에서 점프 = 월 점프 · 대시 중 점프 = 대시 점프', CX(), 300, 9.5, '#8b96bd', { align: 'center', weight: 500 });
       const best = NS.Game.save.totalScore;
       if (best > 0) text(g, s, `누적 베스트 스코어 ${best.toLocaleString()}`, CX(), 336, 10, '#5c6690', { align: 'center', weight: 500 });
+    },
+
+    ovCharSelect(g, s) {
+      const G = NS.Game;
+      text(g, s, '헌터 선택', CX(), 46, 24, '#f2f7ff', { align: 'center', weight: 900, glow: NS.rgba(P.cyan2, 0.6), glowSize: 10 });
+      const keys = ['dusk', 'raven'];
+      for (let i = 0; i < 2; i++) {
+        const cx = CX() + (i === 0 ? -130 : 130);
+        const info = NS.CHAR_INFO[keys[i]];
+        const sel = G.charIdx === i;
+        panel(g, s, cx - 95, 74, 190, 180, { border: sel ? NS.rgba(i === 0 ? P.orange3 : P.steel5, 0.95) : NS.rgba(P.steel3, 0.4), bg: sel ? 'rgba(15,22,52,0.22)' : 'rgba(9,10,26,0.3)' });
+        if (sel) {
+          g.strokeStyle = NS.rgba(i === 0 ? P.orange3 : P.cyan3, 0.5 + 0.3 * Math.sin(this.frame * 0.15));
+          g.lineWidth = 2 * Math.max(1, s * 0.5);
+          g.strokeRect((cx - 98) * s, 71 * s, 196 * s, 186 * s);
+        }
+        text(g, s, info.name, cx, 100, 17, sel ? '#f2f7ff' : '#8b96bd', { align: 'center', weight: 900 });
+        text(g, s, info.sub, cx, 118, 10.5, sel ? (i === 0 ? '#ffc44d' : '#c3cbe8') : '#5c6690', { align: 'center', weight: 500 });
+      }
+      const info = NS.CHAR_INFO[keys[G.charIdx]];
+      panel(g, s, CX() - 220, 268, 440, 34, { border: NS.rgba(P.steel3, 0.5) });
+      text(g, s, info.desc, CX(), 290, 11, '#c3cbe8', { align: 'center', weight: 500 });
+      text(g, s, '←→ 선택 · Z 결정 · ESC 타이틀', CX(), 330, 10, '#5c6690', { align: 'center', weight: 500 });
     },
 
     ovSelect(g, s) {
@@ -275,7 +325,9 @@
       } else {
         text(g, s, '코어 칩으로 영구 강화를 구매한다 (사망해도 칩은 남는다)', CX(), 272, 11, '#c3cbe8', { align: 'center', weight: 500 });
       }
-      text(g, s, '←→ 선택 · Z 결정', CX(), 330, 10, '#5c6690', { align: 'center', weight: 500 });
+      const ci = NS.CHAR_INFO[G.save.charKey || 'dusk'];
+      text(g, s, `출격 헌터: ${ci.name}`, 24, 44, 10.5, '#ffc44d', { weight: 700 });
+      text(g, s, '←→ 선택 · Z 결정 · ESC 헌터 변경', CX(), 330, 10, '#5c6690', { align: 'center', weight: 500 });
     },
 
     ovShop(g, s) {
@@ -340,12 +392,12 @@
       panel(g, s, CX() + 56, 76, 140, 168, { border: NS.rgba(P.steel3, 0.6) });
       text(g, s, '장비 현황', CX() + 126, 96, 11, '#c3cbe8', { align: 'center' });
       const pl = NS.Player;
-      const lines = [['버스터', '#a8f6ff']];
+      const lines = [[NS.WEAPONS[0].name, '#f2f7ff']];
       if (pl.owned[1]) lines.push(['마그마 버스트', NS.WEAPONS[1].color]);
       if (pl.owned[2]) lines.push(['프로스트 랜스', '#a8f6ff']);
       if (pl.owned[3]) lines.push(['사이클론 커터', NS.WEAPONS[3].color]);
       if (pl.parts.boots) lines.push(['부스터 파츠', '#ffc44d']);
-      if (pl.parts.buster) lines.push(['버스터 파츠', '#ffc44d']);
+      if (pl.parts.buster) lines.push(['트리거 파츠', '#ffc44d']);
       const hearts = ['mg-heart', 'cr-heart', 'st-heart'].filter(id => G.save.collected[id]).length;
       lines.push([`하트 탱크 ${hearts}/3`, '#ff9fd0']);
       for (let i = 0; i < lines.length; i++)
@@ -401,7 +453,7 @@
         '헬리오스 스파이어의 하늘이 다시 열린다.',
         '',
         '기계군단의 잔해 위로 첫 새벽이 내려앉고,',
-        '노바는 다음 신호가 올 때까지 — 조용히 도시를 지켜본다.',
+        '두 사냥꾼은 다음 현상수배가 붙을 때까지 — 조용히 도시를 지켜본다.',
       ];
       for (let i = 0; i < lines.length; i++) {
         if (t > 40 + i * 34) {

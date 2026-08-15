@@ -563,7 +563,7 @@
             G.announce('부스터 파츠 획득! 공중 대시 2회 가능');
           } else {
             pl.parts.buster = true;
-            G.announce('버스터 파츠 획득! 차지 속도 1.4배');
+            G.announce('트리거 파츠 획득! 차지 속도 1.4배');
           }
           NS.FX.flash('#a8f6ff', 20);
           break;

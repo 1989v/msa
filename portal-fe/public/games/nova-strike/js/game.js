@@ -6,6 +6,7 @@
 
   const defaultSave = () => ({
     chips: 0,
+    charKey: 'dusk',
     cleared: {},                 // stageId → true
     weapons: {},                 // magma/frost/cyclone → true
     collected: {},               // persistId → true
@@ -28,10 +29,10 @@
   NS.SHOP_ITEMS = SHOP_ITEMS;
 
   const Game = {
-    state: 'boot',            // boot → title → select/shop → stage → ...
+    state: 'boot',            // boot → title → charSelect → select/shop → stage → ...
     save: null,
     stage: null,              // 실행 중 스테이지 상태
-    selectIdx: 0, shopIdx: 0, pauseIdx: 0,
+    selectIdx: 0, shopIdx: 0, pauseIdx: 0, charIdx: 0,
     stateT: 0,
     announceQueue: [],        // {text, t}
     pendingWeapon: null,
@@ -53,6 +54,7 @@
       const hearts = ['mg-heart', 'cr-heart', 'st-heart'].filter(id => s.collected[id]).length;
       return {
         hearts,
+        charKey: s.charKey || 'dusk',
         shop: s.shop,
         weapons: s.weapons,
         parts: { boots: !!s.collected['mg-caps'], buster: !!s.collected['st-caps'] },
@@ -286,6 +288,18 @@
       if (NS.Input.pressed('start') || NS.Input.pressed('jump')) {
         NS.Audio.sfx('menuSel');
         NS.Audio.playBgm('title');
+        this.charIdx = this.save.charKey === 'raven' ? 1 : 0;
+        this.setState('charSelect');
+      }
+    },
+    updateCharSelect() {
+      const I = NS.Input;
+      if (I.pressed('left') || I.pressed('right')) { this.charIdx = 1 - this.charIdx; NS.Audio.sfx('menuMove'); }
+      if (I.pressed('back')) { NS.Audio.sfx('menuBack'); this.setState('title'); return; }
+      if (I.pressed('jump') || I.pressed('start')) {
+        this.save.charKey = this.charIdx === 1 ? 'raven' : 'dusk';
+        this.persist();
+        NS.Audio.sfx('menuSel');
         this.setState('select');
         this.selectIdx = 0;
       }
@@ -293,6 +307,7 @@
     updateSelect() {
       const I = NS.Input;
       const cols = 5; // 4 스테이지 + 연구소
+      if (I.pressed('back')) { NS.Audio.sfx('menuBack'); this.setState('charSelect'); return; }
       if (I.pressed('left')) { this.selectIdx = (this.selectIdx + cols - 1) % cols; NS.Audio.sfx('menuMove'); }
       if (I.pressed('right')) { this.selectIdx = (this.selectIdx + 1) % cols; NS.Audio.sfx('menuMove'); }
       if (I.pressed('jump') || I.pressed('start')) {
@@ -397,6 +412,7 @@
 
       switch (this.state) {
         case 'title': this.updateTitle(); break;
+        case 'charSelect': this.updateCharSelect(); break;
         case 'select': this.updateSelect(); break;
         case 'shop': this.updateShop(); break;
         case 'stage': {
