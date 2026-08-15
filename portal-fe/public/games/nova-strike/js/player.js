@@ -95,9 +95,9 @@
     raven: { name: '레이븐', sub: '흑풍 검객', desc: '근접 고화력 3연 콤보와 공중 베기. 홀드 후 놓으면 강참·회전참.', basicName: '흑풍 세이버', basicColor: P.steel5 },
   };
 
-  const GRAV = 0.31, TERM = 6.6;
-  const RUN = 2.0, DASH = 4.4, DASH_TIME = 26;
-  const JUMP = -6.1, WALL_VY = 1.5, WJ_VX = 3.4, WJ_VY = -5.9;
+  const GRAV = 0.38, TERM = 7.6;
+  const RUN = 2.5, DASH = 5.5, DASH_TIME = 26;
+  const JUMP = -6.8, WALL_VY = 1.9, WJ_VX = 4.2, WJ_VY = -6.6;
   const COYOTE = 6, BUFFER = 7;
 
   const Player = {
@@ -503,15 +503,15 @@
         this.shotCd = 6;
         if (level === 0) {
           NS.Audio.sfx('shot');
-          Shots.spawn({ type: 'b1', sprite: 'buster1', x: mz.x - 6, y: mz.y - 3, w: 12, h: 6, vx: 7 * dir, vy: 0, dmg: 1 });
+          Shots.spawn({ type: 'b1', sprite: 'buster1', x: mz.x - 6, y: mz.y - 3, w: 12, h: 6, vx: 9 * dir, vy: 0, dmg: 1 });
           NS.FX.casing(mz.x - dir * 10, mz.y - 2, dir);
         } else if (level === 1) {
           NS.Audio.sfx('shot2');
-          Shots.spawn({ type: 'b2', sprite: 'buster2', x: mz.x - 9, y: mz.y - 6, w: 18, h: 12, vx: 7.5 * dir, vy: 0, dmg: 3 });
+          Shots.spawn({ type: 'b2', sprite: 'buster2', x: mz.x - 9, y: mz.y - 6, w: 18, h: 12, vx: 9.5 * dir, vy: 0, dmg: 3 });
           NS.FX.shake(1, 4);
         } else {
           NS.Audio.sfx('shot3');
-          Shots.spawn({ type: 'b3', sprite: 'buster3', x: mz.x - 13, y: mz.y - 8, w: 26, h: 16, vx: 8 * dir, vy: 0, dmg: 6, pierce: true });
+          Shots.spawn({ type: 'b3', sprite: 'buster3', x: mz.x - 13, y: mz.y - 8, w: 26, h: 16, vx: 10.5 * dir, vy: 0, dmg: 6, pierce: true });
           NS.FX.shake(2, 6);
           NS.FX.hitstop(3);
         }
@@ -529,7 +529,7 @@
       if (W.id === 'magma') {
         NS.Audio.sfx('shot2');
         Shots.spawn({
-          type: 'magma', sprite: 'magma', x: mz.x - 9, y: mz.y - 9, w: 14, h: 14, vx: 4.2 * dir, vy: -3.2, gravity: 0.22, dmg: 3, elem: 'fire',
+          type: 'magma', sprite: 'magma', x: mz.x - 9, y: mz.y - 9, w: 14, h: 14, vx: 5.2 * dir, vy: -3.8, gravity: 0.27, dmg: 3, elem: 'fire',
           onWall(s) {
             s.dead = true;
             NS.FX.burst(s.x + 7, s.y + 7, 10, { color: [P.orange3, P.red2, P.yellow], up: 1 });
@@ -542,19 +542,19 @@
         });
       } else if (W.id === 'frost') {
         NS.Audio.sfx('freeze');
-        Shots.spawn({ type: 'frost', sprite: 'frost', x: mz.x - 13, y: mz.y - 5, w: 22, h: 8, vx: 9 * dir, vy: 0, dmg: 2, elem: 'ice', pierce: true, freeze: 90 });
+        Shots.spawn({ type: 'frost', sprite: 'frost', x: mz.x - 13, y: mz.y - 5, w: 22, h: 8, vx: 11 * dir, vy: 0, dmg: 2, elem: 'ice', pierce: true, freeze: 90 });
       } else if (W.id === 'cyclone') {
         NS.Audio.sfx('dash');
         const self = this;
         Shots.spawn({
-          type: 'cyclone', sprite: 'cyclone', x: mz.x - 10, y: mz.y - 10, w: 18, h: 18, vx: 5.5 * dir, vy: -1.2, dmg: 2, elem: 'wind', pierce: true, life: 110, ignoreWall: true, phase: 0,
+          type: 'cyclone', sprite: 'cyclone', x: mz.x - 10, y: mz.y - 10, w: 18, h: 18, vx: 6.8 * dir, vy: -1.5, dmg: 2, elem: 'wind', pierce: true, life: 110, ignoreWall: true, phase: 0,
           update(s) {
             s.phase++;
             if (s.phase === 26) { s.returning = true; }
             if (s.returning) {
               const a = NS.angleTo(s.x, s.y, self.cx - 9, self.cy - 9);
-              s.vx = NS.lerp(s.vx, Math.cos(a) * 6.5, 0.2);
-              s.vy = NS.lerp(s.vy, Math.sin(a) * 6.5, 0.2);
+              s.vx = NS.lerp(s.vx, Math.cos(a) * 8, 0.2);
+              s.vy = NS.lerp(s.vy, Math.sin(a) * 8, 0.2);
               if (NS.dist(s.x + 9, s.y + 9, self.cx, self.cy) < 12) s.dead = true;
             } else {
               s.vy -= 0.06;
@@ -578,8 +578,8 @@
       this.invuln = 60;
       this.hurtT = 18;
       this.state = this.onGround ? 'ground' : 'air';
-      this.vx = (fromDir !== undefined ? fromDir : -this.facing) * 1.8;
-      this.vy = -2.2;
+      this.vx = (fromDir !== undefined ? fromDir : -this.facing) * 2.2;
+      this.vy = -2.6;
       this.onGround = false;
     },
 

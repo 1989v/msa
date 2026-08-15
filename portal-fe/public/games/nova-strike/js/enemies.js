@@ -150,7 +150,7 @@
   const TYPES = {
     walker: {
       w: 24, h: 20, hp: 3, dmg: 3, score: 100,
-      init(e) { e.dir = -1; e.speed = 0.5; },
+      init(e) { e.dir = -1; e.speed = 0.65; },
       update(e, pl) {
         e.frozen = NS.tick(e.frozen);
         if (e.frozen > 0) return;
@@ -165,8 +165,8 @@
           e.t--;
           if (!(e.t > 0)) {
             e.state = 'lunge';
-            e.vx = NS.sign(pl.cx - e.x) * 2.2;
-            e.vy = -3.4;
+            e.vx = NS.sign(pl.cx - e.x) * 2.7;
+            e.vy = -3.9;
             NS.Audio.sfx('jump');
           }
           return;
@@ -201,7 +201,7 @@
         if (e.cycle === 100) {
           for (const spread of [-0.35, 0, 0.35]) {
             const a = NS.angleTo(e.x + e.w / 2, e.y + 6, pl.cx, pl.cy) + spread;
-            NS.EBullets.spawn({ x: e.x + e.w / 2, y: e.y + 6, vx: Math.cos(a) * 2.4, vy: Math.sin(a) * 2.4, dmg: 2 });
+            NS.EBullets.spawn({ x: e.x + e.w / 2, y: e.y + 6, vx: Math.cos(a) * 2.9, vy: Math.sin(a) * 2.9, dmg: 2 });
           }
           NS.Audio.sfx('shot');
         }
@@ -225,7 +225,7 @@
           if (!(e.t2 > 0)) {
             e.state = 'dive';
             const a = NS.angleTo(e.x, e.y, pl.cx, pl.cy);
-            e.vx = Math.cos(a) * 2.8; e.vy = Math.sin(a) * 2.8;
+            e.vx = Math.cos(a) * 3.4; e.vy = Math.sin(a) * 3.4;
             NS.Audio.sfx('dash');
           }
           return;
@@ -255,7 +255,7 @@
           const dx = pl.cx - (e.x + e.w / 2);
           NS.EBullets.spawn({
             x: e.x + e.w / 2, y: e.y - 4, sprite: 'lavaGlob', w: 10, h: 10,
-            vx: NS.clamp(dx / 70, -2.2, 2.2), vy: -4.6, gravity: 0.18, dmg: 3,
+            vx: NS.clamp(dx / 60, -2.7, 2.7), vy: -5.2, gravity: 0.22, dmg: 3,
           });
           NS.Audio.sfx('shot2');
         }
@@ -275,7 +275,7 @@
         if (e.t % 160 >= 120 && e.t % 160 < 138 && (e.t % 6 === 0)) {
           NS.EBullets.spawn({
             x: e.x + e.w / 2 + e.facing * 8, y: e.y + 12, sprite: 'icicle', w: 6, h: 12,
-            vx: e.facing * 4.2, vy: 0, dmg: 2,
+            vx: e.facing * 5, vy: 0, dmg: 2,
           });
           NS.Audio.sfx('freeze');
         }
@@ -297,13 +297,13 @@
           if (e.swoopT >= 60) { e.state = 'fly'; e.baseY = e.y; }
           return;
         }
-        e.x += e.dir * 1.3;
+        e.x += e.dir * 1.6;
         e.y = e.baseY + Math.sin(e.t * 0.08) * 6;
         e.facing = e.dir;
         if (NS.Level.solidAt(e.x + (e.dir > 0 ? e.w + 4 : -4), e.y + 7)) e.dir *= -1;
         if (Math.abs(pl.cx - e.x) < 110 && pl.cy > e.y + 20 && e.cool <= 0) {
           e.state = 'swoop'; e.swoopT = 0; e.swoopY = e.y;
-          e.vx = NS.sign(pl.cx - e.x) * 2.0;
+          e.vx = NS.sign(pl.cx - e.x) * 2.4;
           e.cool = 180;
           NS.Audio.sfx('dash');
         }
@@ -330,7 +330,7 @@
           NS.Physics.move(e);
           return;
         }
-        e.vx = e.facing * 0.35;
+        e.vx = e.facing * 0.45;
         const r = NS.Physics.move(e);
         if (r.down) e.vy = 0;
         e.cool = NS.tick(e.cool);
@@ -374,7 +374,7 @@
         e.regen = NS.tick(e.regen);
         if (!e.hasBomb && !(e.regen > 0)) e.hasBomb = true;
         e.facing = NS.sign(pl.cx - e.x) || -1;
-        e.vx = e.facing * 0.4;
+        e.vx = e.facing * 0.5;
         const r = NS.Physics.move(e);
         if (r.down) e.vy = 0;
         e.cool = NS.tick(e.cool);

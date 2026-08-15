@@ -14,15 +14,18 @@
   function resize() {
     const availW = window.innerWidth - 16;
     const availH = window.innerHeight - 16;
-    scale = Math.max(1, Math.floor(Math.min(availW / NS.VW, availH / NS.VH)));
+    scale = Math.max(0.5, Math.min(availW / NS.VW, availH / NS.VH));
+    // 정수 배율에 근접하면 pixelated, 아니면 부드러운 업스케일 (도트 뭉침/불균일 방지)
+    const nearInt = Math.abs(scale - Math.round(scale)) < 0.06;
+    gameCanvas.style.imageRendering = nearInt ? 'pixelated' : 'auto';
     dpr = Math.min(2, window.devicePixelRatio || 1);
-    gameCanvas.style.width = NS.VW * scale + 'px';
-    gameCanvas.style.height = NS.VH * scale + 'px';
+    gameCanvas.style.width = Math.round(NS.VW * scale) + 'px';
+    gameCanvas.style.height = Math.round(NS.VH * scale) + 'px';
     uiCanvas.width = Math.round(NS.VW * scale * dpr);
     uiCanvas.height = Math.round(NS.VH * scale * dpr);
-    uiCanvas.style.width = NS.VW * scale + 'px';
-    uiCanvas.style.height = NS.VH * scale + 'px';
-    uiScale = scale * dpr;
+    uiCanvas.style.width = Math.round(NS.VW * scale) + 'px';
+    uiCanvas.style.height = Math.round(NS.VH * scale) + 'px';
+    uiScale = scale * dpr * (NS.VW / 640);   // 오버레이 UI 는 640×360 논리 좌표계 유지
   }
   window.addEventListener('resize', resize);
   resize();

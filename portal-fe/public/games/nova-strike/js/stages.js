@@ -1,11 +1,11 @@
 // NOVA STRIKE — stages: 4개 지역 (마그마/빙결/폭풍/코어) — 지형·기믹·적·숨김 요소
-// 맵은 빌더 DSL 로 생성 (H=34 행, 폭 208 타일 = 3328px, 보스방 = 정확히 1화면 480px)
+// 맵은 빌더 DSL 로 생성 (H=34 행, 폭 228 타일 = 3648px, 보스방 = 정확히 1화면 960px)
 'use strict';
 (function () {
   const T = NS.TILE;
-  const H = 34, W = 208;
+  const H = 34, W = 228;
   const GY = 30;              // 기본 지면 상단 행
-  const ARENA_X0 = 168, ARENA_X1 = 208;   // 보스방 = 정확히 1화면 (40타일 = 640px)
+  const ARENA_X0 = 168, ARENA_X1 = 228;   // 보스방 = 정확히 1화면 (60타일 = 960px)
 
   function builder() {
     const g = Array.from({ length: H }, () => Array(W).fill('.'));

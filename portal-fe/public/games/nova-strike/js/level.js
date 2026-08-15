@@ -155,7 +155,7 @@
   // ── 배경 베이크 (4층: 하늘/원경/중경/근경) ─────────────
   function bakeBackground(theme) {
     const bg = {};
-    const W = 960, H = 360;
+    const W = 1440, H = 540;
     // 하늘
     bg.sky = NS.makeCanvas(NS.VW, NS.VH);
     {
@@ -163,15 +163,15 @@
       NS.ditherGrad(g, 0, 0, NS.VW, NS.VH, theme.skyStops);
       const rng = NS.makeRng(theme.key.charCodeAt(0) * 131);
       if (theme.key === 'magma') {
-        // 지평선 용광 발광 (조밀한 밴드)
-        for (let i = 0; i < 8; i++) R(g, 0, 250 + i * 7, NS.VW, 4, NS.rgba('#f07820', 0.08 + i * 0.045));
-        R(g, 0, 244, NS.VW, 2, NS.rgba('#ffc44d', 0.25));
-        for (let i = 0; i < 34; i++) R(g, rng() * NS.VW, 30 + rng() * 180, 1, 1, NS.rgba('#ffc44d', 0.35 + rng() * 0.3)); // 불티빛
+        // 지평선 용광 발광 (조밀한 밴드 — 지면선 부근)
+        for (let i = 0; i < 8; i++) R(g, 0, 424 + i * 8, NS.VW, 5, NS.rgba('#f07820', 0.08 + i * 0.045));
+        R(g, 0, 418, NS.VW, 2, NS.rgba('#ffc44d', 0.25));
+        for (let i = 0; i < 44; i++) R(g, rng() * NS.VW, 40 + rng() * 300, 1, 1, NS.rgba('#ffc44d', 0.35 + rng() * 0.3)); // 불티빛
         // 연무 밴드
-        for (let i = 0; i < 3; i++) {
-          const y = 60 + i * 55;
+        for (let i = 0; i < 4; i++) {
+          const y = 90 + i * 80;
           for (let x = 0; x < NS.VW; x += 8)
-            R(g, x, y + Math.sin(x * 0.03 + i * 2) * 10, 8, 14, NS.rgba('#3d141c', 0.35));
+            R(g, x, y + Math.sin(x * 0.03 + i * 2) * 12, 8, 16, NS.rgba('#3d141c', 0.35));
         }
       } else if (theme.key === 'cryo') {
         for (let i = 0; i < 60; i++) R(g, rng() * NS.VW, rng() * 180, 1, 1, NS.rgba('#e8fbff', 0.35 + rng() * 0.5));
@@ -548,7 +548,7 @@
     // ── 카메라 ──
     updateCamera(target, instant) {
       const b = this.camBounds || { x0: 0, y0: 0, x1: this.pxW, y1: this.pxH };
-      let tx = target.x + target.w / 2 - NS.VW / 2 + (target.facing || 0) * 24;
+      let tx = target.x + target.w / 2 - NS.VW / 2 + (target.facing || 0) * 44;
       let ty = target.y + target.h / 2 - NS.VH / 2 - 12;
       tx = NS.clamp(tx, b.x0, Math.max(b.x0, b.x1 - NS.VW));
       ty = NS.clamp(ty, b.y0, Math.max(b.y0, b.y1 - NS.VH));
@@ -577,7 +577,7 @@
       if (this.theme.key === 'magma') {
         const a = 0.045 + 0.03 * Math.sin(this.frame * 0.045);
         g.fillStyle = NS.rgba('#f07820', a);
-        g.fillRect(0, 236 - Math.round(cy * 0.06), NS.VW, 70);
+        g.fillRect(0, 420 - Math.round(cy * 0.06), NS.VW, 90);
       }
       // 번개 섬광 (폭풍)
       if (this.theme.key === 'storm') {

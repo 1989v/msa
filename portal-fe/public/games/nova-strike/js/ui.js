@@ -6,7 +6,9 @@
   const P = NS.PAL;
   const FONT = "'Apple SD Gothic Neo','Pretendard','Noto Sans KR','Malgun Gothic',sans-serif";
   let menuStars = null;
-  const CX = () => NS.VW / 2;
+  const UIW = 640, UIH = 360;              // 오버레이/메뉴 논리 좌표계 (게임 캔버스와 1.5:1)
+  const K = () => NS.VW / UIW;           // 월드px → UI 유닛 변환 계수 (1.5)
+  const CX = () => UIW / 2;
 
   function text(g, s, str, x, y, size, color, opts = {}) {
     g.font = `${opts.weight || 700} ${Math.round(size * s)}px ${FONT}`;
@@ -35,7 +37,7 @@
 
   // 셀렉트 카드 레이아웃 (픽셀/오버레이 공유)
   const CARD = { y: 110, w: 100, h: 96, gap: 12, labW: 72 };
-  CARD.x0 = () => (NS.VW - (4 * CARD.w + 3 * CARD.gap + 16 + CARD.labW)) / 2;
+  CARD.x0 = () => (UIW - (4 * CARD.w + 3 * CARD.gap + 16 + CARD.labW)) / 2;
   CARD.x = (i) => CARD.x0() + i * (CARD.w + CARD.gap);
   CARD.labX = () => CARD.x0() + 4 * (CARD.w + CARD.gap) + 4;
 
@@ -47,6 +49,12 @@
       const G = NS.Game;
       const st = G.state;
       this.frame++;
+      g.save();
+      g.scale(K(), K());
+      this._drawPixelInner(g, G, st);
+      g.restore();
+    },
+    _drawPixelInner(g, G, st) {
       if (['title', 'charSelect', 'select', 'shop'].includes(st)) {
         this.drawMenuBackdrop(g);
         if (st === 'select') this.drawSelectPortraits(g);
@@ -62,46 +70,46 @@
       if (!menuStars) {
         menuStars = [];
         const rng = NS.makeRng(20260815);
-        for (let i = 0; i < 120; i++) menuStars.push({ x: rng() * NS.VW, y: rng() * NS.VH, z: rng() });
+        for (let i = 0; i < 120; i++) menuStars.push({ x: rng() * UIW, y: rng() * UIH, z: rng() });
       }
-      NS.ditherGrad(g, 0, 0, NS.VW, NS.VH, ['#04030d', '#0a0618', '#140a28', '#1c1038']);
+      NS.ditherGrad(g, 0, 0, UIW, UIH, ['#04030d', '#0a0618', '#140a28', '#1c1038']);
       for (const s of menuStars) {
         const tw = 0.35 + 0.65 * Math.abs(Math.sin(this.frame * 0.02 + s.x));
         g.fillStyle = NS.rgba(s.z > 0.7 ? P.cyan3 : s.z > 0.4 ? P.steel5 : P.violet3, 0.3 + 0.5 * tw * s.z);
-        g.fillRect(Math.round(s.x), Math.round((s.y + this.frame * 0.03 * s.z) % NS.VH), s.z > 0.8 ? 2 : 1, s.z > 0.8 ? 2 : 1);
+        g.fillRect(Math.round(s.x), Math.round((s.y + this.frame * 0.03 * s.z) % UIH), s.z > 0.8 ? 2 : 1, s.z > 0.8 ? 2 : 1);
       }
       // 하단 실루엣 스카이라인
       g.fillStyle = '#0a0818';
-      for (let x = 0; x < NS.VW; x += 24) {
+      for (let x = 0; x < UIW; x += 24) {
         const h = 20 + (((x * 2654435761) >>> 16) % 97) % 40;
-        g.fillRect(x, NS.VH - h, 24, h);
+        g.fillRect(x, UIH - h, 24, h);
       }
       g.fillStyle = NS.rgba(P.cyan2, 0.12);
-      g.fillRect(0, NS.VH - 66, NS.VW, 1);
+      g.fillRect(0, UIH - 66, UIW, 1);
     },
 
     drawTitleHero(g) {
       // 현상금 사냥꾼 듀오
       const duo = [
-        [NS.Sprites.heroes.dusk.idle[Math.floor(this.frame / 40) % 2], NS.VW * 0.76, 2.4, false],
-        [NS.Sprites.heroes.raven.idle[Math.floor(this.frame / 40 + 1) % 2], NS.VW * 0.90, 2.2, true],
+        [NS.Sprites.heroes.dusk.idle[Math.floor(this.frame / 40) % 2], UIW * 0.76, 2.4, false],
+        [NS.Sprites.heroes.raven.idle[Math.floor(this.frame / 40 + 1) % 2], UIW * 0.90, 2.2, true],
       ];
       for (const [img, x, sc, flip] of duo) {
         g.save();
         g.imageSmoothingEnabled = false;
-        g.translate(Math.round(x), Math.round(NS.VH * 0.96));
+        g.translate(Math.round(x), Math.round(UIH * 0.96));
         g.scale(flip ? -sc : sc, sc);
         g.drawImage(img, -32, -64);
         g.restore();
       }
       g.fillStyle = NS.rgba(P.cyan2, 0.06 + 0.03 * Math.sin(this.frame * 0.05));
-      g.fillRect(0, 0, NS.VW, NS.VH);
+      g.fillRect(0, 0, UIW, UIH);
     },
 
     drawCharPortraits(g) {
       const keys = ['dusk', 'raven'];
       for (let i = 0; i < 2; i++) {
-        const cx = NS.VW / 2 + (i === 0 ? -130 : 130);
+        const cx = UIW / 2 + (i === 0 ? -130 : 130);
         const sel = NS.Game.charIdx === i;
         const set = NS.Sprites.heroes[keys[i]];
         const img = sel ? set.victory[Math.floor(this.frame / 30) % 2] : set.idle[Math.floor(this.frame / 40) % 2];
@@ -172,7 +180,7 @@
       // ── 보스 체력바 (우측) ──
       const B = NS.Boss;
       if (B.active && ['fill', 'fight', 'dying'].includes(B.state)) {
-        const bx = NS.VW - 24, bBot = 226, bH2 = Math.min(160, B.maxHp * 2) + 8;
+        const bx = UIW - 24, bBot = 226, bH2 = Math.min(160, B.maxHp * 2) + 8;
         g.fillStyle = 'rgba(9,10,26,0.8)';
         g.fillRect(bx - 2, bBot - bH2, 12, bH2);
         const shown = Math.round(B.hpRatio * (bH2 - 8) / 2);
@@ -190,7 +198,7 @@
 
     drawWeaponGetPixel(g) {
       g.fillStyle = 'rgba(5,6,15,0.82)';
-      g.fillRect(0, 0, NS.VW, NS.VH);
+      g.fillRect(0, 0, UIW, UIH);
       const G = NS.Game;
       const sprMap = { magma: 'magma', frost: 'frost', cyclone: 'cyclone' };
       const wid = G.pendingWeapon;
@@ -355,11 +363,11 @@
       const W = NS.WEAPONS[pl.weapon];
       text(g, s, W.name, 12, 216, 10, W.color === P.cyan2 ? '#a8f6ff' : W.color, { weight: 700 });
       if (pl.weapon !== 0) text(g, s, `${pl.ammo[pl.weapon]}/${pl.ammoMax}`, 12, 230, 9.5, '#8b96bd', { weight: 500 });
-      text(g, s, `칩 ${G.save.chips.toLocaleString()}`, NS.VW - 12, 22, 11, '#ffc44d', { align: 'right' });
-      text(g, s, `${G.stage.score.toLocaleString()}점`, NS.VW - 12, 40, 10.5, '#c3cbe8', { align: 'right', weight: 500 });
+      text(g, s, `칩 ${G.save.chips.toLocaleString()}`, UIW - 12, 22, 11, '#ffc44d', { align: 'right' });
+      text(g, s, `${G.stage.score.toLocaleString()}점`, UIW - 12, 40, 10.5, '#c3cbe8', { align: 'right', weight: 500 });
       const B = NS.Boss;
       if (B.active && ['fill', 'fight', 'dying'].includes(B.state)) {
-        text(g, s, B.def.name, NS.VW - 12, 244, 11, '#ff9fd0', { align: 'right' });
+        text(g, s, B.def.name, UIW - 12, 244, 11, '#ff9fd0', { align: 'right' });
       }
       // ── 스테이지 도입 연출: 레터박스 + 타이틀 카드 ──
       const st = G.stage;
@@ -367,11 +375,11 @@
         const it = st.introT;
         const barH = 38 * NS.clamp(Math.min((150 - it) / 18, it / 28), 0, 1);
         g.fillStyle = '#05060f';
-        g.fillRect(0, 0, NS.VW * s, barH * s);
-        g.fillRect(0, (NS.VH - barH) * s, NS.VW * s, barH * s);
+        g.fillRect(0, 0, UIW * s, barH * s);
+        g.fillRect(0, (UIH - barH) * s, UIW * s, barH * s);
         // 페이드 인
         const fa = NS.clamp((it - 118) / 32, 0, 1);
-        if (fa > 0) { g.fillStyle = `rgba(5,6,15,${fa})`; g.fillRect(0, 0, NS.VW * s, NS.VH * s); }
+        if (fa > 0) { g.fillStyle = `rgba(5,6,15,${fa})`; g.fillRect(0, 0, UIW * s, UIH * s); }
         // 타이틀 카드
         const ta = NS.clamp(Math.min((142 - it) / 14, (it - 26) / 22), 0, 1);
         if (ta > 0) {
@@ -390,27 +398,27 @@
       if (B.active && B.state === 'warning') {
         const bh = 38 * NS.clamp(B.t / 16, 0, 1);
         g.fillStyle = '#05060f';
-        g.fillRect(0, 0, NS.VW * s, bh * s);
-        g.fillRect(0, (NS.VH - bh) * s, NS.VW * s, bh * s);
+        g.fillRect(0, 0, UIW * s, bh * s);
+        g.fillRect(0, (UIH - bh) * s, UIW * s, bh * s);
         if (Math.floor(B.t / 12) % 2 === 0) {
           g.fillStyle = 'rgba(126,29,44,0.35)';
-          g.fillRect(0, 144 * s, NS.VW * s, 62 * s);
+          g.fillRect(0, 144 * s, UIW * s, 62 * s);
           text(g, s, 'W A R N I N G', CX(), 186, 38, '#e04545', { align: 'center', weight: 900, glow: 'rgba(224,69,69,0.8)', glowSize: 18 });
         }
       }
       if (B.active && (B.state === 'enter' || (B.state === 'fill' && B.t < 55))) {
         g.fillStyle = '#05060f';
-        g.fillRect(0, 0, NS.VW * s, 38 * s);
-        g.fillRect(0, (NS.VH - 38) * s, NS.VW * s, 38 * s);
+        g.fillRect(0, 0, UIW * s, 38 * s);
+        g.fillRect(0, (UIH - 38) * s, UIW * s, 38 * s);
         text(g, s, B.def.name, CX(), 182, 26, '#ff9fd0', { align: 'center', weight: 900, glow: 'rgba(230,62,143,0.7)', glowSize: 14 });
         text(g, s, '구역 가디언', CX(), 203, 11, '#c3cbe8', { align: 'center', weight: 500 });
       }
       // 데미지 팝업 (월드 좌표 == 유닛 좌표)
-      const camX = NS.Level.camX, camY = NS.Level.camY;
+      const camX = NS.Level.camX, camY = NS.Level.camY, k = K();
       for (const pu of NS.FX.popups) {
         const a = Math.min(1, pu.life / 16);
         g.globalAlpha = a;
-        text(g, s, pu.text, pu.x - camX, pu.y - camY, 11, pu.color, { align: 'center', weight: 900, stroke: 'rgba(10,12,30,0.9)', strokeW: 1.4 });
+        text(g, s, pu.text, (pu.x - camX) / k, (pu.y - camY) / k, 11, pu.color, { align: 'center', weight: 900, stroke: 'rgba(10,12,30,0.9)', strokeW: 1.4 });
         g.globalAlpha = 1;
       }
     },
@@ -418,7 +426,7 @@
     ovPaused(g, s) {
       const G = NS.Game;
       g.fillStyle = 'rgba(5,6,15,0.72)';
-      g.fillRect(0, 0, NS.VW * s, NS.VH * s);
+      g.fillRect(0, 0, UIW * s, UIH * s);
       panel(g, s, CX() - 150, 76, 190, 128, { border: NS.rgba(P.cyan2, 0.8) });
       text(g, s, 'PAUSE', CX() - 55, 100, 17, '#f2f7ff', { align: 'center', weight: 900 });
       const opts = G.pauseOptions();
@@ -457,7 +465,7 @@
       const G = NS.Game;
       const st = G.stage;
       g.fillStyle = 'rgba(5,6,15,0.7)';
-      g.fillRect(0, 0, NS.VW * s, NS.VH * s);
+      g.fillRect(0, 0, UIW * s, UIH * s);
       text(g, s, 'MISSION COMPLETE', CX(), 96, 27, '#3ecf6e', { align: 'center', weight: 900, glow: 'rgba(62,207,110,0.6)', glowSize: 14 });
       text(g, s, st.def.name + ' — ' + st.def.bossName + ' 격파', CX(), 124, 12.5, '#c3cbe8', { align: 'center', weight: 500 });
       panel(g, s, CX() - 115, 148, 230, 100, { border: NS.rgba(P.cyan2, 0.6) });
@@ -472,7 +480,7 @@
 
     ovGameover(g, s) {
       g.fillStyle = 'rgba(5,6,15,0.78)';
-      g.fillRect(0, 0, NS.VW * s, NS.VH * s);
+      g.fillRect(0, 0, UIW * s, UIH * s);
       text(g, s, 'GAME OVER', CX(), 158, 34, '#e04545', { align: 'center', weight: 900, glow: 'rgba(224,69,69,0.7)', glowSize: 16 });
       text(g, s, '수리 완료 — 코어 칩은 보존되었다', CX(), 190, 12.5, '#c3cbe8', { align: 'center', weight: 500 });
       if (NS.Game.stateT > 90 && Math.floor(this.frame / 24) % 2 === 0)
@@ -482,7 +490,7 @@
     ovEnding(g, s) {
       const G = NS.Game;
       g.fillStyle = 'rgba(5,6,15,0.85)';
-      g.fillRect(0, 0, NS.VW * s, NS.VH * s);
+      g.fillRect(0, 0, UIW * s, UIH * s);
       const t = G.stateT;
       text(g, s, 'MISSION ACCOMPLISHED', CX(), 88, 25, '#38e0ff', { align: 'center', weight: 900, glow: NS.rgba(P.cyan2, 0.8), glowSize: 14 });
       const lines = [
