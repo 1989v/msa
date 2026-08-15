@@ -123,6 +123,7 @@
 
 캔버스 게임 공용 정적 자산 (`portal-fe/public/games/lib/`):
 - `touch.js` — 모바일 조작·레이아웃 엔진. **원형 아날로그 조이스틱**(한 손가락 360°, 8방향 KeyboardEvent 합성이라 게임별 입력 코드 무변경 — 대각선은 인접 두 키 동시) + 액션 버튼 + **레이아웃 fit**(게임 화면 상단 정렬, 하단 조작 영역 `--vt-pad-h` 확보, 가로/세로 비율 유지 contain). `canvas.width/height` **속성은 절대 건드리지 않는다**(인라인 style 만) — 게임 좌표계 보존이 12종 공용의 불변식. 옵션 `data-actions`(기존) `data-nodpad`(기존) `data-dirkeys="wasd"` `data-stick="fixed|floating|off"` `data-fit="0"`. API `GameTouch.axis()/pressed()/setVisible()/refit()/on()` — 비터치에서도 no-op 스텁이 있어 게임 쪽 가드 불필요
+- `keys.js` — **플랫폼 입력 표준** (2026-08-15). 좌/우 손잡이 2레이아웃(방향키+ZXC(AS) / WASD+JKL(UI)) + 공통 Enter=일시정지·Esc=뒤로. localStorage 전 게임 공유 + 좌하단 전환 배지. 신규 게임은 `GameKeys.keys()` 네이티브 매핑, 레거시는 `GameKeys.remap(프로필)` 무수정 적용. 표준 문서: `docs/conventions/game-input-standard.md`. 레퍼런스: nova-strike
 - `rank.js` — 랭킹 위젯. `GameRank.autoPanel(slug)`(#menu 하단 TOP10), `submit(slug, score, detail)`, `copyButton(getCode)`(이어하기 코드 📋 복사)
 - `i18n.js` — 글로벌 한/영. localStorage('game_lang') → navigator.language 자동, 우상단 토글 자동 부착. 게임은 `GameI18n.init({ko,en})` + `TR()` + `data-i18n`. 카탈로그(제목/설명)는 `title_en`/`description_en` 컬럼(V17)
 - `daily.js` — 데일리 퍼즐 공용. KST 자정 롤오버 날짜 시드(`seed`/`rng`/`shuffle`), 연속 출석 스트릭, 오늘 결과 저장(재제출 방지), 다음 퍼즐 카운트다운, 이모지 결과 공유
