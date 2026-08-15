@@ -1,3 +1,13 @@
+/* sitelock — 무단 재호스팅 방지. 정식 배포 도메인과 로컬 개발에서만 실행된다. */
+(function () {
+  var h = location.hostname;
+  if (h === "localhost" || h === "127.0.0.1" || h === "1989v.com" || /\.1989v\.com$/.test(h)) return;
+  var msg = function () {
+    document.body.innerHTML = "<div style=\"font:16px sans-serif;color:#eee;background:#111;position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px\">이 게임은 <a href=\"https://game.1989v.com\" style=\"color:#6cf;margin-left:6px\"> game.1989v.com</a> 에서만 플레이할 수 있습니다.</div>";
+  };
+  if (document.body) msg(); else document.addEventListener("DOMContentLoaded", msg);
+  throw new Error("sitelock");
+})();
 /**
  * 게임 공통 i18n — 브라우저 언어 자동 감지 + 전역 언어 전환.
  *

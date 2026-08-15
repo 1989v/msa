@@ -19,6 +19,11 @@ ENV VITE_API_URL=""
 # Skip tsc type-check (pre-existing TS errors in ForceGraph3D.tsx).
 # 프리렌더는 공개 게임 API 를 읽어 SEO 정적 페이지를 찍는다 — 실패해도 빌드는 통과한다.
 RUN npx vite build --base / && node scripts/prerender-seo.mjs
+# 게임 JS minify — 서빙물에서 원문 가독성 제거 (소스맵 미발행). 인라인 스크립트 HTML 게임은
+# 55종 일괄 회귀 위험 대비 이득이 작아 제외 — 수익 티어(다중 파일) 게임과 공용 lib 만.
+RUN find dist/games -name '*.js' -type f | while read f; do \
+      node_modules/.bin/esbuild "$f" --minify --charset=utf8 --outfile="$f" --allow-overwrite --log-level=error || exit 1; \
+    done
 
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html

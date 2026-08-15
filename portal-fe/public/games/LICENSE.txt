@@ -1,0 +1,15 @@
+Copyright (c) 2026 kgd (1989v). All rights reserved.
+
+이 디렉토리의 게임 소스 코드·그래픽·사운드·텍스트는 저작권자의 자산이며,
+사전 서면 허가 없는 복제·수정·재배포·재호스팅을 금지합니다.
+소스가 열람 가능하다는 사실은 사용 허락을 의미하지 않습니다 (source-available ≠ open source).
+
+The game source code, graphics, audio and text in this directory are proprietary.
+Copying, modification, redistribution or re-hosting without prior written
+permission is prohibited. Source visibility does not grant a license.
+
+제3자 에셋은 각 게임의 assets/CREDITS.md 에 명시된 라이선스(CC0, SIL OFL 등)를 따릅니다.
+Third-party assets follow the licenses stated in each game's assets/CREDITS.md.
+
+정식 서비스: https://game.1989v.com
+문의: github.com/1989v
