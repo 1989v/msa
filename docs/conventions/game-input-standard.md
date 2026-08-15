@@ -35,4 +35,6 @@
 
 - [x] `lib/keys.js` + 손잡이 배지
 - [x] `nova-strike` (레퍼런스 — 네이티브 매핑 + 라벨 연동)
-- [ ] 기존 게임 일괄 적용 (게임별 컨트롤 조사 → remap 프로필 부착, 별도 스윕 작업)
+- [x] 1차 스윕 슬라이스 (2026-08-15): `cave-glide`(a1/a2→Space), `crimson-ravine`(s1/s2→Q/W) remap 부착 · 검증 완료.
+  `storm-corridor`(방향키+WASD 동시 수용)·`iron-vanguard`(마우스+Esc)는 **이미 표준 부합** 판정
+- [ ] 잔여 게임 일괄 스윕 — 분류 절차: ①키 사용 grep ②판정(부합/리맵/마우스-스킵) ③remap 한 줄 부착
