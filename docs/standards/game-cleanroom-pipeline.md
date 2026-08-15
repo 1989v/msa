@@ -106,7 +106,7 @@
   포함, favicon 은 data URI)
 - 산출물 폴더: /Users/gideok-kwon/IdeaProjects/msa/portal-fe/public/games/⟨slug⟩/
   구성: index.html + js/ + assets/ + CREDITS.md + DESIGN.md
-- git: 게임 디렉토리는 **private 서브모듈(1989v/msa-games)** 이다 — 그 안에서의 커밋은
+- git: 게임 디렉토리는 **private 서브모듈(1989v/games)** 이다 — 그 안에서의 커밋은
   자동으로 msa-games 레포로 간다. **자기 폴더만** 페이즈별 백업 커밋 허용, 다른 게임
   폴더는 절대 스테이징하지 않는다. msa 본체 커밋/푸시는 하지 않는다 (포인터 범프는 통합 몫)
 

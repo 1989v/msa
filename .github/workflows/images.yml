@@ -47,12 +47,12 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
           # 최소권한: 이 워크플로가 접근하는 4개 repo 만 명시.
-          # App 설치 페이지에 msa / msa-auth / msa-gifticon / msa-games 전부 있어야 동작.
+          # App 설치 페이지에 msa / msa-auth / msa-gifticon / games 전부 있어야 동작.
           repositories: |
             msa
             msa-auth
             msa-gifticon
-            msa-games
+            games
 
       - name: Checkout (root only)
         uses: actions/checkout@v4
