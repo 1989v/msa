@@ -106,8 +106,9 @@
   포함, favicon 은 data URI)
 - 산출물 폴더: /Users/gideok-kwon/IdeaProjects/msa/portal-fe/public/games/⟨slug⟩/
   구성: index.html + js/ + assets/ + CREDITS.md + DESIGN.md
-- git: **자기 폴더만** 페이즈별 백업 커밋 허용. 다른 파일은 절대 스테이징하지 않는다.
-  (스테이징 전 `git status --porcelain` 로 자기 폴더 외 변경이 섞이지 않았는지 확인)
+- git: 게임 디렉토리는 **private 서브모듈(1989v/msa-games)** 이다 — 그 안에서의 커밋은
+  자동으로 msa-games 레포로 간다. **자기 폴더만** 페이즈별 백업 커밋 허용, 다른 게임
+  폴더는 절대 스테이징하지 않는다. msa 본체 커밋/푸시는 하지 않는다 (포인터 범프는 통합 몫)
 
 ## IP / 상표 (전 산출물 적용)
 - **서빙되는 파일**(코드·주석·UI 문구·메타태그·CREDITS)에는 타사 게임/상표 명칭을 쓰지
@@ -183,7 +184,9 @@
      장르는 genre 컬럼. title_en/description_en 필수(SEO). supports_mobile 은 키보드 전용이면 0
    - `./gradlew :game:feature:test --tests '*GameSchemaIntegrationSpec*' --rerun-tasks` 로 실 MySQL 검증
 5. **game/CLAUDE.md** 정적 자산 표에 행 추가
-6. 커밋 → 푸시 → 배포 확인 → **portal-fe 재빌드**(`gh workflow run images -f services=portal-fe`)
+6. **msa-games 푸시 + 본체 포인터 범프** — 서브모듈에서 커밋·푸시 후 msa 에서
+   `git add portal-fe/public/games` (포인터) → 시드·문서와 함께 커밋
+7. 커밋 → 푸시 → 배포 확인 → **portal-fe 재빌드**(`gh workflow run images -f services=portal-fe`)
    — 프리렌더/사이트맵은 빌드 시점 API 를 읽으므로 백엔드 반영 후 한 번 더 돌아야 잡힌다
 
 ## 슬롯 작성 예 (실전에서 쓴 것)

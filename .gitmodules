@@ -16,3 +16,6 @@
 [submodule "career"]
 	path = career
 	url = https://github.com/1989v/msa-career.git
+[submodule "portal-fe/public/games"]
+	path = portal-fe/public/games
+	url = https://github.com/1989v/msa-games.git
