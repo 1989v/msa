@@ -11,7 +11,7 @@
       key: 'magma', name: '마그마 제련구역',
       block: { base: '#54303a', dark: '#331c26', lite: '#8a5152', deco: '#f07820', top: '#a86a55', topL: '#e0a080' },
       hazard: 'lava', ambient: 'ember',
-      skyStops: ['#1a0b14', '#33101a', '#571c1e', '#7e2a1c'],
+      skyStops: ['#140812', '#241016', '#3d141c', '#571c1e', '#7e2a1c'],
     },
     cryo: {
       key: 'cryo', name: '빙결 연구동',
@@ -38,23 +38,39 @@
     const B = theme.block;
     const ts = {};
     const rng = NS.makeRng(theme.key.length * 7919 + 17);
-    // 상단 타일 (지표) — 변형 3종
-    ts.top = [0, 1, 2].map(v => NS.bake(T, T, (g) => {
+    // 상단 타일 (지표) — 변형 4종 (요철 크러스트 프로필)
+    const topProfile = (v) => [ [0,1,0,0], [1,0,0,1], [0,0,1,0], [1,0,1,0] ][v];
+    ts.top = [0, 1, 2, 3].map(v => NS.bake(T, T, (g) => {
       R(g, 0, 0, T, T, B.base);
-      R(g, 0, 0, T, 4, B.top); R(g, 0, 0, T, 1, B.topL);
+      const prof = topProfile(v);
+      for (let q = 0; q < 4; q++) {
+        const off = prof[q];
+        R(g, q * 4, off, 4, 4, B.top);
+        R(g, q * 4, off, 4, 1, B.topL);
+      }
       R(g, 0, T - 4, T, 4, B.dark);
       if (v === 1) { R(g, 3, 6, 2, 2, B.dark); R(g, 10, 9, 3, 2, B.dark); }
       if (v === 2) { R(g, 6, 7, 4, 1, B.lite); R(g, 2, 10, 2, 2, B.dark); R(g, 12, 5, 2, 1, B.lite); }
-      R(g, (v * 5 + 2) % 12, 2, 1, 1, B.topL);
+      if (v === 3) { R(g, 4, 8, 2, 2, B.dark); R(g, 11, 6, 2, 3, B.dark); }
+      R(g, (v * 5 + 2) % 12, 5, 1, 1, B.topL);
     }, { post: false }));
-    // 내부 타일 — 변형 3종
-    ts.inner = [0, 1, 2].map(v => NS.bake(T, T, (g) => {
+    // 글로우 크랙 상단 타일 (2프레임 — deco 발광 맥동)
+    ts.topGlow = [0, 1].map(f => NS.bake(T, T, (g) => {
+      g.drawImage(ts.top[3], 0, 0);
+      const a = f ? 0.9 : 0.55;
+      R(g, 5, 4, 1, 5, NS.rgba(B.deco, a)); R(g, 6, 8, 3, 1, NS.rgba(B.deco, a * 0.8));
+      R(g, 9, 9, 1, 4, NS.rgba(B.deco, a * 0.7)); R(g, 11, 3, 1, 3, NS.rgba(B.deco, a * 0.6));
+      R(g, 5, 4, 1, 1, f ? '#ffffff' : NS.rgba('#ffffff', 0.5));
+    }, { post: false }));
+    // 내부 타일 — 변형 4종
+    ts.inner = [0, 1, 2, 3].map(v => NS.bake(T, T, (g) => {
       R(g, 0, 0, T, T, B.base);
       R(g, 0, 0, T, 1, NS.rgba(B.lite, 0.4));
       R(g, 0, T - 3, T, 3, B.dark);
       if (v === 0) { R(g, 2, 4, 5, 4, B.dark); R(g, 3, 5, 3, 2, B.base); }
       if (v === 1) { R(g, 9, 3, 4, 4, B.dark); R(g, 4, 10, 6, 2, B.dark); R(g, 10, 4, 2, 2, NS.rgba(B.deco, 0.5)); }
       if (v === 2) { R(g, 3, 3, 2, 2, B.lite); R(g, 11, 9, 3, 3, B.dark); }
+      if (v === 3) { R(g, 2, 2, 12, 1, B.dark); R(g, 2, 12, 12, 1, B.dark); R(g, 6, 5, 4, 5, B.dark); R(g, 7, 6, 2, 3, NS.rgba(B.deco, 0.4)); }
       // 리벳
       if (rng() > 0.4) { R(g, 1, 1, 1, 1, B.lite); R(g, 14, 1, 1, 1, B.lite); }
     }, { post: false }));
@@ -139,7 +155,7 @@
   // ── 배경 베이크 (4층: 하늘/원경/중경/근경) ─────────────
   function bakeBackground(theme) {
     const bg = {};
-    const W = 960, H = 270;
+    const W = 960, H = 360;
     // 하늘
     bg.sky = NS.makeCanvas(NS.VW, NS.VH);
     {
@@ -147,9 +163,16 @@
       NS.ditherGrad(g, 0, 0, NS.VW, NS.VH, theme.skyStops);
       const rng = NS.makeRng(theme.key.charCodeAt(0) * 131);
       if (theme.key === 'magma') {
-        // 지평선 용광 발광
-        for (let i = 0; i < 5; i++) R(g, 0, 200 + i * 8, NS.VW, 4, NS.rgba('#f07820', 0.10 + i * 0.05));
-        for (let i = 0; i < 26; i++) R(g, rng() * NS.VW, 30 + rng() * 130, 1, 1, NS.rgba('#ffc44d', 0.5)); // 불티빛
+        // 지평선 용광 발광 (조밀한 밴드)
+        for (let i = 0; i < 8; i++) R(g, 0, 250 + i * 7, NS.VW, 4, NS.rgba('#f07820', 0.08 + i * 0.045));
+        R(g, 0, 244, NS.VW, 2, NS.rgba('#ffc44d', 0.25));
+        for (let i = 0; i < 34; i++) R(g, rng() * NS.VW, 30 + rng() * 180, 1, 1, NS.rgba('#ffc44d', 0.35 + rng() * 0.3)); // 불티빛
+        // 연무 밴드
+        for (let i = 0; i < 3; i++) {
+          const y = 60 + i * 55;
+          for (let x = 0; x < NS.VW; x += 8)
+            R(g, x, y + Math.sin(x * 0.03 + i * 2) * 10, 8, 14, NS.rgba('#3d141c', 0.35));
+        }
       } else if (theme.key === 'cryo') {
         for (let i = 0; i < 60; i++) R(g, rng() * NS.VW, rng() * 180, 1, 1, NS.rgba('#e8fbff', 0.35 + rng() * 0.5));
         // 오로라 커튼
@@ -187,13 +210,40 @@
       const rng = NS.makeRng(theme.key.charCodeAt(1) * 733);
       if (theme.key === 'magma') {
         for (let x = 0; x < W;) {
-          const bw = 40 + rng() * 70, bh = 60 + rng() * 90;
-          R(g, x, H - bh, bw, bh, '#241016');
-          R(g, x, H - bh, bw, 2, '#3d1c22');
-          for (let wy = H - bh + 8; wy < H - 10; wy += 12)
-            for (let wx = x + 5; wx < x + bw - 6; wx += 10)
-              if (rng() > 0.55) R(g, wx, wy, 3, 4, rng() > 0.3 ? '#f07820' : '#7e2a1c');
-          x += bw + 12 + rng() * 30;
+          const roll = rng();
+          if (roll < 0.25) {
+            // 용광로 돔 (아가리 발광 — 지면선 위로 노출되게 상향)
+            const dw = 60 + rng() * 30, dh = 76 + rng() * 24;
+            NS.orb(g, x + dw / 2, H - dh, dw / 2, '#4a2028', '#3a1820', '#603038');
+            R(g, x, H - dh, dw, dh, '#4a2028');
+            R(g, x + dw / 2 - 8, H - dh - dw / 2 + 2, 16, 8, '#2c1218');
+            R(g, x + dw / 2 - 5, H - dh - dw / 2 + 4, 10, 5, '#f07820');
+            R(g, x + dw / 2 - 3, H - dh - dw / 2 + 5, 6, 3, '#ffc44d');
+            for (let ry = H - dh + 8; ry < H - 8; ry += 12) R(g, x + 2, ry, dw - 4, 2, '#3a1820');
+            x += dw + 20 + rng() * 30;
+          } else if (roll < 0.42) {
+            // 크레인 실루엣 (트러스 디테일)
+            const ch2 = 110 + rng() * 60;
+            R(g, x + 6, H - ch2, 5, ch2, '#4a2028');
+            R(g, x - 14, H - ch2, 70, 4, '#4a2028');
+            for (let i = 0; i < 5; i++) R(g, x - 12 + i * 14, H - ch2 + 4, 2, 3, '#3a1820');
+            R(g, x + 46, H - ch2 + 4, 2, 20, '#4a2028');
+            R(g, x + 43, H - ch2 + 24, 8, 6, '#603038');
+            R(g, x + 45, H - ch2 + 27, 3, 2, '#f07820');
+            for (let i = 0; i < 5; i++) R(g, x + 8 + (i % 2) * 2, H - ch2 + 8 + i * 12, 2, 2, '#603038');
+            x += 90 + rng() * 40;
+          } else {
+            const bw = 40 + rng() * 70, bh = 80 + rng() * 120;
+            R(g, x, H - bh, bw, bh, '#4a2028');
+            R(g, x, H - bh, bw, 2, '#603038');
+            R(g, x + bw - 3, H - bh, 3, bh, '#3a1820');
+            for (let wy = H - bh + 8; wy < H - 10; wy += 12)
+              for (let wx = x + 5; wx < x + bw - 6; wx += 10)
+                if (rng() > 0.55) R(g, wx, wy, 3, 4, rng() > 0.3 ? '#f07820' : '#8c3220');
+            // 옥상 안테나/급수탑
+            if (rng() > 0.5) { R(g, x + bw / 2, H - bh - 12, 2, 12, '#4a2028'); R(g, x + bw / 2 - 1, H - bh - 14, 4, 3, '#f07820'); }
+            x += bw + 12 + rng() * 30;
+          }
         }
       } else if (theme.key === 'cryo') {
         for (let x = 0; x < W;) {
@@ -233,18 +283,33 @@
       const rng = NS.makeRng(theme.key.charCodeAt(2) * 977);
       if (theme.key === 'magma') {
         for (let x = 0; x < W;) {
-          const bw = 26 + rng() * 30, bh = 100 + rng() * 110;
-          R(g, x, H - bh, bw, bh, '#38181e');
-          R(g, x, H - bh, bw, 3, '#5c2c30'); R(g, x, H - bh, 3, bh, '#502428');
-          // 굴뚝 + 배관 (건물 폭 안쪽으로만)
-          R(g, x + bw / 2 - 3, H - bh - 18, 6, 18, '#2c1218');
-          R(g, x + bw / 2 - 4, H - bh - 22, 8, 5, '#502428');
-          for (let py = H - bh + 12; py < H - 20; py += 26) {
-            R(g, x + 2, py, bw - 4, 4, '#241016');
-            R(g, x + 2, py, bw - 4, 1, NS.rgba('#f07820', 0.55));
-            R(g, x + 1, py, 2, 5, '#2c1218'); R(g, x + bw - 3, py, 2, 5, '#2c1218'); // 브래킷
+          if (rng() < 0.3) {
+            // 저장 탱크 (원통 + 돔 지붕 + 압력 게이지 글로우)
+            const tw = 46 + rng() * 20, th2 = 60 + rng() * 30;
+            R(g, x, H - th2, tw, th2, '#26101a');
+            NS.orb(g, x + tw / 2, H - th2, tw / 2, '#2e141e', '#1c0a12', '#3d1c26');
+            R(g, x + 4, H - th2 + 6, 3, th2 - 12, '#3d1c26');
+            for (let ry = H - th2 + 10; ry < H - 8; ry += 14) R(g, x, ry, tw, 2, '#1c0a12');
+            R(g, x + tw - 9, H - th2 + 12, 4, 4, '#f07820'); R(g, x + tw - 8, H - th2 + 13, 2, 2, '#ffc44d');
+            x += tw + 26 + rng() * 30;
+          } else {
+            const bw = 26 + rng() * 30, bh = 100 + rng() * 110;
+            R(g, x, H - bh, bw, bh, '#22101a');
+            R(g, x, H - bh, bw, 3, '#3d1c26'); R(g, x, H - bh, 3, bh, '#301622');
+            // 굴뚝 + 연기 기둥
+            R(g, x + bw / 2 - 3, H - bh - 18, 6, 18, '#1c0a12');
+            R(g, x + bw / 2 - 4, H - bh - 22, 8, 5, '#301622');
+            for (let sy = H - bh - 30; sy > H - bh - 78; sy -= 9) {
+              const drift = (H - bh - 30 - sy) * 0.35;
+              NS.orb(g, x + bw / 2 + drift, sy, 5 + drift * 0.35, NS.rgba('#241318', 0.5), NS.rgba('#160a0e', 0.4), NS.rgba('#38202a', 0.4));
+            }
+            for (let py = H - bh + 12; py < H - 20; py += 26) {
+              R(g, x + 2, py, bw - 4, 4, '#180a10');
+              R(g, x + 2, py, bw - 4, 1, NS.rgba('#f07820', 0.5));
+              R(g, x + 1, py, 2, 5, '#1c0a12'); R(g, x + bw - 3, py, 2, 5, '#1c0a12');
+            }
+            x += bw + 30 + rng() * 40;
           }
-          x += bw + 30 + rng() * 40;
         }
       } else if (theme.key === 'cryo') {
         for (let x = 10; x < W;) {
@@ -346,6 +411,33 @@
           }
           x += 130 + rng() * 110;
         }
+      }
+    }
+    // 전경 실루엣 (parallax 1.3 — 화면 앞을 스치는 구조물)
+    bg.fg = NS.makeCanvas(W, H);
+    {
+      const g = bg.fg.getContext('2d');
+      const rng = NS.makeRng(theme.key.charCodeAt(0) * 557);
+      const SIL = { magma: '#160a0e', cryo: '#0a1228', storm: '#100d20', core: '#0c081a' }[theme.key];
+      const ACC = { magma: '#f07820', cryo: '#38e0ff', storm: '#c08cff', core: '#e63e8f' }[theme.key];
+      for (let x = 60; x < W;) {
+        if (rng() < 0.55) {
+          // 수직 파이프 클러스터
+          const pw = 12 + rng() * 8;
+          R(g, x, 0, pw, H, SIL);
+          R(g, x + 2, 0, 2, H, 'rgba(255,255,255,0.05)');
+          for (let fy = 30 + rng() * 60; fy < H; fy += 90 + rng() * 60) {
+            R(g, x - 3, fy, pw + 6, 8, SIL);
+            R(g, x + pw / 2 - 1, fy + 3, 2, 2, NS.rgba(ACC, 0.5));
+          }
+        } else {
+          // 행잉 체인/케이블
+          const ch2 = 60 + rng() * 120;
+          R(g, x + 4, 0, 3, ch2, SIL);
+          for (let cy2 = 8; cy2 < ch2; cy2 += 10) R(g, x + 3, cy2, 5, 3, SIL);
+          R(g, x + 1, ch2, 9, 7, SIL);
+        }
+        x += 300 + rng() * 220;
       }
     }
     return bg;
@@ -481,6 +573,12 @@
         g.drawImage(img, Math.round(ox), Math.round(oy));
         g.drawImage(img, Math.round(ox + img.width), Math.round(oy));
       }
+      // 용광 지평선 맥동 (마그마)
+      if (this.theme.key === 'magma') {
+        const a = 0.045 + 0.03 * Math.sin(this.frame * 0.045);
+        g.fillStyle = NS.rgba('#f07820', a);
+        g.fillRect(0, 236 - Math.round(cy * 0.06), NS.VW, 70);
+      }
       // 번개 섬광 (폭풍)
       if (this.theme.key === 'storm') {
         if (this.lightning > 0) {
@@ -499,13 +597,21 @@
           const ch = this.at(tx, ty);
           if (ch === '.' || ch === '!') continue;
           const dx = tx * T - cx, dy = ty * T - cy;
-          const v = (tx * 7 + ty * 13) % 3;
+          const v = (tx * 7 + ty * 13) % 4;
           if (ch === '#') {
             const above = this.at(tx, ty - 1);
-            const img = (SOLID.has(above) || above === '~') ? ts.inner[v] : ts.top[v];
+            let img;
+            if (SOLID.has(above) || above === '~') img = ts.inner[v];
+            else if ((tx * 11 + ty * 5) % 7 === 0) img = ts.topGlow[animF];   // 글로우 크랙 산포
+            else img = ts.top[v];
             g.drawImage(img, Math.round(dx), Math.round(dy));
           } else if (ch === '%') {
             g.drawImage(ts.inner[v], Math.round(dx), Math.round(dy));
+          }
+          // 노출면 엣지 셰이딩 (깊이감)
+          if (ch === '#' || ch === '%') {
+            if (!SOLID.has(this.at(tx - 1, ty))) { g.fillStyle = 'rgba(10,12,30,0.35)'; g.fillRect(Math.round(dx), Math.round(dy), 1, T); }
+            if (!SOLID.has(this.at(tx + 1, ty))) { g.fillStyle = 'rgba(10,12,30,0.35)'; g.fillRect(Math.round(dx) + T - 1, Math.round(dy), 1, T); }
           } else if (ch === '=') g.drawImage(ts.oneway, Math.round(dx), Math.round(dy));
           else if (ch === '^') g.drawImage(ts.spike, Math.round(dx), Math.round(dy));
           else if (ch === 'v') g.drawImage(ts.spikeDown, Math.round(dx), Math.round(dy));
@@ -539,6 +645,13 @@
       }
     },
     drawFront(g) {
+      // 전경 실루엣 (최상단 시차 레이어)
+      const fgi = this.bg.fg;
+      const ox = -((this.camX * 1.3) % fgi.width);
+      g.globalAlpha = 0.92;
+      g.drawImage(fgi, Math.round(ox), 0);
+      g.drawImage(fgi, Math.round(ox + fgi.width), 0);
+      g.globalAlpha = 1;
       g.drawImage(this.vignette, 0, 0);
     },
 
@@ -548,7 +661,20 @@
       const amb = this.theme.ambient;
       if (amb === 'ember' && NS.chance(0.3)) {
         NS.FX.p({ x: cx + NS.rand(0, NS.VW), y: cy + NS.VH + 4, vx: NS.rand(-0.3, 0.3), vy: NS.rand(-0.9, -0.4), g: -0.002, life: 90, size: NS.randInt(1, 2), color: NS.pick([P.orange3, P.orange2, P.yellow]) });
-      } else if (amb === 'snow' && NS.chance(0.5)) {
+      }
+      // 용암 기포 (화면 내 용암 표면에서 보글)
+      if (amb === 'ember' && NS.chance(0.25)) {
+        for (let tries = 0; tries < 3; tries++) {
+          const tx2 = Math.floor((cx + NS.rand(0, NS.VW)) / T), ty2 = Math.floor(cy / T) + NS.randInt(0, Math.ceil(NS.VH / T));
+          if (this.at(tx2, ty2) === '~') {
+            const bx = tx2 * T + NS.rand(2, 14), by = ty2 * T + 2;
+            NS.FX.p({ x: bx, y: by, vx: 0, vy: NS.rand(-1.4, -0.7), g: 0.05, life: 22, size: 2, color: P.orange3 });
+            NS.FX.p({ x: bx + 1, y: by - 1, vx: NS.rand(-0.3, 0.3), vy: NS.rand(-1.8, -1), g: 0.06, life: 16, size: 1, color: P.yellow });
+            break;
+          }
+        }
+      }
+      if (amb === 'snow' && NS.chance(0.5)) {
         NS.FX.p({ x: cx + NS.rand(0, NS.VW), y: cy - 4, vx: NS.rand(-0.5, 0.2), vy: NS.rand(0.4, 0.9), g: 0, life: 200, size: 1, color: NS.pick(['#e8fbff', '#a8d8f0', '#ffffff']) });
       } else if (amb === 'rain' && NS.chance(0.9)) {
         NS.FX.p({ x: cx + NS.rand(0, NS.VW + 60), y: cy - 4, vx: -2.2, vy: 5.5, g: 0, life: 60, size: 1, color: NS.rgba('#a8b8ff', 0.5) });

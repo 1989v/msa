@@ -361,12 +361,49 @@
       if (B.active && ['fill', 'fight', 'dying'].includes(B.state)) {
         text(g, s, B.def.name, NS.VW - 12, 244, 11, '#ff9fd0', { align: 'right' });
       }
+      // ── 스테이지 도입 연출: 레터박스 + 타이틀 카드 ──
+      const st = G.stage;
+      if (st.introT > 0) {
+        const it = st.introT;
+        const barH = 38 * NS.clamp(Math.min((150 - it) / 18, it / 28), 0, 1);
+        g.fillStyle = '#05060f';
+        g.fillRect(0, 0, NS.VW * s, barH * s);
+        g.fillRect(0, (NS.VH - barH) * s, NS.VW * s, barH * s);
+        // 페이드 인
+        const fa = NS.clamp((it - 118) / 32, 0, 1);
+        if (fa > 0) { g.fillStyle = `rgba(5,6,15,${fa})`; g.fillRect(0, 0, NS.VW * s, NS.VH * s); }
+        // 타이틀 카드
+        const ta = NS.clamp(Math.min((142 - it) / 14, (it - 26) / 22), 0, 1);
+        if (ta > 0) {
+          g.globalAlpha = ta;
+          g.fillStyle = 'rgba(5,6,15,0.4)';
+          g.fillRect((CX() - 220) * s, 142 * s, 440 * s, 66 * s);
+          g.fillStyle = NS.rgba(P.orange3, 0.9);
+          g.fillRect((CX() - 220) * s, 142 * s, 440 * s, Math.max(2, 2 * s * 0.6));
+          g.fillRect((CX() - 220) * s, 208 * s, 440 * s, Math.max(2, 2 * s * 0.6));
+          text(g, s, st.def.name, CX(), 178, 26, '#f2f7ff', { align: 'center', weight: 900, glow: NS.rgba(P.orange3, 0.6), glowSize: 12 });
+          text(g, s, `가디언 — ${st.def.bossName}`, CX(), 200, 11, '#ffc44d', { align: 'center', weight: 500 });
+          g.globalAlpha = 1;
+        }
+      }
+      // ── 보스 등장 연출: WARNING → 네임 카드 ──
       if (B.active && B.state === 'warning') {
+        const bh = 38 * NS.clamp(B.t / 16, 0, 1);
+        g.fillStyle = '#05060f';
+        g.fillRect(0, 0, NS.VW * s, bh * s);
+        g.fillRect(0, (NS.VH - bh) * s, NS.VW * s, bh * s);
         if (Math.floor(B.t / 12) % 2 === 0) {
           g.fillStyle = 'rgba(126,29,44,0.35)';
           g.fillRect(0, 144 * s, NS.VW * s, 62 * s);
           text(g, s, 'W A R N I N G', CX(), 186, 38, '#e04545', { align: 'center', weight: 900, glow: 'rgba(224,69,69,0.8)', glowSize: 18 });
         }
+      }
+      if (B.active && (B.state === 'enter' || (B.state === 'fill' && B.t < 55))) {
+        g.fillStyle = '#05060f';
+        g.fillRect(0, 0, NS.VW * s, 38 * s);
+        g.fillRect(0, (NS.VH - 38) * s, NS.VW * s, 38 * s);
+        text(g, s, B.def.name, CX(), 182, 26, '#ff9fd0', { align: 'center', weight: 900, glow: 'rgba(230,62,143,0.7)', glowSize: 14 });
+        text(g, s, '구역 가디언', CX(), 203, 11, '#c3cbe8', { align: 'center', weight: 500 });
       }
       // 데미지 팝업 (월드 좌표 == 유닛 좌표)
       const camX = NS.Level.camX, camY = NS.Level.camY;

@@ -96,7 +96,7 @@
         return B.rows();
       },
       enemies: [
-        ['walker', 16, GY], ['spitter', 26, GY], ['walker', 33, GY],
+        ['walker', 22, GY], ['spitter', 28, GY], ['walker', 35, GY],
         ['spitter', 60, 27], ['wisp', 76, 24],
         ['walker', 80, GY], ['turret', 87, 25], ['bomber', 94, GY],
         ['walker', 128, 13], ['wisp', 133, 10],

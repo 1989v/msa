@@ -123,6 +123,7 @@
       NS.WEAPONS[0].name = NS.CHAR_INFO[this.charKey].basicName;
       NS.WEAPONS[0].color = NS.CHAR_INFO[this.charKey].basicColor;
       this.atkStage = 0; this.atkT = 0; this.chainT = 0; this.atkQueued = false; this.atkKind = 1;
+      this.landT = 0; this.skidding = false; this.strideAcc = 0;
       this.maxHp = 16 + (meta.hearts || 0) * 4 + (meta.shop.maxHp ? 4 : 0) + (meta.shop.maxHp2 ? 4 : 0);
       this.hp = this.maxHp;
       this.ammoMax = 16 + (meta.shop.weaponEff ? 8 : 0);
@@ -234,8 +235,11 @@
       } else {
         // 수평
         const speed = this.dashJump && !this.onGround ? DASH : RUN;
-        const acc = onIce ? 0.08 : 0.6;
-        const fric = onIce ? 0.02 : (this.onGround ? 0.55 : 0.15);
+        const acc = onIce ? 0.08 : (this.onGround ? 0.85 : 0.5);
+        const fric = onIce ? 0.02 : (this.onGround ? 0.65 : 0.15);
+        // 방향 전환 스키드 (지상 감속 중 반대 입력)
+        this.skidding = this.onGround && ax !== 0 && NS.sign(this.vx) === -ax && Math.abs(this.vx) > 1.1;
+        if (this.skidding && this.idleF % 3 === 0) NS.FX.dust(this.cx + this.facing * 6, this.y + this.h, -ax);
         if (ax !== 0) this.vx = NS.clamp(this.vx + ax * acc, -speed, speed);
         else {
           if (Math.abs(this.vx) <= fric) this.vx = 0;
@@ -290,9 +294,15 @@
 
       // ── 이동 적용 ──
       const wasGround = this.onGround;
+      const fallVy = this.vy;
       const r = NS.Physics.move(this);
       if (r.down) {
-        if (!wasGround && this.vy > 3) NS.Audio.sfx('land');
+        if (!wasGround && fallVy > 3) {
+          NS.Audio.sfx('land');
+          this.landT = 8;
+          NS.FX.dust(this.cx - 8, this.y + this.h, -1);
+          NS.FX.dust(this.cx + 8, this.y + this.h, 1);
+        }
         this.vy = 0;
         this.onGround = true;
         this.airDashes = 0;
@@ -328,8 +338,16 @@
         if (inp.pressed(s) && this.owned[idx]) { this.weapon = idx; NS.Audio.sfx('menuMove'); }
       });
 
-      // 달리기 애니 거리
-      if (this.onGround && Math.abs(this.vx) > 0.3) this.runDist += Math.abs(this.vx);
+      // 달리기 애니 거리 + 발구름 먼지
+      this.landT = NS.tick(this.landT);
+      if (this.onGround && Math.abs(this.vx) > 0.3) {
+        this.runDist += Math.abs(this.vx);
+        this.strideAcc += Math.abs(this.vx);
+        if (this.strideAcc > 26) {
+          this.strideAcc = 0;
+          NS.FX.dust(this.cx - this.facing * 8, this.y + this.h, -this.facing);
+        }
+      }
       this.idleF++;
     },
 
@@ -486,6 +504,7 @@
         if (level === 0) {
           NS.Audio.sfx('shot');
           Shots.spawn({ type: 'b1', sprite: 'buster1', x: mz.x - 6, y: mz.y - 3, w: 12, h: 6, vx: 7 * dir, vy: 0, dmg: 1 });
+          NS.FX.casing(mz.x - dir * 10, mz.y - 2, dir);
         } else if (level === 1) {
           NS.Audio.sfx('shot2');
           Shots.spawn({ type: 'b2', sprite: 'buster2', x: mz.x - 9, y: mz.y - 6, w: 18, h: 12, vx: 7.5 * dir, vy: 0, dmg: 3 });
@@ -613,6 +632,8 @@
         if (this.state === 'wall') return 'wall';
         if (this.state === 'dash') return 'dash';
         if (!this.onGround) return this.vy < -1 ? 'jumpRise' : this.vy > 1.4 ? 'jumpFall' : 'jumpApex';
+        if (this.skidding) return 'skid';
+        if (this.landT > 0 && Math.abs(this.vx) < 0.5) return 'land';
         if (Math.abs(this.vx) > 0.3) return 'run';
         return 'idle';
       }
@@ -623,6 +644,8 @@
         const k = this.vy < -1 ? 'jumpRise' : this.vy > 1.4 ? 'jumpFall' : 'jumpApex';
         return shooting ? k + 'Shoot' : k;
       }
+      if (this.skidding && !shooting) return 'skid';
+      if (this.landT > 0 && Math.abs(this.vx) < 0.5 && !shooting) return 'land';
       if (Math.abs(this.vx) > 0.3) return shooting ? 'runShoot' : 'run';
       return shooting ? (forMuzzle ? 'idleShoot' : 'idleShoot') : 'idle';
     },
@@ -631,8 +654,10 @@
       const set = NS.Sprites.heroes[this.charKey];
       const frames = set[key] || set.idle;
       let fi = 0;
-      if (key === 'run' || key === 'runShoot') fi = Math.floor(this.runDist / 7) % 8;
-      else if (key === 'idle') fi = Math.floor(this.idleF / 32) % 2;
+      if (key === 'run' || key === 'runShoot') fi = Math.floor(this.runDist / 5) % 12;
+      else if (key === 'idle') { const c = Math.floor(this.idleF / 30) % 8; fi = [0, 1, 2, 1, 0, 1, 2, 3][c]; }
+      else if (key === 'idleShoot') fi = this.shootAnim > 11 ? 0 : 1;
+      else if (key === 'wall') fi = Math.floor(this.idleF / 8) % 2;
       else if (key === 'victory') fi = Math.min(1, Math.floor(this.victoryT / 14));
       else if (key === 'atkSpin') fi = this.atkT > 10 ? 0 : 1;
       const flip = this.facing < 0;
@@ -660,6 +685,19 @@
       // 접지 그림자
       if (this.onGround) NS.groundShadow(g, this.cx - cx, this.y + this.h - cy, 14);
       NS.blit(g, img, this.spriteX() - cx, this.spriteY() - cy, flip);
+      // 차지 궤도 픽셀 (구조화)
+      if (this.chargeT > 10) {
+        const lvl = this.chargeT >= this.chargeMax() ? 2 : this.chargeT >= this.chargeMid() ? 1 : 0;
+        const n = 3 + lvl * 2;
+        const cols = this.melee ? [P.steel5, P.white, P.orange3] : [P.orange3, P.yellow, P.white];
+        for (let k = 0; k < n; k++) {
+          const a = this.idleF * (0.18 + lvl * 0.06) + k * Math.PI * 2 / n;
+          const r = 16 + Math.sin(this.idleF * 0.3 + k) * 4;
+          const px2 = this.cx + Math.cos(a) * r - cx, py2 = this.cy + Math.sin(a) * r * 0.8 - cy;
+          g.fillStyle = cols[k % cols.length];
+          g.fillRect(Math.round(px2), Math.round(py2), lvl > 0 ? 2 : 1, lvl > 0 ? 2 : 1);
+        }
+      }
       // 풀차지 오라
       if (this.chargeT >= this.chargeMid()) {
         const full = this.chargeT >= this.chargeMax();

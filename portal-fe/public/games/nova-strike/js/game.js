@@ -111,6 +111,7 @@
         kairosChainT: 0,
         lava: def.lavaChase ? { active: false, done: false, y: def.lavaChase.fromY } : null,
         deathHandled: false,
+        introT: 150,   // 스테이지 도입 연출 (레터박스 + 타이틀 카드)
       };
       NS.Level.updateCamera(NS.Player, true);
       NS.Audio.playBgm(def.bgm);
@@ -139,6 +140,7 @@
       const pl = NS.Player;
       const L = NS.Level;
       st.time++;
+      if (st.introT > 0) st.introT--;
 
       // 일시정지
       if (NS.Input.pressed('start') && pl.alive && this.state === 'stage') {
@@ -158,6 +160,9 @@
           st.respawn = { x: tx * NS.TILE, y: (ty - 3) * NS.TILE };
           NS.Audio.sfx('checkpoint');
           pl.heal(pl.maxHp);   // 활성화 시 완전 회복
+          for (let i = 0; i < 12; i++) {
+            NS.FX.p({ x: tx * NS.TILE + NS.rand(-4, 4), y: ty * NS.TILE - NS.rand(0, 44), vx: 0, vy: -1.4, life: 26, size: NS.randInt(1, 2), color: NS.pick(['#a8f6ff', '#38e0ff', '#f2f7ff']) });
+          }
           this.announce('체크포인트 기록 — 아머 수복');
         }
       }

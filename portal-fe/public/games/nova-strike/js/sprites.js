@@ -109,7 +109,9 @@
     // 더스터 코트 (앞이 열린 실루엣 + 뒷자락)
     R(g, x - 8, y, 4, 16, DP.coat); R(g, x - 8, y + 13, 4, 3, DP.coatD); R(g, x - 8, y, 3, 1, DP.coatL);
     R(g, x + 4, y, 4, 14, DP.coat); R(g, x + 4, y + 11, 4, 3, DP.coatD);
-    R(g, x - 10, y + 8, 3, 10, DP.coatD);                              // 휘날리는 뒷자락
+    const fl = T.flut || 0;
+    R(g, x - 10 - fl, y + 8, 3 + Math.abs(fl), 10, DP.coatD);          // 휘날리는 뒷자락 (플러터)
+    if (fl) R(g, x - 11 - fl, y + 15, 2, 3, DP.coatD);
     // 탄띠 (사선)
     for (let i = 0; i < 4; i++) R(g, x - 4 + i * 3, y + 3 + i * 2, 2, 2, '#8a5c38');
     for (let i = 0; i < 3; i++) R(g, x - 3 + i * 3, y + 4 + i * 2, 1, 1, '#ffc44d');
@@ -141,9 +143,13 @@
     // 얼굴
     R(g, x - 4, y - 2, 9, 9, DP.skin);
     R(g, x - 4, y + 4, 9, 3, DP.skinD);
-    // 눈 (진지한 눈매)
-    R(g, x + 1, y + 1, 3, 2, P.white); R(g, x + 3, y + 1, 1, 2, P.ink);
-    R(g, x - 3, y + 1, 2, 2, P.white); R(g, x - 2, y + 1, 1, 2, P.ink);
+    // 눈 (진지한 눈매 / 깜빡임)
+    if (H.blink) {
+      R(g, x + 1, y + 2, 3, 1, DP.skinD); R(g, x - 3, y + 2, 2, 1, DP.skinD);
+    } else {
+      R(g, x + 1, y + 1, 3, 2, P.white); R(g, x + 3, y + 1, 1, 2, P.ink);
+      R(g, x - 3, y + 1, 2, 2, P.white); R(g, x - 2, y + 1, 1, 2, P.ink);
+    }
     R(g, x + 1, y, 3, 1, DP.skinD); R(g, x - 3, y, 2, 1, DP.skinD);   // 눈썹 그늘
     // 입 + 수염 자국
     R(g, x - 1, y + 5, 3, 1, '#a8653f');
@@ -163,9 +169,13 @@
     // 얼굴
     R(g, x - 4, y - 2, 9, 9, RP.skin);
     R(g, x - 4, y + 4, 9, 3, RP.skinD);
-    // 눈 (날카로운)
-    R(g, x + 1, y + 1, 3, 2, P.white); R(g, x + 3, y + 1, 1, 2, P.ink);
-    R(g, x - 3, y + 1, 2, 2, P.white); R(g, x - 2, y + 1, 1, 2, P.ink);
+    // 눈 (날카로운 / 깜빡임)
+    if (H.blink) {
+      R(g, x + 1, y + 2, 3, 1, RP.skinD); R(g, x - 3, y + 2, 2, 1, RP.skinD);
+    } else {
+      R(g, x + 1, y + 1, 3, 2, P.white); R(g, x + 3, y + 1, 1, 2, P.ink);
+      R(g, x - 3, y + 1, 2, 2, P.white); R(g, x - 2, y + 1, 1, 2, P.ink);
+    }
     R(g, x - 1, y + 5, 3, 1, '#a8653f');
     // 흑청 단발 (스파이키) + 백발 스트릭
     R(g, x - 6, y - 7, 13, 6, RP.hair);
@@ -219,28 +229,34 @@
     });
 
     const frames = {};
-    frames.idle = [0, 1].map(i => {
-      const bob = i;
+    frames.idle = [0, 1, 2, 3].map(i => {
+      const bob = [0, 1, 1, 0][i];
       const p = mk(26 + bob, 14 + bob);
+      if (i === 3) p.head.blink = true;
       p.legB = { hx: CX - 3, hy: 44, kx: CX - 5, ky: 51, fx: CX - 6, fy: GY };
       p.legF = { hx: CX + 3, hy: 44, kx: CX + 5, ky: 51, fx: CX + 6, fy: GY };
       p.armB = { sx: CX - 8, sy: 28 + bob, ex: CX - 10, ey: 36 + bob, hx: CX - 9, hy: 42 + bob };
       p.armF = { sx: CX + 8, sy: 28 + bob, ex: CX + 10, ey: 36 + bob, hx: CX + 9, hy: 42 + bob };
       return bakeHero(charKey, p);
     });
-    frames.idleShoot = [0].map(() => {
+    frames.idleShoot = [0, 1].map(rec => {
       const p = mk(26, 14);
       p.legB = { hx: CX - 3, hy: 44, kx: CX - 5, ky: 51, fx: CX - 6, fy: GY };
       p.legF = { hx: CX + 3, hy: 44, kx: CX + 5, ky: 51, fx: CX + 6, fy: GY };
       p.armB = { sx: CX - 8, sy: 28, ex: CX - 10, ey: 36, hx: CX - 9, hy: 42 };
-      p.armF = { sx: CX + 8, sy: 28, ex: CX + 13, ey: 30, hx: CX + 19, hy: 31, buster: true };
+      p.armF = rec === 0
+        ? { sx: CX + 8, sy: 28, ex: CX + 12, ey: 28, hx: CX + 17, hy: 28, buster: true }   // 반동 (총구 들림)
+        : { sx: CX + 8, sy: 28, ex: CX + 13, ey: 30, hx: CX + 19, hy: 31, buster: true };
+      if (rec === 0) p.torso.flut = -2;
       return bakeHero(charKey, p);
     });
+    const RUN_N = 12;
     const mkRun = (i, shoot) => {
-      const ph = i / 8;
+      const ph = i / RUN_N;
       const bob = Math.abs(Math.sin(ph * Math.PI * 2)) * 1.5;
       const p = mk(26 - bob + 1, 14 - bob + 1);
       p.torso.x = CX + 1; p.head.x = CX + 2;
+      p.torso.flut = Math.round(Math.sin(ph * Math.PI * 2) * 2);
       p.legB = runLeg(ph + 0.5, CX - 1, 44, GY);
       p.legF = runLeg(ph, CX + 1, 44, GY);
       if (shoot) {
@@ -254,7 +270,7 @@
       return bakeHero(charKey, p);
     };
     frames.run = []; frames.runShoot = [];
-    for (let i = 0; i < 8; i++) { frames.run.push(mkRun(i, false)); if (!isRaven) frames.runShoot.push(mkRun(i, true)); }
+    for (let i = 0; i < RUN_N; i++) { frames.run.push(mkRun(i, false)); if (!isRaven) frames.runShoot.push(mkRun(i, true)); }
     const mkDash = (shoot) => {
       const p = mk(30, 20);
       p.torso.x = CX + 3; p.head.x = CX + 7; p.head.y = 19;
@@ -304,7 +320,7 @@
       frames.jumpApexShoot = [mkJump('apex', true)];
       frames.jumpFallShoot = [mkJump('fall', true)];
     }
-    const mkWall = (shoot) => {
+    const mkWall = (shoot, v) => {
       const p = mk(26, 15);
       p.torso.x = CX - 2; p.head.x = CX - 4;
       p.legB = { hx: CX - 4, hy: 44, kx: CX - 2, ky: 50, fx: CX + 2, fy: 55 };
@@ -312,11 +328,36 @@
       p.armB = shoot ? { sx: CX - 8, sy: 28, ex: CX - 13, ey: 30, hx: CX - 19, hy: 31, buster: true }
         : { sx: CX - 8, sy: 28, ex: CX - 12, ey: 34, hx: CX - 14, hy: 39 };
       p.armF = { sx: CX + 5, sy: 28, ex: CX + 10, ey: 30, hx: CX + 13, hy: 34 };
-      p.post = (g) => { R(g, CX + 12, 40, 3, 2, '#c0aa88'); R(g, CX + 13, 48, 3, 2, '#a89068'); };
+      p.post = (g) => {
+        if (v) { R(g, CX + 12, 38, 3, 2, '#ffe2b0'); R(g, CX + 13, 50, 2, 2, '#c0aa88'); }
+        else { R(g, CX + 13, 44, 3, 2, '#c0aa88'); R(g, CX + 12, 54, 2, 2, '#ffe2b0'); }
+      };
       return bakeHero(charKey, p);
     };
-    frames.wall = [mkWall(false)];
-    if (!isRaven) frames.wallShoot = [mkWall(true)];
+    frames.wall = [mkWall(false, 0), mkWall(false, 1)];
+    if (!isRaven) frames.wallShoot = [mkWall(true, 0)];
+    // 착지 스쿼시
+    frames.land = [(() => {
+      const p = mk(29, 17);
+      p.legB = { hx: CX - 4, hy: 46, kx: CX - 9, ky: 52, fx: CX - 10, fy: GY };
+      p.legF = { hx: CX + 4, hy: 46, kx: CX + 9, ky: 52, fx: CX + 10, fy: GY };
+      p.armB = { sx: CX - 8, sy: 31, ex: CX - 12, ey: 37, hx: CX - 13, hy: 42 };
+      p.armF = { sx: CX + 8, sy: 31, ex: CX + 12, ey: 37, hx: CX + 13, hy: 42 };
+      p.torso.flut = 2;
+      return bakeHero(charKey, p);
+    })()];
+    // 방향 전환 스키드
+    frames.skid = [(() => {
+      const p = mk(27, 15);
+      p.torso.x = CX - 2; p.head.x = CX - 3;
+      p.legB = { hx: CX - 3, hy: 45, kx: CX - 8, ky: 51, fx: CX - 11, fy: GY };
+      p.legF = { hx: CX + 3, hy: 45, kx: CX + 9, ky: 50, fx: CX + 14, fy: GY - 1 };
+      p.armB = { sx: CX - 8, sy: 29, ex: CX - 13, ey: 33, hx: CX - 16, hy: 30 };
+      p.armF = { sx: CX + 7, sy: 29, ex: CX + 11, ey: 35, hx: CX + 13, hy: 40 };
+      p.torso.flut = -3;
+      p.pre = (g) => { R(g, CX + 10, 55, 6, 2, '#c0aa88'); R(g, CX + 16, 56, 4, 1, '#a89068'); };
+      return bakeHero(charKey, p);
+    })()];
     frames.hurt = [(() => {
       const p = mk(27, 16);
       p.torso.x = CX - 2; p.head.x = CX - 3; p.head.y = 15;
@@ -563,6 +604,28 @@
       R(g, 5, 6, 6, 2, P.white);
       R(g, 3, 3, 2, 2, NS.rgba('#c0aa88', 0.8)); R(g, 10, 4, 2, 2, NS.rgba('#c0aa88', 0.7)); // 화약 연기
     }));
+    // 충격파 링
+    S.fx.ring = [0, 1, 2].map(i => NS.bake(56, 56, (g) => {
+      const r = 8 + i * 9;
+      for (let a = 0; a < Math.PI * 2; a += 0.05) {
+        const w = 3 - i;
+        if (w <= 0) continue;
+        R(g, 28 + Math.cos(a) * r - w / 2, 28 + Math.sin(a) * r * 0.85 - w / 2, w, w,
+          i === 0 ? P.white : NS.rgba(P.orange3, 0.9 - i * 0.25));
+      }
+    }, { post: false }));
+    // 연기 퍼프
+    S.fx.smoke = [0, 1, 2, 3].map(i => NS.bake(28, 28, (g) => {
+      const r = 4 + i * 2.5;
+      NS.orb(g, 14, 16 - i * 2, r, NS.rgba('#6a5a52', 0.8 - i * 0.16), NS.rgba('#4a3e38', 0.7 - i * 0.14), NS.rgba('#9a8878', 0.7 - i * 0.15));
+      NS.orb(g, 14 - r * 0.5, 17 - i * 2, r * 0.6, NS.rgba('#5a4c46', 0.6 - i * 0.12), NS.rgba('#4a3e38', 0.5), NS.rgba('#8a7868', 0.5));
+    }, { post: false }));
+    // 흙먼지 퍼프 (발구름/착지/스키드)
+    S.fx.dust = [0, 1, 2].map(i => NS.bake(18, 14, (g) => {
+      const r = 2 + i * 1.6;
+      NS.orb(g, 6, 10 - i, r, NS.rgba('#c0aa88', 0.75 - i * 0.2), NS.rgba('#a89068', 0.6 - i * 0.15), NS.rgba('#e0d0b0', 0.7 - i * 0.2));
+      NS.orb(g, 12, 11 - i * 1.5, r * 0.8, NS.rgba('#b09878', 0.6 - i * 0.15), NS.rgba('#a89068', 0.5), NS.rgba('#d8c8a8', 0.55));
+    }, { post: false }));
     // 참격 아크 (레이븐) — 흰 강철 궤적 + 오렌지 여운
     S.fx.slash = [0, 1, 2].map(i => NS.bake(40, 40, (g) => {
       const r = 15 + i * 2;

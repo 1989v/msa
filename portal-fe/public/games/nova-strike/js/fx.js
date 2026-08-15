@@ -66,13 +66,30 @@
         });
       }
     },
-    explode(x, y, big) {
+    // 파편 조각 (개체 팔레트 색으로 튀는 청크)
+    debris(x, y, colors, n) {
+      for (let i = 0; i < (n || 6); i++) {
+        const a = NS.rand(-Math.PI, 0) - 0.4;
+        this.p({
+          x, y, vx: NS.rand(-2.6, 2.6), vy: NS.rand(-3.6, -1),
+          g: 0.22, life: NS.randInt(26, 48), size: NS.randInt(2, 4),
+          color: NS.pick(colors || [P.steel3, P.steel2, P.orange2]), fade: true,
+        });
+      }
+    },
+    explode(x, y, big, debrisColors) {
       NS.Audio.sfx(big ? 'bigExplode' : 'explode');
-      this.burst(x, y, big ? 26 : 12, { color: [P.orange3, P.red2, P.yellow, P.white], spMax: big ? 4.5 : 3, up: 0.5, size: big ? 4 : 3 });
+      // 코어 화구 + 충격파 링 + 파편 + 연기 (레이어드)
       this.p({ x, y, anim: 'explosion', life: 20, maxLife: 20, animFps: 5 });
+      this.p({ x, y, anim: 'ring', life: 9, maxLife: 9, animFps: 3 });
+      this.burst(x, y, big ? 22 : 10, { color: [P.orange3, P.red2, P.yellow, P.white], spMax: big ? 4.5 : 3, up: 0.5, size: big ? 4 : 3 });
+      this.debris(x, y, debrisColors, big ? 10 : 6);
+      for (let i = 0; i < (big ? 4 : 2); i++) {
+        this.p({ x: x + NS.rand(-8, 8), y: y + NS.rand(-6, 2), anim: 'smoke', life: 26, maxLife: 26, animFps: 7, delay: 6 + i * 5, vy: -0.4, vx: NS.rand(-0.2, 0.2) });
+      }
       if (big) {
         for (let i = 0; i < 4; i++) {
-          const a = NS.rand(0, Math.PI * 2), d = NS.rand(6, 18);
+          const a = NS.rand(0, Math.PI * 2), d = NS.rand(8, 20);
           this.p({ x: x + Math.cos(a) * d, y: y + Math.sin(a) * d, anim: 'explosion', life: 20, maxLife: 20, animFps: 5, delay: i * 4 });
         }
         this.shake(4, 18); this.hitstop(6);
@@ -81,6 +98,15 @@
       }
     },
     hitSpark(x, y) { this.p({ x, y, anim: 'spark', life: 12, maxLife: 12, animFps: 4 }); },
+    dust(x, y, dir) {
+      this.p({ x, y: y - 3, anim: 'dust', life: 12, maxLife: 12, animFps: 4, vx: (dir || 0) * 0.6, vy: -0.15, flip: (dir || 1) < 0 });
+    },
+    casing(x, y, dir) { // 리볼버 탄피
+      this.p({
+        x, y, vx: -dir * NS.rand(0.8, 1.6), vy: NS.rand(-2.8, -1.8), g: 0.26,
+        life: 34, size: 2, color: NS.pick([P.orange3, P.yellow, '#c0a050']), fade: true,
+      });
+    },
     muzzle(x, y) { this.p({ x, y, anim: 'muzzle', life: 6, maxLife: 6, animFps: 3 }); },
     ghost(img, x, y, flip) { ghosts.push({ img, x, y, flip, life: 14, maxLife: 14 }); },
     popup(x, y, text, color) { popups.push({ x, y, vy: -0.6, life: 42, maxLife: 42, text, color: color || '#ffffff' }); },

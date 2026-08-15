@@ -8,59 +8,75 @@
   function bakeEnemies() {
     const S = NS.Sprites;
     S.enemies = {};
-    // 1. 스캐럽 워커 (28×20)
-    S.enemies.walker = [0, 1, 2].map(f => NS.bake(30, 24, (g) => {
-      const legUp = f === 1 ? 1 : 0;
-      // 다리 4개
+    // 1. 스캐럽 워커 (28×20) — 걷기 4프레임 + 텔레그래프
+    S.enemies.walker = [0, 1, 2, 3, 4].map(f => NS.bake(30, 24, (g) => {
+      const tele = f === 4;
+      const ph = tele ? 0 : f;
+      const bob = [0, 1, 0, 1][ph];
+      // 다리 4개 (게이트 사이클)
       for (let i = 0; i < 4; i++) {
-        const lx = 5 + i * 6, up = (i % 2 === f % 2) ? 1 : 0;
-        NS.limb(g, lx + 2, 14, lx, 20 - up, 3, P.steel2, P.steel1, null);
+        const lx = 5 + i * 6;
+        const up = Math.max(0, Math.round(Math.sin((ph / 4 + (i % 2) / 2) * Math.PI * 2) * 1.4));
+        const fw = Math.round(Math.cos((ph / 4 + (i % 2) / 2) * Math.PI * 2) * 1.2);
+        NS.limb(g, lx + 2, 14, lx + fw, 20 - up, 3, P.steel2, P.steel1, null);
+        R(g, lx + fw - 1, 20 - up, 3, 1, P.steel3);
       }
-      // 등딱지
-      NS.orb(g, 15, 11 - legUp, 10, '#7e3a4a', '#54202e', '#b86a6a');
-      R(g, 6, 8 - legUp, 18, 3, '#b86a6a');
-      R(g, 9, 4 - legUp, 12, 2, '#e04545');
+      // 등딱지 (분할 장갑 + 리벳)
+      NS.orb(g, 15, 11 - bob, 10, '#7e3a4a', '#54202e', '#b86a6a');
+      R(g, 6, 8 - bob, 18, 3, '#b86a6a');
+      R(g, 9, 4 - bob, 12, 2, '#e04545');
+      R(g, 14, 4 - bob, 1, 9, '#54202e'); R(g, 9, 7 - bob, 12, 1, '#54202e');   // 장갑 분할선
+      R(g, 8, 6 - bob, 1, 1, '#e8b0b0'); R(g, 21, 6 - bob, 1, 1, '#e8b0b0');    // 리벳
+      // 후미 배기 글로우
+      R(g, 4, 10 - bob, 2, 3, tele ? P.orange3 : '#54202e');
       // 코어 눈
-      R(g, 22, 10 - legUp, 5, 4, P.ink);
-      R(g, 23, 11 - legUp, 3, 2, f === 2 ? P.yellow : P.red2);
-      R(g, 12, 12 - legUp, 3, 2, '#54202e'); R(g, 17, 12 - legUp, 3, 2, '#54202e');
+      R(g, 22, 10 - bob, 5, 4, P.ink);
+      R(g, 23, 11 - bob, 3, 2, tele ? P.yellow : P.red2);
+      if (tele) R(g, 24, 10 - bob, 2, 1, P.white);
+      R(g, 12, 12 - bob, 3, 2, '#54202e'); R(g, 17, 12 - bob, 3, 2, '#54202e');
     }));
     // 2. 터렛 돔 (22×18) — 닫힘/열림중/열림
-    S.enemies.turret = [0, 1, 2].map(f => NS.bake(24, 20, (g) => {
+    S.enemies.turret = [0, 1, 2, 3].map(f => NS.bake(24, 20, (g) => {
       R(g, 2, 15, 20, 4, P.steel2); R(g, 2, 15, 20, 1, P.steel4);
-      const lift = f * 3;
+      const lift = Math.min(f, 2) * 3;
       NS.orb(g, 12, 12 - lift, 9, P.steel3, P.steel2, P.steel4);
       R(g, 3, 12 - lift, 18, Math.max(0, 4 + lift - 4), P.steel3);
       if (f > 0) {
         R(g, 4, 12 - lift + 3, 16, lift + 1, P.night1);
         R(g, 9, 13 - lift + 2, 6, 4, P.magenta1);
-        R(g, 10, 14 - lift + 2, 4, 2, f === 2 ? P.magenta3 : P.magenta2);
+        R(g, 10, 14 - lift + 2, 4, 2, f >= 2 ? P.magenta3 : P.magenta2);
+        if (f === 3) { R(g, 11, 14 - lift + 2, 2, 2, P.white); R(g, 8, 13 - lift + 1, 8, 1, NS.rgba(P.magenta3, 0.6)); }
       }
       R(g, 6, 7 - lift, 5, 2, P.steel5);
     }));
     // 3. 드론 위습 (20×20)
-    S.enemies.wisp = [0, 1, 2].map(f => NS.bake(22, 22, (g) => {
-      const bob = f === 1 ? 1 : 0;
-      // 로터
-      R(g, 3, 2 + bob, 16, 2, f % 2 ? P.steel4 : P.steel3);
+    S.enemies.wisp = [0, 1, 2, 3].map(f => NS.bake(22, 22, (g) => {
+      const dive = f === 3;
+      const bob = f % 2;
+      // 로터 (3페이즈 회전 잔상)
+      const rp = f % 3;
+      R(g, 3 + rp, 2 + bob, 16 - rp * 2, 2, [P.steel4, P.steel3, P.steel5][rp]);
+      R(g, 5 - rp, 3 + bob, 3, 1, NS.rgba('#c3cbe8', 0.5)); R(g, 15 + rp - 1, 3 + bob, 3, 1, NS.rgba('#c3cbe8', 0.5));
       R(g, 10, 4 + bob, 2, 3, P.steel2);
       NS.orb(g, 11, 12 + bob, 7, '#3d5a8e', '#243a66', '#6a8ec2');
       // 렌즈 눈
       R(g, 8, 9 + bob, 7, 5, P.ink);
-      R(g, 9, 10 + bob, 5, 3, f === 2 ? P.red2 : P.cyan2);
+      R(g, 9, 10 + bob, 5, 3, dive ? P.red2 : P.cyan2);
       R(g, 10, 10 + bob, 2, 1, P.white);
+      if (dive) R(g, 8, 9 + bob, 7, 1, NS.rgba(P.red2, 0.6));
       // 하부 침
       R(g, 10, 18 + bob, 3, 3, P.steel2); R(g, 11, 21 + bob, 1, 1, P.steel4);
     }));
     // 4. 마그마 스피터 (26×18)
-    S.enemies.spitter = [0, 1].map(f => NS.bake(28, 20, (g) => {
+    S.enemies.spitter = [0, 1, 2].map(f => NS.bake(28, 20, (g) => {
       R(g, 2, 14, 24, 5, '#54303a'); R(g, 2, 14, 24, 1, '#8a5152');
       // 포탑 입
       NS.orb(g, 14, 10, 8, '#7e3a2a', '#4a1e18', '#b86a4a');
       R(g, 8, 4, 12, 4, '#b86a4a');
-      R(g, 10, 2, 8, 4, P.ink);
-      R(g, 11, 3, 6, 3, f ? P.yellow : P.orange2);
-      if (f) { R(g, 12, 0, 4, 2, P.orange3); }
+      R(g, 10, 2 + (f === 2 ? 1 : 0), 8, 4, P.ink);
+      R(g, 11, 3 + (f === 2 ? 1 : 0), 6, 3, f === 1 ? P.yellow : f === 2 ? P.white : P.orange2);
+      if (f === 1) { R(g, 12, 0, 4, 2, P.orange3); R(g, 13, -0 + 1, 2, 1, P.yellow); }
+      if (f === 2) { R(g, 11, 0, 6, 2, P.orange3); }
       R(g, 5, 12, 3, 2, '#4a1e18'); R(g, 20, 12, 3, 2, '#4a1e18');
     }));
     // 5. 크라이오 센트리 (20×30)
@@ -171,7 +187,7 @@
         }
         e.cool = NS.tick(e.cool);
       },
-      frame(e) { return e.state === 'tele' ? 2 : Math.floor(e.frame / 8) % 2; },
+      frame(e) { return e.state === 'tele' ? 4 : Math.floor(e.frame / 6) % 4; },
     },
     turret: {
       w: 22, h: 18, hp: 4, dmg: 2, score: 150, noGravity: true,
@@ -190,7 +206,7 @@
           NS.Audio.sfx('shot');
         }
       },
-      frame(e) { return e.cycle < 70 ? 0 : e.cycle < 100 ? 1 : 2; },
+      frame(e) { return e.cycle < 70 ? 0 : e.cycle < 90 ? 1 : e.cycle < 100 ? 2 : 3; },
     },
     wisp: {
       w: 18, h: 18, hp: 2, dmg: 2, score: 100, noGravity: true,
@@ -224,7 +240,7 @@
         }
         e.cool = NS.tick(e.cool);
       },
-      frame(e) { return e.state === 'tele' ? 2 : Math.floor(e.frame / 6) % 2; },
+      frame(e) { return e.state === 'tele' || e.state === 'dive' ? 3 : Math.floor(e.frame / 4) % 3; },
     },
     spitter: {
       w: 24, h: 16, hp: 4, dmg: 3, score: 150, noGravity: true,
@@ -244,7 +260,7 @@
           NS.Audio.sfx('shot2');
         }
       },
-      frame(e) { return (e.t % 130) >= 90 ? 1 : 0; },
+      frame(e) { const c = e.t % 130; return c >= 120 ? 2 : c >= 90 ? 1 : 0; },
     },
     sentry: {
       w: 18, h: 28, hp: 5, dmg: 2, score: 200, noGravity: true,
@@ -449,7 +465,13 @@
       if (shot && shot.freeze) { e.frozen = shot.freeze; NS.Audio.sfx('freeze'); }
       if (e.hp <= 0) {
         e.dead = true;
-        NS.FX.explode(e.x + e.w / 2, e.y + e.h / 2, false);
+        const DEBRIS = {
+          walker: ['#7e3a4a', '#b86a6a', P.steel2], spitter: ['#7e3a2a', '#b86a4a', P.steel2],
+          turret: [P.steel3, P.steel2, P.magenta2], wisp: ['#3d5a8e', '#6a8ec2', P.steel3],
+          sentry: ['#8fc6ea', '#4a7ec2', P.steel3], glider: ['#5e4a92', '#8a70c2', P.steel3],
+          shield: ['#3d6e5a', '#6aa88a', P.steel3], bomber: ['#8a5a2c', '#c29450', P.steel2],
+        };
+        NS.FX.explode(e.x + e.w / 2, e.y + e.h / 2, false, DEBRIS[e.type]);
         NS.Game.addScore(TYPES[e.type].score);
         Items.dropFrom(e.x + e.w / 2, e.y + e.h / 2);
       }
@@ -466,7 +488,8 @@
         if (!def.noGravity || e.type === 'turret' || e.type === 'spitter' || e.type === 'sentry')
           NS.groundShadow(g, e.x + e.w / 2 - cx, e.y + e.h - cy, e.w - 2);
         // 텔레그래프 발광 링
-        if (e.state === 'tele' || (def.frame && def.frame(e) === 2 && e.type !== 'walker')) {
+        const teleFrames = { walker: 4, turret: 1, wisp: 3, spitter: 1, sentry: 1, shield: 2, bomber: 2 };
+        if (e.state === 'tele' || (def.frame && def.frame(e) === teleFrames[e.type])) {
           g.globalAlpha = 0.3 + 0.2 * Math.sin(e.frame * 0.5);
           g.strokeStyle = P.red2;
           g.lineWidth = 1;
