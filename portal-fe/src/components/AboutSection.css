@@ -1,9 +1,9 @@
 .about-section {
-  padding: var(--ed-section-gap, 64px) var(--ko-space-6);
+  padding: var(--kh-void, 64px) var(--ko-space-6);
 }
 
 .about-inner {
-  max-width: var(--ed-container, 1200px);
+  max-width: var(--kh-container, 1200px);
   margin: 0 auto;
 }
 

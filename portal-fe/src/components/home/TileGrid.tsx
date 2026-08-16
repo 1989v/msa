@@ -15,11 +15,11 @@ export default function TileGrid({ services }: TileGridProps) {
   if (services.length === 0) return null;
 
   return (
-    <section id="services" className="home-section ed-tinted">
+    <section id="services" className="home-section">
       <div className="home-inner">
-        <div className="ed-section-head">
+        <div className="kh-section-head">
           <h2 className="home-section-title">만든 서비스</h2>
-          <span className="ed-index">Index / 01</span>
+          <span className="kh-mono kh-index">Index / 01</span>
         </div>
         <p className="home-section-desc">
           직접 설계하고 운영 중인 서비스입니다. 오픈 예정은 아직 화면이 없다는 뜻입니다.
@@ -29,12 +29,12 @@ export default function TileGrid({ services }: TileGridProps) {
           {services.map((service) => (
             <li key={service.code}>
               {service.status === 'OPEN' && service.href ? (
-                <a className="tile tile-open" href={service.href}>
+                <a className="tile kh-slab tile-open" href={service.href}>
                   <TileBody service={service} />
                   <span className="tile-arrow" aria-hidden="true">→</span>
                 </a>
               ) : (
-                <div className="tile tile-preopen" aria-disabled="true">
+                <div className="tile kh-slab tile-preopen" aria-disabled="true">
                   <TileBody service={service} />
                   <span className="tile-badge">오픈 예정</span>
                 </div>

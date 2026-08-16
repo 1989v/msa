@@ -46,10 +46,10 @@
 }
 
 .resume-body h1 {
-  font-size: var(--ed-headline, var(--ko-text-3xl));
+  font-size: var(--kh-headline, var(--ko-text-3xl));
   font-weight: 800;
   line-height: 1.1;
-  letter-spacing: var(--ed-tracking-display, -0.01em);
+  letter-spacing: var(--kh-tracking-display, -0.01em);
   margin-bottom: var(--ko-space-3);
 }
 

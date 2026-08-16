@@ -10,7 +10,7 @@ import {
   isLoggedIn,
 } from '../auth/auth';
 import './Shop.css';
-import { useEditorialSurface } from '../hooks/useEditorialSurface';
+import { useHeritageSurface } from '../hooks/useHeritageSurface';
 
 /**
  * 제공사 심볼. 각 사가 로그인 버튼에 요구하는 형태라 우리 아이콘 세트로 대체하지 않는다 —
@@ -55,7 +55,7 @@ function startOAuth(authUrl: string, next: string | null) {
 }
 
 export default function ShopLoginPage() {
-  useEditorialSurface();
+  useHeritageSurface();
   useSeo({ title: portalTitle('로그인'), canonical: portalUrl('/shop/login'), noindex: true });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -74,7 +74,7 @@ export default function ShopLoginPage() {
       <main className="shop-container shop-container-narrow">
         <section className="shop-login-card">
           <div>
-            <span className="ed-label">Account</span>
+            <span className="kh-section-label">Account</span>
             <h1 className="shop-login-title">로그인</h1>
             <p className="shop-login-desc">
               소셜 계정으로 로그인하면 주문·평점 등 회원 기능을 쓸 수 있습니다.

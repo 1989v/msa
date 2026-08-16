@@ -1,0 +1,290 @@
+/* K-Heritage Minimalist — 브랜드/제품 화면 아키타입 (DESIGN.md §12).
+ *
+ * 왜 여기에 있나: 공유 토큰(`@kgd/design-system`)은 `dark-trading` 이고 quant/admin 이
+ * 그대로 쓴다. 브랜드 화면만 다른 톤을 쓰려고 공유 토큰을 바꾸면 트레이딩 화면까지
+ * 따라 바뀐다. 그래서 **portal-fe 안에서만** 덮어쓴다.
+ *
+ * 색을 hex 로 적는 이유: 한지·기와·송연·연지·황토는 **지정된 브랜드 상수**다.
+ * 팔레트에서 근사하면 그냥 다른 색이 된다. 카카오 노랑과 같은 취급이다.
+ * 소비하는 쪽(컴포넌트 CSS)에서는 여전히 토큰만 쓴다.
+ */
+
+:root[data-surface='heritage'] {
+  /* ─── 브랜드 상수 ─────────────────────────────────────────────────────── */
+  --kh-hanji: #f9f8f2;      /* 한지 — 따뜻한 흰 바탕 */
+  --kh-giwa: #1d1d1f;       /* 기와 — 먹빛 구조와 타이포 */
+  --kh-ink: #0a0a0a;        /* 송연 — 가장 깊은 검정 */
+  --kh-pine: #1a472a;       /* 소나무 — 라이트 모드 상호작용 */
+  --kh-aged-pine: #3e4c3f;  /* 삭은 소나무 — 다크 모드 상호작용 */
+  --kh-yeonji: #a2231d;     /* 연지 — 인장·중대 액션 */
+  --kh-ocher: #b38b6d;      /* 황토 — 테두리·라벨·야간 강조 */
+
+  /* ─── 라이트(전통) — 종이 위의 먹 ────────────────────────────────────── */
+  --ko-surface-0: var(--kh-hanji);
+  --ko-surface-1: #f5f4ee;
+  --ko-surface-2: #efeee8;
+  --ko-surface-3: #e3e3dd;
+
+  --ko-text-primary: var(--kh-giwa);
+  --ko-text-secondary: #46464a;
+  --ko-text-muted: #77767b;
+
+  --ko-border-subtle: color-mix(in srgb, var(--kh-giwa) 12%, transparent);
+  --ko-border-default: color-mix(in srgb, var(--kh-giwa) 24%, transparent);
+  --ko-border-strong: color-mix(in srgb, var(--kh-giwa) 45%, transparent);
+
+  --ko-accent-primary: var(--kh-pine);
+  --ko-accent-primary-hover: #143620;
+  --ko-accent-primary-active: #0f2917;
+  --ko-accent-primary-bg: color-mix(in srgb, var(--kh-pine) 10%, transparent);
+  --ko-focus-ring: 2px solid var(--kh-pine);
+
+  /* 어두운 판 위에 놓이는 것들 — 라이트 모드에서도 카드·아케이드는 검다.
+   * "화면 속의 화면" 효과가 이 시스템의 핵심이다. */
+  --kh-slab: var(--kh-giwa);
+  --kh-slab-deep: var(--kh-ink);
+  --kh-on-slab: var(--kh-hanji);
+  --kh-on-slab-muted: color-mix(in srgb, var(--kh-hanji) 62%, transparent);
+  --kh-slab-border: color-mix(in srgb, var(--kh-ocher) 22%, transparent);
+
+  /* ─── 형태 ───────────────────────────────────────────────────────────── */
+  --kh-radius: 4px;
+  /* 비대칭 모서리 — 좌상/우하는 각지고 우상/좌하는 둥글다.
+   * 지면을 가로지르는 서체의 운필을 흉내낸다. */
+  --kh-radius-asym: 0 12px 0 12px;
+
+  /* ─── 여백 — 여백의 법칙(Rule of Void) ───────────────────────────────── */
+  --kh-void: clamp(5rem, 11vw, 8rem);
+  --kh-container: 1200px;
+
+  /* ─── 타이포 ─────────────────────────────────────────────────────────── */
+  --kh-display: clamp(2rem, 5vw, 3rem);
+  --kh-headline: clamp(1.375rem, 2.4vw, 1.5rem);
+  --kh-tracking-display: -0.02em;
+  --kh-tracking-mono: 0.05em;
+  /* 기술 메타데이터는 전부 모노다 — 날짜·태그·라벨·버튼.
+   * 전통 회화와 코드 사이를 잇는 장치라 장식이 아니다. */
+  --kh-font-mono: 'JetBrains Mono', var(--ko-font-mono);
+}
+
+/* ─── 다크(현대 엔지니어링) — 밤의 목조 누각 ─────────────────────────────── */
+:root[data-surface='heritage'][data-theme='dark'] {
+  --ko-surface-0: var(--kh-ink);
+  --ko-surface-1: #141414;
+  --ko-surface-2: #1d1d1f;
+  --ko-surface-3: #262628;
+
+  --ko-text-primary: #f2f1eb;
+  --ko-text-secondary: #b6b5b0;
+  --ko-text-muted: #8a8987;
+
+  --ko-border-subtle: color-mix(in srgb, var(--kh-ocher) 14%, transparent);
+  --ko-border-default: color-mix(in srgb, var(--kh-ocher) 28%, transparent);
+  --ko-border-strong: color-mix(in srgb, var(--kh-ocher) 50%, transparent);
+
+  --ko-accent-primary: var(--kh-ocher);
+  --ko-accent-primary-hover: #c69d7f;
+  --ko-accent-primary-active: #9c7659;
+  --ko-accent-primary-bg: color-mix(in srgb, var(--kh-ocher) 12%, transparent);
+  --ko-focus-ring: 2px solid var(--kh-ocher);
+
+  --kh-slab: #141414;
+  --kh-slab-deep: var(--kh-ink);
+  --kh-on-slab: #f2f1eb;
+  --kh-on-slab-muted: color-mix(in srgb, #f2f1eb 58%, transparent);
+  --kh-slab-border: color-mix(in srgb, var(--kh-ocher) 20%, transparent);
+}
+
+/* ═══ 프리미티브 ═════════════════════════════════════════════════════════ */
+
+/** 기술 라벨 — 모노, 넓은 자간. 한글에는 쓰지 않는다(자간만 벌어진다). */
+.kh-mono {
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  font-weight: 500;
+  letter-spacing: var(--kh-tracking-mono);
+}
+
+/** 인장(도장) — 붉은 낙관. 분류·상태를 찍는다. */
+.kh-seal {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  padding: 4px var(--ko-space-3);
+  border-radius: var(--kh-radius);
+  background: var(--kh-yeonji);
+  color: var(--kh-hanji);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/** 먹빛 인장 — 붉은 것을 아껴 쓰기 위한 기본형 */
+.kh-seal-ink {
+  background: var(--kh-giwa);
+  color: var(--kh-hanji);
+}
+
+.kh-seal-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--kh-yeonji);
+  flex-shrink: 0;
+}
+
+.kh-seal .kh-seal-dot {
+  background: currentColor;
+}
+
+.kh-seal-ink .kh-seal-dot {
+  background: var(--kh-yeonji);
+}
+
+/** 섹션 라벨 — 황토색 + 아이콘. 지면의 뼈대를 만든다. */
+.kh-section-label {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  color: var(--kh-ocher);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono);
+}
+
+/** 섹션 머리 — 제목은 왼쪽, 순번은 오른쪽 */
+.kh-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ko-space-6);
+}
+
+.kh-index {
+  color: var(--kh-ocher);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/** 제목 아래 짧은 괘선 — 전체 폭을 긋지 않는다 */
+.kh-rule::after {
+  content: '';
+  display: block;
+  width: 96px;
+  height: 1px;
+  margin-top: var(--ko-space-4);
+  background: var(--ko-border-default);
+}
+
+.kh-display {
+  font-size: var(--kh-display);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: var(--kh-tracking-display);
+  margin: 0;
+  /* 침묵의 여백 — 큰 글자는 그릇의 60%를 넘지 않는다 */
+  max-width: 18ch;
+}
+
+/** 한 단어만 연지색으로 — 강조는 문장이 아니라 낱말에 찍는다 */
+.kh-display-accent {
+  color: var(--kh-yeonji);
+}
+
+.kh-headline {
+  font-size: var(--kh-headline);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/**
+ * 판(slab) — 라이트 모드에서도 어두운 카드. "화면 속의 화면".
+ * 안쪽 토큰까지 뒤집어야 자식이 개별 색 지정 없이 읽힌다.
+ */
+.kh-slab {
+  background: var(--kh-slab);
+  border: 1px solid var(--kh-slab-border);
+  border-radius: var(--kh-radius-asym);
+  color: var(--kh-on-slab);
+  --ko-text-primary: var(--kh-on-slab);
+  --ko-text-secondary: var(--kh-on-slab-muted);
+  --ko-text-muted: var(--kh-on-slab-muted);
+  --ko-border-subtle: var(--kh-slab-border);
+}
+
+/** 그림자 대신 단단히 어긋난 판 하나 — 흐림 없는 물리적 깊이 */
+.kh-slab-offset {
+  position: relative;
+}
+
+.kh-slab-offset::before {
+  content: '';
+  position: absolute;
+  inset: var(--ko-space-4) calc(var(--ko-space-4) * -1) calc(var(--ko-space-4) * -1)
+    var(--ko-space-4);
+  background: var(--kh-slab-deep);
+  border-radius: var(--kh-radius-asym);
+  z-index: -1;
+}
+
+/** 채워진 액션 — 먹빛 바탕에 한지색 글씨, 모노 */
+.kh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ko-space-2);
+  min-height: 44px;
+  padding: 0 var(--ko-space-5);
+  border: 1px solid var(--kh-giwa);
+  border-radius: var(--kh-radius);
+  background: var(--kh-giwa);
+  color: var(--kh-hanji);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--ko-duration-normal) var(--ko-ease-out),
+    border-color var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.kh-button:hover {
+  background: var(--kh-ink);
+  border-color: var(--kh-ink);
+}
+
+/** 유령 버튼 — 황토 테두리만 */
+.kh-button-ghost {
+  background: transparent;
+  border-color: var(--ko-border-default);
+  color: var(--ko-text-primary);
+}
+
+.kh-button-ghost:hover {
+  background: var(--ko-surface-2);
+  border-color: var(--ko-border-strong);
+}
+
+:root[data-surface='heritage'][data-theme='dark'] .kh-button {
+  background: var(--kh-aged-pine);
+  border-color: var(--kh-aged-pine);
+  color: var(--kh-hanji);
+}
+
+:root[data-surface='heritage'][data-theme='dark'] .kh-button:hover {
+  background: #4a5a4b;
+  border-color: #4a5a4b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kh-button {
+    transition: none;
+  }
+}

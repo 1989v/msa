@@ -523,7 +523,7 @@ button.shop-product-card {
 }
 
 .shop-login-title {
-  font-size: var(--ed-headline, var(--ko-text-xl));
+  font-size: var(--kh-headline, var(--ko-text-xl));
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.02em;

@@ -12,7 +12,7 @@ import { resumeTitle } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { CLOSED_TITLE, ResumeClosed } from './ResumePage';
 import { hydrateEmails, protectEmails } from './protectEmail';
-import { useEditorialSurface } from '../../hooks/useEditorialSurface';
+import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import './Resume.css';
 
 /**
@@ -22,7 +22,7 @@ import './Resume.css';
  * 상세가 링크로만 걸려 있으면 인쇄본에서는 그 내용이 통째로 빠진다.
  */
 export default function ResumePrintPage() {
-  useEditorialSurface();
+  useHeritageSurface();
   const [overview, setOverview] = useState<ResumeOverview | null>(null);
   const [documents, setDocuments] = useState<ResumeDocument[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'closed'>('loading');

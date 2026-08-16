@@ -3,8 +3,8 @@
   --gnb-height: 64px;
 }
 
-/* 배경·경계는 토큰에서 뽑는다 — 이 헤더는 라이트(브랜드 면)와 다크(테크·게임)를
- * 모두 탄다. 색을 박으면 한쪽에서 반드시 어긋난다. */
+/* 배경·경계는 토큰에서 뽑는다 — 이 헤더는 브랜드 면과 테크·게임을 모두 탄다.
+ * 색을 박으면 한쪽에서 반드시 어긋난다. */
 .gnb {
   position: sticky;
   top: 0;
@@ -16,8 +16,20 @@
   border-bottom: 1px solid var(--ko-border-subtle);
 }
 
+/* K-Heritage 에서는 머리띠가 먹빛 판이다 — 한지 바탕 위에 얹힌 처마처럼.
+ * 라이트 모드에서도 어둡다. */
+:root[data-surface='heritage'] .gnb {
+  background: var(--kh-giwa);
+  border-bottom-color: var(--kh-slab-border);
+  --ko-text-primary: var(--kh-hanji);
+  --ko-text-secondary: color-mix(in srgb, var(--kh-hanji) 72%, transparent);
+  --ko-text-muted: color-mix(in srgb, var(--kh-hanji) 55%, transparent);
+  --ko-surface-2: color-mix(in srgb, var(--kh-hanji) 10%, transparent);
+  color: var(--kh-hanji);
+}
+
 .gnb-inner {
-  max-width: var(--ed-container, 1200px);
+  max-width: var(--kh-container, 1200px);
   margin: 0 auto;
   height: 100%;
   display: flex;
@@ -60,13 +72,16 @@
   flex: 1;
 }
 
-/* 알약 배경 대신 밑줄로 상태를 알린다 — 배경 칩이 늘어서면 헤더가 툴바처럼 보인다 */
+/* 알약 배경 대신 밑줄로 상태를 알린다 — 배경 칩이 늘어서면 헤더가 툴바처럼 보인다.
+ * 메뉴는 모노다 — 기술 메타데이터 표기 규약을 머리띠에서부터 지킨다. */
 .gnb-menu-item {
   background: none;
   border: none;
   cursor: pointer;
   padding: var(--ko-space-2) 0;
+  font-family: var(--kh-font-mono, inherit);
   font-size: var(--ko-text-sm);
+  letter-spacing: var(--kh-tracking-mono, 0);
   color: var(--ko-text-secondary);
   border-bottom: 2px solid transparent;
   transition: color var(--ko-duration-fast) var(--ko-ease-out),
@@ -82,7 +97,34 @@ a.gnb-menu-item {
 
 .gnb-menu-item:hover {
   color: var(--ko-text-primary);
-  border-bottom-color: var(--ko-text-primary);
+  border-bottom-color: var(--kh-ocher, var(--ko-text-primary));
+}
+
+/* 테마 토글 — 오른쪽 끝, 아이콘만 */
+.gnb-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--kh-radius, 4px);
+  background: none;
+  color: var(--ko-text-secondary);
+  cursor: pointer;
+  transition: color var(--ko-duration-fast) var(--ko-ease-out),
+    background var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.gnb-theme-toggle:hover {
+  color: var(--kh-ocher, var(--ko-text-primary));
+  background: var(--ko-surface-2);
+}
+
+.gnb-theme-toggle:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
 }
 
 .gnb-menu-item:focus-visible {

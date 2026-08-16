@@ -3,8 +3,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
-// 속성(`[data-surface='editorial']`)으로만 켜지므로 항상 로드해도 다른 화면에 영향 없다.
-import './styles/editorial.css';
+// 속성(`[data-surface='heritage']`)으로만 켜지므로 항상 로드해도 다른 화면에 영향 없다.
+import './styles/k-heritage.css';
 import App from './App';
 import { queryClient } from './shell/queryClient';
 import { AuthProvider } from './shell/AuthContext';

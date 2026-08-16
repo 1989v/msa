@@ -2,11 +2,11 @@
   min-height: 100vh;
   background: var(--ko-surface-0);
   color: var(--ko-text-primary);
-  padding: var(--ed-section-gap, var(--ko-space-16)) var(--ko-space-6) 96px;
+  padding: var(--kh-void, var(--ko-space-16)) var(--ko-space-6) 96px;
 }
 
 .portfolio-inner {
-  max-width: var(--ed-container, 1280px);
+  max-width: var(--kh-container, 1280px);
   margin: 0 auto;
 }
 
@@ -18,10 +18,10 @@
 }
 
 .portfolio-title {
-  font-size: var(--ed-display, var(--ko-text-2xl));
+  font-size: var(--kh-display, var(--ko-text-2xl));
   font-weight: 800;
   line-height: 1.08;
-  letter-spacing: var(--ed-tracking-display, -0.01em);
+  letter-spacing: var(--kh-tracking-display, -0.01em);
   margin: 0;
 }
 

@@ -1,11 +1,11 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 1.2.0
+version: 2.0.0
 archetype: dark-trading
 # 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
 # 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
-archetype_secondary: editorial-mono
+archetype_secondary: k-heritage
 mood: [data-dense, calm-night, korean-fintech]
 last_updated: 2026-08-16
 owners: [frontend-platform]
@@ -221,47 +221,71 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 
 변경 시 본 파일 YAML 의 `version` + `last_updated` 갱신, `packages/design-system/package.json` 도 동기 bump.
 
-## 12. Archetype 2 — `editorial-mono` (브랜드/포트폴리오 화면 전용)
+## 12. Archetype 2 — `k-heritage` (브랜드/제품 화면 전용)
 
-`1989v.com` 의 브랜드 면(메인 `/`, `/portfolio`, `resume` 호스트)은 **잉크와 종이**에 가까운
-고대비 에디토리얼 톤을 쓴다. 데이터 밀도가 아니라 **읽히는 것**이 목적인 화면이라
-`dark-trading` 의 전제(밀도·야간·시세색)가 맞지 않는다.
+`1989v.com` 의 브랜드 면은 **고대비 기술 미니멀리즘과 한국 전통 공간 감각의 합**이다.
+데이터 밀도가 아니라 **읽히는 것**이 목적인 화면이라 `dark-trading` 의 전제가 맞지 않는다.
+정서적 목표는 *따뜻한 정밀함(Warm Precision)* — 기술적으로 단단하되 장인의 손이 닿은 느낌.
 
 **적용 범위**
 
 | 화면 | 아키타입 |
 |---|---|
-| `/`, `/portfolio`, `resume.1989v.com` | `editorial-mono` |
-| `/shop/**` (로그인·주문·상세 포함), `place.1989v.com` | `editorial-mono` |
-| `/games/**` | `dark-trading` 유지 — 아케이드는 어두워야 한다 |
-| `/tech` (트리맵·그래프·퀴즈) | `dark-trading` 유지 — 데이터 시각화 |
+| `/`, `/portfolio`, `resume.1989v.com` | `k-heritage` |
+| `/shop/**` (로그인·주문·상세 포함), `place.1989v.com` | `k-heritage` |
+| `/games/**`, `/tech` | `dark-trading` 유지 — 아케이드·데이터 시각화 |
 | admin-fe, quant-fe, gifticon-fe | `dark-trading` 유지 |
 
 **구현 규칙**
 
-- 토큰 정의는 `portal-fe/src/styles/editorial.css` 한 곳. **`packages/design-system` 은 건드리지 않는다** —
-  공유 토큰을 바꾸면 트레이딩·백오피스 화면까지 따라 바뀐다.
-- 켜는 방법은 `useEditorialSurface()` 하나. `:root` 에 `data-theme="light"` + `data-surface="editorial"`
-  를 걸고 언마운트 시 되돌린다. 컨테이너에만 걸면 `body` 배경이 다크로 남는다.
-- 팔레트를 새로 만들지 않는다. 공유 light 테마 위에 **대비·타이포·리듬 델타만** 얹는다.
+- 토큰 정의는 `portal-fe/src/styles/k-heritage.css` 한 곳. **`packages/design-system` 은
+  건드리지 않는다** — 공유 토큰을 바꾸면 트레이딩·백오피스 화면까지 따라 바뀐다.
+- 켜는 방법은 `useHeritageSurface()`. `:root` 에 `data-surface="heritage"` 를 걸고
+  언마운트 시 되돌린다. 참조 카운트를 쓴다 — 라우트 전환에서 해제가 나중에 돌면 깜빡인다.
+- **라이트와 다크가 둘 다 일급이다.** 한쪽이 파생이 아니다. 사용자 선택을 저장하고
+  없으면 시스템 설정을 따른다 (`useHeritageTheme`).
 
-**추가 토큰** (`--ed-*`, 공유 스케일에 없는 것만)
+**브랜드 상수** — 팔레트에서 근사하면 그냥 다른 색이 된다. hex 로 고정한다.
 
-| 토큰 | 값 | 용도 |
+| 토큰 | 값 | 이름 | 역할 |
+|---|---|---|---|
+| `--kh-hanji` | `#F9F8F2` | 한지 | 라이트 바탕 |
+| `--kh-giwa` | `#1D1D1F` | 기와 | 먹빛 구조·타이포·머리띠 |
+| `--kh-ink` | `#0A0A0A` | 송연 | 다크 바탕, 가장 깊은 검정 |
+| `--kh-pine` | `#1A472A` | 소나무 | 라이트 모드 상호작용 |
+| `--kh-aged-pine` | `#3E4C3F` | 삭은 소나무 | 다크 모드 상호작용 |
+| `--kh-yeonji` | `#A2231D` | 연지 | 인장·강조 낱말·중대 액션 |
+| `--kh-ocher` | `#B38B6D` | 황토 | 테두리·라벨·야간 강조 |
+
+**구조 토큰**
+
+| 토큰 | 값 | 근거 |
 |---|---|---|
-| `--ed-display` | `clamp(2.5rem, 7vw, 4.5rem)` | 히어로 디스플레이 |
-| `--ed-headline` | `clamp(1.75rem, 3.6vw, 2.5rem)` | 섹션 제목 |
-| `--ed-tracking-display` | `-0.025em` | 디스플레이 자간 |
-| `--ed-tracking-label` | `0.12em` | 대문자 구조 라벨 |
-| `--ed-section-gap` | `clamp(4rem, 9vw, 7.5rem)` | 섹션 간 여백 |
-| `--ed-container` | `1200px` | 콘텐츠 최대 폭 |
+| `--kh-void` | `clamp(5rem, 11vw, 8rem)` | 여백의 법칙 — 섹션 사이 죽은 공간 |
+| `--kh-radius` | `4px` | 기본 |
+| `--kh-radius-asym` | `0 12px 0 12px` | 좌상/우하 각짐, 우상/좌하 둥긂 |
+| `--kh-display` | `clamp(2rem, 5vw, 3rem)` | 디스플레이 |
+| `--kh-font-mono` | JetBrains Mono → 시스템 모노 | 기술 메타데이터 전용 |
+
+**프리미티브** (`.kh-*`)
+
+| 클래스 | 무엇 |
+|---|---|
+| `.kh-slab` | 라이트 모드에서도 어두운 카드 — "화면 속의 화면". 안쪽 텍스트 토큰까지 뒤집는다 |
+| `.kh-slab-offset` | 흐린 그림자 대신 단단히 어긋난 판 하나 |
+| `.kh-seal` / `.kh-seal-ink` | 인장(도장) — 연지색 낙관. 기본형은 먹빛 |
+| `.kh-section-label` | 황토색 모노 섹션 라벨 |
+| `.kh-display` / `.kh-display-accent` | 디스플레이 + **낱말 하나만** 연지색 |
+| `.kh-button` / `.kh-button-ghost` | 먹빛 채움 / 테두리만 |
+| `.kh-mono` | 기술 메타데이터 표기 |
 
 **주의**
 
-- **한글에 `text-transform: uppercase` / 넓은 `letter-spacing` 을 걸지 않는다.** 대문자 변환은
-  효과가 없고 자간만 벌어져 가독성이 떨어진다. 구조 라벨(`.ed-label`)은 라틴 표기에만 쓴다.
-- 디스플레이 자간을 라틴 기준(-0.04em)까지 조이지 않는다. 한글이 붙어 보인다.
-- 구획은 선이 아니라 **여백과 배경 단차**(`.ed-tinted`)로 나눈다. 카드 모서리는 `radius-sm(4)`.
+- **한글에 `text-transform: uppercase` / 넓은 자간을 걸지 않는다.** 대문자 변환은 효과가
+  없고 자간만 벌어진다. 모노 라벨은 라틴 표기에만 쓴다.
+- **강조는 문장이 아니라 낱말에 찍는다.** 연지색은 한 화면에 손에 꼽을 만큼만.
+- 그림자를 쓰지 않는다. 깊이는 **면의 색 단차**와 **어긋난 판**으로 만든다.
+- 큰 글자는 그릇의 60%를 넘지 않는다 — 침묵의 여백이 이 시스템의 뼈대다.
 
 ## 11. Related
 

@@ -12,7 +12,7 @@ import {
 } from '../api/displayApi';
 import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
-import { useEditorialSurface } from '../hooks/useEditorialSurface';
+import { useHeritageSurface } from '../hooks/useHeritageSurface';
 import '../components/home/Home.css';
 
 /** About 은 데이터가 없어도 항상 렌더된다 */
@@ -24,7 +24,7 @@ const ABOUT_ITEM = { label: 'About', anchor: 'about' };
  * 시각화·개념 사전은 여기 없다. IT 타일이 받는 `/tech` 로 옮겼다.
  */
 export default function HomePage() {
-  useEditorialSurface();
+  useHeritageSurface();
   useSeo({
     title: portalTitle(''),
     description:
@@ -76,22 +76,40 @@ export default function HomePage() {
       <GNB items={gnbItems} />
 
       <header className="home-hero">
-        <div className="home-inner">
-          <span className="ed-label home-hero-eyebrow">1989V — Backend Engineering</span>
-          <h1 className="ed-display home-hero-statement">
-            서비스를 처음부터
-            <br />
-            <span className="ed-display-dim">끝까지</span> 만듭니다.
-          </h1>
-          <p className="home-hero-lead">
-            도메인을 쪼개고, 검색과 데이터를 붙이고, 무료 티어 한 대 위에서
-            굴러가게 하는 데까지.
-          </p>
-          {timeline && (
-            <p className="home-hero-meta">
-              백엔드 엔지니어 · {timeline.career.yearsInField}년차
+        <div className="home-inner home-hero-grid">
+          <div className="home-hero-copy">
+            <span className="kh-seal kh-seal-ink home-hero-eyebrow">
+              <span className="kh-seal-dot" aria-hidden="true" />
+              Systems Architect
+            </span>
+            <h1 className="kh-display home-hero-statement">
+              서비스를 처음부터
+              <br />
+              <span className="kh-display-accent">끝까지</span> 만듭니다.
+            </h1>
+            <p className="home-hero-lead">
+              도메인을 쪼개고, 검색과 데이터를 붙이고, 무료 티어 한 대 위에서
+              굴러가게 하는 데까지.
             </p>
-          )}
+            <div className="home-hero-actions">
+              <a className="kh-button" href="#portfolio">
+                지나온 것 보기
+                <span aria-hidden="true">→</span>
+              </a>
+              {timeline && (
+                <span className="kh-mono home-hero-meta">
+                  {timeline.career.yearsInField}년차 · 백엔드
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* 어긋난 판 — 흐린 그림자 대신 물리적 깊이. 장식이라 스크린리더에서 뺀다. */}
+          <div className="home-hero-slab kh-slab-offset" aria-hidden="true">
+            <div className="kh-slab home-hero-slab-face">
+              <span className="kh-mono home-hero-slab-mark">&lt; / system_core &gt;</span>
+            </div>
+          </div>
         </div>
       </header>
 

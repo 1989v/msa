@@ -6,10 +6,10 @@ import { useAuth } from '../auth/useAuth';
 import { portalTitle } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import './Shop.css';
-import { useEditorialSurface } from '../hooks/useEditorialSurface';
+import { useHeritageSurface } from '../hooks/useHeritageSurface';
 
 export default function ShopOAuthCallbackPage() {
-  useEditorialSurface();
+  useHeritageSurface();
   useSeo({ title: portalTitle('로그인 처리 중'), noindex: true });
   const { login } = useAuth();
   const navigate = useNavigate();
