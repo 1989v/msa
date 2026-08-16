@@ -18,8 +18,8 @@ export default function TileGrid({ services }: TileGridProps) {
     <section id="services" className="home-section">
       <div className="home-inner">
         <div className="kh-section-head">
+          <span className="kh-mono kh-index">01_</span>
           <h2 className="home-section-title">만든 서비스</h2>
-          <span className="kh-mono kh-index">Index / 01</span>
         </div>
         <p className="home-section-desc">
           직접 설계하고 운영 중인 서비스입니다. 오픈 예정은 아직 화면이 없다는 뜻입니다.

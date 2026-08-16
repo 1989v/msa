@@ -24,10 +24,11 @@
   font-weight: 600;
   line-height: 1.3;
   letter-spacing: -0.01em;
-  margin: 0 0 var(--ko-space-3);
+  margin: 0;
 }
 
 .home-section-desc {
+  margin-top: var(--ko-space-5);
   font-size: var(--ko-text-base);
   color: var(--ko-text-secondary);
   line-height: var(--ko-leading-relaxed);

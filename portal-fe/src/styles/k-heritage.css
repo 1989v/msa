@@ -17,7 +17,8 @@
   --kh-pine: #1a472a;       /* 소나무 — 라이트 모드 상호작용 */
   --kh-aged-pine: #3e4c3f;  /* 삭은 소나무 — 다크 모드 상호작용 */
   --kh-yeonji: #a2231d;     /* 연지 — 인장·중대 액션 */
-  --kh-ocher: #b38b6d;      /* 황토 — 테두리·라벨·야간 강조 */
+  --kh-ocher: #b38b6d;      /* 황토 — 테두리·라벨·구조 강조 */
+  --kh-celadon: #2b4b63;    /* 청자 — 다크 모드의 액션. 기와 유약에서 왔다 */
 
   /* ─── 라이트(전통) — 종이 위의 먹 ────────────────────────────────────── */
   --ko-surface-0: var(--kh-hanji);
@@ -51,7 +52,7 @@
   --kh-radius: 4px;
   /* 비대칭 모서리 — 좌상/우하는 각지고 우상/좌하는 둥글다.
    * 지면을 가로지르는 서체의 운필을 흉내낸다. */
-  --kh-radius-asym: 0 12px 0 12px;
+  --kh-radius-asym: 0 8px 0 8px;
 
   /* ─── 여백 — 여백의 법칙(Rule of Void) ───────────────────────────────── */
   --kh-void: clamp(5rem, 11vw, 8rem);
@@ -67,32 +68,35 @@
   --kh-font-mono: 'JetBrains Mono', var(--ko-font-mono);
 }
 
-/* ─── 다크(현대 엔지니어링) — 밤의 목조 누각 ─────────────────────────────── */
+/* ─── 다크(Heritage Tech) — 밤의 목조 누각 ────────────────────────────────
+ * 라이트의 반전이 아니라 별도 설계다. 액션은 청자색이고 황토는 구조로 물러난다.
+ * 연지색 강조 낱말은 라이트 전용 — 어두운 바탕에서 붉은 글자는 경고로 읽힌다. */
 :root[data-surface='heritage'][data-theme='dark'] {
-  --ko-surface-0: var(--kh-ink);
-  --ko-surface-1: #141414;
-  --ko-surface-2: #1d1d1f;
-  --ko-surface-3: #262628;
+  --ko-surface-0: #131313;
+  --ko-surface-1: #1c1b1b;
+  --ko-surface-2: #201f1f;
+  --ko-surface-3: #2a2a2a;
 
-  --ko-text-primary: #f2f1eb;
-  --ko-text-secondary: #b6b5b0;
-  --ko-text-muted: #8a8987;
+  --ko-text-primary: #e5e2e1;
+  --ko-text-secondary: #c7c6ca;
+  --ko-text-muted: #919095;
 
-  --ko-border-subtle: color-mix(in srgb, var(--kh-ocher) 14%, transparent);
-  --ko-border-default: color-mix(in srgb, var(--kh-ocher) 28%, transparent);
-  --ko-border-strong: color-mix(in srgb, var(--kh-ocher) 50%, transparent);
+  --ko-border-subtle: color-mix(in srgb, var(--kh-ocher) 12%, transparent);
+  --ko-border-default: color-mix(in srgb, var(--kh-ocher) 22%, transparent);
+  --ko-border-strong: color-mix(in srgb, var(--kh-ocher) 40%, transparent);
 
-  --ko-accent-primary: var(--kh-ocher);
-  --ko-accent-primary-hover: #c69d7f;
-  --ko-accent-primary-active: #9c7659;
-  --ko-accent-primary-bg: color-mix(in srgb, var(--kh-ocher) 12%, transparent);
-  --ko-focus-ring: 2px solid var(--kh-ocher);
+  --ko-accent-primary: var(--kh-celadon);
+  --ko-accent-primary-hover: #37607e;
+  --ko-accent-primary-active: #233d51;
+  --ko-accent-primary-bg: color-mix(in srgb, var(--kh-celadon) 22%, transparent);
+  --ko-focus-ring: 2px solid #6f9fc4;
 
-  --kh-slab: #141414;
-  --kh-slab-deep: var(--kh-ink);
-  --kh-on-slab: #f2f1eb;
-  --kh-on-slab-muted: color-mix(in srgb, #f2f1eb 58%, transparent);
-  --kh-slab-border: color-mix(in srgb, var(--kh-ocher) 20%, transparent);
+  /* 판은 바탕보다 한 단계 올라온 기와색이다 */
+  --kh-slab: #1d1d1f;
+  --kh-slab-deep: #0e0e0e;
+  --kh-on-slab: #e5e2e1;
+  --kh-on-slab-muted: #919095;
+  --kh-slab-border: color-mix(in srgb, var(--kh-ocher) 14%, transparent);
 }
 
 /* ═══ 프리미티브 ═════════════════════════════════════════════════════════ */
@@ -156,21 +160,48 @@
   letter-spacing: var(--kh-tracking-mono);
 }
 
-/** 섹션 머리 — 제목은 왼쪽, 순번은 오른쪽 */
+/**
+ * 섹션 머리 — 순번이 제목 **앞**에 붙고 아래로 전폭 괘선이 지난다.
+ * 순번을 오른쪽 끝에 두면 시선이 제목에서 한 번 끊긴다.
+ */
 .kh-section-head {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--ko-space-6);
+  gap: var(--ko-space-4);
+  padding-bottom: var(--ko-space-4);
+  border-bottom: 1px solid var(--ko-border-subtle);
 }
 
 .kh-index {
   color: var(--kh-ocher);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
-/** 제목 아래 짧은 괘선 — 전체 폭을 긋지 않는다 */
+/** 대문자 라벨 — 모노가 아닌 본문 서체의 캡스. 카드 모서리 표식에 쓴다 */
+.kh-caps {
+  font-size: var(--ko-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ko-text-muted);
+}
+
+/** 아이콘 함 — 얇은 테두리 안의 작은 사각. 아이콘을 그냥 두면 떠 보인다 */
+.kh-icon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius);
+  color: var(--ko-accent-primary);
+  flex-shrink: 0;
+}
+
+/** 짧은 괘선 — `.kh-section-head` 를 쓰지 않는 자리에서만. 둘을 겹쳐 쓰지 않는다 */
 .kh-rule::after {
   content: '';
   display: block;
@@ -190,9 +221,17 @@
   max-width: 18ch;
 }
 
-/** 한 단어만 연지색으로 — 강조는 문장이 아니라 낱말에 찍는다 */
+/**
+ * 한 낱말만 연지색으로 — 강조는 문장이 아니라 낱말에 찍는다.
+ * 다크에서는 색을 빼고 본문색으로 둔다. 어두운 바탕의 붉은 글자는 강조가 아니라
+ * 경고로 읽히고, 이 모드의 강조 자리는 청자색 액션이 갖는다.
+ */
 .kh-display-accent {
   color: var(--kh-yeonji);
+}
+
+:root[data-surface='heritage'][data-theme='dark'] .kh-display-accent {
+  color: inherit;
 }
 
 .kh-headline {
@@ -273,14 +312,14 @@
 }
 
 :root[data-surface='heritage'][data-theme='dark'] .kh-button {
-  background: var(--kh-aged-pine);
-  border-color: var(--kh-aged-pine);
+  background: var(--kh-celadon);
+  border-color: var(--kh-celadon);
   color: var(--kh-hanji);
 }
 
 :root[data-surface='heritage'][data-theme='dark'] .kh-button:hover {
-  background: #4a5a4b;
-  border-color: #4a5a4b;
+  background: #37607e;
+  border-color: #37607e;
 }
 
 /**
@@ -416,4 +455,20 @@
   .kh-field {
     transition: none;
   }
+}
+
+/**
+ * 아케이드 — 별도 스펙(1989V Heritage Arcade). 바탕이 더 깊고 액션이 연지색이다.
+ * 일반 다크가 청자색을 쓰는 것과 다르다: 아케이드는 브랜드 순간이 붉다.
+ */
+.kh-arcade {
+  --ko-accent-primary: var(--kh-yeonji);
+  --ko-accent-primary-hover: #bd2b23;
+  --ko-accent-primary-bg: color-mix(in srgb, var(--kh-yeonji) 18%, transparent);
+}
+
+:root[data-surface='heritage'][data-theme='dark'] .kh-arcade {
+  --ko-surface-0: var(--kh-ink);
+  --kh-slab: var(--kh-giwa);
+  --kh-slab-deep: #050505;
 }

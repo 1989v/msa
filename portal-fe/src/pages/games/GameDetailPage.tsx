@@ -197,7 +197,7 @@ export default function GameDetailPage() {
 
   if (notFound) {
     return (
-      <div className="games-page">
+      <div className="games-page kh-arcade">
         <p className="games-status">
           {lang === 'en' ? 'Game not found.' : '게임을 찾을 수 없습니다.'}
         </p>
@@ -211,7 +211,7 @@ export default function GameDetailPage() {
   if (!game) return <div className="games-page games-status">불러오는 중…</div>;
 
   return (
-    <div className="games-page">
+    <div className="games-page kh-arcade">
       <div className="games-topbar">
         <AuthButton />
       </div>

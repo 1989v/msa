@@ -170,7 +170,7 @@ export default function GamesPage() {
   }
 
   return (
-    <div className="games-page">
+    <div className="games-page kh-arcade">
       {/* 게임 화면은 GNB 를 렌더하지 않는다 — 로그인 진입점을 여기에도 둔다 */}
       <div className="games-topbar">
         <AuthButton />
