@@ -15,8 +15,10 @@
 
 /* 구획은 선이 아니라 여백과 배경 단차로 나눈다 — 선을 매 섹션에 그으면
  * 지면이 표처럼 읽히고 여백이 만드는 리듬이 죽는다. */
+/* 여백은 섹션마다 위아래로 들어가 이웃끼리 겹친다 — 절반씩 나눠 실제 간격을
+ * 한 번만 만든다. */
 .home-section {
-  padding: var(--kh-void, var(--ko-space-16)) 0;
+  padding: calc(var(--kh-void, var(--ko-space-16)) / 2) 0;
 }
 
 .home-section-title {
@@ -53,7 +55,7 @@
 /* ─── 브랜드 히어로 ───────────────────────────────────────────────────────── */
 
 .home-hero {
-  padding: var(--kh-void, var(--ko-space-16)) 0;
+  padding: var(--ko-space-12) 0 calc(var(--kh-void, var(--ko-space-16)) / 2);
 }
 
 /* 대칭을 피한다 — 글은 왼쪽으로 몰고 오른쪽은 판 하나로 받는다 */

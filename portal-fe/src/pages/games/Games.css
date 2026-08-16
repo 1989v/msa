@@ -103,13 +103,13 @@
   color: var(--ko-text-secondary);
   font-size: 0.875rem;
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: var(--kh-radius, 6px);
   cursor: pointer;
   transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .games-sort-btn.active {
-  background: var(--ko-accent-secondary);
+  background: var(--ko-text-primary);
   color: var(--ko-surface-0);
   font-weight: 600;
 }
@@ -130,10 +130,12 @@
   border: 1px solid var(--ko-border-default);
   background: var(--ko-surface-2);
   color: var(--ko-text-primary);
-  font-size: 0.8125rem;
+  font-family: var(--kh-font-mono, inherit);
+  font-size: 0.75rem;
   font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono, 0);
   padding: 6px 14px;
-  border-radius: 8px;
+  border-radius: var(--kh-radius, 8px);
   cursor: pointer;
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
   min-height: 32px;
@@ -588,13 +590,15 @@
   gap: 2px;
   margin-left: 12px;
   vertical-align: middle;
-  border: 1px solid var(--border, rgba(128, 128, 128, 0.35));
+  border: 1px solid var(--ko-border-default);
   border-radius: 8px;
   overflow: hidden;
 }
 
 .games-lang-btn {
   padding: 3px 10px;
+  font-family: var(--kh-font-mono, inherit);
+  border-radius: var(--kh-radius, 4px);
   font-size: 0.55em;
   border: 0;
   background: transparent;
@@ -605,7 +609,7 @@
 
 .games-lang-btn.active {
   opacity: 1;
-  background: var(--accent, rgba(120, 120, 255, 0.25));
+  background: var(--ko-accent-primary-bg, var(--ko-surface-3));
   font-weight: 700;
 }
 

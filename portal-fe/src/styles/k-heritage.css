@@ -132,6 +132,12 @@
   color: var(--kh-hanji);
 }
 
+/* 다크에서는 바탕도 먹빛이라 인장이 묻힌다. 테두리로 형태를 남긴다. */
+:root[data-surface='heritage'][data-theme='dark'] .kh-seal-ink {
+  background: var(--ko-surface-2);
+  border: 1px solid var(--ko-border-default);
+}
+
 .kh-seal-dot {
   width: 6px;
   height: 6px;
@@ -329,7 +335,10 @@
 .kh-eave-edge {
   height: 20px;
   background: var(--kh-giwa);
+  /* 곡률은 폭을 따라 커진다 — 넓은 머리띠에 그대로 쓰면 활처럼 휜다.
+   * 그래서 머리띠에는 쓰지 않고, 폭이 제한된 구획선에만 쓴다. */
   border-radius: 0 0 50% 50% / 0 0 20px 20px;
+  max-width: 480px;
 }
 
 /**
@@ -347,12 +356,13 @@
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.05;
   border-radius: inherit;
+  /* 결은 **어두운** 선이다. `currentColor` 를 쓰면 어두운 판 위에서 흰 세로선이 되어
+   * 목재가 아니라 스캔라인으로 보인다. 잉크로 고정하고 두 겹만 겹친다 —
+   * 세 겹은 주기 간섭으로 굵은 띠를 만든다. */
   background-image:
-    repeating-linear-gradient(93deg, currentColor 0 1px, transparent 1px 7px),
-    repeating-linear-gradient(88deg, currentColor 0 1px, transparent 1px 13px),
-    repeating-linear-gradient(91deg, currentColor 0 1px, transparent 1px 23px);
+    repeating-linear-gradient(93deg, rgb(0 0 0 / 0.055) 0 1px, transparent 2px 11px),
+    repeating-linear-gradient(88deg, rgb(0 0 0 / 0.035) 0 2px, transparent 5px 23px);
 }
 
 /**
