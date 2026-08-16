@@ -295,7 +295,7 @@ images:
     newTag: 3d19d63
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: b1d2dee
+    newTag: 499d2bb
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 3d19d63
@@ -316,7 +316,7 @@ images:
     newTag: 3d19d63
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 13036b1
+    newTag: 499d2bb
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 3d19d63
