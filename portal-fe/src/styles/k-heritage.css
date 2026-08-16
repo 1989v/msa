@@ -283,8 +283,137 @@
   border-color: #4a5a4b;
 }
 
+/**
+ * 처마(cheoma) — 처진 가운데와 들린 끝. 한국 지붕 선을 아주 얕게 흉내낸 구획선이다.
+ * 곡률을 키우면 즉시 유치해지므로 전체 폭 대비 20px 안쪽으로만 쓴다.
+ */
+.kh-eave-edge {
+  height: 20px;
+  background: var(--kh-giwa);
+  border-radius: 0 0 50% 50% / 0 0 20px 20px;
+}
+
+/**
+ * 목재 결 — 이미지 없이 만든다. 주기가 서로 배수가 아닌 세 겹을 겹쳐야
+ * 규칙적인 줄무늬가 아니라 결처럼 읽힌다. 5% 이상 올리면 텍스처가 아니라 무늬가 된다.
+ */
+.kh-grain {
+  position: relative;
+  isolation: isolate;
+}
+
+.kh-grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.05;
+  border-radius: inherit;
+  background-image:
+    repeating-linear-gradient(93deg, currentColor 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(88deg, currentColor 0 1px, transparent 1px 13px),
+    repeating-linear-gradient(91deg, currentColor 0 1px, transparent 1px 23px);
+}
+
+/**
+ * 입력 — 테두리를 두르지 않고 아래 선 하나만 둔다. 상자가 늘어서면 지면이
+ * 서식처럼 보이고 여백이 만드는 리듬이 죽는다.
+ */
+.kh-field {
+  width: 100%;
+  min-height: 44px;
+  padding: var(--ko-space-2) 0;
+  border: 0;
+  border-bottom: 1px solid var(--ko-border-default);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ko-text-primary);
+  font-family: inherit;
+  font-size: var(--ko-text-base);
+  transition: border-color var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.kh-field::placeholder {
+  color: var(--ko-text-muted);
+}
+
+.kh-field:focus {
+  outline: none;
+  border-bottom-width: 2px;
+  border-bottom-color: var(--ko-accent-primary);
+}
+
+/* 키보드 사용자에게는 선 굵기만으로 부족하다 — 링을 함께 준다. */
+.kh-field:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 4px;
+}
+
+/**
+ * 상태 — 비었거나, 불러오는 중이거나, 실패했거나. 셋을 한 자리에서 다룬다.
+ * 실패는 연지색을 쓰되 글자까지 붉히지 않는다 — 읽을 것은 안내문이지 경고색이 아니다.
+ */
+.kh-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-12) 0;
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+}
+
+.kh-status-title {
+  font-family: var(--kh-font-mono);
+  letter-spacing: var(--kh-tracking-mono);
+  color: var(--ko-text-secondary);
+}
+
+.kh-status-error {
+  border-left: 2px solid var(--kh-yeonji);
+  padding-left: var(--ko-space-4);
+}
+
+/**
+ * 표 — 머리줄은 황토색 모노. 숫자 열은 자리를 고정한다.
+ * 세로선을 긋지 않는다. 격자가 촘촘해지면 지면이 서식이 된다.
+ */
+.kh-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ko-text-sm);
+}
+
+.kh-table th,
+.kh-table td {
+  text-align: left;
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border-bottom: 1px solid var(--ko-border-subtle);
+  vertical-align: top;
+}
+
+.kh-table thead th {
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono);
+  text-transform: uppercase;
+  color: var(--kh-ocher);
+  white-space: nowrap;
+}
+
+.kh-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.kh-table .num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .kh-button {
+  .kh-button,
+  .kh-field {
     transition: none;
   }
 }

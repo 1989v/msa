@@ -26,6 +26,21 @@
   --ko-text-muted: color-mix(in srgb, var(--kh-hanji) 55%, transparent);
   --ko-surface-2: color-mix(in srgb, var(--kh-hanji) 10%, transparent);
   color: var(--kh-hanji);
+  /* 처마가 지면 위로 걸치므로 아래 경계선을 지운다 — 선과 곡선이 겹치면 둘 다 죽는다 */
+  border-bottom: 0;
+}
+
+/* 처마(cheoma) — 처진 가운데와 들린 끝. 곡률을 키우면 즉시 유치해진다. */
+:root[data-surface='heritage'] .gnb::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: var(--kh-giwa);
+  border-radius: 0 0 50% 50% / 0 0 18px 18px;
+  pointer-events: none;
 }
 
 .gnb-inner {

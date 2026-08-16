@@ -29,12 +29,12 @@ export default function TileGrid({ services }: TileGridProps) {
           {services.map((service) => (
             <li key={service.code}>
               {service.status === 'OPEN' && service.href ? (
-                <a className="tile kh-slab tile-open" href={service.href}>
+                <a className="tile kh-slab kh-grain tile-open" href={service.href}>
                   <TileBody service={service} />
                   <span className="tile-arrow" aria-hidden="true">→</span>
                 </a>
               ) : (
-                <div className="tile kh-slab tile-preopen" aria-disabled="true">
+                <div className="tile kh-slab kh-grain tile-preopen" aria-disabled="true">
                   <TileBody service={service} />
                   <span className="tile-badge">오픈 예정</span>
                 </div>

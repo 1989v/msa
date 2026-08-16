@@ -106,7 +106,7 @@ export default function HomePage() {
 
           {/* 어긋난 판 — 흐린 그림자 대신 물리적 깊이. 장식이라 스크린리더에서 뺀다. */}
           <div className="home-hero-slab kh-slab-offset" aria-hidden="true">
-            <div className="kh-slab home-hero-slab-face">
+            <div className="kh-slab kh-grain home-hero-slab-face">
               <span className="kh-mono home-hero-slab-mark">&lt; / system_core &gt;</span>
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function HomePage() {
 
       {!services && (
         <div className="home-inner">
-          <p className="home-status">
+          <p className="kh-status home-status">
             {failed
               ? '서비스 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'
               : '불러오는 중…'}

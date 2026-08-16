@@ -127,7 +127,7 @@ export default function PortfolioPage() {
 
         <div className="portfolio-toolbar">
           <input
-            className="portfolio-search"
+            className="kh-field portfolio-search"
             aria-label="포트폴리오 키워드 검색"
             placeholder="키워드 검색 (제목 / 요약 / 본문)"
             value={q}
@@ -167,17 +167,18 @@ export default function PortfolioPage() {
           </div>
         )}
 
-        {loading && <div className="portfolio-loading">불러오는 중…</div>}
+        {loading && <div className="kh-status"><span className="kh-status-title">Loading</span>불러오는 중…</div>}
         {error && (
-          <div className="portfolio-error" role="alert">
+          <div className="kh-status kh-status-error" role="alert">
+            <span className="kh-status-title">Error</span>
             {error}
           </div>
         )}
 
         {!loading && !error && cards.length === 0 && (
-          <div className="portfolio-empty">
-            아직 등록된 카드가 없습니다. <br />
-            <small>seed DML을 실행하거나 어드민에서 카드를 추가하세요.</small>
+          <div className="kh-status">
+            <span className="kh-status-title">Empty</span>
+            아직 등록된 카드가 없습니다.
           </div>
         )}
 
@@ -243,9 +244,10 @@ export default function PortfolioPage() {
             >
               ×
             </button>
-            {detailLoading && <div className="portfolio-loading">불러오는 중…</div>}
+            {detailLoading && <div className="kh-status"><span className="kh-status-title">Loading</span>불러오는 중…</div>}
             {detailError && (
-              <div className="portfolio-error" role="alert">
+              <div className="kh-status kh-status-error" role="alert">
+                <span className="kh-status-title">Error</span>
                 {detailError}
               </div>
             )}
