@@ -8,6 +8,7 @@ import {
 } from '../api/portfolioApi';
 import { portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
+import { useEditorialSurface } from '../hooks/useEditorialSurface';
 import './PortfolioPage.css';
 
 function formatPeriod(start: string | null, end: string | null): string {
@@ -23,6 +24,7 @@ function errorMessage(err: unknown, fallback: string): string {
 }
 
 export default function PortfolioPage() {
+  useEditorialSurface();
   useSeo({
     title: portalTitle('포트폴리오'),
     description:
@@ -112,7 +114,12 @@ export default function PortfolioPage() {
     <div className="portfolio-page">
       <div className="portfolio-inner">
         <header className="portfolio-header">
-          <h1 className="portfolio-title">Portfolio</h1>
+          <span className="ed-label">Project Archive</span>
+          <h1 className="portfolio-title">
+            지나온
+            <br />
+            <span className="ed-display-dim">작업들.</span>
+          </h1>
           <p className="portfolio-subtitle">
             그동안 일군 프로젝트·기능·트러블슈팅·학습을 시간순/임팩트순으로.
           </p>

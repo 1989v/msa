@@ -5,12 +5,14 @@ import { captureShareToken, fetchResumeOverview, type ResumeOverview } from '../
 import { resumeTitle } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { hydrateEmails, protectEmails } from './protectEmail';
+import { useEditorialSurface } from '../../hooks/useEditorialSurface';
 import './Resume.css';
 
 /** 게이트에 막혔을 때는 탭 제목도 404 와 같은 말을 해야 한다 */
 export const CLOSED_TITLE = '페이지를 찾을 수 없습니다';
 
 export default function ResumePage() {
+  useEditorialSurface();
   const [overview, setOverview] = useState<ResumeOverview | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'closed'>('loading');
   const bodyRef = useRef<HTMLDivElement>(null);

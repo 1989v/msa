@@ -1,23 +1,18 @@
 .about-section {
-  padding: 64px 24px;
+  padding: var(--ed-section-gap, 64px) var(--ko-space-6);
 }
 
 .about-inner {
-  max-width: 1200px;
+  max-width: var(--ed-container, 1200px);
   margin: 0 auto;
 }
 
+/* 레이더는 `/tech` 에서만 붙는다. 고정 2열로 두면 메인에서 오른쪽 절반이 빈 채로 남는다. */
 .about-content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 48px;
+  grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr));
+  gap: var(--ko-space-12);
   align-items: start;
-}
-
-@media (max-width: 800px) {
-  .about-content {
-    grid-template-columns: 1fr;
-  }
 }
 
 .about-profile {

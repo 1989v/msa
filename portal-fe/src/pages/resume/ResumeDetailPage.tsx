@@ -6,9 +6,11 @@ import { CLOSED_TITLE, ResumeClosed } from './ResumePage';
 import { resumeTitle } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { hydrateEmails, protectEmails } from './protectEmail';
+import { useEditorialSurface } from '../../hooks/useEditorialSurface';
 import './Resume.css';
 
 export default function ResumeDetailPage() {
+  useEditorialSurface();
   const { slug } = useParams<{ slug: string }>();
   const [document, setDocument] = useState<ResumeDocument | null>(null);
   const [state, setState] = useState<'loading' | 'ready' | 'closed'>('loading');

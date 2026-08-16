@@ -1,7 +1,7 @@
 .site-footer {
   text-align: center;
   padding: 28px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--ko-border-subtle);
 }
 
 .footer-built {

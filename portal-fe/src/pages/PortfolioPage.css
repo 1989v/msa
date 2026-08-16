@@ -2,31 +2,34 @@
   min-height: 100vh;
   background: var(--ko-surface-0);
   color: var(--ko-text-primary);
-  padding: var(--ko-space-16) var(--ko-space-6) 96px;
+  padding: var(--ed-section-gap, var(--ko-space-16)) var(--ko-space-6) 96px;
 }
 
 .portfolio-inner {
-  max-width: 1280px;
+  max-width: var(--ed-container, 1280px);
   margin: 0 auto;
 }
 
 .portfolio-header {
   display: flex;
   flex-direction: column;
-  gap: var(--ko-space-2);
-  margin-bottom: var(--ko-space-8);
+  gap: var(--ko-space-4);
+  margin-bottom: var(--ko-space-12);
 }
 
 .portfolio-title {
-  font-size: var(--ko-text-2xl);
-  font-weight: var(--ko-weight-bold);
-  letter-spacing: -0.01em;
+  font-size: var(--ed-display, var(--ko-text-2xl));
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: var(--ed-tracking-display, -0.01em);
+  margin: 0;
 }
 
 .portfolio-subtitle {
   color: var(--ko-text-secondary);
-  font-size: var(--ko-text-sm);
+  font-size: var(--ko-text-lg);
   line-height: var(--ko-leading-relaxed);
+  max-width: 46ch;
 }
 
 .portfolio-toolbar {
@@ -132,10 +135,10 @@
 }
 
 .portfolio-card {
-  background: var(--ko-surface-1);
+  background: var(--ko-surface-0);
   border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--ko-radius-lg);
-  padding: var(--ko-space-5);
+  border-radius: var(--ko-radius-sm);
+  padding: var(--ko-space-6);
   cursor: pointer;
   position: relative;
   transition: border-color var(--ko-duration-normal) var(--ko-ease-out),
