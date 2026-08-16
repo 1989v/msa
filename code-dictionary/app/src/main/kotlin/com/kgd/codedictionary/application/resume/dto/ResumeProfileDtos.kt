@@ -93,6 +93,7 @@ data class ResumeProjectDto(
     val ongoing: Boolean,
     val summary: String?,
     val bodyMarkdown: String?,
+    val publicBodyMarkdown: String?,
     val metrics: List<String>,
     /** 카탈로그 기술 참조 — 화면이 이 id 로 같은 기술의 프로젝트를 모아본다 */
     val skills: List<ResumeSkillRefDto>,
@@ -119,6 +120,7 @@ data class ResumeProjectDto(
             ongoing = project.period?.ongoing ?: false,
             summary = project.summary,
             bodyMarkdown = project.bodyMarkdown,
+            publicBodyMarkdown = project.publicBodyMarkdown,
             metrics = project.metrics,
             skills = skills,
             detailSlug = project.detailSlug,
@@ -186,6 +188,7 @@ data class ResumeProjectUpsertRequest(
     val endMonth: String? = null,
     val summary: String? = null,
     val bodyMarkdown: String? = null,
+    val publicBodyMarkdown: String? = null,
     val metrics: List<String> = emptyList(),
     val skillIds: List<Long> = emptyList(),
     val detailSlug: String? = null,

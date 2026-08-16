@@ -51,6 +51,8 @@ data class ResumeProject(
     val period: CareerPeriod?,
     val summary: String?,
     val bodyMarkdown: String?,
+    /** 공개면(`/portfolio`) 전용 서술. 게이트 뒤 본문과 수위가 다르다. */
+    val publicBodyMarkdown: String?,
     val metrics: List<String>,
     /** 카탈로그의 기술 참조. 자유 문자열을 두지 않는 이유는 V11 마이그레이션 주석 참조 */
     val skillIds: List<Long>,

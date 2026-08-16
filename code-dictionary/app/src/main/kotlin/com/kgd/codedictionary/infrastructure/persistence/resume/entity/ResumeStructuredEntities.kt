@@ -153,6 +153,7 @@ class ResumeProjectJpaEntity(
     endMonth: LocalDate? = null,
     summary: String? = null,
     bodyMarkdown: String? = null,
+    publicBodyMarkdown: String? = null,
     metrics: List<String> = emptyList(),
     detailSlug: String? = null,
     orderNo: Int = 0,
@@ -186,6 +187,10 @@ class ResumeProjectJpaEntity(
     var bodyMarkdown: String? = bodyMarkdown
         private set
 
+    @Column(name = "public_body_markdown", columnDefinition = "TEXT")
+    var publicBodyMarkdown: String? = publicBodyMarkdown
+        private set
+
     @Convert(converter = StringListJsonConverter::class)
     @Column(columnDefinition = "json")
     var metrics: List<String> = metrics
@@ -211,6 +216,7 @@ class ResumeProjectJpaEntity(
         endMonth = project.period?.end?.toDate()
         summary = project.summary
         bodyMarkdown = project.bodyMarkdown
+        publicBodyMarkdown = project.publicBodyMarkdown
         metrics = project.metrics
         detailSlug = project.detailSlug
         orderNo = project.orderNo
@@ -225,6 +231,7 @@ class ResumeProjectJpaEntity(
         period = startMonth?.let { CareerPeriod(it.toYearMonth(), endMonth?.toYearMonth()) },
         summary = summary,
         bodyMarkdown = bodyMarkdown,
+        publicBodyMarkdown = publicBodyMarkdown,
         metrics = metrics,
         skillIds = emptyList(),
         detailSlug = detailSlug,
@@ -242,6 +249,7 @@ class ResumeProjectJpaEntity(
             endMonth = project.period?.end?.toDate(),
             summary = project.summary,
             bodyMarkdown = project.bodyMarkdown,
+            publicBodyMarkdown = project.publicBodyMarkdown,
             metrics = project.metrics,
             detailSlug = project.detailSlug,
             orderNo = project.orderNo,

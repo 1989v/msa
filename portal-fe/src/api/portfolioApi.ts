@@ -10,6 +10,8 @@ export interface PortfolioProject {
   title: string;
   categoryCode: string | null;
   summary: string | null;
+  /** 공개용 서술 — 게이트 뒤 본문과 다른 글이다 */
+  body: string | null;
   metrics: string[];
   tags: string[];
   orderNo: number;

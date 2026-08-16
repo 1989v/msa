@@ -30,6 +30,7 @@ const EMPTY_PROJECT = {
   endMonth: '',
   summary: '',
   bodyMarkdown: '',
+  publicBodyMarkdown: '',
   metrics: '',
   skillIds: [] as number[],
   detailSlug: '',
@@ -222,6 +223,7 @@ export function ResumeProfilePage() {
                       id: p.id, title: p.title, companyId: p.companyId, categoryId: p.categoryId,
                       startMonth: p.startMonth ?? '', endMonth: p.endMonth ?? '', summary: p.summary ?? '',
                       bodyMarkdown: p.bodyMarkdown ?? '',
+                      publicBodyMarkdown: p.publicBodyMarkdown ?? '',
                       metrics: p.metrics.join('\n'), skillIds: p.skills.map((s) => s.id),
                       detailSlug: p.detailSlug ?? '', orderNo: p.orderNo, published: p.published,
                     })}>편집</Button>
@@ -259,8 +261,11 @@ export function ResumeProfilePage() {
             placeholder="요약 — 카드에 항상 보인다. 2~3줄로"
             value={project.summary} onChange={(e) => setProject({ ...project, summary: e.target.value })} />
           <textarea className="h-40 w-full rounded-md border border-zinc-300 bg-transparent p-2 font-mono text-xs dark:border-zinc-700"
-            placeholder="상세 (마크다운, 선택) — 접힌 채로 두고 펼쳐 본다. 인쇄에는 항상 펼쳐진다"
+            placeholder="상세 — 이력서(게이트 뒤) 전용. 장애 경위 등 구체적인 내용"
             value={project.bodyMarkdown} onChange={(e) => setProject({ ...project, bodyMarkdown: e.target.value })} />
+          <textarea className="h-32 w-full rounded-md border border-zinc-300 bg-transparent p-2 font-mono text-xs dark:border-zinc-700"
+            placeholder="공개용 상세 — /portfolio 에 나간다. 설계 판단만, 장애 수치·경위 금지"
+            value={project.publicBodyMarkdown} onChange={(e) => setProject({ ...project, publicBodyMarkdown: e.target.value })} />
           <textarea className="h-24 w-full rounded-md border border-zinc-300 bg-transparent p-2 text-sm dark:border-zinc-700"
             placeholder="성과 지표 — 한 줄에 하나 (예: CTR +3.4%)"
             value={project.metrics} onChange={(e) => setProject({ ...project, metrics: e.target.value })} />
@@ -306,6 +311,7 @@ export function ResumeProfilePage() {
                 categoryId: project.categoryId, startMonth: blankToNull(project.startMonth),
                 endMonth: blankToNull(project.endMonth), summary: blankToNull(project.summary),
                 bodyMarkdown: blankToNull(project.bodyMarkdown),
+                publicBodyMarkdown: blankToNull(project.publicBodyMarkdown),
                 metrics: splitList(project.metrics), skillIds: project.skillIds,
                 detailSlug: blankToNull(project.detailSlug),
                 orderNo: project.orderNo, published: project.published,

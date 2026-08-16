@@ -87,6 +87,7 @@ class ResumeStructuredAdminService(
                 period = period,
                 summary = request.summary,
                 bodyMarkdown = request.bodyMarkdown,
+                publicBodyMarkdown = request.publicBodyMarkdown,
                 metrics = request.metrics ?: emptyList(),
                 skillIds = request.skillIds ?: emptyList(),
                 detailSlug = request.detailSlug?.trim()?.lowercase()?.takeIf { it.isNotEmpty() },

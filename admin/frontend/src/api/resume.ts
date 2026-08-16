@@ -146,6 +146,7 @@ export interface ResumeProject {
   ongoing: boolean;
   summary: string | null;
   bodyMarkdown: string | null;
+  publicBodyMarkdown: string | null;
   metrics: string[];
   skills: ResumeSkillRef[];
   detailSlug: string | null;
