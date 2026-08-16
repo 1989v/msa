@@ -39,6 +39,9 @@
   --ko-accent-primary-active: #0f2917;
   --ko-accent-primary-bg: color-mix(in srgb, var(--kh-pine) 10%, transparent);
   --ko-focus-ring: 2px solid var(--kh-pine);
+  /* 채움용과 글씨용을 나눈다 — 같은 색이 바탕일 때와 글자일 때 요구 대비가 다르다.
+   * 라이트에서는 소나무가 둘 다 통과하므로 값이 같다. */
+  --ko-accent-text: var(--kh-pine);
 
   /* 어두운 판 위에 놓이는 것들 — 라이트 모드에서도 카드·아케이드는 검다.
    * "화면 속의 화면" 효과가 이 시스템의 핵심이다. */
@@ -90,6 +93,9 @@
   --ko-accent-primary-active: #233d51;
   --ko-accent-primary-bg: color-mix(in srgb, var(--kh-celadon) 22%, transparent);
   --ko-focus-ring: 2px solid #6f9fc4;
+  /* 청자 원색은 #131313 위에서 2.03:1 로 본문 대비에 못 미친다. 채움으로는 8.6:1 이라
+   * 문제없으므로 **글씨에만** 밝은 변형을 쓴다. */
+  --ko-accent-text: #6f9fc4;
 
   /* 판은 바탕보다 한 단계 올라온 기와색이다 */
   --kh-slab: #1d1d1f;
@@ -203,7 +209,7 @@
   height: 34px;
   border: 1px solid var(--ko-border-default);
   border-radius: var(--kh-radius);
-  color: var(--ko-accent-primary);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
   flex-shrink: 0;
 }
 

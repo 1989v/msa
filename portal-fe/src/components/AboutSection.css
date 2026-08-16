@@ -63,7 +63,7 @@
 
 .about-title {
   font-size: 1rem;
-  color: var(--ko-accent-primary);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
   font-weight: 500;
   margin: 0;
 }
@@ -94,7 +94,7 @@
 }
 
 .about-link:hover {
-  color: var(--ko-accent-primary);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
 }
 
 .about-radar {

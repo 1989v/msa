@@ -27,11 +27,11 @@ import {
   itemListJsonLd,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
-import AuthButton from '../../components/AuthButton';
 import GameCard from './GameCard';
 import HouseBanner from './HouseBanner';
 import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
+import GNB from '../../components/GNB';
 
 const UI = {
   ko: {
@@ -170,11 +170,12 @@ export default function GamesPage() {
   }
 
   return (
-    <div className="games-page kh-arcade">
-      {/* 게임 화면은 GNB 를 렌더하지 않는다 — 로그인 진입점을 여기에도 둔다 */}
-      <div className="games-topbar">
-        <AuthButton />
-      </div>
+    <>
+      {/* 머리띠는 컨테이너 **밖**에 둔다 — 안에 넣으면 max-width 에 갇혀 전폭이 아니게 된다.
+          메뉴는 비운다: 게임 안의 이동은 아래 툴바가 맡고, 게임 호스트에서는 같은 경로가
+          다른 화면을 가리키므로 링크를 섞으면 어긋난다. */}
+      <GNB items={[]} />
+      <div className="games-page kh-arcade">
       <header className="games-header">
         <h1 className="games-title">
           {meta.heading}
@@ -290,6 +291,7 @@ export default function GamesPage() {
             </>
           )}
       </section>
-    </div>
+      </div>
+    </>
   );
 }

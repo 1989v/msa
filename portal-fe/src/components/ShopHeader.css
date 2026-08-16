@@ -22,7 +22,7 @@
 .shop-header-logo {
   font-size: var(--ko-text-lg);
   font-weight: var(--ko-weight-bold);
-  color: var(--ko-accent-primary);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
   text-decoration: none;
   letter-spacing: -0.02em;
   display: inline-flex;

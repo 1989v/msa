@@ -147,7 +147,7 @@
 
 .game-genre-btn.active {
   background: var(--ko-accent-primary);
-  border-color: var(--ko-accent-primary);
+  border-color: var(--ko-accent-text, var(--ko-accent-primary));
   color: var(--ko-surface-0);
 }
 
@@ -174,8 +174,8 @@
 }
 
 .game-tag-filter.active {
-  border-color: var(--ko-accent-primary);
-  color: var(--ko-accent-primary);
+  border-color: var(--ko-accent-text, var(--ko-accent-primary));
+  color: var(--ko-accent-text, var(--ko-accent-primary));
   background: var(--ko-accent-primary-bg);
 }
 
@@ -203,7 +203,7 @@
 
 .games-collection-title a:hover,
 .games-collection-title a:focus-visible {
-  color: var(--ko-accent-primary);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
   text-decoration: underline;
 }
 
@@ -531,8 +531,8 @@
 
 .game-score-btn.active {
   background: var(--ko-accent-primary-bg);
-  border-color: var(--ko-accent-primary);
-  color: var(--ko-accent-primary);
+  border-color: var(--ko-accent-text, var(--ko-accent-primary));
+  color: var(--ko-accent-text, var(--ko-accent-primary));
   font-weight: 700;
 }
 

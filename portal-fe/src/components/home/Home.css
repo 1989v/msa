@@ -44,7 +44,7 @@
   font-family: var(--kh-font-mono);
   font-size: var(--ko-text-sm);
   letter-spacing: var(--kh-tracking-mono);
-  color: var(--ko-accent-primary);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
   text-decoration: none;
 }
 
