@@ -59,6 +59,7 @@ class PortfolioTimelineServiceTest : BehaviorSpec({
         period = start?.let { CareerPeriod(YearMonth.parse(it), null) },
         summary = "요약",
         bodyMarkdown = "본문",
+        publicBodyMarkdown = null,
         metrics = listOf("P99 320ms"),
         skillIds = emptyList(),
         detailSlug = "detail-slug",
