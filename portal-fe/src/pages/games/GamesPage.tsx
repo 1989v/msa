@@ -31,6 +31,7 @@ import AuthButton from '../../components/AuthButton';
 import GameCard from './GameCard';
 import HouseBanner from './HouseBanner';
 import './Games.css';
+import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 
 const UI = {
   ko: {
@@ -72,6 +73,7 @@ function dedupeCollections(collections: GameCollection[]): GameCollection[] {
 }
 
 export default function GamesPage() {
+  useHeritageSurface();
   const { pathname } = useLocation();
   const { genre: genreParam } = useParams();
   const navigate = useNavigate();

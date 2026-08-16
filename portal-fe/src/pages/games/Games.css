@@ -1,9 +1,9 @@
 /* Games — DESIGN.md 토큰(--ko-*) 기반, 카드 radius 12px(lg) */
 
 .games-page {
-  max-width: 1280px;
+  max-width: var(--kh-container, 1280px);
   margin: 0 auto;
-  padding: 48px 24px 64px;
+  padding: var(--kh-void, 48px) 24px 64px;
   color: var(--ko-text-primary);
 }
 
@@ -12,15 +12,19 @@
 }
 
 .games-title {
-  font-size: 1.875rem;
+  font-size: var(--kh-display, 1.875rem);
   font-weight: 700;
-  margin: 0 0 8px;
+  line-height: 1.14;
+  letter-spacing: var(--kh-tracking-display, -0.02em);
+  margin: 0 0 12px;
   color: var(--ko-text-primary);
 }
 
 .games-subtitle {
-  font-size: 0.875rem;
-  color: var(--ko-text-muted);
+  font-size: 1.0625rem;
+  line-height: var(--ko-leading-relaxed);
+  color: var(--ko-text-secondary);
+  max-width: 52ch;
   margin: 0;
 }
 
@@ -179,9 +183,12 @@
 }
 
 .games-collection-title {
-  font-size: 1.25rem;
+  font-size: var(--kh-headline, 1.25rem);
   font-weight: 600;
+  letter-spacing: -0.01em;
   margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ko-border-subtle);
   color: var(--ko-text-primary);
 }
 
@@ -214,17 +221,28 @@
 }
 
 .games-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2, 8px);
+  padding: var(--ko-space-12, 48px) 0;
   color: var(--ko-text-muted);
+  font-family: var(--kh-font-mono);
+  letter-spacing: var(--kh-tracking-mono, 0);
   font-size: 0.875rem;
 }
 
 /* Card */
+/* 게임 카드는 판이다 — 라이트 모드에서도 어둡다. 아케이드는 "화면 속의 화면"이라
+ * 주변이 밝아져도 게임 자체는 검은 화면으로 남아야 한다. */
 .game-card {
   display: flex;
   flex-direction: column;
-  background: var(--ko-surface-1);
-  border: 1px solid var(--ko-border-subtle);
-  border-radius: 12px;
+  background: var(--kh-slab, var(--ko-surface-1));
+  border: 1px solid var(--kh-slab-border, var(--ko-border-subtle));
+  border-radius: var(--kh-radius-asym, 12px);
+  --ko-text-primary: var(--kh-on-slab, inherit);
+  --ko-text-secondary: var(--kh-on-slab-muted, inherit);
+  --ko-text-muted: var(--kh-on-slab-muted, inherit);
   overflow: hidden;
   text-decoration: none;
   color: inherit;
@@ -277,12 +295,16 @@
   gap: 8px;
 }
 
+/* 장르는 낙관이다 — 판 위에서 한지색 글씨의 먹빛 인장 */
 .game-card-genre {
+  font-family: var(--kh-font-mono);
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--ko-accent-secondary);
-  background: var(--ko-surface-3);
-  border-radius: 4px;
+  letter-spacing: var(--kh-tracking-mono, 0);
+  color: var(--kh-ocher, var(--ko-accent-secondary));
+  background: transparent;
+  border: 1px solid var(--kh-slab-border, var(--ko-border-subtle));
+  border-radius: var(--kh-radius, 4px);
   padding: 2px 7px;
   white-space: nowrap;
   flex-shrink: 0;
@@ -291,7 +313,10 @@
 .game-card-meta {
   display: flex;
   gap: 10px;
-  font-size: 0.75rem;
+  font-family: var(--kh-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: var(--kh-tracking-mono, 0);
+  color: var(--kh-ocher, var(--ko-text-muted));
   font-variant-numeric: tabular-nums;
   margin-bottom: 8px;
 }

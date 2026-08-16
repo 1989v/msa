@@ -34,6 +34,7 @@ import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
 import './Games.css';
+import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 
 const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -62,6 +63,7 @@ function InternalGamePlayer({ slug }: { slug: string }) {
 const HUB_SUB = window.location.hostname.split('.')[0] === 'game' ? '' : '/games';
 
 export default function GameDetailPage() {
+  useHeritageSurface();
   const { slug = '' } = useParams();
   const { pathname } = useLocation();
   const lang: GameLang = pathname.startsWith('/en/') ? 'en' : 'ko';
