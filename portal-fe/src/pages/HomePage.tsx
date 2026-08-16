@@ -12,6 +12,7 @@ import {
 } from '../api/displayApi';
 import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
+import { useEditorialSurface } from '../hooks/useEditorialSurface';
 import '../components/home/Home.css';
 
 /** About 은 데이터가 없어도 항상 렌더된다 */
@@ -23,6 +24,7 @@ const ABOUT_ITEM = { label: 'About', anchor: 'about' };
  * 시각화·개념 사전은 여기 없다. IT 타일이 받는 `/tech` 로 옮겼다.
  */
 export default function HomePage() {
+  useEditorialSurface();
   useSeo({
     title: portalTitle(''),
     description:
@@ -75,10 +77,15 @@ export default function HomePage() {
 
       <header className="home-hero">
         <div className="home-inner">
-          <h1 className="home-hero-brand">1989v</h1>
+          <span className="ed-label home-hero-eyebrow">1989V — Backend Engineering</span>
+          <h1 className="ed-display home-hero-statement">
+            서비스를 처음부터
+            <br />
+            <span className="ed-display-dim">끝까지</span> 만듭니다.
+          </h1>
           <p className="home-hero-lead">
-            서비스를 처음부터 끝까지 만듭니다. 도메인을 쪼개고, 검색과 데이터를 붙이고,
-            무료 티어 한 대 위에서 굴러가게 하는 데까지.
+            도메인을 쪼개고, 검색과 데이터를 붙이고, 무료 티어 한 대 위에서
+            굴러가게 하는 데까지.
           </p>
           {timeline && (
             <p className="home-hero-meta">

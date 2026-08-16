@@ -8,26 +8,31 @@
 }
 
 .home-inner {
-  max-width: 1080px;
+  max-width: var(--ed-container, 1080px);
   margin: 0 auto;
   padding: 0 var(--ko-space-6);
 }
 
+/* 구획은 선이 아니라 여백과 배경 단차로 나눈다 — 선을 매 섹션에 그으면
+ * 지면이 표처럼 읽히고 여백이 만드는 리듬이 죽는다. */
 .home-section {
-  padding: var(--ko-space-16) 0;
-  border-top: 1px solid var(--ko-border-subtle);
+  padding: var(--ed-section-gap, var(--ko-space-16)) 0;
 }
 
 .home-section-title {
-  font-size: var(--ko-text-lg);
-  font-weight: 600;
-  margin: 0 0 var(--ko-space-2);
+  font-size: var(--ed-headline, var(--ko-text-lg));
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--ko-space-3);
 }
 
 .home-section-desc {
-  font-size: var(--ko-text-sm);
-  color: var(--ko-text-muted);
-  margin: 0 0 var(--ko-space-8);
+  font-size: var(--ko-text-base);
+  color: var(--ko-text-secondary);
+  line-height: var(--ko-leading-relaxed);
+  max-width: 52ch;
+  margin: 0 0 var(--ko-space-10);
 }
 
 .home-more-link {
@@ -45,26 +50,32 @@
 /* ─── 브랜드 히어로 ───────────────────────────────────────────────────────── */
 
 .home-hero {
-  padding: var(--ko-space-16) 0 var(--ko-space-12);
+  padding: var(--ed-section-gap, var(--ko-space-16)) 0;
 }
 
-.home-hero-brand {
-  font-size: var(--ko-text-4xl);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  margin: 0 0 var(--ko-space-3);
+.home-hero-eyebrow {
+  display: block;
+  margin-bottom: var(--ko-space-6);
+}
+
+.home-hero-statement {
+  margin: 0 0 var(--ko-space-8);
+  max-width: 18ch;
 }
 
 .home-hero-lead {
-  font-size: var(--ko-text-base);
+  font-size: var(--ko-text-lg);
   color: var(--ko-text-secondary);
   line-height: var(--ko-leading-relaxed);
-  max-width: 44ch;
+  max-width: 46ch;
   margin: 0;
 }
 
 .home-hero-meta {
-  margin-top: var(--ko-space-5);
+  margin-top: var(--ko-space-6);
+  padding-top: var(--ko-space-4);
+  border-top: 1px solid var(--ko-border-subtle);
+  display: inline-block;
   font-size: var(--ko-text-sm);
   color: var(--ko-text-muted);
   font-variant-numeric: tabular-nums;
@@ -100,10 +111,11 @@
   gap: var(--ko-space-3);
   /* 터치 타깃 44px 이상 */
   min-height: 96px;
-  padding: var(--ko-space-5);
+  padding: var(--ko-space-6);
   border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--ko-radius-lg);
-  background: var(--ko-surface-1);
+  /* 카드는 거의 각지게 — 곡률이 커지면 격자의 구조감이 사라진다 */
+  border-radius: var(--ko-radius-sm);
+  background: var(--ko-surface-0);
   text-decoration: none;
   color: inherit;
   transition: background var(--ko-duration-fast) var(--ko-ease-out),
@@ -112,7 +124,7 @@
 
 .tile-open:hover {
   background: var(--ko-surface-2);
-  border-color: var(--ko-border-default);
+  border-color: var(--ko-border-strong);
 }
 
 .tile-open:focus-visible {
@@ -167,11 +179,11 @@
 /* ─── 포트폴리오 타임라인 ─────────────────────────────────────────────────── */
 
 .timeline-career {
-  margin-bottom: var(--ko-space-10);
-  padding: var(--ko-space-5);
+  margin-bottom: var(--ko-space-12);
+  padding: var(--ko-space-6);
   border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--ko-radius-lg);
-  background: var(--ko-surface-1);
+  border-radius: var(--ko-radius-sm);
+  background: var(--ko-surface-2);
 }
 
 .timeline-career-total {
@@ -253,10 +265,10 @@
 .timeline-category {
   padding: 2px var(--ko-space-2);
   border-radius: var(--ko-radius-full);
-  background: var(--ko-accent-primary-bg);
-  color: var(--ko-accent-primary);
+  background: var(--ko-surface-3);
+  color: var(--ko-text-secondary);
   font-size: var(--ko-text-xs);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .timeline-summary {
@@ -264,6 +276,8 @@
   color: var(--ko-text-secondary);
   line-height: var(--ko-leading-relaxed);
   margin: 0;
+  /* 설명은 여러 문단으로 들어온다 — 입력한 줄바꿈을 그대로 살린다. */
+  white-space: pre-line;
 }
 
 .timeline-metrics {

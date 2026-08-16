@@ -6,12 +6,12 @@
 
 .footer-built {
   font-size: 0.8rem;
-  color: #444;
+  color: var(--ko-text-muted);
   margin: 0 0 4px;
 }
 
 .footer-copy {
   font-size: 0.75rem;
-  color: #334155;
+  color: var(--ko-text-secondary);
   margin: 0;
 }

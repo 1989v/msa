@@ -30,9 +30,9 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  background: rgba(0, 200, 100, 0.1);
-  border: 1px solid rgba(0, 200, 100, 0.3);
-  color: #00c864;
+  background: var(--ko-surface-2);
+  border: 1px solid var(--ko-border-strong);
+  color: var(--ko-text-primary);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -45,37 +45,37 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #00c864;
+  background: var(--ko-text-primary);
   animation: pulse-dot 2s infinite;
 }
 
 @keyframes pulse-dot {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(0, 200, 100, 0.5);
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--ko-text-primary) 45%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 5px rgba(0, 200, 100, 0);
+    box-shadow: 0 0 0 5px color-mix(in oklch, var(--ko-text-primary) 0%, transparent);
   }
 }
 
 .about-name {
   font-size: 2rem;
   font-weight: 800;
-  color: #e0e0e0;
+  color: var(--ko-text-primary);
   letter-spacing: -0.03em;
   margin: 4px 0 0;
 }
 
 .about-title {
   font-size: 1rem;
-  color: #6c63ff;
+  color: var(--ko-accent-primary);
   font-weight: 500;
   margin: 0;
 }
 
 .about-oneliner {
   font-size: 0.95rem;
-  color: #94a3b8;
+  color: var(--ko-text-secondary);
   line-height: 1.6;
   margin: 4px 0 8px;
 }
@@ -91,7 +91,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: #aaa;
+  color: var(--ko-text-muted);
   text-decoration: none;
   font-size: 0.9rem;
   transition: color 0.2s;
@@ -99,12 +99,12 @@
 }
 
 .about-link:hover {
-  color: #6c63ff;
+  color: var(--ko-accent-primary);
 }
 
 .about-radar {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
   border-radius: 16px;
   padding: 24px;
 }
@@ -112,13 +112,13 @@
 .about-radar-title {
   font-size: 1rem;
   font-weight: 700;
-  color: #e0e0e0;
+  color: var(--ko-text-primary);
   margin: 0 0 2px;
 }
 
 .about-radar-subtitle {
   font-size: 0.8rem;
-  color: #555;
+  color: var(--ko-text-muted);
   margin: 0 0 16px;
 }
 

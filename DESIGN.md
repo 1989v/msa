@@ -1,10 +1,13 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 1.1.0
+version: 1.2.0
 archetype: dark-trading
+# 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
+# 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
+archetype_secondary: editorial-mono
 mood: [data-dense, calm-night, korean-fintech]
-last_updated: 2026-05-09
+last_updated: 2026-08-16
 owners: [frontend-platform]
 default_theme: dark
 themes: [dark, light]
@@ -217,6 +220,46 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 - **major**: archetype 교체 (`dark-trading` → 다른 톤) — 별도 브랜치에서 작업 후 main 교체
 
 변경 시 본 파일 YAML 의 `version` + `last_updated` 갱신, `packages/design-system/package.json` 도 동기 bump.
+
+## 12. Archetype 2 — `editorial-mono` (브랜드/포트폴리오 화면 전용)
+
+`1989v.com` 의 브랜드 면(메인 `/`, `/portfolio`, `resume` 호스트)은 **잉크와 종이**에 가까운
+고대비 에디토리얼 톤을 쓴다. 데이터 밀도가 아니라 **읽히는 것**이 목적인 화면이라
+`dark-trading` 의 전제(밀도·야간·시세색)가 맞지 않는다.
+
+**적용 범위**
+
+| 화면 | 아키타입 |
+|---|---|
+| `/`, `/portfolio`, `resume.1989v.com` | `editorial-mono` |
+| `/tech` (트리맵·그래프), `/games` | `dark-trading` 유지 — 데이터 시각화·아케이드 |
+| admin-fe, quant-fe, gifticon-fe | `dark-trading` 유지 |
+
+**구현 규칙**
+
+- 토큰 정의는 `portal-fe/src/styles/editorial.css` 한 곳. **`packages/design-system` 은 건드리지 않는다** —
+  공유 토큰을 바꾸면 트레이딩·백오피스 화면까지 따라 바뀐다.
+- 켜는 방법은 `useEditorialSurface()` 하나. `:root` 에 `data-theme="light"` + `data-surface="editorial"`
+  를 걸고 언마운트 시 되돌린다. 컨테이너에만 걸면 `body` 배경이 다크로 남는다.
+- 팔레트를 새로 만들지 않는다. 공유 light 테마 위에 **대비·타이포·리듬 델타만** 얹는다.
+
+**추가 토큰** (`--ed-*`, 공유 스케일에 없는 것만)
+
+| 토큰 | 값 | 용도 |
+|---|---|---|
+| `--ed-display` | `clamp(2.5rem, 7vw, 4.5rem)` | 히어로 디스플레이 |
+| `--ed-headline` | `clamp(1.75rem, 3.6vw, 2.5rem)` | 섹션 제목 |
+| `--ed-tracking-display` | `-0.025em` | 디스플레이 자간 |
+| `--ed-tracking-label` | `0.12em` | 대문자 구조 라벨 |
+| `--ed-section-gap` | `clamp(4rem, 9vw, 7.5rem)` | 섹션 간 여백 |
+| `--ed-container` | `1200px` | 콘텐츠 최대 폭 |
+
+**주의**
+
+- **한글에 `text-transform: uppercase` / 넓은 `letter-spacing` 을 걸지 않는다.** 대문자 변환은
+  효과가 없고 자간만 벌어져 가독성이 떨어진다. 구조 라벨(`.ed-label`)은 라틴 표기에만 쓴다.
+- 디스플레이 자간을 라틴 기준(-0.04em)까지 조이지 않는다. 한글이 붙어 보인다.
+- 구획은 선이 아니라 **여백과 배경 단차**(`.ed-tinted`)로 나눈다. 카드 모서리는 `radius-sm(4)`.
 
 ## 11. Related
 

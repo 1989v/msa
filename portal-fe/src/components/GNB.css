@@ -60,7 +60,7 @@
   cursor: pointer;
   padding: 8px 14px;
   font-size: 0.875rem;
-  color: #aaa;
+  color: var(--ko-text-muted);
   border-radius: 8px;
   transition: color 0.2s, background 0.2s;
   font-family: inherit;
@@ -72,7 +72,7 @@ a.gnb-menu-item {
 }
 
 .gnb-menu-item:hover {
-  color: #e0e0e0;
+  color: var(--ko-text-primary);
   background: rgba(108, 99, 255, 0.12);
 }
 
@@ -80,7 +80,7 @@ a.gnb-menu-item {
   background: none;
   border: none;
   cursor: pointer;
-  color: #94a3b8;
+  color: var(--ko-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -90,7 +90,7 @@ a.gnb-menu-item {
 }
 
 .gnb-search-btn:hover {
-  color: #6c63ff;
+  color: var(--ko-accent-primary);
   background: rgba(108, 99, 255, 0.12);
 }
 

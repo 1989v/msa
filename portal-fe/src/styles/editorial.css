@@ -1,0 +1,120 @@
+/* 에디토리얼 표면 — 브랜드/포트폴리오 화면 전용 (`/`, `/portfolio`, resume 호스트).
+ *
+ * 왜 여기에 있나: 공유 토큰(`@kgd/design-system`)은 `dark-trading` 아키타입이고
+ * quant/admin 이 그대로 쓴다. 브랜드 화면만 다른 톤을 쓰려고 공유 토큰을 바꾸면
+ * 트레이딩 화면까지 따라 바뀐다. 그래서 **portal-fe 안에서만** 덮어쓴다.
+ *
+ * 공유 light 테마(`[data-theme='light']`)를 먼저 켜고, 그 위에 대비·타이포·리듬만
+ * 얹는 구조다 — 팔레트를 다시 정의하지 않는다.
+ */
+
+:root[data-surface='editorial'] {
+  /* 공유 light 보다 대비를 더 민다. 잉크와 종이에 가깝게. */
+  --ko-surface-0: oklch(1 0 0);
+  --ko-surface-1: oklch(0.985 0.002 250);
+  --ko-surface-2: oklch(0.968 0.004 250);
+  --ko-surface-3: oklch(0.94 0.006 250);
+
+  --ko-text-primary: oklch(0.19 0.008 260);
+  --ko-text-secondary: oklch(0.45 0.012 255);
+  --ko-text-muted: oklch(0.6 0.012 255);
+
+  --ko-border-subtle: oklch(0.925 0.006 250);
+  --ko-border-default: oklch(0.86 0.008 250);
+  --ko-border-strong: oklch(0.7 0.01 250);
+
+  /* 액션은 코발트 하나로 통일 — 화면당 강조색은 하나다. */
+  --ko-accent-primary: oklch(0.55 0.2 260);
+  --ko-accent-primary-hover: oklch(0.48 0.2 260);
+  --ko-accent-primary-active: oklch(0.44 0.2 260);
+  --ko-accent-primary-bg: oklch(0.95 0.03 260);
+  --ko-focus-ring: 2px solid oklch(0.55 0.2 260);
+
+  /* ─── 에디토리얼 전용 — 공유 스케일에 없는 값 ─────────────────────────── */
+
+  /* 디스플레이는 뷰포트에 따라 흐른다. 고정 px 두 벌보다 중간 폭에서 안정적이다. */
+  --ed-display: clamp(2.5rem, 7vw, 4.5rem);
+  --ed-headline: clamp(1.75rem, 3.6vw, 2.5rem);
+
+  /* 한글이 섞이므로 트래킹을 라틴 기준(-0.04em)까지 조이지 않는다 —
+   * 한글은 자간이 좁아지면 글자가 붙어 보인다. */
+  --ed-tracking-display: -0.025em;
+  --ed-tracking-label: 0.12em;
+
+  --ed-section-gap: clamp(4rem, 9vw, 7.5rem);
+  --ed-container: 1200px;
+
+  --ed-ink: oklch(0 0 0);
+  --ed-paper: oklch(1 0 0);
+}
+
+/* ─── 프리미티브 ─────────────────────────────────────────────────────────── */
+
+/** 구조 라벨 — 대문자 + 넓은 트래킹으로 섹션의 뼈대를 만든다 */
+.ed-label {
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--ed-tracking-label);
+  text-transform: uppercase;
+  color: var(--ko-text-muted);
+}
+
+/** 섹션 순번 — 잡지 지면의 인덱스 표기 */
+.ed-index {
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--ed-tracking-label);
+  color: var(--ko-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/** 섹션 머리 — 제목은 왼쪽, 인덱스는 오른쪽 */
+.ed-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ko-space-6);
+}
+
+.ed-display {
+  font-size: var(--ed-display);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: var(--ed-tracking-display);
+  margin: 0;
+}
+
+/** 디스플레이 두 번째 줄을 흐리게 — 템플릿의 2톤 헤드라인 */
+.ed-display-dim {
+  color: var(--ko-text-muted);
+}
+
+.ed-headline {
+  font-size: var(--ed-headline);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/**
+ * 반전 섹션 — 전면 검정. 안쪽 텍스트 토큰도 같이 뒤집어야
+ * 자식들이 개별 색 지정 없이 그대로 읽힌다.
+ */
+.ed-invert {
+  background: var(--ed-ink);
+  --ko-surface-0: oklch(0 0 0);
+  --ko-surface-1: oklch(0.14 0 0);
+  --ko-surface-2: oklch(0.2 0 0);
+  --ko-text-primary: oklch(1 0 0);
+  --ko-text-secondary: oklch(0.78 0 0);
+  --ko-text-muted: oklch(0.62 0 0);
+  --ko-border-subtle: oklch(0.26 0 0);
+  --ko-border-default: oklch(0.36 0 0);
+  color: var(--ko-text-primary);
+}
+
+/** 톤 섹셔닝 — 선 대신 배경 단차로 구획을 나눈다 */
+.ed-tinted {
+  background: var(--ko-surface-2);
+}

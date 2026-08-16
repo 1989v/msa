@@ -24,7 +24,10 @@ export default function PortfolioTimeline({ timeline }: PortfolioTimelineProps) 
   return (
     <section id="portfolio" className="home-section">
       <div className="home-inner">
-        <h2 className="home-section-title">지나온 것</h2>
+        <div className="ed-section-head">
+          <h2 className="home-section-title">지나온 것</h2>
+          <span className="ed-index">Index / 02</span>
+        </div>
         <p className="home-section-desc">
           회사에서 한 일은 이력서에, 여기에는 직접 만든 것들을 시간순으로 둡니다.
         </p>

@@ -15,9 +15,12 @@ export default function TileGrid({ services }: TileGridProps) {
   if (services.length === 0) return null;
 
   return (
-    <section id="services" className="home-section">
+    <section id="services" className="home-section ed-tinted">
       <div className="home-inner">
-        <h2 className="home-section-title">만든 서비스</h2>
+        <div className="ed-section-head">
+          <h2 className="home-section-title">만든 서비스</h2>
+          <span className="ed-index">Index / 01</span>
+        </div>
         <p className="home-section-desc">
           직접 설계하고 운영 중인 서비스입니다. 오픈 예정은 아직 화면이 없다는 뜻입니다.
         </p>
