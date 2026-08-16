@@ -108,7 +108,8 @@
   min-height: 44px;
   padding: 0 var(--ko-space-5);
   background: var(--ko-accent-primary);
-  color: #fff;
+  /* 채도 높은 액션 위의 글자는 두 테마 모두 흰색이 맞다 — 토큰을 타면 다크에서 뒤집힌다. */
+  color: oklch(1 0 0);
   border: none;
   border-radius: var(--ko-radius-md);
   font-size: var(--ko-text-base);

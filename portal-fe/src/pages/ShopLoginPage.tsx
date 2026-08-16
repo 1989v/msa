@@ -10,6 +10,7 @@ import {
   isLoggedIn,
 } from '../auth/auth';
 import './Shop.css';
+import { useEditorialSurface } from '../hooks/useEditorialSurface';
 
 /** OAuth redirect 왕복 동안 복귀 경로 보관 후 인가 페이지로 이동 */
 function startOAuth(authUrl: string, next: string | null) {
@@ -22,6 +23,7 @@ function startOAuth(authUrl: string, next: string | null) {
 }
 
 export default function ShopLoginPage() {
+  useEditorialSurface();
   useSeo({ title: portalTitle('로그인'), canonical: portalUrl('/shop/login'), noindex: true });
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

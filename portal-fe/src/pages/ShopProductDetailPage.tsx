@@ -13,8 +13,10 @@ import { formatWon } from './shopFormat';
 import { portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import './Shop.css';
+import { useEditorialSurface } from '../hooks/useEditorialSurface';
 
 export default function ShopProductDetailPage() {
+  useEditorialSurface();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();

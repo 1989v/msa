@@ -13,6 +13,7 @@ import {
 } from '../../api/placeApi';
 import { loadGoogleMaps, mapsApiKey, radiusFromBounds } from './googleMaps';
 import './PlacePage.css';
+import { useEditorialSurface } from '../../hooks/useEditorialSurface';
 
 // ADR-0065 K-관광/지리 탐색 — 관광지 지도 검색. 데이터 출처: 한국관광공사 TourAPI.
 // place.<domain> 서브도메인이 정규 주소 (game 과 동일한 host 인식 루트 라우팅):
@@ -88,6 +89,7 @@ interface GeoState {
 }
 
 export default function PlacePage() {
+  useEditorialSurface();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const lang: PlaceLang = pathname.startsWith('/en') ? 'en' : 'ko';

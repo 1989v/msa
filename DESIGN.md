@@ -232,7 +232,9 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 | 화면 | 아키타입 |
 |---|---|
 | `/`, `/portfolio`, `resume.1989v.com` | `editorial-mono` |
-| `/tech` (트리맵·그래프), `/games` | `dark-trading` 유지 — 데이터 시각화·아케이드 |
+| `/shop/**` (로그인·주문·상세 포함), `place.1989v.com` | `editorial-mono` |
+| `/games/**` | `dark-trading` 유지 — 아케이드는 어두워야 한다 |
+| `/tech` (트리맵·그래프·퀴즈) | `dark-trading` 유지 — 데이터 시각화 |
 | admin-fe, quant-fe, gifticon-fe | `dark-trading` 유지 |
 
 **구현 규칙**

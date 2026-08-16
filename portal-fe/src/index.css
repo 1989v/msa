@@ -109,7 +109,7 @@ body {
   padding: 10px 24px;
   font-size: 1rem;
   font-weight: 600;
-  color: #fff;
+  color: oklch(1 0 0);
   background: var(--accent);
   border: none;
   border-radius: 8px;
@@ -203,7 +203,7 @@ body {
   border-radius: 12px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: #fff;
+  color: oklch(1 0 0);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -284,7 +284,7 @@ body {
 
 .git-link-button:hover {
   background: var(--accent);
-  color: #fff;
+  color: oklch(1 0 0);
 }
 
 .code-block {

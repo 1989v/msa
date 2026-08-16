@@ -12,6 +12,7 @@ import {
 import { isLoggedIn } from '../auth/auth';
 import { formatDateTime, formatWon } from './shopFormat';
 import './Shop.css';
+import { useEditorialSurface } from '../hooks/useEditorialSurface';
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   PENDING: '결제 대기',
@@ -28,6 +29,7 @@ const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
 };
 
 export default function MyOrdersPage() {
+  useEditorialSurface();
   useSeo({ title: portalTitle('주문 내역'), canonical: portalUrl('/shop/orders'), noindex: true });
   const navigate = useNavigate();
   const [orders, setOrders] = useState<MyOrder[] | null>(null);

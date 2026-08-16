@@ -17,6 +17,7 @@ import {
 import { getUserId } from '../auth/auth';
 import { formatWon } from './shopFormat';
 import './Shop.css';
+import { useEditorialSurface } from '../hooks/useEditorialSurface';
 
 const PAGE_SIZE = 20;
 
@@ -67,6 +68,7 @@ function fromSearch(p: SearchProduct): DisplayProduct {
 }
 
 export default function ShopPage() {
+  useEditorialSurface();
   useSeo({
     title: portalTitle('스토어'),
     description: 'MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다.',
