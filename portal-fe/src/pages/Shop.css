@@ -195,7 +195,7 @@
   padding: var(--ko-space-4);
   background: var(--ko-surface-1);
   border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--ko-radius-lg); /* 카드 12px */
+  border-radius: var(--kh-radius-asym, var(--ko-radius-lg));
   text-align: left;
   font-family: inherit;
   color: var(--ko-text-primary);
@@ -234,6 +234,8 @@ button.shop-product-card {
 }
 
 .shop-product-price {
+  font-family: var(--kh-font-mono);
+  letter-spacing: var(--kh-tracking-mono);
   font-size: var(--ko-text-xl);
   font-weight: var(--ko-weight-bold);
   font-variant-numeric: tabular-nums;
@@ -247,13 +249,16 @@ button.shop-product-card {
 
 /* ── 배지 / 칩 (radius full) ─────────────────────────── */
 
+/* 배지는 인장이다 — 각진 낙관에 모노 */
 .shop-badge {
   display: inline-flex;
   align-items: center;
   padding: 2px var(--ko-space-2);
-  border-radius: var(--ko-radius-full);
+  border-radius: var(--kh-radius, var(--ko-radius-full));
+  font-family: var(--kh-font-mono);
   font-size: var(--ko-text-xs);
-  font-weight: var(--ko-weight-medium);
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -361,6 +366,8 @@ button.shop-product-card {
 }
 
 .shop-detail-price {
+  font-family: var(--kh-font-mono);
+  letter-spacing: var(--kh-tracking-mono);
   font-size: var(--ko-text-3xl);
   font-weight: var(--ko-weight-bold);
   font-variant-numeric: tabular-nums;

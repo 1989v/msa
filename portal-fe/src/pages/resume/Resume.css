@@ -355,7 +355,9 @@
 
 .resume-career-total {
   margin-bottom: var(--ko-space-6);
+  font-family: var(--kh-font-mono);
   font-size: var(--ko-text-sm);
+  letter-spacing: var(--kh-tracking-mono);
   color: var(--ko-text-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -364,10 +366,22 @@
   margin-bottom: var(--ko-space-8);
 }
 
+/* 도메인이 이력의 축이다 — 황토색 짧은 표시로 먼저 잡히게 한다 */
 .resume-project-category {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
   font-size: var(--ko-text-lg);
   font-weight: var(--ko-weight-semibold);
   margin-bottom: var(--ko-space-1);
+}
+
+.resume-project-category::before {
+  content: '';
+  width: 14px;
+  height: 2px;
+  background: var(--kh-ocher, var(--ko-accent-primary));
+  flex-shrink: 0;
 }
 
 .resume-project-category-desc {
@@ -404,7 +418,9 @@
 }
 
 .resume-project-meta {
+  font-family: var(--kh-font-mono);
   font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono);
   color: var(--ko-text-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -422,7 +438,9 @@
   padding: 0;
   border: 0;
   background: none;
+  font-family: var(--kh-font-mono);
   font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono);
   color: var(--ko-text-tertiary);
   cursor: pointer;
 }
@@ -541,8 +559,9 @@
   border: 1px solid var(--ko-border-subtle);
   border-radius: var(--ko-radius-sm);
   font-size: var(--ko-text-xs);
-  color: var(--ko-text-muted);
-  font-family: var(--ko-font-mono);
+  letter-spacing: var(--kh-tracking-mono);
+  color: var(--kh-ocher, var(--ko-text-muted));
+  font-family: var(--kh-font-mono);
 }
 
 @media print {

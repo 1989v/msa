@@ -61,7 +61,7 @@
   display: inline-flex;
   background: var(--ko-surface-1);
   border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--ko-radius-md);
+  border-radius: var(--kh-radius, var(--ko-radius-md));
   padding: 2px;
 }
 
@@ -70,10 +70,12 @@
   color: var(--ko-text-muted);
   border: none;
   padding: var(--ko-space-2) var(--ko-space-3);
-  font-size: var(--ko-text-sm);
-  font-weight: var(--ko-weight-medium);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono);
+  font-weight: 600;
   cursor: pointer;
-  border-radius: var(--ko-radius-sm);
+  border-radius: var(--kh-radius, var(--ko-radius-sm));
   transition: color var(--ko-duration-normal) var(--ko-ease-out),
     background-color var(--ko-duration-normal) var(--ko-ease-out);
 }
@@ -82,8 +84,9 @@
   color: var(--ko-text-primary);
 }
 
+/* 활성은 먹빛으로 찍는다 — 강조색은 화면당 하나이고 그 자리는 태그 필터가 갖는다 */
 .portfolio-sort button.active {
-  background: var(--ko-accent-primary);
+  background: var(--ko-text-primary);
   color: var(--ko-surface-0);
 }
 
@@ -99,12 +102,15 @@
   margin-bottom: var(--ko-space-6);
 }
 
+/* 칩은 인장이다 — 둥근 알약이 아니라 각진 낙관 */
 .portfolio-tag-chip {
   background: transparent;
   border: 1px solid var(--ko-border-subtle);
   color: var(--ko-text-muted);
   padding: var(--ko-space-1) var(--ko-space-3);
-  border-radius: var(--ko-radius-full);
+  border-radius: var(--kh-radius, var(--ko-radius-full));
+  font-family: var(--kh-font-mono);
+  letter-spacing: var(--kh-tracking-mono);
   font-size: var(--ko-text-xs);
   cursor: pointer;
   transition: color var(--ko-duration-normal) var(--ko-ease-out),
@@ -118,9 +124,9 @@
 }
 
 .portfolio-tag-chip.active {
-  background: var(--ko-accent-primary-bg);
-  border-color: var(--ko-accent-primary);
-  color: var(--ko-accent-primary-hover);
+  background: var(--kh-yeonji, var(--ko-accent-primary));
+  border-color: var(--kh-yeonji, var(--ko-accent-primary));
+  color: var(--kh-hanji, var(--ko-surface-0));
 }
 
 .portfolio-tag-chip:focus-visible {
@@ -137,7 +143,7 @@
 .portfolio-card {
   background: var(--ko-surface-0);
   border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--ko-radius-sm);
+  border-radius: var(--kh-radius-asym, var(--ko-radius-sm));
   padding: var(--ko-space-6);
   cursor: pointer;
   position: relative;
@@ -149,7 +155,7 @@
 }
 
 .portfolio-card:hover {
-  border-color: var(--ko-accent-primary);
+  border-color: var(--ko-border-strong);
   transform: translateY(-2px);
 }
 
@@ -158,17 +164,19 @@
   outline-offset: var(--ko-focus-ring-offset);
 }
 
+/* 임팩트는 낙관이다 — 붉은 인장을 카드 한쪽 귀퉁이에 찍는다 */
 .portfolio-card-impact {
   position: absolute;
   top: var(--ko-space-4);
   right: var(--ko-space-4);
-  background: var(--ko-accent-primary-bg);
-  color: var(--ko-accent-primary-hover);
-  border-radius: var(--ko-radius-full);
+  background: var(--kh-yeonji, var(--ko-accent-primary));
+  color: var(--kh-hanji, var(--ko-surface-0));
+  border-radius: var(--kh-radius, var(--ko-radius-full));
   padding: 3px var(--ko-space-2);
+  font-family: var(--kh-font-mono);
   font-size: var(--ko-text-xs);
-  font-weight: var(--ko-weight-semibold);
-  letter-spacing: 0.02em;
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -181,8 +189,10 @@
 }
 
 .portfolio-card-period {
+  font-family: var(--kh-font-mono);
   font-size: var(--ko-text-xs);
-  color: var(--ko-text-muted);
+  letter-spacing: var(--kh-tracking-mono);
+  color: var(--kh-ocher, var(--ko-text-muted));
   font-variant-numeric: tabular-nums;
 }
 
@@ -200,6 +210,8 @@
 }
 
 .portfolio-card-tag {
+  font-family: var(--kh-font-mono);
+  letter-spacing: var(--kh-tracking-mono);
   font-size: var(--ko-text-xs);
   background: var(--ko-surface-2);
   color: var(--ko-text-muted);
