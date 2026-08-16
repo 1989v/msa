@@ -59,6 +59,8 @@ export interface ResumeProject {
   endMonth: string | null;
   ongoing: boolean;
   summary: string | null;
+  /** 카드에서는 접혀 있고 인쇄에서는 펼쳐지는 상세 (마크다운) */
+  bodyMarkdown: string | null;
   metrics: string[];
   skills: ResumeSkillRef[];
   detailSlug: string | null;

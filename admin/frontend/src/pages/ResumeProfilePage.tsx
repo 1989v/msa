@@ -29,6 +29,7 @@ const EMPTY_PROJECT = {
   startMonth: '',
   endMonth: '',
   summary: '',
+  bodyMarkdown: '',
   metrics: '',
   skillIds: [] as number[],
   detailSlug: '',
@@ -220,6 +221,7 @@ export function ResumeProfilePage() {
                     <Button size="sm" variant="outline" onClick={() => setProject({
                       id: p.id, title: p.title, companyId: p.companyId, categoryId: p.categoryId,
                       startMonth: p.startMonth ?? '', endMonth: p.endMonth ?? '', summary: p.summary ?? '',
+                      bodyMarkdown: p.bodyMarkdown ?? '',
                       metrics: p.metrics.join('\n'), skillIds: p.skills.map((s) => s.id),
                       detailSlug: p.detailSlug ?? '', orderNo: p.orderNo, published: p.published,
                     })}>편집</Button>
@@ -253,7 +255,12 @@ export function ResumeProfilePage() {
             <Input placeholder="상세 문서 slug (선택)" value={project.detailSlug} onChange={(e) => setProject({ ...project, detailSlug: e.target.value })} />
             <Input type="number" value={project.orderNo} onChange={(e) => setProject({ ...project, orderNo: Number(e.target.value) })} />
           </div>
-          <Input placeholder="한 줄 요약" value={project.summary} onChange={(e) => setProject({ ...project, summary: e.target.value })} />
+          <textarea className="h-20 w-full rounded-md border border-zinc-300 bg-transparent p-2 text-sm dark:border-zinc-700"
+            placeholder="요약 — 카드에 항상 보인다. 2~3줄로"
+            value={project.summary} onChange={(e) => setProject({ ...project, summary: e.target.value })} />
+          <textarea className="h-40 w-full rounded-md border border-zinc-300 bg-transparent p-2 font-mono text-xs dark:border-zinc-700"
+            placeholder="상세 (마크다운, 선택) — 접힌 채로 두고 펼쳐 본다. 인쇄에는 항상 펼쳐진다"
+            value={project.bodyMarkdown} onChange={(e) => setProject({ ...project, bodyMarkdown: e.target.value })} />
           <textarea className="h-24 w-full rounded-md border border-zinc-300 bg-transparent p-2 text-sm dark:border-zinc-700"
             placeholder="성과 지표 — 한 줄에 하나 (예: CTR +3.4%)"
             value={project.metrics} onChange={(e) => setProject({ ...project, metrics: e.target.value })} />
@@ -298,6 +305,7 @@ export function ResumeProfilePage() {
                 id: project.id ?? undefined, title: project.title, companyId: project.companyId,
                 categoryId: project.categoryId, startMonth: blankToNull(project.startMonth),
                 endMonth: blankToNull(project.endMonth), summary: blankToNull(project.summary),
+                bodyMarkdown: blankToNull(project.bodyMarkdown),
                 metrics: splitList(project.metrics), skillIds: project.skillIds,
                 detailSlug: blankToNull(project.detailSlug),
                 orderNo: project.orderNo, published: project.published,

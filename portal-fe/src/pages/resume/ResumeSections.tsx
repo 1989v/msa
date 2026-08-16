@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Markdown from '../../components/Markdown';
 import type { ResumeProfile, ResumeProject } from '../../api/resumeApi';
 
 /** `2022-08` → `2022.08` — 이력서 표기 관례 */
@@ -126,6 +127,7 @@ function ProjectCard({
   onSkillClick: (skill: { id: number; name: string }) => void;
 }) {
   const period = periodText(project.startMonth, project.endMonth, project.ongoing);
+  const [detailOpen, setDetailOpen] = useState(false);
   return (
     <article className={`resume-project${hidden ? ' is-filtered-out' : ''}`}>
       <div className="resume-project-head">
@@ -141,6 +143,21 @@ function ProjectCard({
         </span>
       </div>
       {project.summary && <p className="resume-project-summary">{project.summary}</p>}
+      {project.bodyMarkdown && (
+        <>
+          {/* 접기도 필터와 같은 이유로 CSS 로만 처리한다 — 렌더에서 빼면 인쇄본에 빠진다. */}
+          <button
+            type="button"
+            className="resume-project-detail-toggle"
+            onClick={() => setDetailOpen((open) => !open)}
+          >
+            {detailOpen ? '▾ 접기' : '▸ 자세히'}
+          </button>
+          <div className={`resume-project-detail${detailOpen ? '' : ' is-collapsed'}`}>
+            <Markdown className="resume-project-detail-body" source={project.bodyMarkdown} />
+          </div>
+        </>
+      )}
       {project.metrics.length > 0 && (
         <ul className="resume-project-metrics">
           {project.metrics.map((m) => <li key={m}>{m}</li>)}

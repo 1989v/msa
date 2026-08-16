@@ -412,6 +412,28 @@
   margin-top: var(--ko-space-1);
   font-size: var(--ko-text-sm);
   color: var(--ko-text-secondary);
+  /* 설명은 여러 문단으로 들어온다 — 입력한 줄바꿈을 그대로 살린다. */
+  white-space: pre-line;
+}
+
+.resume-project-detail-toggle {
+  margin-top: var(--ko-space-1);
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-tertiary);
+  cursor: pointer;
+}
+
+.resume-project-detail.is-collapsed {
+  display: none;
+}
+
+.resume-project-detail-body {
+  margin-top: var(--ko-space-2);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
 }
 
 .resume-project-metrics {
@@ -493,6 +515,15 @@
   .resume-project,
   .resume-project-group {
     page-break-inside: avoid;
+  }
+
+  /* 화면에서 접어 둔 상세도 인쇄본에는 전부 담긴다 — 받는 쪽은 PDF 하나뿐이다. */
+  .resume-project-detail.is-collapsed {
+    display: block;
+  }
+
+  .resume-project-detail-toggle {
+    display: none;
   }
 }
 
