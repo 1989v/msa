@@ -5,6 +5,33 @@ const api = axios.create({
   timeout: 10_000,
 });
 
+/** `/portfolio` 공개 아카이브 — 이력서와 같은 데이터를 회사명 없이 내보낸다 */
+export interface PortfolioProject {
+  title: string;
+  categoryCode: string | null;
+  summary: string | null;
+  body: string | null;
+  metrics: string[];
+  tags: string[];
+  orderNo: number;
+}
+
+export interface PortfolioCategory {
+  code: string;
+  label: string;
+  description: string | null;
+}
+
+export interface PortfolioProjects {
+  projects: PortfolioProject[];
+  categories: PortfolioCategory[];
+}
+
+export async function fetchPortfolioProjects(): Promise<PortfolioProjects> {
+  const { data } = await api.get<ApiResponse<PortfolioProjects>>('/api/v1/portfolio/projects');
+  return data.data;
+}
+
 export interface PortfolioCardSummary {
   id: number;
   title: string;

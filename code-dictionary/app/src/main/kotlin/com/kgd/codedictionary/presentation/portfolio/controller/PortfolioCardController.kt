@@ -2,7 +2,9 @@ package com.kgd.codedictionary.presentation.portfolio.controller
 
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioCardDetailDto
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioCardSummaryDto
+import com.kgd.codedictionary.application.portfolio.dto.PortfolioProjectsDto
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioTimelineDto
+import com.kgd.codedictionary.application.portfolio.service.PortfolioProjectService
 import com.kgd.codedictionary.application.portfolio.service.PortfolioQueryService
 import com.kgd.codedictionary.application.portfolio.service.PortfolioSort
 import com.kgd.codedictionary.application.portfolio.service.PortfolioTimelineService
@@ -19,12 +21,23 @@ import org.springframework.web.bind.annotation.RestController
 class PortfolioCardController(
     private val portfolioQueryService: PortfolioQueryService,
     private val portfolioTimelineService: PortfolioTimelineService,
+    private val portfolioProjectService: PortfolioProjectService,
 ) {
 
     /** 메인의 포트폴리오 타임라인 (ADR-0066). 재직 기간·직무 + 개인 프로젝트만 나간다. */
     @GetMapping("/timeline")
     fun timeline(): ApiResponse<PortfolioTimelineDto> =
         ApiResponse.success(portfolioTimelineService.timeline())
+
+    /**
+     * `/portfolio` 공개 아카이브 (ADR-0066 개정).
+     *
+     * 공개로 표시된 프로젝트 전부가 나가되 **회사명은 나가지 않는다.**
+     * 타임라인(`/timeline`)이 개인 프로젝트만 싣는 것과 범위가 다르다.
+     */
+    @GetMapping("/projects")
+    fun projects(): ApiResponse<PortfolioProjectsDto> =
+        ApiResponse.success(portfolioProjectService.projects())
 
     @GetMapping("/cards")
     fun list(

@@ -1,114 +1,65 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Markdown from '../components/Markdown';
 import {
-  getPortfolioCard,
-  listPortfolioCards,
-  type PortfolioCardDetail,
-  type PortfolioCardSummary,
-  type PortfolioSort,
+  fetchPortfolioProjects,
+  type PortfolioProject,
+  type PortfolioProjects,
 } from '../api/portfolioApi';
 import { portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
 import './PortfolioPage.css';
 
-function formatPeriod(start: string | null, end: string | null): string {
-  if (!start && !end) return '';
-  const startStr = start ? start.slice(0, 7) : '';
-  const endStr = end ? end.slice(0, 7) : '진행 중';
-  if (!startStr) return endStr;
-  return `${startStr} ~ ${endStr}`;
-}
-
-function errorMessage(err: unknown, fallback: string): string {
-  return err instanceof Error && err.message ? err.message : fallback;
-}
-
+/**
+ * `/portfolio` 공개 아카이브 (ADR-0066 개정).
+ *
+ * 이력서와 **같은 데이터를 다른 범위로** 보여준다. 내용은 공개하되 어느 회사에서 한
+ * 일인지는 서버가 아예 내려보내지 않는다 — 화면에서 가리는 게 아니라 응답에 없다.
+ *
+ * 예전에는 `portfolio_card` 라는 별도 테이블을 봤는데, 프로젝트를 담는 곳이 둘이면
+ * 반드시 한쪽만 갱신되어 두 화면이 다른 이력을 말하게 된다.
+ */
 export default function PortfolioPage() {
   useHeritageSurface();
   useSeo({
     title: portalTitle('포트폴리오'),
     description:
-      'MSA 커머스 플랫폼을 직접 설계·구현하며 쌓은 백엔드 엔지니어링 포트폴리오 — 서비스 분리, 이벤트 기반 연동, 검색·추천, 쿠버네티스 운영 사례.',
+      '검색·전시·커머스·인프라·AI 엔지니어링 도메인에서 만든 것들과 그때의 판단.',
     canonical: portalUrl('/portfolio'),
   });
-  const [cards, setCards] = useState<PortfolioCardSummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const [sort, setSort] = useState<PortfolioSort>('time');
-  const [q, setQ] = useState('');
-  const [activeStacks, setActiveStacks] = useState<string[]>([]);
-
-  const [selectedCard, setSelectedCard] = useState<PortfolioCardDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const [detailError, setDetailError] = useState<string | null>(null);
-  const closeButtonRef = useRef<HTMLButtonElement>(null);
-
-  const modalOpen = selectedCard !== null || detailLoading || detailError !== null;
-
-  const closeDetail = useCallback(() => {
-    setSelectedCard(null);
-    setDetailError(null);
-  }, []);
+  const [data, setData] = useState<PortfolioProjects | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [focusedTag, setFocusedTag] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-
-    const handle = setTimeout(() => {
-      listPortfolioCards({ sort, q, stack: activeStacks })
-        .then((page) => {
-          if (!cancelled) setCards(page.content);
-        })
-        .catch((err: unknown) => {
-          if (!cancelled) setError(errorMessage(err, '카드를 불러오지 못했습니다'));
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-    }, 200);
-
+    fetchPortfolioProjects()
+      .then((result) => {
+        if (!cancelled) setData(result);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
     return () => {
       cancelled = true;
-      clearTimeout(handle);
     };
-  }, [sort, q, activeStacks]);
+  }, []);
 
-  useEffect(() => {
-    if (!modalOpen) return;
-    closeButtonRef.current?.focus();
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeDetail();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [modalOpen, closeDetail]);
+  const grouped = useMemo(() => {
+    if (!data) return [];
+    return data.categories
+      .map((category) => ({
+        category,
+        items: data.projects.filter((p) => p.categoryCode === category.code),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [data]);
 
-  const allTags = useMemo(() => {
-    const set = new Set<string>();
-    cards.forEach((c) => c.tags.forEach((t) => set.add(t)));
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [cards]);
+  const matches = (project: PortfolioProject) =>
+    !focusedTag || project.tags.includes(focusedTag);
 
-  const toggleStack = (tag: string) => {
-    setActiveStacks((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
-    );
-  };
-
-  const openDetail = async (id: number) => {
-    setDetailLoading(true);
-    setDetailError(null);
-    try {
-      const detail = await getPortfolioCard(id);
-      setSelectedCard(detail);
-    } catch (err: unknown) {
-      setDetailError(errorMessage(err, '카드 상세를 불러오지 못했습니다'));
-    } finally {
-      setDetailLoading(false);
-    }
-  };
+  const matchedCount = data?.projects.filter(matches).length ?? 0;
 
   return (
     <div className="portfolio-page">
@@ -116,168 +67,127 @@ export default function PortfolioPage() {
         <header className="portfolio-header">
           <span className="kh-section-label">Project Archive</span>
           <h1 className="portfolio-title">
-            지나온
+            만든 것들과
             <br />
-            <span className="kh-display-accent">작업들.</span>
+            <span className="kh-display-accent">그때의 판단.</span>
           </h1>
           <p className="portfolio-subtitle">
-            그동안 일군 프로젝트·기능·트러블슈팅·학습을 시간순/임팩트순으로.
+            검색·전시·커머스·인프라·AI 엔지니어링에서 다룬 일들입니다. 회사에서 한 일은
+            회사를 밝히지 않고 내용만 둡니다.
           </p>
         </header>
 
-        <div className="portfolio-toolbar">
-          <input
-            className="kh-field portfolio-search"
-            aria-label="포트폴리오 키워드 검색"
-            placeholder="키워드 검색 (제목 / 요약 / 본문)"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-          />
-          <div className="portfolio-sort" role="group" aria-label="정렬">
-            <button
-              className={sort === 'time' ? 'active' : ''}
-              onClick={() => setSort('time')}
-              type="button"
-            >
-              최신순
-            </button>
-            <button
-              className={sort === 'impact' ? 'active' : ''}
-              onClick={() => setSort('impact')}
-              type="button"
-            >
-              임팩트순
-            </button>
-          </div>
-        </div>
-
-        {allTags.length > 0 && (
-          <div className="portfolio-tag-filter">
-            {allTags.map((tag) => (
-              <button
-                key={tag}
-                type="button"
-                aria-pressed={activeStacks.includes(tag)}
-                className={`portfolio-tag-chip ${activeStacks.includes(tag) ? 'active' : ''}`}
-                onClick={() => toggleStack(tag)}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {loading && <div className="kh-status"><span className="kh-status-title">Loading</span>불러오는 중…</div>}
-        {error && (
+        {failed && (
           <div className="kh-status kh-status-error" role="alert">
             <span className="kh-status-title">Error</span>
-            {error}
+            기록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
           </div>
         )}
 
-        {!loading && !error && cards.length === 0 && (
+        {!data && !failed && (
+          <div className="kh-status">
+            <span className="kh-status-title">Loading</span>
+            불러오는 중…
+          </div>
+        )}
+
+        {data && data.projects.length === 0 && (
           <div className="kh-status">
             <span className="kh-status-title">Empty</span>
-            아직 등록된 카드가 없습니다.
+            아직 공개된 기록이 없습니다.
           </div>
         )}
 
-        {!loading && !error && cards.length > 0 && (
-          <div className="portfolio-grid">
-            {cards.map((card) => (
-              <article
-                key={card.id}
-                className="portfolio-card"
-                role="button"
-                tabIndex={0}
-                onClick={() => openDetail(card.id)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openDetail(card.id);
-                  }
-                }}
-              >
-                <span className="portfolio-card-impact" title="Impact score">
-                  ★ {card.impact}
-                </span>
-                <h2 className="portfolio-card-title">{card.title}</h2>
-                {(card.periodStart || card.periodEnd) && (
-                  <div className="portfolio-card-period">
-                    {formatPeriod(card.periodStart, card.periodEnd)}
-                    {card.role ? ` · ${card.role}` : ''}
-                  </div>
-                )}
-                {card.summary && (
-                  <p className="portfolio-card-summary">{card.summary}</p>
-                )}
-                {card.tags.length > 0 && (
-                  <div className="portfolio-card-tags">
-                    {card.tags.map((tag) => (
-                      <span key={tag} className="portfolio-card-tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {modalOpen && (
-        <div className="portfolio-modal-backdrop" onClick={closeDetail}>
-          <div
-            className="portfolio-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={selectedCard ? 'portfolio-modal-title' : undefined}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              ref={closeButtonRef}
-              className="portfolio-modal-close"
-              onClick={closeDetail}
-              aria-label="닫기"
-              type="button"
-            >
-              ×
+        {focusedTag && (
+          <div className="portfolio-focus">
+            <span>
+              <strong>{focusedTag}</strong> 를 쓴 기록 {matchedCount}건
+            </span>
+            <button type="button" onClick={() => setFocusedTag(null)}>
+              선택 해제
             </button>
-            {detailLoading && <div className="kh-status"><span className="kh-status-title">Loading</span>불러오는 중…</div>}
-            {detailError && (
-              <div className="kh-status kh-status-error" role="alert">
-                <span className="kh-status-title">Error</span>
-                {detailError}
-              </div>
-            )}
-            {selectedCard && (
-              <>
-                <h2 id="portfolio-modal-title" className="portfolio-modal-title">
-                  {selectedCard.title}
-                </h2>
-                <div className="portfolio-modal-meta">
-                  {(selectedCard.periodStart || selectedCard.periodEnd) && (
-                    <span>{formatPeriod(selectedCard.periodStart, selectedCard.periodEnd)}</span>
-                  )}
-                  {selectedCard.role && <span>{selectedCard.role}</span>}
-                  <span>Impact ★ {selectedCard.impact}</span>
-                </div>
-                <div className="portfolio-modal-body">{selectedCard.body}</div>
-                {selectedCard.tags.length > 0 && (
-                  <div className="portfolio-modal-tags">
-                    {selectedCard.tags.map((tag) => (
-                      <span key={tag} className="portfolio-card-tag">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
           </div>
+        )}
+
+        {grouped.map(({ category, items }) => (
+          <section
+            key={category.code}
+            className={`portfolio-group${items.some(matches) ? '' : ' is-filtered-out'}`}
+          >
+            <div className="kh-section-head">
+              <h2 className="portfolio-group-title">{category.label}</h2>
+            </div>
+            {category.description && (
+              <p className="portfolio-group-desc">{category.description}</p>
+            )}
+            <div className="portfolio-grid">
+              {items.map((project) => (
+                <ProjectCard
+                  key={project.title}
+                  project={project}
+                  hidden={!matches(project)}
+                  onTagClick={setFocusedTag}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProjectCard({
+  project,
+  hidden,
+  onTagClick,
+}: {
+  project: PortfolioProject;
+  hidden: boolean;
+  onTagClick: (tag: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <article className={`portfolio-card${hidden ? ' is-filtered-out' : ''}`}>
+      <h3 className="portfolio-card-title">{project.title}</h3>
+      {project.summary && <p className="portfolio-card-summary">{project.summary}</p>}
+      {project.metrics.length > 0 && (
+        <ul className="portfolio-card-metrics">
+          {project.metrics.map((metric) => (
+            <li key={metric}>{metric}</li>
+          ))}
+        </ul>
+      )}
+      {project.body && (
+        <>
+          {/* 접기도 CSS 로만 — 렌더에서 빼면 크롤러가 본문을 못 본다 */}
+          <button
+            type="button"
+            className="portfolio-card-toggle"
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? '▾ 접기' : '▸ 자세히'}
+          </button>
+          <div className={`portfolio-card-body${open ? '' : ' is-collapsed'}`}>
+            <Markdown source={project.body} />
+          </div>
+        </>
+      )}
+      {project.tags.length > 0 && (
+        <div className="portfolio-card-tags">
+          {project.tags.map((tag) => (
+            <button
+              key={tag}
+              type="button"
+              className="portfolio-card-tag"
+              onClick={() => onTagClick(tag)}
+              title={`${tag} 를 쓴 기록 모아보기`}
+            >
+              {tag}
+            </button>
+          ))}
         </div>
       )}
-    </div>
+    </article>
   );
 }

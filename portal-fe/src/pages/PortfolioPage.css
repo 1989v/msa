@@ -341,3 +341,95 @@
     padding: var(--ko-space-5);
   }
 }
+
+/* ─── 그룹 · 카드 (공개 아카이브) ─────────────────────────────────────── */
+
+.portfolio-group {
+  margin-top: var(--kh-void, var(--ko-space-16));
+}
+
+.portfolio-group-title {
+  font-size: var(--kh-headline, var(--ko-text-xl));
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.portfolio-group-desc {
+  margin: var(--ko-space-4) 0 0;
+  max-width: 52ch;
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-muted);
+}
+
+.portfolio-group .portfolio-grid {
+  margin-top: var(--ko-space-8);
+}
+
+/* 필터는 CSS 로만 감춘다 — 렌더에서 빼면 크롤러가 못 본다 */
+.portfolio-group.is-filtered-out,
+.portfolio-card.is-filtered-out {
+  display: none;
+}
+
+.portfolio-focus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ko-space-4);
+  margin-top: var(--ko-space-8);
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  letter-spacing: var(--kh-tracking-mono, 0);
+}
+
+.portfolio-focus button {
+  border: 0;
+  background: none;
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.portfolio-card-metrics {
+  margin: 0;
+  padding-left: var(--ko-space-5);
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.portfolio-card-metrics li {
+  font-variant-numeric: tabular-nums;
+}
+
+.portfolio-card-toggle {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono, 0);
+  color: var(--kh-ocher, var(--ko-text-muted));
+  cursor: pointer;
+}
+
+.portfolio-card-body.is-collapsed {
+  display: none;
+}
+
+.portfolio-card-body {
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+  line-height: var(--ko-leading-relaxed);
+}
+
+.portfolio-card-tag {
+  border: 1px solid var(--ko-border-subtle);
+  background: none;
+  cursor: pointer;
+}
