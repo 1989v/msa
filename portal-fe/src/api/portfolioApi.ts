@@ -10,7 +10,6 @@ export interface PortfolioProject {
   title: string;
   categoryCode: string | null;
   summary: string | null;
-  body: string | null;
   metrics: string[];
   tags: string[];
   orderNo: number;

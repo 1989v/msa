@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import Markdown from '../components/Markdown';
 import {
   fetchPortfolioProjects,
   type PortfolioProject,
@@ -18,6 +17,8 @@ import './PortfolioPage.css';
  *
  * 예전에는 `portfolio_card` 라는 별도 테이블을 봤는데, 프로젝트를 담는 곳이 둘이면
  * 반드시 한쪽만 갱신되어 두 화면이 다른 이력을 말하게 된다.
+ *
+ * 공개 범위는 **요약과 지표까지**다. 본문(장애 대응 경위 등)은 응답에 없다.
  */
 export default function PortfolioPage() {
   useHeritageSurface();
@@ -146,7 +147,6 @@ function ProjectCard({
   hidden: boolean;
   onTagClick: (tag: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
   return (
     <article className={`portfolio-card${hidden ? ' is-filtered-out' : ''}`}>
       <h3 className="portfolio-card-title">{project.title}</h3>
@@ -157,21 +157,6 @@ function ProjectCard({
             <li key={metric}>{metric}</li>
           ))}
         </ul>
-      )}
-      {project.body && (
-        <>
-          {/* 접기도 CSS 로만 — 렌더에서 빼면 크롤러가 본문을 못 본다 */}
-          <button
-            type="button"
-            className="portfolio-card-toggle"
-            onClick={() => setOpen((v) => !v)}
-          >
-            {open ? '▾ 접기' : '▸ 자세히'}
-          </button>
-          <div className={`portfolio-card-body${open ? '' : ' is-collapsed'}`}>
-            <Markdown source={project.body} />
-          </div>
-        </>
       )}
       {project.tags.length > 0 && (
         <div className="portfolio-card-tags">

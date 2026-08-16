@@ -406,28 +406,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.portfolio-card-toggle {
-  align-self: flex-start;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: var(--kh-font-mono);
-  font-size: var(--ko-text-xs);
-  letter-spacing: var(--kh-tracking-mono, 0);
-  color: var(--kh-ocher, var(--ko-text-muted));
-  cursor: pointer;
-}
-
-.portfolio-card-body.is-collapsed {
-  display: none;
-}
-
-.portfolio-card-body {
-  font-size: var(--ko-text-sm);
-  color: var(--ko-text-secondary);
-  line-height: var(--ko-leading-relaxed);
-}
-
 .portfolio-card-tag {
   border: 1px solid var(--ko-border-subtle);
   background: none;
