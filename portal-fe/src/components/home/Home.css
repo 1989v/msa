@@ -147,7 +147,9 @@
   min-height: 140px;
   padding: var(--ko-space-6);
   text-decoration: none;
-  color: inherit;
+  /* 판 위 글자색은 .kh-slab 이 정한다 — inherit 로 두면 라이트 모드에서 페이지의
+     먹빛을 물려받아 어두운 판 위 어두운 글씨가 된다 (같은 명세도라 늦게 실리는 쪽이 이긴다) */
+  color: var(--kh-on-slab);
   transition: background var(--ko-duration-fast) var(--ko-ease-out),
               border-color var(--ko-duration-fast) var(--ko-ease-out);
 }
