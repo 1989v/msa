@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, type ReactElement } from 'react';
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
@@ -93,6 +93,11 @@ function App() {
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
           <Route path="/place" element={placeRoute(<PlacePage />)} />
           <Route path="/en/place" element={placeRoute(<PlacePage />)} />
+
+          {/* 개명된 게임의 옛 주소 — 색인·공유 링크가 죽지 않게 새 슬러그로 넘긴다.
+              슬러그를 바꿀 때마다 여기 한 줄이 늘어난다 (DB 는 새 슬러그만 안다). */}
+          <Route path="/games/rustveil-holdout" element={<Navigate to="/games/deadline" replace />} />
+          <Route path="/en/games/rustveil-holdout" element={<Navigate to="/en/games/deadline" replace />} />
 
           <Route path="/games" element={gameRoute(<GamesPage />)} />
           <Route path="/games/genre/:genre" element={gameRoute(<GamesPage />)} />
