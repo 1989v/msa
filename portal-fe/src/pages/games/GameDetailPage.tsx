@@ -251,7 +251,8 @@ export default function GameDetailPage() {
             <span className="game-detail-dev">by {game.developerName}</span>
           </div>
           <div className="game-card-tags">
-            {game.tags.map((tag) => (
+            {/* 'beta' 는 상태 배지로 이미 보여 준다 — 칩으로 또 찍으면 같은 말이 두 번 나온다 */}
+            {game.tags.filter((t) => t !== 'beta').map((tag) => (
               <span key={tag} className="game-tag-chip">
                 {tag}
               </span>
