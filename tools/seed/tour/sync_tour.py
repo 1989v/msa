@@ -56,9 +56,24 @@ CONTENT_TYPES = {
 CAT2_OVERRIDE = {"A0201": "history", "A0202": "nature"}
 CAT1_MAP = {"A01": "nature", "A02": "culture", "A03": "leisure", "A04": "shopping", "A05": "food", "B02": "stay"}
 
+# TourAPI 4.0 신규 분류체계(lclsSystm1) 폴백.
+# cat1 이 비는 응답이 있어(아래 AREA_CODES 주석 참조) 이쪽으로 받아낸다.
+LCLS1_MAP = {"NA": "nature", "HS": "history", "EX": "leisure", "VE": "culture",
+             "AC": "stay", "FD": "food", "SH": "shopping", "LS": "leisure", "EV": "culture"}
 
-def categorize(cat1: str, cat2: str) -> str:
-    return CAT2_OVERRIDE.get(cat2) or CAT1_MAP.get(cat1, "etc")
+
+def categorize(cat1: str, cat2: str, lcls1: str = "") -> str:
+    """구 분류(cat1/cat2)를 우선하고, 비면 신규 분류체계로 받아낸다."""
+    return (CAT2_OVERRIDE.get(cat2)
+            or CAT1_MAP.get(cat1)
+            or LCLS1_MAP.get(lcls1, "etc"))
+
+
+# areaBasedList2 는 **areaCode 를 지정하지 않으면 areacode·cat1~3 을 빈 문자열로 돌려준다**
+# (2026-08 실측: 무지정 300건 전부 결측, 지역 지정 시 정상). 전국 수집은 지역을 순회해야
+# 지역 필터와 카테고리가 살아난다. 목록은 areaCode2 오퍼레이션 실측값.
+AREA_CODES = ["1", "2", "3", "4", "5", "6", "7", "8",
+              "31", "32", "33", "34", "35", "36", "37", "38", "39"]
 
 
 def http_json(url: str) -> dict:
@@ -116,7 +131,8 @@ def fetch_area_based(key: str, svc_key: str, content_type: str, area: str | None
                 "address": " ".join(x for x in (it.get("addr1"), it.get("addr2")) if x).strip() or None,
                 "areaCode": str(it.get("areacode") or "") or None,
                 "sigunguCode": str(it.get("sigungucode") or "") or None,
-                "category": categorize(it.get("cat1") or "", it.get("cat2") or ""),
+                "category": categorize(it.get("cat1") or "", it.get("cat2") or "",
+                                       it.get("lclsSystm1") or ""),
                 "cat1": it.get("cat1") or None,
                 "cat2": it.get("cat2") or None,
                 "cat3": it.get("cat3") or None,
@@ -181,7 +197,18 @@ def main() -> int:
     if not key:
         raise SystemExit("TOUR_API_KEY(또는 DATA_GO_KR_KEY) 환경변수가 필요합니다. 샘플은 --from-sample.")
 
-    rows = fetch_area_based(key, args.service, args.content_type, args.area, args.limit, args.dump_keys)
+    if args.area or args.dump_keys:
+        rows = fetch_area_based(key, args.service, args.content_type, args.area,
+                                args.limit, args.dump_keys)
+    else:
+        # 전국 = 지역 순회. 무지정 호출은 areacode·cat1 이 비어 오므로 쓰지 않는다.
+        rows, per_area = [], max(1, args.limit // len(AREA_CODES))
+        for code in AREA_CODES:
+            got = fetch_area_based(key, args.service, args.content_type, code, per_area, False)
+            print(f"  area {code}: {len(got)}건", file=sys.stderr)
+            rows.extend(got)
+            if len(rows) >= args.limit:
+                break
     if args.dump_keys:
         return 0
     if args.with_overview:
