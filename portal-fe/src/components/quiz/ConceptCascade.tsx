@@ -337,7 +337,7 @@ export default function ConceptCascade({ nodes }: ConceptCascadeProps) {
       <div className="cascade-container">
         <div className="cascade-play-area">
           <div className="cascade-start-screen">
-            <h2 className="cascade-start-title">Concept Cascade</h2>
+            <h2 className="cascade-start-title">개념 낙하</h2>
             <p className="cascade-start-subtitle">
               Falling concepts appear one at a time. Drag each concept into the correct category zone before it reaches
               the bottom!
