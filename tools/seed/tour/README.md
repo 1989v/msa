@@ -62,6 +62,27 @@ curl 'https://api.1989v.com/api/search/attractions?keyword=palace&lang=en'
 curl 'https://api.1989v.com/api/search/attractions?lat=37.57&lng=126.97&radiusKm=5&sort=distance'
 ```
 
+## 4) 개요(overview) 점진 수집
+
+목록 조회는 100건/콜이지만 개요는 `detailCommon2` 로 **건당 1콜**이라 하루에 다 못 받는다.
+일일 한도는 **(서비스 × 오퍼레이션)별로 따로**다 — KorService2 가 429 여도 EngService2 는 살아 있고,
+`areaBasedList2` 도 별도 한도라 목록 재수집은 영향받지 않는다.
+
+```bash
+TOUR_API_KEY='...' ./overview_daily.sh        # ko 1000 + en 1000 수집 → 적재 → 재색인
+./overview_daily.sh --stats                   # 잔량만 확인 (API 호출 없음)
+```
+
+**수집만 따로 돌리지 말 것.** 중복 호출을 막는 기준이 "place SSOT 에 개요가 있는가" 하나뿐이라,
+적재를 미루면 다음 실행이 같은 레코드를 그대로 다시 부른다(실측 30/30 재호출). `overview_daily.sh`
+가 수집·적재·재색인을 한 단위로 묶는 이유다.
+
+- 우선순위: 관광지 분류(nature/history/culture/leisure) → 이미지 보유 → contentId
+- 원천이 개요를 빈 값으로 주는 레코드는 `~/.local/state/1989v/tour-overview-empty.txt` 에 기록해
+  다음 실행에서 제외한다 (DB 에는 "없음 확인" 을 표현할 자리가 없다). 429·네트워크 실패는 기록하지 않는다
+- **부분 전송 금지** — bulk upsert 는 전체 동기화라 보내지 않은 필드가 null 로 덮인다.
+  개요만 예외로 보존된다(`Attraction.syncFrom`)
+
 ## 출력 스키마 (1줄 = 1관광지, 값 없는 필드 생략)
 
 ```json
