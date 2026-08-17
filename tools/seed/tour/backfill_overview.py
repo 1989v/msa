@@ -59,12 +59,22 @@ def fetch_all() -> list[dict]:
     return rows
 
 
+# 관광 성격의 분류 — 음식/쇼핑/숙박보다 먼저 채운다.
+# 건수로는 음식·쇼핑이 절반을 넘어서, 이미지 유무로만 정렬하면 첫 배치가 통째로
+# 음식점으로 채워진다. 사이트가 보여주려는 건 관광지다.
+SIGHT_CATEGORIES = ("nature", "history", "culture", "leisure")
+
+
 def pick(rows: list[dict], lang: str | None, budget: int) -> list[dict]:
-    """개요가 빈 것만, 이미지 보유분 우선."""
+    """개요가 빈 것만 — 관광지 우선, 그 안에서 이미지 보유분 우선."""
     missing = [r for r in rows
                if not (r.get("overview") or "").strip()
                and (lang is None or r.get("lang") == lang)]
-    missing.sort(key=lambda r: (0 if (r.get("imageUrl") or "").strip() else 1, r["contentId"]))
+    missing.sort(key=lambda r: (
+        0 if r.get("category") in SIGHT_CATEGORIES else 1,
+        0 if (r.get("imageUrl") or "").strip() else 1,
+        r["contentId"],
+    ))
     return missing[:budget]
 
 
@@ -81,8 +91,9 @@ def main() -> int:
         sub = [r for r in rows if r.get("lang") == lg]
         miss = [r for r in sub if not (r.get("overview") or "").strip()]
         with_img = sum(1 for r in miss if (r.get("imageUrl") or "").strip())
-        print(f"[{lg}] 전체 {len(sub):,} · 개요없음 {len(miss):,} (이미지보유 {with_img:,})",
-              file=sys.stderr)
+        sight = sum(1 for r in miss if r.get("category") in SIGHT_CATEGORIES)
+        print(f"[{lg}] 전체 {len(sub):,} · 개요없음 {len(miss):,} "
+              f"(관광지 {sight:,} · 이미지보유 {with_img:,})", file=sys.stderr)
     if args.stats_only:
         return 0
 
