@@ -286,7 +286,7 @@ function ProjectDialog({
     <div className="portfolio-dialog-veil" onClick={onClose}>
       <div
         ref={panelRef}
-        className="portfolio-dialog kh-grain"
+        className="portfolio-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="portfolio-dialog-title"

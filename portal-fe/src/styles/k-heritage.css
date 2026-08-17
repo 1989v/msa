@@ -69,6 +69,10 @@
   /* 기술 메타데이터는 전부 모노다 — 날짜·태그·라벨·버튼.
    * 전통 회화와 코드 사이를 잇는 장치라 장식이 아니다. */
   --kh-font-mono: 'JetBrains Mono', var(--ko-font-mono);
+
+  /* 결의 색은 **면이 정한다.** 하나로 고정하면 한쪽에서 반드시 어긋난다 —
+   * 밝은 면 위의 먹선은 줄무늬로 도드라지고, 어두운 면 위에서는 아예 사라진다. */
+  --kh-grain-ink: rgb(0 0 0 / 0.022);
 }
 
 /* ─── 다크(Heritage Tech) — 밤의 목조 누각 ────────────────────────────────
@@ -103,6 +107,7 @@
   --kh-on-slab: #e5e2e1;
   --kh-on-slab-muted: #919095;
   --kh-slab-border: color-mix(in srgb, var(--kh-ocher) 14%, transparent);
+  --kh-grain-ink: rgb(255 255 255 / 0.016);
 }
 
 /* ═══ 프리미티브 ═════════════════════════════════════════════════════════ */
@@ -267,6 +272,8 @@
   --ko-text-secondary: var(--kh-on-slab-muted);
   --ko-text-muted: var(--kh-on-slab-muted);
   --ko-border-subtle: var(--kh-slab-border);
+  /* 판은 라이트 모드에서도 어둡다 — 결도 그에 맞춰 밝은 선으로 뒤집는다 */
+  --kh-grain-ink: rgb(255 255 255 / 0.02);
 }
 
 /** 그림자 대신 단단히 어긋난 판 하나 — 흐림 없는 물리적 깊이 */
@@ -348,8 +355,11 @@
 }
 
 /**
- * 목재 결 — 이미지 없이 만든다. 주기가 서로 배수가 아닌 세 겹을 겹쳐야
- * 규칙적인 줄무늬가 아니라 결처럼 읽힌다. 5% 이상 올리면 텍스처가 아니라 무늬가 된다.
+ * 목재 결 — 이미지 없이 만든다.
+ *
+ * **어두운 면에만 쓴다.** 밝은 면에서는 1px 반복선이 결이 아니라 골판지로 읽힌다.
+ * 값을 낮춰도 마찬가지다 — 보일 만큼 올리면 줄무늬가 되고, 안 보일 만큼 내리면 없는
+ * 것과 같다. 진짜 결이 필요하면 CSS 가 아니라 텍스처 이미지를 써야 한다.
  */
 .kh-grain {
   position: relative;
@@ -367,8 +377,8 @@
    * 목재가 아니라 스캔라인으로 보인다. 잉크로 고정하고 두 겹만 겹친다 —
    * 세 겹은 주기 간섭으로 굵은 띠를 만든다. */
   background-image:
-    repeating-linear-gradient(93deg, rgb(0 0 0 / 0.055) 0 1px, transparent 2px 11px),
-    repeating-linear-gradient(88deg, rgb(0 0 0 / 0.035) 0 2px, transparent 5px 23px);
+    repeating-linear-gradient(93deg, var(--kh-grain-ink) 0 1px, transparent 2px 11px),
+    repeating-linear-gradient(88deg, var(--kh-grain-ink) 0 2px, transparent 5px 23px);
 }
 
 /**
