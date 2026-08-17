@@ -61,15 +61,16 @@ const GENRES = Object.keys(GENRE_LABELS) as GameGenre[];
 const HUB_SUB = window.location.hostname.split('.')[0] === 'game' ? '' : '/games';
 
 /** 큐레이션 행 간 중복 제거 — 한 게임은 첫 노출 행에만 남기고, 비어버린 행은 숨긴다 */
-function dedupeCollections(collections: GameCollection[]): GameCollection[] {
-  const seen = new Set<string>();
-  return collections
-    .map((col) => {
-      const games = col.games.filter((g) => !seen.has(g.slug));
-      games.forEach((g) => seen.add(g.slug));
-      return { ...col, games };
-    })
-    .filter((col) => col.games.length > 0);
+/**
+ * 컬렉션 행은 각자의 이름이 뜻하는 바를 그대로 보여 준다.
+ *
+ * 전에는 앞 행에 나온 게임을 뒷 행에서 걷어냈다(중복 카드 방지). 그 결과
+ * '지금 인기' 가 신작을 먼저 가져가고 **'새로 나온 게임' 에는 남은 옛 게임**이 실렸다 —
+ * 행의 제목이 거짓말을 하게 된다. 큰 게임 포털이 같은 게임을 인기·신작 양쪽에 노출하는 것은
+ * 정상이고, 정렬 축이 다르면 목록도 다르다. 그래서 중복 제거는 하지 않고 빈 행만 숨긴다.
+ */
+function visibleCollections(collections: GameCollection[]): GameCollection[] {
+  return collections.filter((col) => col.games.length > 0);
 }
 
 export default function GamesPage() {
@@ -99,7 +100,7 @@ export default function GamesPage() {
 
   useEffect(() => {
     Promise.allSettled([fetchGameCollections(), fetchGameTags()]).then(([c, t]) => {
-      if (c.status === 'fulfilled') setCollections(dedupeCollections(c.value));
+      if (c.status === 'fulfilled') setCollections(visibleCollections(c.value));
       if (t.status === 'fulfilled') setTags(t.value);
     });
   }, []);
