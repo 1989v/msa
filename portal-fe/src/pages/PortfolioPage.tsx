@@ -178,10 +178,30 @@ function ProjectCard({
   onTagClick: (tag: string) => void;
   onOpen: (opened: OpenedProject) => void;
 }) {
+  const hasDetail = Boolean(project.body);
+  const open = () => onOpen({ project, categoryLabel });
+
   return (
-    <article className={`portfolio-card${hidden ? ' is-filtered-out' : ''}`}>
-      <h3 className="portfolio-card-title">{project.title}</h3>
+    <article
+      className={`portfolio-card${hasDetail ? ' is-openable' : ''}${hidden ? ' is-filtered-out' : ''}`}
+      onClick={hasDetail ? open : undefined}
+    >
+      <h3 className="portfolio-card-title">
+        {/*
+          카드 전체가 눌리지만 **키보드 초점은 제목이 받는다.** article 에 role="button" 을
+          주면 안에 있는 기술 칩이 버튼 안의 버튼이 되어 보조기기가 읽지 못한다.
+        */}
+        {hasDetail ? (
+          <button type="button" className="portfolio-card-open" onClick={open}>
+            {project.title}
+          </button>
+        ) : (
+          project.title
+        )}
+      </h3>
+
       {project.summary && <p className="portfolio-card-summary">{project.summary}</p>}
+
       {project.metrics.length > 0 && (
         <ul className="portfolio-card-metrics">
           {project.metrics.map((metric) => (
@@ -189,25 +209,18 @@ function ProjectCard({
           ))}
         </ul>
       )}
+
       {project.body && (
-        <>
-          <button
-            type="button"
-            className="portfolio-card-more"
-            onClick={() => onOpen({ project, categoryLabel })}
-          >
-            자세히 <span aria-hidden="true">→</span>
-          </button>
-          {/*
-            본문을 DOM 에 남긴다. 모달은 열릴 때만 그려지므로, 이게 없으면 프리렌더 결과에
-            본문이 빠져 크롤러가 이 페이지의 알맹이를 못 본다. 보조기기에는 중복이라
-            aria-hidden 으로 숨긴다 — 같은 글을 모달에서 다시 읽게 된다.
-          */}
-          <div className="portfolio-card-seed" aria-hidden="true">
-            <Markdown source={project.body} />
-          </div>
-        </>
+        /*
+          본문을 DOM 에 남긴다. 모달은 열릴 때만 그려지므로, 이게 없으면 프리렌더 결과에
+          본문이 빠져 크롤러가 이 페이지의 알맹이를 못 본다. 보조기기에는 중복이라
+          aria-hidden 으로 숨긴다 — 같은 글을 모달에서 다시 읽게 된다.
+        */
+        <div className="portfolio-card-seed" aria-hidden="true">
+          <Markdown source={project.body} />
+        </div>
       )}
+
       {project.tags.length > 0 && (
         <div className="portfolio-card-tags">
           {project.tags.map((tag) => (
@@ -215,13 +228,23 @@ function ProjectCard({
               key={tag}
               type="button"
               className="portfolio-card-tag"
-              onClick={() => onTagClick(tag)}
+              /* 칩은 칩대로 동작한다 — 카드까지 열리면 두 가지가 한 번에 일어난다 */
+              onClick={(e) => {
+                e.stopPropagation();
+                onTagClick(tag);
+              }}
               title={`${tag} 를 쓴 기록 모아보기`}
             >
               {tag}
             </button>
           ))}
         </div>
+      )}
+
+      {hasDetail && (
+        <span className="portfolio-card-mark" aria-hidden="true">
+          →
+        </span>
       )}
     </article>
   );

@@ -44,7 +44,7 @@
   border: 1px solid var(--ko-border-subtle);
   border-radius: var(--kh-radius-asym, var(--ko-radius-sm));
   padding: var(--ko-space-6);
-  cursor: pointer;
+  padding-bottom: var(--ko-space-8);
   position: relative;
   transition: border-color var(--ko-duration-normal) var(--ko-ease-out),
     transform var(--ko-duration-normal) var(--ko-ease-out);
@@ -53,7 +53,12 @@
   gap: var(--ko-space-3);
 }
 
-.portfolio-card:hover {
+/* 상세가 없는 카드는 눌리는 것처럼 보이면 안 된다 — 눌러도 아무 일이 없다 */
+.portfolio-card.is-openable {
+  cursor: pointer;
+}
+
+.portfolio-card.is-openable:hover {
   border-color: var(--ko-border-strong);
   transform: translateY(-2px);
 }
@@ -64,6 +69,37 @@
 }
 
 /* 임팩트는 낙관이다 — 붉은 인장을 카드 한쪽 귀퉁이에 찍는다 */
+/* 제목이 초점을 받는다. 배경·테두리 없이 글자 그대로 두어 카드 안에서 튀지 않게 한다. */
+.portfolio-card-open {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.portfolio-card-open:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+/* 열 수 있다는 표시 — 버튼이 아니라 흔적이다 */
+.portfolio-card-mark {
+  position: absolute;
+  right: var(--ko-space-5);
+  bottom: var(--ko-space-4);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  color: var(--kh-ocher, var(--ko-text-muted));
+  transition: transform var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.portfolio-card.is-openable:hover .portfolio-card-mark {
+  transform: translateX(3px);
+}
+
 .portfolio-card-title {
   font-size: var(--ko-text-lg);
   font-weight: var(--ko-weight-semibold);
@@ -85,14 +121,32 @@
   margin-top: auto;
 }
 
+/* 칩은 카드와 별개로 동작한다 — 눌리는 것이라는 걸 hover 로 알린다.
+ * 색은 그 모드의 액션색(라이트 소나무 / 다크 청자)을 쓴다. 연지는 인장 자리라 쓰지 않는다. */
 .portfolio-card-tag {
+  cursor: pointer;
   font-family: var(--kh-font-mono);
   letter-spacing: var(--kh-tracking-mono);
   font-size: var(--ko-text-xs);
-  background: var(--ko-surface-2);
-  color: var(--ko-text-muted);
   padding: 3px var(--ko-space-2);
-  border-radius: var(--ko-radius-sm);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, var(--ko-radius-sm));
+  background: none;
+  color: var(--ko-text-muted);
+  transition: color var(--ko-duration-fast) var(--ko-ease-out),
+    border-color var(--ko-duration-fast) var(--ko-ease-out),
+    background-color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.portfolio-card-tag:hover {
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  border-color: var(--ko-accent-primary);
+  background: var(--ko-accent-primary-bg);
+}
+
+.portfolio-card-tag:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
 }
 
 /* DESIGN.md §4 breakpoint sm(640) */
@@ -170,29 +224,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.portfolio-card-tag {
-  border: 1px solid var(--ko-border-subtle);
-  background: none;
-  cursor: pointer;
-}
-
 /* ─── 상세 모달 ───────────────────────────────────────────────────────── */
-
-.portfolio-card-more {
-  align-self: flex-start;
-  padding: 0;
-  border: 0;
-  background: none;
-  font-family: var(--kh-font-mono);
-  font-size: var(--ko-text-xs);
-  letter-spacing: var(--kh-tracking-mono, 0);
-  color: var(--kh-ocher, var(--ko-text-muted));
-  cursor: pointer;
-}
-
-.portfolio-card-more:hover {
-  color: var(--ko-text-primary);
-}
 
 /* 크롤러용 사본 — 화면에서만 걷어낸다. display:none 은 일부 크롤러가 통째로 무시한다. */
 .portfolio-card-seed {
