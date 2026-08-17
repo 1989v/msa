@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import GNB from '../components/GNB';
 import Markdown from '../components/Markdown';
 import {
   fetchPortfolioProjects,
@@ -34,6 +35,7 @@ export default function PortfolioPage() {
   const [data, setData] = useState<PortfolioProjects | null>(null);
   const [failed, setFailed] = useState(false);
   const [focusedTag, setFocusedTag] = useState<string | null>(null);
+  const [opened, setOpened] = useState<OpenedProject | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,8 +67,12 @@ export default function PortfolioPage() {
   const matchedCount = data?.projects.filter(matches).length ?? 0;
 
   return (
-    <div className="portfolio-page">
-      <div className="portfolio-inner">
+    <>
+      {/* 머리띠는 컨테이너 밖에 둔다 — 안에 넣으면 max-width 에 갇혀 전폭이 아니게 된다.
+          공개면이라 메인으로 돌아갈 길과 테마 토글이 있어야 한다. */}
+      <GNB items={[{ label: '홈', href: '/' }]} />
+      <div className="portfolio-page">
+        <div className="portfolio-inner">
         <header className="portfolio-header">
           <span className="kh-section-label">Project Archive</span>
           <h1 className="portfolio-title">
@@ -128,28 +134,50 @@ export default function PortfolioPage() {
                 <ProjectCard
                   key={project.title}
                   project={project}
+                  categoryLabel={category.label}
                   hidden={!matches(project)}
                   onTagClick={setFocusedTag}
+                  onOpen={setOpened}
                 />
               ))}
             </div>
           </section>
         ))}
+        </div>
+
+        {opened && (
+          <ProjectDialog
+            opened={opened}
+            onClose={() => setOpened(null)}
+            onTagClick={(tag) => {
+              setOpened(null);
+              setFocusedTag(tag);
+            }}
+          />
+        )}
       </div>
-    </div>
+    </>
   );
+}
+
+interface OpenedProject {
+  project: PortfolioProject;
+  categoryLabel: string;
 }
 
 function ProjectCard({
   project,
+  categoryLabel,
   hidden,
   onTagClick,
+  onOpen,
 }: {
   project: PortfolioProject;
+  categoryLabel: string;
   hidden: boolean;
   onTagClick: (tag: string) => void;
+  onOpen: (opened: OpenedProject) => void;
 }) {
-  const [open, setOpen] = useState(false);
   return (
     <article className={`portfolio-card${hidden ? ' is-filtered-out' : ''}`}>
       <h3 className="portfolio-card-title">{project.title}</h3>
@@ -163,15 +191,19 @@ function ProjectCard({
       )}
       {project.body && (
         <>
-          {/* 접기도 CSS 로만 — 렌더에서 빼면 크롤러가 본문을 못 본다 */}
           <button
             type="button"
-            className="portfolio-card-toggle"
-            onClick={() => setOpen((v) => !v)}
+            className="portfolio-card-more"
+            onClick={() => onOpen({ project, categoryLabel })}
           >
-            {open ? '▾ 접기' : '▸ 자세히'}
+            자세히 <span aria-hidden="true">→</span>
           </button>
-          <div className={`portfolio-card-body${open ? '' : ' is-collapsed'}`}>
+          {/*
+            본문을 DOM 에 남긴다. 모달은 열릴 때만 그려지므로, 이게 없으면 프리렌더 결과에
+            본문이 빠져 크롤러가 이 페이지의 알맹이를 못 본다. 보조기기에는 중복이라
+            aria-hidden 으로 숨긴다 — 같은 글을 모달에서 다시 읽게 된다.
+          */}
+          <div className="portfolio-card-seed" aria-hidden="true">
             <Markdown source={project.body} />
           </div>
         </>
@@ -192,5 +224,121 @@ function ProjectCard({
         </div>
       )}
     </article>
+  );
+}
+
+/**
+ * 상세 모달.
+ *
+ * 처마 아래 문을 여는 감각으로 만든다 — 뒤는 먹빛으로 가라앉히고(ink in water), 판은
+ * 비대칭 모서리에 결을 입혀 앞으로 나온다. 그림자는 쓰지 않는다: 이 시스템의 깊이는
+ * 면의 색 단차와 테두리로 만든다.
+ */
+function ProjectDialog({
+  opened,
+  onClose,
+  onTagClick,
+}: {
+  opened: OpenedProject;
+  onClose: () => void;
+  onTagClick: (tag: string) => void;
+}) {
+  const { project, categoryLabel } = opened;
+  const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // 포커스를 모달 안에 가둔다. 없으면 탭이 뒤 페이지로 새어나가 어디를 누르는지 알 수 없다.
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const focusables = panelRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusables || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    },
+    [onClose],
+  );
+
+  useEffect(() => {
+    closeRef.current?.focus();
+    // 뒤 페이지가 같이 스크롤되면 모달이 종이 위에 뜬 게 아니라 붙어 있는 것처럼 보인다.
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  return (
+    <div className="portfolio-dialog-veil" onClick={onClose}>
+      <div
+        ref={panelRef}
+        className="portfolio-dialog kh-grain"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="portfolio-dialog-title"
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={onKeyDown}
+      >
+        <div className="portfolio-dialog-head">
+          <span className="kh-seal kh-seal-ink">
+            <span className="kh-seal-dot" aria-hidden="true" />
+            {categoryLabel}
+          </span>
+          <button ref={closeRef} type="button" className="portfolio-dialog-close" onClick={onClose}>
+            닫기 <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+
+        <h2 id="portfolio-dialog-title" className="portfolio-dialog-title">
+          {project.title}
+        </h2>
+
+        {project.summary && <p className="portfolio-dialog-summary">{project.summary}</p>}
+
+        {project.metrics.length > 0 && (
+          <ul className="portfolio-dialog-metrics">
+            {project.metrics.map((metric) => (
+              <li key={metric}>{metric}</li>
+            ))}
+          </ul>
+        )}
+
+        {project.body && (
+          <div className="portfolio-dialog-body">
+            <Markdown source={project.body} />
+          </div>
+        )}
+
+        {project.tags.length > 0 && (
+          <div className="portfolio-dialog-tags">
+            {project.tags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                className="portfolio-card-tag"
+                onClick={() => onTagClick(tag)}
+                title={`${tag} 를 쓴 기록 모아보기`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

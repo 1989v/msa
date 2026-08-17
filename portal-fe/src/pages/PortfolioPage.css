@@ -32,108 +32,7 @@
   max-width: 46ch;
 }
 
-.portfolio-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ko-space-3);
-  align-items: center;
-  margin-bottom: var(--ko-space-6);
-}
-
-.portfolio-search {
-  flex: 1 1 240px;
-  min-width: 200px;
-  background: var(--ko-surface-1);
-  border: 1px solid var(--ko-border-subtle);
-  color: var(--ko-text-primary);
-  padding: var(--ko-space-2) var(--ko-space-3);
-  border-radius: var(--ko-radius-md);
-  font-size: var(--ko-text-sm);
-  outline: none;
-  transition: border-color var(--ko-duration-normal) var(--ko-ease-out);
-}
-
-.portfolio-search:focus {
-  border-color: var(--ko-accent-primary);
-}
-
-.portfolio-sort {
-  display: inline-flex;
-  background: var(--ko-surface-1);
-  border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--kh-radius, var(--ko-radius-md));
-  padding: 2px;
-}
-
-.portfolio-sort button {
-  background: transparent;
-  color: var(--ko-text-muted);
-  border: none;
-  padding: var(--ko-space-2) var(--ko-space-3);
-  font-family: var(--kh-font-mono);
-  font-size: var(--ko-text-xs);
-  letter-spacing: var(--kh-tracking-mono);
-  font-weight: 600;
-  cursor: pointer;
-  border-radius: var(--kh-radius, var(--ko-radius-sm));
-  transition: color var(--ko-duration-normal) var(--ko-ease-out),
-    background-color var(--ko-duration-normal) var(--ko-ease-out);
-}
-
-.portfolio-sort button:hover {
-  color: var(--ko-text-primary);
-}
-
-/* 활성은 먹빛으로 찍는다 — 강조색은 화면당 하나이고 그 자리는 태그 필터가 갖는다 */
-.portfolio-sort button.active {
-  background: var(--ko-text-primary);
-  color: var(--ko-surface-0);
-}
-
-.portfolio-sort button:focus-visible {
-  outline: var(--ko-focus-ring);
-  outline-offset: var(--ko-focus-ring-offset);
-}
-
-.portfolio-tag-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ko-space-2);
-  margin-bottom: var(--ko-space-6);
-}
-
 /* 칩은 인장이다 — 둥근 알약이 아니라 각진 낙관 */
-.portfolio-tag-chip {
-  background: transparent;
-  border: 1px solid var(--ko-border-subtle);
-  color: var(--ko-text-muted);
-  padding: var(--ko-space-1) var(--ko-space-3);
-  border-radius: var(--kh-radius, var(--ko-radius-full));
-  font-family: var(--kh-font-mono);
-  letter-spacing: var(--kh-tracking-mono);
-  font-size: var(--ko-text-xs);
-  cursor: pointer;
-  transition: color var(--ko-duration-normal) var(--ko-ease-out),
-    border-color var(--ko-duration-normal) var(--ko-ease-out),
-    background-color var(--ko-duration-normal) var(--ko-ease-out);
-}
-
-.portfolio-tag-chip:hover {
-  border-color: var(--ko-accent-primary);
-  color: var(--ko-text-primary);
-}
-
-.portfolio-tag-chip.active {
-  background: var(--kh-yeonji, var(--ko-accent-primary));
-  border-color: var(--kh-yeonji, var(--ko-accent-primary));
-  color: var(--kh-hanji, var(--ko-surface-0));
-}
-
-.portfolio-tag-chip:focus-visible {
-  outline: var(--ko-focus-ring);
-  outline-offset: var(--ko-focus-ring-offset);
-}
-
 .portfolio-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -165,35 +64,12 @@
 }
 
 /* 임팩트는 낙관이다 — 붉은 인장을 카드 한쪽 귀퉁이에 찍는다 */
-.portfolio-card-impact {
-  position: absolute;
-  top: var(--ko-space-4);
-  right: var(--ko-space-4);
-  background: var(--kh-yeonji, var(--ko-accent-primary));
-  color: var(--kh-hanji, var(--ko-surface-0));
-  border-radius: var(--kh-radius, var(--ko-radius-full));
-  padding: 3px var(--ko-space-2);
-  font-family: var(--kh-font-mono);
-  font-size: var(--ko-text-xs);
-  font-weight: 600;
-  letter-spacing: var(--kh-tracking-mono);
-  font-variant-numeric: tabular-nums;
-}
-
 .portfolio-card-title {
   font-size: var(--ko-text-lg);
   font-weight: var(--ko-weight-semibold);
   color: var(--ko-text-primary);
   padding-right: var(--ko-space-12);
   line-height: var(--ko-leading-tight);
-}
-
-.portfolio-card-period {
-  font-family: var(--kh-font-mono);
-  font-size: var(--ko-text-xs);
-  letter-spacing: var(--kh-tracking-mono);
-  color: var(--kh-ocher, var(--ko-text-muted));
-  font-variant-numeric: tabular-nums;
 }
 
 .portfolio-card-summary {
@@ -219,111 +95,7 @@
   border-radius: var(--ko-radius-sm);
 }
 
-.portfolio-empty {
-  padding: var(--ko-space-16) var(--ko-space-6);
-  text-align: center;
-  color: var(--ko-text-muted);
-  background: var(--ko-surface-1);
-  border: 1px dashed var(--ko-border-subtle);
-  border-radius: var(--ko-radius-lg);
-}
-
-.portfolio-loading,
-.portfolio-error {
-  padding: var(--ko-space-12) var(--ko-space-6);
-  text-align: center;
-  color: var(--ko-text-muted);
-}
-
-.portfolio-error {
-  color: var(--ko-action-danger);
-}
-
-/* Detail modal */
-.portfolio-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: var(--ko-space-12) var(--ko-space-6);
-  overflow-y: auto;
-}
-
-.portfolio-modal {
-  background: var(--ko-surface-1);
-  border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--ko-radius-lg);
-  box-shadow: var(--ko-shadow-xl);
-  max-width: 800px;
-  width: 100%;
-  padding: var(--ko-space-8);
-  position: relative;
-}
-
-.portfolio-modal-close {
-  position: absolute;
-  top: var(--ko-space-4);
-  right: var(--ko-space-4);
-  background: transparent;
-  border: none;
-  color: var(--ko-text-muted);
-  font-size: var(--ko-text-2xl);
-  cursor: pointer;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--ko-radius-sm);
-}
-
-.portfolio-modal-close:hover {
-  background: var(--ko-surface-2);
-  color: var(--ko-text-primary);
-}
-
-.portfolio-modal-close:focus-visible {
-  outline: var(--ko-focus-ring);
-  outline-offset: var(--ko-focus-ring-offset);
-}
-
-.portfolio-modal-title {
-  font-size: var(--ko-text-2xl);
-  font-weight: var(--ko-weight-bold);
-  margin-bottom: var(--ko-space-2);
-  padding-right: var(--ko-space-10);
-}
-
-.portfolio-modal-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ko-space-3);
-  font-size: var(--ko-text-sm);
-  color: var(--ko-text-muted);
-  margin-bottom: var(--ko-space-5);
-  padding-bottom: var(--ko-space-4);
-  border-bottom: 1px solid var(--ko-border-subtle);
-  font-variant-numeric: tabular-nums;
-}
-
-.portfolio-modal-body {
-  font-size: var(--ko-text-base);
-  color: var(--ko-text-secondary);
-  line-height: var(--ko-leading-relaxed);
-  white-space: pre-wrap;
-  word-wrap: break-word;
-}
-
-.portfolio-modal-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ko-space-1);
-  margin-top: var(--ko-space-6);
-  padding-top: var(--ko-space-4);
-  border-top: 1px solid var(--ko-border-subtle);
-}
-
-/* 모바일 우선 보정 — DESIGN.md §4 breakpoint sm(640) */
+/* DESIGN.md §4 breakpoint sm(640) */
 @media (max-width: 640px) {
   .portfolio-page {
     padding: var(--ko-space-8) var(--ko-space-4) var(--ko-space-16);
@@ -331,14 +103,6 @@
 
   .portfolio-grid {
     grid-template-columns: 1fr;
-  }
-
-  .portfolio-modal-backdrop {
-    padding: var(--ko-space-4);
-  }
-
-  .portfolio-modal {
-    padding: var(--ko-space-5);
   }
 }
 
@@ -412,7 +176,9 @@
   cursor: pointer;
 }
 
-.portfolio-card-toggle {
+/* ─── 상세 모달 ───────────────────────────────────────────────────────── */
+
+.portfolio-card-more {
   align-self: flex-start;
   padding: 0;
   border: 0;
@@ -424,12 +190,165 @@
   cursor: pointer;
 }
 
-.portfolio-card-body {
-  font-size: var(--ko-text-sm);
+.portfolio-card-more:hover {
+  color: var(--ko-text-primary);
+}
+
+/* 크롤러용 사본 — 화면에서만 걷어낸다. display:none 은 일부 크롤러가 통째로 무시한다. */
+.portfolio-card-seed {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 먹이 물에 풀리듯 뒤를 가라앉힌다 */
+.portfolio-dialog-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ko-space-6);
+  background: color-mix(in srgb, var(--kh-ink, #0a0a0a) 72%, transparent);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  animation: portfolio-veil-in var(--ko-duration-slow, 250ms) var(--ko-ease-out);
+}
+
+.portfolio-dialog {
+  position: relative;
+  width: min(720px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  padding: var(--ko-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+  background: var(--ko-surface-0);
+  border: 1px solid var(--ko-border-default);
+  /* 그림자를 쓰지 않는다 — 깊이는 테두리와 가라앉은 뒤로 만든다 */
+  border-radius: var(--kh-radius-asym, 4px);
+  animation: portfolio-dialog-in var(--ko-duration-slow, 250ms) var(--ko-ease-out);
+}
+
+.portfolio-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-4);
+}
+
+.portfolio-dialog-close {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  min-height: 36px;
+  padding: 0 var(--ko-space-3);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+  background: none;
+  color: var(--ko-text-muted);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono, 0);
+  cursor: pointer;
+}
+
+.portfolio-dialog-close:hover {
+  color: var(--ko-text-primary);
+  border-color: var(--ko-border-strong);
+}
+
+.portfolio-dialog-close:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.portfolio-dialog-title {
+  margin: 0;
+  font-size: var(--kh-headline, var(--ko-text-xl));
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.portfolio-dialog-summary {
+  margin: 0;
   color: var(--ko-text-secondary);
   line-height: var(--ko-leading-relaxed);
 }
 
-.portfolio-card-body.is-collapsed {
-  display: none;
+.portfolio-dialog-metrics {
+  margin: 0;
+  padding-left: var(--ko-space-5);
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-sm);
+}
+
+.portfolio-dialog-metrics li {
+  font-variant-numeric: tabular-nums;
+}
+
+.portfolio-dialog-body {
+  padding-top: var(--ko-space-4);
+  border-top: 1px solid var(--ko-border-subtle);
+  color: var(--ko-text-secondary);
+  line-height: var(--ko-leading-relaxed);
+}
+
+.portfolio-dialog-body strong {
+  color: var(--ko-text-primary);
+  font-weight: 600;
+}
+
+/* 마크다운 기본 마진이 이 컨테이너 안에서는 죽는다 — 문단과 목록이 붙어 읽기 어려워진다 */
+.portfolio-dialog-body > * + * {
+  margin-top: var(--ko-space-4);
+}
+
+.portfolio-dialog-body p {
+  margin: 0;
+}
+
+.portfolio-dialog-body ul {
+  margin: 0;
+  padding-left: var(--ko-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+}
+
+.portfolio-dialog-body li {
+  padding-left: var(--ko-space-1);
+}
+
+.portfolio-dialog-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-1);
+  padding-top: var(--ko-space-4);
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+@keyframes portfolio-veil-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes portfolio-dialog-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-dialog-veil,
+  .portfolio-dialog {
+    animation: none;
+  }
 }
