@@ -7,6 +7,7 @@ import {
   fetchGameDetail,
   fetchSimilarGames,
   genreLabel,
+  isBeta,
   rateGame,
   startGameSession,
   type GameDetail,
@@ -229,7 +230,17 @@ export default function GameDetailPage() {
 
       <div className="game-detail-head">
         <div>
-          <h1 className="games-title">{displayTitle(game, lang)}</h1>
+          <h1 className="games-title">
+            {displayTitle(game, lang)}
+            {isBeta(game) && <span className="game-badge-beta inline">BETA</span>}
+          </h1>
+          {isBeta(game) && (
+            <p className="game-detail-beta-note">
+              {lang === 'en'
+                ? 'In active development — balance and content are still changing. Feedback welcome.'
+                : '아직 다듬는 중입니다 — 밸런스와 콘텐츠가 계속 바뀝니다. 피드백 환영.'}
+            </p>
+          )}
           <div className="game-detail-meta">
             {game.ratingCount > 0 && (
               <span className="game-card-rating">

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { displayTitle, genreLabel, getGameLang, type GameLang, type GameSummary } from '../../api/gameApi';
+import { displayTitle, genreLabel, getGameLang, isBeta, type GameLang, type GameSummary } from '../../api/gameApi';
 import { gamePath } from '../../seo/copy.mjs';
 
 const COVER_HUES = [245, 180, 145, 25, 300, 75];
@@ -39,6 +39,7 @@ export default function GameCard({ game, lang }: { game: GameSummary; lang?: Gam
             {title.slice(0, 1)}
           </span>
         )}
+        {isBeta(game) && <span className="game-badge-beta">BETA</span>}
       </div>
       <div className="game-card-body">
         <h3 className="game-card-title">
@@ -54,7 +55,7 @@ export default function GameCard({ game, lang }: { game: GameSummary; lang?: Gam
           <span className="game-card-plays">{game.playCount.toLocaleString()} plays</span>
         </div>
         <div className="game-card-tags">
-          {game.tags.slice(0, 3).map((tag) => (
+          {game.tags.filter((t) => t !== 'beta').slice(0, 3).map((tag) => (
             <span key={tag} className="game-tag-chip">
               {tag}
             </span>

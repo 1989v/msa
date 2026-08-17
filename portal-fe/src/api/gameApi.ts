@@ -94,6 +94,15 @@ export interface GameSummary {
   ratingCount: number;
 }
 
+/**
+ * 베타 표기 판정 — 두 신호를 모두 받는다.
+ * 상태(GameStatus.BETA)가 정식 축이고, `beta` 태그는 PUBLISHED 로 둔 채 배지만 붙이던 기존 방식이다.
+ * 한쪽만 보면 같은 카탈로그 안에서 같은 뜻이 다르게 보인다.
+ */
+export function isBeta(game: Pick<GameSummary, 'status' | 'tags'>): boolean {
+  return game.status === 'BETA' || game.tags.includes('beta');
+}
+
 export interface GameDetail extends GameSummary {
   description: string;
   descriptionEn: string | null;

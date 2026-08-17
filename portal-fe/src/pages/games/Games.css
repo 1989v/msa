@@ -262,10 +262,40 @@
 }
 
 .game-card-cover {
+  position: relative;
   aspect-ratio: 16 / 10;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* 베타 표기 — 아직 다듬는 중인 게임임을 카탈로그에서 바로 알린다 */
+.game-badge-beta {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: oklch(0.72 0.17 65);
+  color: oklch(0.16 0.02 65);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px oklch(0 0 0 / 0.45);
+}
+
+/* 상세 헤더에서는 제목 옆에 붙는다 */
+.game-badge-beta.inline {
+  position: static;
+  margin-left: 10px;
+  vertical-align: middle;
+}
+
+.game-detail-beta-note {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: oklch(0.72 0.14 65);
 }
 
 .game-card-thumb {

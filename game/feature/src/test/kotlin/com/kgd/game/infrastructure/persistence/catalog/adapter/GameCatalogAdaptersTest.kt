@@ -12,6 +12,7 @@ import com.kgd.game.infrastructure.persistence.catalog.entity.GameStatsJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameQueryRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameStatsJpaRepository
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -51,7 +52,7 @@ class GameCatalogAdaptersTest : BehaviorSpec({
 
     given("공개 카탈로그 어댑터가 목록을 조회할 때") {
         `when`("어떤 필터가 오든") {
-            then("PUBLISHED 상태 조건이 강제로 붙어야 한다") {
+            then("플레이 가능한 상태(PUBLISHED·BETA) 조건이 강제로 붙어야 한다") {
                 val queryRepository = mockk<GameQueryRepository>()
                 val adapter = GameRepositoryAdapter(mockk(), queryRepository, mockk())
                 val criteria = slot<GameSearchCriteria>()
@@ -60,7 +61,10 @@ class GameCatalogAdaptersTest : BehaviorSpec({
 
                 adapter.search(tag = "puzzle", genre = Genre.PUZZLE, sort = GameSort.NEW, pageable = PageRequest.of(0, 24))
 
-                criteria.captured.statuses shouldBe setOf(GameStatus.PUBLISHED)
+                criteria.captured.statuses shouldBe setOf(GameStatus.PUBLISHED, GameStatus.BETA)
+                // DRAFT/REVIEW/SUSPENDED 는 어떤 필터로도 새어 들어오면 안 된다
+                criteria.captured.statuses shouldNotContain GameStatus.DRAFT
+                criteria.captured.statuses shouldNotContain GameStatus.SUSPENDED
                 // 공개 경로는 검색어를 노출하지 않는다 — 조건이 새어 들어가면 안 된다
                 criteria.captured.q shouldBe null
                 criteria.captured.tag shouldBe "puzzle"

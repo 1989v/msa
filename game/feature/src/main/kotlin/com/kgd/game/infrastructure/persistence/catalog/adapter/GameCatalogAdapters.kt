@@ -37,8 +37,13 @@ class GameRepositoryAdapter(
 ) : GameRepositoryPort {
 
     companion object {
-        /** 공개 리스트 불변식 — PUBLISHED 외 상태는 어떤 경로로도 공개 목록에 실리지 않는다 */
-        private val PUBLIC_STATUSES = setOf(GameStatus.PUBLISHED)
+        /**
+         * 공개 리스트 불변식 — 플레이 가능한 상태(PUBLISHED, BETA)만 공개 목록에 실린다.
+         * DRAFT/REVIEW/SUSPENDED 는 어떤 경로로도 실리지 않는다.
+         * BETA 를 포함하는 이유: 피드백을 받으려면 찾을 수 있어야 한다. 대신 FE 가 배지로 구분하고,
+         * 수익화는 `Game.isMonetizable()`(PUBLISHED 전용)이 따로 막는다.
+         */
+        private val PUBLIC_STATUSES = setOf(GameStatus.PUBLISHED, GameStatus.BETA)
     }
 
     override fun save(game: Game): Game {
