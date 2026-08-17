@@ -69,11 +69,27 @@ def categorize(cat1: str, cat2: str, lcls1: str = "") -> str:
             or LCLS1_MAP.get(lcls1, "etc"))
 
 
-# areaBasedList2 는 **areaCode 를 지정하지 않으면 areacode·cat1~3 을 빈 문자열로 돌려준다**
-# (2026-08 실측: 무지정 300건 전부 결측, 지역 지정 시 정상). 전국 수집은 지역을 순회해야
-# 지역 필터와 카테고리가 살아난다. 목록은 areaCode2 오퍼레이션 실측값.
+# 구 지역코드(areaCode). areaBasedList2 를 지역 지정으로 부를 때만 쓴다.
 AREA_CODES = ["1", "2", "3", "4", "5", "6", "7", "8",
               "31", "32", "33", "34", "35", "36", "37", "38", "39"]
+
+# 법정동 시도코드(lDongRegnCd) → 구 areaCode.
+#
+# 왜 필요한가: areaBasedList2 를 **무지정으로 부르면 areacode·cat1~3 이 빈 문자열로 온다**
+# (2026-08 실측). 그렇다고 지역을 순회하면 areaCode 가 아예 없는 레코드 43%(12,639 중 5,484)를
+# 통째로 놓친다. 그래서 무지정으로 전량을 받고, 신체계 코드에서 구 코드를 역산한다.
+#
+# 발급 화면상 areaCode2·categoryCode2 는 "삭제예정 — 법정동/분류체계 코드로 대체" 다.
+# 신체계가 원본이고 구 코드는 파생이라고 보는 게 맞다.
+#
+# 매핑은 추측이 아니라 실측이다 — 지역별 조회 결과의 lDongRegnCd 최빈값으로 대응시켰다.
+# ⚠ '12' 는 광주와 전남이 통합(전남광주통합특별시)되어 둘 다 가리킨다. 시도 코드만으로는
+#   나눌 수 없어 전남(38)으로 둔다.
+LDONG_TO_AREA = {
+    "11": "1", "28": "2", "30": "3", "27": "4", "12": "38", "26": "6",
+    "31": "7", "36110": "8", "41": "31", "51": "32", "43": "33", "44": "34",
+    "47": "35", "48": "36", "52": "37", "50": "39",
+}
 
 
 def http_json(url: str) -> dict:
@@ -121,16 +137,21 @@ def fetch_area_based(key: str, svc_key: str, content_type: str, area: str | None
             print(json.dumps(item_list[0], ensure_ascii=False, indent=2))
             return []
         for it in item_list:
-            lat, lng = it.get("mapy"), it.get("mapx")
-            if not lat or not lng:
-                continue  # 좌표 없는 행은 지도/근방검색에 못 쓴다 — 제외
+            # 좌표 없는 행은 지도·근방검색에 못 쓴다 — 제외.
+            # 무지정 조회에는 문자열 "null" 로 오는 레코드가 섞여 있어 값으로도 걸러낸다.
+            lat, lng = str(it.get("mapy") or "").strip(), str(it.get("mapx") or "").strip()
+            if lat in ("", "null", "0") or lng in ("", "null", "0"):
+                continue
             rows.append({
                 "contentId": str(it["contentid"]),
                 "lang": lang,
                 "title": (it.get("title") or "").strip(),
                 "address": " ".join(x for x in (it.get("addr1"), it.get("addr2")) if x).strip() or None,
-                "areaCode": str(it.get("areacode") or "") or None,
-                "sigunguCode": str(it.get("sigungucode") or "") or None,
+                # 구 코드가 있으면 그대로, 없으면 법정동 코드에서 역산 (무지정 조회 대응)
+                "areaCode": (str(it.get("areacode") or "").strip()
+                             or LDONG_TO_AREA.get(str(it.get("lDongRegnCd") or "").strip())),
+                "sigunguCode": (str(it.get("sigungucode") or "").strip()
+                                or str(it.get("lDongSignguCd") or "").strip() or None),
                 "category": categorize(it.get("cat1") or "", it.get("cat2") or "",
                                        it.get("lclsSystm1") or ""),
                 "cat1": it.get("cat1") or None,
@@ -197,18 +218,10 @@ def main() -> int:
     if not key:
         raise SystemExit("TOUR_API_KEY(또는 DATA_GO_KR_KEY) 환경변수가 필요합니다. 샘플은 --from-sample.")
 
-    if args.area or args.dump_keys:
-        rows = fetch_area_based(key, args.service, args.content_type, args.area,
-                                args.limit, args.dump_keys)
-    else:
-        # 전국 = 지역 순회. 무지정 호출은 areacode·cat1 이 비어 오므로 쓰지 않는다.
-        rows, per_area = [], max(1, args.limit // len(AREA_CODES))
-        for code in AREA_CODES:
-            got = fetch_area_based(key, args.service, args.content_type, code, per_area, False)
-            print(f"  area {code}: {len(got)}건", file=sys.stderr)
-            rows.extend(got)
-            if len(rows) >= args.limit:
-                break
+    # 전국은 무지정 페이징으로 받는다 — 지역 순회는 areaCode 없는 43% 를 놓친다.
+    # 빠지는 areacode·cat1 은 LDONG_TO_AREA / LCLS1_MAP 이 신체계에서 받아낸다.
+    rows = fetch_area_based(key, args.service, args.content_type, args.area,
+                            args.limit, args.dump_keys)
     if args.dump_keys:
         return 0
     if args.with_overview:

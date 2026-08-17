@@ -120,7 +120,10 @@ class Attraction private constructor(
         )
     }
 
-    /** 재적재(upsert) 시 원천 최신값으로 전체 동기화 — 자연키(contentId, lang)와 id 는 불변 (entity-mutation.md). */
+    /**
+     * 재적재(upsert) 시 원천 최신값으로 동기화 — 자연키(contentId, lang)와 id 는 불변 (entity-mutation.md).
+     * 목록 원천에 없는 보강 필드(개요)는 덮어쓰지 않는다.
+     */
     fun syncFrom(source: Attraction) {
         require(source.contentId == contentId && source.lang == lang) {
             "자연키가 다른 관광지로 동기화할 수 없습니다: ${source.contentId}/${source.lang} → $contentId/$lang"
@@ -137,7 +140,12 @@ class Attraction private constructor(
         longitude = source.longitude
         imageUrl = source.imageUrl
         tel = source.tel
-        overview = source.overview
+        /*
+         * 개요는 목록 조회에 없다 — 건당 1콜인 상세 조회로만 채워지는 **보강 필드**다.
+         * 목록 동기화가 통째로 덮어쓰면 며칠에 걸쳐 모은 개요가 한 번에 지워진다
+         * (실제로 그렇게 300건을 잃었다). 들어온 값이 있을 때만 갱신한다.
+         */
+        overview = source.overview ?: overview
         sourceModifiedAt = source.sourceModifiedAt
         status = source.status
     }

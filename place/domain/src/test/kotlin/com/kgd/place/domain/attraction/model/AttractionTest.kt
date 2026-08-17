@@ -65,6 +65,28 @@ class AttractionTest : BehaviorSpec({
                 existing.latitude shouldBe 37.5789
             }
         }
+        `when`("개요 없는 목록 원천이 주어지면") {
+            then("이미 채워둔 개요는 지워지지 않아야 한다") {
+                // 개요는 건당 1콜인 상세 조회로만 채운다. 목록 재동기화가 덮어쓰면
+                // 며칠 걸려 모은 값이 한 번에 날아간다.
+                val existing = gyeongbokgung().apply { syncFrom(
+                    Attraction.create(
+                        contentId = "126508", lang = "ko", title = "경복궁",
+                        latitude = 37.5788, longitude = 126.977,
+                        overview = "조선 왕조 제일의 법궁",
+                    )
+                ) }
+                existing.overview shouldBe "조선 왕조 제일의 법궁"
+
+                existing.syncFrom(
+                    Attraction.create(
+                        contentId = "126508", lang = "ko", title = "경복궁",
+                        latitude = 37.5788, longitude = 126.977,
+                    )
+                )
+                existing.overview shouldBe "조선 왕조 제일의 법궁"
+            }
+        }
         `when`("자연키가 다른 원천이 주어지면") {
             then("IllegalArgumentException 이 발생해야 한다") {
                 shouldThrow<IllegalArgumentException> {
