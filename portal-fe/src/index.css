@@ -26,6 +26,10 @@
   line-height: 1.5;
   color: var(--text);
   background: var(--bg);
+  /* 이 선언이 없으면 브라우저는 페이지가 테마를 관리하지 않는다고 보고 스크롤바·폼 컨트롤을
+     기기 설정대로 칠한다. 모바일 크롬의 자동 다크도 미선언 페이지를 대상으로 하므로,
+     라이트를 고른 화면 위에 어두운 층이 덧씌워진다. 톤마다 명시한다. */
+  color-scheme: dark;
 }
 
 @media (prefers-reduced-motion: reduce) {
