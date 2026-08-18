@@ -56,6 +56,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **K8s 전환**: 배포 모드 이원화, Eureka 제거, Jib → `docs/adr/ADR-0019-k8s-migration.md`
 - **FE 디자인 가드레일**: AI slop 방지, 타이포/색상/레이아웃/모션/접근성 → `docs/conventions/frontend-design.md`
 - **DESIGN.md 표준 (필수)**: FE 코드 작성 / UI 화면 생성 전 **반드시 root `DESIGN.md` 의 토큰을 우선 참조**. hex 직접 입력 금지. 상세 표준 → `docs/standards/design-md.md`, 인스턴스 → `DESIGN.md`
+- **FE 화면 검증 (필수)**: 색 대비·테마·기기 설정 분기는 tsc/build 가 못 잡는다. `눈으로 봤다` 대신 **CDP 로 잰 값**을 남긴다 — 독립 프로필 헤드리스 크롬 + `Emulation.setEmulatedMedia` 로 기기×사이트 4조합. chrome-devtools MCP 가 막혀도 **락 파일을 지우지 않는다**(프로필이 깨져 알럿이 반복된다) → `docs/standards/fe-visual-verification.md`
 - **브랜드 면 디자인 작업 (필수)**: `/`·`/portfolio`·`resume`·`/shop`·`place`·`/games` 를 손대기 전 **`docs/design/k-heritage.html` 을 먼저 연다**. 재료·표면·활자·여백·형태·상태·프리미티브가 **살아 있는 견본**으로 있고 원본 시안 13장이 함께 있다. DESIGN.md §12 는 규칙 요약이고, 무엇이 어떻게 보이는지는 이 문서가 원본이다. 규칙을 바꿨으면 이 문서도 같이 고친다 — 문서가 코드와 어긋나면 다음 사람이 되돌린다.
 - **@Transactional 규칙**: 외부 IO 분리, 중첩 txn 예외 금지, 클래스 레벨 주의 → `docs/conventions/transactional-usage.md`
 - **로깅 규칙**: kotlin-logging 필수, 람다 형식, error 레벨 규칙 → `docs/conventions/logging.md`
