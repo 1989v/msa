@@ -12,6 +12,7 @@ import {
   type Suggestion,
 } from '../../api/placeApi';
 import { loadGoogleMaps, mapsApiKey, radiusFromBounds } from './googleMaps';
+import ThemeToggle from '../../components/ThemeToggle';
 import './PlacePage.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 
@@ -269,16 +270,19 @@ export default function PlacePage() {
       <header className="place-header">
         <h1 className="place-title">
           {L.title}
-          <span className="place-lang-toggle" role="group" aria-label="Language">
-            {(['ko', 'en'] as PlaceLang[]).map((key) => (
-              <button
-                key={key}
-                className={`place-lang-btn ${lang === key ? 'active' : ''}`}
-                onClick={() => switchLang(key)}
-              >
-                {key === 'ko' ? '한' : 'EN'}
-              </button>
-            ))}
+          <span className="place-header-actions">
+            <span className="place-lang-toggle" role="group" aria-label="Language">
+              {(['ko', 'en'] as PlaceLang[]).map((key) => (
+                <button
+                  key={key}
+                  className={`place-lang-btn ${lang === key ? 'active' : ''}`}
+                  onClick={() => switchLang(key)}
+                >
+                  {key === 'ko' ? '한' : 'EN'}
+                </button>
+              ))}
+            </span>
+            <ThemeToggle />
           </span>
         </h1>
         <p className="place-subtitle">{L.subtitle}</p>

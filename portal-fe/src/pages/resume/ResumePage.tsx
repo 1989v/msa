@@ -6,6 +6,7 @@ import { resumeTitle } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { hydrateEmails, protectEmails } from './protectEmail';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
+import ThemeToggle from '../../components/ThemeToggle';
 import './Resume.css';
 
 /** 게이트에 막혔을 때는 탭 제목도 404 와 같은 말을 해야 한다 */
@@ -84,6 +85,8 @@ export default function ResumePage() {
         <a className="resume-print" href="/print">
           전체 인쇄 (상세 포함)
         </a>
+        {/* resume 는 자기 호스트의 첫 화면인데 GNB 가 없다 — 여기 없으면 톤을 바꿀 수단이 없다 */}
+        <ThemeToggle />
       </div>
     </div>
   );

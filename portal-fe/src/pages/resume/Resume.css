@@ -230,6 +230,9 @@
 .resume-actions {
   max-width: 56rem;
   margin: var(--ko-space-10) auto 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-2);
 }
 
 .resume-print {

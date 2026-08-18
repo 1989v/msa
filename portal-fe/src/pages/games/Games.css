@@ -354,7 +354,8 @@
 }
 
 .game-card-rating {
-  color: var(--ko-status-profit);
+  /* 트레이딩 팔레트의 상승 초록이 흘러들어와 있었다 — 브랜드 면의 강조는 황토다 */
+  color: var(--kh-ocher, var(--ko-text-primary));
   font-weight: 600;
 }
 
@@ -387,7 +388,8 @@
 }
 
 .games-back {
-  color: var(--ko-quote-fall-link);
+  /* 시세 하락 파랑이 링크색으로 쓰이고 있었다 — 정경마다 다른 액션색을 따른다 */
+  color: var(--ko-accent-text, var(--ko-accent-primary));
   text-decoration: none;
   font-size: 0.875rem;
 }

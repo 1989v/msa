@@ -424,3 +424,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.place-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+}

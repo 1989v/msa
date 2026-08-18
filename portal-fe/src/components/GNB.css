@@ -101,33 +101,6 @@ a.gnb-menu-item {
   border-bottom-color: var(--kh-ocher, var(--ko-text-primary));
 }
 
-/* 테마 토글 — 오른쪽 끝, 아이콘만 */
-.gnb-theme-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: none;
-  border-radius: var(--kh-radius, 4px);
-  background: none;
-  color: var(--ko-text-secondary);
-  cursor: pointer;
-  transition: color var(--ko-duration-fast) var(--ko-ease-out),
-    background var(--ko-duration-fast) var(--ko-ease-out);
-}
-
-.gnb-theme-toggle:hover {
-  color: var(--kh-ocher, var(--ko-text-primary));
-  background: var(--ko-surface-2);
-}
-
-.gnb-theme-toggle:focus-visible {
-  outline: var(--ko-focus-ring);
-  outline-offset: var(--ko-focus-ring-offset);
-}
-
 .gnb-menu-item:focus-visible {
   outline: var(--ko-focus-ring);
   outline-offset: var(--ko-focus-ring-offset);

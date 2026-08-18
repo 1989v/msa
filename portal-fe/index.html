@@ -32,7 +32,46 @@
       })();
     </script>
 
+    <!-- 모바일 브라우저가 주소창을 이 색으로 칠한다 — 아래 스크립트가 톤에 맞춰 바꾼다 -->
     <meta name="theme-color" content="#0a0a0a" />
+
+    <!-- 첫 페인트 전에 톤을 확정한다. 번들이 뜬 뒤 칠하면 정적 HTML 이 먼저 그려지면서
+         라이트를 고른 사람에게 다크가 한 번 번쩍인다. 판정 규칙의 원본은
+         src/hooks/useHeritageSurface.ts 이고 여기는 같은 규칙의 최소 사본이다. -->
+    <script>
+      (function () {
+        var KEY = "kh-theme";
+        function stored() {
+          var hit = document.cookie.split("; ").find(function (c) {
+            return c.indexOf(KEY + "=") === 0;
+          });
+          var v = hit && hit.slice(KEY.length + 1);
+          if (v === "light" || v === "dark") return v;
+          try {
+            v = localStorage.getItem(KEY);
+          } catch (e) {
+            v = null;
+          }
+          return v === "light" || v === "dark" ? v : null;
+        }
+        var root = document.documentElement;
+        var theme;
+        // /tech 만 브랜드 면이 아니다 — dark-trading 팔레트를 전제로 그려진 화면이라 다크 고정.
+        if (location.pathname === "/tech") {
+          theme = "dark";
+        } else {
+          theme =
+            stored() ||
+            (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light");
+          root.setAttribute("data-surface", "heritage");
+        }
+        root.setAttribute("data-theme", theme);
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.setAttribute("content", theme === "dark" ? "#131313" : "#f9f8f2");
+      })();
+    </script>
 
     <!-- scripts/prerender-seo.mjs 가 이 블록을 페이지별 메타로 통째 교체한다.
          마커를 지우면 프리렌더가 조용히 무력화되므로 유지할 것. -->
