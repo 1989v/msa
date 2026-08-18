@@ -45,11 +45,22 @@ function isImmersiveViewport() {
  * 뷰포트는 게임이 바꿀 수 없으므로 useStageFit 의 "모바일에서는 내용을 재지 않는다" 원칙은
  * 그대로다 — 재는 대상이 내용이 아니라 창이라 되먹임이 생기지 않는다.
  * 전체화면 중에는 브라우저 크롬이 없어 상자가 곧 화면이므로 높이를 지정하지 않는다.
+ *
+ * **둘 중 작은 쪽을 쓴다.** 어느 한 값도 혼자서는 "보이는 높이"가 아니다 — 브라우저마다
+ * 크롬을 어느 값에 반영하는지가 다르다. 갤럭시 S23 울트라 실측:
+ *
+ *   삼성인터넷 30  innerHeight 702, visualViewport 882 (화면 883 과 같음, 크롬 미반영)
+ *   카톡 WebView   innerHeight 798, visualViewport 790
+ *   크롬 안드로이드 innerHeight 는 주소창 숨은 기준(큼), visualViewport 가 줄어듦
+ *
+ * 삼성인터넷 값을 그대로 믿으면 상자가 보이는 영역보다 180px 커져 조이스틱이 화면 아래로
+ * 밀려난다 — 고치려던 증상을 오히려 더 키운다. min 이면 세 경우 다 맞는다.
  */
 function visibleHeight(): number | null {
   if (typeof window === 'undefined') return null;
   if (document.fullscreenElement) return null;
-  return Math.round(window.visualViewport?.height ?? window.innerHeight);
+  const visual = window.visualViewport?.height ?? Number.POSITIVE_INFINITY;
+  return Math.round(Math.min(window.innerHeight, visual));
 }
 
 export function useStageFit(active: boolean) {
