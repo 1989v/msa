@@ -74,10 +74,16 @@ function resolveTheme(): HeritageTheme {
   return storedTheme() ?? systemTheme();
 }
 
-/** 모바일 브라우저 주소창 색. 톤을 바꿔도 여기가 그대로면 위쪽 띠만 반대 톤으로 남는다. */
+/**
+ * 모바일 브라우저 주소창 색. 톤을 바꿔도 여기가 그대로면 위쪽 띠만 반대 톤으로 남는다.
+ * color-scheme 메타도 같이 맞춘다 — 삼성 인터넷은 CSS 속성이 아니라 이 태그를 읽고
+ * 강제 다크를 걸지 말지 판단한다.
+ */
 function applyThemeColor(theme: HeritageTheme) {
-  const meta = document.querySelector('meta[name="theme-color"]');
-  meta?.setAttribute('content', theme === 'dark' ? '#131313' : '#f9f8f2');
+  document.querySelector('meta[name="theme-color"]')
+    ?.setAttribute('content', theme === 'dark' ? '#131313' : '#f9f8f2');
+  document.querySelector('meta[name="color-scheme"]')
+    ?.setAttribute('content', `only ${theme}`);
 }
 
 function applyTheme(theme: HeritageTheme) {
