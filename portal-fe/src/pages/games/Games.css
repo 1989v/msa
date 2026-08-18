@@ -245,14 +245,17 @@
   --ko-text-primary: var(--kh-on-slab, inherit);
   --ko-text-secondary: var(--kh-on-slab-muted, inherit);
   --ko-text-muted: var(--kh-on-slab-muted, inherit);
+  --ko-text-disabled: var(--kh-on-slab-muted, inherit);
   overflow: hidden;
   text-decoration: none;
-  color: inherit;
+  color: var(--kh-on-slab, inherit);
   transition: transform 150ms cubic-bezier(0, 0, 0.2, 1), background 150ms;
 }
 
 .game-card:hover {
-  background: var(--ko-surface-2);
+  /* 판 안에서 더 깊어져야 한다. --ko-surface-2 는 라이트에서 #efeee8 이라, 판 글자색(한지)
+     그대로인 채 바탕만 밝아져 hover 순간 글자가 사라졌다 (1.09:1). */
+  background: var(--kh-slab-deep, var(--ko-surface-2));
   transform: translateY(-2px);
 }
 

@@ -286,6 +286,7 @@
   --ko-text-primary: var(--kh-on-slab);
   --ko-text-secondary: var(--kh-on-slab-muted);
   --ko-text-muted: var(--kh-on-slab-muted);
+  --ko-text-disabled: var(--kh-on-slab-muted);
   --ko-border-subtle: var(--kh-slab-border);
   /* 판은 라이트 모드에서도 어둡다 — 결도 그에 맞춰 밝은 선으로 뒤집는다 */
   --kh-grain-ink: rgb(255 255 255 / 0.02);
