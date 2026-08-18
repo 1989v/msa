@@ -65,6 +65,30 @@ await send('Page.navigate', { url: 'http://localhost:5199/' });
 
 값이 조합마다 다르면 어딘가에서 OS 설정이 새고 있다는 뜻이다.
 
+### 자동 다크는 계산값에 안 나온다 — 픽셀을 찍어야 한다
+
+기기 다크의 영향은 **두 층**이다.
+
+| 층 | 재현 | 계산값에 보이나 |
+|---|---|---|
+| `prefers-color-scheme` (미디어 쿼리) | `Emulation.setEmulatedMedia` | 보인다 |
+| 브라우저 자동 다크 (force-dark) | `--enable-features=WebContentsForceDark` 플래그 | **안 보인다** |
+
+자동 다크는 CSS 를 바꾸지 않고 **다 그린 화면의 색을 뒤집는다.** 그래서 `getComputedStyle` 은
+`--ko-surface-0: #f9f8f2` 라고 답하는데 실제 화면은 어둡다. 실제로 이 상태가 "4조합 정상"으로
+검증을 통과했다 — 픽셀을 찍고서야 잡혔다.
+
+```js
+const s = await send('Page.captureScreenshot', { format:'png', clip:{x:700,y:420,width:4,height:4,scale:1} });
+// PNG 첫 픽셀을 읽어 실제 칠해진 색을 확인한다
+```
+
+**막는 방법은 `only` 다.** `color-scheme: light` 는 "라이트를 지원한다"는 뜻이라 자동 다크가
+덧씌워진다. `color-scheme: only light` 는 "이 정경만 지원하니 변환하지 말라"는 선언이라 비켜선다.
+
+> 주의: 플래그로 force-dark 를 켠 채 `prefers-color-scheme: light` 를 에뮬레이션하면 현실에
+> 없는 조합이라 결과가 뒤집혀 보인다. 자동 다크는 기기가 다크일 때만 도므로 **dark 조합만** 본다.
+
 ---
 
 ## 4. 무엇을 재는가
