@@ -33,11 +33,31 @@ function isImmersiveViewport() {
  * 조작 패드가 없어 게임이 뷰포트 높이를 보지 않으므로 되먹임이 없다. 고정 높이(560px)면
  * 가로형 캔버스 위아래로 빈 공간이 남으므로 캔버스 비율·패널·흐름 내용 중 최대값을 쓴다.
  */
+/**
+ * 몰입 모드 상자의 높이 — **보이는 높이**여야 한다.
+ *
+ * `position:fixed; inset:0` 은 레이아웃 뷰포트를 채우는데, 모바일 브라우저의 레이아웃
+ * 뷰포트는 주소창이 숨은 상태 기준이다. 주소창이 떠 있는 동안 상자 아래쪽은 화면 밖으로
+ * 밀리고, 하필 조이스틱이 그 잘리는 띠에 있어서 "터치패드가 안 보인다"가 됐다.
+ * 게임 쪽에서는 고칠 수 없다 — iframe 안에서 `100dvh` 는 그냥 iframe 높이이고,
+ * 주소창의 존재 자체를 알 수 없다. 그래서 호스트가 재서 그만큼만 준다.
+ *
+ * 뷰포트는 게임이 바꿀 수 없으므로 useStageFit 의 "모바일에서는 내용을 재지 않는다" 원칙은
+ * 그대로다 — 재는 대상이 내용이 아니라 창이라 되먹임이 생기지 않는다.
+ * 전체화면 중에는 브라우저 크롬이 없어 상자가 곧 화면이므로 높이를 지정하지 않는다.
+ */
+function visibleHeight(): number | null {
+  if (typeof window === 'undefined') return null;
+  if (document.fullscreenElement) return null;
+  return Math.round(window.visualViewport?.height ?? window.innerHeight);
+}
+
 export function useStageFit(active: boolean) {
   const ref = useRef<HTMLIFrameElement | null>(null);
   const [height, setHeight] = useState<number | null>(null);
   const [immersive, setImmersive] = useState(isImmersiveViewport);
   const [portrait, setPortrait] = useState(() => window.innerHeight >= window.innerWidth);
+  const [stageHeight, setStageHeight] = useState<number | null>(visibleHeight);
 
   const measure = useCallback(() => {
     const frame = ref.current;
@@ -86,17 +106,26 @@ export function useStageFit(active: boolean) {
     setHeight(Math.min(MAX_H, Math.max(MIN_H, Math.round(Math.max(canvasFit, panelNeed, flowNeed)))));
   }, []);
 
-  // 회전하면 몰입 여부가 바뀔 수 있다 (태블릿 경계)
+  // 회전하면 몰입 여부가 바뀔 수 있다 (태블릿 경계).
+  // 주소창이 접히고 펴질 때마다 보이는 높이가 바뀌므로 visualViewport 도 같이 듣는다.
   useEffect(() => {
     const sync = () => {
       setImmersive(isImmersiveViewport());
       setPortrait(window.innerHeight >= window.innerWidth);
+      setStageHeight(visibleHeight());
     };
+    const vv = window.visualViewport;
     window.addEventListener('resize', sync);
     window.addEventListener('orientationchange', sync);
+    document.addEventListener('fullscreenchange', sync);
+    vv?.addEventListener('resize', sync);
+    vv?.addEventListener('scroll', sync);
     return () => {
       window.removeEventListener('resize', sync);
       window.removeEventListener('orientationchange', sync);
+      document.removeEventListener('fullscreenchange', sync);
+      vv?.removeEventListener('resize', sync);
+      vv?.removeEventListener('scroll', sync);
     };
   }, []);
 
@@ -138,5 +167,5 @@ export function useStageFit(active: boolean) {
     };
   }, [active, immersive, measure]);
 
-  return { ref, height: immersive ? null : height, immersive, portrait };
+  return { ref, height: immersive ? null : height, immersive, portrait, stageHeight };
 }

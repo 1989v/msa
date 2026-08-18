@@ -265,6 +265,7 @@ export default function GameDetailPage() {
         className={`game-stage${immersive ? ' is-immersive' : ''}`}
         ref={stageRef}
         aria-label="게임 플레이 영역"
+        style={immersive && stageFit.stageHeight ? { height: `${stageFit.stageHeight}px` } : undefined}
       >
         {immersive && (
           <div className="game-stage-bar">

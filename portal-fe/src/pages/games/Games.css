@@ -480,13 +480,24 @@
  */
 .game-stage.is-immersive {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* bottom 을 고정하면(=inset:0) 레이아웃 뷰포트를 채운다 — 주소창이 떠 있는 동안
+     아래쪽이 화면 밖으로 밀려 조이스틱이 잘린다. 실제 높이는 useStageFit 이 재서
+     인라인으로 준다. dvh 는 그 전까지의 초기값. */
+  height: 100dvh;
   z-index: 60;
   margin: 0;
   border: 0;
   border-radius: 0;
   min-height: 0;
   background: #000;
+}
+
+/* 전체화면 중에는 브라우저 크롬이 없다 — 상자가 곧 화면이라 잰 높이를 쓰면 안 된다. */
+.game-stage.is-immersive:fullscreen {
+  height: 100%;
 }
 
 .game-stage.is-immersive .game-stage-frame {
