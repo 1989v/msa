@@ -333,6 +333,9 @@ jobs:
             # ADR-0065 /tour 구글맵 — 시크릿 미설정이면 지도 없이 리스트-only 폴백
             if [[ "$svc" == "portal-fe" ]]; then
               BUILD_ARGS+=(--build-arg "VITE_GOOGLE_MAPS_KEY=${{ secrets.VITE_GOOGLE_MAPS_KEY }}")
+              # 게임 공용 lib 참조 지문 — 파일명에 해시가 없어 URL 이 고정이라
+              # CDN/브라우저가 구버전을 붙들고 있었다 (portal-fe/Dockerfile 주석 참조)
+              BUILD_ARGS+=(--build-arg "GIT_SHA=$TAG")
             fi
             docker buildx build \
               --platform linux/arm64 \

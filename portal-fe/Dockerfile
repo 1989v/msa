@@ -24,6 +24,17 @@ RUN npx vite build --base / && node scripts/prerender-seo.mjs
 RUN find dist/games -name '*.js' -type f | while read f; do \
       node_modules/.bin/esbuild "$f" --minify --charset=utf8 --outfile="$f" --allow-overwrite --log-level=error || exit 1; \
     done
+# 공용 lib 참조에 빌드 지문을 찍는다. 게임 자산은 파일명에 해시가 없어 URL 이 고정인데,
+# Cloudflare 가 오리진의 no-cache 를 자기 Browser Cache TTL(4h)로 덮어써서 배포해도
+# 기존 방문자는 최대 4시간 동안 구버전 lib 를 계속 썼다. 게임 HTML 은 no-cache 가 지켜지므로
+# (cf-cache-status: DYNAMIC) 참조 URL 만 바뀌면 그 즉시 새 파일을 받는다.
+# 이미 ?v=N 이 손으로 붙어 있는 참조가 섞여 있으므로(keys/platform/rank) 먼저 그것부터 갈아친다.
+ARG GIT_SHA="dev"
+RUN find dist/games -name '*.html' -type f -exec \
+      sed -i -e "s#\(\.\./lib/[a-z0-9_.-]*\)?v=[^\"]*\"#\1?v=${GIT_SHA}\"#g" \
+             -e "s#\(\.\./lib/[a-z0-9_-]*\.js\)\"#\1?v=${GIT_SHA}\"#g" \
+             -e "s#\(\.\./lib/[a-z0-9_-]*\.css\)\"#\1?v=${GIT_SHA}\"#g" {} + \
+ && grep -q 'lib/touch\.js?v=' dist/games/overworld-quest/index.html
 
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
