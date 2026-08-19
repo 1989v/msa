@@ -59,5 +59,9 @@ class DealRedirectController(
             .location(URI.create(location))
             // 302 가 캐시되면 링크를 교체해도 옛 대상으로 계속 나간다.
             .header(HttpHeaders.CACHE_CONTROL, "no-store")
+            // robots.txt 의 `Disallow: /go/` 를 무시하는 수집기가 있다. 공유되는 주소라
+            // 외부에서 발견되기도 쉬운데, 색인되면 제휴 트래킹 URL 이 검색결과에 노출되고
+            // 302 를 따라간 링크 신호가 제휴사로 넘어간다 (ADR-0069 §3, ADR-0062).
+            .header("X-Robots-Tag", "noindex, nofollow")
             .build()
 }

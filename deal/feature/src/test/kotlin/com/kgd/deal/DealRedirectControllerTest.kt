@@ -38,6 +38,11 @@ class DealRedirectControllerTest : BehaviorSpec({
                 response.headers.location.toString() shouldBe target
             }
 
+            then("색인·링크추적을 막는다 — robots.txt 를 무시하는 수집기가 있다") {
+                // 색인되면 제휴 트래킹 URL 이 검색결과에 남고 302 를 따라간 신호가 제휴사로 넘어간다
+                response.headers.getFirst("X-Robots-Tag") shouldBe "noindex, nofollow"
+            }
+
             then("302 를 캐시하지 못하게 막는다") {
                 response.headers.getFirst(HttpHeaders.CACHE_CONTROL) shouldBe "no-store"
             }

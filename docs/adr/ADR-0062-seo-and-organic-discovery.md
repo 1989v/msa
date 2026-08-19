@@ -156,6 +156,33 @@ Applebot-Extended 를 `Allow` 로 적는다 (기본 `*` 로도 열리지만, 의
 API, 포털은 서비스 목록. **전량 열거는 sitemap 이 하고 llms.txt 는 "무엇을 어디서 보면 되는지"만**
 짧게 적는다. 이력서 호스트는 llms.txt 도 sitemap 도 두지 않는다 (ADR-0064).
 
+### 11. deal — 색인은 막되 크롤은 연다 (2026-08-20)
+
+혜택 링크 허브는 P1 에서 색인 대상이 아니다 (ADR-0069 §6 — 링크 모음만 있는 상태로 색인되면
+thin affiliate 판정을 자초하고 그 평가가 사이트 전체에 번진다). 다만 **막는 방식이 중요하다.**
+
+robots.txt 로 크롤을 막으면 안 된다. 크롤러가 `noindex` 를 읽지 못해 URL 만 색인되고,
+카카오톡·슬랙·X 언퍼러가 OG 카드를 못 만든다. 이 페이지의 유입은 SNS 공유라 OG 카드가 곧
+트래픽이다. 그래서 **크롤은 열고 색인만 세 겹으로 막는다.**
+
+| 계층 | 수단 |
+|---|---|
+| 응답 헤더 | nginx `map $host $host_robots_tag` → `noindex, follow` |
+| HTML | 프리렌더가 `<meta name="robots" content="noindex, follow">` 를 심는다 |
+| 런타임 | `dealHubMeta()` 의 `noindex: true` 를 `useSeo` 가 적용 |
+
+헤더 하나에 걸어두면 프록시 한 단만 잘못 끼어도 사라지는데, 색인은 한 번 뚫리면 되돌리는 데
+몇 주가 걸린다. 되돌리기 비용이 비대칭이면 중복이 낭비가 아니다.
+
+**아웃바운드 리다이렉터 `/go/{slug}` 는 별도로 막는다.** robots.txt 의 `Disallow: /go/` 를
+무시하는 수집기가 있고, 공유되는 주소라 외부에서 발견되기도 쉽다. 색인되면 제휴 트래킹 URL 이
+검색결과에 노출되고 302 를 따라간 링크 신호가 제휴사로 넘어가므로, 응답에
+`X-Robots-Tag: noindex, nofollow` 를 직접 붙인다 (`DealRedirectController`). 이 경로는 ingress 가
+gateway 로 보내 portal-fe nginx 를 거치지 않으므로 헤더를 백엔드가 붙여야 한다.
+
+sitemap 과 llms.txt 는 두지 않는다 — 색인하지 않기로 한 면을 답변형 검색에 밀어 넣는 것은
+모순이다. P2 에서 오퍼별 콘텐츠가 붙으면 세 계층을 한꺼번에 푼다.
+
 ## Consequences
 
 - 빌드가 공개 게임 API(`api.1989v.com`)에 의존한다. **fail-soft** — 조회 실패 시 robots/sitemap
@@ -189,15 +216,17 @@ API, 포털은 서비스 목록. **전량 열거는 sitemap 이 하고 llms.txt 
    Bing Webmaster 에 `game.1989v.com`, `place.1989v.com`, `1989v.com` 을 각각 등록하고
    sitemap 제출 (place 는 인덱스 하나만 내면 분할본까지 따라간다).
    등록 없이는 색인까지 수 주가 걸린다. 네이버는 등록이 사실상 필수.
-2. **게임별 1200×630 래스터 스크린샷** — 미보유 11종. 메신저 공유 CTR 이 텍스트 카드 대비
+2. **deal 허브 OG 이미지** — 유입이 SNS 공유인데 `og:image` 가 없어 텍스트 카드로 나간다.
+   색인을 막아둔 P1 에서는 카드 품질이 사실상 유일한 유입 변수다 (ADR-0069 §6).
+3. **게임별 1200×630 래스터 스크린샷** — 미보유 11종. 메신저 공유 CTR 이 텍스트 카드 대비
    크게 갈린다. `public/games/thumbs/shots/<slug>.png` 에 넣으면 자동으로 og:image 가 붙는다.
-3. **게임 설명 고유성 점검** — `description` 이 짧거나 템플릿에 가까우면 스니펫이 빈약해진다.
+4. **게임 설명 고유성 점검** — `description` 이 짧거나 템플릿에 가까우면 스니펫이 빈약해진다.
    50자 미만이면 프리렌더가 장르 문구를 덧붙이지만, 시드 원문을 채우는 편이 낫다.
-4. **영문 카피 채우기** — `title_en` / `description_en` 이 비면 영문 페이지가 한국어로 채워진다.
+5. **영문 카피 채우기** — `title_en` / `description_en` 이 비면 영문 페이지가 한국어로 채워진다.
    영문 검색량이 한국어의 수십 배인 카테고리라 여기 투자 대비가 가장 크다.
-5. **Core Web Vitals** — 번들 2MB(gzip 573KB) 단일 청크. 게임 상세 진입 LCP 가 유입 순위에
+6. **Core Web Vitals** — 번들 2MB(gzip 573KB) 단일 청크. 게임 상세 진입 LCP 가 유입 순위에
    직접 걸린다. 라우트 단위 코드 스플릿이 다음 개선점.
-6. **외부 링크 확보** — itch.io / Reddit(r/WebGames, r/incremental_games) / 커뮤니티 등록.
+7. **외부 링크 확보** — itch.io / Reddit(r/WebGames, r/incremental_games) / 커뮤니티 등록.
    신규 도메인은 백링크 없이는 경쟁 키워드에서 밀린다.
-7. **배포 후 검증** — `curl -I https://game.1989v.com/games/<slug>/index.html` 로 X-Robots-Tag,
+8. **배포 후 검증** — `curl -I https://game.1989v.com/games/<slug>/index.html` 로 X-Robots-Tag,
    Search Console URL 검사로 렌더링 결과와 구조화 데이터, `sitemap.xml` 200 응답 확인.
