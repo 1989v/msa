@@ -65,7 +65,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **Latency Budget**: latency 를 설계 입력으로 강제 + Tier 1 P99 SLA + 측정 표준 → `docs/adr/ADR-0025-latency-budget.md` (실천: `docs/conventions/latency-budget.md`)
 - **docs 분류 정책**: ADR vs Conventions vs Standards 의 정의 / 판단 기준 / 분해 원칙 / redirect 표준 → `docs/adr/ADR-0026-docs-taxonomy.md`
 - **이력서 사이트**: `resume.1989v.com` — DB(마크다운) 서빙 + 공개 토글 + 제출처별 토큰 게이트 + 열람 기록 → `docs/adr/ADR-0064-resume-site-gated-serving.md`. **본문은 레포가 아니라 DB가 원본**이고 어드민에서 편집한다 (공개 레포에 이력서 원문을 두면 게이트가 무의미해진다). 초기 데이터만 이력서 볼트에서 가져왔고, 이후 볼트와 사이트는 독립적으로 갱신된다
-- **SEO / 검색 유입**: 빌드타임 프리렌더, 언어(`/en`)·장르(`/games/genre/*`) URL 승격, 호스트별 robots/sitemap, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 게임 타이틀/설명 문구는 여기서만 고친다
+- **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다)
 
 ---
 

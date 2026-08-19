@@ -15,6 +15,7 @@ const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
 // ADR-0065 — K-관광/지리 탐색. place.<domain> 이 정규 주소 (host 인식 루트 라우팅),
 // apex/개발은 /place. 구글맵 로더 포함이라 lazy 분리.
 const PlacePage = lazy(() => import('./pages/place/PlacePage'));
+const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
 // ADR-0066 — IT(개념 사전·3D 그래프·트리맵). 메인이 런처가 되면서 three.js 를 쓰지 않게 됐다.
 // eager 로 두면 타일만 보는 방문자도 그래프 엔진을 통째로 받는다.
 const SearchPage = lazy(() => import('./pages/SearchPage'));
@@ -52,7 +53,7 @@ function gameRoute(element: ReactElement) {
 function PlaceHostRedirect() {
   const { pathname, search, hash } = window.location;
   // 허브(/place, /en/place)는 place 호스트에서 루트(/, /en)가 정규 주소다 (ADR-0065)
-  const target = pathname === '/place' ? '/' : pathname === '/en/place' ? '/en' : pathname;
+  const target = pathname.replace(/^(\/en)?\/place/, '$1') || '/';
   window.location.replace(`https://place.1989v.com${target}${search}${hash}`);
   return null;
 }
@@ -93,6 +94,11 @@ function App() {
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
           <Route path="/place" element={placeRoute(<PlacePage />)} />
           <Route path="/en/place" element={placeRoute(<PlacePage />)} />
+          {/* 관광지 상세 — 고유명사 검색의 착지점 (ADR-0062). place 호스트가 정규 주소 */}
+          <Route path="/attractions/:id" element={placeRoute(<AttractionPage />)} />
+          <Route path="/en/attractions/:id" element={placeRoute(<AttractionPage />)} />
+          <Route path="/place/attractions/:id" element={placeRoute(<AttractionPage />)} />
+          <Route path="/en/place/attractions/:id" element={placeRoute(<AttractionPage />)} />
 
           {/* 개명된 게임의 옛 주소 — 색인·공유 링크가 죽지 않게 새 슬러그로 넘긴다.
               슬러그를 바꿀 때마다 여기 한 줄이 늘어난다 (DB 는 새 슬러그만 안다). */}

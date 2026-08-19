@@ -15,6 +15,16 @@ import { loadGoogleMaps, mapsApiKey, radiusFromBounds } from './googleMaps';
 import ThemeToggle from '../../components/ThemeToggle';
 import './PlacePage.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
+import {
+  PLACE_ORIGIN,
+  attractionPath,
+  collectionPageJsonLd,
+  placeBrand,
+  placeHreflangAlternates,
+  placeHubMeta,
+  placeUrl,
+} from '../../seo/copy.mjs';
+import { useSeo } from '../../seo/useSeo';
 
 // ADR-0065 K-관광/지리 탐색 — 관광지 지도 검색. 데이터 출처: 한국관광공사 TourAPI.
 // place.<domain> 서브도메인이 정규 주소 (game 과 동일한 host 인식 루트 라우팅):
@@ -95,6 +105,17 @@ export default function PlacePage() {
   const navigate = useNavigate();
   const lang: PlaceLang = pathname.startsWith('/en') ? 'en' : 'ko';
   const L = UI[lang];
+
+  const seoMeta = placeHubMeta(lang);
+  const seoCanonical = placeUrl(lang);
+  useSeo({
+    title: seoMeta.title,
+    description: seoMeta.description,
+    canonical: seoCanonical,
+    lang,
+    alternates: placeHreflangAlternates(''),
+    jsonLd: [collectionPageJsonLd(lang, seoMeta, seoCanonical, { name: placeBrand(lang), url: PLACE_ORIGIN })],
+  });
 
   const [keywordInput, setKeywordInput] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -438,6 +459,9 @@ export default function PlacePage() {
               {selected.address && <p className="place-detail-addr">{selected.address}</p>}
               {selected.tel && <p className="place-detail-tel">{selected.tel}</p>}
               {selected.overview && <p className="place-detail-overview">{selected.overview}</p>}
+              <a className="place-btn" href={attractionPath(lang, selected.id)}>
+                {lang === 'en' ? 'Open detail page' : '상세 페이지 열기'}
+              </a>
               <a
                 className="place-btn primary"
                 href={`https://www.google.com/maps/search/?api=1&query=${selected.latitude},${selected.longitude}`}
@@ -467,8 +491,17 @@ function PlaceCard({
 }) {
   const L = UI[lang];
   return (
-    <article className="place-card" onClick={onSelect} role="button" tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && onSelect()}>
+    // 실주소를 가진 링크로 둔다 — 크롤러는 onClick 을 따라가지 못하고, 사용자는 새 탭/공유가 된다.
+    // 평범한 좌클릭만 가로채 기존 사이드 패널 UX 를 유지한다.
+    <a
+      className="place-card"
+      href={attractionPath(lang, attraction.id)}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+        e.preventDefault();
+        onSelect();
+      }}
+    >
       {attraction.imageUrl ? (
         <img className="place-card-img" src={attraction.imageUrl} alt="" loading="lazy" />
       ) : (
@@ -483,6 +516,6 @@ function PlaceCard({
         {attraction.address && <p className="place-card-addr">{attraction.address}</p>}
         {attraction.overview && <p className="place-card-overview">{attraction.overview}</p>}
       </div>
-    </article>
+    </a>
   );
 }

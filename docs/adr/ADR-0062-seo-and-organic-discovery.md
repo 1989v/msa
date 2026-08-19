@@ -1,8 +1,8 @@
-# ADR-0062 — SEO / 검색 유입 설계 (게임 플랫폼 우선)
+# ADR-0062 — SEO / AEO / 검색 유입 설계 (전 호스트)
 
-- Status: Accepted (2026-08-07)
+- Status: Accepted (2026-08-07, 2026-08-19 place·포털·AEO 로 확장)
 - Date: 2026-08-07
-- Relates: ADR-0058(FE 통합), ADR-0059(게임 플랫폼 · game 서브도메인), ADR-0019(K8s 전환)
+- Relates: ADR-0058(FE 통합), ADR-0059(게임 플랫폼), ADR-0064(이력서 게이트), ADR-0065(K-관광), ADR-0066(서비스 런처), ADR-0019(K8s 전환)
 
 ## Context
 
@@ -31,13 +31,15 @@
 그대로 물려받으므로 SPA 는 정상 부팅하고, React 가 마운트되면 `#root` 본문을 교체한다.
 
 ```
-dist/prerender/_hosts/game.1989v.com.html   →  game 호스트 루트(허브, ko)
-dist/prerender/en/index.html                →  /en (허브, en)
-dist/prerender/games/index.html             →  /games
-dist/prerender/games/genre/<genre>.html     →  장르 랜딩 9종
-dist/prerender/games/<slug>.html            →  게임 상세
-dist/prerender/en/games/**                  →  영문 전량
-dist/seo/<host>/{robots.txt,sitemap.xml}    →  호스트별 SEO 자산
+dist/prerender/_hosts/<host>[.en].html       →  호스트별 루트 (게임 허브 / place 허브 / 포털)
+dist/prerender/{tech,portfolio,shop}.html    →  apex 정적 페이지
+dist/prerender/games/index.html              →  /games
+dist/prerender/games/genre/<genre>.html      →  장르 랜딩 9종
+dist/prerender/games/<slug>.html             →  게임 상세
+dist/prerender/en/games/**                   →  게임 영문 전량
+dist/seo/<host>/robots.txt                   →  호스트별 크롤 정책
+dist/seo/<host>/sitemap*.xml                 →  호스트별 sitemap (place 는 인덱스 + 분할)
+dist/seo/<host>/llms.txt                     →  호스트별 AEO 진입 문서
 ```
 
 nginx 가 정확히 매칭되는 프리렌더 파일이 있으면 그것을, 없으면 기존처럼 SPA 셸을 준다.
@@ -88,7 +90,7 @@ location = /robots.txt  { try_files /seo/$host/robots.txt /seo/1989v.com/robots.
 location = /sitemap.xml { try_files /seo/$host/sitemap.xml =404; }
 ```
 
-게임 sitemap 은 76 URL(허브 2 + 장르 18 + 상세 56)이며 `lastmod` 는 `contentUpdatedAt`,
+게임 sitemap 은 142 URL(허브 2 + 장르 18 + 상세 122, 2026-08-19 기준 61종 × 2언어)이며 `lastmod` 는 `contentUpdatedAt`,
 각 URL 에 `xhtml:link` hreflang 대체 주소를 붙인다.
 
 ### 6. 구조화 데이터
@@ -96,8 +98,13 @@ location = /sitemap.xml { try_files /seo/$host/sitemap.xml =404; }
 | 페이지 | schema.org |
 |---|---|
 | 게임 상세 | `VideoGame` (+ 평점이 있으면 `aggregateRating`) + `BreadcrumbList` |
-| 허브 / 장르 | `CollectionPage` + `ItemList` (+ 허브는 `WebSite`) |
+| 게임 허브 / 장르 | `CollectionPage` + `ItemList` (+ 허브는 `WebSite`) |
+| 관광지 상세 | `TouristAttraction` (+ `PostalAddress` · `GeoCoordinates`) + `BreadcrumbList` |
+| place 허브 | `CollectionPage` |
 | 포털 루트 | `WebSite` + `SearchAction` |
+
+`CollectionPage` 는 소속 사이트를 인자로 받는다 — 기본값(게임)이 새면 place 페이지가
+`kgd Games` 소속으로 선언된다.
 
 `aggregateRating` 은 `ratingCount > 0` 일 때만 넣는다 — 0표에 별점을 선언하면 리치 결과에서
 스팸으로 취급된다.
@@ -106,7 +113,48 @@ location = /sitemap.xml { try_files /seo/$host/sitemap.xml =404; }
 
 SVG 썸네일은 카카오톡·슬랙·X·페이스북 언퍼러가 렌더하지 못한다. `socialImage()` 가
 `png/jpg/webp` 일 때만 `og:image` 를 내보내고, 아니면 `twitter:card=summary`(텍스트 카드)로
-떨어뜨린다. 현재 28종 중 래스터 스크린샷 보유는 17종.
+떨어뜨린다. place 의 관광지 사진은 TourAPI 원본(jpg)이라 그대로 쓴다.
+
+### 8. place — 상세는 sitemap 전용, 프리렌더하지 않는다 (2026-08-19)
+
+관광지는 국문 44,911건 · 영문 14,658건, 합계 **59,569 URL** 이다(무필터 조회의 10,000 은
+OpenSearch 집계 상한이고 실제 규모가 아니다). 전량 프리렌더하면 9KB × 6만 = 540MB 가 이미지에
+들어가 OCI 무료 범위 제약과 정면으로 부딪히고, 국문의 85% 는 개요가 없어 제목·주소뿐인 얇은
+페이지가 대량 생긴다. 그래서 상세는 **라우트(`/attractions/:id`) + `useSeo` + sitemap** 으로만
+연다. 구글은 렌더링 후 색인하고, 네이버·언퍼러는 상세를 못 보지만 그 손실을 감수한다.
+
+- 정규 주소: `place.1989v.com/attractions/{id}` · 영문 `place.1989v.com/en/attractions/{id}`
+  (경로에 `attractions` 를 남겨 영문 키워드를 URL 에 싣는다)
+- **hreflang 을 걸지 않는다.** TourAPI 가 국문/영문을 별도 콘텐츠로 관리해 같은 장소라도
+  id·contentId 가 다르다(경복궁 ko 126508 / en 264337). 짝을 알 수 없으므로 잘못된 대체 주소를
+  선언하느니 생략한다. 허브(`/` ↔ `/en`)만 진짜 번역쌍이라 거기에만 붙인다
+- 문서의 `lang` 필드가 SEO 기준이다 — `/en/attractions/{국문id}` 처럼 어긋난 주소가 들어와도
+  canonical 이 올바른 쪽을 가리킨다
+- 열거는 지역코드 17개로 잘라 훑는다. 무필터는 상위 10,000 에서 잘리고 페이지 크기는 서버가
+  100 으로 고정한다. 약 600회 요청 · 100초. 실패한 조각은 건너뛴다 — 일부가 빠진 sitemap 이
+  sitemap 이 없는 것보다 낫다
+- sitemap 은 파일당 20,000 URL 로 쪼개고 `sitemap.xml` 을 인덱스로 둔다(상한 50,000)
+- 검색 목록 카드는 `<article onClick>` 에서 **`<a href>`** 로 바꿨다. 크롤러는 onClick 을
+  따라가지 못하고, sitemap 에만 있고 내부 링크가 없는 URL 은 잘 크롤되지 않는다
+
+### 9. `/en` 은 호스트로 가른다 (2026-08-19)
+
+`location = /en` 이 호스트를 보지 않아 **place 영문 홈에 게임 허브 프리렌더가 나가고 있었다** —
+canonical 까지 `game.1989v.com/en` 을 가리켜 place 영문 페이지가 통째로 오색인됐다. 루트(`/`)와
+같은 규칙으로 `_hosts/$host.en.html` 을 먼저 찾게 고쳤다.
+
+한 벌의 번들이 4개 호스트를 서빙하는 구조에서는 **호스트로 갈리는 경로마다 프리렌더도 호스트
+키를 가져야 한다**. 경로만 보고 파일을 고르면 다른 서비스의 페이지가 새어 나간다.
+
+### 10. AEO — llms.txt + AI 크롤러 명시 (2026-08-19)
+
+답변형 검색에 인용되는 쪽이 이득이라고 보고 명시적으로 연다. robots.txt 에 GPTBot ·
+OAI-SearchBot · ChatGPT-User · ClaudeBot · Claude-User · PerplexityBot · Google-Extended ·
+Applebot-Extended 를 `Allow` 로 적는다 (기본 `*` 로도 열리지만, 의도를 기록으로 남긴다).
+
+호스트마다 `/llms.txt` 를 둔다 — 게임은 전체 목록과 장르, place 는 데이터 규모·주소 형식·공개
+API, 포털은 서비스 목록. **전량 열거는 sitemap 이 하고 llms.txt 는 "무엇을 어디서 보면 되는지"만**
+짧게 적는다. 이력서 호스트는 llms.txt 도 sitemap 도 두지 않는다 (ADR-0064).
 
 ## Consequences
 
@@ -117,7 +165,11 @@ SVG 썸네일은 카카오톡·슬랙·X·페이스북 언퍼러가 렌더하지
   게임 추가가 잦아지면 sitemap/프리렌더를 백엔드 엔드포인트로 옮기는 것이 다음 단계다.
 - `index.html` 의 `<!--seo:start--> … <!--seo:end-->` 마커를 지우면 프리렌더가 조용히 죽는다.
   스크립트가 마커 부재를 에러로 던져 빌드 로그에 남긴다.
-- `/en` 이 게임 영역 전용 프리픽스가 됐다. 포털(apex)에는 영문 라우트가 없다.
+- `/en` 은 호스트마다 다른 서비스의 영문 면이다 (게임 허브 / place 허브). 포털(apex)에는 영문 면이
+  없어 게임 영문 허브로 폴백하고, canonical 이 게임 호스트를 가리킨다.
+- 빌드가 관광지 열거로 100초 늘었다. 실패해도 fail-soft 라 이미지 빌드는 통과한다.
+- 관광지가 늘어도 재배포 전까지 sitemap 에 반영되지 않는다 — 게임과 같은 성질의 지연이다.
+- SEO 자산 총량은 6MB (place sitemap 3파일 6MB 가 대부분). 프리렌더 HTML 은 149장 1.8MB.
 
 ## Alternatives considered
 
@@ -134,7 +186,8 @@ SVG 썸네일은 카카오톡·슬랙·X·페이스북 언퍼러가 렌더하지
 코드로 끝나지 않는, 사람이 해야 하는 항목. 영향 큰 순.
 
 1. **검색엔진 등록 + sitemap 제출** — Google Search Console / 네이버 서치어드바이저 /
-   Bing Webmaster 에 `game.1989v.com`, `1989v.com` 을 각각 등록하고 sitemap 제출.
+   Bing Webmaster 에 `game.1989v.com`, `place.1989v.com`, `1989v.com` 을 각각 등록하고
+   sitemap 제출 (place 는 인덱스 하나만 내면 분할본까지 따라간다).
    등록 없이는 색인까지 수 주가 걸린다. 네이버는 등록이 사실상 필수.
 2. **게임별 1200×630 래스터 스크린샷** — 미보유 11종. 메신저 공유 CTR 이 텍스트 카드 대비
    크게 갈린다. `public/games/thumbs/shots/<slug>.png` 에 넣으면 자동으로 og:image 가 붙는다.
