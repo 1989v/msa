@@ -59,6 +59,12 @@ class DataSourceConfig {
      * Boot 의 EMF 자동 구성이 back-off 하므로(=`entityManagerFactory` 빈 소멸), code-dictionary
      * 도메인의 EMF/TM 도 명시 정의한다. 이름을 기본값 그대로 두어 기존 `@Transactional`·
      * Spring Data 기본 참조가 그대로 동작한다.
+     *
+     * **폴드된 도메인의 패키지는 여기에 더한다.** 이 EMF 가 명시 정의라 `@EntityScan` 은
+     * 먹지 않는다 — 그 애너테이션은 Boot 가 자동 구성한 EMF 에만 반영되고, 위 back-off 때문에
+     * 그 EMF 는 존재하지 않는다. 빠뜨리면 해당 도메인의 리포지토리가 "not a managed type" 으로
+     * 컨텍스트 로드에서 죽는다 (ADR-0069 deal 폴드 때 실제로 겪었다).
+     * game 은 예외 — 전용 datasource/EMF 를 따로 갖는다 (GameDataSourceConfig).
      */
     @Bean
     @Primary
@@ -67,7 +73,7 @@ class DataSourceConfig {
         @Qualifier("dataSource") dataSource: DataSource,
     ): LocalContainerEntityManagerFactoryBean =
         builder.dataSource(dataSource)
-            .packages("com.kgd.codedictionary")
+            .packages("com.kgd.codedictionary", "com.kgd.deal")
             .persistenceUnit("code-dictionary")
             .build()
 
