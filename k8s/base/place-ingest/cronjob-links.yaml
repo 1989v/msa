@@ -1,0 +1,59 @@
+# ADR-0070 — 관광지 외부 콘텐츠(유튜브) 수집 CronJob.
+#
+# 전량 사전수집을 하지 않는다. YouTube `search.list` 는 건당 100 units 이고 일일 쿼터가
+# 10,000 units 라 하루 100 관광지가 상한 — ko 44,912건이면 450일이다. 그래서 **실제로 열어본
+# 곳부터** 채운다(place 의 우선순위 큐).
+#
+# 시간당 1회 × 10건인 이유: 일일 예산은 place 가 세므로 여기서 지킬 필요는 없지만, 한 번에
+# 100건을 몰아 쓰면 자정 직후 큐에 있던 것만 채워지고 낮에 조회된 곳은 다음 날로 밀린다.
+# 조금씩 나눠 써야 온디맨드가 실제로 온디맨드로 동작한다.
+#
+# 10분 주기로 하지 않는 이유: 예산이 하루 100건이라 대부분의 실행이 0건을 받는데,
+# free-tier 단일 노드에서 하루 144번 파드를 띄우는 값을 하지 못한다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-links
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "links"
+spec:
+  schedule: "17 * * * *"       # 매시 17분 — 정각 몰림(다른 배치들)을 피한다
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # 재시도하지 않는다 — 실패 대부분이 쿼터이고, place 가 레코드별 재시도 시점을 이미 잡는다.
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "links"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=links"]
+              env:
+                - name: PLACE_API
+                  value: "http://place:8096"
+                - name: LINK_LIMIT
+                  value: "10"
+                - name: YOUTUBE_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: youtube-api-key
+                      optional: true
+              resources:
+                # 개요 잡과 달리 전량 스캔이 없다 — 큐에서 받은 10건만 다룬다.
+                requests: { cpu: 50m, memory: 128Mi }
+                limits:   { memory: 256Mi }

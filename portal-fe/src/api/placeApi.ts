@@ -82,8 +82,20 @@ export interface AttractionDeepLink {
   revenueType: LinkRevenueType;
 }
 
+export interface CollectedLink {
+  source: 'YOUTUBE' | 'NAVER_BLOG';
+  title: string;
+  url: string;
+  thumbnailUrl: string | null;
+  author: string | null;
+  publishedAt: string | null;
+}
+
 export interface AttractionLinks {
+  collected: CollectedLink[];
   deepLinks: AttractionDeepLink[];
+  /** 수집 대기 — 오류가 아니다. 조회가 큐를 채우고 CronJob 이 비운다. */
+  pending: boolean;
 }
 
 export const fetchAttractionLinks = async (id: string): Promise<AttractionLinks> => {

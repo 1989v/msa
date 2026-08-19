@@ -497,7 +497,7 @@
 }
 
 .place-links-slide {
-  flex: 0 0 8.5rem;
+  flex: 0 0 9.5rem;
   scroll-snap-align: start;
 }
 
@@ -517,13 +517,29 @@
   border-color: var(--ko-border-strong);
 }
 
-.place-links-card-provider {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.85rem;
+.place-links-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 0.35rem;
+  background: var(--ko-surface-1);
+}
+
+.place-links-card-title {
+  font-size: 0.8rem;
   font-weight: 600;
+  line-height: 1.35;
   color: var(--ko-text-primary);
+  /* 제목 길이가 제각각이라 카드 높이가 들쭉날쭉해진다 — 두 줄에서 자른다 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.place-links-card-skeleton {
+  /* 오류가 아니라 대기다 — 회색 자리만 잡고 문구는 그룹 제목이 말한다 */
+  opacity: 0.55;
 }
 
 .place-links-card-sub {

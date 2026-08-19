@@ -107,8 +107,24 @@ def main() -> int:
     assert len(POSTED["bulk"]) == 1 and POSTED["bulk"][0]["contentId"] == "A", POSTED["bulk"]
     assert POSTED["probes"] == [{"contentId": "B", "lang": "ko"}], POSTED["probes"]
 
-    print("SMOKE OK — 제외목록 적용 · 429 는 negative cache 제외 · 전체 레코드 적재")
+    _youtube_matcher()
+
+    print("SMOKE OK — 제외목록 적용 · 429 는 negative cache 제외 · 전체 레코드 적재 · 영상 매칭 필터")
     return 0
+
+
+def _youtube_matcher() -> None:
+    """관광지명이 제목·설명에 없는 영상은 버린다 — "경복궁" 검색에 무관한 영상이 섞여 온다."""
+    from src import youtube
+
+    assert youtube._matches("경복궁", {"title": "서울 경복궁 브이로그", "description": ""})
+    assert youtube._matches("Gyeongbokgung Palace",
+                            {"title": "Seoul walk", "description": "we visit Gyeongbokgung Palace"})
+    assert not youtube._matches("경복궁", {"title": "부산 맛집 투어", "description": "해운대"})
+    # 공백·문장부호는 무시하고 붙여서 본다
+    assert youtube._matches("전주 한옥마을", {"title": "전주한옥마을 1박2일", "description": ""})
+    # 이름이 통째로 사라지는 입력은 매칭하지 않는다 (아무 영상이나 붙는 것을 막는다)
+    assert not youtube._matches("!!!", {"title": "무엇이든", "description": ""})
 
 
 if __name__ == "__main__":

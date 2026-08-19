@@ -131,9 +131,23 @@ data class RecordOverviewProbeResponse(val recorded: Int)
  * 관광지 외부 링크 (ADR-0070). `revenueType` 이 AFFILIATE 인 것만 화면이 배지·고지와
  * `rel="sponsored"` 를 붙인다 — 표시 규칙은 화면 한 곳에서만 판단한다.
  */
-data class AttractionLinksResponse(val deepLinks: List<DeepLinkResponse>) {
+data class AttractionLinksResponse(
+    val collected: List<CollectedLinkResponse>,
+    val deepLinks: List<DeepLinkResponse>,
+    val pending: Boolean,
+) {
     companion object {
         fun from(links: GetAttractionLinksUseCase.Links) = AttractionLinksResponse(
+            collected = links.collected.map {
+                CollectedLinkResponse(
+                    source = it.source.name,
+                    title = it.title,
+                    url = it.url,
+                    thumbnailUrl = it.thumbnailUrl,
+                    author = it.author,
+                    publishedAt = it.publishedAt,
+                )
+            },
             deepLinks = links.deepLinks.map {
                 DeepLinkResponse(
                     provider = it.provider,
@@ -142,9 +156,19 @@ data class AttractionLinksResponse(val deepLinks: List<DeepLinkResponse>) {
                     revenueType = it.revenueType.name,
                 )
             },
+            pending = links.pending,
         )
     }
 }
+
+data class CollectedLinkResponse(
+    val source: String,
+    val title: String,
+    val url: String,
+    val thumbnailUrl: String?,
+    val author: String?,
+    val publishedAt: LocalDateTime?,
+)
 
 data class DeepLinkResponse(
     val provider: String,

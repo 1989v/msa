@@ -27,12 +27,15 @@
 | `thumbnail_url` | VARCHAR(500) | nullable |
 | `author` | VARCHAR(100) | 채널명 / 블로그명, nullable |
 | `published_at` | DATETIME | nullable |
-| `rank` | INT | 소스 내 표시 순서 (0부터) |
+| `sort_order` | INT | 소스 내 표시 순서 (0부터) |
 | `collected_at` | DATETIME | |
-| `expires_at` | DATETIME | 재수집 기준선 |
 
 - `UNIQUE (attraction_id, source, external_id)` — 재수집 멱등성
-- `INDEX (attraction_id, source, rank)` — 조회 경로
+- `INDEX (attraction_id, source, sort_order)` — 조회 경로
+- **만료는 여기 없다.** 신선도는 아래 요청 행의 `next_attempt_at` 이 단독으로 들고 있다 —
+  양쪽에 두면 어느 쪽이 기준인지 알 수 없어진다.
+- 적용은 (관광지, 소스) 단위 **전체 교체**다. 원천에서 빠진 영상이 남으면 삭제된 영상으로
+  링크가 죽고 그걸 알아챌 경로가 없다.
 - 도메인: `place/domain/.../attraction/model/AttractionLink.kt` (프레임워크 의존 없음)
 - **`Attraction` 은 변경하지 않는다.** `syncFrom` 에 손대지 않는 것이 이 분리의 목적이다.
 
@@ -45,8 +48,15 @@
 | `source` | VARCHAR(20) | |
 | `view_count` | INT | 우선순위 — 조회될 때마다 +1 |
 | `requested_at` | DATETIME | |
-| `last_attempt_at` | DATETIME | nullable |
-| `attempt_count` | INT | 3회 실패 시 큐에서 제외 |
+| `last_attempt_at` | DATETIME | nullable — 그날 소진량 집계 기준 |
+| `next_attempt_at` | DATETIME | nullable(=즉시 대상). 성공 +90일 · 빈결과 +30일 · 실패 +1일 |
+
+**행을 지우지 않는다.** `next_attempt_at` 하나가 신선도와 재시도를 함께 표현하고,
+`last_attempt_at` 이 그날 쓴 호출 수를 세는 근거가 된다. 성공 행을 지우면 그날 몇 번 불렀는지
+알 수 없어져 일일 예산을 지킬 수 없다 — 별도 카운터 테이블을 두지 않는 이유이기도 하다.
+
+`attempt_count` 는 만들지 않았다. "3회 실패 시 제외"는 429(한도)를 레코드의 결함으로 오해하는
+설계다. 실패는 `next_attempt_at = +1일` 로 미루면 충분하고, 영구 제외는 만들지 않는다.
 
 조회 횟수를 별도 테이블로 두지 않고 큐 행에 얹는다 — 우선순위를 정하는 것 말고 이 값의
 용도가 지금 없다. (YAGNI: 조회 통계가 요구되면 그때 analytics 로 보낸다.)
@@ -57,53 +67,55 @@
 
 ```
 GET /api/places/attractions/{id}/links
-200 { "deepLinks": [ { "provider":"INSTAGRAM",  "kind":"SOCIAL",       "url":..., "revenueType":"PLAIN" },
+200 { "collected": [ { "source":"YOUTUBE", "title":..., "url":..., "thumbnailUrl":..., "author":..., "publishedAt":... } ],
+      "deepLinks": [ { "provider":"INSTAGRAM",  "kind":"SOCIAL",       "url":..., "revenueType":"PLAIN" },
                      { "provider":"MYREALTRIP", "kind":"TOUR_PRODUCT", "url":..., "revenueType":"PLAIN" },
-                     { "provider":"KLOOK",      "kind":"TOUR_PRODUCT", "url":..., "revenueType":"PLAIN" } ] }
+                     { "provider":"KLOOK",      "kind":"TOUR_PRODUCT", "url":..., "revenueType":"PLAIN" } ],
+      "pending": true }
 ```
-
-T3 에서 `collected`(수집형 카드)와 `pending`(수집 중) 이 이 응답에 더해진다. **지금 넣지 않는다** —
-소비자가 없는 필드를 미리 만들면 항상 빈 배열과 항상 false 를 유지해야 한다.
-
-`label` 이 아니라 `provider` 를 돌려주는 이유: 문구는 화면의 몫이다. 백엔드가 한국어 라벨을 들면
-영문 화면이 그걸 다시 뒤집어야 한다.
-
-**T3 이후**
 
 - `collected` 가 비었거나 만료면 큐에 적재하고 `pending: true` 로 답한다 (**동기 수집 없음**).
 - `deepLinks` 는 항상 즉시 조립된다 — 응답이 빈 적이 없다.
 - 큐 적재는 조회 응답을 막지 않는다 — 실패는 warn 만 남긴다 (ADR-0069 §3 과 같은 정신).
 
+`label` 이 아니라 `provider` 를 돌려주는 이유: 문구는 화면의 몫이다. 백엔드가 한국어 라벨을 들면
+영문 화면이 그걸 다시 뒤집어야 한다.
+
 ### 내부 (gateway 미라우팅 — 클러스터 내부 전용)
 
 ```
-GET  /internal/attractions/links/pending?source=YOUTUBE&limit=100
-     → [ { "attractionId":..., "title":"경복궁", "lang":"ko", "latitude":..., "longitude":... } ]
-     view_count DESC, requested_at ASC
+GET  /internal/attractions/links/pending?source=YOUTUBE&limit=10
+     → { "items": [ { "attractionId":..., "title":"경복궁", "lang":"ko", "latitude":..., "longitude":... } ] }
+     view_count DESC, requested_at ASC · **일일 예산이 남은 만큼만** 나온다
 
 POST /internal/attractions/links/bulk
-     { "links": [ { "attractionId":..., "source":..., "externalId":..., ... } ], "emptyFor": [ {attractionId, source} ] }
+     { "source": "YOUTUBE", "results": [
+         { "attractionId": 1, "links": [ { "externalId":..., "title":..., "url":..., ... } ] },  // 성공(0건이면 빈 배열)
+         { "attractionId": 2, "failed": true }                                                   // 429·네트워크
+       ] }
 ```
 
-- `emptyFor` = 원천이 결과를 0건으로 준 (관광지, 소스) — 큐에서 제거하고 만료 시각만 기록한다.
-  이게 없으면 결과 없는 관광지가 매 실행마다 큐 앞자리를 차지한다. TourAPI 개요의
-  negative cache 와 같은 문제다 — 개요 쪽은 `attraction_overview_probes` 로 이미 옮겼다(T1).
-- **429·네트워크 실패는 `emptyFor` 가 아니다.** `attempt_count` 만 올린다 — 넣으면 그 레코드가
-  영영 재시도되지 않는다 (핸드오프 §3.3 과 동일한 함정).
+- **`links: []` 와 `failed: true` 는 다른 뜻이다.** 전자는 원천이 "0건"이라고 답한 것이고
+  후자는 답 자체를 못 받은 것이다. 서버가 전자는 +30일, 후자는 +1일로 재시도를 잡는다.
+  섞으면 실패한 레코드의 재시도가 유효기간만큼 밀린다 (핸드오프 §3.3 과 동일한 함정).
+- `pending` 이 빈 목록인 것은 실패가 아니라 **오늘 몫을 다 썼다**는 뜻이다.
 
 ## 4. 수집 커넥터 (`place/ingest`)
 
 | 소스 | 엔드포인트 | 파라미터 | 상한 | TTL |
 |---|---|---|---|---|
-| YouTube | `youtube/v3/search` | `q={title} {지역명}`, `type=video`, `maxResults=5`, `regionCode=KR`, `relevanceLanguage={lang}`, `safeSearch=strict` | **일 100 관광지** (10,000 units ÷ 100) | 90일 |
+| YouTube | `youtube/v3/search` | `q={title}`, `type=video`, `maxResults=5`, `regionCode=KR`, `relevanceLanguage={lang}`, `safeSearch=strict` | **일 100 관광지** (10,000 units ÷ 100) | 90일 |
 | 네이버 | `/v1/search/blog.json` | `query={title}`, `display=5`, `sort=sim` | 일 25,000콜 | 30일 |
 
 - **매칭 필터**: 영상/글 제목에 관광지명(공백 제거·정규화)이 포함되지 않으면 버린다.
   "경복궁" 질의에 무관한 콘텐츠가 섞이는 것에 대한 1차 방어이고, 오탐률은 운영에서 잰다.
 - `lang=en` 레코드는 영문 타이틀로 질의하고 `relevanceLanguage=en`.
 - 일일 예산은 **소진이 정상**이다. 남은 큐는 다음 실행으로 넘어간다.
-- 예산 카운터는 프로세스 안에 두지 않는다(파드가 매번 새로 뜬다) — 당일 `collected_at`
-  기준 카운트로 place 에서 계산해 `pending` 응답의 `limit` 을 정한다.
+- 예산 카운터는 프로세스 안에 두지 않는다(파드가 매번 새로 뜬다) — 당일 `last_attempt_at`
+  기준 카운트로 place 가 계산해 `pending` 의 `limit` 을 자른다. `collected_at` 이 아니라
+  `last_attempt_at` 인 이유: 빈 결과와 실패도 호출을 썼다.
+- **쿼터 소진은 403(reason=quotaExceeded)이지 429 가 아니다.** 만나면 그 실행을 즉시 멈춘다 —
+  남은 큐를 계속 두드려도 답이 같다.
 
 ## 5. 딥링크 템플릿
 

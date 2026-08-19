@@ -41,13 +41,13 @@
 
 ---
 
-## T2 — 링크 도메인 + API (place) — **딥링크분 완료**, 수집형은 T3 과 함께
+## T2 — 링크 도메인 + API (place) — **완료 (2026-08-20)**
 
-- [ ] `AttractionLink` 도메인 모델 + `AttractionLinkRequest` (프레임워크 의존 없음) — T3
+- [x] `AttractionLink` 도메인 모델 + `AttractionLinkRequest` (프레임워크 의존 없음)
 - [x] `AttractionDeepLinks` 템플릿 + `AttractionOverviewProbe` (T1 에서 함께)
-- [ ] Flyway 마이그레이션 2개 테이블 (enum STRING, UNIQUE/INDEX 는 spec.md §2) — T3
-- [x] `GET /api/places/attractions/{id}/links` — 딥링크 조립 (캐시·큐는 T3)
-- [ ] `GET|POST /internal/attractions/links/**` — 큐 조회 / 적재 — T3
+- [x] Flyway 마이그레이션 2개 테이블 (`V5__create_attraction_links.sql`)
+- [x] `GET /api/places/attractions/{id}/links` — 캐시 조회 + 딥링크 조립 + 큐 적재
+- [x] `GET|POST /internal/attractions/links/**` — 큐 조회 / 적재
 - [x] 딥링크 템플릿 상수 1곳 (`AttractionDeepLinks`)
 
 **검증**:
@@ -58,24 +58,26 @@
 
 ---
 
-## T3 — 수집 커넥터 (place-ingest 확장)
+## T3 — 수집 커넥터 (place-ingest 확장) — **완료 (2026-08-20), 실호출은 키 대기**
 
-- [ ] YouTube `search.list` 커넥터 — 일 100건 예산, 제목 매칭 필터
-- [ ] 네이버 블로그 검색 커넥터 — 일 25,000콜
-- [ ] 예산 카운터: 당일 `collected_at` 기준 count 로 `pending` limit 산출
-- [ ] `k8s/base/place-ingest/cronjob-links.yaml` (10분)
+- [x] YouTube `search.list` 커넥터 — 제목 매칭 필터, 403 quotaExceeded 즉시 중단
+- [ ] 네이버 블로그 검색 커넥터 — 일 25,000콜 (소스 enum·예산까지만 준비됨)
+- [x] 예산 카운터: 당일 `last_attempt_at` 기준 count 로 `pending` limit 산출
+- [x] `k8s/base/place-ingest/cronjob-links.yaml` (매시 17분 × 10건 — 10분 주기는 대부분 0건을 받아 파드만 띄운다)
 
-**검증**: 표본 50건 수동 채점으로 OQ-1(오탐률) 해소. 429 를 받았을 때 `emptyFor` 로
-보내지 않는지 단위 테스트.
+**검증 (2026-08-20)**: `AttractionLinkServiceTest` 9케이스 — 예산 소진 시 빈 목록, 남은 예산으로
+limit 절단, `failed` 와 0건의 재시도 시점 분리, 큐 적재 실패가 조회를 막지 않음, sortOrder 보존.
+`place/ingest` 스모크에 영상 매칭 필터 추가. **OQ-1(오탐률)은 실호출이 있어야 재므로 미해소.**
 
 ---
 
-## T4 — FE 관련 콘텐츠 섹션 — **딥링크분 완료**
+## T4 — FE 관련 콘텐츠 섹션 — **완료 (2026-08-20)**
 
 - [x] `AttractionLinks` 컴포넌트 — `PlacePage` 사이드 패널 + `AttractionPage` 공용
 - [x] 딥링크 버튼 행 (인스타 / 마이리얼트립 / Klook)
-- [ ] 유튜브 썸네일 카드 / 블로그 링크 — T3
-- [ ] `pending` 스켈레톤 (오류 아님) — T3
+- [x] 유튜브 썸네일 카드 캐로셀
+- [ ] 블로그 링크 — 네이버 커넥터와 함께
+- [x] `pending` 스켈레톤 (오류 아님)
 - [x] `rel` 속성 + `AFFILIATE` 배지·고지 (ADR-0069 §1 규칙 그대로)
 - [x] `placeApi.ts` 에 `fetchAttractionLinks`
 

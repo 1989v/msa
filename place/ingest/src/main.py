@@ -18,7 +18,7 @@ import argparse
 import os
 import sys
 
-from src import backfill_overview, place_client, sync_tour
+from src import backfill_overview, place_client, sync_tour, youtube
 
 
 def _api_key() -> str:
@@ -57,14 +57,48 @@ def _job_sync(content_type: str, limit: int) -> int:
     return 0
 
 
+def _job_links(limit: int) -> int:
+    """수집 대상만큼 외부 소스를 훑어 place 에 돌려준다. 예산 관리는 place 가 한다."""
+    key = os.environ.get("YOUTUBE_API_KEY")
+    if not key:
+        raise SystemExit("YOUTUBE_API_KEY 가 필요합니다")
+
+    items = place_client.fetch_pending_links("YOUTUBE", limit)
+    if not items:
+        backfill_overview.log("수집 대상 없음 (큐가 비었거나 오늘 예산 소진)")
+        return 0
+
+    results = []
+    for item in items:
+        try:
+            links = youtube.search(key, item["title"], item.get("lang") or "ko")
+        except youtube.QuotaExceeded as e:
+            # 남은 큐를 더 두드려도 답이 같다. 이미 받은 결과만 돌려주고 멈춘다.
+            backfill_overview.log(f"쿼터 소진 — 여기서 중단 ({e})")
+            break
+        except Exception as e:
+            # 답을 못 받은 것과 "0건" 은 다르다. place 가 재시도 시점을 다르게 잡는다.
+            backfill_overview.log(f"  {item['title']} 실패: {e}")
+            results.append({"attractionId": item["attractionId"], "failed": True})
+            continue
+        results.append({"attractionId": item["attractionId"], "links": links})
+
+    applied = place_client.apply_link_results("YOUTUBE", results)
+    backfill_overview.log(f"YouTube — 수집 {applied['collected']} · 결과없음 {applied['empty']} "
+                          f"· 실패 {applied['failed']}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--job", required=True, choices=["overview", "stats", "sync"])
+    ap.add_argument("--job", required=True, choices=["overview", "stats", "sync", "links"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
     ap.add_argument("--content-type", default="attraction", choices=list(sync_tour.CONTENT_TYPES))
     ap.add_argument("--limit", type=int, default=200000, help="목록 동기화 상한 (사실상 무제한)")
+    ap.add_argument("--link-limit", type=int, default=int(os.environ.get("LINK_LIMIT", "10")),
+                    help="한 실행에서 훑을 관광지 수 (일일 예산은 place 가 따로 센다)")
     args = ap.parse_args()
 
     langs = (args.lang,) if args.lang else ("ko", "en")
@@ -72,6 +106,8 @@ def main() -> int:
         return _job_stats()
     if args.job == "overview":
         return _job_overview(args.budget, langs)
+    if args.job == "links":
+        return _job_links(args.link_limit)
     return _job_sync(args.content_type, args.limit)
 
 

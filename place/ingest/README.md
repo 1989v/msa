@@ -25,6 +25,7 @@ TourAPI(KorService2/EngService2)
 | `overview` | 개요 하루치 수집(ko/en 각 1,000) → 적재 → negative cache 기록 | `place-ingest-overview` 매일 KST 04:00 |
 | `stats` | 잔량만 출력 (TourAPI 호출 0) | 수동 |
 | `sync` | 목록 전량 재동기화 → 적재 | 수동 (원천 스키마가 바뀔 때) |
+| `links` | 유튜브 영상 수집 → 적재 (우선순위 큐에서 N건) | `place-ingest-links` 매시 17분 |
 
 재색인은 이 이미지가 트리거하지 않는다 — Job 생성 RBAC 을 얻는 대신 `attraction-reindex`
 CronJob 이 30분 뒤(KST 04:30)에 돈다.
@@ -51,13 +52,15 @@ PLACE_API=http://localhost:8096 TOUR_API_KEY='...' python3 -m src.main --job=sta
 | 환경변수 | 발급 | 비고 |
 |---|---|---|
 | `TOUR_API_KEY` | data.go.kr — TourAPI 4.0 국문(KorService2) + 영문(EngService2) | Encoding 키, 추가 인코딩 금지. 미설정 시 `DATA_GO_KR_KEY` 재사용 |
+| `YOUTUBE_API_KEY` | Google Cloud — YouTube Data API v3 | `search.list` 는 건당 100 units, 일 10,000 units → **하루 100 관광지** |
 
 클러스터에서는 Secret `place-ingest-secrets` 의 `tour-api-key`. 운영은 SealedSecret
 (`k8s/infra/prod/sealed-secrets/README.md`).
 
 ```bash
 kubectl -n commerce create secret generic place-ingest-secrets \
-  --from-literal=tour-api-key="$TOUR_API_KEY"
+  --from-literal=tour-api-key="$TOUR_API_KEY" \
+  --from-literal=youtube-api-key="$YOUTUBE_API_KEY"
 ```
 
 > 공공누리 출처표시: "한국관광공사 TourAPI". 원천 raw 응답은 레포에 커밋하지 않는다.
@@ -88,6 +91,18 @@ kubectl -n commerce create secret generic place-ingest-secrets \
 **신체계(`lclsSystm1~3`, `lDongRegnCd`)가 원본**이고 구 코드는 파생이다. 지역을 지정해 순회하면
 areaCode 자체가 없는 레코드 **43%** 를 통째로 놓치므로, 무지정 페이징으로 전량을 받고
 `sync_tour.py` 의 `LDONG_TO_AREA`·`LCLS1_MAP` 으로 역산한다.
+
+### 영상 수집의 예산은 place 가 센다 — 수집기가 세지 않는다
+
+파드가 매번 새로 뜨므로 프로세스 안에 카운터를 두면 소용이 없다. place 가 그날의
+`last_attempt_at` 개수로 남은 예산을 계산해 `pending` 의 개수를 잘라 준다.
+`collected_at` 이 아니라 `last_attempt_at` 인 이유는 **빈 결과와 실패도 호출을 썼기** 때문이다.
+
+**쿼터 소진은 403(reason=quotaExceeded)이고 429 가 아니다.** 만나면 그 실행을 즉시 멈춘다 —
+남은 큐를 계속 두드려도 답이 같고 로그만 쌓인다.
+
+`links: []`(원천이 0건이라고 답함)와 `failed: true`(답 자체를 못 받음)를 섞지 않는다.
+서버가 전자는 30일 뒤, 후자는 하루 뒤로 재시도를 잡는다.
 
 ### 일일 한도는 (서비스 × 오퍼레이션)별로 따로다
 

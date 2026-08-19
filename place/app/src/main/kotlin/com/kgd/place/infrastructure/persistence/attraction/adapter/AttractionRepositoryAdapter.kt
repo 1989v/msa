@@ -45,6 +45,9 @@ class AttractionRepositoryAdapter(
     override fun findById(id: Long): Attraction? =
         jpaRepository.findById(id).orElse(null)?.toDomain()
 
+    override fun findAllByIds(ids: Collection<Long>): List<Attraction> =
+        if (ids.isEmpty()) emptyList() else jpaRepository.findAllById(ids).map { it.toDomain() }
+
     override fun findPage(lang: String?, pageable: Pageable): Page<Attraction> =
         (lang?.let { jpaRepository.findByLang(it, pageable) } ?: jpaRepository.findAll(pageable))
             .map { it.toDomain() }

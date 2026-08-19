@@ -3,3 +3,4 @@ kind: Kustomization
 namespace: commerce
 resources:
   - cronjob-overview.yaml
+  - cronjob-links.yaml

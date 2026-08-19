@@ -2,34 +2,34 @@ import { useQuery } from '@tanstack/react-query';
 import {
   fetchAttractionLinks,
   type AttractionDeepLink,
+  type CollectedLink,
   type PlaceLang,
 } from '../../api/placeApi';
 
 /**
  * 관광지 상세의 "더 찾아보기" (ADR-0070). 검색 패널과 상세 페이지가 같은 컴포넌트를 쓴다.
  *
- * 여행 상품은 하단 캐로셀, SNS 는 그 위 버튼 줄이다. **지금 카드에 담을 수 있는 것은
- * 제공자까지다** — 사진·가격·평점이 있는 상품 카드는 제휴 API 승인이 있어야 나온다.
- * 승인되면 이 캐로셀의 아이템만 상품으로 바뀐다 (자리와 스크롤 동작은 그대로).
- *
- * 인스타그램은 장소 기반 공개 검색 API 가 없어 태그 페이지로 보내는 것이 공식 경로로
- * 할 수 있는 전부다 (수집하지 않는다).
+ * 캐로셀은 수집된 영상이고, SNS·여행 상품은 조립된 딥링크라 항상 즉시 나간다.
+ * 인스타그램은 장소 기반 공개 검색 API 가 없어 태그 페이지로 보내는 것이 공식 경로로 할 수
+ * 있는 전부고, 투어 상품은 제휴 승인 전이라 검색 딥링크만 건다 (상품 카드는 승인 후).
  */
 const UI = {
   ko: {
     heading: '더 찾아보기',
+    videos: '영상',
     social: 'SNS',
     tour: '여행 상품',
-    tourSub: '투어·티켓 검색',
     affiliateBadge: '제휴',
+    pending: '영상을 찾는 중입니다',
     disclosure: '제휴 표시가 붙은 링크는 이용 시 수수료를 받을 수 있습니다.',
   },
   en: {
     heading: 'Explore more',
+    videos: 'Videos',
     social: 'Social',
     tour: 'Tours & tickets',
-    tourSub: 'Search tours',
     affiliateBadge: 'Affiliate',
+    pending: 'Looking for videos',
     disclosure: 'Links marked as affiliate may earn us a commission.',
   },
 } as const;
@@ -49,6 +49,55 @@ function relFor(link: AttractionDeepLink): string {
   return link.revenueType === 'AFFILIATE' ? 'sponsored nofollow noopener' : 'nofollow noopener';
 }
 
+function DeepLinkRow({
+  title,
+  links,
+  lang,
+  affiliateBadge,
+}: {
+  title: string;
+  links: AttractionDeepLink[];
+  lang: PlaceLang;
+  affiliateBadge: string;
+}) {
+  if (links.length === 0) return null;
+  return (
+    <div className="place-links-group">
+      <span className="place-links-group-title">{title}</span>
+      <div className="place-links-row">
+        {links.map((link) => (
+          <a
+            key={link.provider}
+            className="place-btn place-links-btn"
+            href={link.url}
+            target="_blank"
+            rel={relFor(link)}
+          >
+            {providerLabel(link.provider, lang)}
+            {link.revenueType === 'AFFILIATE' && (
+              <span className="place-links-badge">{affiliateBadge}</span>
+            )}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VideoCard({ link }: { link: CollectedLink }) {
+  return (
+    <li className="place-links-slide">
+      <a className="place-links-card" href={link.url} target="_blank" rel="nofollow noopener">
+        {link.thumbnailUrl && (
+          <img className="place-links-thumb" src={link.thumbnailUrl} alt="" loading="lazy" />
+        )}
+        <span className="place-links-card-title">{link.title}</span>
+        {link.author && <span className="place-links-card-sub">{link.author}</span>}
+      </a>
+    </li>
+  );
+}
+
 export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceLang }) {
   const L = UI[lang];
   const { data } = useQuery({
@@ -58,57 +107,41 @@ export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceL
     staleTime: 10 * 60_000,
   });
 
-  const links = data?.deepLinks ?? [];
-  if (links.length === 0) return null; // 실패는 조용히 — 링크는 부수 정보다
+  if (!data) return null; // 실패는 조용히 — 링크는 부수 정보다
 
-  const social = links.filter((l) => l.kind === 'SOCIAL');
-  const tour = links.filter((l) => l.kind === 'TOUR_PRODUCT');
-  const hasAffiliate = links.some((l) => l.revenueType === 'AFFILIATE');
+  const videos = data.collected.filter((l) => l.source === 'YOUTUBE');
+  const social = data.deepLinks.filter((l) => l.kind === 'SOCIAL');
+  const tour = data.deepLinks.filter((l) => l.kind === 'TOUR_PRODUCT');
+  const hasAffiliate = data.deepLinks.some((l) => l.revenueType === 'AFFILIATE');
+  // 수집 대기는 오류가 아니다. 이미 받은 영상이 있으면 굳이 자리표시를 띄우지 않는다.
+  const showSkeleton = data.pending && videos.length === 0;
+
+  if (videos.length === 0 && social.length === 0 && tour.length === 0 && !showSkeleton) return null;
 
   return (
     <section className="place-links" aria-label={L.heading}>
       <h3 className="place-links-heading">{L.heading}</h3>
 
-      {social.length > 0 && (
+      {(videos.length > 0 || showSkeleton) && (
         <div className="place-links-group">
-          <span className="place-links-group-title">{L.social}</span>
-          <div className="place-links-row">
-            {social.map((link) => (
-              <a
-                key={link.provider}
-                className="place-btn place-links-btn"
-                href={link.url}
-                target="_blank"
-                rel={relFor(link)}
-              >
-                {providerLabel(link.provider, lang)}
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {tour.length > 0 && (
-        <div className="place-links-group">
-          <span className="place-links-group-title">{L.tour}</span>
-          {/* 좁은 패널에서 넘치면 가로로 민다 — 아이템이 늘어나도(제휴 API) 레이아웃이 그대로다 */}
-          <ul className="place-links-carousel">
-            {tour.map((link) => (
-              <li key={link.provider} className="place-links-slide">
-                <a className="place-links-card" href={link.url} target="_blank" rel={relFor(link)}>
-                  <span className="place-links-card-provider">
-                    {providerLabel(link.provider, lang)}
-                    {link.revenueType === 'AFFILIATE' && (
-                      <span className="place-links-badge">{L.affiliateBadge}</span>
-                    )}
-                  </span>
-                  <span className="place-links-card-sub">{L.tourSub}</span>
-                </a>
-              </li>
-            ))}
+          <span className="place-links-group-title">{showSkeleton ? L.pending : L.videos}</span>
+          {/* 좁은 패널에서 넘치면 가로로 민다 */}
+          <ul className="place-links-carousel" aria-busy={showSkeleton}>
+            {showSkeleton
+              ? [0, 1, 2].map((i) => (
+                  <li key={i} className="place-links-slide">
+                    <div className="place-links-card place-links-card-skeleton" aria-hidden="true">
+                      <div className="place-links-thumb" />
+                    </div>
+                  </li>
+                ))
+              : videos.map((video) => <VideoCard key={video.url} link={video} />)}
           </ul>
         </div>
       )}
+
+      <DeepLinkRow title={L.social} links={social} lang={lang} affiliateBadge={L.affiliateBadge} />
+      <DeepLinkRow title={L.tour} links={tour} lang={lang} affiliateBadge={L.affiliateBadge} />
 
       {hasAffiliate && <p className="place-links-disclosure">{L.disclosure}</p>}
     </section>

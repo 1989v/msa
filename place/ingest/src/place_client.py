@@ -76,3 +76,17 @@ def record_probes(items: list[dict]) -> int:
         recorded += int(_request("POST", "/api/places/attractions/overview-probes",
                                  {"probes": chunk})["data"]["recorded"])
     return recorded
+
+
+def fetch_pending_links(source: str, limit: int) -> list[dict]:
+    """수집 대상. **빈 목록은 실패가 아니라 "오늘 몫을 다 썼다"** 는 뜻이다 — 예산은 place 가 센다."""
+    qs = urllib.parse.urlencode({"source": source, "limit": limit})
+    return _request("GET", f"/internal/attractions/links/pending?{qs}")["data"]["items"]
+
+
+def apply_link_results(source: str, results: list[dict]) -> dict:
+    """`failed: true` 와 `links: []` 는 다른 뜻이다 — 전자는 답을 못 받은 것, 후자는 0건이라는 답이다."""
+    if not results:
+        return {"collected": 0, "empty": 0, "failed": 0}
+    return _request("POST", "/internal/attractions/links/bulk",
+                    {"source": source, "results": results}, timeout=300)["data"]
