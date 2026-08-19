@@ -43,11 +43,13 @@ TourAPI 4.0 ──(로컬 ETL)──> place MySQL(SSOT) ──(batch 재색인)�
 
 목록은 100건/콜이라 하루면 끝났지만, **개요(overview)는 `detailCommon2` 로 건당 1콜**이라 며칠이 걸린다.
 
+**2026-08-20 부터 CronJob 이 대신 돈다** — `place-ingest-overview` 가 매일 KST 04:00 에
+ko 1,000 + en 1,000 을 채우고, `attraction-reindex` 가 04:30 에 재색인한다. 손댈 일은 없다.
+
 ```bash
-cd tools/seed/tour
-set -a && . ~/.config/1989v/tour.env && set +a
-./overview_daily.sh            # ko 1,000 + en 1,000 → 적재 → 재색인까지 한 번에
-./overview_daily.sh --stats    # 잔량만 확인 (API 호출 0)
+# 수동 트리거 / 잔량 확인
+kubectl -n commerce create job --from=cronjob/place-ingest-overview place-ingest-overview-manual
+kubectl -n commerce logs -f job/place-ingest-overview-manual
 ```
 
 **일일 한도는 (서비스 × 오퍼레이션)별로 따로다** — KorService2 가 429 여도 EngService2 는 살아 있고,
@@ -84,7 +86,7 @@ ko/en 을 병행해도 **국문이 병목**이다 — 관광 분류만 약 **17�
 
 ### 3.3 원천이 빈 개요를 주는 레코드는 negative cache 로 제외한다
 
-`~/.local/state/1989v/tour-overview-empty.txt`. 이게 없으면 SSOT 에는 영원히 "개요 없음"이라
+`attraction_overview_probes` 테이블 (2026-08-20 전까지는 로컬 파일). 이게 없으면 SSOT 에는 영원히 "개요 없음"이라
 **매일 다시 호출**되며 큐 앞자리를 차지한다. 429·네트워크 실패는 **기록하지 않는다** — 넣으면
 그 레코드가 영영 재시도되지 않는다.
 
@@ -175,10 +177,10 @@ free-tier 마진을 다시 계산한 뒤에만 올린다.
 
 | 무엇 | 어디 |
 |---|---|
-| ETL·매핑 | `tools/seed/tour/sync_tour.py` |
-| 개요 수집 | `tools/seed/tour/backfill_overview.py` |
-| 하루치 파이프라인 | `tools/seed/tour/overview_daily.sh` |
-| 사용법 | `tools/seed/tour/README.md` |
+| ETL·매핑 | `place/ingest/src/sync_tour.py` |
+| 개요 수집 | `place/ingest/src/backfill_overview.py` |
+| 하루치 파이프라인 | `place/ingest/src/main.py --job=overview` (CronJob `place-ingest-overview`) |
+| 사용법 | `place/ingest/README.md` |
 | 도메인(보호 규칙) | `place/domain/.../attraction/model/Attraction.kt` |
 | 검색 쿼리 | `search/app/.../opensearch/AttractionSearchAdapter.kt` |
 | 화면 | `portal-fe/src/pages/place/PlacePage.tsx` |
@@ -190,7 +192,8 @@ free-tier 마진을 다시 계산한 뒤에만 올린다.
 ## 8. 이어받는 세션이 처음에 할 일
 
 ```bash
-tools/seed/tour/overview_daily.sh --stats    # 잔량 확인 (API 호출 0)
+kubectl -n commerce create job --from=cronjob/place-ingest-overview place-ingest-overview-manual
+kubectl -n commerce logs -f job/place-ingest-overview-manual    # 잔량이 로그 앞뒤에 찍힌다
 ```
 
 그리고 위 4장의 네 쿼리를 그대로 던져 **현재 품질을 먼저 기록**한다. 바꾸기 전 값이 없으면

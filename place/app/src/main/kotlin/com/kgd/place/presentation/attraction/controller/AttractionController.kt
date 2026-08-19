@@ -1,12 +1,16 @@
 package com.kgd.place.presentation.attraction.controller
 
 import com.kgd.common.response.ApiResponse
+import com.kgd.place.application.attraction.usecase.AttractionOverviewProbeUseCase
 import com.kgd.place.application.attraction.usecase.GetAttractionUseCase
 import com.kgd.place.application.attraction.usecase.UpsertAttractionUseCase
 import com.kgd.place.presentation.attraction.dto.AttractionPageResponse
 import com.kgd.place.presentation.attraction.dto.AttractionResponse
 import com.kgd.place.presentation.attraction.dto.BulkUpsertAttractionRequest
 import com.kgd.place.presentation.attraction.dto.BulkUpsertAttractionResponse
+import com.kgd.place.presentation.attraction.dto.OverviewProbeListResponse
+import com.kgd.place.presentation.attraction.dto.RecordOverviewProbeRequest
+import com.kgd.place.presentation.attraction.dto.RecordOverviewProbeResponse
 import jakarta.validation.Valid
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController
 class AttractionController(
     private val upsertAttractionUseCase: UpsertAttractionUseCase,
     private val getAttractionUseCase: GetAttractionUseCase,
+    private val overviewProbeUseCase: AttractionOverviewProbeUseCase,
 ) {
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -60,4 +65,25 @@ class AttractionController(
     @GetMapping("/{id}")
     fun findById(@PathVariable id: Long): ApiResponse<AttractionResponse> =
         ApiResponse.success(AttractionResponse.from(getAttractionUseCase.findById(id)))
+
+    /**
+     * 개요 수집 negative cache (ADR-0070). 수집기가 제외 목록을 받아 가고, 원천이 빈 개요를 준
+     * 레코드를 남긴다. 조회는 공개(내용이 contentId 목록뿐), 기록은 게이트웨이가 ADMIN 으로 막는다.
+     */
+    @GetMapping("/overview-probes")
+    fun findOverviewProbes(
+        @RequestParam(required = false) lang: String?,
+    ): ApiResponse<OverviewProbeListResponse> {
+        val keys = overviewProbeUseCase.findKeys(lang)
+        return ApiResponse.success(OverviewProbeListResponse(keys = keys, total = keys.size))
+    }
+
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/overview-probes")
+    fun recordOverviewProbes(
+        @Valid @RequestBody request: RecordOverviewProbeRequest,
+    ): ApiResponse<RecordOverviewProbeResponse> =
+        ApiResponse.success(
+            RecordOverviewProbeResponse(overviewProbeUseCase.record(request.probes.map { it.toCommand() })),
+        )
 }

@@ -11,11 +11,12 @@ spec:
   # ADR-0065 — 관광지 전체 재색인(alias swap). attractionApiReindexJob 이 place API 를
   # 페이지네이션 풀-스캔하여 attractions 인덱스를 재구축한다.
   #
-  # 기본 suspend: 적재(bulk upsert) 후 온디맨드 실행을 전제로 정의만 해 둔다.
+  # ADR-0070 — place-ingest-overview(KST 04:00) 가 매일 개요를 채우므로 재색인도 매일 돈다.
+  # 30분 간격을 두는 이유: 개요 잡이 외부 API 한도에 걸려 느려져도 재색인이 앞지르지 않게 한다.
   #   온디맨드:  kubectl -n commerce create job --from=cronjob/attraction-reindex attraction-reindex-manual
-  #   주기화:    P2 sync CronJob 도입 시 suspend: false + 주 1회로 전환
-  suspend: true
-  schedule: "30 3 * * 0"
+  suspend: false
+  # 매일 UTC 19:30 = KST 04:30
+  schedule: "30 19 * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5

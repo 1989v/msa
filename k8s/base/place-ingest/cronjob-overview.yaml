@@ -1,0 +1,59 @@
+# ADR-0070 — TourAPI 개요(overview) 하루치 수집 CronJob.
+#
+# 개요는 detailCommon2 로 **건당 1콜**이라 전량이 며칠 걸린다. 하루 예산(언어별 1,000)만큼
+# 잘라서 매일 채운다. 한도는 (서비스 × 오퍼레이션)별로 따로라 ko·en 을 병행할 수 있다.
+#
+# 이 잡이 외부 :443 을 부르는 유일한 place 계열 파드다 — 상시 파드인 place 에는 egress 를
+# 열지 않는다 (ADR-0031 §5.10). 그래서 label name 이 place 가 아니라 place-ingest 다.
+#
+# 재색인은 여기서 트리거하지 않는다. Job 생성 RBAC 을 얻는 대신 attraction-reindex CronJob 을
+# 30분 뒤(KST 04:30)에 돌린다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-overview
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "overview"
+spec:
+  # 매일 UTC 19:00 = KST 04:00
+  schedule: "0 19 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # 재시도하지 않는다 — 실패 원인 대부분이 일일 한도(429)라 즉시 재시도는 낭비다.
+      # 다음 날 실행이 같은 큐를 이어서 소진한다.
+      backoffLimit: 0
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "overview"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=overview"]
+              env:
+                - name: PLACE_API
+                  value: "http://place:8096"
+                - name: BUDGET
+                  value: "1000"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                # 전량(약 6만 행) 페이지 스캔을 메모리에 올린다 — 파이썬 dict 기준 ~100Mi.
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 768Mi }

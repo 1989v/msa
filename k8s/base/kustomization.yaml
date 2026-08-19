@@ -28,6 +28,8 @@ resources:
   - recommendation
   - recommendation-ann
   - place
+  # ADR-0070: 관광지 개요/콘텐츠 수집 배치 (외부 :443 을 부르는 유일한 place 계열 파드)
+  - place-ingest
   # Frontend + non-JVM services (Phase 7 extension)
   - portal-fe
   - gifticon-fe

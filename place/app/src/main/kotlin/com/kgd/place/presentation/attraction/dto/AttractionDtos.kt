@@ -1,5 +1,6 @@
 package com.kgd.place.presentation.attraction.dto
 
+import com.kgd.place.application.attraction.usecase.AttractionOverviewProbeUseCase
 import com.kgd.place.application.attraction.usecase.GetAttractionUseCase
 import com.kgd.place.application.attraction.usecase.UpsertAttractionUseCase
 import jakarta.validation.Valid
@@ -104,3 +105,23 @@ data class AttractionPageResponse(
     val totalPages: Int,
     val currentPage: Int,
 )
+
+/** 개요 negative cache 기록 요청 (ADR-0070) — 원천이 빈 개요를 준 (contentId, lang). */
+data class RecordOverviewProbeRequest(
+    @field:NotEmpty(message = "probes 는 비어있을 수 없습니다")
+    @field:Valid
+    val probes: List<Item>,
+) {
+    data class Item(
+        @field:NotBlank(message = "contentId 는 필수입니다")
+        val contentId: String,
+        @field:NotBlank(message = "lang 은 필수입니다")
+        val lang: String,
+    ) {
+        fun toCommand() = AttractionOverviewProbeUseCase.Command(contentId = contentId, lang = lang)
+    }
+}
+
+data class OverviewProbeListResponse(val keys: List<String>, val total: Int)
+
+data class RecordOverviewProbeResponse(val recorded: Int)

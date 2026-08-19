@@ -138,7 +138,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | warehouse | (CLAUDE.md 미작성) | 창고 관리 — 서비스 코드 존재 |
 | chatbot | (CLAUDE.md 미작성) | 대화형 AI — 서비스 코드 존재 |
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
-| place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 운영 활성 (2026-08-09) |
+| place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
 
