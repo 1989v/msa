@@ -1,0 +1,51 @@
+> Phase: pre-impl / post-P1
+questions:
+  - id: OQ-1
+    phase: pre-impl
+    status: open
+    q: "Cloudflare DNS `deal` A 레코드 생성(proxied/orange) — 사용자 작업. DNS-only 면 AOP 우회로가 열린다(ADR-0061)."
+    owner: user
+  - id: OQ-2
+    phase: pre-impl
+    status: open
+    q: "`cf-origin-ca-tls` Origin CA 인증서 재발급 — SAN 에 deal.1989v.com 추가. 수동 등록 cert 라 cert-manager 가 갱신하지 않는다. 누락 시 526."
+    owner: user
+  - id: OQ-3
+    phase: pre-impl
+    status: open
+    q: "쿠팡 파트너스 사이트 등록 심사 + 약관상 지정 고지 문구 확인 — 문구가 확정돼야 배너 상수를 채운다."
+    owner: user
+  - id: OQ-4
+    phase: pre-impl
+    status: open
+    q: "여행 파트너 가입(트립닷컴·클룩·아고다·마이리얼트립) — 네트워크별 트래킹 URL 형식 확인. 배포 차단은 아니고 오퍼 입력의 선행."
+    owner: user
+  - id: OQ-5
+    phase: post-P1
+    status: open
+    q: "고지 문구를 어드민 설정으로 승격할지 — 네트워크마다 요구 문구가 다르고 약관이 바뀐다. P1 은 상수 한 곳에 모아두고 관찰."
+  - id: OQ-6
+    phase: post-P1
+    status: open
+    q: "P2 SEO 승격 시점 판단 기준 — 오퍼별 상세 콘텐츠가 몇 개/어느 깊이여야 thin affiliate 를 벗어나는지. 색인 해제는 되돌리기 비싸다."
+  - id: OQ-7
+    phase: post-P1
+    status: open
+    q: "성과(수익) 입력 방식 — 네트워크 대시보드 수기 vs CSV 업로드 vs API. 가입 후 각 네트워크의 리포트 제공 형태를 보고 결정."
+  - id: OQ-8
+    phase: post-P1
+    status: open
+    q: "봇 클릭 필터링 — P1 은 ua_family='bot' 으로 기록만 한다. 실데이터를 보고 집계에서 제외할지 결정."
+closed:
+  - id: CQ-1
+    q: "의료·금융 카테고리 포함 여부"
+    a: "제외. 의료법 27조·금소법 대상 구조라 행 자체를 만들지 않는다 (ADR-0069 §2)."
+  - id: CQ-2
+    q: "리다이렉터 경유 vs 원본 URL 직결"
+    a: "경유. 단 302 로 URL 무변조 전달 — 링크 교체 대응 + 클릭 계측을 얻고 약관 위반은 피한다."
+  - id: CQ-3
+    q: "deal 전용 datasource 분리 여부"
+    a: "분리하지 않는다. 테이블 3개·독립 쓰기 경로 없음 — 두 번째 HikariCP 풀은 free-tier 비용만 (ADR-0069 §4)."
+  - id: CQ-4
+    q: "P1 색인 허용 여부"
+    a: "noindex. thin affiliate 판정은 사이트 전체 평가에 번진다. P2 콘텐츠 승격 시 해제."

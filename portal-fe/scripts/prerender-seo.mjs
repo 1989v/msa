@@ -43,6 +43,10 @@ import {
   placePath,
   placeUrl,
   portalUrl,
+  DEAL_ORIGIN,
+  DEAL_BRAND,
+  DEAL_DISCLOSURE,
+  dealHubMeta,
 } from '../src/seo/copy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -58,6 +62,7 @@ const PLACE_HOST = new URL(PLACE_ORIGIN).host;
 /** TourAPI 지역코드 — 무필터 조회는 상위 10,000건에서 잘리므로 지역으로 잘라 훑는다 */
 const AREA_CODES = ['1','2','3','4','5','6','7','8','31','32','33','34','35','36','37','38','39'];
 const RESUME_HOST = new URL(RESUME_ORIGIN).host;
+const DEAL_HOST = new URL(DEAL_ORIGIN).host;
 
 main().catch((err) => {
   console.warn(`[seo] 프리렌더 실패 — SPA 만 배포됩니다: ${err.message}`);
@@ -89,6 +94,7 @@ async function main() {
   await writeRobotsAndSitemaps(games, places);
   await renderPortalPages(shell);
   await renderPlaceHubs(shell, places);
+  await renderDealHub(shell);
 
   if (games.length === 0) {
     console.warn('[seo] 게임 카탈로그가 비어 게임 프리렌더를 건너뜁니다');
@@ -179,7 +185,7 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;');
 }
 
-function metaTags({ title, description, canonical, lang, image, alternates, jsonLd, siteName = BRAND }) {
+function metaTags({ title, description, canonical, lang, image, alternates, jsonLd, noindex, siteName = BRAND }) {
   const lines = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -194,6 +200,9 @@ function metaTags({ title, description, canonical, lang, image, alternates, json
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
   ];
+  // 색인은 막되 크롤은 열어 둔다 — robots.txt 로 막으면 크롤러가 이 태그를 읽지 못해
+  // URL 만 색인되고, 카카오톡/슬랙/X 언퍼러도 OG 를 못 가져간다.
+  if (noindex) lines.push(`<meta name="robots" content="noindex, follow" />`);
   if (image) {
     lines.push(`<meta property="og:image" content="${image}" />`);
     lines.push(`<meta name="twitter:image" content="${image}" />`);
@@ -413,6 +422,10 @@ async function writeRobotsAndSitemaps(games, places = { ko: [], en: [] }) {
   await emit(`seo/${PLACE_HOST}/robots.txt`, robotsTxt(PLACE_ORIGIN));
   // 이력서는 색인 대상이 아니다 (ADR-0064). sitemap·llms.txt 도 두지 않는다.
   await emit(`seo/${RESUME_HOST}/robots.txt`, 'User-agent: *\nDisallow: /\n');
+  // 혜택 허브는 색인하지 않지만(ADR-0069) **크롤은 연다** — Disallow 로 막으면
+  // noindex 태그를 읽지 못해 URL 만 색인되고, 메신저 언퍼러도 OG 카드를 못 만든다.
+  // P1 유입이 공유라 OG 가 색인보다 중요하다. sitemap·llms.txt 는 두지 않는다.
+  await emit(`seo/${DEAL_HOST}/robots.txt`, dealRobotsTxt());
 
   await emit(`seo/${GAME_HOST}/llms.txt`, gameLlmsTxt(games));
   await emit(`seo/${PORTAL_HOST}/llms.txt`, portalLlmsTxt());
@@ -579,6 +592,43 @@ async function renderPlaceHubs(shell, places = { ko: [], en: [] }) {
     });
     await emit(`prerender/_hosts/${PLACE_HOST}${lang === 'en' ? '.en' : ''}.html`, html);
   }
+}
+
+/**
+ * 혜택 허브 프리렌더 (ADR-0069).
+ *
+ * 색인 대상이 아닌데도 찍는 이유는 **언퍼러** 때문이다. P1 유입은 SNS·메신저 공유이고,
+ * 카카오톡/슬랙/X 는 JS 를 실행하지 않으므로 초기 HTML 에 OG 가 없으면 링크가 맨 URL 로 나간다.
+ * 공정위 고지도 함께 심는다 — JS 미실행 방문자에게도 보여야 고지의 의미가 있다.
+ */
+async function renderDealHub(shell) {
+  const meta = dealHubMeta();
+  const html = compose(shell, {
+    lang: 'ko',
+    title: meta.title,
+    description: meta.description,
+    canonical: meta.canonical,
+    siteName: DEAL_BRAND,
+    noindex: true,
+    body: shellBody(
+      `<h1>${escapeHtml(DEAL_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>` +
+        `<p>${escapeHtml(DEAL_DISCLOSURE)}</p>`,
+    ),
+  });
+  await emit(`prerender/_hosts/${DEAL_HOST}.html`, html);
+}
+
+/**
+ * 혜택 허브 robots — sitemap 도 llms.txt 도 걸지 않는다.
+ * 색인 차단은 meta/X-Robots-Tag 가 하고, 여기서는 크롤을 열어 그 태그가 읽히게 한다.
+ */
+function dealRobotsTxt() {
+  return `User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /go/
+
+`;
 }
 
 async function renderPortalPages(shell) {

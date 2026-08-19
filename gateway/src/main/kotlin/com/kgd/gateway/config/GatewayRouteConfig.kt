@@ -299,6 +299,28 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // === ADR-0069 혜택 링크 허브 (code-dictionary 소유) ===
+            // 어드민 경로를 먼저 선언해야 공개 라우트에 가려지지 않는다.
+            .route("deal-admin") { r ->
+                r.path("/api/v1/admin/deal/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            .route("deal-public") { r ->
+                r.path("/api/v1/deal/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 아웃바운드 리다이렉터. `/api/v1/deal/go/...` 가 아니라 `/go/...` 인 이유는 이 주소가
+            // 공유되기 때문이다. ingress 는 deal 호스트에만 이 prefix 를 연다.
+            .route("deal-redirect") { r ->
+                r.path("/go/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
             .route("place-service-read") { r ->
                 r.method(HttpMethod.GET)

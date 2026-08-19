@@ -15,6 +15,8 @@ const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
 // ADR-0065 — K-관광/지리 탐색. place.<domain> 이 정규 주소 (host 인식 루트 라우팅),
 // apex/개발은 /place. 구글맵 로더 포함이라 lazy 분리.
 const PlacePage = lazy(() => import('./pages/place/PlacePage'));
+// ADR-0069 — 혜택 링크 허브 (deal.<domain>). place/game 과 같은 host 인식 루트 라우팅.
+const DealPage = lazy(() => import('./pages/deal/DealPage'));
 const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
 // ADR-0066 — IT(개념 사전·3D 그래프·트리맵). 메인이 런처가 되면서 three.js 를 쓰지 않게 됐다.
 // eager 로 두면 타일만 보는 방문자도 그래프 엔진을 통째로 받는다.
@@ -33,6 +35,8 @@ const isGamesHost = window.location.hostname.split('.')[0] === 'game';
 const isPlaceHost = window.location.hostname.split('.')[0] === 'place';
 // resume.<domain> — 같은 portal-fe 번들을 서빙하되 루트가 이력서다 (ADR-0064)
 const isResumeHost = window.location.hostname.split('.')[0] === 'resume';
+// deal.<domain> — 같은 번들을 서빙하되 루트가 혜택 링크 허브다 (ADR-0069)
+const isDealHost = window.location.hostname.split('.')[0] === 'deal';
 // apex 의 /games 는 game 서브도메인으로 정리 — 게임 주소를 하나로 고정.
 // localhost/k3d 등 개발 환경은 서브도메인이 없으므로 apex 프로덕션에서만 보낸다.
 const isApexProd = window.location.hostname === '1989v.com';
@@ -63,6 +67,18 @@ function placeRoute(element: ReactElement) {
   return isApexProd ? <PlaceHostRedirect /> : element;
 }
 
+function DealHostRedirect() {
+  const { search, hash } = window.location;
+  // 허브는 deal 호스트에서 루트가 정규 주소다 (ADR-0069)
+  window.location.replace(`https://deal.1989v.com/${search}${hash}`);
+  return null;
+}
+
+/** deal 라우트 — apex 프로덕션에서는 deal 호스트로 보내고, 그 외(로컬/개발)에는 그대로 렌더 */
+function dealRoute(element: ReactElement) {
+  return isApexProd ? <DealHostRedirect /> : element;
+}
+
 function AdminHostRedirect() {
   window.location.replace('https://admin.1989v.com' + window.location.pathname.replace(/^\/admin/, ''));
   return null;
@@ -77,7 +93,17 @@ function App() {
           <Route
             path="/"
             element={
-              isResumeHost ? <ResumePage /> : isGamesHost ? <GamesPage /> : isPlaceHost ? <PlacePage /> : <HomePage />
+              isResumeHost ? (
+                <ResumePage />
+              ) : isGamesHost ? (
+                <GamesPage />
+              ) : isPlaceHost ? (
+                <PlacePage />
+              ) : isDealHost ? (
+                <DealPage />
+              ) : (
+                <HomePage />
+              )
             }
           />
           <Route path="/tech" element={<SearchPage />} />
@@ -94,6 +120,8 @@ function App() {
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
           <Route path="/place" element={placeRoute(<PlacePage />)} />
           <Route path="/en/place" element={placeRoute(<PlacePage />)} />
+          {/* 혜택 링크 허브 — 한국어만 (P1). apex 는 서브도메인으로 넘긴다 */}
+          <Route path="/deal" element={dealRoute(<DealPage />)} />
           {/* 관광지 상세 — 고유명사 검색의 착지점 (ADR-0062). place 호스트가 정규 주소 */}
           <Route path="/attractions/:id" element={placeRoute(<AttractionPage />)} />
           <Route path="/en/attractions/:id" element={placeRoute(<AttractionPage />)} />

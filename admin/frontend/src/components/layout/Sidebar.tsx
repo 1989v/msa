@@ -19,6 +19,8 @@ import {
   FileText,
   Briefcase,
   LayoutGrid,
+  Tag,
+  Tags,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +45,9 @@ const navItems: NavItem[] = [
   { label: '이력서 경력데이터', icon: Briefcase, to: '/resume/profile', enabled: true },
   // ADR-0066 — 1989v.com 메인에 전시하는 서비스
   { label: '메인 전시', icon: LayoutGrid, to: '/display/services', enabled: true },
+  // ADR-0069 — deal.1989v.com 혜택 링크 허브
+  { label: '혜택 링크', icon: Tag, to: '/deal/offers', enabled: true },
+  { label: '혜택 분류', icon: Tags, to: '/deal/categories', enabled: true },
   // ADR-0050 Phase 4 UI — 검색 디버그 + 쿼리 빌더
   { label: '검색 디버그', icon: Search, to: '/search-debug', enabled: true },
   { label: '검색 쿼리 빌더', icon: Sliders, to: '/search-debug/query-builder', enabled: true },

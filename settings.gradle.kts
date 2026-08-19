@@ -44,5 +44,7 @@ include(
     "recommendation:domain",
     "recommendation:app",
     "place:domain",
-    "place:app"
+    "place:app",
+    "deal:domain",
+    "deal:feature" // ADR-0069: 혜택 링크 허브 라이브러리 (code-dictionary:app 이 흡수, 비-bootable)
 )

@@ -17,6 +17,7 @@
 #   gft.<DOMAIN>                → gifticon-fe [proxied]
 #   game.<DOMAIN>               → portal-fe (게임 허브 루트, ADR-0059) [proxied]
 #   place.<DOMAIN>              → portal-fe (K-관광/지리 탐색 루트, ADR-0065) [proxied]
+#   deal.<DOMAIN>               → portal-fe (혜택 링크 허브 루트, ADR-0069) [proxied]
 #   resume.<DOMAIN>             → portal-fe (이력서, ADR-0064) [proxied]
 #   api.<DOMAIN>                → gateway (REST 위주) [proxied]
 #   rt.<DOMAIN>                 → gateway (WS+SSE) [bypass]
@@ -58,6 +59,7 @@ spec:
         - game.1989v.com
         - resume.1989v.com
         - place.1989v.com
+        - deal.1989v.com
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
@@ -198,6 +200,22 @@ spec:
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /svc
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }
+    # ─── portal-fe (deal 호스트 — 혜택 링크 허브, ADR-0069) ───
+    # `/go` 는 아웃바운드 리다이렉터다. 공유되는 주소라 짧게 두고, **이 호스트에만** 연다 —
+    # 다른 host 에 열면 같은 링크가 두 주소로 돌아다녀 클릭 집계가 갈라진다.
+    # WS/SSE 는 쓰지 않으므로 열지 않는다 (노출면을 필요한 만큼만).
+    - host: deal.1989v.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /go
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /

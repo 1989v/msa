@@ -1,0 +1,222 @@
+/* ADR-0069 혜택 링크 허브 (deal) — DESIGN.md(--ko-* / --kh-*) 토큰만 사용, hex 직접 입력 금지.
+   깊이는 그림자가 아니라 면의 색 단차와 어긋난 판으로 만든다 (DESIGN.md §12). */
+
+.deal-page {
+  min-height: 100vh;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  font-family: var(--ko-font-family);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-8);
+  padding: var(--ko-space-6) clamp(1rem, 5vw, 3.5rem) var(--ko-space-12);
+}
+
+/* ─── 머리 ─── */
+
+.deal-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  max-width: 62rem;
+}
+
+.deal-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-4);
+}
+
+.deal-header__brand {
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  color: var(--ko-text-primary);
+  text-decoration: none;
+}
+
+.deal-header__title {
+  margin: var(--ko-space-4) 0 0;
+  font-size: var(--kh-display, clamp(2rem, 5vw, 3rem));
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.deal-header__subtitle {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 1rem;
+}
+
+/*
+ * 공정위 고지. 눈에 띄되 카드보다 앞서지는 않는 무게로 둔다 — 작게 숨기면 고지의 의미가 없고,
+ * 크게 띄우면 페이지가 경고문이 된다. 황토 테두리로 "구조"라는 신호만 준다.
+ */
+.deal-disclosure {
+  margin: var(--ko-space-2) 0 0;
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border-left: 2px solid var(--ko-border-strong);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-xs, 0.78rem);
+  line-height: 1.6;
+  border-radius: var(--kh-radius-asym, 0 8px 0 8px);
+}
+
+/* ─── 카테고리 칩 ─── */
+
+.deal-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+}
+
+.deal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: color var(--ko-duration-fast) var(--ko-ease-out),
+    border-color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.deal-chip.is-active {
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-accent-text);
+}
+
+.deal-chip__count {
+  font-size: var(--ko-text-xs, 0.72rem);
+  color: var(--ko-text-muted);
+}
+
+/* ─── 본문 ─── */
+
+.deal-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-10);
+}
+
+.deal-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-5);
+}
+
+.deal-state {
+  color: var(--ko-text-muted);
+  font-size: 0.95rem;
+}
+
+.deal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--ko-space-4);
+}
+
+/* ─── 오퍼 카드 ─── */
+
+.deal-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-5);
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--kh-radius-asym, 0 8px 0 8px);
+  transition: border-color var(--ko-duration-fast) var(--ko-ease-out),
+    transform var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.deal-card:hover {
+  border-color: var(--ko-accent-primary);
+  transform: translateY(-2px);
+}
+
+.deal-card:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.deal-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-2);
+}
+
+.deal-card__merchant {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs, 0.72rem);
+}
+
+/*
+ * 제휴 배지. 숨기지 않는다 — 표시 의무이기도 하고, 감추면 나중에 알게 됐을 때
+ * 페이지 전체의 신뢰가 무너진다.
+ */
+.deal-card__badge {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--ko-border-strong);
+  border-radius: var(--kh-radius, 4px);
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs, 0.68rem);
+  white-space: nowrap;
+}
+
+.deal-card__benefit {
+  margin: var(--ko-space-1) 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ko-accent-text);
+}
+
+.deal-card__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.deal-card__summary {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.deal-card__expiry {
+  margin-top: auto;
+  padding-top: var(--ko-space-3);
+  font-size: var(--ko-text-xs, 0.72rem);
+  color: var(--ko-text-muted);
+}
+
+/* 남은 기간이 짧을 때만 색을 쓴다. 전부 강조하면 아무것도 강조되지 않는다. */
+.deal-card__expiry.is-urgent {
+  color: var(--ko-accent-text);
+}
+
+/* ─── 꼬리 ─── */
+
+.deal-footer {
+  padding-top: var(--ko-space-6);
+  border-top: 1px solid var(--ko-border-subtle);
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs, 0.72rem);
+  line-height: 1.6;
+}
+
+.deal-footer p {
+  margin: 0;
+  max-width: 48rem;
+}
+
+@media (max-width: 640px) {
+  .deal-grid {
+    grid-template-columns: 1fr;
+  }
+}

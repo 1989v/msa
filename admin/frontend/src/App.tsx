@@ -18,6 +18,8 @@ import { SearchJudgmentsPage } from '@/pages/SearchJudgmentsPage';
 import { ResumePage } from '@/pages/ResumePage';
 import { ResumeProfilePage } from '@/pages/ResumeProfilePage';
 import { DisplayServicesPage } from '@/pages/DisplayServicesPage';
+import { DealOffersPage } from '@/pages/DealOffersPage';
+import { DealCategoriesPage } from '@/pages/DealCategoriesPage';
 
 export default function App() {
   return (
@@ -38,6 +40,8 @@ export default function App() {
         <Route path="resume" element={<ResumePage />} />
         <Route path="resume/profile" element={<ResumeProfilePage />} />
         <Route path="display/services" element={<DisplayServicesPage />} />
+        <Route path="deal/offers" element={<DealOffersPage />} />
+        <Route path="deal/categories" element={<DealCategoriesPage />} />
         <Route path="search-debug" element={<SearchDebugPage />} />
         <Route path="search-debug/query-builder" element={<SearchQueryBuilderPage />} />
         <Route path="search-debug/judgments" element={<SearchJudgmentsPage />} />

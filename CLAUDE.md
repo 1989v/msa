@@ -65,6 +65,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **Latency Budget**: latency 를 설계 입력으로 강제 + Tier 1 P99 SLA + 측정 표준 → `docs/adr/ADR-0025-latency-budget.md` (실천: `docs/conventions/latency-budget.md`)
 - **docs 분류 정책**: ADR vs Conventions vs Standards 의 정의 / 판단 기준 / 분해 원칙 / redirect 표준 → `docs/adr/ADR-0026-docs-taxonomy.md`
 - **이력서 사이트**: `resume.1989v.com` — DB(마크다운) 서빙 + 공개 토글 + 제출처별 토큰 게이트 + 열람 기록 → `docs/adr/ADR-0064-resume-site-gated-serving.md`. **본문은 레포가 아니라 DB가 원본**이고 어드민에서 편집한다 (공개 레포에 이력서 원문을 두면 게이트가 무의미해진다). 초기 데이터만 이력서 볼트에서 가져왔고, 이후 볼트와 사이트는 독립적으로 갱신된다
+- **혜택 링크 허브**: `deal.1989v.com` — 카테고리별 혜택 링크 큐레이션 + 자체 리다이렉터 → `docs/adr/ADR-0069-deal-affiliate-hub.md`. **규제 업권(의료·금융)은 카테고리 행 자체를 만들지 않는다**(의료법 27조·금소법). 제휴 링크는 `AFFILIATE`/`PLAIN` 로 갈라 고지를 제휴에만 붙이고, `target_url` 은 **원본 무변조**로 302 한다 — 파라미터를 손대면 약관 위반이고 트래킹 쿠키가 깨진다
 - **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다)
 
 ---
@@ -139,6 +140,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | chatbot | (CLAUDE.md 미작성) | 대화형 AI — 서비스 코드 존재 |
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
+| deal | (CLAUDE.md 미작성) | 혜택 링크 허브 — 카테고리별 제휴/일반 혜택 링크 큐레이션 + `/go/{slug}` 리다이렉터 + 클릭 계측. `:deal:domain`+`:deal:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `deal.1989v.com` (ADR-0069) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
 
@@ -150,6 +152,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | `/tech` | `portal-fe` | 코드딕셔너리 — 트리맵/그래프/히트맵/검색 + 서비스 카탈로그. 옛 `/` 내용이 그대로 옮겨왔다 (lazy chunk) |
 | `place.1989v.com` | `portal-fe` | K-관광/지리 탐색 (ADR-0065) — TourAPI 관광지 국문(`/`)·영문(`/en`) + 구글맵. game 과 같은 host 인식 루트 라우팅, apex `/place` 는 서브도메인으로 리다이렉트. 데이터: place SSOT → search attractions 인덱스 |
 | `resume.1989v.com` | `portal-fe` | 이력서 — 같은 번들·같은 Service, 호스트로 분기. 공개 여부는 DB 설정 + 제출처별 토큰 게이트 (ADR-0064). 색인 대상 아님 |
+| `deal.1989v.com` | `portal-fe` | 혜택 링크 허브 — 같은 번들·호스트 분기. `/go/{slug}` 는 gateway(아웃바운드 리다이렉터). **색인 대상 아님(noindex)** — 링크 모음만으로 색인되면 thin affiliate 판정이 사이트 전체에 번진다 (ADR-0069) |
 | `/admin/*` | `admin-fe` | 백오피스 |
 | `/quant/*` | `quant-fe` | 트레이딩 (Phase 3) |
 | `/gifticon/*` | `gifticon-fe` | 기프티콘 |

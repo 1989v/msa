@@ -10,6 +10,7 @@ plugins {
 dependencies {
     implementation(project(":code-dictionary:domain"))
     implementation(project(":game:feature")) // ADR-0059: 게임 플랫폼 co-deploy (모듈러 모놀리스)
+    implementation(project(":deal:feature")) // ADR-0069: 혜택 링크 허브 co-deploy (스키마는 호스트 공유)
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
@@ -40,6 +41,7 @@ dependencies {
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.mysql)
     testImplementation(project(":game:feature"))
+    testImplementation(project(":deal:feature"))
 }
 
 tasks.bootJar {

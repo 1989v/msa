@@ -5,9 +5,11 @@
 #   - quant        거래소 API (Binance/Upbit/Bithumb), Telegram, KMS (OCI Vault — ADR-0027)
 #   - quant-ingest yfinance / FinanceDataReader (Yahoo / Naver) OHLCV 시세 수집 sidecar
 #   - gifticon     외부 OCR API
-#   - place-ingest    TourAPI(개요) + YouTube/네이버 콘텐츠 수집 CronJob (ADR-0070).
-#                     상시 파드인 place 에는 열지 않는다: 배치가 필요로 하는
+#   - deal-linkcheck  혜택 링크 생존 점검 CronJob (ADR-0069) — 주 1회 HEAD/GET.
+#                     상시 파드인 code-dictionary 에는 열지 않는다: 배치가 필요로 하는
 #                     외부 접근 때문에 상시 노출면을 늘리지 않기 위해서다.
+#   - place-ingest    TourAPI(개요) + YouTube/네이버 콘텐츠 수집 CronJob (ADR-0070).
+#                     상시 파드인 place 에는 열지 않는다 — deal 과 같은 이유.
 # (charting 은 ADR-0036 P2-T20 에서 Hard remove 되어 제외됨, 2026-05-02.)
 # 다른 서비스는 외부 :443 차단된 상태 (default-deny + DNS only).
 #
@@ -24,7 +26,7 @@ metadata:
 spec:
   podSelector:
     matchExpressions:
-      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, quant-ingest, gifticon, place-ingest] }
+      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, quant-ingest, gifticon, deal-linkcheck, place-ingest] }
   policyTypes:
     - Egress
   egress:
