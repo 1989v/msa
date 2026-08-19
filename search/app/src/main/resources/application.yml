@@ -41,6 +41,12 @@ opensearch:
   uris: ${OPENSEARCH_URIS:http://localhost:9200}
 
 search:
+  # ADR-0065 P2 — 관광지 분류 가중치. 음식·쇼핑이 적재량의 62% 라 관광 의도의 질의에서
+  # 상점·식당이 관광지를 밀어낸다. 지우지 않고 내린다 (근처 검색에서는 여전히 유효한 결과).
+  # 둘 다 1.0 이면 function_score 자체를 감싸지 않는다 = 이전 동작.
+  attraction-ranking:
+    sight-weight: 3.0
+    commerce-weight: 0.35
   ranking:
     popularity-weight: 10.0
     ctr-weight: 5.0

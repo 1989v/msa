@@ -61,7 +61,7 @@
 ## T3 — 수집 커넥터 (place-ingest 확장) — **완료 (2026-08-20), 실호출은 키 대기**
 
 - [x] YouTube `search.list` 커넥터 — 제목 매칭 필터, 403 quotaExceeded 즉시 중단
-- [ ] 네이버 블로그 검색 커넥터 — 일 25,000콜 (소스 enum·예산까지만 준비됨)
+- [x] 네이버 블로그 검색 커넥터 — 일 25,000콜, `<b>` 태그 제거 + 링크 sha1 을 external_id 로
 - [x] 예산 카운터: 당일 `last_attempt_at` 기준 count 로 `pending` limit 산출
 - [x] `k8s/base/place-ingest/cronjob-links.yaml` (매시 17분 × 10건 — 10분 주기는 대부분 0건을 받아 파드만 띄운다)
 
@@ -76,7 +76,7 @@ limit 절단, `failed` 와 0건의 재시도 시점 분리, 큐 적재 실패가
 - [x] `AttractionLinks` 컴포넌트 — `PlacePage` 사이드 패널 + `AttractionPage` 공용
 - [x] 딥링크 버튼 행 (인스타 / 마이리얼트립 / Klook)
 - [x] 유튜브 썸네일 카드 캐로셀
-- [ ] 블로그 링크 — 네이버 커넥터와 함께
+- [x] 블로그 링크 줄 (썸네일이 없는 소스라 카드로 만들지 않는다)
 - [x] `pending` 스켈레톤 (오류 아님)
 - [x] `rel` 속성 + `AFFILIATE` 배지·고지 (ADR-0069 §1 규칙 그대로)
 - [x] `placeApi.ts` 에 `fetchAttractionLinks`
@@ -95,6 +95,14 @@ limit 절단, `failed` 와 0건의 재시도 시점 분리, 큐 적재 실패가
 - [ ] 클러스터링은 하지 않는다 (페이지당 30건)
 
 ---
+
+## T7 — 검색 품질 1순위: 분류 가중치 (핸드오프 §5) — **구현 완료, 배포 후 재측정**
+
+- [x] `AttractionRankingProperties` (`search.attraction-ranking`) — 관광 ×3.0 / 상점·식당 ×0.35
+- [x] `function_score` 를 **검색과 자동완성 양쪽**에 적용 ("경복"이 밀린 곳이 자동완성이다)
+- [x] 둘 다 1.0 이면 감싸지 않는 되돌림 스위치
+- [x] 질의 모양 테스트 (`AttractionSearchAdapterRankingTest`)
+- [ ] 배포 후 4개 회귀 쿼리 재측정 → 핸드오프 §5 표에 나란히 기록
 
 ## T6 — 문서 동기화
 

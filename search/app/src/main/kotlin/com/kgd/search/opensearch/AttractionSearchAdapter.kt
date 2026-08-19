@@ -8,6 +8,8 @@ import org.opensearch.client.opensearch._types.FieldValue
 import org.opensearch.client.opensearch._types.SortOrder
 import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
 import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
+import org.opensearch.client.opensearch._types.query_dsl.FunctionScoreMode
+import org.opensearch.client.opensearch._types.query_dsl.Query
 import org.opensearch.client.opensearch.core.SearchRequest
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
@@ -21,6 +23,7 @@ import kotlin.math.sqrt
 @Component
 class AttractionSearchAdapter(
     private val client: OpenSearchClient,
+    private val ranking: AttractionRankingProperties,
 ) : AttractionSearchPort {
 
     companion object {
@@ -116,15 +119,16 @@ class AttractionSearchAdapter(
     private fun suggestAttractions(prefix: String, lang: String?, size: Int): List<SuggestHit> {
         if (size <= 0) return emptyList()
         val titleField = if (lang == "en") "title.en" else "title"
+        val matched = Query.of { q ->
+            q.bool { b ->
+                b.must { m -> m.matchBoolPrefix { it.field(titleField).query(prefix) } }
+                lang?.let { l -> b.filter { f -> f.term { it.field("lang").value(FieldValue.of(l)) } } }
+                b
+            }
+        }
         val request = SearchRequest.Builder()
             .index(INDEX)
-            .query { q ->
-                q.bool { b ->
-                    b.must { m -> m.matchBoolPrefix { it.field(titleField).query(prefix) } }
-                    lang?.let { l -> b.filter { f -> f.term { it.field("lang").value(FieldValue.of(l)) } } }
-                    b
-                }
-            }
+            .query(withCategoryWeights(matched))
             .size(size)
             .build()
         return client.search(request, AttractionSearchDocument::class.java).hits().hits().mapNotNull { hit ->
@@ -142,12 +146,8 @@ class AttractionSearchAdapter(
     }
 
     private fun buildRequest(query: AttractionSearchPort.SearchQuery, pageable: Pageable): SearchRequest {
-        val builder = SearchRequest.Builder()
-            .index(INDEX)
-            .from(pageable.offset.toInt())
-            .size(pageable.pageSize)
-            .query { q ->
-                q.bool { b ->
+        val matched = Query.of { q ->
+            q.bool { b ->
                     val keyword = query.keyword
                     if (keyword != null) {
                         b.must { m -> m.multiMatch { mm -> mm.query(keyword).fields(KEYWORD_FIELDS) } }
@@ -172,9 +172,14 @@ class AttractionSearchAdapter(
                             }
                         }
                     }
-                    b
-                }
+                b
             }
+        }
+        val builder = SearchRequest.Builder()
+            .index(INDEX)
+            .from(pageable.offset.toInt())
+            .size(pageable.pageSize)
+            .query(withCategoryWeights(matched))
 
         val geo = query.geo
         if (geo != null && geo.sortByDistance) {
@@ -192,6 +197,46 @@ class AttractionSearchAdapter(
         }
 
         return builder.build()
+    }
+
+    /**
+     * 관광 분류를 올리고 상점·식당을 내린다 (ADR-0065 P2).
+     *
+     * `scoreMode = First` 인 이유: 분류는 문서당 하나뿐이라 두 함수가 함께 걸릴 일이 없고,
+     * Multiply 로 두면 나중에 함수를 늘렸을 때 가중치가 곱해져 의도보다 크게 움직인다.
+     * `boostMode = Multiply` 라 키워드 적합도의 상대 순서는 분류 안에서 그대로 유지된다.
+     *
+     * 키워드 없는 기본 목록에도 걸린다. 지금까지 관광지가 먼저 보인 건 적재 순서 덕이었고
+     * 의도된 설계가 아니었다 — 음식·쇼핑을 먼저 재적재하면 첫 화면이 뒤집혔다.
+     */
+    private fun withCategoryWeights(matched: Query): Query {
+        if (!ranking.enabled) return matched
+        return Query.of { q ->
+            q.functionScore { fs ->
+                fs.query(matched)
+                categoryFunction(fs, ranking.sightCategories, ranking.sightWeight)
+                categoryFunction(fs, ranking.commerceCategories, ranking.commerceWeight)
+                fs.scoreMode(FunctionScoreMode.First)
+                fs.boostMode(FunctionBoostMode.Multiply)
+            }
+        }
+    }
+
+    private fun categoryFunction(
+        fs: org.opensearch.client.opensearch._types.query_dsl.FunctionScoreQuery.Builder,
+        categories: List<String>,
+        weight: Double,
+    ) {
+        if (categories.isEmpty()) return
+        fs.functions { fn ->
+            fn.filter { f ->
+                f.terms { t ->
+                    t.field("category").terms { tv ->
+                        tv.value(categories.map { FieldValue.of(it) })
+                    }
+                }
+            }.weight(weight.toFloat())
+        }
     }
 
     private fun haversineKm(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
