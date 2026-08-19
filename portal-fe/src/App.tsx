@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, type ReactElement } from 'react';
+import { isApexProd } from './shell/serviceHref';
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import ShopPage from './pages/ShopPage';
@@ -39,7 +40,8 @@ const isResumeHost = window.location.hostname.split('.')[0] === 'resume';
 const isDealHost = window.location.hostname.split('.')[0] === 'deal';
 // apex 의 /games 는 game 서브도메인으로 정리 — 게임 주소를 하나로 고정.
 // localhost/k3d 등 개발 환경은 서브도메인이 없으므로 apex 프로덕션에서만 보낸다.
-const isApexProd = window.location.hostname === '1989v.com';
+// `isApexProd` 는 전시 타일(TileGrid)과 공유한다 — 기준이 갈리면 타일이 거는 주소와
+// 라우트가 어긋난다 (shell/serviceHref.ts).
 
 function GameHostRedirect() {
   const { pathname, search, hash } = window.location;

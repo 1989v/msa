@@ -1,4 +1,5 @@
 import type { DisplayService } from '../../api/displayApi';
+import { resolveServiceHref } from '../../shell/serviceHref';
 import './Home.css';
 
 interface TileGridProps {
@@ -29,7 +30,10 @@ export default function TileGrid({ services }: TileGridProps) {
           {services.map((service) => (
             <li key={service.code}>
               {service.status === 'OPEN' && service.href ? (
-                <a className="tile kh-slab kh-grain tile-open" href={service.href}>
+                <a
+                  className="tile kh-slab kh-grain tile-open"
+                  href={resolveServiceHref(service.code, service.href)}
+                >
                   <TileBody service={service} />
                   <span className="tile-arrow" aria-hidden="true">→</span>
                 </a>
