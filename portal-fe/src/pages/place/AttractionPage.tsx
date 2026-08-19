@@ -15,6 +15,7 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
+import AttractionLinks from './AttractionLinks';
 import './PlacePage.css';
 
 const UI = {
@@ -121,6 +122,7 @@ export default function AttractionPage() {
             >
               {L.map}
             </a>
+            <AttractionLinks id={attraction.id} lang={lang} />
           </article>
         )}
 

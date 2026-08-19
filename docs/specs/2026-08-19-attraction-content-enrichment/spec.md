@@ -56,14 +56,19 @@
 ### 공개 (gateway `GET /api/places/**` — 비로그인)
 
 ```
-GET /api/places/attractions/{id}/links?lang=ko
-200 {
-  "collected": [ { "source":"YOUTUBE", "title":..., "url":..., "thumbnailUrl":..., "author":..., "publishedAt":... } ],
-  "deepLinks": [ { "source":"INSTAGRAM", "label":"인스타그램", "url":..., "revenueType":"PLAIN" },
-                 { "source":"TOUR_PRODUCT", "label":"마이리얼트립", "url":..., "revenueType":"PLAIN" } ],
-  "pending": true
-}
+GET /api/places/attractions/{id}/links
+200 { "deepLinks": [ { "provider":"INSTAGRAM",  "kind":"SOCIAL",       "url":..., "revenueType":"PLAIN" },
+                     { "provider":"MYREALTRIP", "kind":"TOUR_PRODUCT", "url":..., "revenueType":"PLAIN" },
+                     { "provider":"KLOOK",      "kind":"TOUR_PRODUCT", "url":..., "revenueType":"PLAIN" } ] }
 ```
+
+T3 에서 `collected`(수집형 카드)와 `pending`(수집 중) 이 이 응답에 더해진다. **지금 넣지 않는다** —
+소비자가 없는 필드를 미리 만들면 항상 빈 배열과 항상 false 를 유지해야 한다.
+
+`label` 이 아니라 `provider` 를 돌려주는 이유: 문구는 화면의 몫이다. 백엔드가 한국어 라벨을 들면
+영문 화면이 그걸 다시 뒤집어야 한다.
+
+**T3 이후**
 
 - `collected` 가 비었거나 만료면 큐에 적재하고 `pending: true` 로 답한다 (**동기 수집 없음**).
 - `deepLinks` 는 항상 즉시 조립된다 — 응답이 빈 적이 없다.
@@ -82,7 +87,7 @@ POST /internal/attractions/links/bulk
 
 - `emptyFor` = 원천이 결과를 0건으로 준 (관광지, 소스) — 큐에서 제거하고 만료 시각만 기록한다.
   이게 없으면 결과 없는 관광지가 매 실행마다 큐 앞자리를 차지한다. TourAPI 개요의
-  negative cache(`tour-overview-empty.txt`)와 같은 문제이고, 이번엔 DB 에 자리를 만든다.
+  negative cache 와 같은 문제다 — 개요 쪽은 `attraction_overview_probes` 로 이미 옮겼다(T1).
 - **429·네트워크 실패는 `emptyFor` 가 아니다.** `attempt_count` 만 올린다 — 넣으면 그 레코드가
   영영 재시도되지 않는다 (핸드오프 §3.3 과 동일한 함정).
 

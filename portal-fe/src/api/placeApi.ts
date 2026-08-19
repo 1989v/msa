@@ -68,6 +68,29 @@ export const fetchAttraction = async (id: string): Promise<Attraction> => {
   return res.data.data;
 };
 
+/**
+ * 관광지 외부 링크 (ADR-0070). 검색이 아니라 place SSOT 에서 읽는다 — 링크는 검색 조건이
+ * 아니라 상세 표시물이라 attractions 인덱스에 넣지 않았다. 문서 id 와 place PK 가 같은 값이라
+ * 같은 id 로 부르면 된다.
+ */
+export type LinkRevenueType = 'PLAIN' | 'AFFILIATE';
+
+export interface AttractionDeepLink {
+  provider: string;
+  kind: 'SOCIAL' | 'TOUR_PRODUCT';
+  url: string;
+  revenueType: LinkRevenueType;
+}
+
+export interface AttractionLinks {
+  deepLinks: AttractionDeepLink[];
+}
+
+export const fetchAttractionLinks = async (id: string): Promise<AttractionLinks> => {
+  const res = await api.get<ApiResponse<AttractionLinks>>(`/api/places/attractions/${id}/links`);
+  return res.data.data;
+};
+
 // 통합 자동완성 — 지역(행정 계층, 인구 부스트 상단) + 관광지 prefix (ADR-0065)
 export interface Suggestion {
   type: 'REGION' | 'ATTRACTION';

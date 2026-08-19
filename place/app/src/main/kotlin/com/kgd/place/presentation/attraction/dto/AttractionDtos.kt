@@ -1,6 +1,7 @@
 package com.kgd.place.presentation.attraction.dto
 
 import com.kgd.place.application.attraction.usecase.AttractionOverviewProbeUseCase
+import com.kgd.place.application.attraction.usecase.GetAttractionLinksUseCase
 import com.kgd.place.application.attraction.usecase.GetAttractionUseCase
 import com.kgd.place.application.attraction.usecase.UpsertAttractionUseCase
 import jakarta.validation.Valid
@@ -125,3 +126,29 @@ data class RecordOverviewProbeRequest(
 data class OverviewProbeListResponse(val keys: List<String>, val total: Int)
 
 data class RecordOverviewProbeResponse(val recorded: Int)
+
+/**
+ * 관광지 외부 링크 (ADR-0070). `revenueType` 이 AFFILIATE 인 것만 화면이 배지·고지와
+ * `rel="sponsored"` 를 붙인다 — 표시 규칙은 화면 한 곳에서만 판단한다.
+ */
+data class AttractionLinksResponse(val deepLinks: List<DeepLinkResponse>) {
+    companion object {
+        fun from(links: GetAttractionLinksUseCase.Links) = AttractionLinksResponse(
+            deepLinks = links.deepLinks.map {
+                DeepLinkResponse(
+                    provider = it.provider,
+                    kind = it.kind.name,
+                    url = it.url,
+                    revenueType = it.revenueType.name,
+                )
+            },
+        )
+    }
+}
+
+data class DeepLinkResponse(
+    val provider: String,
+    val kind: String,
+    val url: String,
+    val revenueType: String,
+)

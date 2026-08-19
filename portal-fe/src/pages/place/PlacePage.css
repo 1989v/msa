@@ -430,3 +430,59 @@
   align-items: center;
   gap: var(--ko-space-2);
 }
+
+/* 관광지 외부 링크 (ADR-0070) — 검색 패널·상세 페이지 공용 */
+.place-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.place-links-heading {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ko-text-primary);
+}
+
+.place-links-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.place-links-group-title {
+  font-size: 0.75rem;
+  /* muted 는 이 면에서 4.09:1 이라 작은 글자 하한(4.5)에 못 미친다 — 실측값 */
+  color: var(--ko-text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.place-links-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.place-links-btn {
+  font-size: 0.85rem;
+  padding: 0.4rem 0.7rem;
+  gap: 0.35rem;
+}
+
+.place-links-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--ko-text-secondary);
+  border: 1px solid var(--ko-border-default);
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+}
+
+.place-links-disclosure {
+  font-size: 0.75rem;
+  /* 공정위 고지 문구 — 읽히지 않으면 고지가 아니다. muted(4.09:1) 로 두지 않는다. */
+  color: var(--ko-text-secondary);
+  line-height: 1.45;
+}

@@ -19,7 +19,7 @@
 
 ---
 
-## T1 — 수집 파이프라인 주기화 (링크와 독립)
+## T1 — 수집 파이프라인 주기화 (링크와 독립) — **완료 (2026-08-20, 64015a6d)**
 
 2026-08-17 "자동 스케줄 금지" 를 뒤집는 작업. 근거는 ADR-0070 맥락 4번.
 
@@ -41,13 +41,14 @@
 
 ---
 
-## T2 — 링크 도메인 + API (place)
+## T2 — 링크 도메인 + API (place) — **딥링크분 완료**, 수집형은 T3 과 함께
 
-- [ ] `AttractionLink` 도메인 모델 + `AttractionLinkRequest` (프레임워크 의존 없음)
-- [ ] Flyway 마이그레이션 2개 테이블 (enum STRING, UNIQUE/INDEX 는 spec.md §2)
-- [ ] `GET /api/places/attractions/{id}/links` — 캐시 조회 + 딥링크 조립 + 큐 적재
-- [ ] `GET|POST /internal/attractions/links/**` — 큐 조회 / 적재
-- [ ] 딥링크 템플릿 상수 1곳 (`AttractionDeepLink`)
+- [ ] `AttractionLink` 도메인 모델 + `AttractionLinkRequest` (프레임워크 의존 없음) — T3
+- [x] `AttractionDeepLinks` 템플릿 + `AttractionOverviewProbe` (T1 에서 함께)
+- [ ] Flyway 마이그레이션 2개 테이블 (enum STRING, UNIQUE/INDEX 는 spec.md §2) — T3
+- [x] `GET /api/places/attractions/{id}/links` — 딥링크 조립 (캐시·큐는 T3)
+- [ ] `GET|POST /internal/attractions/links/**` — 큐 조회 / 적재 — T3
+- [x] 딥링크 템플릿 상수 1곳 (`AttractionDeepLinks`)
 
 **검증**:
 - 캐시 유효/만료/부재 3분기 — Kotest BehaviorSpec
@@ -69,16 +70,19 @@
 
 ---
 
-## T4 — FE 관련 콘텐츠 섹션
+## T4 — FE 관련 콘텐츠 섹션 — **딥링크분 완료**
 
-- [ ] `AttractionLinks` 컴포넌트 — `PlacePage` 사이드 패널 + `AttractionPage` 공용
-- [ ] 유튜브 썸네일 카드 / 블로그 링크 / 딥링크 버튼 행
-- [ ] `pending` 스켈레톤 (오류 아님)
-- [ ] `rel` 속성 + `AFFILIATE` 배지·고지 (ADR-0069 §1 규칙 그대로)
-- [ ] `placeApi.ts` 에 `fetchAttractionLinks`
+- [x] `AttractionLinks` 컴포넌트 — `PlacePage` 사이드 패널 + `AttractionPage` 공용
+- [x] 딥링크 버튼 행 (인스타 / 마이리얼트립 / Klook)
+- [ ] 유튜브 썸네일 카드 / 블로그 링크 — T3
+- [ ] `pending` 스켈레톤 (오류 아님) — T3
+- [x] `rel` 속성 + `AFFILIATE` 배지·고지 (ADR-0069 §1 규칙 그대로)
+- [x] `placeApi.ts` 에 `fetchAttractionLinks`
 
-**검증**: CDP 실측 4조합 (기기 × 사이트 테마) — `docs/standards/fe-visual-verification.md`.
-브랜드 면이므로 `docs/design/k-heritage.html` 을 먼저 연다.
+**검증 (2026-08-20 실측)**: 기기 × 사이트 4조합 모두 동일값, `color-scheme: light only`/`dark only`.
+제목·버튼 15.27/13.34 · hover 14.48/12.76 · 라벨/배지/고지 8.53/10.11 — 전부 4.5:1 상회.
+고지 문구가 `--ko-text-muted` 로 **4.09:1** 이던 것을 실측으로 잡아 `--ko-text-secondary` 로 올렸다
+(읽히지 않는 고지는 고지가 아니다). 방법 → `docs/standards/fe-visual-verification.md`.
 
 ---
 

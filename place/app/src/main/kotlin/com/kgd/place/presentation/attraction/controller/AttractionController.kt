@@ -2,8 +2,10 @@ package com.kgd.place.presentation.attraction.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.place.application.attraction.usecase.AttractionOverviewProbeUseCase
+import com.kgd.place.application.attraction.usecase.GetAttractionLinksUseCase
 import com.kgd.place.application.attraction.usecase.GetAttractionUseCase
 import com.kgd.place.application.attraction.usecase.UpsertAttractionUseCase
+import com.kgd.place.presentation.attraction.dto.AttractionLinksResponse
 import com.kgd.place.presentation.attraction.dto.AttractionPageResponse
 import com.kgd.place.presentation.attraction.dto.AttractionResponse
 import com.kgd.place.presentation.attraction.dto.BulkUpsertAttractionRequest
@@ -33,6 +35,7 @@ class AttractionController(
     private val upsertAttractionUseCase: UpsertAttractionUseCase,
     private val getAttractionUseCase: GetAttractionUseCase,
     private val overviewProbeUseCase: AttractionOverviewProbeUseCase,
+    private val getAttractionLinksUseCase: GetAttractionLinksUseCase,
 ) {
 
     @ResponseStatus(HttpStatus.CREATED)
@@ -65,6 +68,11 @@ class AttractionController(
     @GetMapping("/{id}")
     fun findById(@PathVariable id: Long): ApiResponse<AttractionResponse> =
         ApiResponse.success(AttractionResponse.from(getAttractionUseCase.findById(id)))
+
+    /** 관광지 외부 링크 (ADR-0070) — 지금은 조립되는 딥링크만. 수집형은 커넥터가 붙을 때 더해진다. */
+    @GetMapping("/{id}/links")
+    fun findLinks(@PathVariable id: Long): ApiResponse<AttractionLinksResponse> =
+        ApiResponse.success(AttractionLinksResponse.from(getAttractionLinksUseCase.findByAttractionId(id)))
 
     /**
      * 개요 수집 negative cache (ADR-0070). 수집기가 제외 목록을 받아 가고, 원천이 빈 개요를 준

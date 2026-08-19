@@ -12,6 +12,7 @@ import {
   type Suggestion,
 } from '../../api/placeApi';
 import { loadGoogleMaps, mapsApiKey, radiusFromBounds } from './googleMaps';
+import AttractionLinks from './AttractionLinks';
 import ThemeToggle from '../../components/ThemeToggle';
 import './PlacePage.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -470,6 +471,7 @@ export default function PlacePage() {
               >
                 {L.openInGoogleMaps}
               </a>
+              <AttractionLinks id={selected.id} lang={lang} />
             </aside>
           )}
         </section>
