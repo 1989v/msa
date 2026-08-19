@@ -50,3 +50,23 @@ export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: numb
     Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLng / 2) ** 2;
   return 2 * 6371 * Math.asin(Math.sqrt(a));
 }
+
+/**
+ * 선택된 명소와 함께 지도 프레임에 넣을 가까운 이웃 (ADR-0070).
+ *
+ * 선택한 한 점만 확대하면 "여기가 어디 옆인지"가 사라져 지도가 목록의 장식이 된다.
+ * 그래서 가장 가까운 몇 곳을 같은 프레임에 넣어 bounds 를 만든다.
+ */
+export function neighboursInFrame<T extends { id: string; latitude: number; longitude: number }>(
+  target: T,
+  all: T[],
+  count: number,
+): T[] {
+  if (count <= 0) return [];
+  return all
+    .filter((a) => a.id !== target.id)
+    .map((a) => ({ a, km: haversineKm(target.latitude, target.longitude, a.latitude, a.longitude) }))
+    .sort((x, y) => x.km - y.km)
+    .slice(0, count)
+    .map(({ a }) => a);
+}

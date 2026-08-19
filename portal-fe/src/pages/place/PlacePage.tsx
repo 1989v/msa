@@ -11,7 +11,7 @@ import {
   type PlaceLang,
   type Suggestion,
 } from '../../api/placeApi';
-import { loadGoogleMaps, mapsApiKey, radiusFromBounds } from './googleMaps';
+import { loadGoogleMaps, mapsApiKey, neighboursInFrame, radiusFromBounds } from './googleMaps';
 import AttractionLinks from './AttractionLinks';
 import ThemeToggle from '../../components/ThemeToggle';
 import './PlacePage.css';
@@ -84,6 +84,10 @@ const UI = {
 
 const CATEGORIES = ['nature', 'history', 'culture', 'leisure', 'shopping', 'food'];
 
+// 선택 시 프레임에 함께 넣을 주변 명소 수 / 확대 상한 (건물 단위까지 당기지 않는다)
+const NEIGHBOURS_IN_FRAME = 6;
+const MAX_SELECT_ZOOM = 16;
+
 const AREAS: Array<{ code: string; ko: string; en: string }> = [
   { code: '1', ko: '서울', en: 'Seoul' },
   { code: '6', ko: '부산', en: 'Busan' },
@@ -132,7 +136,7 @@ export default function PlacePage() {
 
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
-  const markersRef = useRef<any[]>([]);
+  const markersRef = useRef<Map<string, any>>(new Map());
   const hasMapKey = mapsApiKey() !== '';
 
   const query: AttractionQuery = useMemo(
@@ -198,7 +202,7 @@ export default function PlacePage() {
     const map = mapRef.current;
     if (!map || !mapReady || !window.google?.maps) return;
     markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = [];
+    markersRef.current = new Map();
     const attractions = data?.attractions ?? [];
     if (attractions.length === 0) return;
 
@@ -210,13 +214,53 @@ export default function PlacePage() {
         title: a.title,
       });
       marker.addListener('click', () => setSelectedId(a.id));
-      markersRef.current.push(marker);
+      markersRef.current.set(a.id, marker);
       bounds.extend({ lat: a.latitude, lng: a.longitude });
     });
     map.fitBounds(bounds, 48);
     // fitBounds 가 유발하는 zoom_changed 를 사용자 이동으로 오인하지 않게 리셋
     window.google.maps.event.addListenerOnce(map, 'idle', () => setMapMoved(false));
   }, [data, mapReady]);
+
+  // 선택 → 지도가 따라간다. 그 명소만 꽉 채우지 않고 **가까운 몇 곳을 프레임에 함께 넣는다** —
+  // 한 점만 확대하면 "여기가 어디 옆인지"가 사라져서 지도가 목록의 장식이 된다.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || !selectedId || !window.google?.maps) return;
+    const list = data?.attractions ?? [];
+    const target = list.find((a) => a.id === selectedId);
+    if (!target) return;
+
+    const bounds = new window.google.maps.LatLngBounds();
+    bounds.extend({ lat: target.latitude, lng: target.longitude });
+    neighboursInFrame(target, list, NEIGHBOURS_IN_FRAME)
+      .forEach((a) => bounds.extend({ lat: a.latitude, lng: a.longitude }));
+    map.fitBounds(bounds, 72);
+
+    window.google.maps.event.addListenerOnce(map, 'idle', () => {
+      // 주변이 몇 십 미터 안에 몰려 있으면 fitBounds 가 건물 단위까지 당긴다 — 상한을 둔다.
+      if (map.getZoom() > MAX_SELECT_ZOOM) map.setZoom(MAX_SELECT_ZOOM);
+      setMapMoved(false);
+    });
+  }, [selectedId, data, mapReady]);
+
+  // 어느 마커가 선택됐는지 지도 위에서도 보여야 한다. 튀는 동작은 두 번만 —
+  // 계속 뛰면 시선을 붙잡아 나머지 마커를 읽기 어렵게 만든다.
+  useEffect(() => {
+    if (!window.google?.maps) return;
+    const selected = selectedId ? markersRef.current.get(selectedId) : null;
+    markersRef.current.forEach((marker, id) => {
+      marker.setZIndex(id === selectedId ? 999 : 1);
+      if (id !== selectedId) marker.setAnimation(null);
+    });
+    if (!selected) return;
+    selected.setAnimation(window.google.maps.Animation.BOUNCE);
+    const stop = setTimeout(() => selected.setAnimation(null), 1500);
+    return () => {
+      clearTimeout(stop);
+      selected.setAnimation(null);
+    };
+  }, [selectedId, data]);
 
   // 통합 자동완성 — 200ms 디바운스, 실패는 조용히 무시 (shop suggest 패턴)
   useEffect(() => {

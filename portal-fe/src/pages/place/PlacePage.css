@@ -486,3 +486,47 @@
   color: var(--ko-text-secondary);
   line-height: 1.45;
 }
+
+.place-links-carousel {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 0.2rem;
+  list-style: none;
+}
+
+.place-links-slide {
+  flex: 0 0 8.5rem;
+  scroll-snap-align: start;
+}
+
+.place-links-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  height: 100%;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 0.5rem;
+  background: var(--ko-surface-2);
+  text-decoration: none;
+}
+
+.place-links-card:hover {
+  border-color: var(--ko-border-strong);
+}
+
+.place-links-card-provider {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ko-text-primary);
+}
+
+.place-links-card-sub {
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
+}
