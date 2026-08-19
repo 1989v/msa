@@ -295,7 +295,7 @@ images:
     newTag: 3d19d63
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 7f90906
+    newTag: bd0e9f7
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 3d19d63
