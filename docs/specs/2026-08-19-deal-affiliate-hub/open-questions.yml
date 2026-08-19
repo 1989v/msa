@@ -7,8 +7,9 @@ questions:
     owner: user
   - id: OQ-2
     phase: pre-impl
-    status: open
-    q: "`cf-origin-ca-tls` Origin CA 인증서 재발급 — SAN 에 deal.1989v.com 추가. 수동 등록 cert 라 cert-manager 가 갱신하지 않는다. 누락 시 526."
+    status: closed
+    q: "`cf-origin-ca-tls` Origin CA 인증서에 deal.1989v.com SAN 추가가 필요한가?"
+    a: "불필요. 해당 cert 는 *.1989v.com 와일드카드(2041-05 만료)라 새 서브도메인을 이미 커버한다 (ADR-0061 §5). game/resume/place 도 인증서 작업 없이 올라갔다."
     owner: user
   - id: OQ-3
     phase: pre-impl
