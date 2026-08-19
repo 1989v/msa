@@ -88,9 +88,40 @@ PUT /api/v1/admin/display/services      전시 등록·수정
 |---|---|
 | `code` | 식별자 |
 | `label` / `tagline` | 화면 문구 |
-| `href` | 진입 주소 (외부 호스트 · 내부 라우트 모두) |
+| `href` | 진입 주소 — **DB 에는 항상 상대 경로** (아래 개정 참조) |
 | `status` | `OPEN` / `PREOPEN` / `HOLD` |
 | `order_no` | 전시 순서 |
+
+### 개정 (2026-08-20) — 서브도메인 서비스의 타일은 정규 주소를 직접 건다
+
+`place`·`game`·`deal` 처럼 **서브도메인이 정규 주소인 서비스**는, DB `href`(`/place`·`/games`·`/deal`)를
+그대로 타일에 걸면 안 된다. 클릭하면 `App.tsx` 의 호스트 리다이렉트가 서브도메인으로 보내주지만
+그건 **브라우저에서 JS 가 돈 뒤**다 (서버는 200 으로 SPA 를 내려줄 뿐 301/302 를 내지 않는다).
+
+그래서 다음이 전부 apex 를 가리킨다.
+
+- hover 시 상태바에 뜨는 주소
+- 우클릭 → 링크 주소 복사
+- 새 탭으로 열기
+- JS 를 실행하지 않는 크롤러·언퍼러 (apex 에 머문다)
+
+**결정: DB 는 상대 경로를 유지하고, apex 에서 그릴 때만 화면이 정규 주소로 승격한다.**
+
+```
+display_service.href = "/deal"           ← DB (변경 없음)
+        ↓ TileGrid → resolveServiceHref()
+apex 프로덕션  →  https://deal.1989v.com/
+로컬 · k3d     →  /deal
+```
+
+DB 에 절대 URL 을 박지 않는 이유는 그대로다 — 로컬 개발에서 타일을 눌러도 프로덕션으로 튄다.
+호스트 리다이렉트는 지우지 않는다. 주소를 직접 친 방문자와 옛 공유 링크를 위한 안전망이다.
+
+**새 서비스를 서브도메인으로 올릴 때 할 일**은 `portal-fe/src/shell/serviceHref.ts` 의
+`SUBDOMAIN_ORIGIN` 에 `전시코드 → origin` 한 줄을 더하는 것이다. 빠뜨리면 위 증상이 조용히
+재발한다 — 클릭은 되므로 테스트로도 눈으로도 잘 안 잡힌다.
+
+`tech`·`commerce`(`/shop`)·`portfolio` 는 apex 경로가 정규 주소라 대상이 아니다.
 
 상태값은 커머스의 전시 상태 관례를 따른다.
 

@@ -16,14 +16,19 @@ describe('resolveServiceHref', () => {
     vi.resetModules();
   });
 
-  it('apex 프로덕션에서 deal 타일은 서브도메인 정규 주소를 건다', async () => {
+  it('apex 프로덕션에서 서브도메인 서비스는 정규 주소를 건다', async () => {
     const { resolveServiceHref } = await loadWithHost('1989v.com');
     expect(resolveServiceHref('deal', '/deal')).toBe('https://deal.1989v.com/');
+    expect(resolveServiceHref('place', '/place')).toBe('https://place.1989v.com/');
+    // 게임 타일의 DB 값은 /games 지만 정규 주소는 게임 호스트의 루트다
+    expect(resolveServiceHref('game', '/games')).toBe('https://game.1989v.com/');
   });
 
   it('로컬에서는 상대 경로 그대로 — 개발 중에 프로덕션으로 튀지 않는다', async () => {
     const { resolveServiceHref } = await loadWithHost('localhost');
     expect(resolveServiceHref('deal', '/deal')).toBe('/deal');
+    expect(resolveServiceHref('place', '/place')).toBe('/place');
+    expect(resolveServiceHref('game', '/games')).toBe('/games');
   });
 
   it('서브도메인이 없는 서비스는 apex 에서도 상대 경로를 유지한다', async () => {
