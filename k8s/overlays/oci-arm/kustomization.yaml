@@ -313,13 +313,13 @@ images:
     newTag: 6a1889c
   - name: commerce/place
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place
-    newTag: 83b8539
-  # ADR-0070 — newTag 는 첫 빌드 때 CI 가 채운다 (그 전까지 :latest 로 남아 Pull 실패한다)
+    newTag: 64015a6
   - name: commerce/place-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place-ingest
+    newTag: 64015a6
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 9b1d4d6
+    newTag: 64015a6
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 3d19d63
