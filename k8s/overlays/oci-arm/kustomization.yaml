@@ -304,7 +304,7 @@ images:
     newTag: 3d19d63
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 3d19d63
+    newTag: 61847d2
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
     newTag: 1b9189b
