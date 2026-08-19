@@ -109,22 +109,32 @@ def main() -> int:
 
     _youtube_matcher()
 
-    print("SMOKE OK — 제외목록 적용 · 429 는 negative cache 제외 · 전체 레코드 적재 · 영상 매칭 필터")
+    print("SMOKE OK — 제외목록 적용 · 429 는 negative cache 제외 · 전체 레코드 적재 · 매칭 필터(유튜브·블로그 공용)")
     return 0
 
 
 def _youtube_matcher() -> None:
-    """관광지명이 제목·설명에 없는 영상은 버린다 — "경복궁" 검색에 무관한 영상이 섞여 온다."""
-    from src import youtube
+    """관광지명이 제목·설명에 없는 결과는 버린다 — "경복궁" 검색에 무관한 것이 섞여 온다.
 
-    assert youtube._matches("경복궁", {"title": "서울 경복궁 브이로그", "description": ""})
-    assert youtube._matches("Gyeongbokgung Palace",
-                            {"title": "Seoul walk", "description": "we visit Gyeongbokgung Palace"})
-    assert not youtube._matches("경복궁", {"title": "부산 맛집 투어", "description": "해운대"})
+    유튜브와 블로그가 **같은 판단**을 쓰는지도 여기서 본다. 소스마다 기준이 갈리면
+    같은 관광지에 붙는 콘텐츠 품질이 소스마다 달라진다.
+    """
+    from src import naver
+    from src.linkmatch import matches, normalize, strip_tags
+
+    assert matches("경복궁", "서울 경복궁 브이로그", "")
+    assert matches("Gyeongbokgung Palace", "Seoul walk", "we visit Gyeongbokgung Palace")
+    assert not matches("경복궁", "부산 맛집 투어", "해운대")
     # 공백·문장부호는 무시하고 붙여서 본다
-    assert youtube._matches("전주 한옥마을", {"title": "전주한옥마을 1박2일", "description": ""})
-    # 이름이 통째로 사라지는 입력은 매칭하지 않는다 (아무 영상이나 붙는 것을 막는다)
-    assert not youtube._matches("!!!", {"title": "무엇이든", "description": ""})
+    assert matches("전주 한옥마을", "전주한옥마을 1박2일", "")
+    # 이름이 통째로 사라지는 입력은 매칭하지 않는다 (아무거나 붙는 것을 막는다)
+    assert not matches("!!!", "무엇이든", "")
+    assert normalize("전주 한옥마을!") == "전주한옥마을"
+
+    # 네이버는 매칭 구간을 <b> 로 감싸 준다 — 걷어내지 않으면 태그가 제목에 남는다
+    assert strip_tags("<b>경복궁</b> 나들이") == "경복궁 나들이"
+    assert naver._post_date("20260819") == "2026-08-19T00:00:00"
+    assert naver._post_date("2026") is None
 
 
 if __name__ == "__main__":

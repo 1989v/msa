@@ -149,7 +149,10 @@ class AttractionLinkService(
 
     companion object {
         /** 조회가 큐를 채우는 소스. 딥링크는 조립되므로 큐가 없다. */
-        private val COLLECTED_SOURCES = listOf(AttractionLinkSource.YOUTUBE)
+        private val COLLECTED_SOURCES = listOf(
+            AttractionLinkSource.YOUTUBE,
+            AttractionLinkSource.NAVER_BLOG,
+        )
 
         /**
          * 일일 예산 — 제공자 쿼터에서 나온 값이지 조절 손잡이가 아니다.

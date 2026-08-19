@@ -546,3 +546,31 @@
   font-size: 0.75rem;
   color: var(--ko-text-secondary);
 }
+
+.place-links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  list-style: none;
+}
+
+.place-links-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-decoration: none;
+}
+
+.place-links-list-title {
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--ko-text-primary);
+  /* 블로그 제목은 길다 — 한 줄에서 자르고 나머지는 링크를 따라가면 된다 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.place-links-list-item:hover .place-links-list-title {
+  text-decoration: underline;
+}

@@ -25,7 +25,7 @@ TourAPI(KorService2/EngService2)
 | `overview` | 개요 하루치 수집(ko/en 각 1,000) → 적재 → negative cache 기록 | `place-ingest-overview` 매일 KST 04:00 |
 | `stats` | 잔량만 출력 (TourAPI 호출 0) | 수동 |
 | `sync` | 목록 전량 재동기화 → 적재 | 수동 (원천 스키마가 바뀔 때) |
-| `links` | 유튜브 영상 수집 → 적재 (우선순위 큐에서 N건) | `place-ingest-links` 매시 17분 |
+| `links` | 유튜브·네이버 블로그 수집 → 적재 (우선순위 큐에서 N건) | `place-ingest-links` 매시 17분 |
 
 재색인은 이 이미지가 트리거하지 않는다 — Job 생성 RBAC 을 얻는 대신 `attraction-reindex`
 CronJob 이 30분 뒤(KST 04:30)에 돈다.
@@ -53,6 +53,7 @@ PLACE_API=http://localhost:8096 TOUR_API_KEY='...' python3 -m src.main --job=sta
 |---|---|---|
 | `TOUR_API_KEY` | data.go.kr — TourAPI 4.0 국문(KorService2) + 영문(EngService2) | Encoding 키, 추가 인코딩 금지. 미설정 시 `DATA_GO_KR_KEY` 재사용 |
 | `YOUTUBE_API_KEY` | Google Cloud — YouTube Data API v3 | `search.list` 는 건당 100 units, 일 10,000 units → **하루 100 관광지** |
+| `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` | 네이버 개발자센터 — 검색 API | 일 25,000콜. 없으면 이 소스만 건너뛴다 |
 
 클러스터에서는 Secret `place-ingest-secrets` 의 `tour-api-key`. 운영은 SealedSecret
 (`k8s/infra/prod/sealed-secrets/README.md`).
@@ -60,7 +61,9 @@ PLACE_API=http://localhost:8096 TOUR_API_KEY='...' python3 -m src.main --job=sta
 ```bash
 kubectl -n commerce create secret generic place-ingest-secrets \
   --from-literal=tour-api-key="$TOUR_API_KEY" \
-  --from-literal=youtube-api-key="$YOUTUBE_API_KEY"
+  --from-literal=youtube-api-key="$YOUTUBE_API_KEY" \
+  --from-literal=naver-client-id="$NAVER_CLIENT_ID" \
+  --from-literal=naver-client-secret="$NAVER_CLIENT_SECRET"
 ```
 
 > 공공누리 출처표시: "한국관광공사 TourAPI". 원천 raw 응답은 레포에 커밋하지 않는다.

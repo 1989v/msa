@@ -17,6 +17,7 @@ const UI = {
   ko: {
     heading: '더 찾아보기',
     videos: '영상',
+    blogs: '방문 후기',
     social: 'SNS',
     tour: '여행 상품',
     affiliateBadge: '제휴',
@@ -26,6 +27,7 @@ const UI = {
   en: {
     heading: 'Explore more',
     videos: 'Videos',
+    blogs: 'Blog posts',
     social: 'Social',
     tour: 'Tours & tickets',
     affiliateBadge: 'Affiliate',
@@ -110,13 +112,16 @@ export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceL
   if (!data) return null; // 실패는 조용히 — 링크는 부수 정보다
 
   const videos = data.collected.filter((l) => l.source === 'YOUTUBE');
+  const blogs = data.collected.filter((l) => l.source === 'NAVER_BLOG');
   const social = data.deepLinks.filter((l) => l.kind === 'SOCIAL');
   const tour = data.deepLinks.filter((l) => l.kind === 'TOUR_PRODUCT');
   const hasAffiliate = data.deepLinks.some((l) => l.revenueType === 'AFFILIATE');
   // 수집 대기는 오류가 아니다. 이미 받은 영상이 있으면 굳이 자리표시를 띄우지 않는다.
   const showSkeleton = data.pending && videos.length === 0;
 
-  if (videos.length === 0 && social.length === 0 && tour.length === 0 && !showSkeleton) return null;
+  if (videos.length === 0 && blogs.length === 0 && social.length === 0 && tour.length === 0 && !showSkeleton) {
+    return null;
+  }
 
   return (
     <section className="place-links" aria-label={L.heading}>
@@ -136,6 +141,28 @@ export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceL
                   </li>
                 ))
               : videos.map((video) => <VideoCard key={video.url} link={video} />)}
+          </ul>
+        </div>
+      )}
+
+      {blogs.length > 0 && (
+        <div className="place-links-group">
+          <span className="place-links-group-title">{L.blogs}</span>
+          {/* 블로그 검색 응답에는 이미지가 없다 — 카드로 만들면 빈 썸네일 자리만 남는다 */}
+          <ul className="place-links-list">
+            {blogs.map((blog) => (
+              <li key={blog.url}>
+                <a
+                  className="place-links-list-item"
+                  href={blog.url}
+                  target="_blank"
+                  rel="nofollow noopener"
+                >
+                  <span className="place-links-list-title">{blog.title}</span>
+                  {blog.author && <span className="place-links-card-sub">{blog.author}</span>}
+                </a>
+              </li>
+            ))}
           </ul>
         </div>
       )}

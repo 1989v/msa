@@ -13,6 +13,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from src.linkmatch import matches
+
 SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 WATCH_URL = "https://www.youtube.com/watch?v="
 MAX_RESULTS = 5
@@ -20,23 +22,6 @@ MAX_RESULTS = 5
 
 class QuotaExceeded(RuntimeError):
     """일일 쿼터 소진 — 남은 큐를 더 두드려도 답이 같다."""
-
-
-def _normalize(text: str) -> str:
-    return "".join(ch for ch in text.lower() if ch.isalnum())
-
-
-def _matches(title: str, snippet: dict) -> bool:
-    """관광지명이 제목·설명에 없으면 버린다.
-
-    "경복궁" 으로 검색해도 무관한 영상이 섞여 오기 때문이다. 완벽한 필터는 아니고,
-    오탐률은 운영에서 재야 안다 (spec OQ-1).
-    """
-    needle = _normalize(title)
-    if not needle:
-        return False
-    haystack = _normalize(f"{snippet.get('title', '')} {snippet.get('description', '')}")
-    return needle in haystack
 
 
 def search(api_key: str, title: str, lang: str) -> list[dict]:
@@ -68,7 +53,7 @@ def search(api_key: str, title: str, lang: str) -> list[dict]:
     for item in body.get("items") or []:
         video_id = ((item.get("id") or {}).get("videoId") or "").strip()
         snippet = item.get("snippet") or {}
-        if not video_id or not _matches(title, snippet):
+        if not video_id or not matches(title, snippet.get("title", ""), snippet.get("description", "")):
             continue
         thumbnails = snippet.get("thumbnails") or {}
         thumb = (thumbnails.get("medium") or thumbnails.get("default") or {}).get("url")
