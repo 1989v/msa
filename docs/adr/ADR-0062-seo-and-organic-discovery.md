@@ -90,6 +90,12 @@ location = /robots.txt  { try_files /seo/$host/robots.txt /seo/1989v.com/robots.
 location = /sitemap.xml { try_files /seo/$host/sitemap.xml =404; }
 ```
 
+이 블록들에는 **`Cache-Control` 을 반드시 명시한다.** 비워 두면 Cloudflare 가 기본 4시간을
+붙여, 배포가 끝난 뒤에도 엣지가 옛 robots 를 계속 내보낸다. 2026-08-20 deal 호스트를 새로
+붙였을 때 `cf-cache-status: HIT` · `age: 1979` 로 apex 폴백 robots 가 계속 나갔고, PoP 마다
+캐시 나이가 달라 응답이 요청마다 갈리는 바람에 파드 혼재로 오진했다. 크롤러가 자주 읽는
+파일이 아니라 짧은 TTL(300s)의 비용은 사실상 없다.
+
 게임 sitemap 은 142 URL(허브 2 + 장르 18 + 상세 122, 2026-08-19 기준 61종 × 2언어)이며 `lastmod` 는 `contentUpdatedAt`,
 각 URL 에 `xhtml:link` hreflang 대체 주소를 붙인다.
 
