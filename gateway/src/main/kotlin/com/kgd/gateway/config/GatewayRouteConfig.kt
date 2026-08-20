@@ -321,6 +321,72 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // === ADR-0072 블로그 플랫폼 (code-dictionary 소유) ===
+            // 좁은 경로부터 선언한다 — 선언 순서가 곧 우선순위라, 공개 라우트를 먼저 두면
+            // 스튜디오·어드민 경로가 인증 없이 통과한다.
+            .route("blog-admin") { r ->
+                r.path("/api/v1/admin/blog/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(adminConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 작성자 스튜디오 — 로그인까지만 엣지가 본다. "저자인가"·"내 글인가"는
+            // 서비스가 판정한다 (소유권은 게이트웨이가 알 수 없는 정보다).
+            .route("blog-studio") { r ->
+                r.path("/api/v1/blog/me/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 댓글은 로그인 필수 + Rate Limiter. 스팸이 익명에서만 오지는 않는다.
+            .route("blog-comments") { r ->
+                r.path("/api/v1/blog/comments", "/api/v1/blog/comments/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(userKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 좋아요·평점은 익명 허용(방문자 1표). 익명 쓰기라 Rate Limiter 를 건다 —
+            // 게임 평점과 같은 판단이다.
+            .route("blog-reaction") { r ->
+                r.path("/api/v1/blog/posts/*/like", "/api/v1/blog/posts/*/rating")
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(userKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 목록·상세·카테고리·작성자 공간 조회 — 공개.
+            // 인증 필터를 걸지 않아도 게이트웨이가 채운 신원 헤더는 그대로 전달되므로,
+            // 로그인 사용자의 "내가 누른 좋아요" 표시는 동작한다.
+            .route("blog-public") { r ->
+                r.path("/api/v1/blog/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 글 상세·작성자 공간의 HTML (meta 주입, ADR-0072 §6).
+            // `/api` 밑이 아닌 이유는 이 주소가 공유되기 때문이다 — deal 의 `/go` 와 같은 판단.
+            // ingress 는 blog 호스트에만 이 prefix 를 연다.
+            .route("blog-page") { r ->
+                r.path("/posts/**", "/authors/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
             .route("place-service-read") { r ->
                 r.method(HttpMethod.GET)

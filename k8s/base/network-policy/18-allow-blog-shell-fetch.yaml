@@ -1,0 +1,31 @@
+# ADR-0072 §6 — code-dictionary → portal-fe (블로그 셸 페치)
+#
+# 블로그 글 상세는 백엔드가 portal-fe 의 실제 index.html 을 받아 메타를 주입해 내보낸다.
+# 13-allow-ingress-to-frontend 는 FE Pod 의 ingress 를 ingress-nginx 로만 열어 두므로,
+# 그 한 줄이 없으면 셸 페치가 default-deny 에 막혀 모든 글이 최소 HTML 로 떨어진다
+# (증상: 화면은 뜨는데 SPA 가 안 붙는다 — 원인이 NetworkPolicy 라는 신호가 어디에도 없다).
+#
+# 13번 파일을 고치지 않고 별도 정책으로 두는 이유: NetworkPolicy 는 합집합이라 이렇게 두면
+# **portal-fe 에만** 이 예외가 붙는다. 13번의 podSelector 에 from 을 더하면 admin-fe·
+# quant-fe·gifticon-fe 까지 code-dictionary 에 열린다.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-blog-shell-fetch
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: portal-fe
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: code-dictionary
+      ports:
+        - { port: 80, protocol: TCP }

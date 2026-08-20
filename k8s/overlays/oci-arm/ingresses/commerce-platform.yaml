@@ -60,6 +60,7 @@ spec:
         - resume.1989v.com
         - place.1989v.com
         - deal.1989v.com
+        - blog.1989v.com
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
@@ -216,6 +217,26 @@ spec:
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /go
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }
+    # ─── portal-fe (blog 호스트 — 블로그 플랫폼, ADR-0072) ───
+    # `/posts` 와 `/authors` 는 백엔드가 meta 를 주입한 HTML 을 내는 경로다 (§6).
+    # portal-fe 로 보내면 정적 index.html 이 나가 모든 글의 공유 카드가 같은 문구가 된다.
+    # **이 호스트에만** 연다 — 다른 host 에 열면 같은 글이 두 주소로 돌아다녀 canonical 이 갈린다.
+    # WS/SSE 는 쓰지 않으므로 열지 않는다 (노출면을 필요한 만큼만).
+    - host: blog.1989v.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /posts
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /authors
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /
