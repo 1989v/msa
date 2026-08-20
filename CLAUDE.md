@@ -54,6 +54,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
 - **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md` (스크립트) · `k8s/infra/prod/backup/` (CronJob 래퍼)
 - **K8s 전환**: 배포 모드 이원화, Eureka 제거, Jib → `docs/adr/ADR-0019-k8s-migration.md`
+- **원천 데이터 대장 (외부 데이터를 붙이면 필수 갱신)**: 출처·라이선스·키 필요 여부·받는 방법 → `docs/architecture/data-sources.md`. 출처표시 의무가 있는 것(GeoNames CC BY 4.0, TourAPI 공공누리, 참가격 KOGL 제1유형)이 섞여 있어 **코드에만 있고 대장에 없으면 없는 것으로 친다**
 - **FE 디자인 가드레일**: AI slop 방지, 타이포/색상/레이아웃/모션/접근성 → `docs/conventions/frontend-design.md`
 - **DESIGN.md 표준 (필수)**: FE 코드 작성 / UI 화면 생성 전 **반드시 root `DESIGN.md` 의 토큰을 우선 참조**. hex 직접 입력 금지. 상세 표준 → `docs/standards/design-md.md`, 인스턴스 → `DESIGN.md`
 - **FE 화면 검증 (필수)**: 색 대비·테마·기기 설정 분기는 tsc/build 가 못 잡는다. `눈으로 봤다` 대신 **CDP 로 잰 값**을 남긴다 — 독립 프로필 헤드리스 크롬 + `Emulation.setEmulatedMedia` 로 기기×사이트 4조합. chrome-devtools MCP 가 막혀도 **락 파일을 지우지 않는다**(프로필이 깨져 알럿이 반복된다) → `docs/standards/fe-visual-verification.md`

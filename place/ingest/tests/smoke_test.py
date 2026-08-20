@@ -162,6 +162,7 @@ def _admin_region_parser() -> None:
 
     _english_from_address()
     _sejong_has_a_sido()
+    _ldong_normalization()
 
 
 def _english_from_address() -> None:
@@ -191,6 +192,18 @@ def _english_from_address() -> None:
     assert "29" not in SIDO_EN and "46" not in SIDO_EN
     assert SIDO_EN["12"].startswith("Jeonnam-Gwangju")
     assert SIDO_EN["51"] == "Gangwon-do" and SIDO_EN["52"] == "Jeonbuk-do"
+
+
+def _ldong_normalization() -> None:
+    """세종은 두 필드 모두 5자리로 온다 — 그대로 저장하면 시도 코드와 조인이 안 된다."""
+    from src.sync_tour import _ldong
+
+    assert _ldong({"lDongRegnCd": "11", "lDongSignguCd": "110"}) == {
+        "ldongRegnCd": "11", "ldongSignguCd": "110"}
+    # 세종: 36110 → 36 / 110 (admin_regions 의 36 + 36110 과 맞는다)
+    assert _ldong({"lDongRegnCd": "36110", "lDongSignguCd": "36110"}) == {
+        "ldongRegnCd": "36", "ldongSignguCd": "110"}
+    assert _ldong({}) == {"ldongRegnCd": None, "ldongSignguCd": None}
 
 
 def _sejong_has_a_sido() -> None:

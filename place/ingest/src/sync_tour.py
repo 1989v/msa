@@ -108,6 +108,21 @@ def tour_get(key: str, service: str, op: str, params: dict) -> dict:
     return data["response"]["body"]
 
 
+def _ldong(item: dict) -> dict:
+    """법정동 시도(2)·시군구(3) 코드로 정규화한다.
+
+    원천이 대부분 2/3자리를 주지만 **세종은 두 필드 모두 5자리(`36110`)** 로 온다 —
+    시도 행이 없는 단층제라 시군구 코드를 그대로 얹어 보내는 것으로 보인다(200건 표본에서 1건).
+    그대로 저장하면 시도 코드 `36` 과 조인이 안 돼 세종이 드릴다운에서 사라진다.
+    5자리면 앞 2 / 뒤 3 으로 쪼갠다 — `admin_regions` 의 `36` + `36110` 과 정확히 맞는다.
+    """
+    regn = str(item.get("lDongRegnCd") or "").strip()
+    signgu = str(item.get("lDongSignguCd") or "").strip()
+    if len(regn) == 5:
+        regn, signgu = regn[:2], regn[2:]
+    return {"ldongRegnCd": regn or None, "ldongSignguCd": signgu or None}
+
+
 def parse_modified(raw: str) -> str | None:
     # modifiedtime: yyyyMMddHHmmss → ISO LocalDateTime
     if not raw or len(raw) < 8:
@@ -152,12 +167,9 @@ def fetch_area_based(key: str, svc_key: str, content_type: str, area: str | None
                              or LDONG_TO_AREA.get(str(it.get("lDongRegnCd") or "").strip())),
                 "sigunguCode": (str(it.get("sigungucode") or "").strip()
                                 or str(it.get("lDongSignguCd") or "").strip() or None),
-                # ADR-0071 — 법정동 코드는 **역산하지 않고 원천 값 그대로** 싣는다.
-                # 위 sigunguCode 는 구 코드와 법정동 코드를 대체해 담아 두 체계가 섞였다
-                # (실측: 법정동 25,030행 + 구코드 19,874행 → 시군구가 486개로 보였다).
-                # 지역 축은 아래 두 필드로만 세운다.
-                "ldongRegnCd": str(it.get("lDongRegnCd") or "").strip() or None,
-                "ldongSignguCd": str(it.get("lDongSignguCd") or "").strip() or None,
+                # ADR-0071 — 지역 축은 법정동 코드로만 세운다. 위 sigunguCode 는 구 코드와
+                # 법정동 코드를 대체해 담아 두 체계가 섞였다(실측: 486쌍, 실제 시군구는 269개).
+                **_ldong(it),
                 "category": categorize(it.get("cat1") or "", it.get("cat2") or "",
                                        it.get("lclsSystm1") or ""),
                 "cat1": it.get("cat1") or None,
