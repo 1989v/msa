@@ -25,9 +25,10 @@ spec:
   failedJobsHistoryLimit: 3
   jobTemplate:
     spec:
-      # 재시도하지 않는다 — 실패 원인 대부분이 일일 한도(429)라 즉시 재시도는 낭비다.
-      # 다음 날 실행이 같은 큐를 이어서 소진한다.
-      backoffLimit: 0
+      # 일일 한도(429)는 수집기가 안에서 흡수하고 exit 0 으로 끝난다 — Job 실패로 잡히지 않는다.
+      # 그래서 여기 남는 실패는 "시작조차 못한" 경우(DNS·연결)뿐이고, 그건 재시도가 정답이다.
+      # 하루 1회라 한 번 놓치면 그날 치를 통째로 잃는다 (실제로 롤아웃 중 노드 포화로 잃었다).
+      backoffLimit: 2
       template:
         metadata:
           labels:
