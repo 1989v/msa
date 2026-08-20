@@ -316,10 +316,10 @@ images:
     newTag: 5ffa478
   - name: commerce/place-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place-ingest
-    newTag: d68ca46
+    newTag: c621b4b
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 859499f
+    newTag: c621b4b
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 12f6421
