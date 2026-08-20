@@ -16,7 +16,10 @@
       "lang": { "type": "keyword" },
       "title": {
         "type": "text", "analyzer": "nori_analyzer",
-        "fields": { "en": { "type": "text", "analyzer": "english" } }
+        "fields": {
+          "en": { "type": "text", "analyzer": "english" },
+          "keyword": { "type": "keyword", "ignore_above": 256 }
+        }
       },
       "address": {
         "type": "text", "analyzer": "nori_analyzer",

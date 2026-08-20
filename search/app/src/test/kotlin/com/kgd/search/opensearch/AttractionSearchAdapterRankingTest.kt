@@ -76,7 +76,12 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
                 adapter.suggest("경복", "ko", 8)
 
                 // 마지막 호출이 관광지 자동완성 (앞은 지역 슬롯)
-                captured.captured.query()?.isFunctionScore shouldBe true
+                val query = captured.captured.query()
+                query?.isFunctionScore shouldBe true
+                // 분류 가중치만으로는 '한복남 경복궁점'(culture) 을 못 내린다 — 이름이 입력으로
+                // 시작하는지를 함께 본다. 이 should 가 빠지면 그 회귀가 그대로 돌아온다.
+                val inner = requireNotNull(query!!.functionScore().query()).bool()
+                inner.should().any { it.isPrefix && it.prefix().field() == "title.keyword" } shouldBe true
             }
         }
     }

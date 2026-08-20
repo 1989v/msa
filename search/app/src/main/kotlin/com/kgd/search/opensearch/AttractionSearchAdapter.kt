@@ -122,6 +122,15 @@ class AttractionSearchAdapter(
         val matched = Query.of { q ->
             q.bool { b ->
                 b.must { m -> m.matchBoolPrefix { it.field(titleField).query(prefix) } }
+                /*
+                 * 이름이 입력으로 **시작하는** 문서를 올린다.
+                 *
+                 * 분류 가중치만으로는 "경복" 에서 `한복남 경복궁점` 을 못 내린다 — 그 상점의
+                 * TourAPI 분류가 `culture` 라 경복궁과 같은 가중치를 받기 때문이다. 분류 체계가
+                 * 새는 지점이고, 거기에 맞서는 신호는 분류가 아니라 **이름의 모양**이다.
+                 * `경복궁` 은 "경복" 으로 시작하고 `한복남 경복궁점` 은 포함만 한다.
+                 */
+                b.should { s -> s.prefix { p -> p.field("title.keyword").value(prefix).boost(6.0f) } }
                 lang?.let { l -> b.filter { f -> f.term { it.field("lang").value(FieldValue.of(l)) } } }
                 b
             }
