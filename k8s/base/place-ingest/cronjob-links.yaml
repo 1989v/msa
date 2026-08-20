@@ -20,10 +20,10 @@ metadata:
     app.kubernetes.io/part-of: commerce-platform
     place.kgd.io/job: "links"
 spec:
-  # YOUTUBE_API_KEY / NAVER_CLIENT_ID+SECRET 중 하나라도 등록되면 suspend 를 풀 것.
-  # 키가 없으면 잡이 "키가 필요합니다" 로 매시 실패해 실패 잡만 쌓인다 — 알람 피로가 쌓이면
-  # 진짜 실패를 놓친다. 동작할 수 없는 배치는 스케줄에 올려두지 않는다.
-  suspend: true
+  # 2026-08-21 YOUTUBE_API_KEY 등록으로 가동. 네이버 키는 아직 없고, 키 없는 소스는
+  # 수집기가 건너뛰므로 잡은 정상 종료한다. 키를 전부 지우게 되면 다시 suspend 로 —
+  # 동작할 수 없는 배치가 매시 실패 잡을 쌓으면 알람 피로로 진짜 실패를 놓친다.
+  suspend: false
   schedule: "17 * * * *"       # 매시 17분 — 정각 몰림(다른 배치들)을 피한다
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 1
