@@ -80,6 +80,9 @@ spec:
         - { port: http, protocol: TCP }
 ---
 # search-batch → place : attractionApiReindexJob 이 관광지 SSOT 를 페이지 풀스캔 (ADR-0065).
+# place-ingest → place : 개요·링크 수집이 큐 조회/적재를 place API 로 한다 (ADR-0070/0071).
+#   빠뜨리면 k3s netpol 이 REJECT 라 CronJob 이 "Connection refused" 로 죽는다 — 지금까지
+#   수동 적재가 됐던 건 kubectl port-forward 가 NetworkPolicy 를 우회하기 때문이었다.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -99,5 +102,8 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: search-batch
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: place-ingest
       ports:
         - { port: http, protocol: TCP }
