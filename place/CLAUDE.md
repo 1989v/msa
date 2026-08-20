@@ -25,6 +25,13 @@
 - **`regions`(GeoNames 지명 계층)과 `admin_regions`(한국 행정구역)은 다른 것이다** (ADR-0071).
   GeoNames 의 KR CITY 296행은 흥해읍·왜관읍이 섞인 지명 덤프이고 `admin2_code` 가 전부 NULL 이라
   시군구 축으로 쓸 수 없다. 한국 행정구역은 법정동 코드로 따로 세운다.
+- **원천 분류는 원본 그대로 컬럼에 남기고, 화면용 `category` 는 파생으로 계산한다**
+  (`lcls_systm1~3`/`cat1~3` → `category`). 그루핑 규칙이 바뀌면 UPDATE 한 번이면 된다 —
+  실제로 517건을 원천 재호출 0회로 고쳤다 (`docs/architecture/data-sources.md` §0).
+- **분류 우선순위는 "좁게 말하는 쪽이 이긴다"** — 신/구 체계 중 어느 쪽인지로 정하지 않는다.
+  신 체계를 통째로 앞세우면 캠핑장이 `AC`(숙박)로 가 목록에서 사라지고, 구 체계를 통째로
+  앞세우면 온천·스파(`EX05`)가 `A0202`(자연)로 간다. 순서는 **소분류 → 중분류 → 구 중분류 →
+  구 대분류 → 신 대분류**. `sync_tour.categorize` 와 smoke_test 에 고정돼 있다.
 - 관광지의 지역 축은 `ldong_regn_cd`/`ldong_signgu_cd` 다. 기존 `area_code`/`sigungu_code` 는
   두 코드 체계가 섞여 있어(법정동 25,030행 + TourAPI 구코드 19,874행) **필터 축으로 쓰지 않는다.**
 - 스키마는 **Flyway+validate** 단독 책임. 단일 datasource (warehouse 의 routing 미사용).
