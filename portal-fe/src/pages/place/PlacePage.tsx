@@ -46,6 +46,8 @@ const UI = {
     prev: '이전',
     next: '다음',
     close: '닫기',
+    hideList: '목록 접기',
+    showList: '목록 펼치기',
     categories: {
       nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
       shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
@@ -70,6 +72,8 @@ const UI = {
     prev: 'Prev',
     next: 'Next',
     close: 'Close',
+    hideList: 'Hide list',
+    showList: 'Show list',
     categories: {
       nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
       shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
@@ -87,6 +91,12 @@ const CATEGORIES = ['nature', 'history', 'culture', 'leisure', 'shopping', 'food
 // 선택 시 프레임에 함께 넣을 주변 명소 수 / 확대 상한 (건물 단위까지 당기지 않는다)
 const NEIGHBOURS_IN_FRAME = 6;
 const MAX_SELECT_ZOOM = 16;
+
+/*
+ * 행정 레벨별 확대 상한 (ADR-0071 §4). 시도를 골랐는데 결과가 한 동네에 몰리면 fitBounds 가
+ * 그 동네까지 당겨 "제주를 봤는데 성산 골목이 보이는" 상태가 된다. 고른 레벨이 화면의 축이다.
+ */
+const MAX_ZOOM_BY_LEVEL = { SIDO: 11, SIGUNGU: 13 } as const;
 
 const AREAS: Array<{ code: string; ko: string; en: string }> = [
   { code: '1', ko: '서울', en: 'Seoul' },
@@ -133,6 +143,8 @@ export default function PlacePage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapMoved, setMapMoved] = useState(false);
   const [mapReady, setMapReady] = useState(false);
+  // 좁은 화면은 세 열이 안 들어간다 — 접힌 채로 시작해 지도를 먼저 보인다
+  const [listOpen, setListOpen] = useState(() => window.innerWidth > 900);
 
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -218,9 +230,13 @@ export default function PlacePage() {
       bounds.extend({ lat: a.latitude, lng: a.longitude });
     });
     map.fitBounds(bounds, 48);
-    // fitBounds 가 유발하는 zoom_changed 를 사용자 이동으로 오인하지 않게 리셋
-    window.google.maps.event.addListenerOnce(map, 'idle', () => setMapMoved(false));
-  }, [data, mapReady]);
+    window.google.maps.event.addListenerOnce(map, 'idle', () => {
+      // 시도를 고른 상태면 그 레벨보다 더 당기지 않는다
+      if (areaCode && map.getZoom() > MAX_ZOOM_BY_LEVEL.SIDO) map.setZoom(MAX_ZOOM_BY_LEVEL.SIDO);
+      // fitBounds 가 유발하는 zoom_changed 를 사용자 이동으로 오인하지 않게 리셋
+      setMapMoved(false);
+    });
+  }, [data, mapReady, areaCode]);
 
   // 선택 → 지도가 따라간다. 그 명소만 꽉 채우지 않고 **가까운 몇 곳을 프레임에 함께 넣는다** —
   // 한 점만 확대하면 "여기가 어디 옆인지"가 사라져서 지도가 목록의 장식이 된다.
@@ -450,30 +466,49 @@ export default function PlacePage() {
         </div>
       </div>
 
-      <div className="place-body">
-        <section className="place-list" aria-busy={isLoading}>
-          {attractions.length === 0 && !isLoading && <p className="place-empty">{L.empty}</p>}
-          {attractions.map((a) => (
-            <PlaceCard key={a.id} attraction={a} lang={lang} onSelect={() => setSelectedId(a.id)} />
-          ))}
-          {data && data.totalPages > 1 && (
-            <div className="place-paging">
-              <button className="place-btn" disabled={page === 0} onClick={() => setPage(page - 1)}>
-                {L.prev}
-              </button>
-              <span className="place-paging-info">
-                {data.currentPage + 1} / {data.totalPages}
-              </span>
-              <button
-                className="place-btn"
-                disabled={page + 1 >= data.totalPages}
-                onClick={() => setPage(page + 1)}
-              >
-                {L.next}
-              </button>
-            </div>
+      <div
+        className={[
+          'place-body',
+          listOpen ? '' : 'list-collapsed',
+          selected ? 'has-detail' : '',
+        ].filter(Boolean).join(' ')}
+      >
+        <div className="place-list-col">
+          <button
+            type="button"
+            className="place-list-toggle"
+            aria-expanded={listOpen}
+            aria-label={listOpen ? L.hideList : L.showList}
+            onClick={() => setListOpen((open) => !open)}
+          >
+            {listOpen ? `‹ ${L.hideList}` : '›'}
+          </button>
+          {listOpen && (
+            <section className="place-list" aria-busy={isLoading}>
+              {attractions.length === 0 && !isLoading && <p className="place-empty">{L.empty}</p>}
+              {attractions.map((a) => (
+                <PlaceCard key={a.id} attraction={a} lang={lang} onSelect={() => setSelectedId(a.id)} />
+              ))}
+              {data && data.totalPages > 1 && (
+                <div className="place-paging">
+                  <button className="place-btn" disabled={page === 0} onClick={() => setPage(page - 1)}>
+                    {L.prev}
+                  </button>
+                  <span className="place-paging-info">
+                    {data.currentPage + 1} / {data.totalPages}
+                  </span>
+                  <button
+                    className="place-btn"
+                    disabled={page + 1 >= data.totalPages}
+                    onClick={() => setPage(page + 1)}
+                  >
+                    {L.next}
+                  </button>
+                </div>
+              )}
+            </section>
           )}
-        </section>
+        </div>
 
         <section className="place-map-wrap">
           {hasMapKey ? (
@@ -489,36 +524,38 @@ export default function PlacePage() {
             <div className="place-map place-map-placeholder">{L.mapKeyMissing}</div>
           )}
 
-          {selected && (
-            <aside className="place-detail" aria-label={selected.title}>
-              <button className="place-detail-close" onClick={() => setSelectedId(null)}>
-                {L.close}
-              </button>
-              {selected.imageUrl && (
-                <img className="place-detail-img" src={selected.imageUrl} alt={selected.title} loading="lazy" />
-              )}
-              <h2 className="place-detail-title">{selected.title}</h2>
-              {selected.category && (
-                <span className="place-chip active">{L.categories[selected.category] ?? selected.category}</span>
-              )}
-              {selected.address && <p className="place-detail-addr">{selected.address}</p>}
-              {selected.tel && <p className="place-detail-tel">{selected.tel}</p>}
-              {selected.overview && <p className="place-detail-overview">{selected.overview}</p>}
-              <a className="place-btn" href={attractionPath(lang, selected.id)}>
-                {lang === 'en' ? 'Open detail page' : '상세 페이지 열기'}
-              </a>
-              <a
-                className="place-btn primary"
-                href={`https://www.google.com/maps/search/?api=1&query=${selected.latitude},${selected.longitude}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {L.openInGoogleMaps}
-              </a>
-              <AttractionLinks id={selected.id} lang={lang} />
-            </aside>
-          )}
+          {/* 캐로셀은 정보 패널의 부속이 아니라 장소에 딸린 것이다 — 지도 하단에 둔다 */}
+          {selectedId && <AttractionLinks id={selectedId} lang={lang} />}
         </section>
+
+        {selected && (
+          <aside className="place-detail" aria-label={selected.title}>
+            <button className="place-detail-close" onClick={() => setSelectedId(null)}>
+              {L.close}
+            </button>
+            {selected.imageUrl && (
+              <img className="place-detail-img" src={selected.imageUrl} alt={selected.title} loading="lazy" />
+            )}
+            <h2 className="place-detail-title">{selected.title}</h2>
+            {selected.category && (
+              <span className="place-chip active">{L.categories[selected.category] ?? selected.category}</span>
+            )}
+            {selected.address && <p className="place-detail-addr">{selected.address}</p>}
+            {selected.tel && <p className="place-detail-tel">{selected.tel}</p>}
+            {selected.overview && <p className="place-detail-overview">{selected.overview}</p>}
+            <a className="place-btn" href={attractionPath(lang, selected.id)}>
+              {lang === 'en' ? 'Open detail page' : '상세 페이지 열기'}
+            </a>
+            <a
+            className="place-btn primary"
+            href={`https://www.google.com/maps/search/?api=1&query=${selected.latitude},${selected.longitude}`}
+            target="_blank"
+            rel="noreferrer"
+            >
+            {L.openInGoogleMaps}
+            </a>
+          </aside>
+        )}
       </div>
 
       <footer className="place-footer">{L.source}</footer>

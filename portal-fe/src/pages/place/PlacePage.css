@@ -161,12 +161,55 @@
   color: var(--ko-text-primary);
 }
 
+/*
+ * 지도가 센터다 (ADR-0071 §8). 정보를 오버레이로 지도 위에 띄우면 읽는 동안 지도를 못 본다 —
+ * 지역 탐색은 지도를 보면서 읽는 행위라 그 구조와 맞지 않는다.
+ * 좌측 목록은 접어서 지도를 넓힐 수 있고, 선택이 없으면 우측 정보 열 자체가 없다.
+ */
 .place-body {
   display: grid;
-  grid-template-columns: minmax(18rem, 26rem) 1fr;
+  grid-template-columns: minmax(0, 22rem) minmax(0, 1fr);
   gap: 1rem;
   flex: 1;
   min-height: 0;
+}
+
+.place-body.has-detail {
+  grid-template-columns: minmax(0, 20rem) minmax(0, 1fr) minmax(0, 20rem);
+}
+
+.place-body.list-collapsed {
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+}
+
+.place-body.list-collapsed.has-detail {
+  grid-template-columns: 2.75rem minmax(0, 1fr) minmax(0, 20rem);
+}
+
+.place-list-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+}
+
+.place-list-toggle {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 36px;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 0.5rem;
+  background: var(--ko-surface-1);
+  color: var(--ko-text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.place-list-toggle:hover {
+  background: var(--ko-surface-2);
 }
 
 .place-list {
@@ -248,8 +291,12 @@
   overflow: hidden;
 }
 
+/* 지도 + 그 아래 아이템 캐로셀. 캐로셀은 정보 패널의 부속이 아니라 장소에 딸린 것이다. */
 .place-map-wrap {
   position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.6rem;
   min-height: 24rem;
 }
 
@@ -278,12 +325,9 @@
   box-shadow: 0 2px 8px oklch(0 0 0 / 0.35);
 }
 
+/* 오버레이가 아니라 열이다 — 지도를 가리지 않는다 (ADR-0071 §8). */
 .place-detail {
-  position: absolute;
-  top: 0.75rem;
-  right: 0.75rem;
-  width: min(20rem, 85%);
-  max-height: calc(100% - 1.5rem);
+  min-height: 0;
   overflow-y: auto;
   background: var(--ko-surface-1);
   border: 1px solid var(--ko-border-default);
@@ -346,7 +390,11 @@
 }
 
 @media (max-width: 900px) {
-  .place-body {
+  /* 좁은 화면에선 세 열이 다 들어가지 않는다 — 쌓고, 목록은 접힌 채로 시작한다 */
+  .place-body,
+  .place-body.has-detail,
+  .place-body.list-collapsed,
+  .place-body.list-collapsed.has-detail {
     grid-template-columns: 1fr;
   }
 
