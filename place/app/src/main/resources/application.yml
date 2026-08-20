@@ -65,6 +65,11 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+    # place 는 Redis 를 쓰지 않는다 — common 이 끌고 오는 스타터 때문에 지표만 등록되고
+    # localhost:6379 로 붙으려다 실패해 /actuator/health 가 상시 DOWN(503) 이었다.
+    # readiness 그룹은 readinessState 만 봐서 파드는 Ready 였고, 그래서 아무도 못 봤다.
+    redis:
+      enabled: false
   metrics:
     tags:
       application: ${spring.application.name}
