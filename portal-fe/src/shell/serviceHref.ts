@@ -1,4 +1,4 @@
-import { DEAL_ORIGIN, GAME_ORIGIN, PLACE_ORIGIN } from '../seo/copy.mjs';
+import { BLOG_ORIGIN, DEAL_ORIGIN, GAME_ORIGIN, PLACE_ORIGIN } from '../seo/copy.mjs';
 
 /**
  * apex 프로덕션인가. 서브도메인이 없는 로컬·k3d 는 false 라 상대 경로가 그대로 쓰인다.
@@ -18,6 +18,7 @@ export const isApexProd = window.location.hostname === '1989v.com';
  * App.tsx 의 호스트 리다이렉트는 주소를 직접 친 방문자를 위한 안전망으로 남는다.
  */
 const SUBDOMAIN_ORIGIN: Record<string, string> = {
+  blog: BLOG_ORIGIN,
   deal: DEAL_ORIGIN,
   place: PLACE_ORIGIN,
   game: GAME_ORIGIN,

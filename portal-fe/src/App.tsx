@@ -19,6 +19,14 @@ const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
 const PlacePage = lazy(() => import('./pages/place/PlacePage'));
 // ADR-0069 — 혜택 링크 허브 (deal.<domain>). place/game 과 같은 host 인식 루트 라우팅.
 const DealPage = lazy(() => import('./pages/deal/DealPage'));
+// ADR-0072 — 블로그 (blog.<domain>). 본문 렌더(marked/dompurify)가 들어가므로 lazy 로 분리한다.
+const BlogHomePage = lazy(() => import('./pages/blog/BlogHomePage'));
+const BlogPostPage = lazy(() => import('./pages/blog/BlogPostPage'));
+const BlogCategoryPage = lazy(() => import('./pages/blog/BlogCategoryPage'));
+const BlogAuthorPage = lazy(() => import('./pages/blog/BlogAuthorPage'));
+const BlogStudioPage = lazy(() => import('./pages/blog/BlogStudioPage'));
+const BlogEditorPage = lazy(() => import('./pages/blog/BlogEditorPage'));
+const BlogLoginPage = lazy(() => import('./pages/blog/BlogLoginPage'));
 const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
 // ADR-0071 — 지역 페이지. "제주 가볼 만한 곳" 류 질의의 착지점 (코드 세그먼트: 시도 2자리/시군구 5자리)
 const RegionPage = lazy(() => import('./pages/place/RegionPage'));
@@ -41,6 +49,8 @@ const isPlaceHost = window.location.hostname.split('.')[0] === 'place';
 const isResumeHost = window.location.hostname.split('.')[0] === 'resume';
 // deal.<domain> — 같은 번들을 서빙하되 루트가 혜택 링크 허브다 (ADR-0069)
 const isDealHost = window.location.hostname.split('.')[0] === 'deal';
+// blog.<domain> — 같은 번들을 서빙하되 루트가 블로그다 (ADR-0072)
+const isBlogHost = window.location.hostname.split('.')[0] === 'blog';
 // apex 의 /games 는 game 서브도메인으로 정리 — 게임 주소를 하나로 고정.
 // localhost/k3d 등 개발 환경은 서브도메인이 없으므로 apex 프로덕션에서만 보낸다.
 // `isApexProd` 는 전시 타일(TileGrid)과 공유한다 — 기준이 갈리면 타일이 거는 주소와
@@ -84,6 +94,26 @@ function dealRoute(element: ReactElement) {
   return isApexProd ? <DealHostRedirect /> : element;
 }
 
+function BlogHostRedirect() {
+  const { pathname, search, hash } = window.location;
+  // 허브(/blog)는 블로그 호스트에서 루트가 정규 주소다 (ADR-0072)
+  const target = pathname.replace(/^\/blog/, '') || '/';
+  window.location.replace(`https://blog.1989v.com${target}${search}${hash}`);
+  return null;
+}
+
+/** 블로그 라우트 — apex 프로덕션에서는 blog 호스트로 보내고, 그 외(로컬/개발)에는 그대로 렌더 */
+function blogRoute(element: ReactElement) {
+  return isApexProd ? <BlogHostRedirect /> : element;
+}
+
+/**
+ * 블로그의 짧은 주소(`/posts/:slug`, `/c/*`, `/authors/:handle`, `/studio`)는 blog 호스트의
+ * 것이다. apex 프로덕션에 함께 열면 같은 글이 두 주소로 돌아다녀 canonical 이 갈린다 —
+ * 서브도메인이 없는 개발 환경에서만 예외로 연다.
+ */
+const blogRoutesEnabled = isBlogHost || !isApexProd;
+
 function AdminHostRedirect() {
   window.location.replace('https://admin.1989v.com' + window.location.pathname.replace(/^\/admin/, ''));
   return null;
@@ -106,6 +136,8 @@ function App() {
                 <PlacePage />
               ) : isDealHost ? (
                 <DealPage />
+              ) : isBlogHost ? (
+                <BlogHomePage />
               ) : (
                 <HomePage />
               )
@@ -127,6 +159,15 @@ function App() {
           <Route path="/en/place" element={placeRoute(<PlacePage />)} />
           {/* 혜택 링크 허브 — 한국어만 (P1). apex 는 서브도메인으로 넘긴다 */}
           <Route path="/deal" element={dealRoute(<DealPage />)} />
+          {/* 블로그 — apex 는 서브도메인으로 넘긴다 (ADR-0072) */}
+          <Route path="/blog" element={blogRoute(<BlogHomePage />)} />
+          {blogRoutesEnabled && <Route path="/posts/:slug" element={<BlogPostPage />} />}
+          {blogRoutesEnabled && <Route path="/c/*" element={<BlogCategoryPage />} />}
+          {blogRoutesEnabled && <Route path="/authors/:handle" element={<BlogAuthorPage />} />}
+          {blogRoutesEnabled && <Route path="/studio" element={<BlogStudioPage />} />}
+          {blogRoutesEnabled && <Route path="/studio/write" element={<BlogEditorPage />} />}
+          {blogRoutesEnabled && <Route path="/studio/edit/:id" element={<BlogEditorPage />} />}
+          {isBlogHost && <Route path="/login" element={<BlogLoginPage />} />}
           {/* 관광지 상세 — 고유명사 검색의 착지점 (ADR-0062). place 호스트가 정규 주소 */}
           {/* 지역 페이지 — 지역 단위 질의의 착지점 (ADR-0071). place 호스트가 정규 주소 */}
           <Route path="/regions/:code" element={placeRoute(<RegionPage />)} />

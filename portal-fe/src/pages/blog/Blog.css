@@ -1,0 +1,613 @@
+/* ADR-0072 블로그 (blog.<domain>) — DESIGN.md(--ko-* / --kh-*) 토큰만 사용, hex 직접 입력 금지.
+   깊이는 그림자가 아니라 면의 색 단차로 만든다 (DESIGN.md §12). */
+
+.blog-page {
+  min-height: 100vh;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  font-family: var(--ko-font-family);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-8);
+  padding: var(--ko-space-6) clamp(1rem, 5vw, 3.5rem) var(--ko-space-12);
+}
+
+/* ─── 머리 ─── */
+
+.blog-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+}
+
+.blog-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-4);
+  flex-wrap: wrap;
+}
+
+.blog-header__brand {
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  color: var(--ko-text-primary);
+  text-decoration: none;
+}
+
+.blog-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+}
+
+.blog-header__title {
+  margin: var(--ko-space-4) 0 0;
+  font-size: var(--kh-display, clamp(2rem, 5vw, 3rem));
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.blog-header__subtitle {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 1rem;
+}
+
+/* ─── 카테고리 네비 — 계층을 들여쓰기가 아니라 줄바꿈으로 보인다 ─── */
+
+.blog-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  border-top: 1px solid var(--ko-border-subtle);
+  padding-top: var(--ko-space-4);
+}
+
+.blog-nav__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+  align-items: baseline;
+}
+
+.blog-nav__row--child {
+  padding-left: var(--ko-space-4);
+  border-left: 1px solid var(--ko-border-subtle);
+}
+
+.blog-chip {
+  border: 1px solid var(--ko-border-subtle);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  border-radius: var(--kh-radius, 4px);
+  padding: var(--ko-space-1) var(--ko-space-3);
+  font-size: 0.85rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color var(--ko-duration-fast, 120ms) var(--ko-ease-out, ease);
+}
+
+.blog-chip:hover {
+  border-color: var(--ko-border-strong);
+  color: var(--ko-text-primary);
+}
+
+.blog-chip.is-active {
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-accent-text);
+}
+
+.blog-chip__count {
+  margin-left: var(--ko-space-1);
+  font-size: 0.72rem;
+  color: var(--ko-text-muted);
+}
+
+/* ─── 목록 ─── */
+
+.blog-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: var(--ko-space-5);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.blog-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-5);
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--kh-radius-asym, 0 8px 0 8px);
+}
+
+.blog-card__cover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--kh-radius, 4px);
+  margin-bottom: var(--ko-space-2);
+}
+
+.blog-card__category {
+  font-size: 0.72rem;
+  color: var(--ko-text-muted);
+}
+
+.blog-card__title {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.blog-card__summary {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.blog-card__meta {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-3);
+  font-size: 0.75rem;
+  color: var(--ko-text-muted);
+}
+
+/* ─── 상세 ─── */
+
+.blog-article {
+  max-width: 44rem;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-5);
+}
+
+.blog-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+  font-size: 0.78rem;
+  color: var(--ko-text-muted);
+}
+
+.blog-breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.blog-breadcrumb a:hover {
+  color: var(--ko-text-primary);
+}
+
+.blog-article__title {
+  margin: 0;
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.blog-article__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-3);
+  font-size: 0.8rem;
+  color: var(--ko-text-muted);
+  padding-bottom: var(--ko-space-4);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.blog-article__meta a {
+  color: var(--ko-text-secondary);
+  text-decoration: none;
+}
+
+.blog-cover {
+  width: 100%;
+  border-radius: var(--kh-radius-asym, 0 8px 0 8px);
+}
+
+/* 본문 — 읽는 화면이라 줄길이와 행간이 전부다 */
+.blog-body {
+  font-size: 1.02rem;
+  line-height: 1.85;
+  color: var(--ko-text-primary);
+  overflow-wrap: break-word;
+}
+
+.blog-body h2,
+.blog-body h3,
+.blog-body h4 {
+  margin: var(--ko-space-8) 0 var(--ko-space-3);
+  line-height: 1.3;
+}
+
+.blog-body h2 {
+  font-size: 1.4rem;
+}
+
+.blog-body h3 {
+  font-size: 1.15rem;
+}
+
+.blog-body p {
+  margin: 0 0 var(--ko-space-4);
+}
+
+.blog-body a {
+  color: var(--ko-accent-text);
+}
+
+.blog-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--kh-radius, 4px);
+}
+
+.blog-body blockquote {
+  margin: var(--ko-space-4) 0;
+  padding: var(--ko-space-2) var(--ko-space-4);
+  border-left: 2px solid var(--ko-border-strong);
+  color: var(--ko-text-secondary);
+}
+
+.blog-body pre {
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+  padding: var(--ko-space-4);
+  /* 코드는 지면 밖으로 밀지 않는다 — 본문이 가로로 흔들리면 읽기가 끊긴다 */
+  overflow-x: auto;
+}
+
+.blog-body code {
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+  font-size: 0.88em;
+}
+
+.blog-body table {
+  width: 100%;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+
+.blog-body th,
+.blog-body td {
+  border-bottom: 1px solid var(--ko-border-subtle);
+  padding: var(--ko-space-2) var(--ko-space-3);
+  text-align: left;
+}
+
+/* ─── 반응 (좋아요 · 평점 · 공유) ─── */
+
+.blog-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ko-space-4);
+  padding: var(--ko-space-5) 0;
+  border-top: 1px solid var(--ko-border-subtle);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+/* 좋아요가 1차 액션 — 평점과 경합하지 않게 무게를 나눈다 (ADR-0072 §5) */
+.blog-like {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  border: 1px solid var(--ko-border-strong);
+  background: transparent;
+  color: var(--ko-text-primary);
+  border-radius: var(--kh-radius, 4px);
+  padding: var(--ko-space-2) var(--ko-space-5);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.blog-like.is-on {
+  background: var(--ko-accent-primary);
+  color: var(--ko-surface-0);
+  border-color: var(--ko-accent-primary);
+}
+
+.blog-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-1);
+  font-size: 0.85rem;
+  color: var(--ko-text-muted);
+}
+
+.blog-rating__stars {
+  display: inline-flex;
+}
+
+.blog-star {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--ko-text-muted);
+}
+
+.blog-star.is-on {
+  color: var(--ko-accent-text);
+}
+
+.blog-share {
+  display: inline-flex;
+  gap: var(--ko-space-2);
+  margin-left: auto;
+}
+
+.blog-share__btn {
+  border: 1px solid var(--ko-border-subtle);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  border-radius: var(--kh-radius, 4px);
+  padding: var(--ko-space-2) var(--ko-space-3);
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.blog-share__btn:hover {
+  border-color: var(--ko-border-strong);
+  color: var(--ko-text-primary);
+}
+
+/* ─── 댓글 ─── */
+
+.blog-comments {
+  max-width: 44rem;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+}
+
+.blog-comment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-4) 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.blog-comment--reply {
+  margin-left: var(--ko-space-6);
+  border-left: 1px solid var(--ko-border-subtle);
+  padding-left: var(--ko-space-4);
+  border-bottom: none;
+}
+
+.blog-comment__head {
+  display: flex;
+  gap: var(--ko-space-3);
+  align-items: baseline;
+  font-size: 0.8rem;
+  color: var(--ko-text-muted);
+}
+
+.blog-comment__author {
+  color: var(--ko-text-primary);
+  font-weight: 600;
+}
+
+.blog-comment__body {
+  margin: 0;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.blog-comment__body.is-removed {
+  color: var(--ko-text-muted);
+  font-style: italic;
+}
+
+.blog-comment__tools {
+  display: flex;
+  gap: var(--ko-space-3);
+  font-size: 0.75rem;
+}
+
+.blog-linkbtn {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--ko-text-muted);
+  cursor: pointer;
+  font-size: inherit;
+  text-decoration: underline;
+}
+
+.blog-linkbtn:hover {
+  color: var(--ko-text-primary);
+}
+
+/* ─── 폼 · 스튜디오 ─── */
+
+.blog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  max-width: 44rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.blog-form--wide {
+  max-width: 60rem;
+}
+
+.blog-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+}
+
+.blog-field > span {
+  font-size: 0.78rem;
+  color: var(--ko-text-muted);
+}
+
+.blog-input,
+.blog-textarea,
+.blog-select {
+  width: 100%;
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+  color: var(--ko-text-primary);
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: var(--ko-space-2) var(--ko-space-3);
+}
+
+.blog-textarea {
+  min-height: 8rem;
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.blog-textarea--body {
+  min-height: 26rem;
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+  font-size: 0.9rem;
+}
+
+.blog-input:focus-visible,
+.blog-textarea:focus-visible,
+.blog-select:focus-visible {
+  outline: var(--ko-focus-ring, 2px solid) var(--ko-accent-primary);
+  outline-offset: var(--ko-focus-ring-offset, 2px);
+}
+
+.blog-btn {
+  border: 1px solid var(--ko-accent-primary);
+  background: var(--ko-accent-primary);
+  color: var(--ko-surface-0);
+  border-radius: var(--kh-radius, 4px);
+  padding: var(--ko-space-2) var(--ko-space-5);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.blog-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.blog-btn--ghost {
+  background: transparent;
+  color: var(--ko-text-primary);
+  border-color: var(--ko-border-strong);
+}
+
+.blog-btn--danger {
+  background: transparent;
+  color: var(--ko-text-secondary);
+  border-color: var(--ko-border-strong);
+}
+
+.blog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-3);
+  align-items: center;
+}
+
+.blog-editor {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ko-space-4);
+}
+
+@media (max-width: 60rem) {
+  .blog-editor {
+    grid-template-columns: 1fr;
+  }
+}
+
+.blog-preview {
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+  padding: var(--ko-space-4);
+  background: var(--ko-surface-1);
+  overflow-y: auto;
+  max-height: 34rem;
+}
+
+.blog-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-5);
+  padding: var(--ko-space-4) 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.blog-stat__value {
+  font-size: 1.5rem;
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+}
+
+.blog-stat__label {
+  font-size: 0.75rem;
+  color: var(--ko-text-muted);
+}
+
+.blog-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.blog-table th,
+.blog-table td {
+  text-align: left;
+  padding: var(--ko-space-2) var(--ko-space-3);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.blog-status {
+  padding: var(--ko-space-8) 0;
+  color: var(--ko-text-muted);
+  text-align: center;
+}
+
+.blog-error {
+  color: var(--ko-accent-text);
+  font-size: 0.85rem;
+}
+
+.blog-empty {
+  padding: var(--ko-space-10) 0;
+  text-align: center;
+  color: var(--ko-text-muted);
+}
+
+.blog-pager {
+  display: flex;
+  gap: var(--ko-space-3);
+  justify-content: center;
+  align-items: center;
+  padding: var(--ko-space-6) 0;
+}

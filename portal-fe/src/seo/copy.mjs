@@ -539,3 +539,122 @@ export function dealHubMeta() {
     noindex: true,
   };
 }
+
+// ─── blog (블로그 플랫폼) ─────────────────────────────────────────────────────
+
+export const BLOG_ORIGIN = 'https://blog.1989v.com';
+export const BLOG_BRAND = '1989v 블로그';
+
+/**
+ * 이 절의 문구는 **서버 렌더(`blog/feature` 의 `BlogSeoCopy`)와 쌍이다.**
+ *
+ * 글 상세·작성자 공간은 백엔드가 meta 를 주입한 HTML 을 내보내고(ADR-0072 §6), SPA 가
+ * 마운트된 뒤에는 여기 함수들이 같은 값을 다시 쓴다. 한쪽만 고치면 크롤러가 본 제목과
+ * 탭 제목이 갈라진다 — 고칠 때는 두 곳을 함께 고친다.
+ */
+export function blogUrl(sub = '') {
+  return `${BLOG_ORIGIN}${sub || '/'}`;
+}
+
+export function blogPostUrl(slug) {
+  return blogUrl(`/posts/${slug}`);
+}
+
+export function blogAuthorUrl(handle) {
+  return blogUrl(`/authors/${handle}`);
+}
+
+export function blogCategoryUrl(path) {
+  return blogUrl(`/c${path}`);
+}
+
+export function blogHubMeta(postCount) {
+  const n = postCount || 0;
+  return {
+    title: `${BLOG_BRAND} — 기술과 일상의 기록`,
+    description: clampDescription(
+      n > 0
+        ? `서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다. 글 ${n}편을 분류별로 모아 봅니다.`
+        : '서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다.',
+    ),
+    canonical: blogUrl('/'),
+  };
+}
+
+export function blogPostMeta(post) {
+  return {
+    title: `${post.title} | ${BLOG_BRAND}`,
+    description: clampDescription(post.summary ?? ''),
+    canonical: blogPostUrl(post.slug),
+    image: post.coverImageUrl ?? null,
+    type: 'article',
+  };
+}
+
+export function blogCategoryMeta(category) {
+  return {
+    title: `${category.name} | ${BLOG_BRAND}`,
+    description: clampDescription(
+      category.description ?? `${category.name} 분류의 글 ${category.postCount ?? 0}편.`,
+    ),
+    canonical: blogCategoryUrl(category.path),
+  };
+}
+
+export function blogAuthorMeta(author, postCount) {
+  return {
+    title: `${author.displayName}의 글 | ${BLOG_BRAND}`,
+    description: clampDescription(author.bio || `${author.displayName}이(가) 쓴 글 ${postCount ?? 0}편`),
+    canonical: blogAuthorUrl(author.handle ?? ''),
+    image: author.avatarUrl ?? null,
+  };
+}
+
+/** 스튜디오·로그인처럼 색인하면 안 되는 화면 */
+export function blogPrivateMeta(title) {
+  return {
+    title: `${title} | ${BLOG_BRAND}`,
+    canonical: blogUrl('/'),
+    noindex: true,
+  };
+}
+
+export function blogPostingJsonLd(post) {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.summary ?? '',
+    mainEntityOfPage: { '@type': 'WebPage', '@id': blogPostUrl(post.slug) },
+    url: blogPostUrl(post.slug),
+    author: { '@type': 'Person', name: post.author?.displayName ?? '' },
+    publisher: { '@type': 'Organization', name: BLOG_BRAND, url: BLOG_ORIGIN },
+  };
+  if (post.publishedAt) data.datePublished = post.publishedAt;
+  if (post.categoryName) data.articleSection = post.categoryName;
+  if (post.coverImageUrl) data.image = post.coverImageUrl;
+  if (post.ratingCount > 0) {
+    data.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: post.ratingAverage.toFixed(1),
+      ratingCount: post.ratingCount,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+  return data;
+}
+
+export function blogBreadcrumbJsonLd(crumbs) {
+  if (!crumbs || crumbs.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: crumbs.map((crumb, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: crumb.name,
+      item: blogCategoryUrl(crumb.path),
+    })),
+  };
+}

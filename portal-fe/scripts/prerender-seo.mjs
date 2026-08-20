@@ -50,6 +50,12 @@ import {
   DEAL_BRAND,
   DEAL_DISCLOSURE,
   dealHubMeta,
+  BLOG_ORIGIN,
+  BLOG_BRAND,
+  blogAuthorUrl,
+  blogCategoryUrl,
+  blogHubMeta,
+  blogPostUrl,
 } from '../src/seo/copy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -66,6 +72,7 @@ const PLACE_HOST = new URL(PLACE_ORIGIN).host;
 const AREA_CODES = ['1','2','3','4','5','6','7','8','31','32','33','34','35','36','37','38','39'];
 const RESUME_HOST = new URL(RESUME_ORIGIN).host;
 const DEAL_HOST = new URL(DEAL_ORIGIN).host;
+const BLOG_HOST = new URL(BLOG_ORIGIN).host;
 
 main().catch((err) => {
   console.warn(`[seo] 프리렌더 실패 — SPA 만 배포됩니다: ${err.message}`);
@@ -96,10 +103,19 @@ async function main() {
     console.warn(`[seo] 관광지 색인 조회 실패: ${err.message}`);
   }
 
-  await writeRobotsAndSitemaps(games, places, regions);
+  // 블로그는 색인 대상이다 (deal/resume 과 반대) — 목록·카테고리·작성자 URL 이 sitemap 에 들어간다
+  let blog = { posts: [], categories: [] };
+  try {
+    blog = await fetchBlogIndex();
+  } catch (err) {
+    console.warn(`[seo] 블로그 색인 조회 실패: ${err.message}`);
+  }
+
+  await writeRobotsAndSitemaps(games, places, regions, blog);
   await renderPortalPages(shell);
   await renderPlaceHubs(shell, places, regions);
   await renderDealHub(shell);
+  await renderBlogHub(shell, blog);
 
   if (games.length === 0) {
     console.warn('[seo] 게임 카탈로그가 비어 게임 프리렌더를 건너뜁니다');
@@ -374,7 +390,12 @@ function sitemapXml(entries) {
   ].join('\n');
 }
 
-async function writeRobotsAndSitemaps(games, places = { ko: [], en: [] }, regions = { ko: [], en: [] }) {
+async function writeRobotsAndSitemaps(
+  games,
+  places = { ko: [], en: [] },
+  regions = { ko: [], en: [] },
+  blog = { posts: [], categories: [] },
+) {
   const gameEntries = [];
   for (const lang of LANGS) {
     gameEntries.push({
@@ -445,10 +466,37 @@ async function writeRobotsAndSitemaps(games, places = { ko: [], en: [] }, region
   // noindex 태그를 읽지 못해 URL 만 색인되고, 메신저 언퍼러도 OG 카드를 못 만든다.
   // P1 유입이 공유라 OG 가 색인보다 중요하다. sitemap·llms.txt 는 두지 않는다.
   await emit(`seo/${DEAL_HOST}/robots.txt`, dealRobotsTxt());
+  // 블로그는 자체 콘텐츠라 thin 판정 대상이 아니다 — 색인을 연다 (ADR-0072 §8)
+  await emit(`seo/${BLOG_HOST}/robots.txt`, robotsTxt(BLOG_ORIGIN));
+  await emit(`seo/${BLOG_HOST}/sitemap.xml`, sitemapXml(blogSitemapEntries(blog)));
 
   await emit(`seo/${GAME_HOST}/llms.txt`, gameLlmsTxt(games));
   await emit(`seo/${PORTAL_HOST}/llms.txt`, portalLlmsTxt());
   await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places));
+  await emit(`seo/${BLOG_HOST}/llms.txt`, blogLlmsTxt(blog));
+}
+
+/**
+ * 블로그 sitemap.
+ *
+ * 글 상세는 백엔드가 meta 를 주입해 서빙하므로(ADR-0072 §6) 정적 HTML 을 찍지 않는다.
+ * 여기서 하는 일은 **주소를 알리는 것**뿐이다 — 크롤러가 찾아오면 서버가 완성된 문서를 준다.
+ */
+function blogSitemapEntries(blog) {
+  return [
+    { loc: `${BLOG_ORIGIN}/`, priority: '1.0' },
+    ...(blog.categories ?? []).map((c) => ({ loc: blogCategoryUrl(c.path), priority: '0.6' })),
+    ...(blog.posts ?? []).map((p) => ({
+      loc: blogPostUrl(p.slug),
+      lastmod: p.publishedAt ? String(p.publishedAt).slice(0, 10) : undefined,
+      priority: '0.8',
+    })),
+    ...blogAuthorHandles(blog).map((handle) => ({ loc: blogAuthorUrl(handle), priority: '0.5' })),
+  ];
+}
+
+function blogAuthorHandles(blog) {
+  return [...new Set((blog.posts ?? []).map((p) => p.author?.handle).filter(Boolean))];
 }
 
 /** sitemap 은 파일당 50,000 URL 상한이 있다. 넘치면 쪼개고 인덱스로 묶는다. */
@@ -673,6 +721,81 @@ Allow: /
 Disallow: /api/
 Disallow: /go/
 
+`;
+}
+
+/**
+ * 블로그 색인.
+ *
+ * 공개 목록 API 를 페이지 단위로 훑는다. 전용 "전체" 엔드포인트를 새로 뚫지 않는 이유는
+ * 그 경로가 공개면에 하나 더 생기고, 글이 수천 편이 되기 전에는 페이징 몇 번이 더 싸기 때문이다.
+ */
+async function fetchBlogIndex() {
+  const categories = flattenBlogCategories(await getJson('/api/v1/blog/categories'));
+  const posts = [];
+  for (let page = 0; page < BLOG_MAX_PAGES; page += 1) {
+    const result = await getJson(`/api/v1/blog/posts?page=${page}&size=${BLOG_PAGE_SIZE}`);
+    posts.push(...(result.items ?? []));
+    if (page + 1 >= (result.totalPages ?? 1)) break;
+  }
+  return { posts, categories };
+}
+
+const BLOG_PAGE_SIZE = 50;
+/** 안전장치 — 글이 이 수를 넘으면 sitemap 을 쪼개야 한다는 신호다 */
+const BLOG_MAX_PAGES = 40;
+
+function flattenBlogCategories(nodes) {
+  return (nodes ?? []).flatMap((node) => [node, ...flattenBlogCategories(node.children)]);
+}
+
+/**
+ * 블로그 홈 프리렌더.
+ *
+ * 글 상세는 백엔드가 직접 서빙하므로(ADR-0072 §6) 여기서 찍지 않는다. 홈만 찍는 이유는
+ * 목록의 메타가 고정이고, **최근 글 링크가 크롤러의 진입로**가 되기 때문이다 —
+ * sitemap 에만 있고 내부 링크가 없는 URL 은 잘 크롤되지 않는다.
+ */
+async function renderBlogHub(shell, blog) {
+  const meta = blogHubMeta(blog.posts?.length ?? 0);
+  const links = (blog.posts ?? [])
+    .slice(0, 30)
+    .map((p) => `<li><a href="/posts/${p.slug}">${escapeHtml(p.title)}</a></li>`)
+    .join('');
+  const nav = (blog.categories ?? [])
+    .map((c) => `<a href="/c${c.path}">${escapeHtml(c.name)}</a>`)
+    .join(' · ');
+  const html = compose(shell, {
+    lang: 'ko',
+    title: meta.title,
+    description: meta.description,
+    canonical: meta.canonical,
+    siteName: BLOG_BRAND,
+    body: shellBody(
+      `<h1>${escapeHtml(BLOG_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>` +
+        `<nav>${nav}</nav><ul>${links}</ul>`,
+    ),
+  });
+  await emit(`prerender/_hosts/${BLOG_HOST}.html`, html);
+}
+
+function blogLlmsTxt(blog) {
+  const recent = (blog.posts ?? [])
+    .slice(0, 20)
+    .map((p) => `- [${p.title}](${blogPostUrl(p.slug)})`)
+    .join('\n');
+  return `# ${BLOG_BRAND}
+
+> 서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다.
+
+## 분류
+${(blog.categories ?? []).map((c) => `- [${c.name}](${blogCategoryUrl(c.path)})`).join('\n')}
+
+## 최근 글
+${recent}
+
+## 참고
+- [전체 URL 목록](${BLOG_ORIGIN}/sitemap.xml)
 `;
 }
 
