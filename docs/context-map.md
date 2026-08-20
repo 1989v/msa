@@ -29,6 +29,7 @@
 | experiment | `experiment/` | `experiment/glossary.md` | Experiment, Variant, StatisticalSignificance |
 | wishlist | `wishlist/` | `wishlist/glossary.md` | WishlistItem |
 | quant | `quant/` | `quant/glossary.md` | Asset, Execution, Fundamentals, KillSwitch, HybridStrategy, OrderCommand, PriceTick, RiskLimit |
+| blog | `blog/` | `blog/glossary.md` | BlogProfile, BlogCategory, BlogPost, BlogComment, VoterKey |
 | code-dictionary | `code-dictionary/` | `code-dictionary/glossary.md` | Concept, CodeLocation, ConceptIndex |
 
 ## Cross-Context Shared Terms

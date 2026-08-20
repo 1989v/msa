@@ -73,6 +73,10 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
   ④ 를 빠뜨리면 메인 타일이 apex 경로를 걸고 클릭 후 JS 로만 넘어간다 — 도착은 하므로 눈에 안 띄지만
   hover·링크복사·새 탭·크롤러가 전부 apex 에 머문다 (ADR-0066 개정 2026-08-20).
   Origin 인증서는 `*.1989v.com` 와일드카드라 **재발급 불요**. DNS 는 proxied(orange) 필수 (ADR-0061)
+- **블로그**: `blog.1989v.com` — 계층 카테고리 + 다중 저자 + 상호작용 → `docs/adr/ADR-0072-blog-platform.md`.
+  **작성 권한은 전역 Role enum 이 아니라 `blog_profile` 행이 갖는다** — 역할 하나로는 핸들·표시명을 담지 못하고,
+  권한 진실이 JWT 와 두 군데로 갈리면 정지 처분이 토큰 만료 전까지 먹지 않는다. 좋아요·평점은 익명 허용,
+  댓글만 로그인. 조회수는 Redis 가 아니라 `blog_post_view` 원장(하루 1표) — 부수로 일별 추이가 남는다
 - **혜택 링크 허브**: `deal.1989v.com` — 카테고리별 혜택 링크 큐레이션 + 자체 리다이렉터 → `docs/adr/ADR-0069-deal-affiliate-hub.md`. **규제 업권(의료·금융)은 카테고리 행 자체를 만들지 않는다**(의료법 27조·금소법). 제휴 링크는 `AFFILIATE`/`PLAIN` 로 갈라 고지를 제휴에만 붙이고, `target_url` 은 **원본 무변조**로 302 한다 — 파라미터를 손대면 약관 위반이고 트래킹 쿠키가 깨진다
 - **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다)
 
@@ -148,6 +152,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | chatbot | (CLAUDE.md 미작성) | 대화형 AI — 서비스 코드 존재 |
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
+| blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |
 | deal | (CLAUDE.md 미작성) | 혜택 링크 허브 — 카테고리별 제휴/일반 혜택 링크 큐레이션 + `/go/{slug}` 리다이렉터 + 클릭 계측. `:deal:domain`+`:deal:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `deal.1989v.com` (ADR-0069) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
@@ -161,6 +166,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | `place.1989v.com` | `portal-fe` | K-관광/지리 탐색 (ADR-0065) — TourAPI 관광지 국문(`/`)·영문(`/en`) + 구글맵. game 과 같은 host 인식 루트 라우팅, apex `/place` 는 서브도메인으로 리다이렉트. 데이터: place SSOT → search attractions 인덱스 |
 | `resume.1989v.com` | `portal-fe` | 이력서 — 같은 번들·같은 Service, 호스트로 분기. 공개 여부는 DB 설정 + 제출처별 토큰 게이트 (ADR-0064). 색인 대상 아님 |
 | `deal.1989v.com` | `portal-fe` | 혜택 링크 허브 — 같은 번들·호스트 분기. `/go/{slug}` 는 gateway(아웃바운드 리다이렉터). **색인 대상 아님(noindex)** — 링크 모음만으로 색인되면 thin affiliate 판정이 사이트 전체에 번진다 (ADR-0069) |
+| `blog.1989v.com` | `portal-fe` | 블로그 — 같은 번들·호스트 분기. **글 상세(`/posts/:slug`)와 작성자 공간(`/authors/:handle`)은 gateway 가 받아 백엔드가 meta 를 주입한 HTML 을 낸다** (ADR-0072 §6) — 발행 즉시 정확한 공유 카드·색인. 색인 대상 (deal/resume 과 반대) |
 | `/admin/*` | `admin-fe` | 백오피스 |
 | `/quant/*` | `quant-fe` | 트레이딩 (Phase 3) |
 | `/gifticon/*` | `gifticon-fe` | 기프티콘 |
