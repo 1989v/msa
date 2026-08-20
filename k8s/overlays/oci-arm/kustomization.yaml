@@ -304,7 +304,7 @@ images:
     newTag: 12f6421
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 12f6421
+    newTag: 329469e
   - name: commerce/gifticon
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
     newTag: 12f6421
@@ -319,7 +319,7 @@ images:
     newTag: d68ca46
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 8b02032
+    newTag: 329469e
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 12f6421
