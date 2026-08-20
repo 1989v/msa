@@ -13,6 +13,8 @@ import {
 import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
+import { useReveal } from '../hooks/useReveal';
+import InkWash from '../components/brand/InkWash';
 import '../components/home/Home.css';
 
 /** About 은 데이터가 없어도 항상 렌더된다 */
@@ -25,6 +27,7 @@ const ABOUT_ITEM = { label: 'About', anchor: 'about' };
  */
 export default function HomePage() {
   useHeritageSurface();
+  const reveal = useReveal();
   useSeo({
     title: portalTitle(''),
     description:
@@ -75,23 +78,24 @@ export default function HomePage() {
     <div className="home-page">
       <GNB items={gnbItems} />
 
-      <header className="home-hero">
+      <header className="home-hero" ref={reveal}>
+        <InkWash />
         <div className="home-inner home-hero-grid">
-          <div className="home-hero-copy">
-            <span className="kh-seal kh-seal-ink home-hero-eyebrow">
+          <div className="home-hero-copy kh-stagger">
+            <span className="kh-seal kh-seal-ink kh-stamp home-hero-eyebrow">
               <span className="kh-seal-dot" aria-hidden="true" />
               Systems Architect
             </span>
-            <h1 className="kh-display home-hero-statement">
+            <h1 className="kh-display kh-seep home-hero-statement">
               서비스를 처음부터
               <br />
               <span className="kh-display-accent">끝까지</span> 만듭니다.
             </h1>
-            <p className="home-hero-lead">
+            <p className="kh-seep home-hero-lead">
               도메인을 쪼개고, 검색과 데이터를 붙이고, 무료 티어 한 대 위에서
               굴러가게 하는 데까지.
             </p>
-            <div className="home-hero-actions">
+            <div className="kh-seep home-hero-actions">
               <a className="kh-button" href="#portfolio">
                 지나온 것 보기
                 <span aria-hidden="true">→</span>
@@ -105,7 +109,7 @@ export default function HomePage() {
           </div>
 
           {/* 어긋난 판 — 흐린 그림자 대신 물리적 깊이. 장식이라 스크린리더에서 뺀다. */}
-          <div className="home-hero-slab kh-slab-offset" aria-hidden="true">
+          <div className="home-hero-slab kh-slab-offset kh-settle" aria-hidden="true">
             <div className="kh-slab kh-grain home-hero-slab-face">
               <span className="kh-mono home-hero-slab-mark">&lt; / system_core &gt;</span>
             </div>

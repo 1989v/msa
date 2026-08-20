@@ -1,4 +1,5 @@
 import type { PortfolioTimeline as Timeline } from '../../api/displayApi';
+import { useReveal } from '../../hooks/useReveal';
 import './Home.css';
 
 /** `2026-06` → `2026.06` */
@@ -16,24 +17,25 @@ interface PortfolioTimelineProps {
 }
 
 export default function PortfolioTimeline({ timeline }: PortfolioTimelineProps) {
+  const reveal = useReveal();
   const { career, companies, projects, categories } = timeline;
   if (companies.length === 0 && projects.length === 0) return null;
 
   const categoryLabel = new Map(categories.map((c) => [c.code, c.label]));
 
   return (
-    <section id="portfolio" className="home-section">
+    <section id="portfolio" className="home-section" ref={reveal}>
       <div className="home-inner">
-        <div className="kh-section-head">
+        <div className="kh-section-head kh-rule-draw">
           <span className="kh-mono kh-index">02_</span>
           <h2 className="home-section-title">지나온 것</h2>
         </div>
-        <p className="home-section-desc">
+        <p className="kh-seep home-section-desc">
           회사에서 한 일은 이력서에, 여기에는 직접 만든 것들을 시간순으로 둡니다.
         </p>
 
         {companies.length > 0 && (
-          <div className="timeline-career">
+          <div className="kh-seep timeline-career">
             <span className="timeline-career-total">
               총 {career.years}년 {career.months}개월 · {career.yearsInField}년차
             </span>

@@ -9,6 +9,7 @@ import {
 import type { GraphStats } from '../types/graph';
 import { CATEGORY_LABELS, type Category } from '../types/index';
 import { useResumeStatus } from '../hooks/useResumeStatus';
+import { useReveal } from '../hooks/useReveal';
 import './AboutSection.css';
 
 interface AboutSectionProps {
@@ -19,6 +20,7 @@ interface AboutSectionProps {
 export default function AboutSection({ stats }: AboutSectionProps) {
   // 구인중 배지와 이력서 링크는 같은 상태를 본다 — 한쪽만 남아 어긋나는 일이 없게 (ADR-0064)
   const resumeVisible = useResumeStatus();
+  const reveal = useReveal();
 
   const radarData = Object.entries(stats?.byCategory ?? {})
     .map(([cat, count]) => ({
@@ -29,9 +31,9 @@ export default function AboutSection({ stats }: AboutSectionProps) {
     .slice(0, 8);
 
   return (
-    <section id="about" className="about-section">
+    <section id="about" className="about-section" ref={reveal}>
       <div className="about-inner">
-        <div className="about-content">
+        <div className="kh-seep about-content">
           <div className="about-profile">
             {resumeVisible && (
               <div className="about-open-badge">

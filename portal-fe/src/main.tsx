@@ -5,6 +5,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import './index.css';
 // 속성(`[data-surface='heritage']`)으로만 켜지므로 항상 로드해도 다른 화면에 영향 없다.
 import './styles/k-heritage.css';
+// 모션 문법 — `[data-reveal]`(useReveal 이 붙임)로만 켜진다. 문법 자체는 전 화면 공통.
+import './styles/kh-motion.css';
 import App from './App';
 import { bootstrapTheme } from './hooks/useHeritageSurface';
 import { queryClient } from './shell/queryClient';

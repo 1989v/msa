@@ -1,0 +1,151 @@
+/* K-Heritage 모션 문법 — 다섯 동사 (DESIGN.md §12).
+ *
+ * 색이 재료(한지·기와·먹)에서 왔듯 모션은 행위에서 온다:
+ * 스밈(.kh-seep) · 긋기(.kh-rule-draw) · 어긋남(.kh-settle) · 찍힘(.kh-stamp) · 눌림(:active).
+ *
+ * 발화 계약: useReveal 훅이 컨테이너에 `data-reveal="pending" → "in"` 을 붙인다.
+ * 아래 규칙은 전부 `[data-reveal]` 존재를 전제로만 숨긴다 — 속성은 JS 만 붙이므로
+ * 프리렌더 HTML·무 JS 환경에서는 아무것도 숨겨지지 않는다 (SEO·no-JS 안전).
+ *
+ * 규칙: transform + opacity 만 쓴다 (blur/filter 금지 — 스며듬의 질감은
+ * duration 과 easing 이 만든다). 퇴장은 fade 만, 입장의 75% 속도.
+ */
+
+:root {
+  --kh-dur-feedback: 120ms; /* 눌림 */
+  --kh-dur-state: 240ms;    /* hover·토글·찍힘 */
+  --kh-dur-enter: 560ms;    /* 등장 (스밈·어긋남·긋기) */
+  --kh-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --kh-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+}
+
+/* ─── 스밈 — 먹이 한지에 스며들듯 떠오른다 ──────────────────────────────── */
+
+[data-reveal] .kh-seep {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity var(--kh-dur-enter) var(--kh-ease-enter),
+    transform var(--kh-dur-enter) var(--kh-ease-enter);
+}
+
+[data-reveal='in'] .kh-seep {
+  opacity: 1;
+  transform: none;
+}
+
+/* ─── 긋기 — 괘선이 왼쪽에서 오른쪽으로 그어진다 ─────────────────────────
+ * `.kh-section-head` 에 얹는다. 원래 border-bottom 을 감추고 ::after 선이 대신 긋는다.
+ * `.kh-rule` 과 겹쳐 쓰지 않는다 — 둘 다 ::after 를 쓴다. */
+
+[data-reveal] .kh-rule-draw {
+  position: relative;
+  border-bottom-color: transparent;
+}
+
+[data-reveal] .kh-rule-draw::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background: var(--ko-border-subtle);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform var(--kh-dur-enter) var(--kh-ease-enter);
+}
+
+[data-reveal='in'] .kh-rule-draw::after {
+  transform: scaleX(1);
+}
+
+/* ─── 어긋남 — 뒤판이 카드 밑에서 미끄러져 나와 어긋난다 ─────────────────
+ * `.kh-slab-offset` 에 얹는다. ::before(깊은 판)가 카드와 겹친 채 시작해
+ * 제 오프셋으로 이동한다 — 깊이가 "생기는" 순간을 보여준다. */
+
+[data-reveal] .kh-settle {
+  opacity: 0;
+  transition: opacity var(--kh-dur-enter) var(--kh-ease-enter);
+}
+
+[data-reveal] .kh-settle::before {
+  transform: translate(calc(var(--ko-space-4) * -1), calc(var(--ko-space-4) * -1));
+  transition: transform var(--kh-dur-enter) var(--kh-ease-enter);
+}
+
+[data-reveal='in'] .kh-settle {
+  opacity: 1;
+}
+
+[data-reveal='in'] .kh-settle::before {
+  transform: translate(0, 0);
+}
+
+/* ─── 찍힘 — 도장이 눌리듯 살짝 크게 나타나 자리를 잡는다 ────────────────── */
+
+[data-reveal] .kh-stamp {
+  opacity: 0;
+  transform: scale(1.06);
+  transition:
+    opacity var(--kh-dur-state) var(--kh-ease-enter),
+    transform var(--kh-dur-state) var(--kh-ease-enter);
+}
+
+[data-reveal='in'] .kh-stamp {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* ─── 스태거 — 자식 50ms 간격, 6번째까지만 ──────────────────────────────
+ * 7번째부터는 딜레이가 없다: 긴 목록이 끝없이 순차 등장하면 기다림이 된다.
+ *
+ * 딜레이는 자식 요소 자신의 모든 transition 에 물든다 — 스태거 자식에는
+ * hover transition 을 직접 걸지 않는다 (안쪽 요소에 걸면 무관하다). */
+
+[data-reveal] .kh-stagger > :nth-child(2) { transition-delay: 50ms; }
+[data-reveal] .kh-stagger > :nth-child(3) { transition-delay: 100ms; }
+[data-reveal] .kh-stagger > :nth-child(4) { transition-delay: 150ms; }
+[data-reveal] .kh-stagger > :nth-child(5) { transition-delay: 200ms; }
+[data-reveal] .kh-stagger > :nth-child(6) { transition-delay: 250ms; }
+
+/* ─── 눌림 — 눌리는 것은 눌릴 것처럼 보여야 한다 ─────────────────────────── */
+
+.kh-button,
+.kh-button-ghost,
+.kh-press {
+  transition:
+    transform var(--kh-dur-feedback) var(--kh-ease-enter),
+    background var(--ko-duration-normal) var(--ko-ease-out),
+    border-color var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.kh-button:active,
+.kh-button-ghost:active,
+.kh-press:active {
+  transform: translateY(1px);
+}
+
+/* ─── reduced motion — 훅이 속성을 안 붙이지만, CSS 도 이중으로 지킨다 ───── */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal] .kh-seep,
+  [data-reveal] .kh-settle,
+  [data-reveal] .kh-stamp {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  [data-reveal] .kh-settle::before,
+  [data-reveal] .kh-rule-draw::after {
+    transform: none;
+    transition: none;
+  }
+
+  .kh-button,
+  .kh-button-ghost,
+  .kh-press {
+    transition: none;
+  }
+}

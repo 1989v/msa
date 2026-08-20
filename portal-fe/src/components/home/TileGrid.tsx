@@ -1,5 +1,6 @@
 import type { DisplayService } from '../../api/displayApi';
 import { resolveServiceHref } from '../../shell/serviceHref';
+import { useReveal } from '../../hooks/useReveal';
 import './Home.css';
 
 interface TileGridProps {
@@ -13,22 +14,23 @@ interface TileGridProps {
  * 카드로 그릴지 리스트로 그릴지는 화면이 정한다 (ADR-0066).
  */
 export default function TileGrid({ services }: TileGridProps) {
+  const reveal = useReveal();
   if (services.length === 0) return null;
 
   return (
-    <section id="services" className="home-section">
+    <section id="services" className="home-section" ref={reveal}>
       <div className="home-inner">
-        <div className="kh-section-head">
+        <div className="kh-section-head kh-rule-draw">
           <span className="kh-mono kh-index">01_</span>
           <h2 className="home-section-title">만든 서비스</h2>
         </div>
-        <p className="home-section-desc">
+        <p className="kh-seep home-section-desc">
           직접 설계하고 운영 중인 서비스입니다. 오픈 예정은 아직 화면이 없다는 뜻입니다.
         </p>
 
-        <ul className="tile-grid">
+        <ul className="tile-grid kh-stagger">
           {services.map((service) => (
-            <li key={service.code}>
+            <li key={service.code} className="kh-seep">
               {service.status === 'OPEN' && service.href ? (
                 <a
                   className="tile kh-slab kh-grain tile-open"

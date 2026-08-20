@@ -15,6 +15,13 @@
   flex-direction: column;
   gap: var(--ko-space-4);
   margin-bottom: var(--ko-space-12);
+  /* 먹 캔버스(InkWash)의 바탕층 기준 — 콘텐츠는 한 층 위로 */
+  position: relative;
+}
+
+.portfolio-header > :not(.kh-ink-wash) {
+  position: relative;
+  z-index: 1;
 }
 
 .portfolio-title {
@@ -250,7 +257,7 @@
   background: color-mix(in srgb, var(--kh-ink, #0a0a0a) 72%, transparent);
   backdrop-filter: blur(32px);
   -webkit-backdrop-filter: blur(32px);
-  animation: portfolio-veil-in var(--ko-duration-slow, 250ms) var(--ko-ease-out);
+  animation: portfolio-veil-in var(--kh-dur-state, 240ms) var(--kh-ease-enter);
 }
 
 .portfolio-dialog {
@@ -266,7 +273,7 @@
   border: 1px solid var(--ko-border-default);
   /* 그림자를 쓰지 않는다 — 깊이는 테두리와 가라앉은 뒤로 만든다 */
   border-radius: var(--kh-radius-asym, 4px);
-  animation: portfolio-dialog-in var(--ko-duration-slow, 250ms) var(--ko-ease-out);
+  animation: portfolio-dialog-in var(--kh-dur-state, 240ms) var(--kh-ease-enter);
 }
 
 .portfolio-dialog-head {

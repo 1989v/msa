@@ -56,6 +56,13 @@
 
 .home-hero {
   padding: var(--ko-space-12) 0 calc(var(--kh-void, var(--ko-space-16)) / 2);
+  /* 먹 캔버스(InkWash)의 바탕층 기준 — 콘텐츠는 한 층 위로 */
+  position: relative;
+}
+
+.home-hero > .home-inner {
+  position: relative;
+  z-index: 1;
 }
 
 /* 대칭을 피한다 — 글은 왼쪽으로 몰고 오른쪽은 판 하나로 받는다 */

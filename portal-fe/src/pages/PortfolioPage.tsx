@@ -9,6 +9,8 @@ import {
 import { portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
+import { useReveal } from '../hooks/useReveal';
+import InkWash from '../components/brand/InkWash';
 import './PortfolioPage.css';
 
 /**
@@ -25,6 +27,7 @@ import './PortfolioPage.css';
  */
 export default function PortfolioPage() {
   useHeritageSurface();
+  const reveal = useReveal();
   useSeo({
     title: portalTitle('포트폴리오'),
     description:
@@ -73,14 +76,15 @@ export default function PortfolioPage() {
       <GNB items={[{ label: '홈', href: '/' }]} />
       <div className="portfolio-page">
         <div className="portfolio-inner">
-        <header className="portfolio-header">
-          <span className="kh-section-label">Project Archive</span>
-          <h1 className="portfolio-title">
+        <header className="portfolio-header kh-stagger" ref={reveal}>
+          <InkWash />
+          <span className="kh-section-label kh-seep">Project Archive</span>
+          <h1 className="portfolio-title kh-seep">
             만든 것들과
             <br />
             <span className="kh-display-accent">그때의 판단.</span>
           </h1>
-          <p className="portfolio-subtitle">
+          <p className="portfolio-subtitle kh-seep">
             검색·전시·커머스·인프라·AI 엔지니어링에서 다룬 일들입니다. 회사에서 한 일은
             회사를 밝히지 않고 내용만 둡니다.
           </p>
@@ -121,15 +125,16 @@ export default function PortfolioPage() {
         {grouped.map(({ category, items }) => (
           <section
             key={category.code}
+            ref={reveal}
             className={`portfolio-group${items.some(matches) ? '' : ' is-filtered-out'}`}
           >
-            <div className="kh-section-head">
+            <div className="kh-section-head kh-rule-draw">
               <h2 className="portfolio-group-title">{category.label}</h2>
             </div>
             {category.description && (
               <p className="portfolio-group-desc">{category.description}</p>
             )}
-            <div className="portfolio-grid">
+            <div className="portfolio-grid kh-stagger">
               {items.map((project) => (
                 <ProjectCard
                   key={project.title}
@@ -183,7 +188,7 @@ function ProjectCard({
 
   return (
     <article
-      className={`portfolio-card${hasDetail ? ' is-openable' : ''}${hidden ? ' is-filtered-out' : ''}`}
+      className={`portfolio-card kh-seep${hasDetail ? ' is-openable' : ''}${hidden ? ' is-filtered-out' : ''}`}
       onClick={hasDetail ? open : undefined}
     >
       <h3 className="portfolio-card-title">
