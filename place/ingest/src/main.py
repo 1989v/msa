@@ -116,10 +116,35 @@ def _job_admin_regions(file: str | None) -> int:
     regions = admin_region.run(Path(file).expanduser())
     sido = sum(1 for r in regions if r["level"] == "SIDO")
     located = sum(1 for r in regions if r.get("latitude") is not None)
+    named = sum(1 for r in regions if r.get("nameEn"))
     created, updated = admin_region.upsert(regions)
     backfill_overview.log(f"행정구역 {len(regions):,}건 (시도 {sido} · 시군구 {len(regions) - sido:,}) "
-                          f"— 신규 {created} · 갱신 {updated} · 좌표 채움 {located:,}")
+                          f"— 신규 {created} · 갱신 {updated}")
+    # 못 채운 쪽을 같이 찍는다. 그 시군구는 영문 화면에서 한글명이 그대로 나온다.
+    backfill_overview.log(f"  좌표 {located:,}/{len(regions):,} · 영문명 {named:,}/{len(regions):,}")
+    _print_english_names(regions)
     return 0
+
+
+def _print_english_names(regions: list[dict]) -> None:
+    """뽑아낸 시군구 영문명을 시도별로 한 줄씩 찍는다 — **한 번은 눈으로 봐야 한다.**
+
+    영문명은 관광지 주소에서 최빈값으로 뽑는데, 원천이 일관되게 틀린 경우가 있어 최빈값으로도
+    안 걸러진다 (실측: 인천 서구가 137건 모두 `Seohae-gu` 로 온다. 맞는 표기는 `Seo-gu` 다).
+    자동으로 고칠 방법이 없으므로 사람이 훑을 수 있게 내놓는다.
+    """
+    sido = {r["code"]: (r.get("nameEn") or r["name"]) for r in regions if r["level"] == "SIDO"}
+    by_parent: dict[str, list[str]] = {}
+    for region in regions:
+        if region["level"] != "SIGUNGU":
+            continue
+        by_parent.setdefault(region["parentCode"], []).append(
+            region.get("nameEn") or f'{region["name"]}(영문없음)'
+        )
+    backfill_overview.log("아래 영문명은 원천(관광지 주소)에서 뽑은 값이다 — 한 번 훑어볼 것:")
+    for code in sorted(by_parent):
+        names = ", ".join(sorted(by_parent[code]))
+        backfill_overview.log(f"  [{code} {sido.get(code, '?')}] {names}")
 
 
 def main() -> int:

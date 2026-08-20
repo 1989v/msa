@@ -110,7 +110,7 @@ def main() -> int:
     _youtube_matcher()
     _admin_region_parser()
 
-    print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 법정동 파서")
+    print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 법정동 파서 · 영문명 추출")
     return 0
 
 
@@ -159,6 +159,35 @@ def _admin_region_parser() -> None:
     # 시(수원시)와 자치구(수원시 장안구)가 둘 다 5자리다 — 어느 쪽을 쓸지 여기서 정하지 않는다
     assert rows[3]["name"] == "수원시" and rows[4]["name"] == "수원시 장안구"
     assert all(r["parentCode"] == r["code"][:2] for r in rows if r["level"] == "SIGUNGU")
+
+    _english_from_address()
+
+
+def _english_from_address() -> None:
+    """영문 시군구명은 tokens[-2] 로 고정하면 안 된다 — 시 아래 자치구가 있으면 한 칸 밀린다.
+
+    어느 칸을 볼지는 법정동 한글명의 단어 수가 정한다.
+    """
+    from src.admin_region import SIDO_EN, _english_sigungu
+
+    # 1단어 이름 → 뒤에서 두 번째
+    assert _english_sigungu("종로구", "161 Sajik-ro, Jongno-gu, Seoul") == "Jongno-gu"
+    assert _english_sigungu("경주시", "385 Bulguk-ro, Gyeongju-si, Gyeongsangbuk-do") == "Gyeongju-si"
+    # 건물명이 앞에 붙어도 뒤에서 세면 영향이 없다
+    assert _english_sigungu(
+        "영등포구", "CM Chungmu Hospital, 13 Yeongdeungpo-ro 36-gil, Yeongdeungpo-gu, Seoul",
+    ) == "Yeongdeungpo-gu"
+    # 2단어 이름(시 아래 자치구) → 한 칸 더 앞을 함께 본다
+    assert _english_sigungu(
+        "전주시 완산구", "99 Girin-daero, Wansan-gu, Jeonju-si, Jeollabuk-do",
+    ) == "Wansan-gu, Jeonju-si"
+    # 숫자가 섞이면 주소 형식이 깨진 것 — 버린다
+    assert _english_sigungu("종로구", "161 Sajik-ro, Seoul") is None
+    assert _english_sigungu("종로구", "Seoul") is None
+
+    # 시도는 상수다. 원천이 전남과 광주를 뭉갠 라벨을 주기 때문이다.
+    assert len(SIDO_EN) == 17
+    assert SIDO_EN["29"] == "Gwangju" and SIDO_EN["46"] == "Jeollanam-do"
 
 
 if __name__ == "__main__":
