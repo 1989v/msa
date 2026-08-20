@@ -53,12 +53,16 @@
 
 ---
 
-## R4 — 지역 페이지 SEO/AEO
+## R4 — 지역 페이지 SEO/AEO — **완료 (2026-08-20)**
 
-- [ ] `/regions/{시도}` · `/regions/{시도}/{시군구}` 라우트 + 프리렌더
-- [ ] `TouristDestination` + `ItemList` 구조화 데이터
-- [ ] `portal-fe/src/seo/copy.mjs` 에 지역 카피 (문구 SSOT)
-- [ ] sitemap 에 지역 URL 추가
+- [x] `/regions/{code}` 라우트 — 세그먼트는 **법정동 코드 하나**(시도 2자리/시군구 5자리).
+      이름 슬러그는 개편 때 죽는다(강원도 → 강원특별자치도를 이번에 겪었다). 코드 길이가
+      레벨을 정하므로 라우트도 페이지도 하나다
+- [x] `TouristDestination`(+`includesAttraction` 대표 10곳) + breadcrumb 구조화 데이터
+- [x] `copy.mjs` 에 `regionPath/regionUrl/regionMeta/touristDestinationJsonLd`
+- [x] sitemap 지역 546 URL (273×2개 언어, 실측) — 지역 페이지는 관광지 상세와 달리
+      **진짜 번역쌍**이라 hreflang 을 건다. 언어별 관광 건수 0 인 지역은 뺀다(thin content)
+- [x] 허브 프리렌더에 시도 링크 — sitemap 만 있고 내부 링크가 없는 URL 은 잘 크롤되지 않는다
 
 **함정**: 호스트로 갈리는 경로는 프리렌더도 `_hosts/$host` 키를 써야 한다 (ADR-0062).
 

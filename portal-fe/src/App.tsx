@@ -19,6 +19,8 @@ const PlacePage = lazy(() => import('./pages/place/PlacePage'));
 // ADR-0069 — 혜택 링크 허브 (deal.<domain>). place/game 과 같은 host 인식 루트 라우팅.
 const DealPage = lazy(() => import('./pages/deal/DealPage'));
 const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
+// ADR-0071 — 지역 페이지. "제주 가볼 만한 곳" 류 질의의 착지점 (코드 세그먼트: 시도 2자리/시군구 5자리)
+const RegionPage = lazy(() => import('./pages/place/RegionPage'));
 // ADR-0066 — IT(개념 사전·3D 그래프·트리맵). 메인이 런처가 되면서 three.js 를 쓰지 않게 됐다.
 // eager 로 두면 타일만 보는 방문자도 그래프 엔진을 통째로 받는다.
 const SearchPage = lazy(() => import('./pages/SearchPage'));
@@ -125,6 +127,11 @@ function App() {
           {/* 혜택 링크 허브 — 한국어만 (P1). apex 는 서브도메인으로 넘긴다 */}
           <Route path="/deal" element={dealRoute(<DealPage />)} />
           {/* 관광지 상세 — 고유명사 검색의 착지점 (ADR-0062). place 호스트가 정규 주소 */}
+          {/* 지역 페이지 — 지역 단위 질의의 착지점 (ADR-0071). place 호스트가 정규 주소 */}
+          <Route path="/regions/:code" element={placeRoute(<RegionPage />)} />
+          <Route path="/en/regions/:code" element={placeRoute(<RegionPage />)} />
+          <Route path="/place/regions/:code" element={placeRoute(<RegionPage />)} />
+          <Route path="/en/place/regions/:code" element={placeRoute(<RegionPage />)} />
           <Route path="/attractions/:id" element={placeRoute(<AttractionPage />)} />
           <Route path="/en/attractions/:id" element={placeRoute(<AttractionPage />)} />
           <Route path="/place/attractions/:id" element={placeRoute(<AttractionPage />)} />

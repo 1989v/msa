@@ -333,6 +333,75 @@ export function attractionUrl(lang, id) {
   return `${PLACE_ORIGIN}${attractionPath(lang, id)}`;
 }
 
+/**
+ * 지역 페이지 주소 (ADR-0071 §9). 세그먼트는 **법정동 코드**다 — 시도 2자리(41), 시군구 5자리(41110).
+ * 이름 슬러그를 쓰지 않는 이유: 행정구역명은 바뀐다(강원도 → 강원특별자치도, 2026년 실측).
+ * 코드는 안정적이고, 검색엔진이 관련성을 읽는 곳은 URL 이 아니라 title/h1 이다.
+ */
+export function regionPath(lang, code) {
+  return placePath(lang, `/regions/${code}`);
+}
+
+export function regionUrl(lang, code) {
+  return `${PLACE_ORIGIN}${regionPath(lang, code)}`;
+}
+
+/** 화면·색인에 쓰는 지역 표시명 — 영문명이 비면 한글명을 그대로 쓴다(없는 번역을 지어내지 않는다) */
+export function regionDisplayName(lang, region) {
+  return (lang === 'en' && region.nameEn) || region.name;
+}
+
+export function regionMeta(lang, region, attractionCount = null) {
+  const name = regionDisplayName(lang, region);
+  const isSido = region.level === 'SIDO';
+  const count = attractionCount != null && attractionCount > 0 ? attractionCount : null;
+  if (lang === 'en') {
+    return {
+      title: `Things to Do in ${name}${count ? ` — ${count.toLocaleString('en')} Attractions` : ''} | ${PLACE_BRAND_EN}`,
+      description: clampDescription(
+        `Explore ${count ? `${count.toLocaleString('en')} ` : ''}tourist attractions in ${name}, South Korea${
+          isSido ? ' by district' : ''
+        }. Nature, history, culture and leisure spots with maps and photos from official tourism data.`,
+      ),
+      heading: `Things to do in ${name}`,
+    };
+  }
+  return {
+    title: `${name} 가볼 만한 곳${count ? ` ${count.toLocaleString('ko')}곳` : ''} — 관광지 지도·명소 | ${PLACE_BRAND_KO}`,
+    description: clampDescription(
+      `${name}의 자연·역사·문화·레포츠 관광지${count ? ` ${count.toLocaleString('ko')}곳` : ''}을 ${
+        isSido ? '시·군·구별로 ' : ''
+      }모았습니다. 한국관광공사 공식 데이터로 지도와 사진을 함께 확인하세요.`,
+    ),
+    heading: `${name} 가볼 만한 곳`,
+  };
+}
+
+/** TouristDestination + 대표 관광지 ItemList — 지역 페이지의 구조화 데이터 (ADR-0071 §9) */
+export function touristDestinationJsonLd(lang, region, attractions = []) {
+  const name = regionDisplayName(lang, region);
+  const json = {
+    '@context': 'https://schema.org',
+    '@type': 'TouristDestination',
+    name,
+    url: regionUrl(lang, region.code),
+    inLanguage: lang,
+    address: { '@type': 'PostalAddress', addressRegion: name, addressCountry: 'KR' },
+    isPartOf: { '@type': 'WebSite', name: placeBrand(lang), url: PLACE_ORIGIN },
+  };
+  if (region.latitude != null && region.longitude != null) {
+    json.geo = { '@type': 'GeoCoordinates', latitude: region.latitude, longitude: region.longitude };
+  }
+  if (attractions.length > 0) {
+    json.includesAttraction = attractions.slice(0, 10).map((a) => ({
+      '@type': 'TouristAttraction',
+      name: a.title,
+      url: attractionUrl(lang, a.id),
+    }));
+  }
+  return json;
+}
+
 export function placeHreflangAlternates(sub = '') {
   return [
     { hreflang: 'ko', href: placeUrl('ko', sub) },

@@ -42,6 +42,9 @@ import {
   placeHubMeta,
   placePath,
   placeUrl,
+  regionDisplayName,
+  regionPath,
+  regionUrl,
   portalUrl,
   DEAL_ORIGIN,
   DEAL_BRAND,
@@ -85,15 +88,17 @@ async function main() {
   // 관광지는 sitemap 전용 — 6만 URL 을 정적 HTML 로 찍으면 이미지가 수백 MB 로 불어난다.
   // 라우트(/attractions/:id)와 useSeo 가 있으니 구글은 렌더링 후 색인한다 (ADR-0062).
   let places = { ko: [], en: [] };
+  let regions = { ko: [], en: [] };
   try {
     places = await fetchAttractionIndex();
+    regions = await fetchRegionIndex();
   } catch (err) {
     console.warn(`[seo] 관광지 색인 조회 실패: ${err.message}`);
   }
 
-  await writeRobotsAndSitemaps(games, places);
+  await writeRobotsAndSitemaps(games, places, regions);
   await renderPortalPages(shell);
-  await renderPlaceHubs(shell, places);
+  await renderPlaceHubs(shell, places, regions);
   await renderDealHub(shell);
 
   if (games.length === 0) {
@@ -369,7 +374,7 @@ function sitemapXml(entries) {
   ].join('\n');
 }
 
-async function writeRobotsAndSitemaps(games, places = { ko: [], en: [] }) {
+async function writeRobotsAndSitemaps(games, places = { ko: [], en: [] }, regions = { ko: [], en: [] }) {
   const gameEntries = [];
   for (const lang of LANGS) {
     gameEntries.push({
@@ -405,6 +410,20 @@ async function writeRobotsAndSitemaps(games, places = { ko: [], en: [] }) {
     priority: '1.0',
     alternates: placeHreflangAlternates(''),
   }));
+  // 지역 페이지 — 관광지 상세와 달리 **진짜 번역쌍**이다(같은 코드가 두 언어에 있다).
+  // hreflang 은 양쪽에 그 언어 콘텐츠가 실제로 있을 때만 건다.
+  const regionCodesBoth = new Set(
+    (regions.ko ?? []).map((r) => r.code).filter((code) => (regions.en ?? []).some((r) => r.code === code)),
+  );
+  const regionEntries = LANGS.flatMap((lang) =>
+    (regions[lang] ?? []).map((r) => ({
+      loc: regionUrl(lang, r.code),
+      priority: r.level === 'SIDO' ? '0.8' : '0.6',
+      ...(regionCodesBoth.has(r.code)
+        ? { alternates: placeHreflangAlternates(`/regions/${r.code}`) }
+        : {}),
+    })),
+  );
   const placeDetailEntries = LANGS.flatMap((lang) =>
     (places[lang] ?? []).map((a) => ({
       loc: placeUrl(lang, `/attractions/${a.id}`),
@@ -415,7 +434,7 @@ async function writeRobotsAndSitemaps(games, places = { ko: [], en: [] }) {
 
   await emit(`seo/${GAME_HOST}/sitemap.xml`, sitemapXml(gameEntries));
   await emit(`seo/${PORTAL_HOST}/sitemap.xml`, sitemapXml(portalEntries));
-  await writePlaceSitemaps(placeHubEntries, placeDetailEntries);
+  await writePlaceSitemaps([...placeHubEntries, ...regionEntries], placeDetailEntries);
 
   await emit(`seo/${GAME_HOST}/robots.txt`, robotsTxt(GAME_ORIGIN));
   await emit(`seo/${PORTAL_HOST}/robots.txt`, robotsTxt(PORTAL_ORIGIN));
@@ -529,6 +548,26 @@ async function emit(relativePath, content) {
  * 각 조각이 그 아래로 떨어진다. 페이지 크기는 서버가 100 으로 고정한다.
  * 실패한 조각은 건너뛴다 — 일부가 빠진 sitemap 이 sitemap 이 없는 것보다 낫다.
  */
+/**
+ * 지역 페이지 색인 대상 (ADR-0071 §9). 언어별 관광 분류 건수가 0 인 지역은 뺀다 —
+ * 빈 지역 페이지를 sitemap 에 올리면 thin content 로 사이트 전체 평가를 깎는다.
+ */
+async function fetchRegionIndex() {
+  const result = {};
+  for (const lang of LANGS) {
+    const regions = [];
+    const sidos = (await getJson(`/api/places/admin-regions?level=SIDO&lang=${lang}`)).regions ?? [];
+    for (const sido of sidos) {
+      if ((sido.attractionCount ?? 0) > 0) regions.push(sido);
+      const children = (await getJson(`/api/places/admin-regions?level=SIGUNGU&parent=${sido.code}&lang=${lang}`)).regions ?? [];
+      regions.push(...children.filter((c) => (c.attractionCount ?? 0) > 0));
+    }
+    result[lang] = regions;
+    console.log(`[seo] 지역 ${lang}: ${regions.length}건`);
+  }
+  return result;
+}
+
 async function fetchAttractionIndex() {
   const result = {};
   for (const lang of LANGS) {
@@ -568,10 +607,15 @@ async function fetchAreaSlice(lang, areaCode) {
 
 // ─── place · 포털 허브 프리렌더 ──────────────────────────────────────────────
 
-async function renderPlaceHubs(shell, places = { ko: [], en: [] }) {
+async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { ko: [], en: [] }) {
   for (const lang of LANGS) {
     const meta = placeHubMeta(lang);
     const canonical = placeUrl(lang);
+    // 시도 지역 링크 — sitemap 만 있고 내부 링크가 없는 URL 은 잘 크롤되지 않는다
+    const regionLinks = (regions[lang] ?? [])
+      .filter((r) => r.level === 'SIDO')
+      .map((r) => `<li><a href="${regionPath(lang, r.code)}">${escapeHtml(regionDisplayName(lang, r))}</a></li>`)
+      .join('');
     // 허브에서 관광지 일부로 링크를 뻗어 크롤러가 상세 URL 을 발견할 진입점을 만든다.
     // (sitemap 만 있고 내부 링크가 없는 URL 은 잘 크롤되지 않는다)
     const seeds = (places[lang] ?? []).filter((a) => a.hasOverview).slice(0, 60);
@@ -587,6 +631,7 @@ async function renderPlaceHubs(shell, places = { ko: [], en: [] }) {
       jsonLd: [collectionPageJsonLd(lang, meta, canonical, { name: placeBrand(lang), url: PLACE_ORIGIN })],
       body: shellBody(
         `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
+          (regionLinks ? `<ul>${regionLinks}</ul>` : '') +
           (links ? `<ul>${links}</ul>` : ''),
       ),
     });
