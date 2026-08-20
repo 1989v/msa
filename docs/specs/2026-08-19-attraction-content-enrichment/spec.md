@@ -124,6 +124,7 @@ POST /internal/attractions/links/bulk
 | source | 템플릿 | 검증 |
 |---|---|---|
 | `INSTAGRAM` | `https://www.instagram.com/explore/tags/{정규화명}/` | 정규화 = 공백·특수문자 제거 |
+| `YOUTUBE` (검색) | `https://www.youtube.com/results?search_query={관광지명}` | API 호출 0 — 수집 카드(일 100곳)와 별개의 "직접 더 찾아보기" |
 | `TOUR_PRODUCT` (MRT) | `https://www.myrealtrip.com/search?q={관광지명}` | 200 확인 (2026-08-19) |
 | `TOUR_PRODUCT` (Klook) | `https://www.klook.com/search/?query={관광지명}` | 제휴 승인 시 트래킹 파라미터 부착 |
 

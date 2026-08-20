@@ -45,6 +45,10 @@ object AttractionDeepLinks {
                 add(AttractionDeepLink("INSTAGRAM", DeepLinkKind.SOCIAL,
                     "https://www.instagram.com/explore/tags/$tag/", LinkRevenueType.PLAIN))
             }
+            // 유튜브 검색 — 수집 카드(하루 100곳 쿼터)와 별개로, 항상 즉시 나가는 "직접 더 찾아보기".
+            // API 호출 0 이라 키 없이도 동작하고, 카드가 5개뿐인 한계를 사용자가 스스로 넘게 한다.
+            add(AttractionDeepLink("YOUTUBE", DeepLinkKind.SOCIAL,
+                "https://www.youtube.com/results?search_query=$query", LinkRevenueType.PLAIN))
             // 마이리얼트립 — 공개 제휴 프로그램·오픈 API 가 확인되지 않아 상품 데이터는 긁지 않는다
             // (ADR-0070 §6). 검색 딥링크만 건다.
             add(AttractionDeepLink("MYREALTRIP", DeepLinkKind.TOUR_PRODUCT,

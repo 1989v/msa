@@ -38,6 +38,7 @@ const UI = {
 
 const PROVIDER_LABEL: Record<string, { ko: string; en: string }> = {
   INSTAGRAM: { ko: '인스타그램', en: 'Instagram' },
+  YOUTUBE: { ko: '유튜브에서 찾기', en: 'Search on YouTube' },
   MYREALTRIP: { ko: '마이리얼트립', en: 'MyRealTrip' },
   KLOOK: { ko: 'Klook', en: 'Klook' },
 };

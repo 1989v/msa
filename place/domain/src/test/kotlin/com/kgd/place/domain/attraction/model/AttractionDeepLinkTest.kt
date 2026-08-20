@@ -11,9 +11,10 @@ class AttractionDeepLinkTest : BehaviorSpec({
             then("인스타 태그는 붙여 쓰고 검색어는 URL 인코딩되어야 한다") {
                 val links = AttractionDeepLinks.of("전주 한옥마을 역사관")
                 links.map { it.provider } shouldContainExactly
-                    listOf("INSTAGRAM", "MYREALTRIP", "KLOOK")
+                    listOf("INSTAGRAM", "YOUTUBE", "MYREALTRIP", "KLOOK")
                 links[0].url shouldBe "https://www.instagram.com/explore/tags/전주한옥마을역사관/"
-                links[1].url shouldBe "https://www.myrealtrip.com/search?q=%EC%A0%84%EC%A3%BC+%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84+%EC%97%AD%EC%82%AC%EA%B4%80"
+                links[1].url shouldBe "https://www.youtube.com/results?search_query=%EC%A0%84%EC%A3%BC+%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84+%EC%97%AD%EC%82%AC%EA%B4%80"
+                links[2].url shouldBe "https://www.myrealtrip.com/search?q=%EC%A0%84%EC%A3%BC+%ED%95%9C%EC%98%A5%EB%A7%88%EC%9D%84+%EC%97%AD%EC%82%AC%EA%B4%80"
             }
         }
         `when`("영문 관광지명이면") {
@@ -23,8 +24,9 @@ class AttractionDeepLinkTest : BehaviorSpec({
         }
         `when`("문장부호만 남는 이름이면") {
             then("인스타 링크를 만들지 않는다") {
+                // 유튜브 검색은 원문 그대로 인코딩해 나간다 — 태그와 달리 문장부호가 있어도 검색이 된다
                 AttractionDeepLinks.of("!!!").map { it.provider } shouldContainExactly
-                    listOf("MYREALTRIP", "KLOOK")
+                    listOf("YOUTUBE", "MYREALTRIP", "KLOOK")
             }
         }
     }

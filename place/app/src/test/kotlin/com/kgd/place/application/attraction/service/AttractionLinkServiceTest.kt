@@ -49,7 +49,7 @@ class AttractionLinkServiceTest : BehaviorSpec({
                 val links = service.findByAttractionId(1L)
 
                 links.collected shouldHaveSize 0
-                links.deepLinks shouldHaveSize 3
+                links.deepLinks shouldHaveSize 4
                 links.pending shouldBe true
                 verify { linkRepository.saveRequest(any()) }
             }
@@ -79,7 +79,7 @@ class AttractionLinkServiceTest : BehaviorSpec({
 
                 val links = service.findByAttractionId(1L)
 
-                links.deepLinks shouldHaveSize 3
+                links.deepLinks shouldHaveSize 4
                 links.pending shouldBe false
             }
         }
