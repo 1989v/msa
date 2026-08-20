@@ -28,7 +28,11 @@ interface AttractionSearchPort {
         /** 법정동 축 (ADR-0071). areaCode 와 같이 주지 않는다 — 어느 쪽이 이기는지 호출자가 모른다. */
         val sidoCode: String? = null,
         val sigunguCode: String? = null,
-        val category: String? = null,
+        /**
+         * 분류 필터 (복수). 목록은 관광 분류만 올리고 음식·쇼핑은 지도 오버레이로 가르기
+         * 위해 여러 개를 받는다 (ADR-0071 §5). 비어 있으면 필터하지 않는다.
+         */
+        val categories: List<String> = emptyList(),
         val geo: GeoFilter? = null,
     )
 

@@ -12,6 +12,7 @@ interface SearchAttractionUseCase {
         /** 법정동 축 (ADR-0071) — 지역 드릴다운이 쓰는 필터. */
         val sidoCode: String? = null,
         val sigunguCode: String? = null,
+        /** 쉼표로 여러 개를 받는다 — `history` 도 `nature,history` 도 같은 파라미터다. */
         val category: String? = null,
         val lat: Double? = null,
         val lng: Double? = null,

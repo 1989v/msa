@@ -45,7 +45,11 @@ class SearchAttractionService(
                 areaCode = query.areaCode?.takeIf { it.isNotBlank() },
                 sidoCode = query.sidoCode?.takeIf { it.isNotBlank() },
                 sigunguCode = query.sigunguCode?.takeIf { it.isNotBlank() },
-                category = query.category?.takeIf { it.isNotBlank() },
+                categories = query.category
+                    ?.split(",")
+                    ?.map { it.trim() }
+                    ?.filter { it.isNotBlank() }
+                    .orEmpty(),
                 geo = geo,
             ),
             pageable,

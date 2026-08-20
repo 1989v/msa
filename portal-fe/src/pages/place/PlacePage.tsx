@@ -50,6 +50,7 @@ const UI = {
     close: '닫기',
     hideList: '목록 접기',
     showList: '목록 펼치기',
+    onMap: '지도에 표시',
     categories: {
       nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
       shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
@@ -76,6 +77,7 @@ const UI = {
     close: 'Close',
     hideList: 'Hide list',
     showList: 'Show list',
+    onMap: 'Show on map',
     categories: {
       nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
       shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
@@ -88,7 +90,20 @@ const UI = {
   },
 };
 
-const CATEGORIES = ['nature', 'history', 'culture', 'leisure', 'shopping', 'food'];
+/*
+ * 목록에는 관광 분류만 올린다 (ADR-0071 §5). 적재의 62% 가 음식·쇼핑이라 한 목록에 섞으면
+ * 관광지가 보이지 않는다. 분류 가중치로 순위를 눌렀지만, 목록과 지도의 **역할을 나누는 것**이
+ * 더 정직한 해법이다 — 음식·쇼핑을 지우는 게 아니라 지도로 옮긴다.
+ */
+const CATEGORIES = ['nature', 'history', 'culture', 'leisure'];
+const OVERLAY_CATEGORIES = ['food', 'shopping'];
+/** 지도 오버레이는 화면에 보이는 범위만 가져온다 — 시군구 전체 식당을 찍으면 마커로 덮인다 */
+const OVERLAY_SIZE = 60;
+
+/** 지도 API 에 넘길 색은 CSS 변수가 아니라 계산된 값이어야 한다 (DESIGN.md — hex 직접 입력 금지). */
+function token(name: string): string {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
 
 // 선택 시 프레임에 함께 넣을 주변 명소 수 / 확대 상한 (건물 단위까지 당기지 않는다)
 const NEIGHBOURS_IN_FRAME = 6;
@@ -142,6 +157,8 @@ export default function PlacePage() {
   const [areaCode, setAreaCode] = useState<string | null>(null);
   const [sidoCode, setSidoCode] = useState<string | null>(null);
   const [sigunguCode, setSigunguCode] = useState<string | null>(null);
+  const [overlay, setOverlay] = useState<string | null>(null);
+  const [mapView, setMapView] = useState<{ lat: number; lng: number; radiusKm: number } | null>(null);
   const [geo, setGeo] = useState<GeoState | null>(null);
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -153,6 +170,7 @@ export default function PlacePage() {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Map<string, any>>(new Map());
+  const overlayMarkersRef = useRef<any[]>([]);
   const hasMapKey = mapsApiKey() !== '';
 
   const query: AttractionQuery = useMemo(
@@ -163,7 +181,8 @@ export default function PlacePage() {
       areaCode: sidoCode ? undefined : (areaCode ?? undefined),
       sidoCode: sidoCode ?? undefined,
       sigunguCode: sigunguCode ?? undefined,
-      category: category ?? undefined,
+      // 분류를 안 고르면 관광 분류 전체 — 음식·쇼핑은 목록에 올리지 않는다
+      category: category ?? CATEGORIES.join(','),
       lat: geo?.lat,
       lng: geo?.lng,
       radiusKm: geo?.radiusKm,
@@ -252,6 +271,73 @@ export default function PlacePage() {
       setMapMoved(false);
     });
   }, [data, mapReady, areaCode]);
+
+  /*
+   * 오버레이가 켜져 있을 때만 지도 이동을 따라간다. 꺼져 있으면 상태를 건드리지 않는다 —
+   * 지도를 움직일 때마다 setState 를 하면 오버레이를 안 쓰는 사람까지 리렌더 비용을 낸다.
+   */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || !overlay || !window.google?.maps) return;
+    const sync = () => {
+      const center = map.getCenter();
+      const bounds = map.getBounds();
+      if (center && bounds) {
+        setMapView({ lat: center.lat(), lng: center.lng(), radiusKm: radiusFromBounds(bounds) });
+      }
+    };
+    sync();
+    const listener = map.addListener('idle', sync);
+    return () => listener.remove();
+  }, [overlay, mapReady]);
+
+  const { data: overlayData } = useQuery({
+    queryKey: ['place-overlay', overlay, mapView, lang],
+    queryFn: () =>
+      searchAttractions({
+        lang,
+        category: overlay!,
+        lat: mapView!.lat,
+        lng: mapView!.lng,
+        radiusKm: mapView!.radiusKm,
+        sort: 'distance',
+        size: OVERLAY_SIZE,
+      }),
+    enabled: overlay != null && mapView != null,
+    staleTime: 60_000,
+  });
+
+  /*
+   * 오버레이 마커는 관광지 핀과 **모양으로** 구분한다. 색만 다르면 색각 이상에서 같아 보이고,
+   * 이 지도는 두 종류가 항상 겹쳐 있는 화면이다.
+   */
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady || !window.google?.maps) return;
+    overlayMarkersRef.current.forEach((m) => m.setMap(null));
+    overlayMarkersRef.current = [];
+    if (!overlay) return;
+    (overlayData?.attractions ?? []).forEach((a) => {
+      const marker = new window.google.maps.Marker({
+        map,
+        position: { lat: a.latitude, lng: a.longitude },
+        title: a.title,
+        zIndex: 0,
+        icon: {
+          path: window.google.maps.SymbolPath.CIRCLE,
+          scale: 5,
+          // 지도 API 는 CSS 변수를 못 읽는다 — 토큰을 읽어서 넘긴다.
+          // hex 를 박으면 테마가 바뀔 때 마커만 이전 팔레트로 남는다 (DESIGN.md).
+          fillColor: token('--ko-accent-primary'),
+          fillOpacity: 0.9,
+          strokeColor: token('--ko-surface-0'),
+          strokeWeight: 1.5,
+        },
+      });
+      marker.addListener('click', () => setSelectedId(a.id));
+      overlayMarkersRef.current.push(marker);
+    });
+  }, [overlay, overlayData, mapReady]);
 
   // 선택 → 지도가 따라간다. 그 명소만 꽉 채우지 않고 **가까운 몇 곳을 프레임에 함께 넣는다** —
   // 한 점만 확대하면 "여기가 어디 옆인지"가 사라져서 지도가 목록의 장식이 된다.
@@ -457,6 +543,19 @@ export default function PlacePage() {
                 setCategory(category === c ? null : c);
                 setPage(0);
               }}
+            >
+              {L.categories[c]}
+            </button>
+          ))}
+          <span className="place-filter-sep" aria-hidden="true" />
+          <span className="place-filter-label">{L.onMap}</span>
+          {OVERLAY_CATEGORIES.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`place-chip overlay ${overlay === c ? 'active' : ''}`}
+              aria-pressed={overlay === c}
+              onClick={() => setOverlay(overlay === c ? null : c)}
             >
               {L.categories[c]}
             </button>

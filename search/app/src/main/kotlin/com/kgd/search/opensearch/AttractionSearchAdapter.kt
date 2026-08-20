@@ -197,8 +197,14 @@ class AttractionSearchAdapter(
                     query.sigunguCode?.let { sigungu ->
                         b.filter { f -> f.term { it.field("ldongSignguCd").value(FieldValue.of(sigungu)) } }
                     }
-                    query.category?.let { category ->
-                        b.filter { f -> f.term { it.field("category").value(FieldValue.of(category)) } }
+                    query.categories.takeIf { it.isNotEmpty() }?.let { categories ->
+                        b.filter { f ->
+                            f.terms { t ->
+                                t.field("category").terms { tv ->
+                                    tv.value(categories.map { FieldValue.of(it) })
+                                }
+                            }
+                        }
                     }
                     query.geo?.let { geo ->
                         b.filter { f ->

@@ -671,3 +671,31 @@
   color: var(--ko-text-secondary);
   font-size: 0.85rem;
 }
+
+/* 지도 오버레이 토글 — 목록 필터와 다른 축이라 눈으로도 갈라 보인다 */
+.place-filter-sep {
+  width: 1px;
+  align-self: stretch;
+  margin: 0 0.15rem;
+  background: var(--ko-border-default);
+}
+
+.place-filter-label {
+  font-size: 0.8rem;
+  color: var(--ko-text-secondary);
+}
+
+/* 오버레이 칩은 원형 — 지도 위 마커도 원이라 같은 모양을 쓴다 (색만으로 가르지 않는다) */
+.place-chip.overlay {
+  border-radius: 999px;
+}
+
+.place-chip.overlay::before {
+  content: '';
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.35rem;
+  border-radius: 50%;
+  background: currentColor;
+}

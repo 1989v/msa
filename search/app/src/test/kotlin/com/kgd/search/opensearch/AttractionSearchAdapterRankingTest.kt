@@ -103,6 +103,38 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
         }
     }
 
+    given("분류 필터") {
+        `when`("여러 분류를 주면") {
+            then("terms 로 한 번에 건다 — 목록(관광)과 지도(음식·쇼핑)를 가르는 축이다") {
+                val (adapter, captured) = adapterWith(AttractionRankingProperties())
+
+                adapter.search(
+                    AttractionSearchPort.SearchQuery(
+                        lang = "ko",
+                        categories = listOf("nature", "history", "culture", "leisure"),
+                    ),
+                    PageRequest.of(0, 10),
+                )
+
+                val filters = requireNotNull(captured.captured.query()!!.functionScore().query()).bool().filter()
+                val terms = filters.single { it.isTerms }.terms()
+                terms.field() shouldBe "category"
+                terms.terms().value().map { it.stringValue() } shouldContainExactlyInAnyOrder
+                    listOf("nature", "history", "culture", "leisure")
+            }
+        }
+        `when`("분류를 주지 않으면") {
+            then("분류 필터를 걸지 않는다") {
+                val (adapter, captured) = adapterWith(AttractionRankingProperties())
+
+                adapter.search(AttractionSearchPort.SearchQuery(lang = "ko"), PageRequest.of(0, 10))
+
+                val filters = requireNotNull(captured.captured.query()!!.functionScore().query()).bool().filter()
+                filters.none { it.isTerms } shouldBe true
+            }
+        }
+    }
+
     given("가중치를 둘 다 1.0 으로 두면") {
         `when`("검색을 하면") {
             then("function_score 를 감싸지 않는다 — 끄는 스위치가 있어야 되돌릴 수 있다") {
