@@ -1,6 +1,23 @@
 {
   "settings": {
     "analysis": {
+      "filter": {
+        "tourism_synonyms": {
+          "type": "synonym_graph",
+          "synonyms": [
+            "궁궐, 고궁, 왕궁 => 궁궐, 고궁, 왕궁, 경복궁, 창덕궁, 덕수궁, 창경궁, 경희궁",
+            "해수욕장, 해변, 비치",
+            "사찰, 절, 사원",
+            "박물관, 뮤지엄",
+            "미술관, 갤러리",
+            "전통시장, 재래시장",
+            "한옥마을, 한옥촌",
+            "테마파크, 놀이공원, 유원지",
+            "수목원, 식물원",
+            "전망대, 스카이워크"
+          ]
+        }
+      },
       "tokenizer": {
         "jamo_edge_ngram": {
           "type": "edge_ngram",
@@ -13,6 +30,11 @@
         "nori_analyzer": {
           "type": "custom",
           "tokenizer": "nori_tokenizer"
+        },
+        "nori_search": {
+          "type": "custom",
+          "tokenizer": "nori_tokenizer",
+          "filter": ["tourism_synonyms"]
         },
         "jamo_index": {
           "type": "custom",
@@ -33,7 +55,7 @@
       "contentId": { "type": "keyword" },
       "lang": { "type": "keyword" },
       "title": {
-        "type": "text", "analyzer": "nori_analyzer",
+        "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
         "fields": {
           "en": { "type": "text", "analyzer": "english" },
           "keyword": { "type": "keyword", "ignore_above": 256 }
@@ -45,11 +67,11 @@
         "search_analyzer": "jamo_search"
       },
       "address": {
-        "type": "text", "analyzer": "nori_analyzer",
+        "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
         "fields": { "en": { "type": "text", "analyzer": "english" } }
       },
       "overview": {
-        "type": "text", "analyzer": "nori_analyzer",
+        "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
         "fields": { "en": { "type": "text", "analyzer": "english" } }
       },
       "areaCode": { "type": "keyword" },
