@@ -699,3 +699,11 @@
   border-radius: 50%;
   background: currentColor;
 }
+
+/* 지역 선택 카드 — 관광지 카드와 같은 지면을 쓰되 버튼이라 기본 스타일을 지운다 */
+button.place-card {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}

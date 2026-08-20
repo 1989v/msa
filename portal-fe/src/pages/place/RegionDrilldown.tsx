@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { fetchAdminRegions, type AdminRegion, type PlaceLang } from '../../api/placeApi';
-import { haversineKm } from './googleMaps';
+import { nearestRegion } from './googleMaps';
 
 /**
  * 시도 → 시군구 드릴다운 (ADR-0071 §3).
@@ -18,17 +18,6 @@ const UI = {
 
 function label(region: AdminRegion, lang: PlaceLang): string {
   return (lang === 'en' && region.nameEn) || region.name;
-}
-
-/** 좌표가 속한 시도를 중심 좌표 최근접으로 고른다 — 경계 폴리곤이 필요할 만큼 정밀한 판단이 아니다. */
-function nearestSido(regions: AdminRegion[], lat: number, lng: number): string | null {
-  let best: { code: string; km: number } | null = null;
-  for (const region of regions) {
-    if (region.latitude == null || region.longitude == null) continue;
-    const km = haversineKm(lat, lng, region.latitude, region.longitude);
-    if (!best || km < best.km) best = { code: region.code, km };
-  }
-  return best?.code ?? null;
 }
 
 export default function RegionDrilldown({
@@ -63,7 +52,7 @@ export default function RegionDrilldown({
   // 자료가 없으면 호출자가 이전 축을 계속 쓴다 (같은 쿼리 키를 보고 판단한다)
   if (!sidos || sidos.length === 0) return null;
 
-  const nearCode = origin ? nearestSido(sidos, origin.lat, origin.lng) : null;
+  const nearCode = origin ? (nearestRegion(sidos, origin.lat, origin.lng)?.code ?? null) : null;
   // 가까운 시도를 맨 앞으로. 정렬만 바꾸고 선택은 사용자가 한다.
   const ordered = nearCode
     ? [...sidos].sort((a, b) => Number(b.code === nearCode) - Number(a.code === nearCode))

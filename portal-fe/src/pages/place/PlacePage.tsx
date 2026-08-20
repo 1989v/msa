@@ -7,12 +7,13 @@ import {
   fetchAttraction,
   searchAttractions,
   suggestPlaces,
+  type AdminRegion,
   type Attraction,
   type AttractionQuery,
   type PlaceLang,
   type Suggestion,
 } from '../../api/placeApi';
-import { loadGoogleMaps, mapsApiKey, neighboursInFrame, radiusFromBounds } from './googleMaps';
+import { loadGoogleMaps, mapsApiKey, nearestRegion, neighboursInFrame, radiusFromBounds } from './googleMaps';
 import AttractionLinks from './AttractionLinks';
 import RegionDrilldown from './RegionDrilldown';
 import ThemeToggle from '../../components/ThemeToggle';
@@ -115,6 +116,16 @@ const MAX_SELECT_ZOOM = 16;
  */
 const MAX_ZOOM_BY_LEVEL = { SIDO: 11, SIGUNGU: 13 } as const;
 
+/**
+ * 첫 진입에 좌표를 못 얻었을 때의 기본 시도 (법정동 코드 11 = 서울특별시).
+ *
+ * 전국 지도로 시작하지 않는 이유: 6만 곳 중 30개를 무작위로 흩뿌린 화면은 고를 근거가 안 된다.
+ * 어디든 한 곳을 정해야 하고, 정할 거면 관광 수요가 가장 두꺼운 곳이 덜 틀린다.
+ */
+const DEFAULT_SIDO_CODE = '11';
+/** 좌표를 기다리는 상한 — 넘으면 기본 시도로 간다. 길게 잡으면 빈 화면이 그만큼 길어진다. */
+const GEO_TIMEOUT_MS = 4000;
+
 const AREAS: Array<{ code: string; ko: string; en: string }> = [
   { code: '1', ko: '서울', en: 'Seoul' },
   { code: '6', ko: '부산', en: 'Busan' },
@@ -206,6 +217,66 @@ export default function PlacePage() {
   });
   // 자료가 들어오면 드릴다운으로, 아직이면 이전 광역 선택으로. 두 축을 동시에 노출하지 않는다.
   const hasRegionAxis = (sidoRegions?.length ?? 0) > 0;
+  /*
+   * 시도를 아직 안 고른 첫 화면 (ADR-0071 §3 — 탐색의 축이 지역이다).
+   *
+   * 이 상태에서 전국 관광지 30건을 흩뿌리면 마커가 아무 의미도 없다 — 6만 곳 중 30개를
+   * 무작위로 본 셈이라 고를 근거가 안 된다. 대신 **시도 자체를 마커로** 보여 "어디부터
+   * 볼지"를 지도에서 고르게 한다. 검색어나 내 주변을 쓰면 그건 명시적 의도라 비켜준다.
+   */
+  const pickingRegion = hasRegionAxis && !sidoCode && !keyword && !geo;
+
+  /** 지역 선택 — 드릴다운 칩과 지도의 시도 마커가 같은 경로를 쓴다. */
+  const selectRegion = useCallback(
+    (next: { sidoCode: string | null; sigunguCode: string | null; region?: AdminRegion } | AdminRegion) => {
+      const region = 'level' in next ? next : next.region;
+      const nextSido = 'level' in next ? next.code : next.sidoCode;
+      const nextSigungu = 'level' in next ? null : next.sigunguCode;
+      setSidoCode(nextSido);
+      setSigunguCode(nextSigungu);
+      setAreaCode(null);
+      setGeo(null);
+      setPage(0);
+      setSelectedId(null);
+      // 고른 레벨이 화면의 축이다 — 그 레벨의 줌으로 옮긴다 (ADR-0071 §4)
+      const map = mapRef.current;
+      if (map && region?.latitude != null && region.longitude != null) {
+        map.setCenter({ lat: region.latitude, lng: region.longitude });
+        map.setZoom(region.level === 'SIDO' ? MAX_ZOOM_BY_LEVEL.SIDO : MAX_ZOOM_BY_LEVEL.SIGUNGU);
+        setMapMoved(false);
+      }
+    },
+    [],
+  );
+
+  /*
+   * 첫 진입은 **시도 하나를 고른 상태**로 시작한다 (ADR-0071 §3).
+   * 좌표를 얻으면 그 위치의 시도로, 못 얻으면 서울로.
+   *
+   * 한 번만 돈다 — 사용자가 "전체"로 되돌린 뒤 다시 낚아채면 조작을 빼앗는 셈이다.
+   * 검색어를 들고 들어온 경우(공유 링크 등)도 비켜준다. 그건 이미 명시된 의도다.
+   */
+  const autoPickedRef = useRef(false);
+  useEffect(() => {
+    if (autoPickedRef.current || !hasRegionAxis || sidoCode || keyword || geo) return;
+    const regions = sidoRegions ?? [];
+    if (regions.length === 0) return;
+    autoPickedRef.current = true;
+
+    const pick = (region?: AdminRegion | null) => {
+      const target = region ?? regions.find((r) => r.code === DEFAULT_SIDO_CODE) ?? regions[0];
+      if (target) selectRegion(target);
+    };
+    if (!navigator.geolocation) {
+      pick(null);
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => pick(nearestRegion(regions, pos.coords.latitude, pos.coords.longitude)),
+      () => pick(null),                       // 거부·실패는 정상 경로다 — 기본 시도로 간다
+      { timeout: GEO_TIMEOUT_MS, maximumAge: 10 * 60_000 },
+    );
+  }, [hasRegionAxis, sidoCode, keyword, geo, sidoRegions, selectRegion]);
 
   const { data: selected } = useQuery({
     queryKey: ['place-attraction', selectedId],
@@ -249,6 +320,42 @@ export default function PlacePage() {
     if (!map || !mapReady || !window.google?.maps) return;
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = new Map();
+
+    // 지역 선택 화면 — 관광지 대신 시도를 찍는다. 클릭하면 그 시도로 들어간다.
+    if (pickingRegion) {
+      const bounds = new window.google.maps.LatLngBounds();
+      (sidoRegions ?? []).forEach((r) => {
+        if (r.latitude == null || r.longitude == null) return;
+        const marker = new window.google.maps.Marker({
+          map,
+          position: { lat: r.latitude, lng: r.longitude },
+          title: `${(lang === 'en' && r.nameEn) || r.name} (${r.attractionCount ?? 0})`,
+          label: {
+            text: String(r.attractionCount ?? 0),
+            color: token('--ko-surface-0'),
+            fontSize: '11px',
+            fontWeight: '700',
+          },
+          icon: {
+            path: window.google.maps.SymbolPath.CIRCLE,
+            scale: 15,
+            fillColor: token('--ko-accent-primary'),
+            fillOpacity: 0.92,
+            strokeColor: token('--ko-surface-0'),
+            strokeWeight: 2,
+          },
+        });
+        marker.addListener('click', () => selectRegion(r));
+        markersRef.current.set(r.code, marker);
+        bounds.extend({ lat: r.latitude, lng: r.longitude });
+      });
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, 56);
+        window.google.maps.event.addListenerOnce(map, 'idle', () => setMapMoved(false));
+      }
+      return;
+    }
+
     const attractions = data?.attractions ?? [];
     if (attractions.length === 0) return;
 
@@ -270,7 +377,7 @@ export default function PlacePage() {
       // fitBounds 가 유발하는 zoom_changed 를 사용자 이동으로 오인하지 않게 리셋
       setMapMoved(false);
     });
-  }, [data, mapReady, areaCode]);
+  }, [data, mapReady, areaCode, pickingRegion, sidoRegions, lang, selectRegion]);
 
   /*
    * 오버레이가 켜져 있을 때만 지도 이동을 따라간다. 꺼져 있으면 상태를 건드리지 않는다 —
@@ -587,21 +694,7 @@ export default function PlacePage() {
             sidoCode={sidoCode}
             sigunguCode={sigunguCode}
             origin={geo ? { lat: geo.lat, lng: geo.lng } : null}
-            onChange={({ sidoCode: nextSido, sigunguCode: nextSigungu, region }) => {
-              setSidoCode(nextSido);
-              setSigunguCode(nextSigungu);
-              setAreaCode(null);
-              setGeo(null);
-              setPage(0);
-              setSelectedId(null);
-              // 고른 레벨이 화면의 축이다 — 그 레벨의 줌으로 옮긴다 (ADR-0071 §4)
-              const map = mapRef.current;
-              if (map && region?.latitude != null && region.longitude != null) {
-                map.setCenter({ lat: region.latitude, lng: region.longitude });
-                map.setZoom(region.level === 'SIDO' ? MAX_ZOOM_BY_LEVEL.SIDO : MAX_ZOOM_BY_LEVEL.SIGUNGU);
-                setMapMoved(false);
-              }
-            }}
+            onChange={selectRegion}
           />
         )}
       </div>
@@ -623,7 +716,23 @@ export default function PlacePage() {
           >
             {listOpen ? `‹ ${L.hideList}` : '›'}
           </button>
-          {listOpen && (
+          {listOpen && pickingRegion && (
+            <section className="place-list" aria-label={L.pickRegion}>
+              <h2 className="place-subtitle">{L.pickRegion}</h2>
+              <p className="place-region-hint">{L.pickRegionHint}</p>
+              {(sidoRegions ?? []).map((r) => (
+                <button key={r.code} className="place-card" onClick={() => selectRegion(r)}>
+                  <div className="place-card-body">
+                    <h3 className="place-card-title">{(lang === 'en' && r.nameEn) || r.name}</h3>
+                    <p className="place-card-addr">
+                      {(r.attractionCount ?? 0).toLocaleString(lang === 'en' ? 'en' : 'ko')} {L.countSuffix}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </section>
+          )}
+          {listOpen && !pickingRegion && (
             <section className="place-list" aria-busy={isLoading}>
               {attractions.length === 0 && !isLoading && <p className="place-empty">{L.empty}</p>}
               {attractions.map((a) => (

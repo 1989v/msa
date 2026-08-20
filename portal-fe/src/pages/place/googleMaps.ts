@@ -70,3 +70,25 @@ export function neighboursInFrame<T extends { id: string; latitude: number; long
     .slice(0, count)
     .map(({ a }) => a);
 }
+
+/**
+ * 좌표에 가장 가까운 지역 (ADR-0071 §3). 중심 좌표 최근접이라 경계 폴리곤이 필요 없다 —
+ * "지금 어느 시도에 있나"는 그 정도 정밀도로 충분하고, 경계 GeoJSON 은 free-tier 에서
+ * 전송 비용을 다시 계산해야 하는 무게다.
+ *
+ * 첫 진입 자동 선택과 드릴다운 정렬이 **같은 함수**를 쓴다 — 둘이 다른 시도를 가리키면
+ * 화면이 스스로 모순된다.
+ */
+export function nearestRegion<T extends { code: string; latitude: number | null; longitude: number | null }>(
+  regions: T[],
+  lat: number,
+  lng: number,
+): T | null {
+  let best: { region: T; km: number } | null = null;
+  for (const region of regions) {
+    if (region.latitude == null || region.longitude == null) continue;
+    const km = haversineKm(lat, lng, region.latitude, region.longitude);
+    if (!best || km < best.km) best = { region, km };
+  }
+  return best?.region ?? null;
+}
