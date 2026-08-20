@@ -284,5 +284,11 @@ kubectl -n commerce create job --from=cronjob/place-ingest-overview place-ingest
 kubectl -n commerce logs -f job/place-ingest-overview-manual    # 잔량이 로그 앞뒤에 찍힌다
 ```
 
-그리고 위 4장의 네 쿼리를 그대로 던져 **현재 품질을 먼저 기록**한다. 바꾸기 전 값이 없으면
-좋아졌는지 말할 수 없다.
+그리고 검색 회귀 체크를 돌린다 — 4장의 측정된 문제들이 그대로 케이스다:
+
+```bash
+python3 scripts/attractions-search-check.py    # 운영 6케이스, 랭킹을 손댔으면 배포 후 필수
+```
+
+바꾸기 전 값이 없으면 좋아졌는지 말할 수 없다. 새 품질 문제를 잡으면 **케이스를 추가**하고,
+케이스를 지우려면 그 문제가 왜 더는 문제가 아닌지부터 이 문서에 적는다.
