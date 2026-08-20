@@ -316,7 +316,7 @@ images:
     newTag: 49a1741
   - name: commerce/place-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place-ingest
-    newTag: fbc159a
+    newTag: a65a61b
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: 3b0299c
