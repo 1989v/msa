@@ -22,7 +22,12 @@ class AttractionLinkRequest private constructor(
     var nextAttemptAt: LocalDateTime? = null,
 ) {
     companion object {
-        /** 수집 성공분의 유효 기간 — 지나면 다시 훑는다. */
+        /**
+         * 수집 성공분의 기본 유효 기간 — 지나면 다시 훑는다.
+         *
+         * 소스가 더 짧은 주기를 요구하면 [markCollected] 인자로 넘긴다. YouTube 는 API 서비스
+         * 약관이 **30일 넘게 보관하려면 갱신**하도록 요구해 90일을 그대로 쓸 수 없다.
+         */
         const val FRESH_DAYS = 90L
 
         /** 원천이 결과를 0건으로 준 경우. 영영 제외하지 않는다 — 새 영상이 올라올 수 있다. */
@@ -60,7 +65,8 @@ class AttractionLinkRequest private constructor(
         viewCount += 1
     }
 
-    fun markCollected(at: LocalDateTime = LocalDateTime.now()) = markAttempt(at, FRESH_DAYS)
+    fun markCollected(at: LocalDateTime = LocalDateTime.now(), freshDays: Long = FRESH_DAYS) =
+        markAttempt(at, freshDays)
 
     fun markEmpty(at: LocalDateTime = LocalDateTime.now()) = markAttempt(at, EMPTY_RETRY_DAYS)
 

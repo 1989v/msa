@@ -86,7 +86,19 @@ function DeepLinkRow({
   );
 }
 
-function VideoCard({ link }: { link: CollectedLink }) {
+/** 조회수는 자릿수가 커서 그대로 쓰면 카드가 밀린다 — 만/억(en: K/M) 단위로 줄인다. */
+function views(count: number, lang: PlaceLang): string {
+  if (lang === 'en') {
+    if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M views`;
+    if (count >= 1_000) return `${Math.round(count / 1_000)}K views`;
+    return `${count} views`;
+  }
+  if (count >= 100_000_000) return `조회수 ${(count / 100_000_000).toFixed(1)}억회`;
+  if (count >= 10_000) return `조회수 ${Math.round(count / 10_000).toLocaleString()}만회`;
+  return `조회수 ${count.toLocaleString()}회`;
+}
+
+function VideoCard({ link, lang }: { link: CollectedLink; lang: PlaceLang }) {
   return (
     <li className="place-links-slide">
       <a className="place-links-card" href={link.url} target="_blank" rel="nofollow noopener">
@@ -94,7 +106,13 @@ function VideoCard({ link }: { link: CollectedLink }) {
           <img className="place-links-thumb" src={link.thumbnailUrl} alt="" loading="lazy" />
         )}
         <span className="place-links-card-title">{link.title}</span>
-        {link.author && <span className="place-links-card-sub">{link.author}</span>}
+        {(link.author || link.viewCount != null) && (
+          <span className="place-links-card-sub">
+            {[link.author, link.viewCount != null ? views(link.viewCount, lang) : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </span>
+        )}
       </a>
     </li>
   );
@@ -140,7 +158,7 @@ export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceL
                     </div>
                   </li>
                 ))
-              : videos.map((video) => <VideoCard key={video.url} link={video} />)}
+              : videos.map((video) => <VideoCard key={video.url} link={video} lang={lang} />)}
           </ul>
         </div>
       )}

@@ -53,7 +53,7 @@ PLACE_API=http://localhost:8096 TOUR_API_KEY='...' python3 -m src.main --job=sta
 | 환경변수 | 발급 | 비고 |
 |---|---|---|
 | `TOUR_API_KEY` | data.go.kr — TourAPI 4.0 국문(KorService2) + 영문(EngService2) | Encoding 키, 추가 인코딩 금지. 미설정 시 `DATA_GO_KR_KEY` 재사용 |
-| `YOUTUBE_API_KEY` | Google Cloud — YouTube Data API v3 | `search.list` 는 건당 100 units, 일 10,000 units → **하루 100 관광지** |
+| `YOUTUBE_API_KEY` | Google Cloud — YouTube Data API v3 | `search.list` 100 units + `videos.list` 1 units, 일 10,000 → **하루 100 관광지**. 보관 30일 제한 |
 | `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` | 네이버 개발자센터 — 검색 API | 일 25,000콜. 없으면 이 소스만 건너뛴다 |
 
 클러스터에서는 Secret `place-ingest-secrets` 의 `tour-api-key`. 운영은 SealedSecret

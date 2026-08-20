@@ -154,6 +154,7 @@ data class AttractionLinksResponse(
                     thumbnailUrl = it.thumbnailUrl,
                     author = it.author,
                     publishedAt = it.publishedAt,
+                    viewCount = it.viewCount,
                 )
             },
             deepLinks = links.deepLinks.map {
@@ -176,6 +177,7 @@ data class CollectedLinkResponse(
     val thumbnailUrl: String?,
     val author: String?,
     val publishedAt: LocalDateTime?,
+    val viewCount: Long?,
 )
 
 data class DeepLinkResponse(

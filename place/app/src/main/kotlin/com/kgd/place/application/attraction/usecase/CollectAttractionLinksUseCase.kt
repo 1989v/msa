@@ -38,6 +38,7 @@ interface CollectAttractionLinksUseCase {
         val thumbnailUrl: String? = null,
         val author: String? = null,
         val publishedAt: LocalDateTime? = null,
+        val viewCount: Long? = null,
     )
 
     data class Applied(val collected: Int, val empty: Int, val failed: Int)

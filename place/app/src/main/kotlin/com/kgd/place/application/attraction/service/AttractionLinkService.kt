@@ -95,7 +95,7 @@ class AttractionLinkService(
                         source,
                         result.links.mapIndexed { index, link -> link.toDomain(result.attractionId, source, index, now) },
                     )
-                    request.markCollected(now)
+                    request.markCollected(now, freshDays(source))
                     collected++
                 }
             }
@@ -143,6 +143,7 @@ class AttractionLinkService(
         thumbnailUrl = thumbnailUrl,
         author = author,
         publishedAt = publishedAt,
+        viewCount = viewCount,
         sortOrder = index,
         collectedAt = now,
     )
@@ -159,6 +160,16 @@ class AttractionLinkService(
          * YouTube Data API v3: 하루 10,000 units, `search.list` 가 건당 100 units → 100건.
          * 네이버 검색 API: 하루 25,000콜 — 다른 용도와 나눠 쓰도록 여유를 둔다.
          */
+        /**
+          * 수집분 유효 기간. YouTube 는 API 서비스 약관이 **30일 넘게 보관하려면 갱신**하도록
+          * 요구하므로 기본 90일을 쓸 수 없다. 하루 100건 예산과 겹치면 30일 안에 갱신할 수 있는
+          * 관광지는 3,000곳이 상한이라는 뜻이기도 하다 — 조회 많은 곳부터 채우는 이유다.
+          */
+        private fun freshDays(source: AttractionLinkSource): Long = when (source) {
+            AttractionLinkSource.YOUTUBE -> 30
+            AttractionLinkSource.NAVER_BLOG -> AttractionLinkRequest.FRESH_DAYS
+        }
+
         private fun dailyBudget(source: AttractionLinkSource): Long = when (source) {
             AttractionLinkSource.YOUTUBE -> 100
             AttractionLinkSource.NAVER_BLOG -> 5_000

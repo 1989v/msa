@@ -132,19 +132,30 @@
 
 | | |
 |---|---|
-| 호출 | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=5`, `regionCode=KR`, `safeSearch=strict` |
-| 쿼터 | 일 10,000 units · `search.list` 는 **건당 100 units** → **하루 100 관광지** |
-| 저장 | videoId · 제목 · URL · 썸네일 **URL** · 채널명 · 게시일 |
-| 저장 안 함 | 설명, 조회수·좋아요, 채널 ID, 영상 파일. 썸네일 이미지도 내려받지 않는다 |
+| 발급 | Google Cloud Console → API 및 서비스 → 라이브러리 → `YouTube Data API v3` 사용 설정 → 사용자 인증 정보 → API 키 |
+| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=5`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict` |
+| 호출 ② | `youtube/v3/videos` — `part=statistics`, `id=` (최대 50개 묶음) |
+| 쿼터 | 일 10,000 units · `search.list` **100 units** + `videos.list` **1 unit** → **하루 100 관광지** |
+| 저장 | videoId · 제목 · URL · 썸네일 **URL** · 채널명 · 게시일 · **조회수** |
+| 저장 안 함 | 설명, 좋아요·댓글 수, 채널 ID, 영상 파일. 썸네일 이미지도 내려받지 않는다 |
+| 보관 | **30일** — 약관이 그보다 오래 보관하려면 갱신을 요구한다 |
+
+`search.list` 는 **관련성 순**이라 그것만으로는 "인기 영상"이 아니다. `videos.list` 로 조회수를
+받아 내림차순 정렬한다 — 50개를 묶어 1 unit 이라 100 units 짜리 search 옆에서는 사실상 공짜다.
+**조회수를 못 받아도 영상은 버리지 않는다** — 정렬 근거가 없을 뿐이다.
 
 쿼터 소진은 **403 `quotaExceeded`** 이지 429 가 아니다. 만나면 그 실행을 즉시 멈춘다.
 서버에서 호출하므로 **HTTP 리퍼러 제한이 통하지 않는다** — IP 제한을 쓰거나 제한 없이 둔다.
+
+> **30일 보관 제한이 예산과 맞물린다.** 하루 100건 × 30일 = **3,000곳**이 신선하게 유지할 수 있는
+> 상한이다. 그래서 전량이 아니라 **조회 많은 곳부터** 채운다.
 
 ### 네이버 검색 API (블로그)
 
 | | |
 |---|---|
-| 호출 | `/v1/search/blog.json` — `display=5`, `sort=sim`, 헤더 `X-Naver-Client-Id/Secret` |
+| 발급 | 네이버 개발자센터(developers.naver.com) → 애플리케이션 등록 → **검색** API 선택 → Client ID/Secret |
+| 호출 | `/v1/search/blog.json` — `query`, `display=5`, `sort=sim`, 헤더 `X-Naver-Client-Id/Secret` |
 | 쿼터 | 일 25,000콜 |
 | 저장 | 제목(`<b>` 태그 제거) · URL · 블로그명 · 게시일. 썸네일 없음 |
 | external_id | 링크의 sha1 — 블로그 URL 이 길어 100자 컬럼에 안 들어간다 |

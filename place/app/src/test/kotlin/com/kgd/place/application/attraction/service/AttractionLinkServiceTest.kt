@@ -142,6 +142,28 @@ class AttractionLinkServiceTest : BehaviorSpec({
             }
         }
 
+        `when`("YouTube 수집이 성공하면") {
+            then("30일 뒤 다시 훑는다 — API 약관이 30일 넘는 보관에 갱신을 요구한다") {
+                val saved = slot<AttractionLinkRequest>()
+                every { linkRepository.findRequest(1L, youtube) } returns null
+                every { linkRepository.saveRequest(capture(saved)) } answers { saved.captured }
+
+                service.apply(
+                    youtube,
+                    listOf(
+                        CollectAttractionLinksUseCase.Result(
+                            1L,
+                            links = listOf(CollectAttractionLinksUseCase.Link("v1", "제목", "https://youtu.be/v1")),
+                        ),
+                    ),
+                )
+
+                val next = requireNotNull(saved.captured.nextAttemptAt)
+                next.isBefore(LocalDateTime.now().plusDays(31)) shouldBe true
+                next.isAfter(LocalDateTime.now().plusDays(29)) shouldBe true
+            }
+        }
+
         `when`("영상을 받았으면") {
             then("검색 결과 순서를 sortOrder 로 보존해 전체 교체한다") {
                 val links = slot<List<AttractionLink>>()
@@ -154,8 +176,8 @@ class AttractionLinkServiceTest : BehaviorSpec({
                         CollectAttractionLinksUseCase.Result(
                             1L,
                             links = listOf(
-                                CollectAttractionLinksUseCase.Link("v1", "첫번째", "https://youtu.be/v1"),
-                                CollectAttractionLinksUseCase.Link("v2", "두번째", "https://youtu.be/v2"),
+                                CollectAttractionLinksUseCase.Link("v1", "첫번째", "https://youtu.be/v1", viewCount = 9000L),
+                                CollectAttractionLinksUseCase.Link("v2", "두번째", "https://youtu.be/v2", viewCount = 120L),
                             ),
                         ),
                     ),
@@ -164,6 +186,8 @@ class AttractionLinkServiceTest : BehaviorSpec({
                 applied.collected shouldBe 1
                 links.captured.map { it.sortOrder } shouldBe listOf(0, 1)
                 links.captured.map { it.externalId } shouldBe listOf("v1", "v2")
+                // 조회수는 수집기가 정렬해 보내므로 서비스는 순서를 보존하기만 한다
+                links.captured.map { it.viewCount } shouldBe listOf(9000L, 120L)
             }
         }
     }

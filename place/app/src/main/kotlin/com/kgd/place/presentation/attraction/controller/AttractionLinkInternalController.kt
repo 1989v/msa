@@ -90,6 +90,7 @@ data class ApplyLinkResultsRequest(
                     thumbnailUrl = it.thumbnailUrl,
                     author = it.author,
                     publishedAt = it.publishedAt,
+                    viewCount = it.viewCount,
                 )
             },
             failed = failed,
@@ -103,6 +104,7 @@ data class ApplyLinkResultsRequest(
         val thumbnailUrl: String? = null,
         val author: String? = null,
         val publishedAt: LocalDateTime? = null,
+        val viewCount: Long? = null,
     )
 }
 

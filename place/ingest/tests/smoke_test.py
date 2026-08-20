@@ -163,6 +163,7 @@ def _admin_region_parser() -> None:
     _english_from_address()
     _sejong_has_a_sido()
     _ldong_normalization()
+    _view_count_sorting()
 
 
 def _english_from_address() -> None:
@@ -192,6 +193,17 @@ def _english_from_address() -> None:
     assert "29" not in SIDO_EN and "46" not in SIDO_EN
     assert SIDO_EN["12"].startswith("Jeonnam-Gwangju")
     assert SIDO_EN["51"] == "Gangwon-do" and SIDO_EN["52"] == "Jeonbuk-do"
+
+
+def _view_count_sorting() -> None:
+    """조회수 내림차순, 못 받은 것은 뒤로 — 순서를 뒤집을 근거가 없다."""
+    links = [
+        {"externalId": "none", "viewCount": None},
+        {"externalId": "low", "viewCount": 500},
+        {"externalId": "high", "viewCount": 9000},
+    ]
+    links.sort(key=lambda l: (l["viewCount"] is None, -(l["viewCount"] or 0)))
+    assert [l["externalId"] for l in links] == ["high", "low", "none"]
 
 
 def _ldong_normalization() -> None:

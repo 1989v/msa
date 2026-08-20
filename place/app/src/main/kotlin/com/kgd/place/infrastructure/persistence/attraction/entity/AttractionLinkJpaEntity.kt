@@ -44,6 +44,9 @@ class AttractionLinkJpaEntity(
     @Column(name = "published_at")
     val publishedAt: LocalDateTime? = null,
 
+    @Column(name = "view_count")
+    val viewCount: Long? = null,
+
     @Column(name = "sort_order", nullable = false)
     val sortOrder: Int = 0,
 
@@ -60,6 +63,7 @@ class AttractionLinkJpaEntity(
         thumbnailUrl = thumbnailUrl,
         author = author,
         publishedAt = publishedAt,
+        viewCount = viewCount,
         sortOrder = sortOrder,
         collectedAt = collectedAt,
     )
@@ -75,6 +79,7 @@ class AttractionLinkJpaEntity(
             thumbnailUrl = link.thumbnailUrl,
             author = link.author,
             publishedAt = link.publishedAt,
+            viewCount = link.viewCount,
             sortOrder = link.sortOrder,
             collectedAt = link.collectedAt,
         )

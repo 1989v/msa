@@ -21,6 +21,8 @@ class AttractionLink private constructor(
     val thumbnailUrl: String? = null,
     val author: String? = null,
     val publishedAt: LocalDateTime? = null,
+    /** 인기 신호. `search.list` 는 관련성 순이라 이것 없이는 "인기 영상"이 아니다. */
+    val viewCount: Long? = null,
     val sortOrder: Int = 0,
     val collectedAt: LocalDateTime = LocalDateTime.now(),
 ) {
@@ -35,6 +37,7 @@ class AttractionLink private constructor(
             thumbnailUrl: String? = null,
             author: String? = null,
             publishedAt: LocalDateTime? = null,
+            viewCount: Long? = null,
             sortOrder: Int = 0,
             collectedAt: LocalDateTime = LocalDateTime.now(),
         ): AttractionLink {
@@ -51,6 +54,7 @@ class AttractionLink private constructor(
                 thumbnailUrl = thumbnailUrl?.takeIf { it.isNotBlank() },
                 author = author?.takeIf { it.isNotBlank() },
                 publishedAt = publishedAt,
+                viewCount = viewCount?.takeIf { it >= 0 },
                 sortOrder = sortOrder,
                 collectedAt = collectedAt,
             )
@@ -67,11 +71,12 @@ class AttractionLink private constructor(
             thumbnailUrl: String?,
             author: String?,
             publishedAt: LocalDateTime?,
+            viewCount: Long?,
             sortOrder: Int,
             collectedAt: LocalDateTime,
         ) = AttractionLink(
             id, attractionId, source, externalId, title, url,
-            thumbnailUrl, author, publishedAt, sortOrder, collectedAt,
+            thumbnailUrl, author, publishedAt, viewCount, sortOrder, collectedAt,
         )
     }
 }

@@ -123,6 +123,8 @@ export interface CollectedLink {
   thumbnailUrl: string | null;
   author: string | null;
   publishedAt: string | null;
+  /** 영상 조회수. 인기순 정렬의 근거이자 카드에 보이는 값. */
+  viewCount: number | null;
 }
 
 export interface AttractionLinks {
