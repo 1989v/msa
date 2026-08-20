@@ -46,5 +46,7 @@ include(
     "place:domain",
     "place:app",
     "deal:domain",
-    "deal:feature" // ADR-0069: 혜택 링크 허브 라이브러리 (code-dictionary:app 이 흡수, 비-bootable)
+    "deal:feature", // ADR-0069: 혜택 링크 허브 라이브러리 (code-dictionary:app 이 흡수, 비-bootable)
+    "blog:domain",
+    "blog:feature" // ADR-0072: 블로그 플랫폼 라이브러리 (code-dictionary:app 이 흡수, 비-bootable)
 )

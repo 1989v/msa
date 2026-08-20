@@ -19,6 +19,7 @@ resilience4j = "2.3.0"
 ociSdk = "3.46.0"
 nimbusJose = "9.40"
 caffeine = "3.1.8"
+commonmark = "0.24.0"
 ta4j = "0.18"
 multik = "0.2.3"
 javaUuidGenerator = "5.1.0"
@@ -131,6 +132,7 @@ java-uuid-generator = { module = "com.fasterxml.uuid:java-uuid-generator", versi
 
 # Cache (Phase 2 TG-P2-03: KMS DEK 캐시)
 caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "caffeine" }
+commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

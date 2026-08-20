@@ -1,0 +1,45 @@
+package com.kgd.blog.domain.model
+
+import com.kgd.common.exception.BusinessException
+import com.kgd.common.exception.ErrorCode
+
+/**
+ * 댓글. 대댓글은 1단계까지만 — 깊이를 열어 두면 화면이 감당하지 못하고,
+ * 모바일에서는 3단만 되어도 읽을 수 없게 된다.
+ */
+data class BlogComment(
+    val id: Long?,
+    val postId: Long,
+    val profileId: Long,
+    val parentId: Long?,
+    val body: String,
+    val status: CommentStatus,
+) {
+    init {
+        if (body.isBlank() || body.length > MAX_BODY) {
+            throw BusinessException(ErrorCode.INVALID_INPUT, "댓글은 1~$MAX_BODY 자여야 합니다")
+        }
+    }
+
+    fun isOwnedBy(profileId: Long?): Boolean = profileId != null && profileId == this.profileId
+
+    fun requireEditableBy(profileId: Long?, isAdmin: Boolean) {
+        if (!isAdmin && !isOwnedBy(profileId)) {
+            throw BusinessException(ErrorCode.FORBIDDEN, "본인이 작성한 댓글만 수정할 수 있습니다")
+        }
+    }
+
+    companion object {
+        const val MAX_BODY = 2000
+
+        /** 소프트 삭제된 댓글의 표시 문구. 행을 지우면 대댓글이 부모를 잃는다 */
+        const val DELETED_PLACEHOLDER = "삭제된 댓글입니다"
+
+        /** 대댓글의 부모는 반드시 최상위 댓글이어야 한다 (1단계 제한을 도메인이 강제) */
+        fun requireTopLevelParent(parent: BlogComment) {
+            if (parent.parentId != null) {
+                throw BusinessException(ErrorCode.INVALID_INPUT, "대댓글에는 다시 답글을 달 수 없습니다")
+            }
+        }
+    }
+}
