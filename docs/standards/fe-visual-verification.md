@@ -139,6 +139,51 @@ const over = (fg, bg) => { const f = parse(fg), b = parse(bg);
 
 ---
 
+## 4.5 잰 값을 믿기 전에 — 무엇을 재고 있는지부터 확인한다
+
+**틀린 측정은 안 잰 것보다 나쁘다.** PASS 가 찍히면 그 자리를 다시 안 보기 때문이다.
+2026-08-20 하루에 아래 셋을 다 밟았고, 셋 다 화면은 멀쩡했는데 숫자만 거짓이었다.
+
+### 앱이 떴는지 먼저 본다
+
+`vite` 를 레포 루트에서 띄우면(`npx --prefix` 는 cwd 를 안 바꾼다) 404 가 나고 크롬은
+**자기 오류 페이지**를 그린다. 거기에 프로브를 심으면 UA 기본색(`rgb(32,33,36)` 바탕,
+`rgb(138,180,248)` 링크)을 재고 "PASS" 가 나온다. 이 세 색이 보이면 앱이 아니라 오류 페이지다.
+
+```js
+if (!document.querySelector('.place-page')) return JSON.stringify({error: '앱이 로드되지 않음'});
+```
+
+### 배경이 투명하면 검정으로 계산된다
+
+`body` 에 `position: fixed` 로 프로브를 띄우면 배경이 `rgba(0,0,0,0)` 이다. 그걸 그대로
+대비 계산에 넣으면 **검정 위에서 잰 값**이 나와 멀쩡한 8.8:1 이 2.24:1 로 읽힌다.
+
+프로브는 **실제로 들어갈 자리에 심고**, 배경은 조상으로 올라가 실제로 칠해진 색을 찾은 뒤
+반투명이면 그 위에 합성한다. `.place-chip.active` 처럼 알파가 있는 배경이 흔하다.
+
+```js
+const painted = (el) => { const stack = [];
+  for (let n = el; n; n = n.parentElement) {
+    const c = getComputedStyle(n).backgroundColor;
+    if (!c || c === 'rgba(0, 0, 0, 0)') continue;
+    stack.push(c);
+    if (alphaOf(c) >= 0.999) break;      // 불투명한 층을 만나면 멈춘다
+  }
+  return stack.reverse(); };             // 아래에서 위로 합성
+```
+
+### 겹침은 사각형 교차로 본다
+
+x 축만 비교하면 **세로로 쌓인 레이아웃이 전부 "겹침"** 으로 나온다. 좁은 화면에서
+목록·지도·정보가 순서대로 쌓이면 left/right 는 당연히 겹친다.
+
+```js
+d.left < m.right && d.right > m.left && d.top < m.bottom && d.bottom > m.top
+```
+
+---
+
 ## 5. 캐스케이드가 의심되면 빌드 산출물을 본다
 
 명세도가 같으면 **나중에 실린 쪽이 이긴다.** 그 순서는 번들러가 정하므로 소스가 아니라

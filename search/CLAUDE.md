@@ -12,6 +12,16 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 | `:search:consumer` | Kafka 이벤트 소비 → OpenSearch 인덱싱 (port 8084) | Deployment (Worker tier — 벌크 색인이 쿼리 P99 위협, ADR-0025/0058 로 분리 유지) |
 | `:search:batch` | 전체 리인덱싱 / 오프라인 평가 | **CronJob** (ADR-0058 — 상주 Deployment 제거, `search-reindex`/`search-eval-daily`/`attraction-reindex`) |
 
+## 디렉터리 ≠ 패키지 (주의)
+
+`search/app/src/main/kotlin/com/kgd/search/opensearch/` 안의 파일들은 패키지를
+**`com.kgd.search.infrastructure.opensearch`** 로 선언한다. 디렉터리 경로와 패키지가 어긋나 있고
+Kotlin 은 이를 허용한다.
+
+새 파일을 이 디렉터리에 만들 때 경로를 보고 `com.kgd.search.opensearch` 라고 적으면
+같은 디렉터리의 클래스가 **"Unresolved reference"** 로 안 보인다. 이웃 파일의 첫 줄을 보고 맞춘다.
+
+
 ## Commands
 
 ```bash
