@@ -25,6 +25,9 @@ interface AttractionSearchPort {
         val keyword: String? = null,
         val lang: String? = null,
         val areaCode: String? = null,
+        /** 법정동 축 (ADR-0071). areaCode 와 같이 주지 않는다 — 어느 쪽이 이기는지 호출자가 모른다. */
+        val sidoCode: String? = null,
+        val sigunguCode: String? = null,
         val category: String? = null,
         val geo: GeoFilter? = null,
     )

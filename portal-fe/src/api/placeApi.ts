@@ -33,10 +33,42 @@ export interface AttractionSearchResult {
   currentPage: number;
 }
 
+/**
+ * 한국 행정구역 (ADR-0071). GeoNames 지명 계층(`/api/places/regions`)과 다른 축이다 —
+ * 그쪽은 흥해읍·왜관읍이 CITY 로 섞인 지명 데이터셋이라 시군구로 쓸 수 없다.
+ */
+export interface AdminRegion {
+  code: string;
+  parentCode: string | null;
+  level: 'SIDO' | 'SIGUNGU';
+  name: string;
+  nameEn: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  /** 관광 분류 건수. lang 을 안 주면 null — 0(관광지 없음)과 다른 뜻이다. */
+  attractionCount: number | null;
+}
+
+export const fetchAdminRegions = async (
+  params: { level?: 'SIDO' | 'SIGUNGU'; parent?: string; lang?: PlaceLang },
+): Promise<AdminRegion[]> => {
+  const qs = new URLSearchParams();
+  if (params.level) qs.set('level', params.level);
+  if (params.parent) qs.set('parent', params.parent);
+  if (params.lang) qs.set('lang', params.lang);
+  const res = await api.get<ApiResponse<{ regions: AdminRegion[] }>>(
+    `/api/places/admin-regions?${qs}`,
+  );
+  return res.data.data.regions;
+};
+
 export interface AttractionQuery {
   keyword?: string;
   lang: PlaceLang;
   areaCode?: string;
+  /** 법정동 축 (ADR-0071). areaCode 와 같이 보내지 않는다 — 어느 쪽이 이기는지 알 수 없다. */
+  sidoCode?: string;
+  sigunguCode?: string;
   category?: string;
   lat?: number;
   lng?: number;
@@ -50,6 +82,8 @@ export const searchAttractions = async (query: AttractionQuery): Promise<Attract
   const params = new URLSearchParams({ lang: query.lang });
   if (query.keyword) params.set('keyword', query.keyword);
   if (query.areaCode) params.set('areaCode', query.areaCode);
+  if (query.sidoCode) params.set('sidoCode', query.sidoCode);
+  if (query.sigunguCode) params.set('sigunguCode', query.sigunguCode);
   if (query.category) params.set('category', query.category);
   if (query.lat != null && query.lng != null) {
     params.set('lat', String(query.lat));

@@ -42,6 +42,8 @@ data class AdminRegionResponse(
     val nameEn: String?,
     val latitude: Double?,
     val longitude: Double?,
+    /** 관광 분류 건수. `lang` 을 주지 않았으면 null — 0(관광지 없음)과 다른 뜻이다. */
+    val attractionCount: Long?,
 ) {
     companion object {
         fun from(view: AdminRegionUseCase.View) = AdminRegionResponse(
@@ -52,6 +54,7 @@ data class AdminRegionResponse(
             nameEn = view.nameEn,
             latitude = view.latitude,
             longitude = view.longitude,
+            attractionCount = view.attractionCount,
         )
     }
 }

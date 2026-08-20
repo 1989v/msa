@@ -53,4 +53,12 @@ class AttractionRepositoryAdapter(
             .map { it.toDomain() }
 
     override fun count(): Long = jpaRepository.count()
+
+    override fun countByLdong(
+        lang: String,
+        categories: Collection<String>,
+    ): List<AttractionRepositoryPort.LdongCount> =
+        jpaRepository.countByLdong(lang, categories).map {
+            AttractionRepositoryPort.LdongCount(it.getRegnCode(), it.getSignguCode(), it.getTotal())
+        }
 }

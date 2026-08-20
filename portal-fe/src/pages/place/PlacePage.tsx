@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
+  fetchAdminRegions,
   fetchAttraction,
   searchAttractions,
   suggestPlaces,
@@ -13,6 +14,7 @@ import {
 } from '../../api/placeApi';
 import { loadGoogleMaps, mapsApiKey, neighboursInFrame, radiusFromBounds } from './googleMaps';
 import AttractionLinks from './AttractionLinks';
+import RegionDrilldown from './RegionDrilldown';
 import ThemeToggle from '../../components/ThemeToggle';
 import './PlacePage.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -138,6 +140,8 @@ export default function PlacePage() {
   const [showSuggest, setShowSuggest] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
   const [areaCode, setAreaCode] = useState<string | null>(null);
+  const [sidoCode, setSidoCode] = useState<string | null>(null);
+  const [sigunguCode, setSigunguCode] = useState<string | null>(null);
   const [geo, setGeo] = useState<GeoState | null>(null);
   const [page, setPage] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -155,7 +159,10 @@ export default function PlacePage() {
     () => ({
       keyword: keyword || undefined,
       lang,
-      areaCode: areaCode ?? undefined,
+      // 두 축을 같이 보내지 않는다 — 어느 쪽이 이기는지 서버도 호출자도 모른다 (ADR-0071 §9)
+      areaCode: sidoCode ? undefined : (areaCode ?? undefined),
+      sidoCode: sidoCode ?? undefined,
+      sigunguCode: sigunguCode ?? undefined,
       category: category ?? undefined,
       lat: geo?.lat,
       lng: geo?.lng,
@@ -164,7 +171,7 @@ export default function PlacePage() {
       page,
       size: 30,
     }),
-    [keyword, lang, areaCode, category, geo, page],
+    [keyword, lang, areaCode, sidoCode, sigunguCode, category, geo, page],
   );
 
   const { data, isLoading } = useQuery({
@@ -172,6 +179,14 @@ export default function PlacePage() {
     queryFn: () => searchAttractions(query),
     staleTime: 60_000,
   });
+
+  const { data: sidoRegions } = useQuery({
+    queryKey: ['admin-regions', 'SIDO', lang],
+    queryFn: () => fetchAdminRegions({ level: 'SIDO', lang }),
+    staleTime: 30 * 60_000,
+  });
+  // 자료가 들어오면 드릴다운으로, 아직이면 이전 광역 선택으로. 두 축을 동시에 노출하지 않는다.
+  const hasRegionAxis = (sidoRegions?.length ?? 0) > 0;
 
   const { data: selected } = useQuery({
     queryKey: ['place-attraction', selectedId],
@@ -446,24 +461,50 @@ export default function PlacePage() {
               {L.categories[c]}
             </button>
           ))}
-          <select
-            className="place-area-select"
-            value={areaCode ?? ''}
-            onChange={(e) => {
-              setAreaCode(e.target.value || null);
+          {!hasRegionAxis && (
+            <select
+              className="place-area-select"
+              value={areaCode ?? ''}
+              onChange={(e) => {
+                setAreaCode(e.target.value || null);
+                setGeo(null);
+                setPage(0);
+              }}
+              aria-label="Area"
+            >
+              <option value="">{L.all}</option>
+              {AREAS.map((a) => (
+                <option key={a.code} value={a.code}>
+                  {lang === 'ko' ? a.ko : a.en}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
+        {hasRegionAxis && (
+          <RegionDrilldown
+            lang={lang}
+            sidoCode={sidoCode}
+            sigunguCode={sigunguCode}
+            origin={geo ? { lat: geo.lat, lng: geo.lng } : null}
+            onChange={({ sidoCode: nextSido, sigunguCode: nextSigungu, region }) => {
+              setSidoCode(nextSido);
+              setSigunguCode(nextSigungu);
+              setAreaCode(null);
               setGeo(null);
               setPage(0);
+              setSelectedId(null);
+              // 고른 레벨이 화면의 축이다 — 그 레벨의 줌으로 옮긴다 (ADR-0071 §4)
+              const map = mapRef.current;
+              if (map && region?.latitude != null && region.longitude != null) {
+                map.setCenter({ lat: region.latitude, lng: region.longitude });
+                map.setZoom(region.level === 'SIDO' ? MAX_ZOOM_BY_LEVEL.SIDO : MAX_ZOOM_BY_LEVEL.SIGUNGU);
+                setMapMoved(false);
+              }
             }}
-            aria-label="Area"
-          >
-            <option value="">{L.all}</option>
-            {AREAS.map((a) => (
-              <option key={a.code} value={a.code}>
-                {lang === 'ko' ? a.ko : a.en}
-              </option>
-            ))}
-          </select>
-        </div>
+          />
+        )}
       </div>
 
       <div

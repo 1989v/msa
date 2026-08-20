@@ -9,8 +9,11 @@ import com.kgd.place.domain.region.model.AdminRegionLevel
 interface AdminRegionUseCase {
     fun upsertAll(commands: List<Command>): Result
 
-    /** `parentCode` 가 있으면 그 하위(시군구), 없으면 최상위(시도). */
-    fun find(level: AdminRegionLevel, parentCode: String?): List<View>
+    /**
+     * `parentCode` 가 있으면 그 하위(시군구), 없으면 최상위(시도).
+     * `countLang` 을 주면 그 언어의 **관광 분류** 건수를 함께 낸다.
+     */
+    fun find(level: AdminRegionLevel, parentCode: String?, countLang: String? = null): List<View>
 
     data class Command(
         val code: String,
@@ -30,6 +33,8 @@ interface AdminRegionUseCase {
         val nameEn: String?,
         val latitude: Double?,
         val longitude: Double?,
+        /** 관광 분류 건수. `countLang` 을 주지 않았으면 null — 0 과 구분해야 한다. */
+        val attractionCount: Long? = null,
     )
 
     data class Result(val created: Int, val updated: Int)

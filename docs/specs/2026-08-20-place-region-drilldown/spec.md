@@ -58,10 +58,16 @@ admin_regions
 ## 2. 지역 드릴다운
 
 ```
-GET /api/search/attractions/regions?level=SIDO
-GET /api/search/attractions/regions?level=SIGUNGU&parent=11
-    → [ { code, name, nameEn, attractionCount, latitude, longitude } ]
+GET /api/places/admin-regions?level=SIDO&lang=ko
+GET /api/places/admin-regions?level=SIGUNGU&parent=11&lang=ko
+    → { regions: [ { code, parentCode, level, name, nameEn, latitude, longitude, attractionCount } ] }
 ```
+
+**search 가 아니라 place 다.** place 가 행정구역과 관광지를 둘 다 갖고 있어 교차 서비스 호출도
+색인 변경도 필요 없다. 시도 건수는 시군구 건수의 합으로 **한 번의 group by** 에서 같이 만든다 —
+레벨마다 따로 세면 합이 안 맞는 순간이 생기고 화면에서 알아채기 어렵다.
+
+`lang` 을 주지 않으면 `attractionCount` 가 `null` 이다. 0(세어봤고 없음)과 구분해야 한다.
 
 - `attractionCount` 는 관광 분류만 센다 — 음식·쇼핑까지 세면 "제주 12,000곳" 같은 수가 나와
   기대와 어긋난다.

@@ -54,6 +54,8 @@
       },
       "areaCode": { "type": "keyword" },
       "sigunguCode": { "type": "keyword" },
+      "ldongRegnCd": { "type": "keyword" },
+      "ldongSignguCd": { "type": "keyword" },
       "category": { "type": "keyword" },
       "location": { "type": "geo_point" },
       "imageUrl": { "type": "keyword", "index": false },

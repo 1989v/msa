@@ -9,6 +9,9 @@ interface SearchAttractionUseCase {
         val keyword: String? = null,
         val lang: String? = null,
         val areaCode: String? = null,
+        /** 법정동 축 (ADR-0071) — 지역 드릴다운이 쓰는 필터. */
+        val sidoCode: String? = null,
+        val sigunguCode: String? = null,
         val category: String? = null,
         val lat: Double? = null,
         val lng: Double? = null,

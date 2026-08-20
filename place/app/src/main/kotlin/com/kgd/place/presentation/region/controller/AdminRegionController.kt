@@ -37,15 +37,21 @@ class AdminRegionController(
         return ApiResponse.success(BulkUpsertAdminRegionResponse(result.created, result.updated))
     }
 
-    /** `parent` 를 주면 그 시도의 시군구, 없으면 시도 전체. */
+    /**
+     * `parent` 를 주면 그 시도의 시군구, 없으면 시도 전체.
+     * `lang` 을 주면 그 언어의 **관광 분류** 건수를 함께 낸다 — 음식·쇼핑까지 세면
+     * "제주 12,000곳" 같은 수가 나와 기대와 어긋난다.
+     */
     @GetMapping
     fun find(
         @RequestParam(defaultValue = "SIDO") level: AdminRegionLevel,
         @RequestParam(required = false) parent: String?,
+        @RequestParam(required = false) lang: String?,
     ): ApiResponse<AdminRegionListResponse> =
         ApiResponse.success(
             AdminRegionListResponse(
-                adminRegionUseCase.find(level, parent).map { AdminRegionResponse.from(it) },
+                adminRegionUseCase.find(level, parent, lang?.takeIf { it.isNotBlank() })
+                    .map { AdminRegionResponse.from(it) },
             ),
         )
 }

@@ -43,6 +43,8 @@ class SearchAttractionService(
                 keyword = query.keyword?.takeIf { it.isNotBlank() },
                 lang = query.lang?.takeIf { it.isNotBlank() },
                 areaCode = query.areaCode?.takeIf { it.isNotBlank() },
+                sidoCode = query.sidoCode?.takeIf { it.isNotBlank() },
+                sigunguCode = query.sigunguCode?.takeIf { it.isNotBlank() },
                 category = query.category?.takeIf { it.isNotBlank() },
                 geo = geo,
             ),

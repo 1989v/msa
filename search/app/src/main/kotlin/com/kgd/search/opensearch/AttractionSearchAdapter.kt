@@ -190,6 +190,13 @@ class AttractionSearchAdapter(
                     query.areaCode?.let { area ->
                         b.filter { f -> f.term { it.field("areaCode").value(FieldValue.of(area)) } }
                     }
+                    // 법정동 축 (ADR-0071). 시군구를 주면 시도는 그 앞 2자리라 따로 걸 필요가 없다.
+                    query.sidoCode?.let { sido ->
+                        b.filter { f -> f.term { it.field("ldongRegnCd").value(FieldValue.of(sido)) } }
+                    }
+                    query.sigunguCode?.let { sigungu ->
+                        b.filter { f -> f.term { it.field("ldongSignguCd").value(FieldValue.of(sigungu)) } }
+                    }
                     query.category?.let { category ->
                         b.filter { f -> f.term { it.field("category").value(FieldValue.of(category)) } }
                     }

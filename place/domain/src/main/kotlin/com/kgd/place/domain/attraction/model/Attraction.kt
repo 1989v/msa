@@ -33,6 +33,12 @@ class Attraction private constructor(
     companion object {
         val SUPPORTED_LANGS = setOf("ko", "en")
 
+        /**
+         * 관광 성격의 분류. 지역 드릴다운의 건수는 이것만 센다 (ADR-0071) —
+         * 적재의 62% 가 음식·쇼핑이라 다 세면 "제주 12,000곳" 같은 수가 나와 기대와 어긋난다.
+         */
+        val SIGHT_CATEGORIES = setOf("nature", "history", "culture", "leisure")
+
         @Suppress("LongParameterList")
         fun create(
             contentId: String,

@@ -21,11 +21,16 @@
 
 ---
 
-## R2 — 드릴다운 API + 검색 필터 (R1 이후)
+## R2 — 드릴다운 API + 검색 필터 — **완료 (2026-08-20), 자료 들어오면 화면에 뜬다**
 
-- [ ] `GET /api/search/attractions/regions?level=&parent=` — 관광 분류만 세는 카운트
-- [ ] 검색에 `sidoCode`/`sigunguCode` 필터 추가
-- [ ] 좌표 → 시도 판정 (중심 좌표 최근접, 경계 폴리곤 없이)
+- [x] `GET /api/places/admin-regions?level=&parent=&lang=` — 관광 분류만 세는 카운트
+      **search 가 아니라 place 에 뒀다** — place 가 행정구역과 관광지를 둘 다 갖고 있어
+      교차 서비스 호출도 색인 변경도 필요 없다. 시도 건수는 시군구 합으로 한 번에 낸다.
+- [x] 검색에 `sidoCode`/`sigunguCode` 필터 + `ldongRegnCd`/`ldongSignguCd` 색인
+- [x] 좌표 → 시도 판정 (중심 좌표 최근접) — **정렬만 앞으로, 자동 선택은 하지 않는다**
+- [x] FE 드릴다운(`RegionDrilldown`) — 자료가 없으면 이전 광역 선택을 그대로 쓴다.
+      두 축을 동시에 노출하지 않는다 (ADR-0071 §9)
+- [x] 레벨 선택 시 그 레벨의 줌으로 지도 이동
 
 ---
 

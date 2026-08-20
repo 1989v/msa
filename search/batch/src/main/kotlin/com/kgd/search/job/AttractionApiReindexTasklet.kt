@@ -64,6 +64,8 @@ class AttractionApiReindexTasklet(
                                 address = attraction.address,
                                 areaCode = attraction.areaCode,
                                 sigunguCode = attraction.sigunguCode,
+                                ldongRegnCd = attraction.ldongRegnCd,
+                                ldongSignguCd = attraction.ldongSignguCd,
                                 category = attraction.category,
                                 imageUrl = attraction.imageUrl,
                                 tel = attraction.tel,

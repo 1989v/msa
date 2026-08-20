@@ -18,5 +18,10 @@ interface AttractionRepositoryPort {
 
     fun count(): Long
 
+    /** 법정동 축 관광지 건수 — 드릴다운이 "몇 곳"을 보이는 근거. 관광 분류만 센다. */
+    fun countByLdong(lang: String, categories: Collection<String>): List<LdongCount>
+
     data class UpsertSummary(val created: Int, val updated: Int)
+
+    data class LdongCount(val regnCode: String, val signguCode: String?, val total: Long)
 }

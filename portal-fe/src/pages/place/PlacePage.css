@@ -622,3 +622,52 @@
 .place-links-list-item:hover .place-links-list-title {
   text-decoration: underline;
 }
+
+/* ─── 지역 드릴다운 (ADR-0071) ─── */
+.place-region {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.place-region-crumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.place-region-sep {
+  color: var(--ko-text-muted);
+}
+
+.place-region-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.place-region-count {
+  margin-left: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
+}
+
+.place-chip.active .place-region-count {
+  color: inherit;
+}
+
+/* 현재 위치의 시도라는 표시. 정렬만 앞으로 올릴 뿐 자동으로 고르지 않는다. */
+.place-region-near {
+  margin-right: 0.3rem;
+  font-size: 0.7rem;
+  padding: 0 0.25rem;
+  border-radius: 0.25rem;
+  border: 1px solid var(--ko-border-default);
+  color: var(--ko-text-secondary);
+}
+
+.place-region-hint {
+  color: var(--ko-text-secondary);
+  font-size: 0.85rem;
+}

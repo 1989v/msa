@@ -16,6 +16,10 @@ data class AttractionDocument(
     val address: String? = null,
     val areaCode: String? = null,
     val sigunguCode: String? = null,
+    /** 법정동 시도/시군구 코드 — 지역 드릴다운의 축 (ADR-0071).
+     *  `areaCode`/`sigunguCode` 는 두 코드 체계가 섞여 있어 필터 축으로 쓰지 않는다. */
+    val ldongRegnCd: String? = null,
+    val ldongSignguCd: String? = null,
     val category: String? = null,
     val imageUrl: String? = null,
     val tel: String? = null,
