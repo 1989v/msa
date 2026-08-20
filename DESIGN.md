@@ -1,13 +1,13 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 2.1.0
+version: 2.2.0
 archetype: dark-trading
 # 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
 # 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
 archetype_secondary: k-heritage
 mood: [data-dense, calm-night, korean-fintech]
-last_updated: 2026-08-16
+last_updated: 2026-08-21
 owners: [frontend-platform]
 default_theme: dark
 themes: [dark, light]
@@ -295,6 +295,35 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 | `.kh-eave-edge` · `.kh-grain` | 처마 곡선 · 목재 결 (**어두운 면 전용**) |
 | `.portfolio-dialog` 계열 | 상세 모달 — 먹빛 backdrop blur, 비대칭 모서리, 그림자 없음 |
 | `.kh-arcade` | 아케이드 스코프 — 액션을 연지로 되돌린다 |
+
+**모션 어휘 — 다섯 동사** (`portal-fe/src/styles/kh-motion.css`)
+
+색이 재료에서 왔듯 모션은 행위에서 온다. 전 화면이 이 다섯만 쓴다.
+
+| 동사 | 클래스 | 값 | 쓰는 곳 |
+|---|---|---|---|
+| 스밈 | `.kh-seep` | opacity + translateY(8px→0), 560ms | 히어로 카피·카드·섹션 콘텐츠 |
+| 긋기 | `.kh-rule-draw` | 괘선 scaleX(0→1) origin-left | `.kh-section-head`, 탭 활성 |
+| 어긋남 | `.kh-settle` | 뒤판이 카드 밑에서 미끄러져 어긋남 | `.kh-slab-offset` |
+| 찍힘 | `.kh-stamp` | scale(1.06→1), 240ms | `.kh-seal`, 배지, 칩 |
+| 눌림 | `:active` | translateY(1px), 120ms | 모든 인터랙티브 |
+
+- 토큰: 등장 560ms / 상태 240ms / 피드백 120ms, `--kh-ease-enter: cubic-bezier(0.16,1,0.3,1)`.
+- **transform + opacity 만.** 퇴장은 fade 만, 입장의 75% 속도. 스태거는 자식 50ms, 6번째까지만.
+- 발화는 `useReveal()` 이 붙이는 `data-reveal` 로만 — 프리렌더·무 JS 에서는 아무것도
+  숨지 않는다. `prefers-reduced-motion` 이면 발화 자체가 없다.
+- **먹 캔버스** `<InkWash>` 는 히어로(`/`, `/portfolio`) 전용. 먹 색은 정경 토큰
+  `--kh-ink-wash` — 한지 위 먹빛, 송연 위 흰 안개. 먹이 마르면 rAF 완전 정지.
+
+**모바일 앱 셸** (`kh-shell.css`, 뷰포트 < 768px 에서만)
+
+| 프리미티브 | 무엇 |
+|---|---|
+| `.kh-tabbar` / `KhTabBar` | 하단 탭바 — 호스트별 구성은 `shell/appShell.tsx`. 기와 먹빛 판, 활성은 긋기. resume·deal·게임 플레이 화면은 없음 |
+| `.kh-sheet` / `KhSheet` | 바텀시트 — 먹빛 veil, 비대칭 귀, 드래그 닫기. 모바일의 다이얼로그 대체 |
+| `.kh-skeleton` | 스켈레톤 — 정경 톤 opacity pulse. **shimmer 그래디언트 금지** |
+| 스택 전환 | RR7 `viewTransition` — 상세 진입 push / 뒤로 pop / 탭 간 cross-fade. 방향은 `<html data-nav>` |
+| 접히는 머리띠 | `useScrollDirection()` — 아래로 스크롤 시 GNB 접힘 |
 
 **주의**
 

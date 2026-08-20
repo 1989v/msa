@@ -404,6 +404,43 @@
   </section>
 
   <section>
+    <div class="head"><span class="label">모션 / Motion</span><h2>다섯 동사 — 색이 재료에서 왔듯 모션은 행위에서 온다</h2></div>
+    <style>
+      .mo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+      .mo-cell { background: var(--ground); padding: 1.25rem; min-height: 150px; }
+      .mo-key { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.05em; color: var(--ocher); display: block; margin-bottom: 0.8rem; }
+      .mo-note { display: block; margin-top: 0.8rem; font-size: 0.78rem; color: var(--tx-2); line-height: 1.55; }
+      .mo-stage { height: 56px; display: flex; align-items: center; }
+      /* 각 동사는 2.8초 주기로 되풀이 재생된다 — 살아 있는 견본 */
+      .mo-seep { animation: mo-seep 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      @keyframes mo-seep { 0% { opacity: 0; transform: translateY(8px); } 20%, 80% { opacity: 1; transform: none; } 92%, 100% { opacity: 0; } }
+      .mo-rule { width: 100%; border-bottom: 1px solid var(--line-2); position: relative; }
+      .mo-rule::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--ocher); transform-origin: 0 50%; animation: mo-rule 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      @keyframes mo-rule { 0% { transform: scaleX(0); } 17%, 82% { transform: scaleX(1); } 92%, 100% { transform: scaleX(0); } }
+      .mo-settle { position: relative; width: 96px; height: 48px; }
+      .mo-settle i { position: absolute; inset: 0; border-radius: 0 8px 0 8px; }
+      .mo-settle .mo-front { background: var(--giwa); border: 1px solid var(--line-2); animation: mo-seep 2.8s cubic-bezier(0.16,1,0.3,1) infinite; }
+      .mo-settle .mo-back { background: #0a0a0a; animation: mo-back 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      @keyframes mo-back { 0% { transform: translate(0, 0); opacity: 0; } 20%, 80% { transform: translate(10px, 10px); opacity: 1; } 92%, 100% { opacity: 0; } }
+      .mo-stamp { animation: mo-stamp 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      @keyframes mo-stamp { 0% { opacity: 0; transform: scale(1.06); } 10%, 84% { opacity: 1; transform: scale(1); } 94%, 100% { opacity: 0; } }
+      .mo-press { animation: mo-press 2.8s ease-out infinite; }
+      @keyframes mo-press { 0%, 40%, 60%, 100% { transform: translateY(0); } 46%, 54% { transform: translateY(1px); } }
+      @media (prefers-reduced-motion: reduce) { .mo-seep, .mo-rule::after, .mo-settle i, .mo-stamp, .mo-press { animation: none; } }
+    </style>
+    <p class="note">전 화면이 이 다섯만 쓴다. 등장 560ms / 상태 240ms / 피드백 120ms, 이징은 <code>cubic-bezier(0.16,1,0.3,1)</code>. <strong>transform + opacity 만</strong> — blur 애니메이션 금지. 퇴장은 fade 만, 입장의 75% 속도 (먹은 화려하게 사라지지 않는다 — 마를 뿐이다). 스태거는 자식 50ms 간격, 6번째까지만. 발화는 <code>useReveal</code> 이 붙이는 <code>data-reveal</code> 로만 — 프리렌더·무 JS 에서는 아무것도 숨지 않는다. <code>prefers-reduced-motion</code> 이면 발화 자체가 없다.</p>
+    <div class="mo-grid">
+      <div class="mo-cell"><span class="mo-key">스밈 · .kh-seep</span><div class="mo-stage"><span class="mo-seep">먹이 한지에 스며들듯</span></div><span class="mo-note">등장의 기본형. opacity + 8px 상승. 히어로 카피·카드·섹션 콘텐츠.</span></div>
+      <div class="mo-cell"><span class="mo-key">긋기 · .kh-rule-draw</span><div class="mo-stage"><span class="mo-rule">&nbsp;</span></div><span class="mo-note">괘선이 왼쪽에서 오른쪽으로. 섹션 머리·탭 활성 표시.</span></div>
+      <div class="mo-cell"><span class="mo-key">어긋남 · .kh-settle</span><div class="mo-stage"><span class="mo-settle"><i class="mo-back"></i><i class="mo-front"></i></span></div><span class="mo-note">뒤판이 카드 밑에서 미끄러져 나와 어긋난다 — 깊이가 생기는 순간.</span></div>
+      <div class="mo-cell"><span class="mo-key">찍힘 · .kh-stamp</span><div class="mo-stage"><span class="seal seal-ink mo-stamp"><span class="dot"></span>Stamp</span></div><span class="mo-note">도장이 눌리듯 1.06 → 1. 인장·배지·상태칩. 240ms 로 짧게.</span></div>
+      <div class="mo-cell"><span class="mo-key">눌림 · :active</span><div class="mo-stage"><span class="btn mo-press">지나온 것 보기 →</span></div><span class="mo-note">모든 인터랙티브가 1px 내려앉는다. 120ms. 데모는 주기 재생.</span></div>
+      <div class="mo-cell"><span class="mo-key">먹 캔버스 · InkWash</span><div class="mo-stage"><span style="font-size:0.85rem; color:var(--tx-2)">히어로(/, /portfolio) 전용</span></div><span class="mo-note">포인터를 따라 먹이 번지고 마른다. 마르면 rAF 완전 정지. 먹 색은 정경 토큰 --kh-ink-wash — 한지 위 먹빛, 송연 위 흰 안개.</span></div>
+    </div>
+    <p class="note" style="margin-top:1rem"><strong>모바일 앱 셸</strong> (뷰포트 &lt; 768px) — 하단 탭바 <code>.kh-tabbar</code>(기와 먹빛 판, 활성은 긋기), 바텀시트 <code>.kh-sheet</code>(먹빛 veil, 비대칭 귀), 스켈레톤 <code>.kh-skeleton</code>(정경 톤 opacity pulse — shimmer 금지), 스택 전환(View Transitions: 상세 진입 push / 뒤로 pop / 탭 간 cross-fade). 데스크탑은 머리띠 그대로 — 한 코드베이스, 두 표정.</p>
+  </section>
+
+  <section>
     <div class="head"><span class="label">보강 / Filled</span><h2>스펙에는 있었는데 없던 것들</h2></div>
     <p class="note">원 스펙이 부르는데 코드에 없던 것들을 채웠습니다. 각 항목의 설명이 <strong>왜 이 형태여야 하는지</strong>입니다 — 규칙 없는 장식은 다음 사람이 늘려 버립니다.</p>
     <div class="filled">

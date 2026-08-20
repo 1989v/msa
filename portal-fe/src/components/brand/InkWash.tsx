@@ -91,6 +91,9 @@ export default function InkWash() {
       const w = host.clientWidth;
       const h = host.clientHeight;
       if (w === 0 || h === 0) return;
+      // 크기가 그대로면 건너뛴다 — width 재대입은 같은 값이어도 캔버스를 지우므로,
+      // ResizeObserver 의 초기 콜백이 첫 낙묵을 지워버린다
+      if (w === canvas.width && h === canvas.height) return;
       canvas.width = w;
       canvas.height = h;
       scale = Math.min(1 / 3, FIELD_MAX_W / w);

@@ -1,3 +1,4 @@
+<!-- source: portal-fe/src/styles/kh-motion.css, portal-fe/src/styles/kh-shell.css, portal-fe/src/components/brand/InkWash.tsx, portal-fe/src/shell/appShell.tsx -->
 # K-Heritage 모션 문법 + 먹 캔버스 + 모바일 앱 셸
 
 - **Status**: approved (설계 대화 2026-08-21)
