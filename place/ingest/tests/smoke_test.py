@@ -164,6 +164,7 @@ def _admin_region_parser() -> None:
     _sejong_has_a_sido()
     _ldong_normalization()
     _view_count_sorting()
+    _categorize_rules()
 
 
 def _english_from_address() -> None:
@@ -193,6 +194,24 @@ def _english_from_address() -> None:
     assert "29" not in SIDO_EN and "46" not in SIDO_EN
     assert SIDO_EN["12"].startswith("Jeonnam-Gwangju")
     assert SIDO_EN["51"] == "Gangwon-do" and SIDO_EN["52"] == "Jeonbuk-do"
+
+
+def _categorize_rules() -> None:
+    """분류 매핑 — 의료관광 제외와 EX 하위 분해가 핵심이다."""
+    from src.sync_tour import categorize
+
+    # 의료관광은 관광지가 아니다. 구 분류가 뭐라 해도 앞단에서 걸러진다.
+    assert categorize("", "", "EX", "EX05", "EX050800") == "etc"
+    assert categorize("A02", "A0201", "EX", "EX05", "EX050800") == "etc"
+    # EX 하위 분해 — 체험은 문화, 온천·액티비티는 레저
+    assert categorize("", "", "EX", "EX02", "EX020100") == "culture"   # 공예
+    assert categorize("", "", "EX", "EX03", "EX030100") == "culture"   # 체험마을
+    assert categorize("", "", "EX", "EX05", "EX050100") == "leisure"   # 온천
+    assert categorize("", "", "EX", "EX07", "EX070100") == "leisure"   # 케이블카
+    # 기존 경로는 그대로 — 구 분류 우선, 없으면 1단계 폴백
+    assert categorize("A02", "A0201", "", "", "") == "history"
+    assert categorize("", "", "NA", "", "") == "nature"
+    assert categorize("", "", "SH", "SH04", "") == "shopping"
 
 
 def _view_count_sorting() -> None:

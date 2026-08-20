@@ -58,14 +58,43 @@ CAT1_MAP = {"A01": "nature", "A02": "culture", "A03": "leisure", "A04": "shoppin
 
 # TourAPI 4.0 신규 분류체계(lclsSystm1) 폴백.
 # cat1 이 비는 응답이 있어(아래 AREA_CODES 주석 참조) 이쪽으로 받아낸다.
+# **영문 서비스는 cat1~3 이 전부 비어 있어** 사실상 이 경로만 탄다.
 LCLS1_MAP = {"NA": "nature", "HS": "history", "EX": "leisure", "VE": "culture",
              "AC": "stay", "FD": "food", "SH": "shopping", "LS": "leisure", "EV": "culture"}
 
+# EX(체험)는 1단계로 뭉치면 안 된다 — 공예·체험마을·과학관이 레포츠가 된다.
+# 2단계로 갈라 문화 체험과 레저를 나눈다 (2026-08-21 원천 표본으로 확인한 구성).
+LCLS2_MAP = {
+    "EX01": "culture",   # 전통·염색 체험
+    "EX02": "culture",   # 공예·도예
+    "EX03": "culture",   # 체험마을
+    "EX06": "culture",   # 과학·산업 체험관
+    "EX05": "leisure",   # 온천·스파·힐링
+    "EX07": "leisure",   # 케이블카·액티비티
+}
 
-def categorize(cat1: str, cat2: str, lcls1: str = "") -> str:
-    """구 분류(cat1/cat2)를 우선하고, 비면 신규 분류체계로 받아낸다."""
+# 관광지가 아닌 것 — 관광 분류에서 뺀다(`etc` 는 목록·지도 필터 어디에도 안 들어간다).
+#
+# EX050800 은 **의료관광**(성형외과·치과·병원)이다. 영문 관광지(76) 표본 1,000건 중 125건으로
+# 12.5% 를 차지해 그대로 두면 영문 목록이 병원 목록처럼 보인다 (실측 2026-08-21:
+# `AB Plastic Surgery`, `WOORIDUL SPINE HOSPITAL`, `Yonsei GoodDay Dental Clinic`).
+# 국문 관광지에는 이 코드가 없어 영문에서만 드러났다.
+#
+# 레코드를 지우지는 않는다 — 원천이 재분류할 수 있고, 지우면 되돌릴 근거가 사라진다.
+NON_TOURISM_LCLS3 = {"EX050800"}
+
+
+def categorize(cat1: str, cat2: str, lcls1: str = "", lcls2: str = "", lcls3: str = "") -> str:
+    """구 분류(cat1/cat2)를 우선하고, 비면 신규 분류체계로 받아낸다.
+
+    관광지가 아닌 것(의료관광)은 앞단에서 걸러 `etc` 로 보낸다 — 구 분류가 뭐라 하든
+    병원은 관광지가 아니다.
+    """
+    if lcls3 in NON_TOURISM_LCLS3:
+        return "etc"
     return (CAT2_OVERRIDE.get(cat2)
             or CAT1_MAP.get(cat1)
+            or LCLS2_MAP.get(lcls2)
             or LCLS1_MAP.get(lcls1, "etc"))
 
 
@@ -171,13 +200,26 @@ def fetch_area_based(key: str, svc_key: str, content_type: str, area: str | None
                 # 법정동 코드를 대체해 담아 두 체계가 섞였다(실측: 486쌍, 실제 시군구는 269개).
                 **_ldong(it),
                 "category": categorize(it.get("cat1") or "", it.get("cat2") or "",
-                                       it.get("lclsSystm1") or ""),
+                                       it.get("lclsSystm1") or "", it.get("lclsSystm2") or "",
+                                       it.get("lclsSystm3") or ""),
                 "cat1": it.get("cat1") or None,
                 "cat2": it.get("cat2") or None,
                 "cat3": it.get("cat3") or None,
                 "latitude": float(lat),
                 "longitude": float(lng),
                 "imageUrl": it.get("firstimage") or None,
+                "thumbnailUrl": it.get("firstimage2") or None,
+                # 원천이 주는 값은 **가공 없이 그대로** 싣는다 (ADR-0065).
+                # category 는 이 값들에서 계산한 파생 컬럼이라, 그루핑 규칙이 바뀌어도
+                # 원천 재호출(일일 한도가 있는 자원) 없이 DB 안에서 다시 계산할 수 있다.
+                "lclsSystm1": it.get("lclsSystm1") or None,
+                "lclsSystm2": it.get("lclsSystm2") or None,
+                "lclsSystm3": it.get("lclsSystm3") or None,
+                "contentTypeId": str(it.get("contenttypeid") or "").strip() or None,
+                "copyrightDivCd": it.get("cpyrhtDivCd") or None,
+                "mapLevel": int(it["mlevel"]) if str(it.get("mlevel") or "").strip().isdigit() else None,
+                "zipcode": str(it.get("zipcode") or "").strip() or None,
+                "sourceCreatedAt": parse_modified(it.get("createdtime") or ""),
                 "tel": (it.get("tel") or "").strip() or None,
                 "sourceModifiedAt": parse_modified(str(it.get("modifiedtime") or "")),
             })

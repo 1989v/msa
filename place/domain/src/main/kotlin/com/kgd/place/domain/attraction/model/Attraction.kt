@@ -21,6 +21,15 @@ class Attraction private constructor(
     var cat1: String? = null,
     var cat2: String? = null,
     var cat3: String? = null,
+    var lclsSystm1: String? = null,
+    var lclsSystm2: String? = null,
+    var lclsSystm3: String? = null,
+    var contentTypeId: String? = null,
+    var copyrightDivCd: String? = null,
+    var thumbnailUrl: String? = null,
+    var mapLevel: Int? = null,
+    var zipcode: String? = null,
+    var sourceCreatedAt: LocalDateTime? = null,
     var latitude: Double,
     var longitude: Double,
     var imageUrl: String? = null,
@@ -55,6 +64,15 @@ class Attraction private constructor(
             cat1: String? = null,
             cat2: String? = null,
             cat3: String? = null,
+            lclsSystm1: String? = null,
+            lclsSystm2: String? = null,
+            lclsSystm3: String? = null,
+            contentTypeId: String? = null,
+            copyrightDivCd: String? = null,
+            thumbnailUrl: String? = null,
+            mapLevel: Int? = null,
+            zipcode: String? = null,
+            sourceCreatedAt: LocalDateTime? = null,
             imageUrl: String? = null,
             tel: String? = null,
             overview: String? = null,
@@ -80,6 +98,15 @@ class Attraction private constructor(
                 cat1 = cat1?.takeIf { it.isNotBlank() },
                 cat2 = cat2?.takeIf { it.isNotBlank() },
                 cat3 = cat3?.takeIf { it.isNotBlank() },
+                lclsSystm1 = lclsSystm1?.takeIf { it.isNotBlank() },
+                lclsSystm2 = lclsSystm2?.takeIf { it.isNotBlank() },
+                lclsSystm3 = lclsSystm3?.takeIf { it.isNotBlank() },
+                contentTypeId = contentTypeId?.takeIf { it.isNotBlank() },
+                copyrightDivCd = copyrightDivCd?.takeIf { it.isNotBlank() },
+                thumbnailUrl = thumbnailUrl?.takeIf { it.isNotBlank() },
+                mapLevel = mapLevel,
+                zipcode = zipcode?.takeIf { it.isNotBlank() },
+                sourceCreatedAt = sourceCreatedAt,
                 imageUrl = imageUrl?.takeIf { it.isNotBlank() },
                 tel = tel?.takeIf { it.isNotBlank() },
                 overview = overview?.takeIf { it.isNotBlank() },
@@ -103,6 +130,15 @@ class Attraction private constructor(
             cat1: String?,
             cat2: String?,
             cat3: String?,
+            lclsSystm1: String?,
+            lclsSystm2: String?,
+            lclsSystm3: String?,
+            contentTypeId: String?,
+            copyrightDivCd: String?,
+            thumbnailUrl: String?,
+            mapLevel: Int?,
+            zipcode: String?,
+            sourceCreatedAt: LocalDateTime?,
             latitude: Double,
             longitude: Double,
             imageUrl: String?,
@@ -125,6 +161,15 @@ class Attraction private constructor(
             cat1 = cat1,
             cat2 = cat2,
             cat3 = cat3,
+            lclsSystm1 = lclsSystm1,
+            lclsSystm2 = lclsSystm2,
+            lclsSystm3 = lclsSystm3,
+            contentTypeId = contentTypeId,
+            copyrightDivCd = copyrightDivCd,
+            thumbnailUrl = thumbnailUrl,
+            mapLevel = mapLevel,
+            zipcode = zipcode,
+            sourceCreatedAt = sourceCreatedAt,
             latitude = latitude,
             longitude = longitude,
             imageUrl = imageUrl,
@@ -156,6 +201,20 @@ class Attraction private constructor(
         cat1 = source.cat1
         cat2 = source.cat2
         cat3 = source.cat3
+        /*
+         * 원천이 주는 값은 **가공 없이 그대로** 최신값으로 덮는다 (ADR-0065).
+         * 화면용 그루핑은 아래 category 가 따로 들고 있어, 그루핑 규칙을 바꿔도
+         * 원천 재호출 없이 이 컬럼들로 다시 계산할 수 있다.
+         */
+        lclsSystm1 = source.lclsSystm1
+        lclsSystm2 = source.lclsSystm2
+        lclsSystm3 = source.lclsSystm3
+        contentTypeId = source.contentTypeId
+        copyrightDivCd = source.copyrightDivCd
+        thumbnailUrl = source.thumbnailUrl
+        mapLevel = source.mapLevel
+        zipcode = source.zipcode
+        sourceCreatedAt = source.sourceCreatedAt
         latitude = source.latitude
         longitude = source.longitude
         imageUrl = source.imageUrl

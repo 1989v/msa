@@ -54,6 +54,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
 - **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md` (스크립트) · `k8s/infra/prod/backup/` (CronJob 래퍼)
 - **K8s 전환**: 배포 모드 이원화, Eureka 제거, Jib → `docs/adr/ADR-0019-k8s-migration.md`
+- **외부 데이터 연동 3규칙 (필수)**: ① 원천 필드는 **전부** 적재 — 지금 안 써도 컬럼으로 남긴다(원천 호출은 일일 한도 자원이라 다시 받으려면 그 한도를 또 쓴다) ② 가공은 원천을 덮지 않고 **파생 컬럼**으로 ③ 전체 동기화 경로의 필드 목록도 함께 갱신(안 하면 다음 배치가 새 컬럼을 지운다) → `docs/architecture/data-sources.md` §0
 - **원천 데이터 대장 (외부 데이터를 붙이면 필수 갱신)**: 출처·라이선스·키 필요 여부·받는 방법 → `docs/architecture/data-sources.md`. 출처표시 의무가 있는 것(GeoNames CC BY 4.0, TourAPI 공공누리, 참가격 KOGL 제1유형)이 섞여 있어 **코드에만 있고 대장에 없으면 없는 것으로 친다**
 - **FE 디자인 가드레일**: AI slop 방지, 타이포/색상/레이아웃/모션/접근성 → `docs/conventions/frontend-design.md`
 - **DESIGN.md 표준 (필수)**: FE 코드 작성 / UI 화면 생성 전 **반드시 root `DESIGN.md` 의 토큰을 우선 참조**. hex 직접 입력 금지. 상세 표준 → `docs/standards/design-md.md`, 인스턴스 → `DESIGN.md`

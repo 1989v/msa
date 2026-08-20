@@ -27,9 +27,14 @@ from src.sync_tour import SERVICES, tour_get
 SIGHT_CATEGORIES = ("nature", "history", "culture", "leisure")
 
 # bulk upsert 가 받는 필드 (id·status 는 서버 소유라 되돌려 보내지 않는다)
-UPSERT_FIELDS = ("contentId", "lang", "title", "latitude", "longitude", "address",
+# bulk 는 전체 동기화라 여기 빠진 필드는 **매일 null 로 덮인다**. 원천 컬럼을 추가하면
+# 반드시 여기에도 넣을 것 (ADR-0065).
+UPSERT_FIELDS = ("contentId", "lang", "title", "latitude", "longitude", "address", "zipcode",
                  "areaCode", "sigunguCode", "ldongRegnCd", "ldongSignguCd",
-                 "category", "imageUrl", "tel", "overview", "sourceModifiedAt")
+                 "cat1", "cat2", "cat3", "lclsSystm1", "lclsSystm2", "lclsSystm3",
+                 "contentTypeId", "copyrightDivCd", "mapLevel",
+                 "category", "imageUrl", "thumbnailUrl", "tel", "overview",
+                 "sourceModifiedAt", "sourceCreatedAt")
 
 
 def log(msg: str) -> None:

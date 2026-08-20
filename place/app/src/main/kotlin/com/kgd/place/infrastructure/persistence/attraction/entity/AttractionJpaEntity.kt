@@ -51,6 +51,34 @@ class AttractionJpaEntity(
     @Column(length = 16)
     val cat3: String? = null,
 
+    @Column(name = "lcls_systm1", length = 4)
+    val lclsSystm1: String? = null,
+
+    @Column(name = "lcls_systm2", length = 8)
+    val lclsSystm2: String? = null,
+
+    @Column(name = "lcls_systm3", length = 16)
+    val lclsSystm3: String? = null,
+
+    @Column(name = "content_type_id", length = 8)
+    val contentTypeId: String? = null,
+
+    @Column(name = "copyright_div_cd", length = 8)
+    val copyrightDivCd: String? = null,
+
+    @Column(name = "thumbnail_url", length = 500)
+    val thumbnailUrl: String? = null,
+
+    @Column(name = "map_level")
+    val mapLevel: Int? = null,
+
+    @Column(name = "zipcode", length = 16)
+    val zipcode: String? = null,
+
+    @Column(name = "source_created_at")
+    val sourceCreatedAt: LocalDateTime? = null,
+
+
     @Column(nullable = false)
     val latitude: Double,
 
@@ -88,6 +116,15 @@ class AttractionJpaEntity(
         cat1 = cat1,
         cat2 = cat2,
         cat3 = cat3,
+        lclsSystm1 = lclsSystm1,
+        lclsSystm2 = lclsSystm2,
+        lclsSystm3 = lclsSystm3,
+        contentTypeId = contentTypeId,
+        copyrightDivCd = copyrightDivCd,
+        thumbnailUrl = thumbnailUrl,
+        mapLevel = mapLevel,
+        zipcode = zipcode,
+        sourceCreatedAt = sourceCreatedAt,
         latitude = latitude,
         longitude = longitude,
         imageUrl = imageUrl,
@@ -113,6 +150,15 @@ class AttractionJpaEntity(
             cat1 = attraction.cat1,
             cat2 = attraction.cat2,
             cat3 = attraction.cat3,
+            lclsSystm1 = attraction.lclsSystm1,
+            lclsSystm2 = attraction.lclsSystm2,
+            lclsSystm3 = attraction.lclsSystm3,
+            contentTypeId = attraction.contentTypeId,
+            copyrightDivCd = attraction.copyrightDivCd,
+            thumbnailUrl = attraction.thumbnailUrl,
+            mapLevel = attraction.mapLevel,
+            zipcode = attraction.zipcode,
+            sourceCreatedAt = attraction.sourceCreatedAt,
             latitude = attraction.latitude,
             longitude = attraction.longitude,
             imageUrl = attraction.imageUrl,
