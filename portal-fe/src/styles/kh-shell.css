@@ -1,0 +1,290 @@
+/* K-Heritage 앱 셸 — 모바일(< 768px)에서 앱처럼 동작하는 층 (DESIGN.md §12).
+ *
+ * 하단 탭바 · 바텀시트 · 스켈레톤 · 스택 전환(View Transitions) · 터치 기반기.
+ * 데스크탑은 현행 GNB 그대로다 — 한 코드베이스, 두 표정.
+ */
+
+/* ─── 터치 기반기 ────────────────────────────────────────────────────────── */
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  /* 러버밴드를 페이지 안에 가둔다 — 바탕색이 정경색이라 흰 배경이 새지 않는다 */
+  overscroll-behavior-y: contain;
+}
+
+a,
+button,
+[role='button'],
+input,
+select,
+textarea {
+  /* 더블탭 줌 대기 없이 즉시 반응 — 앱 체감의 절반은 지연 제거다 */
+  touch-action: manipulation;
+}
+
+/* ─── 하단 탭바 ──────────────────────────────────────────────────────────
+ * 기와 먹빛 판이다 — GNB(머리띠)와 같은 논리로 라이트에서도 어둡다.
+ * heritage 밖(테크 등)에서는 페이지 서피스 토큰으로 물러난다. */
+
+.kh-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  display: flex;
+  background: var(--kh-giwa, var(--ko-surface-1));
+  border-top: 1px solid var(--kh-slab-border, var(--ko-border-subtle));
+  padding-bottom: env(safe-area-inset-bottom);
+  /* 스택 전환 중에도 탭바는 제자리다 — 루트 스냅샷에서 분리한다 */
+  view-transition-name: kh-tabbar;
+}
+
+@media (min-width: 768px) {
+  .kh-tabbar {
+    display: none;
+  }
+}
+
+/* 탭바가 있을 때만 본문 하단을 비운다 (KhTabBar 가 :root 에 data-tabbar 를 건다) */
+@media (max-width: 767.98px) {
+  :root[data-tabbar='on'] body {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+}
+
+.kh-tabbar-item {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 52px;
+  padding: var(--ko-space-2) 0 6px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-decoration: none;
+  color: var(--kh-on-slab-muted, var(--ko-text-muted));
+  font-family: var(--kh-font-mono, var(--ko-font-mono));
+  font-size: 10px;
+  letter-spacing: var(--kh-tracking-mono, 0.05em);
+  transition: color var(--kh-dur-state) var(--kh-ease-enter);
+}
+
+.kh-tabbar-item.is-active {
+  color: var(--kh-on-slab, var(--ko-text-primary));
+}
+
+/* 활성 표시는 긋기 — 탭 위로 황토 괘선이 그어진다 */
+.kh-tabbar-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 22%;
+  right: 22%;
+  height: 2px;
+  background: var(--kh-ocher, var(--ko-accent-primary));
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  transition: transform var(--kh-dur-state) var(--kh-ease-enter);
+}
+
+.kh-tabbar-item.is-active::before {
+  transform: scaleX(1);
+}
+
+.kh-tabbar-item:active {
+  transform: translateY(1px);
+}
+
+.kh-tabbar-item:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: -2px;
+}
+
+/* ─── 바텀시트 ───────────────────────────────────────────────────────────
+ * 처마 아래 문 여는 감각의 모바일판 — 먹빛 veil 위로 판이 올라온다.
+ * 그림자 금지 규약 그대로: 깊이는 veil 의 단차와 테두리가 만든다. */
+
+.kh-sheet-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: color-mix(in srgb, var(--kh-ink, #0a0a0a) 62%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  animation: kh-sheet-veil-in var(--kh-dur-state) var(--kh-ease-enter);
+}
+
+.kh-sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 72vh;
+  overflow-y: auto;
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  border-top: 1px solid var(--ko-border-default);
+  /* 비대칭 모서리 — 판의 운필. 위쪽 한 귀만 둥글린다 */
+  border-radius: 0 16px 0 0;
+  padding: 0 var(--ko-space-5) calc(var(--ko-space-6) + env(safe-area-inset-bottom));
+  animation: kh-sheet-up var(--kh-dur-enter) var(--kh-ease-enter);
+}
+
+.kh-sheet-handle {
+  display: flex;
+  justify-content: center;
+  padding: var(--ko-space-3) 0 var(--ko-space-2);
+  /* 손잡이는 끌라고 있는 것 — 시트 스크롤과 겹치지 않게 여기서만 끈다 */
+  touch-action: none;
+  cursor: grab;
+}
+
+.kh-sheet-grip {
+  width: 44px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--ko-border-strong);
+}
+
+.kh-sheet-label {
+  color: var(--kh-ocher, var(--ko-text-muted));
+  font-size: var(--ko-text-xs);
+  text-transform: uppercase;
+  padding-bottom: var(--ko-space-3);
+}
+
+@keyframes kh-sheet-veil-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes kh-sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+/* ─── 장르 시트 목록 — 유령 버튼 2열 ─────────────────────────────────────── */
+
+.kh-genre-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ko-space-2);
+}
+
+.kh-genre-list a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  color: var(--ko-text-primary);
+  text-decoration: none;
+  font-size: var(--ko-text-sm);
+}
+
+.kh-genre-list a:active {
+  transform: translateY(1px);
+  background: var(--ko-surface-2);
+}
+
+/* ─── 스켈레톤 — 정경 톤 면이 숨쉰다. shimmer 그래디언트는 쓰지 않는다 ──── */
+
+.kh-skeleton {
+  background: var(--ko-surface-2);
+  border-radius: var(--kh-radius, 4px);
+  animation: kh-skeleton-breathe 1.6s var(--ko-ease-in-out, ease-in-out) infinite;
+}
+
+@keyframes kh-skeleton-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ─── 스택 전환 — 목록→상세 push, 뒤로 pop. 모바일에서만 ──────────────────
+ * 방향은 AppShellChrome 이 <html data-nav> 로 찍는다. 탭 간 이동('tab')은
+ * 규칙이 없어 UA 기본 cross-fade 로 남는다. View Transitions 미지원이면
+ * 이 블록 전체가 무시된다 — 즉시 교체(현행)로 동작한다. */
+
+@media (max-width: 767.98px) and (prefers-reduced-motion: no-preference) {
+  :root[data-nav='push']::view-transition-new(root) {
+    animation: kh-vt-enter-right 280ms var(--kh-ease-enter);
+  }
+
+  :root[data-nav='push']::view-transition-old(root) {
+    animation: kh-vt-recede 200ms var(--kh-ease-exit);
+  }
+
+  :root[data-nav='pop']::view-transition-new(root) {
+    animation: kh-vt-enter-left 280ms var(--kh-ease-enter);
+  }
+
+  :root[data-nav='pop']::view-transition-old(root) {
+    animation: kh-vt-exit-right 200ms var(--kh-ease-exit);
+  }
+}
+
+@keyframes kh-vt-enter-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes kh-vt-enter-left {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+@keyframes kh-vt-exit-right {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes kh-vt-recede {
+  to {
+    opacity: 0.4;
+  }
+}
+
+/* ─── reduced motion ─────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .kh-tabbar-item,
+  .kh-tabbar-item::before {
+    transition: none;
+  }
+
+  .kh-sheet-veil,
+  .kh-sheet {
+    animation: none;
+  }
+
+  .kh-skeleton {
+    animation: none;
+  }
+}

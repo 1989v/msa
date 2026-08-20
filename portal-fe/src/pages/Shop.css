@@ -309,27 +309,11 @@ button.shop-product-card {
   color: var(--ko-status-warning);
 }
 
+/* 숨쉬는 동작은 공용 .kh-skeleton (kh-shell.css) 이 맡는다 — 여기는 크기만 */
 .shop-skeleton-card {
   height: 116px;
   border-radius: var(--ko-radius-lg);
   background: var(--ko-surface-1);
-  animation: shop-skeleton-pulse 1.2s var(--ko-ease-in-out) infinite;
-}
-
-@keyframes shop-skeleton-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .shop-skeleton-card {
-    animation: none;
-  }
 }
 
 /* ── 페이지네이션 ────────────────────────────────────── */

@@ -185,7 +185,7 @@ export default function ShopPage() {
           // 행동 로그 실패는 무시
         });
       }
-      navigate(`/shop/products/${product.productId}`);
+      navigate(`/shop/products/${product.productId}`, { viewTransition: true });
     },
     [data, navigate],
   );
@@ -241,7 +241,7 @@ export default function ShopPage() {
         {loading && (
           <div className="shop-product-grid" aria-hidden="true">
             {Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="shop-skeleton-card" />
+              <div key={i} className="kh-skeleton shop-skeleton-card" />
             ))}
           </div>
         )}

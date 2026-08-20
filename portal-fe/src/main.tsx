@@ -7,6 +7,8 @@ import './index.css';
 import './styles/k-heritage.css';
 // 모션 문법 — `[data-reveal]`(useReveal 이 붙임)로만 켜진다. 문법 자체는 전 화면 공통.
 import './styles/kh-motion.css';
+// 앱 셸 — 탭바·시트·스켈레톤·스택 전환. 모바일(< 768px)에서만 개입한다.
+import './styles/kh-shell.css';
 import App from './App';
 import { bootstrapTheme } from './hooks/useHeritageSurface';
 import { queryClient } from './shell/queryClient';

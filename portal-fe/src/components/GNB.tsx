@@ -1,5 +1,6 @@
 import AuthButton from './AuthButton';
 import { useResumeStatus } from '../hooks/useResumeStatus';
+import { useScrollDirection } from '../hooks/useScrollDirection';
 import ThemeToggle from './ThemeToggle';
 import './GNB.css';
 
@@ -29,13 +30,15 @@ const TECH_ITEMS: GNBItem[] = [
 export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GNBProps) {
   // 구직 중일 때만 이력서 진입점을 띄운다 (ADR-0064)
   const resumeVisible = useResumeStatus();
+  // 모바일 앱 셸 — 아래로 스크롤하면 머리띠가 접힌다 (CSS 가 모바일에서만 적용)
+  const collapsed = useScrollDirection();
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <nav className="gnb">
+    <nav className={`gnb${collapsed ? ' gnb--collapsed' : ''}`}>
       <div className="gnb-inner">
         <a className="gnb-logo" href="/">
           1989v

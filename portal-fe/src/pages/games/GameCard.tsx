@@ -19,7 +19,7 @@ export default function GameCard({ game, lang }: { game: GameSummary; lang?: Gam
   const [thumbFailed, setThumbFailed] = useState(false);
   const showThumb = !!game.thumbnailUrl && !thumbFailed;
   return (
-    <Link to={gamePath(gameLang, `/games/${game.slug}`)} className="game-card">
+    <Link to={gamePath(gameLang, `/games/${game.slug}`)} className="game-card" viewTransition>
       <div
         className="game-card-cover"
         style={{

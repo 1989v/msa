@@ -202,7 +202,7 @@ export default function GameDetailPage() {
         <p className="games-status">
           {lang === 'en' ? 'Game not found.' : '게임을 찾을 수 없습니다.'}
         </p>
-        <Link className="games-back" to={gamePath(lang, HUB_SUB)}>
+        <Link className="games-back" to={gamePath(lang, HUB_SUB)} viewTransition>
           {lang === 'en' ? '← Back to all games' : '← 게임 목록으로'}
         </Link>
       </div>
@@ -217,7 +217,7 @@ export default function GameDetailPage() {
         <AuthButton />
       </div>
       <nav className="games-breadcrumb" aria-label={lang === 'en' ? 'Breadcrumb' : '탐색 경로'}>
-        <Link className="games-back" to={gamePath(lang, HUB_SUB)}>
+        <Link className="games-back" to={gamePath(lang, HUB_SUB)} viewTransition>
           ← {lang === 'en' ? 'Games' : '게임'}
         </Link>
         <Link

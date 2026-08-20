@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, type ReactElement } from 'react';
 import { isApexProd } from './shell/serviceHref';
+import AppShellChrome from './components/shell/AppShellChrome';
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import ShopPage from './pages/ShopPage';
@@ -160,6 +161,8 @@ function App() {
           <Route path="/agent-viewer/*" element={<AgentViewerApp />} />
         </Routes>
       </Suspense>
+      {/* 모바일 앱 셸 — 탭바 + 스택 전환 방향 판정 (kh-motion-app-shell spec §4) */}
+      <AppShellChrome />
     </BrowserRouter>
   );
 }

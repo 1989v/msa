@@ -130,3 +130,22 @@ a.gnb-menu-item {
   gap: 10px;
   margin-left: auto;
 }
+
+/* ─── 모바일 앱 셸: 접히는 머리띠 ────────────────────────────────────────
+ * 아래로 스크롤하면 접히고 위로 한 틱이면 돌아온다 (useScrollDirection).
+ * transform 만 쓴다 — 리플로우 없음. 데스크탑에선 항상 펴져 있다. */
+@media (max-width: 767.98px) {
+  .gnb {
+    transition: transform var(--kh-dur-state, 240ms) var(--kh-ease-enter, ease-out);
+  }
+
+  .gnb--collapsed {
+    transform: translateY(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gnb {
+    transition: none;
+  }
+}

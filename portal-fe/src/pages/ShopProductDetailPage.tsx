@@ -109,7 +109,7 @@ export default function ShopProductDetailPage() {
             <Link to="/shop/orders" className="shop-btn-primary">
               주문내역 보기
             </Link>
-            <Link to="/shop" className="shop-btn-secondary">
+            <Link to="/shop" className="shop-btn-secondary" viewTransition>
               계속 쇼핑하기
             </Link>
           </section>
