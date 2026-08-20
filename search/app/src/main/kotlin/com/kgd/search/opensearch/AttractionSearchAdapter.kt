@@ -1,6 +1,7 @@
 package com.kgd.search.infrastructure.opensearch
 
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.Jamo
 import com.kgd.search.domain.attraction.model.SuggestHit
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import org.opensearch.client.opensearch.OpenSearchClient
@@ -9,6 +10,7 @@ import org.opensearch.client.opensearch._types.SortOrder
 import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
 import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
 import org.opensearch.client.opensearch._types.query_dsl.FunctionScoreMode
+import org.opensearch.client.opensearch._types.query_dsl.Operator
 import org.opensearch.client.opensearch._types.query_dsl.Query
 import org.opensearch.client.opensearch.core.SearchRequest
 import org.springframework.data.domain.Page
@@ -119,18 +121,37 @@ class AttractionSearchAdapter(
     private fun suggestAttractions(prefix: String, lang: String?, size: Int): List<SuggestHit> {
         if (size <= 0) return emptyList()
         val titleField = if (lang == "en") "title.en" else "title"
+        /*
+         * 세 신호를 **가중치로 눌러** 섞는다. must 가 아니라 should + minimumShouldMatch(1) 인 이유:
+         * 자모로만 맞는 입력("경보")을 must 가 걸러버리면 자모 색인이 아무 일도 하지 못한다.
+         *
+         *  ×6  이름이 입력으로 시작        `경복궁` vs `한복남 경복궁점`
+         *  ×1  형태소 기준 일반 매칭        기존 동작
+         *  ×0.3 자모(조합 중간 상태)        `경보` → `ㄱㅕㅇㅂㅗ`
+         *
+         * 자모를 낮게 두는 건 그게 **가장 헐거운 신호**라서다. 같은 무게로 두면 자모로만 스치는
+         * 문서가 이름이 정확히 맞는 문서를 밀어낸다 — 자동완성에서 제일 나쁜 실패다.
+         */
         val matched = Query.of { q ->
             q.bool { b ->
-                b.must { m -> m.matchBoolPrefix { it.field(titleField).query(prefix) } }
+                b.should { s -> s.matchBoolPrefix { it.field(titleField).query(prefix).boost(1.0f) } }
                 /*
-                 * 이름이 입력으로 **시작하는** 문서를 올린다.
-                 *
                  * 분류 가중치만으로는 "경복" 에서 `한복남 경복궁점` 을 못 내린다 — 그 상점의
                  * TourAPI 분류가 `culture` 라 경복궁과 같은 가중치를 받기 때문이다. 분류 체계가
                  * 새는 지점이고, 거기에 맞서는 신호는 분류가 아니라 **이름의 모양**이다.
-                 * `경복궁` 은 "경복" 으로 시작하고 `한복남 경복궁점` 은 포함만 한다.
                  */
                 b.should { s -> s.prefix { p -> p.field("title.keyword").value(prefix).boost(6.0f) } }
+                b.should { s ->
+                    s.match { m ->
+                        m.field("titleJamo")
+                            .query(FieldValue.of(Jamo.decompose(prefix)))
+                            // 여러 단어를 쳤으면 전부 맞아야 한다 — 하나만 스친 결과가 올라오면
+                            // 자모의 헐거움이 그대로 순위에 샌다.
+                            .operator(Operator.And)
+                            .boost(0.3f)
+                    }
+                }
+                b.minimumShouldMatch("1")
                 lang?.let { l -> b.filter { f -> f.term { it.field("lang").value(FieldValue.of(l)) } } }
                 b
             }

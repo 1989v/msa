@@ -1,10 +1,28 @@
 {
   "settings": {
     "analysis": {
+      "tokenizer": {
+        "jamo_edge_ngram": {
+          "type": "edge_ngram",
+          "min_gram": 1,
+          "max_gram": 20,
+          "token_chars": ["letter", "digit"]
+        }
+      },
       "analyzer": {
         "nori_analyzer": {
           "type": "custom",
           "tokenizer": "nori_tokenizer"
+        },
+        "jamo_index": {
+          "type": "custom",
+          "tokenizer": "jamo_edge_ngram",
+          "filter": ["lowercase"]
+        },
+        "jamo_search": {
+          "type": "custom",
+          "tokenizer": "whitespace",
+          "filter": ["lowercase"]
         }
       }
     }
@@ -20,6 +38,11 @@
           "en": { "type": "text", "analyzer": "english" },
           "keyword": { "type": "keyword", "ignore_above": 256 }
         }
+      },
+      "titleJamo": {
+        "type": "text",
+        "analyzer": "jamo_index",
+        "search_analyzer": "jamo_search"
       },
       "address": {
         "type": "text", "analyzer": "nori_analyzer",

@@ -73,7 +73,7 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
             then("같은 가중치가 걸려야 한다 — '경복' 이 밀린 곳이 바로 여기다") {
                 val (adapter, captured) = adapterWith(AttractionRankingProperties())
 
-                adapter.suggest("경복", "ko", 8)
+                adapter.suggest("경보", "ko", 8)   // 조합 중간 상태
 
                 // 마지막 호출이 관광지 자동완성 (앞은 지역 슬롯)
                 val query = captured.captured.query()
@@ -82,6 +82,23 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
                 // 시작하는지를 함께 본다. 이 should 가 빠지면 그 회귀가 그대로 돌아온다.
                 val inner = requireNotNull(query!!.functionScore().query()).bool()
                 inner.should().any { it.isPrefix && it.prefix().field() == "title.keyword" } shouldBe true
+
+                // must 가 아니라 should — 자모로만 맞는 입력을 must 가 걸러버리면 자모 색인이
+                // 아무 일도 하지 못한다.
+                inner.must().isEmpty() shouldBe true
+                inner.minimumShouldMatch() shouldBe "1"
+
+                // 가중치 순서가 뒤집히면 자모로만 스친 문서가 이름이 정확한 문서를 밀어낸다
+                val boosts = inner.should().associate { clause ->
+                    when {
+                        clause.isPrefix -> "keyword" to clause.prefix().boost()
+                        clause.isMatchBoolPrefix -> "title" to clause.matchBoolPrefix().boost()
+                        else -> "jamo" to clause.match().boost()
+                    }
+                }
+                boosts["keyword"] shouldBe 6.0f
+                boosts["title"] shouldBe 1.0f
+                boosts["jamo"] shouldBe 0.3f
             }
         }
     }

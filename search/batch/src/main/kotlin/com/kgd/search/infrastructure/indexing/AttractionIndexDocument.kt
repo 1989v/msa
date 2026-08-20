@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.Jamo
 import java.time.LocalDateTime
 
 /**
@@ -17,6 +18,11 @@ data class AttractionIndexDocument(
     val contentId: String,
     val lang: String,
     val title: String,
+    /**
+     * 자모로 편 이름 (ADR-0065 P2 후속). 조합 중간 상태("경보")로도 자동완성이 맞게 한다.
+     * 분해 규칙은 질의 쪽과 **같은 [Jamo]** 를 쓴다 — 한쪽만 바뀌면 조용히 아무것도 안 맞는다.
+     */
+    val titleJamo: String,
     val location: GeoPoint,
     val address: String? = null,
     val areaCode: String? = null,
@@ -38,6 +44,7 @@ data class AttractionIndexDocument(
             contentId = doc.contentId,
             lang = doc.lang,
             title = doc.title,
+            titleJamo = Jamo.decompose(doc.title),
             location = GeoPoint(lat = doc.latitude, lon = doc.longitude),
             address = doc.address,
             areaCode = doc.areaCode,
