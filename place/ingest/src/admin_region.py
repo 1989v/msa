@@ -65,21 +65,52 @@ def parse(lines: list[str]) -> list[dict]:
                 "parentCode": code[:2],
                 "level": "SIGUNGU",
                 "name": short or name,
+                "_fullName": name,
             })
-    return regions
+    return _fill_missing_sido(regions)
 
 
-# 법정동 자료에 영문이 없다 (컬럼은 법정동코드/법정동명/폐지여부 뿐). 시도 17개는 확립된 공식
-# 표기라 여기 고정한다 — 관광지 영문 주소에서 뽑으면 원천 오류를 물려받는다. 실측(2026-08-20):
-# `Jeonnam-Gwangju Special Metropolitan City` 568건이 전남과 광주를 뭉개서 둘 다 그 이름이 된다.
-# 이름이 아니라 **코드**로 잡는 이유: 한글명은 바뀐다(강원도 → 강원특별자치도). 코드는 안 바뀐다.
+def _fill_missing_sido(regions: list[dict]) -> list[dict]:
+    """시도 행이 없는데 시군구만 있는 경우를 메운다.
+
+    세종이 그렇다 — 자료에 `3600000000` 이 없고 `3611000000 세종특별자치시` 만 있다.
+    그대로 두면 세종 시군구가 어느 시도에도 붙지 않아 드릴다운에서 사라진다.
+    상위 이름은 자식의 법정동명 첫 단어에서 가져온다 (세종특별자치시 → 세종특별자치시).
+    """
+    have = {r["code"] for r in regions if r["level"] == "SIDO"}
+    orphans: dict[str, str] = {}
+    for region in regions:
+        if region["level"] != "SIGUNGU" or region["parentCode"] in have:
+            continue
+        orphans.setdefault(region["parentCode"], region.get("_fullName", region["name"]).split()[0])
+
+    for code, name in sorted(orphans.items()):
+        regions.append({"code": code, "level": "SIDO", "name": name})
+
+    for region in regions:
+        region.pop("_fullName", None)
+    return sorted(regions, key=lambda r: (r["code"][:2], r["level"] != "SIDO", r["code"]))
+
+
+# 법정동 자료에 영문이 없다 (컬럼은 법정동코드/법정동명/폐지여부 뿐).
+# 시도는 수가 적고 공식 영문 표기가 확립돼 있어 여기 고정한다.
+#
+# **값은 2026-08-20 자 실제 자료 기준이다.** 행정구역은 개편된다 —
+#   · 광주광역시(29)와 전라남도(46)가 폐지되고 전남광주통합특별시(12)로 합쳐졌다
+#   · 강원도(42) → 강원특별자치도(51), 전라북도(45) → 전북특별자치도(52)
+# 자료를 다시 받았는데 상수에 없는 코드가 나오면 잡이 경고를 찍는다. 그때 여기를 고친다.
+#
+# 이름이 아니라 **코드**로 잡는 이유가 이것이다 — 한글명도 코드도 바뀌지만, 코드가 덜 바뀐다.
 SIDO_EN = {
-    "11": "Seoul",            "26": "Busan",              "27": "Daegu",
-    "28": "Incheon",          "29": "Gwangju",            "30": "Daejeon",
-    "31": "Ulsan",            "36": "Sejong",             "41": "Gyeonggi-do",
-    "42": "Gangwon-do",       "43": "Chungcheongbuk-do",  "44": "Chungcheongnam-do",
-    "45": "Jeonbuk-do",       "46": "Jeollanam-do",       "47": "Gyeongsangbuk-do",
-    "48": "Gyeongsangnam-do", "50": "Jeju-do",
+    "11": "Seoul",
+    # 통합 신설 시도. TourAPI 영문 주소가 쓰는 표기를 그대로 따른다 — 화면에 보이는 주소와
+    # 지역 이름이 어긋나면 같은 곳인지 알 수 없다. 더 짧은 관용 표기가 정해지면 그때 바꾼다.
+    "12": "Jeonnam-Gwangju Special Metropolitan City",
+    "26": "Busan",            "27": "Daegu",              "28": "Incheon",
+    "30": "Daejeon",          "31": "Ulsan",              "36": "Sejong",
+    "41": "Gyeonggi-do",      "43": "Chungcheongbuk-do",  "44": "Chungcheongnam-do",
+    "47": "Gyeongsangbuk-do", "48": "Gyeongsangnam-do",   "50": "Jeju-do",
+    "51": "Gangwon-do",       "52": "Jeonbuk-do",
 }
 
 
@@ -156,6 +187,10 @@ def enrich(regions: list[dict]) -> list[dict]:
 
         if region["level"] == "SIDO":
             english = SIDO_EN.get(region["code"])
+            if not english:
+                # 행정구역이 개편됐다는 신호다. 조용히 비우면 영문 화면에서만 한글이 튄다.
+                print(f"[!] 시도 {region['code']} {region['name']} 의 영문명이 SIDO_EN 에 없다 "
+                      f"— admin_region.py 를 갱신할 것", flush=True)
         else:
             bucket = names.get(region["code"])
             english = max(bucket, key=bucket.get) if bucket else None

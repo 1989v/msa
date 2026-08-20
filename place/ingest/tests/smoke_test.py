@@ -161,6 +161,7 @@ def _admin_region_parser() -> None:
     assert all(r["parentCode"] == r["code"][:2] for r in rows if r["level"] == "SIGUNGU")
 
     _english_from_address()
+    _sejong_has_a_sido()
 
 
 def _english_from_address() -> None:
@@ -185,9 +186,34 @@ def _english_from_address() -> None:
     assert _english_sigungu("종로구", "161 Sajik-ro, Seoul") is None
     assert _english_sigungu("종로구", "Seoul") is None
 
-    # 시도는 상수다. 원천이 전남과 광주를 뭉갠 라벨을 주기 때문이다.
-    assert len(SIDO_EN) == 17
-    assert SIDO_EN["29"] == "Gwangju" and SIDO_EN["46"] == "Jeollanam-do"
+    # 시도 영문은 상수다. 값은 2026-08-20 자 실제 자료 기준 — 광주(29)·전남(46)은 폐지되고
+    # 전남광주통합특별시(12)로 합쳐졌다. 그래서 29/46 은 상수에 없어야 한다.
+    assert "29" not in SIDO_EN and "46" not in SIDO_EN
+    assert SIDO_EN["12"].startswith("Jeonnam-Gwangju")
+    assert SIDO_EN["51"] == "Gangwon-do" and SIDO_EN["52"] == "Jeonbuk-do"
+
+
+def _sejong_has_a_sido() -> None:
+    """시도 행이 없는데 시군구만 있는 경우를 메운다 — 안 메우면 드릴다운에서 사라진다.
+
+    실제 자료에 `3600000000` 이 없고 `3611000000 세종특별자치시` 만 있다.
+    """
+    from src.admin_region import parse
+
+    rows = parse([
+        "1100000000\t서울특별시\t존재",
+        "1111000000\t서울특별시 종로구\t존재",
+        "3611000000\t세종특별자치시\t존재",     # 상위(3600000000)가 자료에 없다
+        "3611010100\t세종특별자치시 반곡동\t존재",
+    ])
+    by_code = {r["code"]: r for r in rows}
+    assert by_code["36"]["level"] == "SIDO" and by_code["36"]["name"] == "세종특별자치시"
+    assert by_code["36110"]["parentCode"] == "36"
+    # 부모 없는 시군구가 남지 않는다
+    sido = {r["code"] for r in rows if r["level"] == "SIDO"}
+    assert all(r["parentCode"] in sido for r in rows if r["level"] == "SIGUNGU")
+    # 내부 표시용 키가 새어 나가지 않는다
+    assert all("_fullName" not in r for r in rows)
 
 
 if __name__ == "__main__":
