@@ -27,7 +27,7 @@ blog/feature/    :blog:feature   Spring 라이브러리 (비-bootable, code-dict
 | `ProfileStatus` | `PENDING` / `ACTIVE` / `SUSPENDED` |
 | `BlogCategory` | 계층 카테고리. `path` 조립·깊이 상한을 자기가 강제 |
 | `BlogPost` | 글. 상태 전이·소유권 판정·슬러그 생성 규칙 보유 |
-| `PostStatus` | `DRAFT` / `SCHEDULED` / `PUBLISHED` / `ARCHIVED` |
+| `PostStatus` | `DRAFT` / `PUBLISHED` / `ARCHIVED` |
 | `BlogComment` | 댓글. 1단계 대댓글, 소프트 삭제 |
 | `CommentStatus` | `VISIBLE` / `HIDDEN` / `DELETED` |
 | `VoterKey` | `voterType(MEMBER\|VISITOR)` + `key` 값 객체 |
@@ -41,8 +41,10 @@ blog/feature/    :blog:feature   Spring 라이브러리 (비-bootable, code-dict
 - 슬러그: `^[a-z0-9][a-z0-9-]{2,79}$`. 미입력 시 제목에서 ASCII 슬러그를 뽑고,
   한글 등으로 비면 `yyyyMMdd-{base36}` 로 생성 (한글 제목이 기본이라 이 경로가 정상 경로다)
 - `handle`: `^[a-z0-9][a-z0-9-]{2,29}$` + 예약어 차단
-- `PostStatus` 전이: `DRAFT → SCHEDULED → PUBLISHED → ARCHIVED`, `PUBLISHED → DRAFT` 금지
-  (발행된 주소가 공유된 뒤 사라지면 링크가 죽는다. 내릴 때는 `ARCHIVED`)
+- `PostStatus` 전이: `DRAFT → PUBLISHED → ARCHIVED` (+ `ARCHIVED → PUBLISHED` 복구),
+  `PUBLISHED → DRAFT` 금지 — 발행된 주소가 공유된 뒤 사라지면 링크가 죽는다. 내릴 때는 `ARCHIVED`
+- **예약 발행은 P1 에 없다.** 스케줄러(`@EnableScheduling`)를 폴드된 라이브러리가 호스트에
+  얹는 일이라, 요구에 없는 기능을 위해 호스트 앱의 실행 모델을 바꾸게 된다 (YAGNI)
 - `readingMinutes` = 본문 글자수 기준 파생값. 저장 시 계산
 
 ## 3. 스키마 — `code-dictionary/app/src/main/resources/db/migration/V14__blog.sql`
@@ -126,7 +128,7 @@ GET  /api/v1/blog/me/posts?status=          내 글 목록
 POST /api/v1/blog/me/posts                  작성        ← canWrite() 검사
 PUT  /api/v1/blog/me/posts/{id}             수정        ← isOwnedBy() 검사
 DELETE /api/v1/blog/me/posts/{id}           삭제        ← isOwnedBy() 검사
-POST /api/v1/blog/me/posts/{id}/publish     발행/예약   ← isOwnedBy() 검사
+POST /api/v1/blog/me/posts/{id}/publish     발행        ← isOwnedBy() 검사
 POST   /api/v1/blog/comments                댓글 작성 { postSlug, parentId?, body }
 PUT    /api/v1/blog/comments/{id}           내 댓글 수정
 DELETE /api/v1/blog/comments/{id}           내 댓글 삭제 (soft)
@@ -138,7 +140,7 @@ DELETE /api/v1/blog/comments/{id}           내 댓글 삭제 (soft)
 - **`status=SUSPENDED` 는 작성뿐 아니라 댓글도 막는다.** 글만 막고 댓글을 열어 두면 정지 처분이
   사실상 무력해진다 — `BlogProfile.canInteract()` 를 도메인에 두어 두 경로가 같은 판정을 쓴다
 - 로그인 댓글도 Rate Limiter 를 건다. 스팸은 익명에서만 오지 않는다
-- **초안 미리보기**: `GET /api/v1/blog/me/posts/{id}` 는 소유자에게 `DRAFT`/`SCHEDULED` 도
+- **초안 미리보기**: `GET /api/v1/blog/me/posts/{id}` 는 소유자에게 `DRAFT`/`ARCHIVED` 도
   돌려준다. 공개 `GET /api/v1/blog/posts/{slug}` 는 `PUBLISHED` 만 — 미발행 슬러그는 404
 
 ### 4.4 어드민 (`adminConfig`, ROLE_ADMIN)

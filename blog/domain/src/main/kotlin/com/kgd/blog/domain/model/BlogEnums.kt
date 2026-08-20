@@ -40,7 +40,6 @@ enum class CategoryStatus {
  */
 enum class PostStatus {
     DRAFT,
-    SCHEDULED,
     PUBLISHED,
     ARCHIVED;
 
@@ -48,8 +47,7 @@ enum class PostStatus {
     val publiclyVisible: Boolean get() = this == PUBLISHED
 
     fun canTransitionTo(next: PostStatus): Boolean = when (this) {
-        DRAFT -> next in setOf(SCHEDULED, PUBLISHED, ARCHIVED)
-        SCHEDULED -> next in setOf(DRAFT, PUBLISHED, ARCHIVED)
+        DRAFT -> next in setOf(PUBLISHED, ARCHIVED)
         PUBLISHED -> next == ARCHIVED
         ARCHIVED -> next == PUBLISHED
     }

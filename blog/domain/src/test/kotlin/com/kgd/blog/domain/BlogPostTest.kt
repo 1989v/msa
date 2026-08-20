@@ -68,9 +68,8 @@ class BlogPostTest : BehaviorSpec({
             PostStatus.PUBLISHED.canTransitionTo(PostStatus.ARCHIVED) shouldBe true
         }
 
-        then("초안은 예약·발행·보관으로 갈 수 있다") {
+        then("초안은 발행·보관으로 갈 수 있다") {
             val draft = post(status = PostStatus.DRAFT)
-            draft.requireTransitionTo(PostStatus.SCHEDULED)
             draft.requireTransitionTo(PostStatus.PUBLISHED)
             draft.requireTransitionTo(PostStatus.ARCHIVED)
         }

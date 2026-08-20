@@ -16,9 +16,7 @@ data class BlogComment(
     val status: CommentStatus,
 ) {
     init {
-        if (body.isBlank() || body.length > MAX_BODY) {
-            throw BusinessException(ErrorCode.INVALID_INPUT, "댓글은 1~$MAX_BODY 자여야 합니다")
-        }
+        validateBody(body)
     }
 
     fun isOwnedBy(profileId: Long?): Boolean = profileId != null && profileId == this.profileId
@@ -34,6 +32,18 @@ data class BlogComment(
 
         /** 소프트 삭제된 댓글의 표시 문구. 행을 지우면 대댓글이 부모를 잃는다 */
         const val DELETED_PLACEHOLDER = "삭제된 댓글입니다"
+
+        /**
+         * 저장 직전의 본문 정규화 + 검증. 컨트롤러의 `@Size` 와 규칙이 갈리면 어느 쪽이
+         * 진짜인지 알 수 없게 되므로, 실제로 저장되는 값은 항상 여기를 통과한 것이다.
+         */
+        fun validateBody(body: String): String {
+            val trimmed = body.trim()
+            if (trimmed.isEmpty() || trimmed.length > MAX_BODY) {
+                throw BusinessException(ErrorCode.INVALID_INPUT, "댓글은 1~$MAX_BODY 자여야 합니다")
+            }
+            return trimmed
+        }
 
         /** 대댓글의 부모는 반드시 최상위 댓글이어야 한다 (1단계 제한을 도메인이 강제) */
         fun requireTopLevelParent(parent: BlogComment) {

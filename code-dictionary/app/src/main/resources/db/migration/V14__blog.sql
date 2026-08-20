@@ -82,7 +82,7 @@ CREATE TABLE blog_post (
     INDEX idx_blog_post_status_published (status, published_at DESC),
     INDEX idx_blog_post_category (category_id, status, published_at DESC),
     INDEX idx_blog_post_author (author_profile_id, status, published_at DESC),
-    CONSTRAINT chk_blog_post_status CHECK (status IN ('DRAFT', 'SCHEDULED', 'PUBLISHED', 'ARCHIVED'))
+    CONSTRAINT chk_blog_post_status CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 조회 원장. 조회수의 진실은 이 테이블이고 blog_post.view_count 는 그 파생값이다.
