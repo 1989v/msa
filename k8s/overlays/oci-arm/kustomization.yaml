@@ -319,7 +319,7 @@ images:
     newTag: 1eadfab
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 29675ee
+    newTag: ef77011
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 3d19d63
