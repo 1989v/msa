@@ -84,17 +84,36 @@ data class BulkUpsertAttractionResponse(val created: Int, val updated: Int, val 
     }
 }
 
+/**
+ * 관광지 조회 응답.
+ *
+ * **원천 컬럼을 전부 담는다.** 개요 수집기는 이 응답을 읽어 그대로 bulk upsert 로 되돌려
+ * 보내고, bulk 는 전체 동기화라 **여기 없는 필드는 매일 null 로 덮인다** (ADR-0065).
+ * 실제로 cat1~3 이 이 응답에 없어 그렇게 지워지고 있었다. 컬럼을 추가하면 여기도 같이 넣는다.
+ */
 data class AttractionResponse(
     val id: Long,
     val contentId: String,
     val lang: String,
     val title: String,
     val address: String?,
+    val zipcode: String?,
     val areaCode: String?,
     val sigunguCode: String?,
     val ldongRegnCd: String?,
     val ldongSignguCd: String?,
     val category: String?,
+    val cat1: String?,
+    val cat2: String?,
+    val cat3: String?,
+    val lclsSystm1: String?,
+    val lclsSystm2: String?,
+    val lclsSystm3: String?,
+    val contentTypeId: String?,
+    val copyrightDivCd: String?,
+    val thumbnailUrl: String?,
+    val mapLevel: Int?,
+    val sourceCreatedAt: LocalDateTime?,
     val latitude: Double,
     val longitude: Double,
     val imageUrl: String?,
@@ -110,11 +129,23 @@ data class AttractionResponse(
             lang = view.lang,
             title = view.title,
             address = view.address,
+            zipcode = view.zipcode,
             areaCode = view.areaCode,
             sigunguCode = view.sigunguCode,
             ldongRegnCd = view.ldongRegnCd,
             ldongSignguCd = view.ldongSignguCd,
             category = view.category,
+            cat1 = view.cat1,
+            cat2 = view.cat2,
+            cat3 = view.cat3,
+            lclsSystm1 = view.lclsSystm1,
+            lclsSystm2 = view.lclsSystm2,
+            lclsSystm3 = view.lclsSystm3,
+            contentTypeId = view.contentTypeId,
+            copyrightDivCd = view.copyrightDivCd,
+            thumbnailUrl = view.thumbnailUrl,
+            mapLevel = view.mapLevel,
+            sourceCreatedAt = view.sourceCreatedAt,
             latitude = view.latitude,
             longitude = view.longitude,
             imageUrl = view.imageUrl,
