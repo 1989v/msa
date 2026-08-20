@@ -22,7 +22,11 @@ spec:
   failedJobsHistoryLimit: 5
   jobTemplate:
     spec:
-      backoffLimit: 1
+      # 새로 뜬 파드는 첫 몇 초간 DNS egress 가 막힌다 — k3s 가 netpol 에 파드 IP 를
+      # 등록하기 전이라 CoreDNS 로 못 나가고 `UnknownHostException: opensearch` 로 죽는다.
+      # 노드가 포화(대량 롤아웃)면 이 창이 1분 넘게 벌어져 2회로는 못 넘긴다.
+      # 재색인은 멱등(alias swap)이라 재시도에 부작용이 없다.
+      backoffLimit: 4
       template:
         metadata:
           labels:
