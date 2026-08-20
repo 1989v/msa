@@ -175,6 +175,41 @@ python3 -m src.main --job=admin-regions --file ~/Downloads/법정동코드_전�
 - **세종은 시도 행이 없다.** 자료에 `3600000000` 이 없고 `3611000000 세종특별자치시` 만 있어,
   그대로 두면 드릴다운에서 사라진다. 파서가 자식의 이름으로 시도 행을 만들어 붙인다.
 
+## 다른 장비에서 돌리기 — 키를 손으로 옮기지 않는다
+
+**자동 수집(개요·링크·재색인)은 로컬과 무관하다.** CronJob 이 클러스터 Secret 에서 키를 읽으므로
+작업 장비가 꺼져 있어도 돈다. 로컬 키가 필요한 건 **수동 잡을 로컬에서 돌릴 때뿐**이다.
+
+### ① 아예 클러스터에서 실행 (권장 — 로컬에 키가 없어도 된다)
+
+CronJob 의 파드 스펙(Secret 마운트 포함)을 그대로 쓰고 `args` 만 바꾼다. kubectl 만 되면 어느
+장비든 동작한다.
+
+```bash
+kubectl -n commerce create job sync-once --from=cronjob/place-ingest-overview --dry-run=client -o json \
+  | jq '.spec.template.spec.containers[0].args=["--job=sync","--content-type=attraction"]' \
+  | kubectl apply -f -
+```
+
+### ② 클러스터 Secret 에서 로컬 env 복원
+
+**클러스터가 원본이고 `~/.config/1989v/tour.env` 는 사본이다.** 장비를 옮기거나 파일을 잃으면
+여기서 되살린다 (2026-08-21 복원값 == 원본 실측 확인).
+
+```bash
+mkdir -p ~/.config/1989v && umask 077
+{ for k in tour-api-key youtube-api-key naver-client-id naver-client-secret; do
+    v=$(kubectl -n commerce get secret place-ingest-secrets -o jsonpath="{.data.$k}" 2>/dev/null | base64 -d)
+    [ -n "$v" ] && echo "$(echo $k | tr 'a-z-' 'A-Z_')=$v"
+  done; } > ~/.config/1989v/tour.env
+chmod 600 ~/.config/1989v/tour.env
+```
+
+로컬 env 파일은 **지우지 않는다** — 클러스터를 재구축하면 Secret 이 사라지고, 그때 재등록할
+원본이 이 파일이다. 레포 밖 + `chmod 600` 이라 노출 경로가 없다.
+
+> `--job=admin-regions` 만 예외로 로컬이 편하다 — 법정동 자료 **파일**이 있어야 해서다.
+
 ## 배포 전 확인
 
 ```bash
