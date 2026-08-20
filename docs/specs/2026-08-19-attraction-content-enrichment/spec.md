@@ -104,7 +104,7 @@ POST /internal/attractions/links/bulk
 
 | 소스 | 엔드포인트 | 파라미터 | 상한 | TTL |
 |---|---|---|---|---|
-| YouTube | `youtube/v3/search` | `q={title}`, `type=video`, `maxResults=5`, `regionCode=KR`, `relevanceLanguage={lang}`, `safeSearch=strict` | **일 100 관광지** (10,000 units ÷ 100) | 90일 |
+| YouTube | `youtube/v3/search` | `q={title}`, `type=video`, `maxResults=10`(노출은 FE 가 5로 자름), `regionCode=KR`, `relevanceLanguage={lang}`, `safeSearch=strict` | **일 100 관광지** (10,000 units ÷ 100) | 90일 |
 | 네이버 | `/v1/search/blog.json` | `query={title}`, `display=5`, `sort=sim` | 일 25,000콜 | 30일 |
 
 - **매칭 필터**: 영상/글 제목에 관광지명(공백 제거·정규화)이 포함되지 않으면 버린다.

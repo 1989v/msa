@@ -36,6 +36,8 @@ const UI = {
   },
 } as const;
 
+const VISIBLE_VIDEOS = 5;
+
 const PROVIDER_LABEL: Record<string, { ko: string; en: string }> = {
   INSTAGRAM: { ko: '인스타그램', en: 'Instagram' },
   YOUTUBE: { ko: '유튜브에서 찾기', en: 'Search on YouTube' },
@@ -130,7 +132,9 @@ export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceL
 
   if (!data) return null; // 실패는 조용히 — 링크는 부수 정보다
 
-  const videos = data.collected.filter((l) => l.source === 'YOUTUBE');
+  // 저장은 관광지당 최대 10개(수집기 MAX_RESULTS), 노출은 5개 — 캐로셀이 길어지면
+  // 아래 SNS·여행 상품 줄이 밀린다. 저장분이 있으니 노출을 늘리는 건 이 숫자 하나다.
+  const videos = data.collected.filter((l) => l.source === 'YOUTUBE').slice(0, VISIBLE_VIDEOS);
   const blogs = data.collected.filter((l) => l.source === 'NAVER_BLOG');
   const social = data.deepLinks.filter((l) => l.kind === 'SOCIAL');
   const tour = data.deepLinks.filter((l) => l.kind === 'TOUR_PRODUCT');

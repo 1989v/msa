@@ -20,7 +20,10 @@ from src.linkmatch import matches
 SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
 WATCH_URL = "https://www.youtube.com/watch?v="
-MAX_RESULTS = 5
+# 후보 10개를 받는다 — search.list 는 1개를 받든 50개를 받든 같은 100 units 라 공짜이고,
+# 이름 매칭 필터가 후보를 걸러낸 뒤에도 화면 몫(5개)이 실제로 남으려면 여유가 필요하다.
+# 화면 노출 수는 FE 가 정한다(현재 5) — 저장분이 있으면 노출을 늘릴 때 재수집이 필요 없다.
+MAX_RESULTS = 10
 # videos.list 는 id 를 50개까지 묶어 **1 unit** 이다. search.list(건당 100 units) 옆에서는
 # 사실상 공짜라 조회수를 받아 정렬한다 — 안 받으면 관련성 순이지 '인기 영상'이 아니다.
 STATS_BATCH = 50

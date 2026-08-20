@@ -133,7 +133,7 @@
 | | |
 |---|---|
 | 발급 | Google Cloud Console → API 및 서비스 → 라이브러리 → `YouTube Data API v3` 사용 설정 → 사용자 인증 정보 → API 키 |
-| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=5`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict` |
+| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=10`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict` |
 | 호출 ② | `youtube/v3/videos` — `part=statistics`, `id=` (최대 50개 묶음) |
 | 쿼터 | 일 10,000 units · `search.list` **100 units** + `videos.list` **1 unit** → **하루 100 관광지** |
 | 저장 | videoId · 제목 · URL · 썸네일 **URL** · 채널명 · 게시일 · **조회수** |
@@ -147,8 +147,8 @@
 쿼터 소진은 **403 `quotaExceeded`** 이지 429 가 아니다. 만나면 그 실행을 즉시 멈춘다.
 서버에서 호출하므로 **HTTP 리퍼러 제한이 통하지 않는다** — IP 제한을 쓰거나 제한 없이 둔다.
 
-**주의: 100 units 는 "영상 100개"가 아니라 호출 1회의 가격표다.** 영상은 관광지당 5개만
-요청하며(`maxResults=5`), 개수를 줄여도 비용은 같다. 수집 카드와 별개로 유튜브 **검색
+**주의: 100 units 는 "영상 100개"가 아니라 호출 1회의 가격표다.** 1개를 받든 50개를 받든
+비용이 같아 후보 10개를 받아 저장하고, 화면은 5개만 노출한다(노출 확대는 FE 상수 하나). 수집 카드와 별개로 유튜브 **검색
 딥링크**(`results?search_query=`)를 항상 조립해 내보낸다 — API 호출 0, 키 불필요.
 
 > **30일 보관 제한이 예산과 맞물린다.** 하루 100건 × 30일 = **3,000곳**이 신선하게 유지할 수 있는
