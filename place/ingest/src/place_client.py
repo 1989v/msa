@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import urllib.parse
 import urllib.request
 
@@ -20,6 +21,15 @@ _UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/140.0 Safari/537.36")
 
 
+# 연결 자체가 안 되는 오류만 재시도한다 (HTTP 4xx/5xx 는 서버의 답이므로 그대로 올린다).
+#
+# 왜 필요한가: k3s 의 NetworkPolicy 컨트롤러는 **새 파드의 IP 를 허용 목록에 등록하는 데
+# 수 초~수십 초가 걸린다.** 파이썬 잡은 뜨자마자 1초 안에 place 를 부르므로 그 창에서
+# REJECT(= Connection refused)를 맞는다 — 같은 파드가 25초 뒤엔 성공하는 것을 실측했다
+# (2026-08-21). Spring 배치(재색인)가 무사했던 건 부팅 40초가 우연히 이 창을 넘겨서다.
+_CONNECT_RETRIES = (2, 4, 8, 16, 30)
+
+
 def _request(method: str, path: str, body: dict | None = None, timeout: int = 120) -> dict:
     data = json.dumps(body, ensure_ascii=False).encode() if body is not None else None
     req = urllib.request.Request(
@@ -29,8 +39,18 @@ def _request(method: str, path: str, body: dict | None = None, timeout: int = 12
         headers={"Accept": "application/json", "User-Agent": _UA,
                  **({"Content-Type": "application/json"} if data else {})},
     )
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode())
+    for attempt, wait in enumerate((*_CONNECT_RETRIES, None)):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read().decode())
+        except urllib.error.HTTPError:
+            raise                                  # 서버가 답한 것 — 재시도 대상이 아니다
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            if wait is None:
+                raise
+            print(f"[place] 연결 실패(시도 {attempt + 1}): {e} — {wait}s 후 재시도", flush=True)
+            time.sleep(wait)
+    raise AssertionError("unreachable")
 
 
 def fetch_attractions() -> list[dict]:
