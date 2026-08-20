@@ -21,6 +21,7 @@ data class BlogCategoryNode(
     val description: String?,
     val path: String,
     val depth: Int,
+    val orderNo: Int,
     val postCount: Long,
     val children: List<BlogCategoryNode>,
 )

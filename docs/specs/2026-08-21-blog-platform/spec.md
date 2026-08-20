@@ -230,10 +230,11 @@ src/pages/blog/BlogAuthorsPage.tsx      저자 승인·정지
 src/pages/blog/BlogCommentsPage.tsx     모더레이션
 ```
 
-### 7.3 공용 에디터
+### 7.3 에디터
 
-`packages/design-system` 에 `MarkdownEditor` 추가 → 0.5.0 → `scripts/sync-design-system.sh`
-로 portal-fe / admin-fe 재배포. 두 벌을 만들면 미리보기 규칙이 갈린다.
+두 앱에 각각 둔다 (`packages/design-system` 은 건드리지 않는다 — quant-fe·gifticon-fe 까지
+`marked`/`dompurify` 를 받게 된다). admin-fe 에 `marked` + `dompurify` 를 추가한다.
+중복되는 것은 입력 화면뿐이고 규칙은 전부 `BlogPostWriteService` 한 곳에 있다.
 
 ## 8. 테스트
 

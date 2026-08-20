@@ -20,6 +20,11 @@ import { ResumeProfilePage } from '@/pages/ResumeProfilePage';
 import { DisplayServicesPage } from '@/pages/DisplayServicesPage';
 import { DealOffersPage } from '@/pages/DealOffersPage';
 import { DealCategoriesPage } from '@/pages/DealCategoriesPage';
+// ADR-0072 — blog.1989v.com. 운영자가 글을 쓰는 기본 경로가 여기다.
+import { BlogPostsPage } from '@/pages/blog/BlogPostsPage';
+import { BlogCategoriesPage } from '@/pages/blog/BlogCategoriesPage';
+import { BlogAuthorsPage } from '@/pages/blog/BlogAuthorsPage';
+import { BlogCommentsPage } from '@/pages/blog/BlogCommentsPage';
 
 export default function App() {
   return (
@@ -42,6 +47,10 @@ export default function App() {
         <Route path="display/services" element={<DisplayServicesPage />} />
         <Route path="deal/offers" element={<DealOffersPage />} />
         <Route path="deal/categories" element={<DealCategoriesPage />} />
+        <Route path="blog/posts" element={<BlogPostsPage />} />
+        <Route path="blog/categories" element={<BlogCategoriesPage />} />
+        <Route path="blog/authors" element={<BlogAuthorsPage />} />
+        <Route path="blog/comments" element={<BlogCommentsPage />} />
         <Route path="search-debug" element={<SearchDebugPage />} />
         <Route path="search-debug/query-builder" element={<SearchQueryBuilderPage />} />
         <Route path="search-debug/judgments" element={<SearchJudgmentsPage />} />

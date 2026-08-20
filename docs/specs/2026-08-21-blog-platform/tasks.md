@@ -63,10 +63,9 @@ ADR-0072 / spec.md 기준. 그룹 순서대로 진행하고, 그룹마다 커밋
 - [ ] T7.4 DNS `blog` proxied 안내 (사용자 작업)
 - [ ] 검증: `./gradlew :gateway:build`
 
-## TG8 — 공용 에디터
+## TG8 — 에디터 의존성
 
-- [ ] T8.1 `packages/design-system` 에 `MarkdownEditor` (+ CSS, index.ts export)
-- [ ] T8.2 버전 0.5.0 → `scripts/sync-design-system.sh` 실행 (portal-fe / admin-fe 재배포)
+- [ ] T8.1 admin-fe 에 `marked` + `dompurify` 추가 (portal-fe 에는 이미 있다)
 
 ## TG9 — portal-fe
 

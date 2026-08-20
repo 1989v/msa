@@ -48,6 +48,7 @@ export interface BlogCategoryNode {
   description: string | null;
   path: string;
   depth: number;
+  orderNo: number;
   postCount: number;
   children: BlogCategoryNode[];
 }

@@ -231,6 +231,7 @@ class BlogAdminService(
         description = category.description,
         path = category.path,
         depth = category.depth,
+        orderNo = category.orderNo,
         postCount = postRepository.countByCategoryId(category.id ?: 0),
         children = emptyList(),
     )

@@ -21,6 +21,10 @@ import {
   LayoutGrid,
   Tag,
   Tags,
+  PenLine,
+  FolderTree,
+  UserCheck,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +52,11 @@ const navItems: NavItem[] = [
   // ADR-0069 — deal.1989v.com 혜택 링크 허브
   { label: '혜택 링크', icon: Tag, to: '/deal/offers', enabled: true },
   { label: '혜택 분류', icon: Tags, to: '/deal/categories', enabled: true },
+  // ADR-0072 — blog.1989v.com 블로그 플랫폼
+  { label: '블로그 글', icon: PenLine, to: '/blog/posts', enabled: true },
+  { label: '블로그 분류', icon: FolderTree, to: '/blog/categories', enabled: true },
+  { label: '블로그 저자', icon: UserCheck, to: '/blog/authors', enabled: true },
+  { label: '블로그 댓글', icon: MessageSquare, to: '/blog/comments', enabled: true },
   // ADR-0050 Phase 4 UI — 검색 디버그 + 쿼리 빌더
   { label: '검색 디버그', icon: Search, to: '/search-debug', enabled: true },
   { label: '검색 쿼리 빌더', icon: Sliders, to: '/search-debug/query-builder', enabled: true },

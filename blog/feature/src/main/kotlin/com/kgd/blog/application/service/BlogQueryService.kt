@@ -58,6 +58,7 @@ class BlogQueryService(
                         description = category.description,
                         path = category.path,
                         depth = category.depth,
+                        orderNo = category.orderNo,
                         // 하위 글까지 합산한다 — 상위 카테고리가 늘 0 이면 트리가 죽어 보인다
                         postCount = counts[category.id] ?: 0L,
                         children = children,

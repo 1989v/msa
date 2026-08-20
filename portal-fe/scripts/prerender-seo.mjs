@@ -467,7 +467,10 @@ async function writeRobotsAndSitemaps(
   // P1 유입이 공유라 OG 가 색인보다 중요하다. sitemap·llms.txt 는 두지 않는다.
   await emit(`seo/${DEAL_HOST}/robots.txt`, dealRobotsTxt());
   // 블로그는 자체 콘텐츠라 thin 판정 대상이 아니다 — 색인을 연다 (ADR-0072 §8)
-  await emit(`seo/${BLOG_HOST}/robots.txt`, robotsTxt(BLOG_ORIGIN));
+  // 스튜디오·로그인은 크롤 자체를 막는다. useSeo 의 noindex 는 JS 를 실행하는 크롤러에만
+  // 닿는데, 이 경로들은 프리렌더가 없어 셸의 기본 메타가 그대로 나간다 — 색인되면
+  // 제목이 같은 문서가 여러 개 생긴다.
+  await emit(`seo/${BLOG_HOST}/robots.txt`, robotsTxt(BLOG_ORIGIN, ['/studio', '/login']));
   await emit(`seo/${BLOG_HOST}/sitemap.xml`, sitemapXml(blogSitemapEntries(blog)));
 
   await emit(`seo/${GAME_HOST}/llms.txt`, gameLlmsTxt(games));
@@ -533,14 +536,14 @@ function sitemapIndexXml(locs) {
   ].join('\n');
 }
 
-function robotsTxt(origin) {
+function robotsTxt(origin, extraDisallow = []) {
   return `User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /oauth/
 Disallow: /admin/
 Disallow: /shop/login
-Disallow: /shop/orders
+Disallow: /shop/orders${extraDisallow.map((path) => `\nDisallow: ${path}`).join('')}
 
 # /games/<slug>/index.html 은 상세 페이지가 iframe 으로 물고 있는 원시 게임 프레임이다.
 # nginx 가 X-Robots-Tag: noindex 를 붙이므로 크롤은 열어둬야 그 헤더를 읽을 수 있다.
