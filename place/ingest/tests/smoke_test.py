@@ -108,8 +108,9 @@ def main() -> int:
     assert POSTED["probes"] == [{"contentId": "B", "lang": "ko"}], POSTED["probes"]
 
     _youtube_matcher()
+    _admin_region_parser()
 
-    print("SMOKE OK — 제외목록 적용 · 429 는 negative cache 제외 · 전체 레코드 적재 · 매칭 필터(유튜브·블로그 공용)")
+    print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 법정동 파서")
     return 0
 
 
@@ -135,6 +136,29 @@ def _youtube_matcher() -> None:
     assert strip_tags("<b>경복궁</b> 나들이") == "경복궁 나들이"
     assert naver._post_date("20260819") == "2026-08-19T00:00:00"
     assert naver._post_date("2026") is None
+
+
+def _admin_region_parser() -> None:
+    """법정동코드 자료에서 시도·시군구만 뽑는다 — 읍면동과 폐지 코드는 버린다."""
+    from src.admin_region import parse
+
+    rows = parse([
+        "법정동코드\t법정동명\t폐지여부",
+        "1100000000\t서울특별시\t존재",
+        "1111000000\t서울특별시 종로구\t존재",
+        "1111010100\t서울특별시 종로구 청운동\t존재",   # 읍면동 — 탐색 단위가 아니다
+        "2600000000\t부산광역시\t폐지",                  # 폐지 코드
+        "4100000000\t경기도\t존재",
+        "4111000000\t경기도 수원시\t존재",
+        "4111100000\t경기도 수원시 장안구\t존재",
+    ])
+
+    assert [r["code"] for r in rows] == ["11", "11110", "41", "41110", "41111"], rows
+    # 상위를 이미 골랐으므로 시도 접두는 떼고 보인다
+    assert rows[1]["name"] == "종로구"
+    # 시(수원시)와 자치구(수원시 장안구)가 둘 다 5자리다 — 어느 쪽을 쓸지 여기서 정하지 않는다
+    assert rows[3]["name"] == "수원시" and rows[4]["name"] == "수원시 장안구"
+    assert all(r["parentCode"] == r["code"][:2] for r in rows if r["level"] == "SIGUNGU")
 
 
 if __name__ == "__main__":

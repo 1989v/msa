@@ -152,6 +152,12 @@ def fetch_area_based(key: str, svc_key: str, content_type: str, area: str | None
                              or LDONG_TO_AREA.get(str(it.get("lDongRegnCd") or "").strip())),
                 "sigunguCode": (str(it.get("sigungucode") or "").strip()
                                 or str(it.get("lDongSignguCd") or "").strip() or None),
+                # ADR-0071 — 법정동 코드는 **역산하지 않고 원천 값 그대로** 싣는다.
+                # 위 sigunguCode 는 구 코드와 법정동 코드를 대체해 담아 두 체계가 섞였다
+                # (실측: 법정동 25,030행 + 구코드 19,874행 → 시군구가 486개로 보였다).
+                # 지역 축은 아래 두 필드로만 세운다.
+                "ldongRegnCd": str(it.get("lDongRegnCd") or "").strip() or None,
+                "ldongSignguCd": str(it.get("lDongSignguCd") or "").strip() or None,
                 "category": categorize(it.get("cat1") or "", it.get("cat2") or "",
                                        it.get("lclsSystm1") or ""),
                 "cat1": it.get("cat1") or None,

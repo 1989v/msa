@@ -5,6 +5,7 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=overview --budget=1000
     python -m src.main --job=stats            # 잔량만 (TourAPI 호출 0)
     python -m src.main --job=sync --content-type=attraction
+    python -m src.main --job=admin-regions --file 법정동코드_전체자료.txt
 
 외부 :443 을 부르는 것은 이 CronJob 파드뿐이다 — 상시 파드인 place 에는 egress 를 열지 않는다
 (ADR-0031 §5.10 화이트리스트에 place-ingest 만 추가).
@@ -18,7 +19,9 @@ import argparse
 import os
 import sys
 
-from src import backfill_overview, naver, place_client, sync_tour, youtube
+from pathlib import Path
+
+from src import admin_region, backfill_overview, naver, place_client, sync_tour, youtube
 
 
 def _api_key() -> str:
@@ -102,14 +105,33 @@ def _collect_source(source: str, fetch, limit: int) -> None:
                           f"· 실패 {applied['failed']}")
 
 
+def _job_admin_regions(file: str | None) -> int:
+    """행정안전부 법정동코드 자료를 적재한다 (ADR-0071).
+
+    자료 확보는 사용자 작업이다 — 다운로드가 세션·폼 파라미터에 묶여 있어 스크립트로 긁으면
+    정부 포털의 내부 폼을 역공학하는 셈이 된다.
+    """
+    if not file:
+        raise SystemExit("--file 로 법정동코드 전체자료 경로를 주세요")
+    regions = admin_region.run(Path(file).expanduser())
+    sido = sum(1 for r in regions if r["level"] == "SIDO")
+    located = sum(1 for r in regions if r.get("latitude") is not None)
+    created, updated = admin_region.upsert(regions)
+    backfill_overview.log(f"행정구역 {len(regions):,}건 (시도 {sido} · 시군구 {len(regions) - sido:,}) "
+                          f"— 신규 {created} · 갱신 {updated} · 좌표 채움 {located:,}")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--job", required=True, choices=["overview", "stats", "sync", "links"])
+    ap.add_argument("--job", required=True,
+                    choices=["overview", "stats", "sync", "links", "admin-regions"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
     ap.add_argument("--content-type", default="attraction", choices=list(sync_tour.CONTENT_TYPES))
     ap.add_argument("--limit", type=int, default=200000, help="목록 동기화 상한 (사실상 무제한)")
+    ap.add_argument("--file", help="법정동코드 전체자료 경로 (--job=admin-regions)")
     ap.add_argument("--link-limit", type=int, default=int(os.environ.get("LINK_LIMIT", "10")),
                     help="한 실행에서 훑을 관광지 수 (일일 예산은 place 가 따로 센다)")
     args = ap.parse_args()
@@ -121,6 +143,8 @@ def main() -> int:
         return _job_overview(args.budget, langs)
     if args.job == "links":
         return _job_links(args.link_limit)
+    if args.job == "admin-regions":
+        return _job_admin_regions(args.file)
     return _job_sync(args.content_type, args.limit)
 
 

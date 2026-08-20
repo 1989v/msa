@@ -28,8 +28,8 @@ SIGHT_CATEGORIES = ("nature", "history", "culture", "leisure")
 
 # bulk upsert 가 받는 필드 (id·status 는 서버 소유라 되돌려 보내지 않는다)
 UPSERT_FIELDS = ("contentId", "lang", "title", "latitude", "longitude", "address",
-                 "areaCode", "sigunguCode", "category", "imageUrl", "tel",
-                 "overview", "sourceModifiedAt")
+                 "areaCode", "sigunguCode", "ldongRegnCd", "ldongSignguCd",
+                 "category", "imageUrl", "tel", "overview", "sourceModifiedAt")
 
 
 def log(msg: str) -> None:

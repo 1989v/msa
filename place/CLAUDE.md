@@ -22,6 +22,11 @@
 - **MySQL = SSOT, OpenSearch(`poi` 인덱스) = read model.** POI 는 정적 reference data 라 Kafka 없이
   **동기 색인**(저장→index). 색인은 외부 IO 이므로 DB 트랜잭션 밖에서 수행 (transactional-usage.md).
 - 지리 계층은 self-FK 단일 `regions` 테이블(level). `geonames_id` 가 멱등 upsert 키.
+- **`regions`(GeoNames 지명 계층)과 `admin_regions`(한국 행정구역)은 다른 것이다** (ADR-0071).
+  GeoNames 의 KR CITY 296행은 흥해읍·왜관읍이 섞인 지명 덤프이고 `admin2_code` 가 전부 NULL 이라
+  시군구 축으로 쓸 수 없다. 한국 행정구역은 법정동 코드로 따로 세운다.
+- 관광지의 지역 축은 `ldong_regn_cd`/`ldong_signgu_cd` 다. 기존 `area_code`/`sigungu_code` 는
+  두 코드 체계가 섞여 있어(법정동 25,030행 + TourAPI 구코드 19,874행) **필터 축으로 쓰지 않는다.**
 - 스키마는 **Flyway+validate** 단독 책임. 단일 datasource (warehouse 의 routing 미사용).
 - OpenSearch 클라이언트는 ADR-0055 패턴(opensearch-java + HttpClient5) 재사용.
 
@@ -30,6 +35,8 @@
 | Method | Path | 인증 | 설명 |
 |---|---|---|---|
 | GET | `/api/places/regions?level=&parentId=` | public | 계층 탐색 |
+| GET | `/api/places/admin-regions?level=&parent=` | public | **한국 행정구역**(법정동 코드) 시도/시군구 (ADR-0071) |
+| POST | `/api/places/admin-regions/bulk` | ADMIN | 법정동코드 자료 적재 |
 | GET | `/api/places/nearby?lat&lng&radiusKm&category&keyword` | public | 반경 내 POI 거리순 |
 | POST | `/api/places/regions`(+`/bulk`), `/api/places/pois`(+`/bulk`) | ADMIN | 적재 |
 | POST | `/api/places/attractions/bulk` | ADMIN | 관광지 멱등 upsert — (contentId, lang) 자연키 (ADR-0065) |

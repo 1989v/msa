@@ -33,6 +33,12 @@ class AttractionJpaEntity(
     @Column(length = 8)
     val sigunguCode: String? = null,
 
+    @Column(length = 2)
+    val ldongRegnCd: String? = null,
+
+    @Column(length = 3)
+    val ldongSignguCd: String? = null,
+
     @Column(length = 50)
     val category: String? = null,
 
@@ -76,6 +82,8 @@ class AttractionJpaEntity(
         address = address,
         areaCode = areaCode,
         sigunguCode = sigunguCode,
+        ldongRegnCd = ldongRegnCd,
+        ldongSignguCd = ldongSignguCd,
         category = category,
         cat1 = cat1,
         cat2 = cat2,
@@ -99,6 +107,8 @@ class AttractionJpaEntity(
             address = attraction.address,
             areaCode = attraction.areaCode,
             sigunguCode = attraction.sigunguCode,
+            ldongRegnCd = attraction.ldongRegnCd,
+            ldongSignguCd = attraction.ldongSignguCd,
             category = attraction.category,
             cat1 = attraction.cat1,
             cat2 = attraction.cat2,

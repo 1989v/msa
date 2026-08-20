@@ -17,6 +17,8 @@ interface GetAttractionUseCase {
         val address: String?,
         val areaCode: String?,
         val sigunguCode: String?,
+        val ldongRegnCd: String?,
+        val ldongSignguCd: String?,
         val category: String?,
         val latitude: Double,
         val longitude: Double,

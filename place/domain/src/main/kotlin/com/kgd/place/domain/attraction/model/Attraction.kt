@@ -15,6 +15,8 @@ class Attraction private constructor(
     var address: String? = null,
     var areaCode: String? = null,
     var sigunguCode: String? = null,
+    var ldongRegnCd: String? = null,
+    var ldongSignguCd: String? = null,
     var category: String? = null,
     var cat1: String? = null,
     var cat2: String? = null,
@@ -41,6 +43,8 @@ class Attraction private constructor(
             address: String? = null,
             areaCode: String? = null,
             sigunguCode: String? = null,
+            ldongRegnCd: String? = null,
+            ldongSignguCd: String? = null,
             category: String? = null,
             cat1: String? = null,
             cat2: String? = null,
@@ -64,6 +68,8 @@ class Attraction private constructor(
                 address = address?.takeIf { it.isNotBlank() },
                 areaCode = areaCode?.takeIf { it.isNotBlank() },
                 sigunguCode = sigunguCode?.takeIf { it.isNotBlank() },
+                ldongRegnCd = ldongRegnCd?.takeIf { it.isNotBlank() },
+                ldongSignguCd = ldongSignguCd?.takeIf { it.isNotBlank() },
                 category = category?.takeIf { it.isNotBlank() },
                 cat1 = cat1?.takeIf { it.isNotBlank() },
                 cat2 = cat2?.takeIf { it.isNotBlank() },
@@ -85,6 +91,8 @@ class Attraction private constructor(
             address: String?,
             areaCode: String?,
             sigunguCode: String?,
+            ldongRegnCd: String?,
+            ldongSignguCd: String?,
             category: String?,
             cat1: String?,
             cat2: String?,
@@ -105,6 +113,8 @@ class Attraction private constructor(
             address = address,
             areaCode = areaCode,
             sigunguCode = sigunguCode,
+            ldongRegnCd = ldongRegnCd,
+            ldongSignguCd = ldongSignguCd,
             category = category,
             cat1 = cat1,
             cat2 = cat2,
@@ -132,6 +142,10 @@ class Attraction private constructor(
         address = source.address
         areaCode = source.areaCode
         sigunguCode = source.sigunguCode
+        // 법정동 코드는 목록 원천이 주는 값이라 구 코드와 같이 최신값으로 덮는다.
+        // 개요처럼 보존해야 하는 보강 필드가 아니다 (ADR-0071).
+        ldongRegnCd = source.ldongRegnCd
+        ldongSignguCd = source.ldongSignguCd
         category = source.category
         cat1 = source.cat1
         cat2 = source.cat2

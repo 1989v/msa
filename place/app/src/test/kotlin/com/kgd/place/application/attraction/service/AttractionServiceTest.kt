@@ -57,6 +57,7 @@ class AttractionServiceTest : BehaviorSpec({
                 val attraction = Attraction.restore(
                     id = 1L, contentId = "126508", lang = "ko", title = "경복궁",
                     address = "서울 종로구", areaCode = "1", sigunguCode = null,
+                    ldongRegnCd = "11", ldongSignguCd = "110",
                     category = "역사", cat1 = "A02", cat2 = null, cat3 = null,
                     latitude = 37.5788, longitude = 126.9770,
                     imageUrl = null, tel = null, overview = null,

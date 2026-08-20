@@ -14,6 +14,8 @@ interface UpsertAttractionUseCase {
         val address: String? = null,
         val areaCode: String? = null,
         val sigunguCode: String? = null,
+        val ldongRegnCd: String? = null,
+        val ldongSignguCd: String? = null,
         val category: String? = null,
         val cat1: String? = null,
         val cat2: String? = null,
