@@ -85,16 +85,25 @@ NON_TOURISM_LCLS3 = {"EX050800"}
 
 
 def categorize(cat1: str, cat2: str, lcls1: str = "", lcls2: str = "", lcls3: str = "") -> str:
-    """구 분류(cat1/cat2)를 우선하고, 비면 신규 분류체계로 받아낸다.
+    """**더 구체적인 코드가 이긴다** — 신/구 어느 체계인지가 아니라 얼마나 좁게 말하는지로 고른다.
 
-    관광지가 아닌 것(의료관광)은 앞단에서 걸러 `etc` 로 보낸다 — 구 분류가 뭐라 하든
+    원천은 한 레코드에 두 체계를 같이 준다. 신 체계를 통째로 앞세우면 캠핑장 1,335건이
+    `AC`(숙박)로 넘어가 관광지 목록에서 사라진다 — 구 코드의 `A03`(레포츠)가 더 맞다.
+    거꾸로 구 코드를 통째로 앞세우면 온천·스파(`EX05`)가 `A0202`(자연) 때문에 자연으로
+    간다. 어느 체계도 항상 옳지 않고, **좁게 말하는 쪽이 옳다.**
+
+    그래서 순서는 소분류 → 중분류 → 구 중분류 → 구 대분류 → 신 대분류다.
+    실측(2026-08-21): 이 순서로 517건이 바뀌고 전부 온천·스파·케이블카가 leisure 로
+    옮겨가는 방향이었다.
+
+    관광지가 아닌 것(의료관광)은 앞단에서 걸러 `etc` 로 보낸다 — 어느 코드가 뭐라 하든
     병원은 관광지가 아니다.
     """
     if lcls3 in NON_TOURISM_LCLS3:
         return "etc"
-    return (CAT2_OVERRIDE.get(cat2)
+    return (LCLS2_MAP.get(lcls2)
+            or CAT2_OVERRIDE.get(cat2)
             or CAT1_MAP.get(cat1)
-            or LCLS2_MAP.get(lcls2)
             or LCLS1_MAP.get(lcls1, "etc"))
 
 

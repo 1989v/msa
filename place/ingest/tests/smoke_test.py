@@ -208,10 +208,21 @@ def _categorize_rules() -> None:
     assert categorize("", "", "EX", "EX03", "EX030100") == "culture"   # 체험마을
     assert categorize("", "", "EX", "EX05", "EX050100") == "leisure"   # 온천
     assert categorize("", "", "EX", "EX07", "EX070100") == "leisure"   # 케이블카
-    # 기존 경로는 그대로 — 구 분류 우선, 없으면 1단계 폴백
+    # 구 분류만 있으면 그대로 쓴다
     assert categorize("A02", "A0201", "", "", "") == "history"
     assert categorize("", "", "NA", "", "") == "nature"
     assert categorize("", "", "SH", "SH04", "") == "shopping"
+
+    # ── 두 체계가 부딪히면 **좁게 말하는 쪽**이 이긴다 (2026-08-21 실측 517건) ──
+    # 온천/스파: 구 코드는 A0202(자연)라지만 EX05 가 더 구체적이다.
+    # 실제로 `Q Spa & Clinic` 이 이것 때문에 자연으로 목록에 떠 있었다.
+    assert categorize("A02", "A0202", "EX", "EX05", "EX050100") == "leisure"
+    assert categorize("A02", "A0202", "EX", "EX07", "EX070100") == "leisure"
+    # 캠핑장: 신 대분류 AC(숙박)보다 구 중분류 A03(레포츠)가 맞다 — 대분류는 최후 폴백이라
+    # 통째로 신 체계를 앞세웠다면 여기서 1,335건이 목록에서 사라졌다.
+    assert categorize("A03", "A0302", "AC", "AC05", "AC050100") == "leisure"
+    # 구 코드가 없으면 신 대분류가 받는다
+    assert categorize("", "", "AC", "AC05", "AC050100") == "stay"
 
 
 def _view_count_sorting() -> None:
