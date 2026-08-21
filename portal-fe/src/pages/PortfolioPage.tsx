@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import GNB from '../components/GNB';
+import Footer from '../components/Footer';
 import Markdown from '../components/Markdown';
 import {
   fetchPortfolioProjects,
   type PortfolioProject,
   type PortfolioProjects,
 } from '../api/portfolioApi';
+import GatedCodeSnippet from '../components/premium/GatedCodeSnippet';
+import { storedUnlockToken } from '../components/premium/snippetUnlock';
 import { portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
@@ -39,12 +42,23 @@ export default function PortfolioPage() {
   const [failed, setFailed] = useState(false);
   const [focusedTag, setFocusedTag] = useState<string | null>(null);
   const [opened, setOpened] = useState<OpenedProject | null>(null);
+  // 광고 시청 보상 토큰 — 탭 세션에 남아 있으면 첫 조회부터 전문을 받는다.
+  // 로그인 사용자는 토큰 없이도 서버가 열어준다 (Bearer → X-User-Id).
+  const [unlockToken, setUnlockToken] = useState<string | null>(() => storedUnlockToken());
 
   useEffect(() => {
     let cancelled = false;
-    fetchPortfolioProjects()
+    fetchPortfolioProjects(unlockToken)
       .then((result) => {
-        if (!cancelled) setData(result);
+        if (cancelled) return;
+        setData(result);
+        // 상세가 열린 채 잠금이 풀리면 그 자리에서 새 응답으로 갈아끼운다 —
+        // 닫았다 다시 열어야 보이는 잠금 해제는 해제가 아니다.
+        setOpened((prev) => {
+          if (!prev) return prev;
+          const fresh = result.projects.find((p) => p.title === prev.project.title);
+          return fresh ? { ...prev, project: fresh } : prev;
+        });
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -52,7 +66,7 @@ export default function PortfolioPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [unlockToken]);
 
   const grouped = useMemo(() => {
     if (!data) return [];
@@ -150,6 +164,8 @@ export default function PortfolioPage() {
         ))}
         </div>
 
+        <Footer />
+
         {opened && (
           <ProjectDialog
             opened={opened}
@@ -158,6 +174,7 @@ export default function PortfolioPage() {
               setOpened(null);
               setFocusedTag(tag);
             }}
+            onUnlocked={setUnlockToken}
           />
         )}
       </div>
@@ -183,7 +200,8 @@ function ProjectCard({
   onTagClick: (tag: string) => void;
   onOpen: (opened: OpenedProject) => void;
 }) {
-  const hasDetail = Boolean(project.body);
+  // 스니펫만 있는 프로젝트도 상세를 연다 — 코드가 곧 상세다
+  const hasDetail = Boolean(project.body) || project.snippets.length > 0;
   const open = () => onOpen({ project, categoryLabel });
 
   return (
@@ -213,6 +231,13 @@ function ProjectCard({
             <li key={metric}>{metric}</li>
           ))}
         </ul>
+      )}
+
+      {project.snippets.length > 0 && (
+        /* 실코드가 붙어 있음을 카드에서 미리 알린다 — 상세를 열어야 아는 것은 없는 것과 같다 */
+        <span className="portfolio-card-snippets">
+          <span aria-hidden="true">{'</>'}</span> 코드 {project.snippets.length}개
+        </span>
       )}
 
       {project.body && (
@@ -266,10 +291,13 @@ function ProjectDialog({
   opened,
   onClose,
   onTagClick,
+  onUnlocked,
 }: {
   opened: OpenedProject;
   onClose: () => void;
   onTagClick: (tag: string) => void;
+  /** 스니펫 광고 보상 토큰 수령 — 페이지가 이 토큰으로 재조회한다 */
+  onUnlocked: (token: string) => void;
 }) {
   const { project, categoryLabel } = opened;
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -348,6 +376,15 @@ function ProjectDialog({
         {project.body && (
           <div className="portfolio-dialog-body">
             <Markdown source={project.body} />
+          </div>
+        )}
+
+        {project.snippets.length > 0 && (
+          <div className="portfolio-dialog-snippets">
+            <h3 className="portfolio-dialog-snippets-title">코드 스니펫</h3>
+            {project.snippets.map((snippet) => (
+              <GatedCodeSnippet key={snippet.id} snippet={snippet} onUnlocked={onUnlocked} />
+            ))}
           </div>
         )}
 

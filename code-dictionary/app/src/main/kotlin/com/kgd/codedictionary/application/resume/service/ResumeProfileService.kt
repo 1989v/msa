@@ -2,12 +2,14 @@ package com.kgd.codedictionary.application.resume.service
 
 import com.kgd.codedictionary.application.resume.dto.CareerSummaryDto
 import com.kgd.codedictionary.application.resume.dto.ResumeCategoryDto
+import com.kgd.codedictionary.application.resume.dto.ResumeCodeSnippetDto
 import com.kgd.codedictionary.application.resume.dto.ResumeCompanyDto
 import com.kgd.codedictionary.application.resume.dto.ResumeProfileDto
 import com.kgd.codedictionary.application.resume.dto.ResumeProjectDto
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupDto
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillRefDto
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeCodeSnippetRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
@@ -31,6 +33,7 @@ class ResumeProfileService(
     private val skillGroupRepository: ResumeSkillGroupRepositoryPort,
     private val skillRepository: ResumeSkillRepositoryPort,
     private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
+    private val codeSnippetRepository: ResumeCodeSnippetRepositoryPort,
 ) {
 
     @Transactional(readOnly = true)
@@ -46,6 +49,8 @@ class ResumeProfileService(
         val skills = skillRepository.findAll()
         val skillRefById = skills.mapNotNull { s -> s.id?.let { it to ResumeSkillRefDto(it, s.name) } }.toMap()
         val skillIdsByProject = projectSkillRepository.skillIdsByProject()
+        // 이력서는 게이트 뒤(ADR-0064)라 스니펫을 항상 전문으로 싣는다 — 잠금은 공개면의 일이다
+        val snippetsByProject = codeSnippetRepository.snippetsByProject()
 
         val tenure = CareerCalculator.tenure(companies.map { it.period }, asOf)
         return ResumeProfileDto(
@@ -65,6 +70,10 @@ class ResumeProfileService(
                     skills = project.id
                         ?.let { skillIdsByProject[it] }
                         ?.mapNotNull { skillRefById[it] }
+                        ?: emptyList(),
+                    snippets = project.id
+                        ?.let { snippetsByProject[it] }
+                        ?.map(ResumeCodeSnippetDto::from)
                         ?: emptyList(),
                 )
             },

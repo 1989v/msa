@@ -1,6 +1,7 @@
 package com.kgd.codedictionary.application.resume.dto
 
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
+import com.kgd.codedictionary.domain.resume.model.ResumeCodeSnippet
 import com.kgd.codedictionary.domain.resume.model.ResumeCompany
 import com.kgd.codedictionary.domain.resume.model.ResumeProject
 import com.kgd.codedictionary.domain.resume.model.ResumeSkillGroup
@@ -97,6 +98,8 @@ data class ResumeProjectDto(
     val metrics: List<String>,
     /** 카탈로그 기술 참조 — 화면이 이 id 로 같은 기술의 프로젝트를 모아본다 */
     val skills: List<ResumeSkillRefDto>,
+    /** 이력서는 게이트 뒤라 항상 전문이다 — 잠금 개념은 공개면 DTO 에만 있다 (ADR-0064) */
+    val snippets: List<ResumeCodeSnippetDto>,
     val detailSlug: String?,
     val orderNo: Int,
     val published: Boolean,
@@ -107,6 +110,7 @@ data class ResumeProjectDto(
             company: ResumeCompany?,
             category: ResumeCategory?,
             skills: List<ResumeSkillRefDto> = emptyList(),
+            snippets: List<ResumeCodeSnippetDto> = emptyList(),
         ) = ResumeProjectDto(
             id = project.id,
             title = project.title,
@@ -123,9 +127,39 @@ data class ResumeProjectDto(
             publicBodyMarkdown = project.publicBodyMarkdown,
             metrics = project.metrics,
             skills = skills,
+            snippets = snippets,
             detailSlug = project.detailSlug,
             orderNo = project.orderNo,
             published = project.published,
+        )
+    }
+}
+
+/** 코드 스니펫 전문 — 이력서·어드민용. 공개면의 잘린 형태는 portfolio DTO 가 따로 만든다. */
+data class ResumeCodeSnippetDto(
+    val id: Long?,
+    val title: String?,
+    val language: String,
+    val filePath: String?,
+    val lineStart: Int?,
+    val lineEnd: Int?,
+    val gitUrl: String?,
+    val code: String,
+    val totalLines: Int,
+    val orderNo: Int,
+) {
+    companion object {
+        fun from(snippet: ResumeCodeSnippet) = ResumeCodeSnippetDto(
+            id = snippet.id,
+            title = snippet.title,
+            language = snippet.language,
+            filePath = snippet.filePath,
+            lineStart = snippet.lineStart,
+            lineEnd = snippet.lineEnd,
+            gitUrl = snippet.gitUrl,
+            code = snippet.code,
+            totalLines = snippet.totalLines,
+            orderNo = snippet.orderNo,
         )
     }
 }
@@ -194,6 +228,20 @@ data class ResumeProjectUpsertRequest(
     val detailSlug: String? = null,
     val orderNo: Int = 0,
     val published: Boolean = true,
+)
+
+/** 순서 변경도 이 요청으로 한다 — orderNo 를 실어 upsert (다른 구조화 영역과 같은 방식) */
+data class ResumeSnippetUpsertRequest(
+    val id: Long? = null,
+    val projectId: Long,
+    val title: String? = null,
+    val language: String,
+    val filePath: String? = null,
+    val lineStart: Int? = null,
+    val lineEnd: Int? = null,
+    val gitUrl: String? = null,
+    val code: String,
+    val orderNo: Int? = null,
 )
 
 data class ResumeSkillGroupUpsertRequest(

@@ -3,7 +3,9 @@ package com.kgd.codedictionary.application.portfolio.service
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioCategoryDto
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioProjectDto
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioProjectsDto
+import com.kgd.codedictionary.application.portfolio.dto.PortfolioSnippetDto
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeCodeSnippetRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
@@ -27,15 +29,21 @@ class PortfolioProjectService(
     private val projectRepository: ResumeProjectRepositoryPort,
     private val skillRepository: ResumeSkillRepositoryPort,
     private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
+    private val codeSnippetRepository: ResumeCodeSnippetRepositoryPort,
 ) {
 
-    fun projects(): PortfolioProjectsDto {
+    /**
+     * @param unlocked 스니펫 전문 공개 여부 — 로그인(X-User-Id)이나 광고 시청 토큰으로
+     * 컨트롤러가 판정해 넘긴다. false 면 전문은 응답에 실리지 않는다.
+     */
+    fun projects(unlocked: Boolean = false): PortfolioProjectsDto {
         val categories = categoryRepository.findAll()
         val categoryById = categories.associateBy { it.id }
         val skillNameById = skillRepository.findAll()
             .mapNotNull { skill -> skill.id?.let { it to skill.name } }
             .toMap()
         val skillIdsByProject = projectSkillRepository.skillIdsByProject()
+        val snippetsByProject = codeSnippetRepository.snippetsByProject()
 
         val projects = projectRepository.findAllPublished()
             .sortedBy { it.orderNo }
@@ -46,6 +54,10 @@ class PortfolioProjectService(
                     tags = project.id
                         ?.let { skillIdsByProject[it] }
                         ?.mapNotNull { skillNameById[it] }
+                        ?: emptyList(),
+                    snippets = project.id
+                        ?.let { snippetsByProject[it] }
+                        ?.map { PortfolioSnippetDto.from(it, unlocked) }
                         ?: emptyList(),
                 )
             }

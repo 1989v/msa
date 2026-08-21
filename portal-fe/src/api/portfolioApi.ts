@@ -1,9 +1,37 @@
 import axios from 'axios';
+import { getAccessToken } from '../auth/auth';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:8089',
   timeout: 10_000,
 });
+
+// 스니펫 전문은 로그인 사용자에게 열린다 — Bearer 를 실어야 게이트웨이가 X-User-Id 를
+// 주입한다. 401 강제 이동은 하지 않는다: 포트폴리오는 익명이 기본이다.
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+/** 공개면의 코드 스니펫 — 익명에게는 미리보기만 오고 `code` 는 응답에 없다 */
+export interface PortfolioSnippet {
+  id: number;
+  title: string | null;
+  language: string;
+  filePath: string | null;
+  lineStart: number | null;
+  lineEnd: number | null;
+  gitUrl: string | null;
+  /** 상단 8줄 — 전문이 그보다 짧으면 전문 그대로 */
+  previewCode: string;
+  totalLines: number;
+  locked: boolean;
+  /** 잠금 해제(로그인 또는 광고 시청) 시에만 실린다 */
+  code: string | null;
+}
 
 /** `/portfolio` 공개 아카이브 — 이력서와 같은 데이터를 회사명 없이 내보낸다 */
 export interface PortfolioProject {
@@ -14,6 +42,7 @@ export interface PortfolioProject {
   body: string | null;
   metrics: string[];
   tags: string[];
+  snippets: PortfolioSnippet[];
   orderNo: number;
 }
 
@@ -28,8 +57,28 @@ export interface PortfolioProjects {
   categories: PortfolioCategory[];
 }
 
-export async function fetchPortfolioProjects(): Promise<PortfolioProjects> {
-  const { data } = await api.get<ApiResponse<PortfolioProjects>>('/api/v1/portfolio/projects');
+/**
+ * @param unlockToken 광고 시청 보상 토큰(`unlockSnippets` 발급) — 있으면 스니펫 전문이 온다.
+ * 로그인 상태라면 토큰 없이도 서버가 열어준다.
+ */
+export async function fetchPortfolioProjects(
+  unlockToken?: string | null,
+): Promise<PortfolioProjects> {
+  const { data } = await api.get<ApiResponse<PortfolioProjects>>('/api/v1/portfolio/projects', {
+    params: unlockToken ? { unlock: unlockToken } : undefined,
+  });
+  return data.data;
+}
+
+export interface SnippetUnlock {
+  token: string;
+  /** 초 단위 */
+  expiresIn: number;
+}
+
+/** 광고(하우스 인터스티셜) 시청 완료 보상 — 스니펫 잠금 해제 토큰 발급 */
+export async function unlockSnippets(): Promise<SnippetUnlock> {
+  const { data } = await api.post<ApiResponse<SnippetUnlock>>('/api/v1/portfolio/snippet-unlock');
   return data.data;
 }
 

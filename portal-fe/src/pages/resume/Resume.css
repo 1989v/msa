@@ -469,6 +469,14 @@
   color: var(--ko-text-secondary);
 }
 
+/* 코드 스니펫 묶음 — 판 자체 스타일은 GatedCodeSnippet.css 가 갖는다 */
+.resume-project-snippets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+  margin-top: var(--ko-space-4);
+}
+
 .resume-skills {
   list-style: none;
   padding: 0;

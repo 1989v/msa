@@ -1,0 +1,384 @@
+/*
+ * 프리미엄 코드 스니펫 — k-heritage 판(slab) 위의 코드.
+ *
+ * 코드는 "화면 속의 화면"이라 아케이드 카드처럼 라이트 모드에서도 어두운 판에 놓는다.
+ * 깊이는 그림자가 아니라 면의 색 단차로 만든다 (DESIGN.md §12).
+ */
+
+.premium-snippet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-5);
+}
+
+.premium-snippet-head {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+  flex-wrap: wrap;
+}
+
+/* 언어는 낙관이다 — 각진 모노 라벨, 황토 */
+.premium-snippet-lang {
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono);
+  text-transform: uppercase;
+  color: var(--kh-ocher);
+  border: 1px solid var(--kh-slab-border);
+  border-radius: var(--kh-radius);
+  padding: 2px var(--ko-space-2);
+  flex-shrink: 0;
+}
+
+.premium-snippet-title {
+  margin: 0;
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold, 600);
+  color: var(--kh-on-slab);
+  flex: 1;
+  min-width: 0;
+}
+
+.premium-snippet-git {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  /* 글자는 작아도 누르는 자리는 44px 를 지킨다 */
+  min-height: 44px;
+  padding: 0 var(--ko-space-2);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono);
+  color: var(--kh-ocher);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.premium-snippet-git:hover {
+  text-decoration: underline;
+}
+
+.premium-snippet-git:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.premium-snippet-meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ko-space-3);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-on-slab-muted);
+  overflow-wrap: anywhere;
+}
+
+.premium-snippet-lines {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 코드 창 — 넓은 코드는 자기 안에서만 흐른다. 페이지가 옆으로 밀리면 안 된다. */
+.premium-snippet-window {
+  position: relative;
+  border: 1px solid var(--kh-slab-border);
+  border-radius: var(--kh-radius);
+  background: var(--kh-slab-deep);
+}
+
+.premium-snippet-code {
+  margin: 0;
+  padding: var(--ko-space-4);
+  max-height: 24rem;
+  overflow: auto;
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  line-height: 1.6;
+  color: var(--kh-on-slab);
+  tab-size: 4;
+}
+
+.premium-snippet-code code {
+  font-family: inherit;
+  white-space: pre;
+}
+
+/* 잠긴 창 — 아래가 먹으로 가라앉는다. 더 있음을 색으로 말한다. */
+.premium-snippet-window.is-gated .premium-snippet-code {
+  max-height: none;
+  overflow: hidden;
+}
+
+.premium-snippet-window.is-gated::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 5.5rem;
+  border-radius: 0 0 var(--kh-radius) var(--kh-radius);
+  background: linear-gradient(180deg, transparent, var(--kh-slab-deep) 82%);
+  pointer-events: none;
+}
+
+.premium-snippet-lockbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+}
+
+.premium-snippet-locknote {
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono);
+  color: var(--kh-on-slab-muted);
+}
+
+.premium-snippet-actions {
+  display: flex;
+  gap: var(--ko-space-3);
+  flex-wrap: wrap;
+}
+
+/*
+ * 잠금 해제 액션 — 판 위에 놓이므로 kh-button 을 그대로 못 쓴다
+ * (라이트의 먹빛 채움이 먹빛 판에 묻힌다). 채움은 정경 액션 토큰을 쓴다:
+ * 라이트 소나무 / 다크 청자 — 둘 다 한지색 글씨와의 대비가 선다.
+ */
+.premium-lock-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ko-space-2);
+  min-height: 44px;
+  padding: 0 var(--ko-space-5);
+  border-radius: var(--kh-radius);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--ko-duration-normal) var(--ko-ease-out),
+    border-color var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+/* 눌림 — 다섯 동사의 하나, 120ms */
+.premium-lock-btn:active {
+  transform: translateY(1px);
+  transition-duration: 120ms;
+}
+
+.premium-lock-btn:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.premium-lock-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.premium-lock-btn-primary {
+  background: var(--ko-accent-primary);
+  border: 1px solid var(--ko-accent-primary);
+  color: var(--kh-hanji);
+}
+
+.premium-lock-btn-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ko-accent-primary) 86%, var(--kh-ink));
+  border-color: color-mix(in srgb, var(--ko-accent-primary) 86%, var(--kh-ink));
+}
+
+.premium-lock-btn-ghost {
+  background: transparent;
+  border: 1px solid var(--kh-slab-border);
+  color: var(--kh-on-slab);
+}
+
+.premium-lock-btn-ghost:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--kh-hanji) 8%, transparent);
+  border-color: var(--kh-ocher);
+}
+
+.premium-snippet-error {
+  margin: 0;
+  font-size: var(--ko-text-sm);
+  color: var(--kh-on-slab);
+}
+
+/* ─── 하우스 광고 인터스티셜 ─────────────────────────────────────────────── */
+
+/* 상세 모달(z 200) 위에 뜬다 */
+.premium-ad-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ko-space-6);
+  background: color-mix(in srgb, var(--kh-ink) 72%, transparent);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  animation: premium-ad-in var(--kh-dur-state, 240ms) var(--kh-ease-enter);
+}
+
+.premium-ad {
+  width: min(480px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+  padding: var(--ko-space-6);
+  background: var(--ko-surface-0);
+  border: 1px solid var(--ko-border-default);
+  /* 그림자 없음 — 깊이는 테두리와 가라앉은 뒤(veil)로 만든다 */
+  border-radius: var(--kh-radius-asym);
+}
+
+@keyframes premium-ad-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-ad-veil,
+  .premium-ad {
+    animation: none;
+  }
+}
+
+.premium-ad-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-4);
+}
+
+.premium-ad-close {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  min-height: 44px;
+  padding: 0 var(--ko-space-3);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius);
+  background: none;
+  color: var(--ko-text-muted);
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono);
+  cursor: pointer;
+}
+
+.premium-ad-close:hover {
+  color: var(--ko-text-primary);
+  border-color: var(--ko-border-strong);
+}
+
+.premium-ad-close:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.premium-ad-lead {
+  margin: 0;
+  font-size: var(--ko-text-sm);
+  line-height: var(--ko-leading-relaxed, 1.6);
+  color: var(--ko-text-secondary);
+}
+
+.premium-ad-promos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+}
+
+.premium-ad-promos a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 44px;
+  justify-content: center;
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius);
+  text-decoration: none;
+  color: var(--ko-text-primary);
+  transition: border-color var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.premium-ad-promos a:hover {
+  border-color: var(--ko-border-strong);
+}
+
+.premium-ad-promos a:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.premium-ad-promos strong {
+  font-size: var(--ko-text-sm);
+}
+
+.premium-ad-promos span {
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+}
+
+.premium-ad-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-4);
+  flex-wrap: wrap;
+}
+
+.premium-ad-count {
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--kh-tracking-mono);
+  color: var(--ko-text-secondary);
+}
+
+/* 광고 문맥(밝은 지면) 위의 primary 는 그대로 정경 액션 토큰을 쓴다 — 재정의 불요 */
+
+/* ─── 인쇄 (이력서 PDF) ────────────────────────────────────────────────── */
+
+@media print {
+  /* 스크롤 창은 인쇄에서 잘린다 — 전체를 편다. 채용 담당자가 받는 문서다. */
+  .premium-snippet-code {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .premium-snippet-code code {
+    white-space: pre-wrap;
+  }
+}
+
+/* ─── 모바일 (390px 안전) ─────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .premium-snippet {
+    padding: var(--ko-space-4);
+  }
+
+  .premium-snippet-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

@@ -1,6 +1,29 @@
 import { useState } from 'react';
 import Markdown from '../../components/Markdown';
-import type { ResumeProfile, ResumeProject } from '../../api/resumeApi';
+import GatedCodeSnippet, {
+  type GatedSnippetView,
+} from '../../components/premium/GatedCodeSnippet';
+import type { ResumeCodeSnippet, ResumeProfile, ResumeProject } from '../../api/resumeApi';
+
+/**
+ * 이력서는 게이트 뒤(ADR-0064)라 스니펫이 항상 전문이다 — 공개면과 같은 컴포넌트를
+ * 잠기지 않은 형태로 쓴다. 게이트 UI 가 붙을 자리가 없으니 locked 는 항상 false 다.
+ */
+function unlockedView(snippet: ResumeCodeSnippet): GatedSnippetView {
+  return {
+    id: snippet.id,
+    title: snippet.title,
+    language: snippet.language,
+    filePath: snippet.filePath,
+    lineStart: snippet.lineStart,
+    lineEnd: snippet.lineEnd,
+    gitUrl: snippet.gitUrl,
+    previewCode: snippet.code,
+    totalLines: snippet.totalLines,
+    locked: false,
+    code: snippet.code,
+  };
+}
 
 /** `2022-08` → `2022.08` — 이력서 표기 관례 */
 function ym(value: string | null): string {
@@ -162,6 +185,13 @@ function ProjectCard({
         <ul className="resume-project-metrics">
           {project.metrics.map((m) => <li key={m}>{m}</li>)}
         </ul>
+      )}
+      {project.snippets.length > 0 && (
+        <div className="resume-project-snippets">
+          {project.snippets.map((s, i) => (
+            <GatedCodeSnippet key={s.id ?? `${project.title}-${i}`} snippet={unlockedView(s)} />
+          ))}
+        </div>
       )}
       {project.skills.length > 0 && (
         <div className="resume-project-tags">

@@ -1,6 +1,7 @@
 package com.kgd.codedictionary.application.portfolio.dto
 
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
+import com.kgd.codedictionary.domain.resume.model.ResumeCodeSnippet
 import com.kgd.codedictionary.domain.resume.model.ResumeProject
 
 /**
@@ -29,6 +30,7 @@ data class PortfolioProjectDto(
     val body: String?,
     val metrics: List<String>,
     val tags: List<String>,
+    val snippets: List<PortfolioSnippetDto>,
     val orderNo: Int,
 ) {
     companion object {
@@ -36,6 +38,7 @@ data class PortfolioProjectDto(
             project: ResumeProject,
             category: ResumeCategory?,
             tags: List<String>,
+            snippets: List<PortfolioSnippetDto> = emptyList(),
         ) = PortfolioProjectDto(
             title = project.title,
             categoryCode = category?.code,
@@ -43,7 +46,47 @@ data class PortfolioProjectDto(
             body = project.publicBodyMarkdown,
             metrics = project.metrics,
             tags = tags,
+            snippets = snippets,
             orderNo = project.orderNo,
+        )
+    }
+}
+
+/**
+ * 공개면의 코드 스니펫 — 프리미엄 게이트 (ADR-0066 개정).
+ *
+ * 익명에게는 상단 미리보기만 싣고 전문(`code`)은 **null 이 아니라 자리 자체가 비어** 나간다.
+ * 화면에서 가리는 방식은 응답을 열어 보면 끝이라, 회사명 스크럽과 같은 원칙을 쓴다 —
+ * 보여주지 않을 것은 응답에 싣지 않는다.
+ */
+data class PortfolioSnippetDto(
+    val id: Long,
+    val title: String?,
+    val language: String,
+    val filePath: String?,
+    val lineStart: Int?,
+    val lineEnd: Int?,
+    val gitUrl: String?,
+    /** 상단 8줄 — 전문이 그보다 짧으면 전문 그대로 */
+    val previewCode: String,
+    val totalLines: Int,
+    val locked: Boolean,
+    /** 잠금 해제 시에만 실린다 */
+    val code: String?,
+) {
+    companion object {
+        fun from(snippet: ResumeCodeSnippet, unlocked: Boolean) = PortfolioSnippetDto(
+            id = requireNotNull(snippet.id) { "저장된 스니펫이어야 합니다" },
+            title = snippet.title,
+            language = snippet.language,
+            filePath = snippet.filePath,
+            lineStart = snippet.lineStart,
+            lineEnd = snippet.lineEnd,
+            gitUrl = snippet.gitUrl,
+            previewCode = snippet.preview(),
+            totalLines = snippet.totalLines,
+            locked = !unlocked,
+            code = if (unlocked) snippet.code else null,
         )
     }
 }

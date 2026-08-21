@@ -8,7 +8,9 @@ import com.kgd.codedictionary.application.resume.dto.ResumeProjectUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupDto
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillUpsertRequest
+import com.kgd.codedictionary.application.resume.dto.ResumeSnippetUpsertRequest
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeCodeSnippetRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
@@ -16,6 +18,7 @@ import com.kgd.codedictionary.application.resume.port.ResumeSkillGroupRepository
 import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
 import com.kgd.codedictionary.domain.resume.model.CareerPeriod
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
+import com.kgd.codedictionary.domain.resume.model.ResumeCodeSnippet
 import com.kgd.codedictionary.domain.resume.model.ResumeCompany
 import com.kgd.codedictionary.domain.resume.model.ResumeProject
 import com.kgd.codedictionary.domain.resume.model.ResumeSkill
@@ -36,6 +39,7 @@ class ResumeStructuredAdminService(
     private val skillGroupRepository: ResumeSkillGroupRepositoryPort,
     private val skillRepository: ResumeSkillRepositoryPort,
     private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
+    private val codeSnippetRepository: ResumeCodeSnippetRepositoryPort,
 ) {
 
     @Transactional
@@ -130,6 +134,25 @@ class ResumeStructuredAdminService(
 
     @Transactional
     fun deleteSkill(id: Long) = skillRepository.delete(id)
+
+    @Transactional
+    fun upsertSnippet(request: ResumeSnippetUpsertRequest): Long? = codeSnippetRepository.save(
+        ResumeCodeSnippet(
+            id = request.id,
+            projectId = request.projectId,
+            title = request.title,
+            language = request.language.trim(),
+            filePath = request.filePath,
+            lineStart = request.lineStart,
+            lineEnd = request.lineEnd,
+            gitUrl = request.gitUrl,
+            code = request.code,
+            orderNo = request.orderNo ?: 0,
+        ),
+    ).id
+
+    @Transactional
+    fun deleteSnippet(id: Long) = codeSnippetRepository.delete(id)
 
     /** 화면에서 `2022-08` 형태로 들어온다. 일자는 받지 않는다 — 이력서에서 의미가 없다. */
     private fun parseMonth(raw: String): YearMonth = try {

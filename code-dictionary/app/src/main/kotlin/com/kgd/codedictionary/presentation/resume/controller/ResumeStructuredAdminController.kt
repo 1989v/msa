@@ -9,6 +9,7 @@ import com.kgd.codedictionary.application.resume.dto.ResumeProjectUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupDto
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillUpsertRequest
+import com.kgd.codedictionary.application.resume.dto.ResumeSnippetUpsertRequest
 import com.kgd.codedictionary.application.resume.service.ResumeProfileService
 import com.kgd.codedictionary.application.resume.service.ResumeStructuredAdminService
 import com.kgd.common.response.ApiResponse
@@ -85,6 +86,17 @@ class ResumeStructuredAdminController(
     @DeleteMapping("/skills/{id}")
     fun deleteSkill(@PathVariable id: Long): ApiResponse<Unit> {
         adminService.deleteSkill(id)
+        return ApiResponse.success(Unit)
+    }
+
+    /** 목록은 `/profile` 이 프로젝트에 실어 내려준다. 순서 변경도 orderNo 를 실은 upsert 다. */
+    @PutMapping("/snippets")
+    fun upsertSnippet(@RequestBody request: ResumeSnippetUpsertRequest): ApiResponse<Map<String, Long?>> =
+        ApiResponse.success(mapOf("id" to adminService.upsertSnippet(request)))
+
+    @DeleteMapping("/snippets/{id}")
+    fun deleteSnippet(@PathVariable id: Long): ApiResponse<Unit> {
+        adminService.deleteSnippet(id)
         return ApiResponse.success(Unit)
     }
 }

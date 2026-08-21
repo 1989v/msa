@@ -51,6 +51,20 @@ export interface ResumeCategoryItem {
   description: string | null;
 }
 
+/** 이력서는 게이트 뒤라 스니펫이 항상 전문이다 — 공개면의 잠금 개념이 없다 */
+export interface ResumeCodeSnippet {
+  id: number | null;
+  title: string | null;
+  language: string;
+  filePath: string | null;
+  lineStart: number | null;
+  lineEnd: number | null;
+  gitUrl: string | null;
+  code: string;
+  totalLines: number;
+  orderNo: number;
+}
+
 export interface ResumeProject {
   title: string;
   companyName: string | null;
@@ -63,6 +77,7 @@ export interface ResumeProject {
   bodyMarkdown: string | null;
   metrics: string[];
   skills: ResumeSkillRef[];
+  snippets: ResumeCodeSnippet[];
   detailSlug: string | null;
   orderNo: number;
 }

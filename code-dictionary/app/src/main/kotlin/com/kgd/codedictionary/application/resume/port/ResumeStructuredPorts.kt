@@ -1,6 +1,7 @@
 package com.kgd.codedictionary.application.resume.port
 
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
+import com.kgd.codedictionary.domain.resume.model.ResumeCodeSnippet
 import com.kgd.codedictionary.domain.resume.model.ResumeCompany
 import com.kgd.codedictionary.domain.resume.model.ResumeProject
 import com.kgd.codedictionary.domain.resume.model.ResumeSkill
@@ -50,4 +51,11 @@ interface ResumeSkillRepositoryPort {
 interface ResumeProjectSkillRepositoryPort {
     fun skillIdsByProject(): Map<Long, List<Long>>
     fun replace(projectId: Long, skillIds: List<Long>)
+}
+
+interface ResumeCodeSnippetRepositoryPort {
+    /** 조립부가 프로젝트 목록에 붙이기 좋은 형태 — 프로젝트별 order_no 순 */
+    fun snippetsByProject(): Map<Long, List<ResumeCodeSnippet>>
+    fun save(snippet: ResumeCodeSnippet): ResumeCodeSnippet
+    fun delete(id: Long)
 }

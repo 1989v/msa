@@ -2,6 +2,7 @@ package com.kgd.codedictionary.infrastructure.persistence.resume.entity
 
 import com.kgd.codedictionary.domain.resume.model.CareerPeriod
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
+import com.kgd.codedictionary.domain.resume.model.ResumeCodeSnippet
 import com.kgd.codedictionary.domain.resume.model.ResumeCompany
 import com.kgd.codedictionary.domain.resume.model.ResumeProject
 import com.kgd.codedictionary.domain.resume.model.ResumeSkillGroup
@@ -254,6 +255,100 @@ class ResumeProjectJpaEntity(
             detailSlug = project.detailSlug,
             orderNo = project.orderNo,
             published = project.published,
+        )
+    }
+}
+
+@Entity
+@Table(name = "resume_project_code_snippet")
+class ResumeCodeSnippetJpaEntity(
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Long? = null,
+
+    projectId: Long = 0,
+    title: String? = null,
+    language: String = "",
+    filePath: String? = null,
+    lineStart: Int? = null,
+    lineEnd: Int? = null,
+    gitUrl: String? = null,
+    code: String = "",
+    orderNo: Int = 0,
+) {
+    /** resume_project FK — 같은 스키마지만 객체 참조 대신 ID 만 둔다 (FK-as-ID 정책) */
+    @Column(name = "project_id", nullable = false)
+    var projectId: Long = projectId
+        private set
+
+    @Column(length = 120)
+    var title: String? = title
+        private set
+
+    @Column(nullable = false, length = 30)
+    var language: String = language
+        private set
+
+    @Column(name = "file_path", length = 300)
+    var filePath: String? = filePath
+        private set
+
+    @Column(name = "line_start")
+    var lineStart: Int? = lineStart
+        private set
+
+    @Column(name = "line_end")
+    var lineEnd: Int? = lineEnd
+        private set
+
+    @Column(name = "git_url", length = 400)
+    var gitUrl: String? = gitUrl
+        private set
+
+    @Column(nullable = false, columnDefinition = "MEDIUMTEXT")
+    var code: String = code
+        private set
+
+    @Column(name = "order_no", nullable = false)
+    var orderNo: Int = orderNo
+        private set
+
+    fun update(snippet: ResumeCodeSnippet) {
+        projectId = snippet.projectId
+        title = snippet.title
+        language = snippet.language
+        filePath = snippet.filePath
+        lineStart = snippet.lineStart
+        lineEnd = snippet.lineEnd
+        gitUrl = snippet.gitUrl
+        code = snippet.code
+        orderNo = snippet.orderNo
+    }
+
+    fun toDomain() = ResumeCodeSnippet(
+        id = id,
+        projectId = projectId,
+        title = title,
+        language = language,
+        filePath = filePath,
+        lineStart = lineStart,
+        lineEnd = lineEnd,
+        gitUrl = gitUrl,
+        code = code,
+        orderNo = orderNo,
+    )
+
+    companion object {
+        fun fromDomain(snippet: ResumeCodeSnippet) = ResumeCodeSnippetJpaEntity(
+            id = snippet.id,
+            projectId = snippet.projectId,
+            title = snippet.title,
+            language = snippet.language,
+            filePath = snippet.filePath,
+            lineStart = snippet.lineStart,
+            lineEnd = snippet.lineEnd,
+            gitUrl = snippet.gitUrl,
+            code = snippet.code,
+            orderNo = snippet.orderNo,
         )
     }
 }

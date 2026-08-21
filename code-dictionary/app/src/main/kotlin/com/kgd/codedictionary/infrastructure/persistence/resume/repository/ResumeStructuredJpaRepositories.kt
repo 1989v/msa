@@ -1,6 +1,7 @@
 package com.kgd.codedictionary.infrastructure.persistence.resume.repository
 
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeCategoryJpaEntity
+import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeCodeSnippetJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeCompanyJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeProjectJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeProjectSkillJpaEntity
@@ -33,6 +34,11 @@ interface ResumeSkillGroupJpaRepository : JpaRepository<ResumeSkillGroupJpaEntit
 interface ResumeSkillJpaRepository : JpaRepository<ResumeSkillJpaEntity, Long> {
     fun findAllByOrderByOrderNoAsc(): List<ResumeSkillJpaEntity>
     fun findByName(name: String): ResumeSkillJpaEntity?
+}
+
+interface ResumeCodeSnippetJpaRepository : JpaRepository<ResumeCodeSnippetJpaEntity, Long> {
+    /** 프로젝트별 묶음이 목적이라 프로젝트 → order_no 순으로 한 번에 읽는다 */
+    fun findAllByOrderByProjectIdAscOrderNoAsc(): List<ResumeCodeSnippetJpaEntity>
 }
 
 interface ResumeProjectSkillJpaRepository :

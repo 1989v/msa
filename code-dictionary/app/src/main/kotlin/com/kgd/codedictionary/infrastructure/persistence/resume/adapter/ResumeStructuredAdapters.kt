@@ -1,18 +1,22 @@
 package com.kgd.codedictionary.infrastructure.persistence.resume.adapter
 
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
+import com.kgd.codedictionary.application.resume.port.ResumeCodeSnippetRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillGroupRepositoryPort
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
+import com.kgd.codedictionary.domain.resume.model.ResumeCodeSnippet
 import com.kgd.codedictionary.domain.resume.model.ResumeCompany
 import com.kgd.codedictionary.domain.resume.model.ResumeProject
 import com.kgd.codedictionary.domain.resume.model.ResumeSkillGroup
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeCategoryJpaEntity
+import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeCodeSnippetJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeCompanyJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeProjectJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSkillGroupJpaEntity
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeCategoryJpaRepository
+import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeCodeSnippetJpaRepository
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeCompanyJpaRepository
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeProjectJpaRepository
 import com.kgd.codedictionary.infrastructure.persistence.resume.repository.ResumeSkillGroupJpaRepository
@@ -153,6 +157,30 @@ class ResumeSkillRepositoryAdapter(
             ).toDomain()
         } else {
             existing.update(skill)
+            existing.toDomain()
+        }
+    }
+
+    override fun delete(id: Long) = jpaRepository.deleteById(id)
+}
+
+@Component
+class ResumeCodeSnippetRepositoryAdapter(
+    private val jpaRepository: ResumeCodeSnippetJpaRepository,
+) : ResumeCodeSnippetRepositoryPort {
+
+    override fun snippetsByProject(): Map<Long, List<ResumeCodeSnippet>> =
+        jpaRepository.findAllByOrderByProjectIdAscOrderNoAsc()
+            .groupBy({ it.projectId }, ResumeCodeSnippetJpaEntity::toDomain)
+
+    override fun save(snippet: ResumeCodeSnippet): ResumeCodeSnippet {
+        val existing = snippet.id?.let {
+            jpaRepository.findById(it).orElseThrow { NotFoundException("ResumeCodeSnippet", it) }
+        }
+        return if (existing == null) {
+            jpaRepository.save(ResumeCodeSnippetJpaEntity.fromDomain(snippet)).toDomain()
+        } else {
+            existing.update(snippet)
             existing.toDomain()
         }
     }

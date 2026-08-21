@@ -375,6 +375,32 @@
   border-top: 1px solid var(--ko-border-subtle);
 }
 
+/* 실코드가 붙은 카드의 표식 — 모노·황토, 한글이라 자간은 벌리지 않는다 */
+.portfolio-card-snippets {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  align-self: flex-start;
+  font-family: var(--kh-font-mono);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-ocher, var(--ko-text-muted));
+}
+
+.portfolio-dialog-snippets {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+  padding-top: var(--ko-space-4);
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.portfolio-dialog-snippets-title {
+  margin: 0;
+  font-size: var(--ko-text-sm);
+  font-weight: var(--ko-weight-semibold, 600);
+  color: var(--ko-text-secondary);
+}
+
 @keyframes portfolio-veil-in {
   from { opacity: 0; }
   to { opacity: 1; }
