@@ -27,6 +27,11 @@ export interface Attraction {
   imageUrl: string | null;
   tel: string | null;
   overview: string | null;
+  /**
+   * Google Places place_id — 구글맵 딥링크(`query_place_id=`)가 장소 카드에 착지하게 한다.
+   * 점진 보강이라 없을 수 있다 — 없으면 주소/좌표 검색 링크로 폴백 (googleMapsSearchUrl).
+   */
+  googlePlaceId?: string | null;
   distanceKm: number | null;
   position: number;
 }

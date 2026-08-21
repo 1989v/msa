@@ -33,6 +33,8 @@ class PlaceApiClient(
         val imageUrl: String? = null,
         val tel: String? = null,
         val overview: String? = null,
+        /** 구글맵 딥링크용 place_id — V10 이전 place 응답에는 없을 수 있다. */
+        val googlePlaceId: String? = null,
         val sourceModifiedAt: LocalDateTime? = null,
         val status: String,
     )
@@ -124,6 +126,7 @@ class PlaceApiClient(
                 imageUrl = a["imageUrl"] as? String,
                 tel = a["tel"] as? String,
                 overview = a["overview"] as? String,
+                googlePlaceId = a["googlePlaceId"] as? String,
                 sourceModifiedAt = (a["sourceModifiedAt"] as? String)?.let { LocalDateTime.parse(it) },
                 status = a["status"] as String,
             )

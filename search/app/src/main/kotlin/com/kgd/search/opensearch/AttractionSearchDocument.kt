@@ -26,6 +26,8 @@ data class AttractionSearchDocument(
     val imageUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
+    /** 재색인 전 옛 인덱스 문서에는 없다 — null 이면 FE 가 좌표/주소 링크로 폴백한다. */
+    val googlePlaceId: String? = null,
     /** 재색인 전 옛 인덱스 문서에는 없다 — 기본값 1.0(공식의 base)으로 중립 처리. */
     val popularityScore: Double = 1.0,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -51,6 +53,7 @@ data class AttractionSearchDocument(
         imageUrl = imageUrl,
         tel = tel,
         overview = overview,
+        googlePlaceId = googlePlaceId,
         popularityScore = popularityScore,
         modifiedAt = modifiedAt,
     )

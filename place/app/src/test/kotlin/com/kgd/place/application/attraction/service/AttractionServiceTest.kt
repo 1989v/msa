@@ -64,6 +64,7 @@ class AttractionServiceTest : BehaviorSpec({
                     mapLevel = 6, zipcode = "03045", sourceCreatedAt = null,
                     latitude = 37.5788, longitude = 126.9770,
                     imageUrl = null, tel = null, overview = null,
+                    googlePlaceId = "ChIJod7tSseifDUR9hXHLFNGMIs",
                     sourceModifiedAt = null, status = "ACTIVE",
                     createdAt = java.time.LocalDateTime.now(),
                 )
@@ -72,6 +73,8 @@ class AttractionServiceTest : BehaviorSpec({
                 val view = service.findById(1L)
                 view.title shouldBe "경복궁"
                 view.lang shouldBe "ko"
+                // 보강 필드도 조회로 되읽혀야 한다 — 못 읽으면 개요 배치 왕복이 지운다 (§0 ③)
+                view.googlePlaceId shouldBe "ChIJod7tSseifDUR9hXHLFNGMIs"
             }
         }
     }

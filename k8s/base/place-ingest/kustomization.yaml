@@ -4,3 +4,4 @@ namespace: commerce
 resources:
   - cronjob-overview.yaml
   - cronjob-links.yaml
+  - cronjob-google-places.yaml

@@ -30,6 +30,10 @@
 꼬리 괄호 표기 분리, 규칙은 place:domain `AttractionTitle`). 그루핑 규칙이 바뀌면
 **UPDATE 한 번**으로 끝나고, 판단이 틀렸을 때 되돌릴 근거가 DB 안에 남는다.
 
+다른 원천에서 온 **보강 컬럼**도 같은 취급이다 — `overview`(TourAPI 상세 1콜),
+`google_place_id`(Google Places, §7). TourAPI 목록 원천을 덮지 않는 별도 컬럼이고,
+전체 동기화(`Attraction.syncFrom`)가 보존한다.
+
 ### ③ 전체 동기화 경로는 **왕복 양쪽**을 함께 갱신한다
 
 bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮는 방식), 컬럼을 추가할 때
@@ -65,6 +69,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 영상 | YouTube Data API v3 | 필요 | Google API 서비스 약관 | `place/ingest --job=links` (매시) |
 | 관광지 후기 | 네이버 검색 API(블로그) | 필요 | 네이버 오픈API 이용약관 | 〃 |
 | 지도 | Google Maps JavaScript API | 필요 | Google Maps Platform 약관 | 브라우저 직접 호출 |
+| 구글 place_id | Google Places API (New) Text Search | 필요 | Google Maps Platform 약관 (**place_id 만 무기한 저장 허용**) | `place/ingest --job=google-places` |
 
 **출처 표기 의무가 있는 것**: GeoNames(CC BY 4.0), TourAPI(공공누리), 참가격(KOGL 제1유형).
 화면 하단 또는 관련 페이지에 표기한다 — `place` 화면은 "출처: 한국관광공사 TourAPI".
@@ -237,6 +242,22 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 갖고 있으므로 섞지 않는다.
 
 로컬 개발은 별도 키를 쓴다 — 운영 키에 `localhost` 를 열면 누구나 그 키로 호출할 수 있다.
+
+### Places API (New) — 구글 place_id 보강
+
+구글맵 딥링크가 좌표 핀이 아니라 **장소 카드**(리뷰·사진·영업시간)에 착지하려면
+`query_place_id=` 가 필요하다 (Maps URLs API — 조립 링크라 키·쿼터 불요). 그 id 하나를
+`attractions.google_place_id`(V10, 보강 컬럼)에 채운다.
+
+| | |
+|---|---|
+| 발급 | Cloud Console → **Places API (New)** 사용 설정 → API 키. **서버(CronJob) 호출이라 IP 제한** — Maps JS 키(공개·리퍼러 제한)와 키를 분리한다 (YouTube 키와 같은 이유: 한 키에 둘을 담으면 어느 제한을 걸어도 한쪽이 죽는다) |
+| 호출 | `places:searchText` POST — `textQuery = "{표시명} {주소}"`(주소 없으면 표시명 단독), `languageCode` 는 행의 lang, `pageSize: 1`. 첫 결과의 `id` 만 취한다 |
+| fieldMask | **`places.id` 고정** — ID-only 는 Essentials(무과금) SKU 다. 다른 필드를 넣는 순간 Pro 과금이 시작되므로 `google_place.FIELD_MASK` 상수로 못 박고 스모크가 지킨다 |
+| 예산 | `GOOGLE_PLACES_DAILY_BUDGET` (기본 1,000/일) — 무과금이지만 상한 없이 돌리지 않는다. 전량(6만 건)은 약 60일 |
+| 키 | `GOOGLE_PLACES_API_KEY`. 클러스터는 Secret `place-ingest-secrets/google-places-api-key` (optional) — **없으면 잡이 조용히 건너뛴다** (좌표/주소 링크 폴백으로 화면은 정상) |
+| 저장 | **place_id 문자열만** (위 저장 정책의 캐싱 예외 조항). 검색 0건은 null 로 남겨 재시도한다 — 무과금 호출이고 구글 색인은 자라므로 negative cache 를 두지 않았다 |
+| 경로 | `place/ingest --job=google-places` → `GET/POST /internal/attractions/google-place-ids/**` (클러스터 내부 전용, ADR-0070 §3 과 같은 패턴) |
 
 ---
 

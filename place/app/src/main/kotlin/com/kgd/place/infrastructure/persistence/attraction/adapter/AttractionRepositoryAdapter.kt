@@ -5,7 +5,9 @@ import com.kgd.place.domain.attraction.model.Attraction
 import com.kgd.place.infrastructure.persistence.attraction.entity.AttractionJpaEntity
 import com.kgd.place.infrastructure.persistence.attraction.repository.AttractionJpaRepository
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
@@ -61,4 +63,16 @@ class AttractionRepositoryAdapter(
         jpaRepository.countByLdong(lang, categories).map {
             AttractionRepositoryPort.LdongCount(it.getRegnCode(), it.getSignguCode(), it.getTotal())
         }
+
+    override fun findMissingGooglePlaceId(lang: String?, limit: Int): List<Attraction> {
+        val pageable = PageRequest.of(0, limit, Sort.by("id"))
+        val page = lang
+            ?.let { jpaRepository.findByGooglePlaceIdIsNullAndStatusAndLang("ACTIVE", it, pageable) }
+            ?: jpaRepository.findByGooglePlaceIdIsNullAndStatus("ACTIVE", pageable)
+        return page.content.map { it.toDomain() }
+    }
+
+    override fun saveAll(attractions: List<Attraction>) {
+        jpaRepository.saveAll(attractions.map { AttractionJpaEntity.fromDomain(it) })
+    }
 }

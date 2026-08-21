@@ -35,6 +35,7 @@ class Attraction private constructor(
     var imageUrl: String? = null,
     var tel: String? = null,
     var overview: String? = null,
+    var googlePlaceId: String? = null,
     var sourceModifiedAt: LocalDateTime? = null,
     var status: String = "ACTIVE",
     val createdAt: LocalDateTime = LocalDateTime.now(),
@@ -50,6 +51,9 @@ class Attraction private constructor(
 
     companion object {
         val SUPPORTED_LANGS = setOf("ko", "en")
+
+        /** V10 컬럼 폭. 구글이 place_id 길이를 보장하지 않아 여유를 둔다 (관측치는 27~40자). */
+        const val GOOGLE_PLACE_ID_MAX_LENGTH = 128
 
         /**
          * 관광 성격의 분류. 지역 드릴다운의 건수는 이것만 센다 (ADR-0071) —
@@ -85,6 +89,7 @@ class Attraction private constructor(
             imageUrl: String? = null,
             tel: String? = null,
             overview: String? = null,
+            googlePlaceId: String? = null,
             sourceModifiedAt: LocalDateTime? = null,
         ): Attraction {
             require(contentId.isNotBlank()) { "contentId 는 비어있을 수 없습니다" }
@@ -119,6 +124,7 @@ class Attraction private constructor(
                 imageUrl = imageUrl?.takeIf { it.isNotBlank() },
                 tel = tel?.takeIf { it.isNotBlank() },
                 overview = overview?.takeIf { it.isNotBlank() },
+                googlePlaceId = googlePlaceId?.takeIf { it.isNotBlank() },
                 sourceModifiedAt = sourceModifiedAt,
                 status = "ACTIVE",
             )
@@ -153,6 +159,7 @@ class Attraction private constructor(
             imageUrl: String?,
             tel: String?,
             overview: String?,
+            googlePlaceId: String?,
             sourceModifiedAt: LocalDateTime?,
             status: String,
             createdAt: LocalDateTime,
@@ -184,6 +191,7 @@ class Attraction private constructor(
             imageUrl = imageUrl,
             tel = tel,
             overview = overview,
+            googlePlaceId = googlePlaceId,
             sourceModifiedAt = sourceModifiedAt,
             status = status,
             createdAt = createdAt,
@@ -234,7 +242,26 @@ class Attraction private constructor(
          * (실제로 그렇게 300건을 잃었다). 들어온 값이 있을 때만 갱신한다.
          */
         overview = source.overview ?: overview
+        /*
+         * 구글 place_id 도 개요와 같은 **보강 필드**다 — TourAPI 목록 원천에는 없고
+         * Places Text Search 로만 채워진다. 목록 동기화가 덮어쓰면 며칠치 보강이 지워진다
+         * (개요가 실제로 300건 그렇게 사라졌다). 들어온 값이 있을 때만 갱신한다.
+         */
+        googlePlaceId = source.googlePlaceId ?: googlePlaceId
         sourceModifiedAt = source.sourceModifiedAt
         status = source.status
+    }
+
+    /**
+     * 구글 place_id 보강 (부분 수정 — entity-mutation.md). 수집기가 Places Text Search 로
+     * 찾은 id 를 붙인다. **id 문자열 외에는 저장하지 않는다** — Google Maps Platform 약관이
+     * 무기한 캐시를 허용하는 유일한 필드다 (data-sources.md §7).
+     */
+    fun enrichGooglePlaceId(placeId: String) {
+        require(placeId.isNotBlank()) { "googlePlaceId 는 비어있을 수 없습니다" }
+        require(placeId.length <= GOOGLE_PLACE_ID_MAX_LENGTH) {
+            "googlePlaceId 가 너무 깁니다 (${placeId.length} > $GOOGLE_PLACE_ID_MAX_LENGTH)"
+        }
+        googlePlaceId = placeId
     }
 }

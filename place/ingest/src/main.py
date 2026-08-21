@@ -21,7 +21,7 @@ import sys
 
 from pathlib import Path
 
-from src import admin_region, backfill_overview, naver, place_client, sync_tour, youtube
+from src import admin_region, backfill_overview, google_place, naver, place_client, sync_tour, youtube
 
 
 def _api_key() -> str:
@@ -109,6 +109,43 @@ def _collect_source(source: str, fetch, limit: int) -> None:
                           f"· 실패 {applied['failed']}")
 
 
+def _job_google_places(budget: int) -> int:
+    """구글 place_id 보강 — Text Search ID-only(무과금 SKU)로 미보강분을 id 순 소진한다.
+
+    키가 없으면 조용히 건너뛴다 — 선택 키다 (_job_links 가 소스별 키를 거르는 것과 같은 태도).
+    좌표 링크 폴백이 있어 화면은 깨지지 않고, 키가 생기는 날부터 채워진다.
+    """
+    api_key = os.environ.get("GOOGLE_PLACES_API_KEY")
+    if not api_key:
+        backfill_overview.log("[GOOGLE_PLACES] 키 없음 — 건너뜀 (좌표 링크 폴백으로 동작)")
+        return 0
+
+    items = place_client.fetch_pending_google_place_ids(budget)
+    if not items:
+        backfill_overview.log("[GOOGLE_PLACES] 미보강분 없음")
+        return 0
+
+    results = []
+    misses = failures = 0
+    for item in items:
+        try:
+            place_id = google_place.find_place_id(
+                api_key, item["title"], item.get("address"), item.get("lang") or "ko")
+        except Exception as e:
+            # 답을 못 받은 것 — 행은 null 로 남아 다음 실행이 다시 시도한다.
+            backfill_overview.log(f"  [GOOGLE_PLACES] {item['title']} 실패: {e}")
+            failures += 1
+            continue
+        if place_id:
+            results.append({"attractionId": item["attractionId"], "googlePlaceId": place_id})
+        else:
+            misses += 1
+    applied = place_client.apply_google_place_ids(results)
+    backfill_overview.log(f"[GOOGLE_PLACES] 적용 {applied} · 결과없음 {misses} · 실패 {failures} "
+                          f"(대상 {len(items)})")
+    return 0
+
+
 def _job_admin_regions(file: str | None) -> int:
     """행정안전부 법정동코드 자료를 적재한다 (ADR-0071).
 
@@ -154,7 +191,7 @@ def _print_english_names(regions: list[dict]) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--job", required=True,
-                    choices=["overview", "stats", "sync", "links", "admin-regions"])
+                    choices=["overview", "stats", "sync", "links", "admin-regions", "google-places"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -163,6 +200,9 @@ def main() -> int:
     ap.add_argument("--file", help="법정동코드 전체자료 경로 (--job=admin-regions)")
     ap.add_argument("--link-limit", type=int, default=int(os.environ.get("LINK_LIMIT", "10")),
                     help="한 실행에서 훑을 관광지 수 (일일 예산은 place 가 따로 센다)")
+    ap.add_argument("--google-places-budget", type=int,
+                    default=int(os.environ.get("GOOGLE_PLACES_DAILY_BUDGET", "1000")),
+                    help="구글 place_id 보강 일일 상한 (Text Search ID-only 호출 수)")
     args = ap.parse_args()
 
     langs = (args.lang,) if args.lang else ("ko", "en")
@@ -172,6 +212,8 @@ def main() -> int:
         return _job_overview(args.budget, langs)
     if args.job == "links":
         return _job_links(args.link_limit)
+    if args.job == "google-places":
+        return _job_google_places(args.google_places_budget)
     if args.job == "admin-regions":
         return _job_admin_regions(args.file)
     return _job_sync(args.content_type, args.limit)

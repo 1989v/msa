@@ -40,6 +40,7 @@ interface GetAttractionUseCase {
         val imageUrl: String?,
         val tel: String?,
         val overview: String?,
+        val googlePlaceId: String?,
         val sourceModifiedAt: LocalDateTime?,
         val status: String,
     )

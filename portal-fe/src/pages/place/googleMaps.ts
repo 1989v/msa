@@ -34,6 +34,30 @@ export function loadGoogleMaps(): Promise<any> {
   return loading;
 }
 
+/**
+ * 구글맵 "여기서 보기" 링크 (Maps URLs API — 키·쿼터 불요).
+ *
+ * 좌표 질의(`query={lat},{lng}`)는 맨 핀에 떨어져 리뷰·사진·영업시간이 없는 화면이 된다.
+ * place_id 가 있으면 `query_place_id=` 로 장소 카드에 바로 착지한다 (query 는 폴백 표시용 필수).
+ * 보강이 점진이라 3단 폴백이다: place_id → 이름+주소 검색 → 좌표.
+ */
+export function googleMapsSearchUrl(a: {
+  title: string;
+  googlePlaceId?: string | null;
+  address?: string | null;
+  latitude: number;
+  longitude: number;
+}): string {
+  const base = 'https://www.google.com/maps/search/?api=1';
+  const placeId = (a.googlePlaceId ?? '').trim();
+  if (placeId) {
+    return `${base}&query=${encodeURIComponent(a.title)}&query_place_id=${encodeURIComponent(placeId)}`;
+  }
+  const address = (a.address ?? '').trim();
+  if (address) return `${base}&query=${encodeURIComponent(`${a.title} ${address}`)}`;
+  return `${base}&query=${a.latitude},${a.longitude}`;
+}
+
 /** 지도 bounds 로부터 재검색 반경(km) 추정 — 중심~모서리 거리, 0.5~50 캡. */
 export function radiusFromBounds(bounds: any): number {
   const ne = bounds.getNorthEast();

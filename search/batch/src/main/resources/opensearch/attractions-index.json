@@ -89,6 +89,7 @@
       "location": { "type": "geo_point" },
       "imageUrl": { "type": "keyword", "index": false },
       "tel": { "type": "keyword", "index": false },
+      "googlePlaceId": { "type": "keyword", "index": false },
       "popularityScore": { "type": "float" },
       "modifiedAt": { "type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss" }
     }

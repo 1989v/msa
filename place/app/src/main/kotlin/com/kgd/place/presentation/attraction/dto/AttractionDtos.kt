@@ -44,6 +44,7 @@ data class UpsertAttractionItem(
     val imageUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
+    val googlePlaceId: String? = null,
     val sourceModifiedAt: LocalDateTime? = null,
 ) {
     fun toCommand(): UpsertAttractionUseCase.Command = UpsertAttractionUseCase.Command(
@@ -73,6 +74,7 @@ data class UpsertAttractionItem(
         imageUrl = imageUrl,
         tel = tel,
         overview = overview,
+        googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
     )
 }
@@ -122,6 +124,7 @@ data class AttractionResponse(
     val imageUrl: String?,
     val tel: String?,
     val overview: String?,
+    val googlePlaceId: String?,
     val sourceModifiedAt: LocalDateTime?,
     val status: String,
 ) {
@@ -156,6 +159,7 @@ data class AttractionResponse(
             imageUrl = view.imageUrl,
             tel = view.tel,
             overview = view.overview,
+            googlePlaceId = view.googlePlaceId,
             sourceModifiedAt = view.sourceModifiedAt,
             status = view.status,
         )

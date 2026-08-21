@@ -16,6 +16,7 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
+import { googleMapsSearchUrl } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { titleParts } from './placeView';
@@ -125,7 +126,7 @@ export default function AttractionPage() {
             {attraction.overview && <p className="place-detail-overview">{attraction.overview}</p>}
             <a
               className="place-btn"
-              href={`https://www.google.com/maps/search/?api=1&query=${attraction.latitude},${attraction.longitude}`}
+              href={googleMapsSearchUrl(attraction)}
               target="_blank"
               rel="noreferrer"
             >

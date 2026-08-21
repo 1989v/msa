@@ -27,6 +27,7 @@ TourAPI(KorService2/EngService2)
 | `sync` | 목록 전량 재동기화 → 적재 | 수동 (원천 스키마가 바뀔 때) |
 | `links` | 유튜브·네이버 블로그 수집 → 적재 (우선순위 큐에서 N건) | `place-ingest-links` 매시 17분 |
 | `admin-regions` | 법정동코드 자료 → 행정구역 적재 (+시군구 좌표 계산) | 수동 (자료가 갱신될 때) |
+| `google-places` | 구글 place_id 보강 — Places Text Search **ID-only(무과금)**, 일 `GOOGLE_PLACES_DAILY_BUDGET`(기본 1,000)건. 키(`GOOGLE_PLACES_API_KEY`) 없으면 건너뜀 | `place-ingest-google-places` 매일 KST 03:20 (04:30 재색인 앞) |
 
 재색인은 이 이미지가 트리거하지 않는다 — Job 생성 RBAC 을 얻는 대신 `attraction-reindex`
 CronJob 이 30분 뒤(KST 04:30)에 돈다.

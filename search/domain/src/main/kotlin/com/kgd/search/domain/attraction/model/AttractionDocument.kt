@@ -27,6 +27,8 @@ data class AttractionDocument(
     val imageUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
+    /** 구글맵 딥링크용 Google Places place_id — 검색 조건이 아니라 상세 표시물이다. */
+    val googlePlaceId: String? = null,
     /**
      * 완결성 기반 정렬 신호 — 위 필드들에서 파생한다 ([AttractionPopularity]).
      * 색인 경로는 기본값(계산)을 쓰고, 읽기 경로는 인덱스에 저장된 값을 그대로 넘긴다.

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { haversineKm, nearestRegion, neighboursInFrame, radiusFromBounds } from '../googleMaps';
+import {
+  googleMapsSearchUrl,
+  haversineKm,
+  nearestRegion,
+  neighboursInFrame,
+  radiusFromBounds,
+} from '../googleMaps';
 
 type P = { id: string; latitude: number; longitude: number };
 
@@ -31,6 +37,38 @@ describe('neighboursInFrame', () => {
 
   it('목록에 자기 자신뿐이면 빈 배열', () => {
     expect(neighboursInFrame(GYEONGBOK, [GYEONGBOK], 3)).toEqual([]);
+  });
+});
+
+describe('googleMapsSearchUrl', () => {
+  const base = { title: '경복궁', latitude: 37.5788, longitude: 126.977 };
+
+  it('place_id 가 있으면 장소 카드 딥링크 — query 는 폴백 표시용으로 함께 싣는다', () => {
+    expect(
+      googleMapsSearchUrl({ ...base, googlePlaceId: 'ChIJod7tSseifDUR9hXHLFNGMIs', address: '서울 종로구' }),
+    ).toBe(
+      'https://www.google.com/maps/search/?api=1&query=%EA%B2%BD%EB%B3%B5%EA%B6%81&query_place_id=ChIJod7tSseifDUR9hXHLFNGMIs',
+    );
+  });
+
+  it('place_id 가 없으면 이름+주소 검색 — 좌표보다 장소 카드에 닿을 확률이 높다', () => {
+    expect(googleMapsSearchUrl({ ...base, address: '서울 종로구 사직로 161' })).toBe(
+      'https://www.google.com/maps/search/?api=1&query=' +
+        encodeURIComponent('경복궁 서울 종로구 사직로 161'),
+    );
+    // 공백뿐인 place_id 는 없는 것과 같다 (구 인덱스 문서 폴백)
+    expect(googleMapsSearchUrl({ ...base, googlePlaceId: ' ', address: '서울 종로구' })).toContain(
+      '&query=' + encodeURIComponent('경복궁 서울 종로구'),
+    );
+  });
+
+  it('place_id 도 주소도 없으면 좌표 검색 — 기존 동작 그대로', () => {
+    expect(googleMapsSearchUrl(base)).toBe(
+      'https://www.google.com/maps/search/?api=1&query=37.5788,126.977',
+    );
+    expect(googleMapsSearchUrl({ ...base, address: '  ' })).toBe(
+      'https://www.google.com/maps/search/?api=1&query=37.5788,126.977',
+    );
   });
 });
 

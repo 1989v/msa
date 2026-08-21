@@ -32,6 +32,7 @@ interface UpsertAttractionUseCase {
         val imageUrl: String? = null,
         val tel: String? = null,
         val overview: String? = null,
+        val googlePlaceId: String? = null,
         val sourceModifiedAt: LocalDateTime? = null,
     )
 

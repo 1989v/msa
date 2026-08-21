@@ -111,9 +111,10 @@ def main() -> int:
     _title_parser()
     _youtube_search_shape()
     _admin_region_parser()
+    _google_place_enrichment()
 
     print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 제목 분리 "
-          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출")
+          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출 · 구글 place_id 보강")
     return 0
 
 
@@ -348,6 +349,81 @@ def _sejong_has_a_sido() -> None:
     assert all(r["parentCode"] in sido for r in rows if r["level"] == "SIGUNGU")
     # 내부 표시용 키가 새어 나가지 않는다
     assert all("_fullName" not in r for r in rows)
+
+
+def _google_place_enrichment() -> None:
+    """구글 place_id 보강 — 질의 모양 · ID-only 마스크 · 예산 상한 · 키 없으면 건너뜀."""
+    import urllib.request
+
+    from src import google_place, main as ingest_main, place_client
+
+    # ── 요청 모양: 질의는 "표시명 주소", 마스크는 places.id 하나 — 마스크가 무과금의 경계다
+    captured: dict = {}
+
+    def fake_urlopen(req, timeout=0):
+        captured["url"] = req.full_url
+        captured["mask"] = req.get_header("X-goog-fieldmask")
+        captured["body"] = json.loads(req.data.decode())
+
+        class R:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return json.dumps({"places": [{"id": "ChIJ-abc"}]}).encode()
+        return R()
+
+    orig_urlopen = urllib.request.urlopen
+    urllib.request.urlopen = fake_urlopen
+    try:
+        assert google_place.find_place_id("k", "도산공원", "서울 강남구 압구정로", "ko") == "ChIJ-abc"
+        assert captured["body"]["textQuery"] == "도산공원 서울 강남구 압구정로"
+        assert captured["body"]["languageCode"] == "ko"
+        assert captured["mask"] == "places.id", captured["mask"]
+        # 주소 없는 행은 이름 단독으로 묻는다
+        google_place.find_place_id("k", "Dosan Park", None, "en")
+        assert captured["body"]["textQuery"] == "Dosan Park"
+        assert captured["body"]["languageCode"] == "en"
+    finally:
+        urllib.request.urlopen = orig_urlopen
+
+    # ── 잡 흐름: 예산이 pending 상한이고, 결과없음(None)은 적용 목록에 들어가지 않는다
+    calls: list[str] = []
+    applied: list[list] = []
+    orig = (place_client.fetch_pending_google_place_ids, place_client.apply_google_place_ids,
+            google_place.find_place_id)
+    place_client.fetch_pending_google_place_ids = lambda limit: [
+        {"attractionId": i, "title": f"곳{i}", "lang": "ko", "address": None}
+        for i in range(min(limit, 2))
+    ]
+    place_client.apply_google_place_ids = lambda results: applied.append(results) or len(results)
+    google_place.find_place_id = lambda _k, title, _a, _l: (
+        calls.append(title) or ("ChIJ-1" if title == "곳0" else None))
+    os.environ["GOOGLE_PLACES_API_KEY"] = "k"
+    try:
+        ingest_main._job_google_places(2)
+        assert calls == ["곳0", "곳1"], calls                       # 예산(2)만큼만 묻는다
+        assert applied == [[{"attractionId": 0, "googlePlaceId": "ChIJ-1"}]], applied
+
+        # ── 키가 없으면 조용히 건너뛴다 — pending 조회조차 하지 않는다
+        del os.environ["GOOGLE_PLACES_API_KEY"]
+
+        def boom(_limit):
+            raise AssertionError("키 없이 pending 을 조회하면 안 된다")
+
+        place_client.fetch_pending_google_place_ids = boom
+        assert ingest_main._job_google_places(2) == 0
+    finally:
+        (place_client.fetch_pending_google_place_ids, place_client.apply_google_place_ids,
+         google_place.find_place_id) = orig
+        os.environ.pop("GOOGLE_PLACES_API_KEY", None)
+
+    # ── 왕복 계약: bulk 는 전체 동기화라 UPSERT_FIELDS 에 없는 보강 필드는 매일 지워진다 (§0 ③)
+    from src.backfill_overview import UPSERT_FIELDS
+    assert "googlePlaceId" in UPSERT_FIELDS
 
 
 if __name__ == "__main__":

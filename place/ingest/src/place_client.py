@@ -110,3 +110,17 @@ def apply_link_results(source: str, results: list[dict]) -> dict:
         return {"collected": 0, "empty": 0, "failed": 0}
     return _request("POST", "/internal/attractions/links/bulk",
                     {"source": source, "results": results}, timeout=300)["data"]
+
+
+def fetch_pending_google_place_ids(limit: int) -> list[dict]:
+    """구글 place_id 미보강분 (id 순). 빈 목록 = 전부 채워졌다는 뜻이다."""
+    qs = urllib.parse.urlencode({"limit": limit})
+    return _request("GET", f"/internal/attractions/google-place-ids/pending?{qs}")["data"]["items"]
+
+
+def apply_google_place_ids(results: list[dict]) -> int:
+    """찾은 id 만 보낸다 — 검색 0건은 항목을 만들지 않는다 (null 로 남아 다음 실행이 재시도)."""
+    if not results:
+        return 0
+    return int(_request("POST", "/internal/attractions/google-place-ids/bulk",
+                        {"results": results}, timeout=300)["data"]["applied"])

@@ -67,6 +67,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                             title = "Dosan Park(도산공원)",
                             titleDisplay = "Dosan Park", titleLocal = "도산공원",
                             imageUrl = "http://img/7", overview = "가".repeat(200), tel = "02-1",
+                            googlePlaceId = "ChIJod7tSseifDUR9hXHLFNGMIs",
                         ),
                         // 파생 컬럼이 아직 없는 place 응답 — 원문 title 로 폴백한다
                         dto(8, "ko"),
@@ -79,6 +80,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 val enriched = documents.single { it.id == "7" }
                 enriched.title shouldBe "Dosan Park"
                 enriched.titleLocal shouldBe "도산공원"
+                enriched.googlePlaceId shouldBe "ChIJod7tSseifDUR9hXHLFNGMIs"
                 enriched.idSort shouldBe 7L
                 // base 1.0 + 이미지 1.0 + 개요(200자) 1.0 + 전화 0.2 (AttractionPopularity)
                 enriched.popularityScore shouldBe (3.2 plusOrMinus 1e-9)
@@ -86,6 +88,7 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 val bare = documents.single { it.id == "8" }
                 bare.title shouldBe "관광지8"
                 bare.titleLocal shouldBe null
+                bare.googlePlaceId shouldBe null
                 bare.popularityScore shouldBe (1.0 plusOrMinus 1e-9)
             }
         }

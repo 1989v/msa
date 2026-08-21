@@ -37,6 +37,8 @@ data class AttractionIndexDocument(
     val imageUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
+    /** 구글맵 딥링크용 place_id — 표시 전용이라 색인하지 않는다 (mapping: index=false). */
+    val googlePlaceId: String? = null,
     /** 완결성 기반 브라우즈 정렬 신호 — 도메인이 계산한다 (AttractionPopularity). */
     val popularityScore: Double,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -64,6 +66,7 @@ data class AttractionIndexDocument(
             imageUrl = doc.imageUrl,
             tel = doc.tel,
             overview = doc.overview,
+            googlePlaceId = doc.googlePlaceId,
             popularityScore = doc.popularityScore,
             modifiedAt = doc.modifiedAt,
         )

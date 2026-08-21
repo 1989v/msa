@@ -73,6 +73,7 @@ class AttractionApiReindexTasklet(
                                 imageUrl = attraction.imageUrl,
                                 tel = attraction.tel,
                                 overview = attraction.overview,
+                                googlePlaceId = attraction.googlePlaceId,
                                 modifiedAt = attraction.sourceModifiedAt,
                             )
                         )

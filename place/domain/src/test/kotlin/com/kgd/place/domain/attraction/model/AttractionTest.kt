@@ -94,5 +94,36 @@ class AttractionTest : BehaviorSpec({
                 }
             }
         }
+        `when`("구글 place_id 없는 목록 원천이 주어지면") {
+            then("이미 채워둔 place_id 는 지워지지 않아야 한다") {
+                // 개요와 같은 보강 필드다 — TourAPI 목록 원천에는 없고 Places 수집기만 채운다.
+                val existing = gyeongbokgung().apply { enrichGooglePlaceId("ChIJod7tSseifDUR9hXHLFNGMIs") }
+
+                existing.syncFrom(
+                    Attraction.create(
+                        contentId = "126508", lang = "ko", title = "경복궁",
+                        latitude = 37.5788, longitude = 126.977,
+                    )
+                )
+                existing.googlePlaceId shouldBe "ChIJod7tSseifDUR9hXHLFNGMIs"
+            }
+        }
+    }
+
+    given("구글 place_id 보강 시") {
+        `when`("유효한 id 가 주어지면") {
+            then("place_id 가 채워져야 한다") {
+                val attraction = gyeongbokgung().apply { enrichGooglePlaceId("ChIJod7tSseifDUR9hXHLFNGMIs") }
+                attraction.googlePlaceId shouldBe "ChIJod7tSseifDUR9hXHLFNGMIs"
+            }
+        }
+        `when`("빈 값이나 컬럼 폭을 넘는 값이 주어지면") {
+            then("IllegalArgumentException 이 발생해야 한다") {
+                shouldThrow<IllegalArgumentException> { gyeongbokgung().enrichGooglePlaceId(" ") }
+                shouldThrow<IllegalArgumentException> {
+                    gyeongbokgung().enrichGooglePlaceId("C".repeat(Attraction.GOOGLE_PLACE_ID_MAX_LENGTH + 1))
+                }
+            }
+        }
     }
 })

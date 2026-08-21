@@ -40,6 +40,8 @@ interface SearchAttractionUseCase {
         val tel: String? = null,
         /** 목록 응답은 200자 요약 — 전문은 단건 조회로 */
         val overview: String? = null,
+        /** 구글맵 딥링크용 place_id — 없으면 FE 가 주소/좌표 검색 링크로 폴백한다. */
+        val googlePlaceId: String? = null,
         val distanceKm: Double? = null,
         val position: Int = 0,
     )

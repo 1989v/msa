@@ -98,6 +98,7 @@ class SearchAttractionService(
         imageUrl = imageUrl,
         tel = tel,
         overview = overview?.let { if (summarize && it.length > OVERVIEW_SUMMARY_LENGTH) it.take(OVERVIEW_SUMMARY_LENGTH) + "…" else it },
+        googlePlaceId = googlePlaceId,
         distanceKm = distanceKm,
         position = position,
     )

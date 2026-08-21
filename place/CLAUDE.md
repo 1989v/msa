@@ -50,6 +50,7 @@
 | GET | `/api/places/attractions?lang=&page=&size=` (+`/{id}`) | public | 페이지 조회 — search-batch 재색인 풀스캔용 |
 | GET | `/api/places/attractions/{id}/links` | public | 관광지 외부 링크 — 수집형(유튜브) + 조립 딥링크 (ADR-0070) |
 | GET/POST | `/internal/attractions/links/**` | 클러스터 내부 | 수집 큐 조회 / 결과 적재 — 게이트웨이가 라우팅하지 않는다 |
+| GET/POST | `/internal/attractions/google-place-ids/**` | 클러스터 내부 | 구글 place_id 미보강분 조회 / 반영 (data-sources.md §7, ID-only 무과금 SKU) |
 | GET | `/api/places/attractions/overview-probes?lang=` | public | 개요 negative cache 조회 — 수집기 제외 목록 (ADR-0070) |
 | POST | `/api/places/attractions/overview-probes` | ADMIN | 원천이 빈 개요를 준 (contentId, lang) 기록 |
 

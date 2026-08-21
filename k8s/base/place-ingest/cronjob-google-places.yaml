@@ -1,0 +1,63 @@
+# 구글 place_id 보강 CronJob (data-sources.md §7).
+#
+# 구글맵 딥링크가 좌표 핀이 아니라 장소 카드에 착지하려면 `query_place_id` 가 필요하다.
+# Places Text Search(New)를 fieldMask=places.id 로만 불러 — **ID-only 는 무과금(Essentials)
+# SKU 다** — attractions.google_place_id 를 id 순으로 점진 수집한다. 전량(약 6만)은 60일.
+#
+# 하루 1회인 이유: 예산이 일 단위(GOOGLE_PLACES_DAILY_BUDGET)라 쪼개 돌릴 이득이 없고,
+# 링크 잡과 달리 온디맨드 큐가 아니어서 낮에 몰아 채울 필요도 없다.
+# KST 03:20 인 이유: 04:30 재색인(attraction-reindex)이 그날 채운 id 를 바로 싣는다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-google-places
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "google-places"
+spec:
+  # 키(google-places-api-key)가 아직 없어도 suspend 하지 않는다 — 키 없는 소스는 수집기가
+  # 건너뛰고 exit 0 이라(links 와 같은 태도) 실패 잡이 쌓이지 않고, 하루 1파드는 free-tier
+  # 에서도 값이 없다. Secret 에 키를 넣는 날부터 스스로 돌기 시작한다.
+  suspend: false
+  schedule: "20 18 * * *"      # 매일 UTC 18:20 = KST 03:20 — 04:00 개요·04:30 재색인 앞
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # 하루 1회라 한 번 놓치면 그날 치를 통째로 잃는다 — 개요 잡과 같은 이유로 재시도한다.
+      # (여기 남는 실패는 시작조차 못한 경우뿐이다 — 검색 실패·결과없음은 수집기가 흡수한다)
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "google-places"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=google-places"]   # 키 없으면 건너뛰고 정상 종료
+              env:
+                - name: PLACE_API
+                  value: "http://place:8096"
+                # 일일 호출 상한 — 무과금 SKU 지만 상한 없이 돌리지 않는다 (수집기 기본값과 동일)
+                - name: GOOGLE_PLACES_DAILY_BUDGET
+                  value: "1000"
+                # Maps JS 키(공개·리퍼러 제한)와 분리된 서버용 키(IP 제한) — data-sources.md §7
+                - name: GOOGLE_PLACES_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: google-places-api-key
+                      optional: true
+              resources:
+                # 전량 스캔이 없다 — pending 엔드포인트가 예산만큼(≤1,000행)만 돌려준다.
+                requests: { cpu: 50m, memory: 128Mi }
+                limits:   { memory: 256Mi }

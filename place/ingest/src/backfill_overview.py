@@ -33,7 +33,7 @@ UPSERT_FIELDS = ("contentId", "lang", "title", "latitude", "longitude", "address
                  "areaCode", "sigunguCode", "ldongRegnCd", "ldongSignguCd",
                  "cat1", "cat2", "cat3", "lclsSystm1", "lclsSystm2", "lclsSystm3",
                  "contentTypeId", "copyrightDivCd", "mapLevel",
-                 "category", "imageUrl", "thumbnailUrl", "tel", "overview",
+                 "category", "imageUrl", "thumbnailUrl", "tel", "overview", "googlePlaceId",
                  "sourceModifiedAt", "sourceCreatedAt")
 
 

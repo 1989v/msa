@@ -102,6 +102,10 @@ class AttractionJpaEntity(
     @Column(columnDefinition = "TEXT")
     val overview: String? = null,
 
+    // Places Text Search 로 채우는 보강 필드 — id 외에는 저장하지 않는다 (data-sources.md §7)
+    @Column(name = "google_place_id", length = 128)
+    val googlePlaceId: String? = null,
+
     val sourceModifiedAt: LocalDateTime? = null,
 
     @Column(nullable = false, length = 20)
@@ -138,6 +142,7 @@ class AttractionJpaEntity(
         imageUrl = imageUrl,
         tel = tel,
         overview = overview,
+        googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
         status = status,
         createdAt = createdAt,
@@ -174,6 +179,7 @@ class AttractionJpaEntity(
             imageUrl = attraction.imageUrl,
             tel = attraction.tel,
             overview = attraction.overview,
+            googlePlaceId = attraction.googlePlaceId,
             sourceModifiedAt = attraction.sourceModifiedAt,
             status = attraction.status,
             createdAt = attraction.createdAt,

@@ -15,7 +15,13 @@ import {
   type Suggestion,
 } from '../../api/placeApi';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
-import { loadGoogleMaps, mapsApiKey, nearestRegion, radiusFromBounds } from './googleMaps';
+import {
+  googleMapsSearchUrl,
+  loadGoogleMaps,
+  mapsApiKey,
+  nearestRegion,
+  radiusFromBounds,
+} from './googleMaps';
 import AttractionLinks from './AttractionLinks';
 import RegionDrilldown from './RegionDrilldown';
 import RegionSheet from './RegionSheet';
@@ -1046,7 +1052,7 @@ function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; la
       </a>
       <a
         className="place-btn primary"
-        href={`https://www.google.com/maps/search/?api=1&query=${attraction.latitude},${attraction.longitude}`}
+        href={googleMapsSearchUrl(attraction)}
         target="_blank"
         rel="noreferrer"
       >

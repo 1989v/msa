@@ -60,6 +60,7 @@ class AttractionService(
         imageUrl = imageUrl,
         tel = tel,
         overview = overview,
+        googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
     )
 
@@ -93,6 +94,7 @@ class AttractionService(
         imageUrl = imageUrl,
         tel = tel,
         overview = overview,
+        googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
         status = status,
     )
