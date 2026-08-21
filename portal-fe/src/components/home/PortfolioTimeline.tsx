@@ -43,14 +43,16 @@ export default function PortfolioTimeline({ timeline }: PortfolioTimelineProps) 
               {companies.map((c) => (
                 <li key={`${c.name}-${c.startMonth}`} className="timeline-company">
                   <span className="timeline-company-name">{c.name}</span>
-                  <span className="timeline-company-period">
-                    {periodText(c.startMonth, c.endMonth, c.ongoing)}
-                  </span>
-                  {(c.position || c.team) && (
-                    <span className="timeline-company-role">
-                      {[c.position, c.team].filter(Boolean).join(' · ')}
+                  <span className="timeline-company-meta">
+                    <span className="timeline-company-period">
+                      {periodText(c.startMonth, c.endMonth, c.ongoing)}
                     </span>
-                  )}
+                    {(c.position || c.team) && (
+                      <span className="timeline-company-role">
+                        {[c.position, c.team].filter(Boolean).join(' · ')}
+                      </span>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>

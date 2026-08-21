@@ -120,7 +120,9 @@
   --kh-slab-deep: #0e0e0e;
   --kh-on-slab: #e5e2e1;
   --kh-on-slab-muted: #919095;
-  --kh-slab-border: color-mix(in srgb, var(--kh-ocher) 14%, transparent);
+  /* 판(#1d1d1f)과 바탕(#131313)의 명도차가 작아 모서리는 테두리가 만든다 —
+   * 14% 는 판이 바탕에 묻혀 카드 경계가 사라진다. */
+  --kh-slab-border: color-mix(in srgb, var(--kh-ocher) 28%, transparent);
   --kh-grain-ink: rgb(255 255 255 / 0.016);
   /* 송연 위에서 먹은 보이지 않는다 — 흰 안개로 뒤집는다 */
   --kh-ink-wash: 229 226 225;

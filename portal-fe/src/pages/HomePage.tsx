@@ -4,10 +4,13 @@ import Footer from '../components/Footer';
 import AboutSection from '../components/AboutSection';
 import TileGrid from '../components/home/TileGrid';
 import PortfolioTimeline from '../components/home/PortfolioTimeline';
+import OpenSourceSection from '../components/home/OpenSourceSection';
 import {
   fetchDisplayServices,
+  fetchOpenSourceItems,
   fetchPortfolioTimeline,
   type DisplayService,
+  type OpenSourceItem,
   type PortfolioTimeline as Timeline,
 } from '../api/displayApi';
 import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
@@ -38,6 +41,7 @@ export default function HomePage() {
 
   const [services, setServices] = useState<DisplayService[] | null>(null);
   const [timeline, setTimeline] = useState<Timeline | null>(null);
+  const [openSource, setOpenSource] = useState<OpenSourceItem[] | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
@@ -58,6 +62,13 @@ export default function HomePage() {
       })
       .catch(() => undefined);
 
+    // 오픈소스도 마찬가지 — 실패하면 섹션이 통째로 빠진다.
+    fetchOpenSourceItems()
+      .then((data) => {
+        if (!cancelled) setOpenSource(data);
+      })
+      .catch(() => undefined);
+
     return () => {
       cancelled = true;
     };
@@ -68,9 +79,11 @@ export default function HomePage() {
   const hasTimeline = Boolean(
     timeline && (timeline.companies.length > 0 || timeline.projects.length > 0),
   );
+  const hasOpenSource = Boolean(openSource && openSource.length > 0);
   const gnbItems = [
     ...(services && services.length > 0 ? [{ label: '서비스', anchor: 'services' }] : []),
     ...(hasTimeline ? [{ label: '지나온 것', anchor: 'portfolio' }] : []),
+    ...(hasOpenSource ? [{ label: '오픈소스', anchor: 'opensource' }] : []),
     ABOUT_ITEM,
   ];
 
@@ -131,6 +144,8 @@ export default function HomePage() {
       )}
 
       {timeline && <PortfolioTimeline timeline={timeline} />}
+
+      {openSource && <OpenSourceSection items={openSource} />}
 
       <AboutSection />
 

@@ -77,3 +77,18 @@ export const fetchPortfolioTimeline = async (): Promise<PortfolioTimeline> => {
   const res = await api.get<ApiResponse<PortfolioTimeline>>('/api/v1/portfolio/timeline');
   return unwrap(res.data);
 };
+
+/** 메인에 전시하는 공개 오픈소스 저장소. active 만 내려온다 (서버가 거른다). */
+export interface OpenSourceItem {
+  slug: string;
+  name: string;
+  tagline: string;
+  repoUrl: string;
+  language: string;
+  orderNo: number;
+}
+
+export const fetchOpenSourceItems = async (): Promise<OpenSourceItem[]> => {
+  const res = await api.get<ApiResponse<OpenSourceItem[]>>('/api/v1/display/open-source');
+  return unwrap(res.data);
+};
