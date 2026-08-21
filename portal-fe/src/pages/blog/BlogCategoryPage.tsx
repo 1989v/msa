@@ -13,8 +13,12 @@ import './Blog.css';
 const PAGE_SIZE = 12;
 
 /**
- * 카테고리 페이지. 경로 세그먼트가 그대로 카테고리 경로가 된다 (`/c/tech/server/search`).
- * 상위를 고르면 하위 글까지 나온다 — 서버가 서브트리로 조회하기 때문이다.
+ * 공간 홈 + 하위 분류 페이지. 경로 세그먼트가 그대로 카테고리 경로가 된다
+ * (`/c/tech/server/search`). 상위를 고르면 하위 글까지 나온다 — 서버가 서브트리로
+ * 조회하기 때문이다.
+ *
+ * 제목 자리는 언제나 **공간**(depth-1)이다 — 하위 분류는 칩의 활성 상태가 말해 준다.
+ * 공간이 페이지의 정체성이고, 공간 전환은 머리의 SpaceSwitcher 몫이다 (ADR-0072).
  */
 export default function BlogCategoryPage() {
   useHeritageSurface();
@@ -33,6 +37,9 @@ export default function BlogCategoryPage() {
     enabled: path.length > 1,
   });
 
+  const space = (categories.data ?? []).find(
+    (c) => path === c.path || path.startsWith(`${c.path}/`),
+  );
   const category = flattenCategories(categories.data ?? []).find((c) => c.path === path);
   useSeo(
     category
@@ -42,8 +49,8 @@ export default function BlogCategoryPage() {
 
   return (
     <BlogShell
-      title={category?.name ?? '분류'}
-      subtitle={category?.description ?? undefined}
+      title={space?.name ?? '공간'}
+      subtitle={category?.description ?? space?.description ?? undefined}
       nav={<CategoryNav categories={categories.data ?? []} activePath={path} />}
     >
       <main>

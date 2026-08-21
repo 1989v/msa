@@ -158,69 +158,72 @@ export default function BlogStudioPage() {
               )}
             </div>
 
-            <table className="blog-table">
-              <thead>
-                <tr>
-                  <th>제목</th>
-                  <th>상태</th>
-                  <th>발행일</th>
-                  <th>조회</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {(posts.data?.items ?? []).map((post) => (
-                  <tr key={post.id}>
-                    <td>
-                      <Link to={`/studio/edit/${post.id}`}>{post.title}</Link>
-                    </td>
-                    <td className="kh-mono">{STATUS_LABEL[post.status] ?? post.status}</td>
-                    <td className="kh-mono">{formatDate(post.publishedAt)}</td>
-                    <td className="kh-mono">{post.viewCount}</td>
-                    <td>
-                      <div className="blog-comment__tools">
-                        {post.status !== 'PUBLISHED' && (
-                          <button
-                            type="button"
-                            className="blog-linkbtn"
-                            onClick={() => publishMutation.mutate(post.id)}
-                          >
-                            발행
-                          </button>
-                        )}
-                        {post.status === 'PUBLISHED' && (
-                          <button
-                            type="button"
-                            className="blog-linkbtn"
-                            onClick={() => archiveMutation.mutate(post.id)}
-                          >
-                            내리기
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          className="blog-linkbtn"
-                          onClick={() => {
-                            if (window.confirm('삭제하면 댓글과 반응도 함께 사라집니다. 계속할까요?')) {
-                              deleteMutation.mutate(post.id);
-                            }
-                          }}
-                        >
-                          삭제
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {(posts.data?.items.length ?? 0) === 0 && (
+            {/* 5열 표는 모바일 폭에 안 들어간다 — 지면이 아니라 표가 스크롤한다 */}
+            <div className="blog-table-scroll">
+              <table className="blog-table">
+                <thead>
                   <tr>
-                    <td colSpan={5} className="blog-empty">
-                      아직 쓴 글이 없습니다.
-                    </td>
+                    <th>제목</th>
+                    <th>상태</th>
+                    <th>발행일</th>
+                    <th>조회</th>
+                    <th />
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(posts.data?.items ?? []).map((post) => (
+                    <tr key={post.id}>
+                      <td>
+                        <Link to={`/studio/edit/${post.id}`}>{post.title}</Link>
+                      </td>
+                      <td className="kh-mono">{STATUS_LABEL[post.status] ?? post.status}</td>
+                      <td className="kh-mono">{formatDate(post.publishedAt)}</td>
+                      <td className="kh-mono">{post.viewCount}</td>
+                      <td>
+                        <div className="blog-comment__tools">
+                          {post.status !== 'PUBLISHED' && (
+                            <button
+                              type="button"
+                              className="blog-linkbtn"
+                              onClick={() => publishMutation.mutate(post.id)}
+                            >
+                              발행
+                            </button>
+                          )}
+                          {post.status === 'PUBLISHED' && (
+                            <button
+                              type="button"
+                              className="blog-linkbtn"
+                              onClick={() => archiveMutation.mutate(post.id)}
+                            >
+                              내리기
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="blog-linkbtn"
+                            onClick={() => {
+                              if (window.confirm('삭제하면 댓글과 반응도 함께 사라집니다. 계속할까요?')) {
+                                deleteMutation.mutate(post.id);
+                              }
+                            }}
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {(posts.data?.items.length ?? 0) === 0 && (
+                    <tr>
+                      <td colSpan={5} className="blog-empty">
+                        아직 쓴 글이 없습니다.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
 

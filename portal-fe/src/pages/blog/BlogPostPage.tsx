@@ -19,6 +19,7 @@ import { useAuth } from '../../auth/useAuth';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { blogBreadcrumbJsonLd, blogPostMeta, blogPostUrl, blogPostingJsonLd } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
+import FavoriteButton from '../../components/favorite/FavoriteButton';
 import BlogShell from './BlogShell';
 import CommentThread from './CommentThread';
 import MarkdownBody from './MarkdownBody';
@@ -165,6 +166,8 @@ export default function BlogPostPage() {
           <span>{formatDate(detail.post.publishedAt)}</span>
           <span>{detail.post.readingMinutes}분</span>
           <span>조회 {detail.post.viewCount}</span>
+          {/* 찜 — 좋아요(공감)와 달리 내 목록에 담는 행위라 메타 줄에 둔다 (ADR-0074) */}
+          <FavoriteButton type="BLOG_POST" targetKey={detail.post.slug} />
         </div>
 
         {detail.post.coverImageUrl && (
