@@ -41,3 +41,44 @@ describe('resolveServiceHref', () => {
     expect(resolveServiceHref('portfolio', '/portfolio')).toBe('/portfolio');
   });
 });
+
+describe('resolveExplorerHref', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('서브도메인 프로덕션 호스트에서도 정규 주소로 보낸다 — 상대 경로면 다른 서비스가 게임 origin 아래로 샌다', async () => {
+    const { resolveExplorerHref } = await loadWithHost('game.1989v.com');
+    expect(resolveExplorerHref('place', '/place')).toBe('https://place.1989v.com/');
+    expect(resolveExplorerHref('blog', '/blog')).toBe('https://blog.1989v.com/');
+    // 서브도메인이 없는 서비스는 apex 절대 주소로
+    expect(resolveExplorerHref('tech', '/tech')).toBe('https://1989v.com/tech');
+    expect(resolveExplorerHref('shop', '/shop')).toBe('https://1989v.com/shop');
+  });
+
+  it('apex 프로덕션 — 서브도메인 서비스는 origin, 나머지는 apex 절대 주소', async () => {
+    const { resolveExplorerHref } = await loadWithHost('1989v.com');
+    expect(resolveExplorerHref('game', '/games')).toBe('https://game.1989v.com/');
+    expect(resolveExplorerHref('tech', '/tech')).toBe('https://1989v.com/tech');
+  });
+
+  it('로컬에서는 상대 경로 그대로', async () => {
+    const { resolveExplorerHref } = await loadWithHost('localhost');
+    expect(resolveExplorerHref('place', '/place')).toBe('/place');
+    expect(resolveExplorerHref('tech', '/tech')).toBe('/tech');
+  });
+});
+
+describe('portalHomeHref', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('프로덕션 호스트에서는 apex 절대 주소, 로컬에서는 루트', async () => {
+    expect((await loadWithHost('blog.1989v.com')).portalHomeHref()).toBe('https://1989v.com/');
+    expect((await loadWithHost('1989v.com')).portalHomeHref()).toBe('https://1989v.com/');
+    expect((await loadWithHost('localhost')).portalHomeHref()).toBe('/');
+  });
+});

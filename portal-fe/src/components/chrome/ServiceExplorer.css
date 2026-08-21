@@ -1,0 +1,78 @@
+/* 서비스 탐색 오버레이 — DESIGN.md 토큰만 사용, hex 직접 입력 금지.
+ * 시트 판(.kh-sheet)의 서피스 토큰 위에서 그려지므로 두 아키타입을 모두 탄다. */
+
+.kh-explorer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 행은 괘선으로만 가른다 — 카드가 겹겹이면 시트가 서식이 된다 */
+.kh-explorer-list li + li {
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.kh-explorer-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ko-space-4);
+  min-height: 52px;
+  padding: var(--ko-space-3) var(--ko-space-2);
+  color: var(--ko-text-primary);
+  text-decoration: none;
+}
+
+a.kh-explorer-item:hover {
+  background: var(--ko-surface-2);
+}
+
+a.kh-explorer-item:active {
+  transform: translateY(1px);
+}
+
+a.kh-explorer-item:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: -2px;
+}
+
+.kh-explorer-label {
+  font-size: var(--ko-text-base);
+  font-weight: 600;
+}
+
+.kh-explorer-tagline {
+  /* muted 는 heritage 라이트의 시트 판(s1) 위에서 4.09:1 — xs 텍스트 AA 미달이라 secondary */
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-xs);
+  text-align: right;
+}
+
+/* 오픈 예정 — 타일 그리드와 같은 처지: 흐리고 누를 수 없다 */
+.kh-explorer-item.is-preopen {
+  opacity: 0.55;
+}
+
+.kh-explorer-badge {
+  flex-shrink: 0;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  padding: 2px var(--ko-space-2);
+}
+
+.kh-explorer-status {
+  margin: 0;
+  padding: var(--ko-space-6) 0;
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a.kh-explorer-item:active {
+    transform: none;
+  }
+}

@@ -74,20 +74,19 @@
 }
 
 /* 알약 배경 대신 밑줄로 상태를 알린다 — 배경 칩이 늘어서면 헤더가 툴바처럼 보인다.
- * 메뉴는 모노다 — 기술 메타데이터 표기 규약을 머리띠에서부터 지킨다. */
+ * 메뉴는 본문 서체다 — 라벨이 한글이라 모노+넓은 자간 규약(라틴 기술 라벨 전용)을
+ * 걸면 자간만 벌어진다 (§12 '한글에 넓은 자간 금지'). */
 .gnb-menu-item {
   background: none;
   border: none;
   cursor: pointer;
   padding: var(--ko-space-2) 0;
-  font-family: var(--kh-font-mono, inherit);
+  font-family: inherit;
   font-size: var(--ko-text-sm);
-  letter-spacing: var(--kh-tracking-mono, 0);
   color: var(--ko-text-secondary);
   border-bottom: 2px solid transparent;
   transition: color var(--ko-duration-fast) var(--ko-ease-out),
               border-color var(--ko-duration-fast) var(--ko-ease-out);
-  font-family: inherit;
   white-space: nowrap;
 }
 
@@ -131,9 +130,86 @@ a.gnb-menu-item {
   margin-left: auto;
 }
 
-/* ─── 모바일 앱 셸: 접히는 머리띠 ────────────────────────────────────────
+/* 햄버거 — 모바일 전용. 44px 터치 타깃. */
+.gnb-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: var(--kh-radius, 4px);
+  background: none;
+  color: var(--ko-text-secondary);
+  cursor: pointer;
+}
+
+.gnb-hamburger:hover {
+  color: var(--ko-text-primary);
+  background: var(--ko-surface-2);
+}
+
+.gnb-hamburger:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+/* ─── 서랍(바텀시트) 내용 — 시트 판 토큰 위에서 그려진다 ─────────────────── */
+
+.gnb-drawer-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.gnb-drawer-list li + li {
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.gnb-drawer-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--ko-space-2) var(--ko-space-2);
+  border: none;
+  background: none;
+  color: var(--ko-text-primary);
+  font-family: inherit;
+  font-size: var(--ko-text-base);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.gnb-drawer-item:active {
+  transform: translateY(1px);
+  background: var(--ko-surface-2);
+}
+
+.gnb-drawer-item:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: -2px;
+}
+
+.gnb-drawer-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ko-space-3);
+  padding-top: var(--ko-space-4);
+  margin-top: var(--ko-space-2);
+  border-top: 1px solid var(--ko-border-default);
+}
+
+/* ─── 모바일 앱 셸: 접히는 머리띠 + 로고·햄버거만 남는 머리띠 ─────────────
  * 아래로 스크롤하면 접히고 위로 한 틱이면 돌아온다 (useScrollDirection).
- * transform 만 쓴다 — 리플로우 없음. 데스크탑에선 항상 펴져 있다. */
+ * transform 만 쓴다 — 리플로우 없음. 데스크탑에선 항상 펴져 있다.
+ * 메뉴·토글·로그인은 서랍으로 — 390px 에서 nowrap 칩들이 만들던
+ * 가로 오버플로(실측 24px)의 원인 제거다. */
 @media (max-width: 767.98px) {
   .gnb {
     transition: transform var(--kh-dur-state, 240ms) var(--kh-ease-enter, ease-out);
@@ -141,6 +217,15 @@ a.gnb-menu-item {
 
   .gnb--collapsed {
     transform: translateY(-100%);
+  }
+
+  .gnb-menu,
+  .gnb-right {
+    display: none;
+  }
+
+  .gnb-hamburger {
+    display: inline-flex;
   }
 }
 

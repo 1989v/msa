@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { markTabNav, shellTabsFor } from '../../shell/appShell';
 import KhSheet from './KhSheet';
+import ServiceExplorer from '../chrome/ServiceExplorer';
 import {
   GENRE_LABELS_EN,
   GENRE_LABELS_KO,
@@ -21,7 +22,7 @@ import {
  */
 export default function KhTabBar() {
   const { pathname } = useLocation();
-  const [genresOpen, setGenresOpen] = useState(false);
+  const [openSheet, setOpenSheet] = useState<'genres' | 'explorer' | null>(null);
   const tabs = shellTabsFor(window.location.hostname, pathname);
   const active = tabs !== null;
 
@@ -55,13 +56,14 @@ export default function KhTabBar() {
             </>
           );
           if (tab.sheet) {
+            const sheet = tab.sheet;
             return (
               <button
                 key={tab.key}
                 type="button"
                 className={cls}
                 aria-haspopup="dialog"
-                onClick={() => setGenresOpen(true)}
+                onClick={() => setOpenSheet(sheet)}
               >
                 {body}
               </button>
@@ -89,10 +91,10 @@ export default function KhTabBar() {
         })}
       </nav>
 
-      {genresOpen && (
+      {openSheet === 'genres' && (
         <KhSheet
           label={lang === 'en' ? 'Genres' : '장르'}
-          onClose={() => setGenresOpen(false)}
+          onClose={() => setOpenSheet(null)}
         >
           <ul className="kh-genre-list">
             {genreEntries.map(([genre, label]) => (
@@ -102,7 +104,7 @@ export default function KhTabBar() {
                   viewTransition
                   onClick={() => {
                     markTabNav();
-                    setGenresOpen(false);
+                    setOpenSheet(null);
                   }}
                 >
                   {label}
@@ -112,6 +114,8 @@ export default function KhTabBar() {
           </ul>
         </KhSheet>
       )}
+
+      {openSheet === 'explorer' && <ServiceExplorer onClose={() => setOpenSheet(null)} />}
     </>
   );
 }

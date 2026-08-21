@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ShopHeader from '../components/ShopHeader';
+import Footer from '../components/Footer';
 import { portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import {
@@ -315,6 +316,8 @@ export default function ShopPage() {
           </>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 }

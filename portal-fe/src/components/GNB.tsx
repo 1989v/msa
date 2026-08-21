@@ -1,4 +1,8 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import AuthButton from './AuthButton';
+import KhSheet from './shell/KhSheet';
+import ServiceExplorer from './chrome/ServiceExplorer';
 import { useResumeStatus } from '../hooks/useResumeStatus';
 import { useScrollDirection } from '../hooks/useScrollDirection';
 import ThemeToggle from './ThemeToggle';
@@ -32,10 +36,19 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
   const resumeVisible = useResumeStatus();
   // 모바일 앱 셸 — 아래로 스크롤하면 머리띠가 접힌다 (CSS 가 모바일에서만 적용)
   const collapsed = useScrollDirection();
+  // 모바일(< 768px)에서는 메뉴·토글·로그인이 전부 서랍으로 들어간다 — 좁은 폭에서
+  // 로그인 칩이 머리띠 밖으로 밀려 나가던 가로 오버플로의 근본 수술이다.
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [explorerOpen, setExplorerOpen] = useState(false);
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  const menuItems = [
+    ...items,
+    ...(resumeVisible ? [{ label: '이력서', href: 'https://resume.1989v.com' }] : []),
+  ];
 
   return (
     <nav className={`gnb${collapsed ? ' gnb--collapsed' : ''}`}>
@@ -45,7 +58,7 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
           {pageLabel && <span className="gnb-page-label">{pageLabel}</span>}
         </a>
         <ul className="gnb-menu">
-          {items.map((item) => (
+          {menuItems.map((item) => (
             <li key={item.label}>
               {item.href ? (
                 <a className="gnb-menu-item" href={item.href}>
@@ -58,13 +71,6 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
               )}
             </li>
           ))}
-          {resumeVisible && (
-            <li>
-              <a className="gnb-menu-item" href="https://resume.1989v.com">
-                이력서
-              </a>
-            </li>
-          )}
         </ul>
         <div className="gnb-right">
           <ThemeToggle />
@@ -78,7 +84,88 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
             </button>
           )}
         </div>
+        <button
+          type="button"
+          className="gnb-hamburger"
+          aria-label="메뉴"
+          aria-haspopup="dialog"
+          aria-expanded={drawerOpen}
+          onClick={() => setDrawerOpen(true)}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <line x1="4" y1="7" x2="20" y2="7" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="17" x2="20" y2="17" />
+          </svg>
+        </button>
       </div>
+
+      {/* 서랍은 바텀시트다 — 모바일 다이얼로그는 시트 하나로 통일돼 있고(장르·지역·상세),
+          상단 고정 패널은 접히는 머리띠(transform)에 기준점이 걸려 스크롤과 함께 흔들린다. */}
+      {drawerOpen && (
+        <KhSheet label="메뉴" onClose={() => setDrawerOpen(false)}>
+          <ul className="gnb-drawer-list">
+            {menuItems.map((item) => (
+              <li key={item.label}>
+                {item.href ? (
+                  <a className="gnb-drawer-item" href={item.href}>
+                    {item.label}
+                  </a>
+                ) : (
+                  <button
+                    type="button"
+                    className="gnb-drawer-item"
+                    onClick={() => {
+                      setDrawerOpen(false);
+                      scrollToSection(item.anchor!);
+                    }}
+                  >
+                    {item.label}
+                  </button>
+                )}
+              </li>
+            ))}
+            {onSearchFocus && (
+              <li>
+                <button
+                  type="button"
+                  className="gnb-drawer-item"
+                  onClick={() => {
+                    setDrawerOpen(false);
+                    onSearchFocus();
+                  }}
+                >
+                  검색
+                </button>
+              </li>
+            )}
+            <li>
+              <Link className="gnb-drawer-item" to="/favorites" onClick={() => setDrawerOpen(false)}>
+                내 찜
+              </Link>
+            </li>
+            <li>
+              <button
+                type="button"
+                className="gnb-drawer-item"
+                aria-haspopup="dialog"
+                onClick={() => {
+                  setDrawerOpen(false);
+                  setExplorerOpen(true);
+                }}
+              >
+                서비스 탐색
+              </button>
+            </li>
+          </ul>
+          <div className="gnb-drawer-actions">
+            <ThemeToggle />
+            <AuthButton />
+          </div>
+        </KhSheet>
+      )}
+
+      {explorerOpen && <ServiceExplorer onClose={() => setExplorerOpen(false)} />}
     </nav>
   );
 }

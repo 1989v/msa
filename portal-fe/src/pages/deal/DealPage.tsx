@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDealSections, type DealOffer, type DealSection } from '../../api/dealApi';
+import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { DEAL_AFFILIATE_BADGE, DEAL_DISCLOSURE, dealHubMeta } from '../../seo/copy.mjs';
@@ -35,7 +36,7 @@ function OfferCard({ offer }: { offer: DealOffer }) {
 
   return (
     <a
-      className="deal-card kh-slab-offset"
+      className="deal-card kh-slab kh-slab-offset"
       href={`/go/${offer.slug}`}
       target="_blank"
       // 제휴 링크에만 sponsored 를 붙인다. 수수료를 받지 않는 링크까지 광고로 표시하면
@@ -143,12 +144,14 @@ export default function DealPage() {
         ))}
       </main>
 
-      <footer className="deal-footer">
-        <p className="kh-mono">
+      {/* 조건 변동 고지는 공통 푸터의 슬롯으로 — 헤더의 공정위 고지(DEAL_DISCLOSURE)는
+          링크를 보기 전에 읽혀야 해서 그대로 위에 남는다 (ADR-0069). */}
+      <Footer>
+        <p>
           혜택 내용과 조건은 각 제공처의 정책에 따라 예고 없이 바뀔 수 있습니다. 최종 조건은
           이동한 페이지에서 확인하세요.
         </p>
-      </footer>
+      </Footer>
     </div>
   );
 }

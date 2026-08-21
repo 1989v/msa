@@ -119,13 +119,16 @@
 
 /* ─── 오퍼 카드 ─── */
 
+/* 카드는 판이다 — 배경·글자 토큰은 .kh-slab 이 뒤집는다. offset 만 단독으로 걸면
+ * 뒷판(#0a0a0a)이 투명 카드 밑에 그대로 비쳐 라이트 모드에서 글자가 묻힌다. */
 .deal-card {
   display: flex;
   flex-direction: column;
   gap: var(--ko-space-2);
   padding: var(--ko-space-5);
   text-decoration: none;
-  color: inherit;
+  /* 판 위 강조색 — 라이트 액션(소나무)은 어두운 판에서 대비가 못 나온다 */
+  --ko-accent-text: var(--kh-ocher);
   border-radius: var(--kh-radius-asym, 0 8px 0 8px);
   transition: border-color var(--ko-duration-fast) var(--ko-ease-out),
     transform var(--ko-duration-fast) var(--ko-ease-out);
@@ -198,21 +201,6 @@
 /* 남은 기간이 짧을 때만 색을 쓴다. 전부 강조하면 아무것도 강조되지 않는다. */
 .deal-card__expiry.is-urgent {
   color: var(--ko-accent-text);
-}
-
-/* ─── 꼬리 ─── */
-
-.deal-footer {
-  padding-top: var(--ko-space-6);
-  border-top: 1px solid var(--ko-border-subtle);
-  color: var(--ko-text-muted);
-  font-size: var(--ko-text-xs, 0.72rem);
-  line-height: 1.6;
-}
-
-.deal-footer p {
-  margin: 0;
-  max-width: 48rem;
 }
 
 @media (max-width: 640px) {

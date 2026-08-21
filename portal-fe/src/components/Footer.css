@@ -1,17 +1,90 @@
+/* 공통 푸터 — 조용한 꼬리. 배경을 칠하지 않고 괘선 하나로 가른다.
+ * 이 푸터는 두 아키타입(k-heritage / dark-trading)과 blog·deal 처럼 좌우 패딩이 있는
+ * 컨테이너 안을 모두 탄다 — 어두운 판(full-bleed)으로 만들면 패딩 안에서 어긋난다. */
+
 .site-footer {
-  text-align: center;
-  padding: 28px 24px;
+  margin-top: var(--ko-space-12);
+  padding: var(--ko-space-8) var(--ko-space-6);
   border-top: 1px solid var(--ko-border-subtle);
 }
 
-.footer-built {
-  font-size: 0.8rem;
-  color: var(--ko-text-muted);
-  margin: 0 0 4px;
+.site-footer-inner {
+  max-width: var(--kh-container, 1200px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
 }
 
-.footer-copy {
-  font-size: 0.75rem;
+.site-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-4);
+}
+
+/* 낙관 자리 — 황토. k-heritage 견본 푸터의 mark 를 따른다 */
+.site-footer-mark {
+  color: var(--kh-ocher, var(--ko-text-muted));
+}
+
+.site-footer-explore {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--ko-space-4);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  background: transparent;
+  color: var(--ko-text-primary);
+  font-family: inherit;
+  font-size: var(--ko-text-sm);
+  cursor: pointer;
+  transition: background var(--ko-duration-fast) var(--ko-ease-out),
+    border-color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.site-footer-explore:hover {
+  background: var(--ko-surface-2);
+  border-color: var(--ko-border-strong);
+}
+
+.site-footer-explore:active {
+  transform: translateY(1px);
+}
+
+.site-footer-explore:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+/* 호스트 특화 슬롯 — 출처 고지·제휴 조건·스튜디오 링크가 이 자리에 산다 */
+.site-footer-slot {
+  /* 고지문이 실리는 자리다 — muted 는 heritage 라이트에서 4.5:1 에 못 미쳐 secondary 를 쓴다 */
   color: var(--ko-text-secondary);
+  font-size: var(--ko-text-xs, 0.75rem);
+  line-height: 1.6;
+}
+
+.site-footer-slot p {
   margin: 0;
+  max-width: 48rem;
+}
+
+.site-footer-slot a {
+  color: var(--ko-text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.site-footer-copy {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-xs, 0.75rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-footer-explore {
+    transition: none;
+  }
 }

@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { Braces, Gamepad2, Home, LayoutGrid, Layers, ShoppingBag } from 'lucide-react';
+import { Compass, Gamepad2, Heart, Home, LayoutGrid, Layers } from 'lucide-react';
 
 /**
  * 모바일 앱 셸 — 호스트별 하단 탭 구성 (kh-motion-app-shell spec §4).
@@ -7,6 +7,11 @@ import { Braces, Gamepad2, Home, LayoutGrid, Layers, ShoppingBag } from 'lucide-
  * 탭바는 뷰포트 < 768px 에서만 보인다 (kh-shell.css). 호스트 인식은
  * App.tsx / serviceHref.ts 와 같은 서브도메인 규칙을 쓴다.
  *
+ * - apex: 홈·포트폴리오·내 찜·서비스 — 기술/샵은 상시 탭에서 내리고(약한 진입점)
+ *   서비스 탐색 오버레이와 홈 타일 그리드가 받는다.
+ * - blog: 홈·내 찜·서비스 — apex 탭을 그대로 내면 블로그 origin 아래로 다른 서비스
+ *   화면이 새므로(cross-host) 자기 탭을 갖는다. 카테고리·스튜디오는 BlogShell 머리가 맡는다.
+ * - game: 로비·장르·서비스 — 풀 내비게이션('1989v') 탭 대신 탐색 오버레이.
  * - resume / deal: 셸 없음 — 문서·단일 목록 성격에 탭바는 소음이다.
  * - place: 지역 드릴다운 착지 후 별도 적용 (spec §5).
  * - 게임 플레이 화면: 탭바 숨김 — 게임 rAF 와의 경합 + 몰입 면.
@@ -20,8 +25,8 @@ export interface ShellTab {
   to?: string;
   /** 호스트 간 — 풀 내비게이션 */
   href?: string;
-  /** 눌렀을 때 여는 시트 */
-  sheet?: 'genres';
+  /** 눌렀을 때 여는 시트 — genres: 게임 장르 목록 / explorer: 서비스 탐색 오버레이 */
+  sheet?: 'genres' | 'explorer';
   /** 활성 판정 */
   isActive: (pathname: string) => boolean;
 }
@@ -40,6 +45,23 @@ export function consumeTabNav(): boolean {
   return was;
 }
 
+/** 서비스 탐색 탭 — 어느 호스트에서든 같은 오버레이를 연다 (하드 내비게이션 없음) */
+const EXPLORER_TAB: ShellTab = {
+  key: 'services',
+  label: '서비스',
+  icon: Compass,
+  sheet: 'explorer',
+  isActive: () => false,
+};
+
+const FAVORITES_TAB: ShellTab = {
+  key: 'favorites',
+  label: '내 찜',
+  icon: Heart,
+  to: '/favorites',
+  isActive: (p) => p === '/favorites' || p === '/en/favorites',
+};
+
 const APEX_TABS: ShellTab[] = [
   {
     key: 'home',
@@ -49,26 +71,14 @@ const APEX_TABS: ShellTab[] = [
     isActive: (p) => p === '/' || p === '/en',
   },
   {
-    key: 'tech',
-    label: '기술',
-    icon: Braces,
-    to: '/tech',
-    isActive: (p) => p.startsWith('/tech'),
-  },
-  {
     key: 'portfolio',
     label: '포트폴리오',
     icon: Layers,
     to: '/portfolio',
     isActive: (p) => p.startsWith('/portfolio'),
   },
-  {
-    key: 'shop',
-    label: '샵',
-    icon: ShoppingBag,
-    to: '/shop',
-    isActive: (p) => p.startsWith('/shop'),
-  },
+  FAVORITES_TAB,
+  EXPLORER_TAB,
 ];
 
 const GAME_TABS: ShellTab[] = [
@@ -87,13 +97,21 @@ const GAME_TABS: ShellTab[] = [
     sheet: 'genres',
     isActive: (p) => /\/games\/genre\//.test(p),
   },
+  // '1989v' 풀 내비게이션 탭이 있던 자리 — 오버레이가 본진(1989v 홈) 행을 품으므로
+  // 컨텍스트를 버리는 하드 이동 없이 같은 목적지를 전부 커버한다.
+  EXPLORER_TAB,
+];
+
+const BLOG_TABS: ShellTab[] = [
   {
-    key: 'main',
-    label: '1989v',
+    key: 'home',
+    label: '홈',
     icon: Home,
-    href: 'https://1989v.com',
-    isActive: () => false,
+    to: '/',
+    isActive: (p) => p === '/',
   },
+  FAVORITES_TAB,
+  EXPLORER_TAB,
 ];
 
 /** 게임 플레이 화면 — 허브(/games)·장르(/games/genre/*)가 아닌 /games/{slug} */
@@ -105,5 +123,6 @@ export function shellTabsFor(hostname: string, pathname: string): ShellTab[] | n
   const sub = hostname.split('.')[0];
   if (sub === 'resume' || sub === 'deal' || sub === 'place') return null;
   if (sub === 'game') return GAME_TABS;
+  if (sub === 'blog') return BLOG_TABS;
   return APEX_TABS;
 }

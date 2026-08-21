@@ -71,9 +71,10 @@ textarea {
   cursor: pointer;
   text-decoration: none;
   color: var(--kh-on-slab-muted, var(--ko-text-muted));
-  font-family: var(--kh-font-mono, var(--ko-font-mono));
+  /* 탭 라벨은 전부 한글이다 — 모노+넓은 자간은 라틴 기술 라벨 규약이라 여기선
+   * 자간만 벌어진다(§12 '한글에 넓은 자간 금지'). 본문 서체로 둔다. */
+  font-family: inherit;
   font-size: 10px;
-  letter-spacing: var(--kh-tracking-mono, 0.05em);
   transition: color var(--kh-dur-state) var(--kh-ease-enter);
 }
 
@@ -137,6 +138,24 @@ textarea {
   border-radius: 0 16px 0 0;
   padding: 0 var(--ko-space-5) calc(var(--ko-space-6) + env(safe-area-inset-bottom));
   animation: kh-sheet-up var(--kh-dur-enter) var(--kh-ease-enter);
+}
+
+/* 다이얼로그 변형 — 데스크탑(≥768px)에서는 바닥에 붙는 대신 가운데 판이 된다.
+ * auto 마진은 veil 의 align-items(flex-end)보다 우선하므로 세로도 중앙에 선다.
+ * 드래그 손잡이는 데스크탑 입력에 없는 동작이라 숨기고 위 여백으로 대신한다. */
+@media (min-width: 768px) {
+  .kh-sheet--dialog {
+    margin: auto;
+    max-width: 440px;
+    max-height: 80vh;
+    border: 1px solid var(--ko-border-default);
+    border-radius: var(--kh-radius-asym, 0 8px 0 8px);
+    padding-top: var(--ko-space-5);
+  }
+
+  .kh-sheet--dialog .kh-sheet-handle {
+    display: none;
+  }
 }
 
 .kh-sheet-handle {

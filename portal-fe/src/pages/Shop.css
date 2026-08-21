@@ -344,6 +344,14 @@ button.shop-product-card {
   border-radius: var(--ko-radius-lg);
 }
 
+/* 상품명 + 찜 버튼 한 줄 (ADR-0074) */
+.shop-detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .shop-detail-name {
   font-size: var(--ko-text-xl);
   font-weight: var(--ko-weight-bold);

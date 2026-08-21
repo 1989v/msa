@@ -11,10 +11,13 @@ export default function KhSheet({
   label,
   onClose,
   children,
+  className,
 }: {
   label?: string;
   onClose: () => void;
   children: ReactNode;
+  /** 변형 클래스 — `kh-sheet--dialog` 는 데스크탑(≥768px)에서 가운데 다이얼로그가 된다 */
+  className?: string;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [dragY, setDragY] = useState(0);
@@ -55,7 +58,7 @@ export default function KhSheet({
     <div className="kh-sheet-veil" onClick={onClose}>
       <div
         ref={panelRef}
-        className="kh-sheet"
+        className={className ? `kh-sheet ${className}` : 'kh-sheet'}
         role="dialog"
         aria-modal="true"
         aria-label={label}
