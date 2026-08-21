@@ -22,6 +22,17 @@ class AttractionDeepLinkTest : BehaviorSpec({
                 AttractionDeepLinks.instagramTag("Gyeongbokgung Palace") shouldBe "gyeongbokgungpalace"
             }
         }
+        `when`("원천 제목에 꼬리 괄호가 붙어 있으면") {
+            then("표시명으로 가른 뒤 조립해야 한다 — 원문 그대로면 태그·검색어가 불가능해진다") {
+                // 호출자(AttractionLinkService)가 titleDisplay 를 넘기는 규약의 근거.
+                // 원문을 그대로 넣으면 `dosanpark도산공원` — 어디에도 없는 태그다.
+                val display = AttractionTitle.parse("Dosan Park(도산공원)").display
+                AttractionDeepLinks.instagramTag(display) shouldBe "dosanpark"
+                val links = AttractionDeepLinks.of(display)
+                links[1].url shouldBe "https://www.youtube.com/results?search_query=Dosan+Park"
+                links[2].url shouldBe "https://www.myrealtrip.com/search?q=Dosan+Park"
+            }
+        }
         `when`("문장부호만 남는 이름이면") {
             then("인스타 링크를 만들지 않는다") {
                 // 유튜브 검색은 원문 그대로 인코딩해 나간다 — 태그와 달리 문장부호가 있어도 검색이 된다

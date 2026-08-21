@@ -10,13 +10,21 @@ import {
   type AdminRegion,
   type Attraction,
   type AttractionQuery,
+  type AttractionSearchResult,
   type PlaceLang,
   type Suggestion,
 } from '../../api/placeApi';
-import { loadGoogleMaps, mapsApiKey, nearestRegion, neighboursInFrame, radiusFromBounds } from './googleMaps';
+import { MarkerClusterer } from '@googlemaps/markerclusterer';
+import { loadGoogleMaps, mapsApiKey, nearestRegion, radiusFromBounds } from './googleMaps';
 import AttractionLinks from './AttractionLinks';
 import RegionDrilldown from './RegionDrilldown';
+import RegionSheet from './RegionSheet';
+import KhSheet from '../../components/shell/KhSheet';
+import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
+import FavoriteButton from '../../components/favorite/FavoriteButton';
+import { mergePages, nextPage, titleParts } from './placeView';
+import { useMediaQuery } from './useMediaQuery';
 import './PlacePage.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import {
@@ -52,6 +60,11 @@ const UI = {
     hideList: '목록 접기',
     showList: '목록 펼치기',
     onMap: '지도에 표시',
+    loadMore: '더 보기',
+    pickRegion: '어느 지역부터 볼까요?',
+    pickRegionHint: '지도의 숫자는 그 시·도의 관광지 수입니다',
+    countSuffix: '곳',
+    regionTrigger: '지역 선택',
     categories: {
       nature: '자연', history: '역사', culture: '문화', leisure: '레포츠',
       shopping: '쇼핑', food: '음식', stay: '숙박', etc: '기타',
@@ -79,6 +92,11 @@ const UI = {
     hideList: 'Hide list',
     showList: 'Show list',
     onMap: 'Show on map',
+    loadMore: 'Load more',
+    pickRegion: 'Where do you want to start?',
+    pickRegionHint: 'Numbers on the map are attraction counts per province',
+    countSuffix: 'places',
+    regionTrigger: 'Choose a region',
     categories: {
       nature: 'Nature', history: 'History', culture: 'Culture', leisure: 'Leisure',
       shopping: 'Shopping', food: 'Food', stay: 'Stay', etc: 'Etc',
@@ -106,9 +124,16 @@ function token(name: string): string {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
-// 선택 시 프레임에 함께 넣을 주변 명소 수 / 확대 상한 (건물 단위까지 당기지 않는다)
-const NEIGHBOURS_IN_FRAME = 6;
+// 선택 시 확대 상한 (건물 단위까지 당기지 않는다)
 const MAX_SELECT_ZOOM = 16;
+
+/** JS 렌더 분기(시트·무한스크롤·목록 상시 노출)용 모바일 판정 — CSS 900px 티어와 같은 경계 */
+const MOBILE_QUERY = '(max-width: 899.98px)';
+
+/** 선택 마커 강조 핀 — 기본 핀과 같은 실루엣을 유지하고 색·크기로만 구분한다 */
+const SELECTED_PIN_PATH = 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z';
+
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /*
  * 행정 레벨별 확대 상한 (ADR-0071 §4). 시도를 골랐는데 결과가 한 동네에 몰리면 fitBounds 가
@@ -175,13 +200,17 @@ export default function PlacePage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [mapMoved, setMapMoved] = useState(false);
   const [mapReady, setMapReady] = useState(false);
-  // 좁은 화면은 세 열이 안 들어간다 — 접힌 채로 시작해 지도를 먼저 보인다
+  // 데스크톱 전용 — 목록 열을 접어 지도를 넓힌다. 모바일은 목록이 항상 지도 아래에 있다.
   const [listOpen, setListOpen] = useState(() => window.innerWidth > 900);
+  const [regionSheetOpen, setRegionSheetOpen] = useState(false);
+  const isMobile = useMediaQuery(MOBILE_QUERY);
 
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
   const markersRef = useRef<Map<string, any>>(new Map());
+  const clustererRef = useRef<MarkerClusterer | null>(null);
   const overlayMarkersRef = useRef<any[]>([]);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const hasMapKey = mapsApiKey() !== '';
 
   const query: AttractionQuery = useMemo(
@@ -210,6 +239,46 @@ export default function PlacePage() {
     staleTime: 60_000,
   });
 
+  // ─── 모바일 무한 스크롤 누적 — page 를 뺀 검색 조건이 바뀌면 처음부터 다시 쌓는다.
+  // effect 가 아니라 렌더 중 조정(React 'adjusting state during render')이다 —
+  // effect 를 거치면 프레임 하나 늦게 그려지고 set-state-in-effect 계단식 렌더가 된다.
+  const baseKey = useMemo(() => JSON.stringify({ ...query, page: 0 }), [query]);
+  const [store, setStore] = useState<{
+    key: string;
+    data: AttractionSearchResult | null;
+    items: Attraction[];
+  }>({ key: baseKey, data: null, items: [] });
+  if (data && (store.key !== baseKey || store.data !== data)) {
+    const prev = store.key === baseKey ? store.items : [];
+    setStore({ key: baseKey, data, items: mergePages(prev, data.attractions, data.currentPage) });
+  }
+  // 목록·마커의 단일 원본 — 모바일은 누적분, 데스크톱은 현재 페이지.
+  // useMemo — 매 렌더 새 배열이면 마커 동기화 effect 가 키 입력마다 돈다.
+  const attractions = useMemo(
+    () => (isMobile ? (store.key === baseKey ? store.items : []) : (data?.attractions ?? [])),
+    [isMobile, store, baseKey, data],
+  );
+
+  // 센티널이 보이면 다음 페이지. 로딩 중에는 붙이지 않아 중복 요청이 없고,
+  // 데이터가 오면 effect 가 다시 붙어 다음 구간을 기다린다.
+  const hasIO = typeof IntersectionObserver !== 'undefined';
+  const totalPages = data?.totalPages ?? 0;
+  useEffect(() => {
+    if (!isMobile || !hasIO || isLoading) return;
+    const el = sentinelRef.current;
+    if (!el || nextPage(page, totalPages) == null) return;
+    const io = new IntersectionObserver(
+      (entries, obs) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        obs.disconnect(); // 한 번만 — 연타로 여러 페이지를 건너뛰지 않는다
+        setPage((p) => nextPage(p, totalPages) ?? p);
+      },
+      { rootMargin: '480px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [isMobile, hasIO, isLoading, page, totalPages, baseKey]);
+
   const { data: sidoRegions } = useQuery({
     queryKey: ['admin-regions', 'SIDO', lang],
     queryFn: () => fetchAdminRegions({ level: 'SIDO', lang }),
@@ -217,6 +286,24 @@ export default function PlacePage() {
   });
   // 자료가 들어오면 드릴다운으로, 아직이면 이전 광역 선택으로. 두 축을 동시에 노출하지 않는다.
   const hasRegionAxis = (sidoRegions?.length ?? 0) > 0;
+
+  // 모바일 지역 트리거 라벨("서울 · 강남구")용 시군구 이름 — RegionSheet 와 같은 캐시를 쓴다
+  const { data: sigunguRegions } = useQuery({
+    queryKey: ['admin-regions', 'SIGUNGU', sidoCode, lang],
+    queryFn: () => fetchAdminRegions({ level: 'SIGUNGU', parent: sidoCode!, lang }),
+    enabled: isMobile && sidoCode != null,
+    staleTime: 30 * 60_000,
+  });
+  const regionName = (r?: AdminRegion | null) => (r ? (lang === 'en' && r.nameEn) || r.name : null);
+  const selectedSidoName = regionName((sidoRegions ?? []).find((r) => r.code === sidoCode));
+  const selectedSigunguName = sigunguCode
+    ? regionName((sigunguRegions ?? []).find((r) => r.code.slice(2) === sigunguCode))
+    : null;
+  const regionTriggerLabel = selectedSidoName
+    ? selectedSigunguName
+      ? `${selectedSidoName} · ${selectedSigunguName}`
+      : selectedSidoName
+    : UI[lang].regionTrigger;
   /*
    * 시도를 아직 안 고른 첫 화면 (ADR-0071 §3 — 탐색의 축이 지역이다).
    *
@@ -314,14 +401,28 @@ export default function PlacePage() {
     };
   }, [hasMapKey]);
 
-  // 결과 → 마커 동기화
+  // 클러스터 최대 줌에서 카드 목록으로 안내 — 지도가 더는 쪼개 주지 못하는 것을 목록이 보여준다
+  const scrollCardIntoView = useCallback((id: string) => {
+    setListOpen(true); // 접힌 목록(데스크톱)으로는 안내할 수 없다
+    requestAnimationFrame(() => {
+      document.getElementById(`place-card-${id}`)?.scrollIntoView({
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        block: 'center',
+      });
+    });
+  }, []);
+
+  // 결과 → 마커 동기화. 관광지 마커는 줌에 따라 클러스터로 묶는다 —
+  // 모바일 무한 스크롤이 마커를 수백 개까지 쌓아 개별 핀만으로는 지도가 덮인다.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady || !window.google?.maps) return;
+    clustererRef.current?.clearMarkers();
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = new Map();
 
     // 지역 선택 화면 — 관광지 대신 시도를 찍는다. 클릭하면 그 시도로 들어간다.
+    // 시도 카운트 원은 이미 수동 클러스터라 MarkerClusterer 를 태우지 않는다.
     if (pickingRegion) {
       const bounds = new window.google.maps.LatLngBounds();
       (sidoRegions ?? []).forEach((r) => {
@@ -356,28 +457,76 @@ export default function PlacePage() {
       return;
     }
 
-    const attractions = data?.attractions ?? [];
     if (attractions.length === 0) return;
 
+    const markers: any[] = [];
     const bounds = new window.google.maps.LatLngBounds();
     attractions.forEach((a) => {
+      // map 은 클러스터러가 관리한다 — 여기서 붙이면 클러스터와 개별 핀이 겹쳐 보인다
       const marker = new window.google.maps.Marker({
-        map,
         position: { lat: a.latitude, lng: a.longitude },
         title: a.title,
       });
       marker.addListener('click', () => setSelectedId(a.id));
       markersRef.current.set(a.id, marker);
+      markers.push(marker);
       bounds.extend({ lat: a.latitude, lng: a.longitude });
     });
-    map.fitBounds(bounds, 48);
-    window.google.maps.event.addListenerOnce(map, 'idle', () => {
-      // 시도를 고른 상태면 그 레벨보다 더 당기지 않는다
-      if (areaCode && map.getZoom() > MAX_ZOOM_BY_LEVEL.SIDO) map.setZoom(MAX_ZOOM_BY_LEVEL.SIDO);
-      // fitBounds 가 유발하는 zoom_changed 를 사용자 이동으로 오인하지 않게 리셋
-      setMapMoved(false);
-    });
-  }, [data, mapReady, areaCode, pickingRegion, sidoRegions, lang, selectRegion]);
+
+    if (!clustererRef.current) {
+      clustererRef.current = new MarkerClusterer({
+        map,
+        renderer: {
+          // 시도 카운트 원과 같은 문법의 아이콘. 지도 API 는 CSS 변수를 못 읽으므로
+          // 토큰을 계산값으로 넘긴다 — hex 를 박으면 테마 전환 때 마커만 남는다 (DESIGN.md)
+          render: ({ count, position }: { count: number; position: any }) =>
+            new window.google.maps.Marker({
+              position,
+              icon: {
+                path: window.google.maps.SymbolPath.CIRCLE,
+                scale: 13 + Math.min(6, Math.round(count / 8)),
+                fillColor: token('--ko-accent-primary'),
+                fillOpacity: 0.92,
+                strokeColor: token('--ko-surface-0'),
+                strokeWeight: 2,
+              },
+              label: {
+                text: String(count),
+                color: token('--ko-surface-0'),
+                fontSize: '11px',
+                fontWeight: '700',
+              },
+              zIndex: 500 + count,
+            }),
+        },
+        onClusterClick: (_event: unknown, cluster: any, clusterMap: any) => {
+          // 최대 줌에서는 더 쪼개지지 않는다 — 지도 대신 카드 목록으로 안내한다
+          if ((clusterMap.getZoom() ?? 0) >= MAX_SELECT_ZOOM) {
+            const first = cluster.markers?.[0];
+            const found = first
+              ? [...markersRef.current.entries()].find(([, m]) => m === first)
+              : null;
+            if (found) scrollCardIntoView(found[0]);
+            return;
+          }
+          clusterMap.fitBounds(cluster.bounds, 48);
+        },
+      });
+    }
+    clustererRef.current.addMarkers(markers);
+
+    // 새 검색(0페이지)만 화면을 다시 맞춘다 — 무한 스크롤로 페이지가 붙을 때마다
+    // fitBounds 를 하면 읽고 있던 지도가 계속 튄다.
+    if (!isMobile || page === 0) {
+      map.fitBounds(bounds, 48);
+      window.google.maps.event.addListenerOnce(map, 'idle', () => {
+        // 시도를 고른 상태면 그 레벨보다 더 당기지 않는다
+        if (areaCode && map.getZoom() > MAX_ZOOM_BY_LEVEL.SIDO) map.setZoom(MAX_ZOOM_BY_LEVEL.SIDO);
+        // fitBounds 가 유발하는 zoom_changed 를 사용자 이동으로 오인하지 않게 리셋
+        setMapMoved(false);
+      });
+    }
+  }, [attractions, mapReady, areaCode, pickingRegion, sidoRegions, lang, selectRegion, scrollCardIntoView, isMobile, page]);
 
   /*
    * 오버레이가 켜져 있을 때만 지도 이동을 따라간다. 꺼져 있으면 상태를 건드리지 않는다 —
@@ -446,45 +595,64 @@ export default function PlacePage() {
     });
   }, [overlay, overlayData, mapReady]);
 
-  // 선택 → 지도가 따라간다. 그 명소만 꽉 채우지 않고 **가까운 몇 곳을 프레임에 함께 넣는다** —
-  // 한 점만 확대하면 "여기가 어디 옆인지"가 사라져서 지도가 목록의 장식이 된다.
+  // 선택 → 지도가 **한 번의 팬**으로 따라간다. 이전의 fitBounds(주변 프레임) 뒤 1.5초 BOUNCE 는
+  // 화면을 다시 맞춘 다음 마커가 또 움직이는 두 박자라 부자연스러웠다. 줌을 바꾸지 않고
+  // panTo 만 하면 "여기가 어디 옆인지"의 맥락(현재 축척)도 그대로 남는다.
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady || !selectedId || !window.google?.maps) return;
-    const list = data?.attractions ?? [];
-    const target = list.find((a) => a.id === selectedId);
+    const target = attractions.find((a) => a.id === selectedId);
     if (!target) return;
+    const position = { lat: target.latitude, lng: target.longitude };
 
-    const bounds = new window.google.maps.LatLngBounds();
-    bounds.extend({ lat: target.latitude, lng: target.longitude });
-    neighboursInFrame(target, list, NEIGHBOURS_IN_FRAME)
-      .forEach((a) => bounds.extend({ lat: a.latitude, lng: a.longitude }));
-    map.fitBounds(bounds, 72);
+    if (prefersReducedMotion()) {
+      map.setCenter(position); // 모션 최소화 — 애니메이션 없이 즉시 이동
+    } else if (map.getBounds()?.contains(position)) {
+      map.panTo(position);
+    } else {
+      // 화면 밖 목표는 panTo 가 점프로 떨어진다 — 목표를 포함하는 최소 이동으로 완만하게 옮긴다
+      map.panToBounds(new window.google.maps.LatLngBounds(position, position), 96);
+    }
+    if ((map.getZoom() ?? 0) > MAX_SELECT_ZOOM) map.setZoom(MAX_SELECT_ZOOM);
+    window.google.maps.event.addListenerOnce(map, 'idle', () => setMapMoved(false));
+  }, [selectedId, attractions, mapReady]);
 
-    window.google.maps.event.addListenerOnce(map, 'idle', () => {
-      // 주변이 몇 십 미터 안에 몰려 있으면 fitBounds 가 건물 단위까지 당긴다 — 상한을 둔다.
-      if (map.getZoom() > MAX_SELECT_ZOOM) map.setZoom(MAX_SELECT_ZOOM);
-      setMapMoved(false);
-    });
-  }, [selectedId, data, mapReady]);
-
-  // 어느 마커가 선택됐는지 지도 위에서도 보여야 한다. 튀는 동작은 두 번만 —
-  // 계속 뛰면 시선을 붙잡아 나머지 마커를 읽기 어렵게 만든다.
+  // 어느 마커가 선택됐는지는 색·크기가 말한다 — 찍힘(kh-stamp)처럼 살짝 크게 눌렸다가
+  // 240ms 뒤 자리를 잡고, 이후 움직이는 것은 없다. 반복 BOUNCE 는 시선을 붙잡아
+  // 나머지 마커를 읽기 어렵게 했다.
   useEffect(() => {
     if (!window.google?.maps) return;
     const selected = selectedId ? markersRef.current.get(selectedId) : null;
     markersRef.current.forEach((marker, id) => {
-      marker.setZIndex(id === selectedId ? 999 : 1);
-      if (id !== selectedId) marker.setAnimation(null);
+      if (id === selectedId) return;
+      marker.setZIndex(1);
+      marker.setIcon(null); // 기본 핀으로 복귀
     });
     if (!selected) return;
-    selected.setAnimation(window.google.maps.Animation.BOUNCE);
-    const stop = setTimeout(() => selected.setAnimation(null), 1500);
+    const icon = (scale: number) => ({
+      path: SELECTED_PIN_PATH,
+      scale,
+      fillColor: token('--ko-accent-primary'),
+      fillOpacity: 1,
+      strokeColor: token('--ko-surface-0'),
+      strokeWeight: 1.5,
+    });
+    selected.setZIndex(999);
+    if (prefersReducedMotion()) {
+      selected.setIcon(icon(1.2));
+      return () => {
+        selected.setIcon(null);
+        selected.setZIndex(1);
+      };
+    }
+    selected.setIcon(icon(1.45));
+    const settle = setTimeout(() => selected.setIcon(icon(1.2)), 240);
     return () => {
-      clearTimeout(stop);
-      selected.setAnimation(null);
+      clearTimeout(settle);
+      selected.setIcon(null);
+      selected.setZIndex(1);
     };
-  }, [selectedId, data]);
+  }, [selectedId, attractions]);
 
   // 통합 자동완성 — 200ms 디바운스, 실패는 조용히 무시 (shop suggest 패턴)
   useEffect(() => {
@@ -553,8 +721,6 @@ export default function PlacePage() {
     navigate(next === 'en' ? `/en${base}` : base || '/');
   };
 
-  const attractions = data?.attractions ?? [];
-
   return (
     <div className="place-page">
       <header className="place-header">
@@ -619,6 +785,9 @@ export default function PlacePage() {
                         : (s.category ? L.categories[s.category] ?? s.category : L.attractionLabel)}
                     </span>
                     <span className="place-suggest-title">{s.title}</span>
+                    {titleParts(s).secondary && (
+                      <span className="place-suggest-local">{titleParts(s).secondary}</span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -631,6 +800,28 @@ export default function PlacePage() {
             {L.nearMe}
           </button>
         </form>
+
+        {/* 모바일 지역 선택 — 칩 벽 대신 현재 선택을 접은 트리거 + 바텀시트 드릴다운 */}
+        {hasRegionAxis && isMobile && (
+          <button
+            type="button"
+            className="place-region-trigger"
+            aria-haspopup="dialog"
+            onClick={() => setRegionSheetOpen(true)}
+          >
+            <span className="place-region-trigger-label">{regionTriggerLabel}</span>
+            <span aria-hidden="true">▾</span>
+          </button>
+        )}
+        {regionSheetOpen && isMobile && (
+          <RegionSheet
+            lang={lang}
+            sidoCode={sidoCode}
+            sigunguCode={sigunguCode}
+            onChange={selectRegion}
+            onClose={() => setRegionSheetOpen(false)}
+          />
+        )}
 
         <div className="place-filters">
           <button
@@ -688,7 +879,8 @@ export default function PlacePage() {
           )}
         </div>
 
-        {hasRegionAxis && (
+        {/* 데스크톱은 기존 칩 드릴다운 그대로 — 화면이 넓으면 펼쳐 보이는 쪽이 한 탭 덜 든다 */}
+        {hasRegionAxis && !isMobile && (
           <RegionDrilldown
             lang={lang}
             sidoCode={sidoCode}
@@ -702,21 +894,24 @@ export default function PlacePage() {
       <div
         className={[
           'place-body',
-          listOpen ? '' : 'list-collapsed',
-          selected ? 'has-detail' : '',
+          isMobile || listOpen ? '' : 'list-collapsed',
+          selected && !isMobile ? 'has-detail' : '',
         ].filter(Boolean).join(' ')}
       >
         <div className="place-list-col">
-          <button
-            type="button"
-            className="place-list-toggle"
-            aria-expanded={listOpen}
-            aria-label={listOpen ? L.hideList : L.showList}
-            onClick={() => setListOpen((open) => !open)}
-          >
-            {listOpen ? `‹ ${L.hideList}` : '›'}
-          </button>
-          {listOpen && pickingRegion && (
+          {/* 접기 토글은 데스크톱 전용 — 모바일 목록은 지도 아래에 항상 있다 */}
+          {!isMobile && (
+            <button
+              type="button"
+              className="place-list-toggle"
+              aria-expanded={listOpen}
+              aria-label={listOpen ? L.hideList : L.showList}
+              onClick={() => setListOpen((open) => !open)}
+            >
+              {listOpen ? `‹ ${L.hideList}` : '›'}
+            </button>
+          )}
+          {(isMobile || listOpen) && pickingRegion && (
             <section className="place-list" aria-label={L.pickRegion}>
               <h2 className="place-subtitle">{L.pickRegion}</h2>
               <p className="place-region-hint">{L.pickRegionHint}</p>
@@ -732,13 +927,17 @@ export default function PlacePage() {
               ))}
             </section>
           )}
-          {listOpen && !pickingRegion && (
+          {(isMobile || listOpen) && !pickingRegion && (
             <section className="place-list" aria-busy={isLoading}>
               {attractions.length === 0 && !isLoading && <p className="place-empty">{L.empty}</p>}
               {attractions.map((a) => (
                 <PlaceCard key={a.id} attraction={a} lang={lang} onSelect={() => setSelectedId(a.id)} />
               ))}
-              {data && data.totalPages > 1 && (
+              {/* 다음 페이지를 기다리는 자리 — 정경 톤 opacity pulse (shimmer 금지) */}
+              {isMobile && isLoading && (
+                <div className="place-card place-card-loading kh-skeleton" aria-hidden="true" />
+              )}
+              {!isMobile && data && data.totalPages > 1 && (
                 <div className="place-paging">
                   <button className="place-btn" disabled={page === 0} onClick={() => setPage(page - 1)}>
                     {L.prev}
@@ -754,6 +953,19 @@ export default function PlacePage() {
                     {L.next}
                   </button>
                 </div>
+              )}
+              {/* 모바일은 무한 스크롤 — IO 가 없는 브라우저만 버튼으로 대신한다 */}
+              {isMobile && data && nextPage(page, data.totalPages) != null && (
+                hasIO ? (
+                  <div ref={sentinelRef} className="place-list-sentinel" aria-hidden="true" />
+                ) : (
+                  <button
+                    className="place-btn place-load-more"
+                    onClick={() => setPage((p) => nextPage(p, data.totalPages) ?? p)}
+                  >
+                    {L.loadMore}
+                  </button>
+                )
               )}
             </section>
           )}
@@ -773,42 +985,74 @@ export default function PlacePage() {
             <div className="place-map place-map-placeholder">{L.mapKeyMissing}</div>
           )}
 
-          {/* 캐로셀은 정보 패널의 부속이 아니라 장소에 딸린 것이다 — 지도 하단에 둔다 */}
-          {selectedId && <AttractionLinks id={selectedId} lang={lang} />}
+          {/* 캐로셀은 정보 패널의 부속이 아니라 장소에 딸린 것이다 — 데스크톱은 지도 하단.
+              모바일은 상세 시트 안이다: 시트가 화면을 덮는 동안 지도 아래 캐로셀은 보이지 않는다. */}
+          {selectedId && !isMobile && <AttractionLinks id={selectedId} lang={lang} />}
         </section>
 
-        {selected && (
+        {selected && !isMobile && (
           <aside className="place-detail" aria-label={selected.title}>
             <button className="place-detail-close" onClick={() => setSelectedId(null)}>
               {L.close}
             </button>
-            {selected.imageUrl && (
-              <img className="place-detail-img" src={selected.imageUrl} alt={selected.title} loading="lazy" />
-            )}
-            <h2 className="place-detail-title">{selected.title}</h2>
-            {selected.category && (
-              <span className="place-chip active">{L.categories[selected.category] ?? selected.category}</span>
-            )}
-            {selected.address && <p className="place-detail-addr">{selected.address}</p>}
-            {selected.tel && <p className="place-detail-tel">{selected.tel}</p>}
-            {selected.overview && <p className="place-detail-overview">{selected.overview}</p>}
-            <a className="place-btn" href={attractionPath(lang, selected.id)}>
-              {lang === 'en' ? 'Open detail page' : '상세 페이지 열기'}
-            </a>
-            <a
-            className="place-btn primary"
-            href={`https://www.google.com/maps/search/?api=1&query=${selected.latitude},${selected.longitude}`}
-            target="_blank"
-            rel="noreferrer"
-            >
-            {L.openInGoogleMaps}
-            </a>
+            <AttractionDetailBody attraction={selected} lang={lang} />
           </aside>
         )}
       </div>
 
-      <footer className="place-footer">{L.source}</footer>
+      {/* 모바일 상세 — 세 번째 열 대신 바텀시트. 포커스·Escape·드래그 닫기는 KhSheet 가 담당하고,
+          선택이 화면 아래로 흘러가 못 보는 일이 없다. */}
+      {selected && isMobile && (
+        <KhSheet label={L.attractionLabel} onClose={() => setSelectedId(null)}>
+          <div className="place-detail place-detail-sheet" aria-label={selected.title}>
+            <AttractionDetailBody attraction={selected} lang={lang} />
+            <AttractionLinks id={selected.id} lang={lang} />
+          </div>
+        </KhSheet>
+      )}
+
+      {/* 출처 고지는 공통 푸터의 슬롯으로 — TourAPI(공공누리)·GeoNames(CC BY 4.0) 는
+          출처표시 의무가 있다 (docs/architecture/data-sources.md §0). */}
+      <Footer>
+        <p>
+          {L.source} · GeoNames (CC BY 4.0)
+        </p>
+      </Footer>
     </div>
+  );
+}
+
+/** 상세 본문 — 데스크톱 세 번째 열과 모바일 바텀시트가 같은 내용을 그린다. */
+function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; lang: PlaceLang }) {
+  const L = UI[lang];
+  const { primary, secondary } = titleParts(attraction);
+  return (
+    <>
+      {attraction.imageUrl && (
+        <img className="place-detail-img" src={attraction.imageUrl} alt={primary} loading="lazy" />
+      )}
+      <h2 className="place-detail-title">{primary}</h2>
+      {secondary && <p className="place-detail-local">{secondary}</p>}
+      {/* 찜 (ADR-0074) — 데스크톱 열·모바일 시트가 이 본문을 공유하므로 여기 한 번만 둔다 */}
+      <FavoriteButton type="ATTRACTION" targetKey={attraction.id} />
+      {attraction.category && (
+        <span className="place-chip active">{L.categories[attraction.category] ?? attraction.category}</span>
+      )}
+      {attraction.address && <p className="place-detail-addr">{attraction.address}</p>}
+      {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
+      {attraction.overview && <p className="place-detail-overview">{attraction.overview}</p>}
+      <a className="place-btn" href={attractionPath(lang, attraction.id)}>
+        {lang === 'en' ? 'Open detail page' : '상세 페이지 열기'}
+      </a>
+      <a
+        className="place-btn primary"
+        href={`https://www.google.com/maps/search/?api=1&query=${attraction.latitude},${attraction.longitude}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        {L.openInGoogleMaps}
+      </a>
+    </>
   );
 }
 
@@ -822,10 +1066,13 @@ function PlaceCard({
   onSelect: () => void;
 }) {
   const L = UI[lang];
+  const { primary, secondary } = titleParts(attraction);
   return (
     // 실주소를 가진 링크로 둔다 — 크롤러는 onClick 을 따라가지 못하고, 사용자는 새 탭/공유가 된다.
     // 평범한 좌클릭만 가로채 기존 사이드 패널 UX 를 유지한다.
+    // id 는 클러스터 최대 줌에서 "이 무리의 목록 보기" 스크롤 목적지다.
     <a
+      id={`place-card-${attraction.id}`}
       className="place-card"
       href={attractionPath(lang, attraction.id)}
       onClick={(e) => {
@@ -839,8 +1086,13 @@ function PlaceCard({
       ) : (
         <div className="place-card-img place-card-img-empty" aria-hidden />
       )}
+      {/* 찜 — 실주소 <a> 안에 앉지만 클릭은 버튼이 삼켜 카드 이동으로 번지지 않는다 (ADR-0074) */}
+      <span className="place-card-favorite">
+        <FavoriteButton type="ATTRACTION" targetKey={attraction.id} compact />
+      </span>
       <div className="place-card-body">
-        <h3 className="place-card-title">{attraction.title}</h3>
+        <h3 className="place-card-title">{primary}</h3>
+        {secondary && <p className="place-card-local">{secondary}</p>}
         <p className="place-card-meta">
           {attraction.category && <span>{L.categories[attraction.category] ?? attraction.category}</span>}
           {attraction.distanceKm != null && <span>{attraction.distanceKm.toFixed(1)}km</span>}

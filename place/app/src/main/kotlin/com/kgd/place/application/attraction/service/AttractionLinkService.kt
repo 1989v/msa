@@ -31,7 +31,9 @@ class AttractionLinkService(
         val pending = COLLECTED_SOURCES.count { enqueueIfDue(id, it) } > 0
         return GetAttractionLinksUseCase.Links(
             collected = collected,
-            deepLinks = AttractionDeepLinks.of(attraction.title),
+            // 표시명으로 조립한다 — 원천 제목은 꼬리 괄호에 다른 표기를 얹어 와서
+            // (`Dosan Park(도산공원)`), 그대로 실으면 태그·검색어가 어디에도 없는 질의가 된다.
+            deepLinks = AttractionDeepLinks.of(attraction.titleDisplay),
             pending = pending,
         )
     }

@@ -27,7 +27,10 @@ interface SearchAttractionUseCase {
         val id: String,
         val contentId: String,
         val lang: String,
+        /** 표시명 — 원천 제목의 꼬리 괄호 표기는 [titleLocal] 로 분리 */
         val title: String,
+        /** 다른 표기 (영문 행: 국문명, 국문 행: 지역 구분자). 없으면 null */
+        val titleLocal: String? = null,
         val category: String? = null,
         val areaCode: String? = null,
         val address: String? = null,

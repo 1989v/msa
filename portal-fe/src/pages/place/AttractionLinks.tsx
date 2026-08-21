@@ -21,7 +21,6 @@ const UI = {
     social: 'SNS',
     tour: '여행 상품',
     affiliateBadge: '제휴',
-    pending: '영상을 찾는 중입니다',
     disclosure: '제휴 표시가 붙은 링크는 이용 시 수수료를 받을 수 있습니다.',
   },
   en: {
@@ -31,7 +30,6 @@ const UI = {
     social: 'Social',
     tour: 'Tours & tickets',
     affiliateBadge: 'Affiliate',
-    pending: 'Looking for videos',
     disclosure: 'Links marked as affiliate may earn us a commission.',
   },
 } as const;
@@ -123,12 +121,32 @@ function VideoCard({ link, lang }: { link: CollectedLink; lang: PlaceLang }) {
 
 export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceLang }) {
   const L = UI[lang];
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['attraction-links', id],
     queryFn: () => fetchAttractionLinks(id),
     enabled: id !== '',
     staleTime: 10 * 60_000,
   });
+
+  // 자리표시는 **요청이 나가 있는 동안만**이다. 응답의 `pending`(수집 대기)은 일 배치가
+  // 돌 때까지 — 최대 하루 — true 로 남으므로, 그걸 스켈레톤 근거로 삼으면
+  // 사용자가 하루 종일 빈 껍데기 캐로셀을 본다.
+  if (isLoading) {
+    return (
+      <section className="place-links" aria-label={L.heading} aria-busy="true">
+        <h3 className="place-links-heading">{L.heading}</h3>
+        <ul className="place-links-carousel">
+          {[0, 1, 2].map((i) => (
+            <li key={i} className="place-links-slide">
+              <div className="place-links-card place-links-card-skeleton" aria-hidden="true">
+                <div className="place-links-thumb kh-skeleton" />
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    );
+  }
 
   if (!data) return null; // 실패는 조용히 — 링크는 부수 정보다
 
@@ -139,10 +157,9 @@ export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceL
   const social = data.deepLinks.filter((l) => l.kind === 'SOCIAL');
   const tour = data.deepLinks.filter((l) => l.kind === 'TOUR_PRODUCT');
   const hasAffiliate = data.deepLinks.some((l) => l.revenueType === 'AFFILIATE');
-  // 수집 대기는 오류가 아니다. 이미 받은 영상이 있으면 굳이 자리표시를 띄우지 않는다.
-  const showSkeleton = data.pending && videos.length === 0;
 
-  if (videos.length === 0 && blogs.length === 0 && social.length === 0 && tour.length === 0 && !showSkeleton) {
+  // 딥링크는 서버가 항상 조립하지만 타입은 빈 응답을 허용한다 — 전부 비면 섹션 자체를 접는다
+  if (videos.length === 0 && blogs.length === 0 && social.length === 0 && tour.length === 0) {
     return null;
   }
 
@@ -150,20 +167,15 @@ export default function AttractionLinks({ id, lang }: { id: string; lang: PlaceL
     <section className="place-links" aria-label={L.heading}>
       <h3 className="place-links-heading">{L.heading}</h3>
 
-      {(videos.length > 0 || showSkeleton) && (
+      {/* 영상이 실제로 있을 때만 그룹을 그린다 — 수집 대기(pending) 는 빈 그룹의 근거가 아니다 */}
+      {videos.length > 0 && (
         <div className="place-links-group">
-          <span className="place-links-group-title">{showSkeleton ? L.pending : L.videos}</span>
+          <span className="place-links-group-title">{L.videos}</span>
           {/* 좁은 패널에서 넘치면 가로로 민다 */}
-          <ul className="place-links-carousel" aria-busy={showSkeleton}>
-            {showSkeleton
-              ? [0, 1, 2].map((i) => (
-                  <li key={i} className="place-links-slide">
-                    <div className="place-links-card place-links-card-skeleton" aria-hidden="true">
-                      <div className="place-links-thumb" />
-                    </div>
-                  </li>
-                ))
-              : videos.map((video) => <VideoCard key={video.url} link={video} lang={lang} />)}
+          <ul className="place-links-carousel">
+            {videos.map((video) => (
+              <VideoCard key={video.url} link={video} lang={lang} />
+            ))}
           </ul>
         </div>
       )}

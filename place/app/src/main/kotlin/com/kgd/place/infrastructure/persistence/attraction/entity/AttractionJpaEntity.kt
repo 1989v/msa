@@ -24,6 +24,14 @@ class AttractionJpaEntity(
     @Column(nullable = false, length = 300)
     val title: String,
 
+    // title 에서 파생 (AttractionTitle) — 저장 때마다 도메인이 다시 계산해 온다.
+    // 원천(title)은 덮지 않고 파생 컬럼을 따로 두는 규칙 (data-sources.md §0 ②).
+    @Column(name = "title_display", nullable = false, length = 300)
+    val titleDisplay: String,
+
+    @Column(name = "title_local", length = 300)
+    val titleLocal: String? = null,
+
     @Column(length = 300)
     val address: String? = null,
 
@@ -141,6 +149,8 @@ class AttractionJpaEntity(
             contentId = attraction.contentId,
             lang = attraction.lang,
             title = attraction.title,
+            titleDisplay = attraction.titleDisplay,
+            titleLocal = attraction.titleLocal,
             address = attraction.address,
             areaCode = attraction.areaCode,
             sigunguCode = attraction.sigunguCode,

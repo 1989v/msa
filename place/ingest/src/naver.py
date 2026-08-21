@@ -14,6 +14,7 @@ import urllib.parse
 import urllib.request
 
 from src.linkmatch import matches, strip_tags
+from src.title_parse import parse_title
 
 SEARCH_URL = "https://openapi.naver.com/v1/search/blog.json"
 DISPLAY = 5
@@ -31,11 +32,21 @@ def _post_date(raw: str) -> str | None:
     return f"{raw[:4]}-{raw[4:6]}-{raw[6:]}T00:00:00"
 
 
-def search(client_id: str, client_secret: str, title: str, _lang: str) -> list[dict]:
+def _query(title: str, lang: str) -> str:
+    """네이버는 국문 코퍼스다 — 영문 행은 국문명(로컬명)으로 물어야 결과가 있다.
+
+    `Dosan Park(도산공원)` 를 통째로 묻던 것을 가른다: en 행은 `도산공원`, ko 행은
+    표시명(지역 구분자 뗀 이름). 매칭은 어느 표기든 통과한다 (linkmatch.matches).
+    """
+    display, local = parse_title(title)
+    return local if (lang == "en" and local) else display
+
+
+def search(client_id: str, client_secret: str, title: str, lang: str) -> list[dict]:
     if not client_id or not client_secret:
         raise AuthMissing("NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 가 필요합니다")
 
-    params = {"query": title, "display": DISPLAY, "sort": "sim"}
+    params = {"query": _query(title, lang), "display": DISPLAY, "sort": "sim"}
     req = urllib.request.Request(
         f"{SEARCH_URL}?{urllib.parse.urlencode(params)}",
         headers={

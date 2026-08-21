@@ -351,27 +351,32 @@ export function regionDisplayName(lang, region) {
   return (lang === 'en' && region.nameEn) || region.name;
 }
 
+/**
+ * 지역 페이지 메타 — "제주 가볼 만한 곳"(ko) / "Things to Do in Jeju"(en) 류
+ * 지역×의도 키워드가 title 앞머리에 오도록 짠다 (ADR-0071 §9).
+ * @param {number | null} [attractionCount] 관광 분류 건수 — 모르면 null (0 과 다르다)
+ */
 export function regionMeta(lang, region, attractionCount = null) {
   const name = regionDisplayName(lang, region);
   const isSido = region.level === 'SIDO';
   const count = attractionCount != null && attractionCount > 0 ? attractionCount : null;
   if (lang === 'en') {
     return {
-      title: `Things to Do in ${name}${count ? ` — ${count.toLocaleString('en')} Attractions` : ''} | ${PLACE_BRAND_EN}`,
+      title: `Things to Do in ${name}${count ? ` — ${count.toLocaleString('en')} Attractions & Map` : ' — Attractions & Map'} | ${PLACE_BRAND_EN}`,
       description: clampDescription(
-        `Explore ${count ? `${count.toLocaleString('en')} ` : ''}tourist attractions in ${name}, South Korea${
+        `Visit ${name}, South Korea: ${count ? `${count.toLocaleString('en')} ` : ''}tourist attractions${
           isSido ? ' by district' : ''
-        }. Nature, history, culture and leisure spots with maps and photos from official tourism data.`,
+        } — nature, history, culture and leisure spots with maps, photos and directions from official tourism data.`,
       ),
       heading: `Things to do in ${name}`,
     };
   }
   return {
-    title: `${name} 가볼 만한 곳${count ? ` ${count.toLocaleString('ko')}곳` : ''} — 관광지 지도·명소 | ${PLACE_BRAND_KO}`,
+    title: `${name} 가볼 만한 곳${count ? ` ${count.toLocaleString('ko')}곳` : ''} — 관광지 지도·여행 명소 | ${PLACE_BRAND_KO}`,
     description: clampDescription(
-      `${name}의 자연·역사·문화·레포츠 관광지${count ? ` ${count.toLocaleString('ko')}곳` : ''}을 ${
+      `${name} 여행에서 가볼 만한 자연·역사·문화·레포츠 관광지${count ? ` ${count.toLocaleString('ko')}곳` : ''}을 ${
         isSido ? '시·군·구별로 ' : ''
-      }모았습니다. 한국관광공사 공식 데이터로 지도와 사진을 함께 확인하세요.`,
+      }모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요.`,
     ),
     heading: `${name} 가볼 만한 곳`,
   };
@@ -402,6 +407,25 @@ export function touristDestinationJsonLd(lang, region, attractions = []) {
   return json;
 }
 
+/**
+ * place 허브·목록의 ItemList — 게임의 itemListJsonLd 는 slug/장르 등 게임 필드에 묶여 있어
+ * 쓰지 못한다. 이름이 있는 문서만 싣는다 (id 뿐인 항목은 리치 결과에 도움이 안 된다).
+ */
+export function placeItemListJsonLd(lang, attractions) {
+  const named = attractions.filter((a) => a.title);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    numberOfItems: named.length,
+    itemListElement: named.map((a, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: attractionUrl(lang, a.id),
+      name: a.title,
+    })),
+  };
+}
+
 export function placeHreflangAlternates(sub = '') {
   return [
     { hreflang: 'ko', href: placeUrl('ko', sub) },
@@ -413,21 +437,26 @@ export function placeHreflangAlternates(sub = '') {
 export function placeHubMeta(lang) {
   return lang === 'en'
     ? {
-        title: `Korea Travel Guide — Find Attractions by Region & Theme | ${PLACE_BRAND_EN}`,
+        title: `Things to Do in Korea — Attractions by Region & Map | ${PLACE_BRAND_EN}`,
         description: clampDescription(
-          'Search tourist attractions across South Korea by region, theme, or your current location. Official Korea Tourism Organization data with maps, photos and addresses.',
+          'Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data with maps, photos and addresses.',
         ),
         heading: 'Explore Korea',
       }
     : {
-        title: `한국 관광지 검색 — 지역·테마별 여행지 찾기 | ${PLACE_BRAND_KO}`,
+        title: `한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | ${PLACE_BRAND_KO}`,
         description: clampDescription(
-          '전국 관광지를 지역·테마·현재 위치로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진을 함께 확인하세요.',
+          '전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요.',
         ),
         heading: '한국 관광지 탐색',
       };
 }
 
+/**
+ * 관광지 상세 메타 — 고유명사 검색("경복궁", "Gyeongbokgung")의 착지점이므로
+ * 이름 뒤에 의도 키워드(관광 정보·가는 길·주변 / Visit·Things to Do Nearby)를 붙인다.
+ * titleLocal(원어 병기명)은 제목에 다시 합치지 않는다 — 구조화 데이터의 alternateName 이 담당.
+ */
 export function attractionMeta(lang, attraction) {
   const name = attraction.title;
   const label = placeCategoryLabel(attraction.category, lang);
@@ -435,13 +464,13 @@ export function attractionMeta(lang, attraction) {
   const overview = (attraction.overview || '').trim();
   const fallback =
     lang === 'en'
-      ? `${name} is a ${label.toLowerCase()} attraction${where ? ` in ${where}` : ' in South Korea'}. See the map, photos and nearby places to visit.`
-      : `${name}${where ? ` — ${where}` : ''}에 있는 ${label} 관광지입니다. 지도와 사진, 주변 명소를 함께 확인하세요.`;
+      ? `${name} is a ${label.toLowerCase()} attraction${where ? ` at ${where}` : ' in South Korea'}. See the map, photos, directions and things to do nearby.`
+      : `${name}${where ? ` — ${where}` : ''}에 있는 ${label} 관광지입니다. 주소·지도·사진과 가는 길, 주변 가볼 만한 곳을 함께 확인하세요.`;
   return {
     title:
       lang === 'en'
-        ? `${name} — Visitor Guide, Map & Photos | ${PLACE_BRAND_EN}`
-        : `${name} 관광 정보 — 주소·지도·사진 | ${PLACE_BRAND_KO}`,
+        ? `Visit ${name} — Map, Photos & Things to Do Nearby | ${PLACE_BRAND_EN}`
+        : `${name} 관광 정보 — 가는 길 · 주변 가볼 만한 곳 | ${PLACE_BRAND_KO}`,
     description: clampDescription(overview.length >= 60 ? overview : fallback),
     heading: name,
   };
@@ -457,6 +486,10 @@ export function touristAttractionJsonLd(lang, attraction) {
     inLanguage: lang,
     isPartOf: { '@type': 'WebSite', name: placeBrand(lang), url: PLACE_ORIGIN },
   };
+  // 원어 병기명(예: en "Dosan Park" 의 "도산공원") — 화면에는 별도 요소로 그리고,
+  // 검색엔진에는 alternateName 으로 알린다. name 에 괄호로 다시 합치지 않는다.
+  const local = (attraction.titleLocal || '').trim();
+  if (local && local !== attraction.title) json.alternateName = local;
   if (attraction.imageUrl) json.image = attraction.imageUrl;
   if (attraction.tel) json.telephone = attraction.tel;
   if (attraction.address) {
@@ -620,7 +653,9 @@ export function blogPrivateMeta(title) {
 }
 
 export function blogPostingJsonLd(post) {
-  const data = {
+  // 조건부 프로퍼티는 스프레드로 넣는다 — 리터럴에 뒤늦게 대입하면 추론 타입이 닫혀
+  // .ts 소비자(테스트 포함)가 해당 프로퍼티를 못 본다.
+  return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     headline: post.title,
@@ -629,20 +664,21 @@ export function blogPostingJsonLd(post) {
     url: blogPostUrl(post.slug),
     author: { '@type': 'Person', name: post.author?.displayName ?? '' },
     publisher: { '@type': 'Organization', name: BLOG_BRAND, url: BLOG_ORIGIN },
+    ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
+    ...(post.categoryName ? { articleSection: post.categoryName } : {}),
+    ...(post.coverImageUrl ? { image: post.coverImageUrl } : {}),
+    ...(post.ratingCount > 0
+      ? {
+          aggregateRating: {
+            '@type': 'AggregateRating',
+            ratingValue: post.ratingAverage.toFixed(1),
+            ratingCount: post.ratingCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
-  if (post.publishedAt) data.datePublished = post.publishedAt;
-  if (post.categoryName) data.articleSection = post.categoryName;
-  if (post.coverImageUrl) data.image = post.coverImageUrl;
-  if (post.ratingCount > 0) {
-    data.aggregateRating = {
-      '@type': 'AggregateRating',
-      ratingValue: post.ratingAverage.toFixed(1),
-      ratingCount: post.ratingCount,
-      bestRating: 5,
-      worstRating: 1,
-    };
-  }
-  return data;
 }
 
 export function blogBreadcrumbJsonLd(crumbs) {

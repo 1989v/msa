@@ -52,12 +52,19 @@
   "mappings": {
     "properties": {
       "id": { "type": "keyword" },
+      "idSort": { "type": "long" },
       "contentId": { "type": "keyword" },
       "lang": { "type": "keyword" },
       "title": {
         "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
         "fields": {
           "en": { "type": "text", "analyzer": "english" },
+          "keyword": { "type": "keyword", "ignore_above": 256 }
+        }
+      },
+      "titleLocal": {
+        "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
+        "fields": {
           "keyword": { "type": "keyword", "ignore_above": 256 }
         }
       },
@@ -82,7 +89,7 @@
       "location": { "type": "geo_point" },
       "imageUrl": { "type": "keyword", "index": false },
       "tel": { "type": "keyword", "index": false },
-      "popularity": { "type": "long" },
+      "popularityScore": { "type": "float" },
       "modifiedAt": { "type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss" }
     }
   }

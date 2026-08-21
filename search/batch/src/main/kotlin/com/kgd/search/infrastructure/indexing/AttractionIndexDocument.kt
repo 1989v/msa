@@ -15,9 +15,13 @@ import java.time.LocalDateTime
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class AttractionIndexDocument(
     val id: String,
+    /** 숫자 정렬용 id — keyword `id` 로 정렬하면 "1","10","100" 사전순이 된다 (tiebreaker). */
+    val idSort: Long,
     val contentId: String,
     val lang: String,
     val title: String,
+    /** 원천 제목 꼬리 괄호의 다른 표기 (영문 문서: 국문명) — nori 색인해 국문 질의로 찾는다. */
+    val titleLocal: String? = null,
     /**
      * 자모로 편 이름 (ADR-0065 P2 후속). 조합 중간 상태("경보")로도 자동완성이 맞게 한다.
      * 분해 규칙은 질의 쪽과 **같은 [Jamo]** 를 쓴다 — 한쪽만 바뀌면 조용히 아무것도 안 맞는다.
@@ -33,7 +37,8 @@ data class AttractionIndexDocument(
     val imageUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
-    val popularity: Long = 0,
+    /** 완결성 기반 브라우즈 정렬 신호 — 도메인이 계산한다 (AttractionPopularity). */
+    val popularityScore: Double,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
 ) {
@@ -43,9 +48,11 @@ data class AttractionIndexDocument(
     companion object {
         fun fromDomain(doc: AttractionDocument) = AttractionIndexDocument(
             id = doc.id,
+            idSort = doc.id.toLongOrNull() ?: 0L,
             contentId = doc.contentId,
             lang = doc.lang,
             title = doc.title,
+            titleLocal = doc.titleLocal,
             titleJamo = Jamo.decompose(doc.title),
             location = GeoPoint(lat = doc.latitude, lon = doc.longitude),
             address = doc.address,
@@ -57,7 +64,7 @@ data class AttractionIndexDocument(
             imageUrl = doc.imageUrl,
             tel = doc.tel,
             overview = doc.overview,
-            popularity = doc.popularity,
+            popularityScore = doc.popularityScore,
             modifiedAt = doc.modifiedAt,
         )
     }

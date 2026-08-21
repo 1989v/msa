@@ -71,6 +71,23 @@ class AttractionLinkServiceTest : BehaviorSpec({
             }
         }
 
+        `when`("원천 제목에 꼬리 괄호가 붙어 있으면") {
+            then("딥링크는 표시명으로 조립되어야 한다 — 원문 그대로면 불가능한 질의가 된다") {
+                every { attractionRepository.findById(2L) } returns Attraction.create(
+                    contentId = "3113200", lang = "en", title = "Dosan Park(도산공원)",
+                    latitude = 37.524, longitude = 127.035,
+                )
+                every { linkRepository.findLinks(2L) } returns emptyList()
+
+                val links = service.findByAttractionId(2L)
+
+                links.deepLinks.first { it.provider == "YOUTUBE" }.url shouldBe
+                    "https://www.youtube.com/results?search_query=Dosan+Park"
+                links.deepLinks.first { it.provider == "INSTAGRAM" }.url shouldBe
+                    "https://www.instagram.com/explore/tags/dosanpark/"
+            }
+        }
+
         `when`("큐 적재가 실패하면") {
             then("조회는 그대로 성공해야 한다 — 링크는 부수 정보고 상세가 본질이다") {
                 every { attractionRepository.findById(1L) } returns gyeongbokgung()

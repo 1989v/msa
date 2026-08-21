@@ -16,6 +16,9 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
+import Footer from '../../components/Footer';
+import FavoriteButton from '../../components/favorite/FavoriteButton';
+import { titleParts } from './placeView';
 import './PlacePage.css';
 
 const UI = {
@@ -108,6 +111,12 @@ export default function AttractionPage() {
               />
             )}
             <h1 className="place-detail-title">{attraction.title}</h1>
+            {/* 원어 병기명은 별도 요소다 — 제목에 괄호로 다시 붙이지 않는다 (t2 백엔드 계약) */}
+            {titleParts(attraction).secondary && (
+              <p className="place-detail-local">{titleParts(attraction).secondary}</p>
+            )}
+            {/* 찜 (ADR-0074) — 로그인 전용, 게스트는 로그인으로 복귀 유도 */}
+            <FavoriteButton type="ATTRACTION" targetKey={attraction.id} />
             {attraction.category && (
               <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
             )}
@@ -138,6 +147,7 @@ export default function AttractionPage() {
                 )}
                 <div className="place-card-body">
                   <h3 className="place-card-title">{a.title}</h3>
+                  {titleParts(a).secondary && <p className="place-card-local">{titleParts(a).secondary}</p>}
                   {a.address && <p className="place-card-addr">{a.address}</p>}
                 </div>
               </Link>
@@ -146,9 +156,15 @@ export default function AttractionPage() {
         )}
       </div>
 
-      <footer className="place-footer">
-        <a href={PLACE_ORIGIN}>{placeBrand(lang)}</a>
-      </footer>
+      {/* 통합 푸터 + 출처표시 의무 슬롯 — 허브(PlacePage)와 동일 구성 (data-sources.md §0) */}
+      <Footer>
+        <p>
+          <a href={PLACE_ORIGIN}>{placeBrand(lang)}</a>
+          {' · '}
+          {lang === 'en' ? 'Source: Korea Tourism Organization TourAPI' : '출처: 한국관광공사 TourAPI'}
+          {' · GeoNames (CC BY 4.0)'}
+        </p>
+      </Footer>
     </div>
   );
 }

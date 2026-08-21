@@ -58,7 +58,10 @@ class AttractionApiReindexTasklet(
                                 id = attraction.id.toString(),
                                 contentId = attraction.contentId,
                                 lang = attraction.lang,
-                                title = attraction.title,
+                                // 문서 title 은 표시명이다 — 꼬리 괄호 표기는 titleLocal 로 분리
+                                // (place 가 아직 파생 컬럼 없이 응답하면 원문으로 폴백).
+                                title = attraction.titleDisplay ?: attraction.title,
+                                titleLocal = attraction.titleLocal,
                                 latitude = attraction.latitude,
                                 longitude = attraction.longitude,
                                 address = attraction.address,

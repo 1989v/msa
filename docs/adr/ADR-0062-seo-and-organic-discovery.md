@@ -1,6 +1,6 @@
 # ADR-0062 — SEO / AEO / 검색 유입 설계 (전 호스트)
 
-- Status: Accepted (2026-08-07, 2026-08-19 place·포털·AEO 로 확장)
+- Status: Accepted (2026-08-07, 2026-08-19 place·포털·AEO 로 확장, 2026-08-22 §8 개정 — 상세 선별 프리렌더)
 - Date: 2026-08-07
 - Relates: ADR-0058(FE 통합), ADR-0059(게임 플랫폼), ADR-0064(이력서 게이트), ADR-0065(K-관광), ADR-0066(서비스 런처), ADR-0019(K8s 전환)
 
@@ -37,6 +37,8 @@ dist/prerender/games/index.html              →  /games
 dist/prerender/games/genre/<genre>.html      →  장르 랜딩 9종
 dist/prerender/games/<slug>.html             →  게임 상세
 dist/prerender/en/games/**                   →  게임 영문 전량
+dist/prerender/(en/)?attractions/<id>.html   →  관광지 상세 — 개요 있는 문서만, 상한 아래 (§8 개정)
+dist/prerender/(en/)?regions/<code>.html     →  지역 상세 양언어 (§8 개정)
 dist/seo/<host>/robots.txt                   →  호스트별 크롤 정책
 dist/seo/<host>/sitemap*.xml                 →  호스트별 sitemap (place 는 인덱스 + 분할)
 dist/seo/<host>/llms.txt                     →  호스트별 AEO 진입 문서
@@ -142,6 +144,26 @@ OpenSearch 집계 상한이고 실제 규모가 아니다). 전량 프리렌더�
 - sitemap 은 파일당 20,000 URL 로 쪼개고 `sitemap.xml` 을 인덱스로 둔다(상한 50,000)
 - 검색 목록 카드는 `<article onClick>` 에서 **`<a href>`** 로 바꿨다. 크롤러는 onClick 을
   따라가지 못하고, sitemap 에만 있고 내부 링크가 없는 URL 은 잘 크롤되지 않는다
+
+**개정 (2026-08-22) — 개요 있는 상세만 선별 프리렌더한다.** "전량 프리렌더 금지"의 근거
+두 가지(용량, 얇은 페이지) 는 개요 있는 문서에는 해당하지 않고, JS 를 실행하지 않는 AEO
+크롤러(GPTBot·ClaudeBot·PerplexityBot — robots 에서 명시적으로 열어 둔)는 프리렌더 없이는
+본문을 영영 못 본다. 그래서:
+
+- **관광지 상세**: 개요(`overview`) 있는 문서만, 사진 있는 쪽 우선, 언어당
+  `SEO_PLACE_DETAIL_CAP`(기본 3,000 — 최악 ~9KB×6,000 ≈ 54MB) 아래에서
+  `dist/prerender/(en/)?attractions/<id>.html` 로 찍는다. 메타 + `TouristAttraction`
+  (+`alternateName`=원어 병기명) + breadcrumb + 읽히는 본문(h1·주소·개요·지역/주변 링크).
+  개요 없는 나머지는 원 결정대로 sitemap 전용이다. hreflang 없음도 그대로다
+- **지역 상세**: 건수>0 지역 전부 양언어(`(en/)?regions/<code>.html`). `TouristDestination`
+  + 시군구/대표 관광지 내부 링크. hreflang 은 양언어에 실재하는 코드만 (sitemap 과 동일 규칙)
+- **키는 경로다, `_hosts` 가 아니다** — §9 의 호스트 키는 호스트마다 내용이 갈리는 `/`·`/en`
+  의 것이고, `/attractions/*`·`/regions/*` 는 어느 호스트로 오든 같은 place 콘텐츠에
+  canonical 이 place 호스트를 가리킨다. nginx 는 프리렌더 파일을 먼저 찾고 없으면 SPA 폴백
+  (`portal-fe/nginx.conf` 의 attractions|regions location)
+- **열거 축을 구 areaCode → 법정동 sidoCode 로 교체.** 구 코드는 폐기 중이라 문서의 ~43% 에서
+  비어 그 축의 샤딩은 그만큼을 sitemap 에서 누락시켰다. 시도 17개 정적 목록으로 훑는다
+  (ADR-0071 의 지역 축과 일치, 10,000건 창 회피는 동일)
 
 ### 9. `/en` 은 호스트로 가른다 (2026-08-19)
 

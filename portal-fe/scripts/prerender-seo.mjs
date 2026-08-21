@@ -11,8 +11,16 @@
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
+  attractionMeta,
+  attractionPath,
+  attractionUrl,
+  placeCategoryLabel,
+  placeItemListJsonLd,
+  regionMeta,
+  touristAttractionJsonLd,
+  touristDestinationJsonLd,
   BRAND,
   GAME_ORIGIN,
   PORTAL_ORIGIN,
@@ -68,16 +76,35 @@ const GAME_HOST = new URL(GAME_ORIGIN).host;
 const PORTAL_HOST = new URL(PORTAL_ORIGIN).host;
 const PLACE_HOST = new URL(PLACE_ORIGIN).host;
 
-/** TourAPI 지역코드 — 무필터 조회는 상위 10,000건에서 잘리므로 지역으로 잘라 훑는다 */
-const AREA_CODES = ['1','2','3','4','5','6','7','8','31','32','33','34','35','36','37','38','39'];
+/**
+ * 열거 샤드 = 법정동 시도코드 17개 (ADR-0071 의 지역 축과 동일).
+ *
+ * 무필터 조회는 상위 10,000건(OpenSearch from+size 창)에서 잘리므로 지역으로 잘라 훑는데,
+ * 축이 중요하다 — 구 TourAPI areaCode 는 폐기 중이라 문서의 ~43% 에서 비어 있어
+ * (tour-api-field-drift, 2026-08-17 실측) 그 축으로 훑으면 그만큼 sitemap 에서 빠진다.
+ * 법정동 코드는 신체계가 원천에서 채워 주는 현행 축이다.
+ *
+ * admin-regions API 로 열거하지 않고 정적 목록을 쓰는 이유: 색인 열거가 그 API 장애에
+ * 연쇄되지 않아야 하고(fail-soft 독립), 시도 17개는 법으로 고정된 집합이라 바뀌는 시점
+ * (행정구역 개편)에는 어차피 admin_regions 재적재와 함께 이 한 줄을 고치면 된다.
+ * 강원 51·전북 52 는 특별자치도 승격 후 코드다 (admin_regions 실측과 일치해야 한다).
+ */
+export const SIDO_CODES = [
+  '11', '26', '27', '28', '29', '30', '31', '36', // 서울·부산·대구·인천·광주·대전·울산·세종
+  '41', '43', '44', '46', '47', '48', '50', '51', '52', // 경기·충북·충남·전남·경북·경남·제주·강원·전북
+];
 const RESUME_HOST = new URL(RESUME_ORIGIN).host;
 const DEAL_HOST = new URL(DEAL_ORIGIN).host;
 const BLOG_HOST = new URL(BLOG_ORIGIN).host;
 
-main().catch((err) => {
-  console.warn(`[seo] 프리렌더 실패 — SPA 만 배포됩니다: ${err.message}`);
-  process.exit(0);
-});
+// 직접 실행일 때만 돈다 — 렌더 함수 단위 테스트(vitest)가 import 만으로
+// 운영 API 를 두드리는 일이 없어야 한다.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((err) => {
+    console.warn(`[seo] 프리렌더 실패 — SPA 만 배포됩니다: ${err.message}`);
+    process.exit(0);
+  });
+}
 
 async function main() {
   const shell = await readFile(resolve(DIST, 'index.html'), 'utf8');
@@ -92,8 +119,11 @@ async function main() {
   } catch (err) {
     console.warn(`[seo] 게임 카탈로그 조회 실패 (${API_ORIGIN}): ${err.message}`);
   }
-  // 관광지는 sitemap 전용 — 6만 URL 을 정적 HTML 로 찍으면 이미지가 수백 MB 로 불어난다.
-  // 라우트(/attractions/:id)와 useSeo 가 있으니 구글은 렌더링 후 색인한다 (ADR-0062).
+  // 관광지 전량은 sitemap 전용이다 — 6만 URL 을 정적 HTML 로 찍으면 이미지가 수백 MB 로
+  // 불어난다 (ADR-0062 §8). 다만 **개요가 있는 문서만** 상한을 두고 프리렌더한다:
+  // 개요 없는 85% 는 제목·주소뿐인 얇은 페이지라 찍어봤자 해가 되고, 개요 있는 문서는
+  // JS 를 실행하지 않는 AEO 크롤러(GPTBot·ClaudeBot·PerplexityBot)에게 본문이 보여야
+  // 인용 대상이 된다. 나머지는 여전히 라우트 + useSeo + sitemap 으로 연다.
   let places = { ko: [], en: [] };
   let regions = { ko: [], en: [] };
   try {
@@ -114,6 +144,7 @@ async function main() {
   await writeRobotsAndSitemaps(games, places, regions, blog);
   await renderPortalPages(shell);
   await renderPlaceHubs(shell, places, regions);
+  await renderPlaceDetails(shell, places, regions);
   await renderDealHub(shell);
   await renderBlogHub(shell, blog);
 
@@ -593,15 +624,9 @@ async function emit(relativePath, content) {
 // ─── 관광지 색인 (sitemap 전용) ──────────────────────────────────────────────
 
 /**
- * 관광지 id 를 전부 훑는다.
- *
- * 무필터 조회는 상위 10,000건에서 잘리고(OpenSearch 기본 집계 상한), 지역코드로 자르면
- * 각 조각이 그 아래로 떨어진다. 페이지 크기는 서버가 100 으로 고정한다.
- * 실패한 조각은 건너뛴다 — 일부가 빠진 sitemap 이 sitemap 이 없는 것보다 낫다.
- */
-/**
  * 지역 페이지 색인 대상 (ADR-0071 §9). 언어별 관광 분류 건수가 0 인 지역은 뺀다 —
  * 빈 지역 페이지를 sitemap 에 올리면 thin content 로 사이트 전체 평가를 깎는다.
+ * (관광지 열거와 달리 admin-regions 자체를 훑으므로 구 areaCode 공동화의 영향이 없다)
  */
 async function fetchRegionIndex() {
   const result = {};
@@ -619,14 +644,20 @@ async function fetchRegionIndex() {
   return result;
 }
 
+/**
+ * 관광지 id 를 전부 훑는다 — 샤드는 법정동 시도코드다 (SIDO_CODES 주석 참조).
+ * 무필터 조회는 상위 10,000건에서 잘리고, 시도로 자르면 각 조각이 그 아래로 떨어진다.
+ * 페이지 크기는 서버가 100 으로 고정한다. 실패한 조각은 건너뛴다 —
+ * 일부가 빠진 sitemap 이 sitemap 이 없는 것보다 낫다.
+ */
 async function fetchAttractionIndex() {
   const result = {};
   for (const lang of LANGS) {
     const byId = new Map();
     const CONCURRENCY = 4;
-    for (let i = 0; i < AREA_CODES.length; i += CONCURRENCY) {
+    for (let i = 0; i < SIDO_CODES.length; i += CONCURRENCY) {
       const slices = await Promise.all(
-        AREA_CODES.slice(i, i + CONCURRENCY).map((areaCode) => fetchAreaSlice(lang, areaCode)),
+        SIDO_CODES.slice(i, i + CONCURRENCY).map((sidoCode) => fetchSidoSlice(lang, sidoCode)),
       );
       slices.flat().forEach((a) => byId.set(a.id, a));
     }
@@ -636,21 +667,45 @@ async function fetchAttractionIndex() {
   return result;
 }
 
-async function fetchAreaSlice(lang, areaCode) {
+/**
+ * 색인 항목 하나 — 개요 있는 문서는 상세 프리렌더 후보라 원본 필드(+어느 시도 샤드에서
+ * 왔는지)를 들고 가고, 나머지는 sitemap 에 id 만 필요하다 — 6만 건 전부의 본문을
+ * 메모리에 얹지 않는다. sidoCode 는 상세 페이지의 지역 링크·대표 관광지 짝짓기 축이다.
+ * @param {Record<string, any>} a 검색 응답의 관광지 문서
+ * @param {string} sidoCode 이 문서를 가져온 샤드의 법정동 시도코드
+ */
+export function indexDoc(a, sidoCode) {
+  const overview = (a.overview || '').trim();
+  if (!overview) return { id: a.id, hasOverview: false };
+  return {
+    id: a.id,
+    hasOverview: true,
+    sidoCode,
+    title: a.title,
+    titleLocal: a.titleLocal ?? null,
+    category: a.category ?? null,
+    address: a.address ?? null,
+    imageUrl: a.imageUrl ?? null,
+    tel: a.tel ?? null,
+    overview,
+    latitude: a.latitude,
+    longitude: a.longitude,
+  };
+}
+
+async function fetchSidoSlice(lang, sidoCode) {
   const found = [];
   // from+size 창(10,000) 안에서만 페이징된다 — 100건 × 100페이지
   for (let page = 0; page < 100; page += 1) {
     let data;
     try {
-      data = await getJson(`/api/search/attractions?lang=${lang}&areaCode=${areaCode}&size=100&page=${page}`);
+      data = await getJson(`/api/search/attractions?lang=${lang}&sidoCode=${sidoCode}&size=100&page=${page}`);
     } catch (err) {
-      console.warn(`[seo] 관광지 ${lang}/area=${areaCode}/p${page} 실패: ${err.message}`);
+      console.warn(`[seo] 관광지 ${lang}/sido=${sidoCode}/p${page} 실패: ${err.message}`);
       break;
     }
     const items = data.attractions ?? [];
-    for (const a of items) {
-      found.push({ id: a.id, hasOverview: Boolean((a.overview || '').trim()) });
-    }
+    for (const a of items) found.push(indexDoc(a, sidoCode));
     if (items.length < 100) break;
   }
   return found;
@@ -669,9 +724,13 @@ async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { k
       .join('');
     // 허브에서 관광지 일부로 링크를 뻗어 크롤러가 상세 URL 을 발견할 진입점을 만든다.
     // (sitemap 만 있고 내부 링크가 없는 URL 은 잘 크롤되지 않는다)
+    // 개요 있는 문서는 이제 이름까지 들고 있다 — 앵커 텍스트가 "#id" 면 관련성 신호가 없다.
     const seeds = (places[lang] ?? []).filter((a) => a.hasOverview).slice(0, 60);
     const links = seeds
-      .map((a) => `<li><a href="${placePath(lang, `/attractions/${a.id}`)}">#${a.id}</a></li>`)
+      .map(
+        (a) =>
+          `<li><a href="${placePath(lang, `/attractions/${a.id}`)}">${escapeHtml(a.title || `#${a.id}`)}</a></li>`,
+      )
       .join('');
     const html = compose(shell, {
       lang,
@@ -679,7 +738,10 @@ async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { k
       canonical,
       siteName: placeBrand(lang),
       alternates: placeHreflangAlternates(''),
-      jsonLd: [collectionPageJsonLd(lang, meta, canonical, { name: placeBrand(lang), url: PLACE_ORIGIN })],
+      jsonLd: [
+        collectionPageJsonLd(lang, meta, canonical, { name: placeBrand(lang), url: PLACE_ORIGIN }),
+        placeItemListJsonLd(lang, seeds.slice(0, 30)),
+      ],
       body: shellBody(
         `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
           (regionLinks ? `<ul>${regionLinks}</ul>` : '') +
@@ -688,6 +750,174 @@ async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { k
     });
     await emit(`prerender/_hosts/${PLACE_HOST}${lang === 'en' ? '.en' : ''}.html`, html);
   }
+}
+
+// ─── place 상세 프리렌더 (ADR-0062 §8 개정) ─────────────────────────────────
+//
+// 개요 있는 문서만, 언어당 상한을 두고 찍는다. 전량(6만)은 이미지를 수백 MB 로 불리고
+// 개요 없는 문서는 얇은 페이지라 원래 결정대로 sitemap 에만 둔다. 상한 기준 최악치는
+// 페이지당 ~9KB × 2×3,000 = ~54MB — 개요 백필(일 2,000건)이 쌓이면 이 상한이 예산이다.
+const PLACE_DETAIL_CAP = Number(process.env.SEO_PLACE_DETAIL_CAP || 3000);
+
+/**
+ * 상세 프리렌더 대상 선별 — 개요가 있는 문서만, 사진 있는 문서 먼저(소셜 카드·리치 결과
+ * 경쟁력이 있는 쪽에 상한을 먼저 쓴다), 언어당 cap 개.
+ * @param {Array<Record<string, any>>} docs
+ * @param {number} [cap]
+ */
+export function pickPrerenderDetails(docs, cap = PLACE_DETAIL_CAP) {
+  const withOverview = docs.filter((a) => a.hasOverview && a.title);
+  const rank = (a) => (a.imageUrl ? 0 : 1);
+  return withOverview.sort((a, b) => rank(a) - rank(b)).slice(0, cap);
+}
+
+/**
+ * 관광지 상세 정적 HTML. 어느 호스트에서나 같은 place 콘텐츠라 경로 키다 (nginx.conf 참조).
+ * @param {string} shell
+ * @param {'ko'|'en'} lang
+ * @param {Record<string, any>} doc
+ * @param {{ region?: Record<string, any> | null, nearby?: Array<Record<string, any>> }} [context]
+ */
+export function renderAttractionDetail(shell, lang, doc, { region = null, nearby = [] } = {}) {
+  const meta = attractionMeta(lang, doc);
+  const canonical = attractionUrl(lang, doc.id);
+  const local = (doc.titleLocal || '').trim();
+  const hubName = lang === 'en' ? 'Explore Korea' : '한국 관광지 탐색';
+  const crumbs = [
+    { name: hubName, url: placeUrl(lang) },
+    ...(region ? [{ name: regionDisplayName(lang, region), url: regionUrl(lang, region.code) }] : []),
+    { name: meta.heading, url: canonical },
+  ];
+  const nearbyList = nearby
+    .map((a) => `<li><a href="${attractionPath(lang, a.id)}">${escapeHtml(a.title)}</a></li>`)
+    .join('');
+  return compose(shell, {
+    lang,
+    ...meta,
+    canonical,
+    siteName: placeBrand(lang),
+    image: /\.(png|jpe?g|webp)$/i.test(doc.imageUrl || '') ? doc.imageUrl : null,
+    // hreflang 없음 — TourAPI 는 국문/영문이 별도 콘텐츠라 짝을 모른다 (ADR-0062 §8)
+    jsonLd: [touristAttractionJsonLd(lang, doc), breadcrumbJsonLd(lang, crumbs)],
+    body: shellBody(
+      `<nav><a href="${placePath(lang, '')}">${escapeHtml(hubName)}</a>` +
+        (region
+          ? ` › <a href="${regionPath(lang, region.code)}">${escapeHtml(regionDisplayName(lang, region))}</a>`
+          : '') +
+        `</nav>` +
+        `<h1>${escapeHtml(meta.heading)}</h1>` +
+        // 원어 병기명은 별도 요소 — 제목에 괄호로 합치지 않는다 (t2 백엔드 계약)
+        (local && local !== doc.title ? `<p>${escapeHtml(local)}</p>` : '') +
+        `<p>${escapeHtml(
+          [placeCategoryLabel(doc.category, lang), doc.address].filter(Boolean).join(' · '),
+        )}</p>` +
+        (doc.tel ? `<p>${escapeHtml(doc.tel)}</p>` : '') +
+        `<p>${escapeHtml(doc.overview)}</p>` +
+        (nearbyList
+          ? `<h2>${lang === 'en' ? 'Things to do nearby' : '주변 가볼 만한 곳'}</h2><ul>${nearbyList}</ul>`
+          : ''),
+    ),
+  });
+}
+
+/**
+ * 지역 상세 정적 HTML — "제주 가볼 만한 곳" 류 질의의 무 JS 착지점 (ADR-0071 §9).
+ * @param {string} shell
+ * @param {'ko'|'en'} lang
+ * @param {Record<string, any>} region
+ * @param {{ parent?: Record<string, any> | null, children?: Array<Record<string, any>>,
+ *           top?: Array<Record<string, any>>, bothLangs?: boolean }} [context]
+ */
+export function renderRegionDetail(
+  shell,
+  lang,
+  region,
+  { parent = null, children = [], top = [], bothLangs = false } = {},
+) {
+  const meta = regionMeta(lang, region, region.attractionCount);
+  const canonical = regionUrl(lang, region.code);
+  const hubName = lang === 'en' ? 'Explore Korea' : '한국 관광지 탐색';
+  const crumbs = [
+    { name: hubName, url: placeUrl(lang) },
+    ...(parent ? [{ name: regionDisplayName(lang, parent), url: regionUrl(lang, parent.code) }] : []),
+    { name: meta.heading, url: canonical },
+  ];
+  const childLinks = children
+    .map((c) => `<li><a href="${regionPath(lang, c.code)}">${escapeHtml(regionDisplayName(lang, c))}</a></li>`)
+    .join('');
+  const topLinks = top
+    .map((a) => `<li><a href="${attractionPath(lang, a.id)}">${escapeHtml(a.title)}</a></li>`)
+    .join('');
+  return compose(shell, {
+    lang,
+    ...meta,
+    canonical,
+    siteName: placeBrand(lang),
+    // 지역 페이지는 관광지 상세와 달리 진짜 번역쌍 — 양쪽에 실제로 있을 때만 hreflang
+    ...(bothLangs ? { alternates: placeHreflangAlternates(`/regions/${region.code}`) } : {}),
+    jsonLd: [touristDestinationJsonLd(lang, region, top), breadcrumbJsonLd(lang, crumbs)],
+    body: shellBody(
+      `<nav><a href="${placePath(lang, '')}">${escapeHtml(hubName)}</a>` +
+        (parent
+          ? ` › <a href="${regionPath(lang, parent.code)}">${escapeHtml(regionDisplayName(lang, parent))}</a>`
+          : '') +
+        `</nav>` +
+        `<h1>${escapeHtml(meta.heading)}</h1>` +
+        `<p>${escapeHtml(meta.description)}</p>` +
+        (childLinks
+          ? `<h2>${lang === 'en' ? 'Browse by district' : '시·군·구별로 보기'}</h2><ul>${childLinks}</ul>`
+          : '') +
+        (topLinks
+          ? `<h2>${lang === 'en' ? 'Top attractions' : '대표 관광지'}</h2><ul>${topLinks}</ul>`
+          : ''),
+    ),
+  });
+}
+
+async function renderPlaceDetails(shell, places, regions) {
+  let count = 0;
+  const bothLangCodes = new Set(
+    (regions.ko ?? []).map((r) => r.code).filter((code) => (regions.en ?? []).some((r) => r.code === code)),
+  );
+  for (const lang of LANGS) {
+    const prefix = lang === 'en' ? 'prerender/en' : 'prerender';
+    const regionsLang = regions[lang] ?? [];
+    const sidoByCode = new Map(regionsLang.filter((r) => r.level === 'SIDO').map((r) => [r.code, r]));
+
+    // 관광지 — 지역 페이지 링크는 훑을 때 쓴 시도 샤드가 그대로 말해 준다 (indexDoc.sidoCode)
+    const docs = pickPrerenderDetails(places[lang] ?? []);
+    const bySido = new Map();
+    for (const doc of docs) {
+      if (!bySido.has(doc.sidoCode)) bySido.set(doc.sidoCode, []);
+      bySido.get(doc.sidoCode).push(doc);
+    }
+    for (const doc of docs) {
+      const region = sidoByCode.get(doc.sidoCode) ?? null;
+      const nearby = (bySido.get(doc.sidoCode) ?? []).filter((a) => a.id !== doc.id).slice(0, 6);
+      await emit(`${prefix}/attractions/${doc.id}.html`, renderAttractionDetail(shell, lang, doc, { region, nearby }));
+      count += 1;
+    }
+
+    // 지역 — 건수 0 은 색인 대상이 아니라 fetchRegionIndex 가 이미 걸렀다 (thin content)
+    for (const region of regionsLang) {
+      const isSido = region.level === 'SIDO';
+      const parent = isSido ? null : (sidoByCode.get(region.code.slice(0, 2)) ?? null);
+      const children = isSido ? regionsLang.filter((r) => r.level === 'SIGUNGU' && r.code.startsWith(region.code)) : [];
+      // 대표 관광지는 시도만 — 검색 응답에 시군구 축이 없어 시군구는 짝지을 수 없다
+      const top = isSido ? (bySido.get(region.code) ?? []).slice(0, 10) : [];
+      await emit(
+        `${prefix}/regions/${region.code}.html`,
+        renderRegionDetail(shell, lang, region, {
+          parent,
+          children,
+          top,
+          bothLangs: bothLangCodes.has(region.code),
+        }),
+      );
+      count += 1;
+    }
+  }
+  if (count > 0) console.log(`[seo] place 상세 프리렌더 ${count}장 (관광지 cap ${PLACE_DETAIL_CAP}/언어)`);
 }
 
 /**

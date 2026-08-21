@@ -23,6 +23,8 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
+import Footer from '../../components/Footer';
+import { titleParts } from './placeView';
 import './PlacePage.css';
 
 const UI = {
@@ -194,6 +196,9 @@ export default function RegionPage() {
                   )}
                   <div className="place-card-body">
                     <h3 className="place-card-title">{a.title}</h3>
+                    {titleParts(a).secondary && (
+                      <p className="place-card-local">{titleParts(a).secondary}</p>
+                    )}
                     {a.category && (
                       <span className="place-card-addr">{placeCategoryLabel(a.category, lang)}</span>
                     )}
@@ -206,9 +211,15 @@ export default function RegionPage() {
         </div>
       )}
 
-      <footer className="place-footer">
-        <a href={PLACE_ORIGIN}>{placeBrand(lang)}</a>
-      </footer>
+      {/* 통합 푸터 + 출처표시 의무 슬롯 — 허브(PlacePage)와 동일 구성 (data-sources.md §0) */}
+      <Footer>
+        <p>
+          <a href={PLACE_ORIGIN}>{placeBrand(lang)}</a>
+          {' · '}
+          {lang === 'en' ? 'Source: Korea Tourism Organization TourAPI' : '출처: 한국관광공사 TourAPI'}
+          {' · GeoNames (CC BY 4.0)'}
+        </p>
+      </Footer>
     </div>
   );
 }

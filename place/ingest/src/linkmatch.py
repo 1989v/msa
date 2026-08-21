@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import re
 
+from src.title_parse import parse_title
+
 _TAG = re.compile(r"<[^>]+>")
 
 
@@ -23,8 +25,15 @@ def normalize(text: str) -> str:
 
 
 def matches(title: str, *texts: str) -> bool:
-    needle = normalize(title)
-    if not needle:
-        return False
+    """제목·설명에 관광지 이름이 있는가 — **표시명 또는 로컬명** 중 하나면 된다.
+
+    원천 제목을 통째로 정규화해 부분일치를 요구하면 영문 행(`Dosan Park(도산공원)`)은
+    바늘이 `dosanpark도산공원` 이 되어 어떤 콘텐츠와도 맞지 않는다 — 그 관광지는 영영
+    0건이고, 그 사이 무관 영상만 검색 상위에 남는다. 표기별로 바늘을 갈라 리콜을 살리되
+    "이름이 통째로 들어있어야 한다"는 기준은 그대로다 — 이름이 없는 콘텐츠(도산공원의
+    재테크 영상이 실제 사례)는 여전히 버린다.
+    """
+    display, local = parse_title(title)
     haystack = normalize(" ".join(texts))
-    return needle in haystack
+    needles = (normalize(display), normalize(local or ""))
+    return any(n and n in haystack for n in needles)

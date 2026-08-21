@@ -8,6 +8,8 @@ data class SuggestHit(
     val type: Type,
     val id: String,
     val title: String,
+    /** 관광지일 때만 — 표시명에서 분리된 다른 표기 (영문 문서: 국문명) */
+    val titleLocal: String? = null,
     val latitude: Double?,
     val longitude: Double?,
     /** 지역일 때만 — CONTINENT/COUNTRY/REGION/CITY */

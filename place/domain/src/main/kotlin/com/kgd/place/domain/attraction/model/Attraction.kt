@@ -39,6 +39,15 @@ class Attraction private constructor(
     var status: String = "ACTIVE",
     val createdAt: LocalDateTime = LocalDateTime.now(),
 ) {
+    /**
+     * 표시명 — 원천 [title] 에서 꼬리 한글 괄호를 뗀 파생 값 ([AttractionTitle]).
+     * 저장 시점마다 title 로부터 다시 계산되므로 전체 동기화가 돌아도 어긋날 수 없다.
+     */
+    val titleDisplay: String get() = AttractionTitle.parse(title).display
+
+    /** 꼬리 괄호의 다른 표기 — 영문 행은 국문명, 국문 행은 지역 구분자. 없으면 null. */
+    val titleLocal: String? get() = AttractionTitle.parse(title).local
+
     companion object {
         val SUPPORTED_LANGS = setOf("ko", "en")
 

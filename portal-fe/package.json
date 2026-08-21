@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@chenglou/pretext": "^0.0.5",
+    "@googlemaps/markerclusterer": "^2.6.2",
     "@kgd/design-system": "file:./vendor/kgd-design-system-0.4.0.tgz",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",

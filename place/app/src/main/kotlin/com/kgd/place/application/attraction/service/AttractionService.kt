@@ -68,6 +68,8 @@ class AttractionService(
         contentId = contentId,
         lang = lang,
         title = title,
+        titleDisplay = titleDisplay,
+        titleLocal = titleLocal,
         address = address,
         areaCode = areaCode,
         sigunguCode = sigunguCode,

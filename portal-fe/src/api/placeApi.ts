@@ -13,6 +13,12 @@ export interface Attraction {
   contentId: string;
   lang: PlaceLang;
   title: string;
+  /**
+   * 원어 병기명 — title 이 정제된 표시명이고, 괄호로 붙어 있던 현지어 이름이 여기로 분리된다
+   * (예: en title "Dosan Park" / titleLocal "도산공원"). 구 응답에는 없다 — 없으면 표시하지 않는다.
+   * 두 이름을 다시 한 문자열로 합치지 않는다 (titleParts 로만 소비).
+   */
+  titleLocal?: string | null;
   category: string | null;
   areaCode: string | null;
   address: string | null;
@@ -144,6 +150,8 @@ export interface Suggestion {
   type: 'REGION' | 'ATTRACTION';
   id: string;
   title: string;
+  /** 원어 병기명 (Attraction.titleLocal 과 같은 계약) — 구 응답·지역 항목에는 없다 */
+  titleLocal?: string | null;
   latitude: number | null;
   longitude: number | null;
   regionLevel: 'CONTINENT' | 'COUNTRY' | 'REGION' | 'CITY' | null;

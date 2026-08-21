@@ -96,6 +96,9 @@ data class AttractionResponse(
     val contentId: String,
     val lang: String,
     val title: String,
+    /** title 파생 (조회 전용 — 적재 요청에는 없다, 서버가 저장 때마다 다시 계산한다) */
+    val titleDisplay: String,
+    val titleLocal: String?,
     val address: String?,
     val zipcode: String?,
     val areaCode: String?,
@@ -128,6 +131,8 @@ data class AttractionResponse(
             contentId = view.contentId,
             lang = view.lang,
             title = view.title,
+            titleDisplay = view.titleDisplay,
+            titleLocal = view.titleLocal,
             address = view.address,
             zipcode = view.zipcode,
             areaCode = view.areaCode,

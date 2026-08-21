@@ -26,8 +26,9 @@
 ### ② 가공은 파생 컬럼으로 따로 둔다
 
 화면용 그루핑·정규화는 **원천 컬럼을 덮지 않고** 별도 컬럼에 쓴다
-(예: `lcls_systm1~3` 원본 → `category` 파생). 그루핑 규칙이 바뀌면 **UPDATE 한 번**으로 끝나고,
-판단이 틀렸을 때 되돌릴 근거가 DB 안에 남는다.
+(예: `lcls_systm1~3` 원본 → `category` 파생, `title` 원본 → `title_display`/`title_local` 파생 —
+꼬리 괄호 표기 분리, 규칙은 place:domain `AttractionTitle`). 그루핑 규칙이 바뀌면
+**UPDATE 한 번**으로 끝나고, 판단이 틀렸을 때 되돌릴 근거가 DB 안에 남는다.
 
 ### ③ 전체 동기화 경로는 **왕복 양쪽**을 함께 갱신한다
 
@@ -175,7 +176,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | | |
 |---|---|
 | 발급 | Google Cloud Console → API 및 서비스 → 라이브러리 → `YouTube Data API v3` 사용 설정 → 사용자 인증 정보 → API 키 |
-| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=10`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict` |
+| 호출 ① | `youtube/v3/search` — `part=snippet`, `type=video`, `maxResults=10`, `regionCode=KR`, `relevanceLanguage`, `safeSearch=strict`, `videoCategoryId=19`(여행·이벤트), 좌표 있으면 `location`+`locationRadius=10km`. 검색어는 표시명(`title_display`). 여행 카테고리 결과 3건 미만이면 일반 검색 **1콜 보충**(건당 100 units — 최악엔 하루 예산이 절반) |
 | 호출 ② | `youtube/v3/videos` — `part=statistics`, `id=` (최대 50개 묶음) |
 | 쿼터 | 일 10,000 units · `search.list` **100 units** + `videos.list` **1 unit** → **하루 100 관광지** |
 | 저장 | videoId · 제목 · URL · 썸네일 **URL** · 채널명 · 게시일 · **조회수** |
@@ -209,7 +210,7 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | | |
 |---|---|
 | 발급 | 네이버 개발자센터(developers.naver.com) → 애플리케이션 등록 → **검색** API 선택 → Client ID/Secret |
-| 호출 | `/v1/search/blog.json` — `query`, `display=5`, `sort=sim`, 헤더 `X-Naver-Client-Id/Secret` |
+| 호출 | `/v1/search/blog.json` — `query`(국문 코퍼스라 en 행은 국문명, ko 행은 표시명), `display=5`, `sort=sim`, 헤더 `X-Naver-Client-Id/Secret` |
 | 쿼터 | 일 25,000콜 |
 | 저장 | 제목(`<b>` 태그 제거) · URL · 블로그명 · 게시일. 썸네일 없음 |
 | external_id | 링크의 sha1 — 블로그 URL 이 길어 100자 컬럼에 안 들어간다 |

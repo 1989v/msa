@@ -16,6 +16,7 @@ import urllib.parse
 import urllib.request
 
 from src.linkmatch import matches
+from src.title_parse import parse_title
 
 SEARCH_URL = "https://www.googleapis.com/youtube/v3/search"
 VIDEOS_URL = "https://www.googleapis.com/youtube/v3/videos"
@@ -27,17 +28,71 @@ MAX_RESULTS = 10
 # videos.list 는 id 를 50개까지 묶어 **1 unit** 이다. search.list(건당 100 units) 옆에서는
 # 사실상 공짜라 조회수를 받아 정렬한다 — 안 받으면 관련성 순이지 '인기 영상'이 아니다.
 STATS_BATCH = 50
+# Travel & Events. "도산공원" 일반 검색 1위가 재테크 영상이던 문제의 1차 방어선 —
+# 이름 매칭 필터는 이름이 스친 무관 영상까지는 못 거르므로, 후보군 자체를 여행으로 좁힌다.
+TRAVEL_CATEGORY_ID = "19"
+# 여행 카테고리 결과가 이보다 적을 때만 일반 검색 1콜을 보충한다.
+BACKFILL_THRESHOLD = 3
+LOCATION_RADIUS = "10km"
 
 
 class QuotaExceeded(RuntimeError):
     """일일 쿼터 소진 — 남은 큐를 더 두드려도 답이 같다."""
 
 
-def search(api_key: str, title: str, lang: str) -> list[dict]:
-    """관광지명으로 영상을 찾는다. 반환은 place `/internal/.../bulk` 의 link 스키마."""
+def search(
+    api_key: str,
+    title: str,
+    lang: str,
+    latitude: float | None = None,
+    longitude: float | None = None,
+) -> list[dict]:
+    """관광지명으로 영상을 찾는다. 반환은 place `/internal/.../bulk` 의 link 스키마.
+
+    검색어는 원천 제목이 아니라 **표시명**이다 — `Dosan Park(도산공원)` 을 그대로 물으면
+    두 표기가 붙은 질의가 되어 관련성이 무너진다 (이름 매칭도 title_parse 기준으로 한다).
+
+    쿼터 트레이드오프: search.list 는 건당 100 units 라 무조건 2콜(여행 + 일반)이면
+    하루 100곳 예산이 50곳으로 준다. 그래서 보충 콜은 여행 카테고리 결과가
+    BACKFILL_THRESHOLD 미만일 때만 나간다 — 대부분의 관광지는 1콜로 끝난다.
+    최악(전부 보충)엔 쿼터가 실행 중간에 끝나지만, QuotaExceeded 는 그때까지의 수집분을
+    적재하고 멈추는 신호라 남은 큐는 내일로 넘어간다 (main._collect_source).
+    """
+    display, _ = parse_title(title)
+    links = _search_page(
+        api_key, _params(api_key, display, lang, latitude, longitude, TRAVEL_CATEGORY_ID), title,
+    )
+    if len(links) < BACKFILL_THRESHOLD:
+        try:
+            extra = _search_page(
+                api_key, _params(api_key, display, lang, latitude, longitude, None), title,
+            )
+        except QuotaExceeded:
+            extra = []   # 1차 결과는 이미 100 units 를 냈다 — 버리지 않는다
+        seen = {link["externalId"] for link in links}
+        links += [link for link in extra if link["externalId"] not in seen]
+
+    if not links:
+        return links
+    counts = _view_counts(api_key, [l["externalId"] for l in links])
+    for link in links:
+        link["viewCount"] = counts.get(link["externalId"])
+    # 조회수 내림차순. 못 받은 것(None)은 뒤로 — 순서를 뒤집을 근거가 없다.
+    links.sort(key=lambda l: (l["viewCount"] is None, -(l["viewCount"] or 0)))
+    return links
+
+
+def _params(
+    api_key: str,
+    query: str,
+    lang: str,
+    latitude: float | None,
+    longitude: float | None,
+    category_id: str | None,
+) -> dict:
     params = {
         "part": "snippet",
-        "q": title,
+        "q": query,
         "type": "video",
         "maxResults": MAX_RESULTS,
         "regionCode": "KR",
@@ -45,6 +100,17 @@ def search(api_key: str, title: str, lang: str) -> list[dict]:
         "safeSearch": "strict",
         "key": api_key,
     }
+    if category_id:
+        params["videoCategoryId"] = category_id
+    # 좌표가 있으면 그 근방으로 치우친다 — 동명이지·무관 지역 영상을 내린다.
+    # 큐가 좌표를 항상 실어 준다 (PendingLinkItem.latitude/longitude).
+    if latitude is not None and longitude is not None:
+        params["location"] = f"{latitude},{longitude}"
+        params["locationRadius"] = LOCATION_RADIUS
+    return params
+
+
+def _search_page(api_key: str, params: dict, title: str) -> list[dict]:
     req = urllib.request.Request(
         f"{SEARCH_URL}?{urllib.parse.urlencode(params)}",
         headers={"Accept": "application/json"},
@@ -75,14 +141,6 @@ def search(api_key: str, title: str, lang: str) -> list[dict]:
             # RFC3339(Z) → place 가 받는 LocalDateTime
             "publishedAt": (snippet.get("publishedAt") or "").rstrip("Z") or None,
         })
-
-    if not links:
-        return links
-    counts = _view_counts(api_key, [l["externalId"] for l in links])
-    for link in links:
-        link["viewCount"] = counts.get(link["externalId"])
-    # 조회수 내림차순. 못 받은 것(None)은 뒤로 — 순서를 뒤집을 근거가 없다.
-    links.sort(key=lambda l: (l["viewCount"] is None, -(l["viewCount"] or 0)))
     return links
 
 

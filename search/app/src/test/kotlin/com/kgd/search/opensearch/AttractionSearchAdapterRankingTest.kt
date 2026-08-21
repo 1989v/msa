@@ -9,6 +9,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import org.opensearch.client.opensearch.OpenSearchClient
+import org.opensearch.client.opensearch._types.mapping.FieldType
+import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
 import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
 import org.opensearch.client.opensearch._types.query_dsl.FunctionScoreMode
 import org.opensearch.client.opensearch.core.SearchRequest
@@ -50,7 +52,7 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
 
     given("기본 설정(관광 3.0 / 상점·식당 0.35)") {
         `when`("키워드 검색을 하면") {
-            then("function_score 로 감싸고 두 분류 가중치를 싣는다") {
+            then("function_score 로 분류 가중치 둘 + 완결성 fvf 를 싣는다") {
                 val (adapter, captured) = adapterWith(AttractionRankingProperties())
 
                 adapter.search(
@@ -61,11 +63,38 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
                 val query = captured.captured.query()
                 query?.isFunctionScore shouldBe true
                 val fs = query!!.functionScore()
-                // 분류는 문서당 하나뿐이라 두 함수가 겹치지 않는다 — First 로 곱셈 누적을 막는다
-                fs.scoreMode() shouldBe FunctionScoreMode.First
+                // 분류 필터 둘은 배타(문서당 하나만 걸림) + fvf 는 항상 걸림 —
+                // Multiply 로 (분류 가중치 × ln1p(완결성)) 가 된다. First 는 fvf 를 무시한다.
+                fs.scoreMode() shouldBe FunctionScoreMode.Multiply
                 // 곱이라 키워드 적합도의 상대 순서는 분류 안에서 유지된다
                 fs.boostMode() shouldBe FunctionBoostMode.Multiply
-                fs.functions().map { it.weight() } shouldContainExactlyInAnyOrder listOf(3.0f, 0.35f)
+                fs.functions().mapNotNull { it.weight() } shouldContainExactlyInAnyOrder
+                    listOf(3.0f, 0.35f)
+
+                // 완결성 신호 — ln1p 로 눌러 키워드 모드에선 BM25 가 지배적으로 남고,
+                // missing=1.0 이라 재색인 전 옛 인덱스에서도 중립으로 동작한다
+                val fvf = fs.functions().single { it.isFieldValueFactor }.fieldValueFactor()
+                fvf.field() shouldBe "popularityScore"
+                fvf.modifier() shouldBe FieldValueFactorModifier.Ln1p
+                fvf.missing() shouldBe 1.0
+            }
+        }
+
+        `when`("키워드 없이(브라우즈) 검색을 하면") {
+            then("동점(matchAll)을 idSort 숫자 정렬로 끊는다 — keyword id 는 사전순이었다") {
+                val (adapter, captured) = adapterWith(AttractionRankingProperties())
+
+                adapter.search(AttractionSearchPort.SearchQuery(lang = "en"), PageRequest.of(0, 10))
+
+                // matchAll 동점에서도 fvf 가 걸려 완결성 높은 문서가 먼저 온다
+                captured.captured.query()?.isFunctionScore shouldBe true
+
+                val sorts = captured.captured.sort()
+                sorts[0].isScore shouldBe true
+                sorts[1].field().field() shouldBe "idSort"
+                // 재색인 전 옛 인덱스에는 idSort 가 없다 — unmappedType 이 없으면 정렬이 깨진다
+                sorts[1].field().unmappedType() shouldBe FieldType.Long
+                sorts[2].field().field() shouldBe "id"
             }
         }
 

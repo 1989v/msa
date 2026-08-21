@@ -7,6 +7,7 @@ import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.FieldValue
 import org.opensearch.client.opensearch._types.SortOrder
+import org.opensearch.client.opensearch._types.mapping.FieldType
 import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifier
 import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
 import org.opensearch.client.opensearch._types.query_dsl.FunctionScoreMode
@@ -35,9 +36,13 @@ class AttractionSearchAdapter(
         /** 자동완성에서 지역이 차지하는 상단 슬롯 수 — "서울" 같은 지역 질의 우선 노출 */
         private const val SUGGEST_REGION_SLOTS = 3
 
-        /** 키워드 매칭 대상 — ko(nori)/en(english) 서브필드 동시 커버 (문서 단위 lang 분리, ADR-0065). */
+        /**
+         * 키워드 매칭 대상 — ko(nori)/en(english) 서브필드 동시 커버 (문서 단위 lang 분리, ADR-0065).
+         * titleLocal 은 표시명에서 분리된 다른 표기(영문 문서의 국문명) — "도산공원" 질의가
+         * `Dosan Park` 영문 문서를 찾는 리콜 축이라 title 과 같은 무게를 준다.
+         */
         private val KEYWORD_FIELDS = listOf(
-            "title^3", "title.en^3", "overview", "overview.en", "address", "address.en",
+            "title^3", "title.en^3", "titleLocal^3", "overview", "overview.en", "address", "address.en",
         )
         private const val EARTH_RADIUS_KM = 6371.0
     }
@@ -167,6 +172,7 @@ class AttractionSearchAdapter(
                     type = SuggestHit.Type.ATTRACTION,
                     id = doc.id,
                     title = doc.title,
+                    titleLocal = doc.titleLocal,
                     latitude = doc.location.lat,
                     longitude = doc.location.lon,
                     category = doc.category,
@@ -234,23 +240,40 @@ class AttractionSearchAdapter(
                 }
             }
         } else {
-            // 결정적 tiebreaker (ADR-0050 Phase 1) — 동점시 페이지네이션 flicker 방지
             builder.sort { s -> s.score { it.order(SortOrder.Desc) } }
-                .sort { s -> s.field { f -> f.field("id").order(SortOrder.Asc) } }
         }
+        /*
+         * 결정적 tiebreaker (ADR-0050 Phase 1) — 동점시 페이지네이션 flicker 방지.
+         * keyword `id` 는 문자열 PK 라 사전순("1","10","100")이 된다 — 숫자 필드 `idSort` 로
+         * 정렬한다. `unmappedType`: 재색인 전 옛 인덱스에는 필드가 없어 정렬이 깨지는 것을
+         * 막고, 그동안은 keyword `id` 가 최종 순서를 결정적으로 유지한다.
+         */
+        builder.sort { s ->
+            s.field { f -> f.field("idSort").order(SortOrder.Asc).unmappedType(FieldType.Long) }
+        }
+            .sort { s -> s.field { f -> f.field("id").order(SortOrder.Asc) } }
 
         return builder.build()
     }
 
     /**
-     * 관광 분류를 올리고 상점·식당을 내린다 (ADR-0065 P2).
+     * 분류 가중치 × 완결성 신호 (ADR-0065 P2 + 브라우즈 정렬).
      *
-     * `scoreMode = First` 인 이유: 분류는 문서당 하나뿐이라 두 함수가 함께 걸릴 일이 없고,
-     * Multiply 로 두면 나중에 함수를 늘렸을 때 가중치가 곱해져 의도보다 크게 움직인다.
-     * `boostMode = Multiply` 라 키워드 적합도의 상대 순서는 분류 안에서 그대로 유지된다.
+     * 관광 분류를 올리고 상점·식당을 내리는 것에 더해, **키워드 없는 목록의 순서**를 여기서
+     * 정한다 — matchAll 은 전 문서 동점이라 이 함수 곱이 곧 순서다. 분류(관광 우선) 안에서
+     * 완결성(이미지·개요·전화, AttractionPopularity)이 높은 문서가 먼저 온다. ko/en 에 같은
+     * 공식이 걸려 영문 목록도 보여줄 준비가 된 레코드부터 나온다 (이전에는 keyword id
+     * 사전순 — 사실상 무작위였다).
      *
-     * 키워드 없는 기본 목록에도 걸린다. 지금까지 관광지가 먼저 보인 건 적재 순서 덕이었고
-     * 의도된 설계가 아니었다 — 음식·쇼핑을 먼저 재적재하면 첫 화면이 뒤집혔다.
+     * `scoreMode = Multiply`: 분류 함수 둘은 필터가 배타라 문서당 하나만 걸리고, 완결성
+     * fvf 는 항상 걸린다 — 곱해서 (분류 가중치 × ln1p(완결성)) 가 된다. 이전의 First 는
+     * 함수가 분류 둘뿐일 때의 선택이고, fvf 를 넣는 순간 First 는 뒤 함수를 무시한다.
+     *
+     * fvf 의 `ln1p`: 완결성 원값(1.0~3.7)을 그대로 곱하면 키워드 검색에서 BM25 차이를
+     * 완결성이 뒤집는다. ln1p 로 눌러 극단 간 배율을 약 2.2배(ln2≈0.69 ~ ln4.7≈1.55)로
+     * 묶는다 — 브라우즈(동점)에선 순서를 정하기에 충분하고, 키워드 모드에선 텍스트
+     * 적합도가 지배적으로 남는다. `missing = 1.0` 은 재색인 전 옛 인덱스(필드 없음)에서도
+     * 중립(상수 배)으로 동작하게 한다.
      */
     private fun withCategoryWeights(matched: Query): Query {
         if (!ranking.enabled) return matched
@@ -259,7 +282,15 @@ class AttractionSearchAdapter(
                 fs.query(matched)
                 categoryFunction(fs, ranking.sightCategories, ranking.sightWeight)
                 categoryFunction(fs, ranking.commerceCategories, ranking.commerceWeight)
-                fs.scoreMode(FunctionScoreMode.First)
+                fs.functions { fn ->
+                    fn.fieldValueFactor { fvf ->
+                        fvf.field("popularityScore")
+                            .factor(1.0f)
+                            .modifier(FieldValueFactorModifier.Ln1p)
+                            .missing(1.0)
+                    }
+                }
+                fs.scoreMode(FunctionScoreMode.Multiply)
                 fs.boostMode(FunctionBoostMode.Multiply)
             }
         }

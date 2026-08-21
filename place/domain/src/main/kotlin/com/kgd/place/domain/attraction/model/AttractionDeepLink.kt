@@ -34,6 +34,9 @@ object AttractionDeepLinks {
     /**
      * 전부 PLAIN 으로 시작한다 — 제휴 승인 전에는 수수료가 없으므로 `sponsored` 를 붙이지 않는다.
      * 승인되면 해당 제공자만 AFFILIATE 로 올린다 (그때 트래킹 URL 도 여기서 갈린다).
+     *
+     * [title] 은 원천 제목이 아니라 **표시명([Attraction.titleDisplay])** 이어야 한다 —
+     * `Dosan Park(도산공원)` 을 그대로 넣으면 검색어·태그에 두 표기가 통째로 실린다.
      */
     fun of(title: String): List<AttractionDeepLink> {
         val tag = instagramTag(title)

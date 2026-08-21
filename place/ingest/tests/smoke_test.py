@@ -108,9 +108,12 @@ def main() -> int:
     assert POSTED["probes"] == [{"contentId": "B", "lang": "ko"}], POSTED["probes"]
 
     _youtube_matcher()
+    _title_parser()
+    _youtube_search_shape()
     _admin_region_parser()
 
-    print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 법정동 파서 · 영문명 추출")
+    print("SMOKE OK — 제외목록 · 429 분리 · 전체 레코드 적재 · 매칭 필터 · 제목 분리 "
+          "· 유튜브 카테고리/좌표/보충 · 법정동 파서 · 영문명 추출")
     return 0
 
 
@@ -132,10 +135,86 @@ def _youtube_matcher() -> None:
     assert not matches("!!!", "무엇이든", "")
     assert normalize("전주 한옥마을!") == "전주한옥마을"
 
+    # 원천 제목이 두 표기를 붙여 와도 (`Dosan Park(도산공원)`) 표기별로 매칭한다 —
+    # 통째 바늘(`dosanpark도산공원`)은 어떤 콘텐츠와도 안 맞아 그 관광지가 영영 0건이었다
+    assert matches("Dosan Park(도산공원)", "Dosan Park autumn walk", "")
+    assert matches("Dosan Park(도산공원)", "도산공원 산책 브이로그", "")
+    assert matches("청룡사(서울)", "청룡사 템플스테이", "")
+    # 이름이 없는 콘텐츠는 여전히 버린다 — 도산공원 검색에 걸리던 재테크 영상이 실제 사례
+    assert not matches("Dosan Park(도산공원)", "어르신 얼마 모으셨어요?", "재테크 인터뷰")
+
     # 네이버는 매칭 구간을 <b> 로 감싸 준다 — 걷어내지 않으면 태그가 제목에 남는다
     assert strip_tags("<b>경복궁</b> 나들이") == "경복궁 나들이"
     assert naver._post_date("20260819") == "2026-08-19T00:00:00"
     assert naver._post_date("2026") is None
+
+
+def _title_parser() -> None:
+    """제목 분리 — place:domain AttractionTitle · V9 백필과 같은 규칙이어야 한다.
+
+    꼬리 괄호에 한글이 있을 때만 가른다. 영문 병기·한자 병기·본문 중간 괄호는 이름의 일부다.
+    """
+    from src.title_parse import parse_title
+
+    assert parse_title("Dosan Park(도산공원)") == ("Dosan Park", "도산공원")
+    assert parse_title("Dosan Park (도산공원)") == ("Dosan Park", "도산공원")   # 괄호 앞 공백
+    assert parse_title("Dosan Park（도산공원）") == ("Dosan Park", "도산공원")  # 전각 괄호
+    assert parse_title("청룡사(서울)") == ("청룡사", "서울")                     # 지역 구분자
+    assert parse_title("서울랜드(과천) ") == ("서울랜드", "과천")                # 꼬리 공백
+    assert parse_title("A(한1)(한2)") == ("A(한1)", "한2")                       # 마지막 괄호만 꼬리
+    assert parse_title("Seongsan Ilchulbong (Sunrise Peak)") == ("Seongsan Ilchulbong (Sunrise Peak)", None)
+    assert parse_title("성산일출봉(城山日出峰)") == ("성산일출봉(城山日出峰)", None)
+    assert parse_title("경복궁") == ("경복궁", None)
+    assert parse_title("(도산공원)") == ("(도산공원)", None)                     # 본문 없이 괄호만
+    assert parse_title("한옥마을(전주) 게스트하우스") == ("한옥마을(전주) 게스트하우스", None)
+
+
+def _youtube_search_shape() -> None:
+    """유튜브 검색 요청 — 표시명 질의 · 여행 카테고리 · 좌표 편향 · 조건부 보충."""
+    from src import naver, youtube
+
+    # 여행 카테고리 + 좌표 편향이 같이 나간다
+    p = youtube._params("key", "Dosan Park", "en", 37.524, 127.035, youtube.TRAVEL_CATEGORY_ID)
+    assert p["q"] == "Dosan Park" and p["videoCategoryId"] == "19"
+    assert p["location"] == "37.524,127.035" and p["locationRadius"] == "10km"
+    # 보충 콜은 카테고리 없이, 좌표 없으면 location 도 없다
+    p = youtube._params("key", "경복궁", "ko", None, None, None)
+    assert "videoCategoryId" not in p and "location" not in p
+
+    # 보충은 여행 카테고리 결과가 3건 미만일 때만 — 무조건 2콜이면 하루 예산이 절반이 된다
+    calls: list[str | None] = []
+
+    def fake_page(_key, params, _title):
+        calls.append(params.get("videoCategoryId"))
+        if params.get("videoCategoryId"):
+            return [{"externalId": "t1"}]
+        return [{"externalId": "t1"}, {"externalId": "g2"}]   # t1 은 중복 — 걸러져야 한다
+
+    orig_page, orig_counts = youtube._search_page, youtube._view_counts
+    youtube._search_page = fake_page
+    youtube._view_counts = lambda _key, _ids: {}
+    try:
+        links = youtube.search("key", "Dosan Park(도산공원)", "en", 37.524, 127.035)
+        assert calls == ["19", None], calls                       # 여행 → 부족 → 일반 보충
+        assert [l["externalId"] for l in links] == ["t1", "g2"]   # videoId 로 중복 제거
+
+        calls.clear()
+
+        def fake_full_page(_key, params, _title):
+            calls.append(params.get("videoCategoryId"))
+            return [{"externalId": f"v{i}"} for i in range(3)]
+
+        youtube._search_page = fake_full_page
+        youtube.search("key", "경복궁", "ko")
+        # 여행 카테고리에서 3건을 채웠으면 보충 콜이 없다 (search.list 는 건당 100 units)
+        assert calls == ["19"], calls
+    finally:
+        youtube._search_page, youtube._view_counts = orig_page, orig_counts
+
+    # 네이버 질의 — 영문 행은 국문명으로, 국문 행은 구분자 뗀 표시명으로 묻는다
+    assert naver._query("Dosan Park(도산공원)", "en") == "도산공원"
+    assert naver._query("Dosan Park(도산공원)", "ko") == "Dosan Park"
+    assert naver._query("청룡사(서울)", "ko") == "청룡사"
 
 
 def _admin_region_parser() -> None:

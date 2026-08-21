@@ -15,6 +15,7 @@ data class AttractionSearchDocument(
     val contentId: String,
     val lang: String,
     val title: String,
+    val titleLocal: String? = null,
     val location: GeoPoint,
     val address: String? = null,
     val areaCode: String? = null,
@@ -25,7 +26,8 @@ data class AttractionSearchDocument(
     val imageUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
-    val popularity: Long = 0,
+    /** 재색인 전 옛 인덱스 문서에는 없다 — 기본값 1.0(공식의 base)으로 중립 처리. */
+    val popularityScore: Double = 1.0,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
 ) {
@@ -37,6 +39,7 @@ data class AttractionSearchDocument(
         contentId = contentId,
         lang = lang,
         title = title,
+        titleLocal = titleLocal,
         latitude = location.lat,
         longitude = location.lon,
         address = address,
@@ -48,7 +51,7 @@ data class AttractionSearchDocument(
         imageUrl = imageUrl,
         tel = tel,
         overview = overview,
-        popularity = popularity,
+        popularityScore = popularityScore,
         modifiedAt = modifiedAt,
     )
 }

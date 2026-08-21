@@ -19,6 +19,9 @@ class PlaceApiClient(
         val contentId: String,
         val lang: String,
         val title: String,
+        /** place 가 title 에서 파생한 표시명/로컬명 — 마이그레이션 전 place 응답에는 없을 수 있다. */
+        val titleDisplay: String? = null,
+        val titleLocal: String? = null,
         val latitude: Double,
         val longitude: Double,
         val address: String? = null,
@@ -108,6 +111,8 @@ class PlaceApiClient(
                 contentId = a["contentId"] as String,
                 lang = a["lang"] as String,
                 title = a["title"] as String,
+                titleDisplay = a["titleDisplay"] as? String,
+                titleLocal = a["titleLocal"] as? String,
                 latitude = (a["latitude"] as Number).toDouble(),
                 longitude = (a["longitude"] as Number).toDouble(),
                 address = a["address"] as? String,

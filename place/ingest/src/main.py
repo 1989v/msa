@@ -67,10 +67,14 @@ def _job_links(limit: int) -> int:
     naver_secret = os.environ.get("NAVER_CLIENT_SECRET")
 
     sources = []
+    # 큐 항목을 통째로 넘긴다 — 좌표(latitude/longitude)까지 소스가 쓴다 (유튜브 location 편향).
     if youtube_key:
-        sources.append(("YOUTUBE", lambda t, lang: youtube.search(youtube_key, t, lang)))
+        sources.append(("YOUTUBE", lambda item: youtube.search(
+            youtube_key, item["title"], item.get("lang") or "ko",
+            item.get("latitude"), item.get("longitude"))))
     if naver_id and naver_secret:
-        sources.append(("NAVER_BLOG", lambda t, lang: naver.search(naver_id, naver_secret, t, lang)))
+        sources.append(("NAVER_BLOG", lambda item: naver.search(
+            naver_id, naver_secret, item["title"], item.get("lang") or "ko")))
     if not sources:
         raise SystemExit("YOUTUBE_API_KEY 또는 NAVER_CLIENT_ID/SECRET 중 하나는 필요합니다")
 
@@ -88,7 +92,7 @@ def _collect_source(source: str, fetch, limit: int) -> None:
     results = []
     for item in items:
         try:
-            links = fetch(item["title"], item.get("lang") or "ko")
+            links = fetch(item)
         except youtube.QuotaExceeded as e:
             # 남은 큐를 더 두드려도 답이 같다. 이미 받은 결과만 돌려주고 멈춘다.
             backfill_overview.log(f"[{source}] 쿼터 소진 — 여기서 중단 ({e})")
