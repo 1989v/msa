@@ -295,7 +295,7 @@ images:
     newTag: 12f6421
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: e6498d9
+    newTag: 65cfd40
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 12f6421
