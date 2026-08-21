@@ -1,0 +1,174 @@
+# 멈춘 Argo 동기화 작업 워치독.
+#
+# Argo 는 Application 당 동기화 작업을 하나만 돌린다 — 즉 이미 큐다. 문제는 큐가 밀리는 게
+# 아니라 **큐 머리가 안 끝나는 것**이다. 2026-08-21 에 code-dictionary 가 CrashLoopBackOff 로
+# 떨어지자 동기화 작업이 `Running` 상태로 6시간 30분을 머물렀고, 그동안 롤백을 포함해 어떤
+# 리비전도 적용되지 않았다. 작업을 끊자 다음 동기화는 6분 42초에 끝났다.
+#
+# progressDeadlineSeconds(600) 와 syncPolicy.retry(limit 5) 가 이미 있는데도 막혔다 —
+# 둘 다 "실패"를 다루지 "안 끝남"을 다루지 않는다. 그래서 시간으로 자른다.
+#
+# **이 워치독은 Argo 가 배포하지 않는다.** Argo 가 막혔을 때 자기를 고칠 물건을 Argo 가
+# 배포하면 같이 막힌다. `k8s/argocd/install.sh` 가 직접 apply 한다 (Application 자신과 동일).
+#
+# 이미지는 노드에 이미 있는 `curlimages/curl` 을 쓴다. argocd CLI 의 `--core` 모드도 검토했지만
+# 그건 argocd-server 급 권한(argocd ns 의 configmap·secret **전체** list)을 요구한다 —
+# 워치독 하나에 리포 자격증명과 admin 비밀번호를 읽을 권한을 주는 셈이라 접었다.
+# SA 토큰으로 K8s API 를 직접 부르면 필요한 권한이 applications 의 get/patch 둘로 끝난다.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: argocd-stuck-sync-watchdog
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/component: watchdog
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: argocd-stuck-sync-watchdog
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/component: watchdog
+rules:
+  # terminate-op 은 Application 의 /operation 을 지우는 patch 다. delete 권한은 주지 않는다 —
+  # 워치독이 할 수 있는 최대치가 "진행 중인 작업 취소"여야 한다.
+  - apiGroups: ["argoproj.io"]
+    resources: ["applications"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+  - apiGroups: ["argoproj.io"]
+    resources: ["appprojects"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argocd-stuck-sync-watchdog
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/component: watchdog
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: argocd-stuck-sync-watchdog
+subjects:
+  - kind: ServiceAccount
+    name: argocd-stuck-sync-watchdog
+    namespace: argocd
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: argocd-stuck-sync-watchdog
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd
+    app.kubernetes.io/component: watchdog
+spec:
+  schedule: "*/5 * * * *"
+  # 겹쳐 돌 이유가 없다. 앞 틱이 늦어지면 건너뛴다.
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  jobTemplate:
+    spec:
+      # 재시도하지 않는다 — 5분 뒤 다음 틱이 온다. 실패한 워치독이 파드를 쌓으면
+      # 단일 노드에서 그 자체가 문제가 된다.
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: argocd-stuck-sync-watchdog
+        spec:
+          serviceAccountName: argocd-stuck-sync-watchdog
+          restartPolicy: Never
+          containers:
+            - name: watchdog
+              image: docker.io/curlimages/curl:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                # Application 목록을 JSON 에서 긁지 않고 명시한다. 이 클러스터의 Application 은
+                # `commerce` 하나뿐이고, 목록 파싱은 status 안의 수백 개 "name" 과 뒤섞여
+                # 조용히 틀리기 쉽다. 앱이 늘면 공백으로 구분해 여기에 더한다.
+                - name: APPS
+                  value: "commerce"
+                # 정상 동기화는 관측상 7분 안에 끝난다. 20분은 느린 날에도 걸리지 않으면서
+                # 6시간짜리 정지는 확실히 자르는 간격이다.
+                - name: THRESHOLD_SECONDS
+                  value: "1200"
+                - name: TZ
+                  value: UTC
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -u
+                  API=https://kubernetes.default.svc
+                  SA=/var/run/secrets/kubernetes.io/serviceaccount
+                  TOKEN=$(cat "$SA/token")
+                  NS=$(cat "$SA/namespace")
+                  now=$(date +%s)
+                  stuck=0
+
+                  for app in $APPS; do
+                    url="$API/apis/argoproj.io/v1alpha1/namespaces/$NS/applications/$app"
+                    json=$(curl -sS --fail --cacert "$SA/ca.crt" -H "Authorization: Bearer $TOKEN" "$url") || {
+                      echo "[watchdog] $app 조회 실패 — 건너뜀"; continue; }
+
+                    # status.operationState 이후만 본다. 앞쪽 .operation 과 .spec 에는 "phase" 가
+                    # 없고, 뒤쪽 syncResult 의 "hookPhase" 는 앞에 따옴표가 없어 겹치지 않는다.
+                    #
+                    # API 는 pretty-print 로 응답한다(수천 줄, `"operationState": {` 처럼 콜론 뒤 공백).
+                    # 그래서 한 줄 문자열로 자르지 않고 **줄 범위**로 자르고, 패턴도 공백을 허용한다.
+                    ops=$(printf '%s\n' "$json" | sed -n '/"operationState"/,$p')
+                    if [ -z "$ops" ]; then
+                      echo "[watchdog] $app 진행 중인 동기화 없음"; continue
+                    fi
+                    phase=$(printf '%s\n' "$ops" | grep -o '"phase": *"[^"]*"' | head -1 | cut -d'"' -f4)
+                    started=$(printf '%s\n' "$ops" | grep -o '"startedAt": *"[^"]*"' | head -1 | cut -d'"' -f4)
+
+                    if [ "${phase:-}" != "Running" ]; then
+                      echo "[watchdog] $app phase=${phase:-<none>} — 정상"; continue
+                    fi
+
+                    st=$(date -D "%Y-%m-%dT%H:%M:%SZ" -d "$started" +%s 2>/dev/null) || st=""
+                    if [ -z "$st" ]; then
+                      echo "[watchdog] $app startedAt 파싱 실패($started) — 건드리지 않는다"; continue
+                    fi
+                    age=$((now - st))
+
+                    if [ "$age" -gt "$THRESHOLD_SECONDS" ]; then
+                      echo "[watchdog] $app 동기화가 ${age}s 째 Running (임계 ${THRESHOLD_SECONDS}s) — 작업을 끊는다"
+                      # /operation 제거 = argocd app terminate-op. 다음 자동 동기화가 최신 리비전으로 다시 건다.
+                      if curl -sS --fail --cacert "$SA/ca.crt" -H "Authorization: Bearer $TOKEN" \
+                           -X PATCH -H "Content-Type: application/json-patch+json" \
+                           --data '[{"op":"remove","path":"/operation"}]' "$url" >/dev/null; then
+                        stuck=$((stuck+1))
+                        echo "[watchdog] $app 작업 종료함"
+                      else
+                        echo "[watchdog] $app 종료 실패 — 다음 틱에 다시 시도한다"
+                      fi
+                    else
+                      echo "[watchdog] $app 동기화 진행 중 ${age}s — 임계 이내"
+                    fi
+                  done
+                  echo "[watchdog] 종료 — 끊은 작업 ${stuck}건"
+              resources:
+                requests:
+                  cpu: 10m
+                  memory: 16Mi
+                limits:
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                runAsNonRoot: true
+                # curlimages/curl 의 USER 는 이름(curl_user)이라 kubelet 이 non-root 임을
+                # 검증하지 못해 CreateContainerConfigError 로 떨어진다. 숫자로 못박는다.
+                runAsUser: 100
+                capabilities:
+                  drop: ["ALL"]

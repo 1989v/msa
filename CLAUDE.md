@@ -77,6 +77,9 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
   **작성 권한은 전역 Role enum 이 아니라 `blog_profile` 행이 갖는다** — 역할 하나로는 핸들·표시명을 담지 못하고,
   권한 진실이 JWT 와 두 군데로 갈리면 정지 처분이 토큰 만료 전까지 먹지 않는다. 좋아요·평점은 익명 허용,
   댓글만 로그인. 조회수는 Redis 가 아니라 `blog_post_view` 원장(하루 1표) — 부수로 일별 추이가 남는다
+- **배포 안전장치**: Argo 동기화가 20분 넘게 `Running` 이면 워치독 CronJob 이 작업을 끊는다 + `ApplyOutOfSyncOnly` 로 변경분만 적용 → `docs/adr/ADR-0073-deploy-pipeline-guardrails.md`.
+  **워치독은 Argo 가 배포하지 않는다** — 막힌 것을 푸는 물건을 막힌 것이 배포하면 같이 막힌다.
+  `k8s/argocd/install.sh` 가 직접 apply 하므로, 워치독을 고치면 install.sh 를 다시 돌려야 반영된다
 - **혜택 링크 허브**: `deal.1989v.com` — 카테고리별 혜택 링크 큐레이션 + 자체 리다이렉터 → `docs/adr/ADR-0069-deal-affiliate-hub.md`. **규제 업권(의료·금융)은 카테고리 행 자체를 만들지 않는다**(의료법 27조·금소법). 제휴 링크는 `AFFILIATE`/`PLAIN` 로 갈라 고지를 제휴에만 붙이고, `target_url` 은 **원본 무변조**로 302 한다 — 파라미터를 손대면 약관 위반이고 트래킹 쿠키가 깨진다
 - **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다)
 

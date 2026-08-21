@@ -224,3 +224,24 @@ EOF
 kubectl delete application commerce -n argocd
 helm uninstall argocd -n argocd
 ```
+
+## 멈춘 동기화 워치독 (ADR-0073)
+
+`stuck-sync-watchdog.yaml` — 5분 주기로 Application 을 보고, 동기화 작업이 20분 넘게 `Running`
+이면 `/operation` 을 제거해 끊는다. 다음 자동 동기화가 최신 리비전으로 다시 건다.
+
+```bash
+# 상태
+kubectl -n argocd get cronjob argocd-stuck-sync-watchdog
+# 최근 판정 로그 (유일한 알림 수단이다)
+kubectl -n argocd logs -l app.kubernetes.io/name=argocd-stuck-sync-watchdog --tail=20
+# 수동 1회 실행
+kubectl -n argocd create job --from=cronjob/argocd-stuck-sync-watchdog wd-once
+```
+
+**이 파일은 Argo 가 아니라 `install.sh` 가 apply 한다.** Argo 가 막혔을 때 그것을 푸는 물건을
+Argo 가 배포하면 같이 막히기 때문이다. 워치독을 고쳤으면 `install.sh` 를 다시 돌리거나
+`kubectl apply -f k8s/argocd/stuck-sync-watchdog.yaml` 을 직접 실행한다.
+
+Application 이 늘면 CronJob 의 `APPS` 환경변수에 공백으로 구분해 더한다 — 목록을 API 응답에서
+긁지 않는 이유는 status 안의 수백 개 `"name"` 과 뒤섞여 조용히 틀리기 때문이다.

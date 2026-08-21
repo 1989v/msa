@@ -108,6 +108,12 @@ sed -e "s|__GITHUB_REPO_URL__|$GITHUB_REPO_URL|g" \
   "$SCRIPT_DIR/application.yaml" | kubectl apply -f -
 ok "Application 등록"
 
+# 멈춘 동기화 워치독 — **Argo 가 아니라 여기서** 적용한다.
+# Argo 가 막혔을 때 그것을 푸는 물건을 Argo 가 배포하면 같이 막힌다.
+log "멈춘 동기화 워치독 적용"
+kubectl apply -f "$SCRIPT_DIR/stuck-sync-watchdog.yaml"
+ok "워치독 등록 (5분 주기 · 20분 초과 작업 종료)"
+
 #───────────────────────────────────────────────────────────────────────────────
 # 4. 초기 admin 비번 출력
 #───────────────────────────────────────────────────────────────────────────────
