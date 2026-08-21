@@ -33,6 +33,7 @@ spec:
         app.kubernetes.io/component: zero-trust-tunnel
         app.kubernetes.io/part-of: commerce-platform
     spec:
+      priorityClassName: edge-critical
       containers:
         # name: app 인 이유 — oci-arm 의 java-tool-options patch 가 `name: app`
         # container 에 strategic merge 로 env 주입. 이름이 다르면 patch 가 새
@@ -75,12 +76,15 @@ spec:
             periodSeconds: 30
             failureThreshold: 5
           resources:
+            # 엣지는 넉넉히 잡는다 (ADR-0075 개정) — 2026-08-22 전체 롤아웃 포화(load 18)에서
+            # 200m 상한에 스로틀돼 터널이 응답을 못 하며 9분간 521 이 났다. requests 는
+            # CFS 지분(포화 시 보장 몫)이고, 상한은 병목이 안 되게 500m 로 올린다.
             requests:
-              cpu: 50m
-              memory: 64Mi
-            limits:
               cpu: 200m
               memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

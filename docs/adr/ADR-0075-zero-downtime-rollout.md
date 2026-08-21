@@ -60,3 +60,25 @@ oci-arm 은 지금까지 전 Deployment 에 `maxSurge:0 / maxUnavailable:1` 을 
 
 이 변경 자체가 파드 템플릿을 바꿔 전 Deployment 를 롤아웃시킨다 — 그 롤아웃을
 외부 curl 루프(1s 간격, 전 호스트)로 관측해 503 0건을 확인한다.
+
+## 개정 (2026-08-22) — 첫 전체 롤아웃 실측과 엣지 보호
+
+surge-first 로 전환한 커밋 자체가 전 Deployment 의 파드 템플릿(env)을 바꿔 **20종 전체
+롤아웃**이라는 최악 케이스를 즉시 실행했다. 결과:
+
+- **백엔드 503 은 사라졌다** — 구 파드가 끝까지 서빙했다.
+- 그러나 04:32–04:40 KST **약 9분간 521**(Cloudflare origin down)이 났다. 구+신 파드가
+  웨이브마다 겹치며 노드 load 가 18 까지 오르자, `cpu limit 200m` 의 cloudflared 가
+  스로틀돼 터널 응답을 못 했다. **백엔드가 살아 있어도 엣지가 굶으면 전부 죽은 것이다.**
+
+조치:
+
+| 대상 | 변경 | 근거 |
+|---|---|---|
+| cloudflared | requests 50m→200m, limits 200m→500m, `edge-critical` PriorityClass | 포화 시 CFS 지분 보장 + 스로틀 병목 제거 |
+| PriorityClass `edge-critical` (신설) | value 1e8 | 엣지 경로는 축출·기아 대상이 아니다 |
+| ingress-nginx | requests cpu 100m→300m + edge-critical (레포 밖 설치물 — README 에 명령 기록) | 같은 이유 |
+
+전체 롤아웃(파드 템플릿 전 서비스 동시 변경)은 드물다 — 평소 이미지 태그 1~2종 배포는
+웨이브 1개 안에서 끝나 이 압력이 없다. 전 서비스 env/공통 변경을 배포할 때는 이
+개정의 부하 프로파일을 전제로 판단할 것.

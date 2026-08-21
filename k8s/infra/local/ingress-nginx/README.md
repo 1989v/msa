@@ -53,3 +53,18 @@ IngressClass named `nginx` marked as `(default)`.
 helm uninstall ingress-nginx -n ingress-nginx
 kubectl delete ns ingress-nginx
 ```
+
+## oci-arm 운영 보강 (ADR-0075 개정, 2026-08-22)
+
+ingress-nginx 는 이 레포가 아니라 설치 명령으로 배포된다. oci-arm 단일 노드에서
+롤아웃 포화 시 컨트롤러가 굶지 않도록 아래를 설치 후 1회 적용한다
+(2026-08-22 적용됨 — 재설치 시 반복):
+
+```bash
+kubectl -n ingress-nginx patch deploy ingress-nginx-controller --type=json -p '[
+  {"op":"replace","path":"/spec/template/spec/containers/0/resources/requests/cpu","value":"300m"},
+  {"op":"add","path":"/spec/template/spec/priorityClassName","value":"edge-critical"}]'
+```
+
+`edge-critical` PriorityClass 는 `k8s/overlays/oci-arm/edge-priority.yaml` 이 만든다 —
+Argo 동기화가 먼저다.

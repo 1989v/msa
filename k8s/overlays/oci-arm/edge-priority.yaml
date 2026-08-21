@@ -1,0 +1,12 @@
+# 엣지 우선순위 (ADR-0075 개정) — 롤아웃 포화에서 마지막까지 살아야 하는 것들.
+#
+# 2026-08-22 surge-first 첫 전체 롤아웃에서 load 18 포화 중 cloudflared/ingress 가
+# 굶어 9분간 521(오리진 다운)이 났다. 백엔드는 구 파드가 살아 있었는데 **엣지가
+# 죽으면 전부 죽은 것**이다. CPU 지분(requests)과 축출 순위(priority) 양쪽으로 보호한다.
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: edge-critical
+value: 100000000
+globalDefault: false
+description: "터널·인그레스 등 엣지 경로 — 롤아웃 포화에서도 축출·기아 대상이 아니다"

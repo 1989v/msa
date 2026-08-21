@@ -36,6 +36,7 @@ resources:
   - ../k3s-lite
   - cert-manager/cluster-issuer-staging.yaml
   - cert-manager/cluster-issuer-prod.yaml
+  - edge-priority.yaml
   # Ingress 2개:
   # - commerce-proxied: 6 host (root + admin/quant/gft/game/api) — CF proxy
   #   활성, secretName 은 수동 등록한 cf-origin-ca-tls (CF Origin CA 15년 cert).
