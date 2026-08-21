@@ -20,6 +20,7 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import org.springframework.data.domain.PageImpl
+import org.springframework.data.domain.PageRequest
 import java.time.Instant
 
 class GameQueryServiceTest : BehaviorSpec({
@@ -173,6 +174,116 @@ class GameQueryServiceTest : BehaviorSpec({
                 every { statsRepository.findByGameIds(any()) } returns emptyList()
 
                 service.collections()[0].games.map { it.slug } shouldBe listOf("pinned", "top")
+            }
+        }
+    }
+
+    given("큐레이션 행 간 중복 제거 시") {
+        fun collectionOf(
+            id: Long,
+            slug: String,
+            type: CollectionType,
+            displayOrder: Int,
+            tagSlug: String? = null,
+            gameIds: List<Long> = emptyList(),
+        ) = GameCollection.restore(
+            id = id, slug = slug, title = slug, type = type,
+            tagSlug = tagSlug, displayOrder = displayOrder, active = true, gameIds = gameIds,
+        )
+
+        `when`("같은 게임이 신작·인기 산출에 모두 오르면") {
+            then("NEW 행이 갖고 TRENDING 은 다음 인기 게임으로 채운다 — 노출 순서는 display_order 그대로") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val collectionRepository = mockk<GameCollectionRepositoryPort>()
+                val service = GameQueryService(gameRepository, statsRepository, mockk(), collectionRepository)
+
+                every { collectionRepository.findActive() } returns listOf(
+                    collectionOf(1L, "trending", CollectionType.TRENDING, displayOrder = 1),
+                    collectionOf(2L, "new-games", CollectionType.NEW, displayOrder = 2),
+                )
+                val fresh = gameWith(1L, "fresh", GameStatus.PUBLISHED)
+                val backfill = gameWith(2L, "backfill", GameStatus.PUBLISHED)
+                every { gameRepository.search(null, null, GameSort.NEW, any()) } returns PageImpl(listOf(fresh))
+                every { gameRepository.search(null, null, GameSort.TRENDING, any()) } returns
+                    PageImpl(listOf(fresh, backfill))
+                every { statsRepository.findByGameIds(any()) } returns emptyList()
+
+                val collections = service.collections()
+
+                collections.map { it.slug } shouldBe listOf("trending", "new-games")
+                collections[0].games.map { it.slug } shouldBe listOf("backfill")
+                collections[1].games.map { it.slug } shouldBe listOf("fresh")
+            }
+        }
+
+        `when`("운영자가 놓은 게임이 다른 행과 겹치면") {
+            then("MANUAL 행과 자동 행의 상단 고정은 걷어내지 않는다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val collectionRepository = mockk<GameCollectionRepositoryPort>()
+                val service = GameQueryService(gameRepository, statsRepository, mockk(), collectionRepository)
+
+                val alpha = gameWith(1L, "alpha", GameStatus.PUBLISHED)
+                every { collectionRepository.findActive() } returns listOf(
+                    collectionOf(1L, "editors-pick", CollectionType.MANUAL, displayOrder = 1, gameIds = listOf(1L)),
+                    collectionOf(2L, "new-games", CollectionType.NEW, displayOrder = 2),
+                    collectionOf(3L, "trending", CollectionType.TRENDING, displayOrder = 3, gameIds = listOf(1L)),
+                )
+                every { gameRepository.findByIds(listOf(1L)) } returns listOf(alpha)
+                // alpha 는 MANUAL 이 이미 가져갔지만 신작 산출에도 올라 있다
+                every { gameRepository.search(null, null, GameSort.NEW, any()) } returns
+                    PageImpl(listOf(alpha, gameWith(2L, "nova", GameStatus.PUBLISHED)))
+                every { gameRepository.search(null, null, GameSort.TRENDING, any()) } returns
+                    PageImpl(listOf(gameWith(3L, "hit", GameStatus.PUBLISHED)))
+                every { statsRepository.findByGameIds(any()) } returns emptyList()
+
+                val collections = service.collections()
+
+                collections[0].games.map { it.slug } shouldBe listOf("alpha")
+                collections[1].games.map { it.slug } shouldBe listOf("nova")
+                // 상단 고정은 다른 행에 이미 실렸어도 남는다 — 운영자 배치가 중복 제거보다 세다
+                collections[2].games.map { it.slug } shouldBe listOf("alpha", "hit")
+            }
+        }
+
+        `when`("산출 목록이 정원을 넘으면") {
+            then("여유분 20개를 받아 걷어낸 뒤 10개로 자른다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val collectionRepository = mockk<GameCollectionRepositoryPort>()
+                val service = GameQueryService(gameRepository, statsRepository, mockk(), collectionRepository)
+
+                every { collectionRepository.findActive() } returns listOf(
+                    collectionOf(1L, "trending", CollectionType.TRENDING, displayOrder = 1),
+                )
+                // 페이지 크기까지 정확히 매칭 — 여유분을 안 받으면 이 스텁에 안 걸려 실패한다
+                every { gameRepository.search(null, null, GameSort.TRENDING, PageRequest.of(0, 20)) } returns
+                    PageImpl((1L..12L).map { gameWith(it, "game-$it", GameStatus.PUBLISHED) })
+                every { statsRepository.findByGameIds(any()) } returns emptyList()
+
+                service.collections()[0].games.size shouldBe 10
+            }
+        }
+
+        `when`("행을 채울 게임이 하나도 없으면") {
+            then("빈 행은 응답에서 뺀다") {
+                val gameRepository = mockk<GameRepositoryPort>()
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val collectionRepository = mockk<GameCollectionRepositoryPort>()
+                val service = GameQueryService(gameRepository, statsRepository, mockk(), collectionRepository)
+
+                every { collectionRepository.findActive() } returns listOf(
+                    collectionOf(1L, "retro", CollectionType.TAG_BASED, displayOrder = 1, tagSlug = "retro"),
+                    collectionOf(2L, "new-games", CollectionType.NEW, displayOrder = 2),
+                )
+                every { gameRepository.search("retro", null, GameSort.TRENDING, any()) } returns
+                    PageImpl(emptyList())
+                every { gameRepository.search(null, null, GameSort.NEW, any()) } returns
+                    PageImpl(listOf(gameWith(1L, "fresh", GameStatus.PUBLISHED)))
+                every { statsRepository.findByGameIds(any()) } returns emptyList()
+
+                service.collections().map { it.slug } shouldBe listOf("new-games")
             }
         }
     }

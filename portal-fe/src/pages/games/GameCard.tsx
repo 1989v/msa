@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { displayTitle, genreLabel, getGameLang, isBeta, type GameLang, type GameSummary } from '../../api/gameApi';
 import { gamePath } from '../../seo/copy.mjs';
+import FavoriteButton from '../../components/favorite/FavoriteButton';
+import { StarRating, starsFromHalves } from './StarRating';
 
 const COVER_HUES = [245, 180, 145, 25, 300, 75];
 
@@ -40,6 +42,10 @@ export default function GameCard({ game, lang }: { game: GameSummary; lang?: Gam
           </span>
         )}
         {isBeta(game) && <span className="game-badge-beta">BETA</span>}
+        {/* 찜 — 카드 링크 안에 앉지만 클릭은 버튼이 삼킨다 (ADR-0074) */}
+        <span className="game-card-favorite">
+          <FavoriteButton type="GAME" targetKey={game.slug} compact />
+        </span>
       </div>
       <div className="game-card-body">
         <h3 className="game-card-title">
@@ -48,7 +54,10 @@ export default function GameCard({ game, lang }: { game: GameSummary; lang?: Gam
         </h3>
         <div className="game-card-meta">
           {game.ratingCount > 0 ? (
-            <span className="game-card-rating">★ {game.ratingAvg.toFixed(1)}</span>
+            <span className="game-card-rating">
+              <StarRating value={starsFromHalves(game.ratingAvg)} />
+              {starsFromHalves(game.ratingAvg).toFixed(1)}
+            </span>
           ) : (
             <span className="game-card-rating muted">{gameLang === 'en' ? 'No ratings' : '평가 없음'}</span>
           )}

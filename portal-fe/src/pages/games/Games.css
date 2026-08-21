@@ -79,18 +79,20 @@
   flex-shrink: 0;
 }
 
-/* Toolbar */
+/* Toolbar — 모바일 우선. 칩을 줄바꿈으로 쌓으면 목록 위에 칩 벽이 서므로
+   기본은 세로 스택 + 행마다 가로 스크롤 한 줄, 데스크탑(≥768px)에서만 줄바꿈으로 푼다. */
 .games-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
   margin-bottom: 32px;
 }
 
 .games-sorts {
   display: flex;
   gap: 4px;
+  align-self: flex-start;
   background: var(--ko-surface-1);
   border: 1px solid var(--ko-border-subtle);
   border-radius: 8px;
@@ -103,6 +105,7 @@
   color: var(--ko-text-secondary);
   font-size: 0.875rem;
   padding: 6px 14px;
+  min-height: 44px;
   border-radius: var(--kh-radius, 6px);
   cursor: pointer;
   transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -114,10 +117,25 @@
   font-weight: 600;
 }
 
-.games-genres {
+/* 장르·태그 행 — 한 줄 가로 스크롤. 잘린 칩 + 오른쪽 가장자리 페이드가
+   "옆으로 더 있다"는 신호다. 마스크의 검정은 색이 아니라 알파 커브다.
+   끝까지 밀었을 때 마지막 칩이 흐려지지 않게 페이드 폭만큼 끝 패딩을 둔다. */
+.games-genres,
+.games-tags {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-inline-end: 32px;
+  mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 32px), transparent);
+}
+
+.games-genres::-webkit-scrollbar,
+.games-tags::-webkit-scrollbar {
+  display: none;
 }
 
 .game-genre-btn {
@@ -125,6 +143,8 @@
      앵커 기본 스타일(밑줄)을 지우고 폰트/정렬을 버튼과 맞춘다. */
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
   text-decoration: none;
   font-family: inherit;
   border: 1px solid var(--ko-border-default);
@@ -138,7 +158,7 @@
   border-radius: var(--kh-radius, 8px);
   cursor: pointer;
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 32px;
+  min-height: 44px;
 }
 
 .game-genre-btn:hover {
@@ -147,17 +167,15 @@
 
 .game-genre-btn.active {
   background: var(--ko-accent-primary);
-  border-color: var(--ko-accent-text, var(--ko-accent-primary));
-  color: var(--ko-surface-0);
-}
-
-.games-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  border-color: var(--ko-accent-primary);
+  /* 다크 아케이드에서 surface-0 은 송연(#0a0a0a)이라 연지 바탕 위에서 2.6:1 로 죽는다 —
+     채움 칩의 글씨는 정경과 무관하게 한지로 고정한다 (연지 위 한지 7.1:1). */
+  color: var(--kh-hanji, var(--ko-surface-0));
 }
 
 .game-tag-filter {
+  flex-shrink: 0;
+  white-space: nowrap;
   border: 1px solid var(--ko-border-subtle);
   background: var(--ko-surface-1);
   color: var(--ko-text-secondary);
@@ -166,7 +184,7 @@
   border-radius: 9999px;
   cursor: pointer;
   transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 32px;
+  min-height: 44px;
 }
 
 .game-tag-filter:hover {
@@ -177,6 +195,41 @@
   border-color: var(--ko-accent-text, var(--ko-accent-primary));
   color: var(--ko-accent-text, var(--ko-accent-primary));
   background: var(--ko-accent-primary-bg);
+}
+
+/* 데스크탑 — 툴바를 한 줄로 눕히고 칩은 줄바꿈으로 푼다 */
+@media (min-width: 768px) {
+  .games-toolbar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .games-sorts {
+    align-self: auto;
+  }
+
+  .games-genres,
+  .games-tags {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    padding-inline-end: 0;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
+
+/* 칩 축소는 포인터가 정밀한 환경만 — 터치 태블릿은 폭이 넓어도 44px 를 유지해야 한다 */
+@media (min-width: 768px) and (pointer: fine) {
+  .games-sort-btn {
+    min-height: 0;
+  }
+
+  .game-genre-btn,
+  .game-tag-filter {
+    min-height: 32px;
+  }
 }
 
 /* Collections & grid */
@@ -272,6 +325,13 @@
   justify-content: center;
 }
 
+/* 찜 하트 — 커버 우상단, 베타 배지와 반대편 (ADR-0074) */
+.game-card-favorite {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+
 /* 베타 표기 — 아직 다듬는 중인 게임임을 카탈로그에서 바로 알린다 */
 .game-badge-beta {
   position: absolute;
@@ -358,8 +418,32 @@
 
 .game-card-rating {
   /* 트레이딩 팔레트의 상승 초록이 흘러들어와 있었다 — 브랜드 면의 강조는 황토다 */
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--kh-ocher, var(--ko-text-primary));
   font-weight: 600;
+}
+
+/* 별점 표시 — 같은 글리프 두 겹, 위 겹의 폭을 %로 잘라 반개를 그린다 (StarRating.tsx) */
+.star-rating {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.star-rating-track {
+  display: block;
+  white-space: nowrap;
+  opacity: 0.3;
+}
+
+.star-rating-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .game-card-rating.muted {
@@ -377,12 +461,20 @@
   gap: 6px;
 }
 
+/* 태그 칩은 테두리형 — 채움(surface-3)은 판 위에서 뒤집히지 않는다: 라이트에서 판 글자색(한지)
+   그대로 밝은 회색 바탕이 깔려 1.9:1 로 죽었다. 테두리 + 문맥 글자색은 지면·판 어디서든 선다. */
 .game-tag-chip {
   font-size: 0.6875rem;
-  color: var(--ko-text-muted);
-  background: var(--ko-surface-3);
-  border-radius: 4px;
+  color: var(--ko-text-secondary);
+  background: transparent;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
   padding: 2px 7px;
+}
+
+/* 판 위의 칩 테두리 — 판이 어두워 지면용 테두리(먹 12%)는 보이지 않는다 */
+.game-card .game-tag-chip {
+  border-color: var(--kh-slab-border, var(--ko-border-default));
 }
 
 /* Detail */
@@ -407,14 +499,27 @@
 
 .game-detail-meta {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 14px;
   font-size: 0.875rem;
   font-variant-numeric: tabular-nums;
   margin-bottom: 10px;
 }
 
+/* 상세 헤더는 판이 아니라 지면 위다 — 카드용 황토·muted 는 한지 위에서 2.9:1/4.2:1 로
+   본문 대비에 못 미친다. 별점은 정경별 글씨용 액션색, 나머지는 secondary 로 올린다. */
+.game-detail-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  font-weight: 600;
+}
+
+.game-detail-meta .game-card-plays,
 .game-detail-dev {
-  color: var(--ko-text-muted);
+  color: var(--ko-text-secondary);
 }
 
 /* Play stage */
@@ -550,36 +655,72 @@
   margin-bottom: 40px;
 }
 
-.game-rating-scores {
+/* 별점 입력 — 별마다 좌/우 반쪽 히트존(halves 1..10). 셀 44×44 로 터치 표준 준수 */
+.star-input {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 10px;
 }
 
-.game-score-btn {
+.star-input-cell {
+  position: relative;
   width: 44px;
   height: 44px;
-  border-radius: 8px;
-  border: 1px solid var(--ko-border-subtle);
-  background: var(--ko-surface-1);
-  color: var(--ko-text-secondary);
-  font-size: 0.9375rem;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.game-score-btn:hover {
-  background: var(--ko-surface-2);
-  border-color: var(--ko-border-default);
-}
-
-.game-score-btn.active {
-  background: var(--ko-accent-primary-bg);
-  border-color: var(--ko-accent-text, var(--ko-accent-primary));
+.star-input-glyph {
+  position: relative;
+  font-size: 1.75rem;
+  line-height: 1;
+  letter-spacing: 0;
   color: var(--ko-accent-text, var(--ko-accent-primary));
-  font-weight: 700;
+  transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.star-input-track {
+  display: block;
+  white-space: nowrap;
+  opacity: 0.3;
+}
+
+.star-input-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* 눌림 — 다섯 동사 중 피드백(120ms) */
+.star-input-cell:active .star-input-glyph {
+  transform: translateY(1px);
+}
+
+.star-input-half {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.star-input-half.is-left {
+  left: 0;
+}
+
+.star-input-half.is-right {
+  right: 0;
+}
+
+.star-input-half:focus-visible {
+  outline: var(--ko-focus-ring, 2px solid var(--ko-accent-primary));
+  outline-offset: -2px;
+  border-radius: var(--kh-radius, 4px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -587,7 +728,7 @@
   .games-sort-btn,
   .game-tag-filter,
   .game-play-btn,
-  .game-score-btn {
+  .star-input-glyph {
     transition: none;
   }
 }
@@ -648,13 +789,13 @@
   font-size: 0.55em;
   border: 0;
   background: transparent;
-  color: inherit;
+  /* 제목색 55% 흐림은 한지 위에서 3.7:1 로 떨어졌다 — 통과하는 회색 토큰을 그대로 쓴다 */
+  color: var(--ko-text-secondary);
   cursor: pointer;
-  opacity: 0.55;
 }
 
 .games-lang-btn.active {
-  opacity: 1;
+  color: inherit;
   background: var(--ko-accent-primary-bg, var(--ko-surface-3));
   font-weight: 700;
 }
@@ -674,5 +815,23 @@
 .games-topbar {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
   padding: 8px 0 0;
+}
+
+/* 내 찜 진입 (ADR-0074) — 조용한 텍스트 링크, 히트영역은 44px 확보 */
+.games-favorites-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 8px;
+  color: var(--ko-text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.games-favorites-link:hover {
+  color: var(--ko-text-primary);
+  text-decoration: underline;
 }

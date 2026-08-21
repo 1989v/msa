@@ -28,16 +28,16 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import AuthButton from '../../components/AuthButton';
+import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { useStageFit } from './useStageFit';
 import { fetchGraphData } from '../../api/searchApi';
 import { isLoggedIn } from '../../auth/auth';
 import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
+import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
 import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
-
-const SCORES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 function InternalGamePlayer({ slug }: { slug: string }) {
   const [nodes, setNodes] = useState<GraphNode[] | null>(null);
@@ -73,7 +73,8 @@ export default function GameDetailPage() {
   const [playing, setPlaying] = useState(false);
   const stageFit = useStageFit(playing);
   const [notFound, setNotFound] = useState(false);
-  const [myScore, setMyScore] = useState<number | null>(null);
+  // 내 평점은 BE 척도(halves 1~10) 그대로 든다 — 화면 변환은 StarRating 몫
+  const [myHalves, setMyHalves] = useState<number | null>(null);
   const [ratingMessage, setRatingMessage] = useState<string | null>(null);
   const sessionRef = useRef<{ slug: string; key: string } | null>(null);
   const stageRef = useRef<HTMLElement | null>(null);
@@ -93,7 +94,7 @@ export default function GameDetailPage() {
     setGame(null);
     setPlaying(false);
     setNotFound(false);
-    setMyScore(null);
+    setMyHalves(null);
     setRatingMessage(null);
     fetchGameDetail(slug)
       .then(setGame)
@@ -153,14 +154,24 @@ export default function GameDetailPage() {
       .catch(() => undefined);
   };
 
-  const handleRate = async (score: number) => {
+  const handleRate = async (halves: number) => {
     try {
-      const result = await rateGame(slug, score);
-      setMyScore(score);
-      setRatingMessage(`평가 완료 — 평균 ${result.ratingAvg.toFixed(1)}점 (${result.ratingCount.toLocaleString()}표)`);
+      const result = await rateGame(slug, halves);
+      setMyHalves(halves);
+      const avgStars = starsFromHalves(result.ratingAvg).toFixed(1);
+      const votes = result.ratingCount.toLocaleString();
+      setRatingMessage(
+        lang === 'en'
+          ? `Rating saved — average ${avgStars} (${votes} votes)`
+          : `평가 완료 — 평균 ${avgStars}점 (${votes}표)`,
+      );
       setGame((prev) => (prev ? { ...prev, ratingAvg: result.ratingAvg, ratingCount: result.ratingCount } : prev));
     } catch {
-      setRatingMessage('평점 등록에 실패했습니다 — 잠시 후 다시 시도해 주세요.');
+      setRatingMessage(
+        lang === 'en'
+          ? 'Could not save your rating — please try again later.'
+          : '평점 등록에 실패했습니다 — 잠시 후 다시 시도해 주세요.',
+      );
     }
   };
 
@@ -214,6 +225,9 @@ export default function GameDetailPage() {
   return (
     <div className="games-page kh-arcade">
       <div className="games-topbar">
+        <Link className="games-favorites-link" to={lang === 'en' ? '/en/favorites' : '/favorites'} viewTransition>
+          {lang === 'en' ? 'My favorites' : '내 찜'}
+        </Link>
         <AuthButton />
       </div>
       <nav className="games-breadcrumb" aria-label={lang === 'en' ? 'Breadcrumb' : '탐색 경로'}>
@@ -234,6 +248,7 @@ export default function GameDetailPage() {
             {displayTitle(game, lang)}
             {isBeta(game) && <span className="game-badge-beta inline">BETA</span>}
           </h1>
+          <FavoriteButton type="GAME" targetKey={slug} />
           {isBeta(game) && (
             <p className="game-detail-beta-note">
               {lang === 'en'
@@ -243,8 +258,11 @@ export default function GameDetailPage() {
           )}
           <div className="game-detail-meta">
             {game.ratingCount > 0 && (
-              <span className="game-card-rating">
-                ★ {game.ratingAvg.toFixed(1)} ({game.ratingCount.toLocaleString()}표)
+              <span className="game-detail-rating">
+                <StarRating value={starsFromHalves(game.ratingAvg)} />
+                {starsFromHalves(game.ratingAvg).toFixed(1)} (
+                {game.ratingCount.toLocaleString()}
+                {lang === 'en' ? ' votes' : '표'})
               </span>
             )}
             <span className="game-card-plays">{game.playCount.toLocaleString()} plays</span>
@@ -310,20 +328,13 @@ export default function GameDetailPage() {
           {lang === 'en' ? 'Rate this game' : '이 게임 어땠나요?'}
         </h2>
         {!isLoggedIn() && (
-          <p className="games-status">로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.</p>
+          <p className="games-status">
+            {lang === 'en'
+              ? 'You can rate once from this device without signing in.'
+              : '로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.'}
+          </p>
         )}
-        <div className="game-rating-scores">
-          {SCORES.map((score) => (
-            <button
-              key={score}
-              className={`game-score-btn ${myScore === score ? 'active' : ''}`}
-              onClick={() => handleRate(score)}
-              aria-label={`${score}점 주기`}
-            >
-              {score}
-            </button>
-          ))}
-        </div>
+        <StarRatingInput halves={myHalves} onRate={handleRate} lang={lang} />
         {ratingMessage && <p className="games-status">{ratingMessage}</p>}
       </section>
 

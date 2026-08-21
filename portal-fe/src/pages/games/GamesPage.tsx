@@ -32,6 +32,7 @@ import HouseBanner from './HouseBanner';
 import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import GNB from '../../components/GNB';
+import Footer from '../../components/Footer';
 
 const UI = {
   ko: {
@@ -60,14 +61,12 @@ const GENRES = Object.keys(GENRE_LABELS) as GameGenre[];
 /** 허브 경로 — game 서브도메인에서는 루트가, 그 외 호스트에서는 /games 가 허브다 */
 const HUB_SUB = window.location.hostname.split('.')[0] === 'game' ? '' : '/games';
 
-/** 큐레이션 행 간 중복 제거 — 한 게임은 첫 노출 행에만 남기고, 비어버린 행은 숨긴다 */
 /**
- * 컬렉션 행은 각자의 이름이 뜻하는 바를 그대로 보여 준다.
- *
- * 전에는 앞 행에 나온 게임을 뒷 행에서 걷어냈다(중복 카드 방지). 그 결과
- * '지금 인기' 가 신작을 먼저 가져가고 **'새로 나온 게임' 에는 남은 옛 게임**이 실렸다 —
- * 행의 제목이 거짓말을 하게 된다. 큰 게임 포털이 같은 게임을 인기·신작 양쪽에 노출하는 것은
- * 정상이고, 정렬 축이 다르면 목록도 다르다. 그래서 중복 제거는 하지 않고 빈 행만 숨긴다.
+ * 행 간 중복 제거는 백엔드(GameQueryService)가 한다 — 노출 순서가 아니라
+ * MANUAL → NEW → TAG_BASED → TRENDING 우선순위로 배정해, '지금 인기'가 신작을 먼저
+ * 집어가 '새로 나온 게임'에 남은 옛 게임이 실리는 문제를 피한다(TRENDING 은 다음 인기
+ * 게임으로 뒤를 채울 수 있는 유일한 행이라 맨 나중). 빈 행도 서버가 이미 뺀다 —
+ * 여기 필터는 구버전 응답에 대한 방어일 뿐이다.
  */
 function visibleCollections(collections: GameCollection[]): GameCollection[] {
   return collections.filter((col) => col.games.length > 0);
@@ -177,6 +176,12 @@ export default function GamesPage() {
           다른 화면을 가리키므로 링크를 섞으면 어긋난다. */}
       <GNB items={[]} />
       <div className="games-page kh-arcade">
+      {/* 내 찜 진입 — 상세 페이지 topbar 와 같은 자리 (ADR-0074) */}
+      <div className="games-topbar">
+        <Link className="games-favorites-link" to={lang === 'en' ? '/en/favorites' : '/favorites'} viewTransition>
+          {lang === 'en' ? 'My favorites' : '내 찜'}
+        </Link>
+      </div>
       <header className="games-header">
         <h1 className="games-title">
           {meta.heading}
@@ -292,6 +297,8 @@ export default function GamesPage() {
             </>
           )}
       </section>
+
+      <Footer />
       </div>
     </>
   );
