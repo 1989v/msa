@@ -1,13 +1,13 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 2.2.1
+version: 2.3.0
 archetype: dark-trading
 # 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
 # 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
 archetype_secondary: k-heritage
 mood: [data-dense, calm-night, korean-fintech]
-last_updated: 2026-08-21
+last_updated: 2026-08-22
 owners: [frontend-platform]
 default_theme: dark
 themes: [dark, light]
@@ -336,8 +336,10 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 - **결은 어두운 면에만 쓴다.** 밝은 면에서는 1px 반복선이 결이 아니라 골판지로 읽히고, 값을
   낮춰도 해결되지 않는다 — 보일 만큼 올리면 줄무늬, 안 보일 만큼 내리면 없는 것과 같다.
   밝은 면의 결이 필요하면 CSS 가 아니라 텍스처 이미지를 써야 한다.
-- **채움색과 글씨색을 나눈다** (`--ko-accent-text`). 같은 색이라도 바탕일 때와 글자일 때 요구
-  대비가 다르다 — 청자 원색은 채움으로 8.6:1 이지만 글씨로는 2.03:1 로 AA 에 못 미친다.
+- **채움색과 글씨색을 나눈다** (`--ko-accent-text`, `--kh-ocher-text`). 같은 색이라도 바탕일 때와
+  글자일 때 요구 대비가 다르다 — 청자 원색은 채움으로 8.6:1 이지만 글씨로는 2.03:1, 황토 원색은
+  한지 위 글씨로 2.89:1 로 AA 에 못 미친다. 라이트의 황토 글씨는 `--kh-ocher-text`(#8a6346, 5.0:1),
+  다크는 원색 그대로(6.04:1).
 - 표에 세로선을 긋지 않는다. 격자가 촘촘해지면 지면이 서식이 된다.
 - **아케이드는 표면이 아니라 카드가 어둡다.** 페이지는 모드를 따르고 게임 카드만
   판으로 고정한다 — "화면 속의 화면"이라 주변이 밝아져도 게임은 검은 화면이어야 한다.

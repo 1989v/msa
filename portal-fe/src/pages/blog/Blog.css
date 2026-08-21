@@ -702,7 +702,9 @@
   min-height: 44px;
   border: 1px solid var(--ko-accent-primary);
   background: var(--ko-accent-primary);
-  color: var(--ko-surface-0);
+  /* 채움 위 글씨는 한지 — surface-0 은 다크에서 검정이라 청자 채움 위 2.03:1 로 떨어진다
+     (DESIGN §12 '채움색과 글씨색을 나눈다') */
+  color: var(--kh-hanji, var(--ko-surface-0));
   border-radius: var(--kh-radius, 4px);
   padding: var(--ko-space-2) var(--ko-space-5);
   font-size: 0.9rem;

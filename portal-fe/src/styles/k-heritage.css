@@ -28,6 +28,9 @@
   --kh-aged-pine: #3e4c3f;  /* 삭은 소나무 — 다크 모드 상호작용 */
   --kh-yeonji: #a2231d;     /* 연지 — 인장·중대 액션 */
   --kh-ocher: #b38b6d;      /* 황토 — 테두리·라벨·구조 강조 */
+  /* 황토 원색은 한지 위 글씨로 2.89:1 — 채움/테두리용과 글씨용을 나눈다 (청자의
+     --ko-accent-text 와 같은 규칙). 다크 정경이 아래에서 원색으로 되돌린다. */
+  --kh-ocher-text: #8a6346; /* 한지 위 5.0:1 */
   --kh-celadon: #2b4b63;    /* 청자 — 다크 모드의 액션. 기와 유약에서 왔다 */
 
   /* ─── 라이트(전통) — 종이 위의 먹 ────────────────────────────────────── */
@@ -114,6 +117,8 @@
   /* 청자 원색은 #131313 위에서 2.03:1 로 본문 대비에 못 미친다. 채움으로는 8.6:1 이라
    * 문제없으므로 **글씨에만** 밝은 변형을 쓴다. */
   --ko-accent-text: #6f9fc4;
+  /* 어두운 바탕에서는 황토 원색이 글씨로도 6.04:1 — 변형 불요 */
+  --kh-ocher-text: var(--kh-ocher);
 
   /* 판은 바탕보다 한 단계 올라온 기와색이다 */
   --kh-slab: #1d1d1f;
@@ -192,7 +197,7 @@
   display: flex;
   align-items: center;
   gap: var(--ko-space-2);
-  color: var(--kh-ocher);
+  color: var(--kh-ocher-text, var(--kh-ocher));
   font-family: var(--kh-font-mono);
   font-size: var(--ko-text-sm);
   font-weight: 600;

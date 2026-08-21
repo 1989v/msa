@@ -3,13 +3,12 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { loginWithProvider, extractErrorMessage } from '../api/shopApi';
 import { LOGIN_NEXT_KEY, getOAuthRedirectUri, type OAuthProvider } from '../auth/auth';
 import { useAuth } from '../auth/useAuth';
+import LoginShell from '../components/chrome/LoginShell';
 import { portalTitle } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import './Shop.css';
-import { useHeritageSurface } from '../hooks/useHeritageSurface';
 
 export default function ShopOAuthCallbackPage() {
-  useHeritageSurface();
   useSeo({ title: portalTitle('로그인 처리 중'), noindex: true });
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -44,22 +43,21 @@ export default function ShopOAuthCallbackPage() {
     doLogin();
   }, [searchParams, login, navigate]);
 
+  // 인가 왕복의 착지점도 로그인과 같은 셸 — 성공이면 곧장 복귀 경로로 빠져나간다
   return (
-    <div className="shop-page">
-      <main className="shop-container shop-container-narrow">
-        {error ? (
-          <div className="shop-status" role="alert">
-            <p className="shop-status-error" style={{ marginBottom: 'var(--ko-space-4)' }}>
-              {error}
-            </p>
-            <Link to="/shop/login" className="shop-btn-primary">
-              다시 로그인하기
-            </Link>
-          </div>
-        ) : (
-          <div className="shop-status">로그인 처리 중...</div>
-        )}
-      </main>
-    </div>
+    <LoginShell>
+      {error ? (
+        <div className="shop-status" role="alert">
+          <p className="shop-status-error" style={{ marginBottom: 'var(--ko-space-4)' }}>
+            {error}
+          </p>
+          <Link to="/shop/login" className="shop-btn-primary">
+            다시 로그인하기
+          </Link>
+        </div>
+      ) : (
+        <div className="shop-status">로그인 처리 중...</div>
+      )}
+    </LoginShell>
   );
 }

@@ -1,0 +1,162 @@
+/* 인증 셸 — 모든 호스트의 로그인·OAuth 콜백이 입는 중립 옷 (GNB/FNB 공통 포맷).
+ * 머리띠는 GNB 의 기와 idiom(라이트에서도 먹빛 판)을 따르되 서비스 메뉴를 얹지 않는다. */
+
+.login-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  font-family: var(--ko-font-family);
+}
+
+/* GNB 와 같은 재매핑 — 어두운 머리띠 위에서 로고·토글이 종이색으로 읽힌다 */
+.login-shell-bar {
+  background: var(--kh-giwa);
+  border-bottom: 1px solid var(--kh-slab-border);
+  color: var(--kh-hanji);
+  --ko-text-primary: var(--kh-hanji);
+  --ko-text-secondary: color-mix(in srgb, var(--kh-hanji) 72%, transparent);
+  --ko-surface-2: color-mix(in srgb, var(--kh-hanji) 10%, transparent);
+}
+
+/* 라이트의 focus ring(소나무)은 먹빛 판 위에서 보이지 않는다 — 판 위는 종이색 링 */
+.login-shell-bar :focus-visible {
+  outline: 2px solid var(--kh-hanji);
+  outline-offset: 2px;
+}
+
+.login-shell-bar-inner {
+  max-width: var(--kh-container, 1200px);
+  margin: 0 auto;
+  height: var(--gnb-height, 64px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--ko-space-6);
+}
+
+.login-shell-logo {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--ko-text-lg);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--ko-text-primary);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.login-shell-bar .kh-theme-toggle {
+  width: 44px;
+  height: 44px;
+}
+
+.login-shell-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ko-space-8) var(--ko-space-4);
+}
+
+/* 판이 아니라 종이 위의 괘선 상자다 — 바탕과 같은 면에 얇은 테두리 하나 (그림자 금지) */
+.login-shell-card {
+  width: 100%;
+  max-width: 480px; /* DESIGN.md layout.max_width.mobile_app */
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-6);
+  padding: var(--ko-space-8) var(--ko-space-5);
+  background: var(--ko-surface-0);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+}
+
+@media (min-width: 640px) {
+  .login-shell-card {
+    padding: var(--ko-space-10) var(--ko-space-8);
+  }
+}
+
+.login-shell-title {
+  margin: 0;
+  font-size: var(--kh-headline, var(--ko-text-xl));
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.login-shell-desc {
+  margin: var(--ko-space-2) 0 0;
+  font-size: var(--ko-text-sm);
+  color: var(--ko-text-secondary);
+}
+
+.login-shell-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+}
+
+/* 제공사 브랜드 색은 우리 토큰으로 근사할 수 없다 — 카카오 노랑을 팔레트에서 뽑으면
+ * 그냥 다른 노랑이 된다. 각 사가 로그인 버튼용으로 규정한 값을 상수로 두고 테마를
+ * 태우지 않는다 — 라이트/다크 어디서든 규정색 그대로다. */
+.login-shell-actions {
+  --brand-kakao: #fee500;
+  --brand-kakao-hover: #f2da00;
+  --brand-kakao-ink: #191600;
+  --brand-google-border: #dadce0;
+  --brand-google-ink: #3c4043;
+  --brand-google-hover: #f8f9fa;
+}
+
+.login-provider-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ko-space-2);
+  min-height: 48px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font-size: var(--ko-text-base);
+  font-weight: var(--ko-weight-semibold);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.login-provider-btn svg {
+  flex-shrink: 0;
+}
+
+.login-provider-btn--kakao {
+  background: var(--brand-kakao);
+  border-color: var(--brand-kakao);
+  color: var(--brand-kakao-ink);
+}
+
+.login-provider-btn--kakao:hover {
+  background: var(--brand-kakao-hover);
+  border-color: var(--brand-kakao-hover);
+}
+
+/* 구글은 흰 배경 + 회색 테두리가 규정이다. 색을 채우면 가이드라인 위반이다. */
+.login-provider-btn--google {
+  background: oklch(1 0 0);
+  border-color: var(--brand-google-border);
+  color: var(--brand-google-ink);
+}
+
+.login-provider-btn--google:hover {
+  background: var(--brand-google-hover);
+  border-color: var(--brand-google-border);
+}
+
+.login-provider-btn:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}

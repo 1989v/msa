@@ -301,7 +301,8 @@ button.shop-product-card {
 .shop-status {
   padding: var(--ko-space-10) 0;
   text-align: center;
-  color: var(--ko-text-muted);
+  /* muted 는 헤리티지 라이트에서 경계선(4.09:1) — 상태 문구는 본문급 대비로 */
+  color: var(--ko-text-secondary);
   font-size: var(--ko-text-sm);
 }
 
@@ -508,94 +509,3 @@ button.shop-product-card {
   font-variant-numeric: tabular-nums;
 }
 
-/* ── 로그인 ──────────────────────────────────────────── */
-
-.shop-login-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ko-space-6);
-  padding: var(--ko-space-10) var(--ko-space-8);
-  background: var(--ko-surface-0);
-  border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--ko-radius-sm);
-  margin-top: var(--ko-space-12);
-}
-
-.shop-login-title {
-  font-size: var(--kh-headline, var(--ko-text-xl));
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-}
-
-.shop-login-desc {
-  font-size: var(--ko-text-sm);
-  color: var(--ko-text-secondary);
-}
-
-.shop-login-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ko-space-3);
-}
-
-/* 제공사 브랜드 색은 우리 토큰으로 근사할 수 없다 — 카카오 노랑을 팔레트에서 뽑으면
- * 그냥 다른 노랑이 된다. 각 사가 로그인 버튼용으로 규정한 값을 상수로 둔다. */
-.shop-login-buttons {
-  --brand-kakao: #fee500;
-  --brand-kakao-hover: #f2da00;
-  --brand-kakao-ink: #191600;
-  --brand-google-border: #dadce0;
-  --brand-google-ink: #3c4043;
-  --brand-google-hover: #f8f9fa;
-}
-
-.shop-login-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ko-space-2);
-  min-height: 48px;
-  border: 1px solid var(--ko-border-default);
-  border-radius: var(--ko-radius-md);
-  background: var(--ko-surface-2);
-  color: var(--ko-text-primary);
-  font-size: var(--ko-text-base);
-  font-weight: var(--ko-weight-semibold);
-  font-family: inherit;
-  cursor: pointer;
-  transition: background var(--ko-duration-normal) var(--ko-ease-out),
-    border-color var(--ko-duration-normal) var(--ko-ease-out);
-}
-
-.shop-login-btn svg {
-  flex-shrink: 0;
-}
-
-.shop-login-btn-kakao {
-  background: var(--brand-kakao);
-  border-color: var(--brand-kakao);
-  color: var(--brand-kakao-ink);
-}
-
-.shop-login-btn-kakao:hover {
-  background: var(--brand-kakao-hover);
-  border-color: var(--brand-kakao-hover);
-}
-
-/* 구글은 흰 배경 + 회색 테두리가 규정이다. 색을 채우면 가이드라인 위반이다. */
-.shop-login-btn-google {
-  background: oklch(1 0 0);
-  border-color: var(--brand-google-border);
-  color: var(--brand-google-ink);
-}
-
-.shop-login-btn-google:hover {
-  background: var(--brand-google-hover);
-  border-color: var(--brand-google-border);
-}
-
-.shop-login-btn:focus-visible {
-  outline: 2px solid var(--ko-accent-primary);
-  outline-offset: 2px;
-}
