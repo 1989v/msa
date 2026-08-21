@@ -1,5 +1,5 @@
 /* 먹 캔버스 — 호스트(히어로)의 바탕층. 호스트가 position: relative 를 갖고
- * 콘텐츠가 z-index 1 이상으로 올라와야 한다 (Home.css / PortfolioPage.css 참조). */
+ * 콘텐츠가 z-index 1 이상으로 올라와야 한다 (PortfolioPage.css 참조). */
 .kh-ink-wash {
   position: absolute;
   inset: 0;
@@ -7,4 +7,12 @@
   height: 100%;
   pointer-events: none;
   z-index: 0;
+}
+
+/* 페이지 전체 모드 — 뷰포트에 고정하고 음수 z 로 내린다. 호스트가
+ * isolation: isolate 로 자기 스택 맥락을 만들면 캔버스는 호스트 배경 위·
+ * 모든 콘텐츠 아래에 깔린다 (Home.css 의 .home-page 참조). */
+.kh-ink-wash--page {
+  position: fixed;
+  z-index: -1;
 }

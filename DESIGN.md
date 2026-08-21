@@ -1,7 +1,7 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 2.2.0
+version: 2.2.1
 archetype: dark-trading
 # 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
 # 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
@@ -312,7 +312,8 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 - **transform + opacity 만.** 퇴장은 fade 만, 입장의 75% 속도. 스태거는 자식 50ms, 6번째까지만.
 - 발화는 `useReveal()` 이 붙이는 `data-reveal` 로만 — 프리렌더·무 JS 에서는 아무것도
   숨지 않는다. `prefers-reduced-motion` 이면 발화 자체가 없다.
-- **먹 캔버스** `<InkWash>` 는 히어로(`/`, `/portfolio`) 전용. 먹 색은 정경 토큰
+- **먹 캔버스** `<InkWash>` — 메인(`/`)은 `fullPage`: 페이지 전체가 지면이라
+  스크롤해도 먹이 지면에 남는다. `/portfolio` 는 히어로 스코프. 먹 색은 정경 토큰
   `--kh-ink-wash` — 한지 위 먹빛, 송연 위 흰 안개. 먹이 마르면 rAF 완전 정지.
 
 **모바일 앱 셸** (`kh-shell.css`, 뷰포트 < 768px 에서만)

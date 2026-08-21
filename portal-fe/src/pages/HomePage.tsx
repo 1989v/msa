@@ -76,10 +76,11 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
+      {/* 먹 캔버스 — 페이지 전체가 지면이다. 배경 위·콘텐츠 아래 (isolation) */}
+      <InkWash fullPage />
       <GNB items={gnbItems} />
 
       <header className="home-hero" ref={reveal}>
-        <InkWash />
         <div className="home-inner home-hero-grid">
           <div className="home-hero-copy kh-stagger">
             <span className="kh-seal kh-seal-ink kh-stamp home-hero-eyebrow">
