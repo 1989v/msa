@@ -23,17 +23,26 @@ ADR: `docs/adr/ADR-0072-blog-platform.md` · spec: `docs/specs/2026-08-21-blog-p
 ./gradlew :code-dictionary:app:test      # 폴드 컨텍스트 로드 검증
 ```
 
-## 폴드 시 반드시 함께 고치는 두 곳
+## 폴드 시 반드시 함께 고치는 세 곳
 
-새 엔티티·리포지토리를 추가하면 아래 두 파일을 함께 본다. 하나라도 빠지면 **컨텍스트 로드에서**
-`not a managed type` 으로 죽거나 리포지토리 빈이 생기지 않는다.
-
-| 파일 | 무엇 |
-|---|---|
-| `code-dictionary/.../DataSourceConfig.kt` | `entityManagerFactory().packages(...)` 에 `com.kgd.blog` |
-| `code-dictionary/.../CodeDictionaryJpaConfig.kt` | `@EnableJpaRepositories` basePackages 에 `com.kgd.blog` |
+| 파일 | 무엇 | 빠뜨리면 |
+|---|---|---|
+| `code-dictionary/.../CodeDictionaryApplication.kt` | `scanBasePackages` 에 `com.kgd.blog` | **조용한 404** — 컨텍스트는 뜨고 Flyway 도 도는데 컨트롤러가 하나도 매핑되지 않는다 |
+| `code-dictionary/.../DataSourceConfig.kt` | `entityManagerFactory().packages(...)` | 기동 실패 (`not a managed type`) |
+| `code-dictionary/.../CodeDictionaryJpaConfig.kt` | `@EnableJpaRepositories` basePackages | 리포지토리 빈 없음 |
 
 `@EntityScan` 은 먹지 않는다 — 호스트가 EMF 를 명시 정의해 Boot 자동 구성이 back-off 한 상태다.
+
+**첫 줄이 가장 위험하다.** 기동 실패는 파드가 안 뜨니 즉시 보이지만, 스캔 누락은 앱이 건강하게
+뜬 채로 그 도메인만 404 라 배포가 성공한 것처럼 보인다. `CodeDictionaryContextLoadSpec` 의
+"폴드된 도메인의 컨트롤러가 전부 빈으로 등록된다" 케이스가 이걸 잡는다 — 새 도메인을 폴드하면
+거기에 한 줄을 더한다.
+
+## 마이그레이션은 불변이다
+
+`V14__blog.sql` 을 커밋한 뒤 고쳤다가 code-dictionary 전체가 CrashLoopBackOff 로 떨어졌다
+(2026-08-21). main 이 곧 배포 브랜치라 **커밋한 순간 이미 운영에 적용됐을 수 있다** —
+로컬 브랜치 감각으로 마이그레이션을 되고치면 안 된다. 바꿔야 하면 언제나 다음 번호(V15)다.
 
 ## 도메인 규칙 (도메인이 강제 — 서비스로 새지 않게)
 

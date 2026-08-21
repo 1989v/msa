@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.nulls.shouldNotBeNull
+import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -51,6 +52,24 @@ class CodeDictionaryContextLoadSpec(
                     "gameFlyway", "gameJpaQueryFactory", "jpaQueryFactory",
                     "gameKafkaTemplate",
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
+            }
+
+        /**
+         * 폴드된 도메인의 **컨트롤러가 실제로 매핑되는지** 본다.
+         *
+         * scanBasePackages 에서 패키지를 빠뜨리면 컨텍스트는 멀쩡히 뜨고 Flyway 도 돌지만
+         * 그 도메인의 API 만 조용히 404 가 된다 — 기동 실패가 아니라서 배포 후에야 드러난다
+         * (ADR-0072 blog 폴드 때 실제로 겪었다). 새 도메인을 폴드하면 여기 한 줄을 더한다.
+         */
+        Then("폴드된 도메인(game·deal·blog)의 컨트롤러가 전부 빈으로 등록된다")
+            .config(enabledIf = { dockerAvailable }) {
+                listOf(
+                    com.kgd.deal.presentation.controller.DealController::class.java,
+                    com.kgd.blog.presentation.controller.BlogPublicController::class.java,
+                    com.kgd.blog.presentation.controller.BlogStudioController::class.java,
+                    com.kgd.blog.presentation.controller.BlogAdminController::class.java,
+                    com.kgd.blog.presentation.controller.BlogPageController::class.java,
+                ).forEach { ctx.getBeanNamesForType(it).size shouldBe 1 }
             }
 
         Then("game 마이그레이션은 game_db 에만 적용되어 시드 게임들이 조회된다")
