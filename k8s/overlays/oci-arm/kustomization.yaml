@@ -295,7 +295,7 @@ images:
     newTag: 12f6421
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 72a3bde
+    newTag: e6498d9
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 12f6421
@@ -319,7 +319,7 @@ images:
     newTag: c621b4b
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: c3ed8ef
+    newTag: e6498d9
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 12f6421
