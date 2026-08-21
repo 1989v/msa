@@ -1,0 +1,14 @@
+# 무중단 롤아웃 — 새 파드가 Ready 된 뒤에만 구 파드를 내린다 (ADR-0075).
+#
+# 과거에는 "단일 노드라 서지 여유가 없다"는 이유로 maxSurge:0/maxUnavailable:1 로
+# 구 파드를 먼저 내렸고, 그 결과 JVM 부팅(+ 크래시 백오프) 동안 배포마다 503 이 났다.
+# 지금은 sync-wave(웨이브당 JVM 2개) + cpu-cap(1코어) + startupProbe 가 갖춰져
+# 서지 파드가 웨이브당 최대 2개만 뜬다 — 2026-08-22 실측 여유(CPU 요청 1670m,
+# 메모리 ~13Gi)로 충분히 스케줄된다. 자세한 근거와 전제(가산적 마이그레이션)는 ADR-0075.
+- op: add
+  path: /spec/strategy
+  value:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0

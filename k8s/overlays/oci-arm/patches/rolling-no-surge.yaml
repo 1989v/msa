@@ -1,9 +1,0 @@
-# 단일 노드(4 OCPU/24GB)에서는 서지용 여유가 없어 새 파드가 Pending 으로 굳는다.
-# 기존 파드를 먼저 내리고 그 자리에 새 파드를 올린다 — 짧은 순단은 허용.
-- op: add
-  path: /spec/strategy
-  value:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 0
-      maxUnavailable: 1

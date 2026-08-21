@@ -60,8 +60,8 @@ patches:
   # 본인 CA 로 교체해야 한다. 검증/롤백 → origin-lockdown/README.md
   - path: origin-lockdown/aop-patch.yaml
     target: {kind: Ingress, name: commerce-proxied}
-  # 모든 Deployment — 단일 노드라 surge 불가: 자리 비운 뒤 교체
-  - path: patches/rolling-no-surge.yaml
+  # 모든 Deployment — 무중단: 새 파드 Ready 후 교체 (서지 예산은 sync-wave 가 묶는다, ADR-0075)
+  - path: patches/rolling-surge-first.yaml
     target:
       kind: Deployment
   # ─── Kafka EXTERNAL listener — WARP 통한 외부 접근용 (kafka-ui macOS docker 등) ─
@@ -177,6 +177,11 @@ patches:
     target: {kind: Deployment, name: gifticon-fe}
   # ─── CPU 상한 (tier memory 패치 뒤에 적용 — limits 맵 병합) ────────────────
   - path: patches/cpu-cap.yaml
+    target:
+      kind: Deployment
+      labelSelector: "app.kubernetes.io/part-of=commerce-platform"
+  # ─── 부팅 DB 재시도 — 웨이브 중 순간적 DB 무응답이 크래시 백오프가 되지 않게 ────
+  - path: patches/boot-db-retry.yaml
     target:
       kind: Deployment
       labelSelector: "app.kubernetes.io/part-of=commerce-platform"

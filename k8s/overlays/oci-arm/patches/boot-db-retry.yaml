@@ -1,0 +1,21 @@
+# 부팅 시 DB 커넥션 재시도 — 롤아웃 웨이브 중 MySQL 이 순간적으로 응답을 못 주면
+# Flyway 가 fail-fast 로 컨테이너를 종료시켜 크래시 백오프(10s→20s→40s…)로 기동이
+# 오히려 늦어진다 (2026-08-21 실측: commerce 2회·code-dictionary 3회 재시작).
+# 재시도(5s × 24 = 최대 2분 대기)는 백오프 없이 그 자리에서 기다렸다가 이어간다.
+# startupProbe 예산(5분) 안이므로 프로브와 충돌하지 않는다.
+# cpu-cap 과 같은 labelSelector 라 FE(nginx)에도 걸리지만, nginx 는 SPRING_* env 를
+# 읽지 않으므로 무해하다 (cpu-cap 의 선례와 동일).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          env:
+            - name: SPRING_FLYWAY_CONNECT_RETRIES
+              value: "24"
+            - name: SPRING_FLYWAY_CONNECT_RETRIES_INTERVAL
+              value: "5"
