@@ -33,6 +33,8 @@ const RegionPage = lazy(() => import('./pages/place/RegionPage'));
 // ADR-0066 — IT(개념 사전·3D 그래프·트리맵). 메인이 런처가 되면서 three.js 를 쓰지 않게 됐다.
 // eager 로 두면 타일만 보는 방문자도 그래프 엔진을 통째로 받는다.
 const SearchPage = lazy(() => import('./pages/SearchPage'));
+// ADR-0074 — 내 찜 모아보기 (호스트 인식: game=GAME, place=ATTRACTION, blog=BLOG_POST, apex=탭)
+const FavoritesPage = lazy(() => import('./components/favorite/FavoritesPage'));
 // ADR-0064 — 이력서 (resume.<domain>). 공개 포털 번들과 코드가 섞이지 않게 lazy 로 분리한다.
 const ResumePage = lazy(() => import('./pages/resume/ResumePage'));
 const ResumeDetailPage = lazy(() => import('./pages/resume/ResumeDetailPage'));
@@ -144,6 +146,9 @@ function App() {
             }
           />
           <Route path="/tech" element={<SearchPage />} />
+          {/* 내 찜 (ADR-0074) — 개인 화면이라 모든 호스트에서 그 자리 그대로 연다 (리다이렉트 없음) */}
+          <Route path="/favorites" element={<FavoritesPage />} />
+          <Route path="/en/favorites" element={<FavoritesPage />} />
           {/* 이력서 상세 — resume 호스트에만 둔다. apex 에 열어두면 전체공개 상태에서
               색인 대상인 1989v.com 경로로 이력서가 노출된다 (ADR-0064: 이력서는 noindex) */}
           {isResumeHost && <Route path="/d/:slug" element={<ResumeDetailPage />} />}

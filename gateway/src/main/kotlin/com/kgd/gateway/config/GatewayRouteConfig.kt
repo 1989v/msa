@@ -137,9 +137,9 @@ class GatewayRouteConfig(
                     }
                     .uri("http://gifticon:8086")
             }
-            // Wishlist Service (ROLE_USER+)
+            // Wishlist Service (ROLE_USER+) — 찜은 로그인 전용, 게이트웨이가 인증 경계 (ADR-0074)
             .route("wishlist-service") { r ->
-                r.path("/api/wishlist/**", "/api/wishlist")
+                r.path("/api/v1/wishlist/**", "/api/v1/wishlist")
                     .filters { f ->
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
@@ -262,6 +262,17 @@ class GatewayRouteConfig(
             // 광고 슬롯/보상 (HOUSE, ADR-0059 §3) — 게스트 허용, 로그인 시 X-User-Id 식별
             .route("game-ads") { r ->
                 r.path("/api/v1/ads/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 포트폴리오 (code-dictionary 소유) — 공개 조회 + 로그인 시 스니펫 게이트 해제.
+            // YAML 무인증 라우트에서 이동: 필터 없이는 X-User-Id 가 주입되지 않아 로그인 해제가
+            // 죽고, 위조 신원 헤더도 그대로 통과했다 (필터가 익명 요청의 신원 헤더를 벗긴다).
+            .route("portfolio-service") { r ->
+                r.path("/api/v1/portfolio/**")
                     .filters { f ->
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)

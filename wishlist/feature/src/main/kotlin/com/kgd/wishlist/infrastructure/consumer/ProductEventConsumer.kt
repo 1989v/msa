@@ -2,6 +2,7 @@ package com.kgd.wishlist.infrastructure.consumer
 
 import tools.jackson.databind.ObjectMapper
 import com.kgd.wishlist.application.wishlist.port.WishlistRepositoryPort
+import com.kgd.wishlist.domain.model.WishlistTargetType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.kafka.annotation.KafkaListener
@@ -15,6 +16,7 @@ class ProductEventConsumer(
 ) {
     private val log = KotlinLogging.logger {}
 
+    // 다형 모델(ADR-0074)에서 PRODUCT 타입으로 스코프 — 삭제된 상품의 찜만 정리한다.
     @KafkaListener(
         topics = ["product.deleted"],
         groupId = "wishlist-product-cleanup",
@@ -27,7 +29,7 @@ class ProductEventConsumer(
         val node = objectMapper.readTree(record.value())
         val productId = node.get("productId").asLong()
 
-        wishlistRepositoryPort.deleteAllByProductId(productId)
+        wishlistRepositoryPort.deleteAllByTarget(WishlistTargetType.PRODUCT, productId.toString())
         log.info { "Deleted all wishlist items for productId=$productId" }
     }
 }

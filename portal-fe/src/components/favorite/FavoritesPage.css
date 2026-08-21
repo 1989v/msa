@@ -1,0 +1,121 @@
+/* 내 찜 (ADR-0074) — k-heritage 정경 토큰만. 카드는 조용한 판(kh-slab), 깊이는 색 단차. */
+
+.favorites-page {
+  max-width: var(--kh-container, 1200px);
+  margin: 0 auto;
+  padding: 24px 20px calc(var(--kh-void, 5rem) / 2);
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  min-height: 60vh;
+}
+
+.favorites-head {
+  margin-bottom: 20px;
+}
+
+.favorites-title {
+  font-size: var(--kh-headline, 1.5rem);
+  letter-spacing: var(--kh-tracking-display, -0.02em);
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.favorites-scope {
+  font-size: 0.8rem;
+  color: var(--kh-ocher, var(--ko-text-muted));
+  letter-spacing: var(--kh-tracking-mono, 0.05em);
+}
+
+.favorites-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.favorites-tab {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--ko-border-strong);
+  border-radius: var(--kh-radius, 4px);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.favorites-tab.is-active {
+  background: var(--ko-accent-primary);
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-surface-0);
+}
+
+.favorites-status {
+  color: var(--ko-text-muted);
+  padding: 24px 0;
+}
+
+.favorites-login {
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  text-decoration: underline;
+}
+
+.favorites-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.favorites-card {
+  position: relative;
+  border-radius: var(--kh-radius-asym, 0 8px 0 8px);
+  border: 1px solid var(--kh-slab-border, var(--ko-border-default));
+  overflow: hidden;
+}
+
+.favorites-card__link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  color: var(--kh-on-slab, var(--ko-text-primary));
+  text-decoration: none;
+  min-height: 44px;
+}
+
+.favorites-card__cover {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--kh-radius, 4px);
+  margin-bottom: 4px;
+}
+
+.favorites-card__title {
+  font-weight: 600;
+  line-height: 1.35;
+  /* 하트(44px)가 우상단에 앉는다 — 제목이 밑으로 깔리지 않게 자리를 비운다 */
+  padding-right: 48px;
+}
+
+.favorites-card__meta {
+  font-size: 0.78rem;
+  color: var(--kh-on-slab-muted, var(--ko-text-muted));
+  letter-spacing: var(--kh-tracking-mono, 0.05em);
+}
+
+.favorites-card__action {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+}
+
+.favorites-note {
+  margin-top: 16px;
+  font-size: 0.78rem;
+  color: var(--ko-text-muted);
+}

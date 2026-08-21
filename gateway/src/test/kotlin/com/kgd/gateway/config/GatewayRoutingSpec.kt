@@ -77,8 +77,8 @@ class GatewayRoutingSpec(
             Then("/api/members/stats/count 는 401 (ADMIN 경계)") {
                 status("/api/members/stats/count") shouldBe 401
             }
-            Then("/api/wishlist 는 401") {
-                status("/api/wishlist") shouldBe 401
+            Then("/api/v1/wishlist 는 401") {
+                status("/api/v1/wishlist") shouldBe 401
             }
             Then("/api/orders 는 401") {
                 status("/api/orders") shouldBe 401

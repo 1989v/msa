@@ -2,13 +2,16 @@ package com.kgd.wishlist.infrastructure.config
 
 import com.kgd.common.persistence.DataSourceType
 import com.kgd.common.persistence.ReadReplicaRoutingDataSource
+import com.kgd.common.persistence.ScopedFlywayMigrator
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.DataSourceBuilder
 import org.springframework.boot.jpa.EntityManagerFactoryBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.DependsOn
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
 import org.springframework.orm.jpa.JpaTransactionManager
@@ -55,7 +58,22 @@ class WishlistDataSourceConfig {
         @Qualifier("wishlistRoutingDataSource") routingDataSource: DataSource,
     ): DataSource = LazyConnectionDataSourceProxy(routingDataSource)
 
+    // 폴드된 앱이라 Boot 의 Flyway 자동설정을 쓸 수 없다 (도메인별 V1__… 이 한 클래스패스에 공존).
+    // baseline=1: 운영 스키마는 Hibernate 산물이라 이력이 없다 — V1 은 그 형태의 재현이고,
+    // 실제 변경(다형 대상 전환, ADR-0074)은 V2 부터다.
     @Bean
+    fun wishlistFlyway(
+        @Qualifier("wishlistMasterDataSource") dataSource: DataSource,
+        @Value("\${wishlist.flyway.enabled:true}") enabled: Boolean,
+    ): ScopedFlywayMigrator = ScopedFlywayMigrator(
+        dataSource = dataSource,
+        location = "classpath:wishlistdb/migration",
+        enabled = enabled,
+        baselineVersion = "1",
+    )
+
+    @Bean
+    @DependsOn("wishlistFlyway")
     fun wishlistEntityManagerFactory(
         builder: EntityManagerFactoryBuilder,
         @Qualifier("wishlistDataSource") dataSource: DataSource,

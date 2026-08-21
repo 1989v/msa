@@ -1,0 +1,95 @@
+/* 찜하기 하트 (ADR-0074) — k-heritage 정경 토큰만 쓴다 (DESIGN.md §12).
+ *
+ * 활성색 결정:
+ * - 라이트(전통): 찜은 낙관(落款)이다 — 인장 연지(--kh-yeonji)를 채움으로 찍는다.
+ *   글씨가 아니라 **채움**이라 한지 위 8:1 급 대비가 나온다 (채움색/글씨색 분리 규칙).
+ * - 다크: 어두운 바탕의 붉음은 강조가 아니라 경고로 읽힌다(§12 주의) — 정경의 액션색
+ *   (--ko-accent-primary: heritage 다크=청자, .kh-arcade=연지)을 그대로 따른다.
+ *   아케이드에서 연지가 돌아오는 것은 .kh-arcade 가 accent-primary 를 재정의해 주는
+ *   기존 스코프 덕이다 — 여기서 따로 갈라 두지 않는다.
+ */
+
+.favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--ko-border-strong);
+  border-radius: var(--kh-radius, 4px);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    color var(--kh-dur-state, 240ms) var(--kh-ease-enter, ease),
+    background var(--kh-dur-state, 240ms) var(--kh-ease-enter, ease),
+    border-color var(--kh-dur-state, 240ms) var(--kh-ease-enter, ease);
+}
+
+.favorite-btn:active {
+  /* 눌림 — 다섯 동사의 피드백 */
+  transform: translateY(1px);
+  transition-duration: var(--kh-dur-feedback, 120ms);
+}
+
+.favorite-btn.is-on {
+  background: var(--kh-yeonji);
+  border-color: var(--kh-yeonji);
+  color: var(--kh-hanji);
+}
+
+:root[data-surface='heritage'][data-theme='dark'] .favorite-btn.is-on {
+  background: var(--ko-accent-primary);
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-surface-0);
+}
+
+/* 찍힘 — 도장이 눌리듯 살짝 크게 나타나 자리를 잡는다 (kh-stamp 와 같은 값) */
+@keyframes favorite-stamp {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.favorite-btn.is-on .favorite-btn__heart {
+  animation: favorite-stamp var(--kh-dur-state, 240ms) var(--kh-ease-enter, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .favorite-btn.is-on .favorite-btn__heart {
+    animation: none;
+  }
+}
+
+.favorite-btn__heart {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+/* 카드 모서리용 — 히트영역 44px 은 유지하고 시각 크기만 줄인다.
+ * 커버 이미지 위에 앉으므로 먹빛 스크림으로 형태를 남긴다 (그림자 금지 — 면의 색 단차). */
+.favorite-btn.is-compact {
+  padding: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--kh-radius, 4px);
+  background: color-mix(in srgb, var(--kh-ink, #0a0a0a) 38%, transparent);
+  color: var(--kh-hanji, #f9f8f2);
+}
+
+.favorite-btn.is-compact.is-on {
+  background: var(--kh-yeonji);
+  color: var(--kh-hanji);
+}
+
+:root[data-surface='heritage'][data-theme='dark'] .favorite-btn.is-compact.is-on {
+  background: var(--ko-accent-primary);
+  color: var(--ko-surface-0);
+}

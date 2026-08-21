@@ -14,6 +14,7 @@ import { portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
 import './Shop.css';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
+import FavoriteButton from '../components/favorite/FavoriteButton';
 
 export default function ShopProductDetailPage() {
   useHeritageSurface();
@@ -117,7 +118,11 @@ export default function ShopProductDetailPage() {
 
         {!loading && !error && product && !orderResult && (
           <section className="shop-detail-card">
-            <h1 className="shop-detail-name">{product.name}</h1>
+            <div className="shop-detail-head">
+              <h1 className="shop-detail-name">{product.name}</h1>
+              {/* 찜 (ADR-0074) — 목록 카드는 <button> 이라 중첩이 안 돼 상세에만 둔다 */}
+              {id && <FavoriteButton type="PRODUCT" targetKey={id} />}
+            </div>
             <div className="shop-detail-price">{formatWon(product.price)}</div>
             <div className="shop-detail-row">
               <span className="shop-detail-label">재고</span>
