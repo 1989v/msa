@@ -55,12 +55,25 @@ export interface PortfolioTimeline {
   categories: TimelineCategory[];
 }
 
+/**
+ * 게이트웨이는 업스트림이 죽어 있으면 200 에 **빈 바디**를 내려보낼 수 있다
+ * (2026-08-21 code-dictionary CrashLoop 때 실측). 빈 payload 를 성공으로 넘기면
+ * 화면이 failed 도 loaded 도 아닌 "불러오는 중…" 에 영원히 갇힌다 — 여기서 던져
+ * 호출부의 catch(실패 상태)로 보낸다.
+ */
+function unwrap<T>(body: ApiResponse<T> | '' | null | undefined): T {
+  if (!body || !body.success || body.data == null) {
+    throw new Error('empty or unsuccessful display API response');
+  }
+  return body.data;
+}
+
 export const fetchDisplayServices = async (): Promise<DisplayService[]> => {
   const res = await api.get<ApiResponse<DisplayService[]>>('/api/v1/display/services');
-  return res.data.data;
+  return unwrap(res.data);
 };
 
 export const fetchPortfolioTimeline = async (): Promise<PortfolioTimeline> => {
   const res = await api.get<ApiResponse<PortfolioTimeline>>('/api/v1/portfolio/timeline');
-  return res.data.data;
+  return unwrap(res.data);
 };
