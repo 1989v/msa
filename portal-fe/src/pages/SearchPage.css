@@ -1,0 +1,184 @@
+/* /tech — dark-trading 아키타입 (DESIGN.md §12 적용 범위). 토큰만 사용. */
+
+.tech-status-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ko-space-4);
+  padding: var(--ko-space-6);
+  min-height: 100vh;
+}
+
+.tech-status-text {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-base);
+}
+
+.tech-fallback-title {
+  color: var(--ko-text-primary);
+  font-size: var(--ko-text-2xl);
+  font-weight: var(--ko-weight-bold);
+}
+
+.tech-fallback-desc {
+  color: var(--ko-text-secondary);
+  text-align: center;
+  max-width: 30rem;
+}
+
+.tech-fallback-detail {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+}
+
+.tech-fallback-links {
+  display: flex;
+  gap: var(--ko-space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tech-fallback-links a {
+  padding: var(--ko-space-2) var(--ko-space-4);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  border-radius: var(--ko-radius-md);
+  text-decoration: none;
+  border: 1px solid var(--ko-border-subtle);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.tech-fallback-links a:hover {
+  background: var(--ko-surface-2);
+  border-color: var(--ko-border-default);
+}
+
+.tech-fallback-retry {
+  padding: var(--ko-space-2) var(--ko-space-4);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  border-radius: var(--ko-radius-md);
+  border: 1px solid var(--ko-border-subtle);
+  cursor: pointer;
+  min-height: 44px;
+  font: inherit;
+  font-size: var(--ko-text-sm);
+}
+
+.tech-fallback-retry:hover {
+  color: var(--ko-text-primary);
+  border-color: var(--ko-border-default);
+}
+
+/* ---- 뷰 스테이지 ---- */
+
+.tech-stage-wrap {
+  max-width: 80rem;
+  margin: 0 auto;
+  padding: 0 clamp(0.75rem, 3vw, 1.5rem);
+}
+
+.tech-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-3) 0 var(--ko-space-2);
+}
+
+.tech-view-tabs {
+  display: flex;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-1);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-full);
+  overflow-x: auto;
+  max-width: 100%;
+  scrollbar-width: none;
+}
+
+.tech-view-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tech-view-tab {
+  min-height: 2.25rem;
+  padding: var(--ko-space-1) var(--ko-space-3);
+  border: none;
+  background: transparent;
+  color: var(--ko-text-muted);
+  font: inherit;
+  font-size: var(--ko-text-sm);
+  border-radius: var(--ko-radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color var(--ko-duration-normal) var(--ko-ease-out),
+    color var(--ko-duration-normal) var(--ko-ease-out);
+}
+
+.tech-view-tab:hover {
+  color: var(--ko-text-primary);
+}
+
+.tech-view-tab.is-active {
+  background: var(--ko-surface-3);
+  color: var(--ko-text-primary);
+  font-weight: var(--ko-weight-semibold);
+}
+
+.tech-view-tab:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.tech-map-reset {
+  min-height: 2.25rem;
+  padding: var(--ko-space-1) var(--ko-space-3);
+  border: 1px solid var(--ko-border-subtle);
+  background: transparent;
+  color: var(--ko-text-muted);
+  font: inherit;
+  font-size: var(--ko-text-sm);
+  border-radius: var(--ko-radius-full);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tech-map-reset:hover {
+  color: var(--ko-text-primary);
+  border-color: var(--ko-border-default);
+}
+
+.tech-map-reset:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.tech-stage {
+  position: relative;
+  /* 모바일: 페이지 스크롤 여지를 남기는 높이 (캔버스가 터치 제스처를 가져간다) */
+  height: max(21.25rem, 58dvh);
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-lg);
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .tech-stage {
+    height: min(70vh, 43.75rem);
+  }
+}
+
+.tech-map-hint {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+  line-height: var(--ko-leading-normal);
+  padding: var(--ko-space-2) var(--ko-space-1) 0;
+}

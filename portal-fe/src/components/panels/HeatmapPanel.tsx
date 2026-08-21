@@ -16,11 +16,13 @@ export default function HeatmapPanel({ matrix, onCellClick }: HeatmapPanelProps)
   );
 
   return (
-    <div style={{ padding: 32, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+    <div style={{ padding: 'clamp(16px, 4vw, 32px)', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <h2 style={{ color: '#e0e0e0', fontSize: '1.125rem', marginBottom: 24, textAlign: 'center' }}>
         Category × Level Heatmap
       </h2>
-      <div style={{ display: 'grid', gridTemplateColumns: '140px repeat(3, 1fr)', gap: 4, maxWidth: 600, margin: '0 auto' }}>
+      {/* 390px 에서 페이지 가로 스크롤이 생기지 않게 넓은 그리드는 자체 스크롤 컨테이너 안에 둔다 */}
+      <div style={{ overflowX: 'auto', width: '100%' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '140px repeat(3, 1fr)', gap: 4, maxWidth: 600, minWidth: 420, margin: '0 auto' }}>
         <div />
         {LEVELS.map((lvl) => (
           <div key={lvl} style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.6875rem', padding: 4 }}>
@@ -65,6 +67,7 @@ export default function HeatmapPanel({ matrix, onCellClick }: HeatmapPanelProps)
             </div>
           );
         })}
+      </div>
       </div>
     </div>
   );

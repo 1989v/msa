@@ -1,12 +1,26 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { useGraphData } from '../hooks/useGraphData';
 import SearchBar from '../components/SearchBar';
-import Carousel3D from '../components/Carousel3D';
 import ForceGraph3D from '../components/graph/ForceGraph3D';
 import HeatmapPanel from '../components/panels/HeatmapPanel';
 import StatsDashboard from '../components/panels/StatsDashboard';
 import TreemapPanel from '../components/panels/TreemapPanel';
 import TreemapSection from '../components/graph/TreemapSection';
+import DomainMap from '../components/domainmap/DomainMap';
+import {
+  INITIAL_DRILLDOWN,
+  DOMAIN_NODE_PREFIX,
+  buildDomainModel,
+  clearEmphasis,
+  computeVisible,
+  domainIdOfCategory,
+  domainNodeId,
+  revealCategory,
+  revealConcepts,
+  selectConcept,
+  toggleDomain,
+} from '../components/domainmap/domainModel';
+import type { DrilldownState, VisibleNode } from '../components/domainmap/domainModel';
 import DetailSidePanel from '../components/DetailSidePanel';
 import GNB from '../components/GNB';
 import { portalTitle, portalUrl, websiteJsonLd } from '../seo/copy.mjs';
@@ -20,6 +34,19 @@ import Footer from '../components/Footer';
 import { searchConcepts } from '../api/searchApi';
 import type { GraphRenderer, GraphNode } from '../types/graph';
 import type { Category } from '../types/index';
+import './SearchPage.css';
+
+/** 보조 뷰 — 도메인 맵이 기본, 기존 시각화는 명시적 전환 뒤에 둔다 */
+const VIEWS = [
+  { key: 'map', label: '도메인 맵' },
+  { key: 'treemap', label: '트리맵' },
+  { key: 'graph3d', label: '3D 그래프' },
+  { key: 'concept-treemap', label: '개념 트리맵' },
+  { key: 'heatmap', label: '히트맵' },
+  { key: 'stats', label: '통계' },
+] as const;
+
+type ViewKey = (typeof VIEWS)[number]['key'];
 
 export default function SearchPage() {
   useSeo({
@@ -33,148 +60,147 @@ export default function SearchPage() {
   const graphRef = useRef<GraphRenderer>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
-  const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null);
-  const [highlightedNodes, setHighlightedNodes] = useState<Set<string>>(new Set());
-  const [dimmed, setDimmed] = useState(false);
-  // 트리맵을 기본 뷰로 (Q8). Carousel index 3 = Treemap 슬롯.
-  const [carouselIndex, setCarouselIndex] = useState(3);
-  const [containerSize, setContainerSize] = useState({ width: window.innerWidth * 0.9, height: window.innerHeight * 0.8 });
-  const containerRef = useRef<HTMLDivElement>(null);
+  const model = useMemo(() => (data ? buildDomainModel(data) : null), [data]);
+  const [drill, setDrill] = useState<DrilldownState>(INITIAL_DRILLDOWN);
+  const [view, setView] = useState<ViewKey>('map');
+  const [focus, setFocus] = useState<{ id: string; nonce: number } | null>(null);
+  const visible = useMemo(
+    () => (model ? computeVisible(model, drill) : { nodes: [], links: [] }),
+    [model, drill],
+  );
 
+  // 3D 그래프 뷰 전용 크기 측정 — 예전 window.innerWidth*0.9 고정값 대체
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [stageSize, setStageSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
-    const el = containerRef.current;
+    const el = stageRef.current;
     if (!el) return;
-
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        if (width > 0 && height > 0) {
-          setContainerSize({ width, height });
-        }
+        if (width > 0 && height > 0) setStageSize({ width, height });
       }
     });
     ro.observe(el);
+    return () => ro.disconnect();
+  }, [loading, error]);
 
-    const timer = setTimeout(() => {
-      if (el.clientWidth > 0 && el.clientHeight > 0) {
-        setContainerSize({ width: el.clientWidth, height: el.clientHeight });
+  const bumpFocus = useCallback((id: string) => {
+    setFocus((prev) => ({ id, nonce: (prev?.nonce ?? 0) + 1 }));
+  }, []);
+
+  /** 개념 선택 공통 경로 — 자동완성/인기 개념/카탈로그/트리맵 타일/상세 패널 내비게이션 */
+  const handleSelectConcept = useCallback(
+    (conceptId: string) => {
+      if (!model) return;
+      setDrill((prev) => selectConcept(prev, model, conceptId));
+      if (model.nodesById.has(conceptId)) {
+        if (view === 'graph3d') {
+          graphRef.current?.focusNode(conceptId, true);
+        } else {
+          setView('map');
+          bumpFocus(conceptId);
+        }
       }
-    }, 100);
+    },
+    [model, view, bumpFocus],
+  );
 
-    return () => {
-      ro.disconnect();
-      clearTimeout(timer);
-    };
-  }, [data]);
+  /** 검색 실행 — 히트를 도메인 맵에 드러내고 첫 히트로 카메라 이동 */
+  const handleSearch = useCallback(
+    async (query: string) => {
+      if (!model) return;
+      try {
+        const result = await searchConcepts(query, undefined, undefined, 0, 50);
+        const hitIds = result.hits.map((h) => h.conceptId);
+        setDrill((prev) => revealConcepts(prev, model, hitIds));
+        setView('map');
+        const firstKnown = hitIds.find((id) => model.nodesById.has(id));
+        if (firstKnown) bumpFocus(firstKnown);
+      } catch {
+        // search failed silently
+      }
+    },
+    [model, bumpFocus],
+  );
 
-  const handleNodeClick = useCallback((node: GraphNode) => {
-    setSelectedConceptId(node.id);
-    const related = data?.links
-      .filter((l) => {
-        const src = typeof l.source === 'string' ? l.source : (l.source as GraphNode).id;
-        const tgt = typeof l.target === 'string' ? l.target : (l.target as GraphNode).id;
-        return src === node.id || tgt === node.id;
-      })
-      .map((l) => {
-        const src = typeof l.source === 'string' ? l.source : (l.source as GraphNode).id;
-        const tgt = typeof l.target === 'string' ? l.target : (l.target as GraphNode).id;
-        return src === node.id ? tgt : src;
-      }) ?? [];
+  /** 카테고리 칩 — 해당 카테고리 개념을 맵에 펼쳐 강조 */
+  const handleCategoryFilter = useCallback(
+    (category: Category | null) => {
+      if (!model) return;
+      if (category === null) {
+        setDrill((prev) => clearEmphasis(prev));
+        return;
+      }
+      setDrill((prev) => revealCategory(prev, model, category));
+      setView('map');
+      bumpFocus(domainNodeId(domainIdOfCategory(category)));
+    },
+    [model, bumpFocus],
+  );
 
-    setHighlightedNodes(new Set([node.id, ...related]));
-    setDimmed(true);
-    graphRef.current?.focusNode(node.id, true);
-  }, [data]);
+  const handleHeatmapClick = useCallback(
+    (category: string, level: string) => {
+      if (!model || !data) return;
+      const ids = data.nodes.filter((n) => n.category === category && n.level === level).map((n) => n.id);
+      setDrill((prev) => revealConcepts(prev, model, ids));
+      setView('map');
+      if (ids.length > 0) bumpFocus(ids[0]);
+    },
+    [model, data, bumpFocus],
+  );
 
-  const handleBackgroundClick = useCallback(() => {
-    setSelectedConceptId(null);
-    setHighlightedNodes(new Set());
-    setDimmed(false);
-    graphRef.current?.resetView();
+  const handleTreemapCategoryClick = useCallback(
+    (category: string) => {
+      handleCategoryFilter(category as Category);
+    },
+    [handleCategoryFilter],
+  );
+
+  const handleMapNodeClick = useCallback(
+    (node: VisibleNode) => {
+      if (!model) return;
+      if (node.kind === 'domain') {
+        setDrill((prev) => toggleDomain(prev, model, node.id.slice(DOMAIN_NODE_PREFIX.length)));
+        bumpFocus(node.id);
+        return;
+      }
+      setDrill((prev) => selectConcept(prev, model, node.id));
+      bumpFocus(node.id);
+    },
+    [model, bumpFocus],
+  );
+
+  /** 배경 클릭/ESC/패널 닫기 — 강조·선택만 걷어내고 펼친 구조는 유지 */
+  const handleClearEmphasis = useCallback(() => {
+    setDrill((prev) => clearEmphasis(prev));
+    if (view === 'graph3d') graphRef.current?.resetView();
+  }, [view]);
+
+  const handleMapReset = useCallback(() => {
+    setDrill(INITIAL_DRILLDOWN);
+    setFocus(null);
   }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleBackgroundClick();
-      }
+      if (e.key === 'Escape') handleClearEmphasis();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleBackgroundClick]);
+  }, [handleClearEmphasis]);
 
-  const handleSearch = useCallback(async (query: string) => {
-    try {
-      const result = await searchConcepts(query, undefined, undefined, 0, 50);
-      const matchIds = new Set(result.hits.map((h) => h.conceptId));
-      setHighlightedNodes(matchIds);
-      setDimmed(true);
-      setCarouselIndex(0);
-      if (result.hits.length > 0) {
-        graphRef.current?.focusNode(result.hits[0].conceptId, false);
-      }
-    } catch {
-      // search failed silently
-    }
-  }, []);
+  // 3D 그래프 뷰의 노드 클릭 — 뷰 전환 없이 그 자리에서 선택
+  const handle3DNodeClick = useCallback(
+    (node: GraphNode) => {
+      if (!model) return;
+      setDrill((prev) => selectConcept(prev, model, node.id));
+      graphRef.current?.focusNode(node.id, true);
+    },
+    [model],
+  );
 
-  const handleSelectConcept = useCallback((conceptId: string) => {
-    setSelectedConceptId(conceptId);
-    setHighlightedNodes(new Set([conceptId]));
-    setDimmed(true);
-    setCarouselIndex(0);
-    graphRef.current?.focusNode(conceptId, true);
-  }, []);
-
-  const handleCategoryFilter = useCallback((category: Category | null) => {
-    if (!data) return;
-    if (category === null) {
-      setHighlightedNodes(new Set());
-      setDimmed(false);
-      graphRef.current?.resetView();
-      return;
-    }
-    const matching = data.nodes.filter((n) => n.category === category);
-    const ids = new Set(matching.map((n) => n.id));
-    setHighlightedNodes(ids);
-    setDimmed(true);
-    setCarouselIndex(0);
-    if (matching.length > 0) {
-      graphRef.current?.focusNode(matching[0].id, false);
-    }
-  }, [data]);
-
-  const handleHeatmapClick = useCallback((category: string, level: string) => {
-    if (!data) return;
-    const matching = data.nodes.filter((n) => n.category === category && n.level === level);
-    setHighlightedNodes(new Set(matching.map((n) => n.id)));
-    setDimmed(true);
-    setCarouselIndex(0);
-    if (matching.length > 0) {
-      graphRef.current?.focusNode(matching[0].id);
-    }
-  }, [data]);
-
-  const handleNavigate = useCallback((conceptId: string) => {
-    handleSelectConcept(conceptId);
-  }, [handleSelectConcept]);
-
-  // 기존 TreemapPanel 핸들러 — 카테고리 클릭 시 ForceGraph 하이라이트 + focusNode
-  const handleTreemapClick = useCallback((conceptId: string) => {
-    handleSelectConcept(conceptId);
-    setCarouselIndex(0);
-  }, [handleSelectConcept]);
-
-  const handleTreemapCategoryClick = useCallback((category: string) => {
-    if (!data) return;
-    const matching = data.nodes.filter((n) => n.category === category);
-    setHighlightedNodes(new Set(matching.map((n) => n.id)));
-    setDimmed(true);
-    setCarouselIndex(0);
-    if (matching.length > 0) {
-      graphRef.current?.focusNode(matching[0].id, false);
-    }
-  }, [data]);
+  const highlightedSet = useMemo(() => new Set(drill.highlighted), [drill.highlighted]);
 
   const handleSearchFocus = useCallback(() => {
     if (searchBarRef.current) {
@@ -188,137 +214,34 @@ export default function SearchPage() {
 
   if (loading) {
     return (
-      <div className="viz-page-scroll" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#94a3b8' }}>Loading concept graph...</p>
+      <div className="viz-page-scroll tech-status-screen">
+        <p className="tech-status-text">개념 그래프를 불러오는 중…</p>
       </div>
     );
   }
 
-  if (error || !data) {
+  if (error || !data || !model) {
     // code-dictionary 백엔드 unavailable 시 (5xx / network) graceful fallback —
     // 메인 페이지가 빈 에러 메시지만 보이지 않도록 안내 + 다른 서비스 진입 링크.
     return (
-      <div
-        className="viz-page-scroll"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          gap: 16,
-          padding: 24,
-        }}
-      >
-        <h2 style={{ color: '#f1f5f9', fontSize: 22, fontWeight: 700 }}>1989v</h2>
-        <p style={{ color: '#94a3b8', textAlign: 'center', maxWidth: 480 }}>
+      <div className="viz-page-scroll tech-status-screen tech-fallback">
+        <h2 className="tech-fallback-title">1989v</h2>
+        <p className="tech-fallback-desc">
           코드 사전 백엔드가 일시적으로 응답하지 않습니다. 다른 서비스는 정상 동작 중입니다.
         </p>
-        <p style={{ color: '#64748b', fontSize: 13 }}>
-          {error ? `(${error})` : ''}
-        </p>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <a
-            href="/quant/"
-            style={{ padding: '10px 16px', background: '#1a2238', color: '#f1f5f9', borderRadius: 10, textDecoration: 'none', border: '1px solid #2c3550' }}
-          >
-            Quant 트레이딩
-          </a>
-          <a
-            href="/admin/"
-            style={{ padding: '10px 16px', background: '#1a2238', color: '#f1f5f9', borderRadius: 10, textDecoration: 'none', border: '1px solid #2c3550' }}
-          >
-            Admin
-          </a>
-          <a
-            href="/gifticon/"
-            style={{ padding: '10px 16px', background: '#1a2238', color: '#f1f5f9', borderRadius: 10, textDecoration: 'none', border: '1px solid #2c3550' }}
-          >
-            기프티콘
-          </a>
-          <a
-            href="/agent-viewer/"
-            style={{ padding: '10px 16px', background: '#1a2238', color: '#f1f5f9', borderRadius: 10, textDecoration: 'none', border: '1px solid #2c3550' }}
-          >
-            Agent Viewer
-          </a>
+        <p className="tech-fallback-detail">{error ? `(${error})` : ''}</p>
+        <div className="tech-fallback-links">
+          <a href="/quant/">Quant 트레이딩</a>
+          <a href="/admin/">Admin</a>
+          <a href="/gifticon/">기프티콘</a>
+          <a href="/agent-viewer/">Agent Viewer</a>
         </div>
-        <button
-          type="button"
-          onClick={() => window.location.reload()}
-          style={{ padding: '8px 14px', background: 'transparent', color: '#94a3b8', borderRadius: 8, border: '1px solid #2c3550', cursor: 'pointer', marginTop: 8 }}
-        >
+        <button type="button" className="tech-fallback-retry" onClick={() => window.location.reload()}>
           다시 시도
         </button>
       </div>
     );
   }
-
-  const panels = [
-    {
-      key: 'graph',
-      label: 'Graph',
-      content: (
-        <div ref={containerRef} className="carousel-slide-inner" style={{ width: '100%', height: '100%' }}>
-          <ForceGraph3D
-            ref={graphRef}
-            nodes={data.nodes}
-            links={data.links}
-            highlightedNodes={highlightedNodes}
-            dimmed={dimmed}
-            onNodeClick={handleNodeClick}
-            onBackgroundClick={handleBackgroundClick}
-            width={containerSize.width}
-            height={containerSize.height}
-          />
-        </div>
-      ),
-      preview: <div className="carousel-preview-card">Concept Graph</div>,
-    },
-    {
-      key: 'heatmap',
-      label: 'Heatmap',
-      content: (
-        <div className="carousel-slide-inner">
-          <HeatmapPanel matrix={data.stats.matrix} onCellClick={handleHeatmapClick} />
-        </div>
-      ),
-      preview: <div className="carousel-preview-card">Heatmap</div>,
-    },
-    {
-      key: 'stats',
-      label: 'Statistics',
-      content: (
-        <div className="carousel-slide-inner">
-          <StatsDashboard stats={data.stats} />
-        </div>
-      ),
-      preview: <div className="carousel-preview-card">Statistics</div>,
-    },
-    {
-      key: 'treemap',
-      label: 'Treemap',
-      content: (
-        <div className="carousel-slide-inner" style={{ width: '100%', height: '100%' }}>
-          <TreemapSection onTileClick={handleSelectConcept} />
-        </div>
-      ),
-      preview: <div className="carousel-preview-card">Treemap</div>,
-    },
-    {
-      key: 'treemap-graph',
-      label: 'Concept Treemap',
-      content: (
-        <div className="carousel-slide-inner">
-          <TreemapPanel
-            nodes={data.nodes}
-            onNodeClick={handleTreemapClick}
-            onCategoryClick={handleTreemapCategoryClick}
-          />
-        </div>
-      ),
-      preview: <div className="carousel-preview-card">Concept Treemap</div>,
-    },
-  ];
 
   return (
     <div className="viz-page-scroll">
@@ -326,14 +249,78 @@ export default function SearchPage() {
 
       <section id="tech">
         <HeroSection stats={data.stats} serviceCount={9} />
-        <CategoryChips onCategoryFilter={handleCategoryFilter} />
         <div className="search-bar-section" ref={searchBarRef}>
           <SearchBar onSearch={handleSearch} onSelectConcept={handleSelectConcept} />
         </div>
+        <CategoryChips onCategoryFilter={handleCategoryFilter} />
 
-        <div className="carousel-section">
-          <Carousel3D panels={panels} activeIndex={carouselIndex} onActiveChange={setCarouselIndex} />
+        <div className="tech-stage-wrap">
+          <div className="tech-toolbar">
+            <div className="tech-view-tabs" role="tablist" aria-label="시각화 뷰 선택">
+              {VIEWS.map((v) => (
+                <button
+                  key={v.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={view === v.key}
+                  className={`tech-view-tab ${view === v.key ? 'is-active' : ''}`}
+                  onClick={() => setView(v.key)}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+            {view === 'map' && (
+              <button type="button" className="tech-map-reset" onClick={handleMapReset}>
+                처음으로
+              </button>
+            )}
+          </div>
+
+          <div className="tech-stage" ref={stageRef}>
+            {view === 'map' && (
+              <DomainMap
+                graph={visible}
+                highlighted={drill.highlighted}
+                selectedId={drill.selected}
+                focus={focus}
+                onNodeClick={handleMapNodeClick}
+                onBackgroundClick={handleClearEmphasis}
+              />
+            )}
+            {view === 'treemap' && <TreemapSection onTileClick={handleSelectConcept} />}
+            {view === 'graph3d' && stageSize.width > 0 && (
+              <ForceGraph3D
+                ref={graphRef}
+                nodes={data.nodes}
+                links={data.links}
+                highlightedNodes={highlightedSet}
+                dimmed={drill.highlighted.size > 0}
+                onNodeClick={handle3DNodeClick}
+                onBackgroundClick={handleClearEmphasis}
+                width={stageSize.width}
+                height={stageSize.height}
+              />
+            )}
+            {view === 'concept-treemap' && (
+              <TreemapPanel
+                nodes={data.nodes}
+                onNodeClick={handleSelectConcept}
+                onCategoryClick={handleTreemapCategoryClick}
+              />
+            )}
+            {view === 'heatmap' && <HeatmapPanel matrix={data.stats.matrix} onCellClick={handleHeatmapClick} />}
+            {view === 'stats' && <StatsDashboard stats={data.stats} />}
+          </div>
+
+          {view === 'map' && (
+            <p className="tech-map-hint">
+              도메인을 누르면 핵심 개념이, 개념을 누르면 연관 개념과 상세가 펼쳐집니다 — 드래그로 이동 · 휠/핀치로
+              확대
+            </p>
+          )}
         </div>
+
         <PopularConcepts nodes={data.nodes} onConceptClick={handleSelectConcept} />
       </section>
 
@@ -346,9 +333,9 @@ export default function SearchPage() {
       <Footer />
 
       <DetailSidePanel
-        conceptId={selectedConceptId}
-        onClose={handleBackgroundClick}
-        onNavigate={handleNavigate}
+        conceptId={drill.selected}
+        onClose={handleClearEmphasis}
+        onNavigate={handleSelectConcept}
       />
     </div>
   );

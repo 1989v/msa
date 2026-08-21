@@ -1,112 +1,191 @@
-.detail-side-panel {
+/* 개념 상세 — 데스크탑 우측 레일 / 모바일 바텀시트. 토큰만 사용 (DESIGN.md). */
+
+.detail-panel-backdrop {
   position: fixed;
-  top: 0;
-  right: 0;
-  width: 380px;
-  height: 100vh;
-  background: rgba(13, 13, 26, 0.95);
-  backdrop-filter: blur(16px);
-  border-left: 1px solid rgba(108, 99, 255, 0.2);
-  z-index: 50;
-  transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  overflow-y: auto;
-  padding: 24px;
+  inset: 0;
+  z-index: 300; /* modal-backdrop 레이어 */
+  background: oklch(0 0 0 / 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ko-duration-slow) var(--ko-ease-out);
 }
 
-.detail-side-panel.open {
-  transform: translateX(0);
+.detail-side-panel {
+  position: fixed;
+  z-index: 400; /* modal 레이어 */
+  background: var(--ko-surface-1);
+  overflow-y: auto;
+  padding: var(--ko-space-6);
+  transition: transform var(--ko-duration-slow) var(--ko-ease-out);
+}
+
+/* 데스크탑 — 우측 레일 (backdrop 없음, 페이지는 계속 인터랙티브) */
+@media (min-width: 768px) {
+  .detail-side-panel {
+    top: 0;
+    right: 0;
+    width: min(23.75rem, 92vw);
+    height: 100vh;
+    border-left: 1px solid var(--ko-border-subtle);
+    transform: translateX(100%);
+  }
+
+  .detail-side-panel.open {
+    transform: translateX(0);
+  }
+}
+
+/* 모바일 — 바텀시트 */
+@media (max-width: 767px) {
+  .detail-panel-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .detail-side-panel {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 76dvh;
+    border-top: 1px solid var(--ko-border-subtle);
+    border-radius: var(--ko-radius-lg) var(--ko-radius-lg) 0 0;
+    transform: translateY(100%);
+    padding-top: var(--ko-space-2);
+    padding-bottom: calc(var(--ko-space-6) + env(safe-area-inset-bottom));
+  }
+
+  .detail-side-panel.open {
+    transform: translateY(0);
+  }
+}
+
+/* 시트 핸들 — 모바일 전용, 아래로 끌면 닫힌다 */
+.detail-panel-handle {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .detail-panel-handle {
+    display: flex;
+    justify-content: center;
+    padding: var(--ko-space-2) 0 var(--ko-space-3);
+    touch-action: none;
+    cursor: grab;
+  }
+
+  .detail-panel-handle::before {
+    content: '';
+    width: 2.25rem;
+    height: 0.25rem;
+    border-radius: var(--ko-radius-full);
+    background: var(--ko-border-strong);
+  }
 }
 
 .detail-panel-close {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: var(--ko-space-4);
+  right: var(--ko-space-4);
   background: none;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  color: #94a3b8;
-  font-size: 1.125rem;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--ko-radius-md);
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-lg);
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 2.75rem;
+  height: 2.75rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .detail-panel-close:hover {
-  border-color: #6c63ff;
-  color: #fff;
+  border-color: var(--ko-border-strong);
+  color: var(--ko-text-primary);
+}
+
+.detail-panel-close:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.detail-panel-loading {
+  color: var(--ko-text-muted);
 }
 
 .detail-panel-header {
-  margin-bottom: 20px;
+  margin-bottom: var(--ko-space-5);
+  padding-right: var(--ko-space-12); /* 닫기 버튼과 겹치지 않게 */
 }
 
 .detail-panel-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #e0e0e0;
-  margin: 0 0 8px;
+  font-size: var(--ko-text-xl);
+  font-weight: var(--ko-weight-bold);
+  color: var(--ko-text-primary);
+  margin: 0 0 var(--ko-space-2);
 }
 
 .detail-panel-badges {
   display: flex;
-  gap: 8px;
+  gap: var(--ko-space-2);
 }
 
 .detail-badge {
-  font-size: 0.6875rem;
-  padding: 2px 8px;
-  border-radius: 6px;
-  color: #fff;
-  font-weight: 500;
+  font-size: var(--ko-text-xs);
+  padding: 0.125rem var(--ko-space-2);
+  border-radius: var(--ko-radius-full);
+  color: oklch(1 0 0);
+  font-weight: var(--ko-weight-medium);
 }
 
 .detail-panel-section {
-  margin-bottom: 20px;
+  margin-bottom: var(--ko-space-5);
 }
 
 .detail-panel-section h3 {
-  font-size: 0.8125rem;
-  color: #94a3b8;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0 0 8px;
+  letter-spacing: 0.03em;
+  margin: 0 0 var(--ko-space-2);
 }
 
 .detail-panel-description {
-  color: #bbb;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-sm);
+  line-height: var(--ko-leading-relaxed);
 }
 
 .detail-snippet {
-  background: #111;
-  border: 1px solid #222;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 8px;
+  background: var(--ko-surface-0);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--ko-radius-md);
+  padding: var(--ko-space-3);
+  margin-bottom: var(--ko-space-2);
 }
 
 .detail-snippet-path {
-  font-size: 0.6875rem;
-  color: #64748b;
-  margin-bottom: 6px;
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
+  margin-bottom: var(--ko-space-1);
+  word-break: break-all;
 }
 
 .detail-snippet-path a {
-  color: #6c63ff;
+  color: var(--ko-accent-primary);
   text-decoration: none;
 }
 
+.detail-snippet-path a:hover {
+  text-decoration: underline;
+}
+
 .detail-snippet-code {
-  font-family: 'Fira Code', monospace;
-  font-size: 0.75rem;
-  color: #cbd5e1;
+  font-family: var(--ko-font-mono);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
   white-space: pre-wrap;
-  max-height: 150px;
+  max-height: 9.375rem;
   overflow-y: auto;
 }
 
@@ -117,15 +196,34 @@
 }
 
 .detail-related-item {
-  padding: 6px 8px;
-  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--ko-space-1) var(--ko-space-2);
+  border: none;
+  border-radius: var(--ko-radius-sm);
+  background: none;
   cursor: pointer;
-  color: #aaa;
-  font-size: 0.8125rem;
-  transition: background 0.15s;
+  color: var(--ko-text-secondary);
+  font: inherit;
+  font-size: var(--ko-text-sm);
+  text-align: left;
+  transition: background-color var(--ko-duration-normal) var(--ko-ease-out);
 }
 
 .detail-related-item:hover {
-  background: rgba(108, 99, 255, 0.1);
-  color: #e0e0e0;
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+}
+
+.detail-related-item:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.detail-related-category {
+  margin-left: var(--ko-space-2);
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-muted);
 }

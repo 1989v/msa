@@ -2,7 +2,7 @@ import { useRef, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Text } from '@react-three/drei';
 import * as THREE from 'three';
-// @ts-expect-error d3-force-3d has no type definitions
+// 타입은 domainmap/d3-force-3d.d.ts 의 최소 선언을 공유한다
 import { forceSimulation, forceManyBody, forceLink, forceCenter } from 'd3-force-3d';
 import type { GraphNode, GraphLink, GraphRenderer } from '../../types/graph';
 import { CATEGORY_COLORS } from '../../types';
@@ -157,10 +157,10 @@ const ThreeJSGraph = forwardRef<GraphRenderer, ThreeJSGraphProps>(
           cameraTarget.current = new THREE.Vector3(node.x, node.y, node.z);
         }
       },
-      highlightNodes(_nodeIds: string[]) {
+      highlightNodes() {
         // Handled via highlightedNodes prop
       },
-      dimAllExcept(_nodeIds: string[]) {
+      dimAllExcept() {
         // Handled via dimmed + highlightedNodes props
       },
       resetView() {

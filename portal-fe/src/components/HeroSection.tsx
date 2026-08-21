@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { GraphStats } from '../types/graph';
 import './HeroSection.css';
 
@@ -7,13 +7,18 @@ interface HeroSectionProps {
   serviceCount: number;
 }
 
-function AnimatedCounter({ target, label }: { target: number; label: string }) {
-  const [value, setValue] = useState(0);
-  const startedRef = useRef(false);
+function prefersReducedMotion(): boolean {
+  return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
+function AnimatedCounter({ target, label }: { target: number; label: string }) {
+  // 모션 축소 설정이면 카운트업 없이 최종값으로 시작한다
+  const [value, setValue] = useState(() => (prefersReducedMotion() ? target : 0));
+
+  // startedRef 가드는 StrictMode 이중 실행에서 인터벌이 영영 안 도는 버그가 있었다 —
+  // cleanup 이 인터벌을 정리하므로 가드 없이 재실행해도 안전하다.
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
+    if (prefersReducedMotion()) return;
 
     const duration = 1200;
     const steps = 40;
@@ -45,7 +50,7 @@ export default function HeroSection({ stats, serviceCount }: HeroSectionProps) {
       <div className="hero-inner">
         <h1 className="hero-tagline">코드로 배우는 IT 개념 사전</h1>
         <p className="hero-subtitle">
-          실제 프로젝트 코드에서 추출한 개념을 3D 그래프로 탐색하세요
+          실제 프로젝트 코드에서 추출한 개념을 도메인 맵으로 드릴다운하세요
         </p>
         <div className="hero-counters">
           <AnimatedCounter target={stats.totalConcepts} label="Concepts" />

@@ -22,10 +22,10 @@ export default function StatsDashboard({ stats }: StatsDashboardProps) {
   const levelColors = ['#00b894', '#fdcb6e', '#e17055'];
 
   return (
-    <div style={{ padding: 32, height: '100%', overflow: 'auto', color: '#e0e0e0' }}>
+    <div style={{ padding: 'clamp(16px, 4vw, 32px)', height: '100%', overflow: 'auto', color: '#e0e0e0' }}>
       <h2 style={{ fontSize: '1.125rem', marginBottom: 24, textAlign: 'center' }}>Statistics</h2>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 48, marginBottom: 32 }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 'clamp(24px, 5vw, 48px)', marginBottom: 32 }}>
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: '2.25rem', fontWeight: 700, color: '#6c63ff' }}>{stats.totalConcepts}</div>
           <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Concepts</div>
