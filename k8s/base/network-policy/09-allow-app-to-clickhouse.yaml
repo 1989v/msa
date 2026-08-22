@@ -21,6 +21,9 @@ metadata:
     app.kubernetes.io/part-of: commerce-platform
     app.kubernetes.io/component: network-policy
 spec:
+  # search-batch 는 검색 평가 잡(search-eval-daily)이 ClickHouse 의 클릭 로그를 읽어
+  # 랭킹 지표를 낸다. 목록에 없어 그 잡은 만들어진 뒤 **한 번도 성공한 적이 없었다** —
+  # 연결 거부가 방화벽 때문인데 앱 오류처럼 보여 오래 묻혀 있었다 (2026-08-22 규명).
   podSelector:
     matchLabels:
       app.kubernetes.io/name: clickhouse
@@ -30,7 +33,7 @@ spec:
     - from:
         - podSelector:
             matchExpressions:
-              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, quant-ingest, recommendation, recommendation-ml] }
+              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, quant-ingest, recommendation, recommendation-ml, search-batch] }
       ports:
         - { port: 8123, protocol: TCP }   # HTTP — recommendation 등이 사용
         - { port: 9000, protocol: TCP }   # Native TCP — recommendation-ml (clickhouse_driver) 가 사용
