@@ -2,6 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { fetchFavorites, type FavoriteTargetType } from '../../api/wishlistApi';
+import { CollectionBar, MoveToCollection } from './FavoriteCollections';
+import { useCollections, type CollectionFilter } from './useCollections';
 import { fetchGameDetail } from '../../api/gameApi';
 import { fetchPost } from '../../api/blogApi';
 import { fetchAttraction } from '../../api/placeApi';
@@ -20,6 +22,8 @@ import './FavoritesPage.css';
 /** 하이드레이션된 카드 한 장 — 타입이 달라도 목록은 같은 모양으로 그린다 */
 interface FavoriteCard {
   targetKey: string;
+  /** 소속 묶음 — null 이면 미분류 (ADR-0080). 하이드레이션 뒤 목록이 채운다 */
+  collectionId: number | null;
   title: string;
   meta: string;
   imageUrl: string | null;
@@ -54,7 +58,9 @@ const TYPE_LABELS_EN: Record<FavoriteTargetType, string> = {
  * 대상 상세는 각 서비스 공개 API 로 키별 조회한다 (ADR-0074 — wishlist 는 키만 안다).
  * 실패(삭제·비공개 전환)는 null 로 접어 목록에서 건너뛴다.
  */
-async function hydrate(type: FavoriteTargetType, key: string): Promise<FavoriteCard | null> {
+type HydratedCard = Omit<FavoriteCard, 'collectionId'>;
+
+async function hydrate(type: FavoriteTargetType, key: string): Promise<HydratedCard | null> {
   try {
     switch (type) {
       case 'GAME': {
@@ -112,13 +118,22 @@ async function hydrate(type: FavoriteTargetType, key: string): Promise<FavoriteC
   }
 }
 
-function useFavoriteCards(type: FavoriteTargetType, enabled: boolean) {
+function useFavoriteCards(type: FavoriteTargetType, filter: CollectionFilter, enabled: boolean) {
+  const scope = filter.kind === 'one' ? filter.id : filter.kind;
   return useQuery({
-    queryKey: ['favorites', 'list', type],
+    queryKey: ['favorites', 'list', type, scope],
     queryFn: async () => {
-      const page = await fetchFavorites({ type, size: 100 });
+      const page = await fetchFavorites({
+        type,
+        size: 100,
+        collectionId: filter.kind === 'one' ? filter.id : undefined,
+        unclassified: filter.kind === 'unclassified',
+      });
       const hydrated = await Promise.all(page.items.map((item) => hydrate(type, item.targetKey)));
-      const cards = hydrated.filter((card): card is FavoriteCard => card !== null);
+      // 소속은 찜 레코드가 알고 대상 서비스는 모른다 — 하이드레이션 결과에 얹는다
+      const cards = hydrated
+        .map((card, i) => (card ? { ...card, collectionId: page.items[i].collectionId } : null))
+        .filter((card): card is FavoriteCard => card !== null);
       return { cards, missing: page.items.length - cards.length };
     },
     enabled,
@@ -136,7 +151,11 @@ export default function FavoritesPage() {
   const loggedIn = isLoggedIn();
   const labels = lang === 'en' ? TYPE_LABELS_EN : TYPE_LABELS_KO;
 
-  const cards = useFavoriteCards(type, loggedIn);
+  // 묶음은 관광지에만 (ADR-0080 §4) — 게임·블로그 글을 여행 묶음에 넣을 이유가 없다
+  const grouped = type === 'ATTRACTION';
+  const [filter, setFilter] = useState<CollectionFilter>({ kind: 'all' });
+  const collections = useCollections(loggedIn && grouped);
+  const cards = useFavoriteCards(type, grouped ? filter : { kind: 'all' }, loggedIn);
 
   useSeo({
     title: lang === 'en' ? 'My favorites' : '내 찜',
@@ -168,6 +187,15 @@ export default function FavoritesPage() {
             </button>
           ))}
         </nav>
+      )}
+
+      {loggedIn && grouped && collections.data && (
+        <CollectionBar
+          collections={collections.data}
+          filter={filter}
+          onChange={setFilter}
+          lang={lang}
+        />
       )}
 
       {!loggedIn && (
@@ -211,6 +239,15 @@ export default function FavoritesPage() {
                 </Link>
               )}
               <span className="favorites-card__action">
+                {grouped && collections.data && (
+                  <MoveToCollection
+                    type={type}
+                    targetKey={card.targetKey}
+                    current={card.collectionId ?? null}
+                    collections={collections.data}
+                    lang={lang}
+                  />
+                )}
                 <FavoriteButton type={type} targetKey={card.targetKey} compact />
               </span>
             </li>

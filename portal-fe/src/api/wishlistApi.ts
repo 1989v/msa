@@ -29,6 +29,15 @@ export interface FavoriteItem {
   id: number;
   targetType: FavoriteTargetType;
   targetKey: string;
+  /** 소속 묶음 — null 이면 미분류 (ADR-0080) */
+  collectionId: number | null;
+  createdAt: string;
+}
+
+export interface FavoriteCollection {
+  id: number;
+  name: string;
+  itemCount: number;
   createdAt: string;
 }
 
@@ -50,11 +59,17 @@ export async function removeFavorite(type: FavoriteTargetType, targetKey: string
 
 export async function fetchFavorites(params: {
   type?: FavoriteTargetType;
+  /** 지정하면 그 묶음만. 생략은 **전체**이지 미분류가 아니다 */
+  collectionId?: number;
+  /** 미분류만 — collectionId 와 겸하지 않는다 */
+  unclassified?: boolean;
   page?: number;
   size?: number;
 }): Promise<FavoritePage> {
   const search = new URLSearchParams();
   if (params.type) search.set('type', params.type);
+  if (params.collectionId != null) search.set('collectionId', String(params.collectionId));
+  if (params.unclassified) search.set('unclassified', 'true');
   search.set('page', String(params.page ?? 0));
   search.set('size', String(params.size ?? 50));
   const res = await api.get<ApiResponse<FavoritePage>>(`/api/v1/wishlist?${search}`);
@@ -65,4 +80,35 @@ export async function fetchFavorites(params: {
 export async function fetchFavoriteKeys(type: FavoriteTargetType): Promise<string[]> {
   const res = await api.get<ApiResponse<{ keys: string[] }>>(`/api/v1/wishlist/keys?type=${type}`);
   return res.data.data.keys;
+}
+
+// ── 여행 묶음 (ADR-0080) ─────────────────────────────────────────────────────
+
+export async function fetchCollections(): Promise<FavoriteCollection[]> {
+  const res = await api.get<ApiResponse<FavoriteCollection[]>>('/api/v1/wishlist/collections');
+  return res.data.data;
+}
+
+export async function createCollection(name: string): Promise<FavoriteCollection> {
+  const res = await api.post<ApiResponse<FavoriteCollection>>('/api/v1/wishlist/collections', { name });
+  return res.data.data;
+}
+
+export async function renameCollection(id: number, name: string): Promise<FavoriteCollection> {
+  const res = await api.patch<ApiResponse<FavoriteCollection>>(`/api/v1/wishlist/collections/${id}`, { name });
+  return res.data.data;
+}
+
+/** 묶음만 지운다 — 소속 찜은 미분류로 남는다 */
+export async function deleteCollection(id: number): Promise<void> {
+  await api.delete(`/api/v1/wishlist/collections/${id}`);
+}
+
+/** 찜을 묶음으로 옮긴다. `null` 이면 미분류로 뺀다 (찜 자체는 남는다) */
+export async function moveFavorite(
+  type: FavoriteTargetType,
+  targetKey: string,
+  collectionId: number | null,
+): Promise<void> {
+  await api.patch(`/api/v1/wishlist/${type}/${encodeURIComponent(targetKey)}/collection`, { collectionId });
 }

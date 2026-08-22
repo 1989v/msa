@@ -1,0 +1,139 @@
+/* 여행 묶음 (ADR-0080) — 찜 목록 위의 필터 줄.
+   칩은 얇은 테두리와 여백만 쓴다. 판(.kh-slab)을 쓰면 아래 카드 그리드와 층이 겹쳐
+   무엇이 목록이고 무엇이 필터인지 흐려진다. */
+
+.collection-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  margin-bottom: var(--ko-space-5);
+}
+
+.collection-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+  align-items: center;
+}
+
+.collection-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  padding: 6px 14px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--ko-duration-fast) var(--ko-ease-out),
+    border-color var(--ko-duration-fast) var(--ko-ease-out);
+}
+
+.collection-chip:hover {
+  color: var(--ko-text-primary);
+  border-color: var(--ko-border-strong);
+}
+
+.collection-chip:active {
+  transform: translateY(1px);
+}
+
+.collection-chip.is-active {
+  color: var(--ko-accent-text);
+  border-color: var(--ko-accent-text);
+}
+
+/* 담긴 수 — 이름보다 약하게, 숫자는 모노 */
+.collection-chip__count {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono, 0.04em);
+}
+
+.collection-chip--add {
+  border-style: dashed;
+  color: var(--ko-text-muted);
+}
+
+.collection-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+}
+
+.collection-add__input {
+  width: 10rem;
+  padding: 5px 10px;
+  font-size: var(--ko-text-sm);
+}
+
+.collection-add__ok {
+  padding: 6px 12px;
+  border: 1px solid var(--ko-accent-text);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ko-accent-text);
+  font-size: var(--ko-text-sm);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.collection-add__ok:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* 선택된 묶음에만 뜨는 관리 줄 — 항상 보이면 목록이 시끄럽다 */
+.collection-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-3);
+  align-items: center;
+}
+
+.collection-action {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-sm);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.collection-action:hover {
+  color: var(--ko-text-secondary);
+}
+
+.collection-action--danger:hover {
+  color: var(--kh-yeonji, #a2231d);
+}
+
+/* 카드 안의 묶음 이동 — 하트 옆에 작게. 하트를 대체하지 않는다 */
+.collection-move__select {
+  max-width: 8.5rem;
+  padding: 3px 6px;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+  background: transparent;
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+  font-family: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
