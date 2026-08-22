@@ -48,21 +48,6 @@
   font-size: 1rem;
 }
 
-/*
- * 공정위 고지. 눈에 띄되 카드보다 앞서지는 않는 무게로 둔다 — 작게 숨기면 고지의 의미가 없고,
- * 크게 띄우면 페이지가 경고문이 된다. 황토 테두리로 "구조"라는 신호만 준다.
- */
-.deal-disclosure {
-  margin: var(--ko-space-2) 0 0;
-  padding: var(--ko-space-3) var(--ko-space-4);
-  border-left: 2px solid var(--ko-border-strong);
-  background: var(--ko-surface-1);
-  color: var(--ko-text-secondary);
-  font-size: var(--ko-text-xs, 0.78rem);
-  line-height: 1.6;
-  border-radius: var(--kh-radius-asym, 0 8px 0 8px);
-}
-
 /* ─── 카테고리 칩 ─── */
 
 .deal-filters {
@@ -144,29 +129,9 @@
   outline-offset: var(--ko-focus-ring-offset);
 }
 
-.deal-card__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ko-space-2);
-}
-
 .deal-card__merchant {
   color: var(--ko-text-muted);
   font-size: var(--ko-text-xs, 0.72rem);
-}
-
-/*
- * 제휴 배지. 숨기지 않는다 — 표시 의무이기도 하고, 감추면 나중에 알게 됐을 때
- * 페이지 전체의 신뢰가 무너진다.
- */
-.deal-card__badge {
-  padding: 0.1rem 0.4rem;
-  border: 1px solid var(--ko-border-strong);
-  border-radius: var(--kh-radius, 4px);
-  color: var(--ko-text-muted);
-  font-size: var(--ko-text-xs, 0.68rem);
-  white-space: nowrap;
 }
 
 .deal-card__benefit {
@@ -191,11 +156,30 @@
   line-height: 1.55;
 }
 
-.deal-card__expiry {
+/* 카드 바닥의 메타 줄. 남은 기간과 고지가 같은 무게로 나란히 쌓인다 — 고지가 배너가 아니라
+ * 카드의 정보 한 줄로 읽혀야 페이지가 광고판이 되지 않는다. */
+.deal-card__foot {
   margin-top: auto;
   padding-top: var(--ko-space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+}
+
+.deal-card__expiry {
   font-size: var(--ko-text-xs, 0.72rem);
   color: var(--ko-text-muted);
+}
+
+/*
+ * 공정위 고지. 숨기지 않는다 — 표시 의무이기도 하고, 감추면 나중에 알게 됐을 때
+ * 페이지 전체의 신뢰가 무너진다. 그래서 더 줄이지 않는다: 판 위 보조 텍스트가
+ * 지침이 말하는 "쉽게 인식할 수 있는" 하한이다 (판 대비 6.8:1 라이트 / 5.3:1 다크).
+ */
+.deal-card__affiliate {
+  font-size: var(--ko-text-xs, 0.72rem);
+  line-height: 1.5;
+  color: var(--ko-text-secondary);
 }
 
 /* 남은 기간이 짧을 때만 색을 쓴다. 전부 강조하면 아무것도 강조되지 않는다. */

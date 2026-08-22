@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DealPage from '../DealPage';
-import { DEAL_DISCLOSURE } from '../../../seo/copy.mjs';
+import { DEAL_AFFILIATE_NOTE } from '../../../seo/copy.mjs';
 import type { DealSection } from '../../../api/dealApi';
 
 vi.mock('../../../api/dealApi', () => ({
@@ -53,9 +53,13 @@ describe('DealPage', () => {
     vi.mocked(fetchDealSections).mockResolvedValue(sections);
   });
 
-  it('공정위 고지를 화면에 고정 노출한다', async () => {
+  it('공정위 고지는 제휴 카드 안에만 붙는다 — 페이지 전체가 광고로 읽히지 않아야 한다', async () => {
     renderPage();
-    expect(await screen.findByText(DEAL_DISCLOSURE)).toBeInTheDocument();
+    const notes = await screen.findAllByText(DEAL_AFFILIATE_NOTE);
+    const affiliate = screen.getByRole('link', { name: /해외 호텔 예약/ });
+
+    expect(notes).toHaveLength(1);
+    expect(affiliate).toContainElement(notes[0]);
   });
 
   it('제휴 링크에만 sponsored 를 붙인다 — 수수료 없는 링크까지 광고로 표시하지 않는다', async () => {
@@ -76,9 +80,4 @@ describe('DealPage', () => {
     expect(plain).toHaveAttribute('href', '/go/airport-coupon');
   });
 
-  it('제휴 링크에만 고지 배지를 단다', async () => {
-    renderPage();
-    expect(await screen.findByText('제휴')).toBeInTheDocument();
-    expect(screen.getAllByText('제휴')).toHaveLength(1);
-  });
 });

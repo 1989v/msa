@@ -56,7 +56,6 @@ import {
   portalUrl,
   DEAL_ORIGIN,
   DEAL_BRAND,
-  DEAL_DISCLOSURE,
   dealHubMeta,
   BLOG_ORIGIN,
   BLOG_BRAND,
@@ -925,7 +924,7 @@ async function renderPlaceDetails(shell, places, regions) {
  *
  * 색인 대상이 아닌데도 찍는 이유는 **언퍼러** 때문이다. P1 유입은 SNS·메신저 공유이고,
  * 카카오톡/슬랙/X 는 JS 를 실행하지 않으므로 초기 HTML 에 OG 가 없으면 링크가 맨 URL 로 나간다.
- * 공정위 고지도 함께 심는다 — JS 미실행 방문자에게도 보여야 고지의 의미가 있다.
+ * 공정위 고지는 여기 없다 — 이 셸에는 오퍼 링크가 없고, 고지는 링크에 붙는다 (ADR-0069 개정).
  */
 async function renderDealHub(shell) {
   const meta = dealHubMeta();
@@ -937,8 +936,7 @@ async function renderDealHub(shell) {
     siteName: DEAL_BRAND,
     noindex: true,
     body: shellBody(
-      `<h1>${escapeHtml(DEAL_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>` +
-        `<p>${escapeHtml(DEAL_DISCLOSURE)}</p>`,
+      `<h1>${escapeHtml(DEAL_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>`,
     ),
   });
   await emit(`prerender/_hosts/${DEAL_HOST}.html`, html);

@@ -4,7 +4,7 @@ import { fetchDealSections, type DealOffer, type DealSection } from '../../api/d
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
-import { DEAL_AFFILIATE_BADGE, DEAL_DISCLOSURE, dealHubMeta } from '../../seo/copy.mjs';
+import { DEAL_AFFILIATE_NOTE, dealHubMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import './DealPage.css';
 
@@ -43,19 +43,22 @@ function OfferCard({ offer }: { offer: DealOffer }) {
       // 검색엔진에도 사용자에게도 사실과 다른 신호가 된다.
       rel={offer.disclosureRequired ? 'sponsored nofollow noopener' : 'nofollow noopener'}
     >
-      <div className="deal-card__head">
-        <span className="deal-card__merchant kh-caps">{offer.merchant}</span>
-        {offer.disclosureRequired && (
-          <span className="deal-card__badge kh-mono" title={DEAL_DISCLOSURE}>
-            {DEAL_AFFILIATE_BADGE}
-          </span>
-        )}
-      </div>
+      <span className="deal-card__merchant kh-caps">{offer.merchant}</span>
       <p className="deal-card__benefit">{offer.benefit}</p>
       <h3 className="deal-card__title">{offer.title}</h3>
       {offer.summary && <p className="deal-card__summary">{offer.summary}</p>}
-      {expiry && (
-        <span className={`deal-card__expiry kh-mono${urgent ? ' is-urgent' : ''}`}>{expiry}</span>
+      {(expiry || offer.disclosureRequired) && (
+        <div className="deal-card__foot">
+          {expiry && (
+            <span className={`deal-card__expiry kh-mono${urgent ? ' is-urgent' : ''}`}>
+              {expiry}
+            </span>
+          )}
+          {/* 고지는 링크 안에, 링크를 누르기 전에 읽히는 위치에 둔다 (ADR-0069 개정) */}
+          {offer.disclosureRequired && (
+            <span className="deal-card__affiliate kh-mono">{DEAL_AFFILIATE_NOTE}</span>
+          )}
+        </div>
       )}
     </a>
   );
@@ -94,8 +97,6 @@ export default function DealPage() {
         <p className="deal-header__subtitle">
           여행 · 커머스 · 구독 · 교육 · 생활 혜택을 분류별로 모았습니다.
         </p>
-        {/* 공정위 고지는 접히거나 스크롤 아래로 숨지 않는다 — 링크를 보기 전에 읽혀야 한다 */}
-        <p className="deal-disclosure kh-mono">{DEAL_DISCLOSURE}</p>
       </header>
 
       {sections.length > 0 && (
@@ -144,8 +145,7 @@ export default function DealPage() {
         ))}
       </main>
 
-      {/* 조건 변동 고지는 공통 푸터의 슬롯으로 — 헤더의 공정위 고지(DEAL_DISCLOSURE)는
-          링크를 보기 전에 읽혀야 해서 그대로 위에 남는다 (ADR-0069). */}
+      {/* 조건 변동 고지는 공통 푸터의 슬롯으로 — 공정위 고지는 해당 카드 안에 있다 (ADR-0069). */}
       <Footer>
         <p>
           혜택 내용과 조건은 각 제공처의 정책에 따라 예고 없이 바뀔 수 있습니다. 최종 조건은
