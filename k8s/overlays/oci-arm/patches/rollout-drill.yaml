@@ -1,0 +1,18 @@
+# 롤아웃 훈련 표식 (ADR-0075) — 값을 바꾸면 **전 Deployment 가 동시에 롤아웃된다.**
+#
+# 왜 이런 손잡이를 두는가: 무중단 전환과 엣지 보호는 "전 서비스가 한꺼번에 도는" 최악
+# 부하에서만 진짜로 검증된다. 평소 배포는 이미지 1~2종이라 웨이브 하나로 끝나 그 압력을
+# 만들지 못한다. 2026-08-22 첫 전체 롤아웃에서 노드 부하 18로 cloudflared 가 굶어 9분간
+# 521 이 났고, 그 조치(우선순위·CPU 상향)를 검증할 방법이 필요했다.
+#
+# 사용법: 날짜를 오늘로 바꿔 커밋 → Argo 동기화 → 1초 간격 카나리로 non-200 을 센다.
+# 훈련이 아니면 건드리지 않는다 — 이 값이 바뀔 때마다 운영 전체가 재기동한다.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    metadata:
+      annotations:
+        deploy.kgd.io/rollout-drill: "2026-08-22"

@@ -65,6 +65,10 @@ patches:
   - path: patches/rolling-surge-first.yaml
     target:
       kind: Deployment
+  # ─── 롤아웃 훈련 표식 — 날짜를 바꾸면 전 Deployment 동시 롤아웃 (ADR-0075 검증용) ──
+  - path: patches/rollout-drill.yaml
+    target:
+      kind: Deployment
   # ─── Kafka EXTERNAL listener — WARP 통한 외부 접근용 (kafka-ui macOS docker 등) ─
   # base 의 advertised 는 host-access(k3s-lite) 검증용 localhost:19092.
   # oci-arm 에선 외부 client 가 reconnect 시 사용할 public hostname 으로 교체.
