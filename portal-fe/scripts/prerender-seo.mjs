@@ -9,6 +9,7 @@
  * API 가 닿지 않으면 프리렌더는 건너뛰고 robots/sitemap 만 남긴 뒤 성공으로 끝낸다 —
  * SEO 자산 때문에 이미지 빌드가 깨지면 안 된다.
  */
+import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -36,7 +37,10 @@ import {
   hreflangAlternates,
   hubMeta,
   itemListJsonLd,
+  OG_IMAGE_H,
+  OG_IMAGE_W,
   socialImage,
+  socialImageIsSmall,
   titleOf,
   videoGameJsonLd,
   websiteJsonLd,
@@ -210,6 +214,11 @@ async function fetchCatalog() {
     );
     details.push(...chunk);
   }
+  // 전용 OG 카드(1200×630)가 있으면 붙여준다 — 없으면 목록 썸네일로 떨어진다
+  for (const game of details) {
+    const rel = `games/thumbs/og/${game.slug}.png`;
+    if (existsSync(resolve(ROOT, 'public', rel))) game.ogImageUrl = `/${rel}`;
+  }
   return details;
 }
 
@@ -238,7 +247,8 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;');
 }
 
-function metaTags({ title, description, canonical, lang, image, alternates, jsonLd, noindex, siteName = BRAND }) {
+function metaTags({ title, description, canonical, lang, image, imageSmall, imageAlt,
+                    alternates, jsonLd, noindex, siteName = BRAND }) {
   const lines = [
     `<title>${escapeHtml(title)}</title>`,
     `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -249,7 +259,8 @@ function metaTags({ title, description, canonical, lang, image, alternates, json
     `<meta property="og:description" content="${escapeHtml(description)}" />`,
     `<meta property="og:url" content="${canonical}" />`,
     `<meta property="og:locale" content="${lang === 'en' ? 'en_US' : 'ko_KR'}" />`,
-    `<meta name="twitter:card" content="${image ? 'summary_large_image' : 'summary'}" />`,
+    // 작은 썸네일로 큰 카드를 선언하면 뭉개진다 — 전용 OG 카드가 있을 때만 large
+    `<meta name="twitter:card" content="${image && !imageSmall ? 'summary_large_image' : 'summary'}" />`,
     `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
     `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
   ];
@@ -258,7 +269,16 @@ function metaTags({ title, description, canonical, lang, image, alternates, json
   if (noindex) lines.push(`<meta name="robots" content="noindex, follow" />`);
   if (image) {
     lines.push(`<meta property="og:image" content="${image}" />`);
+    lines.push(`<meta property="og:image:secure_url" content="${image}" />`);
+    lines.push(`<meta property="og:image:type" content="image/png" />`);
+    if (!imageSmall) {
+      // 크기를 명시하면 언퍼러가 이미지를 먼저 받아 재보지 않아도 카드를 그린다
+      lines.push(`<meta property="og:image:width" content="${OG_IMAGE_W}" />`);
+      lines.push(`<meta property="og:image:height" content="${OG_IMAGE_H}" />`);
+    }
+    if (imageAlt) lines.push(`<meta property="og:image:alt" content="${escapeHtml(imageAlt)}" />`);
     lines.push(`<meta name="twitter:image" content="${image}" />`);
+    if (imageAlt) lines.push(`<meta name="twitter:image:alt" content="${escapeHtml(imageAlt)}" />`);
   }
   for (const alt of alternates ?? []) {
     lines.push(`<link rel="alternate" hreflang="${alt.hreflang}" href="${alt.href}" />`);
@@ -372,6 +392,8 @@ function renderDetail(shell, lang, game, games) {
     ...meta,
     canonical,
     image: socialImage(game),
+    imageSmall: socialImageIsSmall(game),
+    imageAlt: titleOf(game, lang),
     alternates: hreflangAlternates(`/games/${game.slug}`),
     jsonLd: [
       videoGameJsonLd(lang, game),

@@ -170,13 +170,27 @@ function absoluteAsset(url) {
   return url.startsWith('http') ? url : `${GAME_ORIGIN}${url}`;
 }
 
+/** 소셜 카드 규격 — 전용 OG 이미지는 이 크기로 만든다 */
+export const OG_IMAGE_W = 1200;
+export const OG_IMAGE_H = 630;
+
 /**
  * 소셜 카드 이미지. SVG 는 대부분의 언퍼러(카카오톡/슬랙/X/페이스북)가 렌더하지 못하므로
- * 래스터 스크린샷이 있을 때만 og:image 를 노출한다.
+ * 래스터만 노출한다.
+ *
+ * 전용 OG 카드(`/games/thumbs/og/<slug>.png`, 1200×630)가 있으면 그것을 쓴다.
+ * 목록용 썸네일은 320×180 이라 큰 카드 최소치(600×315)에 한참 못 미쳐,
+ * 그대로 `summary_large_image` 로 내보내면 뭉개진 카드가 나온다.
  */
 export function socialImage(game) {
+  if (game.ogImageUrl) return absoluteAsset(game.ogImageUrl);
   const url = game.thumbnailUrl || '';
   return /\.(png|jpe?g|webp)$/i.test(url) ? absoluteAsset(url) : null;
+}
+
+/** 전용 OG 카드가 아니라 작은 썸네일로 대체된 상태인가 (큰 카드로 내보내면 안 된다) */
+export function socialImageIsSmall(game) {
+  return !game.ogImageUrl;
 }
 
 export function videoGameJsonLd(lang, game) {
