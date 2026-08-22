@@ -368,7 +368,7 @@ images:
     newTag: 574f010
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: e4c1040
+    newTag: "2621002"
   - name: commerce/experiment
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
     newTag: 12f6421
@@ -389,7 +389,7 @@ images:
     newTag: 61a4535
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 574f010
+    newTag: "2621002"
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: 12f6421
