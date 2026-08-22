@@ -15,4 +15,4 @@ spec:
   template:
     metadata:
       annotations:
-        deploy.kgd.io/rollout-drill: "2026-08-22"
+        deploy.kgd.io/rollout-drill: "2026-08-22b"
