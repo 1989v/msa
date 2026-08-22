@@ -21,6 +21,8 @@ import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { isNotFoundError, titleParts } from './placeView';
 import './PlacePage.css';
+import AdSlot from '../../components/ads/AdSlot';
+import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 const UI = {
   ko: { back: '← 관광지 탐색', nearby: '주변 명소', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
@@ -162,6 +164,9 @@ export default function AttractionPage() {
           </section>
         )}
       </div>
+
+      {/* 지도와 주변 목록을 다 본 뒤 (ADR-0076) */}
+      <AdSlot slot={ADSENSE_SLOTS.attractionEnd} shape="horizontal" minHeight={90} />
 
       {/* 통합 푸터 + 출처표시 의무 슬롯 — 허브(PlacePage)와 동일 구성 (data-sources.md §0) */}
       <Footer>

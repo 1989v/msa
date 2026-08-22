@@ -33,6 +33,8 @@ import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import GNB from '../../components/GNB';
 import Footer from '../../components/Footer';
+import AdSlot from '../../components/ads/AdSlot';
+import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 const UI = {
   ko: {
@@ -297,6 +299,9 @@ export default function GamesPage() {
             </>
           )}
       </section>
+
+      {/* 목록 끝. 게임 프레임(iframe) 안에는 두지 않는다 — 조작 방해이자 정책 위반 (ADR-0076) */}
+      <AdSlot slot={ADSENSE_SLOTS.gameHubEnd} shape="horizontal" minHeight={90} />
 
       <Footer />
       </div>

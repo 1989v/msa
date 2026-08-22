@@ -36,6 +36,21 @@
 | 게임 조작 영역 침범 | 가능 | 구조적으로 불가 |
 | 초기 작업량 | 스니펫 1개 | 스니펫 + 지면당 1줄 |
 
+지면은 넷이다. 목록·본문이 **끝난 지점**에만 둔다 — 중간에 끼우면 읽던 것을 끊는다.
+
+| 지면 | 위치 | 왜 여기인가 |
+|---|---|---|
+| `blogPostEnd` | 글 본문 끝, 댓글 위 | 다 읽은 뒤라 방해가 없고, 댓글 위여서 대화 흐름도 자르지 않는다 |
+| `gameHubEnd` | 게임 목록 끝 | **게임 프레임(iframe) 안에는 두지 않는다** — 조작 방해이자 정책 위반 |
+| `attractionEnd` | 관광지 상세 끝 | 지도와 주변 목록을 다 본 뒤 |
+| `dealHubEnd` | 혜택 목록 바깥 | 제휴 고지가 붙은 카드 사이에 끼면 어느 쪽이 광고인지 흐려진다 (ADR-0069) |
+
+메인(`/`)과 `/portfolio` 에는 두지 않는다. 첫인상이 곧 포트폴리오인 면이다.
+
+광고 단위 ID 는 콘솔에서 만들어야 나오므로 승인 전에는 `ADSENSE_SLOTS` 가 전부 빈
+문자열이다. **자리는 코드에 박혀 있고 ID 만 비어 있는** 상태이고, 승인 후 네 줄을 채우면
+그 순간 전부 켜진다.
+
 콘솔에서 사이트별 자동 광고는 **끈 상태로 유지한다.** 켜는 순간 이 결정이 코드와 무관하게
 무력화된다 — 레포만 보고 되돌릴 수 없는 종류의 설정이라 여기 적어 둔다.
 
@@ -123,6 +138,7 @@ deal 은 제휴 링크 허브라 자체 부가가치가 얇고(ADR-0069), AdSens
 | 게시자 ID · 광고 호스트 · `ads.txt` 생성 | `portal-fe/src/seo/copy.mjs` |
 | 로더 (호스트 게이트) | `portal-fe/index.html` |
 | 지면 컴포넌트 | `portal-fe/src/components/ads/AdSlot.tsx` |
+| 지면 ID 등록부 | `portal-fe/src/seo/copy.mjs` (`ADSENSE_SLOTS`) |
 | `ads.txt` 산출 | `portal-fe/scripts/prerender-seo.mjs` |
 | `/ads.txt` · `/privacy` 라우트 | `portal-fe/nginx.conf` |
 | 방침 본문 | `portal-fe/src/pages/PrivacyPage.tsx` |

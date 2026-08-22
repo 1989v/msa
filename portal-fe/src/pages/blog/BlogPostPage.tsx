@@ -26,6 +26,8 @@ import MarkdownBody from './MarkdownBody';
 import { formatDate } from './PostCard';
 import ReactionBar from './ReactionBar';
 import './Blog.css';
+import AdSlot from '../../components/ads/AdSlot';
+import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 /**
  * 글 상세.
@@ -187,6 +189,10 @@ export default function BlogPostPage() {
           />
         )}
       </article>
+
+      {/* 본문이 끝난 지점 — 다 읽은 뒤라 읽기를 방해하지 않고, 댓글보다 위여서
+          대화 흐름을 자르지도 않는다 (ADR-0076) */}
+      <AdSlot slot={ADSENSE_SLOTS.blogPostEnd} shape="horizontal" minHeight={90} />
 
       <CommentThread
         comments={comments.data ?? []}

@@ -739,6 +739,27 @@ export const ADSENSE_HOSTS = [PORTAL_ORIGIN, GAME_ORIGIN, PLACE_ORIGIN, DEAL_ORI
  * 찍는다 — nginx 가 `/ads.txt` 를 $host 로 갈라 서빙하는데(robots 와 동일 구조)
  * 서브도메인 키가 없으면 SPA 폴백이 index.html 을 내보내 크롤러가 HTML 을 받는다.
  */
+/**
+ * 광고 단위 ID (`data-ad-slot`) — 지면마다 하나씩.
+ *
+ * 값은 AdSense 콘솔에서 광고 단위를 만들어야 나온다. 승인 전에는 전부 빈 문자열이고,
+ * 그때 AdSlot 은 아무것도 그리지 않는다. **자리는 코드에 이미 박혀 있고 ID 만 비어 있는**
+ * 상태이므로, 승인 후 여기 네 줄을 채우면 그 순간 전부 켜진다.
+ *
+ * 이름은 '어디냐'로 짓는다 — 크기나 모양(가로배너/사각)으로 지으면 나중에 형태를 바꿀 때
+ * 이름이 거짓이 된다.
+ */
+export const ADSENSE_SLOTS = {
+  /** 블로그 글 본문이 끝난 지점 — 다 읽은 뒤라 읽기를 방해하지 않는다 */
+  blogPostEnd: '',
+  /** 게임 목록 끝. **게임 프레임 안에는 절대 두지 않는다** — 조작 방해이자 정책 위반이다 */
+  gameHubEnd: '',
+  /** 관광지 상세 끝 — 지도와 주변 목록을 다 본 뒤 */
+  attractionEnd: '',
+  /** 혜택 허브 끝 — 제휴 고지가 붙은 카드와 섞이지 않게 목록 바깥에 둔다 */
+  dealHubEnd: '',
+};
+
 export function adsTxt(client = ADSENSE_CLIENT) {
   if (!client) return null;
   // DIRECT = 게시자가 직접 계약한 판매자, 끝의 값은 Google 의 인증 기관 ID (고정)

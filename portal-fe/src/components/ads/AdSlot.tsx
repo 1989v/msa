@@ -42,15 +42,17 @@ export default function AdSlot({ slot, shape = 'auto', minHeight = 100, classNam
   const pushed = useRef(false);
 
   useEffect(() => {
-    if (!ADSENSE_CLIENT || pushed.current || !insRef.current) return;
+    if (!ADSENSE_CLIENT || !slot || pushed.current || !insRef.current) return;
     pushed.current = true;
     // 스크립트가 아직 안 왔어도 배열에 쌓아두면 로드 직후 처리된다 (AdSense 규약)
     (window.adsbygoogle = window.adsbygoogle ?? []).push({});
-  }, []);
+    // slot 이 바뀌어도 pushed 가 재진입을 막는다 — 한 <ins> 에 두 번 push 하면 AdSense 가 던진다
+  }, [slot]);
 
   // 이력서 호스트는 index.html 단계에서 스크립트를 싣지 않으므로 여기까지 오지 않지만,
   // 그 판정이 한 곳에만 있으면 나중에 조건이 갈렸을 때 빈 지면이 남는다.
-  if (!ADSENSE_CLIENT) return null;
+  // slot 이 비는 것은 승인 전 정상 상태다 (ADSENSE_SLOTS 참조) — 자리는 잡혀 있고 ID 만 없다.
+  if (!ADSENSE_CLIENT || !slot) return null;
 
   return (
     <aside

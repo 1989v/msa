@@ -7,6 +7,8 @@ import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { DEAL_AFFILIATE_NOTE, dealHubMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import './DealPage.css';
+import AdSlot from '../../components/ads/AdSlot';
+import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 // ADR-0069 혜택 링크 허브 — deal.<domain> 이 정규 주소 (place/game 과 같은 host 인식 루트 라우팅).
 //
@@ -144,6 +146,9 @@ export default function DealPage() {
           </section>
         ))}
       </main>
+
+      {/* 목록 바깥에 둔다 — 제휴 고지가 붙은 카드 사이에 끼면 어느 쪽이 광고인지 흐려진다 */}
+      <AdSlot slot={ADSENSE_SLOTS.dealHubEnd} shape="horizontal" minHeight={90} />
 
       {/* 조건 변동 고지는 공통 푸터의 슬롯으로 — 공정위 고지는 해당 카드 안에 있다 (ADR-0069). */}
       <Footer>
