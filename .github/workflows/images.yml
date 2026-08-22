@@ -333,6 +333,7 @@ jobs:
             case "$svc" in
               admin-fe|portal-fe)
                 BUILD_ARGS+=(--build-arg "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}")
+                BUILD_ARGS+=(--build-arg "VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}")
                 ;;
             esac
             # ADR-0065 /tour 구글맵 — 시크릿 미설정이면 지도 없이 리스트-only 폴백

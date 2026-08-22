@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import HouseAdInterstitial from './HouseAdInterstitial';
 import { unlockSnippets } from '../../api/portfolioApi';
 import { storeUnlockToken } from './snippetUnlock';
 import './GatedCodeSnippet.css';
+import { buildLoginHref } from '../../auth/auth';
 
 /**
  * 화면 계약 — 공개면(잠김/열림)과 이력서(항상 열림)가 같은 형태로 넘긴다.
@@ -27,7 +27,7 @@ export interface GatedSnippetView {
  * 코드 스니펫 판 — "화면 속의 화면"이라 라이트 모드에서도 어두운 판(`.kh-slab`) 위에 놓는다.
  *
  * 잠긴 상태: 미리보기 아래를 먹으로 가라앉히고(그라데이션), 여는 길 둘을 놓는다 —
- * 로그인(`/shop/login?next=` AuthButton 패턴) 또는 하우스 광고 시청(보상 토큰).
+ * 로그인(apex `/login` — AuthButton 과 같은 진입점) 또는 하우스 광고 시청(보상 토큰).
  * 광고를 다 보면 토큰을 발급받아 세션에 담고 호출부에 알린다 — 재조회는 호출부의 일이다.
  */
 export default function GatedCodeSnippet({
@@ -38,7 +38,6 @@ export default function GatedCodeSnippet({
   /** 광고 보상 토큰 수령 시 — 호출부가 이 토큰으로 재조회한다. 잠긴 스니펫에만 필요. */
   onUnlocked?: (token: string) => void;
 }) {
-  const { pathname, search } = useLocation();
   const [adOpen, setAdOpen] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const [unlockFailed, setUnlockFailed] = useState(false);
@@ -108,7 +107,7 @@ export default function GatedCodeSnippet({
           <div className="premium-snippet-actions">
             <a
               className="premium-lock-btn premium-lock-btn-primary"
-              href={`/shop/login?next=${encodeURIComponent(pathname + search)}`}
+              href={buildLoginHref()}
             >
               로그인하고 전체 보기
             </a>

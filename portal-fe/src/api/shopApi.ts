@@ -1,5 +1,6 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import {
+  buildLoginHref,
   getAccessToken,
   getRefreshToken,
   logout as clearAuth,
@@ -183,7 +184,7 @@ api.interceptors.response.use(
         return api(config); // 원 요청 재시도 (request 인터셉터가 새 토큰 부착)
       }
       clearAuth();
-      window.location.href = '/shop/login';
+      window.location.href = buildLoginHref();
     }
     return Promise.reject(error);
   },

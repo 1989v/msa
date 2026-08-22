@@ -7,6 +7,7 @@
  */
 import axios from 'axios';
 import { getAccessToken, logout } from '../auth/auth';
+import { buildLoginHref } from '../auth/auth';
 
 export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? '',
@@ -26,8 +27,8 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error?.response?.status === 401) {
       logout();
-      if (!window.location.pathname.startsWith('/shop/login')) {
-        window.location.href = '/shop/login';
+      if (window.location.pathname !== '/login') {
+        window.location.href = buildLoginHref();
       }
     }
     return Promise.reject(error);

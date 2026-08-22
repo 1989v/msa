@@ -8,6 +8,10 @@ COPY . .
 # 미주입이면 빈 문자열이 되어 로그인 버튼이 동작하지 않는다.
 ARG VITE_GOOGLE_CLIENT_ID=""
 ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+# 카카오도 같은 공개값이다. 이 줄이 없어 지금까지 client_id 가 빈 문자열로 빌드됐고
+# 카카오 로그인이 KOE101(앱 관리자 설정 오류)로 막혀 있었다 — 컨테이너 빌드 전체에서.
+ARG VITE_KAKAO_CLIENT_ID=""
+ENV VITE_KAKAO_CLIENT_ID=$VITE_KAKAO_CLIENT_ID
 # Google Maps JS 키 (ADR-0065 /tour) — 공개값, referrer 제한+쿼터 캡으로 보호.
 # 미주입이면 /tour 는 지도 없이 리스트-only 폴백.
 ARG VITE_GOOGLE_MAPS_KEY=""

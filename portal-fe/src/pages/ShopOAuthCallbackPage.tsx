@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { loginWithProvider, extractErrorMessage } from '../api/shopApi';
-import { LOGIN_NEXT_KEY, getOAuthRedirectUri, type OAuthProvider } from '../auth/auth';
+import { LOGIN_NEXT_KEY, buildLoginHref, getOAuthRedirectUri, safeNext, type OAuthProvider } from '../auth/auth';
 import { useAuth } from '../auth/useAuth';
 import LoginShell from '../components/chrome/LoginShell';
 import { portalTitle } from '../seo/copy.mjs';
@@ -11,7 +11,6 @@ import './Shop.css';
 export default function ShopOAuthCallbackPage() {
   useSeo({ title: portalTitle('로그인 처리 중'), noindex: true });
   const { login } = useAuth();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   // OAuth 인가 코드는 1회용 — StrictMode 의 effect 중복 실행 가드
@@ -32,16 +31,18 @@ export default function ShopOAuthCallbackPage() {
       try {
         const res = await loginWithProvider(state as OAuthProvider, code, getOAuthRedirectUri());
         login(res.accessToken, res.refreshToken, res.memberId);
-        const next = sessionStorage.getItem(LOGIN_NEXT_KEY);
+        const next = safeNext(sessionStorage.getItem(LOGIN_NEXT_KEY));
         sessionStorage.removeItem(LOGIN_NEXT_KEY);
-        navigate(next ?? '/shop', { replace: true });
+        // next 는 다른 호스트의 절대 URL 일 수 있다 (로그인은 apex 한 곳이므로) —
+        // react-router 의 navigate 로는 호스트를 넘지 못한다 (ADR-0079)
+        window.location.replace(next ?? '/');
       } catch (e) {
         setError(extractErrorMessage(e, '로그인 처리 중 오류가 발생했습니다.'));
       }
     };
 
     doLogin();
-  }, [searchParams, login, navigate]);
+  }, [searchParams, login]);
 
   // 인가 왕복의 착지점도 로그인과 같은 셸 — 성공이면 곧장 복귀 경로로 빠져나간다
   return (
@@ -51,9 +52,9 @@ export default function ShopOAuthCallbackPage() {
           <p className="shop-status-error" style={{ marginBottom: 'var(--ko-space-4)' }}>
             {error}
           </p>
-          <Link to="/shop/login" className="shop-btn-primary">
+          <a href={buildLoginHref()} className="shop-btn-primary">
             다시 로그인하기
-          </Link>
+          </a>
         </div>
       ) : (
         <div className="shop-status">로그인 처리 중...</div>

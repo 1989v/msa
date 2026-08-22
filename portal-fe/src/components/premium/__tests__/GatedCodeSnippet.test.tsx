@@ -53,7 +53,8 @@ describe('GatedCodeSnippet — 잠긴 상태', () => {
     expect(screen.getByText('전체 20줄 중 8줄 미리보기')).toBeInTheDocument();
 
     const login = screen.getByRole('link', { name: '로그인하고 전체 보기' });
-    expect(login).toHaveAttribute('href', `/shop/login?next=${encodeURIComponent('/portfolio')}`);
+    // 로그인 진입점은 apex `/login` 하나이고, 복귀 경로는 현재 주소 전체다 (ADR-0079)
+    expect(login.getAttribute('href')).toMatch(/^\/login\?next=/);
     expect(screen.getByRole('button', { name: '광고 보고 전체 보기' })).toBeInTheDocument();
   });
 

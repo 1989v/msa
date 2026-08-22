@@ -21,20 +21,26 @@ function renderButton(targetKey = 'abyssal-crown') {
       <MemoryRouter initialEntries={['/']}>
         <Routes>
           <Route path="/" element={<FavoriteButton type="GAME" targetKey={targetKey} />} />
-          <Route path="/shop/login" element={<div>로그인 화면</div>} />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
+/** 토큰은 도메인 쿠키에 산다 (ADR-0079) — 테스트도 같은 곳을 봐야 한다 */
+function setSession(token: string | null) {
+  document.cookie = token
+    ? `portal_access_token=${token}; Path=/`
+    : 'portal_access_token=; Path=/; Max-Age=0';
+}
+
 beforeEach(() => {
-  localStorage.clear();
+  setSession(null);
   vi.clearAllMocks();
 });
 
 afterEach(() => {
-  localStorage.clear();
+  setSession(null);
 });
 
 describe('FavoriteButton (게스트)', () => {
@@ -44,8 +50,19 @@ describe('FavoriteButton (게스트)', () => {
     const button = screen.getByRole('button', { name: '게임 찜' });
     expect(button).toHaveAttribute('aria-pressed', 'false');
 
+    // 로그인은 apex 한 곳이라 호스트를 넘는 이동이다 — jsdom 이 실제 이동을 막으므로
+    // href 대입을 가로채 목적지만 확인한다 (ADR-0079)
+    const assigned: string[] = [];
+    const original = Object.getOwnPropertyDescriptor(window, 'location');
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...window.location, get href() { return ''; }, set href(v: string) { assigned.push(v); } },
+    });
+
     await userEvent.click(button);
-    expect(screen.getByText('로그인 화면')).toBeInTheDocument();
+
+    if (original) Object.defineProperty(window, 'location', original);
+    expect(assigned.at(-1)).toContain('/login?next=');
     // 게스트 탭이 API 를 부르면 안 된다
     expect(addFavorite).not.toHaveBeenCalled();
   });
@@ -53,7 +70,7 @@ describe('FavoriteButton (게스트)', () => {
 
 describe('FavoriteButton (로그인)', () => {
   beforeEach(() => {
-    localStorage.setItem('portal_access_token', 'token');
+    setSession('token');
   });
 
   it('/keys 하이드레이션으로 찜됨 상태가 켜진다', async () => {

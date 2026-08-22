@@ -1,11 +1,9 @@
-import { useNavigate } from 'react-router-dom';
 import type { MouseEvent } from 'react';
-import { LOGIN_NEXT_KEY } from '../../auth/auth';
 import type { FavoriteTargetType } from '../../api/wishlistApi';
 import { useFavorites } from './useFavorites';
 import './Favorite.css';
+import { buildLoginHref } from '../../auth/auth';
 
-const isBlogHost = window.location.hostname.split('.')[0] === 'blog';
 
 const LABELS: Record<FavoriteTargetType, string> = {
   PRODUCT: '상품 찜',
@@ -30,7 +28,6 @@ export default function FavoriteButton({
   targetKey: string;
   compact?: boolean;
 }) {
-  const navigate = useNavigate();
   const { loggedIn, isFavorite, toggle } = useFavorites(type);
   const active = loggedIn && isFavorite(targetKey);
 
@@ -39,14 +36,8 @@ export default function FavoriteButton({
     e.preventDefault();
     e.stopPropagation();
     if (!loggedIn) {
-      const next = window.location.pathname + window.location.search;
-      if (isBlogHost) {
-        // blog 호스트는 자체 로그인 화면(/login)이 있고 복귀 경로는 세션에 둔다 (BlogPostPage 와 동일)
-        sessionStorage.setItem(LOGIN_NEXT_KEY, next);
-        navigate('/login');
-      } else {
-        navigate(`/shop/login?next=${encodeURIComponent(next)}`);
-      }
+      // 로그인은 apex 한 곳이라 호스트를 넘는 이동이다 (ADR-0079)
+      window.location.href = buildLoginHref();
       return;
     }
     toggle(targetKey);

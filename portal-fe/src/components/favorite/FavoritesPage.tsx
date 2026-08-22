@@ -7,7 +7,7 @@ import { fetchPost } from '../../api/blogApi';
 import { fetchAttraction } from '../../api/placeApi';
 import { titleParts } from '../../pages/place/placeView';
 import { fetchProduct } from '../../api/shopApi';
-import { isLoggedIn } from '../../auth/auth';
+import { buildLoginHref, isLoggedIn } from '../../auth/auth';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { BLOG_ORIGIN } from '../../seo/copy.mjs';
 import { isApexProd } from '../../shell/serviceHref';
@@ -173,12 +173,9 @@ export default function FavoritesPage() {
       {!loggedIn && (
         <p className="favorites-status">
           {lang === 'en' ? 'Sign in to see what you saved. ' : '로그인하면 찜한 것을 모아볼 수 있습니다. '}
-          <Link
-            className="favorites-login"
-            to={`/shop/login?next=${encodeURIComponent(pathname)}`}
-          >
+          <a className="favorites-login" href={buildLoginHref()}>
             {lang === 'en' ? 'Sign in' : '로그인'}
-          </Link>
+          </a>
         </p>
       )}
 

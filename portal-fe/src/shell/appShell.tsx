@@ -122,7 +122,7 @@ export function shellTabsFor(hostname: string, pathname: string): ShellTab[] | n
   // 로그인·OAuth 콜백 — 일회성 중단 화면이라 탭바가 목적을 흐린다 (게임 플레이와 같은
   // 몰입 판정). 나가는 길은 LoginShell 의 로고·푸터 서비스 탐색이 이미 제공한다.
   // `/login` 은 blog 호스트에만 라우트가 있어 다른 호스트에선 무해하다.
-  if (pathname === '/shop/login' || pathname === '/login' || pathname === '/oauth/callback') return null;
+  if (pathname === '/login' || pathname === '/oauth/callback') return null;
 
   const sub = hostname.split('.')[0];
   if (sub === 'resume' || sub === 'deal' || sub === 'place') return null;

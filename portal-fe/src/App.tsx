@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Suspense, lazy, type ReactElement } from 'react';
-import { isApexProd } from './shell/serviceHref';
+import { isApexProd, isProd1989vHost } from './shell/serviceHref';
+import { PORTAL_ORIGIN } from './seo/copy.mjs';
 import AppShellChrome from './components/shell/AppShellChrome';
 import HomePage from './pages/HomePage';
 import PortfolioPage from './pages/PortfolioPage';
 import ShopPage from './pages/ShopPage';
 import ShopProductDetailPage from './pages/ShopProductDetailPage';
 import MyOrdersPage from './pages/MyOrdersPage';
-import ShopLoginPage from './pages/ShopLoginPage';
+import LoginPage from './pages/LoginPage';
 import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 
 // ADR-0058 R3 FE 통합 — 흡수될 sub-app 슬롯 (lazy). P2 에서 실제 앱 라우터로 교체.
@@ -26,7 +27,6 @@ const BlogCategoryPage = lazy(() => import('./pages/blog/BlogCategoryPage'));
 const BlogAuthorPage = lazy(() => import('./pages/blog/BlogAuthorPage'));
 const BlogStudioPage = lazy(() => import('./pages/blog/BlogStudioPage'));
 const BlogEditorPage = lazy(() => import('./pages/blog/BlogEditorPage'));
-const BlogLoginPage = lazy(() => import('./pages/blog/BlogLoginPage'));
 const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
 // ADR-0071 — 지역 페이지. "제주 가볼 만한 곳" 류 질의의 착지점 (코드 세그먼트: 시도 2자리/시군구 5자리)
 const RegionPage = lazy(() => import('./pages/place/RegionPage'));
@@ -119,6 +119,16 @@ function blogRoute(element: ReactElement) {
  */
 const blogRoutesEnabled = isBlogHost || !isApexProd;
 
+/**
+ * 서브도메인의 `/login` → apex 로그인. 원래 있던 곳으로 돌아오도록 현재 주소를
+ * 절대 URL 로 넘긴다 (apex 에서 `safeNext` 가 1989v 계열인지 검증한다).
+ */
+function LoginHostRedirect() {
+  const next = new URLSearchParams(window.location.search).get('next') ?? window.location.href;
+  window.location.replace(`${PORTAL_ORIGIN}/login?next=${encodeURIComponent(next)}`);
+  return null;
+}
+
 function AdminHostRedirect() {
   window.location.replace('https://admin.1989v.com' + window.location.pathname.replace(/^\/admin/, ''));
   return null;
@@ -163,7 +173,6 @@ function App() {
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/products/:id" element={<ShopProductDetailPage />} />
           <Route path="/shop/orders" element={<MyOrdersPage />} />
-          <Route path="/shop/login" element={<ShopLoginPage />} />
           <Route path="/oauth/callback" element={<ShopOAuthCallbackPage />} />
           {/* 게임 — 언어(/en)와 장르는 URL 로 승격해 검색엔진이 개별 색인할 수 있게 한다 */}
           <Route path="/place" element={placeRoute(<PlacePage />)} />
@@ -178,7 +187,14 @@ function App() {
           {blogRoutesEnabled && <Route path="/studio" element={<BlogStudioPage />} />}
           {blogRoutesEnabled && <Route path="/studio/write" element={<BlogEditorPage />} />}
           {blogRoutesEnabled && <Route path="/studio/edit/:id" element={<BlogEditorPage />} />}
-          {isBlogHost && <Route path="/login" element={<BlogLoginPage />} />}
+          {/* 로그인은 apex 한 곳 (ADR-0079). 서브도메인으로 직접 들어오면 apex 로 보낸다 —
+              여기서 그리면 OAuth 콜백이 그 호스트로 잡혀 등록되지 않은 redirect_uri 가 된다. */}
+          {/* 로그인은 apex 한 곳이다 (ADR-0079). 서브도메인으로 직접 들어오면 apex 로 보낸다 —
+              여기서 그리면 OAuth 콜백이 그 호스트로 잡혀 등록되지 않은 redirect_uri 가 된다. */}
+          <Route
+            path="/login"
+            element={isProd1989vHost && !isApexProd ? <LoginHostRedirect /> : <LoginPage />}
+          />
           {/* 관광지 상세 — 고유명사 검색의 착지점 (ADR-0062). place 호스트가 정규 주소 */}
           {/* 지역 페이지 — 지역 단위 질의의 착지점 (ADR-0071). place 호스트가 정규 주소 */}
           <Route path="/regions/:code" element={placeRoute(<RegionPage />)} />

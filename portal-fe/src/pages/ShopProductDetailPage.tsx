@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import ShopHeader from '../components/ShopHeader';
 import {
   createOrder,
@@ -8,7 +8,7 @@ import {
   type OrderCreateResponse,
   type ProductDetail,
 } from '../api/shopApi';
-import { isLoggedIn } from '../auth/auth';
+import { isLoggedIn, buildLoginHref } from '../auth/auth';
 import { formatWon } from './shopFormat';
 import { portalTitle, portalUrl } from '../seo/copy.mjs';
 import { useSeo } from '../seo/useSeo';
@@ -19,8 +19,6 @@ import FavoriteButton from '../components/favorite/FavoriteButton';
 export default function ShopProductDetailPage() {
   useHeritageSurface();
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +61,7 @@ export default function ShopProductDetailPage() {
   const handleOrder = async () => {
     if (!product || soldOut) return;
     if (!isLoggedIn()) {
-      navigate(`/shop/login?next=${encodeURIComponent(location.pathname)}`);
+      window.location.href = buildLoginHref();
       return;
     }
     setOrdering(true);

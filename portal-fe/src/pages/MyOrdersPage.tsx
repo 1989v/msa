@@ -9,7 +9,7 @@ import {
   type MyOrder,
   type OrderStatus,
 } from '../api/shopApi';
-import { isLoggedIn } from '../auth/auth';
+import { isLoggedIn, buildLoginHref } from '../auth/auth';
 import { formatDateTime, formatWon } from './shopFormat';
 import './Shop.css';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
@@ -38,7 +38,7 @@ export default function MyOrdersPage() {
 
   useEffect(() => {
     if (!isLoggedIn()) {
-      navigate(`/shop/login?next=${encodeURIComponent('/shop/orders')}`, { replace: true });
+      window.location.replace(buildLoginHref());
       return;
     }
     let cancelled = false;

@@ -36,7 +36,7 @@ export function resolveServiceHref(code: string, href: string): string {
  * 걸면 `game.1989v.com/tech` 처럼 다른 서비스 화면이 게임 origin 아래로 샌다 (ADR-0066 개정
  * 이 경고한 바로 그 형태 — 도착은 하지만 주소·크롤러·공유 링크가 전부 어긋난다).
  */
-const isProd1989vHost =
+export const isProd1989vHost =
   window.location.hostname === '1989v.com' || window.location.hostname.endsWith('.1989v.com');
 
 /** 서비스 탐색 오버레이가 걸 주소 — 어느 프로덕션 호스트에서든 정규 주소로 보낸다 */

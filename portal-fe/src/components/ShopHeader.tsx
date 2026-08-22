@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/useAuth';
 import './ShopHeader.css';
+import { buildLoginHref } from '../auth/auth';
 
 /**
  * ShopHeader — 쇼핑 플로우 공용 헤더.
@@ -30,9 +31,9 @@ export default function ShopHeader() {
               로그아웃
             </button>
           ) : (
-            <Link to="/shop/login" className="shop-header-link">
+            <a href={buildLoginHref()} className="shop-header-link">
               로그인
-            </Link>
+            </a>
           )}
           <Link to="/" className="shop-header-link shop-header-home">
             포털 홈
