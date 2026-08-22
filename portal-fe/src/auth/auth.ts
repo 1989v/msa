@@ -153,6 +153,17 @@ export function buildLoginHref(next?: string): string {
 const KAKAO_CLIENT_ID: string = import.meta.env.VITE_KAKAO_CLIENT_ID ?? '';
 const GOOGLE_CLIENT_ID: string = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? '';
 
+/**
+ * 그 제공자로 실제 로그인할 수 있는가 — `client_id` 가 빌드에 주입됐는지로 판정한다.
+ *
+ * 비어 있으면 인가 요청이 제공자 쪽에서 거절된다(카카오 KOE101, 구글 invalid_client).
+ * **동작할 수 없는 로그인 수단은 화면에 내지 않는다** — 눌러서 오류를 보는 것이
+ * 처음부터 없는 것보다 나쁘다. 시크릿을 넣어 다시 빌드하면 그대로 살아난다.
+ */
+export function isProviderEnabled(provider: OAuthProvider): boolean {
+  return (provider === 'kakao' ? KAKAO_CLIENT_ID : GOOGLE_CLIENT_ID).trim().length > 0;
+}
+
 export function buildKakaoAuthUrl(): string {
   const redirectUri = getOAuthRedirectUri();
   return (

@@ -1,4 +1,4 @@
-import { buildGoogleAuthUrl, buildKakaoAuthUrl } from '../../auth/auth';
+import { buildGoogleAuthUrl, buildKakaoAuthUrl, isProviderEnabled } from '../../auth/auth';
 import './LoginShell.css';
 
 /**
@@ -36,30 +36,35 @@ function GoogleMark() {
 /**
  * OAuth 제공사 버튼 묶음 — 로그인 화면의 본문.
  *
- * 인가 URL 만들기까지가 이 컴포넌트의 몫이고, 복귀 경로 보관은 호스트마다 달라
- * (쇼핑 계열: `?next=` 쿼리에서, 블로그: 호출 화면이 세션에 선저장) 호출부가
- * `onStart` 로 잇는다. 브랜드 색은 테마를 타지 않는다 — 각 사 규정색이라
- * 라이트/다크 어디서든 그대로다.
+ * 인가 URL 만들기까지가 이 컴포넌트의 몫이고, 복귀 경로 보관은 호출부가 `onStart` 로 잇는다.
+ * 브랜드 색은 테마를 타지 않는다 — 각 사 규정색이라 라이트/다크 어디서든 그대로다.
+ *
+ * **`client_id` 가 없는 제공자는 그리지 않는다.** 눌러서 제공자 오류 화면을 보는 것이
+ * 처음부터 없는 것보다 나쁘다. 카카오는 현재 키가 없어 화면에 나오지 않는다.
  */
 export default function LoginProviderButtons({ onStart }: { onStart: (authUrl: string) => void }) {
   return (
     <div className="login-shell-actions">
-      <button
-        type="button"
-        className="login-provider-btn login-provider-btn--kakao kh-press"
-        onClick={() => onStart(buildKakaoAuthUrl())}
-      >
-        <KakaoMark />
-        카카오로 계속하기
-      </button>
-      <button
-        type="button"
-        className="login-provider-btn login-provider-btn--google kh-press"
-        onClick={() => onStart(buildGoogleAuthUrl())}
-      >
-        <GoogleMark />
-        구글로 계속하기
-      </button>
+      {isProviderEnabled('kakao') && (
+        <button
+          type="button"
+          className="login-provider-btn login-provider-btn--kakao kh-press"
+          onClick={() => onStart(buildKakaoAuthUrl())}
+        >
+          <KakaoMark />
+          카카오로 계속하기
+        </button>
+      )}
+      {isProviderEnabled('google') && (
+        <button
+          type="button"
+          className="login-provider-btn login-provider-btn--google kh-press"
+          onClick={() => onStart(buildGoogleAuthUrl())}
+        >
+          <GoogleMark />
+          구글로 계속하기
+        </button>
+      )}
     </div>
   );
 }
