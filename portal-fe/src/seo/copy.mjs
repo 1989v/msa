@@ -718,7 +718,7 @@ export function blogBreadcrumbJsonLd(crumbs) {
  * 이 모듈을 import 할 수 없어서다(테마 판정 스크립트가 useHeritageSurface 의
  * 사본을 두는 것과 같은 이유). 고칠 때 두 곳을 함께 고친다.
  */
-export const ADSENSE_CLIENT = '';
+export const ADSENSE_CLIENT = 'ca-pub-4627924728297793';
 
 /**
  * 광고를 게재하는 호스트.
