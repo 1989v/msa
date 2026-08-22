@@ -57,6 +57,7 @@ const UI = {
     searchArea: '이 지역 재검색',
     all: '전체',
     empty: '검색 결과가 없습니다',
+    failed: '목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     mapKeyMissing: '지도 키가 설정되지 않아 목록만 표시합니다',
     openInGoogleMaps: '구글맵에서 보기',
     source: '출처: 한국관광공사 TourAPI',
@@ -89,6 +90,7 @@ const UI = {
     searchArea: 'Search this area',
     all: 'All',
     empty: 'No results found',
+    failed: 'Could not load the list. Please try again in a moment.',
     mapKeyMissing: 'Map key not configured — showing list only',
     openInGoogleMaps: 'Open in Google Maps',
     source: 'Source: Korea Tourism Organization TourAPI',
@@ -259,10 +261,16 @@ export default function PlacePage() {
     [keyword, lang, areaCode, sidoCode, sigunguCode, category, geo, page],
   );
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['place-attractions', query],
     queryFn: () => searchAttractions(query),
     staleTime: 60_000,
+    // 이 목록이 이 페이지의 본문이다. 한 번 실패했다고 '결과 없음' 을 띄우면 200 응답에
+    // '찾을 수 없음' 문구가 실려 크롤러에게 Soft 404 로 읽힌다 (2026-08-22 구글 실측:
+    // 렌더된 본문이 'No results found' 한 줄이었다). 기본 retry 1 로는 배포 중 재기동
+    // 한 번을 못 넘긴다.
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
   });
 
   // ─── 모바일 무한 스크롤 누적 — page 를 뺀 검색 조건이 바뀌면 처음부터 다시 쌓는다.
@@ -1010,7 +1018,9 @@ export default function PlacePage() {
           )}
           {(isMobile || listOpen) && !pickingRegion && (
             <section className="place-list" aria-busy={isLoading}>
-              {attractions.length === 0 && !isLoading && <p className="place-empty">{L.empty}</p>}
+              {attractions.length === 0 && !isLoading && (
+                <p className="place-empty">{isError ? L.failed : L.empty}</p>
+              )}
               {attractions.map((a) => (
                 <PlaceCard key={a.id} attraction={a} lang={lang} onSelect={() => setSelectedId(a.id)} />
               ))}
