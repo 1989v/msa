@@ -16,6 +16,10 @@ spec:
             httpGet:
               path: /actuator/health/liveness
               port: http
-            initialDelaySeconds: 20
-            periodSeconds: 10
-            failureThreshold: 30   # up to 5 minutes total (20 + 30*10s)
+            # 첫 검사 10초·주기 5초 — 실제 기동은 40~70초라 20초를 통째로 기다릴 이유가
+            # 없다. 감지 해상도만 높이고 총 예산(약 5분)은 threshold 로 유지한다:
+            # 롤아웃 웨이브당 10~15초를 아낀다 (ADR-0075 개정 4).
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 60   # up to ~5 minutes total (10 + 60*5s)

@@ -17,15 +17,6 @@ spec:
     spec:
       containers:
         - name: app
-          # startupProbe 는 부팅 감지 해상도를 높인다 — 첫 검사 20→10초, 주기 10→5초.
-          # 실제 기동은 40~70초라 20초를 통째로 기다릴 이유가 없고, 웨이브당 10~15초씩
-          # 아낀다(전체 롤아웃 16웨이브 기준 3~4분). failureThreshold 를 60 으로 올려
-          # 총 예산은 그대로 5분 유지 — 느린 부팅을 잘라내지 않는다.
-          startupProbe:
-            initialDelaySeconds: 10
-            periodSeconds: 5
-            timeoutSeconds: 5
-            failureThreshold: 60
           readinessProbe:
             timeoutSeconds: 5
             failureThreshold: 3
