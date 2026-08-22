@@ -359,7 +359,7 @@ images:
     newTag: 12f6421
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 12f6421
+    newTag: "2621002"
   - name: commerce/chatbot
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
     newTag: 12f6421
