@@ -102,10 +102,27 @@ const RESUME_HOST = new URL(RESUME_ORIGIN).host;
 const DEAL_HOST = new URL(DEAL_ORIGIN).host;
 const BLOG_HOST = new URL(BLOG_ORIGIN).host;
 
+/**
+ * 일부 섹션만 조회에 실패했을 때 던진다 — **빌드를 세운다.**
+ *
+ * 2026-08-22 사고: 게임 카탈로그 조회만 실패하고 나머지(관광지·지역·포털)는 성공했다.
+ * 스크립트는 경고만 남기고 성공으로 끝냈고, `prerender/games/` 가 통째로 빠진 이미지가
+ * 배포되어 **전 게임의 공유 카드가 기본 메타로 떨어졌다.** 빌드는 초록불이었다.
+ *
+ * 왜 빌드를 세우는 쪽이 안전한가: 실패하면 Argo 가 직전 이미지를 유지하는데, 그 이미지에는
+ * 정상 프리렌더가 들어 있다. 즉 **세우는 것이 곧 좋은 상태를 지키는 것**이다. 반대로 통과시키면
+ * 나쁜 상태로 덮어쓰고, 아무도 모른 채 며칠이 간다.
+ */
+class PartialSeoFailure extends Error {}
+
 // 직접 실행일 때만 돈다 — 렌더 함수 단위 테스트(vitest)가 import 만으로
 // 운영 API 를 두드리는 일이 없어야 한다.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((err) => {
+    if (err instanceof PartialSeoFailure) {
+      console.error(`[seo] ${err.message}`);
+      process.exit(1);
+    }
     console.warn(`[seo] 프리렌더 실패 — SPA 만 배포됩니다: ${err.message}`);
     process.exit(0);
   });
@@ -117,11 +134,17 @@ async function main() {
     throw new Error('index.html 에 <!--seo:start--> 마커가 없습니다');
   }
 
+  // 섹션별 성패를 남긴다 — 끝에서 '일부만 실패' 를 가려내 빌드를 세운다 (PartialSeoFailure)
+  const fetched = [];
+  const failed = [];
+
   // 카탈로그를 못 받아도 robots/sitemap 은 남긴다 — 포털 색인까지 같이 죽으면 안 된다
   let games = [];
   try {
     games = await fetchCatalog();
+    fetched.push('games');
   } catch (err) {
+    failed.push('games');
     console.warn(`[seo] 게임 카탈로그 조회 실패 (${API_ORIGIN}): ${err.message}`);
   }
   // 관광지 전량은 sitemap 전용이다 — 6만 URL 을 정적 HTML 로 찍으면 이미지가 수백 MB 로
@@ -134,7 +157,9 @@ async function main() {
   try {
     places = await fetchAttractionIndex();
     regions = await fetchRegionIndex();
+    fetched.push('places');
   } catch (err) {
+    failed.push('places');
     console.warn(`[seo] 관광지 색인 조회 실패: ${err.message}`);
   }
 
@@ -142,8 +167,21 @@ async function main() {
   let blog = { posts: [], categories: [] };
   try {
     blog = await fetchBlogIndex();
+    fetched.push('blog');
   } catch (err) {
+    failed.push('blog');
     console.warn(`[seo] 블로그 색인 조회 실패: ${err.message}`);
+  }
+
+  // **일부만 실패**했으면 여기서 세운다. 전부 실패한 경우(API 자체가 죽은 상황)는
+  // 통과시킨다 — 그때는 백엔드 장애가 이미 드러나 있고, FE 만 올려야 할 이유가 있을 수 있다.
+  // 위험한 것은 조용한 부분 손실이지 명백한 전면 장애가 아니다.
+  if (failed.length > 0 && fetched.length > 0) {
+    throw new PartialSeoFailure(
+      `일부 색인 조회만 실패했습니다 (성공: ${fetched.join(', ')} / 실패: ${failed.join(', ')}). ` +
+        '이대로 배포하면 실패한 섹션의 프리렌더가 통째로 사라진 이미지가 나갑니다 — ' +
+        '빌드를 세웁니다. 재시도하면 대개 해소됩니다.',
+    );
   }
 
   await writeRobotsAndSitemaps(games, places, regions, blog);
