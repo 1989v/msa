@@ -32,3 +32,15 @@ export function titleParts(doc: { title: string; titleLocal?: string | null }): 
   const local = (doc.titleLocal ?? '').trim();
   return { primary: doc.title, secondary: local && local !== doc.title ? local : null };
 }
+
+/**
+ * 진짜 "없는 자원"과 일시적 장애를 가른다.
+ *
+ * 둘을 뭉뚱그려 "찾을 수 없습니다"를 띄우면, 게이트웨이가 잠깐 흔들린 사이 크롤러가
+ * 본 페이지가 **200 인데 '찾을 수 없음' 문구**를 담게 된다 — 구글이 정의하는 Soft 404 다
+ * (2026-08-22 /attractions/1 실측). 404 일 때만 "없음"이라고 말한다.
+ */
+export function isNotFoundError(error: unknown): boolean {
+  const status = (error as { response?: { status?: number } } | null)?.response?.status;
+  return status === 404 || status === 410;
+}

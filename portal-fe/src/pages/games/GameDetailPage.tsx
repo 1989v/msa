@@ -15,7 +15,6 @@ import {
   type GameSummary,
 } from '../../api/gameApi';
 import {
-  BRAND,
   breadcrumbJsonLd,
   detailMeta,
   gameDetailUrl,
@@ -198,13 +197,9 @@ export default function GameDetailPage() {
             ]),
           ],
         }
-      : notFound
-        ? {
-            title: lang === 'en' ? `Game not found | ${BRAND}` : `게임을 찾을 수 없습니다 | ${BRAND}`,
-            lang,
-            noindex: true,
-          }
-        : { title: '', lang }, // 로딩 중 — 프리렌더된 메타를 유지
+      : // 조회 실패·로딩 중 모두 프리렌더된 메타를 유지한다 — 실패에 noindex 를 심으면
+        // 일시적 장애가 색인 제외로 굳는다 (2026-08-22 place 에서 실측)
+        { title: '', lang },
   );
 
   if (notFound) {

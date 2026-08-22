@@ -34,6 +34,7 @@ const UI = {
     top: '대표 관광지',
     all: '지도에서 전체 보기',
     notFound: '지역을 찾을 수 없습니다.',
+    failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.',
     loading: '불러오는 중…',
   },
   en: {
@@ -42,6 +43,7 @@ const UI = {
     top: 'Top attractions',
     all: 'View all on the map',
     notFound: 'Region not found.',
+    failed: 'Could not load this page. Please try again in a moment.',
     loading: 'Loading…',
   },
 } as const;
@@ -66,7 +68,7 @@ export default function RegionPage() {
   const parentCode = isSido ? null : code.slice(0, 2);
 
   // 지역 메타는 부모 목록에서 찾는다 — 단건 조회 API 를 만들 만큼 목록이 크지 않다(시도 16·시군구 최대 55)
-  const { data: siblings, isLoading } = useQuery({
+  const { data: siblings, isLoading, isError } = useQuery({
     queryKey: ['admin-regions', isSido ? 'SIDO' : 'SIGUNGU', parentCode, lang],
     queryFn: () =>
       isSido
@@ -125,9 +127,8 @@ export default function RegionPage() {
             ]),
           ],
         }
-      : !isLoading && siblings
-        ? { title: `${L.notFound} | ${placeBrand(lang)}`, lang, noindex: true }
-        : { title: '', lang },
+      : // 조회 실패에 noindex 를 심지 않는다 (AttractionPage 와 같은 이유) — 프리렌더 메타 유지
+        { title: '', lang },
   );
 
   const childRegions = (children ?? []).filter((c) => (c.attractionCount ?? 0) > 0);
@@ -148,7 +149,10 @@ export default function RegionPage() {
       </header>
 
       {isLoading && <p className="place-empty">{L.loading}</p>}
+      {/* 목록을 받았는데 그 코드가 없으면 진짜 '없음'. 조회 자체가 실패한 것은 일시 장애로
+          말한다 — 200 응답에 '찾을 수 없음' 문구가 실리면 Soft 404 로 잡힌다 */}
       {!isLoading && siblings && !region && <p className="place-empty">{L.notFound}</p>}
+      {isError && <p className="place-empty">{L.failed}</p>}
 
       {region && meta && (
         <div className="place-body">

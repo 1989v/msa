@@ -98,12 +98,14 @@ function upsertMeta(attr: 'name' | 'property', key: string, content: string | nu
   meta.setAttribute('content', content);
 }
 
+/**
+ * canonical 은 **지우지 않는다.** 값이 없다는 건 "이 화면이 아직 모른다"이지
+ * "정규 주소가 없다"가 아니다 — 지우면 프리렌더가 심어둔 정확한 canonical 이 사라져
+ * 크롤러가 정규 주소 없는 페이지를 본다 (2026-08-22 /attractions/1 실측: 'canonical 없음').
+ */
 function upsertLink(rel: string, href: string | undefined): void {
   const existing = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
-  if (!href) {
-    existing?.remove();
-    return;
-  }
+  if (!href) return;
   const link = existing ?? document.head.appendChild(document.createElement('link'));
   link.rel = rel;
   link.href = href;

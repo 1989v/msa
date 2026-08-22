@@ -19,12 +19,12 @@ import AttractionLinks from './AttractionLinks';
 import { googleMapsSearchUrl } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
-import { titleParts } from './placeView';
+import { isNotFoundError, titleParts } from './placeView';
 import './PlacePage.css';
 
 const UI = {
-  ko: { back: '← 관광지 탐색', nearby: '주변 명소', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', loading: '불러오는 중…' },
-  en: { back: '← Explore Korea', nearby: 'Nearby places', map: 'Open in Google Maps', notFound: 'Attraction not found.', loading: 'Loading…' },
+  ko: { back: '← 관광지 탐색', nearby: '주변 명소', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { back: '← Explore Korea', nearby: 'Nearby places', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /**
@@ -38,7 +38,7 @@ export default function AttractionPage() {
   const lang: PlaceLang = pathname.startsWith('/en') ? 'en' : 'ko';
   const L = UI[lang];
 
-  const { data: attraction, isLoading, isError } = useQuery({
+  const { data: attraction, isLoading, isError, error } = useQuery({
     queryKey: ['attraction', id],
     queryFn: () => fetchAttraction(id),
     enabled: id !== '',
@@ -81,9 +81,11 @@ export default function AttractionPage() {
             ]),
           ],
         }
-      : isError
-        ? { title: `${L.notFound} | ${placeBrand(lang)}`, lang, noindex: true }
-        : { title: '', lang }, // 로딩 중 — 이미 심어둔 메타를 유지한다
+      : // 조회 실패·로딩 중에는 메타를 건드리지 않는다. 실패에 noindex 를 심으면 게이트웨이가
+        // 잠깐 흔들린 사이 크롤러가 들어왔을 때 멀쩡한 페이지가 색인에서 빠진다 —
+        // 2026-08-22 실측: /attractions/1 이 'NOINDEX 태그에 의해 제외' 판정을 받았다.
+        // 프리렌더 HTML 이 이미 정확한 메타를 갖고 있으므로 그대로 두는 쪽이 항상 옳다.
+        { title: '', lang },
   );
 
   const others = (nearby?.attractions ?? []).filter((a) => a.id !== id).slice(0, 6);
@@ -100,7 +102,11 @@ export default function AttractionPage() {
 
       <div className="place-body">
         {isLoading && <p className="place-empty">{L.loading}</p>}
-        {isError && <p className="place-empty">{L.notFound}</p>}
+        {/* 404 일 때만 '없음' 이라고 말한다 — 일시 장애까지 그렇게 쓰면 200 응답에 '찾을 수
+            없음' 문구가 실려 Soft 404 로 잡힌다 (placeView.isNotFoundError 주석 참조) */}
+        {isError && (
+          <p className="place-empty">{isNotFoundError(error) ? L.notFound : L.failed}</p>
+        )}
 
         {attraction && (
           <article className="place-detail" aria-label={attraction.title}>
