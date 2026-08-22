@@ -414,6 +414,50 @@
   font-size: 0.85rem;
 }
 
+/* ─── 데스크톱 티어 (≥900px) — 지도 높이는 뷰포트가 정한다 ────────────────────
+ *
+ * 세 열이 한 그리드 행을 공유하는데 행 높이가 내용으로 정해지면, 가장 긴 열이 지도 높이를
+ * 정한다. 정보 열을 열면 행이 늘고, 지도 밑에 캐로셀이 붙으면 지도가 그만큼 눌린다 —
+ * 관광지를 고를 때마다 지도가 678 → 542 → 384px 로 줄었다 (실측).
+ *
+ * 그래서 높이를 **뷰포트에서** 받는다. 열은 늘지 않고(align-items: start) 각자 안에서
+ * 스크롤하며, 지도는 어떤 상태에서도 같은 높이다. 캐로셀은 지도를 밀지 않고 그 아래로
+ * 흐른다 — 지도를 줄이는 것보다 페이지가 길어지는 편이 낫다. 지도가 화면의 축이라
+ * 보고 있던 지점이 매번 다른 자리로 가면 안 된다 (ADR-0071 §8). */
+@media (min-width: 900px) {
+  .place-body {
+    /* 상한을 두는 이유: 세로로 긴 화면에서 지도만 끝없이 커지면 목록이 딸려 올라간다 */
+    --place-col-h: clamp(24rem, calc(100vh - 16rem), 60rem);
+    align-items: start;
+  }
+
+  /* 목록 열은 고정 높이 — 안쪽에서 스크롤한다. max-height 가 아니라 height 인 이유는
+     .place-list 의 flex 가 자동 높이 컨테이너에서 0 으로 접히기 때문이다. */
+  .place-list-col {
+    height: var(--place-col-h);
+  }
+
+  .place-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+  }
+
+  .place-map-wrap {
+    align-self: start;
+    min-height: 0;
+  }
+
+  .place-map {
+    height: var(--place-col-h);
+    min-height: 0;
+  }
+
+  .place-detail {
+    max-height: var(--place-col-h);
+  }
+}
+
 /* ─── 모바일 티어 (≤900px) — JS 의 MOBILE_QUERY 와 같은 경계 ──────────────────
  * 세 열을 쌓는다. 목록은 접지 않고 항상 지도 아래에 있다(토글은 JS 가 데스크톱에만
  * 그린다). 상세는 세 번째 열 대신 바텀시트, 지역 선택은 칩 벽 대신 트리거+시트다. */

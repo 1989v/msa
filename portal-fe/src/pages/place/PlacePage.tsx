@@ -136,8 +136,28 @@ const MAX_SELECT_ZOOM = 16;
 /** JS 렌더 분기(시트·무한스크롤·목록 상시 노출)용 모바일 판정 — CSS 900px 티어와 같은 경계 */
 const MOBILE_QUERY = '(max-width: 899.98px)';
 
-/** 선택 마커 강조 핀 — 기본 핀과 같은 실루엣을 유지하고 색·크기로만 구분한다 */
-const SELECTED_PIN_PATH = 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z';
+/*
+ * 지도 핀 — 기본과 선택이 같은 실루엣을 쓰고 색·크기·발밑 고리로 갈린다.
+ *
+ * 기본 핀도 토큰으로 그린다. 구글 기본 붉은 핀을 그대로 두면 팔레트 밖의 강한 색이 지도를
+ * 가득 채우고, 그 위에서 무엇을 강조해도 "핀이 하나 더 있는" 화면이 된다.
+ *
+ * 테두리는 정경이 아니라 한지로 고정한다 — 지도에 스타일을 입히지 않으므로 타일은 라이트·
+ * 다크 어느 정경에서도 밝다. 여기에 surface-0 을 쓰면 다크에서 검정 테두리가 되어 핀이
+ * 타일에서 떨어져 보이지 않는다.
+ */
+const PIN_PATH = 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z';
+const PIN_SCALE = 1;
+const SELECTED_PIN_SCALE = 1.4;
+/** 선택 고리 반지름(px). 클러스터 원(최대 19)보다 커야 무리 뒤에서도 테두리가 보인다. */
+const SELECTED_HALO_SCALE = 21;
+
+function pinIcon(fill: string, stroke: string, scale: number, strokeWeight: number) {
+  return { path: PIN_PATH, scale, fillColor: fill, fillOpacity: 1, strokeColor: stroke, strokeWeight };
+}
+const defaultPinIcon = () => pinIcon(token('--ko-accent-primary'), token('--kh-hanji'), PIN_SCALE, 1.5);
+const selectedPinIcon = (scale = SELECTED_PIN_SCALE) =>
+  pinIcon(token('--kh-yeonji'), token('--kh-hanji'), scale, 2);
 
 const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -377,9 +397,18 @@ export default function PlacePage() {
     enabled: selectedId != null,
   });
 
-  useEffect(() => {
-    document.title = `${L.title} — 1989v`;
-  }, [L.title]);
+  /*
+   * 선택한 지점의 좌표. 목록에 있으면 목록에서, 없으면 상세 응답에서 가져온다 —
+   * 오버레이(음식·쇼핑) 마커를 누르면 그 장소는 목록에 없어서, 목록만 보면 지도가
+   * 따라가지도 강조되지도 않았다. 팬과 강조가 같은 좌표를 봐야 둘이 어긋나지 않는다.
+   */
+  const selectedTarget = useMemo(() => {
+    if (!selectedId) return null;
+    const inList = attractions.find((a) => a.id === selectedId);
+    if (inList) return { lat: inList.latitude, lng: inList.longitude };
+    if (selected?.id === selectedId) return { lat: selected.latitude, lng: selected.longitude };
+    return null;
+  }, [selectedId, attractions, selected]);
 
   // 지도 초기화 (키 있을 때만 — 미설정이면 리스트-only)
   useEffect(() => {
@@ -418,6 +447,16 @@ export default function PlacePage() {
     });
   }, []);
 
+  /*
+   * 마커 동기화가 읽을 현재 선택. selectedId 를 그 effect 의 의존성에 넣으면 관광지를 고를
+   * 때마다 마커를 전부 다시 만들고 클러스터가 새로 계산된다. 그래서 ref 로 넘긴다 —
+   * 이 effect 를 **먼저** 선언해 같은 커밋에서 마커 동기화보다 앞서 돌게 한다.
+   */
+  const selectedIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedIdRef.current = selectedId;
+  }, [selectedId]);
+
   // 결과 → 마커 동기화. 관광지 마커는 줌에 따라 클러스터로 묶는다 —
   // 모바일 무한 스크롤이 마커를 수백 개까지 쌓아 개별 핀만으로는 지도가 덮인다.
   useEffect(() => {
@@ -439,7 +478,8 @@ export default function PlacePage() {
           title: `${(lang === 'en' && r.nameEn) || r.name} (${r.attractionCount ?? 0})`,
           label: {
             text: String(r.attractionCount ?? 0),
-            color: token('--ko-surface-0'),
+            // 판 위 글씨는 한지 — surface-0 은 다크에서 #131313 이라 청자 채움 위 1.9:1 로 떨어진다
+            color: token('--kh-hanji'),
             fontSize: '11px',
             fontWeight: '700',
           },
@@ -467,11 +507,17 @@ export default function PlacePage() {
 
     const markers: any[] = [];
     const bounds = new window.google.maps.LatLngBounds();
+    const defaultIcon = defaultPinIcon();
     attractions.forEach((a) => {
+      // 선택된 곳은 **강조된 채로 태어난다** — 마커를 다시 만든 뒤 강조를 덧입히면
+      // 그 사이 한 프레임 동안 선택이 사라지고, 강조 effect 가 다시 돌 이유도 없다.
+      const isSelected = a.id === selectedIdRef.current;
       // map 은 클러스터러가 관리한다 — 여기서 붙이면 클러스터와 개별 핀이 겹쳐 보인다
       const marker = new window.google.maps.Marker({
         position: { lat: a.latitude, lng: a.longitude },
         title: a.title,
+        icon: isSelected ? selectedPinIcon() : defaultIcon,
+        zIndex: isSelected ? 999 : 1,
       });
       marker.addListener('click', () => setSelectedId(a.id));
       markersRef.current.set(a.id, marker);
@@ -498,7 +544,8 @@ export default function PlacePage() {
               },
               label: {
                 text: String(count),
-                color: token('--ko-surface-0'),
+                // 위와 같은 이유 — 클러스터 배지 숫자도 한지로 고정한다
+                color: token('--kh-hanji'),
                 fontSize: '11px',
                 fontWeight: '700',
               },
@@ -606,10 +653,8 @@ export default function PlacePage() {
   // panTo 만 하면 "여기가 어디 옆인지"의 맥락(현재 축척)도 그대로 남는다.
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !mapReady || !selectedId || !window.google?.maps) return;
-    const target = attractions.find((a) => a.id === selectedId);
-    if (!target) return;
-    const position = { lat: target.latitude, lng: target.longitude };
+    if (!map || !mapReady || !selectedTarget || !window.google?.maps) return;
+    const position = selectedTarget;
 
     if (prefersReducedMotion()) {
       map.setCenter(position); // 모션 최소화 — 애니메이션 없이 즉시 이동
@@ -621,44 +666,74 @@ export default function PlacePage() {
     }
     if ((map.getZoom() ?? 0) > MAX_SELECT_ZOOM) map.setZoom(MAX_SELECT_ZOOM);
     window.google.maps.event.addListenerOnce(map, 'idle', () => setMapMoved(false));
-  }, [selectedId, attractions, mapReady]);
+  }, [selectedTarget, mapReady]);
 
-  // 어느 마커가 선택됐는지는 색·크기가 말한다 — 찍힘(kh-stamp)처럼 살짝 크게 눌렸다가
-  // 240ms 뒤 자리를 잡고, 이후 움직이는 것은 없다. 반복 BOUNCE 는 시선을 붙잡아
-  // 나머지 마커를 읽기 어렵게 했다.
+  /*
+   * 선택 표시는 **다음 선택까지 남는다.** 잠깐 커졌다 돌아오는 강조는 시선을 옮기는 신호일
+   * 뿐이라, 목록을 읽고 지도로 눈을 돌린 순간엔 이미 없다.
+   *
+   * 세 가지가 동시에 다르다 — 연지(인장) 색 / 1.4배 크기 / 발밑의 고리. 색만으로 말하지
+   * 않는 이유는 색각 이상(2형)에서 정경 액션색(소나무·청자)과 연지가 붙어 보이기 때문이다.
+   *
+   * 고리는 클러스터러가 관리하지 않는 별도 마커다 — 선택한 핀이 무리에 삼켜져도 "그 자리"는
+   * 지도에 남고, 줌인해 무리가 풀리면 핀이 강조된 채로 다시 나타난다. 목록이 바뀌어 마커가
+   * 새로 만들어지는 경우는 동기화 쪽이 강조된 채로 만들고(selectedIdRef), 여기서는 매번
+   * 선택 아닌 마커를 기본으로 되돌려 놓아 남은 강조가 없게 한다.
+   */
+  const stampedRef = useRef<string | null>(null);
   useEffect(() => {
-    if (!window.google?.maps) return;
-    const selected = selectedId ? markersRef.current.get(selectedId) : null;
+    const map = mapRef.current;
+    if (!map || !mapReady || !window.google?.maps) return;
+    // 시도 선택 화면의 마커는 카운트 원이다 — 여기서 아이콘을 건드리면 그 원이 지워진다
+    if (pickingRegion) return;
+
+    // 찍힘은 **선택이 바뀔 때만** 재생한다 — 무한 스크롤로 마커가 다시 그려질 때마다
+    // 도장을 다시 찍으면 가만히 있는 지도에서 핀 하나가 계속 튄다.
+    // 선택이 풀린 것도 기록해야 같은 곳을 다시 고를 때 도장이 찍힌다.
+    const lastStamped = stampedRef.current;
+    stampedRef.current = selectedId;
+
+    const defaultIcon = defaultPinIcon();
     markersRef.current.forEach((marker, id) => {
       if (id === selectedId) return;
       marker.setZIndex(1);
-      marker.setIcon(null); // 기본 핀으로 복귀
+      marker.setIcon(defaultIcon);
     });
-    if (!selected) return;
-    const icon = (scale: number) => ({
-      path: SELECTED_PIN_PATH,
-      scale,
-      fillColor: token('--ko-accent-primary'),
-      fillOpacity: 1,
-      strokeColor: token('--ko-surface-0'),
-      strokeWeight: 1.5,
+    if (!selectedId || !selectedTarget) return;
+
+    const seal = token('--kh-yeonji');
+    const halo = new window.google.maps.Marker({
+      map,
+      position: selectedTarget,
+      clickable: false, // 고리가 핀·클러스터의 클릭을 가로채면 안 된다
+      zIndex: 400,      // 클러스터(500+) 아래 — 무리 뒤로 테두리만 비친다
+      icon: {
+        path: window.google.maps.SymbolPath.CIRCLE,
+        scale: SELECTED_HALO_SCALE,
+        fillColor: seal,
+        fillOpacity: 0.14,
+        strokeColor: seal,
+        strokeWeight: 3,
+      },
     });
-    selected.setZIndex(999);
-    if (prefersReducedMotion()) {
-      selected.setIcon(icon(1.2));
-      return () => {
-        selected.setIcon(null);
-        selected.setZIndex(1);
-      };
+
+    const marker = markersRef.current.get(selectedId);
+    const stamp = !prefersReducedMotion() && lastStamped !== selectedId;
+    let settle: ReturnType<typeof setTimeout> | undefined;
+    if (marker) {
+      marker.setZIndex(999);
+      marker.setIcon(selectedPinIcon(stamp ? SELECTED_PIN_SCALE * 1.15 : SELECTED_PIN_SCALE));
+      if (stamp) settle = setTimeout(() => marker.setIcon(selectedPinIcon()), 240);
     }
-    selected.setIcon(icon(1.45));
-    const settle = setTimeout(() => selected.setIcon(icon(1.2)), 240);
     return () => {
-      clearTimeout(settle);
-      selected.setIcon(null);
-      selected.setZIndex(1);
+      if (settle) clearTimeout(settle);
+      halo.setMap(null);
+      if (marker) {
+        marker.setIcon(defaultIcon);
+        marker.setZIndex(1);
+      }
     };
-  }, [selectedId, attractions]);
+  }, [selectedId, selectedTarget, pickingRegion, mapReady]);
 
   // 통합 자동완성 — 200ms 디바운스, 실패는 조용히 무시 (shop suggest 패턴)
   useEffect(() => {

@@ -290,7 +290,7 @@ export function collectionPageJsonLd(lang, meta, canonical, site = { name: BRAND
 
 export const PLACE_ORIGIN = 'https://place.1989v.com';
 export const PLACE_BRAND_KO = 'K-관광';
-export const PLACE_BRAND_EN = 'Korea Travel Finder';
+export const PLACE_BRAND_EN = 'K-Tour';
 
 /** 카테고리 라벨 — PlacePage 의 필터 칩과 같은 문자열을 써야 색인 문구가 화면과 어긋나지 않는다 */
 export const PLACE_CATEGORY_KO = {

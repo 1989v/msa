@@ -141,7 +141,7 @@ describe('place (K-관광)', () => {
       url: PLACE_ORIGIN,
     }) as unknown as { isPartOf: { url: string; name: string } };
     expect(ld.isPartOf.url).toBe('https://place.1989v.com');
-    expect(ld.isPartOf.name).toBe('Korea Travel Finder');
+    expect(ld.isPartOf.name).toBe('K-Tour');
   });
 });
 
