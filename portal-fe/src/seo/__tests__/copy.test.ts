@@ -147,7 +147,7 @@ describe('place (K-관광)', () => {
 
 describe('포털 페이지 카피', () => {
   it('프리렌더 대상 경로가 모두 정의돼 있다', () => {
-    expect(Object.keys(PORTAL_PAGES)).toEqual(['/', '/tech', '/portfolio', '/shop']);
+    expect(Object.keys(PORTAL_PAGES)).toEqual(['/', '/tech', '/portfolio', '/shop', '/privacy']);
     const pages = Object.entries(PORTAL_PAGES) as [string, { title: string; description: string }][];
     for (const [path, meta] of pages) {
       expect(meta.title, path).toBeTruthy();

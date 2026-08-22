@@ -63,6 +63,8 @@ import {
   blogCategoryUrl,
   blogHubMeta,
   blogPostUrl,
+  ADSENSE_HOSTS,
+  adsTxt,
 } from '../src/seo/copy.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -449,7 +451,7 @@ async function writeRobotsAndSitemaps(
     }
   }
 
-  const portalEntries = ['/', '/tech', '/portfolio', '/shop'].map((path) => ({
+  const portalEntries = ['/', '/tech', '/portfolio', '/shop', '/privacy'].map((path) => ({
     loc: `${PORTAL_ORIGIN}${path}`,
     priority: path === '/' ? '1.0' : '0.6',
   }));
@@ -507,6 +509,23 @@ async function writeRobotsAndSitemaps(
   await emit(`seo/${PORTAL_HOST}/llms.txt`, portalLlmsTxt());
   await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places));
   await emit(`seo/${BLOG_HOST}/llms.txt`, blogLlmsTxt(blog));
+
+  await writeAdsTxt();
+}
+
+/**
+ * ads.txt — 광고 게재 호스트마다 같은 내용을 찍는다.
+ *
+ * 게시자 ID 가 비어 있으면 파일을 만들지 않는다. 빈 ads.txt 는 "없음"과 다르다 —
+ * 파일이 존재하는데 판매자 줄이 없으면 크롤러는 그것을 '승인된 판매자 없음'
+ * 선언으로 읽어 그 도메인의 입찰을 통째로 버린다.
+ */
+async function writeAdsTxt() {
+  const body = adsTxt();
+  if (!body) return;
+  for (const host of ADSENSE_HOSTS) {
+    await emit(`seo/${host}/ads.txt`, body);
+  }
 }
 
 /**

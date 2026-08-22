@@ -534,6 +534,13 @@ export const PORTAL_PAGES = {
     title: portalTitle('스토어'),
     description: 'MSA 커머스 플랫폼 데모 스토어 — 상품 검색·추천·주문 플로우를 실제 서비스로 확인할 수 있습니다.',
   },
+  // 광고 심사는 이 문서를 **크롤러로** 확인한다 — SPA 렌더만 되고 초기 HTML 이 비어 있으면
+  // '방침 없음'으로 읽힐 수 있어 다른 포털 페이지와 같이 프리렌더 대상에 둔다 (ADR-0076).
+  '/privacy': {
+    title: portalTitle('개인정보처리방침'),
+    description:
+      '1989v.com 과 하위 서비스가 수집하는 정보, 사용하는 쿠키와 제3자 도구, 보관 기간과 이용자의 선택권을 정리한 문서입니다.',
+  },
 };
 
 // ─── deal (혜택 링크 허브) ────────────────────────────────────────────────────
@@ -694,4 +701,46 @@ export function blogBreadcrumbJsonLd(crumbs) {
       item: blogCategoryUrl(crumb.path),
     })),
   };
+}
+
+// ─── AdSense (수익화) ────────────────────────────────────────────────────────
+
+/**
+ * AdSense 게시자 ID (`ca-pub-…`).
+ *
+ * 빈 문자열이면 광고를 아예 켜지 않는다 — index.html 의 로더가 조기 반환하고
+ * ads.txt 도 찍히지 않는다. 승인 전에 스크립트만 먼저 나가면 게시자 ID 가 없는
+ * 요청이 반복돼 계정 심사에 불리하고, 내용 없는 ads.txt 는 그 자체가 크롤러에게
+ * "권한 있는 판매자 없음" 선언이 되어 광고 게재를 막는다.
+ *
+ * GA 측정 ID 와 마찬가지로 브라우저에 노출되는 공개값이라 레포에 그대로 둔다.
+ * 여기와 index.html 두 곳에 같은 값이 필요하다 — index.html 은 정적 HTML 이라
+ * 이 모듈을 import 할 수 없어서다(테마 판정 스크립트가 useHeritageSurface 의
+ * 사본을 두는 것과 같은 이유). 고칠 때 두 곳을 함께 고친다.
+ */
+export const ADSENSE_CLIENT = '';
+
+/**
+ * 광고를 게재하는 호스트.
+ *
+ * resume 는 제외한다 — 실명·연락처가 들어간 토큰 게이트 문서라(ADR-0064) 광고
+ * 네트워크에 열람 맥락을 넘기지 않는다. GA 를 같은 이유로 빼둔 것과 같은 기준이다.
+ * index.html 의 로더가 이 목록의 사본으로 판정하므로 호스트를 늘리면 함께 고친다.
+ */
+export const ADSENSE_HOSTS = [PORTAL_ORIGIN, GAME_ORIGIN, PLACE_ORIGIN, DEAL_ORIGIN, BLOG_ORIGIN].map(
+  (origin) => new URL(origin).host,
+);
+
+/**
+ * ads.txt — 이 도메인의 광고 재고를 팔 권한이 있는 판매자 선언 (IAB Tech Lab).
+ *
+ * 파일이 없으면 대부분의 수요처가 입찰을 건너뛰어 실질 수익이 0 에 수렴한다.
+ * 서브도메인은 루트 도메인의 ads.txt 를 따르지만, 여기서는 호스트별로 같은 내용을
+ * 찍는다 — nginx 가 `/ads.txt` 를 $host 로 갈라 서빙하는데(robots 와 동일 구조)
+ * 서브도메인 키가 없으면 SPA 폴백이 index.html 을 내보내 크롤러가 HTML 을 받는다.
+ */
+export function adsTxt(client = ADSENSE_CLIENT) {
+  if (!client) return null;
+  // DIRECT = 게시자가 직접 계약한 판매자, 끝의 값은 Google 의 인증 기관 ID (고정)
+  return `google.com, ${client.replace(/^ca-/, '')}, DIRECT, f08c47fec0942fa0\n`;
 }

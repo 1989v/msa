@@ -1,0 +1,23 @@
+/* 광고는 콘텐츠가 아니다 — 판(.kh-slab)이나 테두리로 꾸미지 않는다. 지면과 구분되기만
+   하면 되고, 그 구분은 위아래 여백과 작은 라벨이 한다. */
+
+.ad-slot {
+  display: block;
+  width: 100%;
+  margin: var(--ko-space-12) 0;
+  /* 광고 로드 전에도 자리를 차지해 본문이 밀려 내려가지 않게 한다 (CLS) */
+  contain: layout;
+}
+
+.ad-slot-label {
+  display: block;
+  margin-bottom: var(--ko-space-2);
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+  letter-spacing: var(--kh-tracking-mono, 0.04em);
+}
+
+.ad-slot-unit {
+  display: block;
+  width: 100%;
+}

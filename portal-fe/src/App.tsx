@@ -36,6 +36,9 @@ const SearchPage = lazy(() => import('./pages/SearchPage'));
 // ADR-0074 — 내 찜 모아보기 (호스트 인식: game=GAME, place=ATTRACTION, blog=BLOG_POST, apex=탭)
 const FavoritesPage = lazy(() => import('./components/favorite/FavoritesPage'));
 // ADR-0064 — 이력서 (resume.<domain>). 공개 포털 번들과 코드가 섞이지 않게 lazy 로 분리한다.
+// ADR-0076 — 개인정보처리방침. 광고·분석의 전제 문서이고 모든 호스트의 푸터가 이 주소를
+// 건다. 읽으러 오는 사람만 받으면 되므로 lazy 로 뺀다.
+const PrivacyPage = lazy(() => import('./pages/PrivacyPage'));
 const ResumePage = lazy(() => import('./pages/resume/ResumePage'));
 const ResumeDetailPage = lazy(() => import('./pages/resume/ResumeDetailPage'));
 const ResumePrintPage = lazy(() => import('./pages/resume/ResumePrintPage'));
@@ -153,6 +156,9 @@ function App() {
               색인 대상인 1989v.com 경로로 이력서가 노출된다 (ADR-0064: 이력서는 noindex) */}
           {isResumeHost && <Route path="/d/:slug" element={<ResumeDetailPage />} />}
           {isResumeHost && <Route path="/print" element={<ResumePrintPage />} />}
+          {/* 개인정보처리방침 — 호스트를 가리지 않는다. 서브도메인마다 방침을 따로 두면
+              한 곳만 고쳐진 채로 남는다 (ADR-0076) */}
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/portfolio" element={<PortfolioPage />} />
           <Route path="/shop" element={<ShopPage />} />
           <Route path="/shop/products/:id" element={<ShopProductDetailPage />} />

@@ -81,6 +81,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
   **워치독은 Argo 가 배포하지 않는다** — 막힌 것을 푸는 물건을 막힌 것이 배포하면 같이 막힌다.
   `k8s/argocd/install.sh` 가 직접 apply 하므로, 워치독을 고치면 install.sh 를 다시 돌려야 반영된다
 - **혜택 링크 허브**: `deal.1989v.com` — 카테고리별 혜택 링크 큐레이션 + 자체 리다이렉터 → `docs/adr/ADR-0069-deal-affiliate-hub.md`. **규제 업권(의료·금융)은 카테고리 행 자체를 만들지 않는다**(의료법 27조·금소법). 제휴 링크는 `AFFILIATE`/`PLAIN` 로 갈라 고지를 제휴에만 붙이고, `target_url` 은 **원본 무변조**로 302 한다 — 파라미터를 손대면 약관 위반이고 트래킹 쿠키가 깨진다
+- **광고 수익화 (AdSense)**: 지면은 `AdSlot` 을 넣은 자리에만 — **자동 광고는 콘솔에서 끈 채로 둔다** → `docs/adr/ADR-0076-adsense-monetization.md`. `copy.mjs` 의 `ADSENSE_CLIENT` 한 줄이 로더·지면·`ads.txt` 셋을 동시에 켜고 끈다(빈 값 = 광고 없음이 정상 상태). **`/ads.txt` 는 nginx 명시 route 가 없으면 SPA 폴백이 index.html 을 내보내고, 그 응답은 '유효한 판매자 0줄'로 읽혀 도메인 전체 입찰이 끊긴다.** resume 는 제외 (ADR-0064 와 같은 기준)
 - **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다)
 
 ---

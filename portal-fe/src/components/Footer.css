@@ -88,3 +88,11 @@
     transition: none;
   }
 }
+
+/* 저작권 줄 끝에 붙는 법 문서 링크 — 본문보다 약하게 두되 밑줄로 링크임을 남긴다 */
+.site-footer-policy {
+  margin-left: var(--ko-space-3);
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

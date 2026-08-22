@@ -33,7 +33,14 @@ export default function Footer({ children }: { children?: ReactNode }) {
           </button>
         </div>
         {children && <div className="site-footer-slot">{children}</div>}
-        <p className="site-footer-copy">© 2026 Gideok Kwon. All rights reserved.</p>
+        <p className="site-footer-copy">
+          © 2026 Gideok Kwon. All rights reserved.
+          {/* 광고·분석을 싣는 모든 화면에서 방침에 닿아야 한다 (ADR-0076). 상대 경로라
+              서브도메인에서는 그 호스트가 같은 라우트를 그린다 — canonical 은 apex 다. */}
+          <a className="site-footer-policy" href="/privacy">
+            개인정보처리방침
+          </a>
+        </p>
       </div>
 
       {explorerOpen && <ServiceExplorer onClose={() => setExplorerOpen(false)} />}
