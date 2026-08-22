@@ -1,5 +1,5 @@
 import type { ComponentType } from 'react';
-import { Compass, Gamepad2, Heart, Home, LayoutGrid, Layers } from 'lucide-react';
+import { Compass, Gamepad2, Heart, Home, LayoutGrid, Layers, MapPin } from 'lucide-react';
 
 /**
  * 모바일 앱 셸 — 호스트별 하단 탭 구성 (kh-motion-app-shell spec §4).
@@ -11,9 +11,11 @@ import { Compass, Gamepad2, Heart, Home, LayoutGrid, Layers } from 'lucide-react
  *   서비스 탐색 오버레이와 홈 타일 그리드가 받는다.
  * - blog: 홈·내 찜·서비스 — apex 탭을 그대로 내면 블로그 origin 아래로 다른 서비스
  *   화면이 새므로(cross-host) 자기 탭을 갖는다. 카테고리·스튜디오는 BlogShell 머리가 맡는다.
- * - game: 로비·장르·서비스 — 풀 내비게이션('1989v') 탭 대신 탐색 오버레이.
+ * - game: 로비·장르·내 찜·서비스 — 풀 내비게이션('1989v') 탭 대신 탐색 오버레이.
+ * - place: 지도·내 찜·서비스 — 관광지를 찜해 두고 **다시 찾아가는** 것이 이 서비스의
+ *   본 흐름이라 찜 목록이 상시 진입점이어야 한다 (ADR-0080). 셸이 없던 동안 찜은
+ *   할 수 있는데 볼 수가 없었다 — 라우트도 화면도 있는데 길만 없었다.
  * - resume / deal: 셸 없음 — 문서·단일 목록 성격에 탭바는 소음이다.
- * - place: 지역 드릴다운 착지 후 별도 적용 (spec §5).
  * - 게임 플레이 화면: 탭바 숨김 — 게임 rAF 와의 경합 + 몰입 면.
  */
 
@@ -97,8 +99,29 @@ const GAME_TABS: ShellTab[] = [
     sheet: 'genres',
     isActive: (p) => /\/games\/genre\//.test(p),
   },
+  // 찜·평점이 이 호스트에서 일어나는데 목록은 GNB 서랍에만 있었다 — 모바일에서
+  // 서랍을 열어야만 닿는 것은 상시 진입점이 아니다 (ADR-0080).
+  FAVORITES_TAB,
   // '1989v' 풀 내비게이션 탭이 있던 자리 — 오버레이가 본진(1989v 홈) 행을 품으므로
   // 컨텍스트를 버리는 하드 이동 없이 같은 목적지를 전부 커버한다.
+  EXPLORER_TAB,
+];
+
+/**
+ * place — 지도·내 찜·서비스.
+ *
+ * 장르 같은 분류 탭을 두지 않는다: 지역 드릴다운은 화면 안에서 일어나고(지도·지역 페이지),
+ * 탭으로 올리면 지도 위 컨텍스트를 버리는 이동이 된다.
+ */
+const PLACE_TABS: ShellTab[] = [
+  {
+    key: 'map',
+    label: '지도',
+    icon: MapPin,
+    to: '/',
+    isActive: (p) => p === '/' || p === '/en',
+  },
+  FAVORITES_TAB,
   EXPLORER_TAB,
 ];
 
@@ -125,7 +148,8 @@ export function shellTabsFor(hostname: string, pathname: string): ShellTab[] | n
   if (pathname === '/login' || pathname === '/oauth/callback') return null;
 
   const sub = hostname.split('.')[0];
-  if (sub === 'resume' || sub === 'deal' || sub === 'place') return null;
+  if (sub === 'resume' || sub === 'deal') return null;
+  if (sub === 'place') return PLACE_TABS;
   if (sub === 'game') return GAME_TABS;
   if (sub === 'blog') return BLOG_TABS;
   return APEX_TABS;

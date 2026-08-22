@@ -147,7 +147,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | analytics | `analytics/CLAUDE.md` | 이벤트 수집, 스코어 산출 (Kafka Streams + ClickHouse) |
 | experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼 |
 | member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
-| wishlist | `wishlist/CLAUDE.md` | 찜하기 — 다형 대상(상품·게임·관광지·블로그 글), 로그인 전용, opaque targetKey (ADR-0074) |
+| wishlist | `wishlist/CLAUDE.md` | 찜하기 — 다형 대상(상품·게임·관광지·블로그 글), 로그인 전용, opaque targetKey (ADR-0074). 관광지는 **여행 묶음**으로 모은다 — `collection_id IS NULL` 이 미분류이고 '기본' 묶음 행을 만들지 않는다 (ADR-0080) |
 | quant | `quant/CLAUDE.md` | 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS + Phase 3 실매매 (ADR-0033/0036/0037, Phase 3 코어 구현 완료, 거래소 어댑터 4종 wire-up 후 Beta) |
 | auth | (CLAUDE.md 미작성) | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) — 서비스 코드 존재 |
 | gifticon | (CLAUDE.md 미작성) | 기프티콘 관리, 공유 그룹 — 서비스 코드 존재 |

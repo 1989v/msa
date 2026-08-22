@@ -18,6 +18,14 @@ class WishlistItemJpaEntity(
     val id: Long? = null,
     @Column(name = "member_id", nullable = false)
     val memberId: Long,
+    /**
+     * 소속 묶음 (ADR-0080). NULL = 미분류 — '기본' 묶음 행을 만들지 않는다.
+     *
+     * FK 는 ON DELETE SET NULL 이다: 묶음을 지워도 찜은 남는다. 묶음을 없애는 것과
+     * 장소를 버리는 것은 다른 일이다.
+     */
+    @Column(name = "collection_id")
+    var collectionId: Long? = null,
     @Enumerated(EnumType.STRING)
     @Column(name = "target_type", nullable = false, length = 30)
     val targetType: WishlistTargetType,
@@ -31,6 +39,7 @@ class WishlistItemJpaEntity(
     fun toDomain(): WishlistItem = WishlistItem.restore(
         id = id,
         memberId = memberId,
+        collectionId = collectionId,
         targetType = targetType,
         targetKey = targetKey,
         createdAt = createdAt
@@ -40,6 +49,7 @@ class WishlistItemJpaEntity(
         fun fromDomain(item: WishlistItem) = WishlistItemJpaEntity(
             id = item.id,
             memberId = item.memberId,
+            collectionId = item.collectionId,
             targetType = item.targetType,
             targetKey = item.targetKey,
             createdAt = item.createdAt

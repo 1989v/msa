@@ -20,6 +20,7 @@ class WishlistServiceTest : BehaviorSpec({
         WishlistItem.restore(
             id = id,
             memberId = 1L,
+            collectionId = null,
             targetType = type,
             targetKey = key,
             createdAt = LocalDateTime.now(),
@@ -33,7 +34,7 @@ class WishlistServiceTest : BehaviorSpec({
             every { port.findByMemberAndTarget(1L, WishlistTargetType.GAME, "abyssal-crown") } returns null
             every { port.save(any()) } answers {
                 val saved = firstArg<WishlistItem>()
-                WishlistItem.restore(10L, saved.memberId, saved.targetType, saved.targetKey, saved.createdAt)
+                WishlistItem.restore(10L, saved.memberId, null, saved.targetType, saved.targetKey, saved.createdAt)
             }
 
             val result = service.execute(
@@ -81,11 +82,11 @@ class WishlistServiceTest : BehaviorSpec({
         val service = WishlistService(port)
 
         When("타입 지정 없이 조회하면") {
-            every { port.findByMember(1L, null, 0, 20) } returns listOf(
+            every { port.findByMember(1L, null, null, false, 0, 20) } returns listOf(
                 item(id = 11L, type = WishlistTargetType.ATTRACTION, key = "12345"),
                 item(id = 10L),
             )
-            every { port.countByMember(1L, null) } returns 2L
+            every { port.countByMember(1L, null, null, false) } returns 2L
 
             val result = service.execute(GetWishlistUseCase.Query(memberId = 1L))
 
@@ -97,8 +98,8 @@ class WishlistServiceTest : BehaviorSpec({
         }
 
         When("타입을 지정하면") {
-            every { port.findByMember(1L, WishlistTargetType.GAME, 0, 20) } returns listOf(item())
-            every { port.countByMember(1L, WishlistTargetType.GAME) } returns 1L
+            every { port.findByMember(1L, WishlistTargetType.GAME, null, false, 0, 20) } returns listOf(item())
+            every { port.countByMember(1L, WishlistTargetType.GAME, null, false) } returns 1L
 
             val result = service.execute(
                 GetWishlistUseCase.Query(memberId = 1L, targetType = WishlistTargetType.GAME)

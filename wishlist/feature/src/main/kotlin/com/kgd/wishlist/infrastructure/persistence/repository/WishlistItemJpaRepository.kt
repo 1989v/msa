@@ -14,15 +14,58 @@ interface WishlistItemJpaRepository : JpaRepository<WishlistItemJpaEntity, Long>
         targetKey: String,
     ): WishlistItemJpaEntity?
 
-    fun findByMemberId(memberId: Long, pageable: Pageable): List<WishlistItemJpaEntity>
-    fun findByMemberIdAndTargetType(
+    /**
+     * 타입·묶음으로 좁힌 내 찜 (ADR-0080).
+     *
+     * 파생 메서드를 조합별로 두지 않는 이유: 타입(2) × 묶음(2) × 미분류(2) = 8종이 되고,
+     * 필터가 하나 더 붙을 때마다 배가 된다. 조건을 쿼리 안에서 접는 편이 읽기도 쉽다.
+     *
+     * `collectionId = null` 은 **전체**이지 미분류가 아니다 — 미분류만 보려면
+     * `unclassifiedOnly = true` 다. 둘을 한 파라미터로 겸하면 '지정 안 함' 과
+     * '미분류 지정' 이 구분되지 않는다.
+     */
+    @Query(
+        """
+        SELECT w FROM WishlistItemJpaEntity w
+        WHERE w.memberId = :memberId
+          AND (:targetType IS NULL OR w.targetType = :targetType)
+          AND (:unclassifiedOnly = FALSE OR w.collectionId IS NULL)
+          AND (:collectionId IS NULL OR w.collectionId = :collectionId)
+        """,
+    )
+    fun search(
         memberId: Long,
-        targetType: WishlistTargetType,
+        targetType: WishlistTargetType?,
+        collectionId: Long?,
+        unclassifiedOnly: Boolean,
         pageable: Pageable,
     ): List<WishlistItemJpaEntity>
 
-    fun countByMemberId(memberId: Long): Long
-    fun countByMemberIdAndTargetType(memberId: Long, targetType: WishlistTargetType): Long
+    @Query(
+        """
+        SELECT COUNT(w) FROM WishlistItemJpaEntity w
+        WHERE w.memberId = :memberId
+          AND (:targetType IS NULL OR w.targetType = :targetType)
+          AND (:unclassifiedOnly = FALSE OR w.collectionId IS NULL)
+          AND (:collectionId IS NULL OR w.collectionId = :collectionId)
+        """,
+    )
+    fun countSearch(
+        memberId: Long,
+        targetType: WishlistTargetType?,
+        collectionId: Long?,
+        unclassifiedOnly: Boolean,
+    ): Long
+
+    /** 묶음별 항목 수 — 목록이 '제주 여행 · 8곳' 을 그리는 데 쓴다 */
+    @Query(
+        """
+        SELECT w.collectionId, COUNT(w) FROM WishlistItemJpaEntity w
+        WHERE w.memberId = :memberId AND w.collectionId IS NOT NULL
+        GROUP BY w.collectionId
+        """,
+    )
+    fun countGroupedByCollection(memberId: Long): List<Array<Any>>
 
     @Query("SELECT w.targetKey FROM WishlistItemJpaEntity w WHERE w.memberId = :memberId AND w.targetType = :targetType")
     fun findKeysByMemberIdAndTargetType(memberId: Long, targetType: WishlistTargetType): List<String>
