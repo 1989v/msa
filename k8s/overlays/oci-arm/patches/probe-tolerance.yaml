@@ -1,0 +1,25 @@
+# 프로브 관용도 (ADR-0075 개정 2) — 바쁜 노드에서 **멀쩡한 파드가 쫓겨나지 않게** 한다.
+#
+# 2026-08-22 전체 롤아웃 훈련에서 실측: 부하 32까지 오르자 이미 Ready 이던 portal-fe(nginx)
+# 의 readiness 가 실패하며 Service 엔드포인트가 비었고, ingress 가 "no active Endpoint" 로
+# 503 을 냈다. 파드는 계속 Running 이었다 — 죽은 게 아니라 **1초 안에 대답하지 못했을 뿐**이다.
+#
+# k8s 기본 timeoutSeconds 는 1 이다. 4 OCPU 를 20개 파드가 나눠 쓰는 롤아웃 순간에는
+# 그 1초가 정적 파일 서버에게도 빠듯하다. 타임아웃을 늘리고 연속 실패 허용치를 올려
+# "느림"이 "장애"로 승격되지 않게 한다. 진짜 죽은 파드는 여전히 걸러진다
+# (readiness 5초×3회=15초, liveness 5초×5회=25초).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: placeholder
+spec:
+  template:
+    spec:
+      containers:
+        - name: app
+          readinessProbe:
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            timeoutSeconds: 5
+            failureThreshold: 5
