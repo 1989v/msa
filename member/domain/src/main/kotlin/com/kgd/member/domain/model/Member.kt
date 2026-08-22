@@ -4,9 +4,12 @@ import java.time.LocalDateTime
 
 class Member private constructor(
     val id: Long? = null,
-    val email: String,
     private var _name: String,
     val ssoProvider: SsoProvider,
+    /**
+     * 소셜 제공자 식별값의 **해시** (ADR-0078). auth 가 HMAC 을 씌워 넘긴다 —
+     * 원본 `sub` 은 이 서비스에 들어오지 않는다.
+     */
     val ssoProviderId: String,
     private var _status: MemberStatus = MemberStatus.ACTIVE,
     val createdAt: LocalDateTime = LocalDateTime.now()
@@ -15,16 +18,18 @@ class Member private constructor(
     val status: MemberStatus get() = _status
 
     companion object {
+        /**
+         * 가입. 표시 이름은 받지 않고 만든다 — 소셜 계정의 실명·닉네임을 수집하지 않기
+         * 때문이다. 사용자가 [updateName] 으로 언제든 바꿀 수 있다.
+         */
         fun create(
-            email: String,
-            name: String,
             ssoProvider: SsoProvider,
-            ssoProviderId: String
+            ssoProviderId: String,
+            name: String = Nickname.generate()
         ): Member {
-            require(email.isNotBlank()) { "이메일은 비어있을 수 없습니다" }
+            require(ssoProviderId.isNotBlank()) { "소셜 식별값은 비어있을 수 없습니다" }
             require(name.isNotBlank()) { "이름은 비어있을 수 없습니다" }
             return Member(
-                email = email,
                 _name = name,
                 ssoProvider = ssoProvider,
                 ssoProviderId = ssoProviderId
@@ -33,7 +38,6 @@ class Member private constructor(
 
         fun restore(
             id: Long?,
-            email: String,
             name: String,
             ssoProvider: SsoProvider,
             ssoProviderId: String,
@@ -41,7 +45,6 @@ class Member private constructor(
             createdAt: LocalDateTime
         ): Member = Member(
             id = id,
-            email = email,
             _name = name,
             ssoProvider = ssoProvider,
             ssoProviderId = ssoProviderId,

@@ -42,14 +42,20 @@ spec:
             - name: GOOGLE_CLIENT_SECRET
               valueFrom:
                 secretKeyRef: { name: oauth-google, key: client-secret, optional: true }
-            # 최초 관리자 — 역할 부여 API 가 ROLE_ADMIN 을 요구해 생기는 교착을 끊는 유일한 경로.
-            # 이 레포는 공개라 이메일을 매니페스트에 두지 않는다:
-            #   kubectl -n commerce create secret generic auth-bootstrap \
-            #     --from-literal=admin-emails='you@example.com'
-            # 첫 관리자 로그인 뒤에는 시크릿을 지워도 된다(이후는 역할 부여 API 로 운영).
-            - name: AUTH_BOOTSTRAP_ADMIN_EMAILS
+            # 소셜 식별값(sub)을 가리는 HMAC 키 (ADR-0078).
+            #
+            # optional: false — 없으면 파드가 뜨지 않는다. 평문으로 되돌아가는 경로를 두면
+            # 그날부터 조용히 원본 sub 이 쌓이고, 그 사실은 유출된 뒤에야 드러난다.
+            #
+            # 이 레포는 공개라 키를 매니페스트에 두지 않는다:
+            #   kubectl -n commerce create secret generic auth-subject-hash \
+            #     --from-literal=key="$(openssl rand -hex 32)"
+            #
+            # **키를 잃으면 기존 회원 전원이 로그인 불가다** — 해시를 다시 만들 수 없다.
+            # 백업 대상이며, 교체 절차는 auth/CLAUDE.md 참조.
+            - name: AUTH_SUBJECT_HASH_KEY
               valueFrom:
-                secretKeyRef: { name: auth-bootstrap, key: admin-emails, optional: true }
+                secretKeyRef: { name: auth-subject-hash, key: key }
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

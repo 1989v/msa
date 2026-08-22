@@ -24,15 +24,12 @@ class MemberService(
         if (existing != null) {
             return GetOrCreateMemberUseCase.Result(
                 id = requireNotNull(existing.id),
-                email = existing.email,
-                name = existing.name,
                 isNewMember = false
             )
         }
 
+        // 표시 이름은 Member.create 가 만든다 — 제공자에게서 받는 것이 식별값뿐이라서다
         val newMember = Member.create(
-            email = command.email,
-            name = command.name,
             ssoProvider = command.ssoProvider,
             ssoProviderId = command.ssoProviderId
         )
@@ -40,8 +37,6 @@ class MemberService(
 
         return GetOrCreateMemberUseCase.Result(
             id = requireNotNull(saved.id),
-            email = saved.email,
-            name = saved.name,
             isNewMember = true
         )
     }
@@ -53,7 +48,6 @@ class MemberService(
 
         return GetMemberProfileUseCase.Result(
             id = requireNotNull(member.id),
-            email = member.email,
             name = member.name,
             ssoProvider = member.ssoProvider.name,
             status = member.status

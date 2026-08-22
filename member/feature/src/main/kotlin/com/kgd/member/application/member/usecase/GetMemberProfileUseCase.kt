@@ -9,7 +9,6 @@ interface GetMemberProfileUseCase {
 
     data class Result(
         val id: Long,
-        val email: String,
         val name: String,
         val ssoProvider: String,
         val status: MemberStatus

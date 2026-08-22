@@ -21,17 +21,13 @@ class MemberController(
     fun getOrCreateMember(@RequestBody request: SsoMemberRequest): ApiResponse<SsoMemberResponse> {
         val result = getOrCreateMemberUseCase.execute(
             GetOrCreateMemberUseCase.Command(
-                email = request.email,
-                name = request.name,
                 ssoProvider = SsoProvider.valueOf(request.ssoProvider),
-                ssoProviderId = request.ssoProviderId
+                ssoProviderId = request.subjectHash
             )
         )
         return ApiResponse.success(
             SsoMemberResponse(
                 id = result.id,
-                email = result.email,
-                name = result.name,
                 isNewMember = result.isNewMember
             )
         )
@@ -46,7 +42,6 @@ class MemberController(
         return ApiResponse.success(
             MemberProfileResponse(
                 id = result.id,
-                email = result.email,
                 name = result.name,
                 ssoProvider = result.ssoProvider,
                 status = result.status.name
@@ -79,23 +74,19 @@ class MemberController(
     }
 }
 
+/** [subjectHash] 는 auth 가 HMAC 을 씌운 소셜 식별값이다 (ADR-0078) */
 data class SsoMemberRequest(
-    val email: String,
-    val name: String,
     val ssoProvider: String,
-    val ssoProviderId: String
+    val subjectHash: String
 )
 
 data class SsoMemberResponse(
     val id: Long,
-    val email: String,
-    val name: String,
     val isNewMember: Boolean
 )
 
 data class MemberProfileResponse(
     val id: Long,
-    val email: String,
     val name: String,
     val ssoProvider: String,
     val status: String

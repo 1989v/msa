@@ -65,12 +65,19 @@ export function buildKakaoAuthUrl(): string {
   );
 }
 
+/**
+ * 스코프는 `openid` 하나다 (ADR-0078).
+ *
+ * `email`·`profile` 을 빼면 응답에 식별값(sub)만 온다 — 받지 않는 것이 저장하지 않는 것보다
+ * 확실하고, 동의 화면에 이름·이메일이 뜨지 않아 사용자가 무엇을 주는지도 정확해진다.
+ * 회원을 찾는 데는 sub 이면 충분하다(원래부터 그것이 유일한 조회 키였다).
+ */
 export function buildGoogleAuthUrl(): string {
   const redirectUri = getOAuthRedirectUri();
   return (
     'https://accounts.google.com/o/oauth2/v2/auth' +
     `?client_id=${GOOGLE_CLIENT_ID}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    '&response_type=code&scope=openid%20email%20profile&state=google'
+    '&response_type=code&scope=openid&state=google'
   );
 }

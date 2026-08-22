@@ -17,12 +17,11 @@ import java.time.LocalDateTime
 class MemberJpaEntity(
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
-    @Column(nullable = false, length = 255)
-    val email: String,
     name: String,
     @Enumerated(EnumType.STRING)
     @Column(name = "sso_provider", nullable = false, length = 20)
     val ssoProvider: SsoProvider,
+    /** HMAC-SHA256 hex = 64자 (ADR-0078). 원본 sub 은 저장하지 않는다. */
     @Column(name = "sso_provider_id", nullable = false, length = 255)
     val ssoProviderId: String,
     status: MemberStatus = MemberStatus.ACTIVE,
@@ -42,7 +41,6 @@ class MemberJpaEntity(
 
     fun toDomain(): Member = Member.restore(
         id = id,
-        email = email,
         name = name,
         ssoProvider = ssoProvider,
         ssoProviderId = ssoProviderId,
@@ -53,7 +51,6 @@ class MemberJpaEntity(
     companion object {
         fun fromDomain(member: Member) = MemberJpaEntity(
             id = member.id,
-            email = member.email,
             name = member.name,
             ssoProvider = member.ssoProvider,
             ssoProviderId = member.ssoProviderId,

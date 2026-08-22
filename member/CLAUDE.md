@@ -1,12 +1,12 @@
 # Member Service
 
-회원 식별 및 프로필 관리 서비스. 최소 개인정보 원칙 (email, name, SSO 제공자).
+회원 식별 및 프로필 관리 서비스. **이메일·실명을 저장하지 않는다** (ADR-0078).
 
 ## Modules
 
 | Gradle path | 역할 |
 |---|---|
-| `:member:domain` | Pure Kotlin 도메인 (Member, MemberStatus, SsoProvider) |
+| `:member:domain` | Pure Kotlin 도메인 (Member, MemberStatus, SsoProvider, Nickname) |
 | `:member:app` | Spring Boot 앱 (port 8093) |
 
 ## Commands
@@ -19,7 +19,8 @@
 
 ## Key Rules
 
-- **최소 개인정보**: email, name, SSO 제공자/ID만 저장
+- **최소 개인정보**: 제공자 구분 + **해시된** 소셜 식별값 + 표시 이름만 저장 (ADR-0078).
+  이메일은 컬럼째 없앴고, 표시 이름은 가입 시 `Nickname.generate()` 가 만든다 — 소셜 계정의 실명이 아니다
 - Auth 서비스가 OAuth 로그인 시 `/api/members/sso`를 호출하여 회원 조회/생성
 - 탈퇴 시 `member.withdrawn` Kafka 이벤트 발행 (향후)
 - Member DB 독립, 다른 서비스 직접 DB 접근 금지
@@ -28,7 +29,7 @@
 
 | Method | Path | 설명 |
 |--------|------|------|
-| POST | `/api/members/sso` | SSO 기반 회원 조회/생성 (auth 내부 호출) |
+| POST | `/api/members/sso` | SSO 기반 회원 조회/생성 (auth 내부 호출). 본문은 `ssoProvider` + `subjectHash` 뿐 |
 | GET | `/api/members/me` | 내 프로필 조회 |
 | PATCH | `/api/members/me/name` | 이름 수정 |
 | DELETE | `/api/members/me` | 회원 탈퇴 |
