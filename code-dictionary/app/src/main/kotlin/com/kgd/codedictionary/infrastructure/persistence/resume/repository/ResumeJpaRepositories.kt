@@ -6,7 +6,10 @@ import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeSet
 import com.kgd.codedictionary.infrastructure.persistence.resume.entity.ResumeShareLinkJpaEntity
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import java.time.LocalDateTime
 
 interface ResumeDocumentJpaRepository : JpaRepository<ResumeDocumentJpaEntity, Long> {
     fun findBySlug(slug: String): ResumeDocumentJpaEntity?
@@ -42,4 +45,9 @@ interface ResumeAccessLogJpaRepository : JpaRepository<ResumeAccessLogJpaEntity,
         """,
     )
     fun findRecentWithLabel(pageable: Pageable): List<Array<Any?>>
+
+    /** 보존기간 초과분 정리 — retention CronJob 이 부른다 (ADR-0077) */
+    @Modifying
+    @Query("DELETE FROM ResumeAccessLogJpaEntity l WHERE l.visitedAt < :cutoff")
+    fun deleteOlderThan(@Param("cutoff") cutoff: LocalDateTime): Int
 }

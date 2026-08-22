@@ -20,6 +20,7 @@ import com.kgd.codedictionary.infrastructure.persistence.resume.repository.Resum
 import com.kgd.common.exception.NotFoundException
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Component
@@ -97,6 +98,9 @@ class ResumeAccessLogRepositoryAdapter(
                 visitedAt = row[3] as LocalDateTime,
             )
         }
+
+    @Transactional
+    override fun purgeOlderThan(cutoff: LocalDateTime): Int = jpaRepository.deleteOlderThan(cutoff)
 }
 
 @Component

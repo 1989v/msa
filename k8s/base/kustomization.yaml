@@ -32,6 +32,8 @@ resources:
   - place-ingest
   # ADR-0069: 혜택 링크 생존 점검 배치 (code-dictionary 이미지 재사용, 상주 파드 없음)
   - deal-linkcheck
+  # ADR-0077: 원장 보존기간 정리 배치 (같은 이미지 재사용, 외부 egress 없음)
+  - retention
   # Frontend + non-JVM services (Phase 7 extension)
   - portal-fe
   - gifticon-fe

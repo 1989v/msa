@@ -1,0 +1,6 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: commerce
+# ADR-0077 — 상주 Deployment 없음. 주 1회 CronJob 으로만 구동(idle 메모리 0).
+resources:
+  - cronjob.yaml

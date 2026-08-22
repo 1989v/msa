@@ -42,7 +42,7 @@ class BlogViewService(
         }.onFailure { log.warn(it) { "조회수 집계 실패 postId=$postId" } }
     }
 
-    /** 보존기간 초과 원장 정리 — 어드민에서 수동 실행 */
+    /** 보존기간 초과 원장 정리 — retention CronJob 이 부른다 (ADR-0077) */
     @Transactional
     fun purgeOlderThan(days: Long): Int =
         viewRepository.deleteOlderThan(LocalDate.now().minusDays(days))
