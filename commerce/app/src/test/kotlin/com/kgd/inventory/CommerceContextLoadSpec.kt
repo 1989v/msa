@@ -35,6 +35,10 @@ fun commerceDockerAvailable(): Boolean = dockerAvailable
         "spring.kafka.listener.auto-startup=false",
         "spring.jpa.hibernate.ddl-auto=create",
         "spring.flyway.enabled=false",
+        // member 는 전용 Flyway 를 갖는다(ADR-0078). 토글이 호스트와 분리돼 있어
+        // spring.flyway.enabled 로는 꺼지지 않는다 — 여기서 끄지 않으면 ddl-auto 가
+        // 테이블을 만들기도 전에 V2 의 ALTER 가 돌아 컨텍스트 로드가 깨진다.
+        "member.flyway.enabled=false",
         "outbox.polling.enabled=false",
         "management.health.redis.enabled=false",
         "spring.data.redis.host=localhost",
