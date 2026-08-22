@@ -35,6 +35,9 @@ RUN find dist/games -name '*.html' -type f -exec \
              -e "s#\(\.\./lib/[a-z0-9_-]*\.js\)\"#\1?v=${GIT_SHA}\"#g" \
              -e "s#\(\.\./lib/[a-z0-9_-]*\.css\)\"#\1?v=${GIT_SHA}\"#g" {} + \
  && grep -q 'lib/touch\.js?v=' dist/games/overworld-quest/index.html
+# 산출물 HTML 주석 제거 — 반드시 마지막이다. index.html 주석은 미니파이 대상이 아니라
+# 내부 설계 메모가 그대로 배포된다. 프리렌더의 seo 마커 교체와 위 sed 가 끝난 뒤 돈다.
+RUN node scripts/strip-html-comments.mjs
 
 FROM nginx:1.27-alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
