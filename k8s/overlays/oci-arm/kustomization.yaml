@@ -208,6 +208,8 @@ patches:
   # 2026-08-09 실측: 웨이브당 4개(=4코어, 100%)로 잡았더니 CoreDNS 가 굶어
   # UnknownHostException → crashloop. 사이트는 살아 있었지만 롤아웃이 정체했다.
   # nginx(FE) 는 기동 비용이 무시할 수준이라 한 웨이브에 묶어도 된다.
+  # nginx 3종 — 기동 비용 미미
+  # 무거운 백그라운드 — 마지막에 둬서 늦거나 실패해도 트래픽 경로를 막지 않는다
   - target: {kind: Deployment, name: "^(gateway|portal-fe)$"}
     patch: |-
       apiVersion: apps/v1
@@ -216,7 +218,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "1"
-  - target: {kind: Deployment, name: "^(code-dictionary|commerce)$"}
+  - target: {kind: Deployment, name: "^(code-dictionary)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -224,8 +226,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "2"
-  # nginx 3종 — 기동 비용 미미
-  - target: {kind: Deployment, name: "^(admin-fe|quant-fe|gifticon-fe|agent-viewer-fe)$"}
+  - target: {kind: Deployment, name: "^(commerce)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -233,7 +234,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "3"
-  - target: {kind: Deployment, name: "^(auth|product)$"}
+  - target: {kind: Deployment, name: "^(admin-fe|quant-fe|gifticon-fe|agent-viewer-fe)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -241,7 +242,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "4"
-  - target: {kind: Deployment, name: "^(search|gifticon)$"}
+  - target: {kind: Deployment, name: "^(auth)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -249,7 +250,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "5"
-  - target: {kind: Deployment, name: "^(experiment|place|agent-viewer-api)$"}
+  - target: {kind: Deployment, name: "^(product)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -257,8 +258,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "6"
-  # 무거운 백그라운드 — 마지막에 둬서 늦거나 실패해도 트래픽 경로를 막지 않는다
-  - target: {kind: Deployment, name: "^(analytics|quant)$"}
+  - target: {kind: Deployment, name: "^(search)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -266,7 +266,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "7"
-  - target: {kind: Deployment, name: "^(chatbot|recommendation)$"}
+  - target: {kind: Deployment, name: "^(gifticon)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -274,7 +274,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "8"
-  - target: {kind: Deployment, name: "^(recommendation-ann|search-consumer)$"}
+  - target: {kind: Deployment, name: "^(experiment)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -282,6 +282,62 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "9"
+  - target: {kind: Deployment, name: "^(place|agent-viewer-api)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "10"
+  - target: {kind: Deployment, name: "^(analytics)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "11"
+  - target: {kind: Deployment, name: "^(quant)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "12"
+  - target: {kind: Deployment, name: "^(chatbot)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "13"
+  - target: {kind: Deployment, name: "^(recommendation)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "14"
+  - target: {kind: Deployment, name: "^(recommendation-ann)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "15"
+  - target: {kind: Deployment, name: "^(search-consumer)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "16"
     # ─── place (ADR-0056) — DB provisioning 전까지 비활성 가드 ─────────────────
     # OCIR 이미지·images: 항목은 CI 가 등재 완료. 남은 활성화 절차:
     #   1) place_db / place_user — **완료 (2026-08-09)**. 수동 생성 유저는 반드시 native
