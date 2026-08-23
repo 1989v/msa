@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
  * ADR-0069 — deal:feature 는 game 과 달리 **전용 datasource 를 두지 않고** 이 기본
  * EMF/TM 을 그대로 쓴다(같은 스키마). 그래서 리포지토리 스캔 범위에 com.kgd.deal 을 더한다.
  * ADR-0072 — blog:feature 도 같은 이유로 com.kgd.blog 을 더한다.
+ * ADR-0081 — ranking:feature 도 같은 이유로 com.kgd.ranking 을 더한다.
  *
  * **엔티티 스캔은 여기서 못 한다.** `@EntityScan` 은 Boot 가 자동 구성한 EMF 에만 반영되는데,
  * 이 앱은 `DataSourceConfig` 가 EMF 를 명시 정의해 자동 구성이 back-off 한 상태다. 엔티티
@@ -18,5 +19,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
  * 다음 사람이 그게 동작한다고 믿는다.
  */
 @Configuration
-@EnableJpaRepositories(basePackages = ["com.kgd.codedictionary", "com.kgd.deal", "com.kgd.blog"])
+@EnableJpaRepositories(basePackages = ["com.kgd.codedictionary", "com.kgd.deal", "com.kgd.blog", "com.kgd.ranking"])
 class CodeDictionaryJpaConfig
