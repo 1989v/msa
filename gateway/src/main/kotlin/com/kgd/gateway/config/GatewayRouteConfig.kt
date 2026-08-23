@@ -317,6 +317,14 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // === ADR-0081 랭킹 리더보드 (code-dictionary 소유) ===
+            // 공개 조회만 연다. 수집기가 쓰는 `/internal` 하위는 여기 없다 — 클러스터 안에서
+            // 직접 부르므로 게이트웨이를 통과할 이유가 없고, 열면 외부에서 적재가 가능해진다.
+            .route("ranking-public") { r ->
+                r.path("/api/v1/ranking/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // === ADR-0069 혜택 링크 허브 (code-dictionary 소유) ===
             // 어드민 경로를 먼저 선언해야 공개 라우트에 가려지지 않는다.
             .route("deal-admin") { r ->
