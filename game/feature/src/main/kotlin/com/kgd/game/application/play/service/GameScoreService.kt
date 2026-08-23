@@ -7,9 +7,12 @@ import com.kgd.game.application.play.port.ScoreEntry
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
+import com.kgd.game.domain.play.model.GameDay
+import com.kgd.game.domain.play.model.ScorePeriod
 import com.kgd.game.domain.play.model.ScoreTrack
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 /** 게임별 랭킹 — 닉네임당 최고 기록. 게스트 제출 허용 (닉네임이 곧 신원) */
 @Service
@@ -30,18 +33,40 @@ class GameScoreService(
         private const val ACTIVE_FETCH_FACTOR = 3
     }
 
+    /**
+     * 점수 제출 — 역대 보드와 오늘 보드를 **한 트랜잭션에서** 함께 올린다.
+     *
+     * 날짜는 서버가 정한다(`GameDay`). 클라이언트가 실어 보내게 하면 기기 시계와 타임존만큼
+     * 보드가 갈라지고, 게임 57종이 쓰는 공용 제출 코드(`lib/rank.js`)를 전부 고쳐야 한다.
+     */
     @Transactional(transactionManager = "gameTransactionManager")
     fun submit(slug: String, track: ScoreTrack, nickname: String, score: Long, detail: String?): Pair<Boolean, Int> {
         val gameId = resolveGameId(slug)
         val nick = nickname.trim()
         if (!NICK_REGEX.matches(nick)) throw BusinessException(ErrorCode.INVALID_INPUT, "닉네임은 2~16자 (문자/숫자/공백/._-)")
         if (score !in 0..MAX_SCORE) throw BusinessException(ErrorCode.INVALID_INPUT, "점수 범위 오류")
-        return scoreRepository.submit(gameId, track, nick, score, detail?.take(64))
+        return scoreRepository.submit(gameId, track, nick, score, detail?.take(64), GameDay.today())
     }
 
+    /**
+     * 보드 조회. `period` 를 생략하면 역대 보드 — 기존 호출자(게임 안 `lib/rank.js` 포함)의
+     * 계약이 그대로 유지된다. `date` 는 DAILY 에서만 뜻이 있고, 생략하면 KST 기준 오늘이다.
+     */
     @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
-    fun leaderboard(slug: String, track: ScoreTrack, limit: Int): List<ScoreEntry> =
-        scoreRepository.top(resolveGameId(slug), track, limit.coerceIn(1, 50))
+    fun leaderboard(
+        slug: String,
+        track: ScoreTrack,
+        limit: Int,
+        period: ScorePeriod = ScorePeriod.ALL_TIME,
+        date: LocalDate? = null,
+    ): List<ScoreEntry> {
+        val gameId = resolveGameId(slug)
+        val size = limit.coerceIn(1, 50)
+        return when (period) {
+            ScorePeriod.ALL_TIME -> scoreRepository.top(gameId, track, size)
+            ScorePeriod.DAILY -> scoreRepository.topDaily(gameId, track, date ?: GameDay.today(), size)
+        }
+    }
 
     /**
      * 허브 랭킹 레일 — 기록이 있는 보드만 한 번에.
@@ -53,6 +78,9 @@ class GameScoreService(
      * **게임당 한 보드**만 싣는다. 두 트랙을 합치지는 않되(합치면 강화 기록이 무강화 순위를 밀어낸다),
      * 레일에서 같은 게임이 두 칸을 차지하면 순회가 반복으로 보이므로 최근에 갱신된 트랙을 싣고
      * 나머지 트랙은 상세 페이지에서 보게 한다.
+     *
+     * 보드마다 오늘 기록을 함께 실어 보낸다 — 레일이 "오늘의 1위"를 보여주려고 요청을 한 번 더
+     * 하지 않게. 오늘 아무도 안 논 보드는 그 칸이 비고, 레일은 역대 기록으로 그린다.
      */
     @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
     fun activeBoards(boardLimit: Int, entryLimit: Int): List<LeaderboardBoardDto> {
@@ -61,6 +89,7 @@ class GameScoreService(
 
         val refs = scoreRepository.activeBoards(boards * ACTIVE_FETCH_FACTOR).distinctBy { it.gameId }
         val games = gameRepository.findByIds(refs.map { it.gameId }).associateBy { it.id }
+        val today = GameDay.today()
 
         return refs.asSequence()
             .mapNotNull { ref -> games[ref.gameId]?.takeIf { it.isPlayable() }?.let { ref to it } }
@@ -72,6 +101,7 @@ class GameScoreService(
                     thumbnailUrl = game.thumbnailUrl,
                     track = ref.track,
                     entries = scoreRepository.top(ref.gameId, ref.track, entries),
+                    todayEntries = scoreRepository.topDaily(ref.gameId, ref.track, today, entries),
                 )
             }
             .filter { it.entries.isNotEmpty() }

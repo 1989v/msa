@@ -5,10 +5,12 @@ import com.kgd.game.infrastructure.persistence.play.entity.GamePlaySessionJpaEnt
 import com.kgd.game.infrastructure.persistence.play.entity.GameRatingJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameRunJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameSaveDataJpaEntity
+import com.kgd.game.infrastructure.persistence.play.entity.GameScoreDailyJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 interface GamePlaySessionJpaRepository : JpaRepository<GamePlaySessionJpaEntity, Long> {
@@ -52,4 +54,19 @@ interface GameScoreJpaRepository : JpaRepository<GameScoreJpaEntity, Long> {
         """,
     )
     fun findActiveBoards(pageable: Pageable): List<ScoreBoardProjection>
+}
+
+interface GameScoreDailyJpaRepository : JpaRepository<GameScoreDailyJpaEntity, Long> {
+    fun findByGameIdAndTrackAndPlayDateAndNickname(
+        gameId: Long,
+        track: ScoreTrack,
+        playDate: LocalDate,
+        nickname: String,
+    ): GameScoreDailyJpaEntity?
+
+    fun findTop50ByGameIdAndTrackAndPlayDateOrderByScoreDescUpdatedAtAsc(
+        gameId: Long,
+        track: ScoreTrack,
+        playDate: LocalDate,
+    ): List<GameScoreDailyJpaEntity>
 }

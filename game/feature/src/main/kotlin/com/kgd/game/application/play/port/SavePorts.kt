@@ -3,6 +3,7 @@ package com.kgd.game.application.play.port
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.domain.play.model.GameRun
 import java.time.Duration
+import java.time.LocalDate
 
 /** 세이브 스냅샷 — data 는 게임이 정의하는 불투명 JSON 문자열, code 는 이어하기 코드 */
 data class SaveSnapshot(val data: String, val version: Long, val code: String?)
@@ -47,9 +48,26 @@ data class ScoreEntry(val rank: Int, val nickname: String, val score: Long, val 
 data class ScoreBoardRef(val gameId: Long, val track: ScoreTrack)
 
 interface GameScoreRepositoryPort {
-    /** 트랙 안에서 닉네임당 최고 기록 upsert. 반영 여부와 그 트랙 내 순위를 돌려준다 */
-    fun submit(gameId: Long, track: ScoreTrack, nickname: String, score: Long, detail: String?): Pair<Boolean, Int>
+    /**
+     * 트랙 안에서 닉네임당 최고 기록 upsert. 반영 여부와 그 트랙 내 **역대** 순위를 돌려준다.
+     *
+     * 같은 호출이 오늘 보드(`playDate` 안에서 닉네임당 최고)도 함께 올린다 — 제출 한 번에
+     * 보드 둘이 갱신되어야 두 보드가 어긋나지 않는다. 둘의 판정은 독립이다:
+     * 지난달의 자기 최고에 못 미친 런도 오늘 안에서는 최고일 수 있다.
+     */
+    fun submit(
+        gameId: Long,
+        track: ScoreTrack,
+        nickname: String,
+        score: Long,
+        detail: String?,
+        playDate: LocalDate,
+    ): Pair<Boolean, Int>
+
     fun top(gameId: Long, track: ScoreTrack, limit: Int): List<ScoreEntry>
+
+    /** 그 날짜 안에서의 상위 기록. 아무도 안 논 날은 빈 목록이고, 그게 정상이다 */
+    fun topDaily(gameId: Long, track: ScoreTrack, playDate: LocalDate, limit: Int): List<ScoreEntry>
 
     /**
      * 기록이 하나라도 있는 보드를 최근 갱신순으로. 기록 없는 보드는 애초에 행이 없으므로 나오지 않는다 —

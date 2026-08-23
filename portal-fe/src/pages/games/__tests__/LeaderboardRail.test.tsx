@@ -15,7 +15,7 @@ vi.mock('../../../api/gameApi', async (importOriginal) => {
 
 import { fetchActiveLeaderboards, getGameNickname } from '../../../api/gameApi';
 
-const board = (slug: string, title: string): LeaderboardBoard => ({
+const board = (slug: string, title: string, todayEntries: LeaderboardBoard['entries'] = []): LeaderboardBoard => ({
   slug,
   title,
   titleEn: null,
@@ -25,6 +25,7 @@ const board = (slug: string, title: string): LeaderboardBoard => ({
     { rank: 1, nickname: `${slug}-1등`, score: 900, detail: null },
     { rank: 2, nickname: `${slug}-2등`, score: 500, detail: null },
   ],
+  todayEntries,
 });
 
 /** jsdom 에는 matchMedia 가 없다 — 두 분기를 모두 결정적으로 재현하려고 직접 심는다 */
@@ -139,6 +140,29 @@ describe('허브 랭킹 레일', () => {
 
     fireEvent.click(screen.getByRole('button', { name: '다음 랭킹' }));
     expect(screen.getByText('나 게임')).toBeInTheDocument();
+  });
+
+  it('오늘 기록이 있으면 오늘 것을 싣고 "오늘" 표식을 단다', async () => {
+    vi.mocked(fetchActiveLeaderboards).mockResolvedValue([
+      board('a', '가 게임', [{ rank: 1, nickname: '오늘1등', score: 400, detail: null }]),
+    ]);
+    renderRail();
+    await flush();
+
+    expect(screen.getByText('오늘1등')).toBeInTheDocument();
+    expect(screen.getByText('오늘')).toBeInTheDocument();
+    // 오늘 것을 싣는 동안 역대 기록은 자리를 비켜 준다 — 한 칸에 두 보드를 겹치지 않는다
+    expect(screen.queryByText('a-1등')).toBeNull();
+  });
+
+  it('오늘 아무도 안 놀았으면 역대 기록으로 그린다 — 레일이 통째로 사라지지 않는다', async () => {
+    vi.mocked(fetchActiveLeaderboards).mockResolvedValue([board('a', '가 게임')]);
+    renderRail();
+    await flush();
+
+    expect(screen.getByText('a-1등')).toBeInTheDocument();
+    // 늘 붙는 라벨은 읽히지 않는다 — 역대일 때는 표식이 없다
+    expect(screen.queryByText('오늘')).toBeNull();
   });
 
   it('내 기록은 색이 아니라 낱말로도 짚어 준다', async () => {

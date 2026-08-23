@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GameLeaderboard from '../GameLeaderboard';
-import type { ScoreEntry, ScoreTrack } from '../../../api/gameApi';
+import type { ScoreEntry, ScorePeriod, ScoreTrack } from '../../../api/gameApi';
 
 vi.mock('../../../api/gameApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../api/gameApi')>();
@@ -21,10 +21,20 @@ const entry = (rank: number, nickname: string, score: number): ScoreEntry => ({
   detail: null,
 });
 
-/** 트랙별로 다른 보드를 돌려주도록 — 두 보드는 합쳐지지 않는다 */
-function serve(base: ScoreEntry[], modded: ScoreEntry[]) {
-  vi.mocked(fetchLeaderboard).mockImplementation((_slug: string, track: ScoreTrack) =>
-    Promise.resolve(track === 'BASE' ? base : modded),
+/**
+ * (기간 × 트랙) 넷을 각각 다르게 돌려준다 — 어느 것도 합쳐지지 않는다.
+ * 오늘 보드를 생략하면 오늘 아무도 안 논 상태다 (지금 대부분의 게임의 정상 상태).
+ */
+function serve(
+  base: ScoreEntry[],
+  modded: ScoreEntry[],
+  today: { BASE?: ScoreEntry[]; MODDED?: ScoreEntry[] } = {},
+) {
+  vi.mocked(fetchLeaderboard).mockImplementation(
+    (_slug: string, track: ScoreTrack, _limit?: number, period: ScorePeriod = 'ALL_TIME') => {
+      if (period === 'DAILY') return Promise.resolve(today[track] ?? []);
+      return Promise.resolve(track === 'BASE' ? base : modded);
+    },
   );
 }
 
@@ -49,6 +59,8 @@ describe('게임 상세 랭킹', () => {
     expect(screen.getByText('첫 기록에 도전해 보세요 — 위 플레이 버튼으로 시작합니다.')).toBeInTheDocument();
     expect(screen.queryByText('랭킹을 불러오지 못했습니다.')).toBeNull();
     expect(screen.queryByRole('table')).toBeNull();
+    // 보여줄 보드가 없으면 기간 토글도 없다 — 빈 조작을 세워 두지 않는다
+    expect(screen.queryByRole('tab', { name: '오늘' })).toBeNull();
   });
 
   it('한 트랙에만 기록이 있으면 보드 전환 탭을 두지 않는다 — 빈 탭을 보여주지 않는다', async () => {
@@ -56,7 +68,8 @@ describe('게임 상세 랭킹', () => {
     renderBoard();
 
     expect(await screen.findByText('가')).toBeInTheDocument();
-    expect(screen.queryByRole('tab')).toBeNull();
+    expect(screen.queryByRole('tab', { name: '무강화' })).toBeNull();
+    expect(screen.queryByRole('tab', { name: '강화' })).toBeNull();
   });
 
   it('두 트랙 모두 기록이 있으면 탭이 생기고, 전환하면 그 보드만 보인다', async () => {
@@ -70,6 +83,52 @@ describe('게임 상세 랭킹', () => {
 
     await waitFor(() => expect(screen.getByText('강화1등')).toBeInTheDocument());
     expect(screen.queryByText('무강화1등')).toBeNull();
+  });
+
+  it('전체/오늘 토글이 보드를 갈아 끼운다 — 오늘 기록이 역대 기록을 밀어내지 않는다', async () => {
+    serve([entry(1, '역대1등', 9000)], [], { BASE: [entry(1, '오늘1등', 400)] });
+    renderBoard();
+
+    expect(await screen.findByText('역대1등')).toBeInTheDocument();
+    expect(screen.queryByText('오늘1등')).toBeNull();
+
+    fireEvent.click(screen.getByRole('tab', { name: '오늘' }));
+
+    await waitFor(() => expect(screen.getByText('오늘1등')).toBeInTheDocument());
+    expect(screen.queryByText('역대1등')).toBeNull();
+    expect(screen.getByText('오늘의 기록은 매일 자정(한국 시간)에 새로 시작합니다.')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: '전체' }));
+    await waitFor(() => expect(screen.getByText('역대1등')).toBeInTheDocument());
+  });
+
+  it('오늘 아무도 안 놀았으면 오류가 아니라 비어 있는 1위 자리로 보여준다', async () => {
+    serve([entry(1, '역대1등', 9000)], []);
+    renderBoard();
+
+    expect(await screen.findByText('역대1등')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: '오늘' }));
+
+    await waitFor(() => expect(screen.getByText('오늘은 아직 기록이 없습니다')).toBeInTheDocument());
+    expect(screen.getByText('오늘의 1위 자리가 비어 있습니다 — 한 판이면 됩니다.')).toBeInTheDocument();
+    expect(screen.queryByRole('table')).toBeNull();
+    expect(screen.queryByText('랭킹을 불러오지 못했습니다.')).toBeNull();
+  });
+
+  it('오늘 보드에 기록이 있는 트랙이 하나뿐이면 그 트랙으로 옮겨 준다', async () => {
+    serve([entry(1, '무강화역대', 900)], [entry(1, '강화역대', 5000)], {
+      MODDED: [entry(1, '강화오늘', 300)],
+    });
+    renderBoard();
+
+    // 역대는 무강화가 기본 보드
+    expect(await screen.findByText('무강화역대')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: '오늘' }));
+
+    // 오늘은 무강화가 비어 있으니 강화 보드가 열린다 — 빈 표를 먼저 보여주지 않는다
+    await waitFor(() => expect(screen.getByText('강화오늘')).toBeInTheDocument());
   });
 
   it('내 기록 줄은 색이 아니라 낱말로도 표시된다', async () => {

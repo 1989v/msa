@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { ScoreEntry } from '../../../api/gameApi';
 import {
+  hasAnyPeriodRecord,
   hasAnyRecord,
   initialTrack,
   isMyEntry,
   keepOrPickTrack,
+  railView,
   stepIndex,
   trackedTracks,
+  type PeriodBoards,
   type TrackBoards,
 } from '../leaderboardView';
 
@@ -76,5 +79,51 @@ describe('내 기록 판정 — 닉네임이 곧 신원이다 (게스트 제출 
   it('정확히 같은 닉네임만 내 줄이다', () => {
     expect(isMyEntry(entry(1, '가'), '가')).toBe(true);
     expect(isMyEntry(entry(1, '가'), '가나')).toBe(false);
+  });
+});
+
+describe('보드 기간 — 전체와 오늘은 서로 다른 원장이다', () => {
+  const periods = (allTime: TrackBoards, daily: TrackBoards): PeriodBoards => ({
+    ALL_TIME: allTime,
+    DAILY: daily,
+  });
+
+  it('어느 기간에든 기록이 있으면 보여줄 표가 있다', () => {
+    expect(hasAnyPeriodRecord(periods(boards([entry(1, '가')], []), boards([], [])))).toBe(true);
+    expect(hasAnyPeriodRecord(periods(boards([], []), boards([], [entry(1, '나')])))).toBe(true);
+  });
+
+  it('어느 기간에도 기록이 없으면 토글도 세우지 않는다', () => {
+    expect(hasAnyPeriodRecord(periods(boards([], []), boards([], [])))).toBe(false);
+  });
+
+  it('오늘이 비어 있어도 전체에 기록이 있으면 토글은 선다 — 빈 오늘은 초대다', () => {
+    const withEmptyDay = periods(boards([entry(1, '가')], []), boards([], []));
+    expect(hasAnyPeriodRecord(withEmptyDay)).toBe(true);
+    expect(hasAnyRecord(withEmptyDay.DAILY)).toBe(false);
+  });
+
+  it('기간을 옮겼을 때 그 기간에 없는 트랙은 있는 트랙으로 옮겨 준다', () => {
+    const daily = boards([], [entry(1, '강화오늘')]);
+    expect(keepOrPickTrack('BASE', daily)).toBe('MODDED');
+  });
+});
+
+describe('레일이 실을 보드 고르기', () => {
+  const rail = (todayEntries: ReturnType<typeof entry>[]) => ({
+    entries: [entry(1, '역대1등')],
+    todayEntries,
+  });
+
+  it('오늘 기록이 있으면 오늘 것을 싣는다', () => {
+    const view = railView(rail([entry(1, '오늘1등')]));
+    expect(view.period).toBe('DAILY');
+    expect(view.entries.map((e) => e.nickname)).toEqual(['오늘1등']);
+  });
+
+  it('오늘 아무도 안 놀았으면 역대 기록으로 채운다 — 레일이 사라지지 않는다', () => {
+    const view = railView(rail([]));
+    expect(view.period).toBe('ALL_TIME');
+    expect(view.entries.map((e) => e.nickname)).toEqual(['역대1등']);
   });
 });

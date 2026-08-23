@@ -3,14 +3,18 @@ import {
   fetchLeaderboard,
   getGameNickname,
   type GameLang,
+  type ScorePeriod,
   type ScoreTrack,
 } from '../../api/gameApi';
 import {
+  PERIOD_LABELS,
+  PERIOD_ORDER,
   TRACK_LABELS,
-  hasAnyRecord,
+  hasAnyPeriodRecord,
   isMyEntry,
   keepOrPickTrack,
   trackedTracks,
+  type PeriodBoards,
   type TrackBoards,
 } from './leaderboardView';
 
@@ -23,12 +27,16 @@ const UI = {
     retry: '다시 시도',
     emptyTitle: '아직 기록이 없습니다',
     emptyBody: '첫 기록에 도전해 보세요 — 위 플레이 버튼으로 시작합니다.',
+    emptyDayTitle: '오늘은 아직 기록이 없습니다',
+    emptyDayBody: '오늘의 1위 자리가 비어 있습니다 — 한 판이면 됩니다.',
     colRank: '순위',
     colPlayer: '플레이어',
     colScore: '점수',
     me: '내 기록',
+    periodLabel: '랭킹 기간',
     trackLabel: '랭킹 보드',
     trackNote: '영구 강화를 쓴 기록은 따로 셉니다 — 두 보드는 서로 비교하지 않습니다.',
+    dayNote: '오늘의 기록은 매일 자정(한국 시간)에 새로 시작합니다.',
     nickNote: '게임 안에서 닉네임을 정하면 기록이 이 표에 남습니다.',
   },
   en: {
@@ -39,17 +47,22 @@ const UI = {
     retry: 'Try again',
     emptyTitle: 'No records yet',
     emptyBody: 'Be the first — start with the play button above.',
+    emptyDayTitle: 'No records today yet',
+    emptyDayBody: "Today's top spot is open — one run takes it.",
     colRank: 'Rank',
     colPlayer: 'Player',
     colScore: 'Score',
     me: 'Your run',
+    periodLabel: 'Leaderboard period',
     trackLabel: 'Leaderboard track',
     trackNote: 'Runs with permanent upgrades are counted separately — the two boards are not compared.',
+    dayNote: "Today's board starts over at midnight, Korea time.",
     nickNote: 'Set a nickname inside the game and your runs will show up here.',
   },
 } as const;
 
-const EMPTY: TrackBoards = { BASE: [], MODDED: [] };
+const EMPTY_TRACKS: TrackBoards = { BASE: [], MODDED: [] };
+const EMPTY: PeriodBoards = { ALL_TIME: EMPTY_TRACKS, DAILY: EMPTY_TRACKS };
 
 interface Props {
   slug: string;
@@ -64,21 +77,30 @@ interface Props {
 
 export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
   const L = UI[lang];
-  const [boards, setBoards] = useState<TrackBoards | null>(null);
+  const [boards, setBoards] = useState<PeriodBoards | null>(null);
   const [failed, setFailed] = useState(false);
+  const [period, setPeriod] = useState<ScorePeriod>('ALL_TIME');
+  // 사용자가 고른 트랙은 "선호"로만 들고 있다 — 지금 보고 있는 기간에 그 트랙이 없으면
+  // keepOrPickTrack 이 렌더 때 옮겨 준다. 상태 둘을 서로 맞추려 들면 어긋난다.
   const [track, setTrack] = useState<ScoreTrack | null>(null);
   const [nickname, setNickname] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setFailed(false);
     setBoards(null);
-    // 트랙은 보드 식별자의 일부라 한 요청으로 둘을 받을 수 없다 — 두 보드를 나란히 받아
-    // 기록이 있는 쪽만 탭으로 세운다.
-    Promise.all([fetchLeaderboard(slug, 'BASE'), fetchLeaderboard(slug, 'MODDED')])
-      .then(([base, modded]) => {
-        const next: TrackBoards = { BASE: base, MODDED: modded };
-        setBoards(next);
-        setTrack((prev) => keepOrPickTrack(prev, next));
+    // 기간과 트랙이 둘 다 보드 식별자라 한 요청으로 넷을 받을 수 없다. 넷을 나란히 받아
+    // 기록이 있는 것만 탭으로 세운다 — 어느 탭이 비었는지 알아야 탭을 감출 수 있다.
+    Promise.all([
+      fetchLeaderboard(slug, 'BASE'),
+      fetchLeaderboard(slug, 'MODDED'),
+      fetchLeaderboard(slug, 'BASE', 10, 'DAILY'),
+      fetchLeaderboard(slug, 'MODDED', 10, 'DAILY'),
+    ])
+      .then(([base, modded, baseToday, moddedToday]) => {
+        setBoards({
+          ALL_TIME: { BASE: base, MODDED: modded },
+          DAILY: { BASE: baseToday, MODDED: moddedToday },
+        });
         setNickname(getGameNickname());
       })
       .catch(() => {
@@ -87,13 +109,22 @@ export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
       });
   }, [slug]);
 
+  // 게임이 바뀌면 고른 것도 처음으로. 같은 게임을 다시 읽는 것(플레이 후 복귀)은
+  // 보고 있던 기간을 유지한다 — 오늘 보드를 보다 한 판 하고 왔는데 전체로 튀면 안 된다.
   useEffect(() => {
+    setPeriod('ALL_TIME');
     setTrack(null);
+  }, [slug]);
+
+  useEffect(() => {
     load();
   }, [load, reloadToken]);
 
-  const tracks = trackedTracks(boards ?? EMPTY);
-  const rows = boards && track ? boards[track] : [];
+  const view = (boards ?? EMPTY)[period];
+  const tracks = trackedTracks(view);
+  const activeTrack = keepOrPickTrack(track, view);
+  const rows = activeTrack ? view[activeTrack] : [];
+  const hasRecord = boards !== null && hasAnyPeriodRecord(boards);
 
   return (
     <section className="game-leaderboard" aria-labelledby="game-leaderboard-heading">
@@ -115,72 +146,97 @@ export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
 
       {!failed && boards === null && <p className="games-status game-leaderboard-status">{L.loading}</p>}
 
-      {!failed && boards !== null && !hasAnyRecord(boards) && (
+      {!failed && boards !== null && !hasRecord && (
         <div className="game-leaderboard-empty">
           <p className="game-leaderboard-empty-title">{L.emptyTitle}</p>
           <p className="game-leaderboard-empty-body">{L.emptyBody}</p>
         </div>
       )}
 
-      {!failed && boards !== null && track && (
+      {!failed && boards !== null && hasRecord && (
         <>
+          <div className="game-leaderboard-periods" role="tablist" aria-label={L.periodLabel}>
+            {PERIOD_ORDER.map((key) => (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                id={`game-leaderboard-period-${key}`}
+                aria-selected={key === period}
+                aria-controls="game-leaderboard-panel"
+                className={`game-leaderboard-period${key === period ? ' active' : ''}`}
+                onClick={() => setPeriod(key)}
+              >
+                {PERIOD_LABELS[lang][key]}
+              </button>
+            ))}
+          </div>
+
           {tracks.length > 1 && (
-            <>
-              <div className="game-leaderboard-tracks" role="tablist" aria-label={L.trackLabel}>
-                {tracks.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    role="tab"
-                    id={`game-leaderboard-tab-${key}`}
-                    aria-selected={key === track}
-                    aria-controls="game-leaderboard-panel"
-                    className={`game-leaderboard-track${key === track ? ' active' : ''}`}
-                    onClick={() => setTrack(key)}
-                  >
-                    {TRACK_LABELS[lang][key]}
-                  </button>
-                ))}
-              </div>
-              <p className="game-leaderboard-note">{L.trackNote}</p>
-            </>
+            <div className="game-leaderboard-tracks" role="tablist" aria-label={L.trackLabel}>
+              {tracks.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  id={`game-leaderboard-tab-${key}`}
+                  aria-selected={key === activeTrack}
+                  aria-controls="game-leaderboard-panel"
+                  className={`game-leaderboard-track${key === activeTrack ? ' active' : ''}`}
+                  onClick={() => setTrack(key)}
+                >
+                  {TRACK_LABELS[lang][key]}
+                </button>
+              ))}
+            </div>
           )}
+
+          {tracks.length > 1 && <p className="game-leaderboard-note">{L.trackNote}</p>}
 
           <div
             id="game-leaderboard-panel"
-            role={tracks.length > 1 ? 'tabpanel' : undefined}
-            aria-labelledby={tracks.length > 1 ? `game-leaderboard-tab-${track}` : undefined}
+            role="tabpanel"
+            aria-labelledby={`game-leaderboard-period-${period}`}
           >
-            <table className="kh-table game-leaderboard-table">
-              <thead>
-                <tr>
-                  <th scope="col">{L.colRank}</th>
-                  <th scope="col">{L.colPlayer}</th>
-                  <th scope="col" className="num">
-                    {L.colScore}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((entry) => {
-                  const mine = isMyEntry(entry, nickname);
-                  return (
-                    <tr key={`${entry.rank}-${entry.nickname}`} className={mine ? 'is-me' : undefined}>
-                      <td className="game-leaderboard-rank num">{entry.rank}</td>
-                      <td>
-                        <span className="game-leaderboard-nick">{entry.nickname}</span>
-                        {/* 내 줄은 색으로만 구분하지 않는다 — 낱말과 굵은 선을 함께 준다 */}
-                        {mine && <span className="game-leaderboard-me">{L.me}</span>}
-                        {entry.detail && <span className="game-leaderboard-detail">{entry.detail}</span>}
-                      </td>
-                      <td className="num">{entry.score.toLocaleString()}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            {/* 오늘 아무도 안 논 것은 고장이 아니라 비어 있는 1위 자리다 */}
+            {!activeTrack ? (
+              <div className="game-leaderboard-empty">
+                <p className="game-leaderboard-empty-title">{L.emptyDayTitle}</p>
+                <p className="game-leaderboard-empty-body">{L.emptyDayBody}</p>
+              </div>
+            ) : (
+              <table className="kh-table game-leaderboard-table">
+                <thead>
+                  <tr>
+                    <th scope="col">{L.colRank}</th>
+                    <th scope="col">{L.colPlayer}</th>
+                    <th scope="col" className="num">
+                      {L.colScore}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((entry) => {
+                    const mine = isMyEntry(entry, nickname);
+                    return (
+                      <tr key={`${entry.rank}-${entry.nickname}`} className={mine ? 'is-me' : undefined}>
+                        <td className="game-leaderboard-rank num">{entry.rank}</td>
+                        <td>
+                          <span className="game-leaderboard-nick">{entry.nickname}</span>
+                          {/* 내 줄은 색으로만 구분하지 않는다 — 낱말과 굵은 선을 함께 준다 */}
+                          {mine && <span className="game-leaderboard-me">{L.me}</span>}
+                          {entry.detail && <span className="game-leaderboard-detail">{entry.detail}</span>}
+                        </td>
+                        <td className="num">{entry.score.toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
 
+          {period === 'DAILY' && <p className="game-leaderboard-note">{L.dayNote}</p>}
           {!nickname && <p className="game-leaderboard-note">{L.nickNote}</p>}
         </>
       )}

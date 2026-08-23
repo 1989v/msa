@@ -13,8 +13,12 @@ import com.kgd.game.infrastructure.persistence.catalog.repository.GameJpaReposit
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameQueryRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameTagMapJpaRepository
 import com.kgd.game.domain.play.model.ScoreTrack
+import com.kgd.game.infrastructure.persistence.play.adapter.GameScoreRepositoryAdapter
+import com.kgd.game.infrastructure.persistence.play.entity.GameScoreDailyJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
+import com.kgd.game.infrastructure.persistence.play.repository.GameScoreDailyJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameScoreJpaRepository
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldContain
@@ -28,12 +32,14 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.Primary
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.PageRequest
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.utility.DockerImageName
+import java.time.LocalDate
 import javax.sql.DataSource
 
 /**
@@ -98,6 +104,7 @@ class GameSchemaIntegrationSpec(
     @Autowired private val queryRepository: GameQueryRepository,
     @Autowired private val tagMapRepository: GameTagMapJpaRepository,
     @Autowired private val scoreRepository: GameScoreJpaRepository,
+    @Autowired private val dailyScoreRepository: GameScoreDailyJpaRepository,
 ) : BehaviorSpec({
 
     val pageable = PageRequest.of(0, 10)
@@ -224,6 +231,69 @@ class GameSchemaIntegrationSpec(
                         lastAts shouldBe lastAts.sortedDescending()
                     } finally {
                         scoreRepository.deleteAll(rows)
+                    }
+                }
+        }
+
+        When("같은 사람이 하루에 여러 번 기록을 올리면") {
+            Then("역대 보드와 무관하게 그날의 최고 하나만 남는다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val gameId = gameRepository.findBySlug("snake")!!.id!!
+                    val day = LocalDate.of(2026, 8, 23)
+                    val adapter = GameScoreRepositoryAdapter(scoreRepository, dailyScoreRepository)
+                    try {
+                        // 역대 최고를 먼저 높게 세워 둔다 — 이후 런은 역대 보드를 건드리지 못한다
+                        adapter.submit(gameId, ScoreTrack.BASE, "하루", 5_000, null, day)
+                        adapter.submit(gameId, ScoreTrack.BASE, "하루", 900, null, day)
+                        adapter.submit(gameId, ScoreTrack.BASE, "하루", 2_000, null, day)
+                        adapter.submit(gameId, ScoreTrack.BASE, "이웃", 1_500, null, day)
+
+                        // 유니크 키 (game_id, track, play_date, nickname) — 세 번 올려도 한 행
+                        val mine = dailyScoreRepository
+                            .findByGameIdAndTrackAndPlayDateAndNickname(gameId, ScoreTrack.BASE, day, "하루")!!
+                        mine.score shouldBe 5_000
+
+                        val board = adapter.topDaily(gameId, ScoreTrack.BASE, day, 10)
+                        board.map { it.nickname } shouldBe listOf("하루", "이웃")
+                        board.map { it.rank } shouldBe listOf(1, 2)
+
+                        // 다른 날은 같은 닉네임이어도 별개 행이다
+                        adapter.submit(gameId, ScoreTrack.BASE, "하루", 100, null, day.plusDays(1))
+                        adapter.topDaily(gameId, ScoreTrack.BASE, day.plusDays(1), 10)
+                            .map { it.score } shouldBe listOf(100L)
+                        adapter.topDaily(gameId, ScoreTrack.BASE, day, 10).map { it.score } shouldBe
+                            listOf(5_000L, 1_500L)
+                    } finally {
+                        dailyScoreRepository.deleteAll(
+                            dailyScoreRepository.findAll().filter { it.gameId == gameId },
+                        )
+                        scoreRepository.deleteAll(
+                            scoreRepository.findAll().filter { it.gameId == gameId && it.nickname in setOf("하루", "이웃") },
+                        )
+                    }
+                }
+
+            Then("유니크 키가 같은 날 같은 닉네임의 둘째 행을 거부한다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val gameId = gameRepository.findBySlug("snake")!!.id!!
+                    val day = LocalDate.of(2026, 8, 24)
+                    val first = dailyScoreRepository.save(
+                        GameScoreDailyJpaEntity(
+                            gameId = gameId, track = ScoreTrack.BASE, playDate = day,
+                            nickname = "중복", score = 10, detail = null,
+                        ),
+                    )
+                    try {
+                        shouldThrow<DataIntegrityViolationException> {
+                            dailyScoreRepository.saveAndFlush(
+                                GameScoreDailyJpaEntity(
+                                    gameId = gameId, track = ScoreTrack.BASE, playDate = day,
+                                    nickname = "중복", score = 20, detail = null,
+                                ),
+                            )
+                        }
+                    } finally {
+                        dailyScoreRepository.delete(first)
                     }
                 }
         }

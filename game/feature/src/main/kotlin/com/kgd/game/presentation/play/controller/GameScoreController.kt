@@ -1,5 +1,8 @@
 package com.kgd.game.presentation.play.controller
 
+import com.kgd.common.exception.BusinessException
+import com.kgd.common.exception.ErrorCode
+import com.kgd.game.domain.play.model.ScorePeriod
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.play.port.ScoreEntry
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDate
 
 data class ScoreSubmitRequest(
     @field:NotBlank val nickname: String = "",
@@ -41,11 +45,33 @@ class GameScoreController(
         return ApiResponse.success(ScoreSubmitResponse(applied = applied, rank = rank))
     }
 
+    /**
+     * `period` / `date` 는 생략 가능하다 — 생략하면 역대 보드이고, 이건 게임 57종이 쓰는
+     * 공용 위젯(`lib/rank.js`)이 이미 부르고 있는 계약 그대로다.
+     * `date` 는 `period=DAILY` 에서만 뜻이 있고, 생략하면 KST 기준 오늘이다(`GameDay`).
+     */
     @GetMapping("/leaderboard")
     fun leaderboard(
         @PathVariable slug: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(required = false) track: String?,
+        @RequestParam(required = false) period: String?,
+        @RequestParam(required = false) date: String?,
     ): ApiResponse<List<ScoreEntry>> =
-        ApiResponse.success(gameScoreService.leaderboard(slug, ScoreTrack.from(track), limit))
+        ApiResponse.success(
+            gameScoreService.leaderboard(
+                slug = slug,
+                track = ScoreTrack.from(track),
+                limit = limit,
+                period = ScorePeriod.from(period),
+                date = parseDate(date),
+            ),
+        )
+
+    /** 못 읽는 날짜는 조용히 오늘로 넘기지 않는다 — 잘못된 날의 빈 보드는 "기록 없음"으로 위장된다 */
+    private fun parseDate(raw: String?): LocalDate? =
+        raw?.trim()?.takeIf { it.isNotEmpty() }?.let {
+            runCatching { LocalDate.parse(it) }
+                .getOrElse { throw BusinessException(ErrorCode.INVALID_INPUT, "날짜 형식 오류 (YYYY-MM-DD)") }
+        }
 }

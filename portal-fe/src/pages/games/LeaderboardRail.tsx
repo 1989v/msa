@@ -8,7 +8,7 @@ import {
   type LeaderboardBoard,
 } from '../../api/gameApi';
 import { gamePath } from '../../seo/copy.mjs';
-import { TRACK_LABELS, isMyEntry, stepIndex } from './leaderboardView';
+import { PERIOD_LABELS, TRACK_LABELS, isMyEntry, railView, stepIndex } from './leaderboardView';
 
 /** 한 칸에 머무는 시간. 3줄을 읽고 "전체 보기"를 누를지 정하기에 6초면 넉넉하다. */
 const ROTATE_MS = 6000;
@@ -45,6 +45,10 @@ function prefersReducedMotion(): boolean {
  *
  * 기록이 하나도 없으면 **아무것도 그리지 않는다.** 빈 위젯이 자리를 잡고 있으면
  * 고장난 화면처럼 보이고, 채워 넣을 가짜 데이터도 없다.
+ *
+ * 오늘 기록이 있는 보드는 오늘 것을 싣는다(`railView`). 오늘 것만 싣지 않는 이유는
+ * 기록이 드문 지금 아무도 안 논 날이 대부분이고, 그런 날 레일이 통째로 사라지기 때문이다.
+ * 오늘 기록은 보드 목록 응답에 함께 실려 오므로 요청은 여전히 한 번이다.
  */
 export default function LeaderboardRail({ lang }: { lang: GameLang }) {
   const L = UI[lang];
@@ -80,6 +84,7 @@ export default function LeaderboardRail({ lang }: { lang: GameLang }) {
   if (total === 0) return null;
 
   const board = boards[stepIndex(index, total, 0)];
+  const shown = railView(board);
 
   return (
     <section
@@ -116,13 +121,17 @@ export default function LeaderboardRail({ lang }: { lang: GameLang }) {
       </div>
 
       {/* key 로 칸이 바뀔 때마다 스밈이 다시 발화한다 */}
-      <div className="games-rail-slide" key={`${board.slug}-${board.track}`}>
+      <div className="games-rail-slide" key={`${board.slug}-${board.track}-${shown.period}`}>
         <div className="games-rail-game">
           <h2 className="games-rail-title">{displayTitle(board, lang)}</h2>
           <span className="games-rail-track">{TRACK_LABELS[lang][board.track]}</span>
+          {/* 역대 기록일 때는 표식을 달지 않는다 — 늘 붙는 라벨은 읽히지 않는다 */}
+          {shown.period === 'DAILY' && (
+            <span className="games-rail-today">{PERIOD_LABELS[lang].DAILY}</span>
+          )}
         </div>
         <ol className="games-rail-entries">
-          {board.entries.map((entry) => (
+          {shown.entries.map((entry) => (
             <li
               key={`${entry.rank}-${entry.nickname}`}
               className={isMyEntry(entry, nickname) ? 'is-me' : undefined}

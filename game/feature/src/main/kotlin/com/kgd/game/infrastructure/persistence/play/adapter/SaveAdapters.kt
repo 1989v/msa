@@ -13,9 +13,11 @@ import com.kgd.game.domain.play.model.GameRun
 import com.kgd.game.infrastructure.persistence.play.entity.GameRunJpaEntity
 import com.kgd.game.infrastructure.persistence.play.SaveCipher
 import com.kgd.game.infrastructure.persistence.play.entity.GameSaveDataJpaEntity
+import com.kgd.game.infrastructure.persistence.play.entity.GameScoreDailyJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
 import com.kgd.game.infrastructure.persistence.play.repository.GameRunJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameSaveDataJpaRepository
+import com.kgd.game.infrastructure.persistence.play.repository.GameScoreDailyJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameScoreJpaRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -23,6 +25,7 @@ import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import java.security.SecureRandom
 import java.time.Duration
+import java.time.LocalDate
 
 @Repository
 class GameSaveRepositoryAdapter(
@@ -124,6 +127,7 @@ class RedisSaveLeaseStore(
 @Repository
 class GameScoreRepositoryAdapter(
     private val jpaRepository: GameScoreJpaRepository,
+    private val dailyRepository: GameScoreDailyJpaRepository,
 ) : GameScoreRepositoryPort {
 
     override fun submit(
@@ -132,7 +136,12 @@ class GameScoreRepositoryAdapter(
         nickname: String,
         score: Long,
         detail: String?,
+        playDate: LocalDate,
     ): Pair<Boolean, Int> {
+        // 오늘 보드는 역대 보드의 판정과 무관하게 올린다 — 자기 역대 최고에 못 미친 런도
+        // 오늘 안에서는 최고일 수 있다. 여기서 역대 반영 여부로 갈라 버리면 오늘의 1위가 빈다.
+        upsertDaily(gameId, track, playDate, nickname, score, detail)
+
         val existing = jpaRepository.findByGameIdAndTrackAndNickname(gameId, track, nickname)
         val applied = if (existing == null) {
             jpaRepository.save(
@@ -147,8 +156,35 @@ class GameScoreRepositoryAdapter(
         return applied to rank
     }
 
+    /** 하루 안에서도 닉네임당 최고 1행 — 같은 점수를 다시 올려도 아무 일이 없다(멱등) */
+    private fun upsertDaily(
+        gameId: Long,
+        track: ScoreTrack,
+        playDate: LocalDate,
+        nickname: String,
+        score: Long,
+        detail: String?,
+    ) {
+        val today = dailyRepository.findByGameIdAndTrackAndPlayDateAndNickname(gameId, track, playDate, nickname)
+        if (today == null) {
+            dailyRepository.save(
+                GameScoreDailyJpaEntity(
+                    gameId = gameId, track = track, playDate = playDate,
+                    nickname = nickname, score = score, detail = detail,
+                ),
+            )
+        } else if (today.updateIfHigher(score, detail)) {
+            dailyRepository.saveAndFlush(today)
+        }
+    }
+
     override fun top(gameId: Long, track: ScoreTrack, limit: Int): List<ScoreEntry> =
         jpaRepository.findTop50ByGameIdAndTrackOrderByScoreDescUpdatedAtAsc(gameId, track)
+            .take(limit)
+            .mapIndexed { i, e -> ScoreEntry(rank = i + 1, nickname = e.nickname, score = e.score, detail = e.detail) }
+
+    override fun topDaily(gameId: Long, track: ScoreTrack, playDate: LocalDate, limit: Int): List<ScoreEntry> =
+        dailyRepository.findTop50ByGameIdAndTrackAndPlayDateOrderByScoreDescUpdatedAtAsc(gameId, track, playDate)
             .take(limit)
             .mapIndexed { i, e -> ScoreEntry(rank = i + 1, nickname = e.nickname, score = e.score, detail = e.detail) }
 

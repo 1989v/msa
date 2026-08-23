@@ -53,6 +53,8 @@
 | `GET /api/v1/games/{slug}`, `/{slug}/similar` | 상세(BETA 노출 허용) / 태그 교집합 유사 게임 |
 | `POST /api/v1/games/{slug}/sessions`, `PATCH .../{sessionKey}` | 세션 시작(게스트 OK)/종료 |
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
+| `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&limit=&period=&date=` | 랭킹 제출/조회 (게스트 OK). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
+| `GET /api/v1/games/leaderboards?boards=&entries=` | 허브 레일용 배치 — 기록 있는 보드의 TOP N + **오늘 기록(`todayEntries`)**을 한 응답에 |
 | `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 읽기는 잠그지 않고 쓰기만 `X-Device-Id` 리스(1h) — 코드 제시 요청은 리스를 넘겨받는다(기기 분실 복구) |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
 | `GET/POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN). `GET`(목록 `?q=&status=&genre=&tag=&sort=created\|updated\|title\|playCount`, 상세)은 **상태 무관** — 공개 API 로는 보이지 않는 DRAFT/REVIEW/SUSPENDED 를 백오피스에서 다룬다. 화면은 admin-fe `/games` |
@@ -94,6 +96,12 @@
   피드백을 받을 수 없다. 수익화는 상태와 별개로 `Game.isMonetizable()`(PUBLISHED + SDK)이 막는다.
   FE 는 `isBeta()`(status=BETA 또는 `beta` 태그)로 배지를 렌더한다 — 두 신호를 다 받는 이유는
   V35 가 PUBLISHED + 태그 방식으로 먼저 붙였기 때문이다
+- **랭킹 보드의 축은 둘이다 — 트랙(무강화/강화, V28)과 기간(전체/오늘, V49).** 오늘 보드는
+  `game_score` 에서 파생할 수 없어 별도 원장(`game_score_daily`)을 쓴다: 역대 보드는 닉네임당
+  최고 1행이라 **자기 최고를 못 넘은 런은 아예 저장되지 않는다** — `updated_at` 이 오늘인 행을
+  세면 "오늘 자기 기록을 깬 사람"만 세어진다. 하루의 경계는 **KST**(`GameDay.ZONE`)이고
+  날짜는 서버가 정한다(클라이언트가 보내면 기기 시계만큼 보드가 갈린다). 제출 한 번이 두 보드를
+  한 트랜잭션에서 올리며, **두 보드의 판정은 독립**이다
 - GameStats 는 프로젝션 — 원본 이벤트 집계는 analytics(ClickHouse) 소유, 실시간 카운터를 Game row 에 두지 않는다
 - `game:feature` 는 codedictionary 컨텍스트 빈을 직접 주입하지 않는다 (교차 import 금지, ADR-0058 불변식)
 

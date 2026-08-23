@@ -1,4 +1,4 @@
-import type { GameLang, ScoreEntry, ScoreTrack } from '../../api/gameApi';
+import type { GameLang, ScoreEntry, ScorePeriod, ScoreTrack } from '../../api/gameApi';
 
 /** 한 게임의 트랙별 보드. 둘 다 비어 있는 것이 지금 대부분의 게임에서 **정상 상태**다. */
 export type TrackBoards = Record<ScoreTrack, ScoreEntry[]>;
@@ -13,6 +13,36 @@ export const TRACK_LABELS: Record<GameLang, Record<ScoreTrack, string>> = {
   ko: { BASE: '무강화', MODDED: '강화' },
   en: { BASE: 'No upgrades', MODDED: 'Upgraded' },
 };
+
+/** 한 게임의 기간별 보드. 기간 안에 다시 트랙이 있다 — 축이 둘이라 4장이다. */
+export type PeriodBoards = Record<ScorePeriod, TrackBoards>;
+
+export const PERIOD_ORDER: ScorePeriod[] = ['ALL_TIME', 'DAILY'];
+
+export const PERIOD_LABELS: Record<GameLang, Record<ScorePeriod, string>> = {
+  ko: { ALL_TIME: '전체', DAILY: '오늘' },
+  en: { ALL_TIME: 'All time', DAILY: 'Today' },
+};
+
+/** 어느 기간에든 기록이 하나라도 있으면 보여줄 표가 있다는 뜻이다 */
+export function hasAnyPeriodRecord(boards: PeriodBoards): boolean {
+  return PERIOD_ORDER.some((period) => hasAnyRecord(boards[period]));
+}
+
+/**
+ * 레일 한 칸이 실제로 보여줄 것 — 오늘 기록이 있으면 오늘을, 없으면 역대를.
+ *
+ * 오늘 것만 싣게 하면 아무도 안 논 날에는 레일이 통째로 사라진다. 기록이 드문 지금
+ * 그런 날이 대부분이라, 살아 있어 보이려던 위젯이 오히려 자주 없는 위젯이 된다.
+ */
+export function railView(board: { entries: ScoreEntry[]; todayEntries: ScoreEntry[] }): {
+  entries: ScoreEntry[];
+  period: ScorePeriod;
+} {
+  return board.todayEntries.length > 0
+    ? { entries: board.todayEntries, period: 'DAILY' }
+    : { entries: board.entries, period: 'ALL_TIME' };
+}
 
 /** 기록이 있는 트랙만. 빈 탭을 띄우느니 탭 자체를 없앤다. */
 export function trackedTracks(boards: TrackBoards): ScoreTrack[] {

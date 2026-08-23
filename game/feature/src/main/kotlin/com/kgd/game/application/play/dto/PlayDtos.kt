@@ -55,4 +55,10 @@ data class LeaderboardBoardDto(
     val thumbnailUrl: String,
     val track: ScoreTrack,
     val entries: List<ScoreEntry>,
+    /**
+     * 같은 보드의 오늘 기록. 아무도 안 논 날은 비고, 그때 레일은 역대 기록을 그대로 보여준다 —
+     * 오늘만 싣게 하면 조용한 날에는 레일이 통째로 사라진다.
+     * 응답에 함께 실어 보내는 이유는 레일이 요청을 두 번 하지 않게 하기 위해서다.
+     */
+    val todayEntries: List<ScoreEntry>,
 )

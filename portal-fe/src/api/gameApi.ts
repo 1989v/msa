@@ -202,6 +202,12 @@ export async function rateGame(slug: string, score: number): Promise<RatingResul
 
 export type ScoreTrack = 'BASE' | 'MODDED';
 
+/**
+ * 보드의 기간 축. 트랙이 "무엇으로 잰 기록인가"라면 기간은 "언제 세운 기록인가"다.
+ * 하루의 경계는 **서버가 KST 로** 정한다 — 기기 시계로 자르면 사람마다 다른 오늘을 본다.
+ */
+export type ScorePeriod = 'ALL_TIME' | 'DAILY';
+
 export interface ScoreEntry {
   rank: number;
   nickname: string;
@@ -220,6 +226,8 @@ export interface LeaderboardBoard {
   thumbnailUrl: string;
   track: ScoreTrack;
   entries: ScoreEntry[];
+  /** 같은 보드의 오늘 기록. 아무도 안 논 날은 비고, 그때 레일은 역대 기록을 그린다 */
+  todayEntries: ScoreEntry[];
 }
 
 const GAME_NICKNAME_KEY = 'game_nickname';
@@ -244,10 +252,19 @@ function unwrapGame<T>(body: ApiResponse<T> | '' | null | undefined): T {
   return body.data;
 }
 
-/** 게임 한 종의 트랙별 랭킹 — 게임 안 위젯이 쓰는 것과 같은 엔드포인트다 */
-export async function fetchLeaderboard(slug: string, track: ScoreTrack, limit = 10): Promise<ScoreEntry[]> {
+/**
+ * 게임 한 종의 보드 — 게임 안 위젯이 쓰는 것과 같은 엔드포인트다.
+ * `period` 를 생략하면 역대 보드이고, 그게 위젯이 이미 부르고 있는 계약이다.
+ * 날짜는 보내지 않는다 — 오늘이 언제인지는 서버가 KST 로 정한다.
+ */
+export async function fetchLeaderboard(
+  slug: string,
+  track: ScoreTrack,
+  limit = 10,
+  period: ScorePeriod = 'ALL_TIME',
+): Promise<ScoreEntry[]> {
   const res = await api.get<ApiResponse<ScoreEntry[]>>(
-    `/api/v1/games/${slug}/leaderboard?track=${track}&limit=${limit}`,
+    `/api/v1/games/${slug}/leaderboard?track=${track}&limit=${limit}&period=${period}`,
   );
   return unwrapGame(res.data);
 }
