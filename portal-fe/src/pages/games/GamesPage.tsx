@@ -117,7 +117,13 @@ export default function GamesPage() {
     ]).then(([c, t, p]) => {
       if (c.status === 'fulfilled') setCollections(visibleCollections(c.value));
       if (t.status === 'fulfilled') setTags(t.value);
-      if (p.status === 'fulfilled') setPartyPool(p.value.content);
+      /* 장르로 한 번 더 거른다 — 서버는 **모르는 장르를 무시하고 전체 목록을 준다**
+         (`Genre.parse()` 가 null 이면 필터 없음). 백엔드가 아직 이 장르를 모르는 동안
+         거르지 않으면 뽑기 대상이 전 게임이 되어, 인계를 읽지도 못하는 게임이 참가자
+         없이 켜진다. 거르면 그 구간에는 버튼이 안 보일 뿐이다 — 그게 맞는 퇴화다 */
+      if (p.status === 'fulfilled') {
+        setPartyPool(p.value.content.filter((g) => g.genre === PARTY_GENRE));
+      }
     });
   }, []);
 
