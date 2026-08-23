@@ -10,7 +10,7 @@
 | 공통 리더보드 엔진 (보드·스냅샷·엔트리) | 사용자 투표·조회수 축 (P3) |
 | 시군구별 최저가 20곳 일 1회 수집 | 실시간 가격 조회 · 전국 전량 |
 | 시군구 × 유종 최저가 보드 자동 생성 | 유료 API(시도별 평균가·상호검색·기간통계) |
-| 경로상 주유소 탐색 | 정밀 이탈시간(경유지 재호출) |
+| 각 주유소 구글맵 길찾기 링크 | 경로상 주유소 탐색(외부 API 필요) |
 | `rank.1989v.com` 화면 | LOCALDATA·참가격 도메인 (P2) |
 
 ## 2. 모듈
@@ -211,7 +211,6 @@ KATEC 이면 WGS84 로 변환해 `latitude`/`longitude` 에 넣고 **원본도 `
 | GET | `/api/v1/ranking/boards` | 보드 목록 (domain·scope 필터) | 1 |
 | GET | `/api/v1/ranking/boards/{slug}` | 최신 스냅샷 엔트리 + 등락 | 1 |
 | GET | `/api/v1/ranking/gas/areas` | 시도·시군구 선택지 (오피넷 지역코드) | 1 |
-| POST | `/api/v1/ranking/gas/route` | 경로상 주유소 탐색 | 2 (외부 1콜) |
 | POST | `/internal/ranking/gas/stations/bulk` | 수집기 전용 — 클러스터 내부 | — |
 
 응답은 `ApiResponse<T>`. `/internal/**` 은 ingress 에 노출하지 않는다(ADR-0070 §3 패턴).
@@ -222,26 +221,20 @@ KATEC 이면 WGS84 로 변환해 `latitude`/`longitude` 에 넣고 **원본도 `
 지역 계층은 **오피넷 `지역코드 조회`** 로 자체 확보한다. place 서비스를 부르지 않는다 —
 네트워크 홉과 서비스 결합을 하나 아끼고, 주유소의 지역은 어차피 오피넷 코드계로 온다.
 
-## 7. 경로 탐색
+## 7. 길안내 — 구글맵으로 넘긴다 (개정 2026-08-23)
+
+리더보드의 각 줄에 **길찾기 버튼**을 둔다.
 
 ```
-POST /api/v1/ranking/gas/route
-{ "origin": {lat,lng}, "destination": {lat,lng},
-  "productCode": "B027", "detourLimitMin": 5,
-  "selfOnly": false, "brands": [] }
+https://www.google.com/maps/dir/?api=1&travelmode=driving&destination={lat},{lng}
 ```
 
-1. **Google Routes API** 1콜 → encoded polyline
-2. 폴리라인 디코드 → 약 3km 간격 샘플 포인트
-3. 각 포인트 반경 내 `gas_station` 조회 (**우리 DB만** — 오피넷 실시간 호출 없음)
-4. `opinet_id` 로 중복 제거
-5. 폴리라인 최근접점까지의 거리로 **이탈 시간 근사** → `detourLimitMin` 초과분 제외
-6. 가격 오름차순 정렬 + 경로 평균가 대비 절약액
+Maps URLs 는 API 호출이 아니라 **주소**라 키도 쿼터도 없다. 좌표를 먼저 쓴다 — 이름으로 찾게
+하면 같은 상호의 다른 주유소로 안내될 수 있고, **방금 본 가격과 다른 곳에 도착하는 것이 이
+버튼의 유일한 실패 방식**이다. 좌표가 없으면 이름+주소로 폴백한다.
 
-**이탈 시간은 근사값이다.** "약 N분"으로 표기하고 단정하지 않는다. 후보마다 경유지 재호출을
-하면 정확하지만 1건당 1콜이라 월 10,000 무료를 즉시 태운다(OQ-5).
-
-`GOOGLE_ROUTES_API_KEY` 가 없으면 **이 화면만 비활성**, 리더보드는 정상이다.
+경로를 우리가 계산하지 않는 이유는 ADR-0081 §6 에 있다 — 출발지가 전국에 흩어지면 캐시가
+듣지 않아 호출 수가 사용자 수를 그대로 따라가고, 무료분을 넘기면 1,000콜당 $5 다.
 
 ## 8. FE — `rank.1989v.com`
 
@@ -250,7 +243,6 @@ POST /api/v1/ranking/gas/route
 
 - `/` 보드 목록 — 내 지역 자동 선택 없음(위치 권한 요구 안 함), 시도·시군구 선택
 - `/boards/:slug` 리더보드 — 순위·가격·등락 배지(NEW/↑n/↓n)·브랜드·셀프
-- `/route` 경로 탐색 — 출발·도착 입력, 결과 카드 + 지도
 
 토큰은 **root `DESIGN.md`** 를 따른다. hex 직접 입력 금지.
 화면 하단에 **"출처: 한국석유공사 오피넷"** 표기.
@@ -273,16 +265,15 @@ apex 리다이렉트 / 프리렌더 `_hosts/$host` 키 / `serviceHref.ts` 의 `S
 | 키 | 자리 | 없으면 |
 |---|---|---|
 | `OPINET_API_KEY` | Secret `ranking-ingest-secrets` | 수집 잡이 건너뛴다 (샘플 JSONL 로 E2E 가능) |
-| `GOOGLE_ROUTES_API_KEY` | 앱 Secret | 경로 화면만 비활성 |
 
-Routes 키는 **서버 호출이라 IP 제한**이다. Maps JS 키(리퍼러 제한)와 반드시 분리한다.
+길안내는 링크라 키가 없다 — 지도 표시용 `VITE_GOOGLE_MAPS_KEY`(FE 빌드타임)만 쓴다.
 
 ## 11. 수용 기준
 
 - [ ] 시군구를 고르면 최저가 주유소 Top N 이 **어제 대비 등락과 함께** 보인다
 - [ ] 첫 스냅샷에서는 전부 NEW 로 표기되고 화면이 깨지지 않는다
-- [ ] 출발·도착을 넣으면 경로상 주유소가 **약 N분 이탈 + 절약액**과 함께 나온다
+- [ ] 각 줄의 길찾기 버튼이 구글맵에서 그 주유소로 정확히 안내한다
 - [ ] 수집 CronJob 이 전국을 하루 1회 무료 한도 안에서 돈다
 - [ ] 지도의 핀이 실제 주유소 위치에 찍힌다 (KATEC 변환 검증)
 - [ ] 화면에 "출처: 한국석유공사 오피넷" 이 있다
-- [ ] `data-sources.md` 대장에 오피넷·Google Routes 두 줄이 추가돼 있다
+- [ ] `data-sources.md` 대장에 유가 원천이 등재돼 있다

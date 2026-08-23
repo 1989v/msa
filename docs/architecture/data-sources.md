@@ -71,7 +71,6 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 지도 | Google Maps JavaScript API | 필요 | Google Maps Platform 약관 | 브라우저 직접 호출 |
 | 구글 place_id | Google Places API (New) Text Search | 필요 | Google Maps Platform 약관 (**place_id 만 무기한 저장 허용**) | `place/ingest --job=google-places` |
 | **주유소·유가** | 한국석유공사(오피넷) — **공공데이터포털 경유** | `DATA_GO_KR_KEY` **재사용** | 공공누리 (출처표시) | `ranking/ingest --job=gas-stations` (매일) |
-| 자동차 경로 | Google Routes API | 필요 | Google Maps Platform 약관 | 서버 호출 (요청 시) |
 
 **출처 표기 의무가 있는 것**: GeoNames(CC BY 4.0), TourAPI(공공누리), 참가격(KOGL 제1유형), **오피넷**.
 화면 하단 또는 관련 페이지에 표기한다 — `place` 화면은 "출처: 한국관광공사 TourAPI",
@@ -296,33 +295,6 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 
 유종 코드: 휘발유 `B027` · 경유 `D047`. 원천은 (지역 × 유종)으로 답하므로 수집기가
 **주유소 단위로 유종을 모아** 보낸다 — 나눠 보내면 뒤 유종이 앞 유종의 가격 행을 지운다.
-
-## 9. 자동차 경로 — Google Routes API
-
-| | |
-|---|---|
-| 발급 | Cloud Console → **Routes API** 사용 설정 → API 키. **서버 호출이라 IP 제한** |
-| 호출 | `POST directions/v2:computeRoutes` — fieldMask `routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration` + `routingPreference=TRAFFIC_UNAWARE` 로 **고정** |
-| 무료분 | **Essentials 월 10,000콜** (Pro 는 5,000) |
-| 키 | `RANKING_GOOGLE_ROUTES_API_KEY`. 클러스터는 Secret `ranking-secrets/google-routes-api-key` (optional — **없으면 경로 화면만 비활성**) |
-| 저장 | 영구 저장하지 않는다. **7일 인메모리 캐시**만 둔다(약관은 임시 캐시를 최대 30일 허용) |
-| 상한 | `ranking.google-routes.daily-budget` **기본 300/일** — 넘기면 호출하지 않고 거절한다 |
-
-**SKU 를 올리는 곳이 두 군데다.** 둘 다 `GoogleRoutesClient` 안에서만 정해진다.
-
-| 올리는 것 | 결과 |
-|---|---|
-| `fieldMask` 에 불필요한 필드 추가 | 상위 SKU (Places 를 id-only 로 고정한 §7 과 같은 이유) |
-| `routingPreference=TRAFFIC_AWARE` (실시간 교통) | **Pro SKU** — 무료분이 10,000 → **5,000** 으로 반토막 |
-
-우리는 응답에서 폴리라인과 평균 속도만 쓰고, 그 평균 속도는 "약 N분"이라는 **근사값**의 입력이다.
-근사값 하나 때문에 무료 구간을 벗어날 이유가 없어 `TRAFFIC_UNAWARE` 로 둔다.
-
-**키를 Maps JS 키와 분리한다** — Maps JS 는 공개·리퍼러 제한, Routes 는 서버·IP 제한이다.
-한 키에 둘을 담으면 어느 제한을 걸어도 한쪽이 죽는다(YouTube·Places 와 같은 함정).
-
-> Directions API 는 Google 이 legacy 로 지정했다. **Routes API** 를 쓴다.
-> 카카오모빌리티 자동차 길찾기는 **제휴 파트너 전용**이라 후보에서 빠졌다.
 
 ## 관련
 

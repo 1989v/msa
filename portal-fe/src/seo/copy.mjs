@@ -605,8 +605,6 @@ export const RANK_BRAND = '랭킹';
 /** 출처 표시 의무가 붙은 원천이라 화면 어딘가에 반드시 나와야 한다 (ADR-0081). */
 export const RANK_GAS_SOURCE = '출처: 한국석유공사 오피넷';
 
-/** 이탈 시간은 근사값이다. 문구가 그 불확실성을 감추면 안 된다. */
-export const RANK_DETOUR_NOTE = '이탈 시간은 경로에서 떨어진 거리로 추정한 근사값입니다.';
 
 /**
  * 우리가 아는 주유소의 범위.
@@ -647,14 +645,6 @@ export function rankBoardMeta(board) {
   };
 }
 
-export function rankRouteMeta() {
-  return {
-    title: `경로 위 주유소 찾기 — ${RANK_BRAND}`,
-    description:
-      '출발지와 도착지를 지정하면 그 경로에서 조건에 맞는 주유소를 값싼 순으로 찾아줍니다. 이탈 시간과 절약액을 함께 보여줍니다.',
-    canonical: rankUrl('/route'),
-  };
-}
 
 // ─── blog (블로그 플랫폼) ─────────────────────────────────────────────────────
 

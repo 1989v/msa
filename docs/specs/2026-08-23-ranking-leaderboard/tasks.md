@@ -53,19 +53,19 @@
       — 빠뜨리면 배포는 성공하고 화면만 404
 - [x] `/internal/**` 은 ingress 미노출 확인
 
-## TG-6 · 경로 탐색
+## TG-6 · 길안내 (개정 — 구글맵 링크로 대체)
 
-- [x] `GoogleRoutesClient` — Routes API(legacy Directions 아님) 1콜, encoded polyline
-- [x] 폴리라인 디코더 + 약 3km 간격 샘플링
-- [x] 후보 산출 — 샘플별 반경 조회 → `opinet_id` dedupe → 이탈시간 근사 → 필터 → 정렬
-- [x] 테스트: 근접 중복 미발생 / `detourLimitMin=0` 이면 빈 결과가 정상 / 출발=도착 퇴화 입력
-- [x] 키 없으면 이 기능만 비활성 (리더보드는 정상)
+- [x] ~~Routes API 어댑터·폴리라인·이탈 근사~~ → **제거**. 출발지가 전국에 흩어져 캐시가 듣지
+      않고 호출 수가 사용자 수를 따라간다 (ADR-0081 §6 개정)
+- [x] 리더보드 각 줄에 **구글맵 길찾기 링크** (Maps URLs — 키·쿼터 없음)
+- [x] 좌표 우선, 없으면 이름+주소 폴백
+- [x] 상시 파드의 외부 `:443` egress 원복
 
 ## TG-7 · FE (`rank.1989v.com`)
 
 - [x] `portal-fe` 호스트 분기 라우트 (`/`, `/boards/:slug`, `/route`)
 - [x] 리더보드 — 순위·가격·등락 배지(NEW/↑n/↓n)·브랜드·셀프
-- [x] 경로 탐색 — 출발·도착 입력 + 결과 카드 + 지도
+- [x] 각 줄 길찾기 버튼 (모바일에서도 잘리지 않게 그리드 재배치)
 - [x] **DESIGN.md 토큰만 사용** (hex 직접 입력 금지)
 - [x] 하단 출처 표기 "출처: 한국석유공사 오피넷"
 - [x] **신규 서브도메인 체크리스트 4단계**
@@ -78,7 +78,6 @@
 ## TG-8 · 배포 + 문서 동기화
 
 - [x] `ranking/ingest` CronJob + Secret `ranking-ingest-secrets`
-- [x] `GOOGLE_ROUTES_API_KEY` 앱 Secret 주입
 - [x] `display_service` 행 추가 (메인 런처 타일, ADR-0066) — V20 에서 PREOPEN 으로. 실데이터 붙으면 OPEN 으로
 - [x] **`docs/architecture/data-sources.md` 대장에 오피넷 · Google Routes 두 줄**
       — 코드에만 있고 대장에 없으면 없는 것으로 친다
@@ -89,7 +88,6 @@
 
 | # | 작업 | 막히는 것 |
 |---|---|---|
-| 1 | opinet.co.kr 회원가입 → **무료 API 이용신청** | 실데이터 (샘플로 개발은 진행 가능) |
-| 2 | GCP → **Routes API** 사용 설정 + **서버 키(IP 제한)** | 경로 탐색 실동작 |
+| 1 | 공공데이터포털에서 한국석유공사 5종 **활용신청** (기존 `DATA_GO_KR_KEY` 재사용) | 실데이터 (샘플로 개발은 진행 가능) |
 
-> ②는 Maps JS 키와 **분리**한다. 한 키에 리퍼러·IP 제한을 같이 걸 수 없어 한쪽이 죽는다.
+> 길안내는 링크라 키가 필요 없다 — 사용자 작업이 하나로 줄었다.

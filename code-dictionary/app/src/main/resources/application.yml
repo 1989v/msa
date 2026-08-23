@@ -114,13 +114,3 @@ management:
 encryption:
   aes-key: ${AES_KEY:default-aes-key-exactly-32bytes!}
 
-# ADR-0081 — 경로 위 주유소 찾기의 길찾기 키(Google Routes).
-# 비어 있으면 경로 화면만 비활성이고 리더보드는 정상 동작한다 — 기능 하나가 꺼질 뿐
-# 기동을 막지 않는다. Maps JS 키(공개·리퍼러 제한)와 반드시 분리된 서버용 키(IP 제한)다.
-ranking:
-  google-routes:
-    api-key: ${RANKING_GOOGLE_ROUTES_API_KEY:}
-    # 하루 호출 상한. 무료 구간이 월 10,000콜(하루 약 333회)이라 300 이면 월 9,000 으로
-    # 여유를 두고 들어간다. **무료 한도는 상한이 아니라 통과 지점이라** 막지 않으면
-    # 인기가 생긴 달에 청구서로 알게 된다. 캐시 적중은 이 수를 쓰지 않는다.
-    daily-budget: ${RANKING_ROUTES_DAILY_BUDGET:300}

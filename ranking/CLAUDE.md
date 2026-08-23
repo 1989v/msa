@@ -8,7 +8,7 @@
 | Gradle / 경로 | 역할 |
 |---|---|
 | `:ranking:domain` | 순수 Kotlin — 보드·스냅샷·엔트리·등락·순위 산정. Spring/JPA 없음 |
-| `:ranking:feature` | Spring 라이브러리(비-bootable) — 조회 API · 스냅샷 배치 · 경로 탐색 |
+| `:ranking:feature` | Spring 라이브러리(비-bootable) — 조회 API · 스냅샷 배치 |
 | `ranking/ingest` | Python CronJob — 공공데이터포털 유가 API 수집 → 좌표 변환 → 내부 API 적재 |
 
 스키마·마이그레이션은 **호스트(code-dictionary)가 소유**한다 (`V20__ranking.sql`).
@@ -18,7 +18,7 @@ deal/blog 과 같은 형태 — 전용 datasource 를 두지 않는다.
 
 ```bash
 ./gradlew :ranking:domain:test      # 도메인 (Spring context 없음)
-./gradlew :ranking:feature:test     # 서비스·경로 탐색
+./gradlew :ranking:feature:test     # 조회 서비스·DTO 왕복
 cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 ```
 
@@ -55,10 +55,13 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 `latestSnapshotId` 는 엔트리를 **다 쓴 뒤에** 건다. 먼저 걸면 배치가 도는 동안 조회가 반쪽
 스냅샷을 읽는다. `prevRank = null` 은 **신규 진입**이지 0 이나 최하위가 아니다.
 
-### 5. 외부 호출은 길찾기 1회뿐
+### 5. 사용자 요청 경로에 외부 호출이 없다
 
 주유소·가격은 매일 받아둔 DB 만 읽는다. 유가 API 를 요청 경로에서 부르면 인기가 생기는 순간
 일일 한도가 터진다. 유료 오퍼레이션(**시도별** 평균가·상호 검색·기간 통계)은 부르지 않는다.
+
+길안내도 우리가 하지 않는다 — **구글맵 Maps URLs 링크**로 넘긴다(키·쿼터 없음).
+경로 API 를 직접 부르면 출발지가 전국에 흩어져 캐시가 듣지 않고 호출 수가 사용자 수를 따라간다.
 
 한도 초과는 **HTTP 200 + 본문 `resultCode`** 로 온다 — 상태코드만 보면 성공으로 읽는다.
 
@@ -69,7 +72,6 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 | GET | `/api/v1/ranking/boards` | 보드 목록 (`domain`·`scope` 필터) |
 | GET | `/api/v1/ranking/boards/{slug}` | 최신 스냅샷 + 등락 |
 | GET | `/api/v1/ranking/gas/areas` | 보드가 있는 지역만 |
-| POST | `/api/v1/ranking/gas/route` | 경로 위 주유소 — 외부 1콜 |
 | POST | `/internal/ranking/gas/stations/bulk` | 수집기 전용. ingress 미노출 |
 | POST | `/internal/ranking/gas/boards/rebuild` | 〃 |
 
@@ -82,19 +84,10 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 |---|---|---|
 | `DATA_GO_KR_KEY` | `ranking-ingest-secrets/data-go-kr-key` | 수집 잡이 "아직 안 켬"으로 정상 종료 (샘플 JSONL 로 개발 가능) |
 | `OIL_API_BASE` | `ranking-ingest-config/oil-api-base` | 〃. **기본값을 두지 않는다** — 틀린 주소는 404 를 조용히 삼킨다 |
-| `RANKING_GOOGLE_ROUTES_API_KEY` | `ranking-secrets/google-routes-api-key` | 경로 화면만 비활성, 리더보드는 정상 |
 
 `DATA_GO_KR_KEY` 는 참가격·식약처·TourAPI 와 **같은 포털 키**다 — 새로 만들 것이 없고
 해당 API 별 **활용신청**만 하면 된다.
 
-Routes 키는 **Maps JS 키와 분리**한다 — 서버 호출이라 IP 제한, Maps JS 는 리퍼러 제한이다.
-
-Routes 요청은 **Essentials 구간(월 10,000콜 무료)에 고정**돼 있다. `fieldMask` 에 필드를 더하거나
-`routingPreference` 를 `TRAFFIC_AWARE` 로 올리면 Pro SKU 가 되어 무료분이 5,000 으로 반토막 난다.
-
-그 위에 `CachedRouteLookup` 이 **캐시(7일·100m 격자)와 일일 예산(기본 300)** 을 건다.
-경로는 출발·도착만으로 정해지므로 조건을 바꿔 다시 찾아도 외부는 부르지 않는다.
-예산을 넘기면 거절하되 캐시된 구간과 리더보드는 계속 동작한다.
 
 ## 다음 슬라이스
 

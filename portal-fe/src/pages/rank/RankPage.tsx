@@ -51,9 +51,6 @@ export default function RankPage() {
         <p className="rank-header__subtitle">
           지역별 최저가 주유소를 매일 새로 줄 세웁니다. 어제 대비 등락을 함께 봅니다.
         </p>
-        <Link className="rank-cta kh-button-ghost" to="/route">
-          가는 길 위의 싼 주유소 찾기 →
-        </Link>
       </header>
 
       <div className="rank-toolbar">

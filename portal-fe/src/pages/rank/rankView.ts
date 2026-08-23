@@ -39,39 +39,37 @@ export function capturedLabel(capturedAt: string | null): string | null {
   return `${date.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })} 기준`;
 }
 
-/**
- * Google encoded polyline 디코더 (정밀도 5).
- *
- * Maps JS 의 geometry 라이브러리를 부르지 않는 이유는 로더 URL 을 건드려야 하고, 그러면
- * 이 기능 때문에 다른 화면의 번들이 같이 커지기 때문이다. 알고리즘은 20줄이다.
- */
-export function decodePolyline(encoded: string): { lat: number; lng: number }[] {
-  const points: { lat: number; lng: number }[] = [];
-  let index = 0;
-  let lat = 0;
-  let lng = 0;
-
-  while (index < encoded.length) {
-    let shift = 0;
-    let result = 0;
-    let byte: number;
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-    lat += result & 1 ? ~(result >> 1) : result >> 1;
-
-    shift = 0;
-    result = 0;
-    do {
-      byte = encoded.charCodeAt(index++) - 63;
-      result |= (byte & 0x1f) << shift;
-      shift += 5;
-    } while (byte >= 0x20);
-    lng += result & 1 ? ~(result >> 1) : result >> 1;
-
-    points.push({ lat: lat / 1e5, lng: lng / 1e5 });
+/** payload 의 숫자 필드를 안전하게 꺼낸다 — JSON 이라 타입이 보장되지 않는다. */
+export function payloadNumber(payload: Record<string, unknown>, key: string): number | null {
+  const value = payload[key];
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
   }
-  return points;
+  return null;
+}
+
+/**
+ * 구글맵 길찾기 링크 (Maps URLs API).
+ *
+ * **조립 링크라 키도 쿼터도 없다** — API 호출이 아니라 주소다. 경로 계산을 우리가 하려면
+ * 요청마다 유료 API 를 불러야 하고, 출발지가 전국에 흩어지면 캐시도 듣지 않는다.
+ * 길안내는 이미 잘하는 앱에 넘기고 우리는 "어디가 싼가"에 집중한다.
+ *
+ * 좌표를 먼저 쓴다 — 이름으로 찾게 하면 같은 상호의 다른 주유소로 안내될 수 있고,
+ * 방금 본 가격과 다른 곳에 도착하는 것이 이 버튼의 유일한 실패 방식이다.
+ */
+export function googleMapsDirectionsUrl(station: {
+  name: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  roadAddress?: string | null;
+}): string {
+  const base = 'https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=';
+  if (station.latitude != null && station.longitude != null) {
+    return `${base}${station.latitude},${station.longitude}`;
+  }
+  const address = (station.roadAddress ?? '').trim();
+  return `${base}${encodeURIComponent(address ? `${station.name} ${address}` : station.name)}`;
 }

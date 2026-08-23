@@ -30,7 +30,6 @@ const BlogEditorPage = lazy(() => import('./pages/blog/BlogEditorPage'));
 // ADR-0081 — 랭킹 리더보드 (rank.<domain>). 경로 화면이 구글맵 로더를 포함해 lazy 로 분리한다.
 const RankPage = lazy(() => import('./pages/rank/RankPage'));
 const RankBoardPage = lazy(() => import('./pages/rank/RankBoardPage'));
-const RankRoutePage = lazy(() => import('./pages/rank/RankRoutePage'));
 const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
 // ADR-0071 — 지역 페이지. "제주 가볼 만한 곳" 류 질의의 착지점 (코드 세그먼트: 시도 2자리/시군구 5자리)
 const RegionPage = lazy(() => import('./pages/place/RegionPage'));
@@ -132,7 +131,7 @@ function rankRoute(element: ReactElement) {
 }
 
 /**
- * 랭킹의 짧은 주소(`/boards/:slug`, `/route`)는 rank 호스트의 것이다. apex 에 함께 열면
+ * 랭킹의 짧은 주소(`/boards/:slug`)는 rank 호스트의 것이다. apex 에 함께 열면
  * 같은 리더보드가 두 주소로 돌아다녀 canonical 이 갈린다 — 블로그와 같은 이유다.
  */
 const rankRoutesEnabled = isRankHost || !isApexProd;
@@ -209,7 +208,6 @@ function App() {
           {/* 랭킹 리더보드 — apex 는 서브도메인으로 넘긴다 (ADR-0081) */}
           <Route path="/rank" element={rankRoute(<RankPage />)} />
           {rankRoutesEnabled && <Route path="/boards/:slug" element={<RankBoardPage />} />}
-          {rankRoutesEnabled && <Route path="/route" element={<RankRoutePage />} />}
           {/* 블로그 — apex 는 서브도메인으로 넘긴다 (ADR-0072) */}
           <Route path="/blog" element={blogRoute(<BlogHomePage />)} />
           {blogRoutesEnabled && <Route path="/posts/:slug" element={<BlogPostPage />} />}

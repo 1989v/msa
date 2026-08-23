@@ -88,8 +88,9 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
   같은 `DATA_GO_KR_KEY` 를 재사용한다(별도 가입 없음). 다만 포털에 지역 전량+가격이 없어
   **아는 것은 시군구별 최저가 상위 20곳**이고, 화면이 이 범위를 밝힌다. **좌표는 KATEC 으로 올 때가
   있어** 그대로 저장하면 값은 그럴듯한 채로 지도 핀만 어긋나고, 이미 위경도인 걸 또 변환하면
-  한반도 밖으로 날아간다. 수집(CronJob)과 서빙(DB 읽기)을 분리한다 — 외부 한도를 트래픽에
-  묶으면 인기가 생기는 순간 죽는다
+  한반도 밖으로 날아간다. **사용자 요청 경로에 외부 호출이 없다** — 수집은 CronJob 이 하고
+  길안내는 구글맵 링크(키·쿼터 없음)로 넘긴다. 경로 API 를 직접 부르면 출발지가 전국에 흩어져
+  캐시가 듣지 않고 호출 수가 사용자 수를 따라간다
 - **광고 수익화 (AdSense)**: 지면 4곳(블로그 글 끝·게임 목록 끝·관광지 상세 끝·혜택 목록 바깥)에 `AdSlot` — **자동 광고는 콘솔에서 끈 채로 둔다** → `docs/adr/ADR-0076-adsense-monetization.md`. `copy.mjs` 의 `ADSENSE_CLIENT` 한 줄이 로더·지면·`ads.txt` 셋을 동시에 켜고 끈다(빈 값 = 광고 없음이 정상 상태). **`/ads.txt` 는 nginx 명시 route 가 없으면 SPA 폴백이 index.html 을 내보내고, 그 응답은 '유효한 판매자 0줄'로 읽혀 도메인 전체 입찰이 끊긴다.** resume 는 제외 (ADR-0064 와 같은 기준)
 - **로그인 진입점**: **apex `/login` 한 곳**, 토큰은 `.1989v.com` 도메인 쿠키 → `docs/adr/ADR-0079-single-login-origin.md`. 서브도메인에서 로그인을 그리면 OAuth 콜백이 그 호스트로 잡혀 `redirect_uri_mismatch` 가 난다(2026-08-22 game 호스트 실제 사고). **제공자 콘솔에 등록할 redirect_uri 는 `https://1989v.com/oauth/callback` 하나뿐**. `localStorage` 로 되돌리면 서브도메인 세션 공유가 깨져 로그인 화면도 다시 갈라야 한다
 - **회원 식별 최소화**: 소셜에서 **이메일·실명을 받지 않는다**(스코프 `openid` 뿐), 제공자 `sub` 은 auth 가 HMAC 으로 가려 member 로 넘긴다 → `docs/adr/ADR-0078-identity-minimization.md`. **`AUTH_SUBJECT_HASH_KEY` 가 없으면 auth 가 기동하지 않고, 키를 잃으면 전 회원 로그인 불가**(해시 재생성 불가) — 백업 대상. 어드민 부트스트랩은 제거됐고 역할은 `member_roles` 행에만 있다(복구 절차: `auth/CLAUDE.md`)
@@ -169,7 +170,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
 | blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |
-| ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 주유소 유가(시군구 × 유종 최저가 TOP20, 공공데이터포털) + **경로 위 주유소 찾기**. `:ranking:domain`+`:ranking:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
+| ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 주유소 유가(시군구 × 유종 최저가 TOP20, 공공데이터포털) + 각 주유소 **구글맵 길찾기 링크**. `:ranking:domain`+`:ranking:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
 | deal | (CLAUDE.md 미작성) | 혜택 링크 허브 — 카테고리별 제휴/일반 혜택 링크 큐레이션 + `/go/{slug}` 리다이렉터 + 클릭 계측. `:deal:domain`+`:deal:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `deal.1989v.com` (ADR-0069) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.
@@ -184,7 +185,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | `resume.1989v.com` | `portal-fe` | 이력서 — 같은 번들·같은 Service, 호스트로 분기. 공개 여부는 DB 설정 + 제출처별 토큰 게이트 (ADR-0064). 색인 대상 아님 |
 | `deal.1989v.com` | `portal-fe` | 혜택 링크 허브 — 같은 번들·호스트 분기. `/go/{slug}` 는 gateway(아웃바운드 리다이렉터). **색인 대상 아님(noindex)** — 링크 모음만으로 색인되면 thin affiliate 판정이 사이트 전체에 번진다 (ADR-0069) |
 | `blog.1989v.com` | `portal-fe` | 블로그 — 같은 번들·호스트 분기. **글 상세(`/posts/:slug`)와 작성자 공간(`/authors/:handle`)은 gateway 가 받아 백엔드가 meta 를 주입한 HTML 을 낸다** (ADR-0072 §6) — 발행 즉시 정확한 공유 카드·색인. 색인 대상 (deal/resume 과 반대) |
-| `rank.1989v.com` | `portal-fe` | 랭킹 리더보드 — 같은 번들·호스트 분기. 지역별 최저가 주유소 + 경로 탐색. **색인 대상** (deal 과 반대 — 집계와 등락이 자체 콘텐츠다) (ADR-0081) |
+| `rank.1989v.com` | `portal-fe` | 랭킹 리더보드 — 같은 번들·호스트 분기. 지역별 최저가 주유소 + 길찾기 링크. **색인 대상** (deal 과 반대 — 집계와 등락이 자체 콘텐츠다) (ADR-0081) |
 | `/admin/*` | `admin-fe` | 백오피스 |
 | `/quant/*` | `quant-fe` | 트레이딩 (Phase 3) |
 | `/gifticon/*` | `gifticon-fe` | 기프티콘 |

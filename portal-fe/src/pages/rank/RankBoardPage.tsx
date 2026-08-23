@@ -6,10 +6,20 @@ import ThemeToggle from '../../components/ThemeToggle';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import { RANK_GAS_SOURCE, rankBoardMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
-import { capturedLabel, formatPrice, movementLabel, movementTone } from './rankView';
+import {
+  capturedLabel,
+  formatPrice,
+  googleMapsDirectionsUrl,
+  movementLabel,
+  movementTone,
+  payloadNumber,
+} from './rankView';
 import './RankPage.css';
 
 // ADR-0081 — 리더보드 상세. 순위·가격·등락이 한 줄에 다 보여야 한다.
+//
+// 길안내는 구글맵으로 넘긴다. 경로를 우리가 계산하려면 요청마다 유료 API 를 불러야 하고,
+// 출발지가 전국에 흩어지면 캐시도 듣지 않는다. Maps URLs 는 조립 링크라 키·쿼터가 없다.
 
 function payloadText(entry: RankingEntry, key: string): string | null {
   const value = entry.payload[key];
@@ -39,6 +49,20 @@ function EntryRow({ entry, unit }: { entry: RankingEntry; unit: string }) {
         {formatPrice(entry.score)}
         <em>{unit}</em>
       </span>
+      <a
+        className="rank-row__nav kh-button-ghost"
+        href={googleMapsDirectionsUrl({
+          name: entry.subjectName,
+          latitude: payloadNumber(entry.payload, 'latitude'),
+          longitude: payloadNumber(entry.payload, 'longitude'),
+          roadAddress: address,
+        })}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`${entry.subjectName} 길찾기`}
+      >
+        길찾기
+      </a>
     </li>
   );
 }

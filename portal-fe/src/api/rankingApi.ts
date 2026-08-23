@@ -57,32 +57,6 @@ export interface RankingScope {
   name: string;
 }
 
-export interface RouteGasCandidate {
-  opinetId: string;
-  name: string;
-  brandCode: string | null;
-  brandName: string | null;
-  isSelf: boolean;
-  latitude: number | null;
-  longitude: number | null;
-  roadAddress: string | null;
-  price: number;
-  /** 근사값이다 — 화면도 "약 N분"으로 적는다 */
-  detourMinutes: number;
-  distanceToRouteMeters: number;
-  savingsPerLiter: number;
-}
-
-export interface RouteGasSearchResponse {
-  encodedPolyline: string;
-  distanceMeters: number;
-  durationMinutes: number;
-  productCode: string;
-  averagePrice: number | null;
-  sourceLabel: string;
-  candidates: RouteGasCandidate[];
-}
-
 export const fetchRankingBoards = async (scope?: string): Promise<RankingBoardSummary[]> => {
   const res = await api.get<ApiResponse<RankingBoardSummary[]>>('/api/v1/ranking/boards', {
     params: scope ? { domain: 'GAS_STATION', scope } : undefined,
@@ -100,19 +74,3 @@ export const fetchGasAreas = async (): Promise<RankingScope[]> => {
   return res.data.data;
 };
 
-export interface RouteSearchInput {
-  origin: { latitude: number; longitude: number };
-  destination: { latitude: number; longitude: number };
-  productCode: string;
-  detourLimitMin: number;
-  selfOnly: boolean;
-  brands: string[];
-}
-
-export const searchRouteGas = async (input: RouteSearchInput): Promise<RouteGasSearchResponse> => {
-  const res = await api.post<ApiResponse<RouteGasSearchResponse>>(
-    '/api/v1/ranking/gas/route',
-    input,
-  );
-  return res.data.data;
-};

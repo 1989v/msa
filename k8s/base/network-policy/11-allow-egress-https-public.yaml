@@ -12,11 +12,6 @@
 #                     CronJob (ADR-0070, data-sources.md §7).
 #                     상시 파드인 place 에는 열지 않는다 — deal 과 같은 이유.
 #   - ranking-ingest  오피넷 주유소·가격 수집 CronJob (ADR-0081).
-#   - code-dictionary 경로 위 주유소 찾기의 길찾기 호출(Google Routes) — ADR-0081 §6.
-#                     **상시 파드인데 여는 예외다.** 위 배치들과 달리 이 호출은 요청마다
-#                     즉시 필요해 미리 받아둘 수 없다(출발·도착이 임의 좌표다). auth 의
-#                     OAuth 검증과 같은 성격이라 배치로 밀어낼 수 없는 것만 여는 원칙에는 맞다.
-#                     주유소·가격 자체는 여전히 배치가 받아두고 서빙은 DB 만 읽는다.
 # (charting 은 ADR-0036 P2-T20 에서 Hard remove 되어 제외됨, 2026-05-02.)
 # 다른 서비스는 외부 :443 차단된 상태 (default-deny + DNS only).
 #
@@ -33,7 +28,7 @@ metadata:
 spec:
   podSelector:
     matchExpressions:
-      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, quant-ingest, gifticon, deal-linkcheck, place-ingest, ranking-ingest, code-dictionary] }
+      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, quant-ingest, gifticon, deal-linkcheck, place-ingest, ranking-ingest] }
   policyTypes:
     - Egress
   egress:

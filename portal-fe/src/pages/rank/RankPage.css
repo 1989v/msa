@@ -202,10 +202,18 @@
 
 .rank-row {
   display: grid;
-  grid-template-columns: 2.2rem 3rem 1fr auto;
+  grid-template-columns: 2.2rem 3rem 1fr auto auto;
   align-items: center;
   gap: var(--ko-space-3);
   padding: var(--ko-space-3) var(--ko-space-4);
+}
+
+/* 길안내는 구글맵으로 넘긴다 — 링크라 키도 쿼터도 없다 */
+.rank-row__nav {
+  padding: 0.3rem 0.7rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  text-decoration: none;
 }
 
 .rank-row__rank {
@@ -271,49 +279,17 @@
   white-space: nowrap;
 }
 
-/* ─── 경로 화면 ─── */
-
-.rank-route__picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ko-space-2);
-}
-
-.rank-pill {
-  padding: 0.35rem 0.75rem;
-  border: 1px solid var(--ko-border);
-  color: var(--ko-text-secondary);
-  font-size: 0.82rem;
-}
-
-.rank-pill.is-active {
-  border-color: var(--ko-accent-primary);
-  color: var(--ko-accent-text);
-}
-
-.rank-route__map {
-  width: 100%;
-  height: clamp(18rem, 45vh, 30rem);
-  border: 1px solid var(--ko-border);
-  background: var(--ko-surface-1);
-}
-
-.rank-route__summary {
-  margin: 0;
-  color: var(--ko-text-secondary);
-  font-size: 0.88rem;
-}
-
 @media (max-width: 40rem) {
   .rank-row {
-    grid-template-columns: 1.8rem 2.6rem 1fr;
+    grid-template-columns: 1.8rem 2.6rem 1fr auto;
     grid-template-areas:
-      'rank move body'
-      '.    .    score';
-    row-gap: var(--ko-space-1);
+      'rank move body body'
+      '.    .    score nav';
+    row-gap: var(--ko-space-2);
   }
   .rank-row__rank { grid-area: rank; }
   .rank-row__move { grid-area: move; }
   .rank-row__body { grid-area: body; }
   .rank-row__score { grid-area: score; text-align: right; }
+  .rank-row__nav { grid-area: nav; justify-self: end; }
 }

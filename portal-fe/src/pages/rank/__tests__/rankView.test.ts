@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { capturedLabel, decodePolyline, formatPrice, movementLabel, movementTone } from '../rankView';
+import {
+  capturedLabel,
+  formatPrice,
+  googleMapsDirectionsUrl,
+  movementLabel,
+  movementTone,
+  payloadNumber,
+} from '../rankView';
 
 describe('등락 표기', () => {
   it('신규 진입은 NEW 로, 변동 없음과 구분한다', () => {
@@ -34,18 +41,42 @@ describe('기준 시각', () => {
   });
 });
 
-describe('폴리라인 디코더', () => {
-  it('구글 문서의 표준 예시를 그대로 푼다', () => {
-    // 기대값은 Google Maps Platform 문서가 명시한 것 — 우리 코드가 만든 값이 아니다
-    const points = decodePolyline('_p~iF~ps|U_ulLnnqC_mqNvxq`@');
-    expect(points).toEqual([
-      { lat: 38.5, lng: -120.2 },
-      { lat: 40.7, lng: -120.95 },
-      { lat: 43.252, lng: -126.453 },
-    ]);
+describe('구글맵 길찾기 링크', () => {
+  it('좌표가 있으면 좌표로 찍는다 — 같은 상호의 다른 주유소로 안내되면 안 된다', () => {
+    const url = googleMapsDirectionsUrl({
+      name: '경복궁셀프주유소',
+      latitude: 37.5766,
+      longitude: 126.9769,
+      roadAddress: '서울 종로구 사직로 1',
+    });
+    expect(url).toContain('destination=37.5766,126.9769');
+    expect(url).toContain('travelmode=driving');
   });
 
-  it('빈 문자열은 빈 경로다', () => {
-    expect(decodePolyline('')).toEqual([]);
+  it('좌표가 없으면 이름+주소로 넘긴다', () => {
+    const url = googleMapsDirectionsUrl({
+      name: '광화문주유소',
+      latitude: null,
+      longitude: null,
+      roadAddress: '서울 종로구 새문안로 20',
+    });
+    expect(url).toContain(encodeURIComponent('광화문주유소 서울 종로구 새문안로 20'));
+  });
+
+  it('좌표도 주소도 없으면 이름만으로도 링크가 만들어진다', () => {
+    expect(googleMapsDirectionsUrl({ name: '이름만' })).toContain(encodeURIComponent('이름만'));
+  });
+});
+
+describe('payload 숫자 꺼내기', () => {
+  it('숫자와 숫자 문자열을 모두 받는다 — JSON 이라 타입이 보장되지 않는다', () => {
+    expect(payloadNumber({ latitude: 37.5 }, 'latitude')).toBe(37.5);
+    expect(payloadNumber({ latitude: '37.5' }, 'latitude')).toBe(37.5);
+  });
+
+  it('없거나 숫자가 아니면 null 이다', () => {
+    expect(payloadNumber({}, 'latitude')).toBeNull();
+    expect(payloadNumber({ latitude: 'abc' }, 'latitude')).toBeNull();
+    expect(payloadNumber({ latitude: null }, 'latitude')).toBeNull();
   });
 });

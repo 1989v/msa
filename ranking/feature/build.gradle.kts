@@ -18,10 +18,6 @@ dependencies {
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
-    // 길찾기 응답 캐시 — Spring cache 추상화를 쓰지 않는다. 호스트의 CaffeineCacheManager 는
-    // 캐시 이름을 고정 목록으로 받는 정적 모드라 @Cacheable 을 쓰려면 호스트 설정을 고쳐야 한다
-    // (deal:feature 와 같은 판단 — 폴드된 라이브러리가 호스트 설정에 손대지 않는 편이 재분리도 쉽다).
-    implementation(libs.caffeine)
     implementation(libs.kotlin.logging)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
