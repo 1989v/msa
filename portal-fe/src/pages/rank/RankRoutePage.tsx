@@ -6,7 +6,12 @@ import { searchRouteGas, type RouteGasSearchResponse } from '../../api/rankingAp
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
-import { RANK_DETOUR_NOTE, RANK_GAS_SOURCE, rankRouteMeta } from '../../seo/copy.mjs';
+import {
+  RANK_COVERAGE_NOTE,
+  RANK_DETOUR_NOTE,
+  RANK_GAS_SOURCE,
+  rankRouteMeta,
+} from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { loadGoogleMaps, mapsApiKey } from '../place/googleMaps';
 import { decodePolyline, formatPrice } from './rankView';
@@ -277,6 +282,7 @@ export default function RankRoutePage() {
 
       <Footer>
         <p>{RANK_DETOUR_NOTE}</p>
+        <p>{RANK_COVERAGE_NOTE}</p>
         <p>{result?.sourceLabel ? `출처: ${result.sourceLabel}` : RANK_GAS_SOURCE}</p>
       </Footer>
     </div>

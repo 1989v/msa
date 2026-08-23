@@ -31,14 +31,26 @@ def log(message: str) -> None:
 
 
 def _api_key() -> str:
-    key = os.environ.get("OPINET_API_KEY")
+    # 참가격·식약처·TourAPI 와 **같은 포털 키**다. 별도 키를 만들지 않는다.
+    key = os.environ.get("DATA_GO_KR_KEY")
     if not key:
-        raise SystemExit("OPINET_API_KEY 가 필요합니다 (--file 로 샘플 실행은 키 없이 가능)")
+        raise SystemExit("DATA_GO_KR_KEY 가 필요합니다 (--file 로 샘플 실행은 키 없이 가능)")
     return key
 
 
 def _apply_coordinates(station: dict) -> dict:
-    """KATEC 원본은 그대로 두고 WGS84 를 덧붙인다 (data-sources.md §0 ①②)."""
+    """지도에 찍을 WGS84 를 채운다. KATEC 원본은 그대로 남긴다 (data-sources.md §0 ①②).
+
+    오퍼레이션마다 좌표를 주는 형태가 다르다 — 위경도로 오는 것도 있고 KATEC 으로 오는 것도
+    있다. **이미 위경도면 변환하지 않는다.** 변환된 값을 또 변환하면 한반도 밖으로 날아간다.
+    """
+    lat, lng = station.get("latitude"), station.get("longitude")
+    if lat is not None and lng is not None:
+        if katec.within_korea(lat, lng):
+            return station
+        log(f"위경도 범위 밖 — {station.get('opinetId')} ({lat},{lng}) — 좌표를 비운다")
+        station["latitude"] = station["longitude"] = None
+
     x, y = station.get("katecX"), station.get("katecY")
     if x is None or y is None:
         return station
@@ -74,13 +86,20 @@ def _merge_by_station(rows: list[dict]) -> list[dict]:
 
 
 def _collect_from_api(key: str) -> list[dict]:
+    """시군구 × 유종의 최저가 상위 20곳을 모은다.
+
+    포털에는 지역 단위 **전량**+가격 오퍼레이션이 없다 — 가격을 주는 지역 단위 경로는
+    최저가 TOP20 뿐이다(오피넷 직접 신청에만 전량이 있다). "최저가 랭킹"이 목적이라
+    데이터셋이 목적과 겹치지만, **전국 모든 주유소를 아는 것은 아니다** — 화면 문구가
+    그 사실을 감추면 안 된다.
+    """
     areas = [a for a in opinet.fetch_areas(key) if a["level"] == "SIGUN"]
-    log(f"지역 {len(areas)}곳 × 유종 {len(opinet.PRODUCTS)}종 순회")
+    log(f"지역 {len(areas)}곳 × 유종 {len(opinet.PRODUCTS)}종 = {len(areas) * len(opinet.PRODUCTS)}콜")
 
     rows: list[dict] = []
     for area in areas:
         for product in opinet.PRODUCTS:
-            rows.extend(opinet.fetch_area_stations(key, area, product))
+            rows.extend(opinet.fetch_area_top(key, area, product))
     return rows
 
 
@@ -96,6 +115,10 @@ def job_gas_stations(sample: Path | None) -> int:
     except opinet.QuotaExceeded as e:
         # 부분 적재를 남기지 않는다 — 적재가 전체 동기화라 다음 실행이 나머지를 지운다
         log(f"한도 초과로 중단, 적재하지 않는다: {e}")
+        return 0
+    except opinet.ApiNotConfigured as e:
+        # 키·엔드포인트 미설정은 실패가 아니라 "아직 안 켬" 이다 — 실패 잡을 쌓지 않는다
+        log(f"아직 설정되지 않아 건너뛴다: {e}")
         return 0
 
     stations = [_apply_coordinates(row) for row in _merge_by_station(rows)]

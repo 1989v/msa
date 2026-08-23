@@ -7,6 +7,8 @@ CI 게이트가 아니라 **배포 전 수동 확인**이다. 여기서 잡으�
   1. 유종별로 나눠 온 줄이 주유소 단위로 합쳐지는가 — 안 합치면 적재가 전체 동기화라
      뒤에 보낸 유종이 앞 유종의 가격 행을 지운다.
   2. KATEC 좌표가 WGS84 로 바뀌어 나가는가 — 안 바뀌면 지도 핀이 전부 어긋난다.
+  3. **이미 위경도로 온 줄을 또 변환하지 않는가** — 오퍼레이션마다 좌표 형태가 달라서,
+     두 번 변환하면 한반도 밖으로 날아간다.
 """
 from __future__ import annotations
 
@@ -67,13 +69,19 @@ def main() -> int:
     if merged and merged.get("roadAddress") is None:
         failures.append("병합이 앞 줄의 주소를 잃었다")
 
+    already_wgs = by_id.get("C0033001")
+    if already_wgs and abs((already_wgs.get("latitude") or 0) - 35.1631) > 0.001:
+        failures.append("위경도로 온 줄이 다시 변환됐다")
+    if already_wgs and already_wgs.get("katecX") is not None:
+        failures.append("위경도로 온 줄에 없던 KATEC 이 생겼다")
+
     for station in RECEIVED:
         lat, lng = station.get("latitude"), station.get("longitude")
         if lat is None or lng is None:
             failures.append(f"{station['opinetId']} 좌표 변환 누락")
         elif not (33.0 <= lat <= 39.0 and 124.0 <= lng <= 132.0):
             failures.append(f"{station['opinetId']} 좌표가 한반도 밖 ({lat},{lng})")
-        if station.get("katecX") is None:
+        if station.get("katecX") is None and station["opinetId"] != "C0033001":
             failures.append(f"{station['opinetId']} 원천 KATEC 이 버려졌다")
 
     if failures:

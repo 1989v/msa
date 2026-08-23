@@ -9,7 +9,7 @@
 |---|---|
 | `:ranking:domain` | 순수 Kotlin — 보드·스냅샷·엔트리·등락·순위 산정. Spring/JPA 없음 |
 | `:ranking:feature` | Spring 라이브러리(비-bootable) — 조회 API · 스냅샷 배치 · 경로 탐색 |
-| `ranking/ingest` | Python CronJob — 오피넷 수집 → 좌표 변환 → 내부 API 적재 |
+| `ranking/ingest` | Python CronJob — 공공데이터포털 유가 API 수집 → 좌표 변환 → 내부 API 적재 |
 
 스키마·마이그레이션은 **호스트(code-dictionary)가 소유**한다 (`V20__ranking.sql`).
 deal/blog 과 같은 형태 — 전용 datasource 를 두지 않는다.
@@ -24,11 +24,20 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 
 ## 이 서비스에서 조용히 틀리는 곳
 
-### 1. 좌표는 KATEC 이다
+### 0. 우리가 아는 주유소는 전국 전량이 아니다
 
-오피넷의 `GIS_X_COOR`/`GIS_Y_COOR` 는 위경도가 아니라 **KATEC(TM128)** 이다. 십만 단위라
-그럴듯해 보이고, 그대로 저장하면 **지도 핀만 전부 어긋난다.** 수집기가 변환하고 원천 좌표도
-남긴다. 기대값은 우리 코드가 아니라 **PROJ 로 뽑았다** (`tests/test_katec.py`).
+공공데이터포털이 주는 유가 API 5종에는 **지역 단위 전량+가격이 없다** — 가격을 주는 지역 단위
+경로는 **최저가 TOP20** 뿐이다. 그래서 데이터셋은 **시군구별 싼 주유소 상위 20곳**(약 5,000곳)이다.
+"최저가 랭킹"이 목적이라 목적과 겹치지만, **화면이 "전국 모든 주유소"라고 말하면 거짓**이 된다.
+전량은 오피넷 직접 신청(`주유소 판매가격정보(지역별)`)에만 있다.
+
+### 1. 좌표 형태가 오퍼레이션마다 다르다
+
+`GIS_X_COOR`/`GIS_Y_COOR` 는 위경도가 아니라 **KATEC(TM128)** 이고, 위경도로 주는 오퍼레이션도
+있다. KATEC 은 십만 단위라 그럴듯해 보이고 그대로 저장하면 **지도 핀만 전부 어긋난다.**
+반대로 **이미 위경도인 값을 또 변환하면 한반도 밖으로 날아간다** — 형태를 판정해 한 번만
+변환하고 원천 좌표도 남긴다. 기대값은 우리 코드가 아니라 **PROJ 로 뽑았다**
+(`tests/test_katec.py`).
 
 ### 2. 폴드 배선 세 군데
 
@@ -48,9 +57,10 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 
 ### 5. 외부 호출은 길찾기 1회뿐
 
-주유소·가격은 매일 받아둔 DB 만 읽는다. 오피넷을 요청 경로에서 부르면 인기가 생기는 순간
-일일 한도가 터진다. 유료 오퍼레이션(`최저가 Top20`·`시군구 평균가`)은 부르지 않는다 —
-무료 수집분으로 직접 집계한다.
+주유소·가격은 매일 받아둔 DB 만 읽는다. 유가 API 를 요청 경로에서 부르면 인기가 생기는 순간
+일일 한도가 터진다. 유료 오퍼레이션(**시도별** 평균가·상호 검색·기간 통계)은 부르지 않는다.
+
+한도 초과는 **HTTP 200 + 본문 `resultCode`** 로 온다 — 상태코드만 보면 성공으로 읽는다.
 
 ## API
 
@@ -68,10 +78,14 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 
 ## 키
 
-| 키 | Secret | 없으면 |
+| 키 | Secret / ConfigMap | 없으면 |
 |---|---|---|
-| `OPINET_API_KEY` | `ranking-ingest-secrets/opinet-api-key` | 수집 잡이 즉시 종료 (샘플 JSONL 로 개발 가능) |
+| `DATA_GO_KR_KEY` | `ranking-ingest-secrets/data-go-kr-key` | 수집 잡이 "아직 안 켬"으로 정상 종료 (샘플 JSONL 로 개발 가능) |
+| `OIL_API_BASE` | `ranking-ingest-config/oil-api-base` | 〃. **기본값을 두지 않는다** — 틀린 주소는 404 를 조용히 삼킨다 |
 | `RANKING_GOOGLE_ROUTES_API_KEY` | `ranking-secrets/google-routes-api-key` | 경로 화면만 비활성, 리더보드는 정상 |
+
+`DATA_GO_KR_KEY` 는 참가격·식약처·TourAPI 와 **같은 포털 키**다 — 새로 만들 것이 없고
+해당 API 별 **활용신청**만 하면 된다.
 
 Routes 키는 **Maps JS 키와 분리**한다 — 서버 호출이라 IP 제한, Maps JS 는 리퍼러 제한이다.
 

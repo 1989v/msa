@@ -5,7 +5,7 @@ import { fetchGasAreas, fetchRankingBoards } from '../../api/rankingApi';
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
-import { RANK_GAS_SOURCE, rankHubMeta } from '../../seo/copy.mjs';
+import { RANK_COVERAGE_NOTE, RANK_GAS_SOURCE, rankHubMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { capturedLabel, formatPrice } from './rankView';
 import './RankPage.css';
@@ -107,6 +107,7 @@ export default function RankPage() {
       </main>
 
       <Footer>
+        <p>{RANK_COVERAGE_NOTE}</p>
         <p>{RANK_GAS_SOURCE}</p>
       </Footer>
     </div>

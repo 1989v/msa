@@ -84,9 +84,12 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **랭킹 리더보드**: `rank.1989v.com` — 무엇이든 줄세우는 공통 엔진 + 도메인별 수집기 → `docs/adr/ADR-0081-ranking-leaderboard-platform.md`.
   **순위는 현재값이 아니라 스냅샷 원장**이다 — 등락("지난주 대비 ↑3")이 재방문의 거의 유일한
   동기인데 덮어쓰면 만들 수 없다. 공통은 "줄 세운 결과"까지만 알고 도메인 이질성은 `payload` JSON 이
-  흡수한다(정규 컬럼으로 펴면 nullable 30개가 된다). **오피넷 좌표는 KATEC 이라** 그대로 저장하면
-  값은 그럴듯한 채로 지도 핀만 어긋난다 — 수집기가 WGS84 로 변환하고 원천도 남긴다.
-  수집(CronJob)과 서빙(DB 읽기)을 분리한다 — 외부 한도를 트래픽에 묶으면 인기가 생기는 순간 죽는다
+  흡수한다(정규 컬럼으로 펴면 nullable 30개가 된다). **유가 원천은 공공데이터포털** — 참가격·TourAPI 와
+  같은 `DATA_GO_KR_KEY` 를 재사용한다(별도 가입 없음). 다만 포털에 지역 전량+가격이 없어
+  **아는 것은 시군구별 최저가 상위 20곳**이고, 화면이 이 범위를 밝힌다. **좌표는 KATEC 으로 올 때가
+  있어** 그대로 저장하면 값은 그럴듯한 채로 지도 핀만 어긋나고, 이미 위경도인 걸 또 변환하면
+  한반도 밖으로 날아간다. 수집(CronJob)과 서빙(DB 읽기)을 분리한다 — 외부 한도를 트래픽에
+  묶으면 인기가 생기는 순간 죽는다
 - **광고 수익화 (AdSense)**: 지면 4곳(블로그 글 끝·게임 목록 끝·관광지 상세 끝·혜택 목록 바깥)에 `AdSlot` — **자동 광고는 콘솔에서 끈 채로 둔다** → `docs/adr/ADR-0076-adsense-monetization.md`. `copy.mjs` 의 `ADSENSE_CLIENT` 한 줄이 로더·지면·`ads.txt` 셋을 동시에 켜고 끈다(빈 값 = 광고 없음이 정상 상태). **`/ads.txt` 는 nginx 명시 route 가 없으면 SPA 폴백이 index.html 을 내보내고, 그 응답은 '유효한 판매자 0줄'로 읽혀 도메인 전체 입찰이 끊긴다.** resume 는 제외 (ADR-0064 와 같은 기준)
 - **로그인 진입점**: **apex `/login` 한 곳**, 토큰은 `.1989v.com` 도메인 쿠키 → `docs/adr/ADR-0079-single-login-origin.md`. 서브도메인에서 로그인을 그리면 OAuth 콜백이 그 호스트로 잡혀 `redirect_uri_mismatch` 가 난다(2026-08-22 game 호스트 실제 사고). **제공자 콘솔에 등록할 redirect_uri 는 `https://1989v.com/oauth/callback` 하나뿐**. `localStorage` 로 되돌리면 서브도메인 세션 공유가 깨져 로그인 화면도 다시 갈라야 한다
 - **회원 식별 최소화**: 소셜에서 **이메일·실명을 받지 않는다**(스코프 `openid` 뿐), 제공자 `sub` 은 auth 가 HMAC 으로 가려 member 로 넘긴다 → `docs/adr/ADR-0078-identity-minimization.md`. **`AUTH_SUBJECT_HASH_KEY` 가 없으면 auth 가 기동하지 않고, 키를 잃으면 전 회원 로그인 불가**(해시 재생성 불가) — 백업 대상. 어드민 부트스트랩은 제거됐고 역할은 `member_roles` 행에만 있다(복구 절차: `auth/CLAUDE.md`)
@@ -166,7 +169,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
 | blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |
-| ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 오피넷 주유소(시군구 × 유종 최저가) + **경로 위 주유소 찾기**. `:ranking:domain`+`:ranking:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
+| ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 주유소 유가(시군구 × 유종 최저가 TOP20, 공공데이터포털) + **경로 위 주유소 찾기**. `:ranking:domain`+`:ranking:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
 | deal | (CLAUDE.md 미작성) | 혜택 링크 허브 — 카테고리별 제휴/일반 혜택 링크 큐레이션 + `/go/{slug}` 리다이렉터 + 클릭 계측. `:deal:domain`+`:deal:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `deal.1989v.com` (ADR-0069) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.

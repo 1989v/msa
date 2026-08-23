@@ -606,6 +606,15 @@ export const RANK_GAS_SOURCE = '출처: 한국석유공사 오피넷';
 /** 이탈 시간은 근사값이다. 문구가 그 불확실성을 감추면 안 된다. */
 export const RANK_DETOUR_NOTE = '이탈 시간은 경로에서 떨어진 거리로 추정한 근사값입니다.';
 
+/**
+ * 우리가 아는 주유소의 범위.
+ *
+ * 원천이 지역 단위로 주는 것은 **최저가 상위 20곳**이라, 전국 모든 주유소를 아는 게 아니다.
+ * 이걸 안 밝히면 목록에 없는 싼 주유소를 "없다"고 말한 셈이 된다.
+ */
+export const RANK_COVERAGE_NOTE =
+  '시군구별 최저가 상위 20곳을 매일 받아 보여줍니다 — 전국 모든 주유소를 포함하지는 않습니다.';
+
 export function rankUrl(sub = '') {
   return `${RANK_ORIGIN}${sub || '/'}`;
 }

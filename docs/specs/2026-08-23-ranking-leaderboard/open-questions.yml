@@ -4,8 +4,11 @@ questions:
     phase: pre-impl
     status: open
     owner: user
-    q: "오피넷 무료 API 키 — opinet.co.kr 회원가입 후 '무료API 이용신청'. 발급 전에는
-        stations.sample.jsonl 로 수집기 E2E 를 태운다 (place/ingest 의 attractions.sample.jsonl 패턴)."
+    q: "공공데이터포털에서 한국석유공사 오픈 API 5종 **활용신청** (지역코드·지역별 최저가 TOP20·
+        반경 내 주유소·주유소 상세정보·전국 평균가격). 키는 기존 DATA_GO_KR_KEY 재사용이라
+        새로 만들 것이 없다. 개발단계 자동승인 / 운영단계 심의승인.
+        신청 후 화면의 End Point 를 OIL_API_BASE 로 넣는다.
+        그 전에는 stations.sample.jsonl 로 수집기 E2E 를 태운다."
   - id: OQ-2
     phase: pre-impl
     status: open
@@ -21,10 +24,17 @@ questions:
         갱신이라 전국이 하루 늦어도 화면은 성립한다."
   - id: OQ-4
     phase: pre-impl
+    status: closed
+    q: "전국 전량 수집 경로 — **닫힘(2026-08-23)**. 포털에는 지역 단위 전량+가격 오퍼레이션이
+        없고 가격을 주는 지역 단위 경로는 최저가 TOP20 뿐이다. 시군구 × 유종 ≈ 500콜/일로
+        전국 약 5,000곳(싼 곳 위주)을 받는다. 전량이 필요해지면 오피넷 직접 신청의
+        '주유소 판매가격정보(지역별)' 을 얹는다 — 오퍼레이션 맵 한 곳만 바뀐다."
+  - id: OQ-11
+    phase: pre-impl
     status: open
-    q: "전국 전량 수집 경로 — '주유소 기본정보(지역별)' 만으로 전량이 되는가, 아니면
-        '반경 내 주유소 검색' 격자 순회가 필요한가. 지역별이 되면 호출 수가 한 자릿수로 떨어진다.
-        키 발급 후 시도 1개로 판정하고 그 결과가 수집기 구조를 정한다."
+    q: "포털 오퍼레이션의 실제 경로·파라미터·응답 필드명 — 활용신청 후 받는 명세서가 원본이다.
+        UNI_ID(주유소 고유 id)가 TOP20 응답에 있는지 반드시 확인할 것. 없으면 등락 계산의
+        키가 없어져 매일 전 항목이 NEW 로 보인다 (수집기는 id 없는 줄을 버린다)."
   - id: OQ-5
     phase: pre-impl
     status: open
@@ -34,13 +44,14 @@ questions:
   - id: OQ-6
     phase: pre-impl
     status: open
-    q: "유종 코드 확정 — 휘발유 B027 · 경유 D047 은 확인됨. 고급휘발유·LPG 코드는 발급 후
-        API 가이드에서 확인. 코드는 도메인 enum 으로 못 박는다."
+    q: "유종 코드 확정 — 휘발유 B027 · 경유 D047 은 확인됨. 고급휘발유·LPG 코드는 활용신청 후
+        명세서에서 확인. 코드는 도메인 enum 으로 못 박는다."
   - id: OQ-7
     phase: pre-impl
-    status: open
-    q: "KATEC(TM128) → WGS84 변환 구현 위치. 수집기(Python)에서 pyproj 로 변환해 적재하는 쪽이
-        검증이 쉽다(골든 좌표 테스트). 서버가 변환하면 원천 좌표계가 도메인에 새어든다."
+    status: closed
+    q: "KATEC → WGS84 변환 위치 — **닫힘**. 수집기(Python)에서 pyproj 없이 직접 편다.
+        기대값은 PROJ 로 뽑아 골든 테스트로 박았다(전 국토 7점, 차이 4cm 이하).
+        오퍼레이션에 따라 위경도로 오기도 해서, 형태를 판정해 **한 번만** 변환한다."
   - id: OQ-8
     phase: post-P1
     status: open
