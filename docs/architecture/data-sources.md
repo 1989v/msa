@@ -70,9 +70,12 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 후기 | 네이버 검색 API(블로그) | 필요 | 네이버 오픈API 이용약관 | 〃 |
 | 지도 | Google Maps JavaScript API | 필요 | Google Maps Platform 약관 | 브라우저 직접 호출 |
 | 구글 place_id | Google Places API (New) Text Search | 필요 | Google Maps Platform 약관 (**place_id 만 무기한 저장 허용**) | `place/ingest --job=google-places` |
+| **주유소·유가** | 한국석유공사 오피넷 | 필요 | 오피넷 유가정보 API 이용약관 (**출처표시**) | `ranking/ingest --job=gas-stations` (매일) |
+| 자동차 경로 | Google Routes API | 필요 | Google Maps Platform 약관 | 서버 호출 (요청 시) |
 
-**출처 표기 의무가 있는 것**: GeoNames(CC BY 4.0), TourAPI(공공누리), 참가격(KOGL 제1유형).
-화면 하단 또는 관련 페이지에 표기한다 — `place` 화면은 "출처: 한국관광공사 TourAPI".
+**출처 표기 의무가 있는 것**: GeoNames(CC BY 4.0), TourAPI(공공누리), 참가격(KOGL 제1유형), **오피넷**.
+화면 하단 또는 관련 페이지에 표기한다 — `place` 화면은 "출처: 한국관광공사 TourAPI",
+`rank` 화면은 "출처: 한국석유공사 오피넷"(보드 행의 `source_label` 이 들고 다닌다).
 
 ---
 
@@ -261,8 +264,52 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 
 ---
 
+## 8. 주유소·유가 — 한국석유공사 오피넷
+
+| | |
+|---|---|
+| 원천 | `www.opinet.co.kr/api` — 지역코드 · 주유소 기본정보(지역별) · 상세정보 · 반경검색 · 전국 평균가 |
+| 키 | `OPINET_API_KEY` (opinet.co.kr 회원가입 후 **무료API 이용신청**). 클러스터는 Secret `ranking-ingest-secrets/opinet-api-key` |
+| 받는 것 | 상호·상표·셀프여부·좌표·주소·전화·부가서비스(세차/경정비/편의점) · 유종별 판매가 |
+| 적재 | `ranking/ingest --job=gas-stations` (매일 KST 05:00) → `gas_station` / `gas_station_price` |
+
+**좌표는 KATEC(TM128) 이다 — 위경도가 아니다.** `GIS_X_COOR`/`GIS_Y_COOR` 가 십만 단위라
+위경도로 착각해도 그럴듯해 보이고, 그대로 저장하면 **지도 핀만 전부 어긋난다.**
+수집기가 WGS84 로 변환해 `latitude`/`longitude` 에 넣고 **원천 KATEC 도 `katec_x`/`katec_y` 에
+남긴다**(§0 ①②). 변환식 검증은 `ranking/ingest/tests/test_katec.py` — 기대값은 PROJ 로 뽑았다.
+
+**유료 오퍼레이션은 부르지 않는다.** `최저가 Top20`·`시군구 평균가` 는 유료지만, 무료
+`주유소 기본정보(지역별)` 로 전량을 받아두면 같은 결과를 우리가 직접 집계할 수 있다.
+
+**일일 한도가 공개돼 있지 않다.** 한도 초과(429 또는 본문 메시지)를 만나면 그 실행을 즉시
+멈추고 **아무것도 적재하지 않는다** — 적재가 전체 동기화라 부분 적재를 남기면 다음 실행이
+나머지를 지운다.
+
+유종 코드: 휘발유 `B027` · 경유 `D047`. 원천은 (지역 × 유종)으로 답하므로 수집기가
+**주유소 단위로 유종을 모아** 보낸다 — 나눠 보내면 뒤 유종이 앞 유종의 가격 행을 지운다.
+
+## 9. 자동차 경로 — Google Routes API
+
+| | |
+|---|---|
+| 발급 | Cloud Console → **Routes API** 사용 설정 → API 키. **서버 호출이라 IP 제한** |
+| 호출 | `POST directions/v2:computeRoutes` — fieldMask `routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration` 로 **고정** |
+| 무료분 | Essentials 월 10,000 콜 |
+| 키 | `RANKING_GOOGLE_ROUTES_API_KEY`. 클러스터는 Secret `ranking-secrets/google-routes-api-key` (optional — **없으면 경로 화면만 비활성**) |
+| 저장 | 저장하지 않는다 — 경로는 요청 때만 쓰고 응답에 실어 보낸다 |
+
+**fieldMask 를 최소로 고정한다.** 필요 없는 필드를 넣는 순간 상위 SKU 로 넘어가 무료분이
+훨씬 빨리 소진된다 (Places 를 id-only 로 고정한 §7 과 같은 이유).
+
+**키를 Maps JS 키와 분리한다** — Maps JS 는 공개·리퍼러 제한, Routes 는 서버·IP 제한이다.
+한 키에 둘을 담으면 어느 제한을 걸어도 한쪽이 죽는다(YouTube·Places 와 같은 함정).
+
+> Directions API 는 Google 이 legacy 로 지정했다. **Routes API** 를 쓴다.
+> 카카오모빌리티 자동차 길찾기는 **제휴 파트너 전용**이라 후보에서 빠졌다.
+
 ## 관련
 
 - 관광지 ETL 실행법 → `place/ingest/README.md`
 - 지리·POI·상품 시드 → `tools/seed/place/README.md`, `tools/seed/products/README.md`
-- 결정 → `docs/adr/ADR-0056`(지리·POI) · `ADR-0065`(K-관광) · `ADR-0070`(콘텐츠 보강) · `ADR-0071`(행정구역 드릴다운)
+- 주유소 수집 실행법 → `ranking/ingest/README.md`
+- 결정 → `docs/adr/ADR-0056`(지리·POI) · `ADR-0065`(K-관광) · `ADR-0070`(콘텐츠 보강) · `ADR-0071`(행정구역 드릴다운) · `ADR-0081`(랭킹 리더보드)

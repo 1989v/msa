@@ -43,6 +43,16 @@ spec:
               value: "mysql-code-dictionary-master:3306"
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: "kafka:9092"
+            # ADR-0081 — 경로 위 주유소 찾기의 길찾기 키(Google Routes).
+            # **Maps JS 키(공개·리퍼러 제한)와 분리된 서버용 키(IP 제한)** 다 — 한 키에 둘을
+            # 담으면 어느 제한을 걸어도 한쪽이 죽는다. 없으면 경로 화면만 비활성이고
+            # 리더보드는 정상 동작하므로 optional 이다.
+            - name: RANKING_GOOGLE_ROUTES_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ranking-secrets
+                  key: google-routes-api-key
+                  optional: true
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

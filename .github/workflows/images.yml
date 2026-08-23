@@ -85,7 +85,7 @@ jobs:
           set -euo pipefail
 
           ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation place"
-          ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest recommendation-ml recommendation-ann"
+          ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
           if [[ -n "${SERVICES_INPUT// /}" ]]; then
@@ -160,8 +160,11 @@ jobs:
               experiment/*)                              JVM_SVCS+=" experiment" ;;
               # code-dictionary:app 에 폴드된 모듈들 — 이쪽 변경도 code-dictionary 리빌드다.
               # 여기 빠지면 해당 모듈은 아무리 고쳐도 운영에 영원히 반영되지 않는다.
-              #   game (ADR-0059) · deal (ADR-0069) · blog (ADR-0072)
-              code-dictionary/*|game/*|deal/*|blog/*)    JVM_SVCS+=" code-dictionary" ;;
+              #   game (ADR-0059) · deal (ADR-0069) · blog (ADR-0072) · ranking (ADR-0081)
+              # ranking/ingest 는 파이썬 배치라 아래에서 먼저 걸러진다 — 순서가 뒤집히면
+              # 수집기만 고친 커밋이 code-dictionary 를 굽고 정작 수집기 이미지는 안 나온다.
+              ranking/ingest/*)                          DOCKER_SVCS+=" ranking-ingest" ;;
+              code-dictionary/*|game/*|deal/*|blog/*|ranking/*) JVM_SVCS+=" code-dictionary" ;;
               chatbot/*)                                 JVM_SVCS+=" chatbot" ;;
               # ADR-0070: place/ingest 는 파이썬 배치 이미지 — place/* 보다 먼저 걸러야 한다
               place/ingest/*)                            DOCKER_SVCS+=" place-ingest" ;;
@@ -311,6 +314,7 @@ jobs:
             [quant-fe]="quant/frontend"
             [quant-ingest]="quant/ingest"
             [place-ingest]="place/ingest"
+            [ranking-ingest]="ranking/ingest"
             [recommendation-ml]="recommendation-ml"
             [recommendation-ann]="recommendation-ann"
           )

@@ -107,3 +107,29 @@ spec:
               app.kubernetes.io/name: place-ingest
       ports:
         - { port: http, protocol: TCP }
+---
+# ranking-ingest → code-dictionary : 주유소 적재와 보드 스냅샷 생성이 `/internal` 을 부른다 (ADR-0081).
+#   빠뜨리면 k3s netpol 이 REJECT 라 CronJob 이 "Connection refused" 로 죽는다.
+#   (수집기는 새 파드 IP 가 허용 목록에 오르는 수 초~수십 초를 재시도로 견딘다 —
+#    그래도 정책 자체가 없으면 재시도가 전부 실패한다.)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ranking-ingest-to-code-dictionary
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: code-dictionary
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ranking-ingest
+      ports:
+        - { port: http, protocol: TCP }

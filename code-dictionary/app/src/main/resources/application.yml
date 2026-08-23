@@ -113,3 +113,10 @@ management:
 # 기본 키로 뜨면 기동 시 경고를 남긴다.
 encryption:
   aes-key: ${AES_KEY:default-aes-key-exactly-32bytes!}
+
+# ADR-0081 — 경로 위 주유소 찾기의 길찾기 키(Google Routes).
+# 비어 있으면 경로 화면만 비활성이고 리더보드는 정상 동작한다 — 기능 하나가 꺼질 뿐
+# 기동을 막지 않는다. Maps JS 키(공개·리퍼러 제한)와 반드시 분리된 서버용 키(IP 제한)다.
+ranking:
+  google-routes:
+    api-key: ${RANKING_GOOGLE_ROUTES_API_KEY:}

@@ -1,0 +1,64 @@
+# ADR-0081 — 오피넷 주유소 수집 + 리더보드 스냅샷 CronJob.
+#
+# 수집과 서빙을 분리하는 것이 이 잡의 존재 이유다. 오피넷 갱신이 일 단위라 사용자 요청마다
+# 부르면 **같은 값을 받으려고 일일 한도를 태우고**, 한도를 트래픽에 묶으면 인기가 생기는
+# 순간 서비스가 죽는다.
+#
+# KST 05:00 인 이유: 오피넷 가격 고시가 아침에 반영되고, 이 시각이면 사람이 보기 전에
+# 그날 순위가 준비된다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ranking-ingest-gas
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: ranking-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    ranking.kgd.io/job: "gas"
+spec:
+  # 키(opinet-api-key)가 아직 없어도 suspend 하지 않는다 — 키 없는 실행은 즉시 종료하고,
+  # Secret 에 키를 넣는 날부터 스스로 돌기 시작한다 (place-ingest 와 같은 태도).
+  suspend: false
+  schedule: "0 20 * * *"        # 매일 UTC 20:00 = KST 05:00
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      # 하루 1회라 한 번 놓치면 그날 순위가 어제 값으로 남는다 — 시작조차 못한 경우만 재시도한다.
+      # (한도 초과는 수집기가 흡수하고 정상 종료한다 — 부분 적재를 남기지 않기 위해서다)
+      backoffLimit: 2
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: ranking-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            ranking.kgd.io/job: "gas"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/ranking-ingest:latest
+              imagePullPolicy: IfNotPresent
+              # 수집과 보드 생성을 한 파드에서 잇는다. 나눠 두면 수집이 실패한 날에도
+              # 보드 잡이 돌아 **어제 데이터로 오늘 스냅샷**을 찍는다.
+              command: ["/bin/sh", "-c"]
+              args:
+                - >-
+                  python -m src.main --job=gas-stations &&
+                  python -m src.main --job=gas-boards
+              env:
+                - name: RANKING_API
+                  value: "http://code-dictionary:8089"
+                # 오피넷 무료 API 키 — 없으면 수집기가 즉시 종료한다
+                - name: OPINET_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: ranking-ingest-secrets
+                      key: opinet-api-key
+                      optional: true
+              resources:
+                # 전국 주유소가 만 단위라 메모리는 목록 한 벌 + JSON 직렬화 분이면 된다.
+                requests: { cpu: 50m, memory: 128Mi }
+                limits:   { memory: 384Mi }

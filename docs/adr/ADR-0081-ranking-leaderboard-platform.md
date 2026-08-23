@@ -106,6 +106,12 @@ targetKey 와 같은 규약이라 찜하기 연동이 스키마 변경 없이 �
 키가 없으면 **경로 화면만 비활성, 리더보드는 정상 동작**한다 — `google-places` 잡이 키 없으면
 조용히 건너뛰는 것과 같은 성질이다.
 
+**이 호출 때문에 상시 파드(code-dictionary)에 외부 `:443` egress 를 연다.** 지금까지 공개
+egress 는 배치(place-ingest·deal-linkcheck)나 인증(auth)에만 열려 있었다. 길찾기는 배치로
+밀어낼 수 없다 — 출발·도착이 임의 좌표라 미리 받아둘 수 없기 때문이다. auth 의 OAuth 검증과
+같은 성격이므로 "배치로 대신할 수 있는 것은 열지 않는다"는 원칙 자체는 유지된다.
+주유소·가격은 여전히 배치가 받아두고 서빙은 DB 만 읽는다.
+
 ### 7) 백엔드는 code-dictionary:app 에 폴드 — 패키지는 `com.kgd.ranking`
 
 `ranking:domain` + `ranking:feature` 라이브러리를 `code-dictionary:app` 에 폴드한다
@@ -144,7 +150,7 @@ apex 리다이렉트 / 프리렌더 `_hosts/$host` 키 / **`serviceHref.ts` 의 
 
 **후속**
 
-- `data-sources.md` 대장에 오피넷·Google Routes 두 줄 추가 — **코드에만 있고 대장에 없으면 없는 것**
+- `data-sources.md` 대장에 오피넷(§8)·Google Routes(§9) 등재 완료 — **코드에만 있고 대장에 없으면 없는 것**
 - P2: LOCALDATA(업력·밀도·개폐업 트렌드), 참가격·영양(이미 적재분 재활용)
 - P3: 자체 조회수·투표 축, 네이버 데이터랩 트렌드 축
 
