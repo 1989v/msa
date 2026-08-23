@@ -302,13 +302,20 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | | |
 |---|---|
 | 발급 | Cloud Console → **Routes API** 사용 설정 → API 키. **서버 호출이라 IP 제한** |
-| 호출 | `POST directions/v2:computeRoutes` — fieldMask `routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration` 로 **고정** |
-| 무료분 | Essentials 월 10,000 콜 |
+| 호출 | `POST directions/v2:computeRoutes` — fieldMask `routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration` + `routingPreference=TRAFFIC_UNAWARE` 로 **고정** |
+| 무료분 | **Essentials 월 10,000콜** (Pro 는 5,000) |
 | 키 | `RANKING_GOOGLE_ROUTES_API_KEY`. 클러스터는 Secret `ranking-secrets/google-routes-api-key` (optional — **없으면 경로 화면만 비활성**) |
 | 저장 | 저장하지 않는다 — 경로는 요청 때만 쓰고 응답에 실어 보낸다 |
 
-**fieldMask 를 최소로 고정한다.** 필요 없는 필드를 넣는 순간 상위 SKU 로 넘어가 무료분이
-훨씬 빨리 소진된다 (Places 를 id-only 로 고정한 §7 과 같은 이유).
+**SKU 를 올리는 곳이 두 군데다.** 둘 다 `GoogleRoutesClient` 안에서만 정해진다.
+
+| 올리는 것 | 결과 |
+|---|---|
+| `fieldMask` 에 불필요한 필드 추가 | 상위 SKU (Places 를 id-only 로 고정한 §7 과 같은 이유) |
+| `routingPreference=TRAFFIC_AWARE` (실시간 교통) | **Pro SKU** — 무료분이 10,000 → **5,000** 으로 반토막 |
+
+우리는 응답에서 폴리라인과 평균 속도만 쓰고, 그 평균 속도는 "약 N분"이라는 **근사값**의 입력이다.
+근사값 하나 때문에 무료 구간을 벗어날 이유가 없어 `TRAFFIC_UNAWARE` 로 둔다.
 
 **키를 Maps JS 키와 분리한다** — Maps JS 는 공개·리퍼러 제한, Routes 는 서버·IP 제한이다.
 한 키에 둘을 담으면 어느 제한을 걸어도 한쪽이 죽는다(YouTube·Places 와 같은 함정).

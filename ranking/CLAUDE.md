@@ -89,6 +89,9 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 
 Routes 키는 **Maps JS 키와 분리**한다 — 서버 호출이라 IP 제한, Maps JS 는 리퍼러 제한이다.
 
+Routes 요청은 **Essentials 구간(월 10,000콜 무료)에 고정**돼 있다. `fieldMask` 에 필드를 더하거나
+`routingPreference` 를 `TRAFFIC_AWARE` 로 올리면 Pro SKU 가 되어 무료분이 5,000 으로 반토막 난다.
+
 ## 다음 슬라이스
 
 | 도메인 | 원천 | 랭킹 축 |

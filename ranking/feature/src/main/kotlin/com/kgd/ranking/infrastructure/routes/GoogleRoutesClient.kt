@@ -28,8 +28,11 @@ data class RouteResult(
  * legacy 로 지정된 Directions API 가 아니라 **Routes API** 를 쓴다. 카카오모빌리티 자동차
  * 길찾기는 제휴 파트너 전용이라 후보에서 빠졌다.
  *
- * **fieldMask 를 최소로 고정한다.** 필요 없는 필드를 넣으면 상위 SKU 로 넘어가 무료분(월 1만)이
- * 훨씬 빨리 소진된다 — Places 를 id-only 로 고정한 것과 같은 이유다.
+ * **무료 구간(Essentials, 월 10,000콜)을 벗어나지 않게 요청을 고정한다.** 두 곳이 SKU 를 올린다:
+ *   - `fieldMask` — 필요 없는 필드를 넣는 순간 상위 SKU. Places 를 id-only 로 고정한 것과 같은 이유다
+ *   - `routingPreference` — 교통 반영(TRAFFIC_AWARE)은 "고급 기능"이라 Pro SKU(무료분 5,000)로 간다
+ *
+ * 둘 다 이 파일 안에서만 정해진다 — 늘리려면 여기를 고쳐야 하므로 실수로 넘어가지 않는다.
  *
  * 키가 없으면 이 기능만 비활성이고 리더보드는 정상 동작한다.
  */
@@ -56,7 +59,11 @@ class GoogleRoutesClient(
             "origin" to waypoint(origin),
             "destination" to waypoint(destination),
             "travelMode" to "DRIVE",
-            "routingPreference" to "TRAFFIC_AWARE",
+            // **TRAFFIC_AWARE 를 쓰지 않는다.** 실시간 교통 반영은 Google 이 "고급 기능"으로 분류해
+            // 상위 SKU(Pro) 로 넘어간다 — 무료분이 월 10,000 에서 5,000 으로 반토막 나고 단가도 오른다.
+            // 우리가 이 응답에서 쓰는 것은 폴리라인과 평균 속도뿐이고, 그 평균 속도는 "약 N분"이라는
+            // 근사값을 만드는 입력이다. 근사값 하나 때문에 무료 구간을 벗어날 이유가 없다.
+            "routingPreference" to "TRAFFIC_UNAWARE",
             "polylineQuality" to "OVERVIEW",
         )
 
