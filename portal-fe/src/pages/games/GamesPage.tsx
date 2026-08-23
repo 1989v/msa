@@ -28,6 +28,7 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import GameCard from './GameCard';
+import PartyDialog from './PartyDialog';
 import HouseBanner from './HouseBanner';
 import LeaderboardRail from './LeaderboardRail';
 import './Games.css';
@@ -56,10 +57,16 @@ const UI = {
 
 /** 카테고리 섹션 노출 순서 — 명확한 분류 축 (task: 카테고리 명확화) */
 const GENRE_ORDER: GameGenre[] = [
-  'DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL', 'EDUCATION',
+  'DECIDER', 'DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL', 'EDUCATION',
 ];
 
 const GENRES = Object.keys(GENRE_LABELS) as GameGenre[];
+
+/**
+ * 「랜덤으로 돌리기」의 대상 장르. 목록을 코드에 적지 않고 **장르로 질의**하므로,
+ * 앞으로 이 장르로 게임이 추가되면 여기를 고치지 않아도 뽑기 대상에 함께 들어간다.
+ */
+const PARTY_GENRE: GameGenre = 'DECIDER';
 
 /** 허브 경로 — game 서브도메인에서는 루트가, 그 외 호스트에서는 /games 가 허브다 */
 const HUB_SUB = window.location.hostname.split('.')[0] === 'game' ? '' : '/games';
@@ -87,6 +94,8 @@ export default function GamesPage() {
   const [sort, setSort] = useState<GameSortKey>('trending');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [partyPool, setPartyPool] = useState<GameSummary[]>([]);
+  const [partyOpen, setPartyOpen] = useState(false);
 
   // 언어와 장르는 URL 이 원본 — 검색엔진이 색인할 수 있는 상태만 주소로 승격한다.
   // (정렬·태그는 같은 게임 목록의 재배열이라 중복 콘텐츠가 되므로 로컬 상태로 둔다)
@@ -101,9 +110,14 @@ export default function GamesPage() {
   ];
 
   useEffect(() => {
-    Promise.allSettled([fetchGameCollections(), fetchGameTags()]).then(([c, t]) => {
+    Promise.allSettled([
+      fetchGameCollections(),
+      fetchGameTags(),
+      listGames({ genre: PARTY_GENRE, size: 48 }),
+    ]).then(([c, t, p]) => {
       if (c.status === 'fulfilled') setCollections(visibleCollections(c.value));
       if (t.status === 'fulfilled') setTags(t.value);
+      if (p.status === 'fulfilled') setPartyPool(p.value.content);
     });
   }, []);
 
@@ -282,6 +296,11 @@ export default function GamesPage() {
                     {genreLabel(section.key, lang)}
                   </Link>
                   <span className="games-genre-count">{section.games.length}</span>
+                  {section.key === PARTY_GENRE && partyPool.length > 0 && (
+                    <button className="games-party-btn" onClick={() => setPartyOpen(true)}>
+                      🎲 {lang === 'en' ? 'Random pick' : '랜덤으로 돌리기'}
+                    </button>
+                  )}
                 </h2>
                 <div className="games-grid">
                   {section.games.map((game) => (
@@ -294,6 +313,11 @@ export default function GamesPage() {
             <>
               <h2 className="games-collection-title">
                 {activeTag ? `#${activeTag}` : genre ? genreLabel(genre, lang) : L.allGames}
+                {genre === PARTY_GENRE && partyPool.length > 0 && (
+                  <button className="games-party-btn" onClick={() => setPartyOpen(true)}>
+                    🎲 {lang === 'en' ? 'Random pick' : '랜덤으로 돌리기'}
+                  </button>
+                )}
               </h2>
               <div className="games-grid">
                 {games.map((game) => (
@@ -309,6 +333,14 @@ export default function GamesPage() {
 
       <Footer />
       </div>
+      {partyOpen && (
+        <PartyDialog
+          games={partyPool}
+          lang={lang}
+          onClose={() => setPartyOpen(false)}
+          onStart={(slug) => navigate(gamePath(lang, `/games/${slug}`))}
+        />
+      )}
     </>
   );
 }

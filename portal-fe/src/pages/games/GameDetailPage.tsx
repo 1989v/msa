@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   displayDescription,
@@ -34,6 +34,7 @@ import { isLoggedIn } from '../../auth/auth';
 import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
+import { peekParty } from './party';
 import GameLeaderboard from './GameLeaderboard';
 import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
 import './Games.css';
@@ -92,6 +93,18 @@ export default function GameDetailPage() {
     };
   }, [immersive]);
 
+  /* 자동 시작(파티 인계)이 상세 로드 직후 이 함수를 부르므로 slug 기준으로 고정한다 —
+     매 렌더마다 새로 만들면 그 effect 가 계속 다시 돈다 */
+  const handlePlay = useCallback(async () => {
+    setPlaying(true);
+    try {
+      const session = await startGameSession(slug);
+      sessionRef.current = { slug, key: session.sessionKey };
+    } catch {
+      // 세션 기록 실패는 플레이를 막지 않는다
+    }
+  }, [slug]);
+
   useEffect(() => {
     setGame(null);
     setPlaying(false);
@@ -99,12 +112,17 @@ export default function GameDetailPage() {
     setMyHalves(null);
     setRatingMessage(null);
     fetchGameDetail(slug)
-      .then(setGame)
+      .then((detail) => {
+        setGame(detail);
+        /* 「랜덤으로 돌리기」로 넘어온 판 — 참가자·방식이 이미 정해졌으니 ▶ 를 한 번 더
+           누르게 하지 않는다. 여기서 값을 지우지는 않는다: 읽어서 소비하는 쪽은 게임이다 */
+        if (peekParty(slug)) void handlePlay();
+      })
       .catch(() => setNotFound(true));
     fetchSimilarGames(slug)
       .then(setSimilar)
       .catch(() => setSimilar([]));
-  }, [slug]);
+  }, [slug, handlePlay]);
 
   // 세션 종료 — 페이지 이탈/게임 전환 시 best-effort
   useEffect(
@@ -117,16 +135,6 @@ export default function GameDetailPage() {
     },
     [slug],
   );
-
-  const handlePlay = async () => {
-    setPlaying(true);
-    try {
-      const session = await startGameSession(slug);
-      sessionRef.current = { slug, key: session.sessionKey };
-    } catch {
-      // 세션 기록 실패는 플레이를 막지 않는다
-    }
-  };
 
   const handleClose = () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);

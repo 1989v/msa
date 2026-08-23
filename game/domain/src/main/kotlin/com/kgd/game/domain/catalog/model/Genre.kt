@@ -13,7 +13,16 @@ enum class Genre {
     STRATEGY,
     DEFENSE,
     VERSUS,
-    CASUAL;
+    CASUAL,
+
+    /**
+     * 순서 정하기 — 커피 사는 사람·역할·차례를 정할 때 쓰는 도구형 게임.
+     * 이 장르의 게임은 **파티 인계 규약**(localStorage `kgd.party.v1`)을 읽어
+     * 참가자 목록과 방식이 미리 정해진 채로 바로 시작할 수 있어야 한다 —
+     * 허브의 '랜덤으로 돌리기' 가 이 장르 전체를 대상으로 하나를 뽑기 때문이다.
+     * 또한 **출발 위치가 결과를 정하지 않아야** 한다(출발 위치 ↔ 도착 등수 |ρ| < 0.1).
+     */
+    DECIDER;
 
     companion object {
         fun parse(value: String?): Genre? =

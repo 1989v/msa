@@ -1255,3 +1255,219 @@
     width: 2.75rem;
   }
 }
+
+/* ── 랜덤으로 돌리기 ──────────────────────────────────────────────────────────
+   「순서 정하기」 장르 줄 오른쪽 끝의 버튼. 제목 줄 안에 앉되 제목을 밀지 않는다. */
+.games-collection-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.games-party-btn {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ko-accent-primary);
+  background: transparent;
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+/* 손가락으로 누르는 화면에서는 44px 하한을 지킨다 — 데스크톱에서 제목 줄을 부풀리지 않으려고
+   기본은 낮게 두고 여기서만 올린다 */
+@media (pointer: coarse) {
+  .games-party-btn {
+    min-height: 44px;
+    padding: 6px 16px;
+  }
+
+  .party-close {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.games-party-btn:hover,
+.games-party-btn:focus-visible {
+  background: var(--ko-accent-primary);
+  color: var(--kh-hanji, var(--ko-surface-0));
+}
+
+.party-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: color-mix(in oklab, var(--ko-surface-0) 78%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+.party-card {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--ko-border-default);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+}
+
+.party-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--ko-border-subtle);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-secondary);
+  cursor: pointer;
+}
+
+.party-title {
+  margin: 0 0 6px;
+  font-size: var(--kh-headline, 1.25rem);
+  font-weight: 700;
+}
+
+.party-sub {
+  margin: 0 0 18px;
+  font-size: 0.85rem;
+  line-height: var(--ko-leading-relaxed);
+  color: var(--ko-text-secondary);
+}
+
+.party-sec {
+  margin-bottom: 18px;
+}
+
+.party-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.party-count {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--ko-text-muted);
+}
+
+.party-ta {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--ko-border-default);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.party-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.party-chip {
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--ko-border-subtle);
+  background: var(--ko-surface-2);
+  font-size: 0.76rem;
+  color: var(--ko-text-secondary);
+}
+
+.party-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.party-mini {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid var(--ko-border-default);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.party-mini:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.party-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.party-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 56px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--ko-border-default);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+.party-mode span {
+  font-size: 0.72rem;
+  color: var(--ko-text-muted);
+}
+
+.party-mode.on {
+  border-color: var(--ko-accent-primary);
+  background: color-mix(in oklab, var(--ko-accent-primary) 16%, var(--ko-surface-2));
+}
+
+.party-go {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 12px;
+  border: none;
+  background: var(--ko-accent-primary);
+  color: var(--kh-hanji, var(--ko-surface-0));
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.party-go:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.party-note {
+  margin: 12px 0 0;
+  font-size: 0.72rem;
+  line-height: var(--ko-leading-relaxed);
+  color: var(--ko-text-muted);
+}

@@ -25,6 +25,7 @@ export const GENRE_LABELS_KO = {
   DEFENSE: '디펜스',
   VERSUS: '대전',
   CASUAL: '캐주얼',
+  DECIDER: '순서 정하기',
 };
 
 export const GENRE_LABELS_EN = {
@@ -37,6 +38,7 @@ export const GENRE_LABELS_EN = {
   DEFENSE: 'Tower Defense',
   VERSUS: 'Versus',
   CASUAL: 'Casual',
+  DECIDER: 'Decider',
 };
 
 /** URL 세그먼트로 쓰는 장르 슬러그 ↔ enum */

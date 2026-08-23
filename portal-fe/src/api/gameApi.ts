@@ -44,7 +44,8 @@ export type GameGenre =
   | 'STRATEGY'
   | 'DEFENSE'
   | 'VERSUS'
-  | 'CASUAL';
+  | 'CASUAL'
+  | 'DECIDER';
 
 // 장르 라벨은 SEO 카피와 같은 문자열을 써야 해 seo/copy.mjs 를 단일 원본으로 삼는다
 export const GENRE_LABELS = GENRE_LABELS_KO as Record<GameGenre, string>;

@@ -102,6 +102,12 @@
   세면 "오늘 자기 기록을 깬 사람"만 세어진다. 하루의 경계는 **KST**(`GameDay.ZONE`)이고
   날짜는 서버가 정한다(클라이언트가 보내면 기기 시계만큼 보드가 갈린다). 제출 한 번이 두 보드를
   한 트랜잭션에서 올리며, **두 보드의 판정은 독립**이다
+- **`DECIDER`(순서 정하기) 장르는 분류가 아니라 기능이다.** 허브의 「랜덤으로 돌리기」가
+  `GET /api/v1/games?genre=DECIDER` 로 뽑기 대상을 만들기 때문에, 이 장르로 등록하면 새 게임이
+  **코드 수정 없이** 뽑기에 들어간다. 대신 등록 전에 둘을 지켜야 한다 — ① `lib/party.js` 인계를
+  읽어 참가자·방식이 정해진 채로 바로 시작할 것 ② **출발 위치 ↔ 도착 등수 스피어만 |ρ| < 0.1**
+  (dev 훅으로 재고 설계 문서에 수치를 남긴다). 상세 계약은
+  `docs/standards/game-cleanroom-pipeline.md` 의 `party-decider` 프리셋 §7
 - GameStats 는 프로젝션 — 원본 이벤트 집계는 analytics(ClickHouse) 소유, 실시간 카운터를 Game row 에 두지 않는다
 - `game:feature` 는 codedictionary 컨텍스트 빈을 직접 주입하지 않는다 (교차 import 금지, ADR-0058 불변식)
 
@@ -148,6 +154,7 @@
 - `keys.js` — **플랫폼 입력 표준** (2026-08-15). 좌/우 손잡이 2레이아웃(방향키+ZXC(AS) / WASD+JKL(UI)) + 공통 Enter=일시정지·Esc=뒤로. localStorage 전 게임 공유 + 좌하단 전환 배지. 신규 게임은 `GameKeys.keys()` 네이티브 매핑, 레거시는 `GameKeys.remap(프로필)` 무수정 적용. 표준 문서: `docs/conventions/game-input-standard.md`. 레퍼런스: nova-strike
 - `rank.js` — 랭킹 위젯. `GameRank.autoPanel(slug)`(#menu 하단 TOP10), `submit(slug, score, detail)`, `copyButton(getCode)`(이어하기 코드 📋 복사)
 - `i18n.js` — 글로벌 한/영. localStorage('game_lang') → navigator.language 자동, 우상단 토글 자동 부착. 게임은 `GameI18n.init({ko,en})` + `TR()` + `data-i18n`. 카탈로그(제목/설명)는 `title_en`/`description_en` 컬럼(V17)
+- `party.js` — **순서 정하기(DECIDER) 장르 인계 규약.** 허브의 「랜덤으로 돌리기」가 정한 참가자·방식을 `localStorage['kgd.party.v1']` 로 넘기고, 게임은 부팅 때 `GameParty.take('<슬러그>')` 한 줄로 받아 준비 화면을 건너뛴다. **주소가 아니라 저장소로 넘기는 이유는 이름이 접근 로그에 남지 않게 하기 위해서**다(정적 파일이라 쿼리스트링이 그대로 기록된다). 읽으면 지운다 — 남기면 새로고침마다 같은 판이 다시 시작돼 준비 화면에 못 들어간다
 - `daily.js` — 데일리 퍼즐 공용. KST 자정 롤오버 날짜 시드(`seed`/`rng`/`shuffle`), 연속 출석 스트릭, 오늘 결과 저장(재제출 방지), 다음 퍼즐 카운트다운, 이모지 결과 공유
 - `thumbs/shots/` — 실플레이 캡처 썸네일 (320×180)
 
