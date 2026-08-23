@@ -310,6 +310,13 @@ class GatewayRouteConfig(
                     .filters { f -> f.stripPrefix(0) }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // === /tech 업무 도메인 맵 (code-dictionary 소유) ===
+            // 개념↔업무 도메인 매핑. 공개 포트폴리오 면이라 인증 없음.
+            .route("tech-domains") { r ->
+                r.path("/api/v1/tech/**")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // === ADR-0069 혜택 링크 허브 (code-dictionary 소유) ===
             // 어드민 경로를 먼저 선언해야 공개 라우트에 가려지지 않는다.
             .route("deal-admin") { r ->
