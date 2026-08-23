@@ -18,6 +18,7 @@
 #   game.<DOMAIN>               → portal-fe (게임 허브 루트, ADR-0059) [proxied]
 #   place.<DOMAIN>              → portal-fe (K-관광/지리 탐색 루트, ADR-0065) [proxied]
 #   deal.<DOMAIN>               → portal-fe (혜택 링크 허브 루트, ADR-0069) [proxied]
+#   rank.<DOMAIN>               → portal-fe (랭킹 리더보드 루트, ADR-0081) [proxied]
 #   resume.<DOMAIN>             → portal-fe (이력서, ADR-0064) [proxied]
 #   api.<DOMAIN>                → gateway (REST 위주) [proxied]
 #   rt.<DOMAIN>                 → gateway (WS+SSE) [bypass]
@@ -61,6 +62,7 @@ spec:
         - place.1989v.com
         - deal.1989v.com
         - blog.1989v.com
+        - rank.1989v.com
       secretName: cf-origin-ca-tls
   rules:
     # ─── portal-fe (root) ───
@@ -237,6 +239,19 @@ spec:
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /authors
+            pathType: Prefix
+            backend: { service: { name: gateway, port: { name: http } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }
+    # ─── portal-fe (rank 호스트 — 랭킹 리더보드, ADR-0081) ───
+    # `/internal` 은 어느 host 에도 열지 않는다 — 수집기가 클러스터 안에서 직접 부르는
+    # 적재 경로라, 밖에 열면 누구나 순위 원본을 밀어 넣을 수 있다.
+    # WS/SSE 는 쓰지 않으므로 열지 않는다 (노출면을 필요한 만큼만).
+    - host: rank.1989v.com
+      http:
+        paths:
+          - path: /api
             pathType: Prefix
             backend: { service: { name: gateway, port: { name: http } } }
           - path: /

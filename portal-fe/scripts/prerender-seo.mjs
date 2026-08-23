@@ -61,6 +61,10 @@ import {
   DEAL_ORIGIN,
   DEAL_BRAND,
   dealHubMeta,
+  RANK_BRAND,
+  RANK_ORIGIN,
+  rankHubMeta,
+  rankUrl,
   BLOG_ORIGIN,
   BLOG_BRAND,
   blogAuthorUrl,
@@ -101,6 +105,7 @@ export const SIDO_CODES = [
 const RESUME_HOST = new URL(RESUME_ORIGIN).host;
 const DEAL_HOST = new URL(DEAL_ORIGIN).host;
 const BLOG_HOST = new URL(BLOG_ORIGIN).host;
+const RANK_HOST = new URL(RANK_ORIGIN).host;
 
 /**
  * 일부 섹션만 조회에 실패했을 때 던진다 — **빌드를 세운다.**
@@ -173,6 +178,17 @@ async function main() {
     console.warn(`[seo] 블로그 색인 조회 실패: ${err.message}`);
   }
 
+  // 랭킹은 **부분 실패 가드 밖**이다. 두 가지가 겹쳐서다:
+  //   ① 보드는 첫 수집이 끝나야 생긴다 — 빈 결과가 정상 상태라 "손실"과 구분되지 않는다
+  //   ② FE 빌드 시점에 백엔드가 아직 이 엔드포인트를 갖고 있지 않을 수 있다(첫 배포)
+  // 여기서 빌드를 세우면 첫 배포 자체가 막힌다. 대신 경고를 남기고 sitemap 을 비운다.
+  let rankBoards = [];
+  try {
+    rankBoards = await fetchRankingBoardIndex();
+  } catch (err) {
+    console.warn(`[seo] 랭킹 보드 조회 실패(첫 배포/첫 수집 전이면 정상): ${err.message}`);
+  }
+
   // **일부만 실패**했으면 여기서 세운다. 전부 실패한 경우(API 자체가 죽은 상황)는
   // 통과시킨다 — 그때는 백엔드 장애가 이미 드러나 있고, FE 만 올려야 할 이유가 있을 수 있다.
   // 위험한 것은 조용한 부분 손실이지 명백한 전면 장애가 아니다.
@@ -184,11 +200,12 @@ async function main() {
     );
   }
 
-  await writeRobotsAndSitemaps(games, places, regions, blog);
+  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards);
   await renderPortalPages(shell);
   await renderPlaceHubs(shell, places, regions);
   await renderPlaceDetails(shell, places, regions);
   await renderDealHub(shell);
+  await renderRankHub(shell);
   await renderBlogHub(shell, blog);
 
   if (games.length === 0) {
@@ -487,6 +504,7 @@ async function writeRobotsAndSitemaps(
   places = { ko: [], en: [] },
   regions = { ko: [], en: [] },
   blog = { posts: [], categories: [] },
+  rankBoards = [],
 ) {
   const gameEntries = [];
   for (const lang of LANGS) {
@@ -564,6 +582,10 @@ async function writeRobotsAndSitemaps(
   // 제목이 같은 문서가 여러 개 생긴다.
   await emit(`seo/${BLOG_HOST}/robots.txt`, robotsTxt(BLOG_ORIGIN, ['/studio', '/login']));
   await emit(`seo/${BLOG_HOST}/sitemap.xml`, sitemapXml(blogSitemapEntries(blog)));
+  // 랭킹은 색인 대상이다 (deal 과 반대) — 링크 모음이 아니라 집계와 등락이 자체 콘텐츠이고
+  // "OO구 최저가 주유소"는 검색 의도가 뚜렷하다 (ADR-0081 §8).
+  await emit(`seo/${RANK_HOST}/robots.txt`, robotsTxt(RANK_ORIGIN));
+  await emit(`seo/${RANK_HOST}/sitemap.xml`, sitemapXml(rankSitemapEntries(rankBoards)));
 
   await emit(`seo/${GAME_HOST}/llms.txt`, gameLlmsTxt(games));
   await emit(`seo/${PORTAL_HOST}/llms.txt`, portalLlmsTxt());
@@ -1019,6 +1041,44 @@ async function renderDealHub(shell) {
     ),
   });
   await emit(`prerender/_hosts/${DEAL_HOST}.html`, html);
+}
+
+/**
+ * 랭킹 보드 색인 — sitemap 용 slug 목록.
+ *
+ * 경로 화면(`/route`)은 넣지 않는다. 입력에 따라 결과가 달라지는 도구라 색인해도
+ * 크롤러가 볼 것은 빈 폼뿐이다.
+ */
+async function fetchRankingBoardIndex() {
+  const boards = await getJson('/api/v1/ranking/boards');
+  return Array.isArray(boards) ? boards : [];
+}
+
+function rankSitemapEntries(boards) {
+  return [
+    { loc: rankUrl('/'), priority: '0.9' },
+    ...boards.map((b) => ({ loc: rankUrl(`/boards/${b.slug}`), priority: '0.6' })),
+  ];
+}
+
+/**
+ * 랭킹 허브 프리렌더 (ADR-0081).
+ *
+ * 보드 상세는 찍지 않는다 — 값이 매일 바뀌는데 프리렌더는 빌드 시점에 굳는다. 굳은 가격을
+ * 내보내면 크롤러가 어제 값을 오늘 문서로 읽는다. 주소는 sitemap 이 알리고, 내용은
+ * 라우트 + useSeo 가 채운다.
+ */
+async function renderRankHub(shell) {
+  const meta = rankHubMeta();
+  const html = compose(shell, {
+    lang: 'ko',
+    title: meta.title,
+    description: meta.description,
+    canonical: meta.canonical,
+    siteName: RANK_BRAND,
+    body: shellBody(`<h1>${escapeHtml(RANK_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>`),
+  });
+  await emit(`prerender/_hosts/${RANK_HOST}.html`, html);
 }
 
 /**

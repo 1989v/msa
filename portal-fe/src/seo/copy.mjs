@@ -595,6 +595,56 @@ export function dealHubMeta() {
   };
 }
 
+// ─── rank (랭킹 리더보드) ─────────────────────────────────────────────────────
+
+export const RANK_ORIGIN = 'https://rank.1989v.com';
+export const RANK_BRAND = '랭킹';
+
+/** 출처 표시 의무가 붙은 원천이라 화면 어딘가에 반드시 나와야 한다 (ADR-0081). */
+export const RANK_GAS_SOURCE = '출처: 한국석유공사 오피넷';
+
+/** 이탈 시간은 근사값이다. 문구가 그 불확실성을 감추면 안 된다. */
+export const RANK_DETOUR_NOTE = '이탈 시간은 경로에서 떨어진 거리로 추정한 근사값입니다.';
+
+export function rankUrl(sub = '') {
+  return `${RANK_ORIGIN}${sub || '/'}`;
+}
+
+/**
+ * deal 과 달리 **색인 대상이다.**
+ *
+ * 링크 모음이 아니라 집계와 등락이 우리가 만든 것이고, "OO구 최저가 주유소"는 검색 의도가
+ * 뚜렷하다. thin affiliate 판정을 걱정해야 했던 쪽과 성격이 반대다 (ADR-0081 §8).
+ */
+export function rankHubMeta() {
+  return {
+    title: `${RANK_BRAND} — ${PORTAL_BRAND}`,
+    description:
+      '지역별 최저가 주유소 리더보드. 어제 대비 순위 등락과 함께 시군구·유종별로 확인하고, 가는 길 위의 싼 주유소도 찾아보세요.',
+    canonical: rankUrl('/'),
+  };
+}
+
+export function rankBoardMeta(board) {
+  const top = board.topName ?? board.entries?.[0]?.subjectName;
+  return {
+    title: `${board.title} — ${RANK_BRAND}`,
+    description: top
+      ? `${board.title} 1위는 ${top}입니다. 순위는 매일 갱신되며 어제 대비 등락을 함께 보여줍니다.`
+      : `${board.title} 순위. 매일 갱신되며 어제 대비 등락을 함께 보여줍니다.`,
+    canonical: rankUrl(`/boards/${board.slug}`),
+  };
+}
+
+export function rankRouteMeta() {
+  return {
+    title: `경로 위 주유소 찾기 — ${RANK_BRAND}`,
+    description:
+      '출발지와 도착지를 지정하면 그 경로에서 조건에 맞는 주유소를 값싼 순으로 찾아줍니다. 이탈 시간과 절약액을 함께 보여줍니다.',
+    canonical: rankUrl('/route'),
+  };
+}
+
 // ─── blog (블로그 플랫폼) ─────────────────────────────────────────────────────
 
 export const BLOG_ORIGIN = 'https://blog.1989v.com';

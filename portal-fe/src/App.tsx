@@ -27,6 +27,10 @@ const BlogCategoryPage = lazy(() => import('./pages/blog/BlogCategoryPage'));
 const BlogAuthorPage = lazy(() => import('./pages/blog/BlogAuthorPage'));
 const BlogStudioPage = lazy(() => import('./pages/blog/BlogStudioPage'));
 const BlogEditorPage = lazy(() => import('./pages/blog/BlogEditorPage'));
+// ADR-0081 — 랭킹 리더보드 (rank.<domain>). 경로 화면이 구글맵 로더를 포함해 lazy 로 분리한다.
+const RankPage = lazy(() => import('./pages/rank/RankPage'));
+const RankBoardPage = lazy(() => import('./pages/rank/RankBoardPage'));
+const RankRoutePage = lazy(() => import('./pages/rank/RankRoutePage'));
 const AttractionPage = lazy(() => import('./pages/place/AttractionPage'));
 // ADR-0071 — 지역 페이지. "제주 가볼 만한 곳" 류 질의의 착지점 (코드 세그먼트: 시도 2자리/시군구 5자리)
 const RegionPage = lazy(() => import('./pages/place/RegionPage'));
@@ -56,6 +60,8 @@ const isResumeHost = window.location.hostname.split('.')[0] === 'resume';
 const isDealHost = window.location.hostname.split('.')[0] === 'deal';
 // blog.<domain> — 같은 번들을 서빙하되 루트가 블로그다 (ADR-0072)
 const isBlogHost = window.location.hostname.split('.')[0] === 'blog';
+// rank.<domain> — 같은 번들을 서빙하되 루트가 랭킹 리더보드다 (ADR-0081)
+const isRankHost = window.location.hostname.split('.')[0] === 'rank';
 // apex 의 /games 는 game 서브도메인으로 정리 — 게임 주소를 하나로 고정.
 // localhost/k3d 등 개발 환경은 서브도메인이 없으므로 apex 프로덕션에서만 보낸다.
 // `isApexProd` 는 전시 타일(TileGrid)과 공유한다 — 기준이 갈리면 타일이 거는 주소와
@@ -112,6 +118,25 @@ function blogRoute(element: ReactElement) {
   return isApexProd ? <BlogHostRedirect /> : element;
 }
 
+function RankHostRedirect() {
+  const { pathname, search, hash } = window.location;
+  // 허브(/rank)는 랭킹 호스트에서 루트가 정규 주소다 (ADR-0081)
+  const target = pathname.replace(/^\/rank/, '') || '/';
+  window.location.replace(`https://rank.1989v.com${target}${search}${hash}`);
+  return null;
+}
+
+/** 랭킹 라우트 — apex 프로덕션에서는 rank 호스트로 보내고, 그 외(로컬/개발)에는 그대로 렌더 */
+function rankRoute(element: ReactElement) {
+  return isApexProd ? <RankHostRedirect /> : element;
+}
+
+/**
+ * 랭킹의 짧은 주소(`/boards/:slug`, `/route`)는 rank 호스트의 것이다. apex 에 함께 열면
+ * 같은 리더보드가 두 주소로 돌아다녀 canonical 이 갈린다 — 블로그와 같은 이유다.
+ */
+const rankRoutesEnabled = isRankHost || !isApexProd;
+
 /**
  * 블로그의 짧은 주소(`/posts/:slug`, `/c/*`, `/authors/:handle`, `/studio`)는 blog 호스트의
  * 것이다. apex 프로덕션에 함께 열면 같은 글이 두 주소로 돌아다녀 canonical 이 갈린다 —
@@ -153,6 +178,8 @@ function App() {
                 <DealPage />
               ) : isBlogHost ? (
                 <BlogHomePage />
+              ) : isRankHost ? (
+                <RankPage />
               ) : (
                 <HomePage />
               )
@@ -179,6 +206,10 @@ function App() {
           <Route path="/en/place" element={placeRoute(<PlacePage />)} />
           {/* 혜택 링크 허브 — 한국어만 (P1). apex 는 서브도메인으로 넘긴다 */}
           <Route path="/deal" element={dealRoute(<DealPage />)} />
+          {/* 랭킹 리더보드 — apex 는 서브도메인으로 넘긴다 (ADR-0081) */}
+          <Route path="/rank" element={rankRoute(<RankPage />)} />
+          {rankRoutesEnabled && <Route path="/boards/:slug" element={<RankBoardPage />} />}
+          {rankRoutesEnabled && <Route path="/route" element={<RankRoutePage />} />}
           {/* 블로그 — apex 는 서브도메인으로 넘긴다 (ADR-0072) */}
           <Route path="/blog" element={blogRoute(<BlogHomePage />)} />
           {blogRoutesEnabled && <Route path="/posts/:slug" element={<BlogPostPage />} />}

@@ -1,0 +1,319 @@
+/* ADR-0081 랭킹 리더보드 (rank) — DESIGN.md(--ko-* / --kh-*) 토큰만 사용, hex 직접 입력 금지.
+   깊이는 그림자가 아니라 면의 색 단차와 어긋난 판으로 만든다 (DESIGN.md §12). */
+
+.rank-page {
+  min-height: 100vh;
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  font-family: var(--ko-font-family);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-6);
+  padding: var(--ko-space-6) clamp(1rem, 5vw, 3.5rem) var(--ko-space-12);
+}
+
+/* ─── 머리 ─── */
+
+.rank-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-3);
+  max-width: 62rem;
+}
+
+.rank-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ko-space-4);
+}
+
+.rank-header__brand {
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  color: var(--ko-text-primary);
+  text-decoration: none;
+}
+
+.rank-header__title {
+  margin: var(--ko-space-4) 0 0;
+  font-size: var(--kh-display, clamp(2rem, 5vw, 3rem));
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.rank-header__subtitle {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 1rem;
+}
+
+.rank-cta {
+  align-self: flex-start;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.rank-captured {
+  color: var(--ko-text-muted);
+  font-size: 0.82rem;
+}
+
+/* ─── 도구 줄 ─── */
+
+.rank-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ko-space-4);
+}
+
+.rank-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+}
+
+.rank-select {
+  min-width: 9rem;
+  padding: 0.4rem 0.6rem;
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  border: 1px solid var(--ko-border);
+  border-radius: 0;
+  font-family: inherit;
+  font-size: 0.92rem;
+}
+
+.rank-select:focus-visible,
+.rank-submit:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: var(--ko-focus-ring-offset);
+}
+
+.rank-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ko-space-2);
+  font-size: 0.92rem;
+  color: var(--ko-text-secondary);
+}
+
+.rank-submit {
+  padding: 0.45rem 1.2rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.rank-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── 보드 카드 ─── */
+
+.rank-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-5);
+}
+
+.rank-state {
+  margin: 0;
+  color: var(--ko-text-secondary);
+}
+
+.rank-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: var(--ko-space-4);
+}
+
+.rank-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  padding: var(--ko-space-5);
+  color: inherit;
+  text-decoration: none;
+}
+
+.rank-card__scope {
+  color: var(--kh-ocher);
+  font-size: 0.72rem;
+}
+
+.rank-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+
+.rank-card__top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ko-space-2);
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 0.9rem;
+}
+
+.rank-card__medal {
+  color: var(--ko-accent-primary);
+  font-weight: 700;
+}
+
+.rank-card__topname {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-card__price {
+  color: var(--ko-text-primary);
+  font-weight: 700;
+}
+
+.rank-card__price em,
+.rank-row__score em {
+  margin-left: 0.15rem;
+  font-size: 0.72em;
+  font-style: normal;
+  color: var(--ko-text-muted);
+}
+
+.rank-card__count {
+  color: var(--ko-text-muted);
+  font-size: 0.78rem;
+}
+
+/* ─── 순위 목록 ─── */
+
+.rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rank-row {
+  display: grid;
+  grid-template-columns: 2.2rem 3rem 1fr auto;
+  align-items: center;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-3) var(--ko-space-4);
+}
+
+.rank-row__rank {
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-align: right;
+  color: var(--ko-text-primary);
+}
+
+.rank-row__move {
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+/* 등락은 색만으로 구분하지 않는다 — 기호(▲▼)가 함께 있어야 색각 이상에서도 읽힌다 */
+.rank-row__move.is-up { color: var(--ko-status-success, var(--ko-accent-primary)); }
+.rank-row__move.is-down { color: var(--ko-status-danger, var(--kh-ocher)); }
+.rank-row__move.is-new { color: var(--kh-ocher); font-weight: 700; }
+.rank-row__move.is-same { color: var(--ko-text-muted); }
+
+.rank-row__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.rank-row__name {
+  font-size: 0.98rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-row__addr {
+  color: var(--ko-text-muted);
+  font-size: 0.78rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-row__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-1);
+  margin-top: 0.15rem;
+}
+
+.rank-tag {
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--ko-border);
+  color: var(--ko-text-secondary);
+  font-size: 0.68rem;
+}
+
+.rank-tag.is-self { color: var(--ko-accent-text); border-color: var(--ko-accent-primary); }
+.rank-tag.is-save { color: var(--kh-ocher); border-color: var(--kh-ocher); }
+
+.rank-row__score {
+  font-size: 1.05rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ─── 경로 화면 ─── */
+
+.rank-route__picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+}
+
+.rank-pill {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--ko-border);
+  color: var(--ko-text-secondary);
+  font-size: 0.82rem;
+}
+
+.rank-pill.is-active {
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-accent-text);
+}
+
+.rank-route__map {
+  width: 100%;
+  height: clamp(18rem, 45vh, 30rem);
+  border: 1px solid var(--ko-border);
+  background: var(--ko-surface-1);
+}
+
+.rank-route__summary {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 0.88rem;
+}
+
+@media (max-width: 40rem) {
+  .rank-row {
+    grid-template-columns: 1.8rem 2.6rem 1fr;
+    grid-template-areas:
+      'rank move body'
+      '.    .    score';
+    row-gap: var(--ko-space-1);
+  }
+  .rank-row__rank { grid-area: rank; }
+  .rank-row__move { grid-area: move; }
+  .rank-row__body { grid-area: body; }
+  .rank-row__score { grid-area: score; text-align: right; }
+}

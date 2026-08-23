@@ -1,4 +1,11 @@
-import { BLOG_ORIGIN, DEAL_ORIGIN, GAME_ORIGIN, PLACE_ORIGIN, PORTAL_ORIGIN } from '../seo/copy.mjs';
+import {
+  BLOG_ORIGIN,
+  DEAL_ORIGIN,
+  GAME_ORIGIN,
+  PLACE_ORIGIN,
+  PORTAL_ORIGIN,
+  RANK_ORIGIN,
+} from '../seo/copy.mjs';
 
 /**
  * apex 프로덕션인가. 서브도메인이 없는 로컬·k3d 는 false 라 상대 경로가 그대로 쓰인다.
@@ -22,6 +29,7 @@ const SUBDOMAIN_ORIGIN: Record<string, string> = {
   deal: DEAL_ORIGIN,
   place: PLACE_ORIGIN,
   game: GAME_ORIGIN,
+  rank: RANK_ORIGIN,
 };
 
 /** 전시 타일이 실제로 걸 주소 */
