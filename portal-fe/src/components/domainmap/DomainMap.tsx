@@ -216,11 +216,11 @@ export default function DomainMap({ graph, highlighted, selectedId, focus, onNod
         // 판: 은은한 채움 + 카테고리 색 링 — 펼치면 판이 비워져 "열림"을 표시
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
-        ctx.fillStyle = node.data.color;
+        ctx.fillStyle = colors.accent;
         ctx.globalAlpha = fade * (node.data.expanded ? 0.06 : 0.16);
         ctx.fill();
         ctx.globalAlpha = fade * (isHover ? 1 : 0.85);
-        ctx.strokeStyle = node.data.color;
+        ctx.strokeStyle = colors.accent;
         ctx.lineWidth = (isHover ? 2.4 : 1.6) / cam.k;
         ctx.stroke();
 
@@ -236,7 +236,7 @@ export default function DomainMap({ graph, highlighted, selectedId, focus, onNod
           ctx.fillStyle = colors.muted;
           ctx.font = `400 ${10 / cam.k}px ${'Pretendard, -apple-system, system-ui, sans-serif'}`;
           let sub = node.data.sub;
-          if (sub.length > 30) sub = `${sub.slice(0, 29)}…`;
+          if (sub.length > 34) sub = `${sub.slice(0, 33)}…`;
           ctx.fillText(sub, node.x, node.y + node.r + 14 / cam.k);
         }
       }
@@ -251,7 +251,7 @@ export default function DomainMap({ graph, highlighted, selectedId, focus, onNod
         ctx.globalAlpha = fade * (dimmedOut ? 0.15 : 0.95);
         ctx.beginPath();
         ctx.arc(node.x, node.y, node.r, 0, Math.PI * 2);
-        ctx.fillStyle = node.data.color;
+        ctx.fillStyle = node.data.color ?? colors.accent;
         ctx.fill();
 
         if (isSel || isHl || isHover) {
@@ -531,7 +531,7 @@ export default function DomainMap({ graph, highlighted, selectedId, focus, onNod
           return { x: existing.x + Math.cos(jitter) * 24, y: existing.y + Math.sin(jitter) * 24 };
         }
       }
-      const domain = prev.get(node.domainNodeId);
+      const domain = node.domainNodeId ? prev.get(node.domainNodeId) : null;
       if (domain) return { x: domain.x + 20, y: domain.y + 20 };
       return anchorOf(node);
     };
@@ -605,7 +605,7 @@ export default function DomainMap({ graph, highlighted, selectedId, focus, onNod
         ref={canvasRef}
         className="domain-map-canvas"
         role="application"
-        aria-label="백엔드 도메인 맵 — 도메인을 누르면 핵심 개념이, 개념을 누르면 연관 개념이 펼쳐집니다"
+        aria-label="만들어본 업무 도메인 맵 — 도메인을 누르면 핵심 개념이, 개념을 누르면 연관 개념이 펼쳐집니다"
       />
     </div>
   );

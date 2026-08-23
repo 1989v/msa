@@ -11,10 +11,9 @@ import {
   INITIAL_DRILLDOWN,
   DOMAIN_NODE_PREFIX,
   buildDomainModel,
+  categoryFocusTarget,
   clearEmphasis,
   computeVisible,
-  domainIdOfCategory,
-  domainNodeId,
   revealCategory,
   revealConcepts,
   selectConcept,
@@ -32,6 +31,8 @@ import ServiceCatalog from '../components/ServiceCatalog';
 import AboutSection from '../components/AboutSection';
 import Footer from '../components/Footer';
 import { searchConcepts } from '../api/searchApi';
+import { fetchTechDomains } from '../api/techApi';
+import type { TechDomain } from '../api/techApi';
 import type { GraphRenderer, GraphNode } from '../types/graph';
 import type { Category } from '../types/index';
 import './SearchPage.css';
@@ -60,7 +61,34 @@ export default function SearchPage() {
   const graphRef = useRef<GraphRenderer>(null);
   const searchBarRef = useRef<HTMLDivElement>(null);
 
-  const model = useMemo(() => (data ? buildDomainModel(data) : null), [data]);
+  // 도메인 맵의 루트 정의 — 세션당 한 번 받는다 (techApi 가 모듈 스코프로 캐시).
+  // 실패하면 specs 가 null 로 남고 buildDomainModel 이 category 그룹핑으로 떨어진다:
+  // 루트 라벨이 "무엇을 만들어봤는가" 대신 기술 분류로 보일 뿐, /tech 는 그대로 동작한다.
+  const [domainSpecs, setDomainSpecs] = useState<TechDomain[] | null>(null);
+  const [domainsResolved, setDomainsResolved] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    fetchTechDomains()
+      .then((specs) => {
+        if (!cancelled) setDomainSpecs(specs);
+      })
+      .catch(() => {
+        // 폴백으로 그린다 — 여기서 화면을 세우지 않는다
+      })
+      .finally(() => {
+        if (!cancelled) setDomainsResolved(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // 두 응답이 다 정해진 뒤에 모델을 만든다 — 먼저 폴백으로 그렸다가 루트가 바뀌면
+  // 펼쳐둔 드릴다운 상태가 통째로 어긋난다
+  const model = useMemo(
+    () => (data && domainsResolved ? buildDomainModel(data, domainSpecs) : null),
+    [data, domainsResolved, domainSpecs],
+  );
   const [drill, setDrill] = useState<DrilldownState>(INITIAL_DRILLDOWN);
   const [view, setView] = useState<ViewKey>('map');
   const [focus, setFocus] = useState<{ id: string; nonce: number } | null>(null);
@@ -134,7 +162,8 @@ export default function SearchPage() {
       }
       setDrill((prev) => revealCategory(prev, model, category));
       setView('map');
-      bumpFocus(domainNodeId(domainIdOfCategory(category)));
+      const target = categoryFocusTarget(model, category);
+      if (target) bumpFocus(target);
     },
     [model, bumpFocus],
   );
@@ -212,7 +241,7 @@ export default function SearchPage() {
     }
   }, []);
 
-  if (loading) {
+  if (loading || !domainsResolved) {
     return (
       <div className="viz-page-scroll tech-status-screen">
         <p className="tech-status-text">개념 그래프를 불러오는 중…</p>
