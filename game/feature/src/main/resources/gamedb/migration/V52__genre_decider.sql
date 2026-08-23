@@ -7,5 +7,8 @@
 --   ② 출발 위치가 결과를 정하지 않을 것 — 출발 위치 ↔ 도착 등수 스피어만 |rho| < 0.1
 -- 규약과 하한은 docs/standards/game-cleanroom-pipeline.md 의 `party-decider` 프리셋에 있다.
 
+-- 두 게임의 시드(V50 사다리 · V51 구슬)보다 뒤에 있어야 한다 — 앞에 두면 아직 없는 행을
+-- 갱신해 아무 일도 일어나지 않고, 두 게임은 조용히 CASUAL 로 남는다.
+
 UPDATE game SET genre = 'DECIDER', updated_at = NOW(6)
 WHERE slug IN ('marble-race', 'ladder-draw');
