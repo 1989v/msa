@@ -29,6 +29,7 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import GameCard from './GameCard';
 import HouseBanner from './HouseBanner';
+import LeaderboardRail from './LeaderboardRail';
 import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import GNB from '../../components/GNB';
@@ -201,6 +202,9 @@ export default function GamesPage() {
         </h1>
         <p className="games-subtitle">{L.subtitle}</p>
       </header>
+
+      {/* 기록이 있는 게임이 하나도 없으면 스스로 아무것도 그리지 않는다 */}
+      <LeaderboardRail lang={lang} />
 
       <HouseBanner placementKey="game-list-banner" />
 

@@ -200,6 +200,69 @@ export async function rateGame(slug: string, score: number): Promise<RatingResul
   return res.data.data;
 }
 
+export type ScoreTrack = 'BASE' | 'MODDED';
+
+export interface ScoreEntry {
+  rank: number;
+  nickname: string;
+  score: number;
+  detail: string | null;
+}
+
+/**
+ * 랭킹 보드 한 개 — 게임 하나의 트랙 하나.
+ * 두 트랙(무강화/강화)은 같은 자로 잰 기록이 아니라 한 보드로 합치지 않는다 (V28__score_track.sql).
+ */
+export interface LeaderboardBoard {
+  slug: string;
+  title: string;
+  titleEn: string | null;
+  thumbnailUrl: string;
+  track: ScoreTrack;
+  entries: ScoreEntry[];
+}
+
+const GAME_NICKNAME_KEY = 'game_nickname';
+
+/**
+ * 게임 안 랭킹 위젯(`public/games/lib/rank.js`)이 점수를 올릴 때 쓰는 것과 **같은 키**다.
+ * 게임은 같은 오리진의 iframe 이라 localStorage 를 공유한다 — 프레임 간 메시지 규약 없이
+ * "이 줄이 내 기록"을 짚을 수 있는 유일한 단서.
+ */
+export function getGameNickname(): string | null {
+  return localStorage.getItem(GAME_NICKNAME_KEY);
+}
+
+/**
+ * 게이트웨이는 업스트림이 죽어 있으면 200 에 빈 바디를 낸다(2026-08-21 실측).
+ * 빈 응답을 "기록 없음"으로 읽으면 장애가 정상 화면으로 위장된다 — 실패로 던진다.
+ */
+function unwrapGame<T>(body: ApiResponse<T> | '' | null | undefined): T {
+  if (!body || !body.success || body.data == null) {
+    throw new Error('empty or unsuccessful game API response');
+  }
+  return body.data;
+}
+
+/** 게임 한 종의 트랙별 랭킹 — 게임 안 위젯이 쓰는 것과 같은 엔드포인트다 */
+export async function fetchLeaderboard(slug: string, track: ScoreTrack, limit = 10): Promise<ScoreEntry[]> {
+  const res = await api.get<ApiResponse<ScoreEntry[]>>(
+    `/api/v1/games/${slug}/leaderboard?track=${track}&limit=${limit}`,
+  );
+  return unwrapGame(res.data);
+}
+
+/**
+ * 기록이 있는 보드만 한 번에 — 허브 랭킹 레일용.
+ * 카탈로그 전체에 리더보드를 물으면 게임 수만큼 요청이 나가고, 그중 대부분은 빈 응답이다.
+ */
+export async function fetchActiveLeaderboards(boards = 8, entries = 3): Promise<LeaderboardBoard[]> {
+  const res = await api.get<ApiResponse<LeaderboardBoard[]>>(
+    `/api/v1/games/leaderboards?boards=${boards}&entries=${entries}`,
+  );
+  return unwrapGame(res.data);
+}
+
 export interface HouseCreative {
   title: string | null;
   body: string | null;

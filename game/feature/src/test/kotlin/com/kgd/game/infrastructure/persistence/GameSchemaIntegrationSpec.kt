@@ -12,6 +12,9 @@ import com.kgd.game.infrastructure.persistence.catalog.entity.GameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameJpaRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameQueryRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameTagMapJpaRepository
+import com.kgd.game.domain.play.model.ScoreTrack
+import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
+import com.kgd.game.infrastructure.persistence.play.repository.GameScoreJpaRepository
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldContain
@@ -94,6 +97,7 @@ class GameSchemaIntegrationSpec(
     @Autowired private val gameRepository: GameJpaRepository,
     @Autowired private val queryRepository: GameQueryRepository,
     @Autowired private val tagMapRepository: GameTagMapJpaRepository,
+    @Autowired private val scoreRepository: GameScoreJpaRepository,
 ) : BehaviorSpec({
 
     val pageable = PageRequest.of(0, 10)
@@ -191,6 +195,35 @@ class GameSchemaIntegrationSpec(
                         updated shouldBe updated.sortedDescending()
                     } finally {
                         gameRepository.delete(draft)
+                    }
+                }
+        }
+
+        When("기록이 있는 보드를 집계하면") {
+            Then("(게임, 트랙) 으로 묶여 최근 갱신순으로 나온다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val a = gameRepository.findBySlug("snake")!!.id!!
+                    val b = gameRepository.findBySlug("overworld-quest")!!.id!!
+                    val rows = listOf(
+                        GameScoreJpaEntity(gameId = a, nickname = "가", track = ScoreTrack.BASE, score = 10, detail = null),
+                        GameScoreJpaEntity(gameId = a, nickname = "나", track = ScoreTrack.BASE, score = 20, detail = null),
+                        GameScoreJpaEntity(gameId = a, nickname = "다", track = ScoreTrack.MODDED, score = 30, detail = null),
+                        GameScoreJpaEntity(gameId = b, nickname = "라", track = ScoreTrack.BASE, score = 40, detail = null),
+                    ).map { scoreRepository.save(it) }
+                    try {
+                        // 집계 쿼리는 MySQL 의 ONLY_FULL_GROUP_BY 아래에서도 돌아야 한다
+                        val boards = scoreRepository.findActiveBoards(PageRequest.of(0, 10))
+
+                        // 닉네임 4개가 보드 3개로 접힌다 — 같은 (게임, 트랙) 은 한 줄
+                        boards.map { it.gameId to it.track }.toSet() shouldBe setOf(
+                            a to ScoreTrack.BASE,
+                            a to ScoreTrack.MODDED,
+                            b to ScoreTrack.BASE,
+                        )
+                        val lastAts = boards.map { it.lastAt }
+                        lastAts shouldBe lastAts.sortedDescending()
+                    } finally {
+                        scoreRepository.deleteAll(rows)
                     }
                 }
         }

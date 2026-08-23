@@ -43,8 +43,17 @@ interface SaveLeasePort {
 /** 랭킹 항목 — rank 는 조회 시점 계산 */
 data class ScoreEntry(val rank: Int, val nickname: String, val score: Long, val detail: String?)
 
+/** 보드 식별자 — 랭킹은 게임이 아니라 (게임, 트랙) 단위다. 두 트랙은 비교 대상이 아니라 합치지 않는다 */
+data class ScoreBoardRef(val gameId: Long, val track: ScoreTrack)
+
 interface GameScoreRepositoryPort {
     /** 트랙 안에서 닉네임당 최고 기록 upsert. 반영 여부와 그 트랙 내 순위를 돌려준다 */
     fun submit(gameId: Long, track: ScoreTrack, nickname: String, score: Long, detail: String?): Pair<Boolean, Int>
     fun top(gameId: Long, track: ScoreTrack, limit: Int): List<ScoreEntry>
+
+    /**
+     * 기록이 하나라도 있는 보드를 최근 갱신순으로. 기록 없는 보드는 애초에 행이 없으므로 나오지 않는다 —
+     * 허브가 카탈로그 전체(60여 종)에 리더보드를 물어보지 않아도 되는 이유다.
+     */
+    fun activeBoards(limit: Int): List<ScoreBoardRef>
 }

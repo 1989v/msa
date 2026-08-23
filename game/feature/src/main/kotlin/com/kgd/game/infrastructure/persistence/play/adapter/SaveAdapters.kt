@@ -6,6 +6,7 @@ import com.kgd.game.application.play.port.GameSaveRepositoryPort
 import com.kgd.game.application.play.port.SaveLeasePort
 import com.kgd.game.application.play.port.GameScoreRepositoryPort
 import com.kgd.game.application.play.port.SaveSnapshot
+import com.kgd.game.application.play.port.ScoreBoardRef
 import com.kgd.game.application.play.port.ScoreEntry
 import com.kgd.game.domain.play.exception.SaveVersionConflictException
 import com.kgd.game.domain.play.model.GameRun
@@ -16,6 +17,7 @@ import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
 import com.kgd.game.infrastructure.persistence.play.repository.GameRunJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameSaveDataJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameScoreJpaRepository
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
@@ -149,4 +151,8 @@ class GameScoreRepositoryAdapter(
         jpaRepository.findTop50ByGameIdAndTrackOrderByScoreDescUpdatedAtAsc(gameId, track)
             .take(limit)
             .mapIndexed { i, e -> ScoreEntry(rank = i + 1, nickname = e.nickname, score = e.score, detail = e.detail) }
+
+    override fun activeBoards(limit: Int): List<ScoreBoardRef> =
+        jpaRepository.findActiveBoards(PageRequest.of(0, limit))
+            .map { ScoreBoardRef(gameId = it.gameId, track = it.track) }
 }

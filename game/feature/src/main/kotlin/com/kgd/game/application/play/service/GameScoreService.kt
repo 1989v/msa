@@ -1,6 +1,7 @@
 package com.kgd.game.application.play.service
 
 import com.kgd.game.application.catalog.port.GameRepositoryPort
+import com.kgd.game.application.play.dto.LeaderboardBoardDto
 import com.kgd.game.application.play.port.GameScoreRepositoryPort
 import com.kgd.game.application.play.port.ScoreEntry
 import com.kgd.common.exception.BusinessException
@@ -19,6 +20,14 @@ class GameScoreService(
     companion object {
         private const val MAX_SCORE = 1_000_000_000_000L   // 명백한 조작값 상한
         private val NICK_REGEX = Regex("^[\\p{L}\\p{N} _.-]{2,16}$")
+        private const val MAX_ACTIVE_BOARDS = 12
+        private const val MAX_ACTIVE_ENTRIES = 10
+
+        /**
+         * 집계에서 넉넉히 긁어오는 배수 — 게임당 트랙이 둘일 수 있고(뒤 트랙은 버려진다)
+         * 공개 상태가 아닌 게임도 섞여 나오므로, 걸러낸 뒤에도 요청 수를 채우도록 여유를 둔다.
+         */
+        private const val ACTIVE_FETCH_FACTOR = 3
     }
 
     @Transactional(transactionManager = "gameTransactionManager")
@@ -33,6 +42,42 @@ class GameScoreService(
     @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
     fun leaderboard(slug: String, track: ScoreTrack, limit: Int): List<ScoreEntry> =
         scoreRepository.top(resolveGameId(slug), track, limit.coerceIn(1, 50))
+
+    /**
+     * 허브 랭킹 레일 — 기록이 있는 보드만 한 번에.
+     *
+     * 카탈로그 60여 종에 각각 리더보드를 물으면 요청이 그만큼 나간다. 반대로 여기서는
+     * `game_score` 에 행이 있는 보드(= 기록이 있는 보드)만 최근 갱신순으로 뽑는다 —
+     * 지금처럼 기록이 세 게임에만 있으면 결과도 세 칸이고, 그게 정직한 화면이다.
+     *
+     * **게임당 한 보드**만 싣는다. 두 트랙을 합치지는 않되(합치면 강화 기록이 무강화 순위를 밀어낸다),
+     * 레일에서 같은 게임이 두 칸을 차지하면 순회가 반복으로 보이므로 최근에 갱신된 트랙을 싣고
+     * 나머지 트랙은 상세 페이지에서 보게 한다.
+     */
+    @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
+    fun activeBoards(boardLimit: Int, entryLimit: Int): List<LeaderboardBoardDto> {
+        val boards = boardLimit.coerceIn(1, MAX_ACTIVE_BOARDS)
+        val entries = entryLimit.coerceIn(1, MAX_ACTIVE_ENTRIES)
+
+        val refs = scoreRepository.activeBoards(boards * ACTIVE_FETCH_FACTOR).distinctBy { it.gameId }
+        val games = gameRepository.findByIds(refs.map { it.gameId }).associateBy { it.id }
+
+        return refs.asSequence()
+            .mapNotNull { ref -> games[ref.gameId]?.takeIf { it.isPlayable() }?.let { ref to it } }
+            .map { (ref, game) ->
+                LeaderboardBoardDto(
+                    slug = game.slug,
+                    title = game.title,
+                    titleEn = game.titleEn,
+                    thumbnailUrl = game.thumbnailUrl,
+                    track = ref.track,
+                    entries = scoreRepository.top(ref.gameId, ref.track, entries),
+                )
+            }
+            .filter { it.entries.isNotEmpty() }
+            .take(boards)
+            .toList()
+    }
 
     private fun resolveGameId(slug: String): Long {
         val game = gameRepository.findBySlug(slug) ?: throw GameNotFoundException(slug)

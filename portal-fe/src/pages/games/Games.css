@@ -835,3 +835,403 @@
   color: var(--ko-text-primary);
   text-decoration: underline;
 }
+
+/* ─── 허브 랭킹 레일 ──────────────────────────────────────────────────────
+ * 기록이 있는 게임만 한 칸씩 돌아간다. 게임 카드가 아니라 **지면의 판**이다 —
+ * "화면 속의 화면"으로 어둡게 고정하는 것은 카드뿐이고(DESIGN.md §12), 레일은 정경을 따른다. */
+.games-rail {
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius-asym, 12px);
+  padding: 14px 18px 16px;
+  margin-bottom: 24px;
+}
+
+.games-rail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+/* 황토 라벨이되 모노·넓은 자간을 걸지 않는다 — 한글에서는 자간만 벌어진다 (DESIGN.md §12).
+   황토 원색은 한지 위 2.89:1 이라 글씨용 변형을 쓴다. */
+.games-rail-section {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--kh-ocher-text, var(--kh-ocher));
+}
+
+.games-rail-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.games-rail-step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.games-rail-step:hover {
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+}
+
+/* 눌림 — 다섯 동사 중 하나 */
+.games-rail-step:active {
+  transform: translateY(1px);
+}
+
+.games-rail-step:focus-visible {
+  outline: var(--ko-focus-ring, 2px solid var(--ko-accent-primary));
+  outline-offset: 2px;
+}
+
+.games-rail-position {
+  min-width: 44px;
+  text-align: center;
+  font-family: var(--kh-font-mono, inherit);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  /* muted 는 한지 위에서 4.09:1 로 AA 에 못 미친다 — 작은 글씨라 한 단계 올린다 */
+  color: var(--ko-text-secondary);
+}
+
+/* 스밈 — 칸이 바뀔 때마다 다시 발화한다 (key 교체). transform + opacity 만 쓴다. */
+.games-rail-slide {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  animation: games-rail-seep var(--kh-dur-enter, 560ms) var(--kh-ease-enter, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+
+@keyframes games-rail-seep {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.games-rail-game {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.games-rail-title {
+  margin: 0;
+  font-size: var(--kh-headline, 1.25rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ko-text-primary);
+}
+
+/* 트랙은 보드 이름이지 부가 설명이 아니다 — 무강화 기록과 강화 기록은 다른 보드다 */
+.games-rail-track {
+  padding: 3px 8px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  color: var(--kh-ocher-text, var(--kh-ocher));
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.games-rail-entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.games-rail-entries li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: var(--kh-radius, 4px);
+  font-size: 0.875rem;
+}
+
+.games-rail-entries li.is-me {
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  background: var(--ko-accent-primary-bg);
+  border-left: 2px solid var(--ko-accent-primary);
+  padding-left: 6px;
+}
+
+/* 연지 틴트가 깔린 줄에서 황토는 한지 위 3.55:1 까지 내려간다 — 이 줄에서만 본문색으로 */
+.games-rail-entries li.is-me .games-rail-rank {
+  color: var(--ko-text-primary);
+}
+
+.games-rail-rank {
+  text-align: right;
+  font-family: var(--kh-font-mono, inherit);
+  font-variant-numeric: tabular-nums;
+  color: var(--kh-ocher-text, var(--kh-ocher));
+}
+
+.games-rail-nick {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ko-text-primary);
+}
+
+.games-rail-me {
+  padding: 1px 6px;
+  border: 1px solid var(--ko-accent-primary);
+  border-radius: var(--kh-radius, 4px);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ko-text-primary);
+}
+
+.games-rail-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--ko-text-primary);
+}
+
+.games-rail-more {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 0.8125rem;
+  text-decoration: none;
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+}
+
+.games-rail-more:hover {
+  text-decoration: underline;
+}
+
+/* ─── 상세 랭킹 ───────────────────────────────────────────────────────── */
+.game-leaderboard {
+  margin-bottom: 40px;
+}
+
+.game-leaderboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/*
+ * 게임은 sandbox iframe 안에서 자기 힘으로 점수를 올리고 부모에게 알리지 않는다.
+ * 방금 세운 기록을 확인하는 손잡이를 사람이 직접 쥘 수 있게 둔다.
+ */
+.game-leaderboard-refresh {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.game-leaderboard-refresh:hover {
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+}
+
+.game-leaderboard-refresh:active {
+  transform: translateY(1px);
+}
+
+.game-leaderboard-refresh:focus-visible {
+  outline: var(--ko-focus-ring, 2px solid var(--ko-accent-primary));
+  outline-offset: 2px;
+}
+
+/*
+ * .games-status 를 그대로 쓰면 두 가지가 걸린다 — muted 는 한지 위 4.23:1 로 AA 에 못 미치고,
+ * 모노 + 넓은 자간은 한글에서 자간만 벌어진다 (DESIGN.md §12). 랭킹 영역의 상태 문구에서만 되돌린다.
+ */
+.game-leaderboard-status {
+  color: var(--ko-text-secondary);
+  font-family: inherit;
+  letter-spacing: normal;
+}
+
+.game-leaderboard-error {
+  align-items: flex-start;
+}
+
+/* 기록 없음은 고장이 아니라 초대다 — 대부분의 게임에서 이게 정상 상태다 */
+.game-leaderboard-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 24px 20px;
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius-asym, 12px);
+}
+
+.game-leaderboard-empty-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ko-text-primary);
+}
+
+.game-leaderboard-empty-body {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--ko-text-secondary);
+}
+
+.game-leaderboard-tracks {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.game-leaderboard-track {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  background: var(--ko-surface-1);
+  color: var(--ko-text-secondary);
+  font-family: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 150ms cubic-bezier(0.4, 0, 0.2, 1), color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.game-leaderboard-track:hover {
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+}
+
+.game-leaderboard-track.active {
+  background: var(--ko-accent-primary);
+  border-color: var(--ko-accent-primary);
+  /* 다크 아케이드의 surface-0 은 송연이라 연지 위에서 죽는다 — 채움 위 글씨는 한지로 고정
+     (.game-genre-btn.active 와 같은 이유) */
+  color: var(--kh-hanji, var(--ko-surface-0));
+  font-weight: 600;
+}
+
+.game-leaderboard-track:focus-visible {
+  outline: var(--ko-focus-ring, 2px solid var(--ko-accent-primary));
+  outline-offset: 2px;
+}
+
+/* 안내문은 작은 글씨다 — muted 는 한지 위 4.23:1 이라 secondary 를 쓴다 */
+.game-leaderboard-note {
+  margin: 8px 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  color: var(--ko-text-secondary);
+}
+
+.game-leaderboard-table {
+  margin-top: 4px;
+}
+
+/* 머리줄 — .kh-table 의 모노·대문자·넓은 자간은 한글에서 자간만 벌어진다.
+   황토 원색은 한지 위 2.89:1 이라 글씨용 변형으로 바꾼다. */
+.game-leaderboard-table thead th {
+  font-family: inherit;
+  font-size: 0.75rem;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--kh-ocher-text, var(--kh-ocher));
+}
+
+.game-leaderboard-table td {
+  vertical-align: middle;
+}
+
+.game-leaderboard-rank {
+  width: 3.5rem;
+  font-family: var(--kh-font-mono, inherit);
+  color: var(--ko-text-secondary);
+}
+
+.game-leaderboard-nick {
+  color: var(--ko-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.game-leaderboard-detail {
+  margin-left: 8px;
+  font-size: 0.8125rem;
+  color: var(--ko-text-secondary);
+}
+
+.game-leaderboard-me {
+  margin-left: 8px;
+  padding: 2px 6px;
+  border: 1px solid var(--ko-accent-primary);
+  border-radius: var(--kh-radius, 4px);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ko-text-primary);
+}
+
+.game-leaderboard-table tr.is-me td {
+  background: var(--ko-accent-primary-bg);
+}
+
+.game-leaderboard-table tr.is-me td:first-child {
+  border-left: 2px solid var(--ko-accent-primary);
+  padding-left: calc(var(--ko-space-4, 16px) - 2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .games-rail-slide {
+    animation: none;
+  }
+
+  .games-rail-step,
+  .game-leaderboard-track,
+  .game-leaderboard-refresh {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .games-rail {
+    padding: 12px 14px 14px;
+  }
+
+  .game-leaderboard-rank {
+    width: 2.75rem;
+  }
+}

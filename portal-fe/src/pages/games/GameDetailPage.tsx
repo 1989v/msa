@@ -34,6 +34,7 @@ import { isLoggedIn } from '../../auth/auth';
 import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
+import GameLeaderboard from './GameLeaderboard';
 import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
 import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -70,6 +71,8 @@ export default function GameDetailPage() {
   const [game, setGame] = useState<GameDetail | null>(null);
   const [similar, setSimilar] = useState<GameSummary[]>([]);
   const [playing, setPlaying] = useState(false);
+  // 플레이를 끝내고 나온 순간에 랭킹을 다시 읽는다 (GameLeaderboard 의 reloadToken 주석 참조)
+  const [boardToken, setBoardToken] = useState(0);
   const stageFit = useStageFit(playing);
   const [notFound, setNotFound] = useState(false);
   // 내 평점은 BE 척도(halves 1~10) 그대로 든다 — 화면 변환은 StarRating 몫
@@ -128,6 +131,7 @@ export default function GameDetailPage() {
   const handleClose = () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
     setPlaying(false);
+    setBoardToken((token) => token + 1);
   };
 
   /**
@@ -317,6 +321,8 @@ export default function GameDetailPage() {
           />
         )}
       </section>
+
+      <GameLeaderboard slug={slug} lang={lang} reloadToken={boardToken} />
 
       <section className="game-rating-section" aria-label="평점 남기기">
         <h2 className="games-collection-title">
