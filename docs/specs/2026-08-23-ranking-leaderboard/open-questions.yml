@@ -1,0 +1,59 @@
+> Phase: pre-impl / post-P1
+questions:
+  - id: OQ-1
+    phase: pre-impl
+    status: open
+    owner: user
+    q: "오피넷 무료 API 키 — opinet.co.kr 회원가입 후 '무료API 이용신청'. 발급 전에는
+        stations.sample.jsonl 로 수집기 E2E 를 태운다 (place/ingest 의 attractions.sample.jsonl 패턴)."
+  - id: OQ-2
+    phase: pre-impl
+    status: open
+    owner: user
+    q: "Google Cloud Console → Routes API 사용 설정 + 서버용 API 키(IP 제한).
+        Maps JS 키(리퍼러 제한)와 반드시 분리 — 한 키에 둘을 담으면 어느 제한을 걸어도 한쪽이 죽는다
+        (YouTube·Places 키 분리와 같은 이유). 키 이름 후보 GOOGLE_ROUTES_API_KEY."
+  - id: OQ-3
+    phase: pre-impl
+    status: open
+    q: "오피넷 무료 API 일일 호출 한도가 공개 문서에 없다. 전국 수집이 한도 안에 들어가는지
+        키 발급 직후 실측한다. 초과하면 시도별 분할 순회(하루 N개 시도)로 전환 — 가격이 일 단위
+        갱신이라 전국이 하루 늦어도 화면은 성립한다."
+  - id: OQ-4
+    phase: pre-impl
+    status: open
+    q: "전국 전량 수집 경로 — '주유소 기본정보(지역별)' 만으로 전량이 되는가, 아니면
+        '반경 내 주유소 검색' 격자 순회가 필요한가. 지역별이 되면 호출 수가 한 자릿수로 떨어진다.
+        키 발급 후 시도 1개로 판정하고 그 결과가 수집기 구조를 정한다."
+  - id: OQ-5
+    phase: pre-impl
+    status: open
+    q: "경로 이탈 시간 추정 방식. Routes API 재호출(경유지 포함)은 정확하지만 후보 1건당 1콜이라
+        월 10,000 무료를 즉시 태운다. P1 은 폴리라인 최근접점까지의 직선거리 기반 근사로 두고
+        '약 N분'으로 표기한다. 근사 오차 허용폭을 화면 문구가 감당하는지 확인 필요."
+  - id: OQ-6
+    phase: pre-impl
+    status: open
+    q: "유종 코드 확정 — 휘발유 B027 · 경유 D047 은 확인됨. 고급휘발유·LPG 코드는 발급 후
+        API 가이드에서 확인. 코드는 도메인 enum 으로 못 박는다."
+  - id: OQ-7
+    phase: pre-impl
+    status: open
+    q: "KATEC(TM128) → WGS84 변환 구현 위치. 수집기(Python)에서 pyproj 로 변환해 적재하는 쪽이
+        검증이 쉽다(골든 좌표 테스트). 서버가 변환하면 원천 좌표계가 도메인에 새어든다."
+  - id: OQ-8
+    phase: post-P1
+    status: open
+    q: "사용자 투표 축(P3) — 표가 적을 때 순위가 요동친다. 베이지안 평균 등 사전분포가 필요한지,
+        아니면 '표 N개 이상' 게이트로 충분한지. 데이터가 생긴 뒤 판단."
+  - id: OQ-9
+    phase: deferred
+    status: deferred
+    q: "TMAP 경로안내 폴백 — Google Routes 무료 한도(월 10,000)를 실사용이 넘길 때 검토.
+        일 1,000건 무료라는 정보가 있으나 출처가 오래됐다."
+  - id: OQ-10
+    phase: post-P1
+    status: open
+    q: "LOCALDATA(P2) 는 월 전량 다운로드 + 변경분 API 두 경로를 제공한다. 전량(수백만 행)을
+        우리 DB 에 담을지, 업종을 제과점·일반음식점으로 좁혀 담을지 — free-tier 디스크 여유 재계산 후."
+closed: []
