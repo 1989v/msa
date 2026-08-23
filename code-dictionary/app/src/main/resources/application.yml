@@ -120,3 +120,7 @@ encryption:
 ranking:
   google-routes:
     api-key: ${RANKING_GOOGLE_ROUTES_API_KEY:}
+    # 하루 호출 상한. 무료 구간이 월 10,000콜(하루 약 333회)이라 300 이면 월 9,000 으로
+    # 여유를 두고 들어간다. **무료 한도는 상한이 아니라 통과 지점이라** 막지 않으면
+    # 인기가 생긴 달에 청구서로 알게 된다. 캐시 적중은 이 수를 쓰지 않는다.
+    daily-budget: ${RANKING_ROUTES_DAILY_BUDGET:300}

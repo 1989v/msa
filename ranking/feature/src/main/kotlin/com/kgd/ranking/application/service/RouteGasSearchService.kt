@@ -9,7 +9,7 @@ import com.kgd.ranking.infrastructure.persistence.entity.GasStationJpaEntity
 import com.kgd.ranking.infrastructure.persistence.repository.GasStationJpaRepository
 import com.kgd.ranking.infrastructure.persistence.repository.GasStationPriceJpaRepository
 import com.kgd.ranking.infrastructure.routes.Geo
-import com.kgd.ranking.infrastructure.routes.GoogleRoutesClient
+import com.kgd.ranking.infrastructure.routes.CachedRouteLookup
 import com.kgd.ranking.infrastructure.routes.LatLng
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,13 +19,16 @@ import kotlin.math.roundToInt
 /**
  * 경로 위에서 조건에 맞는 주유소를 찾는다 (ADR-0081 §7).
  *
- * **오피넷을 실시간으로 부르지 않는다.** 매일 받아둔 전국 스냅샷만 읽는다 — 외부 한도를
- * 사용자 요청 수에 묶으면 인기가 생기는 순간 서비스가 죽는다. 외부 호출은 길찾기 1회뿐이다.
+ * **유가 API 를 실시간으로 부르지 않는다.** 매일 받아둔 스냅샷만 읽는다 — 외부 한도를
+ * 사용자 요청 수에 묶으면 인기가 생기는 순간 서비스가 죽는다.
+ *
+ * 외부 호출은 길찾기 하나뿐이고, 그마저 [CachedRouteLookup] 의 캐시·일일 예산 뒤에 있다.
+ * 조건(유종·이탈 시간·셀프)을 바꿔도 **경로는 같으므로** 두 번째부터는 외부를 부르지 않는다.
  */
 @Service
 @Transactional(readOnly = true)
 class RouteGasSearchService(
-    private val routesClient: GoogleRoutesClient,
+    private val routeLookup: CachedRouteLookup,
     private val stationRepository: GasStationJpaRepository,
     private val priceRepository: GasStationPriceJpaRepository,
 ) {
@@ -58,7 +61,7 @@ class RouteGasSearchService(
 
         val origin = LatLng(request.origin.latitude, request.origin.longitude)
         val destination = LatLng(request.destination.latitude, request.destination.longitude)
-        val route = routesClient.computeRoute(origin, destination)
+        val route = routeLookup.route(origin, destination)
 
         val path = Geo.sample(route.path, PATH_SAMPLE_METERS)
         if (path.isEmpty()) {

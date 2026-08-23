@@ -8,7 +8,7 @@ import com.kgd.ranking.infrastructure.persistence.entity.GasStationJpaEntity
 import com.kgd.ranking.infrastructure.persistence.entity.GasStationPriceJpaEntity
 import com.kgd.ranking.infrastructure.persistence.repository.GasStationJpaRepository
 import com.kgd.ranking.infrastructure.persistence.repository.GasStationPriceJpaRepository
-import com.kgd.ranking.infrastructure.routes.GoogleRoutesClient
+import com.kgd.ranking.infrastructure.routes.CachedRouteLookup
 import com.kgd.ranking.infrastructure.routes.LatLng
 import com.kgd.ranking.infrastructure.routes.RouteResult
 import io.kotest.assertions.throwables.shouldThrow
@@ -24,10 +24,10 @@ import java.time.Instant
 
 class RouteGasSearchServiceTest : BehaviorSpec({
 
-    val routesClient = mockk<GoogleRoutesClient>()
+    val routeLookup = mockk<CachedRouteLookup>()
     val stationRepository = mockk<GasStationJpaRepository>()
     val priceRepository = mockk<GasStationPriceJpaRepository>()
-    val service = RouteGasSearchService(routesClient, stationRepository, priceRepository)
+    val service = RouteGasSearchService(routeLookup, stationRepository, priceRepository)
 
     // 서쪽 → 동쪽 8.8km 직선, 880초 → 평균 10 m/s
     val path = (0..100).map { LatLng(37.5, 127.0 + it * 0.001) }
@@ -59,7 +59,7 @@ class RouteGasSearchServiceTest : BehaviorSpec({
             brands = brands,
         )
 
-    every { routesClient.computeRoute(any(), any()) } returns route
+    every { routeLookup.route(any(), any()) } returns route
 
     Given("경로 위·근처·멀리에 주유소가 있을 때") {
         val onRoute = station(37.5, 127.05)          // 경로 위
@@ -155,7 +155,7 @@ class RouteGasSearchServiceTest : BehaviorSpec({
     }
 
     Given("출발지와 도착지가 같을 때") {
-        every { routesClient.computeRoute(any(), any()) } returns
+        every { routeLookup.route(any(), any()) } returns
             RouteResult(listOf(LatLng(37.5, 127.0)), "a", 0, 0)
         every { stationRepository.findWithinBox(any(), any(), any(), any()) } returns emptyList()
         every { priceRepository.findByStationIdInAndProductCode(any(), "B027") } returns emptyList()

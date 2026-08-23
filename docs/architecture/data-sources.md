@@ -305,7 +305,8 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 호출 | `POST directions/v2:computeRoutes` — fieldMask `routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration` + `routingPreference=TRAFFIC_UNAWARE` 로 **고정** |
 | 무료분 | **Essentials 월 10,000콜** (Pro 는 5,000) |
 | 키 | `RANKING_GOOGLE_ROUTES_API_KEY`. 클러스터는 Secret `ranking-secrets/google-routes-api-key` (optional — **없으면 경로 화면만 비활성**) |
-| 저장 | 저장하지 않는다 — 경로는 요청 때만 쓰고 응답에 실어 보낸다 |
+| 저장 | 영구 저장하지 않는다. **7일 인메모리 캐시**만 둔다(약관은 임시 캐시를 최대 30일 허용) |
+| 상한 | `ranking.google-routes.daily-budget` **기본 300/일** — 넘기면 호출하지 않고 거절한다 |
 
 **SKU 를 올리는 곳이 두 군데다.** 둘 다 `GoogleRoutesClient` 안에서만 정해진다.
 
