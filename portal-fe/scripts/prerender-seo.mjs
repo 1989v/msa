@@ -61,6 +61,7 @@ import {
   DEAL_ORIGIN,
   DEAL_BRAND,
   dealHubMeta,
+  dealUrl,
   RANK_BRAND,
   RANK_ORIGIN,
   rankHubMeta,
@@ -178,6 +179,17 @@ async function main() {
     console.warn(`[seo] 블로그 색인 조회 실패: ${err.message}`);
   }
 
+  // 혜택 허브는 2026-08-24 부터 색인 대상이다 (ADR-0069 개정) — 오퍼가 본문이자 llms.txt 이므로
+  // 조회 실패는 곧 "빈 카탈로그가 색인되는" 상태다. 가드 안에 둔다.
+  let dealSections = [];
+  try {
+    dealSections = await fetchDealSections();
+    fetched.push('deal');
+  } catch (err) {
+    failed.push('deal');
+    console.warn(`[seo] 혜택 카탈로그 조회 실패: ${err.message}`);
+  }
+
   // 랭킹은 **부분 실패 가드 밖**이다. 두 가지가 겹쳐서다:
   //   ① 보드는 첫 수집이 끝나야 생긴다 — 빈 결과가 정상 상태라 "손실"과 구분되지 않는다
   //   ② FE 빌드 시점에 백엔드가 아직 이 엔드포인트를 갖고 있지 않을 수 있다(첫 배포)
@@ -200,11 +212,11 @@ async function main() {
     );
   }
 
-  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards);
+  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections);
   await renderPortalPages(shell);
   await renderPlaceHubs(shell, places, regions);
   await renderPlaceDetails(shell, places, regions);
-  await renderDealHub(shell);
+  await renderDealHub(shell, dealSections);
   await renderRankHub(shell);
   await renderBlogHub(shell, blog);
 
@@ -505,6 +517,7 @@ async function writeRobotsAndSitemaps(
   regions = { ko: [], en: [] },
   blog = { posts: [], categories: [] },
   rankBoards = [],
+  dealSections = [],
 ) {
   const gameEntries = [];
   for (const lang of LANGS) {
@@ -572,10 +585,9 @@ async function writeRobotsAndSitemaps(
   await emit(`seo/${PLACE_HOST}/robots.txt`, robotsTxt(PLACE_ORIGIN));
   // 이력서는 색인 대상이 아니다 (ADR-0064). sitemap·llms.txt 도 두지 않는다.
   await emit(`seo/${RESUME_HOST}/robots.txt`, 'User-agent: *\nDisallow: /\n');
-  // 혜택 허브는 색인하지 않지만(ADR-0069) **크롤은 연다** — Disallow 로 막으면
-  // noindex 태그를 읽지 못해 URL 만 색인되고, 메신저 언퍼러도 OG 카드를 못 만든다.
-  // P1 유입이 공유라 OG 가 색인보다 중요하다. sitemap·llms.txt 는 두지 않는다.
+  // 혜택 허브는 색인 대상이다 (2026-08-24, ADR-0069 개정). robots 는 `/go/` 만 막는다.
   await emit(`seo/${DEAL_HOST}/robots.txt`, dealRobotsTxt());
+  await emit(`seo/${DEAL_HOST}/sitemap.xml`, sitemapXml(dealSitemapEntries()));
   // 블로그는 자체 콘텐츠라 thin 판정 대상이 아니다 — 색인을 연다 (ADR-0072 §8)
   // 스튜디오·로그인은 크롤 자체를 막는다. useSeo 의 noindex 는 JS 를 실행하는 크롤러에만
   // 닿는데, 이 경로들은 프리렌더가 없어 셸의 기본 메타가 그대로 나간다 — 색인되면
@@ -591,6 +603,7 @@ async function writeRobotsAndSitemaps(
   await emit(`seo/${PORTAL_HOST}/llms.txt`, portalLlmsTxt());
   await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places));
   await emit(`seo/${BLOG_HOST}/llms.txt`, blogLlmsTxt(blog));
+  await emit(`seo/${DEAL_HOST}/llms.txt`, dealLlmsTxt(dealSections));
 
   await writeAdsTxt();
 }
@@ -1021,26 +1034,88 @@ async function renderPlaceDetails(shell, places, regions) {
 }
 
 /**
- * 혜택 허브 프리렌더 (ADR-0069).
+ * 혜택 허브 프리렌더 (ADR-0069, 2026-08-24 색인 개방).
  *
- * 색인 대상이 아닌데도 찍는 이유는 **언퍼러** 때문이다. P1 유입은 SNS·메신저 공유이고,
- * 카카오톡/슬랙/X 는 JS 를 실행하지 않으므로 초기 HTML 에 OG 가 없으면 링크가 맨 URL 로 나간다.
- * 공정위 고지는 여기 없다 — 이 셸에는 오퍼 링크가 없고, 고지는 링크에 붙는다 (ADR-0069 개정).
+ * 본문에 **오퍼를 텍스트로 적는다.** 링크로 적지 않는 이유가 둘이다: 정적 본문의 `/go/`
+ * 링크는 robots 로 막아 둔 경로라 크롤러에게 막다른 길이고, 무엇보다 `rel="sponsored"`
+ * 는 React 가 `revenueType` 을 보고 붙이는 것이라 정적 복사본에는 그 표시가 없다 —
+ * 고지 없는 제휴 링크를 초기 HTML 로 내보내는 셈이 된다. 텍스트로 두면 무 JS 크롤러는
+ * 카탈로그 내용을 읽고, 실제 링크는 하이드레이션 후의 정상 마크업만 존재한다.
+ *
+ * 언퍼러(카카오톡·슬랙·X)는 JS 를 실행하지 않으므로 OG 는 여기서 확정돼야 한다.
  */
-async function renderDealHub(shell) {
+async function renderDealHub(shell, sections = []) {
+  await emit(`prerender/_hosts/${DEAL_HOST}.html`, renderDealHubHtml(shell, sections));
+}
+
+/** 허브 HTML — 파일 쓰기와 분리해 렌더 규칙만 단위 검증한다 (renderAttractionDetail 과 같은 형태) */
+export function renderDealHubHtml(shell, sections = []) {
   const meta = dealHubMeta();
-  const html = compose(shell, {
+  const filled = sections.filter((s) => (s.offers ?? []).length > 0);
+  const body = filled
+    .map((section) => {
+      const items = section.offers
+        .map((o) => {
+          const line = [o.merchant, o.benefit, o.title].filter(Boolean).join(' · ');
+          const summary = o.summary ? ` ${o.summary}` : '';
+          return `<li>${escapeHtml(line)}${escapeHtml(summary)}</li>`;
+        })
+        .join('');
+      return `<h2>${escapeHtml(section.category.label)}</h2><ul>${items}</ul>`;
+    })
+    .join('');
+  return compose(shell, {
     lang: 'ko',
     title: meta.title,
     description: meta.description,
     canonical: meta.canonical,
     siteName: DEAL_BRAND,
-    noindex: true,
+    jsonLd: [
+      collectionPageJsonLd('ko', meta, meta.canonical, { name: DEAL_BRAND, url: DEAL_ORIGIN }),
+    ],
     body: shellBody(
-      `<h1>${escapeHtml(DEAL_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>`,
+      `<h1>${escapeHtml(DEAL_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>${body}`,
     ),
   });
-  await emit(`prerender/_hosts/${DEAL_HOST}.html`, html);
+}
+
+/**
+ * 혜택 카탈로그 — 허브 프리렌더 본문과 llms.txt 가 함께 쓴다.
+ * 오퍼는 수십 건 규모라 허브 응답 한 번이면 전량이다.
+ */
+async function fetchDealSections() {
+  const sections = await getJson('/api/v1/deal/sections');
+  return Array.isArray(sections) ? sections : [];
+}
+
+export function dealSitemapEntries() {
+  // 허브 한 장이 전부다. 카테고리·오퍼별 URL 을 만들지 않는 이유는 오퍼가 수십 건인
+  // 지금 그것을 쪼개면 링크 두세 개짜리 doorway page 가 되어, 열려는 색인을 오히려 깎아서다.
+  // 검색은 `?q=` 로 같은 URL 위에서 돈다 (canonical 은 항상 `/`).
+  return [{ loc: dealUrl('/'), priority: '1.0' }];
+}
+
+export function dealLlmsTxt(sections) {
+  const body = sections
+    .filter((s) => (s.offers ?? []).length > 0)
+    .map((section) => {
+      const items = section.offers
+        .map((o) => `- ${o.merchant} · ${o.benefit} — ${o.title}${o.summary ? ` (${o.summary})` : ''}`)
+        .join('\n');
+      return `## ${section.category.label}\n${items}`;
+    })
+    .join('\n\n');
+  return `# ${DEAL_BRAND}
+
+> 여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 모아 분류하고,
+> 이름 · 제공처 · 혜택으로 검색할 수 있게 정리한 곳입니다.
+> 제휴 링크에는 "제휴 링크 · 구매 시 수수료를 받습니다" 고지가 붙습니다.
+
+${body}
+
+## 참고
+- [혜택 허브](${DEAL_ORIGIN}/)
+`;
 }
 
 /**
@@ -1082,15 +1157,19 @@ async function renderRankHub(shell) {
 }
 
 /**
- * 혜택 허브 robots — sitemap 도 llms.txt 도 걸지 않는다.
- * 색인 차단은 meta/X-Robots-Tag 가 하고, 여기서는 크롤을 열어 그 태그가 읽히게 한다.
+ * 혜택 허브 robots (2026-08-24 색인 개방).
+ *
+ * `/go/` 는 계속 막는다 — 아웃바운드 리다이렉터라 크롤러에게는 사이트 밖으로 나가는
+ * 문일 뿐이고, 제휴 트래킹 URL 이 색인되면 안 된다. 이 차단은 색인 개방과 무관하게
+ * thin affiliate 방어의 한 축이므로 절대 풀지 않는다.
  */
-function dealRobotsTxt() {
+export function dealRobotsTxt() {
   return `User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /go/
 
+Sitemap: ${DEAL_ORIGIN}/sitemap.xml
 `;
 }
 

@@ -11,6 +11,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import java.time.LocalDateTime
 
@@ -65,6 +66,58 @@ class DealQueryServiceTest : BehaviorSpec({
         then("제휴 링크에만 고지 플래그가 선다") {
             sections[0].offers.single { it.slug == "trip-com" }.disclosureRequired shouldBe true
             sections[0].offers.single { it.slug == "airport-coupon" }.disclosureRequired shouldBe false
+        }
+    }
+
+    given("이름·제공처로 검색할 때") {
+        val categoryRepository = mockk<DealCategoryJpaRepository>()
+        val offerRepository = mockk<DealOfferJpaRepository>()
+        val service = DealQueryService(categoryRepository, offerRepository)
+
+        every { categoryRepository.findAllByStatusOrderByOrderNoAsc(DisplayStatus.OPEN) } returns listOf(
+            category(1, "travel", 10),
+            category(2, "commerce", 20),
+        )
+        every { offerRepository.searchVisible(any(), any()) } returns listOf(
+            offer(1, "trip-com", RevenueType.AFFILIATE, "TRIP_COM"),
+        )
+
+        val sections = service.search("트립", now)
+
+        then("결과가 분류별로 묶여 나온다 — 어느 분류의 혜택인지가 결과에도 필요하다") {
+            sections.map { it.category.code } shouldBe listOf("travel")
+            sections.single().offers.map { it.slug } shouldBe listOf("trip-com")
+        }
+
+        then("결과가 없는 분류는 빠진다 — 목록과 달리 빈 분류는 잡음이다") {
+            sections.none { it.category.code == "commerce" } shouldBe true
+        }
+    }
+
+    given("검색어가 비어 있으면") {
+        val categoryRepository = mockk<DealCategoryJpaRepository>()
+        val offerRepository = mockk<DealOfferJpaRepository>()
+        val service = DealQueryService(categoryRepository, offerRepository)
+
+        then("저장소를 부르지 않는다 — 빈 질의로 전량 스캔이 돌면 안 된다") {
+            service.search("   ", now) shouldBe emptyList()
+            verify(exactly = 0) { offerRepository.searchVisible(any(), any()) }
+        }
+    }
+
+    given("검색어에 LIKE 와일드카드가 섞여 들어오면") {
+        val categoryRepository = mockk<DealCategoryJpaRepository>()
+        val offerRepository = mockk<DealOfferJpaRepository>()
+        val service = DealQueryService(categoryRepository, offerRepository)
+        val pattern = slot<String>()
+
+        every { categoryRepository.findAllByStatusOrderByOrderNoAsc(DisplayStatus.OPEN) } returns emptyList()
+        every { offerRepository.searchVisible(capture(pattern), any()) } returns emptyList()
+
+        service.search("50%_할인", now)
+
+        then("와일드카드가 글자로 이스케이프된다 — 아니면 '%' 하나가 전량 매칭이 된다") {
+            pattern.captured shouldBe "%50!%!_할인%"
         }
     }
 

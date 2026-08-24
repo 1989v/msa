@@ -115,7 +115,13 @@
       name="description"
       content="코드베이스에서 추출한 IT 개념 사전, 백엔드 아키텍처 포트폴리오, MSA 서비스 카탈로그를 한곳에."
     />
-    <link rel="canonical" href="https://1989v.com/" />
+    <!-- canonical · og:url 을 여기 두지 않는다. 이 블록이 그대로 나가는 경우는 프리렌더
+         파일이 없는 **폴백뿐**이고(apex 루트조차 _hosts/1989v.com.html 이 받는다), 그때
+         고정 주소를 적으면 그 값은 항상 틀린다. 실제로 apex 를 적어 둔 탓에 프리렌더 상한
+         밖의 관광지 5만 URL 이 전부 "apex 홈의 대체 페이지"로 판정됐다
+         (2026-08-24 서치콘솔 실측 91건). 비워 두면 크롤러가 요청 주소로 자기참조하고,
+         JS 를 실행하는 크롤러는 useSeo 가 심는 정확한 값을 받는다.
+         프리렌더된 페이지는 metaTags() 가 canonical 을 항상 넣으므로 영향이 없다. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="kgd.dev" />
     <meta property="og:title" content="kgd.dev — IT 개념 사전 · 백엔드 포트폴리오" />
@@ -123,7 +129,6 @@
       property="og:description"
       content="코드 딕셔너리 · 포트폴리오 · MSA 서비스 카탈로그"
     />
-    <meta property="og:url" content="https://1989v.com/" />
     <meta property="og:locale" content="ko_KR" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="kgd.dev — IT 개념 사전 · 백엔드 포트폴리오" />

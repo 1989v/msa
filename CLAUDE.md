@@ -81,7 +81,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **배포 안전장치**: Argo 동기화가 20분 넘게 `Running` 이면 워치독 CronJob 이 작업을 끊는다 + `ApplyOutOfSyncOnly` 로 변경분만 적용 → `docs/adr/ADR-0073-deploy-pipeline-guardrails.md`.
   **워치독은 Argo 가 배포하지 않는다** — 막힌 것을 푸는 물건을 막힌 것이 배포하면 같이 막힌다.
   `k8s/argocd/install.sh` 가 직접 apply 하므로, 워치독을 고치면 install.sh 를 다시 돌려야 반영된다
-- **혜택 링크 허브**: `deal.1989v.com` — 카테고리별 혜택 링크 큐레이션 + 자체 리다이렉터 → `docs/adr/ADR-0069-deal-affiliate-hub.md`. **규제 업권(의료·금융)은 카테고리 행 자체를 만들지 않는다**(의료법 27조·금소법). 제휴 링크는 `AFFILIATE`/`PLAIN` 로 갈라 고지를 제휴에만 붙이고, `target_url` 은 **원본 무변조**로 302 한다 — 파라미터를 손대면 약관 위반이고 트래킹 쿠키가 깨진다
+- **혜택 링크 허브**: `deal.1989v.com` — 카테고리별 혜택 링크 큐레이션 + 자체 리다이렉터 + 오퍼 검색 → `docs/adr/ADR-0069-deal-affiliate-hub.md`. **규제 업권(의료·금융)은 카테고리 행 자체를 만들지 않는다**(의료법 27조·금소법). 제휴 링크는 `AFFILIATE`/`PLAIN` 로 갈라 고지를 제휴에만 붙이고, `target_url` 은 **원본 무변조**로 302 한다 — 파라미터를 손대면 약관 위반이고 트래킹 쿠키가 깨진다. **2026-08-24 색인 개방** — thin affiliate 방어는 색인 차단이 아니라 `rel="sponsored nofollow"` + `/go/` 크롤 차단 + 검색 가능한 카탈로그가 한다. **URL 은 허브 하나뿐이다** — 오퍼 9건에서 분류·오퍼별 주소를 쪼개면 doorway page 가 되어 열려는 색인을 깎는다. 검색은 화면 상태라 주소를 만들지 않고, OpenSearch 가 아니라 저장소 질의다(응답 모양을 목록과 맞춰 뒀으니 커지면 구현만 바꾼다)
 - **랭킹 리더보드**: `rank.1989v.com` — 무엇이든 줄세우는 공통 엔진 + 도메인별 수집기 → `docs/adr/ADR-0081-ranking-leaderboard-platform.md`.
   **순위는 현재값이 아니라 스냅샷 원장**이다 — 등락("지난주 대비 ↑3")이 재방문의 거의 유일한
   동기인데 덮어쓰면 만들 수 없다. 공통은 "줄 세운 결과"까지만 알고 도메인 이질성은 `payload` JSON 이
@@ -96,7 +96,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **로그인 진입점**: **apex `/login` 한 곳**, 토큰은 `.1989v.com` 도메인 쿠키 → `docs/adr/ADR-0079-single-login-origin.md`. 서브도메인에서 로그인을 그리면 OAuth 콜백이 그 호스트로 잡혀 `redirect_uri_mismatch` 가 난다(2026-08-22 game 호스트 실제 사고). **제공자 콘솔에 등록할 redirect_uri 는 `https://1989v.com/oauth/callback` 하나뿐**. `localStorage` 로 되돌리면 서브도메인 세션 공유가 깨져 로그인 화면도 다시 갈라야 한다
 - **회원 식별 최소화**: 소셜에서 **이메일·실명을 받지 않는다**(스코프 `openid` 뿐), 제공자 `sub` 은 auth 가 HMAC 으로 가려 member 로 넘긴다 → `docs/adr/ADR-0078-identity-minimization.md`. **`AUTH_SUBJECT_HASH_KEY` 가 없으면 auth 가 기동하지 않고, 키를 잃으면 전 회원 로그인 불가**(해시 재생성 불가) — 백업 대상. 어드민 부트스트랩은 제거됐고 역할은 `member_roles` 행에만 있다(복구 절차: `auth/CLAUDE.md`)
 - **원장 보존기간**: 조회·클릭 90일 / 이력서 열람 365일, 주 1회 `retention` CronJob 이 정리 → `docs/adr/ADR-0077-ledger-retention.md`. **방침(`/privacy` §6)에 적은 숫자와 상수가 같아야 한다** — 한쪽만 고치면 개인정보처리방침이 거짓이 된다. `deal-linkcheck` 에 얹지 않는 이유는 그것이 외부 `:443` egress 가 열린 유일한 배치라서다
-- **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다)
+- **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다). **SPA 셸(`index.html`)에 canonical·og:url 같은 고정 주소를 두지 않는다** — 그 블록은 프리렌더가 없는 폴백에서만 나가므로 적힌 값은 항상 틀린다(2026-08-24: apex 를 적어 둔 탓에 관광지 5만 URL 이 「대체 페이지」 판정). 모르는 것은 비워 둔다
 
 ---
 
@@ -184,9 +184,9 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | `/tech` | `portal-fe` | 코드딕셔너리 — 트리맵/그래프/히트맵/검색 + 서비스 카탈로그. 옛 `/` 내용이 그대로 옮겨왔다 (lazy chunk) |
 | `place.1989v.com` | `portal-fe` | K-관광/지리 탐색 (ADR-0065) — TourAPI 관광지 국문(`/`)·영문(`/en`) + 구글맵. game 과 같은 host 인식 루트 라우팅, apex `/place` 는 서브도메인으로 리다이렉트. 데이터: place SSOT → search attractions 인덱스 |
 | `resume.1989v.com` | `portal-fe` | 이력서 — 같은 번들·같은 Service, 호스트로 분기. 공개 여부는 DB 설정 + 제출처별 토큰 게이트 (ADR-0064). 색인 대상 아님 |
-| `deal.1989v.com` | `portal-fe` | 혜택 링크 허브 — 같은 번들·호스트 분기. `/go/{slug}` 는 gateway(아웃바운드 리다이렉터). **색인 대상 아님(noindex)** — 링크 모음만으로 색인되면 thin affiliate 판정이 사이트 전체에 번진다 (ADR-0069) |
-| `blog.1989v.com` | `portal-fe` | 블로그 — 같은 번들·호스트 분기. **글 상세(`/posts/:slug`)와 작성자 공간(`/authors/:handle`)은 gateway 가 받아 백엔드가 meta 를 주입한 HTML 을 낸다** (ADR-0072 §6) — 발행 즉시 정확한 공유 카드·색인. 색인 대상 (deal/resume 과 반대) |
-| `rank.1989v.com` | `portal-fe` | 랭킹 리더보드 — 같은 번들·호스트 분기. 지역별 최저가 주유소 + 길찾기 링크. **색인 대상** (deal 과 반대 — 집계와 등락이 자체 콘텐츠다) (ADR-0081) |
+| `deal.1989v.com` | `portal-fe` | 혜택 링크 허브 — 같은 번들·호스트 분기. `/go/{slug}` 는 gateway(아웃바운드 리다이렉터, `noindex` 유지). **색인 대상** (2026-08-24 개방) — 색인되는 주소는 허브 `/` 하나뿐이고 검색은 `?q=` 조차 만들지 않는다 (ADR-0069 개정) |
+| `blog.1989v.com` | `portal-fe` | 블로그 — 같은 번들·호스트 분기. **글 상세(`/posts/:slug`)와 작성자 공간(`/authors/:handle`)은 gateway 가 받아 백엔드가 meta 를 주입한 HTML 을 낸다** (ADR-0072 §6) — 발행 즉시 정확한 공유 카드·색인. 색인 대상 (resume 과 반대) |
+| `rank.1989v.com` | `portal-fe` | 랭킹 리더보드 — 같은 번들·호스트 분기. 지역별 최저가 주유소 + 길찾기 링크. **색인 대상** — 집계와 등락이 자체 콘텐츠다 (ADR-0081) |
 | `/admin/*` | `admin-fe` | 백오피스 |
 | `/quant/*` | `quant-fe` | 트레이딩 (Phase 3) |
 | `/gifticon/*` | `gifticon-fe` | 기프티콘 |

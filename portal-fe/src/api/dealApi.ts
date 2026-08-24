@@ -50,3 +50,19 @@ export const fetchDealSections = async (): Promise<DealSection[]> => {
   const res = await api.get<ApiResponse<DealSection[]>>('/api/v1/deal/sections');
   return res.data.data;
 };
+
+/**
+ * 이름 · 제공처 · 혜택으로 찾기 (ADR-0069 개정).
+ *
+ * 응답이 목록과 **같은 모양**이라 화면이 결과를 같은 컴포넌트로 그린다 — 고지 배지와
+ * 만료 표시 규칙이 두 벌로 갈리지 않는다.
+ *
+ * 검색어를 주소에 싣지 않는다. 질의 조합마다 URL 이 생기면 같은 카탈로그가 무한한
+ * 주소로 갈라져 크롤 예산만 태운다 — 허브는 주소 하나이고 canonical 도 하나다.
+ */
+export const fetchDealSearch = async (query: string): Promise<DealSection[]> => {
+  const res = await api.get<ApiResponse<DealSection[]>>('/api/v1/deal/search', {
+    params: { q: query },
+  });
+  return res.data.data;
+};

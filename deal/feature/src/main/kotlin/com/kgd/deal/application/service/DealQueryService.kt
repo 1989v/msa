@@ -51,6 +51,47 @@ class DealQueryService(
         }
     }
 
+    /**
+     * 이름 · 제공처 · 혜택 · 요약으로 찾는다 (ADR-0069 개정).
+     *
+     * 응답 모양이 [sections] 와 같다. 검색 결과에도 "어느 분류의 혜택인지"가 필요하고,
+     * 모양이 같으면 화면이 목록과 결과를 한 컴포넌트로 그린다 — 다른 DTO 를 만들면
+     * 고지 배지·만료 표시 같은 규칙이 두 벌이 되고 한쪽만 고쳐지는 날이 온다.
+     *
+     * 검색은 화면 상태이지 주소가 아니다 — 허브 URL 은 하나뿐이고 canonical 도 하나다
+     * (질의마다 주소가 생기면 같은 카탈로그가 무한한 URL 로 갈라진다).
+     */
+    fun search(query: String, now: LocalDateTime = LocalDateTime.now()): List<DealCategorySection> {
+        // 길이를 자르는 것은 방어다. 검색어는 공개 파라미터라 임의 길이가 들어올 수 있고,
+        // 그대로 LIKE 패턴이 되면 매칭 비용만 키운다. 오퍼 필드 자체가 이보다 짧다.
+        val keyword = query.trim().take(MAX_QUERY_LENGTH)
+        if (keyword.isBlank()) return emptyList()
+
+        val hits = offerRepository.searchVisible("%${escapeLike(keyword.lowercase())}%", now)
+        if (hits.isEmpty()) return emptyList()
+
+        // 카테고리는 OPEN 인 것만 훑는다 — 내려간 분류의 오퍼가 검색으로 새어 나가지 않게.
+        // 빈 분류를 남기는 sections() 와 달리 결과가 없는 분류는 뺀다: 목록은 레이아웃이
+        // 흔들리지 않아야 하지만, 검색 결과의 빈 분류는 읽는 사람에게 잡음이다.
+        val byCategory = hits.groupBy { it.categoryId }
+        return categoryRepository.findAllByStatusOrderByOrderNoAsc(DisplayStatus.OPEN)
+            .mapNotNull { category ->
+                val offers = byCategory[category.id].orEmpty()
+                if (offers.isEmpty()) {
+                    null
+                } else {
+                    DealCategorySection(
+                        category = DealCategoryResponse(category.code, category.label, category.tagline),
+                        offers = offers.map { it.toResponse() },
+                    )
+                }
+            }
+    }
+
+    /** LIKE 와일드카드를 글자로 되돌린다. 이스케이프 문자 자신을 먼저 바꿔야 한다. */
+    private fun escapeLike(value: String): String =
+        value.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+
     private fun DealOfferJpaEntity.toResponse() = DealOfferResponse(
         slug = slug,
         merchant = merchant,
@@ -61,4 +102,8 @@ class DealQueryService(
         disclosureRequired = revenueType.requiresDisclosure,
         validUntil = validUntil,
     )
+
+    companion object {
+        private const val MAX_QUERY_LENGTH = 60
+    }
 }

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import DealPage from '../DealPage';
@@ -7,9 +7,10 @@ import type { DealSection } from '../../../api/dealApi';
 
 vi.mock('../../../api/dealApi', () => ({
   fetchDealSections: vi.fn(),
+  fetchDealSearch: vi.fn(),
 }));
 
-import { fetchDealSections } from '../../../api/dealApi';
+import { fetchDealSearch, fetchDealSections } from '../../../api/dealApi';
 
 const sections: DealSection[] = [
   {
@@ -51,6 +52,7 @@ function renderPage() {
 describe('DealPage', () => {
   beforeEach(() => {
     vi.mocked(fetchDealSections).mockResolvedValue(sections);
+    vi.mocked(fetchDealSearch).mockReset();
   });
 
   it('공정위 고지는 제휴 카드 안에만 붙는다 — 페이지 전체가 광고로 읽히지 않아야 한다', async () => {
@@ -78,6 +80,47 @@ describe('DealPage', () => {
 
     expect(affiliate).toHaveAttribute('href', '/go/trip-com');
     expect(plain).toHaveAttribute('href', '/go/airport-coupon');
+  });
+
+  it('검색 결과도 같은 카드 규칙을 탄다 — 고지·rel·리다이렉터가 목록과 갈리면 안 된다', async () => {
+    vi.mocked(fetchDealSearch).mockResolvedValue([
+      {
+        category: { code: 'commerce', label: '커머스', tagline: null },
+        offers: [
+          {
+            slug: 'coupang-rocket',
+            merchant: '쿠팡',
+            title: '로켓와우 체험',
+            benefit: '무료 체험',
+            summary: null,
+            revenueType: 'AFFILIATE',
+            disclosureRequired: true,
+            validUntil: null,
+          },
+        ],
+      },
+    ]);
+    renderPage();
+    await screen.findByRole('link', { name: /해외 호텔 예약/ });
+
+    fireEvent.change(screen.getByLabelText('혜택 검색'), { target: { value: '쿠팡' } });
+
+    const hit = await screen.findByRole('link', { name: /로켓와우 체험/ });
+    expect(fetchDealSearch).toHaveBeenCalledWith('쿠팡');
+    expect(hit).toHaveAttribute('href', '/go/coupang-rocket');
+    expect(hit).toHaveAttribute('rel', 'sponsored nofollow noopener');
+    expect(screen.getAllByText(DEAL_AFFILIATE_NOTE)).toHaveLength(1);
+  });
+
+  it('검색 중에는 전체 목록 대신 결과만 남는다 — 둘이 함께 보이면 무엇이 결과인지 흐려진다', async () => {
+    vi.mocked(fetchDealSearch).mockResolvedValue([]);
+    renderPage();
+    await screen.findByRole('link', { name: /해외 호텔 예약/ });
+
+    fireEvent.change(screen.getByLabelText('혜택 검색'), { target: { value: '없는혜택' } });
+
+    expect(await screen.findByText(/에 해당하는 혜택이 없습니다/)).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /해외 호텔 예약/ })).toBeNull();
   });
 
 });

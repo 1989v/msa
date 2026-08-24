@@ -48,6 +48,35 @@
   font-size: 1rem;
 }
 
+/* ─── 검색 ─── */
+
+.deal-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-2);
+  max-width: 32rem;
+}
+
+/* 라벨은 지우지 않는다 — placeholder 만 있는 입력은 스크린리더가 이름 없이 읽는다.
+   시각적으로만 감추고 접근성 트리에는 남긴다. */
+.deal-search__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* 입력 표면·포커스는 .kh-field 가 갖는다 (k-heritage.css) — 여기서 다시 칠하면
+   브랜드 면의 밑줄 규칙이 이 화면에서만 상자로 어긋난다. */
+
+.deal-search__count {
+  margin: 0;
+  font-size: var(--ko-text-xs, 0.72rem);
+  color: var(--ko-text-muted);
+}
+
 /* ─── 카테고리 칩 ─── */
 
 .deal-filters {

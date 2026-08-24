@@ -34,4 +34,14 @@ class DealController(
     @GetMapping("/sections")
     fun sections(): ApiResponse<List<DealCategorySection>> =
         ApiResponse.success(dealQueryService.sections())
+
+    /**
+     * 이름 · 제공처 · 혜택으로 찾기. 응답 모양은 [sections] 와 같다.
+     *
+     * 검색 결과에 별도 URL 을 주지 않는다 — 검색은 허브의 화면 상태이고,
+     * 색인 대상 주소는 허브 하나다 (ADR-0069 개정).
+     */
+    @GetMapping("/search")
+    fun search(@RequestParam q: String): ApiResponse<List<DealCategorySection>> =
+        ApiResponse.success(dealQueryService.search(q))
 }

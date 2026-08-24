@@ -1,6 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchDealSections, type DealOffer, type DealSection } from '../../api/dealApi';
+import {
+  fetchDealSearch,
+  fetchDealSections,
+  type DealOffer,
+  type DealSection,
+} from '../../api/dealApi';
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -16,6 +21,22 @@ import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 // 링크를 교체해도 이미 공유된 주소가 옛 대상으로 계속 나간다.
 
 const ALL = '__all__';
+
+// 글자마다 요청을 보내면 9건짜리 카탈로그를 훑는 데 타자 수만큼의 왕복이 든다.
+const SEARCH_DEBOUNCE_MS = 250;
+// 서버도 같은 길이에서 자른다 (DealQueryService.MAX_QUERY_LENGTH) — 여기서 먼저 막아
+// 잘릴 것이 뻔한 글자가 왕복하지 않게 한다.
+const SEARCH_MAX_LENGTH = 60;
+
+/** 입력이 멎은 뒤의 값만 내보낸다. */
+function useDebounced<T>(value: T, delayMs: number): T {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    const timer = setTimeout(() => setSettled(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+  return settled;
+}
 
 /** 만료까지 남은 날. 오늘 끝나는 것과 다음 주에 끝나는 것은 다르게 읽혀야 한다. */
 function daysLeft(validUntil: string | null): number | null {
@@ -71,18 +92,42 @@ export default function DealPage() {
   useSeo(dealHubMeta());
 
   const [active, setActive] = useState<string>(ALL);
+  const [draft, setDraft] = useState('');
+  const query = useDebounced(draft.trim(), SEARCH_DEBOUNCE_MS);
+  const searching = query.length > 0;
+
   const { data, isLoading, isError } = useQuery({
     queryKey: ['deal', 'sections'],
     queryFn: fetchDealSections,
     staleTime: 5 * 60 * 1000,
   });
 
+  const {
+    data: hits,
+    isFetching: hitsLoading,
+    isError: hitsError,
+  } = useQuery({
+    queryKey: ['deal', 'search', query],
+    queryFn: () => fetchDealSearch(query),
+    enabled: searching,
+    staleTime: 60 * 1000,
+    // 새 검색어의 결과가 오는 동안 직전 결과를 남긴다 — 글자마다 목록이 비면 깜빡인다
+    placeholderData: (prev) => prev,
+  });
+
   const sections: DealSection[] = useMemo(
     () => (data ?? []).filter((s) => s.offers.length > 0),
     [data],
   );
-  const shown = active === ALL ? sections : sections.filter((s) => s.category.code === active);
+  // 검색 결과는 서버가 이미 분류별로 묶어 줬다 — 칩 필터는 검색 중에는 걸지 않는다
+  const results: DealSection[] = useMemo(() => hits ?? [], [hits]);
+  const shown = searching
+    ? results
+    : active === ALL
+      ? sections
+      : sections.filter((s) => s.category.code === active);
   const total = sections.reduce((sum, s) => sum + s.offers.length, 0);
+  const hitCount = results.reduce((sum, s) => sum + s.offers.length, 0);
 
   return (
     <div className="deal-page">
@@ -101,7 +146,29 @@ export default function DealPage() {
         </p>
       </header>
 
-      {sections.length > 0 && (
+      <div className="deal-search">
+        <label className="deal-search__label" htmlFor="deal-search-input">
+          혜택 검색
+        </label>
+        <input
+          id="deal-search-input"
+          className="kh-field"
+          type="search"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="이름 · 제공처 · 혜택으로 찾기"
+          autoComplete="off"
+          maxLength={SEARCH_MAX_LENGTH}
+        />
+        {searching && (
+          <p className="deal-search__count kh-mono" role="status">
+            {hitsError ? '검색에 실패했습니다.' : `${hitCount}건`}
+          </p>
+        )}
+      </div>
+
+      {/* 검색 중에는 분류 칩을 숨긴다 — 결과가 이미 분류별로 묶여 있어 필터가 이중이 된다 */}
+      {!searching && sections.length > 0 && (
         <nav className="deal-filters" aria-label="카테고리">
           <button
             type="button"
@@ -124,10 +191,18 @@ export default function DealPage() {
       )}
 
       <main className="deal-main">
-        {isLoading && <p className="deal-state">불러오는 중…</p>}
-        {isError && <p className="deal-state kh-status-error">혜택을 불러오지 못했습니다.</p>}
-        {!isLoading && !isError && sections.length === 0 && (
+        {!searching && isLoading && <p className="deal-state">불러오는 중…</p>}
+        {!searching && isError && (
+          <p className="deal-state kh-status-error">혜택을 불러오지 못했습니다.</p>
+        )}
+        {!searching && !isLoading && !isError && sections.length === 0 && (
           <p className="deal-state">아직 등록된 혜택이 없습니다.</p>
+        )}
+        {searching && hitsError && (
+          <p className="deal-state kh-status-error">검색에 실패했습니다.</p>
+        )}
+        {searching && !hitsError && !hitsLoading && hitCount === 0 && (
+          <p className="deal-state">‘{query}’ 에 해당하는 혜택이 없습니다.</p>
         )}
 
         {shown.map((section) => (

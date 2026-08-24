@@ -58,6 +58,35 @@ interface DealOfferJpaRepository : JpaRepository<DealOfferJpaEntity, Long> {
     )
     fun findAllVisible(@Param("now") now: LocalDateTime): List<DealOfferJpaEntity>
 
+    /**
+     * 공개 검색 — 전시 판정은 [findAllVisible] 과 **같은 조건**이어야 한다.
+     *
+     * 여기서 조건이 갈리면 목록에는 없는 오퍼가 검색으로만 나오는 구멍이 생긴다.
+     *
+     * 이스케이프 문자로 역슬래시가 아니라 `!` 를 쓴다 — JPQL 문자열 안의 역슬래시는
+     * Kotlin raw string · JPA · JDBC 를 지나며 몇 번 벗겨지는지가 구현마다 달라
+     * 조용히 어긋난다. 패턴을 만드는 쪽(DealQueryService)이 같은 문자로 이스케이프한다.
+     */
+    @Query(
+        """
+        SELECT o FROM DealOfferJpaEntity o
+        WHERE o.status = com.kgd.deal.domain.model.DisplayStatus.OPEN
+          AND (o.validFrom IS NULL OR o.validFrom <= :now)
+          AND (o.validUntil IS NULL OR o.validUntil > :now)
+          AND (
+            LOWER(o.title) LIKE :pattern ESCAPE '!'
+            OR LOWER(o.merchant) LIKE :pattern ESCAPE '!'
+            OR LOWER(o.benefit) LIKE :pattern ESCAPE '!'
+            OR LOWER(o.summary) LIKE :pattern ESCAPE '!'
+          )
+        ORDER BY o.orderNo ASC, o.id ASC
+        """,
+    )
+    fun searchVisible(
+        @Param("pattern") pattern: String,
+        @Param("now") now: LocalDateTime,
+    ): List<DealOfferJpaEntity>
+
     /** 만료 임박 — 어드민 경고 목록 */
     @Query(
         """
