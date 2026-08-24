@@ -27,6 +27,21 @@ questions:
         없고 가격을 주는 지역 단위 경로는 최저가 TOP20 뿐이다. 시군구 × 유종 ≈ 500콜/일로
         전국 약 5,000곳(싼 곳 위주)을 받는다. 전량이 필요해지면 오피넷 직접 신청의
         '주유소 판매가격정보(지역별)' 을 얹는다 — 오퍼레이션 맵 한 곳만 바뀐다."
+  - id: OQ-12
+    phase: pre-impl
+    status: open
+    owner: user
+    q: "이용허락범위 확인 — 대장(data-sources.md §8)에 '공공누리(출처표시)'로 적어뒀지만
+        이는 레포의 다른 공공데이터 관례를 따른 값이고 신청 화면의 `이용허락범위` 필드를
+        직접 확인한 것이 아니다. 실제 값으로 대장을 고쳐야 한다 — 틀린 값이 대장에 있으면
+        화면 출처 표기 판단도 같이 틀어진다."
+  - id: OQ-13
+    phase: pre-impl
+    status: open
+    owner: user
+    q: "End Point 호스트 확인 — apis.data.go.kr 이면 포털 serviceKey 로 끝(예상).
+        www.opinet.co.kr 이면 오피넷 키가 따로 필요하고, 그때는 opinet.py 의 인증 파라미터명을
+        serviceKey → code 로 바꾼다(원래 그렇게 짰다가 포털용으로 옮긴 코드다)."
   - id: OQ-11
     phase: pre-impl
     status: open
