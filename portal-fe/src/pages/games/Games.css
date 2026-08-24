@@ -479,7 +479,18 @@
 
 /* Detail */
 .games-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 16px;
+}
+
+/* 두 번째 항목부터 구분자를 세운다 — 없으면 「← 게임순서 정하기」로 붙어 한 낱말처럼 읽힌다 */
+.games-breadcrumb .games-back + .games-back::before {
+  content: '›';
+  margin-right: 8px;
+  color: var(--ko-text-muted);
 }
 
 .games-back {
