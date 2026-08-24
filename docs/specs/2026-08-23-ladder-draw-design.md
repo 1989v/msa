@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/ladder-draw/ -->
 # 사다리타기 (ladder-draw) — 설계
 
 > 클린룸 13호 · 장르 프리셋 `party-decider` 의 두 번째 산출물

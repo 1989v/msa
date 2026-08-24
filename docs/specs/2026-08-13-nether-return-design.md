@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/nether-return/ -->
 # 황천 회귀 (Nether Return) — 로그라이크 액션 로그라이크 액션 RPG
 
 > **Status**: 구현 진행 중 (이 문서가 단일 설계 원본 — 세션이 끊겨도 여기서 재개한다)

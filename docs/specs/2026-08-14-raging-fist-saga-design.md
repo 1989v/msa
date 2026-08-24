@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/raging-fist-saga/ -->
 # DESIGN.md — 레이징 피스트 사가
 
 벨트스크롤 액션 + 대전격투식 커맨드 격투. 이 문서는 이 게임 폴더 안에서만 유효한 디자인 SSOT다.

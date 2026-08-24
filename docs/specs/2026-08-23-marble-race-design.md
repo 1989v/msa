@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/marble-race/ -->
 # 구슬 레이스 (marble-race) — 설계
 
 > 클린룸 12호 · 장르 프리셋 `party-decider` 의 첫 산출물

@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/hoop-order/ -->
 # 고리 맞추기 (hoop-order) — 설계 문서
 
 > 장르 프리셋: `sort-puzzle` (정렬 퍼즐 — 턴제 · 되돌리기 필수)

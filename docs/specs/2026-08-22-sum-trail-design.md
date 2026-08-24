@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/sum-trail/ -->
 # 합이 딱 (sum-trail) — 설계 문서
 
 > 장르 프리셋: `grid-number-puzzle` (격자 숫자 퍼즐 — 경로 드래그형)

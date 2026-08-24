@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/random-tower-defense/ -->
 # 랜덤 타워 디펜스 (random-tower-defense) — 설계 문서
 
 > 무작위 소환 웨이브 디펜스. 뽑고 · 겹치고 · 막는다.

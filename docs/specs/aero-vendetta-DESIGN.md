@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/aero-vendetta/ -->
 # 에어로 벤데타 (aero-vendetta) — 설계 문서
 
 종스크롤 아케이드 슈팅. 가공의 1949년, 반란 함대 "벤데타"의 단기 항공 반격전.

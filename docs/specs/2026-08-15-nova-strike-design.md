@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/nova-strike/ -->
 # NOVA STRIKE — 노바 스트라이크
 
 > 32비트 세대(메가맨 X4 벤치마크) 사이드스크롤 런앤건 액션 플랫포머.

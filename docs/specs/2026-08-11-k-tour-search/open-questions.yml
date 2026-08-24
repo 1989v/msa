@@ -18,6 +18,12 @@ questions:
     phase: post-P1
     status: open
     q: "관광빅데이터 방문자 지표의 데이터셋 선정(중심관광지 커버리지 확인) — P2 popularity 채움의 소스."
+  - id: OQ-7
+    phase: post-P1
+    status: open
+    q: "지역 데이터는 GeoNames 유지 확정 (사용자 결정 2026-08-11 — 영문명·좌표·무키가 결정 근거).
+        정부 통계(방문자수 등) 조인이 필요해지는 P2 랭킹 시점에 행안부 법정동코드 매핑 컬럼을
+        regions 에 추가하는 이중 코드 체계로 확장 (이름/좌표 휴리스틱 or TourAPI areaCode 경유)."
   - id: OQ-5
     phase: deferred
     status: deferred

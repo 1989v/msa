@@ -1,3 +1,4 @@
+<!-- source: game/domain, game/feature -->
 # Design — Game Platform (게임 리스트 + 플레이 + 광고) 엔티티 설계
 
 **Date**: 2026-07-06

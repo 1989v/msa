@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/abyssal-crown/ -->
 # DESIGN.md — 심연의 왕관 (Abyssal Crown)
 
 탑다운 로그라이크 액션 RPG. 순수 정적 웹(HTML + ES Modules + Canvas 2D), 빌드 스텝 없음.

@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/coin-corgi/ -->
 # 코인 코기 (coin-corgi) — 설계 문서
 
 > 장르 프리셋: `casual-catch` (낙하물 받기·피하기 캐주얼 아케이드)

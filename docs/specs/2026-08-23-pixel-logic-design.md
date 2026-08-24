@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/pixel-logic/ -->
 # 그림 로직 (pixel-logic) — 설계
 
 > 클린룸 11호 · 장르 프리셋 `picture-logic` 의 첫 산출물

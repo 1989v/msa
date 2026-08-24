@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/deadline/ -->
 # 데드라인 (deadline) — 설계 문서
 
 > 개명 이력: 「녹빛 봉쇄구역」(rustveil-holdout) → 「데드라인」(deadline), 2026-08-17.

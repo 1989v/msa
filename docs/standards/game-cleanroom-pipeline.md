@@ -1449,7 +1449,9 @@
 
 1. **스모크 테스트**: 직접 열어 콘솔 에러 0·부팅·기본 조작 확인
    + **IP 스캔**: 서빙 파일에서 타사 게임 명칭 grep, `DESIGN.md` 를 `docs/specs/`
-   로 이동(벤치마크 서술은 서빙 경로에 남기지 않는다 — 2026-08-15 전수 점검 정책)
+   로 이동 — **이때 문서 첫 줄에 인용 표기를 붙여라**:
+   `<!-- source: portal-fe/public/games/<slug>/ -->`
+   (없으면 Docs Health 의 L4-01 이 감점한다. 게임 문서가 쌓이면서 실제로 CI 가 빨개졌다)(벤치마크 서술은 서빙 경로에 남기지 않는다 — 2026-08-15 전수 점검 정책)
 2. **platform.js 배선** (`portal-fe/public/games/lib/platform.js`):
    - index.html 게임 스크립트 앞에:
      ```html

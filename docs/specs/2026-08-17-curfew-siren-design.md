@@ -1,3 +1,4 @@
+<!-- source: portal-fe/public/games/curfew-siren/ -->
 # 통금 사이렌 — 설계 문서
 
 > slug `curfew-siren` · 순수 정적 웹(HTML + ES 모듈 + Canvas 2D) · 빌드 스텝 없음 · 런타임 외부 요청 0
