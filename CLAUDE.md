@@ -137,6 +137,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | 영역 | 경로 |
 |------|------|
 | 배포 (K8s · GitOps) | `k8s/CLAUDE.md` — 실제로 터진 배포 함정 집약 |
+| 게임 제작 (캔버스) | `docs/standards/game-cleanroom-pipeline.md` — 가드레일·프리셋·게이트 |
+| 게임 제작 (유니티) | `docs/standards/unity-game-pipeline.md` — **파일럿 전, 정식 선택지 아님** |
 | Architecture docs | `docs/architecture/` |
 | ADRs (플랫폼) | `docs/adr/` |
 | Feature specs | `docs/specs/` |

@@ -3,10 +3,10 @@
   "version": 1,
   "summary": {
     "source_count": 1488,
-    "doc_count": 330,
-    "link_count": 5205,
+    "doc_count": 331,
+    "link_count": 5206,
     "missing_count": 178,
-    "dangling_count": 310,
+    "dangling_count": 311,
     "coverage_by_service": {
       "admin": {
         "total": 76,
@@ -29101,6 +29101,13 @@
       "resolved": false
     },
     {
+      "doc": "docs/standards/unity-game-pipeline.md",
+      "source": "portal-fe/nginx.conf",
+      "link_type": "explicit",
+      "service": "root",
+      "resolved": false
+    },
+    {
       "doc": "experiment/CLAUDE.md",
       "source": "experiment/app/src/main/kotlin/com/kgd/experiment/ExperimentApplication.kt",
       "link_type": "pattern",
@@ -39757,6 +39764,10 @@
     },
     {
       "doc": "docs/standards/test-rules.md",
+      "service": "root"
+    },
+    {
+      "doc": "docs/standards/unity-game-pipeline.md",
       "service": "root"
     },
     {

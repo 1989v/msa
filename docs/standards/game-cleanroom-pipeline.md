@@ -1248,6 +1248,9 @@ await send('Emulation.setEmitTouchEventsForMouse', { enabled: true, configuratio
 
 ### 8. 엔진 선택 — 유니티는 언제 쓰는가 (2026-08-24 신설)
 
+> **제작 절차는 별도 문서다 — `docs/standards/unity-game-pipeline.md`.**
+> 배치·플랫폼 통합(.jslib)·용량 예산·파일럿 절차가 거기 있다. 이 절은 **판정 게이트**만 다룬다.
+
 위 사다리는 **캔버스 게임의 최적화** 이야기다. 이건 **애초에 무엇으로 만들 것인가** 의 문제라
 층이 다르다. 판단은 장르로 먼저 갈린다.
 

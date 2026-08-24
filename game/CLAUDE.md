@@ -145,6 +145,8 @@
 ## Related
 
 - ADR: `docs/adr/ADR-0059-game-platform.md`
+- 유니티(WebGL) 제작 라인: `docs/standards/unity-game-pipeline.md` — **아직 파일럿 전이라
+  정식 선택지가 아니다.** 비2D 신작 후보가 생기면 그 문서 §0 표로 캔버스/유니티를 먼저 판정한다
 - 설계(엔티티/ads 페이즈 포함): `docs/specs/2026-07-06-game-platform-entities-design.md`
 - 시드: `game/feature/src/main/resources/gamedb/migration/V2__seed_internal_games.sql` (portal-fe 퀴즈 4종 등록)
 
