@@ -10,6 +10,9 @@ import com.kgd.quant.domain.asset.NewsItem
 import com.kgd.quant.domain.asset.NewsKind
 import com.kgd.quant.domain.asset.catalog.AssetClass
 import com.kgd.quant.domain.market.MarketCode
+import com.kgd.common.quota.ExternalApiProvider
+import com.kgd.common.quota.ExternalApiQuotaGuards
+import com.kgd.common.quota.ExternalApiQuotaLedger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.beans.factory.annotation.Value
@@ -38,11 +41,16 @@ class NaverNewsAdapter(
     private val clientId: String,
     @Value("\${quant.charts.naver.client-secret:}")
     private val clientSecret: String,
+    private val quotaLedger: ExternalApiQuotaLedger,
 ) {
     private val log = KotlinLogging.logger {}
 
+    // ADR-0082 — 네이버 검색 API 는 **place 관광지 후기 수집과 같은 25,000콜 쿼터**를 쓴다.
+    // 서로 모르면 각자 "여유 있음"이라 판단하고 합쳐서 넘긴다. 게이트를 필터로 건다 —
+    // AOP 를 쓰면 Mono 조립 시점을 세게 되고 재시도를 못 센다.
     private val webClient: WebClient = WebClient.builder()
         .baseUrl("https://openapi.naver.com")
+        .filter(ExternalApiQuotaGuards.filter(ExternalApiProvider.NAVER_SEARCH, quotaLedger))
         .build()
 
     private val cache: Cache<String, List<NewsItem>> = Caffeine.newBuilder()

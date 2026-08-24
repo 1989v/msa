@@ -144,3 +144,66 @@ val verifyFlywayWiring by tasks.registering {
 
 // 루트에는 check 태스크가 없다 — 서브프로젝트의 check 에 붙여 ./gradlew build 로 함께 돈다.
 subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyFlywayWiring) } } }
+
+/**
+ * 외부 API 호출이 쿼터 게이트를 거치는지 검증한다 (ADR-0082 §6).
+ *
+ * 필터·인터셉터를 아무리 잘 만들어도 이 한 줄이면 무력화된다:
+ *
+ *   private val webClient = WebClient.builder().build()   // 공용 팩토리를 안 거친다
+ *
+ * 그래서 "외부 API 호스트를 직접 부르는 모듈은 provider 를 참조해야 한다"를 빌드가 강제한다.
+ * 문서와 리뷰는 사람이 빠뜨리지만 빌드는 안 빠뜨린다 (verifyFlywayWiring 과 같은 패턴).
+ *
+ * 텍스트 스캔이라 정밀하지 않다 — 그래서 **호스트 문자열**이라는 좁고 구체적인 신호만 본다.
+ * 오탐이 잦으면 사람들이 허용목록으로 통과시키고, 그 순간 검사는 없는 것이 된다.
+ */
+val externalApiHosts = listOf(
+    "openapi.naver.com",        // 네이버 검색
+    "googleapis.com",           // YouTube Data / Places / Directions
+    "apis.data.go.kr",          // 공공데이터포털
+)
+
+/**
+ * 게이트를 정의하는 모듈 자신과, 호스트를 문서/설정으로만 다루는 모듈.
+ * **항목마다 왜인지 남긴다** — 이유 없는 예외가 쌓이면 검사가 죽는다.
+ */
+val quotaGateExempt = setOf(
+    "common",   // 게이트 구현체가 사는 곳
+)
+
+val verifyExternalApiQuota by tasks.registering {
+    group = "verification"
+    description = "외부 API 호스트를 직접 호출하는 모듈이 쿼터 게이트를 참조하는지 확인"
+    doLast {
+        val offenders = subprojects.filter { sp ->
+            if (sp.name in quotaGateExempt) return@filter false
+            val src = sp.file("src/main")
+            if (!src.exists()) return@filter false
+
+            var callsExternal = false
+            var referencesGate = false
+            src.walkTopDown()
+                .filter { it.isFile && it.extension in setOf("kt", "java", "py") }
+                .forEach { f ->
+                    val text = f.readText()
+                    if (externalApiHosts.any { host -> text.contains(host) }) callsExternal = true
+                    if (text.contains("ExternalApiProvider")) referencesGate = true
+                }
+            callsExternal && !referencesGate
+        }
+        if (offenders.isNotEmpty()) {
+            throw GradleException(
+                offenders.joinToString(
+                    prefix = "외부 API 를 부르면서 쿼터 게이트를 안 타는 모듈:\n  ",
+                    separator = "\n  ",
+                    postfix = "\n\nWebClient 면 ExternalApiQuotaGuards.filter(provider, ledger) 를 " +
+                        "ExchangeFilterFunction 으로 걸고,\nRestClient 면 .interceptor(...) 를 붙일 것 " +
+                        "(ADR-0082). 논블로킹에 AOP 를 쓰면 재시도를 못 센다.",
+                ) { it.path },
+            )
+        }
+    }
+}
+
+subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyExternalApiQuota) } } }
