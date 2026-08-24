@@ -93,17 +93,60 @@ export default function GameDetailPage() {
     };
   }, [immersive]);
 
+  const enterLandscape = useCallback(() => {
+    const el = stageRef.current;
+    if (!el || document.fullscreenElement) return;
+    el.requestFullscreen?.()
+      .then(() =>
+        (screen.orientation as unknown as { lock?: (o: string) => Promise<void> })
+          ?.lock?.('landscape')
+          ?.catch(() => undefined),
+      )
+      .catch(() => undefined);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) {
+      (screen.orientation as { unlock?: () => void } | undefined)?.unlock?.();
+      document.exitFullscreen().catch(() => undefined);
+      return;
+    }
+    enterLandscape();
+  };
+
+  /**
+   * 가로 전용 게임은 **시작하면 알아서 가로로 간다** (ADR 없음 — 카탈로그 `orientation` 필드).
+   *
+   * 이 필드는 도메인 → DTO → gameApi 까지 배선돼 있었는데 **읽는 코드가 없어** 죽은 값이었다.
+   * 가로 전용 게임(2560×1440 캔버스 등)이 세로 폰에서 열리면 390×219 CSS px 로 줄어
+   * 조작 대상이 손톱만 해진다 — 사용자가 매번 `⛶ 크게` 를 눌러야 했다.
+   *
+   * 전환은 **사용자 제스처(플레이 버튼) 안에서만** 허용되므로 재생 시작 직후에 부른다.
+   * 실패해도(iOS Safari 는 임의 요소 전체화면이 없다) 몰입 오버레이가 뷰포트를 채우므로
+   * 기기를 돌리면 그대로 가로가 된다 — 그래서 실패를 삼킨다.
+   */
+  const autoLandscape = useCallback(() => {
+    const go = shouldAutoLandscape({
+      orientation: game?.orientation,
+      coarsePointer: window.matchMedia('(pointer: coarse)').matches,
+      portrait: window.innerHeight >= window.innerWidth,
+      fullscreen: !!document.fullscreenElement,
+    });
+    if (go) enterLandscape();
+  }, [game?.orientation, enterLandscape]);
+
   /* 자동 시작(파티 인계)이 상세 로드 직후 이 함수를 부르므로 slug 기준으로 고정한다 —
      매 렌더마다 새로 만들면 그 effect 가 계속 다시 돈다 */
   const handlePlay = useCallback(async () => {
     setPlaying(true);
+    autoLandscape();
     try {
       const session = await startGameSession(slug);
       sessionRef.current = { slug, key: session.sessionKey };
     } catch {
       // 세션 기록 실패는 플레이를 막지 않는다
     }
-  }, [slug]);
+  }, [slug, autoLandscape]);
 
   useEffect(() => {
     setGame(null);
@@ -148,22 +191,6 @@ export default function GameDetailPage() {
    * iOS Safari 는 임의 요소 전체화면이 없어 실패하는데, 몰입 오버레이가 이미 뷰포트를
    * 채우고 있으므로 기기를 돌리면 그대로 가로 배치가 된다.
    */
-  const toggleFullscreen = () => {
-    const el = stageRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      (screen.orientation as { unlock?: () => void } | undefined)?.unlock?.();
-      document.exitFullscreen().catch(() => undefined);
-      return;
-    }
-    el.requestFullscreen?.()
-      .then(() =>
-        (screen.orientation as unknown as { lock?: (o: string) => Promise<void> })
-          ?.lock?.('landscape')
-          ?.catch(() => undefined),
-      )
-      .catch(() => undefined);
-  };
 
   const handleRate = async (halves: number) => {
     try {
