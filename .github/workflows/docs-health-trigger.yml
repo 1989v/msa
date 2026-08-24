@@ -47,4 +47,15 @@ jobs:
           python-version: '3.12'
 
       - name: Run doctor
-        run: python3 ai/plugins/hns/scripts/doctor.py
+        # doctor.py 종료 코드 규약: 0=PASS · 2=WARN · 1=FAIL.
+        # 그냥 실행하면 WARN(2)도 실패로 잡혀 **늘 빨간 CI** 가 된다 —
+        # 미인용 문서 30건이 WARN 이라 사실상 항상 빨갛고, 그러면 아무도 CI 를 안 본다.
+        # 이 파일 상단 주석이 정한 대로 FAIL 만 빨갛게 한다.
+        run: |
+          set +e
+          python3 ai/plugins/hns/scripts/doctor.py
+          code=$?
+          set -e
+          echo "doctor exit=$code (0=PASS 2=WARN 1=FAIL)"
+          [ "$code" -eq 1 ] && exit 1
+          exit 0
