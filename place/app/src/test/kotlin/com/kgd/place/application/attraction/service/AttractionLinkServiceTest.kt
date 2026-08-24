@@ -1,5 +1,7 @@
 package com.kgd.place.application.attraction.service
 
+import com.kgd.common.quota.ExternalApiProvider
+import com.kgd.common.quota.ExternalApiQuotaLedger
 import com.kgd.place.application.attraction.port.AttractionLinkRepositoryPort
 import com.kgd.place.application.attraction.port.AttractionRepositoryPort
 import com.kgd.place.application.attraction.usecase.CollectAttractionLinksUseCase
@@ -22,7 +24,8 @@ import java.time.LocalDateTime
 class AttractionLinkServiceTest : BehaviorSpec({
     val attractionRepository = mockk<AttractionRepositoryPort>()
     val linkRepository = mockk<AttractionLinkRepositoryPort>(relaxed = true)
-    val service = AttractionLinkService(attractionRepository, linkRepository)
+    val quotaLedger = mockk<ExternalApiQuotaLedger>(relaxed = true)
+    val service = AttractionLinkService(attractionRepository, linkRepository, quotaLedger)
     val youtube = AttractionLinkSource.YOUTUBE
 
     fun gyeongbokgung() = Attraction.create(
@@ -103,9 +106,11 @@ class AttractionLinkServiceTest : BehaviorSpec({
     }
 
     given("수집 대상 조회 시") {
+        // 예산은 **제공자 단위 장부**가 안다 (ADR-0082) — 자체 테이블 카운터는 없어졌다.
+        // 장부는 단위(unit)로 세고 YouTube 는 1콜이 100 units 다.
         `when`("오늘 예산을 다 썼으면") {
             then("빈 목록을 돌려준다 — 실패가 아니라 정상이다") {
-                every { linkRepository.countAttemptsSince(youtube, any()) } returns 100
+                every { quotaLedger.remaining(ExternalApiProvider.YOUTUBE_DATA) } returns 0
 
                 service.findDue(youtube, 50) shouldHaveSize 0
 
@@ -115,13 +120,26 @@ class AttractionLinkServiceTest : BehaviorSpec({
 
         `when`("예산이 일부 남았으면") {
             then("요청 수가 아니라 남은 예산으로 잘라야 한다") {
-                every { linkRepository.countAttemptsSince(youtube, any()) } returns 97
+                // 300 units = 3콜. 요청을 50 개 달라고 해도 3 으로 잘려야 한다
+                every { quotaLedger.remaining(ExternalApiProvider.YOUTUBE_DATA) } returns 300
                 val limit = slot<Int>()
                 every { linkRepository.findDueRequests(youtube, any(), capture(limit)) } returns emptyList()
 
                 service.findDue(youtube, 50)
 
                 limit.captured shouldBe 3
+            }
+        }
+
+        `when`("한도가 없는 제공자면") {
+            then("예산으로 자르지 않는다 — 요청 수가 그대로 상한이다") {
+                every { quotaLedger.remaining(ExternalApiProvider.YOUTUBE_DATA) } returns null
+                val limit = slot<Int>()
+                every { linkRepository.findDueRequests(youtube, any(), capture(limit)) } returns emptyList()
+
+                service.findDue(youtube, 50)
+
+                limit.captured shouldBe 50
             }
         }
     }
