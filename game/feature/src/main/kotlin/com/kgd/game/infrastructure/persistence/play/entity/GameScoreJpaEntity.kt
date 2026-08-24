@@ -14,12 +14,20 @@ import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.LocalDateTime
 
-/** 게임별 랭킹 — **트랙 안에서** 닉네임당 최고 기록 1행 (더 높은 점수일 때만 갱신) */
+/**
+ * 게임별 랭킹 — **한 보드 안에서** 닉네임당 최고 기록 1행 (더 높은 점수일 때만 갱신).
+ *
+ * 보드를 정하는 축이 둘이다: 트랙(무강화/강화 — 플랫폼이 정한 값)과 보드(게임이 나눈 모드,
+ * V59). 빈 보드 키가 기본이고, 모드를 나누지 않는 게임은 계속 그 한 보드를 쓴다.
+ */
 @Entity
 @Table(
     name = "game_score",
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_score_game_track_nick", columnNames = ["game_id", "track", "nickname"]),
+        UniqueConstraint(
+            name = "uk_score_game_track_board_nick",
+            columnNames = ["game_id", "track", "board", "nickname"],
+        ),
     ],
 )
 class GameScoreJpaEntity(
@@ -32,6 +40,9 @@ class GameScoreJpaEntity(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 8)
     val track: ScoreTrack = ScoreTrack.BASE,
+    /** 게임이 정한 모드 키. 빈 문자열이 "모드를 나누지 않음"이다 (ScoreBoardKey.DEFAULT) */
+    @Column(nullable = false, length = 24)
+    val board: String = "",
     score: Long,
     detail: String?,
     @CreationTimestamp

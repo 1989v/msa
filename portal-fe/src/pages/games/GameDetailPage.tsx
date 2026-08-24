@@ -330,7 +330,7 @@ export default function GameDetailPage() {
         )}
       </section>
 
-      <GameLeaderboard slug={slug} lang={lang} reloadToken={boardToken} />
+      <GameLeaderboard slug={slug} lang={lang} scoreBoards={game.scoreBoards ?? []} reloadToken={boardToken} />
 
       <section className="game-rating-section" aria-label="평점 남기기">
         <h2 className="games-collection-title">

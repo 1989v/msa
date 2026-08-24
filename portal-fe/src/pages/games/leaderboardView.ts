@@ -1,4 +1,4 @@
-import type { GameLang, ScoreEntry, ScorePeriod, ScoreTrack } from '../../api/gameApi';
+import type { GameLang, ScoreBoardDef, ScoreEntry, ScorePeriod, ScoreTrack } from '../../api/gameApi';
 
 /** 한 게임의 트랙별 보드. 둘 다 비어 있는 것이 지금 대부분의 게임에서 **정상 상태**다. */
 export type TrackBoards = Record<ScoreTrack, ScoreEntry[]>;
@@ -68,6 +68,34 @@ export function hasAnyRecord(boards: TrackBoards): boolean {
 export function keepOrPickTrack(current: ScoreTrack | null, boards: TrackBoards): ScoreTrack | null {
   if (current && boards[current].length > 0) return current;
   return initialTrack(boards);
+}
+
+/**
+ * 처음 보여줄 모드 — 게임이 선언한 첫 보드. 선언이 없으면 null 이고, 그때는 서버에
+ * board 를 안 보낸다(= 모드를 나누지 않은 게임의 기본 보드).
+ *
+ * 트랙과 달리 "기록이 있는 것"으로 고르지 않는다. 모드별 보드는 요청을 하나만 하므로
+ * 다른 모드에 기록이 있는지 알 수 없고, 알려고 전부 읽으면 요청이 셋으로 늘어난다.
+ */
+export function initialBoard(defs: ScoreBoardDef[]): string | null {
+  return defs.length > 0 ? defs[0].key : null;
+}
+
+/** 모드 이름 — 영문 이름이 없으면 한국어를 그대로 쓴다. 키를 화면에 띄우지는 않는다. */
+export function boardLabel(def: ScoreBoardDef, lang: GameLang): string {
+  return (lang === 'en' ? def.nameEn : def.name) || def.name || def.key;
+}
+
+/**
+ * 레일 한 칸의 모드 이름 — 없으면 null 이고, 그때는 칩 자체를 그리지 않는다.
+ * 게임이 보낸 키가 아직 카탈로그에 없을 때 이름이 빈다. 그 경우 키(`rockfall`)를 대신
+ * 띄우지 않는다 — 화면에 영문 식별자가 나가느니 칩이 없는 편이 낫다.
+ */
+export function railBoardLabel(
+  board: { boardName: string | null; boardNameEn: string | null },
+  lang: GameLang,
+): string | null {
+  return (lang === 'en' ? board.boardNameEn || board.boardName : board.boardName) || null;
 }
 
 /** 회전 인덱스 — 끝에서 처음으로 돌아온다. 빈 목록은 0. */

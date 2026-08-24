@@ -27,6 +27,8 @@ class Game private constructor(
     var status: GameStatus,
     var genre: Genre,
     var tags: List<String>,
+    /** 게임이 나눈 랭킹 보드. 비어 있으면 보드가 하나뿐이라는 뜻이다 (V59) */
+    var scoreBoards: List<ScoreBoardDef>,
     var releasedAt: Instant?,
     var contentUpdatedAt: Instant?
 ) {
@@ -73,6 +75,7 @@ class Game private constructor(
                 status = GameStatus.DRAFT,
                 genre = genre,
                 tags = tags,
+                scoreBoards = emptyList(),
                 releasedAt = null,
                 contentUpdatedAt = null
             )
@@ -97,6 +100,7 @@ class Game private constructor(
             status: GameStatus,
             genre: Genre,
             tags: List<String>,
+            scoreBoards: List<ScoreBoardDef> = emptyList(),
             releasedAt: Instant?,
             contentUpdatedAt: Instant?
         ): Game = Game(
@@ -118,6 +122,7 @@ class Game private constructor(
             status = status,
             genre = genre,
             tags = tags,
+            scoreBoards = scoreBoards,
             releasedAt = releasedAt,
             contentUpdatedAt = contentUpdatedAt
         )

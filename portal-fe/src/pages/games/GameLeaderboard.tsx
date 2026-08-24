@@ -3,6 +3,7 @@ import {
   fetchLeaderboard,
   getGameNickname,
   type GameLang,
+  type ScoreBoardDef,
   type ScorePeriod,
   type ScoreTrack,
 } from '../../api/gameApi';
@@ -10,7 +11,9 @@ import {
   PERIOD_LABELS,
   PERIOD_ORDER,
   TRACK_LABELS,
+  boardLabel,
   hasAnyPeriodRecord,
+  initialBoard,
   isMyEntry,
   keepOrPickTrack,
   trackedTracks,
@@ -36,6 +39,8 @@ const UI = {
     periodLabel: '랭킹 기간',
     trackLabel: '랭킹 보드',
     trackNote: '영구 강화를 쓴 기록은 따로 셉니다 — 두 보드는 서로 비교하지 않습니다.',
+    boardLabel: '모드',
+    boardNote: '모드마다 순위표가 따로입니다 — 재는 것이 달라 한 표에 섞지 않습니다.',
     dayNote: '오늘의 기록은 매일 자정(한국 시간)에 새로 시작합니다.',
     nickNote: '게임 안에서 닉네임을 정하면 기록이 이 표에 남습니다.',
   },
@@ -56,6 +61,8 @@ const UI = {
     periodLabel: 'Leaderboard period',
     trackLabel: 'Leaderboard track',
     trackNote: 'Runs with permanent upgrades are counted separately — the two boards are not compared.',
+    boardLabel: 'Mode',
+    boardNote: 'Each mode keeps its own board — they measure different things, so they are not merged.',
     dayNote: "Today's board starts over at midnight, Korea time.",
     nickNote: 'Set a nickname inside the game and your runs will show up here.',
   },
@@ -68,6 +75,11 @@ interface Props {
   slug: string;
   lang: GameLang;
   /**
+   * 게임이 나눈 모드. 비어 있으면(대부분의 게임) 보드가 하나뿐이라 탭도 요청도 늘지 않는다.
+   * 이름은 카탈로그가 준다 — 게임 안 선언은 sandbox iframe 안이라 여기서 못 읽는다 (V59).
+   */
+  scoreBoards: ScoreBoardDef[];
+  /**
    * 값이 바뀌면 보드를 다시 읽는다. 게임은 sandbox iframe 안에서 자기 힘으로 점수를 올리고
    * 부모에게 알리는 규약이 없다 — 프레임 간 메시지 규약을 새로 발명하는 대신,
    * 플레이를 끝내고 나온 순간(상세 페이지가 아는 유일한 신호)에 다시 읽는다.
@@ -75,7 +87,7 @@ interface Props {
   reloadToken: number;
 }
 
-export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
+export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken }: Props) {
   const L = UI[lang];
   const [boards, setBoards] = useState<PeriodBoards | null>(null);
   const [failed, setFailed] = useState(false);
@@ -83,6 +95,9 @@ export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
   // 사용자가 고른 트랙은 "선호"로만 들고 있다 — 지금 보고 있는 기간에 그 트랙이 없으면
   // keepOrPickTrack 이 렌더 때 옮겨 준다. 상태 둘을 서로 맞추려 들면 어긋난다.
   const [track, setTrack] = useState<ScoreTrack | null>(null);
+  // 모드는 트랙과 달리 "고른 것만" 읽는다. 넷을 미리 받는 트랙·기간과 달리 모드는 게임마다
+  // 개수가 다르고, 셋을 미리 받으면 요청이 4개에서 12개가 된다 — 대부분 빈 응답으로.
+  const [board, setBoard] = useState<string | null>(initialBoard(scoreBoards));
   const [nickname, setNickname] = useState<string | null>(null);
 
   const load = useCallback(() => {
@@ -91,10 +106,10 @@ export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
     // 기간과 트랙이 둘 다 보드 식별자라 한 요청으로 넷을 받을 수 없다. 넷을 나란히 받아
     // 기록이 있는 것만 탭으로 세운다 — 어느 탭이 비었는지 알아야 탭을 감출 수 있다.
     Promise.all([
-      fetchLeaderboard(slug, 'BASE'),
-      fetchLeaderboard(slug, 'MODDED'),
-      fetchLeaderboard(slug, 'BASE', 10, 'DAILY'),
-      fetchLeaderboard(slug, 'MODDED', 10, 'DAILY'),
+      fetchLeaderboard(slug, 'BASE', 10, 'ALL_TIME', board),
+      fetchLeaderboard(slug, 'MODDED', 10, 'ALL_TIME', board),
+      fetchLeaderboard(slug, 'BASE', 10, 'DAILY', board),
+      fetchLeaderboard(slug, 'MODDED', 10, 'DAILY', board),
     ])
       .then(([base, modded, baseToday, moddedToday]) => {
         setBoards({
@@ -107,13 +122,16 @@ export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
         setBoards(null);
         setFailed(true);
       });
-  }, [slug]);
+  }, [slug, board]);
 
   // 게임이 바뀌면 고른 것도 처음으로. 같은 게임을 다시 읽는 것(플레이 후 복귀)은
   // 보고 있던 기간을 유지한다 — 오늘 보드를 보다 한 판 하고 왔는데 전체로 튀면 안 된다.
   useEffect(() => {
     setPeriod('ALL_TIME');
     setTrack(null);
+    setBoard(initialBoard(scoreBoards));
+    // scoreBoards 는 slug 와 함께 바뀐다 — 같은 게임에서 배열 정체성만 바뀌어도 다시 맞출 이유가 없다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   useEffect(() => {
@@ -125,6 +143,8 @@ export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
   const activeTrack = keepOrPickTrack(track, view);
   const rows = activeTrack ? view[activeTrack] : [];
   const hasRecord = boards !== null && hasAnyPeriodRecord(boards);
+  // 모드가 여럿이면 이 모드가 비어 있어도 탭은 남는다 — 탭이 사라지면 다른 모드로 갈 길이 없다.
+  const hasBoardTabs = scoreBoards.length > 1;
 
   return (
     <section className="game-leaderboard" aria-labelledby="game-leaderboard-heading">
@@ -145,6 +165,29 @@ export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
       )}
 
       {!failed && boards === null && <p className="games-status game-leaderboard-status">{L.loading}</p>}
+
+      {/*
+        모드 탭은 그 모드에 기록이 없어도 남는다 — 탭까지 사라지면 다른 모드로 건너갈 길이
+        없어져, 기록이 있는 보드가 있는데도 "아직 기록이 없습니다"만 보이게 된다.
+      */}
+      {!failed && boards !== null && hasBoardTabs && (
+        <div className="game-leaderboard-tracks" role="tablist" aria-label={L.boardLabel}>
+          {scoreBoards.map((def) => (
+            <button
+              key={def.key}
+              type="button"
+              role="tab"
+              id={`game-leaderboard-board-${def.key}`}
+              aria-selected={def.key === board}
+              aria-controls="game-leaderboard-panel"
+              className={`game-leaderboard-track${def.key === board ? ' active' : ''}`}
+              onClick={() => setBoard(def.key)}
+            >
+              {boardLabel(def, lang)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!failed && boards !== null && !hasRecord && (
         <div className="game-leaderboard-empty">
@@ -239,6 +282,10 @@ export default function GameLeaderboard({ slug, lang, reloadToken }: Props) {
           {period === 'DAILY' && <p className="game-leaderboard-note">{L.dayNote}</p>}
           {!nickname && <p className="game-leaderboard-note">{L.nickNote}</p>}
         </>
+      )}
+
+      {!failed && boards !== null && hasBoardTabs && (
+        <p className="game-leaderboard-note">{L.boardNote}</p>
       )}
     </section>
   );

@@ -54,6 +54,15 @@ data class LeaderboardBoardDto(
     val titleEn: String?,
     val thumbnailUrl: String,
     val track: ScoreTrack,
+    /** 게임이 나눈 모드 키. 빈 문자열이면 모드를 나누지 않는 게임이다 (V59) */
+    val board: String,
+    /**
+     * 보드의 표시 이름 — 카탈로그 선언에서 찾은 것.
+     * null 은 두 경우다: 모드를 안 나눈 게임이거나, 게임이 보낸 키가 아직 카탈로그에 없거나.
+     * 후자는 기록을 버리지 않고 이름만 비운다(제출을 선언과 대조하지 않는 이유는 서비스 주석 참조).
+     */
+    val boardName: String?,
+    val boardNameEn: String?,
     val entries: List<ScoreEntry>,
     /**
      * 같은 보드의 오늘 기록. 아무도 안 논 날은 비고, 그때 레일은 역대 기록을 그대로 보여준다 —

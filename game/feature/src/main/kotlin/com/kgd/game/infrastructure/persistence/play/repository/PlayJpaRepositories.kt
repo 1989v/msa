@@ -36,20 +36,38 @@ interface GameRunJpaRepository : JpaRepository<GameRunJpaEntity, Long> {
 interface ScoreBoardProjection {
     val gameId: Long
     val track: ScoreTrack
+    /** 게임이 나눈 모드 키. 빈 문자열이 기본 보드다 (V59) */
+    val board: String
     val lastAt: LocalDateTime
 }
 
 interface GameScoreJpaRepository : JpaRepository<GameScoreJpaEntity, Long> {
-    fun findByGameIdAndTrackAndNickname(gameId: Long, track: ScoreTrack, nickname: String): GameScoreJpaEntity?
-    fun findTop50ByGameIdAndTrackOrderByScoreDescUpdatedAtAsc(gameId: Long, track: ScoreTrack): List<GameScoreJpaEntity>
-    fun countByGameIdAndTrackAndScoreGreaterThan(gameId: Long, track: ScoreTrack, score: Long): Long
+    fun findByGameIdAndTrackAndBoardAndNickname(
+        gameId: Long,
+        track: ScoreTrack,
+        board: String,
+        nickname: String,
+    ): GameScoreJpaEntity?
 
-    /** (게임, 트랙) 으로 묶어 최근 갱신순. 행이 있다는 것 자체가 "기록이 있는 보드"라는 뜻이다 */
+    fun findTop50ByGameIdAndTrackAndBoardOrderByScoreDescUpdatedAtAsc(
+        gameId: Long,
+        track: ScoreTrack,
+        board: String,
+    ): List<GameScoreJpaEntity>
+
+    fun countByGameIdAndTrackAndBoardAndScoreGreaterThan(
+        gameId: Long,
+        track: ScoreTrack,
+        board: String,
+        score: Long,
+    ): Long
+
+    /** (게임, 트랙, 보드) 로 묶어 최근 갱신순. 행이 있다는 것 자체가 "기록이 있는 보드"라는 뜻이다 */
     @Query(
         """
-        select s.gameId as gameId, s.track as track, max(s.updatedAt) as lastAt
+        select s.gameId as gameId, s.track as track, s.board as board, max(s.updatedAt) as lastAt
         from GameScoreJpaEntity s
-        group by s.gameId, s.track
+        group by s.gameId, s.track, s.board
         order by max(s.updatedAt) desc
         """,
     )
@@ -57,16 +75,18 @@ interface GameScoreJpaRepository : JpaRepository<GameScoreJpaEntity, Long> {
 }
 
 interface GameScoreDailyJpaRepository : JpaRepository<GameScoreDailyJpaEntity, Long> {
-    fun findByGameIdAndTrackAndPlayDateAndNickname(
+    fun findByGameIdAndTrackAndBoardAndPlayDateAndNickname(
         gameId: Long,
         track: ScoreTrack,
+        board: String,
         playDate: LocalDate,
         nickname: String,
     ): GameScoreDailyJpaEntity?
 
-    fun findTop50ByGameIdAndTrackAndPlayDateOrderByScoreDescUpdatedAtAsc(
+    fun findTop50ByGameIdAndTrackAndBoardAndPlayDateOrderByScoreDescUpdatedAtAsc(
         gameId: Long,
         track: ScoreTrack,
+        board: String,
         playDate: LocalDate,
     ): List<GameScoreDailyJpaEntity>
 }

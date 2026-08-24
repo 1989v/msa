@@ -113,6 +113,8 @@ export interface GameDetail extends GameSummary {
   orientation: string;
   developerName: string;
   sdkIntegrated: boolean;
+  /** 게임이 나눈 랭킹 보드. 비어 있으면 보드가 하나뿐이라 탭을 그리지 않는다 (V59) */
+  scoreBoards: ScoreBoardDef[];
   releasedAt: string | null;
   contentUpdatedAt: string | null;
 }
@@ -204,6 +206,18 @@ export async function rateGame(slug: string, score: number): Promise<RatingResul
 export type ScoreTrack = 'BASE' | 'MODDED';
 
 /**
+ * 게임이 스스로 나눈 랭킹 보드 — 트랙과 축이 다르다.
+ * 트랙은 플랫폼이 정한 값(무강화/강화)이라 타입이 고정이지만, 보드는 게임마다 뜻이 달라
+ * 키가 열려 있다. 이름을 서버가 들고 있는 이유는 게임 안 선언이 iframe 안이라
+ * 바깥에서 읽을 수 없기 때문이다 (V59).
+ */
+export interface ScoreBoardDef {
+  key: string;
+  name: string;
+  nameEn: string | null;
+}
+
+/**
  * 보드의 기간 축. 트랙이 "무엇으로 잰 기록인가"라면 기간은 "언제 세운 기록인가"다.
  * 하루의 경계는 **서버가 KST 로** 정한다 — 기기 시계로 자르면 사람마다 다른 오늘을 본다.
  */
@@ -226,6 +240,11 @@ export interface LeaderboardBoard {
   titleEn: string | null;
   thumbnailUrl: string;
   track: ScoreTrack;
+  /** 게임이 나눈 모드 키. 빈 문자열이면 모드를 나누지 않은 게임이다 */
+  board: string;
+  /** 그 모드의 표시 이름. 게임이 보낸 키가 아직 카탈로그에 없으면 null 이다 */
+  boardName: string | null;
+  boardNameEn: string | null;
   entries: ScoreEntry[];
   /** 같은 보드의 오늘 기록. 아무도 안 논 날은 비고, 그때 레일은 역대 기록을 그린다 */
   todayEntries: ScoreEntry[];
@@ -263,9 +282,12 @@ export async function fetchLeaderboard(
   track: ScoreTrack,
   limit = 10,
   period: ScorePeriod = 'ALL_TIME',
+  board?: string | null,
 ): Promise<ScoreEntry[]> {
+  // board 를 안 보내면 기본 보드다 — 모드를 나누지 않은 게임 60여 종의 기존 계약이 그대로다
+  const boardParam = board ? `&board=${encodeURIComponent(board)}` : '';
   const res = await api.get<ApiResponse<ScoreEntry[]>>(
-    `/api/v1/games/${slug}/leaderboard?track=${track}&limit=${limit}&period=${period}`,
+    `/api/v1/games/${slug}/leaderboard?track=${track}&limit=${limit}&period=${period}${boardParam}`,
   );
   return unwrapGame(res.data);
 }

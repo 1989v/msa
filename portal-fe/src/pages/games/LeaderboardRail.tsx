@@ -8,7 +8,7 @@ import {
   type LeaderboardBoard,
 } from '../../api/gameApi';
 import { gamePath } from '../../seo/copy.mjs';
-import { PERIOD_LABELS, TRACK_LABELS, isMyEntry, railView, stepIndex } from './leaderboardView';
+import { PERIOD_LABELS, TRACK_LABELS, isMyEntry, railBoardLabel, railView, stepIndex } from './leaderboardView';
 
 /** 한 칸에 머무는 시간. 3줄을 읽고 "전체 보기"를 누를지 정하기에 6초면 넉넉하다. */
 const ROTATE_MS = 6000;
@@ -121,10 +121,14 @@ export default function LeaderboardRail({ lang }: { lang: GameLang }) {
       </div>
 
       {/* key 로 칸이 바뀔 때마다 스밈이 다시 발화한다 */}
-      <div className="games-rail-slide" key={`${board.slug}-${board.track}-${shown.period}`}>
+      <div className="games-rail-slide" key={`${board.slug}-${board.track}-${board.board}-${shown.period}`}>
         <div className="games-rail-game">
           <h2 className="games-rail-title">{displayTitle(board, lang)}</h2>
           <span className="games-rail-track">{TRACK_LABELS[lang][board.track]}</span>
+          {/* 모드를 나눈 게임만 칩이 하나 더 붙는다 — 어느 모드의 1위인지 알아야 순위가 뜻을 갖는다 */}
+          {railBoardLabel(board, lang) && (
+            <span className="games-rail-track">{railBoardLabel(board, lang)}</span>
+          )}
           {/* 역대 기록일 때는 표식을 달지 않는다 — 늘 붙는 라벨은 읽히지 않는다 */}
           {shown.period === 'DAILY' && (
             <span className="games-rail-today">{PERIOD_LABELS[lang].DAILY}</span>

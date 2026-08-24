@@ -2,6 +2,7 @@ package com.kgd.game.presentation.play.controller
 
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import com.kgd.game.domain.play.model.ScoreBoardKey
 import com.kgd.game.domain.play.model.ScorePeriod
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.common.response.ApiResponse
@@ -25,6 +26,11 @@ data class ScoreSubmitRequest(
     val detail: String? = null,
     /** 영구 강화를 적용한 런이면 "MODDED" — 생략하면 BASE */
     val track: String? = null,
+    /**
+     * 게임이 나눈 모드 키 — 생략하면 기본 보드다 (V59).
+     * 모드가 하나뿐인 게임 60여 종은 이 값을 보내지 않고, 그 기록은 지금까지처럼 한 보드에 쌓인다.
+     */
+    val board: String? = null,
 )
 
 data class ScoreSubmitResponse(val applied: Boolean, val rank: Int)
@@ -41,7 +47,14 @@ class GameScoreController(
         @Valid @RequestBody request: ScoreSubmitRequest,
     ): ApiResponse<ScoreSubmitResponse> {
         val (applied, rank) =
-            gameScoreService.submit(slug, ScoreTrack.from(request.track), request.nickname, request.score, request.detail)
+            gameScoreService.submit(
+                slug = slug,
+                track = ScoreTrack.from(request.track),
+                board = ScoreBoardKey.from(request.board),
+                nickname = request.nickname,
+                score = request.score,
+                detail = request.detail,
+            )
         return ApiResponse.success(ScoreSubmitResponse(applied = applied, rank = rank))
     }
 
@@ -49,12 +62,14 @@ class GameScoreController(
      * `period` / `date` 는 생략 가능하다 — 생략하면 역대 보드이고, 이건 게임 57종이 쓰는
      * 공용 위젯(`lib/rank.js`)이 이미 부르고 있는 계약 그대로다.
      * `date` 는 `period=DAILY` 에서만 뜻이 있고, 생략하면 KST 기준 오늘이다(`GameDay`).
+     * `board` 도 생략 가능하고, 생략하면 모드를 나누지 않는 게임의 기본 보드다.
      */
     @GetMapping("/leaderboard")
     fun leaderboard(
         @PathVariable slug: String,
         @RequestParam(defaultValue = "10") limit: Int,
         @RequestParam(required = false) track: String?,
+        @RequestParam(required = false) board: String?,
         @RequestParam(required = false) period: String?,
         @RequestParam(required = false) date: String?,
     ): ApiResponse<List<ScoreEntry>> =
@@ -63,6 +78,7 @@ class GameScoreController(
                 slug = slug,
                 track = ScoreTrack.from(track),
                 limit = limit,
+                board = ScoreBoardKey.from(board),
                 period = ScorePeriod.from(period),
                 date = parseDate(date),
             ),

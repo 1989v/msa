@@ -18,7 +18,7 @@ import java.time.LocalDateTime
 /**
  * 오늘의 기록 — **하루 안에서** 닉네임당 최고 1행.
  *
- * 역대 보드(`GameScoreJpaEntity`)와 규칙이 같고 축만 하나 늘었다. 파생 테이블이 아니라
+ * 역대 보드(`GameScoreJpaEntity`)와 규칙이 같고 날짜 축만 하나 늘었다. 파생 테이블이 아니라
  * 별도 원장인 이유는 V49 헤더 참조 — 역대 보드에는 자기 최고를 넘지 못한 런이 남지 않는다.
  *
  * `playDate` 는 KST 로 계산된 결과만 담는다 (`GameDay`). 시각이 아니라 날짜라 DATE 로 둔다.
@@ -28,8 +28,8 @@ import java.time.LocalDateTime
     name = "game_score_daily",
     uniqueConstraints = [
         UniqueConstraint(
-            name = "uk_score_daily_game_track_date_nick",
-            columnNames = ["game_id", "track", "play_date", "nickname"],
+            name = "uk_score_daily_game_track_board_date_nick",
+            columnNames = ["game_id", "track", "board", "play_date", "nickname"],
         ),
     ],
 )
@@ -41,6 +41,9 @@ class GameScoreDailyJpaEntity(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 8)
     val track: ScoreTrack = ScoreTrack.BASE,
+    /** 역대 보드와 같은 모드 축 (V59). 한쪽에만 있으면 "오늘의 1위"가 모드를 섞는다 */
+    @Column(nullable = false, length = 24)
+    val board: String = "",
     @Column(name = "play_date", nullable = false)
     val playDate: LocalDate,
     @Column(nullable = false, length = 24)

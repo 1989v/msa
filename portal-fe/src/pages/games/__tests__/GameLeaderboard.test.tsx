@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GameLeaderboard from '../GameLeaderboard';
-import type { ScoreEntry, ScorePeriod, ScoreTrack } from '../../../api/gameApi';
+import type { ScoreBoardDef, ScoreEntry, ScorePeriod, ScoreTrack } from '../../../api/gameApi';
 
 vi.mock('../../../api/gameApi', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../../api/gameApi')>();
@@ -38,8 +38,33 @@ function serve(
   );
 }
 
-function renderBoard() {
-  return render(<GameLeaderboard slug="coin-corgi" lang="ko" reloadToken={0} />);
+function renderBoard(scoreBoards: ScoreBoardDef[] = []) {
+  return render(
+    <GameLeaderboard slug="coin-corgi" lang="ko" scoreBoards={scoreBoards} reloadToken={0} />,
+  );
+}
+
+/** 모드를 나눈 게임 — 「그어서 막기」의 실제 선언 */
+const MODES: ScoreBoardDef[] = [
+  { key: 'leak', name: '물 막기', nameEn: 'Water' },
+  { key: 'rockfall', name: '돌 막기', nameEn: 'Rocks' },
+  { key: 'bee', name: '벌 막기', nameEn: 'Bees' },
+];
+
+/** 모드별로 다른 기록을 돌려준다 — 어느 것도 합쳐지지 않는지 보려고 */
+function serveByBoard(byBoard: Record<string, ScoreEntry[]>) {
+  vi.mocked(fetchLeaderboard).mockImplementation(
+    (
+      _slug: string,
+      track: ScoreTrack,
+      _limit?: number,
+      period: ScorePeriod = 'ALL_TIME',
+      board?: string | null,
+    ) => {
+      if (period === 'DAILY' || track === 'MODDED') return Promise.resolve([]);
+      return Promise.resolve(byBoard[board ?? ''] ?? []);
+    },
+  );
 }
 
 describe('게임 상세 랭킹', () => {
@@ -154,5 +179,58 @@ describe('게임 상세 랭킹', () => {
     expect(await screen.findByText('랭킹을 불러오지 못했습니다.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '다시 시도' })).toBeInTheDocument();
     expect(screen.queryByText('아직 기록이 없습니다')).toBeNull();
+  });
+
+  describe('모드를 나눈 게임', () => {
+    it('선언된 모드마다 탭이 서고 첫 모드가 먼저 보인다', async () => {
+      serveByBoard({ leak: [entry(1, '물지기', 1009)], rockfall: [entry(1, '돌지기', 798)] });
+      renderBoard(MODES);
+
+      await screen.findByText('물지기');
+      expect(screen.getByRole('tab', { name: '물 막기' })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: '돌 막기' })).toHaveAttribute('aria-selected', 'false');
+      expect(screen.getByRole('tab', { name: '벌 막기' })).toBeInTheDocument();
+      // 다른 모드의 기록이 섞여 들어오지 않는다
+      expect(screen.queryByText('돌지기')).not.toBeInTheDocument();
+    });
+
+    it('모드를 바꾸면 그 모드만 다시 읽는다 — 요청 수는 늘지 않는다', async () => {
+      serveByBoard({ leak: [entry(1, '물지기', 1009)], rockfall: [entry(1, '돌지기', 798)] });
+      renderBoard(MODES);
+      await screen.findByText('물지기');
+
+      // 한 모드당 (기간 × 트랙) 넷. 셋을 미리 받지 않는다.
+      expect(vi.mocked(fetchLeaderboard)).toHaveBeenCalledTimes(4);
+
+      fireEvent.click(screen.getByRole('tab', { name: '돌 막기' }));
+
+      await screen.findByText('돌지기');
+      expect(screen.queryByText('물지기')).not.toBeInTheDocument();
+      expect(vi.mocked(fetchLeaderboard)).toHaveBeenCalledTimes(8);
+      expect(vi.mocked(fetchLeaderboard)).toHaveBeenLastCalledWith(
+        'coin-corgi', 'MODDED', 10, 'DAILY', 'rockfall',
+      );
+    });
+
+    it('고른 모드에 기록이 없어도 탭은 남는다 — 사라지면 다른 모드로 갈 길이 없다', async () => {
+      serveByBoard({ leak: [], rockfall: [entry(1, '돌지기', 798)] });
+      renderBoard(MODES);
+
+      await screen.findByText('아직 기록이 없습니다');
+      const rock = screen.getByRole('tab', { name: '돌 막기' });
+      expect(rock).toBeInTheDocument();
+
+      fireEvent.click(rock);
+      await screen.findByText('돌지기');
+    });
+
+    it('모드를 안 나눈 게임은 탭도 board 파라미터도 없다', async () => {
+      serve([entry(1, '가', 900)], []);
+      renderBoard();
+
+      await screen.findByText('가');
+      expect(screen.queryByRole('tab', { name: '물 막기' })).not.toBeInTheDocument();
+      expect(vi.mocked(fetchLeaderboard)).toHaveBeenCalledWith('coin-corgi', 'BASE', 10, 'ALL_TIME', null);
+    });
   });
 });

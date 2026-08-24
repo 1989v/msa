@@ -6,6 +6,8 @@ import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
+import com.kgd.game.domain.catalog.model.ScoreBoardDef
+import com.kgd.game.infrastructure.persistence.converter.ScoreBoardDefListJsonConverter
 import com.kgd.game.infrastructure.persistence.converter.StringListJsonConverter
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
@@ -48,6 +50,7 @@ class GameJpaEntity(
     status: GameStatus,
     genre: Genre,
     tags: List<String> = emptyList(),
+    scoreBoards: List<ScoreBoardDef> = emptyList(),
     releasedAt: Instant?,
     contentUpdatedAt: Instant?,
     @CreationTimestamp
@@ -117,6 +120,12 @@ class GameJpaEntity(
     var tags: List<String> = tags
         private set
 
+    /** 게임이 나눈 랭킹 보드 (V59). 비면 보드가 하나뿐 — 사이트가 탭을 그리지 않는다 */
+    @Convert(converter = ScoreBoardDefListJsonConverter::class)
+    @Column(name = "score_boards", columnDefinition = "json")
+    var scoreBoards: List<ScoreBoardDef> = scoreBoards
+        private set
+
     @Column(name = "released_at")
     var releasedAt: Instant? = releasedAt
         private set
@@ -164,6 +173,7 @@ class GameJpaEntity(
         status = status,
         genre = genre,
         tags = tags,
+        scoreBoards = scoreBoards,
         releasedAt = releasedAt,
         contentUpdatedAt = contentUpdatedAt,
     )
@@ -188,6 +198,7 @@ class GameJpaEntity(
             status = game.status,
             genre = game.genre,
             tags = game.tags,
+            scoreBoards = game.scoreBoards,
             releasedAt = game.releasedAt,
             contentUpdatedAt = game.contentUpdatedAt,
         )

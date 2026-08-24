@@ -12,6 +12,7 @@ import com.kgd.game.infrastructure.persistence.catalog.entity.GameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameJpaRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameQueryRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameTagMapJpaRepository
+import com.kgd.game.domain.play.model.ScoreBoardKey
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.infrastructure.persistence.play.adapter.GameScoreRepositoryAdapter
 import com.kgd.game.infrastructure.persistence.play.entity.GameScoreDailyJpaEntity
@@ -207,7 +208,7 @@ class GameSchemaIntegrationSpec(
         }
 
         When("기록이 있는 보드를 집계하면") {
-            Then("(게임, 트랙) 으로 묶여 최근 갱신순으로 나온다")
+            Then("(게임, 트랙, 보드) 로 묶여 최근 갱신순으로 나온다")
                 .config(enabledIf = { dockerAvailable }) {
                     val a = gameRepository.findBySlug("snake")!!.id!!
                     val b = gameRepository.findBySlug("overworld-quest")!!.id!!
@@ -215,17 +216,23 @@ class GameSchemaIntegrationSpec(
                         GameScoreJpaEntity(gameId = a, nickname = "가", track = ScoreTrack.BASE, score = 10, detail = null),
                         GameScoreJpaEntity(gameId = a, nickname = "나", track = ScoreTrack.BASE, score = 20, detail = null),
                         GameScoreJpaEntity(gameId = a, nickname = "다", track = ScoreTrack.MODDED, score = 30, detail = null),
+                        // 같은 게임·같은 트랙인데 모드가 다르다 — 합쳐지면 안 된다 (V59)
+                        GameScoreJpaEntity(
+                            gameId = a, nickname = "마", track = ScoreTrack.BASE, board = "rockfall",
+                            score = 50, detail = null,
+                        ),
                         GameScoreJpaEntity(gameId = b, nickname = "라", track = ScoreTrack.BASE, score = 40, detail = null),
                     ).map { scoreRepository.save(it) }
                     try {
                         // 집계 쿼리는 MySQL 의 ONLY_FULL_GROUP_BY 아래에서도 돌아야 한다
                         val boards = scoreRepository.findActiveBoards(PageRequest.of(0, 10))
 
-                        // 닉네임 4개가 보드 3개로 접힌다 — 같은 (게임, 트랙) 은 한 줄
-                        boards.map { it.gameId to it.track }.toSet() shouldBe setOf(
-                            a to ScoreTrack.BASE,
-                            a to ScoreTrack.MODDED,
-                            b to ScoreTrack.BASE,
+                        // 닉네임 5개가 보드 4개로 접힌다 — 같은 (게임, 트랙, 보드) 만 한 줄
+                        boards.map { Triple(it.gameId, it.track, it.board) }.toSet() shouldBe setOf(
+                            Triple(a, ScoreTrack.BASE, ""),
+                            Triple(a, ScoreTrack.MODDED, ""),
+                            Triple(a, ScoreTrack.BASE, "rockfall"),
+                            Triple(b, ScoreTrack.BASE, ""),
                         )
                         val lastAts = boards.map { it.lastAt }
                         lastAts shouldBe lastAts.sortedDescending()
@@ -243,25 +250,28 @@ class GameSchemaIntegrationSpec(
                     val adapter = GameScoreRepositoryAdapter(scoreRepository, dailyScoreRepository)
                     try {
                         // 역대 최고를 먼저 높게 세워 둔다 — 이후 런은 역대 보드를 건드리지 못한다
-                        adapter.submit(gameId, ScoreTrack.BASE, "하루", 5_000, null, day)
-                        adapter.submit(gameId, ScoreTrack.BASE, "하루", 900, null, day)
-                        adapter.submit(gameId, ScoreTrack.BASE, "하루", 2_000, null, day)
-                        adapter.submit(gameId, ScoreTrack.BASE, "이웃", 1_500, null, day)
+                        val base = ScoreBoardKey.DEFAULT
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 5_000, null, day)
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 900, null, day)
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 2_000, null, day)
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "이웃", 1_500, null, day)
 
-                        // 유니크 키 (game_id, track, play_date, nickname) — 세 번 올려도 한 행
+                        // 유니크 키 (game_id, track, board, play_date, nickname) — 세 번 올려도 한 행
                         val mine = dailyScoreRepository
-                            .findByGameIdAndTrackAndPlayDateAndNickname(gameId, ScoreTrack.BASE, day, "하루")!!
+                            .findByGameIdAndTrackAndBoardAndPlayDateAndNickname(
+                                gameId, ScoreTrack.BASE, "", day, "하루",
+                            )!!
                         mine.score shouldBe 5_000
 
-                        val board = adapter.topDaily(gameId, ScoreTrack.BASE, day, 10)
+                        val board = adapter.topDaily(gameId, ScoreTrack.BASE, base, day, 10)
                         board.map { it.nickname } shouldBe listOf("하루", "이웃")
                         board.map { it.rank } shouldBe listOf(1, 2)
 
                         // 다른 날은 같은 닉네임이어도 별개 행이다
-                        adapter.submit(gameId, ScoreTrack.BASE, "하루", 100, null, day.plusDays(1))
-                        adapter.topDaily(gameId, ScoreTrack.BASE, day.plusDays(1), 10)
+                        adapter.submit(gameId, ScoreTrack.BASE, base, "하루", 100, null, day.plusDays(1))
+                        adapter.topDaily(gameId, ScoreTrack.BASE, base, day.plusDays(1), 10)
                             .map { it.score } shouldBe listOf(100L)
-                        adapter.topDaily(gameId, ScoreTrack.BASE, day, 10).map { it.score } shouldBe
+                        adapter.topDaily(gameId, ScoreTrack.BASE, base, day, 10).map { it.score } shouldBe
                             listOf(5_000L, 1_500L)
                     } finally {
                         dailyScoreRepository.deleteAll(
@@ -279,7 +289,7 @@ class GameSchemaIntegrationSpec(
                     val day = LocalDate.of(2026, 8, 24)
                     val first = dailyScoreRepository.save(
                         GameScoreDailyJpaEntity(
-                            gameId = gameId, track = ScoreTrack.BASE, playDate = day,
+                            gameId = gameId, track = ScoreTrack.BASE, board = "", playDate = day,
                             nickname = "중복", score = 10, detail = null,
                         ),
                     )
@@ -287,7 +297,7 @@ class GameSchemaIntegrationSpec(
                         shouldThrow<DataIntegrityViolationException> {
                             dailyScoreRepository.saveAndFlush(
                                 GameScoreDailyJpaEntity(
-                                    gameId = gameId, track = ScoreTrack.BASE, playDate = day,
+                                    gameId = gameId, track = ScoreTrack.BASE, board = "", playDate = day,
                                     nickname = "중복", score = 20, detail = null,
                                 ),
                             )

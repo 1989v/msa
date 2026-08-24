@@ -3,6 +3,7 @@ package com.kgd.game.application.catalog.dto
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.Game
+import com.kgd.game.domain.catalog.model.ScoreBoardDef
 import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.GameTag
@@ -83,6 +84,11 @@ data class GameDetailDto(
     val status: GameStatus,
     val genre: Genre,
     val tags: List<String>,
+    /**
+     * 게임이 나눈 랭킹 보드 (V59). 비어 있으면 보드가 하나뿐이라 탭을 그리지 않는다.
+     * 상세 DTO 에만 있다 — 목록은 보드를 그리지 않으므로 카드마다 실어 보낼 이유가 없다.
+     */
+    val scoreBoards: List<ScoreBoardDef>,
     val releasedAt: Instant?,
     val contentUpdatedAt: Instant?,
     val playCount: Long,
@@ -109,6 +115,7 @@ data class GameDetailDto(
             status = game.status,
             genre = game.genre,
             tags = game.tags,
+            scoreBoards = game.scoreBoards,
             releasedAt = game.releasedAt,
             contentUpdatedAt = game.contentUpdatedAt,
             playCount = stats?.playCount ?: 0,

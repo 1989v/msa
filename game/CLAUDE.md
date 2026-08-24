@@ -53,7 +53,7 @@
 | `GET /api/v1/games/{slug}`, `/{slug}/similar` | 상세(BETA 노출 허용) / 태그 교집합 유사 게임 |
 | `POST /api/v1/games/{slug}/sessions`, `PATCH .../{sessionKey}` | 세션 시작(게스트 OK)/종료 |
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
-| `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&limit=&period=&date=` | 랭킹 제출/조회 (게스트 OK). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
+| `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&board=&limit=&period=&date=` | 랭킹 제출/조회 (게스트 OK). `board` 는 게임이 나눈 모드 키이고 생략 시 기본 보드(V59). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
 | `GET /api/v1/games/leaderboards?boards=&entries=` | 허브 레일용 배치 — 기록 있는 보드의 TOP N + **오늘 기록(`todayEntries`)**을 한 응답에 |
 | `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 읽기는 잠그지 않고 쓰기만 `X-Device-Id` 리스(1h) — 코드 제시 요청은 리스를 넘겨받는다(기기 분실 복구) |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
@@ -96,12 +96,26 @@
   피드백을 받을 수 없다. 수익화는 상태와 별개로 `Game.isMonetizable()`(PUBLISHED + SDK)이 막는다.
   FE 는 `isBeta()`(status=BETA 또는 `beta` 태그)로 배지를 렌더한다 — 두 신호를 다 받는 이유는
   V35 가 PUBLISHED + 태그 방식으로 먼저 붙였기 때문이다
-- **랭킹 보드의 축은 둘이다 — 트랙(무강화/강화, V28)과 기간(전체/오늘, V49).** 오늘 보드는
+- **랭킹 보드의 축은 셋이다 — 트랙(무강화/강화, V28) · 기간(전체/오늘, V49) · 보드(게임이 나눈 모드, V59).** 오늘 보드는
   `game_score` 에서 파생할 수 없어 별도 원장(`game_score_daily`)을 쓴다: 역대 보드는 닉네임당
   최고 1행이라 **자기 최고를 못 넘은 런은 아예 저장되지 않는다** — `updated_at` 이 오늘인 행을
   세면 "오늘 자기 기록을 깬 사람"만 세어진다. 하루의 경계는 **KST**(`GameDay.ZONE`)이고
   날짜는 서버가 정한다(클라이언트가 보내면 기기 시계만큼 보드가 갈린다). 제출 한 번이 두 보드를
   한 트랜잭션에서 올리며, **두 보드의 판정은 독립**이다
+- **보드(V59)는 앞의 두 축과 성질이 다르다 — 값을 게임이 정한다.** 트랙·기간은 플랫폼의
+  물음이라 enum 이지만, 모드는 게임마다 뜻이 달라 열린 키(`^[a-z0-9-]{1,24}$`)다. 나누는
+  이유는 같은 게임 안에서도 재는 자가 다르기 때문이다 — 「그어서 막기」는 같은 방어선이
+  물 1009 / 돌 798 / 벌 383 으로 갈리고, 「인피니티 타워」의 방어전(14분)과 등반(층당
+  60~90초)은 한 판의 길이가 다르다. 합치면 순위표가 실력이 아니라 **점수가 잘 나오는 모드를
+  고른 사람** 순위가 된다. 값을 안 보내면 빈 키 한 보드이고, 기존 60여 종의 기록은 있던
+  자리에 그대로 있다(V59 에 UPDATE 가 없는 이유). **제출은 카탈로그 선언과 대조하지 않는다** —
+  게임이 모드를 늘렸는데 시드가 늦은 순간에 기록을 버리게 되기 때문이고, 선언
+  (`game.score_boards` JSON)은 오로지 **사이트가 탭 이름을 짓는 데만** 쓴다
+  (게임 안 탭은 `PlatformAdapter.init({boards})` 선언이 그린다 — 서버를 거치지 않는다)
+- **`platform.js` 는 `rank.js` 없이는 점수를 못 보낸다.** 넷(잿불 원정대·랜덤 타워 디펜스·
+  인피니티 타워·랜덤 카드 디펜스)이 `rank.js` 없이 배포돼 **한 건도 제출하지 못했다**
+  (2026-08-24 적발·수정). 지금은 없으면 `console.error` 로 외친다 —
+  통합 시 요청 본문까지 눈으로 확인할 것 (`docs/standards/game-cleanroom-pipeline.md`)
 - **새 마이그레이션을 붙이기 전에 최신 번호를 확인한다.** 여러 세션이 한 워킹트리를 쓰기 때문에
   같은 번호를 동시에 잡는 일이 실제로 났다(`V49__game_score_daily` ↔ `V49__seed_marble_race`).
   버전이 겹치면 Flyway 는 **마이그레이션을 세는 단계에서 기동을 거부**하고, 그러면 테스트 게이트가

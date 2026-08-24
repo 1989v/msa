@@ -21,6 +21,9 @@ const board = (slug: string, title: string, todayEntries: LeaderboardBoard['entr
   titleEn: null,
   thumbnailUrl: `/thumbs/${slug}.png`,
   track: 'BASE',
+  board: '',
+  boardName: null,
+  boardNameEn: null,
   entries: [
     { rank: 1, nickname: `${slug}-1등`, score: 900, detail: null },
     { rank: 2, nickname: `${slug}-2등`, score: 500, detail: null },
@@ -172,5 +175,25 @@ describe('허브 랭킹 레일', () => {
     await flush();
 
     expect(screen.getByText('나')).toBeInTheDocument();
+  });
+
+  it('모드를 나눈 게임은 모드 칩이 하나 더 붙는다 — 어느 모드의 1위인지 알아야 한다', async () => {
+    vi.mocked(fetchActiveLeaderboards).mockResolvedValue([
+      { ...board('bee-guard', '그어서 막기'), board: 'rockfall', boardName: '돌 막기' },
+    ]);
+    renderRail();
+    await flush();
+
+    expect(screen.getByText('그어서 막기')).toBeInTheDocument();
+    expect(screen.getByText('돌 막기')).toBeInTheDocument();
+    expect(screen.getByText('무강화')).toBeInTheDocument();
+  });
+
+  it('모드를 안 나눈 게임에는 칩이 하나뿐이다 — 늘 붙는 라벨은 읽히지 않는다', async () => {
+    vi.mocked(fetchActiveLeaderboards).mockResolvedValue([board('coin-corgi', '코인 코기')]);
+    renderRail();
+    await flush();
+
+    expect(document.querySelectorAll('.games-rail-track').length).toBe(1);
   });
 });

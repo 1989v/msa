@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { ScoreEntry } from '../../../api/gameApi';
 import {
+  boardLabel,
   hasAnyPeriodRecord,
+  initialBoard,
+  railBoardLabel,
   hasAnyRecord,
   initialTrack,
   isMyEntry,
@@ -125,5 +128,32 @@ describe('레일이 실을 보드 고르기', () => {
     const view = railView(rail([]));
     expect(view.period).toBe('ALL_TIME');
     expect(view.entries.map((e) => e.nickname)).toEqual(['역대1등']);
+  });
+});
+
+describe('모드 보드', () => {
+  const MODES = [
+    { key: 'leak', name: '물 막기', nameEn: 'Water' },
+    { key: 'rockfall', name: '돌 막기', nameEn: null },
+  ];
+
+  it('처음 보여줄 모드는 선언된 첫 보드다', () => {
+    expect(initialBoard(MODES)).toBe('leak');
+  });
+
+  it('모드를 안 나눈 게임은 null — 그때는 board 를 아예 안 보낸다', () => {
+    expect(initialBoard([])).toBeNull();
+  });
+
+  it('영문 이름이 없으면 한국어를 그대로 쓴다 — 키를 화면에 띄우지 않는다', () => {
+    expect(boardLabel(MODES[0], 'en')).toBe('Water');
+    expect(boardLabel(MODES[1], 'en')).toBe('돌 막기');
+    expect(boardLabel(MODES[1], 'ko')).toBe('돌 막기');
+  });
+
+  it('레일 칩은 카탈로그에 이름이 없으면 아예 안 뜬다 — 영문 식별자가 나가느니 없는 게 낫다', () => {
+    expect(railBoardLabel({ boardName: '돌 막기', boardNameEn: 'Rocks' }, 'en')).toBe('Rocks');
+    expect(railBoardLabel({ boardName: '돌 막기', boardNameEn: null }, 'en')).toBe('돌 막기');
+    expect(railBoardLabel({ boardName: null, boardNameEn: null }, 'ko')).toBeNull();
   });
 });

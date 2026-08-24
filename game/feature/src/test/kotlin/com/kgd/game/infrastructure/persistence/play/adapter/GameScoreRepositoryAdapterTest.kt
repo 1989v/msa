@@ -1,5 +1,6 @@
 package com.kgd.game.infrastructure.persistence.play.adapter
 
+import com.kgd.game.domain.play.model.ScoreBoardKey
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.infrastructure.persistence.play.entity.GameScoreDailyJpaEntity
 import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
@@ -24,14 +25,15 @@ class GameScoreRepositoryAdapterTest : BehaviorSpec({
 
     val gameId = 7L
     val track = ScoreTrack.BASE
+    val board = ScoreBoardKey.DEFAULT
     val today = LocalDate.of(2026, 8, 23)
     val nick = "가나"
 
     fun allTimeRow(score: Long) =
-        GameScoreJpaEntity(gameId = gameId, track = track, nickname = nick, score = score, detail = null)
+        GameScoreJpaEntity(gameId = gameId, track = track, board = "", nickname = nick, score = score, detail = null)
 
     fun dailyRow(score: Long) = GameScoreDailyJpaEntity(
-        gameId = gameId, track = track, playDate = today, nickname = nick, score = score, detail = null,
+        gameId = gameId, track = track, board = "", playDate = today, nickname = nick, score = score, detail = null,
     )
 
     /** relaxed 만으로는 제네릭 save 가 엉뚱한 타입을 돌려줘 캐스팅에서 터진다 — 넣은 걸 그대로 돌려준다 */
@@ -49,12 +51,12 @@ class GameScoreRepositoryAdapterTest : BehaviorSpec({
         `when`("그 게임에서 처음 올리는 기록이면") {
             then("역대 보드와 오늘 보드에 각각 행이 생긴다") {
                 val (allTime, daily) = repositories()
-                every { allTime.findByGameIdAndTrackAndNickname(gameId, track, nick) } returns null
-                every { daily.findByGameIdAndTrackAndPlayDateAndNickname(gameId, track, today, nick) } returns null
-                every { allTime.countByGameIdAndTrackAndScoreGreaterThan(gameId, track, 900) } returns 0
+                every { allTime.findByGameIdAndTrackAndBoardAndNickname(gameId, track, "", nick) } returns null
+                every { daily.findByGameIdAndTrackAndBoardAndPlayDateAndNickname(gameId, track, "", today, nick) } returns null
+                every { allTime.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, track, "", 900) } returns 0
 
                 val (applied, rank) =
-                    GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, nick, 900, null, today)
+                    GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, board, nick, 900, null, today)
 
                 applied shouldBe true
                 rank shouldBe 1
@@ -70,12 +72,12 @@ class GameScoreRepositoryAdapterTest : BehaviorSpec({
                 val (allTime, daily) = repositories()
                 val best = allTimeRow(5_000)
                 val morning = dailyRow(300)
-                every { allTime.findByGameIdAndTrackAndNickname(gameId, track, nick) } returns best
-                every { daily.findByGameIdAndTrackAndPlayDateAndNickname(gameId, track, today, nick) } returns morning
-                every { allTime.countByGameIdAndTrackAndScoreGreaterThan(gameId, track, 5_000) } returns 0
+                every { allTime.findByGameIdAndTrackAndBoardAndNickname(gameId, track, "", nick) } returns best
+                every { daily.findByGameIdAndTrackAndBoardAndPlayDateAndNickname(gameId, track, "", today, nick) } returns morning
+                every { allTime.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, track, "", 5_000) } returns 0
 
                 val (applied, _) =
-                    GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, nick, 900, null, today)
+                    GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, board, nick, 900, null, today)
 
                 applied shouldBe false
                 best.score shouldBe 5_000
@@ -88,11 +90,11 @@ class GameScoreRepositoryAdapterTest : BehaviorSpec({
             then("오늘 보드도 그대로다 — 하루 안에서도 닉네임당 최고 하나다") {
                 val (allTime, daily) = repositories()
                 val morning = dailyRow(1_200)
-                every { allTime.findByGameIdAndTrackAndNickname(gameId, track, nick) } returns allTimeRow(5_000)
-                every { daily.findByGameIdAndTrackAndPlayDateAndNickname(gameId, track, today, nick) } returns morning
-                every { allTime.countByGameIdAndTrackAndScoreGreaterThan(gameId, track, 5_000) } returns 0
+                every { allTime.findByGameIdAndTrackAndBoardAndNickname(gameId, track, "", nick) } returns allTimeRow(5_000)
+                every { daily.findByGameIdAndTrackAndBoardAndPlayDateAndNickname(gameId, track, "", today, nick) } returns morning
+                every { allTime.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, track, "", 5_000) } returns 0
 
-                GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, nick, 900, null, today)
+                GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, board, nick, 900, null, today)
 
                 morning.score shouldBe 1_200
                 verify(exactly = 0) { daily.saveAndFlush(any()) }
@@ -104,12 +106,12 @@ class GameScoreRepositoryAdapterTest : BehaviorSpec({
             then("두 번째는 아무것도 바꾸지 않는다 (멱등)") {
                 val (allTime, daily) = repositories()
                 val already = dailyRow(900)
-                every { allTime.findByGameIdAndTrackAndNickname(gameId, track, nick) } returns allTimeRow(900)
-                every { daily.findByGameIdAndTrackAndPlayDateAndNickname(gameId, track, today, nick) } returns already
-                every { allTime.countByGameIdAndTrackAndScoreGreaterThan(gameId, track, 900) } returns 0
+                every { allTime.findByGameIdAndTrackAndBoardAndNickname(gameId, track, "", nick) } returns allTimeRow(900)
+                every { daily.findByGameIdAndTrackAndBoardAndPlayDateAndNickname(gameId, track, "", today, nick) } returns already
+                every { allTime.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, track, "", 900) } returns 0
 
                 val (applied, _) =
-                    GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, nick, 900, null, today)
+                    GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, board, nick, 900, null, today)
 
                 applied shouldBe false
                 already.score shouldBe 900
@@ -122,16 +124,45 @@ class GameScoreRepositoryAdapterTest : BehaviorSpec({
             then("어제 행을 건드리지 않고 오늘 행을 새로 만든다") {
                 val (allTime, daily) = repositories()
                 val tomorrow = today.plusDays(1)
-                every { allTime.findByGameIdAndTrackAndNickname(gameId, track, nick) } returns allTimeRow(5_000)
-                every { daily.findByGameIdAndTrackAndPlayDateAndNickname(gameId, track, tomorrow, nick) } returns null
-                every { allTime.countByGameIdAndTrackAndScoreGreaterThan(gameId, track, 5_000) } returns 0
+                every { allTime.findByGameIdAndTrackAndBoardAndNickname(gameId, track, "", nick) } returns allTimeRow(5_000)
+                every { daily.findByGameIdAndTrackAndBoardAndPlayDateAndNickname(gameId, track, "", tomorrow, nick) } returns null
+                every { allTime.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, track, "", 5_000) } returns 0
 
-                GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, nick, 100, null, tomorrow)
+                GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, board, nick, 100, null, tomorrow)
 
                 val row = slot<GameScoreDailyJpaEntity>()
                 verify { daily.save(capture(row)) }
                 row.captured.playDate shouldBe tomorrow
                 row.captured.score shouldBe 100
+            }
+        }
+    }
+
+    given("모드를 나눈 게임이 제출하면") {
+        `when`("같은 사람이 다른 모드로 올리면") {
+            then("그 모드의 행만 찾고 그 모드 안에서만 순위를 센다 — 다른 모드의 기록은 세지 않는다") {
+                val (allTime, daily) = repositories()
+                val rock = ScoreBoardKey.from("rockfall")
+                every {
+                    allTime.findByGameIdAndTrackAndBoardAndNickname(gameId, track, "rockfall", nick)
+                } returns null
+                every {
+                    daily.findByGameIdAndTrackAndBoardAndPlayDateAndNickname(gameId, track, "rockfall", today, nick)
+                } returns null
+                every {
+                    allTime.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, track, "rockfall", 798)
+                } returns 0
+
+                val (applied, rank) =
+                    GameScoreRepositoryAdapter(allTime, daily).submit(gameId, track, rock, nick, 798, null, today)
+
+                applied shouldBe true
+                rank shouldBe 1
+                val row = slot<GameScoreJpaEntity>()
+                verify { allTime.save(capture(row)) }
+                row.captured.board shouldBe "rockfall"
+                // 기본 보드는 건드리지 않는다 — 같은 사람이 물 막기로 세운 기록이 거기 남아 있다
+                verify(exactly = 0) { allTime.findByGameIdAndTrackAndBoardAndNickname(gameId, track, "", nick) }
             }
         }
     }
@@ -142,10 +173,10 @@ class GameScoreRepositoryAdapterTest : BehaviorSpec({
                 val allTime = mockk<GameScoreJpaRepository>()
                 val daily = mockk<GameScoreDailyJpaRepository>()
                 every {
-                    daily.findTop50ByGameIdAndTrackAndPlayDateOrderByScoreDescUpdatedAtAsc(gameId, track, today)
+                    daily.findTop50ByGameIdAndTrackAndBoardAndPlayDateOrderByScoreDescUpdatedAtAsc(gameId, track, "", today)
                 } returns listOf(dailyRow(900), dailyRow(500), dailyRow(100))
 
-                val rows = GameScoreRepositoryAdapter(allTime, daily).topDaily(gameId, track, today, 2)
+                val rows = GameScoreRepositoryAdapter(allTime, daily).topDaily(gameId, track, board, today, 2)
 
                 rows.map { it.rank } shouldBe listOf(1, 2)
                 rows.map { it.score } shouldBe listOf(900L, 500L)
@@ -157,10 +188,10 @@ class GameScoreRepositoryAdapterTest : BehaviorSpec({
                 val allTime = mockk<GameScoreJpaRepository>()
                 val daily = mockk<GameScoreDailyJpaRepository>()
                 every {
-                    daily.findTop50ByGameIdAndTrackAndPlayDateOrderByScoreDescUpdatedAtAsc(gameId, track, today)
+                    daily.findTop50ByGameIdAndTrackAndBoardAndPlayDateOrderByScoreDescUpdatedAtAsc(gameId, track, "", today)
                 } returns emptyList()
 
-                GameScoreRepositoryAdapter(allTime, daily).topDaily(gameId, track, today, 10) shouldBe emptyList()
+                GameScoreRepositoryAdapter(allTime, daily).topDaily(gameId, track, board, today, 10) shouldBe emptyList()
             }
         }
     }
