@@ -24,9 +24,7 @@ data class BlogProfile(
     val status: ProfileStatus,
 ) {
     init {
-        if (displayName.isBlank() || displayName.length > MAX_DISPLAY_NAME) {
-            throw BusinessException(ErrorCode.INVALID_INPUT, "표시명은 1~$MAX_DISPLAY_NAME 자여야 합니다")
-        }
+        validateDisplayName(displayName)
         handle?.let(::validateHandle)
         if (role == ProfileRole.AUTHOR && handle == null) {
             throw BusinessException(ErrorCode.INVALID_INPUT, "저자는 핸들이 필요합니다")
@@ -73,6 +71,22 @@ data class BlogProfile(
             "sitemap", "robots", "assets", "static", "oauth", "me",
         )
 
+        /**
+         * 신원을 사칭하는 데 쓰이는 말 — **부분 문자열**로 막는다. 핸들과 표시명 양쪽에 건다.
+         *
+         * 경로 충돌(RESERVED_HANDLES)과 목적이 다르므로 목록을 합치지 않는다. 저쪽은
+         * 정확히 일치할 때만 문제지만("posts" 는 막고 "posts-of-kgd" 는 괜찮다), 이쪽은
+         * "블로그관리자"·"admin-2" 처럼 붙여 쓴 것이 오히려 더 그럴듯해 보인다.
+         *
+         * 브랜드 이름(1989v)도 여기 있다 — 사이트 자신을 자칭하는 저자를 만들지 않기 위해서다.
+         * 부분 일치라 "grassroots" 같은 무해한 말도 걸린다. 사칭 하나를 놓치는 쪽보다 낫다고 봤다.
+         */
+        val RESERVED_NAME_TERMS = setOf(
+            "admin", "manager", "moderator", "official", "operator",
+            "staff", "support", "sysop", "system", "owner", "root", "1989v",
+            "어드민", "관리자", "관리인", "운영자", "운영진", "운영팀", "매니저", "공식", "고객센터",
+        )
+
         fun validateHandle(handle: String) {
             if (!HANDLE_PATTERN.matches(handle)) {
                 throw BusinessException(
@@ -83,6 +97,28 @@ data class BlogProfile(
             if (handle in RESERVED_HANDLES) {
                 throw BusinessException(ErrorCode.INVALID_INPUT, "사용할 수 없는 핸들입니다: $handle")
             }
+            if (reservedTermIn(handle) != null) {
+                throw BusinessException(ErrorCode.INVALID_INPUT, "사용할 수 없는 핸들입니다: $handle")
+            }
+        }
+
+        fun validateDisplayName(displayName: String) {
+            if (displayName.isBlank() || displayName.length > MAX_DISPLAY_NAME) {
+                throw BusinessException(ErrorCode.INVALID_INPUT, "표시명은 1~$MAX_DISPLAY_NAME 자여야 합니다")
+            }
+            reservedTermIn(displayName)?.let {
+                throw BusinessException(ErrorCode.INVALID_INPUT, "표시명에 쓸 수 없는 말이 있습니다: $it")
+            }
+        }
+
+        /**
+         * 걸린 금칙어, 없으면 null.
+         *
+         * 구분자를 먼저 지우고 본다 — 그러지 않으면 "a.d.m.i.n"·"관 리 자" 가 그대로 통과한다.
+         */
+        private fun reservedTermIn(value: String): String? {
+            val normalized = value.lowercase().filter { it.isLetterOrDigit() }
+            return RESERVED_NAME_TERMS.firstOrNull { it in normalized }
         }
 
         /** 첫 댓글 시 자동 생성되는 독자 프로필 */

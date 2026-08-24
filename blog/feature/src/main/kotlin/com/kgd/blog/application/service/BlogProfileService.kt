@@ -51,12 +51,14 @@ class BlogProfileService(
         if (!identity.isAdmin) {
             throw BusinessException(ErrorCode.FORBIDDEN, "블로그 작성 권한이 없습니다")
         }
-        // 저자 없는 글이 생기면 작성자 공간·목록·JSON-LD 가 전부 예외 분기를 갖게 된다
+        // 저자 없는 글이 생기면 작성자 공간·목록·JSON-LD 가 전부 예외 분기를 갖게 된다.
+        // 신원은 "편집자" 다 — 사칭 금칙어(BlogProfile.RESERVED_NAME_TERMS)를 남에게만 걸고
+        // 시스템이 만드는 프로필은 "관리자" 를 쓰면, 그 이름이 진짜인지 사칭인지 읽는 쪽이 구분할 수 없다.
         return profileRepository.save(
             BlogProfileJpaEntity(
                 memberId = memberId,
-                handle = uniqueHandle("admin-$memberId"),
-                displayName = "관리자",
+                handle = uniqueHandle("editor-$memberId"),
+                displayName = "편집자",
                 role = ProfileRole.AUTHOR,
                 status = ProfileStatus.ACTIVE,
             ),
@@ -86,7 +88,10 @@ class BlogProfileService(
     fun updateProfile(identity: BlogIdentity, request: BlogProfileRequest): BlogProfileAdminResponse {
         val profile = find(identity)
             ?: throw BusinessException(ErrorCode.NOT_FOUND, "블로그 프로필이 없습니다")
-        profile.updateProfile(request.displayName.trim(), request.bio, request.avatarUrl)
+        val displayName = request.displayName.trim()
+        // 엔티티의 updateProfile 은 검증하지 않는다 — 도메인을 거치지 않는 경로라 여기서 막는다
+        BlogProfile.validateDisplayName(displayName)
+        profile.updateProfile(displayName, request.bio, request.avatarUrl)
         return response(profile)
     }
 
@@ -98,11 +103,13 @@ class BlogProfileService(
     fun applyAsAuthor(identity: BlogIdentity, request: BlogAuthorApplicationRequest): BlogProfileAdminResponse {
         val memberId = requireMemberId(identity)
         val handle = request.handle.trim().lowercase()
+        val displayName = request.displayName.trim()
         BlogProfile.validateHandle(handle)
+        BlogProfile.validateDisplayName(displayName)
 
         val profile = profileRepository.findByMemberId(memberId)
             ?: profileRepository.save(
-                BlogProfileJpaEntity(memberId = memberId, displayName = request.displayName.trim()),
+                BlogProfileJpaEntity(memberId = memberId, displayName = displayName),
             )
         profile.toDomain().requireCanInteract()
         if (profile.role == ProfileRole.AUTHOR && profile.status == ProfileStatus.ACTIVE) {
@@ -111,7 +118,7 @@ class BlogProfileService(
         if (profile.handle != handle && profileRepository.existsByHandle(handle)) {
             throw BusinessException(ErrorCode.DUPLICATE_RESOURCE, "이미 사용 중인 핸들입니다: $handle")
         }
-        profile.updateProfile(request.displayName.trim(), request.bio, profile.avatarUrl)
+        profile.updateProfile(displayName, request.bio, profile.avatarUrl)
         profile.applyAsAuthor(handle)
         return response(profile)
     }

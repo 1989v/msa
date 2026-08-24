@@ -85,6 +85,54 @@ class BlogProfileTest : BehaviorSpec({
                 shouldThrow<BusinessException> { BlogProfile.validateHandle("studio") }
             }
         }
+
+        `when`("사칭 금칙어를 품고 있으면") {
+            then("정확히 일치하지 않아도 거부한다") {
+                shouldThrow<BusinessException> { BlogProfile.validateHandle("admin-2") }
+                shouldThrow<BusinessException> { BlogProfile.validateHandle("blog-manager") }
+                shouldThrow<BusinessException> { BlogProfile.validateHandle("1989v") }
+                shouldThrow<BusinessException> { BlogProfile.validateHandle("the-1989v-blog") }
+            }
+        }
+
+        `when`("금칙어가 없으면") {
+            then("통과한다") {
+                BlogProfile.validateHandle("kgd")
+                BlogProfile.validateHandle("posts-of-kgd")
+            }
+        }
+    }
+
+    given("표시명을 검증할 때") {
+
+        `when`("사칭 금칙어를 품고 있으면") {
+            then("거부한다 — 붙여 쓴 쪽이 오히려 더 그럴듯해 보인다") {
+                shouldThrow<BusinessException> { BlogProfile.validateDisplayName("관리자") }
+                shouldThrow<BusinessException> { BlogProfile.validateDisplayName("블로그 관리자") }
+                shouldThrow<BusinessException> { BlogProfile.validateDisplayName("1989v") }
+                shouldThrow<BusinessException> { BlogProfile.validateDisplayName("Admin") }
+            }
+        }
+
+        `when`("구분자로 금칙어를 쪼개 놓으면") {
+            then("그래도 거부한다 — 지우고 본다") {
+                shouldThrow<BusinessException> { BlogProfile.validateDisplayName("a.d.m.i.n") }
+                shouldThrow<BusinessException> { BlogProfile.validateDisplayName("관 리 자") }
+            }
+        }
+
+        `when`("비었거나 너무 길면") {
+            then("거부한다") {
+                shouldThrow<BusinessException> { BlogProfile.validateDisplayName(" ") }
+                shouldThrow<BusinessException> { BlogProfile.validateDisplayName("가".repeat(41)) }
+            }
+        }
+
+        `when`("프로필을 만들 때도") {
+            then("같은 판정이 걸린다 — 검증을 우회하는 생성 경로를 남기지 않는다") {
+                shouldThrow<BusinessException> { profile(displayName = "운영자") }
+            }
+        }
     }
 
     given("저자인데 핸들이 없으면") {
