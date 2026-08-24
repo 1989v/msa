@@ -60,6 +60,15 @@ ADR: `docs/adr/ADR-0072-blog-platform.md` · spec: `docs/specs/2026-08-21-blog-p
 - 카테고리 최대 3단. 부모가 바뀌면 **하위 전체의 `path` 를 다시 쓴다** (`BlogAdminService.updateCategory`).
 - 대댓글은 1단계까지. 삭제는 소프트 삭제 — 행을 지우면 대댓글이 부모를 잃는다.
 
+## 글을 쓸 때
+
+문체·구조 규칙과 발행 전 lint → `docs/conventions/blog-writing.md`.
+**본문의 원본은 DB 라 빌드가 잡을 수 없다** — `scripts/lint-blog-post.py draft.md` 가 유일한 게이트다.
+
+한글은 hex 로 넣는다 (`CONVERT(0x… USING utf8mb4)`). `oci-mysql` 경유 접속의 클라이언트
+charset 이 latin1 이라 리터럴로 넣으면 조용히 이중 인코딩된다 — 에러도 없고 값도 들어가며,
+목록 API 응답에서야 깨져 보인다 (2026-08-24 실제 발생).
+
 ## 조회수·좋아요·평점
 
 - 조회수의 진실은 `blog_post_view` 원장이고 `blog_post.view_count` 는 파생값이다.
