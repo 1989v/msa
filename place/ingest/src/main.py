@@ -21,7 +21,7 @@ import sys
 
 from pathlib import Path
 
-from src import admin_region, backfill_overview, google_place, naver, place_client, sync_tour, youtube
+from src import admin_region, backfill_overview, google_place, naver, place_client, quota, sync_tour, youtube
 
 
 def _api_key() -> str:
@@ -125,9 +125,19 @@ def _job_google_places(budget: int) -> int:
         backfill_overview.log("[GOOGLE_PLACES] 미보강분 없음")
         return 0
 
+    # ADR-0082 — 제공자 단위 장부. JVM(quant·deal·place:app)과 같은 Redis 키를 쓴다.
+    # 자체 카운터를 두면 같은 API 키를 쓰는 다른 서비스를 모른 채 합쳐서 넘긴다.
+    ledger = quota.QuotaLedger()
+
     results = []
     misses = failures = 0
+    blocked = 0
     for item in items:
+        # 호출 직전에 예약한다. 성공·빈결과·실패 전부 1콜로 세고 되돌리지 않는다.
+        if not ledger.try_acquire(quota.GOOGLE_PLACES):
+            blocked = len(items) - len(results) - misses - failures
+            backfill_overview.log(f"[GOOGLE_PLACES] 일일 한도 소진 — {blocked}건을 다음 실행으로 넘긴다")
+            break
         try:
             place_id = google_place.find_place_id(
                 api_key, item["title"], item.get("address"), item.get("lang") or "ko")

@@ -47,9 +47,13 @@ spec:
               env:
                 - name: PLACE_API
                   value: "http://place:8096"
-                # 일일 호출 상한 — 무과금 SKU 지만 상한 없이 돌리지 않는다 (수집기 기본값과 동일)
+                # 한 회차에 가져올 미보강분 수. **일일 한도가 아니다** — 한도는 제공자 단위
+                # 장부(ADR-0082)가 들고 있고, 이 값은 배치 크기일 뿐이다.
                 - name: GOOGLE_PLACES_DAILY_BUDGET
                   value: "1000"
+                # ADR-0082 — JVM 과 같은 Redis 장부를 본다. 미설정이면 세지 않고 통과시킨다(경고).
+                - name: REDIS_HOST
+                  value: "redis"
                 # Maps JS 키(공개·리퍼러 제한)와 분리된 서버용 키(IP 제한) — data-sources.md §7
                 - name: GOOGLE_PLACES_API_KEY
                   valueFrom:

@@ -9,6 +9,8 @@ import com.kgd.place.domain.attraction.model.AttractionDeepLinks
 import com.kgd.place.domain.attraction.model.AttractionLink
 import com.kgd.place.domain.attraction.model.AttractionLinkRequest
 import com.kgd.place.domain.attraction.model.AttractionLinkSource
+import com.kgd.common.quota.ExternalApiProvider
+import com.kgd.common.quota.ExternalApiQuotaLedger
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import java.time.LocalDate
@@ -23,6 +25,7 @@ private val log = KotlinLogging.logger {}
 class AttractionLinkService(
     private val attractionRepository: AttractionRepositoryPort,
     private val linkRepository: AttractionLinkRepositoryPort,
+    private val quotaLedger: ExternalApiQuotaLedger,
 ) : GetAttractionLinksUseCase, CollectAttractionLinksUseCase {
 
     override fun findByAttractionId(id: Long): GetAttractionLinksUseCase.Links {
@@ -125,10 +128,20 @@ class AttractionLinkService(
         false
     }
 
-    /** 오늘 남은 외부 호출 수. 성공·빈결과·실패를 모두 센다 — 셋 다 실제로 호출을 썼다. */
+    /**
+     * 오늘 더 부를 수 있는 **호출 수** (ADR-0082).
+     *
+     * 자체 테이블(`countAttemptsSince`)을 세지 않는다 — 그러면 같은 제공자를 쓰는 다른
+     * 서비스(quant 의 네이버 뉴스, deal 의 혜택 발견)를 모른 채 각자 "여유 있음"이라
+     * 판단하게 된다. 쿼터는 API 키에 붙으므로 장부도 제공자 단위여야 한다.
+     *
+     * 장부는 **단위(unit)** 로 세므로 호출 수로 환산한다 — YouTube 는 1콜이 100 units 다.
+     * 실제 증가는 호출하는 쪽(`place/ingest`, Python)이 같은 Redis 키에 한다.
+     */
     private fun remainingBudget(source: AttractionLinkSource): Int {
-        val used = linkRepository.countAttemptsSince(source, LocalDate.now().atStartOfDay())
-        return (dailyBudget(source) - used).toInt().coerceAtLeast(0)
+        val provider = providerOf(source)
+        val remainingUnits = quotaLedger.remaining(provider) ?: return Int.MAX_VALUE
+        return (remainingUnits / unitCostOf(source)).toInt().coerceAtLeast(0)
     }
 
     private fun CollectAttractionLinksUseCase.Link.toDomain(
@@ -158,11 +171,6 @@ class AttractionLinkService(
         )
 
         /**
-         * 일일 예산 — 제공자 쿼터에서 나온 값이지 조절 손잡이가 아니다.
-         * YouTube Data API v3: 하루 10,000 units, `search.list` 가 건당 100 units → 100건.
-         * 네이버 검색 API: 하루 25,000콜 — 다른 용도와 나눠 쓰도록 여유를 둔다.
-         */
-        /**
           * 수집분 유효 기간. YouTube 는 API 서비스 약관이 **30일 넘게 보관하려면 갱신**하도록
           * 요구하므로 기본 90일을 쓸 수 없다. 하루 100건 예산과 겹치면 30일 안에 갱신할 수 있는
           * 관광지는 3,000곳이 상한이라는 뜻이기도 하다 — 조회 많은 곳부터 채우는 이유다.
@@ -172,9 +180,16 @@ class AttractionLinkService(
             AttractionLinkSource.NAVER_BLOG -> AttractionLinkRequest.FRESH_DAYS
         }
 
-        private fun dailyBudget(source: AttractionLinkSource): Long = when (source) {
+        /** 소스 → 제공자. 한도는 provider 가 들고 있다 (ADR-0082) — 여기 상수를 두지 않는다. */
+        private fun providerOf(source: AttractionLinkSource): ExternalApiProvider = when (source) {
+            AttractionLinkSource.YOUTUBE -> ExternalApiProvider.YOUTUBE_DATA
+            AttractionLinkSource.NAVER_BLOG -> ExternalApiProvider.NAVER_SEARCH
+        }
+
+        /** 1콜이 소비하는 단위. YouTube `search.list` 는 건당 100 units 다. */
+        private fun unitCostOf(source: AttractionLinkSource): Long = when (source) {
             AttractionLinkSource.YOUTUBE -> 100
-            AttractionLinkSource.NAVER_BLOG -> 5_000
+            AttractionLinkSource.NAVER_BLOG -> 1
         }
     }
 }

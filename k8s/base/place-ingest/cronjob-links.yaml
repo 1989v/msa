@@ -58,6 +58,9 @@ spec:
               env:
                 - name: PLACE_API
                   value: "http://place:8096"
+                # ADR-0082 — JVM 과 같은 제공자 단위 쿼터 장부
+                - name: REDIS_HOST
+                  value: "redis"
                 - name: LINK_LIMIT
                   value: "10"
                 - name: YOUTUBE_API_KEY

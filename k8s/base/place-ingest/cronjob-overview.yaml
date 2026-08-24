@@ -46,6 +46,9 @@ spec:
               env:
                 - name: PLACE_API
                   value: "http://place:8096"
+                # ADR-0082 — JVM 과 같은 제공자 단위 쿼터 장부
+                - name: REDIS_HOST
+                  value: "redis"
                 - name: BUDGET
                   value: "1000"
                 - name: TOUR_API_KEY
