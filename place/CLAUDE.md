@@ -37,6 +37,35 @@
 - 스키마는 **Flyway+validate** 단독 책임. 단일 datasource (warehouse 의 routing 미사용).
 - OpenSearch 클라이언트는 ADR-0055 패턴(opensearch-java + HttpClient5) 재사용.
 
+### ★ TourAPI — 두 가지가 조용히 데이터를 망가뜨린다
+
+**1. 구 코드(areaCode·cat1)를 기준으로 잡지 마라 — 폐기 중인 축이다**
+
+`areaBasedList2` 를 **areaCode 없이** 부르면 응답의 `areacode`·`cat1~3` 이 100% 빈 문자열로 온다
+(2026-08 실측). 지역을 지정하면 채워지는데, 그러면 **areaCode 자체가 없는 레코드 43%**
+(12,639 중 5,484)를 통째로 놓친다. 발급 화면상 `areaCode2`·`categoryCode2` 는
+**"미사용 (삭제예정 — 법정동/분류체계 코드로 대체)"** 이고, 신체계(`lclsSystm1~3`, `lDongRegnCd`)가
+원본, 구 코드가 파생이다.
+
+- 무지정 페이징으로 전량을 받고 **신체계에서 구 코드를 역산**한다 —
+  `sync_tour.py` 의 `LDONG_TO_AREA` · `LCLS1_MAP` 이 그 맵이고, 값은 추측이 아니라
+  지역별 조회의 **최빈값 실측**이다. lDong `12` 는 광주·전남 통합이라 모호(전남으로 둠)
+- 일일 한도 1,000회는 **계정이 아니라 오퍼레이션별**이다 — 목록 수집은 여유롭고 개요만 병목이다
+
+**2. `POST /api/places/attractions/bulk` 은 전체 동기화다 — 부분 레코드는 나머지를 지운다**
+
+`Attraction.syncFrom` 이라 **보내지 않은 필드는 유지가 아니라 null 로 덮인다.**
+예외는 개요 하나뿐(`overview = source.overview ?: overview` — 목록 재동기화가 며칠치 수집을
+날리던 걸 막으려 2026-08-17 추가).
+
+- 실측 사고: 검증용으로 `{contentId, lang, title, lat, lng}` 만 보냈다가 **경복궁 행의
+  주소·이미지·분류·지역코드를 실제로 날렸다** (`detailCommon2` 로 복구).
+  **개요만 예외라서 "개요가 남았으니 안전하다"는 착각을 하기 쉽다**
+- upsert 할 때는 **항상 전체 레코드**를 보낸다. 한 필드만 고치고 싶으면 place API 로 현재
+  레코드를 읽어 그 위에 덮어써서 보낸다(`backfill_overview.py` 의 `UPSERT_FIELDS` 방식).
+  **운영 데이터로 실험하지 않는다** — 꼭 해야 하면 살아있는 레코드에서 페이로드를 만든다
+
+
 ## API
 
 | Method | Path | 인증 | 설명 |

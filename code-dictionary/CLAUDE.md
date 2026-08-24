@@ -62,6 +62,41 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 - JpaEntity 가변 컬럼은 `private set` + 엔티티 메서드 변경 (entity-mutation.md)
 - 무거운 조회는 Repository interface `@Query` 대신 Querydsl QueryRepository (jpa-persistence.md §5)
 
+### ★ 도메인을 폴드할 때 고치는 곳은 **세 군데**다
+
+하나라도 빠지면 증상이 전부 다르고, **그중 하나는 배포가 성공한 것처럼 보인다.**
+
+| 파일 | 무엇 | 빠뜨렸을 때 |
+|---|---|---|
+| `CodeDictionaryApplication.kt` | `@SpringBootApplication(scanBasePackages)` | **조용한 404** — 컨텍스트도 뜨고 Flyway 도 도는데 그 도메인 컨트롤러만 매핑 안 됨 |
+| `DataSourceConfig.kt` | `entityManagerFactory().packages(...)` | 기동 실패 `not a managed type` |
+| `CodeDictionaryJpaConfig.kt` | `@EnableJpaRepositories` basePackages | 리포지토리 빈 없음 |
+
+- **`@EntityScan` 은 아무 효과가 없다.** EMF 가 `DataSourceConfig` 에 명시 정의돼 Boot 자동
+  구성이 back-off 한 상태다. 붙여두면 다음 사람이 스캔되는 줄 믿는다
+- **game 은 예외** — 전용 datasource/EMF 를 `GameDataSourceConfig` 가 따로 갖는다
+- 실측: deal(ADR-0069) 때 EMF 를, blog(ADR-0072) 때 scanBasePackages 를 빠뜨렸다.
+  **스캔 누락은 파드가 Ready 로 뜨고 다른 도메인도 멀쩡해서 배포 성공으로 보이는데 그 도메인 API 만
+  전부 404 다. 기존 컨텍스트 로드 테스트도 통과한다**(엔티티·리포지토리만 봤으므로)
+- **막는 유일한 자동 장치**: `CodeDictionaryContextLoadSpec` 의 "폴드된 도메인의 컨트롤러가
+  전부 빈으로 등록된다" 케이스에 새 컨트롤러를 한 줄 추가한다
+
+### ★ 적용된 Flyway 마이그레이션은 편집하지 않는다
+
+main 이 곧 배포 브랜치라 커밋 몇 분 뒤 **이미 운영 DB 에 적용된 상태**일 수 있다.
+편집하면 `validate` 가 EMF 생성 단계에서 실패해 서비스가 통째로 기동하지 못하고,
+**이 앱은 폴드 호스트라 개념사전·게임·전시·이력서·딜·블로그·랭킹이 전부 함께 죽는다**
+(2026-08-21 약 1시간). **이미지 태그 롤백이 안 듣는 것**이 이 사고의 특징이다 —
+이미지가 아니라 파일과 DB 의 불일치라 옛 이미지도 같은 체크섬 오류로 죽는다.
+
+- 바꿔야 하면 **언제나 다음 번호**로 뺀다 (CHECK 제약이면 `DROP CHECK` → `ADD CONSTRAINT`)
+- 사고 시: `SELECT version, checksum, success FROM flyway_schema_history` 로 적용본을 확인하고
+  로컬 파일의 Flyway CRC32 와 비교해 **어느 내용이 적용됐는지 특정한 뒤** 그 내용으로 되돌린다.
+  추측으로 repair 하지 않는다. 운영 DB 조회는 `~/.local/bin/oci-mysql code_dictionary_db "..."`
+- **새 마이그레이션을 붙이기 전에 최신 번호를 확인한다** — 여러 세션이 한 워킹트리를 써서
+  같은 번호를 동시에 잡은 적이 실제로 있다. 겹치면 Flyway 가 기동을 거부하고,
+  그러면 테스트 게이트가 죽어 **그 커밋의 모든 서비스 이미지가 안 만들어진다**
+
 ## Related
 
 - seed: `docs/portfolio-seed.md`, `docs/portfolio-dummy-seed.sql`
