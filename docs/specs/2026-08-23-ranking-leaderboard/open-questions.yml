@@ -4,11 +4,10 @@ questions:
     phase: pre-impl
     status: open
     owner: user
-    q: "공공데이터포털에서 한국석유공사 오픈 API 5종 **활용신청** (지역코드·지역별 최저가 TOP20·
-        반경 내 주유소·주유소 상세정보·전국 평균가격). 키는 기존 DATA_GO_KR_KEY 재사용이라
-        새로 만들 것이 없다. 개발단계 자동승인 / 운영단계 심의승인.
-        신청 후 화면의 End Point 를 OIL_API_BASE 로 넣는다.
-        그 전에는 stations.sample.jsonl 로 수집기 E2E 를 태운다."
+    q: "오피넷(opinet.co.kr) 회원가입 → **무료 API 이용신청** → 키 발급.
+        공공데이터포털은 쓸 수 없다 — 한국석유공사 항목이 `API 유형: LINK` 라 중계하지 않고
+        바로가기만 걸어둔 것이어서 포털 인증키가 발급되지 않는다.
+        발급 전에는 stations.sample.jsonl 로 수집기 E2E 를 태운다."
   - id: OQ-2
     phase: pre-impl
     status: closed
@@ -29,19 +28,22 @@ questions:
         '주유소 판매가격정보(지역별)' 을 얹는다 — 오퍼레이션 맵 한 곳만 바뀐다."
   - id: OQ-12
     phase: pre-impl
-    status: open
-    owner: user
-    q: "이용허락범위 확인 — 대장(data-sources.md §8)에 '공공누리(출처표시)'로 적어뒀지만
-        이는 레포의 다른 공공데이터 관례를 따른 값이고 신청 화면의 `이용허락범위` 필드를
-        직접 확인한 것이 아니다. 실제 값으로 대장을 고쳐야 한다 — 틀린 값이 대장에 있으면
-        화면 출처 표기 판단도 같이 틀어진다."
+    status: closed
+    q: "이용허락범위 — **닫힘(2026-08-24)**: '이용허락범위 제한 없음'. 추정으로 적었던
+        '공공누리(출처표시)'는 틀렸고 대장을 고쳤다. 출처 표기는 의무가 아니라 선택이다."
   - id: OQ-13
+    phase: pre-impl
+    status: closed
+    q: "End Point — **닫힘(2026-08-24)**: 포털 항목이 LINK 유형이라 오피넷 직접이다.
+        base=https://www.opinet.co.kr/api, 인증 파라미터 `code`, 오퍼레이션은 `.do` 로 되돌렸다.
+        판별 기준은 상세 페이지의 `API 유형` 한 줄 — REST/SOAP 면 포털 중계, LINK 면 제공기관 직접."
+  - id: OQ-14
     phase: pre-impl
     status: open
     owner: user
-    q: "End Point 호스트 확인 — apis.data.go.kr 이면 포털 serviceKey 로 끝(예상).
-        www.opinet.co.kr 이면 오피넷 키가 따로 필요하고, 그때는 opinet.py 의 인증 파라미터명을
-        serviceKey → code 로 바꾼다(원래 그렇게 짰다가 포털용으로 옮긴 코드다)."
+    q: "개발가이드에 `주유소 판매가격정보(지역별)`(지역 전량+가격)이 있는지. 있으면 수집을
+        최저가 TOP20 에서 전량으로 바꾼다 — 오퍼레이션 맵 한 곳만 고치면 되고, 화면의
+        '상위 20곳' 범위 고지도 걷어낼 수 있다(전국 약 11,000곳)."
   - id: OQ-11
     phase: pre-impl
     status: open

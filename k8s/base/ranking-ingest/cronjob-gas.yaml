@@ -16,7 +16,7 @@ metadata:
     app.kubernetes.io/part-of: commerce-platform
     ranking.kgd.io/job: "gas"
 spec:
-  # 키(data-go-kr-key)가 아직 없어도 suspend 하지 않는다 — 키 없는 실행은 즉시 종료하고,
+  # 키(opinet-api-key)가 아직 없어도 suspend 하지 않는다 — 키 없는 실행은 즉시 종료하고,
   # Secret 에 키를 넣는 날부터 스스로 돌기 시작한다 (place-ingest 와 같은 태도).
   suspend: false
   schedule: "0 20 * * *"        # 매일 UTC 20:00 = KST 05:00
@@ -51,21 +51,14 @@ spec:
               env:
                 - name: RANKING_API
                   value: "http://code-dictionary:8089"
-                # 공공데이터포털 활용신청 화면의 End Point. 기본값을 두지 않는 이유는
-                # 틀린 주소가 404 를 조용히 삼켜 새벽 배치가 말없이 실패하기 때문이다.
-                - name: OIL_API_BASE
-                  valueFrom:
-                    configMapKeyRef:
-                      name: ranking-ingest-config
-                      key: oil-api-base
-                      optional: true
-                # 참가격·식약처·TourAPI 와 **같은 포털 키**다 — 별도 키를 만들지 않는다.
+                # 오피넷 자체 키. 공공데이터포털의 한국석유공사 항목은 `API 유형: LINK` 라
+                # 포털이 중계하지 않고 바로가기만 걸어둔 것이어서 포털 인증키가 발급되지 않는다.
                 # 없으면 수집기가 "아직 안 켬"으로 보고 정상 종료한다.
-                - name: DATA_GO_KR_KEY
+                - name: OPINET_API_KEY
                   valueFrom:
                     secretKeyRef:
                       name: ranking-ingest-secrets
-                      key: data-go-kr-key
+                      key: opinet-api-key
                       optional: true
               resources:
                 # 전국 주유소가 만 단위라 메모리는 목록 한 벌 + JSON 직렬화 분이면 된다.

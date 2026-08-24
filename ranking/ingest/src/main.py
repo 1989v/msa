@@ -31,10 +31,11 @@ def log(message: str) -> None:
 
 
 def _api_key() -> str:
-    # 참가격·식약처·TourAPI 와 **같은 포털 키**다. 별도 키를 만들지 않는다.
-    key = os.environ.get("DATA_GO_KR_KEY")
+    # 오피넷 자체 키다. 공공데이터포털의 한국석유공사 항목은 LINK 유형이라 포털 인증키가
+    # 발급되지 않는다 — DATA_GO_KR_KEY 로는 부를 수 없다.
+    key = os.environ.get("OPINET_API_KEY")
     if not key:
-        raise SystemExit("DATA_GO_KR_KEY 가 필요합니다 (--file 로 샘플 실행은 키 없이 가능)")
+        raise SystemExit("OPINET_API_KEY 가 필요합니다 (--file 로 샘플 실행은 키 없이 가능)")
     return key
 
 
@@ -88,10 +89,11 @@ def _merge_by_station(rows: list[dict]) -> list[dict]:
 def _collect_from_api(key: str) -> list[dict]:
     """시군구 × 유종의 최저가 상위 20곳을 모은다.
 
-    포털에는 지역 단위 **전량**+가격 오퍼레이션이 없다 — 가격을 주는 지역 단위 경로는
-    최저가 TOP20 뿐이다(오피넷 직접 신청에만 전량이 있다). "최저가 랭킹"이 목적이라
-    데이터셋이 목적과 겹치지만, **전국 모든 주유소를 아는 것은 아니다** — 화면 문구가
-    그 사실을 감추면 안 된다.
+    "최저가 랭킹"이 목적이라 데이터셋이 목적과 겹치지만, **전국 모든 주유소를 아는 것은
+    아니다** — 화면 문구가 그 사실을 감추면 안 된다.
+
+    개발가이드에 `주유소 판매가격정보(지역별)`(전량+가격)이 있으면 그쪽으로 바꾼다.
+    그러면 이 제약이 사라진다 (OQ-14).
     """
     areas = [a for a in opinet.fetch_areas(key) if a["level"] == "SIGUN"]
     log(f"지역 {len(areas)}곳 × 유종 {len(opinet.PRODUCTS)}종 = {len(areas) * len(opinet.PRODUCTS)}콜")

@@ -9,7 +9,7 @@
 |---|---|
 | `:ranking:domain` | 순수 Kotlin — 보드·스냅샷·엔트리·등락·순위 산정. Spring/JPA 없음 |
 | `:ranking:feature` | Spring 라이브러리(비-bootable) — 조회 API · 스냅샷 배치 |
-| `ranking/ingest` | Python CronJob — 공공데이터포털 유가 API 수집 → 좌표 변환 → 내부 API 적재 |
+| `ranking/ingest` | Python CronJob — 오피넷 유가 API 수집 → 좌표 변환 → 내부 API 적재 |
 
 스키마·마이그레이션은 **호스트(code-dictionary)가 소유**한다 (`V20__ranking.sql`).
 deal/blog 과 같은 형태 — 전용 datasource 를 두지 않는다.
@@ -26,10 +26,9 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 
 ### 0. 우리가 아는 주유소는 전국 전량이 아니다
 
-공공데이터포털이 주는 유가 API 5종에는 **지역 단위 전량+가격이 없다** — 가격을 주는 지역 단위
-경로는 **최저가 TOP20** 뿐이다. 그래서 데이터셋은 **시군구별 싼 주유소 상위 20곳**(약 5,000곳)이다.
+현재 수집은 시군구 × 유종의 **최저가 TOP20** 이라 데이터셋은 **싼 주유소 상위 20곳**(약 5,000곳)이다.
 "최저가 랭킹"이 목적이라 목적과 겹치지만, **화면이 "전국 모든 주유소"라고 말하면 거짓**이 된다.
-전량은 오피넷 직접 신청(`주유소 판매가격정보(지역별)`)에만 있다.
+개발가이드에 `주유소 판매가격정보(지역별)`(전량+가격)이 있으면 오퍼레이션 맵 한 곳만 고쳐 넘어간다.
 
 ### 1. 좌표 형태가 오퍼레이션마다 다르다
 
@@ -82,11 +81,10 @@ cd ranking/ingest && python3 -m tests.test_katec && python3 -m tests.smoke_test
 
 | 키 | Secret / ConfigMap | 없으면 |
 |---|---|---|
-| `DATA_GO_KR_KEY` | `ranking-ingest-secrets/data-go-kr-key` | 수집 잡이 "아직 안 켬"으로 정상 종료 (샘플 JSONL 로 개발 가능) |
-| `OIL_API_BASE` | `ranking-ingest-config/oil-api-base` | 〃. **기본값을 두지 않는다** — 틀린 주소는 404 를 조용히 삼킨다 |
+| `OPINET_API_KEY` | `ranking-ingest-secrets/opinet-api-key` | 수집 잡이 "아직 안 켬"으로 정상 종료 (샘플 JSONL 로 개발 가능) |
 
-`DATA_GO_KR_KEY` 는 참가격·식약처·TourAPI 와 **같은 포털 키**다 — 새로 만들 것이 없고
-해당 API 별 **활용신청**만 하면 된다.
+**포털 키로는 부를 수 없다.** 포털의 한국석유공사 항목은 `API 유형: LINK` 라 중계하지 않고
+바로가기만 걸어둔 것이다 — opinet.co.kr 에서 직접 받는다. 인증 파라미터도 `code` 다.
 
 
 ## 다음 슬라이스

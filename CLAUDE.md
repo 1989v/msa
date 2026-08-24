@@ -84,9 +84,9 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **랭킹 리더보드**: `rank.1989v.com` — 무엇이든 줄세우는 공통 엔진 + 도메인별 수집기 → `docs/adr/ADR-0081-ranking-leaderboard-platform.md`.
   **순위는 현재값이 아니라 스냅샷 원장**이다 — 등락("지난주 대비 ↑3")이 재방문의 거의 유일한
   동기인데 덮어쓰면 만들 수 없다. 공통은 "줄 세운 결과"까지만 알고 도메인 이질성은 `payload` JSON 이
-  흡수한다(정규 컬럼으로 펴면 nullable 30개가 된다). **유가 원천은 공공데이터포털** — 참가격·TourAPI 와
-  같은 `DATA_GO_KR_KEY` 를 재사용한다(별도 가입 없음). 다만 포털에 지역 전량+가격이 없어
-  **아는 것은 시군구별 최저가 상위 20곳**이고, 화면이 이 범위를 밝힌다. **좌표는 KATEC 으로 올 때가
+  흡수한다(정규 컬럼으로 펴면 nullable 30개가 된다). **유가 원천은 오피넷 직접** — 포털의 한국석유공사
+  항목은 `API 유형: LINK` 라 포털 키로는 못 부른다(`serviceKey` 아니라 `code`). 현재 수집은 최저가
+  TOP20 이라 **아는 것은 시군구별 상위 20곳**이고, 화면이 이 범위를 밝힌다. **좌표는 KATEC 으로 올 때가
   있어** 그대로 저장하면 값은 그럴듯한 채로 지도 핀만 어긋나고, 이미 위경도인 걸 또 변환하면
   한반도 밖으로 날아간다. **사용자 요청 경로에 외부 호출이 없다** — 수집은 CronJob 이 하고
   길안내는 구글맵 링크(키·쿼터 없음)로 넘긴다. 경로 API 를 직접 부르면 출발지가 전국에 흩어져
@@ -170,7 +170,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | admin | (CLAUDE.md 미작성) | 백오피스 관리 도구 (FE only) — admin/ 디렉토리 존재 |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
 | blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |
-| ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 주유소 유가(시군구 × 유종 최저가 TOP20, 공공데이터포털) + 각 주유소 **구글맵 길찾기 링크**. `:ranking:domain`+`:ranking:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
+| ranking | `ranking/CLAUDE.md` | 랭킹 리더보드 — 무엇이든 줄세워 보여주는 곳. P1 은 주유소 유가(시군구 × 유종 최저가 TOP20, 오피넷) + 각 주유소 **구글맵 길찾기 링크**. `:ranking:domain`+`:ranking:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), 수집은 `ranking/ingest` CronJob, FE 는 portal-fe `rank.1989v.com` (ADR-0081) |
 | deal | (CLAUDE.md 미작성) | 혜택 링크 허브 — 카테고리별 제휴/일반 혜택 링크 큐레이션 + `/go/{slug}` 리다이렉터 + 클릭 계측. `:deal:domain`+`:deal:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `deal.1989v.com` (ADR-0069) |
 
 > charting 은 ADR-0036 P2-T20 에서 quant 로 통합 + Hard remove 완료 (2026-05-02). 서비스 특화 ADR 은 해당 서비스의 `docs/adr/`에 위치.

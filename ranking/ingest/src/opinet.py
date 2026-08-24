@@ -1,15 +1,13 @@
-"""유가정보 API 클라이언트 — 공공데이터포털(data.go.kr) 경유 (ADR-0081).
+"""유가정보 API 클라이언트 — 오피넷(한국석유공사) 직접 호출 (ADR-0081).
 
-데이터 주인은 한국석유공사(오피넷)지만 **호출은 공공데이터포털로 한다.** 이 프로젝트는 참가격·
-식약처·TourAPI 때문에 이미 `DATA_GO_KR_KEY` 를 갖고 있어 별도 가입이 필요 없기 때문이다.
+**공공데이터포털을 거치지 않는다.** 포털의 한국석유공사 항목은 `API 유형: LINK` 라
+포털이 중계하지 않고 제공기관 사이트로 바로가기만 걸어둔 것이다 — 활용신청 버튼도 없고
+포털 인증키도 발급되지 않는다. 키는 opinet.co.kr 에서 직접 받는다.
 
-포털이 제공하는 것은 5종뿐이다 — 지역코드 · 지역별 최저가 TOP20 · 반경 내 주유소(5km) ·
-주유소 상세정보(ID) · 전국 평균가격. **지역 단위 전량+가격은 여기 없다**(오피넷 직접 신청에만
-있다). 그래서 수집은 시군구 × 유종의 **최저가 TOP20** 을 모으는 방식이다 —
-"최저가 랭킹"이 목적이라 데이터셋이 목적과 정확히 겹친다.
+인증 파라미터가 포털 표준(`serviceKey`)이 아니라 **`code`** 인 것도 그래서다.
 
-> 엔드포인트 주소와 오퍼레이션 이름은 **활용신청 후 받는 API 명세서가 원본**이다.
-> 어긋나면 [OPERATIONS] 와 `OIL_API_BASE` 두 곳만 고친다 (open-questions OQ-4/OQ-6).
+> 오퍼레이션 이름은 **키 발급 후 받는 개발가이드가 원본**이다. 어긋나면 [OPERATIONS] 한
+> 곳만 고친다 (open-questions OQ-6/OQ-11).
 """
 from __future__ import annotations
 
@@ -21,16 +19,18 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 
-# 활용신청 화면의 End Point 를 그대로 넣는다. **기본값을 두지 않는다** — 틀린 주소로 부르면
-# 404 를 200 처럼 삼키거나 조용히 빈 목록이 되어, 새벽에 도는 배치가 아무 말 없이 실패한다.
-BASE = os.environ.get("OIL_API_BASE", "").rstrip("/")
+BASE = os.environ.get("OIL_API_BASE", "https://www.opinet.co.kr/api").rstrip("/")
 
+# 개발가이드의 오퍼레이션 이름이 다르면 여기만 고친다.
+#
+# `low_top` 은 예전 가이드에서 `lowTop10.do` 였고 지금 목록은 TOP20 이라, 이름이 바뀌었을
+# 가능성이 있다 — 발급 후 가장 먼저 확인할 값이다.
 OPERATIONS = {
-    "area_code": "areaCode",       # 지역코드 조회
-    "low_top": "lowTop20",         # 지역별 최저가 주유소 TOP20 (가격 포함)
-    "around": "aroundAll",         # 반경 내 주유소 (5km, 가격 포함)
-    "detail": "detailById",        # 주유소 상세정보(ID)
-    "avg_all": "avgAllPrice",      # 전국 평균가격
+    "area_code": "areaCode.do",       # 지역코드 조회
+    "low_top": "lowTop20.do",         # 지역별 최저가 주유소 TOP20 (가격 포함)
+    "around": "aroundAll.do",         # 반경 내 주유소 (가격 포함)
+    "detail": "detailById.do",        # 주유소 상세정보(ID)
+    "avg_all": "avgAllPrice.do",      # 전국 평균가격
 }
 
 # 유종 코드. 발급 가이드에서 확인해 여기서만 고친다 (OQ-6).
@@ -38,8 +38,8 @@ PRODUCT_GASOLINE = "B027"   # 휘발유
 PRODUCT_DIESEL = "D047"     # 경유
 PRODUCTS = (PRODUCT_GASOLINE, PRODUCT_DIESEL)
 
-# 공공데이터포털의 표준 오류 코드. **HTTP 는 200 인 채로 본문에 담겨 온다** —
-# 상태코드만 보면 한도 초과를 성공으로 읽는다.
+# 한도 초과·인증 실패가 **HTTP 200 인 채로 본문에 담겨 오는** 경우가 있다 —
+# 상태코드만 보면 성공으로 읽는다. 포털 표준 코드도 함께 본다(응답이 그 형태로 올 때가 있다).
 QUOTA_CODES = {"22", "LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR"}
 AUTH_CODES = {"30", "SERVICE_KEY_IS_NOT_REGISTERED_ERROR", "31", "DEADLINE_HAS_EXPIRED_ERROR"}
 
@@ -61,12 +61,11 @@ def log(message: str) -> None:
 
 def _fetch(operation: str, params: dict[str, str], key: str) -> str:
     if not BASE:
-        raise ApiNotConfigured("OIL_API_BASE 가 필요합니다 (활용신청 화면의 End Point)")
+        raise ApiNotConfigured("OIL_API_BASE 가 비어 있습니다")
 
-    # serviceKey 는 **Encoding 키를 그대로** 넣는다. urlencode 가 다시 인코딩하면
-    # 퍼센트가 이중으로 escape 돼 인증이 깨진다 (참가격 적재에서 겪은 것과 같은 함정).
-    query = urllib.parse.urlencode({"out": "json", **params})
-    url = f"{BASE}/{OPERATIONS[operation]}?serviceKey={key}&{query}"
+    # 오피넷은 인증 파라미터가 `code` 다 (포털 표준 `serviceKey` 가 아니다).
+    query = urllib.parse.urlencode({"code": key, "out": "json", **params})
+    url = f"{BASE}/{OPERATIONS[operation]}?{query}"
 
     for wait in (*_RETRY_WAITS, None):
         try:
