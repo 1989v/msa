@@ -12,6 +12,13 @@ INPUT=$(cat)
 CMD=$(echo "$INPUT" | jq -r '.tool_input.command // ""')
 [ -z "$CMD" ] && exit 0
 
+# 히어독 본문·커밋 메시지 안의 낱말에는 반응하지 않는다 — 실제로 오탐이 났다
+# (`pkill` 을 **설명하는** 커밋 메시지를 쓰다가 가드가 걸렸다).
+# 히어독으로 파일에 쓰는 명령이면 그 본문은 실행 대상이 아니다.
+case "$CMD" in
+  *"<<'"*|*'<<"'*|*"cat > "*|*"git commit"*) exit 0 ;;
+esac
+
 RISK=""
 HINT=""
 
