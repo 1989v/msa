@@ -176,9 +176,14 @@ class GameSchemaIntegrationSpec(
                         queryRepository.search(GameSearchCriteria(q = "픽스처"), pageable)
                             .content.map { it.slug } shouldBe listOf(DRAFT_SLUG)
 
-                        // 상태 필터
-                        queryRepository.search(GameSearchCriteria(statuses = setOf(GameStatus.DRAFT)), pageable)
-                            .content.map { it.slug } shouldBe listOf(DRAFT_SLUG)
+                        // 상태 필터 — **포함**을 본다. 시드에도 DRAFT 가 있을 수 있으므로
+                        // (V60 네온 드리프터가 그렇다) "픽스처 하나뿐" 을 기대하면 시드가 늘 때마다 깨진다.
+                        // 여기서 지키려는 것은 "DRAFT 로 거르면 DRAFT 만 나온다" 이다.
+                        val drafts = queryRepository
+                            .search(GameSearchCriteria(statuses = setOf(GameStatus.DRAFT)), PageRequest.of(0, 200))
+                            .content
+                        drafts.map { it.slug } shouldContain DRAFT_SLUG
+                        drafts.map { it.status }.toSet() shouldBe setOf(GameStatus.DRAFT)
 
                         // 장르 필터
                         val strategy = queryRepository
