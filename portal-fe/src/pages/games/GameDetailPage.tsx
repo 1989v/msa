@@ -125,18 +125,26 @@ export default function GameDetailPage() {
    * 실패해도(iOS Safari 는 임의 요소 전체화면이 없다) 몰입 오버레이가 뷰포트를 채우므로
    * 기기를 돌리면 그대로 가로가 된다 — 그래서 실패를 삼킨다.
    */
+  /* 방향 값을 **ref 로** 들고 있는다 — `handlePlay` 가 이 값에 의존하면 안 되기 때문이다.
+     `handlePlay` 는 상세 로드 effect 의 의존성이라, 정체성이 바뀌면 그 effect 가 다시 돌고
+     그러면 상세를 또 가져와 다시 렌더 → 무한 루프가 된다. 2026-08-25 운영 회귀로 실측:
+     화면이 깜빡이며 "불러오는 중" 에서 진입이 막혔다. 아래 주석이 경고하던 바로 그것이다. */
+  const orientationRef = useRef<string | null | undefined>(undefined);
+  orientationRef.current = game?.orientation;
+
   const autoLandscape = useCallback(() => {
     const go = shouldAutoLandscape({
-      orientation: game?.orientation,
+      orientation: orientationRef.current,
       coarsePointer: window.matchMedia('(pointer: coarse)').matches,
       portrait: window.innerHeight >= window.innerWidth,
       fullscreen: !!document.fullscreenElement,
     });
     if (go) enterLandscape();
-  }, [game?.orientation, enterLandscape]);
+  }, [enterLandscape]);
 
   /* 자동 시작(파티 인계)이 상세 로드 직후 이 함수를 부르므로 slug 기준으로 고정한다 —
-     매 렌더마다 새로 만들면 그 effect 가 계속 다시 돈다 */
+     매 렌더마다 새로 만들면 그 effect 가 계속 다시 돈다.
+     **의존성에 game 에서 파생된 값을 넣지 마라** — 위 orientationRef 가 그래서 있다. */
   const handlePlay = useCallback(async () => {
     setPlaying(true);
     autoLandscape();
@@ -146,7 +154,8 @@ export default function GameDetailPage() {
     } catch {
       // 세션 기록 실패는 플레이를 막지 않는다
     }
-  }, [slug, autoLandscape]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
 
   useEffect(() => {
     setGame(null);
