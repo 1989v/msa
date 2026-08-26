@@ -7,6 +7,9 @@
 ## Commands
 
 ```bash
+# 최초 1회 — git 훅 활성화 (클론 직후에는 훅이 하나도 안 깔려 있다)
+scripts/install-hooks.sh                                # .githooks/ 를 core.hooksPath 로
+
 # Build
 ./gradlew build                                         # 전체 빌드
 ./gradlew :{service}:app:build                          # 단일 서비스 빌드
@@ -51,6 +54,11 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **Common 기능 로드**: Auto-Configuration (`kgd.common.*`) → `docs/architecture/common-features.md`
 - **코드 생성 컨벤션**: 네이밍, DI 방향, 도메인 패턴 → `docs/conventions/code-convention.md`
 - **Kotlin 코드 스타일 & 리팩터링**: 관용구, null/불변, 애너테이션 순서, 코드 스멜 렌즈, behavior-preserving 정리 → `docs/conventions/kotlin-style.md`
+- **설계 판정 원칙 (필수)**: KISS·YAGNI·DRY·Rule of Three·조기 최적화 금지·Occam 동점 처리, 그리고
+  **최소 수정(Minimal Diff)이 기본값** → `docs/conventions/kotlin-style.md` §1·§1.1.
+  **보이스카우트 규칙은 "발견 → 보고"까지다** — 태스크와 무관한 스멜은 고치지 말고 무엇을·왜 고쳐야
+  하는지 보고하고 **진행 여부를 묻는다**. 승인 없이 손대면 diff 가 두 이유를 섞어 되돌릴 수 없다
+  (예외: 안 고치면 작업이 성립하지 않는 것 — 컴파일 실패·게이트 위반)
 - **JPA 영속성 컨벤션**: enum STRING, FK-as-ID / 연관관계 정책, Flyway+validate, Querydsl 조회 → `docs/conventions/jpa-persistence.md`
 - **멱등성 패턴**: Kafka Consumer 중복 처리 방어 → `docs/conventions/idempotent-consumer.md` (실천 가이드, ADR-0012/0029)
 - **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
