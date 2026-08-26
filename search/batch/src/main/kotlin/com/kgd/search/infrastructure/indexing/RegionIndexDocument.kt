@@ -15,6 +15,6 @@ data class RegionIndexDocument(
     val nameKo: String? = null,
     val level: String,
     val countryCode: String? = null,
-    val location: AttractionIndexDocument.GeoPoint? = null,
+    val location: GeoPoint? = null,
     val population: Long = 0,
 )

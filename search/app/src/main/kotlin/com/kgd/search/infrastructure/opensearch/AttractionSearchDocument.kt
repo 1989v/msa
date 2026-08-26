@@ -34,7 +34,6 @@ data class AttractionSearchDocument(
     val modifiedAt: LocalDateTime? = null,
 ) {
     @JsonIgnoreProperties(ignoreUnknown = true)
-    data class GeoPoint(val lat: Double = 0.0, val lon: Double = 0.0)
 
     fun toDomain(): AttractionDocument = AttractionDocument(
         id = id,

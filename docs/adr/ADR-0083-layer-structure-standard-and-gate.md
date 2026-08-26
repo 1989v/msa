@@ -105,7 +105,38 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 | `ci.yml` compile-gate | 모든 PR·main push, 변경 범위 무관 | 신호. 컴파일보다 **먼저** 돌려 빨리 실패시킨다 |
 | `images.yml` | 이미지 굽기 직전 | 위반이 운영으로 나가는 것 |
 
+세 지점 모두 개별 태스크가 아니라 묶음 **`verifyArchitecture`** 를 부른다 — 개별 이름을 부르면 게이트를
+새로 만들 때 호출부 세 곳에 추가하는 걸 잊고, 정확히 이 문서가 처음에 만든 상태(`check` 에만 달린 채
+아무 데서도 안 도는)로 되돌아간다. **게이트를 새로 만들면 `verifyArchitecture` 에 매단다.**
+
 `check` 연결은 그대로 둔다 — `./gradlew build` 를 돌리는 사람에게는 그쪽이 자연스럽다.
+
+`verifyArchitecture` 가 묶는 것: `verifyLayerDependencies` · `verifyFlywayWiring` · `verifyExternalApiQuota` ·
+`verifySearchIndexContract`(매핑 JSON ↔ 문서 클래스 필드, 아래).
+
+### 5-1) `verifySearchIndexContract` — 읽기 모델은 어긋나도 컴파일된다
+
+검색 인덱스마다 쓰기(`:batch`·`:consumer`)와 읽기(`:app`) 문서 클래스가 따로 있다. **합치지 않는 것이 맞다** —
+셋은 별개 배포 단위(API tier / Worker / CronJob, ADR-0058)라 클래스를 공유하면 색인 쪽 필드 추가가 검색 API
+재배포를 강제하고, 애너테이션 비대칭(`쓰기 @JsonInclude(NON_NULL)` / `읽기 @JsonIgnoreProperties(ignoreUnknown = true)`)이
+바로 그 독립 배포를 가능하게 한다. 실제로 갈라지기도 한다(`attractions` 의 `idSort`·`titleJamo` 는 쓰기 전용).
+
+문제는 나뉜 것이 아니라 **나뉜 것을 아무도 맞춰보지 않는다**는 점이었다. 읽기 클래스는 `ignoreUnknown = true`
+라서 필드를 빠뜨려도 컴파일 에러가 아니라 조용히 기본값(0/null)으로 읽힌다 — 검색 결과의 값이 비어야 알아챈다.
+계약의 SSOT 는 Kotlin 클래스가 아니라 `search/batch/src/main/resources/opensearch/*-index.json` 이므로,
+게이트가 각 클래스를 그 매핑의 투영인지 본다.
+
+| 역할 | 규칙 |
+|---|---|
+| 쓰기 (`*IndexDocument`) | 필드 집합 == 매핑 키 집합 (정확히) |
+| 읽기 (`*SearchDocument`) | 매핑 키의 부분집합. 빠진 것은 `searchReadOmitted` 에 **이유와 함께** 적는다 |
+
+`GeoPoint` 는 `attractions` 문서의 중첩 타입이었고 `regions` 문서가 그걸 참조했다 — 별개 인덱스가 남의 문서
+정의에 묶여 attractions 를 손대면 regions 가 따라 깨진다. 2026-08-26 에 각 모듈의 top-level 타입으로 뺐다.
+
+`ProductIndexDocument` 는 `:batch` 와 `:consumer` 에 바이트 단위로 같은 것이 2벌 있다. 둘 다 **쓰기** 측이라
+위의 분리 근거가 하나도 적용되지 않는 순수 중복이지만, 게이트가 드리프트를 잡으므로 위험이 사라졌다 —
+Rule of Three 로 **세 번째 사본이 생길 때** 공유 모듈을 만든다(지금 만들면 두 배포 단위를 다시 묶는다).
 
 ### 6) 게이트 밖 모듈 — 명시적 예외
 

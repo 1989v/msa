@@ -45,7 +45,6 @@ data class AttractionIndexDocument(
     val modifiedAt: LocalDateTime? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
-    data class GeoPoint(val lat: Double, val lon: Double)
 
     companion object {
         fun fromDomain(doc: AttractionDocument) = AttractionIndexDocument(

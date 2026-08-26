@@ -62,10 +62,13 @@
    **DTO 를 `service` 패키지에 두지 않는다**: 구현을 부르는 것과 타입을 쓰는 것은 다르지만 위치가 같으면
    규칙이 구분하지 못한다. `dto` 로 옮긴다.
 
-   > **주의 — 인터페이스를 붙이면 Spring 프록시가 CGLIB 에서 JDK 로 바뀐다.** `@Cacheable`/`@Transactional`
-   > 이 걸린 클래스에 인터페이스가 생기면 그 빈은 `jdk.proxy$Proxy` 가 되고, **구상 타입으로 주입하던 곳은
-   > 기동 시 `BeanNotOfRequiredTypeException` 으로 죽는다**(2026-08-26 code-dictionary 에서 실제 발생).
-   > 컨트롤러만 고치면 안 되고 서비스끼리·테스트의 `@Autowired`·MockK 목 타입까지 함께 인터페이스로 옮긴다.
+   > **주의 — 인터페이스를 붙이면 프록시 방식이 바뀔 수 있다.** `@Cacheable`/`@Transactional` 이 걸린 클래스에
+   > 인터페이스가 생기면 그 빈이 JDK 프록시가 되어 **구상 타입으로 주입하던 곳이 `BeanNotOfRequiredTypeException`
+   > 으로 죽는다.** 앱 자체는 안전하다 — `@SpringBootApplication` 이 켜는 `AopAutoConfiguration` 이
+   > `spring.aop.proxy-target-class` 기본값(true)으로 CGLIB 을 강제하기 때문이다. 위험한 곳은 **auto-config 가
+   > 안 도는 최소 테스트 컨텍스트**다(맨 `@EnableCaching` = JDK 프록시). 2026-08-26 code-dictionary 에서
+   > 실제로 여기서만 깨졌다 — 그런 컨텍스트에는 `@EnableCaching(proxyTargetClass = true)` 로 프로덕션과 맞춰
+   > 두어야 프로덕션에는 없는 실패가 나지 않는다. 그와 별개로 주입은 컨트롤러·서비스·테스트 모두 인터페이스로 옮긴다.
 
 8. **application 은 infrastructure 를 import 하지 않는다.** `JpaRepository`·`JpaEntity`·metrics·
    properties 를 서비스에 직접 주입하는 것이 가장 흔한 위반이다. **`presentation` 도 같은 규칙**이고,

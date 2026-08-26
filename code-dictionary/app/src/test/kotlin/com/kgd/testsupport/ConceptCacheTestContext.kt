@@ -21,7 +21,10 @@ import org.springframework.context.annotation.ComponentScan
  * `cacheManager` 가 중복 정의되어 `BeanDefinitionOverrideException` 으로 부팅이 깨진다.
  */
 @SpringBootConfiguration
-@EnableCaching
+// 프로덕션과 같은 프록시 방식으로 맞춘다 — 앱은 @SpringBootApplication 이라 AopAutoConfiguration 이
+// spring.aop.proxy-target-class 기본값(true)으로 CGLIB 을 강제한다. 여기는 auto-config 가 안 도는
+// 최소 컨텍스트라 기본값(JDK 프록시)이 걸리고, 그러면 프로덕션에서는 나지 않는 실패가 난다.
+@EnableCaching(proxyTargetClass = true)
 @ComponentScan(
     basePackageClasses = [
         ConceptService::class,

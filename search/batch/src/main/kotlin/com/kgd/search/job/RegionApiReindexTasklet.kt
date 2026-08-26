@@ -2,6 +2,7 @@ package com.kgd.search.job
 
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument
+import com.kgd.search.infrastructure.indexing.GeoPoint
 import com.kgd.search.infrastructure.indexing.IndexAliasManager
 import com.kgd.search.infrastructure.indexing.OsBulkDocumentProcessor
 import com.kgd.search.infrastructure.indexing.RegionIndexDocument
@@ -54,7 +55,7 @@ class RegionApiReindexTasklet(
                         level = region.level,
                         countryCode = region.countryCode,
                         location = if (region.latitude != null && region.longitude != null) {
-                            AttractionIndexDocument.GeoPoint(lat = region.latitude, lon = region.longitude)
+                            GeoPoint(lat = region.latitude, lon = region.longitude)
                         } else null,
                         population = region.population ?: 0,
                     )

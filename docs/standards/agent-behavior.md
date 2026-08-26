@@ -151,8 +151,9 @@ python3 ai/plugins/hns/scripts/doc_map.py --check
 
 ### L1/L2: Automated Review
 - 프로젝트 린터 실행 → 위반 시 수정
-- `./gradlew verifyLayerDependencies` → 레이어 규칙(ADR-0083) 위반 시 수정. 허용목록에 새 항목을 넣어 통과시키지 않는다.
-  pre-push 훅과 CI(compile-gate·images)가 같은 태스크를 부르므로, 여기서 넘긴 위반은 push 나 배포에서 다시 걸린다
+- `./gradlew verifyArchitecture` → 레이어(ADR-0083)·Flyway 배선·외부 API 쿼터·검색 인덱스 계약을 한 번에.
+  허용목록에 새 항목을 넣어 통과시키지 않는다. pre-push 훅과 CI(compile-gate·images)가 같은 묶음 태스크를
+  부르므로, 여기서 넘긴 위반은 push 나 배포에서 다시 걸린다. **게이트를 새로 만들면 `verifyArchitecture` 에 매단다**
 
 ### L3: Fresh Context Review (품질 모드)
 - 서브에이전트로 fresh context reviewer 호출

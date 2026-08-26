@@ -3,7 +3,7 @@ name: ci
 # PR/main 머지 전 사전 검증.
 #
 # 네 job (병렬):
-#   - compile-gate       : 구조 게이트(ADR-0083) + Kotlin/Java 컴파일 검증 (test 는 미포함)
+#   - compile-gate       : 구조 게이트(verifyArchitecture) + Kotlin/Java 컴파일 검증 (test 는 미포함)
 #   - test-gate          : 변경된 JVM 서비스만 ./gradlew test (PR 전용)
 #   - yaml-validate      : application*.yml syntax + duplicate key 검증
 #   - kustomize-validate : k8s overlay 렌더 검증
@@ -74,8 +74,9 @@ jobs:
 
       # 구조 게이트는 `check` 에 붙어 있는데 CI 는 `test` 만 돈다 → 여기서 직접 부른다.
       # 텍스트 스캔이라 컴파일 없이 수 초에 끝나고, 컴파일보다 먼저 실패해야 신호가 빠르다.
-      - name: ./gradlew verifyLayerDependencies verifyFlywayWiring verifyExternalApiQuota
-        run: ./gradlew verifyLayerDependencies verifyFlywayWiring verifyExternalApiQuota --no-daemon
+      # 묶음 태스크라 게이트가 늘어도 이 줄은 그대로다.
+      - name: ./gradlew verifyArchitecture
+        run: ./gradlew verifyArchitecture --no-daemon
 
       - name: ./gradlew compileKotlin compileJava
         run: ./gradlew compileKotlin compileJava --no-daemon

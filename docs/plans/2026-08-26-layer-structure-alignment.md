@@ -148,10 +148,12 @@ P1~P6 을 끝낸 뒤 재측정에서 **완료 기준의 지표 자체가 틀렸�
 - DTO 가 `service` 패키지에 살면 규칙이 구현 호출과 구별할 수 없어 6개를 `dto` 로 이동.
 - 게이트 규칙 ④ 추가 + 허용목록 `useCaseGateExempt` (비어 있다).
 
-**걸린 것**: 인터페이스를 붙이자 `@Cacheable` 이 걸린 `ConceptService` 의 프록시가 CGLIB → JDK 로 바뀌어
-구상 타입으로 주입하던 곳이 `BeanNotOfRequiredTypeException` 으로 죽었다. 컨트롤러만 바꾸면 안 되고
-서비스끼리(`ResumeQueryService`→`GetResumeProfileUseCase`)·테스트 `@Autowired`·MockK 목 타입까지 옮겨야 한다.
-**테스트가 없었으면 배포 후 기동 실패로 알았을 문제다.**
+**걸린 것**: 인터페이스를 붙이자 `@Cacheable` 이 걸린 `ConceptService` 의 빈이 JDK 프록시가 되어 구상 타입으로
+주입하던 곳이 `BeanNotOfRequiredTypeException` 으로 죽었다. **원인을 다시 재보니 앱이 아니라 테스트 컨텍스트
+한정이었다** — `@SpringBootApplication` 은 `AopAutoConfiguration` 이 `spring.aop.proxy-target-class` 기본값(true)으로
+CGLIB 을 강제하는데, `ConceptCacheTestContext` 는 auto-config 가 안 도는 최소 컨텍스트라 맨 `@EnableCaching`
+기본값(JDK)이 걸렸다. `@EnableCaching(proxyTargetClass = true)` 로 프로덕션과 맞추자 구상 주입도 통과한다(실측).
+주입은 컨벤션대로 인터페이스로 두되, **프로덕션에 없는 실패를 내는 테스트 컨텍스트를 고치는 것이 진짜 수정**이다.
 
 **검증**: 일부러 만든 위반으로 규칙 ①·④가 실패하는 것 확인 후 원복, DTO import 는 통과(오탐 없음),
 code-dictionary 41 · game · blog · deal · ranking · search · analytics · recommendation · member · order · commerce test 통과.

@@ -13,6 +13,6 @@ data class RegionSearchDocument(
     val nameKo: String? = null,
     val level: String,
     val countryCode: String? = null,
-    val location: AttractionSearchDocument.GeoPoint? = null,
+    val location: GeoPoint? = null,
     val population: Long = 0,
 )

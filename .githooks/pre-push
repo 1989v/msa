@@ -5,7 +5,7 @@
 #   1. GitHub auth account = 1989v
 #   2. push 되는 커밋의 author = kgd <1989v@naver.com>
 #   3. 서브모듈 포인터가 원격에 실제로 존재
-#   4. Kotlin 소스가 섞여 있으면 레이어/배선 게이트 (ADR-0083)
+#   4. Kotlin 소스가 섞여 있으면 구조 게이트 verifyArchitecture (ADR-0083)
 #
 # main 이 곧 배포 브랜치라 CI 는 "밀고 난 뒤" 다. 여기가 위반을 막을 수 있는 마지막 지점이다.
 
@@ -97,10 +97,11 @@ done
 
 # --- Check 4: 레이어/배선 게이트 (ADR-0083 / 0082 / Flyway) ---
 # `check` 에 붙어 있지만 CI 도 로컬도 보통 `test` 만 돌린다 — Kotlin 이 섞인 push 에서만 직접 부른다.
+# 개별 태스크가 아니라 묶음(verifyArchitecture)을 부른다 — 게이트를 새로 만들 때 호출부 추가를 잊지 않도록.
 # 텍스트 스캔이라 컴파일하지 않는다 (측정 ~7s).
 if [ -n "$KT_TOUCHED" ]; then
-    echo "▶ 레이어/배선 게이트 (verifyLayerDependencies · verifyFlywayWiring · verifyExternalApiQuota)"
-    if ! ./gradlew -q verifyLayerDependencies verifyFlywayWiring verifyExternalApiQuota; then
+    echo "▶ 구조 게이트 (verifyArchitecture)"
+    if ! ./gradlew -q verifyArchitecture; then
         echo ""
         echo "❌ PUSH BLOCKED: 구조 게이트 위반 (ADR-0083)"
         echo ""

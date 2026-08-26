@@ -347,3 +347,118 @@ val verifyLayerDependencies by tasks.registering {
 }
 
 subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyLayerDependencies) } } }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 검색 인덱스 계약 — 매핑 JSON 과 Kotlin 문서 클래스가 어긋나지 않는지 (ADR-0055/0065)
+//
+// 인덱스마다 쓰기(:batch·:consumer)와 읽기(:app) 문서 클래스가 따로 있다. 별개 배포 단위라
+// 클래스를 합치지 않는 것이 맞지만, 그러면 26개 필드가 여러 파일에 흩어진 채 **아무것도 어긋남을
+// 잡지 않는다.** 특히 읽기 쪽은 @JsonIgnoreProperties(ignoreUnknown = true) 라 필드를 빠뜨려도
+// 컴파일 에러가 아니라 조용히 기본값(0/null)으로 읽힌다 — 검색 결과의 값이 비어야 알아챈다.
+//
+// 계약의 SSOT 는 Kotlin 클래스가 아니라 매핑 JSON 이고, 이 검사는 각 클래스가 그 투영인지 본다.
+//   쓰기 클래스 == 매핑 키 (정확히 같아야 한다 — 매핑에 없는 필드를 색인하거나, 선언된 필드를 비운다)
+//   읽기 클래스 ⊆ 매핑 키 (빠진 것은 아래 allowlist 에 "왜" 를 적는다)
+val searchIndexContracts = listOf(
+    Triple("regions", "search/batch/src/main/resources/opensearch/regions-index.json", listOf(
+        "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/RegionIndexDocument.kt" to "write",
+        "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/RegionSearchDocument.kt" to "read",
+    )),
+    Triple("attractions", "search/batch/src/main/resources/opensearch/attractions-index.json", listOf(
+        "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/AttractionIndexDocument.kt" to "write",
+        "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchDocument.kt" to "read",
+    )),
+    Triple("products", "search/batch/src/main/resources/opensearch/products-index.json", listOf(
+        "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/ProductIndexDocument.kt" to "write",
+        "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/indexing/ProductIndexDocument.kt" to "write",
+        "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/ProductSearchDocument.kt" to "read",
+    )),
+)
+
+// 읽기 클래스가 의도적으로 안 읽는 필드 — 항목마다 "왜" 를 적는다
+val searchReadOmitted = mapOf(
+    "attractions" to mapOf(
+        "idSort" to "정렬 전용 색인 필드 — 응답에 쓰지 않는다",
+        "titleJamo" to "자모 분해 검색 전용 — 응답에 쓰지 않는다",
+    ),
+)
+
+val verifySearchIndexContract by tasks.registering {
+    group = "verification"
+    description = "OpenSearch 매핑 JSON 과 문서 클래스 필드가 일치하는지 확인 (ADR-0055/0065)"
+    doLast {
+        val valLine = Regex("""^\s+(?:@\w+(?:\([^)]*\))?\s+)*val\s+(\w+)\s*:""", RegexOption.MULTILINE)
+        val failures = mutableListOf<String>()
+
+        searchIndexContracts.forEach { (index, mappingPath, classes) ->
+            val mappingFile = rootProject.file(mappingPath)
+            if (!mappingFile.exists()) {
+                failures += "[매핑 없음] $index: $mappingPath"
+                return@forEach
+            }
+            @Suppress("UNCHECKED_CAST")
+            val parsed = groovy.json.JsonSlurper().parse(mappingFile) as Map<String, Any?>
+            val mappings = parsed["mappings"] as? Map<String, Any?>
+            val mappingKeys = (mappings?.get("properties") as? Map<String, Any?>)?.keys?.toSortedSet()
+            if (mappingKeys == null) {
+                failures += "[매핑 형식] $index: mappings.properties 를 못 읽었다"
+                return@forEach
+            }
+
+            classes.forEach { (classPath, role) ->
+                val f = rootProject.file(classPath)
+                if (!f.exists()) {
+                    failures += "[클래스 없음] $index($role): $classPath"
+                    return@forEach
+                }
+                // data class 본문의 val 만 — 중첩 타입(GeoPoint 등)은 별도 파일이라 섞이지 않는다
+                val body = f.readText().substringAfter("data class ").substringAfter("(").substringBefore("\n)")
+                val fields = valLine.findAll(body).map { it.groupValues[1] }.toSortedSet()
+                val name = f.name.removeSuffix(".kt")
+
+                val extra = fields - mappingKeys
+                if (extra.isNotEmpty()) {
+                    failures += "[$index/$role] $name 에 매핑에 없는 필드: ${extra.joinToString(", ")}"
+                }
+                val missing = mappingKeys - fields
+                when (role) {
+                    "write" -> if (missing.isNotEmpty()) {
+                        failures += "[$index/write] $name 이 매핑 필드를 안 채운다: ${missing.joinToString(", ")}"
+                    }
+                    "read" -> {
+                        val allowed = searchReadOmitted[index].orEmpty().keys
+                        val unexplained = missing - allowed
+                        if (unexplained.isNotEmpty()) {
+                            failures += "[$index/read] $name 이 매핑 필드를 안 읽는다(이유 미기재): ${unexplained.joinToString(", ")}"
+                        }
+                    }
+                }
+            }
+        }
+
+        if (failures.isNotEmpty()) {
+            throw GradleException(
+                failures.joinToString(
+                    prefix = "검색 인덱스 계약 불일치:\n  ",
+                    separator = "\n  ",
+                    postfix = "\n\n매핑 JSON(search/batch/src/main/resources/opensearch/)이 SSOT 다. 클래스를 그것에 맞춘다.\n" +
+                        "읽기 쪽이 일부러 안 읽는 필드라면 루트 build.gradle.kts 의 searchReadOmitted 에 이유를 적는다.\n" +
+                        "읽기 클래스는 ignoreUnknown = true 라 빠뜨려도 컴파일이 통과하고 값만 조용히 빈다.",
+                ),
+            )
+        }
+    }
+}
+
+subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifySearchIndexContract) } } }
+
+/**
+ * 구조 게이트 묶음. pre-push 훅과 CI 는 **이 태스크 하나만** 부른다 —
+ * 개별 이름을 부르면 게이트를 새로 만들 때 호출부에 추가하는 걸 잊고,
+ * `check` 에만 달린 채 아무 데서도 안 도는 상태가 된다 (2026-08-26 실제로 그랬다).
+ */
+val verifyArchitecture by tasks.registering {
+    group = "verification"
+    description = "레이어·배선·쿼터·검색 인덱스 계약 게이트를 한 번에"
+    dependsOn(verifyLayerDependencies, verifyFlywayWiring, verifyExternalApiQuota, verifySearchIndexContract)
+}
