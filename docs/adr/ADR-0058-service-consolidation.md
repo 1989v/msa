@@ -91,6 +91,10 @@ JVM 안에서 N벌 — 풀 사이즈로 조절. 별도 JVM N개보다 훨씬 저
 
 1. **모듈 간 직접 빈 주입 금지** — 컨텍스트 간 통신은 Kafka(또는 HTTP)로만. `{domain}:feature` 는
    다른 feature 를 **의존하지 않는다** → 교차 import 가 **컴파일 에러로 차단**(결합 구조적 불가).
+
+   > 2026-08-26 보강: "컴파일 에러로 차단" 은 feature 끼리에만 참이다. **호스트 앱은 폴드된 도메인을
+   > 의존하므로 컴파일이 통과한다** — 즉 이 불변식에는 강제 장치가 없었다. `verifyArchitecture` 의
+   > 규칙 ⑦(교차 서비스 import 금지, 합성 루트만 예외)이 이제 그 자리를 메운다 (ADR-0083).
 2. 컨텍스트 간 이벤트는 **같은 JVM 이라도 Kafka 유지**(in-process @EventListener 전환 금지).
 3. **스키마·datasource·EMF·TM·outbox 는 도메인별 분리**(공유 금지). 도메인 `@Transactional` 은
    자기 TM 한정자(`@Transactional("xxxTransactionManager")`)를 명시.
@@ -102,7 +106,13 @@ JVM 안에서 N벌 — 풀 사이즈로 조절. 별도 JVM N개보다 훨씬 저
    자기 datasource 블록만 담은 application.yml.
 2. `commerce:app` 에서 `{domain}:feature` 의존·yml 블록 제거.
 3. k8s `{domain}` Deployment 복원 + gateway 라우트 repoint.
-4. 끝 — `{domain}:feature`·DB(`{domain}_db`)·Kafka 토픽·outbox **무변경**, 데이터 이관 0.
+4. **호스트의 교차 배선 정리** — 합성 루트가 그 도메인의 인바운드 포트를 부르는 코드가 있으면 함께
+   옮긴다. 현재 해당하는 것은 `code-dictionary:app` 의 `RetentionRunner` 하나이며
+   (폴드된 blog 의 `PurgeBlogViewsUseCase` 호출, ADR-0077 원장 정리), 루트 `build.gradle.kts` 의
+   `crossServiceImportAllowed` 가 그 목록을 들고 있다 — 이 단계를 빼면 2번만 하고 컴파일이 깨진다.
+   `code-dictionary:app` 은 `commerce:app` 과 달리 **호스트이자 도메인**이라 호스트 코드가
+   `com.kgd.codedictionary.*` 안에 산다. 클래스 하나 때문에 중립 패키지를 새로 파지는 않는다.
+5. 끝 — `{domain}:feature`·DB(`{domain}_db`)·Kafka 토픽·outbox **무변경**, 데이터 이관 0.
 
 ## Consequences
 

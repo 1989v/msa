@@ -246,6 +246,21 @@ val useCaseGateExempt = mapOf<String, String>(
     // 2026-08-26 P7·P9 완료 — 비어 있어야 정상. 새 항목을 넣지 않는다
 )
 
+/**
+ * ⑦ 교차 서비스 import 의 **영구 예외** — 합성 루트(호스트 앱)만.
+ *
+ * ADR-0058 불변식 1 은 `{domain}:feature` 끼리의 결합을 막는 것이지, 호스트가 폴드된 도메인의
+ * 인바운드 포트를 부르는 것까지 막지 않는다. 원장 정리(ADR-0077)는 blog·resume 을 함께 만져야 해서
+ * 호스트 말고 있을 곳이 없다. 비워야 할 부채가 아니라 **의도된 배선**이다.
+ *
+ * 다만 여기 적힌 파일은 **재분리 시 같이 고쳐야 컴파일된다** — ADR-0058 재분리 체크리스트가
+ * 문자 그대로는 이걸 안 적고 있어 함께 보강했다.
+ */
+val crossServiceImportAllowed = mapOf(
+    ":code-dictionary:app" to
+        "합성 루트: RetentionRunner 가 폴드된 blog 의 PurgeBlogViewsUseCase 를 부른다 (ADR-0077 원장 정리)",
+)
+
 val dirPackageExempt = mapOf<String, String>(
     // 2026-08-26 P3 완료 — 변종 D 120+17 파일 git mv. 새 항목을 넣지 않는다
 )
@@ -282,6 +297,7 @@ val verifyLayerDependencies by tasks.registering {
                 }
                 acc
             }
+        val kgdImport = Regex("""^import\s+com\.kgd\.(\w+)\.""", RegexOption.MULTILINE)
         val presentationImport = Regex(
             """^import\s+com\.kgd\.\w+\.presentation\.""",
             RegexOption.MULTILINE,
@@ -331,6 +347,24 @@ val verifyLayerDependencies by tasks.registering {
                     }
                     if (layer != null && infraImport.containsMatchIn(text)) {
                         failures += "[① $layer→infrastructure] ${sp.path}: ${f.relativeTo(srcRoot)}"
+                    }
+                }
+            }
+
+            // ⑦ 교차 서비스 import 금지 (ADR-0058 불변식 1 을 코드로)
+            //    "교차 import 가 컴파일 에러로 차단된다" 고 적혀 있지만, 실제로는 호스트가 폴드된
+            //    도메인을 build.gradle 로 의존하는 순간 컴파일은 통과한다. 즉 그 불변식에는
+            //    강제 장치가 없었다. 합성 루트만 예외로 두고 나머지는 여기서 막는다.
+            if (sp.path !in crossServiceImportAllowed) {
+                val ownRoots = ktFiles.mapNotNull { packageLine.find(it.readText())?.groupValues?.get(1) }
+                    .mapNotNull { it.split(".").getOrNull(2) }
+                    .toSet() + "common"
+                ktFiles.forEach { f ->
+                    kgdImport.findAll(f.readText()).forEach { m ->
+                        if (m.groupValues[1] !in ownRoots) {
+                            failures += "[⑦ 교차 서비스 import] ${sp.path}: ${f.relativeTo(srcRoot)} ← " +
+                                "com.kgd.${m.groupValues[1]}"
+                        }
                     }
                 }
             }
@@ -427,6 +461,7 @@ val verifyLayerDependencies by tasks.registering {
                         "③ 파일을 package 선언과 같은 디렉토리로 git mv 한다 (package 은 그대로).\n" +
                         "④ 컨트롤러는 application/{entity}/usecase 의 UseCase 인터페이스를 주입한다. DTO 가 service 패키지에\n" +
                         "⑥ 저장 포맷을 프레젠테이션 DTO 로 쓰지 않는다 — infrastructure 가 자기 payload 타입을 갖는다.\n" +
+                        "⑦ 컨텍스트 간 통신은 Kafka/HTTP 로 한다 (ADR-0058 불변식 1). 호스트 합성 루트만 예외.\n" +
                         "   있으면 dto 로 옮긴다 — 구현을 부르는 것과 타입을 쓰는 것은 다르지만 위치가 같으면 구분이 안 된다.\n" +
                         "기존 위반의 정리 순서: docs/plans/2026-08-26-layer-structure-alignment.md",
                 ),

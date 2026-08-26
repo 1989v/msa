@@ -221,6 +221,22 @@ quant `JpaSignalStrategyAdapter` 가 프레젠테이션 DTO 를 그대로 직렬
 
 **검증**: infrastructure 에 프레젠테이션 DTO 를 심어 ⑥이 잡는 것 확인 후 원복.
 
+## P12 — ADR-0058 불변식 1 을 코드로 ✅ 2026-08-26
+
+ADR-0058 은 "교차 import 가 **컴파일 에러로 차단**(결합 구조적 불가)" 이라고 적었는데, 그건 feature
+끼리에만 참이었다. 호스트 앱은 폴드된 도메인을 build.gradle 로 의존하므로 컴파일이 통과한다 —
+**불변식이 문서에만 있고 강제 장치가 없던 셈**이다(ADR-0083 이 지목한 바로 그 상태).
+
+- 규칙 ⑦: 그 모듈이 소유하지 않은 `com.kgd.{다른서비스}.` import 금지(`common` 제외).
+- 실측 위반 1건은 `code-dictionary:app` 의 `RetentionRunner`(폴드된 blog 의 `PurgeBlogViewsUseCase`)
+  뿐이고, 이건 **부채가 아니라 의도된 합성 루트 배선**이다(원장 정리는 blog·resume 을 함께 만져야 해서
+  호스트 말고 있을 곳이 없다). `crossServiceImportAllowed` 에 영구 예외로 두되 **이유를 적어** 둔다 —
+  `search:domain`(규칙 ②)과 같은 종류의 예외이지 "비워야 할 목록" 이 아니다.
+- ADR-0058 도 함께 고쳤다: 불변식 1 에 "컴파일 차단은 feature 끼리만 참" 을 명시하고, **재분리
+  체크리스트에 4번(호스트 교차 배선 정리)을 추가**했다 — 없으면 2번만 하고 컴파일이 깨진다.
+
+**검증**: `deal:feature` 에 blog import 를 심어 ⑦이 잡는 것 확인 후 원복.
+
 ## 완료 기준 — 전부 충족 (2026-08-26)
 
 - ✅ 게이트 allowlist 에 `search:domain`(②) 만 남는다.
