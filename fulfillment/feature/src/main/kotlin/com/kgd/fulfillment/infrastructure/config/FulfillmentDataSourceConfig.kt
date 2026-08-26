@@ -83,7 +83,7 @@ class FulfillmentDataSourceConfig {
     ): LocalContainerEntityManagerFactoryBean =
         builder.dataSource(dataSource)
             // fulfillment 엔티티 + common OutboxEntity(전용 outbox 가 fulfillment_db 에 기록)
-            .packages("com.kgd.fulfillment", "com.kgd.common.messaging.outbox")
+            .packages("com.kgd.fulfillment", "com.kgd.common.messaging.outbox", "com.kgd.common.messaging.idempotency")
             .persistenceUnit("fulfillment")
             .build()
 

@@ -79,7 +79,7 @@ class OrderDataSourceConfig {
         @Qualifier("orderDataSource") dataSource: DataSource,
     ): LocalContainerEntityManagerFactoryBean =
         builder.dataSource(dataSource)
-            .packages("com.kgd.order", "com.kgd.common.messaging.outbox")
+            .packages("com.kgd.order", "com.kgd.common.messaging.outbox", "com.kgd.common.messaging.idempotency")
             .persistenceUnit("order")
             .build()
 

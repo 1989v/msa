@@ -4,10 +4,12 @@ import tools.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.common.messaging.ProcessedEventRepositoryPort
+import com.kgd.common.messaging.idempotency.JpaProcessedEventRepositoryAdapter
 import com.kgd.common.messaging.outbox.OutboxJpaAdapter
 import com.kgd.common.messaging.outbox.OutboxMetrics
 import com.kgd.common.messaging.outbox.OutboxPollingPublisher
 import com.kgd.common.messaging.outbox.OutboxPort
+import com.kgd.fulfillment.infrastructure.idempotency.FulfillmentProcessedEventRepository
 import com.kgd.fulfillment.infrastructure.outbox.FulfillmentOutboxRepository
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
@@ -46,6 +48,11 @@ class FulfillmentMessagingConfig {
     )
 
     // ─── 전용 idempotency ────────────────────────────────────────
+    @Bean
+    fun fulfillmentProcessedEventRepositoryAdapter(
+        repository: FulfillmentProcessedEventRepository,
+    ): ProcessedEventRepositoryPort = JpaProcessedEventRepositoryAdapter(repository)
+
     @Bean(name = ["fulfillmentIdempotentTxTemplate"])
     fun fulfillmentIdempotentTxTemplate(
         @Qualifier("fulfillmentTransactionManager") transactionManager: PlatformTransactionManager,

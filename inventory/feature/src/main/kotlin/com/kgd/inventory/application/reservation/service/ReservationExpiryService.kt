@@ -3,12 +3,13 @@ package com.kgd.inventory.application.reservation.service
 import tools.jackson.databind.ObjectMapper
 import com.kgd.inventory.application.inventory.port.InventoryMetricsPort
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
-import com.kgd.inventory.application.inventory.port.OutboxPort
+import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
 import com.kgd.inventory.application.reservation.usecase.ExpireReservationsUseCase
 import com.kgd.inventory.domain.reservation.event.ReservationEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 class ReservationExpiryService(
     private val reservationRepositoryPort: ReservationRepositoryPort,
     private val inventoryRepositoryPort: InventoryRepositoryPort,
-    private val outboxPort: OutboxPort,
+    @Qualifier("inventoryOutboxPort") private val outboxPort: OutboxPort,
     private val objectMapper: ObjectMapper,
     // ADR-0032 Phase 3 / PR-4 — TTL fallback 발화 메트릭. 정상 흐름이면 0 이어야 한다.
     // @Autowired(required = false) 로 노출해 Micrometer 미적재 환경(테스트 등)에서도 서비스 초기화가 가능.

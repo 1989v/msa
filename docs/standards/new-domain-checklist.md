@@ -65,6 +65,9 @@
 - [ ] 토픽 `{svc}.{entity}.{event}` → `docs/architecture/kafka-convention.md` 표에 발행/수신 행 추가.
 - [ ] 컨슈머는 common `IdempotentEventHandler` 만 쓴다 (자체 dedup 금지) → `docs/conventions/idempotent-consumer.md`.
 - [ ] 발행은 common Outbox 를 도메인 전용 서브인터페이스로 바인딩 (`OrderOutboxRepository : OutboxRepository` 패턴).
+- [ ] 소비 멱등 원장도 같은 방식 — `{Domain}ProcessedEventRepository : ProcessedEventRepository` + EMF `packages(...)` 에
+  `com.kgd.common.messaging.idempotency` + `JpaProcessedEventRepositoryAdapter` 빈 (`docs/conventions/idempotent-consumer.md` §1.3).
+  엔티티를 도메인에 다시 만들지 않는다.
   자체 Outbox 를 새로 짜지 않는다.
 - [ ] 같은 JVM 의 다른 BC 와도 **Kafka 로** 통신한다 — in-process `@EventListener` 금지 (ADR-0058 불변식 2).
 

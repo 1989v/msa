@@ -12,8 +12,7 @@ import java.util.UUID
 
 /**
  * ADR-0029 PR-5 (Phase 3) — fulfillment 컨슈머의 멱등 처리는 common
- * [IdempotentEventHandler] 로 위임된다. 호출부는 더 이상 [com.kgd.fulfillment.infrastructure.persistence.idempotency.ProcessedEventJpaRepository]
- * 에 직접 의존하지 않는다.
+ * [IdempotentEventHandler] 로 위임된다. 호출부는 processed_event 리포지토리에 직접 의존하지 않는다.
  */
 @Component
 class FulfillmentEventConsumer(

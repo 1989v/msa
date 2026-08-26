@@ -5,7 +5,7 @@ import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.inventory.application.inventory.port.InventoryCachePort
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
-import com.kgd.inventory.application.inventory.port.OutboxPort
+import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
 import com.kgd.inventory.application.inventory.usecase.ConfirmStockByOrderUseCase
 import com.kgd.inventory.application.inventory.usecase.ConfirmStockUseCase
@@ -22,6 +22,7 @@ import com.kgd.inventory.domain.reservation.model.Reservation
 import com.kgd.inventory.domain.reservation.model.ReservationStatus
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -29,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional
 class InventoryService(
     private val inventoryRepository: InventoryRepositoryPort,
     private val reservationRepository: ReservationRepositoryPort,
-    private val outboxPort: OutboxPort,
+    @Qualifier("inventoryOutboxPort") private val outboxPort: OutboxPort,
     private val objectMapper: ObjectMapper,
     @param:Autowired(required = false)
     private val cachePort: InventoryCachePort? = null,

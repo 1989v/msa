@@ -11,7 +11,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 (2026-08-26, 플랜 P3 완료) — 두 방식으로 갈려 있던 디렉토리를 `git mv` 로 합쳤다(36파일, package 무변경). UseCase 인터페이스 3 · Port 4 · Adapter 5. Outbox 는 common 서브인터페이스(`OrderOutboxRepository`) — 정본 패턴.
+표준 준수 (2026-08-26, 플랜 P3 완료) — 두 방식으로 갈려 있던 디렉토리를 `git mv` 로 합쳤다(36파일, package 무변경). UseCase 인터페이스 3 · Port 4 · Adapter 5. Outbox·멱등 원장은 common 서브인터페이스(`OrderOutboxRepository`·`OrderProcessedEventRepository`) — 정본 패턴.
 
 ## Commands
 

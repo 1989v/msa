@@ -21,6 +21,8 @@
 ## 구조 상태 (ADR-0083)
 
 **레이어 표준의 견본이다.** 신규 도메인은 이 모듈을 복사해서 시작한다 (`docs/standards/new-domain-checklist.md`).
+Outbox·멱등 원장은 자체 구현이 아니라 common 바인딩(`InventoryOutboxRepository`·`InventoryProcessedEventRepository`, 2026-08-26 P5) — 서비스는
+`@Qualifier("inventoryOutboxPort")` 로 common `OutboxPort` 를 받는다(commerce 에 order/fulfillment 것도 같이 떠 있다).
 
 - `application/inventory/usecase` 인터페이스 7 + `reservation/usecase` 1 — 전부 `Command/Result` 내장
 - `application/inventory/port` 5 (`InventoryRepositoryPort` / `ReservationRepositoryPort` / `InventoryCachePort` / `OutboxPort` / `InventoryMetricsPort`)

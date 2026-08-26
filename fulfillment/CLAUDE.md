@@ -22,7 +22,7 @@ Saga choreography 의 출고 단계이고, `commerce:app` 에 폴드된 라이�
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 — UseCase 인터페이스 3(`Create`/`Get`/`Transition`), `FulfillmentRepositoryPort`, adapter.
+표준 준수 — UseCase 인터페이스 3(`Create`/`Get`/`Transition`), `FulfillmentRepositoryPort`, adapter. Outbox·멱등 원장은 common 바인딩(`FulfillmentOutboxRepository`·`FulfillmentProcessedEventRepository`).
 Outbox 는 common 서브인터페이스 `FulfillmentOutboxRepository : OutboxRepository` 로 fulfillment EMF 에 바인딩 —
 **이것이 폴드 앱에서 Outbox 를 붙이는 정본 패턴**이다 (inventory 의 자체 구현이 아니라). 부채 없음.
 

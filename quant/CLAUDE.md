@@ -28,7 +28,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 (2026-08-26, P4 완료) — UseCase 14개가 인터페이스 + `*Service` 구현으로 갈렸다(quant 는 자기 레이아웃 `application/{usecase,paper,live,asset,learn}` 을 유지하고 인터페이스와 서비스가 같은 패키지에 산다). `PaperAccountRepositoryPort` 는 도메인 `PaperAccount` 를 본다(엔티티 노출 제거). Micrometer 는 `QuantMetricsPort`·`QuantPhase3MetricsPort` 뒤로, `QuantChartsProperties` 는 application 소유(규칙 11). 자체 Outbox(`OutboxRelay`, Postgres)는 P5 별도 검토.
+표준 준수 (2026-08-26, P4 완료) — UseCase 14개가 인터페이스 + `*Service` 구현으로 갈렸다(quant 는 자기 레이아웃 `application/{usecase,paper,live,asset,learn}` 을 유지하고 인터페이스와 서비스가 같은 패키지에 산다). `PaperAccountRepositoryPort` 는 도메인 `PaperAccount` 를 본다(엔티티 노출 제거). Micrometer 는 `QuantMetricsPort`·`QuantPhase3MetricsPort` 뒤로, `QuantChartsProperties` 는 application 소유(규칙 11). 멱등 원장은 common 엔티티(`QuantProcessedEventRepository` + `@EntityScan`, P5). 자체 Outbox(`OutboxRelay`, Postgres)는 형태가 달라 별도 검토 대상으로 남겼다.
 
 ## Commands
 

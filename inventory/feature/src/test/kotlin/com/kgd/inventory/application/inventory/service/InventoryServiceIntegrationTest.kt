@@ -2,7 +2,7 @@ package com.kgd.inventory.application.inventory.service
 
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
-import com.kgd.inventory.application.inventory.port.OutboxPort
+import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
 import com.kgd.inventory.application.inventory.usecase.ReserveStockUseCase
 import com.kgd.inventory.domain.inventory.model.Inventory

@@ -4,10 +4,12 @@ import tools.jackson.databind.ObjectMapper
 import com.kgd.common.messaging.IdempotentEventHandler
 import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.common.messaging.ProcessedEventRepositoryPort
+import com.kgd.common.messaging.idempotency.JpaProcessedEventRepositoryAdapter
 import com.kgd.common.messaging.outbox.OutboxJpaAdapter
 import com.kgd.common.messaging.outbox.OutboxMetrics
 import com.kgd.common.messaging.outbox.OutboxPollingPublisher
 import com.kgd.common.messaging.outbox.OutboxPort
+import com.kgd.order.infrastructure.idempotency.OrderProcessedEventRepository
 import com.kgd.order.infrastructure.outbox.OrderOutboxRepository
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
@@ -40,6 +42,11 @@ class OrderMessagingConfig {
         objectMapper = objectMapper,
         metrics = outboxMetrics ?: OutboxMetrics.NOOP,
     )
+
+    @Bean
+    fun orderProcessedEventRepositoryAdapter(
+        repository: OrderProcessedEventRepository,
+    ): ProcessedEventRepositoryPort = JpaProcessedEventRepositoryAdapter(repository)
 
     @Bean(name = ["orderIdempotentTxTemplate"])
     fun orderIdempotentTxTemplate(

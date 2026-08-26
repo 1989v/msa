@@ -75,6 +75,8 @@ class CommerceContextLoadSpec(
                 ctx.containsBean("orderOutboxPort").shouldBeTrue()
                 ctx.containsBean("orderOutboxPollingPublisher").shouldBeTrue()
                 ctx.containsBean("orderIdempotentEventHandler").shouldBeTrue()
+                ctx.containsBean("inventoryOutboxPort").shouldBeTrue()
+                ctx.containsBean("inventoryOutboxPollingPublisher").shouldBeTrue()
                 ctx.containsBean("inventoryIdempotentEventHandler").shouldBeTrue()
                 // 도메인별 retention cleanup 스케줄러 (common 단일 스케줄러의 다중-port 모호성 회피)
                 ctx.containsBean("inventoryIdempotentEventCleanupScheduler").shouldBeTrue()

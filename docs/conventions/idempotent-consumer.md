@@ -54,6 +54,28 @@ fun onSomeEvent(record: ConsumerRecord<String, String>) {
 3. consumer_group 명명 — §4 참고.
 4. retention 활성화 — §5 참고.
 
+### 1.3 `processed_event` 배선 — 엔티티는 common 한 벌, 바인딩은 도메인
+
+`processed_event` 스키마는 모든 도메인이 같다(`event_id BINARY(16)` + `consumer_group` 복합 PK, `processed_at`).
+엔티티·베이스 리포지토리·어댑터는 [`common.messaging.idempotency`](../../common/src/main/kotlin/com/kgd/common/messaging/idempotency/) 가 **한 벌만** 갖고,
+도메인은 outbox 와 같은 방식으로 자기 EMF 에 바인딩만 한다 (ADR-0058 불변식 3 — 도메인별 EMF/TM).
+
+```kotlin
+// {domain}/infrastructure/idempotency/{Domain}ProcessedEventRepository.kt — 패키지가 EMF 를 정한다
+interface OrderProcessedEventRepository : ProcessedEventRepository
+
+// EMF: 엔티티 패키지를 명시 (상위 com.kgd.common 을 통째로 넣지 않는다 — 남의 엔티티가 섞여 validate 실패)
+builder.dataSource(ds).packages("com.kgd.order", "com.kgd.common.messaging.outbox", "com.kgd.common.messaging.idempotency")
+
+// {Domain}MessagingConfig — 어댑터는 컴포넌트 스캔 대상이 아니다. 도메인마다 한 벌씩 빈으로 등록해 @Qualifier 로 TM 과 짝을 맞춘다
+@Bean fun orderProcessedEventRepositoryAdapter(repo: OrderProcessedEventRepository): ProcessedEventRepositoryPort =
+    JpaProcessedEventRepositoryAdapter(repo)
+```
+
+- 단독 앱(product·quant)은 Boot 기본 스캔이 자기 패키지뿐이라 `@EntityScan(basePackages = ["com.kgd.{svc}", "com.kgd.common.messaging.idempotency"])` 를
+  애플리케이션 클래스에 붙인다. 리포지토리 서브인터페이스는 자기 패키지에 있어 자동으로 잡힌다.
+- 도메인이 `ProcessedEvent*` 엔티티·리포지토리·어댑터를 **다시 만들면 거부** — 2026-08-26 이전에는 5벌이 바이트 단위로 같았다.
+
 ---
 
 ## 2. 자연 멱등 보장 의무 (Policy A)

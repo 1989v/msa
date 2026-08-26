@@ -11,7 +11,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 (2026-08-26, 플랜 P3 완료) — 디렉토리 == 패키지 (`git mv` 35파일, package 무변경). UseCase 인터페이스 5 · Port 2 · Adapter 3. 부채 없음.
+표준 준수 (2026-08-26, 플랜 P3 완료) — 디렉토리 == 패키지 (`git mv` 35파일, package 무변경). UseCase 인터페이스 5 · Port 2 · Adapter 3. 멱등 원장은 common 엔티티(`ProductProcessedEventRepository` + `@EntityScan`) — 도메인에 `ProcessedEvent*` 를 다시 만들지 않는다. 부채 없음.
 
 ## Commands
 

@@ -1,4 +1,4 @@
-package com.kgd.fulfillment.infrastructure.persistence.idempotency
+package com.kgd.common.messaging.idempotency
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -10,24 +10,16 @@ import java.time.Instant
 import java.util.UUID
 
 /**
- * ADR-0029 PR-4 (Phase 2b) — `processed_event` 테이블 매핑 Entity.
+ * 멱등 소비 원장 `processed_event` (ADR-0012/0029) — 스키마는 모든 도메인이 같다.
  *
- * Composite PK = (event_id, consumer_group). 컨슈머 그룹별 독립 멱등성을 유지한다.
- *
- * ## V2 스키마
- * ```
- * processed_event (
- *   event_id       BINARY(16)  NOT NULL,
- *   consumer_group VARCHAR(64) NOT NULL,
- *   processed_at   DATETIME(6) NOT NULL,
- *   PRIMARY KEY (event_id, consumer_group)
- * )
- * ```
+ * 엔티티는 common 이 한 벌만 갖고, 각 도메인은 [ProcessedEventRepository] 서브인터페이스를
+ * 자기 패키지에 두어 자기 EMF 에 바인딩한다(outbox 와 같은 방식). EMF `packages(...)` 에
+ * `com.kgd.common.messaging.idempotency` 를 넣어야 이 엔티티가 그 DB 에 매핑된다.
  */
 @Entity
 @Table(name = "processed_event")
 @IdClass(ProcessedEventId::class)
-class ProcessedEventJpaEntity(
+class ProcessedEventEntity(
     eventId: UUID = UUID.randomUUID(),
     consumerGroup: String = "",
     processedAt: Instant = Instant.now(),
@@ -47,9 +39,6 @@ class ProcessedEventJpaEntity(
         private set
 }
 
-/**
- * Composite PK ID class for [ProcessedEventJpaEntity]. JPA 요구사항 — Serializable + equals/hashCode.
- */
 data class ProcessedEventId(
     var eventId: UUID = UUID.randomUUID(),
     var consumerGroup: String = "",

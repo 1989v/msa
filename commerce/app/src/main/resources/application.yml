@@ -162,9 +162,6 @@ outbox:
 inventory:
   reservation:
     ttl-minutes: 30
-  outbox:
-    polling-interval-ms: 1000
-    max-retry: 3
   reconciliation:
     interval-ms: 300000
   admission:

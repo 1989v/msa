@@ -3,7 +3,7 @@ package com.kgd.inventory.application.inventory.service
 import tools.jackson.databind.ObjectMapper
 import com.kgd.common.exception.BusinessException
 import com.kgd.inventory.application.inventory.port.InventoryRepositoryPort
-import com.kgd.inventory.application.inventory.port.OutboxPort
+import com.kgd.common.messaging.outbox.OutboxPort
 import com.kgd.inventory.application.inventory.port.ReservationRepositoryPort
 import com.kgd.inventory.application.inventory.usecase.ConfirmStockUseCase
 import com.kgd.inventory.application.inventory.usecase.ReleaseStockUseCase
