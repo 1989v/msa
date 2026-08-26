@@ -11,7 +11,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 — UseCase 인터페이스 4 · `MemberRepositoryPort` · adapter. 부채: **`feature` 에 테스트 소스셋이 없다** (플랜 P6).
+표준 준수 — UseCase 인터페이스 4 · `MemberRepositoryPort` · adapter. 테스트: `MemberServiceTest` (Port MockK, P6).
 
 ## Commands
 

@@ -19,7 +19,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 (2026-08-26, P4 완료) — UseCase 인터페이스 3 · Port 4 · Adapter 5. `ChatbotProperties` 는 application 이 읽으므로 `application/chat/config`, `ChatbotConfig`·`WebSocketConfig` 는 `infrastructure/config`. 부채: **`app` 에 테스트 소스셋이 없다** (P6).
+표준 준수 (2026-08-26, P4 완료) — UseCase 인터페이스 3 · Port 4 · Adapter 5. `ChatbotProperties` 는 application 이 읽으므로 `application/chat/config`, `ChatbotConfig`·`WebSocketConfig` 는 `infrastructure/config`. 테스트: `PromptBuilderTest`·`ChatServiceTest` (Port MockK, P6).
 
 ## Key Rules
 

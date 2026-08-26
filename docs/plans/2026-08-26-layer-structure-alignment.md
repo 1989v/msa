@@ -108,24 +108,29 @@ val dirPackageExempt = mapOf(
 
 **검증**: 각 모듈 test + 게이트 ① allowlist 비움 ✅ 2026-08-26.
 
-## P5 — DRY (Outbox · 멱등 엔티티)
+## P5 — DRY (Outbox · 멱등 엔티티) ✅ 2026-08-26
 
-- `inventory/feature` 자체 Outbox(`OutboxPort`/`OutboxAdapter`/`OutboxJpaEntity`/`OutboxPollingPublisher`)
-  → common `OutboxRepository` 서브인터페이스(`InventoryOutboxRepository`) 패턴. order/fulfillment 와 동형.
-  **주의**: 테이블 스키마가 common `OutboxEntity` 와 같은지 먼저 비교 — 다르면 마이그레이션(새 번호).
+- ✅ `inventory/feature` 자체 Outbox 4파일 + `OutboxPollingPublisher` 삭제 → common `InventoryOutboxRepository : OutboxRepository`
+  + `InventoryMessagingConfig` 에 `inventoryOutboxPort`/`inventoryOutboxPollingPublisher` 빈. 스키마는 common `OutboxEntity` 와
+  컬럼 단위로 같아 마이그레이션 없음(인덱스 선언만 common 쪽에 있고 DDL 은 이미 있었다). 죽은 키 `inventory.outbox.*` 제거.
+- ✅ ProcessedEvent 5벌 — **설계상 중복이 아니었다.** ADR-0058 불변식 3 이 요구하는 것은 "도메인별 EMF 바인딩" 이지
+  "도메인별 엔티티" 가 아니다. outbox 와 같은 모양으로 common `messaging.idempotency` 에 엔티티·`@NoRepositoryBean` 베이스·어댑터
+  한 벌, 도메인은 `{Domain}ProcessedEventRepository` 한 줄 + EMF 패키지 + 어댑터 빈. 단독 앱(product·quant)은 `@EntityScan`
+  (Boot 4 는 `org.springframework.boot.persistence.autoconfigure.EntityScan`). 어댑터 테스트 4벌 → common 1벌.
+  규칙은 `idempotent-consumer.md` §1.3.
 - `quant/app` Outbox(`OutboxRelay`, Postgres) — 형태가 달라 별도 검토. 이 플랜에서 결정하지 않는다.
-- ProcessedEvent 엔티티 5벌 — ADR-0058 불변식 3(도메인별 EMF)이 요구하는 중복인지, common
-  `@MappedSuperclass` + 도메인별 얇은 `@Entity` 로 줄일 수 있는지 판정. 줄일 수 없으면 "설계상 중복" 으로
-  `idempotent-consumer.md` 에 적는다.
 
-## P6 — 테스트 소스셋 없는 모듈
+**검증**: common 81 · inventory 29 · fulfillment 17 · order 20 · product 16 · quant 129 · commerce 3(`CommerceContextLoadSpec` Testcontainers 로
+inventory EMF 가 common 엔티티 두 개를 inventory_db 에 매핑하는 것까지) 전부 통과, `verifyLayerDependencies` 통과.
 
-`agent-viewer/api`(예외 — 도구) 제외 5개: `chatbot/app` · `gifticon/app` · `gifticon/domain`(서브모듈) ·
-`member/feature` · `warehouse/feature`. 최소 domain 단위 테스트 + 서비스 테스트(Port MockK) 1벌씩.
-체크리스트 §8 "소스셋 없는 모듈 금지" 가 이후 신규를 막는다.
+## P6 — 테스트 소스셋 없는 모듈 ✅ 2026-08-26
 
-## 완료 기준
+`agent-viewer/api`(예외 — 도구) 제외 5개 모두 소스셋 생김 — `warehouse/feature` `WarehouseServiceTest`, `member/feature` `MemberServiceTest`,
+`gifticon/domain` `GifticonTest`·`ExpiryAlertPolicyTest`, `gifticon/app` `GifticonServiceTest`, `chatbot/app` `PromptBuilderTest`·`ChatServiceTest`.
+전부 Port MockK 단위 테스트(Spring 컨텍스트 없음). 체크리스트 §8 "소스셋 없는 모듈 금지" 가 이후 신규를 막는다.
 
-- 게이트 allowlist 에 `search:domain`(②) 만 남는다.
-- 실측 집계: `dir≠pkg 0 · app→infra 0 · UseCase-class 0 · 테스트 소스셋 부재 0(도구 제외)`.
-- `package-structure.md` 의 "레거시 디렉토리 (이행 중)" 절 삭제.
+## 완료 기준 — 전부 충족 (2026-08-26)
+
+- ✅ 게이트 allowlist 에 `search:domain`(②) 만 남는다.
+- ✅ 실측 집계: `dir≠pkg 0 · app→infra 0 · UseCase-class 0 · 테스트 소스셋 부재 0(도구 제외)`.
+- ✅ `package-structure.md` 의 "레거시 디렉토리 (이행 중)" 절 삭제.

@@ -22,7 +22,7 @@ Phase 2 분리 검토는 미착수). `commerce:app` 에 폴드된 라이브러�
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 — UseCase 인터페이스 2(`Create`/`Get`), `WarehouseRepositoryPort`, adapter, 13 파일.
+표준 준수 — UseCase 인터페이스 2(`Create`/`Get`), `WarehouseRepositoryPort`, adapter, 13 파일. 테스트: `WarehouseServiceTest` (Port MockK, P6).
 부채: **`feature` 에 테스트 소스셋이 없다** (플랜 P6). `src/main/resources` 도 없어 Flyway 마이그레이션이
 없다 — 스키마는 `commerce:app` 의 `ddl-auto=validate` 아래 이미 존재하는 테이블에 기댄다. 컬럼을 바꾸면
 `warehousedb/migration` 을 만들고 `ScopedFlywayMigrator` 를 배선한다 (루트 `verifyFlywayWiring` 이 검사).
