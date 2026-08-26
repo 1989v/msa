@@ -12,10 +12,8 @@ import com.kgd.quant.domain.market.MarketCode
 import com.kgd.quant.domain.strategy.SignalStrategy
 import com.kgd.quant.infrastructure.persistence.entity.SignalStrategyEntity
 import com.kgd.quant.infrastructure.persistence.repository.SignalStrategyJpaRepository
-import com.kgd.quant.presentation.dto.PositionSizingDto
-import com.kgd.quant.presentation.dto.SignalConfigDto
-import com.kgd.quant.presentation.dto.toDomain
-import com.kgd.quant.presentation.dto.toDto
+import com.kgd.quant.infrastructure.persistence.payload.PositionSizingPayload
+import com.kgd.quant.infrastructure.persistence.payload.SignalConfigPayload
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.context.annotation.Primary
@@ -43,9 +41,9 @@ class JpaSignalStrategyAdapter(
             assetCode = strategy.asset.code.value,
             assetClass = strategy.asset.assetClass.name,
             marketCode = strategy.market.code.value,
-            entrySignalJson = objectMapper.writeValueAsString(strategy.entrySignal.toDto()),
-            exitSignalJson = strategy.exitSignal?.let { objectMapper.writeValueAsString(it.toDto()) },
-            sizingJson = objectMapper.writeValueAsString(strategy.sizing.toDto()),
+            entrySignalJson = objectMapper.writeValueAsString(SignalConfigPayload.from(strategy.entrySignal)),
+            exitSignalJson = strategy.exitSignal?.let { objectMapper.writeValueAsString(SignalConfigPayload.from(it)) },
+            sizingJson = objectMapper.writeValueAsString(PositionSizingPayload.from(strategy.sizing)),
             createdAt = strategy.createdAt,
         )
         jpa.save(entity)
@@ -85,11 +83,11 @@ class JpaSignalStrategyAdapter(
             tenantId = TenantId(tenantId),
             asset = asset,
             market = market,
-            entrySignal = objectMapper.readValue(entrySignalJson, SignalConfigDto::class.java).toDomain(),
+            entrySignal = objectMapper.readValue(entrySignalJson, SignalConfigPayload::class.java).toDomain(),
             exitSignal = exitSignalJson?.let {
-                objectMapper.readValue(it, SignalConfigDto::class.java).toDomain()
+                objectMapper.readValue(it, SignalConfigPayload::class.java).toDomain()
             },
-            sizing = objectMapper.readValue(sizingJson, PositionSizingDto::class.java).toDomain(),
+            sizing = objectMapper.readValue(sizingJson, PositionSizingPayload::class.java).toDomain(),
             createdAt = createdAt,
         )
     }

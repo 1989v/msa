@@ -282,6 +282,10 @@ val verifyLayerDependencies by tasks.registering {
                 }
                 acc
             }
+        val presentationImport = Regex(
+            """^import\s+com\.kgd\.\w+\.presentation\.""",
+            RegexOption.MULTILINE,
+        )
         val serviceImport = Regex(
             """^import\s+com\.kgd\.\w+\.application\.[\w.]*service\.[A-Z]""",
             RegexOption.MULTILINE,
@@ -327,6 +331,22 @@ val verifyLayerDependencies by tasks.registering {
                     }
                     if (layer != null && infraImport.containsMatchIn(text)) {
                         failures += "[① $layer→infrastructure] ${sp.path}: ${f.relativeTo(srcRoot)}"
+                    }
+                }
+            }
+
+            // ⑥ infrastructure → presentation 금지 (①의 대칭형)
+            //    지금까지 규칙은 전부 '안쪽이 바깥을 부르는' 방향만 봤다. 반대 방향도 같은 사고를 낸다 —
+            //    quant 어댑터가 프레젠테이션 DTO 를 그대로 직렬화해 DB 에 넣고 있었고, 그러면
+            //    @JsonTypeInfo 판별자가 API 계약이자 이미 저장된 값이 되어 FE 와 맞추려 이름을 바꾸는
+            //    순간 기존 행이 못 읽힌다. 저장 포맷은 infrastructure 가 따로 소유해야 한다.
+            if (sp.path !in useCaseGateExempt) {
+                ktFiles.forEach { f ->
+                    val text = f.readText()
+                    val pkg = packageLine.find(text)?.groupValues?.get(1) ?: return@forEach
+                    if (".infrastructure." !in "$pkg.") return@forEach
+                    if (presentationImport.containsMatchIn(text)) {
+                        failures += "[⑥ infrastructure→presentation] ${sp.path}: ${f.relativeTo(srcRoot)}"
                     }
                 }
             }
@@ -406,6 +426,7 @@ val verifyLayerDependencies by tasks.registering {
                         "② domain 모듈의 build.gradle.kts 에서 Spring/JPA 의존을 뺀다.\n" +
                         "③ 파일을 package 선언과 같은 디렉토리로 git mv 한다 (package 은 그대로).\n" +
                         "④ 컨트롤러는 application/{entity}/usecase 의 UseCase 인터페이스를 주입한다. DTO 가 service 패키지에\n" +
+                        "⑥ 저장 포맷을 프레젠테이션 DTO 로 쓰지 않는다 — infrastructure 가 자기 payload 타입을 갖는다.\n" +
                         "   있으면 dto 로 옮긴다 — 구현을 부르는 것과 타입을 쓰는 것은 다르지만 위치가 같으면 구분이 안 된다.\n" +
                         "기존 위반의 정리 순서: docs/plans/2026-08-26-layer-structure-alignment.md",
                 ),

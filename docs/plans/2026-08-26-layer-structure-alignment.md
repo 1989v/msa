@@ -208,6 +208,19 @@ P7 이 고친 `SearchDebugController` 의 원래 형태(컨트롤러가 `OpenSea
 
 **검증**: application 에 `WebClient`, presentation 에 `OpenSearchClient` 를 심어 규칙 ①이 잡는 것 확인 후 원복.
 
+## P11 — 반대 방향 의존 ✅ 2026-08-26
+
+①~⑤가 전부 "안쪽이 바깥을 부르는" 방향만 봤다. 반대 방향은 무검사였고 딱 한 곳이 걸렸다 —
+quant `JpaSignalStrategyAdapter` 가 프레젠테이션 DTO 를 그대로 직렬화해 DB JSON 컬럼에 넣고 있었다.
+`@JsonTypeInfo` 판별자가 API 계약이자 저장된 값이라, 응답 DTO 이름을 바꾸면 기존 행이 못 읽힌다.
+
+- `infrastructure/persistence/payload/SignalConfigPayload`·`PositionSizingPayload` 를 infrastructure
+  소유로 만들고 자기 `toDomain`/`from` 을 갖게 했다. 판별자 문자열은 **이미 저장된 값이라 고정**이며,
+  그 사실을 KDoc 과 계약 테스트(`SignalConfigPayloadSpec`, 왕복 3케이스)로 못 박았다.
+- 게이트 규칙 ⑥(`infrastructure → presentation` 금지). 위반이 그 1건뿐이라 허용목록 없이 켰다.
+
+**검증**: infrastructure 에 프레젠테이션 DTO 를 심어 ⑥이 잡는 것 확인 후 원복.
+
 ## 완료 기준 — 전부 충족 (2026-08-26)
 
 - ✅ 게이트 allowlist 에 `search:domain`(②) 만 남는다.

@@ -80,6 +80,7 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 | ② domain 모듈 프레임워크 금지 | `*/domain/src/main` 의 `import org.springframework.` / `jakarta.persistence.` | 빌드 의존성이 없어 이미 컴파일 에러지만, `search:domain` 처럼 의존성을 추가한 순간 뚫린다 |
 | ③ 디렉토리 == 패키지 | 파일 경로에서 유도한 패키지 ≠ `package` 선언 | 변종 D 재발 방지 |
 | ④ presentation → application.service 금지 | `package …presentation…` 파일의 `import com.kgd.*.application.{entity}.service.X` | 규칙 7("컨트롤러는 UseCase 인터페이스만 주입")의 강제 장치. 이게 없으면 UseCase 를 아예 안 만들어도 게이트를 통과한다 |
+| ⑥ infrastructure → presentation 금지 | `package …infrastructure…` 파일의 `import com.kgd.*.presentation.` | ①~⑤가 전부 **안쪽이 바깥을 부르는** 방향만 본다. 반대 방향도 같은 사고를 낸다 — 아래 |
 | ⑤ presentation 생성자 주입 = UseCase 만 | 컨트롤러 생성자 파라미터 타입을 **선언 위치**로 판정 — `usecase`·`presentation`·`config` 밖의 `com.kgd.*` 타입이면 실패. 선언 위치는 **그 파일의 import 로** 해석한다 | ④는 `service` 라는 **패키지 이름**에 기댄다. UseCase 와 구현이 같은 패키지에 사는 레이아웃에서는 못 잡고, 포트·`*Query` 클래스 직접 주입도 못 본다. ⑤는 이름이 아니라 타입이 어디서 왔는지를 본다. 전역 심플명 색인으로 판정하면 같은 이름이 두 패키지에 있을 때(현재 45건) 파일시스템 순서로 승자가 갈려 **로컬은 통과하고 CI 는 실패**할 수 있다 — import 가 있으면 그것이 답이고, 없으면 같은 패키지다 |
 
 규칙 ①은 `presentation` 도 본다 — 컨트롤러가 `JpaRepository`/어댑터를 직접 부르면 application 을 통째로
@@ -93,6 +94,14 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 변종 C 와 같은 실패인데 JPA 가 아니라 HTTP 였을 뿐이다. 그래서 목록에 I/O 기술을 넣었다.
 **Caffeine 같은 인메모리 자료구조는 넣지 않는다** — 프로세스 밖으로 나가지 않으므로 기술 누수가
 아니고, 넣으면 캐시 TTL 같은 application 정책까지 포트 뒤로 밀게 된다.
+
+규칙 ⑥이 필요한 이유는 quant `JpaSignalStrategyAdapter` 가 보여줬다. 프레젠테이션 DTO(`SignalConfigDto`)를
+그대로 직렬화해 `signal_strategy.entry_signal_json` 에 넣고 있었고, 그러면 `@JsonTypeInfo` 판별자
+(`VOLUME_SPIKE` 등)가 **API 계약이자 이미 저장된 값**이 된다. FE 와 맞추려고 응답 DTO 의 이름 하나를
+바꾸면 — 프레젠테이션만 고친 셈인데 — 기존 행이 역직렬화에서 터진다. 커밋한 마이그레이션은 불변이고
+main 이 곧 배포 브랜치라 배포된 뒤에야 드러난다. 검색 인덱스에서 쓰기/읽기 문서를 일부러 안 합친 것과
+같은 판단이다: **한 클래스가 두 계약을 겸하면 한쪽 요구가 다른 쪽을 조용히 깬다.**
+저장 포맷은 infrastructure 가 `persistence/payload` 에 따로 소유하고, 도메인이 가운데 선다.
 
 규칙 ④의 신호는 **마지막 패키지 세그먼트가 `service`** 인 import 다. code-dictionary 에는 `service` 라는
 *엔티티* 가 있어 `application.service.dto.ServiceResultDto` 가 존재하는데, 이걸 레이어로 오인하면 오탐이 된다.
