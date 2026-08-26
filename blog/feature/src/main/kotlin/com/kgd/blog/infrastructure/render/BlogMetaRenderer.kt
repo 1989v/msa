@@ -1,9 +1,9 @@
 package com.kgd.blog.infrastructure.render
 
-import com.kgd.blog.application.dto.BlogAuthorSpace
-import com.kgd.blog.application.dto.BlogCrumb
-import com.kgd.blog.application.dto.BlogPostDetail
-import com.kgd.blog.application.dto.BlogPostSummary
+import com.kgd.blog.application.post.dto.BlogAuthorSpace
+import com.kgd.blog.application.post.dto.BlogCrumb
+import com.kgd.blog.application.post.dto.BlogPostDetail
+import com.kgd.blog.application.post.dto.BlogPostSummary
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.html.HtmlRenderer
 import org.springframework.beans.factory.annotation.Value

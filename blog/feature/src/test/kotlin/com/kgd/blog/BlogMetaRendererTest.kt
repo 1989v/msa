@@ -1,9 +1,9 @@
 package com.kgd.blog
 
-import com.kgd.blog.application.dto.BlogAuthorSummary
-import com.kgd.blog.application.dto.BlogCrumb
-import com.kgd.blog.application.dto.BlogPostDetail
-import com.kgd.blog.application.dto.BlogPostSummary
+import com.kgd.blog.application.profile.dto.BlogAuthorSummary
+import com.kgd.blog.application.post.dto.BlogCrumb
+import com.kgd.blog.application.post.dto.BlogPostDetail
+import com.kgd.blog.application.post.dto.BlogPostSummary
 import com.kgd.blog.domain.model.PostStatus
 import com.kgd.blog.infrastructure.render.BlogMetaRenderer
 import io.kotest.core.spec.style.BehaviorSpec

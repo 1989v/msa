@@ -1,8 +1,9 @@
 package com.kgd.blog.presentation.controller
 
-import com.kgd.blog.application.dto.BlogIdentity
-import com.kgd.blog.application.service.BlogQueryService
-import com.kgd.blog.application.service.BlogViewService
+import com.kgd.blog.application.interaction.usecase.RecordBlogViewUseCase
+import com.kgd.blog.application.post.usecase.GetBlogAuthorSpaceUseCase
+import com.kgd.blog.application.post.usecase.GetBlogPostUseCase
+import com.kgd.blog.application.profile.dto.BlogIdentity
 import com.kgd.blog.infrastructure.render.BlogMetaRenderer
 import com.kgd.blog.infrastructure.render.ShellHtmlProvider
 import com.kgd.common.exception.BusinessException
@@ -26,8 +27,9 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 class BlogPageController(
-    private val queryService: BlogQueryService,
-    private val viewService: BlogViewService,
+    private val getPost: GetBlogPostUseCase,
+    private val getAuthorSpace: GetBlogAuthorSpaceUseCase,
+    private val recordView: RecordBlogViewUseCase,
     private val shellProvider: ShellHtmlProvider,
     private val renderer: BlogMetaRenderer,
 ) {
@@ -43,13 +45,13 @@ class BlogPageController(
         val shell = shellProvider.shell()
         val identity = BlogIdentity.of(userId, roles, visitorId)
         val detail = try {
-            queryService.post(slug, identity)
+            getPost.execute(GetBlogPostUseCase.Query(slug, identity))
         } catch (e: BusinessException) {
             return notFound(shell)
         }
         // 봇이 아닌 직접 방문도 여기서 한 번 센다. 뒤이어 SPA 가 API 를 부르지만
         // 원장의 유니크 제약이 같은 방문자를 하루 1표로 접는다
-        viewService.record(detail.post.id, identity.visitorId, userAgent)
+        recordView.execute(RecordBlogViewUseCase.Command(detail.post.id, identity.visitorId, userAgent))
         return html(renderer.postPage(shell, detail))
     }
 
@@ -57,7 +59,7 @@ class BlogPageController(
     fun authorPage(@PathVariable handle: String): ResponseEntity<String> {
         val shell = shellProvider.shell()
         val space = try {
-            queryService.authorSpace(handle, page = 0, size = AUTHOR_PAGE_SIZE)
+            getAuthorSpace.execute(GetBlogAuthorSpaceUseCase.Query(handle, page = 0, size = AUTHOR_PAGE_SIZE))
         } catch (e: BusinessException) {
             return notFound(shell)
         }

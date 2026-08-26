@@ -23,6 +23,14 @@ data class BlogPost(
     val coverImageUrl: String?,
     val status: PostStatus,
     val publishedAt: LocalDateTime?,
+    // ─── 관측값 — 편집 대상이 아니다. 저장 시 무시되고 각자의 원장이 성공했을 때만 오른다 ───
+    val viewCount: Long = 0,
+    val likeCount: Long = 0,
+    val commentCount: Long = 0,
+    val ratingSum: Long = 0,
+    val ratingCount: Long = 0,
+    val createdAt: LocalDateTime? = null,
+    val updatedAt: LocalDateTime? = null,
 ) {
     init {
         if (!SLUG_PATTERN.matches(slug)) {
@@ -43,6 +51,19 @@ data class BlogPost(
     }
 
     val readingMinutes: Int get() = readingMinutesOf(body)
+
+    val ratingAverage: Double get() = if (ratingCount == 0L) 0.0 else ratingSum.toDouble() / ratingCount
+
+    /**
+     * 상태 전이. 최초 발행 시각은 한 번만 찍는다 — 재발행이 날짜를 바꾸면 정렬과 sitemap 이 흔들린다.
+     */
+    fun transitionTo(next: PostStatus, now: LocalDateTime): BlogPost {
+        requireTransitionTo(next)
+        return copy(
+            status = next,
+            publishedAt = if (next == PostStatus.PUBLISHED) (publishedAt ?: now) else publishedAt,
+        )
+    }
 
     fun isOwnedBy(profileId: Long?): Boolean = profileId != null && profileId == authorProfileId
 

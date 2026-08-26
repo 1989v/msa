@@ -1,6 +1,6 @@
 package com.kgd.codedictionary.infrastructure.retention
 
-import com.kgd.blog.application.service.BlogViewService
+import com.kgd.blog.application.interaction.usecase.PurgeBlogViewsUseCase
 import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.ApplicationArguments
@@ -28,13 +28,13 @@ private val log = KotlinLogging.logger {}
 @Component
 @Profile("retention")
 class RetentionRunner(
-    private val blogViewService: BlogViewService,
+    private val purgeBlogViews: PurgeBlogViewsUseCase,
     private val resumeAccessLog: ResumeAccessLogRepositoryPort,
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments) {
         val results = listOf(
-            purge("blog_post_view") { blogViewService.purgeOlderThan(BlogViewService.RETENTION_DAYS) },
+            purge("blog_post_view") { purgeBlogViews.execute() },
             purge("resume_access_log") {
                 resumeAccessLog.purgeOlderThan(LocalDateTime.now().minusDays(RESUME_ACCESS_RETENTION_DAYS))
             },

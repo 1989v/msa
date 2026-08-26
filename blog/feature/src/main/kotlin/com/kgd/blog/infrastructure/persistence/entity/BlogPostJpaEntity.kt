@@ -125,6 +125,13 @@ class BlogPostJpaEntity(
     val ratingAverage: Double
         get() = if (ratingCount == 0L) 0.0 else ratingSum.toDouble() / ratingCount
 
+    /** 도메인의 편집값·상태를 관리 엔티티에 반영한다. 카운터는 건드리지 않는다 */
+    fun applyFrom(post: BlogPost) {
+        update(post)
+        status = post.status
+        publishedAt = post.publishedAt
+    }
+
     fun toDomain() = BlogPost(
         id = id,
         authorProfileId = authorProfileId,
@@ -136,5 +143,28 @@ class BlogPostJpaEntity(
         coverImageUrl = coverImageUrl,
         status = status,
         publishedAt = publishedAt,
+        viewCount = viewCount,
+        likeCount = likeCount,
+        commentCount = commentCount,
+        ratingSum = ratingSum,
+        ratingCount = ratingCount,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
     )
+
+    companion object {
+        fun fromDomain(post: BlogPost) = BlogPostJpaEntity(
+            id = post.id,
+            authorProfileId = post.authorProfileId,
+            slug = post.slug,
+            categoryId = post.categoryId,
+            title = post.title,
+            summary = post.summary,
+            body = post.body,
+            coverImageUrl = post.coverImageUrl,
+            status = post.status,
+            publishedAt = post.publishedAt,
+            readingMinutes = post.readingMinutes,
+        )
+    }
 }

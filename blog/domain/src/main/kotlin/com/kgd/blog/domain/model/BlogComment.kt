@@ -2,6 +2,7 @@ package com.kgd.blog.domain.model
 
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import java.time.LocalDateTime
 
 /**
  * 댓글. 대댓글은 1단계까지만 — 깊이를 열어 두면 화면이 감당하지 못하고,
@@ -14,10 +15,22 @@ data class BlogComment(
     val parentId: Long?,
     val body: String,
     val status: CommentStatus,
+    val createdAt: LocalDateTime? = null,
+    val updatedAt: LocalDateTime? = null,
 ) {
     init {
         validateBody(body)
     }
+
+    fun edit(body: String): BlogComment = copy(body = validateBody(body))
+
+    /**
+     * 소프트 삭제. 행은 남기고 본문만 비운다 — 행을 지우면 대댓글이 부모를 잃고,
+     * 본문을 남기면 "삭제했다"는 사용자의 의사가 지켜지지 않는다.
+     */
+    fun softDelete(): BlogComment = copy(status = CommentStatus.DELETED, body = DELETED_PLACEHOLDER)
+
+    fun withStatus(status: CommentStatus): BlogComment = copy(status = status)
 
     fun isOwnedBy(profileId: Long?): Boolean = profileId != null && profileId == this.profileId
 

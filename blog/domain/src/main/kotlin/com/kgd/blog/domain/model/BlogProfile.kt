@@ -2,6 +2,7 @@ package com.kgd.blog.domain.model
 
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import java.time.LocalDateTime
 
 /**
  * 블로그 안의 신원 (ADR-0072 §2).
@@ -22,6 +23,10 @@ data class BlogProfile(
     val avatarUrl: String?,
     val role: ProfileRole,
     val status: ProfileStatus,
+    // ─── 관측값 — 본인 편집 대상이 아니다. 승인 경로와 시스템만 채운다 ───
+    val approvedAt: LocalDateTime? = null,
+    val approvedByMemberId: Long? = null,
+    val createdAt: LocalDateTime? = null,
 ) {
     init {
         validateDisplayName(displayName)
@@ -56,6 +61,20 @@ data class BlogProfile(
 
     /** 작성자 공간(`/authors/{handle}`)을 갖는가 — 승인 전에는 공간이 없다 */
     fun hasPublicSpace(): Boolean = canWrite() && handle != null
+
+    /** 본인이 고치는 값만. 역할·상태는 어드민 경로로만 바뀐다 */
+    fun updateProfile(displayName: String, bio: String?, avatarUrl: String?): BlogProfile =
+        copy(displayName = displayName, bio = bio, avatarUrl = avatarUrl)
+
+    /** 저자 신청 — 승인 전까지 핸들을 선점해 둔다(중복 신청·핸들 경합 방지) */
+    fun applyAsAuthor(handle: String): BlogProfile =
+        copy(handle = handle, role = ProfileRole.AUTHOR, status = ProfileStatus.PENDING)
+
+    /** 승인 — 누가 언제 승인했는지 남긴다. 정지·복구 판단의 근거가 된다 */
+    fun approve(approverMemberId: Long, at: LocalDateTime): BlogProfile =
+        copy(role = ProfileRole.AUTHOR, status = ProfileStatus.ACTIVE, approvedAt = at, approvedByMemberId = approverMemberId)
+
+    fun withStatus(status: ProfileStatus): BlogProfile = copy(status = status)
 
     companion object {
         const val MAX_DISPLAY_NAME = 40

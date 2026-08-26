@@ -1,13 +1,17 @@
 package com.kgd.blog.presentation.controller
 
-import com.kgd.blog.application.dto.BlogCommentEditRequest
-import com.kgd.blog.application.dto.BlogCommentNode
-import com.kgd.blog.application.dto.BlogCommentRequest
-import com.kgd.blog.application.dto.BlogIdentity
-import com.kgd.blog.application.dto.BlogRatingRequest
-import com.kgd.blog.application.dto.BlogReaction
-import com.kgd.blog.application.service.BlogCommentService
-import com.kgd.blog.application.service.BlogReactionService
+import com.kgd.blog.application.comment.dto.BlogCommentEditRequest
+import com.kgd.blog.application.comment.dto.BlogCommentNode
+import com.kgd.blog.application.comment.dto.BlogCommentRequest
+import com.kgd.blog.application.comment.usecase.CreateBlogCommentUseCase
+import com.kgd.blog.application.comment.usecase.DeleteBlogCommentUseCase
+import com.kgd.blog.application.comment.usecase.EditBlogCommentUseCase
+import com.kgd.blog.application.interaction.dto.BlogRatingRequest
+import com.kgd.blog.application.interaction.dto.BlogReaction
+import com.kgd.blog.application.interaction.usecase.ClearBlogRatingUseCase
+import com.kgd.blog.application.interaction.usecase.RateBlogPostUseCase
+import com.kgd.blog.application.interaction.usecase.ToggleBlogLikeUseCase
+import com.kgd.blog.application.profile.dto.BlogIdentity
 import com.kgd.common.response.ApiResponse
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -29,8 +33,12 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/blog")
 class BlogInteractionController(
-    private val reactionService: BlogReactionService,
-    private val commentService: BlogCommentService,
+    private val toggleLike: ToggleBlogLikeUseCase,
+    private val ratePost: RateBlogPostUseCase,
+    private val clearRating: ClearBlogRatingUseCase,
+    private val createComment: CreateBlogCommentUseCase,
+    private val editComment: EditBlogCommentUseCase,
+    private val deleteComment: DeleteBlogCommentUseCase,
 ) {
 
     @PostMapping("/posts/{slug}/like")
@@ -40,7 +48,7 @@ class BlogInteractionController(
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
         @RequestHeader(value = "X-Visitor-Id", required = false) visitorId: String?,
     ): ApiResponse<BlogReaction> =
-        ApiResponse.success(reactionService.toggleLike(slug, BlogIdentity.of(userId, roles, visitorId)))
+        ApiResponse.success(toggleLike.execute(ToggleBlogLikeUseCase.Command(slug, BlogIdentity.of(userId, roles, visitorId))))
 
     @PutMapping("/posts/{slug}/rating")
     fun rate(
@@ -49,8 +57,9 @@ class BlogInteractionController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
         @RequestHeader(value = "X-Visitor-Id", required = false) visitorId: String?,
-    ): ApiResponse<BlogReaction> =
-        ApiResponse.success(reactionService.rate(slug, BlogIdentity.of(userId, roles, visitorId), request.score))
+    ): ApiResponse<BlogReaction> = ApiResponse.success(
+        ratePost.execute(RateBlogPostUseCase.Command(slug, BlogIdentity.of(userId, roles, visitorId), request.score)),
+    )
 
     @DeleteMapping("/posts/{slug}/rating")
     fun clearRating(
@@ -59,7 +68,7 @@ class BlogInteractionController(
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
         @RequestHeader(value = "X-Visitor-Id", required = false) visitorId: String?,
     ): ApiResponse<BlogReaction> =
-        ApiResponse.success(reactionService.clearRating(slug, BlogIdentity.of(userId, roles, visitorId)))
+        ApiResponse.success(clearRating.execute(ClearBlogRatingUseCase.Command(slug, BlogIdentity.of(userId, roles, visitorId))))
 
     /**
      * 댓글 작성. 글 슬러그를 본문에 담는 이유는 게이트웨이 라우팅 때문이다 —
@@ -72,7 +81,7 @@ class BlogInteractionController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<List<BlogCommentNode>> =
-        ApiResponse.success(commentService.create(request, BlogIdentity.of(userId, roles, null)))
+        ApiResponse.success(createComment.execute(CreateBlogCommentUseCase.Command(request, BlogIdentity.of(userId, roles, null))))
 
     @PutMapping("/comments/{id}")
     fun edit(
@@ -81,7 +90,7 @@ class BlogInteractionController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<List<BlogCommentNode>> =
-        ApiResponse.success(commentService.edit(id, request.body, BlogIdentity.of(userId, roles, null)))
+        ApiResponse.success(editComment.execute(EditBlogCommentUseCase.Command(id, request.body, BlogIdentity.of(userId, roles, null))))
 
     @DeleteMapping("/comments/{id}")
     fun delete(
@@ -89,5 +98,5 @@ class BlogInteractionController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<List<BlogCommentNode>> =
-        ApiResponse.success(commentService.delete(id, BlogIdentity.of(userId, roles, null)))
+        ApiResponse.success(deleteComment.execute(DeleteBlogCommentUseCase.Command(id, BlogIdentity.of(userId, roles, null))))
 }

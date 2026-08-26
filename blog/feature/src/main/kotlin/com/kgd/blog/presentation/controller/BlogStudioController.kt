@@ -1,17 +1,23 @@
 package com.kgd.blog.presentation.controller
 
-import com.kgd.blog.application.dto.BlogAuthorApplicationRequest
-import com.kgd.blog.application.dto.BlogIdentity
-import com.kgd.blog.application.dto.BlogPage
-import com.kgd.blog.application.dto.BlogPostDetail
-import com.kgd.blog.application.dto.BlogPostRequest
-import com.kgd.blog.application.dto.BlogPostSummary
-import com.kgd.blog.application.dto.BlogProfileAdminResponse
-import com.kgd.blog.application.dto.BlogProfileRequest
-import com.kgd.blog.application.dto.BlogStudioOverview
-import com.kgd.blog.application.service.BlogPostWriteService
-import com.kgd.blog.application.service.BlogProfileService
-import com.kgd.blog.application.service.BlogStudioService
+import com.kgd.blog.application.post.dto.BlogPage
+import com.kgd.blog.application.post.dto.BlogPostDetail
+import com.kgd.blog.application.post.dto.BlogPostRequest
+import com.kgd.blog.application.post.dto.BlogPostSummary
+import com.kgd.blog.application.post.dto.BlogStudioOverview
+import com.kgd.blog.application.post.usecase.ChangeBlogPostStatusUseCase
+import com.kgd.blog.application.post.usecase.CreateBlogPostUseCase
+import com.kgd.blog.application.post.usecase.DeleteBlogPostUseCase
+import com.kgd.blog.application.post.usecase.GetBlogStudioOverviewUseCase
+import com.kgd.blog.application.post.usecase.GetMyBlogPostUseCase
+import com.kgd.blog.application.post.usecase.ListMyBlogPostsUseCase
+import com.kgd.blog.application.post.usecase.UpdateBlogPostUseCase
+import com.kgd.blog.application.profile.dto.BlogAuthorApplicationRequest
+import com.kgd.blog.application.profile.dto.BlogIdentity
+import com.kgd.blog.application.profile.dto.BlogProfileAdminResponse
+import com.kgd.blog.application.profile.dto.BlogProfileRequest
+import com.kgd.blog.application.profile.usecase.ApplyAsBlogAuthorUseCase
+import com.kgd.blog.application.profile.usecase.UpdateBlogProfileUseCase
 import com.kgd.blog.domain.model.PostStatus
 import com.kgd.common.response.ApiResponse
 import jakarta.validation.Valid
@@ -35,17 +41,22 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/blog/me")
 class BlogStudioController(
-    private val studioService: BlogStudioService,
-    private val writeService: BlogPostWriteService,
-    private val profileService: BlogProfileService,
+    private val getOverview: GetBlogStudioOverviewUseCase,
+    private val updateProfile: UpdateBlogProfileUseCase,
+    private val applyAsAuthor: ApplyAsBlogAuthorUseCase,
+    private val listMyPosts: ListMyBlogPostsUseCase,
+    private val getMyPost: GetMyBlogPostUseCase,
+    private val createPost: CreateBlogPostUseCase,
+    private val updatePost: UpdateBlogPostUseCase,
+    private val changePostStatus: ChangeBlogPostStatusUseCase,
+    private val deletePost: DeleteBlogPostUseCase,
 ) {
 
     @GetMapping("/overview")
     fun overview(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
-    ): ApiResponse<BlogStudioOverview> =
-        ApiResponse.success(studioService.overview(BlogIdentity.of(userId, roles, null)))
+    ): ApiResponse<BlogStudioOverview> = ApiResponse.success(getOverview.execute(BlogIdentity.of(userId, roles, null)))
 
     @PutMapping("/profile")
     fun updateProfile(
@@ -53,7 +64,7 @@ class BlogStudioController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<BlogProfileAdminResponse> =
-        ApiResponse.success(profileService.updateProfile(BlogIdentity.of(userId, roles, null), request))
+        ApiResponse.success(updateProfile.execute(UpdateBlogProfileUseCase.Command(BlogIdentity.of(userId, roles, null), request)))
 
     @PostMapping("/author-application")
     fun applyAsAuthor(
@@ -61,7 +72,7 @@ class BlogStudioController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<BlogProfileAdminResponse> =
-        ApiResponse.success(profileService.applyAsAuthor(BlogIdentity.of(userId, roles, null), request))
+        ApiResponse.success(applyAsAuthor.execute(ApplyAsBlogAuthorUseCase.Command(BlogIdentity.of(userId, roles, null), request)))
 
     @GetMapping("/posts")
     fun myPosts(
@@ -71,7 +82,7 @@ class BlogStudioController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<BlogPage<BlogPostSummary>> =
-        ApiResponse.success(studioService.myPosts(BlogIdentity.of(userId, roles, null), status, page, size))
+        ApiResponse.success(listMyPosts.execute(ListMyBlogPostsUseCase.Query(BlogIdentity.of(userId, roles, null), status, page, size)))
 
     @GetMapping("/posts/{id}")
     fun myPost(
@@ -79,7 +90,7 @@ class BlogStudioController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<BlogPostDetail> =
-        ApiResponse.success(studioService.myPost(id, BlogIdentity.of(userId, roles, null)))
+        ApiResponse.success(getMyPost.execute(GetMyBlogPostUseCase.Query(id, BlogIdentity.of(userId, roles, null))))
 
     @PostMapping("/posts")
     fun create(
@@ -87,7 +98,7 @@ class BlogStudioController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<BlogPostSummary> =
-        ApiResponse.success(writeService.create(request, BlogIdentity.of(userId, roles, null)))
+        ApiResponse.success(createPost.execute(CreateBlogPostUseCase.Command(request, BlogIdentity.of(userId, roles, null))))
 
     @PutMapping("/posts/{id}")
     fun update(
@@ -96,15 +107,16 @@ class BlogStudioController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<BlogPostSummary> =
-        ApiResponse.success(writeService.update(id, request, BlogIdentity.of(userId, roles, null)))
+        ApiResponse.success(updatePost.execute(UpdateBlogPostUseCase.Command(id, request, BlogIdentity.of(userId, roles, null))))
 
     @PostMapping("/posts/{id}/publish")
     fun publish(
         @PathVariable id: Long,
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
-    ): ApiResponse<BlogPostSummary> =
-        ApiResponse.success(writeService.changeStatus(id, PostStatus.PUBLISHED, BlogIdentity.of(userId, roles, null)))
+    ): ApiResponse<BlogPostSummary> = ApiResponse.success(
+        changePostStatus.execute(ChangeBlogPostStatusUseCase.Command(id, PostStatus.PUBLISHED, BlogIdentity.of(userId, roles, null))),
+    )
 
     /** 내리기 — 초안으로 되돌리지 않고 보관으로 간다. 공유된 주소가 죽지 않게 */
     @PostMapping("/posts/{id}/archive")
@@ -112,8 +124,9 @@ class BlogStudioController(
         @PathVariable id: Long,
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
-    ): ApiResponse<BlogPostSummary> =
-        ApiResponse.success(writeService.changeStatus(id, PostStatus.ARCHIVED, BlogIdentity.of(userId, roles, null)))
+    ): ApiResponse<BlogPostSummary> = ApiResponse.success(
+        changePostStatus.execute(ChangeBlogPostStatusUseCase.Command(id, PostStatus.ARCHIVED, BlogIdentity.of(userId, roles, null))),
+    )
 
     @DeleteMapping("/posts/{id}")
     fun delete(
@@ -121,7 +134,7 @@ class BlogStudioController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<Unit> {
-        writeService.delete(id, BlogIdentity.of(userId, roles, null))
+        deletePost.execute(DeleteBlogPostUseCase.Command(id, BlogIdentity.of(userId, roles, null)))
         return ApiResponse.success(Unit)
     }
 }

@@ -1,7 +1,7 @@
 package com.kgd.blog.infrastructure.render
 
-import com.kgd.blog.application.dto.BlogAuthorSummary
-import com.kgd.blog.application.dto.BlogPostSummary
+import com.kgd.blog.application.profile.dto.BlogAuthorSummary
+import com.kgd.blog.application.post.dto.BlogPostSummary
 
 /**
  * 블로그 SEO 카피의 서버 쪽 사본.

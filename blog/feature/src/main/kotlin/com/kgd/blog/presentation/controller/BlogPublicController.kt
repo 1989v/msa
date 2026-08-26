@@ -1,14 +1,18 @@
 package com.kgd.blog.presentation.controller
 
-import com.kgd.blog.application.dto.BlogAuthorSpace
-import com.kgd.blog.application.dto.BlogCategoryNode
-import com.kgd.blog.application.dto.BlogCommentNode
-import com.kgd.blog.application.dto.BlogIdentity
-import com.kgd.blog.application.dto.BlogPage
-import com.kgd.blog.application.dto.BlogPostDetail
-import com.kgd.blog.application.dto.BlogPostSummary
-import com.kgd.blog.application.service.BlogQueryService
-import com.kgd.blog.application.service.BlogViewService
+import com.kgd.blog.application.category.dto.BlogCategoryNode
+import com.kgd.blog.application.category.usecase.GetBlogCategoryTreeUseCase
+import com.kgd.blog.application.comment.dto.BlogCommentNode
+import com.kgd.blog.application.comment.usecase.GetBlogCommentsUseCase
+import com.kgd.blog.application.interaction.usecase.RecordBlogViewUseCase
+import com.kgd.blog.application.post.dto.BlogAuthorSpace
+import com.kgd.blog.application.post.dto.BlogPage
+import com.kgd.blog.application.post.dto.BlogPostDetail
+import com.kgd.blog.application.post.dto.BlogPostSummary
+import com.kgd.blog.application.post.usecase.GetBlogAuthorSpaceUseCase
+import com.kgd.blog.application.post.usecase.GetBlogPostUseCase
+import com.kgd.blog.application.post.usecase.GetBlogPostsUseCase
+import com.kgd.blog.application.profile.dto.BlogIdentity
 import com.kgd.common.response.ApiResponse
 import org.springframework.http.HttpHeaders
 import org.springframework.web.bind.annotation.GetMapping
@@ -27,13 +31,17 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/blog")
 class BlogPublicController(
-    private val queryService: BlogQueryService,
-    private val viewService: BlogViewService,
+    private val getCategoryTree: GetBlogCategoryTreeUseCase,
+    private val getPosts: GetBlogPostsUseCase,
+    private val getPost: GetBlogPostUseCase,
+    private val getComments: GetBlogCommentsUseCase,
+    private val getAuthorSpace: GetBlogAuthorSpaceUseCase,
+    private val recordView: RecordBlogViewUseCase,
 ) {
 
     @GetMapping("/categories")
     fun categories(): ApiResponse<List<BlogCategoryNode>> =
-        ApiResponse.success(queryService.categoryTree())
+        ApiResponse.success(getCategoryTree.execute(GetBlogCategoryTreeUseCase.Query()))
 
     @GetMapping("/posts")
     fun posts(
@@ -42,7 +50,7 @@ class BlogPublicController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "12") size: Int,
     ): ApiResponse<BlogPage<BlogPostSummary>> =
-        ApiResponse.success(queryService.posts(categoryPath, handle, page, size))
+        ApiResponse.success(getPosts.execute(GetBlogPostsUseCase.Query(categoryPath, handle, page, size)))
 
     @GetMapping("/posts/{slug}")
     fun post(
@@ -53,9 +61,9 @@ class BlogPublicController(
         @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) userAgent: String?,
     ): ApiResponse<BlogPostDetail> {
         val identity = BlogIdentity.of(userId, roles, visitorId)
-        val detail = queryService.post(slug, identity)
+        val detail = getPost.execute(GetBlogPostUseCase.Query(slug, identity))
         // 조회 집계는 응답을 만든 뒤에 — 실패해도 본문이 나가야 한다
-        viewService.record(detail.post.id, identity.visitorId, userAgent)
+        recordView.execute(RecordBlogViewUseCase.Command(detail.post.id, identity.visitorId, userAgent))
         return ApiResponse.success(detail)
     }
 
@@ -65,12 +73,13 @@ class BlogPublicController(
         @RequestHeader(value = "X-User-Id", required = false) userId: String?,
         @RequestHeader(value = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<List<BlogCommentNode>> =
-        ApiResponse.success(queryService.comments(slug, BlogIdentity.of(userId, roles, null)))
+        ApiResponse.success(getComments.execute(GetBlogCommentsUseCase.Query(slug, BlogIdentity.of(userId, roles, null))))
 
     @GetMapping("/authors/{handle}")
     fun author(
         @PathVariable handle: String,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "12") size: Int,
-    ): ApiResponse<BlogAuthorSpace> = ApiResponse.success(queryService.authorSpace(handle, page, size))
+    ): ApiResponse<BlogAuthorSpace> =
+        ApiResponse.success(getAuthorSpace.execute(GetBlogAuthorSpaceUseCase.Query(handle, page, size)))
 }

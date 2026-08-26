@@ -101,6 +101,18 @@ class BlogProfileJpaEntity(
         this.status = status
     }
 
+    /** 도메인이 정한 값의 반영 — 승인 시각·승인자는 도메인 approve() 가 채운 값 그대로 */
+    fun applyFrom(profile: BlogProfile) {
+        handle = profile.handle
+        displayName = profile.displayName
+        bio = profile.bio
+        avatarUrl = profile.avatarUrl
+        role = profile.role
+        status = profile.status
+        approvedAt = profile.approvedAt
+        approvedByMemberId = profile.approvedByMemberId
+    }
+
     fun toDomain() = BlogProfile(
         id = id,
         memberId = memberId,
@@ -110,5 +122,21 @@ class BlogProfileJpaEntity(
         avatarUrl = avatarUrl,
         role = role,
         status = status,
+        approvedAt = approvedAt,
+        approvedByMemberId = approvedByMemberId,
+        createdAt = createdAt,
     )
+
+    companion object {
+        fun fromDomain(profile: BlogProfile) = BlogProfileJpaEntity(
+            id = profile.id,
+            memberId = profile.memberId,
+            handle = profile.handle,
+            displayName = profile.displayName,
+            bio = profile.bio,
+            avatarUrl = profile.avatarUrl,
+            role = profile.role,
+            status = profile.status,
+        ).also { it.applyFrom(profile) }
+    }
 }

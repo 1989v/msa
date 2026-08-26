@@ -80,16 +80,6 @@ class BlogCategoryJpaEntity(
         status = category.status
     }
 
-    /**
-     * 부모가 바뀌어 하위 경로를 다시 쓸 때만 쓰는 부분 수정.
-     * 이름·설명까지 함께 덮으면 재부모화가 조용히 다른 값을 되돌린다.
-     */
-    fun relocate(parentId: Long?, depth: Int, path: String) {
-        this.parentId = parentId
-        this.depth = depth
-        this.path = path
-    }
-
     fun toDomain() = BlogCategory(
         id = id,
         parentId = parentId,
@@ -101,4 +91,18 @@ class BlogCategoryJpaEntity(
         orderNo = orderNo,
         status = status,
     )
+
+    companion object {
+        fun fromDomain(category: BlogCategory) = BlogCategoryJpaEntity(
+            id = category.id,
+            parentId = category.parentId,
+            slug = category.slug,
+            name = category.name,
+            description = category.description,
+            depth = category.depth,
+            path = category.path,
+            orderNo = category.orderNo,
+            status = category.status,
+        )
+    }
 }

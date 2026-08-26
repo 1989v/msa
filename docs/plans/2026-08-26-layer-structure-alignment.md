@@ -72,7 +72,7 @@ val dirPackageExempt = mapOf(
 |---|---|---|---|---|
 | P2-1 ✅ 2026-08-26 | `ranking/feature` | 4 | 20 | 완료 — UseCase 5 · Port 4 · Adapter 4, allowlist 제거 |
 | P2-2 ✅ 2026-08-26 | `deal/feature` | 3 | 12 | 완료 — UseCase 16 · Port 3 · Adapter 3, allowlist 제거 |
-| P2-3 | `blog/feature` | 9 | 41 | 가장 큼. `BlogPostJpaEntity` 를 직접 돌려주는 자리가 많다 — 도메인 모델(`blog/domain`)로 매핑 |
+| P2-3 ✅ 2026-08-26 | `blog/feature` | 9 | 41 | 완료 — UseCase 31 · Port 6 · Adapter 6, 도메인 Paging/Paged 도입, allowlist 제거 |
 
 **검증**: 모듈 test + `:code-dictionary:app:test`(컨텍스트 로드) + 게이트. 공개 API 응답 JSON 이 이전과
 동일한지 FE 스냅샷 또는 curl diff.

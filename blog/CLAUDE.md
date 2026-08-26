@@ -17,10 +17,11 @@ ADR: `docs/adr/ADR-0072-blog-platform.md` · spec: `docs/specs/2026-08-21-blog-p
 
 ## 구조 상태 (ADR-0083)
 
-**변종 C — 미준수.** Port/Adapter 가 없고 `application/service` 9개가 `BlogPostJpaRepository`·`BlogPostJpaEntity` 등
-infrastructure 를 직접 주입한다 (import 41줄 — 레포 최대). 플랜 **P2-3** (세 모듈 중 마지막·가장 큼): `application/{entity}/port`
-+ `infrastructure/persistence/{entity}/adapter` 신설, `JpaEntity` 를 응답으로 돌려주던 자리는 `blog/domain` 모델 경유.
-그때까지 새 서비스를 같은 모양으로 늘리지 않는다 — 빌드 게이트 allowlist 에 "P2-3 에서 제거" 로 올라가 있다.
+표준 준수 (2026-08-26, 플랜 P2-3 완료) — `application/{category,profile,post,comment,interaction}/{usecase,port,dto}` +
+서비스 8종(Query/Assembler/PostWrite/Studio/Admin · Profile · Comment · Reaction/View) + `infrastructure/persistence/adapter` 6종.
+UseCase 인터페이스 31 · Port 6. 페이지네이션은 도메인 `Paging/Paged` 로 포트를 넘고 `Pageable` 은 어댑터 안에만 있다.
+글의 카운터·프로필의 승인 시각은 도메인의 관측값 필드(기본값)로 실려 응답이 엔티티 없이 나가고, 저장 시엔 엔티티가
+무시한다(entity-mutation). 호스트의 retention 배치는 `PurgeBlogViewsUseCase` 인터페이스만 본다.
 
 ## Commands
 

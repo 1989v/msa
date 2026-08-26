@@ -64,6 +64,11 @@ class BlogCommentJpaEntity(
         this.status = status
     }
 
+    fun applyFrom(comment: BlogComment) {
+        body = comment.body
+        status = comment.status
+    }
+
     fun toDomain() = BlogComment(
         id = id,
         postId = postId,
@@ -71,5 +76,18 @@ class BlogCommentJpaEntity(
         parentId = parentId,
         body = body,
         status = status,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
     )
+
+    companion object {
+        fun fromDomain(comment: BlogComment) = BlogCommentJpaEntity(
+            id = comment.id,
+            postId = comment.postId,
+            profileId = comment.profileId,
+            parentId = comment.parentId,
+            body = comment.body,
+            status = comment.status,
+        )
+    }
 }
