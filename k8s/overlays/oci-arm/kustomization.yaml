@@ -395,7 +395,7 @@ images:
     newTag: 7ef0ef8
   - name: commerce/quant
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
-    newTag: 7ef0ef8
+    newTag: a0918be
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: 6a1889c
