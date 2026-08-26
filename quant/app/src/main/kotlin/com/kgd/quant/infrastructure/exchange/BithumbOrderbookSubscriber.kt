@@ -6,7 +6,7 @@ import com.kgd.quant.application.asset.catalog.port.AssetCatalogRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.TradeFill
 import com.kgd.quant.domain.asset.TradeSide
-import com.kgd.quant.domain.asset.catalog.AssetClass
+import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.market.MarketCode
 import com.kgd.quant.infrastructure.chart.OrderbookSnapshotMaintainer
 import io.github.oshai.kotlinlogging.KotlinLogging

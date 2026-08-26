@@ -262,6 +262,8 @@ val verifyLayerDependencies by tasks.registering {
         // `application.service.dto.X` 를 레이어로 오인하면 안 된다. 뒤에 대문자(타입명)를 요구해 가른다.
         val ctorParams = Regex("""^class (\w+)\(([^)]*)\)""", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
         val injectedType = Regex(""":\s*([A-Z]\w*)""")
+        // `import a.b.C` → (a.b, C). 별칭(`as D`)은 주입 타입으로 거의 안 쓰이므로 원 이름만 본다
+        val importedType = Regex("""^import\s+([\w.]+)\.(\w+)$""", RegexOption.MULTILINE)
         // presentation 이 주입해도 되는 선언 위치: 인바운드 포트(usecase) · 프레젠테이션 로컬 · 설정값
         val presentationAllowedPkg = listOf(".usecase.", ".presentation.", ".config.")
         // com.kgd.* 최상위 선언 → 선언 패키지. 타입 이름만으로 '어느 레이어에서 온 것인지' 를 판정한다
@@ -284,8 +286,24 @@ val verifyLayerDependencies by tasks.registering {
             """^import\s+com\.kgd\.\w+\.application\.[\w.]*service\.[A-Z]""",
             RegexOption.MULTILINE,
         )
+        // application 이 인프라에 닿는 경로는 셋이다.
+        //   ㉠ 남의 infrastructure 패키지를 부른다
+        //   ㉡ 자기 패키지 안에 JPA 를 직접 들인다 (`interface XRepo : JpaRepository<…>`)
+        //   ㉢ 기술 클라이언트를 직접 손에 쥔다 (WebClient·OpenSearchClient·Redis·Kafka…)
+        // ㉡㉢ 은 `com.kgd.*.infrastructure.` 가 한 번도 안 나와 첫 패턴만으로는 통과한다. ㉢ 은 실제로
+        // quant `GlobalIndicesQuery` 가 그랬다 — UseCase 를 구현하고 있어 ④⑤에는 정상으로 보이는데
+        // application 안에서 Yahoo URL 로 WebClient 를 세우고 있었다.
+        //
+        // **I/O 경계만 넣는다.** Caffeine 같은 인메모리 자료구조는 프로세스 밖으로 나가지 않으므로
+        // 기술 누수가 아니다 — 넣으면 캐시 TTL 같은 application 정책까지 포트 뒤로 밀게 된다.
         val infraImport = Regex(
-            """^import\s+(com\.kgd\.\w+\.infrastructure\.|org\.springframework\.data\.jpa\.|jakarta\.persistence\.)""",
+            """^import\s+(""" +
+                """com\.kgd\.\w+\.infrastructure\.|""" +
+                """org\.springframework\.data\.jpa\.|jakarta\.persistence\.|""" +
+                """org\.springframework\.data\.redis\.|org\.springframework\.kafka\.|org\.apache\.kafka\.|""" +
+                """org\.springframework\.web\.reactive\.function\.client\.|org\.springframework\.web\.client\.|""" +
+                """org\.opensearch\.|org\.springframework\.jdbc\.|org\.hibernate\.|javax\.sql\.|com\.zaxxer\.hikari\.""" +
+                """)""",
             RegexOption.MULTILINE,
         )
         val failures = mutableListOf<String>()
@@ -344,13 +362,22 @@ val verifyLayerDependencies by tasks.registering {
                     val text = f.readText()
                     val pkg = packageLine.find(text)?.groupValues?.get(1) ?: return@forEach
                     if (".presentation." !in "$pkg.") return@forEach
+                    // 타입 → 선언 패키지 해석은 **그 파일의 import 우선**. 전역 심플명 색인은 같은 이름이
+                    // 두 패키지에 있으면(현재 46건) 파일시스템 순서로 승자가 갈려 로컬과 CI 의 판정이
+                    // 달라진다. import 가 있으면 그것이 답이고, 없으면 같은 패키지다.
+                    val localImports = importedType.findAll(text)
+                        .associate { it.groupValues[2] to it.groupValues[1] }
                     ctorParams.findAll(text).forEach { ctor ->
                         injectedType.findAll(ctor.groupValues[2]).forEach { t ->
-                            val declared = kgdDeclarations[t.groupValues[1]] ?: return@forEach
+                            val name = t.groupValues[1]
+                            val declared = localImports[name]
+                                ?: pkg.takeIf { kgdDeclarations[name] == pkg }
+                                ?: return@forEach            // 외부 라이브러리이거나 판정 불가
+                            if (!declared.startsWith("com.kgd.")) return@forEach
                             val ok = presentationAllowedPkg.any { it in "$declared." }
                             if (!ok) {
                                 failures += "[⑤ presentation 주입] ${sp.path}: ${f.relativeTo(srcRoot)} ← " +
-                                    "${t.groupValues[1]} ($declared)"
+                                    "$name ($declared)"
                             }
                         }
                     }

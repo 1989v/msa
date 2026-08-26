@@ -2,7 +2,7 @@ package com.kgd.quant.application.asset.catalog.port
 
 import com.kgd.quant.domain.asset.catalog.AssetCatalog
 import com.kgd.quant.domain.asset.catalog.AssetCatalogId
-import com.kgd.quant.domain.asset.catalog.AssetClass
+import com.kgd.quant.domain.asset.AssetClass
 
 /**
  * AssetCatalogRepositoryPort — 자산 카탈로그 영속성 포트.

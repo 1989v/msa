@@ -8,7 +8,7 @@ import com.kgd.quant.application.asset.catalog.port.AssetCatalogRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.NewsItem
 import com.kgd.quant.domain.asset.NewsKind
-import com.kgd.quant.domain.asset.catalog.AssetClass
+import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.market.MarketCode
 import com.kgd.common.quota.ExternalApiProvider
 import com.kgd.common.quota.ExternalApiQuotaGuards

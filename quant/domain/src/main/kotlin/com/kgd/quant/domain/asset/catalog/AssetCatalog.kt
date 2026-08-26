@@ -1,5 +1,6 @@
 package com.kgd.quant.domain.asset.catalog
 
+import com.kgd.quant.domain.asset.AssetClass
 import java.time.Instant
 import java.util.UUID
 
@@ -13,12 +14,6 @@ value class AssetCatalogId(val value: UUID) {
     companion object {
         fun new(): AssetCatalogId = AssetCatalogId(UUID.randomUUID())
     }
-}
-
-enum class AssetClass {
-    CRYPTO,
-    STOCK_KR,
-    STOCK_US,
 }
 
 enum class AssetSource {

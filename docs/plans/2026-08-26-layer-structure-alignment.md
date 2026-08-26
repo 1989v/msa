@@ -189,6 +189,25 @@ flat 으로 만들어졌으며, quant 의 어떤 ADR·스펙도 패키지 구조
 **검증**: quant 129 · search app 46/batch 11/consumer 7 · chatbot 9 · gifticon 9+10 · game 107 ·
 code-dictionary 41 통과, `verifyArchitecture` 통과(허용목록 ①③④⑤ 전부 빔, ② `search:domain` 만).
 
+## P10 — 게이트가 3rd-party 기술을 보게 ✅ 2026-08-26
+
+규칙 ①의 신호가 `com.kgd.*.infrastructure.` + JPA 뿐이라, **기술을 직접 손에 쥔 application** 은 통과했다.
+quant `GlobalIndicesQuery` 가 UseCase 를 구현한 채 application 안에서 Yahoo URL 로 `WebClient` 를 세우고
+있었다(변종 C 와 같은 실패, JPA 대신 HTTP). Redis·Kafka·OpenSearch·JDBC 도 같은 사각이었다 —
+P7 이 고친 `SearchDebugController` 의 원래 형태(컨트롤러가 `OpenSearchClient` 보유)가 다시 들어와도
+안 걸리는 상태였다.
+
+- 규칙 ①의 import 목록에 I/O 기술을 넣었다. **Caffeine 은 넣지 않았다** — 인메모리 자료구조는
+  프로세스 밖으로 안 나가므로 기술 누수가 아니고, 넣으면 캐시 TTL 같은 application 정책까지 포트 뒤로 민다.
+- `GlobalIndicesQuery` 의 Yahoo 호출을 `GlobalIndexQuotePort` + `YahooGlobalIndicesAdapter` 로 뺐다.
+  같은 패키지에 `YahooLatestPriceAdapter`·`YahooNewsAdapter`·`YahooFundamentalsAdapter` 가 이미 있다.
+  캐시 TTL 과 실패 흡수는 application 에 남겼다 — 화면 정책이지 원천의 성질이 아니다.
+- 규칙 ⑤의 타입 해석을 전역 심플명 색인 → **파일의 import 우선**으로 바꿨다. 충돌 이름 45건이
+  `putIfAbsent` + 파일시스템 순서로 갈려 로컬/CI 판정이 달라질 수 있었다(현재 실영향 0이었지만 잠복).
+- 덤으로 `quant/domain` 의 `AssetClass` 중복 2벌(상수까지 동일)을 하나로 합쳤다.
+
+**검증**: application 에 `WebClient`, presentation 에 `OpenSearchClient` 를 심어 규칙 ①이 잡는 것 확인 후 원복.
+
 ## 완료 기준 — 전부 충족 (2026-08-26)
 
 - ✅ 게이트 allowlist 에 `search:domain`(②) 만 남는다.

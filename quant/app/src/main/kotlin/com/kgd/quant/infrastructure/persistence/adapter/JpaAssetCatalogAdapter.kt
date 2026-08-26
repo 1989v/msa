@@ -3,7 +3,7 @@ package com.kgd.quant.infrastructure.persistence.adapter
 import com.kgd.quant.application.asset.catalog.port.AssetCatalogRepositoryPort
 import com.kgd.quant.domain.asset.catalog.AssetCatalog
 import com.kgd.quant.domain.asset.catalog.AssetCatalogId
-import com.kgd.quant.domain.asset.catalog.AssetClass
+import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.asset.catalog.AssetSource
 import com.kgd.quant.infrastructure.persistence.entity.AssetCatalogEntity
 import com.kgd.quant.infrastructure.persistence.repository.AssetCatalogJpaRepository

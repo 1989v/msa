@@ -76,16 +76,23 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 
 | 규칙 | 신호 | 왜 이 신호인가 |
 |---|---|---|
-| ① application → infrastructure 금지 | `package …application…` 파일의 `import com.kgd.*.infrastructure.` | 변종 C 의 정의 그 자체. 오탐 없음 |
+| ① application·presentation → 기술 금지 | 그 패키지 파일의 `import com.kgd.*.infrastructure.` **또는 I/O 기술 클라이언트**(JPA·JDBC·Hibernate·Redis·Kafka·OpenSearch·WebClient/RestClient·DataSource) | 변종 C 의 정의 그 자체. 기술 목록이 필요한 이유는 아래 |
 | ② domain 모듈 프레임워크 금지 | `*/domain/src/main` 의 `import org.springframework.` / `jakarta.persistence.` | 빌드 의존성이 없어 이미 컴파일 에러지만, `search:domain` 처럼 의존성을 추가한 순간 뚫린다 |
 | ③ 디렉토리 == 패키지 | 파일 경로에서 유도한 패키지 ≠ `package` 선언 | 변종 D 재발 방지 |
 | ④ presentation → application.service 금지 | `package …presentation…` 파일의 `import com.kgd.*.application.{entity}.service.X` | 규칙 7("컨트롤러는 UseCase 인터페이스만 주입")의 강제 장치. 이게 없으면 UseCase 를 아예 안 만들어도 게이트를 통과한다 |
-| ⑤ presentation 생성자 주입 = UseCase 만 | 컨트롤러 생성자 파라미터 타입을 **선언 위치**로 판정 — `usecase`·`presentation`·`config` 밖의 `com.kgd.*` 타입이면 실패 | ④는 `service` 라는 **패키지 이름**에 기댄다. UseCase 와 구현이 같은 패키지에 사는 레이아웃에서는 못 잡고, 포트·`*Query` 클래스 직접 주입도 못 본다. ⑤는 이름이 아니라 타입이 어디서 왔는지를 본다 |
+| ⑤ presentation 생성자 주입 = UseCase 만 | 컨트롤러 생성자 파라미터 타입을 **선언 위치**로 판정 — `usecase`·`presentation`·`config` 밖의 `com.kgd.*` 타입이면 실패. 선언 위치는 **그 파일의 import 로** 해석한다 | ④는 `service` 라는 **패키지 이름**에 기댄다. UseCase 와 구현이 같은 패키지에 사는 레이아웃에서는 못 잡고, 포트·`*Query` 클래스 직접 주입도 못 본다. ⑤는 이름이 아니라 타입이 어디서 왔는지를 본다. 전역 심플명 색인으로 판정하면 같은 이름이 두 패키지에 있을 때(현재 45건) 파일시스템 순서로 승자가 갈려 **로컬은 통과하고 CI 는 실패**할 수 있다 — import 가 있으면 그것이 답이고, 없으면 같은 패키지다 |
 
 규칙 ①은 `presentation` 도 본다 — 컨트롤러가 `JpaRepository`/어댑터를 직접 부르면 application 을 통째로
 건너뛴 것이라 변종 C 보다 나쁘다. 그리고 ①의 import 목록에는 `org.springframework.data.jpa.` ·
 `jakarta.persistence.` 도 들어간다: application 패키지 안에 `interface XRepo : JpaRepository<…>` 를 정의하면
 `com.kgd.*.infrastructure.` 가 한 번도 안 나와 통과하기 때문이다 (변종 C 를 되살리는 가장 자연스러운 경로).
+
+규칙 ①이 `com.kgd.*.infrastructure.` 만 보면 **기술을 직접 손에 쥔 application** 을 못 잡는다. 2026-08-26
+실측에서 quant `GlobalIndicesQuery` 가 그랬다 — `GetGlobalIndicesUseCase` 를 구현하고 있어 ④·⑤에는
+정상으로 보이는데, application 패키지 안에서 Yahoo URL 로 `WebClient` 를 세우고 응답을 파싱했다.
+변종 C 와 같은 실패인데 JPA 가 아니라 HTTP 였을 뿐이다. 그래서 목록에 I/O 기술을 넣었다.
+**Caffeine 같은 인메모리 자료구조는 넣지 않는다** — 프로세스 밖으로 나가지 않으므로 기술 누수가
+아니고, 넣으면 캐시 TTL 같은 application 정책까지 포트 뒤로 밀게 된다.
 
 규칙 ④의 신호는 **마지막 패키지 세그먼트가 `service`** 인 import 다. code-dictionary 에는 `service` 라는
 *엔티티* 가 있어 `application.service.dto.ServiceResultDto` 가 존재하는데, 이걸 레이어로 오인하면 오탐이 된다.

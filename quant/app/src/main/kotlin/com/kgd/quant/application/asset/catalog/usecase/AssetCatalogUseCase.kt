@@ -2,7 +2,7 @@ package com.kgd.quant.application.asset.catalog.usecase
 
 import com.kgd.quant.domain.asset.catalog.AssetCatalog
 import com.kgd.quant.domain.asset.catalog.AssetCatalogId
-import com.kgd.quant.domain.asset.catalog.AssetClass
+import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.asset.catalog.AssetSource
 
 /** 자산 카탈로그 CRUD — admin REST 와 ingest scheduler 양쪽이 사용 (Phase 1.5) */

@@ -5,7 +5,7 @@ import com.kgd.quant.application.discover.port.RankingPort
 import com.kgd.quant.application.discover.usecase.GetMarketRankingUseCase
 import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
-import com.kgd.quant.domain.asset.catalog.AssetClass as CatalogAssetClass
+import com.kgd.quant.domain.asset.AssetClass as CatalogAssetClass
 import com.kgd.quant.domain.asset.catalog.AssetSource
 import com.kgd.quant.domain.market.MarketCode
 import io.github.oshai.kotlinlogging.KotlinLogging

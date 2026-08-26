@@ -4,7 +4,7 @@ import com.kgd.common.response.ApiResponse
 import com.kgd.quant.application.asset.catalog.usecase.AssetCatalogUseCase
 import com.kgd.quant.domain.asset.catalog.AssetCatalog
 import com.kgd.quant.domain.asset.catalog.AssetCatalogId
-import com.kgd.quant.domain.asset.catalog.AssetClass
+import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.asset.catalog.AssetSource
 import com.kgd.quant.presentation.resolver.RolesHeader
 import org.springframework.http.HttpStatus
