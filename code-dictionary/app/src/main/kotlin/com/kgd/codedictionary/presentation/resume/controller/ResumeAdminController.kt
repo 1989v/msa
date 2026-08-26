@@ -7,7 +7,7 @@ import com.kgd.codedictionary.application.resume.dto.ResumeShareLinkCreateReques
 import com.kgd.codedictionary.application.resume.dto.ResumeShareLinkDto
 import com.kgd.codedictionary.application.resume.dto.ResumeVisibilityUpdateRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeVisitDto
-import com.kgd.codedictionary.application.resume.service.ResumeAdminService
+import com.kgd.codedictionary.application.resume.usecase.ManageResumeUseCase
 import com.kgd.common.exception.NotFoundException
 import com.kgd.common.response.ApiResponse
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -28,58 +28,58 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/admin/resume")
 class ResumeAdminController(
-    private val resumeAdminService: ResumeAdminService,
+    private val manageResume: ManageResumeUseCase,
 ) {
 
     @GetMapping("/documents")
     fun listDocuments(): ApiResponse<List<ResumeDocumentSummaryDto>> =
-        ApiResponse.success(resumeAdminService.listDocuments())
+        ApiResponse.success(manageResume.listDocuments())
 
     @GetMapping("/documents/{slug}")
     fun getDocument(@PathVariable slug: String): ApiResponse<ResumeDocumentDto> {
-        val document = resumeAdminService.getDocument(slug) ?: throw NotFoundException("ResumeDocument", slug)
+        val document = manageResume.getDocument(slug) ?: throw NotFoundException("ResumeDocument", slug)
         return ApiResponse.success(ResumeDocumentDto.from(document))
     }
 
     @PutMapping("/documents")
     fun upsertDocument(
         @RequestBody request: ResumeDocumentUpsertRequest,
-    ): ApiResponse<ResumeDocumentSummaryDto> = ApiResponse.success(resumeAdminService.upsertDocument(request))
+    ): ApiResponse<ResumeDocumentSummaryDto> = ApiResponse.success(manageResume.upsertDocument(request))
 
     @DeleteMapping("/documents/{slug}")
     fun deleteDocument(@PathVariable slug: String): ApiResponse<Unit> {
-        resumeAdminService.deleteDocument(slug)
+        manageResume.deleteDocument(slug)
         return ApiResponse.success(Unit)
     }
 
     @GetMapping("/share-links")
     fun listShareLinks(): ApiResponse<List<ResumeShareLinkDto>> =
-        ApiResponse.success(resumeAdminService.listShareLinks())
+        ApiResponse.success(manageResume.listShareLinks())
 
     @PostMapping("/share-links")
     fun createShareLink(
         @RequestBody request: ResumeShareLinkCreateRequest,
-    ): ApiResponse<ResumeShareLinkDto> = ApiResponse.success(resumeAdminService.createShareLink(request))
+    ): ApiResponse<ResumeShareLinkDto> = ApiResponse.success(manageResume.createShareLink(request))
 
     @DeleteMapping("/share-links/{id}")
     fun revokeShareLink(@PathVariable id: Long): ApiResponse<Unit> {
-        resumeAdminService.revokeShareLink(id)
+        manageResume.revokeShareLink(id)
         return ApiResponse.success(Unit)
     }
 
     @GetMapping("/visibility")
     fun visibility(): ApiResponse<Map<String, String>> =
-        ApiResponse.success(mapOf("visibility" to resumeAdminService.currentVisibility().name))
+        ApiResponse.success(mapOf("visibility" to manageResume.currentVisibility().name))
 
     @PutMapping("/visibility")
     fun updateVisibility(
         @RequestBody request: ResumeVisibilityUpdateRequest,
     ): ApiResponse<Map<String, String>> {
-        resumeAdminService.updateVisibility(request.toDomain())
-        return ApiResponse.success(mapOf("visibility" to resumeAdminService.currentVisibility().name))
+        manageResume.updateVisibility(request.toDomain())
+        return ApiResponse.success(mapOf("visibility" to manageResume.currentVisibility().name))
     }
 
     @GetMapping("/visits")
     fun visits(@RequestParam(defaultValue = "100") limit: Int): ApiResponse<List<ResumeVisitDto>> =
-        ApiResponse.success(resumeAdminService.recentVisits(limit.coerceIn(1, 500)))
+        ApiResponse.success(manageResume.recentVisits(limit.coerceIn(1, 500)))
 }

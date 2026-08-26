@@ -3,6 +3,7 @@ package com.kgd.blog.infrastructure.render
 import com.github.benmanes.caffeine.cache.Caffeine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
+import com.kgd.blog.application.post.port.BlogShellPort
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.time.Duration
@@ -19,7 +20,7 @@ import java.time.Duration
 @Component
 class ShellHtmlProvider(
     @Value("\${blog.shell-url:http://portal-fe/index.html}") private val shellUrl: String,
-) {
+) : BlogShellPort {
     private val log = KotlinLogging.logger {}
     private val restClient = RestClient.builder().build()
 
@@ -35,7 +36,7 @@ class ShellHtmlProvider(
     /**
      * 셸 HTML. 한 번도 받아 오지 못했으면 null 이고, 호출부는 SPA 없는 최소 HTML 로 떨어진다.
      */
-    fun shell(): String? {
+    override fun shell(): String? {
         cache.getIfPresent(KEY)?.let { return it }
         return runCatching {
             val html = restClient.get().uri(shellUrl).retrieve().body(String::class.java)

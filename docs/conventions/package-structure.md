@@ -58,10 +58,20 @@
 6. **Outbound Port 는 `application/{entity}/port`.** domain 모듈에 두지 않는다. 포트 시그니처에
    JPA 엔티티·프레임워크 타입을 쓰지 않는다.
 7. **UseCase 는 인터페이스다.** 단일 구현이라도 `@Service` 클래스로 대체하지 않는다. 컨트롤러는
-   UseCase 인터페이스만 주입한다.
+   UseCase 인터페이스만 주입한다 — 게이트 규칙 ④가 `presentation → application.{entity}.service` import 를 막는다.
+   **DTO 를 `service` 패키지에 두지 않는다**: 구현을 부르는 것과 타입을 쓰는 것은 다르지만 위치가 같으면
+   규칙이 구분하지 못한다. `dto` 로 옮긴다.
+
+   > **주의 — 인터페이스를 붙이면 Spring 프록시가 CGLIB 에서 JDK 로 바뀐다.** `@Cacheable`/`@Transactional`
+   > 이 걸린 클래스에 인터페이스가 생기면 그 빈은 `jdk.proxy$Proxy` 가 되고, **구상 타입으로 주입하던 곳은
+   > 기동 시 `BeanNotOfRequiredTypeException` 으로 죽는다**(2026-08-26 code-dictionary 에서 실제 발생).
+   > 컨트롤러만 고치면 안 되고 서비스끼리·테스트의 `@Autowired`·MockK 목 타입까지 함께 인터페이스로 옮긴다.
+
 8. **application 은 infrastructure 를 import 하지 않는다.** `JpaRepository`·`JpaEntity`·metrics·
-   properties 를 서비스에 직접 주입하는 것이 가장 흔한 위반이다. 루트 `verifyLayerDependencies`
-   게이트가 빌드에서 잡는다.
+   properties 를 서비스에 직접 주입하는 것이 가장 흔한 위반이다. **`presentation` 도 같은 규칙**이고,
+   application 패키지 안의 `org.springframework.data.jpa.`·`jakarta.persistence.` import 도 포함한다
+   (`interface XRepo : JpaRepository<…>` 를 application 에 두면 infrastructure 문자열 없이 통과하므로).
+   루트 `verifyLayerDependencies` 게이트가 빌드에서 잡는다.
 9. **폴드는 레이어 면제 사유가 아니다.** `:feature` 도 위 규칙 전부를 따른다. ADR-0058 은 모듈
    **간** 규칙(feature 끼리 빈 주입 금지·Kafka 유지·datasource 분리)이고 이 문서는 모듈 **안** 규칙이다.
 10. 한 컨텍스트의 포트가 여럿이면 `{Context}Ports.kt` 한 파일에 묶어도 된다 (game 이 그렇게 한다).

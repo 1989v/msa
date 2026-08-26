@@ -2,7 +2,7 @@ package com.kgd.codedictionary.presentation.display.controller
 
 import com.kgd.codedictionary.application.display.dto.DisplayServiceDto
 import com.kgd.codedictionary.application.display.dto.DisplayServiceUpsertRequest
-import com.kgd.codedictionary.application.display.service.DisplayAdminService
+import com.kgd.codedictionary.application.display.usecase.ManageDisplayServicesUseCase
 import com.kgd.common.response.ApiResponse
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/admin/display")
 class DisplayServiceAdminController(
-    private val adminService: DisplayAdminService,
+    private val adminService: ManageDisplayServicesUseCase,
 ) {
 
     @GetMapping("/services")

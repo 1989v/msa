@@ -79,6 +79,17 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 | ① application → infrastructure 금지 | `package …application…` 파일의 `import com.kgd.*.infrastructure.` | 변종 C 의 정의 그 자체. 오탐 없음 |
 | ② domain 모듈 프레임워크 금지 | `*/domain/src/main` 의 `import org.springframework.` / `jakarta.persistence.` | 빌드 의존성이 없어 이미 컴파일 에러지만, `search:domain` 처럼 의존성을 추가한 순간 뚫린다 |
 | ③ 디렉토리 == 패키지 | 파일 경로에서 유도한 패키지 ≠ `package` 선언 | 변종 D 재발 방지 |
+| ④ presentation → application.service 금지 | `package …presentation…` 파일의 `import com.kgd.*.application.{entity}.service.X` | 규칙 7("컨트롤러는 UseCase 인터페이스만 주입")의 강제 장치. 이게 없으면 UseCase 를 아예 안 만들어도 게이트를 통과한다 |
+
+규칙 ①은 `presentation` 도 본다 — 컨트롤러가 `JpaRepository`/어댑터를 직접 부르면 application 을 통째로
+건너뛴 것이라 변종 C 보다 나쁘다. 그리고 ①의 import 목록에는 `org.springframework.data.jpa.` ·
+`jakarta.persistence.` 도 들어간다: application 패키지 안에 `interface XRepo : JpaRepository<…>` 를 정의하면
+`com.kgd.*.infrastructure.` 가 한 번도 안 나와 통과하기 때문이다 (변종 C 를 되살리는 가장 자연스러운 경로).
+
+규칙 ④의 신호는 **마지막 패키지 세그먼트가 `service`** 인 import 다. code-dictionary 에는 `service` 라는
+*엔티티* 가 있어 `application.service.dto.ServiceResultDto` 가 존재하는데, 이걸 레이어로 오인하면 오탐이 된다.
+뒤에 대문자(타입명)를 요구해 가른다. DTO 가 `service` 패키지에 살면 규칙이 구현 호출과 구별할 수 없으므로
+`dto` 로 옮긴다 — 2026-08-26 에 5개(`GameSort`·`AdPlacementDto`·`RewardDto`·`PortfolioSort`·`SnippetUnlockDto`·`ResumeOverview`)를 옮겼다.
 
 현재 위반은 **모듈 단위 allowlist** 로 통과시키되 항목마다 "왜 · 언제 비우는지" 를 적는다
 (ADR-0082 `quotaGateExempt` 와 같은 규율 — 이유 없는 예외가 쌓이면 검사가 죽는다). 이행
@@ -104,6 +115,13 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 | `agent-viewer/api` | 플랫폼 서비스가 아니라 개발 도구. `ApiResponse` 도 안 쓴다 — 서비스 표에서도 도구로 분류 |
 | `game:sim` · `game:web` | KMP 모듈. JVM 레이어 규칙 대상이 아니다 |
 | `search:domain` | 규칙 ② 예외 — `spring-data-commons` 만 허용 |
+
+**게이트는 통과하지만 견본과 모양이 다른 두 곳** (2026-08-26 실측, 위반 아님 — 문서화로 닫는다):
+
+| 모듈 | 모양 | 왜 그대로 두나 |
+|---|---|---|
+| `quant:app` | `application/{port,usecase,service,view}` 플랫 구조와 `application/paper/{port,usecase}` 엔티티 구조가 공존 (플랫 port 43 · usecase 20) | 도메인이 전략·백테스트·페이퍼·실매매로 갈리는데 엔티티 축이 하나로 안 잡힌다. 재배치 비용이 크고 얻는 것이 이름뿐이다. quant 는 자기 레이아웃을 `quant/CLAUDE.md` 에 적어 둔다 |
+| `search:app` · `search:batch` | `com.kgd.search.{bandit,config,search}` · `com.kgd.search.job` 이 세 레이어 **밖** 최상위에 있다 | 규칙 ③(디렉토리==패키지)은 만족한다. 다만 레이어 밖이라 **규칙 ①·④의 시야에도 없다** — `bandit` 패키지가 커지면 검사되지 않는 면이 함께 커진다. 다음에 이 패키지를 손댈 때 `application`/`infrastructure` 로 접는다 |
 
 ### 7) 기존 위반 정리 순서
 

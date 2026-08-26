@@ -2,11 +2,12 @@ package com.kgd.codedictionary.application.portfolio.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.Ticker
-import org.springframework.stereotype.Service
+import com.kgd.codedictionary.application.portfolio.dto.SnippetUnlockDto
+import com.kgd.codedictionary.application.portfolio.usecase.UnlockSnippetUseCase
 import java.time.Duration
 import java.util.UUID
+import org.springframework.stereotype.Service
 
-data class SnippetUnlockDto(val token: String, val expiresIn: Long)
 
 /**
  * 광고 시청 후 공개면 스니펫 전문을 여는 1회성 토큰 (ADR-0066 개정).
@@ -19,7 +20,7 @@ data class SnippetUnlockDto(val token: String, val expiresIn: Long)
 @Service
 class SnippetUnlockService(
     ticker: Ticker = Ticker.systemTicker(),
-) {
+) : UnlockSnippetUseCase {
 
     // maximumSize 는 발급 폭주가 힙을 먹지 않게 하는 안전핀 — 초과분은 오래된 것부터 밀려난다
     private val tokens = Caffeine.newBuilder()
@@ -28,13 +29,13 @@ class SnippetUnlockService(
         .maximumSize(10_000)
         .build<String, Boolean>()
 
-    fun issue(): SnippetUnlockDto {
+    override fun issue(): SnippetUnlockDto {
         val token = UUID.randomUUID().toString()
         tokens.put(token, true)
         return SnippetUnlockDto(token = token, expiresIn = TTL.seconds)
     }
 
-    fun isValid(token: String?): Boolean =
+    override fun isValid(token: String?): Boolean =
         token?.takeIf { it.isNotBlank() }?.let { tokens.getIfPresent(it) } == true
 
     companion object {

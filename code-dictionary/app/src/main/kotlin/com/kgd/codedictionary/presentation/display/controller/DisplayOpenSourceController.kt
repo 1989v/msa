@@ -1,7 +1,7 @@
 package com.kgd.codedictionary.presentation.display.controller
 
 import com.kgd.codedictionary.application.display.dto.DisplayOpenSourceDto
-import com.kgd.codedictionary.application.display.service.DisplayOpenSourceQueryService
+import com.kgd.codedictionary.application.display.usecase.GetOpenSourceItemsUseCase
 import com.kgd.common.response.ApiResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/display")
 class DisplayOpenSourceController(
-    private val displayOpenSourceQueryService: DisplayOpenSourceQueryService,
+    private val getOpenSourceItems: GetOpenSourceItemsUseCase,
 ) {
 
     @GetMapping("/open-source")
     fun openSource(): ApiResponse<List<DisplayOpenSourceDto>> =
-        ApiResponse.success(displayOpenSourceQueryService.activeItems())
+        ApiResponse.success(getOpenSourceItems.activeItems())
 }

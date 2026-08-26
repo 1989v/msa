@@ -2,6 +2,7 @@ package com.kgd.member.application.member.service
 
 import com.kgd.member.application.member.port.MemberRepositoryPort
 import com.kgd.member.application.member.usecase.GetMemberProfileUseCase
+import com.kgd.member.application.member.usecase.GetMemberStatsUseCase
 import com.kgd.member.application.member.usecase.GetOrCreateMemberUseCase
 import com.kgd.member.application.member.usecase.UpdateMemberNameUseCase
 import com.kgd.member.application.member.usecase.WithdrawMemberUseCase
@@ -9,11 +10,16 @@ import com.kgd.member.domain.exception.MemberNotFoundException
 import com.kgd.member.domain.model.Member
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
 
 @Service
 class MemberService(
     private val memberRepositoryPort: MemberRepositoryPort
-) : GetOrCreateMemberUseCase, GetMemberProfileUseCase, UpdateMemberNameUseCase, WithdrawMemberUseCase {
+) : GetOrCreateMemberUseCase,
+    GetMemberProfileUseCase,
+    GetMemberStatsUseCase,
+    UpdateMemberNameUseCase,
+    WithdrawMemberUseCase {
 
     @Transactional("memberTransactionManager")
     override fun execute(command: GetOrCreateMemberUseCase.Command): GetOrCreateMemberUseCase.Result {
@@ -53,6 +59,12 @@ class MemberService(
             status = member.status
         )
     }
+
+    @Transactional("memberTransactionManager", readOnly = true)
+    override fun execute(): GetMemberStatsUseCase.Result = GetMemberStatsUseCase.Result(
+        newCount = memberRepositoryPort.countJoinedAfter(LocalDate.now().atStartOfDay()),
+        totalCount = memberRepositoryPort.countAll(),
+    )
 
     @Transactional("memberTransactionManager")
     override fun execute(command: UpdateMemberNameUseCase.Command) {

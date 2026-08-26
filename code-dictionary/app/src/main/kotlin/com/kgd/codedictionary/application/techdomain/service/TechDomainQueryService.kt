@@ -2,6 +2,7 @@ package com.kgd.codedictionary.application.techdomain.service
 
 import com.kgd.codedictionary.application.techdomain.dto.TechDomainResultDto
 import com.kgd.codedictionary.application.techdomain.port.TechDomainRepositoryPort
+import com.kgd.codedictionary.application.techdomain.usecase.GetTechDomainsUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class TechDomainQueryService(
     private val repository: TechDomainRepositoryPort,
-) {
-    fun activeDomains(): List<TechDomainResultDto> =
+) : GetTechDomainsUseCase {
+    override fun activeDomains(): List<TechDomainResultDto> =
         repository.findAllActiveOrdered().map(TechDomainResultDto::from)
 }

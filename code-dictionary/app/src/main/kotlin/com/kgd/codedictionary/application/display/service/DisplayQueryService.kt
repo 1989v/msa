@@ -2,6 +2,7 @@ package com.kgd.codedictionary.application.display.service
 
 import com.kgd.codedictionary.application.display.dto.DisplayServiceDto
 import com.kgd.codedictionary.application.display.port.DisplayServiceRepositoryPort
+import com.kgd.codedictionary.application.display.usecase.GetDisplayServicesUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class DisplayQueryService(
     private val repository: DisplayServiceRepositoryPort,
-) {
-    fun displayedServices(): List<DisplayServiceDto> =
+) : GetDisplayServicesUseCase {
+    override fun displayedServices(): List<DisplayServiceDto> =
         repository.findAllDisplayed().map(DisplayServiceDto::from)
 }

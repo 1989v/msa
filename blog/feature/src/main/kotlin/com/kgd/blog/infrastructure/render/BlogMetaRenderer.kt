@@ -7,6 +7,7 @@ import com.kgd.blog.application.post.dto.BlogPostSummary
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.html.HtmlRenderer
 import org.springframework.beans.factory.annotation.Value
+import com.kgd.blog.application.post.port.BlogPageRenderPort
 import org.springframework.stereotype.Component
 import tools.jackson.databind.ObjectMapper
 import java.time.format.DateTimeFormatter
@@ -22,7 +23,7 @@ import java.time.format.DateTimeFormatter
 class BlogMetaRenderer(
     @Value("\${blog.origin:https://blog.1989v.com}") private val origin: String,
     private val objectMapper: ObjectMapper,
-) {
+) : BlogPageRenderPort {
     private val parser = Parser.builder().build()
 
     /**
@@ -31,7 +32,7 @@ class BlogMetaRenderer(
      */
     private val renderer = HtmlRenderer.builder().escapeHtml(true).build()
 
-    fun postPage(shell: String?, detail: BlogPostDetail): String {
+    override fun postPage(shell: String?, detail: BlogPostDetail): String {
         val post = detail.post
         val canonical = BlogSeoCopy.postUrl(origin, post.slug)
         val meta = metaTags(
@@ -45,7 +46,7 @@ class BlogMetaRenderer(
         return compose(shell, meta, postBody(detail, canonical))
     }
 
-    fun authorPage(shell: String?, space: BlogAuthorSpace): String {
+    override fun authorPage(shell: String?, space: BlogAuthorSpace): String {
         val handle = space.author.handle.orEmpty()
         val canonical = BlogSeoCopy.authorUrl(origin, handle)
         val meta = metaTags(
@@ -60,7 +61,7 @@ class BlogMetaRenderer(
     }
 
     /** 없는 글·작성자. 색인은 막되 크롤은 열어 둔다(follow) — 링크 그래프까지 끊을 이유는 없다 */
-    fun notFoundPage(shell: String?): String {
+    override fun notFoundPage(shell: String?): String {
         val meta = metaTags(
             title = "찾을 수 없는 글 | ${BlogSeoCopy.BRAND}",
             description = "요청한 글을 찾을 수 없습니다.",

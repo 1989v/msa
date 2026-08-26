@@ -1,6 +1,7 @@
 package com.kgd.recommendation.infrastructure.bandit
 
 import com.kgd.recommendation.application.recommendation.port.BanditPort
+import com.kgd.recommendation.application.recommendation.port.BanditVariantStats
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -57,7 +58,7 @@ class BanditPolicy(
         }
     }
 
-    fun recordClick(variant: String) {
+    override fun recordClick(variant: String) {
         if (!enabled) return
         when (backend) {
             "redis" -> redisSampler.update(variant, clicked = true)
@@ -65,15 +66,17 @@ class BanditPolicy(
         }
     }
 
-    fun snapshot(): List<ThompsonSampler.BanditStats> {
+    override fun snapshot(): List<BanditVariantStats> {
         val data = when (backend) {
             "redis" -> redisSampler.snapshot()
             else -> memorySampler.snapshot()
         }
-        return data.values.toList().sortedByDescending { it.successes }
+        return data.values
+            .sortedByDescending { it.successes }
+            .map { BanditVariantStats(it.variant, it.successes, it.failures, it.expectedCtr) }
     }
 
-    fun reset() {
+    override fun reset() {
         when (backend) {
             "redis" -> redisSampler.reset()
             // memory 는 process restart 로 reset

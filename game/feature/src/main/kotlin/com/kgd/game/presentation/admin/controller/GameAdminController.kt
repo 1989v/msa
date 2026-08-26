@@ -3,7 +3,7 @@ package com.kgd.game.presentation.admin.controller
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.catalog.dto.AdminGameSummaryDto
 import com.kgd.game.application.catalog.dto.GameDetailDto
-import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.application.catalog.usecase.ChangeGameStatusUseCase
 import com.kgd.game.application.catalog.usecase.CreateGameCollectionUseCase
 import com.kgd.game.application.catalog.usecase.CreateGameCommand

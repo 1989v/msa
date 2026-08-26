@@ -2,12 +2,15 @@ package com.kgd.codedictionary.application.resume.service
 
 import com.kgd.codedictionary.application.resume.dto.ResumeDocumentDto
 import com.kgd.codedictionary.application.resume.dto.ResumeDocumentSummaryDto
+import com.kgd.codedictionary.application.resume.dto.ResumeOverview
 import com.kgd.codedictionary.application.resume.dto.ResumeProfileDto
 import com.kgd.codedictionary.application.resume.dto.ResumeStatusDto
 import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeDocumentRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSettingRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeShareLinkRepositoryPort
+import com.kgd.codedictionary.application.resume.usecase.GetResumeProfileUseCase
+import com.kgd.codedictionary.application.resume.usecase.GetResumeUseCase
 import com.kgd.codedictionary.domain.resume.model.ResumeDocumentKind
 import com.kgd.codedictionary.domain.resume.model.ResumeShareLink
 import com.kgd.codedictionary.domain.resume.model.ResumeVisibility
@@ -16,12 +19,6 @@ import com.kgd.common.exception.NotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-data class ResumeOverview(
-    val main: ResumeDocumentDto?,
-    val details: List<ResumeDocumentSummaryDto>,
-    /** 경력·프로젝트·기술 스택 — 마크다운의 자리표시자를 채운다 */
-    val profile: ResumeProfileDto,
-)
 
 /**
  * 공개 이력서 조회 (ADR-0064).
@@ -35,15 +32,15 @@ class ResumeQueryService(
     private val shareLinkRepository: ResumeShareLinkRepositoryPort,
     private val accessLogRepository: ResumeAccessLogRepositoryPort,
     private val settingRepository: ResumeSettingRepositoryPort,
-    private val profileService: ResumeProfileService,
-) {
+    private val getProfile: GetResumeProfileUseCase,
+) : GetResumeUseCase {
 
     @Transactional(readOnly = true)
-    fun status(): ResumeStatusDto =
+    override fun status(): ResumeStatusDto =
         ResumeStatusDto(publiclyVisible = settingRepository.currentVisibility() == ResumeVisibility.PUBLIC)
 
     @Transactional
-    fun overview(token: String?): ResumeOverview {
+    override fun overview(token: String?): ResumeOverview {
         val link = authorize(token)
         val published = documentRepository.findAllPublished()
         val main = published.firstOrNull { it.kind == ResumeDocumentKind.MAIN }
@@ -56,12 +53,12 @@ class ResumeQueryService(
         return ResumeOverview(
             main = main?.let(ResumeDocumentDto::from),
             details = details,
-            profile = profileService.profile(),
+            profile = getProfile.profile(),
         )
     }
 
     @Transactional
-    fun document(slug: String, token: String?): ResumeDocumentDto {
+    override fun document(slug: String, token: String?): ResumeDocumentDto {
         val link = authorize(token)
         val document = documentRepository.findBySlug(slug)
             ?.takeIf { it.published }

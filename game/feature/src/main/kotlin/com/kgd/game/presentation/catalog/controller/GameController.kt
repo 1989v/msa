@@ -5,7 +5,7 @@ import com.kgd.game.application.catalog.dto.GameCollectionDto
 import com.kgd.game.application.catalog.dto.GameDetailDto
 import com.kgd.game.application.catalog.dto.GameSummaryDto
 import com.kgd.game.application.catalog.dto.GameTagDto
-import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.application.catalog.usecase.GetGameCollectionsUseCase
 import com.kgd.game.application.catalog.usecase.GetGameDetailUseCase
 import com.kgd.game.application.catalog.usecase.GetSimilarGamesUseCase

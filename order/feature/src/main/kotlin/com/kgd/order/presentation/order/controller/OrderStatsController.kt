@@ -1,54 +1,28 @@
 package com.kgd.order.presentation.order.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.order.infrastructure.persistence.order.repository.OrderJpaRepository
+import com.kgd.order.application.order.usecase.GetOrderStatsUseCase
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.math.BigDecimal
-import java.time.LocalDate
 
-/**
- * OrderStatsController — admin dashboard 용 read-only 집계.
- *
- * 트레이드오프: 도메인 로직 없이 단순 집계 read 만 수행하므로 port/adapter 추상화 생략하고
- * JpaRepository 직접 주입. Clean Architecture 의 application 레이어 분리는 비즈니스 로직이
- * 추가될 때 도입.
- *
- * 빈 결과 / 에러 시 admin FE 가 graceful degrade (catch → 0/[]) 하므로 본 컨트롤러는
- * 단순 nullable 처리만.
- */
+/** OrderStatsController — admin dashboard 용 read-only 집계. */
 @RestController
 @RequestMapping("/api/orders/stats")
 class OrderStatsController(
-    private val orderJpaRepository: OrderJpaRepository,
+    private val getOrderStats: GetOrderStatsUseCase,
 ) {
     @GetMapping("/today")
-    fun todayOrderCount(): ApiResponse<Long> {
-        val count = orderJpaRepository.countByCreatedAtAfter(LocalDate.now().atStartOfDay())
-        return ApiResponse.success(count)
-    }
+    fun todayOrderCount(): ApiResponse<Long> = ApiResponse.success(getOrderStats.todayOrderCount())
 
     @GetMapping("/revenue/today")
-    fun todayRevenue(): ApiResponse<BigDecimal> {
-        val sum = orderJpaRepository.sumRevenueByCreatedAtAfter(LocalDate.now().atStartOfDay())
-            ?: BigDecimal.ZERO
-        return ApiResponse.success(sum)
-    }
+    fun todayRevenue(): ApiResponse<BigDecimal> = ApiResponse.success(getOrderStats.todayRevenue())
 
     @GetMapping("/daily")
-    fun dailyOrderStats(@RequestParam(defaultValue = "7") days: Int): ApiResponse<List<DailyOrderStat>> {
-        val from = LocalDate.now().minusDays(days.toLong() - 1).atStartOfDay()
-        val rows = orderJpaRepository.aggregateDailyOrders(from)
-        val byDate = rows.associate { (it[0] as java.sql.Date).toLocalDate() to (it[1] as Number).toLong() }
-        // 날짜 빈 칸 0 으로 채워 N 일 시계열 보장
-        val series = (0 until days).map { offset ->
-            val date = LocalDate.now().minusDays(offset.toLong())
-            DailyOrderStat(date = date.toString(), count = byDate[date] ?: 0)
-        }.reversed()
-        return ApiResponse.success(series)
-    }
+    fun dailyOrderStats(@RequestParam(defaultValue = "7") days: Int): ApiResponse<List<DailyOrderStat>> =
+        ApiResponse.success(getOrderStats.dailyOrderCounts(days).map { DailyOrderStat(it.date, it.count) })
 
     @GetMapping("/by-category")
     fun revenueByCategory(): ApiResponse<List<CategoryRevenue>> {

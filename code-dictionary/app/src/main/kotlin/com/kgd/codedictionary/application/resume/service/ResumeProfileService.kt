@@ -15,10 +15,11 @@ import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPor
 import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillGroupRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
+import com.kgd.codedictionary.application.resume.usecase.GetResumeProfileUseCase
 import com.kgd.codedictionary.domain.resume.model.CareerCalculator
+import java.time.LocalDate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDate
 
 /**
  * 구조화 영역 조립 (ADR-0064).
@@ -34,10 +35,10 @@ class ResumeProfileService(
     private val skillRepository: ResumeSkillRepositoryPort,
     private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
     private val codeSnippetRepository: ResumeCodeSnippetRepositoryPort,
-) {
+) : GetResumeProfileUseCase {
 
     @Transactional(readOnly = true)
-    fun profile(includeUnpublished: Boolean = false): ResumeProfileDto {
+    override fun profile(includeUnpublished: Boolean): ResumeProfileDto {
         val asOf = LocalDate.now()
         val companies = companyRepository.findAll()
         val categories = categoryRepository.findAll()

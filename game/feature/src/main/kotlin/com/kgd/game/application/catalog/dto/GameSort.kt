@@ -1,4 +1,4 @@
-package com.kgd.game.application.catalog.service
+package com.kgd.game.application.catalog.dto
 
 enum class GameSort {
     TRENDING,

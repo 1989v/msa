@@ -1,8 +1,10 @@
 package com.kgd.game.application.catalog.service
 
+import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.application.catalog.port.GameCollectionRepositoryPort
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.catalog.port.GameStatsRepositoryPort
+import com.kgd.game.application.catalog.usecase.GetGameDetailUseCase
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.EngineType
@@ -14,14 +16,13 @@ import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import io.kotest.assertions.throwables.shouldThrow
-import com.kgd.game.application.catalog.usecase.GetGameDetailUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import java.time.Instant
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
-import java.time.Instant
 
 class GameQueryServiceTest : BehaviorSpec({
 

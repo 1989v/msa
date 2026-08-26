@@ -1,7 +1,7 @@
 package com.kgd.game.infrastructure.persistence.catalog.adapter
 
 import com.kgd.game.application.catalog.port.GameSearchCriteria
-import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.Genre

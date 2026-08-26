@@ -7,6 +7,7 @@ import com.kgd.codedictionary.application.concept.dto.CreateConceptCommand
 import com.kgd.codedictionary.application.concept.dto.RelatedConceptInfoDto
 import com.kgd.codedictionary.application.concept.dto.UpdateConceptCommand
 import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
+import com.kgd.codedictionary.application.concept.usecase.ConceptCatalogUseCase
 import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
 import com.kgd.codedictionary.domain.concept.exception.ConceptAlreadyExistsException
 import com.kgd.codedictionary.domain.concept.exception.ConceptNotFoundException
@@ -22,9 +23,9 @@ import org.springframework.stereotype.Service
 class ConceptService(
     private val conceptRepository: ConceptRepositoryPort,
     private val indexRepository: ConceptIndexRepositoryPort
-) {
+) : ConceptCatalogUseCase {
     @CacheEvict(value = ["conceptCategoryStats"], allEntries = true)
-    fun create(command: CreateConceptCommand): ConceptResultDto {
+    override fun create(command: CreateConceptCommand): ConceptResultDto {
         if (conceptRepository.existsByConceptId(command.conceptId)) {
             throw ConceptAlreadyExistsException(command.conceptId)
         }
@@ -40,13 +41,13 @@ class ConceptService(
         return toResultDto(saved)
     }
 
-    fun findById(id: Long): ConceptResultDto {
+    override fun findById(id: Long): ConceptResultDto {
         val concept = conceptRepository.findById(id)
             ?: throw ConceptNotFoundException(id.toString())
         return toResultDto(concept)
     }
 
-    fun findAll(category: ConceptCategory?, level: ConceptLevel?, pageable: Pageable): Page<ConceptResultDto> {
+    override fun findAll(category: ConceptCategory?, level: ConceptLevel?, pageable: Pageable): Page<ConceptResultDto> {
         val page = when {
             category != null -> conceptRepository.findByCategory(category, pageable)
             level != null -> conceptRepository.findByLevel(level, pageable)
@@ -56,7 +57,7 @@ class ConceptService(
     }
 
     @CacheEvict(value = ["conceptCategoryStats"], allEntries = true)
-    fun update(id: Long, command: UpdateConceptCommand): ConceptResultDto {
+    override fun update(id: Long, command: UpdateConceptCommand): ConceptResultDto {
         val concept = conceptRepository.findById(id)
             ?: throw ConceptNotFoundException(id.toString())
         concept.update(
@@ -71,12 +72,12 @@ class ConceptService(
     }
 
     @CacheEvict(value = ["conceptCategoryStats"], allEntries = true)
-    fun delete(id: Long) {
+    override fun delete(id: Long) {
         conceptRepository.findById(id) ?: throw ConceptNotFoundException(id.toString())
         conceptRepository.delete(id)
     }
 
-    fun findByConceptIdDetail(conceptId: String): ConceptDetailDto {
+    override fun findByConceptIdDetail(conceptId: String): ConceptDetailDto {
         val concept = conceptRepository.findByConceptId(conceptId)
             ?: throw ConceptNotFoundException(conceptId)
         val indexes = indexRepository.findByConceptId(conceptId)

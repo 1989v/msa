@@ -6,6 +6,7 @@ import com.kgd.member.domain.model.SsoProvider
 import com.kgd.member.infrastructure.persistence.entity.MemberJpaEntity
 import com.kgd.member.infrastructure.persistence.repository.MemberJpaRepository
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 
 @Component
 class MemberRepositoryAdapter(
@@ -24,4 +25,9 @@ class MemberRepositoryAdapter(
     override fun findBySsoProviderAndSsoProviderId(ssoProvider: SsoProvider, ssoProviderId: String): Member? {
         return memberJpaRepository.findBySsoProviderAndSsoProviderId(ssoProvider, ssoProviderId)?.toDomain()
     }
+
+    override fun countAll(): Long = memberJpaRepository.count()
+
+    override fun countJoinedAfter(from: LocalDateTime): Long =
+        memberJpaRepository.countByCreatedAtAfter(from)
 }

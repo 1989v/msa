@@ -2,7 +2,7 @@ package com.kgd.codedictionary.presentation.search.controller
 
 import com.kgd.codedictionary.application.search.dto.SearchCommand
 import com.kgd.codedictionary.application.search.dto.SearchResultDto
-import com.kgd.codedictionary.application.search.service.SearchService
+import com.kgd.codedictionary.application.search.usecase.SearchConceptsUseCase
 import com.kgd.common.response.ApiResponse
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/search")
 class SearchController(
-    private val searchService: SearchService
+    private val searchConcepts: SearchConceptsUseCase
 ) {
 
     @GetMapping
@@ -23,7 +23,7 @@ class SearchController(
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
     ): ApiResponse<SearchResultDto> {
-        val result = searchService.search(
+        val result = searchConcepts.search(
             SearchCommand(
                 query = q,
                 category = category,

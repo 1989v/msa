@@ -4,7 +4,8 @@ import com.kgd.codedictionary.application.concept.dto.CreateConceptCommand
 import com.kgd.codedictionary.application.concept.dto.UpdateConceptCommand
 import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
 import com.kgd.codedictionary.application.graph.dto.CategoryStatsFilter
-import com.kgd.codedictionary.application.graph.service.GraphService
+import com.kgd.codedictionary.application.concept.usecase.ConceptCatalogUseCase
+import com.kgd.codedictionary.application.graph.usecase.ConceptGraphUseCase
 import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
 import com.kgd.codedictionary.domain.concept.model.Concept
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
@@ -44,8 +45,8 @@ import org.springframework.test.annotation.DirtiesContext
 )
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class ConceptServiceCacheEvictTest(
-    @Autowired private val conceptService: ConceptService,
-    @Autowired private val graphService: GraphService,
+    @Autowired private val conceptService: ConceptCatalogUseCase,
+    @Autowired private val graphService: ConceptGraphUseCase,
     @Autowired private val conceptRepository: ConceptRepositoryPort,
     @Autowired private val indexRepository: ConceptIndexRepositoryPort,
     @Autowired private val cacheManager: CacheManager,

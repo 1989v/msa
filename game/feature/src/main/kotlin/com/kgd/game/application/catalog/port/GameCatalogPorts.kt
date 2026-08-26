@@ -1,7 +1,7 @@
 package com.kgd.game.application.catalog.port
 
 import com.kgd.game.application.catalog.dto.AdminGameSummaryDto
-import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.GameStats

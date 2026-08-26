@@ -1,11 +1,14 @@
 package com.kgd.game.application.ads.service
 
-import tools.jackson.core.type.TypeReference
-import tools.jackson.module.kotlin.jacksonObjectMapper
+import com.kgd.game.application.ads.dto.AdPlacementDto
+import com.kgd.game.application.ads.dto.RewardDto
 import com.kgd.game.application.ads.port.AdFrequencyPort
 import com.kgd.game.application.ads.port.AdPlacementRepositoryPort
 import com.kgd.game.application.ads.port.AdPolicyRepositoryPort
 import com.kgd.game.application.ads.port.RewardGrantRepositoryPort
+import com.kgd.game.application.ads.usecase.CompleteAdRewardUseCase
+import com.kgd.game.application.ads.usecase.GetServablePlacementUseCase
+import com.kgd.game.application.ads.usecase.IssueAdRewardUseCase
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.domain.ads.exception.AdNotAllowedException
 import com.kgd.game.domain.ads.exception.PlacementNotFoundException
@@ -13,26 +16,18 @@ import com.kgd.game.domain.ads.exception.RewardNotFoundException
 import com.kgd.game.domain.ads.model.AdType
 import com.kgd.game.domain.ads.model.RewardGrant
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
-import org.springframework.stereotype.Component
-import com.kgd.game.application.ads.usecase.CompleteAdRewardUseCase
-import com.kgd.game.application.ads.usecase.GetServablePlacementUseCase
-import com.kgd.game.application.ads.usecase.IssueAdRewardUseCase
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
+import org.springframework.stereotype.Component
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import tools.jackson.core.type.TypeReference
+import tools.jackson.module.kotlin.jacksonObjectMapper
 
 data class HouseCreativeDto(val title: String?, val body: String?, val href: String?, val emoji: String?)
 
-data class AdPlacementDto(
-    val placementKey: String,
-    val adType: AdType,
-    val provider: String,
-    val creatives: List<HouseCreativeDto>,
-)
 
-data class RewardDto(val rewardKey: String, val status: String)
 
 /**
  * 광고 파사드 — frequency 판정(Redis, 외부 IO)은 트랜잭션 밖, 보상 원장만 트랜잭션 안.

@@ -4,6 +4,7 @@ import com.kgd.codedictionary.application.portfolio.dto.PortfolioCategoryDto
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioProjectDto
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioProjectsDto
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioSnippetDto
+import com.kgd.codedictionary.application.portfolio.usecase.GetPortfolioProjectsUseCase
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCodeSnippetRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPort
@@ -30,13 +31,13 @@ class PortfolioProjectService(
     private val skillRepository: ResumeSkillRepositoryPort,
     private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
     private val codeSnippetRepository: ResumeCodeSnippetRepositoryPort,
-) {
+) : GetPortfolioProjectsUseCase {
 
     /**
      * @param unlocked 스니펫 전문 공개 여부 — 로그인(X-User-Id)이나 광고 시청 토큰으로
      * 컨트롤러가 판정해 넘긴다. false 면 전문은 응답에 실리지 않는다.
      */
-    fun projects(unlocked: Boolean = false): PortfolioProjectsDto {
+    override fun projects(unlocked: Boolean): PortfolioProjectsDto {
         val categories = categoryRepository.findAll()
         val categoryById = categories.associateBy { it.id }
         val skillNameById = skillRepository.findAll()

@@ -10,8 +10,8 @@ import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupDto
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillGroupUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeSkillUpsertRequest
 import com.kgd.codedictionary.application.resume.dto.ResumeSnippetUpsertRequest
-import com.kgd.codedictionary.application.resume.service.ResumeProfileService
-import com.kgd.codedictionary.application.resume.service.ResumeStructuredAdminService
+import com.kgd.codedictionary.application.resume.usecase.GetResumeProfileUseCase
+import com.kgd.codedictionary.application.resume.usecase.ManageResumeStructureUseCase
 import com.kgd.common.response.ApiResponse
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -29,14 +29,14 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/admin/resume")
 class ResumeStructuredAdminController(
-    private val profileService: ResumeProfileService,
-    private val adminService: ResumeStructuredAdminService,
+    private val getProfile: GetResumeProfileUseCase,
+    private val adminService: ManageResumeStructureUseCase,
 ) {
 
     /** 어드민은 미공개 프로젝트까지 본다 */
     @GetMapping("/profile")
     fun profile(): ApiResponse<ResumeProfileDto> =
-        ApiResponse.success(profileService.profile(includeUnpublished = true))
+        ApiResponse.success(getProfile.profile(includeUnpublished = true))
 
     @PutMapping("/companies")
     fun upsertCompany(@RequestBody request: ResumeCompanyUpsertRequest): ApiResponse<ResumeCompanyDto> =

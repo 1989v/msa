@@ -241,6 +241,11 @@ val domainFrameworkExempt = mapOf(
 )
 
 // ③ 허용목록 — 비어 있어야 정상
+// ④ 허용목록 — 비어 있어야 정상
+val useCaseGateExempt = mapOf<String, String>(
+    // 2026-08-26 P7 완료 — 비어 있어야 정상. 새 항목을 넣지 않는다
+)
+
 val dirPackageExempt = mapOf<String, String>(
     // 2026-08-26 P3 완료 — 변종 D 120+17 파일 git mv. 새 항목을 넣지 않는다
 )
@@ -250,7 +255,19 @@ val verifyLayerDependencies by tasks.registering {
     description = "application→infrastructure import · domain 프레임워크 의존 · 디렉토리==패키지 를 확인 (ADR-0083)"
     doLast {
         val packageLine = Regex("""^package\s+([\w.]+)""", RegexOption.MULTILINE)
-        val infraImport = Regex("""^import\s+com\.kgd\.\w+\.infrastructure\.""", RegexOption.MULTILINE)
+        // application 이 인프라에 닿는 경로는 둘이다 — 남의 infrastructure 패키지를 부르거나,
+        // 자기 패키지 안에 JPA 를 직접 들이거나(`interface XRepo : JpaRepository<…>`).
+        // 후자는 `com.kgd.*.infrastructure.` 가 한 번도 안 나와 첫 정규식만으로는 통과한다.
+        // 마지막 패키지 세그먼트가 service 인 것만 — code-dictionary 에는 `service` 라는 **엔티티**가 있어
+        // `application.service.dto.X` 를 레이어로 오인하면 안 된다. 뒤에 대문자(타입명)를 요구해 가른다.
+        val serviceImport = Regex(
+            """^import\s+com\.kgd\.\w+\.application\.[\w.]*service\.[A-Z]""",
+            RegexOption.MULTILINE,
+        )
+        val infraImport = Regex(
+            """^import\s+(com\.kgd\.\w+\.infrastructure\.|org\.springframework\.data\.jpa\.|jakarta\.persistence\.)""",
+            RegexOption.MULTILINE,
+        )
         val failures = mutableListOf<String>()
 
         subprojects.filter { it.path !in layerGateOutside }.forEach { sp ->
@@ -263,8 +280,15 @@ val verifyLayerDependencies by tasks.registering {
                 ktFiles.forEach { f ->
                     val text = f.readText()
                     val pkg = packageLine.find(text)?.groupValues?.get(1) ?: return@forEach
-                    if (".application." in "$pkg." && infraImport.containsMatchIn(text)) {
-                        failures += "[① application→infrastructure] ${sp.path}: ${f.relativeTo(srcRoot)}"
+                    // presentation 도 같은 규칙 — 컨트롤러가 JpaRepository/어댑터를 직접 부르면
+                    // application 을 통째로 건너뛴 것이라 변종 C 보다 나쁘다
+                    val layer = when {
+                        ".application." in "$pkg." -> "application"
+                        ".presentation." in "$pkg." -> "presentation"
+                        else -> null
+                    }
+                    if (layer != null && infraImport.containsMatchIn(text)) {
+                        failures += "[① $layer→infrastructure] ${sp.path}: ${f.relativeTo(srcRoot)}"
                     }
                 }
             }
@@ -291,6 +315,18 @@ val verifyLayerDependencies by tasks.registering {
                     }
                 }
             }
+
+            // ④ presentation 은 application 의 service 구현이 아니라 usecase 인터페이스를 본다
+            if (sp.path !in useCaseGateExempt) {
+                ktFiles.forEach { f ->
+                    val text = f.readText()
+                    val pkg = packageLine.find(text)?.groupValues?.get(1) ?: return@forEach
+                    if (".presentation." !in "$pkg." ) return@forEach
+                    if (serviceImport.containsMatchIn(text)) {
+                        failures += "[④ presentation→application.service] ${sp.path}: ${f.relativeTo(srcRoot)}"
+                    }
+                }
+            }
         }
 
         if (failures.isNotEmpty()) {
@@ -301,6 +337,8 @@ val verifyLayerDependencies by tasks.registering {
                     postfix = "\n\n① 서비스는 application/{entity}/port 의 Port 만 주입하고 Adapter 가 infrastructure 에서 구현한다.\n" +
                         "② domain 모듈의 build.gradle.kts 에서 Spring/JPA 의존을 뺀다.\n" +
                         "③ 파일을 package 선언과 같은 디렉토리로 git mv 한다 (package 은 그대로).\n" +
+                        "④ 컨트롤러는 application/{entity}/usecase 의 UseCase 인터페이스를 주입한다. DTO 가 service 패키지에\n" +
+                        "   있으면 dto 로 옮긴다 — 구현을 부르는 것과 타입을 쓰는 것은 다르지만 위치가 같으면 구분이 안 된다.\n" +
                         "기존 위반의 정리 순서: docs/plans/2026-08-26-layer-structure-alignment.md",
                 ),
             )

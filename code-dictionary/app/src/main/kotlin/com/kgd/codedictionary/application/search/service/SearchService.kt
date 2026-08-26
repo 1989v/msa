@@ -6,13 +6,14 @@ import com.kgd.codedictionary.application.search.dto.SearchResultDto
 import com.kgd.codedictionary.application.search.dto.SuggestCommand
 import com.kgd.codedictionary.application.search.dto.SuggestItemDto
 import com.kgd.codedictionary.application.search.port.ConceptSearchPort
+import com.kgd.codedictionary.application.search.usecase.SearchConceptsUseCase
 import org.springframework.stereotype.Service
 
 @Service
 class SearchService(
     private val searchPort: ConceptSearchPort
-) {
-    fun search(command: SearchCommand): SearchResultDto {
+) : SearchConceptsUseCase {
+    override fun search(command: SearchCommand): SearchResultDto {
         val response = searchPort.search(
             query = command.query,
             category = command.category,
@@ -41,7 +42,7 @@ class SearchService(
         )
     }
 
-    fun suggest(command: SuggestCommand): List<SuggestItemDto> {
+    override fun suggest(command: SuggestCommand): List<SuggestItemDto> {
         return searchPort.suggest(command.query, command.size).map { hit ->
             SuggestItemDto(
                 conceptId = hit.conceptId,

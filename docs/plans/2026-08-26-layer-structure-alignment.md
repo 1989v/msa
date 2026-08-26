@@ -102,7 +102,7 @@ val dirPackageExempt = mapOf(
 | ✅ `recommendation` | 완료 — domain/recommendation/{model,policy}, 포트 9(밴딧·실험·노출 포트 신설), UseCase 인터페이스 3 + 서비스 3 |
 | ✅ `quant` | 완료 — 인터페이스 14 + Service 14, `PaperAccount` 도메인 모델, metrics 포트 2, 차트 properties 는 application 소유 |
 | ✅ `game` | 완료 — UseCase 인터페이스 31, 컨트롤러 8개 인터페이스 주입 |
-| ✅ `code-dictionary` | 완료 — `IndexAliasPort` |
+| ✅ `code-dictionary` | 아웃바운드는 완료 — `IndexAliasPort`. **인바운드(UseCase 인터페이스)는 P7 에서** |
 | ✅ `chatbot` | 완료 — Properties 는 application/chat/config, Config 는 infrastructure/config (규칙 11) |
 | ✅ `search/app` · `auth/app` · `inventory/feature` | 완료 — `SearchVariantPort` · `SubjectHashPort` · `InventoryMetricsPort` |
 
@@ -129,8 +129,36 @@ inventory EMF 가 common 엔티티 두 개를 inventory_db 에 매핑하는 것�
 `gifticon/domain` `GifticonTest`·`ExpiryAlertPolicyTest`, `gifticon/app` `GifticonServiceTest`, `chatbot/app` `PromptBuilderTest`·`ChatServiceTest`.
 전부 Port MockK 단위 테스트(Spring 컨텍스트 없음). 체크리스트 §8 "소스셋 없는 모듈 금지" 가 이후 신규를 막는다.
 
+## P7 — 규칙 7 강제 (컨트롤러가 UseCase 를 본다) ✅ 2026-08-26
+
+P1~P6 을 끝낸 뒤 재측정에서 **완료 기준의 지표 자체가 틀렸다는 것**이 드러났다. `UseCase-class 0` 은
+"UseCase 를 클래스로 구현한 것"을 세는데, code-dictionary 는 **UseCase 가 아예 없어서** 그 수치를 공짜로
+통과했다. 21개 모듈 중 유일하게 컨트롤러가 `*Service` 를 직접 주입하고 있었고, 하필 game·deal·blog·ranking
+을 폴드한 최대 호스트라 신규 도메인이 복사할 견본이 거기 있었다.
+
+- 규칙 ①을 `presentation` 까지 + import 목록에 `org.springframework.data.jpa.`·`jakarta.persistence.` 추가.
+- presentation → infrastructure 6파일 수정 (허용목록 없이): `MemberStatsController`·`OrderStatsController` 는
+  포트 집계 메서드 + `Get*StatsUseCase`, `JudgmentController` 는 `JudgmentRepositoryPort`+`JudgmentRecord`,
+  `BanditMonitorController` 는 `BanditPort` 확장 + `MonitorBanditUseCase`, `BlogPageController` 는
+  `BlogShellPort`/`BlogPageRenderPort` + `RenderBlogPageUseCase`(sealed `Page`), `SearchDebugController` 는
+  `SearchDebugPort` + `SearchDebugAdapter`(OpenSearch·리랭커·프로퍼티 9개가 어댑터로).
+  **응답 JSON 은 그대로다** — admin-fe 의 `searchDebug.ts` 필드명을 그대로 옮겨 담았다.
+- code-dictionary 18 서비스 → UseCase 인터페이스 18개(`application/{entity}/usecase`), 컨트롤러 14개가
+  인터페이스를 주입.
+- DTO 가 `service` 패키지에 살면 규칙이 구현 호출과 구별할 수 없어 6개를 `dto` 로 이동.
+- 게이트 규칙 ④ 추가 + 허용목록 `useCaseGateExempt` (비어 있다).
+
+**걸린 것**: 인터페이스를 붙이자 `@Cacheable` 이 걸린 `ConceptService` 의 프록시가 CGLIB → JDK 로 바뀌어
+구상 타입으로 주입하던 곳이 `BeanNotOfRequiredTypeException` 으로 죽었다. 컨트롤러만 바꾸면 안 되고
+서비스끼리(`ResumeQueryService`→`GetResumeProfileUseCase`)·테스트 `@Autowired`·MockK 목 타입까지 옮겨야 한다.
+**테스트가 없었으면 배포 후 기동 실패로 알았을 문제다.**
+
+**검증**: 일부러 만든 위반으로 규칙 ①·④가 실패하는 것 확인 후 원복, DTO import 는 통과(오탐 없음),
+code-dictionary 41 · game · blog · deal · ranking · search · analytics · recommendation · member · order · commerce test 통과.
+
 ## 완료 기준 — 전부 충족 (2026-08-26)
 
 - ✅ 게이트 allowlist 에 `search:domain`(②) 만 남는다.
-- ✅ 실측 집계: `dir≠pkg 0 · app→infra 0 · UseCase-class 0 · 테스트 소스셋 부재 0(도구 제외)`.
+- ✅ 실측 집계: `dir≠pkg 0 · app→infra 0 · presentation→infra 0 · presentation→app.service 0 · 테스트 소스셋 부재 0(도구 제외)`.
+  (P7 에서 `UseCase-class 0` 을 폐기했다 — UseCase 가 없으면 공짜로 통과하는 지표였다.)
 - ✅ `package-structure.md` 의 "레거시 디렉토리 (이행 중)" 절 삭제.

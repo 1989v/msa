@@ -4,6 +4,7 @@ import com.kgd.codedictionary.application.portfolio.dto.PortfolioTimelineDto
 import com.kgd.codedictionary.application.portfolio.dto.TimelineCategoryDto
 import com.kgd.codedictionary.application.portfolio.dto.TimelineCompanyDto
 import com.kgd.codedictionary.application.portfolio.dto.TimelineProjectDto
+import com.kgd.codedictionary.application.portfolio.usecase.GetPortfolioTimelineUseCase
 import com.kgd.codedictionary.application.resume.dto.CareerSummaryDto
 import com.kgd.codedictionary.application.resume.port.ResumeCategoryRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeCompanyRepositoryPort
@@ -11,10 +12,10 @@ import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPor
 import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
 import com.kgd.codedictionary.domain.resume.model.CareerCalculator
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.YearMonth
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 /**
  * 메인 포트폴리오 타임라인 조립 (ADR-0066).
@@ -31,9 +32,9 @@ class PortfolioTimelineService(
     private val projectRepository: ResumeProjectRepositoryPort,
     private val skillRepository: ResumeSkillRepositoryPort,
     private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
-) {
+) : GetPortfolioTimelineUseCase {
 
-    fun timeline(): PortfolioTimelineDto {
+    override fun timeline(): PortfolioTimelineDto {
         val asOf = LocalDate.now()
         val companies = companyRepository.findAll()
         val categories = categoryRepository.findAll()

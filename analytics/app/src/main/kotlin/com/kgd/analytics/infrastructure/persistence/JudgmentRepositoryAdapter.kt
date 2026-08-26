@@ -1,5 +1,7 @@
 package com.kgd.analytics.infrastructure.persistence
 
+import com.kgd.analytics.application.judgment.port.JudgmentRecord
+import com.kgd.analytics.application.judgment.port.JudgmentRepositoryPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Repository
 import java.sql.Timestamp
@@ -20,10 +22,10 @@ import javax.sql.DataSource
 @Repository
 class JudgmentRepositoryAdapter(
     private val dataSource: DataSource
-) {
+) : JudgmentRepositoryPort {
     private val log = KotlinLogging.logger {}
 
-    fun upsertManual(query: String, productId: String, relevance: Int, weight: Double = 1.0) {
+    override fun upsertManual(query: String, productId: String, relevance: Int, weight: Double) {
         require(relevance in 0..3) { "relevance must be in 0..3: $relevance" }
         require(weight > 0.0) { "weight must be > 0: $weight" }
         require(query.isNotBlank() && productId.isNotBlank()) { "query / productId must not be blank" }
@@ -47,7 +49,7 @@ class JudgmentRepositoryAdapter(
         log.info { "Manual judgment upserted: query='$query', productId=$productId, relevance=$relevance" }
     }
 
-    fun list(queryFilter: String?, limit: Int = 100, offset: Int = 0): List<JudgmentRow> {
+    override fun list(queryFilter: String?, limit: Int, offset: Int): List<JudgmentRecord> {
         val sql = buildString {
             append(
                 """
@@ -59,7 +61,7 @@ class JudgmentRepositoryAdapter(
             if (!queryFilter.isNullOrBlank()) append("\nWHERE query LIKE ?")
             append("\nGROUP BY query, product_id\nORDER BY ts DESC\nLIMIT ? OFFSET ?")
         }
-        val out = mutableListOf<JudgmentRow>()
+        val out = mutableListOf<JudgmentRecord>()
         dataSource.connection.use { conn ->
             conn.prepareStatement(sql).use { ps ->
                 var idx = 1
@@ -71,7 +73,7 @@ class JudgmentRepositoryAdapter(
                 ps.executeQuery().use { rs ->
                     while (rs.next()) {
                         out.add(
-                            JudgmentRow(
+                            JudgmentRecord(
                                 query = rs.getString("query"),
                                 productId = rs.getString("product_id"),
                                 relevance = rs.getInt("rel"),
@@ -87,7 +89,7 @@ class JudgmentRepositoryAdapter(
         return out
     }
 
-    fun distinctQueries(prefix: String?, limit: Int = 50): List<String> {
+    override fun distinctQueries(prefix: String?, limit: Int): List<String> {
         val sql = buildString {
             append("SELECT DISTINCT query FROM analytics.search_judgments")
             if (!prefix.isNullOrBlank()) append(" WHERE query LIKE ?")
@@ -107,12 +109,3 @@ class JudgmentRepositoryAdapter(
         return out
     }
 }
-
-data class JudgmentRow(
-    val query: String,
-    val productId: String,
-    val relevance: Int,
-    val source: String,
-    val weight: Double,
-    val createdAt: Instant
-)

@@ -7,7 +7,7 @@ import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.catalog.port.GameSearchCriteria
 import com.kgd.game.application.catalog.port.GameStatsRepositoryPort
 import com.kgd.game.application.catalog.port.GameTagRepositoryPort
-import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.domain.catalog.model.Game
 import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.GameStats

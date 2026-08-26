@@ -1,7 +1,7 @@
 package com.kgd.analytics.presentation.controller
 
-import com.kgd.analytics.infrastructure.persistence.JudgmentRepositoryAdapter
-import com.kgd.analytics.infrastructure.persistence.JudgmentRow
+import com.kgd.analytics.application.judgment.port.JudgmentRecord
+import com.kgd.analytics.application.judgment.usecase.ManageSearchJudgmentsUseCase
 import com.kgd.common.response.ApiResponse
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
@@ -25,20 +25,22 @@ import org.springframework.web.server.ResponseStatusException
 @RestController
 @RequestMapping("/api/v1/search/judgments")
 class JudgmentController(
-    private val repository: JudgmentRepositoryAdapter
+    private val manageJudgments: ManageSearchJudgmentsUseCase,
 ) {
 
     @PostMapping
     fun upsert(
         @RequestBody body: UpsertRequest,
-        @RequestHeader(name = "X-User-Roles", required = false) roles: String?
+        @RequestHeader(name = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<Unit> {
         requireAdmin(roles)
-        repository.upsertManual(
-            query = body.query,
-            productId = body.productId,
-            relevance = body.relevance,
-            weight = body.weight ?: 1.0
+        manageJudgments.upsert(
+            ManageSearchJudgmentsUseCase.Command(
+                query = body.query,
+                productId = body.productId,
+                relevance = body.relevance,
+                weight = body.weight,
+            ),
         )
         return ApiResponse.success()
     }
@@ -48,20 +50,20 @@ class JudgmentController(
         @RequestParam(required = false) query: String?,
         @RequestParam(defaultValue = "100") limit: Int,
         @RequestParam(defaultValue = "0") offset: Int,
-        @RequestHeader(name = "X-User-Roles", required = false) roles: String?
-    ): ApiResponse<List<JudgmentRow>> {
+        @RequestHeader(name = "X-User-Roles", required = false) roles: String?,
+    ): ApiResponse<List<JudgmentRecord>> {
         requireAdmin(roles)
-        return ApiResponse.success(repository.list(query, limit.coerceIn(1, 500), offset.coerceAtLeast(0)))
+        return ApiResponse.success(manageJudgments.list(query, limit, offset))
     }
 
     @GetMapping("/queries")
     fun queries(
         @RequestParam(required = false) prefix: String?,
         @RequestParam(defaultValue = "50") limit: Int,
-        @RequestHeader(name = "X-User-Roles", required = false) roles: String?
+        @RequestHeader(name = "X-User-Roles", required = false) roles: String?,
     ): ApiResponse<List<String>> {
         requireAdmin(roles)
-        return ApiResponse.success(repository.distinctQueries(prefix, limit.coerceIn(1, 500)))
+        return ApiResponse.success(manageJudgments.distinctQueries(prefix, limit))
     }
 
     private fun requireAdmin(roles: String?) {
@@ -75,6 +77,6 @@ class JudgmentController(
         val query: String,
         val productId: String,
         val relevance: Int,
-        val weight: Double? = null
+        val weight: Double? = null,
     )
 }

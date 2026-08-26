@@ -2,7 +2,9 @@ package com.kgd.codedictionary.application.portfolio.service
 
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioCardDetailDto
 import com.kgd.codedictionary.application.portfolio.dto.PortfolioCardSummaryDto
+import com.kgd.codedictionary.application.portfolio.dto.PortfolioSort
 import com.kgd.codedictionary.application.portfolio.port.PortfolioCardRepositoryPort
+import com.kgd.codedictionary.application.portfolio.usecase.GetPortfolioCardsUseCase
 import com.kgd.codedictionary.domain.portfolio.model.Visibility
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
@@ -15,8 +17,8 @@ import org.springframework.stereotype.Service
 @Service
 class PortfolioQueryService(
     private val repository: PortfolioCardRepositoryPort,
-) {
-    fun list(
+) : GetPortfolioCardsUseCase {
+    override fun list(
         sort: PortfolioSort,
         stacks: List<String>,
         q: String?,
@@ -39,7 +41,7 @@ class PortfolioQueryService(
         return PageImpl(filtered, pageable, filtered.size.toLong())
     }
 
-    fun findById(id: Long): PortfolioCardDetailDto {
+    override fun findById(id: Long): PortfolioCardDetailDto {
         val card = repository.findById(id)
             ?: throw BusinessException(ErrorCode.NOT_FOUND, "PortfolioCard not found: $id")
         if (card.visibility != Visibility.PUBLIC) {
@@ -49,20 +51,3 @@ class PortfolioQueryService(
     }
 }
 
-enum class PortfolioSort {
-    TIME,
-    IMPACT;
-
-    fun toSpringSort(): Sort = when (this) {
-        TIME -> Sort.by(Sort.Direction.DESC, "createdAt")
-        IMPACT -> Sort.by(Sort.Direction.DESC, "impact").and(Sort.by(Sort.Direction.DESC, "createdAt"))
-    }
-
-    companion object {
-        fun parse(raw: String?): PortfolioSort = when (raw?.lowercase()) {
-            null, "", "time" -> TIME
-            "impact" -> IMPACT
-            else -> throw BusinessException(ErrorCode.INVALID_INPUT, "Unknown sort: $raw")
-        }
-    }
-}

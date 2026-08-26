@@ -9,14 +9,15 @@ import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryP
 import com.kgd.codedictionary.application.resume.port.ResumeDocumentRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSettingRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeShareLinkRepositoryPort
+import com.kgd.codedictionary.application.resume.usecase.ManageResumeUseCase
 import com.kgd.codedictionary.domain.resume.model.ResumeDocument
 import com.kgd.codedictionary.domain.resume.model.ResumeDocumentKind
 import com.kgd.codedictionary.domain.resume.model.ResumeShareLink
 import com.kgd.codedictionary.domain.resume.model.ResumeVisibility
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
 import java.util.Base64
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ResumeAdminService(
@@ -24,21 +25,21 @@ class ResumeAdminService(
     private val shareLinkRepository: ResumeShareLinkRepositoryPort,
     private val accessLogRepository: ResumeAccessLogRepositoryPort,
     private val settingRepository: ResumeSettingRepositoryPort,
-) {
+) : ManageResumeUseCase {
     private val random = SecureRandom()
     private val encoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
 
     @Transactional(readOnly = true)
-    fun listDocuments(): List<ResumeDocumentSummaryDto> =
+    override fun listDocuments(): List<ResumeDocumentSummaryDto> =
         documentRepository.findAll()
             .sortedWith(compareBy({ it.kind != ResumeDocumentKind.MAIN }, { it.orderNo }))
             .map(ResumeDocumentSummaryDto::from)
 
     @Transactional(readOnly = true)
-    fun getDocument(slug: String): ResumeDocument? = documentRepository.findBySlug(slug)
+    override fun getDocument(slug: String): ResumeDocument? = documentRepository.findBySlug(slug)
 
     @Transactional
-    fun upsertDocument(request: ResumeDocumentUpsertRequest): ResumeDocumentSummaryDto {
+    override fun upsertDocument(request: ResumeDocumentUpsertRequest): ResumeDocumentSummaryDto {
         val existing = documentRepository.findBySlug(request.slug.trim().lowercase())
         val document = ResumeDocument.restore(
             id = existing?.id,
@@ -55,10 +56,10 @@ class ResumeAdminService(
     }
 
     @Transactional
-    fun deleteDocument(slug: String) = documentRepository.deleteBySlug(slug.trim().lowercase())
+    override fun deleteDocument(slug: String) = documentRepository.deleteBySlug(slug.trim().lowercase())
 
     @Transactional(readOnly = true)
-    fun listShareLinks(): List<ResumeShareLinkDto> {
+    override fun listShareLinks(): List<ResumeShareLinkDto> {
         val stats = accessLogRepository.countByShareLink()
         return shareLinkRepository.findAll()
             .sortedByDescending { it.createdAt }
@@ -74,7 +75,7 @@ class ResumeAdminService(
     }
 
     @Transactional
-    fun createShareLink(request: ResumeShareLinkCreateRequest): ResumeShareLinkDto {
+    override fun createShareLink(request: ResumeShareLinkCreateRequest): ResumeShareLinkDto {
         val link = shareLinkRepository.save(
             ResumeShareLink.create(token = generateToken(), label = request.label, note = request.note),
         )
@@ -82,16 +83,16 @@ class ResumeAdminService(
     }
 
     @Transactional
-    fun revokeShareLink(id: Long) = shareLinkRepository.revoke(id)
+    override fun revokeShareLink(id: Long) = shareLinkRepository.revoke(id)
 
     @Transactional(readOnly = true)
-    fun currentVisibility(): ResumeVisibility = settingRepository.currentVisibility()
+    override fun currentVisibility(): ResumeVisibility = settingRepository.currentVisibility()
 
     @Transactional
-    fun updateVisibility(visibility: ResumeVisibility) = settingRepository.updateVisibility(visibility)
+    override fun updateVisibility(visibility: ResumeVisibility) = settingRepository.updateVisibility(visibility)
 
     @Transactional(readOnly = true)
-    fun recentVisits(limit: Int): List<ResumeVisitDto> =
+    override fun recentVisits(limit: Int): List<ResumeVisitDto> =
         accessLogRepository.findRecent(limit).map {
             ResumeVisitDto(label = it.label, slug = it.slug, visitedAt = it.visitedAt)
         }

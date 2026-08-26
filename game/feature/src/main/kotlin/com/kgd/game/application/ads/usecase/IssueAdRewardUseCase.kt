@@ -1,6 +1,6 @@
 package com.kgd.game.application.ads.usecase
 
-import com.kgd.game.application.ads.service.RewardDto
+import com.kgd.game.application.ads.dto.RewardDto
 
 /** rewarded 보상 발급 — PUBLISHED+SDK 게임만 */
 interface IssueAdRewardUseCase {

@@ -2,10 +2,15 @@ package com.kgd.game.application.catalog.service
 
 import com.kgd.game.application.catalog.dto.GameCollectionDto
 import com.kgd.game.application.catalog.dto.GameDetailDto
+import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.application.catalog.dto.GameSummaryDto
 import com.kgd.game.application.catalog.port.GameCollectionRepositoryPort
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.catalog.port.GameStatsRepositoryPort
+import com.kgd.game.application.catalog.usecase.GetGameCollectionsUseCase
+import com.kgd.game.application.catalog.usecase.GetGameDetailUseCase
+import com.kgd.game.application.catalog.usecase.GetSimilarGamesUseCase
+import com.kgd.game.application.catalog.usecase.ListGamesUseCase
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.Game
@@ -13,10 +18,6 @@ import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.Genre
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
-import com.kgd.game.application.catalog.usecase.GetGameCollectionsUseCase
-import com.kgd.game.application.catalog.usecase.GetGameDetailUseCase
-import com.kgd.game.application.catalog.usecase.GetSimilarGamesUseCase
-import com.kgd.game.application.catalog.usecase.ListGamesUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

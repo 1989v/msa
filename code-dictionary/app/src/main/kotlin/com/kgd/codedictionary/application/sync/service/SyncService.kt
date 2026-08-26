@@ -5,6 +5,7 @@ import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
 import com.kgd.codedictionary.application.search.port.ConceptIndexingPort
 import com.kgd.codedictionary.application.sync.dto.IndexSyncJob
 import com.kgd.codedictionary.application.sync.port.IndexAliasPort
+import com.kgd.codedictionary.application.sync.usecase.SyncConceptIndexUseCase
 import com.kgd.codedictionary.domain.index.model.CodeLocation
 import com.kgd.codedictionary.domain.index.model.ConceptIndex
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -22,17 +23,17 @@ class SyncService(
     private val jobRegistry: IndexSyncJobRegistry,
     @Value("\${opensearch.index-name:concept-index}") private val alias: String,
     @Value("\${opensearch.retention:2}") private val retention: Int
-) {
+) : SyncConceptIndexUseCase {
     private val log = KotlinLogging.logger {}
 
     /** 동기 트리거 — jobId 즉시 반환, 백그라운드에서 실행됨 */
-    fun submit(): IndexSyncJob {
+    override fun submit(): IndexSyncJob {
         val job = jobRegistry.submit()
         runAsyncIfPending(job)
         return job
     }
 
-    fun get(jobId: String): IndexSyncJob? = jobRegistry.get(jobId)
+    override fun get(jobId: String): IndexSyncJob? = jobRegistry.get(jobId)
 
     private fun runAsyncIfPending(job: IndexSyncJob) {
         if (job.finishedAt != null) return

@@ -2,6 +2,7 @@ package com.kgd.codedictionary.application.graph.service
 
 import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
 import com.kgd.codedictionary.application.graph.dto.*
+import com.kgd.codedictionary.application.graph.usecase.ConceptGraphUseCase
 import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
 import com.kgd.codedictionary.domain.concept.model.Concept
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -12,10 +13,10 @@ import org.springframework.stereotype.Service
 class GraphService(
     private val conceptRepository: ConceptRepositoryPort,
     private val indexRepository: ConceptIndexRepositoryPort
-) {
+) : ConceptGraphUseCase {
     private val log = KotlinLogging.logger {}
 
-    fun getGraphData(): GraphDataDto {
+    override fun getGraphData(): GraphDataDto {
         val (concepts, indexCountMap, totalIndexCount) = loadAllConceptsWithIndexCounts()
 
         val nodes = concepts.map { concept ->
@@ -69,7 +70,7 @@ class GraphService(
      * - 빈 카테고리(concept 0 개) 응답 제외 (Q3)
      */
     @Cacheable(value = ["conceptCategoryStats"], key = "#filter")
-    fun getCategoryStats(filter: CategoryStatsFilter): TreemapDataDto {
+    override fun getCategoryStats(filter: CategoryStatsFilter): TreemapDataDto {
         log.info { "stats.treemap request filter=$filter" }
         val started = System.currentTimeMillis()
 

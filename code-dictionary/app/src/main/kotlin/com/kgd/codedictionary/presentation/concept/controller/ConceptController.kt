@@ -2,10 +2,10 @@ package com.kgd.codedictionary.presentation.concept.controller
 
 import com.kgd.codedictionary.application.concept.dto.ConceptDetailDto
 import com.kgd.codedictionary.application.concept.dto.ConceptResultDto
-import com.kgd.codedictionary.application.concept.service.ConceptService
+import com.kgd.codedictionary.application.concept.usecase.ConceptCatalogUseCase
 import com.kgd.codedictionary.application.graph.dto.CategoryStatsFilter
 import com.kgd.codedictionary.application.graph.dto.TreemapDataDto
-import com.kgd.codedictionary.application.graph.service.GraphService
+import com.kgd.codedictionary.application.graph.usecase.ConceptGraphUseCase
 import com.kgd.codedictionary.domain.concept.model.ConceptCategory
 import com.kgd.codedictionary.domain.concept.model.ConceptLevel
 import com.kgd.codedictionary.presentation.concept.dto.ConceptCreateRequest
@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/v1/concepts")
 class ConceptController(
-    private val conceptService: ConceptService,
-    private val graphService: GraphService
+    private val conceptCatalog: ConceptCatalogUseCase,
+    private val conceptGraph: ConceptGraphUseCase
 ) {
 
     @GetMapping
@@ -34,19 +34,19 @@ class ConceptController(
     ): ApiResponse<Page<ConceptResultDto>> {
         val parsedCategory = category?.let { ConceptCategory.valueOf(it.uppercase()) }
         val parsedLevel = level?.let { ConceptLevel.valueOf(it.uppercase()) }
-        val result = conceptService.findAll(parsedCategory, parsedLevel, PageRequest.of(page, size))
+        val result = conceptCatalog.findAll(parsedCategory, parsedLevel, PageRequest.of(page, size))
         return ApiResponse.success(result)
     }
 
     @GetMapping("/{id}")
     fun getById(@PathVariable id: Long): ApiResponse<ConceptResultDto> {
-        val result = conceptService.findById(id)
+        val result = conceptCatalog.findById(id)
         return ApiResponse.success(result)
     }
 
     @GetMapping("/by-concept-id/{conceptId}")
     fun getByConceptId(@PathVariable conceptId: String): ApiResponse<ConceptDetailDto> {
-        val result = conceptService.findByConceptIdDetail(conceptId)
+        val result = conceptCatalog.findByConceptIdDetail(conceptId)
         return ApiResponse.success(result)
     }
 
@@ -85,13 +85,13 @@ class ConceptController(
             categories = categorySet,
             includeZeroIndex = includeZeroIndex
         )
-        return ApiResponse.success(graphService.getCategoryStats(filter))
+        return ApiResponse.success(conceptGraph.getCategoryStats(filter))
     }
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping
     fun create(@RequestBody request: ConceptCreateRequest): ApiResponse<ConceptResultDto> {
-        val result = conceptService.create(request.toCommand())
+        val result = conceptCatalog.create(request.toCommand())
         return ApiResponse.success(result)
     }
 
@@ -100,13 +100,13 @@ class ConceptController(
         @PathVariable id: Long,
         @RequestBody request: ConceptUpdateRequest
     ): ApiResponse<ConceptResultDto> {
-        val result = conceptService.update(id, request.toCommand())
+        val result = conceptCatalog.update(id, request.toCommand())
         return ApiResponse.success(result)
     }
 
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("/{id}")
     fun delete(@PathVariable id: Long) {
-        conceptService.delete(id)
+        conceptCatalog.delete(id)
     }
 }

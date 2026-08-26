@@ -17,7 +17,7 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 (2026-08-26, P4 완료) — Port 12(`application/*/port`, 인덱스 alias 교체도 `IndexAliasPort`) · Adapter 9 · application → infrastructure import 0. **폴드 호스트**로서 game·deal·blog·ranking 의 레이어 상태는 각자의 `CLAUDE.md` 에 있다 — 호스트가 준수해도 폴드된 모듈이 어기면 게이트가 호스트 빌드를 막는다.
+표준 준수 (2026-08-26, P7 완료) — UseCase 인터페이스 18(`application/{entity}/usecase`, P7 신설) · Port 12(`application/*/port`, 인덱스 alias 교체도 `IndexAliasPort`) · Adapter 9 · application → infrastructure import 0. P4 까지는 아웃바운드만 맞춰져 있었고 컨트롤러가 `*Service` 를 직접 주입했다 — 게이트 규칙 ④가 이걸 막는다. **폴드 호스트**로서 game·deal·blog·ranking 의 레이어 상태는 각자의 `CLAUDE.md` 에 있다 — 호스트가 준수해도 폴드된 모듈이 어기면 게이트가 호스트 빌드를 막는다.
 
 ## Commands
 

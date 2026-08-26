@@ -1,7 +1,7 @@
 package com.kgd.game.application.catalog.usecase
 
 import com.kgd.game.application.catalog.dto.GameSummaryDto
-import com.kgd.game.application.catalog.service.GameSort
+import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.domain.catalog.model.Genre
 import org.springframework.data.domain.Page
 

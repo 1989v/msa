@@ -1,13 +1,13 @@
 package com.kgd.codedictionary.presentation.concept.controller
 
 import tools.jackson.module.kotlin.jacksonMapperBuilder
-import com.kgd.codedictionary.application.concept.service.ConceptService
+import com.kgd.codedictionary.application.concept.usecase.ConceptCatalogUseCase
 import com.kgd.codedictionary.application.graph.dto.CategoryStatsFilter
 import com.kgd.codedictionary.application.graph.dto.TreemapCategoryDto
 import com.kgd.codedictionary.application.graph.dto.TreemapConceptDto
 import com.kgd.codedictionary.application.graph.dto.TreemapDataDto
 import com.kgd.codedictionary.application.graph.dto.TreemapTotalsDto
-import com.kgd.codedictionary.application.graph.service.GraphService
+import com.kgd.codedictionary.application.graph.usecase.ConceptGraphUseCase
 import com.kgd.common.exception.GlobalExceptionHandler
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.ints.shouldBeLessThan
@@ -37,8 +37,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
  */
 class ConceptStatsControllerTest : BehaviorSpec({
 
-    val graphService = mockk<GraphService>()
-    val conceptService = mockk<ConceptService>(relaxed = true)
+    val graphService = mockk<ConceptGraphUseCase>()
+    val conceptService = mockk<ConceptCatalogUseCase>(relaxed = true)
     val controller = ConceptController(conceptService, graphService)
     val objectMapper = jacksonMapperBuilder().build()
 

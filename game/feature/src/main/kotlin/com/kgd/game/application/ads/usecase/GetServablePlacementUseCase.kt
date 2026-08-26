@@ -1,6 +1,6 @@
 package com.kgd.game.application.ads.usecase
 
-import com.kgd.game.application.ads.service.AdPlacementDto
+import com.kgd.game.application.ads.dto.AdPlacementDto
 
 /** 노출 가능하면 슬롯+크리에이티브, frequency cap 에 걸리면 null */
 interface GetServablePlacementUseCase {

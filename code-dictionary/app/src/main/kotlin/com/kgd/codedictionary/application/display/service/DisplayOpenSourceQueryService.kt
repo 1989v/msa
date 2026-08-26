@@ -2,6 +2,7 @@ package com.kgd.codedictionary.application.display.service
 
 import com.kgd.codedictionary.application.display.dto.DisplayOpenSourceDto
 import com.kgd.codedictionary.application.display.port.DisplayOpenSourceRepositoryPort
+import com.kgd.codedictionary.application.display.usecase.GetOpenSourceItemsUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -10,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class DisplayOpenSourceQueryService(
     private val repository: DisplayOpenSourceRepositoryPort,
-) {
-    fun activeItems(): List<DisplayOpenSourceDto> =
+) : GetOpenSourceItemsUseCase {
+    override fun activeItems(): List<DisplayOpenSourceDto> =
         repository.findAllActive().map(DisplayOpenSourceDto::from)
 }

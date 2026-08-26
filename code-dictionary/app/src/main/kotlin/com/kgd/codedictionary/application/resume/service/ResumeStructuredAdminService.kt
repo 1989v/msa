@@ -16,6 +16,7 @@ import com.kgd.codedictionary.application.resume.port.ResumeProjectRepositoryPor
 import com.kgd.codedictionary.application.resume.port.ResumeProjectSkillRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillGroupRepositoryPort
 import com.kgd.codedictionary.application.resume.port.ResumeSkillRepositoryPort
+import com.kgd.codedictionary.application.resume.usecase.ManageResumeStructureUseCase
 import com.kgd.codedictionary.domain.resume.model.CareerPeriod
 import com.kgd.codedictionary.domain.resume.model.ResumeCategory
 import com.kgd.codedictionary.domain.resume.model.ResumeCodeSnippet
@@ -25,11 +26,11 @@ import com.kgd.codedictionary.domain.resume.model.ResumeSkill
 import com.kgd.codedictionary.domain.resume.model.ResumeSkillGroup
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
-import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeParseException
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ResumeStructuredAdminService(
@@ -40,10 +41,10 @@ class ResumeStructuredAdminService(
     private val skillRepository: ResumeSkillRepositoryPort,
     private val projectSkillRepository: ResumeProjectSkillRepositoryPort,
     private val codeSnippetRepository: ResumeCodeSnippetRepositoryPort,
-) {
+) : ManageResumeStructureUseCase {
 
     @Transactional
-    fun upsertCompany(request: ResumeCompanyUpsertRequest): ResumeCompanyDto {
+    override fun upsertCompany(request: ResumeCompanyUpsertRequest): ResumeCompanyDto {
         val saved = companyRepository.save(
             ResumeCompany(
                 id = request.id,
@@ -58,10 +59,10 @@ class ResumeStructuredAdminService(
     }
 
     @Transactional
-    fun deleteCompany(id: Long) = companyRepository.delete(id)
+    override fun deleteCompany(id: Long) = companyRepository.delete(id)
 
     @Transactional
-    fun upsertCategory(request: ResumeCategoryUpsertRequest): ResumeCategoryDto =
+    override fun upsertCategory(request: ResumeCategoryUpsertRequest): ResumeCategoryDto =
         ResumeCategoryDto.from(
             categoryRepository.save(
                 ResumeCategory(
@@ -75,10 +76,10 @@ class ResumeStructuredAdminService(
         )
 
     @Transactional
-    fun deleteCategory(id: Long) = categoryRepository.delete(id)
+    override fun deleteCategory(id: Long) = categoryRepository.delete(id)
 
     @Transactional
-    fun upsertProject(request: ResumeProjectUpsertRequest): Long? {
+    override fun upsertProject(request: ResumeProjectUpsertRequest): Long? {
         val period = request.startMonth?.let {
             CareerPeriod(parseMonth(it), request.endMonth?.let(::parseMonth))
         }
@@ -102,10 +103,10 @@ class ResumeStructuredAdminService(
     }
 
     @Transactional
-    fun deleteProject(id: Long) = projectRepository.delete(id)
+    override fun deleteProject(id: Long) = projectRepository.delete(id)
 
     @Transactional
-    fun upsertSkillGroup(request: ResumeSkillGroupUpsertRequest): ResumeSkillGroupDto =
+    override fun upsertSkillGroup(request: ResumeSkillGroupUpsertRequest): ResumeSkillGroupDto =
         ResumeSkillGroupDto.from(
             group = skillGroupRepository.save(
                 ResumeSkillGroup(
@@ -120,10 +121,10 @@ class ResumeStructuredAdminService(
         )
 
     @Transactional
-    fun deleteSkillGroup(id: Long) = skillGroupRepository.delete(id)
+    override fun deleteSkillGroup(id: Long) = skillGroupRepository.delete(id)
 
     @Transactional
-    fun upsertSkill(request: ResumeSkillUpsertRequest): Long? = skillRepository.save(
+    override fun upsertSkill(request: ResumeSkillUpsertRequest): Long? = skillRepository.save(
         ResumeSkill(
             id = request.id,
             name = request.name.trim(),
@@ -133,10 +134,10 @@ class ResumeStructuredAdminService(
     ).id
 
     @Transactional
-    fun deleteSkill(id: Long) = skillRepository.delete(id)
+    override fun deleteSkill(id: Long) = skillRepository.delete(id)
 
     @Transactional
-    fun upsertSnippet(request: ResumeSnippetUpsertRequest): Long? = codeSnippetRepository.save(
+    override fun upsertSnippet(request: ResumeSnippetUpsertRequest): Long? = codeSnippetRepository.save(
         ResumeCodeSnippet(
             id = request.id,
             projectId = request.projectId,
@@ -152,7 +153,7 @@ class ResumeStructuredAdminService(
     ).id
 
     @Transactional
-    fun deleteSnippet(id: Long) = codeSnippetRepository.delete(id)
+    override fun deleteSnippet(id: Long) = codeSnippetRepository.delete(id)
 
     /** 화면에서 `2022-08` 형태로 들어온다. 일자는 받지 않는다 — 이력서에서 의미가 없다. */
     private fun parseMonth(raw: String): YearMonth = try {

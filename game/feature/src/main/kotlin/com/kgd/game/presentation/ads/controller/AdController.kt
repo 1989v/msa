@@ -1,11 +1,11 @@
 package com.kgd.game.presentation.ads.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.game.application.ads.service.AdPlacementDto
+import com.kgd.game.application.ads.dto.AdPlacementDto
 import com.kgd.game.application.ads.usecase.CompleteAdRewardUseCase
 import com.kgd.game.application.ads.usecase.GetServablePlacementUseCase
 import com.kgd.game.application.ads.usecase.IssueAdRewardUseCase
-import com.kgd.game.application.ads.service.RewardDto
+import com.kgd.game.application.ads.dto.RewardDto
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.springframework.web.bind.annotation.GetMapping
