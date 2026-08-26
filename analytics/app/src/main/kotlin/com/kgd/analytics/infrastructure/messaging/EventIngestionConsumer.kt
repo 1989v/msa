@@ -1,6 +1,6 @@
 package com.kgd.analytics.infrastructure.messaging
 
-import com.kgd.analytics.domain.port.EventRepositoryPort
+import com.kgd.analytics.application.event.port.EventRepositoryPort
 import com.kgd.common.analytics.AnalyticsEvent
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.kafka.annotation.KafkaListener

@@ -11,8 +11,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-**변종 B** — 정리 대상 (플랜 P4): Port 4개가 `analytics/domain` 의 `domain/port` 에 있다 → `app` 의
-`application/{entity}/port` 로. UseCase 3개가 `@Service` 클래스 → 인터페이스 추출. Adapter 5 는 표준 위치.
+표준 준수 (2026-08-26, P4 완료) — Port 4개를 `application/{score,event}/port` 로 옮기고 UseCase 클래스 3개를 인터페이스 4개(`GetProductScore`·`GetProductScores`·`GetKeywordScore`·`GetExperimentMetrics`) + 서비스 2개로. `analytics:domain` 은 이제 모델만 갖는다. Kafka Streams·컨슈머·ClickHouse 어댑터는 그대로.
 
 ## Commands
 

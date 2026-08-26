@@ -1,6 +1,7 @@
 package com.kgd.recommendation.infrastructure.kafka
 
-import com.kgd.recommendation.recommendation.Recommendation
+import com.kgd.recommendation.domain.recommendation.model.Recommendation
+import com.kgd.recommendation.application.recommendation.port.ImpressionPublisherPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.kafka.core.KafkaTemplate
@@ -22,10 +23,10 @@ class RecommendationImpressionPublisher(
     private val kafkaTemplate: KafkaTemplate<String, String>,
     @Value("\${recommendation.impression.publish.enabled:false}") private val enabled: Boolean,
     @Value("\${recommendation.impression.topic:recommendation.impression.recorded}") private val topic: String,
-) {
+) : ImpressionPublisherPort {
     private val logger = KotlinLogging.logger {}
 
-    fun publishImpressions(rec: Recommendation, variant: String) {
+    override fun publishImpressions(rec: Recommendation, variant: String) {
         if (!enabled || rec.items.isEmpty() || rec.userId == null) return
         try {
             rec.items.forEachIndexed { rank, item ->

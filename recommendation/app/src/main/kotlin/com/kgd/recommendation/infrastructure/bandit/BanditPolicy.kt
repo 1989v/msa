@@ -1,5 +1,6 @@
 package com.kgd.recommendation.infrastructure.bandit
 
+import com.kgd.recommendation.application.recommendation.port.BanditPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -30,7 +31,7 @@ class BanditPolicy(
     @Value("\${recommendation.bandit.backend:memory}") private val backend: String,
     @Value("\${recommendation.bandit.alpha-prior:1.0}") private val alphaPrior: Double,
     @Value("\${recommendation.bandit.beta-prior:10.0}") private val betaPrior: Double,
-) {
+) : BanditPort {
     private val logger = KotlinLogging.logger {}
     private val redisSampler: RedisThompsonSampler by lazy {
         RedisThompsonSampler(redisTemplate, alphaPrior, betaPrior)
@@ -40,7 +41,7 @@ class BanditPolicy(
         logger.info { "BanditPolicy enabled=$enabled backend=$backend" }
     }
 
-    fun selectIfEnabled(): String? {
+    override fun selectIfEnabled(): String? {
         if (!enabled) return null
         return when (backend) {
             "redis" -> redisSampler.select(VARIANTS)
@@ -48,7 +49,7 @@ class BanditPolicy(
         }
     }
 
-    fun recordImpression(variant: String) {
+    override fun recordImpression(variant: String) {
         if (!enabled) return
         when (backend) {
             "redis" -> redisSampler.update(variant, clicked = false)

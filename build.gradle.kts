@@ -230,15 +230,9 @@ val layerGateOutside = setOf(
     ":game:web",         // KMP
 )
 
-// ① 허용목록 — 비우는 단계는 플랜 P2/P4
+// ① 허용목록 — 남은 항목은 플랜 P4 (quant)
 val layerImportExempt = mapOf(
     ":quant:app" to "포트가 JPA 엔티티·metrics 를 import — P4",
-    ":code-dictionary:app" to "SyncService → IndexAliasManager 1건 — P4",
-    ":recommendation:app" to "변종 B — P4",
-    ":search:app" to "2건 — P4",
-    ":auth:app" to "1건 — P4 (private 서브모듈)",
-    ":experiment:app" to "1건 — P4",
-    ":inventory:feature" to "1건 — P4",
 )
 
 // ② 허용목록 — 영구 예외 하나뿐

@@ -1,9 +1,9 @@
 package com.kgd.recommendation.presentation.dto
 
-import com.kgd.recommendation.recommendation.Recommendation
-import com.kgd.recommendation.recommendation.RecommendationContext
-import com.kgd.recommendation.recommendation.RecommendationItem
-import com.kgd.recommendation.recommendation.RecommendationType
+import com.kgd.recommendation.domain.recommendation.model.Recommendation
+import com.kgd.recommendation.domain.recommendation.model.RecommendationContext
+import com.kgd.recommendation.domain.recommendation.model.RecommendationItem
+import com.kgd.recommendation.domain.recommendation.model.RecommendationType
 import java.time.Instant
 
 data class RecommendationDto(

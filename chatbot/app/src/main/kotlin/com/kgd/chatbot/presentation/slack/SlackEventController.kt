@@ -2,7 +2,7 @@ package com.kgd.chatbot.presentation.slack
 
 import com.kgd.chatbot.application.chat.port.ChannelNotificationPort
 import com.kgd.chatbot.application.chat.usecase.AskQuestionUseCase
-import com.kgd.chatbot.config.ChatbotProperties
+import com.kgd.chatbot.application.chat.config.ChatbotProperties
 import com.kgd.chatbot.domain.model.ChannelType
 import com.kgd.chatbot.domain.model.UserRole
 import io.github.oshai.kotlinlogging.KotlinLogging

@@ -1,6 +1,6 @@
 package com.kgd.analytics.presentation.controller
 
-import com.kgd.analytics.application.usecase.GetExperimentMetricsUseCase
+import com.kgd.analytics.application.event.usecase.GetExperimentMetricsUseCase
 import com.kgd.analytics.presentation.dto.ExperimentMetricsResponse
 import com.kgd.analytics.presentation.dto.VariantMetrics
 import com.kgd.common.response.ApiResponse
@@ -22,7 +22,7 @@ class ExperimentMetricsController(
         @RequestParam start: Instant,
         @RequestParam end: Instant
     ): ApiResponse<ExperimentMetricsResponse> {
-        val rows = getMetrics.execute(experimentId, start, end)
+        val rows = getMetrics.execute(GetExperimentMetricsUseCase.Query(experimentId, start, end))
 
         val variants = rows.groupBy { it.variantName }.map { (variant, metrics) ->
             val impressions = metrics.find { it.eventType == "PRODUCT_VIEW" }?.eventCount ?: 0

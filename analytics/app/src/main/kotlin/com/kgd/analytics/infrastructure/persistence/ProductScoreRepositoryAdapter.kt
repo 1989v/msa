@@ -1,7 +1,7 @@
 package com.kgd.analytics.infrastructure.persistence
 
 import com.kgd.analytics.domain.model.ProductScore
-import com.kgd.analytics.domain.port.ProductScoreRepositoryPort
+import com.kgd.analytics.application.score.port.ProductScoreRepositoryPort
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 import java.sql.Timestamp

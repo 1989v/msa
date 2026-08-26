@@ -1,5 +1,7 @@
 package com.kgd.experiment.infrastructure.client
 
+import com.kgd.experiment.application.experiment.port.AnalyticsMetricsPort
+import com.kgd.experiment.application.experiment.port.ExperimentMetrics
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
@@ -9,10 +11,10 @@ import java.time.Instant
 class AnalyticsClient(
     webClientBuilder: WebClient.Builder,
     @Value("\${analytics.service.url:http://localhost:8090}") private val baseUrl: String
-) {
+) : AnalyticsMetricsPort {
     private val webClient = webClientBuilder.baseUrl(baseUrl).build()
 
-    fun getExperimentMetrics(experimentId: Long, start: Instant, end: Instant): ExperimentMetricsDto? {
+    override fun getExperimentMetrics(experimentId: Long, start: Instant, end: Instant): ExperimentMetrics? {
         return webClient.get()
             .uri("/api/v1/analytics/experiments/{id}/metrics?start={start}&end={end}",
                 experimentId, start.toString(), end.toString())
@@ -25,20 +27,6 @@ class AnalyticsClient(
 
 data class ExperimentMetricsApiResponse(
     val success: Boolean = false,
-    val data: ExperimentMetricsDto? = null,
+    val data: ExperimentMetrics? = null,
     val error: Any? = null
-)
-
-data class ExperimentMetricsDto(
-    val experimentId: Long = 0,
-    val variants: List<VariantMetricsDto> = emptyList()
-)
-
-data class VariantMetricsDto(
-    val variantName: String = "",
-    val impressions: Long = 0,
-    val clicks: Long = 0,
-    val orders: Long = 0,
-    val ctr: Double = 0.0,
-    val cvr: Double = 0.0
 )

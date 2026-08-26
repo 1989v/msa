@@ -4,7 +4,7 @@ import tools.jackson.databind.ObjectMapper
 import com.kgd.analytics.domain.model.KeywordScore
 import com.kgd.analytics.domain.model.ProductScore
 import com.kgd.analytics.domain.model.ScoreStats
-import com.kgd.analytics.domain.port.ScoreCachePort
+import com.kgd.analytics.application.score.port.ScoreCachePort
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component

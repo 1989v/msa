@@ -11,8 +11,7 @@ A/B 테스트 실험 관리, 버킷 할당, 결과 분석 서비스.
 
 ## 구조 상태 (ADR-0083)
 
-**변종 B** — 정리 대상 (플랜 P4): Port 1개가 `experiment/domain` 의 `domain/port` → application 으로. UseCase 5개가
-`@Service` 클래스 → 인터페이스 추출. application → infrastructure import 1건.
+표준 준수 (2026-08-26, P4 완료) — `application/experiment/{usecase,port,service,dto}`. UseCase 인터페이스 6 · Port 2(`ExperimentRepositoryPort`·`AnalyticsMetricsPort`) · 서비스 2(`ExperimentService`·`ExperimentResultService`). analytics 호출은 포트 뒤.
 
 ## Commands
 

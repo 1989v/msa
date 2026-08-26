@@ -1,7 +1,7 @@
 package com.kgd.recommendation.infrastructure.persistence
 
-import com.kgd.recommendation.port.ItemSimilarityPort
-import com.kgd.recommendation.recommendation.RecommendationItem
+import com.kgd.recommendation.application.recommendation.port.ItemSimilarityPort
+import com.kgd.recommendation.domain.recommendation.model.RecommendationItem
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Repository
 

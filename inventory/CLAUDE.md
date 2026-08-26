@@ -23,10 +23,9 @@
 **레이어 표준의 견본이다.** 신규 도메인은 이 모듈을 복사해서 시작한다 (`docs/standards/new-domain-checklist.md`).
 
 - `application/inventory/usecase` 인터페이스 7 + `reservation/usecase` 1 — 전부 `Command/Result` 내장
-- `application/inventory/port` 4 (`InventoryRepositoryPort` / `ReservationRepositoryPort` / `InventoryCachePort` / `OutboxPort`)
-- `infrastructure/persistence/{inventory,reservation,outbox,idempotency}` adapter, `cache/InventoryCacheAdapter`, `messaging/InventoryEventConsumer`
-- 남은 부채: **Outbox 가 자체 구현**(`OutboxJpaEntity`/`OutboxPollingPublisher`)이다 — order/fulfillment 처럼 common
-  `OutboxRepository` 서브인터페이스로 바꾼다 (플랜 P5). application → infrastructure import 1건 (P4)
+- `application/inventory/port` 5 (`InventoryRepositoryPort` / `ReservationRepositoryPort` / `InventoryCachePort` / `OutboxPort` / `InventoryMetricsPort`)
+- `infrastructure/persistence/{inventory,reservation,outbox,idempotency}` adapter, `cache/InventoryCacheAdapter`, `metrics/InventoryMetrics`, `messaging/InventoryEventConsumer`
+- 남은 부채: **Outbox 가 자체 구현**(`OutboxJpaEntity`/`OutboxPollingPublisher`)이다 — order/fulfillment 처럼 common `OutboxRepository` 서브인터페이스로 바꾼다 (플랜 P5)
 
 ## Key Rules
 

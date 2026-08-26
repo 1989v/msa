@@ -1,7 +1,7 @@
 package com.kgd.recommendation.infrastructure.persistence
 
-import com.kgd.recommendation.port.UserMetadataPort
-import com.kgd.recommendation.port.UserPreferredContext
+import com.kgd.recommendation.application.recommendation.port.UserMetadataPort
+import com.kgd.recommendation.application.recommendation.port.UserPreferredContext
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import javax.sql.DataSource

@@ -1,12 +1,13 @@
 package com.kgd.experiment.presentation.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.experiment.application.usecase.AssignBucketUseCase
-import com.kgd.experiment.application.usecase.ChangeExperimentStatusUseCase
-import com.kgd.experiment.application.usecase.CreateExperimentUseCase
-import com.kgd.experiment.application.usecase.ExperimentResultDto
-import com.kgd.experiment.application.usecase.GetExperimentResultsUseCase
-import com.kgd.experiment.application.usecase.GetExperimentUseCase
+import com.kgd.experiment.application.experiment.dto.ExperimentResultDto
+import com.kgd.experiment.application.experiment.usecase.AssignBucketUseCase
+import com.kgd.experiment.application.experiment.usecase.ChangeExperimentStatusUseCase
+import com.kgd.experiment.application.experiment.usecase.CreateExperimentUseCase
+import com.kgd.experiment.application.experiment.usecase.GetExperimentResultsUseCase
+import com.kgd.experiment.application.experiment.usecase.GetExperimentUseCase
+import com.kgd.experiment.application.experiment.usecase.ListExperimentsUseCase
 import com.kgd.experiment.presentation.dto.*
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*
 class ExperimentController(
     private val createExperiment: CreateExperimentUseCase,
     private val getExperiment: GetExperimentUseCase,
+    private val listExperiments: ListExperimentsUseCase,
     private val changeStatus: ChangeExperimentStatusUseCase,
     private val assignBucket: AssignBucketUseCase,
     private val getResults: GetExperimentResultsUseCase
@@ -28,7 +30,7 @@ class ExperimentController(
 
     @GetMapping
     fun list(): ApiResponse<List<ExperimentResponse>> {
-        val experiments = getExperiment.executeAll()
+        val experiments = listExperiments.execute()
         return ApiResponse.success(experiments.map { ExperimentResponse.from(it) })
     }
 
@@ -43,7 +45,7 @@ class ExperimentController(
         @PathVariable id: Long,
         @RequestBody request: ChangeStatusRequest
     ): ApiResponse<ExperimentResponse> {
-        val experiment = changeStatus.execute(id, request.status)
+        val experiment = changeStatus.execute(ChangeExperimentStatusUseCase.Command(id, request.status))
         return ApiResponse.success(ExperimentResponse.from(experiment))
     }
 
@@ -52,7 +54,7 @@ class ExperimentController(
         @PathVariable id: Long,
         @RequestParam userId: String
     ): ApiResponse<AssignmentResponse> {
-        val variant = assignBucket.execute(id, userId)
+        val variant = assignBucket.execute(AssignBucketUseCase.Command(id, userId))
         return ApiResponse.success(AssignmentResponse(id, userId, variant))
     }
 

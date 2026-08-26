@@ -1,5 +1,6 @@
 package com.kgd.recommendation.infrastructure.client
 
+import com.kgd.recommendation.application.recommendation.port.ExperimentVariantPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.client.SimpleClientHttpRequestFactory
@@ -18,7 +19,7 @@ import org.springframework.web.client.RestTemplate
 @Component
 class RecommendationExperimentClient(
     @Value("\${recommendation.experiment.url:http://experiment:8091}") private val experimentUrl: String,
-) {
+) : ExperimentVariantPort {
     private val logger = KotlinLogging.logger {}
 
     private val restTemplate: RestTemplate = RestTemplate(
@@ -28,7 +29,7 @@ class RecommendationExperimentClient(
         }
     )
 
-    fun getVariant(experimentId: Long, userId: Long): String? {
+    override fun getVariant(experimentId: Long, userId: Long): String? {
         return try {
             val response = restTemplate.getForObject(
                 "$experimentUrl/api/v1/experiments/$experimentId/assignment?userId=$userId",

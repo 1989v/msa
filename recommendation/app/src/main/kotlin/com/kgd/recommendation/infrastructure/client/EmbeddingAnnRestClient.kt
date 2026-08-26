@@ -1,7 +1,7 @@
 package com.kgd.recommendation.infrastructure.client
 
-import com.kgd.recommendation.port.EmbeddingAnnPort
-import com.kgd.recommendation.recommendation.RecommendationItem
+import com.kgd.recommendation.application.recommendation.port.EmbeddingAnnPort
+import com.kgd.recommendation.domain.recommendation.model.RecommendationItem
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpEntity

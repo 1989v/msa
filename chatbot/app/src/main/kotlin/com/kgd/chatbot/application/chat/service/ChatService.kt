@@ -7,7 +7,7 @@ import com.kgd.chatbot.application.chat.port.KnowledgeSourcePort
 import com.kgd.chatbot.application.chat.usecase.AskQuestionUseCase
 import com.kgd.chatbot.application.chat.usecase.CloseConversationUseCase
 import com.kgd.chatbot.application.chat.usecase.GetConversationUseCase
-import com.kgd.chatbot.config.ChatbotProperties
+import com.kgd.chatbot.application.chat.config.ChatbotProperties
 import com.kgd.chatbot.domain.exception.AccessDeniedException
 import com.kgd.chatbot.domain.exception.ConversationNotFoundException
 import com.kgd.chatbot.domain.model.Conversation

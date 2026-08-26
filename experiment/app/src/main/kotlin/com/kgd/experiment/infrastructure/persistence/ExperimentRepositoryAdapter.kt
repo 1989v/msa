@@ -2,7 +2,7 @@ package com.kgd.experiment.infrastructure.persistence
 
 import com.kgd.experiment.domain.model.Experiment
 import com.kgd.experiment.domain.model.ExperimentStatus
-import com.kgd.experiment.domain.port.ExperimentRepositoryPort
+import com.kgd.experiment.application.experiment.port.ExperimentRepositoryPort
 import com.kgd.experiment.infrastructure.persistence.entity.ExperimentJpaEntity
 import org.springframework.stereotype.Repository
 

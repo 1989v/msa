@@ -4,9 +4,9 @@ import com.kgd.codedictionary.application.concept.port.ConceptRepositoryPort
 import com.kgd.codedictionary.application.index.port.ConceptIndexRepositoryPort
 import com.kgd.codedictionary.application.search.port.ConceptIndexingPort
 import com.kgd.codedictionary.application.sync.dto.IndexSyncJob
+import com.kgd.codedictionary.application.sync.port.IndexAliasPort
 import com.kgd.codedictionary.domain.index.model.CodeLocation
 import com.kgd.codedictionary.domain.index.model.ConceptIndex
-import com.kgd.codedictionary.infrastructure.opensearch.adapter.IndexAliasManager
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Pageable
@@ -18,7 +18,7 @@ class SyncService(
     private val conceptRepository: ConceptRepositoryPort,
     private val indexRepository: ConceptIndexRepositoryPort,
     private val indexingPort: ConceptIndexingPort,
-    private val aliasManager: IndexAliasManager,
+    private val aliasManager: IndexAliasPort,
     private val jobRegistry: IndexSyncJobRegistry,
     @Value("\${opensearch.index-name:concept-index}") private val alias: String,
     @Value("\${opensearch.retention:2}") private val retention: Int

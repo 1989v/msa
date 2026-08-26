@@ -1,10 +1,10 @@
 package com.kgd.recommendation.infrastructure.persistence
 
-import com.kgd.recommendation.port.RecommendationRepository
-import com.kgd.recommendation.recommendation.Recommendation
-import com.kgd.recommendation.recommendation.RecommendationContext
-import com.kgd.recommendation.recommendation.RecommendationItem
-import com.kgd.recommendation.recommendation.RecommendationType
+import com.kgd.recommendation.application.recommendation.port.RecommendationRepository
+import com.kgd.recommendation.domain.recommendation.model.Recommendation
+import com.kgd.recommendation.domain.recommendation.model.RecommendationContext
+import com.kgd.recommendation.domain.recommendation.model.RecommendationItem
+import com.kgd.recommendation.domain.recommendation.model.RecommendationType
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Repository
 import java.time.Instant

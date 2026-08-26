@@ -4,7 +4,7 @@ import com.kgd.common.statistics.Wilson
 import com.kgd.recommendation.infrastructure.persistence.CbScoreRow
 import com.kgd.recommendation.infrastructure.persistence.ClickHouseScoreReader
 import com.kgd.recommendation.infrastructure.persistence.RedisRecommendationAdapter
-import com.kgd.recommendation.service.ActionWeightedScore
+import com.kgd.recommendation.domain.recommendation.policy.ActionWeightedScore
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Component

@@ -1,7 +1,7 @@
 package com.kgd.chatbot.infrastructure.channel.slack
 
 import com.kgd.chatbot.application.chat.port.ChannelNotificationPort
-import com.kgd.chatbot.config.ChatbotProperties
+import com.kgd.chatbot.application.chat.config.ChatbotProperties
 import com.kgd.chatbot.domain.model.ChannelType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers

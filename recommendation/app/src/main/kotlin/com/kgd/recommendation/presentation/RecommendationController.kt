@@ -1,9 +1,9 @@
 package com.kgd.recommendation.presentation
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.recommendation.application.usecase.GetCategoryBestUseCase
-import com.kgd.recommendation.application.usecase.GetPersonalizedUseCase
-import com.kgd.recommendation.application.usecase.GetSimilarItemsUseCase
+import com.kgd.recommendation.application.recommendation.usecase.GetCategoryBestUseCase
+import com.kgd.recommendation.application.recommendation.usecase.GetPersonalizedUseCase
+import com.kgd.recommendation.application.recommendation.usecase.GetSimilarItemsUseCase
 import com.kgd.recommendation.presentation.dto.RecommendationDto
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -28,7 +28,7 @@ class RecommendationController(
         @RequestParam categoryId: Long,
         @RequestParam(defaultValue = "20") limit: Int,
     ): ApiResponse<RecommendationDto> {
-        val result = getCategoryBest.execute(cityId, categoryId, limit)
+        val result = getCategoryBest.execute(GetCategoryBestUseCase.Query(cityId, categoryId, limit))
         return ApiResponse.success(RecommendationDto.from(result))
     }
 
@@ -42,7 +42,7 @@ class RecommendationController(
         @RequestParam itemId: Long,
         @RequestParam(defaultValue = "20") limit: Int,
     ): ApiResponse<RecommendationDto> {
-        val result = getSimilarItems.execute(itemId, limit)
+        val result = getSimilarItems.execute(GetSimilarItemsUseCase.Query(itemId, limit))
         return ApiResponse.success(RecommendationDto.from(result))
     }
 
@@ -57,7 +57,7 @@ class RecommendationController(
         @RequestParam userId: Long,
         @RequestParam(defaultValue = "20") limit: Int,
     ): ApiResponse<RecommendationDto> {
-        val result = getPersonalized.execute(userId, limit)
+        val result = getPersonalized.execute(GetPersonalizedUseCase.Query(userId, limit))
         return ApiResponse.success(RecommendationDto.from(result))
     }
 }

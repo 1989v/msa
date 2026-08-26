@@ -1,8 +1,8 @@
 package com.kgd.analytics.infrastructure.persistence
 
 import tools.jackson.databind.ObjectMapper
-import com.kgd.analytics.domain.port.EventRepositoryPort
-import com.kgd.analytics.domain.port.ExperimentMetricRow
+import com.kgd.analytics.application.event.port.EventRepositoryPort
+import com.kgd.analytics.application.event.port.ExperimentMetricRow
 import com.kgd.common.analytics.AnalyticsEvent
 import org.springframework.stereotype.Repository
 import java.sql.Timestamp

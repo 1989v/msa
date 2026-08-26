@@ -11,8 +11,7 @@ import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.domain.product.model.ScoredProductDocument
 import com.kgd.search.application.product.usecase.SuggestProductUseCase
 import com.kgd.search.domain.product.port.ProductSearchPort
-import com.kgd.search.infrastructure.client.SearchExperimentClient
-import com.kgd.search.infrastructure.client.SearchExperimentProperties
+import com.kgd.search.application.product.port.SearchVariantPort
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldBeNull
@@ -32,15 +31,15 @@ class SearchProductServiceTest : BehaviorSpec({
     val banditProps = BanditProperties(enabled = false)
     val reranker = ThompsonReranker(banditProps, MultiScopeBanditBlender(banditProps, banditStatePort))
     val diversity = SellerDiversityReranker(DiversityProperties(enabled = false))
-    val experimentClient = mockk<SearchExperimentClient>()
+    val variantPort = mockk<SearchVariantPort>()
 
-    fun service(experimentEnabled: Boolean = false) = SearchProductService(
-        searchPort, reranker, diversity,
-        experimentClient,
-        SearchExperimentProperties(enabled = experimentEnabled, id = 1L),
-    )
+    fun service() = SearchProductService(searchPort, reranker, diversity, variantPort)
 
-    beforeEach { clearMocks(searchPort, experimentClient) }
+    beforeEach {
+        clearMocks(searchPort, variantPort)
+        // 기본: 실험 미참여 (어댑터가 실험 비활성·비로그인을 null 로 접는다 — SearchExperimentClientTest)
+        every { variantPort.resolveVariant(any()) } returns null
+    }
 
     given("상품 검색 시") {
         `when`("키워드가 주어지면") {
@@ -81,12 +80,11 @@ class SearchProductServiceTest : BehaviorSpec({
         `when`("로그인 사용자(userId)가 주어지면") {
             then("variant 가 할당되어 port 로 전달되고 결과에 태깅되어야 한다") {
                 val pageable = PageRequest.of(0, 20)
-                every { experimentClient.getVariant(1L, "user-1") } returns "experiment_a"
+                every { variantPort.resolveVariant("user-1") } returns "experiment_a"
                 every { searchPort.searchScored("테스트", pageable, "experiment_a") } returns
                     PageImpl(emptyList(), pageable, 0)
 
-                val result = service(experimentEnabled = true)
-                    .execute(SearchProductUseCase.Query("테스트", 0, 20, userId = "user-1"))
+                val result = service().execute(SearchProductUseCase.Query("테스트", 0, 20, userId = "user-1"))
 
                 result.variant shouldBe "experiment_a"
                 verify(exactly = 1) { searchPort.searchScored("테스트", pageable, "experiment_a") }
@@ -97,21 +95,18 @@ class SearchProductServiceTest : BehaviorSpec({
                 val pageable = PageRequest.of(0, 20)
                 every { searchPort.searchScored("테스트", pageable, null) } returns PageImpl(emptyList(), pageable, 0)
 
-                val result = service(experimentEnabled = true)
-                    .execute(SearchProductUseCase.Query("테스트", 0, 20, userId = null))
+                val result = service().execute(SearchProductUseCase.Query("테스트", 0, 20, userId = null))
 
                 result.variant.shouldBeNull()
-                verify(exactly = 0) { experimentClient.getVariant(any(), any()) }
             }
         }
         `when`("experiment 서비스 호출이 실패(null)하면") {
             then("기본 ranking 으로 graceful degrade 해야 한다") {
                 val pageable = PageRequest.of(0, 20)
-                every { experimentClient.getVariant(1L, "user-1") } returns null
+                every { variantPort.resolveVariant("user-1") } returns null
                 every { searchPort.searchScored("테스트", pageable, null) } returns PageImpl(emptyList(), pageable, 0)
 
-                val result = service(experimentEnabled = true)
-                    .execute(SearchProductUseCase.Query("테스트", 0, 20, userId = "user-1"))
+                val result = service().execute(SearchProductUseCase.Query("테스트", 0, 20, userId = "user-1"))
 
                 result.variant.shouldBeNull()
             }

@@ -1,5 +1,6 @@
 package com.kgd.codedictionary.infrastructure.opensearch.adapter
 
+import com.kgd.codedictionary.application.sync.port.IndexAliasPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.opensearch.client.opensearch._types.analysis.Analyzer
@@ -21,14 +22,14 @@ import java.time.format.DateTimeFormatter
 @Component
 class IndexAliasManager(
     private val openSearchClient: OpenSearchClient
-) {
+) : IndexAliasPort {
     private val log = KotlinLogging.logger {}
     private val timestampFormatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
 
-    fun createTimestampedIndexName(alias: String): String =
+    override fun createTimestampedIndexName(alias: String): String =
         "${alias}_${LocalDateTime.now().format(timestampFormatter)}"
 
-    fun createIndex(indexName: String) {
+    override fun createIndex(indexName: String) {
         openSearchClient.indices().create { c ->
             c.index(indexName)
                 .settings { s ->
@@ -175,7 +176,7 @@ class IndexAliasManager(
     /**
      * alias를 newIndexName으로 atomic 교체하고, 옛 인덱스 중 maxRetention 초과분을 삭제.
      */
-    fun swapAlias(alias: String, newIndexName: String, maxRetention: Int = 2) {
+    override fun swapAlias(alias: String, newIndexName: String, maxRetention: Int) {
         val aliasedIndices = getIndicesForAlias(alias)
 
         openSearchClient.indices().updateAliases { req ->

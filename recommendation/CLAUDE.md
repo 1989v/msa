@@ -20,11 +20,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-**변종 B** — 정리 대상 (플랜 P4):
-- Port 6개가 `com.kgd.recommendation.port` (domain 모듈, `domain.` 접두도 없음) → `app` 의 `application/{entity}/port` 로
-- 도메인 모델이 `recommendation/` · `service/` 패키지 — `domain/{entity}/model` 아래로
-- UseCase 3개가 `@Service` 클래스 (`GetCategoryBest`/`GetSimilarItems`/`GetPersonalized`) → 인터페이스 추출
-- application → infrastructure import 3건
+표준 준수 (2026-08-26, P4 완료) — 도메인 모델은 `domain/recommendation/{model,policy}`, Port 9개는 `application/recommendation/port`(밴딧·실험 variant·노출 발행도 포트), UseCase 인터페이스 3 + 서비스 3(`CategoryBest`·`SimilarItems`·`Personalized`). `/internal/**`·밴딧 모니터 컨트롤러는 인프라 빈을 직접 쓴다(presentation→infrastructure, 규칙 밖).
 
 ## Key Rules
 

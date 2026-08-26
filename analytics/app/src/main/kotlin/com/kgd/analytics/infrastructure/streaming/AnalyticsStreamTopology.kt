@@ -3,9 +3,9 @@ package com.kgd.analytics.infrastructure.streaming
 import tools.jackson.module.kotlin.jacksonMapperBuilder
 import com.kgd.analytics.domain.model.KeywordScore
 import com.kgd.analytics.domain.model.ProductScore
-import com.kgd.analytics.domain.port.KeywordScoreRepositoryPort
-import com.kgd.analytics.domain.port.ProductScoreRepositoryPort
-import com.kgd.analytics.domain.port.ScoreCachePort
+import com.kgd.analytics.application.score.port.KeywordScoreRepositoryPort
+import com.kgd.analytics.application.score.port.ProductScoreRepositoryPort
+import com.kgd.analytics.application.score.port.ScoreCachePort
 import com.kgd.analytics.infrastructure.messaging.ScoreUpdateEvent
 import com.kgd.common.analytics.AnalyticsEvent
 import com.kgd.common.analytics.EventType

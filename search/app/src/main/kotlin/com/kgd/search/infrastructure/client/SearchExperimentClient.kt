@@ -1,5 +1,6 @@
 package com.kgd.search.infrastructure.client
 
+import com.kgd.search.application.product.port.SearchVariantPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.http.client.SimpleClientHttpRequestFactory
@@ -16,7 +17,7 @@ import org.springframework.web.client.RestTemplate
 @Component
 class SearchExperimentClient(
     private val properties: SearchExperimentProperties,
-) {
+) : SearchVariantPort {
     private val log = KotlinLogging.logger {}
 
     private val restTemplate: RestTemplate = RestTemplate(
@@ -25,6 +26,12 @@ class SearchExperimentClient(
             setReadTimeout(1000)
         }
     )
+
+    /** 실험 비활성 또는 비로그인 사용자는 미참여 (null = 기본 ranking) */
+    override fun resolveVariant(userId: String?): String? {
+        if (!properties.enabled || userId.isNullOrBlank()) return null
+        return getVariant(properties.id, userId)
+    }
 
     fun getVariant(experimentId: Long, userId: String): String? {
         return try {

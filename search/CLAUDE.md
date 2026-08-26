@@ -14,7 +14,7 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 (2026-08-26, 플랜 P3 완료) — 디렉토리 == 패키지. UseCase 인터페이스 4 · Adapter 4, Port 는 `search:domain` 의 문서화된 예외 위치. 남은 부채: application → infrastructure import 2건 (P4).
+표준 준수 (2026-08-26, P3·P4 완료) — 디렉토리 == 패키지, application → infrastructure import 0. 실험 variant 해석은 `SearchVariantPort` 뒤로(실험 on/off·비로그인 판정은 어댑터가 접는다). UseCase 인터페이스 4 · Adapter 4, Port 는 `search:domain` 의 문서화된 예외 위치.
 
 ## Commands
 

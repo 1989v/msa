@@ -2,7 +2,7 @@ package com.kgd.chatbot.infrastructure.knowledge
 
 import com.kgd.chatbot.application.chat.port.KnowledgeChunk
 import com.kgd.chatbot.application.chat.port.KnowledgeSourcePort
-import com.kgd.chatbot.config.ChatbotProperties
+import com.kgd.chatbot.application.chat.config.ChatbotProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct
 import org.springframework.scheduling.annotation.Scheduled

@@ -1,7 +1,8 @@
 package com.kgd.analytics.presentation.controller
 
-import com.kgd.analytics.application.usecase.GetKeywordScoreUseCase
-import com.kgd.analytics.application.usecase.GetProductScoreUseCase
+import com.kgd.analytics.application.score.usecase.GetKeywordScoreUseCase
+import com.kgd.analytics.application.score.usecase.GetProductScoreUseCase
+import com.kgd.analytics.application.score.usecase.GetProductScoresUseCase
 import com.kgd.analytics.presentation.dto.KeywordScoreResponse
 import com.kgd.analytics.presentation.dto.ProductScoreResponse
 import com.kgd.common.response.ApiResponse
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/scores")
 class ScoreController(
     private val getProductScore: GetProductScoreUseCase,
+    private val getProductScores: GetProductScoresUseCase,
     private val getKeywordScore: GetKeywordScoreUseCase
 ) {
     @GetMapping("/products/{productId}")
@@ -26,7 +28,7 @@ class ScoreController(
 
     @GetMapping("/products/bulk")
     fun getBulkProductScores(@RequestParam ids: List<Long>): ApiResponse<List<ProductScoreResponse>> {
-        val scores = getProductScore.executeBulk(ids)
+        val scores = getProductScores.execute(ids)
         return ApiResponse.success(scores.map { ProductScoreResponse.from(it) })
     }
 

@@ -3,7 +3,7 @@ package com.kgd.chatbot.infrastructure.ai
 import com.kgd.chatbot.application.chat.port.AiModelPort
 import com.kgd.chatbot.application.chat.port.AiModelRequest
 import com.kgd.chatbot.application.chat.port.AiModelResponse
-import com.kgd.chatbot.config.ChatbotProperties
+import com.kgd.chatbot.application.chat.config.ChatbotProperties
 import com.kgd.chatbot.domain.exception.AiModelException
 import com.kgd.chatbot.domain.model.MessageRole
 import io.github.oshai.kotlinlogging.KotlinLogging

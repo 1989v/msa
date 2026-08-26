@@ -1,7 +1,7 @@
 package com.kgd.analytics.infrastructure.persistence
 
 import com.kgd.analytics.domain.model.KeywordScore
-import com.kgd.analytics.domain.port.KeywordScoreRepositoryPort
+import com.kgd.analytics.application.score.port.KeywordScoreRepositoryPort
 import org.springframework.stereotype.Repository
 import java.sql.Timestamp
 import javax.sql.DataSource

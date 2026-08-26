@@ -66,6 +66,9 @@
    **간** 규칙(feature 끼리 빈 주입 금지·Kafka 유지·datasource 분리)이고 이 문서는 모듈 **안** 규칙이다.
 10. 한 컨텍스트의 포트가 여럿이면 `{Context}Ports.kt` 한 파일에 묶어도 된다 (game 이 그렇게 한다).
     파일 이름이 아니라 **패키지 위치**가 규칙이다.
+11. **`@ConfigurationProperties` 는 그것을 읽는 레이어가 소유한다.** application 서비스가 읽으면
+    `application/{entity}/config/{X}Properties.kt`, 인프라 어댑터만 읽으면 `infrastructure/config`.
+    인프라에 두고 application 이 import 하면 규칙 8 위반이다 (chatbot·quant 가 그랬다).
 
 ## Infrastructure-only Modules (Single-level)
 

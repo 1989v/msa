@@ -19,10 +19,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 — UseCase 인터페이스 3(`AskQuestion`/`GetConversation`/`CloseConversation`), Port 4
-(`AiModelPort` / `ChannelNotificationPort` / `ConversationRepositoryPort` / `KnowledgeSourcePort`), adapter 5
-(Claude / Slack / WebSocket / FileSystemKnowledge / ConversationRepository).
-부채: `config/` 가 `infrastructure/config` 가 아니라 최상위에 있다 (플랜 P4) · **`app` 에 테스트 소스셋이 없다** (P6).
+표준 준수 (2026-08-26, P4 완료) — UseCase 인터페이스 3 · Port 4 · Adapter 5. `ChatbotProperties` 는 application 이 읽으므로 `application/chat/config`, `ChatbotConfig`·`WebSocketConfig` 는 `infrastructure/config`. 부채: **`app` 에 테스트 소스셋이 없다** (P6).
 
 ## Key Rules
 

@@ -1,5 +1,6 @@
 package com.kgd.inventory.infrastructure.metrics
 
+import com.kgd.inventory.application.inventory.port.InventoryMetricsPort
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
@@ -22,9 +23,9 @@ import java.time.Duration
 @Component
 class InventoryMetrics(
     private val meterRegistry: MeterRegistry,
-) {
+) : InventoryMetricsPort {
 
-    fun incrementReservationExpired(warehouseId: Long) {
+    override fun incrementReservationExpired(warehouseId: Long) {
         Counter.builder(METRIC_RESERVATION_EXPIRED_TOTAL)
             .description("Reservations released via 30-min TTL fallback (should be 0 in normal flow)")
             .tag("warehouse_id", warehouseId.toString())
@@ -32,7 +33,7 @@ class InventoryMetrics(
             .increment()
     }
 
-    fun recordOrderCancellationLatency(reason: String, latency: Duration) {
+    override fun recordOrderCancellationLatency(reason: String, latency: Duration) {
         // Negative latency (clock skew between order/inventory pods) — 통계 오염 방지를 위해 0 으로 클램프.
         val safe = if (latency.isNegative) Duration.ZERO else latency
         Timer.builder(METRIC_ORDER_CANCELLATION_TO_RELEASE_LATENCY)
