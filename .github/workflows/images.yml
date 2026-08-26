@@ -388,34 +388,50 @@ jobs:
       # 시점엔 manifest 갱신 별개로 처리.
       - name: Commit manifest update
         if: ${{ steps.changes.outputs.kustomize_services != '' && github.ref == 'refs/heads/main' }}
+        env:
+          REGISTRY: ${{ steps.meta.outputs.registry }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          SVCS: ${{ steps.changes.outputs.kustomize_services }}
         run: |
           set -euo pipefail
-          if git diff --quiet k8s/overlays/oci-arm/kustomization.yaml; then
+          KUSTOM=k8s/overlays/oci-arm/kustomization.yaml
+          if git diff --quiet "$KUSTOM"; then
             echo "No manifest changes — skip commit"
             exit 0
           fi
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add k8s/overlays/oci-arm/kustomization.yaml
-          UPDATED_COUNT=$(echo "${{ steps.changes.outputs.kustomize_services }}" | tr ' ' '\n' | wc -l)
-          SVCS="${{ steps.changes.outputs.kustomize_services }}"
-          git commit -m "ci: bump ${UPDATED_COUNT} service image tag(s) to ${{ steps.meta.outputs.tag }} [skip ci]" -m "Services: ${SVCS}"
+          UPDATED_COUNT=$(echo "$SVCS" | tr ' ' '\n' | wc -l)
 
-          # 사람이 빌드 중에 push 하면 non-fast-forward 로 밀린다. 그러면 이미지는 OCIR 에
-          # 올라갔는데 태그만 누락돼 "배포된 줄 아는" 상태가 된다(2026-08-06·08 두 차례 발생).
-          # rebase 재시도로 흡수한다 — 우리가 건드리는 파일은 kustomization 한 개뿐이라
-          # 충돌 나면 그건 동시 태그 변경이므로 재시도가 옳다.
+          # 이 잡은 자기 commit sha 를 체크아웃한다. 빌드가 도는 몇 분 사이 앞선 run 의
+          # commit-back 이 main 에 얹히면 push 가 non-fast-forward 로 밀린다(2026-08-06·08·25).
+          # 그때 rebase 로 합치려 하면 images: 블록을 양쪽이 통째로 다시 쓰므로 반드시 충돌한다.
+          # 그래서 병합하지 않는다 — 매 시도마다 최신 main 을 받아 그 위에 우리 태그만 다시
+          # 적용한다. 무엇을 어떤 태그로 바꿀지는 이 잡이 알고 있어 언제든 재현 가능하다.
+          apply_tags() {
+            yq -i '.images = (.images // [])' "$KUSTOM"
+            for svc in $SVCS; do
+              yq -i "(.images) |= map(select(.name != \"commerce/$svc\"))" "$KUSTOM"
+              yq -i "(.images) += [{\"name\": \"commerce/$svc\", \"newName\": \"$REGISTRY/$svc\", \"newTag\": \"$TAG\"}]" "$KUSTOM"
+            done
+            yq -i '(.images) |= sort_by(.name)' "$KUSTOM"
+          }
+
           for attempt in 1 2 3 4 5; do
-            if git push; then
+            git fetch --quiet origin main
+            git reset --quiet --hard FETCH_HEAD
+            apply_tags
+            if git diff --quiet "$KUSTOM"; then
+              echo "main 이 이미 ${TAG} 를 담고 있다 — push 불필요"
+              exit 0
+            fi
+            git add "$KUSTOM"
+            git commit -q -m "ci: bump ${UPDATED_COUNT} service image tag(s) to ${TAG} [skip ci]" -m "Services: ${SVCS}"
+            if git push --quiet origin HEAD:main; then
               echo "manifest push OK (attempt ${attempt})"
               exit 0
             fi
-            echo "push rejected — rebase 후 재시도 (${attempt}/5)"
-            git pull --rebase --autostash origin main || {
-              echo "::error::rebase 충돌 — 수동 확인 필요"
-              git rebase --abort || true
-              exit 1
-            }
+            echo "push 거부 — 최신 main 위에 재적용 후 재시도 (${attempt}/5)"
             sleep $((attempt * 3))
           done
           echo "::error::5회 재시도 후에도 manifest push 실패 — 이미지는 OCIR 에 있으니 수동 bump 필요"

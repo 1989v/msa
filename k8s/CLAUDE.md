@@ -68,10 +68,19 @@ k8s/argocd/install.sh                                   # Argo + 워치독 (Argo
   - **워치독은 Argo 가 배포하지 않는다** — 막힌 것을 푸는 물건을 막힌 것이 배포하면 같이 막힌다.
     `k8s/argocd/install.sh` 가 직접 apply 하므로 **워치독을 고치면 install.sh 를 다시 돌려야 반영된다**
 
-- **CI 커밋백은 push 레이스로 실패할 수 있다** — 이미지는 OCIR 에 올라갔는데 kustomization
-  bump 만 누락된다. 런 로그에서 태그를 확인하고 수동 bump `[skip ci]` 로 복구한다.
+- **CI 커밋백은 최신 main 위에 태그를 다시 적는다 — 병합하지 않는다.** 각 런은 자기 commit sha 를
+  체크아웃하므로, 빌드가 도는 몇 분 사이 앞선 런의 커밋백이 얹히면 push 가 밀린다. 이때 rebase 로
+  합치려 하면 `images:` 블록을 양쪽이 통째로 다시 써서 **반드시 충돌한다** (2026-08-25 실패).
+  그래서 `Commit manifest update` 는 시도마다 `fetch → reset --hard origin/main → 태그 재적용` 한다.
+  5회 모두 실패하면 이미지는 OCIR 에 있으니 수동 bump `[skip ci]` 로 복구한다.
   **push 이벤트 CI 런은 수 분~수십 분 지연 생성될 수 있다** (2026-08-11 실측 — "런 없음"으로
   판정해 dispatch 했더니 원래 런이 뒤늦게 생성돼 이중 빌드). 최소 10분 뒤에 판단한다
+
+- **서브모듈은 본체보다 먼저 push 한다** — 원격에 없는 커밋을 포인터가 가리키면 CI 가
+  `upload-pack: not our ref` 로 죽는다. 이미지가 **아예 생성되지 않으므로** 그 커밋의 변경분은
+  다음 커밋이 같은 경로를 건드릴 때까지 운영에 반영되지 않는다 (2026-08-22·23 games 3회).
+  로컬 `pre-push` 훅이 7개 서브모듈 포인터를 원격 대조해 막지만, **훅은 레포에 없다** —
+  새 클론에서는 이 방어가 없다
 
 - **NetworkPolicy 는 default-deny 라 새 트래픽 경로마다 명시 허용이 필요하다.** 앱→Kafka 는
   9092 만 열려 있었는데 kubernetes 프로파일은 `kafka:29092`(INTERNAL)로 bootstrap 해서
