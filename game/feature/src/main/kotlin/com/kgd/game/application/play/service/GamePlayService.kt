@@ -7,6 +7,9 @@ import com.kgd.game.application.play.dto.SessionEndedDto
 import com.kgd.game.application.play.dto.SessionStartedDto
 import com.kgd.game.application.play.port.GameEventPort
 import com.kgd.game.domain.play.model.DeviceType
+import com.kgd.game.application.play.usecase.EndGameSessionUseCase
+import com.kgd.game.application.play.usecase.RateGameUseCase
+import com.kgd.game.application.play.usecase.StartGameSessionUseCase
 import org.springframework.stereotype.Service
 
 /**
@@ -17,10 +20,10 @@ import org.springframework.stereotype.Service
 class GamePlayService(
     private val playCommand: GamePlayCommand,
     private val eventPort: GameEventPort,
-) {
+) : StartGameSessionUseCase, EndGameSessionUseCase, RateGameUseCase {
 
-    fun startSession(slug: String, memberId: Long?, deviceType: DeviceType): SessionStartedDto {
-        val result = playCommand.startSession(slug, memberId, deviceType)
+    override fun execute(command: StartGameSessionUseCase.Command): SessionStartedDto {
+        val result = playCommand.startSession(command.slug, command.memberId, command.deviceType)
         eventPort.publishSessionStarted(
             GameSessionStartedEvent(
                 sessionKey = result.session.sessionKey,
@@ -38,8 +41,8 @@ class GamePlayService(
         )
     }
 
-    fun endSession(sessionKey: String): SessionEndedDto {
-        val result = playCommand.endSession(sessionKey)
+    override fun execute(command: EndGameSessionUseCase.Command): SessionEndedDto {
+        val result = playCommand.endSession(command.sessionKey)
         val session = result.session
         val endedAt = session.endedAt
         val durationSec = session.durationSec ?: 0
@@ -58,6 +61,6 @@ class GamePlayService(
         return SessionEndedDto(sessionKey = session.sessionKey, durationSec = durationSec)
     }
 
-    fun rate(slug: String, memberId: Long?, deviceId: String?, score: Int): RatingResultDto =
-        playCommand.rate(slug, memberId, deviceId, score)
+    override fun execute(command: RateGameUseCase.Command): RatingResultDto =
+        playCommand.rate(command.slug, command.memberId, command.deviceId, command.score)
 }

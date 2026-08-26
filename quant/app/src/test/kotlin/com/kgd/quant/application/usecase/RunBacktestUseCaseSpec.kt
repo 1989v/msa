@@ -45,7 +45,7 @@ class RunBacktestUseCaseSpec : BehaviorSpec({
         marketData: HistoricalMarketDataSource,
         clock: Clock,
         backtestRunRepo: BacktestRunRepositoryPort? = null
-    ): RunBacktestUseCase = RunBacktestUseCase(
+    ): RunBacktestUseCase = RunBacktestService(
         strategyRepository = strategyRepo,
         persistenceService = persistenceService,
         outboxRepository = outboxRepo,

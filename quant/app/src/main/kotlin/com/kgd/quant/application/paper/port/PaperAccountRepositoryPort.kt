@@ -2,7 +2,7 @@ package com.kgd.quant.application.paper.port
 
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
-import com.kgd.quant.infrastructure.persistence.entity.PaperAccountEntity
+import com.kgd.quant.domain.paper.PaperAccount
 import java.math.BigDecimal
 
 /**
@@ -20,8 +20,7 @@ import java.math.BigDecimal
  *
  * ## Phase 2 단순화
  * - balance 만 추적. 보유 코인 수량 (asset position) 은 TrancheSlot.filledQty 로 추적되므로 별도 컬럼 불필요.
- * - PaperAccountEntity 를 직접 노출하는 점은 의도적 (Phase 2 단계에서는 도메인 매퍼 부담을 줄임).
- *   Phase 3 에서 LIVE 모드와 추상화 통합 시 도메인 모델로 승격 검토.
+ * - 포트는 도메인 모델 [PaperAccount] 만 본다 — JPA 엔티티는 어댑터 안에 있다 (ADR-0083).
  */
 interface PaperAccountRepositoryPort {
 
@@ -29,9 +28,10 @@ interface PaperAccountRepositoryPort {
         tenantId: TenantId,
         strategyId: StrategyId,
         baseAsset: String = DEFAULT_BASE_ASSET
-    ): PaperAccountEntity?
+    ): PaperAccount?
 
-    suspend fun save(entity: PaperAccountEntity): PaperAccountEntity
+    /** id 가 0 이면 생성, 아니면 갱신 */
+    suspend fun save(account: PaperAccount): PaperAccount
 
     /**
      * (tenantId, strategyId, baseAsset=KRW) PaperAccount 의 balance 에 delta 를 더한다.

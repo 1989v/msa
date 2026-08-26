@@ -1,5 +1,6 @@
 package com.kgd.quant.infrastructure.metrics
 
+import com.kgd.quant.application.port.metrics.QuantPhase3MetricsPort
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.Timer
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeUnit
 @Component
 class QuantPhase3Metrics(
     private val registry: MeterRegistry,
-) {
+) : QuantPhase3MetricsPort {
 
     private val orderCounters = ConcurrentHashMap<Pair<String, String>, Counter>()
     private val orderLatencyTimers = ConcurrentHashMap<String, Timer>()
@@ -34,7 +35,7 @@ class QuantPhase3Metrics(
     private val twoFaCounters = ConcurrentHashMap<String, Counter>()
     private val auditVerifyCounters = ConcurrentHashMap<String, Counter>()
 
-    fun liveOrderRecorded(exchange: String, status: String) {
+    override fun liveOrderRecorded(exchange: String, status: String) {
         orderCounters.computeIfAbsent(exchange to status) {
             Counter.builder(METRIC_LIVE_ORDERS_TOTAL)
                 .description("Live orders by exchange and status (placed/filled/cancelled/rejected)")
@@ -44,7 +45,7 @@ class QuantPhase3Metrics(
         }.increment()
     }
 
-    fun liveOrderLatency(exchange: String, latencyMs: Long) {
+    override fun liveOrderLatency(exchange: String, latencyMs: Long) {
         if (latencyMs < 0L) return
         val timer = orderLatencyTimers.computeIfAbsent(exchange) {
             Timer.builder(METRIC_LIVE_ORDER_LATENCY)
@@ -59,7 +60,7 @@ class QuantPhase3Metrics(
     /**
      * @param type [com.kgd.quant.domain.live.SuspendReason] enum name 권장 (DAILY_LOSS_LIMIT 등).
      */
-    fun riskLimitBreach(type: String) {
+    override fun riskLimitBreach(type: String) {
         riskBreachCounters.computeIfAbsent(type) {
             Counter.builder(METRIC_RISK_LIMIT_BREACH_TOTAL)
                 .description("Risk limit breach count by type")
@@ -78,7 +79,7 @@ class QuantPhase3Metrics(
         }.increment()
     }
 
-    fun twoFaVerify(result: String) {
+    override fun twoFaVerify(result: String) {
         twoFaCounters.computeIfAbsent(result) {
             Counter.builder(METRIC_TWO_FA_VERIFY_TOTAL)
                 .description("2FA verification by result (success / failure)")

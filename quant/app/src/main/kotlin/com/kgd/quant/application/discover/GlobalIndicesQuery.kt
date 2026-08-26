@@ -3,7 +3,6 @@ package com.kgd.quant.application.discover
 import tools.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.kgd.quant.infrastructure.config.QuantChartsProperties
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.async

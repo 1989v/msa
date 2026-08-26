@@ -32,7 +32,7 @@ class CreateStrategyUseCaseSpec : BehaviorSpec({
         val saved = slot<TrancheStrategy>()
         coEvery { strategyRepo.save(capture(saved)) } coAnswers { saved.captured }
 
-        val useCase = CreateStrategyUseCase(strategyRepo)
+        val useCase = CreateStrategyService(strategyRepo)
         val command = CreateStrategyCommand(
             tenantId = TenantId(BacktestFixtures.TENANT),
             config = BacktestFixtures.defaultConfig(),
@@ -54,7 +54,7 @@ class CreateStrategyUseCaseSpec : BehaviorSpec({
 
     Given("roundCount 가 0 인 config") {
         val strategyRepo = mockk<StrategyRepositoryPort>(relaxed = true)
-        CreateStrategyUseCase(strategyRepo)  // UseCase 인스턴스는 생성 가능하나 execute 에 도달 전 차단
+        CreateStrategyService(strategyRepo)  // UseCase 인스턴스는 생성 가능하나 execute 에 도달 전 차단
 
         When("CreateStrategyCommand 를 만들기 위해 TrancheStrategyConfig 를 생성하면") {
             Then("TrancheStrategyConfigInvalidException 이 즉시 발생한다 (도메인 팩토리가 차단)") {

@@ -2,7 +2,7 @@ package com.kgd.game.presentation.play.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.play.dto.LeaderboardBoardDto
-import com.kgd.game.application.play.service.GameScoreService
+import com.kgd.game.application.play.usecase.GetActiveLeaderboardsUseCase
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/games/leaderboards")
 class GameLeaderboardsController(
-    private val gameScoreService: GameScoreService,
+    private val getActiveLeaderboards: GetActiveLeaderboardsUseCase,
 ) {
     @GetMapping
     fun activeBoards(
         @RequestParam(defaultValue = "8") boards: Int,
         @RequestParam(defaultValue = "3") entries: Int,
     ): ApiResponse<List<LeaderboardBoardDto>> =
-        ApiResponse.success(gameScoreService.activeBoards(boards, entries))
+        ApiResponse.success(getActiveLeaderboards.execute(GetActiveLeaderboardsUseCase.Query(boards, entries)))
 }

@@ -3,11 +3,9 @@ package com.kgd.game.application.catalog.service
 import com.kgd.game.application.catalog.dto.GameCollectionDto
 import com.kgd.game.application.catalog.dto.GameDetailDto
 import com.kgd.game.application.catalog.dto.GameSummaryDto
-import com.kgd.game.application.catalog.dto.GameTagDto
 import com.kgd.game.application.catalog.port.GameCollectionRepositoryPort
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.catalog.port.GameStatsRepositoryPort
-import com.kgd.game.application.catalog.port.GameTagRepositoryPort
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.Game
@@ -15,6 +13,10 @@ import com.kgd.game.domain.catalog.model.GameCollection
 import com.kgd.game.domain.catalog.model.Genre
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
+import com.kgd.game.application.catalog.usecase.GetGameCollectionsUseCase
+import com.kgd.game.application.catalog.usecase.GetGameDetailUseCase
+import com.kgd.game.application.catalog.usecase.GetSimilarGamesUseCase
+import com.kgd.game.application.catalog.usecase.ListGamesUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,9 +25,8 @@ import org.springframework.transaction.annotation.Transactional
 class GameQueryService(
     private val gameRepository: GameRepositoryPort,
     private val statsRepository: GameStatsRepositoryPort,
-    private val tagRepository: GameTagRepositoryPort,
     private val collectionRepository: GameCollectionRepositoryPort,
-) {
+) : ListGamesUseCase, GetGameDetailUseCase, GetSimilarGamesUseCase, GetGameCollectionsUseCase {
     companion object {
         private const val COLLECTION_SIZE = 10
 
@@ -49,30 +50,28 @@ class GameQueryService(
         )
     }
 
-    fun list(tag: String?, genre: Genre?, sort: GameSort, page: Int, size: Int): Page<GameSummaryDto> {
-        val games = gameRepository.search(tag, genre, sort, PageRequest.of(page, size))
+    override fun execute(query: ListGamesUseCase.Query): Page<GameSummaryDto> {
+        val games = gameRepository.search(query.tag, query.genre, query.sort, PageRequest.of(query.page, query.size))
         val statsByGameId = statsOf(games.content)
         return games.map { GameSummaryDto.of(it, statsByGameId[it.id]) }
     }
 
-    fun detail(slug: String): GameDetailDto {
-        val game = findVisibleGame(slug)
+    override fun execute(query: GetGameDetailUseCase.Query): GameDetailDto {
+        val game = findVisibleGame(query.slug)
         val gameId = game.id
         return GameDetailDto.of(game, gameId?.let { statsRepository.findByGameId(it) })
     }
 
-    fun similar(slug: String): List<GameSummaryDto> {
-        val game = findVisibleGame(slug)
+    override fun execute(query: GetSimilarGamesUseCase.Query): List<GameSummaryDto> {
+        val game = findVisibleGame(query.slug)
         val gameId = game.id ?: return emptyList()
         val similar = gameRepository.findSimilar(gameId, SIMILAR_LIMIT)
         val statsByGameId = statsOf(similar)
         return similar.map { GameSummaryDto.of(it, statsByGameId[it.id]) }
     }
 
-    fun tags(): List<GameTagDto> = tagRepository.findAll().map { GameTagDto.of(it) }
-
     /** 노출 순서는 display_order 그대로 — 중복 제거만 [DEDUPE_PRIORITY] 순서로 돈다. 빈 행은 뺀다. */
-    fun collections(): List<GameCollectionDto> {
+    override fun execute(): List<GameCollectionDto> {
         val active = collectionRepository.findActive()
         val gamesBySlug = dedupedGames(active)
         return active.mapNotNull { collection ->

@@ -15,6 +15,9 @@ import com.kgd.game.domain.play.model.GameDay
 import com.kgd.game.domain.play.model.ScoreBoardKey
 import com.kgd.game.domain.play.model.ScorePeriod
 import com.kgd.game.domain.play.model.ScoreTrack
+import com.kgd.game.application.play.usecase.GetActiveLeaderboardsUseCase
+import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
+import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -72,7 +75,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(2L, ScoreTrack.BASE, default, 3) } returns listOf(entry(1, "나", 700))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).activeBoards(8, 3)
+                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards.map { it.slug } shouldContainExactly listOf("abyssal-crown", "coin-corgi")
                 boards[0].track shouldBe ScoreTrack.MODDED
@@ -103,7 +106,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(1L, ScoreTrack.BASE, rock, 3) } returns listOf(entry(1, "가", 900))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).activeBoards(8, 3)
+                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards.size shouldBe 1
                 boards[0].board shouldBe "rockfall"
@@ -125,7 +128,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(1L, ScoreTrack.BASE, fresh, 3) } returns listOf(entry(1, "가", 900))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).activeBoards(8, 3)
+                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards[0].board shouldBe "newmode"
                 boards[0].boardName shouldBe null
@@ -148,7 +151,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(2L, ScoreTrack.BASE, default, 3) } returns listOf(entry(1, "나", 700))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).activeBoards(8, 3)
+                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards.map { it.slug } shouldContainExactly listOf("coin-corgi")
             }
@@ -161,7 +164,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.activeBoards(any()) } returns emptyList()
                 every { gameRepository.findByIds(emptyList()) } returns emptyList()
 
-                GameScoreService(gameRepository, scoreRepository).activeBoards(8, 3) shouldBe emptyList()
+                GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3)) shouldBe emptyList()
             }
         }
 
@@ -175,7 +178,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scoreRepository.top(1L, ScoreTrack.BASE, default, 1) } returns listOf(entry(1, "나", 700))
                 every { scoreRepository.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
-                GameScoreService(gameRepository, scoreRepository).activeBoards(0, 0)
+                GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(0, 0))
 
                 // 0 → 1 로 올라가고, 집계는 여유분(×6)까지 긁는다 — 게임당 보드가 최대 3개가 됐다
                 verify { scoreRepository.activeBoards(6) }
@@ -197,7 +200,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val (games, scores) = serving("coin-corgi")
                 every { scores.top(1L, ScoreTrack.BASE, default, 10) } returns listOf(entry(1, "가", 900))
 
-                GameScoreService(games, scores).leaderboard("coin-corgi", ScoreTrack.BASE, 10)
+                GameScoreService(games, scores).execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10))
                     .map { it.nickname } shouldContainExactly listOf("가")
 
                 verify(exactly = 0) { scores.topDaily(any(), any(), any(), any(), any()) }
@@ -209,7 +212,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val (games, scores) = serving("coin-corgi")
                 every { scores.top(1L, ScoreTrack.BASE, default, 10) } returns listOf(entry(1, "가", 900))
 
-                GameScoreService(games, scores).leaderboard("coin-corgi", ScoreTrack.BASE, 10)
+                GameScoreService(games, scores).execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10))
 
                 verify { scores.top(1L, ScoreTrack.BASE, ScoreBoardKey.DEFAULT, 10) }
             }
@@ -221,7 +224,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 val rock = ScoreBoardKey.from("rockfall")
                 every { scores.top(1L, ScoreTrack.BASE, rock, 10) } returns listOf(entry(1, "돌잡이", 798))
 
-                GameScoreService(games, scores).leaderboard("bee-guard", ScoreTrack.BASE, 10, rock)
+                GameScoreService(games, scores).execute(GetGameLeaderboardUseCase.Query("bee-guard", ScoreTrack.BASE, 10, rock))
                     .map { it.nickname } shouldContainExactly listOf("돌잡이")
 
                 verify(exactly = 0) { scores.top(1L, ScoreTrack.BASE, ScoreBoardKey.DEFAULT, any()) }
@@ -235,7 +238,7 @@ class GameScoreServiceTest : BehaviorSpec({
                     listOf(entry(1, "나", 300))
 
                 GameScoreService(games, scores)
-                    .leaderboard("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY)
+                    .execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY))
                     .map { it.nickname } shouldContainExactly listOf("나")
 
                 verify(exactly = 0) { scores.top(any(), any(), any(), any()) }
@@ -250,7 +253,7 @@ class GameScoreServiceTest : BehaviorSpec({
                     listOf(entry(1, "벌잡이", 383))
 
                 GameScoreService(games, scores)
-                    .leaderboard("bee-guard", ScoreTrack.BASE, 10, bee, ScorePeriod.DAILY)
+                    .execute(GetGameLeaderboardUseCase.Query("bee-guard", ScoreTrack.BASE, 10, bee, ScorePeriod.DAILY))
                     .map { it.nickname } shouldContainExactly listOf("벌잡이")
             }
         }
@@ -262,7 +265,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scores.topDaily(1L, ScoreTrack.BASE, default, past, 10) } returns listOf(entry(1, "다", 120))
 
                 GameScoreService(games, scores)
-                    .leaderboard("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY, past)
+                    .execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY, past))
                     .map { it.nickname } shouldContainExactly listOf("다")
             }
         }
@@ -273,7 +276,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scores.topDaily(any(), any(), any(), any(), any()) } returns emptyList()
 
                 GameScoreService(games, scores)
-                    .leaderboard("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY) shouldBe emptyList()
+                    .execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 10, default, ScorePeriod.DAILY)) shouldBe emptyList()
             }
         }
 
@@ -283,7 +286,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 every { scores.topDaily(1L, ScoreTrack.BASE, default, GameDay.today(), 50) } returns emptyList()
 
                 GameScoreService(games, scores)
-                    .leaderboard("coin-corgi", ScoreTrack.BASE, 999, default, ScorePeriod.DAILY)
+                    .execute(GetGameLeaderboardUseCase.Query("coin-corgi", ScoreTrack.BASE, 999, default, ScorePeriod.DAILY))
 
                 verify { scores.topDaily(1L, ScoreTrack.BASE, default, GameDay.today(), 50) }
             }
@@ -301,7 +304,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 } returns (true to 1)
 
                 GameScoreService(gameRepository, scoreRepository)
-                    .submit("coin-corgi", ScoreTrack.BASE, default, "가나", 900, null) shouldBe (true to 1)
+                    .execute(SubmitGameScoreUseCase.Command("coin-corgi", ScoreTrack.BASE, default, "가나", 900, null)) shouldBe (true to 1)
 
                 verify { scoreRepository.submit(1L, ScoreTrack.BASE, default, "가나", 900, null, GameDay.today()) }
             }
@@ -319,7 +322,7 @@ class GameScoreServiceTest : BehaviorSpec({
                 } returns (true to 1)
 
                 GameScoreService(gameRepository, scoreRepository)
-                    .submit("bee-guard", ScoreTrack.BASE, fresh, "가나", 900, null) shouldBe (true to 1)
+                    .execute(SubmitGameScoreUseCase.Command("bee-guard", ScoreTrack.BASE, fresh, "가나", 900, null)) shouldBe (true to 1)
             }
         }
     }
@@ -341,7 +344,7 @@ class GameScoreServiceTest : BehaviorSpec({
                     listOf(entry(1, "오늘1등", 400))
                 every { scoreRepository.topDaily(2L, ScoreTrack.BASE, default, GameDay.today(), 3) } returns emptyList()
 
-                val boards = GameScoreService(gameRepository, scoreRepository).activeBoards(8, 3)
+                val boards = GameScoreService(gameRepository, scoreRepository).execute(GetActiveLeaderboardsUseCase.Query(8, 3))
 
                 boards[0].todayEntries.map { it.nickname } shouldContainExactly listOf("오늘1등")
                 boards[1].todayEntries shouldBe emptyList()

@@ -10,6 +10,9 @@ import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import io.kotest.assertions.throwables.shouldThrow
+import com.kgd.game.application.catalog.usecase.ChangeGameStatusUseCase
+import com.kgd.game.application.catalog.usecase.GameStatusAction
+import com.kgd.game.application.catalog.usecase.UpdateGameMetadataUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -53,7 +56,7 @@ class GameAdminServiceTest : BehaviorSpec({
         `when`("BETA 게임에 PUBLISH 를 요청하면") {
             then("PUBLISHED 로 전이된다") {
                 val service = serviceOf(gameWith(GameStatus.BETA))
-                service.changeStatus("alpha", GameStatusAction.PUBLISH).status shouldBe GameStatus.PUBLISHED
+                service.execute(ChangeGameStatusUseCase.Command("alpha", GameStatusAction.PUBLISH)).status shouldBe GameStatus.PUBLISHED
             }
         }
 
@@ -61,22 +64,22 @@ class GameAdminServiceTest : BehaviorSpec({
             then("SUSPENDED 를 거쳐 다시 PUBLISHED 가 된다") {
                 val game = gameWith(GameStatus.PUBLISHED)
                 val service = serviceOf(game)
-                service.changeStatus("alpha", GameStatusAction.SUSPEND).status shouldBe GameStatus.SUSPENDED
-                service.changeStatus("alpha", GameStatusAction.RESUME).status shouldBe GameStatus.PUBLISHED
+                service.execute(ChangeGameStatusUseCase.Command("alpha", GameStatusAction.SUSPEND)).status shouldBe GameStatus.SUSPENDED
+                service.execute(ChangeGameStatusUseCase.Command("alpha", GameStatusAction.RESUME)).status shouldBe GameStatus.PUBLISHED
             }
         }
 
         `when`("DRAFT 게임에 PUBLISH 를 요청하면") {
             then("상태머신이 거부해야 한다") {
                 val service = serviceOf(gameWith(GameStatus.DRAFT))
-                shouldThrow<InvalidGameStatusException> { service.changeStatus("alpha", GameStatusAction.PUBLISH) }
+                shouldThrow<InvalidGameStatusException> { service.execute(ChangeGameStatusUseCase.Command("alpha", GameStatusAction.PUBLISH)) }
             }
         }
 
         `when`("SUSPENDED 게임에 SUSPEND 를 다시 요청하면") {
             then("상태머신이 거부해야 한다") {
                 val service = serviceOf(gameWith(GameStatus.SUSPENDED))
-                shouldThrow<InvalidGameStatusException> { service.changeStatus("alpha", GameStatusAction.SUSPEND) }
+                shouldThrow<InvalidGameStatusException> { service.execute(ChangeGameStatusUseCase.Command("alpha", GameStatusAction.SUSPEND)) }
             }
         }
     }
@@ -86,7 +89,7 @@ class GameAdminServiceTest : BehaviorSpec({
             then("SEO 필드가 갱신된다") {
                 val service = serviceOf(gameWith(GameStatus.PUBLISHED))
 
-                val updated = service.updateMetadata(
+                val updated = service.execute(UpdateGameMetadataUseCase.Command(
                     slug = "alpha",
                     title = "알파 리마스터",
                     description = null,
@@ -98,7 +101,7 @@ class GameAdminServiceTest : BehaviorSpec({
                     supportsMobile = null,
                     developerName = null,
                     genre = Genre.ARCADE,
-                )
+                ))
 
                 updated.title shouldBe "알파 리마스터"
                 updated.titleEn shouldBe "Alpha Remastered"
@@ -112,7 +115,7 @@ class GameAdminServiceTest : BehaviorSpec({
             then("빈 문자열이 아니라 null 로 비워져야 한다") {
                 val service = serviceOf(gameWith(GameStatus.PUBLISHED, titleEn = "Alpha"))
 
-                val updated = service.updateMetadata(
+                val updated = service.execute(UpdateGameMetadataUseCase.Command(
                     slug = "alpha",
                     title = null,
                     description = null,
@@ -124,7 +127,7 @@ class GameAdminServiceTest : BehaviorSpec({
                     supportsMobile = null,
                     developerName = null,
                     genre = null,
-                )
+                ))
 
                 updated.titleEn shouldBe null
             }

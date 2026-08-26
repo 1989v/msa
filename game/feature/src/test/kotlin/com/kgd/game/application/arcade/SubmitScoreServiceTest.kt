@@ -23,6 +23,7 @@ import com.kgd.game.sim.InputEvent
 import com.kgd.game.sim.ReplayLog
 import com.kgd.game.sim.SimRunner
 import com.kgd.game.sim.games.SnakeGame
+import com.kgd.game.application.arcade.usecase.StartArcadeSessionUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import java.util.concurrent.ConcurrentHashMap
@@ -106,13 +107,13 @@ class SubmitScoreServiceTest : BehaviorSpec({
 
     Given("an honestly played submission") {
         val e = Env()
-        val started = e.starter.start("snake", isDaily = false, date = "2026-06-29")
+        val started = e.starter.execute(StartArcadeSessionUseCase.Command("snake", isDaily = false, date = "2026-06-29"))
         val replay = honestReplay(started.seed)
         val honest = SimRunner.run(SnakeGame(), replay).score
         e.clock.now = ticks.toLong() * 40 // 충분한 서버 경과
 
         When("the matching score is submitted") {
-            val out = e.submitter.submit(SubmitCommand(started.sessionId, started.token, honest, replay, 3000, "kgd"))
+            val out = e.submitter.execute(SubmitCommand(started.sessionId, started.token, honest, replay, 3000, "kgd"))
             Then("accepted and Tier B confirms it at rank 1") {
                 out.accepted shouldBe true
                 out.verification shouldBe VerificationStatus.CONFIRMED
@@ -123,13 +124,13 @@ class SubmitScoreServiceTest : BehaviorSpec({
 
     Given("a plausible but forged score (passes Tier A, fails Tier B)") {
         val e = Env()
-        val started = e.starter.start("snake", false, "2026-06-29")
+        val started = e.starter.execute(StartArcadeSessionUseCase.Command("snake", false, "2026-06-29"))
         val replay = honestReplay(started.seed)
         val honest = SimRunner.run(SnakeGame(), replay).score
         e.clock.now = ticks.toLong() * 40
 
         When("claiming honest+1 (still within the per-tick bound)") {
-            val out = e.submitter.submit(SubmitCommand(started.sessionId, started.token, honest + 1, replay, 3000, "cheater"))
+            val out = e.submitter.execute(SubmitCommand(started.sessionId, started.token, honest + 1, replay, 3000, "cheater"))
             Then("accepted into provisional but Tier B rejects (replay recompute != claim)") {
                 out.accepted shouldBe true
                 out.verification shouldBe VerificationStatus.REJECTED
@@ -139,12 +140,12 @@ class SubmitScoreServiceTest : BehaviorSpec({
 
     Given("an implausible forged score (exceeds the per-tick bound)") {
         val e = Env()
-        val started = e.starter.start("snake", false, "2026-06-29")
+        val started = e.starter.execute(StartArcadeSessionUseCase.Command("snake", false, "2026-06-29"))
         val replay = honestReplay(started.seed)
         e.clock.now = ticks.toLong() * 40
 
         When("claiming a score far above ticks") {
-            val out = e.submitter.submit(SubmitCommand(started.sessionId, started.token, ticks + 500, replay, 3000, "cheater"))
+            val out = e.submitter.execute(SubmitCommand(started.sessionId, started.token, ticks + 500, replay, 3000, "cheater"))
             Then("Tier A rejects before any replay") {
                 out.accepted shouldBe false
             }
@@ -153,12 +154,12 @@ class SubmitScoreServiceTest : BehaviorSpec({
 
     Given("a tampered token") {
         val e = Env()
-        val started = e.starter.start("snake", false, "2026-06-29")
+        val started = e.starter.execute(StartArcadeSessionUseCase.Command("snake", false, "2026-06-29"))
         val replay = honestReplay(started.seed)
         e.clock.now = ticks.toLong() * 40
 
         When("submitting with a bad token") {
-            val out = e.submitter.submit(SubmitCommand(started.sessionId, "bogus", 1, replay, 3000, "x"))
+            val out = e.submitter.execute(SubmitCommand(started.sessionId, "bogus", 1, replay, 3000, "x"))
             Then("rejected") { out.accepted shouldBe false }
         }
     }

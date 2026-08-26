@@ -13,6 +13,8 @@ import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import io.kotest.assertions.throwables.shouldThrow
+import com.kgd.game.application.catalog.usecase.GetGameDetailAdminUseCase
+import com.kgd.game.application.catalog.usecase.ListGamesAdminUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -75,10 +77,10 @@ class GameAdminQueryServiceTest : BehaviorSpec({
                 )
                 every { port.search(capture(criteria), any()) } returns PageImpl(hidden)
 
-                val page = service.list(
+                val page = service.execute(ListGamesAdminUseCase.Query(
                     q = null, status = null, genre = null, tag = null,
                     sort = GameSort.UPDATED, page = 0, size = 20,
-                )
+                ))
 
                 criteria.captured.statuses shouldBe emptySet()
                 page.content.map { it.status } shouldBe listOf(
@@ -99,7 +101,7 @@ class GameAdminQueryServiceTest : BehaviorSpec({
                     1,
                 )
 
-                service.list(
+                service.execute(ListGamesAdminUseCase.Query(
                     q = "beta",
                     status = GameStatus.BETA,
                     genre = Genre.RPG,
@@ -107,7 +109,7 @@ class GameAdminQueryServiceTest : BehaviorSpec({
                     sort = GameSort.TITLE,
                     page = 2,
                     size = 5,
-                )
+                ))
 
                 criteria.captured shouldBe GameSearchCriteria(
                     q = "beta",
@@ -131,7 +133,7 @@ class GameAdminQueryServiceTest : BehaviorSpec({
                 every { gameRepository.findBySlug("hidden") } returns gameWith("hidden", GameStatus.DRAFT)
                 every { statsRepository.findByGameId(7L) } returns null
 
-                val detail = service.detail("hidden")
+                val detail = service.execute(GetGameDetailAdminUseCase.Query("hidden"))
 
                 detail.slug shouldBe "hidden"
                 detail.status shouldBe GameStatus.DRAFT
@@ -145,7 +147,7 @@ class GameAdminQueryServiceTest : BehaviorSpec({
                 val service = GameAdminQueryService(mockk(), gameRepository, mockk())
                 every { gameRepository.findBySlug("nope") } returns null
 
-                shouldThrow<GameNotFoundException> { service.detail("nope") }
+                shouldThrow<GameNotFoundException> { service.execute(GetGameDetailAdminUseCase.Query("nope")) }
             }
         }
     }

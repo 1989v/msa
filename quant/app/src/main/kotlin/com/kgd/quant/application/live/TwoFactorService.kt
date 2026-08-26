@@ -10,7 +10,7 @@ import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.AuditEventType
 import com.kgd.quant.domain.twofa.TotpVerifier
 import com.kgd.quant.domain.twofa.TwoFactorSecret
-import com.kgd.quant.infrastructure.metrics.QuantPhase3Metrics
+import com.kgd.quant.application.port.metrics.QuantPhase3MetricsPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import java.security.MessageDigest
@@ -45,7 +45,7 @@ class TwoFactorService(
     private val tokenStore: TwoFactorTokenStorePort,
     private val rateLimiter: TwoFactorRateLimiterPort,
     private val auditChain: AuditChainService,
-    private val metrics: QuantPhase3Metrics,
+    private val metrics: QuantPhase3MetricsPort,
 ) {
     private val random = SecureRandom()
 

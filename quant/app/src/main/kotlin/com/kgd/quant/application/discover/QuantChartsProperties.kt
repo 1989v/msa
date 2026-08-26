@@ -1,4 +1,4 @@
-package com.kgd.quant.infrastructure.config
+package com.kgd.quant.application.discover
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

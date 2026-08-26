@@ -1,9 +1,9 @@
 package com.kgd.game.presentation.arcade
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.game.application.arcade.StartSessionService
 import com.kgd.game.application.arcade.SubmitCommand
-import com.kgd.game.application.arcade.SubmitScoreService
+import com.kgd.game.application.arcade.usecase.StartArcadeSessionUseCase
+import com.kgd.game.application.arcade.usecase.SubmitArcadeScoreUseCase
 import com.kgd.game.domain.arcade.BoardKey
 import com.kgd.game.domain.arcade.DailyChallengePort
 import com.kgd.game.domain.arcade.GameCatalogItem
@@ -26,8 +26,8 @@ import java.time.ZoneOffset
 @RestController
 @RequestMapping("/api/v1/games/arcade")
 class ArcadeController(
-    private val startSession: StartSessionService,
-    private val submitScore: SubmitScoreService,
+    private val startSession: StartArcadeSessionUseCase,
+    private val submitScore: SubmitArcadeScoreUseCase,
     private val leaderboard: LeaderboardPort,
     private val registry: GameRegistry,
     private val daily: DailyChallengePort,
@@ -41,7 +41,7 @@ class ArcadeController(
         if (registry.module(req.gameId) == null) {
             return ApiResponse.error("UNKNOWN_GAME", "unknown game: ${req.gameId}")
         }
-        val started = startSession.start(req.gameId, req.daily == true, today())
+        val started = startSession.execute(StartArcadeSessionUseCase.Command(req.gameId, req.daily == true, today()))
         return ApiResponse.success(
             StartSessionResponse(started.sessionId.value, started.gameId, started.seed, started.dailyDate, started.token),
         )
@@ -55,7 +55,7 @@ class ArcadeController(
             totalTicks = req.replay.totalTicks,
             inputs = req.replay.inputs.map { InputEvent(it.tick, parseCommand(it.command)) },
         )
-        val outcome = submitScore.submit(
+        val outcome = submitScore.execute(
             SubmitCommand(SessionId(req.sessionId), req.token, req.claimedScore, replay, req.clientDurationMs, req.nickname),
         )
         return ApiResponse.success(

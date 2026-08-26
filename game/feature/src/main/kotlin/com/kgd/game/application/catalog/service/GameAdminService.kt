@@ -14,28 +14,19 @@ import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.Genre
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
+import com.kgd.game.application.catalog.usecase.ChangeGameStatusUseCase
+import com.kgd.game.application.catalog.usecase.CreateGameCollectionUseCase
+import com.kgd.game.application.catalog.usecase.CreateGameCommand
+import com.kgd.game.application.catalog.usecase.CreateGameUseCase
+import com.kgd.game.application.catalog.usecase.GameStatusAction
+import com.kgd.game.application.catalog.usecase.ListGameCollectionsAdminUseCase
+import com.kgd.game.application.catalog.usecase.UpdateGameCollectionUseCase
+import com.kgd.game.application.catalog.usecase.UpdateGameContentUseCase
+import com.kgd.game.application.catalog.usecase.UpdateGameMetadataUseCase
+import com.kgd.game.application.catalog.usecase.UpdateGameTagsUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
-
-data class CreateGameCommand(
-    val slug: String,
-    val title: String,
-    val description: String,
-    val thumbnailUrl: String,
-    val coverUrl: String?,
-    val engineType: EngineType,
-    val loadType: LoadType,
-    val entryUrl: String,
-    val orientation: Orientation,
-    val supportsMobile: Boolean,
-    val developerName: String,
-    val sdkIntegrated: Boolean,
-    val genre: Genre,
-    val tags: List<String>,
-)
-
-enum class GameStatusAction { SUBMIT_REVIEW, LAUNCH_BETA, PUBLISH, SUSPEND, RESUME }
 
 @Service
 @Transactional(transactionManager = "gameTransactionManager")
@@ -43,9 +34,10 @@ class GameAdminService(
     private val gameRepository: GameRepositoryPort,
     private val statsRepository: GameStatsRepositoryPort,
     private val collectionRepository: GameCollectionRepositoryPort,
-) {
+) : CreateGameUseCase, UpdateGameMetadataUseCase, UpdateGameContentUseCase, UpdateGameTagsUseCase, ChangeGameStatusUseCase,
+    ListGameCollectionsAdminUseCase, CreateGameCollectionUseCase, UpdateGameCollectionUseCase {
 
-    fun create(command: CreateGameCommand): GameDetailDto {
+    override fun execute(command: CreateGameCommand): GameDetailDto {
         if (gameRepository.existsBySlug(command.slug)) throw GameAlreadyExistsException(command.slug)
         val game = gameRepository.save(
             Game.create(
@@ -70,19 +62,8 @@ class GameAdminService(
         return GameDetailDto.of(game, stats)
     }
 
-    fun updateMetadata(
-        slug: String,
-        title: String?,
-        description: String?,
-        titleEn: String?,
-        descriptionEn: String?,
-        thumbnailUrl: String?,
-        coverUrl: String?,
-        orientation: Orientation?,
-        supportsMobile: Boolean?,
-        developerName: String?,
-        genre: Genre?,
-    ): GameDetailDto {
+    override fun execute(command: UpdateGameMetadataUseCase.Command): GameDetailDto {
+        val (slug, title, description, titleEn, descriptionEn, thumbnailUrl, coverUrl, orientation, supportsMobile, developerName, genre) = command
         val game = findGame(slug)
         game.updateMetadata(
             title = title,
@@ -99,21 +80,21 @@ class GameAdminService(
         return saveAndToDto(game)
     }
 
-    fun updateContent(slug: String, entryUrl: String, sdkIntegrated: Boolean): GameDetailDto {
-        val game = findGame(slug)
-        game.updateContent(entryUrl = entryUrl, sdkIntegrated = sdkIntegrated, now = Instant.now())
+    override fun execute(command: UpdateGameContentUseCase.Command): GameDetailDto {
+        val game = findGame(command.slug)
+        game.updateContent(entryUrl = command.entryUrl, sdkIntegrated = command.sdkIntegrated, now = Instant.now())
         return saveAndToDto(game)
     }
 
-    fun updateTags(slug: String, tags: List<String>): GameDetailDto {
-        val game = findGame(slug)
-        game.updateTags(tags)
+    override fun execute(command: UpdateGameTagsUseCase.Command): GameDetailDto {
+        val game = findGame(command.slug)
+        game.updateTags(command.tags)
         return saveAndToDto(game)
     }
 
-    fun changeStatus(slug: String, action: GameStatusAction): GameDetailDto {
-        val game = findGame(slug)
-        when (action) {
+    override fun execute(command: ChangeGameStatusUseCase.Command): GameDetailDto {
+        val game = findGame(command.slug)
+        when (command.action) {
             GameStatusAction.SUBMIT_REVIEW -> game.submitForReview()
             GameStatusAction.LAUNCH_BETA -> game.launchBeta()
             GameStatusAction.PUBLISH -> game.publish(Instant.now())
@@ -123,33 +104,21 @@ class GameAdminService(
         return saveAndToDto(game)
     }
 
-    fun listCollections(): List<GameCollection> = collectionRepository.findAll()
+    override fun execute(): List<GameCollection> = collectionRepository.findAll()
 
-    fun createCollection(
-        slug: String,
-        title: String,
-        type: CollectionType,
-        tagSlug: String?,
-        displayOrder: Int,
-        gameIds: List<Long>,
-    ): GameCollection = collectionRepository.save(
+    override fun execute(command: CreateGameCollectionUseCase.Command): GameCollection = collectionRepository.save(
         GameCollection.create(
-            slug = slug,
-            title = title,
-            type = type,
-            tagSlug = tagSlug,
-            displayOrder = displayOrder,
-            gameIds = gameIds,
+            slug = command.slug,
+            title = command.title,
+            type = command.type,
+            tagSlug = command.tagSlug,
+            displayOrder = command.displayOrder,
+            gameIds = command.gameIds,
         )
     )
 
-    fun updateCollection(
-        slug: String,
-        title: String?,
-        displayOrder: Int?,
-        active: Boolean?,
-        gameIds: List<Long>?,
-    ): GameCollection {
+    override fun execute(command: UpdateGameCollectionUseCase.Command): GameCollection {
+        val (slug, title, displayOrder, active, gameIds) = command
         val collection = collectionRepository.findBySlug(slug) ?: throw GameNotFoundException(slug)
         collection.update(title = title, displayOrder = displayOrder, active = active)
         gameIds?.let { collection.replaceGames(it) }

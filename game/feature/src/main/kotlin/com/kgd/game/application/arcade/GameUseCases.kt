@@ -20,6 +20,8 @@ import com.kgd.game.domain.arcade.SessionTokenService
 import com.kgd.game.domain.arcade.StoredReplay
 import com.kgd.game.domain.arcade.VerificationStatus
 import com.kgd.game.sim.ReplayLog
+import com.kgd.game.application.arcade.usecase.StartArcadeSessionUseCase
+import com.kgd.game.application.arcade.usecase.SubmitArcadeScoreUseCase
 import org.springframework.stereotype.Service
 import java.util.UUID
 
@@ -39,8 +41,9 @@ class StartSessionService(
     private val seeds: SeedSource,
     private val daily: DailyChallengePort,
     private val clock: Clock,
-) {
-    fun start(gameId: String, isDaily: Boolean, date: String): StartedSession {
+) : StartArcadeSessionUseCase {
+    override fun execute(command: StartArcadeSessionUseCase.Command): StartedSession {
+        val (gameId, isDaily, date) = command
         val seed: Int
         val dailyDate: String?
         if (isDaily) {
@@ -93,11 +96,12 @@ class SubmitScoreService(
     private val leaderboard: LeaderboardPort,
     private val registry: GameRegistry,
     private val clock: Clock,
-) {
+) : SubmitArcadeScoreUseCase {
     private val plausibility = ScorePlausibility()
     private val replayVerifier = ReplayVerifier()
 
-    fun submit(cmd: SubmitCommand): SubmitOutcome {
+    override fun execute(command: SubmitCommand): SubmitOutcome {
+        val cmd = command
         val session = sessions.find(cmd.sessionId) ?: return SubmitOutcome.rejected("session not found")
         if (!tokens.verify(cmd.token, session.id, session.seed, session.startedEpochMs)) {
             return SubmitOutcome.rejected("invalid token")

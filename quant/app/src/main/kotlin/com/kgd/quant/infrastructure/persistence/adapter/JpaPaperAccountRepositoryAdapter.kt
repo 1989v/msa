@@ -4,6 +4,7 @@ import com.kgd.quant.application.paper.port.PaperAccountRepositoryPort
 import com.kgd.quant.domain.common.Clock
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
+import com.kgd.quant.domain.paper.PaperAccount
 import com.kgd.quant.infrastructure.persistence.entity.PaperAccountEntity
 import com.kgd.quant.infrastructure.persistence.repository.PaperAccountJpaRepository
 import kotlinx.coroutines.Dispatchers
@@ -32,22 +33,43 @@ class JpaPaperAccountRepositoryAdapter(
         tenantId: TenantId,
         strategyId: StrategyId,
         baseAsset: String
-    ): PaperAccountEntity? = withContext(Dispatchers.IO) {
+    ): PaperAccount? = withContext(Dispatchers.IO) {
         jpa.findByTenantIdAndStrategyIdAndBaseAsset(
             tenantId = tenantId.value,
             strategyId = strategyId.value,
             baseAsset = baseAsset
-        )
+        )?.toDomain()
     }
 
-    override suspend fun save(entity: PaperAccountEntity): PaperAccountEntity = withContext(Dispatchers.IO) {
+    override suspend fun save(account: PaperAccount): PaperAccount = withContext(Dispatchers.IO) {
         val now = clock.now()
-        if (entity.paperAccountId == 0L) {
-            entity.createdAt = now
+        val entity = if (account.id == 0L) {
+            PaperAccountEntity(
+                tenantId = account.tenantId.value,
+                strategyId = account.strategyId.value,
+                baseAsset = account.baseAsset,
+                balance = account.balance,
+                createdAt = now,
+                updatedAt = now
+            )
+        } else {
+            (jpa.findById(account.id).orElse(null) ?: error("PaperAccount not found id=${account.id}")).apply {
+                balance = account.balance
+                updatedAt = now
+            }
         }
-        entity.updatedAt = now
-        jpa.save(entity)
+        jpa.save(entity).toDomain()
     }
+
+    private fun PaperAccountEntity.toDomain() = PaperAccount(
+        id = paperAccountId,
+        tenantId = TenantId(tenantId),
+        strategyId = StrategyId(strategyId),
+        baseAsset = baseAsset,
+        balance = balance,
+        createdAt = createdAt,
+        updatedAt = updatedAt,
+    )
 
     override suspend fun adjustBalance(
         tenantId: TenantId,

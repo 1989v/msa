@@ -11,6 +11,9 @@ import com.kgd.game.domain.play.model.GameDay
 import com.kgd.game.domain.play.model.ScoreBoardKey
 import com.kgd.game.domain.play.model.ScorePeriod
 import com.kgd.game.domain.play.model.ScoreTrack
+import com.kgd.game.application.play.usecase.GetActiveLeaderboardsUseCase
+import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
+import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -20,7 +23,7 @@ import java.time.LocalDate
 class GameScoreService(
     private val gameRepository: GameRepositoryPort,
     private val scoreRepository: GameScoreRepositoryPort,
-) {
+) : SubmitGameScoreUseCase, GetGameLeaderboardUseCase, GetActiveLeaderboardsUseCase {
     companion object {
         private const val MAX_SCORE = 1_000_000_000_000L   // 명백한 조작값 상한
         private val NICK_REGEX = Regex("^[\\p{L}\\p{N} _.-]{2,16}$")
@@ -42,14 +45,8 @@ class GameScoreService(
      * 보드가 갈라지고, 게임 57종이 쓰는 공용 제출 코드(`lib/rank.js`)를 전부 고쳐야 한다.
      */
     @Transactional(transactionManager = "gameTransactionManager")
-    fun submit(
-        slug: String,
-        track: ScoreTrack,
-        board: ScoreBoardKey,
-        nickname: String,
-        score: Long,
-        detail: String?,
-    ): Pair<Boolean, Int> {
+    override fun execute(command: SubmitGameScoreUseCase.Command): Pair<Boolean, Int> {
+        val (slug, track, board, nickname, score, detail) = command
         val gameId = resolveGameId(slug)
         val nick = nickname.trim()
         if (!NICK_REGEX.matches(nick)) throw BusinessException(ErrorCode.INVALID_INPUT, "닉네임은 2~16자 (문자/숫자/공백/._-)")
@@ -64,14 +61,8 @@ class GameScoreService(
      * 계약이 그대로 유지된다. `date` 는 DAILY 에서만 뜻이 있고, 생략하면 KST 기준 오늘이다.
      */
     @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
-    fun leaderboard(
-        slug: String,
-        track: ScoreTrack,
-        limit: Int,
-        board: ScoreBoardKey = ScoreBoardKey.DEFAULT,
-        period: ScorePeriod = ScorePeriod.ALL_TIME,
-        date: LocalDate? = null,
-    ): List<ScoreEntry> {
+    override fun execute(query: GetGameLeaderboardUseCase.Query): List<ScoreEntry> {
+        val (slug, track, limit, board, period, date) = query
         val gameId = resolveGameId(slug)
         val size = limit.coerceIn(1, 50)
         return when (period) {
@@ -95,9 +86,9 @@ class GameScoreService(
      * 하지 않게. 오늘 아무도 안 논 보드는 그 칸이 비고, 레일은 역대 기록으로 그린다.
      */
     @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
-    fun activeBoards(boardLimit: Int, entryLimit: Int): List<LeaderboardBoardDto> {
-        val boards = boardLimit.coerceIn(1, MAX_ACTIVE_BOARDS)
-        val entries = entryLimit.coerceIn(1, MAX_ACTIVE_ENTRIES)
+    override fun execute(query: GetActiveLeaderboardsUseCase.Query): List<LeaderboardBoardDto> {
+        val boards = query.boardLimit.coerceIn(1, MAX_ACTIVE_BOARDS)
+        val entries = query.entryLimit.coerceIn(1, MAX_ACTIVE_ENTRIES)
 
         val refs = scoreRepository.activeBoards(boards * ACTIVE_FETCH_FACTOR).distinctBy { it.gameId }
         val games = gameRepository.findByIds(refs.map { it.gameId }).associateBy { it.id }

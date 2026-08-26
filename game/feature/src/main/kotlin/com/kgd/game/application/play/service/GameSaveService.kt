@@ -8,6 +8,8 @@ import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.play.exception.SaveLockedException
 import com.kgd.game.domain.play.exception.SaveTooLargeException
 import org.springframework.stereotype.Component
+import com.kgd.game.application.play.usecase.LoadGameSaveUseCase
+import com.kgd.game.application.play.usecase.StoreGameSaveUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
@@ -21,7 +23,7 @@ class GameSaveService(
     private val gameRepository: GameRepositoryPort,
     private val saveLease: SaveLeasePort,
     private val saveCommand: GameSaveCommand,
-) {
+) : LoadGameSaveUseCase, StoreGameSaveUseCase {
     companion object {
 /** 저장 후 1시간 동안 같은 holder(기기)만 저장 가능 — 멀티기기 동시 쓰기 방어 */
         private val LEASE_TTL: Duration = Duration.ofHours(1)
@@ -32,21 +34,16 @@ class GameSaveService(
      * 로그인 사용자는 memberId 로, 게스트는 이어하기 코드로 자기 세이브를 찾는다.
      * 읽기는 잠그지 않는다 — 브라우저를 잃고 코드로 복구하는 경로가 이전 기기의 리스에 막히면 안 된다.
      */
-    fun load(slug: String, memberId: Long?, code: String?, holder: String): SaveSnapshot? {
+    override fun execute(query: LoadGameSaveUseCase.Query): SaveSnapshot? {
+        val (slug, memberId, code, _) = query
         val gameId = resolveGameId(slug)
         subjectOf(memberId, code) ?: return null                    // 신원이 없으면 불러올 세이브도 없다
         return if (memberId != null) saveCommand.find(gameId, memberId)
         else saveCommand.findByCode(gameId, requireNotNull(code))
     }
 
-    fun store(
-        slug: String,
-        memberId: Long?,
-        code: String?,
-        holder: String,
-        data: String,
-        expectedVersion: Long,
-    ): SaveSnapshot {
+    override fun execute(command: StoreGameSaveUseCase.Command): SaveSnapshot {
+        val (slug, memberId, code, holder, data, expectedVersion) = command
         val gameId = resolveGameId(slug)
         val size = data.toByteArray(Charsets.UTF_8).size
         if (size > MAX_SAVE_BYTES) throw SaveTooLargeException(size = size, limit = MAX_SAVE_BYTES)

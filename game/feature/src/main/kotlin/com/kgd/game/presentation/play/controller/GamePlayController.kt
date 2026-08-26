@@ -6,7 +6,9 @@ import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.play.dto.RatingResultDto
 import com.kgd.game.application.play.dto.SessionEndedDto
 import com.kgd.game.application.play.dto.SessionStartedDto
-import com.kgd.game.application.play.service.GamePlayService
+import com.kgd.game.application.play.usecase.EndGameSessionUseCase
+import com.kgd.game.application.play.usecase.RateGameUseCase
+import com.kgd.game.application.play.usecase.StartGameSessionUseCase
 import com.kgd.game.domain.play.model.DeviceType
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
@@ -30,7 +32,9 @@ data class RateRequest(
 @RestController
 @RequestMapping("/api/v1/games/{slug}")
 class GamePlayController(
-    private val gamePlayService: GamePlayService,
+    private val startSession: StartGameSessionUseCase,
+    private val endSession: EndGameSessionUseCase,
+    private val rateGame: RateGameUseCase,
 ) {
 
     /** 세션 시작 — 게스트 허용 (X-User-Id 없으면 memberId null) */
@@ -41,10 +45,12 @@ class GamePlayController(
         @RequestBody(required = false) request: StartSessionRequest?,
     ): ApiResponse<SessionStartedDto> =
         ApiResponse.success(
-            gamePlayService.startSession(
-                slug = slug,
-                memberId = userId?.toLongOrNull(),
-                deviceType = request?.deviceType ?: DeviceType.DESKTOP,
+            startSession.execute(
+                StartGameSessionUseCase.Command(
+                    slug = slug,
+                    memberId = userId?.toLongOrNull(),
+                    deviceType = request?.deviceType ?: DeviceType.DESKTOP,
+                )
             )
         )
 
@@ -53,7 +59,7 @@ class GamePlayController(
         @PathVariable slug: String,
         @PathVariable sessionKey: String,
     ): ApiResponse<SessionEndedDto> =
-        ApiResponse.success(gamePlayService.endSession(sessionKey))
+        ApiResponse.success(endSession.execute(EndGameSessionUseCase.Command(sessionKey)))
 
     /**
      * 평점 upsert — 회원은 1인 1표, 비로그인은 **기기 1표**.
@@ -73,6 +79,6 @@ class GamePlayController(
         if (memberId == null && device == null) {
             throw BusinessException(ErrorCode.INVALID_INPUT, "평점 등록에는 회원 또는 기기 식별자가 필요합니다")
         }
-        return ApiResponse.success(gamePlayService.rate(slug, memberId, device, request.score))
+        return ApiResponse.success(rateGame.execute(RateGameUseCase.Command(slug, memberId, device, request.score)))
     }
 }

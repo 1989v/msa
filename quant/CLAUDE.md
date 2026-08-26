@@ -28,9 +28,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-**혼합.** Port 31개는 표준 위치(`application/**/port`)이고 Adapter 50 도 표준이지만 UseCase 14개가 `@Service` 클래스다.
-application → infrastructure import 7건 중 `PaperAccountRepositoryPort` 가 **JPA 엔티티를 포트 시그니처에 노출**하고
-`QuantMetrics`/`QuantChartsProperties` 를 application 에서 직접 부른다 — 플랜 P4. 자체 Outbox(`OutboxRelay`, Postgres)는 P5 별도 검토.
+표준 준수 (2026-08-26, P4 완료) — UseCase 14개가 인터페이스 + `*Service` 구현으로 갈렸다(quant 는 자기 레이아웃 `application/{usecase,paper,live,asset,learn}` 을 유지하고 인터페이스와 서비스가 같은 패키지에 산다). `PaperAccountRepositoryPort` 는 도메인 `PaperAccount` 를 본다(엔티티 노출 제거). Micrometer 는 `QuantMetricsPort`·`QuantPhase3MetricsPort` 뒤로, `QuantChartsProperties` 는 application 소유(규칙 11). 자체 Outbox(`OutboxRelay`, Postgres)는 P5 별도 검토.
 
 ## Commands
 

@@ -2,7 +2,7 @@ package com.kgd.quant.application.market
 
 import com.kgd.quant.application.port.marketdata.Symbol
 import com.kgd.quant.application.port.marketdata.Tick
-import com.kgd.quant.infrastructure.metrics.QuantMetrics
+import com.kgd.quant.application.port.metrics.QuantMetricsPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,7 +32,7 @@ private val log = KotlinLogging.logger {}
  */
 @Component
 class MarketDataHub(
-    private val metrics: QuantMetrics,
+    private val metrics: QuantMetricsPort,
 ) {
     private val flow = MutableSharedFlow<Tick>(
         replay = 0,

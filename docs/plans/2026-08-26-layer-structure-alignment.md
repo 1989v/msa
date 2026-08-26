@@ -100,13 +100,13 @@ val dirPackageExempt = mapOf(
 | ✅ `analytics` | 완료 — 포트 `application/{score,event}/port`, UseCase 인터페이스 4 + 서비스 2 |
 | ✅ `experiment` | 완료 — 포트 2(AnalyticsMetricsPort 신설), UseCase 인터페이스 6 + 서비스 2 |
 | ✅ `recommendation` | 완료 — domain/recommendation/{model,policy}, 포트 9(밴딧·실험·노출 포트 신설), UseCase 인터페이스 3 + 서비스 3 |
-| `quant` | UseCase 클래스 14 → 인터페이스. `PaperAccountRepositoryPort` 의 `PaperAccountEntity` 노출 제거, `QuantMetrics`/`QuantChartsProperties` 를 application 에서 import 하는 7건 → 포트 또는 application 소유 프로퍼티로 |
-| `game` | 서비스 10개에 UseCase 인터페이스 도입 (포트는 이미 표준 위치 — `*Ports.kt` 묶음 파일 허용) |
+| ✅ `quant` | 완료 — 인터페이스 14 + Service 14, `PaperAccount` 도메인 모델, metrics 포트 2, 차트 properties 는 application 소유 |
+| ✅ `game` | 완료 — UseCase 인터페이스 31, 컨트롤러 8개 인터페이스 주입 |
 | ✅ `code-dictionary` | 완료 — `IndexAliasPort` |
 | ✅ `chatbot` | 완료 — Properties 는 application/chat/config, Config 는 infrastructure/config (규칙 11) |
 | ✅ `search/app` · `auth/app` · `inventory/feature` | 완료 — `SearchVariantPort` · `SubjectHashPort` · `InventoryMetricsPort` |
 
-**검증**: 각 모듈 test + 게이트 ① allowlist 를 `search:domain` 제외 전부 제거.
+**검증**: 각 모듈 test + 게이트 ① allowlist 비움 ✅ 2026-08-26.
 
 ## P5 — DRY (Outbox · 멱등 엔티티)
 

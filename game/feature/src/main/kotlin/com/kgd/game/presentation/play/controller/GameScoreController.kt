@@ -7,7 +7,8 @@ import com.kgd.game.domain.play.model.ScorePeriod
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.play.port.ScoreEntry
-import com.kgd.game.application.play.service.GameScoreService
+import com.kgd.game.application.play.usecase.GetGameLeaderboardUseCase
+import com.kgd.game.application.play.usecase.SubmitGameScoreUseCase
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.PositiveOrZero
@@ -39,7 +40,8 @@ data class ScoreSubmitResponse(val applied: Boolean, val rank: Int)
 @RestController
 @RequestMapping("/api/v1/games/{slug}")
 class GameScoreController(
-    private val gameScoreService: GameScoreService,
+    private val submitScore: SubmitGameScoreUseCase,
+    private val getLeaderboard: GetGameLeaderboardUseCase,
 ) {
     @PostMapping("/scores")
     fun submit(
@@ -47,13 +49,15 @@ class GameScoreController(
         @Valid @RequestBody request: ScoreSubmitRequest,
     ): ApiResponse<ScoreSubmitResponse> {
         val (applied, rank) =
-            gameScoreService.submit(
-                slug = slug,
-                track = ScoreTrack.from(request.track),
-                board = ScoreBoardKey.from(request.board),
-                nickname = request.nickname,
-                score = request.score,
-                detail = request.detail,
+            submitScore.execute(
+                SubmitGameScoreUseCase.Command(
+                    slug = slug,
+                    track = ScoreTrack.from(request.track),
+                    board = ScoreBoardKey.from(request.board),
+                    nickname = request.nickname,
+                    score = request.score,
+                    detail = request.detail,
+                )
             )
         return ApiResponse.success(ScoreSubmitResponse(applied = applied, rank = rank))
     }
@@ -74,13 +78,15 @@ class GameScoreController(
         @RequestParam(required = false) date: String?,
     ): ApiResponse<List<ScoreEntry>> =
         ApiResponse.success(
-            gameScoreService.leaderboard(
-                slug = slug,
-                track = ScoreTrack.from(track),
-                limit = limit,
-                board = ScoreBoardKey.from(board),
-                period = ScorePeriod.from(period),
-                date = parseDate(date),
+            getLeaderboard.execute(
+                GetGameLeaderboardUseCase.Query(
+                    slug = slug,
+                    track = ScoreTrack.from(track),
+                    limit = limit,
+                    board = ScoreBoardKey.from(board),
+                    period = ScorePeriod.from(period),
+                    date = parseDate(date),
+                ),
             ),
         )
 

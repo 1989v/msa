@@ -2,6 +2,7 @@ package com.kgd.quant.infrastructure.metrics
 
 import com.kgd.quant.application.port.notification.NotificationPriority
 import com.kgd.quant.application.port.notification.NotificationPriorityQueue
+import com.kgd.quant.application.port.metrics.QuantMetricsPort
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
@@ -62,7 +63,7 @@ import java.util.concurrent.atomic.AtomicInteger
 @Component
 class QuantMetrics(
     private val registry: MeterRegistry,
-) {
+) : QuantMetricsPort {
 
     /** 백테스트 1회 성공 시 증가. */
     val backtestRunSuccess: Counter = Counter.builder(METRIC_BACKTEST_RUN_TOTAL)
@@ -109,8 +110,12 @@ class QuantMetrics(
         counter.increment(rows.toDouble())
     }
 
+    override fun backtestRunSucceeded() = backtestRunSuccess.increment()
+
+    override fun backtestRunFailed() = backtestRunFailed.increment()
+
     /** [backtestDuration] 에 nanos 를 기록. */
-    fun recordBacktestDuration(nanos: Long) {
+    override fun recordBacktestDuration(nanos: Long) {
         backtestDuration.record(nanos, TimeUnit.NANOSECONDS)
     }
 
@@ -258,7 +263,7 @@ class QuantMetrics(
     private val marketHubDroppedCounters = ConcurrentHashMap<String, Counter>()
 
     /** SharedFlow tryEmit 실패 (느린 소비자로 인한 buffer overflow) 카운트. */
-    fun marketHubDropped(reason: String) {
+    override fun marketHubDropped(reason: String) {
         val counter = marketHubDroppedCounters.computeIfAbsent(reason) {
             Counter.builder(METRIC_MARKET_HUB_DROPPED_TOTAL)
                 .description("Total ticks dropped from MarketDataHub SharedFlow buffer")

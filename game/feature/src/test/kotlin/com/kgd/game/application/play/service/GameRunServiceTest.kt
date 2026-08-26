@@ -11,6 +11,8 @@ import com.kgd.game.domain.catalog.model.Orientation
 import com.kgd.game.domain.play.exception.RunNotFoundException
 import com.kgd.game.domain.play.model.GameRun
 import io.kotest.assertions.throwables.shouldThrow
+import com.kgd.game.application.play.usecase.ConsumeGameRunUseCase
+import com.kgd.game.application.play.usecase.StartGameRunUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -51,7 +53,7 @@ class GameRunServiceTest : BehaviorSpec({
                 val saved = slot<GameRun>()
                 every { runRepository.save(capture(saved)) } answers { saved.captured }
 
-                val run = GameRunService(gameRepository, runRepository).start("roguelike", memberId = null)
+                val run = GameRunService(gameRepository, runRepository).execute(StartGameRunUseCase.Command("roguelike", memberId = null))
 
                 run.isActive() shouldBe true
                 run.runKey shouldNotBe ""
@@ -70,7 +72,7 @@ class GameRunServiceTest : BehaviorSpec({
                     GameRun.start("run-1", gameId = 1L, memberId = null, seed = 42L, now = Instant.now())
 
                 shouldThrow<RunNotFoundException> {
-                    GameRunService(gameRepository, runRepository).consume("other-game", "run-1", "CLEAR")
+                    GameRunService(gameRepository, runRepository).execute(ConsumeGameRunUseCase.Command("other-game", "run-1", "CLEAR"))
                 }
             }
         }

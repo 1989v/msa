@@ -5,6 +5,9 @@ import com.kgd.game.application.play.port.GameRunRepositoryPort
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import com.kgd.game.domain.play.exception.RunNotFoundException
 import com.kgd.game.domain.play.model.GameRun
+import com.kgd.game.application.play.usecase.ConsumeGameRunUseCase
+import com.kgd.game.application.play.usecase.GetGameRunUseCase
+import com.kgd.game.application.play.usecase.StartGameRunUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
@@ -20,16 +23,16 @@ import java.util.UUID
 class GameRunService(
     private val gameRepository: GameRepositoryPort,
     private val runRepository: GameRunRepositoryPort,
-) {
+) : StartGameRunUseCase, GetGameRunUseCase, ConsumeGameRunUseCase {
     private val random = SecureRandom()
 
-    fun start(slug: String, memberId: Long?): GameRun {
-        val gameId = resolveGameId(slug)
+    override fun execute(command: StartGameRunUseCase.Command): GameRun {
+        val gameId = resolveGameId(command.slug)
         return runRepository.save(
             GameRun.start(
                 runKey = UUID.randomUUID().toString(),
                 gameId = gameId,
-                memberId = memberId,
+                memberId = command.memberId,
                 seed = random.nextLong(),
                 now = Instant.now(),
             )
@@ -37,11 +40,11 @@ class GameRunService(
     }
 
     @Transactional(transactionManager = "gameTransactionManager", readOnly = true)
-    fun get(slug: String, runKey: String): GameRun = findRunOf(slug, runKey)
+    override fun execute(query: GetGameRunUseCase.Query): GameRun = findRunOf(query.slug, query.runKey)
 
-    fun consume(slug: String, runKey: String, outcome: String?): GameRun {
-        val run = findRunOf(slug, runKey)
-        run.consume(outcome = outcome, now = Instant.now())
+    override fun execute(command: ConsumeGameRunUseCase.Command): GameRun {
+        val run = findRunOf(command.slug, command.runKey)
+        run.consume(outcome = command.outcome, now = Instant.now())
         return runRepository.save(run)
     }
 

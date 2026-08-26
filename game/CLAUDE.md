@@ -14,8 +14,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-Port 는 표준 위치(`application/{catalog,play,ads}/port` — `GameCatalogPorts.kt` 처럼 컨텍스트별 한 파일에 묶음, 허용) ·
-Adapter 표준 · **application → infrastructure import 0건**. 부채: 서비스 10개에 UseCase 인터페이스가 없다 (플랜 P4).
+표준 준수 (2026-08-26, P4 완료) — `application/{catalog,play,ads,arcade}/usecase` 인터페이스 31개, 서비스가 구현하고 컨트롤러는 인터페이스만 주입. Port 는 컨텍스트별 `*Ports.kt` 묶음 파일(허용), application → infrastructure import 0. 부채 없음.
 
 ## Commands
 

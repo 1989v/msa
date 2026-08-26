@@ -14,6 +14,9 @@ import com.kgd.game.domain.ads.model.AdType
 import com.kgd.game.domain.ads.model.RewardGrant
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
 import org.springframework.stereotype.Component
+import com.kgd.game.application.ads.usecase.CompleteAdRewardUseCase
+import com.kgd.game.application.ads.usecase.GetServablePlacementUseCase
+import com.kgd.game.application.ads.usecase.IssueAdRewardUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
@@ -42,13 +45,14 @@ class AdService(
     private val frequencyStore: AdFrequencyPort,
     private val gameRepository: GameRepositoryPort,
     private val rewardCommand: RewardCommand,
-) {
+) : GetServablePlacementUseCase, IssueAdRewardUseCase, CompleteAdRewardUseCase {
     // Kotlin data class 역직렬화에는 KotlinModule 필수 — plain ObjectMapper 는 조용히 실패한다
     private val mapper = jacksonObjectMapper()
     private val creativesType = object : TypeReference<List<HouseCreativeDto>>() {}
 
     /** 노출 가능하면 슬롯+크리에이티브, frequency cap 에 걸리면 null (FE 는 슬롯 미노출) */
-    fun getServablePlacement(placementKey: String, subject: String): AdPlacementDto? {
+    override fun execute(query: GetServablePlacementUseCase.Query): AdPlacementDto? {
+        val (placementKey, subject) = query
         val placement = placementRepository.findByKey(placementKey)
             ?: throw PlacementNotFoundException(placementKey)
         if (!placement.isServable()) return null
@@ -69,7 +73,8 @@ class AdService(
     }
 
     /** rewarded 보상 발급 — PUBLISHED+SDK 게임만 (isMonetizable, ADR-0059 §3) */
-    fun issueReward(gameSlug: String, placementKey: String, sessionKey: String?, memberId: Long?): RewardDto {
+    override fun execute(command: IssueAdRewardUseCase.Command): RewardDto {
+        val (gameSlug, placementKey, sessionKey, memberId) = command
         val placement = placementRepository.findByKey(placementKey)
             ?: throw PlacementNotFoundException(placementKey)
         if (placement.adType != AdType.REWARDED && placement.adType != AdType.MIDGAME) {
@@ -92,8 +97,8 @@ class AdService(
     }
 
     /** 시청 완료 콜백 — idempotencyKey 기준 멱등 (중복 콜백에도 1회 지급) */
-    fun completeReward(rewardKey: String): RewardDto {
-        val grant = rewardCommand.complete(rewardKey)
+    override fun execute(command: CompleteAdRewardUseCase.Command): RewardDto {
+        val grant = rewardCommand.complete(command.rewardKey)
         return RewardDto(rewardKey = grant.idempotencyKey, status = grant.status.name)
     }
 }

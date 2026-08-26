@@ -3,11 +3,19 @@ package com.kgd.game.presentation.admin.controller
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.catalog.dto.AdminGameSummaryDto
 import com.kgd.game.application.catalog.dto.GameDetailDto
-import com.kgd.game.application.catalog.service.CreateGameCommand
-import com.kgd.game.application.catalog.service.GameAdminQueryService
-import com.kgd.game.application.catalog.service.GameAdminService
 import com.kgd.game.application.catalog.service.GameSort
-import com.kgd.game.application.catalog.service.GameStatusAction
+import com.kgd.game.application.catalog.usecase.ChangeGameStatusUseCase
+import com.kgd.game.application.catalog.usecase.CreateGameCollectionUseCase
+import com.kgd.game.application.catalog.usecase.CreateGameCommand
+import com.kgd.game.application.catalog.usecase.CreateGameUseCase
+import com.kgd.game.application.catalog.usecase.GameStatusAction
+import com.kgd.game.application.catalog.usecase.GetGameDetailAdminUseCase
+import com.kgd.game.application.catalog.usecase.ListGameCollectionsAdminUseCase
+import com.kgd.game.application.catalog.usecase.ListGamesAdminUseCase
+import com.kgd.game.application.catalog.usecase.UpdateGameCollectionUseCase
+import com.kgd.game.application.catalog.usecase.UpdateGameContentUseCase
+import com.kgd.game.application.catalog.usecase.UpdateGameMetadataUseCase
+import com.kgd.game.application.catalog.usecase.UpdateGameTagsUseCase
 import com.kgd.game.domain.catalog.model.CollectionType
 import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.GameCollection
@@ -97,8 +105,16 @@ data class CollectionResponse(
 @RestController
 @RequestMapping("/api/v1/admin/games")
 class GameAdminController(
-    private val gameAdminService: GameAdminService,
-    private val gameAdminQueryService: GameAdminQueryService,
+    private val listGames: ListGamesAdminUseCase,
+    private val getDetail: GetGameDetailAdminUseCase,
+    private val createGame: CreateGameUseCase,
+    private val updateMetadata: UpdateGameMetadataUseCase,
+    private val updateContent: UpdateGameContentUseCase,
+    private val updateTags: UpdateGameTagsUseCase,
+    private val changeStatus: ChangeGameStatusUseCase,
+    private val listCollections: ListGameCollectionsAdminUseCase,
+    private val createCollection: CreateGameCollectionUseCase,
+    private val updateCollection: UpdateGameCollectionUseCase,
 ) {
 
     /** 상태 무관 전체 목록 — 공개 리스트(PUBLISHED 전용)로는 볼 수 없는 게임을 운영자가 다룬다 */
@@ -113,25 +129,27 @@ class GameAdminController(
         @RequestParam(defaultValue = "20") size: Int,
     ): ApiResponse<Page<AdminGameSummaryDto>> =
         ApiResponse.success(
-            gameAdminQueryService.list(
-                q = q,
-                status = GameStatus.parse(status),
-                genre = Genre.parse(genre),
-                tag = tag,
-                sort = GameSort.parseAdmin(sort),
-                page = page,
-                size = size.coerceAtMost(100),
+            listGames.execute(
+                ListGamesAdminUseCase.Query(
+                    q = q,
+                    status = GameStatus.parse(status),
+                    genre = Genre.parse(genre),
+                    tag = tag,
+                    sort = GameSort.parseAdmin(sort),
+                    page = page,
+                    size = size.coerceAtMost(100),
+                )
             )
         )
 
     @GetMapping("/{slug}")
     fun detail(@PathVariable slug: String): ApiResponse<GameDetailDto> =
-        ApiResponse.success(gameAdminQueryService.detail(slug))
+        ApiResponse.success(getDetail.execute(GetGameDetailAdminUseCase.Query(slug)))
 
     @PostMapping
     fun create(@Valid @RequestBody request: CreateGameRequest): ApiResponse<GameDetailDto> =
         ApiResponse.success(
-            gameAdminService.create(
+            createGame.execute(
                 CreateGameCommand(
                     slug = request.slug,
                     title = request.title,
@@ -157,18 +175,20 @@ class GameAdminController(
         @RequestBody request: UpdateGameMetadataRequest,
     ): ApiResponse<GameDetailDto> =
         ApiResponse.success(
-            gameAdminService.updateMetadata(
-                slug = slug,
-                title = request.title,
-                description = request.description,
-                titleEn = request.titleEn,
-                descriptionEn = request.descriptionEn,
-                thumbnailUrl = request.thumbnailUrl,
-                coverUrl = request.coverUrl,
-                orientation = request.orientation,
-                supportsMobile = request.supportsMobile,
-                developerName = request.developerName,
-                genre = request.genre,
+            updateMetadata.execute(
+                UpdateGameMetadataUseCase.Command(
+                    slug = slug,
+                    title = request.title,
+                    description = request.description,
+                    titleEn = request.titleEn,
+                    descriptionEn = request.descriptionEn,
+                    thumbnailUrl = request.thumbnailUrl,
+                    coverUrl = request.coverUrl,
+                    orientation = request.orientation,
+                    supportsMobile = request.supportsMobile,
+                    developerName = request.developerName,
+                    genre = request.genre,
+                )
             )
         )
 
@@ -177,35 +197,37 @@ class GameAdminController(
         @PathVariable slug: String,
         @Valid @RequestBody request: UpdateGameContentRequest,
     ): ApiResponse<GameDetailDto> =
-        ApiResponse.success(gameAdminService.updateContent(slug, request.entryUrl, request.sdkIntegrated))
+        ApiResponse.success(updateContent.execute(UpdateGameContentUseCase.Command(slug, request.entryUrl, request.sdkIntegrated)))
 
     @PutMapping("/{slug}/tags")
     fun updateTags(
         @PathVariable slug: String,
         @RequestBody request: UpdateGameTagsRequest,
     ): ApiResponse<GameDetailDto> =
-        ApiResponse.success(gameAdminService.updateTags(slug, request.tags))
+        ApiResponse.success(updateTags.execute(UpdateGameTagsUseCase.Command(slug, request.tags)))
 
     @PostMapping("/{slug}/status")
     fun changeStatus(
         @PathVariable slug: String,
         @RequestBody request: ChangeGameStatusRequest,
     ): ApiResponse<GameDetailDto> =
-        ApiResponse.success(gameAdminService.changeStatus(slug, request.action))
+        ApiResponse.success(changeStatus.execute(ChangeGameStatusUseCase.Command(slug, request.action)))
 
     @GetMapping("/collections")
     fun listCollections(): ApiResponse<List<CollectionResponse>> =
-        ApiResponse.success(gameAdminService.listCollections().map { it.toResponse() })
+        ApiResponse.success(listCollections.execute().map { it.toResponse() })
 
     @PostMapping("/collections")
     fun createCollection(@Valid @RequestBody request: CreateCollectionRequest): ApiResponse<CollectionResponse> {
-        val collection = gameAdminService.createCollection(
-            slug = request.slug,
-            title = request.title,
-            type = request.type,
-            tagSlug = request.tagSlug,
-            displayOrder = request.displayOrder,
-            gameIds = request.gameIds,
+        val collection = createCollection.execute(
+            CreateGameCollectionUseCase.Command(
+                slug = request.slug,
+                title = request.title,
+                type = request.type,
+                tagSlug = request.tagSlug,
+                displayOrder = request.displayOrder,
+                gameIds = request.gameIds,
+            )
         )
         return ApiResponse.success(collection.toResponse())
     }
@@ -215,12 +237,14 @@ class GameAdminController(
         @PathVariable slug: String,
         @RequestBody request: UpdateCollectionRequest,
     ): ApiResponse<CollectionResponse> {
-        val collection = gameAdminService.updateCollection(
-            slug = slug,
-            title = request.title,
-            displayOrder = request.displayOrder,
-            active = request.active,
-            gameIds = request.gameIds,
+        val collection = updateCollection.execute(
+            UpdateGameCollectionUseCase.Command(
+                slug = slug,
+                title = request.title,
+                displayOrder = request.displayOrder,
+                active = request.active,
+                gameIds = request.gameIds,
+            )
         )
         return ApiResponse.success(collection.toResponse())
     }

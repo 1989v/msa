@@ -3,8 +3,11 @@ package com.kgd.game.presentation.play.controller
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
 import com.kgd.common.response.ApiResponse
-import com.kgd.game.application.play.service.GameRunService
-import com.kgd.game.application.play.service.GameSaveService
+import com.kgd.game.application.play.usecase.ConsumeGameRunUseCase
+import com.kgd.game.application.play.usecase.GetGameRunUseCase
+import com.kgd.game.application.play.usecase.LoadGameSaveUseCase
+import com.kgd.game.application.play.usecase.StartGameRunUseCase
+import com.kgd.game.application.play.usecase.StoreGameSaveUseCase
 import jakarta.validation.constraints.PositiveOrZero
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
@@ -43,8 +46,11 @@ data class ConsumeRunRequest(val outcome: String? = null)
 @RestController
 @RequestMapping("/api/v1/games/{slug}")
 class GameSaveController(
-    private val gameSaveService: GameSaveService,
-    private val gameRunService: GameRunService,
+    private val loadSave: LoadGameSaveUseCase,
+    private val storeSave: StoreGameSaveUseCase,
+    private val startRun: StartGameRunUseCase,
+    private val getRun: GetGameRunUseCase,
+    private val consumeRun: ConsumeGameRunUseCase,
 ) {
     private val mapper = ObjectMapper()
     private val mapType = object : TypeReference<Map<String, Any?>>() {}
@@ -56,7 +62,7 @@ class GameSaveController(
         @RequestHeader("X-Device-Id") deviceId: String,
         @RequestParam(required = false) code: String?,
     ): ApiResponse<SaveStateResponse> {
-        val snapshot = gameSaveService.load(slug, userId?.toLongOrNull(), code, deviceId)
+        val snapshot = loadSave.execute(LoadGameSaveUseCase.Query(slug, userId?.toLongOrNull(), code, deviceId))
         return ApiResponse.success(
             SaveStateResponse(
                 data = snapshot?.let { mapper.readValue(it.data, mapType) },
@@ -73,13 +79,15 @@ class GameSaveController(
         @RequestHeader("X-Device-Id") deviceId: String,
         @Valid @RequestBody request: SaveRequest,
     ): ApiResponse<SaveStateResponse> {
-        val saved = gameSaveService.store(
-            slug = slug,
-            memberId = userId?.toLongOrNull(),
-            code = request.code,
-            holder = deviceId,
-            data = mapper.writeValueAsString(request.data),
-            expectedVersion = request.version,
+        val saved = storeSave.execute(
+            StoreGameSaveUseCase.Command(
+                slug = slug,
+                memberId = userId?.toLongOrNull(),
+                code = request.code,
+                holder = deviceId,
+                data = mapper.writeValueAsString(request.data),
+                expectedVersion = request.version,
+            )
         )
         return ApiResponse.success(
             SaveStateResponse(data = mapper.readValue(saved.data, mapType), version = saved.version, code = saved.code)
@@ -91,7 +99,7 @@ class GameSaveController(
         @PathVariable slug: String,
         @RequestHeader("X-User-Id", required = false) userId: String?,
     ): ApiResponse<RunStartedResponse> {
-        val run = gameRunService.start(slug, userId?.toLongOrNull())
+        val run = startRun.execute(StartGameRunUseCase.Command(slug, userId?.toLongOrNull()))
         return ApiResponse.success(RunStartedResponse(runKey = run.runKey, seed = run.seed))
     }
 
@@ -100,7 +108,7 @@ class GameSaveController(
         @PathVariable slug: String,
         @PathVariable runKey: String,
     ): ApiResponse<RunResponse> {
-        val run = gameRunService.get(slug, runKey)
+        val run = getRun.execute(GetGameRunUseCase.Query(slug, runKey))
         return ApiResponse.success(
             RunResponse(runKey = run.runKey, seed = run.seed, status = run.status.name, outcome = run.outcome)
         )
@@ -112,7 +120,7 @@ class GameSaveController(
         @PathVariable runKey: String,
         @RequestBody(required = false) request: ConsumeRunRequest?,
     ): ApiResponse<RunResponse> {
-        val run = gameRunService.consume(slug, runKey, request?.outcome)
+        val run = consumeRun.execute(ConsumeGameRunUseCase.Command(slug, runKey, request?.outcome))
         return ApiResponse.success(
             RunResponse(runKey = run.runKey, seed = run.seed, status = run.status.name, outcome = run.outcome)
         )

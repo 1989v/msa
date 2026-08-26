@@ -13,6 +13,8 @@ import com.kgd.game.domain.catalog.model.Orientation
 import com.kgd.game.domain.play.exception.SaveLockedException
 import com.kgd.game.domain.play.exception.SaveTooLargeException
 import io.kotest.assertions.throwables.shouldThrow
+import com.kgd.game.application.play.usecase.LoadGameSaveUseCase
+import com.kgd.game.application.play.usecase.StoreGameSaveUseCase
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -59,7 +61,7 @@ class GameSaveServiceTest : BehaviorSpec({
                 every { saveRepository.find(1L, 7L) } returns SaveSnapshot("{}", 2L, "CODE12345678")
 
                 serviceWith(lease, saveRepository)
-                    .load("roguelike", memberId = 7L, code = null, holder = "device-b")?.version shouldBe 2L
+                    .execute(LoadGameSaveUseCase.Query("roguelike", memberId = 7L, code = null, holder = "device-b"))?.version shouldBe 2L
             }
         }
 
@@ -69,7 +71,7 @@ class GameSaveServiceTest : BehaviorSpec({
                 val saveRepository = mockk<GameSaveRepositoryPort>()
                 every { saveRepository.find(1L, 7L) } returns null
 
-                serviceWith(lease, saveRepository).load("roguelike", 7L, null, "device-a") shouldBe null
+                serviceWith(lease, saveRepository).execute(LoadGameSaveUseCase.Query("roguelike", 7L, null, "device-a")) shouldBe null
             }
         }
 
@@ -81,7 +83,7 @@ class GameSaveServiceTest : BehaviorSpec({
                     SaveSnapshot(data = """{"floor":5}""", version = 4L, code = "ABCD2345WXYZ")
 
                 val result = serviceWith(lease, saveRepository)
-                    .load("roguelike", memberId = null, code = "ABCD2345WXYZ", holder = "device-a")
+                    .execute(LoadGameSaveUseCase.Query("roguelike", memberId = null, code = "ABCD2345WXYZ", holder = "device-a"))
                 result?.version shouldBe 4L
                 result?.code shouldBe "ABCD2345WXYZ"
             }
@@ -90,7 +92,7 @@ class GameSaveServiceTest : BehaviorSpec({
         `when`("신원(로그인/코드)이 전혀 없으면") {
             then("불러올 세이브가 없어 null을 반환해야 한다") {
                 val lease = mockk<SaveLeasePort>(relaxed = true)
-                serviceWith(lease).load("roguelike", memberId = null, code = null, holder = "device-a") shouldBe null
+                serviceWith(lease).execute(LoadGameSaveUseCase.Query("roguelike", memberId = null, code = null, holder = "device-a")) shouldBe null
             }
         }
     }
@@ -102,7 +104,7 @@ class GameSaveServiceTest : BehaviorSpec({
                 every { lease.tryAcquire(any(), any(), any(), any(), any()) } returns true
 
                 shouldThrow<SaveTooLargeException> {
-                    serviceWith(lease).store("roguelike", 7L, null, "device-a", "x".repeat(64 * 1024 + 1), 0)
+                    serviceWith(lease).execute(StoreGameSaveUseCase.Command("roguelike", 7L, null, "device-a", "x".repeat(64 * 1024 + 1), 0))
                 }
             }
         }
@@ -116,7 +118,7 @@ class GameSaveServiceTest : BehaviorSpec({
                     SaveSnapshot(data = """{"floor":3}""", version = 3L, code = "CODE12345678")
 
                 val result = serviceWith(lease, saveRepository)
-                    .store("roguelike", 7L, null, "device-a", """{"floor":3}""", 2L)
+                    .execute(StoreGameSaveUseCase.Command("roguelike", 7L, null, "device-a", """{"floor":3}""", 2L))
                 result.version shouldBe 3L
             }
         }
@@ -129,7 +131,7 @@ class GameSaveServiceTest : BehaviorSpec({
                     SaveSnapshot(data = """{"floor":1}""", version = 1L, code = "NEWCODE23456")
 
                 val result = serviceWith(lease, saveRepository)
-                    .store("roguelike", null, null, "device-a", """{"floor":1}""", 0L)
+                    .execute(StoreGameSaveUseCase.Command("roguelike", null, null, "device-a", """{"floor":1}""", 0L))
                 result.code shouldBe "NEWCODE23456"
             }
         }

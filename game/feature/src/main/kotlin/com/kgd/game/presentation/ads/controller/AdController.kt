@@ -2,7 +2,9 @@ package com.kgd.game.presentation.ads.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.ads.service.AdPlacementDto
-import com.kgd.game.application.ads.service.AdService
+import com.kgd.game.application.ads.usecase.CompleteAdRewardUseCase
+import com.kgd.game.application.ads.usecase.GetServablePlacementUseCase
+import com.kgd.game.application.ads.usecase.IssueAdRewardUseCase
 import com.kgd.game.application.ads.service.RewardDto
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -24,7 +26,9 @@ data class IssueRewardRequest(
 @RestController
 @RequestMapping("/api/v1/ads")
 class AdController(
-    private val adService: AdService,
+    private val getPlacement: GetServablePlacementUseCase,
+    private val issueReward: IssueAdRewardUseCase,
+    private val completeReward: CompleteAdRewardUseCase,
 ) {
 
     /** 슬롯 조회 — frequency cap 에 걸리면 data=null (FE 는 배너 미노출) */
@@ -33,7 +37,7 @@ class AdController(
         @PathVariable placementKey: String,
         @RequestParam subject: String,
     ): ApiResponse<AdPlacementDto?> =
-        ApiResponse.success(adService.getServablePlacement(placementKey, subject))
+        ApiResponse.success(getPlacement.execute(GetServablePlacementUseCase.Query(placementKey, subject)))
 
     @PostMapping("/rewards")
     fun issueReward(
@@ -41,15 +45,17 @@ class AdController(
         @Valid @RequestBody request: IssueRewardRequest,
     ): ApiResponse<RewardDto> =
         ApiResponse.success(
-            adService.issueReward(
-                gameSlug = request.gameSlug,
-                placementKey = request.placementKey,
-                sessionKey = request.sessionKey,
-                memberId = userId?.toLongOrNull(),
+            issueReward.execute(
+                IssueAdRewardUseCase.Command(
+                    gameSlug = request.gameSlug,
+                    placementKey = request.placementKey,
+                    sessionKey = request.sessionKey,
+                    memberId = userId?.toLongOrNull(),
+                )
             )
         )
 
     @PostMapping("/rewards/{rewardKey}/complete")
     fun completeReward(@PathVariable rewardKey: String): ApiResponse<RewardDto> =
-        ApiResponse.success(adService.completeReward(rewardKey))
+        ApiResponse.success(completeReward.execute(CompleteAdRewardUseCase.Command(rewardKey)))
 }

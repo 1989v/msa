@@ -11,6 +11,8 @@ import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.Genre
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
+import com.kgd.game.application.catalog.usecase.GetGameDetailAdminUseCase
+import com.kgd.game.application.catalog.usecase.ListGamesAdminUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -24,29 +26,22 @@ class GameAdminQueryService(
     private val adminQueryPort: GameAdminQueryPort,
     private val gameRepository: GameRepositoryPort,
     private val statsRepository: GameStatsRepositoryPort,
-) {
+) : ListGamesAdminUseCase, GetGameDetailAdminUseCase {
 
-    fun list(
-        q: String?,
-        status: GameStatus?,
-        genre: Genre?,
-        tag: String?,
-        sort: GameSort,
-        page: Int,
-        size: Int,
-    ): Page<AdminGameSummaryDto> = adminQueryPort.search(
+    override fun execute(query: ListGamesAdminUseCase.Query): Page<AdminGameSummaryDto> = adminQueryPort.search(
         GameSearchCriteria(
-            q = q,
-            tag = tag,
-            genre = genre,
-            statuses = status?.let(::setOf) ?: emptySet(),
-            sort = sort,
+            q = query.q,
+            tag = query.tag,
+            genre = query.genre,
+            statuses = query.status?.let(::setOf) ?: emptySet(),
+            sort = query.sort,
         ),
-        PageRequest.of(page, size),
+        PageRequest.of(query.page, query.size),
     )
 
     /** 편집 폼 프리필용 상세 — 공개 상세와 달리 상태 은닉 없이 그대로 돌려준다 */
-    fun detail(slug: String): GameDetailDto {
+    override fun execute(query: GetGameDetailAdminUseCase.Query): GameDetailDto {
+        val slug = query.slug
         val game = gameRepository.findBySlug(slug) ?: throw GameNotFoundException(slug)
         val gameId = game.id
         return GameDetailDto.of(game, gameId?.let { statsRepository.findByGameId(it) })
