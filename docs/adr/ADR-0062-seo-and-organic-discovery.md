@@ -112,7 +112,7 @@ location = /sitemap.xml { try_files /seo/$host/sitemap.xml =404; }
 | 포털 루트 | `WebSite` + `SearchAction` |
 
 `CollectionPage` 는 소속 사이트를 인자로 받는다 — 기본값(게임)이 새면 place 페이지가
-`kgd Games` 소속으로 선언된다.
+`1989v 게임` 소속으로 선언된다.
 
 `aggregateRating` 은 `ratingCount > 0` 일 때만 넣는다 — 0표에 별점을 선언하면 리치 결과에서
 스팸으로 취급된다.

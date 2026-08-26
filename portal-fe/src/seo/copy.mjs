@@ -10,7 +10,7 @@ export const GAME_ORIGIN = 'https://game.1989v.com';
 export const PORTAL_ORIGIN = 'https://1989v.com';
 /** 이력서 호스트 (ADR-0064). 색인 대상이 아니다 — robots 로 전면 차단한다. */
 export const RESUME_ORIGIN = 'https://resume.1989v.com';
-export const BRAND = 'kgd Games';
+export const BRAND = '1989v 게임';
 /** 브랜드는 도메인과 일치시킨다 — place/game/resume 서브도메인이 모두 이 아래다 (ADR-0066) */
 export const PORTAL_BRAND = '1989v';
 
@@ -274,19 +274,31 @@ export function resumeTitle(name) {
   return name ? `${name} — Resume 권기덕` : 'Resume — 권기덕';
 }
 
-export function websiteJsonLd() {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
+/**
+ * 사이트 신원. 구글은 검색결과에 표기할 사이트명을 홈페이지의 WebSite 에서 먼저 읽으므로
+ * **호스트 루트마다 자기 이름·자기 url** 로 넣어야 한다. 인자를 비우면 apex 다.
+ */
+export function websiteJsonLd(site) {
+  const { name, url, searchUrlTemplate } = site ?? {
     name: PORTAL_BRAND,
     url: PORTAL_ORIGIN,
-    inLanguage: 'ko',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: { '@type': 'EntryPoint', urlTemplate: `${PORTAL_ORIGIN}/tech?q={search_term_string}` },
-      'query-input': 'required name=search_term_string',
-    },
+    searchUrlTemplate: `${PORTAL_ORIGIN}/tech?q={search_term_string}`,
   };
+  const json = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name,
+    url,
+    inLanguage: 'ko',
+  };
+  if (searchUrlTemplate) {
+    json.potentialAction = {
+      '@type': 'SearchAction',
+      target: { '@type': 'EntryPoint', urlTemplate: searchUrlTemplate },
+      'query-input': 'required name=search_term_string',
+    };
+  }
+  return json;
 }
 
 /** site 를 넘기지 않으면 게임 허브 소속으로 본다 — place 등 다른 호스트는 반드시 넘긴다 */
@@ -562,7 +574,12 @@ export const PORTAL_PAGES = {
 // ─── deal (혜택 링크 허브) ────────────────────────────────────────────────────
 
 export const DEAL_ORIGIN = 'https://deal.1989v.com';
-export const DEAL_BRAND = '혜택 링크';
+export const DEAL_BRAND = '모든 혜택';
+/**
+ * 검색엔진에 알리는 사이트 신원. 화면 라벨(DEAL_BRAND)과 나눠 둔다 — 일반명사는 브랜드
+ * 질의를 잡지 못하므로 고유 토큰(1989v)을 붙인 이름을 og:site_name·WebSite.name 에 쓴다.
+ */
+export const DEAL_SITE_NAME = `${PORTAL_BRAND} 혜택`;
 
 /**
  * 공정위 「추천·보증 등에 관한 표시·광고 심사지침」에 따른 경제적 이해관계 고지.
@@ -602,7 +619,9 @@ export function dealHubMeta() {
 // ─── rank (랭킹 리더보드) ─────────────────────────────────────────────────────
 
 export const RANK_ORIGIN = 'https://rank.1989v.com';
-export const RANK_BRAND = '랭킹';
+export const RANK_BRAND = '모든 랭킹';
+/** 화면 라벨(RANK_BRAND)과 나눈 검색 신원 — DEAL_SITE_NAME 과 같은 이유 */
+export const RANK_SITE_NAME = `${PORTAL_BRAND} 랭킹`;
 
 /** 출처 표시 의무가 붙은 원천이라 화면 어딘가에 반드시 나와야 한다 (ADR-0081). */
 export const RANK_GAS_SOURCE = '출처: 한국석유공사 오피넷';
@@ -639,7 +658,7 @@ export function rankHubMeta() {
 export function rankBoardMeta(board) {
   const top = board.topName ?? board.entries?.[0]?.subjectName;
   return {
-    title: `${board.title} — ${RANK_BRAND}`,
+    title: `${board.title} — ${RANK_SITE_NAME}`,
     description: top
       ? `${board.title} 1위는 ${top}입니다. 순위는 매일 갱신되며 어제 대비 등락을 함께 보여줍니다.`
       : `${board.title} 순위. 매일 갱신되며 어제 대비 등락을 함께 보여줍니다.`,

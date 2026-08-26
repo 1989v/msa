@@ -60,8 +60,8 @@ describe('게임 URL 규칙', () => {
 
 describe('메타 카피', () => {
   it('상세 타이틀은 언어별 포맷을 따른다', () => {
-    expect(detailMeta('ko', game).title).toBe('감자 투기장 — 무료 온라인 플레이 | kgd Games');
-    expect(detailMeta('en', game).title).toBe('Spud Arena — Play Free Online | kgd Games');
+    expect(detailMeta('ko', game).title).toBe('감자 투기장 — 무료 온라인 플레이 | 1989v 게임');
+    expect(detailMeta('en', game).title).toBe('Spud Arena — Play Free Online | 1989v 게임');
   });
 
   it('설명이 짧으면 장르 문구를 덧붙여 빈약한 스니펫을 막는다', () => {

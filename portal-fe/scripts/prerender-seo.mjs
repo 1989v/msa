@@ -60,9 +60,11 @@ import {
   portalUrl,
   DEAL_ORIGIN,
   DEAL_BRAND,
+  DEAL_SITE_NAME,
   dealHubMeta,
   dealUrl,
   RANK_BRAND,
+  RANK_SITE_NAME,
   RANK_ORIGIN,
   rankHubMeta,
   rankUrl,
@@ -408,7 +410,7 @@ function renderHub(shell, lang, games) {
     jsonLd: [
       collectionPageJsonLd(lang, meta, canonical),
       itemListJsonLd(lang, games.slice(0, 30)),
-      websiteJsonLd(),
+      websiteJsonLd({ name: BRAND, url: GAME_ORIGIN }),
     ],
     body: shellBody(
       `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
@@ -1069,9 +1071,10 @@ export function renderDealHubHtml(shell, sections = []) {
     title: meta.title,
     description: meta.description,
     canonical: meta.canonical,
-    siteName: DEAL_BRAND,
+    siteName: DEAL_SITE_NAME,
     jsonLd: [
-      collectionPageJsonLd('ko', meta, meta.canonical, { name: DEAL_BRAND, url: DEAL_ORIGIN }),
+      collectionPageJsonLd('ko', meta, meta.canonical, { name: DEAL_SITE_NAME, url: DEAL_ORIGIN }),
+      websiteJsonLd({ name: DEAL_SITE_NAME, url: DEAL_ORIGIN }),
     ],
     body: shellBody(
       `<h1>${escapeHtml(DEAL_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>${body}`,
@@ -1150,7 +1153,8 @@ async function renderRankHub(shell) {
     title: meta.title,
     description: meta.description,
     canonical: meta.canonical,
-    siteName: RANK_BRAND,
+    siteName: RANK_SITE_NAME,
+    jsonLd: [websiteJsonLd({ name: RANK_SITE_NAME, url: RANK_ORIGIN })],
     body: shellBody(`<h1>${escapeHtml(RANK_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>`),
   });
   await emit(`prerender/_hosts/${RANK_HOST}.html`, html);
