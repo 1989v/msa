@@ -255,6 +255,13 @@ jobs:
           username: ${{ secrets.OCIR_USERNAME }}
           password: ${{ secrets.OCIR_TOKEN }}
 
+      # ───── 구조 게이트: 레이어/배선 (ADR-0083 / 0082) — 이미지 push 전 필수 ─────
+      # main 이 배포 브랜치라 여기서 막지 않으면 위반이 그대로 운영으로 나간다.
+      # 텍스트 스캔이라 컴파일 없이 수 초. 변경 범위와 무관하게 레포 전체를 본다.
+      - name: ./gradlew verifyLayerDependencies verifyFlywayWiring verifyExternalApiQuota
+        if: ${{ steps.changes.outputs.jvm_services != '' }}
+        run: ./gradlew --no-daemon --max-workers=1 verifyLayerDependencies verifyFlywayWiring verifyExternalApiQuota
+
       # ───── 테스트 게이트: 변경된 JVM 서비스만 (이미지 push 전 필수) ─────────
       - name: ./gradlew test (변경된 JVM 서비스만)
         if: ${{ steps.changes.outputs.jvm_services != '' }}

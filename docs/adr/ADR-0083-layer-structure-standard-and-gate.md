@@ -70,7 +70,7 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 이 ADR 은 모듈 **안** 레이어를 정한다. 둘은 겹치지 않는다. `:feature` 라이브러리도 `:app` 과
 같은 규칙을 따른다.
 
-### 5) 빌드 게이트 `verifyLayerDependencies` — 텍스트 스캔, `check` 에 연결
+### 5) 빌드 게이트 `verifyLayerDependencies` — 텍스트 스캔, `check` + CI + pre-push
 
 `verifyFlywayWiring` 과 같은 패턴이다. 의존성을 추가하지 않고 소스를 읽어 세 규칙을 본다.
 
@@ -83,6 +83,18 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 현재 위반은 **모듈 단위 allowlist** 로 통과시키되 항목마다 "왜 · 언제 비우는지" 를 적는다
 (ADR-0082 `quotaGateExempt` 와 같은 규율 — 이유 없는 예외가 쌓이면 검사가 죽는다). 이행
 단계마다 allowlist 를 비우고, 비운 항목은 다시 넣지 못한다.
+
+**`check` 에만 붙이면 아무 데서도 안 돈다** (2026-08-26 확인). `check` 는 `test` 를 포함하지만 그 역은
+아니고, ci.yml·images.yml 은 둘 다 `:module:test` 만 부른다. 그래서 세 지점에서 태스크를 **직접** 부른다 —
+텍스트 스캔이라 컴파일 없이 ~7초다.
+
+| 지점 | 언제 | 막는 것 |
+|---|---|---|
+| `.githooks/pre-push` | Kotlin 이 섞인 push (로컬) | main 이 배포 브랜치라 **위반이 원격에 닿기 전 마지막 지점** |
+| `ci.yml` compile-gate | 모든 PR·main push, 변경 범위 무관 | 신호. 컴파일보다 **먼저** 돌려 빨리 실패시킨다 |
+| `images.yml` | 이미지 굽기 직전 | 위반이 운영으로 나가는 것 |
+
+`check` 연결은 그대로 둔다 — `./gradlew build` 를 돌리는 사람에게는 그쪽이 자연스럽다.
 
 ### 6) 게이트 밖 모듈 — 명시적 예외
 

@@ -1,0 +1,114 @@
+#!/bin/bash
+# Pre-push hook (tracked: .githooks/) — 활성화: scripts/install-hooks.sh
+#
+# 책임:
+#   1. GitHub auth account = 1989v
+#   2. push 되는 커밋의 author = kgd <1989v@naver.com>
+#   3. 서브모듈 포인터가 원격에 실제로 존재
+#   4. Kotlin 소스가 섞여 있으면 레이어/배선 게이트 (ADR-0083)
+#
+# main 이 곧 배포 브랜치라 CI 는 "밀고 난 뒤" 다. 여기가 위반을 막을 수 있는 마지막 지점이다.
+
+REQUIRED_GH_ACCOUNT="1989v"
+REQUIRED_NAME="kgd"
+REQUIRED_EMAIL="1989v@naver.com"
+
+# --- Check 1: GitHub auth account ---
+ACTIVE_ACCOUNT=$(gh auth status 2>&1 | grep "Active account: true" -B3 | grep "account" | head -1 | sed 's/.*account \([^ ]*\).*/\1/')
+
+if [ "$ACTIVE_ACCOUNT" != "$REQUIRED_GH_ACCOUNT" ]; then
+    echo ""
+    echo "❌ PUSH BLOCKED: active GitHub account is '$ACTIVE_ACCOUNT', not '$REQUIRED_GH_ACCOUNT'"
+    echo ""
+    echo "   Fix: gh auth switch --user $REQUIRED_GH_ACCOUNT"
+    echo ""
+    exit 1
+fi
+
+# --- Check 2: Commit author on commits being pushed ---
+remote="$1"
+url="$2"
+KT_TOUCHED=""
+
+while read local_ref local_oid remote_ref remote_oid; do
+    if [ "$local_oid" = "0000000000000000000000000000000000000000" ]; then
+        continue  # branch delete
+    fi
+
+    if [ "$remote_oid" = "0000000000000000000000000000000000000000" ]; then
+        range="$local_oid"
+    else
+        range="$remote_oid..$local_oid"
+    fi
+
+    # 게이트를 돌릴지 판단 (Check 4). 루프 밖에서 쓰므로 여기서 모아 둔다.
+    if git diff --name-only "$range" 2>/dev/null | grep -q '\.kt$'; then
+        KT_TOUCHED=1
+    fi
+
+    BAD_COMMITS=$(git log "$range" --format='%H %an <%ae>' 2>/dev/null | grep -v "$REQUIRED_NAME <$REQUIRED_EMAIL>" | grep -v "Co-Authored-By")
+
+    if [ -n "$BAD_COMMITS" ]; then
+        echo ""
+        echo "❌ PUSH BLOCKED: commits with wrong author detected"
+        echo ""
+        echo "$BAD_COMMITS" | while read line; do
+            echo "   $line"
+        done
+        echo ""
+        echo "   Expected: $REQUIRED_NAME <$REQUIRED_EMAIL>"
+        echo "   Fix: git rebase -i <base> --exec 'git commit --amend --author=\"$REQUIRED_NAME <$REQUIRED_EMAIL>\" --no-edit'"
+        echo ""
+        exit 1
+    fi
+
+    # --- Check 3: 서브모듈 포인터가 원격에 실제로 존재하는가 ---
+    # 서브모듈 커밋을 먼저 push 하지 않고 본체 포인터만 올리면, CI 는 그 커밋을
+    # 받을 수 없어 죽는다 ("upload-pack: not our ref"). 이미지가 아예 안 만들어지므로
+    # 그 커밋의 변경분은 운영에 영원히 반영되지 않는다 (2026-08-22·23 images 3회).
+    sub_contains() { git -C "$1" branch -r --contains "$2" 2>/dev/null | grep -q .; }
+
+    SUB_BAD=""
+    for sub_path in $(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' 2>/dev/null | awk '{print $2}'); do
+        sub_sha=$(git rev-parse "$local_oid:$sub_path" 2>/dev/null) || continue
+        # 로컬에 체크아웃되지 않은 서브모듈은 판정 불가 → 건너뛴다
+        [ -e "$sub_path/.git" ] || continue
+        if ! sub_contains "$sub_path" "$sub_sha"; then
+            git -C "$sub_path" fetch -q origin 2>/dev/null || true
+            sub_contains "$sub_path" "$sub_sha" || SUB_BAD="${SUB_BAD}${sub_path} ${sub_sha}"$'\n'
+        fi
+    done
+
+    if [ -n "$SUB_BAD" ]; then
+        echo ""
+        echo "❌ PUSH BLOCKED: 원격에 없는 서브모듈 커밋을 가리키고 있다"
+        echo ""
+        printf '%s' "$SUB_BAD" | while read -r p s; do
+            echo "   $p -> $s"
+        done
+        echo ""
+        echo "   CI 가 이 커밋을 받지 못해 images 워크플로가 죽는다."
+        echo "   Fix: 해당 서브모듈에서 먼저 push 한 뒤 본체를 push"
+        echo "        git -C <submodule> push"
+        echo ""
+        exit 1
+    fi
+done
+
+# --- Check 4: 레이어/배선 게이트 (ADR-0083 / 0082 / Flyway) ---
+# `check` 에 붙어 있지만 CI 도 로컬도 보통 `test` 만 돌린다 — Kotlin 이 섞인 push 에서만 직접 부른다.
+# 텍스트 스캔이라 컴파일하지 않는다 (측정 ~7s).
+if [ -n "$KT_TOUCHED" ]; then
+    echo "▶ 레이어/배선 게이트 (verifyLayerDependencies · verifyFlywayWiring · verifyExternalApiQuota)"
+    if ! ./gradlew -q verifyLayerDependencies verifyFlywayWiring verifyExternalApiQuota; then
+        echo ""
+        echo "❌ PUSH BLOCKED: 구조 게이트 위반 (ADR-0083)"
+        echo ""
+        echo "   허용목록에 새 항목을 넣어 통과시키지 않는다 — 코드를 고친다."
+        echo "   표준: docs/conventions/package-structure.md · 체크리스트: docs/standards/new-domain-checklist.md"
+        echo ""
+        exit 1
+    fi
+fi
+
+exit 0

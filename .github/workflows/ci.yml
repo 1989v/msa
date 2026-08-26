@@ -3,7 +3,7 @@ name: ci
 # PR/main 머지 전 사전 검증.
 #
 # 네 job (병렬):
-#   - compile-gate       : Kotlin/Java 컴파일 검증 (test 는 미포함)
+#   - compile-gate       : 구조 게이트(ADR-0083) + Kotlin/Java 컴파일 검증 (test 는 미포함)
 #   - test-gate          : 변경된 JVM 서비스만 ./gradlew test (PR 전용)
 #   - yaml-validate      : application*.yml syntax + duplicate key 검증
 #   - kustomize-validate : k8s overlay 렌더 검증
@@ -30,7 +30,7 @@ concurrency:
 
 jobs:
   compile-gate:
-    name: Kotlin/Java compile (compile only, no test)
+    name: 구조 게이트 + Kotlin/Java compile (no test)
     runs-on: ubuntu-24.04-arm   # public repo + arm64 무료
     timeout-minutes: 20
     steps:
@@ -71,6 +71,11 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+
+      # 구조 게이트는 `check` 에 붙어 있는데 CI 는 `test` 만 돈다 → 여기서 직접 부른다.
+      # 텍스트 스캔이라 컴파일 없이 수 초에 끝나고, 컴파일보다 먼저 실패해야 신호가 빠르다.
+      - name: ./gradlew verifyLayerDependencies verifyFlywayWiring verifyExternalApiQuota
+        run: ./gradlew verifyLayerDependencies verifyFlywayWiring verifyExternalApiQuota --no-daemon
 
       - name: ./gradlew compileKotlin compileJava
         run: ./gradlew compileKotlin compileJava --no-daemon
@@ -126,7 +131,7 @@ jobs:
           set -euo pipefail
 
           # 서비스 → 테스트 태스크 매핑은 images.yml 의 매핑과 동일하게 유지할 것
-          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation"
+          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot place quant recommendation"
 
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA"...HEAD)
           echo "── 변경 파일 ($(echo "$CHANGED_FILES" | wc -l) 개):"
@@ -150,8 +155,13 @@ jobs:
                 inventory/*|warehouse/*|fulfillment/*|order/*|member/*|wishlist/*|commerce/*)           SVCS+=" commerce" ;;
                 analytics/*)                               SVCS+=" analytics" ;;
                 experiment/*)                              SVCS+=" experiment" ;;
-                code-dictionary/*)                         SVCS+=" code-dictionary" ;;
+                # code-dictionary:app 에 폴드된 모듈 — 여기 빠지면 그 도메인은 PR 에서 테스트가 한 건도 안 돈다
+                #   game (ADR-0059) · deal (ADR-0069) · blog (ADR-0072) · ranking (ADR-0081)
+                ranking/ingest/*)                          ;;   # 파이썬 배치 — JVM 테스트 대상 아님
+                code-dictionary/*|game/*|deal/*|blog/*|ranking/*) SVCS+=" code-dictionary" ;;
                 chatbot/*)                                 SVCS+=" chatbot" ;;
+                place/ingest/*)                            ;;   # 파이썬 배치
+                place/*)                                   SVCS+=" place" ;;
                 quant/app/*|quant/domain/*)                SVCS+=" quant" ;;
                 recommendation/app/*|recommendation/domain/*) SVCS+=" recommendation" ;;
               esac
