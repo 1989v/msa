@@ -16,8 +16,9 @@ deal/blog 과 같은 형태 — 전용 datasource 를 두지 않는다.
 
 ## 구조 상태 (ADR-0083)
 
-**변종 C — 미준수.** Port/Adapter 가 없고 서비스 4개가 `JpaRepository`/`JpaEntity` 를 직접 주입한다 (import 20줄).
-플랜 **P2-1** (세 모듈 중 첫 순서 — 가장 작다): `application/{entity}/port` + adapter 신설, 스냅샷 배치도 Port 경유.
+표준 준수 (2026-08-26, 플랜 P2-1 완료) — `application/{ranking,gas}/{usecase,port,service,dto}` + `infrastructure/persistence/adapter`.
+UseCase 인터페이스 5 · Port 4 · Adapter 4. 서비스는 도메인 모델(`GasStation`·`RankingBoard`·`RankingEntry`)만 다루고
+JSON payload 직렬화·유종 가격 행 동기화는 어댑터가 한다. 테스트는 Port MockK.
 
 ## Commands
 

@@ -18,6 +18,7 @@ interface RankingBoardJpaRepository : JpaRepository<RankingBoardJpaEntity, Long>
 
 interface RankingSnapshotJpaRepository : JpaRepository<RankingSnapshotJpaEntity, Long> {
     fun findFirstByBoardIdOrderByCapturedAtDesc(boardId: Long): RankingSnapshotJpaEntity?
+    fun findByCapturedAtBefore(threshold: Instant): List<RankingSnapshotJpaEntity>
     fun deleteByBoardIdAndCapturedAtBefore(boardId: Long, threshold: Instant): Int
 }
 

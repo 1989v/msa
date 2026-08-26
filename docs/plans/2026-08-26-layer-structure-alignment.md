@@ -70,8 +70,8 @@ val dirPackageExempt = mapOf(
 
 | 순서 | 모듈 | 위반 파일 | import | 비고 |
 |---|---|---|---|---|
-| P2-1 | `ranking/feature` | 4 | 20 | 포트 디렉토리 없음. 스냅샷 배치도 서비스 — 배치는 Port 경유로 |
-| P2-2 | `deal/feature` | 3 | 12 | `application/port`·`persistence/adapter` 디렉토리가 **이미 있다** — 그 안에 채운다 |
+| P2-1 ✅ 2026-08-26 | `ranking/feature` | 4 | 20 | 완료 — UseCase 5 · Port 4 · Adapter 4, allowlist 제거 |
+| P2-2 | `deal/feature` | 3 | 12 | 포트 디렉토리는 있으나 **비어 있다**(파일 0) — 순수 변종 C |
 | P2-3 | `blog/feature` | 9 | 41 | 가장 큼. `BlogPostJpaEntity` 를 직접 돌려주는 자리가 많다 — 도메인 모델(`blog/domain`)로 매핑 |
 
 **검증**: 모듈 test + `:code-dictionary:app:test`(컨텍스트 로드) + 게이트. 공개 API 응답 JSON 이 이전과

@@ -3,7 +3,9 @@ package com.kgd.ranking.infrastructure.persistence.entity
 import com.kgd.ranking.domain.model.BoardStatus
 import com.kgd.ranking.domain.model.RankingBoard
 import com.kgd.ranking.domain.model.RankingDomain
+import com.kgd.ranking.domain.model.RankingEntry
 import com.kgd.ranking.domain.model.RankingMetric
+import com.kgd.ranking.domain.model.RankingSnapshot
 import com.kgd.ranking.domain.model.SortDirection
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -108,7 +110,31 @@ class RankingBoardJpaEntity(
         unit = unit,
         sourceLabel = sourceLabel,
         status = status,
+        latestSnapshotId = latestSnapshotId,
     )
+
+    /** 도메인의 변경을 관리 엔티티에 반영한다 — 관측값은 null 로 되돌리지 않는다 (entity-mutation.md) */
+    fun applyFrom(board: RankingBoard) {
+        updateDisplay(board.scopeName, board.title, board.subtitle, board.unit, board.sourceLabel)
+        board.latestSnapshotId?.let { publishSnapshot(it) }
+    }
+
+    companion object {
+        fun fromDomain(board: RankingBoard) = RankingBoardJpaEntity(
+            id = board.id,
+            slug = board.slug,
+            domain = board.domain,
+            metric = board.metric,
+            direction = board.direction,
+            scopeKey = board.scopeKey,
+            scopeName = board.scopeName,
+            title = board.title,
+            subtitle = board.subtitle,
+            unit = board.unit,
+            sourceLabel = board.sourceLabel,
+            status = board.status,
+        ).also { entity -> board.latestSnapshotId?.let { entity.publishSnapshot(it) } }
+    }
 }
 
 @Entity
@@ -125,7 +151,18 @@ class RankingSnapshotJpaEntity(
 
     @Column(name = "entry_count", nullable = false)
     val entryCount: Int = 0,
-)
+) {
+    fun toDomain() = RankingSnapshot(id = id, boardId = boardId, capturedAt = capturedAt, entryCount = entryCount)
+
+    companion object {
+        fun fromDomain(snapshot: RankingSnapshot) = RankingSnapshotJpaEntity(
+            id = snapshot.id,
+            boardId = snapshot.boardId,
+            capturedAt = snapshot.capturedAt,
+            entryCount = snapshot.entryCount,
+        )
+    }
+}
 
 /**
  * 순위 한 줄.
@@ -160,4 +197,26 @@ class RankingEntryJpaEntity(
 
     @Column(columnDefinition = "json")
     val payload: String? = null,
-)
+) {
+    /** [payload] 의 JSON 역직렬화는 어댑터가 한다 — 엔티티는 문자열만 안다 */
+    fun toDomain(payload: Map<String, Any?>) = RankingEntry(
+        rank = rankNo,
+        subjectKey = subjectKey,
+        subjectName = subjectName,
+        score = score,
+        prevRank = prevRank,
+        payload = payload,
+    )
+
+    companion object {
+        fun fromDomain(snapshotId: Long, entry: RankingEntry, payload: String?) = RankingEntryJpaEntity(
+            snapshotId = snapshotId,
+            rankNo = entry.rank,
+            subjectKey = entry.subjectKey,
+            subjectName = entry.subjectName,
+            score = entry.score,
+            prevRank = entry.prevRank,
+            payload = payload,
+        )
+    }
+}

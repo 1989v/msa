@@ -1,7 +1,7 @@
 package com.kgd.ranking
 
-import com.kgd.ranking.application.dto.GasStationResponse
-import com.kgd.ranking.application.dto.GasStationUpsertItem
+import com.kgd.ranking.application.gas.dto.GasStationResponse
+import com.kgd.ranking.application.gas.dto.GasStationUpsertItem
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.ints.shouldBeGreaterThan

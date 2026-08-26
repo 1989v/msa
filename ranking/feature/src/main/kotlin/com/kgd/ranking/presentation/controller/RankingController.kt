@@ -1,10 +1,12 @@
 package com.kgd.ranking.presentation.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.ranking.application.dto.RankingBoardDetail
-import com.kgd.ranking.application.dto.RankingBoardSummary
-import com.kgd.ranking.application.dto.RankingScopeResponse
-import com.kgd.ranking.application.service.RankingQueryService
+import com.kgd.ranking.application.ranking.dto.RankingBoardDetail
+import com.kgd.ranking.application.ranking.dto.RankingBoardSummary
+import com.kgd.ranking.application.ranking.dto.RankingScopeResponse
+import com.kgd.ranking.application.ranking.usecase.GetRankingBoardUseCase
+import com.kgd.ranking.application.ranking.usecase.GetRankingBoardsUseCase
+import com.kgd.ranking.application.ranking.usecase.GetRankingScopesUseCase
 import com.kgd.ranking.domain.model.RankingDomain
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -20,7 +22,9 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/ranking")
 class RankingController(
-    private val rankingQueryService: RankingQueryService,
+    private val getRankingBoards: GetRankingBoardsUseCase,
+    private val getRankingBoard: GetRankingBoardUseCase,
+    private val getRankingScopes: GetRankingScopesUseCase,
 ) {
 
     @GetMapping("/boards")
@@ -28,13 +32,13 @@ class RankingController(
         @RequestParam(required = false) domain: RankingDomain?,
         @RequestParam(required = false) scope: String?,
     ): ApiResponse<List<RankingBoardSummary>> =
-        ApiResponse.success(rankingQueryService.boards(domain, scope))
+        ApiResponse.success(getRankingBoards.execute(GetRankingBoardsUseCase.Query(domain, scope)))
 
     @GetMapping("/boards/{slug}")
     fun board(@PathVariable slug: String): ApiResponse<RankingBoardDetail> =
-        ApiResponse.success(rankingQueryService.board(slug))
+        ApiResponse.success(getRankingBoard.execute(slug))
 
     @GetMapping("/gas/areas")
     fun gasAreas(): ApiResponse<List<RankingScopeResponse>> =
-        ApiResponse.success(rankingQueryService.scopes(RankingDomain.GAS_STATION))
+        ApiResponse.success(getRankingScopes.execute(RankingDomain.GAS_STATION))
 }

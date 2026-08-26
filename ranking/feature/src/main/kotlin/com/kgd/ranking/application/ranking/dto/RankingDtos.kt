@@ -1,4 +1,4 @@
-package com.kgd.ranking.application.dto
+package com.kgd.ranking.application.ranking.dto
 
 import com.kgd.ranking.domain.model.Movement
 import java.math.BigDecimal

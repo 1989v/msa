@@ -1,7 +1,8 @@
-package com.kgd.ranking.application.dto
+package com.kgd.ranking.application.gas.dto
 
-import com.kgd.ranking.infrastructure.persistence.entity.GasStationJpaEntity
-import com.kgd.ranking.infrastructure.persistence.entity.GasStationPriceJpaEntity
+import com.kgd.ranking.domain.model.GasPrice
+import com.kgd.ranking.domain.model.GasStation
+import java.time.Instant
 import java.math.BigDecimal
 import java.time.LocalDate
 
@@ -42,7 +43,31 @@ data class GasStationUpsertItem(
     val hasCvs: Boolean? = null,
     val is24h: Boolean? = null,
     val prices: List<GasPriceItem> = emptyList(),
-)
+) {
+    fun toDomain(syncedAt: Instant) = GasStation(
+        id = null,
+        opinetId = opinetId,
+        name = name,
+        brandCode = brandCode,
+        brandName = brandName,
+        isSelf = isSelf,
+        katecX = katecX,
+        katecY = katecY,
+        latitude = latitude,
+        longitude = longitude,
+        areaCode = areaCode,
+        areaName = areaName,
+        roadAddress = roadAddress,
+        jibunAddress = jibunAddress,
+        tel = tel,
+        hasCarWash = hasCarWash,
+        hasMaintenance = hasMaintenance,
+        hasCvs = hasCvs,
+        is24h = is24h,
+        syncedAt = syncedAt,
+        prices = prices.map { GasPrice(it.productCode, it.price, it.tradedAt) },
+    )
+}
 
 data class GasStationBulkRequest(val stations: List<GasStationUpsertItem>)
 
@@ -71,7 +96,7 @@ data class GasStationResponse(
     val prices: List<GasPriceItem>,
 ) {
     companion object {
-        fun of(station: GasStationJpaEntity, prices: List<GasStationPriceJpaEntity>) = GasStationResponse(
+        fun of(station: GasStation) = GasStationResponse(
             opinetId = station.opinetId,
             name = station.name,
             brandCode = station.brandCode,
@@ -90,7 +115,7 @@ data class GasStationResponse(
             hasMaintenance = station.hasMaintenance,
             hasCvs = station.hasCvs,
             is24h = station.is24h,
-            prices = prices.map { GasPriceItem(it.productCode, it.price, it.tradedAt) },
+            prices = station.prices.map { GasPriceItem(it.productCode, it.price, it.tradedAt) },
         )
     }
 }

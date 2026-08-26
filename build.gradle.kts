@@ -233,7 +233,6 @@ val layerGateOutside = setOf(
 // ① 허용목록 — 비우는 단계는 플랜 P2/P4
 val layerImportExempt = mapOf(
     ":blog:feature" to "변종 C — P2-3 포트 도입 후 제거",
-    ":ranking:feature" to "변종 C — P2-1",
     ":deal:feature" to "변종 C — P2-2",
     ":quant:app" to "포트가 JPA 엔티티·metrics 를 import — P4",
     ":code-dictionary:app" to "SyncService → IndexAliasManager 1건 — P4",

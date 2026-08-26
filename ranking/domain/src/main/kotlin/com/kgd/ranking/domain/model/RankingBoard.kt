@@ -29,6 +29,12 @@ data class RankingBoard(
      */
     val sourceLabel: String,
     val status: BoardStatus,
+    /**
+     * 마지막으로 공개된 스냅샷. null 이면 아직 순위가 없다.
+     *
+     * 스냅샷과 엔트리를 **다 쓴 뒤에** 갱신한다 — 먼저 걸면 조회가 반쪽 스냅샷을 읽는다.
+     */
+    val latestSnapshotId: Long? = null,
 ) {
     init {
         if (!SLUG_PATTERN.matches(slug)) {

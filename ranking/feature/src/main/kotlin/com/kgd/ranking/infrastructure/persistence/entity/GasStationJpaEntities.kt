@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import com.kgd.ranking.domain.model.GasPrice
+import com.kgd.ranking.domain.model.GasStation
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.LocalDate
@@ -142,6 +144,56 @@ class GasStationJpaEntity(
         hasCvs = other.hasCvs
         is24h = other.is24h
         syncedAt = other.syncedAt
+    }
+
+    fun toDomain(prices: List<GasStationPriceJpaEntity>) = GasStation(
+        id = id,
+        opinetId = opinetId,
+        name = name,
+        brandCode = brandCode,
+        brandName = brandName,
+        isSelf = isSelf,
+        katecX = katecX,
+        katecY = katecY,
+        latitude = latitude,
+        longitude = longitude,
+        areaCode = areaCode,
+        areaName = areaName,
+        roadAddress = roadAddress,
+        jibunAddress = jibunAddress,
+        tel = tel,
+        hasCarWash = hasCarWash,
+        hasMaintenance = hasMaintenance,
+        hasCvs = hasCvs,
+        is24h = is24h,
+        syncedAt = syncedAt,
+        prices = prices.map { GasPrice(it.productCode, it.price, it.tradedAt) },
+    )
+
+    companion object {
+        /** 가격은 별도 테이블이라 여기 담지 않는다 — 어댑터가 [GasStationPriceJpaEntity] 로 동기화한다 */
+        fun fromDomain(station: GasStation) = GasStationJpaEntity(
+            id = station.id,
+            opinetId = station.opinetId,
+            name = station.name,
+            brandCode = station.brandCode,
+            brandName = station.brandName,
+            isSelf = station.isSelf,
+            katecX = station.katecX,
+            katecY = station.katecY,
+            latitude = station.latitude,
+            longitude = station.longitude,
+            areaCode = station.areaCode,
+            areaName = station.areaName,
+            roadAddress = station.roadAddress,
+            jibunAddress = station.jibunAddress,
+            tel = station.tel,
+            hasCarWash = station.hasCarWash,
+            hasMaintenance = station.hasMaintenance,
+            hasCvs = station.hasCvs,
+            is24h = station.is24h,
+            syncedAt = station.syncedAt,
+        )
     }
 }
 

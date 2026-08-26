@@ -1,24 +1,22 @@
-package com.kgd.ranking.application.service
+package com.kgd.ranking.application.ranking.service
 
+import com.kgd.ranking.application.gas.port.GasStationRepositoryPort
+import com.kgd.ranking.application.ranking.port.RankingBoardRepositoryPort
+import com.kgd.ranking.application.ranking.port.RankingEntryRepositoryPort
+import com.kgd.ranking.application.ranking.port.RankingSnapshotRepositoryPort
+import com.kgd.ranking.application.ranking.usecase.RebuildGasBoardsUseCase
 import com.kgd.ranking.domain.model.BoardStatus
+import com.kgd.ranking.domain.model.GasStation
+import com.kgd.ranking.domain.model.Ranker
+import com.kgd.ranking.domain.model.RankingBoard
 import com.kgd.ranking.domain.model.RankingDomain
 import com.kgd.ranking.domain.model.RankingMetric
-import com.kgd.ranking.domain.model.Ranker
+import com.kgd.ranking.domain.model.RankingSnapshot
 import com.kgd.ranking.domain.model.ScoredSubject
 import com.kgd.ranking.domain.model.SortDirection
-import com.kgd.ranking.infrastructure.persistence.entity.GasStationJpaEntity
-import com.kgd.ranking.infrastructure.persistence.entity.RankingBoardJpaEntity
-import com.kgd.ranking.infrastructure.persistence.entity.RankingEntryJpaEntity
-import com.kgd.ranking.infrastructure.persistence.entity.RankingSnapshotJpaEntity
-import com.kgd.ranking.infrastructure.persistence.repository.GasStationJpaRepository
-import com.kgd.ranking.infrastructure.persistence.repository.GasStationPriceJpaRepository
-import com.kgd.ranking.infrastructure.persistence.repository.RankingBoardJpaRepository
-import com.kgd.ranking.infrastructure.persistence.repository.RankingEntryJpaRepository
-import com.kgd.ranking.infrastructure.persistence.repository.RankingSnapshotJpaRepository
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import tools.jackson.databind.ObjectMapper
 import java.math.BigDecimal
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -37,13 +35,11 @@ private val PRODUCT_NAMES = mapOf("B027" to "휘발유", "D047" to "경유")
  */
 @Service
 class GasBoardRebuildService(
-    private val boardRepository: RankingBoardJpaRepository,
-    private val snapshotRepository: RankingSnapshotJpaRepository,
-    private val entryRepository: RankingEntryJpaRepository,
-    private val stationRepository: GasStationJpaRepository,
-    private val priceRepository: GasStationPriceJpaRepository,
-    private val objectMapper: ObjectMapper,
-) {
+    private val boardRepository: RankingBoardRepositoryPort,
+    private val snapshotRepository: RankingSnapshotRepositoryPort,
+    private val entryRepository: RankingEntryRepositoryPort,
+    private val stationRepository: GasStationRepositoryPort,
+) : RebuildGasBoardsUseCase {
     companion object {
         const val TOP_N = 20
         const val RETENTION_DAYS = 30L
@@ -57,17 +53,14 @@ class GasBoardRebuildService(
      * 봐서는 알 수 없다.
      */
     @Transactional
-    fun rebuildAll(sourceLabel: String): Map<String, Int> {
+    override fun execute(command: RebuildGasBoardsUseCase.Command): RebuildGasBoardsUseCase.Result {
         val stations = stationRepository.findAll().filter { it.areaCode != null }
         if (stations.isEmpty()) {
             logger.info { "[GAS] 적재된 주유소가 없어 보드를 만들지 않는다" }
-            return mapOf("boards" to 0, "entries" to 0)
+            return RebuildGasBoardsUseCase.Result(boards = 0, entries = 0)
         }
 
-        val pricesByStation = priceRepository.findByStationIdIn(stations.mapNotNull { it.id })
-            .groupBy { it.stationId }
         val now = Instant.now()
-
         var boardCount = 0
         var entryCount = 0
 
@@ -75,8 +68,7 @@ class GasBoardRebuildService(
             val areaName = areaStations.firstNotNullOfOrNull { it.areaName } ?: areaCode
             PRODUCT_NAMES.forEach { (productCode, productName) ->
                 val subjects = areaStations.mapNotNull { station ->
-                    val price = pricesByStation[station.id].orEmpty()
-                        .firstOrNull { it.productCode == productCode } ?: return@mapNotNull null
+                    val price = station.priceOf(productCode) ?: return@mapNotNull null
                     ScoredSubject(
                         subjectKey = "gas:${station.opinetId}",
                         subjectName = station.name,
@@ -86,7 +78,7 @@ class GasBoardRebuildService(
                 }
                 if (subjects.isEmpty()) return@forEach
 
-                val board = upsertBoard(areaCode, areaName, productCode, productName, sourceLabel)
+                val board = upsertBoard(areaCode, areaName, productCode, productName, command.sourceLabel)
                 entryCount += writeSnapshot(board, subjects, now)
                 boardCount++
             }
@@ -94,7 +86,7 @@ class GasBoardRebuildService(
 
         purgeOldSnapshots(now)
         logger.info { "[GAS] 보드 ${boardCount}개 · 엔트리 ${entryCount}건 스냅샷 생성" }
-        return mapOf("boards" to boardCount, "entries" to entryCount)
+        return RebuildGasBoardsUseCase.Result(boards = boardCount, entries = entryCount)
     }
 
     private fun upsertBoard(
@@ -103,35 +95,37 @@ class GasBoardRebuildService(
         productCode: String,
         productName: String,
         sourceLabel: String,
-    ): RankingBoardJpaEntity {
+    ): RankingBoard {
         val slug = "gas-$areaCode-${productCode.lowercase()}"
         val title = "$areaName $productName 최저가"
         val subtitle = "$areaName 주유소 $productName 판매가 낮은 순"
 
         val existing = boardRepository.findBySlug(slug)
-        if (existing != null) {
-            existing.updateDisplay(areaName, title, subtitle, "원/L", sourceLabel)
-            return existing
-        }
-        return boardRepository.save(
-            RankingBoardJpaEntity(
-                slug = slug,
-                domain = RankingDomain.GAS_STATION,
-                metric = RankingMetric.FUEL_PRICE,
-                direction = SortDirection.ASC,
-                scopeKey = areaCode,
-                scopeName = areaName,
-                title = title,
-                subtitle = subtitle,
-                unit = "원/L",
-                sourceLabel = sourceLabel,
-                status = BoardStatus.OPEN,
-            ),
+        val board = existing?.copy(
+            scopeName = areaName,
+            title = title,
+            subtitle = subtitle,
+            unit = "원/L",
+            sourceLabel = sourceLabel,
+        ) ?: RankingBoard(
+            id = null,
+            slug = slug,
+            domain = RankingDomain.GAS_STATION,
+            metric = RankingMetric.FUEL_PRICE,
+            direction = SortDirection.ASC,
+            scopeKey = areaCode,
+            scopeName = areaName,
+            title = title,
+            subtitle = subtitle,
+            unit = "원/L",
+            sourceLabel = sourceLabel,
+            status = BoardStatus.OPEN,
         )
+        return boardRepository.save(board)
     }
 
     private fun writeSnapshot(
-        board: RankingBoardJpaEntity,
+        board: RankingBoard,
         subjects: List<ScoredSubject>,
         now: Instant,
     ): Int {
@@ -140,41 +134,27 @@ class GasBoardRebuildService(
         // 직전 순위는 **저장된 상위 N줄**에서만 온다. 21위에 있던 곳이 5위로 올라오면 NEW 로
         // 보이는데, "처음 순위에 들었다"는 뜻이므로 화면에서도 그게 맞다.
         val previousRanks = board.latestSnapshotId
-            ?.let { entryRepository.findBySnapshotIdOrderByRankNoAsc(it) }
+            ?.let { entryRepository.findBySnapshotId(it) }
             .orEmpty()
-            .associate { it.subjectKey to it.rankNo }
+            .associate { it.subjectKey to it.rank }
 
         val ranked = Ranker.rank(subjects, board.direction, previousRanks).take(TOP_N)
 
         val snapshot = snapshotRepository.save(
-            RankingSnapshotJpaEntity(boardId = boardId, capturedAt = now, entryCount = ranked.size),
+            RankingSnapshot(id = null, boardId = boardId, capturedAt = now, entryCount = ranked.size),
         )
         val snapshotId = snapshot.id ?: return 0
 
-        entryRepository.saveAll(
-            ranked.map { entry ->
-                RankingEntryJpaEntity(
-                    snapshotId = snapshotId,
-                    rankNo = entry.rank,
-                    subjectKey = entry.subjectKey,
-                    subjectName = entry.subjectName,
-                    score = entry.score,
-                    prevRank = entry.prevRank,
-                    payload = objectMapper.writeValueAsString(entry.payload),
-                )
-            },
-        )
+        entryRepository.saveAll(snapshotId, ranked)
 
         // 엔트리를 다 쓴 뒤에 공개한다 — 먼저 걸면 조회가 반쪽 스냅샷을 읽는다
-        board.publishSnapshot(snapshotId)
+        boardRepository.save(board.copy(latestSnapshotId = snapshotId))
         return ranked.size
     }
 
     private fun purgeOldSnapshots(now: Instant) {
         val threshold = now.minus(RETENTION_DAYS, ChronoUnit.DAYS)
-        val stale = snapshotRepository.findAll()
-            .filter { it.capturedAt.isBefore(threshold) }
-            .mapNotNull { it.id }
+        val stale = snapshotRepository.findIdsCapturedBefore(threshold)
         if (stale.isEmpty()) return
 
         entryRepository.deleteBySnapshotIdIn(stale)
@@ -182,7 +162,7 @@ class GasBoardRebuildService(
         logger.info { "[GAS] 보관기간(${RETENTION_DAYS}일) 지난 스냅샷 ${stale.size}개 정리" }
     }
 
-    private fun GasStationJpaEntity.toPayload(): Map<String, Any?> = mapOf(
+    private fun GasStation.toPayload(): Map<String, Any?> = mapOf(
         "opinetId" to opinetId,
         "brandCode" to brandCode,
         "brandName" to brandName,
