@@ -1,6 +1,6 @@
 package com.kgd.quant.presentation.dto
 
-import com.kgd.quant.application.usecase.RunBacktestCommand
+import com.kgd.quant.application.backtest.usecase.RunBacktestCommand
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
 import jakarta.validation.constraints.NotBlank

@@ -3,7 +3,7 @@ package com.kgd.quant.infrastructure.security
 /**
  * TG-P2-04 — KEK 버전 라벨 ↔ DB 컬럼 INT 변환 유틸.
  *
- * Storage 컬럼 `kek_version` 은 INT 이지만, [com.kgd.quant.application.port.security.KeyManagementService]
+ * Storage 컬럼 `kek_version` 은 INT 이지만, [com.kgd.quant.application.security.port.KeyManagementService]
  * 가 반환하는 라벨은 문자열 (예: `local-v3`, OCI key version OCID).
  *
  * ## 변환 규칙
@@ -14,7 +14,7 @@ package com.kgd.quant.infrastructure.security
  *
  * ## 사용처
  *  - [LazyReencryptionJob] — `current` 버전을 INT 로 변환해 stale row scan 쿼리에 전달.
- *  - Adapter — entity 의 `kekVersion: Int` ↔ [com.kgd.quant.application.port.security.WrappedDek.kekVersion] 라벨 변환.
+ *  - Adapter — entity 의 `kekVersion: Int` ↔ [com.kgd.quant.application.security.port.WrappedDek.kekVersion] 라벨 변환.
  *
  * ## 단순화 한계 (문서화)
  *  - OCI 환경에서 라벨 → Int 의 단조 증가가 깨질 수 있다 → lazy reencryption 의 "stale 판정" 이

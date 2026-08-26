@@ -1,7 +1,7 @@
 package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.quant.application.asset.catalog.AssetCatalogUseCase
+import com.kgd.quant.application.asset.catalog.usecase.AssetCatalogUseCase
 import com.kgd.quant.domain.asset.catalog.AssetCatalog
 import com.kgd.quant.domain.asset.catalog.AssetCatalogId
 import com.kgd.quant.domain.asset.catalog.AssetClass

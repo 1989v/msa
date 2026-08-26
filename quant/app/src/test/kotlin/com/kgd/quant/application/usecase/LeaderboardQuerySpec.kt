@@ -1,9 +1,10 @@
 package com.kgd.quant.application.usecase
 
 import com.kgd.quant.application.backtest.BacktestFixtures
-import com.kgd.quant.application.port.persistence.BacktestRunRecord
-import com.kgd.quant.application.port.persistence.BacktestRunRepositoryPort
-import com.kgd.quant.application.port.persistence.StrategyRepositoryPort
+import com.kgd.quant.application.backtest.port.BacktestRunRecord
+import com.kgd.quant.application.backtest.port.BacktestRunRepositoryPort
+import com.kgd.quant.application.strategy.port.StrategyRepositoryPort
+import com.kgd.quant.application.strategy.usecase.LeaderboardQuery
 import com.kgd.quant.domain.common.ExecutionMode
 import com.kgd.quant.domain.common.RunId
 import com.kgd.quant.domain.common.StrategyId
@@ -13,9 +14,9 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
 import java.math.BigDecimal
 import java.time.Instant
+import kotlinx.coroutines.runBlocking
 
 /**
  * LeaderboardQuery 단위 테스트.

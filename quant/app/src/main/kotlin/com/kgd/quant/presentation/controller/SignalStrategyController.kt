@@ -1,8 +1,8 @@
 package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.quant.application.usecase.ListSignalStrategiesQuery
-import com.kgd.quant.application.usecase.RegisterSignalStrategyUseCase
+import com.kgd.quant.application.strategy.usecase.ListSignalStrategiesQuery
+import com.kgd.quant.application.strategy.usecase.RegisterSignalStrategyUseCase
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.presentation.dto.CreateSignalStrategyRequest
 import com.kgd.quant.presentation.dto.SignalStrategyResponse

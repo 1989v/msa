@@ -2,7 +2,9 @@ package com.kgd.quant.application.usecase
 
 import com.kgd.quant.application.backtest.BacktestFixtures
 import com.kgd.quant.application.exception.StrategyNotFoundException
-import com.kgd.quant.application.port.persistence.StrategyRepositoryPort
+import com.kgd.quant.application.strategy.dto.StrategyDetailView
+import com.kgd.quant.application.strategy.port.StrategyRepositoryPort
+import com.kgd.quant.application.strategy.usecase.GetStrategyDetailQuery
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
 import io.kotest.assertions.throwables.shouldThrow

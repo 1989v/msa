@@ -1,5 +1,10 @@
 package com.kgd.quant.application.indicator
 
+import com.kgd.quant.application.marketdata.port.Bar
+import java.math.BigDecimal
+import java.math.RoundingMode
+import java.time.Duration
+import java.time.Instant
 import org.springframework.stereotype.Component
 import org.ta4j.core.BaseBarSeries
 import org.ta4j.core.BaseBarSeriesBuilder
@@ -7,10 +12,6 @@ import org.ta4j.core.indicators.RSIIndicator
 import org.ta4j.core.indicators.averages.EMAIndicator
 import org.ta4j.core.indicators.averages.SMAIndicator
 import org.ta4j.core.indicators.helpers.ClosePriceIndicator
-import java.math.BigDecimal
-import java.math.RoundingMode
-import java.time.Duration
-import java.time.Instant
 
 /**
  * Ta4jIndicatorCalculator — ta4j 0.18 기반 지표 계산 (ADR-0033 Phase 1 후반).

@@ -28,7 +28,21 @@
 
 ## 구조 상태 (ADR-0083)
 
-표준 준수 (2026-08-26, P4 완료) — UseCase 14개가 인터페이스 + `*Service` 구현으로 갈렸다(quant 는 자기 레이아웃 `application/{usecase,paper,live,asset,learn}` 을 유지하고 인터페이스와 서비스가 같은 패키지에 산다). `PaperAccountRepositoryPort` 는 도메인 `PaperAccount` 를 본다(엔티티 노출 제거). Micrometer 는 `QuantMetricsPort`·`QuantPhase3MetricsPort` 뒤로, `QuantChartsProperties` 는 application 소유(규칙 11). 멱등 원장은 common 엔티티(`QuantProcessedEventRepository` + `@EntityScan`, P5). 자체 Outbox(`OutboxRelay`, Postgres)는 형태가 달라 별도 검토 대상으로 남겼다.
+표준 준수 (2026-08-26, P8 완료) — **자기 레이아웃을 버리고 표준으로 옮겼다.** `application/port/` 에 몰려 있던 43개
+포트가 `application/{묶음}/port` 로 갈렸고, `usecase/`·`view/`·`service/` flat 디렉토리도 컨텍스트 안으로 접혔다.
+묶음은 엔티티(`strategy`·`backtest`·`live`·`paper`·`learn`·`chart`·`kimchi`·`audit`·`embedding`·`outbox`·`asset/catalog`)와
+**외부 시스템**(`exchange`·`marketdata`·`credential`·`notification`·`fx`·`external`·`market`·`security`·`metrics`·`discover`)
+두 축이다 — 후자는 `package-structure.md` 규칙 6 이 새로 규정한 것으로, 거래소·시세처럼 상대 시스템이 경계인
+포트를 엔티티 축에 억지로 끼우지 않는다.
+
+실매매 컨트롤러가 `KillSwitchService` 등 구상 서비스와 원장 포트를 직접 주입하던 것도 `Manage*UseCase` 4종 +
+`ListAuditEventsUseCase` 로 정리했다(결과 sealed 타입은 서비스가 아니라 UseCase 인터페이스가 소유).
+`PaperAccountRepositoryPort` 는 도메인 `PaperAccount` 를 본다(엔티티 노출 제거). Micrometer 는 `QuantMetricsPort`·
+`QuantPhase3MetricsPort` 뒤로, `QuantChartsProperties` 는 application 소유(규칙 11). 멱등 원장은 common 엔티티
+(`QuantProcessedEventRepository` + `@EntityScan`, P5). 자체 Outbox(`OutboxRelay`, Postgres)는 형태가 달라 별도 검토.
+
+**남은 부채**: `chart`·`discover`·`kimchi` 의 `*Query`·`*Calculator` 가 인터페이스 없이 컨트롤러에 직접 주입된다
+(12곳). 게이트 규칙 ④는 `service` 패키지만 보므로 못 잡는다 — 레이아웃 무관 규칙과 함께 처리한다.
 
 ## Commands
 

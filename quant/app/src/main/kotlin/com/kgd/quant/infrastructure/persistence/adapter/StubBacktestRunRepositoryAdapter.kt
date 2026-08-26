@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.BacktestRunRecord
-import com.kgd.quant.application.port.persistence.BacktestRunRepositoryPort
+import com.kgd.quant.application.backtest.port.BacktestRunRecord
+import com.kgd.quant.application.backtest.port.BacktestRunRepositoryPort
 import com.kgd.quant.domain.common.RunId
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId

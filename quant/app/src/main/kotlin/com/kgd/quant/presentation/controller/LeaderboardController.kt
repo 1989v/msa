@@ -2,8 +2,8 @@ package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.quant.application.exception.NotImplementedInPhase1Exception
-import com.kgd.quant.application.usecase.LeaderboardQuery
-import com.kgd.quant.application.view.LeaderboardEntry
+import com.kgd.quant.application.strategy.usecase.LeaderboardQuery
+import com.kgd.quant.application.strategy.dto.LeaderboardEntry
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.presentation.resolver.TenantHeader
 import jakarta.validation.constraints.Max

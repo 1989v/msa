@@ -147,11 +147,16 @@ Rule of Three 로 **세 번째 사본이 생길 때** 공유 모듈을 만든다
 | `game:sim` · `game:web` | KMP 모듈. JVM 레이어 규칙 대상이 아니다 |
 | `search:domain` | 규칙 ② 예외 — `spring-data-commons` 만 허용 |
 
-**게이트는 통과하지만 견본과 모양이 다른 두 곳** (2026-08-26 실측, 위반 아님 — 문서화로 닫는다):
+**게이트는 통과하지만 견본과 모양이 다른 곳** (2026-08-26 실측, 위반 아님 — 문서화로 닫는다).
+
+> quant 는 **예외에서 빠졌다.** 처음엔 "엔티티 축이 안 잡힌다" 를 이유로 예외 표에 넣었는데,
+> 이력을 다시 보니 그런 결정이 내려진 적이 없었다 — 규약(2026-03-18)이 이미 있는데 quant 포트가
+> 2026-04-25 에 flat 으로 만들어졌고, quant 의 어떤 ADR·스펙도 패키지 구조를 규정하지 않았다.
+> 근거 없는 사후 정당화였으므로 철회하고 표준으로 옮겼다. 대신 규약의 진짜 빈칸(외부 시스템 포트를
+> 엔티티 축에 어떻게 놓나)을 `package-structure.md` 규칙 6 에 채웠다.
 
 | 모듈 | 모양 | 왜 그대로 두나 |
 |---|---|---|
-| `quant:app` | `application/{port,usecase,service,view}` 플랫 구조와 `application/paper/{port,usecase}` 엔티티 구조가 공존 (플랫 port 43 · usecase 20) | 도메인이 전략·백테스트·페이퍼·실매매로 갈리는데 엔티티 축이 하나로 안 잡힌다. 재배치 비용이 크고 얻는 것이 이름뿐이다. quant 는 자기 레이아웃을 `quant/CLAUDE.md` 에 적어 둔다 |
 | `search:app` · `search:batch` | `com.kgd.search.{bandit,config,search}` · `com.kgd.search.job` 이 세 레이어 **밖** 최상위에 있다 | 규칙 ③(디렉토리==패키지)은 만족한다. 다만 레이어 밖이라 **규칙 ①·④의 시야에도 없다** — `bandit` 패키지가 커지면 검사되지 않는 면이 함께 커진다. 다음에 이 패키지를 손댈 때 `application`/`infrastructure` 로 접는다 |
 
 ### 7) 기존 위반 정리 순서

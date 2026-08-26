@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.KillSwitchRepositoryPort
+import com.kgd.quant.application.live.port.KillSwitchRepositoryPort
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.KillSwitch

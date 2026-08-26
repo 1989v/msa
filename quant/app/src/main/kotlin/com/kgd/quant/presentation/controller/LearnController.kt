@@ -1,7 +1,7 @@
 package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.quant.application.learn.IndicatorContentUseCase
+import com.kgd.quant.application.learn.usecase.IndicatorContentUseCase
 import com.kgd.quant.domain.learn.ContentId
 import com.kgd.quant.domain.learn.IndicatorCategory
 import com.kgd.quant.domain.learn.IndicatorContent

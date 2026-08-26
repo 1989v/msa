@@ -4,7 +4,7 @@ import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.kgd.quant.application.port.external.NewsPort
+import com.kgd.quant.application.external.port.NewsPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.NewsItem
 import com.kgd.quant.domain.asset.NewsKind

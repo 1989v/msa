@@ -1,11 +1,12 @@
 package com.kgd.quant.infrastructure.security.kms
 
-import com.kgd.quant.application.port.security.KeyManagementService
+import com.kgd.quant.application.security.port.KeyManagementService
+import com.kgd.quant.application.security.port.WrappedDek
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
-import kotlinx.coroutines.runBlocking
 import java.security.SecureRandom
+import kotlinx.coroutines.runBlocking
 
 /**
  * TG-P2-03.6 — Adapter 3종 (LocalFile / Fake / OciVault skip) 모두가 동일 Port

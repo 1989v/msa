@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.state
 
-import com.kgd.quant.application.port.state.KillSwitchStatePort
+import com.kgd.quant.application.live.port.KillSwitchStatePort
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.KillSwitchSnapshot

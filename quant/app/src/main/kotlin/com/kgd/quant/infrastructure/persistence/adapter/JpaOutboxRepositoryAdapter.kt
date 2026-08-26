@@ -1,8 +1,8 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
 import tools.jackson.databind.ObjectMapper
-import com.kgd.quant.application.port.persistence.OutboxRecord
-import com.kgd.quant.application.port.persistence.OutboxRepositoryPort
+import com.kgd.quant.application.outbox.port.OutboxRecord
+import com.kgd.quant.application.outbox.port.OutboxRepositoryPort
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.event.DomainEvent
 import com.kgd.quant.infrastructure.persistence.entity.OutboxEntity

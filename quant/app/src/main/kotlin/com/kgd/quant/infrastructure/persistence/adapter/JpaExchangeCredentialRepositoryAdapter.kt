@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.ExchangeCredentialRepositoryPort
+import com.kgd.quant.application.credential.port.ExchangeCredentialRepositoryPort
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.credential.Exchange
 import com.kgd.quant.domain.credential.ExchangeCredential

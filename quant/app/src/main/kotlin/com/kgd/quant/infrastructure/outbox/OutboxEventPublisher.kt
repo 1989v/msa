@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.outbox
 
-import com.kgd.quant.application.port.persistence.OutboxRepositoryPort
+import com.kgd.quant.application.outbox.port.OutboxRepositoryPort
 import com.kgd.quant.domain.event.DomainEvent
 import com.kgd.quant.domain.event.EventPublisher
 import org.springframework.stereotype.Component

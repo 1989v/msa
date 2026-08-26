@@ -1,7 +1,7 @@
 package com.kgd.quant.application.live
 
-import tools.jackson.module.kotlin.jacksonMapperBuilder
-import com.kgd.quant.application.port.persistence.AuditEventRepositoryPort
+import com.kgd.quant.application.audit.port.AuditEventRepositoryPort
+import com.kgd.quant.application.live.service.AuditChainService
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.AuditEvent
 import com.kgd.quant.domain.live.AuditEventType
@@ -13,8 +13,9 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.runBlocking
 import java.time.Instant
+import kotlinx.coroutines.runBlocking
+import tools.jackson.module.kotlin.jacksonMapperBuilder
 
 /**
  * AuditChainServiceSpec — canonical JSON 정렬 + chain prevHash → currentHash 검증 (L8).

@@ -2,7 +2,7 @@ package com.kgd.quant.infrastructure.discover
 
 import com.kgd.quant.application.discover.MarketRanking
 import com.kgd.quant.application.discover.RankingMode
-import com.kgd.quant.application.discover.RankingPort
+import com.kgd.quant.application.discover.port.RankingPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

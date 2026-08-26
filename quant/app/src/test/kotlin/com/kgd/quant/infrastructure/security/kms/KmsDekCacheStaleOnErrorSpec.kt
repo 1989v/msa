@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.security.kms
 
-import com.kgd.quant.application.port.security.WrappedDek
+import com.kgd.quant.application.security.port.WrappedDek
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec

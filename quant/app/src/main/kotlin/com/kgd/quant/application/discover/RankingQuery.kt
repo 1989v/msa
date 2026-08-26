@@ -1,20 +1,21 @@
 package com.kgd.quant.application.discover
 
-import com.kgd.quant.application.port.persistence.AssetCatalogRepositoryPort
-import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
+import com.kgd.quant.application.asset.catalog.port.AssetCatalogRepositoryPort
+import com.kgd.quant.application.discover.port.RankingPort
+import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.catalog.AssetClass as CatalogAssetClass
 import com.kgd.quant.domain.asset.catalog.AssetSource
 import com.kgd.quant.domain.market.MarketCode
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
 import java.time.Instant
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import org.springframework.stereotype.Service
 
 /**
  * RankingQuery — ranking use case + displayName 합성.

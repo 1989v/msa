@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
 import com.kgd.quant.application.kimchi.KimchiPremium
-import com.kgd.quant.application.port.persistence.KimchiPremiumTickRepositoryPort
+import com.kgd.quant.application.kimchi.port.KimchiPremiumTickRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
 import io.github.oshai.kotlinlogging.KotlinLogging

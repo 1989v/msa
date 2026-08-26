@@ -1,14 +1,12 @@
 package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.quant.application.live.CancelLiveOrderUseCase
-import com.kgd.quant.application.live.KillSwitchService
-import com.kgd.quant.application.live.LiveModeService
-import com.kgd.quant.application.live.RiskLimitService
-import com.kgd.quant.application.live.TwoFactorService
-import com.kgd.quant.application.port.persistence.AuditEventRepositoryPort
-import com.kgd.quant.application.port.persistence.LiveOrderRecordRepositoryPort
-import com.kgd.quant.application.port.security.TwoFactorTokenStorePort
+import com.kgd.quant.application.live.usecase.CancelLiveOrderUseCase
+import com.kgd.quant.application.live.usecase.ManageKillSwitchUseCase
+import com.kgd.quant.application.live.usecase.ManageLiveModeUseCase
+import com.kgd.quant.application.live.usecase.ManageRiskLimitUseCase
+import com.kgd.quant.application.live.usecase.ManageTwoFactorUseCase
+import com.kgd.quant.application.audit.usecase.ListAuditEventsUseCase
 import com.kgd.quant.domain.common.OrderId
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
@@ -47,7 +45,7 @@ import java.time.Instant
 @RestController
 @RequestMapping("/api/v1/2fa")
 class TwoFactorController(
-    private val twoFactorService: TwoFactorService,
+    private val twoFactorService: ManageTwoFactorUseCase,
 ) {
 
     @PostMapping("/register")
@@ -71,17 +69,17 @@ class TwoFactorController(
     ): ResponseEntity<ApiResponse<TwoFactorVerifyResponse>> = runBlocking {
         val userId = tenantId.toUserId()
         when (val r = twoFactorService.verify(tenantId, userId, body.totp)) {
-            is TwoFactorService.VerificationResult.Verified ->
+            is ManageTwoFactorUseCase.VerificationResult.Verified ->
                 ResponseEntity.ok(
                     ApiResponse.success(TwoFactorVerifyResponse(r.tokenHash, r.expiresInSeconds)),
                 )
-            TwoFactorService.VerificationResult.RateLimited ->
+            ManageTwoFactorUseCase.VerificationResult.RateLimited ->
                 ResponseEntity.status(429)
                     .body(ApiResponse.error<TwoFactorVerifyResponse>("RATE_LIMITED", "too many 2FA attempts"))
-            TwoFactorService.VerificationResult.NotRegistered ->
+            ManageTwoFactorUseCase.VerificationResult.NotRegistered ->
                 ResponseEntity.status(404)
                     .body(ApiResponse.error<TwoFactorVerifyResponse>("NOT_REGISTERED", "2FA not registered"))
-            TwoFactorService.VerificationResult.Failed ->
+            ManageTwoFactorUseCase.VerificationResult.Failed ->
                 ResponseEntity.status(401)
                     .body(ApiResponse.error<TwoFactorVerifyResponse>("INVALID_OTP", "invalid TOTP or backup code"))
         }
@@ -91,7 +89,7 @@ class TwoFactorController(
 @RestController
 @RequestMapping("/api/v1/live-mode")
 class LiveModeController(
-    private val liveModeService: LiveModeService,
+    private val liveModeService: ManageLiveModeUseCase,
 ) {
     @GetMapping
     fun current(@TenantHeader tenantId: TenantId): ResponseEntity<ApiResponse<LiveModeStateResponse>> = runBlocking {
@@ -111,9 +109,9 @@ class LiveModeController(
             liveModeService.disable(tenantId, userId, body.twoFaTokenHash)
         }
         when (result) {
-            is LiveModeService.ToggleResult.Ok ->
+            is ManageLiveModeUseCase.ToggleResult.Ok ->
                 ResponseEntity.ok(ApiResponse.success(result.state.toResponse()))
-            LiveModeService.ToggleResult.TwoFaRequired ->
+            ManageLiveModeUseCase.ToggleResult.TwoFaRequired ->
                 ResponseEntity.status(401).body(
                     ApiResponse.error<LiveModeStateResponse>("TWO_FA_REQUIRED", "2FA token invalid or already used"),
                 )
@@ -124,8 +122,8 @@ class LiveModeController(
 @RestController
 @RequestMapping("/api/v1/risk-limit")
 class RiskLimitController(
-    private val riskLimitService: RiskLimitService,
-    private val tokenStore: TwoFactorTokenStorePort,
+    private val riskLimitService: ManageRiskLimitUseCase,
+    private val twoFactor: ManageTwoFactorUseCase,
 ) {
     @GetMapping
     fun current(@TenantHeader tenantId: TenantId): ResponseEntity<ApiResponse<RiskLimitResponse>> = runBlocking {
@@ -140,7 +138,7 @@ class RiskLimitController(
         @RequestBody body: RiskLimitUpdateRequest,
     ): ResponseEntity<ApiResponse<RiskLimitResponse>> = runBlocking {
         val userId = tenantId.toUserId()
-        if (!tokenStore.redeem(userId, body.twoFaTokenHash)) {
+        if (!twoFactor.redeemToken(userId, body.twoFaTokenHash)) {
             return@runBlocking ResponseEntity.status(401).body(
                 ApiResponse.error<RiskLimitResponse>("TWO_FA_REQUIRED", "2FA token invalid"),
             )
@@ -169,8 +167,8 @@ class RiskLimitController(
 @RestController
 @RequestMapping("/api/v1/kill-switch")
 class KillSwitchController(
-    private val killSwitchService: KillSwitchService,
-    private val tokenStore: TwoFactorTokenStorePort,
+    private val killSwitchService: ManageKillSwitchUseCase,
+    private val twoFactor: ManageTwoFactorUseCase,
 ) {
     @GetMapping
     fun snapshot(
@@ -195,7 +193,7 @@ class KillSwitchController(
                 ?: return@runBlocking ResponseEntity.status(401).body(
                     ApiResponse.error<Map<String, Boolean>>("TWO_FA_REQUIRED", "kill-switch off requires 2FA"),
                 )
-            if (!tokenStore.redeem(userId, token)) {
+            if (!twoFactor.redeemToken(userId, token)) {
                 return@runBlocking ResponseEntity.status(401).body(
                     ApiResponse.error<Map<String, Boolean>>("TWO_FA_REQUIRED", "2FA token invalid"),
                 )
@@ -216,7 +214,7 @@ class KillSwitchController(
         if (!body.enabled) {
             val token = body.twoFaTokenHash ?: return@runBlocking ResponseEntity.status(401)
                 .body(ApiResponse.error<Map<String, Boolean>>("TWO_FA_REQUIRED", "kill-switch off requires 2FA"))
-            if (!tokenStore.redeem(userId, token)) {
+            if (!twoFactor.redeemToken(userId, token)) {
                 return@runBlocking ResponseEntity.status(401)
                     .body(ApiResponse.error<Map<String, Boolean>>("TWO_FA_REQUIRED", "2FA token invalid"))
             }
@@ -229,8 +227,8 @@ class KillSwitchController(
 @RestController
 @RequestMapping("/api/v1/admin/kill-switch")
 class GlobalKillSwitchController(
-    private val killSwitchService: KillSwitchService,
-    private val tokenStore: TwoFactorTokenStorePort,
+    private val killSwitchService: ManageKillSwitchUseCase,
+    private val twoFactor: ManageTwoFactorUseCase,
 ) {
     @PutMapping("/global")
     fun toggleGlobal(
@@ -240,7 +238,7 @@ class GlobalKillSwitchController(
         val userId = adminId.toUserId()
         val token = body.twoFaTokenHash ?: return@runBlocking ResponseEntity.status(401)
             .body(ApiResponse.error<Map<String, Boolean>>("TWO_FA_REQUIRED", "global kill-switch requires 2FA"))
-        if (!tokenStore.redeem(userId, token)) {
+        if (!twoFactor.redeemToken(userId, token)) {
             return@runBlocking ResponseEntity.status(401)
                 .body(ApiResponse.error<Map<String, Boolean>>("TWO_FA_REQUIRED", "2FA token invalid"))
         }
@@ -252,7 +250,6 @@ class GlobalKillSwitchController(
 @RestController
 @RequestMapping("/api/v1/orders")
 class LiveOrderController(
-    private val orderRepo: LiveOrderRecordRepositoryPort,
     private val cancelUseCase: CancelLiveOrderUseCase,
 ) {
     @GetMapping
@@ -289,14 +286,14 @@ class LiveOrderController(
 @RestController
 @RequestMapping("/api/v1/audit-log")
 class AuditLogController(
-    private val auditRepo: AuditEventRepositoryPort,
+    private val listAuditEvents: ListAuditEventsUseCase,
 ) {
     @GetMapping
     fun list(
         @TenantHeader tenantId: TenantId,
         @RequestParam(required = false, defaultValue = "100") limit: Int,
     ): ResponseEntity<ApiResponse<List<AuditLogItem>>> = runBlocking {
-        val events = auditRepo.loadAscending(tenantId, limit.coerceIn(1, 1000))
+        val events = listAuditEvents.execute(tenantId, limit)
         ResponseEntity.ok(
             ApiResponse.success(events.map {
                 AuditLogItem(

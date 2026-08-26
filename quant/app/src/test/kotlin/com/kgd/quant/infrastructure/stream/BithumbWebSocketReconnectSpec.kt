@@ -1,10 +1,10 @@
 package com.kgd.quant.infrastructure.stream
 
-import tools.jackson.databind.ObjectMapper
 import com.kgd.quant.application.market.MarketDataHub
-import com.kgd.quant.application.port.marketdata.Symbol
-import com.kgd.quant.application.port.marketdata.Tick
-import com.kgd.quant.application.port.marketdata.TickSource
+import com.kgd.quant.application.marketdata.port.MarketDataSubscriber
+import com.kgd.quant.application.marketdata.port.Symbol
+import com.kgd.quant.application.marketdata.port.Tick
+import com.kgd.quant.application.marketdata.port.TickSource
 import com.kgd.quant.domain.event.EventPublisher
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
 import io.kotest.core.spec.style.BehaviorSpec
@@ -15,6 +15,7 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import java.math.BigDecimal
 import java.time.Instant
+import tools.jackson.databind.ObjectMapper
 
 /**
  * TG-P2-06 — BithumbWebSocketSubscriber 단위 검증.

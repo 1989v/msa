@@ -2,7 +2,7 @@ package com.kgd.quant.infrastructure.persistence.adapter
 
 import tools.jackson.core.type.TypeReference
 import tools.jackson.databind.ObjectMapper
-import com.kgd.quant.application.port.persistence.TwoFactorSecretRepositoryPort
+import com.kgd.quant.application.live.port.TwoFactorSecretRepositoryPort
 import com.kgd.quant.domain.twofa.TwoFactorSecret
 import com.kgd.quant.infrastructure.persistence.entity.TwoFactorSecretEntity
 import com.kgd.quant.infrastructure.persistence.repository.TwoFactorSecretJpaRepository

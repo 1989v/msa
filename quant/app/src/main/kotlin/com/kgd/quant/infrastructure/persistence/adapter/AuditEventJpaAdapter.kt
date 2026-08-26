@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.AuditEventRepositoryPort
+import com.kgd.quant.application.audit.port.AuditEventRepositoryPort
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.AuditEvent
 import com.kgd.quant.domain.live.AuditEventType

@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.IndicatorContentRepositoryPort
+import com.kgd.quant.application.learn.port.IndicatorContentRepositoryPort
 import com.kgd.quant.domain.learn.ContentId
 import com.kgd.quant.domain.learn.IndicatorCategory
 import com.kgd.quant.domain.learn.IndicatorContent

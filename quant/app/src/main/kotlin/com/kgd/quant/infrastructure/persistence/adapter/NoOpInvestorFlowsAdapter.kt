@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.InvestorFlowsPort
+import com.kgd.quant.application.external.port.InvestorFlowsPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.InvestorFlow
 import com.kgd.quant.domain.market.MarketCode

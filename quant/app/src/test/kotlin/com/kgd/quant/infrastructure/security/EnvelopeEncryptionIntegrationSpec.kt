@@ -1,14 +1,18 @@
 package com.kgd.quant.infrastructure.security
 
-import com.kgd.quant.application.port.security.WrappedDek
+import com.kgd.quant.application.security.port.WrappedDek
+import com.kgd.quant.infrastructure.metrics.QuantMetrics
 import com.kgd.quant.infrastructure.persistence.entity.ExchangeCredentialEntity
 import com.kgd.quant.infrastructure.persistence.entity.NotificationTargetEntity
 import com.kgd.quant.infrastructure.persistence.repository.ExchangeCredentialJpaRepository
 import com.kgd.quant.infrastructure.persistence.repository.NotificationTargetJpaRepository
 import com.kgd.quant.infrastructure.security.kms.FakeKmsAdapter
+import com.kgd.quant.infrastructure.security.kms.KmsDekCache
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
+import java.time.Instant
+import java.util.UUID
 import kotlinx.coroutines.runBlocking
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -23,8 +27,6 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.junit.jupiter.Testcontainers
-import java.time.Instant
-import java.util.UUID
 
 /**
  * TG-P2-04.5 / 04.7 — Testcontainers MySQL + Flyway V001 + V002 적용 통합 테스트.

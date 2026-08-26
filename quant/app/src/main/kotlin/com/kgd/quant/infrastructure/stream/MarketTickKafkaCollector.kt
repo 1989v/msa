@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.stream
 
 import com.kgd.quant.application.market.MarketDataHub
-import com.kgd.quant.application.port.marketdata.Tick
+import com.kgd.quant.application.marketdata.port.Tick
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
 import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.annotation.PostConstruct

@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.state
 
-import com.kgd.quant.application.port.security.TwoFactorTokenStorePort
+import com.kgd.quant.application.security.port.TwoFactorTokenStorePort
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.springframework.data.redis.core.StringRedisTemplate

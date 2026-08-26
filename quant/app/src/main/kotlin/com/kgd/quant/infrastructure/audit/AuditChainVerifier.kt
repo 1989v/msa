@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.audit
 
-import com.kgd.quant.application.port.notification.NotificationEvent
-import com.kgd.quant.application.port.notification.NotificationSender
+import com.kgd.quant.application.notification.port.NotificationEvent
+import com.kgd.quant.application.notification.port.NotificationSender
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
 import io.github.oshai.kotlinlogging.KotlinLogging

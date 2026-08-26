@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.AssetCatalogRepositoryPort
+import com.kgd.quant.application.asset.catalog.port.AssetCatalogRepositoryPort
 import com.kgd.quant.domain.asset.catalog.AssetCatalog
 import com.kgd.quant.domain.asset.catalog.AssetCatalogId
 import com.kgd.quant.domain.asset.catalog.AssetClass

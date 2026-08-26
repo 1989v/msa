@@ -1,5 +1,6 @@
 package com.kgd.quant.application.indicator
 
+import com.kgd.quant.application.marketdata.port.Bar
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.bigdecimal.shouldBeGreaterThan
 import io.kotest.matchers.bigdecimal.shouldBeLessThanOrEquals

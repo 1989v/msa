@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.LiveOrderRecordRepositoryPort
+import com.kgd.quant.application.live.port.LiveOrderRecordRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.common.OrderId
 import com.kgd.quant.domain.common.Price

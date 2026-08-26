@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.exchange
 
-import com.kgd.quant.application.port.exchange.SlippageModel
+import com.kgd.quant.application.exchange.port.SlippageModel
 import com.kgd.quant.domain.common.Price
 import com.kgd.quant.domain.order.OrderSide
 import org.springframework.beans.factory.annotation.Value

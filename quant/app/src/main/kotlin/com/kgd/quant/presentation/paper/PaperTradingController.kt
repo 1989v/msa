@@ -1,8 +1,8 @@
 package com.kgd.quant.presentation.paper
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.quant.application.paper.query.GetPaperStatusQuery
-import com.kgd.quant.application.paper.query.PaperStatusView
+import com.kgd.quant.application.paper.usecase.GetPaperStatusQuery
+import com.kgd.quant.application.paper.usecase.PaperStatusView
 import com.kgd.quant.application.paper.usecase.PausePaperTradingCommand
 import com.kgd.quant.application.paper.usecase.PausePaperTradingUseCase
 import com.kgd.quant.application.paper.usecase.ResumePaperTradingCommand

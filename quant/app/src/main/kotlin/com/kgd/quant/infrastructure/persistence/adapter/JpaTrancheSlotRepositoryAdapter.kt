@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.TrancheSlotRepositoryPort
+import com.kgd.quant.application.strategy.port.TrancheSlotRepositoryPort
 import com.kgd.quant.domain.common.Clock
 import com.kgd.quant.domain.common.RunId
 import com.kgd.quant.domain.common.TenantId

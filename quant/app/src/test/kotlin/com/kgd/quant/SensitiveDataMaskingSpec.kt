@@ -1,6 +1,6 @@
 package com.kgd.quant
 
-import com.kgd.quant.application.port.credential.DecryptedCredential
+import com.kgd.quant.application.credential.port.DecryptedCredential
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.credential.Exchange
 import com.kgd.quant.domain.credential.ExchangeCredential

@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.LiveModeRepositoryPort
+import com.kgd.quant.application.live.port.LiveModeRepositoryPort
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.LiveTradingMode
 import com.kgd.quant.domain.live.SuspendReason

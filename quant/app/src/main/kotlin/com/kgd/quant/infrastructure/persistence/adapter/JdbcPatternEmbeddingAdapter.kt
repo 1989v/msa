@@ -1,8 +1,8 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.EmbeddingRecord
-import com.kgd.quant.application.port.persistence.PatternEmbeddingRepositoryPort
-import com.kgd.quant.application.port.persistence.SimilarityHit
+import com.kgd.quant.application.embedding.port.EmbeddingRecord
+import com.kgd.quant.application.embedding.port.PatternEmbeddingRepositoryPort
+import com.kgd.quant.application.embedding.port.SimilarityHit
 import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode

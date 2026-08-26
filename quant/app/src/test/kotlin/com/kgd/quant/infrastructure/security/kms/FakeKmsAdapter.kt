@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.security.kms
 
-import com.kgd.quant.application.port.security.KeyManagementService
-import com.kgd.quant.application.port.security.WrappedDek
+import com.kgd.quant.application.security.port.KeyManagementService
+import com.kgd.quant.application.security.port.WrappedDek
 import java.nio.ByteBuffer
 import java.security.SecureRandom
 import javax.crypto.Cipher

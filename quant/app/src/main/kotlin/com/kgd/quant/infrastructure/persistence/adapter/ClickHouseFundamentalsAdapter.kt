@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.external.FundamentalsPort
+import com.kgd.quant.application.external.port.FundamentalsPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.Fundamentals
 import com.kgd.quant.domain.market.MarketCode

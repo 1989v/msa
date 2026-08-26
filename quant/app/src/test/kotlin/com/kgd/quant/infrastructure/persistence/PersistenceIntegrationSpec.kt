@@ -1,9 +1,9 @@
 package com.kgd.quant.infrastructure.persistence
 
-import com.kgd.quant.application.port.persistence.OrderRepositoryPort
-import com.kgd.quant.application.port.persistence.TrancheSlotRepositoryPort
-import com.kgd.quant.application.port.persistence.StrategyRepositoryPort
-import com.kgd.quant.application.port.persistence.StrategyRunRepositoryPort
+import com.kgd.quant.application.backtest.port.OrderRepositoryPort
+import com.kgd.quant.application.strategy.port.TrancheSlotRepositoryPort
+import com.kgd.quant.application.strategy.port.StrategyRepositoryPort
+import com.kgd.quant.application.strategy.port.StrategyRunRepositoryPort
 import com.kgd.quant.domain.common.ExecutionMode
 import com.kgd.quant.domain.common.OrderId
 import com.kgd.quant.domain.common.Percent

@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.security.kms
 
-import com.kgd.quant.application.port.security.KeyManagementService
-import com.kgd.quant.application.port.security.WrappedDek
+import com.kgd.quant.application.security.port.KeyManagementService
+import com.kgd.quant.application.security.port.WrappedDek
 import com.oracle.bmc.Region
 import com.oracle.bmc.auth.SimpleAuthenticationDetailsProvider
 import com.oracle.bmc.keymanagement.KmsCryptoClient

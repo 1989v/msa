@@ -55,8 +55,17 @@
 4. **bootJar 이름**: `tasks.bootJar { archiveBaseName.set("{service}") }` (app). feature 는 bootJar disabled.
 5. **디렉토리 == package 선언.** 레이어를 디렉토리에서 생략하지 않는다. 파일 경로에서 유도한 패키지와
    `package` 줄이 다르면 틀린 것이다.
-6. **Outbound Port 는 `application/{entity}/port`.** domain 모듈에 두지 않는다. 포트 시그니처에
+6. **Outbound Port 는 `application/{묶음}/port`.** domain 모듈에 두지 않는다. 포트 시그니처에
    JPA 엔티티·프레임워크 타입을 쓰지 않는다.
+
+   `{묶음}` 은 보통 **엔티티**(`inventory`·`order`)지만, **외부 시스템**도 묶음이 된다
+   (`exchange`·`marketdata`·`notification`·`fx`). 거래소 어댑터나 시세 구독처럼 우리 엔티티가 아니라
+   상대 시스템이 경계인 포트는 엔티티 축에 억지로 끼우면 이름이 거짓말이 된다. 판단 기준은
+   **"이 포트가 사라지면 무엇이 없어지나"** — 우리 데이터면 엔티티, 상대편이면 시스템 이름을 쓴다.
+
+   금지되는 것은 축이 아니라 **`application/port/` 밑에 전부 몰아넣는 flat 구조**다. 그러면 포트가
+   어느 맥락의 것인지 디렉토리가 말해주지 않고, 실제로 quant 가 43개를 그렇게 쌓아 견본이 둘로 갈렸다
+   (2026-08-26 정리).
 7. **UseCase 는 인터페이스다.** 단일 구현이라도 `@Service` 클래스로 대체하지 않는다. 컨트롤러는
    UseCase 인터페이스만 주입한다 — 게이트 규칙 ④가 `presentation → application.{entity}.service` import 를 막는다.
    **DTO 를 `service` 패키지에 두지 않는다**: 구현을 부르는 것과 타입을 쓰는 것은 다르지만 위치가 같으면

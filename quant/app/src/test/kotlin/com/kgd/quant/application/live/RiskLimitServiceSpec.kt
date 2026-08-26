@@ -1,8 +1,10 @@
 package com.kgd.quant.application.live
 
-import com.kgd.quant.application.port.persistence.RiskLimitRepositoryPort
-import com.kgd.quant.application.port.state.DailyMetrics
-import com.kgd.quant.application.port.state.RiskMetricsPort
+import com.kgd.quant.application.live.port.DailyMetrics
+import com.kgd.quant.application.live.port.RiskLimitRepositoryPort
+import com.kgd.quant.application.live.port.RiskMetricsPort
+import com.kgd.quant.application.live.service.RiskLimitService
+import com.kgd.quant.application.live.usecase.ManageRiskLimitUseCase
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.live.RiskLimit
 import com.kgd.quant.domain.live.SuspendReason
@@ -11,12 +13,12 @@ import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlinx.coroutines.runBlocking
 import java.math.BigDecimal
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import kotlinx.coroutines.runBlocking
 
 /**
  * RiskLimitServiceSpec — 사전 게이트 (PreOrderResult) + 사후 누적 (recordOrderAndCheck) (L8).
@@ -38,8 +40,8 @@ class RiskLimitServiceSpec : BehaviorSpec({
         `when`("singleOrderMaxKrw 초과") {
             then("Reject(DAILY_VOLUME_LIMIT)") {
                 val r = runBlocking { service.evaluatePreOrder(tenantId, BigDecimal("100001")) }
-                r.shouldBeInstanceOf<RiskLimitService.PreOrderResult.Reject>()
-                (r as RiskLimitService.PreOrderResult.Reject).reason shouldBe SuspendReason.DAILY_VOLUME_LIMIT
+                r.shouldBeInstanceOf<ManageRiskLimitUseCase.PreOrderResult.Reject>()
+                (r as ManageRiskLimitUseCase.PreOrderResult.Reject).reason shouldBe SuspendReason.DAILY_VOLUME_LIMIT
             }
         }
 
@@ -51,8 +53,8 @@ class RiskLimitServiceSpec : BehaviorSpec({
             )
             then("Reject(DAILY_LOSS_LIMIT)") {
                 val r = runBlocking { service.evaluatePreOrder(tenantId, BigDecimal("50000")) }
-                r.shouldBeInstanceOf<RiskLimitService.PreOrderResult.Reject>()
-                (r as RiskLimitService.PreOrderResult.Reject).reason shouldBe SuspendReason.DAILY_LOSS_LIMIT
+                r.shouldBeInstanceOf<ManageRiskLimitUseCase.PreOrderResult.Reject>()
+                (r as ManageRiskLimitUseCase.PreOrderResult.Reject).reason shouldBe SuspendReason.DAILY_LOSS_LIMIT
             }
         }
 
@@ -60,7 +62,7 @@ class RiskLimitServiceSpec : BehaviorSpec({
             coEvery { metrics.snapshot(tenantId, today) } returns DailyMetrics(BigDecimal.ZERO, BigDecimal.ZERO, 0L)
             then("Allow") {
                 val r = runBlocking { service.evaluatePreOrder(tenantId, BigDecimal("50000")) }
-                r.shouldBeInstanceOf<RiskLimitService.PreOrderResult.Allow>()
+                r.shouldBeInstanceOf<ManageRiskLimitUseCase.PreOrderResult.Allow>()
             }
         }
     }

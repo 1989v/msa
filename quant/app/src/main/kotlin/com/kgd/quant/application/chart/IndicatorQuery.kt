@@ -1,7 +1,7 @@
 package com.kgd.quant.application.chart
 
 import com.kgd.quant.application.indicator.IndicatorCalculator
-import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
+import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
 import org.springframework.stereotype.Component

@@ -1,8 +1,8 @@
 package com.kgd.quant.infrastructure.notification
 
-import com.kgd.quant.application.port.notification.NotificationPriority
-import com.kgd.quant.application.port.notification.NotificationPriorityQueue
-import com.kgd.quant.application.port.notification.PrioritizedNotification
+import com.kgd.quant.application.notification.port.NotificationPriority
+import com.kgd.quant.application.notification.port.NotificationPriorityQueue
+import com.kgd.quant.application.notification.port.PrioritizedNotification
 import kotlinx.coroutines.channels.Channel
 import org.springframework.stereotype.Component
 import java.util.concurrent.LinkedBlockingQueue

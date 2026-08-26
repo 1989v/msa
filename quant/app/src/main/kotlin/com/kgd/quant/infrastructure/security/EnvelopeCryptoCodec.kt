@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.security
 
-import com.kgd.quant.application.port.security.KeyManagementService
-import com.kgd.quant.application.port.security.WrappedDek
+import com.kgd.quant.application.security.port.KeyManagementService
+import com.kgd.quant.application.security.port.WrappedDek
 import com.kgd.quant.infrastructure.security.kms.KmsDekCache
 import org.springframework.stereotype.Component
 import java.nio.ByteBuffer

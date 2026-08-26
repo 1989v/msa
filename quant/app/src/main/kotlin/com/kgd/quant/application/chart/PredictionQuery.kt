@@ -1,9 +1,9 @@
 package com.kgd.quant.application.chart
 
 import com.kgd.quant.application.embedding.PatternEmbedder
-import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
-import com.kgd.quant.application.port.persistence.PatternEmbeddingRepositoryPort
-import com.kgd.quant.application.port.persistence.SimilarityHit
+import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
+import com.kgd.quant.application.embedding.port.PatternEmbeddingRepositoryPort
+import com.kgd.quant.application.embedding.port.SimilarityHit
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
 import org.springframework.beans.factory.ObjectProvider

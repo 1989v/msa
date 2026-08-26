@@ -2,11 +2,11 @@ package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.quant.application.exception.NotImplementedInPhase1Exception
-import com.kgd.quant.application.usecase.CreateStrategyUseCase
-import com.kgd.quant.application.usecase.GetStrategyDetailQuery
-import com.kgd.quant.application.usecase.ListStrategiesQuery
-import com.kgd.quant.application.view.StrategyDetailView
-import com.kgd.quant.application.view.StrategySummaryView
+import com.kgd.quant.application.strategy.usecase.CreateStrategyUseCase
+import com.kgd.quant.application.strategy.usecase.GetStrategyDetailQuery
+import com.kgd.quant.application.strategy.usecase.ListStrategiesQuery
+import com.kgd.quant.application.strategy.dto.StrategyDetailView
+import com.kgd.quant.application.strategy.dto.StrategySummaryView
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.presentation.dto.CreateStrategyRequest

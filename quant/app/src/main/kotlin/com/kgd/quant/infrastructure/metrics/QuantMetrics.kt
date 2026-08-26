@@ -1,8 +1,8 @@
 package com.kgd.quant.infrastructure.metrics
 
-import com.kgd.quant.application.port.notification.NotificationPriority
-import com.kgd.quant.application.port.notification.NotificationPriorityQueue
-import com.kgd.quant.application.port.metrics.QuantMetricsPort
+import com.kgd.quant.application.notification.port.NotificationPriority
+import com.kgd.quant.application.notification.port.NotificationPriorityQueue
+import com.kgd.quant.application.metrics.port.QuantMetricsPort
 import io.micrometer.core.instrument.Counter
 import io.micrometer.core.instrument.Gauge
 import io.micrometer.core.instrument.MeterRegistry
@@ -203,7 +203,7 @@ class QuantMetrics(
      *
      * @param exchange `bithumb` / `upbit` (lowercase 권장)
      * @param symbol 거래쌍 (예: `BTC_KRW`)
-     * @param source [com.kgd.quant.application.port.marketdata.TickSource] enum name (`WS` / `REST`)
+     * @param source [com.kgd.quant.application.marketdata.port.TickSource] enum name (`WS` / `REST`)
      */
     fun marketTickReceived(exchange: String, symbol: String, source: String) {
         val counter = tickReceivedCounters.computeIfAbsent(Triple(exchange, symbol, source)) {

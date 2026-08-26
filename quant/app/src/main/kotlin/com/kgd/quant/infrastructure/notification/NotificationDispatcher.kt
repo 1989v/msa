@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.notification
 
-import com.kgd.quant.application.port.notification.NotificationPriorityQueue
-import com.kgd.quant.application.port.notification.NotificationSender
+import com.kgd.quant.application.notification.port.NotificationPriorityQueue
+import com.kgd.quant.application.notification.port.NotificationSender
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -24,7 +24,7 @@ private val log = KotlinLogging.logger {}
  * TG-P2-10 — 알림 dispatcher worker.
  *
  * 단일 coroutine 으로 [NotificationPriorityQueue.dequeue] 를 무한 polling 하며
- * 꺼낸 [com.kgd.quant.application.port.notification.PrioritizedNotification] 을
+ * 꺼낸 [com.kgd.quant.application.notification.port.PrioritizedNotification] 을
  * [NotificationSender] 에 위임한다.
  *
  * ## Lifecycle

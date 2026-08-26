@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.persistence.adapter
 
-import com.kgd.quant.application.port.persistence.SignalStrategyRepositoryPort
+import com.kgd.quant.application.strategy.port.SignalStrategyRepositoryPort
 import com.kgd.quant.domain.common.StrategyId
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.domain.strategy.SignalStrategy

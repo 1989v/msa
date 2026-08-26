@@ -1,7 +1,7 @@
 package com.kgd.quant.infrastructure.security.kms
 
-import com.kgd.quant.application.port.security.KeyManagementService
-import com.kgd.quant.application.port.security.WrappedDek
+import com.kgd.quant.application.security.port.KeyManagementService
+import com.kgd.quant.application.security.port.WrappedDek
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Profile

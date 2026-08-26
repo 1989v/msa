@@ -1,8 +1,8 @@
 package com.kgd.quant.application.market
 
-import com.kgd.quant.application.port.marketdata.Symbol
-import com.kgd.quant.application.port.marketdata.Tick
-import com.kgd.quant.application.port.marketdata.TickSource
+import com.kgd.quant.application.marketdata.port.Symbol
+import com.kgd.quant.application.marketdata.port.Tick
+import com.kgd.quant.application.marketdata.port.TickSource
 import com.kgd.quant.infrastructure.metrics.QuantMetrics
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldHaveSize

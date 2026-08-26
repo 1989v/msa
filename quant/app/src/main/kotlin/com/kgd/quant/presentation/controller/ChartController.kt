@@ -3,13 +3,13 @@ package com.kgd.quant.presentation.controller
 import com.kgd.common.response.ApiResponse
 import com.kgd.quant.application.chart.FundamentalsQuery
 import com.kgd.quant.application.chart.IndicatorQuery
-import com.kgd.quant.application.chart.OrderbookPort
+import com.kgd.quant.application.chart.port.OrderbookPort
 import com.kgd.quant.application.chart.PredictionQuery
 import com.kgd.quant.application.chart.SimilarityQuery
 import com.kgd.quant.application.indicator.IndicatorCalculator
-import com.kgd.quant.application.port.external.NewsPort
-import com.kgd.quant.application.port.persistence.InvestorFlowsPort
-import com.kgd.quant.application.port.persistence.OhlcvRepositoryPort
+import com.kgd.quant.application.external.port.NewsPort
+import com.kgd.quant.application.external.port.InvestorFlowsPort
+import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
 import org.springframework.web.bind.annotation.GetMapping
@@ -79,7 +79,7 @@ class ChartController(
         @RequestParam windowEnd: String,
         @RequestParam(defaultValue = "60") windowDays: Int,
         @RequestParam(defaultValue = "20") k: Int,
-    ): ApiResponse<List<com.kgd.quant.application.port.persistence.SimilarityHit>> {
+    ): ApiResponse<List<com.kgd.quant.application.embedding.port.SimilarityHit>> {
         val hits = similarityQuery.searchSimilar(
             AssetCode(asset),
             MarketCode(market),

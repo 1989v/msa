@@ -1,6 +1,6 @@
 package com.kgd.quant.infrastructure.external
 
-import com.kgd.quant.application.port.external.NewsPort
+import com.kgd.quant.application.external.port.NewsPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.NewsItem
 import com.kgd.quant.domain.market.MarketCode
