@@ -1,5 +1,6 @@
 package com.kgd.deal.infrastructure.persistence.entity
 
+import com.kgd.deal.domain.model.OfferClick
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
@@ -31,4 +32,13 @@ class DealOfferClickJpaEntity(
 
     @Column(name = "ua_family", length = 40)
     val uaFamily: String? = null,
-)
+) {
+    companion object {
+        fun fromDomain(click: OfferClick) = DealOfferClickJpaEntity(
+            offerId = click.offerId,
+            clickedAt = click.clickedAt,
+            referrerHost = click.referrerHost,
+            uaFamily = click.uaFamily,
+        )
+    }
+}

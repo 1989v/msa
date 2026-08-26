@@ -1,11 +1,14 @@
-package com.kgd.deal.application.service
+package com.kgd.deal.application.offer.service
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.kgd.deal.domain.model.DisplayStatus
-import com.kgd.deal.infrastructure.persistence.entity.DealOfferClickJpaEntity
-import com.kgd.deal.infrastructure.persistence.repository.DealCategoryJpaRepository
-import com.kgd.deal.infrastructure.persistence.repository.DealOfferClickJpaRepository
-import com.kgd.deal.infrastructure.persistence.repository.DealOfferJpaRepository
+import com.kgd.deal.application.category.port.DealCategoryRepositoryPort
+import com.kgd.deal.application.offer.port.DealOfferClickRepositoryPort
+import com.kgd.deal.application.offer.port.DealOfferRepositoryPort
+import com.kgd.deal.application.offer.usecase.RecordDealClickUseCase
+import com.kgd.deal.application.offer.usecase.ResolveDealRedirectUseCase
+import com.kgd.deal.application.offer.usecase.ResolveDealRedirectUseCase.Decision
+import com.kgd.deal.domain.model.Offer
+import com.kgd.deal.domain.model.OfferClick
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -13,26 +16,8 @@ import java.net.URI
 import java.time.Duration
 import java.time.LocalDateTime
 
-/** slug 해석 결과 */
-sealed interface RedirectDecision {
-    /** 정상 — [targetUrl] 을 **원본 그대로** 302 로 넘긴다 */
-    data class Go(val offerId: Long, val targetUrl: String) : RedirectDecision
-
-    /** 만료·비전시 — 404 대신 카테고리 목록으로 보낸다. 프로모션은 끝나도 공유된 링크는 남는다 */
-    data class Unavailable(val categoryCode: String) : RedirectDecision
-
-    data object NotFound : RedirectDecision
-}
-
-/** 캐시에 담는 최소 스냅샷. 만료 판정은 캐시가 아니라 요청 시각으로 한다. */
-private data class OfferSnapshot(
-    val offerId: Long,
-    val targetUrl: String,
-    val status: DisplayStatus,
-    val validFrom: LocalDateTime?,
-    val validUntil: LocalDateTime?,
-    val categoryCode: String,
-)
+/** 캐시에 담는 스냅샷. 만료 판정은 캐시가 아니라 요청 시각으로 한다. */
+private data class OfferSnapshot(val offer: Offer, val categoryCode: String)
 
 /**
  * 아웃바운드 리다이렉트 (ADR-0069 §3).
@@ -42,10 +27,10 @@ private data class OfferSnapshot(
  */
 @Service
 class DealRedirectService(
-    private val offerRepository: DealOfferJpaRepository,
-    private val categoryRepository: DealCategoryJpaRepository,
-    private val clickRepository: DealOfferClickJpaRepository,
-) {
+    private val offerRepository: DealOfferRepositoryPort,
+    private val categoryRepository: DealCategoryRepositoryPort,
+    private val clickRepository: DealOfferClickRepositoryPort,
+) : ResolveDealRedirectUseCase, RecordDealClickUseCase {
 
     private val cache = Caffeine.newBuilder()
         .expireAfterWrite(Duration.ofMinutes(5))
@@ -53,15 +38,13 @@ class DealRedirectService(
         .build<String, OfferSnapshot>()
 
     @Transactional(readOnly = true)
-    fun resolve(slug: String, now: LocalDateTime = LocalDateTime.now()): RedirectDecision {
-        val snapshot = cache.get(slug) { key -> loadSnapshot(key) } ?: return RedirectDecision.NotFound
-        val live = snapshot.status == DisplayStatus.OPEN &&
-            (snapshot.validFrom == null || !now.isBefore(snapshot.validFrom)) &&
-            (snapshot.validUntil == null || now.isBefore(snapshot.validUntil))
-        return if (live) {
-            RedirectDecision.Go(snapshot.offerId, snapshot.targetUrl)
+    override fun execute(slug: String, now: LocalDateTime): Decision {
+        val snapshot = cache.get(slug) { key -> loadSnapshot(key) } ?: return Decision.NotFound
+        val offer = snapshot.offer
+        return if (offer.isVisibleAt(now)) {
+            Decision.Go(requireNotNull(offer.id), offer.targetUrl)
         } else {
-            RedirectDecision.Unavailable(snapshot.categoryCode)
+            Decision.Unavailable(snapshot.categoryCode)
         }
     }
 
@@ -73,16 +56,16 @@ class DealRedirectService(
      * [Propagation.REQUIRES_NEW] 로 조회 트랜잭션과 분리해 실패가 밖으로 번지지 않게 한다.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun recordClick(offerId: Long, referrer: String?, userAgent: String?) {
+    override fun execute(command: RecordDealClickUseCase.Command) {
         clickRepository.save(
-            DealOfferClickJpaEntity(
-                offerId = offerId,
+            OfferClick(
+                offerId = command.offerId,
                 clickedAt = LocalDateTime.now(),
-                referrerHost = referrerHost(referrer),
-                uaFamily = uaFamily(userAgent),
+                referrerHost = referrerHost(command.referrer),
+                uaFamily = uaFamily(command.userAgent),
             ),
         )
-        offerRepository.increaseClickCount(offerId)
+        offerRepository.increaseClickCount(command.offerId)
     }
 
     /** 어드민이 오퍼를 손댔을 때 — 캐시가 옛 링크를 최대 5분 더 내보내지 않게 한다 */
@@ -92,17 +75,8 @@ class DealRedirectService(
 
     private fun loadSnapshot(slug: String): OfferSnapshot? {
         val offer = offerRepository.findBySlug(slug) ?: return null
-        val categoryCode = categoryRepository.findById(offer.categoryId)
-            .map { it.code }
-            .orElse("")
-        return OfferSnapshot(
-            offerId = requireNotNull(offer.id),
-            targetUrl = offer.targetUrl,
-            status = offer.status,
-            validFrom = offer.validFrom,
-            validUntil = offer.validUntil,
-            categoryCode = categoryCode,
-        )
+        val categoryCode = categoryRepository.findById(offer.categoryId)?.code.orEmpty()
+        return OfferSnapshot(offer, categoryCode)
     }
 
     companion object {

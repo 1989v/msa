@@ -1,5 +1,6 @@
-package com.kgd.deal.application.dto
+package com.kgd.deal.application.offer.dto
 
+import com.kgd.deal.application.category.dto.DealCategoryResponse
 import com.kgd.deal.domain.model.DisplayStatus
 import com.kgd.deal.domain.model.LinkStatus
 import com.kgd.deal.domain.model.RevenueType
@@ -9,12 +10,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 // ─── 공개 ───
-
-data class DealCategoryResponse(
-    val code: String,
-    val label: String,
-    val tagline: String?,
-)
 
 /**
  * 공개 오퍼 응답.
@@ -40,24 +35,6 @@ data class DealCategorySection(
 )
 
 // ─── 어드민 ───
-
-data class DealCategoryAdminResponse(
-    val id: Long,
-    val code: String,
-    val label: String,
-    val tagline: String?,
-    val status: DisplayStatus,
-    val orderNo: Int,
-    val offerCount: Long,
-)
-
-data class DealCategoryRequest(
-    @field:NotBlank @field:Size(max = 40) val code: String,
-    @field:NotBlank @field:Size(max = 80) val label: String,
-    @field:Size(max = 200) val tagline: String? = null,
-    val status: DisplayStatus = DisplayStatus.OPEN,
-    val orderNo: Int = 0,
-)
 
 data class DealOfferAdminResponse(
     val id: Long,

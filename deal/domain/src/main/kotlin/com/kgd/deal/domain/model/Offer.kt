@@ -26,6 +26,12 @@ data class Offer(
     val validFrom: LocalDateTime?,
     val validUntil: LocalDateTime?,
     val orderNo: Int,
+    // ─── 관측값 — 어드민 편집 대상이 아니다. 저장 시 무시되고 시스템만 갱신한다 (entity-mutation.md) ───
+    val clickCount: Long = 0,
+    val linkStatus: LinkStatus = LinkStatus.UNKNOWN,
+    val linkStatusCode: Int? = null,
+    val linkCheckedAt: LocalDateTime? = null,
+    val updatedAt: LocalDateTime? = null,
 ) {
     init {
         if (!SLUG_PATTERN.matches(slug)) {

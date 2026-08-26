@@ -1,7 +1,8 @@
 package com.kgd.deal.presentation.controller
 
-import com.kgd.deal.application.service.DealRedirectService
-import com.kgd.deal.application.service.RedirectDecision
+import com.kgd.deal.application.offer.usecase.RecordDealClickUseCase
+import com.kgd.deal.application.offer.usecase.ResolveDealRedirectUseCase
+import com.kgd.deal.application.offer.usecase.ResolveDealRedirectUseCase.Decision
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -22,7 +23,8 @@ private val log = KotlinLogging.logger {}
  */
 @RestController
 class DealRedirectController(
-    private val redirectService: DealRedirectService,
+    private val resolveRedirect: ResolveDealRedirectUseCase,
+    private val recordClick: RecordDealClickUseCase,
 ) {
 
     @GetMapping("/go/{slug}")
@@ -30,19 +32,19 @@ class DealRedirectController(
         @PathVariable slug: String,
         @RequestHeader(value = HttpHeaders.REFERER, required = false) referer: String?,
         @RequestHeader(value = HttpHeaders.USER_AGENT, required = false) userAgent: String?,
-    ): ResponseEntity<Void> = when (val decision = redirectService.resolve(slug)) {
-        is RedirectDecision.Go -> {
+    ): ResponseEntity<Void> = when (val decision = resolveRedirect.execute(slug)) {
+        is Decision.Go -> {
             recordQuietly(decision.offerId, slug, referer, userAgent)
             // target_url 은 원본 그대로. 파라미터를 재조립하면 네트워크 약관 위반이고
             // 트래킹 쿠키가 깨져 수익 자체가 사라진다.
             redirect(decision.targetUrl)
         }
 
-        is RedirectDecision.Unavailable ->
+        is Decision.Unavailable ->
             // 프로모션은 끝나도 공유된 링크는 남는다. 404 로 끊지 않고 같은 분류의 목록으로 보낸다.
             redirect("/?category=${decision.categoryCode}")
 
-        RedirectDecision.NotFound -> ResponseEntity.notFound().build()
+        Decision.NotFound -> ResponseEntity.notFound().build()
     }
 
     /**
@@ -50,7 +52,7 @@ class DealRedirectController(
      * 수익 링크가 통째로 죽는다 — 클릭 수는 다시 셀 수 있지만 놓친 방문은 못 되돌린다.
      */
     private fun recordQuietly(offerId: Long, slug: String, referer: String?, userAgent: String?) {
-        runCatching { redirectService.recordClick(offerId, referer, userAgent) }
+        runCatching { recordClick.execute(RecordDealClickUseCase.Command(offerId, referer, userAgent)) }
             .onFailure { log.warn(it) { "클릭 적재 실패 — 리다이렉트는 계속한다. slug=$slug" } }
     }
 

@@ -155,6 +155,11 @@ class DealOfferJpaEntity(
         validFrom = validFrom,
         validUntil = validUntil,
         orderNo = orderNo,
+        clickCount = clickCount,
+        linkStatus = linkStatus,
+        linkStatusCode = linkStatusCode,
+        linkCheckedAt = linkCheckedAt,
+        updatedAt = updatedAt,
     )
 
     companion object {

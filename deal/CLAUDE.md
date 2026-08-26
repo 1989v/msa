@@ -10,14 +10,16 @@
 | Gradle path | 역할 |
 |---|---|
 | `:deal:domain` | Pure Kotlin 도메인 (`DealCategory`, `Offer`, `DealEnums`) |
-| `:deal:feature` | 라이브러리(비-bootable) — 컨트롤러·서비스·JPA. 스키마는 code-dictionary 와 공유 |
+| `:deal:feature` | 라이브러리(비-bootable) — 컨트롤러·UseCase·Port/Adapter·JPA. 스키마는 code-dictionary 와 공유 |
 
 FE 는 portal-fe `deal.1989v.com` (같은 번들·호스트 분기).
 
 ## 구조 상태 (ADR-0083)
 
-**변종 C — 부분 준수.** `application/port` 와 `persistence/adapter` 디렉토리는 **있는데** 서비스 3개가 `JpaRepository` 를
-직접 주입한다 (import 12줄). 플랜 **P2-2**: 있는 디렉토리를 채우고 서비스는 Port 만 본다.
+표준 준수 (2026-08-26, 플랜 P2-2 완료) — `application/{category,offer}/{usecase,port,dto}` + `offer/service` 3종(Query/Admin/Redirect)
++ `infrastructure/persistence/adapter` 3종. UseCase 인터페이스 16 · Port 3. 관측값(클릭 수·링크 상태)은 도메인 `Offer` 의
+기본값 필드로 실려 어드민 응답이 엔티티 없이 나가고, 저장 시에는 무시된다(entity-mutation). `infrastructure/linkcheck` 는
+배치 전용이라 JPA 를 직접 쓴다(인프라→인프라, 규칙 위반 아님).
 
 ## Commands
 

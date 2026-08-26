@@ -1,7 +1,8 @@
 package com.kgd.deal
 
-import com.kgd.deal.application.service.DealRedirectService
-import com.kgd.deal.application.service.RedirectDecision
+import com.kgd.deal.application.offer.usecase.RecordDealClickUseCase
+import com.kgd.deal.application.offer.usecase.ResolveDealRedirectUseCase
+import com.kgd.deal.application.offer.usecase.ResolveDealRedirectUseCase.Decision
 import com.kgd.deal.presentation.controller.DealRedirectController
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -14,22 +15,23 @@ import org.springframework.http.HttpStatus
 class DealRedirectControllerTest : BehaviorSpec({
 
     // 블록마다 새 목을 쓴다 — 스펙 단위로 공유하면 앞 블록의 호출이 뒤 블록의 verify 를 오염시킨다
-    fun controllerWith(decision: RedirectDecision, recordFails: Boolean = false): Pair<DealRedirectController, DealRedirectService> {
-        val service = mockk<DealRedirectService>()
-        every { service.resolve(any(), any()) } returns decision
+    fun controllerWith(decision: Decision, recordFails: Boolean = false): Pair<DealRedirectController, RecordDealClickUseCase> {
+        val resolve = mockk<ResolveDealRedirectUseCase>()
+        val record = mockk<RecordDealClickUseCase>()
+        every { resolve.execute(any(), any()) } returns decision
         if (recordFails) {
-            every { service.recordClick(any(), any(), any()) } throws IllegalStateException("DB down")
+            every { record.execute(any()) } throws IllegalStateException("DB down")
         } else {
-            every { service.recordClick(any(), any(), any()) } returns Unit
+            every { record.execute(any()) } returns Unit
         }
-        return DealRedirectController(service) to service
+        return DealRedirectController(resolve, record) to record
     }
 
     given("살아 있는 오퍼의 slug 로 들어오면") {
         val target = "https://link.coupang.com/a/x?lptag=AF123"
 
         `when`("정상 해석되면") {
-            val (controller, service) = controllerWith(RedirectDecision.Go(offerId = 7L, targetUrl = target))
+            val (controller, service) = controllerWith(Decision.Go(offerId = 7L, targetUrl = target))
             val response = controller.go("coupang-rocket", referer = "https://t.co/abc", userAgent = "Mozilla/5.0")
 
             then("302 로 원본 URL 을 그대로 넘긴다") {
@@ -48,13 +50,13 @@ class DealRedirectControllerTest : BehaviorSpec({
             }
 
             then("클릭을 적재한다") {
-                verify { service.recordClick(7L, "https://t.co/abc", "Mozilla/5.0") }
+                verify { service.execute(RecordDealClickUseCase.Command(7L, "https://t.co/abc", "Mozilla/5.0")) }
             }
         }
 
         `when`("클릭 적재가 실패하면") {
             val (controller, _) = controllerWith(
-                RedirectDecision.Go(offerId = 7L, targetUrl = target),
+                Decision.Go(offerId = 7L, targetUrl = target),
                 recordFails = true,
             )
             val response = controller.go("coupang-rocket", referer = null, userAgent = null)
@@ -67,7 +69,7 @@ class DealRedirectControllerTest : BehaviorSpec({
     }
 
     given("만료됐거나 내려간 오퍼면") {
-        val (controller, service) = controllerWith(RedirectDecision.Unavailable("travel"))
+        val (controller, service) = controllerWith(Decision.Unavailable("travel"))
         val response = controller.go("expired-promo", referer = null, userAgent = null)
 
         then("404 가 아니라 해당 카테고리 목록으로 보낸다") {
@@ -76,12 +78,12 @@ class DealRedirectControllerTest : BehaviorSpec({
         }
 
         then("클릭은 세지 않는다") {
-            verify(exactly = 0) { service.recordClick(any(), any(), any()) }
+            verify(exactly = 0) { service.execute(any()) }
         }
     }
 
     given("없는 slug 면") {
-        val (controller, _) = controllerWith(RedirectDecision.NotFound)
+        val (controller, _) = controllerWith(Decision.NotFound)
 
         then("404 를 낸다") {
             controller.go("nope", referer = null, userAgent = null).statusCode shouldBe HttpStatus.NOT_FOUND
