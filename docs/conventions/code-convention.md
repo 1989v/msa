@@ -58,6 +58,10 @@ Controller → UseCase (interface)
 - **Adapter** 는 Port 를 구현하고, 프레임워크 기술에 의존
 - 생성자 주입만 사용 (field injection 금지)
 - `@Component`/`@Service` 로 Spring 자동 주입
+- **UseCase 인터페이스와 Outbound Port 는 필수다** — 단일 구현이라도 생략하지 않는다 (ADR-0083).
+  Port 는 `application/{entity}/port` 에만 둔다
+- **application 은 infrastructure 를 import 하지 않는다** — `JpaRepository`/`JpaEntity`/metrics 를
+  서비스에 직접 주입하면 루트 `verifyLayerDependencies` 게이트가 빌드를 막는다
 
 ## 3. Domain 모델 생성 패턴
 

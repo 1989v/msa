@@ -9,6 +9,12 @@
 | `:product:domain` | Pure Kotlin 도메인 (Product, Money, ProductStatus) |
 | `:product:app` | Spring Boot 앱 (port 8081) |
 
+## 구조 상태 (ADR-0083)
+
+모양은 표준(UseCase 인터페이스 5 · Port 2 · Adapter 3)이지만 **디렉토리가 레거시**다 — `product/product/service/` 에
+`com.kgd.product.application.product.service` 가 산다 (app 31 + domain 4 파일). 플랜 P3 에서 `git mv`(package 무변경).
+**그 전까지 새 파일은 전체 레이어 경로 디렉토리에 만들고, 이웃 파일 위치가 아니라 `package` 줄을 따른다.**
+
 ## Commands
 
 ```bash

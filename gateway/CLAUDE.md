@@ -6,6 +6,10 @@ Spring Cloud Gateway 기반 API Gateway. 인증 필터, 라우팅, Rate Limiting
 
 단일 모듈 `:gateway` (port 8080)
 
+## 구조 상태 (ADR-0083)
+
+레이어 규칙 **비대상** — 인프라 단일 모듈 (WebFlux). 라우팅·필터·리밋만 있고 도메인이 없다.
+
 ## Commands
 
 ```bash

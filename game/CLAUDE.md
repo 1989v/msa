@@ -12,6 +12,11 @@
 | `:game:feature` | 라이브러리(비-bootable) — 컨트롤러·서비스·JPA·Kafka + 전용 datasource(`game_db`)/EMF/TM/Flyway + **arcade Redis 저장소** |
 | `:game:web` | Kotlin/JS 브라우저 클라이언트(Snake). 산출물은 portal-fe `public/games/snake/` 로 복사해 서빙 (#23 흡수) |
 
+## 구조 상태 (ADR-0083)
+
+Port 는 표준 위치(`application/{catalog,play,ads}/port` — `GameCatalogPorts.kt` 처럼 컨텍스트별 한 파일에 묶음, 허용) ·
+Adapter 표준 · **application → infrastructure import 0건**. 부채: 서비스 10개에 UseCase 인터페이스가 없다 (플랜 P4).
+
 ## Commands
 
 ```bash

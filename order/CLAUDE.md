@@ -7,14 +7,21 @@
 | Gradle path | 역할 |
 |---|---|
 | `:order:domain` | Pure Kotlin 도메인 (Order, OrderItem, Money, OrderStatus) |
-| `:order:app` | Spring Boot 앱 (port 8082) |
+| `:order:feature` | 비-bootable 라이브러리 — **commerce:app 이 폴드** (ADR-0058). 전용 datasource `order_db` |
+
+## 구조 상태 (ADR-0083)
+
+모양은 표준(UseCase 인터페이스 3 · Port 4 · Adapter 5)이지만 **디렉토리가 두 방식으로 갈라져 있다** —
+`order/order/controller/` 와 `order/presentation/order/controller/` 가 같은 패키지를 나눠 가진다 (feature 26 + domain 5 파일).
+플랜 P3 에서 `git mv` 로 합친다. **그 전까지 새 파일은 `presentation/`·`application/`·`infrastructure/` 전체 경로 쪽에 만든다.**
+Outbox 는 common 서브인터페이스(`OrderOutboxRepository`) — 정본 패턴.
 
 ## Commands
 
 ```bash
-./gradlew :order:app:build       # 빌드
+./gradlew :order:feature:build   # 빌드
 ./gradlew :order:domain:test     # 도메인 테스트 (Spring context 없음)
-./gradlew :order:app:bootJar     # bootJar 생성
+./gradlew :commerce:app:build    # 배포 단위(폴드 앱) 빌드
 ```
 
 ## Key Rules

@@ -6,6 +6,11 @@
 
 단일 모듈 `:common`
 
+## 구조 상태 (ADR-0083)
+
+레이어 규칙 **비대상** — 공유 라이브러리. 여기가 Outbox(`messaging.outbox`)·멱등(`IdempotentEventHandler`)·`ApiResponse` 의
+**정본**이다. 서비스가 같은 것을 다시 짜지 않는다 — inventory 자체 Outbox 와 quant 자체 Outbox 는 플랜 P5 에서 여기로 수렴.
+
 ## Commands
 
 ```bash

@@ -11,6 +11,11 @@ commerce:app 에 폴드된 라이브러리 모듈 (ADR-0058 round 2).
 | `:wishlist:domain` | Pure Kotlin 도메인 (WishlistItem, WishlistTargetType, WishlistCollection) |
 | `:wishlist:feature` | 비-bootable 라이브러리 — commerce:app 이 폴드 (전용 datasource wishlist_db) |
 
+## 구조 상태 (ADR-0083)
+
+표준 준수 — UseCase 인터페이스 5 · `WishlistRepositoryPort` · adapter · 테스트 있음. 부채 없음.
+전용 datasource 형 `:feature` 의 `build.gradle.kts` 원본으로 쓴다 (신규 도메인 체크리스트 §1).
+
 ## Commands
 
 ```bash

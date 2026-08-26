@@ -7,14 +7,18 @@
 | Gradle path | 역할 |
 |---|---|
 | `:member:domain` | Pure Kotlin 도메인 (Member, MemberStatus, SsoProvider, Nickname) |
-| `:member:app` | Spring Boot 앱 (port 8093) |
+| `:member:feature` | 비-bootable 라이브러리 — **commerce:app 이 폴드** (ADR-0058 round 2). 전용 datasource `member_db` |
+
+## 구조 상태 (ADR-0083)
+
+표준 준수 — UseCase 인터페이스 4 · `MemberRepositoryPort` · adapter. 부채: **`feature` 에 테스트 소스셋이 없다** (플랜 P6).
 
 ## Commands
 
 ```bash
-./gradlew :member:app:build       # 빌드
+./gradlew :member:feature:build   # 빌드
 ./gradlew :member:domain:test     # 도메인 테스트 (Spring context 없음)
-./gradlew :member:app:bootJar     # bootJar 생성
+./gradlew :commerce:app:build     # 배포 단위(폴드 앱) 빌드
 ```
 
 ## Key Rules

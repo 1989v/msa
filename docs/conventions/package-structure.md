@@ -1,16 +1,21 @@
 # Package Structure Convention
 
+> 표준의 근거와 변종 정리 계획: `docs/adr/ADR-0083-layer-structure-standard-and-gate.md`.
+> 신규 도메인을 올릴 때는 `docs/standards/new-domain-checklist.md` 를 위에서 아래로 훑는다.
+> 코드 견본은 `inventory/feature`.
+
 ## Base Package
 
-`com.kgd.{service}`
+`com.kgd.{service}` — 폴드된 도메인도 호스트 하위가 아니라 자기 이름이다 (`com.kgd.deal`, `com.kgd.codedictionary.deal` 아님).
 
 ## Nested Submodule Layout
 
-각 서비스는 `{service}:domain` / `{service}:app` 형태의 Gradle 서브모듈로 분리된다.
+각 서비스는 `{service}:domain` + `{service}:app`(상주 JVM) **또는** `{service}:feature`(비-bootable
+라이브러리, 호스트 앱에 폴드 — ADR-0058) 로 나뉜다. `app` 과 `feature` 의 내부 레이아웃은 같다.
 
 ```
 {service}/
-├── domain/                              ← :{service}:domain (순수 Kotlin)
+├── domain/                              ← :{service}:domain (순수 Kotlin, 의존은 :common 뿐)
 │   └── src/main/kotlin/com/kgd/{service}/
 │       └── domain/
 │           └── {entity}/
@@ -18,67 +23,85 @@
 │               ├── policy/       # Domain Policy, Specification
 │               ├── event/        # Domain Event
 │               └── exception/    # Domain Exception
-└── app/                                 ← :{service}:app (Spring Boot)
+└── app/  또는  feature/                 ← :{service}:app (Spring Boot) / :{service}:feature (라이브러리)
     └── src/main/kotlin/com/kgd/{service}/
         ├── application/
         │   └── {entity}/
-        │       ├── usecase/      # UseCase interface (Inbound Port)
-        │       ├── service/      # UseCase 구현체
+        │       ├── usecase/      # UseCase interface (Inbound Port) + 내부 Command/Query/Result
+        │       ├── service/      # UseCase 구현체 (@Service) — Port 만 주입
         │       ├── port/         # Outbound Port interface
-        │       └── dto/          # Command, Result, Query
+        │       └── dto/          # (선택) 여러 UseCase 가 공유하는 Query/Result
         ├── infrastructure/
         │   ├── persistence/
         │   │   └── {entity}/
         │   │       ├── entity/   # JPA Entity
         │   │       ├── repository/ # Spring Data Repository + QueryDSL
-        │   │       └── adapter/  # RepositoryPort 구현체
+        │   │       └── adapter/  # Port 구현체
         │   ├── client/           # WebClient 기반 외부 API Adapter
         │   ├── messaging/        # Kafka Producer/Consumer Adapter
-        │   └── config/           # 기술 설정
+        │   └── config/           # 기술 설정 (DataSource, Kafka, Redis …)
         └── presentation/
             └── {entity}/
-                ├── controller/   # RestController
+                ├── controller/   # RestController — UseCase interface 만 주입
                 └── dto/          # Request DTO, Response DTO
 ```
 
 ## Rules
 
-1. **domain 모듈**: Spring/JPA 어노테이션 사용 금지 (의존성 자체가 없으므로 컴파일 에러)
-2. **도메인 간 cross-reference 금지**: Order -> Product 직접 참조 금지, API 호출만 허용
-3. **app 모듈**: `implementation(project(":{service}:domain"))`으로 domain 의존
-4. **bootJar 이름**: `tasks.bootJar { archiveBaseName.set("{service}") }`
+1. **domain 모듈**: Spring/JPA 어노테이션 사용 금지 (의존성 자체가 없으므로 컴파일 에러). 의존성을
+   추가해서 뚫지 않는다 — 유일한 예외는 아래 `search:domain`.
+2. **도메인 간 cross-reference 금지**: Order → Product 직접 참조 금지, API 호출/Kafka 만 허용.
+3. **app/feature 모듈**: `implementation(project(":{service}:domain"))` 으로 domain 의존.
+4. **bootJar 이름**: `tasks.bootJar { archiveBaseName.set("{service}") }` (app). feature 는 bootJar disabled.
+5. **디렉토리 == package 선언.** 레이어를 디렉토리에서 생략하지 않는다. 파일 경로에서 유도한 패키지와
+   `package` 줄이 다르면 틀린 것이다.
+6. **Outbound Port 는 `application/{entity}/port`.** domain 모듈에 두지 않는다. 포트 시그니처에
+   JPA 엔티티·프레임워크 타입을 쓰지 않는다.
+7. **UseCase 는 인터페이스다.** 단일 구현이라도 `@Service` 클래스로 대체하지 않는다. 컨트롤러는
+   UseCase 인터페이스만 주입한다.
+8. **application 은 infrastructure 를 import 하지 않는다.** `JpaRepository`·`JpaEntity`·metrics·
+   properties 를 서비스에 직접 주입하는 것이 가장 흔한 위반이다. 루트 `verifyLayerDependencies`
+   게이트가 빌드에서 잡는다.
+9. **폴드는 레이어 면제 사유가 아니다.** `:feature` 도 위 규칙 전부를 따른다. ADR-0058 은 모듈
+   **간** 규칙(feature 끼리 빈 주입 금지·Kafka 유지·datasource 분리)이고 이 문서는 모듈 **안** 규칙이다.
+10. 한 컨텍스트의 포트가 여럿이면 `{Context}Ports.kt` 한 파일에 묶어도 된다 (game 이 그렇게 한다).
+    파일 이름이 아니라 **패키지 위치**가 규칙이다.
 
-## Filesystem vs Package Declaration Note
+## 레거시 디렉토리 (이행 중 — ADR-0083 P3)
 
-app 모듈의 filesystem 디렉토리는 layer prefix(`application/`, `infrastructure/`, `presentation/`)를 생략하지만,
-`.kt` 파일의 package 선언에는 전체 layer 경로를 포함한다. Kotlin 컴파일러는 이를 허용한다.
+아래 모듈은 package 선언은 전체 레이어 경로인데 디렉토리가 레이어를 생략한 채 남아 있다
+(예: `order/feature/.../com/kgd/order/order/controller/` 에 `com.kgd.order.presentation.order.controller`).
+과거 이 문서가 그렇게 하라고 적었던 잔재이며, `git mv` 로 정리한다(package 무변경).
 
-| Filesystem path | Package declaration |
+| 모듈 | 파일 |
 |---|---|
-| `product/product/controller/` | `com.kgd.product.presentation.product.controller` |
-| `product/product/service/` | `com.kgd.product.application.product.service` |
-| `product/persistence/product/adapter/` | `com.kgd.product.infrastructure.persistence.product.adapter` |
+| `product/app` · `product/domain` | 31 + 4 |
+| `auth/app` (private 서브모듈) | 29 |
+| `order/feature` · `order/domain` | 26 + 5 — 두 방식이 섞여 있다 |
+| `search/app` · `search/domain` | 21 + 4 |
 
-위 표의 convention 문서는 **package 선언** 기준이다. 새 파일 생성 시 filesystem과 package 선언 모두 기존 패턴을 따른다.
+이행 전까지 **이 모듈에 새 파일을 만들 때는 전체 레이어 경로 디렉토리에 만든다.** 이웃 파일의
+디렉토리가 아니라 `package` 줄을 따른다. 정리가 끝나면 이 절을 지운다.
 
 ## Infrastructure-only Modules (Single-level)
 
-- `common`: 공통 라이브러리 (jar only, no bootJar)
-- `discovery`: Eureka Server
-- `gateway`: Spring Cloud Gateway
+- `common`: 공통 라이브러리 (jar only, no bootJar). Outbox·멱등 헬퍼·`ApiResponse` 의 정본.
+- `gateway`: Spring Cloud Gateway (WebFlux — 다른 서비스와 혼재 금지).
+- `agent-viewer:api`: 개발 도구. 플랫폼 서비스가 아니라 레이어 규칙 대상이 아니다.
+- `game:sim` · `game:web`: KMP 모듈. JVM 레이어 규칙 대상이 아니다.
 
 ## search:domain Port Exception
 
-search:domain 모듈은 `product/port/` 패키지에 Outbound Port를 포함한다.
-일반적으로 Port는 application 레이어에 위치하지만, search:domain은 `spring-data-commons`에 의존하여
-`Page`/`Pageable` 타입을 Port 시그니처에 사용하기 위해 domain 모듈에 배치되었다.
+search:domain 모듈은 `product/port/` 패키지에 Outbound Port 를 포함한다. `Page`/`Pageable` 을 포트
+시그니처에 쓰기 위해 `spring-data-commons` 에 의존하며, 이것이 domain 모듈이 Spring 계열 의존성을
+갖는 **유일한** 문서화된 예외다. 새 예외를 만들지 않는다.
 
 ## Search Service Exception
 
-search는 3개의 app-level 서브모듈을 가진다:
+search 는 3개의 app-level 서브모듈을 가진다:
 
-| Gradle path | Role |
-|---|---|
-| `:search:app` | REST API (읽기 전용) |
-| `:search:consumer` | Kafka 증분 색인 |
-| `:search:batch` | Spring Batch 전체 색인 |
+| Gradle path | Role | 배포 |
+|---|---|---|
+| `:search:app` | REST API (읽기 전용) | Deployment |
+| `:search:consumer` | Kafka 증분 색인 | Deployment (Worker tier, ADR-0058) |
+| `:search:batch` | Spring Batch 전체 색인 | CronJob (상주 Deployment 제거, ADR-0058) |

@@ -12,6 +12,12 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 | `:search:consumer` | Kafka 이벤트 소비 → OpenSearch 인덱싱 (port 8084) | Deployment (Worker tier — 벌크 색인이 쿼리 P99 위협, ADR-0025/0058 로 분리 유지) |
 | `:search:batch` | 전체 리인덱싱 / 오프라인 평가 | **CronJob** (ADR-0058 — 상주 Deployment 제거, `search-reindex`/`search-eval-daily`/`attraction-reindex`) |
 
+## 구조 상태 (ADR-0083)
+
+모양은 표준(UseCase 인터페이스 4 · Adapter 4, Port 는 `search:domain` 의 문서화된 예외 위치)이지만 **디렉토리가
+레거시**다 (app 21 + domain 4 파일, 아래 "디렉터리 ≠ 패키지" 절). 플랜 P3 에서 `git mv` 후 그 절을 지운다.
+application → infrastructure import 2건은 P4.
+
 ## 디렉터리 ≠ 패키지 (주의)
 
 `search/app/src/main/kotlin/com/kgd/search/opensearch/` 안의 파일들은 패키지를

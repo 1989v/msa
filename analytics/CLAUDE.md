@@ -9,6 +9,11 @@
 | `:analytics:domain` | Pure Kotlin 도메인 (Score 모델, 정규화, 포트) |
 | `:analytics:app` | Spring Boot 앱 (port 8090) |
 
+## 구조 상태 (ADR-0083)
+
+**변종 B** — 정리 대상 (플랜 P4): Port 4개가 `analytics/domain` 의 `domain/port` 에 있다 → `app` 의
+`application/{entity}/port` 로. UseCase 3개가 `@Service` 클래스 → 인터페이스 추출. Adapter 5 는 표준 위치.
+
 ## Commands
 
 ```bash

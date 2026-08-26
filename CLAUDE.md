@@ -43,6 +43,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 ## Key Conventions (상세는 docs/ 참조)
 
 - **모듈 구조 & 패키지** → `docs/architecture/module-structure.md`
+- **레이어 구조 표준 (필수, ADR-0083)**: UseCase **인터페이스** + Outbound Port(`application/{entity}/port`) + Adapter(`infrastructure`), **디렉토리 == 패키지**, application 은 infrastructure 를 import 하지 않는다 → `docs/conventions/package-structure.md`. 견본은 `inventory/feature`. **폴드(`:feature`)는 배포 형태이지 레이어 면제가 아니다** — 가장 최근 세 도메인(blog·deal·ranking)이 JpaRepository 를 서비스에 직접 주입한 채 리뷰를 통과했다. 정리 순서는 `docs/plans/2026-08-26-layer-structure-alignment.md`
+- **신규 도메인 체크리스트 (필수)**: ADR → 모듈 골격 → 레이어 → 호스트 폴드 3곳+1줄 → 스키마 → 메시징 → 외부 호출 → 노출 → 테스트 → 문서 → 검증 4줄 → `docs/standards/new-domain-checklist.md`
 - **테스트**: Kotest BehaviorSpec + MockK → `docs/standards/test-rules.md`
 - **Kafka 토픽** → `docs/architecture/kafka-convention.md`
 - **API 응답 포맷**: `ApiResponse<T>` → `docs/architecture/api-response.md`
@@ -154,7 +156,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | 서비스 | CLAUDE.md | 비고 |
 |--------|-----------|------|
 | product | `product/CLAUDE.md` | SSOT, Kafka 발행 |
-| order | `order/CLAUDE.md` | 결제 연동, 상태 전이 |
+| order | `order/CLAUDE.md` | 결제 연동, 상태 전이. `:order:feature` 로 commerce:app 에 폴드 (ADR-0058) |
 | search | `search/CLAUDE.md` | OpenSearch 인덱싱, 4개 모듈 |
 | gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting, K8s DNS 라우팅 |
 | common | `common/CLAUDE.md` | 공유 라이브러리 |
@@ -167,10 +169,12 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | gifticon | `gifticon/CLAUDE.md` | 기프티콘 보관·공유·만료 알림. **별도 레포 서브모듈**(`1989v/msa-gifticon`) — 서브모듈 먼저 푸시 후 본체 |
 | code-dictionary | `code-dictionary/CLAUDE.md` | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD + 포트폴리오 카드. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반). **game:feature 호스트** (ADR-0059) |
 | game | `game/CLAUDE.md` | 게임 플랫폼 — 카탈로그(태그/큐레이션/평점) + 플레이 세션 + HOUSE 광고(후속). `:game:domain`+`:game:feature` 라이브러리로 code-dictionary:app 에 폴드, FE 는 portal-fe `/games/*` (ADR-0059) |
-| inventory | (CLAUDE.md 미작성) | 재고 관리, 예약 — 서비스 코드 존재 |
-| fulfillment | (CLAUDE.md 미작성) | 주문 풀필먼트 — 서비스 코드 존재 |
-| warehouse | (CLAUDE.md 미작성) | 창고 관리 — 서비스 코드 존재 |
-| chatbot | (CLAUDE.md 미작성) | 대화형 AI — 서비스 코드 존재 |
+| inventory | `inventory/CLAUDE.md` | 재고 예약/차감/복구 — **재고 SSOT** (ADR-0013). commerce:app 폴드. **레이어 표준 견본** (ADR-0083) |
+| fulfillment | `fulfillment/CLAUDE.md` | 출고 상태 머신 (FulfillmentOrder), Saga choreography 의 출고 단계. commerce:app 폴드 |
+| warehouse | `warehouse/CLAUDE.md` | 창고 마스터. commerce:app 폴드. Kafka 없음 |
+| chatbot | `chatbot/CLAUDE.md` | 대화형 AI — Anthropic SDK 직접 + 채널 추상화(WebSocket/Slack) + 문서 지식원 (ADR-0052) |
+| recommendation | `recommendation/CLAUDE.md` | 추천 — 룰 기반 CB · Item-Item CF · Thompson 밴딧 · ANN 사이드카 (ADR-0044~0049). analytics 의 ClickHouse 를 **읽기만** |
+| commerce | `commerce/CLAUDE.md` | **폴드 호스트** — 자기 도메인 없이 order·inventory·fulfillment·warehouse·member·wishlist 를 한 JVM 으로 (ADR-0058). 도메인별 datasource/EMF/TM |
 | admin | `admin/CLAUDE.md` | 백오피스 (**FE 전용** — 어드민 API 는 각 서비스가 `/api/v1/admin/**` 로 제공) |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
 | blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |

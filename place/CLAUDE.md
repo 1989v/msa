@@ -10,6 +10,10 @@
 | `:place:domain` | Pure Kotlin 도메인 (Region/Poi, 좌표 불변식, GeoMath haversine) |
 | `:place:app` | Spring Boot 앱 (port 8096) — MySQL SSOT + OpenSearch read model |
 
+## 구조 상태 (ADR-0083)
+
+표준 준수 — UseCase 인터페이스 11 · Port 8 · Adapter 8 · 테스트 있음. 부채 없음.
+
 ## Commands
 
 ```bash

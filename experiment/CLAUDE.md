@@ -9,6 +9,11 @@ A/B 테스트 실험 관리, 버킷 할당, 결과 분석 서비스.
 | `:experiment:domain` | Pure Kotlin 도메인 (Experiment, Variant, 상태 전이) |
 | `:experiment:app` | Spring Boot 앱 (port 8091) |
 
+## 구조 상태 (ADR-0083)
+
+**변종 B** — 정리 대상 (플랜 P4): Port 1개가 `experiment/domain` 의 `domain/port` → application 으로. UseCase 5개가
+`@Service` 클래스 → 인터페이스 추출. application → infrastructure import 1건.
+
 ## Commands
 
 ```bash

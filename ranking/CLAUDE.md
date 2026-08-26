@@ -14,6 +14,11 @@
 스키마·마이그레이션은 **호스트(code-dictionary)가 소유**한다 (`V20__ranking.sql`).
 deal/blog 과 같은 형태 — 전용 datasource 를 두지 않는다.
 
+## 구조 상태 (ADR-0083)
+
+**변종 C — 미준수.** Port/Adapter 가 없고 서비스 4개가 `JpaRepository`/`JpaEntity` 를 직접 주입한다 (import 20줄).
+플랜 **P2-1** (세 모듈 중 첫 순서 — 가장 작다): `application/{entity}/port` + adapter 신설, 스냅샷 배치도 Port 경유.
+
 ## Commands
 
 ```bash

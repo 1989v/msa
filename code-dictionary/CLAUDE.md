@@ -15,6 +15,12 @@ FE 는 별도 앱이 아니라 **portal-fe 단일 SPA 의 메인 콘텐츠**로 
 > 컨텍스트다. code-dictionary 리포지토리는 `CodeDictionaryJpaConfig` 가 명시 등록한다
 > (game 의 `@EnableJpaRepositories` 로 Boot 자동 구성이 back-off 하기 때문).
 
+## 구조 상태 (ADR-0083)
+
+표준에 가깝다 — Port 11(`application/*/port`) · Adapter 9 · 테스트 있음. 부채: `SyncService → infrastructure.opensearch.adapter.IndexAliasManager`
+직접 import 1건 (플랜 P4). **폴드 호스트**로서 game·deal·blog·ranking 의 레이어 상태는 각자의 `CLAUDE.md` 에 있다 —
+호스트가 준수해도 폴드된 모듈이 변종 C 면 게이트가 호스트 빌드를 막는다.
+
 ## Commands
 
 ```bash

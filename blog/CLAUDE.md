@@ -15,6 +15,13 @@ ADR: `docs/adr/ADR-0072-blog-platform.md` · spec: `docs/specs/2026-08-21-blog-p
 (`code-dictionary/app/src/main/resources/db/migration/V14__blog.sql`) — Flyway 히스토리가 하나이므로
 버전 수열도 하나여야 한다.
 
+## 구조 상태 (ADR-0083)
+
+**변종 C — 미준수.** Port/Adapter 가 없고 `application/service` 9개가 `BlogPostJpaRepository`·`BlogPostJpaEntity` 등
+infrastructure 를 직접 주입한다 (import 41줄 — 레포 최대). 플랜 **P2-3** (세 모듈 중 마지막·가장 큼): `application/{entity}/port`
++ `infrastructure/persistence/{entity}/adapter` 신설, `JpaEntity` 를 응답으로 돌려주던 자리는 `blog/domain` 모델 경유.
+그때까지 새 서비스를 같은 모양으로 늘리지 않는다 — 빌드 게이트 allowlist 에 "P2-3 에서 제거" 로 올라가 있다.
+
 ## Commands
 
 ```bash

@@ -14,6 +14,11 @@
 
 FE 는 portal-fe `deal.1989v.com` (같은 번들·호스트 분기).
 
+## 구조 상태 (ADR-0083)
+
+**변종 C — 부분 준수.** `application/port` 와 `persistence/adapter` 디렉토리는 **있는데** 서비스 3개가 `JpaRepository` 를
+직접 주입한다 (import 12줄). 플랜 **P2-2**: 있는 디렉토리를 채우고 서비스는 Port 만 본다.
+
 ## Commands
 
 ```bash
