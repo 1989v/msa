@@ -207,3 +207,120 @@ val verifyExternalApiQuota by tasks.registering {
 }
 
 subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyExternalApiQuota) } } }
+
+/**
+ * 레이어 의존 규칙을 빌드에서 강제한다 (ADR-0083 §5).
+ *
+ * 문서(package-structure.md)와 리뷰만으로는 지켜지지 않았다 — 가장 최근에 만든 세 도메인이
+ * 서비스에 JpaRepository 를 직접 주입한 채 리뷰를 통과했다. 규칙은 셋이고 전부 침묵하는 위반이다.
+ *
+ *   ① application 패키지가 infrastructure 를 import 하지 않는다
+ *   ② :*:domain 모듈이 Spring/JPA 를 선언하지 않는다 (의존성 그래프 — 텍스트보다 정확)
+ *   ③ 파일 경로에서 유도한 패키지 == package 선언
+ *
+ * 기존 위반은 모듈 단위 허용목록으로 통과시킨다. **항목마다 왜·어느 단계에서 비우는지 적는다**
+ * (docs/plans/2026-08-26-layer-structure-alignment.md). 비운 항목은 다시 넣지 않는다 —
+ * 허용목록이 "일단 통과" 창구가 되는 순간 이 검사는 없는 것이 된다.
+ */
+val layerGateOutside = setOf(
+    ":gateway",          // 인프라 단일 모듈 — 레이어 없음
+    ":common",           // 공유 라이브러리
+    ":agent-viewer:api", // 개발 도구, 플랫폼 서비스 아님
+    ":game:sim",         // KMP
+    ":game:web",         // KMP
+)
+
+// ① 허용목록 — 비우는 단계는 플랜 P2/P4
+val layerImportExempt = mapOf(
+    ":blog:feature" to "변종 C — P2-3 포트 도입 후 제거",
+    ":ranking:feature" to "변종 C — P2-1",
+    ":deal:feature" to "변종 C — P2-2",
+    ":quant:app" to "포트가 JPA 엔티티·metrics 를 import — P4",
+    ":code-dictionary:app" to "SyncService → IndexAliasManager 1건 — P4",
+    ":recommendation:app" to "변종 B — P4",
+    ":search:app" to "2건 — P4",
+    ":auth:app" to "1건 — P4 (private 서브모듈)",
+    ":experiment:app" to "1건 — P4",
+    ":inventory:feature" to "1건 — P4",
+)
+
+// ② 허용목록 — 영구 예외 하나뿐
+val domainFrameworkExempt = mapOf(
+    ":search:domain" to "Page/Pageable 포트 시그니처 — 문서화된 유일한 예외 (package-structure.md)",
+)
+
+// ③ 허용목록 — 비우는 단계는 플랜 P3 (git mv, package 무변경)
+val dirPackageExempt = mapOf(
+    ":product:app" to "변종 D 31 — P3",
+    ":product:domain" to "변종 D 4 — P3",
+    ":auth:app" to "변종 D 29 — P3 (private 서브모듈, 먼저 푸시)",
+    ":order:feature" to "변종 D 26 — P3 (두 방식 혼재)",
+    ":order:domain" to "변종 D 5 — P3",
+    ":search:app" to "변종 D 21 — P3",
+    ":search:domain" to "변종 D 4 — P3",
+)
+
+val verifyLayerDependencies by tasks.registering {
+    group = "verification"
+    description = "application→infrastructure import · domain 프레임워크 의존 · 디렉토리==패키지 를 확인 (ADR-0083)"
+    doLast {
+        val packageLine = Regex("""^package\s+([\w.]+)""", RegexOption.MULTILINE)
+        val infraImport = Regex("""^import\s+com\.kgd\.\w+\.infrastructure\.""", RegexOption.MULTILINE)
+        val failures = mutableListOf<String>()
+
+        subprojects.filter { it.path !in layerGateOutside }.forEach { sp ->
+            val srcRoot = sp.file("src/main/kotlin")
+            if (!srcRoot.exists()) return@forEach
+            val ktFiles = srcRoot.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+
+            // ① application → infrastructure
+            if (sp.path !in layerImportExempt) {
+                ktFiles.forEach { f ->
+                    val text = f.readText()
+                    val pkg = packageLine.find(text)?.groupValues?.get(1) ?: return@forEach
+                    if (".application." in "$pkg." && infraImport.containsMatchIn(text)) {
+                        failures += "[① application→infrastructure] ${sp.path}: ${f.relativeTo(srcRoot)}"
+                    }
+                }
+            }
+
+            // ② domain 모듈의 프레임워크 선언 (의존성 그래프)
+            if (sp.name == "domain" && sp.path !in domainFrameworkExempt) {
+                val leaked = sp.configurations.findByName("runtimeClasspath")
+                    ?.allDependencies
+                    ?.filter { d ->
+                        val g = d.group ?: return@filter false
+                        g.startsWith("org.springframework") || g == "jakarta.persistence"
+                    }
+                    .orEmpty()
+                leaked.forEach { failures += "[② domain 프레임워크] ${sp.path}: ${it.group}:${it.name}" }
+            }
+
+            // ③ 디렉토리 == 패키지
+            if (sp.path !in dirPackageExempt) {
+                ktFiles.forEach { f ->
+                    val declared = packageLine.find(f.readText())?.groupValues?.get(1) ?: return@forEach
+                    val expected = f.parentFile.relativeTo(srcRoot).path.replace(File.separatorChar, '.')
+                    if (declared != expected) {
+                        failures += "[③ 디렉토리≠패키지] ${sp.path}: ${f.relativeTo(srcRoot)} 는 $declared"
+                    }
+                }
+            }
+        }
+
+        if (failures.isNotEmpty()) {
+            throw GradleException(
+                failures.joinToString(
+                    prefix = "레이어 규칙 위반 (ADR-0083):\n  ",
+                    separator = "\n  ",
+                    postfix = "\n\n① 서비스는 application/{entity}/port 의 Port 만 주입하고 Adapter 가 infrastructure 에서 구현한다.\n" +
+                        "② domain 모듈의 build.gradle.kts 에서 Spring/JPA 의존을 뺀다.\n" +
+                        "③ 파일을 package 선언과 같은 디렉토리로 git mv 한다 (package 은 그대로).\n" +
+                        "기존 위반의 정리 순서: docs/plans/2026-08-26-layer-structure-alignment.md",
+                ),
+            )
+        }
+    }
+}
+
+subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyLayerDependencies) } } }
