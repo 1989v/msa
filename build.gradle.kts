@@ -255,10 +255,18 @@ val useCaseGateExempt = mapOf<String, String>(
  *
  * 다만 여기 적힌 파일은 **재분리 시 같이 고쳐야 컴파일된다** — ADR-0058 재분리 체크리스트가
  * 문자 그대로는 이걸 안 적고 있어 함께 보강했다.
+ *
+ * **면제는 모듈이 아니라 파일 단위다.** ①~⑥의 모듈 면제는 "비우면 사라지는" 임시 상태라 괜찮지만
+ * ⑦은 영구라 모듈째 열면 구멍도 영구가 된다 — 그러면 같은 모듈의 *도메인* 코드가 남의 도메인을
+ * 불러도 게이트가 침묵한다(`code-dictionary` 는 호스트이면서 자기 도메인이기도 하다).
+ * 파일 단위로 두면 **두 번째 교차 배선이 생기는 순간 빌드가 막고**, 재분리 체크리스트가 가리키는
+ * "목록" 이 실제로 파일 목록이 된다.
  */
 val crossServiceImportAllowed = mapOf(
-    ":code-dictionary:app" to
-        "합성 루트: RetentionRunner 가 폴드된 blog 의 PurgeBlogViewsUseCase 를 부른다 (ADR-0077 원장 정리)",
+    ":code-dictionary:app" to mapOf(
+        "com/kgd/codedictionary/infrastructure/retention/RetentionRunner.kt" to
+            "합성 루트: 폴드된 blog 의 PurgeBlogViewsUseCase 를 부른다 (ADR-0077 원장 정리)",
+    ),
 )
 
 val dirPackageExempt = mapOf<String, String>(
@@ -355,16 +363,16 @@ val verifyLayerDependencies by tasks.registering {
             //    "교차 import 가 컴파일 에러로 차단된다" 고 적혀 있지만, 실제로는 호스트가 폴드된
             //    도메인을 build.gradle 로 의존하는 순간 컴파일은 통과한다. 즉 그 불변식에는
             //    강제 장치가 없었다. 합성 루트만 예외로 두고 나머지는 여기서 막는다.
-            if (sp.path !in crossServiceImportAllowed) {
-                val ownRoots = ktFiles.mapNotNull { packageLine.find(it.readText())?.groupValues?.get(1) }
-                    .mapNotNull { it.split(".").getOrNull(2) }
-                    .toSet() + "common"
-                ktFiles.forEach { f ->
-                    kgdImport.findAll(f.readText()).forEach { m ->
-                        if (m.groupValues[1] !in ownRoots) {
-                            failures += "[⑦ 교차 서비스 import] ${sp.path}: ${f.relativeTo(srcRoot)} ← " +
-                                "com.kgd.${m.groupValues[1]}"
-                        }
+            val crossAllowedFiles = crossServiceImportAllowed[sp.path].orEmpty().keys
+            val ownRoots = ktFiles.mapNotNull { packageLine.find(it.readText())?.groupValues?.get(1) }
+                .mapNotNull { it.split(".").getOrNull(2) }
+                .toSet() + "common"
+            ktFiles.forEach { f ->
+                val rel = f.relativeTo(srcRoot).path.replace(File.separatorChar, '/')
+                if (rel in crossAllowedFiles) return@forEach
+                kgdImport.findAll(f.readText()).forEach { m ->
+                    if (m.groupValues[1] !in ownRoots) {
+                        failures += "[⑦ 교차 서비스 import] ${sp.path}: $rel ← com.kgd.${m.groupValues[1]}"
                     }
                 }
             }

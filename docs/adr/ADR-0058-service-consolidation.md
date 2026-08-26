@@ -107,9 +107,9 @@ JVM 안에서 N벌 — 풀 사이즈로 조절. 별도 JVM N개보다 훨씬 저
 2. `commerce:app` 에서 `{domain}:feature` 의존·yml 블록 제거.
 3. k8s `{domain}` Deployment 복원 + gateway 라우트 repoint.
 4. **호스트의 교차 배선 정리** — 합성 루트가 그 도메인의 인바운드 포트를 부르는 코드가 있으면 함께
-   옮긴다. 현재 해당하는 것은 `code-dictionary:app` 의 `RetentionRunner` 하나이며
-   (폴드된 blog 의 `PurgeBlogViewsUseCase` 호출, ADR-0077 원장 정리), 루트 `build.gradle.kts` 의
-   `crossServiceImportAllowed` 가 그 목록을 들고 있다 — 이 단계를 빼면 2번만 하고 컴파일이 깨진다.
+   옮긴다. **목록은 루트 `build.gradle.kts` 의 `crossServiceImportAllowed` 가 파일 단위로 들고 있다**
+   (모듈 단위가 아니라 파일 경로다 — 새 교차 배선이 생기면 게이트가 막으므로 이 목록은 저절로 최신이다).
+   이 단계를 빼면 2번만 하고 컴파일이 깨진다.
    `code-dictionary:app` 은 `commerce:app` 과 달리 **호스트이자 도메인**이라 호스트 코드가
    `com.kgd.codedictionary.*` 안에 산다. 클래스 하나 때문에 중립 패키지를 새로 파지는 않는다.
 5. 끝 — `{domain}:feature`·DB(`{domain}_db`)·Kafka 토픽·outbox **무변경**, 데이터 이관 0.

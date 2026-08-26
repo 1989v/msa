@@ -80,7 +80,7 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 | ② domain 모듈 프레임워크 금지 | `*/domain/src/main` 의 `import org.springframework.` / `jakarta.persistence.` | 빌드 의존성이 없어 이미 컴파일 에러지만, `search:domain` 처럼 의존성을 추가한 순간 뚫린다 |
 | ③ 디렉토리 == 패키지 | 파일 경로에서 유도한 패키지 ≠ `package` 선언 | 변종 D 재발 방지 |
 | ④ presentation → application.service 금지 | `package …presentation…` 파일의 `import com.kgd.*.application.{entity}.service.X` | 규칙 7("컨트롤러는 UseCase 인터페이스만 주입")의 강제 장치. 이게 없으면 UseCase 를 아예 안 만들어도 게이트를 통과한다 |
-| ⑦ 교차 서비스 import 금지 | 그 모듈이 소유하지 않은 `com.kgd.{다른서비스}.` import (`common` 제외) | ADR-0058 불변식 1 은 "교차 import 가 컴파일 에러로 차단된다" 고 적었지만 그건 feature 끼리에만 참이다 — **호스트 앱은 폴드된 도메인을 의존하므로 컴파일이 통과**한다. 즉 그 불변식에 강제 장치가 없었다. 합성 루트만 `crossServiceImportAllowed` 로 두고 나머지는 막는다 |
+| ⑦ 교차 서비스 import 금지 | 그 모듈이 소유하지 않은 `com.kgd.{다른서비스}.` import (`common` 제외) | ADR-0058 불변식 1 은 "교차 import 가 컴파일 에러로 차단된다" 고 적었지만 그건 feature 끼리에만 참이다 — **호스트 앱은 폴드된 도메인을 의존하므로 컴파일이 통과**한다. 즉 그 불변식에 강제 장치가 없었다. 합성 루트만 `crossServiceImportAllowed` 로 두되 **파일 단위**로 연다 — ⑦은 영구 예외라 모듈째 열면 구멍도 영구가 되고, 그 모듈의 *도메인* 코드가 남을 불러도 침묵한다 |
 | ⑥ infrastructure → presentation 금지 | `package …infrastructure…` 파일의 `import com.kgd.*.presentation.` | ①~⑤가 전부 **안쪽이 바깥을 부르는** 방향만 본다. 반대 방향도 같은 사고를 낸다 — 아래 |
 | ⑤ presentation 생성자 주입 = UseCase 만 | 컨트롤러 생성자 파라미터 타입을 **선언 위치**로 판정 — `usecase`·`presentation`·`config` 밖의 `com.kgd.*` 타입이면 실패. 선언 위치는 **그 파일의 import 로** 해석한다 | ④는 `service` 라는 **패키지 이름**에 기댄다. UseCase 와 구현이 같은 패키지에 사는 레이아웃에서는 못 잡고, 포트·`*Query` 클래스 직접 주입도 못 본다. ⑤는 이름이 아니라 타입이 어디서 왔는지를 본다. 전역 심플명 색인으로 판정하면 같은 이름이 두 패키지에 있을 때(현재 45건) 파일시스템 순서로 승자가 갈려 **로컬은 통과하고 CI 는 실패**할 수 있다 — import 가 있으면 그것이 답이고, 없으면 같은 패키지다 |
 
