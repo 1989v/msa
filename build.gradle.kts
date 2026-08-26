@@ -246,15 +246,9 @@ val domainFrameworkExempt = mapOf(
     ":search:domain" to "Page/Pageable 포트 시그니처 — 문서화된 유일한 예외 (package-structure.md)",
 )
 
-// ③ 허용목록 — 비우는 단계는 플랜 P3 (git mv, package 무변경)
-val dirPackageExempt = mapOf(
-    ":product:app" to "변종 D 31 — P3",
-    ":product:domain" to "변종 D 4 — P3",
-    ":auth:app" to "변종 D 29 — P3 (private 서브모듈, 먼저 푸시)",
-    ":order:feature" to "변종 D 26 — P3 (두 방식 혼재)",
-    ":order:domain" to "변종 D 5 — P3",
-    ":search:app" to "변종 D 21 — P3",
-    ":search:domain" to "변종 D 4 — P3",
+// ③ 허용목록 — 비어 있어야 정상
+val dirPackageExempt = mapOf<String, String>(
+    // 2026-08-26 P3 완료 — 변종 D 120+17 파일 git mv. 새 항목을 넣지 않는다
 )
 
 val verifyLayerDependencies by tasks.registering {

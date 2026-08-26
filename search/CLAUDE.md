@@ -14,19 +14,7 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 
 ## 구조 상태 (ADR-0083)
 
-모양은 표준(UseCase 인터페이스 4 · Adapter 4, Port 는 `search:domain` 의 문서화된 예외 위치)이지만 **디렉토리가
-레거시**다 (app 21 + domain 4 파일, 아래 "디렉터리 ≠ 패키지" 절). 플랜 P3 에서 `git mv` 후 그 절을 지운다.
-application → infrastructure import 2건은 P4.
-
-## 디렉터리 ≠ 패키지 (주의)
-
-`search/app/src/main/kotlin/com/kgd/search/opensearch/` 안의 파일들은 패키지를
-**`com.kgd.search.infrastructure.opensearch`** 로 선언한다. 디렉터리 경로와 패키지가 어긋나 있고
-Kotlin 은 이를 허용한다.
-
-새 파일을 이 디렉터리에 만들 때 경로를 보고 `com.kgd.search.opensearch` 라고 적으면
-같은 디렉터리의 클래스가 **"Unresolved reference"** 로 안 보인다. 이웃 파일의 첫 줄을 보고 맞춘다.
-
+표준 준수 (2026-08-26, 플랜 P3 완료) — 디렉토리 == 패키지. UseCase 인터페이스 4 · Adapter 4, Port 는 `search:domain` 의 문서화된 예외 위치. 남은 부채: application → infrastructure import 2건 (P4).
 
 ## Commands
 

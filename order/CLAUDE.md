@@ -11,10 +11,7 @@
 
 ## 구조 상태 (ADR-0083)
 
-모양은 표준(UseCase 인터페이스 3 · Port 4 · Adapter 5)이지만 **디렉토리가 두 방식으로 갈라져 있다** —
-`order/order/controller/` 와 `order/presentation/order/controller/` 가 같은 패키지를 나눠 가진다 (feature 26 + domain 5 파일).
-플랜 P3 에서 `git mv` 로 합친다. **그 전까지 새 파일은 `presentation/`·`application/`·`infrastructure/` 전체 경로 쪽에 만든다.**
-Outbox 는 common 서브인터페이스(`OrderOutboxRepository`) — 정본 패턴.
+표준 준수 (2026-08-26, 플랜 P3 완료) — 두 방식으로 갈려 있던 디렉토리를 `git mv` 로 합쳤다(36파일, package 무변경). UseCase 인터페이스 3 · Port 4 · Adapter 5. Outbox 는 common 서브인터페이스(`OrderOutboxRepository`) — 정본 패턴.
 
 ## Commands
 

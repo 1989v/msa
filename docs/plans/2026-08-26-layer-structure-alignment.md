@@ -78,7 +78,7 @@ val dirPackageExempt = mapOf(
 동일한지 FE 스냅샷 또는 curl diff.
 **이미지 영향**: code-dictionary (세 모듈 전부 이 호스트).
 
-## P3 — 변종 D `git mv` (package 무변경)
+## P3 — 변종 D `git mv` (package 무변경) ✅ 2026-08-26 완료 (main 120 + test 17 파일, auth 는 서브모듈 별도 커밋)
 
 | 모듈 | 파일 | 주의 |
 |---|---|---|

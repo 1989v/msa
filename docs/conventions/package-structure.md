@@ -67,22 +67,6 @@
 10. 한 컨텍스트의 포트가 여럿이면 `{Context}Ports.kt` 한 파일에 묶어도 된다 (game 이 그렇게 한다).
     파일 이름이 아니라 **패키지 위치**가 규칙이다.
 
-## 레거시 디렉토리 (이행 중 — ADR-0083 P3)
-
-아래 모듈은 package 선언은 전체 레이어 경로인데 디렉토리가 레이어를 생략한 채 남아 있다
-(예: `order/feature/.../com/kgd/order/order/controller/` 에 `com.kgd.order.presentation.order.controller`).
-과거 이 문서가 그렇게 하라고 적었던 잔재이며, `git mv` 로 정리한다(package 무변경).
-
-| 모듈 | 파일 |
-|---|---|
-| `product/app` · `product/domain` | 31 + 4 |
-| `auth/app` (private 서브모듈) | 29 |
-| `order/feature` · `order/domain` | 26 + 5 — 두 방식이 섞여 있다 |
-| `search/app` · `search/domain` | 21 + 4 |
-
-이행 전까지 **이 모듈에 새 파일을 만들 때는 전체 레이어 경로 디렉토리에 만든다.** 이웃 파일의
-디렉토리가 아니라 `package` 줄을 따른다. 정리가 끝나면 이 절을 지운다.
-
 ## Infrastructure-only Modules (Single-level)
 
 - `common`: 공통 라이브러리 (jar only, no bootJar). Outbox·멱등 헬퍼·`ApiResponse` 의 정본.
