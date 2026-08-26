@@ -2,6 +2,7 @@ package com.kgd.quant.application.discover
 
 import com.kgd.quant.application.asset.catalog.port.AssetCatalogRepositoryPort
 import com.kgd.quant.application.discover.port.RankingPort
+import com.kgd.quant.application.discover.usecase.GetMarketRankingUseCase
 import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.catalog.AssetClass as CatalogAssetClass
@@ -29,13 +30,13 @@ class RankingQuery(
     private val ohlcvRepo: OhlcvRepositoryPort,
     private val rankingPort: RankingPort? = null,
     private val globalIndices: GlobalIndicesQuery? = null,
-) {
+) : GetMarketRankingUseCase {
     private val log = KotlinLogging.logger {}
 
-    suspend fun rank(
+    override suspend fun rank(
         mode: RankingMode,
-        marketFilter: String? = null,
-        limit: Int = 20,
+        marketFilter: String?,
+        limit: Int,
     ): List<MarketRanking> {
         // 환율 fetch — KR turnover (KRW) 와 US/CRYPTO turnover (USD) 비교 가능하게 USD 환산.
         // marketFilter 가 단일 시장이면 환산 불필요. fetch 실패 시 null → raw 비교 fallback.

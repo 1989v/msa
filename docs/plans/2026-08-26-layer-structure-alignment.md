@@ -158,6 +158,37 @@ CGLIB 을 강제하는데, `ConceptCacheTestContext` 는 auto-config 가 안 도
 **검증**: 일부러 만든 위반으로 규칙 ①·④가 실패하는 것 확인 후 원복, DTO import 는 통과(오탐 없음),
 code-dictionary 41 · game · blog · deal · ranking · search · analytics · recommendation · member · order · commerce test 통과.
 
+## P8 — quant 레이아웃을 표준으로 ✅ 2026-08-26
+
+"quant 는 예외" 라고 적어 둔 근거가 없었다 — 규약은 2026-03-18 부터 있었고 quant 포트는 2026-04-25 에
+flat 으로 만들어졌으며, quant 의 어떤 ADR·스펙도 패키지 구조를 규정한 적이 없다. 프레임워크도 같다.
+사후 정당화였으므로 철회하고 표준으로 옮겼다(포트 43 + flat `usecase`/`view`/`service`).
+
+묶음의 두 축(엔티티 / **외부 시스템**)을 `package-structure.md` 규칙 6 에 명시했다. 이것이 규약의
+진짜 빈칸이었다 — quant 를 옮기기만 하고 이걸 안 채웠으면 다음 서비스가 또 갈린다.
+
+## P9 — 레이아웃 무관 주입 게이트 ✅ 2026-08-26
+
+규칙 ④는 `service` 라는 패키지 이름에 기대므로 UseCase 와 구현이 같은 패키지에 살면 못 잡고, 포트나
+`*Query` 클래스 직접 주입도 못 본다. 규칙 ⑤(주입 타입의 **선언 위치** 판정)를 넣자 5개 모듈 19건이
+드러났고, 허용목록에 이유·단계를 적어 넣은 뒤 단계마다 비웠다 — 지금은 비어 있다.
+
+| 모듈 | 고친 것 |
+|---|---|
+| chatbot | `AdminController` → `ReloadKnowledgeBaseUseCase` |
+| search | `SearchController` → `RecordSearchInteractionUseCase` |
+| gifticon | `PushSubscriptionController` → `ManagePushSubscriptionUseCase` (서브모듈) |
+| game | `ArcadeController` → 아케이드 조회 3종 UseCase |
+| quant | chart 5 · discover 2 · kimchi 1 · market 1 · 포트 5 → UseCase 인터페이스 + `GetChartDataUseCase`·`SubscribePriceStreamUseCase` |
+
+`search` 의 레이어 밖 패키지도 함께 닫았다 — `com.kgd.search.{bandit,config}` 9파일이 세 레이어 밖에
+있었고(어댑터 2 · `@Configuration` 1 · 프로퍼티 2 · 리랭커 4), 기술 어댑터는 `infrastructure`, 랭킹 정책과
+프로퍼티는 `application/ranking/{service,config}` 으로 갈랐다. `search/batch` 의 `job/` 도 `infrastructure/job`.
+이제 세 모듈 모두 최상위에 세 레이어와 `*Application.kt` 만 남는다.
+
+**검증**: quant 129 · search app 46/batch 11/consumer 7 · chatbot 9 · gifticon 9+10 · game 107 ·
+code-dictionary 41 통과, `verifyArchitecture` 통과(허용목록 ①③④⑤ 전부 빔, ② `search:domain` 만).
+
 ## 완료 기준 — 전부 충족 (2026-08-26)
 
 - ✅ 게이트 allowlist 에 `search:domain`(②) 만 남는다.

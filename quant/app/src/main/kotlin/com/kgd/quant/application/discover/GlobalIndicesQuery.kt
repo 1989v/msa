@@ -1,20 +1,21 @@
 package com.kgd.quant.application.discover
 
-import tools.jackson.databind.ObjectMapper
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.kgd.quant.application.discover.usecase.GetGlobalIndicesUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.reactor.awaitSingle
-import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.reactive.function.client.bodyToMono
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
 import java.time.Duration
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.reactor.awaitSingle
+import org.springframework.stereotype.Service
+import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.reactive.function.client.bodyToMono
+import tools.jackson.databind.ObjectMapper
 
 /**
  * GlobalIndicesQuery — 토스급 글로벌 지수 마퀴 (8종).
@@ -26,7 +27,7 @@ import java.time.Duration
 class GlobalIndicesQuery(
     private val objectMapper: ObjectMapper,
     private val properties: QuantChartsProperties,
-) {
+) : GetGlobalIndicesUseCase {
     private val log = KotlinLogging.logger {}
 
     private val webClient: WebClient = WebClient.builder()
@@ -42,7 +43,7 @@ class GlobalIndicesQuery(
         .maximumSize(100)
         .build()
 
-    suspend fun fetchAll(): List<GlobalIndexQuote> = coroutineScope {
+    override suspend fun fetchAll(): List<GlobalIndexQuote> = coroutineScope {
         properties.globalIndices
             .map { cfg ->
                 val ticker = cfg.ticker
@@ -68,7 +69,7 @@ class GlobalIndicesQuery(
      * `KRW=X` ticker 의 latest price (yfinance 의 USD/KRW 환율). 캐시 hit 시 즉시 반환,
      * miss 시 fetchOne 호출 후 cache 채움. 외부 호출 실패 시 null → 호출자 fallback.
      */
-    suspend fun usdKrwRate(): java.math.BigDecimal? {
+    override suspend fun usdKrwRate(): java.math.BigDecimal? {
         val cached = cache.getIfPresent("KRW=X")
         if (cached != null) return cached.price
         val q = runCatching { fetchOne("KRW=X", "USD/KRW") }.getOrNull() ?: return null

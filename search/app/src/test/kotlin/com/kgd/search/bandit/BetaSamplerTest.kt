@@ -1,5 +1,6 @@
 package com.kgd.search.bandit
 
+import com.kgd.search.application.ranking.service.BetaSampler
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.doubles.shouldBeLessThan

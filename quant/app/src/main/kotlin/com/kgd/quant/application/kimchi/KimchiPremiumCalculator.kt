@@ -1,15 +1,16 @@
 package com.kgd.quant.application.kimchi
 
 import com.kgd.quant.application.fx.port.FxRateProvider
+import com.kgd.quant.application.kimchi.usecase.GetKimchiPremiumUseCase
 import com.kgd.quant.application.market.port.MarketAdapter
 import com.kgd.quant.domain.asset.Asset
 import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.market.MarketCode
-import org.springframework.beans.factory.ObjectProvider
-import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.stereotype.Component
 
 /**
  * KimchiPremiumCalculator — 빗썸·바이낸스·환율을 합성해 김치프리미엄 산출 (ADR-0036).
@@ -22,8 +23,8 @@ import java.time.Instant
 class KimchiPremiumCalculator(
     private val adapters: ObjectProvider<MarketAdapter>,
     private val fx: FxRateProvider,
-) {
-    suspend fun compute(
+) : GetKimchiPremiumUseCase {
+    override suspend fun compute(
         asset: Asset,
         krMarketCode: MarketCode,
         foreignMarketCode: MarketCode,

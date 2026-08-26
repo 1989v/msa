@@ -1,16 +1,17 @@
 package com.kgd.quant.application.chart
 
+import com.kgd.quant.application.chart.usecase.PredictPriceUseCase
 import com.kgd.quant.application.embedding.PatternEmbedder
-import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.application.embedding.port.PatternEmbeddingRepositoryPort
 import com.kgd.quant.application.embedding.port.SimilarityHit
+import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
-import org.springframework.beans.factory.ObjectProvider
-import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
+import org.springframework.beans.factory.ObjectProvider
+import org.springframework.stereotype.Component
 
 /**
  * PredictionQuery — 차트 패턴 유사도 기반 미래 수익률 예측 (ADR-0036 P2-T11).
@@ -27,14 +28,14 @@ class PredictionQuery(
     private val ohlcvRepo: OhlcvRepositoryPort,
     private val embedder: PatternEmbedder,
     private val embeddingRepoProvider: ObjectProvider<PatternEmbeddingRepositoryPort>,
-) {
-    suspend fun predict(
+) : PredictPriceUseCase {
+    override suspend fun predict(
         asset: AssetCode,
         market: MarketCode,
         windowEnd: Instant,
-        windowDays: Int = 60,
-        k: Int = 50,
-    ): Prediction {
+        windowDays: Int,
+        k: Int,
+    ): PredictPriceUseCase.Prediction {
         val from = windowEnd.minusSeconds(windowDays.toLong() * 86400)
         val bars = ohlcvRepo.query(asset, market, "1d", from, windowEnd)
         if (bars.size < 2) return EMPTY
@@ -43,13 +44,13 @@ class PredictionQuery(
         val repo = embeddingRepoProvider.ifAvailable ?: return EMPTY
         val hits = repo.searchTopK(v, k = k, excludeAsset = asset)
 
-        return Prediction(
+        return PredictPriceUseCase.Prediction(
             sample = hits.size,
             avgReturn5d = hits.avgOrNull { it.return5d },
             avgReturn20d = hits.avgOrNull { it.return20d },
             avgReturn60d = hits.avgOrNull { it.return60d },
             topHits = hits.take(5).map {
-                TopHit(
+                PredictPriceUseCase.TopHit(
                     asset = it.assetCode.value,
                     market = it.marketCode.value,
                     similarity = it.similarity,
@@ -68,24 +69,7 @@ class PredictionQuery(
         return sum.divide(BigDecimal(values.size), 6, RoundingMode.HALF_UP)
     }
 
-    data class Prediction(
-        val sample: Int,
-        val avgReturn5d: BigDecimal?,
-        val avgReturn20d: BigDecimal?,
-        val avgReturn60d: BigDecimal?,
-        val topHits: List<TopHit>,
-    )
-
-    data class TopHit(
-        val asset: String,
-        val market: String,
-        val similarity: Double,
-        val return5d: BigDecimal?,
-        val return20d: BigDecimal?,
-        val return60d: BigDecimal?,
-    )
-
     companion object {
-        private val EMPTY = Prediction(sample = 0, avgReturn5d = null, avgReturn20d = null, avgReturn60d = null, topHits = emptyList())
+        private val EMPTY = PredictPriceUseCase.Prediction(sample = 0, avgReturn5d = null, avgReturn20d = null, avgReturn60d = null, topHits = emptyList())
     }
 }

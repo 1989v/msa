@@ -1,23 +1,20 @@
 package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
-import com.kgd.quant.application.chart.FundamentalsQuery
-import com.kgd.quant.application.chart.IndicatorQuery
-import com.kgd.quant.application.chart.port.OrderbookPort
-import com.kgd.quant.application.chart.PredictionQuery
-import com.kgd.quant.application.chart.SimilarityQuery
+import com.kgd.quant.application.chart.usecase.CalculateIndicatorsUseCase
+import com.kgd.quant.application.chart.usecase.FindSimilarPatternsUseCase
+import com.kgd.quant.application.chart.usecase.GetChartDataUseCase
+import com.kgd.quant.application.chart.usecase.GetFundamentalsUseCase
+import com.kgd.quant.application.chart.usecase.PredictPriceUseCase
 import com.kgd.quant.application.indicator.IndicatorCalculator
-import com.kgd.quant.application.external.port.NewsPort
-import com.kgd.quant.application.external.port.InvestorFlowsPort
-import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
+import java.math.BigDecimal
+import java.time.Instant
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.math.BigDecimal
-import java.time.Instant
 
 /**
  * ChartController — /api/v1/charts/... (ADR-0033 Phase 1).
@@ -30,14 +27,11 @@ import java.time.Instant
 @RestController
 @RequestMapping("/api/v1/charts")
 class ChartController(
-    private val ohlcvRepo: OhlcvRepositoryPort,
-    private val indicatorQuery: IndicatorQuery,
-    private val similarityQuery: SimilarityQuery,
-    private val predictionQuery: PredictionQuery,
-    private val fundamentalsQuery: FundamentalsQuery,
-    private val investorFlowsPort: InvestorFlowsPort,
-    private val newsPort: NewsPort,
-    private val orderbookPort: OrderbookPort,
+    private val chartData: GetChartDataUseCase,
+    private val indicators: CalculateIndicatorsUseCase,
+    private val similarity: FindSimilarPatternsUseCase,
+    private val prediction: PredictPriceUseCase,
+    private val fundamentals: GetFundamentalsUseCase,
 ) {
     @GetMapping("/prediction")
     suspend fun prediction(
@@ -45,8 +39,8 @@ class ChartController(
         @RequestParam market: String,
         @RequestParam(defaultValue = "60") windowDays: Int,
         @RequestParam(defaultValue = "50") k: Int,
-    ): ApiResponse<PredictionQuery.Prediction> {
-        val result = predictionQuery.predict(
+    ): ApiResponse<PredictPriceUseCase.Prediction> {
+        val result = prediction.predict(
             AssetCode(asset),
             MarketCode(market),
             Instant.now(),
@@ -62,8 +56,8 @@ class ChartController(
         @RequestParam market: String,
         @RequestParam windowEnd: String,
         @RequestParam(defaultValue = "60") windowDays: Int,
-    ): ApiResponse<SimilarityQuery.EmbedResult> {
-        val result = similarityQuery.embedWindow(
+    ): ApiResponse<FindSimilarPatternsUseCase.EmbedResult> {
+        val result = similarity.embedWindow(
             AssetCode(asset),
             MarketCode(market),
             Instant.parse(windowEnd),
@@ -80,7 +74,7 @@ class ChartController(
         @RequestParam(defaultValue = "60") windowDays: Int,
         @RequestParam(defaultValue = "20") k: Int,
     ): ApiResponse<List<com.kgd.quant.application.embedding.port.SimilarityHit>> {
-        val hits = similarityQuery.searchSimilar(
+        val hits = similarity.searchSimilar(
             AssetCode(asset),
             MarketCode(market),
             Instant.parse(windowEnd),
@@ -97,7 +91,7 @@ class ChartController(
         @RequestParam from: String,
         @RequestParam to: String,
     ): ApiResponse<List<OhlcvBarResponse>> {
-        val bars = ohlcvRepo.query(
+        val bars = chartData.candles(
             AssetCode(asset),
             MarketCode(market),
             interval,
@@ -125,26 +119,26 @@ class ChartController(
 
         return when (type.uppercase()) {
             "RSI" -> {
-                val series = indicatorQuery.rsi(assetCode, marketCode, interval, fromTs, toTs, period ?: 14)
+                val series = indicators.rsi(assetCode, marketCode, interval, fromTs, toTs, period ?: 14)
                 ApiResponse.success(IndicatorSeriesResponse.single(type, series))
             }
             "SMA" -> {
-                val series = indicatorQuery.sma(assetCode, marketCode, interval, fromTs, toTs, period ?: 20)
+                val series = indicators.sma(assetCode, marketCode, interval, fromTs, toTs, period ?: 20)
                 ApiResponse.success(IndicatorSeriesResponse.single(type, series))
             }
             "EMA" -> {
-                val series = indicatorQuery.ema(assetCode, marketCode, interval, fromTs, toTs, period ?: 20)
+                val series = indicators.ema(assetCode, marketCode, interval, fromTs, toTs, period ?: 20)
                 ApiResponse.success(IndicatorSeriesResponse.single(type, series))
             }
             "BB" -> {
-                val bb = indicatorQuery.bollinger(
+                val bb = indicators.bollinger(
                     assetCode, marketCode, interval, fromTs, toTs,
                     period ?: 20, stdDev ?: BigDecimal("2.0"),
                 )
                 ApiResponse.success(IndicatorSeriesResponse.bollinger(bb))
             }
             "MACD" -> {
-                val m = indicatorQuery.macd(assetCode, marketCode, interval, fromTs, toTs)
+                val m = indicators.macd(assetCode, marketCode, interval, fromTs, toTs)
                 ApiResponse.success(
                     IndicatorSeriesResponse(
                         type = "MACD",
@@ -157,7 +151,7 @@ class ChartController(
                 )
             }
             "STOCH" -> {
-                val s = indicatorQuery.stochastic(assetCode, marketCode, interval, fromTs, toTs)
+                val s = indicators.stochastic(assetCode, marketCode, interval, fromTs, toTs)
                 ApiResponse.success(
                     IndicatorSeriesResponse(
                         type = "STOCH",
@@ -184,7 +178,7 @@ class ChartController(
         @RequestParam asset: String,
         @RequestParam market: String,
     ): ApiResponse<FundamentalsResponse?> {
-        val data = fundamentalsQuery.fundamentals(AssetCode(asset), MarketCode(market))
+        val data = fundamentals.fundamentals(AssetCode(asset), MarketCode(market))
         return ApiResponse.success(data?.let(::toResponse))
     }
 
@@ -217,7 +211,7 @@ class ChartController(
         @RequestParam from: String,
         @RequestParam to: String,
     ): ApiResponse<List<InvestorFlowResponse>> {
-        val flows = investorFlowsPort.query(
+        val flows = chartData.investorFlows(
             AssetCode(asset),
             MarketCode(market),
             Instant.parse(from),
@@ -244,7 +238,7 @@ class ChartController(
         @RequestParam market: String,
         @RequestParam(defaultValue = "20") limit: Int,
     ): ApiResponse<List<NewsResponse>> {
-        val items = newsPort.fetch(AssetCode(asset), MarketCode(market), limit)
+        val items = chartData.news(AssetCode(asset), MarketCode(market), limit)
         return ApiResponse.success(
             items.map {
                 NewsResponse(
@@ -267,7 +261,7 @@ class ChartController(
         @RequestParam asset: String,
         @RequestParam market: String,
     ): ApiResponse<OrderbookResponse?> {
-        val s = orderbookPort.latestSnapshot(AssetCode(asset), MarketCode(market))
+        val s = chartData.orderbook(AssetCode(asset), MarketCode(market))
             ?: return ApiResponse.success(null)
         return ApiResponse.success(
             OrderbookResponse(
@@ -290,7 +284,7 @@ class ChartController(
         @RequestParam market: String,
         @RequestParam(defaultValue = "50") limit: Int,
     ): ApiResponse<List<TradeResponse>> {
-        val list = orderbookPort.recentTrades(AssetCode(asset), MarketCode(market), limit)
+        val list = chartData.recentTrades(AssetCode(asset), MarketCode(market), limit)
         return ApiResponse.success(
             list.map {
                 TradeResponse(

@@ -3,8 +3,8 @@ package com.kgd.search.application.product.service
 import com.kgd.search.application.product.port.SearchVariantPort
 import com.kgd.search.application.product.usecase.SearchProductUseCase
 import com.kgd.search.application.product.usecase.SuggestProductUseCase
-import com.kgd.search.bandit.SellerDiversityReranker
-import com.kgd.search.bandit.ThompsonReranker
+import com.kgd.search.application.ranking.service.SellerDiversityReranker
+import com.kgd.search.application.ranking.service.ThompsonReranker
 import com.kgd.search.domain.product.port.ProductSearchPort
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service

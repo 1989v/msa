@@ -243,7 +243,7 @@ val domainFrameworkExempt = mapOf(
 // ③ 허용목록 — 비어 있어야 정상
 // ④ 허용목록 — 비어 있어야 정상
 val useCaseGateExempt = mapOf<String, String>(
-    // 2026-08-26 P7 완료 — 비어 있어야 정상. 새 항목을 넣지 않는다
+    // 2026-08-26 P7·P9 완료 — 비어 있어야 정상. 새 항목을 넣지 않는다
 )
 
 val dirPackageExempt = mapOf<String, String>(
@@ -260,6 +260,26 @@ val verifyLayerDependencies by tasks.registering {
         // 후자는 `com.kgd.*.infrastructure.` 가 한 번도 안 나와 첫 정규식만으로는 통과한다.
         // 마지막 패키지 세그먼트가 service 인 것만 — code-dictionary 에는 `service` 라는 **엔티티**가 있어
         // `application.service.dto.X` 를 레이어로 오인하면 안 된다. 뒤에 대문자(타입명)를 요구해 가른다.
+        val ctorParams = Regex("""^class (\w+)\(([^)]*)\)""", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
+        val injectedType = Regex(""":\s*([A-Z]\w*)""")
+        // presentation 이 주입해도 되는 선언 위치: 인바운드 포트(usecase) · 프레젠테이션 로컬 · 설정값
+        val presentationAllowedPkg = listOf(".usecase.", ".presentation.", ".config.")
+        // com.kgd.* 최상위 선언 → 선언 패키지. 타입 이름만으로 '어느 레이어에서 온 것인지' 를 판정한다
+        val kgdDeclarations: Map<String, String> = subprojects
+            .mapNotNull { it.file("src/main/kotlin").takeIf(File::exists) }
+            .flatMap { it.walkTopDown().filter { f -> f.isFile && f.extension == "kt" }.toList() }
+            .fold(mutableMapOf()) { acc, f ->
+                val text = f.readText()
+                val pkg = Regex("""^package (com\.kgd\.[\w.]+)""", RegexOption.MULTILINE)
+                    .find(text)?.groupValues?.get(1)
+                if (pkg != null) {
+                    Regex(
+                        """^(?:@\w+(?:\([^)]*\))?\s*)*(?:data |enum |sealed |value |abstract |open )*(?:class|interface|object) (\w+)""",
+                        RegexOption.MULTILINE,
+                    ).findAll(text).forEach { m -> acc.putIfAbsent(m.groupValues[1], pkg) }
+                }
+                acc
+            }
         val serviceImport = Regex(
             """^import\s+com\.kgd\.\w+\.application\.[\w.]*service\.[A-Z]""",
             RegexOption.MULTILINE,
@@ -312,6 +332,27 @@ val verifyLayerDependencies by tasks.registering {
                     val expected = f.parentFile.relativeTo(srcRoot).path.replace(File.separatorChar, '.')
                     if (declared != expected) {
                         failures += "[③ 디렉토리≠패키지] ${sp.path}: ${f.relativeTo(srcRoot)} 는 $declared"
+                    }
+                }
+            }
+
+            // ⑤ presentation 생성자에는 UseCase 인터페이스만 — 레이아웃과 무관하게 본다
+            //    ④는 `service` 라는 패키지 이름에 기대므로, UseCase 와 구현이 같은 패키지에 사는
+            //    레이아웃에서는 못 잡는다 (quant 가 그랬다). 이 규칙은 주입 '타입이 어디 선언됐는지' 를 본다.
+            if (sp.path !in useCaseGateExempt) {
+                ktFiles.forEach { f ->
+                    val text = f.readText()
+                    val pkg = packageLine.find(text)?.groupValues?.get(1) ?: return@forEach
+                    if (".presentation." !in "$pkg.") return@forEach
+                    ctorParams.findAll(text).forEach { ctor ->
+                        injectedType.findAll(ctor.groupValues[2]).forEach { t ->
+                            val declared = kgdDeclarations[t.groupValues[1]] ?: return@forEach
+                            val ok = presentationAllowedPkg.any { it in "$declared." }
+                            if (!ok) {
+                                failures += "[⑤ presentation 주입] ${sp.path}: ${f.relativeTo(srcRoot)} ← " +
+                                    "${t.groupValues[1]} ($declared)"
+                            }
+                        }
                     }
                 }
             }

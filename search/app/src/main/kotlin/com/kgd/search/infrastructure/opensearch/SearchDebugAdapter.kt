@@ -2,11 +2,11 @@ package com.kgd.search.infrastructure.opensearch
 
 import com.kgd.search.application.debug.port.SearchDebugPort
 import com.kgd.search.application.debug.usecase.DebugSearchUseCase
-import com.kgd.search.bandit.BanditProperties
-import com.kgd.search.bandit.DiversityProperties
-import com.kgd.search.bandit.MultiScopeBanditBlender
-import com.kgd.search.bandit.SellerDiversityReranker
-import com.kgd.search.bandit.ThompsonReranker
+import com.kgd.search.application.ranking.config.BanditProperties
+import com.kgd.search.application.ranking.config.DiversityProperties
+import com.kgd.search.application.ranking.service.MultiScopeBanditBlender
+import com.kgd.search.application.ranking.service.SellerDiversityReranker
+import com.kgd.search.application.ranking.service.ThompsonReranker
 import com.kgd.search.domain.product.model.ProductDocument
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.opensearch.client.json.JsonData

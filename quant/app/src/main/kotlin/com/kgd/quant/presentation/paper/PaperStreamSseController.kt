@@ -1,7 +1,7 @@
 package com.kgd.quant.presentation.paper
 
 import tools.jackson.databind.ObjectMapper
-import com.kgd.quant.application.market.MarketDataHub
+import com.kgd.quant.application.market.usecase.StreamMarketDataUseCase
 import com.kgd.quant.application.marketdata.port.Symbol
 import com.kgd.quant.domain.common.TenantId
 import com.kgd.quant.presentation.resolver.TenantHeader
@@ -51,7 +51,7 @@ private val log = KotlinLogging.logger {}
 @RestController
 @RequestMapping("/api/v1/strategies")
 class PaperStreamSseController(
-    private val hub: MarketDataHub,
+    private val hub: StreamMarketDataUseCase,
     private val objectMapper: ObjectMapper,
 ) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())

@@ -1,0 +1,47 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/gideok-kwon/IdeaProjects/msa/.codex/hooks/adr-check.sh'",
+            "timeout": 10,
+            "statusMessage": "ADR check..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/gideok-kwon/IdeaProjects/msa/.codex/hooks/cdp-chrome-guard.sh'",
+            "timeout": 10,
+            "statusMessage": "CDP chrome guard..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/gideok-kwon/IdeaProjects/msa/.codex/hooks/submodule-auto-push.sh'",
+            "timeout": 30,
+            "statusMessage": "Syncing submodule..."
+          },
+          {
+            "type": "command",
+            "command": "'/Users/gideok-kwon/IdeaProjects/msa/.codex/hooks/game-mobile-check.sh'",
+            "timeout": 20,
+            "statusMessage": "Game mobile check..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,5 @@
 package com.kgd.search.infrastructure.config
 
-import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.DeserializationFeature
 import tools.jackson.databind.cfg.DateTimeFeature
 import tools.jackson.module.kotlin.jacksonMapperBuilder

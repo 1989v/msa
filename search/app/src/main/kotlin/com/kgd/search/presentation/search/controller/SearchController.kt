@@ -6,7 +6,7 @@ import com.kgd.search.application.product.usecase.SuggestProductUseCase
 import com.kgd.search.domain.bandit.model.BanditKey
 import com.kgd.search.domain.bandit.model.ClickEvent
 import com.kgd.search.domain.bandit.model.ImpressionEvent
-import com.kgd.search.domain.bandit.port.BanditEventPort
+import com.kgd.search.application.ranking.usecase.RecordSearchInteractionUseCase
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 class SearchController(
     private val searchProductUseCase: SearchProductUseCase,
     private val suggestProductUseCase: SuggestProductUseCase,
-    private val banditEventPort: BanditEventPort
+    private val recordInteraction: RecordSearchInteractionUseCase
 ) {
 
     /** [minKcal]/[maxKcal] 은 100g 기준 에너지(kcal) 범위 필터 (ADR-0060 — 칼로리 계산기/저칼로리 탐색). */
@@ -56,16 +56,16 @@ class SearchController(
     @PostMapping("/impressions")
     @ResponseStatus(HttpStatus.ACCEPTED)
     fun reportImpressions(@RequestBody request: ImpressionsRequest): ApiResponse<Unit> {
-        request.items.forEach { item ->
-            banditEventPort.recordImpression(
+        recordInteraction.recordImpressions(
+            request.items.map { item ->
                 ImpressionEvent(
                     searchId = request.searchId,
                     key = BanditKey.category(item.categoryId, item.productId),
                     position = item.position,
-                    userId = request.userId
+                    userId = request.userId,
                 )
-            )
-        }
+            },
+        )
         return ApiResponse.success()
     }
 
@@ -75,7 +75,7 @@ class SearchController(
     @PostMapping("/clicks")
     @ResponseStatus(HttpStatus.ACCEPTED)
     fun reportClick(@RequestBody request: ClickRequest): ApiResponse<Unit> {
-        banditEventPort.recordClick(
+        recordInteraction.recordClick(
             ClickEvent(
                 searchId = request.searchId,
                 key = BanditKey.category(request.categoryId, request.productId),

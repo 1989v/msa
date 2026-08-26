@@ -1,5 +1,7 @@
 package com.kgd.search.bandit
 
+import com.kgd.search.application.ranking.config.DiversityProperties
+import com.kgd.search.application.ranking.service.SellerDiversityReranker
 import com.kgd.search.domain.product.model.ProductDocument
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe

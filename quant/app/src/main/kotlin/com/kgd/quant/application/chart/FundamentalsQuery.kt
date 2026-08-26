@@ -1,5 +1,6 @@
 package com.kgd.quant.application.chart
 
+import com.kgd.quant.application.chart.usecase.GetFundamentalsUseCase
 import com.kgd.quant.application.external.port.FundamentalsPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.asset.Fundamentals
@@ -14,8 +15,8 @@ import org.springframework.stereotype.Service
 @Service
 class FundamentalsQuery(
     private val port: FundamentalsPort,
-) {
-    suspend fun fundamentals(asset: AssetCode, market: MarketCode): Fundamentals? {
+) : GetFundamentalsUseCase {
+    override suspend fun fundamentals(asset: AssetCode, market: MarketCode): Fundamentals? {
         return port.fetch(asset, market)
     }
 }

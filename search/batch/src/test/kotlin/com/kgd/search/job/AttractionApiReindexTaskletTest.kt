@@ -1,4 +1,4 @@
-package com.kgd.search.job
+package com.kgd.search.infrastructure.job
 
 import com.kgd.search.infrastructure.client.PlaceApiClient
 import com.kgd.search.infrastructure.indexing.AttractionIndexDocument

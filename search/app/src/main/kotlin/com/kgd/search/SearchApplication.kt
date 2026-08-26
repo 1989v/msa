@@ -1,7 +1,7 @@
 package com.kgd.search
 
-import com.kgd.search.bandit.BanditProperties
-import com.kgd.search.bandit.DiversityProperties
+import com.kgd.search.application.ranking.config.BanditProperties
+import com.kgd.search.application.ranking.config.DiversityProperties
 import com.kgd.search.infrastructure.client.SearchExperimentProperties
 import com.kgd.search.infrastructure.opensearch.AttractionRankingProperties
 import com.kgd.search.infrastructure.opensearch.RankingProperties

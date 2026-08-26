@@ -2,43 +2,43 @@ package com.kgd.game.presentation.arcade
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.game.application.arcade.SubmitCommand
+import com.kgd.game.application.arcade.usecase.GetArcadeCatalogUseCase
+import com.kgd.game.application.arcade.usecase.GetArcadeLeaderboardUseCase
+import com.kgd.game.application.arcade.usecase.GetDailyChallengeUseCase
 import com.kgd.game.application.arcade.usecase.StartArcadeSessionUseCase
 import com.kgd.game.application.arcade.usecase.SubmitArcadeScoreUseCase
 import com.kgd.game.domain.arcade.BoardKey
-import com.kgd.game.domain.arcade.DailyChallengePort
 import com.kgd.game.domain.arcade.GameCatalogItem
-import com.kgd.game.domain.arcade.GameRegistry
 import com.kgd.game.domain.arcade.LeaderboardPeriod
-import com.kgd.game.domain.arcade.LeaderboardPort
 import com.kgd.game.domain.arcade.SessionId
 import com.kgd.game.sim.InputCommand
 import com.kgd.game.sim.InputEvent
 import com.kgd.game.sim.ReplayLog
+import java.time.LocalDate
+import java.time.ZoneOffset
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 @RestController
 @RequestMapping("/api/v1/games/arcade")
 class ArcadeController(
     private val startSession: StartArcadeSessionUseCase,
     private val submitScore: SubmitArcadeScoreUseCase,
-    private val leaderboard: LeaderboardPort,
-    private val registry: GameRegistry,
-    private val daily: DailyChallengePort,
+    private val leaderboard: GetArcadeLeaderboardUseCase,
+    private val catalog: GetArcadeCatalogUseCase,
+    private val daily: GetDailyChallengeUseCase,
 ) {
 
     @GetMapping("/catalog")
-    fun catalog(): ApiResponse<List<GameCatalogItem>> = ApiResponse.success(registry.catalog())
+    fun catalog(): ApiResponse<List<GameCatalogItem>> = ApiResponse.success(catalog.catalog())
 
     @PostMapping("/sessions")
     fun start(@RequestBody req: StartSessionRequest): ApiResponse<StartSessionResponse> {
-        if (registry.module(req.gameId) == null) {
+        if (!catalog.isRegistered(req.gameId)) {
             return ApiResponse.error("UNKNOWN_GAME", "unknown game: ${req.gameId}")
         }
         val started = startSession.execute(StartArcadeSessionUseCase.Command(req.gameId, req.daily == true, today()))

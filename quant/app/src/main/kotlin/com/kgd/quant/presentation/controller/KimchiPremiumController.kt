@@ -2,7 +2,7 @@ package com.kgd.quant.presentation.controller
 
 import com.kgd.common.response.ApiResponse
 import com.kgd.quant.application.kimchi.KimchiPremium
-import com.kgd.quant.application.kimchi.KimchiPremiumCalculator
+import com.kgd.quant.application.kimchi.usecase.GetKimchiPremiumUseCase
 import com.kgd.quant.domain.asset.Asset
 import com.kgd.quant.domain.asset.AssetClass
 import com.kgd.quant.domain.asset.AssetCode
@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v1/charts/kimchi-premium")
 class KimchiPremiumController(
-    private val calculator: KimchiPremiumCalculator,
+    private val calculator: GetKimchiPremiumUseCase,
 ) {
     @GetMapping
     suspend fun current(

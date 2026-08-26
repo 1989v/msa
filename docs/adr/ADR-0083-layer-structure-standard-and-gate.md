@@ -80,6 +80,7 @@ ADR-0058 은 모듈 **간** 경계(feature 끼리 빈 주입 금지·Kafka 유�
 | ② domain 모듈 프레임워크 금지 | `*/domain/src/main` 의 `import org.springframework.` / `jakarta.persistence.` | 빌드 의존성이 없어 이미 컴파일 에러지만, `search:domain` 처럼 의존성을 추가한 순간 뚫린다 |
 | ③ 디렉토리 == 패키지 | 파일 경로에서 유도한 패키지 ≠ `package` 선언 | 변종 D 재발 방지 |
 | ④ presentation → application.service 금지 | `package …presentation…` 파일의 `import com.kgd.*.application.{entity}.service.X` | 규칙 7("컨트롤러는 UseCase 인터페이스만 주입")의 강제 장치. 이게 없으면 UseCase 를 아예 안 만들어도 게이트를 통과한다 |
+| ⑤ presentation 생성자 주입 = UseCase 만 | 컨트롤러 생성자 파라미터 타입을 **선언 위치**로 판정 — `usecase`·`presentation`·`config` 밖의 `com.kgd.*` 타입이면 실패 | ④는 `service` 라는 **패키지 이름**에 기댄다. UseCase 와 구현이 같은 패키지에 사는 레이아웃에서는 못 잡고, 포트·`*Query` 클래스 직접 주입도 못 본다. ⑤는 이름이 아니라 타입이 어디서 왔는지를 본다 |
 
 규칙 ①은 `presentation` 도 본다 — 컨트롤러가 `JpaRepository`/어댑터를 직접 부르면 application 을 통째로
 건너뛴 것이라 변종 C 보다 나쁘다. 그리고 ①의 import 목록에는 `org.springframework.data.jpa.` ·

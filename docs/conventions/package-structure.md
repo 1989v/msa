@@ -67,7 +67,9 @@
    어느 맥락의 것인지 디렉토리가 말해주지 않고, 실제로 quant 가 43개를 그렇게 쌓아 견본이 둘로 갈렸다
    (2026-08-26 정리).
 7. **UseCase 는 인터페이스다.** 단일 구현이라도 `@Service` 클래스로 대체하지 않는다. 컨트롤러는
-   UseCase 인터페이스만 주입한다 — 게이트 규칙 ④가 `presentation → application.{entity}.service` import 를 막는다.
+   UseCase 인터페이스만 주입한다 — 게이트 규칙 ④(`service` import 금지)와 ⑤(주입 타입의 **선언 위치**가
+   `usecase`·`presentation`·`config` 여야 한다)가 막는다. ⑤는 레이아웃과 무관하므로 포트·`*Query` 클래스를
+   컨트롤러에 직접 주입하는 것도 잡는다.
    **DTO 를 `service` 패키지에 두지 않는다**: 구현을 부르는 것과 타입을 쓰는 것은 다르지만 위치가 같으면
    규칙이 구분하지 못한다. `dto` 로 옮긴다.
 

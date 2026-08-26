@@ -1,5 +1,8 @@
 package com.kgd.search.bandit
 
+import com.kgd.search.application.ranking.config.BanditProperties
+import com.kgd.search.application.ranking.service.MultiScopeBanditBlender
+import com.kgd.search.application.ranking.service.ThompsonReranker
 import com.kgd.search.domain.bandit.model.BanditKey
 import com.kgd.search.domain.bandit.model.BanditState
 import com.kgd.search.domain.bandit.port.BanditStatePort

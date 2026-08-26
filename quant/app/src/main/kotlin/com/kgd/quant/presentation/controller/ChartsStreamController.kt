@@ -1,6 +1,6 @@
 package com.kgd.quant.presentation.controller
 
-import com.kgd.quant.application.chart.port.PriceStreamPort
+import com.kgd.quant.application.chart.usecase.SubscribePriceStreamUseCase
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
 import org.springframework.http.MediaType
@@ -28,7 +28,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 @RestController
 @RequestMapping("/api/v1/charts/stream")
 class ChartsStreamController(
-    private val priceStream: PriceStreamPort,
+    private val priceStream: SubscribePriceStreamUseCase,
 ) {
     @GetMapping(
         "/{asset}/{market}",

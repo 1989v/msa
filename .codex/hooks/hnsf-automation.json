@@ -1,0 +1,44 @@
+{
+  "description": "harness-scaffold automation hooks",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "pattern": "**/spec.md",
+        "hooks": [
+          {
+            "type": "reminder",
+            "message": "Spec Checklist:\n  [ ] Overview 30s readable?\n  [ ] Sections independent?\n  [ ] open-questions.yml updated?\n  [ ] Under 400 lines?"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "pattern": "**/tasks.md",
+        "hooks": [
+          {
+            "type": "reminder",
+            "message": "Tasks Checklist:\n  [ ] Dependencies specified?\n  [ ] Verification sub-tasks?\n  [ ] phase + required_skills metadata?\n  [ ] Under 600 lines?"
+          }
+        ]
+      }
+    ],
+    "PrePrompt": [
+      {
+        "matcher": "Always",
+        "hooks": [
+          {
+            "type": "reminder",
+            "condition": "context.usage > 0.75",
+            "message": "Context 75% - Consider strategic compaction at next task completion"
+          },
+          {
+            "type": "reminder",
+            "condition": "context.usage > 0.90",
+            "message": "Context 90% - Compaction recommended (run Pre-Compact checklist)"
+          }
+        ]
+      }
+    ]
+  }
+}

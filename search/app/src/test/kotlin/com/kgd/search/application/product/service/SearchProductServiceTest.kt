@@ -1,11 +1,11 @@
 package com.kgd.search.application.product.service
 
 import com.kgd.search.application.product.usecase.SearchProductUseCase
-import com.kgd.search.bandit.BanditProperties
-import com.kgd.search.bandit.DiversityProperties
-import com.kgd.search.bandit.MultiScopeBanditBlender
-import com.kgd.search.bandit.SellerDiversityReranker
-import com.kgd.search.bandit.ThompsonReranker
+import com.kgd.search.application.ranking.config.BanditProperties
+import com.kgd.search.application.ranking.config.DiversityProperties
+import com.kgd.search.application.ranking.service.MultiScopeBanditBlender
+import com.kgd.search.application.ranking.service.SellerDiversityReranker
+import com.kgd.search.application.ranking.service.ThompsonReranker
 import com.kgd.search.domain.bandit.port.BanditStatePort
 import com.kgd.search.domain.product.model.ProductDocument
 import com.kgd.search.domain.product.model.ScoredProductDocument

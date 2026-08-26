@@ -1,15 +1,16 @@
 package com.kgd.quant.application.market
 
+import com.kgd.quant.application.market.usecase.StreamMarketDataUseCase
 import com.kgd.quant.application.marketdata.port.Symbol
 import com.kgd.quant.application.marketdata.port.Tick
 import com.kgd.quant.application.metrics.port.QuantMetricsPort
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.springframework.stereotype.Component
-import java.util.concurrent.ConcurrentHashMap
 
 private val log = KotlinLogging.logger {}
 
@@ -33,7 +34,7 @@ private val log = KotlinLogging.logger {}
 @Component
 class MarketDataHub(
     private val metrics: QuantMetricsPort,
-) {
+) : StreamMarketDataUseCase {
     private val flow = MutableSharedFlow<Tick>(
         replay = 0,
         extraBufferCapacity = EXTRA_BUFFER_CAPACITY,
@@ -44,10 +45,10 @@ class MarketDataHub(
     private val latestTicks = ConcurrentHashMap<Symbol, Tick>()
 
     /** 다중 소비자가 동일 tick 을 동시 수신할 수 있는 read-only 핸들. */
-    fun asFlow(): SharedFlow<Tick> = flow.asSharedFlow()
+    override fun asFlow(): SharedFlow<Tick> = flow.asSharedFlow()
 
     /** 특정 Symbol 의 가장 최근 emit 된 tick. 없으면 null. */
-    fun latestTick(symbol: Symbol): Tick? = latestTicks[symbol]
+    override fun latestTick(symbol: Symbol): Tick? = latestTicks[symbol]
 
     /**
      * 비차단 발행. `tryEmit` 결과가 `false` 인 경우는 buffer 가 가득 찬 상태가 아니라
@@ -56,7 +57,7 @@ class MarketDataHub(
      *
      * @return `true` = 적어도 1개 subscriber 의 buffer 에 적재됨, `false` = drop 처리됨
      */
-    fun emit(tick: Tick): Boolean {
+    override fun emit(tick: Tick): Boolean {
         latestTicks[tick.symbol] = tick
         val accepted = flow.tryEmit(tick)
         if (!accepted) {
@@ -67,7 +68,7 @@ class MarketDataHub(
     }
 
     /** 현재 활성 subscriber 수. SSE / Strategy Loop 등 hot path 모니터링용. */
-    fun subscriberCount(): Int = flow.subscriptionCount.value
+    override fun subscriberCount(): Int = flow.subscriptionCount.value
 
     companion object {
         const val EXTRA_BUFFER_CAPACITY = 256

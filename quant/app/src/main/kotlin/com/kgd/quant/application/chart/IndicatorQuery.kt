@@ -1,12 +1,13 @@
 package com.kgd.quant.application.chart
 
+import com.kgd.quant.application.chart.usecase.CalculateIndicatorsUseCase
 import com.kgd.quant.application.indicator.IndicatorCalculator
 import com.kgd.quant.application.marketdata.port.OhlcvRepositoryPort
 import com.kgd.quant.domain.asset.AssetCode
 import com.kgd.quant.domain.market.MarketCode
-import org.springframework.stereotype.Component
 import java.math.BigDecimal
 import java.time.Instant
+import org.springframework.stereotype.Component
 
 /**
  * IndicatorQuery — 차트 분석 메뉴의 기술적 지표 계산 query (ADR-0033 Phase 1).
@@ -17,20 +18,20 @@ import java.time.Instant
 class IndicatorQuery(
     private val ohlcvRepo: OhlcvRepositoryPort,
     private val calculator: IndicatorCalculator,
-) {
-    suspend fun rsi(
+) : CalculateIndicatorsUseCase {
+    override suspend fun rsi(
         assetCode: AssetCode,
         marketCode: MarketCode,
         interval: String,
         from: Instant,
         to: Instant,
-        period: Int = 14,
+        period: Int,
     ): List<IndicatorCalculator.IndicatorPoint> {
         val bars = ohlcvRepo.query(assetCode, marketCode, interval, from, to)
         return calculator.rsi(bars, period)
     }
 
-    suspend fun sma(
+    override suspend fun sma(
         assetCode: AssetCode,
         marketCode: MarketCode,
         interval: String,
@@ -42,7 +43,7 @@ class IndicatorQuery(
         return calculator.sma(bars, period)
     }
 
-    suspend fun ema(
+    override suspend fun ema(
         assetCode: AssetCode,
         marketCode: MarketCode,
         interval: String,
@@ -54,41 +55,41 @@ class IndicatorQuery(
         return calculator.ema(bars, period)
     }
 
-    suspend fun macd(
+    override suspend fun macd(
         assetCode: AssetCode,
         marketCode: MarketCode,
         interval: String,
         from: Instant,
         to: Instant,
-        fastPeriod: Int = 12,
-        slowPeriod: Int = 26,
-        signalPeriod: Int = 9,
+        fastPeriod: Int,
+        slowPeriod: Int,
+        signalPeriod: Int,
     ): IndicatorCalculator.Macd {
         val bars = ohlcvRepo.query(assetCode, marketCode, interval, from, to)
         return calculator.macd(bars, fastPeriod, slowPeriod, signalPeriod)
     }
 
-    suspend fun stochastic(
+    override suspend fun stochastic(
         assetCode: AssetCode,
         marketCode: MarketCode,
         interval: String,
         from: Instant,
         to: Instant,
-        kPeriod: Int = 14,
-        dPeriod: Int = 3,
+        kPeriod: Int,
+        dPeriod: Int,
     ): IndicatorCalculator.Stochastic {
         val bars = ohlcvRepo.query(assetCode, marketCode, interval, from, to)
         return calculator.stochastic(bars, kPeriod, dPeriod)
     }
 
-    suspend fun bollinger(
+    override suspend fun bollinger(
         assetCode: AssetCode,
         marketCode: MarketCode,
         interval: String,
         from: Instant,
         to: Instant,
-        period: Int = 20,
-        stdDevMultiplier: BigDecimal = BigDecimal("2.0"),
+        period: Int,
+        stdDevMultiplier: BigDecimal,
     ): IndicatorCalculator.BollingerBands {
         val bars = ohlcvRepo.query(assetCode, marketCode, interval, from, to)
         return calculator.bollinger(bars, period, stdDevMultiplier)

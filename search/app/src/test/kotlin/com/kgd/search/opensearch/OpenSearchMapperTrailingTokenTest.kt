@@ -1,5 +1,6 @@
 package com.kgd.search.opensearch
 
+import com.kgd.search.infrastructure.config.OpenSearchConfig
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import tools.jackson.databind.DeserializationFeature

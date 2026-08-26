@@ -1,5 +1,6 @@
 package com.kgd.quant.application.discover
 
+import com.kgd.quant.application.discover.usecase.GetGlobalIndicesUseCase
 import java.math.BigDecimal
 
 /** ADR-0042 — 발견·트렌딩 ranking entry. */
