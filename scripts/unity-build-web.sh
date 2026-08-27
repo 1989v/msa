@@ -5,8 +5,13 @@
 #
 #   scripts/unity-build-web.sh <slug> [--skip-font]
 #
-# 프로젝트 원본은 portal-fe/public/games/_src/<slug>/ 에 있고 산출물은 그 형제 폴더인
-# portal-fe/public/games/<slug>/ 로 나간다. 원본과 산출물을 캔버스 게임과 같은 레포에 둔다 —
+# 원본은 portal-fe/public/games/_src/<slug>/, 산출물은 portal-fe/public/games/<slug>/ 다.
+# 캔버스 게임과 같은 레포에 두되 폴더는 갈린다.
+#
+# **원본을 산출물 폴더 안에 두면 안 된다.** 유니티는 빌드할 때 출력 폴더를 통째로 비우므로,
+# 그 안에 프로젝트가 있으면 첫 빌드에서 Assets 째로 지워진다 (2026-08-28 실제로 날렸다).
+# 산출물 폴더가 프로젝트의 상위여도 유니티가 거부한다(SIGABRT).
+#
 # 게임이 ../lib/*.js 를 상대경로로 싣기 때문에 다른 곳에 구우면 랭킹·세이브·가상패드가 전부 죽는다.
 # _src 는 .dockerignore 로 이미지에서 빠지므로 서비스에는 산출물만 나간다.
 #
@@ -43,17 +48,27 @@ if [ "${1:-}" != "--skip-font" ]; then
   run_method Kgd.Editor.FontBake.Bake font-bake
 fi
 
+# 산출물 폴더가 프로젝트 폴더의 **상위**라 유니티에 그대로 넘기면 거부한다 —
+# 출력 안에 프로젝트가 들어가는 모양이 되기 때문이다(SIGABRT). 임시 폴더에 굽고 옮긴다.
+STAGE="$(mktemp -d "${TMPDIR:-/tmp}/kgd-unity-XXXXXX")/$SLUG"
+trap 'rm -rf "$(dirname "$STAGE")"' EXIT
+
 echo "▸ WebGL 빌드 → $OUTPUT"
 UNITY_CLI="$HOME/.unity/bin/unity"
 if [ -x "$UNITY_CLI" ]; then
   "$UNITY_CLI" --no-banner --non-interactive build "$PROJECT" \
     --target WebGL --execute-method Kgd.Editor.WebBuild.Build \
-    -o "$OUTPUT" --log-file "$LOGDIR/build.log"
+    -o "$STAGE" --log-file "$LOGDIR/build.log"
 else
   "$EDITOR" -batchmode -nographics -projectPath "$PROJECT" -buildTarget WebGL \
-    -executeMethod Kgd.Editor.WebBuild.Build -buildOutput "$OUTPUT" \
+    -executeMethod Kgd.Editor.WebBuild.Build -buildOutput "$STAGE" \
     -quit -logFile "$LOGDIR/build.log"
 fi
+
+# 산출물만 게임 폴더로 옮긴다. 원본(_src)과 폴더가 갈려 있어 서로 지우지 않는다.
+mkdir -p "$OUTPUT"
+rm -rf "$OUTPUT/Build"
+cp -R "$STAGE/." "$OUTPUT/"
 
 echo
 echo "── 전송량 (게임 하나 상한 15MB) ──"
