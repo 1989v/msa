@@ -19,6 +19,3 @@
 [submodule "portal-fe/public/games"]
 	path = portal-fe/public/games
 	url = https://github.com/1989v/games.git
-[submodule "unity/games"]
-	path = unity/games
-	url = https://github.com/1989v/unity-games.git

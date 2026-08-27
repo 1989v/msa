@@ -5,8 +5,10 @@
 #
 #   scripts/unity-build-web.sh <slug> [--skip-font]
 #
-# 산출물은 portal-fe/public/games/<slug>/ 다. 게임이 ../lib/*.js 를 상대경로로 싣기 때문에
-# 다른 곳에 구우면 랭킹·세이브·가상패드가 전부 죽는다 — 경로를 옮기지 마라.
+# 프로젝트 원본은 portal-fe/public/games/_src/<slug>/ 에 있고 산출물은 그 형제 폴더인
+# portal-fe/public/games/<slug>/ 로 나간다. 원본과 산출물을 캔버스 게임과 같은 레포에 둔다 —
+# 게임이 ../lib/*.js 를 상대경로로 싣기 때문에 다른 곳에 구우면 랭킹·세이브·가상패드가 전부 죽는다.
+# _src 는 .dockerignore 로 이미지에서 빠지므로 서비스에는 산출물만 나간다.
 #
 # CI 에서 돌리지 않는다. Unity 라이선스 활성화를 GitHub Actions 에 넣으면 시크릿·좌석 관리가
 # 붙고, 실패하면 images.yml 테스트 게이트처럼 그 커밋의 다른 서비스 이미지까지 막는다.
@@ -17,7 +19,7 @@ SLUG="${1:-}"
 [ -n "$SLUG" ] || { echo "사용법: scripts/unity-build-web.sh <slug> [--skip-font]"; exit 2; }
 shift || true
 
-PROJECT="$ROOT/unity/games/$SLUG"
+PROJECT="$ROOT/portal-fe/public/games/_src/$SLUG"
 OUTPUT="$ROOT/portal-fe/public/games/$SLUG"
 EDITOR="$(ls -d /Applications/Unity/Hub/Editor/*/Unity.app/Contents/MacOS/Unity 2>/dev/null | sort | tail -1)"
 LOGDIR="$PROJECT/Logs"
