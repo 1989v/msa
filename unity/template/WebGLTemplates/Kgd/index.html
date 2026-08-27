@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>__KGD_TITLE__</title>
+<meta name="description" content="__KGD_DESC__" />
+<meta name="theme-color" content="__KGD_THEME__" />
+<link rel="canonical" href="https://game.1989v.com/games/__KGD_SLUG__" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="1989v 게임" />
+<meta property="og:title" content="__KGD_TITLE__" />
+<meta property="og:description" content="__KGD_DESC__" />
+<meta property="og:url" content="https://game.1989v.com/games/__KGD_SLUG__" />
+<meta property="og:image" content="https://game.1989v.com/games/thumbs/og/__KGD_SLUG__.png" />
+<meta property="og:image:secure_url" content="https://game.1989v.com/games/thumbs/og/__KGD_SLUG__.png" />
+<meta property="og:image:type" content="image/png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="__KGD_TITLE__" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="__KGD_FAVICON__" />
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: __KGD_THEME__;
+    overflow: hidden;
+    overscroll-behavior: none;
+    font-family: system-ui, -apple-system, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    color: #e8eef6;
+  }
+  /* 캔버스를 flex/grid 아이템으로 두지 않는다 — 레이아웃이 크기를 다시 정하면서 서로 물린다 */
+  #kgd-stage { position: fixed; inset: 0; }
+  #unity-canvas {
+    display: block;
+    position: absolute; left: 0; top: 0;
+    background: __KGD_THEME__;
+    touch-action: none;
+    outline: none;
+  }
+
+  /* 로딩 오버레이. .panel 은 "화면을 덮는 메뉴/결과" 전용 클래스이고,
+     lib/touch.js 가 이 클래스를 보고 가상패드를 숨긴다 — 로딩 중에는 그게 맞다.
+     상시 HUD 에는 절대 쓰지 않는다 (쓰면 패드가 영영 안 뜬다).
+
+     z-index 는 플랫폼 크롬(순위 트로피·뒤로가기 배지)보다 위여야 한다. 아래에 두면
+     로딩 화면 위로 버튼이 떠올라 "글자와 버튼이 새는" 첫인상이 된다. */
+  #kgd-boot {
+    position: fixed; inset: 0; z-index: 2147482000;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background:
+      radial-gradient(120% 80% at 50% 12%, rgba(217,164,65,.10), transparent 62%),
+      radial-gradient(100% 70% at 50% 108%, rgba(90,140,190,.10), transparent 60%),
+      __KGD_THEME__;
+    padding: 24px;
+    text-align: center;
+  }
+  #kgd-boot .kicker {
+    font-size: 11px; letter-spacing: .34em; text-transform: uppercase;
+    color: rgba(232,238,246,.42); margin-bottom: 14px;
+  }
+  #kgd-boot h1 {
+    font-size: clamp(22px, 6.2vw, 34px); font-weight: 800; letter-spacing: -.01em;
+    color: __KGD_ACCENT__;
+  }
+  #kgd-boot .rule {
+    width: 84px; height: 2px; margin: 14px 0 18px;
+    background: linear-gradient(90deg, transparent, __KGD_ACCENT__, transparent);
+    opacity: .65;
+  }
+  #kgd-bar {
+    width: min(300px, 68vw); height: 4px; border-radius: 2px;
+    background: rgba(255,255,255,.10); overflow: hidden;
+  }
+  #kgd-bar > i {
+    display: block; height: 100%; width: 0;
+    background: __KGD_ACCENT__; transition: width .22s ease-out;
+  }
+  #kgd-pct {
+    margin-top: 10px; font-size: 12px; color: rgba(232,238,246,.52);
+    font-variant-numeric: tabular-nums; letter-spacing: .06em;
+  }
+  #kgd-tip {
+    margin-top: 26px; max-width: 340px;
+    font-size: 12.5px; line-height: 1.75; color: rgba(232,238,246,.60);
+    min-height: 44px;
+    transition: opacity .35s ease;
+  }
+  #kgd-boot footer {
+    position: absolute; left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom));
+    font-size: 10.5px; line-height: 1.7; color: rgba(232,238,246,.28);
+  }
+  #kgd-boot.gone { display: none; }
+  #kgd-err { margin-top: 14px; font-size: 13px; color: #ff9b9b; line-height: 1.6; }
+</style>
+</head>
+<body>
+<!-- mobile: __KGD_CONTROL__ -->
+<!-- Unity 캔버스 안에서 메뉴를 열면 이 빈 패널이 열린다 — lib/touch.js 가 이걸 보고 가상패드를 치운다 -->
+<div id="kgd-menu" class="panel" hidden style="pointer-events:none;background:transparent"></div>
+<div id="kgd-stage"><canvas id="unity-canvas" tabindex="-1"></canvas></div>
+
+<div id="kgd-boot" class="panel">
+  <div class="kicker">__KGD_KICKER__</div>
+  <h1>__KGD_TITLE__</h1>
+  <div class="rule"></div>
+  <div id="kgd-bar"><i></i></div>
+  <div id="kgd-pct">0%</div>
+  <div id="kgd-tip"></div>
+  <div id="kgd-err"></div>
+  <footer>__KGD_CREDIT__</footer>
+</div>
+
+<script src="../lib/keys.js"></script>
+<script src="../lib/hud.js"></script>
+<script src="../lib/rank.js"></script>
+<script src="../lib/platform.js"></script>
+<script>
+  PlatformAdapter.init({ slug: '__KGD_SLUG__', title: '__KGD_TITLE__', saveKeys: ['__KGD_SAVEKEY__'] });
+</script>
+<!-- data-fit="0" 은 필수다 — Unity 가 캔버스 크기를 직접 관리하므로 fitCanvas 와 둘 다 style.width 를 쓰면 서로 덮어쓴다 -->
+<script src="../lib/touch.js" data-fit="0" data-pause="1" data-actions="__KGD_ACTIONS__"></script>
+
+<script>
+(function () {
+  var canvas = document.getElementById('unity-canvas');
+  var boot = document.getElementById('kgd-boot');
+  var bar = document.querySelector('#kgd-bar > i');
+  var pct = document.getElementById('kgd-pct');
+  var err = document.getElementById('kgd-err');
+  var tip = document.getElementById('kgd-tip');
+
+  /* 로딩은 몇 초 걸린다. 빈 막대만 보이면 멈춘 것처럼 읽히므로 조작을 하나씩 알려 준다. */
+  var tips = __KGD_TIPS__;
+  if (tips.length) {
+    var ti = 0;
+    tip.textContent = tips[0];
+    setInterval(function () {
+      if (boot.classList.contains('gone')) return;
+      ti = (ti + 1) % tips.length;
+      tip.style.opacity = '0';
+      setTimeout(function () { tip.textContent = tips[ti]; tip.style.opacity = '1'; }, 350);
+    }, 3200);
+  }
+
+  /* 보이는 뷰포트를 재는 방법은 lib 과 같아야 한다 — innerHeight 와 visualViewport.height 중
+     작은 쪽이다. 어느 한 값도 혼자서는 보이는 높이가 아니다(삼성인터넷과 크롬이 서로 반대다). */
+  function layout() {
+    var vv = window.visualViewport;
+    var h = Math.min(window.innerHeight || 0, (vv && vv.height) || Infinity);
+    var w = (vv && vv.width) || window.innerWidth || 0;
+    var padH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--vt-pad-h')) || 0;
+
+    /* lib/touch.js 는 캔버스 맞춤(fit)을 켠 게임에만 하단 띠를 만든다. Unity 는 캔버스 크기를
+       스스로 관리해야 해서 fit 을 끄는데(data-fit="0"), 그러면 띠가 0 이 되어 조작부가
+       게임 화면 위로 겹친다. 세로에서만 우리가 같은 규격으로 띠를 확보한다.
+       비율 0.28 의 출처는 docs/conventions/game-input-standard.md 세로모드 패드 비율 규격이다. */
+    var coarse = false;
+    try { coarse = window.matchMedia('(pointer: coarse)').matches; } catch (e) {}
+    if (!padH && coarse && h > w) padH = Math.min(300, Math.max(150, Math.round(h * 0.28)));
+
+    /* 세로에서는 패드가 하단 띠를 차지하므로 그만큼 빼고 위로 붙인다.
+       가로에서는 패드가 오버레이라 padH 가 0 이고 화면 전체를 쓴다. */
+    canvas.style.width = w + 'px';
+    canvas.style.height = Math.max(120, h - padH) + 'px';
+  }
+  layout();
+  window.addEventListener('resize', layout);
+  window.addEventListener('orientationchange', function () { setTimeout(layout, 120); });
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', layout);
+  if (window.GameTouch && GameTouch.on) GameTouch.on('layout', layout);
+
+  /* 첫 프레임이 실제로 그려졌을 때 게임이 부른다 (KgdPlatform.SignalReady).
+     로더 진행률 100% 는 "받았다"이지 "보인다"가 아니다. */
+  window.kgdOnReady = function () { boot.classList.add('gone'); layout(); };
+
+  var config = {
+    dataUrl: 'Build/{{{ DATA_FILENAME }}}',
+    frameworkUrl: 'Build/{{{ FRAMEWORK_FILENAME }}}',
+    codeUrl: 'Build/{{{ CODE_FILENAME }}}',
+    streamingAssetsUrl: 'StreamingAssets',
+    companyName: '{{{ COMPANY_NAME }}}',
+    productName: '{{{ PRODUCT_NAME }}}',
+    productVersion: '{{{ PRODUCT_VERSION }}}',
+    /* 폰의 DPR 은 3 이 흔하다 — 그대로 그리면 픽셀이 2.25배가 되어 fps 가 무너진다.
+       상한 2 는 선명함과 프레임의 교환점이고, 파일럿 실측으로 정한 값이다. */
+    devicePixelRatio: Math.min(window.devicePixelRatio || 1, 2)
+  };
+
+  var script = document.createElement('script');
+  script.src = 'Build/{{{ LOADER_FILENAME }}}';
+  script.onload = function () {
+    createUnityInstance(canvas, config, function (p) {
+      var v = Math.round(p * 100);
+      bar.style.width = v + '%';
+      pct.textContent = v + '%';
+    }).then(function (instance) {
+      window.unityInstance = instance;
+      layout();
+    }).catch(function (e) {
+      err.textContent = '게임을 불러오지 못했다 — 새로고침해 보라. (' + e + ')';
+    });
+  };
+  script.onerror = function () { err.textContent = '게임 파일을 받지 못했다 — 잠시 후 다시 시도하라.'; };
+  document.body.appendChild(script);
+})();
+</script>
+</body>
+</html>

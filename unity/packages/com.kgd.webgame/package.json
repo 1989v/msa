@@ -1,0 +1,14 @@
+{
+  "name": "com.kgd.webgame",
+  "displayName": "KGD Web Game Bridge",
+  "version": "0.1.0",
+  "unity": "6000.0",
+  "description": "1989v 게임 플랫폼 브릿지 — 랭킹 제출·서버 세이브·가상패드 입력·정보 패널 신호를 Unity WebGL 에서 쓰기 위한 공용 계층. 게임 코드는 이 패키지의 공개 API 만 부른다.",
+  "author": {
+    "name": "kgd"
+  },
+  "hideInEditor": false,
+  "dependencies": {
+    "com.unity.ugui": "2.0.0"
+  }
+}

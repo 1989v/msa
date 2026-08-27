@@ -1,0 +1,19 @@
+{
+  "name": "Kgd.Editor",
+  "rootNamespace": "Kgd.Editor",
+  "references": [
+    "Kgd.Runtime",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
