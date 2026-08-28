@@ -210,7 +210,11 @@ def check_canvas_stretch(html: str, game_dir: Path) -> list[Finding]:
     out: list[Finding] = []
     for m in re.finditer(r"(canvas|#(?:game|unity)-?canvas)[^{}]*\{([^{}]*)\}", css, re.I):
         body = m.group(2)
-        if re.search(r"\bwidth\s*:\s*100%", body) and not re.search(r"\bmax-width", body):
+        # `height:auto` 나 `max-width` 가 함께 있으면 비율이 유지된다 — 표준 반응형 패턴이고
+        # 버그가 아니다. 둘 다 없이 폭만 늘이는 경우만 잡는다 (실측: 30건 중 대부분이 전자였다)
+        if (re.search(r"\bwidth\s*:\s*100%", body)
+                and not re.search(r"\bmax-width", body)
+                and not re.search(r"\bheight\s*:\s*auto", body)):
             out.append(Finding(
                 "W7", f"캔버스에 width:100% — {m.group(1)}",
                 "전체화면·가로에서 비율이 깨진다. 크기는 스크립트가 정하고 CSS 는 "
@@ -232,13 +236,21 @@ def check_canvas_in_flexbox(html: str, game_dir: Path) -> list[Finding]:
         if f.exists():
             css += f.read_text(encoding="utf-8", errors="replace")
 
+    # 부모가 flex 라도 **가운데 정렬**이면 캔버스를 늘이지 않는다 — 흔한 센터링 패턴이고
+    # 문제가 아니다. 늘어나는 것은 정렬이 기본값(stretch)이거나 캔버스에 flex 가 걸린 경우다.
     parents = set()
     for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
-        if re.search(r"display\s*:\s*(flex|grid|inline-flex|inline-grid)", m.group(2)):
-            for sel in m.group(1).split(","):
-                sel = sel.strip().lstrip(".#")
-                if sel and not sel.startswith("@"):
-                    parents.add(sel.split()[0].split(":")[0])
+        body = m.group(2)
+        if not re.search(r"display\s*:\s*(flex|grid|inline-flex|inline-grid)", body):
+            continue
+        # place-items / place-content 는 align 과 justify 를 한 번에 준다 — 센터링이면 늘어나지 않는다
+        if re.search(r"(align-items|place-items|place-content)\s*:\s*"
+                     r"(center|flex-start|flex-end|baseline|start|end)", body):
+            continue
+        for sel in m.group(1).split(","):
+            sel = sel.strip().lstrip(".#")
+            if sel and not sel.startswith("@"):
+                parents.add(sel.split()[0].split(":")[0])
 
     for parent in parents:
         if not parent:

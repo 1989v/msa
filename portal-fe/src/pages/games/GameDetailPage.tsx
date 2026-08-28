@@ -26,6 +26,7 @@ import {
   videoGameJsonLd,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
+import { shouldAutoLandscape } from './stageOrientation';
 import AuthButton from '../../components/AuthButton';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { useStageFit } from './useStageFit';

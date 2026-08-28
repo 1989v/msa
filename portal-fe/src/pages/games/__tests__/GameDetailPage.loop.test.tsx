@@ -23,7 +23,6 @@ vi.mock('../../../api/gameApi', async (importOriginal) => {
     getGameNickname: vi.fn(() => null),
     startGameSession: vi.fn(),
     endGameSession: vi.fn(),
-    fetchMyRating: vi.fn(),
     rateGame: vi.fn(),
   };
 });
@@ -39,7 +38,6 @@ import {
   fetchGameDetail,
   fetchSimilarGames,
   fetchLeaderboard,
-  fetchMyRating,
 } from '../../../api/gameApi';
 import GameDetailPage from '../GameDetailPage';
 
@@ -86,7 +84,6 @@ describe('게임 상세 — 상세 조회 루프 방지', () => {
     vi.mocked(fetchGameDetail).mockResolvedValue(DETAIL as never);
     vi.mocked(fetchSimilarGames).mockResolvedValue([] as never);
     vi.mocked(fetchLeaderboard).mockResolvedValue([] as never);
-    vi.mocked(fetchMyRating).mockResolvedValue(null as never);
   });
   afterEach(() => vi.clearAllMocks());
 
