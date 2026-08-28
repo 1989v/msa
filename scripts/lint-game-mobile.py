@@ -177,6 +177,83 @@ def check_canvas_orientation(html: str) -> list[Finding]:
     )]
 
 
+def check_panel_misuse(html: str) -> list[Finding]:
+    """
+    `.panel` 은 **화면을 덮는 메뉴·결과창 전용** 클래스다. lib/touch.js 가 이걸 보고
+    가상패드를 숨기므로, 상시 HUD 에 붙이면 패드가 영영 안 뜬다.
+
+    증상이 "패드가 안 보인다" 라 조작 코드를 파게 되는데 원인은 클래스 이름 하나다.
+    """
+    out: list[Finding] = []
+    for m in re.finditer(r'<[^>]*class=["\'][^"\']*\bpanel\b[^"\']*["\'][^>]*>', html, re.I):
+        tag = m.group(0)
+        if re.search(r'\bid=["\'][^"\']*(hud|status|bar|score|top|overlay-hud)', tag, re.I):
+            out.append(Finding(
+                "F5", f"상시 HUD 로 보이는 요소에 .panel 이 붙어 있다 — {tag[:70]}",
+                "`.panel` 은 화면을 덮는 창 전용이다. lib/touch.js 가 이 클래스를 보고 "
+                "가상패드를 숨기므로 HUD 에 쓰면 패드가 영영 안 뜬다",
+            ))
+    return out
+
+
+def check_canvas_stretch(html: str, game_dir: Path) -> list[Finding]:
+    """
+    캔버스를 `width:100%` 로 늘이면 전체화면·가로에서 **비율이 깨진다.**
+    캔버스는 픽셀 크기가 곧 좌표계라 CSS 로 늘이는 순간 클릭 좌표와 그림이 어긋난다.
+    """
+    css = html
+    for name in ("style.css", "css/style.css", "styles.css"):
+        f = game_dir / name
+        if f.exists():
+            css += f.read_text(encoding="utf-8", errors="replace")
+
+    out: list[Finding] = []
+    for m in re.finditer(r"(canvas|#(?:game|unity)-?canvas)[^{}]*\{([^{}]*)\}", css, re.I):
+        body = m.group(2)
+        if re.search(r"\bwidth\s*:\s*100%", body) and not re.search(r"\bmax-width", body):
+            out.append(Finding(
+                "W7", f"캔버스에 width:100% — {m.group(1)}",
+                "전체화면·가로에서 비율이 깨진다. 크기는 스크립트가 정하고 CSS 는 "
+                "max-width 로만 제한하라",
+            ))
+    return out
+
+
+def check_canvas_in_flexbox(html: str, game_dir: Path) -> list[Finding]:
+    """
+    캔버스가 flex/grid **아이템**이면 부모 레이아웃이 크기를 다시 정하면서 캔버스와 싸운다.
+
+    증상이 "모바일에서 화면이 작다" 라 카메라·해상도 문제로 오진하기 딱 좋다 —
+    원인은 CSS 한 줄이다 (2026-08-25 실측).
+    """
+    css = html
+    for name in ("style.css", "css/style.css", "styles.css"):
+        f = game_dir / name
+        if f.exists():
+            css += f.read_text(encoding="utf-8", errors="replace")
+
+    parents = set()
+    for m in re.finditer(r"([^{}]+)\{([^{}]*)\}", css):
+        if re.search(r"display\s*:\s*(flex|grid|inline-flex|inline-grid)", m.group(2)):
+            for sel in m.group(1).split(","):
+                sel = sel.strip().lstrip(".#")
+                if sel and not sel.startswith("@"):
+                    parents.add(sel.split()[0].split(":")[0])
+
+    for parent in parents:
+        if not parent:
+            continue
+        pat = rf'<[^>]*(?:id|class)=["\'][^"\']*\b{re.escape(parent)}\b[^"\']*["\'][^>]*>\s*<canvas'
+        if re.search(pat, html, re.I):
+            return [Finding(
+                "W8", f"캔버스가 flex/grid 아이템이다 — 부모 `{parent}`",
+                "부모 레이아웃이 캔버스 크기를 다시 정하면서 서로 싸운다. 증상은 "
+                "\"모바일에서 화면이 작다\" 로 나와 카메라 문제로 오진하기 쉽다. "
+                "캔버스는 position:fixed/absolute 로 레이아웃 밖에 둔다",
+            )]
+    return []
+
+
 def lint_game(game_dir: Path) -> list[Finding]:
     index = game_dir / "index.html"
     if not index.exists():
@@ -189,6 +266,9 @@ def lint_game(game_dir: Path) -> list[Finding]:
         + check_action_labels(html)
         + check_scale_conflict(html, game_dir)
         + check_canvas_orientation(html)
+        + check_panel_misuse(html)
+        + check_canvas_stretch(html, game_dir)
+        + check_canvas_in_flexbox(html, game_dir)
     )
 
 
