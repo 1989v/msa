@@ -623,7 +623,10 @@ export const RANK_BRAND = '모든 랭킹';
 /** 화면 라벨(RANK_BRAND)과 나눈 검색 신원 — DEAL_SITE_NAME 과 같은 이유 */
 export const RANK_SITE_NAME = `${PORTAL_BRAND} 랭킹`;
 
-/** 출처 표시 의무가 붙은 원천이라 화면 어딘가에 반드시 나와야 한다 (ADR-0081). */
+/**
+ * 원천 표기. 오피넷은 **이용허락범위 제한 없음**이라 의무는 아니지만, 값의 출처를 밝히는 편이
+ * 숫자를 믿을 근거가 된다. 보드 행의 `source_label` 이 원본이고 이건 그 폴백이다 (ADR-0081).
+ */
 export const RANK_GAS_SOURCE = '출처: 한국석유공사 오피넷';
 
 
@@ -650,7 +653,7 @@ export function rankHubMeta() {
   return {
     title: `${RANK_BRAND} — ${PORTAL_BRAND}`,
     description:
-      '지역별 최저가 주유소 리더보드. 어제 대비 순위 등락과 함께 시군구·유종별로 확인하고, 가는 길 위의 싼 주유소도 찾아보세요.',
+      '지역별 최저가 주유소 리더보드. 시군구·유종별 순위를 어제 대비 등락과 함께 확인하고, 각 주유소로 바로 길찾기하세요.',
     canonical: rankUrl('/'),
   };
 }
