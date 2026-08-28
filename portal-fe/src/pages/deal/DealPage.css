@@ -2,7 +2,6 @@
    깊이는 그림자가 아니라 면의 색 단차와 어긋난 판으로 만든다 (DESIGN.md §12). */
 
 .deal-page {
-  min-height: 100vh;
   background: var(--ko-surface-0);
   color: var(--ko-text-primary);
   font-family: var(--ko-font-family);

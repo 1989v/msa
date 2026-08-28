@@ -2,8 +2,6 @@
  * 머리띠는 GNB 의 기와 idiom(라이트에서도 먹빛 판)을 따르되 서비스 메뉴를 얹지 않는다. */
 
 .login-shell {
-  min-height: 100vh;
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--ko-surface-0);

@@ -3,9 +3,19 @@
  * 컨테이너 안을 모두 탄다 — 어두운 판(full-bleed)으로 만들면 패딩 안에서 어긋난다. */
 
 .site-footer {
-  margin-top: var(--ko-space-12);
+  /* 남는 높이를 흡수해 화면 바닥에 앉는다 (페이지 셸은 index.css 의 #root). */
+  margin-top: auto;
   padding: var(--ko-space-8) var(--ko-space-6);
   border-top: 1px solid var(--ko-border-subtle);
+}
+
+/* 본문과 괘선 사이 여백. 푸터의 margin-top 은 남는 높이를 먹는 데 쓰이므로 여기에
+ * 두면 본문이 긴 화면에서 0 이 된다 — 앞 요소가 갖는다. flex 항목끼리는 마진이
+ * 상쇄되지 않아 값이 그대로 남고, flex:1 인 앞 요소는 그만큼 덜 자란다.
+ * #root 를 앞에 두는 이유는 명시도다 — 앞 요소가 `margin: 0 auto` 로 가운데 정렬하는
+ * 화면(방침·포트폴리오)에서 클래스 하나짜리 선택자로는 그 단축 속성에 진다(실측). */
+#root :has(+ .site-footer) {
+  margin-bottom: var(--ko-space-12);
 }
 
 .site-footer-inner {

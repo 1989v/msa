@@ -5,7 +5,6 @@
  */
 
 .shop-page {
-  min-height: 100vh;
   background: var(--ko-surface-0);
   color: var(--ko-text-primary);
   font-family: var(--ko-font-family);

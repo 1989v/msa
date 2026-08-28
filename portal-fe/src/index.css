@@ -57,6 +57,29 @@ body {
   margin: 0;
 }
 
+/* 페이지 셸 — 푸터를 화면 바닥에 앉힌다.
+ *
+ * 푸터가 본문 끝에 그대로 붙어 있어서 본문이 짧은 화면에서는 화면 중간에 떠 있었다.
+ * 화면마다 푸터 높이가 달라 보이던 원인이다. position:fixed 로 붙이지 않는 이유는
+ * 두 가지다 — 푸터가 뷰포트 높이를 상시 먹고(모바일에서 특히 크다), 아래쪽은 이미
+ * 하단 탭바(kh-shell.css)가 쓰고 있어 겹친다. 본문이 길면 지금처럼 그냥 흘러간다. */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - var(--kh-shell-bottom, 0px));
+}
+
+/* 푸터를 품은 화면이 남는 높이를 가져간다. GNB 를 이 밖에 두는 화면(포트폴리오·방침·
+ * 게임)에서도 머리띠 높이가 자동으로 빠진다.
+ * width 를 박는 건 max-width + margin:0 auto 로 가운데 정렬하는 화면(게임·찜) 때문이다 —
+ * flex 항목이 되면서 가로 auto 마진이 stretch 를 끄기 때문에, 두지 않으면 내용 너비로 줄어든다. */
+#root > :has(> .site-footer) {
+  flex: 1 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Search Page */
 .search-page {
   max-width: 900px;
@@ -362,7 +385,9 @@ body {
 
 .viz-page-scroll {
   background: #0a0a14;
-  min-height: 100vh;
+  /* 푸터 없는 상태 화면(로딩·오류)도 이 클래스를 입어서 셸의 flex 가 닿지 않는다 —
+     자기 높이를 갖되 탭바 몫은 #root 와 같은 식으로 뺀다. */
+  min-height: calc(100dvh - var(--kh-shell-bottom, 0px));
   color: #e0e0e0;
 }
 

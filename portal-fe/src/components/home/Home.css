@@ -2,7 +2,6 @@
  * DESIGN.md 토큰만 사용한다. 모바일 우선 + 데스크탑은 max-width 안에서 같은 레이아웃. */
 
 .home-page {
-  min-height: 100vh;
   background: var(--ko-surface-0);
   color: var(--ko-text-primary);
   /* 먹 캔버스(z:-1)를 이 배경 위·콘텐츠 아래에 가두는 스택 맥락 */

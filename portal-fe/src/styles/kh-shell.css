@@ -49,10 +49,16 @@ textarea {
   }
 }
 
-/* 탭바가 있을 때만 본문 하단을 비운다 (KhTabBar 가 :root 에 data-tabbar 를 건다) */
+/* 탭바가 있을 때만 본문 하단을 비운다 (KhTabBar 가 :root 에 data-tabbar 를 건다).
+ * 같은 값을 페이지 셸(index.css #root)이 화면 높이에서 뺀다 — 안 빼면 셸이 100dvh 를
+ * 잡고 그 아래로 이 여백이 더해져 어느 화면에서나 탭바 높이만큼 스크롤이 생긴다. */
 @media (max-width: 767.98px) {
+  :root[data-tabbar='on'] {
+    --kh-shell-bottom: calc(60px + env(safe-area-inset-bottom));
+  }
+
   :root[data-tabbar='on'] body {
-    padding-bottom: calc(60px + env(safe-area-inset-bottom));
+    padding-bottom: var(--kh-shell-bottom);
   }
 }
 

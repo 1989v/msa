@@ -1,6 +1,5 @@
 /* ADR-0065 K-관광/지리 탐색 (place) — DESIGN.md(--ko-*) 토큰만 사용, hex 직접 입력 금지 */
 .place-page {
-  min-height: 100vh;
   background: var(--ko-surface-0);
   color: var(--ko-text-primary);
   font-family: var(--ko-font-family);

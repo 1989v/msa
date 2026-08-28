@@ -1,5 +1,4 @@
 .portfolio-page {
-  min-height: 100vh;
   background: var(--ko-surface-0);
   color: var(--ko-text-primary);
   padding: var(--kh-void, var(--ko-space-16)) var(--ko-space-6) 96px;

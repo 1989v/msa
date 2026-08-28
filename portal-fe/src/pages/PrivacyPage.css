@@ -2,7 +2,6 @@
    장식은 두지 않는다. 표는 .kh-table 프리미티브를 그대로 쓴다. */
 
 .privacy-page {
-  min-height: 100vh;
   background: var(--ko-surface-0);
   color: var(--ko-text-primary);
   padding: var(--kh-void, var(--ko-space-16)) var(--ko-space-6) 96px;
