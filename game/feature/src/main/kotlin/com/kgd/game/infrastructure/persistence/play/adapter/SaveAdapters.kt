@@ -4,7 +4,6 @@ import com.kgd.game.domain.play.model.ScoreBoardKey
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.application.play.port.GameRunRepositoryPort
 import com.kgd.game.application.play.port.GameSaveRepositoryPort
-import com.kgd.game.application.play.port.SaveLeasePort
 import com.kgd.game.application.play.port.GameScoreRepositoryPort
 import com.kgd.game.application.play.port.SaveSnapshot
 import com.kgd.game.application.play.port.ScoreBoardRef
@@ -21,11 +20,8 @@ import com.kgd.game.infrastructure.persistence.play.repository.GameSaveDataJpaRe
 import com.kgd.game.infrastructure.persistence.play.repository.GameScoreDailyJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameScoreJpaRepository
 import org.springframework.data.domain.PageRequest
-import org.springframework.data.redis.core.StringRedisTemplate
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import java.security.SecureRandom
-import java.time.Duration
 import java.time.LocalDate
 
 @Repository
@@ -113,25 +109,6 @@ class GameRunRepositoryAdapter(
     }
 
     override fun findByRunKey(runKey: String): GameRun? = jpaRepository.findByRunKey(runKey)?.toDomain()
-}
-
-/** Redis SETNX 기반 디바이스 리스 — 동일 holder 는 TTL 연장, 타 holder 는 거절 */
-@Component
-class RedisSaveLeaseStore(
-    private val redis: StringRedisTemplate,
-) : SaveLeasePort {
-
-    private fun key(gameId: Long, subject: String) = "game:save:lease:$gameId:$subject"
-
-    override fun tryAcquire(gameId: Long, subject: String, holder: String, ttl: Duration, takeover: Boolean): Boolean {
-        val k = key(gameId, subject)
-        if (redis.opsForValue().setIfAbsent(k, holder, ttl) == true) return true
-        if (takeover || redis.opsForValue().get(k) == holder) {
-            redis.opsForValue().set(k, holder, ttl)
-            return true
-        }
-        return false
-    }
 }
 
 @Repository

@@ -3,7 +3,6 @@ package com.kgd.game.application.play.port
 import com.kgd.game.domain.play.model.ScoreBoardKey
 import com.kgd.game.domain.play.model.ScoreTrack
 import com.kgd.game.domain.play.model.GameRun
-import java.time.Duration
 import java.time.LocalDate
 
 /** 세이브 스냅샷 — data 는 게임이 정의하는 불투명 JSON 문자열, code 는 이어하기 코드 */
@@ -27,19 +26,6 @@ interface GameSaveRepositoryPort {
 interface GameRunRepositoryPort {
     fun save(run: GameRun): GameRun
     fun findByRunKey(runKey: String): GameRun?
-}
-
-/**
- * 세이브 디바이스 리스 — 로드 시 획득, TTL 동안 다른 holder 의 로드/저장을 차단
- * (멀티탭/멀티기기 동시 조작 방어. 세이브스커밍 방어는 GameRun 시드가 담당).
- */
-interface SaveLeasePort {
-    /**
-     * subject 는 회원 세이브면 memberId, 게스트 세이브면 이어하기 코드.
-     * takeover=true 면 다른 holder 가 점유 중이어도 빼앗는다 — 코드를 아는 것 자체가 자격 증명이므로
-     * 기기를 옮긴 사용자가 이전 기기의 리스에 막히지 않게 한다.
-     */
-    fun tryAcquire(gameId: Long, subject: String, holder: String, ttl: Duration, takeover: Boolean = false): Boolean
 }
 
 /** 랭킹 항목 — rank 는 조회 시점 계산 */

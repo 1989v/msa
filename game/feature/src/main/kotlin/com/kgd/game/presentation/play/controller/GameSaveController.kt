@@ -59,10 +59,9 @@ class GameSaveController(
     fun load(
         @PathVariable slug: String,
         @RequestHeader("X-User-Id", required = false) userId: String?,
-        @RequestHeader("X-Device-Id") deviceId: String,
         @RequestParam(required = false) code: String?,
     ): ApiResponse<SaveStateResponse> {
-        val snapshot = loadSave.execute(LoadGameSaveUseCase.Query(slug, userId?.toLongOrNull(), code, deviceId))
+        val snapshot = loadSave.execute(LoadGameSaveUseCase.Query(slug, userId?.toLongOrNull(), code))
         return ApiResponse.success(
             SaveStateResponse(
                 data = snapshot?.let { mapper.readValue(it.data, mapType) },
@@ -76,7 +75,6 @@ class GameSaveController(
     fun store(
         @PathVariable slug: String,
         @RequestHeader("X-User-Id", required = false) userId: String?,
-        @RequestHeader("X-Device-Id") deviceId: String,
         @Valid @RequestBody request: SaveRequest,
     ): ApiResponse<SaveStateResponse> {
         val saved = storeSave.execute(
@@ -84,7 +82,6 @@ class GameSaveController(
                 slug = slug,
                 memberId = userId?.toLongOrNull(),
                 code = request.code,
-                holder = deviceId,
                 data = mapper.writeValueAsString(request.data),
                 expectedVersion = request.version,
             )

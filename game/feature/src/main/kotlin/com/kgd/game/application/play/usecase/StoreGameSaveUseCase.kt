@@ -9,7 +9,6 @@ interface StoreGameSaveUseCase {
         val slug: String,
         val memberId: Long?,
         val code: String?,
-        val holder: String,
         val data: String,
         val expectedVersion: Long,
     )

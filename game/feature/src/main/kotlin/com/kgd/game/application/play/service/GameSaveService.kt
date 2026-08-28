@@ -2,42 +2,37 @@ package com.kgd.game.application.play.service
 
 import com.kgd.game.application.catalog.port.GameRepositoryPort
 import com.kgd.game.application.play.port.GameSaveRepositoryPort
-import com.kgd.game.application.play.port.SaveLeasePort
 import com.kgd.game.application.play.port.SaveSnapshot
 import com.kgd.game.domain.catalog.exception.GameNotFoundException
-import com.kgd.game.domain.play.exception.SaveLockedException
 import com.kgd.game.domain.play.exception.SaveTooLargeException
 import org.springframework.stereotype.Component
 import com.kgd.game.application.play.usecase.LoadGameSaveUseCase
 import com.kgd.game.application.play.usecase.StoreGameSaveUseCase
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Duration
 
 /**
- * 클라우드 세이브 파사드 — 리스(Redis, 외부 IO)는 트랜잭션 밖에서 판정하고,
- * 낙관적 업서트만 트랜잭션 경계(GameSaveCommand) 안에서 수행한다.
+ * 클라우드 세이브 파사드 — 게임 해석과 크기 상한을 보고 트랜잭션 경계(GameSaveCommand)로 넘긴다.
+ *
+ * 동시 쓰기 방어는 `@Version` 낙관적 락 하나가 맡는다. 전에는 그 위에 Redis 디바이스 리스가
+ * 한 겹 더 있었는데, 그것이 실제로 재던 것은 "동시"가 아니라 "1시간 안의 다른 기기"라
+ * 폰에서 PC 로 옮긴 사람까지 막았다. 게다가 실패가 클라이언트에서 조용히 삼켜져
+ * 낙관적 락 거부와 화면상 구분되지 않았다. 기기 간 어긋남은 클라이언트가 마지막으로 맞춘
+ * version 을 들고 서버가 앞서면 서버본을 받는 쪽으로 푼다 — 막는 대신 맞춘다.
  */
 @Service
 class GameSaveService(
     private val gameRepository: GameRepositoryPort,
-    private val saveLease: SaveLeasePort,
     private val saveCommand: GameSaveCommand,
 ) : LoadGameSaveUseCase, StoreGameSaveUseCase {
     companion object {
-/** 저장 후 1시간 동안 같은 holder(기기)만 저장 가능 — 멀티기기 동시 쓰기 방어 */
-        private val LEASE_TTL: Duration = Duration.ofHours(1)
         private const val MAX_SAVE_BYTES = 64 * 1024
     }
 
-    /**
-     * 로그인 사용자는 memberId 로, 게스트는 이어하기 코드로 자기 세이브를 찾는다.
-     * 읽기는 잠그지 않는다 — 브라우저를 잃고 코드로 복구하는 경로가 이전 기기의 리스에 막히면 안 된다.
-     */
+    /** 로그인 사용자는 memberId 로, 게스트는 이어하기 코드로 자기 세이브를 찾는다. 신원이 없으면 null */
     override fun execute(query: LoadGameSaveUseCase.Query): SaveSnapshot? {
-        val (slug, memberId, code, _) = query
+        val (slug, memberId, code) = query
         val gameId = resolveGameId(slug)
-        subjectOf(memberId, code) ?: return null                    // 신원이 없으면 불러올 세이브도 없다
         memberId?.let { saveCommand.find(gameId, it) }?.let { return it }
         // 계정 슬롯이 아직 비었으면 손에 든 코드로 폴백한다. 게스트로 쌓은 진행도가 로그인
         // 직후에 사라진 것처럼 보이지 않게 하려는 것이고, 저장 때 되돌려 보낼 version 도
@@ -46,24 +41,11 @@ class GameSaveService(
     }
 
     override fun execute(command: StoreGameSaveUseCase.Command): SaveSnapshot {
-        val (slug, memberId, code, holder, data, expectedVersion) = command
+        val (slug, memberId, code, data, expectedVersion) = command
         val gameId = resolveGameId(slug)
         val size = data.toByteArray(Charsets.UTF_8).size
         if (size > MAX_SAVE_BYTES) throw SaveTooLargeException(size = size, limit = MAX_SAVE_BYTES)
-        // 코드가 아직 없는 첫 저장은 잠글 대상이 없다 — 발급 후부터 리스가 걸린다.
-        // 신원이 확인된 요청은 이전 기기의 리스를 넘겨받는다. 코드는 그 자체가 자격 증명이고
-        // 로그인은 그보다 강하다. 회원만 넘겨받지 못하게 두면 폰에서 저장한 뒤 PC 로 옮긴
-        // 사람이 한 시간 동안 서버에 못 올리고, 그 사이 진행분은 다음 접속의 최신본 판정에
-        // 밀려 그대로 사라진다. 실제 동시 쓰기는 @Version 낙관적 락이 막는다.
-        subjectOf(memberId, code)?.let { acquireLeaseOrThrow(gameId, it, holder, takeover = true) }
         return saveCommand.upsert(gameId, memberId, code, data, expectedVersion)
-    }
-
-    private fun subjectOf(memberId: Long?, code: String?): String? =
-        memberId?.toString() ?: code?.takeIf { it.isNotBlank() }?.uppercase()
-
-    private fun acquireLeaseOrThrow(gameId: Long, subject: String, holder: String, takeover: Boolean = false) {
-        if (!saveLease.tryAcquire(gameId, subject, holder, LEASE_TTL, takeover)) throw SaveLockedException()
     }
 
     private fun resolveGameId(slug: String): Long {

@@ -43,7 +43,7 @@
 | 도메인 | 설명 |
 |---|---|
 | catalog | Game(상태머신 DRAFT→REVIEW→BETA→PUBLISHED⇄SUSPENDED, `isMonetizable`=PUBLISHED+SDK, **genre 단일 대표 장르**), GameTag(+map), GameStats(1:1 프로젝션), GameCollection(MANUAL/TRENDING/NEW/TAG_BASED) |
-| play | GamePlaySession(게스트 허용), GameRating(1인 1표, 1~10), **GameSaveData**(불투명 JSON + @Version 낙관적 락 + 64KB 상한 + Redis 디바이스 리스 1h), **GameRun**(서버 권위 시드 발급/소모 — 세이브스커밍 방어) |
+| play | GamePlaySession(게스트 허용), GameRating(1인 1표, 1~10), **GameSaveData**(불투명 JSON + @Version 낙관적 락 + 64KB 상한), **GameRun**(서버 권위 시드 발급/소모 — 세이브스커밍 방어) |
 | battle | `game:sim` 의 결정적 1v1 턴제 배틀 코어(타입 상성/STAB/Mulberry32) — BattleRunner 리플레이 재실행으로 Tier B 검증 가능. 몬스터 수집 RPG 프로토타입 기반 |
 | ads | AdPlacement(HOUSE 크리에이티브 JSON)/AdPolicy(frequency SSOT, 판정은 Redis TTL)/RewardGrant(멱등 보상 원장 — PENDING→COMPLETED, 중복 콜백 1회 보장). rewarded 발급은 `isMonetizable` 게이트. 외부 네트워크(AdSense/GAM)는 후속 |
 | arcade | #23 흡수분 — 세션 구슬(HMAC) · 리플레이 제출 · **Tier A/B 검증**(서버가 결정적 sim 을 재실행해 점수 위조 거부) · Redis 리더보드/데일리 챌린지. API 는 `/api/v1/games/arcade/**` |
@@ -59,7 +59,7 @@
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
 | `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&board=&limit=&period=&date=` | 랭킹 제출/조회 (게스트 OK). `board` 는 게임이 나눈 모드 키이고 생략 시 기본 보드(V59). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
 | `GET /api/v1/games/leaderboards?boards=&entries=` | 허브 레일용 배치 — 기록 있는 보드의 TOP N + **오늘 기록(`todayEntries`)**을 한 응답에 |
-| `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 읽기는 잠그지 않고 쓰기만 `X-Device-Id` 리스(1h) — **신원이 확인된 요청은 리스를 넘겨받는다**(기기 이전·분실 복구). 클라이언트는 로그인 중에도 코드를 함께 보내고, 서버는 계정 슬롯을 먼저 찾은 뒤 없을 때만 코드로 폴백한다 |
+| `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 클라이언트는 로그인 중에도 코드를 함께 보내고, 서버는 계정 슬롯을 먼저 찾은 뒤 없을 때만 코드로 폴백한다. **동시 쓰기 방어는 `@Version` 하나뿐** — `X-Device-Id` 리스는 걷어냈다(아래 Key Rules) |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
 | `GET/POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN). `GET`(목록 `?q=&status=&genre=&tag=&sort=created\|updated\|title\|playCount`, 상세)은 **상태 무관** — 공개 API 로는 보이지 않는 DRAFT/REVIEW/SUSPENDED 를 백오피스에서 다룬다. 화면은 admin-fe `/games` |
 | `/api/v1/games/arcade/{catalog,sessions,scores,leaderboard,daily}` | #23 아케이드 — 세션 발급/점수 제출(검증)/리더보드. `games/**` 하위라 게이트웨이 라우트 추가 없음 |
@@ -104,6 +104,14 @@
   발급하되 화면에 내지 않는다(회원의 이어하기 수단은 로그인 그 자체다).
   기기 간 어긋남은 클라이언트가 **마지막으로 맞춘 version 을 로컬에 남겨** 서버가 앞서면 서버본을
   받는 것으로 푼다 — 로컬이 비었는지만 보던 때는 옛 기기의 진행도가 최신본을 그대로 덮었다
+- **세이브에 기기 리스를 다시 붙이지 않는다.** Redis 디바이스 리스(`game:save:lease:*`, TTL 1h)가
+  `@Version` 위에 한 겹 더 있었고 2026-08-28 제거했다. 이유 셋 — ① 리스가 실제로 잰 것은 "동시"가
+  아니라 **"1시간 안의 다른 기기"** 라, 폰을 덮고 PC 로 옮긴 사람(훨씬 흔한 쪽)이 막혔다
+  ② 실패가 클라이언트에서 조용히 삼켜져(`push()` 의 빈 catch) 낙관적 락 거부와 화면상 구분되지
+  않았다 — 두 곳에서 하고 있음을 알리려던 장치가 알리지 못했다 ③ `takeover = memberId == null`
+  이라 게스트는 원래 항상 통과였고 회원 경로는 토큰 단절로 죽어 있어, **배포 이래 한 번도 거부한
+  적이 없다.** 리스가 유일하게 잡던 것(두 기기가 각자 상태로 번갈아 저장해 서로를 덮는 핑퐁)은
+  위의 version 비교가 **막는 대신 맞추는** 쪽으로 처리한다
 - **공개 목록은 플레이 가능한 상태(PUBLISHED·BETA)를 싣는다.** BETA 를 빼면 베타 게임을 아무도 못 찾아
   피드백을 받을 수 없다. 수익화는 상태와 별개로 `Game.isMonetizable()`(PUBLISHED + SDK)이 막는다.
   FE 는 `isBeta()`(status=BETA 또는 `beta` 태그)로 배지를 렌더한다 — 두 신호를 다 받는 이유는

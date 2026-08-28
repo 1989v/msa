@@ -15,9 +15,6 @@ class RunNotFoundException(runKey: String) :
 class RunAlreadyConsumedException(runKey: String) :
     BusinessException(ErrorCode.INVALID_INPUT, "이미 종료된 런입니다: $runKey")
 
-class SaveLockedException :
-    BusinessException(ErrorCode.FORBIDDEN, "다른 기기에서 로드 중인 세이브입니다. 잠시 후 다시 시도하세요")
-
 class SaveVersionConflictException(expected: Long, actual: Long) :
     BusinessException(ErrorCode.INVALID_INPUT, "세이브 버전 충돌 — 요청 version=$expected, 현재 version=$actual. 다시 로드 후 저장하세요")
 
