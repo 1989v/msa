@@ -59,7 +59,7 @@
 | `PUT /api/v1/games/{slug}/rating` | 평점 upsert (X-User-Id 필수) |
 | `POST /api/v1/games/{slug}/scores`, `GET .../leaderboard?track=&board=&limit=&period=&date=` | 랭킹 제출/조회 (게스트 OK). `board` 는 게임이 나눈 모드 키이고 생략 시 기본 보드(V59). `period=ALL_TIME\|DAILY`, 생략 시 ALL_TIME — 게임 안 위젯(`lib/rank.js`)이 부르는 계약이 그것이다. `date` 는 DAILY 전용이고 생략 시 **KST 오늘** |
 | `GET /api/v1/games/leaderboards?boards=&entries=` | 허브 레일용 배치 — 기록 있는 보드의 TOP N + **오늘 기록(`todayEntries`)**을 한 응답에 |
-| `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 읽기는 잠그지 않고 쓰기만 `X-Device-Id` 리스(1h) — 코드 제시 요청은 리스를 넘겨받는다(기기 분실 복구) |
+| `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 읽기는 잠그지 않고 쓰기만 `X-Device-Id` 리스(1h) — **신원이 확인된 요청은 리스를 넘겨받는다**(기기 이전·분실 복구). 클라이언트는 로그인 중에도 코드를 함께 보내고, 서버는 계정 슬롯을 먼저 찾은 뒤 없을 때만 코드로 폴백한다 |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
 | `GET/POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN). `GET`(목록 `?q=&status=&genre=&tag=&sort=created\|updated\|title\|playCount`, 상세)은 **상태 무관** — 공개 API 로는 보이지 않는 DRAFT/REVIEW/SUSPENDED 를 백오피스에서 다룬다. 화면은 admin-fe `/games` |
 | `/api/v1/games/arcade/{catalog,sessions,scores,leaderboard,daily}` | #23 아케이드 — 세션 발급/점수 제출(검증)/리더보드. `games/**` 하위라 게이트웨이 라우트 추가 없음 |
@@ -96,6 +96,14 @@
 
 - 응답은 공통 `ApiResponse<T>` 포맷
 - DRAFT/REVIEW/SUSPENDED 게임은 공개 API 에서 NOT_FOUND (존재 여부 은닉)
+- **세이브 슬롯은 게임당 하나인데 신원은 둘이다** — 회원은 `member_id`(유니크 `uk_save_game_member`),
+  게스트는 이어하기 코드. 게스트로 놀던 사람이 로그인하면 **계정 슬롯이 비어 있을 때만** 그 행이
+  계정으로 승계된다(`claimBy`). 계정에 이미 진행도가 있으면 그것이 이기고 게스트 행은 코드로 계속
+  열리므로 **어느 쪽도 사라지지 않는다.** 반대로 **코드는 게스트 세이브의 자격 증명이지 계정
+  세이브의 자격 증명이 아니다** — 주인 있는 행은 코드를 제시해도 덮이지 않는다. 회원에게도 코드는
+  발급하되 화면에 내지 않는다(회원의 이어하기 수단은 로그인 그 자체다).
+  기기 간 어긋남은 클라이언트가 **마지막으로 맞춘 version 을 로컬에 남겨** 서버가 앞서면 서버본을
+  받는 것으로 푼다 — 로컬이 비었는지만 보던 때는 옛 기기의 진행도가 최신본을 그대로 덮었다
 - **공개 목록은 플레이 가능한 상태(PUBLISHED·BETA)를 싣는다.** BETA 를 빼면 베타 게임을 아무도 못 찾아
   피드백을 받을 수 없다. 수익화는 상태와 별개로 `Game.isMonetizable()`(PUBLISHED + SDK)이 막는다.
   FE 는 `isBeta()`(status=BETA 또는 `beta` 태그)로 배지를 렌더한다 — 두 신호를 다 받는 이유는
@@ -195,6 +203,12 @@
 캔버스 게임 공용 정적 자산 (`portal-fe/public/games/lib/`):
 - `touch.js` — 모바일 조작·레이아웃 엔진. **원형 아날로그 조이스틱**(한 손가락 360°, 8방향 KeyboardEvent 합성이라 게임별 입력 코드 무변경 — 대각선은 인접 두 키 동시) + 액션 버튼 + **레이아웃 fit**(게임 화면 상단 정렬, 하단 조작 영역 `--vt-pad-h` 확보, 가로/세로 비율 유지 contain). `canvas.width/height` **속성은 절대 건드리지 않는다**(인라인 style 만) — 게임 좌표계 보존이 12종 공용의 불변식. 옵션 `data-actions`(기존) `data-nodpad`(기존) `data-dirkeys="wasd"` `data-stick="fixed|floating|off"` `data-fit="0"`. API `GameTouch.axis()/pressed()/setVisible()/refit()/on()` — 비터치에서도 no-op 스텁이 있어 게임 쪽 가드 불필요
 - `keys.js` — **플랫폼 입력 표준** (2026-08-15). 좌/우 손잡이 2레이아웃(방향키+ZXC(AS) / WASD+JKL(UI)) + 공통 Enter=일시정지·Esc=뒤로. localStorage 전 게임 공유 + 좌하단 전환 배지. 신규 게임은 `GameKeys.keys()` 네이티브 매핑, 레거시는 `GameKeys.remap(프로필)` 무수정 적용. 표준 문서: `docs/conventions/game-input-standard.md`. 레퍼런스: nova-strike
+- `auth.js` — **토큰을 읽는 유일한 곳.** 토큰은 `.1989v.com` 도메인 쿠키다 (ADR-0079). 그 전에는
+  localStorage 였고 게임 21곳이 각자 그 한 줄을 복사해 갖고 있어서, 쿠키로 옮길 때 21곳이 전부
+  뒤처져 **로그인 사용자가 전 게임에서 게스트로 취급됐다** — 서버·게이트웨이의 회원 세이브
+  경로는 멀쩡한데 클라이언트만 끊긴 상태였다. `GameAuth.token()` 하나만 쓰고, 로그인이면
+  `<html>` 에 `game-signed-in` 을 달아 `menu.css` 가 이어하기 코드 줄을 감춘다.
+  **게임 스크립트보다 먼저 로드해야 한다**
 - `rank.js` — 랭킹 위젯. `GameRank.autoPanel(slug)`(#menu 하단 TOP10), `submit(slug, score, detail)`, `copyButton(getCode)`(이어하기 코드 📋 복사)
 - `i18n.js` — 글로벌 한/영. localStorage('game_lang') → navigator.language 자동, 우상단 토글 자동 부착. 게임은 `GameI18n.init({ko,en})` + `TR()` + `data-i18n`. 카탈로그(제목/설명)는 `title_en`/`description_en` 컬럼(V17)
 - `party.js` — **순서 정하기(DECIDER) 장르 인계 규약.** 허브의 「랜덤으로 돌리기」가 정한 참가자·방식을 `localStorage['kgd.party.v1']` 로 넘기고, 게임은 부팅 때 `GameParty.take('<슬러그>')` 한 줄로 받아 준비 화면을 건너뛴다. **주소가 아니라 저장소로 넘기는 이유는 이름이 접근 로그에 남지 않게 하기 위해서**다(정적 파일이라 쿼리스트링이 그대로 기록된다). 읽으면 지운다 — 남기면 새로고침마다 같은 판이 다시 시작돼 준비 화면에 못 들어간다

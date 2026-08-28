@@ -38,8 +38,11 @@ class GameSaveService(
         val (slug, memberId, code, _) = query
         val gameId = resolveGameId(slug)
         subjectOf(memberId, code) ?: return null                    // 신원이 없으면 불러올 세이브도 없다
-        return if (memberId != null) saveCommand.find(gameId, memberId)
-        else saveCommand.findByCode(gameId, requireNotNull(code))
+        memberId?.let { saveCommand.find(gameId, it) }?.let { return it }
+        // 계정 슬롯이 아직 비었으면 손에 든 코드로 폴백한다. 게스트로 쌓은 진행도가 로그인
+        // 직후에 사라진 것처럼 보이지 않게 하려는 것이고, 저장 때 되돌려 보낼 version 도
+        // 여기서 받아야 승계가 버전 충돌 없이 이어진다.
+        return code?.takeIf { it.isNotBlank() }?.let { saveCommand.findByCode(gameId, it) }
     }
 
     override fun execute(command: StoreGameSaveUseCase.Command): SaveSnapshot {
@@ -48,8 +51,11 @@ class GameSaveService(
         val size = data.toByteArray(Charsets.UTF_8).size
         if (size > MAX_SAVE_BYTES) throw SaveTooLargeException(size = size, limit = MAX_SAVE_BYTES)
         // 코드가 아직 없는 첫 저장은 잠글 대상이 없다 — 발급 후부터 리스가 걸린다.
-        // 코드로 식별된 요청은 코드 자체가 자격 증명이라 이전 기기의 리스를 넘겨받는다.
-        subjectOf(memberId, code)?.let { acquireLeaseOrThrow(gameId, it, holder, takeover = memberId == null) }
+        // 신원이 확인된 요청은 이전 기기의 리스를 넘겨받는다. 코드는 그 자체가 자격 증명이고
+        // 로그인은 그보다 강하다. 회원만 넘겨받지 못하게 두면 폰에서 저장한 뒤 PC 로 옮긴
+        // 사람이 한 시간 동안 서버에 못 올리고, 그 사이 진행분은 다음 접속의 최신본 판정에
+        // 밀려 그대로 사라진다. 실제 동시 쓰기는 @Version 낙관적 락이 막는다.
+        subjectOf(memberId, code)?.let { acquireLeaseOrThrow(gameId, it, holder, takeover = true) }
         return saveCommand.upsert(gameId, memberId, code, data, expectedVersion)
     }
 

@@ -103,7 +103,11 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
   길안내는 구글맵 링크(키·쿼터 없음)로 넘긴다. 경로 API 를 직접 부르면 출발지가 전국에 흩어져
   캐시가 듣지 않고 호출 수가 사용자 수를 따라간다
 - **광고 수익화 (AdSense)**: 지면 4곳(블로그 글 끝·게임 목록 끝·관광지 상세 끝·혜택 목록 바깥)에 `AdSlot` — **자동 광고는 콘솔에서 끈 채로 둔다** → `docs/adr/ADR-0076-adsense-monetization.md`. `copy.mjs` 의 `ADSENSE_CLIENT` 한 줄이 로더·지면·`ads.txt` 셋을 동시에 켜고 끈다(빈 값 = 광고 없음이 정상 상태). **`/ads.txt` 는 nginx 명시 route 가 없으면 SPA 폴백이 index.html 을 내보내고, 그 응답은 '유효한 판매자 0줄'로 읽혀 도메인 전체 입찰이 끊긴다.** resume 는 제외 (ADR-0064 와 같은 기준)
-- **로그인 진입점**: **apex `/login` 한 곳**, 토큰은 `.1989v.com` 도메인 쿠키 → `docs/adr/ADR-0079-single-login-origin.md`. 서브도메인에서 로그인을 그리면 OAuth 콜백이 그 호스트로 잡혀 `redirect_uri_mismatch` 가 난다(2026-08-22 game 호스트 실제 사고). **제공자 콘솔에 등록할 redirect_uri 는 `https://1989v.com/oauth/callback` 하나뿐**. `localStorage` 로 되돌리면 서브도메인 세션 공유가 깨져 로그인 화면도 다시 갈라야 한다
+- **로그인 진입점**: **apex `/login` 한 곳**, 토큰은 `.1989v.com` 도메인 쿠키 → `docs/adr/ADR-0079-single-login-origin.md`. 서브도메인에서 로그인을 그리면 OAuth 콜백이 그 호스트로 잡혀 `redirect_uri_mismatch` 가 난다(2026-08-22 game 호스트 실제 사고). **제공자 콘솔에 등록할 redirect_uri 는 `https://1989v.com/oauth/callback` 하나뿐**. `localStorage` 로 되돌리면 서브도메인 세션 공유가 깨져 로그인 화면도 다시 갈라야 한다.
+  **토큰을 읽는 곳을 늘리지 않는다** — 캔버스 게임 21곳이 각자 `localStorage` 읽기 한 줄을 복사해
+  갖고 있어서 쿠키 전환이 그곳들을 지나쳤고, 서버·게이트웨이의 회원 경로가 멀쩡한 채로
+  **로그인 사용자가 전 게임에서 게스트로 취급됐다**(2026-08-28 수정). 지금은
+  `portal-fe/public/games/lib/auth.js` 하나가 읽는다
 - **회원 식별 최소화**: 소셜에서 **이메일·실명을 받지 않는다**(스코프 `openid` 뿐), 제공자 `sub` 은 auth 가 HMAC 으로 가려 member 로 넘긴다 → `docs/adr/ADR-0078-identity-minimization.md`. **`AUTH_SUBJECT_HASH_KEY` 가 없으면 auth 가 기동하지 않고, 키를 잃으면 전 회원 로그인 불가**(해시 재생성 불가) — 백업 대상. 어드민 부트스트랩은 제거됐고 역할은 `member_roles` 행에만 있다(복구 절차: `auth/CLAUDE.md`)
 - **원장 보존기간**: 조회·클릭 90일 / 이력서 열람 365일, 주 1회 `retention` CronJob 이 정리 → `docs/adr/ADR-0077-ledger-retention.md`. **방침(`/privacy` §6)에 적은 숫자와 상수가 같아야 한다** — 한쪽만 고치면 개인정보처리방침이 거짓이 된다. `deal-linkcheck` 에 얹지 않는 이유는 그것이 외부 `:443` egress 가 열린 유일한 배치라서다
 - **SEO / AEO / 검색 유입**: 빌드타임 프리렌더(호스트별), 언어(`/en`)·장르(`/games/genre/*`)·관광지(`/attractions/:id`) URL 승격, 호스트별 robots/sitemap/llms.txt, 구조화 데이터 → `docs/adr/ADR-0062-seo-and-organic-discovery.md`. 카피 SSOT 는 `portal-fe/src/seo/copy.mjs` — 타이틀/설명 문구는 여기서만 고친다. **호스트로 갈리는 경로(`/`, `/en`)는 프리렌더도 반드시 `_hosts/$host` 키를 써야 한다** (경로만 보면 다른 서비스 페이지가 샌다). **SPA 셸(`index.html`)에 canonical·og:url 같은 고정 주소를 두지 않는다** — 그 블록은 프리렌더가 없는 폴백에서만 나가므로 적힌 값은 항상 틀린다(2026-08-24: apex 를 적어 둔 탓에 관광지 5만 URL 이 「대체 페이지」 판정). 모르는 것은 비워 둔다

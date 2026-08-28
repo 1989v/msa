@@ -47,10 +47,16 @@ class GameSaveRepositoryAdapter(
     override fun findByCode(gameId: Long, code: String): SaveSnapshot? =
         jpaRepository.findByGameIdAndSaveCode(gameId, code.normalizeCode())?.toSnapshot()
 
+    /**
+     * 코드로 찾은 행은 **주인이 없을 때만** 쓴다.
+     *
+     * 코드를 아는 것은 게스트 세이브의 자격 증명이지만 계정 세이브의 자격 증명은 아니다.
+     * 걸러내지 않으면 남의 코드를 제시한 요청이 그 계정의 진행도를 덮어쓴다.
+     */
     override fun upsert(gameId: Long, memberId: Long?, code: String?, data: String, expectedVersion: Long): SaveSnapshot {
         val normalized = code?.normalizeCode()
         val existing = memberId?.let { jpaRepository.findByGameIdAndMemberId(gameId, it) }
-            ?: normalized?.let { jpaRepository.findByGameIdAndSaveCode(gameId, it) }
+            ?: normalized?.let { jpaRepository.findByGameIdAndSaveCode(gameId, it) }?.takeIf { it.memberId == null }
 
         if (existing == null) {
             if (expectedVersion != 0L) throw SaveVersionConflictException(expected = expectedVersion, actual = 0L)
@@ -64,6 +70,9 @@ class GameSaveRepositoryAdapter(
         if (existing.version != expectedVersion) {
             throw SaveVersionConflictException(expected = expectedVersion, actual = existing.version)
         }
+        // 계정 슬롯이 비어 있으면 게스트로 쌓은 이 행을 계정으로 승계한다 —
+        // 계정에 이미 세이브가 있었다면 위에서 그 행이 잡혔으므로 여기 오지 않는다.
+        if (memberId != null && existing.memberId == null) existing.claimBy(memberId)
         existing.updateData(cipher.encrypt(data))
         return jpaRepository.saveAndFlush(existing).toSnapshot()
     }

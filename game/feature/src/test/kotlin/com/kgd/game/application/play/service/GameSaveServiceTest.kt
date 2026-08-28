@@ -19,6 +19,7 @@ import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 
 class GameSaveServiceTest : BehaviorSpec({
 
@@ -86,6 +87,33 @@ class GameSaveServiceTest : BehaviorSpec({
                     .execute(LoadGameSaveUseCase.Query("roguelike", memberId = null, code = "ABCD2345WXYZ", holder = "device-a"))
                 result?.version shouldBe 4L
                 result?.code shouldBe "ABCD2345WXYZ"
+            }
+        }
+
+        `when`("로그인 사용자의 계정 슬롯이 아직 비어 있고 게스트 코드를 함께 제시하면") {
+            then("그 코드의 세이브를 돌려줘야 한다 (게스트 진행도가 로그인 직후 사라지지 않게)") {
+                val lease = mockk<SaveLeasePort>(relaxed = true)
+                val saveRepository = mockk<GameSaveRepositoryPort>()
+                every { saveRepository.find(1L, 7L) } returns null
+                every { saveRepository.findByCode(1L, "ABCD2345WXYZ") } returns
+                    SaveSnapshot(data = """{"floor":9}""", version = 6L, code = "ABCD2345WXYZ")
+
+                val result = serviceWith(lease, saveRepository)
+                    .execute(LoadGameSaveUseCase.Query("roguelike", memberId = 7L, code = "ABCD2345WXYZ", holder = "device-a"))
+                result?.version shouldBe 6L
+            }
+        }
+
+        `when`("계정 슬롯에 이미 세이브가 있으면") {
+            then("코드를 함께 제시해도 계정 세이브가 이겨야 한다") {
+                val lease = mockk<SaveLeasePort>(relaxed = true)
+                val saveRepository = mockk<GameSaveRepositoryPort>()
+                every { saveRepository.find(1L, 7L) } returns SaveSnapshot("""{"floor":2}""", 1L, "MEMBERCODE12")
+
+                val result = serviceWith(lease, saveRepository)
+                    .execute(LoadGameSaveUseCase.Query("roguelike", memberId = 7L, code = "ABCD2345WXYZ", holder = "device-a"))
+                result?.code shouldBe "MEMBERCODE12"
+                verify(exactly = 0) { saveRepository.findByCode(any(), any()) }
             }
         }
 
