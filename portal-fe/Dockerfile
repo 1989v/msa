@@ -20,9 +20,15 @@ ENV VITE_GOOGLE_MAPS_KEY=$VITE_GOOGLE_MAPS_KEY
 # /api/* 는 별도 ingress rule 이 gateway 로 라우팅.
 # axios baseURL = "" → relative path 로 같은 origin 의 /api/... 호출.
 ENV VITE_API_URL=""
-# Skip tsc type-check (pre-existing TS errors in ForceGraph3D.tsx).
+# 타입체크를 켠다. 진짜 게이트는 CI(frontend-gate)이고 여기는 마지막 방어선이다 —
+# 이미지가 타입 깨진 코드로 구워지는 것을 막는다.
+#
+# 예전에 ForceGraph3D.tsx 오류 때문에 껐다가 그대로 남아 있었고, 그 사이 import 하나가
+# 빠진 채 배포까지 갔다(2026-08-28 플레이 버튼). 그 오류는 이미 사라졌다 — 껐던 이유는
+# 시간이 지나면 없어지지만 꺼진 게이트는 남는다.
+#
 # 프리렌더는 공개 게임 API 를 읽어 SEO 정적 페이지를 찍는다 — 실패해도 빌드는 통과한다.
-RUN npx vite build --base / && node scripts/prerender-seo.mjs
+RUN npx tsc --noEmit && npx vite build --base / && node scripts/prerender-seo.mjs
 # 게임 JS minify — 서빙물에서 원문 가독성 제거 (소스맵 미발행). 인라인 스크립트 HTML 게임은
 # 55종 일괄 회귀 위험 대비 이득이 작아 제외 — 수익 티어(다중 파일) 게임과 공용 lib 만.
 # Unity 산출물(Build/)은 제외한다 — 엔진이 낸 코드라 이미 최소화돼 있고, 5MB 짜리를

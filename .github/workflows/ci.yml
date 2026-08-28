@@ -2,9 +2,10 @@ name: ci
 
 # PR/main 머지 전 사전 검증.
 #
-# 네 job (병렬):
+# 다섯 job (병렬):
 #   - compile-gate       : 구조 게이트(verifyArchitecture) + Kotlin/Java 컴파일 검증 (test 는 미포함)
 #   - test-gate          : 변경된 JVM 서비스만 ./gradlew test (PR 전용)
+#   - frontend-gate      : portal-fe tsc --noEmit + vitest run
 #   - yaml-validate      : application*.yml syntax + duplicate key 검증
 #   - kustomize-validate : k8s overlay 렌더 검증
 #
@@ -192,6 +193,40 @@ jobs:
           echo "── Gradle test tasks: $TASKS"
           # shellcheck disable=SC2086
           ./gradlew $TASKS --no-daemon --continue
+
+  frontend-gate:
+    name: portal-fe 타입체크 + 테스트
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: portal-fe/package-lock.json
+
+      # 게임 서브모듈은 받지 않는다 — 타입체크·테스트는 src 만 쓰고, games 는 330MB 다
+      - name: Install
+        working-directory: portal-fe
+        run: npm ci --no-audit --no-fund
+
+      # 여기가 진짜 게이트다. Dockerfile 검사만 켜면 이미지 빌드는 머지 뒤에 돌아서
+      # PR 단계에서 안 잡히고, "빌드가 급하다" 는 이유로 다시 꺼진다.
+      - name: Type check
+        working-directory: portal-fe
+        run: npx tsc --noEmit
+
+      # 2026-08-28: import 하나가 빠진 채 배포까지 갔다. 그 케이스를 덮는 테스트가
+      # 이미 있었는데 CI 에서 아무도 돌리지 않아 못 잡았다.
+      - name: Test
+        working-directory: portal-fe
+        run: npx vitest run
 
   yaml-validate:
     name: application*.yml syntax check
