@@ -837,13 +837,13 @@ export const ADSENSE_HOSTS = [PORTAL_ORIGIN, GAME_ORIGIN, PLACE_ORIGIN, DEAL_ORI
  */
 export const ADSENSE_SLOTS = {
   /** 블로그 글 본문이 끝난 지점 — 다 읽은 뒤라 읽기를 방해하지 않는다 */
-  blogPostEnd: '',
+  blogPostEnd: '8241492603',
   /** 게임 목록 끝. **게임 프레임 안에는 절대 두지 않는다** — 조작 방해이자 정책 위반이다 */
-  gameHubEnd: '',
+  gameHubEnd: '8768106211',
   /** 관광지 상세 끝 — 지도와 주변 목록을 다 본 뒤 */
-  attractionEnd: '',
+  attractionEnd: '7395314794',
   /** 혜택 허브 끝 — 제휴 고지가 붙은 카드와 섞이지 않게 목록 바깥에 둔다 */
-  dealHubEnd: '',
+  dealHubEnd: '3236577931',
 };
 
 export function adsTxt(client = ADSENSE_CLIENT) {
