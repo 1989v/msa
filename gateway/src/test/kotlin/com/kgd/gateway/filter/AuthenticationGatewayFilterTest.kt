@@ -2,6 +2,7 @@ package com.kgd.gateway.filter
 
 import com.kgd.common.security.JwtProperties
 import com.kgd.common.security.JwtUtil
+import com.kgd.common.security.TokenKeys
 import com.kgd.gateway.security.JwtTokenValidator
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -57,7 +58,7 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
 
                 val exchangeSlot = slot<ServerWebExchange>()
                 every { chain.filter(capture(exchangeSlot)) } returns Mono.empty()
-                every { redisTemplate.hasKey("blacklist:$token") } returns Mono.just(false)
+                every { redisTemplate.hasKey(TokenKeys.blacklist(token)) } returns Mono.just(false)
 
                 val request = MockServerHttpRequest.get("/api/products/1")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer $token")
@@ -94,7 +95,7 @@ class AuthenticationGatewayFilterTest : BehaviorSpec({
             then("401 Unauthorized를 반환해야 한다") {
                 val validToken = jwtUtil.generateAccessToken("user-1", listOf("USER"))
 
-                every { redisTemplate.hasKey("blacklist:$validToken") } returns Mono.just(true)
+                every { redisTemplate.hasKey(TokenKeys.blacklist(validToken)) } returns Mono.just(true)
 
                 val request = MockServerHttpRequest.get("/api/products/1")
                     .header(HttpHeaders.AUTHORIZATION, "Bearer $validToken")

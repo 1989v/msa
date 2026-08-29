@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAccessToken } from '../auth/auth';
+import { attachRefreshRetry } from '../auth/refresh';
 import { GENRE_LABELS_EN, GENRE_LABELS_KO } from '../seo/copy.mjs';
 
 // VITE_API_URL 이 빈 문자열이면 same-origin relative path 사용 (운영 / K8s ingress 경유).
@@ -18,6 +19,9 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// 액세스 토큰이 만료되면 평점·세션·점수 제출이 조용히 게스트 취급된다 — 재발급 후 재시도한다.
+attachRefreshRetry(api);
 
 interface ApiResponse<T> {
   success: boolean;

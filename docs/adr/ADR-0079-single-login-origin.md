@@ -109,7 +109,8 @@ apex 로 모으면서 `next` 가 **다른 호스트의 절대 URL** 이 됐다. 
 | 통합 로그인 화면 | `portal-fe/src/pages/LoginPage.tsx` |
 | 라우트 · 서브도메인 리다이렉트 | `portal-fe/src/App.tsx` |
 | 토큰 재발급 (401 재시도 · 단일 가드) | `portal-fe/src/auth/refresh.ts` |
-| 401 처리 | `portal-fe/src/shell/apiClient.ts`, `src/api/shopApi.ts`, `src/api/wishlistApi.ts` |
+| 401 처리 | `portal-fe/src/shell/apiClient.ts`, `src/api/{shopApi,wishlistApi,gameApi,blogApi}.ts` |
+| 리프레시 토큰 원장 · 폐기 목록 (Redis) | `auth` 의 `TokenStorePort`, `common` 의 `TokenKeys` |
 | 로그인 유도 지점 | `AuthButton` · `ShopHeader` · `FavoriteButton` · `FavoritesPage` · `GatedCodeSnippet` |
 
 ## 선행 조건 (운영)

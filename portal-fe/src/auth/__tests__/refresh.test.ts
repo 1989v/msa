@@ -46,9 +46,14 @@ function expiredThenValid() {
   return { instance, sentTokens };
 }
 
+/** 테스트마다 다른 리프레시 토큰 — 실패 쿨다운이 토큰별이라 값이 겹치면 서로 간섭한다 */
+let seq = 0;
+let refreshToken = '';
+
 beforeEach(() => {
+  refreshToken = `refresh-${++seq}`;
   setCookie(ACCESS, 'expired');
-  setCookie(REFRESH, 'refresh-1');
+  setCookie(REFRESH, refreshToken);
   vi.restoreAllMocks();
 });
 
@@ -88,7 +93,31 @@ describe('attachRefreshRetry', () => {
 
     const { instance } = expiredThenValid();
     await expect(instance.get('/api/v1/wishlist')).rejects.toThrow();
-    expect(readCookie(REFRESH)).toBe('refresh-1');
+    expect(readCookie(REFRESH)).toBe(refreshToken);
+  });
+
+  it('실패한 토큰으로는 곧바로 다시 두드리지 않는다 — 죽은 세션이 위젯 수만큼 auth 를 때리면 안 된다', async () => {
+    const post = vi.spyOn(axios, 'post').mockRejectedValue(new Error('network down'));
+
+    const { instance } = expiredThenValid();
+    await expect(instance.get('/api/v1/wishlist')).rejects.toThrow();
+    await expect(instance.get('/api/v1/wishlist/keys?type=GAME')).rejects.toThrow();
+    await expect(instance.get('/api/v1/wishlist/collections')).rejects.toThrow();
+
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('다시 로그인해 토큰이 바뀌면 쿨다운이 즉시 풀린다', async () => {
+    vi.spyOn(axios, 'post').mockRejectedValueOnce(new Error('network down')).mockImplementation(async () => {
+      setCookie(ACCESS, 'fresh');
+      return { data: { success: true, data: { accessToken: 'fresh', refreshToken: 're-login-2' } } };
+    });
+
+    const { instance } = expiredThenValid();
+    await expect(instance.get('/api/v1/wishlist')).rejects.toThrow();
+
+    setCookie(REFRESH, 're-login-1'); // 재로그인 — 새 리프레시 토큰
+    await expect(instance.get('/api/v1/wishlist')).resolves.toMatchObject({ data: { ok: true } });
   });
 });
 

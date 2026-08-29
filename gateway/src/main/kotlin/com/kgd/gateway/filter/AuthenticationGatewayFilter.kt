@@ -1,5 +1,6 @@
 package com.kgd.gateway.filter
 
+import com.kgd.common.security.TokenKeys
 import com.kgd.gateway.security.JwtTokenValidator
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.cloud.gateway.filter.GatewayFilter
@@ -45,8 +46,10 @@ class AuthenticationGatewayFilter(
             return@GatewayFilter reject("Missing or invalid Authorization header")
         }
 
-        // JWT 블랙리스트 체크 (Fail-Open 정책: Redis 장애 시 허용)
-        redisTemplate.hasKey("blacklist:$token")
+        // JWT 블랙리스트 체크 (Fail-Open 정책: Redis 장애 시 허용).
+        // 키는 auth 와 같은 것을 봐야 한다 — 여기서 접두사를 직접 적었던 동안
+        // auth 는 다른 키에 썼고 로그아웃이 아무것도 무효화하지 못했다.
+        redisTemplate.hasKey(TokenKeys.blacklist(token))
             .onErrorReturn(false)
             .flatMap { isBlacklisted ->
                 if (isBlacklisted) {

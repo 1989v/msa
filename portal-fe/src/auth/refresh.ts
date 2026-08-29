@@ -31,21 +31,38 @@ interface RefreshResponse {
  */
 let inFlight: Promise<boolean> | null = null;
 
+/**
+ * 방금 실패한 리프레시 토큰 — 같은 것으로는 잠시 다시 시도하지 않는다.
+ *
+ * 죽은 세션은 화면에 뜬 호출 수만큼 재발급을 시도한다. 하트·목록·상세가 각자 401 을
+ * 받으므로 auth 로 가는 요청이 사용자 수가 아니라 **위젯 수**를 따라간다. 다시 로그인해
+ * 토큰이 바뀌면 그 즉시 풀리므로, 창을 길게 잡아 정상 복구를 늦출 이유는 없다.
+ */
+const FAILURE_COOLDOWN_MS = 30_000;
+let lastFailure: { token: string; at: number } | null = null;
+
 export function refreshAccessToken(): Promise<boolean> {
   if (inFlight) return inFlight;
 
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return Promise.resolve(false);
+  if (lastFailure?.token === refreshToken && Date.now() - lastFailure.at < FAILURE_COOLDOWN_MS) {
+    return Promise.resolve(false);
+  }
+
   inFlight = (async () => {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) return false;
     try {
       // 인터셉터 루프 방지를 위해 인스턴스가 아닌 bare axios 사용
       const res = await axios.post<RefreshResponse>(`${BASE_URL}/api/auth/refresh`, { refreshToken });
       if (res.data.success && res.data.data) {
         updateTokens(res.data.data.accessToken, res.data.data.refreshToken);
+        lastFailure = null;
         return true;
       }
+      lastFailure = { token: refreshToken, at: Date.now() };
       return false;
     } catch {
+      lastFailure = { token: refreshToken, at: Date.now() };
       return false;
     } finally {
       inFlight = null;

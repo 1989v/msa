@@ -1,5 +1,6 @@
 import axios, { type AxiosError } from 'axios';
 import { getAccessToken } from '../auth/auth';
+import { attachRefreshRetry } from '../auth/refresh';
 
 // VITE_API_URL 이 빈 문자열이면 same-origin relative path (운영 / K8s ingress 경유).
 const BASE_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8089';
@@ -24,6 +25,9 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+// 액세스 토큰이 만료되면 댓글·작성자 공간이 로그인 상태 그대로 401 이 된다 — 재발급 후 재시도한다.
+attachRefreshRetry(api);
 
 export function blogErrorMessage(err: unknown, fallback: string): string {
   if (axios.isAxiosError(err)) {
