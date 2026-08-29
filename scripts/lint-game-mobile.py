@@ -196,6 +196,80 @@ def check_panel_misuse(html: str) -> list[Finding]:
     return out
 
 
+# 셸이 예약한 우상단 사각 (docs/standards/game-cleanroom-pipeline.md G5-6).
+# 세로에서 전체화면 칩이 「⛶ 크게」라 띠가 112 쯤 된다 — 여유를 둬 120 으로 잡는다.
+CHROME_TOP = 46
+CHROME_RIGHT = 120
+
+
+def check_reserved_corner(html: str, game_dir: Path) -> list[Finding]:
+    """
+    **우상단은 게임 것이 아니다.**
+
+    플랫폼 셸(게임 상세 화면)이 iframe **바깥에서** 닫기 ✕ · 전체화면 ⛶ 을 그 자리에 띄운다.
+    바깥 문서라 z-index 로 이길 수 없고, 거기 둔 버튼은 **눌리지 않는다.**
+
+    2026-08-29 감사에서 게임 71종 중 55종이 걸렸다. 가장 컸던 것은 `lib/i18n.js` 가
+    언어 전환 버튼을 `top:8px; right:8px` 에 심은 것으로, 게임 50종의 한/EN 전환이 죽어 있었다.
+    규칙은 그때 문서에 넣었지만 **검사가 없어서** 새 게임이 같은 자리에 버튼을 두고도
+    깨끗하게 통과할 수 있었다 — 이 검사가 그 구멍이다.
+
+    잡는 것: 뷰포트에 고정(fixed)돼 우상단 예약 사각에 걸치는 **누를 수 있는** 요소.
+    못 잡는 것: 캔버스에 그린 히트존(neon-drifter · random-tower-defense 가 그랬다).
+    그건 좌표가 그림 코드 안에 있어 정적으로 못 읽는다 — 캔버스 HUD 를 우상단에 그리는
+    게임은 `GameChrome.top` 을 읽는지 따로 본다.
+    """
+    out: list[Finding] = []
+
+    css = html
+    for src in (game_dir / p for p in re.findall(r'<link[^>]+href=["\']([^"\']+\.css)["\']', html, re.I)):
+        if src.exists():
+            css += "\n" + src.read_text(encoding="utf-8", errors="ignore")
+
+    # 규칙 블록 단위로: position:fixed 이면서 top·right 가 둘 다 예약 사각 안
+    for m in re.finditer(r"([^{}\n]{0,120})\{([^{}]{0,800})\}", css):
+        sel, body = m.group(1).strip(), m.group(2)
+        if not re.search(r"position:\s*fixed", body):
+            continue
+        if "--kgd-chrome" in body:
+            continue                      # 예약 띠를 읽고 있으면 통과
+        top = re.search(r"(?<![\w-])top:\s*([\d.]+)px", body)
+        right = re.search(r"(?<![\w-])right:\s*([\d.]+)px", body)
+        if not (top and right):
+            continue
+        if float(top.group(1)) >= CHROME_TOP or float(right.group(1)) >= CHROME_RIGHT:
+            continue
+        out.append(Finding(
+            "F6", f"우상단 예약 자리에 고정 요소가 있다 — {sel[:60]} (top {top.group(1)} · right {right.group(1)})",
+            f"거기는 플랫폼 셸의 닫기 ✕ · 전체화면 ⛶ 자리라 눌리지 않는다. "
+            f"`top: calc(var(--kgd-chrome-top, {CHROME_TOP}px) + 8px)` 로 내리거나 "
+            f"오른쪽으로 `var(--kgd-chrome-right, {CHROME_RIGHT}px)` 만큼 비켜라 "
+            f"(규칙: docs/standards/game-cleanroom-pipeline.md G5-6)",
+        ))
+
+    # JS 가 인라인 스타일로 심는 경우 — i18n.js 가 정확히 이 모양이었다
+    for js in [game_dir / s for s in script_srcs(html) if not s.startswith(("http", "../lib/"))]:
+        if not js.exists():
+            continue
+        text = js.read_text(encoding="utf-8", errors="ignore")
+        for m in re.finditer(r"position:\s*fixed;[^'\"`]{0,160}", text):
+            blob = m.group(0)
+            if "--kgd-chrome" in blob or "GameChrome" in blob:
+                continue
+            top = re.search(r"top:\s*([\d.]+)px", blob)
+            right = re.search(r"right:\s*([\d.]+)px", blob)
+            if not (top and right):
+                continue
+            if float(top.group(1)) >= CHROME_TOP or float(right.group(1)) >= CHROME_RIGHT:
+                continue
+            out.append(Finding(
+                "F6", f"{js.name} 이 우상단 예약 자리에 요소를 심는다 — top {top.group(1)} · right {right.group(1)}",
+                "인라인 스타일이라 CSS 검색에 안 걸린다. `var(--kgd-chrome-top, 46px)` 를 써라 "
+                "(규칙: docs/standards/game-cleanroom-pipeline.md G5-6)",
+            ))
+    return out
+
+
 def check_canvas_stretch(html: str, game_dir: Path) -> list[Finding]:
     """
     캔버스를 `width:100%` 로 늘이면 전체화면·가로에서 **비율이 깨진다.**
@@ -281,6 +355,7 @@ def lint_game(game_dir: Path) -> list[Finding]:
         + check_panel_misuse(html)
         + check_canvas_stretch(html, game_dir)
         + check_canvas_in_flexbox(html, game_dir)
+        + check_reserved_corner(html, game_dir)
     )
 
 
@@ -289,6 +364,39 @@ def resolve(target: str) -> Path:
     if p.is_dir():
         return p.resolve()
     return (GAMES_DIR / target).resolve()
+
+
+def check_shared_libs() -> list[Finding]:
+    """
+    **공유 라이브러리도 우상단을 침범하면 안 된다.**
+
+    이번 사고가 정확히 이 모양이었다 — `lib/i18n.js` 한 줄이 언어 전환 버튼을
+    `position:fixed; top:8px; right:8px` 에 심어서 **게임 50종의 한/EN 전환이 죽어 있었다.**
+    게임별 검사만 두면 이걸 못 잡는다: lib 은 게임 폴더 밖이라 건너뛰고,
+    건너뛰지 않으면 같은 위반이 72번 찍혀 아무도 안 읽는다. 그래서 한 번만 따로 본다.
+    """
+    out: list[Finding] = []
+    lib = GAMES_DIR / "lib"
+    if not lib.is_dir():
+        return out
+    for js in sorted(lib.glob("*.js")):
+        text = js.read_text(encoding="utf-8", errors="ignore")
+        for m in re.finditer(r"position:\s*fixed;[^'\"`]{0,200}", text):
+            blob = m.group(0)
+            if "--kgd-chrome" in blob or "GameChrome" in blob or "CHROME_" in blob:
+                continue
+            top = re.search(r"top:\s*([\d.]+)px", blob)
+            right = re.search(r"right:\s*([\d.]+)px", blob)
+            if not (top and right):
+                continue
+            if float(top.group(1)) >= CHROME_TOP or float(right.group(1)) >= CHROME_RIGHT:
+                continue
+            out.append(Finding(
+                "F6", f"lib/{js.name} 이 우상단 예약 자리에 요소를 심는다 — top {top.group(1)} · right {right.group(1)}",
+                "공유 라이브러리라 이걸 부르는 게임 전부가 같이 깨진다 "
+                "(2026-08-29: i18n.js 하나로 50종). `var(--kgd-chrome-top, 46px)` 를 써라",
+            ))
+    return out
 
 
 def main() -> int:
@@ -308,6 +416,16 @@ def main() -> int:
         ap.error("게임 슬러그를 주거나 --all 을 쓰세요")
 
     fatal = warn = clean = 0
+
+    # 공유 라이브러리는 게임과 무관하게 한 번만 본다 — 여기가 깨지면 전부가 깨진다
+    if args.all:
+        for x in check_shared_libs():
+            fatal += 1
+            print(f"  ❌ lib")
+            print(f"       [{x.code}] {x.message}")
+            if x.hint:
+                print(f"            → {x.hint}")
+
     for game in targets:
         findings = lint_game(game)
         if not findings:
