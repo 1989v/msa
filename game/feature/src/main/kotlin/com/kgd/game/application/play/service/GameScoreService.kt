@@ -55,8 +55,9 @@ class GameScoreService(
         // 보드 키는 카탈로그 선언과 대조하지 않는다 — 게임이 모드를 늘렸는데 시드가 아직
         // 안 따라온 순간에 기록을 버리게 된다. 선언은 사이트가 탭 이름을 짓는 데만 쓴다.
         return scoreRepository.submit(
-            gameId, command.track, command.board, nick, command.memberId,
-            score, command.detail?.take(64), GameDay.today(),
+            gameId = gameId, track = command.track, board = command.board, nickname = nick,
+            score = score, detail = command.detail?.take(64), playDate = GameDay.today(),
+            memberId = command.memberId,
         )
     }
 

@@ -76,9 +76,6 @@ class WishlistService(
     }
 
     @Transactional("wishlistTransactionManager", readOnly = true)
-    override fun execute(query: CountWishlistTargetUseCase.Query): Long =
-        wishlistRepositoryPort.countByTarget(query.targetType, query.targetKey)
-
     override fun execute(query: GetWishlistKeysUseCase.Query): GetWishlistKeysUseCase.Result {
         val keys = wishlistRepositoryPort.findKeysByMemberAndType(query.memberId, query.targetType)
         return GetWishlistKeysUseCase.Result(keys = keys)
@@ -139,4 +136,9 @@ class WishlistService(
         itemCount = itemCount,
         createdAt = createdAt,
     )
+
+    /** 단일 count 라 트랜잭션을 선언하지 않는다 (transactional-usage.md 규칙 1) */
+    override fun execute(query: CountWishlistTargetUseCase.Query): Long =
+        wishlistRepositoryPort.countByTarget(query.targetType, query.targetKey)
+
 }

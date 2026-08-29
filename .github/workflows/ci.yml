@@ -31,7 +31,7 @@ concurrency:
 
 jobs:
   compile-gate:
-    name: 구조 게이트 + Kotlin/Java compile (no test)
+    name: 구조 게이트 + Kotlin/Java compile + 테스트 컴파일 (실행은 test-gate)
     runs-on: ubuntu-24.04-arm   # public repo + arm64 무료
     timeout-minutes: 20
     steps:
@@ -81,6 +81,16 @@ jobs:
 
       - name: ./gradlew compileKotlin compileJava
         run: ./gradlew compileKotlin compileJava --no-daemon
+
+      # 테스트 **소스도** 컴파일한다. 실행이 아니라 컴파일이라 몇 초면 끝나는데,
+      # 이게 없으면 시그니처를 바꾸고 호출부를 안 고친 커밋이 main 에 그대로 들어간다.
+      #
+      # 2026-08-29 실제 사고: 포트에 파라미터를 중간에 끼워 넣어 기존 위치 인자가 밀렸고
+      # (score 가 memberId 자리에 들어가도 타입이 맞아 컴파일된다) 테스트 4파일 56개 오류가
+      # 난 채로 push 됐다. compile-gate 는 본 코드만 봤고 test-gate 는 PR 전용이라
+      # main 직푸시에서는 **아무 게이트도 걸리지 않았다.**
+      - name: ./gradlew compileTestKotlin
+        run: ./gradlew compileTestKotlin --no-daemon
 
   test-gate:
     name: Changed-services test (PR only)

@@ -51,10 +51,14 @@ interface GameScoreRepositoryPort {
         track: ScoreTrack,
         board: ScoreBoardKey,
         nickname: String,
-        memberId: Long?,
         score: Long,
         detail: String?,
         playDate: LocalDate,
+        /**
+         * 로그인 회원. **맨 뒤에 기본값으로 둔다** — 중간에 끼우면 기존 위치 인자가
+         * 조용히 밀리고, score(Long) 가 memberId(Long?) 자리에 들어가도 컴파일된다.
+         */
+        memberId: Long? = null,
     ): Pair<Boolean, Int>
 
     fun top(gameId: Long, track: ScoreTrack, board: ScoreBoardKey, limit: Int): List<ScoreEntry>

@@ -250,6 +250,28 @@ class GatewayRouteConfig(
                     }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // 내 기록 — **로그인 전용**. 아래 카탈로그가 /api/v1/games/** 를 필터 없이 받으므로
+            // 여기서 먼저 잡지 않으면 두 가지가 동시에 터진다: 필터가 없어 X-User-Id 가
+            // 주입되지 않아 로그인 사용자도 401 이고, 동시에 손으로 붙인 X-User-Id 가
+            // 걸러지지 않아 **아무 회원의 기록을 열람**할 수 있다.
+            .route("game-my-record") { r ->
+                r.path("/api/v1/games/*/me")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 점수 제출 — 게스트 허용. 로그인 사용자만 X-User-Id 로 식별해 기록을 잇는다.
+            // 필터가 없으면 신원 헤더 위조로 남의 이름에 점수를 귀속시킬 수 있다.
+            .route("game-score-submit") { r ->
+                r.path("/api/v1/games/*/scores")
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // 카탈로그 조회 (리스트/상세/유사/컬렉션/태그) — 공개
             .route("game-catalog") { r ->
                 r.path("/api/v1/games/**")

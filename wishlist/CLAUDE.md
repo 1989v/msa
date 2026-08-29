@@ -35,7 +35,7 @@ commerce:app 에 폴드된 라이브러리 모듈 (ADR-0058 round 2).
   묶음 FK 는 `ON DELETE SET NULL` — **묶음을 지워도 찜은 남는다**
 - 묶음 API 는 전부 `memberId` 와 함께 조회한다 — id 가 URL 로 들어오므로 남의 묶음을 건드릴 수 있으면 안 된다
 - 스키마는 범용이지만 **그룹 선택 UI 는 ATTRACTION 에만** 노출한다 (전 타입에 열면 찜의 가벼움이 사라진다)
-- memberId 는 X-User-Id 헤더 (게이트웨이가 ROLE_USER 검증 후 주입 — 찜은 로그인 전용)
+- memberId 는 X-User-Id 헤더 (게이트웨이가 ROLE_USER 검증 후 주입 — 찜 **목록·추가·삭제는 로그인 전용**이고, 대상별 **찜 수 조회만 공개**다)
 - Kafka 소비: `product.deleted` → PRODUCT 타입 찜 삭제 / `member.withdrawn` → 회원 찜 전체 삭제
 - 스키마는 `wishlistdb/migration` + ScopedFlywayMigrator (baseline=1, 토글 `wishlist.flyway.enabled`)
 

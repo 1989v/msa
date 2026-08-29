@@ -53,6 +53,7 @@
 | Prefix | 설명 |
 |--------|------|
 | `GET /api/v1/games` (+`?tag=&sort=trending\|new\|top`) | 공개 리스트 (**PUBLISHED + BETA** — 플레이 가능한 상태만) |
+| `GET /api/v1/games/{slug}/me` | **로그인 전용** 개인 기록 — 플레이 횟수·총 시간·마지막 플레이(끝난 세션만), 내 최고 기록과 순위, 이어하기 유무. 게이트웨이 `game-my-record` 라우트가 인증 경계다 (필터 없는 `games/**` 캐치올보다 **먼저** 선언해야 한다) |
 | `GET /api/v1/games/collections`, `/tags` | 홈 큐레이션 행 / 태그 목록 |
 | `GET /api/v1/games/{slug}`, `/{slug}/similar` | 상세(BETA 노출 허용) / 태그 교집합 유사 게임 |
 | `POST /api/v1/games/{slug}/sessions`, `PATCH .../{sessionKey}` | 세션 시작(게스트 OK)/종료 |

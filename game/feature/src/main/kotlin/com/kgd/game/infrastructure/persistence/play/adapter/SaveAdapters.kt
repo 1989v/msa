@@ -122,10 +122,10 @@ class GameScoreRepositoryAdapter(
         track: ScoreTrack,
         board: ScoreBoardKey,
         nickname: String,
-        memberId: Long?,
         score: Long,
         detail: String?,
         playDate: LocalDate,
+        memberId: Long?,
     ): Pair<Boolean, Int> {
         val key = board.value
         // 오늘 보드는 역대 보드의 판정과 무관하게 올린다 — 자기 역대 최고에 못 미친 런도
@@ -142,9 +142,11 @@ class GameScoreRepositoryAdapter(
             )
             true
         } else {
-            // 게스트로 쌓다가 로그인하면 그 뒤 제출부터 회원이 붙는다 — 기존 행도 이때 잇는다
-            if (memberId != null && existing.memberId == null) existing.memberId = memberId
-            existing.updateIfHigher(score, detail).also { jpaRepository.saveAndFlush(existing) }
+            // 게스트로 쌓다가 로그인하면 그 뒤 제출부터 회원이 붙는다 — 기존 행도 이때 잇는다.
+            // 점수가 안 올랐어도 주인이 새로 생겼으면 저장한다. 둘 다 아니면 **아무것도 안 한다**
+            // (같은 점수를 다시 올리는 것은 멱등이어야 한다 — 테스트가 이걸 지킨다)
+            val claimed = existing.claimBy(memberId)
+            existing.updateIfHigher(score, detail).also { if (it || claimed) jpaRepository.saveAndFlush(existing) }
         }
         val best = if (applied) score else existing!!.score
         val rank = jpaRepository.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, track, key, best).toInt() + 1

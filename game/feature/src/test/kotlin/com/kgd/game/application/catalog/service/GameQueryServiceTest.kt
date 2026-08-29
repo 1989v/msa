@@ -52,7 +52,7 @@ class GameQueryServiceTest : BehaviorSpec({
             then("통계와 함께 반환되어야 한다") {
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, mockk())
+                val service = GameQueryService(gameRepository, statsRepository, mockk(), mockk(relaxed = true))
 
                 every { gameRepository.findBySlug("alpha") } returns gameWith(1L, "alpha", GameStatus.PUBLISHED)
                 every { statsRepository.findByGameId(1L) } returns
@@ -69,7 +69,7 @@ class GameQueryServiceTest : BehaviorSpec({
         `when`("DRAFT 게임이면") {
             then("존재를 숨기고 GameNotFoundException 이어야 한다") {
                 val gameRepository = mockk<GameRepositoryPort>()
-                val service = GameQueryService(gameRepository, mockk(), mockk())
+                val service = GameQueryService(gameRepository, mockk(), mockk(), mockk(relaxed = true))
                 every { gameRepository.findBySlug("hidden") } returns gameWith(2L, "hidden", GameStatus.DRAFT)
 
                 shouldThrow<GameNotFoundException> { service.execute(GetGameDetailUseCase.Query("hidden")) }
@@ -79,7 +79,7 @@ class GameQueryServiceTest : BehaviorSpec({
         `when`("SUSPENDED 게임이면") {
             then("마찬가지로 GameNotFoundException 이어야 한다") {
                 val gameRepository = mockk<GameRepositoryPort>()
-                val service = GameQueryService(gameRepository, mockk(), mockk())
+                val service = GameQueryService(gameRepository, mockk(), mockk(), mockk(relaxed = true))
                 every { gameRepository.findBySlug("stopped") } returns gameWith(3L, "stopped", GameStatus.SUSPENDED)
 
                 shouldThrow<GameNotFoundException> { service.execute(GetGameDetailUseCase.Query("stopped")) }
@@ -93,7 +93,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository)
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
 
                 every { collectionRepository.findActive() } returns listOf(
                     GameCollection.restore(
@@ -126,7 +126,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository)
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
 
                 every { collectionRepository.findActive() } returns listOf(
                     GameCollection.restore(
@@ -150,7 +150,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository)
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
 
                 every { collectionRepository.findActive() } returns listOf(
                     GameCollection.restore(
@@ -194,7 +194,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository)
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
 
                 every { collectionRepository.findActive() } returns listOf(
                     collectionOf(1L, "trending", CollectionType.TRENDING, displayOrder = 1),
@@ -220,7 +220,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository)
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
 
                 val alpha = gameWith(1L, "alpha", GameStatus.PUBLISHED)
                 every { collectionRepository.findActive() } returns listOf(
@@ -250,7 +250,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository)
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
 
                 every { collectionRepository.findActive() } returns listOf(
                     collectionOf(1L, "trending", CollectionType.TRENDING, displayOrder = 1),
@@ -269,7 +269,7 @@ class GameQueryServiceTest : BehaviorSpec({
                 val gameRepository = mockk<GameRepositoryPort>()
                 val statsRepository = mockk<GameStatsRepositoryPort>()
                 val collectionRepository = mockk<GameCollectionRepositoryPort>()
-                val service = GameQueryService(gameRepository, statsRepository, collectionRepository)
+                val service = GameQueryService(gameRepository, statsRepository, collectionRepository, mockk(relaxed = true))
 
                 every { collectionRepository.findActive() } returns listOf(
                     collectionOf(1L, "retro", CollectionType.TAG_BASED, displayOrder = 1, tagSlug = "retro"),
