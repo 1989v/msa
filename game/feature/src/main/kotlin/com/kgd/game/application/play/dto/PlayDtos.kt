@@ -71,3 +71,18 @@ data class LeaderboardBoardDto(
      */
     val todayEntries: List<ScoreEntry>,
 )
+
+/**
+ * 개인 기록. 값이 없는 것은 null 로 둔다 — 0 으로 채우면 "안 해 봤다" 와
+ * "해 봤는데 기록이 0" 이 같아 보인다.
+ */
+data class MyGameRecordDto(
+    val plays: Long,
+    val totalSeconds: Long,
+    val lastPlayedAt: java.time.LocalDateTime?,
+    val bestScore: Long?,
+    val bestRank: Int?,
+    val bestBoard: String?,
+    /** 이어할 저장이 있는가 — 있으면 화면이 "이어갑니다" 를 띄운다 */
+    val hasSave: Boolean,
+)

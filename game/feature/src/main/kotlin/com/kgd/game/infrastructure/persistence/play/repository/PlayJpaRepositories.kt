@@ -13,8 +13,43 @@ import org.springframework.data.jpa.repository.Query
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+/** 한 회원이 한 게임을 얼마나 했는가 — 상세 화면의 개인 기록 패널이 쓴다 */
+interface MemberPlayProjection {
+    fun getPlays(): Long
+    fun getSeconds(): Long?
+    fun getLastPlayedAt(): java.time.LocalDateTime?
+}
+
 interface GamePlaySessionJpaRepository : JpaRepository<GamePlaySessionJpaEntity, Long> {
     fun findBySessionKey(sessionKey: String): GamePlaySessionJpaEntity?
+
+    /**
+     * 끝난 세션만 센다. 시작만 하고 안 끝난 행은 duration 이 없어서 시간 합계를 왜곡한다 —
+     * 탭을 닫으면 종료 신호가 안 오므로 그런 행이 실제로 쌓인다.
+     */
+    @Query(
+        """
+        SELECT COUNT(s) AS plays, COALESCE(SUM(s.durationSec), 0) AS seconds,
+               MAX(s.startedAt) AS lastPlayedAt
+        FROM GamePlaySessionJpaEntity s
+        WHERE s.gameId = :gameId AND s.memberId = :memberId AND s.endedAt IS NOT NULL
+        """,
+    )
+    fun summarize(gameId: Long, memberId: Long): MemberPlayProjection
+
+    /**
+     * 예상 플레이타임 — **중앙값이 아니라 표본을 받아 서비스가 중앙값을 낸다.**
+     * SQL 중앙값은 MySQL 8 에서 윈도 함수를 써야 하고, 이 표본 크기(최근 200)면
+     * 애플리케이션에서 고르는 편이 읽기 쉽고 이식성도 좋다.
+     */
+    @Query(
+        """
+        SELECT s.durationSec FROM GamePlaySessionJpaEntity s
+        WHERE s.gameId = :gameId AND s.endedAt IS NOT NULL AND s.durationSec > 0
+        ORDER BY s.startedAt DESC
+        """,
+    )
+    fun recentDurations(gameId: Long, pageable: Pageable): List<Int>
 }
 
 interface GameRatingJpaRepository : JpaRepository<GameRatingJpaEntity, Long> {
@@ -42,6 +77,9 @@ interface ScoreBoardProjection {
 }
 
 interface GameScoreJpaRepository : JpaRepository<GameScoreJpaEntity, Long> {
+    /** 내 최고 기록 — 트랙·보드를 가리지 않고 점수가 가장 높은 한 행 */
+    fun findTop1ByGameIdAndMemberIdOrderByScoreDesc(gameId: Long, memberId: Long): GameScoreJpaEntity?
+
     fun findByGameIdAndTrackAndBoardAndNickname(
         gameId: Long,
         track: ScoreTrack,

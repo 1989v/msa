@@ -26,6 +26,17 @@ data class GameSummaryDto(
     val playCount: Long,
     val ratingAvg: Double,
     val ratingCount: Long,
+    /**
+     * 예상 플레이타임(분). **실제 세션 길이의 중앙값**이라 손으로 입력하지 않는다 —
+     * 74종에 값을 채워 넣으면 그 순간부터 낡고, 게임이 길어져도 아무도 안 고친다.
+     * 기록이 적으면(5판 미만) null 이고 화면은 그 줄을 그리지 않는다.
+     */
+    val estimatedMinutes: Int? = null,
+    /**
+     * 1인 / 2인 이상. 별도 컬럼을 두지 않고 태그에서 읽는다 — `multiplayer` 는
+     * 이미 카탈로그가 쓰는 태그라 원본이 둘로 갈리지 않는다.
+     */
+    val playerMode: String = "SINGLE",
 ) {
     companion object {
         fun of(game: Game, stats: GameStats?): GameSummaryDto = GameSummaryDto(
@@ -94,6 +105,17 @@ data class GameDetailDto(
     val playCount: Long,
     val ratingAvg: Double,
     val ratingCount: Long,
+    /**
+     * 예상 플레이타임(분). **실제 세션 길이의 중앙값**이라 손으로 입력하지 않는다 —
+     * 74종에 값을 채워 넣으면 그 순간부터 낡고, 게임이 길어져도 아무도 안 고친다.
+     * 기록이 적으면(5판 미만) null 이고 화면은 그 줄을 그리지 않는다.
+     */
+    val estimatedMinutes: Int? = null,
+    /**
+     * 1인 / 2인 이상. 별도 컬럼을 두지 않고 태그에서 읽는다 — `multiplayer` 는
+     * 이미 카탈로그가 쓰는 태그라 원본이 둘로 갈리지 않는다.
+     */
+    val playerMode: String = "SINGLE",
 ) {
     companion object {
         fun of(game: Game, stats: GameStats?): GameDetailDto = GameDetailDto(

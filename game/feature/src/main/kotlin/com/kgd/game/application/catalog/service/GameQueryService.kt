@@ -27,9 +27,16 @@ class GameQueryService(
     private val gameRepository: GameRepositoryPort,
     private val statsRepository: GameStatsRepositoryPort,
     private val collectionRepository: GameCollectionRepositoryPort,
+    private val records: com.kgd.game.application.play.port.MemberGameRecordPort,
 ) : ListGamesUseCase, GetGameDetailUseCase, GetSimilarGamesUseCase, GetGameCollectionsUseCase {
     companion object {
         private const val COLLECTION_SIZE = 10
+
+        /** 예상 플레이타임 표본. 최근 것만 본다 — 게임이 바뀌면 옛 기록은 다른 게임의 값이다 */
+        private const val DURATION_SAMPLE = 200
+
+        /** 표본이 이보다 적으면 값을 내지 않는다. 두세 판으로 낸 중앙값은 숫자일 뿐이다 */
+        private const val DURATION_MIN_SAMPLE = 5
 
         /** 중복 제거로 걷혀 나가는 몫을 미리 더 받아 둔다 — 걷어낸 뒤에도 행이 가득 차야 한다 */
         private const val COLLECTION_OVERFETCH = COLLECTION_SIZE * 2
@@ -60,7 +67,26 @@ class GameQueryService(
     override fun execute(query: GetGameDetailUseCase.Query): GameDetailDto {
         val game = findVisibleGame(query.slug)
         val gameId = game.id
-        return GameDetailDto.of(game, gameId?.let { statsRepository.findByGameId(it) })
+        val base = GameDetailDto.of(game, gameId?.let { statsRepository.findByGameId(it) })
+        return base.copy(
+            estimatedMinutes = gameId?.let { estimateMinutes(it) },
+            playerMode = if (base.tags.any { it.equals("multiplayer", ignoreCase = true) }) "MULTI" else "SINGLE",
+        )
+    }
+
+    /**
+     * 예상 플레이타임 — 실제 세션 길이의 **중앙값**을 분으로 올린다.
+     *
+     * 평균이 아니라 중앙값인 것은, 열어 두고 자리를 비운 세션 하나가 평균을 몇 시간으로
+     * 밀어 올리기 때문이다. 손으로 입력하지 않는 것은 74종에 값을 채우면 그 순간부터 낡고
+     * 게임이 길어져도 아무도 안 고치기 때문이다.
+     */
+    private fun estimateMinutes(gameId: Long): Int? {
+        val samples = records.recentDurations(gameId, DURATION_SAMPLE)
+        if (samples.size < DURATION_MIN_SAMPLE) return null
+        val sorted = samples.sorted()
+        val median = sorted[sorted.size / 2]
+        return (median / 60.0).let { if (it < 1.0) 1 else Math.round(it).toInt() }
     }
 
     override fun execute(query: GetSimilarGamesUseCase.Query): List<GameSummaryDto> {
