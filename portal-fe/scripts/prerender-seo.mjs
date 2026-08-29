@@ -36,6 +36,7 @@ import {
   genreSlug,
   hreflangAlternates,
   hubMeta,
+  HUB_OG_IMAGE,
   itemListJsonLd,
   OG_IMAGE_H,
   OG_IMAGE_W,
@@ -288,6 +289,14 @@ async function fetchCatalog() {
     const rel = `games/thumbs/og/${game.slug}.png`;
     if (existsSync(resolve(ROOT, 'public', rel))) game.ogImageUrl = `/${rel}`;
   }
+  // 목록 카드에 실을 썸네일. DB 의 thumbnailUrl 이 실물과 어긋난 게 있어(SPA 폴백이
+  // index.html 을 200 으로 돌려준다) 존재 확인을 통과한 것만 <img> 로 내보낸다.
+  for (const game of details) {
+    const url = game.thumbnailUrl;
+    if (url?.startsWith('/') && existsSync(resolve(ROOT, 'public', url.slice(1)))) {
+      game.thumbAsset = url;
+    }
+  }
   return details;
 }
 
@@ -381,12 +390,42 @@ function shellBody(inner) {
 
 function gameLinkList(lang, games) {
   const items = games
-    .map(
-      (g) =>
-        `<li><a href="${gamePath(lang, `/games/${g.slug}`)}">${escapeHtml(titleOf(g, lang))}</a> · ${escapeHtml(genreLabelOf(g.genre, lang))}</li>`,
-    )
+    .map((g) => {
+      const title = titleOf(g, lang);
+      const genre = genreLabelOf(g.genre, lang);
+      const href = gamePath(lang, `/games/${g.slug}`);
+      return `<li><a href="${href}">${gameThumb(lang, g, title, genre)}${escapeHtml(title)}</a> · ${escapeHtml(genre)}</li>`;
+    })
     .join('');
   return `<ul>${items}</ul>`;
+}
+
+/**
+ * 목록 카드의 썸네일. 이게 없으면 프리렌더 HTML 에 <img> 가 한 장도 없어서
+ * 구글 이미지 쪽 유입 경로가 통째로 비고, alt 에 실을 키워드도 같이 사라진다.
+ * 실물 320×180 을 절반 크기로 표시한다 — 셸은 SPA 가 마운트되면 교체되는 임시 본문이다.
+ */
+/**
+ * 상세 페이지 본인의 화면. 그 페이지에서 가장 값어치 있는 이미지인데 프리렌더에는 빠져 있었다.
+ * 1200×630 카드가 있으면 그것을 쓴다 — 목록 썸네일(320×180)보다 이미지 검색에서 낫다.
+ */
+function detailHero(lang, game) {
+  const src = game.ogImageUrl ?? game.thumbAsset;
+  if (!src) return '';
+  const title = titleOf(game, lang);
+  const alt = lang === 'en' ? `${title} gameplay screenshot` : `${title} 게임 플레이 화면`;
+  const [w, h] = game.ogImageUrl ? [600, 315] : [320, 180];
+  return `<p><img src="${src}" width="${w}" height="${h}" alt="${escapeHtml(alt)}" /></p>`;
+}
+
+function gameThumb(lang, game, title, genre) {
+  if (!game.thumbAsset) return '';
+  const alt =
+    lang === 'en' ? `${title} — ${genre} browser game screenshot` : `${title} — ${genre} 웹게임 화면`;
+  return (
+    `<img src="${game.thumbAsset}" width="160" height="90" loading="lazy" ` +
+    `alt="${escapeHtml(alt)}" /> `
+  );
 }
 
 function genreNav(lang, games) {
@@ -406,6 +445,8 @@ function renderHub(shell, lang, games) {
     lang,
     ...meta,
     canonical,
+    image: HUB_OG_IMAGE,
+    imageAlt: meta.heading,
     alternates: hreflangAlternates(''),
     jsonLd: [
       collectionPageJsonLd(lang, meta, canonical),
@@ -456,6 +497,7 @@ function renderDetail(shell, lang, game, games) {
   const play = game.entryUrl?.startsWith('/')
     ? `<p><a href="${game.entryUrl}">${lang === 'en' ? `Play ${escapeHtml(titleOf(game, lang))}` : `${escapeHtml(titleOf(game, lang))} 플레이하기`}</a></p>`
     : '';
+  const hero = detailHero(lang, game);
   return compose(shell, {
     lang,
     ...meta,
@@ -476,6 +518,7 @@ function renderDetail(shell, lang, game, games) {
       `<nav><a href="${gamePath(lang, '')}">${lang === 'en' ? 'Games' : '게임'}</a> › ` +
         `<a href="${genreHref}">${escapeHtml(genreLabelOf(game.genre, lang))}</a></nav>` +
         `<h1>${escapeHtml(meta.heading)}</h1>` +
+        hero +
         `<p>${escapeHtml(meta.description)}</p>` +
         rating +
         play +

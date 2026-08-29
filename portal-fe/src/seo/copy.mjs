@@ -195,6 +195,12 @@ export function socialImageIsSmall(game) {
   return !game.ogImageUrl;
 }
 
+/**
+ * 허브(`/`, `/en`)의 소셜 카드. 게임별 카드와 달리 슬러그가 없어 고정 경로다.
+ * 사이트를 통째로 공유하는 순간이 링크가 생기는 자리라, 여기가 비면 텍스트 카드만 나간다.
+ */
+export const HUB_OG_IMAGE = `${GAME_ORIGIN}/games/thumbs/og/hub.png`;
+
 export function videoGameJsonLd(lang, game) {
   const image = socialImage(game);
   const json = {
