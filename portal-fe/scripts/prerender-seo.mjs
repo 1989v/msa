@@ -28,6 +28,7 @@ import {
   RESUME_ORIGIN,
   breadcrumbJsonLd,
   collectionPageJsonLd,
+  descriptionOf,
   detailMeta,
   gamePath,
   gameUrl,
@@ -519,7 +520,9 @@ function renderDetail(shell, lang, game, games) {
         `<a href="${genreHref}">${escapeHtml(genreLabelOf(game.genre, lang))}</a></nav>` +
         `<h1>${escapeHtml(meta.heading)}</h1>` +
         hero +
-        `<p>${escapeHtml(meta.description)}</p>` +
+        // meta.description 은 검색결과용으로 154자에 잘린 값이다. 본문까지 그걸 쓰면
+        // 길게 쓴 설명이 60% 넘게 버려진 채 나간다 — 본문에는 원문을 그대로 싣는다.
+        `<p>${escapeHtml(descriptionOf(game, lang) || meta.description)}</p>` +
         rating +
         play +
         (related.length
