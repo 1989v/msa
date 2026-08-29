@@ -33,7 +33,7 @@ import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
 import { peekParty } from './party';
-import { GameAboutPanel, GameMyRecordPanel } from './GameDetailPanels';
+import { GameAboutPanel, GameMyRecordPanel, GameRatePanel } from './GameDetailPanels';
 import { useGameSideData } from './useGameSideData';
 import GameLeaderboard from './GameLeaderboard';
 import GNB from '../../components/GNB';
@@ -85,6 +85,9 @@ export default function GameDetailPage() {
   const stageRef = useRef<HTMLElement | null>(null);
   const immersive = playing && stageFit.immersive;
   const side = useGameSideData(slug, boardToken);
+  /* 좁은 화면에서만 쓰는 탭. 넓은 화면은 둘 다 펴므로 이 값이 화면을 바꾸지 않는다
+     (CSS 가 미디어쿼리로 무시한다) — 상태를 폭에 따라 갈라 두면 회전할 때마다 튄다. */
+  const [tab, setTab] = useState<'about' | 'rank'>('about');
   /* 이어할 저장이 있는가. 같은 질의를 두 번 보내지 않으려고 내 기록에서 꺼내 쓴다 —
      게스트는 서버 저장이 없어 `me` 가 null 이고, 없는데 안내를 띄우면 거짓말이 된다. */
   const continueHint = side.me?.hasSave ?? false;
@@ -425,27 +428,49 @@ export default function GameDetailPage() {
         )}
       </section>
 
-      <div className="game-detail-info">
-        <GameAboutPanel
-          game={game}
-          lang={lang}
+      {/* 무대 바로 아래 — 내 기록과 평점이 한 줄. 넓은 화면에서는 두 단을 가로질러 앉는다 */}
+      <div className="game-detail-mine">
+        <GameMyRecordPanel record={side.me} loggedIn={side.loggedIn} lang={lang} />
+        <GameRatePanel
           myHalves={myHalves}
           onRate={handleRate}
           ratingMessage={ratingMessage}
-          favorites={side.favorites}
+          lang={lang}
         />
-        {/* 제목은 GameLeaderboard 가 갖는다(새로고침 버튼이 붙어 있다) — 여기 또 달면 두 번 나온다.
-            다섯 줄씩 넘겨 본다 — 열 줄을 쌓으면 그 아래 패널이 첫 화면 밖으로 밀린다. */}
-        <div className="game-panel">
-          <GameLeaderboard
-            slug={slug}
-            lang={lang}
-            scoreBoards={game.scoreBoards ?? []}
-            reloadToken={boardToken}
-            pageSize={5}
-          />
-        </div>
-        <GameMyRecordPanel record={side.me} loggedIn={side.loggedIn} lang={lang} />
+      </div>
+
+      {/* 좁은 화면 전용 탭. 넓은 화면에서는 CSS 가 이 줄을 감추고 두 판을 모두 편다 */}
+      <div className="game-detail-tabs" role="tablist" aria-label={lang === 'en' ? 'Sections' : '구성'}>
+        <button
+          type="button" role="tab" aria-selected={tab === 'about'}
+          className={`game-panel-tab${tab === 'about' ? ' is-on' : ''}`}
+          onClick={() => setTab('about')}
+        >
+          {lang === 'en' ? 'About' : '소개'}
+        </button>
+        <button
+          type="button" role="tab" aria-selected={tab === 'rank'}
+          className={`game-panel-tab${tab === 'rank' ? ' is-on' : ''}`}
+          onClick={() => setTab('rank')}
+        >
+          {lang === 'en' ? 'Ranking' : '랭킹'}
+        </button>
+      </div>
+
+      <div className={`game-tabpane game-pane-about${tab === 'about' ? ' is-on' : ''}`}>
+        <GameAboutPanel game={game} lang={lang} favorites={side.favorites} />
+      </div>
+
+      {/* 제목은 GameLeaderboard 가 갖는다(새로고침 버튼이 붙어 있다) — 여기 또 달면 두 번 나온다.
+          다섯 줄씩 넘겨 본다 — 열 줄을 쌓으면 그 아래가 첫 화면 밖으로 밀린다. */}
+      <div className={`game-tabpane game-pane-rank${tab === 'rank' ? ' is-on' : ''}`}>
+        <GameLeaderboard
+          slug={slug}
+          lang={lang}
+          scoreBoards={game.scoreBoards ?? []}
+          reloadToken={boardToken}
+          pageSize={5}
+        />
       </div>
       </div>
 

@@ -35,12 +35,9 @@ function sinceLabel(iso: string | null, lang: GameLang): string | null {
  *
  * 배치는 페이지가 정한다 — 여기서는 각 조각이 자기 내용만 안다.
  */
-export function GameAboutPanel({ game, lang, myHalves, onRate, ratingMessage, favorites }: {
+export function GameAboutPanel({ game, lang, favorites }: {
   game: GameDetail;
   lang: GameLang;
-  myHalves: number | null;
-  onRate: (halves: number) => void;
-  ratingMessage: string | null;
   favorites: number | null;
 }) {
   return (
@@ -62,12 +59,25 @@ export function GameAboutPanel({ game, lang, myHalves, onRate, ratingMessage, fa
         )}
       </div>
       <p className="game-about-body">{displayDescription(game, lang)}</p>
+    </section>
+  );
+}
+
+/** 평점 매기기 — 내 기록과 한 줄에 서므로 소개에서 떼어 낸다 */
+export function GameRatePanel({ myHalves, onRate, ratingMessage, lang }: {
+  myHalves: number | null;
+  onRate: (halves: number) => void;
+  ratingMessage: string | null;
+  lang: GameLang;
+}) {
+  return (
+    <section className="game-panel" aria-labelledby="game-rate-heading">
       {/* 별만 늘어놓으면 보여주는 것인지 누르는 것인지 모른다 — 무엇을 하는 자리인지 적는다 */}
-      <p className="game-rate-label">
+      <h2 className="game-panel-title" id="game-rate-heading">
         {myHalves != null
           ? (lang === 'en' ? 'Your rating' : '내 평가')
           : (lang === 'en' ? 'Rate this game' : '이 게임을 평가하기')}
-      </p>
+      </h2>
       <StarRatingInput halves={myHalves} onRate={onRate} lang={lang} />
       {/* 게스트도 한 번은 매길 수 있다 — 안 적으면 로그인해야 하는 줄 알고 지나친다 */}
       <p className="game-panel-note">
