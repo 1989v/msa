@@ -41,6 +41,9 @@ const UI = {
     trackNote: '영구 강화를 쓴 기록은 따로 셉니다 — 두 보드는 서로 비교하지 않습니다.',
     boardLabel: '모드',
     boardNote: '모드마다 순위표가 따로입니다 — 재는 것이 달라 한 표에 섞지 않습니다.',
+    pager: '순위 넘기기',
+    prev: '앞 순위',
+    next: '다음 순위',
     dayNote: '오늘의 기록은 매일 자정(한국 시간)에 새로 시작합니다.',
     nickNote: '게임 안에서 닉네임을 정하면 기록이 이 표에 남습니다.',
   },
@@ -63,6 +66,9 @@ const UI = {
     trackNote: 'Runs with permanent upgrades are counted separately — the two boards are not compared.',
     boardLabel: 'Mode',
     boardNote: 'Each mode keeps its own board — they measure different things, so they are not merged.',
+    pager: 'Ranking pages',
+    prev: 'Higher ranks',
+    next: 'Lower ranks',
     dayNote: "Today's board starts over at midnight, Korea time.",
     nickNote: 'Set a nickname inside the game and your runs will show up here.',
   },
@@ -85,9 +91,14 @@ interface Props {
    * 플레이를 끝내고 나온 순간(상세 페이지가 아는 유일한 신호)에 다시 읽는다.
    */
   reloadToken: number;
+  /**
+   * 한 쪽에 보여 줄 줄 수. 주면 그만큼씩 잘라 **옆으로 넘겨** 본다.
+   * 상세 화면은 5를 준다 — 세로로 열 줄을 쌓으면 그 아래 내용이 첫 화면 밖으로 밀린다.
+   */
+  pageSize?: number;
 }
 
-export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken }: Props) {
+export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken, pageSize }: Props) {
   const L = UI[lang];
   const [boards, setBoards] = useState<PeriodBoards | null>(null);
   const [failed, setFailed] = useState(false);
@@ -142,6 +153,16 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken }
   const tracks = trackedTracks(view);
   const activeTrack = keepOrPickTrack(track, view);
   const rows = activeTrack ? view[activeTrack] : [];
+
+  /* 쪽 넘김. 보드·트랙·기간이 바뀌면 첫 쪽으로 돌아간다 — 3쪽을 보다 다른 보드로 옮겼는데
+     빈 3쪽이 남아 있으면 기록이 없는 것처럼 보인다.
+     되돌리는 것을 효과가 아니라 렌더 중 계산으로 두는 이유: 효과로 하면 한 프레임 동안
+     빈 쪽이 먼저 그려졌다가 지워진다. 보고 있던 것이 무엇이었는지를 상태에 같이 담는다. */
+  const pageKey = `${board}|${period}|${activeTrack ?? ''}`;
+  const [pager, setPager] = useState({ key: pageKey, page: 0 });
+  const pageCount = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
+  const page = pager.key === pageKey ? Math.min(pager.page, pageCount - 1) : 0;
+  const goPage = (n: number) => setPager({ key: pageKey, page: n });
   const hasRecord = boards !== null && hasAnyPeriodRecord(boards);
   // 모드가 여럿이면 이 모드가 비어 있어도 탭은 남는다 — 탭이 사라지면 다른 모드로 갈 길이 없다.
   const hasBoardTabs = scoreBoards.length > 1;
@@ -259,7 +280,7 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken }
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((entry) => {
+                  {(pageSize ? rows.slice(page * pageSize, (page + 1) * pageSize) : rows).map((entry) => {
                     const mine = isMyEntry(entry, nickname);
                     return (
                       <tr key={`${entry.rank}-${entry.nickname}`} className={mine ? 'is-me' : undefined}>
@@ -278,6 +299,33 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken }
               </table>
             )}
           </div>
+
+          {/* 다섯 줄씩 넘겨 본다 — 열 줄을 한 번에 쌓으면 그 아래 패널이 첫 화면 밖으로 밀린다 */}
+          {pageSize != null && pageCount > 1 && (
+            <nav className="game-leaderboard-pager" aria-label={L.pager}>
+              <button
+                type="button"
+                className="game-leaderboard-page-btn"
+                onClick={() => goPage(Math.max(0, page - 1))}
+                disabled={page === 0}
+                aria-label={L.prev}
+              >
+                ‹
+              </button>
+              <span className="game-leaderboard-page-range">
+                {page * pageSize + 1}–{Math.min(rows.length, (page + 1) * pageSize)}
+              </span>
+              <button
+                type="button"
+                className="game-leaderboard-page-btn"
+                onClick={() => goPage(Math.min(pageCount - 1, page + 1))}
+                disabled={page >= pageCount - 1}
+                aria-label={L.next}
+              >
+                ›
+              </button>
+            </nav>
+          )}
 
           {period === 'DAILY' && <p className="game-leaderboard-note">{L.dayNote}</p>}
           {!nickname && <p className="game-leaderboard-note">{L.nickNote}</p>}

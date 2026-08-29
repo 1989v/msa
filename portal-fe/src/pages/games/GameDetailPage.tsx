@@ -28,7 +28,6 @@ import {
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { shouldAutoLandscape } from './stageOrientation';
-import AuthButton from '../../components/AuthButton';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { useStageFit } from './useStageFit';
 import { fetchGraphData } from '../../api/searchApi';
@@ -37,10 +36,12 @@ import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
 import { peekParty } from './party';
-import GameDetailPanels from './GameDetailPanels';
+import { GameAboutPanel, GameMyRecordPanel } from './GameDetailPanels';
+import { useGameSideData } from './useGameSideData';
+import GameLeaderboard from './GameLeaderboard';
 import GNB from '../../components/GNB';
 import Footer from '../../components/Footer';
-import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
+import { starsFromHalves } from './StarRating';
 import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 
@@ -89,6 +90,7 @@ export default function GameDetailPage() {
   const sessionRef = useRef<{ slug: string; key: string } | null>(null);
   const stageRef = useRef<HTMLElement | null>(null);
   const immersive = playing && stageFit.immersive;
+  const side = useGameSideData(slug, boardToken);
 
   // 몰입 중에는 뒤쪽 문서가 스크롤되면 안 된다 — 조이스틱 드래그가 페이지를 끌고 다닌다.
   useEffect(() => {
@@ -307,10 +309,11 @@ export default function GameDetailPage() {
       {!immersive && <GNB items={[]} />}
     <div className="games-page kh-arcade">
       <div className="games-topbar">
+        {/* 로그인/로그아웃은 GNB 가 갖는다. 여기 또 두면 한 화면에 두 번 나온다 —
+            GNB 가 없던 시절의 잔재다(허브 topbar 에는 원래 없다). */}
         <Link className="games-favorites-link" to={lang === 'en' ? '/en/favorites' : '/favorites'} viewTransition>
           {lang === 'en' ? 'My favorites' : '내 찜'}
         </Link>
-        <AuthButton />
       </div>
       <nav className="games-breadcrumb" aria-label={lang === 'en' ? 'Breadcrumb' : '탐색 경로'}>
         <Link className="games-back" to={gamePath(lang, HUB_SUB)} viewTransition>
@@ -339,14 +342,7 @@ export default function GameDetailPage() {
             </p>
           )}
           <div className="game-detail-meta">
-            {game.ratingCount > 0 && (
-              <span className="game-detail-rating">
-                <StarRating value={starsFromHalves(game.ratingAvg)} />
-                {starsFromHalves(game.ratingAvg).toFixed(1)} (
-                {game.ratingCount.toLocaleString()}
-                {lang === 'en' ? ' votes' : '표'})
-              </span>
-            )}
+            {/* 별점은 아래 소개 패널이 갖는다 — 한 화면에 두 번 찍지 않는다 */}
             <span className="game-card-plays">{game.playCount.toLocaleString()} plays</span>
             <span className="game-detail-dev">by {game.developerName}</span>
           </div>
@@ -361,6 +357,10 @@ export default function GameDetailPage() {
         </div>
       </div>
 
+      {/* 넓은 화면은 2단 — 왼쪽에 읽을 것(소개·랭킹·내 기록), 오른쪽에 할 것(썸네일·플레이).
+          좁은 화면은 한 단으로 접히고 DOM 순서대로 무대가 먼저 온다.
+          **플레이 중에는 2단을 풀어 무대가 전폭을 쓴다** — 게임을 반 폭에 가둘 이유가 없다. */}
+      <div className={`game-detail-body${playing ? ' is-playing' : ''}`}>
       <section
         className={`game-stage${immersive ? ' is-immersive' : ''}`}
         ref={stageRef}
@@ -386,6 +386,7 @@ export default function GameDetailPage() {
         {!playing ? (
           <div className="game-stage-idle">
             {/* 스크린샷이 없는 게임이 절반이라 썸네일로 대체한다 — 빈 자리를 남기지 않는다 */}
+            <div className="game-stage-shot-wrap">
             <img
               className="game-stage-shot"
               src={`/games/thumbs/shots/${slug}.png`}
@@ -398,6 +399,10 @@ export default function GameDetailPage() {
                 img.src = game.thumbnailUrl;
               }}
             />
+            <button className="game-play-btn" onClick={handlePlay}>
+              ▶ {lang === 'en' ? 'Play' : '플레이'}
+            </button>
+            </div>
             <ul className="game-stage-facts">
               <li>{genreLabel(game.genre, lang)}</li>
               <li>{game.playerMode === 'MULTI'
@@ -408,9 +413,6 @@ export default function GameDetailPage() {
               )}
               {game.supportsMobile && <li>{lang === 'en' ? 'Mobile' : '모바일 지원'}</li>}
             </ul>
-            <button className="game-play-btn" onClick={handlePlay}>
-              ▶ {lang === 'en' ? 'Play' : '플레이'}
-            </button>
             {/* 저장이 있을 때만 띄운다. 없을 때 문구가 있으면 소음이고,
                 있을 때 안 보이면 처음부터 다시 할까 봐 망설인다 */}
             {continueHint && (
@@ -434,20 +436,29 @@ export default function GameDetailPage() {
         )}
       </section>
 
-      <GameDetailPanels
-        game={game}
-        slug={slug}
-        lang={lang}
-        boardToken={boardToken}
-        myHalves={myHalves}
-        onRate={handleRate}
-        ratingMessage={ratingMessage}
-      />
-
-      <section className="game-about" aria-label="소개">
-        <h2 className="game-panel-title">{lang === 'en' ? 'About' : '소개'}</h2>
-        <p className="game-about-body">{displayDescription(game, lang)}</p>
-      </section>
+      <div className="game-detail-info">
+        <GameAboutPanel
+          game={game}
+          lang={lang}
+          myHalves={myHalves}
+          onRate={handleRate}
+          ratingMessage={ratingMessage}
+          favorites={side.favorites}
+        />
+        {/* 제목은 GameLeaderboard 가 갖는다(새로고침 버튼이 붙어 있다) — 여기 또 달면 두 번 나온다.
+            다섯 줄씩 넘겨 본다 — 열 줄을 쌓으면 그 아래 패널이 첫 화면 밖으로 밀린다. */}
+        <section className="game-panel game-panel-rank">
+          <GameLeaderboard
+            slug={slug}
+            lang={lang}
+            scoreBoards={game.scoreBoards ?? []}
+            reloadToken={boardToken}
+            pageSize={5}
+          />
+        </section>
+        <GameMyRecordPanel record={side.me} loggedIn={side.loggedIn} lang={lang} />
+      </div>
+      </div>
 
       {similar.length > 0 && (
         <section className="games-collection" aria-label="비슷한 게임">

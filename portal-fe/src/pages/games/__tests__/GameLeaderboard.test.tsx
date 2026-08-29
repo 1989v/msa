@@ -38,9 +38,15 @@ function serve(
   );
 }
 
-function renderBoard(scoreBoards: ScoreBoardDef[] = []) {
+function renderBoard(scoreBoards: ScoreBoardDef[] = [], pageSize?: number) {
   return render(
-    <GameLeaderboard slug="coin-corgi" lang="ko" scoreBoards={scoreBoards} reloadToken={0} />,
+    <GameLeaderboard
+      slug="coin-corgi"
+      lang="ko"
+      scoreBoards={scoreBoards}
+      reloadToken={0}
+      pageSize={pageSize}
+    />,
   );
 }
 
@@ -232,5 +238,45 @@ describe('게임 상세 랭킹', () => {
       expect(screen.queryByRole('tab', { name: '물 막기' })).not.toBeInTheDocument();
       expect(vi.mocked(fetchLeaderboard)).toHaveBeenCalledWith('coin-corgi', 'BASE', 10, 'ALL_TIME', null);
     });
+  });
+});
+
+describe('쪽 넘김 (상세 화면의 TOP 5 → TOP 10)', () => {
+  const ten = Array.from({ length: 10 }, (_, i) => entry(i + 1, `p${i + 1}`, 1000 - i));
+
+  it('다섯 줄만 보이고, 넘기면 나머지 다섯 줄이 온다', async () => {
+    serve(ten, []);
+    renderBoard([], 5);
+
+    await waitFor(() => expect(screen.getByText('p1')).toBeInTheDocument());
+    expect(screen.queryByText('p6')).not.toBeInTheDocument();
+    expect(screen.getByText('1–5')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('다음 순위'));
+    expect(screen.getByText('p6')).toBeInTheDocument();
+    expect(screen.queryByText('p1')).not.toBeInTheDocument();
+    expect(screen.getByText('6–10')).toBeInTheDocument();
+  });
+
+  it('pageSize 를 안 주면 전부 편다 — 허브 레일은 넘길 것이 없다', async () => {
+    serve(ten, []);
+    renderBoard();
+
+    await waitFor(() => expect(screen.getByText('p10')).toBeInTheDocument());
+    expect(screen.queryByLabelText('다음 순위')).not.toBeInTheDocument();
+  });
+
+  it('모드를 바꾸면 첫 쪽으로 돌아간다 — 빈 2쪽이 남으면 기록이 없는 것처럼 보인다', async () => {
+    serveByBoard({ leak: ten, rockfall: [entry(1, '돌지기', 798)] });
+    renderBoard(MODES, 5);
+
+    await screen.findByText('p1');
+    fireEvent.click(screen.getByLabelText('다음 순위'));
+    expect(screen.getByText('p6')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('tab', { name: '돌 막기' }));
+    await screen.findByText('돌지기');
+    // 한 줄뿐인 보드로 넘어왔다 — 2쪽에 머물러 빈 표를 보여주면 안 된다
+    expect(screen.queryByLabelText('다음 순위')).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,4 @@
-import { useEffect, useState } from 'react';
-import { fetchFavoriteCount, fetchMyGameRecord, type GameDetail, type MyGameRecord } from '../../api/gameApi';
-import { isLoggedIn } from '../../auth/auth';
-import GameLeaderboard from './GameLeaderboard';
+import { displayDescription, type GameDetail, type MyGameRecord } from '../../api/gameApi';
 import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
 import type { GameLang } from '../../api/gameApi';
 
@@ -12,13 +9,12 @@ import type { GameLang } from '../../api/gameApi';
  * 스크롤 아래로 밀린다 — 게임을 하러 온 사람이 먼저 만나는 것이 정보 더미가 되면 안 된다.
  * 넓은 화면에서는 접을 이유가 없으므로 셋을 한 번에 편다(CSS 가 담당).
  */
-type PanelKey = 'rank' | 'me' | 'reviews';
-
-function minutes(sec: number): string {
-  if (sec < 60) return '1분 미만';
+function minutes(sec: number, lang: GameLang): string {
   const m = Math.round(sec / 60);
-  if (m < 60) return `${m}분`;
-  return `${Math.floor(m / 60)}시간 ${m % 60}분`;
+  if (sec < 60) return lang === 'en' ? 'under a minute' : '1분 미만';
+  if (m < 60) return lang === 'en' ? `${m} min` : `${m}분`;
+  const h = Math.floor(m / 60);
+  return lang === 'en' ? `${h}h ${m % 60}m` : `${h}시간 ${m % 60}분`;
 }
 
 function sinceLabel(iso: string | null, lang: GameLang): string | null {
@@ -30,129 +26,102 @@ function sinceLabel(iso: string | null, lang: GameLang): string | null {
   return `${days}일 전`;
 }
 
-export default function GameDetailPanels({
-  game,
-  slug,
-  lang,
-  boardToken,
-  myHalves,
-  onRate,
-  ratingMessage,
-}: {
+/**
+ * 정보 패널 셋 — 평가 / 랭킹 / 내 기록.
+ *
+ * **탭을 쓰지 않는다.** 넓은 화면은 2단이라 접을 이유가 없고, 좁은 화면에서는
+ * 썸네일과 플레이 버튼이 이미 첫 화면을 차지하므로 그 아래는 스크롤로 읽는 편이
+ * 자연스럽다. 탭은 "무엇이 있는지" 를 감춘다.
+ *
+ * 배치는 페이지가 정한다 — 여기서는 각 조각이 자기 내용만 안다.
+ */
+export function GameAboutPanel({ game, lang, myHalves, onRate, ratingMessage, favorites }: {
   game: GameDetail;
-  slug: string;
   lang: GameLang;
-  boardToken: number;
   myHalves: number | null;
   onRate: (halves: number) => void;
   ratingMessage: string | null;
+  favorites: number | null;
 }) {
-  const [tab, setTab] = useState<PanelKey>('rank');
-  const [me, setMe] = useState<MyGameRecord | null>(null);
-  const [favorites, setFavorites] = useState<number | null>(null);
-  const loggedIn = isLoggedIn();
-
-  useEffect(() => {
-    let alive = true;
-    fetchFavoriteCount(slug).then((n) => alive && setFavorites(n));
-    // 내 기록은 로그인 상태에서만 부른다 — 게스트에게는 401 이 정상이라 요청 자체를 안 한다
-    if (loggedIn) fetchMyGameRecord(slug).then((r) => alive && setMe(r)).catch(() => undefined);
-    return () => {
-      alive = false;
-    };
-    // 플레이가 끝나면 boardToken 이 바뀐다 — 그때 내 기록도 다시 읽는다
-  }, [slug, loggedIn, boardToken]);
-
-  const tabs: { key: PanelKey; label: string }[] = [
-    { key: 'rank', label: lang === 'en' ? 'Ranking' : '랭킹' },
-    { key: 'me', label: lang === 'en' ? 'My record' : '내 기록' },
-    { key: 'reviews', label: lang === 'en' ? 'Ratings' : '평가' },
-  ];
-
   return (
-    <div className="game-panels">
-      <div className="game-panel-tabs" role="tablist">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            role="tab"
-            aria-selected={tab === t.key}
-            className={`game-panel-tab${tab === t.key ? ' is-on' : ''}`}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
+    <section className="game-panel" aria-label={lang === 'en' ? 'About' : '소개'}>
+      <div className="game-rating-summary">
+        <StarRating value={starsFromHalves(game.ratingAvg)} />
+        <span className="game-rating-figure">
+          {game.ratingAvg.toFixed(1)}
+          <span className="game-stat-sub"> ({game.ratingCount.toLocaleString()}{lang === 'en' ? '' : '표'})</span>
+        </span>
+        {favorites != null && favorites > 0 && (
+          <span className="game-stat-sub">♡ {favorites.toLocaleString()}</span>
+        )}
       </div>
+      <p className="game-about-body">{displayDescription(game, lang)}</p>
+      {/* 별만 늘어놓으면 보여주는 것인지 누르는 것인지 모른다 — 무엇을 하는 자리인지 적는다 */}
+      <p className="game-rate-label">
+        {myHalves != null
+          ? (lang === 'en' ? 'Your rating' : '내 평가')
+          : (lang === 'en' ? 'Rate this game' : '이 게임을 평가하기')}
+      </p>
+      <StarRatingInput halves={myHalves} onRate={onRate} lang={lang} />
+      {ratingMessage && <p className="game-panel-note">{ratingMessage}</p>}
+    </section>
+  );
+}
 
-      <section className={`game-panel${tab === 'rank' ? ' is-open' : ''}`} aria-label="랭킹">
-        <h2 className="game-panel-title">{lang === 'en' ? 'Ranking' : '랭킹'}</h2>
-        <GameLeaderboard slug={slug} lang={lang} scoreBoards={game.scoreBoards ?? []} reloadToken={boardToken} />
-      </section>
-
-      <section className={`game-panel${tab === 'me' ? ' is-open' : ''}`} aria-label="내 기록">
-        <h2 className="game-panel-title">{lang === 'en' ? 'My record' : '내 기록'}</h2>
-        {!loggedIn ? (
-          <p className="games-status">
-            {lang === 'en' ? 'Sign in to keep your record.' : '로그인하면 내 기록이 남습니다.'}
-          </p>
-        ) : !me ? (
-          <p className="games-status">{lang === 'en' ? 'Loading…' : '불러오는 중…'}</p>
-        ) : me.plays === 0 ? (
-          <p className="games-status">
-            {lang === 'en' ? 'No plays yet.' : '아직 플레이 기록이 없습니다.'}
-          </p>
-        ) : (
+export function GameMyRecordPanel({ record, loggedIn, lang }: {
+  record: MyGameRecord | null;
+  loggedIn: boolean;
+  lang: GameLang;
+}) {
+  return (
+    <section className="game-panel" aria-label={lang === 'en' ? 'My record' : '내 기록'}>
+      <h2 className="game-panel-title">{lang === 'en' ? 'My record' : '내 기록'}</h2>
+      {!loggedIn ? (
+        <p className="game-panel-note">
+          {lang === 'en' ? 'Sign in to keep your record.' : '로그인하면 내 기록이 남습니다.'}
+        </p>
+      ) : !record ? (
+        <p className="game-panel-note">{lang === 'en' ? 'Loading…' : '불러오는 중…'}</p>
+      ) : record.plays === 0 ? (
+        <p className="game-panel-note">{lang === 'en' ? 'No plays yet.' : '아직 플레이 기록이 없습니다.'}</p>
+      ) : (
+        <>
+          {record.hasSave && (
+            <p className="game-stage-continue">
+              {lang === 'en' ? 'Resumes from your saved progress.' : '저장된 진행에서 이어갑니다.'}
+            </p>
+          )}
           <dl className="game-stat-grid">
             <div>
               <dt>{lang === 'en' ? 'Plays' : '플레이'}</dt>
-              <dd>{me.plays.toLocaleString()}{lang === 'en' ? '' : '회'}</dd>
+              <dd>{record.plays.toLocaleString()}{lang === 'en' ? '' : '회'}</dd>
             </div>
             <div>
               <dt>{lang === 'en' ? 'Total time' : '총 시간'}</dt>
-              <dd>{minutes(me.totalSeconds)}</dd>
+              <dd>{minutes(record.totalSeconds, lang)}</dd>
             </div>
-            {me.bestScore != null && (
+            {record.bestScore != null && (
               <div>
                 <dt>{lang === 'en' ? 'Best' : '내 최고'}</dt>
                 <dd>
-                  {me.bestScore.toLocaleString()}
-                  {me.bestRank != null && <span className="game-stat-sub"> · {me.bestRank}위</span>}
+                  {record.bestScore.toLocaleString()}
+                  {record.bestRank != null && (
+                    <span className="game-stat-sub">
+                      {lang === 'en' ? ` · #${record.bestRank}` : ` · ${record.bestRank}위`}
+                    </span>
+                  )}
                 </dd>
               </div>
             )}
-            {sinceLabel(me.lastPlayedAt, lang) && (
+            {sinceLabel(record.lastPlayedAt, lang) && (
               <div>
                 <dt>{lang === 'en' ? 'Last played' : '마지막 플레이'}</dt>
-                <dd>{sinceLabel(me.lastPlayedAt, lang)}</dd>
+                <dd>{sinceLabel(record.lastPlayedAt, lang)}</dd>
               </div>
             )}
           </dl>
-        )}
-      </section>
-
-      <section className={`game-panel${tab === 'reviews' ? ' is-open' : ''}`} aria-label="평가">
-        <h2 className="game-panel-title">{lang === 'en' ? 'Ratings' : '평가'}</h2>
-        <div className="game-rating-summary">
-          <StarRating value={starsFromHalves(game.ratingAvg)} />
-          <span className="game-rating-figure">
-            {game.ratingAvg.toFixed(1)}
-            <span className="game-stat-sub"> ({game.ratingCount.toLocaleString()}{lang === 'en' ? '' : '표'})</span>
-          </span>
-          {favorites != null && favorites > 0 && (
-            <span className="game-stat-sub">♡ {favorites.toLocaleString()}</span>
-          )}
-        </div>
-        {!loggedIn && (
-          <p className="games-status">
-            {lang === 'en'
-              ? 'You can rate once from this device without signing in.'
-              : '로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.'}
-          </p>
-        )}
-        <StarRatingInput halves={myHalves} onRate={onRate} lang={lang} />
-        {ratingMessage && <p className="games-status">{ratingMessage}</p>}
-      </section>
-    </div>
+        </>
+      )}
+    </section>
   );
 }
