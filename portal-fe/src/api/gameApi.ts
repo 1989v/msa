@@ -93,6 +93,10 @@ export interface GameSummary {
   playCount: number;
   ratingAvg: number;
   ratingCount: number;
+  /** 실제 세션 길이의 중앙값(분). 표본이 적으면 null 이고 화면은 그 줄을 그리지 않는다 */
+  estimatedMinutes: number | null;
+  /** 'SINGLE' | 'MULTI' — multiplayer 태그에서 나온다 */
+  playerMode: string;
 }
 
 /**
@@ -168,6 +172,41 @@ export async function fetchGameCollections(): Promise<GameCollection[]> {
 export async function fetchGameTags(): Promise<GameTag[]> {
   const res = await api.get<ApiResponse<GameTag[]>>('/api/v1/games/tags');
   return res.data.data;
+}
+
+/**
+ * 내 기록 — **로그인 상태에서만 부른다.** 게스트에게 빈 패널을 보여 주면
+ * "기록이 없다" 와 "로그인이 필요하다" 가 구분되지 않는다.
+ */
+export interface MyGameRecord {
+  plays: number;
+  totalSeconds: number;
+  lastPlayedAt: string | null;
+  bestScore: number | null;
+  bestRank: number | null;
+  bestBoard: string | null;
+  hasSave: boolean;
+}
+
+export async function fetchMyGameRecord(slug: string): Promise<MyGameRecord> {
+  const res = await api.get<ApiResponse<MyGameRecord>>(`/api/v1/games/${slug}/me`);
+  return res.data.data;
+}
+
+/**
+ * 찜 수 — 게임 서비스가 아니라 화면이 위시리스트를 직접 부른다.
+ * 게임 서비스에 런타임 의존을 만들면 위시리스트가 죽을 때 상세가 함께 죽는다.
+ * 이 값은 없어도 화면이 성립하므로 실패하면 0 으로 둔다.
+ */
+export async function fetchFavoriteCount(slug: string): Promise<number> {
+  try {
+    const res = await api.get<ApiResponse<number>>(
+      `/api/v1/wishlist/count?type=GAME&key=${encodeURIComponent(slug)}`,
+    );
+    return res.data.data ?? 0;
+  } catch {
+    return 0;
+  }
 }
 
 export async function fetchGameDetail(slug: string): Promise<GameDetail> {

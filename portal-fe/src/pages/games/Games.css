@@ -1487,3 +1487,169 @@
   line-height: var(--ko-leading-relaxed);
   color: var(--ko-text-muted);
 }
+
+
+/* ── 상세 진입 화면 (2026-08-29 개편) ─────────────────────────────────────
+ *
+ * 게임을 하러 온 사람이 먼저 만나는 화면이다. 예전에는 설명 문단과 버튼뿐이었고
+ * 그 설명은 어느 게임에나 붙는 말이라 아무도 읽지 않았다. 스크린샷과 몇 개의
+ * 사실(장르·인원·플레이타임)로 바꾼다 — 읽지 않아도 보이는 정보다.
+ */
+.game-stage-shot {
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 10px;
+  background: var(--ko-surface-2);
+}
+
+.game-stage-facts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 14px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--ko-text-secondary);
+  font-size: 0.875rem;
+}
+
+/* 구분은 선이 아니라 가운뎃점으로 — 칸을 그리면 표처럼 읽힌다 */
+.game-stage-facts li + li::before {
+  content: '·';
+  margin-right: 14px;
+  color: var(--ko-text-muted);
+}
+
+.game-stage-continue {
+  margin: 0;
+  color: var(--ko-accent-primary);
+  font-size: 0.8125rem;
+}
+
+/* ── 정보 패널 (랭킹 / 내 기록 / 평가) ───────────────────────────────────
+ *
+ * 좁은 화면에서는 탭으로 접는다. 셋을 세로로 쌓으면 첫 화면에서 플레이 버튼이
+ * 스크롤 밖으로 밀려 게임을 하러 온 사람이 정보 더미를 먼저 만난다.
+ */
+.game-panel-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.game-panel-tab {
+  flex: 1;
+  min-height: 44px;          /* 조작 대상 하한 (G5-2) */
+  border: 0;
+  background: none;
+  color: var(--ko-text-secondary);
+  font-size: 0.9375rem;
+  padding: 10px 8px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.game-panel-tab.is-on {
+  color: var(--ko-text-primary);
+  border-bottom-color: var(--ko-accent-primary);
+  font-weight: 600;
+}
+
+.game-panel {
+  display: none;
+  margin-bottom: 32px;
+}
+
+.game-panel.is-open {
+  display: block;
+}
+
+/* 패널 제목은 탭이 이미 말하고 있다 — 좁은 화면에서는 지운다 */
+.game-panel-title {
+  display: none;
+}
+
+.game-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+}
+
+.game-stat-grid dt {
+  color: var(--ko-text-muted);
+  font-size: 0.8125rem;
+  margin-bottom: 2px;
+}
+
+.game-stat-grid dd {
+  margin: 0;
+  color: var(--ko-text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.game-stat-sub {
+  color: var(--ko-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.game-rating-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.game-rating-figure {
+  color: var(--ko-text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.game-about {
+  margin-bottom: 32px;
+}
+
+.game-about-body {
+  color: var(--ko-text-secondary);
+  line-height: 1.8;
+  margin: 0;
+  max-width: 68ch;
+}
+
+/* 넓은 화면에서는 접을 이유가 없다 — 탭을 지우고 셋을 한 번에 편다 */
+@media (min-width: 900px) {
+  .game-panel-tabs {
+    display: none;
+  }
+
+  .game-panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 32px;
+  }
+
+  .game-panel,
+  .game-panel.is-open {
+    display: block;
+  }
+
+  .game-panel-title {
+    display: block;
+    font-size: 1.125rem;
+    margin-bottom: 12px;
+    color: var(--ko-text-primary);
+  }
+
+  /* 랭킹은 목록이라 세로로 길다 — 왼쪽 칸을 통째로 쓴다 */
+  .game-panel:first-of-type {
+    grid-row: span 2;
+  }
+}

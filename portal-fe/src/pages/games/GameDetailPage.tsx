@@ -5,6 +5,7 @@ import {
   displayTitle,
   endGameSession,
   fetchGameDetail,
+  fetchMyGameRecord,
   fetchSimilarGames,
   genreLabel,
   isBeta,
@@ -36,7 +37,7 @@ import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
 import { peekParty } from './party';
-import GameLeaderboard from './GameLeaderboard';
+import GameDetailPanels from './GameDetailPanels';
 import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
 import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -80,6 +81,9 @@ export default function GameDetailPage() {
   // 내 평점은 BE 척도(halves 1~10) 그대로 든다 — 화면 변환은 StarRating 몫
   const [myHalves, setMyHalves] = useState<number | null>(null);
   const [ratingMessage, setRatingMessage] = useState<string | null>(null);
+  /* 이어할 저장이 있는가. 로그인 상태에서만 물어본다 — 게스트는 서버 저장이 없다.
+     실패하면 안내를 띄우지 않는다: 없는데 띄우면 거짓말이 된다. */
+  const [continueHint, setContinueHint] = useState(false);
   const sessionRef = useRef<{ slug: string; key: string } | null>(null);
   const stageRef = useRef<HTMLElement | null>(null);
   const immersive = playing && stageFit.immersive;
@@ -172,6 +176,14 @@ export default function GameDetailPage() {
         if (peekParty(slug)) void handlePlay();
       })
       .catch(() => setNotFound(true));
+    if (isLoggedIn()) {
+      fetchMyGameRecord(slug)
+        .then((r) => setContinueHint(r.hasSave))
+        .catch(() => setContinueHint(false));
+    } else {
+      setContinueHint(false);
+    }
+
     fetchSimilarGames(slug)
       .then(setSimilar)
       .catch(() => setSimilar([]));
@@ -347,10 +359,39 @@ export default function GameDetailPage() {
         )}
         {!playing ? (
           <div className="game-stage-idle">
-            <p className="game-stage-desc">{displayDescription(game, lang)}</p>
+            {/* 스크린샷이 없는 게임이 절반이라 썸네일로 대체한다 — 빈 자리를 남기지 않는다 */}
+            <img
+              className="game-stage-shot"
+              src={`/games/thumbs/shots/${slug}.png`}
+              alt=""
+              loading="eager"
+              onError={(e) => {
+                const img = e.currentTarget;
+                if (img.dataset.fallback) return;
+                img.dataset.fallback = '1';
+                img.src = game.thumbnailUrl;
+              }}
+            />
+            <ul className="game-stage-facts">
+              <li>{genreLabel(game.genre, lang)}</li>
+              <li>{game.playerMode === 'MULTI'
+                ? (lang === 'en' ? '2+ players' : '2인 이상')
+                : (lang === 'en' ? 'Single player' : '1인')}</li>
+              {game.estimatedMinutes != null && (
+                <li>{lang === 'en' ? `~${game.estimatedMinutes} min` : `약 ${game.estimatedMinutes}분`}</li>
+              )}
+              {game.supportsMobile && <li>{lang === 'en' ? 'Mobile' : '모바일 지원'}</li>}
+            </ul>
             <button className="game-play-btn" onClick={handlePlay}>
-              ▶ 플레이
+              ▶ {lang === 'en' ? 'Play' : '플레이'}
             </button>
+            {/* 저장이 있을 때만 띄운다. 없을 때 문구가 있으면 소음이고,
+                있을 때 안 보이면 처음부터 다시 할까 봐 망설인다 */}
+            {continueHint && (
+              <p className="game-stage-continue">
+                {lang === 'en' ? 'Resumes from your saved progress.' : '저장된 진행에서 이어갑니다.'}
+              </p>
+            )}
           </div>
         ) : game.loadType === 'INTERNAL_ROUTE' ? (
           <InternalGamePlayer slug={game.entryUrl} />
@@ -367,21 +408,19 @@ export default function GameDetailPage() {
         )}
       </section>
 
-      <GameLeaderboard slug={slug} lang={lang} scoreBoards={game.scoreBoards ?? []} reloadToken={boardToken} />
+      <GameDetailPanels
+        game={game}
+        slug={slug}
+        lang={lang}
+        boardToken={boardToken}
+        myHalves={myHalves}
+        onRate={handleRate}
+        ratingMessage={ratingMessage}
+      />
 
-      <section className="game-rating-section" aria-label="평점 남기기">
-        <h2 className="games-collection-title">
-          {lang === 'en' ? 'Rate this game' : '이 게임 어땠나요?'}
-        </h2>
-        {!isLoggedIn() && (
-          <p className="games-status">
-            {lang === 'en'
-              ? 'You can rate once from this device without signing in.'
-              : '로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.'}
-          </p>
-        )}
-        <StarRatingInput halves={myHalves} onRate={handleRate} lang={lang} />
-        {ratingMessage && <p className="games-status">{ratingMessage}</p>}
+      <section className="game-about" aria-label="소개">
+        <h2 className="game-panel-title">{lang === 'en' ? 'About' : '소개'}</h2>
+        <p className="game-about-body">{displayDescription(game, lang)}</p>
       </section>
 
       {similar.length > 0 && (
