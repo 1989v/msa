@@ -19,6 +19,10 @@
 }
 
 .site-footer-inner {
+  /* 부모가 block 이라 지금은 `width: auto` 와 결과가 같다. 부모에 display:flex 가 붙는 순간
+     교차축 auto 마진이 stretch 를 무효화해 폭이 내용에 맞춰지고 max-width 에 걸린다 —
+     .games-page 가 그렇게 터졌다 (2026-08-29, 모바일에서 페이지가 1200px 로 잡혀 본문이 잘렸다). */
+  width: 100%;
   max-width: var(--kh-container, 1200px);
   margin: 0 auto;
   display: flex;
