@@ -5,6 +5,9 @@ import com.kgd.wishlist.domain.model.WishlistItem
 import com.kgd.wishlist.domain.model.WishlistTargetType
 
 interface WishlistRepositoryPort {
+    /** 이 대상을 찜한 사람 수. 로그인 없이도 볼 수 있는 공개 수치다 */
+    fun countByTarget(targetType: WishlistTargetType, targetKey: String): Long
+
     fun save(item: WishlistItem): WishlistItem
     fun findByMemberAndTarget(memberId: Long, targetType: WishlistTargetType, targetKey: String): WishlistItem?
     fun deleteByMemberAndTarget(memberId: Long, targetType: WishlistTargetType, targetKey: String)

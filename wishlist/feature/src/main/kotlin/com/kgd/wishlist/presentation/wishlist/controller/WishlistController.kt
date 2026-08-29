@@ -4,6 +4,7 @@ import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
 import com.kgd.common.response.ApiResponse
 import com.kgd.wishlist.application.wishlist.usecase.AddWishlistItemUseCase
+import com.kgd.wishlist.application.wishlist.usecase.CountWishlistTargetUseCase
 import com.kgd.wishlist.application.wishlist.usecase.GetWishlistKeysUseCase
 import com.kgd.wishlist.application.wishlist.usecase.GetWishlistUseCase
 import com.kgd.wishlist.application.wishlist.usecase.ManageCollectionUseCase
@@ -33,6 +34,7 @@ class WishlistController(
     private val removeWishlistItemUseCase: RemoveWishlistItemUseCase,
     private val getWishlistUseCase: GetWishlistUseCase,
     private val getWishlistKeysUseCase: GetWishlistKeysUseCase,
+    private val countWishlistTargetUseCase: CountWishlistTargetUseCase,
     private val manageCollectionUseCase: ManageCollectionUseCase,
 ) {
     @PutMapping("/{targetType}/{targetKey}")
@@ -109,6 +111,24 @@ class WishlistController(
             )
         )
     }
+
+    /**
+     * 이 대상을 몇 명이 찜했나 — **로그인 없이 부를 수 있다.**
+     *
+     * 게임 상세가 "좋아요 수" 자리에 쓴다. 게임 서비스가 아니라 화면이 직접 부르는 것은,
+     * 게임 서비스에 위시리스트 런타임 의존을 만들면 위시리스트가 죽을 때 게임 상세가
+     * 함께 죽기 때문이다. 이 값은 없어도 화면이 성립한다.
+     */
+    @GetMapping("/count")
+    fun countTarget(
+        @RequestParam type: String,
+        @RequestParam key: String,
+    ): ApiResponse<Long> =
+        ApiResponse.success(
+            countWishlistTargetUseCase.execute(
+                CountWishlistTargetUseCase.Query(targetType = parseTargetType(type), targetKey = key),
+            ),
+        )
 
     @GetMapping("/keys")
     fun getKeys(

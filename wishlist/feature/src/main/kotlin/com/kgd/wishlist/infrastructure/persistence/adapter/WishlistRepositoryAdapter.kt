@@ -18,6 +18,9 @@ class WishlistRepositoryAdapter(
     private val collectionJpaRepository: WishlistCollectionJpaRepository,
 ) : WishlistRepositoryPort {
 
+    override fun countByTarget(targetType: WishlistTargetType, targetKey: String): Long =
+        wishlistItemJpaRepository.countByTargetTypeAndTargetKey(targetType, targetKey)
+
     override fun save(item: WishlistItem): WishlistItem {
         val entity = WishlistItemJpaEntity.fromDomain(item)
         return wishlistItemJpaRepository.save(entity).toDomain()

@@ -80,6 +80,14 @@ interface WishlistItemJpaRepository : JpaRepository<WishlistItemJpaEntity, Long>
     @Query("DELETE FROM WishlistItemJpaEntity w WHERE w.memberId = :memberId")
     fun deleteAllByMemberId(memberId: Long)
 
+    /**
+     * 이 대상을 몇 명이 찜했나 — 회원이 아니라 **대상** 기준이다.
+     *
+     * 게임 상세가 "좋아요 수" 자리에 쓴다. 좋아요를 따로 만들지 않고 찜을 세는 것은,
+     * 둘 다 "이 게임을 아껴 둔 사람" 을 뜻하는데 표를 나누면 어느 쪽도 안 쌓이기 때문이다.
+     */
+    fun countByTargetTypeAndTargetKey(targetType: WishlistTargetType, targetKey: String): Long
+
     @Modifying
     @Query("DELETE FROM WishlistItemJpaEntity w WHERE w.targetType = :targetType AND w.targetKey = :targetKey")
     fun deleteAllByTarget(targetType: WishlistTargetType, targetKey: String)

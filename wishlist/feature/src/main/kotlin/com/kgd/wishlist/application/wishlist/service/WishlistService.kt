@@ -2,6 +2,7 @@ package com.kgd.wishlist.application.wishlist.service
 
 import com.kgd.wishlist.application.wishlist.port.WishlistRepositoryPort
 import com.kgd.wishlist.application.wishlist.usecase.AddWishlistItemUseCase
+import com.kgd.wishlist.application.wishlist.usecase.CountWishlistTargetUseCase
 import com.kgd.wishlist.application.wishlist.usecase.GetWishlistKeysUseCase
 import com.kgd.wishlist.application.wishlist.usecase.GetWishlistUseCase
 import com.kgd.wishlist.application.wishlist.usecase.ManageCollectionUseCase
@@ -21,7 +22,8 @@ class WishlistService(
     RemoveWishlistItemUseCase,
     GetWishlistUseCase,
     GetWishlistKeysUseCase,
-    ManageCollectionUseCase {
+    ManageCollectionUseCase,
+    CountWishlistTargetUseCase {
 
     // PUT 멱등 — 이미 찜한 대상이면 그 행을 돌려준다. 더블탭·재시도가 에러가 되지 않는다 (ADR-0074 §2).
     @Transactional("wishlistTransactionManager")
@@ -74,6 +76,9 @@ class WishlistService(
     }
 
     @Transactional("wishlistTransactionManager", readOnly = true)
+    override fun execute(query: CountWishlistTargetUseCase.Query): Long =
+        wishlistRepositoryPort.countByTarget(query.targetType, query.targetKey)
+
     override fun execute(query: GetWishlistKeysUseCase.Query): GetWishlistKeysUseCase.Result {
         val keys = wishlistRepositoryPort.findKeysByMemberAndType(query.memberId, query.targetType)
         return GetWishlistKeysUseCase.Result(keys = keys)
