@@ -1,4 +1,4 @@
-import { displayDescription, type GameDetail, type MyGameRecord } from '../../api/gameApi';
+import { displayDescription, type GameDetail, type MyGameRecord, type ReleaseNote } from '../../api/gameApi';
 import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
 import type { GameLang } from '../../api/gameApi';
 
@@ -141,6 +141,35 @@ export function GameMyRecordPanel({ record, loggedIn, lang }: {
           </dl>
         </>
       )}
+    </section>
+  );
+}
+
+/**
+ * 버전별 업데이트 노트 — 전 게임 공통.
+ *
+ * 노트가 없으면 판 자체를 그리지 않는다. 「업데이트 없음」을 보여줄 이유가 없고,
+ * 대부분의 게임이 아직 노트가 없어서 빈 판이 기본 상태가 되어 버린다.
+ */
+export function GameReleaseNotesPanel({ notes, lang }: { notes: ReleaseNote[]; lang: GameLang }) {
+  if (notes.length === 0) return null;
+  return (
+    <section className="game-panel" aria-labelledby="game-notes-heading">
+      <h2 className="game-panel-title" id="game-notes-heading">
+        {lang === 'en' ? 'Update notes' : '업데이트 노트'}
+      </h2>
+      <ol className="game-notes">
+        {notes.map((n) => (
+          <li key={n.version} className="game-note">
+            <p className="game-note-head">
+              <span className="game-note-version">{n.version}</span>
+              <span className="game-stat-sub">{n.releasedAt}</span>
+            </p>
+            {/* 본문은 문단이다 — 줄바꿈을 살려야 「무엇이 왜 바뀌었나」가 읽힌다 */}
+            <p className="game-note-body">{(lang === 'en' && n.bodyEn) || n.body}</p>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }

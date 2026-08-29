@@ -104,6 +104,29 @@ export interface GameSummary {
  * 상태(GameStatus.BETA)가 정식 축이고, `beta` 태그는 PUBLISHED 로 둔 채 배지만 붙이던 기존 방식이다.
  * 한쪽만 보면 같은 카탈로그 안에서 같은 뜻이 다르게 보인다.
  */
+export interface ReleaseNote {
+  version: string;
+  releasedAt: string;
+  body: string;
+  bodyEn: string | null;
+}
+
+/**
+ * 버전별 업데이트 노트. 최신 판이 먼저 온다 — 서버가 정렬해 주므로 화면이 다시 하지 않는다.
+ * 노트가 없는 게임이 대부분이라 실패는 빈 목록으로 삼킨다: 없는 것과 못 가져온 것을
+ * 화면에서 가릴 방법이 없고, 둘 다 「보여줄 것이 없다」로 끝난다.
+ */
+export async function fetchReleaseNotes(slug: string): Promise<ReleaseNote[]> {
+  try {
+    const { data } = await api.get<ApiResponse<ReleaseNote[]>>(
+      `/api/v1/games/${encodeURIComponent(slug)}/release-notes`,
+    );
+    return data.data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export function isBeta(game: Pick<GameSummary, 'status' | 'tags'>): boolean {
   return game.status === 'BETA' || game.tags.includes('beta');
 }

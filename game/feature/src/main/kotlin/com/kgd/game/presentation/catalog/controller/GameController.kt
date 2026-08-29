@@ -5,9 +5,11 @@ import com.kgd.game.application.catalog.dto.GameCollectionDto
 import com.kgd.game.application.catalog.dto.GameDetailDto
 import com.kgd.game.application.catalog.dto.GameSummaryDto
 import com.kgd.game.application.catalog.dto.GameTagDto
+import com.kgd.game.application.catalog.dto.ReleaseNoteDto
 import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.application.catalog.usecase.GetGameCollectionsUseCase
 import com.kgd.game.application.catalog.usecase.GetGameDetailUseCase
+import com.kgd.game.application.catalog.usecase.GetGameReleaseNotesUseCase
 import com.kgd.game.application.catalog.usecase.GetSimilarGamesUseCase
 import com.kgd.game.application.catalog.usecase.ListGameTagsUseCase
 import com.kgd.game.application.catalog.usecase.ListGamesUseCase
@@ -27,6 +29,7 @@ class GameController(
     private val listTags: ListGameTagsUseCase,
     private val getDetail: GetGameDetailUseCase,
     private val getSimilar: GetSimilarGamesUseCase,
+    private val getReleaseNotes: GetGameReleaseNotesUseCase,
 ) {
 
     @GetMapping
@@ -56,4 +59,9 @@ class GameController(
     @GetMapping("/{slug}/similar")
     fun similar(@PathVariable slug: String): ApiResponse<List<GameSummaryDto>> =
         ApiResponse.success(getSimilar.execute(GetSimilarGamesUseCase.Query(slug)))
+
+    /** 버전별 업데이트 노트. 최신 판이 먼저 온다 — 화면이 정렬을 다시 하지 않는다. */
+    @GetMapping("/{slug}/release-notes")
+    fun releaseNotes(@PathVariable slug: String): ApiResponse<List<ReleaseNoteDto>> =
+        ApiResponse.success(getReleaseNotes.execute(GetGameReleaseNotesUseCase.Query(slug)))
 }

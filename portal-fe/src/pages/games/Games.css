@@ -1635,6 +1635,41 @@
   max-width: 68ch;
 }
 
+/* 업데이트 노트 */
+.game-notes {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.game-note + .game-note {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.game-note-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 6px;
+}
+
+.game-note-version {
+  color: var(--ko-text-primary);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 본문은 문단이라 줄바꿈을 살린다 — 한 줄로 붙이면 바꾼 이유가 뭉개진다 */
+.game-note-body {
+  margin: 0;
+  color: var(--ko-text-secondary);
+  line-height: 1.8;
+  white-space: pre-line;
+  max-width: 68ch;
+}
+
 /* 순위 넘기기 — 다섯 줄이 한 쪽 */
 .game-leaderboard-pager {
   display: flex;
@@ -1751,6 +1786,12 @@
   .game-pane-rank {
     grid-column: 1 / -1;
     grid-row: 3;
+  }
+
+  /* 업데이트 노트는 랭킹 아래 — 지금 하는 것보다 뒤에 온다 */
+  .game-pane-notes {
+    grid-column: 1 / -1;
+    grid-row: 4;
   }
 
   .game-detail-tabs {
