@@ -15,7 +15,7 @@ namespace Kgd
     [DefaultExecutionOrder(-10000)]
     internal sealed class KgdBridge : MonoBehaviour
     {
-        internal const int FieldCount = 9;
+        internal const int FieldCount = 10;
 
         internal static KgdBridge Instance { get; private set; }
 
@@ -32,7 +32,8 @@ namespace Kgd
             var go = new GameObject("~KgdBridge") { hideFlags = HideFlags.HideAndDontSave };
             DontDestroyOnLoad(go);
             Instance = go.AddComponent<KgdBridge>();
-            Instance.Frame[6] = 1f; // 정보 패널은 기본이 펼침 (데스크톱 기준)
+            Instance.Frame[6] = 1f;  // 정보 패널은 기본이 펼침 (데스크톱 기준)
+            Instance.Frame[9] = 46f; // 셸이 우상단에 예약한 띠 — JS 가 없는 에디터에서도 같은 자리에 그린다
             Instance.Poll();
         }
 

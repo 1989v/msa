@@ -10,7 +10,8 @@ mergeInto(LibraryManager.library, {
   },
 
   // 한 프레임에 필요한 값을 한 번에 읽는다 (JS↔WASM 경계를 프레임당 1회로 묶는다).
-  // out[0..8] = axisX, axisY, axisMag, padH, landscape, coarse, hudExpanded, actionMask, keyLayout
+  // out[0..9] = axisX, axisY, axisMag, padH, landscape, coarse, hudExpanded, actionMask, keyLayout,
+  //             chromeTop(우상단에 플랫폼 셸이 예약한 띠 높이, CSS px)
   KgdPoll: function (outPtr) {
     var i = outPtr >> 2;
     var H = HEAPF32;
@@ -44,9 +45,34 @@ mergeInto(LibraryManager.library, {
 
     var layout = (typeof GameKeys !== 'undefined' && GameKeys.layout === 'left') ? 1 : 0;
 
+    // 우상단은 플랫폼 셸(portal-fe)의 닫기·전체화면 칩 자리다. 게임이 거기에 버튼을 두면
+    // 셸 칩이 위에 떠서 **눌리지 않는다** — 궁수 키우기의 강화창 닫기가 그랬다.
+    // 얼마나 비워야 하는지를 여기서 알려 준다. 레이아웃을 재는 일이라 크기가 바뀔 때만 다시 잰다.
+    if (Module.kgdChromeW !== vw || Module.kgdChromeH !== vh) {
+      Module.kgdChromeW = vw; Module.kgdChromeH = vh;
+      var top = 46;   // 칩 위 여백 6 + 칩 34 + 아래 여유 6
+      try {
+        if (typeof GameChrome !== 'undefined' && typeof GameChrome.top === 'number') {
+          top = GameChrome.top;
+        } else {
+          var probe = Module.kgdInsetProbe;
+          if (!probe) {
+            probe = document.createElement('div');
+            probe.style.cssText = 'position:fixed;top:0;left:0;width:0;pointer-events:none;' +
+              'visibility:hidden;height:env(safe-area-inset-top,0px)';
+            document.body.appendChild(probe);
+            Module.kgdInsetProbe = probe;
+          }
+          top = (probe.offsetHeight || 0) + 46;
+        }
+      } catch (e) { /* 잴 수 없으면 기본값 */ }
+      Module.kgdChromeTop = top;
+    }
+
     H[i] = ax; H[i + 1] = ay; H[i + 2] = am;
     H[i + 3] = padH; H[i + 4] = vw > vh ? 1 : 0; H[i + 5] = coarse;
     H[i + 6] = hud; H[i + 7] = mask; H[i + 8] = layout;
+    H[i + 9] = Module.kgdChromeTop || 46;
   },
 
   // 런 종료 — 점수는 정수, detail 은 문자열(객체를 넣으면 랭킹에 [object Object] 가 뜬다).

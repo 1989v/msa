@@ -112,6 +112,10 @@
   <footer>__KGD_CREDIT__</footer>
 </div>
 
+<!-- auth.js 가 먼저다 — platform.js 가 GameAuth.token() 을 부른다.
+     빠뜨리면 로그인한 사람이 전 게임에서 게스트로 취급된다 (2026-08-28 실제 사고).
+     산출물 index.html 에는 손으로 들어가 있었는데 템플릿에 없어서, 다음 빌드가 지울 참이었다. -->
+<script src="../lib/auth.js"></script>
 <script src="../lib/keys.js"></script>
 <script src="../lib/hud.js"></script>
 <script src="../lib/rank.js"></script>

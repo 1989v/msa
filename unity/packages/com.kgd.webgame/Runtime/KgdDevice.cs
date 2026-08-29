@@ -37,6 +37,23 @@ namespace Kgd
                 return b == null ? 0f : b.Frame[3];
             }
         }
+
+        /// <summary>
+        /// **우상단에 비워 둬야 하는 띠 높이(CSS px).**
+        ///
+        /// 플랫폼 셸(portal-fe 게임 상세 화면)이 그 자리에 닫기 ✕ · 전체화면 ⛶ 칩을 띄운다.
+        /// 셸은 iframe 바깥이라 항상 위에 뜨고, 게임이 같은 자리에 버튼을 두면 **눌리지 않는다**
+        /// (2026-08-29: 궁수 키우기의 강화창 닫기 버튼이 그랬다).
+        /// 게임의 우상단 UI 는 이 값만큼 내려서 놓는다. 기기의 안전영역이 더해진 값이다.
+        /// </summary>
+        public static float ChromeTopCss
+        {
+            get
+            {
+                var b = KgdBridge.Instance;
+                return b == null ? 46f : Mathf.Max(0f, b.Frame[9]);
+            }
+        }
     }
 
     /// <summary>
