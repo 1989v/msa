@@ -265,20 +265,36 @@ export default function GameDetailPage() {
         { title: '', lang },
   );
 
+  /* 로딩·에러 화면도 같은 껍데기를 쓴다. 본문만 껍데기 안에 두면 이 두 화면에서는
+     사이트 구조가 사라져 돌아갈 길이 뒤로가기뿐이 된다 — 이 커밋이 고치려던 바로 그것이다. */
   if (notFound) {
     return (
-      <div className="games-page kh-arcade">
-        <p className="games-status">
-          {lang === 'en' ? 'Game not found.' : '게임을 찾을 수 없습니다.'}
-        </p>
-        <Link className="games-back" to={gamePath(lang, HUB_SUB)} viewTransition>
-          {lang === 'en' ? '← Back to all games' : '← 게임 목록으로'}
-        </Link>
-      </div>
+      <>
+        <GNB items={[]} />
+        <div className="games-page kh-arcade">
+          <p className="games-status">
+            {lang === 'en' ? 'Game not found.' : '게임을 찾을 수 없습니다.'}
+          </p>
+          <Link className="games-back" to={gamePath(lang, HUB_SUB)} viewTransition>
+            {lang === 'en' ? '← Back to all games' : '← 게임 목록으로'}
+          </Link>
+        </div>
+        <Footer />
+      </>
     );
   }
 
-  if (!game) return <div className="games-page games-status">불러오는 중…</div>;
+  if (!game) {
+    return (
+      <>
+        <GNB items={[]} />
+        <div className="games-page games-status">
+          {lang === 'en' ? 'Loading…' : '불러오는 중…'}
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>

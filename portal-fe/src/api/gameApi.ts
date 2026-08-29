@@ -97,10 +97,6 @@ export interface GameSummary {
   playCount: number;
   ratingAvg: number;
   ratingCount: number;
-  /** 실제 세션 길이의 중앙값(분). 표본이 적으면 null 이고 화면은 그 줄을 그리지 않는다 */
-  estimatedMinutes: number | null;
-  /** 'SINGLE' | 'MULTI' — multiplayer 태그에서 나온다 */
-  playerMode: string;
 }
 
 /**
@@ -113,6 +109,14 @@ export function isBeta(game: Pick<GameSummary, 'status' | 'tags'>): boolean {
 }
 
 export interface GameDetail extends GameSummary {
+  /**
+   * 실제 세션 길이의 중앙값(분). 표본이 적으면 null 이고 화면은 그 줄을 그리지 않는다.
+   * **목록 응답에는 없다** — Summary 에 두면 아무도 안 채워 틀린 값이 나간다.
+   */
+  estimatedMinutes: number | null;
+  /** 'SINGLE' | 'MULTI' — multiplayer 태그에서 나온다. 상세에만 있다 */
+  playerMode: string;
+
   description: string;
   descriptionEn: string | null;
   coverUrl: string | null;

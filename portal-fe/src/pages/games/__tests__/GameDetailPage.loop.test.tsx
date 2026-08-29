@@ -28,7 +28,13 @@ vi.mock('../../../api/gameApi', async (importOriginal) => {
 });
 vi.mock('../../../api/searchApi', () => ({ fetchGraphData: vi.fn(() => Promise.resolve({ nodes: [], links: [] })) }));
 vi.mock('../../../seo/useSeo', () => ({ useSeo: () => undefined }));
-vi.mock('../../../hooks/useHeritageSurface', () => ({ useHeritageSurface: () => undefined }));
+// 모듈을 통째로 대체하므로 **이 모듈이 내보내는 것을 다 채워야 한다.**
+// 상세 화면에 GNB 가 붙으면서 ThemeToggle → useHeritageTheme 경로가 생겼고,
+// 빠진 export 하나가 렌더를 던져 테스트가 exit 1 이 됐다 (2026-08-29).
+vi.mock('../../../hooks/useHeritageSurface', () => ({
+  useHeritageSurface: () => undefined,
+  useHeritageTheme: () => ['light', () => undefined],
+}));
 vi.mock('../../../auth/auth', () => ({ isLoggedIn: () => false }));
 // AuthButton 은 이 테스트의 관심사가 아니고, 던지면 트리가 죽어 루프가 재현되기 전에 렌더가 끊긴다
 vi.mock('../../../components/AuthButton', () => ({ default: () => null }));

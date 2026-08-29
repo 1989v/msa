@@ -67,7 +67,6 @@ class GameScoreJpaEntity(
     var detail: String? = detail
         private set
 
-    /** 기존 기록보다 높을 때만 반영한다 */
     /**
      * 게스트로 쌓인 행을 회원에 잇는다. **이미 주인이 있으면 바꾸지 않는다** —
      * 닉네임이 같다는 이유로 남의 기록을 가져오면 안 된다.
@@ -81,6 +80,7 @@ class GameScoreJpaEntity(
         return true
     }
 
+    /** 기존 기록보다 높을 때만 반영한다 */
     fun updateIfHigher(score: Long, detail: String?): Boolean {
         if (score <= this.score) return false
         this.score = score
