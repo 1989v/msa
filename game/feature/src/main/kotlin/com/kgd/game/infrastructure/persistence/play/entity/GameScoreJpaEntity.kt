@@ -37,6 +37,13 @@ class GameScoreJpaEntity(
     val gameId: Long,
     @Column(nullable = false, length = 24)
     val nickname: String,
+    /**
+     * 제출 당시 로그인 회원. 게스트 제출을 계속 허용하므로 nullable 이다.
+     * 유일성은 여전히 (게임, 트랙, 보드, 닉네임) 이 갖는다 — 회원을 키에 넣으면
+     * 같은 사람이 닉네임을 바꿀 때마다 행이 늘어난다.
+     */
+    @Column(name = "member_id")
+    var memberId: Long? = null,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 8)
     val track: ScoreTrack = ScoreTrack.BASE,

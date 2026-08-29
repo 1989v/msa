@@ -13,6 +13,8 @@ interface SubmitGameScoreUseCase {
         val track: ScoreTrack,
         val board: ScoreBoardKey,
         val nickname: String,
+        /** 로그인 상태면 그 회원. 게스트 제출은 계속 허용한다 */
+        val memberId: Long? = null,
         val score: Long,
         val detail: String?,
     )

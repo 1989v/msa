@@ -46,14 +46,18 @@ class GameScoreService(
      */
     @Transactional(transactionManager = "gameTransactionManager")
     override fun execute(command: SubmitGameScoreUseCase.Command): Pair<Boolean, Int> {
-        val (slug, track, board, nickname, score, detail) = command
-        val gameId = resolveGameId(slug)
-        val nick = nickname.trim()
+        // 위치 분해를 쓰지 않는다 — Command 에 필드를 하나 끼워 넣는 순간 값이 조용히 밀린다
+        val gameId = resolveGameId(command.slug)
+        val nick = command.nickname.trim()
+        val score = command.score
         if (!NICK_REGEX.matches(nick)) throw BusinessException(ErrorCode.INVALID_INPUT, "닉네임은 2~16자 (문자/숫자/공백/._-)")
         if (score !in 0..MAX_SCORE) throw BusinessException(ErrorCode.INVALID_INPUT, "점수 범위 오류")
         // 보드 키는 카탈로그 선언과 대조하지 않는다 — 게임이 모드를 늘렸는데 시드가 아직
         // 안 따라온 순간에 기록을 버리게 된다. 선언은 사이트가 탭 이름을 짓는 데만 쓴다.
-        return scoreRepository.submit(gameId, track, board, nick, score, detail?.take(64), GameDay.today())
+        return scoreRepository.submit(
+            gameId, command.track, command.board, nick, command.memberId,
+            score, command.detail?.take(64), GameDay.today(),
+        )
     }
 
     /**

@@ -122,6 +122,7 @@ class GameScoreRepositoryAdapter(
         track: ScoreTrack,
         board: ScoreBoardKey,
         nickname: String,
+        memberId: Long?,
         score: Long,
         detail: String?,
         playDate: LocalDate,
@@ -136,12 +137,14 @@ class GameScoreRepositoryAdapter(
             jpaRepository.save(
                 GameScoreJpaEntity(
                     gameId = gameId, track = track, board = key,
-                    nickname = nickname, score = score, detail = detail,
+                    nickname = nickname, memberId = memberId, score = score, detail = detail,
                 ),
             )
             true
         } else {
-            existing.updateIfHigher(score, detail).also { if (it) jpaRepository.saveAndFlush(existing) }
+            // 게스트로 쌓다가 로그인하면 그 뒤 제출부터 회원이 붙는다 — 기존 행도 이때 잇는다
+            if (memberId != null && existing.memberId == null) existing.memberId = memberId
+            existing.updateIfHigher(score, detail).also { jpaRepository.saveAndFlush(existing) }
         }
         val best = if (applied) score else existing!!.score
         val rank = jpaRepository.countByGameIdAndTrackAndBoardAndScoreGreaterThan(gameId, track, key, best).toInt() + 1

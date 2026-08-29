@@ -51,6 +51,7 @@ interface GameScoreRepositoryPort {
         track: ScoreTrack,
         board: ScoreBoardKey,
         nickname: String,
+        memberId: Long?,
         score: Long,
         detail: String?,
         playDate: LocalDate,
