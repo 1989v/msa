@@ -365,7 +365,7 @@ images:
     newTag: 1667f6f
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: cbf41a8
+    newTag: 47a5012
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 1667f6f
