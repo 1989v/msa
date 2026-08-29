@@ -137,6 +137,14 @@ class GatewayRouteConfig(
                     }
                     .uri("http://gifticon:8086")
             }
+            // 찜 **수**만 공개다 — 게임 상세가 "좋아요" 자리에 쓴다.
+            // 라우트를 앞에 두는 것은 아래 wishlist-service 가 /api/v1/wishlist/** 를 통째로
+            // 잡기 때문이고, 뒤에 두면 영영 안 걸린다. 개인 목록은 그대로 로그인 전용이다.
+            .route("wishlist-count-public") { r ->
+                r.path("/api/v1/wishlist/count")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri("http://commerce:8085")
+            }
             // Wishlist Service (ROLE_USER+) — 찜은 로그인 전용, 게이트웨이가 인증 경계 (ADR-0074)
             .route("wishlist-service") { r ->
                 r.path("/api/v1/wishlist/**", "/api/v1/wishlist")
