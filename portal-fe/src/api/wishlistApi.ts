@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getAccessToken } from '../auth/auth';
+import { attachRefreshRetry } from '../auth/refresh';
 
 // VITE_API_URL 이 빈 문자열이면 same-origin relative path (운영 / K8s ingress 경유).
 const BASE_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8089';
@@ -13,7 +14,8 @@ interface ApiResponse<T> {
 /**
  * 찜하기 클라이언트 (ADR-0074). shell/apiClient 를 쓰지 않는 이유는 그쪽 401 처리가
  * apex `/login` 으로 강제 이동하기 때문이다 — 하트는 게임·블로그·place 화면 어디에나
- * 있고, 토큰 만료가 화면 이탈이 되면 안 된다. 401 은 버튼이 스스로 처리한다.
+ * 있고, 토큰 만료가 화면 이탈이 되면 안 된다. 401 은 토큰을 재발급해 그 자리에서
+ * 재시도하고, 재발급까지 실패하면 그 호출만 실패로 남긴다.
  */
 const api = axios.create({ baseURL: BASE_URL, timeout: 10_000 });
 
@@ -22,6 +24,8 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+attachRefreshRetry(api);
 
 export type FavoriteTargetType = 'PRODUCT' | 'GAME' | 'ATTRACTION' | 'BLOG_POST';
 

@@ -2,11 +2,10 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import {
   buildLoginHref,
   getAccessToken,
-  getRefreshToken,
   logout as clearAuth,
-  updateTokens,
   type OAuthProvider,
 } from '../auth/auth';
+import { refreshAccessToken } from '../auth/refresh';
 
 // VITE_API_URL 이 빈 문자열이면 same-origin relative path 사용 (운영 / K8s ingress 경유).
 // nullish coalescing 으로 빈 문자열을 fallback 으로 보내지 않도록 — searchApi.ts 와 동일 컨벤션.
@@ -122,11 +121,6 @@ export interface LoginResponse {
   isNewMember: boolean;
 }
 
-export interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
 // ── Axios instance + interceptors ────────────────────────────────
 
 const api = axios.create({ baseURL: BASE_URL });
@@ -143,43 +137,13 @@ interface RetriableConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
-/** 동시 401 발생 시 refresh 요청을 1회로 합치는 가드 (gifticon client.ts 패턴) */
-let refreshPromise: Promise<boolean> | null = null;
-
-async function tryRefreshToken(): Promise<boolean> {
-  if (refreshPromise) return refreshPromise;
-
-  refreshPromise = (async () => {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) return false;
-    try {
-      // 인터셉터 루프 방지를 위해 instance 가 아닌 bare axios 사용
-      const res = await axios.post<ApiResponse<TokenResponse>>(
-        `${BASE_URL}/api/auth/refresh`,
-        { refreshToken },
-      );
-      if (res.data.success && res.data.data) {
-        updateTokens(res.data.data.accessToken, res.data.data.refreshToken);
-        return true;
-      }
-      return false;
-    } catch {
-      return false;
-    } finally {
-      refreshPromise = null;
-    }
-  })();
-
-  return refreshPromise;
-}
-
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const config = error.config as RetriableConfig | undefined;
     if (error.response?.status === 401 && config && !config._retry) {
       config._retry = true;
-      const refreshed = await tryRefreshToken();
+      const refreshed = await refreshAccessToken();
       if (refreshed) {
         return api(config); // 원 요청 재시도 (request 인터셉터가 새 토큰 부착)
       }
