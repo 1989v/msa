@@ -69,6 +69,12 @@ export function GameAboutPanel({ game, lang, myHalves, onRate, ratingMessage, fa
           : (lang === 'en' ? 'Rate this game' : '이 게임을 평가하기')}
       </p>
       <StarRatingInput halves={myHalves} onRate={onRate} lang={lang} />
+      {/* 게스트도 한 번은 매길 수 있다 — 안 적으면 로그인해야 하는 줄 알고 지나친다 */}
+      <p className="game-panel-note">
+        {lang === 'en'
+          ? 'You can rate once from this device without signing in.'
+          : '로그인 없이도 이 기기에서 한 번 평가할 수 있습니다.'}
+      </p>
       {ratingMessage && <p className="game-panel-note">{ratingMessage}</p>}
     </section>
   );

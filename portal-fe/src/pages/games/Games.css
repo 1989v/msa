@@ -1594,6 +1594,11 @@
   font-weight: 400;
 }
 
+/* 평가가 없고 찜도 0이면 이 줄에 남는 것이 없다 — 빈 채로 여백만 12px 벌어진다 */
+.game-rating-summary:empty {
+  margin-bottom: 0;
+}
+
 .game-rating-summary {
   display: flex;
   align-items: center;
