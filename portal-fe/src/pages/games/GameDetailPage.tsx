@@ -38,6 +38,8 @@ import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
 import { peekParty } from './party';
 import GameDetailPanels from './GameDetailPanels';
+import GNB from '../../components/GNB';
+import Footer from '../../components/Footer';
 import { StarRating, StarRatingInput, starsFromHalves } from './StarRating';
 import './Games.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -279,6 +281,14 @@ export default function GameDetailPage() {
   if (!game) return <div className="games-page games-status">불러오는 중…</div>;
 
   return (
+    <>
+      {/* 머리띠·바닥글은 컨테이너 **밖**에 둔다 — 안에 넣으면 max-width 에 갇혀 전폭이 아니다.
+          메뉴를 비우는 것은 허브와 같은 이유다: 게임 호스트에서는 같은 경로가 다른 화면을
+          가리키므로 링크를 섞으면 어긋난다.
+
+          **게임을 실행하는 동안에는 둘 다 감춘다.** 몰입 상자가 화면을 덮어도 그 뒤로
+          문서가 스크롤되면 머리띠·바닥글이 비집고 나온다 — 게임 중에는 게임만 보여야 한다. */}
+      {!immersive && <GNB items={[]} />}
     <div className="games-page kh-arcade">
       <div className="games-topbar">
         <Link className="games-favorites-link" to={lang === 'en' ? '/en/favorites' : '/favorites'} viewTransition>
@@ -436,5 +446,7 @@ export default function GameDetailPage() {
         </section>
       )}
     </div>
+      {!immersive && <Footer />}
+    </>
   );
 }
