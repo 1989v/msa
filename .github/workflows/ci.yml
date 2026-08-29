@@ -228,9 +228,14 @@ jobs:
 
       # 여기가 진짜 게이트다. Dockerfile 검사만 켜면 이미지 빌드는 머지 뒤에 돌아서
       # PR 단계에서 안 잡히고, "빌드가 급하다" 는 이유로 다시 꺼진다.
+      #
+      # **`--noEmit` 이 아니라 `-b` 다.** portal-fe/tsconfig.json 은 `files: []` + references
+      # 만 든 솔루션 파일이라 `tsc --noEmit` 은 **0개 파일을 검사하고 성공한다.** 켜져 있는
+      # 것처럼 보이는 무동작 게이트였고, 실제로 안 쓰는 import 가 그대로 main 에 올라갔다
+      # (2026-08-29). --force 는 증분 캐시를 무시한다 — 러너의 캐시 상태로 결과가 갈리면 안 된다.
       - name: Type check
         working-directory: portal-fe
-        run: npx tsc --noEmit
+        run: npx tsc -b --force
 
       # 2026-08-28: import 하나가 빠진 채 배포까지 갔다. 그 케이스를 덮는 테스트가
       # 이미 있었는데 CI 에서 아무도 돌리지 않아 못 잡았다.

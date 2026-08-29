@@ -44,13 +44,19 @@ export function GameAboutPanel({ game, lang, myHalves, onRate, ratingMessage, fa
   favorites: number | null;
 }) {
   return (
-    <section className="game-panel" aria-label={lang === 'en' ? 'About' : '소개'}>
+    <section className="game-panel" aria-labelledby="game-about-heading">
+      <h2 className="game-panel-title" id="game-about-heading">{lang === 'en' ? 'About' : '소개'}</h2>
       <div className="game-rating-summary">
-        <StarRating value={starsFromHalves(game.ratingAvg)} />
-        <span className="game-rating-figure">
-          {game.ratingAvg.toFixed(1)}
-          <span className="game-stat-sub"> ({game.ratingCount.toLocaleString()}{lang === 'en' ? '' : '표'})</span>
-        </span>
+        {/* ratingAvg 는 BE 척도(halves 1~10) 다 — 별과 숫자가 같은 축을 써야 9.1 과 4.6 이 함께 뜨지 않는다 */}
+        {game.ratingCount > 0 && (
+          <>
+            <StarRating value={starsFromHalves(game.ratingAvg)} />
+            <span className="game-rating-figure">
+              {starsFromHalves(game.ratingAvg).toFixed(1)}
+              <span className="game-stat-sub"> ({game.ratingCount.toLocaleString()}{lang === 'en' ? '' : '표'})</span>
+            </span>
+          </>
+        )}
         {favorites != null && favorites > 0 && (
           <span className="game-stat-sub">♡ {favorites.toLocaleString()}</span>
         )}
@@ -74,8 +80,10 @@ export function GameMyRecordPanel({ record, loggedIn, lang }: {
   lang: GameLang;
 }) {
   return (
-    <section className="game-panel" aria-label={lang === 'en' ? 'My record' : '내 기록'}>
-      <h2 className="game-panel-title">{lang === 'en' ? 'My record' : '내 기록'}</h2>
+    <section className="game-panel" aria-labelledby="game-my-record-heading">
+      <h2 className="game-panel-title" id="game-my-record-heading">
+        {lang === 'en' ? 'My record' : '내 기록'}
+      </h2>
       {!loggedIn ? (
         <p className="game-panel-note">
           {lang === 'en' ? 'Sign in to keep your record.' : '로그인하면 내 기록이 남습니다.'}
@@ -86,11 +94,6 @@ export function GameMyRecordPanel({ record, loggedIn, lang }: {
         <p className="game-panel-note">{lang === 'en' ? 'No plays yet.' : '아직 플레이 기록이 없습니다.'}</p>
       ) : (
         <>
-          {record.hasSave && (
-            <p className="game-stage-continue">
-              {lang === 'en' ? 'Resumes from your saved progress.' : '저장된 진행에서 이어갑니다.'}
-            </p>
-          )}
           <dl className="game-stat-grid">
             <div>
               <dt>{lang === 'en' ? 'Plays' : '플레이'}</dt>

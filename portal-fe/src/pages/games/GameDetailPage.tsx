@@ -1,11 +1,9 @@
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import {
-  displayDescription,
   displayTitle,
   endGameSession,
   fetchGameDetail,
-  fetchMyGameRecord,
   fetchSimilarGames,
   genreLabel,
   isBeta,
@@ -31,7 +29,6 @@ import { shouldAutoLandscape } from './stageOrientation';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { useStageFit } from './useStageFit';
 import { fetchGraphData } from '../../api/searchApi';
-import { isLoggedIn } from '../../auth/auth';
 import type { GraphNode } from '../../types/graph';
 import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
@@ -84,13 +81,13 @@ export default function GameDetailPage() {
   // 내 평점은 BE 척도(halves 1~10) 그대로 든다 — 화면 변환은 StarRating 몫
   const [myHalves, setMyHalves] = useState<number | null>(null);
   const [ratingMessage, setRatingMessage] = useState<string | null>(null);
-  /* 이어할 저장이 있는가. 로그인 상태에서만 물어본다 — 게스트는 서버 저장이 없다.
-     실패하면 안내를 띄우지 않는다: 없는데 띄우면 거짓말이 된다. */
-  const [continueHint, setContinueHint] = useState(false);
   const sessionRef = useRef<{ slug: string; key: string } | null>(null);
   const stageRef = useRef<HTMLElement | null>(null);
   const immersive = playing && stageFit.immersive;
   const side = useGameSideData(slug, boardToken);
+  /* 이어할 저장이 있는가. 같은 질의를 두 번 보내지 않으려고 내 기록에서 꺼내 쓴다 —
+     게스트는 서버 저장이 없어 `me` 가 null 이고, 없는데 안내를 띄우면 거짓말이 된다. */
+  const continueHint = side.me?.hasSave ?? false;
 
   // 몰입 중에는 뒤쪽 문서가 스크롤되면 안 된다 — 조이스틱 드래그가 페이지를 끌고 다닌다.
   useEffect(() => {
@@ -180,14 +177,6 @@ export default function GameDetailPage() {
         if (peekParty(slug)) void handlePlay();
       })
       .catch(() => setNotFound(true));
-    if (isLoggedIn()) {
-      fetchMyGameRecord(slug)
-        .then((r) => setContinueHint(r.hasSave))
-        .catch(() => setContinueHint(false));
-    } else {
-      setContinueHint(false);
-    }
-
     fetchSimilarGames(slug)
       .then(setSimilar)
       .catch(() => setSimilar([]));
@@ -447,7 +436,7 @@ export default function GameDetailPage() {
         />
         {/* 제목은 GameLeaderboard 가 갖는다(새로고침 버튼이 붙어 있다) — 여기 또 달면 두 번 나온다.
             다섯 줄씩 넘겨 본다 — 열 줄을 쌓으면 그 아래 패널이 첫 화면 밖으로 밀린다. */}
-        <section className="game-panel game-panel-rank">
+        <div className="game-panel">
           <GameLeaderboard
             slug={slug}
             lang={lang}
@@ -455,7 +444,7 @@ export default function GameDetailPage() {
             reloadToken={boardToken}
             pageSize={5}
           />
-        </section>
+        </div>
         <GameMyRecordPanel record={side.me} loggedIn={side.loggedIn} lang={lang} />
       </div>
       </div>

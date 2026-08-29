@@ -27,8 +27,11 @@ ENV VITE_API_URL=""
 # 빠진 채 배포까지 갔다(2026-08-28 플레이 버튼). 그 오류는 이미 사라졌다 — 껐던 이유는
 # 시간이 지나면 없어지지만 꺼진 게이트는 남는다.
 #
+# `--noEmit` 이 아니라 `-b` 인 이유: tsconfig.json 이 `files: []` 인 솔루션 파일이라
+# `tsc --noEmit` 은 0개 파일을 검사하고 통과한다 — 위에 적은 사고를 그대로 다시 통과시켰다.
+#
 # 프리렌더는 공개 게임 API 를 읽어 SEO 정적 페이지를 찍는다 — 실패해도 빌드는 통과한다.
-RUN npx tsc --noEmit && npx vite build --base / && node scripts/prerender-seo.mjs
+RUN npx tsc -b --force && npx vite build --base / && node scripts/prerender-seo.mjs
 # 게임 JS minify — 서빙물에서 원문 가독성 제거 (소스맵 미발행). 인라인 스크립트 HTML 게임은
 # 55종 일괄 회귀 위험 대비 이득이 작아 제외 — 수익 티어(다중 파일) 게임과 공용 lib 만.
 # Unity 산출물(Build/)은 제외한다 — 엔진이 낸 코드라 이미 최소화돼 있고, 5MB 짜리를

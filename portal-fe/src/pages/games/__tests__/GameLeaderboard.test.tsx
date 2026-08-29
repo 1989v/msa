@@ -267,16 +267,34 @@ describe('쪽 넘김 (상세 화면의 TOP 5 → TOP 10)', () => {
   });
 
   it('모드를 바꾸면 첫 쪽으로 돌아간다 — 빈 2쪽이 남으면 기록이 없는 것처럼 보인다', async () => {
-    serveByBoard({ leak: ten, rockfall: [entry(1, '돌지기', 798)] });
+    // 옮겨 갈 보드도 두 쪽짜리여야 한다. 한 줄만 주면 쪽 넘김 자체가 사라져
+    // 되돌리기를 지워도 통과하는, 이가 없는 테스트가 된다.
+    const rocks = Array.from({ length: 8 }, (_, i) => entry(i + 1, `r${i + 1}`, 800 - i));
+    serveByBoard({ leak: ten, rockfall: rocks });
     renderBoard(MODES, 5);
 
     await screen.findByText('p1');
     fireEvent.click(screen.getByLabelText('다음 순위'));
-    expect(screen.getByText('p6')).toBeInTheDocument();
+    expect(screen.getByText('6–10')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('tab', { name: '돌 막기' }));
-    await screen.findByText('돌지기');
-    // 한 줄뿐인 보드로 넘어왔다 — 2쪽에 머물러 빈 표를 보여주면 안 된다
-    expect(screen.queryByLabelText('다음 순위')).not.toBeInTheDocument();
+    await screen.findByText('r1');
+    expect(screen.getByText('1–5')).toBeInTheDocument();
+    expect(screen.queryByText('r6')).not.toBeInTheDocument();
+  });
+
+  it('다른 게임으로 옮겨도 첫 쪽으로 돌아간다 — 라우트에 key 가 없어 remount 되지 않는다', async () => {
+    serve(ten, []);
+    const { rerender } = render(
+      <GameLeaderboard slug="coin-corgi" lang="ko" scoreBoards={[]} reloadToken={0} pageSize={5} />,
+    );
+    await screen.findByText('p1');
+    fireEvent.click(screen.getByLabelText('다음 순위'));
+    expect(screen.getByText('6–10')).toBeInTheDocument();
+
+    rerender(
+      <GameLeaderboard slug="other-game" lang="ko" scoreBoards={[]} reloadToken={0} pageSize={5} />,
+    );
+    await waitFor(() => expect(screen.getByText('1–5')).toBeInTheDocument());
   });
 });

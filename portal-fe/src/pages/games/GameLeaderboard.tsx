@@ -158,7 +158,9 @@ export default function GameLeaderboard({ slug, lang, scoreBoards, reloadToken, 
      빈 3쪽이 남아 있으면 기록이 없는 것처럼 보인다.
      되돌리는 것을 효과가 아니라 렌더 중 계산으로 두는 이유: 효과로 하면 한 프레임 동안
      빈 쪽이 먼저 그려졌다가 지워진다. 보고 있던 것이 무엇이었는지를 상태에 같이 담는다. */
-  const pageKey = `${board}|${period}|${activeTrack ?? ''}`;
+  // slug 가 빠지면 안 된다 — 라우트에 key 가 없어 게임을 옮겨도 이 컴포넌트는 remount 되지 않고,
+  // 두 게임이 같은 보드·기간을 쓰면 키가 그대로라 옆 게임의 6–10 쪽이 그대로 열린다.
+  const pageKey = `${slug}|${board}|${period}|${activeTrack ?? ''}`;
   const [pager, setPager] = useState({ key: pageKey, page: 0 });
   const pageCount = pageSize ? Math.max(1, Math.ceil(rows.length / pageSize)) : 1;
   const page = pager.key === pageKey ? Math.min(pager.page, pageCount - 1) : 0;

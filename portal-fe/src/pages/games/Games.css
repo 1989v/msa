@@ -524,15 +524,7 @@
 }
 
 /* 상세 헤더는 판이 아니라 지면 위다 — 카드용 황토·muted 는 한지 위에서 2.9:1/4.2:1 로
-   본문 대비에 못 미친다. 별점은 정경별 글씨용 액션색, 나머지는 secondary 로 올린다. */
-.game-detail-rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--ko-accent-text, var(--ko-accent-primary));
-  font-weight: 600;
-}
-
+   본문 대비에 못 미친다. secondary 로 올린다. */
 .game-detail-meta .game-card-plays,
 .game-detail-dev {
   color: var(--ko-text-secondary);
@@ -1517,12 +1509,13 @@
   }
 }
 
-/* 스크린샷이 밝든 어둡든 버튼 글자가 읽히도록 아래쪽을 깐다 */
+/* 버튼 글자는 자기 두 색이 지키므로 여기서 벌 일이 아니다. 이 막이 사는 이유는
+   버튼의 **경계**다 — 밝은 스크린샷 위에서는 버튼 윤곽이 배경에 묻힌다. */
 .game-stage-shot-wrap::after {
   content: '';
   position: absolute;
   inset: 40% 0 0;
-  background: linear-gradient(to bottom, transparent, rgb(0 0 0 / 62%));
+  background: linear-gradient(to bottom, transparent, var(--kh-scrim, rgb(10 10 10 / 62%)));
   pointer-events: none;
 }
 
@@ -1532,7 +1525,6 @@
   bottom: 16px;
   transform: translateX(-50%);
   z-index: 1;
-  box-shadow: 0 6px 20px rgb(0 0 0 / 35%);
 }
 
 .game-stage-facts {
