@@ -1,6 +1,11 @@
 /* Games — DESIGN.md 토큰(--ko-*) 기반, 카드 radius 12px(lg) */
 
 .games-page {
+  /* 세로 flex 아이템이라 폭이 교차축이다. `margin: 0 auto` 가 교차축 stretch 를 무효화하므로
+     폭이 내용에 맞춰지고 max-width 에 걸린다 — 390px 화면에서 페이지가 1200px 로 잡혀
+     본문이 오른쪽으로 밀려 잘렸다 (2026-08-29 실측, 게임 상세). 허브는 내용이 좁아 안 드러났다.
+     `width: 100%` 로 채우게 하면 좁은 화면에서 줄고 넓은 화면에서는 max-width 가 그대로 캡한다. */
+  width: 100%;
   max-width: var(--kh-container, 1280px);
   margin: 0 auto;
   padding: var(--kh-void, 48px) 24px 64px;
