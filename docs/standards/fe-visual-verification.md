@@ -154,6 +154,27 @@ const over = (fg, bg) => { const f = parse(fg), b = parse(bg);
 if (!document.querySelector('.place-page')) return JSON.stringify({error: '앱이 로드되지 않음'});
 ```
 
+### 재는 번들이 방금 구운 그것인지 본다
+
+`vite preview` 는 **`dist/` 스냅샷**을 서빙한다. `public/` 아래 산출물(게임 번들 등)은 FE 를
+빌드할 때 복사된 것이라, 게임을 아무리 다시 구워도 화면은 **몇 시간 전 번들**이다.
+`Network.setCacheDisabled` 를 켜도 소용없다 — 서버가 옛것을 내주고 있기 때문이다.
+
+2026-08-30 이것 때문에 같은 수정을 두 번 했다. HUD 위치를 고치고 다시 굽고 스크린샷을
+찍었는데 안 움직여서 "코드가 안 먹는다"고 판단했고, 실제로는 프리뷰가 6시간 전 번들을
+내주고 있었다.
+
+**이번에 새로 넣은 심볼이 응답 안에 있는지로 확인한다.** 해시만 보면 index.html 은
+갱신됐는데 로더가 옛것인 경우를 놓친다.
+
+```js
+// 로드된 번들이 정말 새것인가 — 이번에 추가한 이름으로 확인한다
+Object.keys(window.Module || {}).filter(k => k.startsWith('kgd'))   // kgdSafeTop 이 있어야 새 빌드
+document.querySelector('script[src*=loader]').src                    // 해시도 같이 남긴다
+```
+
+없으면 그 측정은 버린다. 프리뷰를 다시 띄우거나, 배포한 뒤 운영에서 잰다.
+
 ### 배경이 투명하면 검정으로 계산된다
 
 `body` 에 `position: fixed` 로 프로브를 띄우면 배경이 `rgba(0,0,0,0)` 이다. 그걸 그대로
