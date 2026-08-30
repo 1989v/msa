@@ -36,20 +36,27 @@
 
          게시자 ID 가 비면 아무것도 로드하지 않는다 — 승인 전에 스크립트만 나가면
          게시자 없는 요청이 반복돼 심사에 불리하다. 값의 원본은 src/seo/copy.mjs 의
-         ADSENSE_CLIENT 이고 여기는 사본이다(정적 HTML 이라 import 를 못 한다).
-         ads.txt 도 같은 상수를 읽으므로 고칠 때 두 곳을 함께 고친다.
+         ADSENSE_CLIENT · ADSENSE_HOSTS 이고 여기는 사본이다(정적 HTML 이라 import 를
+         못 한다). ads.txt 와 아래 소유권 메타도 같은 값을 읽으므로 고칠 때 함께 고친다.
 
-         resume 호스트에서는 싣지 않는다. 실명·연락처가 있는 토큰 게이트 문서인데
-         (ADR-0064) 광고 네트워크에 열람 맥락을 넘기면 게이트가 무의미해진다 —
-         GA 를 뺀 것과 같은 기준이고, 한 벌의 index.html 이 모든 호스트를 서빙하므로
-         여기서 갈라야 한다. -->
+         호스트는 **허용 목록**으로 판정한다. 제외 목록이면 새로 뜨는 호스트가 로더를
+         조용히 물려받는다 — rank 가 실제로 그랬다. ads.txt 는 ADSENSE_HOSTS 에만
+         찍히므로, 광고를 내보내면서 판매자 선언이 없는 호스트가 생긴다.
+
+         resume 이 목록에 없는 이유: 실명·연락처가 있는 토큰 게이트 문서라(ADR-0064)
+         광고망에 열람 맥락을 넘기면 게이트가 무의미해진다. GA 를 뺀 것과 같은 기준이고,
+         한 벌의 index.html 이 모든 호스트를 서빙하므로 여기서 갈라야 한다. -->
     <script>
       (function () {
         var client = "ca-pub-4627924728297793";
-        if (!client) return;
-        var host = location.hostname;
-        if (host === "localhost" || host === "127.0.0.1") return;
-        if (host.split(".")[0] === "resume") return;
+        var hosts = [
+          "1989v.com",
+          "game.1989v.com",
+          "place.1989v.com",
+          "deal.1989v.com",
+          "blog.1989v.com",
+        ];
+        if (!client || hosts.indexOf(location.hostname) < 0) return;
         var tag = document.createElement("script");
         tag.async = true;
         tag.crossOrigin = "anonymous";
@@ -58,6 +65,13 @@
         document.head.appendChild(tag);
       })();
     </script>
+
+    <!-- 애드센스 사이트 소유권 확인 (ADR-0076). 위 로더와 달리 정적으로 둔다 —
+         확인 크롤러가 JS 를 돌리지 않으면 스크립트로 주입한 태그는 소스에 없는 것과 같다.
+         프리렌더는 seo 마커 구간만 갈아끼우므로 이 줄은 모든 호스트의 정적 HTML 에 남는다.
+         호스트로 가르지 않는다 — 이 태그는 계정 이름만 적을 뿐 아무것도 내보내지 않아서,
+         resume 를 로더에서 뺀 기준(열람 맥락 전달)이 여기엔 해당하지 않는다. -->
+    <meta name="google-adsense-account" content="ca-pub-4627924728297793" />
 
     <!-- 모바일 브라우저가 주소창을 이 색으로 칠한다 — 아래 스크립트가 톤에 맞춰 바꾼다 -->
     <meta name="theme-color" content="#0a0a0a" />

@@ -84,6 +84,10 @@
 
 resume 에는 찍지 않는다 — 광고를 싣지 않는 호스트다.
 
+로더도 같은 목록을 **허용 목록**으로 쓴다. 제외 목록이면 새로 뜨는 호스트가 로더만
+물려받아 `ads.txt` 없이 광고를 내보낸다 — rank 가 2026-08-23 에 그렇게 됐고, 광고
+요청은 나가는데 `/ads.txt` 는 404 인 상태로 일주일을 보냈다.
+
 ### 4) `/privacy` 는 apex 하나만 둔다
 
 호스트마다 방침을 따로 두면 한 곳만 고쳐진 채로 남는다. 라우트는 호스트를 가리지 않고
@@ -126,7 +130,9 @@ deal 은 제휴 링크 허브라 자체 부가가치가 얇고(ADR-0069), AdSens
 
 1. `/privacy` 배포 — 방침 없이 신청하면 그 사유로 반려된다.
 2. adsense.google.com 가입 → 사이트에 `1989v.com` 등록 (루트 하나로 서브도메인 전부 커버).
-3. 소유권 확인 — `<head>` 스니펫 방식을 쓴다. `ADSENSE_CLIENT` 를 채우면 로더가 붙는다.
+3. 소유권 확인 — **메타 태그 방식**(`google-adsense-account`, `index.html`)을 쓴다.
+   코드 스니펫 방식은 못 쓴다: 로더를 `document.createElement` 로 붙이므로 HTML 소스에
+   `<script src>` 태그가 없고, 확인 크롤러가 JS 를 돌리지 않으면 없는 것과 같다.
 4. 심사 (며칠~2주). 이 기간에도 `ads.txt` 는 이미 나가 있어야 한다.
 5. 승인 후 콘솔에서 광고 단위 생성 → 나온 `data-ad-slot` 값으로 `AdSlot` 배치.
 6. 콘솔의 **자동 광고는 끈 채로 둔다** (위 1항).
@@ -136,7 +142,7 @@ deal 은 제휴 링크 허브라 자체 부가가치가 얇고(ADR-0069), AdSens
 | 무엇 | 파일 |
 |---|---|
 | 게시자 ID · 광고 호스트 · `ads.txt` 생성 | `portal-fe/src/seo/copy.mjs` |
-| 로더 (호스트 게이트) | `portal-fe/index.html` |
+| 로더 (호스트 허용 목록) · 소유권 확인 메타 | `portal-fe/index.html` |
 | 지면 컴포넌트 | `portal-fe/src/components/ads/AdSlot.tsx` |
 | 지면 ID 등록부 | `portal-fe/src/seo/copy.mjs` (`ADSENSE_SLOTS`) |
 | `ads.txt` 산출 | `portal-fe/scripts/prerender-seo.mjs` |
