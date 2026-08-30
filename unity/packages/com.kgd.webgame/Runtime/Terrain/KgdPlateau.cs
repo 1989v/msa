@@ -54,15 +54,15 @@ namespace Kgd.Terrain
         public float Chamfer = 1.16f;
 
         /// <summary>비탈 길이. 높이 대비 너무 짧으면 걸어 오르는 느낌이 아니라 벽을 타는 느낌이 된다.</summary>
-        public float RampLength = 10f;
+        public float RampLength = 8f;
 
 
 
         /// <summary>비탈 위쪽 폭(초크). 좁아야 고지를 지키는 일이 성립한다.</summary>
-        public float RampTopWidth = 4.5f;
+        public float RampTopWidth = 3.4f;
 
         /// <summary>비탈 아래쪽 폭. 위보다 넓어야 입구가 깔때기로 읽힌다.</summary>
-        public float RampBottomWidth = 7.5f;
+        public float RampBottomWidth = 5.6f;
 
         /// <summary>테두리까지의 거리. 안이면 음수, 밖이면 양수.</summary>
         public float EdgeDistance(Vector3 p)
