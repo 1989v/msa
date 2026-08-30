@@ -88,6 +88,11 @@ export default function GameDetailPage() {
   /* 좁은 화면에서만 쓰는 탭. 넓은 화면은 둘 다 펴므로 이 값이 화면을 바꾸지 않는다
      (CSS 가 미디어쿼리로 무시한다) — 상태를 폭에 따라 갈라 두면 회전할 때마다 튄다. */
   const [tab, setTab] = useState<'about' | 'rank' | 'notes'>('about');
+  /* 업데이트 탭은 노트가 있는 게임에만 뜬다. 라우트가 하나라 「비슷한 게임」으로 옮겨도
+     이 컴포넌트는 remount 되지 않으므로, 노트 없는 게임으로 넘어가면 버튼은 사라지고
+     tab 만 'notes' 로 남아 아무 판도 안 보이는 화면이 된다 — 그때 소개로 되돌린다. */
+  const notesTab = side.notes.length > 0;
+  if (tab === 'notes' && !notesTab) setTab('about');
   /* 이어할 저장이 있는가. 같은 질의를 두 번 보내지 않으려고 내 기록에서 꺼내 쓴다 —
      게스트는 서버 저장이 없어 `me` 가 null 이고, 없는데 안내를 띄우면 거짓말이 된다. */
   const continueHint = side.me?.hasSave ?? false;

@@ -12,6 +12,14 @@
 | `:game:feature` | 라이브러리(비-bootable) — 컨트롤러·서비스·JPA·Kafka + 전용 datasource(`game_db`)/EMF/TM/Flyway + **arcade Redis 저장소** |
 | `:game:web` | Kotlin/JS 브라우저 클라이언트(Snake). 산출물은 portal-fe `public/games/snake/` 로 복사해 서빙 (#23 흡수) |
 
+## 버전 업데이트 노트
+
+`game_release_note` (game_id · version · released_at · body · body_en) 한 표를 전 게임이 쓴다 —
+게임마다 표를 따로 두면 화면이 게임마다 달라진다. 공개 조회는
+`GET /api/v1/games/{slug}/release-notes` 이고 최신 판이 먼저 온다(화면이 정렬을 다시 하지 않는다).
+게이트웨이는 손대지 않는다 — 카탈로그 catch-all `/api/v1/games/**` 이 필터 없이 받는다.
+FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트가 없으면 판도 탭도 내지 않는다.**
+
 ## 구조 상태 (ADR-0083)
 
 표준 준수 (2026-08-26, P4 완료) — `application/{catalog,play,ads,arcade}/usecase` 인터페이스 31개, 서비스가 구현하고 컨트롤러는 인터페이스만 주입. Port 는 컨텍스트별 `*Ports.kt` 묶음 파일(허용), application → infrastructure import 0. 부채 없음.
