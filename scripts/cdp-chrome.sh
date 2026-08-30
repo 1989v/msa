@@ -21,7 +21,8 @@
 #   이 스크립트는 둘 다 **경로로 막는다**.
 #
 # 사용:
-#   scripts/cdp-chrome.sh start <이름>     # 띄우고 포트를 출력한다 (이미 있으면 그 포트를 준다)
+#   scripts/cdp-chrome.sh start <이름>          # 띄우고 포트를 출력한다 (이미 있으면 그 포트를 준다)
+#   scripts/cdp-chrome.sh start <이름> --gl     # WebGL 켜서 (유니티 게임용. 비싸다 — 재고 바로 stop)
 #   scripts/cdp-chrome.sh port  <이름>     # 포트만
 #   scripts/cdp-chrome.sh list             # 이 세션이 띄운 것 전부 (+ 남의 것은 표시만)
 #   scripts/cdp-chrome.sh stop  <이름>     # 하나 종료 + 프로필 삭제
@@ -32,7 +33,12 @@ CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 # 세션 스크래치패드 — 없으면 만들지 않고 실패한다(엉뚱한 곳에 프로필을 만들지 않기 위해)
 ROOT="${CLAUDE_SCRATCHPAD:-}"
 if [ -z "$ROOT" ]; then
+  # **추측은 남의 세션을 집는다.** 여러 세션이 한 머신에서 돌면 `ls -dt` 가 고른 최신
+  # 스크래치패드가 내 것이 아니고, 그러면 내가 띄운 크롬을 `stop` 이 "남의 것" 이라며
+  # 거절한다 — 정리할 수단이 없어져 크롬이 그대로 돈다 (2026-08-30, 759% CPU).
   ROOT=$(ls -dt /private/tmp/claude-*/*/*/scratchpad 2>/dev/null | head -1)
+  echo "  ! CLAUDE_SCRATCHPAD 가 없어 추측했다: $ROOT" >&2
+  echo "    내 세션이 아니면 CLAUDE_SCRATCHPAD 를 지정하고 다시 실행하라" >&2
 fi
 BASE="$ROOT/cdp"
 
@@ -48,6 +54,9 @@ port_of() {
 
 alive() { curl -s -m 2 "http://127.0.0.1:$1/json/version" >/dev/null 2>&1; }
 
+# WebGL 이 필요하면 `start <이름> --gl` — 유니티 WebGL 게임은 이것 없이는
+# "Your browser does not support WebGL." 로 죽는다. **이 옵션을 못 넘겨서 스크립트를
+# 우회했더니, `stop` 이 그 크롬을 자기 것으로 못 알아봐 정리가 안 됐다** (2026-08-30).
 cmd_start() {
   local name="${1:?이름이 필요하다}" port dir
   safe_name "$name"
@@ -59,9 +68,15 @@ cmd_start() {
   fi
   mkdir -p "$dir"
   # --disable-gpu 를 절대 붙이지 않는다 — SwiftShader 로 떨어져 fps 가 10~30 이 된다(표준 실측)
+  local gl=()
+  if [ "${2:-}" = "--gl" ]; then
+    # 헤드리스에는 하드웨어 GL 이 없다. 소프트웨어로라도 켜야 WebGL 게임이 렌더된다.
+    # **아주 비싸다** — 3D 를 CPU 로 그려서 렌더러 하나가 700% 를 넘긴다. 재고 나면 바로 stop.
+    gl=(--use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader)
+  fi
   "$CHROME" --headless=new --remote-debugging-port="$port" --user-data-dir="$dir" \
             --no-first-run --no-default-browser-check --window-size=1280,900 \
-            about:blank >/dev/null 2>&1 &
+            "${gl[@]}" about:blank >/dev/null 2>&1 &
   local i
   for i in $(seq 1 25); do alive "$port" && { echo "$port"; return 0; }; sleep 0.4; done
   die "크롬이 뜨지 않았다 (포트 $port)"

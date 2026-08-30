@@ -220,10 +220,23 @@ grep -o "prefers-color-scheme:light" "$CSS"     # 위치 비교로 순서 확인
 ## 6. 끝나면 정리한다 — **스크립트로만** (2026-08-25 개정)
 
 ```bash
-scripts/cdp-chrome.sh start <이름>   # 띄운다 (포트를 돌려준다. 같은 이름이면 같은 포트)
-scripts/cdp-chrome.sh list           # 살아 있는 것 + 남의 것 표시
-scripts/cdp-chrome.sh clean          # 이 세션 것 전부 종료 + 프로필 삭제
+export CLAUDE_SCRATCHPAD=<이 세션 스크래치패드>   # 안 주면 남의 세션을 집는다 (아래 경고)
+scripts/cdp-chrome.sh start <이름>        # 띄운다 (포트를 돌려준다. 같은 이름이면 같은 포트)
+scripts/cdp-chrome.sh start <이름> --gl   # WebGL 켜서 — 유니티 게임용
+scripts/cdp-chrome.sh list                # 살아 있는 것 + 남의 것 표시
+scripts/cdp-chrome.sh clean               # 이 세션 것 전부 종료 + 프로필 삭제
 ```
+
+> [!caution] **`--gl` 로 띄운 크롬은 재고 나면 바로 끈다.**
+> 헤드리스에는 하드웨어 GL 이 없어 `--use-angle=swiftshader` 로 3D 를 **CPU 로** 그린다.
+> 2026-08-30 유니티 게임을 띄워 둔 채로 두었더니 렌더러 하나가 **759% CPU** 를 먹었고,
+> 사용자가 장비 발열로 알아챘다. 스크린샷 한 장마다 `start` → 재기 → `stop` 이다.
+>
+> 같은 날, 그 크롬을 **스크립트를 우회해** 직접 띄운 것이 문제를 키웠다(당시 런처가
+> GL 플래그를 못 받았다 — 지금은 `--gl` 로 받는다). 우회해서 띄우면 `stop` 이 그것을
+> 자기 것으로 못 알아보고 거절해, **끌 수단이 없어진다.**
+> `CLAUDE_SCRATCHPAD` 를 안 주면 스크립트가 「가장 최근 스크래치패드」를 추측하는데,
+> 여러 세션이 돌면 그게 내 것이 아니라 같은 이유로 정리가 막힌다.
 
 > [!warning] **`pkill` 을 손으로 치지 마라.**
 > 이 절에 원래 `pkill -f "user-data-dir=/tmp/cdp-profile"` 이 적혀 있었는데, 그 문장이
