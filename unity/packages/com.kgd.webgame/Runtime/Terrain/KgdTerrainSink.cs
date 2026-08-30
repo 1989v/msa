@@ -11,9 +11,6 @@ namespace Kgd.Terrain
     /// </summary>
     public interface IKgdTerrainSink
     {
-        /// <summary>회전한 상자 하나. 좌표는 고지대 중심 기준 로컬이다.</summary>
-        void Box(Vector3 center, Vector3 size, Quaternion rotation, Color color);
-
         /// <summary>바닥에 눕힌 사각 하나. 좌표는 로컬이다.</summary>
         void Quad(Vector3 center, float width, float depth, Color color);
 
@@ -43,8 +40,15 @@ namespace Kgd.Terrain
         /// <summary>비탈과 그 위로 이어지는 길.</summary>
         public Color Ramp;
 
+        /// <summary>
+        /// 빛이 오는 방향(정규화). 면 음영을 여기 기준으로 굽는다 — **게임의 실제 태양과
+        /// 맞춰야 한다.** 패키지가 임의로 정하면 다른 게임에서 절벽이 엉뚱하게 밝아진다.
+        /// </summary>
+        public Vector3 ToLight;
+
         public static KgdPlateauPalette Default => new()
         {
+            ToLight = new Vector3(0f, 1f, -0.3f).normalized,
             Cliff = new Color(0.42f, 0.44f, 0.47f),
             Lip = new Color(0.62f, 0.64f, 0.68f),
             Ramp = new Color(0.52f, 0.40f, 0.30f),

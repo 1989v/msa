@@ -30,23 +30,39 @@ namespace Kgd.Terrain
 
         public float Height = 5f;
 
-        /// <summary>램프가 난 방향(도). <see cref="SnapRampYaw"/> 로 대각선에 붙여 쓴다.</summary>
-        public float RampYaw;
+        /// <summary>
+        /// 램프가 난 방향(도). **넣는 즉시 대각선(또는 축)에 붙는다.**
+        ///
+        /// 어중간한 각도를 넣으면 팔각형의 받침선과 램프가 자르는 면이 어긋나, 걷는 면이
+        /// 그려진 면보다 최대 0.8 유닛 높아지고(마루 위를 공중에서 걷는다) 비탈 아래 모서리
+        /// 일부는 반대로 바닥으로 꺼진다. 스냅하면 둘이 정확히 일치한다.
+        /// </summary>
+        public float RampYaw
+        {
+            get => _rampYaw;
+            set
+            {
+                _rampYaw = SnapRampYaw(value);
+                _rampBoundary = -1f;
+                _trig = false;
+            }
+        }
+
+        private float _rampYaw;
 
         /// <summary>모서리를 얼마나 깎는가. 1.414 면 사각형, 1.0 이면 마름모, 1.16 이 팔각.</summary>
         public float Chamfer = 1.16f;
 
         /// <summary>비탈 길이. 높이 대비 너무 짧으면 걸어 오르는 느낌이 아니라 벽을 타는 느낌이 된다.</summary>
-        public float RampLength = 12f;
+        public float RampLength = 10f;
 
-        /// <summary>비탈이 덮는 반각(도). 팔각형 한 면이 45°라 22.5 를 넘기지 않는다.</summary>
-        public float RampHalfAngle = 15f;
+
 
         /// <summary>비탈 위쪽 폭(초크). 좁아야 고지를 지키는 일이 성립한다.</summary>
-        public float RampTopWidth = 5f;
+        public float RampTopWidth = 4.5f;
 
         /// <summary>비탈 아래쪽 폭. 위보다 넓어야 입구가 깔때기로 읽힌다.</summary>
-        public float RampBottomWidth = 10f;
+        public float RampBottomWidth = 7.5f;
 
         /// <summary>테두리까지의 거리. 안이면 음수, 밖이면 양수.</summary>
         public float EdgeDistance(Vector3 p)
@@ -66,19 +82,100 @@ namespace Kgd.Terrain
             if (d <= 0f) return Height;
             if (d > RampLength) return 0f;
             if (!OnRamp(p)) return 0f;
-            return Height * (1f - d / RampLength);
+            // 비탈의 경사는 **램프 축 방향 거리**로 잰다 — 그려진 면이 그 기준이라,
+            // 테두리 거리로 재면 비탈 가장자리에서 그림과 몇 십 cm 씩 어긋난다.
+            Trig();
+            float along = (p.x - Center.x) * _sin + (p.z - Center.z) * _cos;
+            float t = Mathf.Clamp01((along - RampBoundary) / RampLength);
+            return Height * (1f - t);
         }
 
+        /// <summary>
+        /// 비탈 위인가 — **그려진 사다리꼴과 같은 모양으로 잰다.**
+        ///
+        /// 고정 반각(15°)으로 재던 때는 걸을 수 있는 범위가 그려진 비탈보다 양옆으로
+        /// 1.6~2.8 유닛 넓었다(반경 12.5 기준). 비탈 옆 허공을 딛고 오를 수 있다는 뜻이다.
+        /// 그림과 판정이 같은 식을 쓰면 그 틈이 원천적으로 없다.
+        /// </summary>
         public bool OnRamp(Vector3 p)
         {
             float dx = p.x - Center.x, dz = p.z - Center.z;
             if (dx * dx + dz * dz < 0.0001f) return true;
-            float yaw = Mathf.Atan2(dx, dz) * Mathf.Rad2Deg;
-            return Mathf.Abs(Mathf.DeltaAngle(yaw, RampYaw)) <= RampHalfAngle;
+
+            Trig();
+            float along = dx * _sin + dz * _cos;
+            float lateral = Mathf.Abs(dx * _cos - dz * _sin);
+
+            // **여기서 「고원 몸통이면 참」 같은 지름길을 두면 안 된다.** 그렇게 했더니
+            // 반대편까지 포함해 테두리 밖 10유닛 앞마당 전체가 참이 되어, HeightAt 이
+            // 그 땅을 통째로 절벽 높이로 들어 올렸다(약 985㎡, 최대 6.8). 좀비가 언덕
+            // 근처에만 오면 공중을 걸었다. 몸통은 HeightAt 이 EdgeDistance 로 이미 걸러낸다.
+            float t = (along - RampBoundary) / RampLength;
+            if (t < 0f || t > 1f) return false;
+            return lateral <= Mathf.Lerp(RampTopWidth, RampBottomWidth, t) * 0.5f;
+        }
+
+        /// <summary>
+        /// 램프 방향의 경계 거리. **한 번만 재서 들고 있는다** — 개체마다 매 프레임 부르는
+        /// 경로라 이진 탐색을 그때마다 돌리면 안 된다.
+        /// </summary>
+        public float RampBoundary
+        {
+            get
+            {
+                if (_rampBoundary < 0f)
+                {
+                    Trig();
+                    _rampBoundary = BoundaryAlong(new Vector3(_sin, 0f, _cos));
+                }
+                return _rampBoundary;
+            }
+        }
+
+        private float _rampBoundary = -1f;
+        private bool _trig;
+        private float _sin, _cos;
+
+        private void Trig()
+        {
+            if (_trig) return;
+            float rr = _rampYaw * Mathf.Deg2Rad;
+            _sin = Mathf.Sin(rr);
+            _cos = Mathf.Cos(rr);
+            _trig = true;
+        }
+
+        /// <summary>
+        /// <paramref name="dir"/> 방향으로 중심에서 테두리까지의 거리.
+        ///
+        /// **비탈 메시는 반드시 이 값에서 시작해야 한다.** 메시를 중심 거리로, 높이를
+        /// 테두리 거리로 재면 둘이 어긋나 비탈 끝이 지면에 닿지 못하고 턱이 생긴다
+        /// (팔각형이라 대각선 쪽은 축 쪽보다 2~3 유닛 멀다).
+        /// </summary>
+        public float BoundaryAlong(Vector3 dir)
+        {
+            float lo = 0f, hi = Radius * 2f;
+            for (int i = 0; i < 24; i++)
+            {
+                float mid = (lo + hi) * 0.5f;
+                if (EdgeDistance(Center + dir * mid) <= 0f) lo = mid; else hi = mid;
+            }
+            return lo;
         }
 
         /// <summary>높이 조회를 건너뛰어도 되는 거리. 개체가 많으면 이걸로 먼저 걸러야 한다.</summary>
-        public float Reach => Radius * 1.45f + RampLength;
+        public float Reach
+        {
+            get
+            {
+                // {EdgeDistance <= RampLength} 는 각 반평면을 그만큼 민 팔각형이다. 그 꼭짓점까지가
+                // 참 상한 — 1.45 배 어림은 Chamfer 1.414(문서가 권하는 값) 에서 모자라, 비탈 아래
+                // 모서리에서 높이 조회가 잘려 배우가 램프 속으로 꺼진다.
+                float a = Radius + RampLength;
+                float b = 1.41421356f * (Radius * Chamfer + RampLength) - a;
+                return Mathf.Sqrt(a * a + b * b);
+            }
+        }
 
         /// <summary>팔각형 꼭짓점 여덟 개(중심 기준 로컬, 시계 반대).</summary>
         public Vector3[] Corners()
