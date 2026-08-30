@@ -54,6 +54,23 @@ namespace Kgd
                 return b == null ? 46f : Mathf.Max(0f, b.Frame[9]);
             }
         }
+
+        /// <summary>
+        /// **기기가 가리는 위쪽 높이(CSS px).** 노치·상태바 몫이고, 셸 칩은 빠져 있다.
+        ///
+        /// 셸의 닫기·전체화면 칩은 **우상단 모서리**에 뜬다 — 화면을 가로지르는 띠가 아니다.
+        /// 왼쪽·가운데 UI 까지 <see cref="ChromeTopCss"/> 만큼 내리면, 칩이 없는 PC 에서
+        /// 체력·자원이 이유 없이 한 줄 내려앉는다. 우상단에 놓는 것만 그 값을 쓰고
+        /// 나머지는 이 값을 쓴다.
+        /// </summary>
+        public static float SafeTopCss
+        {
+            get
+            {
+                var b = KgdBridge.Instance;
+                return b == null ? 0f : Mathf.Max(0f, b.Frame[10]);
+            }
+        }
     }
 
     /// <summary>

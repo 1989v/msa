@@ -50,29 +50,33 @@ mergeInto(LibraryManager.library, {
     // 얼마나 비워야 하는지를 여기서 알려 준다. 레이아웃을 재는 일이라 크기가 바뀔 때만 다시 잰다.
     if (Module.kgdChromeW !== vw || Module.kgdChromeH !== vh) {
       Module.kgdChromeW = vw; Module.kgdChromeH = vh;
-      var top = 46;   // 칩 위 여백 6 + 칩 34 + 아래 여유 6
+      var chips = 46;   // 칩 위 여백 6 + 칩 34 + 아래 여유 6
+      var safe = 0;
       try {
+        var probe = Module.kgdInsetProbe;
+        if (!probe) {
+          probe = document.createElement('div');
+          probe.style.cssText = 'position:fixed;top:0;left:0;width:0;pointer-events:none;' +
+            'visibility:hidden;height:env(safe-area-inset-top,0px)';
+          document.body.appendChild(probe);
+          Module.kgdInsetProbe = probe;
+        }
+        safe = probe.offsetHeight || 0;
         if (typeof GameChrome !== 'undefined' && typeof GameChrome.top === 'number') {
-          top = GameChrome.top;
-        } else {
-          var probe = Module.kgdInsetProbe;
-          if (!probe) {
-            probe = document.createElement('div');
-            probe.style.cssText = 'position:fixed;top:0;left:0;width:0;pointer-events:none;' +
-              'visibility:hidden;height:env(safe-area-inset-top,0px)';
-            document.body.appendChild(probe);
-            Module.kgdInsetProbe = probe;
-          }
-          top = (probe.offsetHeight || 0) + 46;
+          // 셸이 알려 주는 값에는 안전영역이 이미 더해져 있다 — 칩 몫만 도로 뺀다
+          chips = Math.max(0, GameChrome.top - safe);
         }
       } catch (e) { /* 잴 수 없으면 기본값 */ }
-      Module.kgdChromeTop = top;
+      Module.kgdChromeTop = chips + safe;
+      Module.kgdSafeTop = safe;
     }
 
     H[i] = ax; H[i + 1] = ay; H[i + 2] = am;
     H[i + 3] = padH; H[i + 4] = vw > vh ? 1 : 0; H[i + 5] = coarse;
     H[i + 6] = hud; H[i + 7] = mask; H[i + 8] = layout;
     H[i + 9] = Module.kgdChromeTop || 46;
+    // 기기가 가리는 만큼만. 셸 칩은 **우상단 모서리**라 왼쪽·가운데 UI 는 이 값만 피하면 된다.
+    H[i + 10] = Module.kgdSafeTop || 0;
   },
 
   // 런 종료 — 점수는 정수, detail 은 문자열(객체를 넣으면 랭킹에 [object Object] 가 뜬다).

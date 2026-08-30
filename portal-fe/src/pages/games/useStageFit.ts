@@ -106,17 +106,15 @@ export function useStageFit(active: boolean) {
     // scrollHeight 로 컨테이너를 재면 iframe 높이를 따라가 되먹임이 생기므로 쓰지 않는다.
     // 높이를 **더하지 않고** 가장 아래 자식의 끝을 본다 — 합산은 margin 을 놓쳐 모자란다.
     let flowNeed = 0;
-    const viewHeight = doc.documentElement.clientHeight;
     Array.from(doc.body.children).forEach((child) => {
       const el = child as HTMLElement;
       const cs = view?.getComputedStyle(el);
       if (!cs || cs.position === 'fixed' || cs.position === 'absolute' || cs.display === 'none') return;
-      const bottom = el.offsetTop + el.offsetHeight + (parseFloat(cs.marginBottom) || 0);
-      // **iframe 을 그대로 채우는 자식은 세지 않는다.** height:100% 인 자식의 높이는 지금
-      // iframe 높이 그 자체라, 그걸 다시 높이로 삼으면 자기 입력이 되어 조금씩 커진다
-      // (유니티 게임에서 「시작하면 창이 늘어난다」가 이것이다). 내용이 정한 높이만 센다.
-      if (viewHeight > 0 && Math.abs(bottom - viewHeight) <= 2) return;
-      flowNeed = Math.max(flowNeed, bottom);
+      // **캔버스를 담은 자식은 세지 않는다.** 그 높이는 캔버스 높이고, 캔버스는 iframe 에
+      // 맞춰 잡히므로(유니티 템플릿) 그 값이 곧 지금 iframe 높이다 — 다시 높이로 삼으면
+      // 자기 입력이 되어 조금씩 커진다. 캔버스 몫은 위의 canvasFit 이 비율로 이미 재고 있다.
+      if (canvas && el.contains(canvas)) return;
+      flowNeed = Math.max(flowNeed, el.offsetTop + el.offsetHeight + (parseFloat(cs.marginBottom) || 0));
     });
     if (flowNeed > 0) flowNeed += parseFloat(view?.getComputedStyle(doc.body).paddingBottom || '0') || 0;
 
