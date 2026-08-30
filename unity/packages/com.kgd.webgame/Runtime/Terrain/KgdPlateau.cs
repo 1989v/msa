@@ -163,6 +163,22 @@ namespace Kgd.Terrain
             return lo;
         }
 
+        /// <summary>비탈이 지면과 만나는 자리(월드). 문이나 표식을 여기 세운다.</summary>
+        public Vector3 RampMouth
+        {
+            get
+            {
+                Trig();
+                return Center + new Vector3(_sin, 0f, _cos) * (RampBoundary + RampLength);
+            }
+        }
+
+        /// <summary>비탈 축에 수직인 방향(월드). 문 폭을 이 축으로 편다.</summary>
+        public Vector3 RampSide
+        {
+            get { Trig(); return new Vector3(_cos, 0f, -_sin); }
+        }
+
         /// <summary>높이 조회를 건너뛰어도 되는 거리. 개체가 많으면 이걸로 먼저 걸러야 한다.</summary>
         public float Reach
         {
