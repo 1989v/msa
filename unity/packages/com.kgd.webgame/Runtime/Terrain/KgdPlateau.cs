@@ -195,6 +195,15 @@ namespace Kgd.Terrain
         /// 램프를 대각선에 붙인다. 임의 각도로 두면 절벽 모서리를 비스듬히 잘라
         /// 「깎다 만 자리」처럼 보인다 — 원작의 입구가 대각선인 것도 같은 이유다.
         /// </summary>
-        public static float SnapRampYaw(float yaw) => Mathf.Round((yaw - 45f) / 90f) * 90f + 45f;
+        /// <summary>
+        /// 팔각형은 면이 여덟이므로 **입구도 여덟 방향**이다 — 축 넷(N·E·S·W)과 대각선 넷.
+        /// 45° 눈금에 붙이면 램프가 자르는 면과 팔각형의 받침선이 정확히 겹쳐, 걷는 면과
+        /// 그려진 면이 어긋나지 않는다(눈금 밖 각도는 최대 0.8 유닛 뜬다).
+        ///
+        /// 축 면은 길고(2t) 대각선 면은 짧다(√2(R−t)) — 반경 10·Chamfer 1.16 이면 12.8 대
+        /// 5.1 이다. 램프 위쪽 폭이 짧은 쪽 면보다 넓으면 입구가 이웃 벽에 걸리므로,
+        /// `RampTopWidth` 는 √2(Radius − t) 아래로 둔다.
+        /// </summary>
+        public static float SnapRampYaw(float yaw) => Mathf.Round(yaw / 45f) * 45f;
     }
 }
