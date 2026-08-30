@@ -17,6 +17,13 @@ namespace Kgd.Terrain
         /// <summary>바닥에 눕힌 사각 하나. 좌표는 로컬이다.</summary>
         void Quad(Vector3 center, float width, float depth, Color color);
 
+        /// <summary>
+        /// 네 꼭짓점이 제각각인 면 하나(a→b→c→d, 시계 반대). 좌표는 로컬이다.
+        /// 비탈처럼 **기울고 폭이 변하는** 면에 쓴다 — 상자를 쌓아 흉내 내면 층마다 턱과
+        /// 밝기 차가 생겨 격자무늬로 보인다.
+        /// </summary>
+        void Face(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color);
+
         /// <summary>막는 원판 하나. 좌표는 **월드**다 — 충돌은 대개 전역 격자에 들어간다.</summary>
         void Blocker(Vector3 worldPosition, float radius);
 
