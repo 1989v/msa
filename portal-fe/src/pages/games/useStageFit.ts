@@ -98,11 +98,18 @@ export function useStageFit(active: boolean) {
       // offsetParent 로 판정하면 안 된다 — position:fixed 요소는 항상 null 이다.
       const cs = view?.getComputedStyle(el);
       if (!cs || cs.display === 'none' || cs.visibility === 'hidden') return;
-      // **넘치는 패널만 요구가 있다.** `scrollHeight` 는 내용이 상자보다 짧으면 내용 높이가
+      // **넘칠 때만 더 달라고 한다.** `scrollHeight` 는 내용이 상자보다 짧으면 내용 높이가
       // 아니라 **상자 높이**를 돌려준다. 패널이 iframe 을 덮고 있으면(inset:0) 그 값이 곧 지금
-      // iframe 높이라, 거기에 8 을 더해 높이로 삼으면 잰 값이 자기 입력이 되어 매번 8px 씩 자란다
-      // (2026-08-30 실측: 진입 후 560 → 711 까지 8px 계단 17번, 멈추지 않았다).
-      if (el.scrollHeight > el.clientHeight) panelNeed = Math.max(panelNeed, el.scrollHeight + 8);
+      // iframe 높이라, 거기에 8 을 더해 다음 높이로 삼으면 잰 값이 자기 입력이 되어 매번 8px 씩
+      // 자란다 (2026-08-30 실측: 진입 후 560 → 711 까지 8px 계단, 멈추지 않았다).
+      //
+      // 딱 맞을 때 0 으로 두지 않고 **지금 높이를 그대로** 돌려주는 이유는, 패널이 유일한
+      // 신호인 게임(캔버스도 흐름 내용도 없는 것)에서 높이가 하한으로 떨어졌다가 넘쳐서
+      // 다시 커지는 진동이 생기기 때문이다.
+      if (el.scrollHeight > 0) {
+        const need = el.scrollHeight > el.clientHeight ? el.scrollHeight + 8 : el.clientHeight;
+        panelNeed = Math.max(panelNeed, need);
+      }
     });
 
     // 메뉴가 곧 본문인 게임(방치형 상점 목록 등)은 캔버스·패널만 재면 모자라 내용이 잘린다.
