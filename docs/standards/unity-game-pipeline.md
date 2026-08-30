@@ -265,3 +265,12 @@ Unity 의 기본 WebGL 템플릿을 그대로 쓰지 말고, **우리 규약을 
 - `game/CLAUDE.md` — 카탈로그 등록·`supports_mobile`·`orientation` 시드
 - `k8s/CLAUDE.md` — CI 테스트 게이트가 왜 유니티 빌드를 거기 넣으면 안 되는지
 - `scripts/lint-game-mobile.py` — 엔진과 무관하게 통과해야 하는 정적 검사
+
+## 고지대 지형은 공용 패키지에 있다
+
+`unity/packages/com.kgd.webgame/Runtime/Terrain/` — 스타크래프트식 팔각 고지대(`KgdPlateau`)와
+그리는 쪽(`KgdPlateauBuilder`). **게임마다 다시 만들지 않는다.** 게임은 `IKgdTerrainSink`
+하나만 구현해 자기 메시 빌더와 충돌 구조에 꽂는다.
+
+쓰는 법과 지켜야 할 것은 패키지 README 가 원본이다 —
+`unity/packages/com.kgd.webgame/README.md`.
