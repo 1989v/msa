@@ -44,6 +44,49 @@ namespace Kgd.Terrain
         }
 
 
+        /// <summary>
+        /// 램프가 난 면에서 **램프가 덮지 못한 양옆**을 벽으로 채운다.
+        /// 남는 조각이 <see cref="MinFlank"/> 보다 짧으면 그리지 않는다 — 입구 옆에
+        /// 손톱만 한 벽이 서면 「끊긴 테두리」라는 입구 신호가 오히려 흐려진다.
+        /// </summary>
+        private const float MinFlank = 1.5f;
+
+        private static void RampFlanks(KgdPlateau p, IKgdTerrainSink sink, KgdPlateauPalette palette,
+                                       Vector3 v0, Vector3 v1,
+                                       Vector3 lo0, Vector3 lo1, Vector3 li0, Vector3 li1)
+        {
+            float rr = p.RampYaw * Mathf.Deg2Rad;
+            float sin = Mathf.Sin(rr), cos = Mathf.Cos(rr);
+            // OnRamp 와 **같은 식**으로 잰다. 다른 식을 쓰면 그려진 벽과 걷는 판정이 어긋난다.
+            float Lat(Vector3 v) => v.x * cos - v.z * sin;
+
+            float half = p.RampBottomWidth * 0.5f;
+            float a = Mathf.InverseLerp(Lat(v0), Lat(v1), -half);
+            float b = Mathf.InverseLerp(Lat(v0), Lat(v1), half);
+            if (a > b) (a, b) = (b, a);
+
+            float span = Vector3.Distance(v0, v1);
+            if (a * span >= MinFlank) Segment(0f, a);
+            if ((1f - b) * span >= MinFlank) Segment(b, 1f);
+
+            void Segment(float t0, float t1)
+            {
+                var c0 = Vector3.Lerp(v0, v1, t0);
+                var c1 = Vector3.Lerp(v0, v1, t1);
+                var outward = new Vector3((c0.x + c1.x) * 0.5f, 0f, (c0.z + c1.z) * 0.5f).normalized;
+
+                Quad(sink, Vector3.Lerp(lo0, lo1, t0), Vector3.Lerp(lo0, lo1, t1),
+                     Vector3.Lerp(li0, li1, t1), Vector3.Lerp(li0, li1, t0),
+                     palette.Lip, Vector3.up, palette.ToLight);
+                Quad(sink, c0, c1, c1 + Vector3.up * p.Height, c0 + Vector3.up * p.Height,
+                     palette.Cliff, outward, palette.ToLight);
+
+                int n = Mathf.Max(2, Mathf.CeilToInt(Vector3.Distance(c0, c1) / 2.0f));
+                for (int k = 0; k <= n; k++)
+                    sink.Blocker(p.Center + Vector3.Lerp(c0, c1, k / (float)n), 1.25f);
+            }
+        }
+
         public static void Build(KgdPlateau p, IKgdTerrainSink sink, KgdPlateauPalette palette)
         {
             var corners = p.Corners();
@@ -74,7 +117,17 @@ namespace Kgd.Terrain
                 // 입구를 가로질러, 마루가 그 아래로 내려가는 바람에 「어디로 오르는지」가
                 // 가려졌다 — 원작에서도 램프 자리는 절벽 선이 끊겨 있고, 그 끊긴 자리가
                 // 곧 입구 표시다. 램프 볼(cheek)은 옆벽 윗면이 같은 색으로 받는다.
-                if (isRamp) continue;
+                if (isRamp)
+                {
+                    // **면을 통째로 건너뛰면 안 된다.** 램프 폭이 면 길이를 못 채우는 크기에서는
+                    // 그 차이가 그대로 절벽의 구멍이 된다 — 반경 190 짜리 지형 계단에서
+                    // 면 119 · 램프 12 라 107 유닛이 뚫려 안쪽이 다 보였다(아홉 종, 2026-09-01).
+                    // 램프가 면을 거의 덮는 크기(반경 10~15 짜리 언덕)에서는 남는 조각이
+                    // MinFlank 보다 짧아 그려지지 않으므로 예전 모양 그대로다.
+                    RampFlanks(p, sink, palette, v0, v1, lipOuter[e], lipOuter[(e + 1) % 8],
+                               lipInner[e], lipInner[(e + 1) % 8]);
+                    continue;
+                }
 
                 Quad(sink, lipOuter[e], lipOuter[(e + 1) % 8], lipInner[(e + 1) % 8], lipInner[e],
                      palette.Lip, Vector3.up, palette.ToLight);

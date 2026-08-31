@@ -16,9 +16,45 @@
 | `Kgd.KgdInput` | 가상패드 입력 |
 | `Kgd.KgdDevice` | 기기 판정(터치 여부, 셸 예약 띠 치수) |
 | `Kgd.KgdSave` | 서버 세이브 읽기/쓰기 |
+| `Kgd.Motion.IKgdGround` | 게임이 구현 — 「이 자리 바닥이 얼마나 높은가」 하나만 답한다 |
+| `Kgd.Motion.KgdBody` | **걸어 다니는 몸의 판정** — 들어갈 수 있나 · 미끄러지기 · 박힘 풀기 · 착지 |
+| `Kgd.Motion.KgdObstacles` | 장애물 기둥 격자 — 막기와 올라서기가 같은 규칙에서 나온다 |
 | `Kgd.Terrain.KgdPlateau` | **고지대** — 램프 하나로만 오르는 팔각 절벽의 모양·높이 |
 | `Kgd.Terrain.KgdPlateauBuilder` | 그 고지대를 그리고 막는다 |
 | `Kgd.Terrain.IKgdTerrainSink` | 게임이 구현하는 출력구 — 사각(`Quad`)·자유 사각면(`Face`)·막는 원판·바닥색 |
+
+## 이동·충돌 (Kgd.Motion)
+
+**유니티 물리를 쓰지 않는다.** 엔진 코드 스트리핑이 Physics 모듈을 빼서 WebGL 빌드에는
+`CapsuleCollider` 조차 없을 수 있다. 대신 규칙 하나로 전부 낸다 —
+**바닥이 발보다 `StepUp` 넘게 솟아 있으면 못 들어간다.**
+
+```csharp
+sealed class MyWorld : IKgdGround
+{
+    readonly KgdObstacles _things = new(cell: 8f);
+    public float HeightAt(Vector3 p) => Mathf.Max(TerrainAt(p), _things.TopAt(p));
+}
+
+static readonly KgdBody Body = new(radius: 0.42f, stepUp: 1.1f, stepDown: 1.2f);
+
+// 매 프레임
+Pos = Body.Resolve(world, Pos, Pos + vel * dt);   // 벽에 막히고 미끄러진다
+Pos = Body.Unstick(world, Pos);                   // 박혔으면 밀어낸다
+Pos.y = Body.Settle(Pos.y, world.HeightAt(Pos), onGround, out bool landed);
+```
+
+지켜야 할 것 — **넷 다 실기에서 터진 것이다** (아홉 종, 2026-09-01):
+
+| 값 | 안 지키면 |
+|---|---|
+| `Radius` 로 **테두리도** 본다 | 가운데 한 점만 보면 모델 절반이 절벽에 박힌 채 걷는다 |
+| `StepDown` 을 둔다 | 내리막에서 매 프레임 공중 상태가 되어 **달리기 애니메이션이 끊긴다** |
+| `Unstick` 은 **중심이 벽 안일 때만** 민다 | 벽 **옆에** 서 있기만 해도 밀려나 달리다 멈추다를 되풀이한다 |
+| 장애물은 **기둥**으로 넣는다 | 막기만 하면 뛰어넘는 순간 발밑이 없어 그대로 관통한다 |
+
+`StepUp` 과 점프 높이(`v²/2g`)의 관계가 **무엇을 오를 수 있나**를 정한다.
+계단 한 단이 점프 정점보다 높으면 걸어서도 뛰어서도 못 오르고, 등반이 유일한 길이 된다.
 
 ## 고지대 (Kgd.Terrain)
 
@@ -102,3 +138,8 @@ float groundY = hill.HeightAt(actorPos);   // 비탈 위에서는 경사로 이�
 - **비탈 옆벽의 원판을 빼지 않는다.** 그림만 있으면 옆으로 뚫고 올라온다 — 궁수 키우기에서
   실제로 그랬다.
 - 성능: `Build` 는 청크가 뜰 때 한 번 부른다. 매 프레임 부르는 API 가 아니다.
+- **`TopCell` 을 반경에 맞춰 키운다.** 윗면 격자는 면적으로 들어가서, 기본값(2.2)을
+  반경 190 에 쓰면 계단 한 장이 56,020 삼각형이 된다. 기본값은 반경 10~15 짜리 언덕 기준이다.
+- **램프가 난 면도 양옆은 벽이 선다.** 램프 폭이 면 길이를 못 채우는 크기에서 면을 통째로
+  비우면 그 차이가 절벽의 구멍이 된다 (반경 190 에서 107 유닛이 뚫려 안쪽이 다 보였다).
+  램프가 면을 거의 덮는 크기에서는 남는 조각이 짧아 그려지지 않으므로 예전 모양 그대로다.
