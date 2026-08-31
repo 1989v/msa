@@ -64,6 +64,14 @@ namespace Kgd.Terrain
         /// <summary>비탈 아래쪽 폭. 위보다 넓어야 입구가 깔때기로 읽힌다.</summary>
         public float RampBottomWidth = 5.6f;
 
+        /// <summary>
+        /// 윗면을 까는 격자 한 칸. **반경에 맞춰 키워야 한다** — 이 값은 면적으로 들어가서
+        /// 반경을 15 배로 하면 삼각형이 225 배가 된다. 반경 190 짜리 지형 계단에 기본값
+        /// 2.2 를 쓴 적이 있고, 그때 계단 한 장이 56,020 삼각형이었다(아홉 종, 2026-08-31).
+        /// 기본값은 게임플레이 규모의 언덕(반경 10~15)을 기준으로 한 것이다.
+        /// </summary>
+        public float TopCell = 2.2f;
+
         /// <summary>테두리까지의 거리. 안이면 음수, 밖이면 양수.</summary>
         public float EdgeDistance(Vector3 p)
         {

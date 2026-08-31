@@ -99,15 +99,16 @@ namespace Kgd.Terrain
             }
 
             // ② 윗면
-            for (float x = -p.Radius; x <= p.Radius; x += 2.2f)
-            for (float z = -p.Radius; z <= p.Radius; z += 2.2f)
+            float cell = Mathf.Max(0.5f, p.TopCell);
+            for (float x = -p.Radius; x <= p.Radius; x += cell)
+            for (float z = -p.Radius; z <= p.Radius; z += cell)
             {
                 var world = p.Center + new Vector3(x, 0f, z);
                 if (p.EdgeDistance(world) > 0f) continue;
                 // **위가 더 밝다.** 주변 지면과 같은 밝기면 절벽 옆면 말고는 높이를 알 길이
                 // 없어, 위에서 내려다보는 각도에서 평지처럼 보인다. 원작도 고지대를 다른
                 // 색으로 칠해 한눈에 갈리게 한다.
-                sink.Quad(new Vector3(x, p.Height + 0.02f, z), 2.2f, 2.2f,
+                sink.Quad(new Vector3(x, p.Height + 0.02f, z), cell, cell,
                           sink.GroundColorAt(world) * 1.42f);
             }
 
