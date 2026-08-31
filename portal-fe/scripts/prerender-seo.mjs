@@ -616,12 +616,14 @@ async function writeRobotsAndSitemaps(
         : {}),
     })),
   );
+  // 개요가 없는 관광지는 싣지 않는다. 제목·주소·좌표만 있는 페이지라 본문이 없고,
+  // 그런 URL 이 도메인의 대다수가 되면 사이트 전체가 '가치가 별로 없는 콘텐츠' 로 읽힌다
+  // (2026-08-31 AdSense 반려 사유). 개요 수집 배치가 채우면 조건이 저절로 참이 되어
+  // 다시 실린다 — 지운 것이 아니라 문을 조건부로 만든 것이다.
   const placeDetailEntries = LANGS.flatMap((lang) =>
-    (places[lang] ?? []).map((a) => ({
-      loc: placeUrl(lang, `/attractions/${a.id}`),
-      // 개요가 있는 문서가 순위 경쟁력이 있다 — 크롤 예산을 그쪽으로 기울인다
-      priority: a.hasOverview ? '0.7' : '0.4',
-    })),
+    (places[lang] ?? [])
+      .filter((a) => a.hasOverview)
+      .map((a) => ({ loc: placeUrl(lang, `/attractions/${a.id}`), priority: '0.7' })),
   );
 
   await emit(`seo/${GAME_HOST}/sitemap.xml`, sitemapXml(gameEntries));

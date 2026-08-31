@@ -72,6 +72,10 @@ export default function AttractionPage() {
           canonical: attractionUrl(docLang, attraction.id),
           lang: docLang,
           image: attraction.imageUrl,
+          // 개요가 없으면 제목·주소·좌표뿐이라 본문이 없는 문서다. 사이트맵도 이런 문서를
+          // 싣지 않지만(prerender-seo.mjs) 이미 색인된 것은 사이트맵에서 빠져도 남는다 —
+          // 빼는 일은 noindex 가 한다. 수집 배치가 개요를 채우면 저절로 풀린다.
+          noindex: !attraction.overview,
           // hreflang 없음 — TourAPI 는 국문/영문을 별도 콘텐츠로 관리해 같은 장소라도
           // id·contentId 가 다르다(경복궁 ko 126508 / en 264337). 짝을 알 수 없으므로
           // 잘못된 대체 주소를 선언하느니 걸지 않는다. 허브(/ ↔ /en)만 진짜 번역쌍이다.
