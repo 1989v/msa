@@ -18,12 +18,12 @@
 |---|---|---|---|
 | **CollisionGate** | 8 | `leaks=0` · `worstDepth` 최대 **0.0927** (허용 0.25) · `fenceViolations=0` · `trapped=0` → **`failedSeeds=0`** | 벽을 통과하지 않는가 · 원판이 메시를 덮는가 · 갇히지 않는가 |
 | **SteerGate** | 4 | `failures=0` | 길찾기가 실제로 목적지에 닿는가 |
-| **RouteGate** | 2 | 개활지 **13.6~13.8%** (상한 25) · 길목 21곳 · 최소폭 6.6 · 우회율 1.30~1.79 · 못 가는 구역 0 | 지도가 휑해지지 않았는가 |
-| **HaulGate** | 1 | `failures=0` | 일꾼 처리량(배달량·왕복·막힘) |
-| **RushGate** | 3 | `failures=0` | 난이도 상승이 진입이 아니라 소탕에 걸리는가 |
+| **RouteGate** | **4** | 개활지 13.6~14.7% (상한 25) · 길목 21곳 · 최소폭 5.1~6.6 · **`seed=987654321` 에서 못 가는 구역 1곳 → 빨간불** | 지도가 휑해지지 않았는가 |
+| **HaulGate** | **4** | `failures=0` | 일꾼 처리량(배달량·왕복·막힘) |
+| **RushGate** | **4** | `failures=0` | 난이도 상승이 진입이 아니라 소탕에 걸리는가 |
 | **SiteGate** | 1 | `facilities=8 plots=8 readies=8 distinctGhosts=8 towerSlots=6` | 기지 표시가 실제 자리와 맞는가 |
 
-**게이트 여섯이 전부 초록이다.** `trapped` 은 P0-2 에서 해결했다 (아래).
+**다섯이 초록, `RouteGate` 가 빨간불이다.** 시드를 2→4 로 넓히자 바로 드러났다 (P0-3 참조).
 
 **하루 사이의 변화** — 같은 명령을 세 번 돌린 값이다.
 
@@ -115,9 +115,9 @@ P0 (남은 빨간불·게이트 정리)
 
 | # | 할 일 | 현재 값 | 판정 |
 |---|---|---|---|
-| P0-1 | **울타리를 걷는다.** 누수가 8/8 초록이라 `Progress.VerifiedSeeds` 는 할 일을 끝냈다. `NewMapSeed()` 를 무작위로 되돌리고 `CheckFence` 도 함께 뺀다 | 지도 7개로 제한 중 | **걷어내기 전에** `CollisionGate.Seeds` 를 16개로 늘려 전부 `leaks=0` 인지 본다. 8개로 확인하고 무작위를 열면 표본 밖에서 새는 것을 못 본다 |
+| P0-1 | ~~울타리를 걷는다~~ → **끝남**. 지도 16개로 넓혀 확인한 뒤 `VerifiedSeeds`·`CheckFence` 를 빼고 `NewMapSeed()` 를 무작위로 되돌렸다 | 16/16 `leaks=0 trapped=0 coverage=0`, worstDepth 최대 **0.1066** (허용 0.25) | 완료 |
 | P0-2 | ~~**갇힘 304~367**~~ → **끝남**. 셋 중 고를 문제가 아니라 **검사가 잘못된 것을 세고 있었다** — 아래 참조 | `trapped 304~367` → **0** (8시드) | 완료 |
-| P0-3 | **게이트 시드 편차** — Collision 8 · Steer 4 · Rush 3 · Route 2 · Haul 1 · Site 1 | 제각각 | 지도에 의존하는 넷(Collision·Steer·Route·Haul)은 **같은 시드 목록**을 쓴다. 지금 HaulGate 는 지도 하나만 봐서 다른 지도의 일꾼 막힘을 못 본다 |
+| P0-3 | ~~게이트 시드 편차~~ → **끝남**. `Editor/GateSeeds.cs` 가 단일 원본이 되고 Steer·Route·Haul·Rush 가 넷씩, Collision 이 기본 여덟(`-gateSeeds 16` 로 확장) | Route 2→4 · Haul 1→4 · Rush 3→4 | 완료. **넓히자마자 빨간불이 떴다** — 아래 |
 
 ### P1. 없는 게이트를 먼저 세운다
 
