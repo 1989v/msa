@@ -25,7 +25,17 @@ class GameScoreService(
     private val scoreRepository: GameScoreRepositoryPort,
 ) : SubmitGameScoreUseCase, GetGameLeaderboardUseCase, GetActiveLeaderboardsUseCase {
     companion object {
-        private const val MAX_SCORE = 1_000_000_000_000L   // 명백한 조작값 상한
+        /**
+         * 명백한 조작값 상한.
+         *
+         * **이 값이 방어의 전부다 — 그렇게 결정했다** (ADR-0084). 게임은 전부 클라이언트에서
+         * 돌고 소스가 공개돼 있어, 게임별 타당성 상한이나 암호화는 시간만 벌고 정상 기록을
+         * 거부할 위험을 더한다. 랭킹은 경쟁 장치가 아니라 기록 게시판이라 그 대가가 값을 못 한다.
+         *
+         * 상금·보상이 붙으면 **ADR-0084 를 먼저 뒤집어야 한다.** 그때 필요한 것은 여기 상수가
+         * 아니라 서버가 판정을 갖는 구조다.
+         */
+        private const val MAX_SCORE = 1_000_000_000_000L
         private val NICK_REGEX = Regex("^[\\p{L}\\p{N} _.-]{2,16}$")
         private const val MAX_ACTIVE_BOARDS = 12
         private const val MAX_ACTIVE_ENTRIES = 10
