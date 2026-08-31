@@ -15,7 +15,7 @@ namespace Kgd
     [DefaultExecutionOrder(-10000)]
     internal sealed class KgdBridge : MonoBehaviour
     {
-        internal const int FieldCount = 11;
+        internal const int FieldCount = 12;
 
         internal static KgdBridge Instance { get; private set; }
 

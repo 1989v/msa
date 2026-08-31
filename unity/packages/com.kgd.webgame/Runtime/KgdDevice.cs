@@ -74,6 +74,30 @@ namespace Kgd
     }
 
     /// <summary>
+    /// 언어. 셸(포털·lib/i18n.js)이 정한 값이고, 셸이 없으면 브라우저 언어로 떨어진다.
+    ///
+    /// **에디터·게이트에는 JS 가 없어 항상 한국어다.** 게이트 로그가 한국어로 남아야
+    /// 지금까지의 진단 기록·문서와 말이 맞는다.
+    ///
+    /// 저장 키(`game_lang`)는 플랫폼 공용이라 포털과 다른 게임도 같이 따라온다 — 그래서
+    /// 게임 세이브가 아니고, index.html 의 saveKeys 에 넣지 않는다(넣으면 언어 설정이
+    /// 계정 세이브로 서버에 올라간다).
+    /// </summary>
+    public static class KgdLang
+    {
+        public static bool IsEnglish
+        {
+            get
+            {
+                var b = KgdBridge.Instance;
+                return b != null && b.Frame[11] > 0.5f;
+            }
+        }
+
+        public static void Save(bool english) => KgdBridge.SaveSet("game_lang", english ? "en" : "ko");
+    }
+
+    /// <summary>
     /// 정보 패널 접기 신호. 모바일 기본값은 접힘이고, 접힌 상태에서도 지금 판단에 꼭 필요한 값
     /// (자원·체력·웨이브)은 한 줄로 보여야 한다 — 무엇을 접을지는 게임이 정한다.
     /// </summary>

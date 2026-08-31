@@ -10,8 +10,9 @@ mergeInto(LibraryManager.library, {
   },
 
   // 한 프레임에 필요한 값을 한 번에 읽는다 (JS↔WASM 경계를 프레임당 1회로 묶는다).
-  // out[0..9] = axisX, axisY, axisMag, padH, landscape, coarse, hudExpanded, actionMask, keyLayout,
-  //             chromeTop(우상단에 플랫폼 셸이 예약한 띠 높이, CSS px)
+  // out[0..11] = axisX, axisY, axisMag, padH, landscape, coarse, hudExpanded, actionMask, keyLayout,
+  //              chromeTop(우상단에 플랫폼 셸이 예약한 띠 높이, CSS px), safeTop,
+  //              lang(0=ko, 1=en)
   KgdPoll: function (outPtr) {
     var i = outPtr >> 2;
     var H = HEAPF32;
@@ -45,6 +46,18 @@ mergeInto(LibraryManager.library, {
 
     var layout = (typeof GameKeys !== 'undefined' && GameKeys.layout === 'left') ? 1 : 0;
 
+    // 언어. 규칙과 저장 키는 lib/i18n.js 와 같은 것을 쓴다 — 포털에서 한 번 바꾸면 게임도 따라온다.
+    // i18n.js 를 이 템플릿에 싣지는 않는다: 그 파일이 붙이는 DOM 토글은 전환할 때 페이지를 다시
+    // 읽어서, 유니티 게임에서는 빌드 전체를 다시 세우는 값이 든다. 게임 안 토글이 그 일을 대신하고
+    // 같은 키에 쓴다. 값은 한 번만 읽는다 — 게임이 스스로 바꾼 뒤에는 게임 쪽 상태가 원본이다.
+    if (Module.kgdLang === undefined) {
+      var lg = '';
+      if (typeof GameI18n !== 'undefined' && GameI18n.lang) lg = GameI18n.lang;
+      else { try { lg = localStorage.getItem('game_lang') || ''; } catch (e) {} }
+      if (lg !== 'ko' && lg !== 'en') lg = /^ko/i.test(navigator.language || '') ? 'ko' : 'en';
+      Module.kgdLang = lg === 'en' ? 1 : 0;
+    }
+
     // 우상단은 플랫폼 셸(portal-fe)의 닫기·전체화면 칩 자리다. 게임이 거기에 버튼을 두면
     // 셸 칩이 위에 떠서 **눌리지 않는다** — 궁수 키우기의 강화창 닫기가 그랬다.
     // 얼마나 비워야 하는지를 여기서 알려 준다. 레이아웃을 재는 일이라 크기가 바뀔 때만 다시 잰다.
@@ -77,6 +90,7 @@ mergeInto(LibraryManager.library, {
     H[i + 9] = Module.kgdChromeTop || 46;
     // 기기가 가리는 만큼만. 셸 칩은 **우상단 모서리**라 왼쪽·가운데 UI 는 이 값만 피하면 된다.
     H[i + 10] = Module.kgdSafeTop || 0;
+    H[i + 11] = Module.kgdLang;
   },
 
   // 런 종료 — 점수는 정수, detail 은 문자열(객체를 넣으면 랭킹에 [object Object] 가 뜬다).
