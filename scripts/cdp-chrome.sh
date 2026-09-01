@@ -76,7 +76,7 @@ cmd_start() {
   fi
   "$CHROME" --headless=new --remote-debugging-port="$port" --user-data-dir="$dir" \
             --no-first-run --no-default-browser-check --window-size=1280,900 \
-            "${gl[@]}" about:blank >/dev/null 2>&1 &
+            ${gl[@]+"${gl[@]}"} about:blank >/dev/null 2>&1 &
   local i
   for i in $(seq 1 25); do alive "$port" && { echo "$port"; return 0; }; sleep 0.4; done
   die "크롬이 뜨지 않았다 (포트 $port)"
