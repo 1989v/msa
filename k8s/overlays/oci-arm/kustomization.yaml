@@ -365,7 +365,7 @@ images:
     newTag: 8b371fc
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 8864d07
+    newTag: 85fab94
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 8b371fc
