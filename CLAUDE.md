@@ -181,7 +181,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | auth | `auth/CLAUDE.md` | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) — 서비스 코드 존재 |
 | gifticon | `gifticon/CLAUDE.md` | 기프티콘 보관·공유·만료 알림. **별도 레포 서브모듈**(`1989v/msa-gifticon`) — 서브모듈 먼저 푸시 후 본체 |
 | code-dictionary | `code-dictionary/CLAUDE.md` | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD + 포트폴리오 카드. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반). **game:feature 호스트** (ADR-0059) |
-| game | `game/CLAUDE.md` | 게임 플랫폼 — 카탈로그(태그/큐레이션/평점) + 플레이 세션 + HOUSE 광고(후속). `:game:domain`+`:game:feature` 라이브러리로 code-dictionary:app 에 폴드, FE 는 portal-fe `/games/*` (ADR-0059) |
+| game | `game/CLAUDE.md` | 게임 플랫폼 — 카탈로그(태그/큐레이션/평점) + 플레이 세션 + **개선 제안**(상태 있는 공개 피드백, ADR-0087) + HOUSE 광고(후속). `:game:domain`+`:game:feature` 라이브러리로 code-dictionary:app 에 폴드, FE 는 portal-fe `/games/*` (ADR-0059) |
 | inventory | `inventory/CLAUDE.md` | 재고 예약/차감/복구 — **재고 SSOT** (ADR-0013). commerce:app 폴드. **레이어 표준 견본** (ADR-0083) |
 | fulfillment | `fulfillment/CLAUDE.md` | 출고 상태 머신 (FulfillmentOrder), Saga choreography 의 출고 단계. commerce:app 폴드 |
 | warehouse | `warehouse/CLAUDE.md` | 창고 마스터. commerce:app 폴드. Kafka 없음 |

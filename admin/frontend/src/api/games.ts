@@ -165,3 +165,71 @@ export async function updateCollection(
   const res = await apiClient.put<ApiResponse<AdminCollection>>(`${ADMIN_BASE}/collections/${slug}`, input);
   return res.data.data;
 }
+
+/* ── 개선 제안 (ADR-0087) ────────────────────────────────────────────── */
+
+export type SuggestionStatus = 'OPEN' | 'REVIEWING' | 'APPLIED' | 'DECLINED';
+
+export const SUGGESTION_STATUSES: SuggestionStatus[] = ['OPEN', 'REVIEWING', 'APPLIED', 'DECLINED'];
+
+export interface SuggestionReply {
+  id: number;
+  /** 서버가 정한다 — 어드민이 이 경로로 답글을 달면 항상 OPERATOR 다 */
+  authorType: 'OPERATOR' | 'AUTHOR';
+  authorName: string;
+  body: string;
+  createdAt: string | null;
+}
+
+export interface AdminGameSuggestion {
+  id: number;
+  gameId: number;
+  gameSlug: string;
+  gameTitle: string;
+  nickname: string;
+  body: string;
+  status: SuggestionStatus;
+  createdAt: string | null;
+  updatedAt: string | null;
+  replies: SuggestionReply[];
+}
+
+export async function listGameSuggestions(params: {
+  status?: SuggestionStatus;
+  gameId?: number;
+  page?: number;
+  size?: number;
+}): Promise<PageResponse<AdminGameSuggestion>> {
+  const res = await apiClient.get<ApiResponse<PageResponse<AdminGameSuggestion>>>(
+    `${ADMIN_BASE}/suggestions`,
+    { params },
+  );
+  return res.data.data;
+}
+
+export async function changeSuggestionStatus(
+  id: number,
+  status: SuggestionStatus,
+): Promise<AdminGameSuggestion> {
+  const res = await apiClient.patch<ApiResponse<AdminGameSuggestion>>(
+    `${ADMIN_BASE}/suggestions/${id}/status`,
+    { status },
+  );
+  return res.data.data;
+}
+
+/**
+ * 답글은 어드민 전용 경로가 아니라 **공개 쓰기 경로**로 보낸다 — 답글을 다는 길이 둘이면
+ * 「누가 운영자인가」 판정도 둘이 된다. 어드민 토큰의 ROLE_ADMIN 이 운영자 배지를 만든다.
+ */
+export async function replyToSuggestion(
+  slug: string,
+  id: number,
+  body: string,
+): Promise<SuggestionReply> {
+  const res = await apiClient.post<ApiResponse<SuggestionReply>>(
+    `/api/v1/games/${encodeURIComponent(slug)}/suggestions/${id}/replies`,
+    { body },
+  );
+  return res.data.data;
+}

@@ -19,6 +19,12 @@ import com.kgd.game.infrastructure.persistence.play.entity.GameScoreDailyJpaEnti
 import com.kgd.game.infrastructure.persistence.play.entity.GameScoreJpaEntity
 import com.kgd.game.infrastructure.persistence.play.repository.GameScoreDailyJpaRepository
 import com.kgd.game.infrastructure.persistence.play.repository.GameScoreJpaRepository
+import com.kgd.game.domain.suggestion.model.GameSuggestion
+import com.kgd.game.domain.suggestion.model.ReplyAuthorType
+import com.kgd.game.domain.suggestion.model.SuggestionStatus
+import com.kgd.game.infrastructure.persistence.suggestion.adapter.GameSuggestionRepositoryAdapter
+import com.kgd.game.infrastructure.persistence.suggestion.adapter.SuggestionReplyRepositoryAdapter
+import org.springframework.data.domain.Sort
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -106,6 +112,8 @@ class GameSchemaIntegrationSpec(
     @Autowired private val tagMapRepository: GameTagMapJpaRepository,
     @Autowired private val scoreRepository: GameScoreJpaRepository,
     @Autowired private val dailyScoreRepository: GameScoreDailyJpaRepository,
+    @Autowired private val suggestionAdapter: GameSuggestionRepositoryAdapter,
+    @Autowired private val replyAdapter: SuggestionReplyRepositoryAdapter,
 ) : BehaviorSpec({
 
     val pageable = PageRequest.of(0, 10)
@@ -323,6 +331,56 @@ class GameSchemaIntegrationSpec(
                     similar.map { it.slug } shouldNotContain "concept-memory"
                 }
         }
+
+        When("개선 제안을 저장했다가 본문을 고치면 (V71)") {
+            /**
+             * 어댑터가 도메인 객체를 그대로 엔티티로 바꿔 저장하면 `created_at` 이 지금으로
+             * 덮여 「언제 올라온 제안인가」가 사라진다. 실제 MySQL 로 왕복해야만 드러나는
+             * 종류의 버그라 단위 테스트가 아니라 여기서 잡는다.
+             */
+            Then("접수 시각과 작성자는 그대로 남고 본문·상태만 바뀐다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val gameId = gameRepository.findBySlug("snake")!!.id!!
+                    val saved = suggestionAdapter.save(
+                        GameSuggestion.open(gameId, memberId = 4242L, nickname = "활잡이", body = "보스 속도를 낮춰주세요"),
+                    )
+                    val id = saved.id!!
+                    // 저장된 값끼리 비교한다 — MySQL DATETIME 은 초 단위라 메모리 값과는 애초에 다르다
+                    val storedCreatedAt = suggestionAdapter.findById(id)!!.createdAt
+                    val edited = suggestionAdapter.save(
+                        suggestionAdapter.findById(id)!!
+                            .editBy(4242L, "3스테이지도 같습니다")
+                            .changeStatus(SuggestionStatus.APPLIED),
+                    )
+
+                    edited.id shouldBe id
+                    edited.createdAt shouldBe storedCreatedAt
+                    edited.memberId shouldBe 4242L
+                    edited.nickname shouldBe "활잡이"
+                    edited.body shouldBe "3스테이지도 같습니다"
+                    edited.status shouldBe SuggestionStatus.APPLIED
+
+                    // 답글은 시간순 한 줄기로 돌아온다 — 화면이 정렬을 다시 하지 않는다
+                    replyAdapter.save(saved.reply(memberId = 4242L, isOperator = false, body = "2-3 진입 직후요"))
+                    replyAdapter.save(saved.reply(memberId = 99L, isOperator = true, body = "1.2 에서 낮췄습니다"))
+                    val replies = replyAdapter.findBySuggestionIds(listOf(id))
+                    replies.map { it.authorType } shouldBe
+                        listOf(ReplyAuthorType.AUTHOR, ReplyAuthorType.OPERATOR)
+                    replies.last().authorName shouldBe GameSuggestion.OPERATOR_NAME
+
+                    // 게임을 지정한 조회에 이 제안이 잡힌다
+                    val page = suggestionAdapter.search(
+                        gameId, SuggestionStatus.APPLIED,
+                        // 서비스가 만드는 것과 **같은 정렬**을 쓴다 — 여기서만 다른 정렬을 쓰면
+                        // 잘못된 속성명이 운영에서야 터진다
+                        PageRequest.of(0, 10, Sort.by(Sort.Direction.DESC, "createdAt", "id")),
+                    )
+                    page.content.map { it.id } shouldContain id
+                    // 수정이 행을 새로 만들지 않았다 — 같은 사람의 제안은 여전히 하나다
+                    suggestionAdapter.search(gameId, null, PageRequest.of(0, 50))
+                        .content.count { it.memberId == 4242L } shouldBe 1
+                }
+        }
     }
 }) {
 
@@ -333,7 +391,13 @@ class GameSchemaIntegrationSpec(
      * 테스트에서 대신 제공해 Boot 의 EntityManagerFactoryBuilder 를 구성한다.
      */
     @EnableAutoConfiguration
-    @Import(GameDataSourceConfig::class, GameQueryRepository::class)
+    @Import(
+        GameDataSourceConfig::class,
+        GameQueryRepository::class,
+        // 컴포넌트 스캔이 없는 좁은 슬라이스라 어댑터는 이름으로 들여온다
+        GameSuggestionRepositoryAdapter::class,
+        SuggestionReplyRepositoryAdapter::class,
+    )
     open class Ctx {
         @Bean
         @Primary

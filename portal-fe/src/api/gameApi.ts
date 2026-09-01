@@ -332,6 +332,113 @@ export function getGameNickname(): string | null {
 }
 
 /**
+ * 랭킹 위젯과 같은 키에 쓴다 — 제안에 남긴 이름이 다음 점수 제출에도 그대로 쓰인다.
+ * 게임 안 위젯(`rank.js`)의 규격과 같은 2~16 자만 받는다.
+ */
+export function setGameNickname(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (trimmed.length < 2 || trimmed.length > 16) return null;
+  localStorage.setItem(GAME_NICKNAME_KEY, trimmed);
+  return trimmed;
+}
+
+interface MemberProfile {
+  id: number;
+  name: string;
+}
+
+/**
+ * 랭킹에 쓰는 이름이 아직 없을 때 채울 값을 회원 서비스에서 받아온다.
+ *
+ * 게임 쪽에 이름 생성기를 다시 두지 않는다 — member 가 가입 시점에 이미 만들어 둔
+ * 표시 이름이 있고(ADR-0078), 그것을 쓰면 사람이 사이트 안에서 같은 이름으로 보인다.
+ * 실패하면 null 이고, 그때 화면은 직접 입력을 받는다.
+ */
+export async function fetchMemberDisplayName(): Promise<string | null> {
+  try {
+    const res = await api.get<ApiResponse<MemberProfile>>('/api/members/me');
+    return res.data.data?.name ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** 랭킹에 쓰는 이름을 확보한다 — 있으면 그대로, 없으면 회원 닉네임으로 채운다 */
+export async function resolveGameNickname(): Promise<string | null> {
+  const stored = getGameNickname();
+  if (stored) return stored;
+  const fromMember = await fetchMemberDisplayName();
+  return fromMember ? setGameNickname(fromMember) : null;
+}
+
+export type SuggestionStatus = 'OPEN' | 'REVIEWING' | 'APPLIED' | 'DECLINED';
+
+export interface SuggestionReply {
+  id: number;
+  /** 이름이 아니라 이 값이 「운영자」 배지를 정한다 — 닉네임은 누구나 「운영자」로 지을 수 있다 */
+  authorType: 'OPERATOR' | 'AUTHOR';
+  authorName: string;
+  body: string;
+  createdAt: string | null;
+}
+
+export interface GameSuggestion {
+  id: number;
+  nickname: string;
+  body: string;
+  status: SuggestionStatus;
+  createdAt: string | null;
+  updatedAt: string | null;
+  edited: boolean;
+  /** 서버가 판정한다 — 회원 id 는 응답에 실리지 않는다 */
+  mine: boolean;
+  replies: SuggestionReply[];
+}
+
+export interface SuggestionPage {
+  content: GameSuggestion[];
+  totalElements: number;
+  number: number;
+  last: boolean;
+}
+
+export async function fetchSuggestions(slug: string, page = 0, size = 20): Promise<SuggestionPage> {
+  const res = await api.get<ApiResponse<SuggestionPage>>(
+    `/api/v1/games/${encodeURIComponent(slug)}/suggestions`,
+    { params: { page, size } },
+  );
+  return res.data.data;
+}
+
+export async function createSuggestion(
+  slug: string,
+  nickname: string,
+  body: string,
+): Promise<GameSuggestion> {
+  const res = await api.post<ApiResponse<GameSuggestion>>(
+    `/api/v1/games/${encodeURIComponent(slug)}/suggestions`,
+    { nickname, body },
+  );
+  return res.data.data;
+}
+
+export async function editSuggestion(slug: string, id: number, body: string): Promise<GameSuggestion> {
+  const res = await api.put<ApiResponse<GameSuggestion>>(
+    `/api/v1/games/${encodeURIComponent(slug)}/suggestions/${id}`,
+    { body },
+  );
+  return res.data.data;
+}
+
+export async function replyToSuggestion(slug: string, id: number, body: string): Promise<SuggestionReply> {
+  const res = await api.post<ApiResponse<SuggestionReply>>(
+    `/api/v1/games/${encodeURIComponent(slug)}/suggestions/${id}/replies`,
+    { body },
+  );
+  return res.data.data;
+}
+
+/**
  * 게이트웨이는 업스트림이 죽어 있으면 200 에 빈 바디를 낸다(2026-08-21 실측).
  * 빈 응답을 "기록 없음"으로 읽으면 장애가 정상 화면으로 위장된다 — 실패로 던진다.
  */

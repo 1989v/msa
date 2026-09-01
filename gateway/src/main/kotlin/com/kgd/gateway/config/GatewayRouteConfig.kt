@@ -272,6 +272,33 @@ class GatewayRouteConfig(
                     }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // 개선 제안 읽기 — 본문·상태·답글이 전부 공개라 게스트도 읽는다. 필터를 거는 것은
+            // 「내 글인가」를 서버가 판정하기 위해서다: 필터가 없으면 클라이언트가 붙인
+            // X-User-Id 가 그대로 통과해 남의 글에 수정 버튼이 그려진다.
+            .route("game-suggestion-read") { r ->
+                r.method(HttpMethod.GET)
+                    .and().path("/api/v1/games/*/suggestions", "/api/v1/games/*/suggestions/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 제안 등록·수정·답글 — **로그인 필수**. 위 읽기 라우트가 GET 을 먼저 가져가므로
+            // 여기에는 쓰기만 남는다. 소유권과 운영자 자격은 서비스가 판정한다.
+            .route("game-suggestion-write") { r ->
+                r.path("/api/v1/games/*/suggestions", "/api/v1/games/*/suggestions/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .requestRateLimiter { config ->
+                                config.setRateLimiter(redisRateLimiter)
+                                config.setKeyResolver(userKeyResolver)
+                                config.setDenyEmptyKey(false)
+                            }
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // 카탈로그 조회 (리스트/상세/유사/컬렉션/태그) — 공개
             .route("game-catalog") { r ->
                 r.path("/api/v1/games/**")

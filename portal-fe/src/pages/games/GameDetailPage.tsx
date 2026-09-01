@@ -34,6 +34,7 @@ import { INTERNAL_GAMES } from './internalGames';
 import GameCard from './GameCard';
 import { peekParty } from './party';
 import { GameAboutPanel, GameMyRecordPanel, GameRatePanel, GameReleaseNotesPanel } from './GameDetailPanels';
+import { GameSuggestionsPanel } from './GameSuggestions';
 import { useGameSideData } from './useGameSideData';
 import GameLeaderboard from './GameLeaderboard';
 import GNB from '../../components/GNB';
@@ -87,7 +88,7 @@ export default function GameDetailPage() {
   const side = useGameSideData(slug, boardToken);
   /* 좁은 화면에서만 쓰는 탭. 넓은 화면은 둘 다 펴므로 이 값이 화면을 바꾸지 않는다
      (CSS 가 미디어쿼리로 무시한다) — 상태를 폭에 따라 갈라 두면 회전할 때마다 튄다. */
-  const [tab, setTab] = useState<'about' | 'rank' | 'notes'>('about');
+  const [tab, setTab] = useState<'about' | 'rank' | 'notes' | 'ideas'>('about');
   /* 업데이트 탭은 노트가 있는 게임에만 뜬다. 라우트가 하나라 「비슷한 게임」으로 옮겨도
      이 컴포넌트는 remount 되지 않으므로, 노트 없는 게임으로 넘어가면 버튼은 사라지고
      tab 만 'notes' 로 남아 아무 판도 안 보이는 화면이 된다 — 그때 소개로 되돌린다. */
@@ -470,6 +471,14 @@ export default function GameDetailPage() {
             {lang === 'en' ? 'Updates' : '업데이트'}
           </button>
         )}
+        {/* 제안 탭은 늘 있다 — 비어 있어도 「여기에 쓰면 된다」를 보여 주는 것이 이 판의 일이다 */}
+        <button
+          type="button" role="tab" aria-selected={tab === 'ideas'}
+          className={`game-panel-tab${tab === 'ideas' ? ' is-on' : ''}`}
+          onClick={() => setTab('ideas')}
+        >
+          {lang === 'en' ? 'Suggestions' : '개선 제안'}
+        </button>
       </div>
 
       <div className={`game-tabpane game-pane-about${tab === 'about' ? ' is-on' : ''}`}>
@@ -490,6 +499,10 @@ export default function GameDetailPage() {
 
       <div className={`game-tabpane game-pane-notes${tab === 'notes' ? ' is-on' : ''}`}>
         <GameReleaseNotesPanel notes={side.notes} lang={lang} />
+      </div>
+
+      <div className={`game-tabpane game-pane-ideas${tab === 'ideas' ? ' is-on' : ''}`}>
+        <GameSuggestionsPanel slug={slug} lang={lang} loggedIn={side.loggedIn} />
       </div>
       </div>
 

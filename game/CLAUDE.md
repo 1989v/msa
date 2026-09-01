@@ -54,6 +54,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | play | GamePlaySession(게스트 허용), GameRating(1인 1표, 1~10), **GameSaveData**(불투명 JSON + @Version 낙관적 락 + 64KB 상한), **GameRun**(서버 권위 시드 발급/소모 — 세이브스커밍 방어) |
 | battle | `game:sim` 의 결정적 1v1 턴제 배틀 코어(타입 상성/STAB/Mulberry32) — BattleRunner 리플레이 재실행으로 Tier B 검증 가능. 몬스터 수집 RPG 프로토타입 기반 |
 | ads | AdPlacement(HOUSE 크리에이티브 JSON)/AdPolicy(frequency SSOT, 판정은 Redis TTL)/RewardGrant(멱등 보상 원장 — PENDING→COMPLETED, 중복 콜백 1회 보장). rewarded 발급은 `isMonetizable` 게이트. 외부 네트워크(AdSense/GAM)는 후속 |
+| suggestion | GameSuggestion(제안 — OPEN/REVIEWING/APPLIED/DECLINED, 로그인 필수, **쓴 사람만 수정**) + SuggestionReply(제안자·운영자 평면 스레드, `author_type` 은 서버가 결정). 표 둘을 전 게임이 공유 (ADR-0087) |
 | arcade | #23 흡수분 — 세션 구슬(HMAC) · 리플레이 제출 · **Tier A/B 검증**(서버가 결정적 sim 을 재실행해 점수 위조 거부) · Redis 리더보드/데일리 챌린지. API 는 `/api/v1/games/arcade/**` |
 
 ## API Endpoints (요약)
@@ -70,15 +71,24 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | `GET /api/v1/games/leaderboards?boards=&entries=` | 허브 레일용 배치 — 기록 있는 보드의 TOP N + **오늘 기록(`todayEntries`)**을 한 응답에 |
 | `GET/PUT /api/v1/games/{slug}/save` | 서버 세이브 — **게스트 허용** (V9). 로그인 사용자는 `X-User-Id`, 게스트는 서버 발급 12자리 **이어하기 코드**(`?code=` / body `code`)로 식별. PUT 은 `{data, version, code?}` 낙관적 저장, 신규 시 코드 발급. 클라이언트는 로그인 중에도 코드를 함께 보내고, 서버는 계정 슬롯을 먼저 찾은 뒤 없을 때만 코드로 폴백한다. **동시 쓰기 방어는 `@Version` 하나뿐** — `X-Device-Id` 리스는 걷어냈다(아래 Key Rules) |
 | `POST /api/v1/games/{slug}/runs`, `GET .../{runKey}`, `POST .../{runKey}/consume` | 로그라이크 런 — 서버 시드 발급/조회/소모 (게스트 허용) |
+| `GET /api/v1/games/{slug}/suggestions` | 개선 제안 목록(최신순) — 공개. 로그인해서 보면 자기 글에만 `mine` 이 선다 |
+| `POST`·`PUT .../suggestions[/{id}]`, `POST .../{id}/replies` | 등록·수정·답글 — **로그인 필수**. 수정은 쓴 본인만, 답글은 제안자와 운영자만 |
+| `GET /api/v1/admin/games/suggestions`, `PATCH .../{id}/status` | 처리 대기 목록(전 게임 횡단, 게임 상태 무관) + 상태 변경 (ROLE_ADMIN). 화면은 admin-fe `/games/suggestions` |
 | `GET/POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN). `GET`(목록 `?q=&status=&genre=&tag=&sort=created\|updated\|title\|playCount`, 상세)은 **상태 무관** — 공개 API 로는 보이지 않는 DRAFT/REVIEW/SUSPENDED 를 백오피스에서 다룬다. 화면은 admin-fe `/games` |
 | `/api/v1/games/arcade/{catalog,sessions,scores,leaderboard,daily}` | #23 아케이드 — 세션 발급/점수 제출(검증)/리더보드. `games/**` 하위라 게이트웨이 라우트 추가 없음 |
 | `WS /ws/games/{slug}` | 온라인 대전 릴레이 (raw WebSocket, 게스트). 아래 "온라인 대전 릴레이" 참조 |
 | `GET /api/v1/ads/placements/{key}?subject=`, `POST /api/v1/ads/rewards`(+`/{key}/complete`) | HOUSE 배너 슬롯(cap 시 data=null) / rewarded 보상 발급·완료(멱등) |
 
-게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 7개 라우트로 나뉜다 — 좁은 경로가 먼저
+게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 라우트가 나뉜다 — 좁은 경로가 먼저
 선언되어야 `games/**` 에 가려지지 않는다: `game-admin`(ADMIN) → `game-rating`(USER+) →
 `game-save`(게스트 허용 + Rate Limiter — 익명 쓰기 방어) → `game-session`(게스트 허용, sessions+runs) →
+`game-my-record`(USER+) → `game-score-submit`(게스트 허용) →
+`game-suggestion-read`(GET 만, 게스트 허용) → `game-suggestion-write`(USER+ + Rate Limiter) →
 `game-catalog`(공개) → `game-relay-ws`(`/ws/games/**`, 게스트 허용) → `game-ads`(`/api/v1/ads/**`, 게스트 허용).
+
+**제안 읽기에도 인증 필터를 건다.** 필터 없이 통과시키면 클라이언트가 손으로 붙인 `X-User-Id` 가
+그대로 백엔드에 닿아, 서버가 계산하는 `mine`(=「내 글인가」)이 남의 글에서도 참이 된다.
+필터를 통과하는 게스트는 신원 헤더가 **벗겨진** 상태로 간다.
 
 ## 온라인 대전 릴레이 (`com.kgd.game.infrastructure.ws`)
 
@@ -168,12 +178,28 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
   읽어 참가자·방식이 정해진 채로 바로 시작할 것 ② **출발 위치 ↔ 도착 등수 스피어만 |ρ| < 0.1**
   (dev 훅으로 재고 설계 문서에 수치를 남긴다). 상세 계약은
   `docs/standards/game-cleanroom-pipeline.md` 의 `party-decider` 프리셋 §7
+- **개선 제안은 쓴 사람만 고친다 — 운영자에게도 예외가 없다** (ADR-0087). 반영·반려의 근거로
+  남은 문장이 사후에 달라질 수 있으면 상태 표시가 무의미해진다. 운영자가 하는 일은 상태를
+  옮기고 답글을 다는 것이고, 판정은 도메인이 갖는다: `editBy(memberId, body)` 는 **확인과 변경을
+  한 함수로 묶어** 부르는 쪽이 확인을 건너뛴 조립을 못 하게 한다(같은 이유로 `GameSuggestion` 은
+  데이터 클래스가 아니다 — `copy(body = …)` 가 그 묶음을 푼다).
+  **답글의 `author_type` 도 요청이 아니라 서버가 정한다** — 닉네임은 누구나 「운영자」로 지을 수
+  있어 이름만으로는 진짜 답변과 사칭을 가를 수 없다. 어드민도 공개 쓰기 경로로 답글을 단다
+  (길이 둘이면 자격 판정도 둘이 된다)
+- **제안·답글의 표시 이름은 랭킹에 쓰는 것과 같은 값**(`game_nickname`)이다. 목록을 그릴 때 회원
+  서비스를 부르지 않고, 한 사람이 게임 안에서 늘 같은 이름으로 보인다. 아직 이름이 없으면
+  **회원 닉네임(`members.name`)을 한 번 받아 채운다** — member 가 가입 때 만들어 둔 것이 있으므로
+  (ADR-0078) 게임 쪽에 생성기를 다시 두지 않는다. 이 호출은 쓰려는 사람에게 한 번이고 조회 경로엔 없다
+- **`game_suggestion*` 의 시각은 초 단위(DATETIME)라 같은 초의 두 행은 시각이 같다.** 정렬에 반드시
+  id 를 함께 준다(`OrderByCreatedAtAscIdAsc`, `Sort.by(DESC, "createdAt", "id")`) — 안 그러면
+  같은 초에 올라온 답글의 순서가 미정이라 대화가 뒤집힌 채로 그려진다
 - GameStats 는 프로젝션 — 원본 이벤트 집계는 analytics(ClickHouse) 소유, 실시간 카운터를 Game row 에 두지 않는다
 - `game:feature` 는 codedictionary 컨텍스트 빈을 직접 주입하지 않는다 (교차 import 금지, ADR-0058 불변식)
 
 ## Related
 
 - ADR: `docs/adr/ADR-0059-game-platform.md`
+- ADR: `docs/adr/ADR-0087-game-improvement-suggestions.md` (개선 제안)
 - 유니티(WebGL) 제작 라인: `docs/standards/unity-game-pipeline.md` — **아직 파일럿 전이라
   정식 선택지가 아니다.** 비2D 신작 후보가 생기면 그 문서 §0 표로 캔버스/유니티를 먼저 판정한다
 - 설계(엔티티/ads 페이즈 포함): `docs/specs/2026-07-06-game-platform-entities-design.md`
