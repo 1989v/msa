@@ -51,6 +51,27 @@ namespace Kgd.Terrain
         /// </summary>
         private const float MinFlank = 1.5f;
 
+        /// <summary>
+        /// 비탈 옆벽이 비탈 바깥으로 나온 두께.
+        ///
+        /// **입구를 뚫는 폭과 옆벽 자리가 같은 값에서 나와야 한다.** 절벽은 아래쪽 폭으로
+        /// 뚫고 옆벽은 위쪽 폭 + 이 값으로 서던 때는, 그 차이가 절벽 높이만큼 세로 틈이 되어
+        /// 「언덕 면이 절벽에서 조금 떨어져 보인다」가 됐다 (아홉 종, 2026-09-02).
+        /// </summary>
+        private const float FlankOut = 0.9f;
+
+        /// <summary>
+        /// 절벽에 뚫는 입구의 반폭 — **걸어 오르는 폭 그대로.**
+        ///
+        /// 옆벽 두께까지 더해 뚫던 때는 비탈 바닥이 없는 0.9 짜리 틈이 양옆에 남았다.
+        /// 옆벽은 그 바깥에 서므로 정면에서는 날처럼 얇아 안 가려 주고, 그 틈으로 안이 보여
+        /// 「언덕이 절벽에서 조금 떨어져 보인다」가 됐다 (아홉 종, 2026-09-02).
+        ///
+        /// 딱 걸어 오르는 폭만 뚫으면 남는 틈이 없다. 옆벽은 절벽 안에 묻히는데,
+        /// 아래로 갈수록 절벽이 낮아져 드러나면서 깔때기가 된다.
+        /// </summary>
+        private static float MouthHalf(KgdPlateau p) => p.RampTopWidth * 0.5f;
+
         private static void RampFlanks(KgdPlateau p, IKgdTerrainSink sink, KgdPlateauPalette palette,
                                        Vector3 v0, Vector3 v1,
                                        Vector3 lo0, Vector3 lo1, Vector3 li0, Vector3 li1)
@@ -60,7 +81,7 @@ namespace Kgd.Terrain
             // OnRamp 와 **같은 식**으로 잰다. 다른 식을 쓰면 그려진 벽과 걷는 판정이 어긋난다.
             float Lat(Vector3 v) => v.x * cos - v.z * sin;
 
-            float half = p.RampBottomWidth * 0.5f;
+            float half = MouthHalf(p);
             float a = Mathf.InverseLerp(Lat(v0), Lat(v1), -half);
             float b = Mathf.InverseLerp(Lat(v0), Lat(v1), half);
             if (a > b) (a, b) = (b, a);
@@ -172,6 +193,29 @@ namespace Kgd.Terrain
             // 테두리가 실제로 어디인지 재서 시작한다 — 중심 거리로 잡으면 지면에서 뜬다
             float inner = p.BoundaryAlong(dir);
 
+            // **기울어진 만큼 안으로 밀어 넣는다.**
+            //
+            // 절벽 변은 직선이고 비탈 윗변은 dir 에 수직이다. 램프 방향이 그 변의 법선과
+            // 어긋나면(최대 22.5°) 윗변의 한쪽 끝은 절벽선 **바깥으로 떠 있고** 반대쪽은
+            // 파묻힌다 — 뜬 쪽이 「언덕 면이 떨어져 보인다」의 정체다.
+            //
+            // 반폭 s 인 점이 절벽선에서 벗어나는 거리는 s·sinθ 이고, dir 로 δ 만큼 들어가면
+            // δ·cosθ 만큼 줄어든다. 그래서 δ = 반폭·tanθ 이면 어느 점도 밖으로 안 나온다.
+            float tuck = 0f;
+            {
+                float bestDot = -1f;
+                for (int e = 0; e < 8; e++)
+                {
+                    var m = (corners[e] + corners[(e + 1) % 8]) * 0.5f;
+                    var n = new Vector3(m.x, 0f, m.z).normalized;
+                    float d = Vector3.Dot(n, dir);
+                    if (d > bestDot) bestDot = d;
+                }
+                float cos = Mathf.Clamp(bestDot, 0.3f, 1f);
+                float tan = Mathf.Sqrt(Mathf.Max(0f, 1f - cos * cos)) / cos;
+                tuck = MouthHalf(p) * tan + 0.06f;   // 0.06 은 실선이 안 보이게 하는 여유
+            }
+
             // ③ 비탈 — **면 하나로 편다.**
             //
             // 조각을 쌓아 만들면 층마다 턱이 지고 밝기가 갈려 격자무늬가 된다(실제로 그렇게 보였다).
@@ -183,6 +227,17 @@ namespace Kgd.Terrain
             var botOut = dir * (inner + p.RampLength);
             Quad(sink, topIn - side * topHalf, topIn + side * topHalf,
                  botOut + side * botHalf, botOut - side * botHalf, palette.Ramp * 1.25f, Vector3.up, palette.ToLight);
+
+            // **입구를 메우는 다리.** 비탈 윗변은 dir 에 수직인데 절벽 변은 직선이라,
+            // 기울어진 만큼 윗변 한쪽이 절벽선 바깥으로 뜬다. 비탈 자체를 밀어 넣으면
+            // 걷는 면(HeightAt)과 어긋나므로, 고원 높이의 조각을 안쪽으로 덧대 그 쐐기를 덮는다.
+            {
+                float mh = MouthHalf(p);
+                var bIn = dir * (inner - tuck) + Vector3.up * p.Height;
+                var bOut = dir * inner + Vector3.up * p.Height;
+                Quad(sink, bIn - side * mh, bIn + side * mh,
+                     bOut + side * mh, bOut - side * mh, palette.Lip, Vector3.up, palette.ToLight);
+            }
 
             // 비탈 양옆 얇은 턱 — 경사면과 옆벽 사이를 메워 틈이 보이지 않게 한다
             for (int sgn = -1; sgn <= 1; sgn += 2)
@@ -204,8 +259,9 @@ namespace Kgd.Terrain
                 for (int i = 0; i <= wall; i++)
                 {
                     float t = i / (float)wall;
-                    float d = inner + p.RampLength * t;
-                    float half = Mathf.Lerp(p.RampTopWidth, p.RampBottomWidth, t) * 0.5f + 0.9f;
+                    // 옆벽도 다리만큼 안에서 시작한다 — 안 그러면 다리 옆으로 안이 보인다
+                    float d = inner - tuck + (p.RampLength + tuck) * t;
+                    float half = Mathf.Lerp(p.RampTopWidth, p.RampBottomWidth, t) * 0.5f + FlankOut;
                     // **비탈을 따라 낮아지되 고원을 넘지 않는다.** 램프는 절벽에 낸 홈이라
                     // 위쪽에서는 절벽 높이로 이어지고 아래로 갈수록 사라져야 한다.
                     // 끝까지 고원 높이로 세웠더니 들판 한복판에 거대한 판이 튀어나왔고,
