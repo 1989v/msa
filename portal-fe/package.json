@@ -27,7 +27,7 @@
     "d3-force-3d": "^3.0.6",
     "dompurify": "^3.4.13",
     "embla-carousel-react": "^8.6.0",
-    "fencesvg": "file:./vendor/fencesvg-0.3.2.tgz",
+    "fencesvg": "file:./vendor/fencesvg-0.3.3.tgz",
     "lucide-react": "^1.22.0",
     "marked": "^18.0.9",
     "react": "^19.2.4",
