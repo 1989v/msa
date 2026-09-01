@@ -85,8 +85,12 @@ namespace Kgd.Motion
                 var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
                 if (ground.HeightAt(at + dir * Radius * 2f) <= limit) away += dir;
             }
-            if (away.sqrMagnitude < 0.0001f) return at;
-            return at + away.normalized * (Radius * 0.8f);
+            if (away.sqrMagnitude > 0.0001f) return at + away.normalized * (Radius * 0.8f);
+
+            // **빠질 곳이 없으면 위로 올린다.** 지형 안에 갇히면 조작으로는 절대 못 나온다 —
+            // 위는 막히고 옆은 벽이라 그 자리에서 게임이 끝난다(실제 신고: 비탈 옆으로
+            // 떨어져 비탈 밑에 박혔다). 어디로도 못 가는 것보다 위에 서는 편이 낫다.
+            return new Vector3(at.x, ground.HeightAt(at) + 0.05f, at.z);
         }
 
         /// <summary>

@@ -31,33 +31,42 @@ namespace Kgd
             }
         }
 
-        /// <summary>WASD. 3D 게임에서 이동에 쓰고, 시점은 방향키로 가른다.</summary>
-        public static Vector2 Wasd
+        /// <summary>
+        /// 시점 키. **이동에도 액션에도 안 쓰는 자리**를 손잡이에 맞춰 고른다.
+        ///
+        /// 이 플랫폼의 배치는 「한 손이 이동, 다른 손이 액션」이라 남는 자리가 하나뿐이다:
+        /// 오른손잡이는 이동이 방향키·액션이 ZXCAS 라 **IJKL** 이 비고,
+        /// 왼손잡이는 이동이 WASD·액션이 JKLUI 라 **방향키**가 빈다.
+        ///
+        /// 이동을 WASD 로 옮겨 3D 통용 배치를 흉내 낸 적이 있는데, 그러면 오른손잡이의
+        /// 액션 A·S 와 이동 A·S 가 **같은 키**가 되고 왼손이 이동과 액션을 동시에 한다.
+        /// 플랫폼 배치를 지키는 편이 맞다.
+        /// </summary>
+        public static Vector2 Look
         {
             get
             {
                 Vector2 k = Vector2.zero;
-                if (Input.GetKey(KeyCode.A)) k.x -= 1f;
-                if (Input.GetKey(KeyCode.D)) k.x += 1f;
-                if (Input.GetKey(KeyCode.W)) k.y += 1f;
-                if (Input.GetKey(KeyCode.S)) k.y -= 1f;
-                return k.sqrMagnitude > 1f ? k.normalized : k;
-            }
-        }
-
-        /// <summary>방향키. 3D 게임에서 시점에 쓴다.</summary>
-        public static Vector2 Arrows
-        {
-            get
-            {
-                Vector2 k = Vector2.zero;
-                if (Input.GetKey(KeyCode.LeftArrow)) k.x -= 1f;
-                if (Input.GetKey(KeyCode.RightArrow)) k.x += 1f;
-                if (Input.GetKey(KeyCode.UpArrow)) k.y += 1f;
-                if (Input.GetKey(KeyCode.DownArrow)) k.y -= 1f;
+                if (LeftHanded)
+                {
+                    if (Input.GetKey(KeyCode.LeftArrow)) k.x -= 1f;
+                    if (Input.GetKey(KeyCode.RightArrow)) k.x += 1f;
+                    if (Input.GetKey(KeyCode.UpArrow)) k.y += 1f;
+                    if (Input.GetKey(KeyCode.DownArrow)) k.y -= 1f;
+                }
+                else
+                {
+                    if (Input.GetKey(KeyCode.J)) k.x -= 1f;
+                    if (Input.GetKey(KeyCode.L)) k.x += 1f;
+                    if (Input.GetKey(KeyCode.I)) k.y += 1f;
+                    if (Input.GetKey(KeyCode.K)) k.y -= 1f;
+                }
                 return k;
             }
         }
+
+        /// <summary>지금 손잡이에서 시점을 돌리는 키. 화면 안내에 그대로 쓴다.</summary>
+        public static string LookHint => LeftHanded ? "방향키" : "IJKL";
 
         public static Vector2 Move
         {

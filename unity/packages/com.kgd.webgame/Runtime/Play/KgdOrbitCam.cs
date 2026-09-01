@@ -46,11 +46,9 @@ namespace Kgd.Play
 
         public void Tick(float dt, Vector3 target, float eyeHeight, bool close)
         {
-            // **이동 키와 겹치면 안 된다.** 이동은 WASD, 시점은 방향키다 —
-            // 3D 액션에서 통용되는 배치이고, 위아래도 방향키로 함께 조절된다.
-            // 게임은 KgdInput.Wasd 로 움직인다(KgdInput.Move 는 방향키를 쓰므로 겹친다).
-            var arrows = KgdInput.Arrows;
-            float kx = arrows.x, ky = arrows.y;
+            // **이동에도 액션에도 안 쓰는 자리**를 쓴다. 손잡이 설정에 따라 갈린다.
+            var look = KgdInput.Look;
+            float kx = look.x, ky = look.y;
             Yaw += kx * 130f * dt;
             Pitch = Mathf.Clamp(Pitch - ky * 90f * dt, MinPitch, MaxPitch);
 
