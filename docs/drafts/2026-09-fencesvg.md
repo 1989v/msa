@@ -2,7 +2,7 @@
 title: 마크다운 펜스로 그린 다이어그램이 사이트 톤을 따라가게 만들기
 slug: fencesvg-markdown-diagrams
 category: /tech/frontend
-summary: 다이어그램의 어려운 부분은 그리기가 아니라 넣기다. sanitizer·lint·서버 렌더·CommonMark 가 SVG 를 지우는 네 지점과, 그걸 통과하도록 만든 11.2KB 라이브러리. 색은 사이트에서 읽는다.
+summary: 다이어그램의 어려운 부분은 그리기가 아니라 넣기다. sanitizer·lint·서버 렌더·CommonMark 가 SVG 를 지우는 네 지점과, 그걸 통과하도록 만든 11.7KB 라이브러리. 색은 사이트에서 읽는다.
 ---
 
 블로그 본문에 다이어그램을 넣으려다 같은 SVG 가 네 곳에서 죽는 것을 재봤다. 2026-09-01 기준, `marked` + DOMPurify 로 마크다운을 렌더하는 사이트에서 잰 값이다.
@@ -87,7 +87,7 @@ mermaid 에 렌더를 맡기면 타입을 공짜로 얻는다. 그 비용을 헤
 
 블로그의 메인 번들이 646 KB 다. 그림 하나 든 글을 열었다고 독자가 1 MB 를 더 받을 수는 없다.
 
-자체 렌더러는 gzip 11.2 KB 다. 대신 레이아웃을 직접 써야 하는데, 타입 수만큼 필요하지는 않았다. 계층 그래프 엔진 하나를 flowchart·state·ER·class 가 나눠 쓰고, sequence 만 별도 레인 배치를 쓴다.
+자체 렌더러는 gzip 11.7 KB 다. 대신 레이아웃을 직접 써야 하는데, 타입 수만큼 필요하지는 않았다. 계층 그래프 엔진 하나를 flowchart·state·ER·class 가 나눠 쓰고, sequence 만 별도 레인 배치를 쓴다.
 
 ## 흐름도
 
@@ -361,4 +361,4 @@ return DOMPurify.sanitize(raw, { FORBID_TAGS: ['style', 'iframe', 'form', 'input
 
 브라우저 API 를 쓰지 않아 Node 에서도 같은 문자열이 나온다. 글자 폭을 브라우저에서 재지 않고 내장 근사 테이블로 추정하기 때문이다. 측정에 기대면 서버 렌더에서 크기가 달라져 화면이 한 번 튄다.
 
-런타임 의존성은 없다. gzip 11.2 KB, MIT.
+런타임 의존성은 없다. gzip 11.7 KB, MIT.
