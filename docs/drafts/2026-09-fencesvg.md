@@ -2,7 +2,7 @@
 title: 마크다운 펜스로 그린 다이어그램이 사이트 톤을 따라가게 만들기
 slug: fencesvg-markdown-diagrams
 category: /tech/frontend
-summary: 다이어그램의 어려운 부분은 그리기가 아니라 넣기다. sanitizer·lint·서버 렌더·CommonMark 가 SVG 를 지우는 네 지점과, 그걸 통과하도록 만든 8.6KB 라이브러리.
+summary: 다이어그램의 어려운 부분은 그리기가 아니라 넣기다. sanitizer·lint·서버 렌더·CommonMark 가 SVG 를 지우는 네 지점과, 그걸 통과하도록 만든 10.9KB 라이브러리. 색은 사이트에서 읽는다.
 ---
 
 블로그 본문에 다이어그램을 넣으려다 같은 SVG 가 네 곳에서 죽는 것을 재봤다. 2026-09-01 기준, `marked` + DOMPurify 로 마크다운을 렌더하는 사이트에서 잰 값이다.
@@ -37,6 +37,33 @@ sanitize 를 통과하는 것과 못 하는 것을 하나씩 넣어 확인했다
 
 인라인이면 같은 DOM 이라 `currentColor` 하나로 끝난다. 색은 그리는 시점이 아니라 칠하는 시점에 풀린다.
 
+## 색은 사이트에서 읽는다
+
+`currentColor` 는 역할이 하나뿐이다. 다이어그램에는 노드 채움, 테두리, 강조, 흐린 보조선이 따로 필요하다.
+
+사이트마다 토큰 이름이 다르다. `--brand` 인 곳도, `--primary` 인 곳도, `--kh-action-fg` 인 곳도 있다. 이름으로 찾는 방법은 없다.
+
+그래서 이름 대신 **칠해진 색**을 읽는다. 문서에 링크 요소를 하나 만들어 계산된 `color` 를 읽으면 그것이 그 사이트의 강조색이다. 테두리를 가진 요소에서 선 색을, `body` 에서 바탕과 글자색을 가져온다.
+
+이 사이트에서 잰 값이다.
+
+| | 라이트 | 다크 |
+|---|---|---|
+| 글자 | `rgb(29,29,31)` 기와 | `rgb(242,241,234)` 한지 |
+| 강조 | `rgb(26,71,42)` 소나무 | `rgb(43,75,99)` 청자 |
+
+두 강조색은 서로의 밝기 변형이 아니다. 이 사이트의 다크는 라이트에서 파생한 것이 아니라 따로 설계된 화면이고, 감지는 그 구조를 그대로 따라간다.
+
+값은 참조로 나간다. `fill="var(--fs-accent, rgb(26,71,42))"` 형태라서 우선순위가 세 층이 된다.
+
+1. 사이트가 `--fs-accent` 를 정의하면 그것이 이긴다
+2. 없으면 감지한 값
+3. 감지가 실패하면 EDITORIAL — 무채색 위계로 된 기본 컨셉
+
+3번은 대비가 부족하거나 읽을 값이 없을 때 쓴다. 잘못 잡은 색으로 그리는 것보다 색을 쓰지 않는 편이 낫다.
+
+한 번 그린 SVG 는 색이 안에 박혀 있어 나중에 테마를 바꿔도 따라가지 않는다. 토글이 있는 사이트는 테마를 렌더 의존성에 넣어 다시 그려야 한다.
+
 ## 왜 mermaid 를 싣지 않았나
 
 mermaid 에 렌더를 맡기면 타입을 공짜로 얻는다. 그 비용을 헤드리스 크롬으로 쟀다. jsDelivr ESM 기준 압축 후 전송량이다.
@@ -50,7 +77,7 @@ mermaid 에 렌더를 맡기면 타입을 공짜로 얻는다. 그 비용을 헤
 
 블로그의 메인 번들이 646 KB 다. 그림 하나 든 글을 열었다고 독자가 1 MB 를 더 받을 수는 없다.
 
-자체 렌더러는 gzip 8.6 KB 다. 대신 레이아웃을 직접 써야 하는데, 타입 수만큼 필요하지는 않았다. 계층 그래프 엔진 하나를 flowchart·state·ER·class 가 나눠 쓰고, sequence 만 별도 레인 배치를 쓴다.
+자체 렌더러는 gzip 10.9 KB 다. 대신 레이아웃을 직접 써야 하는데, 타입 수만큼 필요하지는 않았다. 계층 그래프 엔진 하나를 flowchart·state·ER·class 가 나눠 쓰고, sequence 만 별도 레인 배치를 쓴다.
 
 ## 흐름도
 
@@ -304,6 +331,7 @@ id 에 `-` 는 못 쓴다. 무공백 화살표를 받으면 `A-->B` 가 「id `A
 | 타입 | 아직 안 되는 것 |
 |---|---|
 | flowchart | subgraph, 자기 참조 루프 |
+| 배치 | 역방향 간선이 여럿이면 우회 레인이 길어져 읽는 순서가 흐려진다 |
 | sequence | `alt` · `loop` · `opt` · `par` 블록, activation box |
 | state | 중첩 상태, 병렬 영역 |
 | ER | 속성 목록, 키 표기 |
@@ -316,11 +344,11 @@ id 에 `-` 는 못 쓴다. 무공백 화살표를 받으면 `A-->B` 가 「id `A
 ```ts
 import { inlineDiagrams } from 'fencesvg';
 
-const withDiagrams = inlineDiagrams(source, { accent: 'var(--accent)' });
+const withDiagrams = inlineDiagrams(source);
 const raw = marked.parse(withDiagrams, { async: false, gfm: true });
 return DOMPurify.sanitize(raw, { FORBID_TAGS: ['style', 'iframe', 'form', 'input'] });
 ```
 
 브라우저 API 를 쓰지 않아 Node 에서도 같은 문자열이 나온다. 글자 폭을 브라우저에서 재지 않고 내장 근사 테이블로 추정하기 때문이다. 측정에 기대면 서버 렌더에서 크기가 달라져 화면이 한 번 튄다.
 
-런타임 의존성은 없다. gzip 8.6 KB, MIT.
+런타임 의존성은 없다. gzip 10.9 KB, MIT.
