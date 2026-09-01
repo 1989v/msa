@@ -16,6 +16,12 @@
 | `Kgd.KgdInput` | 가상패드 입력 |
 | `Kgd.KgdDevice` | 기기 판정(터치 여부, 셸 예약 띠 치수) |
 | `Kgd.KgdSave` | 서버 세이브 읽기/쓰기 |
+| `Kgd.Play.KgdTraverse` | **젤다라이크의 뼈대** — 걷기·달리기·점프·등반·활공·구르기가 스태미나 하나로 |
+| `Kgd.Play.KgdChase` | 쫓아와서 때리는 것 — 인지 → 추격 → **예고** → 타격 → 후딜 |
+| `Kgd.Play.KgdOrbitCam` | 3인칭 궤도 카메라 — 지형을 두 번 피한다(바닥·벽) |
+| `Kgd.Play.KgdStamina` | 행동 자원 하나. 바닥나도 멈추지 않고 느려진다 |
+| `Kgd.Art.KgdMesh` · `KgdMat` · `KgdKit` | 절차 메시 · 공용 머티리얼 · Kenney 로더 |
+| `Kgd.Motion.IKgdWall` | 붙어서 오를 벽이 앞에 있나 (게임이 구현) |
 | `Kgd.Motion.IKgdGround` | 게임이 구현 — 「이 자리 바닥이 얼마나 높은가」 하나만 답한다 |
 | `Kgd.Motion.KgdLook` | **화면을 끌어 시점을 돌린다** — 가상패드를 잡은 손가락을 피한다 |
 | `Kgd.Motion.KgdBody` | **걸어 다니는 몸의 판정** — 들어갈 수 있나 · 미끄러지기 · 박힘 풀기 · 착지 |
@@ -25,6 +31,24 @@
 | `Kgd.Terrain.KgdPlateau` | **고지대** — 램프 하나로만 오르는 팔각 절벽의 모양·높이 |
 | `Kgd.Terrain.KgdPlateauBuilder` | 그 고지대를 그리고 막는다 |
 | `Kgd.Terrain.IKgdTerrainSink` | 게임이 구현하는 출력구 — 사각(`Quad`)·자유 사각면(`Face`)·막는 원판·바닥색 |
+
+## 새 게임을 시작할 때
+
+```csharp
+sealed class MyWorld : IKgdGround, IKgdWall { … }          // 지형은 게임이 만든다
+
+var move = new KgdTraverse(KgdTraverse.Tuning.Default, staminaCap: 100f);
+var cam  = new KgdOrbitCam(camera, world, move.Pos);
+var foe  = new KgdChase(KgdChase.Tuning.Default, at);
+
+// 매 프레임
+move.Tick(dt, wish, world, world);
+cam.Tick(dt, move.Pos, eyeHeight: 1.35f, close: move.Now == KgdTraverse.State.Climb);
+foe.Tick(dt, move.Pos, world, move.Body);
+```
+
+이동·충돌·시점·적 행동·타격감·챕터·소리·플랫폼이 여기서 나온다.
+**게임이 새로 만드는 것은 규칙·레벨 배치·UI 배치·아트**다.
 
 ## 이동·충돌 (Kgd.Motion)
 
