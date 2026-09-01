@@ -15,6 +15,31 @@
 
 한 문장이 더 빠르면 문장을 쓴다.
 
+## 1.5 기본은 펜스다 — 손으로 SVG 를 쓰지 않는다
+
+````markdown
+본문 문장.
+
+```mermaid
+%% caption: 주문은 결제 승인 뒤에 재고를 잡는다
+flowchart LR
+  A[주문] --> B{결제}
+```
+
+다음 문장.
+````
+
+`fencesvg` 가 마크다운 렌더 앞에서 `mermaid` 펜스를 SVG 로 바꾼다. 지원 문법은
+flowchart · sequenceDiagram · stateDiagram-v2 · erDiagram · classDiagram 5종이다. 색은
+사이트 토큰(`var(--ko-accent-primary)` 등)을 참조해서 나오므로 아래 §3 의 테마 규칙을
+그대로 따른다.
+
+`%% caption:` 은 **필수**다. 빠지면 경고가 뜨고, 그림을 못 보는 사람과 JS 를 실행하지
+않는 수집기가 내용을 알 방법이 없어진다.
+
+아래 §2~§4 는 **라이브러리가 못 그리는 그림을 손으로 그릴 때만** 적용된다. 지원하지 않는
+문법을 만난 펜스는 원래 코드블록으로 그대로 남으므로, 그럴 때만 인라인 SVG 로 옮긴다.
+
 ## 2. 형식 — 본문에 인라인 SVG
 
 ```markdown
