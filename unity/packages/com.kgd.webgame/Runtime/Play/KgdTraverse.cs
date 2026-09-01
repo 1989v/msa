@@ -57,6 +57,12 @@ namespace Kgd.Play
         public readonly KgdStamina Stamina;
         public bool Running { get; private set; }
 
+        /// <summary>
+        /// 지도 반폭. 0 이면 제한이 없다. **없으면 지도 밖 허공을 계속 걷는다** —
+        /// 지형 높이가 0 으로 돌아오므로 걸리는 것도 없이 영영 나간다.
+        /// </summary>
+        public float MapRadius;
+
         /// <summary>이번 프레임에 땅에 닿았나. 소리·먼지에 쓴다.</summary>
         public bool Landed { get; private set; }
 
@@ -281,6 +287,11 @@ namespace Kgd.Play
                 else Now = State.Air;                     // 진짜 낭떠러지다
             }
 
+            if (MapRadius > 0f)
+            {
+                Pos.x = Mathf.Clamp(Pos.x, -MapRadius, MapRadius);
+                Pos.z = Mathf.Clamp(Pos.z, -MapRadius, MapRadius);
+            }
             Pos = _body.Unstick(ground, Pos);
         }
 
