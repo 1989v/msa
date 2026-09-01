@@ -46,14 +46,11 @@ namespace Kgd.Play
 
         public void Tick(float dt, Vector3 target, float eyeHeight, bool close)
         {
-            // **이동 키와 겹치면 안 된다.** 방향키를 쓰던 때는 오른손잡이 기본 배치에서
-            // 방향키가 이동이기도 해서, 걸으면 화면이 같이 돌았다(실제 신고).
-            // Q/E 로 좌우, R/F 로 위아래. 마우스 드래그는 그대로 된다.
-            float kx = 0f, ky = 0f;
-            if (Input.GetKey(KeyCode.Q)) kx -= 1f;
-            if (Input.GetKey(KeyCode.E)) kx += 1f;
-            if (Input.GetKey(KeyCode.R)) ky += 1f;
-            if (Input.GetKey(KeyCode.F)) ky -= 1f;
+            // **이동 키와 겹치면 안 된다.** 이동은 WASD, 시점은 방향키다 —
+            // 3D 액션에서 통용되는 배치이고, 위아래도 방향키로 함께 조절된다.
+            // 게임은 KgdInput.Wasd 로 움직인다(KgdInput.Move 는 방향키를 쓰므로 겹친다).
+            var arrows = KgdInput.Arrows;
+            float kx = arrows.x, ky = arrows.y;
             Yaw += kx * 130f * dt;
             Pitch = Mathf.Clamp(Pitch - ky * 90f * dt, MinPitch, MaxPitch);
 

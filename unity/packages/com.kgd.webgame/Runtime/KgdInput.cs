@@ -16,6 +16,49 @@ namespace Kgd
         private static readonly KeyCode[] LeftHand = { KeyCode.L, KeyCode.K, KeyCode.J, KeyCode.U, KeyCode.I };
 
         /// <summary>이동 입력. Unity 좌표계(위가 +y)로 돌려준다. 길이는 0~1 이고 아날로그 값이 살아 있다.</summary>
+        /// <summary>
+        /// **가상패드만.** 키보드는 게임이 고른다 — 3D 게임은 이동과 시점을 갈라야 해서
+        /// 공용 배치(오른손잡이 = 방향키 이동)를 그대로 쓰면 시점 키와 겹친다.
+        /// 2D 게임은 <see cref="Move"/> 를 그대로 쓰면 된다.
+        /// </summary>
+        public static Vector2 PadMove
+        {
+            get
+            {
+                var b = KgdBridge.Instance;
+                if (b == null || b.Frame[2] <= 0f) return Vector2.zero;
+                return new Vector2(b.Frame[0], -b.Frame[1]);   // 화면 좌표는 아래가 +y 다
+            }
+        }
+
+        /// <summary>WASD. 3D 게임에서 이동에 쓰고, 시점은 방향키로 가른다.</summary>
+        public static Vector2 Wasd
+        {
+            get
+            {
+                Vector2 k = Vector2.zero;
+                if (Input.GetKey(KeyCode.A)) k.x -= 1f;
+                if (Input.GetKey(KeyCode.D)) k.x += 1f;
+                if (Input.GetKey(KeyCode.W)) k.y += 1f;
+                if (Input.GetKey(KeyCode.S)) k.y -= 1f;
+                return k.sqrMagnitude > 1f ? k.normalized : k;
+            }
+        }
+
+        /// <summary>방향키. 3D 게임에서 시점에 쓴다.</summary>
+        public static Vector2 Arrows
+        {
+            get
+            {
+                Vector2 k = Vector2.zero;
+                if (Input.GetKey(KeyCode.LeftArrow)) k.x -= 1f;
+                if (Input.GetKey(KeyCode.RightArrow)) k.x += 1f;
+                if (Input.GetKey(KeyCode.UpArrow)) k.y += 1f;
+                if (Input.GetKey(KeyCode.DownArrow)) k.y -= 1f;
+                return k;
+            }
+        }
+
         public static Vector2 Move
         {
             get
