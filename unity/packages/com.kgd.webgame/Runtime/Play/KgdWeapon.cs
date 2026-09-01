@@ -24,6 +24,8 @@ namespace Kgd.Play
             Chop,
             /// <summary>창 — 앞으로 깊게 찌른다. 몸은 거의 안 돈다.</summary>
             Thrust,
+            /// <summary>활·투척 — 당겼다 놓는다. 닿는 것은 몸이 아니라 날아간 것이다.</summary>
+            Shoot,
         }
 
         public readonly string Name;
@@ -37,11 +39,22 @@ namespace Kgd.Play
         public readonly Swing Style;
         public readonly Color Tint;
 
+        /// <summary>두 손으로 쥔다. 무거운 것은 한 손으로 휘두르면 무게가 안 읽힌다.</summary>
+        public readonly bool TwoHanded;
+
+        /// <summary>날아가는 것의 속도(월드/초). 0 이면 근접 무기다.</summary>
+        public readonly float ShotSpeed;
+
+        /// <summary>날아가는 것이 있나.</summary>
+        public bool Ranged => ShotSpeed > 0f;
+
         public KgdWeapon(string name, float damage, float reach, float arcDot, float time,
-                         float hitAt, Swing style, Color tint)
+                         float hitAt, Swing style, Color tint,
+                         bool twoHanded = false, float shotSpeed = 0f)
         {
             Name = name; Damage = damage; Reach = reach; ArcDot = arcDot;
             Time = time; HitAt = hitAt; Style = style; Tint = tint;
+            TwoHanded = twoHanded; ShotSpeed = shotSpeed;
         }
 
         /// <summary>초당 피해. 무기끼리 견주는 유일한 공통 축이다.</summary>
@@ -76,10 +89,19 @@ namespace Kgd.Play
                     break;
 
                 case Swing.Thrust:
+                    // **몸이 걸어 나가면 찌르기가 아니라 걷기로 읽힌다**(실제 신고).
+                    // 앞으로 내미는 것은 팔이 하고(Arms), 몸은 살짝 기울기만 한다.
                     float push = Mathf.Sin(Mathf.Clamp01(t / 0.6f) * Mathf.PI);
-                    pitch = push * 14f;
-                    yaw = push * -8f;
-                    lunge = push * 12f;
+                    pitch = push * 8f;
+                    yaw = 0f;
+                    lunge = push * 3.5f;
+                    break;
+
+                case Swing.Shoot:
+                    // 당겼다 놓는다 — 몸은 거의 안 움직이고 반동만 남는다
+                    pitch = t < 0.7f ? -4f * (t / 0.7f) : Mathf.Lerp(-4f, 6f, (t - 0.7f) / 0.3f);
+                    yaw = 0f;
+                    lunge = 0f;
                     break;
 
                 default:   // Slash
@@ -89,6 +111,53 @@ namespace Kgd.Play
                     lunge = 6f;
                     break;
             }
+        }
+
+        /// <summary>
+        /// 휘두르는 동안의 **팔 각도**. 몸통만 돌리면 무엇을 들었든 같은 동작으로 보인다 —
+        /// 창이 찌르기가 아니라 휘두르기로 읽힌 것도 이 때문이었다(실제 신고).
+        ///
+        /// 각도는 어깨 기준 X축(앞으로 내미는 방향)이다. 왼팔은 두 손 무기일 때만 따라온다.
+        /// </summary>
+        public void Arms(float t, out float right, out float left, out float grip)
+        {
+            switch (Style)
+            {
+                case Swing.Thrust:
+                    // 뒤로 당겼다 앞으로 곧게 뻗는다
+                    float p = t < 0.35f ? -Mathf.Lerp(0f, 40f, t / 0.35f)
+                                        : Mathf.Lerp(-40f, -104f, (t - 0.35f) / 0.65f);
+                    right = p; left = p * 0.72f; grip = 1f;
+                    break;
+
+                case Swing.Chop:
+                    // 머리 위로 들었다 내리찍는다
+                    right = t < 0.42f ? Mathf.Lerp(-20f, 66f, t / 0.42f)
+                                      : Mathf.Lerp(66f, -78f, (t - 0.42f) / 0.58f);
+                    left = right; grip = 1f;
+                    break;
+
+                case Swing.Shoot:
+                    // 오른팔은 시위를 당기고 왼팔은 활을 든 채 고정한다
+                    right = t < 0.7f ? Mathf.Lerp(-30f, 6f, t / 0.7f) : -34f;
+                    left = -86f; grip = 1f;
+                    break;
+
+                case Swing.Slash:
+                    right = t < 0.30f ? Mathf.Lerp(-10f, 24f, t / 0.30f)
+                          : t < 0.62f ? Mathf.Lerp(24f, -46f, (t - 0.30f) / 0.32f)
+                                      : Mathf.Lerp(-46f, -10f, (t - 0.62f) / 0.38f);
+                    left = 0f; grip = 0f;
+                    break;
+
+                default:   // Jab — 번갈아 짧게 지른다
+                    float j = Mathf.Sin(t * Mathf.PI * 2f);
+                    right = -46f * Mathf.Max(0f, j);
+                    left = -46f * Mathf.Max(0f, -j);
+                    grip = 0f;
+                    break;
+            }
+            if (!TwoHanded && Style != Swing.Shoot && Style != Swing.Jab) { left = 0f; grip = 0f; }
         }
 
         /// <summary>

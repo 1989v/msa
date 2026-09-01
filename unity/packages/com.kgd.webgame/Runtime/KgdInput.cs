@@ -68,6 +68,28 @@ namespace Kgd
         /// <summary>지금 손잡이에서 시점을 돌리는 키. 화면 안내에 그대로 쓴다.</summary>
         public static string LookHint => LeftHanded ? "방향키" : "IJKL";
 
+        /// <summary>가상패드 버튼에 적힌 이름. 게임이 부팅 때 한 번 넣는다.</summary>
+        private static string[] _padNames;
+
+        /// <summary>슬롯 1~5 의 화면 버튼 이름을 등록한다. 안 넣으면 키 이름만 나온다.</summary>
+        public static void BindPadNames(params string[] names) => _padNames = names;
+
+        /// <summary>
+        /// 「무엇을 누르라」를 사람이 읽는 말로. **이모지를 쓰지 않는다** — 구운 글꼴에
+        /// 없는 글자는 오류 없이 빈칸이 되어, 안내문에서 키만 쏙 빠진다(실제 신고).
+        ///
+        /// 터치면 화면 버튼 이름을, 아니면 실제 키를 낸다. 손잡이 배치도 따라간다.
+        /// </summary>
+        public static string ActionHint(int slot)
+        {
+            if (slot < 1 || slot > 5) return "";
+            string key = KeyOf(slot).ToString();
+            string name = _padNames != null && _padNames.Length >= slot ? _padNames[slot - 1] : null;
+            bool touch = Input.touchSupported && Input.touchCount >= 0 && KgdBridge.Instance != null;
+            if (string.IsNullOrEmpty(name)) return $"{key} 키";
+            return touch ? $"「{name}」 버튼" : $"{key} 키({name})";
+        }
+
         public static Vector2 Move
         {
             get

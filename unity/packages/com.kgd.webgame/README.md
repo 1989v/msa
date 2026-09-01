@@ -19,20 +19,43 @@
 | `Kgd.Play.KgdTraverse` | **젤다라이크의 뼈대** — 걷기·달리기·점프·등반·활공·구르기가 스태미나 하나로 |
 | `Kgd.Play.KgdChase` | 쫓아와서 때리는 것 — 인지 → 추격 → **예고** → 타격 → 후딜 |
 | `Kgd.Play.KgdOrbitCam` | 3인칭 궤도 카메라 — 지형을 두 번 피한다(바닥·벽) |
-| `Kgd.Play.KgdWeapon` | 손에 든 것의 **규칙** — 사거리·범위·속도·동작이 한 벌 |
+| `Kgd.Play.KgdWeapon` | 손에 든 것의 **규칙** — 사거리·범위·속도·동작·**팔 각도**가 한 벌. 두 손·원거리 표시 |
+| `Kgd.Play.KgdShots` | 날아가는 것 — 화살·돌·던진 창. **맞는 판정은 게임이 한다**(맞을 것의 목록이 게임마다 다르다) |
+| `Kgd.Play.KgdGuard` | 막기 — 덜 맞고 스태미나를 문다. 정면만, 마르면 풀린다 |
 | `Kgd.Play.KgdScatter` | 지형 위에 흩기 · 둘러싸기 · 고도를 난이도로 |
 | `Kgd.Play.KgdStamina` | 행동 자원 하나. 바닥나도 멈추지 않고 느려진다 |
 | `Kgd.Art.KgdMesh` · `KgdMat` · `KgdKit` | 절차 메시 · 공용 머티리얼 · Kenney 로더 |
+| `Kgd.Feel.KgdTrail` | 휘두른 자국 — 날이 지나간 자리를 리본으로. 무기가 길면 자국도 길다 |
+| `Kgd.Feel.KgdFloaters` | 떠오르는 피해 숫자 — **자리와 나이만** 들고 있고 글자는 게임이 찍는다 |
+| `Kgd.Feel.KgdImpact` | 타격감 — 히트스톱과 화면 흔들림. `Time.timeScale` 을 안 건드린다 |
+| `Kgd.Feel.KgdFlash` | 맞은 것이 번쩍인다 — `MaterialPropertyBlock` 이라 머티리얼이 안 늘어난다 |
 | `Kgd.Motion.IKgdWall` | 붙어서 오를 벽이 앞에 있나 (게임이 구현) |
 | `Kgd.Motion.IKgdGround` | 게임이 구현 — 「이 자리 바닥이 얼마나 높은가」 하나만 답한다 |
 | `Kgd.Motion.KgdLook` | **화면을 끌어 시점을 돌린다** — 가상패드를 잡은 손가락을 피한다 |
 | `Kgd.Motion.KgdBody` | **걸어 다니는 몸의 판정** — 들어갈 수 있나 · 미끄러지기 · 박힘 풀기 · 착지 |
-| `Kgd.Motion.KgdObstacles` | 장애물 기둥 격자 — 막기·올라서기·붙어 오르기가 같은 규칙에서 나온다 |
+| `Kgd.Motion.KgdObstacles` | 장애물 기둥 격자 — 막기·올라서기·붙어 오르기가 같은 규칙에서 나온다. **부술 수 있다**(`Remove`) |
 | `Kgd.Content.KgdChapters` | 챕터 아트 번들을 받아 이름으로 찾는다 (ADR-0085) |
 | `Kgd.Sound.KgdTone` | 효과음을 **파형으로 만든다** — 오디오 파일을 넣지 않는다 |
 | `Kgd.Terrain.KgdPlateau` | **고지대** — 램프 하나로만 오르는 팔각 절벽의 모양·높이 |
 | `Kgd.Terrain.KgdPlateauBuilder` | 그 고지대를 그리고 막는다 |
 | `Kgd.Terrain.IKgdTerrainSink` | 게임이 구현하는 출력구 — 사각(`Quad`)·자유 사각면(`Face`)·막는 원판·바닥색 |
+
+## 싸움을 얹을 때 — 어디에 무엇을 두나
+
+새 게임에 전투를 넣을 때 **게임이 쓸 것과 패키지가 들 것**의 경계다.
+
+| 정하는 것 | 어디 |
+|---|---|
+| 「창은 찌른다」·「도끼는 두 손」 | **패키지** (`KgdWeapon.Style` · `Arms` · `TwoHanded`) |
+| 「이 게임의 검은 22 피해」 | 게임 (`Gear` 같은 값 표) |
+| 「막으면 25% 만 들어온다」 | **패키지** (`KgdGuard.Tuning`) |
+| 「화살이 무엇에 맞나」 | 게임 — 맞을 것의 목록이 게임마다 달라서 패키지가 들면 게임 종류마다 고쳐야 한다 |
+| 「어디까지 날아갔나」 | **패키지** (`KgdShots`) |
+| 「피해 숫자를 어떤 글꼴로」 | 게임 — 패키지가 TMP 를 끌어오면 글꼴 없는 게임이 못 쓴다 |
+
+**막기에 새 버튼을 만들지 않는다.** 화면 버튼 다섯이 이미 다 차 있고, 하나를 더 두면
+이 패키지를 쓰는 다른 게임도 여섯 개를 요구하게 된다. 구르기 키를 **톡 치면 구르기,
+누르고 있으면 막기**로 갈라 쓴다 (`KgdInput.Action(2)` 을 눌린 시간으로 판정).
 
 ## 새 게임을 시작할 때
 
