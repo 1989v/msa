@@ -1819,21 +1819,16 @@
 
 /* ── 개선 제안 (ADR-0087) ─────────────────────────────────────────────
  *
- * 목록은 읽는 자리고 폼은 쓰는 자리다. 배지는 처리 단계를 색으로 갈라
- * 「읽혔는가 / 반영됐는가」를 목록에서 바로 읽게 한다.
+ * 폼 요소는 `.kh-field` · `.kh-button` 프리미티브가 그린다 (k-heritage).
+ * 여기서는 **배치와 이 판에만 있는 것**만 정한다 — 입력 상자를 다시 그리면
+ * 「입력은 아래 선 하나」라는 판단이 이 화면에서만 깨진다.
  */
 .game-suggestion-form textarea,
 .game-suggestion-edit textarea {
-  width: 100%;
-  box-sizing: border-box;
   resize: vertical;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--ko-border-subtle);
-  background: var(--ko-surface-1);
-  color: var(--ko-text-primary);
-  font: inherit;
-  font-size: 0.9375rem;
+  /* .kh-field 는 한 줄 입력 기준이라 세로 여백이 없다 — 여러 줄에는 숨 쉴 자리를 준다 */
+  padding-bottom: 10px;
+  line-height: 1.6;
 }
 
 .game-suggestion-formfoot,
@@ -1841,65 +1836,44 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
 }
 
-.game-suggestion-formfoot > :last-child {
+/* 왼쪽에 이름, 오른쪽 끝에 글자 수와 버튼 */
+.game-suggestion-formfoot .game-suggestion-count {
   margin-left: auto;
 }
 
-.game-suggestion-formfoot button,
-.game-suggestion-actions button,
-.game-suggestion-nick button {
-  min-height: 44px;          /* 조작 대상 하한 (G5-2) */
-  padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid var(--ko-border-subtle);
-  background: var(--ko-surface-1);
-  color: var(--ko-text-primary);
-  font: inherit;
-  font-size: 0.875rem;
-  cursor: pointer;
-}
-
-.game-suggestion-formfoot button[type='submit'] {
-  border-color: transparent;
-  background: var(--ko-accent-primary);
-  /* 채움용 강조색 위의 글씨 — 다크에서 surface-0 은 거의 검정이라 청자 위에서 죽는다.
-     같은 판단이 아케이드 버튼(위)에도 이미 적용돼 있다. */
-  color: var(--kh-hanji, var(--ko-surface-0));
-  font-weight: 600;
-}
-
-.game-suggestion-formfoot button:disabled,
-.game-suggestion-actions button:disabled {
-  opacity: 0.5;
-  cursor: default;
+/* 숫자만 있는 값이라 모노가 맞다 — 세로로 자리가 흔들리지 않는다 */
+.game-suggestion-count {
+  font-family: var(--kh-font-mono, inherit);
+  font-size: 0.75rem;
+  color: var(--ko-text-secondary);
 }
 
 .game-suggestion-nick {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
-.game-suggestion-nick input {
+.game-suggestion-nick label {
+  font-size: 0.8125rem;
+  color: var(--ko-text-secondary);
+  white-space: nowrap;
+}
+
+.game-suggestion-nick .kh-field {
   flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 1px solid var(--ko-border-subtle);
-  background: var(--ko-surface-1);
-  color: var(--ko-text-primary);
-  font: inherit;
+  min-width: 140px;
 }
 
 .game-suggestion-list {
   list-style: none;
-  margin: 16px 0 0;
+  margin: 18px 0 0;
   padding: 0;
 }
 
@@ -1920,9 +1894,12 @@
   font-size: 0.9375rem;
 }
 
-.game-suggestion-when {
+/* 메타데이터지만 **한글이라 모노를 걸지 않는다** — 모노는 한글 자간을 벌리고,
+   벌어진 자간은 「3일  전」처럼 읽혀 오히려 정보를 흐린다 (DESIGN.md §12 주의). */
+.game-suggestion-when,
+.game-suggestion-edited {
   color: var(--ko-text-secondary);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 /* 배지가 줄 끝에 서야 여러 건을 위아래로 훑을 때 상태만 따로 읽힌다 */
@@ -1930,42 +1907,52 @@
   margin-left: auto;
 }
 
+/* 인장의 형태를 따른다 — 각진 모서리(--kh-radius)에 작은 채움/테두리.
+   한글이라 대문자 변환과 넓은 자간은 걸지 않는다(효과가 없고 자간만 벌어진다). */
 .game-suggestion-badge {
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid currentcolor;
-  font-size: 0.75rem;
+  padding: 3px 8px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--kh-radius, 4px);
+  font-size: 0.6875rem;
   font-weight: 600;
   white-space: nowrap;
 }
 
 /* 넷 다 **글씨용** 토큰만 쓴다 — 채움용 원색(--ko-accent-primary)은 다크에서 2.03:1 이라
-   배지 글자로 쓰면 읽히지 않는다. 반려는 접수와 색이 같으므로 테두리 모양으로 가른다
-   (색 하나에 뜻을 싣지 않는다 — 라벨이 본체이고 색은 거들 뿐이다). */
-/* --ko-text-muted 는 한지 위에서 4.23:1 이라 12px 배지 글자로는 AA 미달이다(CDP 실측).
-   배지는 작고 굵어도 large text 가 아니므로 4.5:1 을 넘겨야 한다. */
+   테두리 배지의 글자로 쓰면 읽히지 않는다. 반려는 접수와 색이 같으므로 테두리 모양으로
+   가른다 (색 하나에 뜻을 싣지 않는다 — 라벨이 본체이고 색은 거들 뿐이다). */
 .game-suggestion-badge.is-open { color: var(--ko-text-secondary); }
-.game-suggestion-badge.is-reviewing { color: var(--kh-ocher-text); }
-.game-suggestion-badge.is-applied { color: var(--ko-accent-text); }
+.game-suggestion-badge.is-reviewing { color: var(--kh-ocher-text, var(--kh-ocher)); }
 .game-suggestion-badge.is-declined { color: var(--ko-text-secondary); border-style: dashed; }
 
+/* 반영만 채운다 — 붉은 것은 아껴 쓰고(k-heritage), 이 판의 목적지가 거기다.
+   채움 위 글씨는 한지로 고정한다: 아케이드의 송연 위에서 연지 글자가 죽는다
+   (.games-rail-today 와 같은 판단). */
+.game-suggestion-badge.is-applied {
+  border-color: var(--ko-accent-primary);
+  background: var(--ko-accent-primary);
+  color: var(--kh-hanji, var(--ko-surface-0));
+}
+
 .game-suggestion-body {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
   font-size: 0.9375rem;
-  line-height: 1.6;
+  line-height: 1.7;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
+/* 답글 줄기 — 왼쪽 괘선 하나로 묶는다. 그림자를 쓰지 않는 지면이라
+   깊이는 선과 여백이 만든다 */
 .game-suggestion-replies {
   list-style: none;
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   padding: 0 0 0 14px;
-  border-left: 2px solid var(--ko-border-subtle);
+  border-left: 1px solid var(--ko-border-default);
 }
 
 .game-suggestion-reply + .game-suggestion-reply {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .game-suggestion-reply-who {
@@ -1974,7 +1961,7 @@
   margin-right: 8px;
 }
 
-/* 운영자 답변은 색으로 갈린다 — 닉네임을 「운영자」로 지어도 이 색은 따라오지 않는다 */
+/* 운영자 답변은 액션색으로 갈린다 — 닉네임을 「운영자」로 지어도 이 색은 따라오지 않는다 */
 .game-suggestion-reply.is-operator .game-suggestion-reply-who {
   color: var(--ko-accent-text);
 }
@@ -1982,7 +1969,7 @@
 .game-suggestion-reply-body {
   margin: 4px 0 0;
   font-size: 0.9375rem;
-  line-height: 1.6;
+  line-height: 1.7;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

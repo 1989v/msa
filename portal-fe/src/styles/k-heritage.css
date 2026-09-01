@@ -363,13 +363,17 @@
   border-color: var(--ko-border-strong);
 }
 
-:root[data-surface='heritage'][data-theme='dark'] .kh-button {
+/* `:not(.kh-button-ghost)` 이 있어야 유령 버튼이 다크에서 채워지지 않는다 — 이 규칙의
+   명세도(0,3,0)가 `.kh-button-ghost`(0,1,0)를 이겨, 채움 액션과 보조 액션이 같은 청자
+   덩어리로 보였다. 지금까지 안 드러난 것은 기존 화면들이 ghost 를 자기 레이아웃 클래스와
+   짝지어(`deal-chip`·`rank-row__nav`) `.kh-button` 없이 썼기 때문이다. */
+:root[data-surface='heritage'][data-theme='dark'] .kh-button:not(.kh-button-ghost) {
   background: var(--kh-celadon);
   border-color: var(--kh-celadon);
   color: var(--kh-hanji);
 }
 
-:root[data-surface='heritage'][data-theme='dark'] .kh-button:hover {
+:root[data-surface='heritage'][data-theme='dark'] .kh-button:not(.kh-button-ghost):hover {
   background: #37607e;
   border-color: #37607e;
 }

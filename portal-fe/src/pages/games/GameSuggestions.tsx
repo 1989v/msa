@@ -18,6 +18,10 @@ import {
  * 읽기는 누구나, 쓰기는 로그인해야 한다. 본문·처리 상태·답변이 전부 공개라
  * 「이 제안이 어떻게 됐는지」를 남이 봐도 알 수 있다.
  *
+ * 입력·버튼·배지는 `.kh-*` 프리미티브를 그대로 쓴다 — 입력에 상자를 두르면 지면이 서식처럼
+ * 보인다는 것이 이 디자인의 판단이고(`docs/design/k-heritage.html`), 화면마다 자기 폼을
+ * 그리면 그 판단이 화면 수만큼 갈린다.
+ *
  * 표시 이름은 랭킹에 쓰는 것과 같은 값(`game_nickname`)이다. 아직 없으면 회원 닉네임을
  * 받아 채우고, 그것도 못 받으면 그 자리에서 입력받는다 — 제안을 쓰려던 사람을
  * 다른 화면으로 보내지 않는다.
@@ -196,6 +200,7 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
         <div className="game-suggestion-nick">
           <label htmlFor="game-suggestion-nick-input">{t('표시할 이름', 'Display name')}</label>
           <input
+            className="kh-field"
             id="game-suggestion-nick-input"
             type="text"
             maxLength={16}
@@ -203,7 +208,7 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
             onChange={(e) => setNicknameDraft(e.target.value)}
             placeholder={t('2~16자', '2-16 chars')}
           />
-          <button type="button" onClick={() => setNickname(setGameNickname(nicknameDraft))}>
+          <button className="kh-button" type="button" onClick={() => setNickname(setGameNickname(nicknameDraft))}>
             {t('저장', 'Save')}
           </button>
         </div>
@@ -215,9 +220,12 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
             void submit();
           }}
         >
+          {/* 500자 상한의 짧은 글이라 두 줄로 연다 — 첫 화면의 큰 빈 칸은 쓰라는 신호가
+              아니라 채워야 할 분량으로 읽힌다. 길게 쓰면 세로로 늘릴 수 있다. */}
           <textarea
+            className="kh-field"
             aria-label={t('개선 제안 내용', 'Your suggestion')}
-            rows={3}
+            rows={2}
             maxLength={MAX_BODY}
             value={body}
             onChange={(e) => setBody(e.target.value)}
@@ -225,9 +233,9 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
           />
           <div className="game-suggestion-formfoot">
             {/* 이름은 랭킹과 같은 값이라 여기서 다시 묻지 않는다 — 무엇으로 올라가는지만 알린다 */}
-            <span className="game-stat-sub">{nickname}</span>
-            <span className="game-stat-sub">{body.trim().length}/{MAX_BODY}</span>
-            <button type="submit" disabled={busy || body.trim().length < MIN_BODY}>
+            <span className="game-suggestion-who">{nickname}</span>
+            <span className="game-suggestion-count">{body.trim().length}/{MAX_BODY}</span>
+            <button className="kh-button" type="submit" disabled={busy || body.trim().length < MIN_BODY}>
               {t('제안 등록', 'Submit')}
             </button>
           </div>
@@ -248,7 +256,7 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
                 <span className="game-suggestion-who">{item.nickname}</span>
                 <span className="game-suggestion-when">{when(item.createdAt, lang)}</span>
                 {item.edited && (
-                  <span className="game-stat-sub">{t('수정됨', 'edited')}</span>
+                  <span className="game-suggestion-edited">{t('수정됨', 'edited')}</span>
                 )}
                 <StatusBadge status={item.status} lang={lang} />
               </div>
@@ -256,6 +264,7 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
               {editing === item.id ? (
                 <div className="game-suggestion-edit">
                   <textarea
+                    className="kh-field"
                     aria-label={t('제안 수정', 'Edit suggestion')}
                     rows={3}
                     maxLength={MAX_BODY}
@@ -264,13 +273,14 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
                   />
                   <div className="game-suggestion-actions">
                     <button
+                      className="kh-button"
                       type="button"
                       disabled={busy || editBody.trim().length < MIN_BODY}
                       onClick={() => void saveEdit(item.id)}
                     >
                       {t('저장', 'Save')}
                     </button>
-                    <button type="button" onClick={() => setEditing(null)}>
+                    <button className="kh-button kh-button-ghost" type="button" onClick={() => setEditing(null)}>
                       {t('취소', 'Cancel')}
                     </button>
                   </div>
@@ -284,6 +294,7 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
               {replyingTo === item.id && (
                 <div className="game-suggestion-edit">
                   <textarea
+                    className="kh-field"
                     aria-label={t('답글', 'Reply')}
                     rows={2}
                     maxLength={MAX_REPLY}
@@ -292,13 +303,14 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
                   />
                   <div className="game-suggestion-actions">
                     <button
+                      className="kh-button"
                       type="button"
                       disabled={busy || replyBody.trim().length === 0}
                       onClick={() => void sendReply(item.id)}
                     >
                       {t('답글 등록', 'Reply')}
                     </button>
-                    <button type="button" onClick={() => setReplyingTo(null)}>
+                    <button className="kh-button kh-button-ghost" type="button" onClick={() => setReplyingTo(null)}>
                       {t('취소', 'Cancel')}
                     </button>
                   </div>
@@ -309,6 +321,7 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
               {item.mine && editing !== item.id && replyingTo !== item.id && (
                 <div className="game-suggestion-actions">
                   <button
+                    className="kh-button kh-button-ghost"
                     type="button"
                     onClick={() => {
                       setEditing(item.id);
@@ -317,7 +330,7 @@ export function GameSuggestionsPanel({ slug, lang, loggedIn }: {
                   >
                     {t('수정', 'Edit')}
                   </button>
-                  <button type="button" onClick={() => setReplyingTo(item.id)}>
+                  <button className="kh-button kh-button-ghost" type="button" onClick={() => setReplyingTo(item.id)}>
                     {t('답글', 'Reply')}
                   </button>
                 </div>
