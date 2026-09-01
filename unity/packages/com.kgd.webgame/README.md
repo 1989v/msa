@@ -18,7 +18,9 @@
 | `Kgd.KgdSave` | 서버 세이브 읽기/쓰기 |
 | `Kgd.Motion.IKgdGround` | 게임이 구현 — 「이 자리 바닥이 얼마나 높은가」 하나만 답한다 |
 | `Kgd.Motion.KgdBody` | **걸어 다니는 몸의 판정** — 들어갈 수 있나 · 미끄러지기 · 박힘 풀기 · 착지 |
-| `Kgd.Motion.KgdObstacles` | 장애물 기둥 격자 — 막기와 올라서기가 같은 규칙에서 나온다 |
+| `Kgd.Motion.KgdObstacles` | 장애물 기둥 격자 — 막기·올라서기·붙어 오르기가 같은 규칙에서 나온다 |
+| `Kgd.Content.KgdChapters` | 챕터 아트 번들을 받아 이름으로 찾는다 (ADR-0085) |
+| `Kgd.Sound.KgdTone` | 효과음을 **파형으로 만든다** — 오디오 파일을 넣지 않는다 |
 | `Kgd.Terrain.KgdPlateau` | **고지대** — 램프 하나로만 오르는 팔각 절벽의 모양·높이 |
 | `Kgd.Terrain.KgdPlateauBuilder` | 그 고지대를 그리고 막는다 |
 | `Kgd.Terrain.IKgdTerrainSink` | 게임이 구현하는 출력구 — 사각(`Quad`)·자유 사각면(`Face`)·막는 원판·바닥색 |

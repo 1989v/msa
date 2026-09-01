@@ -49,6 +49,35 @@ namespace Kgd.Motion
             return top;
         }
 
+        /// <summary>
+        /// 붙어서 오를 수 있는 기둥이 앞에 있나. **기둥도 벽이다** — 지형만 보고
+        /// 판정하면 세워 둔 탑을 오르지 못해 「보이는데 못 가는 것」이 된다.
+        /// </summary>
+        public bool WallAt(Vector3 p, float reach, out float top, out Vector3 inward)
+        {
+            top = 0f;
+            inward = Vector3.zero;
+            float best = float.MaxValue;
+            int cx = Mathf.FloorToInt(p.x / _cell), cz = Mathf.FloorToInt(p.z / _cell);
+            for (int dx = -1; dx <= 1; dx++)
+            for (int dz = -1; dz <= 1; dz++)
+            {
+                if (!_grid.TryGetValue(Key(cx + dx, cz + dz), out var bucket)) continue;
+                foreach (int i in bucket)
+                {
+                    var (at, r, t) = _items[i];
+                    if (t <= p.y + 0.5f) continue;              // 이미 그 위다
+                    float ddx = at.x - p.x, ddz = at.z - p.z;
+                    float d = Mathf.Sqrt(ddx * ddx + ddz * ddz) - r;
+                    if (d > reach || d >= best) continue;
+                    best = d;
+                    top = t;
+                    inward = new Vector3(ddx, 0f, ddz).normalized;
+                }
+            }
+            return best < float.MaxValue;
+        }
+
         private static int Key(int x, int z) => (x + 4096) * 8192 + (z + 4096);
     }
 }
