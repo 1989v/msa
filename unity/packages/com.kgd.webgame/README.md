@@ -19,6 +19,8 @@
 | `Kgd.Play.KgdTraverse` | **젤다라이크의 뼈대** — 걷기·달리기·점프·등반·활공·구르기가 스태미나 하나로 |
 | `Kgd.Play.KgdChase` | 쫓아와서 때리는 것 — 인지 → 추격 → **예고** → 타격 → 후딜 |
 | `Kgd.Play.KgdOrbitCam` | 3인칭 궤도 카메라 — 지형을 두 번 피한다(바닥·벽) |
+| `Kgd.Play.KgdWeapon` | 손에 든 것의 **규칙** — 사거리·범위·속도·동작이 한 벌 |
+| `Kgd.Play.KgdScatter` | 지형 위에 흩기 · 둘러싸기 · 고도를 난이도로 |
 | `Kgd.Play.KgdStamina` | 행동 자원 하나. 바닥나도 멈추지 않고 느려진다 |
 | `Kgd.Art.KgdMesh` · `KgdMat` · `KgdKit` | 절차 메시 · 공용 머티리얼 · Kenney 로더 |
 | `Kgd.Motion.IKgdWall` | 붙어서 오를 벽이 앞에 있나 (게임이 구현) |
@@ -33,6 +35,19 @@
 | `Kgd.Terrain.IKgdTerrainSink` | 게임이 구현하는 출력구 — 사각(`Quad`)·자유 사각면(`Face`)·막는 원판·바닥색 |
 
 ## 새 게임을 시작할 때
+
+```
+Unity -batchmode -quit -executeMethod Kgd.Editor.Scaffold.CreateStarter
+Unity -batchmode -quit -executeMethod Kgd.Editor.Scaffold.CreateMainScene
+```
+
+`StarterEntry.cs` 가 나온다 — **평지 하나 · 기둥 여덟 · 쫓아오는 것 하나**로 걷기·달리기·
+점프·기어오르기·활공·구르기·시점이 처음부터 돈다. 거기서 규칙만 바꾸면 새 게임이 된다.
+
+씬 골격만 만들어 두면 다음 사람이 「무엇부터 붙이나」에서 막힌다. 그리고 이 생성기가
+**패키지의 두 번째 사용자**다 — 하나만 쓰는 동안은 「쓸 수 있다」가 주장이지만,
+여기서 컴파일되면 그건 확인이다.
+
 
 ```csharp
 sealed class MyWorld : IKgdGround, IKgdWall { … }          // 지형은 게임이 만든다
