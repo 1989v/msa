@@ -71,6 +71,7 @@ UseCase 인터페이스 31 · Port 6. 페이지네이션은 도메인 `Paging/Pa
 ## 글을 쓸 때
 
 문체·구조 규칙과 발행 전 lint → `docs/conventions/blog-writing.md`.
+그림은 본문에 **인라인 SVG** 로 넣는다 → `docs/conventions/blog-diagram.md` (스킬 `/blog-diagram`).
 **본문의 원본은 DB 라 빌드가 잡을 수 없다** — `scripts/lint-blog-post.py draft.md` 가 유일한 게이트다.
 
 한글은 hex 로 넣는다 (`CONVERT(0x… USING utf8mb4)`). `oci-mysql` 경유 접속의 클라이언트
@@ -93,7 +94,10 @@ charset 이 latin1 이라 리터럴로 넣으면 조용히 이중 인코딩된�
 를 페이지 메타로 갈고 `#root` 에 크롤러용 본문을 넣는다 (빌드타임 프리렌더와 같은 계약).
 
 - 셸 캐시 5분, 실패 시 마지막 정상본, 그것도 없으면 SPA 없는 최소 HTML
-- 서버 렌더 마크다운은 raw HTML 을 **이스케이프**한다 (`escapeHtml(true)`)
+- 서버 렌더 마크다운은 raw HTML 을 **버린다** (`escapeHtml(true)` + `HtmlBlock`/`HtmlInline` 을
+  아무것도 내지 않는 `NodeRenderer`). 이스케이프만 하면 본문 다이어그램의 인라인 SVG 가
+  `&lt;svg viewBox=…` 마크업 텍스트로 색인되는 본문에 섞인다 — 그림은 SPA 가 그리고,
+  그림이 말하는 것은 아래 캡션 줄이 마크다운으로 들고 있다 (`docs/conventions/blog-diagram.md`)
 - `blog/feature` 의 `BlogSeoCopy` 는 `portal-fe/src/seo/copy.mjs` 와 **쌍**이다 — 문구는 함께 고친다
 - NetworkPolicy `18-allow-blog-shell-fetch` 가 없으면 셸 페치가 막혀 전부 최소 HTML 로 떨어진다
 

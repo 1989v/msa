@@ -449,6 +449,15 @@
   border-radius: var(--kh-radius, 4px);
 }
 
+/* 본문 다이어그램 (docs/conventions/blog-diagram.md). 크기는 viewBox 가 정하고
+   여기서는 폭만 가둔다 — 좁은 화면에서 가로 스크롤이 생기지 않게 */
+.blog-body svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: var(--ko-space-5) auto var(--ko-space-2);
+}
+
 .blog-body blockquote {
   margin: var(--ko-space-4) 0;
   padding: var(--ko-space-2) var(--ko-space-4);

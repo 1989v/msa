@@ -72,11 +72,31 @@ class BlogMetaRendererTest : BehaviorSpec({
     }
 
     given("본문에 raw HTML 이 섞여 있을 때") {
-        val html = renderer.postPage(shell, detail(body = "<script>alert(1)</script> 안녕"))
+        val html = renderer.postPage(shell, detail(body = "<script>alert(1)</script>\n\n안녕"))
 
-        then("이스케이프한다 — 크롤러용 사본에 실행 경로를 만들지 않는다") {
-            html shouldContain "&lt;script&gt;alert(1)&lt;/script&gt;"
+        then("버린다 — 실행 경로도, 마크업 텍스트도 남기지 않는다") {
             html.contains("<script>alert(1)</script>") shouldBe false
+            html shouldNotContain "&lt;script&gt;"
+            html shouldContain "안녕"
+        }
+    }
+
+    given("본문에 다이어그램 인라인 SVG 가 있을 때") {
+        val body = """
+            앞 문장.
+
+            <svg viewBox="0 0 200 60" role="img" aria-label="A 가 B 에 쓴다">
+              <rect x="1" y="1" width="9" height="9" fill="none" stroke="currentColor"/>
+            </svg>
+
+            그림: A 가 B 에 쓴다.
+        """.trimIndent()
+        val html = renderer.postPage(shell, detail(body = body))
+
+        then("그림은 빠지고 캡션만 남는다 — 색인되는 본문에 마크업이 새지 않는다") {
+            html shouldNotContain "viewBox"
+            html shouldNotContain "&lt;svg"
+            html shouldContain "그림: A 가 B 에 쓴다."
         }
     }
 

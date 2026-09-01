@@ -64,6 +64,8 @@ scripts/lint-blog-post.py draft.md --strict   # WARN 도 실패로
 | W3 | h2 구간당 산문 8문장 이하 |
 
 코드 블록 · 표 · 인용 · 목록은 산문에서 제외한다. 규칙은 산문에만 건다.
+줄 첫머리가 태그인 **raw HTML 블록(다이어그램 SVG)도 제외**한다 — 빈 줄에서 끝난다.
+그림 아래 캡션 줄은 산문이라 규칙이 그대로 걸린다 → `blog-diagram.md`.
 
 ## 5. 초안 형식
 
@@ -95,6 +97,7 @@ INSERT INTO blog_post (..., title, body) VALUES (..., CONVERT(0x<hex> USING utf8
 
 ## 관련
 
+- `docs/conventions/blog-diagram.md` — 본문에 그림 넣기 (인라인 SVG · 캡션 · 렌더 제약)
 - `blog/CLAUDE.md` — 도메인 규칙 (권한 · 상태 전이 · 슬러그 불변)
 - `docs/adr/ADR-0072-blog-platform.md` — 플랫폼 결정
 - `portal-fe/src/seo/copy.mjs` · `blog/feature/.../BlogSeoCopy.kt` — 호스트 단위 메타 문구 (글 단위 아님)

@@ -4,7 +4,11 @@ import com.kgd.blog.application.post.dto.BlogAuthorSpace
 import com.kgd.blog.application.post.dto.BlogCrumb
 import com.kgd.blog.application.post.dto.BlogPostDetail
 import com.kgd.blog.application.post.dto.BlogPostSummary
+import org.commonmark.node.HtmlBlock
+import org.commonmark.node.HtmlInline
+import org.commonmark.node.Node
 import org.commonmark.parser.Parser
+import org.commonmark.renderer.NodeRenderer
 import org.commonmark.renderer.html.HtmlRenderer
 import org.springframework.beans.factory.annotation.Value
 import com.kgd.blog.application.post.port.BlogPageRenderPort
@@ -27,10 +31,24 @@ class BlogMetaRenderer(
     private val parser = Parser.builder().build()
 
     /**
-     * 저자가 쓴 raw HTML 은 이스케이프한다. 이 사본은 SPA 가 마운트되면 교체되는 크롤러용이라
-     * 표현이 조금 달라도 무방하고, 그 대가로 XSS 경로가 통째로 사라진다.
+     * 저자가 쓴 raw HTML 은 크롤러 사본에서 **버린다**. 이스케이프하면 XSS 경로는 사라지지만
+     * 다이어그램 인라인 SVG 가 `&lt;svg viewBox=…` 마크업 텍스트로 색인되는 본문에 섞인다
+     * (`docs/conventions/blog-diagram.md`). 그림은 SPA 가 마운트되면 그려지고, 그림이
+     * 말하는 것은 바로 아래 캡션 줄이 마크다운으로 들고 있어 크롤러도 읽는다.
+     *
+     * `escapeHtml` 은 그대로 둔다 — 여기서 다루지 않는 노드가 생겨도 raw 로 새지 않는다.
      */
-    private val renderer = HtmlRenderer.builder().escapeHtml(true).build()
+    private val renderer = HtmlRenderer.builder()
+        .escapeHtml(true)
+        .nodeRendererFactory {
+            object : NodeRenderer {
+                override fun getNodeTypes(): Set<Class<out Node>> =
+                    setOf(HtmlBlock::class.java, HtmlInline::class.java)
+
+                override fun render(node: Node) = Unit
+            }
+        }
+        .build()
 
     override fun postPage(shell: String?, detail: BlogPostDetail): String {
         val post = detail.post

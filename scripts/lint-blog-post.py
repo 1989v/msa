@@ -58,6 +58,8 @@ HEADING_RE = re.compile(r"^\s*#{1,6}\s")
 TABLE_RE = re.compile(r"^\s*\|")
 QUOTE_RE = re.compile(r"^\s*>")
 LIST_RE = re.compile(r"^\s*([-*+]|\d+\.)\s")
+# 줄 첫머리의 태그로 시작하는 raw HTML 블록 (다이어그램 SVG). 빈 줄에서 끝난다.
+HTML_BLOCK_RE = re.compile(r"^\s{0,3}</?[A-Za-z]")
 INLINE_CODE_RE = re.compile(r"`[^`]*`")
 LINK_RE = re.compile(r"\[([^\]]*)\]\([^)]*\)")
 
@@ -123,6 +125,7 @@ def prose_blocks(body: str) -> tuple[list[list[str]], list[str], int, int]:
     prose_lines = 0
     content_lines = 0
     in_fence = False
+    in_html = False
 
     for raw in body.splitlines():
         line = raw.rstrip()
@@ -136,6 +139,17 @@ def prose_blocks(body: str) -> tuple[list[list[str]], list[str], int, int]:
             continue
 
         if not line.strip():
+            in_html = False
+            if current:
+                paragraphs.append(current)
+                current = []
+            continue
+
+        # raw HTML 블록은 코드 · 표와 같은 비산문이다. 문장 규칙을 걸면 SVG 한 줄이
+        # 596자짜리 문장으로 잡혀 그림을 넣은 글이 통과할 수 없다.
+        if in_html or HTML_BLOCK_RE.match(line):
+            in_html = True
+            content_lines += 1
             if current:
                 paragraphs.append(current)
                 current = []
