@@ -115,7 +115,7 @@ namespace Kgd.Play
             {
                 case State.Ground: Walk(dt, wish, walls); break;
                 case State.Air: Air(dt, wish, walls); break;
-                case State.Climb: Climb(dt, wish, walls); break;
+                case State.Climb: Climb(dt, wish, walls, ground); break;
                 case State.Glide: Glide(dt, wish); break;
                 case State.Roll: Roll(dt); break;
                 case State.Busy: _vel = Vector3.zero; break;
@@ -194,7 +194,7 @@ namespace Kgd.Play
             Face(inward);
         }
 
-        private void Climb(float dt, in Wish wish, IKgdWall walls)
+        private void Climb(float dt, in Wish wish, IKgdWall walls, IKgdGround ground)
         {
             if (walls == null ||
                 !walls.WallAt(Pos, _t.Radius + _t.ClimbReach + 0.3f, out float topY, out var inward))
@@ -209,6 +209,15 @@ namespace Kgd.Play
             _vel = wish.Move.sqrMagnitude < 0.01f
                  ? Vector3.zero
                  : (Vector3.up * up + side * lat).normalized * _t.ClimbSpeed;
+
+            // **벽면에 붙여 둔다.** 등반 중에는 수평 판정을 안 태우므로, 그냥 두면
+            // 기둥 안으로 흘러들어 파묻힌 채 올라간다(실제 신고). 몸이 solid 안에
+            // 들어갔으면 벽 바깥으로 밀어낸다.
+            for (int i = 0; i < 6; i++)
+            {
+                if (ground.HeightAt(Pos) <= Pos.y + 0.1f) break;
+                Pos -= inward * (_t.Radius * 0.5f);
+            }
 
             if (Pos.y + _t.Height * 0.6f >= topY)
             {

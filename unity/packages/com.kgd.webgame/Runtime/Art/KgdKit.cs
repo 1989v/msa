@@ -97,6 +97,9 @@ namespace Kgd.Art
             var mat = new Material(Stylized) { name = key };
             var tex = Resources.Load<Texture2D>(CharacterKit + skin);
             if (tex != null) mat.SetTexture("_MainTex", tex);
+            // **조용히 하얘지는 것을 막는다.** 못 찾아도 머티리얼은 멀쩡히 만들어지고
+            // 캐릭터는 단색 덩어리가 된다 — 오류가 없으니 스킨 문제인 줄을 모른다
+            else Debug.LogError($"스킨 텍스처를 못 찾았다: {CharacterKit + skin}");
             mat.SetColor("_Tint", tint ?? Color.white);
             mat.SetFloat("_VColor", 0f);
             _materials[key] = mat;
