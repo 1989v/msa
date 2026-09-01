@@ -54,27 +54,48 @@ mermaid 에 렌더를 맡기면 타입을 공짜로 얻는다. 그 비용을 헤
 
 ## 흐름도
 
-방향 4종, 상자 3종, 실선과 점선, 간선 라벨, 강조 1종을 받는다.
+방향 4종, 상자 3종, 실선과 점선, 간선 라벨, 강조 1종을 받는다. 순환이 있어도 배치가 무너지지 않는다.
 
 ````markdown
 ```mermaid
-%% caption: 주문은 결제 승인 뒤에 재고를 잡는다
-flowchart LR
-  주문 -->|승인| 결제
-  결제 --> 재고예약
-  결제 -.->|거절| 취소
-  class 재고예약 emphasis
+%% caption: 주문은 결제와 재고를 모두 통과해야 출고된다
+flowchart TD
+  주문접수 --> 검증{입력 검증}
+  검증 -->|통과| 결제요청
+  검증 -.->|실패| 반려[반려 안내]
+  결제요청 --> 승인{승인 여부}
+  승인 -->|승인| 재고예약
+  승인 -.->|거절| 재시도{재시도 가능}
+  재시도 -->|가능| 결제요청
+  재시도 -.->|불가| 반려
+  재고예약 --> 부족{재고 충분}
+  부족 -->|충분| 출고지시
+  부족 -.->|부족| 입고대기[입고 대기]
+  입고대기 --> 재고예약
+  출고지시 --> 완료[주문 완료]
+  class 출고지시 emphasis
 ```
 ````
 
 ```mermaid
-%% caption: 주문은 결제 승인 뒤에 재고를 잡는다
-flowchart LR
-  주문 -->|승인| 결제
-  결제 --> 재고예약
-  결제 -.->|거절| 취소
-  class 재고예약 emphasis
+%% caption: 주문은 결제와 재고를 모두 통과해야 출고된다
+flowchart TD
+  주문접수 --> 검증{입력 검증}
+  검증 -->|통과| 결제요청
+  검증 -.->|실패| 반려[반려 안내]
+  결제요청 --> 승인{승인 여부}
+  승인 -->|승인| 재고예약
+  승인 -.->|거절| 재시도{재시도 가능}
+  재시도 -->|가능| 결제요청
+  재시도 -.->|불가| 반려
+  재고예약 --> 부족{재고 충분}
+  부족 -->|충분| 출고지시
+  부족 -.->|부족| 입고대기[입고 대기]
+  입고대기 --> 재고예약
+  출고지시 --> 완료[주문 완료]
+  class 출고지시 emphasis
 ```
+
 
 ## 순차도
 
@@ -82,23 +103,44 @@ flowchart LR
 
 ````markdown
 ```mermaid
-%% caption: 승인은 두 번의 왕복으로 끝난다
+%% caption: 주문 생성은 세 시스템을 왕복한다
 sequenceDiagram
+  participant 클라이언트
+  participant 게이트웨이
+  participant 주문
+  participant 결제
+  participant 재고
+  클라이언트->>게이트웨이: 주문 생성 요청
+  게이트웨이->>주문: 주문 초안 저장
   주문->>결제: 승인 요청
   결제-->>주문: 승인 코드
   주문->>재고: 예약 요청
   재고-->>주문: 예약 완료
+  주문-->>게이트웨이: 주문 번호
+  게이트웨이-->>클라이언트: 201 Created
+  Note over 재고: 예약은 15분 후 자동 해제
 ```
 ````
 
 ```mermaid
-%% caption: 승인은 두 번의 왕복으로 끝난다
+%% caption: 주문 생성은 세 시스템을 왕복한다
 sequenceDiagram
+  participant 클라이언트
+  participant 게이트웨이
+  participant 주문
+  participant 결제
+  participant 재고
+  클라이언트->>게이트웨이: 주문 생성 요청
+  게이트웨이->>주문: 주문 초안 저장
   주문->>결제: 승인 요청
   결제-->>주문: 승인 코드
   주문->>재고: 예약 요청
   재고-->>주문: 예약 완료
+  주문-->>게이트웨이: 주문 번호
+  게이트웨이-->>클라이언트: 201 Created
+  Note over 재고: 예약은 15분 후 자동 해제
 ```
+
 
 ## 상태도
 
@@ -106,23 +148,40 @@ sequenceDiagram
 
 ````markdown
 ```mermaid
-%% caption: 주문 상태는 결제와 출고를 거쳐 완료된다
+%% caption: 주문 상태는 취소와 환불로 되돌아갈 수 있다
 stateDiagram-v2
-  [*] --> PENDING
+  [*] --> DRAFT
+  DRAFT --> PENDING: 주문 확정
   PENDING --> PAID: 승인 완료
+  PENDING --> CANCELLED: 사용자 취소
   PAID --> SHIPPED: 출고
-  SHIPPED --> [*]
+  PAID --> REFUNDING: 환불 요청
+  REFUNDING --> REFUNDED: 환불 완료
+  SHIPPED --> DELIVERED: 배송 완료
+  DELIVERED --> REFUNDING: 반품 접수
+  CANCELLED --> [*]
+  REFUNDED --> [*]
+  DELIVERED --> [*]
 ```
 ````
 
 ```mermaid
-%% caption: 주문 상태는 결제와 출고를 거쳐 완료된다
+%% caption: 주문 상태는 취소와 환불로 되돌아갈 수 있다
 stateDiagram-v2
-  [*] --> PENDING
+  [*] --> DRAFT
+  DRAFT --> PENDING: 주문 확정
   PENDING --> PAID: 승인 완료
+  PENDING --> CANCELLED: 사용자 취소
   PAID --> SHIPPED: 출고
-  SHIPPED --> [*]
+  PAID --> REFUNDING: 환불 요청
+  REFUNDING --> REFUNDED: 환불 완료
+  SHIPPED --> DELIVERED: 배송 완료
+  DELIVERED --> REFUNDING: 반품 접수
+  CANCELLED --> [*]
+  REFUNDED --> [*]
+  DELIVERED --> [*]
 ```
+
 
 ## ER 다이어그램
 
@@ -130,19 +189,30 @@ stateDiagram-v2
 
 ````markdown
 ```mermaid
-%% caption: 주문 하나가 여러 항목을 가진다
+%% caption: 주문 한 건이 여러 항목과 결제를 갖는다
 erDiagram
-  ORDER ||--o{ ITEM : contains
-  ITEM }o--|| PRODUCT : refers
+  MEMBER ||--o{ ORDER : places
+  ORDER ||--o{ ORDER_ITEM : contains
+  ORDER_ITEM }o--|| PRODUCT : refers
+  ORDER ||--|| PAYMENT : settles
+  PRODUCT }o--|| CATEGORY : belongs
+  MEMBER ||--o{ ADDRESS : owns
+  ORDER }o--|| ADDRESS : ships
 ```
 ````
 
 ```mermaid
-%% caption: 주문 하나가 여러 항목을 가진다
+%% caption: 주문 한 건이 여러 항목과 결제를 갖는다
 erDiagram
-  ORDER ||--o{ ITEM : contains
-  ITEM }o--|| PRODUCT : refers
+  MEMBER ||--o{ ORDER : places
+  ORDER ||--o{ ORDER_ITEM : contains
+  ORDER_ITEM }o--|| PRODUCT : refers
+  ORDER ||--|| PAYMENT : settles
+  PRODUCT }o--|| CATEGORY : belongs
+  MEMBER ||--o{ ADDRESS : owns
+  ORDER }o--|| ADDRESS : ships
 ```
+
 
 ## 클래스 다이어그램
 
@@ -150,31 +220,56 @@ erDiagram
 
 ````markdown
 ```mermaid
-%% caption: 주문은 결제 수단을 합성으로 갖는다
+%% caption: 결제 수단은 공통 인터페이스를 구현한다
 classDiagram
+  class Payment {
+    +Long id
+    +Money amount
+    +approve()
+  }
+  class CardPayment {
+    +String cardNo
+    +approve()
+  }
+  class PointPayment {
+    +Long balance
+    +approve()
+  }
   class Order {
     +Long id
     +pay()
   }
-  class Payment {
-    +approve()
-  }
+  Payment <|-- CardPayment
+  Payment <|-- PointPayment
   Order --> Payment : uses
 ```
 ````
 
 ```mermaid
-%% caption: 주문은 결제 수단을 합성으로 갖는다
+%% caption: 결제 수단은 공통 인터페이스를 구현한다
 classDiagram
+  class Payment {
+    +Long id
+    +Money amount
+    +approve()
+  }
+  class CardPayment {
+    +String cardNo
+    +approve()
+  }
+  class PointPayment {
+    +Long balance
+    +approve()
+  }
   class Order {
     +Long id
     +pay()
   }
-  class Payment {
-    +approve()
-  }
+  Payment <|-- CardPayment
+  Payment <|-- PointPayment
   Order --> Payment : uses
 ```
+
 
 ## 표기는 관대하게 받는다
 

@@ -17,8 +17,14 @@ describe('renderMarkdown — 다이어그램', () => {
     expect(html).toContain('그림: 주문은 결제 뒤에 재고를 잡는다');
   });
 
-  it('토큰 색을 쓴다', () => {
-    expect(html).toContain('var(--ko-accent-primary)');
+  // 옵션을 넘기지 않으므로 fencesvg 가 페이지에서 팔레트를 감지한다. jsdom 은
+  // 링크도 테두리도 없는 빈 문서라 감지가 아무것도 못 찾고 기본값으로 떨어지는데,
+  // 그 경우에도 색은 반드시 `var(--fs-*, …)` 참조로 나가야 한다 — 그래야 사이트가
+  // CSS 로 덮어쓸 수 있고 테마 토글도 따라간다. 하드코딩된 색이 새면 여기서 잡힌다.
+  it('색을 참조로 내보낸다 — 하드코딩된 hex 가 없다', () => {
+    expect(html).toContain('var(--fs-');
+    const svg = html.slice(html.indexOf('<svg'), html.indexOf('</svg>'));
+    expect(svg).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
   it('다이어그램이 없는 글은 그대로다', () => {
