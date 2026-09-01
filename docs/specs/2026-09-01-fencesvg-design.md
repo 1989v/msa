@@ -108,11 +108,13 @@ inlineDiagrams(markdown: string, opts?: Options): string
 type Result = { svg: string | null; caption: string | null; warnings: string[] };
 
 type Options = {
-  profile?: 'sanitized' | 'permissive';  // 기본 'sanitized'
-  accent?: string;                       // 강조 요소의 색. 기본 'currentColor'
-  idPrefix?: string;                     // renderDiagram 을 직접 부를 때만 필요
+  accent?: string;     // 강조 요소의 색. 기본 'currentColor'
+  idPrefix?: string;   // renderDiagram 을 직접 부를 때만 필요
 };
 ```
+
+`profile` 을 옵션으로 두지 않는다. `permissive` 를 쓸 소비자가 아직 없어서, 넣으면
+**구현이 없는 인터페이스**가 된다. `sanitized` 규칙(§9)은 출력 계층이 항상 지킨다.
 
 `inlineDiagrams` 는 펜스를 **SVG 한 덩어리 + 그 아래 캡션 줄**로 치환한다. 캡션을 따로
 넣는 일을 소비자에게 맡기지 않는다 — 맡기면 잊히고, 잊히면 크롤러가 그림을 못 읽는다.
@@ -175,7 +177,8 @@ return DOMPurify.sanitize(raw, { FORBID_TAGS: ['style', 'iframe', 'form', 'input
 | 모든 `id` 에 접두어 | 한 문서의 두 번째 그림이 첫 그림의 화살촉을 가리킨다 |
 | 캡션을 SVG **밖** 마크다운 줄로 | `<figcaption>` 은 raw HTML 이라 크롤러 사본에서 함께 버려진다 |
 
-`permissive` 는 이 제약이 없는 면(자기 HTML 을 그대로 렌더하는 곳)을 위한 것이다.
+이 규칙은 v1 에서 **끄는 방법이 없다.** 제약이 없는 면(자기 HTML 을 그대로 렌더하는 곳)을
+위한 완화 모드는 그런 소비자가 실제로 나타나면 만든다.
 
 ## 10. 오류 처리
 
