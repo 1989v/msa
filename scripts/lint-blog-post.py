@@ -53,7 +53,23 @@ BANNED = [
     (r"놀랍|당황|아쉽게도|다행히", "감상 표현"),
 ]
 
-FENCE_RE = re.compile(r"^\s*(```|~~~)")
+FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
+
+
+def fence_open(line: str) -> tuple[str, int] | None:
+    """여는 펜스면 (문자, 길이). 아니면 None."""
+    m = FENCE_RE.match(line)
+    return (m.group(1)[0], len(m.group(1))) if m else None
+
+
+def fence_close(line: str, char: str, size: int) -> bool:
+    """CommonMark: 같은 문자로 여는 것 이상 길이, 뒤에 공백만 있어야 닫힌다.
+
+    단순 토글로 두면 ````markdown 안의 ```mermaid 가 바깥 펜스를 닫아 버려,
+    펜스 원문을 보여 주는 글에서 예시 본문이 산문으로 세어진다.
+    """
+    m = re.match(r"^\s{0,3}(`{3,}|~{3,})\s*$", line)
+    return bool(m) and m.group(1)[0] == char and len(m.group(1)) >= size
 HEADING_RE = re.compile(r"^\s*#{1,6}\s")
 TABLE_RE = re.compile(r"^\s*\|")
 QUOTE_RE = re.compile(r"^\s*>")
@@ -124,18 +140,22 @@ def prose_blocks(body: str) -> tuple[list[list[str]], list[str], int, int]:
     current: list[str] = []
     prose_lines = 0
     content_lines = 0
-    in_fence = False
+    fence: tuple[str, int] | None = None
     in_html = False
 
     for raw in body.splitlines():
         line = raw.rstrip()
 
-        if FENCE_RE.match(line):
-            in_fence = not in_fence
+        if fence is None:
+            opened = fence_open(line)
+            if opened is not None:
+                fence = opened
+                content_lines += 1
+                continue
+        else:
             content_lines += 1
-            continue
-        if in_fence:
-            content_lines += 1
+            if fence_close(line, *fence):
+                fence = None
             continue
 
         if not line.strip():
@@ -232,12 +252,18 @@ def check_prose(body: str, r: Result) -> None:
 
 
 def check_banned(body: str, r: Result) -> None:
-    in_fence = False
+    fence: tuple[str, int] | None = None
     for no, raw in enumerate(body.splitlines(), start=1):
-        if FENCE_RE.match(raw):
-            in_fence = not in_fence
+        if fence is None:
+            opened = fence_open(raw)
+            if opened is not None:
+                fence = opened
+                continue
+        else:
+            if fence_close(raw, *fence):
+                fence = None
             continue
-        if in_fence or TABLE_RE.match(raw):
+        if TABLE_RE.match(raw):
             continue
         line = INLINE_CODE_RE.sub("CODE", raw)
         for pattern, why in BANNED:
