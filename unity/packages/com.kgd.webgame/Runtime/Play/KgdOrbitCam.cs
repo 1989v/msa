@@ -29,8 +29,11 @@ namespace Kgd.Play
         private Vector3 _focus;
         private float _dist;
 
-        /// <summary>시점을 돌릴 수 있는 화면 구역의 아래 경계. 가상패드 위에서만 잡는다.</summary>
-        public float LookZone = 0.40f;
+        /// <summary>
+        /// 이동 스틱이 차지하는 좌하단 사각형. 여기서 시작한 손가락은 시점을 안 돌린다.
+        /// 기본값은 <see cref="KgdLook.StickZone"/> — 방향에 따라 알아서 갈린다.
+        /// </summary>
+        public Rect? StickZone;
 
         public KgdOrbitCam(Camera camera, IKgdGround ground, Vector3 focus, float yaw = 0f)
         {
@@ -43,17 +46,19 @@ namespace Kgd.Play
 
         public void Tick(float dt, Vector3 target, float eyeHeight, bool close)
         {
-            // 키보드
+            // **이동 키와 겹치면 안 된다.** 방향키를 쓰던 때는 오른손잡이 기본 배치에서
+            // 방향키가 이동이기도 해서, 걸으면 화면이 같이 돌았다(실제 신고).
+            // Q/E 로 좌우, R/F 로 위아래. 마우스 드래그는 그대로 된다.
             float kx = 0f, ky = 0f;
-            if (Input.GetKey(KeyCode.LeftArrow)) kx -= 1f;
-            if (Input.GetKey(KeyCode.RightArrow)) kx += 1f;
-            if (Input.GetKey(KeyCode.UpArrow)) ky += 1f;
-            if (Input.GetKey(KeyCode.DownArrow)) ky -= 1f;
+            if (Input.GetKey(KeyCode.Q)) kx -= 1f;
+            if (Input.GetKey(KeyCode.E)) kx += 1f;
+            if (Input.GetKey(KeyCode.R)) ky += 1f;
+            if (Input.GetKey(KeyCode.F)) ky -= 1f;
             Yaw += kx * 130f * dt;
             Pitch = Mathf.Clamp(Pitch - ky * 90f * dt, MinPitch, MaxPitch);
 
             // 손가락을 붙들고 끈다 — 스틱을 잡은 손가락과 갈리지 않으면 걸을 때 화면이 돈다
-            _look.Tick(LookZone);
+            _look.Tick(StickZone ?? KgdLook.StickZone);
             Yaw += _look.Delta.x * 0.16f;
             Pitch = Mathf.Clamp(Pitch - _look.Delta.y * 0.12f, MinPitch, MaxPitch);
 
