@@ -17,6 +17,7 @@
 | `Kgd.KgdDevice` | 기기 판정(터치 여부, 셸 예약 띠 치수) |
 | `Kgd.KgdSave` | 서버 세이브 읽기/쓰기 |
 | `Kgd.Motion.IKgdGround` | 게임이 구현 — 「이 자리 바닥이 얼마나 높은가」 하나만 답한다 |
+| `Kgd.Motion.KgdLook` | **화면을 끌어 시점을 돌린다** — 가상패드를 잡은 손가락을 피한다 |
 | `Kgd.Motion.KgdBody` | **걸어 다니는 몸의 판정** — 들어갈 수 있나 · 미끄러지기 · 박힘 풀기 · 착지 |
 | `Kgd.Motion.KgdObstacles` | 장애물 기둥 격자 — 막기·올라서기·붙어 오르기가 같은 규칙에서 나온다 |
 | `Kgd.Content.KgdChapters` | 챕터 아트 번들을 받아 이름으로 찾는다 (ADR-0085) |
@@ -51,6 +52,7 @@ Pos.y = Body.Settle(Pos.y, world.HeightAt(Pos), onGround, out bool landed);
 | 값 | 안 지키면 |
 |---|---|
 | `Radius` 로 **테두리도** 본다 | 가운데 한 점만 보면 모델 절반이 절벽에 박힌 채 걷는다 |
+| 시점은 `KgdLook` 으로 받는다 | `Input.GetTouch(0)` 은 **스틱을 잡은 손가락**이다. 그대로 쓰면 걸을 때마다 화면이 같이 돈다 |
 | `StepDown` 을 둔다 | 내리막에서 매 프레임 공중 상태가 되어 **달리기 애니메이션이 끊긴다** |
 | `Unstick` 은 **중심이 벽 안일 때만** 민다 | 벽 **옆에** 서 있기만 해도 밀려나 달리다 멈추다를 되풀이한다 |
 | 장애물은 **기둥**으로 넣는다 | 막기만 하면 뛰어넘는 순간 발밑이 없어 그대로 관통한다 |
