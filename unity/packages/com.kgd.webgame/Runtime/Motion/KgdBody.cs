@@ -39,9 +39,11 @@ namespace Kgd.Motion
         {
             float limit = from.y + StepUp;
             if (ground.HeightAt(to) > limit) return false;
-            for (int i = 0; i < 4; i++)
+            // **여덟 방향을 본다.** 넷만 보면 그 사이 45° 로 들어오는 모서리를 지나쳐
+            // 몸이 지형에 파고든다.
+            for (int i = 0; i < 8; i++)
             {
-                float a = i * Mathf.PI * 0.5f;
+                float a = i * Mathf.PI * 0.25f;
                 var edge = to + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * Radius;
                 if (ground.HeightAt(edge) > limit) return false;
             }
@@ -54,16 +56,40 @@ namespace Kgd.Motion
         /// </summary>
         public Vector3 Resolve(IKgdGround ground, Vector3 from, Vector3 to)
         {
+            // **한 번에 크게 옮기지 않는다.** 달리기(10.6)에 dt 0.05 면 한 프레임에 0.53 을
+            // 건너뛰는데, 그 사이에 있는 얇은 것은 표본에 걸리지 않고 통과한다.
+            // 반지름의 절반씩 끊어서 옮긴다.
+            var delta = new Vector3(to.x - from.x, 0f, to.z - from.z);
+            float span = delta.magnitude;
+            float step = Radius * 0.5f;
+            if (span > step)
+            {
+                int n = Mathf.Min(8, Mathf.CeilToInt(span / step));
+                var at = from;
+                for (int i = 1; i <= n; i++)
+                {
+                    var next = new Vector3(from.x + delta.x * i / n, at.y, from.z + delta.z * i / n);
+                    at = Step(ground, at, next);
+                }
+                return new Vector3(at.x, to.y, at.z);
+            }
+            var one = Step(ground, from, new Vector3(to.x, from.y, to.z));
+            return new Vector3(one.x, to.y, one.z);
+        }
+
+        /// <summary>한 칸 옮긴다. 막히면 축을 갈라 미끄러진다.</summary>
+        private Vector3 Step(IKgdGround ground, Vector3 from, Vector3 to)
+        {
             var flat = new Vector3(to.x, from.y, to.z);
-            if (CanEnter(ground, from, flat)) return new Vector3(flat.x, to.y, flat.z);
+            if (CanEnter(ground, from, flat)) return flat;
 
             var xOnly = new Vector3(to.x, from.y, from.z);
-            if (CanEnter(ground, from, xOnly)) return new Vector3(xOnly.x, to.y, from.z);
+            if (CanEnter(ground, from, xOnly)) return xOnly;
 
             var zOnly = new Vector3(from.x, from.y, to.z);
-            if (CanEnter(ground, from, zOnly)) return new Vector3(from.x, to.y, zOnly.z);
+            if (CanEnter(ground, from, zOnly)) return zOnly;
 
-            return new Vector3(from.x, to.y, from.z);
+            return from;
         }
 
         /// <summary>
