@@ -4,6 +4,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.annotation.Profile
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.net.URI
 import java.net.http.HttpClient
@@ -24,6 +25,7 @@ private val log = KotlinLogging.logger {}
  * 트랜잭션으로 감싸면 커넥션을 수 분간 붙잡는다.
  */
 @Component
+@Order(0)
 @Profile("linkcheck")
 class DealLinkCheckRunner(
     private val service: DealLinkCheckService,

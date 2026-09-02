@@ -41,6 +41,10 @@ spec:
       # 수집이 통째로 날아간다 — 수집기 안에 연결 재시도가 있어도 그것을 넘긴
       # 실패(외부 API 일시 오류 등)에는 잡 레벨 재시도가 마지막 방어선이다.
       backoffLimit: 2
+      # 시간이 지나면 Job 을 끊는다. backoffLimit 은 실패 횟수를 세는데 ImagePullBackOff 는
+      # 실패로 안 잡혀 Job 이 Running 인 채로 남고, Forbid 가 그 뒤 실행을 전부 막는다.
+      # 관측 소요 51초.
+      activeDeadlineSeconds: 900
       template:
         metadata:
           labels:

@@ -29,6 +29,10 @@ spec:
       # 그래서 여기 남는 실패는 "시작조차 못한" 경우(DNS·연결)뿐이고, 그건 재시도가 정답이다.
       # 하루 1회라 한 번 놓치면 그날 치를 통째로 잃는다 (실제로 롤아웃 중 노드 포화로 잃었다).
       backoffLimit: 2
+      # 시간이 지나면 Job 을 끊는다. backoffLimit 은 실패 횟수를 세는데 ImagePullBackOff 는
+      # 실패로 안 잡혀 Job 이 Running 인 채로 남고, Forbid 가 그 뒤 실행을 전부 막는다.
+      # 관측 소요 676~698초.
+      activeDeadlineSeconds: 3600
       template:
         metadata:
           labels:

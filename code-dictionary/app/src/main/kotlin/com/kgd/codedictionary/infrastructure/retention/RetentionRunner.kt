@@ -6,6 +6,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
 import org.springframework.context.annotation.Profile
+import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
@@ -26,6 +27,7 @@ private val log = KotlinLogging.logger {}
  * 두 배로 쌓이고, 실패한 쪽은 로그에 남으므로 조용히 묻히지도 않는다.
  */
 @Component
+@Order(0)
 @Profile("retention")
 class RetentionRunner(
     private val purgeBlogViews: PurgeBlogViewsUseCase,

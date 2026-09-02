@@ -15,6 +15,10 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 2
+      # 시간이 지나면 Job 을 끊는다. backoffLimit 은 실패 횟수를 세는데 ImagePullBackOff 는
+      # 실패로 안 잡혀 Job 이 Running 인 채로 남고, Forbid 가 그 뒤 실행을 전부 막는다.
+      # 관측 소요 48~68초.
+      activeDeadlineSeconds: 900
       template:
         metadata:
           labels:
@@ -62,6 +66,10 @@ spec:
   jobTemplate:
     spec:
       backoffLimit: 2
+      # 시간이 지나면 Job 을 끊는다. backoffLimit 은 실패 횟수를 세는데 ImagePullBackOff 는
+      # 실패로 안 잡혀 Job 이 Running 인 채로 남고, Forbid 가 그 뒤 실행을 전부 막는다.
+      # 관측 소요 48~68초.
+      activeDeadlineSeconds: 900
       template:
         metadata:
           labels:

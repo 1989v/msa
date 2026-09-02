@@ -27,6 +27,10 @@ spec:
       # 노드가 포화(대량 롤아웃)면 이 창이 1분 넘게 벌어져 2회로는 못 넘긴다.
       # 재색인은 멱등(alias swap)이라 재시도에 부작용이 없다.
       backoffLimit: 4
+      # 시간이 지나면 Job 을 끊는다. backoffLimit 은 실패 횟수를 세는데 ImagePullBackOff 는
+      # 실패로 안 잡혀 Job 이 Running 인 채로 남고, Forbid 가 그 뒤 실행을 전부 막는다.
+      # 관측 소요 125~157초.
+      activeDeadlineSeconds: 1800
       template:
         metadata:
           labels:

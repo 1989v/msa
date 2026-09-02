@@ -30,6 +30,10 @@ spec:
       # 하루 1회라 한 번 놓치면 그날 치를 통째로 잃는다 — 개요 잡과 같은 이유로 재시도한다.
       # (여기 남는 실패는 시작조차 못한 경우뿐이다 — 검색 실패·결과없음은 수집기가 흡수한다)
       backoffLimit: 2
+      # 시간이 지나면 Job 을 끊는다. backoffLimit 은 실패 횟수를 세는데 ImagePullBackOff 는
+      # 실패로 안 잡혀 Job 이 Running 인 채로 남고, Forbid 가 그 뒤 실행을 전부 막는다.
+      # 관측 소요 494초.
+      activeDeadlineSeconds: 3600
       template:
         metadata:
           labels:
