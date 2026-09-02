@@ -96,5 +96,6 @@ echo yes | ~/.local/bin/oci-mysql --write code_dictionary_db \
 ## 관련
 
 - `docs/conventions/blog-writing.md` — 문체·구조·금칙 (단일 원본)
+- `docs/conventions/blog-writing.md` §7 — 본문 세로 리듬 (`.blog-body` 간격 토큰)
 - `docs/conventions/blog-diagram.md` — 그림 삽입 규칙
 - `docs/adr/ADR-0072-blog-platform.md` — 플랫폼 구조

@@ -128,6 +128,30 @@ INSERT INTO blog_post (..., title, body) VALUES (..., CONVERT(0x<hex> USING utf8
 `oci-mysql` 경유 접속의 클라이언트 charset 이 latin1 이라, 한글을 리터럴로 넣으면 조용히
 이중 인코딩된다 (2026-08-24 실제 발생). 값은 들어가고 에러도 없으며, 목록 API 응답에서야 깨져 보인다.
 
+## 7. 본문 세로 리듬 (렌더)
+
+문체가 아무리 촘촘해도 블록이 붙어 있으면 읽기가 막힌다. 본문 스타일은
+`portal-fe/src/pages/blog/Blog.css` 의 `.blog-body` 이고, 간격은 **20px 하나로 통일**한다.
+
+| 대상 | 간격 | 토큰 |
+|---|---|---|
+| 문단 · 표 · 코드 블록 · 목록 · 인용 · 콜아웃 | 20px | `--ko-space-5` |
+| h2 위 (절 경계) | 40px | `--ko-space-10` |
+| h3 · h4 위 | 32px | `--ko-space-8` |
+| 목록 항목 사이 | 4px | `--ko-space-1` |
+
+> [!warning] 새 블록 요소는 margin 을 직접 적어야 한다
+> 전역 리셋이 `* { margin: 0 }` 이라 **UA 기본 여백이 하나도 오지 않는다.**
+> `.blog-body` 에 규칙이 없는 요소는 앞뒤 문단에 그대로 달라붙는다.
+> 실제로 **표와 코드 블록이 위아래 `0px`** 이었고, 표 바로 뒤 문단과의 실간격도 `0px` 였다.
+
+값을 바꾸면 계산값으로 확인한다. 눈으로 봤다는 근거로 쓰지 않는다
+(`docs/standards/fe-visual-verification.md`).
+
+```js
+getComputedStyle(document.querySelector('.blog-body table')).marginTop
+```
+
 ## 관련
 
 - `.claude/skills/blog-post/SKILL.md` — 작성부터 DB 반영까지의 순서
