@@ -17,6 +17,12 @@ namespace Kgd.Play
         public float MinPitch = -32f, MaxPitch = 62f;
         public float Near = 7f, Far = 15f;
 
+        /// <summary>
+        /// 달릴 때 초점을 진행 방향으로 이만큼 당긴다(룩어헤드). 카메라가 등 뒤만 따라오면
+        /// 달리는 앞이 화면 절반뿐이다 — 보는 것은 늘 가는 쪽이다. 0 이면 끈다.
+        /// </summary>
+        public float LookAhead = 2.6f;
+
         public float Yaw { get; private set; }
         public float Pitch { get; private set; } = 16f;
 
@@ -27,6 +33,7 @@ namespace Kgd.Play
         private readonly IKgdGround _ground;
         private readonly KgdLook _look = new();
         private Vector3 _focus;
+        private Vector3 _prevTarget, _ahead;
         private float _dist;
 
         /// <summary>
@@ -40,6 +47,7 @@ namespace Kgd.Play
             _tr = camera.transform;
             _ground = ground;
             _focus = focus;
+            _prevTarget = focus;
             Yaw = yaw;
             _dist = Far;
         }
@@ -58,7 +66,17 @@ namespace Kgd.Play
             Pitch = Mathf.Clamp(Pitch - _look.Delta.y * 0.12f, MinPitch, MaxPitch);
 
             _dist = Mathf.Lerp(_dist, close ? Near : Far, 1f - Mathf.Exp(-4f * dt));
-            _focus = Vector3.Lerp(_focus, target + Vector3.up * eyeHeight, 1f - Mathf.Exp(-9f * dt));
+
+            // **룩어헤드는 속도에서 낸다.** 입력에서 내면 스틱을 톡 건드릴 때마다 화면이
+            // 휙휙 밀린다 — 실제로 몸이 나아갈 때만, 나아가는 만큼만 당긴다.
+            // 당김 자체도 천천히 따라와서(아래 Lerp) 방향 전환에 화면이 튀지 않는다.
+            var vel = (target - _prevTarget) / Mathf.Max(dt, 0.0001f);
+            _prevTarget = target;
+            var flat = new Vector3(vel.x, 0f, vel.z);
+            var ahead = flat.sqrMagnitude > 4f ? flat.normalized * LookAhead : Vector3.zero;
+            _ahead = Vector3.Lerp(_ahead, ahead, 1f - Mathf.Exp(-2.5f * dt));
+
+            _focus = Vector3.Lerp(_focus, target + Vector3.up * eyeHeight + _ahead, 1f - Mathf.Exp(-9f * dt));
 
             var rot = Quaternion.Euler(Pitch, Yaw, 0f);
             var back = -(rot * Vector3.forward);

@@ -238,6 +238,8 @@ namespace Kgd.Terrain
                         * (0.94f + 0.05f * ((index * 37) % 3)),
                 Lip = Color.Lerp(_pal.Lip, _pal.Snow, high * 0.75f),
                 Ramp = Color.Lerp(_pal.Ramp, _pal.Scree, high),
+                // 땅과 만나는 자리를 어둡게 — 벽이 「박혀」 보인다. 산은 늘 켠다
+                FootShade = 0.74f,
                 ToLight = -(Quaternion.Euler(_pal.SunEuler) * Vector3.forward),
             });
             var go = KgdMat.Object($"terrace{index}", mb.Build($"terrace{index}"), _root, terrain: true);

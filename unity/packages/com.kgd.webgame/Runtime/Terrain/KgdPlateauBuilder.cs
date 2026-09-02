@@ -34,6 +34,29 @@ namespace Kgd.Terrain
         /// 향해 통째로 뒷면이 됐다 — 화면에서는 「검은 판」으로 보였다. 방향을 주면 여기서
         /// 뒤집으므로 그 부류의 실수가 아예 생기지 않는다.
         /// </summary>
+        /// <summary>
+        /// 세로면(절벽·옆벽) 전용 — 아래 꼭짓점 둘(a·b), 위 꼭짓점 둘(c·d) 순서를 요구한다.
+        /// 팔레트의 <see cref="KgdPlateauPalette.FootShade"/> 가 1 미만이면 밑동 밴드를 갈라
+        /// 어둡게 깐다. 땅과 만나는 자리가 어두워야 벽이 「박혀」 보인다(접촉 음영).
+        /// </summary>
+        private static void WallQuad(IKgdTerrainSink sink, Vector3 a, Vector3 b, Vector3 c, Vector3 d,
+                                     Color color, Vector3 outward, KgdPlateauPalette palette)
+        {
+            float shade = palette.FootShade <= 0f ? 1f : palette.FootShade;
+            float height = Mathf.Max(c.y - a.y, d.y - b.y);
+            if (shade >= 0.999f || height < 1.2f)
+            {
+                Quad(sink, a, b, c, d, color, outward, palette.ToLight);
+                return;
+            }
+            // 밴드는 낮게 — 사람 무릎 언저리. 절벽 높이에 비례시키면 큰 절벽에서 띠가 벽만 해진다
+            float band = Mathf.Min(1.1f, height * 0.28f);
+            var ma = a + Vector3.up * band;
+            var mb = b + Vector3.up * band;
+            Quad(sink, a, b, mb, ma, color * shade, outward, palette.ToLight);
+            Quad(sink, ma, mb, c, d, color, outward, palette.ToLight);
+        }
+
         private static void Quad(IKgdTerrainSink sink, Vector3 a, Vector3 b, Vector3 c, Vector3 d,
                                  Color color, Vector3 outward, Vector3 toLight)
         {
@@ -102,8 +125,8 @@ namespace Kgd.Terrain
                 Quad(sink, Vector3.Lerp(lo0, lo1, t0), Vector3.Lerp(lo0, lo1, t1),
                      Vector3.Lerp(li0, li1, t1), Vector3.Lerp(li0, li1, t0),
                      palette.Lip, Vector3.up, palette.ToLight);
-                Quad(sink, c0, c1, c1 + Vector3.up * p.Height, c0 + Vector3.up * p.Height,
-                     palette.Cliff, outward, palette.ToLight);
+                WallQuad(sink, c0, c1, c1 + Vector3.up * p.Height, c0 + Vector3.up * p.Height,
+                     palette.Cliff, outward, palette);
 
                 int n = Mathf.Max(2, Mathf.CeilToInt(Vector3.Distance(c0, c1) / 2.0f));
                 for (int k = 0; k <= n; k++)
@@ -158,8 +181,8 @@ namespace Kgd.Terrain
 
                 // 바깥 면 — 밑에서 위로. 변마다 색을 아주 조금씩 달리해 면이 갈려 보이게 한다
                 var outward = new Vector3(mid.x, 0f, mid.z).normalized;
-                Quad(sink, v0, v1, v1 + Vector3.up * p.Height, v0 + Vector3.up * p.Height,
-                     palette.Cliff * (0.94f + 0.04f * (e % 3)), outward, palette.ToLight);
+                WallQuad(sink, v0, v1, v1 + Vector3.up * p.Height, v0 + Vector3.up * p.Height,
+                     palette.Cliff * (0.94f + 0.04f * (e % 3)), outward, palette);
 
                 int n = Mathf.Max(2, Mathf.CeilToInt(Vector3.Distance(v0, v1) / 2.0f));
                 for (int k = 1; k < n; k++)
@@ -277,7 +300,7 @@ namespace Kgd.Terrain
                     if (i > 0)
                     {
                         // 바깥 면 — 감는 방향이 좌우에 따라 뒤집혀야 앞면이 밖을 본다
-                        Quad(sink, prevBase, b, tp, prevTop, palette.Cliff, side * sgn, palette.ToLight);
+                        WallQuad(sink, prevBase, b, tp, prevTop, palette.Cliff, side * sgn, palette);
                         // 윗면 — 걷는 쪽에서 벽 두께가 보인다
                         var inA = prevTop - side * (1.3f * sgn);
                         var inB = tp - side * (1.3f * sgn);

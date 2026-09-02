@@ -46,9 +46,17 @@ namespace Kgd.Terrain
         /// </summary>
         public Vector3 ToLight;
 
+        /// <summary>
+        /// 절벽 밑동을 이 배율로 어둡힌다(0.7~0.8 권장). **1 이면 밑동 밴드를 아예 안 만든다** —
+        /// 기존 게임(궁수)의 지오메트리가 정점 하나까지 그대로다. 땅과 만나는 자리가
+        /// 어두워야 벽이 땅에 「박혀」 보이고, 아니면 세워 둔 판처럼 뜬다(접촉 음영).
+        /// </summary>
+        public float FootShade;
+
         public static KgdPlateauPalette Default => new()
         {
             ToLight = new Vector3(0f, 1f, -0.3f).normalized,
+            FootShade = 1f,
             Cliff = new Color(0.42f, 0.44f, 0.47f),
             Lip = new Color(0.62f, 0.64f, 0.68f),
             Ramp = new Color(0.52f, 0.40f, 0.30f),
