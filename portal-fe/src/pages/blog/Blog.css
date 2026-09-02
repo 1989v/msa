@@ -959,3 +959,18 @@
     transition: none;
   }
 }
+
+/* 원문 | 그림 두 칸. 라이브러리가 인라인 스타일로 2:3 을 주고, 좁은 화면에서
+ * 한 칸으로 쌓는 것만 여기서 정한다 — 인라인 스타일에는 미디어 쿼리를 못 쓴다.
+ * 인라인을 이기려면 !important 가 필요하다. */
+@media (max-width: 720px) {
+  .blog-body .fs-pair {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* 원문 칸은 그림보다 한 단 작게 — 읽는 대상은 그림이고 원문은 참조다. */
+.blog-body .fs-pair pre {
+  margin: 0;
+  font-size: 0.82em;
+}
