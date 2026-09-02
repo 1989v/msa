@@ -1,5 +1,5 @@
 <!-- source: unity/packages/com.kgd.webgame/README.md, portal-fe/public/games/_src/nine-bells/ -->
-# 낙하산 없음 (no-parachute) — PRD
+# 인피니티 스탭 (infinity-step) — PRD
 
 - 일자: 2026-09-02
 - 형태: 유니티 WebGL · **공용 프레임워크 `com.kgd.webgame`** 위에 짓는 두 번째 게임
@@ -7,12 +7,12 @@
 
 ## 0. 한 줄 정의
 
-**점프 하나로 우주까지 오르는 탑. 낙하산은 없다 — 떨어지면 받아 주는 발판이 있을 때까지 떨어진다.**
+**점프 하나로 우주까지, 그 위로도 끝없이 오르는 탑. 떨어지면 받아 주는 발판이 있을 때까지 떨어진다.**
 세이브도 체크포인트도 안전망도 없다. 실수의 값이 곧 긴장이고, 그것이 이 장르(Jump King ·
 Only Up! · Getting Over It)의 정체성이다.
 
-이름의 뜻은 둘이다. 활공(낙하산)을 **일부러 뺐다**는 규칙 그대로이고, 「낙하산 인사」의
-낙하산 — 여기엔 지름길이 없다.
+> 캔버스 라인에 `infinity-tower`(협동 타워 디펜스)가 따로 있다. 다른 게임이다 — 슬러그·이름 모두
+> `infinity-step` / 인피니티 스탭 으로 구분한다.
 
 ## 1. 왜 지금인가
 
