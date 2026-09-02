@@ -429,6 +429,8 @@
   margin-top: 0;
 }
 
+/* 제목 위 여백은 절 경계다. 아래보다 훨씬 크게 둬야 제목이 위 절에서 떨어지고
+ * 아래 내용과 한 덩어리로 읽힌다 — 위아래가 비슷하면 어디에 속한 제목인지 흐려진다. */
 .blog-body h2,
 .blog-body h3,
 .blog-body h4 {
@@ -437,11 +439,13 @@
 }
 
 .blog-body h2 {
-  margin-top: var(--ko-space-10);
+  margin-top: var(--ko-space-16);
+  margin-bottom: var(--ko-space-4);
   font-size: 1.4rem;
 }
 
 .blog-body h3 {
+  margin-top: var(--ko-space-10);
   font-size: 1.15rem;
 }
 
