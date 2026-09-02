@@ -361,6 +361,8 @@ jobs:
             # blob 을 그대로 참조한다 — 추가 용량이 사실상 없다. 빌더 단계까지 담는
             # mode=max 는 node_modules 같은 새 blob 을 얹어 10GB 한도를 도로 깎는다.
             # buildcache 태그는 sha 형식이 아니라 scripts/ocir-prune.py 가 건드리지 않는다.
+            # ignore-error 는 캐시 내보내기 실패가 빌드를 깨지 않게 한다 — 실패하면
+            # 이미지는 push 된 채 스텝만 죽어 뒤의 kustomization 갱신이 건너뛰어진다.
             CACHE_REF="$REGISTRY/$svc:buildcache"
             docker buildx build \
               --platform linux/arm64 \
@@ -368,7 +370,7 @@ jobs:
               -t "$REGISTRY/$svc:$TAG" \
               "${BUILD_ARGS[@]}" \
               --cache-from "type=registry,ref=$CACHE_REF" \
-              --cache-to "type=registry,ref=$CACHE_REF,mode=min,image-manifest=true,oci-mediatypes=true" \
+              --cache-to "type=registry,ref=$CACHE_REF,mode=min,image-manifest=true,oci-mediatypes=true,ignore-error=true" \
               --push \
               "$ctx"
           done
