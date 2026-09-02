@@ -1,8 +1,8 @@
 ---
-title: JVM 논힙 메모리가 선형으로 증가할 때 — glibc malloc arena
+title: 힙은 정상인데 컨테이너가 OOMKilled 될 때 — JVM 네이티브 메모리 누수와 MALLOC_ARENA_MAX
 slug: jvm-native-memory-glibc-malloc-arena
 category: /tech/server
-summary: 힙과 GC 는 정상인데 컨테이너 메모리만 단조 증가해 OOM Kill 로 끝나는 현상을 다룬다. 원인 레이어는 Heap · NMT committed · RSS 세 값 사이의 간극으로 가르고, glibc 스레드 arena 가 범인이면 MALLOC_ARENA_MAX 로 상한을 고정한다.
+summary: 힙과 GC 는 정상인데 컨테이너 메모리만 단조 증가해 OOMKilled 로 끝나는 현상을 다룬다. 원인 레이어는 Heap · NMT committed · RSS 세 값 사이의 간극으로 가르고, glibc 스레드 arena 가 범인이면 MALLOC_ARENA_MAX 로 상한을 고정한다.
 ---
 
 힙 사용량과 GC 가 모두 정상인데 컨테이너 메모리만 시간당 수 MB 씩 오르는 현상의 진단 절차다. NMT 출력은 OpenJDK 25.0.2, glibc 기본값은 `mallopt(3)` 기준이다.

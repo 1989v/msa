@@ -1,5 +1,5 @@
 ---
-title: Claude Code 세션 계측 표시 — 설정 키가 있어도 켜지지 않는 것
+title: Claude Code statusLine 으로 사용량·컨텍스트·시각 상시 표시하기 — showMessageTimestamps 가 안 켜지는 이유
 slug: claude-code-session-timestamp-and-usage
 category: /tech
 summary: 상태줄 하나에 작업 위치 · 컨텍스트 · 5h/7d 사용량 · 마지막 메시지 시각을 담는 스크립트와 그 근거. showMessageTimestamps 는 서버 기능 플래그와 AND 로 묶여 있어 설정만으로는 렌더되지 않는다. Claude Code v2.1.241 · v2.1.250 기준.

@@ -178,6 +178,12 @@ export default function BlogPostPage() {
           <img className="blog-cover" src={detail.post.coverImageUrl} alt="" />
         )}
 
+        {/* 한 줄 요약 — 카드에 나가는 summary 를 본문 앞에도 보인다. 본문 마크다운에
+            따로 적지 않아 한 글에 요약이 하나만 있고, 카드와 어긋날 수 없다. */}
+        {detail.post.summary && (
+          <blockquote className="blog-article__lead">{detail.post.summary}</blockquote>
+        )}
+
         <MarkdownBody source={detail.body} />
 
         {reaction && (

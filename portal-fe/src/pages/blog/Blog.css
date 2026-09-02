@@ -1103,3 +1103,16 @@ html[data-theme='dark'] .blog-body .kh-alert--tip { --kh-alert-line: var(--ko-ac
   padding-bottom: var(--ko-space-2);
   border-bottom: 1px solid var(--ko-border-subtle);
 }
+
+/* 글 상단 한 줄 요약. 본문 인용문과 같은 문법(왼쪽 선)이되 한 단 더 두드러진다 —
+ * 읽기 전에 "무엇을 얻는 글인가" 가 잡혀야 한다. 그림자 없이 선과 면만. */
+.blog-article__lead {
+  margin: var(--ko-space-5) 0 var(--ko-space-6);
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border-left: 3px solid var(--ko-accent-primary);
+  border-radius: 0 var(--kh-radius, 4px) var(--kh-radius, 4px) 0;
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+  font-size: 1.02em;
+  line-height: 1.7;
+}

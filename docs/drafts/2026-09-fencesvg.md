@@ -1,5 +1,5 @@
 ---
-title: fencesvg — 마크다운 펜스를 사이트 색으로 그리는 다이어그램 라이브러리
+title: mermaid 없이 마크다운 다이어그램 그리기 — 사이트 디자인 톤을 따라가는 인라인 SVG (fencesvg)
 slug: fencesvg-markdown-diagrams
 category: /tech/frontend
 summary: mermaid 문법 펜스를 인라인 SVG 로 그린다. 색은 페이지에서 읽고, sanitizer·lint·서버 렌더·CommonMark 를 통과한다. gzip 16.6KB, 의존성 0.
