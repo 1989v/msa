@@ -18,8 +18,11 @@ namespace Kgd.Art
         /// <summary>
         /// 하늘 색 하나로 나머지를 뽑는다. 챕터가 바뀌면 다시 부른다.
         /// <paramref name="sun"/> 은 그 씬의 방향광 — 해 원반이 그 방향에 뜬다.
+        /// <paramref name="cloudBelow"/> 는 **수평선 아래**의 구름띠(0~1) — 성층권처럼
+        /// 구름이 발밑에 있는 고도에서 쓴다. 셰이더에 _CloudBelow 가 없으면 조용히 무시된다.
         /// </summary>
-        public static void Apply(Camera camera, Color sky, Light sun, float cloud = 0.5f)
+        public static void Apply(Camera camera, Color sky, Light sun, float cloud = 0.5f,
+                                 float cloudBelow = 0f)
         {
             if (_mat == null)
             {
@@ -38,6 +41,7 @@ namespace Kgd.Art
             _mat.SetColor("_Horizon", horizon);
             _mat.SetColor("_Ground", ground);
             _mat.SetFloat("_CloudAmount", cloud);
+            _mat.SetFloat("_CloudBelow", cloudBelow);
             if (sun != null) _mat.SetVector("_SunDir", -sun.transform.forward);
 
             RenderSettings.skybox = _mat;

@@ -15,7 +15,7 @@ namespace Kgd.Play
     /// </summary>
     public sealed class KgdTraverse
     {
-        public enum State { Ground, Air, Climb, Glide, Roll, Busy }
+        public enum State { Ground, Air, Climb, Glide, Roll, Busy, Ledge }
 
         public struct Tuning
         {
@@ -32,6 +32,37 @@ namespace Kgd.Play
             public float ClimbReach;
             /// <summary>이 높이보다 낮은 것은 오르지 않는다 — 뛰어넘으면 되는 것이다.</summary>
             public float ClimbMinRise;
+
+            /// <summary>
+            /// 활공 상태 진입 자체를 막는다. GlideSpeed = 0 으로는 부족하다 — 상태에
+            /// 들어가는 순간 하강률이 GlideFall 로 고정되어 낙하의 값이 사라진다.
+            /// </summary>
+            public bool NoGlide;
+
+            /// <summary>
+            /// 차지 점프. 0 이면 없던 기능이다(JumpVel 즉발 점프 그대로).
+            /// 0 보다 크면 점프가 <see cref="Wish.JumpCharge"/> 를 힘으로 쓴다 —
+            /// 게임이 누른 시간을 0~1 로 (양자화까지 해서) 넘긴다.
+            /// </summary>
+            public float ChargeTime;
+            public float ChargeMinVel, ChargeMaxVel;
+            public float ChargeMinSpeed, ChargeMaxSpeed;
+            /// <summary>차지 중 이동 배율. 조준은 되지만 걷어서 도망은 못 가는 값이어야 한다.</summary>
+            public float ChargeMoveScale;
+
+            /// <summary>
+            /// 낙하 종단 속도. 0 이면 무제한(기본). 층층이 떠 있는 지형(one-way 발판)은
+            /// 반드시 둔다 — 무제한이면 긴 낙하에서 한 프레임에 발판 두께를 건너뛴다.
+            /// </summary>
+            public float TerminalFall;
+
+            /// <summary>모서리 잡기. 낙하 중 발판 가장자리에 손이 닿으면 끌어올린다 — 자동이다.</summary>
+            public bool LedgeGrab;
+            /// <summary>모서리까지의 수평 여유(Radius 에 더해).</summary>
+            public float LedgeReach;
+            /// <summary>윗면이 발 기준 이 구간에 있을 때만 손이 닿은 것이다.</summary>
+            public float LedgeMinRise, LedgeMaxRise;
+            public float LedgePullTime, LedgeCost;
 
             /// <summary>봉우리를 오르는 게임의 기준값. 게임이 필요한 것만 덮어쓴다.</summary>
             public static Tuning Default => new()
@@ -53,6 +84,13 @@ namespace Kgd.Play
             /// <summary>가려는 방향(수평, 길이 0~1). 카메라 기준으로 이미 돌려 둔 값이다.</summary>
             public Vector3 Move;
             public bool Run, JumpDown, RollDown, GlideDown, LetGoDown;
+
+            /// <summary>
+            /// 모은 힘 0~1. <see cref="Tuning.ChargeTime"/> 이 켜진 게임만 쓴다 —
+            /// JumpDown 이 서는 프레임(놓는 순간)의 값이 도약의 힘이다.
+            /// 누르고 있는 동안 0 보다 크면 차지 자세(이동이 느려진다)로 취급한다.
+            /// </summary>
+            public float JumpCharge;
         }
 
         public Vector3 Pos;
@@ -66,6 +104,18 @@ namespace Kgd.Play
         /// 지형 높이가 0 으로 돌아오므로 걸리는 것도 없이 영영 나간다.
         /// </summary>
         public float MapRadius;
+
+        /// <summary>중력 배율. 고도로 중력이 변하는 게임이 매 프레임 넣는다. 기본 1.</summary>
+        public float GravityScale = 1f;
+
+        /// <summary>
+        /// 지면 미끄러짐 0~1. 0 이면 즉답(기본 — 기존 게임 무변경), 1 에 가까울수록
+        /// 속도가 관성으로 이어진다. 얼음 발판 위에서 게임이 매 프레임 넣는다.
+        /// </summary>
+        public float Slip;
+
+        /// <summary>차지 점프로 뜬 공중인가 — 이 동안은 조향이 잠긴다. 뛰기 전에 다 정한다.</summary>
+        public bool ChargedAir { get; private set; }
 
         /// <summary>이번 프레임에 땅에 닿았나. 소리·먼지에 쓴다.</summary>
         public bool Landed { get; private set; }
@@ -82,6 +132,13 @@ namespace Kgd.Play
         private readonly KgdBody _body;
         private Vector3 _vel, _knock;
         private float _rollLeft, _sinceGround, _climbCool, _pressing;
+        private float _ledgeLeft;
+        private Vector3 _ledgeFrom, _ledgeTo;
+
+        /// <summary>끌어올리는 진행 0 → 1. 게임이 몸을 접는 데 쓴다.</summary>
+        public float LedgePhase =>
+            Now == State.Ledge && _t.LedgePullTime > 0f
+                ? 1f - Mathf.Clamp01(_ledgeLeft / _t.LedgePullTime) : 0f;
 
         /// <summary>활공 버튼을 기억하는 시간. 길면 나중에 저절로 펴진 것처럼 보인다.</summary>
         private const float GlideMemory = 0.45f;
@@ -112,6 +169,7 @@ namespace Kgd.Play
             Pos = at;
             _vel = Vector3.zero;
             _knock = Vector3.zero;
+            ChargedAir = false;
             Now = State.Ground;
         }
 
@@ -127,6 +185,7 @@ namespace Kgd.Play
                 case State.Glide: Glide(dt, wish); break;
                 case State.Roll: Roll(dt); break;
                 case State.Busy: _vel = Vector3.zero; break;
+                case State.Ledge: Ledge(dt); break;
             }
 
             if (Now != State.Climb && _knock.sqrMagnitude > 0.0001f)
@@ -152,7 +211,18 @@ namespace Kgd.Play
                         : Running ? _t.RunSpeed : _t.WalkSpeed;
             if (Running && !Stamina.Spend(_t.RunDrain * dt)) Running = false;
 
-            _vel = new Vector3(wish.Move.x * speed, 0f, wish.Move.z * speed);
+            // 차지 자세 — 조준은 되지만 걷어서 도망은 못 간다
+            bool charging = _t.ChargeTime > 0f && wish.JumpCharge > 0f;
+            if (charging) speed *= _t.ChargeMoveScale;
+
+            var want = new Vector3(wish.Move.x * speed, 0f, wish.Move.z * speed);
+            if (Slip > 0f)
+            {
+                // 얼음 — 속도가 관성으로 이어진다. 시간 상수라 프레임률과 무관하다.
+                float k = 1f - Mathf.Exp(-dt / Mathf.Lerp(0.02f, 0.7f, Slip));
+                _vel = new Vector3(Mathf.Lerp(_vel.x, want.x, k), 0f, Mathf.Lerp(_vel.z, want.z, k));
+            }
+            else _vel = want;
             if (moving) Face(wish.Move);
 
             if (wish.RollDown && moving && Stamina.TrySpend(_t.RollCost))
@@ -165,7 +235,18 @@ namespace Kgd.Play
             // 스태미나는 무제한이라, 달리기를 쓸 이유가 없어진다(실제 신고).
             if (wish.JumpDown && Stamina.TrySpend(_t.JumpCost))
             {
-                _vel.y = _t.JumpVel;
+                if (_t.ChargeTime > 0f)
+                {
+                    // 차지 점프 — 놓는 순간의 힘으로 몸이 향한 곳(또는 스틱 방향)으로 뛴다.
+                    // 방향은 여기서 굳는다: 공중 조향이 잠기므로 뛰기 전에 다 정한 것이다.
+                    float c = Mathf.Clamp01(wish.JumpCharge);
+                    var dir = wish.Move.sqrMagnitude > 0.01f ? wish.Move.normalized : Facing;
+                    Yaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
+                    _vel = dir * Mathf.Lerp(_t.ChargeMinSpeed, _t.ChargeMaxSpeed, c);
+                    _vel.y = Mathf.Lerp(_t.ChargeMinVel, _t.ChargeMaxVel, c);
+                    ChargedAir = true;
+                }
+                else _vel.y = _t.JumpVel;
                 Now = State.Air;
                 return;
             }
@@ -178,19 +259,75 @@ namespace Kgd.Play
         private void Air(float dt, in Wish wish, IKgdWall walls, IKgdGround ground)
         {
             Running = false;
-            _vel.x = Mathf.Lerp(_vel.x, wish.Move.x * _t.RunSpeed, 3f * dt);
-            _vel.z = Mathf.Lerp(_vel.z, wish.Move.z * _t.RunSpeed, 3f * dt);
-            _vel.y -= _t.Gravity * dt;
-            if (wish.Move.sqrMagnitude > 0.01f) Face(wish.Move);
+            // **차지 점프의 공중은 조향이 잠긴다.** 뛰기 전에 다 정하는 것이 이 점프의
+            // 정체성이다 — 걸어서 떨어진 낙하(ChargedAir 아님)는 그대로 조향된다.
+            if (!ChargedAir)
+            {
+                _vel.x = Mathf.Lerp(_vel.x, wish.Move.x * _t.RunSpeed, 3f * dt);
+                _vel.z = Mathf.Lerp(_vel.z, wish.Move.z * _t.RunSpeed, 3f * dt);
+                if (wish.Move.sqrMagnitude > 0.01f) Face(wish.Move);
+            }
+            _vel.y -= _t.Gravity * GravityScale * dt;
+            if (_t.TerminalFall > 0f && _vel.y < -_t.TerminalFall) _vel.y = -_t.TerminalFall;
 
             // **누른 것을 잠시 기억한다.** 떨어지는 중에만 펴는 것은 맞지만, 뛰어오르는
             // 도중에 누르면 아무 일도 안 일어나 「눌렀는데 안 된다」가 된다(실제 신고).
             // 올라가는 중에 눌러도 고도는 안 주고, 떨어지기 시작하는 순간 펴 준다.
-            if (wish.GlideDown) _glideWanted = GlideMemory;
-            _glideWanted -= dt;
-            if (_vel.y < -1f && _glideWanted > 0f && !Stamina.Empty)
-            { _glideWanted = 0f; Now = State.Glide; return; }
+            if (!_t.NoGlide)
+            {
+                if (wish.GlideDown) _glideWanted = GlideMemory;
+                _glideWanted -= dt;
+                if (_vel.y < -1f && _glideWanted > 0f && !Stamina.Empty)
+                { _glideWanted = 0f; Now = State.Glide; return; }
+            }
+            if (TryLedge(walls, ground)) return;
             TryGrab(dt, wish, walls, ground);
+        }
+
+        /// <summary>
+        /// 모서리 잡기 — 낙하 중 발판 가장자리에 손이 닿으면 자동으로 매달려 끌어올린다.
+        /// 버튼을 요구하면 그 순간에 누를 수 있는 사람만 구원받는다 — 「아깝게」를
+        /// 「간신히」로 바꾸는 장치라 자동이어야 한다.
+        /// </summary>
+        private bool TryLedge(IKgdWall walls, IKgdGround ground)
+        {
+            if (!_t.LedgeGrab || walls == null || _vel.y >= 0f || _climbCool > 0f) return false;
+            if (!walls.WallAt(Pos, _t.Radius + _t.LedgeReach, out float topY, out var inward))
+                return false;
+            float rise = topY - Pos.y;
+            if (rise < _t.LedgeMinRise || rise > _t.LedgeMaxRise) return false;
+            if (!Stamina.TrySpend(_t.LedgeCost)) return false;
+
+            _vel = Vector3.zero;
+            ChargedAir = false;
+            Face(inward);
+            // StandOnWall 을 부르지 않는다 — one-way 발판은 발높이가 잡는 창 밖이면
+            // 지형 질의에 안 잡혀서, 표면 찾기가 몸을 발판 속으로 걸어 들어가게 한다.
+            _ledgeFrom = Pos;
+            _ledgeTo = new Vector3(Pos.x, topY + 0.05f, Pos.z) + inward * (_t.Radius + 0.5f);
+            _ledgeLeft = _t.LedgePullTime;
+            Now = State.Ledge;
+            return true;
+        }
+
+        /// <summary>끌어올린다 — 위로 먼저, 안쪽은 나중. 호를 그려야 「짚고 올라선다」로 읽힌다.</summary>
+        private void Ledge(float dt)
+        {
+            _ledgeLeft -= dt;
+            float t = _t.LedgePullTime > 0f ? 1f - Mathf.Clamp01(_ledgeLeft / _t.LedgePullTime) : 1f;
+            float up = Mathf.SmoothStep(0f, 1f, Mathf.Min(1f, t * 1.4f));
+            float across = t * t;
+            Pos = new Vector3(Mathf.Lerp(_ledgeFrom.x, _ledgeTo.x, across),
+                              Mathf.Lerp(_ledgeFrom.y, _ledgeTo.y, up),
+                              Mathf.Lerp(_ledgeFrom.z, _ledgeTo.z, across));
+            _vel = Vector3.zero;
+            if (_ledgeLeft <= 0f)
+            {
+                Pos = _ledgeTo;
+                Now = State.Ground;
+                Landed = true;
+                _climbCool = 0.2f;
+            }
         }
 
         private void TryGrab(float dt, in Wish wish, IKgdWall walls, IKgdGround ground)
@@ -212,6 +349,7 @@ namespace Kgd.Play
             if (_pressing < _t.ClimbIntent) return;
 
             _vel = Vector3.zero;
+            ChargedAir = false;
             Now = State.Climb;
             Face(inward);
             StandOnWall(ground, inward);
@@ -313,11 +451,13 @@ namespace Kgd.Play
 
         private void Apply(float dt, IKgdGround ground)
         {
+            // 등반·모서리 잡기는 스스로 자리를 놓는다 — 수평 판정을 태우면 벽이 도로 민다
+            bool selfPlaced = Now == State.Climb || Now == State.Ledge;
             var want = Pos + _vel * dt;
-            Pos = Now == State.Climb ? want : _body.Resolve(ground, Pos, want);
+            Pos = selfPlaced ? want : _body.Resolve(ground, Pos, want);
 
             float floor = ground.HeightAt(Pos);
-            if (Now != State.Climb && Pos.y <= floor)
+            if (!selfPlaced && Pos.y <= floor)
             {
                 // **위로 끌어올리지 않는다.** 지면에 붙는 길은 떨어지는 것뿐이다 —
                 // 예전엔 계단 앞에서 점프하면 꼭대기로 순간이동했다.
@@ -326,6 +466,7 @@ namespace Kgd.Play
                 {
                     Now = State.Ground;
                     _vel.y = 0f;
+                    ChargedAir = false;
                     Landed = true;
                 }
             }

@@ -13,10 +13,11 @@
 | 타입 | 하는 일 |
 |---|---|
 | `Kgd.KgdPlatform` | 랭킹 제출 · 세이브 · 플랫폼 신호 |
+| `Kgd.KgdRelay` | 게임 릴레이(`/ws/games/{slug}`) WebSocket 통로 — 열고/보내고/받기만. 스키마는 게임이 안다 (ADR-0088) |
 | `Kgd.KgdInput` | 가상패드 입력 |
 | `Kgd.KgdDevice` | 기기 판정(터치 여부, 셸 예약 띠 치수) |
 | `Kgd.KgdSave` | 서버 세이브 읽기/쓰기 |
-| `Kgd.Play.KgdTraverse` | **젤다라이크의 뼈대** — 걷기·달리기·점프·등반·활공·구르기가 스태미나 하나로 |
+| `Kgd.Play.KgdTraverse` | **젤다라이크의 뼈대** — 걷기·달리기·점프·등반·활공·구르기가 스태미나 하나로. 켜면 **차지 점프**(`Wish.JumpCharge`, 공중 조향 잠김) · **모서리 잡기**(`State.Ledge`, 자동) · 활공 차단(`NoGlide`) · 중력 배율(`GravityScale`) · 미끄러짐(`Slip`)도 — 전부 기본값이 꺼짐이라 기존 게임 무변경 |
 | `Kgd.Play.KgdChase` | 쫓아와서 때리는 것 — 인지 → 추격 → **예고** → 타격 → 후딜 |
 | `Kgd.Play.KgdOrbitCam` | 3인칭 궤도 카메라 — 지형을 두 번 피한다(바닥·벽) |
 | `Kgd.Play.KgdWeapon` | 손에 든 것의 **규칙** — 사거리·범위·속도·동작·**팔 각도**가 한 벌. 두 손·원거리 표시 |
@@ -37,8 +38,11 @@
 | `Kgd.Motion.KgdLook` | **화면을 끌어 시점을 돌린다** — 가상패드를 잡은 손가락을 피한다 |
 | `Kgd.Motion.KgdBody` | **걸어 다니는 몸의 판정** — 들어갈 수 있나 · 미끄러지기 · 박힘 풀기 · 착지 |
 | `Kgd.Motion.KgdObstacles` | 장애물 기둥 격자 — 막기·올라서기·붙어 오르기가 같은 규칙에서 나온다. **부술 수 있다**(`Remove`) |
+| `Kgd.Motion.KgdMover` | 왕복하는 발판의 자리 — 시간 → 위치의 순수 함수. 위에 선 몸은 게임이 `DeltaAt` 만큼 실어 나른다 |
 | `Kgd.Content.KgdChapters` | 챕터 아트 번들을 받아 이름으로 찾는다 (ADR-0085) |
 | `Kgd.Sound.KgdTone` | 효과음을 **파형으로 만든다** — 오디오 파일을 넣지 않는다 |
+| `Kgd.Play.KgdStorm` | **고도 경계** — 낮은 층부터 무너진다(예고 → 차오름, 안개 속은 초당 피해). 언제 어디까지 치사인지만 알고, 보이는 것은 게임이 그린다 |
+| `Kgd.Terrain.KgdMountain` | **산 하나** — 고지대를 층층이 쌓은 봉우리(아홉 종 Peak 의 지형 추출). 게임은 `AddProp` 로 소품을 같은 충돌 격자에 얹는다 |
 | `Kgd.Terrain.KgdPlateau` | **고지대** — 램프 하나로만 오르는 팔각 절벽의 모양·높이 |
 | `Kgd.Terrain.KgdPlateauBuilder` | 그 고지대를 그리고 막는다 |
 | `Kgd.Terrain.IKgdTerrainSink` | 게임이 구현하는 출력구 — 사각(`Quad`)·자유 사각면(`Face`)·막는 원판·바닥색 |
