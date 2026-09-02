@@ -114,50 +114,65 @@ namespace Kgd.Play
         }
 
         /// <summary>
-        /// 휘두르는 동안의 **팔 각도**. 몸통만 돌리면 무엇을 들었든 같은 동작으로 보인다 —
-        /// 창이 찌르기가 아니라 휘두르기로 읽힌 것도 이 때문이었다(실제 신고).
-        ///
-        /// 각도는 어깨 기준 X축(앞으로 내미는 방향)이다. 왼팔은 두 손 무기일 때만 따라온다.
+        /// 휘두르는 동안의 팔 자세. **뼈의 축이 아니라 사람 기준으로 말한다** —
+        /// <see cref="Raise"/> 는 0 이 늘어뜨림 · 90 이 앞으로 수평 · 180 이 머리 위,
+        /// <see cref="Across"/> 는 +1 이 몸 가운데로 모음 · -1 이 바깥으로 벌림.
+        /// 로컬 오일러 각으로 말하면 킷마다 팔이 엉뚱한 데로 꺾인다(실제 신고).
         /// </summary>
-        public void Arms(float t, out float right, out float left, out float grip)
+        public struct ArmPose
         {
+            public float RaiseR, AcrossR, RaiseL, AcrossL;
+            /// <summary>왼손도 같이 쥐는가(0~1). 두 손 무기만 1 이다.</summary>
+            public float Grip;
+        }
+
+        /// <summary>
+        /// 몸통만 돌리면 무엇을 들었든 같은 동작으로 보인다 — 창이 찌르기가 아니라
+        /// 휘두르기로 읽힌 것도 이 때문이었다(실제 신고). 팔은 무기가 정한다.
+        /// </summary>
+        public ArmPose Arms(float t)
+        {
+            var p = new ArmPose();
             switch (Style)
             {
                 case Swing.Thrust:
-                    // 뒤로 당겼다 앞으로 곧게 뻗는다
-                    float p = t < 0.35f ? -Mathf.Lerp(0f, 40f, t / 0.35f)
-                                        : Mathf.Lerp(-40f, -104f, (t - 0.35f) / 0.65f);
-                    right = p; left = p * 0.72f; grip = 1f;
+                    // 뒤로 당겼다 앞으로 곧게 찌른다. 두 손이 자루를 따라 나란히 간다
+                    p.RaiseR = t < 0.35f ? Mathf.Lerp(50f, 20f, t / 0.35f) : Mathf.Lerp(20f, 100f, (t - 0.35f) / 0.65f);
+                    p.AcrossR = 0.35f;
+                    p.RaiseL = p.RaiseR + 20f; p.AcrossL = 0.55f; p.Grip = 1f;
                     break;
 
                 case Swing.Chop:
                     // 머리 위로 들었다 내리찍는다
-                    right = t < 0.42f ? Mathf.Lerp(-20f, 66f, t / 0.42f)
-                                      : Mathf.Lerp(66f, -78f, (t - 0.42f) / 0.58f);
-                    left = right; grip = 1f;
+                    p.RaiseR = t < 0.42f ? Mathf.Lerp(100f, 172f, t / 0.42f) : Mathf.Lerp(172f, 35f, (t - 0.42f) / 0.58f);
+                    p.AcrossR = 0.25f;
+                    p.RaiseL = p.RaiseR; p.AcrossL = 0.45f; p.Grip = 1f;
                     break;
 
                 case Swing.Shoot:
-                    // 오른팔은 시위를 당기고 왼팔은 활을 든 채 고정한다
-                    right = t < 0.7f ? Mathf.Lerp(-30f, 6f, t / 0.7f) : -34f;
-                    left = -86f; grip = 1f;
+                    // 왼팔은 활을 앞으로 든 채 고정, 오른팔은 시위를 뺨까지 당긴다
+                    p.RaiseL = 95f; p.AcrossL = 0.15f;
+                    p.RaiseR = 85f; p.AcrossR = t < 0.7f ? Mathf.Lerp(0.2f, 0.9f, t / 0.7f) : 0.3f;
+                    p.Grip = 1f;
                     break;
 
                 case Swing.Slash:
-                    right = t < 0.30f ? Mathf.Lerp(-10f, 24f, t / 0.30f)
-                          : t < 0.62f ? Mathf.Lerp(24f, -46f, (t - 0.30f) / 0.32f)
-                                      : Mathf.Lerp(-46f, -10f, (t - 0.62f) / 0.38f);
-                    left = 0f; grip = 0f;
+                    // 몸 앞으로 감았다 바깥으로 크게 벤다
+                    p.RaiseR = 80f;
+                    p.AcrossR = t < 0.30f ? Mathf.Lerp(0f, 0.9f, t / 0.30f)
+                              : t < 0.62f ? Mathf.Lerp(0.9f, -0.9f, (t - 0.30f) / 0.32f)
+                                          : Mathf.Lerp(-0.9f, 0f, (t - 0.62f) / 0.38f);
+                    p.RaiseL = 20f; p.AcrossL = 0f; p.Grip = 0f;
                     break;
 
                 default:   // Jab — 번갈아 짧게 지른다
                     float j = Mathf.Sin(t * Mathf.PI * 2f);
-                    right = -46f * Mathf.Max(0f, j);
-                    left = -46f * Mathf.Max(0f, -j);
-                    grip = 0f;
+                    p.RaiseR = 30f + 65f * Mathf.Max(0f, j);
+                    p.RaiseL = 30f + 65f * Mathf.Max(0f, -j);
+                    p.AcrossR = p.AcrossL = 0.35f; p.Grip = 0f;
                     break;
             }
-            if (!TwoHanded && Style != Swing.Shoot && Style != Swing.Jab) { left = 0f; grip = 0f; }
+            return p;
         }
 
         /// <summary>

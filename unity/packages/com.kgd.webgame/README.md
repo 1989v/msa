@@ -22,10 +22,12 @@
 | `Kgd.Play.KgdWeapon` | 손에 든 것의 **규칙** — 사거리·범위·속도·동작·**팔 각도**가 한 벌. 두 손·원거리 표시 |
 | `Kgd.Play.KgdShots` | 날아가는 것 — 화살·돌·던진 창. **맞는 판정은 게임이 한다**(맞을 것의 목록이 게임마다 다르다) |
 | `Kgd.Play.KgdGuard` | 막기 — 덜 맞고 스태미나를 문다. 정면만, 마르면 풀린다 |
+| `Kgd.Play.KgdLimbs` | 클립 없이 팔다리를 잡는다 — **월드 방향 조준**이라 킷의 뼈 축을 몰라도 된다. 기어오르기 자세 내장 + 자세 검사 |
 | `Kgd.Play.KgdBreakables` | 부술 수 있는 것의 체력·단계·흔들림 — **한 방에 사라지지 않는다** |
 | `Kgd.Play.KgdScatter` | 지형 위에 흩기 · 둘러싸기 · 고도를 난이도로 |
 | `Kgd.Play.KgdStamina` | 행동 자원 하나. 바닥나도 멈추지 않고 느려진다 |
 | `Kgd.Art.KgdMesh` · `KgdMat` · `KgdKit` | 절차 메시 · 공용 머티리얼 · Kenney 로더 |
+| `Kgd.Art.KgdSky` | 하늘(그라디언트·해·구름) + 환경광 3색 + 안개색을 한 벌로. 하늘색 하나로 나머지를 뽑는다 |
 | `Kgd.Feel.KgdTrail` | 휘두른 자국 — 날이 지나간 자리를 리본으로. 무기가 길면 자국도 길다 |
 | `Kgd.Feel.KgdFloaters` | 떠오르는 피해 숫자 — **자리와 나이만** 들고 있고 글자는 게임이 찍는다 |
 | `Kgd.Feel.KgdImpact` | 타격감 — 히트스톱과 화면 흔들림. `Time.timeScale` 을 안 건드린다 |

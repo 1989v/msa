@@ -20,7 +20,10 @@ namespace Kgd.Terrain
         /// </summary>
         private static Color Shade(Color c, Vector3 n, Vector3 toLight)
         {
-            float k = 0.66f + 0.44f * Mathf.Clamp01(Vector3.Dot(n.normalized, toLight) * 0.5f + 0.5f);
+            // **살짝만 굽는다.** 셰이더가 실시간으로 다시 어둡히므로 여기서 0.66 까지 내리면
+            // 빛 반대편 면이 둘을 곱해 검게 됐다(실제 화면: 벽 가까이서 반쪽이 검정).
+            // 면끼리 갈려 보일 만큼만 남긴다.
+            float k = 0.86f + 0.20f * Mathf.Clamp01(Vector3.Dot(n.normalized, toLight) * 0.5f + 0.5f);
             return c * k;
         }
 
