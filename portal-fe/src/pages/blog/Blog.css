@@ -995,3 +995,95 @@
   background: transparent;
   font-size: 0.82em;
 }
+
+/* ── 목록 · 수평선 ──────────────────────────────────────────────
+ * 브라우저 기본값은 들여쓰기가 40px 라 본문 왼쪽선이 흔들린다. */
+.blog-body ul,
+.blog-body ol {
+  margin: var(--ko-space-3) 0;
+  padding-left: var(--ko-space-5);
+}
+
+.blog-body li {
+  margin: var(--ko-space-1) 0;
+}
+
+/* 중첩 목록은 위아래 여백을 죽인다 — 항목 하나가 문단처럼 벌어지지 않게. */
+.blog-body li > ul,
+.blog-body li > ol {
+  margin: var(--ko-space-1) 0;
+}
+
+.blog-body hr {
+  margin: var(--ko-space-6) 0;
+  border: 0;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+/* 체크박스는 `<input>` 이 아니라 글자다(sanitizer 가 input 을 막는다).
+ * 목록 마커와 겹쳐 보이지 않게 항목 마커를 없앤다. */
+.blog-body li:has(> .kh-task) {
+  list-style: none;
+  margin-left: calc(var(--ko-space-4) * -1);
+}
+
+.blog-body .kh-task {
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+  color: var(--ko-accent-primary);
+}
+
+/* ── 콜아웃 (`> [!NOTE]`) ────────────────────────────────────────
+ * 인용문 위에 얹는다 — 확장이 죽어도 인용문 스타일로 읽힌다.
+ * k-heritage 는 그림자를 안 쓰므로 왼쪽 굵은 선과 옅은 면으로만 세운다. */
+.blog-body .kh-alert {
+  margin: var(--ko-space-4) 0;
+  padding: var(--ko-space-3) var(--ko-space-4);
+  border-left: 3px solid var(--kh-alert-line, var(--ko-border-strong));
+  border-radius: 0 var(--kh-radius, 4px) var(--kh-radius, 4px) 0;
+  background: var(--ko-surface-1);
+  color: var(--ko-text-primary);
+}
+
+.blog-body .kh-alert__title {
+  margin: 0 0 var(--ko-space-2);
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+  font-size: 0.86em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--kh-alert-line, var(--ko-text-secondary));
+}
+
+/* 콜아웃 안의 마지막 요소는 아래 여백을 죽인다 — 상자가 아래로 뜬다. */
+.blog-body .kh-alert > :last-child {
+  margin-bottom: 0;
+}
+
+.blog-body .kh-alert--note      { --kh-alert-line: var(--ko-accent-primary); }
+.blog-body .kh-alert--tip       { --kh-alert-line: var(--kh-pine); }
+.blog-body .kh-alert--important { --kh-alert-line: var(--kh-ocher); }
+.blog-body .kh-alert--warning,
+.blog-body .kh-alert--caution   { --kh-alert-line: var(--kh-yeonji); }
+
+/* 다크에서 소나무는 바탕과 거의 안 갈린다 — 액션색을 그대로 쓴다. */
+html[data-theme='dark'] .blog-body .kh-alert--tip { --kh-alert-line: var(--ko-accent-primary); }
+
+/* ── 본문에 직접 쓴 접기 ────────────────────────────────────────
+ * fencesvg 가 내는 `.fs-source` 와 같은 표면으로 맞춘다. */
+.blog-body > details {
+  margin: var(--ko-space-4) 0;
+  padding: var(--ko-space-2) var(--ko-space-3);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+  background: var(--ko-surface-1);
+}
+
+.blog-body > details > summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.blog-body > details[open] > summary {
+  margin-bottom: var(--ko-space-2);
+  padding-bottom: var(--ko-space-2);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}

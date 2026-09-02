@@ -1,6 +1,7 @@
 import DOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { inlineDiagrams } from 'fencesvg';
+import { blogMarkdown } from './markdownExtensions';
 
 /**
  * 마크다운 → HTML.
@@ -16,6 +17,10 @@ import { inlineDiagrams } from 'fencesvg';
  * 인자 없이 부르면 페이지의 계산값(바탕·글자색·링크색·테두리색·반경)을 읽어
  * 다이어그램 전체가 이 사이트의 팔레트로 그려진다.
  */
+// 확장은 모듈이 로드될 때 한 번만 건다. `renderMarkdown` 안에서 걸면 호출마다
+// 같은 확장이 쌓여 렌더가 느려진다.
+marked.use(blogMarkdown);
+
 export function renderMarkdown(source: string): string {
   const withDiagrams = inlineDiagrams(source ?? '');
   const raw = marked.parse(withDiagrams, { async: false, gfm: true, breaks: false }) as string;
