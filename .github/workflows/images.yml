@@ -354,11 +354,21 @@ jobs:
               # CDN/브라우저가 구버전을 붙들고 있었다 (portal-fe/Dockerfile 주석 참조)
               BUILD_ARGS+=(--build-arg "GIT_SHA=$TAG")
             fi
+            # 러너가 매번 새로 떠 레이어 캐시가 없다. 의존성이 그대로여도 pip/npm
+            # 레이어가 새 digest 로 다시 생겨 빌드마다 레지스트리에 쌓였다
+            # (recommendation-ml 은 태그 5개가 각자 227 MiB 레이어를 갖고 있었다).
+            # mode=min 은 최종 이미지 레이어만 내보내므로 캐시 매니페스트가 방금 push 한
+            # blob 을 그대로 참조한다 — 추가 용량이 사실상 없다. 빌더 단계까지 담는
+            # mode=max 는 node_modules 같은 새 blob 을 얹어 10GB 한도를 도로 깎는다.
+            # buildcache 태그는 sha 형식이 아니라 scripts/ocir-prune.py 가 건드리지 않는다.
+            CACHE_REF="$REGISTRY/$svc:buildcache"
             docker buildx build \
               --platform linux/arm64 \
               -f "$ctx/Dockerfile" \
               -t "$REGISTRY/$svc:$TAG" \
               "${BUILD_ARGS[@]}" \
+              --cache-from "type=registry,ref=$CACHE_REF" \
+              --cache-to "type=registry,ref=$CACHE_REF,mode=min,image-manifest=true,oci-mediatypes=true" \
               --push \
               "$ctx"
           done
