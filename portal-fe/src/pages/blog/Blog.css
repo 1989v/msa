@@ -960,17 +960,38 @@
   }
 }
 
-/* 원문 | 그림 두 칸. 라이브러리가 인라인 스타일로 2:3 을 주고, 좁은 화면에서
- * 한 칸으로 쌓는 것만 여기서 정한다 — 인라인 스타일에는 미디어 쿼리를 못 쓴다.
- * 인라인을 이기려면 !important 가 필요하다. */
-@media (max-width: 720px) {
-  .blog-body .fs-pair {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
+/* 그림 아래 접어 둔 원문(`%% source`).
+ *
+ * 라이브러리는 마커·여백을 브라우저 기본값에 맡기고 클래스만 붙인다.
+ * 여기서 k-heritage 표면으로 맞춘다 — 그림자 없이 면과 선만. */
+.blog-body .fs-figure {
+  margin: var(--ko-space-5) 0 var(--ko-space-2);
 }
 
-/* 원문 칸은 그림보다 한 단 작게 — 읽는 대상은 그림이고 원문은 참조다. */
-.blog-body .fs-pair pre {
+.blog-body .fs-source {
+  margin-top: var(--ko-space-2);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 4px);
+  background: var(--ko-surface-1);
+}
+
+.blog-body .fs-source > summary {
+  padding: var(--ko-space-2) var(--ko-space-3);
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+  font-size: 0.82em;
+  color: var(--ko-text-muted);
+  list-style-position: inside;
+}
+
+/* 펼친 코드는 상자 안쪽 선으로만 나눈다 — 상자 안에 상자를 겹치지 않는다. */
+.blog-body .fs-source[open] > summary {
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.blog-body .fs-source pre {
   margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   font-size: 0.82em;
 }
