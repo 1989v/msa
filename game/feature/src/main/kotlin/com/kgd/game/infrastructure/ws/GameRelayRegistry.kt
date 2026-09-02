@@ -18,6 +18,12 @@ import java.util.concurrent.ConcurrentHashMap
  * 필요한 종목이 생기면 그 종목 전용 권위 레이어를 릴레이 위에 따로 얹는다.
  * 대신 규칙을 모르는 만큼 남용 방어는 형식만으로 한다 — 메시지 크기·초당 메시지 수·방 수 상한.
  *
+ * ## N석 (ADR-0088)
+ * 방의 좌석 수는 방을 만드는 join 의 `seats`(2~20, 생략 시 2)가 정한다. 3석 이상 방은
+ * 로비 30초 마감(인원 무관 시작, 빈 좌석은 호스트 클라이언트가 봇으로 채운다) · 시작 후
+ * 잠금 · `left`(좌석 번호) · `move` 의 `to`(좌석 지정 전달)가 붙고, 2석 방은 기존
+ * 프로토콜 그대로다 — 배포된 2인 게임 클라이언트를 건드리지 않는다.
+ *
  * ## 왜 in-memory 인가
  * 현재 배포는 단일 노드이고 호스트(code-dictionary)는 1 레플리카다(ADR-0059 폴드).
  * 방 상태를 Redis pub/sub 으로 팬아웃해도 구독자가 자기 자신뿐이라 홉과 실패 지점만 늘어난다.
@@ -38,8 +44,16 @@ class GameRelayRegistry(
     private companion object {
         const val MAX_ROOMS = 200
         const val MAX_MESSAGE_CHARS = 4096
-        const val MAX_MESSAGES_PER_SECOND = 20
+
+        /** 의도 20Hz + 이모트·핑 여유. 스냅샷 10Hz 는 그 안에 든다 (ADR-0088) */
+        const val MAX_MESSAGES_PER_SECOND = 40
         const val RATE_WINDOW_MS = 1_000L
+
+        /** 다인 방(3석 이상)의 로비 마감 — 이 시간이 지나면 인원 무관 강제 시작 */
+        const val LOBBY_MAX_WAIT_MS = 30_000L
+
+        const val MIN_SEATS = 2
+        const val MAX_SEATS = 20
 
         /** 무메시지 60초 → ping 요구, 90초 → 종료 */
         const val IDLE_PING_MS = 60_000L
@@ -55,9 +69,21 @@ class GameRelayRegistry(
         val CODE_PATTERN = Regex("^[A-Z0-9]{4,8}$")
     }
 
-    private class Room(val key: String, val gameSlug: String, val code: String) {
-        val seats = arrayOfNulls<Peer>(2)
+    /**
+     * 좌석 수는 **방을 만드는 join 이 정한다** (2~20, 생략 시 2 — ADR-0088).
+     * 기존 2인 게임은 `seats` 를 보내지 않으므로 그대로 2석이다.
+     */
+    private class Room(val key: String, val gameSlug: String, val code: String, capacity: Int, val createdMs: Long) {
+        val seats = arrayOfNulls<Peer>(capacity)
         var seed: Int = 0
+
+        /** start 이후 참. 판 중간 충원은 없다 — 죽은 사람의 값을 지킨다 (PRD §3) */
+        var started: Boolean = false
+
+        val capacity: Int get() = seats.size
+
+        /** 2석 방은 기존 프로토콜(`opponentLeft`, 만석 시작)을 그대로 쓴다 */
+        val legacy: Boolean get() = capacity == MIN_SEATS
     }
 
     private class Peer(
@@ -120,7 +146,7 @@ class GameRelayRegistry(
         }
 
         when (node.path("t").asText()) {
-            "join" -> join(peer, node)
+            "join" -> join(peer, node, nowMs)
             "move" -> move(peer, node)
             "leave" -> synchronized(matchLock) { leaveRoom(peer) }
             "ping" -> send(peer, message("pong"))
@@ -134,6 +160,29 @@ class GameRelayRegistry(
      */
     @Scheduled(fixedDelay = 15_000L)
     fun sweep() = sweepIdle(System.currentTimeMillis())
+
+    /** 다인 방 로비 마감 — 30초가 지나면 인원 무관 시작한다. 빈 좌석은 호스트가 봇으로 채운다. */
+    @Scheduled(fixedDelay = 1_000L)
+    fun tickLobbies() = startDueLobbies(System.currentTimeMillis())
+
+    fun startDueLobbies(nowMs: Long) {
+        val due = rooms.values.filter {
+            !it.legacy && !it.started && nowMs - it.createdMs >= LOBBY_MAX_WAIT_MS
+        }
+        if (due.isEmpty()) return
+        synchronized(matchLock) {
+            due.forEach { room ->
+                if (room.started) return@forEach
+                val occupants = synchronized(room) { room.seats.filterNotNull() }
+                if (occupants.isEmpty()) {
+                    rooms.remove(room.key, room)
+                    waiting.remove(room.gameSlug, room.key)
+                } else {
+                    startRoom(room, occupants)
+                }
+            }
+        }
+    }
 
     fun sweepIdle(nowMs: Long) {
         peers.values.forEach { peer ->
@@ -157,7 +206,7 @@ class GameRelayRegistry(
 
     // ── 명령 처리 ───────────────────────────────────────────────────────────
 
-    private fun join(peer: Peer, node: JsonNode) {
+    private fun join(peer: Peer, node: JsonNode, nowMs: Long) {
         val roomNode = node.path("room")
         val requested = if (roomNode.isTextual) normalizeCode(roomNode.asText()) else null
         if (roomNode.isTextual && requested == null) {
@@ -165,15 +214,24 @@ class GameRelayRegistry(
             return
         }
         peer.nick = sanitizeNick(node.path("nick").asText(""))
+        // 방을 새로 만들 때만 반영된다 — 이미 있는 방의 좌석 수는 안 바뀐다
+        val seats = node.path("seats").asInt(MIN_SEATS).coerceIn(MIN_SEATS, MAX_SEATS)
 
         synchronized(matchLock) {
             if (peer.room != null) {
                 send(peer, error("ALREADY_JOINED"))
                 return
             }
-            val room = if (requested != null) roomByCode(peer.gameSlug, requested) else autoMatchRoom(peer.gameSlug)
+            val room = if (requested != null) roomByCode(peer.gameSlug, requested, seats, nowMs)
+                       else autoMatchRoom(peer.gameSlug, seats, nowMs)
             if (room == null) {
                 send(peer, error("ROOM_LIMIT"))
+                return
+            }
+            // 다인 방은 시작 후 잠긴다 — 판 중간 충원은 죽은 사람의 값을 없앤다 (ADR-0088).
+            // 2석 방은 기존대로 열어 둔다: 코드로 다시 들어와 재대전하는 흐름이 있다.
+            if (room.started && !room.legacy) {
+                send(peer, error("ROOM_STARTED"))
                 return
             }
             val seat = synchronized(room) {
@@ -192,16 +250,28 @@ class GameRelayRegistry(
             val joined = message("joined")
             joined.put("room", room.code)
             joined.put("seat", seat)
+            joined.put("seats", room.capacity)
             send(peer, joined)
 
             val occupants = synchronized(room) { room.seats.filterNotNull() }
-            if (occupants.size == 2) startRoom(room, occupants)
+            // 다인 방 로비 — 먼저 온 사람들이 「몇이 모였나」를 보게 알린다
+            if (!room.legacy) {
+                val seated = message("seat").put("seat", seat).put("nick", peer.nick)
+                val payload = objectMapper.writeValueAsString(seated)
+                occupants.filter { it !== peer }.forEach { it.conn.send(payload) }
+            }
+            if (occupants.size == room.capacity) startRoom(room, occupants)
         }
     }
 
-    /** 두 자리가 찼다 — 공통 시드를 뽑아 양쪽에 동시에 알린다 (게임별 결정적 초기화용) */
+    /**
+     * 좌석이 다 찼거나 로비가 마감됐다 — 공통 시드를 뽑아 전원에게 동시에 알린다.
+     * `players` 는 좌석 수만큼의 배열이고 **빈 좌석은 빈 문자열** — 호스트가 봇으로 채운다.
+     * [matchLock] 안에서만 호출한다.
+     */
     private fun startRoom(room: Room, occupants: List<Peer>) {
         room.seed = random.nextInt(Int.MAX_VALUE)
+        room.started = true
         waiting.remove(room.gameSlug, room.key)
 
         val players = objectMapper.createArrayNode()
@@ -229,6 +299,15 @@ class GameRelayRegistry(
         out.put("seat", peer.seat)
         out.set("d", opaque)
         val payload = objectMapper.writeValueAsString(out)
+
+        // `to` 가 있으면 그 좌석에게만 — 게스트 의도는 호스트에게만 가면 된다 (ADR-0088 ①).
+        // 방 전체에 뿌리면 최악 판의 아웃바운드가 3배가 된다.
+        val toNode = node.path("to")
+        if (toNode.isIntegralNumber) {
+            val target = synchronized(room) { room.seats.getOrNull(toNode.asInt()) }
+            if (target != null && target !== peer) target.conn.send(payload)
+            return
+        }
         synchronized(room) { room.seats.filterNotNull().filter { it !== peer } }
             .forEach { it.conn.send(payload) }
     }
@@ -236,6 +315,7 @@ class GameRelayRegistry(
     /** [matchLock] 안에서만 호출한다. */
     private fun leaveRoom(peer: Peer) {
         val room = peer.room ?: return
+        val seat = peer.seat
         val remaining = synchronized(room) {
             if (peer.seat in room.seats.indices && room.seats[peer.seat] === peer) {
                 room.seats[peer.seat] = null
@@ -245,10 +325,14 @@ class GameRelayRegistry(
         peer.room = null
         peer.seat = -1
 
-        val payload = objectMapper.writeValueAsString(message("opponentLeft"))
+        // 2석 방은 기존 이름을 유지한다 — 배포된 클라이언트가 그 이름을 듣는다.
+        // 다인 방은 좌석 번호가 있어야 남은 쪽이 호스트 승계를 판정한다 (ADR-0088 ②).
+        val payload = objectMapper.writeValueAsString(
+            if (room.legacy) message("opponentLeft") else message("left").put("seat", seat),
+        )
         remaining.forEach { it.conn.send(payload) }
 
-        // 2인 모두 나가면 즉시 파기 — 방을 재사용하지 않으므로 코드가 새어도 무해하다
+        // 모두 나가면 즉시 파기 — 방을 재사용하지 않으므로 코드가 새어도 무해하다
         if (remaining.isEmpty()) {
             rooms.remove(room.key, room)
             waiting.remove(room.gameSlug, room.key)
@@ -258,30 +342,30 @@ class GameRelayRegistry(
     // ── 방 배정 ─────────────────────────────────────────────────────────────
 
     /** 친구 초대 — 지정 코드의 방을 찾고, 없으면 그 코드로 만든다 */
-    private fun roomByCode(gameSlug: String, code: String): Room? {
+    private fun roomByCode(gameSlug: String, code: String, seats: Int, nowMs: Long): Room? {
         val key = "$gameSlug:$code"
         rooms[key]?.let { return it }
         if (rooms.size >= MAX_ROOMS) return null
-        val created = Room(key, gameSlug, code)
+        val created = Room(key, gameSlug, code, seats, nowMs)
         return rooms.putIfAbsent(key, created) ?: created
     }
 
     /** 빠른 매칭 — 같은 게임의 대기 방이 있으면 합류, 없으면 새 방을 열고 대기열에 올린다 */
-    private fun autoMatchRoom(gameSlug: String): Room? {
+    private fun autoMatchRoom(gameSlug: String, seats: Int, nowMs: Long): Room? {
         val open = waiting[gameSlug]?.let { rooms[it] }
-        if (open != null && synchronized(open) { open.seats.any { it == null } }) return open
+        if (open != null && !open.started && synchronized(open) { open.seats.any { it == null } }) return open
 
-        val room = newRoom(gameSlug) ?: return null
+        val room = newRoom(gameSlug, seats, nowMs) ?: return null
         waiting[gameSlug] = room.key
         return room
     }
 
-    private fun newRoom(gameSlug: String): Room? {
+    private fun newRoom(gameSlug: String, seats: Int, nowMs: Long): Room? {
         if (rooms.size >= MAX_ROOMS) return null
         repeat(16) {
             val code = randomCode()
             val key = "$gameSlug:$code"
-            val room = Room(key, gameSlug, code)
+            val room = Room(key, gameSlug, code, seats, nowMs)
             if (rooms.putIfAbsent(key, room) == null) return room
         }
         return null

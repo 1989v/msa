@@ -31,8 +31,9 @@ private class Client(id: String) {
     fun first(type: String): JsonNode? = nodes().firstOrNull { it.path("t").asText() == type }
 }
 
-private fun join(room: String? = null, nick: String = "kgd") =
-    """{"t":"join","room":${room?.let { "\"$it\"" } ?: "null"},"nick":"$nick"}"""
+private fun join(room: String? = null, nick: String = "kgd", seats: Int? = null) =
+    """{"t":"join","room":${room?.let { "\"$it\"" } ?: "null"},"nick":"$nick"""" +
+        (seats?.let { ""","seats":$it""" } ?: "") + "}"
 
 class GameRelayRegistryTest : BehaviorSpec({
 
@@ -187,15 +188,15 @@ class GameRelayRegistryTest : BehaviorSpec({
         }
     }
 
-    Given("초당 20건 제한") {
+    Given("초당 40건 제한 (의도 20Hz + 여유 — ADR-0088)") {
         val r = registry()
         val a = Client("a")
         r.onOpen(a.peer, "echo-duel", 1_000)
 
-        When("같은 1초 창에서 21건을 보내면") {
-            repeat(21) { r.onMessage(a.id, """{"t":"ping"}""", 1_000) }
+        When("같은 1초 창에서 41건을 보내면") {
+            repeat(41) { r.onMessage(a.id, """{"t":"ping"}""", 1_000) }
 
-            Then("21번째에서 RATE_LIMIT 으로 끊는다") {
+            Then("41번째에서 RATE_LIMIT 으로 끊는다") {
                 a.closed shouldBe listOf(RelayCloseReason.RATE_LIMIT)
                 a.last().path("code").asText() shouldBe "RATE_LIMIT"
                 r.peerCount() shouldBe 0
@@ -205,12 +206,102 @@ class GameRelayRegistryTest : BehaviorSpec({
         When("창이 넘어간 뒤 다시 보내면") {
             val b = Client("b")
             r.onOpen(b.peer, "echo-duel", 1_000)
-            repeat(20) { r.onMessage(b.id, """{"t":"ping"}""", 1_000) }
+            repeat(40) { r.onMessage(b.id, """{"t":"ping"}""", 1_000) }
             r.onMessage(b.id, """{"t":"ping"}""", 2_000)
 
             Then("허용된다") {
                 b.closed.isEmpty() shouldBe true
-                b.types().count { it == "pong" } shouldBe 21
+                b.types().count { it == "pong" } shouldBe 41
+            }
+        }
+    }
+
+    Given("20석 다인 방 (ADR-0088)") {
+        val r = registry()
+        val a = Client("a")
+        val b = Client("b")
+        r.onOpen(a.peer, "last-one", 0)
+        r.onOpen(b.peer, "last-one", 0)
+
+        When("첫 join 이 seats=20 으로 방을 만들면") {
+            r.onMessage(a.id, join(seats = 20), 0)
+            r.onMessage(b.id, join(nick = "rival", seats = 20), 5_000)
+
+            Then("둘이 같은 방의 0/1 좌석이고 좌석 수를 안다") {
+                a.first("joined")!!.path("seats").asInt() shouldBe 20
+                b.first("joined")!!.path("seat").asInt() shouldBe 1
+                r.roomCount() shouldBe 1
+            }
+            Then("먼저 온 쪽이 seat 알림으로 로비 인원을 안다") {
+                a.first("seat")!!.path("seat").asInt() shouldBe 1
+                a.first("seat")!!.path("nick").asText() shouldBe "rival"
+            }
+            Then("만석 전에는 start 가 없다") {
+                a.first("start") shouldBe null
+            }
+            Then("30초 전에는 로비 마감이 돌지 않는다") {
+                r.startDueLobbies(29_000)
+                a.first("start") shouldBe null
+            }
+            Then("30초가 지나면 인원 무관 시작하고 빈 좌석은 빈 문자열이다") {
+                r.startDueLobbies(30_000)
+                val start = a.first("start")!!
+                val players = start.path("players").values().map { it.asString() }
+                players.size shouldBe 20
+                players[0] shouldBe "kgd"
+                players[1] shouldBe "rival"
+                players.count { it.isEmpty() } shouldBe 18
+                b.first("start")!!.path("seed").asInt() shouldBe start.path("seed").asInt()
+            }
+            Then("시작 후의 join 은 ROOM_STARTED 로 거절된다") {
+                val late = Client("late")
+                r.onOpen(late.peer, "last-one", 31_000)
+                r.onMessage(late.id, join(room = a.first("joined")!!.path("room").asText()), 31_000)
+                late.last().path("code").asText() shouldBe "ROOM_STARTED"
+            }
+            Then("좌석 지정 move 는 그 좌석에게만 간다") {
+                r.onMessage(b.id, """{"t":"move","to":0,"d":{"i":1}}""", 31_500)
+                a.last().path("t").asText() shouldBe "move"
+                a.last().path("seat").asInt() shouldBe 1
+                b.types().count { it == "move" } shouldBe 0
+            }
+            Then("이탈하면 남은 쪽이 left 와 좌석 번호를 받는다") {
+                r.onClose(a.id)
+                b.last().path("t").asText() shouldBe "left"
+                b.last().path("seat").asInt() shouldBe 0
+            }
+        }
+    }
+
+    Given("빈 다인 로비") {
+        val r = registry()
+        val a = Client("a")
+        r.onOpen(a.peer, "last-one", 0)
+        r.onMessage(a.id, join(seats = 20), 0)
+        r.onClose(a.id)
+
+        When("전원이 나간 뒤 마감 시각이 오면") {
+            r.startDueLobbies(30_000)
+
+            Then("시작하지 않고 방을 거둔다") {
+                r.roomCount() shouldBe 0
+            }
+        }
+    }
+
+    Given("만석 다인 방") {
+        val r = registry()
+        val clients = (0 until 3).map { Client("p$it") }
+        clients.forEach { r.onOpen(it.peer, "last-one", 0) }
+
+        When("3석 방이 가득 차면") {
+            clients.forEachIndexed { i, c -> r.onMessage(c.id, join(nick = "p$i", seats = 3), 1_000L * i) }
+
+            Then("마감을 기다리지 않고 즉시 시작한다") {
+                clients.forEach { c ->
+                    c.first("start")!!.path("players").values().map { it.asString() } shouldBe
+                        listOf("p0", "p1", "p2")
+                }
             }
         }
     }
