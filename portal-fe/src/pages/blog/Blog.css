@@ -930,3 +930,32 @@
     margin-left: var(--ko-space-3);
   }
 }
+
+/* 읽은 정도 띠 — 화면 맨 위에 고정.
+ *
+ * k-heritage 는 그림자를 쓰지 않으므로 띠도 면과 선만으로 만든다. 두께는 3px:
+ * 2px 는 한지 바탕에서 잘 안 보이고, 4px 부터는 머리글자와 경쟁한다.
+ *
+ * 채우기는 `width` 가 아니라 `transform: scaleX` 로 움직인다 — width 를 매
+ * 프레임 바꾸면 레이아웃이 다시 잡히고, transform 은 합성만 한다. */
+.blog-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 40;
+  height: 3px;
+  background: var(--ko-border-subtle);
+}
+
+.blog-progress__fill {
+  height: 100%;
+  background: var(--ko-accent-primary);
+  transform-origin: left center;
+  /* fe-design-exempt: A-8 — 읽은 정도 게이지의 진행 트랜지션 */
+  transition: transform 0.12s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blog-progress__fill {
+    transition: none;
+  }
+}

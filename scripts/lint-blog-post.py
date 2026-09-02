@@ -53,6 +53,31 @@ BANNED = [
     (r"놀랍|당황|아쉽게도|다행히", "감상 표현"),
 ]
 
+# 이력·의사결정 금칙. 글은 **결과물이 무엇인가**를 전달하고, **어떻게 그렇게
+# 됐는가**(판올림 이력, 시도와 실패, 고른 이유)는 담지 않는다. 그건 커밋
+# 메시지와 ADR 의 몫이다. 정밀도를 위해 실제로 그 뜻으로만 쓰이는 표현만 담는다.
+HISTORY = [
+    (r"처음에는|애초에는|당초에는", "처음에 어떻게 했는지는 결과물 설명이 아니다"),
+    (r"(앞선|이전|옛|첫|둘째|셋째|두\s?번째|세\s?번째)\s?판", "판올림 이력"),
+    (r"\d+\.\d+\.\d+\s?(에서|에는|은|이|가|을|를)", "버전별 변경 이력"),
+    (r"(기로|으로)\s?했다|결정했다|택했다|골랐다(?!\s*는)", "의사결정 서술"),
+    (r"(?<![가-힣])고민|검토했다|따져\s?봤다|(?<![가-힣])재\s?봤다|해\s?봤(다|더니)", "과정 서술"),
+    (r"무너졌다|실패했다|깨졌다|안\s?됐다", "시도의 결말 서술"),
+    (r"바꿨다|고쳤다|되돌렸다|교체했다|넣었다|뺐다", "변경 이력"),
+    (r"그래서\s?(만들|짰|썼|바꿨)", "만들게 된 경위"),
+    # `이유는` 은 뺐다 — 규칙이 허용하는 "결과 문장 뒤 한 줄 근거" 가 그 말로 쓰인다.
+    (r"(?<![가-힣])배경은|계기(는|가)", "배경 서술"),
+    (r"삽질|헤맸|겪었다|당했다", "고생담"),
+    (r"이번(에|엔)\s|이번\s?작업|작업하면서|하면서\s?알게", "작업 일지 말투"),
+    (r"다음\s?(과제|숙제|할\s?일)|앞으로\s?(할|해야)", "남은 할 일 — 글의 몫이 아니다"),
+    # 한글에는 정규식 단어 경계가 없다. 앞 음절 가드를 안 걸면 `단발 조회고` 의
+    # `회고` 처럼 다른 낱말의 일부가 걸린다(2026-09-02 실제 오탐).
+    (r"(?<![가-힣])(돌이켜|되짚어|회고)", "회고"),
+]
+
+# 정보 밀도. 표·코드·목록이 하나도 없는 h2 구간은 산문만으로 답을 미룬다.
+DENSITY_MIN_LINES = 6
+
 FENCE_RE = re.compile(r"^\s{0,3}(`{3,}|~{3,})")
 
 
@@ -270,6 +295,74 @@ def check_banned(body: str, r: Result) -> None:
             m = re.search(pattern, line)
             if m:
                 r.err(f"F6 {why}: {no}행 `{m.group(0).strip()}`")
+        for pattern, why in HISTORY:
+            m = re.search(pattern, line)
+            if m:
+                r.err(f"F7 {why}: {no}행 `{m.group(0).strip()}`")
+
+
+def check_density(body: str, r: Result) -> None:
+    """h2 구간마다 표·코드·목록이 최소 하나. 산문만 긴 절은 답을 미룬다."""
+    fence: tuple[str, int] | None = None
+    heading = None
+    lines = 0
+    solid = False
+
+    def close() -> None:
+        if heading is not None and lines >= DENSITY_MIN_LINES and not solid:
+            r.warn(f"W4 산문만 있는 절: `{heading}` — 표·코드·목록 중 하나를 넣는다")
+
+    for raw in body.splitlines():
+        if fence is None:
+            opened = fence_open(raw)
+            if opened is not None:
+                fence = opened
+                solid = True
+                continue
+        else:
+            if fence_close(raw, *fence):
+                fence = None
+            continue
+        if raw.startswith("## "):
+            close()
+            heading = raw[3:].strip()
+            lines = 0
+            solid = False
+            continue
+        if raw.strip():
+            lines += 1
+        if TABLE_RE.match(raw) or re.match(r"^\s*(?:[-*]|\d+\.)\s+\S", raw):
+            solid = True
+    close()
+
+
+def check_summary_first(body: str, r: Result) -> None:
+    """결론을 먼저. 첫 h2 앞에 요약 표(또는 요약 목록)가 있어야 한다.
+
+    리드 두 문장만으로는 "무엇을 얻는 글인가" 가 안 잡힌다. 표 한 장이면
+    스크롤 없이 답이 잡히고, 그게 이 블로그가 노리는 밀도다.
+    """
+    fence: tuple[str, int] | None = None
+    saw_table = False
+    saw_list = 0
+    for raw in body.splitlines():
+        if fence is None:
+            opened = fence_open(raw)
+            if opened is not None:
+                fence = opened
+                continue
+        else:
+            if fence_close(raw, *fence):
+                fence = None
+            continue
+        if raw.startswith("## "):
+            break
+        if TABLE_RE.match(raw):
+            saw_table = True
+        if re.match(r"^\s*(?:[-*]|\d+\.)\s+\S", raw):
+            saw_list += 1
+    if not saw_table and saw_list < 2:
+        r.err("F8 결론 요약 없음 — 첫 h2 앞에 요약 표(또는 항목 2개 이상 목록)를 둔다")
 
 
 def lint(path: Path) -> Result:
@@ -288,6 +381,8 @@ def lint(path: Path) -> Result:
     check_frontmatter(parse_frontmatter(fm_raw), r)
     check_prose(body, r)
     check_banned(body, r)
+    check_summary_first(body, r)
+    check_density(body, r)
     return r
 
 

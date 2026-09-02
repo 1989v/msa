@@ -23,6 +23,7 @@ import FavoriteButton from '../../components/favorite/FavoriteButton';
 import BlogShell from './BlogShell';
 import CommentThread from './CommentThread';
 import MarkdownBody from './MarkdownBody';
+import ReadingProgress from './ReadingProgress';
 import { formatDate } from './PostCard';
 import ReactionBar from './ReactionBar';
 import './Blog.css';
@@ -148,6 +149,7 @@ export default function BlogPostPage() {
 
   return (
     <BlogShell>
+      <ReadingProgress />
       <article className="blog-article">
         <nav className="blog-breadcrumb kh-mono" aria-label="분류 경로">
           {detail.breadcrumb.map((crumb) => (
