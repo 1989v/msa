@@ -141,24 +141,10 @@ mermaid 에 렌더를 맡기면 타입을 공짜로 얻는다. 그 비용을 헤
 
 노드 모양 8종, 연결선 전종, subgraph, 자기 루프, 강조 1종.
 
-````markdown
-```mermaid
-%% caption: 주문은 결제를 통과해야 출고된다
-flowchart LR
-  주문([주문 접수]) --> 검증{입력 검증}
-  subgraph pay[결제 처리]
-    검증 --> 결제[결제 요청]
-    결제 --> 승인{승인 여부}
-  end
-  승인 --> 예약[(재고 예약)]
-  예약 --> 출고[[출고 지시]]
-  출고 --> 완료((완료))
-  class 출고 emphasis
-```
-````
 
 ```mermaid
 %% caption: 주문은 결제를 통과해야 출고된다
+%% source
 flowchart LR
   주문([주문 접수]) --> 검증{입력 검증}
   subgraph pay[결제 처리]
@@ -193,6 +179,7 @@ flowchart LR
 
 ```mermaid
 %% caption: 주문 생성은 세 시스템을 왕복한다
+%% source
 sequenceDiagram
   autonumber
   participant 클라이언트
@@ -225,6 +212,7 @@ sequenceDiagram
 
 ```mermaid
 %% caption: 주문 상태는 취소와 환불로 되돌아갈 수 있다
+%% source
 stateDiagram-v2
   [*] --> DRAFT
   DRAFT --> PENDING: 주문 확정
@@ -242,6 +230,7 @@ stateDiagram-v2
 
 ```mermaid
 %% caption: 주문 한 건이 여러 항목과 결제를 갖는다
+%% source
 erDiagram
   ORDER {
     bigint id PK
@@ -259,6 +248,7 @@ UML 관계 12종, 제네릭, 표식, 개수 표기, `namespace` 테두리.
 
 ```mermaid
 %% caption: 결제 수단은 공통 인터페이스를 구현한다
+%% source
 classDiagram
   namespace 결제 {
     class Payment {
