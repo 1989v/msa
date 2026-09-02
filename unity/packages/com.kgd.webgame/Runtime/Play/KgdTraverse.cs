@@ -449,7 +449,27 @@ namespace Kgd.Play
             else _sinceGround = 0f;
         }
 
+        /// <summary>
+        /// 한 번에 떨어져도 되는 거리. 층층이 떠 있는 지형에서 이보다 크게 옮기면 발판을
+        /// 건너뛰어 그 발판은 없는 것이 된다 — 그래서 빠른 낙하는 끊어 옮긴다.
+        /// 기둥형 지형에서는 바닥이 열 아래 어디에도 있어 결과가 같다.
+        /// </summary>
+        private const float FallStep = 0.8f;
+
         private void Apply(float dt, IKgdGround ground)
+        {
+            int steps = 1;
+            if (_vel.y < 0f && -_vel.y * dt > FallStep)
+                steps = Mathf.Min(8, Mathf.CeilToInt(-_vel.y * dt / FallStep));
+            float sub = dt / steps;
+            for (int i = 0; i < steps; i++)
+            {
+                ApplyOnce(sub, ground);
+                if (Now == State.Ground || Now == State.Climb || Now == State.Ledge) break;
+            }
+        }
+
+        private void ApplyOnce(float dt, IKgdGround ground)
         {
             // 등반·모서리 잡기는 스스로 자리를 놓는다 — 수평 판정을 태우면 벽이 도로 민다
             bool selfPlaced = Now == State.Climb || Now == State.Ledge;
@@ -466,6 +486,11 @@ namespace Kgd.Play
                 {
                     Now = State.Ground;
                     _vel.y = 0f;
+                    // 착지 충격이 수평 속도를 반 넘게 먹는다. 즉답 지면(Slip 0)에서는 다음 프레임
+                    // Walk 가 덮어써 뜻이 없고, 얼음에서는 이 값이 「착지 후 얼마나 미끄러지나」다 —
+                    // 그대로 두면 8 유닛 속도가 반폭 2 짜리 발판을 무조건 넘겨 버렸다
+                    _vel.x *= 0.25f;
+                    _vel.z *= 0.25f;
                     ChargedAir = false;
                     Landed = true;
                 }
