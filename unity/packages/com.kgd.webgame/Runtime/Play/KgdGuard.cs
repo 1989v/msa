@@ -24,10 +24,13 @@ namespace Kgd.Play
             public float FrontDot;
             /// <summary>풀린 뒤 다시 들기까지.</summary>
             public float Recover;
+            /// <summary>강공(<see cref="KgdWeapon.GuardBreak"/>)을 막았을 때 남는 피해 배율. 막기가 반쯤 뚫린다.</summary>
+            public float PierceSoak;
 
             public static Tuning Default => new()
             {
                 Drain = 6f, PerHit = 12f, Soak = 0.25f, FrontDot = 0.35f, Recover = 0.45f,
+                PierceSoak = 0.6f,
             };
         }
 
@@ -56,16 +59,19 @@ namespace Kgd.Play
         /// <summary>
         /// 한 대 맞았다. 막혔으면 남는 피해를 줄여 돌려주고 스태미나를 문다.
         /// <paramref name="facing"/> 은 내가 보는 방향, <paramref name="fromDir"/> 은 때린 쪽에서 나에게 오는 방향.
+        /// <paramref name="pierce"/> 는 강공 — 막혀도 <see cref="Tuning.PierceSoak"/> 가 들어오고
+        /// 스태미나를 두 배로 문다. 「막고 서 있기」가 최선이 되지 않게 하는 축이다.
         /// </summary>
-        public float Absorb(float damage, Vector3 facing, Vector3 fromDir)
+        public float Absorb(float damage, Vector3 facing, Vector3 fromDir, bool pierce = false)
         {
             if (!Up) return damage;
             var flat = new Vector3(fromDir.x, 0f, fromDir.z);
             if (flat.sqrMagnitude < 0.0001f) return damage;
             // 나를 향해 오는 것을 정면으로 받았나
             if (Vector3.Dot(-flat.normalized, facing) < _t.FrontDot) return damage;
-            if (!_stamina.TrySpend(_t.PerHit)) { Up = false; Broke = true; _cool = _t.Recover; return damage; }
-            return damage * _t.Soak;
+            float cost = pierce ? _t.PerHit * 2f : _t.PerHit;
+            if (!_stamina.TrySpend(cost)) { Up = false; Broke = true; _cool = _t.Recover; return damage; }
+            return damage * (pierce ? _t.PierceSoak : _t.Soak);
         }
     }
 }

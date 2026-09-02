@@ -45,17 +45,33 @@ namespace Kgd.Play
         /// <summary>날아가는 것의 속도(월드/초). 0 이면 근접 무기다.</summary>
         public readonly float ShotSpeed;
 
+        /// <summary>
+        /// **강공이다** — 막기를 뚫는다(<see cref="KgdGuard.Absorb"/> 의 pierce).
+        /// 대신 느리다: 예고가 길어 보고 피할 수 있다. 사람 대 사람에서 「막고 서 있기」가
+        /// 최선이 되지 않게 하는 축이다.
+        /// </summary>
+        public readonly bool GuardBreak;
+
         /// <summary>날아가는 것이 있나.</summary>
         public bool Ranged => ShotSpeed > 0f;
 
         public KgdWeapon(string name, float damage, float reach, float arcDot, float time,
                          float hitAt, Swing style, Color tint,
-                         bool twoHanded = false, float shotSpeed = 0f)
+                         bool twoHanded = false, float shotSpeed = 0f, bool guardBreak = false)
         {
             Name = name; Damage = damage; Reach = reach; ArcDot = arcDot;
             Time = time; HitAt = hitAt; Style = style; Tint = tint;
-            TwoHanded = twoHanded; ShotSpeed = shotSpeed;
+            TwoHanded = twoHanded; ShotSpeed = shotSpeed; GuardBreak = guardBreak;
         }
+
+        /// <summary>
+        /// 이 무기의 **강공 변형** — 세고, 느리고, 막기를 뚫는다.
+        /// 값의 비율은 무기 규칙이다: 게임마다 다르게 잡으면 「강공은 이런 것」이 안 배워진다.
+        /// 스태미나를 얼마나 무는지는 게임이 정한다(자원은 게임 소관).
+        /// </summary>
+        public KgdWeapon Heavy(float damageScale = 1.6f, float timeScale = 1.55f) =>
+            new(Name, Damage * damageScale, Reach, ArcDot, Time * timeScale, HitAt * timeScale,
+                Style, Tint, TwoHanded, ShotSpeed, guardBreak: true);
 
         /// <summary>초당 피해. 무기끼리 견주는 유일한 공통 축이다.</summary>
         public float Dps => Time > 0f ? Damage / Time : 0f;
