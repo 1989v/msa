@@ -459,3 +459,14 @@ jobs:
             echo "→ 변경된 서비스만 이미지 push + kustomization.yaml 갱신."
             echo "→ Argo CD 가 변경된 deployment 만 rolling update."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # OCIR 은 보관 개수 설정이 없다 — 안 지우면 무료 한도 10GB 를 넘겨 저장 용량으로 과금된다.
+      # 실패해도 이미지 발행은 이미 끝났으므로 잡을 깨지 않는다.
+      - name: Prune old OCIR image tags
+        continue-on-error: true
+        env:
+          OCIR_REGION: ${{ secrets.OCIR_REGION }}
+          OCIR_NAMESPACE: ${{ secrets.OCIR_NAMESPACE }}
+          OCIR_USERNAME: ${{ secrets.OCIR_USERNAME }}
+          OCIR_TOKEN: ${{ secrets.OCIR_TOKEN }}
+        run: python3 scripts/ocir-prune.py --keep 20 | tee -a "$GITHUB_STEP_SUMMARY"
