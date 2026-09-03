@@ -19,6 +19,9 @@ import { getUserId } from '../auth/auth';
 import { formatWon } from './shopFormat';
 import './Shop.css';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
+import PickSheet from '../components/dispenser/PickSheet';
+const formatPrice = (n: string | number) => `₩${Math.round(Number(n)).toLocaleString('ko-KR')}`;
+import { escapeHtml } from '../lib/card-dispenser';
 
 const PAGE_SIZE = 20;
 
@@ -82,6 +85,21 @@ export default function ShopPage() {
   const [data, setData] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // 뽑기 — 지금 모드(브라우즈/검색)의 결과 중 무작위 페이지 하나(60개)를 판에 꽂는다
+  const [pickOpen, setPickOpen] = useState(false);
+  const [pick, setPick] = useState<{ items: DisplayProduct[]; searchId: string | null } | null>(null);
+  const [pickError, setPickError] = useState(false);
+  const openPick = () => {
+    setPickOpen(true);
+    setPick(null);
+    setPickError(false);
+    const pages = Math.max(1, Math.ceil((data?.totalElements ?? 0) / 60));
+    const page = Math.floor(Math.random() * pages);
+    const load = keyword.trim() === ''
+      ? fetchProducts(page, 60).then((r) => ({ items: r.products.map(fromBrowse), searchId: null }))
+      : searchProducts(keyword, page, 60).then((r) => ({ items: r.products.map(fromSearch), searchId: r.searchId }));
+    load.then(setPick).catch(() => setPickError(true));
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -237,7 +255,45 @@ export default function ShopPage() {
           <button type="submit" className="shop-btn-primary">
             검색
           </button>
+          <button type="button" className="kh-button kh-button-ghost shop-pick-btn" aria-haspopup="dialog" onClick={openPick}>
+            아무거나
+          </button>
         </form>
+        {pickOpen && (
+          <PickSheet<DisplayProduct>
+            label="이 결과에서 아무거나"
+            items={pick ? pick.items : null}
+            error={pickError}
+            render={(p, i) =>
+              `<div class="cd-body cd-body--text"><span class="cd-seal">${p.status === 'ACTIVE' ? '판매 중' : '품절'}</span>` +
+              `<b class="cd-title cd-title--wrap">${escapeHtml(p.name)}</b><span class="cd-meta">${escapeHtml(formatPrice(p.price))}</span>` +
+              `<span class="cd-num">${String(i + 1).padStart(2, '0')}</span></div>`
+            }
+            describe={(p) => ({ title: p.name, meta: formatPrice(p.price) })}
+            caption={[keyword.trim() === '' ? '전체 상품' : `"${keyword}" 검색 결과`, `${data?.totalElements ?? 0}개`]}
+            goLabel="상품 보기"
+            onGo={(p) => {
+              setPickOpen(false);
+              // 검색 모드에서 뽑힌 것도 클릭이다 — 그 페이지의 searchId 로 남긴다
+              if (pick?.searchId && p.position != null) {
+                const userId = getUserId();
+                postClick({
+                  searchId: pick.searchId,
+                  ...(userId ? { userId } : {}),
+                  categoryId: p.categoryId,
+                  productId: p.productId,
+                  position: p.position,
+                }).catch(() => {
+                  // 행동 로그 실패는 무시
+                });
+              }
+              navigate(`/shop/products/${p.productId}`, { viewTransition: true });
+            }}
+            onClose={() => setPickOpen(false)}
+            skin="paper"
+            minCards={24}
+          />
+        )}
 
         {loading && (
           <div className="shop-product-grid" aria-hidden="true">

@@ -29,6 +29,9 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import GameCard from './GameCard';
 import PartyDialog from './PartyDialog';
+import PickSheet from '../../components/dispenser/PickSheet';
+import { displayTitle } from '../../api/gameApi';
+import { escapeHtml } from '../../lib/card-dispenser';
 import HouseBanner from './HouseBanner';
 import LeaderboardRail from './LeaderboardRail';
 import './Games.css';
@@ -96,6 +99,8 @@ export default function GamesPage() {
   const [error, setError] = useState(false);
   const [partyPool, setPartyPool] = useState<GameSummary[]>([]);
   const [partyOpen, setPartyOpen] = useState(false);
+  // 뽑기 — 지금 걸린 장르·태그·정렬 목록에서 하나. 목록이 곧 후보다 (48개까지 한 번에 받는다)
+  const [pickOpen, setPickOpen] = useState(false);
 
   // 언어와 장르는 URL 이 원본 — 검색엔진이 색인할 수 있는 상태만 주소로 승격한다.
   // (정렬·태그는 같은 게임 목록의 재배열이라 중복 콘텐츠가 되므로 로컬 상태로 둔다)
@@ -258,6 +263,15 @@ export default function GamesPage() {
             </Link>
           ))}
         </nav>
+        <button
+          type="button"
+          className="games-party-btn games-pick-btn"
+          aria-haspopup="dialog"
+          disabled={games.length === 0}
+          onClick={() => setPickOpen(true)}
+        >
+          {lang === 'en' ? 'Pick one' : '뭐 하지'}
+        </button>
         <div className="games-tags">
           <button
             className={`game-tag-filter ${activeTag === null ? 'active' : ''}`}
@@ -339,6 +353,26 @@ export default function GamesPage() {
 
       <Footer />
       </div>
+      {pickOpen && (
+        <PickSheet<GameSummary>
+          label={lang === 'en' ? 'Pick one from this list' : '이 목록에서 아무거나'}
+          items={games}
+          render={(g, i) =>
+            `<div class="cd-photo" style="background-image:url('${escapeHtml(g.thumbnailUrl).replace(/'/g, '%27')}')"></div>` +
+            `<div class="cd-body"><span class="cd-seal">${escapeHtml(genreLabel(g.genre, lang))}</span>` +
+            `<b class="cd-title">${escapeHtml(displayTitle(g, lang))}</b><span class="cd-meta">${escapeHtml(lang === 'en' ? g.title : (g.titleEn ?? ''))} · ${String(i + 1).padStart(2, '0')}</span></div>`
+          }
+          describe={(g) => ({ title: displayTitle(g, lang), meta: `${genreLabel(g.genre, lang)} · ${g.playCount.toLocaleString()}${lang === 'en' ? ' plays' : '회'}` })}
+          caption={[activeTag ? `#${activeTag}` : genre ? genreLabel(genre, lang) : L.allGames, `${games.length}${lang === 'en' ? '' : '종'}`]}
+          goLabel={lang === 'en' ? 'Play' : '플레이'}
+          onGo={(g) => {
+            setPickOpen(false);
+            navigate(gamePath(lang, `/games/${g.slug}`));
+          }}
+          onClose={() => setPickOpen(false)}
+          skin="arcade"
+        />
+      )}
       {partyOpen && (
         <PartyDialog
           games={partyPool}

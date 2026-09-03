@@ -1,7 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import PickSheet from '../../components/dispenser/PickSheet';
+import { escapeHtml } from '../../lib/card-dispenser';
 import { useParams } from 'react-router-dom';
-import { fetchCategories, fetchPosts, flattenCategories } from '../../api/blogApi';
+import { fetchCategories, fetchPosts, flattenCategories, type BlogPostSummary } from '../../api/blogApi';
 import { blogCategoryMeta } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -25,6 +28,14 @@ export default function BlogCategoryPage() {
   const params = useParams();
   const path = `/${params['*'] ?? ''}`.replace(/\/+$/, '');
   const [page, setPage] = useState(0);
+  const navigate = useNavigate();
+  const [pickOpen, setPickOpen] = useState(false);
+  const pickPool = useQuery({
+    queryKey: ['blog', 'posts', path, 'pick'],
+    queryFn: () => fetchPosts({ categoryPath: path, size: 60 }),
+    enabled: pickOpen,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const categories = useQuery({
     queryKey: ['blog', 'categories'],
@@ -54,6 +65,34 @@ export default function BlogCategoryPage() {
       nav={<CategoryNav categories={categories.data ?? []} activePath={path} />}
     >
       <main>
+        <div className="blog-section-row">
+          <h2 className="kh-section-label">글</h2>
+          <button type="button" className="blog-chip kh-press" aria-haspopup="dialog" onClick={() => setPickOpen(true)}>
+            아무 글이나
+          </button>
+        </div>
+        {pickOpen && (
+          <PickSheet<BlogPostSummary>
+            label="아무 글이나"
+            items={pickPool.data ? pickPool.data.items : null}
+            error={pickPool.isError}
+            render={(post, i) =>
+              `<div class="cd-body cd-body--text"><span class="cd-seal">${escapeHtml(post.categoryName)}</span>` +
+              `<b class="cd-title cd-title--wrap">${escapeHtml(post.title)}</b><span class="cd-meta">${escapeHtml((post.publishedAt ?? '').slice(0, 10))} · ${post.readingMinutes}분</span>` +
+              `<span class="cd-num">${String(i + 1).padStart(2, '0')}</span></div>`
+            }
+            describe={(post) => ({ title: post.title, meta: `${post.categoryName} · ${(post.publishedAt ?? '').slice(0, 10)} · ${post.readingMinutes}분` })}
+            caption={['지금 분류', `글 ${pickPool.data?.totalElements ?? 0}편`]}
+            goLabel="읽기"
+            onGo={(post) => {
+              setPickOpen(false);
+              navigate(`/posts/${post.slug}`);
+            }}
+            onClose={() => setPickOpen(false)}
+            skin="paper"
+            minCards={24}
+          />
+        )}
         {posts.isLoading && <p className="blog-status">불러오는 중…</p>}
         {posts.data && posts.data.items.length === 0 && (
           <p className="blog-empty">이 분류에는 아직 글이 없습니다.</p>

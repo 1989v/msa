@@ -1116,3 +1116,15 @@ html[data-theme='dark'] .blog-body .kh-alert--tip { --kh-alert-line: var(--ko-ac
   font-size: 1.02em;
   line-height: 1.7;
 }
+
+/* 섹션 제목 옆의 뽑기 — 제목과 같은 줄, 오른쪽 끝 */
+.blog-section-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+}
+
+.blog-section-row .kh-section-label {
+  margin-bottom: 0;
+}

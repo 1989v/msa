@@ -26,6 +26,8 @@ import AttractionLinks from './AttractionLinks';
 import RegionDrilldown from './RegionDrilldown';
 import RegionSheet from './RegionSheet';
 import KhSheet from '../../components/shell/KhSheet';
+import PickSheet from '../../components/dispenser/PickSheet';
+import { escapeHtml } from '../../lib/card-dispenser';
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
@@ -232,6 +234,11 @@ export default function PlacePage() {
   const [listOpen, setListOpen] = useState(() => window.innerWidth > 900);
   const [regionSheetOpen, setRegionSheetOpen] = useState(false);
   const isMobile = useMediaQuery(MOBILE_QUERY);
+  // 뽑기 — 지금 조건의 결과 중 무작위 페이지 하나(60곳)를 판에 꽂는다. 첫 페이지만 꽂으면
+  // 늘 같은 60곳에서만 뽑히므로 페이지를 먼저 뽑는다.
+  const [pickOpen, setPickOpen] = useState(false);
+  const [pickItems, setPickItems] = useState<Attraction[] | null>(null);
+  const [pickError, setPickError] = useState(false);
 
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<any>(null);
@@ -888,7 +895,49 @@ export default function PlacePage() {
           <button type="button" className="place-btn" onClick={nearMe}>
             {L.nearMe}
           </button>
+          <button
+            type="button"
+            className="place-btn"
+            aria-haspopup="dialog"
+            onClick={() => {
+              setPickOpen(true);
+              setPickItems(null);
+              setPickError(false);
+              const pages = Math.max(1, Math.ceil((data?.totalElements ?? 0) / 60));
+              searchAttractions({ ...query, page: Math.floor(Math.random() * pages), size: 60 })
+                .then((r) => setPickItems(r.attractions))
+                .catch(() => setPickError(true));
+            }}
+          >
+            {lang === 'ko' ? '뽑기' : 'Pick one'}
+          </button>
         </form>
+        {pickOpen && (
+          <PickSheet<Attraction>
+            label={lang === 'ko' ? '이 조건에서 아무 데나' : 'Pick one from these'}
+            items={pickItems}
+            error={pickError}
+            render={(a, i) =>
+              `${a.imageUrl ? `<div class="cd-photo" style="background-image:url('${escapeHtml(a.imageUrl).replace(/'/g, '%27')}')"></div>` : '<div class="cd-photo"></div>'}` +
+              `<div class="cd-body"><span class="cd-seal">${escapeHtml(a.category ? (L.categories[a.category] ?? a.category) : '')}</span>` +
+              `<b class="cd-title">${escapeHtml(a.title)}</b><span class="cd-meta">${escapeHtml(a.address?.split(' ')[1] ?? '')} · ${String(i + 1).padStart(2, '0')}</span></div>`
+            }
+            describe={(a) => ({
+              title: a.title,
+              meta: [a.address?.split(' ')[1], a.category ? (L.categories[a.category] ?? a.category) : null].filter(Boolean).join(' · '),
+            })}
+            caption={[
+              lang === 'ko' ? '지금 조건' : 'Current filters',
+              `${(data?.totalElements ?? 0).toLocaleString()} → ${pickItems?.length ?? 0}`,
+            ]}
+            goLabel={lang === 'ko' ? '이곳 보기' : 'Open'}
+            onGo={(a) => {
+              setPickOpen(false);
+              navigate(attractionPath(lang, a.id));
+            }}
+            onClose={() => setPickOpen(false)}
+          />
+        )}
 
         {/* 모바일 지역 선택 — 칩 벽 대신 현재 선택을 접은 트리거 + 바텀시트 드릴다운 */}
         {hasRegionAxis && isMobile && (
