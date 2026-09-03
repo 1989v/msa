@@ -1,3 +1,4 @@
+<!-- source: portal-fe/src/lib/card-dispenser/index.ts, portal-fe/src/components/dispenser/DispenserStage.tsx, portal-fe/src/components/home/ServiceShowcase.tsx, portal-fe/src/components/brand/SystemCore.tsx -->
 # 메인 개편 — 서비스 섹션 + 카드 디스펜서, 서비스별 "뽑기"
 
 - 상태: 구현 완료 (2026-09-03)
