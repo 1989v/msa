@@ -27,6 +27,8 @@
 #   scripts/cdp-chrome.sh list             # 이 세션이 띄운 것 전부 (+ 남의 것은 표시만)
 #   scripts/cdp-chrome.sh stop  <이름>     # 하나 종료 + 프로필 삭제
 #   scripts/cdp-chrome.sh clean            # 이 세션 것 전부 종료 + 삭제
+#   scripts/cdp-chrome.sh sweep [분]       # **어느 세션이든** 스크래치패드 아래 프로필로 뜬 헤드리스 크롬 중
+#                                          #   N분(기본 30) 넘게 산 것을 종료. 사용자 크롬·MCP 프로필은 절대 대상이 아니다
 set -uo pipefail
 
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
@@ -122,6 +124,32 @@ kill_profile() {
 }
 
 cmd_stop()  { safe_name "${1:?이름이 필요하다}"; kill_profile "$BASE/$1"; echo "  정리: $1"; }
+# 남의 세션이 스크립트를 우회해 띄운 뒤 안 끈 헤드리스 크롬 — 2026-09-03 실측: 23시간 47분 산 인스턴스 하나가
+# 사용자 크롬보다 먼저 떠 있어서 macOS 가 **링크 열기 이벤트를 그 헤드리스에 보냈다**(같은 앱 번들이라
+# 먼저 뜬 인스턴스가 받는다). 증상은 "링크를 눌러도 브라우저가 안 열림". 헤드리스는 사용자 창이 아니므로
+# 스크래치패드 프로필 + 오래 산 것만 골라 끈다. 사용자 크롬(--headless 없음)과 MCP 프로필은 경로로 거른다.
+cmd_sweep() {
+  local min="${1:-30}" killed=0 pid etime mins dir
+  while read -r pid etime; do
+    dir=$(ps -o command= -p "$pid" 2>/dev/null | grep -oE -- "--user-data-dir=[^ ]+" | sed 's/--user-data-dir=//')
+    case "$dir" in
+      */claude-*/*/scratchpad/*) ;;                 # 세션 스크래치패드 아래만
+      *) continue ;;
+    esac
+    case "$dir" in *chrome-devtools-mcp*) continue ;; esac
+    # etime: [[dd-]hh:]mm:ss → 분
+    mins=$(echo "$etime" | awk -F'[-:]' '{ n=NF; s=$n; m=$(n-1); h=(n>=3)?$(n-2):0; d=(n>=4)?$(n-3):0; print d*1440+h*60+m }')
+    if [ "$mins" -ge "$min" ]; then
+      echo "  ✗ 종료: pid $pid (${etime}) $dir"
+      pkill -f "user-data-dir=$dir" 2>/dev/null; sleep 1; pkill -9 -f "user-data-dir=$dir" 2>/dev/null
+      killed=$((killed + 1))
+    else
+      echo "  · 남김(${etime}, ${min}분 미만): pid $pid $dir"
+    fi
+  done < <(ps -axo pid=,etime=,command= | grep -- "--headless" | grep -v -- "--type=" | grep -v grep | awk '{print $1, $2}')
+  echo "  종료 $killed 개 · 남은 헤드리스 루트: $(ps -axo command= | grep -- '--headless' | grep -v -- '--type=' | grep -vc grep)"
+}
+
 cmd_clean() {
   local d
   for d in "$BASE"/*/; do [ -d "$d" ] && { kill_profile "$d"; echo "  정리: $(basename "$d")"; }; done
@@ -135,5 +163,6 @@ case "${1:-}" in
   list)  cmd_list ;;
   stop)  shift; cmd_stop  "$@" ;;
   clean) cmd_clean ;;
-  *) sed -n '1,30p' "$0" | grep '^#' | sed 's/^# \{0,1\}//'; exit 1 ;;
+  sweep) shift; cmd_sweep "$@" ;;
+  *) sed -n '1,34p' "$0" | grep '^#' | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac
