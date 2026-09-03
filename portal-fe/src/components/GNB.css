@@ -95,7 +95,8 @@ a.gnb-menu-item {
   text-decoration: none;
 }
 
-.gnb-menu-item:hover {
+.gnb-menu-item:hover,
+.gnb-menu-item.is-active {
   color: var(--ko-text-primary);
   border-bottom-color: var(--kh-ocher, var(--ko-text-primary));
 }

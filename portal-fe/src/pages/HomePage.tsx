@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import GNB from '../components/GNB';
 import Footer from '../components/Footer';
 import AboutSection from '../components/AboutSection';
-import TileGrid from '../components/home/TileGrid';
+import ServiceShowcase from '../components/home/ServiceShowcase';
+import PulseStrip from '../components/home/PulseStrip';
+import SystemCore from '../components/brand/SystemCore';
 import PortfolioTimeline from '../components/home/PortfolioTimeline';
 import OpenSourceSection from '../components/home/OpenSourceSection';
 import {
@@ -122,16 +124,20 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* 어긋난 판 — 흐린 그림자 대신 물리적 깊이. 장식이라 스크린리더에서 뺀다. */}
-          <div className="home-hero-slab kh-slab-offset kh-settle" aria-hidden="true">
-            <div className="kh-slab kh-grain home-hero-slab-face">
-              <span className="kh-mono home-hero-slab-mark">&lt; / system_core &gt;</span>
-            </div>
+          {/* 어긋난 판 위의 시스템 코어 — 비어 있던 판이 운영 토폴로지가 된다. 장식이 아니라 내용이라 모바일에도 둔다 */}
+          <div className="home-hero-slab kh-slab-offset kh-settle">
+            <SystemCore />
           </div>
         </div>
       </header>
 
-      {services && <TileGrid services={services} />}
+      <PulseStrip
+        openServices={services ? services.filter((s) => s.status === 'OPEN').length : null}
+        openSourceCount={openSource ? openSource.length : null}
+        yearsInField={timeline ? timeline.career.yearsInField : null}
+      />
+
+      <ServiceShowcase services={services} />
 
       {!services && (
         <div className="home-inner">

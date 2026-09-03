@@ -1,13 +1,13 @@
 <!-- source: packages/design-system/src/tokens.css, docs/conventions/frontend-design.md, docs/conventions/design-system.md -->
 <!-- standard: docs/standards/design-md.md -->
 ---
-version: 2.3.0
+version: 2.4.0
 archetype: dark-trading
 # 브랜드/포트폴리오 화면(portal-fe `/`, `/portfolio`, resume 호스트)만 두 번째 아키타입을
 # 쓴다 — §12 참조. 공유 토큰은 그대로 dark-trading 이다.
 archetype_secondary: k-heritage
 mood: [data-dense, calm-night, korean-fintech]
-last_updated: 2026-08-22
+last_updated: 2026-09-03
 owners: [frontend-platform]
 default_theme: dark
 themes: [dark, light]
@@ -295,10 +295,11 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 | `.kh-eave-edge` · `.kh-grain` | 처마 곡선 · 목재 결 (**어두운 면 전용**) |
 | `.portfolio-dialog` 계열 | 상세 모달 — 먹빛 backdrop blur, 비대칭 모서리, 그림자 없음 |
 | `.kh-arcade` | 아케이드 스코프 — 액션을 연지로 되돌린다 |
+| `.dsp-stage` · `.dsp-pick` · `PickSheet` | **카드 디스펜서** — 판 위에 옆으로 꽂힌 카드 중 정면 것이 일어난다. 장치 자체는 `portal-fe/src/lib/card-dispenser`(의존성 0, 다른 모듈 import 없음 — 그대로 떼어 오픈소스로 낼 수 있다), 판 위 배치·뽑기 시트는 `components/dispenser`. 메인 서비스 섹션과 place·game·blog·shop 의 "뽑기"가 같은 것을 쓴다 |
 
-**모션 어휘 — 다섯 동사** (`portal-fe/src/styles/kh-motion.css`)
+**모션 어휘 — 여섯 동사** (`portal-fe/src/styles/kh-motion.css`)
 
-색이 재료에서 왔듯 모션은 행위에서 온다. 전 화면이 이 다섯만 쓴다.
+색이 재료에서 왔듯 모션은 행위에서 온다. 전 화면이 이 여섯만 쓴다.
 
 | 동사 | 클래스 | 값 | 쓰는 곳 |
 |---|---|---|---|
@@ -307,14 +308,19 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 | 어긋남 | `.kh-settle` | 뒤판이 카드 밑에서 미끄러져 어긋남 | `.kh-slab-offset` |
 | 찍힘 | `.kh-stamp` | scale(1.06→1), 240ms | `.kh-seal`, 배지, 칩 |
 | 눌림 | `:active` | translateY(1px), 120ms | 모든 인터랙티브 |
+| 흐름 | `.kh-flow-rule` / `.kh-flow-grow` | 스크롤 진행도에 물린 scaleX(0→1), `animation-timeline: view()` | 시간축·재직 막대 — 지나가는 동안 그어진다 (2026-09-03) |
 
 - 토큰: 등장 560ms / 상태 240ms / 피드백 120ms, `--kh-ease-enter: cubic-bezier(0.16,1,0.3,1)`.
+- **흐름은 발화가 아니라 스크롤 위치가 진행도다.** 범위는 `cover` 로 잡아야 과정이 보인다(`entry` 만 쓰면 요소 높이만큼 스크롤하는 사이에 끝난다). 미지원 브라우저는 다 그어진 상태가 폴백이라 콘텐츠가 숨는 일이 없다. 디스펜서의 회전도 데스크탑에서는 스크롤이 주는 각이지만 **터치 기기에서는 스크롤에 물리지 않는다** — 아래 주의.
 - **transform + opacity 만.** 퇴장은 fade 만, 입장의 75% 속도. 스태거는 자식 50ms, 6번째까지만.
 - 발화는 `useReveal()` 이 붙이는 `data-reveal` 로만 — 프리렌더·무 JS 에서는 아무것도
   숨지 않는다. `prefers-reduced-motion` 이면 발화 자체가 없다.
 - **먹 캔버스** `<InkWash>` — 메인(`/`)은 `fullPage`: 페이지 전체가 지면이라
   스크롤해도 먹이 지면에 남는다. `/portfolio` 는 히어로 스코프. 먹 색은 정경 토큰
-  `--kh-ink-wash` — 한지 위 먹빛, 송연 위 흰 안개. 먹이 마르면 rAF 완전 정지.
+  `--kh-ink-wash` — 한지 위 먹빛, 송연 위 흰 안개. 먹이 마르면 rAF 완전 정지. 첫 낙묵은 카피 칼럼(가로 42%)에 찍는다 —
+  66% 는 데스크탑에서 히어로 판 뒤라 보이지 않았다.
+- **시스템 코어** `<SystemCore>` — 히어로 판 위의 운영 토폴로지 캔버스(요청이 gateway → 서비스 → kafka 로 흐른다).
+  배터리 계약은 먹과 같다(깨운 뒤 12초면 정지, 포인터·스크롤이 깨움). 색은 판의 토큰을 읽고 테마가 바뀌면 다시 읽는다.
 
 **모바일 앱 셸** (`kh-shell.css`, 뷰포트 < 768px 에서만)
 
@@ -344,6 +350,12 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 - **아케이드는 표면이 아니라 카드가 어둡다.** 페이지는 모드를 따르고 게임 카드만
   판으로 고정한다 — "화면 속의 화면"이라 주변이 밝아져도 게임은 검은 화면이어야 한다.
 - `.kh-section-head` 와 `.kh-rule` 을 겹쳐 쓰지 않는다. 괘선이 두 줄 그어진다.
+- **디스펜서는 터치 기기에서 스크롤로 돌리지 않는다.** 엄지 아래에서 판이 계속 움직이면 읽을 수 없고 관성 스크롤과
+  싸운다. 판은 멈춰 있고 44px "뽑기"가 두 바퀴 돌려 하나를 세우며, 뽑힌 것은 판 바로 아래에 온다. 옆으로 쓸면 돈다
+  (`touch-action: pan-y`). 기준은 폭이 아니라 `pointer: coarse` 다. 항목이 최소 칸 수보다 적으면 있는 것을 돌려 채우되
+  뽑히는 건 실제 항목뿐이고, 스핀 중에는 제목을 바꾸지 않다가 멈춘 뒤 한 번만 바꾼다.
+- **테마 전환은 누른 자리에서 먹처럼 번진다** (View Transitions, `data-theme-wipe`). 화면 전환(`data-nav`, kh-shell.css)과
+  범위를 가른다 — 같은 `::view-transition-*(root)` 를 쓰므로 한쪽 규칙이 다른 쪽을 덮으면 안 된다.
 
 ## 11. Related
 

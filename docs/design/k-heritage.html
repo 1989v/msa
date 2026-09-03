@@ -420,7 +420,7 @@
   </section>
 
   <section>
-    <div class="head"><span class="label">모션 / Motion</span><h2>다섯 동사 — 색이 재료에서 왔듯 모션은 행위에서 온다</h2></div>
+    <div class="head"><span class="label">모션 / Motion</span><h2>여섯 동사 — 색이 재료에서 왔듯 모션은 행위에서 온다</h2></div>
     <style>
       .mo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
       .mo-cell { background: var(--ground); padding: 1.25rem; min-height: 150px; }
@@ -441,16 +441,20 @@
       .mo-stamp { animation: mo-stamp 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
       @keyframes mo-stamp { 0% { opacity: 0; transform: scale(1.06); } 10%, 84% { opacity: 1; transform: scale(1); } 94%, 100% { opacity: 0; } }
       .mo-press { animation: mo-press 2.8s ease-out infinite; }
+      .mo-flow { display: block; width: 100%; height: 10px; background: var(--s2); border: 1px solid var(--line-2); border-radius: 2px; overflow: hidden; }
+      .mo-flow i { display: block; height: 100%; background: var(--ocher); transform-origin: 0 50%; animation: mo-flow 2.8s cubic-bezier(0.16, 1, 0.3, 1) infinite; }
+      @keyframes mo-flow { 0% { transform: scaleX(0); } 30%, 80% { transform: scaleX(1); } 92%, 100% { transform: scaleX(0); } }
       @keyframes mo-press { 0%, 40%, 60%, 100% { transform: translateY(0); } 46%, 54% { transform: translateY(1px); } }
-      @media (prefers-reduced-motion: reduce) { .mo-seep, .mo-rule::after, .mo-settle i, .mo-stamp, .mo-press { animation: none; } }
+      @media (prefers-reduced-motion: reduce) { .mo-seep, .mo-rule::after, .mo-settle i, .mo-stamp, .mo-press, .mo-flow i { animation: none; } }
     </style>
-    <p class="note">전 화면이 이 다섯만 쓴다. 등장 560ms / 상태 240ms / 피드백 120ms, 이징은 <code>cubic-bezier(0.16,1,0.3,1)</code>. <strong>transform + opacity 만</strong> — blur 애니메이션 금지. 퇴장은 fade 만, 입장의 75% 속도 (먹은 화려하게 사라지지 않는다 — 마를 뿐이다). 스태거는 자식 50ms 간격, 6번째까지만. 발화는 <code>useReveal</code> 이 붙이는 <code>data-reveal</code> 로만 — 프리렌더·무 JS 에서는 아무것도 숨지 않는다. <code>prefers-reduced-motion</code> 이면 발화 자체가 없다.</p>
+    <p class="note">전 화면이 이 여섯만 쓴다. 등장 560ms / 상태 240ms / 피드백 120ms, 이징은 <code>cubic-bezier(0.16,1,0.3,1)</code>. <strong>transform + opacity 만</strong> — blur 애니메이션 금지. 퇴장은 fade 만, 입장의 75% 속도 (먹은 화려하게 사라지지 않는다 — 마를 뿐이다). 스태거는 자식 50ms 간격, 6번째까지만. 발화는 <code>useReveal</code> 이 붙이는 <code>data-reveal</code> 로만 — 프리렌더·무 JS 에서는 아무것도 숨지 않는다. <code>prefers-reduced-motion</code> 이면 발화 자체가 없다.</p>
     <div class="mo-grid">
       <div class="mo-cell"><span class="mo-key">스밈 · .kh-seep</span><div class="mo-stage"><span class="mo-seep">먹이 한지에 스며들듯</span></div><span class="mo-note">등장의 기본형. opacity + 8px 상승. 히어로 카피·카드·섹션 콘텐츠.</span></div>
       <div class="mo-cell"><span class="mo-key">긋기 · .kh-rule-draw</span><div class="mo-stage"><span class="mo-rule">&nbsp;</span></div><span class="mo-note">괘선이 왼쪽에서 오른쪽으로. 섹션 머리·탭 활성 표시.</span></div>
       <div class="mo-cell"><span class="mo-key">어긋남 · .kh-settle</span><div class="mo-stage"><span class="mo-settle"><i class="mo-back"></i><i class="mo-front"></i></span></div><span class="mo-note">뒤판이 카드 밑에서 미끄러져 나와 어긋난다 — 깊이가 생기는 순간.</span></div>
       <div class="mo-cell"><span class="mo-key">찍힘 · .kh-stamp</span><div class="mo-stage"><span class="seal seal-ink mo-stamp"><span class="dot"></span>Stamp</span></div><span class="mo-note">도장이 눌리듯 1.06 → 1. 인장·배지·상태칩. 240ms 로 짧게.</span></div>
       <div class="mo-cell"><span class="mo-key">눌림 · :active</span><div class="mo-stage"><span class="btn mo-press">지나온 것 보기 →</span></div><span class="mo-note">모든 인터랙티브가 1px 내려앉는다. 120ms. 데모는 주기 재생.</span></div>
+      <div class="mo-cell"><span class="mo-key">흐름 · .kh-flow-rule / .kh-flow-grow</span><div class="mo-stage"><span class="mo-flow"><i></i></span></div><span class="mo-note">스크롤 진행도가 곧 애니메이션 진행도 — 시간축과 재직 막대가 지나가는 동안 왼쪽에서 그어진다. <code>animation-timeline: view()</code> 를 지원하는 브라우저에서만 돌고, 아니면 다 그어진 상태가 폴백이다. 데모는 주기 재생. 카드 디스펜서의 회전도 데스크탑에서는 같은 원리(스크롤이 주는 각)이고 터치 기기에서는 뽑기 버튼이 돌린다.</span></div>
       <div class="mo-cell"><span class="mo-key">먹 캔버스 · InkWash</span><div class="mo-stage"><span style="font-size:0.85rem; color:var(--tx-2)">/ 전면 · /portfolio 히어로</span></div><span class="mo-note">포인터를 따라 먹이 번지고 마른다. 메인은 페이지 전체가 지면 — 스크롤해도 먹이 지면에 남는다. 마르면 rAF 완전 정지. 먹 색은 정경 토큰 --kh-ink-wash — 한지 위 먹빛, 송연 위 흰 안개.</span></div>
     </div>
     <p class="note" style="margin-top:1rem"><strong>모바일 앱 셸</strong> (뷰포트 &lt; 768px) — 하단 탭바 <code>.kh-tabbar</code>(기와 먹빛 판, 활성은 긋기), 바텀시트 <code>.kh-sheet</code>(먹빛 veil, 비대칭 귀), 스켈레톤 <code>.kh-skeleton</code>(정경 톤 opacity pulse — shimmer 금지), 스택 전환(View Transitions: 상세 진입 push / 뒤로 pop / 탭 간 cross-fade). 데스크탑은 머리띠 그대로 — 한 코드베이스, 두 표정.</p>
@@ -528,12 +532,15 @@
           <div>
             <p class="page-desc">브랜드 첫 화면. 머리띠는 <strong>먹빛 처마</strong>로 라이트 모드에서도 어둡고, 메뉴는 모노입니다. 히어로는 왼쪽으로 몰고 오른쪽을 어긋난 판 하나로 받아 대칭을 피합니다.</p>
             <p class="page-desc">도메인 타일은 한지 바탕 위의 <strong>어두운 판</strong>입니다. 부제는 황토색 모노, 타임라인의 연도는 연지색 모노.</p>
+            <p class="page-desc">2026-09-03 개정 — 타일 아홉 장은 서비스 섹션 넷(글 옆에 그 서비스의 실제 데이터가 꽂힌 <strong>카드 디스펜서</strong>, 판이 좌우를 번갈아 선다)과 그 아래 작은 색인 격자가 됐습니다. 히어로 판은 운영 토폴로지 캔버스(시스템 코어), 히어로 아래는 공개 API 응답값 카운터, 타임라인은 재직 막대입니다. 모바일 순서는 소개 → 판 → 뽑힌 것·태그·링크.</p>
           </div>
           <ul class="parts">
             <li><code>.kh-seal-ink</code> 히어로 eyebrow</li>
             <li><code>.kh-display</code> 낱말 하나만 연지색</li>
             <li><code>.kh-slab-offset</code> 히어로 우측 판</li>
-            <li><code>.kh-slab</code> 도메인 타일</li>
+            <li><code>.kh-slab</code> 색인 격자 타일</li>
+            <li><code>.dsp-stage</code> 카드 디스펜서 (lib/card-dispenser)</li>
+            <li><code>.kh-flow-grow</code> 재직 막대</li>
             <li><code>.kh-mono</code> 연도·태그·메뉴</li>
           </ul>
         </div>

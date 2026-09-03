@@ -1,0 +1,66 @@
+/* 시스템 코어 — 히어로 판. 판의 색·모서리·결은 .kh-slab / .kh-grain 이 준다 */
+
+.home-core {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .home-core {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+.home-core-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* 세로 스크롤은 그대로 — 포인터 이벤트만 받는다 */
+  touch-action: pan-y;
+}
+
+.home-core-hint {
+  position: absolute;
+  top: var(--ko-space-3);
+  right: var(--ko-space-4);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-on-slab-muted);
+  pointer-events: none;
+}
+
+.home-core-cap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ko-space-3);
+  padding: var(--ko-space-3) var(--ko-space-4);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-ocher);
+  pointer-events: none;
+}
+
+.home-core-cap span {
+  white-space: nowrap;
+}
+
+.home-core-cap span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.home-core-cap i {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--kh-yeonji);
+  margin-right: 6px;
+  vertical-align: 1px;
+}

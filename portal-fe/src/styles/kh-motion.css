@@ -126,6 +126,37 @@
   transform: translateY(1px);
 }
 
+/* ─── 흐름 — 스크롤에 물린 긋기·자람 ────────────────────────────────────
+ * 여섯 번째 동사. 발화가 아니라 스크롤 위치가 진행도다 — 시간축·막대처럼 "지나가는 동안
+ * 그어지는" 것에 쓴다. 지원 브라우저에서만 돌고, 없으면 정지 상태(다 그어진 것)가 곧 폴백이라
+ * 콘텐츠가 숨는 일이 없다. 범위를 cover 로 잡아야 과정이 보인다 — entry 만 쓰면 요소 높이만큼
+ * 스크롤하는 사이에 끝나 버린다. */
+
+@supports (animation-timeline: view()) {
+  .kh-flow-rule {
+    transform-origin: 0 50%;
+    animation: kh-flow-x linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 30%;
+  }
+
+  .kh-flow-grow {
+    transform-origin: 0 50%;
+    animation: kh-flow-x linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 42%;
+  }
+}
+
+@keyframes kh-flow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 /* ─── reduced motion — 훅이 속성을 안 붙이지만, CSS 도 이중으로 지킨다 ───── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -147,5 +178,11 @@
   .kh-button-ghost,
   .kh-press {
     transition: none;
+  }
+
+  .kh-flow-rule,
+  .kh-flow-grow {
+    animation: none;
+    transform: none;
   }
 }

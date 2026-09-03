@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import AuthButton from './AuthButton';
 import KhSheet from './shell/KhSheet';
@@ -40,6 +40,25 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
   // 로그인 칩이 머리띠 밖으로 밀려 나가던 가로 오버플로의 근본 수술이다.
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [explorerOpen, setExplorerOpen] = useState(false);
+  // 지금 보고 있는 섹션 — 탭 활성은 긋기(밑줄)로 표시한다
+  const [activeAnchor, setActiveAnchor] = useState<string | null>(null);
+
+  useEffect(() => {
+    const els = items
+      .map((item) => (item.anchor ? document.getElementById(item.anchor) : null))
+      .filter((el): el is HTMLElement => el !== null);
+    if (els.length === 0) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((en) => {
+          if (en.isIntersecting) setActiveAnchor(en.target.id);
+        });
+      },
+      { rootMargin: '-30% 0px -60% 0px' },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, [items]);
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -65,7 +84,10 @@ export default function GNB({ pageLabel, items = TECH_ITEMS, onSearchFocus }: GN
                   {item.label}
                 </a>
               ) : (
-                <button className="gnb-menu-item" onClick={() => scrollToSection(item.anchor!)}>
+                <button
+                  className={`gnb-menu-item${item.anchor === activeAnchor ? ' is-active' : ''}`}
+                  onClick={() => scrollToSection(item.anchor!)}
+                >
                   {item.label}
                 </button>
               )}

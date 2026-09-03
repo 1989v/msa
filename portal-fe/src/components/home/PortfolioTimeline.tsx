@@ -1,4 +1,6 @@
-import type { PortfolioTimeline as Timeline } from '../../api/displayApi';
+import type { CSSProperties } from 'react';
+import type { PortfolioTimeline as Timeline, TimelineCompany } from '../../api/displayApi';
+import { careerAxis } from './careerAxis';
 import { useReveal } from '../../hooks/useReveal';
 import './Home.css';
 
@@ -15,6 +17,7 @@ function periodText(start: string | null, end: string | null, ongoing: boolean):
 interface PortfolioTimelineProps {
   timeline: Timeline;
 }
+
 
 export default function PortfolioTimeline({ timeline }: PortfolioTimelineProps) {
   const reveal = useReveal();
@@ -33,6 +36,8 @@ export default function PortfolioTimeline({ timeline }: PortfolioTimelineProps) 
         <p className="kh-seep home-section-desc">
           회사에서 한 일은 이력서에, 여기에는 직접 만든 것들을 시간순으로 둡니다.
         </p>
+
+        {companies.length > 0 && <CareerAxis companies={companies} />}
 
         {companies.length > 0 && (
           <div className="kh-seep timeline-career">
@@ -97,5 +102,36 @@ export default function PortfolioTimeline({ timeline }: PortfolioTimelineProps) 
         </a>
       </div>
     </section>
+  );
+}
+
+/** 시간축 — 축과 막대가 스크롤에 맞춰 왼쪽에서 그어진다 (흐름, kh-motion.css) */
+function CareerAxis({ companies }: { companies: TimelineCompany[] }) {
+  const { years, bars } = careerAxis(companies);
+  return (
+    <div className="kh-seep timeline-axis" aria-label="재직 기간">
+      <div className="kh-mono timeline-years" style={{ '--years': years.length } as CSSProperties}>
+        {years.map((y) => (
+          <span key={y}>{y}</span>
+        ))}
+      </div>
+      <div className="timeline-axis-line kh-flow-rule" aria-hidden="true" />
+      <div className="timeline-lanes">
+        {bars.map(({ company, s, e }) => (
+          <div key={`${company.name}-${company.startMonth}`} className="timeline-lane">
+            <div
+              className={`timeline-bar kh-flow-grow${company.ongoing ? ' now' : ''}`}
+              style={{ '--s': s, '--e': e } as CSSProperties}
+            >
+              <b>{company.name}</b>
+              <span className="kh-mono">
+                {periodText(company.startMonth, company.endMonth, company.ongoing)}
+                {(company.position || company.team) && ` · ${[company.position, company.team].filter(Boolean).join(' · ')}`}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

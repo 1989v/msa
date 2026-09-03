@@ -1,6 +1,5 @@
 import type { DisplayService } from '../../api/displayApi';
 import { resolveServiceHref } from '../../shell/serviceHref';
-import { useReveal } from '../../hooks/useReveal';
 import './Home.css';
 
 interface TileGridProps {
@@ -8,48 +7,39 @@ interface TileGridProps {
 }
 
 /**
- * 전시 서비스를 타일 그리드로 그린다.
+ * 전시 서비스 전체를 작은 색인 격자로 그린다.
  *
  * 타일은 여기서만 쓰는 표현 형태다 — 서버는 전시 서비스(display/services)만 알고,
- * 카드로 그릴지 리스트로 그릴지는 화면이 정한다 (ADR-0066).
+ * 카드로 그릴지 리스트로 그릴지는 화면이 정한다 (ADR-0066). 2026-09-03 개정으로 큰 타일 9장은
+ * 서비스 섹션(ServiceShowcase) 아래의 색인이 됐다 — 진입점은 그대로 전부 여기 있다.
  */
 export default function TileGrid({ services }: TileGridProps) {
-  const reveal = useReveal();
   if (services.length === 0) return null;
 
   return (
-    <section id="services" className="home-section" ref={reveal}>
-      <div className="home-inner">
-        <div className="kh-section-head kh-rule-draw">
-          <span className="kh-mono kh-index">01_</span>
-          <h2 className="home-section-title">만든 서비스</h2>
-        </div>
-        <p className="kh-seep home-section-desc">
-          직접 설계하고 운영 중인 서비스입니다. 오픈 예정은 아직 화면이 없다는 뜻입니다.
-        </p>
-
-        <ul className="tile-grid kh-stagger">
-          {services.map((service) => (
-            <li key={service.code} className="kh-seep">
-              {service.status === 'OPEN' && service.href ? (
-                <a
-                  className="tile kh-slab kh-grain tile-open"
-                  href={resolveServiceHref(service.code, service.href)}
-                >
-                  <TileBody service={service} />
-                  <span className="tile-arrow" aria-hidden="true">→</span>
-                </a>
-              ) : (
-                <div className="tile kh-slab kh-grain tile-preopen" aria-disabled="true">
-                  <TileBody service={service} />
-                  <span className="tile-badge">오픈 예정</span>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </div>
-    </section>
+    <div className="home-index">
+      <div className="kh-mono home-index-label">전체 진입점 · {services.length}</div>
+      <ul className="tile-grid">
+        {services.map((service) => (
+          <li key={service.code}>
+            {service.status === 'OPEN' && service.href ? (
+              <a
+                className="tile kh-slab kh-grain tile-open"
+                href={resolveServiceHref(service.code, service.href)}
+              >
+                <TileBody service={service} />
+                <span className="tile-arrow" aria-hidden="true">→</span>
+              </a>
+            ) : (
+              <div className="tile kh-slab kh-grain tile-preopen" aria-disabled="true">
+                <TileBody service={service} />
+                <span className="tile-badge">오픈 예정</span>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

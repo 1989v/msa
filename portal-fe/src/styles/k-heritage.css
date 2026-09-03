@@ -562,3 +562,21 @@
   outline: var(--ko-focus-ring);
   outline-offset: var(--ko-focus-ring-offset);
 }
+
+/* ─── 테마 전환 — 먹이 번지듯 ─────────────────────────────────────────────
+ * 토글을 누른 자리에서 새 정경이 원으로 번져 나온다 (ThemeToggle, View Transitions API).
+ * 기본 크로스페이드를 끄고 clip-path 로 새 지면을 연다. 화면 전환(data-nav, kh-shell.css)과
+ * 겹치지 않게 전환 중에만 붙는 data-theme-wipe 로 범위를 가른다. */
+:root[data-theme-wipe]::view-transition-old(root),
+:root[data-theme-wipe]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+:root[data-theme-wipe]::view-transition-old(root) {
+  z-index: 1;
+}
+
+:root[data-theme-wipe]::view-transition-new(root) {
+  z-index: 2;
+}

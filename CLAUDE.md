@@ -69,6 +69,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **블로그 글 작성 (필수)**: 문체는 정보 전달 기준 — 산문 물음표·1인칭·수사 도입어 금지, 한 문장 100자·한 문단 3문장 이하 → `docs/conventions/blog-writing.md`. **결론 요약 표를 첫 h2 앞에 두고, 판올림 이력·시도와 실패·의사결정 서술은 본문에서 뺀다** — 그건 릴리스 노트·커밋·ADR 의 몫이고, 옵시디언 노트를 그대로 옮기면 딸려 온다(F7·F8 이 잡는다). 작성부터 DB 반영까지는 **`blog-post` 스킬**이 순서를 갖고 있다. **본문 원본이 DB 라 빌드가 못 잡는다** — 발행 전 `scripts/lint-blog-post.py draft.md` 가 유일한 게이트고, 한글은 hex(`CONVERT(0x… USING utf8mb4)`)로 넣는다(리터럴은 조용히 이중 인코딩)
 - **블로그 다이어그램**: ` ```mermaid ` 펜스로 쓰면 `fencesvg` 가 그린다(5종: flowchart·sequence·ER·state·class, `%% caption:` 필수). 손으로 그릴 때는 본문에 **인라인 SVG**, 캡션은 그 밖의 마크다운 한 줄 → `docs/conventions/blog-diagram.md` (스킬 `/blog-diagram`, 판단 기준은 내장 `artifact-diagramming`). **이미지 파일로 넣지 않는다** — 사이트 테마가 쿠키 토글이라 `<img>` 안의 SVG 는 OS 설정만 따라가 토글과 어긋난다. SVG 안에 **빈 줄을 두면 안 된다**(CommonMark 가 거기서 HTML 블록을 끊어 뒷부분이 문단으로 파싱되고 속성이 sanitize 에 날아간다). `<style>`·`<use>` 는 지워지므로 색은 `currentColor` + 토큰 하나로 쓴다
 - **FE 디자인 가드레일**: AI slop 방지, 타이포/색상/레이아웃/모션/접근성 → `docs/conventions/frontend-design.md`
+- **카드 디스펜서 / 뽑기 (2026-09-03)**: 회전판에 옆으로 꽂힌 카드 중 정면 것이 일어나는 장치. 메인 서비스 섹션 넷과 place·game·blog·shop 의 "뽑기"(지금 건 필터에서 무작위 하나)가 같은 것을 쓴다. 장치는 `portal-fe/src/lib/card-dispenser`(의존성 0, 다른 모듈 import 없음 — 그대로 떼어 오픈소스로 낼 수 있다), 판 위 배치는 `components/dispenser`. **터치 기기에서 스크롤은 판을 돌리지 않는다**(판은 멈춰 있고 뽑기가 돌린다) → `portal-fe/src/lib/card-dispenser/README.md`, 홈 개편 → `docs/specs/2026-09-03-home-showcase-card-dispenser.md`
 - **DESIGN.md 표준 (필수)**: FE 코드 작성 / UI 화면 생성 전 **반드시 root `DESIGN.md` 의 토큰을 우선 참조**. hex 직접 입력 금지. 상세 표준 → `docs/standards/design-md.md`, 인스턴스 → `DESIGN.md`
 - **FE 화면 검증 (필수)**: 색 대비·테마·기기 설정 분기는 tsc/build 가 못 잡는다. `눈으로 봤다` 대신 **CDP 로 잰 값**을 남긴다 — 독립 프로필 헤드리스 크롬 + `Emulation.setEmulatedMedia` 로 기기×사이트 4조합. chrome-devtools MCP 가 막혀도 **락 파일을 지우지 않는다**(프로필이 깨져 알럿이 반복된다) → `docs/standards/fe-visual-verification.md`
 - **브랜드 면 디자인 작업 (필수)**: `/`·`/portfolio`·`resume`·`/shop`·`place`·`/games` 를 손대기 전 **`docs/design/k-heritage.html` 을 먼저 연다**. 재료·표면·활자·여백·형태·상태·프리미티브가 **살아 있는 견본**으로 있고 원본 시안 13장이 함께 있다. DESIGN.md §12 는 규칙 요약이고, 무엇이 어떻게 보이는지는 이 문서가 원본이다. 규칙을 바꿨으면 이 문서도 같이 고친다 — 문서가 코드와 어긋나면 다음 사람이 되돌린다.
@@ -200,7 +201,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 
 | Path | FE | 비고 |
 |------|----|------|
-| `/` (root catch-all) | `portal-fe` | **서비스 런처** (ADR-0066) — 브랜드 히어로 + 전시 서비스 타일 그리드(DB `display_service`, OPEN/PREOPEN) + 포트폴리오 타임라인 + About |
+| `/` (root catch-all) | `portal-fe` | **서비스 런처** (ADR-0066, 2026-09-03 개정) — 브랜드 히어로(시스템 코어 캔버스) + 공개 API 카운터 + 서비스 섹션 넷(글 옆에 실제 데이터가 꽂힌 카드 디스펜서) + 전시 서비스 색인 격자(DB `display_service`, OPEN/PREOPEN) + 타임라인(재직 막대) + 오픈소스 + About |
 | `/tech` | `portal-fe` | 코드딕셔너리 — 트리맵/그래프/히트맵/검색 + 서비스 카탈로그. 옛 `/` 내용이 그대로 옮겨왔다 (lazy chunk) |
 | `place.1989v.com` | `portal-fe` | K-관광/지리 탐색 (ADR-0065) — TourAPI 관광지 국문(`/`)·영문(`/en`) + 구글맵. game 과 같은 host 인식 루트 라우팅, apex `/place` 는 서브도메인으로 리다이렉트. 데이터: place SSOT → search attractions 인덱스 |
 | `resume.1989v.com` | `portal-fe` | 이력서 — 같은 번들·같은 Service, 호스트로 분기. 공개 여부는 DB 설정 + 제출처별 토큰 게이트 (ADR-0064). 색인 대상 아님 |

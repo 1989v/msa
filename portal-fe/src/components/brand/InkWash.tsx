@@ -301,7 +301,8 @@ export default function InkWash({ fullPage = false }: { fullPage?: boolean }) {
 
     /* ─── 첫 먹 — 판이 비어 보이지 않게 은은한 낙묵 하나.
      * y 는 호스트 높이에 클램프 — 낮은 히어로 호스트에서 필드 밖에 찍히면 사라진다 */
-    stamp(host.clientWidth * 0.66, Math.min(340, host.clientHeight * 0.45), 80, 0.28);
+    // 가로 66% 는 데스크탑에서 히어로 판(오른쪽 칼럼) 뒤라 첫 먹이 보이지 않았다 — 카피 칼럼 쪽에 찍는다
+    stamp(host.clientWidth * 0.42, Math.min(340, host.clientHeight * 0.45), 80, 0.28);
     wake();
 
     return () => {
