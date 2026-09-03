@@ -85,6 +85,15 @@ export const SIGHT_CATEGORIES = ['nature', 'history', 'culture', 'leisure'] as c
 /** 지도 위 토글로만 켜는 편의·식음 — 목록에는 올리지 않는다. */
 export const OVERLAY_CATEGORIES = ['food', 'shopping'] as const;
 
+/**
+ * 관광지 상세 아래 "주변 편의시설" 캐로셀에 올리는 분류.
+ *
+ * `etc` 는 **뺀다** — 그 안은 전량이 병원·성형외과·한의원(신 분류 `EX05` 의료관광)이라
+ * 관광지 옆에 붙이면 목록에서 걷어낸 것을 캐로셀로 되돌려 놓는 셈이다.
+ * 그래서 "관광 분류가 아닌 전부" 가 아니라 이 셋을 명시한다.
+ */
+export const AMENITY_CATEGORIES = ['shopping', 'food', 'stay'] as const;
+
 export interface AttractionQuery {
   keyword?: string;
   lang: PlaceLang;

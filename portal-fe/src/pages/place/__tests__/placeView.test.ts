@@ -1,5 +1,6 @@
+import type { Attraction } from '../../../api/placeApi';
 import { describe, expect, it } from 'vitest';
-import { mergePages, nextPage, titleParts } from '../placeView';
+import { groupByCategory, mergePages, nextPage, titleParts } from '../placeView';
 
 describe('nextPage — 무한 스크롤 페이지 전개', () => {
   it('다음 페이지가 있으면 +1', () => {
@@ -60,5 +61,42 @@ describe('titleParts — 표시명/원어 병기명 분리', () => {
 
   it('주 표시명과 같은 값이면 중복 표기하지 않는다', () => {
     expect(titleParts({ title: '경복궁', titleLocal: '경복궁' }).secondary).toBeNull();
+  });
+});
+
+describe('groupByCategory', () => {
+  const at = (id: number, category: string) =>
+    ({ id: String(id), title: `t${id}`, category }) as unknown as Attraction;
+
+  it('유형끼리 붙여 놓는다 — 섞여 들어와도 한 유형이 이어진다', () => {
+    const out = groupByCategory(
+      [at(1, 'shopping'), at(2, 'food'), at(3, 'shopping'), at(4, 'food')],
+      6,
+    );
+    expect(out.map((a) => a.category)).toEqual(['shopping', 'shopping', 'food', 'food']);
+  });
+
+  it('많은 유형이 앞에 온다 — 순서를 고정하면 먹자골목에서도 쇼핑이 먼저 온다', () => {
+    const out = groupByCategory(
+      [at(1, 'shopping'), at(2, 'food'), at(3, 'food'), at(4, 'food')],
+      6,
+    );
+    expect(out[0].category).toBe('food');
+  });
+
+  it('유형당 상한을 지킨다 — 한 유형이 캐로셀을 다 먹지 않는다', () => {
+    const many = Array.from({ length: 20 }, (_, i) => at(i, 'shopping'));
+    const out = groupByCategory([...many, at(99, 'food')], 6);
+    expect(out.filter((a) => a.category === 'shopping')).toHaveLength(6);
+    expect(out.filter((a) => a.category === 'food')).toHaveLength(1);
+  });
+
+  it('유형 안에서는 들어온 순서(거리순)를 유지한다', () => {
+    const out = groupByCategory([at(1, 'food'), at(2, 'food'), at(3, 'food')], 2);
+    expect(out.map((a) => a.id)).toEqual(['1', '2']);
+  });
+
+  it('빈 입력은 빈 결과 — 섹션 자체가 안 그려지는 근거가 된다', () => {
+    expect(groupByCategory([], 6)).toEqual([]);
   });
 });

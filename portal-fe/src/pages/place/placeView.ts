@@ -1,3 +1,5 @@
+import type { Attraction } from '../../api/placeApi';
+
 /**
  * PlacePage 의 화면 로직 중 DOM/지도 없이 검증 가능한 순수 함수.
  * 무한 스크롤 페이지 전개와 표시명 분리는 조건이 미묘해 컴포넌트 밖으로 꺼내 테스트한다.
@@ -43,4 +45,26 @@ export function titleParts(doc: { title: string; titleLocal?: string | null }): 
 export function isNotFoundError(error: unknown): boolean {
   const status = (error as { response?: { status?: number } } | null)?.response?.status;
   return status === 404 || status === 410;
+}
+
+/**
+ * 유형별로 묶되 **한 줄로** 이어 붙인다 — 유형마다 캐로셀을 만들면 관광지 하나에
+ * 가로 스크롤러가 셋 생겨 화면이 스크롤러 더미가 된다.
+ *
+ * 유형 순서는 그 자리에 실제로 많은 쪽이 앞이다 — 관광지마다 상점가인지 먹자골목인지 다르고,
+ * 순서를 고정해 두면 해운대에서도 쇼핑이 음식 앞에 온다.
+ * 각 유형은 거리순 앞에서부터 `perKind` 개만 가져간다.
+ */
+export function groupByCategory(items: Attraction[], perKind: number): Attraction[] {
+  const byCategory = new Map<string, Attraction[]>();
+  for (const item of items) {
+    const key = item.category ?? '';
+    const bucket = byCategory.get(key);
+    if (bucket) bucket.push(item);
+    else byCategory.set(key, [item]);
+  }
+  return [...byCategory.values()]
+    .sort((a, b) => b.length - a.length)
+    .map((bucket) => bucket.slice(0, perKind))
+    .flat();
 }

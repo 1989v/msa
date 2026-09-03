@@ -1,6 +1,12 @@
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchAttraction, searchAttractions, SIGHT_CATEGORIES, type PlaceLang } from '../../api/placeApi';
+import {
+  AMENITY_CATEGORIES,
+  fetchAttraction,
+  searchAttractions,
+  SIGHT_CATEGORIES,
+  type PlaceLang,
+} from '../../api/placeApi';
 import {
   PLACE_ORIGIN,
   attractionMeta,
@@ -19,15 +25,29 @@ import AttractionLinks from './AttractionLinks';
 import { googleMapsSearchUrl } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
-import { isNotFoundError, titleParts } from './placeView';
+import { groupByCategory, isNotFoundError, titleParts } from './placeView';
 import './PlacePage.css';
 import AdSlot from '../../components/ads/AdSlot';
 import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 const UI = {
-  ko: { back: '← 관광지 탐색', nearby: '주변 명소', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { back: '← Explore Korea', nearby: 'Nearby places', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
+
+/** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
+const NEARBY_RADIUS_KM = 5;
+/**
+ * 편의시설은 넉넉히 받아 **유형마다 몫을 잘라** 담는다.
+ *
+ * 거리순 상위만 그대로 쓰면 상점가에서는 전부 쇼핑이 된다 — 명동 영문은 18건 전부,
+ * 100건을 받아도 음식이 1건뿐이었다. 그러면 유형별로 묶은 의미가 없다.
+ * 60건은 지도 오버레이(OVERLAY_SIZE)와 같은 크기라 이 화면 계열에서 새 숫자가 아니다.
+ */
+const AMENITY_FETCH = 60;
+/** 유형당 최대 — 한 유형이 캐로셀을 다 먹지 않게 한다. 적으면 있는 만큼만 나온다. */
+const AMENITY_PER_KIND = 6;
+
 
 /**
  * 관광지 상세 (ADR-0065 / ADR-0062). 검색 UI 의 사이드 패널과 같은 정보를 고유 URL 로 연다 —
@@ -53,12 +73,29 @@ export default function AttractionPage() {
         lang,
         lat: attraction!.latitude,
         lng: attraction!.longitude,
-        radiusKm: 5,
+        radiusKm: NEARBY_RADIUS_KM,
         sort: 'distance',
         // 이 절을 빠뜨리면 "주변 명소" 가 주변 상점이 된다 — 적재의 절반 이상이 음식·쇼핑이라
         // 반경 5km 거리순은 상점이 먼저 걸린다 (명동에서 국문·영문 모두 7/7 이 쇼핑이었다).
         category: SIGHT_CATEGORIES.join(','),
         size: 7,
+      }),
+    enabled: attraction?.latitude != null && attraction?.longitude != null,
+  });
+
+  // 명소에서 걷어낸 상점·음식점은 버리지 않고 아래 캐로셀로 따로 보여준다 —
+  // 목록에 섞이면 관광지를 덮지만, 유형이 붙은 채 따로 있으면 그 자리에서 쓸 정보다.
+  const { data: nearbyAmenities } = useQuery({
+    queryKey: ['attraction-amenities', id, attraction?.latitude, attraction?.longitude],
+    queryFn: () =>
+      searchAttractions({
+        lang,
+        lat: attraction!.latitude,
+        lng: attraction!.longitude,
+        radiusKm: NEARBY_RADIUS_KM,
+        sort: 'distance',
+        category: AMENITY_CATEGORIES.join(','),
+        size: AMENITY_FETCH,
       }),
     enabled: attraction?.latitude != null && attraction?.longitude != null,
   });
@@ -98,6 +135,10 @@ export default function AttractionPage() {
   );
 
   const others = (nearby?.attractions ?? []).filter((a) => a.id !== id).slice(0, 6);
+  const amenities = groupByCategory(
+    (nearbyAmenities?.attractions ?? []).filter((a) => a.id !== id),
+    AMENITY_PER_KIND,
+  );
 
   return (
     <div className="place-page">
@@ -168,6 +209,31 @@ export default function AttractionPage() {
                 </div>
               </Link>
             ))}
+          </section>
+        )}
+
+        {amenities.length > 0 && (
+          <section className="place-amenities" aria-label={L.amenities}>
+            <h2 className="place-subtitle">{L.amenities}</h2>
+            <ul className="place-links-carousel">
+              {amenities.map((a) => (
+                <li key={a.id} className="place-links-slide">
+                  <Link className="place-links-card" to={attractionPath(lang, a.id)}>
+                    {a.imageUrl ? (
+                      <img className="place-links-thumb" src={a.imageUrl} alt="" loading="lazy" />
+                    ) : (
+                      <div className="place-links-thumb" aria-hidden />
+                    )}
+                    {a.category && (
+                      <span className="place-amenity-kind">
+                        {placeCategoryLabel(a.category, lang)}
+                      </span>
+                    )}
+                    <span className="place-links-card-title">{titleParts(a).primary}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </section>
         )}
       </div>

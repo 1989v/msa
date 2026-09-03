@@ -735,6 +735,28 @@
   line-height: 1.45;
 }
 
+/* ── 관광지 상세 아래 "주변 편의시설" — 명소 목록에서 걷어낸 상점·음식점을 유형별로 잇는다.
+   캐로셀 규격(.place-links-*)은 링크 캐로셀 것을 그대로 쓴다: 같은 화면에 가로 스크롤러가
+   둘 생기므로 크기·간격이 다르면 서로 다른 물건처럼 보인다. */
+.place-amenities {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;   /* flex 자식 안의 가로 스크롤러가 부모를 밀지 않게 한다 */
+}
+
+.place-amenity-kind {
+  align-self: flex-start;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 0.25rem;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  /* 유형이 이 캐로셀의 존재 이유다 — muted 로 내리면 왜 모아 놨는지가 안 읽힌다 */
+  color: var(--ko-text-secondary);
+  background: var(--ko-surface-1);
+}
+
 .place-links-carousel {
   display: flex;
   gap: 0.5rem;
