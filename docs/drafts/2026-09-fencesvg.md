@@ -146,7 +146,7 @@ mermaid 에 렌더를 맡기면 타입을 공짜로 얻는다. 그 비용을 헤
 %% caption: 주문은 결제를 통과해야 출고된다
 %% source: mermaid 원문 보기
 flowchart LR
-  주문([주문 접수]) --> 검증{입력 검증}
+  주문([주문 접수]) --> 검증{입력<br>검증}
   subgraph pay[결제 처리]
     검증 --> 결제[결제 요청]
     결제 --> 승인{승인 여부}
@@ -182,19 +182,19 @@ flowchart LR
 %% source: mermaid 원문 보기
 sequenceDiagram
   autonumber
-  participant 클라이언트
+  participant C as 클라이언트<br>(앱)
   participant 주문
   participant 재고
-  클라이언트->>주문: 주문 생성 요청
+  C->>주문: 주문 생성 요청
   activate 주문
   alt 재고 있음
     주문->>재고: 예약 요청
     재고-->>주문: 예약 완료
   else 재고 없음
-    주문-)클라이언트: 품절 통지
+    주문-)C: 품절 통지
   end
   deactivate 주문
-  주문-->>클라이언트: 201 Created
+  주문-->>C: 201 Created
 ```
 
 프레임 블록은 `alt` · `else` · `opt` · `loop` · `par` · `critical` · `break` 를 받는다.
@@ -289,6 +289,8 @@ classDiagram
 | id 문자셋 | 유니코드 글자·숫자·`_`. `주문 --> 결제` 가 된다 |
 | 체인 | `A --> B --> C` 가 간선 두 개가 된다 |
 | 후행 `;` | 무시한다 |
+| 줄바꿈 | `A[첫 줄<br>둘째 줄]` — `<br>` · `<br/>` · `<br />` 전부. 상자가 줄 수만큼 커진다 |
+| 참가자 표시명 | `participant A as 주문<br>서비스` — 메시지는 `A`, 화면은 표시명 |
 | 중첩 펜스 | 더 넓은 펜스 안의 `mermaid` 는 그대로 코드로 남는다 |
 
 id 에 `-` 는 못 쓴다. 무공백 화살표를 받으면 `A-->B` 가 「id `A-`」와 구분되지 않는다.
