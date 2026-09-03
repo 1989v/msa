@@ -25,6 +25,8 @@ data class AttractionDocument(
     val ldongSignguCd: String? = null,
     val category: String? = null,
     val imageUrl: String? = null,
+    /** 대표 이미지 썸네일(원천 firstimage2, 150×100). 카드 얼굴처럼 작은 자리는 원본(약 500KB) 대신 이것을 쓴다. */
+    val thumbnailUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
     /** 구글맵 딥링크용 Google Places place_id — 검색 조건이 아니라 상세 표시물이다. */

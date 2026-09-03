@@ -61,6 +61,13 @@
 
 .home-hero {
   padding: var(--ko-space-12) 0 calc(var(--kh-void, var(--ko-space-16)) / 2);
+  /* 터치 기기의 먹 캔버스(InkWash)가 이 안에 깔린다 — 콘텐츠는 한 층 위로 (포트폴리오 헤더와 같은 규칙) */
+  position: relative;
+}
+
+.home-hero > :not(.kh-ink-wash) {
+  position: relative;
+  z-index: 1;
 }
 
 /* 대칭을 피한다 — 글은 왼쪽으로 몰고 오른쪽은 판 하나로 받는다 */

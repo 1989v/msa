@@ -20,6 +20,7 @@ import { useSeo } from '../seo/useSeo';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
 import { useReveal } from '../hooks/useReveal';
 import InkWash from '../components/brand/InkWash';
+import { useCoarsePointer } from '../components/dispenser/useDispenser';
 import '../components/home/Home.css';
 
 /** About 은 데이터가 없어도 항상 렌더된다 */
@@ -82,6 +83,7 @@ export default function HomePage() {
     timeline && (timeline.companies.length > 0 || timeline.projects.length > 0),
   );
   const hasOpenSource = Boolean(openSource && openSource.length > 0);
+  const coarse = useCoarsePointer();
   const gnbItems = [
     ...(services && services.length > 0 ? [{ label: '서비스', anchor: 'services' }] : []),
     ...(hasTimeline ? [{ label: '지나온 것', anchor: 'portfolio' }] : []),
@@ -91,11 +93,14 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      {/* 먹 캔버스 — 페이지 전체가 지면이다. 배경 위·콘텐츠 아래 (isolation) */}
-      <InkWash fullPage />
+      {/* 먹 캔버스 — 페이지 전체가 지면이다. 배경 위·콘텐츠 아래 (isolation).
+          터치 기기는 히어로 안에만 둔다 — 고정(fixed) 캔버스는 페이지 콘텐츠 전부를 별도 레이어로 밀어 올려
+          스크롤이 버벅인다. 터치에는 포인터를 따라가는 낙묵이 없으니 첫 화면의 먹 자국이면 충분하다 */}
+      {!coarse && <InkWash fullPage />}
       <GNB items={gnbItems} />
 
       <header className="home-hero" ref={reveal}>
+        {coarse && <InkWash />}
         <div className="home-inner home-hero-grid">
           <div className="home-hero-copy kh-stagger">
             <span className="kh-seal kh-seal-ink kh-stamp home-hero-eyebrow">

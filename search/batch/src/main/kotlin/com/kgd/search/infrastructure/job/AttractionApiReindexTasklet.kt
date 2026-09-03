@@ -71,6 +71,7 @@ class AttractionApiReindexTasklet(
                                 ldongSignguCd = attraction.ldongSignguCd,
                                 category = attraction.category,
                                 imageUrl = attraction.imageUrl,
+                                thumbnailUrl = attraction.thumbnailUrl,
                                 tel = attraction.tel,
                                 overview = attraction.overview,
                                 googlePlaceId = attraction.googlePlaceId,

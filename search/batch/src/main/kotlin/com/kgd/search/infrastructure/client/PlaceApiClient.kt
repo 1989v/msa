@@ -31,6 +31,7 @@ class PlaceApiClient(
         val ldongSignguCd: String? = null,
         val category: String? = null,
         val imageUrl: String? = null,
+        val thumbnailUrl: String? = null,
         val tel: String? = null,
         val overview: String? = null,
         /** 구글맵 딥링크용 place_id — V10 이전 place 응답에는 없을 수 있다. */

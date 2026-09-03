@@ -42,7 +42,11 @@ export default function InkWash({ fullPage = false }: { fullPage?: boolean }) {
     const host = canvas?.parentElement;
     if (!canvas || !host) return;
 
-    const dctx = canvas.getContext('2d');
+    // 터치 기기는 소프트웨어 캔버스. GPU 캔버스는 컴포지터 레이어가 되고, 그 위에 그려지는 콘텐츠까지
+    // "겹침" 사유로 승격시킨다(모바일 실측: 문서 높이만 한 레이어 하나가 더 생겼다). 터치에는 포인터 낙묵이
+    // 없어 프레임마다 그릴 일도 없다.
+    const coarse = window.matchMedia('(pointer: coarse)').matches;
+    const dctx = canvas.getContext('2d', { willReadFrequently: coarse });
     if (!dctx) return;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

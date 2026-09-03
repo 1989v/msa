@@ -170,6 +170,19 @@ describe('createDispenser', () => {
     expect(onActivate).toHaveBeenCalledWith('가', 0);
   });
 
+  it('lite 모드는 정면에서 nearSteps 칸 밖의 카드에만 is-far 를 붙인다', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    createDispenser(host, { items, minCards: 24, revealMs: 0, lite: true, nearSteps: 3, render: (it) => it });
+    const far = host.querySelectorAll('.cd-card.is-far').length;
+    expect(far).toBe(24 - 7); // 정면 ±3칸 = 7장만 가깝다
+    expect(front(host).classList.contains('is-far')).toBe(false);
+    // 먼 카드는 보이는 면 하나만 — 왼쪽 호(180° 초과) 8장은 앞면, 오른쪽 호 8장은 뒷면, 정확히 180° 인 한 장은 둘 다
+    expect(host.querySelectorAll('.cd-card.is-far-front').length).toBe(8);
+    expect(host.querySelectorAll('.cd-card.is-far-back').length).toBe(8);
+    expect(host.querySelectorAll('.cd-card.is-far-front.is-far-back').length).toBe(0);
+  });
+
   it('빈 목록은 만들 수 없다', () => {
     const host = document.createElement('div');
     expect(() => createDispenser(host, { items: [], render: () => '' })).toThrow();

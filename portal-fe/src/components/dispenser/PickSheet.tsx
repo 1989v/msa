@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import KhSheet from '../shell/KhSheet';
 import DispenserStage, { type DispenserSkin } from './DispenserStage';
+import { useShownItems } from './useDispenser';
 import './dispenser.css';
 
 export interface PickSheetProps<T> {
@@ -39,6 +40,8 @@ export default function PickSheet<T>({
   const [picked, setPicked] = useState<T | null>(null);
   const [settled, setSettled] = useState(false);
   const shown = picked ? describe(picked) : null;
+  // 터치 기기는 40장까지 — 뽑기 후보도 그 안에서
+  const shownItems = useShownItems(items ?? undefined);
 
   return (
     <KhSheet label={label} onClose={onClose} className="kh-sheet--dialog dsp-sheet">
@@ -47,10 +50,10 @@ export default function PickSheet<T>({
       {!error && items !== null && items.length === 0 && (
         <p className="kh-status">이 조건에는 뽑을 것이 없습니다. 필터를 풀어 보세요.</p>
       )}
-      {!error && items !== null && items.length > 0 && (
+      {!error && shownItems && shownItems.length > 0 && (
         <>
           <DispenserStage
-            items={items}
+            items={shownItems}
             render={render}
             minCards={minCards}
             skin={skin}

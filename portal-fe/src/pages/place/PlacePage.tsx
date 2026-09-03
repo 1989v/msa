@@ -918,7 +918,7 @@ export default function PlacePage() {
             items={pickItems}
             error={pickError}
             render={(a, i) =>
-              `${a.imageUrl ? `<div class="cd-photo" style="background-image:url('${escapeHtml(a.imageUrl).replace(/'/g, '%27')}')"></div>` : '<div class="cd-photo"></div>'}` +
+              `${(a.thumbnailUrl ?? a.imageUrl) ? `<div class="cd-photo" style="background-image:url('${escapeHtml(a.thumbnailUrl ?? a.imageUrl ?? '').replace(/'/g, '%27')}')"></div>` : '<div class="cd-photo"></div>'}` +
               `<div class="cd-body"><span class="cd-seal">${escapeHtml(a.category ? (L.categories[a.category] ?? a.category) : '')}</span>` +
               `<b class="cd-title">${escapeHtml(a.title)}</b><span class="cd-meta">${escapeHtml(a.address?.split(' ')[1] ?? '')} · ${String(i + 1).padStart(2, '0')}</span></div>`
             }

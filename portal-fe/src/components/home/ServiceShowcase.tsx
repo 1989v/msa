@@ -8,6 +8,7 @@ import { fetchProducts, type ProductSummary } from '../../api/shopApi';
 import type { DisplayService } from '../../api/displayApi';
 import { escapeHtml } from '../../lib/card-dispenser';
 import DispenserStage, { type DispenserSkin } from '../dispenser/DispenserStage';
+import { useShownItems } from '../dispenser/useDispenser';
 import PickLine from '../dispenser/PickLine';
 import TileGrid from './TileGrid';
 import { useReveal } from '../../hooks/useReveal';
@@ -150,15 +151,16 @@ export default function ServiceShowcase({ services }: { services: DisplayService
   const posts = useQuery({ queryKey: ['home', 'posts'], queryFn: () => fetchPosts({ size: 30 }), staleTime: STALE });
   const products = useQuery({ queryKey: ['home', 'products'], queryFn: () => fetchProducts(0, 100), staleTime: STALE });
 
-  const attractions = place.data?.attractions;
-  const gameItems = games.data?.content;
-  const postItems = posts.data?.items;
-  const productItems = products.data?.products;
+  // 터치 기기는 40장까지만 꽂는다 (useShownItems) — 캡션의 개수도 실제로 꽂은 수를 말한다
+  const attractions = useShownItems(place.data?.attractions);
+  const gameItems = useShownItems(games.data?.content);
+  const postItems = useShownItems(posts.data?.items);
+  const productItems = useShownItems(products.data?.products);
   const placeTotal = place.data?.totalElements ?? 0;
 
   const renderPlace = useMemo(
     () => (a: Attraction, i: number) =>
-      `${photo(a.imageUrl)}<div class="cd-body"><span class="cd-seal">${escapeHtml(PLACE_CATEGORY[a.category ?? ''] ?? a.category ?? '')}</span>` +
+      `${photo(a.thumbnailUrl ?? a.imageUrl)}<div class="cd-body"><span class="cd-seal">${escapeHtml(PLACE_CATEGORY[a.category ?? ''] ?? a.category ?? '')}</span>` +
       `<b class="cd-title">${escapeHtml(a.title)}</b><span class="cd-meta">${escapeHtml(district(a.address))} · ${pad(i)}</span></div>`,
     [],
   );
@@ -218,7 +220,7 @@ export default function ServiceShowcase({ services }: { services: DisplayService
           index={1}
           side="left"
           title="게임"
-          desc={`설치 없이 브라우저에서 바로.${gameItems ? ` ${gameItems.length}종 전부가 꽂혀 있습니다.` : ''} 리더보드, 모바일 세로·가로 지원. 같은 장치에 아케이드 표피를 끼우면 "뭐 하지" 가 됩니다.`}
+          desc={`설치 없이 브라우저에서 바로.${games.data ? ` ${games.data.totalElements}종이 있고 ${gameItems?.length ?? 0}종이 꽂혀 있습니다.` : ''} 리더보드, 모바일 세로·가로 지원. 같은 장치에 아케이드 표피를 끼우면 "뭐 하지" 가 됩니다.`}
           tags={['Canvas', 'Unity WebGL', 'Leaderboard']}
           goHref={gameUrl('ko', '/games')}
           goLabel="game.1989v.com"
@@ -232,7 +234,7 @@ export default function ServiceShowcase({ services }: { services: DisplayService
           })}
           pickLabel="지금 뽑힌 게임"
           spinLabel="뭐 하지"
-          caption={['game.1989v.com', `${gameItems?.length ?? 0}종 전부 · 같은 장치, 아케이드 표피`]}
+          caption={['game.1989v.com', `${gameItems?.length ?? 0}종${(games.data?.totalElements ?? 0) > (gameItems?.length ?? 0) ? ` (전체 ${games.data?.totalElements})` : ' 전부'} · 같은 장치, 아케이드 표피`]}
           skin="arcade"
           stageLabel="웹게임 전부"
         />

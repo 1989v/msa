@@ -24,6 +24,8 @@ data class AttractionSearchDocument(
     val ldongSignguCd: String? = null,
     val category: String? = null,
     val imageUrl: String? = null,
+    /** 재색인 전 옛 인덱스 문서에는 없다 — null 이면 FE 가 imageUrl 을 쓴다. */
+    val thumbnailUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
     /** 재색인 전 옛 인덱스 문서에는 없다 — null 이면 FE 가 좌표/주소 링크로 폴백한다. */
@@ -50,6 +52,7 @@ data class AttractionSearchDocument(
         ldongSignguCd = ldongSignguCd,
         category = category,
         imageUrl = imageUrl,
+        thumbnailUrl = thumbnailUrl,
         tel = tel,
         overview = overview,
         googlePlaceId = googlePlaceId,

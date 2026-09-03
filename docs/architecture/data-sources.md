@@ -21,7 +21,8 @@
 > 실제로 겪은 값: TourAPI 의 `lclsSystm1~3`(신 분류)을 적재 시점에 `category` 한 글자로
 > 태우고 버렸다. 분류 규칙 하나를 고치려고 **6만 건 재호출**이 필요했다 (2026-08-21).
 > 함께 버려지고 있던 것: `contenttypeid`, `cpyrhtDivCd`(이미지 저작권 구분), `mlevel`,
-> `zipcode`, `createdtime`, `firstimage2`.
+> `zipcode`, `createdtime`, `firstimage2`. 그중 `firstimage2`(150×100 썸네일)는 `thumbnail_url` 로 적재해
+> 검색 색인과 카드 얼굴이 쓴다 — 원본 `firstimage` 는 한 장에 약 500KB 다 (2026-09-03).
 
 ### ② 가공은 파생 컬럼으로 따로 둔다
 

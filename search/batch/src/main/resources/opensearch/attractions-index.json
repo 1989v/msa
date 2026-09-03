@@ -88,6 +88,7 @@
       "category": { "type": "keyword" },
       "location": { "type": "geo_point" },
       "imageUrl": { "type": "keyword", "index": false },
+      "thumbnailUrl": { "type": "keyword", "index": false },
       "tel": { "type": "keyword", "index": false },
       "googlePlaceId": { "type": "keyword", "index": false },
       "popularityScore": { "type": "float" },

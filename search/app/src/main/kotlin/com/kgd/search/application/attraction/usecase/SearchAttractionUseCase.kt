@@ -37,6 +37,8 @@ interface SearchAttractionUseCase {
         val latitude: Double,
         val longitude: Double,
         val imageUrl: String? = null,
+        /** 대표 이미지 썸네일(150×100). 카드 얼굴 같은 작은 자리용 — 없으면 FE 가 imageUrl 을 쓴다. */
+        val thumbnailUrl: String? = null,
         val tel: String? = null,
         /** 목록 응답은 200자 요약 — 전문은 단건 조회로 */
         val overview: String? = null,

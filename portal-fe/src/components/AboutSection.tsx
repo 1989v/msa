@@ -1,16 +1,12 @@
-import {
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  ResponsiveContainer,
-  Tooltip,
-} from 'recharts';
+import { lazy, Suspense } from 'react';
 import type { GraphStats } from '../types/graph';
 import { CATEGORY_LABELS, type Category } from '../types/index';
 import { useResumeStatus } from '../hooks/useResumeStatus';
 import { useReveal } from '../hooks/useReveal';
 import './AboutSection.css';
+
+// recharts 는 이 차트에서만 쓴다 — 따로 떼어야 홈(런처)의 메인 번들에 실리지 않는다
+const AboutRadar = lazy(() => import('./AboutRadar'));
 
 interface AboutSectionProps {
   /** 개념 그래프 통계. 메인(런처)에는 그래프 데이터가 없어 레이더를 그리지 않는다 (ADR-0066). */
@@ -86,32 +82,9 @@ export default function AboutSection({ stats }: AboutSectionProps) {
           <div className="about-radar">
             <h3 className="about-radar-title">Tech Radar</h3>
             <p className="about-radar-subtitle">카테고리별 코드 참조 분포</p>
-            <ResponsiveContainer width="100%" height={320}>
-              <RadarChart data={radarData} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-                <PolarGrid stroke="rgba(108,99,255,0.2)" />
-                <PolarAngleAxis
-                  dataKey="subject"
-                  tick={{ fill: '#94a3b8', fontSize: 11 }}
-                />
-                <Radar
-                  name="Count"
-                  dataKey="value"
-                  stroke="#6c63ff"
-                  fill="#6c63ff"
-                  fillOpacity={0.25}
-                  strokeWidth={2}
-                />
-                <Tooltip
-                  contentStyle={{
-                    background: 'rgba(13,13,26,0.95)',
-                    border: '1px solid rgba(108,99,255,0.3)',
-                    borderRadius: 8,
-                    color: '#e0e0e0',
-                    fontSize: '0.8125rem',
-                  }}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+            <Suspense fallback={<div style={{ height: 320 }} aria-hidden="true" />}>
+              <AboutRadar data={radarData} />
+            </Suspense>
           </div>
           )}
         </div>

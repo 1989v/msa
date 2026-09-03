@@ -24,6 +24,18 @@ export function useCoarsePointer(): boolean {
   );
 }
 
+/**
+ * 터치 기기에서 판에 꽂는 카드 상한. 카드 한 장이 3D 요소 다섯 개라 80장이면 레이어 400개 —
+ * 모바일 에뮬레이션(DPR 3) 실측 530 레이어·418MB 로 스크롤이 버벅였다. 40장 + 라이트 모드로 줄인다.
+ * 데스크탑은 전부 꽂는다.
+ */
+export const MOBILE_MAX_CARDS = 40;
+
+export function useShownItems<T>(items: T[] | undefined): T[] | undefined {
+  const coarse = useCoarsePointer();
+  return useMemo(() => (items && coarse && items.length > MOBILE_MAX_CARDS ? items.slice(0, MOBILE_MAX_CARDS) : items), [items, coarse]);
+}
+
 export function useDispenser<T>({ items, render, onChange, onActivate, minCards, label }: UseDispenserOptions<T>): {
   hostRef: RefObject<HTMLDivElement | null>;
   apiRef: RefObject<Dispenser<T> | null>;
@@ -50,6 +62,8 @@ export function useDispenser<T>({ items, render, onChange, onActivate, minCards,
       label,
       // 축소된 판(모바일)에서도 뽑힌 카드가 읽히게 더 키운다
       pullScale: coarse ? 0.32 : 0.1,
+      // 터치 기기는 라이트 모드 — 먼 카드의 요소를 셋으로 줄인다
+      lite: coarse,
       render: (item, i) => renderRef.current(item, i),
       onChange: (item, i) => onChangeRef.current?.(item, i),
       onActivate: (item, i) => onActivateRef.current?.(item, i),

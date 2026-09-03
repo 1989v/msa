@@ -44,6 +44,12 @@ export interface DispenserOptions<T> {
   dwell?: number;
   /** 눈금 간격. 'auto' 면 24칸 초과 시 다섯 장마다 */
   ticksEvery?: number | 'auto';
+  /**
+   * 라이트 모드 — 정면에서 nearSteps 칸 밖의 카드는 보이는 면 하나와 옆면 하나, 요소 둘만 남긴다.
+   * 카드 한 장이 3D 요소 다섯 개라 판 하나가 수백 레이어가 되는데, 모바일 GPU 는 그걸 못 견딘다(실측: 레이어 530개·418MB).
+   */
+  lite?: boolean;
+  nearSteps?: number;
   label?: string;
 }
 
@@ -74,6 +80,8 @@ const DEFAULTS = {
   idleMs: 260,
   dwell: 0.6,
   ticksEvery: 'auto' as number | 'auto',
+  lite: false,
+  nearSteps: 7,
   label: '카드 디스펜서',
 };
 
@@ -190,6 +198,14 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
       const out = r > 0.5;
       el.classList.toggle('is-out', out);
       el.classList.toggle('is-peek', p > 0.5 && !out);
+      if (o.lite) {
+        const far = ad > step * o.nearSteps;
+        el.classList.toggle('is-far', far);
+        // 먼 카드는 보이는 면 하나만 남긴다. 앞면 법선이 (cos a, 0, −sin a) 라 왼쪽 호(a > 180°)에서만 앞면이
+        // 보이고 오른쪽 호에서는 뒷면이 보인다 — 눈 거리·기울기·원근 원점과 무관하게 부호는 sin a 가 정한다.
+        el.classList.toggle('is-far-front', far && a > 180);
+        el.classList.toggle('is-far-back', far && a < 180);
+      }
       el.setAttribute('aria-selected', p > 0.5 ? 'true' : 'false');
     });
     if (best !== current) {

@@ -317,7 +317,9 @@ export default function SystemCore() {
         if (!running) draw();
       });
     }
-    wake(14_000);
+    // 터치 기기는 정지 화면으로 시작한다 — 탭하면 12초 돈다. 첫 스크롤에 캔버스 rAF 가 끼면 버벅인다
+    if (coarse) draw();
+    else wake(14_000);
 
     return () => {
       cancelAnimationFrame(raf);

@@ -35,6 +35,8 @@ data class AttractionIndexDocument(
     val ldongSignguCd: String? = null,
     val category: String? = null,
     val imageUrl: String? = null,
+    /** 대표 이미지 썸네일 — 표시 전용이라 색인하지 않는다 (mapping: index=false). */
+    val thumbnailUrl: String? = null,
     val tel: String? = null,
     val overview: String? = null,
     /** 구글맵 딥링크용 place_id — 표시 전용이라 색인하지 않는다 (mapping: index=false). */
@@ -63,6 +65,7 @@ data class AttractionIndexDocument(
             ldongSignguCd = doc.ldongSignguCd,
             category = doc.category,
             imageUrl = doc.imageUrl,
+            thumbnailUrl = doc.thumbnailUrl,
             tel = doc.tel,
             overview = doc.overview,
             googlePlaceId = doc.googlePlaceId,

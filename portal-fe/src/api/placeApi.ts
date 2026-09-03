@@ -25,6 +25,11 @@ export interface Attraction {
   latitude: number;
   longitude: number;
   imageUrl: string | null;
+  /**
+   * 대표 이미지 썸네일(TourAPI firstimage2, 150×100·약 18KB). 원본(imageUrl)은 약 500KB 라 카드 얼굴처럼
+   * 작은 자리에는 이것을 쓴다. 색인이 새로 돌기 전 문서에는 없다 — 그때는 imageUrl.
+   */
+  thumbnailUrl?: string | null;
   tel: string | null;
   overview: string | null;
   /**
