@@ -215,21 +215,26 @@ export default function AttractionPage() {
         {amenities.length > 0 && (
           <section className="place-amenities" aria-label={L.amenities}>
             <h2 className="place-subtitle">{L.amenities}</h2>
-            <ul className="place-links-carousel">
+            {/* 카드는 위 "주변 명소" 와 같은 .place-card 를 쓴다 — 같은 화면에서 크기가 다르면
+                아래쪽이 덤처럼 보인다. 다른 것은 가로로 이어진다는 점뿐이다. */}
+            <ul className="place-amenity-row">
               {amenities.map((a) => (
-                <li key={a.id} className="place-links-slide">
-                  <Link className="place-links-card" to={attractionPath(lang, a.id)}>
+                <li key={a.id} className="place-amenity-slide">
+                  <Link className="place-card" to={attractionPath(lang, a.id)}>
                     {a.imageUrl ? (
-                      <img className="place-links-thumb" src={a.imageUrl} alt="" loading="lazy" />
+                      <img className="place-card-img" src={a.imageUrl} alt="" loading="lazy" />
                     ) : (
-                      <div className="place-links-thumb" aria-hidden />
+                      <div className="place-card-img place-card-img-empty" aria-hidden />
                     )}
-                    {a.category && (
-                      <span className="place-amenity-kind">
-                        {placeCategoryLabel(a.category, lang)}
-                      </span>
-                    )}
-                    <span className="place-links-card-title">{titleParts(a).primary}</span>
+                    <div className="place-card-body">
+                      {a.category && (
+                        <span className="place-amenity-kind">
+                          {placeCategoryLabel(a.category, lang)}
+                        </span>
+                      )}
+                      <h3 className="place-card-title">{titleParts(a).primary}</h3>
+                      {a.address && <p className="place-card-addr">{a.address}</p>}
+                    </div>
                   </Link>
                 </li>
               ))}
