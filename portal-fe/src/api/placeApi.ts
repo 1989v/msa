@@ -73,6 +73,18 @@ export const fetchAdminRegions = async (
   return res.data.data.regions;
 };
 
+/**
+ * 관광 성격의 분류 — 목록·주변목록에 올리는 것 (place `Attraction.SIGHT_CATEGORIES` 와 같다).
+ *
+ * 적재의 절반 이상이 음식·쇼핑이라 **분류를 안 걸면 상점 목록이 된다.** 실제로 상세 페이지
+ * 주변목록이 이걸 안 보내서 명동에서 국문·영문 모두 7건 전부 쇼핑이 나왔다 (2026-09-03).
+ * 화면마다 각자 배열을 들고 있던 게 원인이라 여기 한 곳에 둔다.
+ */
+export const SIGHT_CATEGORIES = ['nature', 'history', 'culture', 'leisure'] as const;
+
+/** 지도 위 토글로만 켜는 편의·식음 — 목록에는 올리지 않는다. */
+export const OVERLAY_CATEGORIES = ['food', 'shopping'] as const;
+
 export interface AttractionQuery {
   keyword?: string;
   lang: PlaceLang;
@@ -80,7 +92,14 @@ export interface AttractionQuery {
   /** 법정동 축 (ADR-0071). areaCode 와 같이 보내지 않는다 — 어느 쪽이 이기는지 알 수 없다. */
   sidoCode?: string;
   sigunguCode?: string;
-  category?: string;
+  /**
+   * **필수다.** 빼면 음식·쇼핑이 섞여 들어온다 — 적재의 절반 이상이 그쪽이라
+   * "관광지 목록" 이 상점 목록이 된다. 실제로 상세 페이지 주변목록과 지역 페이지가
+   * 이걸 빠뜨려 명동 주변 7/7 이 쇼핑, 부산 중구 영문 상위에 안과가 올라와 있었다.
+   *
+   * 전부 보고 싶으면 그 의도를 적어서 넘긴다 — 기본값으로 슬쩍 열리게 두지 않는다.
+   */
+  category: string;
   lat?: number;
   lng?: number;
   radiusKm?: number;

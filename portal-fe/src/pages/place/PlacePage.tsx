@@ -5,7 +5,9 @@ import { useQuery } from '@tanstack/react-query';
 import {
   fetchAdminRegions,
   fetchAttraction,
+  OVERLAY_CATEGORIES,
   searchAttractions,
+  SIGHT_CATEGORIES,
   suggestPlaces,
   type AdminRegion,
   type Attraction,
@@ -124,8 +126,6 @@ const UI = {
  * 관광지가 보이지 않는다. 분류 가중치로 순위를 눌렀지만, 목록과 지도의 **역할을 나누는 것**이
  * 더 정직한 해법이다 — 음식·쇼핑을 지우는 게 아니라 지도로 옮긴다.
  */
-const CATEGORIES = ['nature', 'history', 'culture', 'leisure'];
-const OVERLAY_CATEGORIES = ['food', 'shopping'];
 /** 지도 오버레이는 화면에 보이는 범위만 가져온다 — 시군구 전체 식당을 찍으면 마커로 덮인다 */
 const OVERLAY_SIZE = 60;
 
@@ -257,7 +257,7 @@ export default function PlacePage() {
       sidoCode: sidoCode ?? undefined,
       sigunguCode: sigunguCode ?? undefined,
       // 분류를 안 고르면 관광 분류 전체 — 음식·쇼핑은 목록에 올리지 않는다
-      category: category ?? CATEGORIES.join(','),
+      category: category ?? SIGHT_CATEGORIES.join(','),
       lat: geo?.lat,
       lng: geo?.lng,
       radiusKm: geo?.radiusKm,
@@ -971,7 +971,7 @@ export default function PlacePage() {
           >
             {L.all}
           </button>
-          {CATEGORIES.map((c) => (
+          {SIGHT_CATEGORIES.map((c) => (
             <button
               key={c}
               className={`place-chip ${category === c ? 'active' : ''}`}

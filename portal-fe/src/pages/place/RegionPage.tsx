@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   fetchAdminRegions,
   searchAttractions,
+  SIGHT_CATEGORIES,
   type AdminRegion,
   type PlaceLang,
 } from '../../api/placeApi';
@@ -99,6 +100,9 @@ export default function RegionPage() {
       searchAttractions({
         lang,
         ...(isSido ? { sidoCode: code } : { sidoCode: parentCode!, sigunguCode: code.slice(2) }),
+        // 색인되는 지역 페이지다 — 안 걸면 병원·상점이 "이 지역 관광지" 로 색인된다
+        // (부산 중구 영문 상위 12건에 `First Eye Clinic` 이 들어 있었다).
+        category: SIGHT_CATEGORIES.join(','),
         size: TOP_ATTRACTIONS,
       }),
     enabled: region != null,

@@ -1,6 +1,6 @@
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchAttraction, searchAttractions, type PlaceLang } from '../../api/placeApi';
+import { fetchAttraction, searchAttractions, SIGHT_CATEGORIES, type PlaceLang } from '../../api/placeApi';
 import {
   PLACE_ORIGIN,
   attractionMeta,
@@ -55,6 +55,9 @@ export default function AttractionPage() {
         lng: attraction!.longitude,
         radiusKm: 5,
         sort: 'distance',
+        // 이 절을 빠뜨리면 "주변 명소" 가 주변 상점이 된다 — 적재의 절반 이상이 음식·쇼핑이라
+        // 반경 5km 거리순은 상점이 먼저 걸린다 (명동에서 국문·영문 모두 7/7 이 쇼핑이었다).
+        category: SIGHT_CATEGORIES.join(','),
         size: 7,
       }),
     enabled: attraction?.latitude != null && attraction?.longitude != null,
