@@ -96,7 +96,7 @@ class GameAdminService(
         val game = findGame(command.slug)
         when (command.action) {
             GameStatusAction.SUBMIT_REVIEW -> game.submitForReview()
-            GameStatusAction.LAUNCH_BETA -> game.launchBeta()
+            GameStatusAction.LAUNCH_BETA -> game.launchBeta(Instant.now())
             GameStatusAction.PUBLISH -> game.publish(Instant.now())
             GameStatusAction.SUSPEND -> game.suspend()
             GameStatusAction.RESUME -> game.resume()

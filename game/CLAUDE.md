@@ -45,6 +45,18 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 - Kafka: `game.session.started` / `game.session.ended` 발행 (수신: analytics, fire-and-forget). 발행은 트랜잭션 밖 (GamePlayService 파사드 / GamePlayCommand 분리)
 - FE: portal-fe `/games/*` lazy route. INTERNAL_ROUTE 게임은 portal-fe 퀴즈 컴포넌트 재사용, IFRAME 게임은 entry_url 임베드
 - SEO (ADR-0062): 게임 페이지는 `portal-fe/scripts/prerender-seo.mjs` 가 빌드 후 공개 카탈로그 API 를 읽어 정적 HTML·sitemap 을 찍는다. **어드민으로 게임을 추가해도 portal-fe 재배포 전까지 프리렌더에 안 잡힌다.** `title_en`/`description_en`/래스터 썸네일(`thumbs/shots/*.png`)이 비면 영문 색인·소셜 카드가 비어버리므로 시드에서 채울 것
+- **`released_at` 은 노출 시점이고, 노출 상태(BETA·PUBLISHED)면 비어 있을 수 없다.** 홈의 「새로 나온
+  게임」 컬렉션과 신작 탭(`sort=new`)이 이 값으로 줄을 세운다. 유니티 라인 시드 셋(V69·V73·V74)이
+  `score_boards` 컬럼이 하나 늘어난 형식을 서로 복사하면서 `released_at` 자리에 NULL 을 넣었고,
+  BETA 승격(V70)도 채우지 않아 **새 게임 셋이 신작에서 영영 빠져 있었다**(2026-09-03, V75 로 채움).
+  시드로 BETA 를 넣으면 `released_at = NOW(6)`, DRAFT 로 넣으면 NULL 로 두고 **승격 UPDATE 에서
+  채운다.** DDL `DEFAULT NOW()` 로는 못 막는다 — 시드가 명시 NULL 을 넣으면 DEFAULT 는 안 먹고,
+  생성 시점을 출시 시점으로 찍으면 DRAFT 를 늦게 올린 게임이 처음부터 옛 게임이 된다. 정렬은
+  `COALESCE(released_at, created_at)` 라 비어도 뒤로 밀리지는 않지만, 그건 그물이고 값은 채워야 한다.
+  **DB 가 강제한다** — `chk_game_released_when_visible`(V75): BETA·PUBLISHED 인데 `released_at` 이
+  NULL 이면 INSERT/UPDATE 가 실패하고, 시드가 그러면 마이그레이션이 실패해 테스트 게이트
+  (`GameSchemaIntegrationSpec`, 실제 MySQL)에서 잡힌다. 도메인도 `launchBeta(now)` 가 처음 노출되는
+  순간 찍는다 — 전에는 `publish` 만 찍어서 어드민으로 올린 BETA 도 같은 함정이었다
 
 ## Domains
 

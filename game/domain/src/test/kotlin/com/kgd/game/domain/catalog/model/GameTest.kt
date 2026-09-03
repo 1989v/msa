@@ -52,17 +52,22 @@ class GameTest : BehaviorSpec({
 
     given("상태 전이 시") {
         `when`("DRAFT → REVIEW → BETA → PUBLISHED 순서로 전이하면") {
-            then("각 상태가 순차 반영되고 publish 시 releasedAt이 기록되어야 한다") {
+            then("각 상태가 순차 반영되고 releasedAt 은 **처음 노출된 BETA 시점**에 기록되어야 한다") {
                 val game = newGame()
                 game.submitForReview()
                 game.status shouldBe GameStatus.REVIEW
-                game.launchBeta()
-                game.status shouldBe GameStatus.BETA
+                game.releasedAt shouldBe null
 
-                val now = Instant.parse("2026-07-06T00:00:00Z")
-                game.publish(now)
+                // BETA 도 공개 목록·신작 탭에 오르는 노출이다 — 여기서 안 찍으면 신작 정렬에서 빠진다
+                val betaAt = Instant.parse("2026-07-01T00:00:00Z")
+                game.launchBeta(betaAt)
+                game.status shouldBe GameStatus.BETA
+                game.releasedAt shouldBe betaAt
+
+                // publish 는 이미 있는 출시 시점을 덮어쓰지 않는다
+                game.publish(Instant.parse("2026-07-06T00:00:00Z"))
                 game.status shouldBe GameStatus.PUBLISHED
-                game.releasedAt shouldBe now
+                game.releasedAt shouldBe betaAt
             }
         }
 
@@ -78,7 +83,7 @@ class GameTest : BehaviorSpec({
             then("SUSPENDED를 거쳐 PUBLISHED로 복귀해야 한다") {
                 val game = newGame()
                 game.submitForReview()
-                game.launchBeta()
+                game.launchBeta(Instant.parse("2026-07-01T00:00:00Z"))
                 game.publish(Instant.parse("2026-07-06T00:00:00Z"))
 
                 game.suspend()
@@ -94,7 +99,7 @@ class GameTest : BehaviorSpec({
             then("isMonetizable은 false여야 한다") {
                 val game = newGame(sdkIntegrated = false)
                 game.submitForReview()
-                game.launchBeta()
+                game.launchBeta(Instant.parse("2026-07-01T00:00:00Z"))
                 game.publish(Instant.parse("2026-07-06T00:00:00Z"))
                 game.isMonetizable() shouldBe false
             }
@@ -104,7 +109,7 @@ class GameTest : BehaviorSpec({
             then("isMonetizable은 true여야 한다") {
                 val game = newGame(sdkIntegrated = true)
                 game.submitForReview()
-                game.launchBeta()
+                game.launchBeta(Instant.parse("2026-07-01T00:00:00Z"))
                 game.publish(Instant.parse("2026-07-06T00:00:00Z"))
                 game.isMonetizable() shouldBe true
             }
@@ -114,7 +119,7 @@ class GameTest : BehaviorSpec({
             then("플레이는 가능하지만 수익화는 불가해야 한다") {
                 val game = newGame(sdkIntegrated = true)
                 game.submitForReview()
-                game.launchBeta()
+                game.launchBeta(Instant.parse("2026-07-01T00:00:00Z"))
                 game.isPlayable() shouldBe true
                 game.isMonetizable() shouldBe false
             }

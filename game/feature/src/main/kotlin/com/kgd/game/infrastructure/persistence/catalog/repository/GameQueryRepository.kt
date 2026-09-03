@@ -55,7 +55,10 @@ class GameQueryRepository(
 
         val ordered = when (criteria.sort) {
             GameSort.TRENDING -> query.orderBy(stats.weeklyPlayCount.coalesce(0L).desc(), game.id.desc())
-            GameSort.NEW -> query.orderBy(game.releasedAt.desc().nullsLast(), game.id.desc())
+            // released_at 이 비면 created_at 으로 센다. NULLS LAST 로 두었을 때 시드가 released_at 을
+            // 안 채운 새 게임(유니티 라인 셋)이 「새로 나온 게임」·신작 탭에서 영영 빠졌다 —
+            // 새 게임일수록 뒤로 가는 정렬은 정렬이 아니라 함정이다
+            GameSort.NEW -> query.orderBy(game.releasedAt.coalesce(game.createdAt).desc(), game.id.desc())
             GameSort.TOP -> query.orderBy(
                 Expressions.numberTemplate(
                     Double::class.java,

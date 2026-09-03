@@ -130,7 +130,15 @@ class Game private constructor(
 
     fun submitForReview() = transition(from = setOf(GameStatus.DRAFT), to = GameStatus.REVIEW)
 
-    fun launchBeta() = transition(from = setOf(GameStatus.REVIEW), to = GameStatus.BETA)
+    /**
+     * BETA 도 노출이다 — 공개 목록·「새로 나온 게임」·신작 탭에 오른다. 그래서 출시 시점은
+     * PUBLISHED 가 아니라 **처음 노출되는 순간**에 찍는다. 여기서 안 찍으면 신작 정렬이
+     * released_at 을 보므로 BETA 게임이 신작에서 빠진다(유니티 라인 셋이 실제로 그랬다).
+     */
+    fun launchBeta(now: Instant) {
+        transition(from = setOf(GameStatus.REVIEW), to = GameStatus.BETA)
+        if (releasedAt == null) releasedAt = now
+    }
 
     fun publish(now: Instant) {
         transition(from = setOf(GameStatus.BETA), to = GameStatus.PUBLISHED)
