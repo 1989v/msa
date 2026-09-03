@@ -809,9 +809,9 @@ export function blogBreadcrumbJsonLd(crumbs) {
  * "권한 있는 판매자 없음" 선언이 되어 광고 게재를 막는다.
  *
  * GA 측정 ID 와 마찬가지로 브라우저에 노출되는 공개값이라 레포에 그대로 둔다.
- * 여기와 index.html 두 곳에 같은 값이 필요하다 — index.html 은 정적 HTML 이라
- * 이 모듈을 import 할 수 없어서다(테마 판정 스크립트가 useHeritageSurface 의
- * 사본을 두는 것과 같은 이유). 고칠 때 두 곳을 함께 고친다.
+ * 로더가 index.html 에서 `components/ads/adsenseLoader.ts` 로 옮겨 오면서(2026-09-04)
+ * 이 값과 아래 호스트 목록의 사본은 없어졌다 — 여기가 유일한 원본이다.
+ * (ads.txt 와 index.html 의 소유권 메타는 여전히 같은 값을 쓰므로 고칠 때 함께 본다.)
  */
 export const ADSENSE_CLIENT = 'ca-pub-4627924728297793';
 
@@ -820,7 +820,7 @@ export const ADSENSE_CLIENT = 'ca-pub-4627924728297793';
  *
  * resume 는 제외한다 — 실명·연락처가 들어간 토큰 게이트 문서라(ADR-0064) 광고
  * 네트워크에 열람 맥락을 넘기지 않는다. GA 를 같은 이유로 빼둔 것과 같은 기준이다.
- * index.html 의 로더가 이 목록의 사본으로 판정하므로 호스트를 늘리면 함께 고친다.
+ * 로더(`components/ads/adsenseLoader.ts`)와 ads.txt 가 이 목록 하나를 본다.
  */
 export const ADSENSE_HOSTS = [PORTAL_ORIGIN, GAME_ORIGIN, PLACE_ORIGIN, DEAL_ORIGIN, BLOG_ORIGIN].map(
   (origin) => new URL(origin).host,

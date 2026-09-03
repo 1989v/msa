@@ -67,8 +67,16 @@
 콘솔에서 사이트별 자동 광고는 **끈 상태로 유지한다.** 켜는 순간 이 결정이 코드와 무관하게
 무력화된다 — 레포만 보고 되돌릴 수 없는 종류의 설정이라 여기 적어 둔다.
 
-로더 스크립트(`adsbygoogle.js`)는 자동·수동이 공용이므로 `index.html` 에 두는 것이 맞다.
+로더 스크립트(`adsbygoogle.js`)는 자동·수동이 공용이라 처음에는 `index.html` 에 뒀다.
 자동 광고를 끈다는 것은 스크립트를 빼는 것이 아니라 콘솔 스위치를 끈다는 뜻이다.
+
+**개정 2026-09-04 — 로더는 지면이 생길 때 싣는다.** 자동 광고를 끈 상태에서는 지면(`AdSlot`)이
+곧 광고이므로, 지면이 하나도 없는 화면은 로더를 받을 이유가 없다. 그런데 `index.html` 이 실으면
+메인(런처)처럼 지면 0곳인 화면도 **591KB** 를 받고, 로더는 지면이 없어도 숨은 0×0 `ins` 로 광고
+요청을 쏘아 노출 없는 요청만 쌓였다. 모바일 홈 첫 로드 4.7MB 중 애드센스가 두 번째로 큰 항목이었다.
+`window.adsbygoogle` 배열은 스크립트보다 먼저 쌓아 둬도 로드 직후 처리되므로(AdSense 규약),
+지면이 붙는 순간 `components/ads/adsenseLoader.ts` 가 부르면 광고 동작은 전과 같다.
+호스트 허용 목록의 사본도 이때 없어져 `copy.mjs` 하나만 남았다.
 
 ### 2) 게시자 ID 하나가 전체를 켜고 끈다
 
@@ -130,7 +138,10 @@ deal 은 제휴 링크 허브라 자체 부가가치가 얇고(ADR-0069), AdSens
 **대가**
 
 - 지면을 늘리려면 코드를 고쳐야 한다. 자동 광고의 "일단 깔면 알아서" 를 포기했다.
-- 게시자 ID 가 `copy.mjs` 와 `index.html` 두 곳에 있다.
+- 게시자 ID 는 `copy.mjs` 와 `index.html`(소유권 확인 메타) 두 곳에 있다. 로더가 옮겨 가면서
+  호스트 허용 목록의 사본은 없어졌다.
+- 지면이 있는 화면에서는 로더가 마운트 뒤에 시작하므로 광고가 뜨는 시점이 조금 늦다.
+  `AdSlot` 이 높이를 예약해 두므로 레이아웃은 튀지 않는다.
 - 광고 단위 ID(`data-ad-slot`)는 콘솔에서 만들어야 나오므로, 지면을 추가할 때마다
   콘솔 작업이 선행된다.
 
@@ -155,7 +166,8 @@ deal 은 제휴 링크 허브라 자체 부가가치가 얇고(ADR-0069), AdSens
 | 무엇 | 파일 |
 |---|---|
 | 게시자 ID · 광고 호스트 · `ads.txt` 생성 | `portal-fe/src/seo/copy.mjs` |
-| 로더 (호스트 허용 목록) · 소유권 확인 메타 | `portal-fe/index.html` |
+| 로더 (지면 마운트 시 적재, 호스트 허용 목록) | `portal-fe/src/components/ads/adsenseLoader.ts` |
+| 소유권 확인 메타 | `portal-fe/index.html` |
 | 지면 컴포넌트 | `portal-fe/src/components/ads/AdSlot.tsx` |
 | 지면 ID 등록부 | `portal-fe/src/seo/copy.mjs` (`ADSENSE_SLOTS`) |
 | `ads.txt` 산출 | `portal-fe/scripts/prerender-seo.mjs` |

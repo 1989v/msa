@@ -14,6 +14,10 @@ class PlaceApiClient(
 ) {
     private val log = KotlinLogging.logger {}
 
+    /**
+     * 응답 JSON 을 Map 으로 받아 손으로 꺼내 담는다 — **필드를 여기 추가하지 않으면 기본값 null 이 조용히 이긴다.**
+     * 데이터 클래스에만 넣고 아래 매핑을 빼먹어 썸네일이 통째로 null 로 색인된 적이 있다 (2026-09-04).
+     */
     data class AttractionDto(
         val id: Long,
         val contentId: String,
@@ -125,6 +129,7 @@ class PlaceApiClient(
                 ldongSignguCd = a["ldongSignguCd"] as? String,
                 category = a["category"] as? String,
                 imageUrl = a["imageUrl"] as? String,
+                thumbnailUrl = a["thumbnailUrl"] as? String,
                 tel = a["tel"] as? String,
                 overview = a["overview"] as? String,
                 googlePlaceId = a["googlePlaceId"] as? String,

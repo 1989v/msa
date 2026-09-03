@@ -119,10 +119,11 @@ React 다리는 `components/dispenser`: `useDispenser`(mount/unmount), `Dispense
 
 | 항목 | 전 | 후 | 방법 |
 |---|---|---|---|
-| 관광 카드 사진 | 원본 940×627 · 400~550KB | 썸네일 150×100 · 18KB | `thumbnailUrl`(TourAPI firstimage2)을 검색 색인에 싣고 카드 얼굴이 쓴다. **다음 재색인(매일 19:30 UTC)부터** 값이 생기고, 그 전 문서는 `imageUrl` |
+| 관광 카드 사진 | 원본 940×627 · 400~550KB | 썸네일 150×100 · 15KB | `thumbnailUrl`(TourAPI firstimage2)을 검색 색인에 싣고 카드 얼굴이 쓴다. 색인은 재색인 CronJob 이 채운다 |
 | 메인 번들 | 590KB / gzip 177KB | 283KB / gzip 89KB | recharts 레이더를 `AboutRadar` 로 떼어 lazy — 홈은 레이더를 그리지 않는다 |
-| 전송 압축 | 없음 (696,423B 그대로) | gzip 6 | `nginx.conf` `gzip on` — Cloudflare 가 대신 압축해 주지 않는 것을 실측 |
-| 애드센스·gtag 1.3MB | — | 그대로 | 정책 결정 사항 (ADR-0076). 홈에는 광고 지면이 없는데 로더가 실린다 |
+| 전송 압축 | 없음 (696,423B 그대로) | gzip 6 | `nginx.conf` `gzip on`. 확인은 원시 TLS 소켓으로 — 366,263B → **116,011B**. 브라우저 개발자도구의 "전송" 값은 이 경로에서 푼 크기를 보여줘 못 믿는다 |
+| 애드센스 로더 | 591KB, 모든 화면 | 지면 있는 화면만 | 자동 광고는 꺼 둔 상태라 지면(`AdSlot`)이 곧 광고다. 메인은 지면 0곳인데 로더를 받고 있었다 (ADR-0076 개정) |
+| gtag | 502KB | 그대로 | 측정 도구라 페이지를 가리지 않는다 |
 
 ### 서비스 페이지 "뽑기"
 
@@ -156,6 +157,11 @@ React 다리는 `components/dispenser`: `useDispenser`(mount/unmount), `Dispense
 - 대비: 작은 글씨는 `--ko-text-muted`(한지 위 4.23:1)를 쓰지 않고 `--ko-text-secondary` 로 — 뽑힌 것 메타·카운터 라벨·연도 눈금.
   카드 메타는 황토 70% + 송연 혼합으로 한지 위 4.9:1.
 - 모바일 가로 넘침: 연도 눈금 격자가 열보다 넓어 넘쳤다 → `minmax(0, 1fr)` + 눈금 `overflow: hidden`.
+- **썸네일이 색인되지 않던 사고 (2026-09-04)**: 필드를 도메인·색인 문서·매핑·읽기 문서까지 전부 추가하고 재색인을 돌렸는데
+  값이 전부 `null` 이었다. `PlaceApiClient` 가 응답 JSON 을 `Map` 으로 받아 **손으로 꺼내 담는** 코드라, 데이터 클래스에만
+  필드를 넣고 그 매핑 한 줄을 빠뜨리면 기본값 `null` 이 조용히 이긴다. 컴파일도 통과하고 인덱스 매핑에도 필드는 있어서
+  화면만 옛 그림을 계속 받았다. `PlaceApiClientTest` 가 응답 JSON 을 주고 **클라이언트가 내놓은 값**을 보게 해 막았다
+  (매핑 줄을 지우면 빨간불 나는 것까지 확인).
 - 모바일 성능(2026-09-03): 위 표의 레이어 수는 `LayerTree.layerTreeDidChange` 로, 메인 스레드는 `Tracing` 으로 쟀다.
   `willReadFrequently` 로 캔버스가 컴포지팅에서 빠지는지는 헤드리스(소프트웨어 GL)로는 판별되지 않는다 — 실기기 확인 항목.
   라이브러리 테스트 17개(라이트 모드 앞/뒷면 8·8 포함), portal-fe 22개, `nginx -t` 통과, search 모듈 컴파일·테스트 통과.

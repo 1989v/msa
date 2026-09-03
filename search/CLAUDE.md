@@ -39,7 +39,7 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 | 인덱스 | 쓰기 | 읽기 | 필드 |
 |---|---|---|---|
 | `regions` | `RegionIndexDocument` (batch) | `RegionSearchDocument` (app) | 7 / 7 |
-| `attractions` | `AttractionIndexDocument` (batch) | `AttractionSearchDocument` (app) | 20 / 18 — `idSort`·`titleJamo` 쓰기 전용 |
+| `attractions` | `AttractionIndexDocument` (batch) | `AttractionSearchDocument` (app) | 21 / 19 — `idSort`·`titleJamo` 쓰기 전용 |
 | `products` | `ProductIndexDocument` (batch·consumer 2벌) | `ProductSearchDocument` (app) | 26 / 26 |
 
 `ProductIndexDocument` 2벌은 둘 다 쓰기 측이라 분리 근거가 없는 순수 중복이다. 게이트가 드리프트를 잡으므로

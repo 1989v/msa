@@ -32,39 +32,14 @@
       })();
     </script>
 
-    <!-- Google AdSense 자동 광고 (ADR-0076).
+    <!-- Google AdSense 로더는 여기 없다 (ADR-0076, 2026-09-04).
 
-         게시자 ID 가 비면 아무것도 로드하지 않는다 — 승인 전에 스크립트만 나가면
-         게시자 없는 요청이 반복돼 심사에 불리하다. 값의 원본은 src/seo/copy.mjs 의
-         ADSENSE_CLIENT · ADSENSE_HOSTS 이고 여기는 사본이다(정적 HTML 이라 import 를
-         못 한다). ads.txt 와 아래 소유권 메타도 같은 값을 읽으므로 고칠 때 함께 고친다.
+         지면(AdSlot)이 붙는 순간 src/components/ads/adsenseLoader.ts 가 싣는다. 여기서 실으면
+         광고가 한 칸도 없는 화면 — 메인(런처)이 그렇다 — 도 591KB 를 받고, 로더가 숨은 0×0 ins 로
+         광고 요청까지 쏘아 노출 없는 요청만 쌓인다. 자동 광고는 콘솔에서 꺼 둔 상태라 지면이 곧 광고다.
 
-         호스트는 **허용 목록**으로 판정한다. 제외 목록이면 새로 뜨는 호스트가 로더를
-         조용히 물려받는다 — rank 가 실제로 그랬다. ads.txt 는 ADSENSE_HOSTS 에만
-         찍히므로, 광고를 내보내면서 판매자 선언이 없는 호스트가 생긴다.
-
-         resume 이 목록에 없는 이유: 실명·연락처가 있는 토큰 게이트 문서라(ADR-0064)
-         광고망에 열람 맥락을 넘기면 게이트가 무의미해진다. GA 를 뺀 것과 같은 기준이고,
-         한 벌의 index.html 이 모든 호스트를 서빙하므로 여기서 갈라야 한다. -->
-    <script>
-      (function () {
-        var client = "ca-pub-4627924728297793";
-        var hosts = [
-          "1989v.com",
-          "game.1989v.com",
-          "place.1989v.com",
-          "deal.1989v.com",
-          "blog.1989v.com",
-        ];
-        if (!client || hosts.indexOf(location.hostname) < 0) return;
-        var tag = document.createElement("script");
-        tag.async = true;
-        tag.crossOrigin = "anonymous";
-        tag.src =
-          "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=" + client;
-        document.head.appendChild(tag);
-      })();
-    </script>
+         호스트 허용 목록도 그쪽 한 곳(copy.mjs 의 ADSENSE_HOSTS)만 본다 — 사본이 두 벌이면
+         호스트를 늘렸을 때 한쪽만 고쳐져, 광고는 나가는데 ads.txt 가 없는 호스트가 생긴다. -->
 
     <!-- 애드센스 사이트 소유권 확인 (ADR-0076). 위 로더와 달리 정적으로 둔다 —
          확인 크롤러가 JS 를 돌리지 않으면 스크립트로 주입한 태그는 소스에 없는 것과 같다.

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ADSENSE_CLIENT } from '../../seo/copy.mjs';
+import { ensureAdsenseLoaded } from './adsenseLoader';
 import './AdSlot.css';
 
 declare global {
@@ -44,6 +45,8 @@ export default function AdSlot({ slot, shape = 'auto', minHeight = 100, classNam
   useEffect(() => {
     if (!ADSENSE_CLIENT || !slot || pushed.current || !insRef.current) return;
     pushed.current = true;
+    // 로더는 지면이 생길 때 부른다 — 지면 없는 화면(메인 등)은 스크립트를 받지 않는다
+    ensureAdsenseLoaded();
     // 스크립트가 아직 안 왔어도 배열에 쌓아두면 로드 직후 처리된다 (AdSense 규약)
     (window.adsbygoogle = window.adsbygoogle ?? []).push({});
     // slot 이 바뀌어도 pushed 가 재진입을 막는다 — 한 <ins> 에 두 번 push 하면 AdSense 가 던진다
