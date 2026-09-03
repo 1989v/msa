@@ -39,13 +39,17 @@ if [ -z "$ROOT" ]; then
   # 스크래치패드가 내 것이 아니고, 그러면 내가 띄운 크롬을 `stop` 이 "남의 것" 이라며
   # 거절한다 — 정리할 수단이 없어져 크롬이 그대로 돈다 (2026-08-30, 759% CPU).
   ROOT=$(ls -dt /private/tmp/claude-*/*/*/scratchpad 2>/dev/null | head -1)
-  echo "  ! CLAUDE_SCRATCHPAD 가 없어 추측했다: $ROOT" >&2
-  echo "    내 세션이 아니면 CLAUDE_SCRATCHPAD 를 지정하고 다시 실행하라" >&2
+  if [ "${1:-}" != "sweep" ]; then
+    echo "  ! CLAUDE_SCRATCHPAD 가 없어 추측했다: $ROOT" >&2
+    echo "    내 세션이 아니면 CLAUDE_SCRATCHPAD 를 지정하고 다시 실행하라" >&2
+  fi
 fi
 BASE="$ROOT/cdp"
 
 die() { echo "  ✗ $*" >&2; exit 1; }
-[ -n "$ROOT" ] && [ -d "$ROOT" ] || die "스크래치패드를 못 찾았다. CLAUDE_SCRATCHPAD 를 지정하라"
+# sweep 은 세션을 가리지 않으므로 스크래치패드가 없어도 된다 (SessionEnd/SessionStart 훅에서 돈다).
+# 나머지 명령은 자기 세션 프로필이 필요하다.
+need_root() { [ -n "$ROOT" ] && [ -d "$ROOT" ] || die "스크래치패드를 못 찾았다. CLAUDE_SCRATCHPAD 를 지정하라"; }
 
 # 이름 → 포트 (9400~9499). 결정론적이라 같은 이름이면 늘 같은 포트다
 port_of() {
@@ -158,11 +162,11 @@ cmd_clean() {
 }
 
 case "${1:-}" in
-  start) shift; cmd_start "$@" ;;
-  port)  shift; cmd_port  "$@" ;;
-  list)  cmd_list ;;
-  stop)  shift; cmd_stop  "$@" ;;
-  clean) cmd_clean ;;
+  start) shift; need_root; cmd_start "$@" ;;
+  port)  shift; need_root; cmd_port  "$@" ;;
+  list)  need_root; cmd_list ;;
+  stop)  shift; need_root; cmd_stop  "$@" ;;
+  clean) need_root; cmd_clean ;;
   sweep) shift; cmd_sweep "$@" ;;
   *) sed -n '1,34p' "$0" | grep '^#' | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac
