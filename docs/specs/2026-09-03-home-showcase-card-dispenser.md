@@ -69,6 +69,10 @@ createDispenser(host, { items, render, onChange, minCards, radius, cardW, cardH,
 - 스핀 중 `onChange` 를 미루고 멈춘 뒤 한 번만 부른다.
 - 두 단계(2026-09-03 오후 피드백): 판이 움직이는 동안은 정면 카드가 `peek`(18px)만큼만 올라오고, 멈춘 뒤(`revealMs` 360, 스크롤은
   `idleMs` 260 정지)에야 완전히 일어나 얼굴을 보인다. `spinTo` 는 일어난 뒤에 resolve 한다.
+- 일어난 카드를 탭·클릭·Enter 하면 `onActivate` — 메인은 그 항목의 링크로, 뽑기 시트는 "가기" 와 같다.
+- 모바일 스크롤: 화면 밖 판은 `content-visibility: auto` 로 그리지 않고, `will-change` 는 움직일 때만(`.is-live`). 시스템 코어는
+  터치 기기에서 스크롤로 깨우지 않고 30fps·DPR 1.5 로 그린다.
+- 카드 입체감: 두께 3px(더 두꺼우면 둔해 보인다), 옆면은 빛 방향 명암, 앞면 광택 한 겹, 뒷면 사선 무늬 + 안쪽 테두리, 판은 접시형 그라데이션.
 - 다른 모듈을 import 하지 않는다. 색은 `--cd-*` 변수뿐. → 그대로 떼어 `1989v/card-dispenser` 로 낼 수 있다.
   이 레포는 `packages/*` 를 vendored tarball 로 소비하므로(`scripts/sync-design-system.sh`) 별도 패키지는
   npm 배포(fencesvg 와 같은 경로)가 맞다.

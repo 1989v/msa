@@ -9,6 +9,8 @@ export interface DispenserStageProps<T> {
   items: T[];
   render: (item: T, index: number) => string;
   onChange?: (item: T, index: number) => void;
+  /** 일어난 정면 카드를 탭·클릭·Enter 했을 때 — 링크로 보낸다 */
+  onActivate?: (item: T) => void;
   /** 스핀이 멈추고 하나가 섰을 때 */
   onPicked?: (item: T) => void;
   minCards?: number;
@@ -34,6 +36,7 @@ export default function DispenserStage<T>({
   items,
   render,
   onChange,
+  onActivate,
   onPicked,
   minCards,
   skin = 'hanji',
@@ -44,7 +47,7 @@ export default function DispenserStage<T>({
   sweep = 110,
   spinOnMount = false,
 }: DispenserStageProps<T>) {
-  const { hostRef, apiRef } = useDispenser({ items, render, onChange, minCards, label });
+  const { hostRef, apiRef } = useDispenser({ items, render, onChange, onActivate, minCards, label });
   const coarse = useCoarsePointer();
   const [spinning, setSpinning] = useState(false);
 

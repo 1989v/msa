@@ -73,6 +73,9 @@ export default function SystemCore() {
     if (!ctx) return;
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // 터치 기기: 스크롤 중 캔버스를 돌리면 메인 스레드가 스크롤과 싸운다 — 깨우지 않고, 그릴 때도 절반 프레임·DPR 1.5
+    const coarse = window.matchMedia('(pointer: coarse)').matches;
+    const minFrameMs = coarse ? 30 : 0;
     const node = Object.fromEntries(
       NODES.map(([id, label, fx, fy]) => [id, { id, label, fx, fy, x: 0, y: 0, w: 0, h: 20, flash: 0 } as Node]),
     ) as Record<string, Node>;
@@ -104,7 +107,7 @@ export default function SystemCore() {
     const size = () => {
       const r = host.getBoundingClientRect();
       if (r.width === 0) return;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const dpr = Math.min(coarse ? 1.5 : 2, window.devicePixelRatio || 1);
       W = r.width;
       H = r.height;
       canvas.width = Math.round(W * dpr);
@@ -198,6 +201,10 @@ export default function SystemCore() {
       packets.push({ route, i: 0, t: 0, x: node.fe.x, y: node.fe.y, v: 110 + Math.random() * 70, trail: [] });
     };
     const step = (now: number) => {
+      if (now - last < minFrameMs) {
+        raf = requestAnimationFrame(step);
+        return;
+      }
       const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
       last = now;
       if (now > spawnAt) {
@@ -292,7 +299,7 @@ export default function SystemCore() {
     canvas.addEventListener('pointermove', onMove, { passive: true });
     canvas.addEventListener('pointerleave', onLeave);
     canvas.addEventListener('pointerdown', onDown, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
+    if (!coarse) window.addEventListener('scroll', onScroll, { passive: true });
     document.addEventListener('visibilitychange', onVisibility);
     const io = new IntersectionObserver((entries) => {
       inView = entries.some((en) => en.isIntersecting);

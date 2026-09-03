@@ -58,6 +58,10 @@ export default function PickSheet<T>({
             caption={caption}
             pickLabel="다시 뽑기"
             spinOnMount
+            onActivate={(item) => {
+              // 일어난 카드를 누르는 것도 "가기" 다 — 멈춘 뒤에만
+              if (settled) onGo(item);
+            }}
             onChange={(item) => {
               // 첫 layout 의 정면(스핀 전)은 결과가 아니다 — 멈춘 뒤부터 보여준다
               if (settled) setPicked(item);

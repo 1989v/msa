@@ -10,6 +10,8 @@ export interface UseDispenserOptions<T> {
   items: T[];
   render: (item: T, index: number) => string;
   onChange?: (item: T, index: number) => void;
+  /** 일어난 정면 카드를 탭·클릭·Enter 했을 때 — 링크로 보내는 자리 */
+  onActivate?: (item: T, index: number) => void;
   minCards?: number;
   label: string;
 }
@@ -22,7 +24,7 @@ export function useCoarsePointer(): boolean {
   );
 }
 
-export function useDispenser<T>({ items, render, onChange, minCards, label }: UseDispenserOptions<T>): {
+export function useDispenser<T>({ items, render, onChange, onActivate, minCards, label }: UseDispenserOptions<T>): {
   hostRef: RefObject<HTMLDivElement | null>;
   apiRef: RefObject<Dispenser<T> | null>;
 } {
@@ -30,11 +32,13 @@ export function useDispenser<T>({ items, render, onChange, minCards, label }: Us
   const apiRef = useRef<Dispenser<T> | null>(null);
   const renderRef = useRef(render);
   const onChangeRef = useRef(onChange);
+  const onActivateRef = useRef(onActivate);
   const coarse = useCoarsePointer();
   // 최신 콜백을 ref 에 보관 — 항목이 같으면 판을 다시 세우지 않으면서도 새 콜백을 쓴다
   useEffect(() => {
     renderRef.current = render;
     onChangeRef.current = onChange;
+    onActivateRef.current = onActivate;
   });
 
   useEffect(() => {
@@ -48,6 +52,7 @@ export function useDispenser<T>({ items, render, onChange, minCards, label }: Us
       pullScale: coarse ? 0.32 : 0.1,
       render: (item, i) => renderRef.current(item, i),
       onChange: (item, i) => onChangeRef.current?.(item, i),
+      onActivate: (item, i) => onActivateRef.current?.(item, i),
     });
     apiRef.current = api;
     return () => {

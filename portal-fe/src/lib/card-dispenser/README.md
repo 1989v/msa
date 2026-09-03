@@ -48,6 +48,7 @@ const d = createDispenser(host, {
     <div class="cd-body"><span class="cd-seal">${escapeHtml(it.kind)}</span>
     <b class="cd-title">${escapeHtml(it.title)}</b></div>`,
   onChange: (it) => show(it),              // 정면 카드가 바뀔 때. 스핀 중엔 쉬고 멈춘 뒤 한 번
+  onActivate: (it) => location.assign(it.url), // 일어난 카드를 탭·클릭·Enter
 });
 d.setAngle(-scrollProgress * 110);         // 스크롤 스크럽 (터치 기기에서는 하지 않는다)
 d.spinTo('random').then(show);             // 뽑기
@@ -60,6 +61,7 @@ d.destroy();
 | `rotateBy(deg)` · `snap()` | 한 칸 넘기기 · 가장 가까운 카드에 맞춰 세우기 |
 | `spinTo(i \| 'random', ms)` | 두 바퀴 돌아 느려지며 멈춘다. Promise 로 뽑힌 항목 |
 | `current()` · `currentIndex()` | 정면 항목 |
+| `onActivate(item, i)` (옵션) | 완전히 일어난 정면 카드를 탭·클릭하거나 Enter/Space. 끌다 놓은 것은 아니다 |
 | `destroy()` | 전부 치운다 |
 
 옵션: `radius` `cardW` `cardH` `tilt` `lift` `forward` `pullScale` `peek`(움직일 때 올라오는 높이, 18) `revealMs`(멈춘 뒤 일어나는 시간, 360)
@@ -88,6 +90,11 @@ d.destroy();
 
 호스트는 `role="listbox"` + `tabindex=0`, 카드는 `role="option"` + `aria-selected`, 정면 번호는 `aria-live`.
 `prefers-reduced-motion` 이면 스핀·스냅이 즉시 끝난다.
+
+## 성능
+
+카드 한 장이 3D 요소 다섯 개(앞·뒤·옆면 셋)라 판 하나가 수백 레이어다. 화면 밖 판은 `content-visibility: auto` 로
+아예 그리지 않고, `will-change` 는 움직이는 동안(`.cd.is-live`)에만 건다. 터치 기기에서는 스크롤로 `setAngle` 을 부르지 않는다.
 
 ## 크기
 

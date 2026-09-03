@@ -2,7 +2,10 @@
  * 기본값은 K-Heritage 재료(한지·기와·황토·연지)이고, 쓰는 쪽이 자기 토큰으로 덮는다.
  *
  * 3D 시점: .cd-world 의 rotateX 는 **음수**여야 +Z(정면)가 화면 아래·가까운 쪽으로 온다.
- * 양수면 아래에서 올려다본 그림이 된다. 뽑힌 카드는 rotateX(+tilt) 로 되돌려 정면을 본다. */
+ * 양수면 아래에서 올려다본 그림이 된다. 뽑힌 카드는 rotateX(+tilt) 로 되돌려 정면을 본다.
+ *
+ * 성능: 카드 한 장이 3D 요소 다섯 개(앞·뒤·옆면 셋)라 판 하나가 수백 레이어다. 화면 밖 판은
+ * content-visibility 로 아예 그리지 않고, will-change 는 움직이는 동안(.is-live)에만 건다. */
 
 .cd {
   --cd-face-bg: var(--kh-hanji, #f9f8f2);
@@ -16,6 +19,9 @@
   --cd-photo-empty: var(--ko-surface-3, #e3e3dd);
   --cd-meta: var(--kh-ocher-text, #8a6346);
   --cd-mono: var(--kh-font-mono, ui-monospace, monospace);
+  /* 빛은 오른쪽 위에서 온다 — 옆면 명암과 앞면 광택이 같은 방향을 본다 */
+  --cd-light: rgb(255 255 255 / .14);
+  --cd-shade: rgb(0 0 0 / .16);
   position: absolute;
   inset: 0;
   overflow: hidden;
@@ -27,27 +33,30 @@
 .cd:active { cursor: grabbing; }
 .cd:focus-visible { outline: 2px solid var(--ko-accent-primary, #1a472a); outline-offset: -4px; }
 
-.cd-scene { position: absolute; inset: 0; perspective: 1300px; perspective-origin: 50% 40%; }
+/* 화면 밖 판은 그리지 않는다 — 크기는 부모(absolute inset)가 정하므로 자리는 그대로다 */
+.cd-scene { position: absolute; inset: 0; perspective: 1300px; perspective-origin: 50% 40%; content-visibility: auto; }
 .cd-world {
   position: absolute; left: 50%; top: 66%; width: 0; height: 0;
   transform-style: preserve-3d;
   transform: scale(var(--cd-s, 1)) rotateX(calc(var(--cd-tilt, 26deg) * -1));
 }
-.cd-drum { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; will-change: transform; }
+.cd-drum { position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d; }
+.cd.is-live .cd-drum, .cd.is-live .cd-card { will-change: transform; }
 
 .cd-disc {
   position: absolute;
   left: calc(var(--cd-r) * -1 - 38px); top: calc(var(--cd-r) * -1 - 38px);
   width: calc(var(--cd-r) * 2 + 76px); height: calc(var(--cd-r) * 2 + 76px);
   border-radius: 50%;
-  background: var(--cd-disc);
+  /* 가운데가 살짝 밝고 테두리로 갈수록 가라앉는다 — 판이 평면이 아니라 접시로 읽힌다 */
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--cd-disc) 78%, var(--cd-hub)) 0%, var(--cd-disc) 58%, color-mix(in srgb, var(--cd-disc) 72%, #000) 100%);
   border: 1px solid color-mix(in srgb, var(--cd-line) 55%, transparent);
   transform: rotateX(90deg);
 }
 .cd-disc::after { content: ""; position: absolute; inset: 28px; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--cd-line) 22%, transparent); }
 .cd-hub {
   position: absolute; left: -50px; top: -50px; width: 100px; height: 100px; border-radius: 50%;
-  background: var(--cd-hub);
+  background: radial-gradient(circle at 40% 35%, color-mix(in srgb, var(--cd-hub) 80%, #fff) 0%, var(--cd-hub) 55%, color-mix(in srgb, var(--cd-hub) 75%, #000) 100%);
   border: 1px solid color-mix(in srgb, var(--cd-line) 50%, transparent);
   transform: translateY(-5px) rotateX(90deg);
 }
@@ -70,27 +79,38 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ─── 카드 — 두께 3px 의 얇은 판. 입체감은 두께가 아니라 옆면 명암·앞면 광택·뒷면 무늬가 낸다 ─── */
 .cd-card {
+  --e: var(--cd-edge);
   position: absolute; left: calc(var(--cd-w) / -2); top: calc(var(--cd-h) / -2);
   width: var(--cd-w); height: var(--cd-h);
-  transform-style: preserve-3d; will-change: transform;
+  transform-style: preserve-3d;
 }
+.cd-card.is-out, .cd-card.is-peek { --e: var(--cd-line); }
+.cd-card.is-out { cursor: pointer; }
 .cd-face { position: absolute; inset: 0; border-radius: 0 6px 0 6px; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-.cd-front { transform: translateZ(2px); background: var(--cd-face-bg); color: var(--cd-face-fg); display: flex; flex-direction: column; }
+.cd-front { transform: translateZ(1.5px); background: var(--cd-face-bg); color: var(--cd-face-fg); display: flex; flex-direction: column; }
+.cd-front::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; border-radius: inherit;
+  background: linear-gradient(160deg, var(--cd-light), transparent 42%, var(--cd-shade));
+}
+.cd-card.is-out:hover .cd-front::after { background: linear-gradient(160deg, rgb(255 255 255 / .24), transparent 42%, rgb(0 0 0 / .10)); }
 .cd-back {
-  transform: rotateY(180deg) translateZ(2px);
-  background: var(--cd-back-bg); color: var(--cd-line);
+  transform: rotateY(180deg) translateZ(1.5px);
+  background: var(--cd-back-bg);
+  /* 카드 뒷면 무늬 — 사선 결 + 안쪽 테두리 한 줄. 한 장 한 장이 물건으로 읽힌다 */
+  background-image: repeating-linear-gradient(45deg, rgb(255 255 255 / .045) 0 2px, transparent 2px 9px);
+  color: var(--cd-line);
   border: 1px solid color-mix(in srgb, var(--cd-line) 30%, transparent);
-  display: flex; align-items: flex-end; padding: 8px;
+  outline: 1px solid color-mix(in srgb, var(--cd-line) 28%, transparent); outline-offset: -7px;
+  display: flex; align-items: flex-end; padding: 10px;
   font-family: var(--cd-mono); font-size: .625rem; letter-spacing: .06em;
 }
-/* 카드 옆면 — 두께 4px. 정면에 꽂힌 카드는 이 면만 보인다 */
-.cd-edge { position: absolute; background: var(--cd-edge); }
-.cd-edge-l { left: 0; top: 0; width: 4px; height: 100%; transform: translateX(-2px) rotateY(90deg); }
-.cd-edge-r { right: 0; top: 0; width: 4px; height: 100%; transform: translateX(2px) rotateY(90deg); }
-.cd-edge-t { left: 0; top: 0; width: 100%; height: 4px; transform: translateY(-2px) rotateX(90deg); }
-.cd-card.is-out .cd-edge,
-.cd-card.is-peek .cd-edge { background: var(--cd-line); }
+/* 옆면 — 두께 3px. 왼쪽은 그늘, 오른쪽은 빛, 위는 그 사이 */
+.cd-edge { position: absolute; }
+.cd-edge-l { left: 0; top: 0; width: 3px; height: 100%; transform: translateX(-1.5px) rotateY(90deg); background: color-mix(in srgb, var(--e) 70%, #000); }
+.cd-edge-r { right: 0; top: 0; width: 3px; height: 100%; transform: translateX(1.5px) rotateY(90deg); background: color-mix(in srgb, var(--e) 82%, #fff); }
+.cd-edge-t { left: 0; top: 0; width: 100%; height: 3px; transform: translateY(-1.5px) rotateX(90deg); background: linear-gradient(to right, color-mix(in srgb, var(--e) 70%, #000), color-mix(in srgb, var(--e) 82%, #fff)); }
 
 /* 앞면 구성 — 쓰는 쪽의 render() 가 이 클래스들로 조립한다 */
 .cd-photo { height: 52%; background-size: cover; background-position: center; background-color: var(--cd-photo-empty); flex-shrink: 0; }
@@ -106,5 +126,5 @@
 .cd-num { margin-top: auto; font-family: var(--cd-mono); font-size: .5625rem; letter-spacing: .06em; color: var(--cd-meta); }
 
 @media (prefers-reduced-motion: reduce) {
-  .cd-drum, .cd-card { will-change: auto; }
+  .cd.is-live .cd-drum, .cd.is-live .cd-card { will-change: auto; }
 }

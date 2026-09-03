@@ -21,6 +21,8 @@ export interface DispenserOptions<T> {
   render: (item: T, index: number) => string;
   /** 정면 카드가 바뀔 때. 스핀 중에는 쉬고 멈춘 뒤 한 번만 온다 */
   onChange?: (item: T, index: number) => void;
+  /** 완전히 일어난 정면 카드를 탭·클릭하거나 Enter 를 눌렀을 때 — 링크로 보내는 자리 */
+  onActivate?: (item: T, index: number) => void;
   /** 최소 칸 수 — 모자라면 있는 항목을 돌려 가며 채운다 */
   minCards?: number;
   radius?: number;
@@ -153,6 +155,12 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
   let reveal = 1; // 0 = 살짝 올라온 상태(peek), 1 = 완전히 일어난 상태. 멈춰 있을 때만 1
   let revealAnim = 0;
   let idleTimer: ReturnType<typeof setTimeout> | 0 = 0;
+  // 움직이는 동안만 will-change 를 건다 — 카드 수백 장을 늘 레이어로 올려 두면 모바일 스크롤이 버벅인다
+  let live = 0;
+  const setLive = (on: boolean) => {
+    live += on ? 1 : -1;
+    host.classList.toggle('is-live', live > 0);
+  };
 
   const layout = () => {
     const phi = norm(angle + offset);
@@ -193,11 +201,17 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
 
   const fit = () => host.style.setProperty('--cd-s', Math.max(0.66, Math.min(1, host.clientWidth / 520)).toFixed(3));
   const stopAnim = () => {
-    if (anim) cancelAnimationFrame(anim);
+    if (anim) {
+      cancelAnimationFrame(anim);
+      setLive(false);
+    }
     anim = 0;
   };
   const stopReveal = () => {
-    if (revealAnim) cancelAnimationFrame(revealAnim);
+    if (revealAnim) {
+      cancelAnimationFrame(revealAnim);
+      setLive(false);
+    }
     revealAnim = 0;
   };
   const animateOffset = (to: number, ms: number, ease: (k: number) => number): Promise<void> =>
@@ -211,6 +225,7 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
       }
       const from = offset;
       const t0 = performance.now();
+      setLive(true);
       const tick = (t: number) => {
         const k = Math.min(1, (t - t0) / ms);
         offset = from + (to - from) * ease(k);
@@ -218,6 +233,7 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
         if (k < 1) anim = requestAnimationFrame(tick);
         else {
           anim = 0;
+          setLive(false);
           resolve();
         }
       };
@@ -235,6 +251,7 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
       }
       const from = reveal;
       const t0 = performance.now();
+      setLive(true);
       const tick = (t: number) => {
         const k = Math.min(1, (t - t0) / ms);
         reveal = from + (to - from) * easeOut(k);
@@ -242,6 +259,7 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
         if (k < 1) revealAnim = requestAnimationFrame(tick);
         else {
           revealAnim = 0;
+          setLive(false);
           resolve();
         }
       };
@@ -322,14 +340,24 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
     offset = drag.o + dx * 0.45;
     layout();
   };
-  const endDrag = () => {
+  const activate = () => {
+    if (reveal < 1 || current < 0) return;
+    o.onActivate?.(itemAt(current), current % n);
+  };
+  const endDrag = (e?: Event) => {
     if (!drag) return;
     const moved = drag.moved;
     drag = null;
-    if (moved) void api.snap();
+    if (moved) {
+      void api.snap();
+      return;
+    }
+    // 끌지 않고 뗐다 — 일어난 카드 위였으면 그 카드를 고른 것이다
+    const target = e?.target instanceof Element ? e.target.closest('.cd-card.is-out') : null;
+    if (e?.type === 'pointerup' && target && host.contains(target)) activate();
   };
   host.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
+    if (e.button !== 0 || quiet) return; // 스핀 중에는 잡지 않는다 — 끊으면 멈춘 자리에서 일어나지 못한다
     drag = { x: e.clientX, o: offset, moved: false };
     stopAnim();
   });
@@ -343,6 +371,9 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
     } else if (e.key === 'ArrowLeft') {
       e.preventDefault();
       void api.rotateBy(step);
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      activate();
     }
   });
 

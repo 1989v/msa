@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { searchAttractions, type Attraction } from '../../api/placeApi';
 import { displayTitle, genreLabel, listGames, type GameSummary } from '../../api/gameApi';
@@ -80,7 +81,14 @@ function ServiceBlock<T>({
 }: BlockProps<T>) {
   const sectionRef = useRef<HTMLDivElement>(null);
   const [pick, setPick] = useState<Pick | null>(null);
+  const navigate = useNavigate();
   const onChange = (item: T) => setPick(describe(item));
+  // 일어난 카드를 누르면 그 링크로 — 다른 호스트면 통째로 이동, 같은 앱 경로면 라우터로
+  const onActivate = (item: T) => {
+    const { href } = describe(item);
+    if (/^https?:/.test(href)) window.location.assign(href);
+    else void navigate(href);
+  };
 
   let stage: ReactNode;
   if (items && items.length > 0) {
@@ -89,6 +97,7 @@ function ServiceBlock<T>({
         items={items}
         render={render}
         onChange={onChange}
+        onActivate={onActivate}
         minCards={minCards}
         skin={skin}
         label={stageLabel}

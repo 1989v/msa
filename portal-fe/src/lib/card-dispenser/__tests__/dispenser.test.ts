@@ -144,6 +144,32 @@ describe('createDispenser', () => {
     expect(d.currentIndex()).toBe(1);
   });
 
+  it('일어난 정면 카드를 끌지 않고 뗐으면 onActivate 가 그 항목으로 온다', () => {
+    const onActivate = vi.fn();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    createDispenser(host, { items, minCards: 24, revealMs: 0, render: (it) => it, onActivate });
+    const card = front(host);
+    host.dispatchEvent(new MouseEvent('pointerdown', { button: 0, clientX: 10, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+    expect(onActivate).toHaveBeenCalledTimes(1);
+    expect(onActivate).toHaveBeenCalledWith('가', 0);
+    // 끌었다 놓은 것은 고른 게 아니다
+    host.dispatchEvent(new MouseEvent('pointerdown', { button: 0, clientX: 10, bubbles: true }));
+    window.dispatchEvent(new MouseEvent('pointermove', { clientX: 60, bubbles: true }));
+    card.dispatchEvent(new MouseEvent('pointerup', { bubbles: true }));
+    expect(onActivate).toHaveBeenCalledTimes(1);
+  });
+
+  it('Enter 도 일어난 카드를 고른다', () => {
+    const onActivate = vi.fn();
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    createDispenser(host, { items, minCards: 24, revealMs: 0, render: (it) => it, onActivate });
+    host.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(onActivate).toHaveBeenCalledWith('가', 0);
+  });
+
   it('빈 목록은 만들 수 없다', () => {
     const host = document.createElement('div');
     expect(() => createDispenser(host, { items: [], render: () => '' })).toThrow();
