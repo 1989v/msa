@@ -1,0 +1,201 @@
+/* 디스펜서를 K-Heritage 판 위에 세우는 스타일. 카드 자체는 lib/card-dispenser/card-dispenser.css.
+ * 색은 전부 토큰 → --cd-* 변수로 넘긴다. 카드 앞면은 정경과 무관하게 한지(라이트 표피)라
+ * 메타 글씨색도 정경을 따르지 않고 한지 위 대비로 고정한다. */
+
+.dsp-host {
+  position: absolute;
+  inset: var(--ko-space-2) 0 var(--ko-space-8);
+  --cd-face-bg: var(--kh-hanji);
+  --cd-face-fg: var(--kh-giwa);
+  --cd-back-bg: var(--kh-giwa);
+  --cd-line: var(--kh-ocher);
+  --cd-edge: color-mix(in srgb, var(--kh-ocher) 55%, var(--kh-ink));
+  --cd-mark: var(--kh-yeonji);
+  --cd-disc: color-mix(in srgb, var(--kh-ink) 75%, var(--kh-giwa));
+  --cd-hub: color-mix(in srgb, var(--kh-giwa) 88%, var(--kh-hanji));
+  --cd-photo-empty: color-mix(in srgb, var(--kh-hanji) 80%, var(--kh-ocher));
+  --cd-meta: color-mix(in srgb, var(--kh-ocher) 70%, var(--kh-ink)); /* 한지 위 4.9:1 */
+  --cd-seal-bg: var(--kh-giwa);
+  --cd-seal-fg: var(--kh-hanji);
+  --cd-mono: var(--kh-font-mono);
+}
+
+/* 아케이드 표피 — 검은 카드, 연지 인장 (게임은 브랜드 순간이 붉다) */
+.dsp-host--arcade {
+  --cd-face-bg: var(--kh-giwa);
+  --cd-face-fg: var(--kh-hanji);
+  --cd-photo-empty: color-mix(in srgb, var(--kh-giwa) 80%, var(--kh-hanji));
+  --cd-meta: var(--kh-ocher);
+  --cd-seal-bg: var(--kh-yeonji);
+}
+
+/* 종이 표피 — 글자만 있는 카드(글·상품) */
+.dsp-host--paper {
+  --cd-face-bg: color-mix(in srgb, var(--kh-hanji) 96%, var(--kh-giwa));
+}
+
+.dsp-stage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+}
+
+@media (min-width: 900px) {
+  .dsp-stage {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+.dsp-btn {
+  position: absolute;
+  right: var(--ko-space-4);
+  bottom: calc(var(--ko-space-8) + var(--ko-space-2));
+  z-index: 3;
+  min-height: 44px;
+  padding: 0 var(--ko-space-4);
+  border: 1px solid color-mix(in srgb, var(--kh-ocher) 50%, transparent);
+  border-radius: var(--kh-radius);
+  background: color-mix(in srgb, var(--kh-ink) 55%, transparent);
+  color: var(--kh-hanji);
+  font-size: var(--ko-text-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--kh-dur-state) var(--kh-ease-enter), background var(--kh-dur-state) var(--kh-ease-enter);
+}
+
+.dsp-btn:hover {
+  border-color: var(--kh-ocher);
+  background: color-mix(in srgb, var(--kh-ink) 75%, transparent);
+}
+
+.dsp-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.dsp-cap {
+  position: absolute;
+  left: var(--ko-space-4);
+  right: var(--ko-space-4);
+  bottom: var(--ko-space-3);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ko-space-3);
+  font-size: var(--ko-text-xs);
+  color: var(--kh-ocher);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.dsp-cap span:last-child {
+  color: var(--kh-on-slab-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 639px) {
+  .dsp-cap span:last-child {
+    display: none;
+  }
+}
+
+/* ─── 뽑힌 것 한 줄 ─────────────────────────────────────────────────────── */
+
+.dsp-pick {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-3) 0;
+  border-top: 1px solid var(--ko-border-subtle);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+.dsp-pick-label {
+  font-size: var(--ko-text-xs);
+  color: var(--kh-ocher-text);
+}
+
+.dsp-pick-v {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--ko-space-1) var(--ko-space-3);
+  color: var(--ko-text-primary);
+  text-decoration: none;
+}
+
+.dsp-pick-title {
+  display: inline-block;
+  font-size: var(--ko-text-xl);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  animation: dsp-stamp var(--kh-dur-state) var(--kh-ease-enter);
+}
+
+a.dsp-pick-v:hover .dsp-pick-title {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.dsp-pick-meta {
+  font-size: var(--ko-text-xs);
+  color: var(--ko-text-secondary);
+}
+
+@keyframes dsp-stamp {
+  from {
+    transform: scale(1.06);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ─── 뽑기 시트 ──────────────────────────────────────────────────────────── */
+
+.dsp-sheet {
+  --dsp-sheet-pad: var(--ko-space-4);
+}
+
+.dsp-sheet .dsp-offset {
+  margin: 0 var(--dsp-sheet-pad) var(--ko-space-4) calc(var(--dsp-sheet-pad) - 8px);
+}
+
+.dsp-sheet .dsp-stage {
+  aspect-ratio: 4 / 3;
+}
+
+.dsp-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  padding: var(--ko-space-4) var(--dsp-sheet-pad) var(--ko-space-6);
+}
+
+.dsp-result--pending .dsp-pick-title {
+  color: var(--ko-text-muted);
+  animation: none;
+}
+
+.dsp-result-acts {
+  display: flex;
+  gap: var(--ko-space-3);
+  margin-top: var(--ko-space-4);
+}
+
+.dsp-skeleton {
+  aspect-ratio: 4 / 3;
+  margin: 0 var(--ko-space-4) var(--ko-space-6);
+  border-radius: var(--kh-radius-asym);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dsp-pick-title {
+    animation: none;
+  }
+  .dsp-btn {
+    transition: none;
+  }
+}
