@@ -389,7 +389,7 @@ images:
     newTag: "04022e2"
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: 2e23a9c
+    newTag: "0203955"
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: c0612f7
@@ -419,7 +419,7 @@ images:
     newTag: 2e23a9c
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 2e23a9c
+    newTag: "0203955"
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: c0612f7
