@@ -8,6 +8,13 @@
 --
 -- **이 파일을 고치지 마라** — 커밋된 마이그레이션은 이미 적용됐을 수 있고, 고치면
 -- 체크섬 불일치로 code-dictionary 가 통째로 기동하지 못한다(폴드 호스트라 7개 도메인이 함께 죽는다).
+--
+-- 번호 이력: V72 로 커밋했다가 **V74 로 옮겼다** (2026-09-03). 같은 워킹트리의 다른 세션이
+--   V73(마지막 한 사람)을 먼저 붙였고, 그쪽이 먼저 배포되어 운영에 적용됐다. 우리 Flyway 는
+--   `outOfOrder` 를 켜지 않으므로(common/ScopedFlywayMigrator) 이미 73 이 적용된 스키마에
+--   미적용 72 가 나타나면 validate 가 막는다 — 조용히 건너뛰거나 기동이 실패한다.
+--   옮겨도 되는 이유는 하나뿐이다: **운영 flyway_schema_history 를 조회해 72 가 아직 적용되지
+--   않은 것을 확인했다**(70·71·73 만 있었다). 적용된 것을 옮기면 그때는 되돌릴 수 없다.
 
 INSERT INTO game (slug, title, description, title_en, description_en, thumbnail_url, cover_url, engine_type,
                   load_type, entry_url, orientation, supports_mobile, developer_name, sdk_integrated, status,
