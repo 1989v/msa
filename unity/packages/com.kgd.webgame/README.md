@@ -15,6 +15,7 @@
 | `Kgd.KgdPlatform` | 랭킹 제출 · 세이브 · 플랫폼 신호 |
 | `Kgd.KgdRelay` | 게임 릴레이(`/ws/games/{slug}`) WebSocket 통로 — 열고/보내고/받기만. 스키마는 게임이 안다 (ADR-0088) |
 | `Kgd.KgdInput` | 가상패드 입력 |
+| `Kgd.KgdEvents` | **버튼이 눌리게 하는 것** — 씬이 뜨면 `EventSystem` 이 없을 때 세운다. 게임이 부르지 않는다. 없으면 UI 가 그려지되 클릭·터치가 조용히 버려진다(두 게임이 그 상태로 나갔다) |
 | `Kgd.KgdDevice` | 기기 판정(터치 여부, 셸 예약 띠 치수) |
 | `Kgd.KgdSave` | 서버 세이브 읽기/쓰기 |
 | `Kgd.Play.KgdTraverse` | **젤다라이크의 뼈대** — 걷기·달리기·점프·등반·활공·구르기가 스태미나 하나로. 켜면 **차지 점프**(`Wish.JumpCharge`, 공중 조향 잠김) · **모서리 잡기**(`State.Ledge`, 자동) · 활공 차단(`NoGlide`) · 중력 배율(`GravityScale`) · 미끄러짐(`Slip`)도 — 전부 기본값이 꺼짐이라 기존 게임 무변경 |
