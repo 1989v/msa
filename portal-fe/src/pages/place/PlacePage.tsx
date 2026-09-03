@@ -1221,8 +1221,15 @@ function PlaceCard({
         onSelect();
       }}
     >
-      {attraction.imageUrl ? (
-        <img className="place-card-img" src={attraction.imageUrl} alt="" loading="lazy" />
+      {/* 목록 카드는 88px 정사각 — 300×200 썸네일이면 충분하고 원본은 장당 130~550KB 다.
+          상세(place-detail-img)는 폭을 다 쓰므로 그대로 원본을 쓴다 */}
+      {(attraction.thumbnailUrl ?? attraction.imageUrl) ? (
+        <img
+          className="place-card-img"
+          src={attraction.thumbnailUrl ?? attraction.imageUrl ?? ''}
+          alt=""
+          loading="lazy"
+        />
       ) : (
         <div className="place-card-img place-card-img-empty" aria-hidden />
       )}
