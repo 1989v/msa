@@ -65,8 +65,10 @@ createDispenser(host, { items, render, onChange, minCards, radius, cardW, cardH,
 - 각도 하나로 움직인다: 드럼 각 = 스크롤이 주는 `angle` + 사용자 조작(드래그·스핀) `offset`.
   카드의 "뽑힘 정도"는 정면과의 각 거리로만 정해지므로(`pullAmount`) 입력 방식마다 다른 코드가 없다.
 - `minCards`: 칸 s 의 항목은 `items[s % n]` — 뽑히는 것은 언제나 실제 항목.
-- 정면 근처 다섯 장에만 `render` 가 불린다. 카드가 수백 장이어도 그리는 앞면은 다섯.
+- 정면 다섯 칸 안으로 들어올 때 앞면을 한 번 그린다. 카드가 수백 장이어도 그리는 앞면은 그때그때 몇 장.
 - 스핀 중 `onChange` 를 미루고 멈춘 뒤 한 번만 부른다.
+- 두 단계(2026-09-03 오후 피드백): 판이 움직이는 동안은 정면 카드가 `peek`(18px)만큼만 올라오고, 멈춘 뒤(`revealMs` 360, 스크롤은
+  `idleMs` 260 정지)에야 완전히 일어나 얼굴을 보인다. `spinTo` 는 일어난 뒤에 resolve 한다.
 - 다른 모듈을 import 하지 않는다. 색은 `--cd-*` 변수뿐. → 그대로 떼어 `1989v/card-dispenser` 로 낼 수 있다.
   이 레포는 `packages/*` 를 vendored tarball 로 소비하므로(`scripts/sync-design-system.sh`) 별도 패키지는
   npm 배포(fencesvg 와 같은 경로)가 맞다.

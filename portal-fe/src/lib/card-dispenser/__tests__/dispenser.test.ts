@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createDispenser, escapeHtml, pullAmount, slotCount } from '../index';
 
 // jsdom 에는 matchMedia 가 없다 — 모션 여부는 이 테스트의 관심사가 아니다.
@@ -43,17 +43,24 @@ describe('escapeHtml', () => {
 
 describe('createDispenser', () => {
   const items = ['가', '나', '다'];
+  afterEach(() => {
+    vi.useRealTimers();
+  });
   const make = (onChange = vi.fn(), minCards = 24) => {
     const host = document.createElement('div');
     document.body.appendChild(host);
     const d = createDispenser(host, {
       items,
       minCards,
+      revealMs: 0, // 일어남·내려앉음을 즉시 — rAF 없이 상태만 본다
+      idleMs: 50,
       render: (it, i) => `<b>${it}-${i}</b>`,
       onChange,
     });
     return { host, d, onChange };
   };
+  const front = (host: HTMLElement) => host.querySelector<HTMLElement>('.cd-card[aria-selected="true"]')!;
+  const rotY = (el: HTMLElement) => Number(/rotateY\(90deg\)[^]*?rotateY\((-?[\d.]+)deg\)/.exec(el.style.transform)![1]);
 
   it('항목이 최소 칸 수보다 적으면 있는 것을 돌려 가며 칸을 채운다 — 뒷면 번호가 순환한다', () => {
     const { host } = make();
@@ -108,6 +115,33 @@ describe('createDispenser', () => {
     d.destroy();
     expect(host.innerHTML).toBe('');
     expect(host.classList.contains('cd')).toBe(false);
+  });
+
+  it('멈춰 있을 때 정면 카드는 완전히 일어나 있다(rotateY -90)', () => {
+    const { host } = make();
+    expect(front(host).classList.contains('is-out')).toBe(true);
+    expect(rotY(front(host))).toBeCloseTo(-90, 1);
+  });
+
+  it('setAngle 로 움직이는 동안은 살짝 올라오기만 하고, 조용해지면 일어난다', () => {
+    vi.useFakeTimers();
+    const { host, d } = make();
+    d.setAngle(-(360 / 24) * 3);
+    const f = front(host);
+    expect(f.classList.contains('is-peek')).toBe(true);
+    expect(f.classList.contains('is-out')).toBe(false);
+    expect(rotY(f)).toBeCloseTo(0, 1); // 얼굴을 돌리지 않는다
+    expect(f.style.transform).toContain('translateY(-18.00px)'); // peek 만큼만
+    vi.advanceTimersByTime(60);
+    expect(front(host).classList.contains('is-out')).toBe(true);
+    expect(rotY(front(host))).toBeCloseTo(-90, 1);
+  });
+
+  it('spinTo 는 멈춘 카드가 일어난 뒤에 끝난다', async () => {
+    const { host, d } = make();
+    await d.spinTo(4, 0);
+    expect(front(host).classList.contains('is-out')).toBe(true);
+    expect(d.currentIndex()).toBe(1);
   });
 
   it('빈 목록은 만들 수 없다', () => {
