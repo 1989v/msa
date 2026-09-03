@@ -56,6 +56,14 @@ namespace Kgd.Play
             /// </summary>
             public float TerminalFall;
 
+            /// <summary>
+            /// 공중에서 벽에 부딪힌 축의 속도를 지운다 — 몸이 벽을 타고 떨어진다. 끄면(기본) 자리만 막히고
+            /// 속도는 남아 벽 밑을 지나는 순간 다시 그 속도로 난다. 층층이 뜬 단단한 발판 지형에서는
+            /// 켜야 한다(한 단 모자란 낙하의 61% 가 발판 옆을 스친 뒤 탑 밖으로 날아 지상까지 갔다).
+            /// 기본이 꺼짐인 이유: 켜면 다른 게임의 봇 판 결과가 달라진다(마지막 한 사람 무기 균형 1점).
+            /// </summary>
+            public bool StopAtWalls;
+
             /// <summary>모서리 잡기. 낙하 중 발판 가장자리에 손이 닿으면 끌어올린다 — 자동이다.</summary>
             public bool LedgeGrab;
             /// <summary>모서리까지의 수평 여유(Radius 에 더해).</summary>
@@ -114,11 +122,20 @@ namespace Kgd.Play
         /// </summary>
         public float Slip;
 
+        /// <summary>
+        /// 지면이 몸을 미는 수평 속도 — 급경사 미끄러짐·컨베이어. 서 있을 때만 든다. 기본 0.
+        /// 게임이 발밑을 보고 매 프레임 넣는다(얼음의 <see cref="Slip"/> 과 짝이다).
+        /// </summary>
+        public Vector3 Drift;
+
         /// <summary>차지 점프로 뜬 공중인가 — 이 동안은 조향이 잠긴다. 뛰기 전에 다 정한다.</summary>
         public bool ChargedAir { get; private set; }
 
         /// <summary>이번 프레임에 땅에 닿았나. 소리·먼지에 쓴다.</summary>
         public bool Landed { get; private set; }
+
+        /// <summary>이번 프레임에 머리를 부딪혔나 — 위로 가다 천장(발판 밑면)에 막혔다. 소리에 쓴다.</summary>
+        public bool Bumped { get; private set; }
 
         /// <summary>구르기 진행(0 시작 → 1 끝). 게임이 몸을 굴리는 데 쓴다.</summary>
         public float RollPhase => _t.RollTime > 0f ? 1f - Mathf.Clamp01(_rollLeft / _t.RollTime) : 0f;
@@ -130,6 +147,7 @@ namespace Kgd.Play
 
         private readonly Tuning _t;
         private readonly KgdBody _body;
+        private IKgdCeiling _ceiling;
         private Vector3 _vel, _knock;
         private float _rollLeft, _sinceGround, _climbCool, _pressing;
         private float _ledgeLeft;
@@ -176,6 +194,8 @@ namespace Kgd.Play
         public void Tick(float dt, in Wish wish, IKgdGround ground, IKgdWall walls)
         {
             Landed = false;
+            Bumped = false;
+            _ceiling = ground as IKgdCeiling;   // 지형이 천장을 알면 쓴다 — 하이트맵은 모른다
 
             switch (Now)
             {
@@ -215,7 +235,8 @@ namespace Kgd.Play
             bool charging = _t.ChargeTime > 0f && wish.JumpCharge > 0f;
             if (charging) speed *= _t.ChargeMoveScale;
 
-            var want = new Vector3(wish.Move.x * speed, 0f, wish.Move.z * speed);
+            // 지면이 미는 것(급경사·얼음 비탈)은 발로 거슬러야 한다 — 그대로 두면 흘러내린다
+            var want = new Vector3(wish.Move.x * speed, 0f, wish.Move.z * speed) + Drift;
             if (Slip > 0f)
             {
                 // 얼음 — 속도가 관성으로 이어진다. 시간 상수라 프레임률과 무관하다.
@@ -473,33 +494,75 @@ namespace Kgd.Play
         {
             // 등반·모서리 잡기는 스스로 자리를 놓는다 — 수평 판정을 태우면 벽이 도로 민다
             bool selfPlaced = Now == State.Climb || Now == State.Ledge;
+            float prevY = Pos.y;
+            var before = Pos;
             var want = Pos + _vel * dt;
             Pos = selfPlaced ? want : _body.Resolve(ground, Pos, want);
 
-            float floor = ground.HeightAt(Pos);
-            if (!selfPlaced && Pos.y <= floor)
+            if (!selfPlaced)
             {
-                // **위로 끌어올리지 않는다.** 지면에 붙는 길은 떨어지는 것뿐이다 —
-                // 예전엔 계단 앞에서 점프하면 꼭대기로 순간이동했다.
-                Pos.y = floor;
-                if (Now == State.Air || Now == State.Glide)
+                // **공중에서 벽에 부딪힌 축의 속도는 사라진다** (Tuning.StopAtWalls). 자리만 막고 속도를 남겨
+                // 두면 벽 밑을 지나는 순간 다시 그 속도로 날아간다 — 탑에서 한 단 모자란 낙하의 61% 가 발판 옆을
+                // 스친 뒤 탑 밖으로 날아 지상까지 갔다. 벽에 닿은 몸은 벽을 타고 떨어진다. 걷기는 매 프레임
+                // 속도를 새로 놓아 무관
+                if (_t.StopAtWalls && (Now == State.Air || Now == State.Glide))
                 {
-                    Now = State.Ground;
-                    _vel.y = 0f;
-                    // 착지 충격이 수평 속도를 반 넘게 먹는다. 즉답 지면(Slip 0)에서는 다음 프레임
-                    // Walk 가 덮어써 뜻이 없고, 얼음에서는 이 값이 「착지 후 얼마나 미끄러지나」다 —
-                    // 그대로 두면 8 유닛 속도가 반폭 2 짜리 발판을 무조건 넘겨 버렸다
-                    _vel.x *= 0.25f;
-                    _vel.z *= 0.25f;
-                    ChargedAir = false;
-                    Landed = true;
+                    float wx = _vel.x * dt, wz = _vel.z * dt;
+                    if (Mathf.Abs(wx) > 1e-4f && Mathf.Abs(Pos.x - before.x) < Mathf.Abs(wx) * 0.5f) _vel.x = 0f;
+                    if (Mathf.Abs(wz) > 1e-4f && Mathf.Abs(Pos.z - before.z) < Mathf.Abs(wz) * 0.5f) _vel.z = 0f;
                 }
-            }
-            else if (Now == State.Ground)
-            {
-                float drop = Pos.y - floor;
-                if (drop <= _t.StepDown) Pos.y = floor;   // 비탈을 따라 내려간다
-                else Now = State.Air;                     // 진짜 낭떠러지다
+
+                // **천장.** 위로 가다 밑면에 닿으면 머리를 부딪히고 그 자리에서 떨어진다 — 단단한 발판
+                // 아래에서 뛰어 발판 위로 나오는 길은 없다(위에서만 잡히는 one-way 였을 때는 통과했고,
+                // 그것이 「뚫린다」로 읽혔다). 천장을 모르는 지형(하이트맵)은 예전과 같다.
+                if (_ceiling != null && _vel.y > 0f &&
+                    _ceiling.CeilingAt(Pos, _t.Height, out float lid) && Pos.y + _t.Height > lid)
+                {
+                    Pos.y = lid - _t.Height;
+                    _vel.y = 0f;
+                    Bumped = true;
+                }
+
+                float floor = ground.HeightAt(Pos);
+                if (_ceiling != null)
+                {
+                    // **단단한 발판 지형(천장을 아는 지형)의 바닥은 「지나쳤나」로 본다.** 이 걸음 전 발높이에서
+                    // 본 바닥을 이 걸음 뒤 발이 넘어 내려갔으면 그 바닥에 선다 — 빠른 낙하가 얇은 발판을 한 걸음에
+                    // 건너뛰어도 잡힌다. 지나치지 않았으면 발이 윗면 아래 무릎(StepUp) 안일 때만 올라선다.
+                    // 그보다 아래는 옆면이다: 위로 끌어올리지 않는다(Unstick 이 밖으로 민다). 탑에서는 한 뼘 모자란
+                    // 도약이 전부 구원돼 실수의 값이 0 이 됐다.
+                    // 하이트맵 게임(천장 없음)은 아래 옛 판정 그대로 — 이 분기가 다르면 봇 판 결과가 달라진다
+                    // (마지막 한 사람 무기 균형 28% → 36%, 판정 시각 몇 프레임 차이가 싸움을 바꾼다)
+                    float floorPrev = ground.HeightAt(new Vector3(Pos.x, prevY, Pos.z));
+                    if (Now == State.Air || Now == State.Glide)
+                    {
+                        bool crossed = prevY >= floorPrev - 0.001f && Pos.y <= floorPrev;
+                        bool onto = _vel.y <= 0.01f && Pos.y <= floor && floor - Pos.y <= _t.StepUp;
+                        if (crossed || onto) Land(crossed ? floorPrev : floor);
+                    }
+                    else if (Now == State.Ground)
+                    {
+                        float diff = floor - Pos.y;
+                        if (diff >= 0f && diff <= _t.StepUp) Pos.y = floor;          // 오르막·낮은 턱
+                        else if (diff < 0f && -diff <= _t.StepDown) Pos.y = floor;   // 비탈을 따라 내려간다
+                        else if (diff < 0f) Now = State.Air;                         // 진짜 낭떠러지다
+                        // diff > StepUp — 몸이 지형 속이다. 아래 Unstick 이 밀어낸다
+                    }
+                    else if (Pos.y <= floor && floor - Pos.y <= _t.StepUp) Pos.y = floor;   // 구르기 등
+                }
+                else if (Pos.y <= floor)
+                {
+                    // **위로 끌어올리지 않는다.** 지면에 붙는 길은 떨어지는 것뿐이다 —
+                    // 예전엔 계단 앞에서 점프하면 꼭대기로 순간이동했다.
+                    Pos.y = floor;
+                    if (Now == State.Air || Now == State.Glide) Land(floor);
+                }
+                else if (Now == State.Ground)
+                {
+                    float drop = Pos.y - floor;
+                    if (drop <= _t.StepDown) Pos.y = floor;   // 비탈을 따라 내려간다
+                    else Now = State.Air;                     // 진짜 낭떠러지다
+                }
             }
 
             if (MapRadius > 0f)
@@ -508,6 +571,20 @@ namespace Kgd.Play
                 Pos.z = Mathf.Clamp(Pos.z, -MapRadius, MapRadius);
             }
             Pos = _body.Unstick(ground, Pos);
+        }
+
+        private void Land(float y)
+        {
+            Pos.y = y;
+            Now = State.Ground;
+            _vel.y = 0f;
+            // 착지 충격이 수평 속도를 반 넘게 먹는다. 즉답 지면(Slip 0)에서는 다음 프레임
+            // Walk 가 덮어써 뜻이 없고, 얼음에서는 이 값이 「착지 후 얼마나 미끄러지나」다 —
+            // 그대로 두면 8 유닛 속도가 반폭 2 짜리 발판을 무조건 넘겨 버렸다
+            _vel.x *= 0.25f;
+            _vel.z *= 0.25f;
+            ChargedAir = false;
+            Landed = true;
         }
 
         private void Face(Vector3 dir)
