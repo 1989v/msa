@@ -508,8 +508,14 @@ namespace Kgd.Play
                 if (_t.StopAtWalls && (Now == State.Air || Now == State.Glide))
                 {
                     float wx = _vel.x * dt, wz = _vel.z * dt;
-                    if (Mathf.Abs(wx) > 1e-4f && Mathf.Abs(Pos.x - before.x) < Mathf.Abs(wx) * 0.5f) _vel.x = 0f;
-                    if (Mathf.Abs(wz) > 1e-4f && Mathf.Abs(Pos.z - before.z) < Mathf.Abs(wz) * 0.5f) _vel.z = 0f;
+                    bool hitX = Mathf.Abs(wx) > 1e-4f && Mathf.Abs(Pos.x - before.x) < Mathf.Abs(wx) * 0.5f;
+                    bool hitZ = Mathf.Abs(wz) > 1e-4f && Mathf.Abs(Pos.z - before.z) < Mathf.Abs(wz) * 0.5f;
+                    // **정면으로 부딪히면(막힌 축이 큰 성분) 둘 다 멎는다** — 벽에 닿은 몸은 곧장 떨어진다. 막힌 축만
+                    // 지우면 몸 둘레 표본이 닿았는지에 따라 나머지 성분이 남을 때도 안 남을 때도 있어, 어디로 떨어지는지가
+                    // 정해지지 않는다(받침을 둘 자리가 없다). **스치듯 닿은 것(작은 성분이 막힘)은 속도를 그대로 둔다** —
+                    // 올라가며 옆 덩이의 모서리를 스친 몸의 조준(작은 성분)을 지우면 목표 옆으로 떨어진다(실제 놓침)
+                    bool frontal = (hitX && Mathf.Abs(_vel.x) >= Mathf.Abs(_vel.z)) || (hitZ && Mathf.Abs(_vel.z) >= Mathf.Abs(_vel.x));
+                    if (frontal) { _vel.x = 0f; _vel.z = 0f; }
                 }
 
                 // **천장.** 위로 가다 밑면에 닿으면 머리를 부딪히고 그 자리에서 떨어진다 — 단단한 발판
