@@ -358,7 +358,7 @@ export default function GamesPage() {
           label={lang === 'en' ? 'Pick one from this list' : '이 목록에서 아무거나'}
           items={games}
           render={(g, i) =>
-            `<div class="cd-photo" style="background-image:url('${escapeHtml(g.thumbnailUrl).replace(/'/g, '%27')}')"></div>` +
+            `<div class="cd-photo" data-src="${escapeHtml(g.thumbnailUrl)}"></div>` +
             `<div class="cd-body"><span class="cd-seal">${escapeHtml(genreLabel(g.genre, lang))}</span>` +
             `<b class="cd-title">${escapeHtml(displayTitle(g, lang))}</b><span class="cd-meta">${escapeHtml(lang === 'en' ? g.title : (g.titleEn ?? ''))} · ${String(i + 1).padStart(2, '0')}</span></div>`
           }

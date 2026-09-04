@@ -30,7 +30,9 @@ const STALE = 10 * 60_000;
 const pad = (i: number) => String(i + 1).padStart(2, '0');
 const photo = (url: string | null) =>
   url
-    ? `<div class="cd-photo" style="background-image:url('${escapeHtml(url).replace(/'/g, '%27')}')"></div>`
+    // 주소를 data-src 로만 둔다 — 정면 가까이 온 카드에, 판이 멈춘 뒤에 장치가 붙인다.
+    // 그대로 박으면 스핀 한 번에 판 위 모든 그림을 내려받는다
+    ? `<div class="cd-photo" data-src="${escapeHtml(url)}"></div>`
     : '<div class="cd-photo"></div>';
 const won = (n: string | number) => `₩${Math.round(Number(n)).toLocaleString('ko-KR')}`;
 const district = (address: string | null) => address?.split(' ')[1] ?? '';

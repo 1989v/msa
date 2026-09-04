@@ -1,5 +1,5 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { createDispenser, escapeHtml, pullAmount, slotCount } from '../index';
+import { createDispenser, escapeHtml, peekAmount, pullAmount, slotCount } from '../index';
 
 // jsdom 에는 matchMedia 가 없다 — 모션 여부는 이 테스트의 관심사가 아니다.
 beforeAll(() => {
@@ -181,6 +181,36 @@ describe('createDispenser', () => {
     expect(host.querySelectorAll('.cd-card.is-far-front').length).toBe(8);
     expect(host.querySelectorAll('.cd-card.is-far-back').length).toBe(8);
     expect(host.querySelectorAll('.cd-card.is-far-front.is-far-back').length).toBe(0);
+  });
+
+  it('peek 창은 pull 창보다 넓다 — 여러 장이 함께 올라와야 물결로 보인다', () => {
+    const step = 9;
+    expect(peekAmount(0, step, 2.4)).toBeCloseTo(1, 5);
+    expect(peekAmount(step * 2.4, step, 2.4)).toBe(0);
+    // 한 칸 떨어진 카드: pull 은 이미 0 인데 peek 은 아직 남아 있다
+    expect(pullAmount(step, step, 0.6)).toBe(0);
+    expect(peekAmount(step, step, 2.4)).toBeGreaterThan(0.3);
+    // 멀어질수록 작아진다
+    expect(peekAmount(step, step, 2.4)).toBeGreaterThan(peekAmount(step * 2, step, 2.4));
+  });
+
+  it('그림은 정면 photoSteps 칸 안의 카드에만 붙는다 (나머지는 data-src 로 남아 요청되지 않는다)', () => {
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    createDispenser(host, {
+      items,
+      minCards: 24,
+      revealMs: 0,
+      photoSteps: 2,
+      render: (it) => `<div class="cd-photo" data-src="https://example.test/${it}.jpg"></div>`,
+    });
+    // 정면 ±2칸 = 5장
+    expect(host.querySelectorAll('.cd-photo[style*="background-image"]').length).toBe(5);
+    expect(front(host).querySelector('.cd-photo')!.getAttribute('data-src')).toBe(null);
+    // 나머지는 주소가 아직 안 붙었다 — 브라우저가 받지 않는다
+    const pending = host.querySelectorAll('.cd-photo[data-src]').length;
+    expect(pending).toBeGreaterThan(0);
+    expect(pending + 5).toBe(host.querySelectorAll('.cd-photo').length);
   });
 
   it('빈 목록은 만들 수 없다', () => {

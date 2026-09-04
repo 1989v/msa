@@ -36,12 +36,27 @@ export interface DispenserOptions<T> {
   pullScale?: number;
   /** 판이 움직이는 동안 정면 카드가 덱에서 살짝 올라오는 높이(px) */
   peek?: number;
+  /**
+   * peek 이 걸리는 폭(칸 수). 정면 ±이만큼의 카드가 함께 올라왔다 내려간다.
+   *
+   * 이 값이 작으면 한 번에 한 장만 올라오는데, 스핀은 한 칸을 수십 ms 만에 지나가므로 **눈에 안 보인다**
+   * (실측: 스핀 중 올라온 카드 중앙값 1장). 여러 장이 함께 올라와야 물결이 판을 도는 것으로 읽힌다.
+   */
+  peekSpread?: number;
   /** 멈춘 뒤 완전히 일어나는 데 걸리는 시간(ms). 0 이면 즉시 */
   revealMs?: number;
   /** setAngle(스크롤)이 이만큼 조용하면 멈춘 것으로 보고 일어난다(ms) */
   idleMs?: number;
   /** 정면 카드가 완전히 서 있는 구간의 비율 (0~1, 칸 간격 절반 기준) */
   dwell?: number;
+  /**
+   * 그림을 넣을 범위(칸 수) — `render()` 가 낸 `.cd-photo[data-src]` 는 정면 ±이만큼에 들어오고
+   * **판이 멈춘 뒤에야** 실제 주소가 붙는다. 그 전에는 요청 자체가 나가지 않는다.
+   *
+   * 판이 돌 때마다 모든 카드가 정면을 지나므로, 그냥 두면 스핀 한 번에 전 카드의 그림을 내려받는다
+   * (실측: 18장 → 49장). 옆으로 선 카드의 그림은 어차피 보이지 않는다.
+   */
+  photoSteps?: number;
   /** 눈금 간격. 'auto' 면 24칸 초과 시 다섯 장마다 */
   ticksEvery?: number | 'auto';
   /**
@@ -79,6 +94,8 @@ const DEFAULTS = {
   revealMs: 360,
   idleMs: 260,
   dwell: 0.6,
+  peekSpread: 2.4,
+  photoSteps: 2,
   ticksEvery: 'auto' as number | 'auto',
   lite: false,
   nearSteps: 7,
@@ -102,6 +119,19 @@ export const pullAmount = (angleDistance: number, step: number, dwell: number): 
   let p = ad <= plateau ? 1 : ad >= half ? 0 : 1 - (ad - plateau) / (half - plateau);
   p = p * p * (3 - 2 * p);
   return p;
+};
+
+/**
+ * 정면과의 각 거리 → peek 정도 (0~1). [pullAmount] 보다 **넓은** 창을 쓴다.
+ * spread 칸에서 0, 정면에서 1, 사이는 smoothstep — 여러 장이 함께 올라와 물결로 보인다.
+ */
+export const peekAmount = (angleDistance: number, step: number, spread: number): number => {
+  const span = step * spread;
+  if (span <= 0) return 0;
+  const ad = Math.abs(angleDistance);
+  if (ad >= span) return 0;
+  const k = 1 - ad / span;
+  return k * k * (3 - 2 * k);
 };
 
 const norm = (a: number): number => ((a % 360) + 360) % 360;
@@ -170,6 +200,16 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
     host.classList.toggle('is-live', live > 0);
   };
 
+  /** `.cd-photo[data-src]` 에 실제 주소를 붙인다. 한 번 붙으면 data-src 를 지워 다시 받지 않는다 */
+  const hydratePhotos = (card: HTMLElement) => {
+    const holes = card.querySelectorAll<HTMLElement>('.cd-photo[data-src]');
+    for (const hole of holes) {
+      const src = hole.dataset.src;
+      hole.removeAttribute('data-src');
+      if (src) hole.style.backgroundImage = `url("${src.replace(/"/g, '%22')}")`;
+    }
+  };
+
   const layout = () => {
     const phi = norm(angle + offset);
     drum.style.transform = `rotateY(${phi.toFixed(3)}deg)`;
@@ -190,7 +230,11 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
       const p = pullAmount(ad, step, o.dwell);
       // r: 완전히 일어나는 정도. 움직이는 동안(reveal 0)은 peek 만큼만 올라온다
       const r = p * reveal;
-      const lift = o.peek * p + (o.lift - o.peek) * r;
+      // 움직이는 동안에만 넓은 물결이 걸린다 — 멈추면(reveal 1) 정면 한 장만 일어나는 원래 모습으로 돌아간다
+      const pk = peekAmount(ad, step, o.peekSpread) * (1 - reveal);
+      const lift = o.peek * Math.max(pk, p) + (o.lift - o.peek) * r;
+      // 그림은 멈춘 뒤, 정면 가까이에서만 붙인다 — 스핀 중에는 요청이 나가지 않는다
+      if (reveal > 0.98 && ad <= step * o.photoSteps) hydratePhotos(el);
       el.style.transform =
         `rotateY(${slot * step}deg) translateZ(${o.radius}px) rotateY(90deg) translateY(${-o.cardH / 2}px) ` +
         `translateY(${(-lift).toFixed(2)}px) rotateY(${(-90 * r).toFixed(2)}deg) rotateX(${(o.tilt * r).toFixed(2)}deg) ` +
