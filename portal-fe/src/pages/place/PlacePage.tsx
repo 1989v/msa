@@ -29,7 +29,7 @@ import RegionDrilldown from './RegionDrilldown';
 import RegionSheet from './RegionSheet';
 import KhSheet from '../../components/shell/KhSheet';
 import PickSheet from '../../components/dispenser/PickSheet';
-import { escapeHtml } from '../../lib/card-dispenser';
+import { escapeHtml } from 'card-dispenser';
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import FavoriteButton from '../../components/favorite/FavoriteButton';

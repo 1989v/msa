@@ -1,4 +1,4 @@
-<!-- source: portal-fe/src/lib/card-dispenser/index.ts, portal-fe/src/components/dispenser/DispenserStage.tsx, portal-fe/src/components/home/ServiceShowcase.tsx, portal-fe/src/components/brand/SystemCore.tsx -->
+<!-- source: portal-fe/src/components/dispenser/useDispenser.ts, portal-fe/src/components/dispenser/DispenserStage.tsx, portal-fe/src/components/home/ServiceShowcase.tsx, portal-fe/src/components/brand/SystemCore.tsx -->
 # 메인 개편 — 서비스 섹션 + 카드 디스펜서, 서비스별 "뽑기"
 
 - 상태: 구현 완료 (2026-09-03)
@@ -55,7 +55,7 @@ ADR-0066 의 타임라인 원안(재직 막대 + 점)은 글 목록으로만 구
 프리렌더(ADR-0062)는 Node 문자열 템플릿이라 React 를 돌리지 않는다 — 캔버스·디스펜서는
 크롤러에 보이지 않고, 진입 링크(색인 격자·섹션 링크)는 DOM 에 그대로 있다.
 
-### 라이브러리 `portal-fe/src/lib/card-dispenser`
+### 라이브러리 `card-dispenser` (npm)
 
 ```ts
 createDispenser(host, { items, render, onChange, minCards, radius, cardW, cardH, tilt, lift, forward, pullScale, dwell, ticksEvery, label })
@@ -194,7 +194,7 @@ React 다리는 `components/dispenser`: `useDispenser`(mount/unmount), `Dispense
 
 ## 변경 파일
 
-- 라이브러리: `portal-fe/src/lib/card-dispenser/{index.ts, card-dispenser.css, README.md, __tests__/dispenser.test.ts}`
+- 라이브러리: npm `card-dispenser`(소스 `1989v/card-dispenser`) — 2026-09-05 에 0.1.0 을 게시하고 사본을 지웠다
 - 다리: `portal-fe/src/components/dispenser/{useDispenser.ts, DispenserStage.tsx, PickLine.tsx, PickSheet.tsx, dispenser.css}`
 - 메인: `components/brand/{SystemCore.tsx,.css}`, `components/home/{ServiceShowcase.tsx, PulseStrip.tsx, TileGrid.tsx, PortfolioTimeline.tsx, careerAxis.ts, Home.css}`, `pages/HomePage.tsx`, `components/brand/InkWash.tsx`(첫 낙묵)
 - 공통: `components/ThemeToggle.tsx`, `components/GNB.{tsx,css}`, `styles/kh-motion.css`(흐름), `styles/k-heritage.css`(테마 번짐)

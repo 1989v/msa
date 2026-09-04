@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, type RefObject } from 'react';
-import { createDispenser, type Dispenser } from '../../lib/card-dispenser';
+import { createDispenser, type Dispenser } from 'card-dispenser';
 
 /**
  * card-dispenser 를 React 안에서 쓰는 다리. 라이브러리는 React 를 모르므로
@@ -64,6 +64,10 @@ export function useDispenser<T>({ items, render, onChange, onActivate, minCards,
       pullScale: coarse ? 0.32 : 0.1,
       // 터치 기기는 라이트 모드 — 먼 카드의 요소를 셋으로 줄인다
       lite: coarse,
+      // 지나가는 카드가 올라왔다 내려가는 물결. 판이 0.66배로 줄어드는 폭에서도 보이게 기본값보다 크고 넓게 잡는다
+      // (18px·2.4칸이면 화면에서 12px·네 장이라 티가 안 났다). card-dispenser 0.2.0 부터는 이 값이 기본값이다
+      peek: 32,
+      peekSpread: 4,
       render: (item, i) => renderRef.current(item, i),
       onChange: (item, i) => onChangeRef.current?.(item, i),
       onActivate: (item, i) => onActivateRef.current?.(item, i),

@@ -295,7 +295,7 @@ flat 디자인 지향. 카드 사이에 그림자 남발 금지.
 | `.kh-eave-edge` · `.kh-grain` | 처마 곡선 · 목재 결 (**어두운 면 전용**) |
 | `.portfolio-dialog` 계열 | 상세 모달 — 먹빛 backdrop blur, 비대칭 모서리, 그림자 없음 |
 | `.kh-arcade` | 아케이드 스코프 — 액션을 연지로 되돌린다 |
-| `.dsp-stage` · `.dsp-pick` · `PickSheet` | **카드 디스펜서** — 판 위에 옆으로 꽂힌 카드 중 정면 것이 일어난다. 장치 자체는 `portal-fe/src/lib/card-dispenser`(의존성 0, 다른 모듈 import 없음 — 그대로 떼어 오픈소스로 낼 수 있다), 판 위 배치·뽑기 시트는 `components/dispenser`. 메인 서비스 섹션과 place·game·blog·shop 의 "뽑기"가 같은 것을 쓴다 |
+| `.dsp-stage` · `.dsp-pick` · `PickSheet` | **카드 디스펜서** — 판 위에 옆으로 꽂힌 카드 중 정면 것이 일어난다. 장치 자체는 npm 패키지 `card-dispenser`(의존성 0, 소스는 `1989v/card-dispenser`), 판 위 배치·뽑기 시트는 `components/dispenser`. 메인 서비스 섹션과 place·game·blog·shop 의 "뽑기"가 같은 것을 쓴다 |
 
 **모션 어휘 — 여섯 동사** (`portal-fe/src/styles/kh-motion.css`)
 

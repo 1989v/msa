@@ -31,7 +31,7 @@ import GameCard from './GameCard';
 import PartyDialog from './PartyDialog';
 import PickSheet from '../../components/dispenser/PickSheet';
 import { displayTitle } from '../../api/gameApi';
-import { escapeHtml } from '../../lib/card-dispenser';
+import { escapeHtml } from 'card-dispenser';
 import HouseBanner from './HouseBanner';
 import LeaderboardRail from './LeaderboardRail';
 import './Games.css';

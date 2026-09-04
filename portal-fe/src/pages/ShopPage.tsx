@@ -21,7 +21,7 @@ import './Shop.css';
 import { useHeritageSurface } from '../hooks/useHeritageSurface';
 import PickSheet from '../components/dispenser/PickSheet';
 const formatPrice = (n: string | number) => `₩${Math.round(Number(n)).toLocaleString('ko-KR')}`;
-import { escapeHtml } from '../lib/card-dispenser';
+import { escapeHtml } from 'card-dispenser';
 
 const PAGE_SIZE = 20;
 

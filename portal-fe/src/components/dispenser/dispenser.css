@@ -1,4 +1,4 @@
-/* 디스펜서를 K-Heritage 판 위에 세우는 스타일. 카드 자체는 lib/card-dispenser/card-dispenser.css.
+/* 디스펜서를 K-Heritage 판 위에 세우는 스타일. 카드 자체는 card-dispenser 패키지의 card-dispenser.css.
  * 색은 전부 토큰 → --cd-* 변수로 넘긴다. 카드 앞면은 정경과 무관하게 한지(라이트 표피)라
  * 메타 글씨색도 정경을 따르지 않고 한지 위 대비로 고정한다. */
 

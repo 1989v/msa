@@ -2,7 +2,7 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PickSheet from '../../components/dispenser/PickSheet';
-import { escapeHtml } from '../../lib/card-dispenser';
+import { escapeHtml } from 'card-dispenser';
 import { Link } from 'react-router-dom';
 import { fetchCategories, fetchPosts, type BlogCategoryNode, type BlogPostSummary } from '../../api/blogApi';
 import { blogHubMeta } from '../../seo/copy.mjs';

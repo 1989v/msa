@@ -6,7 +6,7 @@ import { displayTitle, genreLabel, listGames, type GameSummary } from '../../api
 import { fetchPosts, type BlogPostSummary } from '../../api/blogApi';
 import { fetchProducts, type ProductSummary } from '../../api/shopApi';
 import type { DisplayService } from '../../api/displayApi';
-import { escapeHtml } from '../../lib/card-dispenser';
+import { escapeHtml } from 'card-dispenser';
 import DispenserStage, { type DispenserSkin } from '../dispenser/DispenserStage';
 import { useShownItems } from '../dispenser/useDispenser';
 import PickLine from '../dispenser/PickLine';
