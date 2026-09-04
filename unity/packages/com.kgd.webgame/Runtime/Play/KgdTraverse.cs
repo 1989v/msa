@@ -64,6 +64,26 @@ namespace Kgd.Play
             /// </summary>
             public bool StopAtWalls;
 
+            /// <summary>
+            /// 공중에서 옆으로 들어갈 수 있는 턱. 0 이하면 StepUp 과 같다(기본). 걷는 무릎(StepUp)을 공중에도
+            /// 쓰면 발이 윗면 아래인 채 덩이 속으로 들어가 정점에서 튀어 올라온다 — 「끼였다」로 보인다.
+            /// 단단한 발판 지형은 0.05 쯤으로 두어 공중에서는 윗면 위로만 들어가게 한다.
+            /// </summary>
+            public float AirStepUp;
+
+            /// <summary>
+            /// 몸 둘레가 벽 속에 있으면 살짝 밀어낸다. 수평 이동은 둘레 표본으로 막지만 **수직 낙하는 둘레를 안 보므로**
+            /// 벽 옆으로 떨어진 몸은 어깨가 벽면 안에 박힌 채 선다. 하이트맵 지형에서는 켜지 않는다 — 비탈 옆에 서 있기만
+            /// 해도 밀려난다.
+            /// </summary>
+            public bool PushOutOfWalls;
+
+            /// <summary>
+            /// 벽을 스치고 있는 몸의 이동을 「둘레가 더 나빠지지 않으면」 허용한다. 단단한 발판 지형에서 공중 턱을
+            /// 낮추면 이것 없이는 벽 옆 낙하의 조향이 통째로 죽는다. 하이트맵 게임은 끄고 쓴다(봇 판정이 흔들린다).
+            /// </summary>
+            public bool GrazeMove;
+
             /// <summary>모서리 잡기. 낙하 중 발판 가장자리에 손이 닿으면 끌어올린다 — 자동이다.</summary>
             public bool LedgeGrab;
             /// <summary>모서리까지의 수평 여유(Radius 에 더해).</summary>
@@ -494,10 +514,19 @@ namespace Kgd.Play
         {
             // 등반·모서리 잡기는 스스로 자리를 놓는다 — 수평 판정을 태우면 벽이 도로 민다
             bool selfPlaced = Now == State.Climb || Now == State.Ledge;
+            bool airborne = Now == State.Air || Now == State.Glide;
+            // **올라서는 턱**은 공중에서 낮다 — 걷는 무릎으로 공중에서 덩이 속에 들어가면 끼인다.
+            float mantle = airborne && _t.AirStepUp > 0f ? _t.AirStepUp : _t.StepUp;
+            // **이동을 막는 턱**은 다르다. 지금 딛고 있는(또는 방금 떠난) 면을 기준으로 걷는 무릎만큼 열어 둔다 —
+            // 비탈에서 뛰는 순간 앞쪽 지면이 0.09 높은 것이 벽으로 잡혀 수평 속도가 통째로 0 이 됐다(실측:
+            // 도약 직후 vz 9.4 → 0, 제자리 상승). 몸이 지면보다 아래(옆면에 잠김)면 이 값은 낮은 채로 남는다.
+            float stepUp = mantle;
+            if (airborne && _t.AirStepUp > 0f)
+                stepUp = Mathf.Max(_t.AirStepUp, ground.HeightAt(Pos) + _t.StepUp - Pos.y);
             float prevY = Pos.y;
             var before = Pos;
             var want = Pos + _vel * dt;
-            Pos = selfPlaced ? want : _body.Resolve(ground, Pos, want);
+            Pos = selfPlaced ? want : _body.Resolve(ground, Pos, want, stepUp, _t.GrazeMove);
 
             if (!selfPlaced)
             {
@@ -543,7 +572,7 @@ namespace Kgd.Play
                     if (Now == State.Air || Now == State.Glide)
                     {
                         bool crossed = prevY >= floorPrev - 0.001f && Pos.y <= floorPrev;
-                        bool onto = _vel.y <= 0.01f && Pos.y <= floor && floor - Pos.y <= _t.StepUp;
+                        bool onto = _vel.y <= 0.01f && Pos.y <= floor && floor - Pos.y <= mantle;
                         if (crossed || onto) Land(crossed ? floorPrev : floor);
                     }
                     else if (Now == State.Ground)
@@ -554,7 +583,7 @@ namespace Kgd.Play
                         else if (diff < 0f) Now = State.Air;                         // 진짜 낭떠러지다
                         // diff > StepUp — 몸이 지형 속이다. 아래 Unstick 이 밀어낸다
                     }
-                    else if (Pos.y <= floor && floor - Pos.y <= _t.StepUp) Pos.y = floor;   // 구르기 등
+                    else if (Pos.y <= floor && floor - Pos.y <= mantle) Pos.y = floor;   // 구르기 등
                 }
                 else if (Pos.y <= floor)
                 {
@@ -576,6 +605,10 @@ namespace Kgd.Play
                 Pos.x = Mathf.Clamp(Pos.x, -MapRadius, MapRadius);
                 Pos.z = Mathf.Clamp(Pos.z, -MapRadius, MapRadius);
             }
+            // **옆으로 밀어내는 것이 먼저다.** Unstick 은 갇힌 몸을 위로 올리는 마지막 수단인데, 벽 속에 잠긴 몸을
+            // 먼저 올려 버리면 그것이 곧 「끼였다 빠진다」다(공중에서 1.07 솟은 실측). 옆으로 빠져나오면 그대로 떨어진다.
+            // 미는 기준도 **이동을 막는 턱**과 같다 — 엄격한 공중 무릎으로 밀면 비탈에서 뛰는 몸을 뒤로 민다
+            if (_t.PushOutOfWalls && !selfPlaced) Pos = _body.PushOut(ground, Pos, stepUp);
             Pos = _body.Unstick(ground, Pos);
         }
 

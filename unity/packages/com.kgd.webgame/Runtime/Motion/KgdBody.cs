@@ -35,26 +35,58 @@ namespace Kgd.Motion
         /// 여기서 저기로 걸어 들어갈 수 있나. **게임과 검사가 이 함수를 같이 쓴다** —
         /// 검사가 사본을 들면 게임 쪽 배선이 끊겨도 초록불이 난다.
         /// </summary>
-        public bool CanEnter(IKgdGround ground, Vector3 from, Vector3 to)
+        public bool CanEnter(IKgdGround ground, Vector3 from, Vector3 to) => CanEnter(ground, from, to, StepUp);
+
+        /// <summary>
+        /// 턱을 따로 주는 판 — 공중에서는 걷는 무릎보다 낮은 턱을 쓴다(덩이 속에 들어가지 않게).
+        /// **이미 파고든 자리에서는 「더 깊어지지 않으면」 허용한다** — 안 그러면 벽 옆에 붙은 몸이 어느
+        /// 방향으로도 못 움직인다(공중 턱을 낮추자 벽 옆 낙하의 조향이 통째로 죽었다: 실측 2.23 → 0.04).
+        /// </summary>
+        public bool CanEnter(IKgdGround ground, Vector3 from, Vector3 to, float stepUp)
+            => CanEnter(ground, from, to, stepUp, false);
+
+        /// <summary>
+        /// <paramref name="graze"/> 가 켜지면 **이미 벽을 스치고 있는 몸**의 이동을 「둘레가 더 나빠지지 않으면」
+        /// 허용한다(중심은 여전히 절대 못 들어간다). 안 켜면 예전 규칙 — 표본 하나라도 턱 위면 막는다.
+        /// 층층이 뜬 단단한 발판 지형은 켜야 한다: 공중 턱을 낮추면 옆 덩이에 스친 몸이 어느 방향으로도 못
+        /// 움직여 벽 옆 낙하의 조향이 통째로 죽는다(실측 2.23 → 0.04). 하이트맵 게임에서 켜면 봇 이동이
+        /// 미세하게 달라져 판정이 흔들린다(마지막 한 사람 무기 균형 28 → 29%).
+        /// </summary>
+        public bool CanEnter(IKgdGround ground, Vector3 from, Vector3 to, float stepUp, bool graze)
         {
-            float limit = from.y + StepUp;
+            float limit = from.y + stepUp;
+            // ① **중심은 절대 지형 속으로 못 들어간다.** 중심이 들어가면 빠져나올 방향이 없어 Unstick 이 몸을
+            //    위로 올리고, 그것이 화면에서 「끼였다 빠진다」다.
             if (ground.HeightAt(to) > limit) return false;
-            // **여덟 방향을 본다.** 넷만 보면 그 사이 45° 로 들어오는 모서리를 지나쳐
-            // 몸이 지형에 파고든다.
+            int after = Blocked(ground, to, limit);
+            if (after == 0) return true;
+            // ② 둘레는 **더 나빠지지 않으면** 허용 (graze) / 하나라도 걸리면 막음 (옛 규칙)
+            return graze && after <= Blocked(ground, from, limit);
+        }
+
+        /// <summary>
+        /// 몸 둘레 여덟 표본 중 턱 위로 솟은 것의 수. **여덟 방향을 본다** — 넷만 보면 그 사이 45° 로 들어오는
+        /// 모서리를 지나쳐 몸이 지형에 파고든다.
+        /// </summary>
+        private int Blocked(IKgdGround ground, Vector3 at, float limit)
+        {
+            int n = 0;
             for (int i = 0; i < 8; i++)
             {
                 float a = i * Mathf.PI * 0.25f;
-                var edge = to + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * Radius;
-                if (ground.HeightAt(edge) > limit) return false;
+                var edge = at + new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a)) * Radius;
+                if (ground.HeightAt(edge) > limit) n++;
             }
-            return true;
+            return n;
         }
 
         /// <summary>
         /// 수평 이동을 지형에 대고 푼다. **축을 갈라 다시 시도한다** — 안 그러면 벽에
         /// 비스듬히 닿는 순간 그 자리에 붙어 버린다.
         /// </summary>
-        public Vector3 Resolve(IKgdGround ground, Vector3 from, Vector3 to)
+        public Vector3 Resolve(IKgdGround ground, Vector3 from, Vector3 to) => Resolve(ground, from, to, StepUp, false);
+
+        public Vector3 Resolve(IKgdGround ground, Vector3 from, Vector3 to, float stepUp, bool graze)
         {
             // **한 번에 크게 옮기지 않는다.** 달리기(10.6)에 dt 0.05 면 한 프레임에 0.53 을
             // 건너뛰는데, 그 사이에 있는 얇은 것은 표본에 걸리지 않고 통과한다.
@@ -69,27 +101,61 @@ namespace Kgd.Motion
                 for (int i = 1; i <= n; i++)
                 {
                     var next = new Vector3(from.x + delta.x * i / n, at.y, from.z + delta.z * i / n);
-                    at = Step(ground, at, next);
+                    at = Step(ground, at, next, stepUp, graze);
                 }
                 return new Vector3(at.x, to.y, at.z);
             }
-            var one = Step(ground, from, new Vector3(to.x, from.y, to.z));
+            var one = Step(ground, from, new Vector3(to.x, from.y, to.z), stepUp, graze);
             return new Vector3(one.x, to.y, one.z);
         }
 
         /// <summary>한 칸 옮긴다. 막히면 축을 갈라 미끄러진다.</summary>
-        private Vector3 Step(IKgdGround ground, Vector3 from, Vector3 to)
+        private Vector3 Step(IKgdGround ground, Vector3 from, Vector3 to, float stepUp, bool graze)
         {
             var flat = new Vector3(to.x, from.y, to.z);
-            if (CanEnter(ground, from, flat)) return flat;
+            if (CanEnter(ground, from, flat, stepUp, graze)) return flat;
 
             var xOnly = new Vector3(to.x, from.y, from.z);
-            if (CanEnter(ground, from, xOnly)) return xOnly;
+            if (CanEnter(ground, from, xOnly, stepUp, graze)) return xOnly;
 
             var zOnly = new Vector3(from.x, from.y, to.z);
-            if (CanEnter(ground, from, zOnly)) return zOnly;
+            if (CanEnter(ground, from, zOnly, stepUp, graze)) return zOnly;
 
             return from;
+        }
+
+        /// <summary>
+        /// 몸 둘레가 벽 속이면 살짝 밀어낸다 — 한 프레임에 0.06, 여러 프레임에 걸쳐 빠져나온다.
+        /// <see cref="Resolve"/> 는 들어가는 것을 막지만 **수직 낙하는 둘레를 안 보므로** 벽 옆으로 떨어진
+        /// 몸은 어깨가 벽면 안에 박힌 채 선다. 표본은 반지름보다 0.04 안쪽이라 Resolve 가 세운 자리
+        /// (면에서 반지름 밖)에서는 밀지 않는다 — 벽 옆에 서 있기만 해도 밀리면 걷다 멈추다를 되풀이한다.
+        /// </summary>
+        public Vector3 PushOut(IKgdGround ground, Vector3 at, float stepUp)
+        {
+            float limit = at.y + stepUp;
+            float r = Radius - 0.04f;
+            // **한 프레임 안에 빠져나오게 여러 번 민다.** 0.06 한 번으로는 낙하 속도(프레임당 0.67)를 못 이겨
+            // 몸이 벽 속에 계속 잠기고, 그러면 Unstick 이 몸을 **위로 올려** 「끼였다 빠진다」가 된다.
+            int score = Blocked(ground, at, limit);
+            for (int step = 0; step < 6 && score > 0; step++)
+            {
+                var away = Vector3.zero;
+                for (int i = 0; i < 8; i++)
+                {
+                    float a = i * Mathf.PI * 0.25f;
+                    var dir = new Vector3(Mathf.Cos(a), 0f, Mathf.Sin(a));
+                    if (ground.HeightAt(at + dir * r) > limit) away -= dir;
+                }
+                if (away.sqrMagnitude < 0.0001f) return at;
+                var pushed = at + away.normalized * 0.08f;
+                // 판정은 **걸린 표본 수**로 — 중심 높이로 보면 덩이 밑에 있는 자리가 전부 「더 나쁘다」로 읽혀
+                // 첫 걸음에 포기하고, 그러면 Unstick 이 몸을 위로 올린다(실측 1.06 솟음)
+                int after = Blocked(ground, pushed, limit);
+                if (after > score) return at;
+                at = pushed;
+                score = after;
+            }
+            return at;
         }
 
         /// <summary>
