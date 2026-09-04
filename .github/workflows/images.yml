@@ -481,4 +481,4 @@ jobs:
           OCIR_NAMESPACE: ${{ secrets.OCIR_NAMESPACE }}
           OCIR_USERNAME: ${{ secrets.OCIR_USERNAME }}
           OCIR_TOKEN: ${{ secrets.OCIR_TOKEN }}
-        run: python3 scripts/ocir-prune.py --keep 20 | tee -a "$GITHUB_STEP_SUMMARY"
+        run: python3 scripts/ocir-prune.py --keep 3 | tee -a "$GITHUB_STEP_SUMMARY"
