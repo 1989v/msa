@@ -210,48 +210,91 @@ export function createDispenser<T>(host: HTMLElement, options: DispenserOptions<
     }
   };
 
+  /* ── 프레임마다 다시 쓰지 않기 위한 캐시 ──────────────────────────────
+   * 판이 돌아도 **대부분의 카드는 제자리 자세 그대로**다(정면 근처만 올라온다).
+   * 그런데 예전에는 40장 전부의 transform 문자열을 매 프레임 새로 만들어 넣고,
+   * 클래스와 aria 도 매번 건드렸다. 값이 같으면 DOM 을 건드리지 않는다. */
+  const restTf = cards.map(
+    (_, slot) =>
+      `rotateY(${slot * step}deg) translateZ(${o.radius}px) rotateY(90deg) translateY(${-o.cardH / 2}px)`,
+  );
+  const lastTf: string[] = new Array<string>(slots).fill('');
+  const lastBits: number[] = new Array<number>(slots).fill(-1);
+  // 정면에서 이 각 밖의 카드는 올라올 일이 없다 — 자세 계산 자체를 건너뛴다
+  const activeSpan = step * Math.max(o.peekSpread, 0.5) + 1e-6;
+
+  const applyBits = (el: HTMLElement, slot: number, bits: number) => {
+    if (bits === lastBits[slot]) return;
+    // 처음(-1)에는 모든 비트가 다르게 보여야 한다 — -1 을 그대로 XOR 하면 켜야 할 비트가 "그대로"로 읽힌다
+    const was = lastBits[slot] < 0 ? ~bits : lastBits[slot];
+    lastBits[slot] = bits;
+    if (((was ^ bits) & 1) !== 0) el.classList.toggle('is-out', (bits & 1) !== 0);
+    if (((was ^ bits) & 2) !== 0) el.classList.toggle('is-peek', (bits & 2) !== 0);
+    if (((was ^ bits) & 4) !== 0) el.setAttribute('aria-selected', (bits & 4) !== 0 ? 'true' : 'false');
+    if (((was ^ bits) & 8) !== 0) el.classList.toggle('is-far', (bits & 8) !== 0);
+    if (((was ^ bits) & 16) !== 0) el.classList.toggle('is-far-front', (bits & 16) !== 0);
+    if (((was ^ bits) & 32) !== 0) el.classList.toggle('is-far-back', (bits & 32) !== 0);
+  };
+
   const layout = () => {
     const phi = norm(angle + offset);
     drum.style.transform = `rotateY(${phi.toFixed(3)}deg)`;
-    let best = -1;
-    let bestD = Infinity;
-    cards.forEach((el, slot) => {
+    // 정면 칸은 각으로 바로 나온다 — 40장을 훑어 최솟값을 찾을 필요가 없다
+    const best = (((Math.round(norm(-phi) / step) % slots) + slots) % slots);
+    const settled = reveal > 0.98;
+
+    for (let slot = 0; slot < slots; slot++) {
+      const el = cards[slot];
       const a = norm(slot * step + phi);
-      const ad = Math.min(a, 360 - a);
-      if (ad < bestD) {
-        bestD = ad;
-        best = slot;
-      }
+      const ad = a > 180 ? 360 - a : a;
+
       // 정면 다섯 칸 안에 들어올 때 앞면을 그린다 — 뒤쪽 카드는 내용이 안 보여도 된다
       if (!el.dataset.ready && ad < step * 5) {
         el.dataset.ready = '1';
         el.firstElementChild!.innerHTML = o.render(itemAt(slot), slot % n);
       }
-      const p = pullAmount(ad, step, o.dwell);
-      // r: 완전히 일어나는 정도. 움직이는 동안(reveal 0)은 peek 만큼만 올라온다
-      const r = p * reveal;
-      // 움직이는 동안에만 넓은 물결이 걸린다 — 멈추면(reveal 1) 정면 한 장만 일어나는 원래 모습으로 돌아간다
-      const pk = peekAmount(ad, step, o.peekSpread) * (1 - reveal);
-      const lift = o.peek * Math.max(pk, p) + (o.lift - o.peek) * r;
       // 그림은 멈춘 뒤, 정면 가까이에서만 붙인다 — 스핀 중에는 요청이 나가지 않는다
-      if (reveal > 0.98 && ad <= step * o.photoSteps) hydratePhotos(el);
-      el.style.transform =
-        `rotateY(${slot * step}deg) translateZ(${o.radius}px) rotateY(90deg) translateY(${-o.cardH / 2}px) ` +
-        `translateY(${(-lift).toFixed(2)}px) rotateY(${(-90 * r).toFixed(2)}deg) rotateX(${(o.tilt * r).toFixed(2)}deg) ` +
-        `translateZ(${(o.forward * r).toFixed(2)}px) scale(${(1 + o.pullScale * r).toFixed(3)})`;
-      const out = r > 0.5;
-      el.classList.toggle('is-out', out);
-      el.classList.toggle('is-peek', p > 0.5 && !out);
+      if (settled && ad <= step * o.photoSteps) hydratePhotos(el);
+
+      let bits = 0;
+      if (ad <= activeSpan) {
+        const p = pullAmount(ad, step, o.dwell);
+        // r: 완전히 일어나는 정도. 움직이는 동안(reveal 0)은 peek 만큼만 올라온다
+        const r = p * reveal;
+        // 움직이는 동안에만 넓은 물결이 걸린다 — 멈추면(reveal 1) 정면 한 장만 일어나는 원래 모습으로 돌아간다
+        const pk = peekAmount(ad, step, o.peekSpread) * (1 - reveal);
+        const lift = o.peek * Math.max(pk, p) + (o.lift - o.peek) * r;
+        const tf =
+          lift === 0 && r === 0
+            ? restTf[slot]
+            : `${restTf[slot]} translateY(${(-lift).toFixed(2)}px) rotateY(${(-90 * r).toFixed(2)}deg) ` +
+              `rotateX(${(o.tilt * r).toFixed(2)}deg) translateZ(${(o.forward * r).toFixed(2)}px) ` +
+              `scale(${(1 + o.pullScale * r).toFixed(3)})`;
+        if (tf !== lastTf[slot]) {
+          lastTf[slot] = tf;
+          el.style.transform = tf;
+        }
+        const out = r > 0.5;
+        bits = (out ? 1 : 0) | (p > 0.5 && !out ? 2 : 0) | (p > 0.5 ? 4 : 0);
+      } else if (lastTf[slot] !== restTf[slot]) {
+        lastTf[slot] = restTf[slot];
+        el.style.transform = restTf[slot];
+      }
+
       if (o.lite) {
-        const far = ad > step * o.nearSteps;
-        el.classList.toggle('is-far', far);
         // 먼 카드는 보이는 면 하나만 남긴다. 앞면 법선이 (cos a, 0, −sin a) 라 왼쪽 호(a > 180°)에서만 앞면이
         // 보이고 오른쪽 호에서는 뒷면이 보인다 — 눈 거리·기울기·원근 원점과 무관하게 부호는 sin a 가 정한다.
-        el.classList.toggle('is-far-front', far && a > 180);
-        el.classList.toggle('is-far-back', far && a < 180);
+        //
+        // 판이 도는 동안에도 매 프레임 다시 판정한다. 멈춘 뒤에만 갱신하면 레이어 작업이 10% 줄지만,
+        // 지나가는 카드가 **보이지 않는 면**으로 굳어 판에 구멍이 생긴다 (스핀 중 스크린샷으로 확인).
+        const far = ad > step * o.nearSteps;
+        const front = far && a > 180;
+        const back = far && a < 180;
+        bits |= (far ? 8 : 0) | (front ? 16 : 0) | (back ? 32 : 0);
       }
-      el.setAttribute('aria-selected', p > 0.5 ? 'true' : 'false');
-    });
+      applyBits(el, slot, bits);
+    }
+
     if (best !== current) {
       current = best;
       count.textContent = `${pad(best % n)} / ${n}`;
