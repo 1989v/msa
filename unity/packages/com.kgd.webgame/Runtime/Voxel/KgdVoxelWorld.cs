@@ -36,6 +36,23 @@ namespace Kgd.Voxel
         /// <summary>청크 메시를 매다는 자리.</summary>
         public Transform Root;
 
+        /// <summary>
+        /// 청크에 쓸 머티리얼. 안 주면 공용 불투명 머티리얼을 쓴다.
+        ///
+        /// **표면 무늬를 여기로 넣는다.** 메시가 칸 단위 UV 를 내므로, 되풀이되는 무늬 한 장을
+        /// 걸면 넓은 면이 단색 판으로 안 읽히고 블록 경계가 드러난다 — 단색 격자는
+        /// 「덜 만든 것」으로 보이는 가장 큰 원인이다.
+        /// </summary>
+        public Material Surface;
+
+        /// <summary>
+        /// 물에 쓸 머티리얼. 안 주면 <see cref="Surface"/> 를 쓴다.
+        ///
+        /// **지형과 갈라 둔다.** 물은 밑에서 올려다볼 때 수면이 보여야 해서 양면이어야 하는데,
+        /// 지형까지 양면으로 그리면 절대 안 보이는 뒷면을 매 프레임 칠하게 되어 픽셀 비용이 배가 된다.
+        /// </summary>
+        public Material LiquidSurface;
+
         /// <summary>지금 들고 있는 청크 수. 메모리 감시용.</summary>
         public int LoadedChunks => _chunks.Count;
 
@@ -62,9 +79,6 @@ namespace Kgd.Voxel
         private readonly Dictionary<long, byte> _edits = new();
         private readonly List<long> _drop = new();
         private readonly Queue<long> _unlightQueue = new();
-
-        // 이웃까지 담은 3×3 청크 손잡이. 메시를 뜰 때 사전을 매 칸 뒤지지 않게 한 번만 찾는다.
-        private readonly Chunk[] _near = new Chunk[9];
 
         public KgdVoxelWorld(int height, KgdVoxelKind[] kinds)
         {
@@ -582,12 +596,6 @@ namespace Kgd.Voxel
 
         private void Mesh(Chunk c)
         {
-            for (int i = 0; i < 9; i++)
-            {
-                int dx = i % 3 - 1, dz = i / 3 - 1;
-                _near[i] = Find(c.Cx + dx, c.Cz + dz);
-            }
-
             KgdVoxelMesher.Build(this, c.Cx, c.Cz, out var solid, out var liquid);
 
             Attach(ref c.SolidGo, ref c.SolidMesh, solid, c, "chunk", terrain: false, drop: 0f);
@@ -619,6 +627,8 @@ namespace Kgd.Voxel
                 go = Kgd.Art.KgdMat.Object($"{name}_{c.Cx}_{c.Cz}", built, Root,
                                            shadows: false, terrain: terrain);
                 go.transform.localPosition = new Vector3(c.Cx * SX, -drop, c.Cz * SZ);
+                var skin = terrain ? LiquidSurface != null ? LiquidSurface : Surface : Surface;
+                if (skin != null) go.GetComponent<MeshRenderer>().sharedMaterial = skin;
             }
             else
             {

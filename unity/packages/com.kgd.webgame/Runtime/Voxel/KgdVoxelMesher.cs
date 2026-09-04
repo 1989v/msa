@@ -62,7 +62,14 @@ namespace Kgd.Voxel
         private static readonly List<Vector3> _v = new();
         private static readonly List<Vector3> _n = new();
         private static readonly List<Color> _c = new();
+        private static readonly List<Vector2> _uv = new();
         private static readonly List<int> _t = new();
+
+        /// <summary>
+        /// 표면 무늬가 몇 칸마다 되풀이되나. **청크 폭(16)의 약수여야** 이음매가 안 생긴다 —
+        /// 무늬 좌표를 청크 안 좌표에서 뽑기 때문이다.
+        /// </summary>
+        public const int TileCells = 16;
 
         public static void Build(KgdVoxelWorld world, int cx, int cz, out Mesh solid, out Mesh liquid)
         {
@@ -131,7 +138,7 @@ namespace Kgd.Voxel
 
         private static Mesh Pass(KgdVoxelWorld world, bool liquidPass, string name)
         {
-            _v.Clear(); _n.Clear(); _c.Clear(); _t.Clear();
+            _v.Clear(); _n.Clear(); _c.Clear(); _uv.Clear(); _t.Clear();
 
             var kinds = world.Kinds;
             int h = world.Height;
@@ -195,6 +202,7 @@ namespace Kgd.Voxel
             mesh.SetVertices(_v);
             mesh.SetNormals(_n);
             mesh.SetColors(_c);
+            mesh.SetUVs(0, _uv);
             mesh.SetTriangles(_t, 0);
             mesh.RecalculateBounds();
             return mesh;
@@ -303,10 +311,13 @@ namespace Kgd.Voxel
             var normal = Normal[d];
             float shade = FaceShade[d];
 
-            float b0 = Emit(face, shade, key, 0, p0);
-            float b1 = Emit(face, shade, key, 1, p0 + uVec);
-            float b2 = Emit(face, shade, key, 2, p0 + uVec + vVec);
-            float b3 = Emit(face, shade, key, 3, p0 + vVec);
+            const float t = 1f / TileCells;
+            float u0 = i * t, v0 = j * t, u1 = (i + wide) * t, v1 = (j + tall) * t;
+
+            float b0 = Emit(face, shade, key, 0, p0, new Vector2(u0, v0));
+            float b1 = Emit(face, shade, key, 1, p0 + uVec, new Vector2(u1, v0));
+            float b2 = Emit(face, shade, key, 2, p0 + uVec + vVec, new Vector2(u1, v1));
+            float b3 = Emit(face, shade, key, 3, p0 + vVec, new Vector2(u0, v1));
             _n.Add(normal); _n.Add(normal); _n.Add(normal); _n.Add(normal);
 
             // 네 모서리의 그늘이 어긋나면 **대각선을 바꿔 자른다.** 안 그러면 구석에
@@ -325,7 +336,7 @@ namespace Kgd.Voxel
 
         private static Vector3 Axis(int i) => i == 0 ? Vector3.right : i == 1 ? Vector3.up : Vector3.forward;
 
-        private static float Emit(Color face, float shade, ulong key, int corner, Vector3 at)
+        private static float Emit(Color face, float shade, ulong key, int corner, Vector3 at, Vector2 uv)
         {
             int packed = (int)((key >> (8 + corner * 10)) & 0x3FF);
             float skyF = SkyCurve[packed & 0xF];
@@ -340,6 +351,7 @@ namespace Kgd.Voxel
 
             _v.Add(at);
             _c.Add(col);
+            _uv.Add(uv);
             return bright;
         }
     }
