@@ -28,7 +28,7 @@ const game = {
   description: '감자 전사를 골라 파도처럼 몰려오는 적을 막아내는 아레나 액션. 라운드마다 상점에서 장비를 갈아끼운다.',
   descriptionEn: 'Pick a spud warrior and survive waves of enemies in this arena brawler. Re-equip between rounds.',
   genre: 'ACTION',
-  thumbnailUrl: '/games/thumbs/shots/spud-arena.png',
+  thumbnailUrl: '/games/thumbs/shots/spud-arena.jpg',
   ratingAvg: 8.4,
   ratingCount: 12,
   developerName: 'kgd',
@@ -82,7 +82,7 @@ describe('메타 카피', () => {
 
 describe('소셜 카드 이미지', () => {
   it('래스터 썸네일만 절대 URL 로 노출한다', () => {
-    expect(socialImage(game)).toBe('https://game.1989v.com/games/thumbs/shots/spud-arena.png');
+    expect(socialImage(game)).toBe('https://game.1989v.com/games/thumbs/shots/spud-arena.jpg');
   });
 
   it('SVG 는 언퍼러가 렌더하지 못하므로 제외한다', () => {

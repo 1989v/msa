@@ -387,7 +387,7 @@ export default function GameDetailPage() {
             <div className="game-stage-shot-wrap">
             <img
               className="game-stage-shot"
-              src={`/games/thumbs/shots/${slug}.png`}
+              src={`/games/thumbs/shots/${slug}.jpg`}
               alt=""
               loading="eager"
               onError={(e) => {
