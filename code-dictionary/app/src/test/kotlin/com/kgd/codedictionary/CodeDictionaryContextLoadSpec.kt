@@ -85,7 +85,7 @@ class CodeDictionaryContextLoadSpec(
                 // 이 스펙이 지키는 것은 "game 마이그레이션이 game_db 에 적용됐는가" 다.
                 // 제목은 운영 중 바뀌는 콘텐츠라(V40 재작명) 여기에 못 박으면 개명할 때마다 깨진다.
                 // 불변인 것은 슬러그 — 행의 존재로 확인한다.
-                gameRepository.findBySlug("concept-cascade").shouldNotBeNull()
+                gameRepository.findBySlug("overworld-quest").shouldNotBeNull()
                 gameRepository.findBySlug("snake").shouldNotBeNull()
             }
     }

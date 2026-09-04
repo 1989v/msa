@@ -60,7 +60,7 @@ const UI = {
 
 /** 카테고리 섹션 노출 순서 — 명확한 분류 축 (task: 카테고리 명확화) */
 const GENRE_ORDER: GameGenre[] = [
-  'DECIDER', 'DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL', 'EDUCATION',
+  'DECIDER', 'DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL',
 ];
 
 const GENRES = Object.keys(GENRE_LABELS) as GameGenre[];

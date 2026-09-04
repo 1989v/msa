@@ -84,7 +84,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = resolve(ROOT, 'dist');
 const API_ORIGIN = process.env.SEO_API_ORIGIN || 'https://api.1989v.com';
 const LANGS = ['ko', 'en'];
-const GENRES = ['DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL', 'EDUCATION'];
+const GENRES = ['DEFENSE', 'ACTION', 'STRATEGY', 'RPG', 'ARCADE', 'PUZZLE', 'VERSUS', 'CASUAL'];
 
 const GAME_HOST = new URL(GAME_ORIGIN).host;
 const PORTAL_HOST = new URL(PORTAL_ORIGIN).host;

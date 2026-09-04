@@ -9,7 +9,6 @@ enum class Genre {
     ACTION,
     PUZZLE,
     RPG,
-    EDUCATION,
     STRATEGY,
     DEFENSE,
     VERSUS,

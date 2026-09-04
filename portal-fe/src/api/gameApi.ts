@@ -44,7 +44,6 @@ export type GameGenre =
   | 'ACTION'
   | 'PUZZLE'
   | 'RPG'
-  | 'EDUCATION'
   | 'STRATEGY'
   | 'DEFENSE'
   | 'VERSUS'

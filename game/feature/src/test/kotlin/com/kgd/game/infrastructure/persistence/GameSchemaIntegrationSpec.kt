@@ -120,13 +120,13 @@ class GameSchemaIntegrationSpec(
 
     Given("game 전용 Flyway 가 적용된 game_db") {
         When("마이그레이션이 끝나면") {
-            Then("초기 시드(V2 내장 4종 + V3 아케이드 2종 + V7 신규 2종)와 태그 매핑이 적재된다")
+            Then("초기 시드(V3 아케이드 2종 + V7 신규 2종)와 태그 매핑이 적재된다")
                 .config(enabledIf = { dockerAvailable }) {
                     // 시드는 마이그레이션마다 늘어난다 — 최초 시드 8종을 하한으로 검증
                     (gameRepository.count() >= 8) shouldBe true
                     // V25 에서 태그를 플레이 속성 축으로 정리하고(genre 중복 제거) V27 이 역정규화된
                     // game.tags 를 map 과 다시 맞춘다 — 이 단언이 그 동기화까지 검증한다.
-                    gameRepository.findBySlug("concept-memory")?.tags shouldBe listOf("education")
+                    gameRepository.findBySlug("snake")?.tags shouldBe listOf("leaderboard")
                     // #23 흡수분은 정적 자산을 iframe 으로 임베드한다
                     gameRepository.findBySlug("snake")?.entryUrl shouldBe "/games/snake/index.html"
                     gameRepository.findBySlug("overworld-quest")?.loadType shouldBe LoadType.IFRAME
@@ -150,7 +150,7 @@ class GameSchemaIntegrationSpec(
                     queryRepository.search(publicCriteria(tag = "open-world"), pageable)
                         .content.map { it.slug } shouldBe listOf("drift-continent")
                     // 정확 개수 대신 하한 — 시드 팩이 늘 때마다 깨지는 단언을 피한다
-                    (queryRepository.search(publicCriteria(tag = "education"), pageable)
+                    (queryRepository.search(publicCriteria(tag = "roguelike"), pageable)
                         .totalElements >= 4) shouldBe true
                 }
         }
@@ -324,11 +324,11 @@ class GameSchemaIntegrationSpec(
         When("유사 게임을 조회하면") {
             Then("태그를 공유하는 다른 게임만 반환된다 (자기 자신 제외)")
                 .config(enabledIf = { dockerAvailable }) {
-                    val target = gameRepository.findBySlug("concept-memory")!!
+                    val target = gameRepository.findBySlug("snake")!!
                     val similar = queryRepository.findSimilar(target.id!!, limit = 8)
 
                     similar.size shouldBeGreaterThan 0
-                    similar.map { it.slug } shouldNotContain "concept-memory"
+                    similar.map { it.slug } shouldNotContain "snake"
                 }
         }
 

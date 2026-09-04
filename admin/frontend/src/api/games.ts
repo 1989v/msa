@@ -6,11 +6,11 @@ interface PageResponse<T> { content: T[]; totalElements: number; totalPages: num
 export type GameStatus = 'DRAFT' | 'REVIEW' | 'BETA' | 'PUBLISHED' | 'SUSPENDED';
 
 export type Genre =
-  | 'ARCADE' | 'ACTION' | 'PUZZLE' | 'RPG' | 'EDUCATION'
+  | 'ARCADE' | 'ACTION' | 'PUZZLE' | 'RPG'
   | 'STRATEGY' | 'DEFENSE' | 'VERSUS' | 'CASUAL' | 'DECIDER';
 
 export const GENRES: Genre[] = [
-  'ARCADE', 'ACTION', 'PUZZLE', 'RPG', 'EDUCATION', 'STRATEGY', 'DEFENSE', 'VERSUS', 'CASUAL',
+  'ARCADE', 'ACTION', 'PUZZLE', 'RPG', 'STRATEGY', 'DEFENSE', 'VERSUS', 'CASUAL',
   // 순서 정하기 — 등록하면 게임 허브의 「랜덤으로 돌리기」 대상에 자동으로 들어간다.
   // 대신 파티 인계(lib/party.js)와 출발 편향 |rho| < 0.1 을 지켜야 한다 (game/CLAUDE.md)
   'DECIDER',

@@ -43,7 +43,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 - 트랜잭션: `@Transactional(transactionManager = "gameTransactionManager")` 필수 (기본 TM 은 code-dictionary 소유)
 - Querydsl: `@Qualifier("gameJpaQueryFactory")` (기본 `jpaQueryFactory` 는 code-dictionary EMF 바인딩)
 - Kafka: `game.session.started` / `game.session.ended` 발행 (수신: analytics, fire-and-forget). 발행은 트랜잭션 밖 (GamePlayService 파사드 / GamePlayCommand 분리)
-- FE: portal-fe `/games/*` lazy route. INTERNAL_ROUTE 게임은 portal-fe 퀴즈 컴포넌트 재사용, IFRAME 게임은 entry_url 임베드
+- FE: portal-fe `/games/*` lazy route. 게임은 전부 IFRAME 으로 entry_url 임베드 — INTERNAL_ROUTE 매핑(`internalGames.ts`)은 남아 있지만 등록된 게임이 없다 (V76 에서 퀴즈 4종 제거)
 - SEO (ADR-0062): 게임 페이지는 `portal-fe/scripts/prerender-seo.mjs` 가 빌드 후 공개 카탈로그 API 를 읽어 정적 HTML·sitemap 을 찍는다. **어드민으로 게임을 추가해도 portal-fe 재배포 전까지 프리렌더에 안 잡힌다.** `title_en`/`description_en`/래스터 썸네일(`thumbs/shots/*.png`)이 비면 영문 색인·소셜 카드가 비어버리므로 시드에서 채울 것
 - **`released_at` 은 노출 시점이고, 노출 상태(BETA·PUBLISHED)면 비어 있을 수 없다.** 홈의 「새로 나온
   게임」 컬렉션과 신작 탭(`sort=new`)이 이 값으로 줄을 세운다. 유니티 라인 시드 셋(V69·V73·V74)이
@@ -225,7 +225,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 - 유니티(WebGL) 제작 라인: `docs/standards/unity-game-pipeline.md` — **아직 파일럿 전이라
   정식 선택지가 아니다.** 비2D 신작 후보가 생기면 그 문서 §0 표로 캔버스/유니티를 먼저 판정한다
 - 설계(엔티티/ads 페이즈 포함): `docs/specs/2026-07-06-game-platform-entities-design.md`
-- 시드: `game/feature/src/main/resources/gamedb/migration/V2__seed_internal_games.sql` (portal-fe 퀴즈 4종 등록)
+- 시드: `game/feature/src/main/resources/gamedb/migration/V2__seed_internal_games.sql` (portal-fe 퀴즈 4종 등록 — **V76 에서 학습 축과 함께 제거**)
 
 ## 정적 게임 자산 (#23 흡수)
 
@@ -240,7 +240,7 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | `frost-outpost` (협동) | `portal-fe/public/games/frost-outpost/index.html` | 온라인 릴레이 세 번째 적용작 — **2인 협동**(건설 A / 지휘 B). 동기화는 **host authority**(seat 0 이 시뮬 소유, 10Hz 스냅샷 + 체크섬, 게스트는 의도만 전송): 기존 싱글 시뮬이 가변 dt + 부동소수 math 라 lockstep 은 그 코드를 다시 써야 하고 그게 곧 싱글 회귀 위험이었다. 상대 이탈 시 게스트가 권한을 승계해 진행 손실 없이 솔로 계속. **협동 기록은 랭킹 제외**(생존 초 단일 스칼라라 두 밸런스 곡선이 섞인다) |
 | `crimson-ravine` `storm-corridor` `dice-citadel` `rift-front` | `portal-fe/public/games/<slug>/index.html` | 유즈맵 팩 2차 (V18 시드). 오토배틀/탄막 회피/랜덤 머지 디펜스/미니 AoS — 세이브 없음, 랭킹+재도전만 |
 | `word-warden` `quad-weave` `pixel-mine` `royal-grid` `number-garden` | `portal-fe/public/games/<slug>/index.html` | 데일리 퍼즐 팩 (V19 시드). 한글 워들/Connections/노노그램/퀸 배치/스도쿠 — KST 날짜 시드(`lib/daily.js`), 스트릭+이모지 공유, 유일해 클라이언트 생성(퀸 배치는 변이 수리, 스도쿠는 파기 검증). 썸네일은 `thumbs/daily/*.svg` |
-| `block-burst` `crate-shift` `mine-pioneer` `stone-sage` `rope-works` `acid-rain` `word-chain` `bracket-battle` `abyss-drill` `cog-foundry` `hero-dispatch` `starlight-farm` `alley-pool` `breeze-links` `beat-dojo` `dawn-ward` `serpent-legion` | `portal-fe/public/games/<slug>/index.html` | 확장 팩 1차 17종 (V20 시드). 퍼즐/보드·한국 특화(타자·끝말잇기)·방치형·물리 스포츠·리듬·서바이버. 썸네일은 `thumbs/art/*.svg`. 방치형(`abyss-drill` `hero-dispatch` `starlight-farm`)은 golden-forge 와 동일한 이어하기 코드 세이브. `bracket-battle` 만 랭킹 미사용(결과 공유형, `sdk_integrated=0`) |
+| `block-burst` `crate-shift` `mine-pioneer` `stone-sage` `rope-works` `acid-rain` `bracket-battle` `abyss-drill` `cog-foundry` `hero-dispatch` `starlight-farm` `alley-pool` `breeze-links` `beat-dojo` `dawn-ward` `serpent-legion` | `portal-fe/public/games/<slug>/index.html` | 확장 팩 1차 16종 (V20 시드, `word-chain` 은 V76 에서 제거). 퍼즐/보드·한국 특화(타자)·방치형·물리 스포츠·리듬·서바이버. 썸네일은 `thumbs/art/*.svg`. 방치형(`abyss-drill` `hero-dispatch` `starlight-farm`)은 golden-forge 와 동일한 이어하기 코드 세이브. `bracket-battle` 만 랭킹 미사용(결과 공유형, `sdk_integrated=0`) |
 | `midnight-tide` `spud-arena` `hand-alchemy` `element-pilgrim` `relic-heir` `cliff-climber` `moon-angler` | `portal-fe/public/games/<slug>/index.html` | 확장 팩 2차 7종 (V21 시드) — 히트 장르 집중. 서바이버 2종(오브젝트 풀 + 공간 해시로 적 300+ 처리), 카드 로그라이크 2종, 인크리멘탈 로그라이트, 피켈 물리 등반, 릴 파이트 낚시. `relic-heir` `moon-angler` 는 이어하기 코드 세이브 |
 | `sketch-sleuth` | `portal-fe/public/games/sketch-sleuth/index.html` | 온라인 그림 맞추기 (V24 시드). 릴레이 두 번째 적용작 — 붓질을 정수 격자 양자화 + 델타 인코딩 + 120ms 배칭으로 보내 상한(4KB·20msg/s) 안에 유지(실측 피크 10msg/s·최대 101B). 릴레이가 규칙을 모르므로 **매 라운드 그리는 쪽이 심판**을 겸한다 |
 | `nether-return` | `portal-fe/public/games/nether-return/` (**다중 파일 + 에셋**) | 로그라이크 액션 RPG (V29 시드, PC 우선 1280×720). 유일하게 **외부 CC0 에셋**(0x72 DungeonTilesetII + 네오둥근모 폰트, `assets/CREDITS.md`)을 쓴다. 대시 무적·문 보상 예고(pending reward)·신격 문장 24종(염라/바리/강림/마고)·3계층+보스 3종·**런 이어하기**(중단 저장→복원)·예언 목록·허브 대사. 세이브는 GameSaveData(단일 그릇에 메타+런+예언), 시드는 GameRun, 랭킹 BASE/MODDED. 설계 원본: `docs/specs/2026-08-13-nether-return-design.md` |
