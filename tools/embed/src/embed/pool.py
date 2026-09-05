@@ -78,7 +78,7 @@ def write_judgments(path: str, doc_header: list[str], meta: dict, judgments: lis
     def q(v): return json.dumps(v, ensure_ascii=False)
     lines = list(doc_header)
     for k, v in meta.items():
-        lines.append(f"{k}: {q(v) if isinstance(v, str) else json.dumps(v, ensure_ascii=False)}")
+        lines.append(f"{k}: {q(v) if isinstance(v, str) else json.dumps(v, ensure_ascii=False, default=str)}")
     lines.append("queries:")
     for item in judgments:
         lines.append(f"  - query: {q(item['query'])}")

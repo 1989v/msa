@@ -105,6 +105,10 @@ def encode(model, texts: list[str], *, prompt: str | None, dim: int, batch_size:
     """sentence-transformers encode → L2 정규화 → MRL 자르기 → 재정규화. 반환 float32 (n, dim)."""
     vecs = model.encode(texts, prompt=prompt, batch_size=batch_size, normalize_embeddings=True,
                         convert_to_numpy=True, show_progress_bar=False).astype(np.float32)
+    # NaN 은 조용히 퍼진다 — 검사하지 않으면 "모든 질의가 같은 문서를 1위로" 라는 그럴듯한 결과가 나온다
+    # (2026-09-05: harrier-270m fp16/MPS 가 전부 NaN 이었는데 풀 파일이 정상처럼 생겼다).
+    if not np.isfinite(vecs).all():
+        raise RuntimeError(f"임베딩에 NaN/Inf 가 있다 ({np.isnan(vecs).sum()}개) — dtype/디바이스 조합을 의심한다(fp16_ok=False?)")
     if vecs.shape[1] > dim:
         vecs = vecs[:, :dim]
         vecs /= np.maximum(np.linalg.norm(vecs, axis=1, keepdims=True), 1e-9)
@@ -131,7 +135,7 @@ def load_model(spec: ModelSpec, device: str | None = None):
     if spec.load_kwargs and spec.load_kwargs.get("quantize_8bit"):
         from transformers import BitsAndBytesConfig  # CUDA 전용 — Colab T4 에서 8B
         model_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
-    elif device != "cpu":
+    elif device != "cpu" and spec.fp16_ok:
         import torch
         model_kwargs["torch_dtype"] = torch.float16
     return SentenceTransformer(spec.hf_id, revision=spec.revision, device=device, model_kwargs=model_kwargs or None,

@@ -16,6 +16,16 @@ Colab(T4) 에서 후보 모델 × 차원(512·1024) × 텍스트 규칙(full·ti
 `docs/specs/2026-09-05-unified-search/judgments.yml` 의 `grade` 에 적는다 — 노트북은 정답을 만들지 않는다.
 결과 표는 플랜 §8.3 옆에 붙이고, 고른 모델의 벡터는 parquet 으로 내려 `push --file`(P1) 이 올린다.
 
+## P0 — 판정 풀링 (`python -m embed.pool`)
+
+BM25 후보만 판정하면 벡터가 새로 찾은 문서가 "판정 없음"으로 빠진다. 후보 모델의 벡터 상위 10 중 BM25 후보에 없던 문서를
+`judgments.yml` 의 `vector_candidates` 로 덧붙여 사람이 한 번에 판정하게 한다. grade 는 만들지 않는다.
+
+```bash
+python -m embed.pool run   --models e5-small,harrier-270m,arctic-ko --lang ko --judgments docs/specs/2026-09-05-unified-search/judgments.yml --out-dir /tmp/pool --device mps
+python -m embed.pool merge --judgments docs/specs/2026-09-05-unified-search/judgments.yml --pools '/tmp/pool/pool_*.json' --out docs/specs/2026-09-05-unified-search/judgments.yml
+```
+
 ## P0 — 로컬 OpenSearch 프로브 (`probes/`)
 
 운영 OpenSearch 를 건드리지 않고 같은 이미지(3.3.0, heap 512m, 한도 1536Mi)로 k-NN 메모리와 hybrid 질의 동작을 잰다.

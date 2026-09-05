@@ -17,6 +17,7 @@ class ModelSpec:
     revision: str | None = None    # HF commit sha. None 이면 resolve_revision() 으로 채운다
     load_kwargs: dict | None = None  # sentence_transformers.SentenceTransformer(model_kwargs=...) 용
     normalize: bool = True
+    fp16_ok: bool = True           # False 면 fp32 로 로드한다. harrier-270m 은 fp16 에서 NaN 이 난다(2026-09-05 MPS 실측)
 
     @property
     def ref(self) -> str:
@@ -40,8 +41,8 @@ CANDIDATES: dict[str, ModelSpec] = {
                           load_kwargs={"quantize_8bit": True}),
     "qwen3-4b": ModelSpec("qwen3-4b", "Qwen/Qwen3-Embedding-4B", 1024, 2560, "last", True, QWEN3_QUERY),
     "arctic-ko": ModelSpec("arctic-ko", "dragonkue/snowflake-arctic-embed-l-v2.0-ko", 1024, 1024, "cls", True, "query: "),
-    "harrier-0.6b": ModelSpec("harrier-0.6b", "microsoft/harrier-oss-v1-0.6b", 1024, 1024, "last", False, HARRIER_QUERY),
-    "harrier-270m": ModelSpec("harrier-270m", "microsoft/harrier-oss-v1-270m", 640, 640, "last", False, HARRIER_QUERY),
+    "harrier-0.6b": ModelSpec("harrier-0.6b", "microsoft/harrier-oss-v1-0.6b", 1024, 1024, "last", False, HARRIER_QUERY, fp16_ok=False),
+    "harrier-270m": ModelSpec("harrier-270m", "microsoft/harrier-oss-v1-270m", 640, 640, "last", False, HARRIER_QUERY, fp16_ok=False),
     # gemma 는 HF 에서 gated(라이선스 수락 + 토큰) — 로컬 무토큰 환경에서는 못 받는다. Colab 에서 HF_TOKEN 을 넣고 돈다
     "gemma-300m": ModelSpec("gemma-300m", "google/embeddinggemma-300m", 768, 768, "mean", True,
                             "task: search result | query: ", doc_prompt="title: none | text: "),
