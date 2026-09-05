@@ -189,3 +189,45 @@ export function introRows(raw: string | null | undefined, lang: 'ko' | 'en'): In
   }
   return rows;
 }
+
+/* ─── 개요 본문 정리 ────────────────────────────────────────────────────────
+ * 원천(TourAPI)의 `overview` 는 **평문이 아니다.** 표본 720건에서 실제로 관측된 것:
+ *   `<br />` 24 · `<br>` 3 · `<em>`/`<b>`/`<strong>`/`<div class=…>` 소수
+ *   `&rsquo;` 32 · `&ldquo;`/`&rdquo;` 각 10 · `&nbsp;` 8 · `&ndash;` 5 · `&lt;`/`&gt;`/`&amp;` …
+ * 국문은 대신 `\n` 이 들어온다(180건 중 30건).
+ *
+ * 지금까지 이걸 그대로 <p> 에 넣어서, 영문 화면에 `<br />` 와 `&rsquo;` 가 **글자로 보이고**
+ * 국문은 개행이 공백으로 접혀 문단 구분이 사라졌다 (2026-09-05 라이브 실측).
+ */
+
+/** 관측된 엔티티만 명시적으로 푼다. innerHTML 을 쓰지 않는다 — 원천 문자열을 HTML 로 해석하면
+ *  거기 담긴 것이 무엇이든 실행 경로가 열린다. 모르는 엔티티는 건드리지 않고 그대로 둔다. */
+const ENTITIES: Record<string, string> = {
+  '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'",
+  '&lsquo;': '‘', '&rsquo;': '’', '&ldquo;': '“', '&rdquo;': '”',
+  '&ndash;': '–', '&mdash;': '—', '&hellip;': '…', '&middot;': '·',
+  '&deg;': '°', '&eacute;': 'é', '&times;': '×',
+};
+
+/**
+ * 원천 개요 → 화면에 낼 평문. 줄바꿈은 `\n` 으로 남기고 화면이 `white-space: pre-line` 으로 살린다.
+ *
+ * 태그를 지우는 것이지 서식을 살리는 것이 아니다 — `<em>` 을 기울임으로 되살리려면 원천 HTML 을
+ * 신뢰해야 하는데, 우리가 통제하지 않는 문자열이라 그러지 않는다. 줄바꿈만 뜻이 분명해 살린다.
+ */
+export function overviewText(raw: string | null | undefined): string {
+  if (!raw) return '';
+  let text = raw.replace(/\r\n?/g, '\n');
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/(p|div|li)>/gi, '\n');
+  text = text.replace(/<[^>]*>/g, '');
+  text = text.replace(/&[a-zA-Z]+;/g, (m) => ENTITIES[m.toLowerCase()] ?? m);
+  text = text.replace(/&#(\d{1,6});/g, (_, code) => {
+    const n = Number(code);
+    // 제어문자는 되돌리지 않는다 — 화면에 보이지 않으면서 줄만 어그러뜨린다
+    return n >= 32 && n <= 0x10ffff ? String.fromCodePoint(n) : '';
+  });
+  // 원천이 <br /><br /><br /> 처럼 겹쳐 보내는 곳이 있다 — 빈 줄은 하나까지만
+  text = text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  return text.trim();
+}

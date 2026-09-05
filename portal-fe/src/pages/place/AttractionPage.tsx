@@ -31,6 +31,7 @@ import {
   introRows,
   isNotFoundError,
   isPlottable,
+  overviewText,
   titleParts,
   type IntroRow,
 } from './placeView';
@@ -236,7 +237,11 @@ export default function AttractionPage() {
             )}
             {attraction.address && <p className="place-detail-addr">{attraction.address}</p>}
             {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
-            {attraction.overview && <p className="place-detail-overview">{attraction.overview}</p>}
+            {/* 원천 개요는 평문이 아니다 — <br>·HTML 엔티티가 섞여 오고 국문은 \n 이 온다.
+                overviewText 가 태그·엔티티를 풀고 줄바꿈만 남기며, CSS 가 그것을 살린다. */}
+            {overviewText(attraction.overview) && (
+              <p className="place-detail-overview">{overviewText(attraction.overview)}</p>
+            )}
 
             {/* 이용 안내 (detailIntro2). 원천이 유형마다 다른 키로 주는 것을 서버가 모아 준다.
                 점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,

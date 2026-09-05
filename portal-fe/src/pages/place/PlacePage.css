@@ -804,6 +804,12 @@
   height: 16rem;
 }
 
+/* 원천 개요의 줄바꿈을 살린다. overviewText 가 <br> 과 엔티티를 풀어 \n 만 남기고,
+   여기서 그 \n 을 줄로 만든다 — 안 주면 브라우저가 공백으로 접어 문단 구분이 사라진다. */
+.place-detail-overview {
+  white-space: pre-line;
+}
+
 /* 이용 안내 — 이용시간·쉬는날·요금·주차·문의. 값이 없는 줄은 아예 안 그린다. */
 .place-detail-info {
   display: flex;

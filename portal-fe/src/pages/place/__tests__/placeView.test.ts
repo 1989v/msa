@@ -9,6 +9,7 @@ import {
   isPlottable,
   mergePages,
   nextPage,
+  overviewText,
   titleParts,
 } from '../placeView';
 
@@ -209,5 +210,49 @@ describe('introRows', () => {
     expect(introRows('{not json', 'ko')).toEqual([]);
     expect(introRows(null, 'ko')).toEqual([]);
     expect(introRows(undefined, 'ko')).toEqual([]);
+  });
+});
+
+describe('overviewText', () => {
+  it('영문 개요의 <br> 과 엔티티를 푼다 — 지금은 글자로 보이고 있었다', () => {
+    // 라이브 실측값 (place.1989v.com/en/attractions/1652)
+    const raw = '◎ Travel information to meet Hallyu&rsquo;s charm<br /><br />Youngchive Seongsu is the studio';
+    const out = overviewText(raw);
+    expect(out).not.toMatch(/<br/i);
+    expect(out).not.toMatch(/&[a-z]+;/i);
+    expect(out).toContain('Hallyu’s charm');
+    expect(out).toContain('charm\n\nYoungchive');
+  });
+
+  it('국문의 \n 은 그대로 남긴다 — 화면이 pre-line 으로 살린다', () => {
+    expect(overviewText('첫 줄\n둘째 줄')).toBe('첫 줄\n둘째 줄');
+  });
+
+  it('빈 줄이 겹쳐 와도 하나까지만', () => {
+    expect(overviewText('가<br /><br /><br /><br />나')).toBe('가\n\n나');
+  });
+
+  it('br 이 아닌 태그는 지운다 — 원천 HTML 을 살려 주지 않는다', () => {
+    expect(overviewText('<div class="text202503"><b>굵게</b> 그리고 <em>기울임</em></div>'))
+      .toBe('굵게 그리고 기울임');
+  });
+
+  it('&lt; &gt; &amp; 는 글자로 되돌린다', () => {
+    expect(overviewText('&lt;가&gt; &amp; 나')).toBe('<가> & 나');
+  });
+
+  it('숫자 엔티티도 푼다. 제어문자는 되돌리지 않는다', () => {
+    expect(overviewText('&#48124;&#44397;')).toBe('민국');   // U+BBFC, U+AD6D
+    expect(overviewText('가&#7;나')).toBe('가나');
+  });
+
+  it('모르는 엔티티는 건드리지 않는다 — 지어내는 것보다 그대로가 낫다', () => {
+    expect(overviewText('&zzz; 남음')).toBe('&zzz; 남음');
+  });
+
+  it('없으면 빈 문자열 — 호출자가 블록을 안 그린다', () => {
+    expect(overviewText(null)).toBe('');
+    expect(overviewText(undefined)).toBe('');
+    expect(overviewText('   ')).toBe('');
   });
 });
