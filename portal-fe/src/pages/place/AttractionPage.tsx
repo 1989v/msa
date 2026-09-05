@@ -31,8 +31,8 @@ import AdSlot from '../../components/ads/AdSlot';
 import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 const UI = {
-  ko: { back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', info: '이용 안내', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', info: 'Visitor info', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
@@ -183,6 +183,34 @@ export default function AttractionPage() {
             {attraction.address && <p className="place-detail-addr">{attraction.address}</p>}
             {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
             {attraction.overview && <p className="place-detail-overview">{attraction.overview}</p>}
+
+            {/* 이용 안내 (detailIntro2). 원천이 유형마다 다른 키로 주는 것을 서버가 모아 준다.
+                점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,
+                다 없으면 블록 자체를 내지 않는다(빈 표는 "정보 없음"보다 나쁘다). */}
+            {(() => {
+              const rows = [
+                [L.useTime, attraction.useTime],
+                [L.restDate, attraction.restDate],
+                [L.useFee, attraction.useFee],
+                [L.parking, attraction.parking],
+                [L.parkingFee, attraction.parkingFee],
+                [L.infoCenter, attraction.infoCenter],
+              ].filter(([, value]) => (value ?? '').trim().length > 0);
+              if (rows.length === 0) return null;
+              return (
+                <section className="place-detail-info" aria-label={L.info}>
+                  <h2 className="place-detail-info-title">{L.info}</h2>
+                  <dl className="place-detail-info-list">
+                    {rows.map(([label, value]) => (
+                      <div className="place-detail-info-row" key={label}>
+                        <dt>{label}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              );
+            })()}
             <a
               className="place-btn"
               href={googleMapsSearchUrl(attraction)}

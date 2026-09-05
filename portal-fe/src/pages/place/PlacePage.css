@@ -769,6 +769,47 @@
   line-height: 1.45;
 }
 
+/* 이용 안내 — 이용시간·쉬는날·요금·주차·문의. 값이 없는 줄은 아예 안 그린다. */
+.place-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding-top: 0.2rem;
+}
+
+.place-detail-info-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ko-text-primary);
+}
+
+.place-detail-info-list {
+  display: grid;
+  /* 라벨은 내용만큼만, 값이 나머지를 갖는다. 라벨 폭을 고정하면 국문("쉬는날")과
+     영문("Parking fee")이 서로 다른 값에서 줄바꿈한다. */
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.3rem 0.75rem;
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.place-detail-info-row {
+  display: contents;   /* dt/dd 가 그리드 칸에 직접 앉는다 */
+}
+
+.place-detail-info-list dt {
+  color: var(--ko-text-secondary);
+  white-space: nowrap;
+}
+
+.place-detail-info-list dd {
+  margin: 0;
+  color: var(--ko-text-primary);
+  /* 원천 값이 줄바꿈 없이 길게 오는 경우가 많다 (이용시간이 계절별로 이어 붙는다) */
+  overflow-wrap: anywhere;
+}
+
 /* ── 관광지 상세 아래 "주변 편의시설" — 명소 목록에서 걷어낸 상점·음식점을 유형별로 잇는다.
    카드는 위 "주변 명소" 와 같은 .place-card 를 그대로 쓴다. 같은 화면에서 크기가 다르면
    아래쪽이 덤처럼 보인다 — 다른 것은 세로로 쌓이지 않고 가로로 이어진다는 점뿐이다. */

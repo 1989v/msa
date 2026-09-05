@@ -102,6 +102,32 @@ class AttractionJpaEntity(
     @Column(columnDefinition = "TEXT")
     val overview: String? = null,
 
+    /** detailIntro2 응답 원문. 안을 질의하지 않으므로 문자열로 둔다 (ranking payload 와 같은 방식). */
+    @Column(name = "intro_raw", columnDefinition = "json")
+    val introRaw: String? = null,
+
+    @Column(name = "use_time", columnDefinition = "TEXT")
+    val useTime: String? = null,
+
+    @Column(name = "rest_date", columnDefinition = "TEXT")
+    val restDate: String? = null,
+
+    @Column(name = "use_fee", columnDefinition = "TEXT")
+    val useFee: String? = null,
+
+    @Column(name = "parking", columnDefinition = "TEXT")
+    val parking: String? = null,
+
+    @Column(name = "parking_fee", columnDefinition = "TEXT")
+    val parkingFee: String? = null,
+
+    @Column(name = "info_center", length = 255)
+    val infoCenter: String? = null,
+
+    @Column(name = "intro_synced_at")
+    val introSyncedAt: java.time.LocalDateTime? = null,
+
+
     // Places Text Search 로 채우는 보강 필드 — id 외에는 저장하지 않는다 (data-sources.md §7)
     @Column(name = "google_place_id", length = 128)
     val googlePlaceId: String? = null,
@@ -142,6 +168,14 @@ class AttractionJpaEntity(
         imageUrl = imageUrl,
         tel = tel,
         overview = overview,
+        introRaw = introRaw,
+        useTime = useTime,
+        restDate = restDate,
+        useFee = useFee,
+        parking = parking,
+        parkingFee = parkingFee,
+        infoCenter = infoCenter,
+        introSyncedAt = introSyncedAt,
         googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
         status = status,
@@ -179,6 +213,14 @@ class AttractionJpaEntity(
             imageUrl = attraction.imageUrl,
             tel = attraction.tel,
             overview = attraction.overview,
+            introRaw = attraction.introRaw,
+            useTime = attraction.useTime,
+            restDate = attraction.restDate,
+            useFee = attraction.useFee,
+            parking = attraction.parking,
+            parkingFee = attraction.parkingFee,
+            infoCenter = attraction.infoCenter,
+            introSyncedAt = attraction.introSyncedAt,
             googlePlaceId = attraction.googlePlaceId,
             sourceModifiedAt = attraction.sourceModifiedAt,
             status = attraction.status,

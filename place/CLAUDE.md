@@ -87,6 +87,22 @@
 | GET | `/api/places/attractions/overview-probes?lang=` | public | 개요 negative cache 조회 — 수집기 제외 목록 (ADR-0070) |
 | POST | `/api/places/attractions/overview-probes` | ADMIN | 원천이 빈 개요를 준 (contentId, lang) 기록 |
 
+## 이용정보 (detailIntro2)
+
+이용시간·쉬는날·요금·주차·문의처. **건당 1콜**이라 개요와 같은 방식으로 매일(KST 05:00)
+하루치씩 채운다 — 한도가 (서비스 × 오퍼레이션)별로 따로라 개요와 예산을 나눠 쓰지 않는다.
+
+**전 유형·전 레코드를 국문·영문 모두 받는다.** 원천이 주는 필드는 유형마다 다르고
+**같은 개념의 키 이름도 다르다**(`usetime` / `usetimeculture` / `usetimeleports`).
+그래서 응답을 통째로 `intro_raw` 에 남기고 화면용은 파생 컬럼으로 내린다 —
+파생 규칙이 바뀌어도 원천을 다시 부르지 않는다.
+
+**요금은 유형에 따라 원천에 아예 없다** — 관광지(12)·레포츠(28)에는 `usefee` 가 없고
+문화시설(14) 등에만 있다. 없는 것을 채워 넣지 말고 그 줄을 안 그린다.
+
+수집 여부는 값이 아니라 `intro_synced_at` 으로 판정한다. 값으로 재면 원천이 빈 응답을 준
+레코드를 매일 다시 부르게 된다.
+
 ## 시드
 
 `place.seed.enabled=true` + `/seed/{regions,pois}.jsonl` 마운트 시 기동 1회 적재(멱등).

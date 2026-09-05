@@ -64,6 +64,10 @@ class AttractionServiceTest : BehaviorSpec({
                     mapLevel = 6, zipcode = "03045", sourceCreatedAt = null,
                     latitude = 37.5788, longitude = 126.9770,
                     imageUrl = null, tel = null, overview = null,
+                    introRaw = """{"usetime":"09:00~18:00"}""",
+                    useTime = "09:00~18:00", restDate = "매주 화요일", useFee = null,
+                    parking = "가능", parkingFee = null, infoCenter = "02-3700-3900",
+                    introSyncedAt = java.time.LocalDateTime.of(2026, 9, 5, 4, 0),
                     googlePlaceId = "ChIJod7tSseifDUR9hXHLFNGMIs",
                     sourceModifiedAt = null, status = "ACTIVE",
                     createdAt = java.time.LocalDateTime.now(),
@@ -75,6 +79,12 @@ class AttractionServiceTest : BehaviorSpec({
                 view.lang shouldBe "ko"
                 // 보강 필드도 조회로 되읽혀야 한다 — 못 읽으면 개요 배치 왕복이 지운다 (§0 ③)
                 view.googlePlaceId shouldBe "ChIJod7tSseifDUR9hXHLFNGMIs"
+                // detailIntro2 보강도 마찬가지 — 원문(introRaw)까지 되읽혀야 파생 규칙을
+                // 바꿀 때 원천을 다시 부르지 않는다
+                view.useTime shouldBe "09:00~18:00"
+                view.restDate shouldBe "매주 화요일"
+                view.infoCenter shouldBe "02-3700-3900"
+                view.introRaw shouldBe """{"usetime":"09:00~18:00"}"""
             }
         }
     }

@@ -245,6 +245,7 @@ def _admin_region_parser() -> None:
     _ldong_normalization()
     _view_count_sorting()
     _categorize_rules()
+    _intro_derive()
 
 
 def _english_from_address() -> None:
@@ -274,6 +275,47 @@ def _english_from_address() -> None:
     assert "29" not in SIDO_EN and "46" not in SIDO_EN
     assert SIDO_EN["12"].startswith("Jeonnam-Gwangju")
     assert SIDO_EN["51"] == "Gangwon-do" and SIDO_EN["52"] == "Jeonbuk-do"
+
+
+def _intro_derive() -> None:
+    """유형마다 다른 키를 한 자리로 모으는지 — 실제 detailIntro2 응답 모양으로 확인한다."""
+    from src.backfill_intro import derive, has_payload
+
+    # 관광지(12) — 접미사 없는 키
+    spot = {"contentid": "126508", "contenttypeid": "12", "usetime": "09:00~18:00",
+            "restdate": "매주 화요일", "parking": "가능 (승용차 240대)", "infocenter": "02-3700-3900"}
+    d = derive(spot)
+    assert d["useTime"] == "09:00~18:00", d
+    assert d["restDate"] == "매주 화요일", d
+    assert d["parking"].startswith("가능"), d
+    assert d["infoCenter"] == "02-3700-3900", d
+    assert "useFee" not in d, "관광지에는 요금 필드가 없다 — 없는 것을 지어내면 안 된다"
+
+    # 문화시설(14) — 같은 개념이 culture 접미사로 온다. 요금도 여기 있다.
+    culture = {"contentid": "1", "contenttypeid": "14", "usetimeculture": "10:00~19:00",
+               "restdateculture": "월요일", "usefee": "성인 5,000원", "parkingfee": "무료",
+               "infocenterculture": "02-000-0000"}
+    d = derive(culture)
+    assert d["useTime"] == "10:00~19:00", d
+    assert d["restDate"] == "월요일", d
+    assert d["useFee"] == "성인 5,000원", d
+    assert d["parkingFee"] == "무료", d
+    assert d["infoCenter"] == "02-000-0000", d
+
+    # 레포츠(28) — leports 접미사
+    leports = {"contentid": "2", "contenttypeid": "28", "usetimeleports": "연중무휴",
+               "infocenterleports": "033-000-0000"}
+    d = derive(leports)
+    assert d["useTime"] == "연중무휴", d
+    assert d["infoCenter"] == "033-000-0000", d
+
+    # 빈 문자열은 값이 아니다 — 뒤 후보로 넘어간다
+    assert derive({"usetime": "   ", "usetimeculture": "09:00"})["useTime"] == "09:00"
+
+    # 메타 키만 온 응답 = 원천이 준 게 없다 (introRaw 를 남기지 않는다)
+    assert not has_payload({"contentid": "1", "contenttypeid": "12"})
+    assert has_payload({"contentid": "1", "contenttypeid": "12", "usetime": "09:00"})
+    print("  이용정보 파생 매핑 OK (관광지/문화시설/레포츠 키 차이 흡수)")
 
 
 def _categorize_rules() -> None:

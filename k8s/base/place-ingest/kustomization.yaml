@@ -3,5 +3,6 @@ kind: Kustomization
 namespace: commerce
 resources:
   - cronjob-overview.yaml
+  - cronjob-intro.yaml
   - cronjob-links.yaml
   - cronjob-google-places.yaml

@@ -3,6 +3,7 @@
 
 K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=overview --budget=1000
+    python -m src.main --job=intro --budget=1000   # 이용시간·휴무·요금·주차 (ko·en 병행)
     python -m src.main --job=stats            # 잔량만 (TourAPI 호출 0)
     python -m src.main --job=sync --content-type=attraction
     python -m src.main --job=admin-regions --file 법정동코드_전체자료.txt
@@ -21,7 +22,7 @@ import sys
 
 from pathlib import Path
 
-from src import admin_region, backfill_overview, google_place, naver, place_client, quota, sync_tour, youtube
+from src import admin_region, backfill_intro, backfill_overview, google_place, naver, place_client, quota, sync_tour, youtube
 
 
 def _api_key() -> str:
@@ -40,6 +41,13 @@ def _job_stats() -> int:
 
 def _job_overview(budget: int, langs: tuple[str, ...]) -> int:
     loaded = backfill_overview.run(_api_key(), budget, langs)
+    backfill_overview.log("적재 없음 — 재색인 불필요" if not loaded else "하루치 완료")
+    return 0
+
+
+def _job_intro(budget: int, langs: tuple[str, ...]) -> int:
+    """이용시간·휴무·요금·주차 하루치. 개요와 오퍼레이션이 달라 한도를 따로 쓴다."""
+    loaded = backfill_intro.run(_api_key(), budget, langs)
     backfill_overview.log("적재 없음 — 재색인 불필요" if not loaded else "하루치 완료")
     return 0
 
@@ -201,7 +209,7 @@ def _print_english_names(regions: list[dict]) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--job", required=True,
-                    choices=["overview", "stats", "sync", "links", "admin-regions", "google-places"])
+                    choices=["overview", "intro", "stats", "sync", "links", "admin-regions", "google-places"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -220,6 +228,8 @@ def main() -> int:
         return _job_stats()
     if args.job == "overview":
         return _job_overview(args.budget, langs)
+    if args.job == "intro":
+        return _job_intro(args.budget, langs)
     if args.job == "links":
         return _job_links(args.link_limit)
     if args.job == "google-places":

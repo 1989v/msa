@@ -35,6 +35,14 @@ class Attraction private constructor(
     var imageUrl: String? = null,
     var tel: String? = null,
     var overview: String? = null,
+    var introRaw: String? = null,
+    var useTime: String? = null,
+    var restDate: String? = null,
+    var useFee: String? = null,
+    var parking: String? = null,
+    var parkingFee: String? = null,
+    var infoCenter: String? = null,
+    var introSyncedAt: LocalDateTime? = null,
     var googlePlaceId: String? = null,
     var sourceModifiedAt: LocalDateTime? = null,
     var status: String = "ACTIVE",
@@ -89,6 +97,14 @@ class Attraction private constructor(
             imageUrl: String? = null,
             tel: String? = null,
             overview: String? = null,
+            introRaw: String? = null,
+            useTime: String? = null,
+            restDate: String? = null,
+            useFee: String? = null,
+            parking: String? = null,
+            parkingFee: String? = null,
+            infoCenter: String? = null,
+            introSyncedAt: LocalDateTime? = null,
             googlePlaceId: String? = null,
             sourceModifiedAt: LocalDateTime? = null,
         ): Attraction {
@@ -124,6 +140,14 @@ class Attraction private constructor(
                 imageUrl = imageUrl?.takeIf { it.isNotBlank() },
                 tel = tel?.takeIf { it.isNotBlank() },
                 overview = overview?.takeIf { it.isNotBlank() },
+                introRaw = introRaw?.takeIf { it.isNotBlank() },
+                useTime = useTime?.takeIf { it.isNotBlank() },
+                restDate = restDate?.takeIf { it.isNotBlank() },
+                useFee = useFee?.takeIf { it.isNotBlank() },
+                parking = parking?.takeIf { it.isNotBlank() },
+                parkingFee = parkingFee?.takeIf { it.isNotBlank() },
+                infoCenter = infoCenter?.takeIf { it.isNotBlank() },
+                introSyncedAt = introSyncedAt,
                 googlePlaceId = googlePlaceId?.takeIf { it.isNotBlank() },
                 sourceModifiedAt = sourceModifiedAt,
                 status = "ACTIVE",
@@ -159,6 +183,14 @@ class Attraction private constructor(
             imageUrl: String?,
             tel: String?,
             overview: String?,
+            introRaw: String?,
+            useTime: String?,
+            restDate: String?,
+            useFee: String?,
+            parking: String?,
+            parkingFee: String?,
+            infoCenter: String?,
+            introSyncedAt: LocalDateTime?,
             googlePlaceId: String?,
             sourceModifiedAt: LocalDateTime?,
             status: String,
@@ -191,6 +223,14 @@ class Attraction private constructor(
             imageUrl = imageUrl,
             tel = tel,
             overview = overview,
+            introRaw = introRaw,
+            useTime = useTime,
+            restDate = restDate,
+            useFee = useFee,
+            parking = parking,
+            parkingFee = parkingFee,
+            infoCenter = infoCenter,
+            introSyncedAt = introSyncedAt,
             googlePlaceId = googlePlaceId,
             sourceModifiedAt = sourceModifiedAt,
             status = status,
@@ -248,6 +288,19 @@ class Attraction private constructor(
          * (개요가 실제로 300건 그렇게 사라졌다). 들어온 값이 있을 때만 갱신한다.
          */
         googlePlaceId = source.googlePlaceId ?: googlePlaceId
+        /*
+         * 이용시간·요금·주차도 같은 보강 필드다 — 목록(areaBasedList2)이 아니라 detailIntro2
+         * 로만 채워진다. 원문(introRaw)까지 함께 보존해야 파생 규칙을 바꿀 때 원천을 다시
+         * 부르지 않는다 (data-sources.md §0 ②).
+         */
+        introRaw = source.introRaw ?: introRaw
+        useTime = source.useTime ?: useTime
+        restDate = source.restDate ?: restDate
+        useFee = source.useFee ?: useFee
+        parking = source.parking ?: parking
+        parkingFee = source.parkingFee ?: parkingFee
+        infoCenter = source.infoCenter ?: infoCenter
+        introSyncedAt = source.introSyncedAt ?: introSyncedAt
         sourceModifiedAt = source.sourceModifiedAt
         status = source.status
     }

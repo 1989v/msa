@@ -33,6 +33,17 @@ export interface Attraction {
   tel: string | null;
   overview: string | null;
   /**
+   * 이용정보 (TourAPI detailIntro2). 원천은 유형마다 키가 다르고(usetime / usetimeculture /
+   * usetimeleports …) 서버가 하나로 모아 준다. 점진 보강이라 없을 수 있다 — 없는 줄은 안 그린다.
+   */
+  useTime?: string | null;
+  restDate?: string | null;
+  /** 이용요금. 관광지(12)·레포츠(28)에는 원천에 아예 없고 문화시설(14) 등에만 있다. */
+  useFee?: string | null;
+  parking?: string | null;
+  parkingFee?: string | null;
+  infoCenter?: string | null;
+  /**
    * Google Places place_id — 구글맵 딥링크(`query_place_id=`)가 장소 카드에 착지하게 한다.
    * 점진 보강이라 없을 수 있다 — 없으면 주소/좌표 검색 링크로 폴백 (googleMapsSearchUrl).
    */

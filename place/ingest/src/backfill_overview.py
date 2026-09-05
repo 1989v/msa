@@ -34,6 +34,9 @@ UPSERT_FIELDS = ("contentId", "lang", "title", "latitude", "longitude", "address
                  "cat1", "cat2", "cat3", "lclsSystm1", "lclsSystm2", "lclsSystm3",
                  "contentTypeId", "copyrightDivCd", "mapLevel",
                  "category", "imageUrl", "thumbnailUrl", "tel", "overview", "googlePlaceId",
+                 # detailIntro2 보강분 — 왕복에서 빠지면 다음 배치가 null 로 덮는다 (§0 ③)
+                 "introRaw", "useTime", "restDate", "useFee", "parking", "parkingFee",
+                 "infoCenter", "introSyncedAt",
                  "sourceModifiedAt", "sourceCreatedAt")
 
 
