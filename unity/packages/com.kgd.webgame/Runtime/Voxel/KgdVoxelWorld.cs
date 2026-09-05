@@ -181,6 +181,20 @@ namespace Kgd.Voxel
             return true;
         }
 
+        /// <summary>
+        /// 남이 바꾼 블록을 받아 넣는다.
+        ///
+        /// **아직 안 만든 청크의 것도 대장에 남긴다.** <see cref="Set"/> 은 청크가 없으면
+        /// 아무 일도 하지 않는데, 여럿이 한 세계를 쓰면 멀리 있는 사람이 바꾼 것이 그대로
+        /// 날아온다 — 버리면 나중에 그 자리를 만들 때 지은 것이 없다.
+        /// </summary>
+        public void Accept(int x, int y, int z, byte id)
+        {
+            if (y < 0 || y >= Height) return;
+            _edits[EditKey(x, y, z)] = id;
+            Set(x, y, z, id);   // 청크가 있으면 지금 반영되고, 없으면 위 대장에만 남는다
+        }
+
         /// <summary>메시만 다시 뜬다 — 빛이 안 바뀌는 변경(같은 성질의 블록 교체)에 쓴다.</summary>
         public void MarkDirty(int cx, int cz)
         {
@@ -652,14 +666,57 @@ namespace Kgd.Voxel
         }
 
         /// <summary>
+        /// 편집 대장을 조각으로 나눠 돌려준다. 한 세계를 남에게 통째로 넘길 때 쓴다 —
+        /// 릴레이 메시지에 4KB 상한이 있어 몇 시간 논 세계는 한 번에 못 보낸다.
+        ///
+        /// **나누기 전에 한 번에 다 뜬다.** 보내는 동안 누가 블록을 놓으면 사전이 커지면서
+        /// 훑는 순서가 바뀌는데, 그때마다 다시 뜨면 빠지거나 겹치는 칸이 생긴다.
+        /// </summary>
+        public string[] EditPages(int maxChars)
+        {
+            var pages = new List<string>();
+            if (_edits.Count == 0) return pages.ToArray();
+
+            int room = Mathf.Max(64, maxChars);
+            var sb = new StringBuilder(room);
+            foreach (var kv in _edits)
+            {
+                Unpack2(kv.Key, out int x, out int y, out int z);
+                string row = $"{x},{y},{z},{kv.Value};";
+                if (sb.Length > 0 && sb.Length + row.Length > room)
+                {
+                    pages.Add(sb.ToString());
+                    sb.Length = 0;
+                }
+                sb.Append(row);
+            }
+            if (sb.Length > 0) pages.Add(sb.ToString());
+            return pages.ToArray();
+        }
+
+        /// <summary>
         /// 저장한 편집을 되돌린다. **청크를 만들기 전에 부른다** — 뒤에 부르면 이미 만든
         /// 청크가 생성기 값 그대로 남아, 지은 것이 사라진 판에서 시작한다.
         /// </summary>
         public void LoadEdits(string data)
         {
             _edits.Clear();
-            if (string.IsNullOrEmpty(data)) return;
+            MergeEdits(data);
+        }
 
+        /// <summary>
+        /// 편집 목록을 **지우지 않고** 얹는다. <see cref="EditPages"/> 로 나눠 받은 조각을
+        /// 차례로 넣을 때 쓴다 — 조각마다 <see cref="LoadEdits"/> 를 부르면 앞 조각이 지워진다.
+        ///
+        /// **목록에 적기만 한다.** 이미 만든 청크에 곧바로 반영하지 않는 것은
+        /// <see cref="LoadEdits"/> 와 같은 규칙이다 — 청크보다 먼저 넣는 것이 순서이고,
+        /// 판이 도는 중에 한 칸씩 오는 것은 <see cref="Accept"/> 가 받는다.
+        /// </summary>
+        public int MergeEdits(string data)
+        {
+            if (string.IsNullOrEmpty(data)) return 0;
+
+            int took = 0;
             foreach (string row in data.Split(';'))
             {
                 if (row.Length < 7) continue;
@@ -668,7 +725,9 @@ namespace Kgd.Voxel
                 if (!int.TryParse(f[0], out int x) || !int.TryParse(f[1], out int y) ||
                     !int.TryParse(f[2], out int z) || !byte.TryParse(f[3], out byte id)) continue;
                 _edits[EditKey(x, y, z)] = id;
+                took++;
             }
+            return took;
         }
 
         private static void Unpack2(long v, out int x, out int y, out int z)
