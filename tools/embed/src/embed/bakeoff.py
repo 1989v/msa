@@ -132,8 +132,10 @@ def top_k(q: np.ndarray, d: np.ndarray, k: int = 10, chunk: int = 20000) -> np.n
 def load_model(spec: ModelSpec, device: str | None = None):
     from sentence_transformers import SentenceTransformer
     model_kwargs: dict = {}
-    if spec.load_kwargs and spec.load_kwargs.get("quantize_8bit"):
-        from transformers import BitsAndBytesConfig  # CUDA 전용 — Colab T4 에서 8B
+    # 8bit 양자화는 bitsandbytes 라 CUDA 에서만 된다. MPS·CPU 에서는 fp16 으로 내려간다
+    # (8B fp16 = 약 16GB — 통합 메모리가 그만큼 있어야 한다).
+    if spec.load_kwargs and spec.load_kwargs.get("quantize_8bit") and (device or "").startswith("cuda"):
+        from transformers import BitsAndBytesConfig
         model_kwargs["quantization_config"] = BitsAndBytesConfig(load_in_8bit=True)
     elif device != "cpu" and spec.fp16_ok:
         import torch
