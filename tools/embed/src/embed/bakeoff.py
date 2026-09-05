@@ -70,7 +70,7 @@ def build_corpus(attractions: Iterable[dict], rule: str, model_ref: str) -> Corp
         text = fn(title=a.get("titleDisplay") or a["title"], title_local=a.get("titleLocal"), category=a.get("category"),
                   address=a.get("address"), overview=a.get("overview"), lang=a.get("lang", "ko"))
         ids.append(str(a["id"])); texts.append(text); hashes.append(text_hash(model_ref, text))
-        meta.append({"title": a.get("titleDisplay") or a["title"], "category": a.get("category"), "lang": a.get("lang")})
+        meta.append({"title": a.get("titleDisplay") or a["title"], "category": a.get("category"), "lang": a.get("lang"), "address": a.get("address")})
     return Corpus(ids, texts, hashes, meta)
 
 
@@ -161,7 +161,8 @@ def evaluate(spec: ModelSpec, model, attractions: list[dict], judgments: list[di
             for qi, q in enumerate(qs):
                 ranked = [corpus.ids[j] for j in idx[qi]]
                 per_query[(spec.key, rule, dim, q["query"])] = [
-                    {"id": corpus.ids[j], "title": corpus.meta[j]["title"], "category": corpus.meta[j]["category"]} for j in idx[qi]]
+                    {"id": corpus.ids[j], "title": corpus.meta[j]["title"], "category": corpus.meta[j]["category"],
+                     "address": corpus.meta[j].get("address")} for j in idx[qi]]
                 n = ndcg_at_k(ranked, graded(q), k)
                 if n is not None:
                     scores.append(n); judged += 1

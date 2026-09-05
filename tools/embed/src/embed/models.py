@@ -41,6 +41,8 @@ CANDIDATES: dict[str, ModelSpec] = {
     "qwen3-4b": ModelSpec("qwen3-4b", "Qwen/Qwen3-Embedding-4B", 1024, 2560, "last", True, QWEN3_QUERY),
     "arctic-ko": ModelSpec("arctic-ko", "dragonkue/snowflake-arctic-embed-l-v2.0-ko", 1024, 1024, "cls", True, "query: "),
     "harrier-0.6b": ModelSpec("harrier-0.6b", "microsoft/harrier-oss-v1-0.6b", 1024, 1024, "last", False, HARRIER_QUERY),
+    "harrier-270m": ModelSpec("harrier-270m", "microsoft/harrier-oss-v1-270m", 640, 640, "last", False, HARRIER_QUERY),
+    # gemma 는 HF 에서 gated(라이선스 수락 + 토큰) — 로컬 무토큰 환경에서는 못 받는다. Colab 에서 HF_TOKEN 을 넣고 돈다
     "gemma-300m": ModelSpec("gemma-300m", "google/embeddinggemma-300m", 768, 768, "mean", True,
                             "task: search result | query: ", doc_prompt="title: none | text: "),
     # 기준선(플랜 v1 실측 모델) — 작은 모델이 "충분한가"를 같은 표에서 본다
