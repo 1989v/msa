@@ -36,6 +36,20 @@ python -m embed.review stats --judgments docs/specs/2026-09-05-unified-search/ju
 python -m embed.review sheet --judgments docs/specs/.../judgments.yml --out /tmp/review.md --queries core --only-ungraded
 ```
 
+## P0 — 판정 페이지 (브라우저)
+
+마크다운 시트 대신 클릭으로 매기고 싶으면 HTML 을 낸다. 후보마다 **어느 모델이 몇 위로 봤는지**(`q8#3` = qwen3-8b 3위)가 붙어 판정에 참고가 된다.
+진행은 `localStorage` 에 저장돼 새로고침해도 남고, 「내보내기」로 `grades.json` 을 받아 되먹인다.
+
+```bash
+python -m embed.review html --judgments docs/specs/.../judgments.yml --rerank /tmp/p0/rerank --out ~/Desktop/judge.html
+open ~/Desktop/judge.html          # 판정 → 내보내기 → grades.json 저장
+python -m embed.review apply --judgments docs/specs/.../judgments.yml --grades ~/Downloads/grades.json \
+                             --out docs/specs/.../judgments.yml
+```
+
+HTML 은 생성물이라 레포에 두지 않는다(데이터 인라인 157KB). 생성 스크립트만 남긴다.
+
 ## P0 — 로컬 OpenSearch 프로브 (`probes/`)
 
 운영 OpenSearch 를 건드리지 않고 같은 이미지(3.3.0, heap 512m, 한도 1536Mi)로 k-NN 메모리와 hybrid 질의 동작을 잰다.
