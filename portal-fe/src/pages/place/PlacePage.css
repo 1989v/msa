@@ -195,10 +195,12 @@
   align-self: flex-start;
 }
 
-/* 읽는 글줄은 폭을 제한한다 — 1360px 한 줄은 눈이 다음 줄 첫 글자를 못 찾는다. */
+/* 읽는 글줄은 폭이 아니라 **글자 수**로 제한한다 (frontend-design.md: 45–75ch).
+   60rem 로 두었더니 라이브에서 한 줄 84자가 나왔다 — 눈이 다음 줄 첫 글자를 못 찾는다.
+   `ch` 는 폰트 크기를 따라가므로 활자 크기를 바꿔도 글줄 길이가 유지된다. */
 .place-body-stacked .place-detail-overview,
 .place-body-stacked .place-detail-info-list {
-  max-width: 60rem;
+  max-width: 62ch;
 }
 
 .place-body.has-detail {
