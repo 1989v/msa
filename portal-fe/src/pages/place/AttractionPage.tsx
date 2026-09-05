@@ -26,7 +26,14 @@ import AttractionLinks from './AttractionLinks';
 import { googleMapsSearchUrl, loadGoogleMaps, mapsApiKey } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
-import { groupByCategory, isNotFoundError, isPlottable, titleParts } from './placeView';
+import {
+  groupByCategory,
+  introRows,
+  isNotFoundError,
+  isPlottable,
+  titleParts,
+  type IntroRow,
+} from './placeView';
 import './PlacePage.css';
 import AdSlot from '../../components/ads/AdSlot';
 import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
@@ -235,23 +242,27 @@ export default function AttractionPage() {
                 점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,
                 다 없으면 블록 자체를 내지 않는다(빈 표는 "정보 없음"보다 나쁘다). */}
             {(() => {
-              const rows = [
-                [L.useTime, attraction.useTime],
-                [L.restDate, attraction.restDate],
-                [L.useFee, attraction.useFee],
-                [L.parking, attraction.parking],
-                [L.parkingFee, attraction.parkingFee],
-                [L.infoCenter, attraction.infoCenter],
-              ].filter(([, value]) => (value ?? '').trim().length > 0);
+              // 파생 6개(유형별 키를 서버가 모은 것) → 그 다음 원문에만 있는 나머지.
+              // 원천이 준 것을 다 보여준다 — 상세는 이 관광지에 대해 아는 전부를 내는 자리다.
+              const derived: IntroRow[] = [
+                { key: 'useTime', label: L.useTime, value: attraction.useTime ?? '' },
+                { key: 'restDate', label: L.restDate, value: attraction.restDate ?? '' },
+                { key: 'useFee', label: L.useFee, value: attraction.useFee ?? '' },
+                { key: 'parking', label: L.parking, value: attraction.parking ?? '' },
+                { key: 'parkingFee', label: L.parkingFee, value: attraction.parkingFee ?? '' },
+                { key: 'infoCenter', label: L.infoCenter, value: attraction.infoCenter ?? '' },
+              ];
+              const rows = [...derived, ...introRows(attraction.introRaw, lang)]
+                .filter((r) => r.value.trim().length > 0);
               if (rows.length === 0) return null;
               return (
                 <section className="place-detail-info" aria-label={L.info}>
                   <h2 className="place-detail-info-title">{L.info}</h2>
                   <dl className="place-detail-info-list">
-                    {rows.map(([label, value]) => (
-                      <div className="place-detail-info-row" key={label}>
-                        <dt>{label}</dt>
-                        <dd>{value}</dd>
+                    {rows.map((row) => (
+                      <div className="place-detail-info-row" key={row.key}>
+                        <dt>{row.label}</dt>
+                        <dd>{row.value}</dd>
                       </div>
                     ))}
                   </dl>

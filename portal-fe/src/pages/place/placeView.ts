@@ -88,3 +88,104 @@ export function isPlottable(lat: number | null | undefined, lng: number | null |
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
   return lat >= 33.0 && lat <= 38.7 && lng >= 124.5 && lng <= 132.0;
 }
+
+/* ─── detailIntro2 원문 펼치기 ───────────────────────────────────────────────
+ * 원천은 같은 개념을 관광 타입마다 다른 키로 준다: `usetime` / `usetimeculture` /
+ * `usetimeleports` / `opentimefood` …. 접미사를 떼고 개념 하나로 모으면 라벨 표를
+ * 20개쯤으로 줄일 수 있고, **원천이 새 타입을 추가해도 따라간다.**
+ */
+
+/** 관광 타입 접미사 — 길이 내림차순으로 지워야 `food` 가 `lodging` 앞을 먹지 않는다. */
+const TYPE_SUFFIXES = ['babycarriage', 'creditcard', 'festival', 'lodging', 'shopping',
+                       'culture', 'leports', 'food'] as const;
+
+export function introBaseKey(key: string): string {
+  const lower = key.toLowerCase();
+  // chk* 는 접미사가 개념의 일부다 (chkbabycarriage = 유모차) — 그것만 먼저 통과시킨다
+  for (const concept of ['chkbabycarriage', 'chkcreditcard', 'chkpet']) {
+    if (lower.startsWith(concept)) return concept;
+  }
+  for (const suffix of TYPE_SUFFIXES) {
+    if (lower.endsWith(suffix) && lower.length > suffix.length) return lower.slice(0, -suffix.length);
+  }
+  return lower;
+}
+
+/** 화면에 낼 값이 아닌 것 — 식별자와 내부 번호. */
+const INTRO_SKIP = new Set(['contentid', 'contenttypeid', 'lcnsno']);
+
+/**
+ * 파생 컬럼이 이미 보여 주는 개념 — 여기에 라벨을 달면 같은 값이 두 줄로 나온다.
+ * 별도 제외 목록을 두지 않는 이유: 라벨이 없으면 어차피 안 나오므로 그 목록은 한 번도
+ * 걸리지 않는 죽은 가드가 된다(실제로 그렇게 만들었다가 회귀가 안 물려서 걷어냈다).
+ * 대신 **아래 표에 이 개념이 없다는 것**을 테스트가 지킨다.
+ */
+export const INTRO_DERIVED_CONCEPTS = ['usetime', 'opentime', 'restdate', 'usefee',
+                                       'parking', 'parkingfee', 'infocenter'] as const;
+
+export const INTRO_LABELS: Record<string, { ko: string; en: string }> = {
+  expguide: { ko: '체험 안내', en: 'Programs' },
+  expagerange: { ko: '체험 가능 연령', en: 'Age range' },
+  spendtime: { ko: '소요시간', en: 'Time needed' },
+  useseason: { ko: '이용 시기', en: 'Season' },
+  accomcount: { ko: '수용 인원', en: 'Capacity' },
+  chkbabycarriage: { ko: '유모차 대여', en: 'Stroller rental' },
+  chkcreditcard: { ko: '신용카드', en: 'Credit cards' },
+  chkpet: { ko: '반려동물 동반', en: 'Pets' },
+  kidsfacility: { ko: '어린이 놀이방', en: 'Kids area' },
+  restroom: { ko: '화장실', en: 'Restrooms' },
+  firstmenu: { ko: '대표 메뉴', en: 'Signature dish' },
+  treatmenu: { ko: '취급 메뉴', en: 'Menu' },
+  saleitem: { ko: '판매 품목', en: 'Items sold' },
+  fairday: { ko: '장서는 날', en: 'Market days' },
+  opendate: { ko: '개장일', en: 'Opened' },
+  scale: { ko: '규모', en: 'Scale' },
+  heritage: { ko: '문화재 지정', en: 'Designated heritage' },
+};
+
+export interface IntroRow {
+  key: string;
+  label: string;
+  value: string;
+}
+
+/**
+ * 원문 JSON → 화면에 낼 줄 목록. 파생 컬럼이 이미 보여 주는 것과 식별자는 뺀다.
+ *
+ * **라벨이 없는 키는 내지 않는다** — 원천 키 이름(`chkcreditcardleports`)을 그대로
+ * 라벨로 쓰면 안 보여 주느니만 못하다. 원천이 새 필드를 늘리면 여기 한 줄을 더한다.
+ */
+export function introRows(raw: string | null | undefined, lang: 'ko' | 'en'): IntroRow[] {
+  if (!raw) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];   // 원문이 깨져 있어도 화면은 살아야 한다
+  }
+  if (!parsed || typeof parsed !== 'object') return [];
+
+  const rows: IntroRow[] = [];
+  const used = new Set<string>();
+  for (const [key, rawValue] of Object.entries(parsed as Record<string, unknown>)) {
+    const value = String(rawValue ?? '').trim();
+    if (!value) continue;
+    const base = introBaseKey(key);
+    if (INTRO_SKIP.has(base)) continue;
+
+    // heritage1~3 은 지정 여부 플래그다 — 0 은 "아님" 이지 정보가 아니고, 1 이면 한 줄로 합친다
+    const concept = /^heritage\d$/.test(base) ? 'heritage' : base;
+    if (concept === 'heritage') {
+      if (value !== '1' || used.has('heritage')) continue;
+    }
+    const label = INTRO_LABELS[concept];
+    if (!label || used.has(concept)) continue;
+    used.add(concept);
+    rows.push({
+      key: concept,
+      label: lang === 'en' ? label.en : label.ko,
+      value: concept === 'heritage' ? (lang === 'en' ? 'Yes' : '지정') : value,
+    });
+  }
+  return rows;
+}

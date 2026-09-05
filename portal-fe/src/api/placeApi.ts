@@ -44,6 +44,12 @@ export interface Attraction {
   parkingFee?: string | null;
   infoCenter?: string | null;
   /**
+   * detailIntro2 응답 원문(JSON 문자열). 위 6개는 유형마다 다른 키를 서버가 하나로 모은 것이고,
+   * 나머지(체험안내·소요시간·대표메뉴·유모차·신용카드 …)는 여기에만 있다.
+   * 상세 화면이 이걸 펼쳐 **원천이 준 것을 다 보여준다**.
+   */
+  introRaw?: string | null;
+  /**
    * Google Places place_id — 구글맵 딥링크(`query_place_id=`)가 장소 카드에 착지하게 한다.
    * 점진 보강이라 없을 수 있다 — 없으면 주소/좌표 검색 링크로 폴백 (googleMapsSearchUrl).
    */

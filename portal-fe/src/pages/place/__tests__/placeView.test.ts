@@ -1,6 +1,16 @@
 import type { Attraction } from '../../../api/placeApi';
 import { describe, expect, it } from 'vitest';
-import { groupByCategory, isPlottable, mergePages, nextPage, titleParts } from '../placeView';
+import {
+  groupByCategory,
+  INTRO_DERIVED_CONCEPTS,
+  INTRO_LABELS,
+  introBaseKey,
+  introRows,
+  isPlottable,
+  mergePages,
+  nextPage,
+  titleParts,
+} from '../placeView';
 
 describe('nextPage — 무한 스크롤 페이지 전개', () => {
   it('다음 페이지가 있으면 +1', () => {
@@ -124,5 +134,80 @@ describe('isPlottable', () => {
     expect(isPlottable(null, 127)).toBe(false);
     expect(isPlottable(37.5, undefined)).toBe(false);
     expect(isPlottable(Number.NaN, 127)).toBe(false);
+  });
+});
+
+describe('introBaseKey', () => {
+  it('관광 타입 접미사를 떼어 개념 하나로 모은다', () => {
+    expect(introBaseKey('usetime')).toBe('usetime');
+    expect(introBaseKey('usetimeculture')).toBe('usetime');
+    expect(introBaseKey('usetimeleports')).toBe('usetime');
+    expect(introBaseKey('restdatefood')).toBe('restdate');
+    expect(introBaseKey('infocentershopping')).toBe('infocenter');
+  });
+
+  it('chk* 는 접미사가 개념의 일부다 — 떼면 안 된다', () => {
+    expect(introBaseKey('chkbabycarriage')).toBe('chkbabycarriage');
+    expect(introBaseKey('chkbabycarriageculture')).toBe('chkbabycarriage');
+    expect(introBaseKey('chkcreditcardleports')).toBe('chkcreditcard');
+  });
+});
+
+describe('introRows', () => {
+  // 원천에서 실제로 관측된 키들 (2026-09-05, 5개 타입 표본)
+  const RAW = JSON.stringify({
+    contentid: '2800664', contenttypeid: '12',
+    usetime: '09:00~18:00',            // 파생이 이미 보여 준다 → 중복 금지
+    restdateculture: '연중무휴',        // 〃
+    lcnsno: '20000199503',             // 내부 번호
+    heritage1: '0', heritage2: '1', heritage3: '0',
+    expguide: '동물/식물 생태 관찰 체험',
+    spendtime: '약 4시간',
+    chkcreditcardfood: '가능',
+    firstmenu: '삼계탕',
+    chkbabycarriageculture: '불가',
+    kidsfacility: '0',
+    unknownfuturefield: '무언가',       // 라벨 없는 새 필드
+  });
+
+  it('파생 컬럼이 보여 주는 개념에는 라벨을 달지 않는다 — 달면 같은 값이 두 줄로 나온다', () => {
+    const overlap = INTRO_DERIVED_CONCEPTS.filter((c) => c in INTRO_LABELS);
+    expect(overlap).toEqual([]);
+  });
+
+  it('파생이 보여 주는 것과 식별자는 빼고 나머지를 낸다', () => {
+    const keys = introRows(RAW, 'ko').map((r) => r.key);
+    expect(keys).not.toContain('usetime');
+    expect(keys).not.toContain('restdate');
+    expect(keys).not.toContain('contentid');
+    expect(keys).not.toContain('lcnsno');
+    expect(keys).toEqual(expect.arrayContaining(['expguide', 'spendtime', 'chkcreditcard']));
+  });
+
+  it('타입 접미사가 달라도 개념 하나로 합쳐 라벨을 붙인다', () => {
+    const row = introRows(RAW, 'ko').find((r) => r.key === 'chkbabycarriage');
+    expect(row?.label).toBe('유모차 대여');
+    expect(row?.value).toBe('불가');
+  });
+
+  it('heritage 는 지정된 것(1)만 한 줄로 — 0 은 정보가 아니다', () => {
+    const rows = introRows(RAW, 'ko').filter((r) => r.key === 'heritage');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].value).toBe('지정');
+    expect(introRows(JSON.stringify({ heritage1: '0' }), 'ko')).toHaveLength(0);
+  });
+
+  it('라벨 없는 새 필드는 내지 않는다 — 원천 키 이름을 라벨로 쓰면 안 보여주느니만 못하다', () => {
+    expect(introRows(RAW, 'ko').map((r) => r.key)).not.toContain('unknownfuturefield');
+  });
+
+  it('영문은 영문 라벨', () => {
+    expect(introRows(RAW, 'en').find((r) => r.key === 'spendtime')?.label).toBe('Time needed');
+  });
+
+  it('원문이 깨져 있거나 없으면 빈 목록 — 화면은 살아야 한다', () => {
+    expect(introRows('{not json', 'ko')).toEqual([]);
+    expect(introRows(null, 'ko')).toEqual([]);
+    expect(introRows(undefined, 'ko')).toEqual([]);
   });
 });
