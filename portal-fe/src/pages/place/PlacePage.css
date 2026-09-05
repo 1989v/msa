@@ -769,6 +769,13 @@
   line-height: 1.45;
 }
 
+/* 상세의 위치 지도 — 허브 지도(.place-map)와 같은 규격을 쓰되 높이만 본문에 맞춘다.
+   허브는 화면을 채우는 물건이고 여기서는 본문 안 한 블록이다. */
+.place-detail-map {
+  min-height: 16rem;
+  height: 16rem;
+}
+
 /* 이용 안내 — 이용시간·쉬는날·요금·주차·문의. 값이 없는 줄은 아예 안 그린다. */
 .place-detail-info {
   display: flex;

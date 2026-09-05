@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -22,21 +23,26 @@ import {
 import { useSeo } from '../../seo/useSeo';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
 import AttractionLinks from './AttractionLinks';
-import { googleMapsSearchUrl } from './googleMaps';
+import { googleMapsSearchUrl, loadGoogleMaps, mapsApiKey } from './googleMaps';
 import Footer from '../../components/Footer';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
-import { groupByCategory, isNotFoundError, titleParts } from './placeView';
+import { groupByCategory, isNotFoundError, isPlottable, titleParts } from './placeView';
 import './PlacePage.css';
 import AdSlot from '../../components/ads/AdSlot';
 import { ADSENSE_SLOTS } from '../../seo/copy.mjs';
 
 const UI = {
-  ko: { back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', info: '이용 안내', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
-  en: { back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', info: 'Visitor info', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
+  ko: { back: '← 관광지 탐색', nearby: '주변 명소', amenities: '주변 편의시설', info: '이용 안내', mapAria: '위치 지도', mapBadCoords: '원천 좌표가 정확하지 않아 지도를 표시하지 않습니다', mapKeyMissing: '지도 키가 설정되지 않아 위치 링크만 표시합니다', useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차', parkingFee: '주차요금', infoCenter: '문의', map: '구글 지도에서 보기', notFound: '관광지를 찾을 수 없습니다.', failed: '정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.', loading: '불러오는 중…' },
+  en: { back: '← Explore Korea', nearby: 'Nearby places', amenities: 'Nearby amenities', info: 'Visitor info', mapAria: 'Location map', mapBadCoords: 'Source coordinates look wrong, so the map is hidden.', mapKeyMissing: 'Map key is not configured — showing the link only.', useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking', parkingFee: 'Parking fee', infoCenter: 'Contact', map: 'Open in Google Maps', notFound: 'Attraction not found.', failed: 'Could not load this page. Please try again in a moment.', loading: 'Loading…' },
 } as const;
 
 /** 주변 검색 반경 — 명소 목록과 편의시설 캐로셀이 같은 값을 쓴다. */
 const NEARBY_RADIUS_KM = 5;
+/**
+ * 상세 지도의 줌. 허브에서 관광지를 고를 때와 같은 상한이다 (ADR-0071 §4) —
+ * 건물 단위까지 당기면 "이 근처가 어디인지" 라는 주변 감각이 사라진다.
+ */
+const DETAIL_ZOOM = 16;
 /**
  * 편의시설은 넉넉히 받아 **유형마다 몫을 잘라** 담는다.
  *
@@ -134,6 +140,47 @@ export default function AttractionPage() {
         { title: '', lang },
   );
 
+  /*
+   * 위치 지도. 허브(PlacePage)와 같은 로더·같은 폴백을 쓴다 — 키가 없으면 지도를 그리는 대신
+   * 안내 문구를 두고 "구글 지도에서 보기" 링크가 그 역할을 이어받는다 (data-sources.md §7).
+   *
+   * 관광지 하나만 보여주므로 클러스터러가 필요 없다. 좌표는 상세 응답에 이미 있어
+   * 지도 때문에 API 를 더 부르지 않는다.
+   */
+  const mapDivRef = useRef<HTMLDivElement | null>(null);
+  const [mapFailed, setMapFailed] = useState(false);
+  const hasMapKey = mapsApiKey() !== '';
+  const lat = attraction?.latitude;
+  const lng = attraction?.longitude;
+  // 원천이 한반도 밖 좌표를 주는 레코드가 있다 — 그대로 찍으면 바다에 핀이 선다
+  const plottable = isPlottable(lat, lng);
+
+  useEffect(() => {
+    if (!hasMapKey || !plottable || lat == null || lng == null) return;
+    let cancelled = false;
+    loadGoogleMaps()
+      .then((maps) => {
+        if (cancelled || !mapDivRef.current) return;
+        const map = new maps.Map(mapDivRef.current, {
+          center: { lat, lng },
+          zoom: DETAIL_ZOOM,
+          clickableIcons: false,
+          streetViewControl: false,
+          mapTypeControl: false,
+          fullscreenControl: false,
+        });
+        new maps.Marker({ map, position: { lat, lng }, title: attraction?.title });
+      })
+      .catch(() => {
+        if (!cancelled) setMapFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // 제목은 마커 툴팁일 뿐이라 바뀌어도 지도를 다시 그리지 않는다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasMapKey, plottable, lat, lng]);
+
   const others = (nearby?.attractions ?? []).filter((a) => a.id !== id).slice(0, 6);
   const amenities = groupByCategory(
     (nearbyAmenities?.attractions ?? []).filter((a) => a.id !== id),
@@ -211,6 +258,24 @@ export default function AttractionPage() {
                 </section>
               );
             })()}
+            {/* 지도 — 링크만으로는 "어디쯤인지" 를 이 화면에서 알 수 없다.
+                키가 없거나 로더가 실패하면 아래 링크가 그대로 그 역할을 한다. */}
+            {!plottable ? (
+              <div className="place-map place-detail-map place-map-placeholder">
+                {L.mapBadCoords}
+              </div>
+            ) : hasMapKey && !mapFailed ? (
+              <div
+                ref={mapDivRef}
+                className="place-map place-detail-map"
+                role="application"
+                aria-label={`${attraction.title} ${L.mapAria}`}
+              />
+            ) : (
+              <div className="place-map place-detail-map place-map-placeholder">
+                {L.mapKeyMissing}
+              </div>
+            )}
             <a
               className="place-btn"
               href={googleMapsSearchUrl(attraction)}

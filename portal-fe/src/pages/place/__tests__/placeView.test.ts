@@ -1,6 +1,6 @@
 import type { Attraction } from '../../../api/placeApi';
 import { describe, expect, it } from 'vitest';
-import { groupByCategory, mergePages, nextPage, titleParts } from '../placeView';
+import { groupByCategory, isPlottable, mergePages, nextPage, titleParts } from '../placeView';
 
 describe('nextPage — 무한 스크롤 페이지 전개', () => {
   it('다음 페이지가 있으면 +1', () => {
@@ -98,5 +98,31 @@ describe('groupByCategory', () => {
 
   it('빈 입력은 빈 결과 — 섹션 자체가 안 그려지는 근거가 된다', () => {
     expect(groupByCategory([], 6)).toEqual([]);
+  });
+});
+
+describe('isPlottable', () => {
+  it('원천이 준 한반도 밖 좌표를 거른다 — 실제 사례', () => {
+    // TourAPI 계남근린공원(2611568): 주소는 서울 양천구인데 좌표는 대만·필리핀 사이 바다
+    expect(isPlottable(19.69442748, 117.9925662504)).toBe(false);
+    // 같은 이름·같은 주소의 정상 레코드(3428372)
+    expect(isPlottable(37.5098751207, 126.8550905317)).toBe(true);
+  });
+
+  it('좌표 없음(0,0)도 거른다 — 아프리카 앞바다에 핀이 선다', () => {
+    expect(isPlottable(0, 0)).toBe(false);
+  });
+
+  it('극점은 통과시킨다 — 범위를 좁히면 진짜 관광지가 지도에서 사라진다', () => {
+    expect(isPlottable(33.06, 126.27)).toBe(true);   // 마라도
+    expect(isPlottable(37.24, 131.87)).toBe(true);   // 독도
+    expect(isPlottable(37.96, 124.61)).toBe(true);   // 백령도
+    expect(isPlottable(38.6, 128.4)).toBe(true);     // 고성
+  });
+
+  it('없거나 숫자가 아니면 거른다', () => {
+    expect(isPlottable(null, 127)).toBe(false);
+    expect(isPlottable(37.5, undefined)).toBe(false);
+    expect(isPlottable(Number.NaN, 127)).toBe(false);
   });
 });

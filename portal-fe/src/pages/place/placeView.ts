@@ -68,3 +68,23 @@ export function groupByCategory(items: Attraction[], perKind: number): Attractio
     .map((bucket) => bucket.slice(0, perKind))
     .flat();
 }
+
+/**
+ * 지도에 찍어도 되는 좌표인지.
+ *
+ * **원천이 틀린 좌표를 준다.** TourAPI 의 `계남근린공원`(contentId 2611568)은 주소가
+ * 서울 양천구인데 mapx/mapy 가 117.99 / 19.69 로 온다 — 대만·필리핀 사이 바다다.
+ * 같은 이름·같은 주소의 정상 레코드(3428372)가 따로 있는 중복이고, 원천에서 그렇게 준다.
+ * 2026-09-05 기준 59,735건 중 39건(0.065%)이 이 범위 밖이고 2건은 0,0 이다.
+ *
+ * **값은 지우지 않는다** — 원천이 준 것은 그대로 두고 노출에서만 거른다
+ * (data-sources.md §0 ②). 언젠가 원천이 고치면 그때부터 저절로 정상이 된다.
+ *
+ * 범위는 대한민국 극점 기준으로 조금 넉넉히: 남 마라도 33.06 · 북 고성 38.6 ·
+ * 서 백령도 124.61 · 동 독도 131.87.
+ */
+export function isPlottable(lat: number | null | undefined, lng: number | null | undefined): boolean {
+  if (lat == null || lng == null) return false;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  return lat >= 33.0 && lat <= 38.7 && lng >= 124.5 && lng <= 132.0;
+}
