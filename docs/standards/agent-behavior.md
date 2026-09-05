@@ -44,6 +44,12 @@
   2026-08-26 에 메인 레포의 pre-push 훅이 `core.hooksPath` 설정 때문에 무시되고 있었고,
   그 안의 서브모듈 포인터 가드(과거 CI 3회 실패로 만든 것)가 **정작 포인터를 올리는 레포에서
   안 돌고 있었다.** 장치가 있는 것과 켜져 있는 것은 다르다.
+- **Claude Code 훅은 `.claude/hooks/hns/` (ADR-0091, tier `enforce`).** `git commit` 전에 바뀐 파일이 속한 모듈만
+  `compileKotlin compileTestKotlin`(portal-fe 는 `tsc -b`)을 돌려 실패하면 커밋을 **거부**하고, 답을 끝낼 때 성공·완료 주장에
+  실행 명령과 결과 줄이 없으면 종료를 막는다. 세션 시작·컴팩션에서는 progress.md·결정·열린 질문을 다시 주입한다.
+  게이트가 막으면 컴파일을 고친다. `HNS_HOOK_TIER` 를 내리는 것은 사용자 결정이다. 새 클론에는 배선이 없으니 `/hns:setup-hooks enforce`.
+- **레포 밖 결정·함정은 볼트에 있다.** `HNS_KB_PATH`(옵시디언 `1989v`)를 `hns:kb` 가 읽기 전용으로 조회한다(`[[page]] (1989v, updated)` 인용,
+  레포 문서가 우선). 볼트에 쓰는 것은 `obsidian-organize` 스킬로만.
 
 ### Pre-Work Checklist (모든 코드 수정 전)
 1. Read `docs/specs/{feature}/context/key-decisions.md` (if exists)

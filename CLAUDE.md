@@ -93,6 +93,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **배포 안전장치**: Argo 동기화가 20분 넘게 `Running` 이면 워치독 CronJob 이 작업을 끊는다 + `ApplyOutOfSyncOnly` 로 변경분만 적용 → `docs/adr/ADR-0073-deploy-pipeline-guardrails.md`.
   **워치독은 Argo 가 배포하지 않는다** — 막힌 것을 푸는 물건을 막힌 것이 배포하면 같이 막힌다.
   `k8s/argocd/install.sh` 가 직접 apply 하므로, 워치독을 고치면 install.sh 를 다시 돌려야 반영된다
+- **에이전트 훅·지식베이스 (2026-09-05)**: `.claude/hooks/hns/` 가 세션 복구·컴팩션 보존·**커밋 전 바뀐 모듈 컴파일(실패 시 거부)**·완료 주장 증거 게이트를 건다(tier `enforce`, `.claude/hns-hooks.env`). 게이트가 막으면 컴파일을 고친다. 레포 밖 결정·함정은 `HNS_KB_PATH`(옵시디언 `1989v` 볼트)를 `hns:kb` 가 읽기 전용으로 조회한다 → `docs/adr/ADR-0091-agent-harness-hooks-kb.md`
 - **혜택 링크 허브**: `deal.1989v.com` — 카테고리별 혜택 링크 큐레이션 + 자체 리다이렉터 + 오퍼 검색 → `docs/adr/ADR-0069-deal-affiliate-hub.md`. **규제 업권(의료·금융)은 카테고리 행 자체를 만들지 않는다**(의료법 27조·금소법). 제휴 링크는 `AFFILIATE`/`PLAIN` 로 갈라 고지를 제휴에만 붙이고, `target_url` 은 **원본 무변조**로 302 한다 — 파라미터를 손대면 약관 위반이고 트래킹 쿠키가 깨진다. **2026-08-24 색인 개방** — thin affiliate 방어는 색인 차단이 아니라 `rel="sponsored nofollow"` + `/go/` 크롤 차단 + 검색 가능한 카탈로그가 한다. **URL 은 허브 하나뿐이다** — 오퍼 9건에서 분류·오퍼별 주소를 쪼개면 doorway page 가 되어 열려는 색인을 깎는다. 검색은 화면 상태라 주소를 만들지 않고, OpenSearch 가 아니라 저장소 질의다(응답 모양을 목록과 맞춰 뒀으니 커지면 구현만 바꾼다)
 - **랭킹 리더보드**: `rank.1989v.com` — 무엇이든 줄세우는 공통 엔진 + 도메인별 수집기 → `docs/adr/ADR-0081-ranking-leaderboard-platform.md`.
   **순위는 현재값이 아니라 스냅샷 원장**이다 — 등락("지난주 대비 ↑3")이 재방문의 거의 유일한
