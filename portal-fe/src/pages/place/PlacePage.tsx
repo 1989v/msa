@@ -33,7 +33,7 @@ import { escapeHtml } from 'card-dispenser';
 import Footer from '../../components/Footer';
 import ThemeToggle from '../../components/ThemeToggle';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
-import { mergePages, nextPage, titleParts } from './placeView';
+import { isPlottable, mergePages, nextPage, titleParts } from './placeView';
 import { useMediaQuery } from './useMediaQuery';
 import './PlacePage.css';
 import { useHeritageSurface } from '../../hooks/useHeritageSurface';
@@ -524,6 +524,10 @@ export default function PlacePage() {
     const bounds = new window.google.maps.LatLngBounds();
     const defaultIcon = defaultPinIcon();
     attractions.forEach((a) => {
+      // 원천이 한반도 밖 좌표를 주는 레코드가 있다 (39/59,735). 그냥 찍으면 핀이 바다에
+      // 서는 것으로 끝나지 않는다 — bounds.extend 가 그 점까지 품어 **지도 전체가
+      // 태평양까지 넓어진다.** 목록에는 남기고 지도에만 안 올린다.
+      if (!isPlottable(a.latitude, a.longitude)) return;
       // 선택된 곳은 **강조된 채로 태어난다** — 마커를 다시 만든 뒤 강조를 덧입히면
       // 그 사이 한 프레임 동안 선택이 사라지고, 강조 effect 가 다시 돌 이유도 없다.
       const isSelected = a.id === selectedIdRef.current;
