@@ -171,6 +171,21 @@
   min-height: 0;
 }
 
+/* 관광지 상세 전용 — 지도가 없으니 한 칸으로 쌓는다.
+   허브의 좌우 분할은 "지도를 보며 목록을 훑는" 화면을 위한 것이라 여기선 맞지 않는다.
+   내부 스크롤러(.place-detail / .place-list)도 푼다 — 페이지가 통째로 스크롤되어야
+   본문 → 주변 명소 → 주변 편의시설 순서로 읽힌다. */
+.place-body-stacked {
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+}
+
+.place-body-stacked .place-detail,
+.place-body-stacked .place-list {
+  overflow-y: visible;
+  max-height: none;
+}
+
 .place-body.has-detail {
   grid-template-columns: minmax(0, 20rem) minmax(0, 1fr) minmax(0, 20rem);
 }
@@ -427,7 +442,9 @@
   /* 상세 페이지의 .place-body 는 `22rem | 1fr` 그리드다. 지정하지 않으면 이 섹션이
      다음 행의 **첫 칸(22rem)** 에 떨어져 명소 목록(992px)의 3분의 1 폭이 된다.
      명소 아래에 같은 폭으로 붙어야 "명소의 나머지" 로 읽힌다. (1440px 실측: 352 → 992) */
-  .place-amenities {
+  /* 허브의 2열 그리드에서만 명소 열(2열) 아래로 보낸다.
+     상세 페이지는 한 칸이라(.place-body-stacked) 지정하면 없는 2열을 만들어 버린다. */
+  .place-body:not(.place-body-stacked) .place-amenities {
     grid-column: 2;
   }
 
@@ -472,7 +489,17 @@
   .place-body.has-detail,
   .place-body.list-collapsed,
   .place-body.list-collapsed.has-detail {
-    grid-template-columns: 1fr;
+    /* `1fr` 은 min-content 바닥을 갖는다 — 안에 안 줄어드는 자식이 하나 있으면 트랙이
+       그만큼 벌어지고, 모바일에서는 브라우저가 레이아웃 뷰포트를 넓혀 버린다.
+       390px 로 에뮬레이션해도 innerWidth 가 435 로 나와 「넘침 없음」 검사가 늘 통과했다
+       (둘이 같이 커지므로). minmax(0,·) 로 바닥을 없앤다. */
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 그리드 자식도 min-content 아래로 줄어들 수 있어야 한다 — 트랙만 고치면
+     자식이 여전히 밀어낸다. (2026-09-05 실측: .place-detail 419px → 뷰포트 435px) */
+  .place-body > * {
+    min-width: 0;
   }
 
   .place-map-wrap {
