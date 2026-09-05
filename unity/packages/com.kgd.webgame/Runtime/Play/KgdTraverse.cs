@@ -114,6 +114,13 @@ namespace Kgd.Play
             public bool Run, JumpDown, RollDown, GlideDown, LetGoDown;
 
             /// <summary>
+            /// 잡기 버튼을 이번 프레임에 눌렀나. 벽에 닿아 있으면 **미는 방향과 무관하게** 붙는다 —
+            /// 원래는 벽 쪽으로 미는 것만으로 붙었는데, 화면의 버튼 이름이 「잡기」라 사람은 그것을 누른다.
+            /// 눌러도 아무 일이 없으면 버튼이 고장 난 것으로 읽힌다(사용자 신고 2026-09-05).
+            /// </summary>
+            public bool GrabDown;
+
+            /// <summary>
             /// 모은 힘 0~1. <see cref="Tuning.ChargeTime"/> 이 켜진 게임만 쓴다 —
             /// JumpDown 이 서는 프레임(놓는 순간)의 값이 도약의 힘이다.
             /// 누르고 있는 동안 0 보다 크면 차지 자세(이동이 느려진다)로 취급한다.
@@ -374,11 +381,13 @@ namespace Kgd.Play
         private void TryGrab(float dt, in Wish wish, IKgdWall walls, IKgdGround ground)
         {
             _climbCool -= dt;
-            if (walls == null || _climbCool > 0f || Stamina.Empty || wish.Move.sqrMagnitude <= 0.01f)
+            // 잡기 버튼은 **미는 방향을 요구하지 않는다** — 벽에 닿아 있으면 그것으로 뜻이 분명하다
+            if (walls == null || _climbCool > 0f || Stamina.Empty ||
+                (wish.Move.sqrMagnitude <= 0.01f && !wish.GrabDown))
             { _pressing = 0f; return; }
 
             if (!walls.WallAt(Pos, _t.Radius + _t.ClimbReach, out float topY, out var inward) ||
-                Vector3.Dot(wish.Move, inward) <= 0.7f)
+                (!wish.GrabDown && Vector3.Dot(wish.Move, inward) <= 0.7f))
             { _pressing = 0f; return; }
 
             // **낮은 것은 오르는 것이 아니라 넘는 것이다.** 상자·드럼통에까지 매달리면
@@ -387,7 +396,7 @@ namespace Kgd.Play
 
             // 뛰어서 닿은 것은 그 자체로 뜻이 분명하다 — 길게 밀 것을 요구하지 않는다
             _pressing += dt;
-            if (_pressing < _t.ClimbIntent) return;
+            if (!wish.GrabDown && _pressing < _t.ClimbIntent) return;   // 버튼을 눌렀으면 즉시 붙는다
 
             _vel = Vector3.zero;
             ChargedAir = false;
@@ -544,7 +553,13 @@ namespace Kgd.Play
                     // 정해지지 않는다(받침을 둘 자리가 없다). **스치듯 닿은 것(작은 성분이 막힘)은 속도를 그대로 둔다** —
                     // 올라가며 옆 덩이의 모서리를 스친 몸의 조준(작은 성분)을 지우면 목표 옆으로 떨어진다(실제 놓침)
                     bool frontal = (hitX && Mathf.Abs(_vel.x) >= Mathf.Abs(_vel.z)) || (hitZ && Mathf.Abs(_vel.z) >= Mathf.Abs(_vel.x));
-                    if (frontal) { _vel.x = 0f; _vel.z = 0f; }
+                    // **올라가는 중에는 지우지 않는다.** 지우면 발판 옆면에 닿는 순간 수평 성분이 사라져
+                    // 그대로 수직으로 솟았다 미끄러져 내린다 — 바로 위 발판(수평 간격 1~2)을 노린 도약이
+                    // 통째로 막힌다(사용자 신고 2026-09-05: 「벽에 막힌 듯 수직으로 점프하고 미끄러짐」).
+                    // 속도를 남기면 몸은 면을 타고 올라가다 윗면을 넘는 순간 들어가 선다. 자리는 여전히
+                    // `CanEnter` 가 막으므로 면을 뚫지는 않는다. 못 넘는 높이면 떨어지기 시작하는 순간
+                    // 아래 규칙이 속도를 지워 밑동으로 떨어진다 — Only Up 의 「벽에 닿으면 탄다」 그대로다.
+                    if (frontal && _vel.y <= 0f) { _vel.x = 0f; _vel.z = 0f; }
                 }
 
                 // **천장.** 위로 가다 밑면에 닿으면 머리를 부딪히고 그 자리에서 떨어진다 — 단단한 발판
