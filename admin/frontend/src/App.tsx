@@ -11,6 +11,7 @@ import { OrdersPage } from '@/pages/OrdersPage';
 import { CodeDictionaryPage } from '@/pages/CodeDictionaryPage';
 import { GamesPage } from '@/pages/GamesPage';
 import { GameSuggestionsPage } from '@/pages/games/GameSuggestionsPage';
+import { PrivateGamesPage } from '@/pages/games/PrivateGamesPage';
 import { QuantAssetCatalogPage } from '@/pages/QuantAssetCatalogPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { SearchDebugPage } from '@/pages/SearchDebugPage';
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="code-dictionary" element={<CodeDictionaryPage />} />
         <Route path="games" element={<GamesPage />} />
         <Route path="games/suggestions" element={<GameSuggestionsPage />} />
+        <Route path="games/private" element={<PrivateGamesPage />} />
         <Route path="quant/assets" element={<QuantAssetCatalogPage />} />
         <Route path="resume" element={<ResumePage />} />
         <Route path="resume/profile" element={<ResumeProfilePage />} />

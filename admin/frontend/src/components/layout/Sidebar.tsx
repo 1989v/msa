@@ -25,6 +25,7 @@ import {
   FolderTree,
   UserCheck,
   MessageSquare,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -49,6 +50,8 @@ const navItems: NavItem[] = [
   { label: '이력서 경력데이터', icon: Briefcase, to: '/resume/profile', enabled: true },
   // ADR-0087 — 게임별 플레이어 개선 제안 처리
   { label: '게임 개선 제안', icon: MessageSquare, to: '/games/suggestions', enabled: true },
+  // 카탈로그에 없는 게임을 열어 줄 회원 지정 — 파일까지 막는 관문의 명단
+  { label: '비밀 게임 권한', icon: Lock, to: '/games/private', enabled: true },
   // ADR-0066 — 1989v.com 메인에 전시하는 서비스
   { label: '메인 전시', icon: LayoutGrid, to: '/display/services', enabled: true },
   // ADR-0069 — deal.1989v.com 혜택 링크 허브

@@ -1,0 +1,53 @@
+# 비밀 게임 — 파일까지 막는 관문.
+#
+# **카탈로그에서 빼는 것으로는 안 막힌다.** 게임 파일은 portal-fe 의 nginx 가 정적으로
+# 그대로 내주므로, 목록에 없어도 주소를 아는 사람은 wasm 까지 전부 받는다.
+# 그래서 경로 자체에 관문을 건다 — 요청마다 게이트웨이에 물어보고, 허용 명단(`game_private_access`)
+# 에 없는 계정은 파일 한 덩이도 못 받는다.
+#
+# **별도 Ingress 인 이유**: 인증 애너테이션은 Ingress 단위라 경로마다 다르게 걸 수 없다.
+# ingress-nginx 는 같은 host 의 규칙을 합치고 **더 긴 경로를 먼저** 매칭하므로,
+# `/games/deep-night` 만 이 관문을 지나고 나머지 `/` 는 commerce-proxied 가 그대로 받는다.
+#
+# 게임을 늘릴 때: 아래 `auth-url` 의 슬러그와 `path` 를 같이 바꾼 Ingress 를 하나 더 만든다.
+# 한 Ingress 에 두 게임을 담으면 관문이 한 슬러그만 물어보게 되어 다른 게임이 무료 통과한다.
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: private-game-deep-night
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # 요청마다 여기에 물어본다. 204 면 통과, 401/403 이면 막는다.
+    # 이 엔드포인트는 게이트웨이 인증 필터를 안 거치고 도메인 쿠키를 스스로 읽는다 —
+    # 브라우저가 .wasm 을 받을 때 Authorization 헤더를 붙일 방법이 없기 때문이다.
+    nginx.ingress.kubernetes.io/auth-url: >-
+      http://gateway.commerce.svc.cluster.local:8080/api/v1/games/private/deep-night/allow
+    # 로그인 안 한 사람은 로그인 화면으로. 로그인 진입점은 apex 한 곳뿐이다 (ADR-0079).
+    nginx.ingress.kubernetes.io/auth-signin: https://1989v.com/login
+    # 검색엔진에 남기지 않는다 — 주소가 색인되면 「비밀」의 뜻이 절반 사라진다
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Robots-Tag "noindex, nofollow, noarchive" always;
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - 1989v.com
+        - game.1989v.com
+      secretName: cf-origin-ca-tls
+  rules:
+    - host: 1989v.com
+      http:
+        paths:
+          - path: /games/deep-night
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }
+    - host: game.1989v.com
+      http:
+        paths:
+          - path: /games/deep-night
+            pathType: Prefix
+            backend: { service: { name: portal-fe, port: { name: http } } }

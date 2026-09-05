@@ -127,6 +127,26 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 > CI 주의: game 모듈 변경은 `code-dictionary` 이미지 리빌드로 이어져야 한다 —
 > `.github/workflows/images.yml` 의 `game/*` 경로 매핑 (ADR-0059 폴드).
 
+## 비밀 게임 (ADR-0089)
+
+**카탈로그에서 빼는 것으로는 안 막힌다.** 게임 파일은 카탈로그와 무관하게 portal-fe 의 nginx 가
+정적으로 내주므로, 목록에 없어도 주소를 아는 사람은 wasm 까지 그대로 받아 간다.
+
+그래서 게이트를 **경로 앞**에 세운다 — ingress `auth-url` 이 요청마다
+`GET /api/v1/games/private/{slug}/allow` 에 물어보고, 허용 명단(`game_private_access`)에 없는
+계정은 파일 한 덩이도 못 받는다. 명단은 어드민 `/admin/games/private` 에서 관리한다.
+
+- **이 엔드포인트만 쿠키를 직접 읽는다** — 브라우저가 `.wasm` 을 받을 때는 `Authorization`
+  헤더를 붙일 수 없어서, 신원을 들고 오는 것이 `portal_access_token` 도메인 쿠키뿐이다.
+  게이트웨이 라우트 `game-private-gate` 에 **필터를 안 건 이유**가 그것이고, 카탈로그
+  캐치올(`games/**`)보다 **먼저** 선언해야 가려지지 않는다
+- **게임마다 Ingress 를 따로 만든다** — 인증 애너테이션은 Ingress 단위라 한 장에 두 게임을
+  담으면 관문이 한 슬러그만 물어보고 다른 게임이 무료 통과한다
+- **robots.txt 에 적지 않는다** — 공개 파일이라 거기 쓰면 비밀 주소를 광고하게 된다
+- **명단이 비면 아무도 못 들어간다.** 그것이 안전한 기본값이다
+- 첫 사례는 `deep-night`(「깊은 밤」, 유니티 라인 5호) — 벤치마크작과 너무 닮아 공개 카탈로그에
+  올리지 않는다. 시드도 넣지 않는다(카탈로그 행이 있으면 목록·검색·사이트맵에 다 나타난다)
+
 ## Key Rules
 
 - 응답은 공통 `ApiResponse<T>` 포맷
@@ -222,8 +242,9 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 
 - ADR: `docs/adr/ADR-0059-game-platform.md`
 - ADR: `docs/adr/ADR-0087-game-improvement-suggestions.md` (개선 제안)
-- 유니티(WebGL) 제작 라인: `docs/standards/unity-game-pipeline.md` — **아직 파일럿 전이라
-  정식 선택지가 아니다.** 비2D 신작 후보가 생기면 그 문서 §0 표로 캔버스/유니티를 먼저 판정한다
+- 유니티(WebGL) 제작 라인: `docs/standards/unity-game-pipeline.md` — **파일럿을 통과해 정식
+  선택지다**(2026-08-28). 서빙 중인 유니티 게임 4종. 비2D 신작 후보가 생기면 그 문서 §0 표로
+  캔버스/유니티를 먼저 판정한다 — 3D 로 보이는 것만으로는 유니티가 아니다
 - 설계(엔티티/ads 페이즈 포함): `docs/specs/2026-07-06-game-platform-entities-design.md`
 - 시드: `game/feature/src/main/resources/gamedb/migration/V2__seed_internal_games.sql` (portal-fe 퀴즈 4종 등록 — **V76 에서 학습 축과 함께 제거**)
 

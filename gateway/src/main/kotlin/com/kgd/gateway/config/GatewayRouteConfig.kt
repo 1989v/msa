@@ -201,6 +201,15 @@ class GatewayRouteConfig(
             }
             // === ADR-0059 Game 플랫폼 (code-dictionary:app 에 폴드) ===
             // 인증 수준이 다른 3종을 분리하며, 좁은 경로를 먼저 선언해야 games/** 에 가려지지 않는다.
+            // 비밀 게임 관문 — **필터를 걸지 않는다.** 이 엔드포인트는 정적 파일 요청을 대신
+            // 판정하는 자리라 Authorization 헤더가 없고, 도메인 쿠키를 스스로 읽어 검증한다
+            // (브라우저가 .wasm 을 받을 때 붙일 수 있는 신원은 쿠키뿐이다).
+            // 카탈로그의 넓은 경로보다 **먼저** 선언해야 가려지지 않는다.
+            .route("game-private-gate") { r ->
+                r.path("/api/v1/games/private/*/allow")
+                    .filters { f -> f.stripPrefix(0) }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             .route("game-admin") { r ->
                 r.path("/api/v1/admin/games/**")
                     .filters { f ->

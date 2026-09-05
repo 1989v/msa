@@ -427,7 +427,7 @@ export default function GameDetailPage() {
             className="game-stage-frame"
             src={game.entryUrl}
             title={game.title}
-            allow="autoplay; fullscreen; gamepad"
+            allow="autoplay; fullscreen; gamepad; pointer-lock"
             sandbox="allow-scripts allow-same-origin allow-pointer-lock"
             style={stageFit.height ? { height: `${stageFit.height}px`, minHeight: 0 } : undefined}
           />

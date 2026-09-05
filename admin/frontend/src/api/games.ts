@@ -233,3 +233,39 @@ export async function replyToSuggestion(
   );
   return res.data.data;
 }
+
+// ── 비밀 게임 허용 명단 ───────────────────────────────────────────────────────
+
+export interface PrivateGameMember {
+  memberId: number;
+  note: string | null;
+  createdAt: string;
+}
+
+/**
+ * 비밀 게임은 **카탈로그에 없다.** 그래서 게임 목록에서 고를 수 없고 슬러그를 직접 적는다 —
+ * 목록에 넣으려면 카탈로그에 행을 만들어야 하는데, 그러면 「목록에 안 나오는 게임」이라는
+ * 전제가 깨진다.
+ */
+export async function listPrivateGameMembers(slug: string): Promise<PrivateGameMember[]> {
+  const res = await apiClient.get<ApiResponse<PrivateGameMember[]>>(
+    `${ADMIN_BASE}/private/${encodeURIComponent(slug)}/members`,
+  );
+  return res.data.data;
+}
+
+export async function grantPrivateGameAccess(
+  slug: string,
+  memberId: number,
+  note?: string,
+): Promise<PrivateGameMember> {
+  const res = await apiClient.post<ApiResponse<PrivateGameMember>>(
+    `${ADMIN_BASE}/private/${encodeURIComponent(slug)}/members`,
+    { memberId, note },
+  );
+  return res.data.data;
+}
+
+export async function revokePrivateGameAccess(slug: string, memberId: number): Promise<void> {
+  await apiClient.delete(`${ADMIN_BASE}/private/${encodeURIComponent(slug)}/members/${memberId}`);
+}
