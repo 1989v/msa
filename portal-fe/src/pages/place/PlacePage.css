@@ -186,6 +186,21 @@
   max-height: none;
 }
 
+/* 본문 안의 조작 요소는 **내용만큼만** 넓다. .place-detail 이 세로 flex 라 기본값(stretch)
+   으로 두면 찜 버튼·분류 칩·지도 버튼이 1360px 로 늘어난다 — 좁은 칸에 있을 때는
+   안 보이던 문제다. 지도만 예외로 전체 폭을 쓴다(넓을수록 쓸모 있는 유일한 요소). */
+.place-body-stacked .place-detail > .favorite-btn,
+.place-body-stacked .place-detail > .place-chip,
+.place-body-stacked .place-detail > .place-btn {
+  align-self: flex-start;
+}
+
+/* 읽는 글줄은 폭을 제한한다 — 1360px 한 줄은 눈이 다음 줄 첫 글자를 못 찾는다. */
+.place-body-stacked .place-detail-overview,
+.place-body-stacked .place-detail-info-list {
+  max-width: 60rem;
+}
+
 .place-body.has-detail {
   grid-template-columns: minmax(0, 20rem) minmax(0, 1fr) minmax(0, 20rem);
 }
@@ -442,6 +457,19 @@
   /* 상세 페이지의 .place-body 는 `22rem | 1fr` 그리드다. 지정하지 않으면 이 섹션이
      다음 행의 **첫 칸(22rem)** 에 떨어져 명소 목록(992px)의 3분의 1 폭이 된다.
      명소 아래에 같은 폭으로 붙어야 "명소의 나머지" 로 읽힌다. (1440px 실측: 352 → 992) */
+  /* 넓은 화면에서 주변 명소는 **카드 격자**다. 한 열로 두면 카드 하나가 1356px 가 되어
+     썸네일만 왼쪽에 붙고 오른쪽이 통째로 빈다. 편의시설 캐로셀(20rem)과 같은 눈금을 쓴다. */
+  .place-body-stacked .place-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    align-content: start;
+  }
+
+  /* 제목은 격자의 한 칸이 아니라 한 줄이다 — 안 그러면 첫 카드가 두 번째 칸부터 시작한다 */
+  .place-body-stacked .place-list > .place-subtitle {
+    grid-column: 1 / -1;
+  }
+
   /* 허브의 2열 그리드에서만 명소 열(2열) 아래로 보낸다.
      상세 페이지는 한 칸이라(.place-body-stacked) 지정하면 없는 2열을 만들어 버린다. */
   .place-body:not(.place-body-stacked) .place-amenities {
