@@ -1153,7 +1153,7 @@ export default function PlacePage() {
 
       {/* 출처 고지는 공통 푸터의 슬롯으로 — TourAPI(공공누리)·GeoNames(CC BY 4.0) 는
           출처표시 의무가 있다 (docs/architecture/data-sources.md §0). */}
-      <Footer>
+      <Footer lang={lang}>
         <p>
           {L.source} · GeoNames (CC BY 4.0)
         </p>
@@ -1174,7 +1174,7 @@ function AttractionDetailBody({ attraction, lang }: { attraction: Attraction; la
       <h2 className="place-detail-title">{primary}</h2>
       {secondary && <p className="place-detail-local">{secondary}</p>}
       {/* 찜 (ADR-0074) — 데스크톱 열·모바일 시트가 이 본문을 공유하므로 여기 한 번만 둔다 */}
-      <FavoriteButton type="ATTRACTION" targetKey={attraction.id} />
+      <FavoriteButton type="ATTRACTION" targetKey={attraction.id} lang={lang} />
       {attraction.category && (
         <span className="place-chip active">{L.categories[attraction.category] ?? attraction.category}</span>
       )}
@@ -1235,7 +1235,7 @@ function PlaceCard({
       )}
       {/* 찜 — 실주소 <a> 안에 앉지만 클릭은 버튼이 삼켜 카드 이동으로 번지지 않는다 (ADR-0074) */}
       <span className="place-card-favorite">
-        <FavoriteButton type="ATTRACTION" targetKey={attraction.id} compact />
+        <FavoriteButton type="ATTRACTION" targetKey={attraction.id} compact lang={lang} />
       </span>
       <div className="place-card-body">
         <h3 className="place-card-title">{primary}</h3>

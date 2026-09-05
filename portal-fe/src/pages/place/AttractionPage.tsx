@@ -231,7 +231,7 @@ export default function AttractionPage() {
               <p className="place-detail-local">{titleParts(attraction).secondary}</p>
             )}
             {/* 찜 (ADR-0074) — 로그인 전용, 게스트는 로그인으로 복귀 유도 */}
-            <FavoriteButton type="ATTRACTION" targetKey={attraction.id} />
+            <FavoriteButton type="ATTRACTION" targetKey={attraction.id} lang={lang} />
             {attraction.category && (
               <span className="place-chip active">{placeCategoryLabel(attraction.category, lang)}</span>
             )}
@@ -359,7 +359,7 @@ export default function AttractionPage() {
       <AdSlot slot={ADSENSE_SLOTS.attractionEnd} shape="horizontal" minHeight={90} />
 
       {/* 통합 푸터 + 출처표시 의무 슬롯 — 허브(PlacePage)와 동일 구성 (data-sources.md §0) */}
-      <Footer>
+      <Footer lang={lang}>
         <p>
           <a href={PLACE_ORIGIN}>{placeBrand(lang)}</a>
           {' · '}

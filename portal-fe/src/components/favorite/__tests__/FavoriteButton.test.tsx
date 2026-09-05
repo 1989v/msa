@@ -14,13 +14,16 @@ vi.mock('../../../api/wishlistApi', () => ({
 
 import { addFavorite, fetchFavoriteKeys, removeFavorite } from '../../../api/wishlistApi';
 
-function renderButton(targetKey = 'abyssal-crown') {
+function renderButton(targetKey = 'abyssal-crown', lang?: 'ko' | 'en') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={['/']}>
         <Routes>
-          <Route path="/" element={<FavoriteButton type="GAME" targetKey={targetKey} />} />
+          <Route
+            path="/"
+            element={<FavoriteButton type="GAME" targetKey={targetKey} lang={lang} />}
+          />
         </Routes>
       </MemoryRouter>
     </QueryClientProvider>,
@@ -106,5 +109,23 @@ describe('FavoriteButton (로그인)', () => {
     // 낙관적으로 꺼졌다가, 실패가 돌아오면 다시 켜진다
     await waitFor(() => expect(button).toHaveAttribute('aria-pressed', 'true'));
     expect(removeFavorite).toHaveBeenCalledWith('GAME', 'abyssal-crown');
+  });
+});
+
+describe('FavoriteButton 문구', () => {
+  beforeEach(() => {
+    vi.mocked(fetchFavoriteKeys).mockResolvedValue([]);
+  });
+
+  it('lang 을 안 넘기면 국문이다 — 영문 면은 place 뿐이라 나머지는 그대로 둔다', async () => {
+    renderButton('abyssal-crown');
+    expect(await screen.findByRole('button', { name: '게임 찜' })).toBeTruthy();
+  });
+
+  it('영문은 어순이 달라 문장을 따로 만든다 — 명사만 갈아끼우면 어색해진다', async () => {
+    renderButton('abyssal-crown', 'en');
+    const btn = await screen.findByRole('button', { name: 'Save game' });
+    expect(btn.textContent).toContain('Save');
+    expect(btn.textContent).not.toContain('찜');
   });
 });

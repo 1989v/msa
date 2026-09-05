@@ -15,7 +15,14 @@ import './Footer.css';
  * 라우터 밖(테스트 단독 렌더 포함)에서도 동작해야 하므로 Link 를 쓰지 않는다 —
  * 슬롯 내용은 각 화면이 자기 컨텍스트에 맞게 넣는다.
  */
-export default function Footer({ children }: { children?: ReactNode }) {
+/** 영문 면은 place 뿐이라(ADR-0065) 기본값은 국문이고, 그 화면만 lang 을 넘긴다. */
+export default function Footer({
+  children,
+  lang = 'ko',
+}: {
+  children?: ReactNode;
+  lang?: 'ko' | 'en';
+}) {
   const [explorerOpen, setExplorerOpen] = useState(false);
 
   return (
@@ -29,7 +36,7 @@ export default function Footer({ children }: { children?: ReactNode }) {
             aria-haspopup="dialog"
             onClick={() => setExplorerOpen(true)}
           >
-            서비스 탐색
+            {lang === 'en' ? 'Explore services' : '서비스 탐색'}
           </button>
         </div>
         {children && <div className="site-footer-slot">{children}</div>}

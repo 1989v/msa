@@ -220,7 +220,7 @@ export default function RegionPage() {
       )}
 
       {/* 통합 푸터 + 출처표시 의무 슬롯 — 허브(PlacePage)와 동일 구성 (data-sources.md §0) */}
-      <Footer>
+      <Footer lang={lang}>
         <p>
           <a href={PLACE_ORIGIN}>{placeBrand(lang)}</a>
           {' · '}

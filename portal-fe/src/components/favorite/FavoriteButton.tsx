@@ -5,11 +5,37 @@ import './Favorite.css';
 import { buildLoginHref } from '../../auth/auth';
 
 
-const LABELS: Record<FavoriteTargetType, string> = {
-  PRODUCT: '상품 찜',
-  GAME: '게임 찜',
-  ATTRACTION: '관광지 찜',
-  BLOG_POST: '글 찜',
+/**
+ * 문구는 화면 언어를 따른다. **영문 면은 place 뿐**이라(ADR-0065) 나머지 호출자는
+ * lang 을 넘기지 않고 국문 기본값을 쓴다 — 안 쓰는 곳까지 인자를 강제하지 않는다.
+ */
+export type FavoriteLang = 'ko' | 'en';
+
+/** 대상을 부르는 말. 접근성 이름은 이것을 각 언어의 어순으로 조립한다. */
+const NOUNS: Record<FavoriteLang, Record<FavoriteTargetType, string>> = {
+  ko: { PRODUCT: '상품', GAME: '게임', ATTRACTION: '관광지', BLOG_POST: '글' },
+  en: { PRODUCT: 'product', GAME: 'game', ATTRACTION: 'place', BLOG_POST: 'post' },
+};
+
+/**
+ * 언어마다 어순이 다르다 — 「명사 + 동작」(ko) 과 「동작 + 명사」(en).
+ * 한 틀에 명사만 끼우면 한쪽이 어색해지므로 언어별로 문장을 만든다.
+ */
+const UI: Record<FavoriteLang, {
+  label: (noun: string) => string;
+  undoLabel: (noun: string) => string;
+  on: string; off: string; title: string; undoTitle: string;
+}> = {
+  ko: {
+    label: (n) => `${n} 찜`,
+    undoLabel: (n) => `${n} 찜 해제`,
+    on: '찜함', off: '찜', title: '찜하기', undoTitle: '찜 해제',
+  },
+  en: {
+    label: (n) => `Save ${n}`,
+    undoLabel: (n) => `Remove ${n} from saved`,
+    on: 'Saved', off: 'Save', title: 'Save', undoTitle: 'Remove from saved',
+  },
 };
 
 /**
@@ -23,11 +49,14 @@ export default function FavoriteButton({
   type,
   targetKey,
   compact = false,
+  lang = 'ko',
 }: {
   type: FavoriteTargetType;
   targetKey: string;
   compact?: boolean;
+  lang?: FavoriteLang;
 }) {
+  const L = UI[lang];
   const { loggedIn, isFavorite, toggle } = useFavorites(type);
   const active = loggedIn && isFavorite(targetKey);
 
@@ -48,14 +77,14 @@ export default function FavoriteButton({
       type="button"
       className={`favorite-btn${compact ? ' is-compact' : ''}${active ? ' is-on' : ''}`}
       aria-pressed={active}
-      aria-label={active ? `${LABELS[type]} 해제` : LABELS[type]}
-      title={active ? '찜 해제' : '찜하기'}
+      aria-label={active ? L.undoLabel(NOUNS[lang][type]) : L.label(NOUNS[lang][type])}
+      title={active ? L.undoTitle : L.title}
       onClick={handleClick}
     >
       <span className="favorite-btn__heart" aria-hidden="true">
         {active ? '♥' : '♡'}
       </span>
-      {!compact && <span className="favorite-btn__label">{active ? '찜함' : '찜'}</span>}
+      {!compact && <span className="favorite-btn__label">{active ? L.on : L.off}</span>}
     </button>
   );
 }
