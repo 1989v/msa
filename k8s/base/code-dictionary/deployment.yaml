@@ -34,6 +34,11 @@ spec:
             - name: AES_KEY
               valueFrom:
                 secretKeyRef: { name: platform-aes, key: secret, optional: true }
+            # 비밀 게임 접근 판정이 auth 가 발급한 JWT 를 검증한다 — auth·gateway 와 같은 키여야 한다.
+            # optional 인 이유는 AES_KEY 와 같다(시크릿 생성 전에 파드가 못 뜨는 순서 의존을 만들지 않는다).
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: platform-jwt, key: secret, optional: true }
             - name: OPENSEARCH_URIS
               value: "http://opensearch:9200"
             # ADR-0059 — 폴드된 game 도메인: 전용 스키마(game_db) + 세션 이벤트 발행

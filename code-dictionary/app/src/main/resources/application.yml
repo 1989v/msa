@@ -114,3 +114,16 @@ management:
 encryption:
   aes-key: ${AES_KEY:default-aes-key-exactly-32bytes!}
 
+# 비밀 게임 접근 판정(ADR-0089)이 토큰의 주체를 읽는다 — auth 가 발급한 JWT 를 검증하므로
+# **auth·gateway 와 같은 키여야 한다**. 폴드된 game 의 JwtTokenIdentityAdapter 가 JwtUtil 을 주입받고,
+# 그 빈은 아래 스위치가 켜져야 생긴다 — 없으면 컨텍스트가 아예 안 뜬다(기동 실패).
+jwt:
+  secret: ${JWT_SECRET:default-dev-secret-key-32-chars-long!}
+
+kgd:
+  common:
+    security:
+      enabled: true
+      # AesUtil 은 SaveCipher 가 직접 만든다 — 자동설정이 하나 더 만들 이유가 없다
+      aes-enabled: false
+
