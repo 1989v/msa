@@ -64,12 +64,8 @@ export function useDispenser<T>({ items, render, onChange, onActivate, minCards,
       pullScale: coarse ? 0.32 : 0.1,
       // 터치 기기는 라이트 모드 — 먼 카드의 요소를 셋으로 줄인다
       lite: coarse,
-      // 지나가는 카드가 올라왔다 내려가는 물결. 판이 0.66배로 줄어드는 폭에서도 보이게 기본값보다 크고 넓게 잡는다
-      // (18px·2.4칸이면 화면에서 12px·네 장이라 티가 안 났다). card-dispenser 0.2.0 부터는 이 값이 기본값이다
-      peek: 32,
-      peekSpread: 4,
-      // 판을 눕혀 본다 — 26도는 위에서 내려다보는 느낌이 강해 카드 얼굴이 눌려 보였다 (0.2.0 부터는 이 값이 기본값)
-      tilt: 18,
+      // 물결(peek 46 · 4칸 · 곡선 4)과 보는 각(18도)은 이 판을 보며 고른 값이고, card-dispenser 0.3.0 의
+      // 기본값이 곧 그 값이라 여기서 다시 넘기지 않는다. 값을 바꾸려면 라이브러리의 튜너에서 골라 판올림한다
       // 세로로 끌면 보는 각이 바뀐다. 터치에서는 끈다 — 세로 제스처는 페이지 스크롤의 몫이다
       tiltDrag: !coarse,
       render: (item, i) => renderRef.current(item, i),
