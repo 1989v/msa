@@ -1,0 +1,17 @@
+[project]
+name = "kgd-embed"
+version = "0.1.0"
+description = "1989v.com 통합 검색 — 서버 밖 임베딩 도구 (임베딩 텍스트 규칙 · 모델 스펙 · bake-off · 업서트)"
+requires-python = ">=3.11"
+dependencies = ["requests>=2.31", "numpy>=1.26", "pyyaml>=6.0"]
+
+[project.optional-dependencies]
+# 모델을 실제로 돌리는 쪽(로컬 GPU · Colab)만 무거운 의존을 받는다. push/probe 는 기본 의존으로 충분하다.
+model = ["sentence-transformers>=3.0", "torch>=2.2", "pandas>=2.2", "pyarrow>=15", "huggingface_hub>=0.25"]
+test = ["pytest>=8.0"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

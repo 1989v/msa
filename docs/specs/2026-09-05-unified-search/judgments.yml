@@ -1,0 +1,489 @@
+# 통합 검색 판정 세트 v0 (2026-09-05) — 검사의 근거는 검사 밖에 있어야 한다. grade 는 사람이 적는다.
+# grade: 3 = 정확히 원하던 것 · 2 = 관련 · 1 = 약하게 관련 · 0 = 무관 · null = 미판정.
+# candidates 는 2026-09-05 운영 /api/search/attractions 의 BM25 상위 10 (lang 별). 벡터 후보는 bake-off 노트북이
+# `vector_candidates` 로 덧붙인다. 판정이 없는 질의는 nDCG 계산에서 빠진다(자동으로 정답을 만들지 않는다).
+version: 0
+created: 2026-09-05
+source_api: https://api.1989v.com/api/search/attractions
+grades: {3: 정확, 2: 관련, 1: 약함, 0: 무관}
+queries:
+  - query: "궁궐"
+    lang: ko
+    intent: "조선 궁궐(경복궁·창덕궁·덕수궁·창경궁·경희궁). 핸드오프 §4 — 유사어 줄 없으면 0건이던 질의"
+    from: handoff-s4
+    bm25_total: 190
+    candidates:
+      - {id: "8654", title: "창경궁", category: "history", address: "서울특별시 종로구 창경궁로 185 (와룡동)", grade: null}
+      - {id: "1", title: "경복궁", category: "history", address: "서울특별시 종로구 사직로 161 (세종로)", grade: null}
+      - {id: "5201", title: "덕수궁", category: "history", address: "서울특별시 중구 세종대로 99 (정동)", grade: null}
+      - {id: "7861", title: "경희궁", category: "history", address: "서울특별시 종로구 새문안로 45", grade: null}
+      - {id: "12992", title: "경희궁 흥화문", category: "history", address: "서울특별시 종로구 새문안로 55 (신문로2가)", grade: null}
+      - {id: "7884", title: "창경궁 명정전", category: "history", address: "서울특별시 종로구 창경궁로 185 (와룡동)", grade: null}
+      - {id: "12987", title: "창경궁 홍화문", category: "history", address: "서울특별시 종로구 창경궁로 185 (와룡동)", grade: null}
+      - {id: "12989", title: "창덕궁 인정문", category: "history", address: "서울특별시 종로구 율곡로 99", grade: null}
+      - {id: "13327", title: "덕수궁 돌담길", category: "culture", address: "서울특별시 중구 세종대로 지하 101", grade: null}
+      - {id: "8217", title: "창덕궁 다래나무", category: "nature", address: "서울특별시 종로구 율곡로 99", grade: null}
+  - query: "한옥"
+    lang: ko
+    intent: "한옥마을·한옥 문화 공간. 식당(한옥 생고기 류)은 무관. 핸드오프 §4"
+    from: handoff-s4
+    bm25_total: 312
+    candidates:
+      - {id: "114", title: "북촌한옥마을", category: "history", address: "서울특별시 종로구 계동길 37 (계동)", grade: null}
+      - {id: "4691", title: "오성한옥마을", category: "history", address: "전북특별자치도 완주군 소양면 송광수만로 472-23", grade: null}
+      - {id: "15805", title: "한옥글방", category: "culture", address: "전남광주통합특별시 순천시 금곡길 28 (행동)", grade: null}
+      - {id: "16458", title: "전주 한옥 마을 역사관", category: "culture", address: "전북특별자치도 전주시 완산구 최명희길 17-10 (풍남동3가)", grade: null}
+      - {id: "50", title: "은평한옥마을", category: "history", address: "서울특별시 은평구 연서로50길 7-10 (진관동)", grade: null}
+      - {id: "2824", title: "송도 한옥마을", category: "history", address: "인천광역시 연수구 테크노파크로 180", grade: null}
+      - {id: "5803", title: "논산한옥마을", category: "history", address: "충청남도 논산시 연산면 임3길 2", grade: null}
+      - {id: "10937", title: "남산골한옥마을", category: "history", address: "서울특별시 중구 퇴계로34길 28 (필동2가)", grade: null}
+      - {id: "7535", title: "익선동 한옥거리", category: "culture", address: "서울특별시 종로구 익선동", grade: null}
+      - {id: "10118", title: "경기광주 한옥마을", category: "history", address: "경기도 광주시 새오개길 39 (목현동)", grade: null}
+  - query: "해수욕장"
+    lang: ko
+    intent: "해변·해수욕장(nature). 핸드오프 §4 정상 케이스"
+    from: handoff-s4
+    bm25_total: 1422
+    candidates:
+      - {id: "7179", title: "사천해변", category: "nature", address: "강원특별자치도 강릉시 사천면 해안로 877", grade: null}
+      - {id: "10862", title: "애견전용해수욕장 멍비치", category: "nature", address: "강원특별자치도 양양군 현남면 광진리 78-20", grade: null}
+      - {id: "616", title: "일산해수욕장", category: "nature", address: "울산광역시 동구 해수욕장10길 18 (일산동)", grade: null}
+      - {id: "859", title: "초곡해수욕장", category: "nature", address: "강원특별자치도 삼척시 근덕면 초곡2길", grade: null}
+      - {id: "1158", title: "구룡포해수욕장", category: "nature", address: "경상북도 포항시 남구 구룡포읍 호미로426번길 6", grade: null}
+      - {id: "2994", title: "춘장대해수욕장", category: "nature", address: "충청남도 서천군 서면 춘장대길 20", grade: null}
+      - {id: "3063", title: "광안리해수욕장", category: "nature", address: "부산광역시 수영구 광안해변로 219 (광안동)", grade: null}
+      - {id: "3424", title: "대광해수욕장", category: "nature", address: "전남광주통합특별시 신안군 임자면 광산리", grade: null}
+      - {id: "3703", title: "신흥해수욕장", category: "nature", address: "전남광주통합특별시 완도군 청산면 신흥리", grade: null}
+      - {id: "4479", title: "변산해수욕장", category: "nature", address: "전북특별자치도 부안군 변산면 대항리 603", grade: null}
+  - query: "경복궁"
+    lang: ko
+    intent: "경복궁 본체가 1위. 상호에 지명이 든 상점은 0~1. 핸드오프 §4"
+    from: handoff-s4
+    bm25_total: 212
+    candidates:
+      - {id: "1", title: "경복궁", category: "history", address: "서울특별시 종로구 사직로 161 (세종로)", grade: null}
+      - {id: "9640", title: "한복남 경복궁점", category: "culture", address: "서울특별시 종로구 사직로 133-5", grade: null}
+      - {id: "5201", title: "덕수궁", category: "history", address: "서울특별시 중구 세종대로 99 (정동)", grade: null}
+      - {id: "5484", title: "궁집", category: "history", address: "경기도 남양주시 평내로 9 (평내동)", grade: null}
+      - {id: "7861", title: "경희궁", category: "history", address: "서울특별시 종로구 새문안로 45", grade: null}
+      - {id: "8654", title: "창경궁", category: "history", address: "서울특별시 종로구 창경궁로 185 (와룡동)", grade: null}
+      - {id: "8031", title: "용흥궁", category: "history", address: "인천광역시 강화군 강화읍 동문안길21번길 16-1", grade: null}
+      - {id: "77", title: "서울 운현궁", category: "history", address: "서울특별시 종로구 삼일대로 464", grade: null}
+      - {id: "12992", title: "경희궁 흥화문", category: "history", address: "서울특별시 종로구 새문안로 55 (신문로2가)", grade: null}
+      - {id: "10038", title: "경희궁공원", category: "nature", address: "서울특별시 종로구 새문안로 55 (신문로2가)", grade: null}
+  - query: "바다가 보이는 곳"
+    lang: ko
+    intent: "해변·전망대·해안 산책로. 선착장·여객선은 0"
+    from: intent-v0
+    bm25_total: 10000  # max_result_window 상한
+    candidates:
+      - {id: "19968", title: "연화도선착장", category: "leisure", address: "경상남도 통영시 욕지면 본촌길 (욕지면)", grade: null}
+      - {id: "2515", title: "마라도가는여객선", category: "leisure", address: "제주특별자치도 서귀포시 대정읍 송악관광로 424", grade: null}
+      - {id: "21063", title: "폭포가있는캠핑장", category: "leisure", address: "강원특별자치도 인제군 북면 미시령로 1312", grade: null}
+      - {id: "11081", title: "증평 장이익어가는마을", category: "culture", address: "충청북도 증평군 증평읍 송티로 76-12", grade: null}
+      - {id: "19217", title: "바다다이브", category: "leisure", address: "제주특별자치도 서귀포시 동홍로12번길 5 (서귀동)", grade: null}
+      - {id: "17159", title: "가가책방", category: "culture", address: "충청남도 공주시 당간지주길 10 (반죽동) (반죽동)", grade: null}
+      - {id: "12905", title: "이순신바다공원", category: "nature", address: "경상남도 남해군 고현면 남해대로3883번길 100", grade: null}
+      - {id: "13418", title: "달빛곳간", category: "leisure", address: "전북특별자치도 임실군 삼계면 세심길 26", grade: null}
+      - {id: "5175", title: "그림같은 수목원", category: "nature", address: "충청남도 홍성군 광천읍 충서로400번길 102-36", grade: null}
+      - {id: "6829", title: "원대리 자작나무 숲", category: "nature", address: "강원특별자치도 인제군 인제읍 자작나무숲길 760 안내소~자작나무숲", grade: null}
+  - query: "아이와 갈만한 곳"
+    lang: ko
+    intent: "테마파크·체험관·공원·동물원. 상호 속 '아이' 는 0"
+    from: intent-v0
+    bm25_total: 10000  # max_result_window 상한
+    candidates:
+      - {id: "13316", title: "와글아이", category: "leisure", address: "경기도 고양시 일산동구 중앙로 1205 (장항동)", grade: null}
+      - {id: "15671", title: "아이와즈", category: "culture", address: "전남광주통합특별시 광산구 상완길 71 (수완동)", grade: null}
+      - {id: "18453", title: "유앤아이센터", category: "leisure", address: "경기도 화성시 태안로 145 (병점동)", grade: null}
+      - {id: "1550", title: "한림항", category: "nature", address: "제주특별자치도 제주시 한림읍 한림해안로 192", grade: null}
+      - {id: "6202", title: "아이아이 연남", category: "leisure", address: "서울특별시 마포구 연남로 86 (연남동)", grade: null}
+      - {id: "1313", title: "속천항", category: "nature", address: "경상남도 창원시 진해구 진희로 36", grade: null}
+      - {id: "4184", title: "당목항", category: "nature", address: "전남광주통합특별시 완도군 약산면 당목길 135", grade: null}
+      - {id: "4269", title: "쉬미항", category: "nature", address: "전남광주통합특별시 진도군 진도읍 산월리", grade: null}
+      - {id: "7770", title: "개목항", category: "nature", address: "충청남도 태안군 소원면 의항리", grade: null}
+      - {id: "9669", title: "석천항", category: "nature", address: "경기도 화성시 우정읍 매향리", grade: null}
+  - query: "조용한 사찰"
+    lang: ko
+    intent: "산사·고찰. 사찰음식 체험관·공원은 0~1"
+    from: intent-v0
+    bm25_total: 10000  # max_result_window 상한
+    candidates:
+      - {id: "937", title: "꽃절", category: "history", address: "충청북도 음성군 원남면 보덕로 330", grade: null}
+      - {id: "9058", title: "온수도시자연공원", category: "nature", address: "서울특별시 구로구 고척로21나길 103 (개봉동)", grade: null}
+      - {id: "5627", title: "한국사찰음식문화체험관", category: "leisure", address: "서울특별시 종로구 율곡로 39 (안국동)", grade: null}
+      - {id: "1550", title: "한림항", category: "nature", address: "제주특별자치도 제주시 한림읍 한림해안로 192", grade: null}
+      - {id: "8043", title: "전통술 박물관 산사원", category: "culture", address: "경기도 포천시 화현면 화동로432번길 25", grade: null}
+      - {id: "1313", title: "속천항", category: "nature", address: "경상남도 창원시 진해구 진희로 36", grade: null}
+      - {id: "4184", title: "당목항", category: "nature", address: "전남광주통합특별시 완도군 약산면 당목길 135", grade: null}
+      - {id: "4269", title: "쉬미항", category: "nature", address: "전남광주통합특별시 진도군 진도읍 산월리", grade: null}
+      - {id: "7770", title: "개목항", category: "nature", address: "충청남도 태안군 소원면 의항리", grade: null}
+      - {id: "9669", title: "석천항", category: "nature", address: "경기도 화성시 우정읍 매향리", grade: null}
+  - query: "야경 명소"
+    lang: ko
+    intent: "야경 전망·다리·누리길. '가야경' 같은 부분 문자열은 0"
+    from: intent-v0
+    bm25_total: 1542
+    candidates:
+      - {id: "6199", title: "달빛야경누리길", category: "culture", address: "울산광역시 중구 성안동 542", grade: null}
+      - {id: "20312", title: "가야경 오토캠핑장", category: "leisure", address: "경상북도 성주군 가천면 동신로 209", grade: null}
+      - {id: "11785", title: "횟집명소거리", category: "culture", address: "강원특별자치도 동해시 일출로 151 (묵호진동)", grade: null}
+      - {id: "9152", title: "음악분수 휴게광장", category: "culture", address: "경상남도 통영시 도남동", grade: null}
+      - {id: "4079", title: "소호동동다리", category: "culture", address: "전남광주통합특별시 여수시 소호로 392 (소호동)", grade: null}
+      - {id: "3037", title: "세병호", category: "nature", address: "전북특별자치도 전주시 덕진구 세병로 177-44 (송천동2가)", grade: null}
+      - {id: "4569", title: "달맞이근린공원", category: "culture", address: "서울특별시 성동구 금호동4가 산27", grade: null}
+      - {id: "6132", title: "용두암해안도로", category: "nature", address: "제주특별자치도 제주시 서해안로 687-8 (용담이동)", grade: null}
+      - {id: "3066", title: "더베이101", category: "culture", address: "부산광역시 해운대구 동백로 52 (우동)", grade: null}
+      - {id: "6773", title: "유호리전망대", category: "culture", address: "경상남도 거제시 장목면 거제북로 2327", grade: null}
+  - query: "벚꽃 명소"
+    lang: ko
+    intent: "벚꽃길·벚꽃 축제 장소"
+    from: intent-v0
+    bm25_total: 2825
+    candidates:
+      - {id: "11444", title: "남면 벚꽃길", category: "nature", address: "충청남도 태안군 남면 달산포로 311", grade: null}
+      - {id: "5304", title: "왕지벚꽃길", category: "nature", address: "경상남도 남해군 설천면 노량리 37-2", grade: null}
+      - {id: "5501", title: "개금벚꽃길", category: "nature", address: "부산광역시 부산진구 개금동 765", grade: null}
+      - {id: "6675", title: "북한강로 벚꽃길", category: "nature", address: "경기도 가평군 청평면 삼회리", grade: null}
+      - {id: "7207", title: "맹방 벚꽃길", category: "nature", address: "강원특별자치도 삼척시 근덕면 상맹방리", grade: null}
+      - {id: "7414", title: "진해 벚꽃공원", category: "culture", address: "경상남도 창원시 진해구 장천동 175-1", grade: null}
+      - {id: "7563", title: "무심천 벚꽃 거리", category: "nature", address: "충청북도 청주시 서원구 무심천자전거길 550 (사직동)", grade: null}
+      - {id: "7801", title: "가실벚꽃길", category: "culture", address: "경기도 용인시 처인구 포곡읍 가실리 190-14", grade: null}
+      - {id: "8019", title: "백리벚꽃길", category: "nature", address: "경상남도 합천군 용주면 가호리", grade: null}
+      - {id: "3374", title: "화양면 벚꽃길", category: "nature", address: "전남광주통합특별시 여수시 화양면 장수리", grade: null}
+  - query: "단풍 명소"
+    lang: ko
+    intent: "단풍 산·숲·군락지"
+    from: intent-v0
+    bm25_total: 1678
+    candidates:
+      - {id: "7589", title: "철암단풍군락지", category: "nature", address: "강원특별자치도 태백시 철암동 산 64-1", grade: null}
+      - {id: "13248", title: "내장산 단풍생태공원", category: "nature", address: "전북특별자치도 정읍시 내장동 560", grade: null}
+      - {id: "21301", title: "용인단풍숲캠핑장", category: "leisure", address: "경기도 용인시 처인구 원삼면 보개원삼로1462번길 14-23", grade: null}
+      - {id: "17889", title: "독립기념관단풍나무숲길", category: "culture", address: "충청남도 천안시 동남구 목천읍 독립기념관로 1", grade: null}
+      - {id: "11785", title: "횟집명소거리", category: "culture", address: "강원특별자치도 동해시 일출로 151 (묵호진동)", grade: null}
+      - {id: "1411", title: "정읍 내장산 관광특구", category: "nature", address: "전북특별자치도 정읍시 내장동", grade: null}
+      - {id: "9968", title: "단양 보발재", category: "nature", address: "충청북도 단양군 가곡면", grade: null}
+      - {id: "8434", title: "광교마루길", category: "nature", address: "경기도 수원시 장안구 하광교동 400-10", grade: null}
+      - {id: "4538", title: "우화정", category: "nature", address: "전북특별자치도 정읍시 내장동 598-7", grade: null}
+      - {id: "18571", title: "송정제방길", category: "leisure", address: "서울특별시 성동구 송정동", grade: null}
+  - query: "온천"
+    lang: ko
+    intent: "온천·스파(온천수)"
+    from: intent-v0
+    bm25_total: 335
+    candidates:
+      - {id: "3593", title: "담양리조트 온천", category: "leisure", address: "전남광주통합특별시 담양군 금성면 금성산성길 202", grade: null}
+      - {id: "4548", title: "필례 게르마늄 온천", category: "leisure", address: "강원특별자치도 인제군 인제읍 필례약수길 72", grade: null}
+      - {id: "5990", title: "온양 온천 랜드", category: "leisure", address: "충청남도 아산시 삼동로28번길 46 (모종동)", grade: null}
+      - {id: "11302", title: "아산시 온천 관광특구", category: "nature", address: "충청남도 아산시 음봉면 신수리 일원", grade: null}
+      - {id: "665", title: "발리온천", category: "leisure", address: "울산광역시 울주군 온양읍 상발2길 34", grade: null}
+      - {id: "10553", title: "예천온천", category: "leisure", address: "경상북도 예천군 감천면 온천길 27 (감천면)", grade: null}
+      - {id: "2848", title: "휴온천", category: "leisure", address: "경상북도 칠곡군 동명면 기성5길 11-10", grade: null}
+      - {id: "5613", title: "정관온천", category: "leisure", address: "부산광역시 기장군 정관읍 정관8로 16-5", grade: null}
+      - {id: "7903", title: "북수원온천", category: "leisure", address: "경기도 수원시 장안구 서부로 2139 (율전동) 8, 9층", grade: null}
+      - {id: "11332", title: "금강온천", category: "leisure", address: "충청남도 공주시 고마나루길 51-12 (웅진동)", grade: null}
+  - query: "캠핑장"
+    lang: ko
+    intent: "캠핑장·오토캠핑장(수련원은 1)"
+    from: intent-v0
+    bm25_total: 1671
+    candidates:
+      - {id: "911", title: "피노키오청소년수련원", category: "nature", address: "강원특별자치도 원주시 신림면 소야1길 72", grade: null}
+      - {id: "20433", title: "트윈스캠핑장", category: "leisure", address: "충청남도 아산시 도고면 도고면로 117", grade: null}
+      - {id: "20860", title: "대충캠핑장", category: "leisure", address: "경상남도 고성군 대가면 유흥갈천길 240", grade: null}
+      - {id: "20922", title: "선야봉캠핑장", category: "leisure", address: "전북특별자치도 완주군 운주면 금고당로 727", grade: null}
+      - {id: "20972", title: "호반캠핑장", category: "leisure", address: "경상남도 밀양시 산내면 발례1길 103-8", grade: null}
+      - {id: "20976", title: "해밀캠핑장", category: "leisure", address: "전북특별자치도 무주군 안성면 덕산로 112-7", grade: null}
+      - {id: "21016", title: "곤달비캠핑장", category: "leisure", address: "경상북도 경주시 산내면 하신길 58-31", grade: null}
+      - {id: "21288", title: "난지캠핑장", category: "leisure", address: "서울특별시 마포구 한강난지로 28 (상암동)", grade: null}
+      - {id: "21511", title: "수덕캠핑장", category: "leisure", address: "충청남도 예산군 덕산면 노곡길 15", grade: null}
+      - {id: "21604", title: "용봉산캠핑장", category: "leisure", address: "충청남도 홍성군 홍북읍 이응노로 227-13", grade: null}
+  - query: "케이블카"
+    lang: ko
+    intent: "케이블카 탑승지"
+    from: intent-v0
+    bm25_total: 327
+    candidates:
+      - {id: "36", title: "남산케이블카", category: "leisure", address: "서울특별시 중구 소파로 83", grade: null}
+      - {id: "2531", title: "하동케이블카", category: "leisure", address: "경상남도 하동군 경충로 461-7", grade: null}
+      - {id: "4519", title: "통영케이블카", category: "leisure", address: "경상남도 통영시 발개로 205 (도남동)", grade: null}
+      - {id: "5286", title: "거제케이블카", category: "nature", address: "경상남도 거제시 거제중앙로 288", grade: null}
+      - {id: "869", title: "설악산 케이블카", category: "leisure", address: "강원특별자치도 속초시 설악산로 1085 (설악동)", grade: null}
+      - {id: "2530", title: "금오산케이블카", category: "leisure", address: "경상북도 구미시 금오산로 419", grade: null}
+      - {id: "3697", title: "두륜산케이블카", category: "leisure", address: "전남광주통합특별시 해남군 삼산면 대흥사길 88-45", grade: null}
+      - {id: "4004", title: "여수 해상케이블카", category: "leisure", address: "전남광주통합특별시 여수시 돌산읍 돌산로 3600-1 (돌산읍)", grade: null}
+      - {id: "6224", title: "왕피천케이블카", category: "leisure", address: "경상북도 울진군 근남면 왕피천공원길 1", grade: null}
+      - {id: "348", title: "팔공산 케이블카", category: "leisure", address: "대구광역시 동구 팔공산로185길 51", grade: null}
+  - query: "등산 코스"
+    lang: ko
+    intent: "산·등산로·둘레길. 승마클럽·자전거길은 0"
+    from: intent-v0
+    bm25_total: 2040
+    candidates:
+      - {id: "7658", title: "현등산", category: "nature", address: "경기도 가평군 조종면 운악리", grade: null}
+      - {id: "19015", title: "어등산승마클럽", category: "leisure", address: "전남광주통합특별시 광산구 고봉로185번길 50 (산정동)", grade: null}
+      - {id: "13275", title: "의암호자전거길", category: "nature", address: "강원특별자치도 춘천시 동면 공단로 104", grade: null}
+      - {id: "5007", title: "[종로둘레길 3코스] 낙산 코스", category: "culture", address: "서울특별시 종로구 종로6가 70", grade: null}
+      - {id: "19737", title: "[서울둘레길 5코스] 아차산코스", category: "leisure", address: "서울특별시 중랑구 면목동 (깔딱고개 쉼터~광나루역)", grade: null}
+      - {id: "5974", title: "[서울둘레길 10코스] 우면산코스", category: "culture", address: "서울특별시 서초구 양재동 (매헌시민의숲 (양재시민의숲역)~사당역 갈림길)", grade: null}
+      - {id: "5964", title: "[서울둘레길 16코스] 봉산·앵봉산코스", category: "culture", address: "서울특별시 은평구 증산로5길 2 (증산동, 인우아파트) (증산역~구파발역)", grade: null}
+      - {id: "5966", title: "[서울둘레길 20코스] 북한산 강북코스", category: "culture", address: "서울특별시 강북구 화계사길 68 (수유동) (화계사 입구~북한산우이역)", grade: null}
+      - {id: "5968", title: "[서울둘레길 17코스] 북한산 은평코스", category: "culture", address: "서울특별시 은평구 진관2로 29-21 (진관동) (구파발역~북한산생태공원)", grade: null}
+      - {id: "5969", title: "[서울둘레길 19코스] 북한산 성북코스", category: "culture", address: "서울특별시 종로구 평창동 (형제봉 입구~화계사 입구)", grade: null}
+  - query: "야시장"
+    lang: ko
+    intent: "야시장·밤 시장. 공원·랜드는 0"
+    from: intent-v0
+    bm25_total: 1623
+    candidates:
+      - {id: "11799", title: "서문풍물야시장&서문시장삼겹살거리", category: "culture", address: "충청북도 청주시 상당구 무심동로392번길 18 (서문동)", grade: null}
+      - {id: "7574", title: "가야공원", category: "nature", address: "부산광역시 부산진구 엄광로 118 (가야동)", grade: null}
+      - {id: "9642", title: "가야랜드", category: "nature", address: "경상남도 김해시 인제로 368 (삼방동)", grade: null}
+      - {id: "10146", title: "가야진사", category: "history", address: "경상남도 양산시 원동면 용당들길 43-62", grade: null}
+      - {id: "5762", title: "파주가야랜드", category: "leisure", address: "경기도 파주시 법원읍 사임당로 674", grade: null}
+      - {id: "10301", title: "비와야폭포", category: "nature", address: "강원특별자치도 태백시 양지길 25 (장성동)", grade: null}
+      - {id: "16742", title: "국립가야역사문화센터", category: "culture", address: "경상남도 김해시 대청로 45 (관동동)", grade: null}
+      - {id: "5255", title: "김해가야테마파크", category: "culture", address: "경상남도 김해시 가야테마길 161 (어방동)", grade: null}
+      - {id: "20284", title: "산호야관광농원", category: "leisure", address: "경상북도 구미시 옥성면 선상서로 797", grade: null}
+      - {id: "20763", title: "바다야놀자", category: "leisure", address: "충청남도 보령시 하학로 800", grade: null}
+  - query: "전통시장 먹거리"
+    lang: ko
+    intent: "전통시장·먹거리촌"
+    from: intent-v0
+    bm25_total: 3059
+    candidates:
+      - {id: "9427", title: "평촌먹거리촌", category: "culture", address: "경기도 안양시 동안구 평촌동", grade: null}
+      - {id: "6299", title: "오대산먹거리마을", category: "culture", address: "강원특별자치도 평창군 진부면 오대산로 152", grade: null}
+      - {id: "11793", title: "행주산성먹거리촌", category: "culture", address: "경기도 고양시 덕양구 행주로15번길 89", grade: null}
+      - {id: "11960", title: "우이령 숲속문화마을", category: "culture", address: "서울특별시 강북구 삼양로181길 202 (우이동)", grade: null}
+      - {id: "508", title: "금정산성마을 먹거리촌", category: "culture", address: "부산광역시 금정구 금성동", grade: null}
+      - {id: "6018", title: "인하대후문먹거리타운", category: "culture", address: "인천광역시 미추홀구 경인남길30번길 45-1 (용현동)", grade: null}
+      - {id: "10074", title: "보문숲머리먹거리촌", category: "culture", address: "경상북도 경주시 보문동 (보문동)", grade: null}
+      - {id: "12383", title: "들안길먹거리타운", category: "culture", address: "대구광역시 수성구 들안로 109-1 (상동) 일대", grade: null}
+      - {id: "7931", title: "먹점마을", category: "culture", address: "경상남도 하동군 하동읍 매화골먹점길 186", grade: null}
+      - {id: "910", title: "꺼먹다리", category: "history", address: "강원특별자치도 화천군 화천읍 평화로 685", grade: null}
+  - query: "서울 근교 드라이브"
+    lang: ko
+    intent: "수도권 근교 드라이브 코스·해안도로. 포항·영덕 등 원거리는 1 이하"
+    from: intent-v0
+    bm25_total: 8177
+    candidates:
+      - {id: "9228", title: "포항 해안드라이브", category: "nature", address: "경상북도 포항시 북구 해안로 226 (두호동)", grade: null}
+      - {id: "21815", title: "호명산드라이브코스", category: "leisure", address: "경기도 가평군 청평면 호반로 9", grade: null}
+      - {id: "8493", title: "영덕 해안도로 드라이브", category: "nature", address: "경상북도 영덕군 영덕읍 창포리", grade: null}
+      - {id: "6504", title: "한우산 드라이브코스", category: "nature", address: "경상남도 의령군 대의면 신전리", grade: null}
+      - {id: "1242", title: "입곡 저수지 드라이브길", category: "nature", address: "경상남도 함안군 산인면 입곡공원길 225", grade: null}
+      - {id: "77", title: "서울 운현궁", category: "history", address: "서울특별시 종로구 삼일대로 464", grade: null}
+      - {id: "6223", title: "서울 연산군묘", category: "history", address: "서울특별시 도봉구 방학로17길 46 (방학동)", grade: null}
+      - {id: "7240", title: "서울 정동교회", category: "history", address: "서울특별시 중구 정동길 46 (정동)", grade: null}
+      - {id: "7450", title: "서울 효창공원", category: "culture", address: "서울특별시 용산구 효창원로 177-18 (효창동)", grade: null}
+      - {id: "7961", title: "서울 경모궁지", category: "history", address: "서울특별시 종로구 창경궁로 202-1 (연건동)", grade: null}
+  - query: "비 오는 날 갈만한 곳"
+    lang: ko
+    intent: "실내 시설(박물관·아쿠아리움·워터파크·카페거리). '비응항' 은 0"
+    from: intent-v0
+    bm25_total: 10000  # max_result_window 상한
+    candidates:
+      - {id: "6341", title: "비응항", category: "nature", address: "전북특별자치도 군산시 비응도동 91", grade: null}
+      - {id: "127", title: "파크하비오 워터킹덤&스파", category: "nature", address: "서울특별시 송파구 송파대로 111 (문정동, 파크하비오)", grade: null}
+      - {id: "2886", title: "생각하는 정원", category: "nature", address: "제주특별자치도 제주시 한경면 녹차분재로 675 (한경면)", grade: null}
+      - {id: "9812", title: "예종대왕태실 및 비", category: "history", address: "전북특별자치도 전주시 완산구 태조로 44 (풍남동3가)", grade: null}
+      - {id: "4190", title: "와온공원", category: "culture", address: "전남광주통합특별시 순천시 해룡면 상내리", grade: null}
+      - {id: "4222", title: "와온항", category: "nature", address: "전남광주통합특별시 순천시 해룡면 상내리 614-5", grade: null}
+      - {id: "17939", title: "KBS온", category: "culture", address: "서울특별시 영등포구 여의공원로 13 (여의도동)", grade: null}
+      - {id: "1550", title: "한림항", category: "nature", address: "제주특별자치도 제주시 한림읍 한림해안로 192", grade: null}
+      - {id: "1288", title: "남해척화비", category: "culture", address: "경상남도 남해군 설천면 노량로183번길 27", grade: null}
+      - {id: "15439", title: "GB가빈아트홀", category: "culture", address: "서울특별시 강남구 삼성로 534 (삼성동)", grade: null}
+  - query: "실내 놀거리"
+    lang: ko
+    intent: "실내 체험·아이스링크·카트장·키즈카페"
+    from: intent-v0
+    bm25_total: 3500
+    candidates:
+      - {id: "19977", title: "여성문화회관 수영장", category: "leisure", address: "인천광역시 부평구 길주로 539 (갈산동)", grade: null}
+      - {id: "21774", title: "목동아이스링크", category: "leisure", address: "서울특별시 양천구 안양천로 939 (목동)", grade: null}
+      - {id: "19668", title: "러쉬 실내 카트장", category: "leisure", address: "전북특별자치도 전주시 완산구 전주객사3길 72 (고사동) CGV고사점 1층", grade: null}
+      - {id: "1575", title: "노리매공원", category: "nature", address: "제주특별자치도 서귀포시 대정읍 중산간서로 2260-15", grade: null}
+      - {id: "18958", title: "광주실내빙상장", category: "leisure", address: "전남광주통합특별시 서구 금화로 278 (풍암동)", grade: null}
+      - {id: "19510", title: "청주실내빙상장", category: "leisure", address: "충청북도 청주시 청원구 밀레니엄1로 45 (사천동)", grade: null}
+      - {id: "18959", title: "염주실내수영장", category: "leisure", address: "전남광주통합특별시 서구 금화로 278 (풍암동)", grade: null}
+      - {id: "19509", title: "증평실내수영장", category: "leisure", address: "충청북도 증평군 증평읍 인삼로 23-1 1층", grade: null}
+      - {id: "19563", title: "청주실내수영장", category: "leisure", address: "충청북도 청주시 서원구 흥덕로 61 (사직동)", grade: null}
+      - {id: "19633", title: "창원실내수영장", category: "culture", address: "경상남도 창원시 성산구 원이대로 450 (중앙동)", grade: null}
+  - query: "미술관"
+    lang: ko
+    intent: "미술관·갤러리"
+    from: intent-v0
+    bm25_total: 824
+    candidates:
+      - {id: "15243", title: "전원미술관", category: "culture", address: "인천광역시 강화군 송해면 강화대로766번길 27", grade: null}
+      - {id: "15403", title: "교동미술관", category: "culture", address: "전북특별자치도 전주시 완산구 경기전길 89", grade: null}
+      - {id: "15518", title: "우리미술관", category: "culture", address: "인천광역시 제물포구 화도진로198번길 6 (만석동)", grade: null}
+      - {id: "15613", title: "우제길미술관", category: "culture", address: "전남광주통합특별시 동구 의재로 140-6", grade: null}
+      - {id: "15658", title: "이강하미술관", category: "culture", address: "전남광주통합특별시 남구 3·1만세운동길 6 (양림동)", grade: null}
+      - {id: "15791", title: "여수미술관", category: "culture", address: "전남광주통합특별시 여수시 도원로 263-1   2층", grade: null}
+      - {id: "15956", title: "전혁림 미술관", category: "culture", address: "경상남도 통영시 봉수1길 10", grade: null}
+      - {id: "16012", title: "엄미술관", category: "culture", address: "경기도 화성시 봉담읍 오궁길 37", grade: null}
+      - {id: "16280", title: "홍천미술관", category: "culture", address: "강원특별자치도 홍천군 홍천읍 희망로 55", grade: null}
+      - {id: "16286", title: "사비나미술관", category: "culture", address: "서울특별시 은평구 진관1로 93 (진관동)", grade: null}
+  - query: "한복 대여"
+    lang: ko
+    intent: "한복 대여·체험 매장 — 여기서는 상점이 정답"
+    from: intent-v0
+    bm25_total: 307
+    candidates:
+      - {id: "16393", title: "강릉 한복 문화 창작소", category: "culture", address: "강원특별자치도 강릉시 동부시장3길 9 (옥천동)", grade: null}
+      - {id: "4292", title: "한복입고 유유자적", category: "culture", address: "전남광주통합특별시 영암군 군서면 돌정고개길 11", grade: null}
+      - {id: "6294", title: "한복남 전주한옥마을점", category: "culture", address: "전북특별자치도 전주시 완산구 태조로 21 (교동)", grade: null}
+      - {id: "22060", title: "알파인스키보드 대여점", category: "leisure", address: "전북특별자치도 무주군 설천면 만선로 6", grade: null}
+      - {id: "702", title: "비녀랑 한복이랑", category: "leisure", address: "세종특별자치시 조치원읍 안터길 107", grade: null}
+      - {id: "5490", title: "한복남 프리미엄점", category: "culture", address: "서울특별시 종로구 사직로 133-9 (적선동)", grade: null}
+      - {id: "5486", title: "한복남 북촌점", category: "culture", address: "서울특별시 종로구 북촌로 35-4 (가회동) 지하 1층", grade: null}
+      - {id: "5487", title: "한복남 창덕궁점", category: "culture", address: "서울특별시 종로구 돈화문로 86-1 (와룡동) 1층", grade: null}
+      - {id: "16197", title: "한국한복진흥원", category: "culture", address: "경상북도 상주시 함창읍 무운로 1591", grade: null}
+      - {id: "9640", title: "한복남 경복궁점", category: "culture", address: "서울특별시 종로구 사직로 133-5", grade: null}
+  - query: "드라마 촬영지"
+    lang: ko
+    intent: "드라마·영화 촬영 세트장"
+    from: intent-v0
+    bm25_total: 10000  # max_result_window 상한
+    candidates:
+      - {id: "4068", title: "봄의 왈츠 드라마 촬영지", category: "leisure", address: "전남광주통합특별시 완도군 청산면 청산로 136", grade: null}
+      - {id: "4531", title: "해양드라마세트장", category: "leisure", address: "경상남도 창원시 마산합포구 구산면 석곡리 산183-2", grade: null}
+      - {id: "3305", title: "순천 드라마촬영장", category: "culture", address: "전남광주통합특별시 순천시 비례골길 24 (조례동)", grade: null}
+      - {id: "17396", title: "[K드라마 촬영지] 공근혜갤러리", category: "culture", address: "서울특별시 종로구 삼청로7길 38", grade: null}
+      - {id: "4110", title: "서편제 촬영지", category: "leisure", address: "전남광주통합특별시 완도군 청산면", grade: null}
+      - {id: "4417", title: "자산어보 촬영지", category: "culture", address: "전남광주통합특별시 신안군 도초면 발매리 1366", grade: null}
+      - {id: "5455", title: "섬마을선생촬영지", category: "leisure", address: "인천광역시 옹진군 자월면 대이작로 422-22", grade: null}
+      - {id: "11988", title: "태양의 후예 촬영지", category: "leisure", address: "강원특별자치도 태백시 통골길 116-52", grade: null}
+      - {id: "887", title: "웰컴투동막골촬영지", category: "leisure", address: "강원특별자치도 평창군 미탄면 동막골길 122", grade: null}
+      - {id: "6672", title: "낭만닥터김사부촬영지", category: "leisure", address: "경기도 포천시 영북면 산정호수로 771", grade: null}
+  - query: "일출 명소"
+    lang: ko
+    intent: "일출 전망지(해안·산). 상호 속 '일출' 은 0~1"
+    from: intent-v0
+    bm25_total: 1575
+    candidates:
+      - {id: "10540", title: "일출선원", category: "history", address: "경상북도 포항시 남구 동해면 정동길 551-74", grade: null}
+      - {id: "1551", title: "일출랜드", category: "nature", address: "제주특별자치도 서귀포시 성산읍 중산간동로 4150-30", grade: null}
+      - {id: "6874", title: "일출공원", category: "culture", address: "강원특별자치도 동해시 해맞이길 289 (묵호진동)", grade: null}
+      - {id: "5311", title: "일출봉유채밭", category: "nature", address: "제주특별자치도 서귀포시 성산읍 성산리 397", grade: null}
+      - {id: "1166", title: "석포일출일몰전망대", category: "culture", address: "경상북도 울릉군 북면 천부리", grade: null}
+      - {id: "5260", title: "성주산일출전망대", category: "culture", address: "충청남도 보령시 성주면 성주리 산37-2", grade: null}
+      - {id: "1579", title: "성산일출봉 [유네스코 세계자연유산]", category: "nature", address: "제주특별자치도 서귀포시 성산읍 일출로 284-12", grade: null}
+      - {id: "11785", title: "횟집명소거리", category: "culture", address: "강원특별자치도 동해시 일출로 151 (묵호진동)", grade: null}
+      - {id: "4387", title: "맴섬", category: "nature", address: "전남광주통합특별시 해남군 송지면 땅끝마을길 111", grade: null}
+      - {id: "10209", title: "장길리 복합 낚시공원", category: "nature", address: "경상북도 포항시 남구 구룡포읍 동해안로 4376-28", grade: null}
+  - query: "섬 여행"
+    lang: ko
+    intent: "섬·도서 관광지"
+    from: intent-v0
+    bm25_total: 2113
+    candidates:
+      - {id: "4081", title: "예술의 섬 장도", category: "culture", address: "전남광주통합특별시 여수시 웅천동", grade: null}
+      - {id: "4283", title: "배알도 섬 정원", category: "nature", address: "전남광주통합특별시 광양시 태인동 산1", grade: null}
+      - {id: "5550", title: "빛의 섬 루미버스", category: "culture", address: "제주특별자치도 서귀포시 표선면 민속해안로 631-34", grade: null}
+      - {id: "15416", title: "곤충테마여행", category: "culture", address: "경기도 포천시 가산면 시우동2길 44-5", grade: null}
+      - {id: "4116", title: "제월섬", category: "nature", address: "전남광주통합특별시 곡성군 입면 제월리 1115", grade: null}
+      - {id: "4387", title: "맴섬", category: "nature", address: "전남광주통합특별시 해남군 송지면 땅끝마을길 111", grade: null}
+      - {id: "5167", title: "남이섬", category: "culture", address: "강원특별자치도 춘천시 남이섬길 1 남이섬", grade: null}
+      - {id: "7326", title: "돝섬", category: "nature", address: "경상남도 창원시 마산합포구 돝섬2길 58 (월영동)", grade: null}
+      - {id: "7345", title: "미르섬", category: "culture", address: "충청남도 공주시 금벽로 368 (신관동)", grade: null}
+      - {id: "10374", title: "솔섬", category: "nature", address: "경상남도 하동군 금남면 중평해안길 202", grade: null}
+  - query: "palace in seoul"
+    lang: en
+    intent: "Joseon palaces in Seoul (Gyeongbokgung, Changdeokgung, Deoksugung, Changgyeonggung, Gyeonghuigung)"
+    from: intent-v0
+    bm25_total: 8977
+    candidates:
+      - {id: "21", title: "Gyeongbokgung Palace", category: "history", address: "161 Sajik-ro, Jongno-gu, Seoul", grade: null}
+      - {id: "13816", title: "Deoksugung Palace", category: "history", address: "99 Sejong-daero, Jung-gu, Seoul", grade: null}
+      - {id: "13865", title: "Changgyeonggung Palace", category: "history", address: "185 Changgyeonggung-ro, Jongno-gu, Seoul", grade: null}
+      - {id: "15140", title: "Yongheunggung Palace", category: "history", address: "16-1, Dongmunan-gil 21beon-gil, Ganghwa-gun, Incheon", grade: null}
+      - {id: "14190", title: "Temporary Palace at Hwaseong Fortress (Hwaseong Haenggung Palace)", category: "history", address: "825 Jeongjo-ro, Paldal-gu, Suwon-si, Gyeonggi-do", grade: null}
+      - {id: "13517", title: "Napory Farm in Tongyeong", category: "leisure", address: "152 Mireuksan-gil, Sanyang-eup, Tongyeong-si, Gyeongsangnam-do", grade: null}
+      - {id: "22290", title: "The Kart in Tongyeong", category: "leisure", address: "147 Dosanilju-ro, Dosan-myeon, Tongyeong-si, Gyeongsangnam-do", grade: null}
+      - {id: "14396", title: "Gyeonghuigung Palace", category: "history", address: "45 Saemunan-ro, Jongno-gu, Seoul", grade: null}
+      - {id: "2040", title: "Earthen Fortification in Jeongbuk-dong", category: "history", address: "353-2 Jeongbuk-dong, Cheongwon-gu, Cheongju-si, Chungcheongbuk-do 353-2", grade: null}
+      - {id: "14731", title: "Hackberry Tree in Bukbu-ri", category: "nature", address: "102-1 Bukbu-ri, Uichang-gu, Changwon-si, Gyeongsangnam-do", grade: null}
+  - query: "beach near busan"
+    lang: en
+    intent: "beaches in/near Busan (Haeundae, Gwangalli, Songjeong, Songdo)"
+    from: intent-v0
+    bm25_total: 1625
+    candidates:
+      - {id: "14426", title: "Busan Songdo Beach", category: "nature", address: "100 Songdohaebyeon-ro, Seo-gu, Busan", grade: null}
+      - {id: "1677", title: "Geojampo Beach", category: "nature", address: "11, Jamjindo-gil, Yeongjong-gu, Incheon", grade: null}
+      - {id: "1679", title: "Wangsan Beach", category: "nature", address: "Eulwang-dong, Yeongjong-gu, Incheon", grade: null}
+      - {id: "1846", title: "Haeundae Beach", category: "nature", address: "264 Haeundaehaebyeon-ro, Haeundae-gu, Busan", grade: null}
+      - {id: "1892", title: "Jinha Beach", category: "nature", address: "Jinhari, Seosaeng-myeon, Ulju-gun, Ulsan", grade: null}
+      - {id: "1999", title: "Hajodae Beach", category: "nature", address: "35 Hajodaehaean-gil, Yangyang-gun, Gangwon-do", grade: null}
+      - {id: "2009", title: "Daejin Beach", category: "nature", address: "46 Daejinhang-gil, Donghae-si, Gangwon-do", grade: null}
+      - {id: "2090", title: "Unyeo Beach", category: "nature", address: "535-57 Jangsampo-ro, Gonam-myeon, Taean-gun, Chungcheongnam-do", grade: null}
+      - {id: "2107", title: "Kkotji Beach", category: "nature", address: "Seungeon-ri, Taean-gun, Chungcheongnam-do", grade: null}
+      - {id: "2122", title: "Muchangpo Beach", category: "nature", address: "10 Yeollinbada 1-gil, Boryeong-si, Chungcheongnam-do", grade: null}
+  - query: "quiet temple"
+    lang: en
+    intent: "Buddhist temples, mountain temples"
+    from: intent-v0
+    bm25_total: 355
+    candidates:
+      - {id: "1809", title: "Mugaksa Temple", category: "history", address: "230, Uncheon-ro, Seo-gu, Jeonnam-Gwangju Special Metropolitan City", grade: null}
+      - {id: "2020", title: "Gamchusa Temple", category: "history", address: "120 Haean-ro, Donghae-si, Gangwon-do", grade: null}
+      - {id: "2069", title: "Gujeolsa Temple", category: "history", address: "226, Sangjung-gil, Gunseo-myeon, Okcheon-gun, Chungcheongbuk-do", grade: null}
+      - {id: "2129", title: "Gakwonsa Temple", category: "history", address: "245 Gagwonsa-gil, Dongnam-gu, Cheonan-si, Chungcheongnam-do", grade: null}
+      - {id: "2287", title: "Unjusa Temple", category: "history", address: "91-44, Cheontae-ro, Hwasun-gun, Jeonnam-Gwangju Special Metropolitan City", grade: null}
+      - {id: "2294", title: "Mihwangsa Temple", category: "history", address: "164 Mihwangsa-gil, Haenam-gun, Jeonnam-Gwangju Special Metropolitan City", grade: null}
+      - {id: "2295", title: "Taeansa Temple", category: "history", address: "622-215, Taean-ro, Jukgok-myeon, Gokseong-gun, Jeonnam-Gwangju Special Metropolitan City", grade: null}
+      - {id: "2325", title: "Dogapsa Temple", category: "history", address: "306, Dogapsa-ro, Yeongam-gun, Jeonnam-Gwangju Special Metropolitan City", grade: null}
+      - {id: "13818", title: "Dasolsa Temple", category: "history", address: "417 Dasolsa-gil, Sacheon-si, Gyeongsangnam-do", grade: null}
+      - {id: "13881", title: "Bogyeongsa Temple", category: "history", address: "523 Bogyeong-ro, Songna-myeon, Buk-gu, Pohang-si, Gyeongsangbuk-do", grade: null}
+  - query: "night view"
+    lang: en
+    intent: "night view spots, bridges, observatories"
+    from: intent-v0
+    bm25_total: 724
+    candidates:
+      - {id: "2190", title: "Chungmugong Night Cruise", category: "leisure", address: "269-38 Donam-ro, Tongyeong-si, Gyeongsangnam-do", grade: null}
+      - {id: "14515", title: "Eight Scenic Views of Bukchon", category: "history", address: "37, Gyedong-gil, Jongno-gu, Seoul", grade: null}
+      - {id: "1708", title: "Janghwa-ri Sunset Viewing Point", category: "nature", address: "1408 Janghwa-ri, Hwado-myeon, Ganghwa-gun, Incheon", grade: null}
+      - {id: "14764", title: "Odojae Pass & Jirisan View Park", category: "nature", address: "534 Jirisanganeun-gil, Macheon-myeon, Hamyang-gun, Gyeongsangnam-do", grade: null}
+      - {id: "13937", title: "Ulsandaegyo Observatory", category: "culture", address: "155-1 Bongsu-ro, Dong-gu, Ulsan", grade: null}
+      - {id: "13641", title: "Soho Dongdong Bridge", category: "culture", address: "505-2 Soho-dong, Yeosu, Jeonnam-Gwangju Special Metropolitan City", grade: null}
+      - {id: "22405", title: "Busan Yacht Tour 3355 Marine", category: "leisure", address: "84 Haeundaehaebyeon-ro, Haeundae-gu, Busan", grade: null}
+      - {id: "14478", title: "Haeundae River Cruise", category: "leisure", address: "85 Suyeonggangbyeon-daero, Haeundae-gu, Busan", grade: null}
+      - {id: "22281", title: "Chungju Tangeumho Rainbow Road", category: "leisure", address: "Ruam-ri, Jungangtap-myeon, Chungju-si, Chungcheongbuk-do,", grade: null}
+      - {id: "13586", title: "Romantic Cart Bars", category: "culture", address: "102 Hamel-ro, Yeosu-si, Jeonnam-Gwangju Special Metropolitan City", grade: null}
+  - query: "kids friendly place"
+    lang: en
+    intent: "theme parks, zoos, children's museums. 'Place' in a name is 0"
+    from: intent-v0
+    bm25_total: 1715
+    candidates:
+      - {id: "13953", title: "Waple Wood Artwork Place", category: "culture", address: "5-6 Wangsimni-ro 10-gil, Seongdong-gu, Seoul", grade: null}
+      - {id: "1908", title: "Twelve Scenic Places of Ulsan City", category: "nature", address: "Ulsan Metropolitan City", grade: null}
+      - {id: "14893", title: "Santokki Park", category: "leisure", address: "623 , Ibang-ro, Changnyeong-gun, Gyeongsangnam-do", grade: null}
+      - {id: "13468", title: "Del Pino Ocean Play", category: "culture", address: "1153 Misiryeongyet-gil, Toseong-myeon, Goseong-gun, Gangwon-do", grade: null}
+      - {id: "14193", title: "Mangnidan Street", category: "culture", address: "Poeun-ro, Mapo-gu, Seoul", grade: null}
+      - {id: "1810", title: "Gwangju Pyeongchon Village", category: "culture", address: "15 Pyeongchon-gil, Buk-gu, Jeonnam-Gwangju Special Metropolitan City", grade: null}
+      - {id: "2035", title: "Goesan Natural Dream Park (자연드림파크(괴산))", category: "culture", address: "240 Jayeondream-gil, Chilseong-myeon, Goesan-gun, Chungcheongbuk-do", grade: null}
+      - {id: "14389", title: "Dochidol Ranch", category: "culture", address: "293 Dochidol-gil, Aewol-eup, Jeju-si, Jeju-do", grade: null}
+      - {id: "1883", title: "Osiria Coastal Walk", category: "nature", address: "Sirang-ri, Gijang-eup, Gijang-gun, Busan", grade: null}
+      - {id: "13956", title: "Nambusan Church", category: "culture", address: "300 Jinnam-ro, Busanjin-gu, Busan", grade: null}
+  - query: "hot spring"
+    lang: en
+    intent: "hot springs / spa resorts"
+    from: intent-v0
+    bm25_total: 267
+    candidates:
+      - {id: "1726", title: "Yuseongoncheon Hot Springs", category: "leisure", address: "Oncheon-ro, Yuseong-gu, Daejeon", grade: null}
+      - {id: "1902", title: "Deungeok Hot Springs", category: "leisure", address: "197, Alpeuseuoncheon-ro, Ulju-gun, Ulsan", grade: null}
+      - {id: "2127", title: "Onyang Hot Springs", category: "leisure", address: "1459 Oncheon-daero, Asan-si, Chungcheongnam-do", grade: null}
+      - {id: "14166", title: "Weolmoon Hot Spring Resort", category: "leisure", address: "5 Beodeul-ro 1597beon-gil, Paltan-myeon, Hwaseong-si, Gyeonggi-do", grade: null}
+      - {id: "14594", title: "Cheoksan Hot Springs Zone", category: "leisure", address: "288 Gwangwang-ro, Sokcho-si, Gangwon-do", grade: null}
+      - {id: "14170", title: "Yulam Hot Springs", category: "leisure", address: "434-14 Oncheon-ro, Paltan-myeon, Hwaseong-si, Gyeonggi-do", grade: null}
+      - {id: "14384", title: "Oreve Hot Spring & Spa", category: "leisure", address: "152 Taepyeong-ro, Seogwipo-si, Jeju-do", grade: null}
+      - {id: "13438", title: "Suanbo Hot Springs Foot Bath Path", category: "leisure", address: "35 Jujeongsan-ro, Suanbo-myeon, Chungju-si, Chungcheongbuk-do", grade: null}
+      - {id: "13833", title: "Suanbo Hot Springs Special Tourist Zone", category: "culture", address: "12 Jujeongsan-ro, Suanbo-myeon, Chungju-si, Chungcheongbuk-do", grade: null}
+      - {id: "14607", title: "Bugok Hot Springs Special Tourist Zone", category: "nature", address: "77 Oncheonjungang-ro, Bugok-myeon, Changnyeong-gun, Gyeongsangnam-do", grade: null}
