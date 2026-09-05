@@ -44,7 +44,11 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 - Querydsl: `@Qualifier("gameJpaQueryFactory")` (기본 `jpaQueryFactory` 는 code-dictionary EMF 바인딩)
 - Kafka: `game.session.started` / `game.session.ended` 발행 (수신: analytics, fire-and-forget). 발행은 트랜잭션 밖 (GamePlayService 파사드 / GamePlayCommand 분리)
 - FE: portal-fe `/games/*` lazy route. 게임은 전부 IFRAME 으로 entry_url 임베드 — INTERNAL_ROUTE 매핑(`internalGames.ts`)은 남아 있지만 등록된 게임이 없다 (V76 에서 퀴즈 4종 제거)
-- SEO (ADR-0062): 게임 페이지는 `portal-fe/scripts/prerender-seo.mjs` 가 빌드 후 공개 카탈로그 API 를 읽어 정적 HTML·sitemap 을 찍는다. **어드민으로 게임을 추가해도 portal-fe 재배포 전까지 프리렌더에 안 잡힌다.** `title_en`/`description_en`/래스터 썸네일(`thumbs/shots/*.png`)이 비면 영문 색인·소셜 카드가 비어버리므로 시드에서 채울 것
+- SEO (ADR-0062): 게임 페이지는 `portal-fe/scripts/prerender-seo.mjs` 가 빌드 후 공개 카탈로그 API 를 읽어 정적 HTML·sitemap 을 찍는다. **어드민으로 게임을 추가해도 portal-fe 재배포 전까지 프리렌더에 안 잡힌다.** `title_en`/`description_en`/래스터 썸네일(`thumbs/shots/*.png`)이 비면 영문 색인·소셜 카드가 비어버리므로 시드에서 채울 것.
+  **문구를 고치는 마이그레이션과 FE 를 같은 푸시로 올리면 그 FE 는 옛 문구를 담은 채로 굳는다** — 프리렌더가 읽는 것은
+  빌드 시점의 운영 API 인데, 그때 마이그레이션은 아직 배포 중이다(두 이미지가 같이 굽히고 code-dictionary 가 나중에 뜬다).
+  실제로 2026-09-05 인피니티 스탭 재테마에서 API 는 새 설명, 페이지 meta 는 옛 설명이 됐다. **마이그레이션이 적용된 것을
+  확인한 뒤 portal-fe 를 한 번 더 굽는다**
 - **`released_at` 은 노출 시점이고, 노출 상태(BETA·PUBLISHED)면 비어 있을 수 없다.** 홈의 「새로 나온
   게임」 컬렉션과 신작 탭(`sort=new`)이 이 값으로 줄을 세운다. 유니티 라인 시드 셋(V69·V73·V74)이
   `score_boards` 컬럼이 하나 늘어난 형식을 서로 복사하면서 `released_at` 자리에 NULL 을 넣었고,
