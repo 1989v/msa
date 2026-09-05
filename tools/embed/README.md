@@ -26,6 +26,16 @@ python -m embed.pool run   --models e5-small,harrier-270m,arctic-ko --lang ko --
 python -m embed.pool merge --judgments docs/specs/2026-09-05-unified-search/judgments.yml --pools '/tmp/pool/pool_*.json' --out docs/specs/2026-09-05-unified-search/judgments.yml
 ```
 
+## P0 — 판정 시트 (`python -m embed.review`)
+
+후보 550건을 YAML 로 훑으면 어느 것이 어디서 왔는지 안 보인다. 질의별로 한 표에 모으고, 같은 문서를 BM25 와 벡터가 둘 다 찾았으면
+출처를 합쳐 보여준다. 빠르게 하려면 **3 과 0 만** 써도 nDCG 는 나온다.
+
+```bash
+python -m embed.review stats --judgments docs/specs/2026-09-05-unified-search/judgments.yml
+python -m embed.review sheet --judgments docs/specs/.../judgments.yml --out /tmp/review.md --queries core --only-ungraded
+```
+
 ## P0 — 로컬 OpenSearch 프로브 (`probes/`)
 
 운영 OpenSearch 를 건드리지 않고 같은 이미지(3.3.0, heap 512m, 한도 1536Mi)로 k-NN 메모리와 hybrid 질의 동작을 잰다.
