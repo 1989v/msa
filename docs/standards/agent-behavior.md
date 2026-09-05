@@ -105,29 +105,10 @@ Proceed?
 
 ## Compaction Rules
 
-### 컴팩션 실행 권장 시점
-- Task Group 완료 시
-- Spec 문서 작성 완료 시
-- 구현 완료 후 테스트 작성 전
-- Phase 전환 시
-
-### 컴팩션 실행 금지 시점
-- 구현 도중
-- 테스트 디버깅 중
-- 중요한 의사결정 논의 중
-
-### Pre-Compact Checklist
-- [ ] 현재 작업을 git commit으로 저장
-- [ ] 중요 의사결정을 key-decisions.md에 기록
-- [ ] 다음 Task 계획 확인
-- [ ] 현재 작업이 완전히 종료되었는지 확인
-
-### Post-Compact Recovery
-1. CLAUDE.md 읽기
-2. key-decisions.md 읽기
-3. open-questions.yml 확인
-4. tasks.md 체크박스 확인
-5. git log 최근 커밋 확인
+컴팩션은 자동이다(1M 컨텍스트, 임계 근처에서 자동 요약). 시점을 통제하지 말고 **파일을 원본**으로 유지한다.
+- task group 완료·결정·블로커마다 `docs/specs/{feature}/context/progress.md`(현재 위치·완료·다음 단계·블로커)와 `key-decisions.md` 를 갱신하고 커밋한다
+- `PreCompact` 훅이 요약에 보존할 항목을 지시하고, `SessionStart` 훅이 컴팩션 후 progress·결정·열린 질문·최근 커밋을 다시 주입한다 (`.claude/hooks/hns/`, `/hns:setup-hooks`)
+- 훅 주입이 없으면 같은 순서로 직접 읽는다: CLAUDE.md → key-decisions.md → open-questions.yml → tasks.md 체크박스 → `git log`
 
 ## Doc Gardening
 

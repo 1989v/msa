@@ -11,7 +11,7 @@ kb=$(hns_cfg HNS_KB_PATH ""); kb_line=""
 if [ -n "$kb" ] && [ -f "$kb/wiki/index.md" ]; then
   n=$(find "$kb/wiki" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
   last=$(grep '^## \[' "$kb/wiki/log.md" 2>/dev/null | tail -1 | sed -e 's/ *→.*$//' -e 's/^## \[[^]]*\] *[^|]*| *//' | cut -c1-120)
-  kb_line="지식베이스: $(basename "$kb") ($n pages, 마지막 ingest: ${last:-없음}) — 레포 밖 결정·함정은 hns:kb 로 필요할 때만 조회 (읽기 전용)"
+  kb_line="지식베이스: $(basename "$kb") ($n pages, 마지막 ingest: ${last:-없음}) — 질의·기능 요청을 받으면 kb-search 를 한 번 돌리고(hns:kb, 읽기 전용) 관련 페이지가 있을 때만 읽는다"
 fi
 [ -z "$progress" ] && [ -z "$kb_line" ] && exit 0
 if [ -z "$progress" ]; then
