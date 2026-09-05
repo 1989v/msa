@@ -7,13 +7,23 @@ hns_input
 reason=$(hns_field start_reason); [ -z "$reason" ] && reason=$(hns_field source)
 
 progress=$(ls -t "$HNS_PROJECT"/docs/specs/*/context/progress.md 2>/dev/null | head -1)
-[ -z "$progress" ] && exit 0
+kb=$(hns_cfg HNS_KB_PATH ""); kb_line=""
+if [ -n "$kb" ] && [ -f "$kb/wiki/index.md" ]; then
+  n=$(find "$kb/wiki" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
+  last=$(grep '^## \[' "$kb/wiki/log.md" 2>/dev/null | tail -1 | sed -e 's/ *→.*$//' -e 's/^## \[[^]]*\] *[^|]*| *//' | cut -c1-120)
+  kb_line="지식베이스: $(basename "$kb") ($n pages, 마지막 ingest: ${last:-없음}) — 레포 밖 결정·함정은 hns:kb 로 필요할 때만 조회 (읽기 전용)"
+fi
+[ -z "$progress" ] && [ -z "$kb_line" ] && exit 0
+if [ -z "$progress" ]; then
+  printf '%s' "$kb_line" | hns_emit SessionStart additionalContext; exit 0
+fi
 spec_dir=$(dirname "$(dirname "$progress")")
 rel=${spec_dir#"$HNS_PROJECT"/}
 
 {
   echo "## hns 진행 상태 복구 (SessionStart: ${reason:-unknown})"
   echo "활성 스펙: $rel"
+  [ -n "$kb_line" ] && echo "$kb_line"
   echo
   echo "### progress.md"
   head -60 "$progress"

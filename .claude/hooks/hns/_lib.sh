@@ -10,7 +10,7 @@ hns_cfg() { # hns_cfg NAME DEFAULT
   if [ -z "$v" ] && [ -f "$HNS_ENV_FILE" ]; then
     v=$(sed -n "s/^$1=//p" "$HNS_ENV_FILE" | head -1 | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
   fi
-  printf '%s' "${v:-$2}"
+  v="${v:-$2}"; v="${v/#\~/$HOME}"; printf '%s' "${v//\$HOME/$HOME}"
 }
 
 hns_input() { # stdin JSON 을 변수에 담아 둔다
