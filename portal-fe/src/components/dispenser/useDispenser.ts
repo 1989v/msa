@@ -70,8 +70,6 @@ export function useDispenser<T>({ items, render, onChange, onActivate, minCards,
       peekSpread: 4,
       // 판을 눕혀 본다 — 26도는 위에서 내려다보는 느낌이 강해 카드 얼굴이 눌려 보였다
       tilt: 18,
-      // 세로로 끌면 각이 바뀐다. 터치에서는 끈다 — 세로 제스처는 페이지 스크롤의 몫이다
-      tiltDrag: !coarse,
       render: (item, i) => renderRef.current(item, i),
       onChange: (item, i) => onChangeRef.current?.(item, i),
       onActivate: (item, i) => onActivateRef.current?.(item, i),
