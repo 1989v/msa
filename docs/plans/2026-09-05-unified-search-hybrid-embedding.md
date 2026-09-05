@@ -160,7 +160,8 @@ D 를 고른 결정적 이유: 이 사이트의 질의는 **다양성이 작고 
 
 ### 2.4 색인·저장 설계
 
-**문서 벡터 — place `attraction_embedding`** (Flyway, 번호는 작성 시점에 `ls` 로 확인 — 다른 세션이 V11 을 쓰고 있다):
+**문서 벡터 — place `attraction_embedding`** (Flyway, 번호는 작성 시점에 `ls` 로 확인 — 다른 세션이 V11 을 쓰고 있다). **엔티티·포트·API 상세는
+`docs/specs/2026-09-05-unified-search/embedding-entities.md`** — 아래는 요지다:
 
 ```sql
 CREATE TABLE attraction_embedding (
@@ -177,7 +178,8 @@ CREATE TABLE attraction_embedding (
 - 임베딩 텍스트는 **오프라인 도구 한 곳**에서만 만든다(서버는 만들지 않으므로 이중 구현이 없다):
   `title · titleLocal · 분류 한국어명 · address · overview(앞 1,000자)`, 512 토큰 절단, 제목이 앞.
 - **신선도**: `attractions.updated_at > attraction_embedding.embedded_at` 이면 stale. `GET /internal/attractions/embeddings/pending?model=`
-  가 (없거나 stale 인) id 목록을 주고, 도구가 그것만 다시 임베딩한다. 매일 바뀌는 개요 2,000건 안팎이 하루치 일이다.
+  가 (없거나 stale 인) id 목록을 주고, 도구가 텍스트 해시로 확정한다 — 해시가 같으면 벡터 없이 `embedded_at` 만 갱신(touch). 매일 바뀌는 개요 2,000건
+  안팎이 하루치 일이다. `embedding_text` 원문도 함께 저장한다(원문 보존 규칙).
 - 재색인(`AttractionApiReindexTasklet`)은 페이지마다 `POST /internal/attractions/embeddings/lookup {ids, model}` 로 벡터를 받아
   `embedding` · `embeddingModel` · `embeddingHash` 를 채운다. 없는 문서는 필드 없이 색인된다(BM25 만). stale 벡터는 그대로 싣고
   개수만 로그·메트릭으로 남긴다.
@@ -405,6 +407,7 @@ P1 은 batch 코드도 바뀌므로 함께 구워지지만, 이후 도메인만 
 | 배포 | `k8s/base/search-batch/cronjob-unified-reindex.yaml`(P2). 신규 파드·NP·CI 매핑 **없음** |
 | 화면 | `portal-fe/src/pages/search/`, `components/GNB.tsx`, `App.tsx`, `seo/copy.mjs`, `pages/place/AttractionPage.tsx`(비슷한 곳), `admin-fe`(status 카드) |
 | 회귀·판정 | `scripts/attractions-search-check.py`, `scripts/unified-search-check.py`(신규), `docs/specs/2026-09-05-unified-search/judgments.yml`(신규), `intents.yml`(신규) |
+| 엔티티 설계 | `docs/specs/2026-09-05-unified-search/embedding-entities.md` — DDL · 도메인 · 포트 · 내부 API · 불변식 · 도구 계약 |
 
 ---
 
