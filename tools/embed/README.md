@@ -21,8 +21,13 @@ Colab(T4) 에서 후보 모델 × 차원(512·1024) × 텍스트 규칙(full·ti
 운영 OpenSearch 를 건드리지 않고 같은 이미지(3.3.0, heap 512m, 한도 1536Mi)로 k-NN 메모리와 hybrid 질의 동작을 잰다.
 
 ```bash
-probes/run_probe.sh            # docker 기동 → knn_probe(512·1024) → hybrid_spike → 컨테이너 삭제 (실패해도 삭제)
+HEAP=512m MEM=1536m DIMS="512 1024" probes/run_probe.sh   # 운영 한도. docker 기동 → knn_probe → hybrid_spike → 컨테이너 삭제(실패해도)
+HEAP=1024m MEM=2560m DIMS=1024 probes/run_probe.sh        # 상향안
+SKIP_KNN=1 probes/run_probe.sh                            # hybrid 스파이크만
 ```
+
+컨테이너가 죽으면(OOM) 그 사실을 찍고 다음 조합으로 넘어간다 — 죽은 것 자체가 측정값이다. `knn_probe.py --exclude-source` 는 `_source` 에서 벡터를 뺀 매핑을 잰다
+(결과: 3.4배 커진다 — 쓰지 않는다). 프로브는 **한 번에 하나만** 돌린다 — 컨테이너 이름이 고정이라 겹치면 서로 지운다. 결과는 플랜 §8.4·§8.5.
 
 ## P1 (예정) — `docs` · `queries` · `push` · `tunnel.sh`
 

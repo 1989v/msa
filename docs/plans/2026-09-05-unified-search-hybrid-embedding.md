@@ -195,7 +195,9 @@ CREATE TABLE attraction_embedding (
 
   `dimension` 은 P0 이 정한 값으로 고정한다. 모델·차원을 바꾸면 전량 재임베딩(오프라인이라 분 단위) + 전체 재색인 + alias swap.
 - 읽기 클래스 `AttractionSearchDocument` 는 세 필드를 읽지 않는다 → 루트 `build.gradle.kts` `searchReadOmitted` 에 이유를 적어
-  `verifySearchIndexContract` 를 통과시킨다. 질의 응답은 `_source.excludes=[embedding]`.
+  `verifySearchIndexContract` 를 통과시킨다.
+- **벡터는 `_source` 에 그대로 둔다.** 원본이 DB 라 빼도 될 것 같지만, 3.3.0 k-NN 에서 매핑 `_source.excludes` 로 빼면 인덱스가 **3.4배 커진다**(실측 §8.4 —
+  플러그인이 벡터를 다른 형태로 다시 저장한다). 응답에서만 질의의 `_source.excludes=[embedding]` 로 뺀다.
 
 **질의 사전 — search 소유 OpenSearch 인덱스 `query_vectors`**:
 
@@ -204,7 +206,7 @@ CREATE TABLE attraction_embedding (
 | `_id` | = 정규화 질의 | NFKC · trim · 공백 축약 · 라틴 소문자 · 끝 문장부호 제거 |
 | `query` | keyword | 원문(표시용) |
 | `model` | keyword | 문서와 같아야 한다 |
-| `vector` | `index: false` float 배열 | `_source` 에만. k-NN 대상이 아니다(조회용) |
+| `vector` | `binary` (base64 float32) | `_source` 에만. k-NN 대상이 아니다(조회용). float JSON 은 3배 크다(§8.4) |
 | `source` | keyword | `intent` · `vocab` · `title` · `log` |
 | `updatedAt` | date | |
 
@@ -250,6 +252,9 @@ CREATE TABLE attraction_embedding (
   건강 지표다.**
 - **자동완성(suggest)은 벡터를 쓰지 않는다.** 조합 중간 상태(`경보`)는 의미가 없고, 자동완성에서 고른 항목은 그대로 사전 항목이라
   본 검색에서 적중한다.
+- **hybrid 에서는 `_score` 정렬에 타이브레이커를 못 붙인다** — 3.3.0 실측: `sort: [_score, idSort]` 가 `_score sort criteria cannot be applied
+  with any other criteria` 로 거부된다(§8.5). 하이브리드 모드에서는 `sort` 를 빼고, 앱이 받은 페이지 안에서 `(score desc, idSort asc)` 로 정렬해
+  같은 점수의 순서를 고정한다. 페이지 경계의 플리커는 허용한다(RRF 점수는 `1/(60+rank)` 합이라 동점이 드물다).
 - 설명: `hybrid_score_explanation` 응답 프로세서는 `/api/v1/search/debug` 에서만.
 - 지연 예산: 검색 P99 300ms. 사전 조회 1~2ms + knn 수 ms. 인코딩 비용 0.
 
@@ -258,8 +263,8 @@ CREATE TABLE attraction_embedding (
 | 항목 | 추가분 | 근거 |
 |---|---|---|
 | 파드 | **0** | 서버에 모델·추론 없음 |
-| OpenSearch 메모리 | 벡터(문서 6만 + 사전 ~8만) 512차원 ≈ 290MB / 1024차원 ≈ 570MB, HNSW +15%, 세대 2 → 최대 ~1.3GB 페이지캐시 | 한도 1536Mi → **2.5Gi** 상향 예정. heap 512m 유지(lucene 엔진). P0-3 실측 후 확정 |
-| PVC | 3Gi 중 ~130MB 사용 → 벡터 포함 세대 2 시 ~1.6GB | 여유 있으나 **5Gi 확장 여부**를 P0 에서 판단(스토리지클래스 확장 지원 확인) |
+| OpenSearch 메모리 | **실측(§8.4)**: 같은 이미지·heap 512m 컨테이너가 idle 950MiB, 60k 문서 + 80k 사전을 넣은 뒤 512차원 1.04GiB · 1024차원 1.12GiB(한도 1536Mi 안). heap 을 1g 으로 올리면 idle 1.4GiB 에 knn 이 더 느렸다(9ms) | **heap 512m 유지**, 컨테이너 한도 1536Mi → **2Gi**(병합·페이지캐시 여유 — 첫 1024 시도가 병합 중 죽은 적이 있다). 2.5Gi 까지는 불필요 |
+| PVC | 3Gi 중 ~130MB 사용. 문서 60k 는 512차원 ~360MB · 1024차원 ~480MB(§8.4), 사전은 `binary` 로 소형 → 세대 2 포함 1.2GB 안 | **3Gi 유지** |
 | CPU | knn 질의 수 ms, 사전 GET 1~2ms | 추론 0 |
 | 로컬 | 첫 채움 6만 건 — M4 Pro MPS 또는 Colab T4 에서 분~수십 분(모델 크기에 따라). 일일 증분 2천 건은 분 단위 | 사람이 돌리는 배치. §5 리스크 |
 
@@ -292,6 +297,17 @@ ADR-0065 가 미뤄 둔 **OQ-5(쿼리 타임 인코딩)는 "하지 않는다" �
 | P0-6 | 모델·차원 확정 + `data-sources.md` 라이선스 행 | ADR Accepted |
 
 이미지 영향: 없음.
+
+**P0 진행 (2026-09-05 저녁)**
+
+| # | 상태 | 어디 |
+|---|---|---|
+| P0-1 | ✅ ADR-0090 Proposed | `docs/adr/ADR-0090-unified-search-hybrid-embedding.md` |
+| P0-2 | ✅ 파일 — **판정(grade) 대기** | `judgments.yml` 30질의 × 운영 BM25 상위 10, `intents.yml` ko 117 · en 30 |
+| P0-3 | ✅ 도구·노트북 준비, e5-small 300건 스모크 통과 — **Colab 실행 대기** | `tools/embed/`, `notebooks/bakeoff.ipynb` |
+| P0-4 | ✅ 로컬 Docker 실측 | §8.4 |
+| P0-5 | ✅ 로컬 Docker 실측 — 8케이스 중 `sort` 타이브레이커만 불가 | §8.5 |
+| P0-6 | ⏳ 모델·차원 확정 — bake-off 표 뒤 | — |
 
 ### P1 — 관광지 하이브리드, 서버 상주 모델 0 (플래그 기본 off)
 
@@ -413,11 +429,11 @@ P1 은 batch 코드도 바뀌므로 함께 구워지지만, 이후 도메인만 
 
 ## 7. 미결 — 사용자 결정
 
-1. **모델·차원**: P0-3 표를 보고. 후보에 "작아도 되는가"(P3 폴백 호환)를 같이 볼지.
+1. **모델·차원**: bake-off 표를 보고. 1024차원도 메모리상 가능함이 실측됐으니(§8.4) 차원은 **nDCG 차이로만** 정한다. 후보에 "작아도 되는가"(P3 폴백 호환)를 같이 볼지.
 2. **사전 시드에 제목 6만 건을 넣을지**: BM25 가 이미 찾는 것이라 이득이 작고 사전이 6만 항목 커진다. 추천은 의도 문구 + 어휘 + 로그만.
 3. **첫 채움을 어디서**: M4 Pro MPS 로 충분하면 Colab 없이. 8B 8bit 이면 Colab.
 4. `/tech` 검색(지금 500)을 통합 API 로 갈아탈지.
-5. OpenSearch 한도 2.5Gi · PVC 5Gi 상향 승인(P0-4 수치 뒤).
+5. OpenSearch 컨테이너 한도 1536Mi → 2Gi 상향 승인(heap 은 512m 그대로, PVC 3Gi 그대로 — §8.4).
 6. 로컬 배치 자동화(launchd) 시점 — P1 부터인지 P3 부터인지.
 
 ---
@@ -520,6 +536,52 @@ print(json.dumps({
   190건, 상위 창경궁 · 경복궁 · 덕수궁 · 경희궁 · 경희궁 흥화문(유사어 줄 효과).
 - 선례: `place/app/…/AttractionLinkInternalController.kt`(`/internal/attractions/links/{pending,bulk}` — 수집기가 밀어 넣는 모양) ·
   `k8s/base/recommendation-ann/`(v1 사이드카 선례, 이제 안 씀) · `place/ingest/Dockerfile`.
+
+### 8.4 k-NN 메모리 · 지연 프로브 (2026-09-05, 로컬 Docker — 운영과 같은 이미지·heap·한도)
+
+`tools/embed/probes/run_probe.sh` — `opensearchproject/opensearch:3.3.0`, 단일 노드, 정규화 난수 벡터. 문서 인덱스 60,000건(knn_vector, lucene HNSW m16 · ef128,
+cosinesimil, 1샤드, forcemerge 1세그먼트) + 사전 인덱스 80,000건(`float` JSON, index:false). knn 질의 200회(k=100, `lang` 필터). M4 Pro 위 Docker Desktop.
+
+| 구성 | 문서 인덱스 | 사전 인덱스(float JSON) | 컨테이너 메모리 idle → 적재 후 | knn p50 / p95 | 사전 GET p50 | heap used/max |
+|---|---|---|---|---|---|---|
+| 512차원, heap 512m, 한도 1536Mi | 244MB | 642MB | 948MiB → **1.04GiB** | **5.1 / 6.2ms** | 1.7ms | 385 / 512MB |
+| 1024차원, heap 512m, 한도 1536Mi | 478MB | 1,287MB | 950MiB → **1.12GiB** | 5.0 / 6.1ms | 2.0ms | 305 / 512MB |
+| 1024차원, heap 1024m, 한도 2560Mi | 478MB | 1,287MB | 1.41GiB → 1.76GiB | 9.1 / 11.6ms | 4.3ms | 227 / 1024MB |
+| 512차원, **`_source.excludes: [embedding]` 매핑** (문서만) | **823MB** (세그먼트 820MB) vs 같은 조건 원본 포함 357MB (세그먼트 243MB) | — | 892MiB → 997MiB | 6.9 / 8.5ms | — | 329 / 512MB |
+
+읽히는 것:
+
+- **idle 이 950MiB** 다(heap 512m + 플러그인 전부 실린 네이티브). 운영 한도 1536Mi 에서 벡터가 쓸 수 있는 여유는 원래 ~600MB 뿐이었다.
+- 60k + 80k 를 넣어도 1024차원이 1.12GiB 로 한도 안이다. knn 지연은 차원과 무관하게 5~6ms(60k, 1세그먼트). heap 을 1g 으로 키우면 더 느렸다 → heap 512m 유지.
+- **첫 1024 시도는 `_forcemerge` 중 연결이 끊겼다.** 같은 한도의 재실행은 통과했고 원인 로그는 못 잡았다(같은 시각에 호스트에서 MPS 스모크·venv 설치가 돌았다).
+  병합은 HNSW 를 다시 짓는 메모리 피크라, 한도를 2Gi 로 두고 재색인 로그에 병합 시간을 남긴다.
+- **`_source` 에서 벡터를 빼면 오히려 3.4배 커진다.** 같은 컨테이너·같은 절차로 두 번 재현됐다(823MB vs 357MB). k-NN 플러그인이 `_source` 에 없는 벡터를 다른 저장 형태로
+  다시 쌓는 것으로 보인다(원인은 코드로 확인하지 않았다). **벡터는 `_source` 에 두고 응답에서만 뺀다.** 사전 인덱스의 `float` JSON 이 큰 것(80k → 642MB)은 그대로라 사전은 `binary`.
+- 사전 GET by id 1.7~2ms — 질의 경로에 얹어도 예산(300ms) 안이다.
+
+### 8.5 hybrid 스파이크 (2026-09-05, OpenSearch 3.3.0, 로컬 Docker)
+
+`tools/embed/probes/hybrid_spike.py` — 2,000건 합성 인덱스(title text · category keyword · idSort · embedding 64차원), 파이프라인 `hybrid-rrf`(score-ranker rrf) · `hybrid-minmax`(min_max + 가중 평균) · `hybrid-rrf-explain`.
+
+| # | 질의 모양 | 결과 |
+|---|---|---|
+| 1 | `hybrid[bool, knn]` + RRF | PASS |
+| 1b | `hybrid[bool, knn]` + min_max 가중(0.7/0.3) | PASS |
+| 2 | **`hybrid[function_score(bool), function_score(knn)]`** — 분류 가중치를 두 레그에 | **PASS** |
+| 3 | `hybrid` + `sort: [_score desc, idSort asc]` | **FAIL** — `_score sort criteria cannot be applied with any other criteria` |
+| 4 | `from=10 size=10` + `pagination_depth=100` | PASS |
+| 5 | `knn` + `filter`(term) 단독 | PASS |
+| 6 | `hybrid_score_explanation` 응답 프로세서 + `explain=true` | PASS (`_explanation` 반환) |
+| 7 | `_source.excludes: [embedding]` | PASS |
+| 8 | `hybrid` 에 BM25 레그 하나만 | PASS — 미적중 폴백을 같은 모양으로 둘 수도 있다 |
+
+결론: §2.5 의 질의 설계는 3.3.0 에서 그대로 성립하고, 타이브레이커만 앱 쪽으로 옮긴다.
+
+### 8.6 bake-off 파이프라인 스모크 (2026-09-05, M4 Pro MPS, `intfloat/multilingual-e5-small@614241f#d384`)
+
+공개 API 300건 fetch 0.9s → 모델 로드 26.5s → 규칙 full·title 평가 3.1s → parquet 50행 export, `text_hash` 재계산 일치. nDCG 는 임시 가짜 판정 2질의로 경로만 확인했고
+(레포 `judgments.yml` 은 건드리지 않았다) 값은 의미가 없다. 300건 코퍼스에서도 `바다가 보이는 곳` 상위가 민머루해변 · 가계해수욕장 · 무의바다누리길로 나와 벡터 레그의 방향은 보였다.
+게이트웨이가 간헐적으로 200 + 빈 바디를 내려 `fetch_attractions` 에 재시도를 넣었다(`k8s/CLAUDE.md` 의 함정 그대로).
 
 ### 8.3 모델 후보 조사 (2026-09-05 조회, 공개 리더보드·모델 카드)
 

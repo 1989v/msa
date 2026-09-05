@@ -33,7 +33,7 @@ erDiagram
         keyword normalized "서버가 정규화"
         keyword modelRef
         short dim
-        float_array vector "index false"
+        binary vector "base64 float32 LE"
         keyword source "intent | vocab | title | log"
         date updatedAt
     }
@@ -65,6 +65,7 @@ DB 가 원본이고 OpenSearch 의 `embedding` 필드는 매일 다시 채워지
 ## 1. 원칙
 
 1. **원본은 SSOT 서비스의 DB.** OpenSearch 인덱스는 매일 새로 지어지므로 거기만 있는 벡터는 사라진다. 재색인은 `lookup` 으로 채운다.
+   문서 인덱스의 `_source` 에서 `embedding` 을 빼고 싶어지지만 **빼지 않는다** — 3.3.0 k-NN 에서 매핑 `_source.excludes` 는 인덱스를 3.4배 키운다(플랜 §8.4 실측). 응답에서만 뺀다.
 2. **모델 스탬프는 행 단위.** `model_ref = "{hf_id}@{revision 7자}#d{dim}"` (예: `Qwen/Qwen3-Embedding-4B@f460253#d512`). 다른 스탬프의 벡터는
    비교 불가다. 모델·리비전·차원 중 하나라도 바뀌면 새 스탬프 = 전량 재임베딩(오프라인이라 분 단위). 두 스탬프가 한 표에 공존할 수 있고,
    검색은 설정 `search.embedding.model-ref` 하나만 본다.
@@ -245,7 +246,7 @@ ORDER BY a.id LIMIT :limit
       "normalized": { "type": "keyword" },
       "modelRef":   { "type": "keyword" },
       "dim":        { "type": "short" },
-      "vector":     { "type": "float", "index": false, "doc_values": false },
+      "vector":     { "type": "binary" },
       "source":     { "type": "keyword" },
       "updatedAt":  { "type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss" }
     }
@@ -254,7 +255,8 @@ ORDER BY a.id LIMIT :limit
 ```
 
 - `_id = "{modelRef}|{normalized}"`. 스탬프가 바뀌어도 옛 항목은 남아 있어도 무해하고, 전환 중 두 스탬프가 공존한다.
-- `vector` 는 `_source` 에만 있다(`index: false`). **이 인덱스는 검색되지 않는다.** GET by id 만.
+- `vector` 는 **`binary`(float32 little-endian 의 base64)** 로 `_source` 에만 있다 — bulk API 의 표현과 같다. **이 인덱스는 검색되지 않는다.** GET by id 만.
+  `float` 배열 JSON 으로 두면 자릿수 때문에 항목당 크기가 3배가 된다(로컬 프로브: 512차원 8만 항목 float JSON = 642MB, 플랜 §8.4).
 - `dynamic: strict` — 도구가 필드를 잘못 보내면 조용히 들어가는 대신 거부된다.
 
 ### 3.2 도메인 (`search:domain`, `com.kgd.search.domain.queryvector.model`)

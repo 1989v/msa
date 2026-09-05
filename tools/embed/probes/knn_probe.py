@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 
 import numpy as np
@@ -48,13 +49,14 @@ def main() -> None:
     ap.add_argument("--batch", type=int, default=1000)
     ap.add_argument("--knn-queries", type=int, default=200)
     ap.add_argument("--cleanup", action="store_true")
+    ap.add_argument("--exclude-source", action="store_true", help="문서 인덱스 _source 에서 embedding 을 뺀다 (원본이 DB 일 때 가능)")
     a = ap.parse_args()
     rng = np.random.default_rng(42)
     docs_idx, qv_idx = f"probe_docs_{a.dim}", f"probe_qv_{a.dim}"
 
     put_index(a.url, docs_idx, {
         "settings": {"index": {"knn": True, "number_of_shards": 1, "number_of_replicas": 0, "refresh_interval": "-1"}},
-        "mappings": {"properties": {
+        "mappings": {**({"_source": {"excludes": ["embedding"]}} if a.exclude_source else {}), "properties": {
             "embedding": {"type": "knn_vector", "dimension": a.dim, "space_type": "cosinesimil",
                           "method": {"name": "hnsw", "engine": "lucene", "parameters": {"m": 16, "ef_construction": 128}}},
             "category": {"type": "keyword"}, "lang": {"type": "keyword"}}}})
@@ -70,16 +72,19 @@ def main() -> None:
         bulk(a.url, docs_idx, range(start, start + n), unit(rng, n, a.dim), "embedding",
              extra=lambda i: {"category": cats[i % 7], "lang": "ko" if i % 4 else "en"})
     docs_load_s = time.time() - t0
+    print(f"[probe] docs loaded {a.docs} x {a.dim} in {docs_load_s:.1f}s", file=sys.stderr)
     t0 = time.time()
     for start in range(0, a.queries, a.batch):
         n = min(a.batch, a.queries - start)
         bulk(a.url, qv_idx, range(start, start + n), unit(rng, n, a.dim), "vector", extra=lambda i: {"modelRef": "probe"})
     qv_load_s = time.time() - t0
+    print(f"[probe] dict loaded {a.queries} in {qv_load_s:.1f}s", file=sys.stderr)
     for idx in (docs_idx, qv_idx):
         requests.post(f"{a.url}/{idx}/_refresh", timeout=120).raise_for_status()
     t0 = time.time()
     requests.post(f"{a.url}/{docs_idx}/_forcemerge?max_num_segments=1", timeout=1800).raise_for_status()
     merge_s = time.time() - t0
+    print(f"[probe] forcemerge {merge_s:.1f}s", file=sys.stderr)
 
     # 워밍업 + 지연
     qs = unit(rng, a.knn_queries + 20, a.dim)
@@ -95,21 +100,26 @@ def main() -> None:
             lat.append((time.perf_counter() - t) * 1000)
     lat.sort()
     get_lat = []
-    for i in range(200):
+    for i in range(min(200, a.queries)):
         t = time.perf_counter()
         requests.get(f"{a.url}/{qv_idx}/_doc/{i}", timeout=30).raise_for_status()
         get_lat.append((time.perf_counter() - t) * 1000)
     get_lat.sort()
 
+    # 병합 뒤 옛 세그먼트 파일이 남아 크기를 부풀릴 수 있다 — flush 하고 세그먼트 수를 같이 본다
+    requests.post(f"{a.url}/{docs_idx}/_flush?force=true&wait_if_ongoing=true", timeout=300)
+    time.sleep(3)
+    segs = requests.get(f"{a.url}/_cat/segments/{docs_idx}?format=json&bytes=mb", timeout=30).json()
     cat = requests.get(f"{a.url}/_cat/indices/probe_*?format=json&bytes=mb", timeout=30).json()
     stats = requests.get(f"{a.url}/_nodes/stats/jvm,os,indices/segments", timeout=30).json()
     node = next(iter(stats["nodes"].values()))
     out = {
-        "dim": a.dim, "docs": a.docs, "queries_dict": a.queries,
+        "dim": a.dim, "docs": a.docs, "queries_dict": a.queries, "exclude_source": a.exclude_source,
         "store_mb": {c["index"]: float(c["store.size"]) for c in cat},
+        "docs_segments": {"count": len(segs), "committed": sum(1 for x in segs if x.get("committed") == "true"), "searchable": sum(1 for x in segs if x.get("searchable") == "true"), "size_mb_sum": round(sum(float(x["size"]) for x in segs), 1)},
         "docs_load_s": round(docs_load_s, 1), "qv_load_s": round(qv_load_s, 1), "forcemerge_s": round(merge_s, 1),
         "knn_ms": {"p50": round(lat[len(lat) // 2], 1), "p95": round(lat[int(len(lat) * 0.95) - 1], 1), "p99": round(lat[int(len(lat) * 0.99) - 1], 1)},
-        "dict_get_ms": {"p50": round(get_lat[100], 2), "p95": round(get_lat[189], 2)},
+        "dict_get_ms": ({"p50": round(get_lat[len(get_lat) // 2], 2), "p95": round(get_lat[int(len(get_lat) * 0.95) - 1], 2)} if get_lat else None),
         "jvm_heap_used_mb": node["jvm"]["mem"]["heap_used_in_bytes"] // 2**20,
         "jvm_heap_max_mb": node["jvm"]["mem"]["heap_max_in_bytes"] // 2**20,
         "segments_memory_mb": node["indices"]["segments"].get("memory_in_bytes", 0) // 2**20,
