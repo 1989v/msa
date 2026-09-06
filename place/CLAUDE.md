@@ -21,6 +21,22 @@
 ./gradlew :place:domain:test     # 도메인 테스트
 ```
 
+## 관광지 임베딩 `attraction_embedding` (ADR-0090)
+
+관광지 문서 벡터의 **원본**이 여기다. place 는 벡터를 **만들지 않는다** — 모델은 서버 밖(로컬 GPU)에 있고,
+`tools/embed` 가 만들어 밀어 넣는다. 이 서비스가 하는 일은 받아서 검증하고 보관하는 것뿐이다.
+
+- 한 관광지 · 한 스탬프(`model_ref = hf_id@rev7#d{dim}`) = 한 행. 스탬프가 다르면 다른 벡터 공간이라
+  섞으면 순위가 무의미해진다.
+- **임베딩 텍스트를 만드는 규칙은 서버에 없다.** 도메인이 갖는 것은 해시 규약(`sha256(model_ref + LF + text)`)뿐이다 —
+  규칙이 두 곳에 있으면 해시가 어긋나 전량이 영원히 pending 이 된다.
+- 업서트는 **요청 단위 all-or-nothing**. 한 건이라도 차원·해시·정규화에 걸리면 전부 거부한다 —
+  부분 성공을 허용하면 도구가 "무엇이 들어갔나"를 다시 물어야 한다.
+- 텍스트가 그대로면 벡터 없이 **touch**(시각만 갱신). `attractions.updated_at` 은 전화·이미지만 바뀌어도
+  올라가므로 pending 의 대부분이 실제로는 그대로다.
+- 내부 API `/internal/attractions/embeddings/{pending,bulk,lookup,status}` + `DELETE` — 게이트웨이가 라우팅하지 않는다.
+  `lookup` 은 search:batch 재색인이 쓰고, 나머지는 도구가 쓴다. 벡터는 float32 little-endian 의 base64.
+
 ## Key Rules
 
 - **MySQL = SSOT, OpenSearch(`poi` 인덱스) = read model.** POI 는 정적 reference data 라 Kafka 없이

@@ -24,12 +24,15 @@ questions:
     q: "지역 데이터는 GeoNames 유지 확정 (사용자 결정 2026-08-11 — 영문명·좌표·무키가 결정 근거).
         정부 통계(방문자수 등) 조인이 필요해지는 P2 랭킹 시점에 행안부 법정동코드 매핑 컬럼을
         regions 에 추가하는 이중 코드 체계로 확장 (이름/좌표 휴리스틱 or TourAPI areaCode 경유)."
-  - id: OQ-5
-    phase: deferred
-    status: deferred
-    q: "벡터 검색 쿼리 타임 인코딩 — 로컬 ETL 임베딩까지는 확정, 쿼리 인코더(ONNX in-pod vs 외부)는 free-tier 마진 재계산 후."
   - id: OQ-6
     phase: post-P1
     status: open
     q: "Instagram Graph API hashtag — Business 계정 전환 + 앱 리뷰 절차 비용 대비 신호 가치 (P3 게이트)."
-closed: []
+closed:
+  - id: OQ-5
+    phase: deferred
+    q: "벡터 검색 쿼리 타임 인코딩 — 로컬 ETL 임베딩까지는 확정, 쿼리 인코더(ONNX in-pod vs 외부)는 free-tier 마진 재계산 후."
+    a: "쿼리 타임 인코딩은 **하지 않는다**. 노드 CPU 가 이미 84% 라 인코더를 파드로 들이면 검색 지연이 그 경합을 받는다.
+        대신 질의 벡터를 **미리 만들어 사전**(`query_vectors`)에 두고, 없으면 벡터 레그를 끄고 BM25 로 답하며 미스를 센다.
+        미스 로그를 도구가 되먹여 사전이 두꺼워진다. 파드 증설 0."
+    closed_by: "ADR-0090 (2026-09-06)"

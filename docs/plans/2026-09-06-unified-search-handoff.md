@@ -92,7 +92,8 @@ git -C ~/IdeaProjects/msa branch -f unified-search-embedding "$(git -C <worktree
    **기본 꺼짐**(`search.attraction-hybrid.enabled=false`) — 사전과 문서 벡터가 다 찬 뒤에 켠다.
 6. **P1-6~9 — 남은 것**
    - **첫 채움**(가장 큰 것): 터널 열기 → `push --file` 또는 `docs run` 으로 전 코퍼스 임베딩 → 재색인 → 사전 `seed`
-   - NetworkPolicy 확인: search:batch → place `:8096`, 도구는 port-forward 라 NP 무관
+   - ~~NetworkPolicy 확인~~ ✅ **바꿀 것 없다 (2026-09-06)** — `allow-search-batch-to-place` 가 이미 place 의
+     `http` 포트를 열어 뒀고, 임베딩 조회는 같은 서비스·같은 포트다. 도구는 port-forward 라 NP 를 우회한다
    - 차원 **512 vs 1024** nDCG A/B (§8.11 이 남긴 유일한 미결) · 융합 방식 A/B (D5-1)
    - 켜는 순서: 벡터 적재율 확인 → `SEARCH_EMBEDDING_MODEL_REF` 설정 → 재색인 → 사전 seed → `hybrid.enabled=true`
 

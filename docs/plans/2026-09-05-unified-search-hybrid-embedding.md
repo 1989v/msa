@@ -314,6 +314,9 @@ ADR-0065 가 미뤄 둔 **OQ-5(쿼리 타임 인코딩)는 "하지 않는다" �
 
 ### P1 — 관광지 하이브리드, 서버 상주 모델 0 (플래그 기본 off)
 
+> **진행 (2026-09-06)**: P1-1~P1-7·P1-9 완료. 남은 것은 **P1-8 첫 채움**(운영 배포 뒤에 한다 — 표가 아직 없다)과
+> 차원 512 vs 1024 A/B, 융합 방식 A/B. 상태의 원본은 `docs/plans/2026-09-06-unified-search-handoff.md`.
+
 | # | 할 일 | 파일 |
 |---|---|---|
 | P1-1 | **place** — Flyway `attraction_embedding`(§2.4) + JPA 엔티티 · 리포지토리 · `AttractionEmbeddingPort` · UseCase 3(`upsertEmbeddings`, `pendingEmbeddings`, `lookupEmbeddings`) + `AttractionEmbeddingInternalController` (`/internal/attractions/embeddings/{pending,bulk,lookup,status}` — 기존 `/internal/attractions/links` 패턴) + 도메인 테스트 | `place/app/src/main/resources/db/migration/V1x__attraction_embedding.sql`, `place/app/.../attraction/` |
