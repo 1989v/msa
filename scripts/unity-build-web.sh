@@ -46,6 +46,11 @@ run_method() {  # run_method <메서드> <로그이름>
 if [ "${1:-}" != "--skip-font" ]; then
   # 문자열을 새로 쓰면 그 글자는 아틀라스에 없다 — 빌드 전에 항상 다시 굽는다.
   run_method Kgd.Editor.FontBake.Bake font-bake
+else
+  # 건너뛰더라도 **담고 있는지는 본다.** 없는 글자는 네모가 아니라 아무것도 안 그려져
+  # 문장에 구멍이 나고, 화면을 봐도 문구를 그렇게 쓴 줄 안다 — 아틀라스가 사흘 동안
+  # 옛 글자 수에 멈춘 채 배포됐다. 검사는 굽기와 같은 charset 을 쓴다.
+  run_method Kgd.Editor.FontBake.Check font-check
 fi
 
 # 산출물 폴더가 프로젝트 폴더의 **상위**라 유니티에 그대로 넘기면 거부한다 —
