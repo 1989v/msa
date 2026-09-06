@@ -1,9 +1,13 @@
 package com.kgd.search.application.attraction.service
 
+import com.kgd.search.application.attraction.config.AttractionHybridProperties
+import com.kgd.search.application.queryvector.config.QueryVectorProperties
+import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
+import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import java.util.UUID
@@ -15,7 +19,15 @@ import java.util.UUID
 @Service
 class SearchAttractionService(
     private val attractionSearchPort: AttractionSearchPort,
+    private val resolveQueryVector: ResolveQueryVectorUseCase,
+    private val hybrid: AttractionHybridProperties,
+    private val queryVector: QueryVectorProperties,
+    meterRegistry: MeterRegistry,
 ) : SearchAttractionUseCase, SuggestAttractionUseCase {
+
+    /** 벡터 레그가 실제로 켜진 요청 수. 사전 적중률(`search.qvec.*`)과 나눠 본다 — 여기가 낮으면 사전이 얇다. */
+    private val hybridCounter = meterRegistry.counter("search.attraction.hybrid")
+    private val bm25Counter = meterRegistry.counter("search.attraction.bm25")
 
     override fun execute(prefix: String, lang: String?, size: Int): List<SuggestAttractionUseCase.Suggestion> =
         attractionSearchPort.suggest(prefix, lang?.takeIf { it.isNotBlank() }, size).map { hit ->
@@ -39,9 +51,11 @@ class SearchAttractionService(
     override fun execute(query: SearchAttractionUseCase.Query): SearchAttractionUseCase.Result {
         val geo = toGeoFilter(query)
         val pageable = PageRequest.of(query.page.coerceAtLeast(0), query.size.coerceIn(1, 100))
+        val keyword = query.keyword?.takeIf { it.isNotBlank() }
+        val embedding = resolveEmbedding(keyword, geo)
         val page = attractionSearchPort.search(
             AttractionSearchPort.SearchQuery(
-                keyword = query.keyword?.takeIf { it.isNotBlank() },
+                keyword = keyword,
                 lang = query.lang?.takeIf { it.isNotBlank() },
                 areaCode = query.areaCode?.takeIf { it.isNotBlank() },
                 sidoCode = query.sidoCode?.takeIf { it.isNotBlank() },
@@ -52,6 +66,7 @@ class SearchAttractionService(
                     ?.filter { it.isNotBlank() }
                     .orEmpty(),
                 geo = geo,
+                embedding = embedding,
             ),
             pageable,
         )
@@ -68,6 +83,23 @@ class SearchAttractionService(
 
     override fun findById(id: String): SearchAttractionUseCase.AttractionSearchResult? =
         attractionSearchPort.findById(id)?.toResult(distanceKm = null, position = 0, summarize = false)
+
+    /**
+     * 벡터 레그를 켤지 정한다. **끄는 쪽이 기본**이고, 넷 중 하나라도 아니면 BM25 로 간다:
+     * 기능이 켜져 있고 · 스탬프가 설정돼 있고 · 키워드가 있고 · 거리순 정렬이 아니다.
+     *
+     * 거리순을 빼는 이유: 정렬이 점수를 무시하므로 벡터 레그를 얹어도 순서가 그대로다 —
+     * 이웃 100개를 훑는 값만 치르고 얻는 것이 없다.
+     */
+    private fun resolveEmbedding(keyword: String?, geo: AttractionSearchPort.GeoFilter?): List<Float>? {
+        if (!hybrid.enabled || !queryVector.enabled || keyword == null || geo?.sortByDistance == true) {
+            bm25Counter.increment()
+            return null
+        }
+        val vector = resolveQueryVector.resolve(keyword, queryVector.modelRef)
+        if (vector == null) bm25Counter.increment() else hybridCounter.increment()
+        return vector
+    }
 
     private fun toGeoFilter(query: SearchAttractionUseCase.Query): AttractionSearchPort.GeoFilter? {
         val lat = query.lat ?: return null

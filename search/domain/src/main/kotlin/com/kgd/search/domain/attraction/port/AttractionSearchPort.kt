@@ -34,6 +34,12 @@ interface AttractionSearchPort {
          */
         val categories: List<String> = emptyList(),
         val geo: GeoFilter? = null,
+        /**
+         * 질의 벡터 (ADR-0090). **null 이면 BM25 만** — 사전 미적중·기능 꺼짐·거리순 정렬이 그 경우다.
+         * 벡터를 만드는 것은 여기가 아니라 사전이다(서버에는 모델이 없다). 어댑터는 받은 벡터로
+         * 레그를 하나 더 얹을 뿐이라, 이 필드가 곧 「벡터 레그 on/off」다.
+         */
+        val embedding: List<Float>? = null,
     )
 
     data class GeoFilter(

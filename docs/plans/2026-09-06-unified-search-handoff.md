@@ -23,7 +23,8 @@
 | P1-2 도구 나머지 | ✅ **완료** (docs·queries·push·tunnel + 코덱/클라이언트, pytest 57) | `tools/embed/` |
 | P1-3 재색인 벡터 적재 | ✅ **완료** (매핑·쓰기 클래스·lookup·tasklet, 테스트 21) | `search/batch/` |
 | P1-4 질의 사전 | ✅ **완료** (도메인·인덱스·서비스·어댑터 2·내부 API, 테스트 95) | `search/app/`, `search/domain/` |
-| P1-5~9 | ⏳ 다음 | §3 |
+| P1-5 hybrid 분기 | ✅ **완료** (질의 조립·파이프라인·설정·메트릭, 테스트 71) | `search/app/` |
+| P1-6~9 | ⏳ 다음 — **첫 채움이 남은 큰 것** | §3 |
 
 ## 2. 이 작업의 물리적 위치 — 먼저 읽을 것
 
@@ -86,8 +87,14 @@ git -C ~/IdeaProjects/msa branch -f unified-search-embedding "$(git -C <worktree
    `QueryVectorPort`/`QueryMissPort`, `query-vectors-index.json`(dynamic strict), `QueryVectorService`(Caffeine, 미적중도 캐시 · 미스는 매 요청 기록),
    `QueryVectorAdapter`·`QueryMissRedisAdapter`, 기동 시 멱등 인덱스 생성, `/internal/query-vectors/{bulk,misses,status}`+`DELETE /misses`.
    **이제 `tools/embed` 의 `queries.py` 가 붙는다.** 설정 `search.query-vector.model-ref` 는 batch 의 것과 같아야 한다.
-5. **P1-5 질의 분기** — `AttractionSearchAdapter` hybrid 분기 + RRF 파이프라인 + `_source.excludes` + 스탬프 불일치 시 벡터 레그 끄기 (`QueryNormalizer` 는 P1-4 에서 이미 만들었다)
-6. **P1-6~9** — 테스트 · NP 확인 · 첫 채움 · 문서
+5. ~~**P1-5 질의 분기**~~ ✅ **완료 (2026-09-06)** — `SearchQuery.embedding` + `hybrid` 질의(두 레그, 필터 양쪽, `embeddingModel` 필터,
+   `paginationDepth`) + `_source.excludes` + RRF 파이프라인 기동 시 생성 + `search.attraction.{hybrid,bm25}` 메트릭.
+   **기본 꺼짐**(`search.attraction-hybrid.enabled=false`) — 사전과 문서 벡터가 다 찬 뒤에 켠다.
+6. **P1-6~9 — 남은 것**
+   - **첫 채움**(가장 큰 것): 터널 열기 → `push --file` 또는 `docs run` 으로 전 코퍼스 임베딩 → 재색인 → 사전 `seed`
+   - NetworkPolicy 확인: search:batch → place `:8096`, 도구는 port-forward 라 NP 무관
+   - 차원 **512 vs 1024** nDCG A/B (§8.11 이 남긴 유일한 미결) · 융합 방식 A/B (D5-1)
+   - 켜는 순서: 벡터 적재율 확인 → `SEARCH_EMBEDDING_MODEL_REF` 설정 → 재색인 → 사전 seed → `hybrid.enabled=true`
 
 **P1 에서 반드시 같이 잴 것**: 차원 512 vs 1024 의 nDCG 차이(§8.11 이 남긴 유일한 미결).
 

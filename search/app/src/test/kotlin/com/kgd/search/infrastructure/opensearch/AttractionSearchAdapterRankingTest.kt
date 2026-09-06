@@ -1,5 +1,7 @@
 package com.kgd.search.infrastructure.opensearch
 
+import com.kgd.search.application.attraction.config.AttractionHybridProperties
+import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -47,7 +49,10 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
         every {
             client.search(any<SearchRequest>(), RegionSearchDocument::class.java)
         } returns emptyResponse()
-        return AttractionSearchAdapter(client, properties) to captured
+        return AttractionSearchAdapter(
+            client, properties,
+            AttractionHybridProperties(enabled = true), QueryVectorProperties(modelRef = MODEL_REF),
+        ) to captured
     }
 
     given("기본 설정(관광 3.0 / 상점·식당 0.35)") {
@@ -181,3 +186,5 @@ class AttractionSearchAdapterRankingTest : BehaviorSpec({
         }
     }
 })
+
+private const val MODEL_REF = "dragonkue/snowflake-arctic-embed-l-v2.0-ko@abc1234#d1024"

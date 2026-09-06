@@ -1,19 +1,38 @@
 package com.kgd.search.application.attraction.service
 
+import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
+import com.kgd.search.application.queryvector.config.QueryVectorProperties
+import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.data.domain.PageImpl
 
 class SearchAttractionServiceTest : BehaviorSpec({
     val searchPort = mockk<AttractionSearchPort>()
-    val service = SearchAttractionService(searchPort)
+    val resolveQueryVector = mockk<ResolveQueryVectorUseCase>(relaxed = true)
+
+    /** 기본은 하이브리드 꺼짐 — 운영 기본값과 같다. 켠 경우는 아래 given 블록이 따로 만든다. */
+    fun serviceWith(hybridEnabled: Boolean = false, modelRef: String = MODEL_REF) = SearchAttractionService(
+        searchPort, resolveQueryVector,
+        AttractionHybridProperties(enabled = hybridEnabled),
+        QueryVectorProperties(modelRef = modelRef),
+        SimpleMeterRegistry(),
+    )
+    val service = serviceWith()
+
+    // 스펙 안에서 목을 공유하므로 매 테스트마다 지운다 — 안 지우면 `verify(exactly = 0)` 이
+    // 앞 테스트의 호출까지 세어 엉뚱하게 실패한다.
+    beforeTest { clearMocks(searchPort, resolveQueryVector) }
 
     fun document(id: String = "1", overview: String? = null) = AttractionDocument(
         id = id, contentId = "126508", lang = "ko", title = "경복궁",
@@ -109,4 +128,82 @@ class SearchAttractionServiceTest : BehaviorSpec({
             }
         }
     }
+
+    given("하이브리드가 켜져 있을 때") {
+        `when`("사전이 질의를 알면") {
+            then("벡터가 포트로 넘어가야 한다 — 벡터 레그를 켜는 것이 이 필드다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { resolveQueryVector.resolve("한옥", MODEL_REF) } returns listOf(0.6f, 0.8f)
+
+                serviceWith(hybridEnabled = true).execute(SearchAttractionUseCase.Query(keyword = "한옥"))
+
+                captured.captured.embedding shouldBe listOf(0.6f, 0.8f)
+            }
+        }
+
+        `when`("사전이 모르는 질의면") {
+            then("벡터 없이 넘겨야 한다 — 미적중은 BM25 경로다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+                every { resolveQueryVector.resolve(any(), any()) } returns null
+
+                serviceWith(hybridEnabled = true).execute(SearchAttractionUseCase.Query(keyword = "처음 보는 말"))
+
+                captured.captured.embedding shouldBe null
+            }
+        }
+
+        `when`("거리순 정렬이면") {
+            then("사전을 보지도 않아야 한다 — 정렬이 점수를 무시해 얻는 것이 없다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+
+                serviceWith(hybridEnabled = true).execute(
+                    SearchAttractionUseCase.Query(keyword = "한옥", lat = 37.5, lng = 127.0, sort = "distance"),
+                )
+
+                captured.captured.embedding shouldBe null
+                verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
+            }
+        }
+
+        `when`("키워드가 없으면(목록 탐색)") {
+            then("사전을 보지 않아야 한다 — 벡터로 비길 질의가 없다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+
+                serviceWith(hybridEnabled = true).execute(SearchAttractionUseCase.Query(keyword = " "))
+
+                captured.captured.embedding shouldBe null
+                verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
+            }
+        }
+
+        `when`("스탬프가 비어 있으면") {
+            then("켜져 있어도 사전을 보지 않아야 한다 — 첫 채움 전 정상 상태다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+
+                serviceWith(hybridEnabled = true, modelRef = "").execute(SearchAttractionUseCase.Query(keyword = "한옥"))
+
+                captured.captured.embedding shouldBe null
+                verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
+            }
+        }
+    }
+
+    given("하이브리드가 꺼져 있을 때") {
+        `when`("키워드 검색을 하면") {
+            then("사전을 보지 않아야 한다") {
+                every { searchPort.search(any(), any()) } returns PageImpl(emptyList())
+
+                service.execute(SearchAttractionUseCase.Query(keyword = "한옥"))
+
+                verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
+            }
+        }
+    }
 })
+
+private const val MODEL_REF = "dragonkue/snowflake-arctic-embed-l-v2.0-ko@abc1234#d1024"

@@ -1,5 +1,7 @@
 package com.kgd.search.infrastructure.opensearch
 
+import com.kgd.search.application.attraction.config.AttractionHybridProperties
+import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.domain.attraction.model.AttractionDocument
 import com.kgd.search.domain.attraction.model.Jamo
 import com.kgd.search.domain.attraction.model.SuggestHit
@@ -12,6 +14,8 @@ import org.opensearch.client.opensearch._types.query_dsl.FieldValueFactorModifie
 import org.opensearch.client.opensearch._types.query_dsl.FunctionBoostMode
 import org.opensearch.client.opensearch._types.query_dsl.FunctionScoreMode
 import org.opensearch.client.opensearch._types.query_dsl.Operator
+import org.opensearch.client.opensearch._types.query_dsl.HybridQuery
+import org.opensearch.client.opensearch._types.query_dsl.KnnQuery
 import org.opensearch.client.opensearch._types.query_dsl.Query
 import org.opensearch.client.opensearch.core.SearchRequest
 import org.springframework.data.domain.Page
@@ -27,6 +31,8 @@ import kotlin.math.sqrt
 class AttractionSearchAdapter(
     private val client: OpenSearchClient,
     private val ranking: AttractionRankingProperties,
+    private val hybrid: AttractionHybridProperties,
+    private val queryVector: QueryVectorProperties,
 ) : AttractionSearchPort {
 
     companion object {
@@ -45,6 +51,13 @@ class AttractionSearchAdapter(
             "title^3", "title.en^3", "titleLocal^3", "overview", "overview.en", "address", "address.en",
         )
         private const val EARTH_RADIUS_KM = 6371.0
+
+        /**
+         * 벡터 필드는 **응답에서만** 뺀다 (ADR-0090). 매핑 `_source.excludes` 로 빼면 인덱스가
+         * 3.4배 커진다 — k-NN 플러그인이 벡터를 다른 형태로 다시 저장하기 때문이다(플랜 §8.4 실측).
+         * 하이브리드가 꺼져 있어도 뺀다: 필드는 이미 `_source` 에 있고, 문서당 4KB 를 그냥 실어 보낼 이유가 없다.
+         */
+        private const val VECTOR_FIELD = "embedding"
     }
 
     override fun search(
@@ -224,11 +237,24 @@ class AttractionSearchAdapter(
                 b
             }
         }
+        val keywordLeg = withCategoryWeights(matched)
+        val embedding = query.embedding
+
         val builder = SearchRequest.Builder()
             .index(INDEX)
             .from(pageable.offset.toInt())
             .size(pageable.pageSize)
-            .query(withCategoryWeights(matched))
+            // 벡터는 답을 고르는 데 쓰이고 화면에는 안 나간다 — 문서당 4KB 를 실어 보내지 않는다.
+            .source { s -> s.filter { f -> f.excludes(VECTOR_FIELD) } }
+
+        if (embedding == null) {
+            builder.query(keywordLeg)
+        } else {
+            builder.query(hybridQuery(keywordLeg, embedding, matched, pageable.offset.toInt() + pageable.pageSize))
+                // 파이프라인이 두 레그의 점수를 융합한다. **이름이 없으면 OpenSearch 가 요청을 거부한다** —
+                // 조용히 BM25 로 떨어지지 않는다는 뜻이라, 파이프라인 부재는 즉시 드러난다.
+                .searchPipeline(hybrid.pipeline)
+        }
 
         val geo = query.geo
         if (geo != null && geo.sortByDistance) {
@@ -254,6 +280,46 @@ class AttractionSearchAdapter(
             .sort { s -> s.field { f -> f.field("id").order(SortOrder.Asc) } }
 
         return builder.build()
+    }
+
+    /**
+     * 두 레그를 얹는다 (ADR-0090 D4) — 키워드 레그는 **지금 것 그대로**, 벡터 레그는 같은 필터를 진 k-NN.
+     *
+     * 벡터 레그에 `embeddingModel` 필터를 거는 것이 **스탬프 전환 창의 안전장치**다. 재색인이 아직
+     * 옛 스탬프 문서를 갖고 있으면 그 문서는 다른 벡터 공간이라 거리가 뜻을 잃는다 — 필터가
+     * 그것들을 벡터 레그에서 빼고, 그 문서는 키워드 레그로만 올라온다.
+     *
+     * 필터를 두 레그에 **각각** 거는 이유: 하이브리드는 레그별로 후보를 뽑아 합치므로,
+     * 한쪽에만 걸면 다른 쪽이 필터 밖 문서를 끌어 온다(지역 필터를 건 검색에 엉뚱한 지역이 섞인다).
+     */
+    private fun hybridQuery(keywordLeg: Query, embedding: List<Float>, filters: Query, depth: Int): Query {
+        val vectorLeg = Query.of { q ->
+            q.knn(
+                KnnQuery.Builder()
+                    .field(VECTOR_FIELD)
+                    .vector(embedding)
+                    .k(hybrid.k)
+                    .filter(
+                        Query.of { f ->
+                            f.bool { b ->
+                                b.filter(filters)
+                                b.filter { m -> m.term { it.field("embeddingModel").value(FieldValue.of(queryVector.modelRef)) } }
+                            }
+                        },
+                    )
+                    .build(),
+            )
+        }
+        return Query.of { q ->
+            q.hybrid(
+                HybridQuery.Builder()
+                    .queries(keywordLeg, vectorLeg)
+                    // 각 레그가 융합에 내놓는 결과 수. 기본값이 10 이라 그냥 두면 **2페이지부터 빈다** —
+                    // 융합은 레그별 상위 N 만 보므로 이 값이 `from + size` 보다 작으면 뒷장이 잘린다.
+                    .paginationDepth(maxOf(depth, hybrid.k))
+                    .build(),
+            )
+        }
     }
 
     /**

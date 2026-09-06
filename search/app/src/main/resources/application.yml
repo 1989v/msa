@@ -50,6 +50,13 @@ search:
   # ADR-0090 — 질의 사전. **비어 있으면 사전을 쓰지 않는다**(첫 채움 전 정상 상태).
   # 값은 search:batch 의 `search.embedding.model-ref` 와 한 글자도 달라선 안 된다 —
   # 다르면 사전이 적중해도 문서 벡터의 스탬프가 달라 벡터 레그가 꺼진다.
+  # ADR-0090 D4 — 하이브리드. **기본은 꺼짐**: 사전과 문서 벡터가 다 찬 뒤에 켠다.
+  # 융합 방식은 미확정(D5-1) — P0 실측에서 질의마다 방향이 갈렸다(야시장 +0.513 / 한옥 -0.270).
+  # `fusion` 을 바꾸면 그 이름의 파이프라인을 쓴다(rrf 만 앱이 만들고, 나머지는 운영이 만든 것을 쓴다).
+  attraction-hybrid:
+    enabled: ${SEARCH_ATTRACTION_HYBRID_ENABLED:false}
+    k: 100
+    fusion: rrf
   query-vector:
     model-ref: ${SEARCH_EMBEDDING_MODEL_REF:}
     cache-max-size: 10000

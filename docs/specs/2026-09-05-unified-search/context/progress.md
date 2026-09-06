@@ -26,11 +26,15 @@
   `QueryVectorService`(Caffeine 캐시·미스 기록·적중률 메트릭), `QueryVectorAdapter`(OpenSearch)·`QueryMissRedisAdapter`(ZSET),
   기동 시 멱등 인덱스 생성, `/internal/query-vectors/{bulk,misses,status}`+`DELETE /misses`.
   search:app 57 · search:domain 38 통과. 계약 게이트에 `query_vectors` 등록. 회귀 5종 확인
+- **P1-5**: hybrid 분기 — `SearchQuery.embedding`(애플리케이션이 사전에서 채운다), 어댑터의 `hybrid` 질의
+  (키워드 레그 + knn 레그, 필터 양쪽에, `embeddingModel` 필터, `paginationDepth`), `_source.excludes`,
+  `AttractionHybridProperties`(기본 꺼짐), RRF 파이프라인 기동 시 생성, 메트릭 `search.attraction.{hybrid,bm25}`.
+  search:app 71 통과. 회귀 5종 확인
 
 ## 다음 단계
 
 1. ~~ADR Accepted~~ ✅ · ~~P1-1 place~~ ✅ (V12 · 테스트 22 · 게이트 통과, 2026-09-06)
-2. ~~P1-2 도구~~ ✅ · ~~P1-3 재색인~~ ✅ · ~~P1-4 질의 사전~~ ✅ (2026-09-06) · **P1-5 부터** — hybrid 분기 · 첫 채움
+2. ~~P1-2~~ ✅ · ~~P1-3~~ ✅ · ~~P1-4~~ ✅ · ~~P1-5 hybrid 분기~~ ✅ (2026-09-06) · **남은 것: 첫 채움(P1-8) + NP 확인 + 차원 A/B**
 4. P1 중에 **차원 512 vs 1024** nDCG 차이 측정(§8.11 이 남긴 유일한 미결)
 
 ## 블로커
