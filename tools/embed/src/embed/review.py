@@ -71,7 +71,10 @@ def stats(doc: dict) -> str:
     graded = sum(1 for q in qs for c in q.get("candidates", []) + q.get("vector_candidates", []) if c.get("grade") is not None)
     per_model = Counter(m for q in qs for c in q.get("vector_candidates", []) for m in c.get("models", []))
     judged_q = sum(1 for q in qs if any(c.get("grade") is not None for c in q.get("candidates", []) + q.get("vector_candidates", [])))
+    by = Counter(c.get("by") or "?" for q in qs for c in q.get("candidates", []) + q.get("vector_candidates", [])
+                 if c.get("grade") is not None)
     lines = [f"질의 {len(qs)}개 · 후보 {bm + vc}건 (BM25 {bm} + 벡터 {vc}) · 판정됨 {graded}건 / 판정된 질의 {judged_q}개",
+             "판정 출처: " + (", ".join(f"{k} {v}" for k, v in by.most_common()) or "(없음)"),
              "모델별 벡터 후보 기여: " + (", ".join(f"{k} {v}" for k, v in per_model.most_common()) or "(없음)")]
     overlap = [len({str(c["id"]) for c in q.get("candidates", [])} &
                    {str(c["id"]) for c in q.get("vector_candidates", [])}) for q in qs]
@@ -101,8 +104,12 @@ def payload(doc: dict, queries: list[str] | None, rerank_dir: str | None) -> dic
     return {"queries": out}
 
 
-def apply_grades(doc: dict, grades: dict[str, dict[str, int]]) -> tuple[dict, int]:
-    """{질의: {id: grade}} 를 judgments 에 반영한다. 없는 id 는 무시하고, null 로 지우는 것도 허용."""
+def apply_grades(doc: dict, grades: dict[str, dict[str, int]], by: str = "human",
+                 overwrite: bool = True) -> tuple[dict, int]:
+    """{질의: {id: grade}} 를 judgments 에 반영하고 출처(`by`)를 남긴다.
+
+    overwrite=False 면 이미 판정된 것은 건드리지 않는다 — LLM 초안이 사람의 판정을 덮어쓰지 않게 하는 안전장치.
+    """
     n = 0
     for q in doc["queries"]:
         g = grades.get(q["query"])
@@ -110,9 +117,13 @@ def apply_grades(doc: dict, grades: dict[str, dict[str, int]]) -> tuple[dict, in
             continue
         for c in q.get("candidates", []) + q.get("vector_candidates", []):
             key = str(c["id"])
-            if key in g:
-                c["grade"] = g[key]
-                n += 1
+            if key not in g:
+                continue
+            if not overwrite and c.get("grade") is not None:
+                continue
+            c["grade"] = g[key]
+            c["by"] = by
+            n += 1
     return doc, n
 
 
@@ -125,7 +136,8 @@ def main() -> None:
     h = sub.add_parser("html"); h.add_argument("--judgments", required=True); h.add_argument("--out", required=True)
     h.add_argument("--queries"); h.add_argument("--rerank", help="rerank_*.json 이 있는 디렉토리")
     p_ = sub.add_parser("apply"); p_.add_argument("--judgments", required=True); p_.add_argument("--grades", required=True)
-    p_.add_argument("--out", required=True)
+    p_.add_argument("--out", required=True); p_.add_argument("--by", default="human", choices=["human", "llm"])
+    p_.add_argument("--no-overwrite", action="store_true", help="이미 판정된 것은 건드리지 않는다")
     t = sub.add_parser("stats"); t.add_argument("--judgments", required=True)
     a = ap.parse_args()
     doc = load(a.judgments)
@@ -134,7 +146,7 @@ def main() -> None:
     if a.cmd == "apply":
         grades = json.load(open(a.grades, encoding="utf-8"))
         grades = grades.get("grades", grades)
-        doc, n = apply_grades(doc, grades)
+        doc, n = apply_grades(doc, grades, by=a.by, overwrite=not a.no_overwrite)
         from .pool import HEADER, write_judgments
         meta = {k: v for k, v in doc.items() if k != "queries"}
         write_judgments(a.out, HEADER, meta, doc["queries"])

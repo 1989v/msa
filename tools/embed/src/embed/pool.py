@@ -89,11 +89,13 @@ def write_judgments(path: str, doc_header: list[str], meta: dict, judgments: lis
             lines.append(f"    bm25_total: {item['bm25_total']}")
         lines.append("    candidates:")
         for c in item.get("candidates", []):
-            lines.append(f"      - {{id: {q(str(c['id']))}, title: {q(c['title'])}, category: {q(c.get('category') or '')}, address: {q(c.get('address') or '')}, grade: {json.dumps(c.get('grade'))}}}")
+            by = f", by: {c['by']}" if c.get("by") else ""
+            lines.append(f"      - {{id: {q(str(c['id']))}, title: {q(c['title'])}, category: {q(c.get('category') or '')}, address: {q(c.get('address') or '')}, grade: {json.dumps(c.get('grade'))}{by}}}")
         if item.get("vector_candidates"):
             lines.append("    vector_candidates:")
             for c in item["vector_candidates"]:
-                lines.append(f"      - {{id: {q(str(c['id']))}, title: {q(c['title'])}, category: {q(c.get('category') or '')}, address: {q(c.get('address') or '')}, models: {json.dumps(c.get('models', []), ensure_ascii=False)}, grade: {json.dumps(c.get('grade'))}}}")
+                by = f", by: {c['by']}" if c.get("by") else ""
+                lines.append(f"      - {{id: {q(str(c['id']))}, title: {q(c['title'])}, category: {q(c.get('category') or '')}, address: {q(c.get('address') or '')}, models: {json.dumps(c.get('models', []), ensure_ascii=False)}, grade: {json.dumps(c.get('grade'))}{by}}}")
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -102,6 +104,7 @@ HEADER = [
     "# grade: 3 = 정확히 원하던 것 · 2 = 관련 · 1 = 약하게 관련 · 0 = 무관 · null = 미판정.",
     "# candidates 는 2026-09-05 운영 /api/search/attractions 의 BM25 상위 10 (lang 별). vector_candidates 는 후보 모델의 벡터 상위 10 중",
     "# BM25 후보에 없던 문서(models 에 어느 모델이 찾았는지). 판정이 없는 질의는 nDCG 계산에서 빠진다(자동으로 정답을 만들지 않는다).",
+    "# by: human = 사람이 매긴 것 · llm = LLM 초안(검토 대상). 출처를 남겨야 '이 nDCG 는 무엇 기준인가'에 답할 수 있다.",
 ]
 
 
