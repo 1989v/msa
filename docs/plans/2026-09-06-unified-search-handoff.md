@@ -47,6 +47,24 @@
 `<scratchpad>` = `/private/tmp/claude-501/-Users-gideok-kwon-IdeaProjects-msa/<세션id>/scratchpad`.
 **세션이 바뀌면 스크래치패드도 바뀐다** — 위 산출물이 필요하면 새 세션에서 다시 만들거나, 이어받기 전에 복사해 둔다.
 
+## 2-1. 커밋은 어디 있나 (temp 가 날아가도 살아남는 곳)
+
+worktree 는 detached HEAD 라 그 디렉터리가 지워지면 커밋이 unreachable 이 되어 gc 대상이 된다.
+그래서 **본 레포에 이름 붙은 브랜치로 고정해 뒀다**:
+
+```bash
+git -C ~/IdeaProjects/msa log --oneline main..unified-search-embedding   # 이 작업의 전 커밋
+```
+
+worktree 를 잃었으면 여기서 되살린다:
+```bash
+git worktree add --detach <새 경로> unified-search-embedding
+```
+**커밋을 새로 쌓았으면 브랜치를 다시 당겨 둔다** — 안 하면 새 커밋만 다시 매달린 상태가 된다:
+```bash
+git -C ~/IdeaProjects/msa branch -f unified-search-embedding "$(git -C <worktree> rev-parse HEAD)"
+```
+
 ## 3. 다음에 할 일 — P1 (순서대로)
 
 플랜 §3 의 P1-1~P1-9. 각 항목의 상세는 `embedding-entities.md`.
