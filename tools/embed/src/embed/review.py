@@ -205,6 +205,9 @@ header button[data-on]{background:var(--acc);color:#fff;border-color:transparent
 tr.doubt{background:color-mix(in srgb,var(--g1) 9%,transparent)}
 .tag{font-size:10.5px;padding:1px 5px;border-radius:4px;border:1px solid var(--line);color:var(--mut);vertical-align:1px}
 .tag.you{border-color:var(--acc);color:var(--acc)}.tag.hum{border-color:var(--g3);color:var(--g3)}
+.qh .undo{margin-top:8px;font-size:12.5px;padding:3px 9px;border-color:var(--g0);color:var(--g0)}
+.qh .undo:hover{background:var(--g0);color:#fff;border-color:transparent}
+tr.mine{background:color-mix(in srgb,var(--acc) 8%,transparent)}
 dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);max-width:640px;width:92%}
 textarea{width:100%;height:260px;font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:9px}
 .hint{color:var(--mut);font-size:12.5px;margin:10px 0 0}
@@ -216,6 +219,7 @@ textarea{width:100%;height:260px;font:12px/1.4 ui-monospace,Menlo,monospace;back
   <button id="f-all">전체</button>
   <button id="f-todo">미판정</button>
   <button id="f-doubt">검토 대상</button>
+  <button id="f-mine">고친 것</button>
   <button id="exp">내보내기</button>
 </header>
 <main id="app"></main>
@@ -271,6 +275,7 @@ function visible(q, it){
   const g = gradeOf(q.query, it.id);
   if (mode === "todo") return g === undefined;
   if (mode === "doubt") return it.doubt && srcOf(q.query, it.id) !== "you";
+  if (mode === "mine") return srcOf(q.query, it.id) === "you";
   return true;
 }
 function render(){
@@ -280,13 +285,19 @@ function render(){
     if (!items.length) continue;
     const sec = document.createElement("section");
     const done = q.items.filter(it => gradeOf(q.query, it.id) !== undefined).length;
+    const mine = Object.keys(OVER[q.query] || {}).length;
+    // 되돌리기는 고친 게 있을 때만 나온다 — 없는데 버튼이 있으면 무엇이 되돌려지는지 알 수 없다
+    const undo = mine ? `<button class="undo">이 질의 되돌리기 (${mine})</button>` : "";
     sec.innerHTML = `<div class="qh"><span class="cnt">${done}/${q.items.length}</span>
-      <h2>${q.query} <span class="m">${q.lang}</span></h2><p>${q.intent||""}</p></div>`;
+      <h2>${q.query} <span class="m">${q.lang}</span></h2><p>${q.intent||""}</p>${undo}</div>`;
+    const ub = sec.querySelector(".undo");
+    if (ub) ub.onclick = () => { delete OVER[q.query]; save(); render(); };
     const tb = document.createElement("table");
     for (const it of items){
       const g = gradeOf(q.query, it.id), src = srcOf(q.query, it.id);
       const tr = document.createElement("tr");
-      if (it.doubt && src !== "you") tr.className = "doubt";
+      if (src === "you") tr.className = "mine";
+      else if (it.doubt) tr.className = "doubt";
       const tag = src === "you" ? '<span class="tag you">내가</span>'
                 : src === "human" ? '<span class="tag hum">사람</span>'
                 : src === "llm" ? '<span class="tag llm">초안</span>' : "";
@@ -309,10 +320,10 @@ function render(){
   }
   if (!app.children.length) app.innerHTML = '<p class="m" style="padding:20px">해당하는 항목이 없습니다.</p>';
 }
-for (const [id, m] of [["f-all","all"],["f-todo","todo"],["f-doubt","doubt"]]) {
+for (const [id, m] of [["f-all","all"],["f-todo","todo"],["f-doubt","doubt"],["f-mine","mine"]]) {
   document.getElementById(id).onclick = () => {
     mode = m; render();
-    for (const x of ["f-all","f-todo","f-doubt"]) document.getElementById(x).removeAttribute("data-on");
+    for (const x of ["f-all","f-todo","f-doubt","f-mine"]) document.getElementById(x).removeAttribute("data-on");
     document.getElementById(id).setAttribute("data-on","");
   };
 }
