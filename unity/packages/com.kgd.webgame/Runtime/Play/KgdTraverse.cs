@@ -15,7 +15,7 @@ namespace Kgd.Play
     /// </summary>
     public sealed class KgdTraverse
     {
-        public enum State { Ground, Air, Climb, Glide, Roll, Busy, Ledge }
+        public enum State { Ground, Air, Climb, Glide, Roll, Busy, Hang, Ledge }
 
         public struct Tuning
         {
@@ -91,13 +91,23 @@ namespace Kgd.Play
             /// </summary>
             public bool GrazeMove;
 
-            /// <summary>모서리 잡기. 낙하 중 발판 가장자리에 손이 닿으면 끌어올린다 — 자동이다.</summary>
+            /// <summary>
+            /// 모서리 잡기. 뛴 높이가 모자라 윗면에 못 올라서도 **손이 걸리면 매달린다** — 떨어지지 않는다.
+            /// 끌어올리는 것은 그 다음이고, 사람이 점프 버튼을 눌러야 한다. 자동으로 올려 주면
+            /// 그것은 잡기가 아니라 낙하 보정이 된다(사용자 신고 2026-09-06).
+            /// </summary>
             public bool LedgeGrab;
             /// <summary>모서리까지의 수평 여유(Radius 에 더해).</summary>
             public float LedgeReach;
-            /// <summary>윗면이 발 기준 이 구간에 있을 때만 손이 닿은 것이다.</summary>
+            /// <summary>
+            /// 윗면이 발 기준 이 구간에 있을 때 손이 닿은 것이다. 위끝은 **팔 길이**라 몸 높이에 가깝다 —
+            /// 좁게 잡으면 「거의 올라선 것」만 걸려서 매달림이 아니라 구원 장치가 된다.
+            /// </summary>
             public float LedgeMinRise, LedgeMaxRise;
+            /// <summary>끌어올리는 시간과 잡는 순간의 스태미나.</summary>
             public float LedgePullTime, LedgeCost;
+            /// <summary>매달려 있는 동안 초당 스태미나. 0 이면 무한히 매달린다.</summary>
+            public float HangDrain;
 
             /// <summary>봉우리를 오르는 게임의 기준값. 게임이 필요한 것만 덮어쓴다.</summary>
             public static Tuning Default => new()
@@ -187,11 +197,17 @@ namespace Kgd.Play
         private float _rollLeft, _sinceGround, _climbCool, _pressing;
         private float _ledgeLeft;
         private Vector3 _ledgeFrom, _ledgeTo;
+        private float _hangTopY;
+        private Vector3 _hangInward;
+        private float _hangSettle;
 
         /// <summary>끌어올리는 진행 0 → 1. 게임이 몸을 접는 데 쓴다.</summary>
         public float LedgePhase =>
             Now == State.Ledge && _t.LedgePullTime > 0f
                 ? 1f - Mathf.Clamp01(_ledgeLeft / _t.LedgePullTime) : 0f;
+
+        /// <summary>매달린 자세로 내려앉는 시간. 길면 손이 늦게 붙은 것처럼 보인다.</summary>
+        private const float HangSettle = 0.18f;
 
         /// <summary>활공 버튼을 기억하는 시간. 길면 나중에 저절로 펴진 것처럼 보인다.</summary>
         private const float GlideMemory = 0.45f;
@@ -241,6 +257,7 @@ namespace Kgd.Play
                 case State.Glide: Glide(dt, wish); break;
                 case State.Roll: Roll(dt); break;
                 case State.Busy: _vel = Vector3.zero; break;
+                case State.Hang: Hang(dt, wish); break;
                 case State.Ledge: Ledge(dt); break;
             }
 
@@ -346,13 +363,18 @@ namespace Kgd.Play
         }
 
         /// <summary>
-        /// 모서리 잡기 — 낙하 중 발판 가장자리에 손이 닿으면 자동으로 매달려 끌어올린다.
-        /// 버튼을 요구하면 그 순간에 누를 수 있는 사람만 구원받는다 — 「아깝게」를
-        /// 「간신히」로 바꾸는 장치라 자동이어야 한다.
+        /// 모서리 잡기 — 뛴 높이가 모자라 윗면에 못 올라서도 **손이 걸리면 매달린다.**
+        ///
+        /// 규칙은 하나다: **올라갈 수 있으면 올라가고, 모자라면 손이 걸린다.** 그래서 올라가는
+        /// 중에도 잡는다 — 파쿠르에서 손이 걸리는 순간이 바로 그때다. 다만 그대로 두면 윗면을
+        /// 넘길 도약까지 가로채므로, 정점이 윗면에 못 미칠 때만 잡는다.
+        ///
+        /// 잡는 데 버튼을 요구하지 않는다(그 순간에 누를 수 있는 사람만 구원받는다). 대신
+        /// **올라서는 데는** 버튼을 요구한다 — 자동으로 올려 주면 그것은 잡기가 아니라 낙하 보정이다.
         /// </summary>
         private bool TryLedge(IKgdWall walls, IKgdGround ground)
         {
-            if (!_t.LedgeGrab || _vel.y >= 0f || _climbCool > 0f) return false;
+            if (!_t.LedgeGrab || _climbCool > 0f) return false;
             // 모서리를 아는 지형이면 **아무 발판의 윗면**에 걸린다. 모르면 예전처럼 벽만 본다 —
             // 벽 질의는 「오를 수 있는 벽」을 답하는 통로라 일반 발판 가장자리를 돌려주지 않는다
             float reach = _t.Radius + _t.LedgeReach;
@@ -365,18 +387,57 @@ namespace Kgd.Play
             if (!found) return false;
             float rise = topY - Pos.y;
             if (rise < _t.LedgeMinRise || rise > _t.LedgeMaxRise) return false;
+            // 올라가는 중이면 **넘길 도약인지 먼저 본다** — 넘길 것을 잡으면 잘 뛴 사람이 손해를 본다.
+            if (_vel.y > 0f && _t.Gravity > 0f && Pos.y + _vel.y * _vel.y / (2f * _t.Gravity) >= topY)
+                return false;
             if (!Stamina.TrySpend(_t.LedgeCost)) return false;
 
             _vel = Vector3.zero;
             ChargedAir = false;
             Face(inward);
-            // StandOnWall 을 부르지 않는다 — one-way 발판은 발높이가 잡는 창 밖이면
-            // 지형 질의에 안 잡혀서, 표면 찾기가 몸을 발판 속으로 걸어 들어가게 한다.
-            _ledgeFrom = Pos;
-            _ledgeTo = new Vector3(Pos.x, topY + 0.05f, Pos.z) + inward * (_t.Radius + 0.5f);
-            _ledgeLeft = _t.LedgePullTime;
-            Now = State.Ledge;
+            // 잡은 자리에 그대로 멎는다 — 손이 닿았다는 것이 잡는 조건이므로 몸을 옮길 이유가 없고,
+            // 옮기면 순간이동으로 보인다. StandOnWall 도 부르지 않는다: one-way 발판은 발높이가
+            // 잡는 창 밖이면 지형 질의에 안 잡혀서, 표면 찾기가 몸을 발판 속으로 걸어 들어가게 한다.
+            _hangTopY = topY;
+            _hangInward = inward;
+            _hangSettle = HangSettle;
+            Now = State.Hang;
             return true;
+        }
+
+        /// <summary>
+        /// 매달려 있다 — 떨어지지 않는다. 점프로 올라서고, 잡기(놓기)로 손을 뗀다.
+        /// 스태미나가 마르면 손이 풀린다: 매달림이 공짜면 아래로 가는 길이 없어진다.
+        /// </summary>
+        private void Hang(float dt, in Wish wish)
+        {
+            _vel = Vector3.zero;
+
+            // **팔이 펴지는 높이로 내려앉는다.** 잡는 창의 위끝(발이 윗면 바로 아래)에서 걸리면
+            // 가슴이 윗면 높이라 공중에 선 것처럼 보인다 — 매달림은 팔 길이만큼 아래에 있는 자세다.
+            // 순간이동으로 보이지 않게 짧게 끈다.
+            float want = _hangTopY - _t.LedgeMaxRise;
+            if (_hangSettle > 0f)
+            {
+                _hangSettle -= dt;
+                Pos = new Vector3(Pos.x, Mathf.Lerp(Pos.y, want, 1f - Mathf.Exp(-14f * dt)), Pos.z);
+            }
+            else Pos = new Vector3(Pos.x, want, Pos.z);
+
+            if (wish.JumpDown)
+            {
+                _ledgeFrom = Pos;
+                _ledgeTo = new Vector3(Pos.x, _hangTopY + 0.05f, Pos.z) + _hangInward * (_t.Radius + 0.5f);
+                _ledgeLeft = _t.LedgePullTime;
+                Now = State.Ledge;
+                return;
+            }
+
+            if (wish.LetGoDown || (_t.HangDrain > 0f && !Stamina.Spend(_t.HangDrain * dt)))
+            {
+                Now = State.Air;
+                _climbCool = 0.25f;   // 놓자마자 같은 모서리를 다시 잡으면 내려갈 수 없다
+            }
         }
 
         /// <summary>끌어올린다 — 위로 먼저, 안쪽은 나중. 호를 그려야 「짚고 올라선다」로 읽힌다.</summary>
@@ -536,14 +597,14 @@ namespace Kgd.Play
             for (int i = 0; i < steps; i++)
             {
                 ApplyOnce(sub, ground);
-                if (Now == State.Ground || Now == State.Climb || Now == State.Ledge) break;
+                if (Now == State.Ground || Now == State.Climb || Now == State.Hang || Now == State.Ledge) break;
             }
         }
 
         private void ApplyOnce(float dt, IKgdGround ground)
         {
             // 등반·모서리 잡기는 스스로 자리를 놓는다 — 수평 판정을 태우면 벽이 도로 민다
-            bool selfPlaced = Now == State.Climb || Now == State.Ledge;
+            bool selfPlaced = Now == State.Climb || Now == State.Hang || Now == State.Ledge;
             bool airborne = Now == State.Air || Now == State.Glide;
             // **올라서는 턱**은 공중에서 낮다 — 걷는 무릎으로 공중에서 덩이 속에 들어가면 끼인다.
             float mantle = airborne && _t.AirStepUp > 0f ? _t.AirStepUp : _t.StepUp;
