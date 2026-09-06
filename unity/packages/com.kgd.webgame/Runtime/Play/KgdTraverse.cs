@@ -51,6 +51,13 @@ namespace Kgd.Play
             public float ChargeMoveScale;
 
             /// <summary>
+            /// 달리다 놓은 차지의 수평 속도 보너스(0 이면 없음 — 기존 게임 무변경). 달리기 버튼이 있는
+            /// 게임만 쓴다. 값을 올릴 때는 **생성기가 이 보너스를 셈하지 않는다**는 것을 기억할 것 —
+            /// 링크는 보너스 없이 닿아야 하고, 보너스는 사람이 쥐는 여유다.
+            /// </summary>
+            public float ChargeRunBonus;
+
+            /// <summary>
             /// 낙하 종단 속도. 0 이면 무제한(기본). 층층이 떠 있는 지형(one-way 발판)은
             /// 반드시 둔다 — 무제한이면 긴 낙하에서 한 프레임에 발판 두께를 건너뛴다.
             /// </summary>
@@ -175,6 +182,7 @@ namespace Kgd.Play
         private readonly Tuning _t;
         private readonly KgdBody _body;
         private IKgdCeiling _ceiling;
+        private IKgdLedge _ledge;
         private Vector3 _vel, _knock;
         private float _rollLeft, _sinceGround, _climbCool, _pressing;
         private float _ledgeLeft;
@@ -223,6 +231,7 @@ namespace Kgd.Play
             Landed = false;
             Bumped = false;
             _ceiling = ground as IKgdCeiling;   // 지형이 천장을 알면 쓴다 — 하이트맵은 모른다
+            _ledge = ground as IKgdLedge;       // 「잡을 모서리」를 아는 지형이면 벽이 아닌 발판에도 손이 닿는다
 
             switch (Now)
             {
@@ -290,7 +299,11 @@ namespace Kgd.Play
                     float c = Mathf.Clamp01(wish.JumpCharge);
                     var dir = wish.Move.sqrMagnitude > 0.01f ? wish.Move.normalized : Facing;
                     Yaw = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg;
-                    _vel = dir * Mathf.Lerp(_t.ChargeMinSpeed, _t.ChargeMaxSpeed, c);
+                    // **달려서 뛰면 더 간다** (`ChargeRunBonus`). 0 이면 없던 기능이다 — 차지 단수만이 거리다.
+                    // 0 보다 크면 달리던 몸이 그만큼 더 멀리 난다(Only Up 은 「긴 간격에서 Shift 를 쓰라」고
+                    // 안내한다). 생성기는 **보너스 없이** 링크를 풀므로, 보너스는 여유일 뿐 필요조건이 아니다.
+                    float boost = Running ? 1f + _t.ChargeRunBonus : 1f;
+                    _vel = dir * (Mathf.Lerp(_t.ChargeMinSpeed, _t.ChargeMaxSpeed, c) * boost);
                     _vel.y = Mathf.Lerp(_t.ChargeMinVel, _t.ChargeMaxVel, c);
                     ChargedAir = true;
                 }
@@ -339,9 +352,17 @@ namespace Kgd.Play
         /// </summary>
         private bool TryLedge(IKgdWall walls, IKgdGround ground)
         {
-            if (!_t.LedgeGrab || walls == null || _vel.y >= 0f || _climbCool > 0f) return false;
-            if (!walls.WallAt(Pos, _t.Radius + _t.LedgeReach, out float topY, out var inward))
-                return false;
+            if (!_t.LedgeGrab || _vel.y >= 0f || _climbCool > 0f) return false;
+            // 모서리를 아는 지형이면 **아무 발판의 윗면**에 걸린다. 모르면 예전처럼 벽만 본다 —
+            // 벽 질의는 「오를 수 있는 벽」을 답하는 통로라 일반 발판 가장자리를 돌려주지 않는다
+            float reach = _t.Radius + _t.LedgeReach;
+            float topY = 0f;
+            var inward = Vector3.zero;
+            bool found;
+            if (_ledge != null) found = _ledge.LedgeAt(Pos, reach, out topY, out inward);
+            else if (walls != null) found = walls.WallAt(Pos, reach, out topY, out inward);
+            else found = false;
+            if (!found) return false;
             float rise = topY - Pos.y;
             if (rise < _t.LedgeMinRise || rise > _t.LedgeMaxRise) return false;
             if (!Stamina.TrySpend(_t.LedgeCost)) return false;
