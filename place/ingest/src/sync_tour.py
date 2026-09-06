@@ -135,14 +135,39 @@ def http_json(url: str) -> dict:
         return json.loads(res.read().decode("utf-8"))
 
 
+class TourApiError(RuntimeError):
+    """원천이 정상 응답이 아닌 것을 준 경우.
+
+    **SystemExit 이 아니라 일반 예외다.** 예전에는 SystemExit 을 던졌는데, 그것은
+    BaseException 계열이라 호출부의 `except Exception` 이 못 잡는다. 그래서 응답 하나가
+    이상하면 그 레코드만 건너뛰는 대신 **잡 전체가 죽었다** — 2026-09-06 에 국문 998건을
+    받은 직후 영문이 시작하자마자 끝나 그날 영문 1,000건을 통째로 잃었다.
+    """
+
+
 def tour_get(key: str, service: str, op: str, params: dict) -> dict:
     qs = urlencode({"MobileOS": "ETC", "MobileApp": "msa-seed", "_type": "json", **params})
     # Encoding 키는 이미 URL-인코딩돼 있어 그대로 붙인다 (이중 인코딩 금지)
     url = f"{BASE}/{service}/{op}?serviceKey={key}&{qs}"
     data = http_json(url)
+
+    # data.go.kr 은 **봉투가 두 종류**다. 정상 경로는 `response.header` 지만, 키·한도 오류는
+    # `OpenAPI_ServiceResponse.cmmMsgHeader` 로 온다. 뒤엣것을 안 읽으면 코드도 메시지도
+    # None 이라 로그가 "실패: None None" 이 되어 원인을 못 찾는다 (실제로 그랬다).
+    fault = (data.get("OpenAPI_ServiceResponse") or {}).get("cmmMsgHeader")
+    if fault:
+        raise TourApiError(
+            f"[tourapi] {op} 거부: {fault.get('returnReasonCode')} "
+            f"{fault.get('returnAuthMsg') or fault.get('errMsg')}"
+        )
+
     header = data.get("response", {}).get("header", {})
     if header.get("resultCode") not in ("0000", "00"):
-        raise SystemExit(f"[tourapi] {op} 실패: {header.get('resultCode')} {header.get('resultMsg')}")
+        if not header:
+            raise TourApiError(f"[tourapi] {op} 응답 형식을 모르겠다: {str(data)[:160]}")
+        raise TourApiError(
+            f"[tourapi] {op} 실패: {header.get('resultCode')} {header.get('resultMsg')}"
+        )
     return data["response"]["body"]
 
 

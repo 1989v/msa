@@ -246,6 +246,7 @@ def _admin_region_parser() -> None:
     _view_count_sorting()
     _categorize_rules()
     _intro_derive()
+    _tour_error_is_catchable()
 
 
 def _english_from_address() -> None:
@@ -275,6 +276,50 @@ def _english_from_address() -> None:
     assert "29" not in SIDO_EN and "46" not in SIDO_EN
     assert SIDO_EN["12"].startswith("Jeonnam-Gwangju")
     assert SIDO_EN["51"] == "Gangwon-do" and SIDO_EN["52"] == "Jeonbuk-do"
+
+
+def _tour_error_is_catchable() -> None:
+    """원천 오류는 **그 레코드만** 건너뛰게 해야 한다 — 잡 전체를 죽이면 하루치를 잃는다."""
+    import src.sync_tour as st
+
+    # 1) 오류 타입이 Exception 계열이어야 호출부의 except Exception 이 잡는다.
+    #    SystemExit(BaseException) 이면 못 잡고 잡이 통째로 죽는다 (2026-09-06 영문 1,000건 유실).
+    assert issubclass(st.TourApiError, Exception), "TourApiError 는 Exception 이어야 한다"
+    assert not issubclass(st.TourApiError, SystemExit)
+
+    orig = st.http_json
+    try:
+        # 2) data.go.kr 의 **키·한도 오류 봉투**를 읽어야 한다. 이걸 모르면 로그가
+        #    "실패: None None" 이 되어 원인을 못 찾는다.
+        st.http_json = lambda url: {"OpenAPI_ServiceResponse": {"cmmMsgHeader": {
+            "returnReasonCode": "22",
+            "returnAuthMsg": "LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR"}}}
+        try:
+            st.tour_get("k", "KorService2", "detailIntro2", {})
+            raise AssertionError("한도 초과 봉투인데 통과했다")
+        except st.TourApiError as e:
+            # 「한도 초과로 거부」와 「형식을 모르겠다」는 운영자가 할 일이 다르다 —
+            # 앞은 기다리는 것, 뒤는 디버깅이다. 봉투를 안 읽으면 뒤엣말이 나오므로
+            # **문구까지** 본다 (원문 일부만 보면 두 경로가 구분되지 않아 검사가 안 문다).
+            assert "거부" in str(e), f"한도 초과를 그렇게 부르지 않았다: {e}"
+            assert "22" in str(e) and "LIMITED" in str(e), f"원인이 안 담겼다: {e}"
+
+        # 3) 아는 봉투 둘 다 아니면 원문 일부라도 남긴다 — None None 은 단서가 없다
+        st.http_json = lambda url: {"뜻밖의모양": 1}
+        try:
+            st.tour_get("k", "KorService2", "detailIntro2", {})
+            raise AssertionError("모르는 형식인데 통과했다")
+        except st.TourApiError as e:
+            assert "None None" not in str(e), f"원인 없는 메시지: {e}"
+            assert "뜻밖의모양" in str(e)
+
+        # 4) 정상 응답은 body 를 그대로 돌려준다
+        st.http_json = lambda url: {"response": {"header": {"resultCode": "0000"},
+                                                 "body": {"items": {"item": []}}}}
+        assert st.tour_get("k", "KorService2", "detailIntro2", {}) == {"items": {"item": []}}
+    finally:
+        st.http_json = orig
+    print("  원천 오류 처리 OK (잡을 수 있는 예외 · 한도 봉투 · 모르는 형식)")
 
 
 def _intro_derive() -> None:
