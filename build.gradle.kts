@@ -512,6 +512,9 @@ val searchReadOmitted = mapOf(
     "attractions" to mapOf(
         "idSort" to "정렬 전용 색인 필드 — 응답에 쓰지 않는다",
         "titleJamo" to "자모 분해 검색 전용 — 응답에 쓰지 않는다",
+        "embedding" to "벡터 레그 전용(knn_vector) — 질의가 _source.excludes 로 빼므로 응답에 오지 않는다 (ADR-0090)",
+        "embeddingModel" to "색인된 벡터의 스탬프 — 질의 경로가 설정과 견주는 값이지 응답 필드가 아니다 (ADR-0090)",
+        "embeddingHash" to "임베딩 텍스트 해시 — 어느 텍스트로 만든 벡터인지 추적용, 검색·응답 모두 안 쓴다 (ADR-0090)",
     ),
 )
 

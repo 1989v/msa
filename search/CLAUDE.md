@@ -2,6 +2,9 @@
 
 OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 전환). CDC + Kafka로 상품 데이터를 비동기 인덱싱.
 관광지(`attractions` 인덱스)는 place SSOT 를 batch 가 일괄 재색인 — Kafka 미경유 (ADR-0065).
+문서 벡터(`embedding`·`embeddingModel`·`embeddingHash`)도 그 재색인이 place `/internal/attractions/embeddings/lookup`
+에서 받아 함께 싣는다 (ADR-0090). **`search.embedding.model-ref` 가 비어 있으면 벡터 없이 색인한다** — 첫 채움 전 정상 상태다.
+벡터가 없는 문서는 세 필드가 빈 채로 색인되고 BM25 로만 찾힌다 — 재색인은 벡터를 기다리지 않는다.
 
 ## Modules
 
@@ -39,7 +42,7 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 | 인덱스 | 쓰기 | 읽기 | 필드 |
 |---|---|---|---|
 | `regions` | `RegionIndexDocument` (batch) | `RegionSearchDocument` (app) | 7 / 7 |
-| `attractions` | `AttractionIndexDocument` (batch) | `AttractionSearchDocument` (app) | 21 / 19 — `idSort`·`titleJamo` 쓰기 전용 |
+| `attractions` | `AttractionIndexDocument` (batch) | `AttractionSearchDocument` (app) | 24 / 19 — `idSort`·`titleJamo` + 벡터 3필드가 쓰기 전용 |
 | `products` | `ProductIndexDocument` (batch·consumer 2벌) | `ProductSearchDocument` (app) | 26 / 26 |
 
 `ProductIndexDocument` 2벌은 둘 다 쓰기 측이라 분리 근거가 없는 순수 중복이다. 게이트가 드리프트를 잡으므로

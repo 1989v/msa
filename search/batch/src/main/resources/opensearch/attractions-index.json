@@ -1,5 +1,8 @@
 {
   "settings": {
+    "index": {
+      "knn": true
+    },
     "analysis": {
       "filter": {
         "tourism_synonyms": {
@@ -92,6 +95,18 @@
       "tel": { "type": "keyword", "index": false },
       "googlePlaceId": { "type": "keyword", "index": false },
       "popularityScore": { "type": "float" },
+      "embedding": {
+        "type": "knn_vector",
+        "dimension": 1024,
+        "space_type": "cosinesimil",
+        "method": {
+          "name": "hnsw",
+          "engine": "lucene",
+          "parameters": { "m": 16, "ef_construction": 128 }
+        }
+      },
+      "embeddingModel": { "type": "keyword" },
+      "embeddingHash": { "type": "keyword", "index": false },
       "modifiedAt": { "type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss" }
     }
   }

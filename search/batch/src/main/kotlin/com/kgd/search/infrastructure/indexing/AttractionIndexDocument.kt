@@ -43,13 +43,29 @@ data class AttractionIndexDocument(
     val googlePlaceId: String? = null,
     /** 완결성 기반 브라우즈 정렬 신호 — 도메인이 계산한다 (AttractionPopularity). */
     val popularityScore: Double,
+    /**
+     * 문서 벡터 (ADR-0090). 원본은 place `attraction_embedding` 이고, 재색인이 옮겨 싣는다.
+     * 벡터가 없는 문서는 이 셋이 비고 BM25 로만 찾힌다 — 벡터 레그는 있는 문서만 태운다.
+     *
+     * **`_source` 에 그대로 둔다.** 원본이 DB 라 빼도 될 것 같지만, 매핑 `_source.excludes` 로 빼면
+     * 인덱스가 3.4배 커진다(플러그인이 벡터를 다른 형태로 다시 저장한다 — 플랜 §8.4 실측).
+     * 응답에서 빼는 것은 질의의 `_source.excludes` 가 한다.
+     */
+    val embedding: List<Float>? = null,
+    /** 그 벡터를 만든 스탬프. 설정과 다르면 질의 경로가 벡터 레그를 끈다(스탬프 전환 창 안전). */
+    val embeddingModel: String? = null,
+    /** 어느 임베딩 텍스트로 만든 벡터인지 — 추적용이라 검색하지 않는다(mapping: index=false). */
+    val embeddingHash: String? = null,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     val modifiedAt: LocalDateTime? = null,
 ) {
     /** OpenSearch geo_point object 표기 — 필드명 lat/lon 고정. */
 
+    /** 재색인이 place 에서 받아 오는 벡터 한 벌. 세 필드가 **함께** 채워지거나 함께 빈다. */
+    data class Embedding(val vector: List<Float>, val modelRef: String, val textHash: String)
+
     companion object {
-        fun fromDomain(doc: AttractionDocument) = AttractionIndexDocument(
+        fun fromDomain(doc: AttractionDocument, embedding: Embedding? = null) = AttractionIndexDocument(
             id = doc.id,
             idSort = doc.id.toLongOrNull() ?: 0L,
             contentId = doc.contentId,
@@ -70,6 +86,9 @@ data class AttractionIndexDocument(
             overview = doc.overview,
             googlePlaceId = doc.googlePlaceId,
             popularityScore = doc.popularityScore,
+            embedding = embedding?.vector,
+            embeddingModel = embedding?.modelRef,
+            embeddingHash = embedding?.textHash,
             modifiedAt = doc.modifiedAt,
         )
     }

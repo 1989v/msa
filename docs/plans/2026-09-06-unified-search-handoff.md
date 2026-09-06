@@ -21,7 +21,8 @@
 | — 차원 512 vs 1024 | ⏳ **미측정** — 메모리는 둘 다 되므로 nDCG 로만 결정. P1 첫 채움 때 | — |
 | P1-1 place 벡터 표·API | ✅ **완료** (V12 · 도메인 10 + 서비스 12 테스트 · 게이트 통과) | `place/` |
 | P1-2 도구 나머지 | ✅ **완료** (docs·queries·push·tunnel + 코덱/클라이언트, pytest 57) | `tools/embed/` |
-| P1-3~9 | ⏳ 다음 | §3 |
+| P1-3 재색인 벡터 적재 | ✅ **완료** (매핑·쓰기 클래스·lookup·tasklet, 테스트 21) | `search/batch/` |
+| P1-4~9 | ⏳ 다음 | §3 |
 
 ## 2. 이 작업의 물리적 위치 — 먼저 읽을 것
 
@@ -76,7 +77,10 @@ git -C ~/IdeaProjects/msa branch -f unified-search-embedding "$(git -C <worktree
 2. ~~**P1-2 tools/embed 나머지**~~ ✅ **완료 (2026-09-06)** — `vectors.py`(float32 LE base64 코덱) · `client.py`(내부 API + 재시도 규칙) ·
    `docs.py`(pending → 해시 비교 → touch/임베딩 → bulk) · `queries.py`(시드·미적중) · `push.py`(parquet 첫 채움) · `tunnel.sh`(port-forward).
    **`queries.py` 가 부르는 `/internal/query-vectors/**` 는 P1-4 에서 만든다** — 그때까지 404 다(계약은 스펙 §3.4 에 고정).
-3. **P1-3 search:batch** — `attractions-index.json` 에 `knn_vector`(dimension 은 차원 결정 후) + `AttractionIndexDocument` 3필드 + `searchReadOmitted` + 재색인 tasklet 의 lookup
+3. ~~**P1-3 search:batch**~~ ✅ **완료 (2026-09-06)** — `attractions-index.json` 에 `knn: true` + `embedding`(knn_vector **d1024** · cosinesimil · lucene hnsw m16/ef128)
+   ·`embeddingModel`·`embeddingHash`, 쓰기 클래스 3필드, `searchReadOmitted` 3줄, `PlaceApiClient.lookupEmbeddings`+`decodeVector`,
+   재색인 tasklet 이 페이지마다 받아 싣고 적재율(`vectors n/총`)을 로그로 남긴다.
+   **`search.embedding.model-ref` 가 비면 벡터를 안 싣는다** — 첫 채움 전 정상 상태이고, search:app 의 같은 설정과 한 글자도 달라선 안 된다.
 4. **P1-4 search:app 사전** — `query_vectors` 인덱스 + 포트/어댑터 + `/internal/query-vectors/*` + Redis 미스
 5. **P1-5 질의 분기** — `QueryNormalizer` + hybrid 분기 + 파이프라인 + 메트릭
 6. **P1-6~9** — 테스트 · NP 확인 · 첫 채움 · 문서

@@ -6,7 +6,10 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.time.LocalDateTime
+import java.util.Base64
 
 @Component
 class PlaceApiClient(
@@ -60,6 +63,9 @@ class PlaceApiClient(
         val longitude: Double? = null,
         val population: Long? = null,
     )
+
+    /** `/internal/attractions/embeddings/lookup` 한 건. 벡터는 이미 float 리스트로 풀어 둔다. */
+    data class EmbeddingDto(val attractionId: Long, val textHash: String, val vector: List<Float>)
 
     data class RegionPageResponse(
         val regions: List<RegionDto>,
@@ -143,5 +149,54 @@ class PlaceApiClient(
             totalElements = (data["totalElements"] as Number).toLong(),
             totalPages = (data["totalPages"] as Number).toInt()
         )
+    }
+
+    /**
+     * 관광지 벡터 조회 (ADR-0090). `/api` 가 아니라 `/internal` 이라 게이트웨이가 라우팅하지 않지만,
+     * placeWebClient 는 place 서비스를 직접 가리키므로 클러스터 안에서는 닿는다.
+     *
+     * 한 번에 500건까지(서버 상한). 벡터가 없는 id 는 응답에 **오지 않는다** — 그 문서는 BM25 로만 찾힌다.
+     */
+    suspend fun lookupEmbeddings(modelRef: String, ids: List<Long>): Map<Long, EmbeddingDto> {
+        if (ids.isEmpty()) return emptyMap()
+        require(ids.size <= LOOKUP_MAX_BATCH) { "한 번에 ${LOOKUP_MAX_BATCH}건까지입니다: ${ids.size}" }
+
+        val response = webClient.post()
+            .uri("/internal/attractions/embeddings/lookup")
+            .bodyValue(mapOf("modelRef" to modelRef, "ids" to ids))
+            .retrieve()
+            .bodyToMono(object : ParameterizedTypeReference<Map<String, Any>>() {})
+            .awaitSingle()
+
+        @Suppress("UNCHECKED_CAST")
+        val data = response["data"] as? Map<String, Any>
+            ?: throw IllegalStateException("No data field in place embedding lookup response")
+
+        @Suppress("UNCHECKED_CAST")
+        val items = data["items"] as? List<Map<String, Any>> ?: emptyList()
+        return items.associate { item ->
+            val id = (item["attractionId"] as Number).toLong()
+            id to EmbeddingDto(
+                attractionId = id,
+                textHash = item["textHash"] as String,
+                vector = decodeVector(item["vector"] as String),
+            )
+        }
+    }
+
+    companion object {
+        /** 서버 `AttractionEmbeddingInternalController.MAX_BATCH` 와 같은 값. */
+        const val LOOKUP_MAX_BATCH = 500
+
+        /**
+         * float32 little-endian 바이트의 base64 → float 리스트. 서버 `encode` 의 역이다.
+         * 엔디안을 틀리면 예외가 아니라 **그럴듯한 쓰레기 벡터**가 나와 검색 품질만 조용히 무너진다.
+         */
+        fun decodeVector(base64: String): List<Float> {
+            val bytes = Base64.getDecoder().decode(base64)
+            require(bytes.size % Float.SIZE_BYTES == 0) { "벡터 바이트 길이가 4의 배수가 아닙니다: ${bytes.size}" }
+            val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+            return List(bytes.size / Float.SIZE_BYTES) { buffer.float }
+        }
     }
 }

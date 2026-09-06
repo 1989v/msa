@@ -83,4 +83,55 @@ class PlaceApiClientTest : BehaviorSpec({
             }
         }
     }
+
+    Given("place 가 임베딩 조회에 응답하면") {
+        // 기준값은 서버 인코더와 같은 방식(ByteBuffer LITTLE_ENDIAN + Base64)으로 만든 것이고,
+        // 같은 문자열을 도구(tools/embed) 쪽 검사도 쓴다 — 세 구현이 한 상수에 묶인다.
+        val client = clientReturning(
+            """
+            {"success":true,"data":{"modelRef":"m@abc1234#d2","items":[
+              {"attractionId":11,"textHash":"h11","vector":"mpkZv83MTD8=","embeddedAt":"2026-09-06T01:00:00"}
+            ]}}
+            """.trimIndent(),
+        )
+        val found = kotlinx.coroutines.runBlocking { client.lookupEmbeddings("m@abc1234#d2", listOf(11L, 12L)) }
+
+        When("벡터를 푼다") {
+            Then("float32 little-endian 순서 그대로 나와야 한다") {
+                found.getValue(11L).vector shouldBe listOf(-0.6f, 0.8f)
+                found.getValue(11L).textHash shouldBe "h11"
+            }
+            Then("응답에 없는 id 는 지도에 없어야 한다 — 그 문서는 BM25 로만 찾힌다") {
+                found.containsKey(12L) shouldBe false
+            }
+        }
+    }
+
+    Given("벡터 base64 를 직접 풀 때") {
+        When("서버가 낸 문자열을 준다") {
+            Then("JVM 인코더의 역이어야 한다") {
+                PlaceApiClient.decodeVector("AACAPwAAAAAAAAAAAAAAAA==") shouldBe listOf(1.0f, 0.0f, 0.0f, 0.0f)
+                PlaceApiClient.decodeVector("AAAAPwAAAD8AAAA/AAAAPw==") shouldBe listOf(0.5f, 0.5f, 0.5f, 0.5f)
+            }
+        }
+        When("길이가 4의 배수가 아니면") {
+            Then("조용한 쓰레기 벡터 대신 예외여야 한다") {
+                io.kotest.assertions.throwables.shouldThrow<IllegalArgumentException> {
+                    PlaceApiClient.decodeVector("AAAA")
+                }
+            }
+        }
+    }
+
+    Given("조회 id 가 상한을 넘으면") {
+        When("501건을 준다") {
+            Then("서버에 보내기 전에 막아야 한다") {
+                io.kotest.assertions.throwables.shouldThrow<IllegalArgumentException> {
+                    kotlinx.coroutines.runBlocking {
+                        clientReturning("{}").lookupEmbeddings("m@abc1234#d2", (1L..501L).toList())
+                    }
+                }
+            }
+        }
+    }
 })

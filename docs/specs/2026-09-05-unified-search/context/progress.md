@@ -18,11 +18,15 @@
 - **P1-2**: 도구 나머지 — `vectors`(코덱) · `client`(내부 API) · `docs`(하루 루틴) · `queries`(사전) · `push`(첫 채움) · `tunnel.sh`.
   pytest 57 통과. 코덱·해시 기준값은 **JVM 이 만든 것**이고, 회귀 4종(엔디안·touch 판정·4xx 재시도·정규화 검사)을
   임시 사본에 주입해 각 테스트가 실제로 무는 것을 확인했다
+- **P1-3**: `attractions-index.json` 에 `knn: true` + `embedding`(knn_vector d1024·cosinesimil·lucene hnsw)·`embeddingModel`·`embeddingHash`,
+  쓰기 클래스 3필드, `searchReadOmitted` 3줄, `PlaceApiClient.lookupEmbeddings` + `decodeVector`,
+  재색인 tasklet 이 페이지마다 벡터를 받아 싣고 적재율을 로그로 남긴다. `search.embedding.model-ref` 가 비면 벡터 없이 색인.
+  search:batch 테스트 21 통과 · `verifySearchIndexContract` 통과. 게이트·검사 회귀 4종 확인
 
 ## 다음 단계
 
 1. ~~ADR Accepted~~ ✅ · ~~P1-1 place~~ ✅ (V12 · 테스트 22 · 게이트 통과, 2026-09-06)
-2. ~~P1-2 도구 나머지~~ ✅ (2026-09-06) · **P1-3 부터** — 재색인(knn_vector) · 사전 API · hybrid 분기 · 첫 채움
+2. ~~P1-2 도구~~ ✅ · ~~P1-3 재색인~~ ✅ (2026-09-06) · **P1-4 부터** — 질의 사전 API · hybrid 분기 · 첫 채움
 4. P1 중에 **차원 512 vs 1024** nDCG 차이 측정(§8.11 이 남긴 유일한 미결)
 
 ## 블로커

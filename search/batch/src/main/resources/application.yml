@@ -32,6 +32,10 @@ search:
     region-alias: regions
   batch:
     page-size: 100
+  embedding:
+    # 문서 벡터 스탬프 (ADR-0090). **비어 있으면 벡터를 싣지 않는다** — 첫 채움 전에는 이것이 정상이다.
+    # 값은 search:app 의 같은 설정과 한 글자도 다르지 않아야 한다. 다르면 질의 경로가 벡터 레그를 끈다.
+    model-ref: ${SEARCH_EMBEDDING_MODEL_REF:}
 
 server:
   port: 8092

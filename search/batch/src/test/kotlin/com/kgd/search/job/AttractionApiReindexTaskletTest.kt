@@ -9,6 +9,7 @@ import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -26,7 +27,11 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
     val tasklet = AttractionApiReindexTasklet(placeApiClient, bulkProcessor, aliasManager).also {
         ReflectionTestUtils.setField(it, "indexAlias", "attractions")
         ReflectionTestUtils.setField(it, "pageSize", 100)
+        // 기본은 빈 값 = 벡터 없이 색인. 첫 채움 전 운영이 실제로 이 상태다.
+        ReflectionTestUtils.setField(it, "embeddingModelRef", "")
     }
+
+    fun useModelRef(ref: String) = ReflectionTestUtils.setField(tasklet, "embeddingModelRef", ref)
 
     fun dto(id: Long, lang: String, status: String = "ACTIVE") = PlaceApiClient.AttractionDto(
         id = id, contentId = "c$id", lang = lang, title = "관광지$id",
@@ -92,5 +97,53 @@ class AttractionApiReindexTaskletTest : BehaviorSpec({
                 bare.popularityScore shouldBe (1.0 plusOrMinus 1e-9)
             }
         }
+
+        `when`("스탬프 설정이 비어 있으면") {
+            then("place 벡터를 조회하지 않고 세 필드가 빈 채로 색인해야 한다") {
+                val documents = mutableListOf<AttractionIndexDocument>()
+                every { bulkProcessor.processDocument("attractions_1", any<String>(), capture(documents)) } just Runs
+                coEvery { placeApiClient.fetchPage(0, 100) } returns PlaceApiClient.AttractionPageResponse(
+                    attractions = listOf(dto(1, "ko")), totalElements = 1, totalPages = 1,
+                )
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                coVerify(exactly = 0) { placeApiClient.lookupEmbeddings(any(), any()) }
+                documents.single().embedding shouldBe null
+                documents.single().embeddingModel shouldBe null
+                documents.single().embeddingHash shouldBe null
+            }
+        }
+
+        `when`("스탬프가 설정됐고 일부 문서만 벡터가 있으면") {
+            then("있는 문서만 세 필드가 채워지고, 없는 문서는 벡터 없이 색인돼야 한다") {
+                useModelRef(MODEL_REF)
+                val documents = mutableListOf<AttractionIndexDocument>()
+                every { bulkProcessor.processDocument("attractions_1", any<String>(), capture(documents)) } just Runs
+                coEvery { placeApiClient.fetchPage(0, 100) } returns PlaceApiClient.AttractionPageResponse(
+                    attractions = listOf(dto(1, "ko"), dto(2, "ko")), totalElements = 2, totalPages = 1,
+                )
+                coEvery { placeApiClient.lookupEmbeddings(MODEL_REF, listOf(1L, 2L)) } returns mapOf(
+                    1L to PlaceApiClient.EmbeddingDto(1L, "hash-1", listOf(0.6f, 0.8f)),
+                )
+
+                tasklet.execute(mockk<StepContribution>(), mockk<ChunkContext>())
+
+                val withVector = documents.single { it.id == "1" }
+                withVector.embedding shouldBe listOf(0.6f, 0.8f)
+                withVector.embeddingModel shouldBe MODEL_REF
+                withVector.embeddingHash shouldBe "hash-1"
+
+                // 벡터가 없는 문서는 색인에서 빠지지 않는다 — BM25 로는 여전히 찾혀야 한다
+                val without = documents.single { it.id == "2" }
+                without.embedding shouldBe null
+                without.embeddingModel shouldBe null
+                without.embeddingHash shouldBe null
+
+                useModelRef("")
+            }
+        }
     }
 })
+
+private const val MODEL_REF = "dragonkue/snowflake-arctic-embed-l-v2.0-ko@abc1234#d1024"
