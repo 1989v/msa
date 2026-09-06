@@ -194,18 +194,17 @@ T 자세 바인딩(`Animation` 을 `Root` 에), 클립 이름 충돌(`Resources.
 | 3D 에셋 | **절차 생성 메시 + 파트 애니메이션.** Claude Design 은 형태 규격을 정한다 (§4-3) |
 | 참조 자료 | `portal-fe/public/games/_src/age-of-siege/_ref/` — 폴더째 gitignore |
 
-**아직 남았다**
+| 캔버스 판본 | **삭제** (커밋 `bfbe83e` 에 남아 복구 가능) |
+| 슬라이스 범위 | **고을 1 · 1판 방어 하나** |
 
-1. **캔버스 판본을 어떻게 하나** — 지우나, `age-of-siege-2d` 로 남기나.
-   남기면 카탈로그에 두 개가 되고, 지우면 되돌릴 수 없다
-2. **슬라이스 범위** — 고을 1의 1판만인가, 3판(방어 2 + 소탕 1) 전부인가.
-   빌드가 한 번에 10분이라 범위가 곧 회차 수다
+열린 결정은 없다. 수치는 `docs/specs/2026-09-06-age-of-siege-prd.md` 가 원본이다.
 
 ---
 
 ## 부록 — 참조 자료
 
-- 참조작 인게임 스크린샷 12장: 세션 스크래치패드 `kingshot-ref/` (레포에 커밋하지 않는다)
-- 캔버스 아트 스파이크: 같은 폴더 `_스파이크-캔버스.png` · 코드 `spike-art.html` (버리는 코드)
+- 참조작 인게임 스크린샷 12장: `portal-fe/public/games/_src/age-of-siege/_ref/` (폴더째 gitignore)
+- 캔버스 아트 스파이크: 같은 폴더 `_스파이크-캔버스.png` · `스파이크-캔버스.html` (버리는 코드)
 - 영웅 로스터 12인 시안: `claude.ai/code/artifact/a12432f7-5562-4b87-807e-5bf25d99eb94`
 - 게임성 설계 원본: `docs/specs/2026-09-05-age-of-siege-design.md`
+- **수치 원본(완성 판정): `docs/specs/2026-09-06-age-of-siege-prd.md`**
