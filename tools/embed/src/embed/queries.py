@@ -10,9 +10,9 @@
 정규화는 **서버가 한다.** 도구는 원문을 보낸다 — 정규화 규칙이 두 곳에 있으면 `_id` 가 어긋나
 사전이 통째로 미적중이 된다.
 
-  python -m embed.queries seed   --model arctic-ko --internal http://localhost:8083 --intents docs/specs/2026-09-05-unified-search/intents.yml
-  python -m embed.queries misses --model arctic-ko --internal http://localhost:8083 --device mps
-  python -m embed.queries status --model arctic-ko --internal http://localhost:8083
+  python -m embed.queries seed   --model qwen3-4b --internal http://localhost:8083 --intents docs/specs/2026-09-05-unified-search/intents.yml
+  python -m embed.queries misses --model qwen3-4b --internal http://localhost:8083 --device mps
+  python -m embed.queries status --model qwen3-4b --internal http://localhost:8083
 """
 from __future__ import annotations
 

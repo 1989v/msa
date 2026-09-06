@@ -25,24 +25,34 @@ queries:
       - {id: "13327", title: "덕수궁 돌담길", category: "culture", address: "서울특별시 중구 세종대로 지하 101", grade: 2, by: human}
       - {id: "8217", title: "창덕궁 다래나무", category: "nature", address: "서울특별시 종로구 율곡로 99", grade: 2, by: human}
     vector_candidates:
-      - {id: "4490", title: "창덕궁과 후원 [유네스코 세계유산]", category: "history", address: "서울특별시 종로구 율곡로 99 (와룡동)", models: ["e5-small", "arctic-ko"], grade: 2, by: human}
+      - {id: "4490", title: "창덕궁과 후원 [유네스코 세계유산]", category: "history", address: "서울특별시 종로구 율곡로 99 (와룡동)", models: ["e5-small", "arctic-ko", "bge-m3", "qwen3-4b"], grade: 2, by: human}
       - {id: "10555", title: "서울 영휘원(순헌황귀비)과 숭인원", category: "history", address: "서울특별시 동대문구 홍릉로 90 (청량리동)", models: ["e5-small"], grade: 1, by: human}
-      - {id: "5484", title: "궁집", category: "history", address: "경기도 남양주시 평내로 9 (평내동)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 1, by: human}
+      - {id: "5484", title: "궁집", category: "history", address: "경기도 남양주시 평내로 9 (평내동)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official"], grade: 1, by: human}
       - {id: "6104", title: "백제문화단지", category: "culture", address: "충청남도 부여군 규암면 백제문로 455", models: ["e5-small"], grade: 1, by: human}
       - {id: "2786", title: "동십자각", category: "history", address: "서울특별시 종로구 삼청로 1", models: ["e5-small"], grade: 1, by: human}
-      - {id: "6253", title: "청와대칠궁", category: "history", address: "서울특별시 종로구 창의문로 12 (궁정동)", models: ["e5-small"], grade: 2, by: human}
-      - {id: "12975", title: "건청궁", category: "history", address: "서울특별시 종로구 사직로 161 (세종로)", models: ["arctic-ko"], grade: 3, by: human}
+      - {id: "6253", title: "청와대칠궁", category: "history", address: "서울특별시 종로구 창의문로 12 (궁정동)", models: ["e5-small", "qwen3-4b"], grade: 2, by: human}
+      - {id: "12975", title: "건청궁", category: "history", address: "서울특별시 종로구 사직로 161 (세종로)", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: human}
       - {id: "49459", title: "궁중삼계탕", category: "food", address: "울산광역시 중구 먹자거리 6", models: ["arctic-ko"], grade: 0, by: human}
       - {id: "58285", title: "대궐안집", category: "food", address: "부산광역시 사상구 광장로 68", models: ["arctic-ko"], grade: 1, by: human}
-      - {id: "9761", title: "봉돈", category: "history", address: "경기도 수원시 팔달구 남수동 153", models: ["arctic-ko"], grade: 1, by: human}
+      - {id: "9761", title: "봉돈", category: "history", address: "경기도 수원시 팔달구 남수동 153", models: ["arctic-ko", "arctic-official"], grade: 1, by: human}
       - {id: "16151", title: "국립고궁박물관", category: "culture", address: "서울특별시 종로구 효자로 12 (세종로)", models: ["harrier-270m"], grade: 2, by: human}
       - {id: "11992", title: "조선왕가", category: "history", address: "경기도 연천군 연천읍 현문로 339-10", models: ["harrier-270m"], grade: 1, by: human}
       - {id: "8094", title: "고려궁지", category: "history", address: "인천광역시 강화군 강화읍 북문길 42", models: ["harrier-270m"], grade: 3, by: human}
-      - {id: "77", title: "서울 운현궁", category: "history", address: "서울특별시 종로구 삼일대로 464", models: ["harrier-270m"], grade: 3, by: human}
+      - {id: "77", title: "서울 운현궁", category: "history", address: "서울특별시 종로구 삼일대로 464", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: human}
       - {id: "8747", title: "익산 왕궁리유적 [유네스코 세계유산]", category: "history", address: "전북특별자치도 익산시 왕궁면 궁성로 666", models: ["harrier-270m"], grade: 2, by: human}
       - {id: "8031", title: "용흥궁", category: "history", address: "인천광역시 강화군 강화읍 동문안길21번길 16-1", models: ["harrier-270m"], grade: 3, by: human}
       - {id: "15887", title: "백제왕궁박물관", category: "culture", address: "전북특별자치도 익산시 왕궁면 궁성로 666", models: ["harrier-270m"], grade: 2, by: human}
       - {id: "4655", title: "서동공원과 궁남지", category: "nature", address: "충청남도 부여군 부여읍 궁남로 52", models: ["harrier-270m"], grade: 2, by: human}
+      - {id: "17614", title: "한국궁중꽃박물관", category: "culture", address: "경상남도 양산시 매곡외산로 232 (매곡동)", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "16592", title: "서울시립미술관 서소문본관", category: "culture", address: "서울특별시 중구 덕수궁길 61", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "8913", title: "무궁화동산", category: "nature", address: "서울특별시 종로구 궁정동 55-5", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "19596", title: "바운스슈퍼파크 수원영통센터", category: "leisure", address: "경기도 수원시 영통구 덕영대로 1566 (영통동)", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "8190", title: "경희궁 숭정전", category: "history", address: "서울특별시 종로구 새문안로 45 (신문로2가) 192-5", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "57932", title: "궁원", category: "food", address: "경상북도 구미시 금오산로 126", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "3378", title: "갈멜정원", category: "nature", address: "전남광주통합특별시 보성군 웅치면 일림로 530-26", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "2845", title: "화성행궁", category: "history", address: "경기도 수원시 팔달구 정조로 825 (남창동)", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "2961", title: "광화문", category: "history", address: "서울특별시 종로구 사직로 161", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "10038", title: "경희궁공원", category: "nature", address: "서울특별시 종로구 새문안로 55 (신문로2가)", models: ["qwen3-4b"], grade: 2, by: llm}
   - query: "한옥"
     lang: ko
     intent: "한옥마을·한옥 문화 공간. 식당(한옥 생고기 류)은 무관. 핸드오프 §4"
@@ -60,23 +70,29 @@ queries:
       - {id: "7535", title: "익선동 한옥거리", category: "culture", address: "서울특별시 종로구 익선동", grade: 3, by: human}
       - {id: "10118", title: "경기광주 한옥마을", category: "history", address: "경기도 광주시 새오개길 39 (목현동)", grade: 3, by: human}
     vector_candidates:
-      - {id: "15312", title: "화천한옥학교", category: "culture", address: "강원특별자치도 화천군 간동면 모현동로 182-35", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 1, by: human}
-      - {id: "54535", title: "한옥 생고기", category: "food", address: "경기도 포천시 신북면 포천로 2228", models: ["e5-small"], grade: 0, by: human}
-      - {id: "16365", title: "원당마을한옥도서관", category: "culture", address: "서울특별시 도봉구 해등로32가길 17 (방학동)", models: ["e5-small"], grade: 1, by: human}
-      - {id: "16135", title: "북촌 한옥청", category: "culture", address: "서울특별시 종로구 북촌로12길 29-1 (가회동)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 1, by: human}
+      - {id: "15312", title: "화천한옥학교", category: "culture", address: "강원특별자치도 화천군 간동면 모현동로 182-35", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "qwen3-4b"], grade: 1, by: human}
+      - {id: "54535", title: "한옥 생고기", category: "food", address: "경기도 포천시 신북면 포천로 2228", models: ["e5-small", "bge-m3"], grade: 0, by: human}
+      - {id: "16365", title: "원당마을한옥도서관", category: "culture", address: "서울특별시 도봉구 해등로32가길 17 (방학동)", models: ["e5-small", "bge-m3"], grade: 1, by: human}
+      - {id: "16135", title: "북촌 한옥청", category: "culture", address: "서울특별시 종로구 북촌로12길 29-1 (가회동)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "qwen3-4b"], grade: 1, by: human}
       - {id: "8347", title: "삼청동오위장김춘영가옥", category: "history", address: "서울특별시 중구 퇴계로34길 28", models: ["e5-small"], grade: 1, by: human}
       - {id: "2", title: "북촌한옥마을", category: "culture", address: "서울특별시 종로구 계동길 37", models: ["e5-small", "harrier-270m"], grade: 3, by: human}
       - {id: "11992", title: "조선왕가", category: "history", address: "경기도 연천군 연천읍 현문로 339-10", models: ["e5-small"], grade: 2, by: human}
-      - {id: "8103", title: "청도한옥학교", category: "culture", address: "경상북도 청도군 화양읍 양정길 156", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 1, by: human}
+      - {id: "8103", title: "청도한옥학교", category: "culture", address: "경상북도 청도군 화양읍 양정길 156", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official"], grade: 1, by: human}
       - {id: "52886", title: "한티옥", category: "food", address: "서울특별시 강남구 도곡로 418 (대치동)", models: ["arctic-ko"], grade: 0, by: human}
-      - {id: "48276", title: "한일옥", category: "food", address: "서울특별시 종로구 수표로 94 한일타워", models: ["arctic-ko"], grade: 0, by: human}
-      - {id: "3222", title: "김용학가옥", category: "history", address: "전남광주통합특별시 북구 하백로29번길 24 (매곡동)", models: ["arctic-ko"], grade: 1, by: human}
-      - {id: "50014", title: "한양 한옥마을점", category: "food", address: "인천광역시 연수구 테크노파크로 180 (송도동)", models: ["arctic-ko"], grade: 0, by: human}
-      - {id: "49944", title: "한일옥", category: "food", address: "전북특별자치도 군산시 구영3길 63", models: ["arctic-ko"], grade: 0, by: human}
-      - {id: "4454", title: "전북 전주 한옥마을 [슬로시티]", category: "history", address: "전북특별자치도 전주시 완산구 기린대로 99 (남노송동)", models: ["arctic-ko", "harrier-270m"], grade: 3, by: human}
+      - {id: "48276", title: "한일옥", category: "food", address: "서울특별시 종로구 수표로 94 한일타워", models: ["arctic-ko", "bge-m3"], grade: 0, by: human}
+      - {id: "3222", title: "김용학가옥", category: "history", address: "전남광주통합특별시 북구 하백로29번길 24 (매곡동)", models: ["arctic-ko", "arctic-official"], grade: 1, by: human}
+      - {id: "50014", title: "한양 한옥마을점", category: "food", address: "인천광역시 연수구 테크노파크로 180 (송도동)", models: ["arctic-ko", "bge-m3"], grade: 0, by: human}
+      - {id: "49944", title: "한일옥", category: "food", address: "전북특별자치도 군산시 구영3길 63", models: ["arctic-ko", "bge-m3"], grade: 0, by: human}
+      - {id: "4454", title: "전북 전주 한옥마을 [슬로시티]", category: "history", address: "전북특별자치도 전주시 완산구 기린대로 99 (남노송동)", models: ["arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: human}
       - {id: "13106", title: "오창 미래지 한옥마을", category: "history", address: "충청북도 청주시 청원구 오창읍 미래지로 71-53", models: ["harrier-270m"], grade: 3, by: human}
       - {id: "15490", title: "서촌라운지", category: "culture", address: "서울특별시 종로구 필운대로 27-4 (누하동)", models: ["harrier-270m"], grade: 1, by: human}
       - {id: "9969", title: "필운동 홍건익 가옥", category: "history", address: "서울특별시 종로구 필운대로1길 14-4 (필운동)", models: ["harrier-270m"], grade: 1, by: human}
+      - {id: "15327", title: "은평역사한옥박물관", category: "culture", address: "서울특별시 은평구 연서로50길 8 (진관동)", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "15273", title: "한옥카페 갤러리 도솔", category: "culture", address: "인천광역시 강화군 길상면 길상로210번길 52-71", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "4220", title: "주포지구한옥전원마을", category: "culture", address: "전남광주통합특별시 함평군 주포한옥길 67", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "9437", title: "개평한옥마을", category: "history", address: "경상남도 함양군 지곡면 개평길 59", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "11349", title: "부여북포한옥마을", category: "leisure", address: "충청남도 부여군 뒷개로27번길 10-1", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "8773", title: "상촌재", category: "culture", address: "서울특별시 종로구 자하문로17길 12-11 (옥인동) 상촌재", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "해수욕장"
     lang: ko
     intent: "해변·해수욕장(nature). 핸드오프 §4 정상 케이스"
@@ -100,24 +116,36 @@ queries:
       - {id: "11322", title: "바람아래해수욕장", category: "nature", address: "충청남도 태안군 고남면 장곡리", models: ["e5-small"], grade: 3, by: human}
       - {id: "11115", title: "궁평리 해수욕장", category: "nature", address: "경기도 화성시 서신면 수문개길 81-36", models: ["e5-small"], grade: 3, by: human}
       - {id: "3001", title: "청호해수욕장", category: "nature", address: "강원특별자치도 속초시 아바이마을1길 86-1 (청호동)", models: ["e5-small"], grade: 3, by: human}
-      - {id: "2590", title: "속초해수욕장", category: "nature", address: "강원특별자치도 속초시 해오름로 186", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: human}
+      - {id: "2590", title: "속초해수욕장", category: "nature", address: "강원특별자치도 속초시 해오름로 186", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: human}
       - {id: "11339", title: "청포대해수욕장", category: "nature", address: "충청남도 태안군 남면 청포대길 57-2", models: ["e5-small"], grade: 3, by: human}
-      - {id: "6394", title: "잔교리해수욕장", category: "nature", address: "강원특별자치도 양양군 현북면 잔교리", models: ["e5-small"], grade: 3, by: human}
+      - {id: "6394", title: "잔교리해수욕장", category: "nature", address: "강원특별자치도 양양군 현북면 잔교리", models: ["e5-small", "qwen3-4b"], grade: 3, by: human}
       - {id: "6807", title: "독산해수욕장", category: "nature", address: "충청남도 보령시 웅천읍 소황리", models: ["e5-small"], grade: 3, by: human}
-      - {id: "12806", title: "옥계해수욕장", category: "nature", address: "경상남도 거제시 하청면 연구리 416", models: ["arctic-ko", "harrier-270m"], grade: 3, by: human}
-      - {id: "6", title: "해운대해수욕장", category: "nature", address: "부산광역시 해운대구 해운대해변로 264 (우동)", models: ["arctic-ko"], grade: 3, by: human}
-      - {id: "6717", title: "장사해수욕장", category: "nature", address: "경상북도 영덕군 남정면 장사리", models: ["arctic-ko"], grade: 3, by: human}
-      - {id: "11463", title: "용두암해수랜드", category: "leisure", address: "제주특별자치도 제주시 서해안로 630", models: ["arctic-ko"], grade: 3, by: human}
-      - {id: "4179", title: "신덕해수욕장", category: "nature", address: "전남광주통합특별시 여수시 신덕동 589-1", models: ["arctic-ko"], grade: 3, by: human}
+      - {id: "12806", title: "옥계해수욕장", category: "nature", address: "경상남도 거제시 하청면 연구리 416", models: ["arctic-ko", "harrier-270m", "arctic-official"], grade: 3, by: human}
+      - {id: "6", title: "해운대해수욕장", category: "nature", address: "부산광역시 해운대구 해운대해변로 264 (우동)", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 3, by: human}
+      - {id: "6717", title: "장사해수욕장", category: "nature", address: "경상북도 영덕군 남정면 장사리", models: ["arctic-ko", "arctic-official"], grade: 3, by: human}
+      - {id: "11463", title: "용두암해수랜드", category: "leisure", address: "제주특별자치도 제주시 서해안로 630", models: ["arctic-ko", "arctic-official"], grade: 3, by: human}
+      - {id: "4179", title: "신덕해수욕장", category: "nature", address: "전남광주통합특별시 여수시 신덕동 589-1", models: ["arctic-ko", "arctic-official"], grade: 3, by: human}
       - {id: "10350", title: "후포해수욕장", category: "nature", address: "경상북도 울진군 후포면 삼율리", models: ["arctic-ko"], grade: 3, by: human}
-      - {id: "6515", title: "사창해수욕장", category: "nature", address: "충청남도 보령시 오천면 원산도리", models: ["arctic-ko"], grade: 3, by: human}
+      - {id: "6515", title: "사창해수욕장", category: "nature", address: "충청남도 보령시 오천면 원산도리", models: ["arctic-ko", "arctic-official"], grade: 3, by: human}
       - {id: "12807", title: "사곡해수욕장", category: "nature", address: "경상남도 거제시 사등면 사곡리 757-1", models: ["arctic-ko", "harrier-270m"], grade: 3, by: human}
       - {id: "8721", title: "광암해수욕장", category: "nature", address: "경상남도 창원시 마산합포구 진동면 요장리", models: ["harrier-270m"], grade: 3, by: human}
       - {id: "9362", title: "협재해수욕장", category: "nature", address: "제주특별자치도 제주시 한림읍 한림로 329-10", models: ["harrier-270m"], grade: 3, by: human}
       - {id: "6129", title: "등대해수욕장", category: "nature", address: "강원특별자치도 속초시 영랑동", models: ["harrier-270m"], grade: 3, by: human}
       - {id: "3213", title: "왕산해수욕장", category: "nature", address: "인천광역시 영종구 을왕동", models: ["harrier-270m"], grade: 3, by: human}
-      - {id: "4521", title: "영일대해수욕장", category: "nature", address: "경상북도 포항시 북구 두호동 685-1", models: ["harrier-270m"], grade: 3, by: human}
+      - {id: "4521", title: "영일대해수욕장", category: "nature", address: "경상북도 포항시 북구 두호동 685-1", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: human}
       - {id: "4675", title: "금능해수욕장", category: "nature", address: "제주특별자치도 제주시 한림읍 금능길 119-10", models: ["harrier-270m"], grade: 3, by: human}
+      - {id: "4576", title: "중앙해수랜드", category: "leisure", address: "부산광역시 남구 용호로 64", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "7701", title: "임랑해수욕장", category: "nature", address: "부산광역시 기장군 장안읍 임랑리", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "21566", title: "대천해수욕장캠핑장", category: "leisure", address: "충청남도 보령시 신흑동 2116", models: ["arctic-official", "bge-m3"], grade: 2, by: llm}
+      - {id: "20595", title: "바다여행잠수교실", category: "leisure", address: "경상남도 창원시 의창구 대봉로26번길 28 (봉림동)", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "3595", title: "대전해수욕장", category: "nature", address: "전남광주통합특별시 고흥군 두원면 두원로 1306-30", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "7097", title: "머드광장", category: "culture", address: "충청남도 보령시 해수욕장10길 5 (신흑동)", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "3857", title: "해수워터피아", category: "leisure", address: "인천광역시 서해구 봉수대로 257 (가좌동)", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "9120", title: "덕동해수욕장", category: "nature", address: "경상남도 통영시 욕지면 서산리", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "4128", title: "연소해수욕장", category: "nature", address: "전남광주통합특별시 고흥군 금산면 연소양지길 70", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "12213", title: "중광정해수욕장", category: "nature", address: "강원특별자치도 양양군 현북면 하조대해안길 119", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "6477", title: "구영해수욕장", category: "nature", address: "경상남도 거제시 장목면 거제북로", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "7509", title: "제부도해수욕장", category: "nature", address: "경기도 화성시 서신면 해안길 260", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "경복궁"
     lang: ko
     intent: "경복궁 본체가 1위. 상호에 지명이 든 상점은 0~1. 핸드오프 §4"
@@ -135,20 +163,24 @@ queries:
       - {id: "12992", title: "경희궁 흥화문", category: "history", address: "서울특별시 종로구 새문안로 55 (신문로2가)", grade: 2, by: human}
       - {id: "10038", title: "경희궁공원", category: "nature", address: "서울특별시 종로구 새문안로 55 (신문로2가)", grade: 2, by: human}
     vector_candidates:
-      - {id: "8190", title: "경희궁 숭정전", category: "history", address: "서울특별시 종로구 새문안로 45 (신문로2가) 192-5", models: ["e5-small"], grade: 2, by: human}
+      - {id: "8190", title: "경희궁 숭정전", category: "history", address: "서울특별시 종로구 새문안로 45 (신문로2가) 192-5", models: ["e5-small", "bge-m3"], grade: 2, by: human}
       - {id: "7884", title: "창경궁 명정전", category: "history", address: "서울특별시 종로구 창경궁로 185 (와룡동)", models: ["e5-small"], grade: 1, by: human}
       - {id: "16151", title: "국립고궁박물관", category: "culture", address: "서울특별시 종로구 효자로 12 (세종로)", models: ["e5-small"], grade: 1, by: human}
-      - {id: "2786", title: "동십자각", category: "history", address: "서울특별시 종로구 삼청로 1", models: ["e5-small", "arctic-ko"], grade: 1, by: human}
-      - {id: "50494", title: "경복궁에 맛있는 부엌", category: "food", address: "서울특별시 종로구 사직로 103", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 0, by: human}
+      - {id: "2786", title: "동십자각", category: "history", address: "서울특별시 종로구 삼청로 1", models: ["e5-small", "arctic-ko", "arctic-official"], grade: 1, by: human}
+      - {id: "50494", title: "경복궁에 맛있는 부엌", category: "food", address: "서울특별시 종로구 사직로 103", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 0, by: human}
       - {id: "1274", title: "천진궁", category: "history", address: "경상남도 밀양시 중앙로 324 (내일동)", models: ["e5-small"], grade: 0, by: human}
-      - {id: "48658", title: "경복궁", category: "food", address: "울산광역시 남구 산업로 595 (삼산동)", models: ["arctic-ko", "harrier-270m"], grade: 1, by: human}
-      - {id: "7961", title: "서울 경모궁지", category: "history", address: "서울특별시 종로구 창경궁로 202-1 (연건동)", models: ["arctic-ko"], grade: 1, by: human}
+      - {id: "48658", title: "경복궁", category: "food", address: "울산광역시 남구 산업로 595 (삼산동)", models: ["arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 1, by: human}
+      - {id: "7961", title: "서울 경모궁지", category: "history", address: "서울특별시 종로구 창경궁로 202-1 (연건동)", models: ["arctic-ko", "arctic-official"], grade: 1, by: human}
       - {id: "12975", title: "건청궁", category: "history", address: "서울특별시 종로구 사직로 161 (세종로)", models: ["arctic-ko"], grade: 2, by: human}
-      - {id: "4490", title: "창덕궁과 후원 [유네스코 세계유산]", category: "history", address: "서울특별시 종로구 율곡로 99 (와룡동)", models: ["harrier-270m"], grade: 1, by: human}
+      - {id: "4490", title: "창덕궁과 후원 [유네스코 세계유산]", category: "history", address: "서울특별시 종로구 율곡로 99 (와룡동)", models: ["harrier-270m", "bge-m3"], grade: 1, by: human}
       - {id: "53133", title: "[백년가게]경복궁식당", category: "food", address: "경상북도 김천시 대항면 황학동길 11-8", models: ["harrier-270m"], grade: 1, by: human}
-      - {id: "53039", title: "경복식당", category: "food", address: "서울특별시 노원구 공릉로39길 10 (공릉동, 대아아파트)", models: ["harrier-270m"], grade: 1, by: human}
+      - {id: "53039", title: "경복식당", category: "food", address: "서울특별시 노원구 공릉로39길 10 (공릉동, 대아아파트)", models: ["harrier-270m", "bge-m3", "qwen3-4b"], grade: 1, by: human}
       - {id: "2", title: "북촌한옥마을", category: "culture", address: "서울특별시 종로구 계동길 37", models: ["harrier-270m"], grade: 1, by: human}
-      - {id: "2961", title: "광화문", category: "history", address: "서울특별시 종로구 사직로 161", models: ["harrier-270m"], grade: 2, by: human}
+      - {id: "2961", title: "광화문", category: "history", address: "서울특별시 종로구 사직로 161", models: ["harrier-270m", "bge-m3", "qwen3-4b"], grade: 2, by: human}
+      - {id: "9408", title: "경흥사", category: "history", address: "경상북도 경산시 남천면 모골길 196-55", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "10672", title: "장충단공원", category: "nature", address: "서울특별시 중구 동호로 261 (장충동2가)", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "31341", title: "앤더슨벨 경복궁 플래그쉽 스토어", category: "shopping", address: "서울특별시 종로구 윤보선길 42 (안국동)", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "30523", title: "다이소 경복궁역점", category: "shopping", address: "서울특별시 종로구 자하문로2길 4 (적선동)", models: ["qwen3-4b"], grade: 0, by: llm}
   - query: "바다가 보이는 곳"
     lang: ko
     intent: "해변·전망대·해안 산책로. 선착장·여객선은 0"
@@ -176,25 +208,37 @@ queries:
       - {id: "12247", title: "문암항", category: "nature", address: "강원특별자치도 고성군 죽왕면 문암진리 134-88", models: ["e5-small"], grade: 2, by: llm}
       - {id: "4323", title: "끝등전망대", category: "culture", address: "전남광주통합특별시 여수시 돌산읍 금성리 산 221-10", models: ["e5-small"], grade: 3, by: llm}
       - {id: "13200", title: "장자도선착장", category: "nature", address: "전북특별자치도 군산시 옥도면 장자도1길 10", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "58333", title: "바다보는날", category: "food", address: "제주특별자치도 제주시 애월해안로 722", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "6509", title: "영도 하늘전망대", category: "culture", address: "부산광역시 영도구 동삼동 628-66", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "22238", title: "바다캠핑장", category: "leisure", address: "인천광역시 강화군 화도면 해안남로 2355-7", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "5977", title: "영뜰해변", category: "nature", address: "인천광역시 강화군 서도면 볼음도리", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "58333", title: "바다보는날", category: "food", address: "제주특별자치도 제주시 애월해안로 722", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "6509", title: "영도 하늘전망대", category: "culture", address: "부산광역시 영도구 동삼동 628-66", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "22238", title: "바다캠핑장", category: "leisure", address: "인천광역시 강화군 화도면 해안남로 2355-7", models: ["arctic-ko", "arctic-official"], grade: 1, by: llm}
+      - {id: "5977", title: "영뜰해변", category: "nature", address: "인천광역시 강화군 서도면 볼음도리", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 3, by: llm}
       - {id: "4797", title: "안목해변", category: "nature", address: "강원특별자치도 강릉시 창해로14번길 20-1", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "7835", title: "역사의 디오라마", category: "culture", address: "부산광역시 중구 영주로 93", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "6975", title: "병대도전망대", category: "culture", address: "경상남도 거제시 남부면 다포리 산38-145", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "22099", title: "바다다 캠핑장", category: "leisure", address: "인천광역시 강화군 화도면 내리 2146-2", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "4328", title: "여자만 해넘이 전망대", category: "culture", address: "전남광주통합특별시 여수시 화양면 화서로 7-30", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "7835", title: "역사의 디오라마", category: "culture", address: "부산광역시 중구 영주로 93", models: ["arctic-ko", "bge-m3"], grade: 1, by: llm}
+      - {id: "6975", title: "병대도전망대", category: "culture", address: "경상남도 거제시 남부면 다포리 산38-145", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "22099", title: "바다다 캠핑장", category: "leisure", address: "인천광역시 강화군 화도면 내리 2146-2", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "4328", title: "여자만 해넘이 전망대", category: "culture", address: "전남광주통합특별시 여수시 화양면 화서로 7-30", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
       - {id: "8235", title: "주벅배전망대", category: "culture", address: "충청남도 서산시 팔봉면 호리 320-18", models: ["arctic-ko"], grade: 3, by: llm}
       - {id: "11636", title: "부잔교갯벌탐방로", category: "nature", address: "경상남도 사천시 용현면 금문리 212-3", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "12464", title: "추암 출렁다리", category: "culture", address: "강원특별자치도 동해시 촛대바위길 28 (추암동)", models: ["harrier-270m"], grade: 3, by: llm}
-      - {id: "8954", title: "은포리해안도로", category: "nature", address: "충청남도 보령시 주교면 송학리 296-6", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "8954", title: "은포리해안도로", category: "nature", address: "충청남도 보령시 주교면 송학리 296-6", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
       - {id: "6677", title: "구조라항", category: "nature", address: "경상남도 거제시 일운면 구조라로 73", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "11977", title: "다사항", category: "nature", address: "충청남도 서천군 비인면 갯벌체험로944번길 64-12", models: ["harrier-270m"], grade: 2, by: llm}
-      - {id: "4168", title: "백암해안전망대", category: "culture", address: "전남광주통합특별시 영광군 백수읍 해안로 565-17", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "4168", title: "백암해안전망대", category: "culture", address: "전남광주통합특별시 영광군 백수읍 해안로 565-17", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
       - {id: "7681", title: "지경리해변", category: "nature", address: "경상북도 경주시 양남면 지경길 35", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "6254", title: "떠오르길·김녕 바닷길", category: "nature", address: "제주특별자치도 제주시 구좌읍 김녕로1길 51-3", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "11900", title: "평대해변", category: "nature", address: "제주특별자치도 제주시 구좌읍 평대리 1994-20", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "7759", title: "천부해중전망대", category: "culture", address: "경상북도 울릉군 북면 울릉순환로 3137", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "20565", title: "바다로글램핑", category: "leisure", address: "인천광역시 강화군 화도면 해안남로 2421-228", models: ["arctic-official", "bge-m3"], grade: 2, by: llm}
+      - {id: "5131", title: "대포항 전망대", category: "culture", address: "강원특별자치도 속초시 대포항1길 16-8 (대포동 753-7)", models: ["arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "1243", title: "여차,홍포간 해안도로", category: "nature", address: "경상남도 거제시 남부면 다포리 산 38-145", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "6976", title: "대포항", category: "nature", address: "경상남도 거제시 남부면 저구리 767-3", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "12635", title: "전망대활어회센터", category: "culture", address: "강원특별자치도 동해시 일출로 88 (묵호진동)", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "12810", title: "여차홍포해안도로전망대", category: "culture", address: "경상남도 거제시 남부면 다포리 산 38-145", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "5390", title: "서해랑 제부도 해상케이블카", category: "leisure", address: "경기도 화성시 서신면 전곡항로 1-10", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "4204", title: "해상관광탐방로", category: "nature", address: "인천광역시 영종구 무의동", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "12476", title: "속초해안로", category: "nature", address: "강원특별자치도 속초시 장사동 517-13", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "157", title: "거잠포해변", category: "nature", address: "인천광역시 영종구 잠진도길 11 (운서동)", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "10251", title: "가포해안변공원", category: "nature", address: "경상남도 창원시 마산합포구 드림베이대로 361", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "아이와 갈만한 곳"
     lang: ko
     intent: "테마파크·체험관·공원·동물원. 상호 속 '아이' 는 0"
@@ -222,23 +266,39 @@ queries:
       - {id: "17377", title: "박물관 얼굴", category: "culture", address: "경기도 광주시 남종면 분원길 3-6", models: ["e5-small"], grade: 2, by: llm}
       - {id: "5899", title: "오저여", category: "nature", address: "제주특별자치도 제주시 구좌읍 행원리", models: ["e5-small"], grade: 0, by: llm}
       - {id: "5428", title: "갈매중앙공원", category: "culture", address: "경기도 구리시 산마루로 41 (갈매동)", models: ["e5-small"], grade: 2, by: llm}
-      - {id: "5603", title: "구봉산근린공원", category: "culture", address: "경기도 화성시 병점1로 110 (병점동)", models: ["arctic-ko"], grade: 2, by: llm}
-      - {id: "20357", title: "아빠랑놀자 키즈글램핑", category: "leisure", address: "경상남도 합천군 삼가면 동리외초길 223", models: ["arctic-ko", "harrier-270m"], grade: 2, by: llm}
-      - {id: "21177", title: "키즈글램핑GEO", category: "leisure", address: "경기도 포천시 이동면 금강로 6561", models: ["arctic-ko"], grade: 2, by: llm}
-      - {id: "149", title: "인천어린이천문대", category: "nature", address: "인천광역시 검단구 원당대로 454-14", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "2900", title: "수성패밀리파크", category: "culture", address: "대구광역시 수성구 팔현길 88-40 (고모동)", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "5603", title: "구봉산근린공원", category: "culture", address: "경기도 화성시 병점1로 110 (병점동)", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "20357", title: "아빠랑놀자 키즈글램핑", category: "leisure", address: "경상남도 합천군 삼가면 동리외초길 223", models: ["arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "21177", title: "키즈글램핑GEO", category: "leisure", address: "경기도 포천시 이동면 금강로 6561", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 2, by: llm}
+      - {id: "149", title: "인천어린이천문대", category: "nature", address: "인천광역시 검단구 원당대로 454-14", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "2900", title: "수성패밀리파크", category: "culture", address: "대구광역시 수성구 팔현길 88-40 (고모동)", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
       - {id: "20479", title: "돌배야영장", category: "leisure", address: "강원특별자치도 인제군 북면 만해로 163-23", models: ["arctic-ko"], grade: 1, by: llm}
       - {id: "21171", title: "우리 글램핑카라반", category: "leisure", address: "경기도 포천시 이동면 금강로 6280", models: ["arctic-ko"], grade: 1, by: llm}
       - {id: "20887", title: "아이비캠프오토캠핑장", category: "leisure", address: "경상남도 밀양시 산내면 원서3길 47", models: ["arctic-ko"], grade: 1, by: llm}
       - {id: "6068", title: "임내숲 어린이공원", category: "culture", address: "경상남도 사천시 숲안길 7-8 (죽림동)", models: ["arctic-ko"], grade: 3, by: llm}
       - {id: "13135", title: "사상근린공원", category: "nature", address: "부산광역시 사상구 가야대로 35 (감전동)", models: ["arctic-ko"], grade: 2, by: llm}
       - {id: "6943", title: "은여울공원", category: "culture", address: "경기도 김포시 김포한강8로 97 (마산동)", models: ["harrier-270m"], grade: 2, by: llm}
-      - {id: "10611", title: "아동청소년친화공간 꿈이랑", category: "leisure", address: "강원특별자치도 속초시 중앙로 33 (교동)", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "10611", title: "아동청소년친화공간 꿈이랑", category: "leisure", address: "강원특별자치도 속초시 중앙로 33 (교동)", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
       - {id: "5682", title: "포레스트벨", category: "culture", address: "경기도 용인시 처인구 원삼면 맹리로 85-1", models: ["harrier-270m"], grade: 2, by: llm}
-      - {id: "6361", title: "샤샤의놀이터", category: "leisure", address: "경상남도 창원시 의창구 대봉로 14 (봉림동)", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "6361", title: "샤샤의놀이터", category: "leisure", address: "경상남도 창원시 의창구 대봉로 14 (봉림동)", models: ["harrier-270m", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
       - {id: "4784", title: "가막들공원", category: "culture", address: "경기도 의왕시 양지편로 41-2 (청계동)", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "16324", title: "키즈몬 강릉점", category: "culture", address: "강원특별자치도 강릉시 사임당로 66 (홍제동)", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "259", title: "마치광장", category: "nature", address: "대전광역시 서구 구봉로131번길 27", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "10150", title: "그라운드플래닛", category: "leisure", address: "경기도 과천시 대공원광장로 80 (막계동)", models: ["arctic-official", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "21841", title: "가평 황정민키즈글램핑", category: "leisure", address: "경기도 가평군 조종면 명지산로 523", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "16253", title: "판교어린이천문대", category: "culture", address: "경기도 성남시 수정구 달래내로377번길 11 (상적동)", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "15796", title: "아이뮤지엄 여수점", category: "culture", address: "전남광주통합특별시 여수시 박람회길 1 (덕충동)", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "21037", title: "원주키즈캠핑장", category: "leisure", address: "강원특별자치도 원주시 신림면 솔치로 88", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "11944", title: "만골근린공원", category: "nature", address: "경기도 용인시 기흥구 기흥로116번길 10 (신갈동)", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "2566", title: "행복&피크닉", category: "leisure", address: "강원특별자치도 원주시 복거리길 40", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "20901", title: "밀양사계절오토캠핑장", category: "leisure", address: "경상남도 밀양시 산외면 표충로 7", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "22233", title: "토리아이글램핑", category: "leisure", address: "강원특별자치도 홍천군 서면 설밀길 190-20", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "10735", title: "모산공원", category: "nature", address: "경상남도 김해시 율하4로 12", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "20848", title: "캠핑라운드", category: "leisure", address: "경상남도 양산시 상북면 구소석5길 20", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "15929", title: "아이바가든", category: "culture", address: "제주특별자치도 제주시 애월읍 고성남서길 10", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "2581", title: "정글어드벤처", category: "leisure", address: "경상남도 진주시 판문로 155 (판문동)", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "12187", title: "갈음이해수욕장", category: "nature", address: "충청남도 태안군 근흥면 정죽리 산 147-46", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "6029", title: "더플레이그라운드", category: "leisure", address: "충청북도 청주시 상당구 가덕면 상야길 6-14", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "19577", title: "대동승마랜드", category: "leisure", address: "경상남도 김해시 대동면 대동로485번길 132", models: ["qwen3-4b"], grade: 2, by: llm}
   - query: "조용한 사찰"
     lang: ko
     intent: "산사·고찰. 사찰음식 체험관·공원은 0~1"
@@ -257,27 +317,39 @@ queries:
       - {id: "9669", title: "석천항", category: "nature", address: "경기도 화성시 우정읍 매향리", grade: 0, by: llm}
     vector_candidates:
       - {id: "8740", title: "남원사", category: "history", address: "전북특별자치도 익산시 여산면 서촌1길 34-3", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
-      - {id: "5031", title: "반야사", category: "history", address: "경기도 수원시 영통구 청명북로 66 (영통동)", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "97", title: "달마사", category: "history", address: "서울특별시 동작구 서달로 50-26 (흑석동)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
+      - {id: "5031", title: "반야사", category: "history", address: "경기도 수원시 영통구 청명북로 66 (영통동)", models: ["e5-small", "bge-m3"], grade: 3, by: llm}
+      - {id: "97", title: "달마사", category: "history", address: "서울특별시 동작구 서달로 50-26 (흑석동)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3"], grade: 3, by: llm}
       - {id: "9981", title: "각원사", category: "history", address: "충청남도 천안시 동남구 각원사길 245 (안서동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "7352", title: "문수사", category: "history", address: "경상북도 구미시 도개면 신곡4길 186", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
       - {id: "11985", title: "장명사", category: "history", address: "강원특별자치도 태백시 계산1길 66 (장성동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "3038", title: "동고사", category: "history", address: "전북특별자치도 전주시 완산구 낙수정2길 103-100 (교동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "8946", title: "천장사", category: "history", address: "충청남도 서산시 고북면 천장사길 100", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "15526", title: "여행책방 잔잔하게", category: "culture", address: "강원특별자치도 동해시 발한로 215-2 (발한동)", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "494", title: "옥련선원", category: "history", address: "부산광역시 수영구 광남로257번길 58", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "11911", title: "서광사", category: "history", address: "강원특별자치도 태백시 오투로 216 (황지동)", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "5102", title: "수암사", category: "history", address: "경상남도 의령군 의령읍 수암로 248-17", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "11330", title: "무상사", category: "history", address: "충청남도 계룡시 엄사면 향적산길 129", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "15526", title: "여행책방 잔잔하게", category: "culture", address: "강원특별자치도 동해시 발한로 215-2 (발한동)", models: ["e5-small", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "494", title: "옥련선원", category: "history", address: "부산광역시 수영구 광남로257번길 58", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "11911", title: "서광사", category: "history", address: "강원특별자치도 태백시 오투로 216 (황지동)", models: ["arctic-ko", "harrier-270m", "arctic-official"], grade: 3, by: llm}
+      - {id: "5102", title: "수암사", category: "history", address: "경상남도 의령군 의령읍 수암로 248-17", models: ["arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "11330", title: "무상사", category: "history", address: "충청남도 계룡시 엄사면 향적산길 129", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
       - {id: "283", title: "내원사", category: "history", address: "대전광역시 서구 배재로197번길 200", models: ["arctic-ko"], grade: 3, by: llm}
       - {id: "8768", title: "여여정사", category: "history", address: "경상남도 밀양시 삼랑진읍 행곡1길 180-158", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "11069", title: "수선사", category: "history", address: "경상남도 산청군 산청읍 웅석봉로154번길 102-23", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "11069", title: "수선사", category: "history", address: "경상남도 산청군 산청읍 웅석봉로154번길 102-23", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 3, by: llm}
       - {id: "6758", title: "금강정사", category: "history", address: "경기도 광명시 설월로 58 (소하동)", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "697", title: "신광사", category: "history", address: "세종특별자치시 조치원읍 토골고개길 24", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "12560", title: "지장정사", category: "history", address: "충청남도 논산시 노성면 화곡안길 103", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "11798", title: "정혜사", category: "history", address: "경기도 고양시 일산동구 일산로 134", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "1544", title: "순례자의 교회", category: "history", address: "제주특별자치도 제주시 한경면 일주서로 3960-24", models: ["harrier-270m"], grade: 0, by: llm}
-      - {id: "11648", title: "석종사", category: "history", address: "충청북도 충주시 직동길 271-56 (직동)", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "11648", title: "석종사", category: "history", address: "충청북도 충주시 직동길 271-56 (직동)", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "7049", title: "심원사", category: "history", address: "경상북도 성주군 수륜면 가야산식물원길 17-56", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "735", title: "서천사", category: "history", address: "경기도 평택시 고덕면 방축4길 22-49", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "12715", title: "관음정사", category: "history", address: "경상남도 김해시 진례면 평지길 299", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "6579", title: "청원사", category: "history", address: "경기도 안성시 원곡면 통심길 16-102", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "8638", title: "휴식&마이웨이리조트", category: "nature", address: "경상남도 밀양시 산외면 엄광길 103-14", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "16671", title: "소심한 책방", category: "culture", address: "제주특별자치도 제주시 구좌읍 종달동길 36-10", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "5314", title: "안의울림", category: "leisure", address: "제주특별자치도 제주시 애월읍 애월북서길 15", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "12790", title: "가섭사", category: "history", address: "충청북도 음성군 음성읍 가섭길 494", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "59192", title: "사일런스", category: "food", address: "경기도 시흥시 수인로3312번길 16 (대야동, 시흥 센트럴 푸르지오)", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "54146", title: "소곤소곤 커피소리", category: "food", address: "강원특별자치도 평창군 대관령면 솔봉로 260-3", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "8072", title: "평화를 품은 집", category: "leisure", address: "경기도 파주시 파평면 파평산로389번길 42-19", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "4915", title: "봉녕사", category: "history", address: "경기도 수원시 팔달구 창룡대로 236-54", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "야경 명소"
     lang: ko
     intent: "야경 전망·다리·누리길. '가야경' 같은 부분 문자열은 0"
@@ -295,26 +367,37 @@ queries:
       - {id: "3066", title: "더베이101", category: "culture", address: "부산광역시 해운대구 동백로 52 (우동)", grade: 3, by: llm}
       - {id: "6773", title: "유호리전망대", category: "culture", address: "경상남도 거제시 장목면 거제북로 2327", grade: 2, by: llm}
     vector_candidates:
-      - {id: "7580", title: "빛누리정원", category: "nature", address: "경상북도 경주시 용담로 107 (황성동) (황성공원 내)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
+      - {id: "7580", title: "빛누리정원", category: "nature", address: "경상북도 경주시 용담로 107 (황성동) (황성공원 내)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
       - {id: "5929", title: "진주 남강음악분수대", category: "culture", address: "경상남도 진주시 남강로 542 (천수교 아래 남강둔치)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "6286", title: "낙강교", category: "culture", address: "경상북도 상주시 중동면 회상리", models: ["e5-small"], grade: 2, by: llm}
       - {id: "9715", title: "이포보", category: "culture", address: "경기도 여주시 금사면 금사로 40", models: ["e5-small", "harrier-270m"], grade: 2, by: llm}
       - {id: "10363", title: "포천계곡", category: "nature", address: "경상북도 성주군 가천면 화죽리", models: ["e5-small"], grade: 1, by: llm}
       - {id: "7759", title: "천부해중전망대", category: "culture", address: "경상북도 울릉군 북면 울릉순환로 3137", models: ["e5-small"], grade: 2, by: llm}
       - {id: "6387", title: "대야산 용추계곡", category: "nature", address: "경상북도 문경시 가은읍", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "4631", title: "괴산 오작교", category: "culture", address: "충청북도 괴산군 괴산읍 동부리 178-2", models: ["e5-small", "harrier-270m"], grade: 2, by: llm}
+      - {id: "4631", title: "괴산 오작교", category: "culture", address: "충청북도 괴산군 괴산읍 동부리 178-2", models: ["e5-small", "harrier-270m", "qwen3-4b"], grade: 2, by: llm}
       - {id: "6288", title: "경천대관광지", category: "culture", address: "경상북도 상주시 사벌국면 경천로 652", models: ["e5-small"], grade: 2, by: llm}
       - {id: "19679", title: "충주 탄금호 무지개길", category: "leisure", address: "충청북도 충주시 중앙탑면 중앙탑길 112-28", models: ["e5-small"], grade: 2, by: llm}
-      - {id: "4086", title: "여수 국가산업단지", category: "leisure", address: "전남광주통합특별시 여수시 평여동", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "501", title: "삼익비치수변공원", category: "nature", address: "부산광역시 수영구 남천동 148-103", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "5780", title: "요천수경 음악분수", category: "culture", address: "전북특별자치도 남원시 어현동 741", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "3", title: "N서울타워", category: "culture", address: "서울특별시 용산구 남산공원길 105", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "6332", title: "형곡전망대", category: "culture", address: "경상북도 구미시 형곡동 산32-2", models: ["arctic-ko"], grade: 2, by: llm}
-      - {id: "5414", title: "인왕산 무무대 전망대", category: "nature", address: "서울 종로구 옥인동 산3-1", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "19122", title: "낭도야영장", category: "leisure", address: "전남광주통합특별시 여수시 화정면 여산길 150", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "4086", title: "여수 국가산업단지", category: "leisure", address: "전남광주통합특별시 여수시 평여동", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "501", title: "삼익비치수변공원", category: "nature", address: "부산광역시 수영구 남천동 148-103", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "5780", title: "요천수경 음악분수", category: "culture", address: "전북특별자치도 남원시 어현동 741", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "3", title: "N서울타워", category: "culture", address: "서울특별시 용산구 남산공원길 105", models: ["arctic-ko", "harrier-270m", "arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "6332", title: "형곡전망대", category: "culture", address: "경상북도 구미시 형곡동 산32-2", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "5414", title: "인왕산 무무대 전망대", category: "nature", address: "서울 종로구 옥인동 산3-1", models: ["arctic-ko", "harrier-270m", "bge-m3"], grade: 3, by: llm}
+      - {id: "19122", title: "낭도야영장", category: "leisure", address: "전남광주통합특별시 여수시 화정면 여산길 150", models: ["arctic-ko", "arctic-official"], grade: 0, by: llm}
       - {id: "9853", title: "남산 팔각정", category: "culture", address: "서울특별시 중구 예장동 8-1", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
       - {id: "9316", title: "용담공원", category: "nature", address: "제주특별자치도 제주시 용담일동 373-5", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "7814", title: "선학산전망대", category: "culture", address: "경상남도 진주시 남강로 751-51 (옥봉동)", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "626", title: "울산 12경", category: "nature", address: "울산광역시 남구 태화동", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "1499", title: "중산 일몰전망대", category: "culture", address: "전남광주통합특별시 고흥군 남양면 고흥로 3777", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "5131", title: "대포항 전망대", category: "culture", address: "강원특별자치도 속초시 대포항1길 16-8 (대포동 753-7)", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "6060", title: "예당호 전망대", category: "culture", address: "충청남도 예산군 응봉면 예당관광로 159-22", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "171", title: "백운산전망대", category: "culture", address: "인천광역시 영종구 운서동 산1-1", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "4189", title: "급치산전망대", category: "culture", address: "전남광주통합특별시 진도군 지산면 지산로 160-147", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "5709", title: "책마루전망대", category: "culture", address: "부산광역시 동구 성북로36번길 54 (범일동)", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "7588", title: "서울달", category: "leisure", address: "서울특별시 영등포구 여의공원로 68-1 (여의도동)", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "8182", title: "엑스포다리", category: "culture", address: "대전광역시 유성구 도룡동", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "8232", title: "우암동 도시숲", category: "nature", address: "부산광역시 남구 우암동 127-142", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "6404", title: "부산북항 친수공원", category: "nature", address: "부산광역시 동구 이순신대로 164 (초량동)", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "벚꽃 명소"
     lang: ko
     intent: "벚꽃길·벚꽃 축제 장소"
@@ -333,21 +416,28 @@ queries:
       - {id: "3374", title: "화양면 벚꽃길", category: "nature", address: "전남광주통합특별시 여수시 화양면 장수리", grade: 3, by: llm}
     vector_candidates:
       - {id: "9816", title: "안양천제방벚꽃길", category: "nature", address: "서울특별시 영등포구 양평동1가", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "11547", title: "대성리 국민관광지", category: "nature", address: "경기도 가평군 청평면 대성강변길 44", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 2, by: llm}
+      - {id: "11547", title: "대성리 국민관광지", category: "nature", address: "경기도 가평군 청평면 대성강변길 44", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official"], grade: 2, by: llm}
       - {id: "10353", title: "전농로 벚꽃거리", category: "nature", address: "제주특별자치도 제주시 삼도일동", models: ["e5-small"], grade: 3, by: llm}
       - {id: "5450", title: "서항마을", category: "culture", address: "경상남도 거제시 연하해안로 1439", models: ["e5-small"], grade: 1, by: llm}
       - {id: "7695", title: "창녕 만옥정공원", category: "culture", address: "경상남도 창녕군 창녕읍 교상리 28-34", models: ["e5-small"], grade: 2, by: llm}
       - {id: "10147", title: "경화역 벚꽃길", category: "nature", address: "경상남도 창원시 진해구 진해대로 663 (경화동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "5692", title: "전군가도100리벚꽃길", category: "leisure", address: "전북특별자치도 익산시 목천동", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "5436", title: "봉숫골 벚꽃길", category: "leisure", address: "경상남도 통영시 발개로", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
-      - {id: "11481", title: "제주대 벚꽃길", category: "nature", address: "제주특별자치도 제주시 제주대학로 102", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "22157", title: "지리산벚꽃카라반캠핑장", category: "leisure", address: "경상남도 하동군 화개면 화개로 946-8", models: ["arctic-ko"], grade: 1, by: llm}
+      - {id: "5436", title: "봉숫골 벚꽃길", category: "leisure", address: "경상남도 통영시 발개로", models: ["e5-small", "arctic-ko", "arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "11481", title: "제주대 벚꽃길", category: "nature", address: "제주특별자치도 제주시 제주대학로 102", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22157", title: "지리산벚꽃카라반캠핑장", category: "leisure", address: "경상남도 하동군 화개면 화개로 946-8", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
       - {id: "6935", title: "달창지 벚꽃길", category: "nature", address: "대구광역시 달성군 유가읍 본말리", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "7412", title: "창원 소하천 벚꽃거리", category: "culture", address: "경상남도 창원시 마산합포구 문화동", models: ["harrier-270m"], grade: 3, by: llm}
-      - {id: "5562", title: "예계마을", category: "culture", address: "경상남도 남해군 서면 남서대로1818번길 52", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "7412", title: "창원 소하천 벚꽃거리", category: "culture", address: "경상남도 창원시 마산합포구 문화동", models: ["harrier-270m", "arctic-official"], grade: 3, by: llm}
+      - {id: "5562", title: "예계마을", category: "culture", address: "경상남도 남해군 서면 남서대로1818번길 52", models: ["harrier-270m", "qwen3-4b"], grade: 1, by: llm}
       - {id: "49844", title: "벚꽃마을", category: "food", address: "전북특별자치도 진안군 마령면 마이산남로 209", models: ["harrier-270m"], grade: 0, by: llm}
-      - {id: "13037", title: "장곡사벚꽃길", category: "nature", address: "충청남도 청양군 대치면 장곡길 241", models: ["harrier-270m"], grade: 3, by: llm}
-      - {id: "7339", title: "마이산 벚꽃길", category: "nature", address: "전북특별자치도 진안군 마령면 동촌리", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "13037", title: "장곡사벚꽃길", category: "nature", address: "충청남도 청양군 대치면 장곡길 241", models: ["harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "7339", title: "마이산 벚꽃길", category: "nature", address: "전북특별자치도 진안군 마령면 동촌리", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "5471", title: "병곡마을", category: "culture", address: "경상남도 거창군 북상면 병곡길 448", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "3339", title: "SK인천석유화학벚꽃동산", category: "nature", address: "인천광역시 서해구 봉수대로 415 (원창동)", models: ["arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "12283", title: "보람공원", category: "nature", address: "부산광역시 강서구 녹산산단262로14번길 20 (송정동)", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "4830", title: "당진천 벚꽃길", category: "nature", address: "충청남도 당진시 대덕1로2길 41 (수청동)", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "4117", title: "동구리호수공원", category: "nature", address: "전남광주통합특별시 화순군 화순읍 동구리", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "7105", title: "주산벚꽃로", category: "nature", address: "충청남도 보령시 주산면 동막오상길 15-4", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "7125", title: "소양벚꽃길", category: "nature", address: "전북특별자치도 완주군 소양면 송광수만로 256", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "단풍 명소"
     lang: ko
     intent: "단풍 산·숲·군락지"
@@ -365,24 +455,28 @@ queries:
       - {id: "4538", title: "우화정", category: "nature", address: "전북특별자치도 정읍시 내장동 598-7", grade: 2, by: llm}
       - {id: "18571", title: "송정제방길", category: "leisure", address: "서울특별시 성동구 송정동", grade: 1, by: llm}
     vector_candidates:
-      - {id: "5415", title: "백풍밀원", category: "nature", address: "강원특별자치도 춘천시 남이섬길 1 남이섬", models: ["e5-small", "harrier-270m"], grade: 1, by: llm}
+      - {id: "5415", title: "백풍밀원", category: "nature", address: "강원특별자치도 춘천시 남이섬길 1 남이섬", models: ["e5-small", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 1, by: llm}
       - {id: "2985", title: "도담삼봉", category: "nature", address: "충청북도 단양군 매포읍 삼봉로 644 (매포읍)", models: ["e5-small"], grade: 1, by: llm}
       - {id: "9891", title: "온달관광지", category: "nature", address: "충청북도 단양군 영춘면 온달로 23", models: ["e5-small"], grade: 1, by: llm}
       - {id: "11397", title: "단양 구담봉·옥순봉", category: "nature", address: "충청북도 단양군 단성면 장회리 산 31", models: ["e5-small"], grade: 1, by: llm}
       - {id: "9900", title: "춘천시 수변공원", category: "nature", address: "강원특별자치도 춘천시 삼천동 200-9", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "11448", title: "단양 관광특구", category: "nature", address: "충청북도 단양군 단양읍 고수동굴길 3-11", models: ["e5-small", "arctic-ko"], grade: 1, by: llm}
+      - {id: "11448", title: "단양 관광특구", category: "nature", address: "충청북도 단양군 단양읍 고수동굴길 3-11", models: ["e5-small", "arctic-ko", "arctic-official"], grade: 1, by: llm}
       - {id: "11160", title: "산외한우마을", category: "culture", address: "전북특별자치도 정읍시 산외면 산외로 450", models: ["e5-small"], grade: 0, by: llm}
       - {id: "19565", title: "단양 패러글라이딩 패러에 반하다", category: "leisure", address: "충청북도 단양군 가곡면 두산길 196-88", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "1396", title: "도솔계곡", category: "nature", address: "전북특별자치도 고창군 아산면 선운사로 250", models: ["arctic-ko"], grade: 2, by: llm}
-      - {id: "56209", title: "단풍나무", category: "food", address: "충청북도 청주시 서원구 대림로 414", models: ["arctic-ko"], grade: 0, by: llm}
-      - {id: "9312", title: "단풍산", category: "nature", address: "강원특별자치도 영월군 산솔면 녹전리", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "5181", title: "설악산소공원", category: "culture", address: "강원특별자치도 속초시 설악산로 1055 (설악동)", models: ["arctic-ko", "harrier-270m"], grade: 2, by: llm}
-      - {id: "4625", title: "소요산국민관광지", category: "nature", address: "경기도 동두천시 평화로2910번길 148-20 (상봉암동)", models: ["arctic-ko"], grade: 2, by: llm}
+      - {id: "1396", title: "도솔계곡", category: "nature", address: "전북특별자치도 고창군 아산면 선운사로 250", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "56209", title: "단풍나무", category: "food", address: "충청북도 청주시 서원구 대림로 414", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 0, by: llm}
+      - {id: "9312", title: "단풍산", category: "nature", address: "강원특별자치도 영월군 산솔면 녹전리", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "5181", title: "설악산소공원", category: "culture", address: "강원특별자치도 속초시 설악산로 1055 (설악동)", models: ["arctic-ko", "harrier-270m", "bge-m3", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "4625", title: "소요산국민관광지", category: "nature", address: "경기도 동두천시 평화로2910번길 148-20 (상봉암동)", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 2, by: llm}
       - {id: "950", title: "소백산국립공원", category: "nature", address: "충청북도 단양군 가곡면 남한강로 494", models: ["arctic-ko"], grade: 2, by: llm}
       - {id: "19335", title: "[남해바래길 7코스] 화전별곡길", category: "leisure", address: "경상남도 남해군 삼동면 동부대로1030번안길 50-1 물건마을~천하마을", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "13115", title: "단양 감골 바람개비마을", category: "culture", address: "충청북도 단양군 적성면 금수산로 784-10", models: ["harrier-270m"], grade: 1, by: llm}
       - {id: "2631", title: "장풍숲", category: "nature", address: "경상남도 거창군 마리면 송계로 12", models: ["harrier-270m"], grade: 1, by: llm}
       - {id: "20914", title: "내장야영장", category: "leisure", address: "전북특별자치도 정읍시 내장산로 800 (내장동)", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "19564", title: "단양 패러 명가", category: "leisure", address: "충청북도 단양군 가곡면 두산길 262", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "21728", title: "선녀와나무꾼캠핑장", category: "leisure", address: "충청북도 제천시 청풍면 청풍명월로 171", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "811", title: "풍도", category: "nature", address: "경기도 안산시 단원구 풍도길 28 (풍도동)", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "10556", title: "국립 운악산자연휴양림", category: "nature", address: "경기도 포천시 화현면 화동로184번길 39", models: ["qwen3-4b"], grade: 2, by: llm}
   - query: "온천"
     lang: ko
     intent: "온천·스파(온천수)"
@@ -400,21 +494,31 @@ queries:
       - {id: "7903", title: "북수원온천", category: "leisure", address: "경기도 수원시 장안구 서부로 2139 (율전동) 8, 9층", grade: 3, by: llm}
       - {id: "11332", title: "금강온천", category: "leisure", address: "충청남도 공주시 고마나루길 51-12 (웅진동)", grade: 3, by: llm}
     vector_candidates:
-      - {id: "1079", title: "온양온천지구", category: "leisure", address: "충청남도 아산시 온천동", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 2, by: llm}
+      - {id: "1079", title: "온양온천지구", category: "leisure", address: "충청남도 아산시 온천동", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 2, by: llm}
       - {id: "13315", title: "보원장탄온천", category: "leisure", address: "경기도 구리시 안골로 79 (수택동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "8483", title: "영일만온천", category: "leisure", address: "경상북도 포항시 남구 대송면 운제로386번길 21", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "13272", title: "신천탕", category: "leisure", address: "충청남도 아산시 온천대로 1469 (온천동)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 2, by: llm}
+      - {id: "13272", title: "신천탕", category: "leisure", address: "충청남도 아산시 온천대로 1469 (온천동)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 2, by: llm}
       - {id: "4545", title: "월문온천 휴양지", category: "leisure", address: "경기도 화성시 만세구 팔탄면 버들로1597번길 5", models: ["e5-small"], grade: 3, by: llm}
       - {id: "5275", title: "파라다이스 스파 도고", category: "leisure", address: "충청남도 아산시 도고면 도고온천로 176", models: ["e5-small"], grade: 3, by: llm}
       - {id: "2879", title: "허심청", category: "leisure", address: "부산광역시 동래구 온천장로107번길 32 (온천동)", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "10359", title: "연산온천파크", category: "leisure", address: "경상북도 포항시 북구 송라면 보경로 516", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "7575", title: "온천천시민공원", category: "culture", address: "부산광역시 연제구 온천천남로 39 (연산동)", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "9545", title: "이천온천공원", category: "nature", address: "경기도 이천시 애련정로136번길 84 (창전동)", models: ["arctic-ko"], grade: 1, by: llm}
+      - {id: "10359", title: "연산온천파크", category: "leisure", address: "경상북도 포항시 북구 송라면 보경로 516", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "7575", title: "온천천시민공원", category: "culture", address: "부산광역시 연제구 온천천남로 39 (연산동)", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "9545", title: "이천온천공원", category: "nature", address: "경기도 이천시 애련정로136번길 84 (창전동)", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
       - {id: "11610", title: "앙성온천지구", category: "leisure", address: "충청북도 충주시 앙성면 가곡로", models: ["arctic-ko", "harrier-270m"], grade: 2, by: llm}
       - {id: "13335", title: "월드온천24", category: "leisure", address: "강원특별자치도 춘천시 신북읍 장본길 35", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "11189", title: "덕산온천지구", category: "leisure", address: "충청남도 예산군 덕산면 온천단지2로 19", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "4868", title: "수안보온천 관광특구", category: "culture", address: "충청북도 충주시 수안보면 주정산로 12", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "8461", title: "청도 용암온천", category: "leisure", address: "경상북도 청도군 화양읍 온천길 23", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "8950", title: "오천항", category: "nature", address: "충청남도 보령시 오천면 오천해안로 782-5", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "10948", title: "이천설봉온천랜드", category: "leisure", address: "경기도 이천시 애련정로 67-16 (안흥동)", models: ["arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "10642", title: "옥천리 냉면마을", category: "culture", address: "경기도 양평군 옥천면 옥천길98번길 12 (옥천면) 일대", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "5748", title: "옥천레포츠공원", category: "culture", address: "경기도 양평군 옥천면 옥천체육공원길 40", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "46537", title: "온천집", category: "food", address: "서울특별시 종로구 돈화문로11나길 31-8", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "5289", title: "오레브핫스프링앤스파", category: "leisure", address: "제주특별자치도 서귀포시 태평로 152 (호근동)", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "8675", title: "테르메덴", category: "leisure", address: "경기도 이천시 모가면 사실로 984", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "2596", title: "로만바스", category: "leisure", address: "경기도 용인시 처인구 지삼로 470 (삼가동)", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "4592", title: "델피노 오션플레이", category: "culture", address: "강원특별자치도 고성군 토성면 미시령옛길 1153", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "5321", title: "센텀시티 스파랜드", category: "leisure", address: "부산광역시 해운대구 센텀남대로 35 (우동)", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "캠핑장"
     lang: ko
     intent: "캠핑장·오토캠핑장(수련원은 1)"
@@ -437,21 +541,21 @@ queries:
       - {id: "21687", title: "솔바람캠핑장", category: "leisure", address: "충청남도 서천군 장항읍 장항산단로34번길 48-44", models: ["e5-small"], grade: 3, by: llm}
       - {id: "20399", title: "추암오토캠핑장", category: "leisure", address: "강원특별자치도 동해시 촛대바위길 28 (추암동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "21200", title: "포시즌스오토캠핑장", category: "leisure", address: "경기도 포천시 신북면 탑신로 1259-68", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "21555", title: "캠프리카 캠핑장", category: "leisure", address: "경기도 양주시 백석읍 기산로440번길 147", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "21555", title: "캠프리카 캠핑장", category: "leisure", address: "경기도 양주시 백석읍 기산로440번길 147", models: ["e5-small", "qwen3-4b"], grade: 3, by: llm}
       - {id: "21660", title: "작은쉼터캠핑장", category: "leisure", address: "경기도 시흥시 죽율로 25 (죽율동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "21865", title: "온더락캠핑장", category: "leisure", address: "경기도 가평군 상면 수목원로 238-106", models: ["e5-small"], grade: 3, by: llm}
       - {id: "20980", title: "장수방화동캠핑장", category: "leisure", address: "전북특별자치도 장수군 번암면 방화동로 398-12", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
       - {id: "21434", title: "임진강힐링카라반", category: "leisure", address: "경기도 연천군 장남면 원당리", models: ["e5-small"], grade: 2, by: llm}
-      - {id: "20216", title: "별장 캠핑카펜션", category: "leisure", address: "충청남도 보령시 대천항1길 30 (신흑동)", models: ["arctic-ko"], grade: 2, by: llm}
-      - {id: "21002", title: "그린하우스캠핑장", category: "leisure", address: "경상북도 경주시 산내면 대현길 91-6", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "20216", title: "별장 캠핑카펜션", category: "leisure", address: "충청남도 보령시 대천항1길 30 (신흑동)", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "21002", title: "그린하우스캠핑장", category: "leisure", address: "경상북도 경주시 산내면 대현길 91-6", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
       - {id: "20314", title: "청석들오토캠핑", category: "leisure", address: "경상북도 경주시 산내면 대현길 176-9", models: ["arctic-ko"], grade: 3, by: llm}
       - {id: "21595", title: "춘장대나드리캠핑장", category: "leisure", address: "충청남도 서천군 서면 춘장대길8번길 3", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "20797", title: "하동다목적캠핑장", category: "leisure", address: "경상남도 하동군 옥종면 옥단로 1830", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "20666", title: "자연펜션캠핑장", category: "leisure", address: "강원특별자치도 영월군 김삿갓면 내리계곡로 1199", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "20797", title: "하동다목적캠핑장", category: "leisure", address: "경상남도 하동군 옥종면 옥단로 1830", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "20666", title: "자연펜션캠핑장", category: "leisure", address: "강원특별자치도 영월군 김삿갓면 내리계곡로 1199", models: ["arctic-ko", "bge-m3"], grade: 3, by: llm}
       - {id: "21008", title: "구미캠핑장", category: "leisure", address: "경상북도 구미시 낙동제방길 200 (양호동)", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "20642", title: "아산글램핑캠핑장", category: "leisure", address: "충청남도 아산시 선장면 학성로 214", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "21870", title: "캠플레이 캠핑장", category: "leisure", address: "경기도 가평군 상면 비룡로 1610-15", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "20318", title: "쉼표캠핑장", category: "leisure", address: "경상북도 김천시 아포읍 회성길 177-8", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "20642", title: "아산글램핑캠핑장", category: "leisure", address: "충청남도 아산시 선장면 학성로 214", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "21870", title: "캠플레이 캠핑장", category: "leisure", address: "경기도 가평군 상면 비룡로 1610-15", models: ["arctic-ko", "harrier-270m", "arctic-official"], grade: 3, by: llm}
+      - {id: "20318", title: "쉼표캠핑장", category: "leisure", address: "경상북도 김천시 아포읍 회성길 177-8", models: ["arctic-ko", "qwen3-4b"], grade: 3, by: llm}
       - {id: "21602", title: "장항오토캠핑장", category: "leisure", address: "충청남도 서천군 장항읍 장항산단로34번길 46-33", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "21866", title: "올래캠핑장", category: "leisure", address: "경기도 가평군 설악면 어비산길 203", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "20196", title: "솔베이캠핑장", category: "leisure", address: "충청북도 괴산군 감물면 충민로 1083-12", models: ["harrier-270m"], grade: 3, by: llm}
@@ -460,6 +564,27 @@ queries:
       - {id: "20219", title: "천안OK캠핑", category: "leisure", address: "충청남도 천안시 동남구 북면 오곡1길 4-30", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "21875", title: "홀리데이캠프캠핑장", category: "leisure", address: "경기도 가평군 설악면 유명로 654-82", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "21851", title: "코끼리캠핑장", category: "leisure", address: "경기도 가평군 북면 화악산로 1217-1", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "20372", title: "늘푸른펜션캠핑장", category: "leisure", address: "강원특별자치도 영월군 김삿갓면 내리계곡로 1116-4", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "20505", title: "아빠가 만든 캠핑장", category: "leisure", address: "강원특별자치도 영월군 북면 덕전길 240", models: ["arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "20804", title: "박사마을 어린이 글램핑장", category: "leisure", address: "강원특별자치도 춘천시 서면 박사로 770", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "20449", title: "파인카라반캠핑장", category: "leisure", address: "충청북도 단양군 가곡면 남한강로 1038", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "20506", title: "어울림펜션 캠핑장", category: "leisure", address: "강원특별자치도 영월군 한반도면 문둔길 106", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "18655", title: "휴가를부탁해 캠핑장&야영장", category: "stay", address: "강원특별자치도 영월군 김삿갓면 내리계곡로 1024", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "18447", title: "숲이야기 캠핑장", category: "stay", address: "강원특별자치도 춘천시 서백길 691-77", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "19186", title: "김삿갓휴게소 체험 캠핑장", category: "stay", address: "강원특별자치도 영월군 김삿갓면 영월동로 2138", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "21610", title: "춘장대중앙솔밭캠핑장", category: "leisure", address: "충청남도 서천군 서면 춘장대길8번길 7-7", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "20452", title: "캠핑배내", category: "leisure", address: "경상남도 양산시 원동면 청수골길 43-21", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "22207", title: "캠핑라운지", category: "leisure", address: "경기도 포천시 이동면 성장로1289번길 155-76", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "18443", title: "정원펜션 캠핑장", category: "stay", address: "강원특별자치도 강릉시 주문진읍 신리천로 1191-15", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "18602", title: "숲속캠핑장", category: "stay", address: "경상북도 봉화군 물야면 오록3길 63-315", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "21901", title: "열린캠핑장", category: "leisure", address: "충청북도 충주시 앙성면 지당리 241", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "18858", title: "J캠핑장", category: "stay", address: "강원특별자치도 홍천군 내면 소한동길 301", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "21078", title: "캄파슬로우", category: "leisure", address: "강원특별자치도 원주시 판부면 백운산길 67-105", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "21789", title: "팀업캠퍼스 더포레스트캠핑장", category: "leisure", address: "경기도 광주시 곤지암읍 경충대로 729", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "20256", title: "방길낚시캠핑장", category: "leisure", address: "전북특별자치도 임실군 신덕면 삼길1길 155-77", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "21032", title: "꿈엔들캠핑장", category: "leisure", address: "강원특별자치도 영월군 무릉도원면 무릉법흥로 968-12", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "21852", title: "이지캠핑장", category: "leisure", address: "경기도 가평군 설악면 유명로 2110", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "20379", title: "웰컴투캠프", category: "leisure", address: "강원특별자치도 영월군 무릉도원면 무릉법흥로 1128-20", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "케이블카"
     lang: ko
     intent: "케이블카 탑승지"
@@ -477,15 +602,17 @@ queries:
       - {id: "6224", title: "왕피천케이블카", category: "leisure", address: "경상북도 울진군 근남면 왕피천공원길 1", grade: 3, by: llm}
       - {id: "348", title: "팔공산 케이블카", category: "leisure", address: "대구광역시 동구 팔공산로185길 51", grade: 3, by: llm}
     vector_candidates:
-      - {id: "4591", title: "사천바다 케이블카", category: "leisure", address: "경상남도 사천시 사천대로 18 (대방동)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "10041", title: "삼척해상케이블카", category: "leisure", address: "강원특별자치도 삼척시 근덕면 삼척로 2154-31", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
-      - {id: "6764", title: "대둔산케이블카", category: "leisure", address: "전북특별자치도 완주군 운주면 대둔산공원길 55", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
-      - {id: "4911", title: "앞산 케이블카", category: "culture", address: "대구광역시 남구 앞산순환로 574-114 (봉덕동)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "5855", title: "내장산 케이블카", category: "leisure", address: "전북특별자치도 정읍시 내장산로 1179-11 (내장동)", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "4591", title: "사천바다 케이블카", category: "leisure", address: "경상남도 사천시 사천대로 18 (대방동)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "10041", title: "삼척해상케이블카", category: "leisure", address: "강원특별자치도 삼척시 근덕면 삼척로 2154-31", models: ["e5-small", "arctic-ko", "arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "6764", title: "대둔산케이블카", category: "leisure", address: "전북특별자치도 완주군 운주면 대둔산공원길 55", models: ["e5-small", "harrier-270m", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "4911", title: "앞산 케이블카", category: "culture", address: "대구광역시 남구 앞산순환로 574-114 (봉덕동)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "5855", title: "내장산 케이블카", category: "leisure", address: "전북특별자치도 정읍시 내장산로 1179-11 (내장동)", models: ["e5-small", "arctic-official", "bge-m3"], grade: 3, by: llm}
       - {id: "5390", title: "서해랑 제부도 해상케이블카", category: "leisure", address: "경기도 화성시 서신면 전곡항로 1-10", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
-      - {id: "4049", title: "목포 해상케이블카", category: "leisure", address: "전남광주통합특별시 목포시 해양대학로 240", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "2522", title: "발왕산 관광케이블카", category: "leisure", address: "강원특별자치도 평창군 대관령면 올림픽로 715 드래곤프라자 2층", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "4049", title: "목포 해상케이블카", category: "leisure", address: "전남광주통합특별시 목포시 해양대학로 240", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "2522", title: "발왕산 관광케이블카", category: "leisure", address: "강원특별자치도 평창군 대관령면 올림픽로 715 드래곤프라자 2층", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
       - {id: "2404", title: "부산 송도해상케이블카", category: "leisure", address: "부산광역시 서구 송도해변로 171", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "872", title: "춘천 삼악산 호수케이블카", category: "leisure", address: "강원특별자치도 춘천시 스포츠타운길 245", models: ["arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "10062", title: "가리왕산케이블카", category: "leisure", address: "강원특별자치도 정선군 북평면 중봉길 41-35", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "등산 코스"
     lang: ko
     intent: "산·등산로·둘레길. 승마클럽·자전거길은 0"
@@ -503,7 +630,7 @@ queries:
       - {id: "5968", title: "[서울둘레길 17코스] 북한산 은평코스", category: "culture", address: "서울특별시 은평구 진관2로 29-21 (진관동) (구파발역~북한산생태공원)", grade: 3, by: llm}
       - {id: "5969", title: "[서울둘레길 19코스] 북한산 성북코스", category: "culture", address: "서울특별시 종로구 평창동 (형제봉 입구~화계사 입구)", grade: 3, by: llm}
     vector_candidates:
-      - {id: "3358", title: "무등산국립공원", category: "nature", address: "전남광주통합특별시 화순군 화순읍 백운촌길 3-3", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "3358", title: "무등산국립공원", category: "nature", address: "전남광주통합특별시 화순군 화순읍 백운촌길 3-3", models: ["e5-small", "qwen3-4b"], grade: 3, by: llm}
       - {id: "10239", title: "선달산", category: "nature", address: "강원특별자치도 영월군 김삿갓면 내리계곡로 1192-10", models: ["e5-small"], grade: 3, by: llm}
       - {id: "10796", title: "원등산", category: "nature", address: "전북특별자치도 완주군 소양면 해월리", models: ["e5-small"], grade: 3, by: llm}
       - {id: "8114", title: "선바위산", category: "nature", address: "강원특별자치도 영월군 상동읍 선바위길 246", models: ["e5-small"], grade: 3, by: llm}
@@ -511,18 +638,18 @@ queries:
       - {id: "4702", title: "베틀바위", category: "nature", address: "강원특별자치도 동해시 삼화로 538 무릉계곡관리사무소", models: ["e5-small"], grade: 2, by: llm}
       - {id: "12572", title: "삼악산", category: "nature", address: "강원특별자치도 춘천시 서면 경춘로 1401-25", models: ["e5-small"], grade: 3, by: llm}
       - {id: "11986", title: "두타산협곡마천루", category: "nature", address: "강원특별자치도 동해시 삼화로 584 (삼화동)", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "8134", title: "등선폭포", category: "nature", address: "강원특별자치도 춘천시 서면 덕두원리 118-2", models: ["e5-small"], grade: 2, by: llm}
+      - {id: "8134", title: "등선폭포", category: "nature", address: "강원특별자치도 춘천시 서면 덕두원리 118-2", models: ["e5-small", "arctic-official", "bge-m3"], grade: 2, by: llm}
       - {id: "19365", title: "[양천구 둘레길] 산림형코스", category: "leisure", address: "서울특별시 양천구 신정동", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "9350", title: "한라산 영실", category: "nature", address: "제주특별자치도 서귀포시 영실로 246", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "12481", title: "등광사", category: "history", address: "강원특별자치도 태백시 문곡소도동 산50", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "21933", title: "[대구올레 팔공산 5코스] 구암마을 가는 길", category: "leisure", address: "대구광역시 수성구 신천동로86안길 14-6", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "19897", title: "내린천 짚트랙 휴레저", category: "leisure", address: "강원특별자치도 인제군 인제읍 내린천로 5693", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "9350", title: "한라산 영실", category: "nature", address: "제주특별자치도 서귀포시 영실로 246", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "12481", title: "등광사", category: "history", address: "강원특별자치도 태백시 문곡소도동 산50", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "21933", title: "[대구올레 팔공산 5코스] 구암마을 가는 길", category: "leisure", address: "대구광역시 수성구 신천동로86안길 14-6", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "19897", title: "내린천 짚트랙 휴레저", category: "leisure", address: "강원특별자치도 인제군 인제읍 내린천로 5693", models: ["arctic-ko", "arctic-official"], grade: 0, by: llm}
       - {id: "11595", title: "망곡산 연인공원", category: "history", address: "경기도 연천군 연천읍 연천로 220", models: ["arctic-ko"], grade: 1, by: llm}
       - {id: "19644", title: "[밀양아리랑길 2코스] 추화산성길", category: "leisure", address: "경상남도 밀양시 밀양향교3길 19 (교동) 밀양향교~시립박물관", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "19741", title: "[서울둘레길 6코스] 고덕산코스", category: "leisure", address: "서울특별시 광진구 아차산로 지하571 (광장동) 광나루역~명일근린공원", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "19741", title: "[서울둘레길 6코스] 고덕산코스", category: "leisure", address: "서울특별시 광진구 아차산로 지하571 (광장동) 광나루역~명일근린공원", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
       - {id: "10797", title: "북한산 백운대", category: "nature", address: "서울특별시 강북구 도선사길 234 (우이동)", models: ["arctic-ko"], grade: 3, by: llm}
       - {id: "10581", title: "덕재산", category: "nature", address: "전북특별자치도 임실군 성수면 봉강리", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "21234", title: "[영덕 블루로드] 3코스 바람의 언덕", category: "leisure", address: "경상북도 영덕군 강구면 영덕대게로 61 강구대게거리~창포말등대", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "21234", title: "[영덕 블루로드] 3코스 바람의 언덕", category: "leisure", address: "경상북도 영덕군 강구면 영덕대게로 61 강구대게거리~창포말등대", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
       - {id: "9310", title: "하이원리조트 알파인코스터", category: "leisure", address: "강원특별자치도 정선군 고한읍 하이원길 265-1", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "10117", title: "영남알프스 얼음골케이블카", category: "leisure", address: "경상남도 밀양시 산내면 얼음골로 241", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "20224", title: "토영이야길2코스", category: "leisure", address: "경상남도 통영시 미수동 산62-5 (미수동)", models: ["harrier-270m"], grade: 3, by: llm}
@@ -531,6 +658,18 @@ queries:
       - {id: "21961", title: "엘리시안 강촌 컨트리클럽", category: "leisure", address: "강원특별자치도 춘천시 남산면 북한강변길 688", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "11706", title: "용마골소공원", category: "nature", address: "경기도 과천시 과천동 549-23", models: ["harrier-270m"], grade: 1, by: llm}
       - {id: "21935", title: "[대구올레 팔공산 7코스] 폭포골 가는 길", category: "leisure", address: "대구광역시 동구 팔공산로237길 147", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "19627", title: "영인산자연휴양림 스카이어드벤처", category: "leisure", address: "충청남도 아산시 영인면 아산온천로 16-26", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "21245", title: "국민의 숲 트레킹 코스", category: "culture", address: "강원특별자치도 평창군 대관령마루길 340", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "7946", title: "등기산스카이워크", category: "culture", address: "경상북도 울진군 후포면 후포리 산141-21", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "5695", title: "선유도 둘레길", category: "culture", address: "전북특별자치도 군산시 옥도면 선유남길 37-1", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "5972", title: "[서울둘레길 18코스] 북한산 종로코스", category: "culture", address: "서울특별시 은평구 불광동 (북한산생태공원~형제봉 입구)", models: ["bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "21119", title: "제로포인트트레일", category: "leisure", address: "제주특별자치도 제주시 산지로 25 (건입동)", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "5453", title: "남한산성 탐방로", category: "culture", address: "경기도 광주시 남한산성면 산성리", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "20278", title: "월류봉 둘레길", category: "leisure", address: "충청북도 영동군 황간면 원촌리", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "22007", title: "[경기옛길 영남길 제4길] 석성산길", category: "leisure", address: "경기도 용인시 기흥구 동백중앙로 239 (중동)", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "11543", title: "유명산", category: "nature", address: "경기도 가평군 설악면 유명산길 79-53", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "11486", title: "명지산군립공원", category: "nature", address: "경기도 가평군 북면 가화로 2089-47", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "10770", title: "설봉산", category: "nature", address: "경기도 이천시 관고동", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "야시장"
     lang: ko
     intent: "야시장·밤 시장. 공원·랜드는 0"
@@ -548,19 +687,19 @@ queries:
       - {id: "20284", title: "산호야관광농원", category: "leisure", address: "경상북도 구미시 옥성면 선상서로 797", grade: 0, by: llm}
       - {id: "20763", title: "바다야놀자", category: "leisure", address: "충청남도 보령시 하학로 800", grade: 0, by: llm}
     vector_candidates:
-      - {id: "15587", title: "대인예술시장 한평갤러리", category: "culture", address: "전남광주통합특별시 동구 제봉로184번길 9-10 (대인동)", models: ["e5-small", "harrier-270m"], grade: 1, by: llm}
-      - {id: "34297", title: "대구 서문시장 & 서문시장 야시장", category: "shopping", address: "대구광역시 중구 큰장로26길 45", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "23207", title: "수목원길 야시장", category: "shopping", address: "제주특별자치도 제주시 은수길 69", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
+      - {id: "15587", title: "대인예술시장 한평갤러리", category: "culture", address: "전남광주통합특별시 동구 제봉로184번길 9-10 (대인동)", models: ["e5-small", "harrier-270m", "arctic-official"], grade: 1, by: llm}
+      - {id: "34297", title: "대구 서문시장 & 서문시장 야시장", category: "shopping", address: "대구광역시 중구 큰장로26길 45", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "23207", title: "수목원길 야시장", category: "shopping", address: "제주특별자치도 제주시 은수길 69", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
       - {id: "12587", title: "큰장길 침구류 명물거리", category: "culture", address: "대구광역시 서구 큰장로 35 (내당동)", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "51187", title: "야반", category: "food", address: "경기도 이천시 경충대로 2849 (관고동)", models: ["e5-small", "arctic-ko"], grade: 0, by: llm}
+      - {id: "51187", title: "야반", category: "food", address: "경기도 이천시 경충대로 2849 (관고동)", models: ["e5-small", "arctic-ko", "bge-m3"], grade: 0, by: llm}
       - {id: "12371", title: "멍딩이마을", category: "culture", address: "충청북도 괴산군 소수면 원소로명덕2길 24", models: ["e5-small"], grade: 0, by: llm}
       - {id: "34317", title: "야옹아멍멍해봐 강릉내곡점", category: "shopping", address: "강원특별자치도 강릉시 남부로17번길 8 (내곡동) (내곡동) , 1층", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "34257", title: "영일만친구야시장", category: "shopping", address: "경상북도 포항시 북구 중앙상가길 56 (상원동)", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
+      - {id: "34257", title: "영일만친구야시장", category: "shopping", address: "경상북도 포항시 북구 중앙상가길 56 (상원동)", models: ["e5-small", "arctic-ko", "bge-m3"], grade: 3, by: llm}
       - {id: "23249", title: "울산큰애기청년야시장", category: "shopping", address: "울산광역시 중구 젊음의거리 90 (옥교동)", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
-      - {id: "23413", title: "수암한우야시장", category: "shopping", address: "울산광역시 남구 수암로128번길 12 (야음동)", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "34085", title: "대구 칠성시장&별별상상 칠성야시장", category: "shopping", address: "대구광역시 북구 칠성시장로 28", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "23413", title: "수암한우야시장", category: "shopping", address: "울산광역시 남구 수암로128번길 12 (야음동)", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "34085", title: "대구 칠성시장&별별상상 칠성야시장", category: "shopping", address: "대구광역시 북구 칠성시장로 28", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
       - {id: "564", title: "국제시장 먹자골목", category: "leisure", address: "부산광역시 중구 중구로 36", models: ["arctic-ko"], grade: 2, by: llm}
-      - {id: "28887", title: "홈플러스 야탑점", category: "shopping", address: "경기도 성남시 분당구 성남대로925번길 16 (야탑동)", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "28887", title: "홈플러스 야탑점", category: "shopping", address: "경기도 성남시 분당구 성남대로925번길 16 (야탑동)", models: ["arctic-ko", "bge-m3"], grade: 0, by: llm}
       - {id: "6235", title: "홍익문화공원", category: "culture", address: "서울특별시 마포구 와우산로21길 19-3 (서교동)", models: ["arctic-ko"], grade: 0, by: llm}
       - {id: "20727", title: "덕동자동차야영장", category: "leisure", address: "전북특별자치도 남원시 산내면 지리산로 365", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "20076", title: "설악산국립공원 자동차야영장", category: "leisure", address: "강원특별자치도 속초시 설악동 370번지 (375-3)", models: ["harrier-270m"], grade: 0, by: llm}
@@ -568,7 +707,22 @@ queries:
       - {id: "2929", title: "종로3가 포장마차 거리", category: "culture", address: "서울특별시 종로구 관수동 종로 3가역 1호선, 5호선 출구 부근", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "51221", title: "뿅의전설 야탑본점", category: "food", address: "경기도 성남시 분당구 야탑로139번길 2 (야탑동)", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "22684", title: "서시장", category: "shopping", address: "전남광주통합특별시 여수시 광무동", models: ["harrier-270m"], grade: 1, by: llm}
-      - {id: "34227", title: "대야전통시장", category: "shopping", address: "전북특별자치도 군산시 대야면 산월리", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "34227", title: "대야전통시장", category: "shopping", address: "전북특별자치도 군산시 대야면 산월리", models: ["harrier-270m", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "5556", title: "제천원도심상권", category: "culture", address: "충북 제천시 중앙로2가 156-1", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "34174", title: "독산동 우시장", category: "shopping", address: "서울특별시 금천구 범안로 1209 (독산동)", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "22685", title: "덕양시장", category: "shopping", address: "전남광주통합특별시 여수시 소라면 하세동길 12-2", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "23247", title: "진주 올빰토요야시장", category: "shopping", address: "경상남도 진주시 진양호로 563번길 일원", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "34434", title: "광장시장 한복매장", category: "shopping", address: "서울특별시 종로구 창경궁로 88 (예지동)", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "28684", title: "NC백화점 야탑점", category: "shopping", address: "경기도 성남시 분당구 야탑로81번길 11 (야탑동)", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "49111", title: "산성식당", category: "food", address: "경상북도 영천시 시장4길 52 영천공설시장", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "33975", title: "하단시장", category: "shopping", address: "부산광역시 사하구 낙동대로451번길 26 (하단동)", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "34265", title: "충무동 새벽시장", category: "shopping", address: "부산광역시 서구 해안새벽시장길 68 (남부민동)", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "49279", title: "야생화뜰", category: "food", address: "인천광역시 강화군 화도면 안골길131번길 36-7", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "34105", title: "울산 수암시장", category: "shopping", address: "울산광역시 남구 수암로128번길 12 (야음동)", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "22641", title: "말바우시장", category: "shopping", address: "전남광주통합특별시 북구 동문대로85번길 62 (우산동)", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "34506", title: "가래비시장", category: "shopping", address: "경기도 양주시 광적면 가납리 738-29", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "34268", title: "반야월종합시장", category: "shopping", address: "대구광역시 동구 율하동로 144 (신기동)", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "22713", title: "중앙선어시장", category: "shopping", address: "전남광주통합특별시 여수시 중앙동 291", models: ["qwen3-4b"], grade: 1, by: llm}
   - query: "전통시장 먹거리"
     lang: ko
     intent: "전통시장·먹거리촌"
@@ -588,7 +742,7 @@ queries:
     vector_candidates:
       - {id: "11799", title: "서문풍물야시장&서문시장삼겹살거리", category: "culture", address: "충청북도 청주시 상당구 무심동로392번길 18 (서문동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "10321", title: "명동 남대문 북창동 다동무교동 관광특구", category: "nature", address: "서울특별시 중구 세종대로 40 (남대문로4가)", models: ["e5-small"], grade: 2, by: llm}
-      - {id: "564", title: "국제시장 먹자골목", category: "leisure", address: "부산광역시 중구 중구로 36", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
+      - {id: "564", title: "국제시장 먹자골목", category: "leisure", address: "부산광역시 중구 중구로 36", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
       - {id: "9985", title: "세종마을 음식문화거리", category: "culture", address: "서울특별시 종로구 자하문로1길 24 (체부동)", models: ["e5-small"], grade: 3, by: llm}
       - {id: "7647", title: "포항전통문화체험관", category: "culture", address: "경상북도 포항시 북구 기북면 덕동문화길 7", models: ["e5-small"], grade: 1, by: llm}
       - {id: "9721", title: "안양중앙시장 곱창골목", category: "culture", address: "경기도 안양시 만안구 안양로291번길 34 (안양동)", models: ["e5-small"], grade: 3, by: llm}
@@ -596,19 +750,30 @@ queries:
       - {id: "12587", title: "큰장길 침구류 명물거리", category: "culture", address: "대구광역시 서구 큰장로 35 (내당동)", models: ["e5-small"], grade: 1, by: llm}
       - {id: "15359", title: "세종전통장류박물관", category: "culture", address: "세종특별자치시 전동면 배일길 90-43", models: ["e5-small"], grade: 1, by: llm}
       - {id: "47972", title: "오향족발", category: "food", address: "서울특별시 마포구 만리재로 19 공덕시장", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "11410", title: "남한산성 전통음식마을", category: "culture", address: "경기도 광주시 남한산성면 남한산성로 731", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "11832", title: "도예촌 쌀밥거리", category: "culture", address: "경기도 이천시 신둔면 경충대로 3194", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "11806", title: "파주 맛고을 음식문화거리", category: "culture", address: "경기도 파주시 탄현면 성동리 일원", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "49493", title: "할매닭발", category: "food", address: "경상북도 의성군 전통시장3길 7-6", models: ["arctic-ko", "harrier-270m"], grade: 1, by: llm}
-      - {id: "11974", title: "통영항 꿀빵거리", category: "culture", address: "경상남도 통영시 중앙동", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "11410", title: "남한산성 전통음식마을", category: "culture", address: "경기도 광주시 남한산성면 남한산성로 731", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "11832", title: "도예촌 쌀밥거리", category: "culture", address: "경기도 이천시 신둔면 경충대로 3194", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "11806", title: "파주 맛고을 음식문화거리", category: "culture", address: "경기도 파주시 탄현면 성동리 일원", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "49493", title: "할매닭발", category: "food", address: "경상북도 의성군 전통시장3길 7-6", models: ["arctic-ko", "harrier-270m", "bge-m3"], grade: 1, by: llm}
+      - {id: "11974", title: "통영항 꿀빵거리", category: "culture", address: "경상남도 통영시 중앙동", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
       - {id: "58092", title: "전통다원", category: "food", address: "서울특별시 종로구 인사동10길 11-4", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "58137", title: "남선옥", category: "food", address: "경상북도 의성군 의성읍 전통시장1길 8-1", models: ["arctic-ko", "harrier-270m"], grade: 1, by: llm}
+      - {id: "58137", title: "남선옥", category: "food", address: "경상북도 의성군 의성읍 전통시장1길 8-1", models: ["arctic-ko", "harrier-270m", "bge-m3", "qwen3-4b"], grade: 1, by: llm}
       - {id: "12480", title: "안동시장 찜닭골목", category: "culture", address: "경상북도 안동시 번영길 30", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
       - {id: "338", title: "서부 오미가미거리", category: "culture", address: "대구광역시 서구 국채보상로75길 25-1", models: ["harrier-270m"], grade: 3, by: llm}
-      - {id: "6080", title: "장항6080 음식골목 맛나로", category: "culture", address: "충청남도 서천군 장항읍 창선1리 일원", models: ["harrier-270m"], grade: 3, by: llm}
-      - {id: "10171", title: "부림시장 먹자골목", category: "culture", address: "경상남도 창원시 마산합포구 3·15대로 352 (부림동)", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "6080", title: "장항6080 음식골목 맛나로", category: "culture", address: "충청남도 서천군 장항읍 창선1리 일원", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "10171", title: "부림시장 먹자골목", category: "culture", address: "경상남도 창원시 마산합포구 3·15대로 352 (부림동)", models: ["harrier-270m", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
       - {id: "2653", title: "조치원테마거리", category: "culture", address: "세종특별자치시 조치원읍 장안로 10-8", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "6418", title: "돌다리 곱창골목", category: "culture", address: "경기도 구리시 검배로6번길 31 (수택동)", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "5498", title: "서면먹자골목", category: "culture", address: "부산광역시 부산진구 부전동", models: ["arctic-official", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "4320", title: "봉산게장백반거리", category: "culture", address: "전남광주통합특별시 여수시 봉산동", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "15925", title: "한국전통음식박물관", category: "culture", address: "인천광역시 남동구 만의골로 71 (운연동)", models: ["arctic-official", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "49111", title: "산성식당", category: "food", address: "경상북도 영천시 시장4길 52 영천공설시장", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "54915", title: "토속식당", category: "food", address: "충청남도 예산군 덕산면 수덕사안길 47", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "46137", title: "옛날두부", category: "food", address: "전남광주통합특별시 화순군 시장길 33 재명상사", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "51696", title: "포항할매집", category: "food", address: "경상북도 영천시 시장4길 52 영천공설시장", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "47099", title: "대흥식당", category: "food", address: "전남광주통합특별시 함평군 함평읍 시장길 112", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "46979", title: "일로장터백반", category: "food", address: "전남광주통합특별시 무안군 시장길 17-12 일로장터백반", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "47163", title: "옛날집", category: "food", address: "전남광주통합특별시 구례군 산동면 상관1길 5", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "47074", title: "전통식당", category: "food", address: "전남광주통합특별시 담양군 고서면 고읍현길 38-4", models: ["bge-m3"], grade: 1, by: llm}
   - query: "서울 근교 드라이브"
     lang: ko
     intent: "수도권 근교 드라이브 코스·해안도로. 포항·영덕 등 원거리는 1 이하"
@@ -626,21 +791,21 @@ queries:
       - {id: "7450", title: "서울 효창공원", category: "culture", address: "서울특별시 용산구 효창원로 177-18 (효창동)", grade: 0, by: llm}
       - {id: "7961", title: "서울 경모궁지", category: "history", address: "서울특별시 종로구 창경궁로 202-1 (연건동)", grade: 0, by: llm}
     vector_candidates:
-      - {id: "19725", title: "[서울둘레길 7코스] 일자산코스", category: "leisure", address: "서울특별시 강동구 상일동 (명일근린공원~오금1교)", models: ["e5-small", "arctic-ko"], grade: 1, by: llm}
+      - {id: "19725", title: "[서울둘레길 7코스] 일자산코스", category: "leisure", address: "서울특별시 강동구 상일동 (명일근린공원~오금1교)", models: ["e5-small", "arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
       - {id: "19404", title: "[서울둘레길 13코스] 안양천 상류코스", category: "leisure", address: "경기도 안양시 만안구 경수대로 1431 (석수동) 석수역~구일역", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "19736", title: "[서울둘레길 2코스] 덕릉고개코스", category: "leisure", address: "서울특별시 노원구 상계동 산152-1 (당고개공원 갈림길~상계동 나들이 철쭉동산)", models: ["e5-small", "arctic-ko"], grade: 1, by: llm}
-      - {id: "68", title: "위라이드 서울전차", category: "leisure", address: "서울특별시 종로구 종로 19 (종로1가)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 0, by: llm}
-      - {id: "19741", title: "[서울둘레길 6코스] 고덕산코스", category: "leisure", address: "서울특별시 광진구 아차산로 지하571 (광장동) 광나루역~명일근린공원", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "19736", title: "[서울둘레길 2코스] 덕릉고개코스", category: "leisure", address: "서울특별시 노원구 상계동 산152-1 (당고개공원 갈림길~상계동 나들이 철쭉동산)", models: ["e5-small", "arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "68", title: "위라이드 서울전차", category: "leisure", address: "서울특별시 종로구 종로 19 (종로1가)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3"], grade: 0, by: llm}
+      - {id: "19741", title: "[서울둘레길 6코스] 고덕산코스", category: "leisure", address: "서울특별시 광진구 아차산로 지하571 (광장동) 광나루역~명일근린공원", models: ["e5-small", "arctic-official", "bge-m3"], grade: 1, by: llm}
       - {id: "5971", title: "[서울둘레길 11코스] 관악산코스", category: "culture", address: "서울특별시 동작구 동작대로 지하3 (사당동) (사당역 갈림길~관악산공원 입구)", models: ["e5-small"], grade: 1, by: llm}
       - {id: "18569", title: "청계천 자전거도로", category: "leisure", address: "서울특별시 성동구 살곶이길 115 (마장동)", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "19737", title: "[서울둘레길 5코스] 아차산코스", category: "leisure", address: "서울특별시 중랑구 면목동 (깔딱고개 쉼터~광나루역)", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "19737", title: "[서울둘레길 5코스] 아차산코스", category: "leisure", address: "서울특별시 중랑구 면목동 (깔딱고개 쉼터~광나루역)", models: ["e5-small", "bge-m3"], grade: 1, by: llm}
       - {id: "19735", title: "[서울둘레길 1코스] 수락산코스", category: "leisure", address: "서울특별시 도봉구 도봉로 948 (도봉동) 도봉산역~당고개공원 갈림길", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "19726", title: "[서울둘레길 4코스] 망우·용마산코스", category: "leisure", address: "서울특별시 노원구 화랑로 지하510 (공릉동) 화랑대역~깔딱고개 쉼터", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "11120", title: "장흥관광지", category: "nature", address: "경기도 양주시 장흥면 권율로 193", models: ["arctic-ko"], grade: 2, by: llm}
+      - {id: "19726", title: "[서울둘레길 4코스] 망우·용마산코스", category: "leisure", address: "서울특별시 노원구 화랑로 지하510 (공릉동) 화랑대역~깔딱고개 쉼터", models: ["e5-small", "bge-m3"], grade: 1, by: llm}
+      - {id: "11120", title: "장흥관광지", category: "nature", address: "경기도 양주시 장흥면 권율로 193", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 2, by: llm}
       - {id: "53082", title: "스시고", category: "food", address: "서울특별시 서초구 사평대로22길 15 (반포동)", models: ["arctic-ko"], grade: 0, by: llm}
       - {id: "20112", title: "엑스라이프(X-LIFE)", category: "leisure", address: "경기도 양평군 옥천면 용천리 산29-1", models: ["arctic-ko"], grade: 2, by: llm}
       - {id: "21694", title: "청계산골든밸리캠핑장", category: "leisure", address: "경기도 성남시 수정구 달래내로221번길 17-5 (금토동)", models: ["arctic-ko"], grade: 0, by: llm}
-      - {id: "2506", title: "호전다실", category: "leisure", address: "서울특별시 종로구 자하문로11길 16-2", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "2506", title: "호전다실", category: "leisure", address: "서울특별시 종로구 자하문로11길 16-2", models: ["arctic-ko", "arctic-official"], grade: 0, by: llm}
       - {id: "11868", title: "국립아세안자연휴양림", category: "nature", address: "경기도 양주시 백석읍 기산로 472", models: ["arctic-ko"], grade: 2, by: llm}
       - {id: "19435", title: "동서울승마클럽", category: "leisure", address: "경기도 남양주시 와부읍 월문천로 280-7", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "17396", title: "[K드라마 촬영지] 공근혜갤러리", category: "culture", address: "서울특별시 종로구 삼청로7길 38", models: ["harrier-270m"], grade: 0, by: llm}
@@ -651,6 +816,18 @@ queries:
       - {id: "26581", title: "MAC 신세계백화점 타임스퀘어점", category: "shopping", address: "서울특별시 영등포구 영중로 9 (영등포동4가) 1층", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "19150", title: "서울광장 스케이트장", category: "leisure", address: "서울특별시 중구 을지로 12 시청광장지하쇼핑센터", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "17731", title: "현대 모터스튜디오 고양", category: "culture", address: "경기도 고양시 일산서구 킨텍스로 217-6", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "6193", title: "솔밭근린공원", category: "nature", address: "서울특별시 강북구 삼양로 561 (우이동)", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "6033", title: "[서울둘레길 15코스] 노을·하늘공원코스", category: "culture", address: "서울특별시 강서구 가양동 1459-11 (가양대교 남단~증산역)", models: ["arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "5967", title: "[서울둘레길 9코스] 대모·구룡산코스", category: "culture", address: "서울특별시 강남구 밤고개로 76-2 (수서동) (수서역~매헌시민의숲 (양재시민의숲역))", models: ["arctic-official", "bge-m3", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "19324", title: "서울 한양도성 순성길", category: "leisure", address: "서울특별시 종로구 누상동 산1-29번지", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "53029", title: "어라운드데이", category: "food", address: "서울특별시 성동구 서울숲2길 24-1 (성수동1가)", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "1240", title: "설천 남해해안도로", category: "nature", address: "경상남도 남해군 설천면", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "12476", title: "속초해안로", category: "nature", address: "강원특별자치도 속초시 장사동 517-13", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "19743", title: "[서울둘레길 8코스] 장지·탄천코스", category: "leisure", address: "서울특별시 송파구 방이동 (오금1교(올림픽공원역)~수서역)", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "6675", title: "북한강로 벚꽃길", category: "nature", address: "경기도 가평군 청평면 삼회리", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "5972", title: "[서울둘레길 18코스] 북한산 종로코스", category: "culture", address: "서울특별시 은평구 불광동 (북한산생태공원~형제봉 입구)", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "1241", title: "동해 해안길", category: "nature", address: "경상남도 고성군 동해면", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "5767", title: "김제 메타세쿼이아길", category: "nature", address: "김제시 죽산면 죽산리 948-20", models: ["qwen3-4b"], grade: 0, by: llm}
   - query: "비 오는 날 갈만한 곳"
     lang: ko
     intent: "실내 시설(박물관·아쿠아리움·워터파크·카페거리). '비응항' 은 0"
@@ -668,33 +845,51 @@ queries:
       - {id: "1288", title: "남해척화비", category: "culture", address: "경상남도 남해군 설천면 노량로183번길 27", grade: 0, by: llm}
       - {id: "15439", title: "GB가빈아트홀", category: "culture", address: "서울특별시 강남구 삼성로 534 (삼성동)", grade: 3, by: llm}
     vector_candidates:
-      - {id: "8393", title: "비선대", category: "nature", address: "강원특별자치도 속초시 설악산로 1091 (설악동)", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "8393", title: "비선대", category: "nature", address: "강원특별자치도 속초시 설악산로 1091 (설악동)", models: ["e5-small", "arctic-official"], grade: 0, by: llm}
       - {id: "13087", title: "미포항", category: "nature", address: "부산광역시 해운대구 중동", models: ["e5-small"], grade: 0, by: llm}
       - {id: "11058", title: "비손농장", category: "leisure", address: "경상북도 포항시 북구 청하면 비학로 1889-157", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "5329", title: "비양도선착장", category: "nature", address: "제주특별자치도 제주시 한림읍 한림해안로 192", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "20647", title: "부여하늘날기", category: "leisure", address: "충청남도 부여군 부여읍 성왕로173번길 12", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "12678", title: "비인 선도리 쌍도해안", category: "nature", address: "충청남도 서천군 비인면 선도리", models: ["e5-small", "harrier-270m"], grade: 0, by: llm}
+      - {id: "5329", title: "비양도선착장", category: "nature", address: "제주특별자치도 제주시 한림읍 한림해안로 192", models: ["e5-small", "arctic-official"], grade: 0, by: llm}
+      - {id: "20647", title: "부여하늘날기", category: "leisure", address: "충청남도 부여군 부여읍 성왕로173번길 12", models: ["e5-small", "arctic-official"], grade: 0, by: llm}
+      - {id: "12678", title: "비인 선도리 쌍도해안", category: "nature", address: "충청남도 서천군 비인면 선도리", models: ["e5-small", "harrier-270m", "bge-m3"], grade: 0, by: llm}
       - {id: "6509", title: "영도 하늘전망대", category: "culture", address: "부산광역시 영도구 동삼동 628-66", models: ["e5-small"], grade: 1, by: llm}
       - {id: "12787", title: "남강댐 노을공원", category: "nature", address: "경상남도 진주시 내동면 삼계로 453", models: ["e5-small"], grade: 1, by: llm}
       - {id: "19353", title: "[강원평화누리자전거길 16코스] 고성 울산바위비경길", category: "leisure", address: "강원특별자치도 고성군 토성면 잼버리로 244 미시령옛길~청간정", models: ["e5-small"], grade: 0, by: llm}
       - {id: "1589", title: "고산일과해안도로", category: "nature", address: "제주특별자치도 서귀포시 대정읍 영락하동로 9-6", models: ["e5-small"], grade: 0, by: llm}
       - {id: "7374", title: "물안개공원", category: "culture", address: "경기 양평군 양평읍 오빈리 154-12", models: ["arctic-ko", "harrier-270m"], grade: 1, by: llm}
-      - {id: "7910", title: "보광사계곡", category: "nature", address: "경기도 파주시 광탄면 영장리", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "10287", title: "배다리지", category: "nature", address: "경기도 평택시 죽백동", models: ["arctic-ko"], grade: 1, by: llm}
+      - {id: "7910", title: "보광사계곡", category: "nature", address: "경기도 파주시 광탄면 영장리", models: ["arctic-ko", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "10287", title: "배다리지", category: "nature", address: "경기도 평택시 죽백동", models: ["arctic-ko", "arctic-official"], grade: 1, by: llm}
       - {id: "7623", title: "태종대", category: "nature", address: "부산광역시 영도구 전망로 24 (동삼동)", models: ["arctic-ko"], grade: 1, by: llm}
       - {id: "2952", title: "공지천유원지", category: "culture", address: "강원특별자치도 춘천시 이디오피아길 25", models: ["arctic-ko"], grade: 2, by: llm}
-      - {id: "11476", title: "호수유원지", category: "nature", address: "경기도 가평군 북면 도대리", models: ["arctic-ko"], grade: 1, by: llm}
-      - {id: "10301", title: "비와야폭포", category: "nature", address: "강원특별자치도 태백시 양지길 25 (장성동)", models: ["arctic-ko"], grade: 1, by: llm}
+      - {id: "11476", title: "호수유원지", category: "nature", address: "경기도 가평군 북면 도대리", models: ["arctic-ko", "bge-m3"], grade: 1, by: llm}
+      - {id: "10301", title: "비와야폭포", category: "nature", address: "강원특별자치도 태백시 양지길 25 (장성동)", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 1, by: llm}
       - {id: "10797", title: "북한산 백운대", category: "nature", address: "서울특별시 강북구 도선사길 234 (우이동)", models: ["arctic-ko"], grade: 0, by: llm}
       - {id: "2602", title: "바람쐬는길", category: "culture", address: "전북특별자치도 전주시 완산구 바람쐬는길 21 (교동)", models: ["arctic-ko"], grade: 0, by: llm}
       - {id: "7543", title: "소인국테마파크", category: "culture", address: "제주특별자치도 서귀포시 안덕면 화순서동로 347", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "8177", title: "유구천핑크뮬리", category: "nature", address: "충청남도 공주시 유구읍 유구리 648-18", models: ["harrier-270m"], grade: 0, by: llm}
-      - {id: "21359", title: "비내길", category: "leisure", address: "충청북도 충주시 앙성면 새바지길 17", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "21359", title: "비내길", category: "leisure", address: "충청북도 충주시 앙성면 새바지길 17", models: ["harrier-270m", "bge-m3"], grade: 0, by: llm}
       - {id: "21275", title: "비토국민여가캠핑장", category: "leisure", address: "경상남도 사천시 서포면 용궁로 132", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "20166", title: "[부산 갈맷길] 2코스 2구간", category: "leisure", address: "부산광역시 해운대구 우동", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "6770", title: "비인해변", category: "nature", address: "충청남도 서천군 비인면 선도리", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "3727", title: "용산전망대", category: "culture", address: "전남광주통합특별시 순천시 해룡면 순천만길 513-51", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "21271", title: "비학농원오토캠핑장", category: "leisure", address: "경기도 파주시 법원읍 만월로613번길 217", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "6647", title: "탄도바닷길", category: "nature", address: "경기도 안산시 단원구 선감동", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "5447", title: "물방아관광지", category: "nature", address: "경기도 광주시 남한산성면 남한산성로 619-1", models: ["arctic-official", "bge-m3"], grade: 0, by: llm}
+      - {id: "4360", title: "일몰공원", category: "culture", address: "전남광주통합특별시 완도군 군외면 대문리 189-3", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "19089", title: "시공간", category: "leisure", address: "전남광주통합특별시 여수시 남면 솔고지길 105", models: ["arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "11297", title: "비금계곡", category: "nature", address: "경기도 남양주시 수동면 비룡로 1222", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "21363", title: "하이원워터월드", category: "leisure", address: "강원특별자치도 정선군 사북읍 하이원길 175", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "5683", title: "양성계곡", category: "nature", address: "경기도 안성시 양성면 양성로 659-25", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "19418", title: "썸머타임수상레저", category: "leisure", address: "경기도 가평군 가평읍 호반로 1540", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "7351", title: "여의도 물빛광장", category: "culture", address: "서울특별시 영등포구 한강남자전거길 1451 (여의도동)", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "21759", title: "도농한강공원물놀이장", category: "leisure", address: "경기도 남양주시 다산동", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "15929", title: "아이바가든", category: "culture", address: "제주특별자치도 제주시 애월읍 고성남서길 10", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "17290", title: "국립기상박물관", category: "culture", address: "서울특별시 종로구 송월동 1-1 국립기상박물관", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "5316", title: "석류공원", category: "culture", address: "경상남도 진주시 진주대로 685 (가좌동)", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "4415", title: "소삼도", category: "nature", address: "전남광주통합특별시 진도군 의신면 초사리", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "16097", title: "국립충주기상과학관", category: "culture", address: "충청북도 충주시 번영대로 270-10 (연수동)", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "6254", title: "떠오르길·김녕 바닷길", category: "nature", address: "제주특별자치도 제주시 구좌읍 김녕로1길 51-3", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "5620", title: "운일암반일암 구름다리", category: "nature", address: "전북특별자치도 진안군 주천면 동상주천로 1888", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "20309", title: "비진도 외항", category: "leisure", address: "경상남도 통영시 한산면 비진리", models: ["qwen3-4b"], grade: 0, by: llm}
   - query: "실내 놀거리"
     lang: ko
     intent: "실내 체험·아이스링크·카트장·키즈카페"
@@ -712,28 +907,38 @@ queries:
       - {id: "19563", title: "청주실내수영장", category: "leisure", address: "충청북도 청주시 서원구 흥덕로 61 (사직동)", grade: 3, by: llm}
       - {id: "19633", title: "창원실내수영장", category: "culture", address: "경상남도 창원시 성산구 원이대로 450 (중앙동)", grade: 3, by: llm}
     vector_candidates:
-      - {id: "6451", title: "가평군어린이음악놀이터", category: "leisure", address: "경기도 가평군 가평읍 중앙로 10", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "2971", title: "쥬벅스", category: "leisure", address: "인천광역시 남동구 서창남순환로216번길 20 (서창동) 승연프라자 2층 204~205호", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "181", title: "파라다이스시티 원더박스", category: "nature", address: "인천광역시 영종구 영종해안남로321번길 186 (운서동)", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "6451", title: "가평군어린이음악놀이터", category: "leisure", address: "경기도 가평군 가평읍 중앙로 10", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "2971", title: "쥬벅스", category: "leisure", address: "인천광역시 남동구 서창남순환로216번길 20 (서창동) 승연프라자 2층 204~205호", models: ["e5-small", "arctic-official"], grade: 3, by: llm}
+      - {id: "181", title: "파라다이스시티 원더박스", category: "nature", address: "인천광역시 영종구 영종해안남로321번길 186 (운서동)", models: ["e5-small", "arctic-official"], grade: 3, by: llm}
       - {id: "1206", title: "안동 놀팍", category: "leisure", address: "경상북도 안동시 도산면 월천길 300", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
       - {id: "12816", title: "다이나믹 메이즈 속초점", category: "nature", address: "강원특별자치도 속초시 원암학사평길 88", models: ["e5-small"], grade: 3, by: llm}
       - {id: "19638", title: "스카이롤러파크", category: "leisure", address: "부산광역시 기장군 정관읍 정관중앙로 45 12층", models: ["e5-small"], grade: 3, by: llm}
       - {id: "16457", title: "용평공룡해양랜드", category: "culture", address: "강원특별자치도 평창군 대관령면 올림픽로 715 그린피아 지하3층", models: ["e5-small"], grade: 2, by: llm}
-      - {id: "21526", title: "양평어린이건강놀이터", category: "leisure", address: "경기도 양평군 양평읍 종합운동장로 5", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
+      - {id: "21526", title: "양평어린이건강놀이터", category: "leisure", address: "경기도 양평군 양평읍 종합운동장로 5", models: ["e5-small", "arctic-ko", "harrier-270m", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
       - {id: "602", title: "울산시립어린이테마파크", category: "leisure", address: "울산광역시 동구 등대로 100 (일산동)", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "5660", title: "놀자숲", category: "culture", address: "경기도 동두천시 탑동가산로 1 (탑동동)", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "5541", title: "몬스터파크 부산명지점", category: "leisure", address: "부산광역시 강서구 명지국제1로 60-1 (명지동) 7층, 8층", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "19479", title: "고고랜드롤러스케이트장 일산 본점", category: "leisure", address: "경기도 고양시 일산서구 일현로 97-11 (탄현동, 일산 위브더제니스) 1동 지하2층", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "2566", title: "행복&피크닉", category: "leisure", address: "강원특별자치도 원주시 복거리길 40", models: ["arctic-ko"], grade: 2, by: llm}
+      - {id: "5660", title: "놀자숲", category: "culture", address: "경기도 동두천시 탑동가산로 1 (탑동동)", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "5541", title: "몬스터파크 부산명지점", category: "leisure", address: "부산광역시 강서구 명지국제1로 60-1 (명지동) 7층, 8층", models: ["arctic-ko", "bge-m3"], grade: 3, by: llm}
+      - {id: "19479", title: "고고랜드롤러스케이트장 일산 본점", category: "leisure", address: "경기도 고양시 일산서구 일현로 97-11 (탄현동, 일산 위브더제니스) 1동 지하2층", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "2566", title: "행복&피크닉", category: "leisure", address: "강원특별자치도 원주시 복거리길 40", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
       - {id: "7561", title: "볼베어파크 부천점", category: "culture", address: "경기도 부천시 원미구 조마루로 2 (상동)", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "20570", title: "레전드히어로즈 잠실롯데월드몰점", category: "leisure", address: "서울특별시 송파구 올림픽로 300 (신천동) 3층", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "10150", title: "그라운드플래닛", category: "leisure", address: "경기도 과천시 대공원광장로 80 (막계동)", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
+      - {id: "20570", title: "레전드히어로즈 잠실롯데월드몰점", category: "leisure", address: "서울특별시 송파구 올림픽로 300 (신천동) 3층", models: ["arctic-ko", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "10150", title: "그라운드플래닛", category: "leisure", address: "경기도 과천시 대공원광장로 80 (막계동)", models: ["arctic-ko", "harrier-270m", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
       - {id: "5488", title: "키즈런스포츠파크 노원점", category: "leisure", address: "서울특별시 노원구 섬밭로 258 (중계동) 4층", models: ["arctic-ko"], grade: 3, by: llm}
       - {id: "15705", title: "재미난 박물관", category: "culture", address: "인천광역시 제물포구 신포로23번길 83 (중앙동1가)", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "120", title: "신기한놀이터 떼굴떼굴", category: "leisure", address: "서울특별시 서대문구 홍제동 산 41-29", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "9800", title: "다이나믹 메이즈 인사동", category: "nature", address: "서울특별시 종로구 인사동길 12 (인사동) 지하 1층", models: ["harrier-270m"], grade: 3, by: llm}
-      - {id: "5481", title: "주렁주렁 동물원 동탄점", category: "culture", address: "경기도 화성시 동탄대로5길 21 (송동)", models: ["harrier-270m"], grade: 3, by: llm}
-      - {id: "7594", title: "오감만족새싹체험장", category: "leisure", address: "충청북도 음성군 원남면 원중로399번길 38", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "5481", title: "주렁주렁 동물원 동탄점", category: "culture", address: "경기도 화성시 동탄대로5길 21 (송동)", models: ["harrier-270m", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "7594", title: "오감만족새싹체험장", category: "leisure", address: "충청북도 음성군 원남면 원중로399번길 38", models: ["harrier-270m", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "19606", title: "몽키몽키롤러장", category: "leisure", address: "부산광역시 강서구 명지국제1로 56-1 (명지동) 9층", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "17339", title: "서울상상나라", category: "culture", address: "서울특별시 광진구 능동로 216 (능동)", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "6412", title: "볼베어파크 롯데몰 은평점", category: "leisure", address: "서울특별시 은평구 통일로 1050 (진관동) 롯데몰은평점 3층", models: ["arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "15329", title: "부산광역시교육청학생예술문화회관 놀이마루", category: "culture", address: "부산광역시 부산진구 전포대로209번길 26 (전포동)", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "5537", title: "히어로테마파크 정관점", category: "culture", address: "부산광역시 기장군 정관읍 정관중앙로 45 탑스퀘어 5층", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "19596", title: "바운스슈퍼파크 수원영통센터", category: "leisure", address: "경기도 수원시 영통구 덕영대로 1566 (영통동)", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "20096", title: "점핑파크 정자점", category: "leisure", address: "경기도 수원시 장안구 대평로 128 (정자동)", models: ["bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "6125", title: "키위키즈랜드", category: "leisure", address: "부산광역시 기장군 장안읍 정관로 1142 힐탑프리미엄아울렛 B1", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "16637", title: "세대공감창의놀이터", category: "culture", address: "울산광역시 북구 중보1길 25 (중산동)", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "6361", title: "샤샤의놀이터", category: "leisure", address: "경상남도 창원시 의창구 대봉로 14 (봉림동)", models: ["qwen3-4b"], grade: 2, by: llm}
   - query: "미술관"
     lang: ko
     intent: "미술관·갤러리"
@@ -751,26 +956,41 @@ queries:
       - {id: "16280", title: "홍천미술관", category: "culture", address: "강원특별자치도 홍천군 홍천읍 희망로 55", grade: 3, by: llm}
       - {id: "16286", title: "사비나미술관", category: "culture", address: "서울특별시 은평구 진관1로 93 (진관동)", grade: 3, by: llm}
     vector_candidates:
-      - {id: "17724", title: "국립현대미술관 서울", category: "culture", address: "서울특별시 종로구 삼청로 30 (소격동)", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
+      - {id: "17724", title: "국립현대미술관 서울", category: "culture", address: "서울특별시 종로구 삼청로 30 (소격동)", models: ["e5-small", "arctic-ko", "arctic-official"], grade: 3, by: llm}
       - {id: "17572", title: "한국미술관", category: "culture", address: "경기도 용인시 기흥구 마북로 244-2 (마북동)", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
       - {id: "17168", title: "C아트뮤지엄", category: "culture", address: "경기도 양평군 양동면 다락근이길 57-13", models: ["e5-small"], grade: 3, by: llm}
       - {id: "15773", title: "못난이미술관", category: "culture", address: "전남광주통합특별시 무안군 일로읍 상사바위길 125", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "17890", title: "한국미술관", category: "culture", address: "서울특별시 종로구 인사동길 12 (인사동)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
+      - {id: "17890", title: "한국미술관", category: "culture", address: "서울특별시 종로구 인사동길 12 (인사동)", models: ["e5-small", "arctic-ko", "harrier-270m", "bge-m3"], grade: 3, by: llm}
       - {id: "16582", title: "마이아트뮤지엄", category: "culture", address: "서울특별시 강남구 테헤란로 518 (대치동)", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
-      - {id: "16652", title: "경인미술관", category: "culture", address: "서울특별시 종로구 인사동10길 11-4 (관훈동)", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "16652", title: "경인미술관", category: "culture", address: "서울특별시 종로구 인사동10길 11-4 (관훈동)", models: ["e5-small", "arctic-official"], grade: 3, by: llm}
       - {id: "16873", title: "미술관 자작나무숲", category: "culture", address: "강원특별자치도 횡성군 우천면 한우로두곡5길 186", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "17718", title: "부산시립미술관", category: "culture", address: "부산광역시 해운대구 APEC로 58 (우동)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "17689", title: "대구미술관", category: "culture", address: "대구광역시 수성구 미술관로 40 대구미술관", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "16694", title: "서울시립 사진미술관", category: "culture", address: "서울특별시 도봉구 마들로13길 68 (창동)", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "17718", title: "부산시립미술관", category: "culture", address: "부산광역시 해운대구 APEC로 58 (우동)", models: ["e5-small", "arctic-ko", "harrier-270m", "bge-m3"], grade: 3, by: llm}
+      - {id: "17689", title: "대구미술관", category: "culture", address: "대구광역시 수성구 미술관로 40 대구미술관", models: ["arctic-ko", "harrier-270m", "arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "16694", title: "서울시립 사진미술관", category: "culture", address: "서울특별시 도봉구 마들로13길 68 (창동)", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
       - {id: "16784", title: "상원미술관", category: "culture", address: "서울특별시 종로구 평창31길 27", models: ["arctic-ko"], grade: 3, by: llm}
       - {id: "16632", title: "천안시립미술관", category: "culture", address: "충청남도 천안시 동남구 성남면 종합휴양지로 185", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "16958", title: "시안미술관", category: "culture", address: "경상북도 영천시 화산면 가래실로 364", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "15864", title: "경기도미술관", category: "culture", address: "경기도 안산시 단원구 동산로 268 (초지동)", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "16213", title: "경북대학교 미술관", category: "culture", address: "대구광역시 북구 대학로 80 (산격동)", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "16958", title: "시안미술관", category: "culture", address: "경상북도 영천시 화산면 가래실로 364", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "15864", title: "경기도미술관", category: "culture", address: "경기도 안산시 단원구 동산로 268 (초지동)", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "16213", title: "경북대학교 미술관", category: "culture", address: "대구광역시 북구 대학로 80 (산격동)", models: ["harrier-270m", "arctic-official", "bge-m3"], grade: 3, by: llm}
       - {id: "17269", title: "수원시립미술관", category: "culture", address: "경기도 수원시 팔달구 정조로 833 (신풍동)", models: ["harrier-270m"], grade: 3, by: llm}
-      - {id: "16314", title: "MUSEUM 209", category: "culture", address: "서울특별시 송파구 잠실로 209 (신천동) 소피텔 앰배서더 호텔 3층", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "16314", title: "MUSEUM 209", category: "culture", address: "서울특별시 송파구 잠실로 209 (신천동) 소피텔 앰배서더 호텔 3층", models: ["harrier-270m", "qwen3-4b"], grade: 2, by: llm}
       - {id: "15813", title: "진도 현대미술관", category: "culture", address: "전남광주통합특별시 진도군 진도읍 교동5길 30", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "16580", title: "구하우스미술관", category: "culture", address: "경기도 양평군 서종면 무내미길 49-12", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "16592", title: "서울시립미술관 서소문본관", category: "culture", address: "서울특별시 중구 덕수궁길 61", models: ["arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "15495", title: "성곡미술관", category: "culture", address: "서울특별시 종로구 경희궁길 42 (신문로2가)", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "15885", title: "서울시립 미술아카이브", category: "culture", address: "서울특별시 종로구 평창문화로 101 (평창동)", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "16092", title: "의정부미술도서관", category: "culture", address: "경기도 의정부시 민락로 248 (민락동)", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "15334", title: "뮤지엄산", category: "culture", address: "강원특별자치도 원주시 지정면 오크밸리2길 260", models: ["bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "17736", title: "유 아트 스페이스", category: "culture", address: "서울특별시 강남구 압구정로71길 10 (청담동) 2층", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "15473", title: "울산시립미술관", category: "culture", address: "울산광역시 중구 미술관길 72 (북정동)", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "16051", title: "뮤지엄한미 삼청", category: "culture", address: "서울특별시 종로구 삼청로9길 45 (삼청동)", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "17663", title: "닻미술관", category: "culture", address: "경기도 광주시 초월읍 진새골길 184", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "17762", title: "뮤지엄그라운드", category: "culture", address: "경기도 용인시 수지구 샘말로 122 (고기동)", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "16443", title: "대림미술관", category: "culture", address: "서울특별시 종로구 자하문로4길 21 (통의동)", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "17264", title: "박물관은살아있다 제주", category: "culture", address: "제주특별자치도 서귀포시 중문관광로 42", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "16730", title: "서울대학교 미술관", category: "culture", address: "서울특별시 관악구 관악로 1 (신림동) 서울대학교 151동", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "17387", title: "블루메 미술관", category: "culture", address: "경기도 파주시 탄현면 헤이리마을길 59-30", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "17779", title: "여주미술관", category: "culture", address: "경기도 여주시 세종로 394-36 (점봉동)", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "한복 대여"
     lang: ko
     intent: "한복 대여·체험 매장 — 여기서는 상점이 정답"
@@ -789,11 +1009,15 @@ queries:
       - {id: "9640", title: "한복남 경복궁점", category: "culture", address: "서울특별시 종로구 사직로 133-5", grade: 3, by: llm}
     vector_candidates:
       - {id: "48848", title: "대복", category: "food", address: "서울특별시 중구 세종대로14길 22", models: ["e5-small", "arctic-ko"], grade: 0, by: llm}
-      - {id: "29498", title: "전통한복", category: "shopping", address: "서울특별시 중구 동호로 249 (장충동2가) B1층", models: ["e5-small", "arctic-ko"], grade: 2, by: llm}
+      - {id: "29498", title: "전통한복", category: "shopping", address: "서울특별시 중구 동호로 249 (장충동2가) B1층", models: ["e5-small", "arctic-ko", "arctic-official", "bge-m3"], grade: 2, by: llm}
       - {id: "27134", title: "한복마루", category: "shopping", address: "서울특별시 종로구 종로 207 (종로5가) 4층", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 2, by: llm}
       - {id: "34126", title: "한순례한복침구", category: "shopping", address: "서울특별시 강남구 압구정로 164 (신사동)", models: ["e5-small"], grade: 1, by: llm}
-      - {id: "34072", title: "동대문종합시장 한복상가", category: "shopping", address: "서울특별시 종로구 종로 266 (종로6가)", models: ["arctic-ko", "harrier-270m"], grade: 2, by: llm}
-      - {id: "23565", title: "한스양복", category: "shopping", address: "서울특별시 용산구 이태원로 134 (이태원동)", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "34072", title: "동대문종합시장 한복상가", category: "shopping", address: "서울특별시 종로구 종로 266 (종로6가)", models: ["arctic-ko", "harrier-270m", "arctic-official", "bge-m3"], grade: 2, by: llm}
+      - {id: "23565", title: "한스양복", category: "shopping", address: "서울특별시 용산구 이태원로 134 (이태원동)", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 0, by: llm}
+      - {id: "20693", title: "코리아레저스쿨", category: "leisure", address: "강원특별자치도 평창군 대관령면 올림픽로 234", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "20097", title: "화이트스포츠", category: "leisure", address: "강원특별자치도 횡성군 둔내면 고원로398번길 15-1 (둔내면)", models: ["bge-m3", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "19669", title: "곤지암렌탈샵 어반그레이1호점", category: "leisure", address: "경기도 광주시 도척면 다람로 12", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "19440", title: "곤지암렌탈샵 코코넛스키", category: "leisure", address: "경기도 광주시 도척면 독고개길302번길 2", models: ["qwen3-4b"], grade: 0, by: llm}
   - query: "드라마 촬영지"
     lang: ko
     intent: "드라마·영화 촬영 세트장"
@@ -811,16 +1035,17 @@ queries:
       - {id: "887", title: "웰컴투동막골촬영지", category: "leisure", address: "강원특별자치도 평창군 미탄면 동막골길 122", grade: 3, by: llm}
       - {id: "6672", title: "낭만닥터김사부촬영지", category: "leisure", address: "경기도 포천시 영북면 산정호수로 771", grade: 3, by: llm}
     vector_candidates:
-      - {id: "4012", title: "완도 청해포구촬영장", category: "leisure", address: "전남광주통합특별시 완도군 완도읍 청해진서로 1161-8 (완도읍)", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "5476", title: "논산 선샤인스튜디오", category: "leisure", address: "충청남도 논산시 연무읍 봉황로 90", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
-      - {id: "3109", title: "폭풍속으로 드라마세트장", category: "culture", address: "경상북도 울진군 죽변면 등대길 74-14", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
-      - {id: "7684", title: "죽성드림세트장", category: "leisure", address: "부산광역시 기장군 기장읍 두호1길 2-7 일원", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
+      - {id: "4012", title: "완도 청해포구촬영장", category: "leisure", address: "전남광주통합특별시 완도군 완도읍 청해진서로 1161-8 (완도읍)", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "5476", title: "논산 선샤인스튜디오", category: "leisure", address: "충청남도 논산시 연무읍 봉황로 90", models: ["e5-small", "arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "3109", title: "폭풍속으로 드라마세트장", category: "culture", address: "경상북도 울진군 죽변면 등대길 74-14", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "7684", title: "죽성드림세트장", category: "leisure", address: "부산광역시 기장군 기장읍 두호1길 2-7 일원", models: ["e5-small", "arctic-ko", "arctic-official"], grade: 3, by: llm}
       - {id: "19497", title: "쇠와꽃승마장", category: "leisure", address: "제주특별자치도 서귀포시 성산읍 섭지코지로25번길 88-17", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "9292", title: "문경새재 오픈세트장", category: "leisure", address: "경상북도 문경시 문경읍 새재로 932", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
-      - {id: "8968", title: "오산 드라마세트장", category: "leisure", address: "경기도 오산시 북삼미로 42 (내삼미동)", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "12180", title: "만양정육점", category: "culture", address: "충청북도 옥천군 옥천읍 마암로1길 5", models: ["arctic-ko", "harrier-270m"], grade: 2, by: llm}
+      - {id: "9292", title: "문경새재 오픈세트장", category: "leisure", address: "경상북도 문경시 문경읍 새재로 932", models: ["e5-small", "arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "8968", title: "오산 드라마세트장", category: "leisure", address: "경기도 오산시 북삼미로 42 (내삼미동)", models: ["e5-small", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "12180", title: "만양정육점", category: "culture", address: "충청북도 옥천군 옥천읍 마암로1길 5", models: ["arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 2, by: llm}
       - {id: "9036", title: "석병리마을", category: "culture", address: "경상북도 포항시 남구 구룡포읍 일출로 390", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "1060", title: "천북 청보리밭", category: "nature", address: "충청남도 보령시 천북면 천광로 73-1", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "230", title: "수기해변", category: "nature", address: "인천광역시 옹진군 북도면 시도로86번길 291-49", models: ["bge-m3"], grade: 1, by: llm}
   - query: "일출 명소"
     lang: ko
     intent: "일출 전망지(해안·산). 상호 속 '일출' 은 0~1"
@@ -838,21 +1063,30 @@ queries:
       - {id: "4387", title: "맴섬", category: "nature", address: "전남광주통합특별시 해남군 송지면 땅끝마을길 111", grade: 3, by: llm}
       - {id: "10209", title: "장길리 복합 낚시공원", category: "nature", address: "경상북도 포항시 남구 구룡포읍 동해안로 4376-28", grade: 2, by: llm}
     vector_candidates:
-      - {id: "5131", title: "대포항 전망대", category: "culture", address: "강원특별자치도 속초시 대포항1길 16-8 (대포동 753-7)", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
-      - {id: "900", title: "묵호항수변공원", category: "nature", address: "강원특별자치도 동해시 일출로 92-11 (묵호진동)", models: ["e5-small", "arctic-ko"], grade: 2, by: llm}
-      - {id: "8999", title: "고삼호수", category: "nature", address: "경기도 안성시 고삼면 봉산리", models: ["e5-small", "arctic-ko"], grade: 2, by: llm}
+      - {id: "5131", title: "대포항 전망대", category: "culture", address: "강원특별자치도 속초시 대포항1길 16-8 (대포동 753-7)", models: ["e5-small", "harrier-270m", "bge-m3"], grade: 3, by: llm}
+      - {id: "900", title: "묵호항수변공원", category: "nature", address: "강원특별자치도 동해시 일출로 92-11 (묵호진동)", models: ["e5-small", "arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "8999", title: "고삼호수", category: "nature", address: "경기도 안성시 고삼면 봉산리", models: ["e5-small", "arctic-ko", "arctic-official"], grade: 2, by: llm}
       - {id: "7579", title: "구 조선식량영단 군산출장소", category: "history", address: "전북특별자치도 군산시 구영2길 43 (영화동)", models: ["e5-small"], grade: 0, by: llm}
-      - {id: "6301", title: "해맞이공원", category: "culture", address: "대구광역시 동구 효목동 212-2", models: ["e5-small", "arctic-ko", "harrier-270m"], grade: 3, by: llm}
+      - {id: "6301", title: "해맞이공원", category: "culture", address: "대구광역시 동구 효목동 212-2", models: ["e5-small", "arctic-ko", "harrier-270m", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
       - {id: "12635", title: "전망대활어회센터", category: "culture", address: "강원특별자치도 동해시 일출로 88 (묵호진동)", models: ["e5-small"], grade: 0, by: llm}
       - {id: "9270", title: "야미도", category: "nature", address: "전북특별자치도 군산시 옥도면 야미도리", models: ["e5-small"], grade: 2, by: llm}
       - {id: "1499", title: "중산 일몰전망대", category: "culture", address: "전남광주통합특별시 고흥군 남양면 고흥로 3777", models: ["arctic-ko"], grade: 1, by: llm}
       - {id: "1141", title: "내수전일출전망대", category: "culture", address: "경상북도 울릉군 울릉읍 저동리 산 33", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
       - {id: "640", title: "강양항", category: "nature", address: "울산광역시 울주군 온산읍 강양길 123", models: ["arctic-ko"], grade: 2, by: llm}
-      - {id: "18844", title: "웨이브글램핑", category: "stay", address: "경상북도 포항시 남구 일출로 465", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "18844", title: "웨이브글램핑", category: "stay", address: "경상북도 포항시 남구 일출로 465", models: ["arctic-ko", "bge-m3"], grade: 0, by: llm}
       - {id: "3566", title: "남열해돋이해수욕장", category: "nature", address: "전남광주통합특별시 고흥군 영남면 남열리", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "19333", title: "요트탈래울산", category: "leisure", address: "울산 동구 일산동 915-41", models: ["harrier-270m"], grade: 0, by: llm}
       - {id: "6254", title: "떠오르길·김녕 바닷길", category: "nature", address: "제주특별자치도 제주시 구좌읍 김녕로1길 51-3", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "12519", title: "하광정항", category: "nature", address: "강원특별자치도 양양군 현북면 하륜길 54", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "3575", title: "월출산국립공원", category: "nature", address: "전남광주통합특별시 영암군 영암읍 천황사로 280-43", models: ["arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "3195", title: "일광해수욕장", category: "nature", address: "부산광역시 기장군 일광읍 삼성리 143-10", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "4150", title: "월출산국립공원 경포대지구", category: "nature", address: "전남광주통합특별시 강진군 성전면 백운로 148-4", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "10293", title: "어달해변", category: "nature", address: "강원특별자치도 동해시 일출로 284 (어달동)", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "595", title: "간절곶", category: "nature", address: "울산광역시 울주군 서생면 간절곶1길 39-2", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "18970", title: "향일암 해안길", category: "leisure", address: "전남광주통합특별시 여수시 돌산읍 향일암로 60", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "7542", title: "강릉 안목해맞이공원", category: "culture", address: "강원특별자치도 강릉시 견소동 287-6", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "15320", title: "새천년기념관", category: "culture", address: "경상북도 포항시 남구 호미곶면 해맞이로 136", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "20604", title: "해오름캠핑장", category: "leisure", address: "울산광역시 울주군 서생면 해맞이로 1109-17", models: ["qwen3-4b"], grade: 1, by: llm}
   - query: "섬 여행"
     lang: ko
     intent: "섬·도서 관광지"
@@ -872,27 +1106,42 @@ queries:
     vector_candidates:
       - {id: "9281", title: "조도", category: "nature", address: "경상남도 남해군 미조면 미조리", models: ["e5-small", "arctic-ko"], grade: 3, by: llm}
       - {id: "137", title: "무의도", category: "nature", address: "인천광역시 영종구 대무의로 310-11", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "8696", title: "동섬", category: "nature", address: "경상남도 창원시 진해구 경화동", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
+      - {id: "8696", title: "동섬", category: "nature", address: "경상남도 창원시 진해구 경화동", models: ["e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
       - {id: "7113", title: "소야도", category: "nature", address: "인천광역시 옹진군 덕적면 소야리", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "1111", title: "행담도", category: "nature", address: "충청남도 당진시 신평면 서해안고속도로 275", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "1111", title: "행담도", category: "nature", address: "충청남도 당진시 신평면 서해안고속도로 275", models: ["e5-small", "bge-m3"], grade: 3, by: llm}
       - {id: "5504", title: "풀등모래섬", category: "nature", address: "인천 옹진군 자월면 이작리", models: ["e5-small"], grade: 3, by: llm}
       - {id: "8282", title: "한섬해변&한섬감성바닷길", category: "nature", address: "강원특별자치도 동해시 한섬해안길 9 (천곡동)", models: ["e5-small"], grade: 2, by: llm}
       - {id: "8920", title: "죽도마을", category: "culture", address: "전북특별자치도 고창군 부안면 죽도길 37-5", models: ["e5-small"], grade: 3, by: llm}
       - {id: "13232", title: "장자도여객터미널", category: "leisure", address: "전북특별자치도 군산시 옥도면 장자도1길 10", models: ["e5-small", "harrier-270m"], grade: 1, by: llm}
       - {id: "6722", title: "위도", category: "nature", address: "전북특별자치도 부안군 위도면 치도리", models: ["e5-small"], grade: 3, by: llm}
-      - {id: "1164", title: "울릉도 유람선", category: "leisure", address: "경상북도 울릉군 울릉읍 도동2길 8-3", models: ["arctic-ko", "harrier-270m"], grade: 2, by: llm}
-      - {id: "7515", title: "신시모도", category: "nature", address: "인천광역시 옹진군 북도면 신도리, 시도리, 모도리", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "7041", title: "월등도", category: "nature", address: "경상남도 사천시 서포면 비토리", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "12110", title: "달아항", category: "nature", address: "경상남도 통영시 산양읍 미남리 822-12", models: ["arctic-ko"], grade: 1, by: llm}
+      - {id: "1164", title: "울릉도 유람선", category: "leisure", address: "경상북도 울릉군 울릉읍 도동2길 8-3", models: ["arctic-ko", "harrier-270m", "arctic-official", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "7515", title: "신시모도", category: "nature", address: "인천광역시 옹진군 북도면 신도리, 시도리, 모도리", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "7041", title: "월등도", category: "nature", address: "경상남도 사천시 서포면 비토리", models: ["arctic-ko", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "12110", title: "달아항", category: "nature", address: "경상남도 통영시 산양읍 미남리 822-12", models: ["arctic-ko", "bge-m3"], grade: 1, by: llm}
       - {id: "5580", title: "장봉도", category: "nature", address: "인천광역시 옹진군 북도면 장봉리", models: ["arctic-ko", "harrier-270m"], grade: 3, by: llm}
       - {id: "8623", title: "적촌선착장", category: "nature", address: "경상남도 통영시 용남면 원평리 293-43", models: ["arctic-ko"], grade: 1, by: llm}
       - {id: "7061", title: "주문도", category: "nature", address: "인천광역시 강화군 서도면 주문도1길 16", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "9317", title: "창선도", category: "nature", address: "경상남도 남해군 창선면 서대리", models: ["arctic-ko"], grade: 3, by: llm}
-      - {id: "9326", title: "우도", category: "nature", address: "제주특별자치도 제주시 삼양고수물길 1", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "9317", title: "창선도", category: "nature", address: "경상남도 남해군 창선면 서대리", models: ["arctic-ko", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "9326", title: "우도", category: "nature", address: "제주특별자치도 제주시 삼양고수물길 1", models: ["harrier-270m", "bge-m3"], grade: 3, by: llm}
       - {id: "4720", title: "고군산군도", category: "nature", address: "전북특별자치도 군산시 옥도면 대장도리", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "3056", title: "동검도", category: "nature", address: "인천광역시 강화군 길상면 동검길63번길 60", models: ["harrier-270m"], grade: 3, by: llm}
       - {id: "5242", title: "고군산섬잇길", category: "culture", address: "전북특별자치도 군산시 옥도면 방축도길 23-1", models: ["harrier-270m"], grade: 2, by: llm}
       - {id: "11436", title: "같이삽시도", category: "leisure", address: "충청남도 보령시 오천면 삽시도1길 83-23", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "5455", title: "섬마을선생촬영지", category: "leisure", address: "인천광역시 옹진군 자월면 대이작로 422-22", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "6244", title: "[솔향기길] 4코스", category: "culture", address: "충청남도 태안군 이원면 태포길 266 새섬~가로림만", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "19194", title: "[남해바래길 8코스] 섬노래길", category: "leisure", address: "경상남도 남해군 미조면 송정리 1557-1 천하마을~송정해변", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "6796", title: "실안해안도로", category: "nature", address: "경상남도 사천시 실안동 818-1", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "1301", title: "사량도", category: "nature", address: "경상남도 통영시 사량면 진촌2길 일대", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "20872", title: "솔섬오토캠핑장", category: "leisure", address: "경상남도 사천시 서포면 토끼로 245-29", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "54947", title: "섬향기", category: "food", address: "강원특별자치도 춘천시 남산면 남이섬길 1", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "49365", title: "섬마을", category: "food", address: "경상남도 창원시 진해구 자은로78번길 30 (자은동)", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "6851", title: "소쿠리섬", category: "nature", address: "경상남도 창원시 진해구 명동 산198", models: ["bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "49859", title: "섬마을", category: "food", address: "전북특별자치도 무주군 무주읍 내도로 126", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "52498", title: "카페 섬섬", category: "food", address: "경상남도 창원시 마산합포구 장구해안길 7", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "10431", title: "부안 솔섬", category: "nature", address: "전북특별자치도 부안군 변산면 도청리", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "9548", title: "새섬공원", category: "nature", address: "제주특별자치도 서귀포시 남성중로 43 (서홍동)", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "9094", title: "연대도", category: "nature", address: "경상남도 통영시 산양읍 연곡리", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "5229", title: "문섬·섶섬·범섬·새섬", category: "nature", address: "제주특별자치도 서귀포시 남성중로 43 (서홍동)", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "palace in seoul"
     lang: en
     intent: "Joseon palaces in Seoul (Gyeongbokgung, Changdeokgung, Deoksugung, Changgyeonggung, Gyeonghuigung)"

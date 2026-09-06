@@ -4,9 +4,9 @@
 (`embed_text.attraction_text`)으로 조립해 해시를 낸다. 저장된 해시와 같으면 **모델을 돌리지 않고 touch** 한다
 — `attractions.updated_at` 은 전화·이미지만 바뀌어도 올라가므로 pending 의 대부분이 실제로는 그대로다.
 
-  python -m embed.docs run    --model arctic-ko --internal http://localhost:8096 --device mps
-  python -m embed.docs run    --model arctic-ko --internal http://localhost:8096 --dry-run
-  python -m embed.docs status --model arctic-ko --internal http://localhost:8096
+  python -m embed.docs run    --model qwen3-4b --internal http://localhost:8096 --device mps
+  python -m embed.docs run    --model qwen3-4b --internal http://localhost:8096 --dry-run
+  python -m embed.docs status --model qwen3-4b --internal http://localhost:8096
 """
 from __future__ import annotations
 

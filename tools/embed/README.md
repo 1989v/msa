@@ -85,9 +85,9 @@ pending → 원문 → 텍스트 조합 → 해시 비교 → **같으면 touch,
 **모델은 임베딩할 것이 실제로 있을 때 처음 로드된다.** touch 만 있는 날은 모델을 읽지 않는다.
 
 ```bash
-python -m embed.docs run --model arctic-ko --internal http://localhost:8096 --device mps
-python -m embed.docs run --model arctic-ko --internal http://localhost:8096 --dry-run   # 한 배치 판정만
-python -m embed.docs status --model arctic-ko --internal http://localhost:8096
+python -m embed.docs run --model qwen3-4b --internal http://localhost:8096 --device mps
+python -m embed.docs run --model qwen3-4b --internal http://localhost:8096 --dry-run   # 한 배치 판정만
+python -m embed.docs status --model qwen3-4b --internal http://localhost:8096
 ```
 
 pending 이 2,000건을 넘으면(첫 채움) id 별 조회 대신 풀스캔으로 원문을 받는다 — 5만 건을 하나씩 부르면 5만 요청이다.
@@ -99,10 +99,10 @@ pending 이 2,000건을 넘으면(첫 채움) id 별 조회 대신 풀스캔으�
 **정규화는 서버가 한다** — 규칙이 두 곳에 있으면 `_id` 가 어긋나 사전이 통째로 미적중이 된다.
 
 ```bash
-python -m embed.queries seed   --model arctic-ko --internal http://localhost:8083 \
+python -m embed.queries seed   --model qwen3-4b --internal http://localhost:8083 \
                                --intents docs/specs/2026-09-05-unified-search/intents.yml
-python -m embed.queries misses --model arctic-ko --internal http://localhost:8083 --device mps
-python -m embed.queries status --model arctic-ko --internal http://localhost:8083
+python -m embed.queries misses --model qwen3-4b --internal http://localhost:8083 --device mps
+python -m embed.queries status --model qwen3-4b --internal http://localhost:8083
 ```
 
 `misses` 는 카운트 내림차순으로 받아 임베딩하고 **넣은 것만** 지운다 — 많이 물어본 질의부터 사전이 된다.

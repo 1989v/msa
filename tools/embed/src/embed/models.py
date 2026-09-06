@@ -36,7 +36,11 @@ class ModelSpec:
 QWEN3_QUERY = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
 HARRIER_QUERY = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
 
+#: **선정 모델은 `qwen3-4b`** (ADR-0090 D5, 2026-09-07 개정) — 전 코퍼스 nDCG@10 0.7764 로 후보 7종 중 1위.
+#: 나머지는 그 판단의 대조군으로 남긴다. 지우지 않는다 — 모델을 다시 고를 때 같은 표를 다시 만들어야 한다.
 CANDIDATES: dict[str, ModelSpec] = {
+    # 8B 는 4B 보다 낮았다(재순위 0.7686 vs 0.7765, 시간은 두 배). 절단 폭 탓으로 보인다:
+    # 4096 → 1024 는 3/4 를 버리고 4B 의 2560 → 1024 는 60% 다. 4096 을 그대로 쓰는 길은 색인이 막는다(플랜 §8.4-1).
     "qwen3-8b": ModelSpec("qwen3-8b", "Qwen/Qwen3-Embedding-8B", 1024, 4096, "last", True, QWEN3_QUERY,
                           load_kwargs={"quantize_8bit": True}),
     "qwen3-4b": ModelSpec("qwen3-4b", "Qwen/Qwen3-Embedding-4B", 1024, 2560, "last", True, QWEN3_QUERY),

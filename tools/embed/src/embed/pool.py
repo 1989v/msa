@@ -47,7 +47,24 @@ def run_pool(model_keys: list[str], lang: str, judgments_path: str, out_dir: str
             "model": key, "model_ref": spec.ref, "lang": lang, "docs": len(corpus.ids), "encode_s": round(enc_s, 1),
             "docs_per_s": round(len(corpus.ids) / max(enc_s, 1e-9), 1), "per_query": per_query}, ensure_ascii=False, indent=1), encoding="utf-8")
         print(f"{key}: {len(corpus.ids)} docs in {enc_s:.0f}s ({len(corpus.ids)/max(enc_s,1e-9):.0f} docs/s) → pool_{lang}_{key}.json")
+        # `del` 만으로는 가속기 메모리가 안 돌아온다 — torch 가 할당자 캐시를 붙들고 있다.
+        # 다음 모델을 그 위에 올리면 두 벌이 겹쳐 죽는다 (2026-09-06: 4B 다음 8B 에서 OOM 으로 프로세스 종료).
         del model
+        _release_accelerator()
+
+
+def _release_accelerator() -> None:
+    """모델 사이에 가속기 캐시를 비운다. 실패해도 진행한다(디바이스가 없을 수도 있다)."""
+    import gc
+    gc.collect()
+    try:
+        import torch
+        if torch.backends.mps.is_available():
+            torch.mps.empty_cache()
+        elif torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:  # torch 가 없거나(테스트 환경) 백엔드가 없으면 그냥 넘어간다
+        pass
 
 
 def merge_pools(judgments: list[dict], pools: list[dict]) -> list[dict]:
