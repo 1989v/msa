@@ -19,7 +19,8 @@
 | P0-5 hybrid 스파이크 | ✅ 8케이스 중 `sort` 타이브레이커만 불가 | 플랜 §8.5 |
 | P0-6 모델 확정 | ✅ **arctic-ko** (ko 0.7404 / en 0.7773) | 플랜 §8.11 |
 | — 차원 512 vs 1024 | ⏳ **미측정** — 메모리는 둘 다 되므로 nDCG 로만 결정. P1 첫 채움 때 | — |
-| P1 구현 | ⏳ **착수 전** | §3 |
+| P1-1 place 벡터 표·API | ✅ **완료** (V12 · 도메인 10 + 서비스 12 테스트 · 게이트 통과) | `place/` |
+| P1-2~9 | ⏳ 다음 | §3 |
 
 ## 2. 이 작업의 물리적 위치 — 먼저 읽을 것
 
@@ -50,8 +51,9 @@
 
 플랜 §3 의 P1-1~P1-9. 각 항목의 상세는 `embedding-entities.md`.
 
-1. **P1-1 place 벡터 표** — Flyway `V12__create_attraction_embedding.sql`(운영 적용 이력은 V11 까지 확인됨, 2026-09-06)
-   + 도메인(`EmbeddingModelRef`·`AttractionEmbedding`·`EmbeddingText.hash`) + 포트 + 어댑터 + `/internal/attractions/embeddings/{pending,bulk,lookup,status}`
+1. ~~P1-1 place 벡터 표~~ ✅ **완료 (2026-09-06)** — `V12__create_attraction_embedding.sql`, 도메인(`EmbeddingModelRef`·`AttractionEmbedding`·`EmbeddingText`),
+   포트·서비스·JPA 어댑터, `/internal/attractions/embeddings/{pending,bulk,lookup,status}` + `DELETE`.
+   테스트 22(도메인 10 · 서비스 12), `verifyLayerDependencies`·`verifyFlywayWiring` 통과. **아직 배포 안 됨**(푸시 대기)
 2. **P1-2 tools/embed 나머지** — `docs.py`·`queries.py`·`push.py`·`tunnel.sh` (지금은 측정용 `bakeoff`·`pool`·`rerank`·`review`·`doubts`·`evaluate` 만)
 3. **P1-3 search:batch** — `attractions-index.json` 에 `knn_vector`(dimension 은 차원 결정 후) + `AttractionIndexDocument` 3필드 + `searchReadOmitted` + 재색인 tasklet 의 lookup
 4. **P1-4 search:app 사전** — `query_vectors` 인덱스 + 포트/어댑터 + `/internal/query-vectors/*` + Redis 미스
