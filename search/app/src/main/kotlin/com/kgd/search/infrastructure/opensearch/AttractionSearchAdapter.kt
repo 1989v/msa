@@ -265,21 +265,33 @@ class AttractionSearchAdapter(
                         .order(SortOrder.Asc)
                 }
             }
-        } else {
+            addTiebreakers(builder)
+        } else if (embedding == null) {
             builder.sort { s -> s.score { it.order(SortOrder.Desc) } }
+            addTiebreakers(builder)
         }
-        /*
-         * 결정적 tiebreaker (ADR-0050 Phase 1) — 동점시 페이지네이션 flicker 방지.
-         * keyword `id` 는 문자열 PK 라 사전순("1","10","100")이 된다 — 숫자 필드 `idSort` 로
-         * 정렬한다. `unmappedType`: 재색인 전 옛 인덱스에는 필드가 없어 정렬이 깨지는 것을
-         * 막고, 그동안은 keyword `id` 가 최종 순서를 결정적으로 유지한다.
-         */
+        // 하이브리드는 **정렬을 전혀 걸지 않는다.** OpenSearch 가 거부한다:
+        //   "_score sort criteria cannot be applied with any other criteria."
+        // 즉 점수 정렬과 tiebreaker 를 함께 줄 수 없다. 기본 정렬이 점수 내림차순이라 빼도 순서는 같고,
+        // 대신 **동점 시 순서 보장이 사라진다** — RRF 점수는 1/(60+rank) 의 합이라 동점이 실제로 생긴다.
+        // 로컬 프로브가 잡았다(플랜 §8.5 케이스 3). 단위 검사는 요청 모양만 보므로 이걸 못 잡는다.
+
+        return builder.build()
+    }
+
+    /**
+     * 결정적 tiebreaker (ADR-0050 Phase 1) — 동점시 페이지네이션 flicker 방지.
+     * keyword `id` 는 문자열 PK 라 사전순("1","10","100")이 된다 — 숫자 필드 `idSort` 로
+     * 정렬한다. `unmappedType`: 재색인 전 옛 인덱스에는 필드가 없어 정렬이 깨지는 것을
+     * 막고, 그동안은 keyword `id` 가 최종 순서를 결정적으로 유지한다.
+     *
+     * **하이브리드 질의에는 걸 수 없다** — 위 `buildRequest` 의 주석 참고.
+     */
+    private fun addTiebreakers(builder: SearchRequest.Builder) {
         builder.sort { s ->
             s.field { f -> f.field("idSort").order(SortOrder.Asc).unmappedType(FieldType.Long) }
         }
             .sort { s -> s.field { f -> f.field("id").order(SortOrder.Asc) } }
-
-        return builder.build()
     }
 
     /**

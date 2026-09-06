@@ -82,6 +82,10 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 - 필터는 **두 레그에 각각** 건다. 하이브리드는 레그별로 후보를 뽑아 합치므로 한쪽에만 걸면
   다른 레그가 필터 밖 문서를 끌어온다.
 - `pagination_depth` 를 `from + size`(최소 k)로 준다. **기본값이 10 이라 안 주면 2페이지부터 빈다.**
+- **하이브리드 경로에는 정렬을 걸지 않는다.** `_score` 정렬과 tiebreaker 를 함께 주면 OpenSearch 가 거부한다
+  (`_score sort criteria cannot be applied with any other criteria`). 기본이 점수 내림차순이라 순서는 같지만
+  **동점 시 순서 보장이 사라진다** — RRF 점수가 `1/(60+rank)` 의 합이라 동점이 실제로 생긴다.
+  단위 검사는 요청 모양만 보므로 이 규칙을 못 잡는다. 로컬 프로브(`probes/hybrid_spike.py` 케이스 3)가 잡았다.
 - `_source.excludes` 로 `embedding` 을 응답에서 뺀다 — **하이브리드가 꺼져 있어도** 뺀다(문서당 4KB).
   매핑에서 빼면 안 된다: 인덱스가 3.4배 커진다(플랜 §8.4 실측).
 - 파이프라인은 앱이 기동 시 PUT 으로 만든다(`rrf` 만). 다른 융합 방식은 운영이 만든 것을 쓴다 —

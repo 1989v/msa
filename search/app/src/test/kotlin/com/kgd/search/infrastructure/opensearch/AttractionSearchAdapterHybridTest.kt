@@ -4,6 +4,7 @@ import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.kotest.core.spec.style.BehaviorSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -159,5 +160,32 @@ class AttractionSearchAdapterHybridTest : BehaviorSpec({
                 captured.captured.query()!!.hybrid().paginationDepth() shouldBe 100
             }
         }
+
+        `when`("정렬을 붙이면") {
+            then("아무 정렬도 걸지 않아야 한다 — OpenSearch 가 점수 정렬과 다른 기준의 조합을 거부한다") {
+                val (a, captured) = adapter()
+
+                a.search(
+                    AttractionSearchPort.SearchQuery(keyword = "야시장", embedding = vector),
+                    PageRequest.of(0, 10),
+                )
+
+                // 로컬 프로브가 실제로 받은 거부:
+                //   "_score sort criteria cannot be applied with any other criteria."
+                // tiebreaker(idSort·id)를 같이 주면 하이브리드 질의가 400 이 된다.
+                captured.captured.sort().shouldBeEmpty()
+            }
+        }
+
+        `when`("벡터가 없는 질의와 견주면") {
+            then("BM25 쪽은 tiebreaker 를 그대로 가져야 한다 — 하이브리드만 예외다") {
+                val (a, captured) = adapter()
+
+                a.search(AttractionSearchPort.SearchQuery(keyword = "야시장"), PageRequest.of(0, 10))
+
+                captured.captured.sort().size shouldBe 3
+            }
+        }
+
     }
 })
