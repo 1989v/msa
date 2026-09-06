@@ -1,5 +1,6 @@
 package com.kgd.search
 
+import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.ranking.config.BanditProperties
 import com.kgd.search.application.ranking.config.DiversityProperties
 import com.kgd.search.infrastructure.client.SearchExperimentProperties
@@ -19,6 +20,7 @@ import org.springframework.kafka.annotation.EnableKafka
     DiversityProperties::class,
     SearchExperimentProperties::class,
     AttractionRankingProperties::class,
+    QueryVectorProperties::class,
 )
 @EnableKafka
 class SearchApplication

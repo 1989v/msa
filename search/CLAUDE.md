@@ -44,10 +44,29 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 | `regions` | `RegionIndexDocument` (batch) | `RegionSearchDocument` (app) | 7 / 7 |
 | `attractions` | `AttractionIndexDocument` (batch) | `AttractionSearchDocument` (app) | 24 / 19 — `idSort`·`titleJamo` + 벡터 3필드가 쓰기 전용 |
 | `products` | `ProductIndexDocument` (batch·consumer 2벌) | `ProductSearchDocument` (app) | 26 / 26 |
+| `query_vectors` | `QueryVectorDocument` (app) | 같은 클래스 | 7 / 7 — 재색인이 없어 넣는 쪽과 읽는 쪽이 한 앱이다 |
 
 `ProductIndexDocument` 2벌은 둘 다 쓰기 측이라 분리 근거가 없는 순수 중복이다. 게이트가 드리프트를 잡으므로
 **세 번째 사본이 생길 때** 공유 모듈을 만든다(지금 묶으면 두 배포 단위를 다시 붙인다).
 `GeoPoint` 는 각 모듈의 top-level — 한쪽 문서의 중첩 타입으로 두면 별개 인덱스가 남의 문서에 묶인다.
+
+## 질의 사전 `query_vectors` (ADR-0090)
+
+질의를 벡터로 바꾸는 표. **여기 있는 항목은 절대 검색 결과가 되지 않는다** — 답이 되는 것은 문서 벡터뿐이고,
+그래서 별도 인덱스에 두고 `vector` 를 `binary`(base64 float32)로 박는다. 검색하지 않고 **id 로만** 읽는다
+(`_id = "{modelRef}|{normalized}"`).
+
+- 서버는 **임베딩하지 않는다.** 사전에 없으면 벡터 레그를 끄고 BM25 로 답하며 미스를 센다 —
+  미적중은 실패가 아니라 정상 경로다. **적중률(hit/(hit+miss))이 v2 의 건강 지표다.**
+- **정규화는 `QueryNormalizer` 한 곳**이 한다. 도구는 원문을 보낸다 — 규칙이 두 곳에 있으면 `_id` 가
+  어긋나 사전이 통째로 미적중이 된다. 이 함수를 고치면 **사전 전량 재적재**다(도구가 원문을 갖고 있어 모델은 안 돌린다).
+- 미적중은 Redis ZSET `search:qmiss:{modelRef}` 에 ZINCRBY. **휘발을 허용한다** — 날아가도 하루치뿐이고,
+  그래서 Redis 가 죽어도 검색은 계속된다(기록 실패를 삼킨다).
+- 인덱스는 앱이 기동 시 **멱등**으로 만든다(`QueryVectorIndexInitializer`). 못 만들어도 앱은 뜬다 —
+  여기서 기동을 막으면 OpenSearch 가 늦게 뜬 날 검색 전체가 죽는다.
+- 내부 API `/internal/query-vectors/{bulk,misses,status}` + `DELETE /misses` — 게이트웨이가 라우팅하지 않는다.
+- `search.query-vector.model-ref` 는 **batch 의 `search.embedding.model-ref` 와 한 글자도 달라선 안 된다.**
+  비어 있으면 사전을 아예 쓰지 않는다(첫 채움 전 정상 상태).
 
 ## Key Rules
 

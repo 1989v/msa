@@ -500,6 +500,11 @@ val searchIndexContracts = listOf(
         "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/AttractionIndexDocument.kt" to "write",
         "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/AttractionSearchDocument.kt" to "read",
     )),
+    // 사전은 쓰기/읽기 클래스가 하나다 — 재색인이 없고 같은 앱이 넣고 읽는다.
+    // 매핑이 dynamic:strict 라 어긋나면 색인 실패로 드러나지만, 그건 **운영에서** 드러난다.
+    Triple("query_vectors", "search/app/src/main/resources/opensearch/query-vectors-index.json", listOf(
+        "search/app/src/main/kotlin/com/kgd/search/infrastructure/opensearch/QueryVectorDocument.kt" to "write",
+    )),
     Triple("products", "search/batch/src/main/resources/opensearch/products-index.json", listOf(
         "search/batch/src/main/kotlin/com/kgd/search/infrastructure/indexing/ProductIndexDocument.kt" to "write",
         "search/consumer/src/main/kotlin/com/kgd/search/infrastructure/indexing/ProductIndexDocument.kt" to "write",

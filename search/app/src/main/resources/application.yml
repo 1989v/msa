@@ -47,6 +47,13 @@ search:
   attraction-ranking:
     sight-weight: 3.0
     commerce-weight: 0.35
+  # ADR-0090 — 질의 사전. **비어 있으면 사전을 쓰지 않는다**(첫 채움 전 정상 상태).
+  # 값은 search:batch 의 `search.embedding.model-ref` 와 한 글자도 달라선 안 된다 —
+  # 다르면 사전이 적중해도 문서 벡터의 스탬프가 달라 벡터 레그가 꺼진다.
+  query-vector:
+    model-ref: ${SEARCH_EMBEDDING_MODEL_REF:}
+    cache-max-size: 10000
+    cache-ttl-minutes: 10
   ranking:
     popularity-weight: 10.0
     ctr-weight: 5.0

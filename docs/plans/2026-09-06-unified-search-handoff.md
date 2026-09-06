@@ -22,7 +22,8 @@
 | P1-1 place 벡터 표·API | ✅ **완료** (V12 · 도메인 10 + 서비스 12 테스트 · 게이트 통과) | `place/` |
 | P1-2 도구 나머지 | ✅ **완료** (docs·queries·push·tunnel + 코덱/클라이언트, pytest 57) | `tools/embed/` |
 | P1-3 재색인 벡터 적재 | ✅ **완료** (매핑·쓰기 클래스·lookup·tasklet, 테스트 21) | `search/batch/` |
-| P1-4~9 | ⏳ 다음 | §3 |
+| P1-4 질의 사전 | ✅ **완료** (도메인·인덱스·서비스·어댑터 2·내부 API, 테스트 95) | `search/app/`, `search/domain/` |
+| P1-5~9 | ⏳ 다음 | §3 |
 
 ## 2. 이 작업의 물리적 위치 — 먼저 읽을 것
 
@@ -81,8 +82,11 @@ git -C ~/IdeaProjects/msa branch -f unified-search-embedding "$(git -C <worktree
    ·`embeddingModel`·`embeddingHash`, 쓰기 클래스 3필드, `searchReadOmitted` 3줄, `PlaceApiClient.lookupEmbeddings`+`decodeVector`,
    재색인 tasklet 이 페이지마다 받아 싣고 적재율(`vectors n/총`)을 로그로 남긴다.
    **`search.embedding.model-ref` 가 비면 벡터를 안 싣는다** — 첫 채움 전 정상 상태이고, search:app 의 같은 설정과 한 글자도 달라선 안 된다.
-4. **P1-4 search:app 사전** — `query_vectors` 인덱스 + 포트/어댑터 + `/internal/query-vectors/*` + Redis 미스
-5. **P1-5 질의 분기** — `QueryNormalizer` + hybrid 분기 + 파이프라인 + 메트릭
+4. ~~**P1-4 search:app 사전**~~ ✅ **완료 (2026-09-06)** — `QueryNormalizer`(고정값 검사로 잠금)·`QueryVector`·`VectorCodec`(도메인, batch/app 공용)·
+   `QueryVectorPort`/`QueryMissPort`, `query-vectors-index.json`(dynamic strict), `QueryVectorService`(Caffeine, 미적중도 캐시 · 미스는 매 요청 기록),
+   `QueryVectorAdapter`·`QueryMissRedisAdapter`, 기동 시 멱등 인덱스 생성, `/internal/query-vectors/{bulk,misses,status}`+`DELETE /misses`.
+   **이제 `tools/embed` 의 `queries.py` 가 붙는다.** 설정 `search.query-vector.model-ref` 는 batch 의 것과 같아야 한다.
+5. **P1-5 질의 분기** — `AttractionSearchAdapter` hybrid 분기 + RRF 파이프라인 + `_source.excludes` + 스탬프 불일치 시 벡터 레그 끄기 (`QueryNormalizer` 는 P1-4 에서 이미 만들었다)
 6. **P1-6~9** — 테스트 · NP 확인 · 첫 채움 · 문서
 
 **P1 에서 반드시 같이 잴 것**: 차원 512 vs 1024 의 nDCG 차이(§8.11 이 남긴 유일한 미결).

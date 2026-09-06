@@ -22,11 +22,15 @@
   쓰기 클래스 3필드, `searchReadOmitted` 3줄, `PlaceApiClient.lookupEmbeddings` + `decodeVector`,
   재색인 tasklet 이 페이지마다 벡터를 받아 싣고 적재율을 로그로 남긴다. `search.embedding.model-ref` 가 비면 벡터 없이 색인.
   search:batch 테스트 21 통과 · `verifySearchIndexContract` 통과. 게이트·검사 회귀 4종 확인
+- **P1-4**: 질의 사전 — 도메인(`QueryNormalizer`·`QueryVector`·`VectorCodec`·포트 2), `query-vectors-index.json`(dynamic strict),
+  `QueryVectorService`(Caffeine 캐시·미스 기록·적중률 메트릭), `QueryVectorAdapter`(OpenSearch)·`QueryMissRedisAdapter`(ZSET),
+  기동 시 멱등 인덱스 생성, `/internal/query-vectors/{bulk,misses,status}`+`DELETE /misses`.
+  search:app 57 · search:domain 38 통과. 계약 게이트에 `query_vectors` 등록. 회귀 5종 확인
 
 ## 다음 단계
 
 1. ~~ADR Accepted~~ ✅ · ~~P1-1 place~~ ✅ (V12 · 테스트 22 · 게이트 통과, 2026-09-06)
-2. ~~P1-2 도구~~ ✅ · ~~P1-3 재색인~~ ✅ (2026-09-06) · **P1-4 부터** — 질의 사전 API · hybrid 분기 · 첫 채움
+2. ~~P1-2 도구~~ ✅ · ~~P1-3 재색인~~ ✅ · ~~P1-4 질의 사전~~ ✅ (2026-09-06) · **P1-5 부터** — hybrid 분기 · 첫 채움
 4. P1 중에 **차원 512 vs 1024** nDCG 차이 측정(§8.11 이 남긴 유일한 미결)
 
 ## 블로커

@@ -5,11 +5,9 @@ import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
+import com.kgd.search.domain.embedding.VectorCodec
 import org.springframework.web.reactive.function.client.WebClient
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.time.LocalDateTime
-import java.util.Base64
 
 @Component
 class PlaceApiClient(
@@ -189,14 +187,10 @@ class PlaceApiClient(
         const val LOOKUP_MAX_BATCH = 500
 
         /**
-         * float32 little-endian 바이트의 base64 → float 리스트. 서버 `encode` 의 역이다.
-         * 엔디안을 틀리면 예외가 아니라 **그럴듯한 쓰레기 벡터**가 나와 검색 품질만 조용히 무너진다.
+         * float32 little-endian 바이트의 base64 → float 리스트.
+         * 규약은 [VectorCodec] 한 곳이다 — 색인(batch)과 질의(app)가 각자 사본을 가지면
+         * 한쪽 엔디안만 바뀌어도 예외 없이 그럴듯한 쓰레기 벡터가 나온다.
          */
-        fun decodeVector(base64: String): List<Float> {
-            val bytes = Base64.getDecoder().decode(base64)
-            require(bytes.size % Float.SIZE_BYTES == 0) { "벡터 바이트 길이가 4의 배수가 아닙니다: ${bytes.size}" }
-            val buffer = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
-            return List(bytes.size / Float.SIZE_BYTES) { buffer.float }
-        }
+        fun decodeVector(base64: String): List<Float> = VectorCodec.decode(base64)
     }
 }
