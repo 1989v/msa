@@ -43,10 +43,14 @@ python -m embed.review sheet --judgments docs/specs/.../judgments.yml --out /tmp
 
 ```bash
 python -m embed.review html --judgments docs/specs/.../judgments.yml --rerank /tmp/p0/rerank --out ~/Desktop/judge.html
-open ~/Desktop/judge.html          # 판정 → 내보내기 → grades.json 저장
+open ~/Desktop/judge.html          # 고치기 → 내보내기 → grades.json 저장
 python -m embed.review apply --judgments docs/specs/.../judgments.yml --grades ~/Downloads/grades.json \
-                             --out docs/specs/.../judgments.yml
+                             --by human --out docs/specs/.../judgments.yml
 ```
+
+**파일의 판정이 바탕, 페이지에서 고친 것이 덮개다.** `localStorage` 만 읽으면 파일에 이미 있는 판정이 안 보인다(2026-09-05에 그랬다).
+내보내기는 **고친 것만** 낸다 — 되먹일 때 사람이 손댄 것만 `by: human` 이 된다. 필터 셋: 전체 · 미판정 · **검토 대상**
+(LLM 초안이면서 경계 등급이고 모델이 상위 5 에 올린 것 = 등급이 바뀌면 nDCG 가 바뀌는 것). 각 행에 출처 태그(사람/초안/내가).
 
 HTML 은 생성물이라 레포에 두지 않는다(데이터 인라인 157KB). 생성 스크립트만 남긴다.
 

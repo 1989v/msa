@@ -29,7 +29,8 @@ def rows(query: dict) -> list[dict]:
     merged: dict[str, dict] = {}
     for rank, c in enumerate(query.get("candidates", []), start=1):
         merged[str(c["id"])] = {"id": str(c["id"]), "title": c["title"], "category": c.get("category") or "",
-                                "address": (c.get("address") or "")[:20], "from": [f"bm25#{rank}"], "grade": c.get("grade")}
+                                "address": (c.get("address") or "")[:20], "from": [f"bm25#{rank}"],
+                                "grade": c.get("grade"), "by": c.get("by")}
     for c in query.get("vector_candidates", []):
         key = str(c["id"])
         src = [f"vec:{m}" for m in c.get("models", [])]
@@ -37,7 +38,8 @@ def rows(query: dict) -> list[dict]:
             merged[key]["from"] += src
         else:
             merged[key] = {"id": key, "title": c["title"], "category": c.get("category") or "",
-                           "address": (c.get("address") or "")[:20], "from": src, "grade": c.get("grade")}
+                           "address": (c.get("address") or "")[:20], "from": src,
+                           "grade": c.get("grade"), "by": c.get("by")}
     return list(merged.values())
 
 
@@ -82,7 +84,7 @@ def stats(doc: dict) -> str:
     return "\n".join(lines)
 
 
-def payload(doc: dict, queries: list[str] | None, rerank_dir: str | None) -> dict:
+def payload(doc: dict, queries: list[str] | None, rerank_dir: str | None, doubt_top: int = 5) -> dict:
     """HTML 이 읽을 데이터. 후보마다 어느 모델이 몇 위로 봤는지(ranks)를 붙여 판정에 참고가 되게 한다."""
     ranks: dict[tuple[str, str], dict[str, int]] = {}
     if rerank_dir:
@@ -98,7 +100,11 @@ def payload(doc: dict, queries: list[str] | None, rerank_dir: str | None) -> dic
             continue
         items = []
         for r in rows(q):
-            items.append({**r, "ranks": ranks.get((q["query"], r["id"]), {})})
+            rk = ranks.get((q["query"], r["id"]), {})
+            # 검토 대상: LLM 초안이면서 경계 등급(1·2)이고 모델이 상위 N 에 올린 것 — 등급이 바뀌면 nDCG 가 바뀐다
+            doubt = (r.get("by") == "llm" and r.get("grade") in (1, 2)
+                     and any(v <= doubt_top for v in rk.values()))
+            items.append({**r, "ranks": rk, "doubt": doubt})
         items.sort(key=lambda x: (0 if any(f.startswith("bm25") for f in x["from"]) else 1, x["title"]))
         out.append({"query": q["query"], "lang": q.get("lang", "ko"), "intent": q.get("intent", ""), "items": items})
     return {"queries": out}
@@ -195,6 +201,10 @@ tr.done{opacity:.5}
 .gs button[data-on]{color:#fff;border-color:transparent}
 .gs button[data-g="3"][data-on]{background:var(--g3)}.gs button[data-g="2"][data-on]{background:var(--g2)}
 .gs button[data-g="1"][data-on]{background:var(--g1)}.gs button[data-g="0"][data-on]{background:var(--g0)}
+header button[data-on]{background:var(--acc);color:#fff;border-color:transparent}
+tr.doubt{background:color-mix(in srgb,var(--g1) 9%,transparent)}
+.tag{font-size:10.5px;padding:1px 5px;border-radius:4px;border:1px solid var(--line);color:var(--mut);vertical-align:1px}
+.tag.you{border-color:var(--acc);color:var(--acc)}.tag.hum{border-color:var(--g3);color:var(--g3)}
 dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--fg);max-width:640px;width:92%}
 textarea{width:100%;height:260px;font:12px/1.4 ui-monospace,Menlo,monospace;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:9px}
 .hint{color:var(--mut);font-size:12.5px;margin:10px 0 0}
@@ -203,14 +213,16 @@ textarea{width:100%;height:260px;font:12px/1.4 ui-monospace,Menlo,monospace;back
   <h1>통합 검색 판정</h1>
   <div class="bar"><i id="pi"></i></div>
   <span id="ps" class="m"></span>
-  <button id="hide">미판정만</button>
+  <button id="f-all">전체</button>
+  <button id="f-todo">미판정</button>
+  <button id="f-doubt">검토 대상</button>
   <button id="exp">내보내기</button>
 </header>
 <main id="app"></main>
 <dialog id="dlg">
   <h3 style="margin:14px 18px 6px">판정 내보내기</h3>
   <div style="padding:0 18px 18px">
-    <p class="hint" style="margin-top:0">아래를 <code>grades.json</code> 으로 저장하거나, 「파일로 저장」을 누르세요.</p>
+    <p class="hint" style="margin-top:0">이 페이지에서 <b>고친 것만</b> 나옵니다. <code>grades.json</code> 으로 저장해 알려주세요.</p>
     <textarea id="out" readonly></textarea>
     <p style="display:flex;gap:8px;margin-top:10px">
       <button id="dl">파일로 저장</button><button id="cp">복사</button><button id="cl">닫기</button>
@@ -219,59 +231,93 @@ textarea{width:100%;height:260px;font:12px/1.4 ui-monospace,Menlo,monospace;back
 </dialog>
 <script>
 const DATA = __DATA__;
-const KEY = "kgd-judge-v1";
-let G = JSON.parse(localStorage.getItem(KEY) || "{}");
-let hideDone = false;
+const KEY = "kgd-judge-v2";
+// 파일에서 온 판정이 바탕(BASE), 이 페이지에서 바꾼 것이 덮개(OVER). 내보내기는 **덮개만** 낸다 —
+// 그래야 되먹일 때 사람이 손댄 것만 by: human 으로 기록된다.
+const BASE = {}, SRC = {};
+for (const q of DATA.queries) for (const it of q.items) {
+  if (it.grade !== null && it.grade !== undefined) { (BASE[q.query] ||= {})[it.id] = it.grade; (SRC[q.query] ||= {})[it.id] = it.by || "?"; }
+}
+let OVER = {};
+try { OVER = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+let mode = "all";
 const app = document.getElementById("app");
-
+const gradeOf = (q, id) => (OVER[q] && OVER[q][id] !== undefined) ? OVER[q][id] : (BASE[q] ? BASE[q][id] : undefined);
+const srcOf = (q, id) => (OVER[q] && OVER[q][id] !== undefined) ? "you" : ((SRC[q] || {})[id]);
 function total(){ return DATA.queries.reduce((a,q)=>a+q.items.length,0); }
-function graded(){ return Object.values(G).reduce((a,m)=>a+Object.keys(m).length,0); }
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(G)); }catch(e){} paint(); }
+function counts(){
+  let g=0, d=0, mine=0;
+  for (const q of DATA.queries) for (const it of q.items){
+    if (gradeOf(q.query, it.id) !== undefined) g++;
+    if (it.doubt && srcOf(q.query, it.id) !== "you") d++;
+    if (srcOf(q.query, it.id) === "you") mine++;
+  }
+  return {g, d, mine};
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(OVER)); }catch(e){} paint(); }
 function paint(){
-  const t=total(), g=graded();
-  document.getElementById("pi").style.width = (t? g/t*100:0)+"%";
-  document.getElementById("ps").textContent = `${g} / ${t}`;
+  const t = total(), c = counts();
+  document.getElementById("pi").style.width = (t ? c.g/t*100 : 0) + "%";
+  document.getElementById("ps").textContent = `판정 ${c.g}/${t} · 검토대상 ${c.d} · 내가 고친 것 ${c.mine}`;
+  document.getElementById("exp").disabled = c.mine === 0;
 }
 function srcHtml(from, ranks){
   const parts = from.map(f => f.startsWith("bm25") ? `<b>${f}</b>` : `<i>${f.replace("vec:","")}</i>`);
-  const rk = Object.entries(ranks||{}).map(([m,r])=>`${m.replace("qwen3-","q")}#${r}`).join(" ");
-  return parts.join(" ") + (rk? ` <span style="opacity:.7">· ${rk}</span>`:"");
+  const rk = Object.entries(ranks||{}).sort((a,b)=>a[1]-b[1])
+    .map(([m,r])=>`${m.replace("qwen3-","q").replace("harrier-270m","har")}#${r}`).join(" ");
+  return parts.join(" ") + (rk ? ` <span style="opacity:.65">· ${rk}</span>` : "");
+}
+function visible(q, it){
+  const g = gradeOf(q.query, it.id);
+  if (mode === "todo") return g === undefined;
+  if (mode === "doubt") return it.doubt && srcOf(q.query, it.id) !== "you";
+  return true;
 }
 function render(){
   app.innerHTML = "";
   for (const q of DATA.queries){
-    const gq = G[q.query] || {};
-    const items = hideDone ? q.items.filter(i => !(i.id in gq)) : q.items;
+    const items = q.items.filter(it => visible(q, it));
     if (!items.length) continue;
     const sec = document.createElement("section");
-    const done = q.items.filter(i => i.id in gq).length;
+    const done = q.items.filter(it => gradeOf(q.query, it.id) !== undefined).length;
     sec.innerHTML = `<div class="qh"><span class="cnt">${done}/${q.items.length}</span>
       <h2>${q.query} <span class="m">${q.lang}</span></h2><p>${q.intent||""}</p></div>`;
     const tb = document.createElement("table");
     for (const it of items){
+      const g = gradeOf(q.query, it.id), src = srcOf(q.query, it.id);
       const tr = document.createElement("tr");
-      if (it.id in gq) tr.className = "done";
-      tr.innerHTML = `<td><span class="t">${it.title}</span> <span class="m">${it.category||""}</span><br>
+      if (it.doubt && src !== "you") tr.className = "doubt";
+      const tag = src === "you" ? '<span class="tag you">내가</span>'
+                : src === "human" ? '<span class="tag hum">사람</span>'
+                : src === "llm" ? '<span class="tag llm">초안</span>' : "";
+      tr.innerHTML = `<td><span class="t">${it.title}</span> <span class="m">${it.category||""}</span> ${tag}<br>
           <span class="m">${it.address||""}</span></td>
         <td class="src">${srcHtml(it.from, it.ranks)}</td>
-        <td style="width:190px"><div class="gs">${[3,2,1,0].map(n=>
-          `<button data-g="${n}" ${gq[it.id]===n?'data-on':''}>${n}</button>`).join("")}</div></td>`;
+        <td style="width:200px"><div class="gs">${[3,2,1,0].map(n=>
+          `<button data-g="${n}" ${g===n?'data-on':''}>${n}</button>`).join("")}</div></td>`;
       tr.querySelectorAll("button").forEach(b => b.onclick = () => {
         const n = +b.dataset.g;
-        G[q.query] = G[q.query] || {};
-        if (G[q.query][it.id] === n) delete G[q.query][it.id]; else G[q.query][it.id] = n;
-        if (!Object.keys(G[q.query]).length) delete G[q.query];
+        OVER[q.query] = OVER[q.query] || {};
+        if (gradeOf(q.query, it.id) === n && OVER[q.query][it.id] !== undefined) delete OVER[q.query][it.id];
+        else OVER[q.query][it.id] = n;
+        if (!Object.keys(OVER[q.query]).length) delete OVER[q.query];
         save(); render();
       });
       tb.appendChild(tr);
     }
     sec.appendChild(tb); app.appendChild(sec);
   }
-  if (!app.children.length) app.innerHTML = '<p class="m">판정할 것이 없습니다.</p>';
+  if (!app.children.length) app.innerHTML = '<p class="m" style="padding:20px">해당하는 항목이 없습니다.</p>';
 }
-document.getElementById("hide").onclick = e => { hideDone = !hideDone; e.target.textContent = hideDone? "전체 보기":"미판정만"; render(); };
+for (const [id, m] of [["f-all","all"],["f-todo","todo"],["f-doubt","doubt"]]) {
+  document.getElementById(id).onclick = () => {
+    mode = m; render();
+    for (const x of ["f-all","f-todo","f-doubt"]) document.getElementById(x).removeAttribute("data-on");
+    document.getElementById(id).setAttribute("data-on","");
+  };
+}
 document.getElementById("exp").onclick = () => {
-  document.getElementById("out").value = JSON.stringify({grades:G}, null, 1);
+  document.getElementById("out").value = JSON.stringify({grades: OVER}, null, 1);
   document.getElementById("dlg").showModal();
 };
 document.getElementById("cl").onclick = () => document.getElementById("dlg").close();
@@ -283,6 +329,7 @@ document.getElementById("dl").onclick = () => {
   const b = new Blob([document.getElementById("out").value], {type:"application/json"});
   const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "grades.json"; a.click();
 };
+document.getElementById("f-all").setAttribute("data-on","");
 render(); paint();
 </script></body></html>
 """
