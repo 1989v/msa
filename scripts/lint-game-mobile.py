@@ -129,6 +129,32 @@ def check_control_mode(html: str) -> list[Finding]:
     )]
 
 
+def check_design_canvas(html: str) -> list[Finding]:
+    """아트가 결과물인 게임은 디자인 판을 먼저 받는다 (G8). 판 없이 만든 것은 "동작한다" 다.
+
+    **이 검사가 판정하는 근거**: index.html 에 적힌 클로드 디자인 캔버스 주소.
+    주소는 Artifact 게시가 만든 것이라 내가 지어낼 수 없다 — 없으면 판이 없었다는 뜻이다.
+    다만 **있다고 해서 판이 코드보다 먼저였다거나 원장과 맞는다는 뜻은 아니다.**
+    그 둘은 사람이 본다. 이 검사는 "판이 아예 없다" 만 잡는다.
+
+    2026-09-06 신설이라 기존 게임은 구조적으로 가질 수 없다 — 그래서 W 다.
+    신작은 통합 절차의 --strict 실행에서 걸린다.
+    """
+    m = re.search(r"<!--\s*design:\s*(\S+)", html, re.I)
+    if m and "claude.ai" in m.group(1):
+        return []
+    if m:
+        return [Finding(
+            "W6", f"design 선언이 클로드 디자인 캔버스 주소가 아니다: {m.group(1)[:60]}",
+            "Artifact 게시가 돌려준 https://claude.ai/code/artifact/<id> 를 적어라",
+        )]
+    return [Finding(
+        "W6", "디자인 판이 선언돼 있지 않다 — 클로드 디자인 캔버스 주소가 없다",
+        "index.html 에 <!-- design: https://claude.ai/code/artifact/<id> --> 를 적어라. "
+        "판이 없으면 design 스킬로 먼저 만든다 (파이프라인 G8)",
+    )]
+
+
 def check_action_labels(html: str) -> list[Finding]:
     m = re.search(r'data-actions=["\']([^"\']+)["\']', html)
     if not m:
@@ -524,6 +550,7 @@ def lint_game(game_dir: Path) -> list[Finding]:
         check_platform_wiring(html)
         + check_viewport(html)
         + check_control_mode(html)
+        + check_design_canvas(html)
         + check_action_labels(html)
         + check_scale_conflict(html, game_dir)
         + check_canvas_orientation(html)
