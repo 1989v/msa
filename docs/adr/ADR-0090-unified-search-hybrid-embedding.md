@@ -1,7 +1,8 @@
 # ADR-0090 통합 검색 하이브리드 — 임베딩은 서버 밖에서, 질의는 사전으로
 
 ## Status
-Proposed (2026-09-05) — P0 실측(모델·차원 bake-off, k-NN 메모리, hybrid 스파이크) 뒤 Accepted 로 승격
+**Accepted (2026-09-06)** — P0 실측 완료. 모델은 `snowflake-arctic-embed-l-v2.0-ko` 로 확정(판정 세트 nDCG@10 ko 0.7404 / en 0.7773).
+차원(512 vs 1024)만 P1 에서 측정한다 — 메모리는 둘 다 가능하므로 nDCG 차이로만 정한다.
 
 **Related**: ADR-0051 트랙 C(벡터는 별도 ADR — 이 문서가 그것) · ADR-0055(OpenSearch 3.3.0, raw 클라이언트) · ADR-0065 §7·OQ-5(임베딩은
 ETL 타임, 쿼리 인코더는 마진 재계산 후 — 여기서 "하지 않는다"로 닫는다) · ADR-0058(새 상주 파드는 사유를 적는다 — 여기서는 파드 0) ·
@@ -53,9 +54,16 @@ OpenSearch 인덱스는 매일 재구축되므로 재색인이 `lookup` 으로 �
 두 레그에 같이 건다. 자동완성은 벡터를 쓰지 않는다. 인덱스 문서의 `embeddingModel` 과 설정의 `model-ref` 가 다르면 벡터 레그를 끈다.
 `_source` 에서 `embedding` 은 뺀다.
 
-**D5. 모델·차원은 P0 bake-off 로 정한다.** 서버 비용이 0 이라 기준은 판정 세트 nDCG@10 · 차원(k-NN 메모리) · 라이선스다. 후보:
+**D5. 모델은 `snowflake-arctic-embed-l-v2.0-ko`**(568M · 1024차원 · Apache-2.0). 판정 세트 872건(사람 113 + LLM 초안 759)의 nDCG@10 이
+ko 0.7404 · en 0.7773 으로 후보 중 최고였다(BM25 는 0.6911 / 0.7117). 차원 축소(512)는 P1 에서 잰다. 판정 근거와 세 표는 플랜 §8.11.
+
+**D5-1. 융합 방식은 확정이 아니다.** RRF 를 기본으로 두되 P1 에서 가중 융합과 A/B 한다 — 질의별로 방향이 갈렸다(`야시장` +0.513 vs
+`한옥` −0.270). **이미 BM25 가 잘 찾는 질의에 벡터를 섞으면 손해**이므로 벡터 레그 가중치는 낮게 시작한다.
+
+<details><summary>후보 조사 원문</summary> 서버 비용이 0 이라 기준은 판정 세트 nDCG@10 · 차원(k-NN 메모리) · 라이선스다. 후보:
 Qwen3-Embedding-8B(8bit) · 4B · snowflake-arctic-embed-l-v2.0-ko · harrier-oss-v1-0.6b · embeddinggemma-300m. 제외: jina v5(CC BY-NC) ·
-KURE-v2(다중 벡터) · multilingual-e5-small(같은 차원의 granite-97m-r2 가 10점 위). MRL 지원 모델은 512 로 잘라 1024 와 비교한다.
+KURE-v2(다중 벡터) · multilingual-e5-small(같은 차원의 granite-97m-r2 가 10점 위).
+</details> MRL 지원 모델은 512 로 잘라 1024 와 비교한다.
 
 **D6. 통합 인덱스 `unified`.** 문서 계약 하나에 `type` 필드(attraction · region · product · concept · blog_post · game · deal_offer · service).
 URL 은 굽지 않고 FE 가 `serviceHref.ts` 로 조립한다. 이력서(ADR-0064)와 비밀 게임(ADR-0089)은 넣지 않는다. 원천은 공개 API 풀스캔.
@@ -98,6 +106,8 @@ P0 측정·결정 → P1 관광지 하이브리드(플래그 기본 off, place �
 
 ## References
 - 플랜: `docs/plans/2026-09-05-unified-search-hybrid-embedding.md` (v2)
+- **이어받기**: `docs/plans/2026-09-06-unified-search-handoff.md` — 산출물 위치·다음 단계·막힌 것
+- 진행: `docs/specs/2026-09-05-unified-search/context/{progress,key-decisions}.md`
 - 엔티티 설계: `docs/specs/2026-09-05-unified-search/embedding-entities.md`
 - 판정 세트·의도 시드: `docs/specs/2026-09-05-unified-search/{judgments.yml,intents.yml}`
 - 도구·노트북: `tools/embed/` (`notebooks/bakeoff.ipynb`, `probes/`)
