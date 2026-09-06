@@ -14,12 +14,15 @@
 - 모델 5종 비교 → **`snowflake-arctic-embed-l-v2.0-ko` 확정**(ko nDCG@10 0.7404 · en 0.7773)
 - k-NN 메모리·hybrid 질의 로컬 실측(플랜 §8.4·§8.5)
 - **P1-1**: place `attraction_embedding` 표(V12) + 도메인·포트·서비스·어댑터 + `/internal/attractions/embeddings/*`
-- 도구 `tools/embed`: 임베딩 텍스트 규칙·모델 스펙·풀링·재순위·판정 시트/페이지·nDCG 평가 (pytest 17)
+- 도구 `tools/embed`: 임베딩 텍스트 규칙·모델 스펙·풀링·재순위·판정 시트/페이지·nDCG 평가
+- **P1-2**: 도구 나머지 — `vectors`(코덱) · `client`(내부 API) · `docs`(하루 루틴) · `queries`(사전) · `push`(첫 채움) · `tunnel.sh`.
+  pytest 57 통과. 코덱·해시 기준값은 **JVM 이 만든 것**이고, 회귀 4종(엔디안·touch 판정·4xx 재시도·정규화 검사)을
+  임시 사본에 주입해 각 테스트가 실제로 무는 것을 확인했다
 
 ## 다음 단계
 
 1. ~~ADR Accepted~~ ✅ · ~~P1-1 place~~ ✅ (V12 · 테스트 22 · 게이트 통과, 2026-09-06)
-2. P1-2~9 — 도구 나머지 · 재색인 · 사전 · hybrid 분기 · 테스트 · 첫 채움
+2. ~~P1-2 도구 나머지~~ ✅ (2026-09-06) · **P1-3 부터** — 재색인(knn_vector) · 사전 API · hybrid 분기 · 첫 채움
 4. P1 중에 **차원 512 vs 1024** nDCG 차이 측정(§8.11 이 남긴 유일한 미결)
 
 ## 블로커

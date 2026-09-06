@@ -68,7 +68,63 @@ SKIP_KNN=1 probes/run_probe.sh                            # hybrid 스파이크�
 컨테이너가 죽으면(OOM) 그 사실을 찍고 다음 조합으로 넘어간다 — 죽은 것 자체가 측정값이다. `knn_probe.py --exclude-source` 는 `_source` 에서 벡터를 뺀 매핑을 잰다
 (결과: 3.4배 커진다 — 쓰지 않는다). 프로브는 **한 번에 하나만** 돌린다 — 컨테이너 이름이 고정이라 겹치면 서로 지운다. 결과는 플랜 §8.4·§8.5.
 
-## P1 (예정) — `docs` · `queries` · `push` · `tunnel.sh`
+## P1 — 통로 (`tunnel.sh`)
 
-하루 루틴: pending → 텍스트 조합 → 해시 비교(같으면 touch) → 모델 → bulk(500) → misses → 질의 임베딩 → bulk → status.
-계약은 `docs/specs/2026-09-05-unified-search/embedding-entities.md` §5.
+`/internal/**` 은 게이트웨이가 라우팅하지 않아 인터넷에서 닿지 않는다. port-forward 로 들어간다.
+포트가 이미 물려 있으면 **거절한다** — 옛 통로로 재고 "확인했다"고 말하는 사고를 막는다.
+
+```bash
+tools/embed/tunnel.sh              # place :8096 + search :8083, Ctrl-C 로 닫는다
+NS=commerce tools/embed/tunnel.sh place
+```
+
+## P1 — 문서 벡터 하루 루틴 (`python -m embed.docs`)
+
+pending → 원문 → 텍스트 조합 → 해시 비교 → **같으면 touch, 다르면 임베딩** → bulk(500).
+`attractions.updated_at` 은 전화·이미지만 바뀌어도 올라가므로 pending 의 대부분은 실제로 그대로다 —
+**모델은 임베딩할 것이 실제로 있을 때 처음 로드된다.** touch 만 있는 날은 모델을 읽지 않는다.
+
+```bash
+python -m embed.docs run --model arctic-ko --internal http://localhost:8096 --device mps
+python -m embed.docs run --model arctic-ko --internal http://localhost:8096 --dry-run   # 한 배치 판정만
+python -m embed.docs status --model arctic-ko --internal http://localhost:8096
+```
+
+pending 이 2,000건을 넘으면(첫 채움) id 별 조회 대신 풀스캔으로 원문을 받는다 — 5만 건을 하나씩 부르면 5만 요청이다.
+같은 배치가 두 번 오면 **멈춘다**: 서버가 반영하지 않았거나 원문이 없는 id 라, 그대로 두면 무한히 돈다.
+
+## P1 — 질의 사전 (`python -m embed.queries`)
+
+질의는 서버에서 임베딩하지 않는다. 사전에 없으면 벡터 레그를 끄고 BM25 로만 답한다.
+**정규화는 서버가 한다** — 규칙이 두 곳에 있으면 `_id` 가 어긋나 사전이 통째로 미적중이 된다.
+
+```bash
+python -m embed.queries seed   --model arctic-ko --internal http://localhost:8083 \
+                               --intents docs/specs/2026-09-05-unified-search/intents.yml
+python -m embed.queries misses --model arctic-ko --internal http://localhost:8083 --device mps
+python -m embed.queries status --model arctic-ko --internal http://localhost:8083
+```
+
+`misses` 는 카운트 내림차순으로 받아 임베딩하고 **넣은 것만** 지운다 — 많이 물어본 질의부터 사전이 된다.
+`/internal/query-vectors/**` 는 **P1-4 에서 만든다**. 붙기 전까지 `seed`·`misses` 는 404 다(계약은 스펙에 고정).
+
+## P1 — 첫 채움 (`python -m embed.push`)
+
+노트북은 클러스터에 닿지 않는다(자격증명을 Colab 에 두지 않는다). parquet 만 내고, 미는 것은 로컬이다.
+
+```bash
+python -m embed.push --file vectors.parquet --internal http://localhost:8096 --dry-run  # 검사만
+python -m embed.push --file vectors.parquet --internal http://localhost:8096 --skip 12  # 끊긴 뒤 이어서
+```
+
+보내기 전에 도구가 먼저 검사한다(해시·차원·정규화·중복 id·단일 스탬프) — 업서트는 요청 단위 all-or-nothing 이라
+500건 중 한 건이 틀리면 나머지 499건도 거부된다.
+
+## 서버와 같아야 하는 두 가지
+
+`text_hash`(sha256) 와 벡터 표현(float32 little-endian 의 base64)은 서버와 **바이트 단위로 같아야** 한다.
+어긋나면 운이 좋으면 400 이고, 운이 나쁘면 엔디안이 뒤집힌 벡터가 조용히 들어가 검색 품질만 무너진다.
+그래서 두 테스트의 기준값은 파이썬이 아니라 **JVM 이 만든 것**이다(`ByteBuffer.LITTLE_ENDIAN` + `Base64`,
+`MessageDigest("SHA-256")` — 서버가 쓰는 그 클래스들). 만든 방법은 각 테스트 파일 맨 위에 적혀 있다.
+
+계약 원본: `docs/specs/2026-09-05-unified-search/embedding-entities.md` §2.5 · §3.4 · §5.

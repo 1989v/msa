@@ -20,7 +20,8 @@
 | P0-6 모델 확정 | ✅ **arctic-ko** (ko 0.7404 / en 0.7773) | 플랜 §8.11 |
 | — 차원 512 vs 1024 | ⏳ **미측정** — 메모리는 둘 다 되므로 nDCG 로만 결정. P1 첫 채움 때 | — |
 | P1-1 place 벡터 표·API | ✅ **완료** (V12 · 도메인 10 + 서비스 12 테스트 · 게이트 통과) | `place/` |
-| P1-2~9 | ⏳ 다음 | §3 |
+| P1-2 도구 나머지 | ✅ **완료** (docs·queries·push·tunnel + 코덱/클라이언트, pytest 57) | `tools/embed/` |
+| P1-3~9 | ⏳ 다음 | §3 |
 
 ## 2. 이 작업의 물리적 위치 — 먼저 읽을 것
 
@@ -72,7 +73,9 @@ git -C ~/IdeaProjects/msa branch -f unified-search-embedding "$(git -C <worktree
 1. ~~P1-1 place 벡터 표~~ ✅ **완료 (2026-09-06)** — `V12__create_attraction_embedding.sql`, 도메인(`EmbeddingModelRef`·`AttractionEmbedding`·`EmbeddingText`),
    포트·서비스·JPA 어댑터, `/internal/attractions/embeddings/{pending,bulk,lookup,status}` + `DELETE`.
    테스트 22(도메인 10 · 서비스 12), `verifyLayerDependencies`·`verifyFlywayWiring` 통과. **아직 배포 안 됨**(푸시 대기)
-2. **P1-2 tools/embed 나머지** — `docs.py`·`queries.py`·`push.py`·`tunnel.sh` (지금은 측정용 `bakeoff`·`pool`·`rerank`·`review`·`doubts`·`evaluate` 만)
+2. ~~**P1-2 tools/embed 나머지**~~ ✅ **완료 (2026-09-06)** — `vectors.py`(float32 LE base64 코덱) · `client.py`(내부 API + 재시도 규칙) ·
+   `docs.py`(pending → 해시 비교 → touch/임베딩 → bulk) · `queries.py`(시드·미적중) · `push.py`(parquet 첫 채움) · `tunnel.sh`(port-forward).
+   **`queries.py` 가 부르는 `/internal/query-vectors/**` 는 P1-4 에서 만든다** — 그때까지 404 다(계약은 스펙 §3.4 에 고정).
 3. **P1-3 search:batch** — `attractions-index.json` 에 `knn_vector`(dimension 은 차원 결정 후) + `AttractionIndexDocument` 3필드 + `searchReadOmitted` + 재색인 tasklet 의 lookup
 4. **P1-4 search:app 사전** — `query_vectors` 인덱스 + 포트/어댑터 + `/internal/query-vectors/*` + Redis 미스
 5. **P1-5 질의 분기** — `QueryNormalizer` + hybrid 분기 + 파이프라인 + 메트릭
