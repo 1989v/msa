@@ -41,6 +41,13 @@ CANDIDATES: dict[str, ModelSpec] = {
                           load_kwargs={"quantize_8bit": True}),
     "qwen3-4b": ModelSpec("qwen3-4b", "Qwen/Qwen3-Embedding-4B", 1024, 2560, "last", True, QWEN3_QUERY),
     "arctic-ko": ModelSpec("arctic-ko", "dragonkue/snowflake-arctic-embed-l-v2.0-ko", 1024, 1024, "cls", True, "query: "),
+    # 위 모델의 **베이스**(Snowflake 공식). 한국어 파인튜닝이 개인 계정이라는 점이 걸릴 때의 대안이고,
+    # 한국어를 얼마나 잃는지는 재 봐야 안다 — 그것이 이 후보를 넣는 이유다.
+    "arctic-official": ModelSpec("arctic-official", "Snowflake/snowflake-arctic-embed-l-v2.0", 1024, 1024, "cls", True, "query: "),
+    # P0 후보 조사에서 빠졌던 기준선. 한국어 검색에서 가장 널리 쓰이는 다국어 모델 중 하나다.
+    # **접두어를 쓰지 않는다**(모델 카드: "no longer requires adding instructions to the queries").
+    # MRL 을 공식 지원하지 않아 1024 고정 — 우리 목표 차원과 같아서 문제되지 않는다.
+    "bge-m3": ModelSpec("bge-m3", "BAAI/bge-m3", 1024, 1024, "cls", False, None),
     "harrier-0.6b": ModelSpec("harrier-0.6b", "microsoft/harrier-oss-v1-0.6b", 1024, 1024, "last", False, HARRIER_QUERY, fp16_ok=False),
     "harrier-270m": ModelSpec("harrier-270m", "microsoft/harrier-oss-v1-270m", 640, 640, "last", False, HARRIER_QUERY, fp16_ok=False),
     # gemma 는 HF 에서 gated(라이선스 수락 + 토큰) — 로컬 무토큰 환경에서는 못 받는다. Colab 에서 HF_TOKEN 을 넣고 돈다
