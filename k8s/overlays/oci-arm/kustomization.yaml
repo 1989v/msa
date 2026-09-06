@@ -390,7 +390,7 @@ images:
     newTag: 5d103e5
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
-    newTag: f9fd92e
+    newTag: f969ee6
   - name: commerce/product
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
     newTag: c0612f7
