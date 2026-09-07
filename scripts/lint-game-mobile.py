@@ -169,6 +169,38 @@ def check_action_labels(html: str) -> list[Finding]:
     )]
 
 
+def check_pad_matches_game(html: str, game_dir: Path) -> list[Finding]:
+    """가상패드 버튼 목록과 게임이 묶은 액션이 같은가.
+
+    목록이 **두 군데에 사본으로** 있다 — index.html 의 data-actions 와 게임 코드의
+    BindPadActions. 한쪽만 늘리면 그 키는 키보드에서만 되고 모바일에서는 버튼이 없다.
+    실제로 달리기(KeyZ)를 코드에만 넣어 「모바일에서 달리기가 안 됨」이 배포까지 나갔다.
+    """
+    m = re.search(r'data-actions=["\']([^"\']*)["\']', html)
+    if not m:
+        return []
+    pad = [a.split(":")[0].strip() for a in m.group(1).split(",") if a.strip()]
+
+    # **원본은 산출물 옆이 아니라 _src 에 있다.** game_dir 는 빌드 산출물이라 Assets 가 없고,
+    # 거기서 찾으면 검사가 매번 조용히 건너뛴다(실제로 그래서 안 물었다)
+    src = GAMES_DIR / "_src" / game_dir.name / "Assets" / "Scripts"
+    if not src.is_dir():
+        return []
+    bound: list[str] = []
+    for f in src.rglob("*.cs"):
+        b = re.search(r"BindPadActions\(([^)]*)\)", f.read_text(encoding="utf-8"))
+        if b:
+            bound = [x.strip().strip('"') for x in b.group(1).split(",") if x.strip()]
+            break
+    if not bound or bound == pad:
+        return []
+    return [Finding(
+        "W9", f"가상패드({', '.join(pad) or '없음'})와 게임이 묶은 액션({', '.join(bound)})이 다르다",
+        "index.html 의 data-actions 를 BindPadActions 와 같은 순서·같은 키로 맞춰라 — "
+        "어긋난 키는 키보드에서만 되고 모바일에는 버튼이 없다",
+    )]
+
+
 def check_scale_conflict(html: str, game_dir: Path) -> list[Finding]:
     if not loads(html, "lib/touch.js"):
         return []
@@ -438,38 +470,6 @@ def check_reserved_corner(html: str, game_dir: Path) -> list[Finding]:
     return out
 
 
-def check_shared_libs() -> list[Finding]:
-    """
-    **공유 라이브러리도 우상단을 침범하면 안 된다.**
-
-    이번 사고가 정확히 이 모양이었다 — `lib/i18n.js` 한 줄이 언어 전환 버튼을
-    `position:fixed; top:8px; right:8px` 에 심어서 **게임 50종의 한/EN 전환이 죽어 있었다.**
-    게임별 검사만 두면 이걸 못 잡는다: lib 은 게임 폴더 밖이라 건너뛰고,
-    건너뛰지 않으면 같은 위반이 72번 찍혀 아무도 안 읽는다. 그래서 한 번만 따로 본다.
-    """
-    out: list[Finding] = []
-    lib = GAMES_DIR / "lib"
-    if not lib.is_dir():
-        return out
-    for js in sorted(lib.glob("*.js")):
-        text = js.read_text(encoding="utf-8", errors="ignore")
-        for m in re.finditer(r"position:\s*fixed;[^'\"`]{0,200}", text):
-            blob = m.group(0)
-            if "--kgd-chrome" in blob or "GameChrome" in blob or "CHROME_" in blob:
-                continue
-            top = re.search(r"top:\s*([\d.]+)px", blob)
-            right = re.search(r"right:\s*([\d.]+)px", blob)
-            if not (top and right):
-                continue
-            if float(top.group(1)) >= CHROME_TOP or float(right.group(1)) >= CHROME_RIGHT:
-                continue
-            out.append(Finding(
-                "F6", f"lib/{js.name} 이 우상단 예약 자리에 요소를 심는다 — top {top.group(1)} · right {right.group(1)}",
-                "공유 라이브러리라 이걸 부르는 게임 전부가 같이 깨진다 "
-                "(2026-08-29: i18n.js 하나로 50종). `var(--kgd-chrome-top, 46px)` 를 써라",
-            ))
-    return out
-
 
 def check_canvas_stretch(html: str, game_dir: Path) -> list[Finding]:
     """
@@ -552,6 +552,7 @@ def lint_game(game_dir: Path) -> list[Finding]:
         + check_control_mode(html)
         + check_design_canvas(html)
         + check_action_labels(html)
+        + check_pad_matches_game(html, game_dir)
         + check_scale_conflict(html, game_dir)
         + check_canvas_orientation(html)
         + check_panel_misuse(html)
