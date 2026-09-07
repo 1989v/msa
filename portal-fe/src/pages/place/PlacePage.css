@@ -196,11 +196,12 @@
 }
 
 /* 읽는 글줄은 폭이 아니라 **글자 수**로 제한한다 (frontend-design.md: 45–75ch).
-   60rem 로 두었더니 라이브에서 한 줄 84자가 나왔다 — 눈이 다음 줄 첫 글자를 못 찾는다.
-   `ch` 는 폰트 크기를 따라가므로 활자 크기를 바꿔도 글줄 길이가 유지된다. */
+   `ch` 는 숫자 0 의 폭이라 한글은 그보다 넓다 — 62ch 이 실측 51자였다. 상한을 75ch 로
+   올려 넓은 화면에서 62자쯤 담는다. 그 이상은 눈이 다음 줄 첫 글자를 못 찾는다
+   (60rem 시절 84자에서 실제로 그랬다). 좁은 화면에서는 어차피 폭이 먼저 걸린다. */
 .place-body-stacked .place-detail-overview,
 .place-body-stacked .place-detail-info-list {
-  max-width: 62ch;
+  max-width: 75ch;
 }
 
 .place-body.has-detail {
@@ -402,9 +403,13 @@
   font-size: 0.8rem;
 }
 
+/* 고정 높이(9rem)는 352px 칸에 있던 시절 값이다. 전체 폭으로 펴진 뒤에는 1360px 위에
+   144px 짜리 띠가 되어 사진이 아니라 구분선처럼 보였다. 비율로 두고 상한만 건다 —
+   좁은 화면에서는 16:9 로 충분히 서고, 넓은 화면에서는 20rem 에서 멈춘다. */
 .place-detail-img {
   width: 100%;
-  height: 9rem;
+  aspect-ratio: 16 / 9;
+  max-height: 20rem;
   object-fit: cover;
   border-radius: 0.5rem;
 }
@@ -810,6 +815,40 @@
    여기서 그 \n 을 줄로 만든다 — 안 주면 브라우저가 공백으로 접어 문단 구분이 사라진다. */
 .place-detail-overview {
   white-space: pre-line;
+}
+
+/* 개요 + 이용 안내 묶음. 좁은 화면은 세로로 쌓이고, 넓은 화면에서만 나란히 선다.
+   나란히 두면 이용 안내가 **스크롤 없이 항상 보인다** — 개요가 1,400자를 넘는
+   관광지에서도 그렇다. */
+.place-detail-read {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  min-width: 0;
+}
+
+@media (min-width: 60rem) {
+  .place-detail-read {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+
+  /* 글은 남는 폭을 갖되 글줄 상한(75ch)이 먼저 걸린다 */
+  .place-detail-read > .place-detail-overview {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  /* 이용 안내는 내용만큼만 — 라벨+값 두 칸이라 그 이상 넓어져도 빈칸만 는다 */
+  .place-detail-read > .place-detail-info {
+    flex: 0 1 24rem;
+    min-width: 0;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--ko-border-subtle);
+    border-radius: 0.6rem;
+    background: var(--ko-surface-2);
+  }
 }
 
 /* 이용 안내 — 이용시간·쉬는날·요금·주차·문의. 값이 없는 줄은 아예 안 그린다. */

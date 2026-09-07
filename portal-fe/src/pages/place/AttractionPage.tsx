@@ -238,45 +238,52 @@ export default function AttractionPage() {
             )}
             {attraction.address && <p className="place-detail-addr">{attraction.address}</p>}
             {attraction.tel && <p className="place-detail-tel">{attraction.tel}</p>}
-            {/* 원천 개요는 평문이 아니다 — <br>·HTML 엔티티가 섞여 오고 국문은 \n 이 온다.
-                overviewText 가 태그·엔티티를 풀고 줄바꿈만 남기며, CSS 가 그것을 살린다. */}
-            {overviewText(attraction.overview) && (
-              <p className="place-detail-overview">{overviewText(attraction.overview)}</p>
-            )}
+            {/* 넓은 화면에서 개요와 이용 안내를 나란히 둔다. 세로로 쌓으면 개요가 긴
+                관광지(1,400자가 넘는 것도 있다)에서 이용 안내가 화면 밖으로 밀려
+                "없는 것"처럼 보인다. 탭으로 감추지 않는 이유는 색인이다 — 이 페이지는
+                관광지 5만 건의 착지점이라 접힌 내용이 본문에서 빠지면 안 된다. */}
+            <div className="place-detail-read">
+              {/* 원천 개요는 평문이 아니다 — <br>·HTML 엔티티가 섞여 오고 국문은 \n 이 온다.
+                  overviewText 가 태그·엔티티를 풀고 줄바꿈만 남기며, CSS 가 그것을 살린다. */}
+              {overviewText(attraction.overview) && (
+                <p className="place-detail-overview">{overviewText(attraction.overview)}</p>
+              )}
 
-            {/* 이용 안내 (detailIntro2). 원천이 유형마다 다른 키로 주는 것을 서버가 모아 준다.
-                점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,
-                다 없으면 블록 자체를 내지 않는다(빈 표는 "정보 없음"보다 나쁘다). */}
-            {(() => {
-              // 파생 6개(유형별 키를 서버가 모은 것) → 그 다음 원문에만 있는 나머지.
-              // 원천이 준 것을 다 보여준다 — 상세는 이 관광지에 대해 아는 전부를 내는 자리다.
-              const derived: IntroRow[] = [
-                { key: 'useTime', label: L.useTime, value: attraction.useTime ?? '' },
-                { key: 'restDate', label: L.restDate, value: attraction.restDate ?? '' },
-                { key: 'useFee', label: L.useFee, value: attraction.useFee ?? '' },
-                { key: 'parking', label: L.parking, value: attraction.parking ?? '' },
-                { key: 'parkingFee', label: L.parkingFee, value: attraction.parkingFee ?? '' },
-                { key: 'infoCenter', label: L.infoCenter, value: attraction.infoCenter ?? '' },
-              ];
-              // 이용정보에도 <br>·엔티티가 섞여 온다 — 개요와 같은 정리를 거친다
-              const rows = [...derived, ...introRows(attraction.introRaw, lang)]
-                .map((r) => ({ ...r, value: sourceText(r.value) }))
-                .filter((r) => r.value.trim().length > 0);
-              if (rows.length === 0) return null;
-              return (
-                <section className="place-detail-info" aria-label={L.info}>
-                  <h2 className="place-detail-info-title">{L.info}</h2>
-                  <dl className="place-detail-info-list">
-                    {rows.map((row) => (
-                      <div className="place-detail-info-row" key={row.key}>
-                        <dt>{row.label}</dt>
-                        <dd>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
-              );
-            })()}
+              {/* 이용 안내 (detailIntro2). 원천이 유형마다 다른 키로 주는 것을 서버가 모아 준다.
+                  점진 보강이라 아직 안 받은 관광지가 있다 — 값이 없는 줄은 그리지 않고,
+                  다 없으면 블록 자체를 내지 않는다(빈 표는 "정보 없음"보다 나쁘다). */}
+              {(() => {
+                // 파생 6개(유형별 키를 서버가 모은 것) → 그 다음 원문에만 있는 나머지.
+                // 원천이 준 것을 다 보여준다 — 상세는 이 관광지에 대해 아는 전부를 내는 자리다.
+                const derived: IntroRow[] = [
+                  { key: 'useTime', label: L.useTime, value: attraction.useTime ?? '' },
+                  { key: 'restDate', label: L.restDate, value: attraction.restDate ?? '' },
+                  { key: 'useFee', label: L.useFee, value: attraction.useFee ?? '' },
+                  { key: 'parking', label: L.parking, value: attraction.parking ?? '' },
+                  { key: 'parkingFee', label: L.parkingFee, value: attraction.parkingFee ?? '' },
+                  { key: 'infoCenter', label: L.infoCenter, value: attraction.infoCenter ?? '' },
+                ];
+                // 이용정보에도 <br>·엔티티가 섞여 온다 — 개요와 같은 정리를 거친다
+                const rows = [...derived, ...introRows(attraction.introRaw, lang)]
+                  .map((r) => ({ ...r, value: sourceText(r.value) }))
+                  .filter((r) => r.value.trim().length > 0);
+                if (rows.length === 0) return null;
+                return (
+                  <section className="place-detail-info" aria-label={L.info}>
+                    <h2 className="place-detail-info-title">{L.info}</h2>
+                    <dl className="place-detail-info-list">
+                      {rows.map((row) => (
+                        <div className="place-detail-info-row" key={row.key}>
+                          <dt>{row.label}</dt>
+                          <dd>{row.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                );
+              })()}
+            </div>
+
             {/* 지도 — 링크만으로는 "어디쯤인지" 를 이 화면에서 알 수 없다.
                 키가 없거나 로더가 실패하면 아래 링크가 그대로 그 역할을 한다. */}
             {!plottable ? (
