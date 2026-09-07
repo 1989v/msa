@@ -15,12 +15,29 @@ import numpy as np
 import requests
 import yaml
 
-from .embed_text import attraction_text, attraction_title_text, text_hash
+from .embed_text import (
+    attraction_text,
+    attraction_text_no_address,
+    attraction_text_no_title,
+    attraction_text_region,
+    attraction_text_short,
+    attraction_title_text,
+    text_hash,
+)
 from .models import ModelSpec
 
 UA = {"User-Agent": "kgd-embed/0.1 (bake-off)", "Accept": "application/json"}
 
-RULES: dict[str, Callable[..., str]] = {"full": attraction_text, "title": attraction_title_text}
+#: 임베딩 텍스트 규칙. `full` 이 v1(운영 규칙)이고 나머지는 그것을 의심하는 변형이다.
+#: **규칙을 바꾸면 모든 text_hash 가 어긋나 전량 재임베딩이 된다** — 비교는 오프라인에서만 한다.
+RULES: dict[str, Callable[..., str]] = {
+    "full": attraction_text,                    # v1 — 제목 · 분류 · 주소전체 · 개요 1000자
+    "title": attraction_title_text,             # A — 이름만
+    "no-address": attraction_text_no_address,   # B — 주소 제거
+    "region": attraction_text_region,           # C — 주소를 시·구까지만
+    "short": attraction_text_short,             # D — 개요 300자
+    "no-title": attraction_text_no_title,       # E — 제목 제거(상호명 충돌 완화)
+}
 
 
 def _get_json(url: str, params: dict, tries: int = 4) -> dict:
