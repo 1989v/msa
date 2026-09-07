@@ -219,12 +219,20 @@ export default function AttractionPage() {
 
         {attraction && (
           <article className="place-detail" aria-label={attraction.title}>
+            {/* 원천 사진은 폭 940px · 대부분 3:2 다(표본 16장 중 15장이 1.4~1.8).
+                꽉 채워 자르면 위아래가 날아가고 1360px 로 늘리면 흐려진다. 비율 그대로
+                두고 높이만 고정하며, 남는 옆 공간은 같은 사진을 흐리게 깔아 메운다. */}
             {attraction.imageUrl && (
-              <img
-                className="place-detail-img"
-                src={attraction.imageUrl}
-                alt={`${attraction.title}${lang === 'en' ? ' photo' : ' 사진'}`}
-              />
+              <div
+                className="place-detail-hero"
+                style={{ backgroundImage: `url(${JSON.stringify(attraction.imageUrl).slice(1, -1)})` }}
+              >
+                <img
+                  className="place-detail-img"
+                  src={attraction.imageUrl}
+                  alt={`${attraction.title}${lang === 'en' ? ' photo' : ' 사진'}`}
+                />
+              </div>
             )}
             <h1 className="place-detail-title">{attraction.title}</h1>
             {/* 원어 병기명은 별도 요소다 — 제목에 괄호로 다시 붙이지 않는다 (t2 백엔드 계약) */}

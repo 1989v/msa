@@ -403,15 +403,47 @@
   font-size: 0.8rem;
 }
 
-/* 고정 높이(9rem)는 352px 칸에 있던 시절 값이다. 전체 폭으로 펴진 뒤에는 1360px 위에
-   144px 짜리 띠가 되어 사진이 아니라 구분선처럼 보였다. 비율로 두고 상한만 건다 —
-   좁은 화면에서는 16:9 로 충분히 서고, 넓은 화면에서는 20rem 에서 멈춘다. */
-.place-detail-img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 20rem;
-  object-fit: cover;
+/* 상단 사진 — **높이는 고정, 비율은 원본 그대로.**
+   원천은 폭 940px · 대부분 3:2 다. 16:9 로 꽉 채워 자르면 높이의 16%가 날아가고,
+   1360px 로 늘리면 940 원본이 1.45배 확대돼 흐려진다. 그래서 사진은 자기 비율대로
+   서고(3:2 면 480×320), 남는 옆 공간은 같은 사진을 흐리게 깐 판이 메운다. */
+.place-detail-hero {
+  position: relative;
+  height: 20rem;
   border-radius: 0.5rem;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  justify-content: center;
+}
+
+/* 배경은 사진 자체라 그대로 두면 뒤가 시끄럽다 — 흐리게 눌러 사진이 앞에 서게 한다.
+   ::before 에 거는 이유: filter 를 컨테이너에 걸면 안의 <img> 까지 흐려진다. */
+.place-detail-hero::before {
+  content: '';
+  position: absolute;
+  inset: -2rem;                 /* blur 가 가장자리를 비게 만들지 않도록 넉넉히 */
+  background: inherit;
+  background-size: cover;
+  background-position: center;
+  filter: blur(1.5rem) brightness(0.45);
+}
+
+.place-detail-img {
+  position: relative;           /* 흐린 판 위로 */
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 40rem) {
+  /* 좁은 화면에서는 사진이 폭을 다 쓰므로 흐린 판이 보일 일이 거의 없다 —
+     높이만 화면에 맞게 줄인다. */
+  .place-detail-hero {
+    height: 12rem;
+  }
 }
 
 .place-detail-title {
