@@ -1,0 +1,10 @@
+[Unit]
+Description=kine 컴팩션 대행 10분마다
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=10min
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

@@ -76,11 +76,27 @@ else
   log "k3s 설치 ($K3S_VERSION)"
   # --disable=traefik : 우리는 ingress-nginx 사용
   # --write-kubeconfig-mode=644 : non-root 도 kubectl 사용 가능
+  # image-gc 임계값 : 기본 85/80 은 이 디스크에서 영영 안 돈다. 82% 에 머무는 동안
+  #   미사용 이미지가 176개(portal-fe 만 112개) 쌓여 containerd 가 35GB 를 먹었다.
   curl -sfL https://get.k3s.io | \
     INSTALL_K3S_VERSION="$K3S_VERSION" \
-    INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644" \
+    INSTALL_K3S_EXEC="--disable=traefik --write-kubeconfig-mode=644 --kubelet-arg=image-gc-high-threshold=70 --kubelet-arg=image-gc-low-threshold=55" \
     sh -
   ok "k3s 설치 완료"
+fi
+
+# kine 컴팩션 대행 타이머 — k3s 가 스스로 못 하는 일을 대신한다.
+# 이것 없이 113일 돌렸더니 state.db 가 26GB · 711만 행이 됐고 apiserver 가 굶었다.
+if [[ -f "$(dirname "$0")/kine-guard.sh" ]]; then
+  log "kine 컴팩션 가드 설치"
+  install -m755 "$(dirname "$0")/kine-guard.sh" /root/kine-guard.sh
+  install -m644 "$(dirname "$0")/kine-guard.service" /etc/systemd/system/kine-guard.service
+  install -m644 "$(dirname "$0")/kine-guard.timer" /etc/systemd/system/kine-guard.timer
+  systemctl daemon-reload
+  systemctl enable --now kine-guard.timer
+  ok "kine-guard.timer 활성 (10분 주기)"
+else
+  log "kine-guard.sh 가 옆에 없어 건너뜀 — 레포에서 scripts/ 를 통째로 받아야 설치된다"
 fi
 
 # kubeconfig 환경변수

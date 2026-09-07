@@ -40,6 +40,27 @@ k8s/argocd/install.sh                                   # Argo + 워치독 (Argo
   배치가 DNS 로 죽으면 CoreDNS 가 아니라 `kubectl top node` 와 Argo sync 상태를 먼저 본다.
   누락 서비스는 지정 재빌드: `gh workflow run images.yml --ref main -f services="gateway portal-fe"`
 
+- **디스크를 먹는 두 가지는 서로 다른 곳이 지운다 — 한쪽만 켜 두면 다른 쪽이 무한히 쌓인다.**
+  ① OCIR 태그는 CI 의 `scripts/ocir-prune.py --keep 3` 이 지운다(원격). ② **노드의 containerd
+  이미지는 kubelet 이미지 GC 가 지운다(로컬).** ②의 기본 임계값 85%는 디스크가 82%에 머무는 동안
+  **영영 안 돈다** — 그래서 미사용 이미지 176개(`portal-fe` 만 112개)가 쌓여 35GB 를 먹었다.
+  `oci-bootstrap.sh` 가 `--kubelet-arg=image-gc-high-threshold=70`(low 55)로 깐다.
+  **확인은 유닛 파일이 아니라 런타임 값**: `kubectl get --raw /api/v1/nodes/<node>/proxy/configz`
+
+- **k3s 의 `state.db` 는 스스로 줄지 않는다 — `kine-guard.timer` 가 없으면 무한히 큰다.**
+  k3s 는 etcd 대신 kine(SQLite)을 쓰고, 오브젝트가 바뀔 때마다 **행을 append** 한다. 리스 갱신만
+  하루 4만 행이다. kine 의 컴팩션이 진척되지 않으면(`compact_rev_key = 0`) 그대로 쌓인다 —
+  2026-09-07 실측 **711만 행 · 26.4GB**, 살아있는 키는 1,345개뿐이었다. 증상은 `Slow SQL` 상시 +
+  ReplicaSet 동기화 4.5초 + iowait 27.5%.
+  - **VACUUM 은 소용없다.** `freelist_count = 0` 이라 회수할 빈 페이지가 없다 — 26GB 는 실제 데이터다.
+  - **k3s 를 켠 채로 지우면 사이트가 죽는다.** 인덱스가 5개라 행 하나에 B-트리 5개를 갱신한다.
+    10만 행 한 배치가 3분 40초에도 커밋 못 하고 디스크를 포화시켜 **apiserver 가 굶었다(6분 장애)**.
+  - 이미 부풀었으면 **지우지 말고 옮긴다** — k3s 정지 → 생존 행만 새 파일에 복사 → 인덱스 일괄 생성 →
+    교체. 4,098행 · 24MB 로 끝나고 다운타임 5분 36초였다. 검증 불변식은 **살아있는 키 수**다
+    (tombstone 은 지우는 게 정상이라 「최신 행」으로 세면 47만 건이 걸려 멈춘다).
+  - 평시 방지는 `scripts/kine-guard.{sh,service,timer}` — 10분마다 2,000행 청크로 최대 4만 행.
+    **청크를 키우지 않는다**(큰 배치가 apiserver 를 굶기는 것이 위 장애의 원인이다)
+
 - **테스트 게이트 한 번 실패 = 그 커밋의 모든 이미지 미생성.** `images.yml` 은 변경된 JVM
   서비스의 `./gradlew test` 를 이미지 빌드보다 **먼저 한 잡 안에서** 돌린다. 한 서비스가 깨지면
   잡이 exit 1 로 끝나 다른 서비스 이미지도 하나도 안 구워진다. 조용한 함정은 그 다음이다 —

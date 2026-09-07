@@ -1,0 +1,7 @@
+[Unit]
+Description=kine 컴팩션 대행 — 옛 리비전을 작은 배치로 지운다
+After=k3s.service
+
+[Service]
+Type=oneshot
+ExecStart=/root/kine-guard.sh
