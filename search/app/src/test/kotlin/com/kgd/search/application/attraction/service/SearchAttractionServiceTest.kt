@@ -206,4 +206,4 @@ class SearchAttractionServiceTest : BehaviorSpec({
     }
 })
 
-private const val MODEL_REF = "dragonkue/snowflake-arctic-embed-l-v2.0-ko@abc1234#d1024"
+private const val MODEL_REF = "microsoft/harrier-oss-v1-270m@abc1234#d640"

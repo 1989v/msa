@@ -24,7 +24,7 @@ import org.springframework.data.domain.PageRequest
  */
 class AttractionSearchAdapterHybridTest : BehaviorSpec({
 
-    val modelRef = "dragonkue/snowflake-arctic-embed-l-v2.0-ko@abc1234#d1024"
+    val modelRef = "microsoft/harrier-oss-v1-270m@abc1234#d640"
     val vector = listOf(0.6f, 0.8f)
 
     fun <T> emptyResponse(): SearchResponse<T> =

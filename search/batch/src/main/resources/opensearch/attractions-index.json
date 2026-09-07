@@ -104,7 +104,7 @@
       "popularityScore": { "type": "float" },
       "embedding": {
         "type": "knn_vector",
-        "dimension": 1024,
+        "dimension": 640,
         "space_type": "cosinesimil",
         "method": {
           "name": "hnsw",

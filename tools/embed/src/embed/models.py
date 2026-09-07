@@ -36,7 +36,9 @@ class ModelSpec:
 QWEN3_QUERY = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
 HARRIER_QUERY = "Instruct: Given a web search query, retrieve relevant passages that answer the query\nQuery: "
 
-#: **선정 모델은 `qwen3-4b`** (ADR-0090 D5, 2026-09-07 개정) — 전 코퍼스 nDCG@10 0.7764 로 후보 7종 중 1위.
+#: **선정 모델은 `harrier-270m`** (ADR-0090 D5, 2026-09-08 개정) — 노드에 상주시킬 수 있는 최대 크기다.
+#: 품질 1위는 `qwen3-4b`(ko 하이브리드 0.7322)이지만 fp32 16.1GB 라 노드 여유 11.6GB 에 안 들어간다.
+#: 이전 주석(2026-09-07):
 #: 나머지는 그 판단의 대조군으로 남긴다. 지우지 않는다 — 모델을 다시 고를 때 같은 표를 다시 만들어야 한다.
 CANDIDATES: dict[str, ModelSpec] = {
     # 8B 는 4B 보다 낮았다(재순위 0.7686 vs 0.7765, 시간은 두 배). 절단 폭 탓으로 보인다:
