@@ -66,7 +66,11 @@ while read local_ref local_oid remote_ref remote_oid; do
     # 서브모듈 커밋을 먼저 push 하지 않고 본체 포인터만 올리면, CI 는 그 커밋을
     # 받을 수 없어 죽는다 ("upload-pack: not our ref"). 이미지가 아예 안 만들어지므로
     # 그 커밋의 변경분은 운영에 영원히 반영되지 않는다 (2026-08-22·23 images 3회).
-    sub_contains() { git -C "$1" branch -r --contains "$2" 2>/dev/null | grep -q .; }
+    # `git push` 는 훅에 GIT_DIR 을 **상위 레포로 설정해** 넘긴다. 그대로 두면 `git -C <서브모듈>` 이
+    # 서브모듈이 아니라 상위 레포를 보고, 거기엔 그 커밋이 없으니 **언제나 "원격에 없다"** 가 된다
+    # (서브모듈이 체크아웃된 모든 푸시가 막혔다 — 2026-09-07). 환경변수를 걷어내고 부른다.
+    sub_git() { env -u GIT_DIR -u GIT_WORK_TREE git -C "$@"; }
+    sub_contains() { sub_git "$1" branch -r --contains "$2" 2>/dev/null | grep -q .; }
 
     SUB_BAD=""
     for sub_path in $(git config -f .gitmodules --get-regexp '^submodule\..*\.path$' 2>/dev/null | awk '{print $2}'); do
@@ -74,7 +78,7 @@ while read local_ref local_oid remote_ref remote_oid; do
         # 로컬에 체크아웃되지 않은 서브모듈은 판정 불가 → 건너뛴다
         [ -e "$sub_path/.git" ] || continue
         if ! sub_contains "$sub_path" "$sub_sha"; then
-            git -C "$sub_path" fetch -q origin 2>/dev/null || true
+            sub_git "$sub_path" fetch -q origin 2>/dev/null || true
             sub_contains "$sub_path" "$sub_sha" || SUB_BAD="${SUB_BAD}${sub_path} ${sub_sha}"$'\n'
         fi
     done
