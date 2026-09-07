@@ -27,7 +27,11 @@ from sentence_transformers import SentenceTransformer  # noqa: E402
 
 torch.set_num_threads(THREADS)
 
-MODEL_ID = os.environ.get("ENCODER_MODEL", "microsoft/harrier-oss-v1-270m")
+# 적재 경로와 **스탬프에 쓰는 논리 id 를 분리한다.** 가중치는 이미지 안 경로에서 읽지만
+# 스탬프는 허브 id 여야 도구가 만든 문서 벡터와 같은 공간으로 인식된다.
+# 이 둘이 어긋나면 벡터 레그가 조용히 꺼진다(embeddingModel 필터가 아무것도 못 찾는다).
+MODEL_PATH = os.environ.get("ENCODER_MODEL", "microsoft/harrier-oss-v1-270m")
+MODEL_ID = os.environ.get("ENCODER_MODEL_ID", MODEL_PATH)
 REVISION = os.environ.get("ENCODER_REVISION", "")
 PROMPT = os.environ.get(
     "ENCODER_QUERY_PROMPT",
@@ -44,11 +48,14 @@ _lock = threading.Lock()
 def load() -> tuple[SentenceTransformer, str, int]:
     kwargs = {"torch_dtype": torch.float32, "use_safetensors": True}
     model = SentenceTransformer(
-        MODEL_ID, device="cpu", trust_remote_code=False,
+        MODEL_PATH, device="cpu", trust_remote_code=False,
         revision=REVISION or None, model_kwargs=kwargs,
     )
     dim = model.get_sentence_embedding_dimension()
-    rev = (REVISION or "unknown")[:7]
+    if not REVISION:
+        # 스탬프에 리비전이 없으면 어느 가중치인지 특정할 수 없다 — 조용히 도는 것보다 낫다.
+        raise SystemExit("ENCODER_REVISION 이 비어 있다 — 스탬프를 만들 수 없다")
+    rev = REVISION[:7]
     ref = f"{MODEL_ID}@{rev}#d{dim}"
     log.info("loaded %s (dim %d, threads %d)", ref, dim, THREADS)
     return model, ref, dim

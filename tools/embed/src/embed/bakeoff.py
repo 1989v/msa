@@ -173,6 +173,11 @@ def load_model(spec: ModelSpec, device: str | None = None):
     elif device != "cpu" and spec.fp16_ok:
         import torch
         model_kwargs["torch_dtype"] = torch.float16
+    else:
+        # fp16 을 못 쓰는 모델은 **fp32 로 못 박는다.** 체크포인트가 bf16 이면 라이브러리가
+        # 그대로 읽어 서버(fp32)와 정밀도가 갈리고, 같은 질의에 다른 벡터가 나온다.
+        import torch
+        model_kwargs["torch_dtype"] = torch.float32
     return SentenceTransformer(spec.hf_id, revision=spec.revision, device=device, model_kwargs=model_kwargs or None,
                                trust_remote_code=False)
 

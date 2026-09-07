@@ -344,6 +344,12 @@ jobs:
             # 시크릿 미설정이면 빈 값으로 빌드돼 로그인 버튼만 비활성 — 빌드는 실패시키지 않는다.
             BUILD_ARGS=()
             case "$svc" in
+              # 인코더는 모델 가중치를 이미지에 굽는다. 리비전을 여기서 고정해야
+              # 스탬프(hf_id@rev7#d{dim})가 도구가 만든 문서 벡터와 같은 공간을 가리킨다.
+              search-embed)
+                BUILD_ARGS+=(--build-arg "MODEL=microsoft/harrier-oss-v1-270m")
+                BUILD_ARGS+=(--build-arg "REVISION=31de22b673913c7d658c0f03f792d77c2dcf8ebd")
+                ;;
               admin-fe|portal-fe)
                 BUILD_ARGS+=(--build-arg "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}")
                 BUILD_ARGS+=(--build-arg "VITE_KAKAO_CLIENT_ID=${{ secrets.VITE_KAKAO_CLIENT_ID }}")

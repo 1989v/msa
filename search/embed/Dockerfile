@@ -14,6 +14,8 @@ snapshot_download('${MODEL}', revision='${REVISION}' or None, local_dir='/weight
   allow_patterns=['*.safetensors','*.json','*.txt','*.model','1_Pooling/*','2_Normalize/*'])"
 
 FROM python:3.12-slim
+ARG MODEL=microsoft/harrier-oss-v1-270m
+ARG REVISION
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 RUN pip install --no-cache-dir \
       --index-url https://download.pytorch.org/whl/cpu "torch==2.14.0" \
@@ -22,6 +24,8 @@ RUN pip install --no-cache-dir \
 COPY --from=weights /weights /opt/model
 COPY server.py /opt/encoder/server.py
 ENV ENCODER_MODEL=/opt/model ENCODER_THREADS=1 ENCODER_PORT=8099
+# 스탬프는 허브 id + 리비전이다 — 도구가 만든 문서 벡터와 같은 공간이어야 한다
+ENV ENCODER_MODEL_ID=${MODEL} ENCODER_REVISION=${REVISION}
 RUN useradd -u 10001 -m encoder && chown -R encoder /opt
 USER 10001
 EXPOSE 8099
