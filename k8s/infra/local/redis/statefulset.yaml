@@ -44,9 +44,9 @@ spec:
           resources:
             requests:
               cpu: 50m
-              memory: 128Mi
+              memory: 128Mi   # 실사용 5Mi (51배 여유)
             limits:
-              memory: 256Mi
+              memory: 128Mi
           volumeMounts:
             - name: data
               mountPath: /data

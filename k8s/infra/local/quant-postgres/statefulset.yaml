@@ -46,7 +46,8 @@ spec:
             periodSeconds: 15
           resources:
             requests: { cpu: 100m, memory: 256Mi }
-            limits:   { memory: 512Mi }
+            # 실사용 23Mi — 512Mi 는 22배 여유였다
+            limits:   { memory: 256Mi }
           volumeMounts:
             - name: data
               mountPath: /var/lib/postgresql/data

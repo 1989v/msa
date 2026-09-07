@@ -85,7 +85,7 @@ jobs:
           set -euo pipefail
 
           ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation place"
-          ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann"
+          ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
           if [[ -n "${SERVICES_INPUT// /}" ]]; then
@@ -175,6 +175,7 @@ jobs:
               recommendation/app/*|recommendation/domain/*) JVM_SVCS+=" recommendation" ;;
               recommendation-ml/*)                       DOCKER_SVCS+=" recommendation-ml" ;;
               recommendation-ann/*)                      DOCKER_SVCS+=" recommendation-ann" ;;
+              search/embed/*)                            DOCKER_SVCS+=" search-embed" ;;
               admin/frontend/*)                          DOCKER_SVCS+=" admin-fe" ;;
               portal-fe/*)                               DOCKER_SVCS+=" portal-fe" ;;
               # k8s 매니페스트만 변경 → 빌드 무관 (Argo CD 가 직접 sync)
@@ -324,6 +325,7 @@ jobs:
             [ranking-ingest]="ranking/ingest"
             [recommendation-ml]="recommendation-ml"
             [recommendation-ann]="recommendation-ann"
+            [search-embed]="search/embed"
           )
           for svc in ${{ steps.changes.outputs.docker_services }}; do
             ctx="${DOCKER_CTX[$svc]:-}"

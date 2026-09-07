@@ -53,3 +53,49 @@ spec:
               memory: 512Mi
             limits:
               memory: 1Gi
+
+        # 질의 인코더 (ADR-0090 개정 2026-09-08) — 같은 파드 안이라 app 은 localhost 로 부른다.
+        # 별도 Deployment 로 빼지 않는 이유: 질의 경로에 홉을 하나 더 얹지 않으려는 것과,
+        # 인코더가 검색 없이는 쓸 데가 없어 수명이 같기 때문이다.
+        - name: encoder
+          image: commerce/search-embed:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: encoder
+              containerPort: 8099
+          env:
+            # 1코어와 2코어의 실측 차이가 150ms 대 143ms 라 코어를 더 줘도 안 빨라진다.
+            # 남는 코어는 클러스터에 남긴다.
+            - name: ENCODER_THREADS
+              value: "1"
+          readinessProbe:
+            httpGet: { path: /healthz, port: encoder }
+            # 모델 적재가 25~45초라 늦게 시작한다. 이 값을 줄이면 기동 중에 죽는다.
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            httpGet: { path: /healthz, port: encoder }
+            initialDelaySeconds: 150
+            periodSeconds: 30
+            failureThreshold: 3
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            # read-only 루트라 파이썬이 쓰는 임시 경로만 연다
+            - name: encoder-tmp
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 100m
+              memory: 1Gi
+            # fp32 268M = 가중치 1.1GB + 활성화. 실측 RSS 는 1.6~2.0GB 였다.
+            limits:
+              memory: 2Gi
+      volumes:
+        - name: encoder-tmp
+          emptyDir: { sizeLimit: 256Mi }

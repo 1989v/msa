@@ -15,4 +15,4 @@ spec:
               cpu: 100m
               memory: 1Gi
             limits:
-              memory: 2Gi
+              memory: 1536Mi   # 실사용 947Mi (2.2배 여유)

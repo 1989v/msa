@@ -166,7 +166,10 @@ patches:
     target: {kind: Deployment, name: search-consumer}
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: recommendation}
+  # recommendation-ann 은 티어 뒤에 전용 패치로 다시 내린다(실사용 60Mi)
   - path: patches/resources-s-512mi.yaml
+    target: {kind: Deployment, name: recommendation-ann}
+  - path: patches/resources-ann-256mi.yaml
     target: {kind: Deployment, name: recommendation-ann}
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: auth}
@@ -418,6 +421,9 @@ images:
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
     newTag: 43e0c50
+  - name: commerce/search-embed
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-embed
+    newTag: latest
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
     newTag: 43e0c50

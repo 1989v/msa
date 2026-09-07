@@ -13,4 +13,4 @@ spec:
               cpu: 10m
               memory: 32Mi
             limits:
-              memory: 96Mi
+              memory: 64Mi   # FE 4종 실사용 4~5Mi — nginx 정적 서빙
