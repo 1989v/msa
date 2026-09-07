@@ -131,14 +131,20 @@ python -m embed.queries status --model qwen3-4b --internal http://localhost:8083
 `misses` 는 카운트 내림차순으로 받아 임베딩하고 **넣은 것만** 지운다 — 많이 물어본 질의부터 사전이 된다.
 `/internal/query-vectors/**` 는 **P1-4 에서 만든다**. 붙기 전까지 `seed`·`misses` 는 404 다(계약은 스펙에 고정).
 
-## P1 — 첫 채움 (`python -m embed.push`)
+## P1 — 첫 채움 (`python -m embed.export` → `python -m embed.push`)
 
 노트북은 클러스터에 닿지 않는다(자격증명을 Colab 에 두지 않는다). parquet 만 내고, 미는 것은 로컬이다.
+`--save-vectors` 로 남긴 npz 도 같은 parquet 이 된다 — 3시간짜리 인코딩을 첫 채움에 다시 쓰는 길이다.
 
 ```bash
-python -m embed.push --file vectors.parquet --internal http://localhost:8096 --dry-run  # 검사만
-python -m embed.push --file vectors.parquet --internal http://localhost:8096 --skip 12  # 끊긴 뒤 이어서
+python -m embed.export --npz <dir>/vec_ko_qwen3-4b_full.npz --dim 1024 --out vectors_ko.parquet
+python -m embed.push --file vectors_ko.parquet --internal http://localhost:8096 --dry-run  # 검사만
+python -m embed.push --file vectors_ko.parquet --internal http://localhost:8096 --skip 12  # 끊긴 뒤 이어서
 ```
+
+**npz 의 해시를 그대로 쓰면 안 된다.** 평가는 native 차원(qwen3-4b 는 2560)에서 인코딩하고 차원마다
+잘라 재므로 npz 의 해시는 native 스탬프로 만들어져 있다. 배포 차원으로 자르면 스탬프가 바뀌고
+해시도 바뀐다 — `export` 가 다시 계산한다. 그대로 썼다면 `push` 의 검사가 막는다.
 
 보내기 전에 도구가 먼저 검사한다(해시·차원·정규화·중복 id·단일 스탬프) — 업서트는 요청 단위 all-or-nothing 이라
 500건 중 한 건이 틀리면 나머지 499건도 거부된다.

@@ -81,6 +81,15 @@ class Corpus:
     meta: list[dict]
 
 
+def corpus_ref(spec: ModelSpec) -> str:
+    """평가용 코퍼스의 해시를 만드는 스탬프 — **native 차원**이다.
+
+    인코딩은 native 에서 한 번만 하고 차원마다 잘라 재므로(evaluate), 해시도 native 스탬프로 만든다.
+    배포 차원의 스탬프와 다르다 — 첫 채움 parquet 을 만들 때는 `embed.export` 가 다시 계산한다.
+    """
+    return spec.with_dim(spec.native_dim).ref if spec.revision else f"{spec.hf_id}@unknown#d{spec.native_dim}"
+
+
 def build_corpus(attractions: Iterable[dict], rule: str, model_ref: str) -> Corpus:
     fn = RULES[rule]
     ids, texts, hashes, meta = [], [], [], []
@@ -170,17 +179,17 @@ def load_model(spec: ModelSpec, device: str | None = None):
 
 def evaluate(spec: ModelSpec, model, attractions: list[dict], judgments: list[dict], *, dims: list[int],
              rules: list[str] = ("full", "title"), k: int = 10, lang_filter: str | None = None,
-             on_encoded=None) -> tuple[list[dict], dict]:
+             on_encoded=None, batch_size: int = 64) -> tuple[list[dict], dict]:
     """한 모델에 대해 차원 × 규칙 조합의 nDCG@10 평균과 질의별 상위 k 를 낸다. 인코딩은 native 차원에서 한 번만 하고 자른다."""
     rows: list[dict] = []
     per_query: dict = {}
     qs = [q for q in judgments if (lang_filter is None or q.get("lang", "ko") == lang_filter)]
     q_texts = [q["query"] for q in qs]
-    q_vecs_full = encode(model, q_texts, prompt=spec.query_prompt, dim=spec.native_dim)
+    q_vecs_full = encode(model, q_texts, prompt=spec.query_prompt, dim=spec.native_dim, batch_size=batch_size)
     for rule in rules:
-        corpus = build_corpus(attractions, rule, spec.with_dim(spec.native_dim).ref if spec.revision else f"{spec.hf_id}@unknown#d{spec.native_dim}")
+        corpus = build_corpus(attractions, rule, corpus_ref(spec))
         t0 = time.time()
-        d_vecs_full = encode(model, corpus.texts, prompt=spec.doc_prompt, dim=spec.native_dim)
+        d_vecs_full = encode(model, corpus.texts, prompt=spec.doc_prompt, dim=spec.native_dim, batch_size=batch_size)
         enc_s = time.time() - t0
         # **인코딩이 이 함수에서 가장 비싼 일이다**(4B·4.5만 건 = 3시간). 평가 단계에서 죽으면
         # 그걸 통째로 잃는다 — 실제로 그랬다(2026-09-07). 계산에 들어가기 전에 먼저 넘겨준다.
@@ -219,10 +228,14 @@ def bm25_baseline(judgments: list[dict], k: int = 10) -> dict:
             f"ndcg@{k}": round(float(np.mean(scores)), 4) if scores else None}
 
 
-def export_vectors(path: str, spec: ModelSpec, corpus: Corpus, vecs: np.ndarray) -> None:
-    """첫 채움용 parquet — push --file 이 읽는다. (attraction_id, model_ref, dim, embedding_text, text_hash, vector)"""
+def export_vectors(path: str, ref: str, dim: int, corpus: Corpus, vecs: np.ndarray) -> None:
+    """첫 채움용 parquet — push --file 이 읽는다. (attraction_id, model_ref, dim, embedding_text, text_hash, vector)
+
+    해시는 corpus 것을 그대로 쓴다. **corpus 를 만든 스탬프와 ref 가 같아야 한다** — 다르면
+    push 의 검사가 막는다(그것이 이 계약이 지켜지는 방식이다).
+    """
     import pandas as pd
-    df = pd.DataFrame({"attraction_id": [int(i) for i in corpus.ids], "model_ref": spec.ref, "dim": spec.dim,
+    df = pd.DataFrame({"attraction_id": [int(i) for i in corpus.ids], "model_ref": ref, "dim": dim,
                        "embedding_text": corpus.texts, "text_hash": corpus.hashes,
                        "vector": [v.astype(np.float32).tolist() for v in vecs]})
     df.to_parquet(path, index=False)
@@ -285,6 +298,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", help="마크다운 표를 쓸 파일")
     ap.add_argument("--score-saved", nargs=2, metavar=("VEC_NPZ", "QVEC_NPZ"),
                     help="저장된 인코딩만으로 차원별 nDCG 를 다시 낸다. 모델을 부르지 않아 초 단위다")
+    ap.add_argument("--batch-size", type=int, default=64,
+                    help="인코딩 배치. 큰 모델(4B 이상)은 64 에서 통합 메모리를 넘겨 스왑으로 떨어진다 — 8~16 으로 낮춘다")
     ap.add_argument("--save-vectors", metavar="DIR",
                     help="인코딩 결과를 규칙마다 npz 로 저장한다. **평가 전에 쓴다** — "
                          "이걸 주면 계산 단계에서 죽어도 인코딩을 다시 하지 않는다. 첫 채움에도 그대로 쓴다")
@@ -315,7 +330,7 @@ def main(argv: list[str] | None = None) -> int:
         f = d / f"vec_{a.lang}_{a.model}_{rule}.npz"
         np.savez_compressed(f, vectors=vecs.astype(np.float32),
                             ids=np.array(corpus.ids), hashes=np.array(corpus.hashes),
-                            texts=np.array(corpus.texts, dtype=object), model_ref=spec.ref, encode_s=enc_s)
+                            texts=np.array(corpus.texts, dtype=object), model_ref=corpus_ref(spec), encode_s=enc_s)
         saved.append(str(f))
         print(f"  인코딩 저장 → {f}  ({vecs.shape[0]}건 · {enc_s:.0f}초)", flush=True)
 
@@ -323,12 +338,12 @@ def main(argv: list[str] | None = None) -> int:
     if a.save_vectors:  # 질의는 싸다 — 문서와 함께 저장해 두면 나중에 모델 없이 재계산할 수 있다
         d = Path(a.save_vectors); d.mkdir(parents=True, exist_ok=True)
         qs = [q["query"] for q in judgments if q.get("lang", "ko") == a.lang]
-        qv = encode(model, qs, prompt=spec.query_prompt, dim=spec.native_dim)
+        qv = encode(model, qs, prompt=spec.query_prompt, dim=spec.native_dim, batch_size=a.batch_size)
         np.savez_compressed(d / f"qvec_{a.lang}_{a.model}.npz", vectors=qv.astype(np.float32),
                             queries=np.array(qs, dtype=object), model_ref=spec.ref)
         print(f"  질의 인코딩 저장 → qvec_{a.lang}_{a.model}.npz ({len(qs)}건)", flush=True)
     rows, _ = evaluate(spec, model, attractions, judgments, dims=dims, rules=rules,
-                       lang_filter=a.lang, on_encoded=save)
+                       lang_filter=a.lang, on_encoded=save, batch_size=a.batch_size)
 
     header = f"# 차원 비교 — {spec.ref} ({a.lang}, 질의 {rows[0]['judged_queries'] if rows else 0}개)\n\n"
     header += "**한 번 인코딩해 MRL 로 잘라 비교한다** — 차원마다 다시 돌린 값이 아니다.\n\n"
