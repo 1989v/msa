@@ -93,6 +93,13 @@
       "imageUrl": { "type": "keyword", "index": false },
       "thumbnailUrl": { "type": "keyword", "index": false },
       "tel": { "type": "keyword", "index": false },
+      "useTime": { "type": "text", "index": false },
+      "restDate": { "type": "text", "index": false },
+      "useFee": { "type": "text", "index": false },
+      "parking": { "type": "text", "index": false },
+      "parkingFee": { "type": "text", "index": false },
+      "infoCenter": { "type": "text", "index": false },
+      "introRaw": { "type": "text", "index": false },
       "googlePlaceId": { "type": "keyword", "index": false },
       "popularityScore": { "type": "float" },
       "embedding": {

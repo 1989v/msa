@@ -30,6 +30,13 @@ data class AttractionDocument(
     val tel: String? = null,
     val overview: String? = null,
     /** 구글맵 딥링크용 Google Places place_id — 검색 조건이 아니라 상세 표시물이다. */
+    val useTime: String? = null,
+    val restDate: String? = null,
+    val useFee: String? = null,
+    val parking: String? = null,
+    val parkingFee: String? = null,
+    val infoCenter: String? = null,
+    val introRaw: String? = null,
     val googlePlaceId: String? = null,
     /**
      * 완결성 기반 정렬 신호 — 위 필드들에서 파생한다 ([AttractionPopularity]).
