@@ -59,6 +59,14 @@ CANDIDATES: dict[str, ModelSpec] = {
                             "task: search result | query: ", doc_prompt="title: none | text: "),
     # 기준선(플랜 v1 실측 모델) — 작은 모델이 "충분한가"를 같은 표에서 본다
     "e5-small": ModelSpec("e5-small", "intfloat/multilingual-e5-small", 384, 384, "mean", False, "query: ", doc_prompt="passage: "),
+    # IBM Granite R2 (2026-04) — 첫 후보 조사(2026-09-05) 때 목록에만 있고 재지 않았다.
+    # Apache-2.0 · 한국어 명시 지원 · 97m 은 e5-small(118M)보다 작으면서 노드 1코어 36.5ms 로 더 빠르다.
+    # 체크포인트가 bf16 이라 **fp32 로 적재해야 한다** — Neoverse-N1 에 bf16 명령이 없어
+    # 그대로 두면 mkldnn 이 BLAS 폴백에 떨어져 쓸 수 없을 만큼 느려진다(2026-09-08 실측).
+    "granite-97m": ModelSpec("granite-97m", "ibm-granite/granite-embedding-97m-multilingual-r2",
+                             384, 384, "cls", False, None, fp16_ok=False),
+    "granite-311m": ModelSpec("granite-311m", "ibm-granite/granite-embedding-311m-multilingual-r2",
+                              768, 768, "cls", False, None, fp16_ok=False),
 }
 
 

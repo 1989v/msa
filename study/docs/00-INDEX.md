@@ -51,7 +51,7 @@ covers: 19 study topics (2026-04-16 ~ 2026-05-04)
 | 16 | [비동기 · 논블로킹 IO (NIO · Reactor · Netty)](16-async-nonblocking-io/) | advanced | 18h | 23 | 7,681 | true | completed (19 deep + 20 Reactor + Netty pipeline) |
 | 17 | [Spring Web 처리 심화 (Filter · Interceptor · AOP · Jackson · gzip)](17-spring-web/) | intermediate | 14h | 22 | 5,279 | true | completed (20 deep) |
 | 18 | [gRPC 심화 (Protobuf · HTTP/2 · Streaming)](18-grpc/) | intermediate | 14h | 22 | 6,297 | false | completed (20 deep) |
-| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 32h | 45 | 20,703 | true | completed (20 deep + 99 catalog + 22~33 보강 12 + 34~36 평가/modifier/자동완성 + 37~41 인덱스 템플릿/매핑 파워/운영 API/시계열/벡터 고급 + 42~44 online learning/MAB + 45 offline·online·bias 보정) |
+| 19 | [검색엔진 심화 (ES · OpenSearch · Hybrid · BM25 · nori)](19-search-engine/) | advanced | 35h | 46 | 21,100 | true | completed (20 deep + 99 catalog + 22~33 보강 12 + 34~36 평가/modifier/자동완성 + 37~41 인덱스 템플릿/매핑 파워/운영 API/시계열/벡터 고급 + 42~44 online learning/MAB + 45 offline·online·bias 보정 + 46 임베딩 모델 생애주기) |
 
 **합계**: 19 주제 / 455h 학습 시간 추정 / 449 file / 145,992 line.
 
