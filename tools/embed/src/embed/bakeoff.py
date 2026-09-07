@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import math
 import time
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Callable, Iterable
 
@@ -197,3 +198,52 @@ def export_vectors(path: str, spec: ModelSpec, corpus: Corpus, vecs: np.ndarray)
                        "embedding_text": corpus.texts, "text_hash": corpus.hashes,
                        "vector": [v.astype(np.float32).tolist() for v in vecs]})
     df.to_parquet(path, index=False)
+
+
+def main(argv: list[str] | None = None) -> int:
+    """차원·규칙 비교 — **한 번 인코딩해 잘라서** 잰다(MRL). 차원마다 다시 돌리지 않는다.
+
+      python -m embed.bakeoff --model qwen3-4b --lang ko --dims 512,1024 \
+             --judgments docs/specs/2026-09-05-unified-search/judgments.yml \
+             --corpus <scratchpad>/p0/pool/corpus_ko.json --device mps
+    """
+    import argparse
+    import json as _json
+
+    from . import models
+
+    ap = argparse.ArgumentParser(prog="python -m embed.bakeoff", description="차원·텍스트 규칙 비교")
+    ap.add_argument("--model", required=True)
+    ap.add_argument("--judgments", required=True)
+    ap.add_argument("--corpus", required=True, help="pool 이 캐시한 corpus_{lang}.json")
+    ap.add_argument("--lang", default="ko")
+    ap.add_argument("--dims", default="512,1024", help="쉼표 구분")
+    ap.add_argument("--rules", default="full", help="full | title | full,title")
+    ap.add_argument("--device")
+    ap.add_argument("--out", help="마크다운 표를 쓸 파일")
+    a = ap.parse_args(argv)
+
+    spec = models.resolve_revision(models.CANDIDATES[a.model])
+    attractions = _json.loads(Path(a.corpus).read_text(encoding="utf-8"))
+    judgments = load_judgments(a.judgments)
+    dims = [int(d) for d in a.dims.split(",")]
+    rules = tuple(r.strip() for r in a.rules.split(",") if r.strip())
+
+    model = load_model(spec, device=a.device)
+    rows, _ = evaluate(spec, model, attractions, judgments, dims=dims, rules=rules, lang_filter=a.lang)
+
+    header = f"# 차원 비교 — {spec.ref} ({a.lang}, 질의 {rows[0]['judged_queries'] if rows else 0}개)\n\n"
+    header += "**한 번 인코딩해 MRL 로 잘라 비교한다** — 차원마다 다시 돌린 값이 아니다.\n\n"
+    table = "| 규칙 | 차원 | nDCG@10 | 판정된 질의 | 문서 | 인코딩 |\n|---|---|---|---|---|---|\n"
+    for r in rows:
+        table += f"| {r['rule']} | {r['dim']} | {r['ndcg@10']} | {r['judged_queries']} | {r['docs']} | {r['encode_docs_s']}초 |\n"
+    out = header + table
+    print(out)
+    if a.out:
+        Path(a.out).write_text(out, encoding="utf-8")
+        print(f"→ {a.out}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

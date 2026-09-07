@@ -16,6 +16,19 @@ Colab(T4) 에서 후보 모델 × 차원(512·1024) × 텍스트 규칙(full·ti
 `docs/specs/2026-09-05-unified-search/judgments.yml` 의 `grade` 에 적는다 — 노트북은 정답을 만들지 않는다.
 결과 표는 플랜 §8.3 옆에 붙이고, 고른 모델의 벡터는 parquet 으로 내려 `push --file`(P1) 이 올린다.
 
+## P0 — 차원·규칙 비교 (`python -m embed.bakeoff`)
+
+**한 번 인코딩해 MRL 로 잘라서** 차원을 비교한다 — 차원마다 다시 돌리지 않는다(4B 는 native 2560).
+
+```bash
+python -m embed.bakeoff --model qwen3-4b --lang ko --dims 512,1024 --rules full \
+  --judgments docs/specs/2026-09-05-unified-search/judgments.yml \
+  --corpus <scratchpad>/p0/pool/corpus_ko.json --device mps --out dims.md
+```
+
+차원은 k-NN 메모리를 절반으로 줄이는 지렛대다(§8.4: 60k 문서가 512차원 244MB / 1024차원 478MB).
+둘 다 한도 안에 들어가므로 **nDCG 차이로만** 정한다.
+
 ## P0 — 판정 풀링 (`python -m embed.pool`)
 
 BM25 후보만 판정하면 벡터가 새로 찾은 문서가 "판정 없음"으로 빠진다. 후보 모델의 벡터 상위 10 중 BM25 후보에 없던 문서를
