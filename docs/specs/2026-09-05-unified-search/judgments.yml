@@ -1395,6 +1395,21 @@ queries:
       - {id: "1926", title: "Jocheon Lotus Park", category: "nature", address: "226 Beonam-ri, Jochiwon-eup, Sejong-si", grade: 0, by: llm}
       - {id: "14542", title: "Samcheok Maengbang Yuchaekkot Village", category: "culture", address: "3916-112 Samcheok-ro, Geundeok-myeon, Samcheok-si, Gangwon-do", grade: 0, by: llm}
       - {id: "1836", title: "Gwangju Park", category: "nature", address: "15 Jungang-ro 107beon-gil, Nam-gu, Jeonnam-Gwangju Special Metropolitan City", grade: 1, by: llm}
+    vector_candidates:
+      - {id: "35404", title: "Beotkkot Pharmacy - IFC  Mall Branch [Tax Refund Shop]", category: "shopping", address: "10, Gukjegeumyung-ro, Yeongdeungpo-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "2167", title: "Bullidan Street", category: "culture", address: "11 Bulguksintaekji 5-gil, Gyeongju-si, Gyeongsangbuk-do", models: ["arctic-ko", "arctic-official", "e5-small", "harrier-270m"], grade: 0, by: llm}
+      - {id: "14807", title: "Seogwipo Gasiri Village (Noksan-ro Canola Flower Road) (서귀포 가시리마을 (녹산로 유채꽃도로))", category: "culture", address: "20 Gasi-ro 565beon-gil, Pyoseon-myeon, Seogwipo-si, Jeju-do", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "13686", title: "Cheonho-dong Rose Village", category: "culture", address: "Cheonho-dong, Gangdong-gu, Seoul", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "45702", title: "10 Corso Como Cheongdam Branch", category: "shopping", address: "416, Apgujeong-ro, Gangnam-gu, Seoul", models: ["arctic-ko", "arctic-official"], grade: 0, by: llm}
+      - {id: "14480", title: "Cheongdo Provence", category: "nature", address: "272-23 Iseulmi-ro, Hwayang-eup, Cheongdo-gun, Gyeongsangbuk-do", models: ["arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "2150", title: "Bomun Tourist Complex", category: "nature", address: "Sinpyeong-dong, Gyeongju-si, Gyeongsangbuk-do", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "1995", title: "Goseokjeong Flower Field", category: "nature", address: "10-2 Jangheung-ri, Dongsong-eup, Cheorwon-gun, Gangwon-do", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "13767", title: "Cheomseongdae Observatory", category: "history", address: "140-25 Cheomseong-ro, Gyeongju-si, Gyeongsangbuk-do", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "13601", title: "Cheong Maesil Farm", category: "culture", address: "55 Jimak 1-gil, Daap-myeon, Gwangyang-si, Jeonnam-Gwangju Special Metropolitan City", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "14923", title: "Cheongsapo Port", category: "nature", address: "Jung-dong, Haeundae-gu, Busan", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "13754", title: "Hwangnyeongsan Observatory", category: "culture", address: "391-39 Hwangnyeongsan-ro, Nam-gu, Busan (Daeyeon-dong)", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "1667", title: "Incheon Jayu Park (자유공원 (인천))", category: "nature", address: "46 Jemullyang-ro 232beon-gil, Jemulpo-gu, Incheon", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "14516", title: "Samcheong Park", category: "nature", address: "44, Insadong-gil, Jongno-gu, Seoul", models: ["qwen3-4b"], grade: 2, by: llm}
   - query: "autumn foliage"
     lang: en
     intent: "Fall foliage viewing — '단풍 명소' 대응"
@@ -1411,6 +1426,42 @@ queries:
       - {id: "14784", title: "Chungnyeongsan Mountain", category: "nature", address: "299 Chungnyeongsan-ro, Sudong-myeon, Namyangju-si, Gyeonggi-do", grade: 2, by: llm}
       - {id: "14372", title: "Seosulla-gil Road", category: "culture", address: "150-3 Jong-ro, Jongno-gu, Seoul", grade: 2, by: llm}
       - {id: "14735", title: "Wondangsaem Park", category: "nature", address: "16 Haedeung-ro 32ga-gil, Dobong-gu, Seoul", grade: 1, by: llm}
+    vector_candidates:
+      - {id: "14583", title: "Seoraksan Osaek Jujeongol Valley", category: "nature", address: "Yaksu-gil, Seo-myeon, Yangyang-gun, Gangwon-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "2261", title: "Naejangsan National Park", category: "nature", address: "328 Naejanghoban-ro, Jeongeup-si, Jeonbuk-do", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "14703", title: "Seongmodo Shrubby Sea-blite Habitat", category: "nature", address: "29-3 Maeeum-ri, Samsan-myeon, Ganghwa-gun, Incheon", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m"], grade: 2, by: llm}
+      - {id: "2246", title: "Naejangsan Maple Ecology Park", category: "nature", address: "273-17 Naejanghoban-ro, Jeongeup-si, Jeonbuk-do", models: ["arctic-ko", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "2297", title: "Jeamsan Recreational Forest", category: "nature", address: "330, Daesan-gil, Boseong-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "14516", title: "Samcheong Park", category: "nature", address: "44, Insadong-gil, Jongno-gu, Seoul", models: ["arctic-ko", "harrier-270m"], grade: 2, by: llm}
+      - {id: "15039", title: "Maeheon Citizen's Forest", category: "nature", address: "99, Maeheon-ro, Seocho-gu, Seoul", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "1908", title: "Twelve Scenic Places of Ulsan City", category: "nature", address: "Ulsan Metropolitan City", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "2271", title: "Uniram Baniramgyegok Valley", category: "nature", address: "1926, Dongsangjucheon-ro, Jucheon-myeon, Jinan-gun, Jeonbuk-do", models: ["arctic-ko"], grade: 2, by: llm}
+      - {id: "13897", title: "Abai Village", category: "culture", address: "122-1 Cheongho-ro, Sokcho-si, Gangwon-do", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "15033", title: "Abai Village Ferry", category: "culture", address: "39, Jungangbudu-gil, Sokcho-si, Gangwon-do", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "1728", title: "Red Leaf Willow Habitat", category: "nature", address: "Miho-dong, Daedeok-gu, Daejeon", models: ["arctic-official", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "14609", title: "Picturesque Arboretum (Gallery in the Garden) [그림같은 수목원(그림이 있는 정원)]", category: "nature", address: "102-36, Chungseo-ro 400beon-gil, Gwangcheon-eup, Hongseong-gun, Chungcheongnam-do", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "37761", title: "Pleats Please-Shinsegae Department Store Times Square Branch [Tax Refund Shop]", category: "shopping", address: "2F, 9, Yeongjung-ro, Yeongdeungpo-gu, Seoul", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "42157", title: "FOLDER Sinchon Highlight Branch [Tax Refund Shop]", category: "shopping", address: "1F, 7, Yonsei-ro, Seodaemun-gu, Seoul", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "18223", title: "Forest Museum", category: "culture", address: "3054 Misiryeong-ro, Sokcho-si, Gangwon-do", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "13824", title: "Gochang Blue Farm", category: "culture", address: "41-27 Cheongcheon-gil, Gongeum-myeon, Gochang-gun, Jeonbuk-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "2372", title: "Hueree Natural Park", category: "nature", address: "256 Sillyedong-ro, Namwon-eup, Seogwipo-si, Jeju-do", models: ["bge-m3", "e5-small"], grade: 1, by: llm}
+      - {id: "2093", title: "Yugu Pink Muhly Garden", category: "nature", address: "648-18 Yuguri, Yugu-eup, Gongju-si, Chungcheongnam-do", models: ["bge-m3", "e5-small"], grade: 2, by: llm}
+      - {id: "1943", title: "Osan Dolmen Park", category: "nature", address: "449, Sumogwon-ro, Osan-si, Gyeonggi-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "22422", title: "Odaesan Seonjaegil Trail", category: "leisure", address: "374-8 , Odaesan-ro, Pyeongchang-gun, Gangwon-do", models: ["bge-m3", "e5-small", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "1926", title: "Jocheon Lotus Park", category: "nature", address: "226 Beonam-ri, Jochiwon-eup, Sejong-si", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "1917", title: "Ulsan Theme Botanic Gardens & Arboretum", category: "nature", address: "33-1, Soepyeong-gil, Dong-gu, Ulsan", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "14205", title: "Uam-dong Urban Forest", category: "nature", address: "6-6 Donghang-ro 106beonga-gil, Nam-gu, Busan", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "13817", title: "Unmunsan National Recreational Forest", category: "nature", address: "763 Unmun-ro, Cheongdo-gun, Gyeongsangbuk-do", models: ["e5-small"], grade: 2, by: llm}
+      - {id: "41212", title: "Folder Jeonju Gaeksa Branch [Tax Refund Shop]", category: "shopping", address: "1F, 25, Jeonjugaeksa 5-gil, Wansan-gu, Jeonju-si, Jeonbuk-do", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "1995", title: "Goseokjeong Flower Field", category: "nature", address: "10-2 Jangheung-ri, Dongsong-eup, Cheorwon-gun, Gangwon-do", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "14326", title: "Sinsa-dong Garosu-gil Road", category: "culture", address: "Sinsa-dong, Gangnam-gu, Seoul", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "2181", title: "Tongiljeon Ginkgo Road", category: "nature", address: "6 Chilburam-gil, Gyeongju-si, Gyeongsangbuk-do", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "14546", title: "Achasan Mountain", category: "nature", address: "Acheon-dong, Guri-si, Gyeonggi-do", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "14585", title: "Hongcheon Ginkgo Forest", category: "nature", address: "686-4 Gwangwon-ri, Nae-myeon, Hongcheon-gun, Gangwon-do", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "13625", title: "Red Spider Lily Park of Yongcheonsa Temple", category: "nature", address: "209 Yongcheonsa-gil, Haebo-myeon, Hampyeong-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "13530", title: "Damyang Metasequoia-lined Road", category: "nature", address: "12, Metasequoia-ro, Damyang-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "2136", title: "Dori Village Ginkgo Tree Forest", category: "nature", address: "35-102 Do-ri, Seo-myeon, Gyeongju-si, Gyeongsangbuk-do", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "2283", title: "Piagolgyegok Valley", category: "nature", address: "Piagol-ro, Gurye-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "sunrise viewpoint"
     lang: en
     intent: "Places to watch the sunrise — '일출 명소' 대응"
@@ -1427,6 +1478,26 @@ queries:
       - {id: "1677", title: "Geojampo Beach", category: "nature", address: "11, Jamjindo-gil, Yeongjong-gu, Incheon", grade: 1, by: llm}
       - {id: "59601", title: "Doripo", category: "nature", address: "Songseok-ri, Haeje-myeon, Muan-gun, Jeonnam-Gwangju Special Metropolitan City", grade: 1, by: llm}
       - {id: "1909", title: "Cape Ganjeolgot Somang-gil", category: "nature", address: "Nasa-ri, Seosaeng-myeon, Ulju-gun, Ulsan", grade: 3, by: llm}
+    vector_candidates:
+      - {id: "1708", title: "Janghwa-ri Sunset Viewing Point", category: "nature", address: "1408 Janghwa-ri, Hwado-myeon, Ganghwa-gun, Incheon", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m"], grade: 1, by: llm}
+      - {id: "1706", title: "Wolmi Park Wolmi Observatory", category: "culture", address: "294 Wolmi-ro, Jemulpo-gu, Incheon", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "34753", title: "Sunrise A&T Busan Seomyeon Underground Branch [Tax Refund Shop]", category: "shopping", address: "777, Gaya-daero, Busanjin-gu, Busan-si", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "14954", title: "Namhae Treasure Island Observatory", category: "culture", address: "720 , Dongbu-daero, Namhae-gun, Gyeongsangnam-do", models: ["arctic-ko", "harrier-270m"], grade: 1, by: llm}
+      - {id: "22282", title: "Seonyu Sky Sunline", category: "leisure", address: "136 Seonyubuk-gil, Okdo-myeon, Gunsan-si, Jeonbuk-do", models: ["arctic-ko", "arctic-official"], grade: 1, by: llm}
+      - {id: "2330", title: "Sebang Sunset Observatory", category: "nature", address: "Jisan-myeon, Jindo-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "13598", title: "Mokpo Skywalk", category: "culture", address: "59 Haeyangdaehak-ro, Mokpo-si, Jeonnam-Gwangju Special Metropolitan City", models: ["bge-m3", "harrier-270m"], grade: 1, by: llm}
+      - {id: "40363", title: "Hello Sunrise Hannam [Tax Refund Shop]", category: "shopping", address: "1F, 58-5, Itaewon-ro 54-gil, Yongsan-gu, Seoul", models: ["bge-m3", "e5-small"], grade: 0, by: llm}
+      - {id: "14866", title: "Apsan Mountain Haeneomi Observatory", category: "culture", address: "Daemyeong-dong, Nam-gu, Daegu", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "42127", title: "Viewmap Yeonnam [Tax Refund Shop]", category: "shopping", address: "1, Yeonnam-ro, Mapo-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "44838", title: "SUNBURNPROJECT  [Tax Refund Shop]", category: "shopping", address: "228, Itaewon-ro, Yongsan-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "37180", title: "VIEWRAUM Mecenatpolis Branch [Tax Refund Shop]", category: "shopping", address: "45, Yanghwa-ro, Mapo-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "22452", title: "Seorak Plaza Country Club", category: "leisure", address: "1111, Misiryeong-ro 2983beon-gil, Sokcho-si, Gangwon-do", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "14934", title: "Amisan Observatory", category: "culture", address: "77 , Dadaenakjo 2-gil, Saha-gu, Busan", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "14220", title: "Jukdojeong Pavilion & Jukdo Observatory", category: "nature", address: "1-1 In-gu-ri, Hyeonnam-myeon, Yangyang-gun, Gangwon-do", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "13739", title: "Ganjeolgot Lighthouse", category: "culture", address: "39-2 Ganjeolgot 1-gil, Ulju-gun, Ulsan", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "15052", title: "Sinseondae Observatory", category: "culture", address: "San 21-19, Galgot-ri, Geoje-si, Gyeongsangnam-do", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "2326", title: "Dorisan Observatory", category: "culture", address: "54, Jodo-daero, Jodo-myeon, Jindo-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "14271", title: "Jukdosan Observatory", category: "culture", address: "90 Chuksanhang-gil, Chuksan-myeon, Yeongdeok-gun, Gyeongsangbuk-do", models: ["qwen3-4b"], grade: 2, by: llm}
   - query: "traditional market food"
     lang: en
     intent: "Street food at traditional markets — '전통시장 먹거리' 대응"
@@ -1443,6 +1514,24 @@ queries:
       - {id: "13526", title: "Suncheon Traditional Wild Tea House", category: "culture", address: "450-1 Seonamsa-gil, Seungju-eup, Suncheon-si, Jeonnam-Gwangju Special Metropolitan City", grade: 1, by: llm}
       - {id: "18245", title: "Namwon Traditional Lacquer Craft Center", category: "culture", address: "1234-5 Yocheon-ro, Namwon-si, Jeonbuk-do", grade: 0, by: llm}
       - {id: "22249", title: "Ojukheon Traditional Boating Experience Center", category: "leisure", address: "754 Jukheon-dong, Gangneung-si, Gangwon-do", grade: 0, by: llm}
+    vector_candidates:
+      - {id: "45670", title: "Sejong Traditional Market (세종전통시장(4, 9일))", category: "shopping", address: "42 Jochiwon 8-gil, Jochiwon-eup, Sejong-si", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45740", title: "Dongmun Traditional Market", category: "shopping", address: "20 Gwandeok-ro 14-gil, Jeju-si, Jeju-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45719", title: "Jeonju Nambu Traditional Market", category: "shopping", address: "19-3 Pungnammun 1-gil, Wansan-gu, Jeonju-si, Jeonbuk-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45680", title: "Seoho Traditional Market", category: "shopping", address: "42-7 Saeteo-gil, Tongyeong-si, Gyeongsangnam-do", models: ["arctic-ko", "arctic-official", "e5-small", "harrier-270m"], grade: 3, by: llm}
+      - {id: "35218", title: "Danyang Gugyeong Traditional Market (open on dates ending in 1 and 6) (단양장 / 단양구경시장 (1, 6일))", category: "shopping", address: "31 Dojeon 5-gil, Danyang-eup, Danyang-gun, Chungcheongbuk-do", models: ["arctic-ko", "arctic-official", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45757", title: "Hallim Traditional 5-Day Market (4th and 9th) (한림민속 5일시장 (4, 9일))", category: "shopping", address: "", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45721", title: "Jeonju New Jungang Market", category: "shopping", address: "70 Taepyeong 3-gil, Wansan-gu, Jeonju-si, Jeonbuk-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small"], grade: 2, by: llm}
+      - {id: "34704", title: "Mangwon Market", category: "shopping", address: "27 Poeun-ro 6-gil, Mapo-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "34772", title: "1913 Songjeong Station Market", category: "shopping", address: "13 Songjeong-ro 8beon-gil, Gwangsan-gu, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko"], grade: 3, by: llm}
+      - {id: "35234", title: "Jeonju Moraenae Market", category: "shopping", address: "8-8 Moraenae 4-gil, Deokjin-gu, Jeonju-si, Jeonbuk-do", models: ["arctic-official", "bge-m3", "e5-small", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "34771", title: "Sinpo International Market", category: "shopping", address: "11-5 Uhyeon-ro 49beon-gil, Jemulpo-gu, Incheon", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "45712", title: "Ulsan Keunaegi Night Market", category: "shopping", address: "90 Jeolmeumui-geori, Jung-gu, Ulsan", models: ["bge-m3", "harrier-270m"], grade: 2, by: llm}
+      - {id: "45703", title: "Paldalmun Market", category: "shopping", address: "17 Jeongjo-ro 770beon-gil, Paldal-gu, Suwon-si, Gyeonggi-do", models: ["e5-small"], grade: 2, by: llm}
+      - {id: "45665", title: "Jukdo Market", category: "shopping", address: "13 Jukdosijang 13-gil, Buk-gu, Pohang-si, Gyeongsangbuk-do", models: ["e5-small", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "37245", title: "Gijang Market", category: "shopping", address: "72-3, Daera-ri, Gijang-eup, Gijang-gun, Busan", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "35221", title: "Motgol Market", category: "shopping", address: "10-12 Suwoncheon-ro 258beon-gil, Paldal-gu, Suwon-si, Gyeonggi-do", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "45675", title: "Cheongju Yukgeori Market", category: "shopping", address: "46, Cheongnam-ro 2197beon-gil, Sangdang-gu, Cheongju-si, Chungcheongbuk-do", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "hanok village"
     lang: en
     intent: "Traditional Korean house villages — '한옥마을' 대응"
@@ -1459,6 +1548,14 @@ queries:
       - {id: "14444", title: "O Sung Hanok Village", category: "history", address: "Daeheung-ri, Wangju-gun, Jeonbuk-do", grade: 3, by: llm}
       - {id: "23", title: "Bukchon Hanok Village", category: "culture", address: "37 Gyedong-gil, Jongno-gu, Seoul", grade: 3, by: llm}
       - {id: "29", title: "Jeonju Hanok Village", category: "culture", address: "99 Girin-daero, Wansan-gu, Jeonju-si, Jeollabuk-do", grade: 3, by: llm}
+    vector_candidates:
+      - {id: "15238", title: "Yeongju Museom Village", category: "history", address: "31-12, Museom-ro 234beon-gil, Yeongju-si, Gyeongsangbuk-do", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "13736", title: "Namsa Yedamchon Village", category: "history", address: "10 Jirisan-daero 2897beon-gil, Danseong-myeon, Sancheong-gun, Gyeongsangnam-do", models: ["arctic-official", "harrier-270m"], grade: 3, by: llm}
+      - {id: "14402", title: "Yekki Village", category: "history", address: "14 Seonseong-gil, Dosan-myeon, Andong-si, Gyeongsangbuk-do", models: ["bge-m3", "e5-small"], grade: 2, by: llm}
+      - {id: "14319", title: "Goseong Wanggok Village", category: "history", address: "", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "14469", title: "Sanoe Hanu Village", category: "culture", address: "450 Sanoe-ro, Sanoe-myeon, Jeongeup-si, Jeonbuk-do", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "43572", title: "Doggom Ceramic Jeonju Hanok Village Branch [Tax Refund Shop]", category: "shopping", address: "14-3, Taejo-ro, Wansan-gu, Jeonju-si, Jeonbuk-do", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "1778", title: "Myeongpum Otgol 1616 Cooperative Society", category: "history", address: "195-5 Otgol-ro, Dong-gu, Daegu", models: ["harrier-270m"], grade: 2, by: llm}
   - query: "art museum"
     lang: en
     intent: "Art museums and galleries — '미술관' 대응"
@@ -1475,6 +1572,28 @@ queries:
       - {id: "18373", title: "Ilmin Art Museum", category: "culture", address: "152, Sejong-daero, Jongno-gu, Seoul", grade: 3, by: llm}
       - {id: "18000", title: "Gwangju Museum of Art", category: "culture", address: "52, Haseo-ro, Buk-gu, Jeonnam-Gwangju Special Metropolitan City", grade: 3, by: llm}
       - {id: "18028", title: "Eunam Museum of Art", category: "culture", address: "8-12 Seoseok-ro 85beon-gil, Dong-gu, Jeonnam-Gwangju Special Metropolitan City", grade: 3, by: llm}
+    vector_candidates:
+      - {id: "18226", title: "Museum 1", category: "culture", address: "20 Centum seo-ro, Haeundae-gu, Busan", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "18081", title: "AMI Art Museum", category: "culture", address: "753-4 Nambu-ro, Sunseong-myeon, Dangjin-si, Chungcheongnam-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m"], grade: 3, by: llm}
+      - {id: "18084", title: "Museum of Art, Seoul National University", category: "culture", address: "1 Gwanak-ro, Gwanak-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "18233", title: "Seoul Museum of Art (서울시립미술관(서소문본관))", category: "culture", address: "61 Deoksugung-gil, Jung-gu, Seoul", models: ["arctic-ko", "arctic-official", "e5-small", "harrier-270m"], grade: 3, by: llm}
+      - {id: "18397", title: "Total Museum", category: "culture", address: "8, Pyeongchang 32-gil, Jongno-gu, Seoul", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "18119", title: "Ulsan Art Museum", category: "culture", address: "72 Misulgwan-gil, Jung-gu, Ulsan", models: ["arctic-ko", "arctic-official", "e5-small", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "18206", title: "Daegu Art Museum", category: "culture", address: "40, Misulgwan-ro, Suseong-gu, Daegu", models: ["arctic-ko", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "18365", title: "Africa Museum of Art", category: "culture", address: "24-1, Samcheong-ro, Jongno-gu, Seoul", models: ["arctic-ko", "bge-m3", "e5-small", "harrier-270m"], grade: 3, by: llm}
+      - {id: "18067", title: "OAR Contemporary Art Museum", category: "culture", address: "260-6 Geumseong-ro, Gyeongju-si, Gyeongsangbuk-do", models: ["arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "18361", title: "Leeum, Samsung Museum of Art", category: "culture", address: "60-16, Itaewon-ro 55-gil, Yongsan-gu, Seoul (Hannam-dong)", models: ["arctic-official", "bge-m3", "harrier-270m"], grade: 3, by: llm}
+      - {id: "18140", title: "Museum of Modern and Contemporary Art Cheongju [MMCA Cheongju] (국립현대미술관(청주관))", category: "culture", address: "314 Sangdang-ro, Cheongwon-gu, Cheongju-si, Chungcheongbuk-do", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "44809", title: "THE MUSEUM VISITOR [Tax Refund Shop]", category: "shopping", address: "20, Gwangnaru-ro 2-gil, Seongdong-gu, Seoul", models: ["bge-m3", "e5-small"], grade: 0, by: llm}
+      - {id: "18016", title: "Han Hee-won Art Museum", category: "culture", address: "27-6, Yangchon-gil, Nam-gu, Jeonnam-Gwangju Special Metropolitan City", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "41538", title: "Gyo Dong Museum of Art [Tax Refund Shop]", category: "shopping", address: "89, Gyeonggijeon-gil, Wansan-gu, Jeonju-si, Jeollabuk-do", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "44554", title: "Art Malling [Tax Refund Shop]", category: "shopping", address: "1413, Nakdongnam-ro, Saha-gu, Busan", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "18239", title: "ARTE Museum Valley Gangneung", category: "culture", address: "131 Nanseolheon-ro, Gangneung-si, Gangwon-do", models: ["e5-small", "harrier-270m"], grade: 2, by: llm}
+      - {id: "18261", title: "Seoul Museum of Art (SeMA)", category: "culture", address: "1238, Dongil-ro, Nowon-gu, Seoul", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "18360", title: "Hangaram Art Museum in Seoul Arts Center", category: "culture", address: "2406, Nambusunhwan-ro, Seocho-gu, Seoul", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "18341", title: "Busan Museum of Art", category: "culture", address: "58, APEC-ro, Haeundae-gu, Busan", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "18082", title: "C Art Museum (Art Museum in Forest) (C아트뮤지엄(숲속의 미술공원))", category: "culture", address: "57-13 Darakgeuni-gil, Yangdong-myeon, Yangpyeong-gun, Gyeonggi-do", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "18148", title: "Daejeon Museum of Art", category: "culture", address: "155 Dunsan-daero, Seo-gu, Daejeon", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "cable car"
     lang: en
     intent: "Cable cars and ropeways — '케이블카' 대응"
@@ -1491,6 +1610,10 @@ queries:
       - {id: "13584", title: "Mokpo Marine Cable Car", category: "leisure", address: "240 Haeyangdaehak-ro, Mokpo-si, Jeonnam-Gwangju Special Metropolitan City", grade: 3, by: llm}
       - {id: "13444", title: "Seohaerang Jebu Marine Cable Car", category: "leisure", address: "1-10 Jeongokhang-ro, Seosin-myeon, Hwaseong-si, Gyeonggi-do", grade: 3, by: llm}
       - {id: "1761", title: "Palgongsan Cable Car", category: "leisure", address: "51 Palgongsan-ro 185-gil, Dong-gu, Daegu", grade: 3, by: llm}
+    vector_candidates:
+      - {id: "14365", title: "Namsan Cable Car", category: "leisure", address: "83 Sopa-ro, Jung-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "13861", title: "Chuncheon Samaksan Mountain Lake Cable Car", category: "leisure", address: "245 Sports town-gil, Chuncheon-si, Gangwon-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "14323", title: "Songdo Sky Park", category: "culture", address: "181 Amnamgongwon-ro, Seo-gu, Busan", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m"], grade: 2, by: llm}
   - query: "hiking trail"
     lang: en
     intent: "Mountain hiking courses — '등산 코스' 대응"
@@ -1507,6 +1630,35 @@ queries:
       - {id: "22391", title: "Gyeyangsan Mountain Trail", category: "leisure", address: "Danam-dong, Gyeyang-gu, Incheon", grade: 3, by: llm}
       - {id: "2165", title: "Padosori Trail", category: "nature", address: "405-7 Eupcheon-ri, Yangnam-myeon, Gyeongju-si, Gyeongsangbuk-do", grade: 2, by: llm}
       - {id: "14701", title: "Namhansanseong Trail", category: "leisure", address: "Sanseong-ri, Namhansanseong-myeon, Gwangju-si, Gyeonggi-do", grade: 3, by: llm}
+    vector_candidates:
+      - {id: "14680", title: "Eco Healing Red Clay Trail", category: "nature", address: "159 Gongwon-ro, Seobuk-gu, Cheonan-si, Chungcheongnam-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m"], grade: 2, by: llm}
+      - {id: "22325", title: "[Seoul Trail Course 1] Suraksan · Buramsan Mountain Course", category: "leisure", address: "Junggye-dong, Nowon-gu, Seoul, Republic of Korea", models: ["arctic-ko", "arctic-official", "e5-small"], grade: 3, by: llm}
+      - {id: "22358", title: "Saemangeum Trail", category: "leisure", address: "1192-1 Hwapo-ri, Jinbong-myeon, Gimje-si, Jeonbuk-do", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "22396", title: "Homibando Peninsula Coastal Trail", category: "leisure", address: "360 Ibam-ri, Donghae-myeon, Nam-gu, Pohang-si, Gyeongsangbuk-do", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "2338", title: "Yeongsil Trail (Hallasan National Park)", category: "nature", address: "246 Yeongsil-ro, Seogwipo-si, Jeju-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22407", title: "Bukhansan Dulle Trail Section 1", category: "leisure", address: "12 Samyang-ro 173-gil, Gangbuk-gu, Seoul", models: ["arctic-ko", "arctic-official", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "14994", title: "Danyanggang Jando Trail", category: "nature", address: "San 18-15, Aegok-ri, Danyang-gun, Chungcheongbuk-do", models: ["arctic-ko"], grade: 2, by: llm}
+      - {id: "22380", title: "Wollyubong Trail", category: "leisure", address: "Wonchon-ri, Hwanggan-myeon, Yeongdong-gun, Chungcheongbuk-do", models: ["arctic-ko", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "22414", title: "Morundae-gil Trail [Haean Nuri-gil]", category: "leisure", address: "734 Dadae-ro, Saha-gu, Busan", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "14614", title: "Ttangmoesan Mountain", category: "nature", address: "260-1 Oryundae-ro, Geumjeong-gu, Busan", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 2, by: llm}
+      - {id: "22413", title: "High1 Haneulgil Trekking", category: "leisure", address: "265-1 High1-gil, Gohan-eup, Jeongseon-gun, Gangwon-do", models: ["arctic-official", "harrier-270m", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "22422", title: "Odaesan Seonjaegil Trail", category: "leisure", address: "374-8 , Odaesan-ro, Pyeongchang-gun, Gangwon-do", models: ["bge-m3", "e5-small", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22390", title: "Sanmagi Old Trail", category: "leisure", address: "88 Sanmagiyet-gil, Chilseong-myeon, Goesan-gun, Chungcheongbuk-do", models: ["bge-m3", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "13925", title: "Magoksa Natural Pine Forest Trail", category: "nature", address: "Magoksa-ro, Sagok-myeon, Gongju-si, Chungcheongnam-do", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "22301", title: "Hantangang River Jusangjeolli-gil (철원 한탄강 주상절리길(잔도))", category: "leisure", address: "San78-2 Guntan-ri, Galmal-eup, Cheorwon-gun, Gangwon-do", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "13775", title: "National Center for Forest Activities, Chilgok", category: "leisure", address: "532 Yuhak-ro, Seokjeok-eup, Chilgok-gun, Gyeongsangbuk-do", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "2186", title: "Gayasan Sori-gil", category: "nature", address: "1783 Gayasan-ro, Gaya-myeon, Hapcheon-gun, Gyeongsangnam-do", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "22433", title: "Gyejoksan Red Clay Trail", category: "leisure", address: "San 85, Jang-dong, Daedeok-gu, Daejeon", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "44815", title: "TRAIL HEAD Seongsu Branch [Tax Refund Shop]", category: "shopping", address: "1F, 54, Achasan-ro, Seongdong-gu, Seoul", models: ["e5-small", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "14611", title: "Seunghaksan Mountain", category: "nature", address: "1-4 Dangni-dong, Saha-gu, Busan", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "14429", title: "Jeoryeonghaean Coastal Walking Trail", category: "nature", address: "52 Haeansanchaek-gil, Yeongdo-gu, Busan", models: ["e5-small", "harrier-270m"], grade: 2, by: llm}
+      - {id: "14392", title: "Hongcheon Palbongsan Mountain (팔봉산(홍천))", category: "nature", address: "1124 Hanchigol-gil, Seo-myeon, Hongcheon-gun, Gangwon-do", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "22339", title: "Solmaru Trail", category: "leisure", address: "233 Dotjil-ro, Nam-gu, Ulsan", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "22342", title: "Chogok Yonggul Chotdaebawi Trail", category: "leisure", address: "236-20 Chogok-gil, Geundeok-myeon, Samcheok-si, Gangwon-do", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "14555", title: "Seoul Hiking Tourism Center - Bugaksan Branch (서울도심등산관광센터(북악산))", category: "leisure", address: "88 Samcheong-ro, Jongno-gu, Seoul", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "14554", title: "Seoul Hiking Tourism Center - Bukhansan Branch (서울도심등산관광센터(북한산))", category: "leisure", address: "5F, 181-7 Ui-dong, Gangbuk-gu, Seoul", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "44779", title: "TRAIL HEAD Dobong Branch [Tax Refund Shop]", category: "shopping", address: "53, Dobongsan-gil, Dobong-gu, Seoul", models: ["harrier-270m", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "22371", title: "DMZ Peace Trail (Goseong A/B Course) (DMZ 평화의 길(고성 A/B코스))", category: "leisure", address: "481 Geumgangsan-ro, Hyeonnae-myeon, Goseong-gun, Gangwon-do", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "island trip"
     lang: en
     intent: "Islands worth visiting — '섬 여행' 대응"
@@ -1523,6 +1675,34 @@ queries:
       - {id: "2296", title: "Bigeumdo Island", category: "nature", address: "Jukrim-ri, Sinan-gun, Jeonnam-Gwangju Special Metropolitan City", grade: 3, by: llm}
       - {id: "2318", title: "Jindo Island", category: "nature", address: "Jindo-eup, Jindo-gun, Jeonnam-Gwangju Special Metropolitan City", grade: 3, by: llm}
       - {id: "13542", title: "Soando Island", category: "nature", address: "Soan-myeon, Wando-gun, Jeonnam-Gwangju Special Metropolitan City", grade: 3, by: llm}
+    vector_candidates:
+      - {id: "37717", title: "Thursday Island - Mario Outlet Building 1 Branch [Tax Refund Shop]", category: "shopping", address: "185, Digital-ro, Geumcheon-gu, Seoul", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "36623", title: "Thursday Island - Shinsegae Simon Premium Outlets Yeoju Branch [Tax Refund Shop]", category: "shopping", address: "360, Myeongpum-ro, Yeoju-si, Gyeonggi-do", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m"], grade: 0, by: llm}
+      - {id: "13765", title: "Gapado Island", category: "nature", address: "Gapa-ro, Daejeong-eup, Seogwipo-si, Jeju-do", models: ["arctic-ko", "arctic-official", "harrier-270m"], grade: 3, by: llm}
+      - {id: "36491", title: "Thursday Island - LOTTE Premium Outlets Icheon Branch [Tax Refund Shop]", category: "shopping", address: "2F, 177-74, Premium outlet-ro, Hobeop-myeon, Icheon-si, Gyeonggi-do", models: ["arctic-ko", "e5-small", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "36452", title: "Thursday Island - LOTTE Premium Outlets Paju Branch [Tax Refund Shop]", category: "shopping", address: "1F, 284, Munbal-ro, Paju-si, Gyeonggi-do", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "39714", title: "Thursday Island - Hyundai Department Store KINTEX Branch [Tax Refund Shop]", category: "shopping", address: "817, Hosu-ro, Ilsanseo-gu, Goyang-si, Gyeonggi-do", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "35680", title: "Thursday Island - Hyundai Outlets Gasan Branch [Tax Refund Shop]", category: "shopping", address: "2F, 9, Digital-ro 10-gil, Geumcheon-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "43707", title: "Thursday Island Times Square Branch [Tax Refund Shop]", category: "shopping", address: "15, Yeongjung-ro, Yeongdeungpo-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "14351", title: "Herb Island", category: "culture", address: "35 Cheongsin-ro 947beon-gil, Sinbuk-myeon, Pocheon-si, Gyeonggi-do", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "39509", title: "Thursday Island - Shinsegae Simon Premium Outlets Jeju Branch [Tax Refund Shop]", category: "shopping", address: "B1F, 38, Sinhwayeoksa-ro 304beon-gil, Andeok-myeon, Seogwipo-si, Jeju-do", models: ["arctic-official", "bge-m3"], grade: 0, by: llm}
+      - {id: "14033", title: "We Trip Korea ((주)우리클럽관광개발)", category: "etc", address: "(101-1204, Lotte Castle President), 467 Gongdeok-dong, Mapo-gu, Seoul", models: ["arctic-official", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "39092", title: "Thursday Island - Hyundai Premium Outlets Songdo Branch [Tax Refund Shop]", category: "shopping", address: "2F, 123, Songdogukje-daero, Yeonsu-gu, Incheon", models: ["arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "36883", title: "Thursday Island - Hyundai Premium Outlet Space 1 Branch [Tax Refund Shop]", category: "shopping", address: "2F, 50, Dasansunhwan-ro, Namyangju-si, Gyeonggi-do", models: ["arctic-official", "bge-m3", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "41896", title: "Island Project Main Branch [Tax Refund Shop]", category: "shopping", address: "29, Jeonnong-ro, Jeju-si, Jeju-do", models: ["bge-m3", "e5-small", "harrier-270m"], grade: 0, by: llm}
+      - {id: "36741", title: "Thursday Island - Starfield Suwon Branch [Tax Refund Shop]", category: "shopping", address: "3F, 175, Suseong-ro, Jangan-gu, Suwon-si, Gyeonggi-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "35590", title: "Thursday Island - Hyundai Busan Branch [Tax Refund Shop]", category: "shopping", address: "2F, 125, Beomil-ro, Dong-gu, Busan", models: ["bge-m3", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "2219", title: "Haegeumgang Cruise", category: "leisure", address: "270 Haegeumgang-ro, Nambu-myeon, Geoje-si, Gyeongsangnam-do", models: ["e5-small"], grade: 2, by: llm}
+      - {id: "2223", title: "Geojedo Haegeumgang Islets", category: "nature", address: "1 Galgot-ri, Nambu-myeon, Geoje-si, Gyeongsangnam-do", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "1669", title: "Muuido Island", category: "nature", address: "310-11 Daemuui-ro, Yeongjong-gu, Incheon", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "13631", title: "The Island for Art & Healing, Jangdo Island", category: "nature", address: "Ungcheon-dong, Yeosu-si, Jeonnam-Gwangju Special Metropolitan City", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "1629", title: "Frientrip Co., Ltd.", category: "etc", address: "#G704, HEYGROUND, 115 Wangsimni-ro, Seongdong-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "14867", title: "Biyangdo Island (Udo Island) (비양도 (우도))", category: "nature", address: "Yeonpyeong-ri, Udo-myeon, Jeju-si, Jeju-do", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "2357", title: "Jeju Island Special Tourist Zone", category: "nature", address: "Jeju-do", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "14376", title: "Mokseom Island", category: "nature", address: "Seonjae-ri, Yeongheung-myeon, Ongjin-gun, Incheon", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "14171", title: "Jebudo Island", category: "nature", address: "421-12 Haean-gil, Seosin-myeon, Hwaseong-si, Gyeonggi-do", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "14956", title: "Biyangdo Island", category: "nature", address: "146, Hallimhaean-ro, Jeju-si, Jeju-do", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "42707", title: "Thursday Island Hyundai Premium Outlets  Gimpo Branch [Tax Refund Shop]", category: "shopping", address: "3F, 100, Arayuk-ro 152beon-gil, Gochon-eup, Gimpo-si, Gyeonggi-do", models: ["qwen3-4b"], grade: 0, by: llm}
   - query: "camping site"
     lang: en
     intent: "Campgrounds and glamping — '캠핑장' 대응"
@@ -1539,6 +1719,24 @@ queries:
       - {id: "14378", title: "Site of Dongnaeeupseong Walled Town", category: "history", address: "48-2 Myeongnyun-dong, Dongnae-gu, Busan", grade: 0, by: llm}
       - {id: "14383", title: "Yeoju Godalsa Temple Site", category: "history", address: "Sanggyo-ri, Bungnae-myeon, Yeoju-si, Gyeonggi-do", grade: 0, by: llm}
       - {id: "14721", title: "Kim Satgat Historic Site", category: "history", address: "216-22 Gimsatgat-ro, Gimsatgat-myeon, Yeongwol-gun, Gangwon-do", grade: 0, by: llm}
+    vector_candidates:
+      - {id: "22401", title: "Hantangang Tourist Area Auto Campground", category: "leisure", address: "76 Seonsa-ro, Jeongok-eup, Yeoncheon-gun, Gyeonggi-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22395", title: "Ssanggeun Auto Campground", category: "leisure", address: "539-1 Tappo-ri, Nambu-myeon, Geoje-si, Gyeongsangnam-do", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22364", title: "Hakdong Auto Campging Site", category: "leisure", address: "981 Geoje-daero, Dongbu-myeon, Geoje-si, Gyeongsangnam-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22260", title: "Manjung Campground", category: "leisure", address: "279-20 Yeongjongsunhwan-ro, Yeongjong-gu, Incheon", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22392", title: "Hamheodongcheon Campground", category: "leisure", address: "13 Haeannam-ro 1196beon-gil, Hwado-myeon, Ganghwa-gun, Incheon", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22259", title: "Citizen's Forest Campground", category: "stay", address: "190 Chuam-ro, Buk-gu, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "44867", title: "Gorilla Camping Songdo Branch [Tax Refund Shop]", category: "shopping", address: "1F, 44-10, Nonhyeongojan-ro 88beon-gil, Namdong-gu, Incheon", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m"], grade: 0, by: llm}
+      - {id: "1679", title: "Wangsan Beach", category: "nature", address: "Eulwang-dong, Yeongjong-gu, Incheon", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "22385", title: "Hagampo Auto Campground", category: "leisure", address: "1152-37, Okpa-ro, Wonbuk-myeon, Taean-gun, Chungcheongnam-do", models: ["arctic-ko", "arctic-official", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22303", title: "Sangju Woosan Auto Campground", category: "leisure", address: "752 Chaereungsan-ro, Oeseo-myeon, Sangju-si, Gyeongsangbuk-do", models: ["arctic-ko", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22386", title: "Dangjin Nanjido National Leisure Campground", category: "leisure", address: "701 Nanjido-ri, Seongmun-myeon, Dangjin-si, Chungcheongnam-do", models: ["arctic-official"], grade: 3, by: llm}
+      - {id: "22347", title: "Around Follie", category: "leisure", address: "433 Seoseongil-ro, Seongsan-eup, Seogwipo-si, Jeju-do", models: ["arctic-official", "bge-m3", "e5-small"], grade: 1, by: llm}
+      - {id: "22370", title: "Mureunggyegok Valley Healing Campground", category: "leisure", address: "467 Samhwa-ro, Donghae-si, Gangwon-do", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "22295", title: "Spielraum Glamping", category: "leisure", address: "468-11 Coastal Road, Seosin-myeon, Hwaseong, Gyeonggi-do", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "14711", title: "Mogok Bambeol Recreation Area", category: "nature", address: "133 Bambeol-gil, Seo-myeon, Hongcheon-gun, Gangwon-do", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "22456", title: "Baengmagang Leisure Park", category: "leisure", address: "424, Wangheung-ro, Buyeo-gun, Chungcheongnam-do", models: ["e5-small"], grade: 1, by: llm}
+      - {id: "37018", title: "Camper - Starfield Goyang Branch [Tax Refund Shop]", category: "shopping", address: "1F, 1955, Goyang-daero, Deogyang-gu, Goyang-si, Gyeonggi-do", models: ["harrier-270m", "qwen3-4b"], grade: 0, by: llm}
   - query: "indoor activities"
     lang: en
     intent: "Things to do indoors — '실내 놀거리' 대응"
@@ -1555,6 +1753,26 @@ queries:
       - {id: "22437", title: "Lotte World Indoor Ice Skating Rink (롯데월드 아이스링크 (실내))", category: "leisure", address: "240, Olympic-ro, Songpa-gu, Seoul", grade: 3, by: llm}
       - {id: "2096", title: "Yeonmisan Nature Art Park", category: "nature", address: "98 Yeonmisangogae-gil, Useong-myeon, Gongju-si, Chungcheongnam-do", grade: 0, by: llm}
       - {id: "13467", title: "Sono Belle Danyang Ocean Play", category: "culture", address: "187-17 Sambong-ro, Danyang-gun, Chungcheongbuk-do", grade: 2, by: llm}
+    vector_candidates:
+      - {id: "14525", title: "Dynamic Maze (Insa-dong) (다이나믹 메이즈 (서울 인사동점))", category: "nature", address: "12, Insadong-gil, Jongno-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "13872", title: "Smob Goyang", category: "culture", address: "1955 Goyang-daero, Deogyang-gu, Goyang-si, Gyeonggi-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "22296", title: "Legend Heroes Jamsil Lotte World Mall", category: "leisure", address: "3F, Lotte World Mall, 300 Olympic-ro, Songpa-gu, Seoul", models: ["arctic-ko", "arctic-official"], grade: 3, by: llm}
+      - {id: "22261", title: "Dream People Enter", category: "leisure", address: "16 Cheonbyeonjwa-ro 338beon-gil, Nam-gu, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "arctic-official", "e5-small", "harrier-270m"], grade: 2, by: llm}
+      - {id: "13770", title: "Lotte World", category: "culture", address: "240 Olympic-ro, Songpa-gu, Seoul", models: ["arctic-ko", "arctic-official", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "18064", title: "Children's Museum", category: "culture", address: "130 Eoulluri-ro, Sejong-si", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "17979", title: "Incheon Children’s Museum", category: "culture", address: "618, Maesohol-ro, Nam-gu, Incheon", models: ["arctic-ko", "arctic-official", "harrier-270m"], grade: 3, by: llm}
+      - {id: "22307", title: "Fly Station", category: "leisure", address: "521 Seongsan-ro Pogok-eup, Cheoin-gu, Yongin-si, Gyeonggi-do", models: ["arctic-ko", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "18214", title: "Incheon Culture and Arts Center", category: "culture", address: "149 Yesul-ro, Namdong-gu, Incheon", models: ["arctic-official"], grade: 2, by: llm}
+      - {id: "22276", title: "Ttakttaguri Youth Center", category: "culture", address: "313-44 Hyeonseok-ro, Yangju-si, Gyeonggi-do", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "22292", title: "Surfing Zone", category: "leisure", address: "19 Semayeok-ro 41beon-gil, Osan-si, Gyeonggi-do", models: ["bge-m3", "e5-small", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "22329", title: "Bundang Olympic Sports Center Ice Skating Rink", category: "leisure", address: "35, Junganggongwon-ro, Bundang-gu, Seongnam-si, Gyeonggi-do", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "18117", title: "INART Pyeongchang (이나트(INART) 평창)", category: "culture", address: "787 Olympic-ro, Daegwallyeong-myeon, Pyeongchang-gun, Gangwon-do", models: ["e5-small"], grade: 2, by: llm}
+      - {id: "34958", title: "Dynafit - MODA Outlet Incheon Branch [Tax Refund Shop]", category: "shopping", address: "50, Bukhang-ro 32beonan-gil, Seohae-gu, Incheon", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "34884", title: "GROOVE RHYME PLAY MODA Outlet Incheon Branch [Tax Refund Shop]", category: "shopping", address: "50, Bukhang-ro 32beonan-gil, Seohae-gu, Incheon", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "1661", title: "Real Escape Challenge", category: "leisure", address: "21, Wausan-ro 27-gil, Mapo-gu, Seoul", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "13953", title: "Waple Wood Artwork Place", category: "culture", address: "5-6 Wangsimni-ro 10-gil, Seongdong-gu, Seoul", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "1700", title: "Paradise City Wonderbox", category: "nature", address: "186 Yeongjonghaeannam-ro 321beon-gil, Yeongjong-gu, Incheon", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "18262", title: "Alive Museum (Insa-dong Branch) [박물관은 살아있다(인사동점)]", category: "culture", address: "(B1 and B2, Daeil Building), 12, Insadong-gil, Jongno-gu, Seoul", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "place to visit on a rainy day"
     lang: en
     intent: "Rainy day destinations, indoor bias — '비 오는 날 갈만한 곳' 대응"
@@ -1571,6 +1789,50 @@ queries:
       - {id: "14774", title: "Tomb of General Gwon Yul", category: "history", address: "223 Gwonyul-ro, Jangheung-myeon, Yangju-si, Gyeonggi-do", grade: 0, by: llm}
       - {id: "1908", title: "Twelve Scenic Places of Ulsan City", category: "nature", address: "Ulsan Metropolitan City", grade: 0, by: llm}
       - {id: "18301", title: "Podo Museum", category: "culture", address: "788 Sallngnam-ro, Andeok-myeon, Seogwipo-si, Jeju-do", grade: 3, by: llm}
+    vector_candidates:
+      - {id: "22251", title: "Mancheonha Skywalk", category: "leisure", address: "10 Otbawi-gil, Jeokseong-myeon, Danyang-gun, Chungcheongbuk-do", models: ["arctic-ko", "arctic-official"], grade: 0, by: llm}
+      - {id: "14863", title: "Majanghosu Suspension Bridge", category: "culture", address: "313 Gisan-ro, Gwangtan-myeon, Paju-si, Gyeonggi-do", models: ["arctic-ko", "arctic-official"], grade: 0, by: llm}
+      - {id: "15122", title: "Geunpodonggul Cave", category: "nature", address: "423 Jeogu-ri, Geoje-si, Gyeongsangnam-do", models: ["arctic-ko", "harrier-270m"], grade: 2, by: llm}
+      - {id: "15071", title: "Namildae Beach", category: "nature", address: "55, Namildae-gil, Sacheon-si, Gyeongsangnam-do", models: ["arctic-ko", "arctic-official"], grade: 0, by: llm}
+      - {id: "14428", title: "Haneul Observatory", category: "culture", address: "321 Jeoryeong-ro, Yeongdo-gu, Busan", models: ["arctic-ko", "harrier-270m"], grade: 0, by: llm}
+      - {id: "13964", title: "Banpo Bridge Rainbow Fountain", category: "culture", address: "647 Banpo-dong, Seocho-gu, Seoul", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "59389", title: "Bibinakan", category: "food", address: "26 Bibijeong-gil, Samnye-eup, Wanju-gun, Jeonbuk-do", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "13862", title: "Gongjicheon Recreation Area", category: "culture", address: "25 Ethiopia-gil, Chuncheon-si, Gangwon-do (근화동)", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "14341", title: "Nakgangmulgil Park", category: "nature", address: "423 Sanga-dong, Andong-si, Gyeongsangbuk-do", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "14676", title: "Bangpo Beach", category: "nature", address: "29-1 Bangpo 1-gil, Anmyeon-eup, Taean-gun, Chungcheongnam-do", models: ["arctic-ko", "e5-small"], grade: 0, by: llm}
+      - {id: "22326", title: "Okcheon Hyangsu Baengni (100-ri) Bike Road - Geumgang Course", category: "leisure", address: "Okcheon-eup, Okcheon-gun, Chungcheongbuk-do", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "1708", title: "Janghwa-ri Sunset Viewing Point", category: "nature", address: "1408 Janghwa-ri, Hwado-myeon, Ganghwa-gun, Incheon", models: ["arctic-official", "bge-m3", "harrier-270m"], grade: 0, by: llm}
+      - {id: "13588", title: "Borimadang & Sihwa Village", category: "culture", address: "27 Borimadang-ro, Mokpo-si, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "14834", title: "Binaeseom Island (Binae Trail) (비내섬(비내길))", category: "nature", address: "44, Namhangangbyeon-gil, Angseong-myeon, Chungju-si, Chungcheongbuk-do", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "13642", title: "Haenam Forest Arboretum", category: "nature", address: "San 1-33, Hwangsanri, Hyunsan-myeon, Haenam-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-official", "e5-small"], grade: 0, by: llm}
+      - {id: "14738", title: "Yeongdo Cheonghak Reservoir Observatory", category: "culture", address: "36 Wachi-ro, Yeongdo-gu, Busan", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "13962", title: "Park Habio Water Kingdom Water Park & Jjimjil Spa", category: "nature", address: "111 Songpa-daero, Songpa-gu, Seoul", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "14718", title: "Geumdaegyegok Valley", category: "nature", address: "546-22 Chiak-ro, Panbu-myeon, Wonju-si, Gangwon-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "1662", title: "Alleys of Changsin-dong", category: "culture", address: "38, Jibong-ro 11-gil, Jongno-gu, Seoul", models: ["bge-m3", "e5-small", "harrier-270m"], grade: 0, by: llm}
+      - {id: "1943", title: "Osan Dolmen Park", category: "nature", address: "449, Sumogwon-ro, Osan-si, Gyeonggi-do", models: ["bge-m3", "harrier-270m"], grade: 0, by: llm}
+      - {id: "13784", title: "Chojeong Mineral Spring", category: "nature", address: "Chojeong-ri, Cheongwon-gu, Cheongju-si, Chungcheongbuk-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "14314", title: "Manseokgeo Park", category: "nature", address: "1087 Jeongjo-ro, Jangan-gu, Suwon-si, Gyeonggi-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "22348", title: "Yedang Reservoir (예당저수지(예당관광지))", category: "leisure", address: "Deungchon-ri, Eungbong-myeon, Yesan-gun, Chungcheongnam-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "2183", title: "Gujora Fortress Sound of the Breeze Path", category: "nature", address: "423-1 Gujora-ri, Irun-myeon, Geoje-si, Gyeongsangnam-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "41981", title: "Rockfish Weatherwear Dosan Branch [Tax Refund Shop]", category: "shopping", address: "27, Dosan-daero 49-gil, Gangnam-gu, Seoul", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "15229", title: "Guri Hangang Park (Cosmos Park) (구리시민한강공원 (코스모스공원))", category: "nature", address: "Topyeong-dong, Guri-si, Gyeonggi-do", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "14170", title: "Yulam Hot Springs", category: "leisure", address: "434-14 Oncheon-ro, Paltan-myeon, Hwaseong-si, Gyeonggi-do", models: ["e5-small"], grade: 2, by: llm}
+      - {id: "1799", title: "Jungoe Park", category: "nature", address: "52, Haseo-ro, Buk-gu, Jeonnam-Gwangju Special Metropolitan City", models: ["e5-small", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "13795", title: "Rainbow Healing Center", category: "leisure", address: "95 Yeongdong healing-ro, Yeongdong-eup, Yeongdong-gun, Chungcheongbuk-do", models: ["e5-small", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "15150", title: "Gyeongju Bomunjeong Pavilion (보문정 (경주))", category: "nature", address: "Sinpyeong-dong, Gyeongju-si, Gyeongsangbuk-do", models: ["e5-small", "harrier-270m"], grade: 0, by: llm}
+      - {id: "14480", title: "Cheongdo Provence", category: "nature", address: "272-23 Iseulmi-ro, Hwayang-eup, Cheongdo-gun, Gyeongsangbuk-do", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "1675", title: "Hanagae Beach", category: "nature", address: "310-11 Daemuui-ro, Yeongjong-gu, Incheon", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "13634", title: "Mokpo Peace Plaza", category: "nature", address: "82 Pyeonghwa-ro, Mokpo-si, Jeonnam-Gwangju Special Metropolitan City", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "2161", title: "Gyeongju World", category: "nature", address: "544 Bomun-ro, Gyeongju-si, Gyeongsangbuk-do", models: ["harrier-270m", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "13598", title: "Mokpo Skywalk", category: "culture", address: "59 Haeyangdaehak-ro, Mokpo-si, Jeonnam-Gwangju Special Metropolitan City", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "22381", title: "Cheondong Tourist Area Water Park", category: "leisure", address: "534, Darian-ro, Danyang-eup, Danyang-gun, Chungcheongbuk-do", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "1700", title: "Paradise City Wonderbox", category: "nature", address: "186 Yeongjonghaeannam-ro 321beon-gil, Yeongjong-gu, Incheon", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "18251", title: "National Meteorological Museum of Korea", category: "culture", address: "52 Songwol-gil, Jongno-gu, Seoul", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "22281", title: "Chungju Tangeumho Rainbow Road", category: "leisure", address: "Ruam-ri, Jungangtap-myeon, Chungju-si, Chungcheongbuk-do,", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "22352", title: "Aranaby Zipline (아라나비(스카이 어촌체험))", category: "leisure", address: "35-7 Gonghang-gil 127beon-gil, Gangneung-si, Gangwon-do", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "14913", title: "Caribbean Bay", category: "nature", address: "199, Everland-ro, Cheoin-gu, Yongin-si, Gyeonggi-do", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "1742", title: "Daedong Sky Park", category: "nature", address: "182, Dongdaejeon-ro 110beon-gil, Dong-gu, Daejeon", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "14929", title: "Dodu-dong Rainbow Coastal Road", category: "nature", address: "1734, Dodu 1(il)-dong, Jeju-si, Jeju-do", models: ["qwen3-4b"], grade: 0, by: llm}
   - query: "ocean view"
     lang: en
     intent: "Spots with a sea view — '바다가 보이는 곳' 대응"
@@ -1587,6 +1849,29 @@ queries:
       - {id: "13465", title: "Sol Beach Samcheok Ocean Play", category: "culture", address: "453 Surobuin-gil, Samcheok-si, Gangwon-do", grade: 2, by: llm}
       - {id: "13466", title: "Sol Beach Yangyang Ocean Play", category: "culture", address: "678 Seonsayujeok-ro, Sonyang-myeon, Yangyang-gun, Gangwon-do", grade: 2, by: llm}
       - {id: "13467", title: "Sono Belle Danyang Ocean Play", category: "culture", address: "187-17 Sambong-ro, Danyang-gun, Chungcheongbuk-do", grade: 0, by: llm}
+    vector_candidates:
+      - {id: "59428", title: "Negaissneun Bada", category: "food", address: "49-75 Gallam-gil Wondeok-eup, Samcheok-si, Gangwon-do", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "59470", title: "LE ONDA", category: "food", address: "5 Saenaru-gil, Hyeonnam-myeon, Yangyang-gun, Gangwon-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m"], grade: 1, by: llm}
+      - {id: "14151", title: "Haewol Observatory", category: "culture", address: "Jung-dong, Haeundae-gu, Busan", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "13598", title: "Mokpo Skywalk", category: "culture", address: "59 Haeyangdaehak-ro, Mokpo-si, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "arctic-official", "bge-m3", "harrier-270m"], grade: 2, by: llm}
+      - {id: "59349", title: "Cloud32", category: "food", address: "52 Marine city 3-ro, Haeundae-gu, Busan", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "13896", title: "Sokcho Eye (속초해수욕장 대관람차(속초아이))", category: "leisure", address: "2 Cheonghohaean-gil, Sokcho-si, Gangwon-do", models: ["arctic-ko", "bge-m3", "e5-small", "harrier-270m"], grade: 3, by: llm}
+      - {id: "13554", title: "The Ocean Resort Water Park", category: "leisure", address: "295, Soho-ro, Yeosu-si, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "e5-small", "harrier-270m", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "2322", title: "Hwawon Oceano Tourism Complex", category: "nature", address: "552, Sia-ro, Haenam-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "harrier-270m", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "37129", title: "Garden Beau [Tax Refund Shop]", category: "shopping", address: "166, Magokdong-ro, Gangseo-gu, Seoul", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "42212", title: "See Channel Eyewear Songpa Jungang Branch [Tax Refund Shop]", category: "shopping", address: "203, Olympic-ro, Songpa-gu, Seoul", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "22405", title: "Busan Yacht Tour 3355 Marine", category: "leisure", address: "84 Haeundaehaebyeon-ro, Haeundae-gu, Busan", models: ["arctic-official", "bge-m3", "e5-small"], grade: 2, by: llm}
+      - {id: "1706", title: "Wolmi Park Wolmi Observatory", category: "culture", address: "294 Wolmi-ro, Jemulpo-gu, Incheon", models: ["bge-m3", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "22319", title: "Songdo Cloud Walk (송도 구름산책로(스카이워크))", category: "leisure", address: "129-4 Amnam-dong, Seo-gu, Busan", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "13575", title: "Expo Ocean Park", category: "nature", address: "1, Bangnamhoe-gil, Yeosu-si, Jeonnam-Gwangju Special Metropolitan City", models: ["e5-small", "harrier-270m"], grade: 2, by: llm}
+      - {id: "42127", title: "Viewmap Yeonnam [Tax Refund Shop]", category: "shopping", address: "1, Yeonnam-ro, Mapo-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "13470", title: "Sono Belle Cheonan Ocean Adventure", category: "culture", address: "1 Sono-ro, Seongnam-myeon, Dongnam-gu, Cheonan-si, Chungcheongnam-do", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "37180", title: "VIEWRAUM Mecenatpolis Branch [Tax Refund Shop]", category: "shopping", address: "45, Yanghwa-ro, Mapo-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "15180", title: "Hupo Beach", category: "nature", address: "Samyul-ri, Uljin-gun, Gyeongsangbuk-do", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "14428", title: "Haneul Observatory", category: "culture", address: "321 Jeoryeong-ro, Yeongdo-gu, Busan", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "42997", title: "vyur LOTTE Premium Outlets Dongbusan Branch [Tax Refund Shop]", category: "shopping", address: "2F, 147, Gijanghaean-ro, Gijang-eup, Gijang-gun, Busan", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "14232", title: "Oryukdo Sunrise Park", category: "nature", address: "Yongho-dong, Nam-gu, Busan", models: ["qwen3-4b"], grade: 3, by: llm}
+      - {id: "14954", title: "Namhae Treasure Island Observatory", category: "culture", address: "720 , Dongbu-daero, Namhae-gun, Gyeongsangnam-do", models: ["qwen3-4b"], grade: 3, by: llm}
   - query: "drama filming location"
     lang: en
     intent: "K-drama shooting locations — '드라마 촬영지' 대응"
@@ -1603,6 +1888,17 @@ queries:
       - {id: "2083", title: "Sunshine Studio", category: "leisure", address: "90 Bonghwang-ro, Yeonmu-eup, Nonsan-si, Chungcheongnam-do", grade: 3, by: llm}
       - {id: "14425", title: "Jukseong Church (Filming Set) (죽성성당(드림세트장))", category: "leisure", address: "Duho 1-gil, Gijang-eup, Gijang-gun, Busan", grade: 3, by: llm}
       - {id: "2234", title: "Ahyeon Supermarket", category: "culture", address: "13 Namgosanseong 1-gil, Wansan-gu, Jeonju-si, Jeonbuk-do", grade: 2, by: llm}
+    vector_candidates:
+      - {id: "2141", title: "Mungyeongsaejae Open Set", category: "leisure", address: "932 Saejae-ro, Mungyeong-si, Gyeongsangbuk-do", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "14510", title: "Gaeun Open Set", category: "leisure", address: "112 Wangneung-gil, Gaeun-eup, Mungyeong-si, Gyeongsangbuk-do", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 3, by: llm}
+      - {id: "2236", title: "Hanbyeok Tunnel", category: "culture", address: "2 Girin-daero, Wansan-gu, Jeonju-si, Jeonbuk-do", models: ["arctic-ko", "e5-small"], grade: 2, by: llm}
+      - {id: "13876", title: "Dae Jang Geum Park", category: "culture", address: "25 Yongcheon drama-gil, Baegam-myeon, Cheoin-gu, Yongin-si, Gyeonggi-do", models: ["arctic-official", "bge-m3", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "1943", title: "Osan Dolmen Park", category: "nature", address: "449, Sumogwon-ro, Osan-si, Gyeonggi-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "22303", title: "Sangju Woosan Auto Campground", category: "leisure", address: "752 Chaereungsan-ro, Oeseo-myeon, Sangju-si, Gyeongsangbuk-do", models: ["bge-m3", "e5-small", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "2238", title: "Iksan Prison Set", category: "leisure", address: "207 Hamnang-ro, Seongdang-myeon, Iksan-si, Jeollabuk-do", models: ["e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "1654", title: "Seoul Mountain Climbing & culture center", category: "leisure", address: "112 Haneulgongwon-ro, Mapo-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "2333", title: "Hallim Port", category: "nature", address: "192 Hallimhaean-ro, Jeju-si, Jeju-do", models: ["harrier-270m", "qwen3-4b"], grade: 0, by: llm}
+      - {id: "13768", title: "Oeam Folk Village", category: "history", address: "13-2 Oeamminsok-gil 9beon-gil, Songak-myeon, Asan-si, Chungcheongnam-do", models: ["qwen3-4b"], grade: 2, by: llm}
   - query: "night market"
     lang: en
     intent: "Night markets — '야시장' 대응"
@@ -1619,6 +1915,30 @@ queries:
       - {id: "14277", title: "Deoksugung Stone Wall Path", category: "culture", address: "24 Sejong-daero 19-gil, Jung-gu, Seoul", grade: 0, by: llm}
       - {id: "14550", title: "Gwangbok-dong Cultural & Fashion Street", category: "culture", address: "Gwangbok-ro, Jung-gu, Busan", grade: 1, by: llm}
       - {id: "14675", title: "Kkotgedari Ocean Bridge", category: "culture", address: "Changgi-ri, Anmyeon-eup, Taean-gun, Chungcheongnam-do", grade: 0, by: llm}
+    vector_candidates:
+      - {id: "45712", title: "Ulsan Keunaegi Night Market", category: "shopping", address: "90 Jeolmeumui-geori, Jung-gu, Ulsan", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "34869", title: "Suncheon Aretjang Market", category: "shopping", address: "60 Jangpyeong-ro, Suncheon-si, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "45718", title: "Sumokwon Night Market", category: "shopping", address: "69 Eunsu-gil, Jeju-si, Jeju-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45719", title: "Jeonju Nambu Traditional Market", category: "shopping", address: "19-3 Pungnammun 1-gil, Wansan-gu, Jeonju-si, Jeonbuk-do", models: ["arctic-ko", "arctic-official", "harrier-270m", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "45730", title: "Gyeongju Jungang Market", category: "shopping", address: "295 Geumseong-ro, Gyeongju-si, Gyeongsangbuk-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "35224", title: "Suwon Nammun Market", category: "shopping", address: "9 Paldalmun-ro, Paldal-gu, Suwon-si, Gyeonggi-do", models: ["arctic-ko", "arctic-official"], grade: 2, by: llm}
+      - {id: "45731", title: "Nammun Rodeo Market", category: "shopping", address: "88 Haenggung-ro, Paldal-gu, Suwon-si, Gyeonggi-do", models: ["arctic-ko", "arctic-official", "e5-small"], grade: 2, by: llm}
+      - {id: "45717", title: "Daegu Seomun Market & Seomun Night Market", category: "shopping", address: "45 Keunjang-ro 26-gil, Jung-gu, Daegu", models: ["arctic-ko", "arctic-official", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "34868", title: "Malbau Market (말바우시장 (2, 4, 7, 9일))", category: "shopping", address: "62 Dongmun-daero 85beon-gil, Buk-gu, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 1, by: llm}
+      - {id: "37854", title: "San Francisco Market [Tax Refund Shop]", category: "shopping", address: "29-10, Dosan-daero 49-gil, Gangnam-gu, Seoul", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "36369", title: "San Francisco Market - Starfield Hanam Branch [Tax Refund Shop]", category: "shopping", address: "2F, 750, Misa-daero, Hanam-si, Gyeonggi-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "34773", title: "Gwangju Yangdong Market", category: "shopping", address: "238 Cheonbyeonjwa-ro, Seo-gu, Jeonnam-Gwangju Special Metropolitan City", models: ["bge-m3"], grade: 2, by: llm}
+      - {id: "37245", title: "Gijang Market", category: "shopping", address: "72-3, Daera-ri, Gijang-eup, Gijang-gun, Busan", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "41612", title: "Toy Market Jeju Branch[Tax Refund Shop]", category: "shopping", address: "192, Dongmun-ro, Jeju-si, Jeju-do", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "35214", title: "Bupyeong (Kkangtong) Market (부평시장(깡통시장))", category: "shopping", address: "48 Bupyeong 1-gil, Jung-gu, Busan", models: ["e5-small"], grade: 3, by: llm}
+      - {id: "35227", title: "Tongin Market", category: "shopping", address: "18 Jahamun-ro 15-gil, Jongno-gu, Seoul", models: ["e5-small"], grade: 2, by: llm}
+      - {id: "35228", title: "Lighting Street", category: "shopping", address: "5 Gukjesijang 2-gil, Jung-gu, Busan", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "45737", title: "Hwanghak-dong Flea Market (Dokkaebi Market / Manmul Market) (황학동 벼룩시장 (도깨비시장/만물시장))", category: "shopping", address: "11-7 Majang-ro 5-gil, Jung-gu, Seoul", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "45727", title: "Yongmun Millennium Market (days ending in 5 and 10) (용문천년시장(5,10일))", category: "shopping", address: "11 Yongmunsijang 2-gil, Yongmun-myeon, Yangpyeong-gun, Gyeonggi-do", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "41920", title: "Gwangjang Market", category: "shopping", address: "88, Changgyeonggung-ro, Jongno-gu, Seoul", models: ["harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45663", title: "Chuncheon Folk Flea Market (Fifth-day Market) (춘천 풍물시장 / 풍물장 (2, 7일))", category: "shopping", address: "2352-21 Yeongseo-ro, Chuncheon-si, Gangwon-do", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "45677", title: "Sehwa Fifth-day Market (세화민속오일시장", category: "shopping", address: "1412 Haemajihaean-ro, Gujwa-eup, Jeju-si, Jeju-do", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "45707", title: "Gukje Market", category: "shopping", address: "Area of Sinchang-ro 4-ga, Jung-gu, Busan", models: ["qwen3-4b"], grade: 2, by: llm}
   - query: "hanbok rental"
     lang: en
     intent: "Places to rent hanbok — '한복 대여' 대응"
@@ -1635,6 +1955,19 @@ queries:
       - {id: "2212", title: "Jinjuseong Fortress", category: "history", address: "626 Namgang-ro, Jinju-si, Gyeongsangnam-do", grade: 0, by: llm}
       - {id: "18406", title: "Dong-Lim Knot Museum", category: "culture", address: "10, Bukchon-ro 12-gil, Jongno-gu, Seoul", grade: 0, by: llm}
       - {id: "18288", title: "Nblgaok", category: "culture", address: "1, Wongeori 13-gil, Dongnam-gu, Cheonan-si, Chungcheongnam-do", grade: 0, by: llm}
+    vector_candidates:
+      - {id: "14888", title: "Sunset Leisure 435", category: "leisure", address: "서울특별시 마포구 망원동 205-5 1층", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 0, by: llm}
+      - {id: "41514", title: "Jeontong Hanbok[Tax Refund Shop]", category: "shopping", address: "B1, 249, Dongho-ro, Jung-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45698", title: "LEESEL Hanbok", category: "shopping", address: "136-11, Eoulmadang-ro, Mapo-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "22351", title: "Jeonju Hanok Railbike", category: "leisure", address: "420 Dongbu-daero, Deokjin-gu, Jeonju-si, Jeonbuk-do", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 0, by: llm}
+      - {id: "39744", title: "Hanbok Maru [Tax Refund Shop]", category: "shopping", address: "4F, 207, Jong-ro, Jongno-gu, Seoul", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "45682", title: "Teterot Salon", category: "shopping", address: "21-12 Supyo-ro 28-gil, Jongno-gu, Seoul", models: ["bge-m3", "e5-small", "qwen3-4b"], grade: 2, by: llm}
+      - {id: "40444", title: "Jeonbuk Hanji[Tax Refund Shop]", category: "shopping", address: "B1, 25, Insadong 5-gil, Jongno-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "44328", title: "Hue Hanbok (Culture Space Hue) [Tax Refund Shop]", category: "shopping", address: "1F, 2, Jungang-ro 8-gil, Jeju-si, Jeju-do", models: ["e5-small", "harrier-270m"], grade: 3, by: llm}
+      - {id: "35715", title: "Artbox - ENTER 6 Gangnam Branch [Tax Refund Shop]", category: "shopping", address: "188, Sinbanpo-ro, Seocho-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "45172", title: "Black Yak Busan Gwangbok Branch [Tax Refund Shop]", category: "shopping", address: "95, Gudeok-ro, Seo-gu, Busan", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "45697", title: "Danha", category: "shopping", address: "39-7 Palpan-gil, Jongno-gu, Seoul", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "37220", title: "Hahn's Custom Tailor [Tax Refund Shop]", category: "shopping", address: "134, Itaewon-ro, Yongsan-gu, Seoul", models: ["qwen3-4b"], grade: 0, by: llm}
   - query: "scenic drive near seoul"
     lang: en
     intent: "Driving courses near Seoul — '서울 근교 드라이브' 대응"
@@ -1651,6 +1984,45 @@ queries:
       - {id: "14181", title: "Seoul Botanic Park", category: "nature", address: "161 Magokdong-ro, Gangseo-gu, Seoul", grade: 1, by: llm}
       - {id: "14915", title: "Seoul Grand Park", category: "nature", address: "102, Daegongwongwangjang-ro, Gwacheon-si, Gyeonggi-do", grade: 2, by: llm}
       - {id: "15163", title: "Seoul Daehan Hospital", category: "history", address: "101, Daehak-ro, Jongno-gu, Seoul", grade: 0, by: llm}
+    vector_candidates:
+      - {id: "2047", title: "Songnisan Special Tourist Zone", category: "nature", address: "405, Beopjusa-ro, Boeun-gun, Chungcheongbuk-do", models: ["arctic-ko", "arctic-official"], grade: 0, by: llm}
+      - {id: "15097", title: "Jungmisan Recreational Forest", category: "nature", address: "1152, Jungmisan-ro, Yangpyeong-gun, Gyeonggi-do", models: ["arctic-ko", "arctic-official", "bge-m3"], grade: 2, by: llm}
+      - {id: "14372", title: "Seosulla-gil Road", category: "culture", address: "150-3 Jong-ro, Jongno-gu, Seoul", models: ["arctic-ko", "arctic-official", "e5-small", "harrier-270m"], grade: 1, by: llm}
+      - {id: "14869", title: "Suseongdonggyegok Valley", category: "nature", address: "185-3, Ogin-dong, Jongno-gu, Seoul 서울특별시 종로구 옥인동", models: ["arctic-ko", "arctic-official"], grade: 1, by: llm}
+      - {id: "59600", title: "Baeksu Coastal Road", category: "nature", address: "Daesin-ri, Yeonggwang-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "arctic-official", "e5-small", "harrier-270m", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "14649", title: "Seolcheon Namhae Coastal Road", category: "nature", address: "Seolcheon-myeon, Namhae-gun, Gyeongsangnam-do", models: ["arctic-ko", "arctic-official", "bge-m3", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "2135", title: "Hwarang Hill", category: "nature", address: "601 Suui-gil, Sannae-myeon, Gyeongju-si, Gyeongsangbuk-do", models: ["arctic-ko"], grade: 0, by: llm}
+      - {id: "2330", title: "Sebang Sunset Observatory", category: "nature", address: "Jisan-myeon, Jindo-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["arctic-ko", "harrier-270m"], grade: 0, by: llm}
+      - {id: "22346", title: "Jeongdong-gil Road", category: "leisure", address: "2-1 Jeongdong-gil, Jung-gu, Seoul", models: ["arctic-official"], grade: 1, by: llm}
+      - {id: "14365", title: "Namsan Cable Car", category: "leisure", address: "83 Sopa-ro, Jung-gu, Seoul", models: ["arctic-official"], grade: 0, by: llm}
+      - {id: "22339", title: "Solmaru Trail", category: "leisure", address: "233 Dotjil-ro, Nam-gu, Ulsan", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "22414", title: "Morundae-gil Trail [Haean Nuri-gil]", category: "leisure", address: "734 Dadae-ro, Saha-gu, Busan", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "22320", title: "Seoul Marina Club & Yacht", category: "leisure", address: "160 Yeouiseo-ro, Yeongdeungpo-gu, Seoul", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "22271", title: "Namparang Trail (Busan)", category: "leisure", address: "Yongho-dong, Nam-gu, Busan", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "22419", title: "We Ride", category: "culture", address: "40 , Cheonggyecheon-ro, Jung-gu, Seoul", models: ["bge-m3", "harrier-270m", "qwen3-4b"], grade: 1, by: llm}
+      - {id: "22293", title: "Skylift", category: "leisure", address: "102 Daegongwongwangjang-ro, Gwacheon-si, Gyeonggi-do", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "1883", title: "Osiria Coastal Walk", category: "nature", address: "Sirang-ri, Gijang-eup, Gijang-gun, Busan", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "22406", title: "Hyundai Yacht Seoul Branch", category: "leisure", address: "350 Dongjak-daero, Seocho-gu, Seoul", models: ["bge-m3", "e5-small"], grade: 1, by: llm}
+      - {id: "13526", title: "Suncheon Traditional Wild Tea House", category: "culture", address: "450-1 Seonamsa-gil, Seungju-eup, Suncheon-si, Jeonnam-Gwangju Special Metropolitan City", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "59396", title: "HILLS & EUROPA", category: "food", address: "35 Sinheung-ro, Yongsan-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "34707", title: "LOW CLASSIC Seongsu [Tax Refund Shop]", category: "shopping", address: "LOW CLASSIC, 86 Yeonmujang-gil, Seongdong-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "14115", title: "SEOUL SHINSEGAE EYE CENTER", category: "etc", address: "3rd–4th Floors, Y-Square, 52 Dobong-ro, Gangbuk-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "42171", title: "Nice Ghost Club Seongsu [Tax Refund Shop]", category: "shopping", address: "2F, 38, Seongsui-ro 7-gil, Seongdong-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "36203", title: "Snow Peak - Hyundai City Outlets Dongdaemun [Tax Refund Shop]", category: "shopping", address: "7F, 20, Jangchungdan-ro 13-gil, Jung-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "40356", title: "CARIN Seongsu Flagship Store[Tax Refund Shop]", category: "shopping", address: "7, Yeonmujang 9-gil, Seongdong-gu, Seoul", models: ["e5-small"], grade: 0, by: llm}
+      - {id: "15230", title: "Sinpung Sincheon Seaside Ranch", category: "nature", address: "5417, Iljudong-ro, Seogwipo-si, Jeju-do", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "14227", title: "Sokch Seorak Sunrise Park", category: "nature", address: "3664 Donghae-daero, Sokcho-si, Gangwon-do", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "15052", title: "Sinseondae Observatory", category: "culture", address: "San 21-19, Galgot-ri, Geoje-si, Gyeongsangnam-do", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "2347", title: "Sinchang Windmill Coastal Road", category: "nature", address: "1322-1 Sinchang-ri, Jeju-si, Jeju-do", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "1998", title: "Uiamho Lake Skywalk", category: "culture", address: "485 Chiljeon-dong, Chuncheon-si, Gangwon-do", models: ["harrier-270m"], grade: 2, by: llm}
+      - {id: "22319", title: "Songdo Cloud Walk (송도 구름산책로(스카이워크))", category: "leisure", address: "129-4 Amnam-dong, Seo-gu, Busan", models: ["harrier-270m"], grade: 0, by: llm}
+      - {id: "14790", title: "5.16 Tree Tunnel (Road 5.16 Forest Tunnel)", category: "culture", address: "267-110 Sillyecheon-ro, Namwon-eup, Seogwipo-si, Jeju-do", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "14809", title: "Jukbyeon Coast Skyrail", category: "leisure", address: "235-12 Jukbyeonjungang-ro, Jukbyeon-myeon, Uljin-gun, Gyeongsangbuk-do", models: ["qwen3-4b"], grade: 0, by: llm}
+      - {id: "22325", title: "[Seoul Trail Course 1] Suraksan · Buramsan Mountain Course", category: "leisure", address: "Junggye-dong, Nowon-gu, Seoul, Republic of Korea", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "13587", title: "Gurye Seomjingang Cherry Blossom Trail", category: "nature", address: "Muncheok-myeon, Gurye-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "14707", title: "Jingwansaggyegok Valley", category: "nature", address: "73 Jingwan-gil, Eunpyeong-gu, Seoul", models: ["qwen3-4b"], grade: 2, by: llm}
+      - {id: "13530", title: "Damyang Metasequoia-lined Road", category: "nature", address: "12, Metasequoia-ro, Damyang-gun, Jeonnam-Gwangju Special Metropolitan City", models: ["qwen3-4b"], grade: 1, by: llm}
+      - {id: "22275", title: "Hoengseong Luge", category: "leisure", address: "407-6 Jeonjae-ro, Ucheon-myeon, Hoengseong-gun, Gangwon-do", models: ["qwen3-4b"], grade: 1, by: llm}
   - query: "waterfall"
     lang: en
     intent: "Waterfalls — 한국어 세트에 없는 축 하나 추가"
@@ -1667,3 +2039,17 @@ queries:
       - {id: "14492", title: "Sambuyeonpokpo Falls [UNESCO Global Geopark] (삼부연폭포", category: "nature", address: "Sincheorwon-ri, Galmal-eup, Cheorwon-gun, Gangwon-do", grade: 3, by: llm}
       - {id: "14619", title: "Bongnaepokpo Falls [Ullengdo & Dokdo National Geopark] (봉래폭포 (울릉도, 독도 국가지질공원))", category: "nature", address: "Dodong-ri, Ulleung-eup, Ulleung-gun, Gyeongsangbuk-do", grade: 3, by: llm}
       - {id: "14829", title: "Hwanggyepokpo Falls", category: "nature", address: "30 Hwanggye 2-gil, Hapcheon-gun, Gyeongsangnam-do", grade: 3, by: llm}
+    vector_candidates:
+      - {id: "14987", title: "Cheonjiyeonpokpo Falls [UNESCO Global Geopark] (천지연폭포 (제주도 국가지질공원))", category: "nature", address: "Cheonji-dong, Seogwipo-si, Jeju-do", models: ["arctic-ko", "arctic-official", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "2366", title: "Donnaeko Resort (Wonangpokpo Falls) (돈내코(원앙폭포))", category: "nature", address: "137, Donnaeko-ro, Seogwipo-si, Jeju-do", models: ["arctic-ko", "arctic-official", "bge-m3", "e5-small", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "15139", title: "Eongttopokpo Falls", category: "nature", address: "Eongtto-ro, Seogwipo-si, Jeju-do", models: ["arctic-ko", "e5-small"], grade: 3, by: llm}
+      - {id: "14765", title: "Burilpokpo Falls", category: "nature", address: "103 Mogap-gil, Hwagae-myeon, Hadong-gun, Gyeongsangnam-do", models: ["arctic-official", "e5-small", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "2375", title: "Cheonjeyeonpokpo Falls", category: "nature", address: "132 Cheonjeyeon-ro, Seogwipo-si, Jeju-do", models: ["arctic-official", "bge-m3", "harrier-270m"], grade: 3, by: llm}
+      - {id: "14706", title: "Yongma Falls Park", category: "nature", address: "250-12 Yongmasan-ro, Jungnang-gu, Seoul", models: ["bge-m3"], grade: 3, by: llm}
+      - {id: "13832", title: "Onemount Water Park", category: "leisure", address: "300 Hallyu world-ro, Ilsanseo-gu, Goyang-si, Gyeonggi-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "13426", title: "WATERWORLD JEJU", category: "leisure", address: "33 World cup-ro, Seogwipo-si, Jeju-do", models: ["bge-m3"], grade: 0, by: llm}
+      - {id: "14740", title: "Deoksangigyegok Valley", category: "nature", address: "Jeongseon-eup, Jeongseon-gun, Gangwon-do", models: ["bge-m3"], grade: 1, by: llm}
+      - {id: "14859", title: "Miinpokpo Falls", category: "nature", address: "77-162, Munuijae-ro, Dogye-eup, Samcheok-si, Gangwon-do", models: ["e5-small", "harrier-270m", "qwen3-4b"], grade: 3, by: llm}
+      - {id: "15064", title: "Gangwon Yongchupokpo Falls (무릉계곡 용추폭포(강원))", category: "nature", address: "538, Samhwa-ro, Donghae-si, Gangwon-do", models: ["harrier-270m"], grade: 3, by: llm}
+      - {id: "14453", title: "Jinan Baegundonggyegok Valley (백운동계곡(진안))", category: "nature", address: "Baegam-ri, Baegun-myeon, Jinan-gun, Jeonbuk-do", models: ["harrier-270m"], grade: 1, by: llm}
+      - {id: "14747", title: "Three Falls of Juwangsan Mountain", category: "nature", address: "24 Sangui-ri, Juwangsan-myeon, Cheongsong-gun, Gyeongsangbuk-do", models: ["qwen3-4b"], grade: 3, by: llm}
