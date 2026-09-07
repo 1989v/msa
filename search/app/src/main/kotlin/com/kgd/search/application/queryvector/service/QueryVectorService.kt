@@ -6,6 +6,7 @@ import com.kgd.search.application.queryvector.usecase.ManageQueryVectorsUseCase
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.queryvector.model.QueryNormalizer
 import com.kgd.search.domain.queryvector.model.QueryVector
+import com.kgd.search.domain.queryvector.port.QueryEncoderPort
 import com.kgd.search.domain.queryvector.port.QueryMissPort
 import com.kgd.search.domain.queryvector.port.QueryVectorPort
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -16,14 +17,19 @@ import java.util.Optional
 import java.util.concurrent.TimeUnit
 
 /**
- * 질의 사전 (ADR-0090). 서버는 임베딩하지 않는다 — 있으면 쓰고, 없으면 BM25 로 답하며 미스를 센다.
+ * 질의 → 벡터 (ADR-0090 개정 2026-09-08). 세 층을 순서대로 본다.
  *
- * **적중률(hit/(hit+miss))이 v2 의 건강 지표다** (ADR-0090 D7). 낮으면 사전이 얇은 것이고,
- * 그 답은 미스 로그를 도구가 되먹이는 것이다.
+ *   1. Caffeine 캐시   — 프로세스 안, 수 µs
+ *   2. RDB 원천        — 재기동해도 남는다. 같은 질의를 두 번 인코딩하지 않는다
+ *   3. 사이드카 인코딩 — 여기서 만든 값은 즉시 RDB 에 남긴다
+ *
+ * **미적중은 실패가 아니다** — 3번까지 실패하면 벡터 레그를 끄고 BM25 로 답한다.
+ * 적중률은 이제 가용성 지표가 아니라 **비용 지표**다(인코딩을 몇 번 했나).
  */
 @Service
 class QueryVectorService(
     private val queryVectorPort: QueryVectorPort,
+    private val queryEncoderPort: QueryEncoderPort,
     private val queryMissPort: QueryMissPort,
     private val properties: QueryVectorProperties,
     meterRegistry: MeterRegistry,
@@ -34,6 +40,9 @@ class QueryVectorService(
     private val hitCounter = meterRegistry.counter("search.qvec.hit")
     private val missCounter = meterRegistry.counter("search.qvec.miss")
     private val disabledCounter = meterRegistry.counter("search.qvec.disabled")
+    private val encodedCounter = meterRegistry.counter("search.qvec.encoded")
+    private val encodeFailedCounter = meterRegistry.counter("search.qvec.encode.failed")
+    private val encodeTimer = meterRegistry.timer("search.qvec.encode")
 
     /**
      * 미적중도 담는다 — `Optional.empty()` 로. 담지 않으면 사전에 없는 질의가 매 요청 OpenSearch 를 친다.
@@ -50,24 +59,52 @@ class QueryVectorService(
             return null
         }
         val normalized = QueryNormalizer.normalize(rawQuery) ?: return null
+        val id = QueryVector.idOf(modelRef, normalized)
 
-        val cached = cache.get(QueryVector.idOf(modelRef, normalized)) { id ->
-            Optional.ofNullable(queryVectorPort.find(id)?.vector)
-        }
-
-        // 미스 기록은 **캐시 적중 여부와 무관하게** 매 요청 — 카운트가 곧 우선순위다.
-        // 캐시된 미적중만 세지 않으면 자주 묻는 질의일수록 카운트가 낮게 나온다.
-        return if (cached.isPresent) {
+        // 1·2층 — 캐시와 원천. 캐시는 **미적중도 담는다**: 안 담으면 인코딩이 실패하는 질의가
+        // 매 요청 DB 와 사이드카를 친다.
+        val cached = cache.get(id) { key -> Optional.ofNullable(queryVectorPort.find(key)?.vector) }
+        if (cached.isPresent) {
             hitCounter.increment()
-            cached.get()
-        } else {
-            missCounter.increment()
-            recordMiss(modelRef, normalized)
-            null
+            return cached.get()
         }
+
+        // 3층 — 인코딩. 성공하면 원천에 남기고 캐시를 갱신한다.
+        missCounter.increment()
+        val encoded = encodeTimer.recordCallable { queryEncoderPort.encode(normalized) }
+        if (encoded == null || encoded.isEmpty()) {
+            encodeFailedCounter.increment()
+            recordMiss(modelRef, normalized)
+            return null
+        }
+        encodedCounter.increment()
+        persist(rawQuery, normalized, modelRef, encoded)
+        cache.put(id, Optional.of(encoded))
+        return encoded
     }
 
-    /** 사전이 없다고 검색이 실패하면 안 된다 — Redis 가 죽어도 로그만 남기고 넘어간다. */
+    /**
+     * 원천 저장 실패가 검색을 막지 않는다 — 벡터는 이미 손에 있고, 저장은 다음 요청의 비용을
+     * 줄이려는 것뿐이다. DB 가 죽어도 검색은 인코딩만으로 계속 답한다.
+     */
+    private fun persist(raw: String, normalized: String, modelRef: String, vector: List<Float>) {
+        runCatching {
+            queryVectorPort.upsertAll(
+                listOf(
+                    QueryVector(
+                        query = raw,
+                        normalized = normalized,
+                        modelRef = modelRef,
+                        vector = vector,
+                        source = QueryVector.Source.LOG,
+                        updatedAt = LocalDateTime.now(),
+                    ),
+                ),
+            )
+        }.onFailure { log.warn(it) { "질의 벡터 저장 실패 (무시): $normalized" } }
+    }
+
+    /** 인코딩까지 실패한 질의만 센다 — 무엇을 못 만들고 있는지가 이 카운터의 뜻이다. */
     private fun recordMiss(modelRef: String, normalized: String) {
         runCatching { queryMissPort.record(modelRef, normalized) }
             .onFailure { log.warn(it) { "미적중 기록 실패 (무시): $normalized" } }

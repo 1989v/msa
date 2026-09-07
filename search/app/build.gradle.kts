@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.spring)
+    alias(libs.plugins.kotlin.jpa)
     alias(libs.plugins.spring.boot)
 }
 
@@ -21,6 +22,14 @@ dependencies {
     implementation(libs.spring.boot.starter.validation)
     // 질의 사전 조회 캐시. 미적중도 담아야 사전에 없는 질의가 매번 OpenSearch 를 치지 않는다 (ADR-0090)
     implementation(libs.caffeine)
+
+    // 질의 벡터 원천 (ADR-0090 개정) — 캐시가 아니라 영속 저장이라 재기동 후에도 다시 인코딩하지 않는다.
+    // Flyway+validate — 스키마 변경은 Flyway 단독 책임 (jpa-persistence.md)
+    implementation(libs.spring.boot.starter.data.jpa)
+    implementation("org.springframework.boot:spring-boot-flyway")
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-mysql")
+    runtimeOnly(libs.mysql.connector)
     implementation(libs.spring.kafka)
     implementation(libs.spring.cloud.loadbalancer)
     implementation(libs.springdoc.openapi.starter.webmvc.ui)

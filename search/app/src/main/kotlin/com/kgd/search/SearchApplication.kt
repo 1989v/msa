@@ -4,6 +4,7 @@ import com.kgd.search.application.attraction.config.AttractionHybridProperties
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.ranking.config.BanditProperties
 import com.kgd.search.application.ranking.config.DiversityProperties
+import com.kgd.search.infrastructure.client.QueryEncoderProperties
 import com.kgd.search.infrastructure.client.SearchExperimentProperties
 import com.kgd.search.infrastructure.opensearch.AttractionRankingProperties
 import com.kgd.search.infrastructure.opensearch.RankingProperties
@@ -22,6 +23,7 @@ import org.springframework.kafka.annotation.EnableKafka
     SearchExperimentProperties::class,
     AttractionRankingProperties::class,
     QueryVectorProperties::class,
+    QueryEncoderProperties::class,
     AttractionHybridProperties::class,
 )
 @EnableKafka

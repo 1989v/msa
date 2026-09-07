@@ -44,13 +44,12 @@ OpenSearch 기반 읽기 전용 검색 모델 서비스 (ADR-0055 로 ES 에서 
 | `regions` | `RegionIndexDocument` (batch) | `RegionSearchDocument` (app) | 7 / 7 |
 | `attractions` | `AttractionIndexDocument` (batch) | `AttractionSearchDocument` (app) | 24 / 19 — `idSort`·`titleJamo` + 벡터 3필드가 쓰기 전용 |
 | `products` | `ProductIndexDocument` (batch·consumer 2벌) | `ProductSearchDocument` (app) | 26 / 26 |
-| `query_vectors` | `QueryVectorDocument` (app) | 같은 클래스 | 7 / 7 — 재색인이 없어 넣는 쪽과 읽는 쪽이 한 앱이다 |
 
 `ProductIndexDocument` 2벌은 둘 다 쓰기 측이라 분리 근거가 없는 순수 중복이다. 게이트가 드리프트를 잡으므로
 **세 번째 사본이 생길 때** 공유 모듈을 만든다(지금 묶으면 두 배포 단위를 다시 붙인다).
 `GeoPoint` 는 각 모듈의 top-level — 한쪽 문서의 중첩 타입으로 두면 별개 인덱스가 남의 문서에 묶인다.
 
-## 질의 사전 `query_vectors` (ADR-0090)
+## 질의 벡터 — RDB 원천 + 캐시 (ADR-0090 개정 2026-09-08)
 
 질의를 벡터로 바꾸는 표. **여기 있는 항목은 절대 검색 결과가 되지 않는다** — 답이 되는 것은 문서 벡터뿐이고,
 그래서 별도 인덱스에 두고 `vector` 를 `binary`(base64 float32)로 박는다. 검색하지 않고 **id 로만** 읽는다

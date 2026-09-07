@@ -145,3 +145,16 @@ kubectl -n commerce create secret generic commerce-mysql-secrets \
 
 Secret 이 없으면 operator 는 secret 대기 상태로 명시적으로 멈춘다 —
 약한 placeholder 값으로 조용히 기동되는 것보다 안전하다.
+
+## 새 DB 를 추가할 때 (2026-09-08 `search_db`)
+
+`init-databases-job.yaml` 은 세 곳을 같이 고쳐야 동작한다.
+
+1. `CREATE DATABASE IF NOT EXISTS <db>` — ConfigMap 의 `init.sql`
+2. `<db>:<user>:<PW_ENV>` 한 줄 — 사용자·권한 루프가 읽는 목록
+3. `commerce-app-db-secrets` SealedSecret 에 `<PW_ENV>` 키 — **없으면 Job 이 명시적으로 실패한다**
+   (약한 기본 비밀번호로 조용히 뜨는 것보다 낫다는 기존 방침)
+
+`search_db` 는 1·2 가 들어갔고 **3 은 운영자가 봉인해야 한다** (`SEARCH_PASSWORD`).
+oci-arm 은 `infra/local` 을 상속하므로 이 Job 을 쓰지 않는다 — 거기서는 `configmap-init.yaml` 이 전부다.
+

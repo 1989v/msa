@@ -3,6 +3,22 @@ spring:
     name: search-service
   lifecycle:
     timeout-per-shutdown-phase: 30s
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/search_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:search_user}
+    password: ${MYSQL_PASSWORD:search_password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
   data:
     redis:
       host: ${REDIS_HOST:localhost}
@@ -61,6 +77,10 @@ search:
     model-ref: ${SEARCH_EMBEDDING_MODEL_REF:}
     cache-max-size: 10000
     cache-ttl-minutes: 10
+  query-encoder:
+    base-url: ${SEARCH_ENCODER_URL:http://localhost:8099}
+    connect-timeout-ms: 200
+    read-timeout-ms: 400
   ranking:
     popularity-weight: 10.0
     ctr-weight: 5.0

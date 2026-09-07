@@ -7,7 +7,7 @@ import java.util.Base64
 /**
  * 벡터 전송 표현 — **float32 little-endian 바이트의 base64** (ADR-0090).
  *
- * place 내부 API 응답, `query_vectors` 인덱스의 `binary` 필드, 도구(`tools/embed`)가 모두 이 표현을 쓴다.
+ * place 내부 API 응답, `query_vector` 표의 `VARBINARY` 컬럼, 도구(`tools/embed`)가 모두 이 표현을 쓴다.
  * 실수 배열 JSON 보다 3배 작고 파싱이 빠르다(로컬 프로브: 512차원 8만 항목 float JSON = 642MB, 플랜 §8.4).
  *
  * **도메인에 두는 이유**: 색인(`search:batch`)과 질의(`search:app`)가 같은 규약을 써야 하는데,
