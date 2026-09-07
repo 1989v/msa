@@ -215,7 +215,12 @@ const ENTITIES: Record<string, string> = {
  * 태그를 지우는 것이지 서식을 살리는 것이 아니다 — `<em>` 을 기울임으로 되살리려면 원천 HTML 을
  * 신뢰해야 하는데, 우리가 통제하지 않는 문자열이라 그러지 않는다. 줄바꿈만 뜻이 분명해 살린다.
  */
-export function overviewText(raw: string | null | undefined): string {
+/**
+ * 원천 텍스트 → 화면에 낼 평문. 개요만이 아니라 **이용정보에도 같은 것이 섞여 온다**
+ * (표본 182개 중 21개: infoCenter `<br>` 11 · useTime `<br>` 8 · 개행 10).
+ * 한 함수로 둔다 — 두 벌로 나뉘면 한쪽만 고쳐지고 다른 쪽에 태그가 남는다.
+ */
+export function sourceText(raw: string | null | undefined): string {
   if (!raw) return '';
   let text = raw.replace(/\r\n?/g, '\n');
   text = text.replace(/<br\s*\/?>/gi, '\n');
@@ -231,3 +236,6 @@ export function overviewText(raw: string | null | undefined): string {
   text = text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
   return text.trim();
 }
+
+/** 개요 전용 별칭 — 호출부의 뜻이 드러나게 남긴다. */
+export const overviewText = sourceText;

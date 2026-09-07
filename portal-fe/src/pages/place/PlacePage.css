@@ -849,6 +849,8 @@
 .place-detail-info-list dd {
   margin: 0;
   color: var(--ko-text-primary);
+  /* 원천이 <br> 로 여러 줄을 주는 값이 있다(문의처 두 곳, 계절별 이용시간) */
+  white-space: pre-line;
   /* 원천 값이 줄바꿈 없이 길게 오는 경우가 많다 (이용시간이 계절별로 이어 붙는다) */
   overflow-wrap: anywhere;
 }

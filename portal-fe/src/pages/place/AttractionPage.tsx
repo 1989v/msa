@@ -32,6 +32,7 @@ import {
   isNotFoundError,
   isPlottable,
   overviewText,
+  sourceText,
   titleParts,
   type IntroRow,
 } from './placeView';
@@ -257,7 +258,9 @@ export default function AttractionPage() {
                 { key: 'parkingFee', label: L.parkingFee, value: attraction.parkingFee ?? '' },
                 { key: 'infoCenter', label: L.infoCenter, value: attraction.infoCenter ?? '' },
               ];
+              // 이용정보에도 <br>·엔티티가 섞여 온다 — 개요와 같은 정리를 거친다
               const rows = [...derived, ...introRows(attraction.introRaw, lang)]
+                .map((r) => ({ ...r, value: sourceText(r.value) }))
                 .filter((r) => r.value.trim().length > 0);
               if (rows.length === 0) return null;
               return (

@@ -10,6 +10,7 @@ import {
   mergePages,
   nextPage,
   overviewText,
+  sourceText,
   titleParts,
 } from '../placeView';
 
@@ -254,5 +255,21 @@ describe('overviewText', () => {
     expect(overviewText(null)).toBe('');
     expect(overviewText(undefined)).toBe('');
     expect(overviewText('   ')).toBe('');
+  });
+});
+
+describe('sourceText — 이용정보에도 같은 정리가 필요하다', () => {
+  it('문의처의 <br> 로 줄을 나눈다 (라이브 실측값)', () => {
+    // GET /api/search/attractions/10447 의 infoCenter 원문
+    const raw = '제주도 지질공원 064-710-3945<br>세계유산본부 064-710-6027';
+    expect(sourceText(raw)).toBe('제주도 지질공원 064-710-3945\n세계유산본부 064-710-6027');
+  });
+
+  it('overviewText 와 같은 함수다 — 두 벌이면 한쪽만 고쳐진다', () => {
+    expect(sourceText).toBe(overviewText);
+  });
+
+  it('이용시간의 엔티티도 푼다', () => {
+    expect(sourceText('09:00&ndash;18:00')).toBe('09:00–18:00');
   });
 });
