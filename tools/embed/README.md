@@ -21,10 +21,20 @@ Colab(T4) 에서 후보 모델 × 차원(512·1024) × 텍스트 규칙(full·ti
 **한 번 인코딩해 MRL 로 잘라서** 차원을 비교한다 — 차원마다 다시 돌리지 않는다(4B 는 native 2560).
 
 ```bash
-python -m embed.bakeoff --model qwen3-4b --lang ko --dims 512,1024 --rules full \
+# 인코딩하며 잰다 — **--save-vectors 를 꼭 준다**
+python -m embed.bakeoff --model arctic-ko --lang ko --dims 512,1024 --rules full \
   --judgments docs/specs/2026-09-05-unified-search/judgments.yml \
-  --corpus <scratchpad>/p0/pool/corpus_ko.json --device mps --out dims.md
+  --corpus <scratchpad>/p0/pool/corpus_ko.json --device mps \
+  --save-vectors <scratchpad>/p0/vectors --out dims.md
+
+# 저장본으로 다시 잰다 — 모델을 안 부르므로 초 단위다
+python -m embed.bakeoff --score-saved <dir>/vec_ko_arctic-ko_full.npz <dir>/qvec_ko_arctic-ko.npz \
+  --judgments docs/specs/2026-09-05-unified-search/judgments.yml --lang ko --dims 256,512,1024
 ```
+
+**`--save-vectors` 는 선택이 아니라 기본이다.** 이 파이프라인에서 비싼 것은 인코딩 하나뿐이고
+(4B·4.5만 건 = 3시간), 평가 단계에서 죽으면 그게 통째로 날아간다 — 2026-09-07 에 실제로 그랬다.
+저장해 두면 차원·k 를 바꿔 가며 재는 것이 초 단위가 되고, 그 파일은 **첫 채움에도 그대로 쓴다**.
 
 차원은 k-NN 메모리를 절반으로 줄이는 지렛대다(§8.4: 60k 문서가 512차원 244MB / 1024차원 478MB).
 둘 다 한도 안에 들어가므로 **nDCG 차이로만** 정한다.
