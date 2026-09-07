@@ -470,6 +470,38 @@ def check_reserved_corner(html: str, game_dir: Path) -> list[Finding]:
     return out
 
 
+def check_shared_libs() -> list[Finding]:
+    """
+    **공유 라이브러리도 우상단을 침범하면 안 된다.**
+
+    이번 사고가 정확히 이 모양이었다 — `lib/i18n.js` 한 줄이 언어 전환 버튼을
+    `position:fixed; top:8px; right:8px` 에 심어서 **게임 50종의 한/EN 전환이 죽어 있었다.**
+    게임별 검사만 두면 이걸 못 잡는다: lib 은 게임 폴더 밖이라 건너뛰고,
+    건너뛰지 않으면 같은 위반이 72번 찍혀 아무도 안 읽는다. 그래서 한 번만 따로 본다.
+    """
+    out: list[Finding] = []
+    lib = GAMES_DIR / "lib"
+    if not lib.is_dir():
+        return out
+    for js in sorted(lib.glob("*.js")):
+        text = js.read_text(encoding="utf-8", errors="ignore")
+        for m in re.finditer(r"position:\s*fixed;[^'\"`]{0,200}", text):
+            blob = m.group(0)
+            if "--kgd-chrome" in blob or "GameChrome" in blob or "CHROME_" in blob:
+                continue
+            top = re.search(r"top:\s*([\d.]+)px", blob)
+            right = re.search(r"right:\s*([\d.]+)px", blob)
+            if not (top and right):
+                continue
+            if float(top.group(1)) >= CHROME_TOP or float(right.group(1)) >= CHROME_RIGHT:
+                continue
+            out.append(Finding(
+                "F6", f"lib/{js.name} 이 우상단 예약 자리에 요소를 심는다 — top {top.group(1)} · right {right.group(1)}",
+                "공유 라이브러리라 이걸 부르는 게임 전부가 같이 깨진다 "
+                "(2026-08-29: i18n.js 하나로 50종). `var(--kgd-chrome-top, 46px)` 를 써라",
+            ))
+    return out
+
 
 def check_canvas_stretch(html: str, game_dir: Path) -> list[Finding]:
     """
