@@ -39,8 +39,15 @@ class CategoryLexiconAdapter(
     override fun lexicon(lang: String?): QueryIntent.Lexicon =
         cache.get()[lang ?: DEFAULT_LANG] ?: QueryIntent.Lexicon.EMPTY
 
-    /** 기동 직후 한 번, 이후 6시간마다. 코드표가 바뀌는 주기(월 1회)보다 훨씬 촘촘하다. */
-    @Scheduled(initialDelay = 5_000, fixedDelay = 6 * 60 * 60 * 1000)
+    /**
+     * 기동 직후 한 번, 이후 10분마다.
+     *
+     * **주기를 코드표가 바뀌는 속도(월 1회)에 맞추면 안 된다** — 정하는 것은 *실패에서 회복하는 속도*다.
+     * 6시간으로 뒀더니 search 와 place 가 같이 롤아웃되는 배포마다 첫 시도가 `Connection refused` 로
+     * 죽고 그 뒤 6시간 동안 사전이 빈 채로 돌았다(실측 2026-09-08). 클러스터 안 호출 한 번에
+     * 수백 행이라 10분 주기는 비용이 아니다.
+     */
+    @Scheduled(initialDelay = 5_000, fixedDelay = 10 * 60 * 1000)
     fun refresh() {
         if (!enabled) return
         val loaded = runCatching { fetch() }.getOrElse {

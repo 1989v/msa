@@ -6,6 +6,7 @@
 #   - search-batch → product  (productApiReindexJob 페이지 스캔 + seed Job bulk 적재, ADR-0056/0058)
 #   - auth → commerce         (SSO 회원 조회/생성)
 #   - search-batch → place    (attractionApiReindexJob 페이지 풀스캔, ADR-0065)
+#   - search → place          (질의 이해가 쓰는 분류 코드표 조회, ADR-0090 D8)
 #
 # 새 백엔드-백엔드 호출이 추가되면 별도 NetworkPolicy 를 추가한다.
 # 공유 manifest 한 파일에 모아두고 ingress 를 늘리는 방식 (per-target)으로 관리.
@@ -105,6 +106,12 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: place-ingest
+        # search → place : 질의 이해가 분류 코드표를 기동 시 받아 캐시한다 (ADR-0090 D8).
+        #   빠뜨리면 "Connection refused" 만 남고 **검색은 멀쩡히 돈다** — 사전이 빈 채로
+        #   의도어가 검색어로 남을 뿐이라 장애로 안 보인다. 그래서 더 늦게 발견된다.
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: search
       ports:
         - { port: http, protocol: TCP }
 ---
