@@ -429,7 +429,7 @@ images:
     newTag: f6ae107
   - name: commerce/search-embed
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-embed
-    newTag: f6ae107
+    newTag: 8f325ca
   # 인프라 이미지 — default-deny egress 라 기동 래퍼의 nori 다운로드가 불가.
   # analysis-nori 베이크 이미지로 교체 (docker/opensearch/Dockerfile, 수동 빌드·푸시)
   - name: opensearchproject/opensearch
