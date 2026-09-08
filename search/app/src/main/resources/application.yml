@@ -52,6 +52,14 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+    distribution:
+      # ADR-0025 §4 가 Tier 1 경로에 요구하는 것. 이게 없으면 prometheus 가
+      # count/sum/max 만 내보내 **P99 를 계산할 수 없다** — SLA 를 적어 두고도 못 잰다.
+      percentiles-histogram:
+        http.server.requests: true
+      # 예산 경계에 버킷을 둔다 (conventions/latency-budget.md Tier 1 검색).
+      slo:
+        http.server.requests: 150ms,500ms
 
 opensearch:
   uris: ${OPENSEARCH_URIS:http://localhost:9200}

@@ -51,15 +51,30 @@ DC → 대륙 간 RTT  ≈ ×300      "광속 한계"
 
 ### Tier 1 — 사용자 직접 응답 경로 (P99 SLA 강제, alerting 등록)
 
-`Last-updated`: 2026-04-26 (initial estimate, pre-production)
+`Last-updated`: 2026-09-08 (검색 항목만 production 측정 반영)
+
+**budget 은 서버 안에서 잰 시간이다.** 강제 계측이 `http_server_requests_seconds_*`
+(§6.5 alerting 룰)이므로 예산도 같은 것을 뜻해야 한다. 엣지 왕복은 아래 별도 항목으로 두고
+경로 예산에 섞지 않는다 — 앱이 고칠 수 없고 보는 사람 위치마다 다르다.
 
 | 경로 | P99 budget | 근거 |
 |---|---|---|
-| 단순 상품 조회 (cache hit) | 50 ms | 외부 RTT + 서버 ~5ms |
-| 단순 상품 조회 (cache miss) | 80 ms | 위 + DB ~3ms (tail +30ms) |
-| 검색 | 300 ms | ES P99 ~100ms + 외부 RTT |
-| 주문 생성 (동기 부분) | 100 ms | DB INSERT + Kafka produce |
-| 위시리스트 추가 | 80 ms | 단순 INSERT + cache invalidate |
+| 단순 상품 조회 (cache hit) | 50 ms | 서버 ~5ms + tail (미측정 추정) |
+| 단순 상품 조회 (cache miss) | 80 ms | 위 + DB ~3ms (tail +30ms, 미측정 추정) |
+| 검색 — 질의 벡터 적중 | 150 ms | 실측 평균 74.6ms (10건, 2026-09-08 oci-arm) |
+| 검색 — 질의 벡터 미적중 | 500 ms | 실측 평균 354ms — 인코딩 235ms(MAX) + 검색 |
+| 주문 생성 (동기 부분) | 100 ms | DB INSERT + Kafka produce (미측정 추정) |
+| 위시리스트 추가 | 80 ms | 단순 INSERT + cache invalidate (미측정 추정) |
+
+**검색을 두 줄로 나눈 이유**: 두 경로의 분포가 다르고, 섞은 P99 는 질의 벡터 적중률이
+정한다. 적중률은 캐시와 `query_vector` 원장이 차면서 계속 오르므로, 한 숫자로 덮으면
+같은 코드가 날마다 다른 판정을 받는다.
+
+**엣지 왕복 (참고, 예산 아님)**: Cloudflare → OCI 춘천 왕복은 아무 일도 하지 않는 404 로
+재도 첫바이트 0.79~1.10초다. 사용자 체감을 줄이려면 손댈 곳은 앱이 아니라 엣지 구성이다.
+
+> 검색 외 항목은 여전히 2026-04-26 의 pre-production 추정값이다. 실측 전에는 근거란의
+> "미측정 추정" 을 지우지 않는다.
 
 ### Tier 2 — 비동기 처리 경로 (Throughput 기준, 강제 X / 권장)
 
