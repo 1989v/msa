@@ -7,6 +7,7 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=stats            # 잔량만 (TourAPI 호출 0)
     python -m src.main --job=sync --content-type=attraction
     python -m src.main --job=admin-regions --file 법정동코드_전체자료.txt
+    python -m src.main --job=lcls-codes            # 분류체계 코드→이름 (호출 400회 미만)
 
 외부 :443 을 부르는 것은 이 CronJob 파드뿐이다 — 상시 파드인 place 에는 egress 를 열지 않는다
 (ADR-0031 §5.10 화이트리스트에 place-ingest 만 추가).
@@ -22,7 +23,8 @@ import sys
 
 from pathlib import Path
 
-from src import admin_region, backfill_intro, backfill_overview, google_place, naver, place_client, quota, sync_tour, youtube
+from src import (admin_region, backfill_intro, backfill_overview, google_place, naver, place_client,
+                 quota, sync_lcls_codes, sync_tour, youtube)
 
 
 def _api_key() -> str:
@@ -49,6 +51,14 @@ def _job_intro(budget: int, langs: tuple[str, ...]) -> int:
     """이용시간·휴무·요금·주차 하루치. 개요와 오퍼레이션이 달라 한도를 따로 쓴다."""
     loaded = backfill_intro.run(_api_key(), budget, langs)
     backfill_overview.log("적재 없음 — 재색인 불필요" if not loaded else "하루치 완료")
+    return 0
+
+
+def _job_lcls_codes(langs: tuple[str, ...]) -> int:
+    """분류체계 코드표. 호출 400회 미만이라 예산 인자를 두지 않는다."""
+    svc = tuple({"ko": "kor", "en": "eng"}[x] for x in langs)
+    applied = sync_lcls_codes.run(_api_key(), svc)
+    sync_lcls_codes.log(f"적재 {applied}건")
     return 0
 
 
@@ -209,7 +219,8 @@ def _print_english_names(regions: list[dict]) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--job", required=True,
-                    choices=["overview", "intro", "stats", "sync", "links", "admin-regions", "google-places"])
+                    choices=["overview", "intro", "stats", "sync", "links", "admin-regions",
+                             "google-places", "lcls-codes"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -236,6 +247,8 @@ def main() -> int:
         return _job_google_places(args.google_places_budget)
     if args.job == "admin-regions":
         return _job_admin_regions(args.file)
+    if args.job == "lcls-codes":
+        return _job_lcls_codes(langs)
     return _job_sync(args.content_type, args.limit)
 
 

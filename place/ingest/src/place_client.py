@@ -80,6 +80,18 @@ def bulk_upsert(records: list[dict]) -> tuple[int, int]:
     return created, updated
 
 
+def upsert_category_codes(rows: list[dict]) -> int:
+    """분류체계 코드표 — (lang, code) 멱등 upsert. 표가 작아 한 번에 보낸다."""
+    if not rows:
+        return 0
+    applied = 0
+    for i in range(0, len(rows), BULK_CHUNK):
+        chunk = rows[i:i + BULK_CHUNK]
+        applied += int(_request("PUT", "/internal/attractions/category-codes",
+                                {"items": chunk})["data"]["applied"])
+    return applied
+
+
 def fetch_probe_keys(lang: str | None = None) -> set[str]:
     """개요 negative cache — `lang:contentId` 집합."""
     qs = f"?{urllib.parse.urlencode({'lang': lang})}" if lang else ""

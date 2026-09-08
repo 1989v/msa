@@ -1,0 +1,55 @@
+# TourAPI 분류체계 코드표(lclsSystmCode2) 수집 CronJob.
+#
+# `attractions` 가 갖고 있는 `lclsSystm1~3` 은 코드뿐이라 사람도 질의도 뜻을 모른다.
+# 이 잡이 코드→이름을 채우고, 그 이름이 필터 표시와 질의 사전의 근거가 된다.
+#
+# 호출은 1 + 대분류 + 중분류 로 400회 미만이다 — 건당 1콜인 개요·이용정보와 성격이 달라
+# 예산(BUDGET)을 두지 않고 한 번에 전량을 받는다. 분류가 바뀌는 일이 드물어 주기도 월 1회다.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-lcls-codes
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "lcls-codes"
+spec:
+  # 매월 1일 UTC 19:30 = KST 04:30. 개요(04:00)·이용정보(05:00) 사이의 빈 자리다.
+  schedule: "30 19 1 * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "lcls-codes"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=lcls-codes"]
+              env:
+                - name: PLACE_API
+                  value: "http://place:8096"
+                - name: REDIS_HOST
+                  value: "redis"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                # 코드 수백 행뿐이라 목록 스캔이 없다 — 개요 잡보다 훨씬 가볍다.
+                requests: { cpu: 50m, memory: 128Mi }
+                limits:   { memory: 256Mi }

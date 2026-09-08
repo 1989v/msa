@@ -6,3 +6,4 @@ resources:
   - cronjob-intro.yaml
   - cronjob-links.yaml
   - cronjob-google-places.yaml
+  - cronjob-lcls-codes.yaml
