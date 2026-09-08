@@ -78,13 +78,32 @@ object QueryIntent {
             fun of(codes: List<Triple<String, Int, String>>): Lexicon {
                 val map = mutableMapOf<String, Pair<String, Int>>()
                 codes.forEach { (code, depth, name) ->
-                    val key = normalize(name)
-                    if (key.isBlank()) return@forEach
-                    val existing = map[key]
-                    if (existing == null || depth >= existing.second) map[key] = code to depth
+                    aliasesOf(name).forEach { key ->
+                        val existing = map[key]
+                        if (existing == null || depth >= existing.second) map[key] = code to depth
+                    }
                 }
                 return Lexicon(map)
             }
+
+            /**
+             * **원천 이름 자체가 동의어를 담고 있다** — `해변. 해수욕장` · `연못·늪` · `항구/포구` ·
+             * `자연경관(하천‧해양)`. 이름을 통째로만 열쇠로 쓰면 「해수욕장」이 안 걸린다(실측).
+             *
+             * 그래서 셋을 다 등록한다: 이름 전체 · 괄호 밖을 쪼갠 것 · 괄호 안을 쪼갠 것.
+             * 사전을 손으로 채우지 않고 얻는 별칭이라, 원천이 이름을 고치면 따라 바뀐다.
+             */
+            fun aliasesOf(name: String): Set<String> {
+                val outside = name.replace(PARENTHETICAL, " ")
+                val inside = PARENTHETICAL.findAll(name).map { it.groupValues[1] }.joinToString(" ")
+                return (listOf(name) + SEPARATORS.split(outside) + SEPARATORS.split(inside))
+                    .map { normalize(it) }
+                    .filter { it.isNotBlank() }
+                    .toSet()
+            }
+
+            private val PARENTHETICAL = Regex("""[(（]([^)）]*)[)）]""")
+            private val SEPARATORS = Regex("""[.,/·∙‧・]""")
         }
     }
 

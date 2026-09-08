@@ -82,6 +82,45 @@ class QueryIntentTest : BehaviorSpec({
         }
     }
 
+    Given("원천 이름이 동의어를 담고 있을 때") {
+        // 실제 코드표 값들이다 — 손으로 만든 예가 아니다.
+        val real = QueryIntent.Lexicon.of(
+            listOf(
+                Triple("NA020900", 3, "해변. 해수욕장"),
+                Triple("NA020400", 3, "연못·늪"),
+                Triple("NA020700", 3, "항구/포구"),
+                Triple("NA02", 2, "자연경관(하천‧해양)"),
+            ),
+        )
+
+        When("마침표로 이어 쓴 이름의 뒷말로 물으면") {
+            Then("같은 코드로 간다 — 이름 전체로만 열쇠를 만들면 못 찾는다") {
+                QueryIntent.analyze("해수욕장", real).lclsCode shouldBe "NA020900"
+                QueryIntent.analyze("해변", real).lclsCode shouldBe "NA020900"
+            }
+        }
+
+        When("가운뎃점·빗금으로 이어 쓴 이름이면") {
+            Then("각 조각이 모두 열쇠가 된다") {
+                QueryIntent.analyze("늪", real).lclsCode shouldBe "NA020400"
+                QueryIntent.analyze("포구", real).lclsCode shouldBe "NA020700"
+            }
+        }
+
+        When("괄호 안에 든 말이면") {
+            Then("그것도 열쇠가 된다") {
+                QueryIntent.analyze("하천", real).lclsCode shouldBe "NA02"
+                QueryIntent.analyze("해양", real).lclsCode shouldBe "NA02"
+            }
+        }
+
+        When("이름 전체로 물어도") {
+            Then("여전히 걸린다") {
+                QueryIntent.analyze("자연경관(하천‧해양)", real).lclsCode shouldBe "NA02"
+            }
+        }
+    }
+
     Given("한영 이름을 한 사전에 넣었을 때") {
         // 원천이 같은 코드에 두 이름을 준다 — 손으로 쓰지 않은 한영 동의어다.
         val bilingual = QueryIntent.Lexicon.of(
