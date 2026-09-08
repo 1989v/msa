@@ -387,10 +387,10 @@ images:
     newTag: 6a1889c
   - name: commerce/place
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place
-    newTag: ff882e0
+    newTag: 7d29725
   - name: commerce/place-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place-ingest
-    newTag: ff882e0
+    newTag: 7d29725
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: "20058e0"
