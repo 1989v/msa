@@ -1,10 +1,12 @@
 package com.kgd.search.application.attraction.service
 
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
+import com.kgd.search.application.attraction.port.CategoryLexiconPort
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -22,8 +24,16 @@ class SearchAttractionServiceTest : BehaviorSpec({
     val resolveQueryVector = mockk<ResolveQueryVectorUseCase>(relaxed = true)
 
     /** 기본은 하이브리드 꺼짐 — 운영 기본값과 같다. 켠 경우는 아래 given 블록이 따로 만든다. */
-    fun serviceWith(hybridEnabled: Boolean = false, modelRef: String = MODEL_REF) = SearchAttractionService(
+    /** 분류 사전은 기본적으로 비워 둔다 — 사전 없이도 검색이 성립해야 한다(place 장애 시 모습). */
+    fun serviceWith(
+        hybridEnabled: Boolean = false,
+        modelRef: String = MODEL_REF,
+        lexicon: QueryIntent.Lexicon = QueryIntent.Lexicon.EMPTY,
+    ) = SearchAttractionService(
         searchPort, resolveQueryVector,
+        object : CategoryLexiconPort {
+            override fun lexicon(lang: String?) = lexicon
+        },
         AttractionHybridProperties(enabled = hybridEnabled),
         QueryVectorProperties(modelRef = modelRef),
         SimpleMeterRegistry(),
@@ -188,6 +198,61 @@ class SearchAttractionServiceTest : BehaviorSpec({
                 serviceWith(hybridEnabled = true, modelRef = "").execute(SearchAttractionUseCase.Query(keyword = "한옥"))
 
                 captured.captured.embedding shouldBe null
+                verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
+            }
+        }
+    }
+
+    given("질의에 의도어가 섞여 있을 때") {
+        val lexicon = QueryIntent.Lexicon.of(listOf(Triple("NA020100", 3, "해수욕장")))
+
+        `when`("「아이와 갈만한 관광지」로 검색하면") {
+            then("의도어는 필터가 되고 검색어에서 빠진다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+
+                serviceWith(lexicon = lexicon)
+                    .execute(SearchAttractionUseCase.Query(keyword = "아이와 갈만한 관광지"))
+
+                captured.captured.contentTypeId shouldBe "12"
+                captured.captured.keyword shouldBe "아이와"
+            }
+        }
+
+        `when`("분류 이름만 치면") {
+            then("검색어 없이 분류 필터만 남는다") {
+                val captured = slot<AttractionSearchPort.SearchQuery>()
+                every { searchPort.search(capture(captured), any()) } returns PageImpl(emptyList())
+
+                serviceWith(lexicon = lexicon)
+                    .execute(SearchAttractionUseCase.Query(keyword = "해수욕장"))
+
+                captured.captured.lclsCode shouldBe "NA020100"
+                captured.captured.lclsDepth shouldBe 3
+                captured.captured.keyword shouldBe null
+            }
+        }
+
+        `when`("벡터 레그에 넘길 질의는") {
+            then("잔여가 아니라 **원문**이어야 한다 — 문장의 뜻이 벡터의 전부다") {
+                every { searchPort.search(any(), any()) } returns PageImpl(emptyList())
+                every { resolveQueryVector.resolve(any(), any()) } returns listOf(0.1f, 0.2f)
+
+                serviceWith(hybridEnabled = true, lexicon = lexicon)
+                    .execute(SearchAttractionUseCase.Query(keyword = "아이와 갈만한 관광지"))
+
+                verify { resolveQueryVector.resolve("아이와 갈만한 관광지", MODEL_REF) }
+            }
+        }
+    }
+
+    given("검색어 없는 목록 조회") {
+        `when`("빈 키워드로 부르면") {
+            then("사전도 인코더도 보지 않는다") {
+                every { searchPort.search(any(), any()) } returns PageImpl(emptyList())
+
+                serviceWith(hybridEnabled = true).execute(SearchAttractionUseCase.Query(keyword = ""))
+
                 verify(exactly = 0) { resolveQueryVector.resolve(any(), any()) }
             }
         }

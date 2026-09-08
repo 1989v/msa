@@ -33,6 +33,14 @@ interface AttractionSearchPort {
          * 위해 여러 개를 받는다 (ADR-0071 §5). 비어 있으면 필터하지 않는다.
          */
         val categories: List<String> = emptyList(),
+        /**
+         * 질의 이해가 만든 원천 분류 필터 (ADR-0090 개정). 사용자가 고른 [categories] 와 축이 달라
+         * 함께 걸릴 수 있다 — 이쪽은 질의에서 유도한 것이고 저쪽은 화면에서 고른 것이다.
+         */
+        val contentTypeId: String? = null,
+        val lclsCode: String? = null,
+        /** 1/2/3 — 어느 lclsSystm 필드에 걸지 정한다. [lclsCode] 가 있으면 반드시 함께 온다. */
+        val lclsDepth: Int? = null,
         val geo: GeoFilter? = null,
         /**
          * 질의 벡터 (ADR-0090). **null 이면 BM25 만** — 사전 미적중·기능 꺼짐·거리순 정렬이 그 경우다.

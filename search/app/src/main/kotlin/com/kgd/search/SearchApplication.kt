@@ -13,8 +13,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 import org.springframework.kafka.annotation.EnableKafka
+import org.springframework.scheduling.annotation.EnableScheduling
 
 @SpringBootApplication
+// 분류 사전 주기 갱신 (CategoryLexiconAdapter) — 질의 경로에 네트워크를 두지 않기 위한 것
+@EnableScheduling
 @EnableConfigurationProperties(
     RankingProperties::class,
     RankingVariantsProperties::class,

@@ -1,11 +1,13 @@
 package com.kgd.search.application.attraction.service
 
 import com.kgd.search.application.attraction.config.AttractionHybridProperties
+import com.kgd.search.application.attraction.port.CategoryLexiconPort
 import com.kgd.search.application.queryvector.config.QueryVectorProperties
 import com.kgd.search.application.queryvector.usecase.ResolveQueryVectorUseCase
 import com.kgd.search.application.attraction.usecase.SearchAttractionUseCase
 import com.kgd.search.application.attraction.usecase.SuggestAttractionUseCase
 import com.kgd.search.domain.attraction.model.AttractionDocument
+import com.kgd.search.domain.attraction.model.QueryIntent
 import com.kgd.search.domain.attraction.port.AttractionSearchPort
 import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.data.domain.PageRequest
@@ -20,6 +22,7 @@ import java.util.UUID
 class SearchAttractionService(
     private val attractionSearchPort: AttractionSearchPort,
     private val resolveQueryVector: ResolveQueryVectorUseCase,
+    private val categoryLexicon: CategoryLexiconPort,
     private val hybrid: AttractionHybridProperties,
     private val queryVector: QueryVectorProperties,
     meterRegistry: MeterRegistry,
@@ -28,6 +31,9 @@ class SearchAttractionService(
     /** 벡터 레그가 실제로 켜진 요청 수. 사전 적중률(`search.qvec.*`)과 나눠 본다 — 여기가 낮으면 사전이 얇다. */
     private val hybridCounter = meterRegistry.counter("search.attraction.hybrid")
     private val bm25Counter = meterRegistry.counter("search.attraction.bm25")
+
+    /** 질의 이해가 의도어를 필터로 옮긴 요청 수. 사전이 실제로 무는지 보는 값이다. */
+    private val intentCounter = meterRegistry.counter("search.attraction.intent")
 
     override fun execute(prefix: String, lang: String?, size: Int): List<SuggestAttractionUseCase.Suggestion> =
         attractionSearchPort.suggest(prefix, lang?.takeIf { it.isNotBlank() }, size).map { hit ->
@@ -52,19 +58,30 @@ class SearchAttractionService(
         val geo = toGeoFilter(query)
         val pageable = PageRequest.of(query.page.coerceAtLeast(0), query.size.coerceIn(1, 100))
         val keyword = query.keyword?.takeIf { it.isNotBlank() }
+        // 벡터 레그에는 **원문**을 준다 — 문장의 뜻이 그 레그의 전부라 잘라내면 안 된다 (ADR-0090 개정).
         val embedding = resolveEmbedding(keyword, geo)
+        // 키워드 레그에는 의도어를 뺀 잔여만 준다. 형태소가 쪼갠 조각이 내용어로 채점되는 것을 막는다.
+        val understood = keyword?.let { QueryIntent.analyze(it, categoryLexicon.lexicon(query.lang)) }
+        if (understood?.hasFilter == true) intentCounter.increment()
+        val categories = query.category
+            ?.split(",")
+            ?.map { it.trim() }
+            ?.filter { it.isNotBlank() }
+            .orEmpty()
         val page = attractionSearchPort.search(
             AttractionSearchPort.SearchQuery(
-                keyword = keyword,
+                // `?:` 를 쓰면 안 된다 — 잔여가 null 인 것은 「값이 없다」가 아니라
+                // **「의도어만이라 검색어가 남지 않았다」**는 결과다. 엘비스로 원문을 되살리면
+                // 방금 잘라낸 「해수욕장」이 그대로 BM25 에 돌아간다.
+                keyword = if (understood != null) understood.residual else keyword,
                 lang = query.lang?.takeIf { it.isNotBlank() },
                 areaCode = query.areaCode?.takeIf { it.isNotBlank() },
                 sidoCode = query.sidoCode?.takeIf { it.isNotBlank() },
                 sigunguCode = query.sigunguCode?.takeIf { it.isNotBlank() },
-                categories = query.category
-                    ?.split(",")
-                    ?.map { it.trim() }
-                    ?.filter { it.isNotBlank() }
-                    .orEmpty(),
+                categories = categories,
+                contentTypeId = understood?.contentTypeId,
+                lclsCode = understood?.lclsCode,
+                lclsDepth = understood?.lclsDepth,
                 geo = geo,
                 embedding = embedding,
             ),
@@ -92,7 +109,10 @@ class SearchAttractionService(
      * 이웃 100개를 훑는 값만 치르고 얻는 것이 없다.
      */
     private fun resolveEmbedding(keyword: String?, geo: AttractionSearchPort.GeoFilter?): List<Float>? {
-        if (!hybrid.enabled || !queryVector.enabled || keyword == null || geo?.sortByDistance == true) {
+        // 검색어가 없는 목록 조회는 **폴백이 아니다** — 인코딩할 질의가 애초에 없다.
+        // 이것을 bm25 로 세면 「벡터를 쓰려다 못 썼다」로 읽혀 폴백률이 부풀려진다.
+        if (keyword == null) return null
+        if (!hybrid.enabled || !queryVector.enabled || geo?.sortByDistance == true) {
             bm25Counter.increment()
             return null
         }

@@ -225,6 +225,16 @@ class AttractionSearchAdapter(
                             }
                         }
                     }
+                    // 질의 이해가 유도한 원천 분류 축 (ADR-0090 개정). 코드는 토큰이 아니라 값이라 term 이다.
+                    query.contentTypeId?.let { type ->
+                        b.filter { f -> f.term { it.field("contentTypeId").value(FieldValue.of(type)) } }
+                    }
+                    query.lclsCode?.let { code ->
+                        // 깊이는 코드와 짝으로만 들어온다(포트 계약). 없으면 어느 필드에 걸지 알 수 없어 거른다.
+                        query.lclsDepth?.let { depth ->
+                            b.filter { f -> f.term { it.field("lclsSystm$depth").value(FieldValue.of(code)) } }
+                        }
+                    }
                     query.geo?.let { geo ->
                         b.filter { f ->
                             f.geoDistance { g ->
@@ -249,6 +259,10 @@ class AttractionSearchAdapter(
 
         if (embedding == null) {
             builder.query(keywordLeg)
+        } else if (query.keyword == null) {
+            // 검색어가 없으면 키워드 레그는 matchAll 이다 — 그것을 융합하면 **임의 순서**가
+            // 벡터 결과와 같은 무게로 섞인다. 순위를 정할 신호가 벡터뿐이니 벡터만 쓴다.
+            builder.query(vectorLeg(embedding, matched))
         } else {
             builder.query(hybridQuery(keywordLeg, embedding, matched, pageable.offset.toInt() + pageable.pageSize))
                 // 파이프라인이 두 레그의 점수를 융합한다. **이름이 없으면 OpenSearch 가 요청을 거부한다** —
@@ -266,7 +280,8 @@ class AttractionSearchAdapter(
                 }
             }
             addTiebreakers(builder)
-        } else if (embedding == null) {
+        } else if (embedding == null || query.keyword == null) {
+            // 벡터 단독은 융합 파이프라인을 쓰지 않으므로 정렬을 걸 수 있다 — 동점 순서를 잃지 않는다.
             builder.sort { s -> s.score { it.order(SortOrder.Desc) } }
             addTiebreakers(builder)
         }
@@ -304,24 +319,30 @@ class AttractionSearchAdapter(
      * 필터를 두 레그에 **각각** 거는 이유: 하이브리드는 레그별로 후보를 뽑아 합치므로,
      * 한쪽에만 걸면 다른 쪽이 필터 밖 문서를 끌어 온다(지역 필터를 건 검색에 엉뚱한 지역이 섞인다).
      */
+    /**
+     * 필터드 HNSW 한 레그. **필터를 `knn` 안에** 두는 것이 중요하다 — 밖에 두면 전역 이웃 k 개를
+     * 뽑은 뒤 거르므로, 지역·분류 필터가 좁을수록 살아남는 것이 급격히 줄어 레그가 사실상 꺼진다.
+     */
+    private fun vectorLeg(embedding: List<Float>, filters: Query): Query = Query.of { q ->
+        q.knn(
+            KnnQuery.Builder()
+                .field(VECTOR_FIELD)
+                .vector(embedding)
+                .k(hybrid.k)
+                .filter(
+                    Query.of { f ->
+                        f.bool { b ->
+                            b.filter(filters)
+                            b.filter { m -> m.term { it.field("embeddingModel").value(FieldValue.of(queryVector.modelRef)) } }
+                        }
+                    },
+                )
+                .build(),
+        )
+    }
+
     private fun hybridQuery(keywordLeg: Query, embedding: List<Float>, filters: Query, depth: Int): Query {
-        val vectorLeg = Query.of { q ->
-            q.knn(
-                KnnQuery.Builder()
-                    .field(VECTOR_FIELD)
-                    .vector(embedding)
-                    .k(hybrid.k)
-                    .filter(
-                        Query.of { f ->
-                            f.bool { b ->
-                                b.filter(filters)
-                                b.filter { m -> m.term { it.field("embeddingModel").value(FieldValue.of(queryVector.modelRef)) } }
-                            }
-                        },
-                    )
-                    .build(),
-            )
-        }
+        val vectorLeg = vectorLeg(embedding, filters)
         return Query.of { q ->
             q.hybrid(
                 HybridQuery.Builder()
