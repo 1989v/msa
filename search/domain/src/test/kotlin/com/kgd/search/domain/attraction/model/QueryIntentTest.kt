@@ -82,6 +82,38 @@ class QueryIntentTest : BehaviorSpec({
         }
     }
 
+    Given("한영 이름을 한 사전에 넣었을 때") {
+        // 원천이 같은 코드에 두 이름을 준다 — 손으로 쓰지 않은 한영 동의어다.
+        val bilingual = QueryIntent.Lexicon.of(
+            listOf(
+                Triple("NA02", 2, "Natural Scenery (Rivers/Marine)"),
+                Triple("NA02", 2, "자연경관(하천‧해양)"),
+            ),
+        )
+
+        When("영문 이름으로 물어도") {
+            Then("같은 코드로 간다 — 문서 언어와 무관하게 필터가 걸린다") {
+                QueryIntent.analyze("natural scenery (rivers/marine)", bilingual).lclsCode shouldBe "NA02"
+            }
+        }
+
+        When("한글 이름으로 물어도") {
+            Then("같은 코드로 간다") {
+                QueryIntent.analyze("자연경관(하천‧해양)", bilingual).lclsCode shouldBe "NA02"
+            }
+        }
+    }
+
+    Given("깊이가 같은 이름이 겹칠 때") {
+        val ordered = QueryIntent.Lexicon.of(listOf(Triple("AA01", 2, "체험"), Triple("BB01", 2, "체험")))
+
+        When("찾으면") {
+            Then("나중에 넣은 것이 이긴다 — 호출자가 순서로 우선순위를 준다") {
+                ordered.lookup("체험") shouldBe ("BB01" to 2)
+            }
+        }
+    }
+
     Given("같은 이름이 두 깊이에 있을 때") {
         val ambiguous = QueryIntent.Lexicon.of(listOf(Triple("VE", 1, "체험"), Triple("VE0101", 2, "체험")))
 

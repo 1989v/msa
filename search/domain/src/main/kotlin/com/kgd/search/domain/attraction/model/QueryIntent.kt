@@ -59,7 +59,10 @@ object QueryIntent {
 
     /**
      * 분류 이름 사전. `place` 의 `attraction_category_codes` 에서 만든다.
-     * 이름이 겹치면(다른 depth 에 같은 이름) **깊은 쪽이 이긴다** — 좁게 말하는 쪽이 사용자의 뜻에 가깝다.
+     *
+     * 이름이 겹칠 때 **깊은 쪽이 이긴다** — 좁게 말하는 쪽이 사용자의 뜻에 가깝다.
+     * 깊이가 같으면 **나중에 넣은 것이 이긴다** — 호출자가 순서로 우선순위를 준다
+     * (한영 이름을 한 사전에 넣을 때 요청 언어를 뒤에 깔면 그쪽이 이긴다).
      */
     class Lexicon(entries: Map<String, Pair<String, Int>> = emptyMap()) {
         private val byName: Map<String, Pair<String, Int>> = entries
@@ -78,7 +81,7 @@ object QueryIntent {
                     val key = normalize(name)
                     if (key.isBlank()) return@forEach
                     val existing = map[key]
-                    if (existing == null || depth > existing.second) map[key] = code to depth
+                    if (existing == null || depth >= existing.second) map[key] = code to depth
                 }
                 return Lexicon(map)
             }
@@ -98,6 +101,13 @@ object QueryIntent {
     fun analyze(raw: String, lexicon: Lexicon = Lexicon.EMPTY): Understood {
         val words = raw.trim().split(Regex("""\s+""")).filter { it.isNotBlank() }
         if (words.isEmpty()) return Understood(residual = null)
+
+        // **질의 전체를 한 구절로 먼저 맞춘다.** 아래 어절 창은 최대 두 어절이라
+        // 「Natural Scenery (Rivers/Marine)」 처럼 긴 이름을 영영 못 잡는다.
+        match(normalize(raw), lexicon)?.let { whole ->
+            return Understood(residual = null, contentTypeId = whole.first,
+                              lclsCode = whole.second?.first, lclsDepth = whole.second?.second)
+        }
 
         var contentTypeId: String? = null
         var lcls: Pair<String, Int>? = null

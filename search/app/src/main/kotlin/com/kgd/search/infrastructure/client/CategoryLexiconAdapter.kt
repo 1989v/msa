@@ -55,13 +55,27 @@ class CategoryLexiconAdapter(
         log.info { "분류 사전 갱신: ${loaded.entries.joinToString { "${it.key} ${it.value.phrasesLongestFirst.size}건" }}" }
     }
 
+    /**
+     * **언어를 가로질러 만든다.** 원천이 같은 코드에 한글·영문 이름을 짝으로 주므로
+     * (`NA02 자연경관(하천‧해양) ↔ Natural Scenery (Rivers/Marine)`),
+     * 두 이름을 한 사전에 넣으면 **한영 동의어를 손으로 쓰지 않고 얻는다.**
+     *
+     * 문서는 `lang` 으로 갈려 있어 영문 질의는 영문 문서만 봤는데, 이제 영문 이름이
+     * 코드로 옮겨져 **국문 문서에도 같은 필터가 걸린다.**
+     * 같은 이름이 두 언어에 겹치면 **요청 언어가 이긴다** — 그쪽이 사용자의 뜻에 가깝다.
+     */
     private fun fetch(): Map<String, QueryIntent.Lexicon> {
         val response = client.get().uri("/api/places/attractions/category-codes")
             .retrieve().body(CodesResponse::class.java) ?: return emptyMap()
-        return response.data
-            .filter { it.name.isNotBlank() && it.code.isNotBlank() }
-            .groupBy { it.lang }
-            .mapValues { (_, rows) -> QueryIntent.Lexicon.of(rows.map { Triple(it.code, it.depth, it.name) }) }
+        val rows = response.data.filter { it.name.isNotBlank() && it.code.isNotBlank() }
+        if (rows.isEmpty()) return emptyMap()
+
+        val langs = rows.map { it.lang }.filter { it.isNotBlank() }.toSet().ifEmpty { setOf(DEFAULT_LANG) }
+        return langs.associateWith { lang ->
+            // 뒤에 오는 것이 이기도록 다른 언어를 먼저 깔고 요청 언어를 덮는다.
+            val ordered = rows.filterNot { it.lang == lang } + rows.filter { it.lang == lang }
+            QueryIntent.Lexicon.of(ordered.map { Triple(it.code, it.depth, it.name) })
+        }
     }
 
     data class CodesResponse(val data: List<Row> = emptyList())
