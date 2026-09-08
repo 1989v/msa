@@ -423,7 +423,7 @@ images:
     newTag: f6ae107
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: f6ae107
+    newTag: 8ddb607
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
     newTag: f6ae107
