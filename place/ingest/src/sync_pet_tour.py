@@ -58,8 +58,11 @@ def run(key: str, langs: tuple[str, ...] = ("ko", "en")) -> bool:
         svc_key = {"ko": "kor", "en": "eng"}[lang]
         try:
             pet = fetch(key, svc_key)
-        except TourApiError as e:
-            log(f"[{lang}] 실패: {e}")
+        except Exception as e:
+            # **한 언어가 실패해도 다른 언어는 받는다.** `TourApiError` 만 잡으면 안 된다 —
+            # 영문 서비스에는 이 오퍼레이션이 없어 urllib 이 HTTP 400 을 그대로 던지고,
+            # 그러면 이미 받아 둔 국문 9,583건이 있어도 잡이 실패로 끝난다(실측 2026-09-08).
+            log(f"[{lang}] 건너뜀 — 원천이 답하지 않았다: {e}")
             continue
         log(f"[{lang}] 원천 {len(pet):,}건")
         if not pet:

@@ -94,6 +94,9 @@ data class UpsertAttractionItem(
         parkingFee = parkingFee,
         infoCenter = infoCenter,
         introSyncedAt = introSyncedAt,
+        petAcmpyType = petAcmpyType,
+        petRaw = petRaw,
+        petSyncedAt = petSyncedAt,
         googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
     )

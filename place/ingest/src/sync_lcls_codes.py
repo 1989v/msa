@@ -70,9 +70,10 @@ def run(key: str, langs: tuple[str, ...] = ("kor", "eng")) -> int:
     for svc_key in langs:
         try:
             rows = fetch(key, svc_key)
-        except TourApiError as e:
+        except Exception as e:
             # 한 언어가 실패해도 다른 언어는 받는다 — 코드표는 언어별로 독립이다.
-            log(f"{svc_key} 실패: {e}")
+            # `TourApiError` 만으로는 부족하다: 오퍼레이션이 없는 서비스는 HTTP 400 이 그대로 올라온다.
+            log(f"{svc_key} 건너뜀 — 원천이 답하지 않았다: {e}")
             continue
         if not rows:
             log(f"{svc_key} 받은 코드 없음")

@@ -68,6 +68,8 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 | 관광지 | 한국관광공사 TourAPI 4.0 | 필요 | 공공누리 (출처표시) | `place/ingest --job=sync` |
 | 관광지 개요 | TourAPI `detailCommon2` | 필요 | 〃 | `place/ingest --job=overview` (매일) |
 | 관광지 이용정보 | TourAPI `detailIntro2` | 필요 | 〃 | `place/ingest --job=intro` (매일) |
+| 관광지 분류 코드표 | TourAPI `lclsSystmCode2` | 필요 | 〃 | `place/ingest --job=lcls-codes` (월 1회) |
+| 관광지 반려동물 동반 | TourAPI `detailPetTour2` | 필요 | 〃 | `place/ingest --job=pet-tour` (주 1회) |
 | **행정구역(법정동)** | 행정안전부 행정표준코드관리시스템 | **불필요** | 공공누리 제1유형 | `place/ingest --job=admin-regions` |
 | 세계 지명 계층 | GeoNames | 불필요 | **CC BY 4.0** | `tools/seed/place/normalize_regions.py` |
 | POI(상가) | 소상공인시장진흥공단 상가(상권)정보 | 필요 | 이용허락범위 제한없음 | `tools/seed/place/normalize_pois.py` |
@@ -108,7 +110,19 @@ bulk upsert 가 **전체 동기화**면(보내지 않은 필드를 null 로 덮�
 단층제라 그렇다. 그대로 저장하면 시도 코드 `36` 과 조인이 안 돼 `sync_tour._ldong` 이 2/3 으로 쪼갠다.
 
 **일일 한도는 (서비스 × 오퍼레이션)별로 따로다** — `KorService2`가 429여도 `EngService2`는
-살아 있고, `areaBasedList2`도 `detailCommon2`와 별도 한도다.
+살아 있고, `areaBasedList2`도 `detailCommon2`와 별도 한도다. 포털이 공표하는 값은
+**상세기능(오퍼레이션)별 100,000/일** 이라, 제공자 단위 숫자로 환산해 쓰면 안 된다
+(`place/ingest/src/quota.py` 가 `DATA_GO_KR` 을 관측만 하는 이유다).
+
+**분류 코드표는 이름을 준다.** `attractions` 는 `lclsSystm1~3` 을 코드로만 갖고 있어
+필터 이름도, 질의의 「자연」이 어느 코드인지도 이을 수 없다. `lclsSystmCode2` 가 그 이름을 주고,
+**같은 코드에 국문·영문 이름을 짝으로** 주므로 한영 동의어가 손으로 쓰지 않고 나온다
+(`NA02 자연경관(하천‧해양) ↔ Natural Scenery (Rivers/Marine)`).
+**깊이를 코드 길이로 유도하면 안 된다** — 대부분 2/4/8 자지만 `C01`(추천코스) 계열만 3/5/9 자다(13건).
+
+**반려동물은 `detailIntro2` 로 오지 않는다.** 그쪽 `chkpet` 은 국문 44,924건 중 3건뿐이고,
+원천이 이 축을 `detailPetTour2` 로 옮겼다. 그쪽은 **contentId 없이 목록으로** 9,691건을 준다 —
+건당 1콜이 아니라 100건 페이징이라 약 100콜이면 전량이다.
 
 > 원천 raw 응답은 레포에 커밋하지 않는다. 정규화 산출물만 적재한다.
 
