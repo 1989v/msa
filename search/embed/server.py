@@ -73,6 +73,10 @@ def encode(query: str) -> list[float]:
     return [float(x) for x in v]
 
 
+# 질의 하나가 들어오는 본문이라 이보다 클 이유가 없다.
+MAX_BODY = 64 * 1024
+
+
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -92,13 +96,37 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._send(404, {"error": "not found"})
 
+    def _read_body(self) -> bytes:
+        """본문을 읽는다 — Content-Length 와 청크 전송 인코딩 둘 다.
+
+        HTTP/1.1 클라이언트는 본문 길이를 미리 모르면 청크로 보낸다. Spring 6.2 의
+        RestClient 가 그 경우다. Content-Length 만 읽으면 본문이 빈 것으로 보이고,
+        남은 청크 틀이 다음 요청줄로 읽혀 연결이 어긋난다.
+        """
+        if "chunked" in self.headers.get("Transfer-Encoding", "").lower():
+            chunks = bytearray()
+            while True:
+                size = int(self.rfile.readline().split(b";")[0].strip() or b"0", 16)
+                if size == 0:
+                    break
+                if len(chunks) + size > MAX_BODY:
+                    raise ValueError("body too large")
+                chunks += self.rfile.read(size)
+                self.rfile.read(2)  # 청크 뒤 CRLF
+            while self.rfile.readline().strip():  # 트레일러
+                pass
+            return bytes(chunks)
+        n = int(self.headers.get("Content-Length", "0"))
+        if n > MAX_BODY:
+            raise ValueError("body too large")
+        return self.rfile.read(n)
+
     def do_POST(self) -> None:  # noqa: N802
         if self.path != "/encode":
             self._send(404, {"error": "not found"})
             return
         try:
-            n = int(self.headers.get("Content-Length", "0"))
-            query = (json.loads(self.rfile.read(n) or b"{}").get("query") or "").strip()
+            query = (json.loads(self._read_body() or b"{}").get("query") or "").strip()
         except Exception:
             self._send(400, {"error": "bad json"})
             return
