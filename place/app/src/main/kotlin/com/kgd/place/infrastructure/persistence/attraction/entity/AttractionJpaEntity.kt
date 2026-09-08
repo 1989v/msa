@@ -121,7 +121,8 @@ class AttractionJpaEntity(
     @Column(name = "parking_fee", columnDefinition = "TEXT")
     val parkingFee: String? = null,
 
-    @Column(name = "info_center", length = 255)
+    // 형제 intro 필드와 같은 TEXT — 255자로 두면 긴 안내소 하나가 배치 전체를 죽인다 (V15).
+    @Column(name = "info_center", columnDefinition = "TEXT")
     val infoCenter: String? = null,
 
     @Column(name = "intro_synced_at")
