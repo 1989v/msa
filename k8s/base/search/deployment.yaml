@@ -32,6 +32,9 @@ spec:
             # 벡터 레그의 스탬프. 재색인이 싣는 embeddingModel 과 같아야 한다.
             - name: SEARCH_EMBEDDING_MODEL_REF
               value: "microsoft/harrier-oss-v1-270m@31de22b#d640"
+            # 벡터 레그. 문서 벡터 적재율이 100% 가 된 뒤에 켠다 — 비어 있으면 knn 레그가 0건을 낸다.
+            - name: SEARCH_ATTRACTION_HYBRID_ENABLED
+              value: "true"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
