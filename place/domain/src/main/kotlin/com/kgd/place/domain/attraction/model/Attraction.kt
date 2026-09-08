@@ -317,6 +317,14 @@ class Attraction private constructor(
         parkingFee = source.parkingFee ?: parkingFee
         infoCenter = source.infoCenter ?: infoCenter
         introSyncedAt = source.introSyncedAt ?: introSyncedAt
+        /*
+         * 반려동물도 같은 보강 필드다 — detailPetTour2 로만 채워진다.
+         * **여기 한 줄이 없으면 값이 조용히 사라진다**: 갱신 경로는 전부 이 함수를 지나므로
+         * DTO·엔티티에 필드를 다 넣어도 로그만 「갱신 9,583건」을 찍고 컬럼은 비어 있다.
+         */
+        petAcmpyType = source.petAcmpyType ?: petAcmpyType
+        petRaw = source.petRaw ?: petRaw
+        petSyncedAt = source.petSyncedAt ?: petSyncedAt
         sourceModifiedAt = source.sourceModifiedAt
         status = source.status
     }
