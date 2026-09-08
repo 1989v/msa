@@ -24,6 +24,16 @@ data class AttractionDocument(
     val ldongRegnCd: String? = null,
     val ldongSignguCd: String? = null,
     val category: String? = null,
+    /**
+     * 원천 분류체계 (TourAPI). `category` 는 이것을 6종으로 접은 **파생**이고, 원본은 이쪽이다.
+     * 접는 과정에서 `VE`(문화관광)가 culture/nature 로 갈리는 식의 손실이 있어 필터 축으로는 원본을 쓴다.
+     * 이름은 place `attraction_category_codes` 가 갖고 있다.
+     */
+    val lclsSystm1: String? = null,
+    val lclsSystm2: String? = null,
+    val lclsSystm3: String? = null,
+    /** 원천이 매긴 관광 유형 — 12 가 곧 「관광지」다. 질의 의도를 코드로 옮길 때 쓴다. */
+    val contentTypeId: String? = null,
     val imageUrl: String? = null,
     /** 대표 이미지 썸네일(원천 firstimage2, 150×100). 카드 얼굴처럼 작은 자리는 원본(약 500KB) 대신 이것을 쓴다. */
     val thumbnailUrl: String? = null,

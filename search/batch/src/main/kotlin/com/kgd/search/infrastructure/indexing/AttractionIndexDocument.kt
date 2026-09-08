@@ -34,6 +34,12 @@ data class AttractionIndexDocument(
     val ldongRegnCd: String? = null,
     val ldongSignguCd: String? = null,
     val category: String? = null,
+    /** 원천 분류체계 코드. `category` 가 접기 전의 원본이라 필터 축으로 쓴다. */
+    val lclsSystm1: String? = null,
+    val lclsSystm2: String? = null,
+    val lclsSystm3: String? = null,
+    /** 12 = 관광지. 질의 의도를 코드로 옮기는 가장 정확한 축이다. */
+    val contentTypeId: String? = null,
     val imageUrl: String? = null,
     /** 대표 이미지 썸네일 — 표시 전용이라 색인하지 않는다 (mapping: index=false). */
     val thumbnailUrl: String? = null,
@@ -87,6 +93,10 @@ data class AttractionIndexDocument(
             ldongRegnCd = doc.ldongRegnCd,
             ldongSignguCd = doc.ldongSignguCd,
             category = doc.category,
+            lclsSystm1 = doc.lclsSystm1,
+            lclsSystm2 = doc.lclsSystm2,
+            lclsSystm3 = doc.lclsSystm3,
+            contentTypeId = doc.contentTypeId,
             imageUrl = doc.imageUrl,
             thumbnailUrl = doc.thumbnailUrl,
             tel = doc.tel,

@@ -515,6 +515,10 @@ val searchReadOmitted = mapOf(
         "embedding" to "벡터 레그 전용(knn_vector) — 질의가 _source.excludes 로 빼므로 응답에 오지 않는다 (ADR-0090)",
         "embeddingModel" to "색인된 벡터의 스탬프 — 질의 경로가 설정과 견주는 값이지 응답 필드가 아니다 (ADR-0090)",
         "embeddingHash" to "임베딩 텍스트 해시 — 어느 텍스트로 만든 벡터인지 추적용, 검색·응답 모두 안 쓴다 (ADR-0090)",
+        "lclsSystm1" to "원천 분류체계 — 필터 축이지 응답 필드가 아니다 (표시 이름은 place category-codes 가 갖는다)",
+        "lclsSystm2" to "위와 같음 (중분류)",
+        "lclsSystm3" to "위와 같음 (소분류)",
+        "contentTypeId" to "원천 관광 유형(12=관광지) — 질의 의도를 옮기는 필터 축, 응답 필드가 아니다",
     ),
 )
 

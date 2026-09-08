@@ -26,7 +26,10 @@
           "type": "edge_ngram",
           "min_gram": 1,
           "max_gram": 20,
-          "token_chars": ["letter", "digit"]
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
         }
       },
       "analyzer": {
@@ -37,38 +40,65 @@
         "nori_search": {
           "type": "custom",
           "tokenizer": "nori_tokenizer",
-          "filter": ["tourism_synonyms"]
+          "filter": [
+            "tourism_synonyms"
+          ]
         },
         "jamo_index": {
           "type": "custom",
           "tokenizer": "jamo_edge_ngram",
-          "filter": ["lowercase"]
+          "filter": [
+            "lowercase"
+          ]
         },
         "jamo_search": {
           "type": "custom",
           "tokenizer": "whitespace",
-          "filter": ["lowercase"]
+          "filter": [
+            "lowercase"
+          ]
         }
       }
     }
   },
   "mappings": {
     "properties": {
-      "id": { "type": "keyword" },
-      "idSort": { "type": "long" },
-      "contentId": { "type": "keyword" },
-      "lang": { "type": "keyword" },
+      "id": {
+        "type": "keyword"
+      },
+      "idSort": {
+        "type": "long"
+      },
+      "contentId": {
+        "type": "keyword"
+      },
+      "lang": {
+        "type": "keyword"
+      },
       "title": {
-        "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
+        "type": "text",
+        "analyzer": "nori_analyzer",
+        "search_analyzer": "nori_search",
         "fields": {
-          "en": { "type": "text", "analyzer": "english" },
-          "keyword": { "type": "keyword", "ignore_above": 256 }
+          "en": {
+            "type": "text",
+            "analyzer": "english"
+          },
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
         }
       },
       "titleLocal": {
-        "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
+        "type": "text",
+        "analyzer": "nori_analyzer",
+        "search_analyzer": "nori_search",
         "fields": {
-          "keyword": { "type": "keyword", "ignore_above": 256 }
+          "keyword": {
+            "type": "keyword",
+            "ignore_above": 256
+          }
         }
       },
       "titleJamo": {
@@ -77,31 +107,104 @@
         "search_analyzer": "jamo_search"
       },
       "address": {
-        "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
-        "fields": { "en": { "type": "text", "analyzer": "english" } }
+        "type": "text",
+        "analyzer": "nori_analyzer",
+        "search_analyzer": "nori_search",
+        "fields": {
+          "en": {
+            "type": "text",
+            "analyzer": "english"
+          }
+        }
       },
       "overview": {
-        "type": "text", "analyzer": "nori_analyzer", "search_analyzer": "nori_search",
-        "fields": { "en": { "type": "text", "analyzer": "english" } }
+        "type": "text",
+        "analyzer": "nori_analyzer",
+        "search_analyzer": "nori_search",
+        "fields": {
+          "en": {
+            "type": "text",
+            "analyzer": "english"
+          }
+        }
       },
-      "areaCode": { "type": "keyword" },
-      "sigunguCode": { "type": "keyword" },
-      "ldongRegnCd": { "type": "keyword" },
-      "ldongSignguCd": { "type": "keyword" },
-      "category": { "type": "keyword" },
-      "location": { "type": "geo_point" },
-      "imageUrl": { "type": "keyword", "index": false },
-      "thumbnailUrl": { "type": "keyword", "index": false },
-      "tel": { "type": "keyword", "index": false },
-      "useTime": { "type": "text", "index": false },
-      "restDate": { "type": "text", "index": false },
-      "useFee": { "type": "text", "index": false },
-      "parking": { "type": "text", "index": false },
-      "parkingFee": { "type": "text", "index": false },
-      "infoCenter": { "type": "text", "index": false },
-      "introRaw": { "type": "text", "index": false },
-      "googlePlaceId": { "type": "keyword", "index": false },
-      "popularityScore": { "type": "float" },
+      "areaCode": {
+        "type": "keyword"
+      },
+      "sigunguCode": {
+        "type": "keyword"
+      },
+      "ldongRegnCd": {
+        "type": "keyword"
+      },
+      "ldongSignguCd": {
+        "type": "keyword"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "lclsSystm1": {
+        "type": "keyword"
+      },
+      "lclsSystm2": {
+        "type": "keyword"
+      },
+      "lclsSystm3": {
+        "type": "keyword"
+      },
+      "contentTypeId": {
+        "type": "keyword"
+      },
+      "location": {
+        "type": "geo_point"
+      },
+      "imageUrl": {
+        "type": "keyword",
+        "index": false
+      },
+      "thumbnailUrl": {
+        "type": "keyword",
+        "index": false
+      },
+      "tel": {
+        "type": "keyword",
+        "index": false
+      },
+      "useTime": {
+        "type": "text",
+        "index": false
+      },
+      "restDate": {
+        "type": "text",
+        "index": false
+      },
+      "useFee": {
+        "type": "text",
+        "index": false
+      },
+      "parking": {
+        "type": "text",
+        "index": false
+      },
+      "parkingFee": {
+        "type": "text",
+        "index": false
+      },
+      "infoCenter": {
+        "type": "text",
+        "index": false
+      },
+      "introRaw": {
+        "type": "text",
+        "index": false
+      },
+      "googlePlaceId": {
+        "type": "keyword",
+        "index": false
+      },
+      "popularityScore": {
+        "type": "float"
+      },
       "embedding": {
         "type": "knn_vector",
         "dimension": 640,
@@ -109,12 +212,23 @@
         "method": {
           "name": "hnsw",
           "engine": "lucene",
-          "parameters": { "m": 16, "ef_construction": 128 }
+          "parameters": {
+            "m": 16,
+            "ef_construction": 128
+          }
         }
       },
-      "embeddingModel": { "type": "keyword" },
-      "embeddingHash": { "type": "keyword", "index": false },
-      "modifiedAt": { "type": "date", "format": "yyyy-MM-dd'T'HH:mm:ss" }
+      "embeddingModel": {
+        "type": "keyword"
+      },
+      "embeddingHash": {
+        "type": "keyword",
+        "index": false
+      },
+      "modifiedAt": {
+        "type": "date",
+        "format": "yyyy-MM-dd'T'HH:mm:ss"
+      }
     }
   }
 }
