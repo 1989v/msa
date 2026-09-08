@@ -40,6 +40,9 @@ interface UpsertAttractionUseCase {
         val parkingFee: String? = null,
         val infoCenter: String? = null,
         val introSyncedAt: LocalDateTime? = null,
+        val petAcmpyType: String? = null,
+        val petRaw: String? = null,
+        val petSyncedAt: LocalDateTime? = null,
         val googlePlaceId: String? = null,
         val sourceModifiedAt: LocalDateTime? = null,
     )

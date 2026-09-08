@@ -8,6 +8,7 @@ K8s CronJob 이 본 모듈을 --job 으로 분기해 호출한다:
     python -m src.main --job=sync --content-type=attraction
     python -m src.main --job=admin-regions --file 법정동코드_전체자료.txt
     python -m src.main --job=lcls-codes            # 분류체계 코드→이름 (호출 400회 미만)
+    python -m src.main --job=pet-tour              # 반려동물 동반 (목록형, 약 100회)
 
 외부 :443 을 부르는 것은 이 CronJob 파드뿐이다 — 상시 파드인 place 에는 egress 를 열지 않는다
 (ADR-0031 §5.10 화이트리스트에 place-ingest 만 추가).
@@ -24,7 +25,7 @@ import sys
 from pathlib import Path
 
 from src import (admin_region, backfill_intro, backfill_overview, google_place, naver, place_client,
-                 quota, sync_lcls_codes, sync_tour, youtube)
+                 quota, sync_lcls_codes, sync_pet_tour, sync_tour, youtube)
 
 
 def _api_key() -> str:
@@ -59,6 +60,13 @@ def _job_lcls_codes(langs: tuple[str, ...]) -> int:
     svc = tuple({"ko": "kor", "en": "eng"}[x] for x in langs)
     applied = sync_lcls_codes.run(_api_key(), svc)
     sync_lcls_codes.log(f"적재 {applied}건")
+    return 0
+
+
+def _job_pet_tour(langs: tuple[str, ...]) -> int:
+    """반려동물 동반. 목록형이라 건당 1콜이 아니고 약 100콜이면 전량이라 예산이 없다."""
+    loaded = sync_pet_tour.run(_api_key(), langs)
+    sync_pet_tour.log("적재 없음 — 재색인 불필요" if not loaded else "전량 반영")
     return 0
 
 
@@ -220,7 +228,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--job", required=True,
                     choices=["overview", "intro", "stats", "sync", "links", "admin-regions",
-                             "google-places", "lcls-codes"])
+                             "google-places", "lcls-codes", "pet-tour"])
     ap.add_argument("--budget", type=int, default=int(os.environ.get("BUDGET", "1000")),
                     help="개요 수집 일일 예산 (언어별, detailCommon2 호출 상한)")
     ap.add_argument("--lang", choices=["ko", "en"], help="미지정 시 ko·en 둘 다")
@@ -249,6 +257,8 @@ def main() -> int:
         return _job_admin_regions(args.file)
     if args.job == "lcls-codes":
         return _job_lcls_codes(langs)
+    if args.job == "pet-tour":
+        return _job_pet_tour(langs)
     return _job_sync(args.content_type, args.limit)
 
 

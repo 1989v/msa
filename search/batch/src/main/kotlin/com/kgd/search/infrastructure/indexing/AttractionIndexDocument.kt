@@ -40,6 +40,8 @@ data class AttractionIndexDocument(
     val lclsSystm3: String? = null,
     /** 12 = 관광지. 질의 의도를 코드로 옮기는 가장 정확한 축이다. */
     val contentTypeId: String? = null,
+    /** 반려동물 동반 여부 (원천 `acmpyTypeCd`). 테마 필터 축 — 값 그대로 term 으로 건다. */
+    val petAcmpyType: String? = null,
     val imageUrl: String? = null,
     /** 대표 이미지 썸네일 — 표시 전용이라 색인하지 않는다 (mapping: index=false). */
     val thumbnailUrl: String? = null,
@@ -97,6 +99,7 @@ data class AttractionIndexDocument(
             lclsSystm2 = doc.lclsSystm2,
             lclsSystm3 = doc.lclsSystm3,
             contentTypeId = doc.contentTypeId,
+            petAcmpyType = doc.petAcmpyType,
             imageUrl = doc.imageUrl,
             thumbnailUrl = doc.thumbnailUrl,
             tel = doc.tel,

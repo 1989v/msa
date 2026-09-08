@@ -7,3 +7,4 @@ resources:
   - cronjob-links.yaml
   - cronjob-google-places.yaml
   - cronjob-lcls-codes.yaml
+  - cronjob-pet-tour.yaml

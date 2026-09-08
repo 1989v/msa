@@ -104,6 +104,7 @@ class AttractionApiReindexTasklet(
                             lclsSystm2 = attraction.lclsSystm2,
                             lclsSystm3 = attraction.lclsSystm3,
                             contentTypeId = attraction.contentTypeId,
+                            petAcmpyType = attraction.petAcmpyType,
                             imageUrl = attraction.imageUrl,
                             thumbnailUrl = attraction.thumbnailUrl,
                             tel = attraction.tel,

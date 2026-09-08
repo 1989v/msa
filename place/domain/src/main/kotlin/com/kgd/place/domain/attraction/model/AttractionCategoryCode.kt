@@ -5,6 +5,11 @@ package com.kgd.place.domain.attraction.model
  *
  * `attractions.lcls_systm1~3` 은 코드만 갖고 있어 사람에게도 질의에게도 뜻이 없다.
  * 이 표가 「NA02 = 자연경관(하천‧해양)」을 알려 주고, 그것이 필터 이름과 질의 사전의 근거가 된다.
+ *
+ * **깊이와 상위 코드는 받는 값이지 코드에서 유도하는 값이 아니다.** 대부분은 2/4/8 자라
+ * 길이로 유도할 수 있을 것 같지만 `C01`(추천코스) 계열만 3/5/9 자다(실측 13건).
+ * 유도하면 그 13건에서 터지고, 관대하게 넘기면 엉뚱한 깊이로 저장된다.
+ * 수집기는 단계별로 받으므로 깊이를 이미 알고 있다 — 그것을 그대로 쓴다.
  */
 class AttractionCategoryCode private constructor(
     val id: Long? = null,
@@ -15,25 +20,15 @@ class AttractionCategoryCode private constructor(
     val name: String,
 ) {
     companion object {
-        /** 코드 길이가 곧 깊이다 — 2(대)/4(중)/8(소). 원천이 이 규칙으로 코드를 만든다. */
-        fun depthOf(code: String): Int = when (code.length) {
-            2 -> 1
-            4 -> 2
-            8 -> 3
-            else -> throw IllegalArgumentException("분류 코드 길이가 2/4/8 이 아닙니다: $code")
-        }
-
-        fun of(lang: String, code: String, name: String, parentCode: String? = null): AttractionCategoryCode {
+        fun of(lang: String, code: String, depth: Int, name: String, parentCode: String? = null): AttractionCategoryCode {
             require(lang.isNotBlank()) { "lang 은 비어있을 수 없습니다" }
+            require(code.isNotBlank()) { "code 는 비어있을 수 없습니다" }
             require(name.isNotBlank()) { "name 은 비어있을 수 없습니다" }
-            val depth = depthOf(code)
+            require(depth in 1..3) { "depth 는 1~3 이어야 합니다: $depth" }
+            require(depth == 1 || parentCode != null) { "depth $depth 는 상위 코드가 필요합니다: $code" }
             return AttractionCategoryCode(
-                lang = lang,
-                code = code,
-                depth = depth,
-                // 원천이 상위 코드를 따로 주지 않으므로 앞자리에서 잘라 쓰되, 준 값이 있으면 그것을 믿는다.
-                parentCode = parentCode ?: if (depth == 1) null else code.take(if (depth == 2) 2 else 4),
-                name = name,
+                lang = lang, code = code, depth = depth,
+                parentCode = parentCode?.takeIf { depth > 1 }, name = name,
             )
         }
 

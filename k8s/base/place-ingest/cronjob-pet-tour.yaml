@@ -1,0 +1,58 @@
+# TourAPI 반려동물 동반 정보(detailPetTour2) 수집 CronJob.
+#
+# detailIntro2 의 chkpet 은 국문 44,924건 중 3건만 채워져 있다 — 원천이 이 축을
+# **별도 오퍼레이션으로 옮겼기** 때문이다. 그쪽은 contentId 없이 목록으로 준다(국문 9,691건).
+#
+# 100건씩 페이징이라 약 100콜이면 전량이다 — 건당 1콜인 개요·이용정보와 성격이 달라
+# 예산(BUDGET)을 두지 않는다. 갱신이 잦지 않아 주 1회.
+#
+# 전체 동기화 경로(bulk_upsert)를 쓰므로 **레코드를 통째로 되돌려 보낸다** — 부분 레코드를
+# 보내면 나머지 필드가 지워진다 (data-sources.md §0 ③).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: place-ingest-pet-tour
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: place-ingest
+    app.kubernetes.io/part-of: commerce-platform
+    place.kgd.io/job: "pet-tour"
+spec:
+  # 매월 1일 UTC 19:30 = KST 04:30. 개요(04:00)·이용정보(05:00) 사이의 빈 자리다.
+  schedule: "0 19 * * 1"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: place-ingest
+            app.kubernetes.io/part-of: commerce-platform
+            place.kgd.io/job: "pet-tour"
+        spec:
+          restartPolicy: Never
+          enableServiceLinks: false
+          containers:
+            - name: ingest
+              image: commerce/place-ingest:latest
+              imagePullPolicy: IfNotPresent
+              args: ["--job=pet-tour"]
+              env:
+                - name: PLACE_API
+                  value: "http://place:8096"
+                - name: REDIS_HOST
+                  value: "redis"
+                - name: TOUR_API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: place-ingest-secrets
+                      key: tour-api-key
+                      optional: true
+              resources:
+                # 전량(약 6만 행) 페이지 스캔을 메모리에 올린다 — bulk_upsert 경로가 그것을 요구한다.
+                requests: { cpu: 100m, memory: 256Mi }
+                limits:   { memory: 768Mi }

@@ -11,7 +11,11 @@ class AttractionCategoryCodeService(
 ) : SyncAttractionCategoryCodesUseCase {
 
     override fun upsert(items: List<SyncAttractionCategoryCodesUseCase.Item>): SyncAttractionCategoryCodesUseCase.Applied {
-        val codes = items.map { AttractionCategoryCode.of(it.lang, it.code, it.name, it.parentCode) }
+        // 같은 (lang, code) 가 두 번 오면 마지막이 이긴다 — 유일 제약이 있어 그대로 넣으면 배치가 통째로 죽는다.
+        val codes = items
+            .associateBy { it.lang to it.code }
+            .values
+            .map { AttractionCategoryCode.of(it.lang, it.code, it.depth, it.name, it.parentCode) }
         return SyncAttractionCategoryCodesUseCase.Applied(repository.upsertAll(codes))
     }
 

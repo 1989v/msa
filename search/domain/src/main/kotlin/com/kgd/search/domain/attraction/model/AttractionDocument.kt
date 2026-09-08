@@ -34,6 +34,8 @@ data class AttractionDocument(
     val lclsSystm3: String? = null,
     /** 원천이 매긴 관광 유형 — 12 가 곧 「관광지」다. 질의 의도를 코드로 옮길 때 쓴다. */
     val contentTypeId: String? = null,
+    /** 반려동물 동반 여부 (원천 `acmpyTypeCd`). 테마 필터 축 — 값 그대로 term 으로 건다. */
+    val petAcmpyType: String? = null,
     val imageUrl: String? = null,
     /** 대표 이미지 썸네일(원천 firstimage2, 150×100). 카드 얼굴처럼 작은 자리는 원본(약 500KB) 대신 이것을 쓴다. */
     val thumbnailUrl: String? = null,

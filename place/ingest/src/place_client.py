@@ -43,8 +43,15 @@ def _request(method: str, path: str, body: dict | None = None, timeout: int = 12
         try:
             with urllib.request.urlopen(req, timeout=timeout) as r:
                 return json.loads(r.read().decode())
-        except urllib.error.HTTPError:
-            raise                                  # 서버가 답한 것 — 재시도 대상이 아니다
+        except urllib.error.HTTPError as e:
+            # 서버가 답한 것 — 재시도 대상이 아니다. **본문을 붙여서** 올린다:
+            # 그냥 raise 하면 로그에 "HTTP Error 500:" 만 남아 무엇이 잘못됐는지 알 수 없다.
+            detail = ""
+            try:
+                detail = e.read().decode(errors="replace")[:500]
+            except Exception:
+                pass
+            raise RuntimeError(f"[place] {method} {path} → HTTP {e.code}: {detail}") from e
         except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
             if wait is None:
                 raise

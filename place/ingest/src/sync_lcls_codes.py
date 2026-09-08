@@ -39,24 +39,26 @@ def fetch(key: str, svc_key: str) -> list[dict]:
     service, lang = SERVICES[svc_key]
     rows: list[dict] = []
 
+    # 깊이는 **여기서 안다** — 몇 번째 단계를 부르고 있는지가 곧 깊이다.
+    # 코드 길이로 유도하면 안 된다: `C01`(추천코스) 계열만 3/5/9 자다(실측 13건).
     for d1 in _fetch_level(key, service, {}):
         c1 = str(d1.get("code") or "").strip()
         if not c1:
             continue
-        rows.append({"lang": lang, "code": c1, "name": (d1.get("name") or "").strip()})
+        rows.append({"lang": lang, "code": c1, "depth": 1, "name": (d1.get("name") or "").strip()})
 
         for d2 in _fetch_level(key, service, {"lclsSystm1": c1}):
             c2 = str(d2.get("code") or "").strip()
             if not c2:
                 continue
-            rows.append({"lang": lang, "code": c2, "name": (d2.get("name") or "").strip(),
+            rows.append({"lang": lang, "code": c2, "depth": 2, "name": (d2.get("name") or "").strip(),
                          "parentCode": c1})
 
             for d3 in _fetch_level(key, service, {"lclsSystm1": c1, "lclsSystm2": c2}):
                 c3 = str(d3.get("code") or "").strip()
                 if not c3:
                     continue
-                rows.append({"lang": lang, "code": c3, "name": (d3.get("name") or "").strip(),
+                rows.append({"lang": lang, "code": c3, "depth": 3, "name": (d3.get("name") or "").strip(),
                              "parentCode": c2})
 
     # 이름이 빈 행은 코드→이름을 못 잇는다 = 이 표의 존재 이유가 없다.
@@ -78,7 +80,6 @@ def run(key: str, langs: tuple[str, ...] = ("kor", "eng")) -> int:
         applied += place_client.upsert_category_codes(rows)
         depths = {}
         for r in rows:
-            d = len(r["code"])
-            depths[d] = depths.get(d, 0) + 1
-        log(f"{svc_key} {len(rows)}건 (대 {depths.get(2, 0)} · 중 {depths.get(4, 0)} · 소 {depths.get(8, 0)})")
+            depths[r["depth"]] = depths.get(r["depth"], 0) + 1
+        log(f"{svc_key} {len(rows)}건 (대 {depths.get(1, 0)} · 중 {depths.get(2, 0)} · 소 {depths.get(3, 0)})")
     return applied

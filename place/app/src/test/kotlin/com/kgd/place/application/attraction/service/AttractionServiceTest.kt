@@ -68,6 +68,8 @@ class AttractionServiceTest : BehaviorSpec({
                     useTime = "09:00~18:00", restDate = "매주 화요일", useFee = null,
                     parking = "가능", parkingFee = null, infoCenter = "02-3700-3900",
                     introSyncedAt = java.time.LocalDateTime.of(2026, 9, 5, 4, 0),
+                    petAcmpyType = "전구역 동반가능", petRaw = null,
+                    petSyncedAt = java.time.LocalDateTime.of(2026, 9, 8, 4, 0),
                     googlePlaceId = "ChIJod7tSseifDUR9hXHLFNGMIs",
                     sourceModifiedAt = null, status = "ACTIVE",
                     createdAt = java.time.LocalDateTime.now(),

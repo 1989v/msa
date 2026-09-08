@@ -33,7 +33,9 @@ DAILY_LIMIT = {
     NAVER_SEARCH: 25_000,     # 제공자 공표
     YOUTUBE_DATA: 10_000,     # 제공자 공표 (units — search.list 는 건당 100)
     GOOGLE_PLACES: 1_000,     # 자체 상한 (무과금이지만 상한 없이 돌리지 않는다)
-    DATA_GO_KR: None,         # 제공자가 공개하지 않음 → 관측만
+    # 포털은 **상세기능(오퍼레이션)별 100,000/일** 로 공표한다 — 제공자 단위 숫자가 아니다.
+    # 여기에 100,000 을 적으면 오퍼레이션을 합산해 실제보다 일찍 막는다. 그래서 관측만 한다.
+    DATA_GO_KR: None,
 }
 
 KST = _dt.timezone(_dt.timedelta(hours=9))

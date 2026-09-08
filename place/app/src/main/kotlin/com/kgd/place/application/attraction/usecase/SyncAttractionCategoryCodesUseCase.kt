@@ -5,7 +5,7 @@ interface SyncAttractionCategoryCodesUseCase {
 
     fun findAll(lang: String?): List<View>
 
-    data class Item(val lang: String, val code: String, val name: String, val parentCode: String? = null)
+    data class Item(val lang: String, val code: String, val depth: Int, val name: String, val parentCode: String? = null)
 
     data class Applied(val applied: Int)
 

@@ -127,6 +127,16 @@ class AttractionJpaEntity(
     @Column(name = "intro_synced_at")
     val introSyncedAt: java.time.LocalDateTime? = null,
 
+    /** 반려동물 동반 (detailPetTour2). 원문은 introRaw 와 같은 이유로 문자열이다. */
+    @Column(name = "pet_acmpy_type", length = 80)
+    val petAcmpyType: String? = null,
+
+    @Column(name = "pet_raw", columnDefinition = "TEXT")
+    val petRaw: String? = null,
+
+    @Column(name = "pet_synced_at")
+    val petSyncedAt: java.time.LocalDateTime? = null,
+
 
     // Places Text Search 로 채우는 보강 필드 — id 외에는 저장하지 않는다 (data-sources.md §7)
     @Column(name = "google_place_id", length = 128)
@@ -176,6 +186,9 @@ class AttractionJpaEntity(
         parkingFee = parkingFee,
         infoCenter = infoCenter,
         introSyncedAt = introSyncedAt,
+        petAcmpyType = petAcmpyType,
+        petRaw = petRaw,
+        petSyncedAt = petSyncedAt,
         googlePlaceId = googlePlaceId,
         sourceModifiedAt = sourceModifiedAt,
         status = status,
@@ -220,6 +233,9 @@ class AttractionJpaEntity(
             parking = attraction.parking,
             parkingFee = attraction.parkingFee,
             infoCenter = attraction.infoCenter,
+            petAcmpyType = attraction.petAcmpyType,
+            petRaw = attraction.petRaw,
+            petSyncedAt = attraction.petSyncedAt,
             introSyncedAt = attraction.introSyncedAt,
             googlePlaceId = attraction.googlePlaceId,
             sourceModifiedAt = attraction.sourceModifiedAt,

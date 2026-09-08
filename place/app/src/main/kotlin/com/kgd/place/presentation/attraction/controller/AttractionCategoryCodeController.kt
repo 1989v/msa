@@ -40,9 +40,10 @@ data class UpsertCategoryCodesRequest(
     data class Item(
         val lang: String,
         val code: String,
+        val depth: Int,
         val name: String,
         val parentCode: String? = null,
     ) {
-        fun toItem() = SyncAttractionCategoryCodesUseCase.Item(lang, code, name, parentCode)
+        fun toItem() = SyncAttractionCategoryCodesUseCase.Item(lang, code, depth, name, parentCode)
     }
 }
