@@ -29,6 +29,9 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
+            # 벡터 레그의 스탬프. 재색인이 싣는 embeddingModel 과 같아야 한다.
+            - name: SEARCH_EMBEDDING_MODEL_REF
+              value: "microsoft/harrier-oss-v1-270m@31de22b#d640"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
