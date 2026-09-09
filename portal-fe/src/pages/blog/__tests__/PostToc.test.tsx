@@ -10,7 +10,13 @@ describe('접힌 목차', () => {
   it('기본은 접힌 상태다 — 한 줄만 보인다', () => {
     const { container } = render(<PostToc items={entries(3)} />);
     expect(container.querySelector('details')?.open).toBe(false);
-    expect(screen.getByText('목차 펼쳐보기')).toBeTruthy();
+    expect(screen.getByText('펼쳐보기')).toBeTruthy();
+    expect(screen.getByText('목차')).toBeTruthy();
+  });
+
+  it('항목 수를 두 자리로 보인다', () => {
+    render(<PostToc items={entries(3)} />);
+    expect(screen.getByText('03')).toBeTruthy();
   });
 
   it('항목마다 그 절로 가는 링크가 있다', () => {
