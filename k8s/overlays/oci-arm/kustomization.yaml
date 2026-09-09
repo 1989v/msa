@@ -357,7 +357,7 @@ patches:
 images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
-    newTag: e48d65e
+    newTag: cb23a78
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
     newTag: ff882e0
@@ -402,7 +402,7 @@ images:
     newTag: ff882e0
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
-    newTag: 6a1889c
+    newTag: cb23a78
   - name: commerce/quant-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-ingest
     newTag: 6a1889c
