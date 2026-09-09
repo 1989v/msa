@@ -50,6 +50,52 @@ export const blogMarkdown: MarkedExtension = {
     },
 
     /**
+     * 표의 각 칸에 자기 열 이름을 `data-label` 로 박는다.
+     *
+     * 좁은 화면에서는 열 셋을 351px 안에 욱여넣느라 브라우저가 열을 min-content 까지
+     * 짓눌러, 「A · 검색 품질」이 세 줄로 쪼개진다. 화면은 이 표를 행 단위 블록으로
+     * 펴서 그 경쟁을 없애는데, 그때 값만 남으면 무슨 열이었는지 알 수 없다.
+     *
+     * **CSS 는 다른 칸(헤더)의 글자를 읽지 못한다.** 그래서 여기서 미리 박아 둔다.
+     * 열이 셋 이상일 때만 `kh-stack` 을 붙인다 — 두 열짜리는 이미 라벨:값 모양이라
+     * 펴도 달라지는 게 없다.
+     */
+    table(token: Tokens.Table) {
+      const labels = token.header.map((c) => c.text);
+      const style = (c: Tokens.TableCell) => (c.align ? ` style="text-align:${c.align}"` : '');
+      const head = token.header
+        .map((c) => `<th${style(c)}>${this.parser.parseInline(c.tokens)}</th>`)
+        .join('');
+      const body = token.rows
+        .map(
+          (row) =>
+            '<tr>'
+            + row
+              .map(
+                (c, i) =>
+                  `<td${style(c)} data-label="${escapeHtml(labels[i] ?? '')}">`
+                  + `${this.parser.parseInline(c.tokens)}</td>`,
+              )
+              .join('')
+            + '</tr>',
+        )
+        .join('');
+      const stack = token.header.length >= 3;
+      const table = `<table${stack ? ' class="kh-stack" data-view="stack"' : ''}`
+        + ` data-cols="${token.header.length}">`
+        + `<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>\n`;
+      if (!stack) return table;
+      // 편 표는 한 행씩 읽기 좋고, 한 열을 아래로 훑기에는 불리하다. 어느 쪽이
+      // 필요한지는 표가 아니라 **읽는 사람**이 아는 것이라 그 자리에서 고르게 둔다.
+      //
+      // 표를 감싸지 않고 **바로 앞 형제**로 둔다 — 감싸면 `.blog-body > table` 로
+      // 걸어 둔 넓은 화면 규칙이 통째로 빗나간다. 누르는 동작은 본문이 innerHTML
+      // 이라 여기서 못 걸고 `MarkdownBody` 가 컨테이너에 한 번 위임한다.
+      return '<button type="button" class="kh-tableview" aria-pressed="false">'
+        + '표로 보기</button>\n' + table;
+    },
+
+    /**
      * 체크박스를 `<input>` 대신 글자로 낸다.
      *
      * sanitizer 가 `input` 을 막고 있어서 기본 렌더러의 출력은 통째로 지워지고

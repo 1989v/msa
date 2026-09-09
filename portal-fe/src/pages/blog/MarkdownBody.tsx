@@ -61,6 +61,29 @@ export default function MarkdownBody({
     };
   }, [permalink]);
 
+  // 좁은 화면에서 편 표를 다시 표로 되돌리는 고르개. 앵커와 같은 이유로
+  // 컨테이너에 한 번 위임한다 — 본문이 innerHTML 이라 버튼마다 못 건다.
+  // `permalink` 에 매이지 않는다: 스튜디오 미리보기에서도 같이 확인해야 한다.
+  useEffect(() => {
+    const container = bodyRef.current;
+    if (!container) return;
+
+    const onClick = (event: MouseEvent) => {
+      const button = (event.target as Element | null)?.closest?.('button.kh-tableview');
+      if (!(button instanceof HTMLButtonElement)) return;
+      // 버튼은 표를 감싸지 않고 바로 앞 형제로 있다 (`markdownExtensions`).
+      const table = button.nextElementSibling;
+      if (!(table instanceof HTMLTableElement)) return;
+      const asTable = table.dataset.view !== 'table';
+      table.dataset.view = asTable ? 'table' : 'stack';
+      button.setAttribute('aria-pressed', String(asTable));
+      button.textContent = asTable ? '펴서 보기' : '표로 보기';
+    };
+
+    container.addEventListener('click', onClick);
+    return () => container.removeEventListener('click', onClick);
+  }, [html]);
+
   // 절 주소로 바로 들어온 경우. 글은 비동기로 받아 오므로 브라우저가 처음 해시를
   // 처리할 때는 그 제목이 아직 문서에 없다 — 화면에 그려진 뒤 여기서 한 번 맞춘다.
   useEffect(() => {

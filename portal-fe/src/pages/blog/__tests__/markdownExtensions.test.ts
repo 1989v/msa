@@ -68,7 +68,9 @@ describe('체크박스', () => {
 describe('기본 문법이 그대로 동작한다', () => {
   const cases: Array<[string, string, string]> = [
     ['코드블럭', '```ts\nconst a = 1;\n```', '<code class="language-ts">'],
-    ['표', '| a |\n|---|\n| 1 |', '<table>'],
+    // `<table>` 여는 태그를 그대로 기대하면 속성이 하나 붙을 때마다 깨진다.
+    // 이 절의 의도는 "표 문법이 렌더된다" 이므로 머리칸 내용으로 본다.
+    ['표', '| a |\n|---|\n| 1 |', '<th>a</th>'],
     ['수평선', '---', '<hr>'],
     ['번호 목록', '1. 하나', '<ol>'],
     ['중첩 불릿', '- 하나\n  - 둘', '<ul>'],
@@ -80,5 +82,50 @@ describe('기본 문법이 그대로 동작한다', () => {
 
   it('스크립트는 계속 막는다', () => {
     expect(renderMarkdown('<script>alert(1)</script>')).not.toContain('<script>');
+  });
+});
+
+describe('표 — 좁은 화면에서 펴기 위한 표시', () => {
+  const three = '| 증상 | 갈래 | 첫 호출 |\n|---|---|---|\n| 안 나온다 | A · 품질 | `_analyze` |';
+  const two = '| 성질 | 내용 |\n|---|---|\n| 비파괴 | 데이터를 안 건드린다 |';
+
+  it('칸마다 자기 열 이름을 data-label 로 갖는다', () => {
+    const html = renderMarkdown(three);
+    expect(html).toContain('data-label="증상"');
+    expect(html).toContain('data-label="갈래"');
+    expect(html).toContain('data-label="첫 호출"');
+  });
+
+  it('열이 셋 이상일 때만 kh-stack 이 붙는다', () => {
+    expect(renderMarkdown(three)).toContain('class="kh-stack"');
+    expect(renderMarkdown(two)).not.toContain('kh-stack');
+    expect(renderMarkdown(two)).toContain('data-cols="2"');
+  });
+
+  it('라벨은 이스케이프된다 — 헤더에 따옴표가 와도 속성이 안 깨진다', () => {
+    const html = renderMarkdown('| a"b | c | d |\n|---|---|---|\n| 1 | 2 | 3 |');
+    expect(html).toContain('data-label="a&quot;b"');
+  });
+
+  it('칸 안의 인라인 마크다운은 그대로 렌더된다', () => {
+    expect(renderMarkdown(three)).toContain('<code>_analyze</code>');
+  });
+
+  it('펴는 표에만 고르개 버튼이 표 앞 형제로 붙는다', () => {
+    const html = renderMarkdown(three);
+    expect(html).toContain('<button type="button" class="kh-tableview" aria-pressed="false">표로 보기</button>');
+    // 감싸면 `.blog-body > table` 로 걸어 둔 넓은 화면 규칙이 빗나간다 — 형제여야 한다
+    expect(html).toMatch(/<\/button>\s*<table class="kh-stack"/);
+    expect(renderMarkdown(two)).not.toContain('kh-tableview');
+  });
+
+  it('되돌릴 상태를 표가 들고 있다', () => {
+    expect(renderMarkdown(three)).toContain('data-view="stack"');
+  });
+
+  it('정렬 지정을 잃지 않는다', () => {
+    const html = renderMarkdown('| a | b | c |\n|:---|---:|---|\n| 1 | 2 | 3 |');
+    expect(html).toContain('style="text-align:left"');
+    expect(html).toContain('style="text-align:right"');
   });
 });

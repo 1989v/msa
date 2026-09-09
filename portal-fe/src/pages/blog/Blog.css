@@ -446,8 +446,10 @@
   scroll-margin-top: var(--ko-space-6);
 }
 
+/* 절 경계는 본문 블록 간격(20px)의 여섯 배다. 스케일 상한이 `--ko-space-16`(4rem)
+ * 이라 두 배는 토큰에서 계산해 쓴다 — 새 값을 손으로 적지 않는다. */
 .blog-body h2 {
-  margin-top: var(--ko-space-16);
+  margin-top: calc(var(--ko-space-16) * 2);
   margin-bottom: var(--ko-space-4);
   font-size: 1.4rem;
 }
@@ -537,6 +539,16 @@
 /* 마지막 줄의 밑줄은 표 아래 여백과 겹쳐 선이 떠 보인다. */
 .blog-body tbody tr:last-child td {
   border-bottom: 0;
+}
+
+/* 표를 되돌리는 고르개. 기본은 숨김이고 좁은 화면에서만 나온다 — 넓은 화면에는
+ * 펴진 표가 없어서 되돌릴 것도 없다.
+ *
+ * **이 규칙은 좁은 화면 규칙보다 앞에 있어야 한다.** 두 선택자의 특이도가 같아
+ * 뒤에 두면 미디어쿼리 안의 `display: block` 을 이겨 버린다 — 버튼이 눌리기는
+ * 하는데 폭 0px 으로 화면에 없는 상태가 된다(실측으로 잡았다). */
+.blog-body > .kh-tableview {
+  display: none;
 }
 
 /* ─── 반응 (좋아요 · 평점 · 공유) ─── */
@@ -1179,6 +1191,122 @@ html[data-theme='dark'] .blog-body .kh-alert--warning,
 html[data-theme='dark'] .blog-body .kh-alert--caution {
   --kh-alert-ink: color-mix(in srgb, var(--kh-yeonji) 45%, var(--kh-hanji));
 }
+
+/* ── 좁은 화면에서 3열 이상 표를 행 단위로 편다 ──────────────────
+ * 351px 안에 열 셋이 들어가려고 경쟁하면 브라우저가 열을 min-content 까지 짓눌러
+ * 「A · 검색 품질」이 세 줄이 된다. 실측(390px): 셀 최대 7줄, 평균 5.4줄, 표 하나 1,611px.
+ * 열 경계를 없애면 그 경쟁 자체가 사라진다. 열 이름은 `data-label` 이 들고 있다.
+ * 두 열짜리는 이미 라벨:값이라 대상이 아니다(`kh-stack` 이 안 붙는다). */
+@media (max-width: 48rem) {
+  .blog-body > table.kh-stack {
+    display: block;
+    overflow-x: visible;
+  }
+
+  .blog-body > table.kh-stack thead {
+    /* 열 이름은 칸마다 다시 나오므로 머리줄은 중복이다 */
+    display: none;
+  }
+
+  .blog-body > table.kh-stack tbody,
+  .blog-body > table.kh-stack tr,
+  .blog-body > table.kh-stack td {
+    display: block;
+  }
+
+  .blog-body > table.kh-stack tr {
+    padding: var(--ko-space-3) 0;
+    border-bottom: 1px solid var(--ko-border-subtle);
+  }
+
+  .blog-body > table.kh-stack tr:last-child {
+    border-bottom: 0;
+  }
+
+  .blog-body > table.kh-stack td {
+    padding: 0 0 var(--ko-space-3);
+    border: 0;
+  }
+
+  .blog-body > table.kh-stack tr > td:last-child {
+    padding-bottom: 0;
+  }
+
+  /* 라벨은 표 머리줄과 같은 어법 — 황토 모노. 값보다 작고 위에 앉는다. */
+  .blog-body > table.kh-stack td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 2px;
+    font-family: var(--kh-font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: var(--kh-tracking-mono, 0.04em);
+    text-transform: uppercase;
+    color: var(--kh-ocher-text);
+  }
+
+  /* 빈 칸(`—` 조차 없는)은 라벨만 남아 떠 보인다 */
+  .blog-body > table.kh-stack td:empty {
+    display: none;
+  }
+
+  /* ── 표로 되돌리기 ──────────────────────────────────────
+   * 편 표는 한 행씩 읽기 좋고 한 열을 훑기에는 불리하다. 어느 쪽이 필요한지는
+   * 글이 아니라 읽는 사람이 안다. 되돌린 표는 셀을 안 접어 한 행을 1줄로 두고
+   * 옆으로 밀게 한다 — 그게 훑기에 가장 빠른 모양이다. */
+  .blog-body > .kh-tableview {
+    display: block;
+    margin: 0 0 -2px auto;
+    padding: 3px 11px;
+    border: 1px solid var(--ko-border-strong);
+    border-radius: var(--kh-radius-full, 999px);
+    background: transparent;
+    color: var(--ko-text-secondary);
+    font-family: var(--kh-font-mono, ui-monospace, monospace);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: var(--kh-tracking-mono, 0.04em);
+    cursor: pointer;
+  }
+
+  .blog-body > table.kh-stack[data-view='table'] {
+    display: block;
+    overflow-x: auto;
+    /* 모바일에는 스크롤바가 안 보인다 — 오른쪽에 더 있다는 것을 면으로 알린다 */
+    box-shadow: inset -14px 0 14px -14px var(--ko-text-muted);
+  }
+
+  .blog-body > table.kh-stack[data-view='table'] thead {
+    display: table-header-group;
+  }
+
+  .blog-body > table.kh-stack[data-view='table'] tbody {
+    display: table-row-group;
+  }
+
+  .blog-body > table.kh-stack[data-view='table'] tr {
+    display: table-row;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  .blog-body > table.kh-stack[data-view='table'] td {
+    display: table-cell;
+    padding: var(--ko-space-2) var(--ko-space-3);
+    border-bottom: 1px solid var(--ko-border-subtle);
+  }
+
+  .blog-body > table.kh-stack[data-view='table'] th,
+  .blog-body > table.kh-stack[data-view='table'] td {
+    /* 짓눌림의 원인은 셀이 접히는 것이다. 안 접으면 스크롤이 대신 걸린다 */
+    white-space: nowrap;
+  }
+
+  .blog-body > table.kh-stack[data-view='table'] td::before {
+    content: none;
+  }
+}
+
 
 /* ── 상태 알약 ──────────────────────────────────────────────────
  * 표 안의 판정값(안전 · 주의 · 위험)을 글자로 두면 읽어야 잡힌다. 셋을 나란히
