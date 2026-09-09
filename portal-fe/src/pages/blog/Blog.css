@@ -8,7 +8,9 @@
   display: flex;
   flex-direction: column;
   gap: var(--ko-space-8);
-  padding: var(--ko-space-6) clamp(1rem, 5vw, 3.5rem) var(--ko-space-12);
+  /* 좌우 여백은 본문 다이어그램이 열 밖으로 나갈 때의 한계라 변수로 둔다 */
+  --blog-page-pad: clamp(1rem, 5vw, 3.5rem);
+  padding: var(--ko-space-6) var(--blog-page-pad) var(--ko-space-12);
 }
 
 /* ─── 머리 ─── */
@@ -354,7 +356,8 @@
 /* ─── 상세 ─── */
 
 .blog-article {
-  max-width: 44rem;
+  --blog-column: 44rem;
+  max-width: var(--blog-column);
   margin: 0 auto;
   width: 100%;
   display: flex;
@@ -990,6 +993,29 @@
  * 여기서 k-heritage 표면으로 맞춘다 — 그림자 없이 면과 선만. */
 .blog-body .fs-figure {
   margin: var(--ko-space-5) 0 var(--ko-space-2);
+}
+
+/* ── 다이어그램은 본문 열 밖으로 나간다 ──────────────────────────
+ * 본문은 44rem 이라 순차도·ER 처럼 옆으로 긴 그림은 그 안에서 85% 까지 줄고
+ * 나머지는 가로 스크롤이었다. 그림 폭을 페이지 좌우 여백 안쪽까지 넓히면
+ * 데스크톱에서는 고유 크기 그대로 들어가 스크롤이 없어진다. 상한 80rem —
+ * 그보다 넓은 그림만 예전처럼 줄고 스크롤한다.
+ *
+ * `100vw` 는 스크롤바 폭을 포함하지만 좌우 여백이 1rem 이상이라 페이지가
+ * 넘치지는 않는다. 그림이 열보다 좁으면 svg 는 고유 폭 그대로 가운데 온다
+ * (`.blog-body svg` 의 margin auto). 좁은 화면에서는 여백 안쪽 = 본문 폭이라
+ * 지금과 같다. `role="img"` 는 fencesvg 가 붙이는 것 — 손으로 그린 svg 는 열 안에 둔다. */
+.blog-body > .fs-figure,
+.blog-body > div:has(> svg[role="img"]) {
+  --blog-figure-w: min(100vw - 2 * var(--blog-page-pad), 80rem);
+  width: var(--blog-figure-w);
+  margin-left: calc(50% - var(--blog-figure-w) / 2);
+}
+
+/* 접힌 원문은 그림과 같이 넓히지 않는다 — 본문 열 폭으로 가운데 */
+.blog-body > .fs-figure > .fs-source {
+  max-width: var(--blog-column);
+  margin-inline: auto;
 }
 
 .blog-body .fs-source {
