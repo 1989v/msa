@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useHeritageTheme } from '../../hooks/useHeritageSurface';
 import { renderMarkdown } from './markdown';
+import PostToc from './PostToc';
+import { decorateHeadings } from './toc';
 
 /**
  * 본문 렌더. sanitize 는 renderMarkdown 안에 있고 여기서 우회할 방법을 두지 않는다.
@@ -9,9 +11,87 @@ import { renderMarkdown } from './markdown';
  * 그 값을 SVG 안에 박는다. 한 번 그린 그림은 나중에 테마를 바꿔도 안 따라가므로,
  * 테마가 바뀌면 다시 그려야 한다. 이걸 빼면 다크로 전환했을 때 밝은 노드 채움이
  * 그대로 남는다 (2026-09-01 실측).
+ *
+ * `permalink`(글의 canonical 주소)가 있을 때만 목차와 제목 앵커를 켠다. 스튜디오
+ * 미리보기에는 아직 공유할 주소가 없어서, 앵커를 그려 봐야 복사되는 것이 편집 화면
+ * 주소가 된다 — 절 링크는 주소를 아는 화면에만 있다.
  */
-export default function MarkdownBody({ source, className }: { source: string; className?: string }) {
+export default function MarkdownBody({
+  source,
+  className,
+  permalink,
+}: {
+  source: string;
+  className?: string;
+  permalink?: string;
+}) {
   const [theme] = useHeritageTheme();
-  const html = useMemo(() => renderMarkdown(source), [source, theme]);
-  return <div className={className ?? 'blog-body'} dangerouslySetInnerHTML={{ __html: html }} />;
+  const bodyRef = useRef<HTMLDivElement>(null);
+
+  const { html, toc } = useMemo(() => {
+    const rendered = renderMarkdown(source);
+    return permalink ? decorateHeadings(rendered) : { html: rendered, toc: [] };
+  }, [source, theme, permalink]);
+
+  // 앵커 클릭 = 그 절로 이동(브라우저 기본 동작) + 절 주소 복사.
+  // 본문이 innerHTML 이라 앵커마다 React 이벤트를 걸 수 없어 컨테이너에 한 번 위임한다.
+  useEffect(() => {
+    const container = bodyRef.current;
+    if (!container || !permalink) return;
+
+    const timers: number[] = [];
+    const onClick = (event: MouseEvent) => {
+      const anchor = (event.target as Element | null)?.closest?.('a.blog-anchor');
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      const hash = anchor.getAttribute('href')?.slice(1);
+      if (!hash) return;
+      // 복사하는 것은 **canonical + 절** 이다. 지금 주소를 그대로 쓰면 쿼리스트링이
+      // 같이 따라가 같은 글이 여러 주소로 돌아다닌다 (SharePanel 과 같은 판단).
+      void copyLink(`${permalink}#${hash}`).then((copied) => {
+        if (!copied) return;
+        anchor.dataset.copied = '1';
+        timers.push(window.setTimeout(() => delete anchor.dataset.copied, 1400));
+      });
+    };
+
+    container.addEventListener('click', onClick);
+    return () => {
+      container.removeEventListener('click', onClick);
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [permalink]);
+
+  // 절 주소로 바로 들어온 경우. 글은 비동기로 받아 오므로 브라우저가 처음 해시를
+  // 처리할 때는 그 제목이 아직 문서에 없다 — 화면에 그려진 뒤 여기서 한 번 맞춘다.
+  useEffect(() => {
+    if (!permalink) return;
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    const frame = window.requestAnimationFrame(() => {
+      document.getElementById(id)?.scrollIntoView({ block: 'start' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [html, permalink]);
+
+  return (
+    <>
+      <PostToc items={toc} />
+      <div
+        ref={bodyRef}
+        className={className ?? 'blog-body'}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+    </>
+  );
+}
+
+/** 클립보드 권한이 없는 브라우저에서는 주소창처럼 고를 수 있는 창으로 떨어뜨린다. */
+async function copyLink(url: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(url);
+    return true;
+  } catch {
+    window.prompt('링크 복사', url);
+    return false;
+  }
 }

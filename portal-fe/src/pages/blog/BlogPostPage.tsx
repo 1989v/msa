@@ -184,7 +184,8 @@ export default function BlogPostPage() {
           <blockquote className="blog-article__lead">{detail.post.summary}</blockquote>
         )}
 
-        <MarkdownBody source={detail.body} />
+        {/* canonical 을 넘기면 목차와 제목 앵커가 켜진다 — 복사되는 절 링크가 이 주소 기준이다 */}
+        <MarkdownBody source={detail.body} permalink={canonical} />
 
         {reaction && (
           <ReactionBar
