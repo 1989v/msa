@@ -1,5 +1,7 @@
 package com.kgd.game.infrastructure.ws
 
+import com.kgd.game.application.party.port.PartyRoomView
+import com.kgd.game.application.party.port.PartySeatQueryPort
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.databind.node.ObjectNode
@@ -38,7 +40,7 @@ import java.util.concurrent.ConcurrentHashMap
 @Component
 class GameRelayRegistry(
     private val objectMapper: ObjectMapper,
-) {
+) : PartySeatQueryPort {
     private val log = KotlinLogging.logger {}
 
     private companion object {
@@ -73,12 +75,32 @@ class GameRelayRegistry(
      * 좌석 수는 **방을 만드는 join 이 정한다** (2~20, 생략 시 2 — ADR-0088).
      * 기존 2인 게임은 `seats` 를 보내지 않으므로 그대로 2석이다.
      */
-    private class Room(val key: String, val gameSlug: String, val code: String, capacity: Int, val createdMs: Long) {
+    private class Room(
+        val key: String,
+        val gameSlug: String,
+        val code: String,
+        capacity: Int,
+        val createdMs: Long,
+        /**
+         * 파티 방 (ADR-0092) — 로비 자동 마감과 시작 후 잠금을 면제받고, 판이 끝나면 다시 열린다.
+         * **옵션이지 규칙이 아니다** — 릴레이는 여전히 게임을 모르고 좌석·메시지 종류·시각만 안다.
+         */
+        val manualStart: Boolean = false,
+    ) {
         val seats = arrayOfNulls<Peer>(capacity)
         var seed: Int = 0
 
-        /** start 이후 참. 판 중간 충원은 없다 — 죽은 사람의 값을 지킨다 (PRD §3) */
+        /** start 이후 참. 대전 방은 편도이고, 파티 방은 판이 끝나면 false 로 돌아온다 */
         var started: Boolean = false
+
+        /** 판 번호 — 방 코드와 함께 판을 가리킨다. 시드·멱등 키·마감이 여기 걸린다 */
+        var roundNo: Int = 0
+
+        /** 이번 판을 끝냈다고 알린 좌석. 릴레이는 **수만 센다** — 값은 채점 서버가 본다 */
+        val doneSeats = mutableSetOf<Int>()
+
+        /** 좌석 밖에서 보기만 하는 사람들. 좌석 배열에 넣으면 모든 경로에 필터가 붙는다 */
+        val spectators = mutableListOf<Peer>()
 
         val capacity: Int get() = seats.size
 
@@ -95,6 +117,7 @@ class GameRelayRegistry(
         var nick: String = ""
         var room: Room? = null
         var seat: Int = -1
+        var spectator: Boolean = false
         var pingRequested: Boolean = false
         var windowCount: Int = 0
     }
@@ -111,6 +134,23 @@ class GameRelayRegistry(
     fun roomCount(): Int = rooms.size
 
     fun peerCount(): Int = peers.size
+
+    /**
+     * 좌석 조회 포트 구현 (ADR-0092). 릴레이가 아는 것만 돌려준다 — 별칭은 싣지 않는다.
+     */
+    override fun findRoom(code: String, gameSlug: String): PartyRoomView? {
+        val room = rooms["$gameSlug:${code.uppercase()}"] ?: return null
+        val seats = synchronized(room) {
+            room.seats.mapIndexedNotNull { i, p -> i.takeIf { p != null } }
+        }
+        return PartyRoomView(
+            code = room.code,
+            roundNo = room.roundNo,
+            roundOpen = room.started,
+            occupiedSeats = seats,
+            createdMs = room.createdMs,
+        )
+    }
 
     // ── 수명주기 ────────────────────────────────────────────────────────────
 
@@ -148,6 +188,8 @@ class GameRelayRegistry(
         when (node.path("t").asText()) {
             "join" -> join(peer, node, nowMs)
             "move" -> move(peer, node)
+            "start" -> startCommand(peer, node)
+            "done" -> roundDone(peer)
             "leave" -> synchronized(matchLock) { leaveRoom(peer) }
             "ping" -> send(peer, message("pong"))
             else -> send(peer, error("BAD_MESSAGE"))
@@ -166,8 +208,10 @@ class GameRelayRegistry(
     fun tickLobbies() = startDueLobbies(System.currentTimeMillis())
 
     fun startDueLobbies(nowMs: Long) {
+        // 파티 방은 제외한다 — 방장이 링크를 붙여 넣는 데 30초가 넘으면 판이 저 혼자 시작되고,
+        // 그 뒤 초대 링크가 전부 거절되며, 빈 좌석이 봇으로 채워져 내기 자리에 봇이 들어온다.
         val due = rooms.values.filter {
-            !it.legacy && !it.started && nowMs - it.createdMs >= LOBBY_MAX_WAIT_MS
+            !it.legacy && !it.manualStart && !it.started && nowMs - it.createdMs >= LOBBY_MAX_WAIT_MS
         }
         if (due.isEmpty()) return
         synchronized(matchLock) {
@@ -217,21 +261,42 @@ class GameRelayRegistry(
         // 방을 새로 만들 때만 반영된다 — 이미 있는 방의 좌석 수는 안 바뀐다
         val seats = node.path("seats").asInt(MIN_SEATS).coerceIn(MIN_SEATS, MAX_SEATS)
 
+        // 파티 옵션 (ADR-0092). 배포된 게임은 이 셋을 안 보내므로 기존 동작 그대로다.
+        val party = node.path("private").asBoolean(false)
+        val manualStart = node.path("manualStart").asBoolean(false)
+        val spectate = node.path("spectate").asBoolean(false)
+
         synchronized(matchLock) {
             if (peer.room != null) {
                 send(peer, error("ALREADY_JOINED"))
                 return
             }
-            val room = if (requested != null) roomByCode(peer.gameSlug, requested, seats, nowMs)
-                       else autoMatchRoom(peer.gameSlug, seats, nowMs)
+            val room = when {
+                // 파티 + 코드 → **입장만.** 알 수 없는 코드로 방이 만들어지면 방 상한(전역 200)이
+                // 아무에게나 열려, 한 사람이 모든 릴레이 게임을 정지시킬 수 있다.
+                party && requested != null -> rooms["${peer.gameSlug}:$requested"]
+                    ?: run { send(peer, error("ROOM_NOT_FOUND")); return }
+                // 파티 + 코드 없음 → 「방 만들기」. 대기열을 우회한다 — 대기열은 슬러그당 한 칸이라
+                // 파티는 슬러그가 하나뿐이어서 두 번째 방장이 첫 방장 방에 앉는다.
+                party -> newRoom(peer.gameSlug, seats, nowMs, manualStart)
+                requested != null -> roomByCode(peer.gameSlug, requested, seats, nowMs)
+                else -> autoMatchRoom(peer.gameSlug, seats, nowMs)
+            }
             if (room == null) {
                 send(peer, error("ROOM_LIMIT"))
                 return
             }
             // 다인 방은 시작 후 잠긴다 — 판 중간 충원은 죽은 사람의 값을 없앤다 (ADR-0088).
-            // 2석 방은 기존대로 열어 둔다: 코드로 다시 들어와 재대전하는 흐름이 있다.
-            if (room.started && !room.legacy) {
+            // 2석 방과 파티 방은 열어 둔다: 앞은 재대전, 뒤는 판 사이에 사람이 더 온다.
+            if (room.started && !room.legacy && !room.manualStart) {
                 send(peer, error("ROOM_STARTED"))
+                return
+            }
+            if (spectate) {
+                synchronized(room) { room.spectators += peer }
+                peer.room = room
+                peer.spectator = true
+                send(peer, message("joined").put("room", room.code).put("seat", -1).put("seats", room.capacity))
                 return
             }
             val seat = synchronized(room) {
@@ -260,7 +325,58 @@ class GameRelayRegistry(
                 val payload = objectMapper.writeValueAsString(seated)
                 occupants.filter { it !== peer }.forEach { it.conn.send(payload) }
             }
-            if (occupants.size == room.capacity) startRoom(room, occupants)
+            // 파티 방은 만석이 시작 조건이 아니다 — 방장의 명시적 명령만이 판을 연다
+            if (!room.manualStart && occupants.size == room.capacity) startRoom(room, occupants)
+        }
+    }
+
+    /**
+     * 방장의 시작 명령 (ADR-0092) — **좌석 0 에서 온 것만** 받는다.
+     *
+     * 시드를 여기서 뽑아 **설정과 한 메시지로** 내보낸다. 쪼개면 방장이 시드를 먼저 보고
+     * 코스·비율을 바꿔 가며 자기가 안 걸리는 조합을 고를 수 있다 — 시드만 서버로 옮기는
+     * 것으로는 부족한 이유다. 설정(`cfg`)은 열어보지 않고 그대로 나른다.
+     */
+    private fun startCommand(peer: Peer, node: JsonNode) {
+        val room = peer.room
+        if (room == null || !room.manualStart) {
+            send(peer, error("NOT_JOINED"))
+            return
+        }
+        synchronized(matchLock) {
+            val host = synchronized(room) { room.seats.filterNotNull().minByOrNull { it.seat } }
+            if (host !== peer) {
+                send(peer, error("NOT_HOST"))
+                return
+            }
+            if (room.started) {
+                send(peer, error("ROUND_RUNNING"))
+                return
+            }
+            startRoom(room, synchronized(room) { room.seats.filterNotNull() }, node.get("cfg"))
+        }
+    }
+
+    /**
+     * 좌석이 이번 판을 끝냈다고 알린다. 릴레이는 **수만 센다** — 결과 값의 비교는 채점 서버 몫이다
+     * (그것은 페이로드의 의미를 알아야 하므로 무권위가 깨진다).
+     *
+     * 전원이 알리면 방을 다시 연다. **방장이 판을 끊을 수 없다** — 판정 권한을 뗐는데 종료 권한으로
+     * 돌아오면 자기가 걸리는 판을 도중에 무를 수 있다.
+     */
+    private fun roundDone(peer: Peer) {
+        val room = peer.room ?: return
+        if (!room.manualStart || peer.spectator || !room.started) return
+        synchronized(matchLock) {
+            val occupants = synchronized(room) {
+                room.doneSeats += peer.seat
+                room.seats.filterNotNull()
+            }
+            if (room.doneSeats.containsAll(occupants.map { it.seat })) {
+                room.started = false
+                room.doneSeats.clear()
+                broadcast(room, occupants, message("roundEnded").put("round", room.roundNo))
+            }
         }
     }
 
@@ -269,9 +385,11 @@ class GameRelayRegistry(
      * `players` 는 좌석 수만큼의 배열이고 **빈 좌석은 빈 문자열** — 호스트가 봇으로 채운다.
      * [matchLock] 안에서만 호출한다.
      */
-    private fun startRoom(room: Room, occupants: List<Peer>) {
+    private fun startRoom(room: Room, occupants: List<Peer>, cfg: JsonNode? = null) {
         room.seed = random.nextInt(Int.MAX_VALUE)
         room.started = true
+        room.roundNo += 1
+        room.doneSeats.clear()
         waiting.remove(room.gameSlug, room.key)
 
         val players = objectMapper.createArrayNode()
@@ -280,8 +398,19 @@ class GameRelayRegistry(
         val start = message("start")
         start.put("seed", room.seed)
         start.set("players", players)
-        val payload = objectMapper.writeValueAsString(start)
+        // 파티 방에서만 붙는다 — 배포된 2인 클라이언트는 모르는 필드를 무시한다
+        if (room.manualStart) {
+            start.put("round", room.roundNo)
+            if (cfg != null) start.set("cfg", cfg)
+        }
+        broadcast(room, occupants, start)
+    }
+
+    /** 좌석에 앉은 사람과 관전자 모두에게 — 관전자는 보기만 하지 못 보는 게 아니다 */
+    private fun broadcast(room: Room, occupants: List<Peer>, node: ObjectNode) {
+        val payload = objectMapper.writeValueAsString(node)
         occupants.forEach { it.conn.send(payload) }
+        synchronized(room) { room.spectators.toList() }.forEach { it.conn.send(payload) }
     }
 
     private fun move(peer: Peer, node: JsonNode) {
@@ -308,13 +437,27 @@ class GameRelayRegistry(
             if (target != null && target !== peer) target.conn.send(payload)
             return
         }
-        synchronized(room) { room.seats.filterNotNull().filter { it !== peer } }
+        synchronized(room) { room.seats.filterNotNull().filter { it !== peer } + room.spectators }
             .forEach { it.conn.send(payload) }
     }
 
     /** [matchLock] 안에서만 호출한다. */
     private fun leaveRoom(peer: Peer) {
         val room = peer.room ?: return
+        // 관전자는 좌석을 안 쥐었으므로 알릴 것도, 승계할 것도 없다
+        if (peer.spectator) {
+            val empty = synchronized(room) {
+                room.spectators.remove(peer)
+                room.seats.all { it == null } && room.spectators.isEmpty()
+            }
+            peer.room = null
+            peer.spectator = false
+            if (empty) {
+                rooms.remove(room.key, room)
+                waiting.remove(room.gameSlug, room.key)
+            }
+            return
+        }
         val seat = peer.seat
         val remaining = synchronized(room) {
             if (peer.seat in room.seats.indices && room.seats[peer.seat] === peer) {
@@ -331,9 +474,20 @@ class GameRelayRegistry(
             if (room.legacy) message("opponentLeft") else message("left").put("seat", seat),
         )
         remaining.forEach { it.conn.send(payload) }
+        synchronized(room) { room.spectators.toList() }.forEach { it.conn.send(payload) }
+
+        // 나간 사람을 기다리다 판이 멈추지 않게 — 남은 좌석이 다 알렸으면 그 자리에서 닫는다
+        if (room.manualStart && room.started && remaining.isNotEmpty() &&
+            room.doneSeats.containsAll(remaining.map { it.seat })
+        ) {
+            room.started = false
+            room.doneSeats.clear()
+            broadcast(room, remaining, message("roundEnded").put("round", room.roundNo))
+        }
 
         // 모두 나가면 즉시 파기 — 방을 재사용하지 않으므로 코드가 새어도 무해하다
         if (remaining.isEmpty()) {
+            synchronized(room) { room.spectators.forEach { it.room = null; it.spectator = false } }
             rooms.remove(room.key, room)
             waiting.remove(room.gameSlug, room.key)
         }
@@ -360,12 +514,12 @@ class GameRelayRegistry(
         return room
     }
 
-    private fun newRoom(gameSlug: String, seats: Int, nowMs: Long): Room? {
+    private fun newRoom(gameSlug: String, seats: Int, nowMs: Long, manualStart: Boolean = false): Room? {
         if (rooms.size >= MAX_ROOMS) return null
         repeat(16) {
             val code = randomCode()
             val key = "$gameSlug:$code"
-            val room = Room(key, gameSlug, code, seats, nowMs)
+            val room = Room(key, gameSlug, code, seats, nowMs, manualStart)
             if (rooms.putIfAbsent(key, room) == null) return room
         }
         return null
