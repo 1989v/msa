@@ -164,6 +164,25 @@ INSERT INTO blog_post (..., title, body) VALUES (..., CONVERT(0x<hex> USING utf8
 `oci-mysql` 경유 접속의 클라이언트 charset 이 latin1 이라, 한글을 리터럴로 넣으면 조용히
 이중 인코딩된다 (2026-08-24 실제 발생). 값은 들어가고 에러도 없으며, 목록 API 응답에서야 깨져 보인다.
 
+## 6.1 본문에서 쓸 수 있는 표현 수단
+
+산문·표·코드 말고도 렌더가 받는 것이 있다. sanitizer 는 `<style>` 태그만 지우고
+`class` · `style` · `data-*` · `<span>` · `<div>` · `<details>` · `<kbd>` · `<mark>` ·
+인라인 `<svg>` 는 통과시킨다 (`portal-fe/src/pages/blog/markdown.ts`).
+
+| 수단 | 문법 | 쓰임 |
+|---|---|---|
+| 콜아웃 5종 | `> [!NOTE]` `[!TIP]` `[!IMPORTANT]` `[!WARNING]` `[!CAUTION]` | 함정·전제·경고. 제목은 표식 뒤에 적는다 |
+| 상태 알약 | `<span class="pill p-green">안전</span>` | 표 안의 판정값. `p-green` · `p-amber` · `p-red` · 클래스 없으면 회색 |
+| 다이어그램 | ` ```mermaid ` 펜스 + `%% caption:` | `fencesvg` 가 그린다 → `blog-diagram.md` |
+| 접기 | `<details><summary>…` | 곁가지. 본문 흐름에서 뺄 것 |
+
+**함정 서술은 산문 대신 콜아웃으로 낸다.** 평문 문단에 섞으면 스캔에서 묻히고, 콜아웃은
+인용 줄로 세어져 W2(산문 비율)도 같이 내려간다.
+
+**알약은 판정값에만 쓴다.** 안전/주의/위험처럼 셋을 나란히 놓는 열이 대상이고, 강조하고
+싶은 낱말에 쓰면 지면이 알록달록해져 정작 판정이 안 보인다.
+
 ## 7. 본문 세로 리듬 (렌더)
 
 문체가 아무리 촘촘해도 블록이 붙어 있으면 읽기가 막힌다. 본문 스타일은

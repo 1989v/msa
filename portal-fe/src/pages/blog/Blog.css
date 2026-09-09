@@ -415,10 +415,12 @@
   border-radius: var(--kh-radius-asym, 0 8px 0 8px);
 }
 
-/* 본문 — 읽는 화면이라 줄길이와 행간이 전부다 */
+/* 본문 — 읽는 화면이라 줄길이와 행간이 전부다.
+ * 1.85 는 산문만 있는 글 기준이었다. 표·코드·목록이 절반을 넘는 글에서는 블록
+ * 사이가 늘어져 한 절이 한 덩어리로 안 잡힌다. */
 .blog-body {
   font-size: 1.02rem;
-  line-height: 1.85;
+  line-height: 1.75;
   color: var(--ko-text-primary);
   overflow-wrap: break-word;
 }
@@ -500,10 +502,15 @@
   font-size: 0.88em;
 }
 
+/* 표는 사이트 표(`.kh-table`)와 같은 규칙을 쓴다 — 머리줄은 황토색 모노, 세로선
+ * 없음, 마지막 줄은 밑줄 없음. 본문만 머리줄과 몸줄이 같은 모양이라 표가 통째로
+ * 회색 덩어리로 읽혔다. 색은 `--kh-ocher-text` 다 — 원색 황토는 한지 위 2.89:1 로
+ * 글씨 대비에 못 미친다. */
 .blog-body table {
   width: 100%;
   margin: var(--ko-space-5) 0;
   border-collapse: collapse;
+  font-size: 0.94em;
   display: block;
   overflow-x: auto;
 }
@@ -513,6 +520,23 @@
   border-bottom: 1px solid var(--ko-border-subtle);
   padding: var(--ko-space-2) var(--ko-space-3);
   text-align: left;
+  vertical-align: top;
+}
+
+.blog-body thead th {
+  border-bottom-color: var(--ko-border-strong);
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+  font-size: 0.82em;
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono, 0.04em);
+  text-transform: uppercase;
+  color: var(--kh-ocher-text);
+  white-space: nowrap;
+}
+
+/* 마지막 줄의 밑줄은 표 아래 여백과 겹쳐 선이 떠 보인다. */
+.blog-body tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 /* ─── 반응 (좋아요 · 평점 · 공유) ─── */
@@ -1007,6 +1031,21 @@
   margin-left: calc(50% - var(--blog-figure-w) / 2);
 }
 
+/* ── 표와 코드도 본문 열 밖으로 나간다 ──────────────────────────
+ * 본문 44rem 은 산문 줄길이 기준이다. 표는 그 안에서 가로 스크롤이 나는 게 아니라
+ * **셀마다 줄바꿈이 쌓여** 한 행이 서너 줄이 된다 — 행이 한 줄로 안 잡히면 표를
+ * 표로 못 읽는다. 다이어그램과 같은 방식으로 넓히되 상한은 60rem 이다.
+ *
+ * 실측(표 14개 글, 1024px 이상): 표 높이합 5,443 → 4,211px, 셀 줄수 305 → 237.
+ * 산문 열은 704px 그대로고 페이지 가로 넘침은 0 이다.
+ * 좁은 화면에서는 여백 안쪽 = 본문 폭이라 지금과 같다(390px 에서 폭 변화 없음). */
+.blog-body > table,
+.blog-body > pre {
+  --blog-wide-w: min(100vw - 2 * var(--blog-page-pad), 60rem);
+  width: var(--blog-wide-w);
+  margin-left: calc(50% - var(--blog-wide-w) / 2);
+}
+
 /* 접힌 원문은 그림과 같이 넓히지 않는다 — 본문 열 폭으로 가운데 */
 .blog-body > .fs-figure > .fs-source {
   max-width: var(--blog-column);
@@ -1095,7 +1134,11 @@
   font-size: 0.86em;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--kh-alert-line, var(--ko-text-secondary));
+  /* 선 색을 그대로 글씨에 쓰지 않는다. 채움·테두리용 원색은 글씨 대비를 못 낸다 —
+   * k-heritage 가 `--kh-ocher-text` · `--ko-accent-text` 로 이미 가른 규칙이고,
+   * 콜아웃 제목만 그 규칙 밖에 있었다. 실측(제목 대 상자 배경):
+   * 다크 note·tip 1.87:1 · warning·caution 2.29:1, 라이트 important 2.79:1. */
+  color: var(--kh-alert-ink, var(--ko-text-secondary));
 }
 
 /* 콜아웃 안의 마지막 요소는 아래 여백을 죽인다 — 상자가 아래로 뜬다. */
@@ -1111,6 +1154,44 @@
 
 /* 다크에서 소나무는 바탕과 거의 안 갈린다 — 액션색을 그대로 쓴다. */
 html[data-theme='dark'] .blog-body .kh-alert--tip { --kh-alert-line: var(--ko-accent-primary); }
+
+/* 제목 글씨는 같은 색의 글씨용 변형으로 내린다. 선(`--kh-alert-line`)은 그대로다. */
+.blog-body .kh-alert--note,
+.blog-body .kh-alert--tip { --kh-alert-ink: var(--ko-accent-text); }
+.blog-body .kh-alert--important { --kh-alert-ink: var(--kh-ocher-text); }
+.blog-body .kh-alert--warning,
+.blog-body .kh-alert--caution { --kh-alert-ink: var(--kh-yeonji); }
+
+/* 연지는 글씨용 변형이 팔레트에 없다. 한지를 섞어 올린다 — 다크 상자 위 7.04:1.
+ * 라이트는 원색이 이미 6.82:1 이라 그대로 둔다. */
+html[data-theme='dark'] .blog-body .kh-alert--warning,
+html[data-theme='dark'] .blog-body .kh-alert--caution {
+  --kh-alert-ink: color-mix(in srgb, var(--kh-yeonji) 45%, var(--kh-hanji));
+}
+
+/* ── 상태 알약 ──────────────────────────────────────────────────
+ * 표 안의 판정값(안전 · 주의 · 위험)을 글자로 두면 읽어야 잡힌다. 셋을 나란히
+ * 놓는 표에서는 색이 곧 답이다.
+ *
+ * **옅은 배경 + 색 글씨가 아니라 채움이다.** 연지와 소나무는 원색이 어두워
+ * 다크 바탕 위 글씨로 각각 1.89:1 · 1.35:1 밖에 안 나온다. 채움으로 쓰면 글자는
+ * 한지·기와가 받으므로 두 정경에서 같은 대비가 나온다(7.4:1 이상). */
+.blog-body .pill {
+  display: inline-block;
+  padding: 0.05em 0.6em;
+  border-radius: var(--kh-radius-full, 999px);
+  background: var(--ko-surface-3);
+  color: var(--ko-text-secondary);
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono, 0.04em);
+  white-space: nowrap;
+}
+
+.blog-body .p-green { background: var(--kh-pine); color: var(--kh-hanji); }
+.blog-body .p-amber { background: var(--kh-ocher); color: var(--kh-giwa); }
+.blog-body .p-red { background: var(--kh-yeonji); color: var(--kh-hanji); }
 
 /* ── 본문에 직접 쓴 접기 ────────────────────────────────────────
  * fencesvg 가 내는 `.fs-source` 와 같은 표면으로 맞춘다. */
