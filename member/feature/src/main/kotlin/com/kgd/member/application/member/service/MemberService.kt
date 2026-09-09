@@ -1,6 +1,7 @@
 package com.kgd.member.application.member.service
 
 import com.kgd.member.application.member.port.MemberRepositoryPort
+import com.kgd.member.application.member.port.RosterPurgePort
 import com.kgd.member.application.member.usecase.GetMemberProfileUseCase
 import com.kgd.member.application.member.usecase.GetMemberStatsUseCase
 import com.kgd.member.application.member.usecase.GetOrCreateMemberUseCase
@@ -12,9 +13,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 
+private val log = io.github.oshai.kotlinlogging.KotlinLogging.logger {}
+
 @Service
 class MemberService(
-    private val memberRepositoryPort: MemberRepositoryPort
+    private val memberRepositoryPort: MemberRepositoryPort,
+    private val rosterPurgePort: RosterPurgePort
 ) : GetOrCreateMemberUseCase,
     GetMemberProfileUseCase,
     GetMemberStatsUseCase,
@@ -80,5 +84,12 @@ class MemberService(
             ?: throw MemberNotFoundException()
         member.withdraw()
         memberRepositoryPort.save(member)
+        // 다른 서비스가 들고 있는 회원 데이터도 함께 파기한다 (ADR-0092) —
+        // 친구 그룹은 game_db 에 있고 그것은 **제3자의 이름**이라 방침 §6 이 그 행에도 걸린다.
+        //
+        // **여기서 감싼다.** 어댑터도 삼키지만 그건 그 구현의 규율일 뿐이고, 다른 어댑터를
+        // 끼우는 순간 탈퇴가 남의 서비스 가용성에 묶인다. 놓친 행은 보존 배치가 그물로 잡는다.
+        runCatching { rosterPurgePort.purgeByMember(command.memberId) }
+            .onFailure { log.error(it) { "탈퇴 후 외부 데이터 파기 실패 — member=${command.memberId}" } }
     }
 }

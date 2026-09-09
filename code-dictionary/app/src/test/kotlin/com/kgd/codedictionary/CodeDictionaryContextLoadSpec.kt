@@ -74,6 +74,8 @@ class CodeDictionaryContextLoadSpec(
                     com.kgd.blog.presentation.controller.BlogPageController::class.java,
                     com.kgd.game.presentation.suggestion.controller.GameSuggestionController::class.java,
                     com.kgd.game.presentation.admin.controller.GameSuggestionAdminController::class.java,
+                    com.kgd.game.presentation.roster.controller.RosterController::class.java,
+                    com.kgd.game.presentation.roster.controller.RosterInternalController::class.java,
                 ).forEach { ctx.getBeanNamesForType(it).size shouldBe 1 }
             }
 

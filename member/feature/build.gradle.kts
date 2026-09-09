@@ -16,6 +16,9 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
+    // 탈퇴 시 친구 그룹 파기 호출의 실패를 남긴다 (ADR-0092). 조용히 삼키면 그물(보존 배치)이
+    // 있다는 사실만 믿고 실제로 새는 것을 못 본다. 로깅 컨벤션이 kotlin-logging 을 요구한다.
+    implementation(libs.kotlin.logging)
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
     runtimeOnly(libs.mysql.connector)

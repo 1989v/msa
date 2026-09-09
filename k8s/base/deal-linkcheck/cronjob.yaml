@@ -49,6 +49,11 @@ spec:
               env:
                 # DB 자격증명은 application.yml 기본값을 쓴다(oci-arm 은 그 값으로 프로비저닝됨).
                 # prod-k8s 로 올릴 때는 Deployment 와 같은 Secret 주입 패치를 이 CronJob 에도 걸 것.
+                # 호스트 앱 컨텍스트를 그대로 띄우므로 이 키가 필요하다 (ADR-0092).
+                # 배치는 좌석 토큰을 안 쓰지만, 서명 컴포넌트가 키 없이는 안 뜬다.
+                - name: GAME_HMAC_SECRET
+                  valueFrom:
+                    secretKeyRef: { name: game-hmac, key: secret }
                 - name: GAME_DB_MASTER
                   value: "mysql-code-dictionary-master:3306"
                 - name: GAME_DB_REPLICA

@@ -4,11 +4,13 @@ import com.kgd.member.application.member.port.MemberRepositoryPort
 import com.kgd.member.application.member.usecase.GetMemberProfileUseCase
 import com.kgd.member.application.member.usecase.GetOrCreateMemberUseCase
 import com.kgd.member.application.member.usecase.UpdateMemberNameUseCase
+import com.kgd.member.application.member.port.RosterPurgePort
 import com.kgd.member.application.member.usecase.WithdrawMemberUseCase
 import com.kgd.member.domain.exception.MemberNotFoundException
 import com.kgd.member.domain.model.Member
 import com.kgd.member.domain.model.MemberStatus
 import com.kgd.member.domain.model.SsoProvider
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.shouldBe
@@ -21,12 +23,16 @@ import java.time.LocalDateTime
 
 class MemberServiceTest : BehaviorSpec({
     val memberRepository = mockk<MemberRepositoryPort>()
-    val service = MemberService(memberRepository)
+    val rosterPurge = mockk<RosterPurgePort>(relaxed = true)
+    val service = MemberService(memberRepository, rosterPurge)
 
     fun stored(id: Long, status: MemberStatus = MemberStatus.ACTIVE, name: String = "푸른 고래") =
         Member.restore(id, name, SsoProvider.KAKAO, "hashed-sub", status, LocalDateTime.of(2026, 1, 1, 0, 0))
 
-    beforeEach { clearMocks(memberRepository) }
+    beforeEach {
+        clearMocks(memberRepository)
+        clearMocks(rosterPurge, answers = false)
+    }
 
     given("소셜 로그인으로 회원을 찾거나 만들 때") {
         `when`("같은 제공자·식별값의 회원이 이미 있으면") {
@@ -107,6 +113,25 @@ class MemberServiceTest : BehaviorSpec({
 
                 service.execute(WithdrawMemberUseCase.Command(11L))
 
+                captured.captured.status shouldBe MemberStatus.WITHDRAWN
+            }
+            then("다른 서비스가 든 회원 데이터도 파기시킨다 (ADR-0092)") {
+                val captured = slot<Member>()
+                every { memberRepository.findById(11L) } returns stored(11L)
+                every { memberRepository.save(capture(captured)) } answers { captured.captured }
+
+                service.execute(WithdrawMemberUseCase.Command(11L))
+
+                verify(exactly = 1) { rosterPurge.purgeByMember(11L) }
+            }
+            then("파기 호출이 실패해도 **탈퇴는 성립한다**") {
+                val captured = slot<Member>()
+                every { memberRepository.findById(11L) } returns stored(11L)
+                every { memberRepository.save(capture(captured)) } answers { captured.captured }
+                // 어댑터가 삼키는 것이 정상이지만, 혹시 새어 나와도 탈퇴가 막히면 안 된다
+                every { rosterPurge.purgeByMember(11L) } throws IllegalStateException("게임 서비스 응답 없음")
+
+                shouldNotThrowAny { service.execute(WithdrawMemberUseCase.Command(11L)) }
                 captured.captured.status shouldBe MemberStatus.WITHDRAWN
             }
         }
