@@ -188,10 +188,19 @@ def check_pad_matches_game(html: str, game_dir: Path) -> list[Finding]:
         return []
     bound: list[str] = []
     for f in src.rglob("*.cs"):
-        b = re.search(r"BindPadActions\(([^)]*)\)", f.read_text(encoding="utf-8"))
-        if b:
-            bound = [x.strip().strip('"') for x in b.group(1).split(",") if x.strip()]
-            break
+        text = f.read_text(encoding="utf-8")
+        b = re.search(r"BindPadActions\(([^)]*)\)", text)
+        if not b:
+            continue
+        args = [x.strip() for x in b.group(1).split(",") if x.strip()]
+        # 인자가 문자열이 아니라 **배열 이름**일 수 있다 — 게이트와 한 곳에서 쓰려고 표로 뺀 경우다.
+        # 이름 그대로 비교하면 멀쩡한 코드에 매번 경고가 뜬다.
+        if len(args) == 1 and not args[0].startswith('"'):
+            decl = re.search(r"\b" + re.escape(args[0]) + r"\s*=\s*\{([^}]*)\}", text)
+            if decl:
+                args = [x.strip() for x in decl.group(1).split(",") if x.strip()]
+        bound = [x.strip('"') for x in args]
+        break
     if not bound or bound == pad:
         return []
     return [Finding(
