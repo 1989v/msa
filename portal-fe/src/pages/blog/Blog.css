@@ -951,11 +951,6 @@
   .blog-comment--reply {
     margin-left: var(--ko-space-3);
   }
-
-  /* 목차 항목은 좁은 화면에서 손가락으로 고른다 */
-  .blog-toc__item a {
-    padding: var(--ko-space-3) 0;
-  }
 }
 
 /* 읽은 정도 띠 — 화면 맨 위에 고정.
@@ -1246,7 +1241,7 @@ html[data-theme='dark'] .blog-body .kh-alert--tip { --kh-alert-line: var(--ko-ac
 /* 펼치면 괘선 하나가 라벨 줄과 목록을 가른다 */
 .blog-toc__list {
   margin: 0;
-  padding: var(--ko-space-3) var(--ko-space-4) var(--ko-space-4);
+  padding: var(--ko-space-2) var(--ko-space-4) var(--ko-space-3);
   border-top: 1px solid var(--ko-border-subtle);
   list-style: none;
   counter-reset: blog-toc;
@@ -1293,8 +1288,10 @@ html[data-theme='dark'] .blog-body .kh-alert--tip { --kh-alert-line: var(--ko-ac
   border-top: 1px solid var(--ko-border-strong);
 }
 
+/* 줄 사이는 좁게 둔다. 목차는 읽는 글이 아니라 고르는 목록이라, 본문만큼 숨을 주면
+ * 여섯 줄이 한 화면을 먹는다. 좁은 화면에서는 손가락 크기가 이겨 다시 벌린다(아래 미디어). */
 .blog-toc__item a {
-  padding: var(--ko-space-2) 0;
+  padding: var(--ko-space-1) 0;
   color: var(--ko-text-primary);
   font-size: 0.92rem;
   line-height: 1.5;
@@ -1304,6 +1301,14 @@ html[data-theme='dark'] .blog-body .kh-alert--tip { --kh-alert-line: var(--ko-ac
 /* 하위 항목은 한 단 물러난 색 — 들여쓰기와 괘선에 더해 무게로도 층을 말한다 */
 .blog-toc__item--h3 a {
   color: var(--ko-text-secondary);
+}
+
+/* 좁은 화면에서는 손가락 크기가 이긴다. 이 블록은 반드시 기본 규칙 **뒤**에 온다 —
+ * 명세도가 같아 순서로 갈리므로, 화면 아래쪽 미디어 묶음에 넣으면 조용히 죽는다. */
+@media (max-width: 767.98px) {
+  .blog-toc__item a {
+    padding: var(--ko-space-3) 0;
+  }
 }
 
 .blog-toc__item a:hover {
