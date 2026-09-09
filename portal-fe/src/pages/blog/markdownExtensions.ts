@@ -81,18 +81,19 @@ export const blogMarkdown: MarkedExtension = {
         )
         .join('');
       const stack = token.header.length >= 3;
-      const table = `<table${stack ? ' class="kh-stack" data-view="stack"' : ''}`
+      const table = `<table${stack ? ' class="kh-stack" data-view="table"' : ''}`
         + ` data-cols="${token.header.length}">`
         + `<thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>\n`;
       if (!stack) return table;
-      // 편 표는 한 행씩 읽기 좋고, 한 열을 아래로 훑기에는 불리하다. 어느 쪽이
-      // 필요한지는 표가 아니라 **읽는 사람**이 아는 것이라 그 자리에서 고르게 둔다.
+      // 기본은 표 모양이다 — 한 열을 아래로 훑는 읽기가 표의 기본 쓰임이고 행이
+      // 1줄일 때 가장 빠르다. 한 행 안의 값 셋을 한 덩어리로 봐야 할 때만 편다.
+      // 어느 쪽이 필요한지는 표가 아니라 **읽는 사람**이 아는 것이라 그 자리에서 고르게 둔다.
       //
       // 표를 감싸지 않고 **바로 앞 형제**로 둔다 — 감싸면 `.blog-body > table` 로
       // 걸어 둔 넓은 화면 규칙이 통째로 빗나간다. 누르는 동작은 본문이 innerHTML
       // 이라 여기서 못 걸고 `MarkdownBody` 가 컨테이너에 한 번 위임한다.
       return '<button type="button" class="kh-tableview" aria-pressed="false">'
-        + '표로 보기</button>\n' + table;
+        + '펴서 보기</button>\n' + table;
     },
 
     /**

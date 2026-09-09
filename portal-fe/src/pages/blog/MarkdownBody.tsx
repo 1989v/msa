@@ -61,7 +61,7 @@ export default function MarkdownBody({
     };
   }, [permalink]);
 
-  // 좁은 화면에서 편 표를 다시 표로 되돌리는 고르개. 앵커와 같은 이유로
+  // 좁은 화면에서 표를 행 단위로 펴는 고르개 (기본은 표 모양). 앵커와 같은 이유로
   // 컨테이너에 한 번 위임한다 — 본문이 innerHTML 이라 버튼마다 못 건다.
   // `permalink` 에 매이지 않는다: 스튜디오 미리보기에서도 같이 확인해야 한다.
   useEffect(() => {
@@ -74,10 +74,10 @@ export default function MarkdownBody({
       // 버튼은 표를 감싸지 않고 바로 앞 형제로 있다 (`markdownExtensions`).
       const table = button.nextElementSibling;
       if (!(table instanceof HTMLTableElement)) return;
-      const asTable = table.dataset.view !== 'table';
-      table.dataset.view = asTable ? 'table' : 'stack';
-      button.setAttribute('aria-pressed', String(asTable));
-      button.textContent = asTable ? '펴서 보기' : '표로 보기';
+      const asStack = table.dataset.view !== 'stack';
+      table.dataset.view = asStack ? 'stack' : 'table';
+      button.setAttribute('aria-pressed', String(asStack));
+      button.textContent = asStack ? '표로 보기' : '펴서 보기';
     };
 
     container.addEventListener('click', onClick);

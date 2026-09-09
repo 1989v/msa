@@ -113,14 +113,15 @@ describe('표 — 좁은 화면에서 펴기 위한 표시', () => {
 
   it('펴는 표에만 고르개 버튼이 표 앞 형제로 붙는다', () => {
     const html = renderMarkdown(three);
-    expect(html).toContain('<button type="button" class="kh-tableview" aria-pressed="false">표로 보기</button>');
+    expect(html).toContain('<button type="button" class="kh-tableview" aria-pressed="false">펴서 보기</button>');
     // 감싸면 `.blog-body > table` 로 걸어 둔 넓은 화면 규칙이 빗나간다 — 형제여야 한다
     expect(html).toMatch(/<\/button>\s*<table class="kh-stack"/);
     expect(renderMarkdown(two)).not.toContain('kh-tableview');
   });
 
-  it('되돌릴 상태를 표가 들고 있다', () => {
-    expect(renderMarkdown(three)).toContain('data-view="stack"');
+  it('기본 상태는 표 모양이다 — 펴는 쪽이 선택이다', () => {
+    expect(renderMarkdown(three)).toContain('data-view="table"');
+    expect(renderMarkdown(three)).not.toContain('data-view="stack"');
   });
 
   it('정렬 지정을 잃지 않는다', () => {
