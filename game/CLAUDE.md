@@ -156,6 +156,21 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
   코드를 모르면 못 들어오지만, 코드를 아는 사람은 명단에 없어도 들어온다. 막으려면 릴레이
   핸들러가 join 때 슬러그별로 명단을 물어야 한다 — 지금은 안 한다
 
+## 필수 시크릿
+
+`GAME_HMAC_SECRET` (Secret `game-hmac`, 키 `secret`). **없으면 파드가 뜨지 않는다** — 아케이드
+세션 토큰의 서명 키다. 전에는 공개 레포에 적힌 기본값으로 폴백했는데, 그러면 서명을 누구나 만들 수
+있어 **검사가 도는 채로 아무것도 막지 않는다**(ADR-0092). 호스트가 `code-dictionary` 라
+이 Secret 이 없으면 blog·ranking·deal 도 함께 안 뜬다 — **파드를 올리기 전에 만든다.**
+
+```bash
+kubectl -n commerce create secret generic game-hmac \
+  --from-literal=secret="$(openssl rand -hex 32)"
+```
+
+키를 바꾸면 **진행 중이던 아케이드 세션의 점수 제출이 거부된다**(판당 수 분). 회원 데이터에는
+영향이 없어서 auth 의 `AUTH_SUBJECT_HASH_KEY` 와 달리 백업 대상은 아니다 — 잃으면 새로 만들면 된다.
+
 ## Key Rules
 
 - 응답은 공통 `ApiResponse<T>` 포맷

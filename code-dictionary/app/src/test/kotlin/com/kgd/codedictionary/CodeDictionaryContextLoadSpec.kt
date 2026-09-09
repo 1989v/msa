@@ -33,6 +33,9 @@ fun codeDictionaryDockerAvailable(): Boolean = dockerAvailable
     properties = [
         "spring.kafka.bootstrap-servers=localhost:9092",
         "opensearch.uris=http://localhost:9200",
+        // 아케이드 세션 토큰 서명 키 — 없으면 컨텍스트가 뜨지 않는다 (ADR-0092).
+        // 32바이트 하한만 넘기면 되고, 값 자체는 이 테스트의 판정 대상이 아니다.
+        "game.security.hmac-secret=test-key-for-context-load-only-32b",
     ],
 )
 @org.junit.jupiter.api.condition.EnabledIf(

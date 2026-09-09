@@ -77,9 +77,12 @@ game:
     topics:
       session-started: game.session.started
       session-ended: game.session.ended
-  # #23 아케이드 흡수 — 세션 토큰 HMAC. prod 는 Secret 주입 필수(기본값은 로컬 전용).
+  # #23 아케이드 흡수 — 세션 토큰 HMAC.
+  # **기본값을 두지 않는다.** 공개 레포에 적힌 값으로 폴백하면 서명이 누구나 만들 수 있는 것이
+  # 되어 검사가 도는 채로 아무것도 막지 않는다. 없으면 기동이 실패한다(HmacSessionTokenService).
+  # 로컬도 주입이 필요하다 — 32바이트 이상이면 아무 값이나 된다.
   security:
-    hmac-secret: ${GAME_HMAC_SECRET:dev-secret-change-me-in-prod}
+    hmac-secret: ${GAME_HMAC_SECRET:}
 
 management:
   endpoints:

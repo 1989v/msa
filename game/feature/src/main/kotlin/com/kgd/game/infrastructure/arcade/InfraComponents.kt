@@ -51,13 +51,30 @@ class InMemoryGameRegistry : GameRegistry {
 
 /**
  * 세션 서명 토큰 — HMAC-SHA256("sessionId|seed|startedEpochMs").
- * 무플레이/위조 제출 차단. 비밀키는 game.security.hmac-secret(운영은 반드시 주입).
+ * 무플레이/위조 제출 차단. 비밀키는 game.security.hmac-secret.
+ *
+ * **키가 없으면 뜨지 않는다.** 전에는 공개 레포에 적힌 기본값으로 폴백했는데, 그러면 서명이
+ * 누구나 만들 수 있는 값이 되어 **검사가 도는 채로 아무것도 막지 않는다.** 안 무는 검사는
+ * 없는 것보다 나쁘다 — 있다고 믿게 만들기 때문이다. 같은 판단이 auth 의 SubjectHasher 에 있다.
+ *
+ * 배포 순서: Secret 을 먼저 만들고 파드를 올린다.
+ *   kubectl -n commerce create secret generic game-hmac \
+ *     --from-literal=secret="$(openssl rand -hex 32)"
+ *
+ * 키를 바꾸면 **진행 중이던 아케이드 세션의 제출이 거부된다**(판당 수 분). 회원 데이터에는
+ * 영향이 없다 — 이 서명은 세션 수명만큼만 산다.
  */
 @Component
 class HmacSessionTokenService(
-    @Value("\${game.security.hmac-secret:dev-secret-change-me-in-prod}") private val secret: String,
+    @Value("\${game.security.hmac-secret:}") secret: String,
 ) : SessionTokenService {
     private val algorithm = "HmacSHA256"
+    private val secret: String = secret.trim().also {
+        check(it.toByteArray().size >= MIN_KEY_BYTES) {
+            "game.security.hmac-secret 가 없거나 너무 짧습니다(최소 ${MIN_KEY_BYTES}바이트). " +
+                "GAME_HMAC_SECRET 을 주입하세요 — 이 키 없이는 세션 토큰이 위조를 막지 못합니다."
+        }
+    }
 
     override fun issue(sessionId: SessionId, seed: Int, startedEpochMs: Long): String =
         sign(payload(sessionId, seed, startedEpochMs))
@@ -74,5 +91,10 @@ class HmacSessionTokenService(
         val mac = Mac.getInstance(algorithm)
         mac.init(SecretKeySpec(secret.toByteArray(), algorithm))
         return Base64.getEncoder().encodeToString(mac.doFinal(data.toByteArray()))
+    }
+
+    private companion object {
+        /** auth 의 SubjectHasher 와 같은 하한 — HMAC-SHA256 블록 크기 */
+        const val MIN_KEY_BYTES = 32
     }
 }
