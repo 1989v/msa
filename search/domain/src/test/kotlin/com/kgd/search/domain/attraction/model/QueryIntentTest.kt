@@ -82,6 +82,41 @@ class QueryIntentTest : BehaviorSpec({
         }
     }
 
+    Given("음식·쇼핑 계열 의도어") {
+        // 이 화면은 관광지 검색이고 랭킹이 이미 음식·쇼핑을 내린다.
+        // 유형/분류로 승격하면 그 정책을 뒤집어 음식점만 남는다 (실측 nDCG 0.4451 → 0.0356).
+        val commerce = QueryIntent.Lexicon.of(
+            listOf(
+                Triple("SH06", 2, "시장"),
+                Triple("EX060800", 3, "화장품/주류/먹거리"),
+                Triple("NA020900", 3, "해변. 해수욕장"),
+            ),
+        )
+
+        When("「전통시장 먹거리」") {
+            val r = QueryIntent.analyze("전통시장 먹거리", commerce)
+
+            Then("필터를 만들지 않는다") {
+                r.hasFilter shouldBe false
+            }
+            Then("검색어로 남는다 — BM25 와 벡터가 쓴다") {
+                r.residual shouldBe "전통시장 먹거리"
+            }
+        }
+
+        When("「맛집」처럼 유형을 뒤집는 말이면") {
+            Then("유형 필터가 안 걸린다") {
+                QueryIntent.analyze("맛집", commerce).contentTypeId shouldBe null
+            }
+        }
+
+        When("관광 분류는 그대로 걸린다") {
+            Then("해수욕장은 필터가 된다") {
+                QueryIntent.analyze("해수욕장", commerce).lclsCode shouldBe "NA020900"
+            }
+        }
+    }
+
     Given("원천 이름이 동의어를 담고 있을 때") {
         // 실제 코드표 값들이다 — 손으로 만든 예가 아니다.
         val real = QueryIntent.Lexicon.of(

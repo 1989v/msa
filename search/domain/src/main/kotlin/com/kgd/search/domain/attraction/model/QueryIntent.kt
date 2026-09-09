@@ -28,8 +28,31 @@ object QueryIntent {
         "축제" to "15", "행사" to "15", "공연" to "15",
         "레포츠" to "28", "체험" to "28",
         "숙박" to "32",
-        "쇼핑" to "38",
-        "맛집" to "39", "음식점" to "39", "먹거리" to "39",
+    )
+
+    /**
+     * **음식·쇼핑으로 유형을 뒤집지 않는다.**
+     *
+     * 이 화면은 관광지 검색이고, 랭킹은 이미 음식·쇼핑을 내리고 있다
+     * (`attraction-ranking` 의 sight 3.0 / commerce 0.35 — 적재량의 62% 가 그쪽이라 관광 의도를 밀어낸다).
+     * 그런데 「맛집」·「먹거리」·「시장」을 유형 필터로 승격하면 **그 정책을 정확히 뒤집어** 음식점만 남는다.
+     *
+     * 실측(2026-09-10 · 판정 2,141건): 「전통시장 먹거리」 nDCG 0.4451 → 0.0356,
+     * 「야시장」 0.6809 → 0.0298. 화면에는 봉평전통시장 메밀카페·할매닭발·남선옥이 나왔다.
+     * 「먹거리」는 소분류 `EX060800 화장품/주류/먹거리` 의 별칭이기도 해서 더 좁게 잘렸다.
+     *
+     * 이 말들은 관광 맥락의 **수식어**지 유형 전환 지시가 아니다. 검색어로 남겨 BM25·벡터가 쓰게 둔다.
+     */
+    private val COMMERCE_PREFIXES = setOf("FD", "SH", "AC")
+
+    /**
+     * 코드 접두만으로는 부족하다. 「먹거리」는 `EX060800 화장품/주류/먹거리`(체험관광 아래)라
+     * `FD`·`SH` 어디에도 안 걸리면서 실제로는 상업 시설을 가리킨다.
+     * 관광 맥락의 수식어로 쓰이는 말은 **어느 코드로 가든** 필터로 승격하지 않는다.
+     */
+    private val COMMERCE_WORDS: Set<String> = setOf(
+        "맛집", "음식", "음식점", "먹거리", "먹을거리", "시장", "쇼핑", "카페", "술집", "주점",
+        "food", "restaurant", "market", "shopping", "cafe",
     )
 
     /**
@@ -165,13 +188,19 @@ object QueryIntent {
     }
 
     private val normalizedStopPhrases: Set<String> = STOP_PHRASES.map { normalize(it) }.toSet()
+    private val normalizedCommerceWords: Set<String> = COMMERCE_WORDS.map { normalize(it) }.toSet()
     private val normalizedTypeIntents: Map<String, String> =
         TYPE_INTENTS.entries.associate { normalize(it.key) to it.value }
 
     /** 유형 의도가 먼저다 — 「관광지」는 분류가 아니라 유형을 가리킨다. */
     private fun match(normalized: String, lexicon: Lexicon): Pair<String?, Pair<String, Int>?>? {
+        if (normalized in normalizedCommerceWords) return null
         normalizedTypeIntents[normalized]?.let { return it to null }
-        lexicon.lookup(normalized)?.let { return null to it }
+        lexicon.lookup(normalized)?.let { hit ->
+            // 같은 이유로 분류 의도도 음식(FD)·쇼핑(SH)·숙박(AC) 으로는 필터를 만들지 않는다.
+            if (COMMERCE_PREFIXES.any { hit.first.startsWith(it) }) return null
+            return null to hit
+        }
         return null
     }
 }
