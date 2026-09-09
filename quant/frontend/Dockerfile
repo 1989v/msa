@@ -2,7 +2,10 @@ FROM node:24-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY vendor ./vendor
-RUN rm -f package-lock.json && npm install --no-audit --no-fund
+# 락파일을 쓴다. 지우고 `npm install` 을 돌리면 범위를 매 빌드마다 다시 풀어,
+# 레포가 안 바뀌어도 업스트림이 새 버전을 내는 순간 빌드가 깨진다 — portal-fe 가
+# 2026-09-09 에 그렇게 멈췄다(react 19.3.0 ↔ fiber peer 상한). CI 게이트도 `npm ci` 다.
+RUN npm ci --no-audit --no-fund
 COPY . .
 # SSE 는 Cloudflare bypass host (rt.<DOMAIN>) 사용해서 CF 100s timeout + 버퍼링 회피.
 # 도메인 변경 시 build-arg 또는 이 Dockerfile 수정.
