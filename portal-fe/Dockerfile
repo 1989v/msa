@@ -2,7 +2,14 @@ FROM node:24-alpine AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY vendor ./vendor
-RUN rm -f package-lock.json && npm install --no-audit --no-fund
+# 락파일을 **쓴다**. 지우고 `npm install` 을 돌리면 캐럿 범위(`^19.2.4`)를 매 빌드마다
+# 다시 풀어, 레포가 한 글자도 안 바뀌어도 업스트림이 새 버전을 내는 순간 빌드가 깨진다.
+# 실제로 react 19.3.0 이 게시되자 `@react-three/fiber` 의 peer 상한(`<19.3`)에 걸려
+# 이미지 빌드가 통째로 멈췄다 (2026-09-09). 그때 레포의 락파일은 19.2.4 로 이미
+# 정확히 고정돼 있었다 — 지우지만 않았으면 아무 일도 없었다.
+#
+# `npm ci` 는 CI 의 테스트 게이트(`ci.yml`)와 같은 명령이라 두 곳의 해석이 갈리지 않는다.
+RUN npm ci --no-audit --no-fund
 COPY . .
 # OAuth client_id 는 브라우저에 노출되는 공개값이지만 값은 레포에 두지 않고 CI 가 넘긴다.
 # 미주입이면 빈 문자열이 되어 로그인 버튼이 동작하지 않는다.

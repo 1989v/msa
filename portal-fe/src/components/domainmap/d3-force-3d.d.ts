@@ -1,5 +1,5 @@
 /**
- * d3-force-3d 는 타입 정의를 배포하지 않는다 (ThreeJSGraph 는 @ts-expect-error 로 우회).
+ * d3-force-3d 는 타입 정의를 배포하지 않아 여기서 최소한만 선언한다.
  * 도메인 맵이 2D 시뮬레이션으로 쓰는 API 만 최소한으로 선언한다.
  */
 declare module 'd3-force-3d' {
