@@ -31,8 +31,12 @@ data class PartyRoomView(
     val roundNo: Int,
     /** 판이 도는 중인가 — 닫힌 판에 들어온 제출은 거부한다 */
     val roundOpen: Boolean,
-    /** 사람이 앉아 있는 좌석 번호. 관전자는 좌석이 없어 여기 없다 */
-    val occupiedSeats: List<Int>,
+    /**
+     * 사람이 앉아 있는 좌석 → 그 좌석의 점유 세대. 관전자는 좌석이 없어 여기 없다.
+     * 세대까지 내주는 이유는 좌석 토큰 검증이 그 값을 요구하기 때문이다 — 안 내주면
+     * 검증하는 쪽이 「몇 세대인지」를 스스로 정하게 되어 검사가 자기 근거를 만든다.
+     */
+    val occupiedSeats: Map<Int, Int>,
     /** 방이 열린 시각 — 같은 코드로 다시 열린 방에서 옛 토큰이 살아나지 않게 서명에 섞는다 */
     val createdMs: Long,
 )

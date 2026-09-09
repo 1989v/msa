@@ -154,7 +154,7 @@ class GameRelayRegistry(
     override fun findRoom(code: String, gameSlug: String): PartyRoomView? {
         val room = rooms["$gameSlug:${code.uppercase()}"] ?: return null
         val seats = synchronized(room) {
-            room.seats.mapIndexedNotNull { i, p -> i.takeIf { p != null } }
+            room.seats.mapIndexedNotNull { i, p -> if (p != null) i to room.seatEpoch[i] else null }.toMap()
         }
         return PartyRoomView(
             code = room.code,
