@@ -53,6 +53,12 @@ private fun startCmd(cfg: String = """{"course":"pinball","pick":1}""") =
 class PartyRoomSpec : BehaviorSpec({
 
     fun registry() = GameRelayRegistry(PM)
+
+    /** 좌석 토큰 배선을 볼 때만 — 실제 서명자를 그대로 쓴다 */
+    fun signingRegistry() = GameRelayRegistry(
+        PM,
+        com.kgd.game.infrastructure.party.HmacPartySeatTokenService("party-relay-token-key-32bytes-ok"),
+    )
     fun code(c: PartyClient) = c.first("joined")!!.path("room").asText()
 
     // ── T6 · T7 · T8 · T43 · T61 ────────────────────────────────────────────
@@ -280,6 +286,47 @@ class PartyRoomSpec : BehaviorSpec({
             Then("정리된다") {
                 host.closed shouldContain RelayCloseReason.IDLE
             }
+        }
+    }
+
+    // ── 좌석 토큰 배선 (TG2) ────────────────────────────────────────────────
+
+    Given("파티 방에 앉을 때") {
+        val r = signingRegistry()
+        val host = PartyClient("h")
+        r.onOpen(host.peer, "party", 0)
+        r.onMessage(host.id, create(), 10)
+
+        Then("좌석 배정과 **같은 메시지**로 토큰이 온다") {
+            host.first("joined")!!.path("token").asText().isNotEmpty() shouldBe true
+        }
+
+        When("판이 두 번 돌면") {
+            r.onMessage(host.id, startCmd(), 20)
+            r.onMessage(host.id, """{"t":"done"}""", 30)
+            r.onMessage(host.id, startCmd(), 40)
+
+            Then("판마다 새 토큰이 나간다 — 지난 판 토큰으로 제출할 수 없다") {
+                val tokens = host.all("start").map { it.path("token").asText() }
+                tokens.size shouldBe 2
+                (tokens[0] == tokens[1]) shouldBe false
+            }
+        }
+    }
+
+    Given("관전자") {
+        val r = signingRegistry()
+        val host = PartyClient("h")
+        r.onOpen(host.peer, "party", 0)
+        r.onMessage(host.id, create(), 10)
+        val watcher = PartyClient("w")
+        r.onOpen(watcher.peer, "party", 20)
+        r.onMessage(watcher.id, enter(code(host), spectate = true), 20)
+
+        Then("토큰을 받지 못한다 — 좌석이 없으면 제출할 수단이 없다") {
+            watcher.first("joined")!!.path("token").asText() shouldBe ""
+            r.onMessage(host.id, startCmd(), 30)
+            watcher.first("start")!!.path("token").asText() shouldBe ""
         }
     }
 })

@@ -1,6 +1,8 @@
 package com.kgd.game.infrastructure.ws
 
 import com.kgd.game.application.party.port.PartyRoomView
+import com.kgd.game.application.party.port.PartySeatTokenPort
+import com.kgd.game.application.party.port.SeatClaim
 import com.kgd.game.application.party.port.PartySeatQueryPort
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
@@ -40,6 +42,11 @@ import java.util.concurrent.ConcurrentHashMap
 @Component
 class GameRelayRegistry(
     private val objectMapper: ObjectMapper,
+    /**
+     * 파티 방에서만 쓴다. 대전 방만 검사하는 테스트는 안 넘겨도 되고, 그때 토큰 필드는 붙지 않는다 —
+     * 「토큰이 없으면 제출이 거부된다」는 채점 쪽 검사가 따로 잡는다.
+     */
+    private val seatTokens: PartySeatTokenPort? = null,
 ) : PartySeatQueryPort {
     private val log = KotlinLogging.logger {}
 
@@ -101,6 +108,12 @@ class GameRelayRegistry(
 
         /** 좌석 밖에서 보기만 하는 사람들. 좌석 배열에 넣으면 모든 경로에 필터가 붙는다 */
         val spectators = mutableListOf<Peer>()
+
+        /**
+         * 좌석별 점유 세대. 앉을 때마다 오른다 — 먼저 나간 사람의 토큰이 그 자리를 물려받은
+         * 사람의 자리에서 계속 유효하면 안 된다.
+         */
+        val seatEpoch = IntArray(capacity)
 
         val capacity: Int get() = seats.size
 
@@ -303,6 +316,7 @@ class GameRelayRegistry(
                 val free = room.seats.indexOfFirst { it == null }
                 if (free >= 0) {
                     room.seats[free] = peer
+                    room.seatEpoch[free] += 1
                     peer.room = room
                     peer.seat = free
                 }
@@ -316,6 +330,9 @@ class GameRelayRegistry(
             joined.put("room", room.code)
             joined.put("seat", seat)
             joined.put("seats", room.capacity)
+            // 좌석 토큰은 **배정하는 그 순간 그 소켓으로만** 나간다 (ADR-0092).
+            // HTTP 가 (방+좌석)을 받아 내주면 자칭 사실에 도장을 찍는 셈이다.
+            if (room.manualStart) joined.put("token", issueSeatToken(room, seat))
             send(peer, joined)
 
             val occupants = synchronized(room) { room.seats.filterNotNull() }
@@ -402,9 +419,31 @@ class GameRelayRegistry(
         if (room.manualStart) {
             start.put("round", room.roundNo)
             if (cfg != null) start.set("cfg", cfg)
+            // 판 번호가 서명 안에 있으므로 판마다 새 토큰이 나간다. 좌석마다 값이 달라
+            // 한 payload 를 돌려 쓸 수 없다 — 그래서 여기만 사람별로 직렬화한다.
+            occupants.forEach { p ->
+                val mine = start.deepCopy()
+                mine.put("token", issueSeatToken(room, p.seat))
+                p.conn.send(objectMapper.writeValueAsString(mine))
+            }
+            synchronized(room) { room.spectators.toList() }
+                .forEach { it.conn.send(objectMapper.writeValueAsString(start)) }
+            return
         }
         broadcast(room, occupants, start)
     }
+
+    /** 좌석 토큰 — 서명 대상 여섯 항은 [PartySeatTokenPort] 문서 참조 */
+    private fun issueSeatToken(room: Room, seat: Int): String =
+        seatTokens?.issue(
+            SeatClaim(
+                roomCode = room.code,
+                roomCreatedMs = room.createdMs,
+                roundNo = room.roundNo,
+                seat = seat,
+                seatEpoch = synchronized(room) { room.seatEpoch[seat] },
+            ),
+        ) ?: ""
 
     /** 좌석에 앉은 사람과 관전자 모두에게 — 관전자는 보기만 하지 못 보는 게 아니다 */
     private fun broadcast(room: Room, occupants: List<Peer>, node: ObjectNode) {
