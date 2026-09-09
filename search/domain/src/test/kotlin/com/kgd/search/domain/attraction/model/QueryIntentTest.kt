@@ -142,10 +142,26 @@ class QueryIntentTest : BehaviorSpec({
             }
         }
 
-        When("괄호 안에 든 말이면") {
-            Then("그것도 열쇠가 된다") {
+        When("괄호 안에 구분자가 있으면") {
+            Then("각 조각이 열쇠가 된다") {
                 QueryIntent.analyze("하천", real).lclsCode shouldBe "NA02"
                 QueryIntent.analyze("해양", real).lclsCode shouldBe "NA02"
+            }
+        }
+
+        When("괄호 안이 한정어면") {
+            // `Inline Skating (Indoor)` 의 「Indoor」를 별칭으로 만들면
+            // 「indoor activities」가 인라인스케이트 소분류로 필터돼 0건이 된다 (실측).
+            val qualifier = QueryIntent.Lexicon.of(
+                listOf(Triple("LS010100", 3, "Inline Skating (Indoor)"), Triple("NA01", 2, "자연경관(산)")),
+            )
+
+            Then("별칭으로 쓰지 않는다") {
+                QueryIntent.analyze("indoor", qualifier).lclsCode shouldBe null
+                QueryIntent.analyze("산", qualifier).lclsCode shouldBe null
+            }
+            Then("이름 전체로는 여전히 걸린다") {
+                QueryIntent.analyze("inline skating (indoor)", qualifier).lclsCode shouldBe "LS010100"
             }
         }
 

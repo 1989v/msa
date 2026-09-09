@@ -118,7 +118,13 @@ object QueryIntent {
              */
             fun aliasesOf(name: String): Set<String> {
                 val outside = name.replace(PARENTHETICAL, " ")
-                val inside = PARENTHETICAL.findAll(name).map { it.groupValues[1] }.joinToString(" ")
+                // **괄호 안은 구분자가 있을 때만 별칭이다.** 대부분은 개념이 아니라 한정어다 —
+                // `Inline Skating (Indoor)` · `(ATV)` · `(드론)` · `자연경관(산)`.
+                // 실측(코드표 617행): 괄호가 있는 이름 ko 4 · en 7 중 구분자가 든 것은 각 1개뿐이다.
+                // 한정어를 별칭으로 만들면 「indoor activities」가 인라인스케이트 소분류로 필터돼 0건이 된다.
+                val inside = PARENTHETICAL.findAll(name).map { it.groupValues[1] }
+                    .filter { SEPARATORS.containsMatchIn(it) }
+                    .joinToString(" ")
                 return (listOf(name) + SEPARATORS.split(outside) + SEPARATORS.split(inside))
                     .map { normalize(it) }
                     .filter { it.isNotBlank() }
