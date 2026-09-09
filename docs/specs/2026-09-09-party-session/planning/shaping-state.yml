@@ -1,0 +1,38 @@
+spec: 2026-09-09-party-session
+stage: shaped
+threshold: 0.2
+rounds: 6
+ambiguity_final: 0.12
+terminated: early   # R3+ 조기 종료 — 남은 미지수가 설계 판단이라 스펙에서 풀린다
+rounds_log:
+  - round: 0
+    dimension: topology
+    result: "컴포넌트 6 — 그룹 저장소 / 파티 방(초대·QR) / 자리 픽 로비 / 게임 선정 / 참여형 신작 2종 / 비참여형 관전 어댑터"
+  - round: 1
+    dimension: identity-privacy
+    question: "친구 그룹을 어디에 저장하나"
+    answer: "기본 기기, 로그인 시 옵트인으로 계정 저장. 별칭이어도 개인정보로 취급"
+  - round: 2
+    dimension: trust
+    question: "참여형 게임 결과를 누가 재나"
+    answer: "종목별 권위 레이어 — 서버가 채점"
+  - round: 3
+    dimension: ontology
+    question: "익명 게임 투표가 무엇을 고르는 것인가"
+    answer: "무엇을 할지 고르는 방법이 둘 (→ R5 에서 사용자가 흐름 전체를 재정의)"
+  - round: 4
+    dimension: scope
+    question: "1차 릴리스 경계"
+    answer: "다섯 개 전부 한 번에"
+  - round: 5
+    dimension: boundary
+    question: "내기가 앱 안에서 어디까지"
+    answer: "결과만 — 돈·포인트 없음. 단 걸리는 인원 수·비율 커스터마이징 추가(판마다)"
+    user_revision: "게임 선정 흐름을 [게임 픽]/[랜덤]/[참여형→랜덤|하나픽] 세 갈래로 재정의. 투표는 참여형>하나픽 에서만"
+  - round: 6
+    dimension: scope
+    question: "명부를 넘겨받는 게임의 범위"
+    answer: "명부 규약을 구현한 게임만"
+mid_turn_additions:
+  - "친구 그룹은 다른 게임에도 활용 — 파티 전용 아님"
+  - "그룹 인원이 매번 참가하지 않는다 → 시작 전 토글로 이번 판만 제외"
