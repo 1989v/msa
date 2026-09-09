@@ -1,0 +1,25 @@
+questions:
+  - id: Q01
+    topic: 제목과 세계관
+    stage: pre-release
+    status: proposed
+    default: Skybound / 바람의 유적 / 지도 제작자 나루
+    resolution: 사용자 피드백에 따라 변경 가능하며 P1 장면 제작은 진행 가능
+  - id: Q02
+    topic: 모델 및 재질 제작 방식
+    stage: T01A-before-content
+    status: open
+    default: 원화 기준의 glTF 또는 동등 품질 제작
+    resolution: T01A에서 도구 가용성과 독창적 소품 하나의 제작-내보내기-렌더 경로를 먼저 결정, 이후 장면/캐릭터 품질 검증. 다른 게임 자산 제외, 출처/라이선스 기록, 유료 구매는 별도 결정
+  - id: Q03
+    topic: 실제 모바일 검증 기기
+    stage: P4
+    status: open
+    default: PC와 터치 에뮬레이션을 먼저 검사
+    resolution: 기기 확보 후 모델과 브라우저 버전을 기록, 미확보 시 실기기 통과 주장 금지
+  - id: Q04
+    topic: 공개 위치와 카탈로그 연동
+    stage: pre-release
+    status: open
+    default: 로컬 정적 게임만 준비
+    resolution: T09에서 검증된 결과와 외부 변경 목록을 제시한 뒤 사용자 승인
