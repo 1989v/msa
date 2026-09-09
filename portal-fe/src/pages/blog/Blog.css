@@ -1039,11 +1039,22 @@
  * 실측(표 14개 글, 1024px 이상): 표 높이합 5,443 → 4,211px, 셀 줄수 305 → 237.
  * 산문 열은 704px 그대로고 페이지 가로 넘침은 0 이다.
  * 좁은 화면에서는 여백 안쪽 = 본문 폭이라 지금과 같다(390px 에서 폭 변화 없음). */
-.blog-body > table,
-.blog-body > pre {
-  --blog-wide-w: min(100vw - 2 * var(--blog-page-pad), 60rem);
-  width: var(--blog-wide-w);
-  margin-left: calc(50% - var(--blog-wide-w) / 2);
+@media (min-width: 64rem) {
+  .blog-body > table,
+  .blog-body > pre {
+    --blog-wide-w: min(100vw - 2 * var(--blog-page-pad), 60rem);
+    width: var(--blog-wide-w);
+    margin-left: calc(50% - var(--blog-wide-w) / 2);
+  }
+
+  /* 넓은 화면에서는 표를 스크롤 상자가 아니라 **표로** 되돌린다.
+   * `display: block` 은 좁은 화면의 가로 스크롤용인데, 그 상태에서는 안쪽 표가
+   * 내용만큼만 줄어 `width: 100%` 가 먹지 않는다. 상자만 넓히면 표가 상자 왼쪽에
+   * 붙어 산문보다 왼쪽에서 시작한다 — 실측 14개 중 12개, 최대 203px.
+   * 넓은 화면에는 가로 스크롤이 필요 없으므로(가장 넓은 표가 960px) 여기서만 되돌린다. */
+  .blog-body > table {
+    display: table;
+  }
 }
 
 /* 접힌 원문은 그림과 같이 넓히지 않는다 — 본문 열 폭으로 가운데 */
