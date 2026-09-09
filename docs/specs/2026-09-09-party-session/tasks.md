@@ -5,7 +5,7 @@
 
 ## Overview
 
-Total Task Groups: **14**  ·  완료: TG1~TG12 (TG13·TG14 남음)
+Total Task Groups: **14**  ·  완료: **TG1~TG14 전부**
 
 세로로 얇게 자르지 않고 **레이어로 자른다.** 이유는 릴레이·채점·명부가 서로 다른 속도로 움직이고,
 FE 는 그 셋이 다 선 뒤에야 붙일 수 있기 때문이다. TG1~TG3 이 기반이고 나머지는 그 위에 얹힌다.
@@ -288,13 +288,13 @@ UseCase **인터페이스**를 먼저 만든다 — 컨트롤러는 인터페이
 `docs/standards/game-cleanroom-pipeline.md` 가드레일. 게임 제작이라 각각이 별도 세션 규모다.
 **코드 전에 목표 이미지를 만들어 확인받는다.**
 
-- [ ] 13.0 7초를 맞춰라 · 원그리기 정확도
-  - [ ] 13.1 테스트 3개: T39(정적 배선 게이트 — 모바일 규격 · 점수 제출 배선) · T40(세로 390×844 · 가로 844×390 CDP 실측) · T53(방침 일수 == 보존 상수, 두 파일을 텍스트로 읽어 비교)
-  - [ ] 13.2 두 게임 제작 — 서버 채점 경로에 붙이고, 혼자서도 되게 한다
-  - [ ] 13.3 랭킹은 **일반 게임 점수 보드**를 쓴다 (아케이드 리더보드가 아니다)
-  - [ ] 13.4 카탈로그 시드 — `released_at` 을 채운다(BETA 로 넣으면 `NOW(6)`)
-  - [ ] 13.5 **검증 브라우저는 측정이 끝난 시점에 닫는다** — start·측정·stop 을 한 명령으로
-  - [ ] 13.6 Verify: `python3 scripts/lint-game-mobile.py --strict && ./gradlew :game:feature:test --tests "*GameSchemaIntegration*"`
+- [x] 13.0 7초를 맞춰라 · 원그리기 정확도
+  - [x] 13.1 테스트 3개: T39(정적 배선 게이트 — 모바일 규격 · 점수 제출 배선) · T40(세로 390×844 · 가로 844×390 CDP 실측) · T53(방침 일수 == 보존 상수, 두 파일을 텍스트로 읽어 비교)
+  - [x] 13.2 두 게임 제작 — 서버 채점 경로에 붙이고, 혼자서도 되게 한다
+  - [x] 13.3 랭킹은 **일반 게임 점수 보드**를 쓴다 (아케이드 리더보드가 아니다)
+  - [x] 13.4 카탈로그 시드 — `released_at` 을 채운다(BETA 로 넣으면 `NOW(6)`)
+  - [x] 13.5 **검증 브라우저는 측정이 끝난 시점에 닫는다** — start·측정·stop 을 한 명령으로
+  - [x] 13.6 Verify: `python3 scripts/lint-game-mobile.py --strict && ./gradlew :game:feature:test --tests "*GameSchemaIntegration*"`
 
 ---
 
@@ -304,13 +304,13 @@ UseCase **인터페이스**를 먼저 만든다 — 컨트롤러는 인터페이
 **Phase:** release
 **Required Skills:** TypeScript, Kotlin, CDP
 
-- [ ] 14.0 약속을 지키는지 확인하고 완주한다
-  - [ ] 14.1 테스트 4개: T34(별칭이 로그·메트릭·예외에 안 실린다 — 어펜더를 붙여 확인) · T35(HTML 이스케이프) · T41(**두 번째 판까지** 두 기기로 완주) · T62·T63(시드 판마다 재발급 · 원자적 발급)
-  - [ ] 14.2 `/privacy` §6 에 친구 그룹 항목 추가 — 방침 숫자와 상수를 맞춘다
-  - [ ] 14.3 관측 — 방 수·좌석 점유·유휴 종료(릴레이) / 채점 거부 사유별·해시 불일치(채점 서버)
-  - [ ] 14.4 **장르 표준의 「이름은 이 기기 밖으로 나가지 않는다」를 함께 고친다**
-  - [ ] 14.5 `docs/context-map.md` 에 `game` BC 행 추가 + `/hns:glossary` 실행
-  - [ ] 14.6 Verify: `./gradlew :code-dictionary:app:build && pnpm --dir portal-fe vitest run && pnpm --dir portal-fe exec tsc --noEmit`
+- [x] 14.0 약속을 지키는지 확인하고 완주한다
+  - [x] 14.1 테스트 4개: T34(별칭이 로그·메트릭·예외에 안 실린다 — 어펜더를 붙여 확인) · T35(HTML 이스케이프) · T41(**두 번째 판까지** 두 기기로 완주) · T62·T63(시드 판마다 재발급 · 원자적 발급)
+  - [x] 14.2 `/privacy` §6 에 친구 그룹 항목 추가 — 방침 숫자와 상수를 맞춘다
+  - [x] 14.3 관측 — 방 수·좌석 점유·유휴 종료(릴레이) / 채점 거부 사유별·해시 불일치(채점 서버)
+  - [x] 14.4 **장르 표준의 「이름은 이 기기 밖으로 나가지 않는다」를 함께 고친다**
+  - [x] 14.5 `docs/context-map.md` 에 `game` BC 행 추가 + `/hns:glossary` 실행
+  - [x] 14.6 Verify: `./gradlew :code-dictionary:app:build && pnpm --dir portal-fe vitest run && pnpm --dir portal-fe exec tsc --noEmit`
 
 **Acceptance Criteria:**
 - 픽스처 별칭 문자열이 로그 출력 전체에 없다

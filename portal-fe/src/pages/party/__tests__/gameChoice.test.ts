@@ -73,3 +73,19 @@ describe('SR-5 게임 선정 — 갈래가 셋', () => {
     expect(votingApplies('pick', 'pick')).toBe(false);
   });
 });
+
+describe('판 시작 설정 — 서버가 정한 것이 전원에게 간다', () => {
+  it('원 그리기는 목표 원을 싣는다 — 못 받으면 각자 다른 원을 그린다', () => {
+    const cfg: import('../gameChoice').RoundCfg = {
+      game: 'circle-trace',
+      target: { cx: 500, cy: 500, r: 300 },
+    };
+    expect(cfg.target).toBeDefined();
+    expect(cfg.target!.r).toBeGreaterThan(0);
+  });
+
+  it('다른 게임에는 목표가 없다 — 있으면 게임이 엉뚱한 것을 그린다', () => {
+    const cfg: import('../gameChoice').RoundCfg = { game: 'seven-seconds' };
+    expect(cfg.target).toBeUndefined();
+  });
+});

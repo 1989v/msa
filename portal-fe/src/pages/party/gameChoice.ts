@@ -36,6 +36,22 @@ export const needsInputRelay = (g: PartyGame) => g.tags.includes(INPUT_DECIDES);
  */
 export const supportsRoundOptions = (g: PartyGame) => g.tags.includes(ROSTER_READY);
 
+/**
+ * 방장 화면이 판을 열 때 릴레이 시작 신호에 실어 보내는 설정.
+ *
+ * 참여형은 서버가 먼저 판을 열고(목표 원 같은 것을 정하고) 그 값을 여기 담아 방에 나른다 —
+ * 릴레이는 열어보지 않으므로 서버가 정한 것이 그대로 전원에게 간다. 게임이 이 값을 못 받으면
+ * 각자 다른 목표를 그리게 되어 비교가 성립하지 않는다.
+ */
+export interface RoundCfg {
+  game: string;
+  /** 원 그리기의 목표 원 — 서버가 낸다. 다른 게임에는 없다 */
+  target?: { cx: number; cy: number; r: number };
+  mode?: string;
+  pick?: number;
+  weights?: number[];
+}
+
 export type Branch = 'pick' | 'random' | 'interactive';
 
 /** 갈래별로 화면에 낼 목록 */

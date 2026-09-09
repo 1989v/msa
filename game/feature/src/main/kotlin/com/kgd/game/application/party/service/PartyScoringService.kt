@@ -2,6 +2,8 @@ package com.kgd.game.application.party.service
 
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import com.kgd.game.application.party.port.PartyMetricsPort
+import com.kgd.game.application.party.usecase.CircleTarget
 import com.kgd.game.application.party.usecase.ClosePartyPlayUseCase
 import com.kgd.game.application.party.usecase.RoundStanding
 import com.kgd.game.application.party.usecase.StartPartyPlayUseCase
@@ -31,12 +33,20 @@ private val log = KotlinLogging.logger {}
 class PartyScoringService(
     private val guard: PartySeatGuard,
     private val clock: () -> Long = System::currentTimeMillis,
+    /** 없어도 판은 돈다 — 관측이 기능의 전제는 아니다 */
+    private val metrics: PartyMetricsPort? = null,
 ) : StartPartyPlayUseCase, SubmitPartyPlayUseCase, ClosePartyPlayUseCase {
 
     private val rounds = ConcurrentHashMap<String, PlayRound>()
     private val random = SecureRandom()
 
-    private class PlayRound(val game: String, val startedMs: Long, val eligible: Set<Int>) {
+    private class PlayRound(
+        val game: String,
+        val startedMs: Long,
+        val eligible: Set<Int>,
+        /** 원그리기일 때만. 한 판의 전원이 같은 목표를 받아야 비교가 성립한다 */
+        val target: CircleTarget?,
+    ) {
         /** 좌석 → 점수(작을수록 좋다). **클라이언트가 보낸 값이 아니라 서버가 계산한 값** */
         val scores = ConcurrentHashMap<Int, Double>()
         val rejected = ConcurrentHashMap<Int, String>()
@@ -50,7 +60,12 @@ class PartyScoringService(
         if (seat.seat != seat.room.occupiedSeats.keys.minOrNull()) {
             throw BusinessException(ErrorCode.INVALID_INPUT, "방장만 판을 열 수 있습니다")
         }
-        val round = PlayRound(command.game, clock(), seat.room.occupiedSeats.keys.toSet())
+        val round = PlayRound(
+            game = command.game,
+            startedMs = clock(),
+            eligible = seat.room.occupiedSeats.keys.toSet(),
+            target = if (command.game == CIRCLE_GAME) newTarget() else null,
+        )
         rounds[seat.room.code] = round
         return view(round)
     }
@@ -76,9 +91,10 @@ class PartyScoringService(
                 val reason = implausible(p.points)
                 if (reason != null) {
                     round.rejected[seat.seat] = reason
+                    metrics?.scoringRejected(reason)
                     log.info { "궤적 개연성 위반 — room=${round.game} seat=${seat.seat} reason=$reason" }
                 } else {
-                    round.scores[seat.seat] = circleError(p.points)
+                    round.scores[seat.seat] = traceError(p.points, round.target ?: newTarget())
                 }
             }
         }
@@ -103,8 +119,10 @@ class PartyScoringService(
         if (round.scores.isEmpty()) {
             round.voided = true
             round.ranking = emptyList()
+            metrics?.roundVoided()
             return
         }
+        metrics?.roundSettled()
         val scored = round.scores.entries.sortedBy { it.value }.map { it.key }
         val rest = (round.eligible - round.scores.keys).shuffled(java.util.Random(random.nextLong()))
         round.ranking = scored + rest
@@ -137,37 +155,108 @@ class PartyScoringService(
         return null
     }
 
-    /** 반지름 표준편차 / 평균 반지름 — 작을수록 정확한 원 */
-    private fun circleError(points: List<SubmitPartyPlayUseCase.TracePoint>): Double {
-        val cx = points.map { it.x }.average()
-        val cy = points.map { it.y }.average()
-        val radii = points.map { hypot(it.x - cx, it.y - cy) }
-        val mean = radii.average()
-        if (mean <= 0.0) return Double.MAX_VALUE
-        val sd = kotlin.math.sqrt(radii.sumOf { (it - mean) * (it - mean) } / radii.size)
-        // 한 바퀴를 안 돌았으면 그만큼 벌점 — 짧은 호는 반지름이 고르기 쉽다
-        val sweep = sweepRadians(points, cx, cy)
-        val closure = (FULL_TURN / sweep.coerceAtLeast(0.1)).coerceAtLeast(1.0)
-        return sd / mean * closure
+    /**
+     * 목표 원에서 얼마나 벗어났나 (OQ-2 확정) — **작을수록 정확하다.**
+     *
+     * ## 왜 「내가 그린 게 원인가」가 아닌가
+     * 이 게임은 **주어진 원을 따라 그리는 것**이다. 반지름의 자기 일관성만 재면
+     * 목표에서 통째로 벗어난 완벽한 원이 만점을 받는다 — 다른 문제를 푸는 식이다.
+     * 중심과 반지름이 둘 다 주어지므로 추정할 것이 없고, 「완벽한 원 그리기」 류가
+     * 중심점을 찍어 주는 이유(중심 추정이 가장 큰 불공평 원인)도 여기서는 사라진다.
+     *
+     * ## 왜 각도 칸으로 나누나
+     * 점 개수로 평균 내면 **천천히 그린 구간이 점수를 지배한다** — 거기 점이 몰려서다.
+     * 속도는 실력이 아닌데 실력처럼 재게 된다. 한 곳에 멈춰 있으면 그 지점 하나가
+     * 수십 표를 갖는 것도 같은 문제다.
+     *
+     * 각도를 [BINS] 칸으로 나눠 칸마다 한 표씩 주면 셋이 한꺼번에 풀린다 —
+     * **속도 무관 · 표본 밀도 무관 · 덜 그린 구간이 저절로 벌점**(빈 칸이 최대 이탈).
+     * 따로 「닫힘 벌점」을 곱하는 땜질이 필요 없다.
+     */
+    private fun traceError(points: List<SubmitPartyPlayUseCase.TracePoint>, target: CircleTarget): Double {
+        val worst = target.r * ZERO_SCORE_RATIO
+        val filled = DoubleArray(BINS) { -1.0 }
+
+        /** 각도 → 칸 */
+        fun binOf(x: Double, y: Double): Int {
+            var a = atan2(y - target.cy, x - target.cx)
+            if (a < 0) a += FULL_TURN
+            return ((a / FULL_TURN) * BINS).toInt().coerceIn(0, BINS - 1)
+        }
+        fun errOf(p: SubmitPartyPlayUseCase.TracePoint) =
+            abs(hypot(p.x - target.cx, p.y - target.cy) - target.r)
+
+        fun mark(bin: Int, e: Double) {
+            val v = e.coerceAtMost(worst)
+            // 같은 칸을 여러 번 지나면 더 나쁜 쪽을 남긴다 — 한 번 잘 지났다고 덮이면
+            // 삐끗한 자국이 사라져 「고르게 그렸나」를 못 재게 된다
+            if (filled[bin] < v) filled[bin] = v
+        }
+
+        // **연속한 두 점 사이를 이어서 칸을 채운다.** 점만 찍으면 빠르게 지나간 구간이
+        // 「안 그린 것」으로 잡혀, 표본이 적을수록 손해를 본다 — 속도가 점수를 바꾸는 바로
+        // 그 문제가 커버리지 쪽으로 되살아난다. 사람 손은 이어서 움직이므로 사이도 지나간 것이다.
+        points.zipWithNext { a, b ->
+            val ba = binOf(a.x, a.y)
+            val bb = binOf(b.x, b.y)
+            val ea = errOf(a)
+            val eb = errOf(b)
+            // 짧은 쪽으로 돈다 — 반 바퀴를 넘게 벌어졌으면 표본이 끊긴 것이라 잇지 않는다
+            var step = bb - ba
+            if (step > BINS / 2) step -= BINS
+            if (step < -BINS / 2) step += BINS
+            val n = abs(step)
+            if (n > BINS / 4) {
+                mark(ba, ea); mark(bb, eb)
+            } else {
+                for (k in 0..n) {
+                    val bin = ((ba + (if (step >= 0) k else -k)) % BINS + BINS) % BINS
+                    val t = if (n == 0) 0.0 else k.toDouble() / n
+                    mark(bin, ea + (eb - ea) * t)
+                }
+            }
+        }
+        if (points.size == 1) mark(binOf(points[0].x, points[0].y), errOf(points[0]))
+
+        var squared = 0.0
+        for (i in 0 until BINS) {
+            // **안 지나간 칸은 최대 이탈이다.** 반원만 그리면 절반이 최대치라 점수가 크게 깎인다 —
+            // 짧은 호가 이기는 것을 막는 장치가 이 한 줄이고, 벌점이 「그릴 수 있는 최악」과
+            // 같으므로 **어려운 구간을 건너뛰는 것이 엉망으로 그리는 것보다 낫지 않다.**
+            val e = if (filled[i] < 0) worst else filled[i]
+            squared += e * e
+        }
+        return kotlin.math.sqrt(squared / BINS) / target.r
     }
 
-    private fun sweepRadians(points: List<SubmitPartyPlayUseCase.TracePoint>, cx: Double, cy: Double): Double {
-        var total = 0.0
-        points.zipWithNext { a, b ->
-            var d = atan2(b.y - cy, b.x - cx) - atan2(a.y - cy, a.x - cx)
-            while (d > Math.PI) d -= FULL_TURN
-            while (d < -Math.PI) d += FULL_TURN
-            total += abs(d)
-        }
-        return total
-    }
+    /**
+     * 목표 원 — 정규 공간(1000×1000) 안에서 서버가 뽑는다.
+     *
+     * 중심과 반지름을 조금씩 흔드는 이유는 **판마다 같은 그림이면 손에 익기 때문**이다.
+     * 흔드는 폭은 좁게 둔다 — 크게 흔들면 어떤 판은 쉽고 어떤 판은 어려워져
+     * 판끼리 비교가 안 된다(한 판 안에서는 전원이 같은 목표라 항상 공평하다).
+     */
+    private fun newTarget(): CircleTarget = CircleTarget(
+        cx = 500.0 + random.nextInt(-40, 41),
+        cy = 500.0 + random.nextInt(-40, 41),
+        r = (300 + random.nextInt(-30, 31)).toDouble(),
+    )
+
+    /** 오차 → 0~100 점. 화면이 자기 식으로 바꾸면 서버와 다른 숫자를 보이게 된다 */
+    private fun toScore(error: Double): Double =
+        ((1 - error / ZERO_SCORE_RATIO) * 100).coerceIn(0.0, 100.0)
 
     private fun view(r: PlayRound) = RoundStanding(
         game = r.game,
+        target = r.target,
         open = !r.closed,
         submitted = r.scores.size + r.rejected.size,
         eligible = r.eligible.size,
         ranking = r.ranking,
+        // 마감 뒤에만 낸다 — 진행 중에 남의 점수가 보이면 그것을 보고 언제 낼지 고른다
+        scores = if (!r.closed) emptyMap()
+                 else if (r.game == CIRCLE_GAME) r.scores.mapValues { toScore(it.value) }
+                 else emptyMap(),
         rejected = r.rejected.toMap(),
         voided = r.voided,
     )
@@ -179,5 +268,27 @@ class PartyScoringService(
         const val MIN_SPAN_MS = 300L
         const val MIN_JITTER_RATIO = 0.05
         const val FULL_TURN = 2 * Math.PI
+
+        /** 원그리기 게임 슬러그 — 이 게임일 때만 목표 원이 나간다 */
+        const val CIRCLE_GAME = "circle-trace"
+
+        /**
+         * 각도 칸 수 — 3° 씩. 손가락 폭보다 잘게 나눌 이유가 없고, 잘게 나눌수록
+         * 표본 사이를 잇는 보간에 기대게 된다.
+         */
+        const val BINS = 120
+
+        /**
+         * 한 칸이 0점이 되는 이탈 — 반지름의 이 비율.
+         *
+         * 실측으로 정했다. 사람이 화면의 원을 손가락으로 따라 그리면 보통 반지름의 2~5%를
+         * 벗어난다. 0.08 로 잡았더니 그 범위가 전부 92~98점에 뭉쳐 순위는 갈려도 **점수가
+         * 아무것도 말하지 않았다.** 0.15 면 2% 이탈이 87점, 4% 가 75점, 8% 가 49점으로
+         * 펴진다 — 잘 그린 것과 대충 그린 것이 숫자로 구분된다.
+         *
+         * 이 값은 **빈 칸의 벌점이기도 하다.** 그리는 최악과 안 그린 것이 같아야
+         * 어려운 구간을 건너뛰는 것이 전략이 되지 않는다.
+         */
+        const val ZERO_SCORE_RATIO = 0.15
     }
 }

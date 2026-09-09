@@ -14,7 +14,10 @@ import com.kgd.game.infrastructure.party.HmacPartySeatTokenService
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.comparables.shouldBeGreaterThan
+import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -37,13 +40,34 @@ private class SCClock(var now: Long = 0L) : () -> Long {
     override fun invoke() = now
 }
 
-/** 사람이 그린 것처럼 간격이 흔들리는 원 */
-private fun SCcircle(n: Int = 60, radius: Double = 100.0, wobble: Double = 0.0): List<TracePoint> {
+/**
+ * 목표 원을 따라 그린 궤적 — 사람처럼 간격이 흔들린다.
+ *
+ * @param off    목표 반지름에서의 이탈(px). 0 이면 완벽히 따라 그린 것
+ * @param sweep  실제로 돈 각도. 2π 미만이면 덜 그린 것
+ * @param speed  구간별 속도 차이 — 한쪽에 점이 몰리게 만든다
+ */
+private fun SCtrace(
+    n: Int = 120,
+    off: Double = 0.0,
+    sweep: Double = 2 * Math.PI,
+    cx: Double = 500.0,
+    cy: Double = 500.0,
+    r: Double = 300.0,
+    crowdFirstHalf: Boolean = false,
+): List<TracePoint> {
     var t = 0L
     return (0 until n).map { i ->
-        val a = i * 2 * Math.PI / n
+        // 앞 절반에 점을 몰면 속도 편향이 생긴다 — 각도 칸이 그것을 무시해야 한다
+        val u = if (crowdFirstHalf) {
+            if (i < n * 3 / 4) (i.toDouble() / (n * 3 / 4)) * 0.5 else 0.5 + ((i - n * 3 / 4).toDouble() / (n / 4)) * 0.5
+        } else {
+            i.toDouble() / n
+        }
+        val a = u * sweep
         t += 16L + (i % 5) * 3L
-        TracePoint(cos(a) * (radius + if (i % 2 == 0) wobble else -wobble), sin(a) * radius, t)
+        val rr = r + (if (i % 2 == 0) off else -off)
+        TracePoint(cx + cos(a) * rr, cy + sin(a) * rr, t)
     }
 }
 
@@ -169,15 +193,15 @@ class PartyScoringServiceSpec : BehaviorSpec({
 
         Then("사람이 그린 듯한 궤적은 채점된다") {
             val v = svc.execute(
-                SubmitPartyPlayUseCase.Command(SCROOM, 0, SCtok(0), Payload.Trace(SCcircle(wobble = 3.0))),
+                SubmitPartyPlayUseCase.Command(SCROOM, 0, SCtok(0), Payload.Trace(SCtrace(off = 6.0))),
             )
             v.rejected.isEmpty() shouldBe true
             v.submitted shouldBe 1
         }
         Then("간격이 완벽히 균일한 합성 궤적은 거부되고 사유가 남는다") {
-            val synthetic = (0 until 60).map { i ->
-                val a = i * 2 * Math.PI / 60
-                TracePoint(cos(a) * 100, sin(a) * 100, i * 16L)
+            val synthetic = (0 until 120).map { i ->
+                val a = i * 2 * Math.PI / 120
+                TracePoint(500 + cos(a) * 300, 500 + sin(a) * 300, i * 16L)
             }
             val v = svc.execute(
                 SubmitPartyPlayUseCase.Command(SCROOM, 1, SCtok(1), Payload.Trace(synthetic)),
@@ -186,7 +210,7 @@ class PartyScoringServiceSpec : BehaviorSpec({
         }
         Then("표본이 너무 적으면 거부된다") {
             val v = svc.execute(
-                SubmitPartyPlayUseCase.Command(SCROOM, 2, SCtok(2), Payload.Trace(SCcircle(n = 5))),
+                SubmitPartyPlayUseCase.Command(SCROOM, 2, SCtok(2), Payload.Trace(SCtrace(n = 5))),
             )
             v.rejected[2] shouldBe "표본 부족"
         }
@@ -199,23 +223,197 @@ class PartyScoringServiceSpec : BehaviorSpec({
         start(svc, "circle-trace")
 
         Then("거부된다 — 채점 서버가 임의 크기 입력을 받지 않는다") {
-            val huge = SCcircle(n = 5_000)
-            val v = svc.execute(SubmitPartyPlayUseCase.Command(SCROOM, 0, SCtok(0), Payload.Trace(huge)))
+            val v = svc.execute(
+                SubmitPartyPlayUseCase.Command(SCROOM, 0, SCtok(0), Payload.Trace(SCtrace(n = 5_000))),
+            )
             v.rejected[0] shouldBe "표본 과다"
         }
     }
 
-    // ── 정확도 판정 ────────────────────────────────────────────────────────
+    // ── OQ-2 채점식 — 목표 이탈을 잰다 ────────────────────────────────────
 
-    Given("정확한 원과 찌그러진 원") {
+    Given("원그리기 판") {
         val (svc, _) = fixture()
-        start(svc, "circle-trace")
 
-        Then("정확한 쪽이 이긴다") {
-            svc.execute(SubmitPartyPlayUseCase.Command(SCROOM, 0, SCtok(0), Payload.Trace(SCcircle(wobble = 1.0))))
-            svc.execute(SubmitPartyPlayUseCase.Command(SCROOM, 1, SCtok(1), Payload.Trace(SCcircle(wobble = 25.0))))
-            val v = svc.execute(SubmitPartyPlayUseCase.Command(SCROOM, 2, SCtok(2), Payload.Trace(SCcircle(wobble = 8.0))))
+        Then("서버가 목표 원을 낸다 — 클라이언트가 고르면 쉬운 원을 고른다") {
+            val st = start(svc, "circle-trace")
+            st.target shouldNotBe null
+            st.target!!.r shouldBeGreaterThan 0.0
+        }
+        Then("7초 판에는 목표가 없다") {
+            val (other, _) = fixture()
+            start(other).target shouldBe null
+        }
+    }
+
+    Given("목표를 잘 따라 그린 사람과 벗어난 사람") {
+        val (svc, _) = fixture()
+        val target = start(svc, "circle-trace").target!!
+
+        Then("목표에 가까운 쪽이 이긴다") {
+            fun send(seat: Int, off: Double) = svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, seat, SCtok(seat),
+                    Payload.Trace(SCtrace(off = off, cx = target.cx, cy = target.cy, r = target.r)),
+                ),
+            )
+            send(0, 2.0)
+            send(1, 30.0)
+            val v = send(2, 10.0)
             v.ranking shouldContainExactly listOf(0, 2, 1)
+        }
+    }
+
+    Given("목표에서 통째로 벗어난 완벽한 원") {
+        val (svc, _) = fixture()
+        val target = start(svc, "circle-trace").target!!
+
+        Then("**만점을 못 받는다** — 「내가 그린 게 원인가」가 아니라 「목표를 따라갔나」를 잰다") {
+            // 자기 일관성만 재는 식이면 이쪽이 이긴다: 반지름이 완벽히 고르기 때문이다
+            svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, 0, SCtok(0),
+                    Payload.Trace(SCtrace(off = 0.0, cx = target.cx, cy = target.cy, r = target.r * 0.6)),
+                ),
+            )
+            // 목표 위에서 조금 흔들린 쪽
+            svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, 1, SCtok(1),
+                    Payload.Trace(SCtrace(off = 8.0, cx = target.cx, cy = target.cy, r = target.r)),
+                ),
+            )
+            val v = svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, 2, SCtok(2),
+                    Payload.Trace(SCtrace(off = 40.0, cx = target.cx, cy = target.cy, r = target.r)),
+                ),
+            )
+            v.ranking.first() shouldBe 1
+        }
+    }
+
+    Given("반원만 그린 사람") {
+        val (svc, _) = fixture()
+        val target = start(svc, "circle-trace").target!!
+
+        Then("한 바퀴 그린 사람에게 진다 — 빈 칸이 최대 이탈로 잡힌다") {
+            // 반원을 완벽히 그려도 남은 절반이 최대 이탈이라, 한 바퀴를 적당히 그린 쪽이 이긴다.
+            // 「짧은 호가 반지름이 고르기 쉬워 이긴다」는 자유 그리기 식의 구멍이 여기서는 안 생긴다.
+            svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, 0, SCtok(0),
+                    Payload.Trace(SCtrace(off = 0.0, sweep = Math.PI, cx = target.cx, cy = target.cy, r = target.r)),
+                ),
+            )
+            val v = svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, 1, SCtok(1),
+                    Payload.Trace(SCtrace(off = 12.0, cx = target.cx, cy = target.cy, r = target.r)),
+                ),
+            )
+            svc.execute(SCROOM).ranking.first() shouldBe 1
+            v.submitted shouldBe 2
+        }
+    }
+
+    Given("어려운 구간을 건너뛸 유혹") {
+        fun scoreOf(sweep: Double, offRatio: Double): Double {
+            val (svc, _) = fixture()
+            val t = start(svc, "circle-trace").target!!
+            svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, 0, SCtok(0),
+                    Payload.Trace(
+                        SCtrace(n = 200, off = offRatio * t.r, sweep = sweep, cx = t.cx, cy = t.cy, r = t.r),
+                    ),
+                ),
+            )
+            return svc.execute(SCROOM).scores[0]!!
+        }
+
+        Then("**건너뛰는 것이 최악으로 그리는 것보다 낫지 않다** — 빈 칸 벌점이 그릴 수 있는 최악과 같다") {
+            // 0.15R 은 한 칸이 0점이 되는 이탈이자 빈 칸의 벌점이다. 그 값으로 한 바퀴 그린 것과
+            // 절반을 건너뛴 것이 같은 점수여야 한다 — 건너뛰어서 앞서면 못 그리는 구간을 빼는 것이
+            // 전략이 된다.
+            // 실측: 0.0 vs 7.8e-14 — 같은 값이다(부동소수 잔차)
+            scoreOf(2 * Math.PI, 0.15) shouldBe (scoreOf(Math.PI, 0.15) plusOrMinus 0.001)
+        }
+        Then("최악보다 나은 정도로라도 그리면 건너뛰는 것보다 낫다") {
+            // 실측: 한 바퀴 33.3 vs 절반 15.0 — 그리는 쪽이 두 배 낫다
+            (scoreOf(2 * Math.PI, 0.10) > scoreOf(Math.PI, 0.10)) shouldBe true
+        }
+    }
+
+    Given("표본 밀도가 다른 두 궤적") {
+        Then("**점 수가 점수를 안 바꾼다** — 사이를 이어 채우므로 빠르게 지나간 구간도 지나간 것이다") {
+            fun scoreOf(n: Int): Double {
+                val (svc, _) = fixture()
+                val t = start(svc, "circle-trace").target!!
+                svc.execute(
+                    SubmitPartyPlayUseCase.Command(
+                        SCROOM, 0, SCtok(0),
+                        Payload.Trace(SCtrace(n = n, off = 0.0, cx = t.cx, cy = t.cy, r = t.r)),
+                    ),
+                )
+                return svc.execute(SCROOM).scores[0]!!
+            }
+            // 실측: 표본을 3배로 늘려도 같은 값이 나온다. 이어 채우지 않으면 성긴 쪽이
+            // 「안 그린 칸」 때문에 손해를 본다 — 속도가 실력처럼 재지는 바로 그 문제다.
+            // cos²+sin² 이 정확히 1 이 아니라 완벽한 원도 100.0 이 아니다 — 허용오차로 본다
+            scoreOf(120) shouldBe (scoreOf(400) plusOrMinus 0.001)
+        }
+    }
+
+    Given("점수 스케일") {
+        Then("잘 그린 것과 대충 그린 것이 숫자로 구분된다") {
+            fun scoreOf(off: Double, sweep: Double = 2 * Math.PI): Double {
+                val (svc, _) = fixture()
+                val t = start(svc, "circle-trace").target!!
+                svc.execute(
+                    SubmitPartyPlayUseCase.Command(
+                        SCROOM, 0, SCtok(0),
+                        Payload.Trace(SCtrace(n = 200, off = off * t.r, sweep = sweep, cx = t.cx, cy = t.cy, r = t.r)),
+                    ),
+                )
+                return svc.execute(SCROOM).scores[0]!!
+            }
+            // 실측값 — 허용치를 0.08 로 뒀을 때는 이 셋이 전부 92~98 에 뭉쳐 있었다
+            scoreOf(0.0) shouldBe (100.0 plusOrMinus 0.001)
+            (scoreOf(0.02) > 80.0) shouldBe true
+            (scoreOf(0.04) in 65.0..85.0) shouldBe true
+            (scoreOf(0.08) in 40.0..60.0) shouldBe true
+        }
+        Then("목표에서 통째로 벗어나면 0 점이다") {
+            val (svc, _) = fixture()
+            val t = start(svc, "circle-trace").target!!
+            svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, 0, SCtok(0),
+                    Payload.Trace(SCtrace(n = 200, off = 0.0, cx = t.cx, cy = t.cy, r = t.r * 0.6)),
+                ),
+            )
+            svc.execute(SCROOM).scores[0]!! shouldBe (0.0 plusOrMinus 0.001)
+        }
+        Then("진행 중에는 점수가 안 보인다 — 남의 점수를 보고 언제 낼지 고르면 안 된다") {
+            val (svc, _) = fixture()
+            val t = start(svc, "circle-trace").target!!
+            val mid = svc.execute(
+                SubmitPartyPlayUseCase.Command(
+                    SCROOM, 0, SCtok(0),
+                    Payload.Trace(SCtrace(off = 5.0, cx = t.cx, cy = t.cy, r = t.r)),
+                ),
+            )
+            mid.open shouldBe true
+            mid.scores.isEmpty() shouldBe true
+        }
+        Then("7초 판은 점수를 안 낸다 — 오차 초를 그대로 보인다") {
+            val (svc, clock) = fixture()
+            start(svc)
+            clock.now = 7_000; stop(svc, 0)
+            clock.now = 7_100; stop(svc, 1)
+            clock.now = 7_200
+            stop(svc, 2).scores.isEmpty() shouldBe true
         }
     }
 

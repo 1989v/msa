@@ -2,6 +2,7 @@ package com.kgd.game.application.party.service
 
 import com.kgd.common.exception.BusinessException
 import com.kgd.common.exception.ErrorCode
+import com.kgd.game.application.party.port.PartyMetricsPort
 import com.kgd.game.application.party.usecase.RoundVerdict
 import com.kgd.game.application.party.usecase.SubmitRoundHashUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -19,6 +20,8 @@ private val log = KotlinLogging.logger {}
 @Service
 class PartyRoundVerdictService(
     private val guard: PartySeatGuard,
+    /** 없어도 판정은 선다 — 관측이 판정의 전제는 아니다 */
+    private val metrics: PartyMetricsPort? = null,
 ) : SubmitRoundHashUseCase {
 
     private val rounds = ConcurrentHashMap<String, HashRound>()
@@ -68,14 +71,17 @@ class PartyRoundVerdictService(
         // 다수가 하나여야 방의 결과가 된다. 동수면 무효 — 2인 방에서 갈리면 여기 온다.
         if (top == null || leaders.size != 1) {
             round.voided = true
+            metrics?.roundVoided()
             val n = consecutiveVoids.merge(roomCode, 1, Int::plus)!!
             log.warn { "결과 해시 다수 없음 — room=$roomCode round=${round.roundNo} 연속무효=$n" }
             return
         }
         round.agreed = leaders.first()
         consecutiveVoids.remove(roomCode)
+        metrics?.roundSettled()
         val diverged = round.hashes.filterValues { it != round.agreed }.keys
         if (diverged.isNotEmpty()) {
+            metrics?.hashDiverged(diverged.size)
             log.warn { "결과 해시 불일치 — room=$roomCode round=${round.roundNo} 이탈좌석=${diverged.size}" }
         }
     }

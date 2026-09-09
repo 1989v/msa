@@ -20,6 +20,9 @@ dependencies {
     kapt(libs.querydsl.apt) { artifact { classifier = "jakarta" } }
     implementation(libs.spring.kafka)
     implementation(libs.kotlin.logging)
+    // 파티 관측 (ADR-0092 SR-9). 호스트에 어댑터를 두면 교차 서비스 import 라
+    // 레이어 게이트가 막는다 — 어댑터가 여기 있어야 해서 계측 의존도 여기 붙는다.
+    implementation("io.micrometer:micrometer-core")
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-mysql")
     runtimeOnly(libs.mysql.connector)

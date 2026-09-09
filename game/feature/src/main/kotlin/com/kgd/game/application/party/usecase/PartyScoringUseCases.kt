@@ -19,8 +19,10 @@ interface SubmitPartyPlayUseCase {
         data object StopNow : Payload
 
         /**
-         * 원그리기 — 궤적 점열. 서버가 재현할 수 없으므로 **개연성 검사가 상한**이다.
-         * 완전한 방어는 없고 캐주얼 조작만 막는다.
+         * 원그리기 — 궤적 점열. **목표 원을 따라 그린 것**이라 서버가 이탈을 직접 잰다.
+         * 다만 궤적 자체를 재현할 수는 없으므로 위조 방어는 개연성 검사가 상한이다.
+         *
+         * 좌표는 1000×1000 정규 공간이다 — 화면 크기가 기기마다 달라도 같은 잣대로 잰다.
          */
         data class Trace(val points: List<TracePoint>) : Payload
     }
@@ -34,6 +36,21 @@ interface SubmitPartyPlayUseCase {
         val payload: Payload,
     )
 }
+
+/**
+ * 따라 그릴 목표 원 (ADR-0092 · OQ-2). 1000×1000 정규 공간의 좌표다.
+ *
+ * **서버가 낸다.** 클라이언트가 고르게 두면 작은 원을 골라 쉽게 만들 수 있다 — 시드를
+ * 방장에게 안 맡기는 것과 같은 이유고, 한 판의 전원이 **같은 목표**를 받아야 비교가 성립한다.
+ */
+data class CircleTarget(val cx: Double, val cy: Double, val r: Double)
+
+/**
+ * 화면이 판을 열 때 받는 것 — **목표는 여기로만 나간다.**
+ *
+ * 방장 화면이 이 값을 릴레이 시작 신호의 `cfg` 에 실어 방 전원에게 나른다. 릴레이는 `cfg` 를
+ * 열어보지 않으므로 무권위 원칙은 그대로다 — 서버가 정한 것을 릴레이가 나르기만 한다.
+ */
 
 /** 방장이 판을 열 때 서버가 시작 시각을 스탬프한다 — 7초를 서버 시계로 재기 위해 */
 interface StartPartyPlayUseCase {
@@ -53,10 +70,19 @@ interface ClosePartyPlayUseCase {
  */
 data class RoundStanding(
     val game: String,
+    /** 원그리기일 때만 채워진다 — 화면이 이 원을 그리고 사람이 그것을 따라 그린다 */
+    val target: CircleTarget?,
     val open: Boolean,
     val submitted: Int,
     val eligible: Int,
     val ranking: List<Int>,
+    /**
+     * 좌석 → 0~100 점. **원그리기에서만, 마감 뒤에만** 채워진다.
+     *
+     * 서버가 변환까지 하는 이유는 화면이 자기 식으로 바꾸면 서버와 다른 숫자를 보이기
+     * 때문이다. 7초는 점수 대신 오차 초를 그대로 보이므로 여기 안 담는다.
+     */
+    val scores: Map<Int, Double>,
     val rejected: Map<Int, String>,
     val voided: Boolean,
 )
