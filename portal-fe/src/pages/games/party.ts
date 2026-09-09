@@ -13,12 +13,26 @@ export const PARTY_KEY = 'kgd.party.v1';
 export type PartyMode = 'last' | 'order';
 
 export interface PartyHandoff {
+  /**
+   * **올리지 않는다.** 배포된 파서(`public/games/lib/party.js`)가 모르는 버전을 통째로
+   * 버려서, 2로 올리면 새 필드가 무시되는 게 아니라 인계가 죽어 참가자 이름을 다시
+   * 입력하는 화면이 뜬다. 확장은 선택 필드를 더하는 것뿐이다 (ADR-0092).
+   */
   v: 1;
   slug: string;
   names: string[];
   mode: PartyMode;
   at: number;
+  /** 걸리는 인원 수. `mode: 'order'` 에서는 뜻이 없어 화면이 만들지 않는다 */
+  pick?: number;
+  /** 사람별 비율 — `names` 와 같은 길이. 기본 전부 1 */
+  weights?: number[];
+  /** 파티 방 코드 — 관전 참가에 쓴다 */
+  room?: string;
 }
+
+/** 비율 상한 — 게임 쪽 규약과 같은 값이어야 한다 */
+export const PARTY_MAX_WEIGHT = 9;
 
 /** 넘긴 뒤 이 시간이 지나면 무시한다 — 옛 값으로 엉뚱한 판이 시작되면 안 된다 */
 export const PARTY_TTL_MS = 3 * 60 * 1000;
@@ -31,8 +45,13 @@ export const PARTY_MODES: { key: PartyMode; ko: string; en: string; hint: string
   { key: 'order', ko: '순서 정하기', en: 'Running order', hint: '차례를 정한다' },
 ];
 
-export function writeParty(slug: string, names: string[], mode: PartyMode): void {
-  const payload: PartyHandoff = { v: 1, slug, names, mode, at: Date.now() };
+export function writeParty(
+  slug: string,
+  names: string[],
+  mode: PartyMode,
+  extra: { pick?: number; weights?: number[]; room?: string } = {},
+): void {
+  const payload: PartyHandoff = { v: 1, slug, names, mode, at: Date.now(), ...extra };
   try {
     localStorage.setItem(PARTY_KEY, JSON.stringify(payload));
   } catch {
