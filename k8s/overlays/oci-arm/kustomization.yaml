@@ -365,7 +365,7 @@ images:
     newTag: d343231
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
-    newTag: 754510e
+    newTag: 9d2620c
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
     newTag: 2ebadbb
