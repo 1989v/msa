@@ -173,8 +173,8 @@ describe('공격·콤보', () => {
     expect(a.cooldown).toBeGreaterThan(0);
   });
   it('프레임 데이터 표와 총 틱이 일치한다', () => {
-    expect(totalTicks(MOVES.jab)).toBe(5 + 3 + 8);
-    expect(chainTick(MOVES.jab)).toBe(5 + 3 + 4);
+    expect(totalTicks(MOVES.jab)).toBe(5 + 3 + 10);
+    expect(chainTick(MOVES.jab)).toBe(5 + 3 + 10);
     expect(totalTicks(MOVES.roundhouse)).toBe(10 + 5 + 18);
   });
 });

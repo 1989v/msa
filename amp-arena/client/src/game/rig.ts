@@ -1,6 +1,6 @@
 // 프리미티브 13본 치비 리그 — 시안 캐릭터 시트의 비율을 3D 로 옮긴다. 외곽선은 뒤집은 껍질(inverted hull).
 import * as THREE from 'three';
-import type { AccessoryId } from '@amp/shared';
+import type { AccessoryId, StyleLook, HairKind } from '@amp/shared';
 import { type Pose, POSES } from './poses.ts';
 
 export const SLOT_COLORS = ['#ff6a2a', '#4488ff', '#4ade80', '#ffb020', '#a78bfa', '#33d1ff', '#f472b6', '#f5f2ea'];
@@ -48,6 +48,9 @@ export class CharacterRig {
   private accGroup = new THREE.Group();
   private shieldGroup = new THREE.Group();
   private shadowBlob: THREE.Mesh;
+  private hairGroup = new THREE.Group();
+  private headG!: THREE.Group;
+  private lookKey = '';
   acc: AccessoryId = 'none';
 
   constructor(shirtColor: string) {
@@ -113,16 +116,10 @@ export class CharacterRig {
     tail.rotation.y = 0.5;
     headG.add(tail);
     // 뒤로 뻗친 머리 3가닥
-    // 뒤로 뻗친 머리 3가닥 — 밑동을 머리 표면에 두고 뒤·위로 뻗는다 (추적 카메라가 뒤에서 보므로 실루엣의 핵심)
-    const hairMat = lambert(HAIR);
-    for (const [ry, dy, len] of [[0.5, 0.0, 0.34], [0, 0.08, 0.42], [-0.5, 0.0, 0.34]] as const) {
-      const geo = new THREE.ConeGeometry(0.09, len, 6);
-      geo.translate(0, len / 2, 0);
-      const spike = part(geo, hairMat, 1.12);
-      spike.position.set(Math.sin(ry) * 0.2, 0.16 + dy, -0.26);
-      spike.rotation.set(-1.25, ry * 0.6, 0);
-      headG.add(spike);
-    }
+    // 머리 모양은 스타일이 정한다 (setLook). 기본은 뒤로 뻗친 3가닥.
+    headG.add(this.hairGroup);
+    this.headG = headG;
+    this.buildHair('spiky', '#2b2f4a');
     this.headPivot.add(headG);
     this.torsoPivot.add(this.headPivot);
     // 악세서리 부착점: 오른손
@@ -137,6 +134,73 @@ export class CharacterRig {
   }
 
   setShirt(color: string): void { this.shirtMat.color.set(color); }
+
+  /** 스타일 외형: 머리 모양·색, 몸통·머리 크기 */
+  setLook(look: StyleLook): void {
+    const key = `${look.hair}:${look.hairColor}:${look.torso}:${look.head}`;
+    if (key === this.lookKey) return;
+    this.lookKey = key;
+    this.buildHair(look.hair, look.hairColor);
+    this.torsoPivot.scale.set(look.torso, 1, look.torso);
+    // 몸통을 키우면 어깨·머리 위치는 몸통 좌표계라 같이 커진다 — 머리는 자기 배율로 되돌려 별도 값을 준다
+    this.headG.scale.setScalar(look.head / look.torso);
+    for (const sh of [this.rShoulder, this.lShoulder]) sh.scale.setScalar(1 / look.torso);
+  }
+
+  private buildHair(kind: HairKind, color: string): void {
+    this.hairGroup.clear();
+    const mat = lambert(color);
+    const add = (geo: THREE.BufferGeometry, x: number, y: number, z: number, rx = 0, ry = 0, rz = 0, outline = 1.1) => {
+      const m = part(geo, mat, outline);
+      m.position.set(x, y, z);
+      m.rotation.set(rx, ry, rz);
+      this.hairGroup.add(m);
+      return m;
+    };
+    switch (kind) {
+      case 'spiky':
+        // 뒤로 뻗친 3가닥 — 밑동을 머리 표면에 두고 뒤·위로 (추적 카메라가 뒤에서 보므로 실루엣의 핵심)
+        for (const [ry, dy, len] of [[0.5, 0.0, 0.34], [0, 0.08, 0.42], [-0.5, 0.0, 0.34]] as const) {
+          const geo = new THREE.ConeGeometry(0.09, len, 6);
+          geo.translate(0, len / 2, 0);
+          add(geo, Math.sin(ry) * 0.2, 0.16 + dy, -0.26, -1.25, ry * 0.6, 0, 1.12);
+        }
+        break;
+      case 'buzz':
+        // 짧게 민 머리: 윗면을 덮는 반구
+        add(new THREE.SphereGeometry(0.345, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.42), 0, 0, 0, 0, 0, 0, 1.03);
+        break;
+      case 'pony': {
+        for (const [ry, dy, len] of [[0.4, 0.0, 0.26], [-0.4, 0.0, 0.26]] as const) {
+          const geo = new THREE.ConeGeometry(0.08, len, 6);
+          geo.translate(0, len / 2, 0);
+          add(geo, Math.sin(ry) * 0.18, 0.18 + dy, -0.24, -1.1, ry * 0.6, 0, 1.12);
+        }
+        add(new THREE.SphereGeometry(0.34, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.4), 0, 0.01, 0, 0, 0, 0, 1.03);
+        const tail = new THREE.CylinderGeometry(0.05, 0.11, 0.62, 8);
+        tail.translate(0, -0.31, 0);
+        add(tail, 0, 0.12, -0.3, 0.55, 0, 0, 1.1);
+        const knot = new THREE.TorusGeometry(0.1, 0.035, 6, 12);
+        add(knot, 0, 0.12, -0.3, 0.55, 0, 0, 1.1);
+        break;
+      }
+      case 'flat': {
+        // 납작한 헬멧형 — 위를 덮는 낮은 반구 + 앞챙
+        add(new THREE.SphereGeometry(0.36, 18, 10, 0, Math.PI * 2, 0, Math.PI * 0.36), 0, 0.02, 0, 0, 0, 0, 1.03);
+        const brim = new THREE.BoxGeometry(0.34, 0.04, 0.18);
+        add(brim, 0, 0.13, 0.32, -0.15, 0, 0, 1.08);
+        break;
+      }
+      case 'mohawk': {
+        for (let i = 0; i < 5; i++) {
+          const fin = new THREE.BoxGeometry(0.07, 0.2 + (i === 2 ? 0.08 : 0), 0.13);
+          fin.translate(0, 0.1, 0);
+          add(fin, 0, 0.24 - Math.abs(i - 2) * 0.03, 0.2 - i * 0.11, -(i - 2) * 0.2, 0, 0, 1.1);
+        }
+        break;
+      }
+    }
+  }
 
   setAccessory(acc: AccessoryId): void {
     if (acc === this.acc && this.accGroup.children.length) return;

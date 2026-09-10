@@ -36,7 +36,7 @@ export class NetSource implements MatchSource {
     this.myId = start.myId;
     this.roster = start.roster;
     this.world = new World({ mapId: start.map, modeId: start.mode, seconds: start.seconds, seed: start.seed });
-    for (const r of start.roster) this.world.addPlayer(r.id, r.name, r.team, r.acc, r.bot);
+    for (const r of start.roster) this.world.addPlayer(r.id, r.name, r.team, r.acc, r.bot, r.style ?? 'fighter');
     this.offs.push(net.on('s', (m) => this.onSnap(m.snap, m.ack)));
     this.offs.push(net.on('ev', (m) => { for (const e of m.events) this.events.push(e); }));
     this.offs.push(net.on('end', (m) => { this.ended = { ranking: m.ranking, score: m.score }; }));

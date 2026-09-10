@@ -6,7 +6,7 @@ import { InputController } from './input.ts';
 import { SLOT_COLORS } from './rig.ts';
 import { targetPose } from './poses.ts';
 import { audio } from './audio.ts';
-import { botInput, newBotMemory, type BotMemory } from '@amp/shared';
+import { botInput, newBotMemory, STYLES, type BotMemory } from '@amp/shared';
 
 /** E2E·디버그용 창 훅: 월드 조회와 오토파일럿(봇 AI 가 내 캐릭터를 조종) */
 interface DebugHook { source: MatchSource; lastInput: Input | null; autopilot: boolean }
@@ -128,6 +128,7 @@ export class Match {
     let meView: RenderPlayer | null = null;
     for (const rp of players) {
       const rig = this.renderer.ensureRig(rp.id, SLOT_COLORS[rp.id % 8], rp.acc);
+      rig.setLook(STYLES[world.players[rp.id]?.style ?? 'fighter'].look);
       rig.root.position.set(rp.x, rp.y, rp.z);
       rig.root.rotation.y = rp.yaw;
       const attackLike = rp.state === 'attack' || rp.state === 'special' || rp.state === 'dashAttack' || rp.state === 'jumpAttack';

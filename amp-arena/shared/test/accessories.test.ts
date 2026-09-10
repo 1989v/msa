@@ -107,11 +107,11 @@ describe('악세서리', () => {
     run(w, inp(), inp(), 10);
     expect(a.pos.z - z0).toBeGreaterThan(1.2);
   });
-  it('부스터 기본 공격은 리치가 길어 2.2m 에서도 닿는다', () => {
-    const { w, b } = setup('rocket', 'none', 2.2);
+  it('부스터 기본 공격은 리치가 길어 2.5m 에서도 닿는다', () => {
+    const { w, b } = setup('rocket', 'none', 2.5);
     run(w, inp(0, 0, BTN_ATTACK), inp(), MOVES.rk1.startup + 2);
     expect(b.hp).toBe(b.maxHp - 6);
-    const s2 = setup('none', 'none', 2.2);
+    const s2 = setup('none', 'none', 2.5);
     run(s2.w, inp(0, 0, BTN_ATTACK), inp(), MOVES.jab.startup + 2);
     expect(s2.b.hp).toBe(s2.b.maxHp);
   });

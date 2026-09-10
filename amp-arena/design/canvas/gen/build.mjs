@@ -56,7 +56,7 @@ for (const r of rows) {
 const canvas = {
   artboards,
   annotations: [
-    { id: 'premise', x: 0, y: -260, w: 620, text: 'AMP ARENA 시안 v0.1 (2026-09-10)\n겟앰프드 계열 8인 실시간 3D 대전 액션을 웹으로.\n시스템·조작·흐름은 원작 계열 문법 그대로, 캐릭터·UI·이름·아트는 오리지널.\n기획서: amp-arena/docs/GDD.md · 이 캔버스는 design/canvas/gen 이 생성한다.' },
+    { id: 'premise', x: 0, y: -260, w: 620, text: 'AMP ARENA 시안 v0.1 (2026-09-10)\n8인 실시간 3D 아레나 대전 액션을 웹으로.\n방·악세서리·잡기·다운·링아웃이라는 고전 아레나 격투 문법, 캐릭터·UI·이름·아트는 오리지널.\n기획서: amp-arena/docs/GDD.md · 이 캔버스는 design/canvas/gen 이 생성한다.' },
     { id: 'row-screens', x: 700, y: -110, w: 420, text: '1행 · 화면 흐름 (1280×720)\n타이틀 → 로비 → 대기실 → 인게임 → 결과' },
     { id: 'row-sheets', x: 0, y: rowY[1] - 110, w: 420, text: '2행 · 캐릭터 · 악세서리 · 동작\n3D 리그와 애니메이션 키의 원본' },
     { id: 'row-systems', x: 0, y: rowY[2] - 110, w: 420, text: '3행 · 맵 · 조작/상태 머신 · 네트워크 · 로드맵\n구현 P1 이 그대로 따르는 규칙' },

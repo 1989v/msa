@@ -111,9 +111,9 @@ export class InputController {
     }
     const l = Math.hypot(x, y);
     if (l > 1) { x /= l; y /= l; }
-    // 카메라 기준: 앞 = (sin yaw, cos yaw), 오른쪽 = (cos yaw, -sin yaw)
+    // 카메라 기준: 앞 = (sin yaw, cos yaw). 오른쪽 = 앞 × 위 = (-cos yaw, sin yaw) — 오른손 좌표계라 +z 를 볼 때 화면 오른쪽은 -x 다
     const fx = Math.sin(camYaw), fz = Math.cos(camYaw);
-    const rx = Math.cos(camYaw), rz = -Math.sin(camYaw);
+    const rx = -Math.cos(camYaw), rz = Math.sin(camYaw);
     return { seq, mx: rx * x + fx * y, mz: rz * x + fz * y, btn };
   }
 }

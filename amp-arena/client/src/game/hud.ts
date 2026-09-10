@@ -1,5 +1,5 @@
 // HUD (DOM) — 시안 인게임 화면의 배치 그대로.
-import { ACCESSORIES, MODES, MOVES, COUNTDOWN_TICKS, TICK_RATE, type Player, type RankEntry, type RosterEntry, type ModeId } from '@amp/shared';
+import { ACCESSORIES, STYLES, MODES, COUNTDOWN_TICKS, TICK_RATE, type Player, type RankEntry, type RosterEntry, type ModeId } from '@amp/shared';
 import { icon, ACC_ICON } from '../ui/icons.ts';
 
 export interface PlateView { id: number; x: number; y: number; visible: boolean }
@@ -88,9 +88,11 @@ export class Hud {
       chip.className = 'chip team ' + (teams ? (me.team === 0 ? 'red' : 'blue') : '');
       chip.style.display = teams ? '' : 'none';
       const acc = ACCESSORIES[me.acc];
-      this.accLine.innerHTML = `${icon(ACC_ICON[me.acc], 18, 'var(--amp)')}<b>${acc.name}</b><span class="chip" style="font-size:11px">${MOVES[acc.special].id === 'uppercut' ? '어퍼컷' : acc.name + ' 기술'}</span>`;
+      const st = STYLES[me.style ?? 'fighter'];
+      const sk = skillName(me.acc, me.style ?? 'fighter');
+      this.accLine.innerHTML = `${icon(ACC_ICON[me.acc], 18, 'var(--amp)')}<b>${esc(st.name)}</b><span class="chip" style="font-size:11px">${esc(acc.id === 'none' ? '맨손' : acc.name)}</span><span class="chip" style="font-size:11px;color:var(--amp)">V ${esc(sk)}</span>`;
       (this.skill.querySelector('.icon') as HTMLElement).innerHTML = icon(ACC_ICON[me.acc], 30, 'var(--amp)', 2.2);
-      this.skillName.textContent = skillName(me.acc);
+      this.skillName.textContent = sk;
     }
     (this.timerT.parentElement!.querySelectorAll('.row') as NodeListOf<HTMLElement>).forEach((e) => { e.style.display = teams ? '' : 'none'; });
   }
@@ -105,7 +107,8 @@ export class Hud {
       this.hpText.textContent = `HP ${me.hp} / ${me.maxHp}`;
       this.guardBar.style.width = `${me.guard}%`;
       const acc = ACCESSORIES[me.acc];
-      const cdMax = Math.max(1, Math.round(acc.specialCooldownSec * TICK_RATE));
+      const cdSec = acc.id === 'none' ? STYLES[me.style ?? 'fighter'].specialCooldownSec : acc.specialCooldownSec;
+      const cdMax = Math.max(1, Math.round(cdSec * TICK_RATE));
       const ready = me.cooldown <= 0;
       this.skillRing.style.strokeDasharray = `${170 * (1 - Math.min(1, me.cooldown / cdMax))} 170`;
       this.skillRing.style.stroke = ready ? 'var(--green)' : 'var(--amp)';
@@ -240,6 +243,7 @@ export class Hud {
   dispose(): void { this.el.remove(); }
 }
 
-function skillName(acc: string): string {
-  return { none: '어퍼컷', greatsword: '내려찍기', spear: '돌진 찌르기', pistols: '백롤 난사', shield: '실드 차지', rocket: '로켓 펀치' }[acc] ?? '기술';
+function skillName(acc: string, style: string): string {
+  if (acc === 'none') return { fighter: '어퍼컷', grappler: '대시 잡기', speedster: '회전 발차기', heavy: '지진', martial: '비연각' }[style] ?? '기술';
+  return { greatsword: '내려찍기', spear: '돌진 찌르기', pistols: '백롤 난사', shield: '실드 차지', rocket: '로켓 펀치' }[acc] ?? '기술';
 }

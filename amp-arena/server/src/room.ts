@@ -1,13 +1,13 @@
 // 방: 슬롯 8 · 설정 · 준비/시작 · 매치 루프(60틱 고정) · 스냅샷 20Hz · 봇 채움.
 import {
-  World, botInput, newBotMemory, encodeSnapshot, ACCESSORIES, ACCESSORY_IDS, MODES, MAPS,
+  World, botInput, newBotMemory, encodeSnapshot, ACCESSORIES, ACCESSORY_IDS, STYLES, STYLE_IDS, MODES, MAPS,
   MAX_PLAYERS, DT, SNAPSHOT_EVERY, RESULT_TICKS, TICK_RATE,
-  type Input, type RoomState, type RoomSlot, type RoomSummary, type ServerMsg, type ClientMsg, type AccessoryId, type MapId, type ModeId, type BotMemory, type RosterEntry,
+  type Input, type RoomState, type RoomSlot, type RoomSummary, type ServerMsg, type ClientMsg, type AccessoryId, type StyleId, type MapId, type ModeId, type BotMemory, type RosterEntry,
 } from '@amp/shared';
 import type { Lobby } from './lobby.ts';
 import type { Session } from './session.ts';
 
-interface Slot { session: Session | null; name: string; team: number; acc: AccessoryId; ready: boolean; bot: boolean; mem: BotMemory | null }
+interface Slot { session: Session | null; name: string; team: number; acc: AccessoryId; style: StyleId; ready: boolean; bot: boolean; mem: BotMemory | null }
 
 const BOT_NAMES = ['봇-알파', '봇-브라보', '봇-찰리', '봇-델타', '봇-에코', '봇-폭스', '봇-골프', '봇-호텔'];
 type SettingsMsg = Extract<ClientMsg, { t: 'settings' }>;
@@ -47,7 +47,7 @@ export class Room {
   state(): RoomState {
     return {
       id: this.id, name: this.name, host: this.host.sid, mode: this.mode, map: this.map, seconds: this.seconds, locked: !!this.pass, fillBots: this.fillBots, phase: this.phase,
-      slots: this.slots.map((s): RoomSlot | null => (s ? { sid: s.session?.sid ?? '', name: s.name, team: s.team, acc: s.acc, ready: s.ready, bot: s.bot } : null)),
+      slots: this.slots.map((s): RoomSlot | null => (s ? { sid: s.session?.sid ?? '', name: s.name, team: s.team, acc: s.acc, style: s.style, ready: s.ready, bot: s.bot } : null)),
     };
   }
 
@@ -72,7 +72,7 @@ export class Room {
     let idx = this.slots.findIndex((s) => s === null);
     if (idx < 0) idx = this.slots.findIndex((s) => s?.bot);
     if (idx < 0) return session.send({ t: 'err', msg: '방이 가득 찼습니다' });
-    this.slots[idx] = { session, name: session.name, team: this.teamFor(), acc: 'none', ready: false, bot: false, mem: null };
+    this.slots[idx] = { session, name: session.name, team: this.teamFor(), acc: 'none', style: 'fighter', ready: false, bot: false, mem: null };
     session.room = this;
     session.slot = idx;
     if (this.phase !== 'wait') session.send({ t: 'chat', from: '시스템', text: '진행 중인 매치가 끝나면 다음 판에 참가합니다.', system: true });
@@ -115,6 +115,13 @@ export class Room {
     this.broadcastState();
   }
 
+  setStyle(session: Session, style: StyleId): void {
+    const s = this.slotOf(session);
+    if (!s || this.phase !== 'wait' || !(style in STYLES)) return;
+    s.style = style;
+    this.broadcastState();
+  }
+
   setTeam(session: Session, team: number): void {
     const s = this.slotOf(session);
     if (!s || this.phase !== 'wait') return;
@@ -143,7 +150,7 @@ export class Room {
       let n = 0;
       for (let i = 0; i < MAX_PLAYERS; i++) {
         if (this.slots[i]) continue;
-        this.slots[i] = { session: null, name: BOT_NAMES[i], team: this.teamFor(), acc: ACCESSORY_IDS[(i + n++) % ACCESSORY_IDS.length], ready: true, bot: true, mem: null };
+        this.slots[i] = { session: null, name: BOT_NAMES[i], team: this.teamFor(), acc: ACCESSORY_IDS[(i + n) % ACCESSORY_IDS.length], style: STYLE_IDS[(i * 2 + n++) % STYLE_IDS.length], ready: true, bot: true, mem: null };
       }
     }
     const count = this.slots.filter((s) => s).length;
@@ -158,11 +165,11 @@ export class Room {
     for (let i = 0; i < MAX_PLAYERS; i++) {
       const s = this.slots[i];
       if (!s) continue;
-      world.addPlayer(i, s.name, s.team, s.acc, s.bot);
+      world.addPlayer(i, s.name, s.team, s.acc, s.bot, s.style);
       if (s.bot) s.mem = newBotMemory(world.rng);
       this.queues[i] = [];
       this.lastSeq[i] = 0;
-      roster.push({ id: i, name: s.name, team: world.teams ? s.team : 0, acc: s.acc, bot: s.bot, sid: s.session?.sid ?? '' });
+      roster.push({ id: i, name: s.name, team: world.teams ? s.team : 0, acc: s.acc, style: s.style, bot: s.bot, sid: s.session?.sid ?? '' });
     }
     this.phase = 'countdown';
     for (let i = 0; i < MAX_PLAYERS; i++) {

@@ -57,6 +57,10 @@ export const POSES = {
   slamWind: P(-16, -10, [170, -20], [160, -20], [20, -30], [10, -20], 0.02),
   slam: P(40, 12, [60, -20], [50, -20], [60, -90], [50, -80], -0.16),
   roll: P(60, 30, [80, -60], [70, -60], [90, -120], [80, -110], 0.1),
+  kickHigh: P(-16, -4, [-50, 30], [50, 40], [130, -10], [-10, 0], 0.04),
+  hookWind: P(0, 2, [-30, 110], [30, 80], [20, -5], [-20, 0]),
+  hook: P(14, 6, [60, 80], [-20, 90], [30, -10], [-30, 0]),
+  flyKick: P(30, 6, [-60, 20], [-50, 20], [95, 0], [-30, -70], 0.12),
 } as const;
 
 export type PoseId = keyof typeof POSES;
@@ -71,6 +75,11 @@ export const MOVE_POSES: Record<MoveId, [PoseId, PoseId]> = {
   rk1: ['jabWind', 'jab'], rk2: ['straightWind', 'straight'], rk3: ['uppercutWind', 'uppercut'], rocketPunch: ['straightWind', 'straight'],
   gunShot: ['shoot', 'shoot'], gunRoll: ['roll', 'shoot'],
   itemThrow: ['throw', 'throw'],
+  hook: ['hookWind', 'hook'], bodySlam: ['slamWind', 'slam'], dashGrab: ['tackle', 'grab'],
+  quick1: ['jabWind', 'jab'], quick2: ['straightWind', 'straight'], quick3: ['jabWind', 'jab'], quick4: ['roundWind', 'roundhouse'],
+  spinKick: ['roundWind', 'kickHigh'],
+  heavy1: ['swingWind', 'swing'], heavy2: ['swing2Wind', 'swing2'], quake: ['slamWind', 'slam'],
+  kick1: ['roundWind', 'roundhouse'], kick2: ['roundWind', 'kickHigh'], kick3: ['roundWind', 'roundhouse'], flyingKick: ['flyKick', 'flyKick'],
 };
 
 export function lerpPose(a: Pose, b: Pose, t: number): Pose {
@@ -116,6 +125,7 @@ export function targetPose(state: PState, t: number, move: MoveId | null, speed:
       const [windId, strikeId] = MOVE_POSES[move ?? 'jab'];
       const wind = POSES[windId], strike = POSES[strikeId];
       if (m.activeUntilLand) return strike;
+      if (move === 'spinKick' && t >= m.startup && t < m.startup + m.active) return { ...strike, spin: 0, lean: strike.lean, lift: 0.05 };
       if (t < m.startup) {
         const half = Math.max(1, m.startup * 0.55);
         return t < half ? lerpPose(POSES.idle, wind, t / half) : lerpPose(wind, strike, (t - half) / Math.max(1, m.startup - half));

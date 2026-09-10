@@ -3,6 +3,7 @@ export * from './math.ts';
 export * from './input.ts';
 export * from './moves.ts';
 export * from './accessories.ts';
+export * from './styles.ts';
 export * from './maps.ts';
 export * from './modes.ts';
 export * from './items.ts';

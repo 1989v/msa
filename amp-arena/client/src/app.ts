@@ -1,12 +1,11 @@
 // 화면 흐름: 타이틀 → (연습 매치) | (로비 → 대기실 → 온라인 매치 → 결과 → 대기실)
-import { ACCESSORIES, ACCESSORY_IDS, MODES, MODE_IDS, MAPS, type RoomState, type RoomSummary, type AccessoryId, type MapId, type ModeId, type ServerMsg } from '@amp/shared';
+import { ACCESSORIES, ACCESSORY_IDS, STYLES, STYLE_IDS, MODES, MODE_IDS, MAPS, MAP_IDS, type RoomState, type RoomSummary, type AccessoryId, type StyleId, type MapId, type ModeId, type ServerMsg } from '@amp/shared';
 import { NetClient } from './net/client.ts';
 import { NetSource } from './net/netsource.ts';
 import { LocalSource } from './local/localsource.ts';
 import { Match } from './game/match.ts';
 import { icon, boltLogo, ACC_ICON } from './ui/icons.ts';
 
-const MAP_IDS: MapId[] = ['colosseum', 'skydock'];
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const ACC_DESC: Record<AccessoryId, string> = {
   none: '잽 · 스트레이트 · 돌려차기 3단. 기술 V: 어퍼컷(띄움). 잡기 가능.',
@@ -36,6 +35,7 @@ export class App {
   private root: HTMLElement;
   private nick: string;
   private acc: AccessoryId = 'none';
+  private style: StyleId = 'fighter';
   private net: NetClient | null = null;
   private sid = '';
   private match: Match | null = null;
@@ -53,6 +53,8 @@ export class App {
     this.nick = localStorage.getItem('amp.nick') ?? '';
     this.acc = (localStorage.getItem('amp.acc') as AccessoryId) ?? 'none';
     if (!(this.acc in ACCESSORIES)) this.acc = 'none';
+    this.style = (localStorage.getItem('amp.style') as StyleId) ?? 'fighter';
+    if (!(this.style in STYLES)) this.style = 'fighter';
     this.showTitle();
   }
 
@@ -86,6 +88,9 @@ export class App {
         <div class="panel title-form col">
           <span class="label">닉네임</span>
           <input class="field nick" maxlength="10" placeholder="2~10자, 이 세션에서만 사용" value="${esc(this.nick)}">
+          <span class="label">스타일</span>
+          <div class="styles"></div>
+          <div class="style-desc muted" style="font-size:12px;min-height:34px"></div>
           <span class="label">악세서리</span>
           <div class="accs"></div>
           <div class="acc-desc muted" style="font-size:12px;min-height:34px"></div>
@@ -105,6 +110,7 @@ export class App {
       <span class="chip version">P1 · 2026-09</span>
       <div class="hints"><span class="row" style="gap:6px">${icon('keyboard', 20, 'var(--muted)')}키보드</span><span class="row" style="gap:6px">${icon('gamepad', 20, 'var(--muted)')}게임패드</span><span>우클릭 드래그 카메라</span></div>`);
     this.renderAccPicker(el.querySelector('.accs') as HTMLElement, el.querySelector('.acc-desc') as HTMLElement, (a) => { this.acc = a; localStorage.setItem('amp.acc', a); });
+    this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (st) => { this.style = st; localStorage.setItem('amp.style', st); });
     const nickEl = el.querySelector('.nick') as HTMLInputElement;
     const readNick = () => { const n = nickEl.value.trim(); if (n.length < 2) { this.toast('닉네임은 2자 이상'); nickEl.focus(); return null; } this.nick = n; localStorage.setItem('amp.nick', n); return n; };
     (el.querySelector('.practice') as HTMLButtonElement).onclick = () => {
@@ -129,8 +135,17 @@ export class App {
     draw();
   }
 
+  private renderStylePicker(container: HTMLElement, desc: HTMLElement, onPick: (s: StyleId) => void, enabled = true): void {
+    const draw = () => {
+      container.innerHTML = STYLE_IDS.map((st) => `<button class="acc stylebtn ${st === this.style ? 'on' : ''}" data-style="${st}" ${enabled ? '' : 'disabled'}><span class="swatch" style="background:${STYLES[st].look.hairColor}"></span><span>${STYLES[st].name}</span></button>`).join('');
+      desc.textContent = STYLES[this.style].desc;
+      container.querySelectorAll<HTMLButtonElement>('.stylebtn').forEach((b) => { b.onclick = () => { this.style = b.dataset.style as StyleId; onPick(this.style); draw(); }; });
+    };
+    draw();
+  }
+
   private startPractice(o: { mapId: MapId; modeId: ModeId; bots: number; seconds: number }): void {
-    const src = new LocalSource({ name: this.nick, acc: this.acc, mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, bots: o.bots });
+    const src = new LocalSource({ name: this.nick, acc: this.acc, style: this.style, mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, bots: o.bots });
     this.runMatch(src, { onExit: () => this.showTitle(), onAgain: () => this.startPractice(o) });
   }
 
@@ -287,7 +302,7 @@ export class App {
         ${s.sid === room.host ? `<span class="crown">${icon('crown', 18, 'var(--amp)', 2.4)}</span>` : ''}
         ${avatar(SLOT_COLORS[i], 84)}
         <div style="font-size:14px;font-weight:800;${me ? 'color:var(--amp)' : ''}">${esc(s.name)}</div>
-        <div class="row" style="gap:6px">${status}<span class="chip" style="font-size:11px">${ACCESSORIES[s.acc].name}</span></div>
+        <div class="row" style="gap:6px">${status}<span class="chip" style="font-size:11px">${STYLES[s.style ?? 'fighter'].name} · ${ACCESSORIES[s.acc].name}</span></div>
       </div>`;
     }).join('');
     const sel = (cls: string, opts: [string, string][], cur: string) => `<select class="field ${cls}" ${isHost ? '' : 'disabled'}>${opts.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
@@ -309,9 +324,11 @@ export class App {
               <div class="kv"><span class="muted">비밀번호</span><b>${room.locked ? '있음' : '없음'}</b></div>
             </div>
             <div class="panel col">
-              <div class="row" style="justify-content:space-between"><span class="label">악세서리</span><span class="chip" style="font-size:11px">매치 중 교체 불가</span></div>
+              <div class="row" style="justify-content:space-between"><span class="label">스타일 · 악세서리</span><span class="chip" style="font-size:11px">매치 중 교체 불가</span></div>
+              <div class="styles"></div>
+              <div class="style-desc muted" style="font-size:12px;min-height:30px"></div>
               <div class="accs"></div>
-              <div class="acc-desc muted" style="font-size:12px;min-height:34px"></div>
+              <div class="acc-desc muted" style="font-size:12px;min-height:30px"></div>
             </div>
           </div>
         </div>
@@ -325,6 +342,8 @@ export class App {
       </div>`);
     this.renderAccPicker(el.querySelector('.accs') as HTMLElement, el.querySelector('.acc-desc') as HTMLElement, (a) => { localStorage.setItem('amp.acc', a); this.net?.send({ t: 'acc', acc: a }); }, room.phase === 'wait');
     if (mySlot && mySlot.acc !== this.acc && room.phase === 'wait') this.net?.send({ t: 'acc', acc: this.acc });
+    this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (st) => { localStorage.setItem('amp.style', st); this.net?.send({ t: 'style', style: st }); }, room.phase === 'wait');
+    if (mySlot && mySlot.style !== this.style && room.phase === 'wait') this.net?.send({ t: 'style', style: this.style });
     (el.querySelector('.leave') as HTMLButtonElement).onclick = () => this.net?.send({ t: 'leave' });
     (el.querySelector('.team') as HTMLButtonElement).onclick = () => { if (mySlot) this.net?.send({ t: 'team', team: mySlot.team === 0 ? 1 : 0 }); };
     const start = el.querySelector('.start') as HTMLButtonElement | null;

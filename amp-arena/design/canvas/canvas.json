@@ -111,7 +111,7 @@
       "x": 0,
       "y": -260,
       "w": 620,
-      "text": "AMP ARENA 시안 v0.1 (2026-09-10)\n겟앰프드 계열 8인 실시간 3D 대전 액션을 웹으로.\n시스템·조작·흐름은 원작 계열 문법 그대로, 캐릭터·UI·이름·아트는 오리지널.\n기획서: amp-arena/docs/GDD.md · 이 캔버스는 design/canvas/gen 이 생성한다."
+      "text": "AMP ARENA 시안 v0.1 (2026-09-10)\n8인 실시간 3D 아레나 대전 액션을 웹으로.\n방·악세서리·잡기·다운·링아웃이라는 고전 아레나 격투 문법, 캐릭터·UI·이름·아트는 오리지널.\n기획서: amp-arena/docs/GDD.md · 이 캔버스는 design/canvas/gen 이 생성한다."
     },
     {
       "id": "row-screens",

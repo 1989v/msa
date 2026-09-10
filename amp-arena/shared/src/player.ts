@@ -2,8 +2,9 @@
 import * as C from './constants.ts';
 import { type Vec3, v3, yawFromDir, dirX, dirZ, clamp, wrapAngle } from './math.ts';
 import { type Input, BTN_ATTACK, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP, pressed, held } from './input.ts';
-import { MOVES, type MoveId, totalTicks, chainTick, PROJECTILE_MOVES } from './moves.ts';
+import { MOVES, type MoveId, totalTicks, chainTick, isActiveAt, PROJECTILE_MOVES, GRAB_MOVES } from './moves.ts';
 import { ACCESSORIES, type AccessoryId } from './accessories.ts';
+import { STYLES, type StyleId, statsForStyle } from './styles.ts';
 import type { MapDef } from './maps.ts';
 
 export type PState =
@@ -25,6 +26,7 @@ export interface Player {
   name: string;
   team: number;          // 0 레드/무팀, 1 블루
   acc: AccessoryId;
+  style: StyleId;
   bot: boolean;
   stats: Stats;
 
@@ -75,11 +77,11 @@ export interface Player {
   lastInput: Input;
 }
 
-export function createPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean, lives: number, stats = defaultStats()): Player {
+export function createPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean, lives: number, style: StyleId = 'fighter', stats = statsForStyle(style)): Player {
   const maxHp = C.hpFromStat(stats.hp);
   const a = ACCESSORIES[acc];
   return {
-    id, name, team, acc, bot, stats,
+    id, name, team, acc, style, bot, stats,
     pos: v3(), vel: v3(), yaw: 0, state: 'idle', t: 0, move: null, comboIdx: 0, comboQueued: false, hitMask: 0, juggled: false, shotFired: false,
     hp: maxHp, maxHp, guard: C.GUARD_MAX, grounded: true, airDashes: 0, landTicks: C.LAND_TICKS, invuln: 0, hitstunLeft: 0,
     grabbing: -1, grabbedBy: -1, grabTarget: -1, mash: 0, throwX: 0, throwZ: 1, wallBonus: false, holding: -1,
@@ -149,8 +151,8 @@ function aimAssist(ctx: SimContext, p: Player, reach: number): void {
 
 function findGrabTarget(ctx: SimContext, p: Player): Player | null {
   const fx = facingX(p), fz = facingZ(p);
-  // 중심 거리 1.0m 이내 = 몸이 거의 닿은 상태 (반지름 0.4 씩)
-  let best: Player | null = null, bestD = C.GRAB_RANGE;
+  // 중심 거리 1.0m(스타일별) 이내 = 몸이 거의 닿은 상태 (반지름 0.4 씩)
+  let best: Player | null = null, bestD = STYLES[p.style].grabRange;
   for (const q of ctx.players) {
     if (!q || q === p || !q.alive || !isGrabbable(q) || q.invuln > 0 || (ctx.teams && q.team === p.team)) continue;
     if (Math.abs(q.pos.y - p.pos.y) > 0.6) continue;
@@ -163,7 +165,21 @@ function findGrabTarget(ctx: SimContext, p: Player): Player | null {
   return best;
 }
 
-function groundMove(p: Player, mx: number, mz: number, moving: boolean, speed: number): void {
+function groundMove(ctx: SimContext, p: Player, mx: number, mz: number, moving: boolean, speed: number): void {
+  if (ctx.map.ice) {
+    // 얼음: 목표 속도로 천천히 붙고, 손을 떼도 천천히 선다
+    if (moving) {
+      p.vel.x += (mx * speed - p.vel.x) * C.ICE_ACCEL;
+      p.vel.z += (mz * speed - p.vel.z) * C.ICE_ACCEL;
+      p.yaw = yawFromDir(mx, mz);
+    } else {
+      p.vel.x *= C.ICE_FRICTION;
+      p.vel.z *= C.ICE_FRICTION;
+      if (Math.abs(p.vel.x) < 0.02) p.vel.x = 0;
+      if (Math.abs(p.vel.z) < 0.02) p.vel.z = 0;
+    }
+    return;
+  }
   if (moving) {
     p.vel.x = mx * speed;
     p.vel.z = mz * speed;
@@ -196,7 +212,14 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
   const guardHeld = held(btn, BTN_GUARD);
   const dash = held(btn, BTN_DASH);
   const acc = ACCESSORIES[p.acc];
-  const spd = C.speedMult(p.stats.spd) * acc.speedMult;
+  const style = STYLES[p.style];
+  const spd = C.speedMult(p.stats.spd) * acc.speedMult * style.speedMult;
+  // 맨손이면 스타일의 공격·기술, 악세서리를 들면 악세서리 것
+  const bare = acc.id === 'none';
+  const combo = bare ? style.combo : acc.combo;
+  const specialMove = bare ? style.special : acc.special;
+  const specialCd = bare ? style.specialCooldownSec : acc.specialCooldownSec;
+  const airDashMax = Math.max(acc.airDashes, style.airDashes);
 
   // 타이머
   if (p.invuln > 0) p.invuln--;
@@ -225,7 +248,7 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
           setState(p, 'jump');
           break;
         }
-        groundMove(p, mx, mz, moving, C.WALK_SPEED * spd);
+        groundMove(ctx, p, mx, mz, moving, C.WALK_SPEED * spd);
         const nextH: PState = !moving ? 'idle' : 'walk';
         if (p.state !== nextH) setState(p, nextH);
         break;
@@ -241,25 +264,32 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
         if (g) { p.grabTarget = g.id; startMove(ctx, p, 'grab', 'grabTry', mx, mz, false); p.yaw = yawFromDir(g.pos.x - p.pos.x, g.pos.z - p.pos.z); break; }
         if (p.state === 'run' && p.acc !== 'pistols') { startMove(ctx, p, 'tackle', 'dashAttack', mx, mz, moving); break; }
         p.comboIdx = 0;
-        startMove(ctx, p, acc.combo[0], 'attack', mx, mz, moving);
+        startMove(ctx, p, combo[0], 'attack', mx, mz, moving);
         break;
       }
       if (special && p.cooldown <= 0) {
-        p.cooldown = Math.round(acc.specialCooldownSec * C.TICK_RATE * C.cooldownMult(p.stats.tec));
-        startMove(ctx, p, acc.special, 'special', mx, mz, moving);
-        if (acc.special === 'gsSlam') { p.vel.y = 6.5; p.grounded = false; }
+        p.cooldown = Math.round(specialCd * C.TICK_RATE * C.cooldownMult(p.stats.tec));
+        if (GRAB_MOVES[specialMove]) {
+          // 대시 잡기: 돌진하며 닿는 상대를 잡는다
+          p.grabTarget = -1;
+          startMove(ctx, p, specialMove, 'grabTry', mx, mz, moving);
+          break;
+        }
+        startMove(ctx, p, specialMove, 'special', mx, mz, moving);
+        if (specialMove === 'gsSlam' || specialMove === 'quake') { p.vel.y = 6.5; p.grounded = false; }
+        if (specialMove === 'flyingKick') { p.vel.y = 4.5; p.grounded = false; }
         break;
       }
       if (jump && p.grounded) {
         p.vel.y = C.jumpSpeed(p.stats.jmp);
         p.grounded = false;
-        p.airDashes = acc.airDashes;
+        p.airDashes = airDashMax;
         if (moving) { p.vel.x = mx * (dash ? C.RUN_SPEED : C.WALK_SPEED) * spd; p.vel.z = mz * (dash ? C.RUN_SPEED : C.WALK_SPEED) * spd; p.yaw = yawFromDir(mx, mz); }
         setState(p, 'jump');
         break;
       }
       const speed = (dash && moving ? C.RUN_SPEED : C.WALK_SPEED) * spd;
-      groundMove(p, mx, mz, moving, speed);
+      groundMove(ctx, p, mx, mz, moving, speed);
       const next: PState = !moving ? 'idle' : dash ? 'run' : 'walk';
       if (p.state !== next) setState(p, next);
       break;
@@ -272,7 +302,7 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
         if (p.vel.y > -3) p.vel.y = -3;
         break;
       }
-      if (special && p.airDashes > 0 && acc.airDashes > 0) {
+      if (special && p.airDashes > 0 && airDashMax > 0) {
         p.airDashes--;
         if (moving) p.yaw = yawFromDir(mx, mz);
         p.vel.x = facingX(p) * 11; p.vel.z = facingZ(p) * 11; p.vel.y = Math.max(p.vel.y, 1);
@@ -302,7 +332,7 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
       }
       if (p.state === 'attack') {
         if (atk && p.t >= m.startup) p.comboQueued = true;
-        const chain = acc.combo;
+        const chain = combo;
         if (p.comboQueued && p.comboIdx < chain.length - 1 && p.t >= chainTick(m) && p.grounded) {
           if (acc.ranged && p.ammo === 0) { setState(p, 'idle'); break; }
           p.comboIdx++;
@@ -330,17 +360,23 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
       break;
     }
     case 'grabTry': {
-      stopXZ(p);
-      const m = MOVES.grab;
-      if (p.t === m.startup) {
-        const q = ctx.players[p.grabTarget];
-        const q2 = q && q.alive && isGrabbable(q) && q.invuln <= 0 ? q : null;
-        if (q2 && Math.hypot(q2.pos.x - p.pos.x, q2.pos.z - p.pos.z) <= C.GRAB_RANGE + 0.3) {
+      const m = MOVES[p.move ?? 'grab'];
+      // 대시 잡기는 지속 동안 전진한다
+      if (m.moveSpeed !== 0 && p.t <= m.startup + m.active) { p.vel.x = facingX(p) * m.moveSpeed; p.vel.z = facingZ(p) * m.moveSpeed; }
+      else stopXZ(p);
+      if (isActiveAt(m, p.t)) {
+        const pre = ctx.players[p.grabTarget];
+        let q2 = pre && pre.alive && isGrabbable(pre) && pre.invuln <= 0 ? pre : null;
+        if (!q2) q2 = findGrabTarget(ctx, p);
+        if (q2 && Math.hypot(q2.pos.x - p.pos.x, q2.pos.z - p.pos.z) <= style.grabRange + 0.3) {
           p.grabbing = q2.id;
+          stopXZ(p);
           setState(p, 'grabbing');
+          p.move = null;
           q2.grabbedBy = p.id;
           q2.mash = 0;
           q2.vel.x = q2.vel.y = q2.vel.z = 0;
+          if (q2.holding >= 0) ctx.dropHeld(q2);
           setState(q2, 'held');
           q2.yaw = wrapAngle(p.yaw + Math.PI);
           break;
@@ -376,7 +412,7 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
         q.pos.x = p.pos.x + p.throwX * 0.9; q.pos.z = p.pos.z + p.throwZ * 0.9; q.pos.y = p.pos.y;
         q.vel.x = p.throwX * C.THROW_VEL_H; q.vel.z = p.throwZ * C.THROW_VEL_H; q.vel.y = C.THROW_VEL_V;
         q.grounded = false; q.wallBonus = true; q.juggled = true;
-        applyDamage(ctx, q, p, C.THROW_DAMAGE);
+        applyDamage(ctx, q, p, style.throwDamage);
         setState(q, 'thrown');
       }
       if (p.t >= C.THROW_RELEASE_TICK + C.THROW_RECOVERY) { setState(p, 'idle'); p.move = null; }

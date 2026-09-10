@@ -80,6 +80,56 @@ function groundTexture(): THREE.CanvasTexture {
   }, 1024);
 }
 
+function iceTexture(): THREE.CanvasTexture {
+  return makeTexture((ctx, s) => {
+    const grad = ctx.createRadialGradient(s / 2, s / 2, s * 0.1, s / 2, s / 2, s * 0.5);
+    grad.addColorStop(0, '#dff2ff'); grad.addColorStop(1, '#a9d4ea');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, s, s);
+    let seed = 5;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 2;
+    for (let i = 0; i < 26; i++) {
+      let x = rnd() * s, y = rnd() * s;
+      ctx.beginPath(); ctx.moveTo(x, y);
+      for (let k = 0; k < 5; k++) { x += (rnd() - 0.5) * s * 0.18; y += (rnd() - 0.5) * s * 0.18; ctx.lineTo(x, y); }
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(60,110,150,0.25)'; ctx.lineWidth = 3;
+    const c = s / 2;
+    for (const r of [5, 10, 15]) { ctx.beginPath(); ctx.arc(c, c, (r / 18) * c, 0, Math.PI * 2); ctx.stroke(); }
+  }, 1024);
+}
+
+function concreteTexture(): THREE.CanvasTexture {
+  return makeTexture((ctx, s) => {
+    ctx.fillStyle = '#6f7484'; ctx.fillRect(0, 0, s, s);
+    let seed = 3;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    for (let i = 0; i < 1400; i++) ctx.fillRect(rnd() * s, rnd() * s, 3, 3);
+    ctx.strokeStyle = 'rgba(20,24,40,0.35)'; ctx.lineWidth = 3;
+    for (let i = 0; i <= 6; i++) { const p = (i / 6) * s; ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, s); ctx.moveTo(0, p); ctx.lineTo(s, p); ctx.stroke(); }
+    // 헬리패드 H
+    ctx.strokeStyle = 'rgba(255,214,110,0.8)'; ctx.lineWidth = 10;
+    ctx.beginPath(); ctx.arc(s / 2, s / 2, s * 0.17, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 14; ctx.beginPath();
+    ctx.moveTo(s * 0.44, s * 0.4); ctx.lineTo(s * 0.44, s * 0.6); ctx.moveTo(s * 0.56, s * 0.4); ctx.lineTo(s * 0.56, s * 0.6); ctx.moveTo(s * 0.44, s * 0.5); ctx.lineTo(s * 0.56, s * 0.5);
+    ctx.stroke();
+  }, 1024);
+}
+
+function windowsTexture(): THREE.CanvasTexture {
+  return makeTexture((ctx, s) => {
+    ctx.fillStyle = '#1a2242'; ctx.fillRect(0, 0, s, s);
+    let seed = 17;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    for (let y = 6; y < s; y += 14) for (let x = 6; x < s; x += 12) {
+      ctx.fillStyle = rnd() < 0.35 ? 'rgba(255,214,110,0.9)' : 'rgba(40,52,96,0.9)';
+      ctx.fillRect(x, y, 7, 9);
+    }
+  }, 256);
+}
+
 function platformTexture(): THREE.CanvasTexture {
   return makeTexture((ctx, s) => {
     ctx.fillStyle = '#a7b8c9'; ctx.fillRect(0, 0, s, s);
@@ -150,11 +200,49 @@ export class Renderer {
     this.map = map;
     this.mapGroup.clear();
     const g = this.mapGroup;
+    const theme = map.theme;
+    // 하늘·안개는 테마별
+    const sky = theme === 'ice' ? 0x223a66 : theme === 'rooftop' ? 0x0b1026 : 0x0f1631;
+    this.scene.background = new THREE.Color(sky);
+    this.scene.fog = new THREE.Fog(sky, theme === 'ice' ? 30 : 45, theme === 'ice' ? 90 : 110);
+
     if (map.groundRadius > 0) {
-      const ground = new THREE.Mesh(new THREE.CircleGeometry(map.groundRadius, 72), new THREE.MeshLambertMaterial({ map: groundTexture() }));
+      const tex = theme === 'ice' ? iceTexture() : groundTexture();
+      const ground = new THREE.Mesh(new THREE.CircleGeometry(map.groundRadius, 72), new THREE.MeshLambertMaterial({ map: tex }));
       ground.rotation.x = -Math.PI / 2;
       ground.receiveShadow = true;
       g.add(ground);
+      if (theme === 'ice') {
+        // 물: 얼음판 밖은 어두운 호수, 가장자리에 얇은 얼음 테두리
+        const water = new THREE.Mesh(new THREE.CircleGeometry(90, 64), new THREE.MeshLambertMaterial({ color: 0x14305a }));
+        water.rotation.x = -Math.PI / 2; water.position.y = -1.4;
+        g.add(water);
+        const rim = new THREE.Mesh(new THREE.CylinderGeometry(map.groundRadius + 0.1, map.groundRadius - 0.3, 1.4, 72, 1, true), new THREE.MeshLambertMaterial({ color: 0xa9d4ea, side: THREE.DoubleSide }));
+        rim.position.y = -0.7;
+        g.add(rim);
+        for (let i = 0; i < 24; i++) {
+          const a = (i / 24) * Math.PI * 2, r = 30 + (i % 3) * 12;
+          const pine = new THREE.Mesh(new THREE.ConeGeometry(1.4 + (i % 2), 5 + (i % 4), 6), new THREE.MeshLambertMaterial({ color: 0x1e3d4a }));
+          pine.position.set(Math.cos(a) * r, 1.2, Math.sin(a) * r);
+          g.add(pine);
+        }
+      }
+    } else if (theme === 'rooftop') {
+      // 도시: 아래는 어둠, 멀리 건물 실루엣
+      const abyss = new THREE.Mesh(new THREE.CircleGeometry(120, 48), new THREE.MeshBasicMaterial({ color: 0x070a18 }));
+      abyss.rotation.x = -Math.PI / 2; abyss.position.y = -22;
+      g.add(abyss);
+      const winTex = windowsTexture();
+      let seed = 11;
+      const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+      for (let i = 0; i < 26; i++) {
+        const a = rnd() * Math.PI * 2, r = 42 + rnd() * 50;
+        const w = 8 + rnd() * 10, h = 12 + rnd() * 30, d = 8 + rnd() * 10;
+        const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), new THREE.MeshLambertMaterial({ map: winTex, color: 0x9aa4c8 }));
+        b.position.set(Math.cos(a) * r, h / 2 - 22, Math.sin(a) * r);
+        b.rotation.y = rnd() * Math.PI;
+        g.add(b);
+      }
     } else {
       // 발판 맵: 아래에 어두운 바닥판으로 깊이감
       const abyss = new THREE.Mesh(new THREE.CircleGeometry(80, 48), new THREE.MeshBasicMaterial({ color: 0x0a0e20 }));
@@ -191,26 +279,49 @@ export class Renderer {
         g.add(row);
       }
     }
-    const pillarMat = new THREE.MeshLambertMaterial({ color: 0xb3aa9c }), capMat = new THREE.MeshLambertMaterial({ color: 0xcfc6b6 });
-    for (const c of map.cylinders) {
-      const m = new THREE.Mesh(new THREE.CylinderGeometry(c.r, c.r, c.h, 20), pillarMat);
-      m.position.set(c.x, c.h / 2, c.z); m.castShadow = true; m.receiveShadow = true;
-      g.add(m);
-      for (const y of [0.25, c.h - 0.25]) {
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(c.r * 1.3, c.r * 1.3, 0.5, 20), capMat);
-        cap.position.set(c.x, y, c.z); cap.castShadow = true;
-        g.add(cap);
+    if (theme === 'ice') {
+      // 바위: 눈 덮인 다면체
+      for (const c of map.cylinders) {
+        const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(c.r * 1.15, 0), new THREE.MeshLambertMaterial({ color: 0x6b7280, flatShading: true }));
+        rock.position.set(c.x, c.h * 0.45, c.z); rock.scale.set(1, c.h / (c.r * 1.15) * 0.55, 1); rock.castShadow = true; rock.receiveShadow = true;
+        g.add(rock);
+        const snow = new THREE.Mesh(new THREE.SphereGeometry(c.r * 0.95, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.45), new THREE.MeshLambertMaterial({ color: 0xeef5ff }));
+        snow.position.set(c.x, c.h - 0.15, c.z);
+        g.add(snow);
+      }
+    } else {
+      const pillarMat = new THREE.MeshLambertMaterial({ color: 0xb3aa9c }), capMat = new THREE.MeshLambertMaterial({ color: 0xcfc6b6 });
+      for (const c of map.cylinders) {
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(c.r, c.r, c.h, 20), pillarMat);
+        m.position.set(c.x, c.h / 2, c.z); m.castShadow = true; m.receiveShadow = true;
+        g.add(m);
+        for (const y of [0.25, c.h - 0.25]) {
+          const cap = new THREE.Mesh(new THREE.CylinderGeometry(c.r * 1.3, c.r * 1.3, 0.5, 20), capMat);
+          cap.position.set(c.x, y, c.z); cap.castShadow = true;
+          g.add(cap);
+        }
       }
     }
-    const platTex = platformTexture();
+    const platTex = theme === 'rooftop' ? concreteTexture() : platformTexture();
     for (const b of map.boxes) {
       const w = b.maxX - b.minX, h = b.maxY - b.minY, d = b.maxZ - b.minZ;
+      const big = w * d > 100;
       const topMat = new THREE.MeshLambertMaterial({ map: platTex });
-      const sideMat = new THREE.MeshLambertMaterial({ color: map.groundRadius > 0 ? 0x9c9384 : 0x5a6a8a });
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [sideMat, sideMat, map.groundRadius > 0 ? new THREE.MeshLambertMaterial({ color: 0xc9bfae }) : topMat, sideMat, sideMat, sideMat]);
+      const sideColor = theme === 'rooftop' ? (big ? 0x4a4f63 : 0x8a919f) : map.groundRadius > 0 ? 0x9c9384 : 0x5a6a8a;
+      const sideMat = new THREE.MeshLambertMaterial({ color: sideColor });
+      const top = theme === 'rooftop' ? (big ? topMat : new THREE.MeshLambertMaterial({ color: 0xa4abb8 })) : map.groundRadius > 0 ? new THREE.MeshLambertMaterial({ color: 0xc9bfae }) : topMat;
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), [sideMat, sideMat, top, sideMat, sideMat, sideMat]);
       m.position.set((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2, (b.minZ + b.maxZ) / 2);
       m.castShadow = true; m.receiveShadow = true;
       g.add(m);
+      if (theme === 'rooftop' && big) {
+        // 지붕 가장자리 표시선 (시뮬에는 없음 — 낙사 경계를 눈으로 알리는 용도)
+        const edge = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.12, d + 0.3), new THREE.MeshLambertMaterial({ color: 0xffb020 }));
+        edge.position.set((b.minX + b.maxX) / 2, b.maxY + 0.02, (b.minZ + b.maxZ) / 2);
+        const inner = new THREE.Mesh(new THREE.BoxGeometry(w - 0.5, 0.16, d - 0.5), new THREE.MeshLambertMaterial({ color: 0x5b6070 }));
+        inner.position.copy(edge.position); inner.position.y += 0.01;
+        g.add(edge); g.add(inner);
+      }
     }
   }
 

@@ -4,6 +4,7 @@ import { type Player, isActionable } from './player.ts';
 import type { World } from './world.ts';
 import { MOVES } from './moves.ts';
 import { ACCESSORIES } from './accessories.ts';
+import { STYLES } from './styles.ts';
 import { supportHeight } from './player.ts';
 
 export interface BotMemory {
@@ -55,7 +56,8 @@ export function botInput(w: World, p: Player, mem: BotMemory): Input {
   const d = Math.hypot(dx, dz);
   const nx = d > 1e-6 ? dx / d : 0, nz = d > 1e-6 ? dz / d : 1;
   const acc = ACCESSORIES[p.acc];
-  const reach = acc.ranged ? 9 : MOVES[acc.combo[0]].reach + 0.3;
+  const combo = acc.id === 'none' ? STYLES[p.style].combo : acc.combo;
+  const reach = acc.ranged ? 9 : MOVES[combo[0]].reach + 0.3;
 
   if (tick >= mem.strafeUntil) { mem.strafeDir = rng() < 0.5 ? -1 : 1; mem.strafeUntil = tick + 40 + Math.floor(rng() * 80); }
 
@@ -89,7 +91,7 @@ export function botInput(w: World, p: Player, mem: BotMemory): Input {
     if (target.pos.y > p.pos.y + 0.6 && p.grounded && rng() < 0.08) out.btn |= BTN_JUMP;
     if (rng() < 0.004 && p.grounded) out.btn |= BTN_JUMP;
     // 낭떠러지 회피: 다음 위치에 지지면이 없으면 멈춘다
-    if (w.map.groundRadius === 0) {
+    if (w.map.wallRadius === 0) {
       const probe = { ...p, pos: { x: p.pos.x + out.mx * 0.9, y: p.pos.y, z: p.pos.z + out.mz * 0.9 } } as Player;
       if (supportHeight(w.map, probe, p.pos.y) < p.pos.y - 3) { out.mx = 0; out.mz = 0; out.btn &= ~BTN_DASH; }
     }

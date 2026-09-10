@@ -7,6 +7,7 @@ import { MAPS, type MapDef, type MapId, type Spawn } from './maps.ts';
 import { MODES, type ModeDef, type ModeId } from './modes.ts';
 import { type Player, type SimContext, stepPlayer, createPlayer, canBeHit, isSolid, applyDamage, setState, respawn, facingX, facingZ, supportHeight } from './player.ts';
 import { ACCESSORIES, type AccessoryId } from './accessories.ts';
+import type { StyleId } from './styles.ts';
 import {
   type Item, type ItemKind, createItem, CRATE_RESPAWN_TICKS, CRATE_BREAK_RADIUS, BOMB_FUSE_TICKS, BOMB_RADIUS, HEART_HEAL,
   PICKUP_RANGE, THROW_ITEM_VEL_H, THROW_ITEM_VEL_V, DROP_HEART, DROP_BOMB,
@@ -69,8 +70,8 @@ export class World implements SimContext {
     });
   }
 
-  addPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean): Player {
-    const p = createPlayer(id, name, this.teams ? team : 0, acc, bot, this.mode.lives);
+  addPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean, style: StyleId = 'fighter'): Player {
+    const p = createPlayer(id, name, this.teams ? team : 0, acc, bot, this.mode.lives, style);
     const s = this.spawnFor(p);
     p.pos.x = s.x; p.pos.y = s.y; p.pos.z = s.z;
     p.yaw = yawFromDir(-s.x, -s.z);
@@ -225,6 +226,8 @@ export class World implements SimContext {
       if (PROJECTILE_MOVES[a.move] || m.damage <= 0) continue;
       const active = m.activeUntilLand ? a.t >= m.startup : isActiveAt(m, a.t);
       if (!active) continue;
+      // 다단 히트: 일정 틱마다 같은 상대를 다시 때릴 수 있다 (회전 발차기)
+      if (m.multiHit > 0 && a.t > m.startup && (a.t - m.startup) % m.multiHit === 0) a.hitMask = 0;
       const fx = facingX(a), fz = facingZ(a);
       const cx = a.pos.x + fx * m.reach, cz = a.pos.z + fz * m.reach;
       const cy = a.pos.y + (a.state === 'jumpAttack' ? 0.3 : C.HIT_HEIGHT);
@@ -434,16 +437,22 @@ export class World implements SimContext {
         return;
       }
     }
-    this.releaseGrabs(v);
-    if (v.holding >= 0) this.dropHeld(v);
+    // 슈퍼아머: 발동~지속 중인 강공격은 경타에 끊기지 않는다 (데미지는 받는다)
+    const vm = v.move ? MOVES[v.move] : null;
+    const armored = !!vm && vm.superArmor && (v.state === 'attack' || v.state === 'special') && v.t < vm.startup + vm.active && m.effect === 'hitstun' && v.grounded;
+    if (!armored) {
+      this.releaseGrabs(v);
+      if (v.holding >= 0) this.dropHeld(v);
+    }
     const wasAir = v.state === 'launched' || v.state === 'thrown' || !v.grounded;
     const dmg = applyDamage(this, v, a, m.damage);
     if (a && v.consecBy === a.id) v.consecCount++; else { v.consecBy = a ? a.id : -1; v.consecCount = 1; }
     const kb = v.consecCount >= C.CONSEC_HIT_KNOCKBACK_FROM ? 1.5 : 1;
     const launch = m.effect === 'launch' || wasAir;
     this.events.push({ t: 'hit', a: a ? a.id : -1, v: v.id, dmg, x: hx, y: hy, z: hz, kind: 'hit', launch });
-    v.yaw = yawFromDir(-dx, -dz);
     if (v.hp <= 0) { this.kill(v, 'hit', a); return; }
+    if (armored) return;
+    v.yaw = yawFromDir(-dx, -dz);
     if (launch) {
       v.vel.x = dx * m.launchH * kb; v.vel.z = dz * m.launchH * kb; v.vel.y = m.launchV;
       v.grounded = false;
