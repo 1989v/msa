@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
+import { CARDS } from '../../../scripts/make-og-cards.mjs';
 import {
+  blogHubMeta,
+  blogPostMeta,
+  dealHubMeta,
+  imageMimeType,
+  rankHubMeta,
   blogPostingJsonLd,
   personJsonLd,
   personRef,
@@ -194,5 +200,47 @@ describe('sourceText — 원천 마크업 정리', () => {
 
   it('모르는 엔티티는 건드리지 않는다 — 추측해서 바꾸면 뜻이 달라진다', () => {
     expect(sourceText('&zzz;')).toBe('&zzz;');
+  });
+});
+
+describe('소셜 카드 — 선언한 주소에 파일이 있어야 한다', () => {
+  // 없는 파일을 og:image 로 선언하면 언퍼러는 '카드 없음' 이 아니라 **깨진 카드**를 그린다.
+  // 카드 목록의 단일 원본은 make-og-cards.mjs 이고, 여기서 그 짝을 지킨다.
+  it('meta 가 가리키는 key 는 굽는 목록에 전부 있다', () => {
+    const baked = new Set(CARDS.map((c) => c.key));
+    const declared = [
+      placeHubMeta('ko').image,
+      placeHubMeta('en').image,
+      dealHubMeta().image,
+      rankHubMeta().image,
+      blogHubMeta(3).image,
+    ];
+    for (const url of declared) {
+      expect(url, 'meta 에 카드 주소가 없다').toBeTruthy();
+      const key = url!.split('/og/')[1]?.replace('.png', '');
+      expect(baked, `굽지 않는 카드를 선언했다: ${url}`).toContain(key);
+    }
+  });
+
+  it('카드 주소는 그 면의 호스트로 만든다 — 절대 URL 이어야 언퍼러가 받는다', () => {
+    expect(placeHubMeta('ko').image).toBe(`${PLACE_ORIGIN}/og/place.png`);
+    expect(blogHubMeta(1).image?.startsWith('https://')).toBe(true);
+  });
+
+  it('표지가 있는 글은 표지가 이긴다 — 카드는 없을 때만 받는다', () => {
+    expect(blogPostMeta({ title: 't', slug: 's', coverImageUrl: 'https://x/y.jpg' }).image)
+      .toBe('https://x/y.jpg');
+    expect(blogPostMeta({ title: 't', slug: 's', coverImageUrl: null }).image)
+      .toContain('/og/blog.png');
+  });
+});
+
+describe('imageMimeType — 확장자에서 읽는다', () => {
+  it('고정 png 를 적으면 jpg 사진에 거짓 타입을 붙이게 된다', () => {
+    expect(imageMimeType('https://x/a.jpg')).toBe('image/jpeg');
+    expect(imageMimeType('https://x/a.JPEG')).toBe('image/jpeg');
+    expect(imageMimeType('https://x/a.png?v=2')).toBe('image/png');
+    expect(imageMimeType('https://x/a.svg')).toBeNull();
+    expect(imageMimeType('https://x/noext')).toBeNull();
   });
 });

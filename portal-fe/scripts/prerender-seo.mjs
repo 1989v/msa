@@ -81,6 +81,8 @@ import {
   SEO_MULTI_ATTR,
   personJsonLd,
   sourceText,
+  ogCardUrl,
+  imageMimeType,
 } from '../src/seo/copy.mjs';
 
 const MULTI = SEO_MULTI_ATTR;
@@ -354,7 +356,9 @@ function metaTags({ title, description, canonical, lang, image, imageSmall, imag
   if (image) {
     lines.push(`<meta property="og:image" content="${image}" />`);
     lines.push(`<meta property="og:image:secure_url" content="${image}" />`);
-    lines.push(`<meta property="og:image:type" content="image/png" />`);
+    // 확장자에서 읽는다 — 고정 png 는 관광지 사진(TourAPI jpg)에 거짓 타입을 붙인다
+    const mime = imageMimeType(image);
+    if (mime) lines.push(`<meta property="og:image:type" content="${mime}" />`);
     if (!imageSmall) {
       // 크기를 명시하면 언퍼러가 이미지를 먼저 받아 재보지 않아도 카드를 그린다
       lines.push(`<meta property="og:image:width" content="${OG_IMAGE_W}" />`);
@@ -479,6 +483,10 @@ function renderGenre(shell, lang, genre, inGenre, allGames) {
     lang,
     ...meta,
     canonical,
+    // 장르별 전용 카드는 만들지 않는다 — 8종을 따로 굽는 값어치보다 허브 카드가
+    // 어디서나 같은 얼굴로 나가는 쪽이 낫다.
+    image: HUB_OG_IMAGE,
+    imageAlt: meta.heading,
     alternates: hreflangAlternates(`/games/genre/${genreSlug(genre)}`),
     jsonLd: [
       collectionPageJsonLd(lang, meta, canonical),
@@ -923,6 +931,7 @@ async function renderPlaceHubs(shell, places = { ko: [], en: [] }, regions = { k
       ...meta,
       canonical,
       siteName: placeBrand(lang),
+      imageAlt: meta.heading,
       alternates: placeHreflangAlternates(''),
       jsonLd: [
         collectionPageJsonLd(lang, meta, canonical, { name: placeBrand(lang), url: PLACE_ORIGIN }),
@@ -982,7 +991,11 @@ export function renderAttractionDetail(shell, lang, doc, { region = null, nearby
     ...meta,
     canonical,
     siteName: placeBrand(lang),
-    image: /\.(png|jpe?g|webp)$/i.test(doc.imageUrl || '') ? doc.imageUrl : null,
+    // 사진이 있으면 그 사진이 이긴다. 없을 때만 서비스 카드 — 빈 카드로 나가지 않게.
+    image: /\.(png|jpe?g|webp)$/i.test(doc.imageUrl || '')
+      ? doc.imageUrl
+      : ogCardUrl(PLACE_ORIGIN, 'place'),
+    imageAlt: meta.heading,
     // hreflang 없음 — TourAPI 는 국문/영문이 별도 콘텐츠라 짝을 모른다 (ADR-0062 §8)
     jsonLd: [touristAttractionJsonLd(lang, doc), breadcrumbJsonLd(lang, crumbs)],
     body: shellBody(
@@ -1059,6 +1072,8 @@ export function renderRegionDetail(
     ...meta,
     canonical,
     siteName: placeBrand(lang),
+    // 지역 대표 사진은 갖고 있지 않다 — 서비스 카드가 받는다. 사진이 있다면 그쪽이 이긴다.
+    imageAlt: meta.heading,
     // 지역 페이지는 관광지 상세와 달리 진짜 번역쌍 — 양쪽에 실제로 있을 때만 hreflang
     ...(bothLangs ? { alternates: placeHreflangAlternates(`/regions/${region.code}`) } : {}),
     jsonLd: [touristDestinationJsonLd(lang, region, top), breadcrumbJsonLd(lang, crumbs)],
@@ -1163,6 +1178,8 @@ export function renderDealHubHtml(shell, sections = []) {
     description: meta.description,
     canonical: meta.canonical,
     siteName: DEAL_SITE_NAME,
+    image: meta.image,
+    imageAlt: DEAL_BRAND,
     jsonLd: [
       collectionPageJsonLd('ko', meta, meta.canonical, { name: DEAL_SITE_NAME, url: DEAL_ORIGIN }),
       websiteJsonLd({ name: DEAL_SITE_NAME, url: DEAL_ORIGIN }),
@@ -1245,6 +1262,8 @@ async function renderRankHub(shell) {
     description: meta.description,
     canonical: meta.canonical,
     siteName: RANK_SITE_NAME,
+    image: meta.image,
+    imageAlt: RANK_BRAND,
     jsonLd: [websiteJsonLd({ name: RANK_SITE_NAME, url: RANK_ORIGIN })],
     body: shellBody(`<h1>${escapeHtml(RANK_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>`),
   });
@@ -1315,6 +1334,8 @@ async function renderBlogHub(shell, blog) {
     description: meta.description,
     canonical: meta.canonical,
     siteName: BLOG_BRAND,
+    image: meta.image,
+    imageAlt: BLOG_BRAND,
     body: shellBody(
       `<h1>${escapeHtml(BLOG_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>` +
         `<nav>${nav}</nav><ul>${links}</ul>`,
@@ -1364,6 +1385,8 @@ async function renderPortalPages(shell) {
       description: meta.description,
       canonical,
       siteName: PORTAL_BRAND,
+      image: ogCardUrl(PORTAL_ORIGIN, 'portal'),
+      imageAlt: PORTAL_BRAND,
       // Person 전체 노드는 apex 홈 한 곳에만 둔다 — 나머지 페이지는 personRef 의 `@id` 로
       // 이 노드를 가리킨다. 프로필이 바뀌면 고칠 자리가 하나다.
       jsonLd: path === '/' ? [websiteJsonLd(), personJsonLd()] : [],

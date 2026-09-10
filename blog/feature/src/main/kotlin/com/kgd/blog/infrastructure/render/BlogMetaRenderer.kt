@@ -57,7 +57,9 @@ class BlogMetaRenderer(
             title = BlogSeoCopy.postTitle(post),
             description = BlogSeoCopy.postDescription(post),
             canonical = canonical,
-            image = post.coverImageUrl,
+            // 표지가 없으면 서비스 카드가 받는다 — portal-fe `blogPostMeta` 와 같은 폴백이어야
+            // 한다. 어긋나면 렌더 전후로 공유 카드가 바뀐다.
+            image = post.coverImageUrl ?: ogCard(),
             ogType = "article",
             jsonLd = listOf(articleJsonLd(post, canonical), breadcrumbJsonLd(detail.breadcrumb)),
             // og:type=article 만 있고 시각이 없으면 공유 카드·리치 결과에 날짜가 안 붙고,
@@ -277,6 +279,9 @@ class BlogMetaRenderer(
      * 사이트 전체를 잇는 Person 참조. 전체 노드(`sameAs` 등)는 apex 홈이 갖고 여기는
      * `@id` 와 이름만 둔다 — portal-fe `copy.mjs` 의 `personRef` 와 같은 값이어야 한다.
      */
+    /** 호스트 기본 소셜 카드. 파일은 portal-fe `public/og/blog.png` 가 갖는다 */
+    private fun ogCard(): String = "$origin/og/blog.png"
+
     private fun personRef(): Map<String, Any?> =
         mapOf("@type" to "Person", "@id" to PERSON_ID, "name" to "권기덕")
 

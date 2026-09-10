@@ -208,6 +208,30 @@ export function socialImageIsSmall(game) {
  */
 export const HUB_OG_IMAGE = `${GAME_ORIGIN}/games/thumbs/og/hub.png`;
 
+/**
+ * 호스트별 기본 소셜 카드 (`scripts/make-og-cards.mjs` 가 굽는다).
+ *
+ * 사진이 있는 문서(관광지·표지 있는 글·게임)는 그 사진이 이기고, **없을 때 이 카드가 받는다.**
+ * 없으면 텍스트 카드로 나가는데, 링크를 만드는 순간은 대개 메신저 공유라 카드 품질이 곧 유입이다.
+ *
+ * key 는 `public/og/<key>.png` 와 같아야 한다 — 없는 파일을 og:image 로 선언하면 언퍼러는
+ * 그걸 '카드 없음' 이 아니라 **깨진 카드**로 그린다. 목록의 단일 원본은 make-og-cards.mjs 다.
+ * 주소는 그 면의 호스트로 만든다 — 한 벌의 번들이 모든 호스트를 서빙하므로 어디서나 열린다.
+ */
+export function ogCardUrl(origin, key) {
+  return `${origin}/og/${key}.png`;
+}
+
+/** 이미지 MIME — 확장자에서 읽는다. 고정으로 png 를 적으면 jpg 사진에 거짓말을 하게 된다 */
+export function imageMimeType(url) {
+  const ext = (String(url || '').split('?')[0].match(/\.([a-z0-9]+)$/i) || [])[1];
+  if (!ext) return null;
+  const lower = ext.toLowerCase();
+  if (lower === 'jpg' || lower === 'jpeg') return 'image/jpeg';
+  if (lower === 'png' || lower === 'webp' || lower === 'gif') return `image/${lower}`;
+  return null;
+}
+
 export function videoGameJsonLd(lang, game) {
   const image = socialImage(game);
   const json = {
@@ -453,6 +477,7 @@ export function regionMeta(lang, region, attractionCount = null) {
         } — nature, history, culture and leisure spots with maps, photos and directions from official tourism data.`,
       ),
       heading: `Things to do in ${name}`,
+      image: ogCardUrl(PLACE_ORIGIN, 'place'),
     };
   }
   return {
@@ -463,6 +488,7 @@ export function regionMeta(lang, region, attractionCount = null) {
       }모았습니다. 한국관광공사 공식 데이터로 지도·사진과 가는 길을 확인하세요.`,
     ),
     heading: `${name} 가볼 만한 곳`,
+    image: ogCardUrl(PLACE_ORIGIN, 'place'),
   };
 }
 
@@ -526,6 +552,7 @@ export function placeHubMeta(lang) {
           'Find things to do across South Korea — search tourist attractions by region, theme, or your current location. Official Korea Tourism Organization data with maps, photos and addresses.',
         ),
         heading: 'Explore Korea',
+        image: ogCardUrl(PLACE_ORIGIN, 'place'),
       }
     : {
         title: `한국 관광지 검색 — 지역별 가볼 만한 곳·여행지 지도 | ${PLACE_BRAND_KO}`,
@@ -533,6 +560,7 @@ export function placeHubMeta(lang) {
           '전국 가볼 만한 곳을 지역·테마·내 주변으로 검색합니다. 한국관광공사 공식 데이터로 주소·지도·사진과 가는 길을 함께 확인하세요.',
         ),
         heading: '한국 관광지 탐색',
+        image: ogCardUrl(PLACE_ORIGIN, 'place'),
       };
 }
 
@@ -723,6 +751,7 @@ export function dealHubMeta() {
     description:
       '여행 · 커머스 · 디지털구독 · 교육 · 생활 카테고리의 혜택 링크를 한곳에 모았습니다. 쿠폰·적립·신규가입 프로모션을 이름·제공처로 검색하세요.',
     canonical: dealUrl('/'),
+    image: ogCardUrl(DEAL_ORIGIN, 'deal'),
   };
 }
 
@@ -765,6 +794,7 @@ export function rankHubMeta() {
     description:
       '지역별 최저가 주유소 리더보드. 시군구·유종별 순위를 어제 대비 등락과 함께 확인하고, 각 주유소로 바로 길찾기하세요.',
     canonical: rankUrl('/'),
+    image: ogCardUrl(RANK_ORIGIN, 'rank'),
   };
 }
 
@@ -818,6 +848,7 @@ export function blogHubMeta(postCount) {
         : '서버·검색·데이터부터 취미와 일상까지, 직접 만들고 겪은 것을 기록합니다.',
     ),
     canonical: blogUrl('/'),
+    image: ogCardUrl(BLOG_ORIGIN, 'blog'),
   };
 }
 
@@ -826,7 +857,9 @@ export function blogPostMeta(post) {
     title: `${post.title} | ${BLOG_BRAND}`,
     description: clampDescription(post.summary ?? ''),
     canonical: blogPostUrl(post.slug),
-    image: post.coverImageUrl ?? null,
+    // 표지가 없으면 서비스 카드가 받는다 — 글 대부분은 표지가 없고, 링크가 생기는 순간은
+    // 대개 메신저 공유라 카드가 비면 그 자리가 통째로 빈다.
+    image: post.coverImageUrl ?? ogCardUrl(BLOG_ORIGIN, 'blog'),
     type: 'article',
   };
 }

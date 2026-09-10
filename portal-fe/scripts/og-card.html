@@ -1,0 +1,180 @@
+<!doctype html>
+<!--
+  소셜 카드(og:image) 템플릿. 1200×630 한 장을 그린다.
+
+  값은 쿼리스트링으로 받는다 — `?label=…&title=…&sub=…&seal=…&tone=hanji|giwa`.
+  색은 DESIGN.md §12 의 브랜드 상수를 그대로 적는다. 근사하면 그냥 다른 색이 된다.
+
+  이 파일은 브라우저가 읽는 렌더 대상이고, 굽는 쪽은 scripts/make-og-cards.mjs 다.
+  빌드 경로에는 없다 — CI 러너(arm64)에 크롬을 얹지 않기 위해서다. 문구가 바뀌면 손으로 굽고
+  결과 PNG 를 커밋한다.
+-->
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        --hanji: #f9f8f2;
+        --giwa: #1d1d1f;
+        --pine: #1a472a;
+        --yeonji: #a2231d;
+        --ocher: #b38b6d;
+        --ocher-text: #8a6346;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1200px; height: 630px; }
+      body {
+        font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .card {
+        position: relative;
+        width: 1200px;
+        height: 630px;
+        padding: 76px 88px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        background: var(--hanji);
+        color: var(--giwa);
+      }
+      /* 다크 정경 — 같은 배치, 바탕과 글씨만 뒤집는다 (라이트의 파생이 아니라 별도 설계) */
+      .card[data-tone='giwa'] {
+        background: var(--giwa);
+        color: var(--hanji);
+      }
+
+      /* 결(grain) — 종이의 촘촘한 세로 올. 면이 정하는 색을 쓴다 */
+      .card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          90deg,
+          rgba(29, 29, 31, 0.022) 0 1px,
+          transparent 1px 7px
+        );
+        pointer-events: none;
+      }
+      .card[data-tone='giwa']::before {
+        background: repeating-linear-gradient(
+          90deg,
+          rgba(249, 248, 242, 0.028) 0 1px,
+          transparent 1px 7px
+        );
+      }
+
+      /* 어긋난 판 — 인장을 감싸 낙관 자리를 만든다. 좌상/우하 각짐, 우상/좌하 둥긂.
+         글을 가로지르지 않게 우하단 안쪽에 가둔다 — 잘려 나가면 의도가 아니라 실수로 읽힌다. */
+      .card::after {
+        content: '';
+        position: absolute;
+        right: 52px;
+        bottom: 44px;
+        width: 250px;
+        height: 250px;
+        border: 1px solid color-mix(in srgb, var(--ocher) 34%, transparent);
+        border-radius: 0 64px 0 64px;
+        pointer-events: none;
+      }
+
+      .head { display: flex; align-items: center; gap: 14px; position: relative; }
+      .label {
+        font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 20px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--ocher-text);
+      }
+      .card[data-tone='giwa'] .label { color: var(--ocher); }
+      .rule {
+        flex: 1;
+        height: 1px;
+        background: color-mix(in srgb, var(--ocher) 55%, transparent);
+      }
+
+      .body { position: relative; }
+      .title {
+        font-size: 76px;
+        line-height: 1.14;
+        letter-spacing: -0.02em;
+        font-weight: 700;
+        text-wrap: balance;
+        max-width: 22ch;
+        /* 한국어는 낱말 중간에서 끊으면 안 된다 — 없으면 「운/영하는」 이 된다 */
+        word-break: keep-all;
+        overflow-wrap: break-word;
+      }
+      /* 낱말 하나만 연지 — 다크 정경에서는 색을 쓰지 않는다 (DESIGN.md §12) */
+      .title em { font-style: normal; color: var(--yeonji); }
+      .card[data-tone='giwa'] .title em { color: inherit; }
+
+      .sub {
+        margin-top: 22px;
+        font-size: 26px;
+        line-height: 1.55;
+        max-width: 46ch;
+        word-break: keep-all;
+        overflow-wrap: break-word;
+        color: color-mix(in srgb, currentColor 66%, transparent);
+      }
+
+      .foot { display: flex; align-items: flex-end; justify-content: space-between; position: relative; }
+      .host {
+        font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 23px;
+        letter-spacing: 0.04em;
+        color: color-mix(in srgb, currentColor 72%, transparent);
+      }
+
+      /* 인장 — 연지 낙관. 카드에서 유일하게 채워진 면이라 시선의 종점이 된다 */
+      .seal {
+        width: 86px;
+        height: 86px;
+        border-radius: 0 14px 0 14px;
+        background: var(--yeonji);
+        color: var(--hanji);
+        display: grid;
+        place-items: center;
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card" id="card">
+      <div class="head">
+        <span class="label" id="label"></span>
+        <span class="rule"></span>
+      </div>
+      <div class="body">
+        <h1 class="title" id="title"></h1>
+        <p class="sub" id="sub"></p>
+      </div>
+      <div class="foot">
+        <span class="host" id="host"></span>
+        <span class="seal" id="seal"></span>
+      </div>
+    </div>
+    <script>
+      const q = new URLSearchParams(location.search);
+      const set = (id, value) => {
+        const el = document.getElementById(id);
+        // 강조 낱말은 `*별표*` 로 표시해 받는다 — 마크업을 쿼리로 넘기지 않는다
+        el.innerHTML = String(value ?? '')
+          .replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c])
+          .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+        if (!el.textContent.trim()) el.style.display = 'none';
+      };
+      set('label', q.get('label'));
+      set('title', q.get('title'));
+      set('sub', q.get('sub'));
+      set('host', q.get('host'));
+      set('seal', q.get('seal') ?? '1989');
+      document.getElementById('card').dataset.tone = q.get('tone') === 'giwa' ? 'giwa' : 'hanji';
+    </script>
+  </body>
+</html>
