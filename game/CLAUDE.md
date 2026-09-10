@@ -92,7 +92,9 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 | `GET /api/v1/admin/games/suggestions`, `PATCH .../{id}/status` | 처리 대기 목록(전 게임 횡단, 게임 상태 무관) + 상태 변경 (ROLE_ADMIN). 화면은 admin-fe `/games/suggestions` |
 | `GET/POST/PUT /api/v1/admin/games/**` | 어드민 CRUD + 상태 전이 + 컬렉션 (ROLE_ADMIN). `GET`(목록 `?q=&status=&genre=&tag=&sort=created\|updated\|title\|playCount`, 상세)은 **상태 무관** — 공개 API 로는 보이지 않는 DRAFT/REVIEW/SUSPENDED 를 백오피스에서 다룬다. 화면은 admin-fe `/games` |
 | `/api/v1/games/arcade/{catalog,sessions,scores,leaderboard,daily}` | #23 아케이드 — 세션 발급/점수 제출(검증)/리더보드. `games/**` 하위라 게이트웨이 라우트 추가 없음 |
-| `WS /ws/games/{slug}` | 온라인 대전 릴레이 (raw WebSocket, 게스트). 아래 "온라인 대전 릴레이" 참조 |
+| `GET/POST/PUT/DELETE /api/v1/games/party/rosters[/{groupId}]`, `PUT .../opt-in` | 친구 그룹 — **로그인 전용**. 계정 저장을 켠 사람만 서버에 남고, 끄면 서버본을 응답으로 돌려준 뒤 지운다 (ADR-0092) |
+| `POST/GET /api/v1/games/party/rooms/{roomCode}/{votes,plays,rounds}` | 파티 판 진행 — 익명 투표 · 참여형 채점 · 결과 해시. **로그인이 아니라 좌석 토큰이 신원**이다(`X-Party-Seat`/`X-Party-Token`), 초대 링크로 들어온 게스트가 참가자이기 때문 |
+| `WS /ws/games/{slug}` | 온라인 대전 릴레이 (raw WebSocket, 게스트). 아래 "온라인 대전 릴레이" 참조. 파티 방은 슬러그 `party` 를 쓴다 |
 | `GET /api/v1/ads/placements/{key}?subject=`, `POST /api/v1/ads/rewards`(+`/{key}/complete`) | HOUSE 배너 슬롯(cap 시 data=null) / rewarded 보상 발급·완료(멱등) |
 
 게이트웨이 라우팅(`GatewayRouteConfig`)은 인증 수준별로 라우트가 나뉜다 — 좁은 경로가 먼저
@@ -100,7 +102,14 @@ FE 는 웹에서 랭킹 아래, 좁은 화면에서 랭킹 다음 탭. **노트�
 `game-save`(게스트 허용 + Rate Limiter — 익명 쓰기 방어) → `game-session`(게스트 허용, sessions+runs) →
 `game-my-record`(USER+) → `game-score-submit`(게스트 허용) →
 `game-suggestion-read`(GET 만, 게스트 허용) → `game-suggestion-write`(USER+ + Rate Limiter) →
+`game-party-roster`(USER+) → `game-party-room`(게스트 허용) →
 `game-catalog`(공개) → `game-relay-ws`(`/ws/games/**`, 게스트 허용) → `game-ads`(`/api/v1/ads/**`, 게스트 허용).
+
+**친구 그룹은 캐치올보다 먼저 잡아야 한다.** `/api/v1/games/party/rosters` 는 처음 붙었을 때
+전용 라우트가 없어 `game-catalog`(필터 없는 공개 경로)로 떨어졌고, 그 경로는 클라이언트가 붙인
+`X-User-Id` 를 벗기지 않는다 — 헤더 한 줄로 **아무 회원의 친구 그룹을 읽고 고치고 지울 수
+있었다**(별칭 목록이라 그 사람 지인의 이름이 샌다). 제안 읽기와 같은 함정이고, 같은 방식으로
+좁은 라우트를 앞에 세워 막는다. 경계는 `GatewayRoutingSpec` 이 401 로 고정한다.
 
 **제안 읽기에도 인증 필터를 건다.** 필터 없이 통과시키면 클라이언트가 손으로 붙인 `X-User-Id` 가
 그대로 백엔드에 닿아, 서버가 계산하는 `mine`(=「내 글인가」)이 남의 글에서도 참이 된다.
@@ -259,6 +268,17 @@ kubectl -n commerce create secret generic game-hmac \
 - **`game_suggestion*` 의 시각은 초 단위(DATETIME)라 같은 초의 두 행은 시각이 같다.** 정렬에 반드시
   id 를 함께 준다(`OrderByCreatedAtAscIdAsc`, `Sort.by(DESC, "createdAt", "id")`) — 안 그러면
   같은 초에 올라온 답글의 순서가 미정이라 대화가 뒤집힌 채로 그려진다
+- **「인기」는 이번 주에 몇 번 열렸는가 + 실제로 논 판이다** (`GameSort.TRENDING`).
+  점수는 `weekly_play_count + GameStats.ENGAGED_WEIGHT × weekly_engaged_count` 이고,
+  앞의 항은 세션 **시작** 때, 뒤의 항은 세션이 **끝났고** `GamePlaySession.ENGAGED_MIN_SEC` 이상
+  머물렀을 때 오른다. 매주 월요일 00:00(KST) 에 **두 항을 함께** 0 으로 되돌린다 —
+  한쪽만 지우면 지난주에 논 판이 이번 주 점수로 계속 더해져 한 번 오른 게임이 안 내려온다.
+  **연 횟수를 버리고 논 판만 셀 수는 없다** — 탭을 그냥 닫으면 종료가 안 와서, 오래 논 게임일수록
+  0 이 되는 뒤집힌 순위가 된다. 그래서 연 횟수를 바닥으로 깔고 그 위에 얹는다(끝까지 논 한 번 =
+  열어만 본 세 번). 종료 신호를 실제로 오게 하는 것은 FE 몫이다 — `GameDetailPage` 가 언마운트뿐
+  아니라 `pagehide` 에서도 `keepalive` 로 보낸다(axios 는 언로드를 못 넘긴다).
+  무게 상수는 **도메인에만 있고 정렬 SQL 이 그 값을 읽는다** — 숫자를 SQL 에 적으면 화면이
+  보여 주는 점수와 정렬이 서로 다른 순위를 갖게 된다
 - GameStats 는 프로젝션 — 원본 이벤트 집계는 analytics(ClickHouse) 소유, 실시간 카운터를 Game row 에 두지 않는다
 - `game:feature` 는 codedictionary 컨텍스트 빈을 직접 주입하지 않는다 (교차 import 금지, ADR-0058 불변식)
 

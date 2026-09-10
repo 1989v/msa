@@ -1,0 +1,416 @@
+/* 파티 세션 화면 (ADR-0092).
+   색은 전부 DESIGN.md 토큰 — 이 화면만 다른 팔레트를 갖게 되면 게임 허브에서 넘어온 순간
+   다른 사이트로 읽힌다. QR 만 예외로 흑백 리터럴을 쓴다(스캐너가 대비를 요구한다). */
+
+.party-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--kh-void, 48px) 20px 64px;
+  color: var(--ko-text-primary);
+}
+
+.party-header h1 {
+  margin: 0 0 6px;
+  font-size: var(--kh-display, 1.875rem);
+  letter-spacing: var(--kh-tracking-display, -0.02em);
+}
+
+.party-header p {
+  margin: 0 0 24px;
+  color: var(--ko-text-secondary);
+  line-height: var(--ko-leading-relaxed);
+}
+
+.party-page h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.party-page section {
+  margin-bottom: 28px;
+  padding: 18px;
+  background: var(--ko-surface-1);
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 6px);
+}
+
+.party-alert,
+.party-notice {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--kh-radius, 6px);
+  font-size: 0.9rem;
+  line-height: var(--ko-leading-relaxed);
+}
+
+.party-alert {
+  border: 1px solid var(--ko-danger, var(--ko-accent-primary));
+  color: var(--ko-danger, var(--ko-accent-primary));
+}
+
+.party-notice {
+  border: 1px solid var(--ko-border-subtle);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-secondary);
+}
+
+.party-status {
+  margin: 8px 0 0;
+  /* muted 는 이 팔레트에서 4.09:1 이라 본문 문턱(4.5) 아래다 — 안내문은 읽으라고 있는 글이다 */
+  color: var(--ko-text-secondary);
+  font-size: 0.85rem;
+}
+
+/* ── 초대 ─────────────────────────────────────────────── */
+
+.party-invite {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.party-code-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.party-code-label {
+  color: var(--ko-text-secondary);
+  font-size: 0.8rem;
+}
+
+/* 눈으로 옮겨 적는 값이라 자간을 벌리고 고정폭으로 둔다 — 0/O 는 코드 알파벳에서 이미 뺐다 */
+.party-code {
+  font-family: var(--ko-font-mono, ui-monospace, monospace);
+  font-size: 1.6rem;
+  letter-spacing: 0.14em;
+}
+
+.party-qr {
+  width: 132px;
+  height: 132px;
+  margin-left: auto;
+  border-radius: 4px;
+}
+
+/* ── 자리 ─────────────────────────────────────────────── */
+
+.party-seats ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.party-seats li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: 999px;
+  font-size: 0.88rem;
+}
+
+.party-seats li.me {
+  border-color: var(--ko-accent-primary);
+}
+
+.party-seat-no {
+  color: var(--ko-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.party-seat-tag {
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  font-size: 0.72rem;
+}
+
+/* ── 이름 고르기 · 투표 ───────────────────────────────── */
+
+.party-name-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.party-name-btn {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 6px);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.party-name-btn.mine {
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+}
+
+.party-name-btn:disabled {
+  color: var(--ko-text-disabled);
+  cursor: not-allowed;
+}
+
+.party-result {
+  margin: 8px 0 0;
+  font-size: 1.05rem;
+}
+
+/* ── 명부 ─────────────────────────────────────────────── */
+
+.party-field-label {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--ko-text-secondary);
+  font-size: 0.8rem;
+}
+
+.party-group-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.party-group-row select,
+.party-manual textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 6px);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font: inherit;
+}
+
+.party-manual {
+  display: block;
+  margin-bottom: 16px;
+}
+
+.party-manual textarea {
+  resize: vertical;
+  line-height: var(--ko-leading-relaxed);
+}
+
+.party-optin {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+  color: var(--ko-text-secondary);
+}
+
+.party-entries {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.party-entries li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
+/* 이번 판에서 뺀 사람 — 지운 게 아니라 이번만 빠진 것이라 자리를 남긴다 */
+.party-entries li.out .party-entry-name span {
+  color: var(--ko-text-disabled);
+  text-decoration: line-through;
+}
+
+.party-entry-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.party-weight,
+.party-pick-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.party-weight button,
+.party-pick-row button {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 6px);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.party-weight button:disabled,
+.party-pick-row button:disabled {
+  color: var(--ko-text-disabled);
+  cursor: not-allowed;
+}
+
+.party-weight b {
+  min-width: 34px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.party-pick-row {
+  margin-bottom: 16px;
+}
+
+/* ── 방식 · 갈래 ──────────────────────────────────────── */
+
+.party-mode-row,
+.party-branch-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.party-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 6px);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font-size: 0.92rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.party-chip small {
+  color: var(--ko-text-secondary);
+  font-size: 0.74rem;
+}
+
+.party-chip.active {
+  border-color: var(--ko-accent-primary);
+  background: var(--ko-accent-primary-bg);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+}
+
+.party-game-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 8px;
+}
+
+.party-game-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--ko-border-subtle);
+  border-radius: var(--kh-radius, 6px);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.party-game-list em {
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  font-size: 0.72rem;
+  font-style: normal;
+}
+
+/* ── 버튼 ─────────────────────────────────────────────── */
+
+.party-primary,
+.party-ghost,
+.party-copy {
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: var(--kh-radius, 6px);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.party-primary {
+  width: 100%;
+  border: 1px solid var(--ko-accent-primary);
+  background: var(--ko-accent-primary);
+  /* 채움 바탕 위 글씨는 정경과 무관하게 한지로 고정한다 — surface-1 은 다크에서
+     연지/청자 바탕 위 2.29:1 로 죽는다(CDP 실측). 게임 장르 칩과 같은 규칙. */
+  color: var(--kh-hanji, var(--ko-surface-0));
+}
+
+.party-primary:disabled {
+  border-color: var(--ko-border-subtle);
+  background: var(--ko-surface-2);
+  color: var(--ko-text-disabled);
+  cursor: not-allowed;
+}
+
+.party-ghost,
+.party-copy {
+  border: 1px solid var(--ko-border-subtle);
+  background: transparent;
+  color: var(--ko-text-secondary);
+}
+
+.party-ghost {
+  margin-top: 12px;
+}
+
+/* 비율·인원 조절 버튼은 기본 32px 이다 — 마우스에는 충분하지만 손가락에는 아니다.
+   게임 허브가 쓰는 것과 같은 방식으로 coarse 포인터에서만 44 로 올린다. */
+@media (pointer: coarse) {
+  .party-weight button,
+  .party-pick-row button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .party-optin input,
+  .party-entry-name input {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+@media (max-width: 480px) {
+  .party-page {
+    padding: 24px 16px 48px;
+  }
+
+  .party-qr {
+    margin-left: 0;
+  }
+
+  .party-invite {
+    justify-content: space-between;
+  }
+}

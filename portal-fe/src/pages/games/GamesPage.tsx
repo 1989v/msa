@@ -228,6 +228,21 @@ export default function GamesPage() {
         <p className="games-subtitle">{L.subtitle}</p>
       </header>
 
+      {/* 내기용 게임 진입 — 목록 맨 위. 전에는 「순서 정하기」 장르 안에서만 버튼이 보여서,
+          그 장르에 이미 들어간 사람만 이 기능을 알 수 있었다. 얇은 한 줄로 두는 이유는
+          이 위에 이미 제목·부제·기록 레일·광고가 쌓여 첫 게임 카드가 밀리기 때문이다. */}
+      <Link className="games-party-entry" to={gamePath(lang, '/party')}>
+        <span className="games-party-entry-title">
+          {lang === 'en' ? 'Settle a bet' : '내기용 게임'}
+        </span>
+        <span className="games-party-entry-desc">
+          {lang === 'en'
+            ? 'Invite friends by link, pick a game, one round decides.'
+            : '링크로 친구를 부르고, 뭘 할지 정하고, 한 판으로 끝낸다'}
+        </span>
+        <span aria-hidden="true">→</span>
+      </Link>
+
       {/* 기록이 있는 게임이 하나도 없으면 스스로 아무것도 그리지 않는다 */}
       <LeaderboardRail lang={lang} />
 

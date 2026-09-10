@@ -3,6 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   displayTitle,
   endGameSession,
+  endGameSessionOnUnload,
   fetchGameDetail,
   fetchSimilarGames,
   genreLabel,
@@ -191,17 +192,24 @@ export default function GameDetailPage() {
       .catch(() => setSimilar([]));
   }, [slug, handlePlay]);
 
-  // 세션 종료 — 페이지 이탈/게임 전환 시 best-effort
-  useEffect(
-    () => () => {
+  /* 세션 종료 — 화면을 떠날 때와 탭을 닫을 때 둘 다.
+     언마운트만 걸어 두면 탭을 그냥 닫는 사람의 판이 통째로 안 세어진다(그쪽이 더 흔하다).
+     pagehide 는 모바일에서 앱을 전환할 때도 오므로 unload 보다 실제로 발화한다. */
+  useEffect(() => {
+    const finish = (unloading: boolean) => {
       const session = sessionRef.current;
-      if (session) {
-        endGameSession(session.slug, session.key).catch(() => undefined);
-        sessionRef.current = null;
-      }
-    },
-    [slug],
-  );
+      if (!session) return;
+      sessionRef.current = null;
+      if (unloading) endGameSessionOnUnload(session.slug, session.key);
+      else endGameSession(session.slug, session.key).catch(() => undefined);
+    };
+    const onHide = () => finish(true);
+    window.addEventListener('pagehide', onHide);
+    return () => {
+      window.removeEventListener('pagehide', onHide);
+      finish(false);
+    };
+  }, [slug]);
 
   const handleClose = () => {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);

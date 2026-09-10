@@ -23,6 +23,14 @@ api.interceptors.request.use((config) => {
 // 액세스 토큰이 만료되면 평점·세션·점수 제출이 조용히 게스트 취급된다 — 재발급 후 재시도한다.
 attachRefreshRetry(api);
 
+/**
+ * 같은 백엔드(code-dictionary)를 부르는 다른 모듈이 쓰는 클라이언트.
+ *
+ * 인스턴스를 하나 더 만들면 인증 헤더와 재발급 재시도가 사본으로 갈라져, 한쪽만 고쳐진
+ * 채로 **로그인 사용자가 게스트로 취급되는** 일이 생긴다(ADR-0079 가 게임 21곳에서 겪은 것).
+ */
+export { api as gameHttp };
+
 interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -257,6 +265,28 @@ export async function startGameSession(slug: string): Promise<SessionStarted> {
 
 export async function endGameSession(slug: string, sessionKey: string): Promise<void> {
   await api.patch(`/api/v1/games/${slug}/sessions/${sessionKey}`);
+}
+
+/**
+ * 탭을 닫는 순간의 세션 종료.
+ *
+ * axios 는 언로드를 못 넘긴다 — 문서가 사라지면 진행 중인 XHR 이 취소되므로 종료가
+ * 서버에 닿지 않고, 그러면 그 판은 **논 적 없는 것으로 남는다**. `keepalive` 는 요청을
+ * 문서보다 오래 살려 보내라는 뜻이라 이 자리에 맞는 유일한 수단이다
+ * (sendBeacon 은 POST 만 되어 PATCH 인 이 경로에 못 쓴다).
+ *
+ * 인증 헤더는 싣지 않는다 — 종료는 세션 키로 찾고, 회원 여부는 시작 때 이미 기록됐다.
+ */
+export function endGameSessionOnUnload(slug: string, sessionKey: string): void {
+  const base = api.defaults.baseURL ?? '';
+  try {
+    void fetch(`${base}/api/v1/games/${slug}/sessions/${sessionKey}`, {
+      method: 'PATCH',
+      keepalive: true,
+    });
+  } catch {
+    // 언로드 중이라 붙잡고 있을 수 없다 — 놓친 종료는 그 판을 안 센다
+  }
 }
 
 /**

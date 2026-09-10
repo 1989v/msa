@@ -16,6 +16,7 @@ import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 // ADR-0059 — 게임 플랫폼 (game:feature API 는 code-dictionary 와 동일 오리진)
 const GamesPage = lazy(() => import('./pages/games/GamesPage'));
 const GameDetailPage = lazy(() => import('./pages/games/GameDetailPage'));
+const PartyPage = lazy(() => import('./pages/party/PartyPage'));
 // ADR-0065 — K-관광/지리 탐색. place.<domain> 이 정규 주소 (host 인식 루트 라우팅),
 // apex/개발은 /place. 구글맵 로더 포함이라 lazy 분리.
 const PlacePage = lazy(() => import('./pages/place/PlacePage'));
@@ -240,6 +241,13 @@ function App() {
               슬러그를 바꿀 때마다 여기 한 줄이 늘어난다 (DB 는 새 슬러그만 안다). */}
           <Route path="/games/rustveil-holdout" element={<Navigate to="/games/deadline" replace />} />
           <Route path="/en/games/rustveil-holdout" element={<Navigate to="/en/games/deadline" replace />} />
+
+          {/* 파티 세션 (ADR-0092) — 방장은 /party, 초대받은 사람은 /party/<방 코드>.
+              초대 링크에 이름을 싣지 않으므로 주소에 남는 것은 방 코드뿐이다. */}
+          <Route path="/party" element={gameRoute(<PartyPage />)} />
+          <Route path="/party/:room" element={gameRoute(<PartyPage />)} />
+          <Route path="/en/party" element={gameRoute(<PartyPage />)} />
+          <Route path="/en/party/:room" element={gameRoute(<PartyPage />)} />
 
           <Route path="/games" element={gameRoute(<GamesPage />)} />
           <Route path="/games/genre/:genre" element={gameRoute(<GamesPage />)} />

@@ -1973,3 +1973,48 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* 내기용 게임 진입 (ADR-0092) — 목록 맨 위 한 줄.
+   카드로 키우지 않는 이유는 이 위에 이미 제목·부제·기록 레일·광고가 있어서다.
+   높이를 더 쓰면 첫 게임 카드가 스크롤 밖으로 밀린다. */
+.games-party-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 20px;
+  padding: 12px 16px;
+  min-height: 44px;
+  border: 1px solid var(--ko-accent-primary);
+  border-radius: var(--kh-radius, 6px);
+  background: var(--ko-accent-primary-bg);
+  color: var(--ko-accent-text, var(--ko-accent-primary));
+  text-decoration: none;
+}
+
+.games-party-entry-title {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.games-party-entry-desc {
+  color: var(--ko-text-secondary);
+  font-size: 0.85rem;
+  line-height: var(--ko-leading-relaxed);
+}
+
+.games-party-entry span:last-child {
+  margin-left: auto;
+}
+
+/* 좁은 화면에서는 설명을 아래로 접는다 — 한 줄에 밀어 넣으면 제목이 잘린다 */
+@media (max-width: 560px) {
+  .games-party-entry {
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+
+  .games-party-entry-desc {
+    flex-basis: 100%;
+    order: 3;
+  }
+}
