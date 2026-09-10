@@ -43,10 +43,18 @@ npm run build && npm start        # client/dist 빌드 → 서버가 8787 에서
 # E2E (헤드리스 크롬, WebGL 은 --gl 필요, 끝나면 반드시 stop)
 PORT=8787 node server/src/index.ts &   # 서버
 P=$(../scripts/cdp-chrome.sh start amparena --gl | tail -1)
-node tools/e2e-practice.mjs $P http://127.0.0.1:8787 <outDir>
-node tools/e2e-online.mjs   $P http://127.0.0.1:8787 <outDir>
+node tools/e2e-practice.mjs $P http://127.0.0.1:8787 <outDir>     # 15초 스모크
+node tools/e2e-online.mjs   $P http://127.0.0.1:8787 <outDir>     # 2탭 스모크
+node tools/e2e-mobile.mjs   $P http://127.0.0.1:8787 <outDir>     # 844×390 터치 레이아웃
+node tools/e2e-autopilot.mjs $P http://127.0.0.1:8787 <outDir>    # 키→입력 매핑 + 봇 AI 가 내 캐릭터 조종 60초 (준 데미지 > 0)
+node tools/e2e-fullmatch.mjs $P http://127.0.0.1:8787 <outDir>    # 연습 2분 완주 → 결과 → 다시 하기 (약 2.5분)
+node tools/e2e-online-full.mjs $P http://127.0.0.1:8787 <outDir>  # 2탭 2분 완주 → 결과 → 대기실 복귀 (약 3분)
 ../scripts/cdp-chrome.sh stop amparena
 ```
+
+- `?autopilot=1` 이면 봇 AI 가 내 캐릭터를 같은 입력 파이프라인으로 조종한다(디버그·E2E 용). `window.__amp` 로 월드를 들여다볼 수 있다.
+- **헤드리스 크롬은 마지막에 연 탭만 visible** 이라 다른 탭은 rAF 가 멈춰 게임 루프가 안 돈다(frames 0). 여러 탭을 재려면 `Page.bringToFront` 로 번갈아 앞에 둔다.
+- 스크립트로 키를 마구 누르는 조작은 조준이 없어 2분 동안 준 데미지 0 이 나온다 — 그건 게임이 아니라 스크립트 문제였고, 오토파일럿으로 60초에 3 KO·275 데미지가 확인됐다.
 
 ## 막힌 것 · 함정
 

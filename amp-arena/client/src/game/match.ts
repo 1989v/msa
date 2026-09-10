@@ -6,6 +6,11 @@ import { InputController } from './input.ts';
 import { SLOT_COLORS } from './rig.ts';
 import { targetPose } from './poses.ts';
 import { audio } from './audio.ts';
+import { botInput, newBotMemory, type BotMemory } from '@amp/shared';
+
+/** E2E·디버그용 창 훅: 월드 조회와 오토파일럿(봇 AI 가 내 캐릭터를 조종) */
+interface DebugHook { source: MatchSource; lastInput: Input | null; autopilot: boolean }
+declare global { interface Window { __amp?: DebugHook } }
 
 export interface RenderPlayer {
   id: number; x: number; y: number; z: number; yaw: number; state: PState; t: number; move: MoveId | null;
@@ -54,6 +59,8 @@ export class Match {
   private hitstop = new Map<number, number>(); // 리그별 포즈 정지 만료 시각
   private shake = 0;
   private lastCountdown = -1;
+  private debug: DebugHook;
+  private autoMem: BotMemory | null = null;
   private onKey = (e: KeyboardEvent): void => { if (e.code === 'KeyM' && !(document.activeElement && document.activeElement.tagName === 'INPUT')) { const m = audio.toggleMute(); this.hud.pushFeed(`<span class="muted">효과음 ${m ? '끔' : '켬'} (M)</span>`); } };
 
   constructor(container: HTMLElement, source: MatchSource, opts: MatchOptions) {
@@ -73,6 +80,8 @@ export class Match {
     this.hud.setRoster(source.roster, source.myId, source.world.teams);
     const me = source.world.players[source.myId];
     if (me) this.renderer.resetCamera(me.yaw);
+    this.debug = { source, lastInput: null, autopilot: new URLSearchParams(location.search).get('autopilot') === '1' };
+    window.__amp = this.debug;
     audio.unlock();
     window.addEventListener('keydown', this.onKey);
     if (this.input.hasTouch) {
@@ -93,7 +102,12 @@ export class Match {
     let steps = 0;
     while (this.acc >= DT && steps < 5) {
       this.seq++;
-      const input = this.input.sample(this.seq, this.renderer.camYaw);
+      let input = this.input.sample(this.seq, this.renderer.camYaw);
+      if (this.debug.autopilot) {
+        const me = this.source.world.players[this.source.myId];
+        if (me) { if (!this.autoMem) this.autoMem = newBotMemory(this.source.world.rng); input = { ...botInput(this.source.world, me, this.autoMem), seq: this.seq }; }
+      }
+      this.debug.lastInput = input;
       this.source.tick(input);
       this.acc -= DT;
       steps++;

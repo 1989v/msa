@@ -63,6 +63,9 @@ export class Page {
   async tap(code, key = code, ms = 40) { await this.keyDown(code, key); await this.sleep(ms); await this.keyUp(code, key); }
   async hold(code, key, ms) { await this.keyDown(code, key); await this.sleep(ms); await this.keyUp(code, key); }
 
+  /** 헤드리스는 마지막에 연 탭만 visible 이라 rAF 가 돈다 — 탭을 앞으로 가져와야 게임 루프가 진행된다 */
+  front() { return this.send('Page.bringToFront'); }
+
   async shot(path) {
     const r = await this.send('Page.captureScreenshot', { format: 'png' });
     writeFileSync(path, Buffer.from(r.data, 'base64'));
