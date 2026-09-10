@@ -41,7 +41,7 @@ class GatewayRouteConfig(
      * gateway 의 springdoc UI (`/api/docs`) 가 이 spec 들을 드롭다운으로 노출한다.
      */
     private val openApiServices = mapOf(
-        "product" to "http://product:8081",
+        "product" to "http://commerce:8085", // ADR-0093: commerce 폴드
         "order" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "search" to "http://search:8083",
         "inventory" to "http://commerce:8085",
@@ -108,7 +108,7 @@ class GatewayRouteConfig(
                 r.method(HttpMethod.GET)
                     .and().path("/api/products/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri("http://product:8081")
+                    .uri("http://commerce:8085") // ADR-0093: commerce 폴드
             }
             // Product Service 쓰기 (ROLE_SELLER+ 검증은 service level 의 X-User-Roles 로 처리)
             .route("product-service-write") { r ->
@@ -117,7 +117,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://product:8081")
+                    .uri("http://commerce:8085") // ADR-0093: commerce 폴드
             }
             // Order Service (ROLE_USER+)
             .route("order-service") { r ->

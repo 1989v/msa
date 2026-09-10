@@ -257,14 +257,6 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "5"
-  - target: {kind: Deployment, name: "^(product)$"}
-    patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: placeholder
-        annotations:
-          argocd.argoproj.io/sync-wave: "6"
   - target: {kind: Deployment, name: "^(search)$"}
     patch: |-
       apiVersion: apps/v1
@@ -395,9 +387,6 @@ images:
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: f845b2a
-  - name: commerce/product
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/product
-    newTag: 6feb9be
   - name: commerce/quant
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
     newTag: 6feb9be

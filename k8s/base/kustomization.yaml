@@ -9,7 +9,6 @@ kind: Kustomization
 namespace: commerce
 resources:
   - gateway
-  - product
   # ADR-0058: order 는 inventory(commerce) 로 폴드 — 별도 Deployment 없음 (스키마 order_db·토픽 유지)
   - search
   - search-consumer
@@ -50,7 +49,7 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|engagement|account|chatbot|code-dictionary|quant|place)"
+      name: "(gateway|search|search-consumer|auth|gifticon|commerce|analytics|engagement|account|chatbot|code-dictionary|quant|place)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment

@@ -74,7 +74,7 @@ spring:
             # 패턴: StripPrefix=2 가 /svc/<service> 두 segment 를 제거.
             # gateway 자체 actuator 는 /actuator/health (routes 무관, Spring Boot 가 직접 노출).
             - id: actuator-product
-              uri: http://product:8081
+              uri: http://commerce:8085 # ADR-0093: commerce 폴드
               predicates: [Path=/svc/product/actuator/health]
               filters: [StripPrefix=2]
             # ADR-0058: order/inventory/fulfillment/warehouse 는 commerce 로 폴드 — 단일 actuator
