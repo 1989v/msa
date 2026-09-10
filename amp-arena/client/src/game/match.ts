@@ -76,6 +76,7 @@ export class Match {
     audio.unlock();
     window.addEventListener('keydown', this.onKey);
     if (this.input.hasTouch) {
+      this.el.classList.add('touch');
       const hint = document.createElement('div');
       hint.className = 'rotate-hint';
       hint.textContent = '가로로 돌려 주세요';
