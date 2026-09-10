@@ -15,7 +15,7 @@ import org.testcontainers.utility.DockerImageName
 /**
  * ADR-0058 — commerce 모듈러 모놀리스 **전체 컨텍스트 로드** 검증.
  *
- * inventory + warehouse + fulfillment 3개 도메인 feature 를 한 JVM(InventoryApplication→commerce)에
+ * inventory + warehouse + fulfillment + order 도메인 feature 를 한 JVM(InventoryApplication→commerce)에
  * 컴포넌트 스캔으로 띄워, ① 빈 이름 충돌이 없고 ② 도메인별 EMF/TM + 전용 outbox/idempotency 가
  * 각자 datasource/TM 에 바인딩되어 로드되는지 확인한다. 컨텍스트가 뜨면 cross-domain 빈 충돌이
  * 모두 해소됐다는 의미(Spring 은 default 로 bean override 비활성 → 충돌 시 로드 실패).
@@ -35,10 +35,6 @@ fun commerceDockerAvailable(): Boolean = dockerAvailable
         "spring.kafka.listener.auto-startup=false",
         "spring.jpa.hibernate.ddl-auto=create",
         "spring.flyway.enabled=false",
-        // member 는 전용 Flyway 를 갖는다(ADR-0078). 토글이 호스트와 분리돼 있어
-        // spring.flyway.enabled 로는 꺼지지 않는다 — 여기서 끄지 않으면 ddl-auto 가
-        // 테이블을 만들기도 전에 V2 의 ALTER 가 돌아 컨텍스트 로드가 깨진다.
-        "member.flyway.enabled=false",
         "outbox.polling.enabled=false",
         "management.health.redis.enabled=false",
         "spring.data.redis.host=localhost",
@@ -64,8 +60,6 @@ class CommerceContextLoadSpec(
                     "warehouseEntityManagerFactory", "warehouseTransactionManager",
                     "fulfillmentEntityManagerFactory", "fulfillmentTransactionManager",
                     "orderEntityManagerFactory", "orderTransactionManager",
-                    "memberEntityManagerFactory", "memberTransactionManager",
-                    "wishlistEntityManagerFactory", "wishlistTransactionManager",
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
 
                 // 도메인별 전용 outbox/idempotency (각자 TM 바인딩)
@@ -102,8 +96,6 @@ class CommerceContextLoadSpec(
                             it.execute("CREATE DATABASE IF NOT EXISTS warehouse_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS fulfillment_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS order_db")
-                            it.execute("CREATE DATABASE IF NOT EXISTS member_db")
-                            it.execute("CREATE DATABASE IF NOT EXISTS wishlist_db")
                         }
                     }
                 }
@@ -119,8 +111,6 @@ class CommerceContextLoadSpec(
             val wh = inv.replace("/inventory_db", "/warehouse_db")
             val ful = inv.replace("/inventory_db", "/fulfillment_db")
             val ord = inv.replace("/inventory_db", "/order_db")
-            val mem = inv.replace("/inventory_db", "/member_db")
-            val wish = inv.replace("/inventory_db", "/wishlist_db")
             // inventory (master/replica)
             for (role in listOf("master", "replica")) {
                 registry.add("spring.datasource.$role.jdbc-url") { inv }
@@ -139,14 +129,6 @@ class CommerceContextLoadSpec(
                 registry.add("spring.datasource.order.$role.username") { mysql.username }
                 registry.add("spring.datasource.order.$role.password") { mysql.password }
                 registry.add("spring.datasource.order.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
-                registry.add("spring.datasource.member.$role.jdbc-url") { mem }
-                registry.add("spring.datasource.member.$role.username") { mysql.username }
-                registry.add("spring.datasource.member.$role.password") { mysql.password }
-                registry.add("spring.datasource.member.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
-                registry.add("spring.datasource.wishlist.$role.jdbc-url") { wish }
-                registry.add("spring.datasource.wishlist.$role.username") { mysql.username }
-                registry.add("spring.datasource.wishlist.$role.password") { mysql.password }
-                registry.add("spring.datasource.wishlist.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             }
         }
     }

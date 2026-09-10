@@ -84,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics engagement code-dictionary commerce chatbot quant place"
+          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics engagement account code-dictionary commerce chatbot quant place"
           ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed amp-arena"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
@@ -155,7 +155,9 @@ jobs:
               auth|auth/*)                               JVM_SVCS+=" auth" ;;
               gifticon|gifticon/app/*|gifticon/domain/*) JVM_SVCS+=" gifticon" ;;
               gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
-              inventory/*|warehouse/*|fulfillment/*|order/*|member/*|wishlist/*|commerce/*)           JVM_SVCS+=" commerce" ;;
+              inventory/*|warehouse/*|fulfillment/*|order/*|commerce/*)  JVM_SVCS+=" commerce" ;;
+              # ADR-0093: member·wishlist 는 account 호스트로 옮겼다
+              member/*|wishlist/*|account/*)             JVM_SVCS+=" account" ;;
               analytics/*)                               JVM_SVCS+=" analytics" ;;
               experiment/*)                              JVM_SVCS+=" engagement" ;; # ADR-0093 폴드
               # code-dictionary:app 에 폴드된 모듈들 — 이쪽 변경도 code-dictionary 리빌드다.
@@ -279,9 +281,10 @@ jobs:
               search-consumer)    TASKS+=" :search:consumer:test" ;;
               # ADR-0058: commerce 는 aggregator(:commerce:app)만 있고 :commerce:domain 없음 →
               # 폴드된 4 도메인/feature 테스트를 직접 지정 (default 의 :commerce:domain:test 는 미존재 → CI 실패).
-              # ADR-0093: engagement 도 aggregator 라 :engagement:domain 이 없다 (commerce 와 같은 함정).
+              # ADR-0093: engagement·account 도 aggregator 라 :{svc}:domain 이 없다 (commerce 와 같은 함정).
               engagement)         TASKS+=" :engagement:app:test :recommendation:domain:test :recommendation:feature:test :experiment:domain:test :experiment:feature:test" ;;
-              commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
+              account)            TASKS+=" :account:app:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
+              commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test" ;;
               *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
             esac
           done

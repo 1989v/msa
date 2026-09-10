@@ -12,6 +12,7 @@ import org.springframework.boot.jpa.EntityManagerFactoryBuilder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.DependsOn
+import org.springframework.context.annotation.Primary
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy
 import org.springframework.orm.jpa.JpaTransactionManager
@@ -21,8 +22,11 @@ import javax.sql.DataSource
 
 /**
  * ADR-0058 round 2 — commerce 모듈러 모놀리스. member 도메인의 **전용** datasource(member_db) +
- * EMF + TM. 비-@Primary(=inventory 가 primary). member 는 outbox/kafka 미사용.
- * 재분리 시 이 설정이 그대로 standalone member:app 으로 따라간다(@Primary 만 부여).
+ * EMF + TM. member 는 outbox/kafka 미사용.
+ *
+ * **ADR-0093 부터 @Primary 다.** commerce 에 있을 때는 inventory 가 primary 라 비-@Primary
+ * 였는데, account 호스트에는 member·wishlist 둘뿐이라 primary 가 없으면 타입으로 주입되는
+ * 자리(헬스 인디케이터·JPA 자동 구성)가 NoUniqueBeanDefinition 으로 깨진다.
  */
 @Configuration
 @EnableJpaRepositories(
@@ -54,6 +58,7 @@ class MemberDataSourceConfig {
     }
 
     @Bean
+    @Primary
     fun memberDataSource(
         @Qualifier("memberRoutingDataSource") routingDataSource: DataSource,
     ): DataSource = LazyConnectionDataSourceProxy(routingDataSource)
@@ -82,6 +87,7 @@ class MemberDataSourceConfig {
     // 마이그레이션이 EMF 생성(스키마 검증)보다 먼저 끝나야 한다 — ddl-auto=validate 라
     // email 컬럼이 남아 있는 채로 검증이 돌면 기동 자체가 갈린다.
     @Bean
+    @Primary
     @DependsOn("memberFlyway")
     fun memberEntityManagerFactory(
         builder: EntityManagerFactoryBuilder,
@@ -93,6 +99,7 @@ class MemberDataSourceConfig {
             .build()
 
     @Bean
+    @Primary
     fun memberTransactionManager(
         @Qualifier("memberEntityManagerFactory") emf: EntityManagerFactory,
     ): PlatformTransactionManager = JpaTransactionManager(emf)

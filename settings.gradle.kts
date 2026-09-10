@@ -45,6 +45,8 @@ include(
     "recommendation:feature",
     // ADR-0093 — engagement: recommendation+experiment 폴드 호스트
     "engagement:app",
+    // ADR-0093 — account: member+wishlist 폴드 호스트
+    "account:app",
     "place:domain",
     "place:app",
     "deal:domain",
