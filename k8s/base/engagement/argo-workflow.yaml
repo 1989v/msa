@@ -37,5 +37,5 @@ spec:
               set -eu
               curl -sSf -X POST \
                 --max-time 600 \
-                http://recommendation:8092/internal/sync/cb-score \
+                http://engagement:8091/internal/sync/cb-score \
                 -H "Content-Type: application/json"

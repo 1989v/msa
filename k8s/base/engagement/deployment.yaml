@@ -1,31 +1,33 @@
+# ADR-0093 — engagement: recommendation + experiment 폴드 (JVM 2 → 1).
+# env 는 두 서비스 것을 합친 것이고 값은 그대로다.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: recommendation
+  name: engagement
   namespace: commerce
   labels:
-    app.kubernetes.io/name: recommendation
+    app.kubernetes.io/name: engagement
     app.kubernetes.io/part-of: commerce-platform
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: recommendation
+      app.kubernetes.io/name: engagement
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: recommendation
+        app.kubernetes.io/name: engagement
         app.kubernetes.io/part-of: commerce-platform
     spec:
-      serviceAccountName: recommendation
+      serviceAccountName: engagement
       terminationGracePeriodSeconds: 45
       containers:
         - name: app
-          image: commerce/recommendation:latest
+          image: commerce/engagement:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
-              containerPort: 8092
+              containerPort: 8091
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"

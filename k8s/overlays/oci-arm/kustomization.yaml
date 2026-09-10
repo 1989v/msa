@@ -160,12 +160,10 @@ patches:
     #     적용 대상: gateway, product, order, search, gifticon, fulfillment
     #     (gifticon/fulfillment 는 k3s-lite 의 동일값 명시 패치 보유)
 
-    target: {kind: Deployment, name: experiment}
+    target: {kind: Deployment, name: engagement}
   # ADR-0058 — search-batch 는 CronJob(Deployment 아님). resource 패치 대상 제외.
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: search-consumer}
-  - path: patches/resources-s-512mi.yaml
-    target: {kind: Deployment, name: recommendation}
   # recommendation-ann 은 티어 뒤에 전용 패치로 다시 내린다(실사용 60Mi)
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: recommendation-ann}
@@ -278,7 +276,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "8"
-  - target: {kind: Deployment, name: "^(experiment)$"}
+  - target: {kind: Deployment, name: "^(engagement)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -318,14 +316,6 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "13"
-  - target: {kind: Deployment, name: "^(recommendation)$"}
-    patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: placeholder
-        annotations:
-          argocd.argoproj.io/sync-wave: "14"
   - target: {kind: Deployment, name: "^(recommendation-ann)$"}
     patch: |-
       apiVersion: apps/v1
@@ -376,9 +366,6 @@ images:
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: 754510e
-  - name: commerce/experiment
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/experiment
-    newTag: ff882e0
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
     newTag: c341b72
@@ -412,9 +399,6 @@ images:
   - name: commerce/ranking-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/ranking-ingest
     newTag: 512b040
-  - name: commerce/recommendation
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation
-    newTag: ff882e0
   - name: commerce/recommendation-ann
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/recommendation-ann
     newTag: 6a1889c

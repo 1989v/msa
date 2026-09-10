@@ -49,7 +49,7 @@ class GatewayRouteConfig(
         "auth" to "http://auth:8087",
         "fulfillment" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "warehouse" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
-        "recommendation" to "http://recommendation:8092",
+        "recommendation" to "http://engagement:8091", // ADR-0093: engagement 폴드
         "member" to "http://commerce:8085",
         "wishlist" to "http://commerce:8085",
     )
@@ -194,10 +194,11 @@ class GatewayRouteConfig(
                     .uri("http://commerce:8085")
             }
             // Recommendation Service — ADR-0044 Phase 1 (인증 불필요, 메인 페이지 비로그인 사용자도 호출)
+            // ADR-0093: recommendation + experiment 가 engagement 파드로 폴드됐다.
             .route("recommendation-service") { r ->
                 r.path("/api/v1/recommendations/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri("http://recommendation:8092")
+                    .uri("http://engagement:8091")
             }
             // === ADR-0059 Game 플랫폼 (code-dictionary:app 에 폴드) ===
             // 인증 수준이 다른 3종을 분리하며, 좁은 경로를 먼저 선언해야 games/** 에 가려지지 않는다.

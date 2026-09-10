@@ -20,12 +20,11 @@ resources:
   # ADR-0058: warehouse·fulfillment 는 inventory(commerce) 로 폴드 — 별도 Deployment 없음
   # (스키마 warehouse_db/fulfillment_db 는 유지, fulfillment.order.* 토픽도 commerce 가 발행)
   - analytics
-  - experiment
   - chatbot
   - code-dictionary
   - quant
   - quant-ingest
-  - recommendation
+  - engagement  # ADR-0093: recommendation + experiment 폴드
   - recommendation-ann
   - place
   # ADR-0070: 관광지 개요/콘텐츠 수집 배치 (외부 :443 을 부르는 유일한 place 계열 파드)
@@ -48,7 +47,7 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|experiment|chatbot|code-dictionary|quant|recommendation|place)"
+      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|engagement|chatbot|code-dictionary|quant|place)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment

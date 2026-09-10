@@ -39,7 +39,7 @@ spring:
               predicates:
                 - Path=/api/v1/scores/**, /api/v1/analytics/**, /api/v1/search/judgments/**
             - id: experiment-service
-              uri: http://experiment:8091
+              uri: http://engagement:8091 # ADR-0093: engagement 폴드
               predicates:
                 - Path=/api/v1/experiments/**
             # T4.1 — Code Dictionary 서비스 (IT 개념 사전 + Elasticsearch 검색/시각화 + 서비스 카탈로그)
@@ -115,7 +115,7 @@ spring:
               predicates: [Path=/svc/analytics/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-experiment
-              uri: http://experiment:8091
+              uri: http://engagement:8091 # ADR-0093: engagement 폴드
               predicates: [Path=/svc/experiment/actuator/health]
               filters: [StripPrefix=2]
 

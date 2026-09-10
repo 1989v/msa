@@ -33,5 +33,5 @@ spec:
               set -eu
               curl -sSf -X POST \
                 --max-time 3600 \
-                http://recommendation:8092/internal/sync/item-similarity \
+                http://engagement:8091/internal/sync/item-similarity \
                 -H "Content-Type: application/json"
