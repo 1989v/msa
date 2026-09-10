@@ -1,0 +1,224 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t01b/index.html",
+  "renderer": "Isolated headless Chrome / software WebGL; not a performance benchmark",
+  "errors": [],
+  "interaction": {
+    "autoRotateToggle": null,
+    "viewButtonsRespond": null
+  },
+  "snapshots": [
+    {
+      "label": "desktop",
+      "width": 1280,
+      "height": 900,
+      "title": "Skybound · 바람이 머무는 절벽",
+      "text": "SKYBOUND / 바람의 유적\n\n바람이 머무는 절벽\n드래그하여 둘러보기 · 스크롤 또는 두 손가락으로 확대\n처음 시점",
+      "horizontalOverflow": false,
+      "canvas": [
+        {
+          "width": 1280,
+          "height": 900
+        }
+      ],
+      "readiness": {
+        "ready": true,
+        "sceneReady": true,
+        "error": null,
+        "running": true,
+        "frames": 5,
+        "seed": 17391,
+        "meshes": 146,
+        "instances": 4352,
+        "triangles": 177364,
+        "terrainIslands": 9,
+        "pathSamples": 181,
+        "externalAssets": 0,
+        "bounds": {
+          "min": [
+            -154.22010803222656,
+            -28.59967613220215,
+            -276.36029052734375
+          ],
+          "max": [
+            149.99473571777344,
+            44.99948501586914,
+            52.07537078857422
+          ]
+        },
+        "camera": {
+          "position": [
+            43.00000000000001,
+            33.00000000000001,
+            67
+          ],
+          "target": [
+            0,
+            19,
+            -12
+          ],
+          "distance": 91.02746838180221,
+          "polar": 1.4163837119924583,
+          "azimuth": 0.49845941046667885,
+          "aspect": 1.4222222222222223,
+          "minDistance": 60,
+          "maxDistance": 260
+        },
+        "reducedMotion": false,
+        "pixelRatio": 1,
+        "viewport": {
+          "width": 1280,
+          "height": 900,
+          "bufferWidth": 1280,
+          "bufferHeight": 900
+        },
+        "waterTime": 0.1333000000000002,
+        "contextLost": false,
+        "hidden": false,
+        "drawCalls": 134,
+        "renderTriangles": 201750
+      }
+    },
+    {
+      "label": "portrait",
+      "width": 390,
+      "height": 844,
+      "title": "Skybound · 바람이 머무는 절벽",
+      "text": "SKYBOUND / 바람의 유적\n\n바람이 머무는 절벽\n드래그하여 둘러보기 · 스크롤 또는 두 손가락으로 확대\n처음 시점",
+      "horizontalOverflow": false,
+      "canvas": [
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "readiness": {
+        "ready": true,
+        "sceneReady": true,
+        "error": null,
+        "running": true,
+        "frames": 17,
+        "seed": 17391,
+        "meshes": 146,
+        "instances": 4352,
+        "triangles": 177364,
+        "terrainIslands": 9,
+        "pathSamples": 181,
+        "externalAssets": 0,
+        "bounds": {
+          "min": [
+            -154.22010803222656,
+            -28.59967613220215,
+            -276.36029052734375
+          ],
+          "max": [
+            149.99473571777344,
+            44.99948501586914,
+            52.07537078857422
+          ]
+        },
+        "camera": {
+          "position": [
+            93.05641025641027,
+            49.29743589743591,
+            158.96410256410255
+          ],
+          "target": [
+            0,
+            19,
+            -12
+          ],
+          "distance": 196.99277772882323,
+          "polar": 1.4163837119924583,
+          "azimuth": 0.4984594104666789,
+          "aspect": 0.46208530805687204,
+          "minDistance": 60,
+          "maxDistance": 260
+        },
+        "reducedMotion": false,
+        "pixelRatio": 1,
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "bufferWidth": 390,
+          "bufferHeight": 844
+        },
+        "waterTime": 0.6333000000000002,
+        "contextLost": false,
+        "hidden": false,
+        "drawCalls": 126,
+        "renderTriangles": 161142
+      }
+    },
+    {
+      "label": "landscape",
+      "width": 844,
+      "height": 390,
+      "title": "Skybound · 바람이 머무는 절벽",
+      "text": "SKYBOUND / 바람의 유적\n\n바람이 머무는 절벽\n드래그하여 둘러보기 · 스크롤 또는 두 손가락으로 확대\n처음 시점",
+      "horizontalOverflow": false,
+      "canvas": [
+        {
+          "width": 844,
+          "height": 390
+        }
+      ],
+      "readiness": {
+        "ready": true,
+        "sceneReady": true,
+        "error": null,
+        "running": true,
+        "frames": 29,
+        "seed": 17391,
+        "meshes": 146,
+        "instances": 4352,
+        "triangles": 177364,
+        "terrainIslands": 9,
+        "pathSamples": 181,
+        "externalAssets": 0,
+        "bounds": {
+          "min": [
+            -154.22010803222656,
+            -28.59967613220215,
+            -276.36029052734375
+          ],
+          "max": [
+            149.99473571777344,
+            44.99948501586914,
+            52.07537078857422
+          ]
+        },
+        "camera": {
+          "position": [
+            43.000000000000014,
+            33.00000000000001,
+            67
+          ],
+          "target": [
+            0,
+            19,
+            -12
+          ],
+          "distance": 91.02746838180221,
+          "polar": 1.4163837119924583,
+          "azimuth": 0.49845941046667896,
+          "aspect": 2.164102564102564,
+          "minDistance": 60,
+          "maxDistance": 260
+        },
+        "reducedMotion": false,
+        "pixelRatio": 1,
+        "viewport": {
+          "width": 844,
+          "height": 390,
+          "bufferWidth": 844,
+          "bufferHeight": 390
+        },
+        "waterTime": 1.166600000000001,
+        "contextLost": false,
+        "hidden": false,
+        "drawCalls": 148,
+        "renderTriangles": 222582
+      }
+    }
+  ]
+}

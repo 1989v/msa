@@ -8,9 +8,9 @@ questions:
   - id: Q02
     topic: 모델 및 재질 제작 방식
     stage: T01A-before-content
-    status: open
+    status: resolved-static-props
     default: 원화 기준의 glTF 또는 동등 품질 제작
-    resolution: T01A에서 도구 가용성과 독창적 소품 하나의 제작-내보내기-렌더 경로를 먼저 결정, 이후 장면/캐릭터 품질 검증. 다른 게임 자산 제외, 출처/라이선스 기록, 유료 구매는 별도 결정
+    resolution: T01A에서 Three 명시적 기하→정적 GLB→GLTFLoader 경로 검증 완료. 정적 환경 소품에만 적용하며 캐릭터/텍스처 제작은 Q05로 분리. 다른 게임 자산 제외.
   - id: Q03
     topic: 실제 모바일 검증 기기
     stage: P4
@@ -23,3 +23,9 @@ questions:
     status: open
     default: 로컬 정적 게임만 준비
     resolution: T09에서 검증된 결과와 외부 변경 목록을 제시한 뒤 사용자 승인
+  - id: Q05
+    topic: 캐릭터 리깅과 텍스처 제작 경로
+    stage: T02B-before-character
+    status: open
+    default: 표준 glTF 도구를 사용하고 T01A 제한 exporter를 확장하지 않음
+    resolution: 캐릭터 제작 시작 시 원화 품질과 도구 가용성 확인, 출처/라이선스 기록, 유료 구매는 별도 결정

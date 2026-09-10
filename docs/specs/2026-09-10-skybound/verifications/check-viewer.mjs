@@ -1,9 +1,10 @@
 // Run against a project-owned CDP browser; never starts or stops a browser.
-// node check-viewer.mjs <CDP port> <viewer URL>
+// node check-viewer.mjs <CDP port> <viewer URL> [artifact label]
 import { writeFile } from 'node:fs/promises';
 
-const [port, url] = process.argv.slice(2);
+const [port, url, artifact = 't01a', mode = 'all'] = process.argv.slice(2);
 if (!port || !url) throw new Error('Usage: node check-viewer.mjs <CDP port> <viewer URL>');
+if (!/^[a-z0-9-]+$/.test(artifact)) throw new Error('Invalid artifact label');
 const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
 const page = pages.find((entry) => entry.type === 'page');
 if (!page) throw new Error('No page in isolated browser');
@@ -59,22 +60,35 @@ try {
     const started = Date.now();
     const poll = () => {
       if (window.__SKYBOUND_VIEWER__?.error) { reject(new Error(window.__SKYBOUND_VIEWER__.error)); return; }
-      if (window.__SKYBOUND_VIEWER__?.ready && window.__SKYBOUND_VIEWER__?.loadedFromGLB) { resolve(); return; }
-      if (Date.now() - started > 10000) { reject(new Error('Actual GLB did not load and render')); return; }
+      const state = window.__SKYBOUND_VIEWER__;
+      if (state?.ready && (${JSON.stringify(artifact)} === 't01a' ? state.loadedFromGLB : state.sceneReady)) { resolve(); return; }
+      if (Date.now() - started > 10000) { reject(new Error('Actual scene did not load and render')); return; }
       setTimeout(poll, 100);
     }; poll();
   })`);
   const interaction = await evaluate(`(() => {
     const button=document.querySelector('#rotate');
+    if (!button) return {autoRotateToggle:null, viewButtonsRespond:null};
     button.click(); const enabled=button.getAttribute('aria-pressed')==='true';
     button.click(); const disabled=button.getAttribute('aria-pressed')==='false';
-    document.querySelector('#front').click(); document.querySelector('#reset').click();
+    document.querySelector('#front')?.click(); document.querySelector('#reset')?.click();
     return {autoRotateToggle:enabled&&disabled, viewButtonsRespond:true};
   })()`);
   const snapshots = [];
-  for (const [label, width, height] of [['desktop', 1280, 900], ['portrait', 390, 844], ['landscape', 844, 390]]) {
+  const viewports = [['desktop', 1280, 900], ['portrait', 390, 844], ['landscape', 844, 390]];
+  for (const [label, width, height] of (mode === 'desktop' ? viewports.slice(0, 1) : viewports)) {
     await send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
-    await evaluate('new Promise(resolve => setTimeout(resolve, 350))');
+    await evaluate(`new Promise((resolve, reject) => {
+      const started = Date.now();
+      const poll = () => {
+        const canvas = document.querySelector('canvas');
+        if (canvas?.width === ${width} && canvas?.height === ${height}) {
+          requestAnimationFrame(() => requestAnimationFrame(resolve)); return;
+        }
+        if (Date.now() - started > 10000) { reject(new Error('Canvas did not resize')); return; }
+        setTimeout(poll, 100);
+      }; poll();
+    })`);
     const details = await evaluate(`({
       title: document.title,
       text: document.body.innerText,
@@ -83,13 +97,13 @@ try {
       readiness: window.__SKYBOUND_VIEWER__ ?? null,
     })`);
     const screenshot = await send('Page.captureScreenshot', { format: 'png' });
-    await writeFile(new URL(`t01a-${label}.png`, import.meta.url), Buffer.from(screenshot.data, 'base64'));
+    await writeFile(new URL(`${artifact}-${label}.png`, import.meta.url), Buffer.from(screenshot.data, 'base64'));
     snapshots.push({ label, width, height, ...details });
   }
   const result = { url, renderer: 'Isolated headless Chrome / software WebGL; not a performance benchmark', errors, interaction, snapshots };
-  await writeFile(new URL('t01a-browser.json', import.meta.url), JSON.stringify(result, null, 2) + '\n');
+  await writeFile(new URL(`${artifact}-browser.json`, import.meta.url), JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify(result, null, 2));
-  if (errors.length || !interaction.autoRotateToggle || snapshots.some(s => s.horizontalOverflow || !s.readiness?.ready)) process.exitCode = 1;
+  if (errors.length || (artifact === 't01a' && !interaction.autoRotateToggle) || snapshots.some(s => s.horizontalOverflow || !s.readiness?.ready)) process.exitCode = 1;
 } finally {
   socket.close();
 }

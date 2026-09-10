@@ -1,0 +1,19 @@
+{
+  "checks": [
+    "zoom-out stays within bounds",
+    "zoom-in stays within bounds",
+    "drag respects orbit limits",
+    "reset returns original camera",
+    "reduced motion freezes water animation",
+    "synthetic visibility event stops render loop",
+    "visibility handler resumes loop",
+    "touch DPR capped at 1.5",
+    "actual WebGL loss stops loop and exposes retry",
+    "actual WebGL restoration resumes rendering",
+    "no unexpected runtime errors before failure injection",
+    "WebGL initialization failure has actionable retry"
+  ],
+  "pass": 12,
+  "fail": 0,
+  "note": "Software WebGL. Visibility event is synthetic; not a real-device performance benchmark."
+}
