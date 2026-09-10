@@ -99,12 +99,12 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 
 ### 5) 단계 — 각 단계가 독립적으로 롤백된다
 
-| 단계 | 내용 | 테이블 이전 |
-|---|---|---|
-| **①** | product·place 를 `:app` → `:feature` 폴드 · `engagement` · `sideapp` · `account`(member·wishlist) | **0** |
-| **②** | `deal` → commerce · `ranking` → content | 3 + 5 |
-| **③** | `blog` → content | 7 |
-| **④** | `resume` → account (`:resume:feature` 모듈 신설 선행) | 11 |
+| 단계 | 내용 | 테이블 이전 | 상태 |
+|---|---|---|---|
+| **①** | product·place 를 `:app` → `:feature` 폴드 · `engagement` · `sideapp` · `account`(member·wishlist) | **0** | engagement·account·product 완료(2026-09-11), place·sideapp 남음 |
+| **②** | `deal` → commerce · `ranking` → content | 3 + 5 | 미착수 |
+| **③** | `blog` → content | 7 | 미착수 |
+| **④** | `resume` → account (`:resume:feature` 모듈 신설 선행) | 11 | 미착수 |
 
 총 **26테이블**. `blog_post_view`(하루 1표 조회 원장)와 `resume_access_log`(열람 기록)는 행이
 계속 쌓이는 원장이라 이전 시간을 따로 잡는다.
@@ -117,6 +117,29 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 
 `:domain` 분리 유지 · 스키마/datasource/EMF/TM 도메인별 분리 · 컨텍스트 간 통신은 같은 JVM
 이라도 Kafka 유지 · 교차 빈 주입 금지. 이번 개정은 **어느 JVM 에 담느냐만** 바꾼다.
+
+## 실행 기록 — ①단계에서 실제로 나온 것 (2026-09-11)
+
+폴드 셋을 순서대로 배포하며 **컴파일과 단위 테스트가 전부 통과하는 채로** 드러난 결함들이다.
+전부 컨텍스트 로드 검사가 잡았고, 배포 순서를 A(코드)/B(매니페스트)로 쪼갠 덕에 하나씩 갈렸다.
+
+**공통 교훈: 폴드 결함은 조용하다.** 빌드·단위 테스트·readiness 프로브가 모두 초록인데
+기능만 죽는다. 그래서 폴드마다 컨텍스트 로드 검사가 **필수**다.
+
+| 폴드 | 나온 결함 |
+|---|---|
+| `engagement` | ClickHouse `DataSource` 빈 하나로 `DataSourceAutoConfiguration` 이 back-off → experiment 의 JPA 소멸. Hikari 풀이 기동 때 연결을 열어 ClickHouse 장애가 A/B 배정까지 세움 |
+| `account` | 두 도메인 모두 비-@Primary 였다(commerce 에서는 inventory 가 primary) → primary 없는 호스트에서 타입 주입 실패 |
+| `product` | **여섯**: 클래스명 충돌(`DataSourceConfig`·`KafkaConfig`·`OpenApiConfig`) · 빈 이름 충돌 5종 · 설정 키 누락 · 최상위 `kafka:` 중복 키 · `IdempotentEventHandler` 다중화 · common 멱등 엔티티 스캔 누락 · Querydsl 이 호스트 EMF 에 붙어 **다른 DB 로 질의** |
+
+배포 쪽에서도 셋이 나왔다.
+
+- **jib 이 조용히 꺼졌다** — 새 폴드 호스트를 `mainClassByImage` 에 안 넣으면 `jib SKIPPED` 인데
+  워크플로는 성공으로 끝나고 태그만 올려 `ErrImagePull` 이 난다. 안내를 `warn` 으로 올렸다.
+- **NetworkPolicy 가 라벨을 못 따라왔다** — 파드는 Ready 인데 ClickHouse 만 막혔다.
+  허용 목록이 `In` 방식인 규칙(ClickHouse)은 폴드마다 갱신해야 하고, `NotIn` 방식(MySQL·Redis·Kafka)은 그대로 통과한다.
+- **`settings.gradle.kts` 를 건드리면 전 서비스가 재빌드·재배포된다.** 4 OCPU 단일 노드에서
+  load 6.14 까지 올라갔다. 폴드 커밋은 그 성질을 항상 갖는다 — 한산한 시간에 올린다.
 
 ## Alternatives Considered
 
