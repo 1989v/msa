@@ -25,7 +25,7 @@
 - [x] P3 콘텐츠 — 악세서리 6종(테스트 11개)·스카이독·모드 3·아이템(상자·하트·폭탄, 테스트 9개) (2026-09-11)
 - [x] P4 마감 — 합성 SFX·터치 조작·히트스톱/흔들림·Dockerfile·README. 모바일 가로 844×390 E2E 통과 (2026-09-11)
 - [x] 플레이 소감 반영 (2026-09-11) — 좌우 반전(카메라 오른쪽 벡터 부호), 근접 리치 +0.25m, 연타는 후딜 끝나야, **스타일 5종**, **맵 2종 추가**(옥상·얼음 호수). 테스트 56, E2E 전부 오류 0
-- [~] 배포 — `k8s/base/amp-arena` + `network-policy/19` + `overlays/oci-arm/ingresses/amp-arena.yaml`(arena.1989v.com) + `images.yml` 매핑까지 커밋. **남은 것: Cloudflare DNS `arena` 레코드(proxied)** 를 `rank` 와 같은 대상으로 추가. 이미지 태그는 CI 가 첫 빌드 뒤 bootstrap → sha 로 바꾼다
+- [~] 배포 — `k8s/base/amp-arena` + `network-policy/19` + `overlays/oci-arm/ingresses/amp-arena.yaml`(arena.1989v.com) + `images.yml` 매핑까지 커밋. **남은 것: Cloudflare DNS `arena` 레코드(proxied)** 를 `rank` 와 같은 대상으로 추가. 이미지 태그는 CI 가 첫 빌드 뒤 bootstrap → sha 로 바꾼다(aee6fb2 로 바뀜, OCI 파드 Running 1/1). Cloudflare 우회 차단(AOP)은 overlay 의 aop-patch 대상에 amp-arena Ingress 를 넣어 적용 — 확인은 `curl -skI -H "Host: arena.1989v.com" https://<OCI_IP>/` 가 400
 - [ ] Phase 2 (차별화) — 스킨 페인터(UV 아틀라스), 진행·상점, 스탯 분배 UI. 시안 캔버스에는 스타일·새 맵이 아직 없다
 
 ## 장르 문법 중 아직 없는 것
