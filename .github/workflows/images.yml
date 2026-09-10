@@ -84,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics experiment code-dictionary commerce chatbot quant recommendation place"
+          ALL_JVM="gateway product search search-batch search-consumer auth gifticon analytics engagement code-dictionary commerce chatbot quant place"
           ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
@@ -157,7 +157,7 @@ jobs:
               gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
               inventory/*|warehouse/*|fulfillment/*|order/*|member/*|wishlist/*|commerce/*)           JVM_SVCS+=" commerce" ;;
               analytics/*)                               JVM_SVCS+=" analytics" ;;
-              experiment/*)                              JVM_SVCS+=" experiment" ;;
+              experiment/*)                              JVM_SVCS+=" engagement" ;; # ADR-0093 폴드
               # code-dictionary:app 에 폴드된 모듈들 — 이쪽 변경도 code-dictionary 리빌드다.
               # 여기 빠지면 해당 모듈은 아무리 고쳐도 운영에 영원히 반영되지 않는다.
               #   game (ADR-0059) · deal (ADR-0069) · blog (ADR-0072) · ranking (ADR-0081)
@@ -172,7 +172,8 @@ jobs:
               quant/app/*|quant/domain/*|quant/glossary*)JVM_SVCS+=" quant" ;;
               quant/frontend/*)                          DOCKER_SVCS+=" quant-fe" ;;
               quant/ingest/*)                            DOCKER_SVCS+=" quant-ingest" ;;
-              recommendation/app/*|recommendation/domain/*) JVM_SVCS+=" recommendation" ;;
+              recommendation/feature/*|recommendation/domain/*) JVM_SVCS+=" engagement" ;; # ADR-0093 폴드
+              engagement/*)                              JVM_SVCS+=" engagement" ;;
               recommendation-ml/*)                       DOCKER_SVCS+=" recommendation-ml" ;;
               recommendation-ann/*)                      DOCKER_SVCS+=" recommendation-ann" ;;
               search/embed/*)                            DOCKER_SVCS+=" search-embed" ;;
@@ -277,6 +278,8 @@ jobs:
               search-consumer)    TASKS+=" :search:consumer:test" ;;
               # ADR-0058: commerce 는 aggregator(:commerce:app)만 있고 :commerce:domain 없음 →
               # 폴드된 4 도메인/feature 테스트를 직접 지정 (default 의 :commerce:domain:test 는 미존재 → CI 실패).
+              # ADR-0093: engagement 도 aggregator 라 :engagement:domain 이 없다 (commerce 와 같은 함정).
+              engagement)         TASKS+=" :engagement:app:test :recommendation:domain:test :recommendation:feature:test :experiment:domain:test :experiment:feature:test" ;;
               commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
               *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
             esac

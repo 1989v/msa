@@ -177,7 +177,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting, K8s DNS 라우팅 |
 | common | `common/CLAUDE.md` | 공유 라이브러리 |
 | analytics | `analytics/CLAUDE.md` | 이벤트 수집, 스코어 산출 (Kafka Streams + ClickHouse) |
-| experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼 |
+| experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼. `:experiment:feature` 로 **engagement:app 에 폴드** (ADR-0093) |
 | member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
 | wishlist | `wishlist/CLAUDE.md` | 찜하기 — 다형 대상(상품·게임·관광지·블로그 글), 로그인 전용, opaque targetKey (ADR-0074). 관광지는 **여행 묶음**으로 모은다 — `collection_id IS NULL` 이 미분류이고 '기본' 묶음 행을 만들지 않는다 (ADR-0080) |
 | quant | `quant/CLAUDE.md` | 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS + Phase 3 실매매 (ADR-0033/0036/0037, Phase 3 코어 구현 완료, 거래소 어댑터 4종 wire-up 후 Beta) |
@@ -189,7 +189,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | fulfillment | `fulfillment/CLAUDE.md` | 출고 상태 머신 (FulfillmentOrder), Saga choreography 의 출고 단계. commerce:app 폴드 |
 | warehouse | `warehouse/CLAUDE.md` | 창고 마스터. commerce:app 폴드. Kafka 없음 |
 | chatbot | `chatbot/CLAUDE.md` | 대화형 AI — Anthropic SDK 직접 + 채널 추상화(WebSocket/Slack) + 문서 지식원 (ADR-0052) |
-| recommendation | `recommendation/CLAUDE.md` | 추천 — 룰 기반 CB · Item-Item CF · Thompson 밴딧 · ANN 사이드카 (ADR-0044~0049). analytics 의 ClickHouse 를 **읽기만** |
+| recommendation | `recommendation/CLAUDE.md` | 추천 — 룰 기반 CB · Item-Item CF · Thompson 밴딧 · ANN 사이드카 (ADR-0044~0049). analytics 의 ClickHouse 를 **읽기만**. `:recommendation:feature` 로 **engagement:app 에 폴드** (ADR-0093) — ANN 사이드카는 별도 파드 유지 |
 | commerce | `commerce/CLAUDE.md` | **폴드 호스트** — 자기 도메인 없이 order·inventory·fulfillment·warehouse·member·wishlist 를 한 JVM 으로 (ADR-0058). 도메인별 datasource/EMF/TM |
 | admin | `admin/CLAUDE.md` | 백오피스 (**FE 전용** — 어드민 API 는 각 서비스가 `/api/v1/admin/**` 로 제공) |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |

@@ -8,14 +8,14 @@
 | Gradle path | 역할 |
 |---|---|
 | `:recommendation:domain` | Pure Kotlin 도메인 — `Recommendation`, `RecommendationContext`, `ActionWeightedScore` |
-| `:recommendation:app` | Spring Boot 앱 (port 8092) — ClickHouse JDBC + Redis + Kafka + Thompson 밴딧 |
+| `:recommendation:feature` | 비-bootable 라이브러리 — ClickHouse JDBC + Redis + Kafka + Thompson 밴딧. `engagement:app` 에 폴드 (ADR-0093) |
 | `k8s/base/recommendation-ann` | FAISS Python 사이드카 + 일일 학습 Argo 워크플로 (ADR-0046) |
 
 ## Commands
 
 ```bash
 ./gradlew :recommendation:domain:test
-./gradlew :recommendation:app:build
+./gradlew :engagement:app:build   # 호스트 앱 (recommendation 포함)
 ```
 
 ## 구조 상태 (ADR-0083)

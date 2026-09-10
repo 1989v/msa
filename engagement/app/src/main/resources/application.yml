@@ -1,0 +1,95 @@
+# ADR-0093 — engagement: recommendation + experiment 통합 설정.
+# 두 앱의 yml 을 합친 것이고 값은 그대로다. 포트는 experiment 의 8091 을 쓴다
+# (recommendation 8092 는 Argo 워크플로가 부르던 주소라 k8s Service 에 함께 남긴다).
+server:
+  port: 8091
+  shutdown: graceful
+
+spring:
+  application:
+    name: engagement-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  # experiment 전용 스키마. recommendation 은 JPA datasource 를 갖지 않으므로 충돌이 없다.
+  datasource:
+    url: jdbc:mysql://localhost:3348/experiment_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: ${MYSQL_USER:commerce}
+    password: ${MYSQL_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+    show-sql: false
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: recommendation-events-consumer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.kgd.common.analytics,com.kgd.recommendation
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+# ADR-0045 — analytics ClickHouse 공유. read-only.
+recommendation:
+  clickhouse:
+    url: jdbc:clickhouse://${CLICKHOUSE_HOST:localhost}:${CLICKHOUSE_PORT:8123}/analytics
+    username: ${CLICKHOUSE_USER:analytics}
+    password: ${CLICKHOUSE_PASSWORD:analytics}
+  sync:
+    top-per-partition: 100
+    ttl-hours: 25
+  # 같은 JVM 이지만 HTTP 로 부른다 — in-process 로 바꾸면 재분리가 어려워진다(ADR-0058 불변식).
+  experiment:
+    url: ${RECOMMENDATION_EXPERIMENT_URL:http://localhost:8091}
+
+analytics:
+  service:
+    url: http://localhost:8090
+
+kgd:
+  common:
+    redis:
+      enabled: true
+    web-client:
+      enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
