@@ -2,11 +2,19 @@
 
 ## 현재
 
-- **T02B-2 텍스처 경로 검증 완료. 다음 T02B-3 주인공 모델. 캐릭터 연결 전.**
+- **T02B-3a 주인공 모델·리깅 초안 및 1차 수정 저장. 다음 T02B-3b 아트 보완. 캐릭터의 게임 연결 전.**
+- `implementation/t02b/character/`: 원본 모델/atlas, 두 LOD GLB, 뷰어, 모델 테스트 저장.
+  수정 후 단위 4/4, 실제 GLB 브라우저 검사 27/27. 최종 아트 통과가 아니다.
+  LOD0 14,340tri / LOD1 4,654tri, 19 bones, 1K atlas. 재빌드 1초 미만, 브라우저 재생성 수초.
+  내장 PNG 포함 GLB는 1,929,024 / 1,562,884 bytes. `verifications/t02b-3.md`에 검증/미달 기록.
+- 2026-09-11 시각 검토: 어깨/스카프 이음, 망토 외곽, 바지 볼륨 1차 수정 완료.
+  얼굴·일자 앞머리·옷의 자연스러운 주름은 여전히 원화 대비 미달이다.
+- `verifications/t02b-3-before-*.png`에 수정 전 화면 보존. 최신 비교는 같은 접두사의 화면 파일.
+- GLB Base64 전체를 한 CDP 응답에 넣으면 시간 초과가 발생했다. 32KiB 단위로 읽어 해결했다.
 - `implementation/t02b/texture-check/`에 1K PNG(24,764 bytes), 내장 GLB(27,892 bytes), 원본/빌드 저장.
   실제 Chrome 152 이미지 디코딩·UV·sRGB·리깅 검사 12/12, 런타임 오류 0.
   `verifications/t02b-2-browser.json`에 원시 증거. GPU 렌더/최종 아트/실기기는 미검증.
-- 사용자 잔여 한도 15% 지시에 따라 `planning/t02b-small-steps.md`로 T02B를 4개 소단위로 나눴다.
+- 이전 사용자 잔여 한도 15% 지시에 따라 `planning/t02b-small-steps.md`로 T02B를 4개 소단위로 나눴다.
 - `implementation/t02b/rig-check/`에 재현 소스·GLB(2,604 bytes)·테스트·README 저장.
   표준 Three.js exporter/loader의 뼈대·가중치·애니메이션 왕복과 CPU 정점 변형, tests 4/4 직접 재검증.
   진단 메시이며 실제 주인공/텍스처/GPU 렌더 검증이 아니다.
@@ -29,7 +37,12 @@
 
 ## 다음 작업
 
-**T02B-3: 원화 기준 주인공 모델 제작을 작은 단위로 진행·기록·커밋.**
+**T02B-3b: 얼굴·헤어·옷 형태를 원화 기준으로 보완하고 같은 구도로 검증.**
+
+- 최신 사용자 한도 안내는 5h 리밋 55%. 작은 단위 구현→검증→저장 원칙은 유지한다.
+- 새 모델을 처음부터 만들지 않는다. character/model-report.md 및 verifications/t02b-3.md를 읽는다.
+- 얼굴의 평면적 비례, 일자 톱니 앞머리, 원통형 튜닉 아래단과 천 주름을 우선 개선한다.
+- T02B-3 전체는 미완료이며 아트 검수 후 T02B-4 걷기/점프/착지와 이동 연결로 간다.
 
 - `planning/t02b-small-steps.md`와 `implementation/t02b/rig-check/README.md`부터 읽는다.
 - `implementation/t02b/texture-check/README.md`를 읽는다. Q05 기술 경로는 검증 완료.
@@ -59,6 +72,8 @@
 
 ## 검증과 막힌 것
 
+- T02B-3 모델 보고 중 크레딧 오류가 한 차례 발생했으나 사용자 재개 후 형상 수정에 성공했다.
+  지속 차단은 없다. 재발 시 현재 소스를 보존하고 그 시점 결과를 기록한다.
 - T02B-1 첫 독립 에이전트 실행은 workspace out of credits 오류였다.
   사용자 재개 요청 후 같은 소단위를 재시도해 성공했다. 현재 지속 차단은 아니다.
 - 이번 재개에서 T02A 회귀 테스트도 `pass 11 / fail 0` 재확인했다.

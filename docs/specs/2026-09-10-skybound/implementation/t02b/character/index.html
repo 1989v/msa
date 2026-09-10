@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>나루 · 캐릭터 스튜디오</title>
+  <link rel="stylesheet" href="./viewer.bundle.css">
+</head>
+<body>
+  <main>
+    <header><div><h1>나루</h1><p>하늘길의 탐험가</p></div><span class="studio-title">캐릭터 스튜디오</span></header>
+    <section class="stage" aria-label="캐릭터 3D 미리보기">
+      <canvas id="viewer" tabindex="0" aria-label="나루 3D 모델. 드래그로 회전하고 스크롤로 확대합니다. 방향 버튼으로도 조작할 수 있습니다."></canvas>
+      <p id="status" role="status">캐릭터를 준비하고 있습니다…</p>
+      <span class="stage-hint">드래그하여 둘러보기 · 스크롤하여 확대</span>
+    </section>
+    <section class="controls" aria-label="미리보기 조작">
+      <div class="views" role="group" aria-label="보는 방향">
+        <button data-view="threequarter" aria-pressed="true">사선</button>
+        <button data-view="front" aria-pressed="false">정면</button>
+        <button data-view="side" aria-pressed="false">측면</button>
+        <button data-view="back" aria-pressed="false">후면</button>
+      </div>
+      <div class="options">
+        <label for="lod">디테일</label><select id="lod"><option value="0">높음</option><option value="1">낮음</option></select>
+        <button id="pose" aria-pressed="false" disabled>리깅 포즈</button>
+        <button id="animate" aria-pressed="false" disabled>동작 재생</button>
+        <button id="rotate" aria-pressed="false">자동 회전</button>
+        <button id="reset">시점 초기화</button>
+      </div>
+    </section>
+    <footer><p>짧은 검은 머리 · 황토 망토 · 남색 탐험복 · 지도 가방</p><p id="metrics">GLB를 읽고 있습니다.</p></footer>
+  </main>
+  <script type="module" src="./viewer.bundle.js"></script>
+</body>
+</html>

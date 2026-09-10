@@ -1,0 +1,6246 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/character/index.html",
+  "checks": [
+    {
+      "name": "Fixture is served",
+      "passed": true
+    },
+    {
+      "name": "Actual GLB character loaded",
+      "passed": true,
+      "stats": [
+        {
+          "lod": 0,
+          "triangles": 14340,
+          "vertices": 8752,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 300,
+              "triangles": 528
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 300,
+              "count": 110,
+              "triangles": 168
+            },
+            {
+              "name": "belt",
+              "start": 410,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "neck",
+              "start": 505,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "face",
+              "start": 585,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "ear",
+              "start": 935,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1005,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1096,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1166,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "ear",
+              "start": 1201,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1271,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1362,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-bridge",
+              "start": 1467,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "nose-tip",
+              "start": 1555,
+              "count": 77,
+              "triangles": 120
+            },
+            {
+              "name": "mouth",
+              "start": 1632,
+              "count": 65,
+              "triangles": 96
+            },
+            {
+              "name": "hair-cap",
+              "start": 1697,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 2047,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 2127,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 2207,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 2287,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 2367,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 2447,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 2527,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 2607,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 2687,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 2767,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 2847,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "sleeve-L",
+              "start": 2927,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-L",
+              "start": 3117,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 3197,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-L",
+              "start": 3292,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-L-0",
+              "start": 3432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-1",
+              "start": 3467,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-2",
+              "start": 3502,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-3",
+              "start": 3537,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-L",
+              "start": 3572,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-L",
+              "start": 3612,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 3892,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 4044,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 4196,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 4291,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 4326,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 4361,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "sleeve-R",
+              "start": 4396,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-R",
+              "start": 4586,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 4666,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-R",
+              "start": 4761,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-R-0",
+              "start": 4901,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-1",
+              "start": 4936,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-2",
+              "start": 4971,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-3",
+              "start": 5006,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-R",
+              "start": 5041,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-R",
+              "start": 5081,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 5361,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 5513,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 5665,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 5760,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 5795,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 5830,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "cape-outer",
+              "start": 5865,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-lining",
+              "start": 6441,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-hem",
+              "start": 7017,
+              "count": 128,
+              "triangles": 186
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 7145,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 7217,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "folded-collar",
+              "start": 7289,
+              "count": 200,
+              "triangles": 336
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 7489,
+              "count": 250,
+              "triangles": 432
+            },
+            {
+              "name": "cape-brooch",
+              "start": 7739,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "strap-front",
+              "start": 7899,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "strap-back",
+              "start": 7979,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "map-satchel",
+              "start": 8059,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "satchel-flap",
+              "start": 8211,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8371,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8406,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8476,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8511,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "rolled-map",
+              "start": 8581,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "belt-buckle",
+              "start": 8661,
+              "count": 91,
+              "triangles": 144
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1929024,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        },
+        {
+          "lod": 1,
+          "triangles": 4654,
+          "vertices": 3252,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 98,
+              "triangles": 156
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 98,
+              "count": 48,
+              "triangles": 66
+            },
+            {
+              "name": "belt",
+              "start": 146,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "neck",
+              "start": 190,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "face",
+              "start": 226,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "ear",
+              "start": 338,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 362,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 390,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 414,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "ear",
+              "start": 430,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 454,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 482,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 506,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "nose-bridge",
+              "start": 522,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-tip",
+              "start": 557,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "mouth",
+              "start": 585,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "hair-cap",
+              "start": 613,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 725,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 755,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 785,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 815,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 845,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 875,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 905,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 935,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 965,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 995,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 1025,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "sleeve-L",
+              "start": 1055,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-L",
+              "start": 1121,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 1157,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-L",
+              "start": 1201,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-L-0",
+              "start": 1249,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-1",
+              "start": 1265,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-2",
+              "start": 1281,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-3",
+              "start": 1297,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-L",
+              "start": 1313,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-L",
+              "start": 1333,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 1421,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 1476,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 1531,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 1575,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 1591,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 1607,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "sleeve-R",
+              "start": 1623,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-R",
+              "start": 1689,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 1725,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-R",
+              "start": 1769,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-R-0",
+              "start": 1817,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-1",
+              "start": 1833,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-2",
+              "start": 1849,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-3",
+              "start": 1865,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-R",
+              "start": 1881,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-R",
+              "start": 1901,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 1989,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 2044,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 2099,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 2143,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 2159,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 2175,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "cape-outer",
+              "start": 2191,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-lining",
+              "start": 2371,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-hem",
+              "start": 2551,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 2623,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 2663,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "folded-collar",
+              "start": 2703,
+              "count": 70,
+              "triangles": 104
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 2773,
+              "count": 84,
+              "triangles": 130
+            },
+            {
+              "name": "cape-brooch",
+              "start": 2857,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "strap-front",
+              "start": 2911,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "strap-back",
+              "start": 2955,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "map-satchel",
+              "start": 2999,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-flap",
+              "start": 3054,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3108,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3124,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3148,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3164,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "rolled-map",
+              "start": 3188,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "belt-buckle",
+              "start": 3224,
+              "count": 28,
+              "triangles": 36
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1562884,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Two exported LOD files and atlas available",
+      "passed": true
+    },
+    {
+      "name": "View button front 1280",
+      "passed": true
+    },
+    {
+      "name": "No overflow front 1280",
+      "passed": true
+    },
+    {
+      "name": "Model contained front 1280",
+      "passed": true
+    },
+    {
+      "name": "View selected front 1280",
+      "passed": true
+    },
+    {
+      "name": "View button back 1280",
+      "passed": true
+    },
+    {
+      "name": "No overflow back 1280",
+      "passed": true
+    },
+    {
+      "name": "Model contained back 1280",
+      "passed": true
+    },
+    {
+      "name": "View selected back 1280",
+      "passed": true
+    },
+    {
+      "name": "View button side 1280",
+      "passed": true
+    },
+    {
+      "name": "No overflow side 1280",
+      "passed": true
+    },
+    {
+      "name": "Model contained side 1280",
+      "passed": true
+    },
+    {
+      "name": "View selected side 1280",
+      "passed": true
+    },
+    {
+      "name": "View button threequarter 1280",
+      "passed": true
+    },
+    {
+      "name": "No overflow threequarter 1280",
+      "passed": true
+    },
+    {
+      "name": "Model contained threequarter 1280",
+      "passed": true
+    },
+    {
+      "name": "View selected threequarter 1280",
+      "passed": true
+    },
+    {
+      "name": "View button front 390",
+      "passed": true
+    },
+    {
+      "name": "No overflow front 390",
+      "passed": true
+    },
+    {
+      "name": "Model contained front 390",
+      "passed": true
+    },
+    {
+      "name": "View selected front 390",
+      "passed": true
+    },
+    {
+      "name": "Lower LOD is selected and rendered",
+      "passed": true
+    },
+    {
+      "name": "Rig inspection pose responds",
+      "passed": true
+    },
+    {
+      "name": "Rest pose can be restored",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "errors": [],
+  "snapshots": [
+    {
+      "label": "front",
+      "width": 1280,
+      "height": 900,
+      "ready": true,
+      "error": null,
+      "stats": [
+        {
+          "lod": 0,
+          "triangles": 14340,
+          "vertices": 8752,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 300,
+              "triangles": 528
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 300,
+              "count": 110,
+              "triangles": 168
+            },
+            {
+              "name": "belt",
+              "start": 410,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "neck",
+              "start": 505,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "face",
+              "start": 585,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "ear",
+              "start": 935,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1005,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1096,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1166,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "ear",
+              "start": 1201,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1271,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1362,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-bridge",
+              "start": 1467,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "nose-tip",
+              "start": 1555,
+              "count": 77,
+              "triangles": 120
+            },
+            {
+              "name": "mouth",
+              "start": 1632,
+              "count": 65,
+              "triangles": 96
+            },
+            {
+              "name": "hair-cap",
+              "start": 1697,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 2047,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 2127,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 2207,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 2287,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 2367,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 2447,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 2527,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 2607,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 2687,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 2767,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 2847,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "sleeve-L",
+              "start": 2927,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-L",
+              "start": 3117,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 3197,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-L",
+              "start": 3292,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-L-0",
+              "start": 3432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-1",
+              "start": 3467,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-2",
+              "start": 3502,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-3",
+              "start": 3537,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-L",
+              "start": 3572,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-L",
+              "start": 3612,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 3892,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 4044,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 4196,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 4291,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 4326,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 4361,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "sleeve-R",
+              "start": 4396,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-R",
+              "start": 4586,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 4666,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-R",
+              "start": 4761,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-R-0",
+              "start": 4901,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-1",
+              "start": 4936,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-2",
+              "start": 4971,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-3",
+              "start": 5006,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-R",
+              "start": 5041,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-R",
+              "start": 5081,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 5361,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 5513,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 5665,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 5760,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 5795,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 5830,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "cape-outer",
+              "start": 5865,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-lining",
+              "start": 6441,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-hem",
+              "start": 7017,
+              "count": 128,
+              "triangles": 186
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 7145,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 7217,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "folded-collar",
+              "start": 7289,
+              "count": 200,
+              "triangles": 336
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 7489,
+              "count": 250,
+              "triangles": 432
+            },
+            {
+              "name": "cape-brooch",
+              "start": 7739,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "strap-front",
+              "start": 7899,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "strap-back",
+              "start": 7979,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "map-satchel",
+              "start": 8059,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "satchel-flap",
+              "start": 8211,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8371,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8406,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8476,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8511,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "rolled-map",
+              "start": 8581,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "belt-buckle",
+              "start": 8661,
+              "count": 91,
+              "triangles": 144
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1929024,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        },
+        {
+          "lod": 1,
+          "triangles": 4654,
+          "vertices": 3252,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 98,
+              "triangles": 156
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 98,
+              "count": 48,
+              "triangles": 66
+            },
+            {
+              "name": "belt",
+              "start": 146,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "neck",
+              "start": 190,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "face",
+              "start": 226,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "ear",
+              "start": 338,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 362,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 390,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 414,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "ear",
+              "start": 430,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 454,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 482,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 506,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "nose-bridge",
+              "start": 522,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-tip",
+              "start": 557,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "mouth",
+              "start": 585,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "hair-cap",
+              "start": 613,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 725,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 755,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 785,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 815,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 845,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 875,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 905,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 935,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 965,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 995,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 1025,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "sleeve-L",
+              "start": 1055,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-L",
+              "start": 1121,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 1157,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-L",
+              "start": 1201,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-L-0",
+              "start": 1249,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-1",
+              "start": 1265,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-2",
+              "start": 1281,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-3",
+              "start": 1297,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-L",
+              "start": 1313,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-L",
+              "start": 1333,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 1421,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 1476,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 1531,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 1575,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 1591,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 1607,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "sleeve-R",
+              "start": 1623,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-R",
+              "start": 1689,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 1725,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-R",
+              "start": 1769,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-R-0",
+              "start": 1817,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-1",
+              "start": 1833,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-2",
+              "start": 1849,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-3",
+              "start": 1865,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-R",
+              "start": 1881,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-R",
+              "start": 1901,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 1989,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 2044,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 2099,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 2143,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 2159,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 2175,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "cape-outer",
+              "start": 2191,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-lining",
+              "start": 2371,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-hem",
+              "start": 2551,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 2623,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 2663,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "folded-collar",
+              "start": 2703,
+              "count": 70,
+              "triangles": 104
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 2773,
+              "count": 84,
+              "triangles": 130
+            },
+            {
+              "name": "cape-brooch",
+              "start": 2857,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "strap-front",
+              "start": 2911,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "strap-back",
+              "start": 2955,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "map-satchel",
+              "start": 2999,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-flap",
+              "start": 3054,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3108,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3124,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3148,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3164,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "rolled-map",
+              "start": 3188,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "belt-buckle",
+              "start": 3224,
+              "count": 28,
+              "triangles": 36
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1562884,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "lod": 0,
+      "view": "front",
+      "frame": 4,
+      "loadedFromGLB": true,
+      "pose": false,
+      "animated": false,
+      "rotating": false,
+      "renderedBounds": {
+        "left": 481.2708681683447,
+        "right": 750.7291318316553,
+        "top": 46.37934844782281,
+        "bottom": 545.2412646873508,
+        "canvasWidth": 1232,
+        "canvasHeight": 594
+      },
+      "threeRevision": "183",
+      "modelBounds": {
+        "min": [
+          -0.4393735468387604,
+          4.768371586472142e-9,
+          -0.1799185311794281
+        ],
+        "max": [
+          0.4393735468387604,
+          1.680999984741211,
+          0.15199999544769527
+        ],
+        "size": [
+          0.8787470936775208,
+          1.6809999799728392,
+          0.3319185266271234
+        ]
+      },
+      "render": {
+        "calls": 2,
+        "triangles": 14342,
+        "dpr": 1
+      },
+      "setLOD": {},
+      "setView": {},
+      "setPose": {},
+      "renderNow": {},
+      "overflow": false
+    },
+    {
+      "label": "back",
+      "width": 1280,
+      "height": 900,
+      "ready": true,
+      "error": null,
+      "stats": [
+        {
+          "lod": 0,
+          "triangles": 14340,
+          "vertices": 8752,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 300,
+              "triangles": 528
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 300,
+              "count": 110,
+              "triangles": 168
+            },
+            {
+              "name": "belt",
+              "start": 410,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "neck",
+              "start": 505,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "face",
+              "start": 585,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "ear",
+              "start": 935,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1005,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1096,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1166,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "ear",
+              "start": 1201,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1271,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1362,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-bridge",
+              "start": 1467,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "nose-tip",
+              "start": 1555,
+              "count": 77,
+              "triangles": 120
+            },
+            {
+              "name": "mouth",
+              "start": 1632,
+              "count": 65,
+              "triangles": 96
+            },
+            {
+              "name": "hair-cap",
+              "start": 1697,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 2047,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 2127,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 2207,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 2287,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 2367,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 2447,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 2527,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 2607,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 2687,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 2767,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 2847,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "sleeve-L",
+              "start": 2927,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-L",
+              "start": 3117,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 3197,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-L",
+              "start": 3292,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-L-0",
+              "start": 3432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-1",
+              "start": 3467,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-2",
+              "start": 3502,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-3",
+              "start": 3537,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-L",
+              "start": 3572,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-L",
+              "start": 3612,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 3892,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 4044,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 4196,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 4291,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 4326,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 4361,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "sleeve-R",
+              "start": 4396,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-R",
+              "start": 4586,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 4666,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-R",
+              "start": 4761,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-R-0",
+              "start": 4901,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-1",
+              "start": 4936,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-2",
+              "start": 4971,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-3",
+              "start": 5006,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-R",
+              "start": 5041,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-R",
+              "start": 5081,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 5361,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 5513,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 5665,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 5760,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 5795,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 5830,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "cape-outer",
+              "start": 5865,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-lining",
+              "start": 6441,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-hem",
+              "start": 7017,
+              "count": 128,
+              "triangles": 186
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 7145,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 7217,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "folded-collar",
+              "start": 7289,
+              "count": 200,
+              "triangles": 336
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 7489,
+              "count": 250,
+              "triangles": 432
+            },
+            {
+              "name": "cape-brooch",
+              "start": 7739,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "strap-front",
+              "start": 7899,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "strap-back",
+              "start": 7979,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "map-satchel",
+              "start": 8059,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "satchel-flap",
+              "start": 8211,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8371,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8406,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8476,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8511,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "rolled-map",
+              "start": 8581,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "belt-buckle",
+              "start": 8661,
+              "count": 91,
+              "triangles": 144
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1929024,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        },
+        {
+          "lod": 1,
+          "triangles": 4654,
+          "vertices": 3252,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 98,
+              "triangles": 156
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 98,
+              "count": 48,
+              "triangles": 66
+            },
+            {
+              "name": "belt",
+              "start": 146,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "neck",
+              "start": 190,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "face",
+              "start": 226,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "ear",
+              "start": 338,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 362,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 390,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 414,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "ear",
+              "start": 430,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 454,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 482,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 506,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "nose-bridge",
+              "start": 522,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-tip",
+              "start": 557,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "mouth",
+              "start": 585,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "hair-cap",
+              "start": 613,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 725,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 755,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 785,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 815,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 845,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 875,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 905,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 935,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 965,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 995,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 1025,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "sleeve-L",
+              "start": 1055,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-L",
+              "start": 1121,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 1157,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-L",
+              "start": 1201,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-L-0",
+              "start": 1249,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-1",
+              "start": 1265,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-2",
+              "start": 1281,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-3",
+              "start": 1297,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-L",
+              "start": 1313,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-L",
+              "start": 1333,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 1421,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 1476,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 1531,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 1575,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 1591,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 1607,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "sleeve-R",
+              "start": 1623,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-R",
+              "start": 1689,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 1725,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-R",
+              "start": 1769,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-R-0",
+              "start": 1817,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-1",
+              "start": 1833,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-2",
+              "start": 1849,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-3",
+              "start": 1865,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-R",
+              "start": 1881,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-R",
+              "start": 1901,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 1989,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 2044,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 2099,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 2143,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 2159,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 2175,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "cape-outer",
+              "start": 2191,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-lining",
+              "start": 2371,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-hem",
+              "start": 2551,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 2623,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 2663,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "folded-collar",
+              "start": 2703,
+              "count": 70,
+              "triangles": 104
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 2773,
+              "count": 84,
+              "triangles": 130
+            },
+            {
+              "name": "cape-brooch",
+              "start": 2857,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "strap-front",
+              "start": 2911,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "strap-back",
+              "start": 2955,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "map-satchel",
+              "start": 2999,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-flap",
+              "start": 3054,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3108,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3124,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3148,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3164,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "rolled-map",
+              "start": 3188,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "belt-buckle",
+              "start": 3224,
+              "count": 28,
+              "triangles": 36
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1562884,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "lod": 0,
+      "view": "back",
+      "frame": 5,
+      "loadedFromGLB": true,
+      "pose": false,
+      "animated": false,
+      "rotating": false,
+      "renderedBounds": {
+        "left": 481.2708681683447,
+        "right": 750.7291318316553,
+        "top": 46.379348447822736,
+        "bottom": 545.241264687351,
+        "canvasWidth": 1232,
+        "canvasHeight": 594
+      },
+      "threeRevision": "183",
+      "modelBounds": {
+        "min": [
+          -0.4393735468387604,
+          4.768371586472142e-9,
+          -0.1799185311794281
+        ],
+        "max": [
+          0.4393735468387604,
+          1.680999984741211,
+          0.15199999544769527
+        ],
+        "size": [
+          0.8787470936775208,
+          1.6809999799728392,
+          0.3319185266271234
+        ]
+      },
+      "render": {
+        "calls": 2,
+        "triangles": 14342,
+        "dpr": 1
+      },
+      "setLOD": {},
+      "setView": {},
+      "setPose": {},
+      "renderNow": {},
+      "overflow": false
+    },
+    {
+      "label": "side",
+      "width": 1280,
+      "height": 900,
+      "ready": true,
+      "error": null,
+      "stats": [
+        {
+          "lod": 0,
+          "triangles": 14340,
+          "vertices": 8752,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 300,
+              "triangles": 528
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 300,
+              "count": 110,
+              "triangles": 168
+            },
+            {
+              "name": "belt",
+              "start": 410,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "neck",
+              "start": 505,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "face",
+              "start": 585,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "ear",
+              "start": 935,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1005,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1096,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1166,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "ear",
+              "start": 1201,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1271,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1362,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-bridge",
+              "start": 1467,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "nose-tip",
+              "start": 1555,
+              "count": 77,
+              "triangles": 120
+            },
+            {
+              "name": "mouth",
+              "start": 1632,
+              "count": 65,
+              "triangles": 96
+            },
+            {
+              "name": "hair-cap",
+              "start": 1697,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 2047,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 2127,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 2207,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 2287,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 2367,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 2447,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 2527,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 2607,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 2687,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 2767,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 2847,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "sleeve-L",
+              "start": 2927,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-L",
+              "start": 3117,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 3197,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-L",
+              "start": 3292,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-L-0",
+              "start": 3432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-1",
+              "start": 3467,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-2",
+              "start": 3502,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-3",
+              "start": 3537,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-L",
+              "start": 3572,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-L",
+              "start": 3612,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 3892,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 4044,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 4196,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 4291,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 4326,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 4361,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "sleeve-R",
+              "start": 4396,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-R",
+              "start": 4586,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 4666,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-R",
+              "start": 4761,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-R-0",
+              "start": 4901,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-1",
+              "start": 4936,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-2",
+              "start": 4971,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-3",
+              "start": 5006,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-R",
+              "start": 5041,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-R",
+              "start": 5081,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 5361,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 5513,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 5665,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 5760,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 5795,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 5830,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "cape-outer",
+              "start": 5865,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-lining",
+              "start": 6441,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-hem",
+              "start": 7017,
+              "count": 128,
+              "triangles": 186
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 7145,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 7217,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "folded-collar",
+              "start": 7289,
+              "count": 200,
+              "triangles": 336
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 7489,
+              "count": 250,
+              "triangles": 432
+            },
+            {
+              "name": "cape-brooch",
+              "start": 7739,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "strap-front",
+              "start": 7899,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "strap-back",
+              "start": 7979,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "map-satchel",
+              "start": 8059,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "satchel-flap",
+              "start": 8211,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8371,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8406,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8476,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8511,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "rolled-map",
+              "start": 8581,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "belt-buckle",
+              "start": 8661,
+              "count": 91,
+              "triangles": 144
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1929024,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        },
+        {
+          "lod": 1,
+          "triangles": 4654,
+          "vertices": 3252,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 98,
+              "triangles": 156
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 98,
+              "count": 48,
+              "triangles": 66
+            },
+            {
+              "name": "belt",
+              "start": 146,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "neck",
+              "start": 190,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "face",
+              "start": 226,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "ear",
+              "start": 338,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 362,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 390,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 414,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "ear",
+              "start": 430,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 454,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 482,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 506,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "nose-bridge",
+              "start": 522,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-tip",
+              "start": 557,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "mouth",
+              "start": 585,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "hair-cap",
+              "start": 613,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 725,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 755,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 785,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 815,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 845,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 875,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 905,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 935,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 965,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 995,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 1025,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "sleeve-L",
+              "start": 1055,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-L",
+              "start": 1121,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 1157,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-L",
+              "start": 1201,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-L-0",
+              "start": 1249,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-1",
+              "start": 1265,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-2",
+              "start": 1281,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-3",
+              "start": 1297,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-L",
+              "start": 1313,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-L",
+              "start": 1333,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 1421,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 1476,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 1531,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 1575,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 1591,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 1607,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "sleeve-R",
+              "start": 1623,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-R",
+              "start": 1689,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 1725,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-R",
+              "start": 1769,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-R-0",
+              "start": 1817,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-1",
+              "start": 1833,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-2",
+              "start": 1849,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-3",
+              "start": 1865,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-R",
+              "start": 1881,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-R",
+              "start": 1901,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 1989,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 2044,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 2099,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 2143,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 2159,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 2175,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "cape-outer",
+              "start": 2191,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-lining",
+              "start": 2371,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-hem",
+              "start": 2551,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 2623,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 2663,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "folded-collar",
+              "start": 2703,
+              "count": 70,
+              "triangles": 104
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 2773,
+              "count": 84,
+              "triangles": 130
+            },
+            {
+              "name": "cape-brooch",
+              "start": 2857,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "strap-front",
+              "start": 2911,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "strap-back",
+              "start": 2955,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "map-satchel",
+              "start": 2999,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-flap",
+              "start": 3054,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3108,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3124,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3148,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3164,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "rolled-map",
+              "start": 3188,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "belt-buckle",
+              "start": 3224,
+              "count": 28,
+              "triangles": 36
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1562884,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "lod": 0,
+      "view": "side",
+      "frame": 6,
+      "loadedFromGLB": true,
+      "pose": false,
+      "animated": false,
+      "rotating": false,
+      "renderedBounds": {
+        "left": 560.6575705756104,
+        "right": 671.3424294243898,
+        "top": 34.419302669735664,
+        "bottom": 575.1609250670308,
+        "canvasWidth": 1232,
+        "canvasHeight": 594
+      },
+      "threeRevision": "183",
+      "modelBounds": {
+        "min": [
+          -0.4393735468387604,
+          4.768371586472142e-9,
+          -0.1799185311794281
+        ],
+        "max": [
+          0.4393735468387604,
+          1.680999984741211,
+          0.15199999544769527
+        ],
+        "size": [
+          0.8787470936775208,
+          1.6809999799728392,
+          0.3319185266271234
+        ]
+      },
+      "render": {
+        "calls": 2,
+        "triangles": 14342,
+        "dpr": 1
+      },
+      "setLOD": {},
+      "setView": {},
+      "setPose": {},
+      "renderNow": {},
+      "overflow": false
+    },
+    {
+      "label": "threequarter",
+      "width": 1280,
+      "height": 900,
+      "ready": true,
+      "error": null,
+      "stats": [
+        {
+          "lod": 0,
+          "triangles": 14340,
+          "vertices": 8752,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 300,
+              "triangles": 528
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 300,
+              "count": 110,
+              "triangles": 168
+            },
+            {
+              "name": "belt",
+              "start": 410,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "neck",
+              "start": 505,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "face",
+              "start": 585,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "ear",
+              "start": 935,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1005,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1096,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1166,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "ear",
+              "start": 1201,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1271,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1362,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-bridge",
+              "start": 1467,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "nose-tip",
+              "start": 1555,
+              "count": 77,
+              "triangles": 120
+            },
+            {
+              "name": "mouth",
+              "start": 1632,
+              "count": 65,
+              "triangles": 96
+            },
+            {
+              "name": "hair-cap",
+              "start": 1697,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 2047,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 2127,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 2207,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 2287,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 2367,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 2447,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 2527,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 2607,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 2687,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 2767,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 2847,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "sleeve-L",
+              "start": 2927,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-L",
+              "start": 3117,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 3197,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-L",
+              "start": 3292,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-L-0",
+              "start": 3432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-1",
+              "start": 3467,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-2",
+              "start": 3502,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-3",
+              "start": 3537,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-L",
+              "start": 3572,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-L",
+              "start": 3612,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 3892,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 4044,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 4196,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 4291,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 4326,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 4361,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "sleeve-R",
+              "start": 4396,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-R",
+              "start": 4586,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 4666,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-R",
+              "start": 4761,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-R-0",
+              "start": 4901,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-1",
+              "start": 4936,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-2",
+              "start": 4971,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-3",
+              "start": 5006,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-R",
+              "start": 5041,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-R",
+              "start": 5081,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 5361,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 5513,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 5665,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 5760,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 5795,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 5830,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "cape-outer",
+              "start": 5865,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-lining",
+              "start": 6441,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-hem",
+              "start": 7017,
+              "count": 128,
+              "triangles": 186
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 7145,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 7217,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "folded-collar",
+              "start": 7289,
+              "count": 200,
+              "triangles": 336
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 7489,
+              "count": 250,
+              "triangles": 432
+            },
+            {
+              "name": "cape-brooch",
+              "start": 7739,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "strap-front",
+              "start": 7899,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "strap-back",
+              "start": 7979,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "map-satchel",
+              "start": 8059,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "satchel-flap",
+              "start": 8211,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8371,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8406,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8476,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8511,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "rolled-map",
+              "start": 8581,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "belt-buckle",
+              "start": 8661,
+              "count": 91,
+              "triangles": 144
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1929024,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        },
+        {
+          "lod": 1,
+          "triangles": 4654,
+          "vertices": 3252,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 98,
+              "triangles": 156
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 98,
+              "count": 48,
+              "triangles": 66
+            },
+            {
+              "name": "belt",
+              "start": 146,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "neck",
+              "start": 190,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "face",
+              "start": 226,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "ear",
+              "start": 338,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 362,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 390,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 414,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "ear",
+              "start": 430,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 454,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 482,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 506,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "nose-bridge",
+              "start": 522,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-tip",
+              "start": 557,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "mouth",
+              "start": 585,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "hair-cap",
+              "start": 613,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 725,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 755,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 785,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 815,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 845,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 875,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 905,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 935,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 965,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 995,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 1025,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "sleeve-L",
+              "start": 1055,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-L",
+              "start": 1121,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 1157,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-L",
+              "start": 1201,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-L-0",
+              "start": 1249,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-1",
+              "start": 1265,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-2",
+              "start": 1281,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-3",
+              "start": 1297,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-L",
+              "start": 1313,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-L",
+              "start": 1333,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 1421,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 1476,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 1531,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 1575,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 1591,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 1607,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "sleeve-R",
+              "start": 1623,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-R",
+              "start": 1689,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 1725,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-R",
+              "start": 1769,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-R-0",
+              "start": 1817,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-1",
+              "start": 1833,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-2",
+              "start": 1849,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-3",
+              "start": 1865,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-R",
+              "start": 1881,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-R",
+              "start": 1901,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 1989,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 2044,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 2099,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 2143,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 2159,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 2175,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "cape-outer",
+              "start": 2191,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-lining",
+              "start": 2371,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-hem",
+              "start": 2551,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 2623,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 2663,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "folded-collar",
+              "start": 2703,
+              "count": 70,
+              "triangles": 104
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 2773,
+              "count": 84,
+              "triangles": 130
+            },
+            {
+              "name": "cape-brooch",
+              "start": 2857,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "strap-front",
+              "start": 2911,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "strap-back",
+              "start": 2955,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "map-satchel",
+              "start": 2999,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-flap",
+              "start": 3054,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3108,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3124,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3148,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3164,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "rolled-map",
+              "start": 3188,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "belt-buckle",
+              "start": 3224,
+              "count": 28,
+              "triangles": 36
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1562884,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "lod": 0,
+      "view": "threequarter",
+      "frame": 7,
+      "loadedFromGLB": true,
+      "pose": false,
+      "animated": false,
+      "rotating": false,
+      "renderedBounds": {
+        "left": 482.528694100308,
+        "right": 755.3753561779588,
+        "top": 40.372677318447096,
+        "bottom": 566.6784292352878,
+        "canvasWidth": 1232,
+        "canvasHeight": 594
+      },
+      "threeRevision": "183",
+      "modelBounds": {
+        "min": [
+          -0.4393735468387604,
+          4.768371586472142e-9,
+          -0.1799185311794281
+        ],
+        "max": [
+          0.4393735468387604,
+          1.680999984741211,
+          0.15199999544769527
+        ],
+        "size": [
+          0.8787470936775208,
+          1.6809999799728392,
+          0.3319185266271234
+        ]
+      },
+      "render": {
+        "calls": 2,
+        "triangles": 14342,
+        "dpr": 1
+      },
+      "setLOD": {},
+      "setView": {},
+      "setPose": {},
+      "renderNow": {},
+      "overflow": false
+    },
+    {
+      "label": "portrait",
+      "width": 390,
+      "height": 844,
+      "ready": true,
+      "error": null,
+      "stats": [
+        {
+          "lod": 0,
+          "triangles": 14340,
+          "vertices": 8752,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 300,
+              "triangles": 528
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 300,
+              "count": 110,
+              "triangles": 168
+            },
+            {
+              "name": "belt",
+              "start": 410,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "neck",
+              "start": 505,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "face",
+              "start": 585,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "ear",
+              "start": 935,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1005,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1096,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1166,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "ear",
+              "start": 1201,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "eye-white",
+              "start": 1271,
+              "count": 91,
+              "triangles": 144
+            },
+            {
+              "name": "iris",
+              "start": 1362,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "brow",
+              "start": 1432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-bridge",
+              "start": 1467,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "nose-tip",
+              "start": 1555,
+              "count": 77,
+              "triangles": 120
+            },
+            {
+              "name": "mouth",
+              "start": 1632,
+              "count": 65,
+              "triangles": 96
+            },
+            {
+              "name": "hair-cap",
+              "start": 1697,
+              "count": 350,
+              "triangles": 624
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 2047,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 2127,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 2207,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 2287,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 2367,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 2447,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 2527,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 2607,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 2687,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 2767,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 2847,
+              "count": 80,
+              "triangles": 126
+            },
+            {
+              "name": "sleeve-L",
+              "start": 2927,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-L",
+              "start": 3117,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 3197,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-L",
+              "start": 3292,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-L-0",
+              "start": 3432,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-1",
+              "start": 3467,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-2",
+              "start": 3502,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-L-3",
+              "start": 3537,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-L",
+              "start": 3572,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-L",
+              "start": 3612,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 3892,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 4044,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 4196,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 4291,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 4326,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 4361,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "sleeve-R",
+              "start": 4396,
+              "count": 190,
+              "triangles": 324
+            },
+            {
+              "name": "elbow-R",
+              "start": 4586,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 4666,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "palm-R",
+              "start": 4761,
+              "count": 140,
+              "triangles": 234
+            },
+            {
+              "name": "finger-R-0",
+              "start": 4901,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-1",
+              "start": 4936,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-2",
+              "start": 4971,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "finger-R-3",
+              "start": 5006,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "thumb-R",
+              "start": 5041,
+              "count": 40,
+              "triangles": 56
+            },
+            {
+              "name": "trouser-R",
+              "start": 5081,
+              "count": 280,
+              "triangles": 494
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 5361,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 5513,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 5665,
+              "count": 95,
+              "triangles": 144
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 5760,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 5795,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 5830,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "cape-outer",
+              "start": 5865,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-lining",
+              "start": 6441,
+              "count": 576,
+              "triangles": 1054
+            },
+            {
+              "name": "cape-hem",
+              "start": 7017,
+              "count": 128,
+              "triangles": 186
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 7145,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 7217,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "folded-collar",
+              "start": 7289,
+              "count": 200,
+              "triangles": 336
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 7489,
+              "count": 250,
+              "triangles": 432
+            },
+            {
+              "name": "cape-brooch",
+              "start": 7739,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "strap-front",
+              "start": 7899,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "strap-back",
+              "start": 7979,
+              "count": 80,
+              "triangles": 114
+            },
+            {
+              "name": "map-satchel",
+              "start": 8059,
+              "count": 152,
+              "triangles": 252
+            },
+            {
+              "name": "satchel-flap",
+              "start": 8211,
+              "count": 160,
+              "triangles": 270
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8371,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8406,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "satchel-closure",
+              "start": 8476,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 8511,
+              "count": 70,
+              "triangles": 108
+            },
+            {
+              "name": "rolled-map",
+              "start": 8581,
+              "count": 80,
+              "triangles": 120
+            },
+            {
+              "name": "belt-buckle",
+              "start": 8661,
+              "count": 91,
+              "triangles": 144
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1929024,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        },
+        {
+          "lod": 1,
+          "triangles": 4654,
+          "vertices": 3252,
+          "bones": 19,
+          "atlasSize": 1024,
+          "height": 1.680999994277954,
+          "parts": [
+            {
+              "name": "tunic",
+              "start": 0,
+              "count": 98,
+              "triangles": 156
+            },
+            {
+              "name": "split-tunic-skirt",
+              "start": 98,
+              "count": 48,
+              "triangles": 66
+            },
+            {
+              "name": "belt",
+              "start": 146,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "neck",
+              "start": 190,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "face",
+              "start": 226,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "ear",
+              "start": 338,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 362,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 390,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 414,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "ear",
+              "start": 430,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "eye-white",
+              "start": 454,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "iris",
+              "start": 482,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "brow",
+              "start": 506,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "nose-bridge",
+              "start": 522,
+              "count": 35,
+              "triangles": 48
+            },
+            {
+              "name": "nose-tip",
+              "start": 557,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "mouth",
+              "start": 585,
+              "count": 28,
+              "triangles": 36
+            },
+            {
+              "name": "hair-cap",
+              "start": 613,
+              "count": 112,
+              "triangles": 182
+            },
+            {
+              "name": "hair-lock-0",
+              "start": 725,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-1",
+              "start": 755,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-2",
+              "start": 785,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-3",
+              "start": 815,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-4",
+              "start": 845,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-5",
+              "start": 875,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-6",
+              "start": 905,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-7",
+              "start": 935,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-8",
+              "start": 965,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-9",
+              "start": 995,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "hair-lock-10",
+              "start": 1025,
+              "count": 30,
+              "triangles": 40
+            },
+            {
+              "name": "sleeve-L",
+              "start": 1055,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-L",
+              "start": 1121,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-L",
+              "start": 1157,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-L",
+              "start": 1201,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-L-0",
+              "start": 1249,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-1",
+              "start": 1265,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-2",
+              "start": 1281,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-L-3",
+              "start": 1297,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-L",
+              "start": 1313,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-L",
+              "start": 1333,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-L",
+              "start": 1421,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-L",
+              "start": 1476,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-L",
+              "start": 1531,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-L0",
+              "start": 1575,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L1",
+              "start": 1591,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-L2",
+              "start": 1607,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "sleeve-R",
+              "start": 1623,
+              "count": 66,
+              "triangles": 100
+            },
+            {
+              "name": "elbow-R",
+              "start": 1689,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "forearm-wrap-R",
+              "start": 1725,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "palm-R",
+              "start": 1769,
+              "count": 48,
+              "triangles": 70
+            },
+            {
+              "name": "finger-R-0",
+              "start": 1817,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-1",
+              "start": 1833,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-2",
+              "start": 1849,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "finger-R-3",
+              "start": 1865,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "thumb-R",
+              "start": 1881,
+              "count": 20,
+              "triangles": 24
+            },
+            {
+              "name": "trouser-R",
+              "start": 1901,
+              "count": 88,
+              "triangles": 140
+            },
+            {
+              "name": "shin-wrap-R",
+              "start": 1989,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-upper-R",
+              "start": 2044,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "boot-sole-R",
+              "start": 2099,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "boot-lace-R0",
+              "start": 2143,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R1",
+              "start": 2159,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "boot-lace-R2",
+              "start": 2175,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "cape-outer",
+              "start": 2191,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-lining",
+              "start": 2371,
+              "count": 180,
+              "triangles": 306
+            },
+            {
+              "name": "cape-hem",
+              "start": 2551,
+              "count": 72,
+              "triangles": 102
+            },
+            {
+              "name": "cape-edge-0",
+              "start": 2623,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "cape-edge-1",
+              "start": 2663,
+              "count": 40,
+              "triangles": 54
+            },
+            {
+              "name": "folded-collar",
+              "start": 2703,
+              "count": 70,
+              "triangles": 104
+            },
+            {
+              "name": "front-scarf-fold",
+              "start": 2773,
+              "count": 84,
+              "triangles": 130
+            },
+            {
+              "name": "cape-brooch",
+              "start": 2857,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "strap-front",
+              "start": 2911,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "strap-back",
+              "start": 2955,
+              "count": 44,
+              "triangles": 60
+            },
+            {
+              "name": "map-satchel",
+              "start": 2999,
+              "count": 55,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-flap",
+              "start": 3054,
+              "count": 54,
+              "triangles": 80
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3108,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3124,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "satchel-closure",
+              "start": 3148,
+              "count": 16,
+              "triangles": 18
+            },
+            {
+              "name": "satchel-buckle",
+              "start": 3164,
+              "count": 24,
+              "triangles": 30
+            },
+            {
+              "name": "rolled-map",
+              "start": 3188,
+              "count": 36,
+              "triangles": 48
+            },
+            {
+              "name": "belt-buckle",
+              "start": 3224,
+              "count": 28,
+              "triangles": 36
+            }
+          ],
+          "meshes": 1,
+          "materials": 1,
+          "glbBytes": 1562884,
+          "clips": [
+            "idle",
+            "rig-inspection"
+          ],
+          "atlas": [
+            1024,
+            1024
+          ]
+        }
+      ],
+      "lod": 0,
+      "view": "front",
+      "frame": 8,
+      "loadedFromGLB": true,
+      "pose": false,
+      "animated": false,
+      "rotating": false,
+      "renderedBounds": {
+        "left": 69.88343750092503,
+        "right": 288.116562499075,
+        "top": 37.56244106060649,
+        "bottom": 441.5886284316826,
+        "canvasWidth": 358,
+        "canvasHeight": 481.078125
+      },
+      "threeRevision": "183",
+      "modelBounds": {
+        "min": [
+          -0.4393735468387604,
+          4.768371586472142e-9,
+          -0.1799185311794281
+        ],
+        "max": [
+          0.4393735468387604,
+          1.680999984741211,
+          0.15199999544769527
+        ],
+        "size": [
+          0.8787470936775208,
+          1.6809999799728392,
+          0.3319185266271234
+        ]
+      },
+      "render": {
+        "calls": 2,
+        "triangles": 14342,
+        "dpr": 1
+      },
+      "setLOD": {},
+      "setView": {},
+      "setPose": {},
+      "renderNow": {},
+      "overflow": false
+    }
+  ]
+}
