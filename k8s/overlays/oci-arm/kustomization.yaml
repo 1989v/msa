@@ -355,7 +355,7 @@ images:
     newTag: cb23a78
   - name: commerce/amp-arena
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/amp-arena
-    newTag: aee6fb2
+    newTag: e6d535e
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
     newTag: ff882e0
