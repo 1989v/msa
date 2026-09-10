@@ -24,6 +24,7 @@ resources:
   - code-dictionary
   - quant
   - quant-ingest
+  - account     # ADR-0093: member + wishlist 폴드 (commerce 에서 이동)
   - engagement  # ADR-0093: recommendation + experiment 폴드
   - recommendation-ann
   - place
@@ -49,7 +50,7 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|engagement|chatbot|code-dictionary|quant|place)"
+      name: "(gateway|product|search|search-consumer|auth|gifticon|commerce|analytics|engagement|account|chatbot|code-dictionary|quant|place)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment

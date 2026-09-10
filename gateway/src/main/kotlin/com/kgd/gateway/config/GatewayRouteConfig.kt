@@ -50,8 +50,8 @@ class GatewayRouteConfig(
         "fulfillment" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "warehouse" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "recommendation" to "http://engagement:8091", // ADR-0093: engagement 폴드
-        "member" to "http://commerce:8085",
-        "wishlist" to "http://commerce:8085",
+        "member" to "http://account:8093", // ADR-0093: account 폴드
+        "wishlist" to "http://account:8093", // ADR-0093: account 폴드
     )
 
     @Bean
@@ -92,7 +92,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://commerce:8085")
+                    .uri("http://account:8093") // ADR-0093: account 폴드
             }
             // Member Service — /api/members/me (ROLE_USER+)
             .route("member-service") { r ->
@@ -101,7 +101,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://commerce:8085")
+                    .uri("http://account:8093") // ADR-0093: account 폴드
             }
             // Product Service — 상품 브라우징(GET)은 비로그인 공개 (커머스 표준: 탐색은 public, 주문은 인증)
             .route("product-service-read") { r ->
@@ -143,7 +143,7 @@ class GatewayRouteConfig(
             .route("wishlist-count-public") { r ->
                 r.path("/api/v1/wishlist/count")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri("http://commerce:8085")
+                    .uri("http://account:8093") // ADR-0093: account 폴드
             }
             // Wishlist Service (ROLE_USER+) — 찜은 로그인 전용, 게이트웨이가 인증 경계 (ADR-0074)
             .route("wishlist-service") { r ->
@@ -152,7 +152,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://commerce:8085")
+                    .uri("http://account:8093") // ADR-0093: account 폴드
             }
             // Search Service — 상품 검색/이벤트 수집은 비로그인 공개 (userId 는 optional 필드).
             // debug API 는 /api/v1/search/debug 로 gateway 비노출 경로라 영향 없음.

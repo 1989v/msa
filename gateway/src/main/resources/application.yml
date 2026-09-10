@@ -103,7 +103,7 @@ spring:
               predicates: [Path=/svc/gifticon/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-wishlist
-              uri: http://commerce:8085
+              uri: http://account:8093 # ADR-0093: account 폴드
               predicates: [Path=/svc/wishlist/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-quant
