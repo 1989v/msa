@@ -167,7 +167,16 @@ export class Hud {
       this.showCenter(left > 0 ? String(left) : 'GO!', v.teams ? '팀 데스매치' : MODES[v.modeId].name);
     } else if (v.phase === 'play' && v.phaseT < 45) {
       this.showCenter('GO!', '');
+    } else if (v.phase === 'play' && me && me.state === 'dead') {
+      if (MODES[v.modeId].respawn && me.alive) {
+        const left = Math.max(0, Math.ceil((60 + 180 - me.t) / TICK_RATE));
+        this.showCenter('KO', `리스폰까지 ${left}초`, true);
+      } else {
+        this.showCenter('탈락', '관전 중 · 매치가 끝나면 결과가 나옵니다', true);
+      }
     } else if (v.phase === 'play' && this.center.dataset.sticky !== '1') {
+      this.hideCenter();
+    } else if (v.phase === 'play' && me && me.state !== 'dead' && this.center.dataset.sticky === '1') {
       this.hideCenter();
     }
     if (this.comboHideAt && performance.now() > this.comboHideAt) { this.combo.classList.remove('on'); this.comboHideAt = 0; }

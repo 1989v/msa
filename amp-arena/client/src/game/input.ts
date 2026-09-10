@@ -1,5 +1,6 @@
 // 키보드·게임패드 → Input. 이동은 카메라 요(yaw)로 돌려 월드 방향으로 보낸다.
 import { BTN_ATTACK, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP, type Input } from '@amp/shared';
+import { TouchPad, touchWanted } from './touch.ts';
 
 const MOVE_KEYS: Record<string, [number, number]> = {
   ArrowUp: [0, 1], KeyW: [0, 1], ArrowDown: [0, -1], KeyS: [0, -1], ArrowLeft: [-1, 0], KeyA: [-1, 0], ArrowRight: [1, 0], KeyD: [1, 0],
@@ -15,9 +16,12 @@ export class InputController {
   private dragDelta = 0;      // 마우스 우클릭 드래그 누적 (px)
   private dragging = false;
   private lastX = 0;
+  private touchState: { dragPx: number } | null = null;
   enabled = true;
+  private touch: TouchPad | null = null;
 
   constructor(el: HTMLElement) {
+    if (touchWanted()) this.touch = new TouchPad(el);
     window.addEventListener('keydown', this.onKeyDown);
     window.addEventListener('keyup', this.onKeyUp);
     window.addEventListener('blur', () => { this.down.clear(); this.dashLatched = false; });
@@ -30,7 +34,10 @@ export class InputController {
   dispose(): void {
     window.removeEventListener('keydown', this.onKeyDown);
     window.removeEventListener('keyup', this.onKeyUp);
+    this.touch?.dispose();
   }
+
+  get hasTouch(): boolean { return !!this.touch; }
 
   private isTyping(): boolean {
     const a = document.activeElement;
@@ -64,8 +71,9 @@ export class InputController {
   /** 카메라 회전 입력 (-1 왼쪽 … 1 오른쪽) — 프레임마다 읽고 드래그 누적은 비운다 */
   cameraTurn(): { keys: number; dragPx: number; stick: number } {
     const keys = (this.down.has('KeyE') ? 1 : 0) - (this.down.has('KeyQ') ? 1 : 0);
-    const dragPx = this.dragDelta;
+    let dragPx = this.dragDelta;
     this.dragDelta = 0;
+    if (this.touchState) { dragPx += this.touchState.dragPx; this.touchState = null; }
     const p = this.pad();
     const stick = p && Math.abs(p.axes[2] ?? 0) > 0.2 ? p.axes[2] : 0;
     return { keys, dragPx, stick };
@@ -83,6 +91,12 @@ export class InputController {
     if (has('KeyF')) btn |= BTN_PICKUP;
     if (has('ShiftLeft') || has('ShiftRight') || this.dashLatched) btn |= BTN_DASH;
 
+    if (this.touch) {
+      const t = this.touch.read();
+      this.touchState = { dragPx: (this.touchState?.dragPx ?? 0) + t.dragPx };
+      if (Math.hypot(t.x, t.y) > 0.12) { x = t.x; y = t.y; }
+      btn |= t.btn;
+    }
     const p = this.pad();
     if (p) {
       const ax = p.axes[0] ?? 0, ay = -(p.axes[1] ?? 0);
