@@ -1,0 +1,89 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t01a/index.html",
+  "renderer": "Isolated headless Chrome / software WebGL; not a performance benchmark",
+  "errors": [],
+  "interaction": {
+    "autoRotateToggle": true,
+    "viewButtonsRespond": true
+  },
+  "snapshots": [
+    {
+      "label": "desktop",
+      "width": 1280,
+      "height": 900,
+      "title": "Skybound · 바람의 자오환 / T01A",
+      "text": "SKYBOUND / ARTIFACT STUDY 001\n바람의 자오환\n\n끊어진 고리에 남은 항로의 기억.\n\nT01A · 제작 경로 실험\n\nGLB 로드 완료 · 원본 기하 / PBR 재질\n\n석회암 · 슬레이트 · 황동 · 호박석\n원화 기반 독창적 소품 / 최종 게임 아트 아님\n\n기본 구도\n정면\n자동 회전\n드래그: 회전 · 휠 / 핀치: 확대 · 우클릭 드래그: 이동",
+      "horizontalOverflow": false,
+      "canvas": [
+        {
+          "width": 1280,
+          "height": 900
+        }
+      ],
+      "readiness": {
+        "ready": true,
+        "error": null,
+        "renderedFrames": 9,
+        "loadedFromGLB": true,
+        "bounds": [
+          5.740000247955322,
+          6.050312994122505,
+          5.45906400680542
+        ],
+        "meshes": 95
+      }
+    },
+    {
+      "label": "portrait",
+      "width": 390,
+      "height": 844,
+      "title": "Skybound · 바람의 자오환 / T01A",
+      "text": "SKYBOUND / ARTIFACT STUDY 001\n바람의 자오환\nT01A · 제작 경로 실험\n\nGLB 로드 완료 · 원본 기하 / PBR 재질\n\n기본 구도\n정면\n자동 회전\n드래그: 회전 · 휠 / 핀치: 확대 · 우클릭 드래그: 이동",
+      "horizontalOverflow": false,
+      "canvas": [
+        {
+          "width": 390,
+          "height": 844
+        }
+      ],
+      "readiness": {
+        "ready": true,
+        "error": null,
+        "renderedFrames": 40,
+        "loadedFromGLB": true,
+        "bounds": [
+          5.740000247955322,
+          6.050312994122505,
+          5.45906400680542
+        ],
+        "meshes": 95
+      }
+    },
+    {
+      "label": "landscape",
+      "width": 844,
+      "height": 390,
+      "title": "Skybound · 바람의 자오환 / T01A",
+      "text": "SKYBOUND / ARTIFACT STUDY 001\n바람의 자오환\nT01A · 제작 경로 실험\n\nGLB 로드 완료 · 원본 기하 / PBR 재질\n\n기본 구도\n정면\n자동 회전\n드래그: 회전 · 휠 / 핀치: 확대 · 우클릭 드래그: 이동",
+      "horizontalOverflow": false,
+      "canvas": [
+        {
+          "width": 844,
+          "height": 390
+        }
+      ],
+      "readiness": {
+        "ready": true,
+        "error": null,
+        "renderedFrames": 66,
+        "loadedFromGLB": true,
+        "bounds": [
+          5.740000247955322,
+          6.050312994122505,
+          5.45906400680542
+        ],
+        "meshes": 95
+      }
+    }
+  ]
+}
