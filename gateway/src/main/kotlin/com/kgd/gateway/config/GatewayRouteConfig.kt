@@ -308,6 +308,29 @@ class GatewayRouteConfig(
                     }
                     .uri(CODE_DICTIONARY_URI)
             }
+            // 친구 그룹 — **로그인 전용**. 담긴 것이 별칭 목록이라 남의 것이 열리면 그 사람
+            // 지인의 이름을 보게 된다. 아래 카탈로그가 /api/v1/games/** 를 필터 없이 받으므로
+            // 여기서 먼저 잡지 않으면 손으로 붙인 X-User-Id 하나로 아무 회원의 그룹을
+            // 읽고 고치고 지울 수 있다.
+            .route("game-party-roster") { r ->
+                r.path("/api/v1/games/party/rosters", "/api/v1/games/party/rosters/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(userConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
+            // 파티 판 진행 (투표·채점·결과 해시) — 게스트 허용. 초대 링크로 들어온 사람이
+            // 참가자라 로그인을 요구하지 않고, 신원은 릴레이가 좌석을 줄 때 발급한 토큰이 갖는다.
+            // 필터를 거는 것은 클라이언트가 위조한 신원 헤더를 벗기기 위해서다.
+            .route("game-party-room") { r ->
+                r.path("/api/v1/games/party/rooms/**")
+                    .filters { f ->
+                        f.filter(authFilter.apply(optionalUserConfig()))
+                            .stripPrefix(0)
+                    }
+                    .uri(CODE_DICTIONARY_URI)
+            }
             // 카탈로그 조회 (리스트/상세/유사/컬렉션/태그) — 공개
             .route("game-catalog") { r ->
                 r.path("/api/v1/games/**")

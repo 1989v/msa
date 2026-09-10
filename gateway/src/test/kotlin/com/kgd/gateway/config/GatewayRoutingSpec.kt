@@ -100,6 +100,31 @@ class GatewayRoutingSpec(
             }
         }
     }
+
+    // 친구 그룹은 별칭 목록이라 남의 것이 열리면 그 사람 지인의 이름이 샌다.
+    // 카탈로그 캐치올(/api/v1/games/**)은 필터가 없어 손으로 붙인 X-User-Id 를 그대로 통과시킨다.
+    Given("친구 그룹 경로") {
+        When("토큰 없이 호출하면") {
+            Then("/api/v1/games/party/rosters 는 401") {
+                status("/api/v1/games/party/rosters") shouldBe 401
+            }
+        }
+
+        When("X-User-Id 를 손으로 붙여 보내면") {
+            Then("헤더만으로는 남의 그룹을 못 읽는다") {
+                client.get().uri("/api/v1/games/party/rosters")
+                    .header("X-User-Id", "1")
+                    .exchange()
+                    .expectStatus().isUnauthorized
+            }
+            Then("쓰기도 막힌다 — 덮어쓰기·삭제가 더 위험하다") {
+                client.delete().uri("/api/v1/games/party/rosters/1")
+                    .header("X-User-Id", "1")
+                    .exchange()
+                    .expectStatus().isUnauthorized
+            }
+        }
+    }
 }) {
     override fun extensions() = listOf(SpringExtension)
 }
