@@ -349,6 +349,9 @@ images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
     newTag: cb23a78
+  - name: commerce/amp-arena
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/amp-arena
+    newTag: aee6fb2
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
     newTag: ff882e0
@@ -382,9 +385,6 @@ images:
   - name: commerce/place-ingest
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/place-ingest
     newTag: 6ca573c
-  - name: commerce/amp-arena
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/amp-arena
-    newTag: bootstrap # 첫 이미지는 CI 가 amp-arena/* 변경을 보고 굽고 여기 sha 를 적는다
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: f845b2a
