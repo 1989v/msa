@@ -209,9 +209,21 @@ jobs:
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 10
     steps:
+      - name: Generate GitHub App token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: |
+            msa
+            games
+
       - name: Checkout
         uses: actions/checkout@v4
         with:
+          token: ${{ steps.app-token.outputs.token }}
           submodules: false
           fetch-depth: 1
 
@@ -221,7 +233,29 @@ jobs:
           cache: npm
           cache-dependency-path: portal-fe/package-lock.json
 
-      # 게임 서브모듈은 받지 않는다 — 타입체크·테스트는 src 만 쓰고, games 는 330MB 다
+      # 게임 서브모듈을 통째로 받지는 않는다 — 지금 2.5GB 다. 그런데 결정성·릴레이·명부
+      # 인계 검사(ADR-0092)가 그 안의 JS 를 **실제로 읽어서** 판정하므로 아예 없으면
+      # 17건이 통째로 죽는다(2026-09-10 실제로 그랬다). 필요한 두 디렉토리만 sparse 로
+      # 가져온다 — 넷(lib · marble-race · card-flip · ladder-draw), 실측 1MB 미만. **커밋된 서브모듈 포인터로 고정**한다: 브랜치 끝을 받으면
+      # 검사가 이 커밋이 아니라 남의 최신 게임 코드를 재게 된다.
+      - name: Fetch game files the tests read (sparse, <1MB)
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+          SHA=$(git rev-parse HEAD:portal-fe/public/games)
+          echo "games 포인터: $SHA"
+          rm -rf portal-fe/public/games
+          mkdir -p portal-fe/public/games
+          cd portal-fe/public/games
+          git init -q
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository_owner }}/games.git"
+          git sparse-checkout init --cone
+          git sparse-checkout set lib marble-race card-flip ladder-draw
+          git fetch -q --depth 1 --filter=blob:none origin "$SHA"
+          git checkout -q FETCH_HEAD
+          echo "받은 크기: $(du -sh . | cut -f1)"
+
       - name: Install
         working-directory: portal-fe
         run: npm ci --no-audit --no-fund
