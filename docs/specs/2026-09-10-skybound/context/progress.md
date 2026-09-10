@@ -2,7 +2,11 @@
 
 ## 현재
 
-- **T01B/T01C 장면·카메라 기술 검증, T02A 순수 이동 규칙 완료. 캐릭터 연결 전.**
+- **T02B-1 리깅 파일 경로 검증 완료. 다음 T02B-2 텍스처 경로. 캐릭터 연결 전.**
+- 사용자 잔여 한도 15% 지시에 따라 `planning/t02b-small-steps.md`로 T02B를 4개 소단위로 나눴다.
+- `implementation/t02b/rig-check/`에 재현 소스·GLB(2,604 bytes)·테스트·README 저장.
+  표준 Three.js exporter/loader의 뼈대·가중치·애니메이션 왕복과 CPU 정점 변형, tests 4/4 직접 재검증.
+  진단 메시이며 실제 주인공/텍스처/GPU 렌더 검증이 아니다.
 - 저장 위치: `/Users/gideok-kwon/IdeaProjects/msa/docs/specs/2026-09-10-skybound/`.
 - 클린룸 폴더 `/private/tmp/skybound-cleanroom/`와 빈 `src/`만 생성했다.
   이 임시 폴더가 없어져도 잃는 구현은 없다. 중요한 결과는 전부 위 문서 폴더에 있다.
@@ -22,7 +26,13 @@
 
 ## 다음 작업
 
-**T02B: 주인공 모델과 동작 제작, 이후 T02C 입력 연결.**
+**T02B-2: 텍스처 경로만 검증하고 기록·커밋.**
+
+- `planning/t02b-small-steps.md`와 `implementation/t02b/rig-check/README.md`부터 읽는다.
+- 1K 아틀라스의 UV/색 공간/GLB 내장 이미지 왕복을 검증하고 Q05 제작 방식을 확정한다.
+- 리깅 실험은 반복 제작하지 않는다. 다음 모델 제작·동작 연결은 각각 별도 소단위다.
+
+이후 T02B 전체 연결 계약:
 
 1. README → tasks의 T02B → T02A README → art-direction/캐릭터 원화를 읽는다.
 2. 새 창작 세션/에이전트에 그 자료만 전달한다. 다른 게임 소스/문서/아트 금지.
@@ -43,8 +53,9 @@
 
 ## 검증과 막힌 것
 
-- 이전 크레딧 제한은 재발하지 않았고 새 에이전트로 T01C/T02A를 마쳤다.
-  과거 제한을 현재도 지속되는 차단으로 가정하지 않는다. 재발하면 그 시점의 결과를 기록한다.
+- T02B-1 첫 독립 에이전트 실행은 workspace out of credits 오류였다.
+  사용자 재개 요청 후 같은 소단위를 재시도해 성공했다. 현재 지속 차단은 아니다.
+- 이번 재개에서 T02A 회귀 테스트도 `pass 11 / fail 0` 재확인했다.
 - P0 파일/링크/이미지 및 설계 리뷰 결과는 `verifications/p0.md`에 기록한다.
 - 검증 결과: 상대 링크 18개 오류 0, PNG 2개 CRC/크기 정상, 독립 설계 리뷰 SHIP.
 - T01A: build 성공, node:test `pass 5 / fail 0`; 실제 GLB 브라우저 로드와 색상 캡처 완료.

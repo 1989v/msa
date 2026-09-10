@@ -28,4 +28,4 @@ questions:
     stage: T02B-before-character
     status: open
     default: 표준 glTF 도구를 사용하고 T01A 제한 exporter를 확장하지 않음
-    resolution: 캐릭터 제작 시작 시 원화 품질과 도구 가용성 확인, 출처/라이선스 기록, 유료 구매는 별도 결정
+    resolution: T02B-1에서 Three 표준 exporter/loader의 스킨·애니메이션 왕복 및 CPU 변형 검증(4/4). 텍스처 제작/내보내기 경로는 T02B-2에서 검증할 때까지 open 유지. 원화 품질·출처/라이선스 기록, 유료 구매는 별도 결정

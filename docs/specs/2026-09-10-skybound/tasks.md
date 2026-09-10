@@ -80,6 +80,14 @@ Dependencies: T01 · Skills: hns:implement-tasks
 
 입력: SR-1/7, 캐릭터 보드. 소유: simulation/input/character와 테스트.
 
+T02B는 남은 사용량을 고려해 아래 소단위마다 검증·기록·커밋한다.
+상위 T02B는 원화 비교와 이동 연결까지 끝나야 완료다.
+
+- [x] T02B-1: 표준 GLTFExporter/GLTFLoader의 스킨·뼈대·애니메이션 왕복 검증 (tests 4/4)
+- [ ] T02B-2: 텍스처 내보내기 경로 검증 및 Q05 제작 방식 확정
+- [ ] T02B-3: 원화 기준 주인공 모델과 리깅, 실루엣 비교
+- [ ] T02B-4: 걷기/달리기/점프/착지 애니메이션과 T02A 스냅샷 연결
+
 - [ ] 지면·경사·낙하·입력 해제 테스트
 - [ ] 캐릭터 실루엣, 걷기/달리기/점프/착지, 카메라 충돌
 - [ ] 키보드·터치 스틱·시야 드래그, pointercancel/blur/메뉴 입력 격리
@@ -185,6 +193,6 @@ Dependencies: T08 · Skills: hns:verify
 ## 다음 세션 시작 문장
 
 > `docs/specs/2026-09-10-skybound/README.md`와 `context/progress.md`를 읽고
-> **T02B부터** 클린룸에서 이어가 줘. 다른 게임 소스/문서/아트는 읽지 말고,
-> 원화와 T02A README의 연결 계약을 읽어 주인공 모델·동작을 제작해.
+> **T02B-2 텍스처 경로 검증부터** 클린룸에서 이어가 줘. 다른 게임 소스/문서/아트는 읽지 말고,
+> planning/t02b-small-steps.md와 리깅 실험 README를 읽어 한 소단위만 진행해.
 > 원화 대비 차이·실행 검증·다음 단계와 경로를 저장하고 커밋해.
