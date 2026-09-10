@@ -39,6 +39,8 @@ resources:
   - gifticon-fe
   - admin-fe
   - quant-fe
+  # AMP ARENA (Node + WebSocket, 8787) — arena.1989v.com, ingress 는 oci-arm overlay
+  - amp-arena
   - frontend-ingress.yaml
 
 patches:

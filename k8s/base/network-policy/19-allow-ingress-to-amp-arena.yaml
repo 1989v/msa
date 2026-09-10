@@ -1,0 +1,24 @@
+# amp-arena — ingress-nginx 에서 :8787 로만 들어온다 (정적 클라 + WebSocket /ws).
+# 13-allow-ingress-to-frontend 는 :80 만 열어 두므로 8787 을 쓰는 이 서비스는 따로 연다.
+# 백엔드·DB·Kafka 로 나가는 egress 는 없다 — 방 상태는 메모리, 외부 호출 없음.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-ingress-to-amp-arena
+  namespace: commerce
+  labels:
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: network-policy
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: amp-arena
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
+      ports:
+        - { port: 8787, protocol: TCP }
