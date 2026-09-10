@@ -34,12 +34,11 @@ val mainClassByImage: Map<String, String> = mapOf(
     "gifticon" to "com.kgd.gifticon.GifticonApplicationKt",
     "commerce" to "com.kgd.commerce.CommerceApplicationKt",
     "analytics" to "com.kgd.analytics.AnalyticsApplicationKt",
-    "experiment" to "com.kgd.experiment.ExperimentApplicationKt",
     "chatbot" to "com.kgd.chatbot.ChatbotApplicationKt",
     "code-dictionary" to "com.kgd.codedictionary.CodeDictionaryApplicationKt",
     "agent-viewer-api" to "com.kgd.agentviewer.AgentViewerApplicationKt",
     "quant" to "com.kgd.quant.QuantApplicationKt",
-    "recommendation" to "com.kgd.recommendation.RecommendationApplicationKt",
+    "engagement" to "com.kgd.engagement.EngagementApplicationKt", // ADR-0093 폴드 호스트
     "place" to "com.kgd.place.PlaceApplicationKt"
 )
 
@@ -66,8 +65,11 @@ if (resolvedMainClass == null) {
     // management and auto-configuration, but disable bootJar because they are
     // not runnable apps. Disable the Jib tasks for those — they have no main
     // class and produce no image.
-    logger.info(
-        "Skipping Jib convention for '{}' — no main class mapped (library module).",
+    // **경고로 낸다.** 폴드 호스트를 새로 만들고 이 표에 안 넣으면 jib 이 조용히 SKIPPED 되고,
+    // CI 는 성공으로 끝난 뒤 매니페스트 태그만 올려 ErrImagePull 을 만든다(ADR-0093 에서 겪음).
+    // 라이브러리 모듈이면 이 줄이 정상이고, 배포 단위인데 보이면 표에 항목이 빠진 것이다.
+    logger.warn(
+        "Jib disabled for '{}' — no main class mapped. 라이브러리면 정상, 배포 단위면 mainClassByImage 에 추가하라.",
         serviceImageName
     )
     tasks.matching { it.name in setOf("jib", "jibBuildTar", "jibDockerBuild") }.configureEach {
