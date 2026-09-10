@@ -10,6 +10,7 @@ import ShopProductDetailPage from './pages/ShopProductDetailPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import LoginPage from './pages/LoginPage';
 import NotFoundPage from './pages/NotFoundPage';
+const TechGlossaryPage = lazy(() => import('./pages/TechGlossaryPage'));
 import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 
 // ADR-0058 R3 FE 통합 — 흡수될 sub-app 슬롯 (lazy). P2 에서 실제 앱 라우터로 교체.
@@ -187,6 +188,9 @@ function App() {
             }
           />
           <Route path="/tech" element={<SearchPage />} />
+          {/* 분류별 용어집 (ADR-0062 §16). 개념마다 URL 을 주지 않는다 — 풀이가 짧아
+              개념당 한 장이면 얇은 페이지가 162장 생긴다 */}
+          <Route path="/tech/:category" element={<TechGlossaryPage />} />
           {/* 내 찜 (ADR-0074) — 개인 화면이라 모든 호스트에서 그 자리 그대로 연다 (리다이렉트 없음) */}
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/en/favorites" element={<FavoritesPage />} />

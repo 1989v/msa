@@ -80,3 +80,23 @@ export const fetchServices = async (): Promise<ServiceItem[]> => {
   const res = await api.get<ApiResponse<ServiceItem[]>>('/api/v1/services');
   return res.data.data;
 };
+
+/** 개념 사전 목록 항목 — 상세(ConceptDetail)에서 스니펫·관계를 뺀 모양 */
+export interface Concept {
+  id: number;
+  conceptId: string;
+  name: string;
+  category: string;
+  level: string;
+  description: string;
+  synonyms: string[];
+}
+
+/**
+ * 개념 전량. 162개라 한 번에 받는다 — 분류별 용어집이 묶음으로 쓰므로 페이지를 나누면 잘린다.
+ * 프리렌더(`scripts/prerender-seo.mjs`)도 같은 엔드포인트를 같은 크기로 부른다.
+ */
+export const fetchConcepts = async (): Promise<Concept[]> => {
+  const res = await api.get<ApiResponse<{ content: Concept[] }>>('/api/v1/concepts?size=500');
+  return res.data.data.content ?? [];
+};

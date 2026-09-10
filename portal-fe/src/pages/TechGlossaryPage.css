@@ -1,0 +1,103 @@
+/* /tech 계열은 dark-trading 아키타입이다 (DESIGN.md §12) — 브랜드 면 토큰을 쓰지 않는다.
+   색은 전부 --ko-* 토큰으로만 잡는다. hex 를 직접 적지 않는다. */
+
+.glossary {
+  max-width: 860px;
+  margin: 0 auto;
+  padding-block: 48px 96px;
+  padding-inline: 20px;
+  color: var(--ko-text-primary);
+}
+
+.glossary-crumb {
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+.glossary-crumb a {
+  color: var(--ko-text-muted);
+  text-decoration: none;
+}
+.glossary-crumb a:hover {
+  color: var(--ko-accent-text);
+}
+
+.glossary-title {
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  line-height: 1.25;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+
+.glossary-lede {
+  color: var(--ko-text-muted);
+  margin: 0 0 36px;
+}
+
+.glossary-terms {
+  margin: 0;
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+/* 용어 하나가 한 줄 — 넓은 화면에서는 이름과 풀이가 나란히, 좁으면 위아래로 */
+.glossary-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 2.2fr;
+  gap: 8px 28px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+@media (max-width: 640px) {
+  .glossary-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+.glossary-row dt {
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+.glossary-row dd {
+  margin: 0;
+  color: var(--ko-text-secondary, var(--ko-text-muted));
+  line-height: 1.6;
+}
+
+/* 동의어 — 용어와 같은 줄이되 무게를 낮춰 이름과 헷갈리지 않게 */
+.glossary-alt {
+  font-family: var(--ko-font-mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--ko-text-muted);
+}
+
+.glossary-more {
+  font-size: 15px;
+  margin: 48px 0 14px;
+  color: var(--ko-text-muted);
+}
+
+.glossary-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+.glossary-nav a {
+  display: inline-block;
+  padding: 5px 11px;
+  border: 1px solid var(--ko-border-default);
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--ko-text-primary);
+  text-decoration: none;
+}
+.glossary-nav a:hover {
+  border-color: var(--ko-accent-primary);
+  color: var(--ko-accent-text);
+}

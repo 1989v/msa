@@ -675,6 +675,99 @@ export function sourceText(raw) {
 }
 
 
+// ─── /tech 분류별 용어집 ─────────────────────────────────────────────────────
+//
+// 개념마다 URL 을 만들지 않는다. 162개 중 description 중앙값이 29자이고 60자 이상은 2개뿐이라
+// (2026-09-10 실측), 개념당 한 장이면 제목 + 한 문장짜리 얇은 페이지가 162장 생긴다.
+// 이 레포는 같은 일을 이미 겪었다 — 개요 없는 관광지 36,092개가 사이트 전체를 '가치가 별로
+// 없는 콘텐츠'로 반려당하게 했다 (ADR-0062 §8).
+//
+// 분류로 묶으면 한 장이 8~20개 용어와 풀이를 들고 있어 그 자체로 읽힌다.
+// schema.org 도 이 모양에 이름이 있다 — `DefinedTermSet`.
+
+/** 분류 한글 이름 — /tech 는 한국어 면이다. 영문 라벨은 화면 칩이 쓴다(types/index.ts) */
+export const TECH_CATEGORY_KO = {
+  BASICS: '프로그래밍 기초',
+  DATA_STRUCTURE: '자료구조',
+  ALGORITHM: '알고리즘',
+  DESIGN_PATTERN: '디자인 패턴',
+  CONCURRENCY: '동시성',
+  DISTRIBUTED_SYSTEM: '분산 시스템',
+  ARCHITECTURE: '아키텍처',
+  INFRASTRUCTURE: '인프라',
+  DATA: '데이터',
+  SECURITY: '보안',
+  NETWORK: '네트워크',
+  TESTING: '테스트',
+  LANGUAGE_FEATURE: '언어 기능',
+};
+
+/** URL 세그먼트 ↔ 분류 enum. 코드가 아니라 뜻이 읽히는 주소를 쓴다 */
+export function techCategorySlug(category) {
+  return String(category).toLowerCase().replace(/_/g, '-');
+}
+
+export function techCategoryFromSlug(slug) {
+  const upper = String(slug || '').toUpperCase().replace(/-/g, '_');
+  return upper in TECH_CATEGORY_KO ? upper : null;
+}
+
+export function techGlossaryPath(category) {
+  return `/tech/${techCategorySlug(category)}`;
+}
+
+export function techGlossaryUrl(category) {
+  return `${PORTAL_ORIGIN}${techGlossaryPath(category)}`;
+}
+
+/**
+ * 용어집 메타. 정의형 질의("클로저란", "멱등성 뜻")의 착지점이라 제목에 분류명과
+ * '용어' 를 함께 싣는다.
+ * @param {string} category
+ * @param {Array<Record<string, any>>} concepts 이 분류의 개념들
+ */
+export function techGlossaryMeta(category, concepts = []) {
+  const name = TECH_CATEGORY_KO[category] ?? category;
+  const n = concepts.length;
+  const picks = concepts.slice(0, 4).map((c) => c.name).filter(Boolean).join(' · ');
+  return {
+    title: `${name} 용어집 — ${n}개 개념 정리 | ${PORTAL_BRAND}`,
+    description: clampDescription(
+      `${name} 분야의 개념 ${n}개를 한 장에 모았습니다${picks ? `. ${picks} 등` : ''} — 코드베이스에서 뽑아 뜻과 관계를 정리했습니다.`,
+    ),
+    canonical: techGlossaryUrl(category),
+    image: ogCardUrl(PORTAL_ORIGIN, 'portal'),
+    heading: `${name} 용어집`,
+  };
+}
+
+/**
+ * `DefinedTermSet` — 용어집의 schema.org 모양. 답변형 검색이 정의를 인용할 때 읽는다.
+ * 풀이가 비어 있는 용어는 넣지 않는다 — 이름만 있는 항목은 정의가 아니다.
+ */
+export function definedTermSetJsonLd(category, concepts = []) {
+  const name = TECH_CATEGORY_KO[category] ?? category;
+  const url = techGlossaryUrl(category);
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'DefinedTermSet',
+    '@id': url,
+    name: `${name} 용어집`,
+    url,
+    inLanguage: 'ko',
+    publisher: { '@type': 'Organization', name: PORTAL_BRAND, url: PORTAL_ORIGIN, founder: personRef },
+    hasDefinedTerm: concepts
+      .filter((c) => (c.description || '').trim())
+      .map((c) => ({
+        '@type': 'DefinedTerm',
+        name: c.name,
+        description: c.description,
+        inDefinedTermSet: url,
+        ...(c.synonyms?.length ? { alternateName: c.synonyms } : {}),
+      })),
+  };
+}
+
 // ─── 포털 페이지 카피 (프리렌더 · 런타임 공용) ───────────────────────────────
 
 /**

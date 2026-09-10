@@ -83,6 +83,12 @@ import {
   sourceText,
   ogCardUrl,
   imageMimeType,
+  TECH_CATEGORY_KO,
+  definedTermSetJsonLd,
+  techCategorySlug,
+  techGlossaryMeta,
+  techGlossaryPath,
+  techGlossaryUrl,
 } from '../src/seo/copy.mjs';
 
 const MULTI = SEO_MULTI_ATTR;
@@ -190,6 +196,16 @@ async function main() {
     console.warn(`[seo] 블로그 색인 조회 실패: ${err.message}`);
   }
 
+  // 개념 사전 — 분류별 용어집의 재료다. 색인 대상이라 가드 안에 둔다.
+  let concepts = [];
+  try {
+    concepts = await fetchConcepts();
+    fetched.push('concepts');
+  } catch (err) {
+    failed.push('concepts');
+    console.warn(`[seo] 개념 사전 조회 실패: ${err.message}`);
+  }
+
   // 혜택 허브는 2026-08-24 부터 색인 대상이다 (ADR-0069 개정) — 오퍼가 본문이자 llms.txt 이므로
   // 조회 실패는 곧 "빈 카탈로그가 색인되는" 상태다. 가드 안에 둔다.
   let dealSections = [];
@@ -223,8 +239,9 @@ async function main() {
     );
   }
 
-  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections);
-  await renderPortalPages(shell);
+  await writeRobotsAndSitemaps(games, places, regions, blog, rankBoards, dealSections, concepts);
+  await renderPortalPages(shell, concepts);
+  await renderTechGlossaries(shell, concepts);
   await renderPlaceHubs(shell, places, regions);
   await renderPlaceDetails(shell, places, regions);
   await renderDealHub(shell, dealSections);
@@ -273,6 +290,15 @@ async function getJson(path) {
   const body = await res.json();
   if (!body.success) throw new Error(`GET ${path} → ${body.error?.code}`);
   return body.data;
+}
+
+/**
+ * 개념 사전 전량. 162개라 한 번에 받는다 — 페이지를 나누면 분류별 묶음이 잘린다.
+ * 상세는 부르지 않는다: 용어집이 쓰는 것은 이름·분류·풀이·동의어뿐이고, 그건 목록에 다 있다.
+ */
+async function fetchConcepts() {
+  const page = await getJson('/api/v1/concepts?size=500');
+  return page.content ?? [];
 }
 
 /** 목록(요약) + 상세(설명·갱신시각)를 합쳐 프리렌더에 필요한 필드를 모두 채운다 */
@@ -584,6 +610,7 @@ async function writeRobotsAndSitemaps(
   blog = { posts: [], categories: [] },
   rankBoards = [],
   dealSections = [],
+  concepts = [],
 ) {
   const gameEntries = [];
   for (const lang of LANGS) {
@@ -608,10 +635,17 @@ async function writeRobotsAndSitemaps(
     }
   }
 
-  const portalEntries = ['/', '/tech', '/portfolio', '/shop', '/privacy'].map((path) => ({
-    loc: `${PORTAL_ORIGIN}${path}`,
-    priority: path === '/' ? '1.0' : '0.6',
-  }));
+  const portalEntries = [
+    ...['/', '/tech', '/portfolio', '/shop', '/privacy'].map((path) => ({
+      loc: `${PORTAL_ORIGIN}${path}`,
+      priority: path === '/' ? '1.0' : '0.6',
+    })),
+    // 분류별 용어집 — 개념이 0개인 분류는 페이지 자체가 없으므로 여기도 없다
+    ...[...groupConcepts(concepts).keys()].map((category) => ({
+      loc: techGlossaryUrl(category),
+      priority: '0.7',
+    })),
+  ];
 
   // place — 허브만 hreflang 쌍이다. 관광지 상세는 TourAPI 가 국문/영문을 별도 콘텐츠로
   // 관리해 같은 장소라도 id 가 다르므로 짝을 지을 수 없다 (ADR-0062).
@@ -1364,6 +1398,79 @@ ${recent}
 `;
 }
 
+/**
+ * 분류별 용어집 — `/tech/<slug>` 13장.
+ *
+ * 개념 하나에 URL 하나를 주지 않는 이유는 copy.mjs 의 이 절 주석에 있다: 풀이가 중앙값 29자라
+ * 개념당 한 장이면 얇은 페이지가 162장 생긴다. 분류로 묶으면 한 장이 8~20개 용어를 들고 있어
+ * 그 자체로 읽히고, `DefinedTermSet` 이 정확히 이 모양이다.
+ * @param {string} shell
+ * @param {Array<Record<string, any>>} concepts
+ */
+async function renderTechGlossaries(shell, concepts) {
+  const byCategory = groupConcepts(concepts);
+  const nav = techGlossaryNav(byCategory);
+  for (const [category, items] of byCategory) {
+    const meta = techGlossaryMeta(category, items);
+    const terms = items
+      .map(
+        (c) =>
+          `<dt>${escapeHtml(c.name)}${c.synonyms?.length ? ` <span>(${escapeHtml(c.synonyms.join(', '))})</span>` : ''}</dt>` +
+          `<dd>${escapeHtml(c.description || '')}</dd>`,
+      )
+      .join('');
+    const html = compose(shell, {
+      lang: 'ko',
+      ...meta,
+      siteName: PORTAL_BRAND,
+      imageAlt: meta.heading,
+      jsonLd: [
+        definedTermSetJsonLd(category, items),
+        breadcrumbJsonLd('ko', [
+          { name: 'IT 개념 사전', url: portalUrl('/tech') },
+          { name: meta.heading, url: meta.canonical },
+        ]),
+      ],
+      body: shellBody(
+        `<nav><a href="/tech">IT 개념 사전</a></nav>` +
+          `<h1>${escapeHtml(meta.heading)}</h1><p>${escapeHtml(meta.description)}</p>` +
+          `<dl>${terms}</dl>` +
+          `<h2>다른 분류</h2>${nav}`,
+      ),
+    });
+    await emit(`prerender/tech/${techCategorySlug(category)}.html`, html);
+  }
+  if (byCategory.size > 0) console.log(`[seo] 용어집 ${byCategory.size}장 · 개념 ${concepts.length}개`);
+}
+
+/**
+ * 분류별로 묶는다. 개념이 0개인 분류는 만들지 않는다 — 빈 용어집은 얇은 페이지 그 자체다.
+ * 순서는 TECH_CATEGORY_KO 의 선언 순서를 따른다(개수순이면 개념이 늘 때마다 목차가 흔들린다).
+ * @param {Array<Record<string, any>>} concepts
+ * @returns {Map<string, Array<Record<string, any>>>}
+ */
+function groupConcepts(concepts) {
+  const map = new Map();
+  for (const category of Object.keys(TECH_CATEGORY_KO)) {
+    const items = (concepts ?? [])
+      .filter((c) => c.category === category)
+      .sort((a, b) => String(a.name).localeCompare(String(b.name), 'ko'));
+    if (items.length > 0) map.set(category, items);
+  }
+  return map;
+}
+
+/** @param {Map<string, Array<Record<string, any>>>} byCategory */
+function techGlossaryNav(byCategory) {
+  const items = [...byCategory.entries()]
+    .map(
+      ([category, items]) =>
+        `<li><a href="${techGlossaryPath(category)}">${escapeHtml(TECH_CATEGORY_KO[category])}</a> · ${items.length}개</li>`,
+    )
+    .join('');
+  return `<ul>${items}</ul>`;
+}
+
 /** apex 홈이 링크하는 서비스 호스트. resume 는 색인 대상이 아니라 넣지 않는다 (ADR-0064) */
 const SUBDOMAIN_LINKS = [
   [GAME_ORIGIN, '무료 웹게임'],
@@ -1373,7 +1480,10 @@ const SUBDOMAIN_LINKS = [
   [DEAL_ORIGIN, '혜택 링크 허브'],
 ];
 
-async function renderPortalPages(shell) {
+async function renderPortalPages(shell, concepts = []) {
+  // /tech 는 용어집 13장으로 들어가는 문이다 — 그 링크가 없으면 sitemap 에만 있는 주소가 되고,
+  // 내부 링크 없는 URL 은 잘 크롤되지 않는다.
+  const glossaryNav = techGlossaryNav(groupConcepts(concepts));
   const nav = Object.keys(PORTAL_PAGES)
     .map((path) => `<a href="${path}">${escapeHtml(PORTAL_PAGES[path].title.split(' — ')[0])}</a>`)
     .join(' · ');
@@ -1393,6 +1503,7 @@ async function renderPortalPages(shell) {
       body: shellBody(
         `<h1>${escapeHtml(meta.title.split(' — ')[0])}</h1><p>${escapeHtml(meta.description)}</p>` +
           `<nav>${nav}</nav>` +
+          (path === '/tech' ? `<h2>분류별 용어집</h2>${glossaryNav}` : '') +
           // 서브도메인 서비스로 가는 링크. 무 JS 크롤러에게는 이 줄이 apex 와 각 호스트를
           // 잇는 **유일한** 연결이다 — sitemap 은 호스트 경계를 넘지 못하므로 여기서
           // 빠지면 그 호스트는 사이트 그래프에서 고립된다.

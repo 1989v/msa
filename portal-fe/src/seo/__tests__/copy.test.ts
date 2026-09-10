@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { CARDS } from '../../../scripts/make-og-cards.mjs';
 import {
+  definedTermSetJsonLd,
+  techCategoryFromSlug,
+  techCategorySlug,
+  techGlossaryMeta,
   blogHubMeta,
   blogPostMeta,
   dealHubMeta,
@@ -242,5 +246,39 @@ describe('imageMimeType — 확장자에서 읽는다', () => {
     expect(imageMimeType('https://x/a.png?v=2')).toBe('image/png');
     expect(imageMimeType('https://x/a.svg')).toBeNull();
     expect(imageMimeType('https://x/noext')).toBeNull();
+  });
+});
+
+describe('/tech 분류별 용어집', () => {
+  const items = [
+    { conceptId: 'array', name: '배열', category: 'DATA_STRUCTURE', description: '같은 타입을 연속 배치', synonyms: ['array'] },
+    { conceptId: 'graph', name: '그래프', category: 'DATA_STRUCTURE', description: '노드와 간선', synonyms: [] },
+    { conceptId: 'thin', name: '풀이없음', category: 'DATA_STRUCTURE', description: '', synonyms: [] },
+  ];
+
+  it('주소는 코드가 아니라 뜻이 읽히는 슬러그다', () => {
+    expect(techCategorySlug('DATA_STRUCTURE')).toBe('data-structure');
+    expect(techCategoryFromSlug('data-structure')).toBe('DATA_STRUCTURE');
+    expect(techCategoryFromSlug('nope-xyz')).toBeNull();
+  });
+
+  it('풀이가 빈 용어는 DefinedTerm 에 넣지 않는다 — 이름만 있는 항목은 정의가 아니다', () => {
+    const set = definedTermSetJsonLd('DATA_STRUCTURE', items);
+    expect(set['@type']).toBe('DefinedTermSet');
+    expect(set.hasDefinedTerm).toHaveLength(2);
+    expect(set.hasDefinedTerm.map((t: { name: string }) => t.name)).not.toContain('풀이없음');
+  });
+
+  it('동의어가 있을 때만 alternateName 을 단다', () => {
+    const terms = definedTermSetJsonLd('DATA_STRUCTURE', items).hasDefinedTerm;
+    expect(terms[0]).toHaveProperty('alternateName', ['array']);
+    expect(terms[1]).not.toHaveProperty('alternateName');
+  });
+
+  it('제목이 분류명과 개수를 함께 싣는다 — 정의형 질의의 착지점이다', () => {
+    const meta = techGlossaryMeta('DATA_STRUCTURE', items);
+    expect(meta.title).toContain('자료구조 용어집');
+    expect(meta.title).toContain('3개');
+    expect(meta.canonical).toBe('https://1989v.com/tech/data-structure');
   });
 });
