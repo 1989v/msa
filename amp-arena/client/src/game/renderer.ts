@@ -1,7 +1,32 @@
 // Three.js 장면: 맵 · 캐릭터 리그 · 투사체 · 이펙트 · 추적 카메라.
 import * as THREE from 'three';
-import { type MapDef, type Projectile, lerpAngle, type AccessoryId } from '@amp/shared';
+import { type MapDef, type Projectile, type Item, lerpAngle, type AccessoryId } from '@amp/shared';
 import { CharacterRig } from './rig.ts';
+
+function heartTexture(): THREE.CanvasTexture {
+  return makeTexture((ctx, s) => {
+    ctx.translate(s / 2, s / 2);
+    ctx.beginPath();
+    ctx.moveTo(0, s * 0.32);
+    ctx.bezierCurveTo(-s * 0.5, -s * 0.05, -s * 0.25, -s * 0.42, 0, -s * 0.18);
+    ctx.bezierCurveTo(s * 0.25, -s * 0.42, s * 0.5, -s * 0.05, 0, s * 0.32);
+    ctx.closePath();
+    ctx.fillStyle = '#ee4444'; ctx.fill();
+    ctx.lineWidth = s * 0.05; ctx.strokeStyle = '#1a1f3a'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(-s * 0.14, -s * 0.16, s * 0.05, 0, Math.PI * 2); ctx.fillStyle = '#ffffff'; ctx.fill();
+  });
+}
+
+function crateTexture(): THREE.CanvasTexture {
+  return makeTexture((ctx, s) => {
+    ctx.fillStyle = '#7a4f22'; ctx.fillRect(0, 0, s, s);
+    ctx.fillStyle = '#b07a3c';
+    for (let i = 0; i < 4; i++) ctx.fillRect(0, i * (s / 4) + 3, s, s / 4 - 6);
+    ctx.strokeStyle = '#3d2711'; ctx.lineWidth = 6;
+    ctx.strokeRect(3, 3, s - 6, s - 6);
+    ctx.beginPath(); ctx.moveTo(6, 6); ctx.lineTo(s - 6, s - 6); ctx.moveTo(s - 6, 6); ctx.lineTo(6, s - 6); ctx.stroke();
+  });
+}
 
 interface Effect { obj: THREE.Sprite; life: number; max: number; from: number; to: number; rise: number }
 
@@ -69,6 +94,9 @@ export class Renderer {
   readonly gl: THREE.WebGLRenderer;
   readonly rigs = new Map<number, CharacterRig>();
   private projMeshes = new Map<number, THREE.Mesh>();
+  private itemMeshes = new Map<number, { obj: THREE.Object3D; kind: string; light?: THREE.Mesh }>();
+  private texHeart: THREE.CanvasTexture | null = null;
+  private crateMat: THREE.MeshLambertMaterial | null = null;
   private effects: Effect[] = [];
   private mapGroup = new THREE.Group();
   private texStar = starTexture('#ffffff', '#ff6a2a');
@@ -219,6 +247,60 @@ export class Renderer {
       m.position.set(p.x, p.y, p.z);
     }
     for (const [id, m] of this.projMeshes) if (!seen.has(id)) { this.scene.remove(m); this.projMeshes.delete(id); }
+  }
+
+  updateItems(items: Item[], holders: Map<number, { x: number; y: number; z: number }>, now: number): void {
+    const seen = new Set<number>();
+    for (const it of items) {
+      seen.add(it.id);
+      let m = this.itemMeshes.get(it.id);
+      if (!m) {
+        let obj: THREE.Object3D;
+        let light: THREE.Mesh | undefined;
+        if (it.kind === 'crate') {
+          if (!this.crateMat) this.crateMat = new THREE.MeshLambertMaterial({ map: crateTexture() });
+          const g = new THREE.Group();
+          const box = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), this.crateMat);
+          box.castShadow = true; box.receiveShadow = true;
+          g.add(box);
+          const outline = new THREE.Mesh(new THREE.BoxGeometry(1.04, 1.04, 1.04), new THREE.MeshBasicMaterial({ color: 0x1a1f3a, side: THREE.BackSide }));
+          g.add(outline);
+          obj = g;
+        } else if (it.kind === 'heart') {
+          if (!this.texHeart) this.texHeart = heartTexture();
+          const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.texHeart, transparent: true }));
+          s.scale.setScalar(0.9);
+          obj = s;
+        } else {
+          const g = new THREE.Group();
+          const body = new THREE.Mesh(new THREE.SphereGeometry(0.32, 14, 10), new THREE.MeshLambertMaterial({ color: 0x222633 }));
+          body.castShadow = true;
+          g.add(body);
+          const outline = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 10), new THREE.MeshBasicMaterial({ color: 0x1a1f3a, side: THREE.BackSide }));
+          g.add(outline);
+          const fuse = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.25, 6), new THREE.MeshBasicMaterial({ color: 0xd9dde8 }));
+          fuse.position.set(0.1, 0.4, 0); fuse.rotation.z = -0.4;
+          g.add(fuse);
+          light = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), new THREE.MeshBasicMaterial({ color: 0xffb020 }));
+          light.position.set(0.16, 0.52, 0);
+          g.add(light);
+          obj = g;
+        }
+        this.scene.add(obj);
+        m = { obj, kind: it.kind, light };
+        this.itemMeshes.set(it.id, m);
+      }
+      const h = it.heldBy >= 0 ? holders.get(it.heldBy) : null;
+      if (h) {
+        m.obj.position.set(h.x, h.y + (it.kind === 'crate' ? 2.35 : 2.2), h.z);
+      } else {
+        const bob = it.kind === 'heart' ? Math.sin(now / 250) * 0.08 + 0.6 : it.kind === 'crate' ? 0.5 : 0.32;
+        m.obj.position.set(it.x, it.y + bob, it.z);
+      }
+      if (it.kind === 'crate') m.obj.rotation.y = it.airborne ? now / 200 : 0;
+      if (m.light) { const on = it.fuse >= 0 && Math.floor(now / (it.fuse < 60 ? 60 : 160)) % 2 === 0; (m.light.material as THREE.MeshBasicMaterial).color.set(on ? 0xff3b3b : 0xffb020); m.light.scale.setScalar(on ? 1.6 : 1); }
+    }
+    for (const [id, m] of this.itemMeshes) if (!seen.has(id)) { this.scene.remove(m.obj); this.itemMeshes.delete(id); }
   }
 
   spawnHit(x: number, y: number, z: number, kind: 'hit' | 'launch' | 'guard' | 'ko'): void {

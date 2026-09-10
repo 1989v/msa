@@ -59,6 +59,21 @@ export function botInput(w: World, p: Player, mem: BotMemory): Input {
 
   if (tick >= mem.strafeUntil) { mem.strafeDir = rng() < 0.5 ? -1 : 1; mem.strafeUntil = tick + 40 + Math.floor(rng() * 80); }
 
+  // 체력이 낮으면 근처 하트를 먼저 줍는다
+  if (p.hp < p.maxHp * 0.55 && isActionable(p)) {
+    let heart = null as { x: number; z: number } | null, hd = 7;
+    for (const it of w.items) {
+      if (it.kind !== 'heart') continue;
+      const hdist = Math.hypot(it.x - p.pos.x, it.z - p.pos.z);
+      if (hdist < hd) { hd = hdist; heart = it; }
+    }
+    if (heart) {
+      const hx = heart.x - p.pos.x, hz = heart.z - p.pos.z, hl = Math.hypot(hx, hz) || 1;
+      out.mx = hx / hl; out.mz = hz / hl;
+      if (hd > 4) out.btn |= BTN_DASH;
+      return out;
+    }
+  }
   // 상대가 누워 있으면 살짝 물러난다
   if (target.state === 'down' || target.state === 'getup') {
     if (d < 2.2) { out.mx = -nx; out.mz = -nz; }

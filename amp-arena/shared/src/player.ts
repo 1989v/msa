@@ -56,6 +56,7 @@ export interface Player {
   throwX: number;
   throwZ: number;
   wallBonus: boolean;    // 던져진 뒤 벽에 부딪히면 추가 데미지 1회
+  holding: number;       // 들고 있는 아이템 id, 없으면 -1
 
   cooldown: number;
   ammo: number;
@@ -81,7 +82,7 @@ export function createPlayer(id: number, name: string, team: number, acc: Access
     id, name, team, acc, bot, stats,
     pos: v3(), vel: v3(), yaw: 0, state: 'idle', t: 0, move: null, comboIdx: 0, comboQueued: false, hitMask: 0, juggled: false, shotFired: false,
     hp: maxHp, maxHp, guard: C.GUARD_MAX, grounded: true, airDashes: 0, landTicks: C.LAND_TICKS, invuln: 0, hitstunLeft: 0,
-    grabbing: -1, grabbedBy: -1, grabTarget: -1, mash: 0, throwX: 0, throwZ: 1, wallBonus: false,
+    grabbing: -1, grabbedBy: -1, grabTarget: -1, mash: 0, throwX: 0, throwZ: 1, wallBonus: false, holding: -1,
     cooldown: 0, ammo: a.ammo, reload: 0,
     lives, alive: true, kos: 0, deaths: 0, dmgDealt: 0, lastHitBy: -1, lastHitTick: -100000, consecBy: -1, consecCount: 0,
     prevBtn: 0, lastInput: { seq: 0, mx: 0, mz: 0, btn: 0 },
@@ -98,6 +99,9 @@ export interface SimContext {
   onWallHit(p: Player): void;
   onFall(p: Player): void;
   onProjectile(p: Player, move: MoveId): void;
+  tryPickup(p: Player): boolean;
+  dropHeld(p: Player): void;
+  throwHeld(p: Player): void;
 }
 
 const ACTIONABLE = new Set<PState>(['idle', 'walk', 'run', 'land']);
@@ -126,7 +130,7 @@ function startMove(ctx: SimContext, p: Player, move: MoveId, state: PState, mx: 
   aimAssist(ctx, p, MOVES[move].reach);
 }
 
-/** 가까운 적이 정면 ±50° 안에 있으면 그쪽으로 살짝 돌아선다 (3D 난전 보조). */
+/** 가까운 적이 정면 ±30° 안에 있으면 그쪽으로 살짝 돌아선다 (3D 난전 보조). 창처럼 좁은 판정의 약점은 남긴다. */
 function aimAssist(ctx: SimContext, p: Player, reach: number): void {
   const maxD = Math.max(reach, 1.0) * 1.6 + C.PLAYER_RADIUS;
   let best: Player | null = null, bestD = maxD;
@@ -137,7 +141,7 @@ function aimAssist(ctx: SimContext, p: Player, reach: number): void {
     const d = Math.hypot(dx, dz);
     if (d > bestD || d < 1e-6) continue;
     const cos = (dx * fx + dz * fz) / d;
-    if (cos < Math.cos((50 * Math.PI) / 180)) continue;
+    if (cos < Math.cos((30 * Math.PI) / 180)) continue;
     best = q; bestD = d;
   }
   if (best) p.yaw = yawFromDir(best.pos.x - p.pos.x, best.pos.z - p.pos.z);
@@ -188,6 +192,7 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
   const atk = pressed(btn, prev, BTN_ATTACK);
   const jump = pressed(btn, prev, BTN_JUMP);
   const special = pressed(btn, prev, BTN_SPECIAL);
+  const pickup = pressed(btn, prev, BTN_PICKUP);
   const guardHeld = held(btn, BTN_GUARD);
   const dash = held(btn, BTN_DASH);
   const acc = ACCESSORIES[p.acc];
@@ -210,6 +215,21 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
   switch (p.state) {
     case 'idle': case 'walk': case 'run': case 'land': {
       if (p.state === 'land' && p.t < p.landTicks) { stopXZ(p); break; }
+      if (pickup) { if (p.holding >= 0) ctx.dropHeld(p); else ctx.tryPickup(p); }
+      if (p.holding >= 0) {
+        // 들고 있을 때: 공격 = 던지기. 가드·기술·잡기는 없고 이동·점프는 된다
+        if (atk) { ctx.throwHeld(p); p.comboIdx = 99; startMove(ctx, p, 'itemThrow', 'attack', mx, mz, moving); break; }
+        if (jump && p.grounded) {
+          p.vel.y = C.jumpSpeed(p.stats.jmp); p.grounded = false;
+          if (moving) { p.vel.x = mx * C.WALK_SPEED * spd; p.vel.z = mz * C.WALK_SPEED * spd; p.yaw = yawFromDir(mx, mz); }
+          setState(p, 'jump');
+          break;
+        }
+        groundMove(p, mx, mz, moving, C.WALK_SPEED * spd);
+        const nextH: PState = !moving ? 'idle' : 'walk';
+        if (p.state !== nextH) setState(p, nextH);
+        break;
+      }
       if (guardHeld && p.grounded) { setState(p, 'guard'); stopXZ(p); break; }
       if (atk) {
         if (acc.ranged) {
@@ -540,7 +560,7 @@ export function respawn(p: Player, x: number, y: number, z: number, yaw: number)
   p.grounded = true;
   p.invuln = C.RESPAWN_INVULN_TICKS;
   p.move = null; p.comboIdx = 0; p.comboQueued = false; p.hitMask = 0; p.juggled = false;
-  p.grabbing = -1; p.grabbedBy = -1; p.grabTarget = -1; p.mash = 0;
+  p.grabbing = -1; p.grabbedBy = -1; p.grabTarget = -1; p.mash = 0; p.holding = -1;
   p.cooldown = 0; p.ammo = ACCESSORIES[p.acc].ammo; p.reload = 0;
   p.consecBy = -1; p.consecCount = 0;
   setState(p, 'idle');

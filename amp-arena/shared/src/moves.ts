@@ -53,6 +53,8 @@ export const MOVES = {
   rk2: def({ id: 'rk2', startup: 6, active: 3, recovery: 10, damage: 6, reach: 1.6, radius: 0.5, effect: 'hitstun', hitstun: 16, push: 2 }),
   rk3: def({ id: 'rk3', startup: 10, active: 5, recovery: 18, damage: 12, reach: 1.7, radius: 0.7, effect: 'launch', launchH: 6, launchV: 7 }),
   rocketPunch: def({ id: 'rocketPunch', startup: 8, active: 1, recovery: 14, damage: 16, reach: 0, radius: 0, effect: 'launch', launchH: 6, launchV: 6 }),
+  // 아이템 던지기 (판정 없음 — 아이템이 한다)
+  itemThrow: def({ id: 'itemThrow', startup: 6, active: 0, recovery: 12, damage: 0, reach: 0, radius: 0, effect: 'hitstun' }),
   // 더블탭 (쌍권총) — 실제 판정은 투사체
   gunShot: def({ id: 'gunShot', startup: 3, active: 1, recovery: 8, damage: 4, reach: 0, radius: 0, effect: 'hitstun', hitstun: 8, push: 1 }),
   gunRoll: def({ id: 'gunRoll', startup: 4, active: 20, recovery: 10, damage: 4, reach: 0, radius: 0, effect: 'hitstun', hitstun: 8, push: 1, moveSpeed: -9, moveUntil: 'active' }),
@@ -68,6 +70,10 @@ export const PROJECTILE_MOVES: Partial<Record<MoveId, ProjectileSpec>> = {
   gunRoll: { speed: 22, range: 12, radius: 0.3, fanCount: 6, fanDeg: 60, every: 0 },
   rocketPunch: { speed: 14, range: 10, radius: 0.5, fanCount: 1, fanDeg: 0, every: 0 },
 };
+
+/** 오브젝트가 주는 피해 — 플레이어 동작이 아니라 아이템 판정에 쓴다 */
+export const CRATE_HIT: MoveDef = def({ id: 'jab', startup: 0, active: 0, recovery: 0, damage: 8, reach: 0, radius: 0, effect: 'launch', launchH: 5, launchV: 6 });
+export const BOMB_HIT: MoveDef = def({ id: 'jab', startup: 0, active: 0, recovery: 0, damage: 20, reach: 0, radius: 0, effect: 'launch', launchH: 6, launchV: 8, guardBreak: true });
 
 export const totalTicks = (m: MoveDef) => m.startup + m.active + m.recovery;
 /** 콤보 캔슬 창: 지속 끝 + 후딜 절반부터 다음 타로 넘어간다 */

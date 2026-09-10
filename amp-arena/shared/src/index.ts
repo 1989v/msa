@@ -5,6 +5,7 @@ export * from './moves.ts';
 export * from './accessories.ts';
 export * from './maps.ts';
 export * from './modes.ts';
+export * from './items.ts';
 export * from './player.ts';
 export * from './world.ts';
 export * from './bot.ts';

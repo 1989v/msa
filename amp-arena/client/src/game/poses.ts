@@ -70,6 +70,7 @@ export const MOVE_POSES: Record<MoveId, [PoseId, PoseId]> = {
   shieldBash: ['bashWind', 'bash'], shieldCharge: ['bash', 'bash'],
   rk1: ['jabWind', 'jab'], rk2: ['straightWind', 'straight'], rk3: ['uppercutWind', 'uppercut'], rocketPunch: ['straightWind', 'straight'],
   gunShot: ['shoot', 'shoot'], gunRoll: ['roll', 'shoot'],
+  itemThrow: ['throw', 'throw'],
 };
 
 export function lerpPose(a: Pose, b: Pose, t: number): Pose {
@@ -86,7 +87,11 @@ export function lerpPose(a: Pose, b: Pose, t: number): Pose {
 }
 
 /** 상태·틱·동작 → 목표 포즈. 공격은 프레임 데이터의 발동/지속/후딜 구간으로 키프레임을 나눈다. */
-export function targetPose(state: PState, t: number, move: MoveId | null, speed: number, grounded: boolean): Pose {
+export function targetPose(state: PState, t: number, move: MoveId | null, speed: number, grounded: boolean, holding = false): Pose {
+  if (holding && (state === 'idle' || state === 'walk' || state === 'run' || state === 'jump' || state === 'fall' || state === 'land')) {
+    const base = targetPose(state, t, move, speed, grounded, false);
+    return { ...base, nearArm: [165, 10], farArm: [165, 10] };
+  }
   switch (state) {
     case 'idle': {
       const breathe = Math.sin(t / 18) * 1.5;

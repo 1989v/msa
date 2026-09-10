@@ -1,10 +1,12 @@
 // 스냅샷: 서버 → 클라. 플레이어 전부의 시뮬 상태를 배열로 편다 (예측 되감기에 필요한 필드 전부).
 import { STATE_IDS, type Player, type PState } from './player.ts';
 import { MOVE_IDS, type MoveId } from './moves.ts';
+import { ITEM_KINDS, type Item } from './items.ts';
 import type { World, Projectile } from './world.ts';
 
 export type PlayerSnap = number[];
 export type ProjSnap = number[];
+export type ItemSnap = number[];
 
 export interface Snapshot {
   tick: number;
@@ -14,6 +16,7 @@ export interface Snapshot {
   score: [number, number];
   p: PlayerSnap[];
   pr: ProjSnap[];
+  it: ItemSnap[];
 }
 
 const stateIndex = new Map<PState, number>(STATE_IDS.map((s, i) => [s, i]));
@@ -24,7 +27,7 @@ export function encodePlayer(p: Player): PlayerSnap {
     p.id, p.pos.x, p.pos.y, p.pos.z, p.yaw,
     stateIndex.get(p.state) ?? 0, p.t, p.move ? (moveIndex.get(p.move) ?? -1) : -1, p.comboIdx, p.comboQueued ? 1 : 0, p.hitMask, p.juggled ? 1 : 0, p.shotFired ? 1 : 0,
     p.hp, p.guard, p.grounded ? 1 : 0, p.airDashes, p.landTicks, p.invuln, p.hitstunLeft,
-    p.grabbing, p.grabbedBy, p.grabTarget, p.mash, p.throwX, p.throwZ, p.wallBonus ? 1 : 0,
+    p.grabbing, p.grabbedBy, p.grabTarget, p.mash, p.throwX, p.throwZ, p.wallBonus ? 1 : 0, p.holding,
     p.cooldown, p.ammo, p.reload,
     p.lives, p.alive ? 1 : 0, p.kos, p.deaths, p.dmgDealt, p.lastHitBy, p.lastHitTick, p.consecBy, p.consecCount, p.prevBtn,
     p.vel.x, p.vel.y, p.vel.z,
@@ -38,7 +41,7 @@ export function decodePlayer(p: Player, s: PlayerSnap): void {
   const mi = s[i++]; p.move = mi >= 0 ? MOVE_IDS[mi] : null;
   p.comboIdx = s[i++]; p.comboQueued = s[i++] === 1; p.hitMask = s[i++]; p.juggled = s[i++] === 1; p.shotFired = s[i++] === 1;
   p.hp = s[i++]; p.guard = s[i++]; p.grounded = s[i++] === 1; p.airDashes = s[i++]; p.landTicks = s[i++]; p.invuln = s[i++]; p.hitstunLeft = s[i++];
-  p.grabbing = s[i++]; p.grabbedBy = s[i++]; p.grabTarget = s[i++]; p.mash = s[i++]; p.throwX = s[i++]; p.throwZ = s[i++]; p.wallBonus = s[i++] === 1;
+  p.grabbing = s[i++]; p.grabbedBy = s[i++]; p.grabTarget = s[i++]; p.mash = s[i++]; p.throwX = s[i++]; p.throwZ = s[i++]; p.wallBonus = s[i++] === 1; p.holding = s[i++];
   p.cooldown = s[i++]; p.ammo = s[i++]; p.reload = s[i++];
   p.lives = s[i++]; p.alive = s[i++] === 1; p.kos = s[i++]; p.deaths = s[i++]; p.dmgDealt = s[i++]; p.lastHitBy = s[i++]; p.lastHitTick = s[i++]; p.consecBy = s[i++]; p.consecCount = s[i++]; p.prevBtn = s[i++];
   p.vel.x = s[i++]; p.vel.y = s[i++]; p.vel.z = s[i++];
@@ -49,6 +52,7 @@ export function encodeSnapshot(w: World): Snapshot {
     tick: w.tick, phase: w.phase, phaseT: w.phaseT, timeLeft: w.timeLeft, score: [w.score[0], w.score[1]],
     p: w.players.filter((p): p is Player => !!p).map(encodePlayer),
     pr: w.projectiles.map((pr) => [pr.id, pr.owner, moveIndex.get(pr.move) ?? 0, pr.x, pr.y, pr.z, pr.vx, pr.vz, pr.life, pr.radius, pr.hitMask, pr.pierce ? 1 : 0]),
+    it: w.items.map((it) => [it.id, ITEM_KINDS.indexOf(it.kind), it.x, it.y, it.z, it.vx, it.vy, it.vz, it.hp, it.heldBy, it.fuse, it.airborne ? 1 : 0, it.thrownBy, it.spot, it.lastHitBy, it.lastHitTick]),
   };
 }
 
@@ -60,6 +64,9 @@ export function applySnapshot(w: World, s: Snapshot): void {
   }
   w.projectiles = s.pr.map((a): Projectile => ({
     id: a[0], owner: a[1], move: MOVE_IDS[a[2]] ?? 'gunShot', x: a[3], y: a[4], z: a[5], vx: a[6], vz: a[7], life: a[8], radius: a[9], hitMask: a[10], pierce: a[11] === 1,
+  }));
+  w.items = (s.it ?? []).map((a): Item => ({
+    id: a[0], kind: ITEM_KINDS[a[1]] ?? 'crate', x: a[2], y: a[3], z: a[4], vx: a[5], vy: a[6], vz: a[7], hp: a[8], heldBy: a[9], fuse: a[10], airborne: a[11] === 1, thrownBy: a[12], spot: a[13], lastHitBy: a[14], lastHitTick: a[15],
   }));
 }
 

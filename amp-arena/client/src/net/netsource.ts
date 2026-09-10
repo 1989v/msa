@@ -109,7 +109,7 @@ export class NetSource implements MatchSource {
       const p = this.world.players[r.id];
       out.push({
         id: r.id, x, y, z, yaw, state: s.state, t: s.t + (alpha < 0.5 ? Math.round(alpha * span) : 0), move: s.move,
-        grounded: s.grounded, invuln: s.invuln, speed: Math.hypot(s.vel.x, s.vel.z), acc: p?.acc ?? r.acc,
+        grounded: s.grounded, invuln: s.invuln, speed: Math.hypot(s.vel.x, s.vel.z), acc: p?.acc ?? r.acc, holding: s.holding,
       });
     }
     return out;

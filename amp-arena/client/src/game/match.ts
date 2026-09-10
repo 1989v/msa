@@ -8,7 +8,7 @@ import { targetPose } from './poses.ts';
 
 export interface RenderPlayer {
   id: number; x: number; y: number; z: number; yaw: number; state: PState; t: number; move: MoveId | null;
-  grounded: boolean; invuln: number; speed: number; acc: AccessoryId;
+  grounded: boolean; invuln: number; speed: number; acc: AccessoryId; holding: number;
 }
 
 export interface MatchSource {
@@ -103,7 +103,7 @@ export class Match {
       rig.root.position.set(rp.x, rp.y, rp.z);
       rig.root.rotation.y = rp.yaw;
       const attackLike = rp.state === 'attack' || rp.state === 'special' || rp.state === 'dashAttack' || rp.state === 'jumpAttack';
-      rig.setPose(targetPose(rp.state, rp.t, rp.move, rp.speed, rp.grounded), attackLike ? Math.min(1, k * 2.2) : k);
+      rig.setPose(targetPose(rp.state, rp.t, rp.move, rp.speed, rp.grounded, rp.holding >= 0), attackLike ? Math.min(1, k * 2.2) : k);
       rig.root.visible = rp.state !== 'dead' || rp.t < 60;
       rig.setOpacity(rp.invuln > 0 ? (Math.floor(now / 90) % 2 ? 0.45 : 0.85) : 1);
       // 착지·대시 먼지
@@ -117,6 +117,9 @@ export class Match {
     }
     for (const ev of src.drainEvents()) this.onEvent(ev);
     this.renderer.updateProjectiles(world.projectiles);
+    const holders = new Map<number, { x: number; y: number; z: number }>();
+    for (const rp of players) if (rp.holding >= 0) holders.set(rp.id, { x: rp.x, y: rp.y, z: rp.z });
+    this.renderer.updateItems(world.items, holders, now);
     this.renderer.updateEffects(dt);
     const turn = this.input.cameraTurn();
     if (meView) {
@@ -166,7 +169,10 @@ export class Match {
         break;
       case 'shot': this.renderer.spawnDust(ev.x, ev.y, ev.z); break;
       case 'phase': if (ev.phase === 'play') this.hud.hideCenter(); break;
-      case 'grab': case 'end': break;
+      case 'explode': this.renderer.spawnHit(ev.x, ev.y, ev.z, 'ko'); this.renderer.spawnDust(ev.x, ev.y - 0.4, ev.z); break;
+      case 'crateBreak': this.renderer.spawnDust(ev.x, ev.y - 0.3, ev.z); this.renderer.spawnHit(ev.x, ev.y, ev.z, 'hit'); break;
+      case 'heal': if (ev.id === src.myId) { const me = src.world.players[src.myId]; if (me) { const s = this.renderer.project(me.pos.x, me.pos.y + 1.8, me.pos.z); this.hud.showDamage(s.x, s.y, `+${ev.amount}`, 'guard'); } } break;
+      case 'pickup': case 'grab': case 'end': break;
     }
   }
 
@@ -193,7 +199,7 @@ export class Match {
 }
 
 export function renderFromPlayer(p: Player): RenderPlayer {
-  return { id: p.id, x: p.pos.x, y: p.pos.y, z: p.pos.z, yaw: p.yaw, state: p.state, t: p.t, move: p.move, grounded: p.grounded, invuln: p.invuln, speed: Math.hypot(p.vel.x, p.vel.z), acc: p.acc };
+  return { id: p.id, x: p.pos.x, y: p.pos.y, z: p.pos.z, yaw: p.yaw, state: p.state, t: p.t, move: p.move, grounded: p.grounded, invuln: p.invuln, speed: Math.hypot(p.vel.x, p.vel.z), acc: p.acc, holding: p.holding };
 }
 
 export const MAP_NAMES = Object.fromEntries(Object.values(MAPS).map((m) => [m.id, m.name]));
