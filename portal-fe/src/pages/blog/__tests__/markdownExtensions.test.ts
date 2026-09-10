@@ -67,7 +67,8 @@ describe('체크박스', () => {
 
 describe('기본 문법이 그대로 동작한다', () => {
   const cases: Array<[string, string, string]> = [
-    ['코드블럭', '```ts\nconst a = 1;\n```', '<code class="language-ts">'],
+    // 하이라이터가 약칭을 정규화하고(ts → typescript) 토큰을 span 으로 감싼다.
+    ['코드블럭', '```ts\nconst a = 1;\n```', '<code class="hljs language-typescript">'],
     // `<table>` 여는 태그를 그대로 기대하면 속성이 하나 붙을 때마다 깨진다.
     // 이 절의 의도는 "표 문법이 렌더된다" 이므로 머리칸 내용으로 본다.
     ['표', '| a |\n|---|\n| 1 |', '<th>a</th>'],
@@ -128,5 +129,35 @@ describe('표 — 좁은 화면에서 펴기 위한 표시', () => {
     const html = renderMarkdown('| a | b | c |\n|:---|---:|---|\n| 1 | 2 | 3 |');
     expect(html).toContain('style="text-align:left"');
     expect(html).toContain('style="text-align:right"');
+  });
+});
+
+describe('코드 블록 — 언어별 하이라이트', () => {
+  it('등록된 언어는 토큰을 span 으로 감싼다', () => {
+    const html = renderMarkdown('```bash\necho hi # 주석\n```');
+    expect(html).toContain('data-lang="bash"');
+    expect(html).toContain('<span class="hljs-comment">');
+  });
+
+  it('약칭을 정규화한다 — ts · py · sh 는 같은 언어로 간다', () => {
+    expect(renderMarkdown('```ts\nconst a=1;\n```')).toContain('data-lang="typescript"');
+    expect(renderMarkdown('```py\nx = 1\n```')).toContain('data-lang="python"');
+    expect(renderMarkdown('```sh\necho hi\n```')).toContain('data-lang="bash"');
+  });
+
+  it('모르는 언어는 하이라이트 없이 그대로 — 글이 깨지지 않는다', () => {
+    const html = renderMarkdown('```brainfuck\n+++.\n```');
+    expect(html).toContain('<pre><code>');
+    expect(html).not.toContain('data-lang');
+  });
+
+  // 하이라이터를 안 타는 경로에서 이스케이프를 빼먹으면 코드 안의 `<` 가 태그가 된다.
+  it('하이라이트하지 않는 코드도 이스케이프한다', () => {
+    expect(renderMarkdown('```text\n<b>안녕</b>\n```')).toContain('&lt;b&gt;안녕&lt;/b&gt;');
+    expect(renderMarkdown('```\n<script>x</script>\n```')).not.toContain('<script>');
+  });
+
+  it('언어를 안 적으면 라벨도 없다', () => {
+    expect(renderMarkdown('```\nplain\n```')).not.toContain('data-lang');
   });
 });

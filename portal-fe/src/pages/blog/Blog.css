@@ -10,6 +10,19 @@
   gap: var(--ko-space-8);
   /* 좌우 여백은 본문 다이어그램이 열 밖으로 나갈 때의 한계라 변수로 둔다 */
   --blog-page-pad: clamp(1rem, 5vw, 3.5rem);
+
+  /* 코드 판 — 라이트 정경에서도 어둡다. 한지 위의 먹이고, 본문과 재료가 갈려야
+   * 코드가 코드로 읽힌다 (DESIGN.md §12 「면의 색 단차」).
+   * 판이 늘 어두우므로 구문 색은 한 벌이면 된다. 색은 전부 브랜드 4색에서 섞어 낸다. */
+  --blog-code-bg: var(--kh-giwa);
+  --blog-code-fg: color-mix(in srgb, var(--kh-hanji) 92%, var(--kh-giwa));
+  /* 46% 는 라이트 판(#1d1d1f) 위에서 4.36:1 로 AA(4.5) 에 못 미쳤다. 주석과 구두점이
+   * 이 색을 쓰므로 코드의 절반이 거기 걸린다 — 실측으로 잡아 52% 로 올렸다. */
+  --blog-code-dim: color-mix(in srgb, var(--kh-hanji) 52%, var(--kh-giwa));
+  --blog-code-ocher: var(--kh-ocher);
+  --blog-code-sage: color-mix(in srgb, var(--kh-pine) 38%, var(--kh-hanji));
+  --blog-code-sky: color-mix(in srgb, var(--kh-celadon) 32%, var(--kh-hanji));
+  --blog-code-rose: color-mix(in srgb, var(--kh-yeonji) 52%, var(--kh-hanji));
   padding: var(--ko-space-6) var(--blog-page-pad) var(--ko-space-12);
 }
 
@@ -456,8 +469,8 @@
   padding-bottom: var(--ko-space-3);
   /* 1.4rem 은 본문(1.02rem)의 1.37배뿐이라 제목이 본문에 묻혔다. 여백(128px)으로
    * 보상하려 해도 크기가 안 갈리면 절이 바뀐 것이 안 걸린다. */
-  font-size: 1.75rem;
-  letter-spacing: -0.01em;
+  font-size: 1.9rem;
+  letter-spacing: -0.015em;
   /* 절 경계를 여백만으로 만들지 않는다 — 스크롤 중에는 선이 먼저 눈에 걸린다. */
   border-bottom: 1px solid var(--ko-border-subtle);
 }
@@ -499,15 +512,35 @@
 
 .blog-body pre {
   margin: var(--ko-space-5) 0;
-  background: var(--ko-surface-1);
-  border: 1px solid var(--ko-border-subtle);
-  border-radius: var(--kh-radius, 4px);
-  padding: var(--ko-space-4);
+  background: var(--blog-code-bg);
+  color: var(--blog-code-fg);
+  /* 좌선 하나로 「여기부터 코드」를 말한다 — 사방 테두리보다 조용하고 분명하다 */
+  border: 0;
+  border-left: 3px solid var(--kh-ocher);
+  border-radius: 0 var(--kh-radius, 4px) var(--kh-radius, 4px) 0;
+  padding: var(--ko-space-4) var(--ko-space-5);
   /* 코드는 지면 밖으로 밀지 않는다 — 본문이 가로로 흔들리면 읽기가 끊긴다 */
   overflow-x: auto;
   /* 본문과 같은 크기(16.32px)라 코드가 코드로 안 보였다. 재료가 다르면 크기도 달라야 한다. */
   font-size: 0.84em;
   line-height: 1.6;
+  /* 언어 라벨의 기준 좌표 */
+  position: relative;
+}
+
+/* 언어는 오른쪽 위에 조용히 적는다. 블록이 길어지면 무슨 언어인지가 위에서만 보인다. */
+.blog-body pre[data-lang]::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 3px 10px;
+  font-family: var(--kh-font-mono, ui-monospace, monospace);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: var(--kh-tracking-mono, 0.04em);
+  text-transform: uppercase;
+  color: var(--blog-code-dim);
 }
 
 /* 코드 블록 안에서는 인라인 코드 축소를 또 걸지 않는다 — 두 번 줄면 12px 밑으로 간다 */
@@ -518,6 +551,14 @@
 .blog-body code {
   font-family: var(--kh-font-mono, ui-monospace, monospace);
   font-size: 0.88em;
+}
+
+/* 산문 속 코드는 면으로도 갈린다 — 글꼴만 바꾸면 본문에 묻힌다. */
+.blog-body :not(pre) > code {
+  padding: 0.1em 0.34em;
+  border-radius: 3px;
+  background: var(--ko-surface-2);
+  color: var(--ko-text-primary);
 }
 
 /* 표는 사이트 표(`.kh-table`)와 같은 규칙을 쓴다 — 머리줄은 황토색 모노, 세로선
@@ -531,6 +572,8 @@
   font-size: 0.94em;
   display: block;
   overflow-x: auto;
+  /* 표를 하나의 덩어리로 만든다 — 밑줄만 있으면 본문에 흘러든 줄들로 읽힌다 */
+  border: 1px solid var(--ko-border-subtle);
 }
 
 .blog-body th,
@@ -1193,6 +1236,11 @@
 .blog-body .kh-alert--warning,
 .blog-body .kh-alert--caution   { --kh-alert-line: var(--kh-yeonji); }
 
+/* 다크 바탕(#131313)에 먹판(#1d1d1f)을 얹으면 거의 안 갈린다 — 송연으로 한 단 내린다. */
+html[data-theme='dark'] .blog-page {
+  --blog-code-bg: var(--kh-ink);
+}
+
 /* 다크에서 소나무는 바탕과 거의 안 갈린다 — 액션색을 그대로 쓴다. */
 html[data-theme='dark'] .blog-body .kh-alert--tip { --kh-alert-line: var(--ko-accent-primary); }
 
@@ -1301,6 +1349,62 @@ html[data-theme='dark'] .blog-body .kh-alert--caution {
     letter-spacing: var(--kh-tracking-mono, 0.04em);
     cursor: pointer;
   }
+}
+
+/* ── 구문 색 ────────────────────────────────────────────────────
+ * 판이 라이트·다크 모두 어두우므로 한 벌이면 된다. 브랜드가 4색뿐이라 화려하지
+ * 않은데, 한지·먹 어법에는 그 편이 맞다 — 코드는 읽는 것이지 보는 것이 아니다. */
+.blog-body .hljs-comment,
+.blog-body .hljs-quote {
+  color: var(--blog-code-dim);
+  font-style: italic;
+}
+
+.blog-body .hljs-keyword,
+.blog-body .hljs-built_in,
+.blog-body .hljs-literal,
+.blog-body .hljs-type,
+.blog-body .hljs-selector-tag {
+  color: var(--blog-code-ocher);
+}
+
+.blog-body .hljs-string,
+.blog-body .hljs-regexp,
+.blog-body .hljs-addition,
+.blog-body .hljs-selector-attr {
+  color: var(--blog-code-sage);
+}
+
+.blog-body .hljs-number,
+.blog-body .hljs-title,
+.blog-body .hljs-attr,
+.blog-body .hljs-attribute,
+.blog-body .hljs-variable,
+.blog-body .hljs-symbol,
+.blog-body .hljs-selector-class,
+.blog-body .hljs-selector-id {
+  color: var(--blog-code-sky);
+}
+
+.blog-body .hljs-deletion,
+.blog-body .hljs-doctag {
+  color: var(--blog-code-rose);
+}
+
+.blog-body .hljs-meta,
+.blog-body .hljs-punctuation,
+.blog-body .hljs-operator {
+  color: var(--blog-code-dim);
+}
+
+.blog-body .hljs-section,
+.blog-body .hljs-name,
+.blog-body .hljs-strong {
+  font-weight: 600;
+}
+
+.blog-body .hljs-emphasis {
+  font-style: italic;
 }
 
 /* ── 상태 알약 ──────────────────────────────────────────────────

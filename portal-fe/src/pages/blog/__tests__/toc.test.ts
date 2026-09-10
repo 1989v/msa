@@ -84,7 +84,7 @@ describe('sanitize 결과를 되돌리지 않는다', () => {
   it('본문 표기가 그대로 살아 있다', () => {
     const { html } = build('## 제목\n\n- 항목\n\n```ts\nconst a = 1;\n```');
     expect(html).toContain('<li>항목</li>');
-    expect(html).toContain('<code class="language-ts">');
+    expect(html).toContain('<code class="hljs language-typescript">');
   });
 
   it('다이어그램 SVG 가 살아남는다', () => {

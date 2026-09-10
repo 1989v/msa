@@ -1,4 +1,5 @@
 import { marked, type MarkedExtension, type Tokens } from 'marked';
+import { highlightCode, resolveLanguage } from './highlight';
 
 /**
  * GitHub 콜아웃(`> [!NOTE]`)과 체크박스를 이 블로그가 쓰는 모양으로 바꾼다.
@@ -47,6 +48,25 @@ export const blogMarkdown: MarkedExtension = {
       return `<blockquote class="kh-alert kh-alert--${type}">`
         + `<p class="kh-alert__title">${escapeHtml(title)}</p>`
         + `${body}</blockquote>\n`;
+    },
+
+    /**
+     * 코드 블록 — 언어를 알면 하이라이트하고, 모르면 그대로 낸다.
+     *
+     * `data-lang` 은 화면이 오른쪽 위에 언어를 적는 데 쓴다. 코드 블록이 길어지면
+     * 무슨 언어인지가 위에서만 보이는데, 스크롤하면 그 위가 화면 밖으로 나간다.
+     *
+     * 하이라이트 결과는 **이미 이스케이프된 HTML** 이다(`hljs` 가 처리한다).
+     * 실패했거나 모르는 언어면 여기서 직접 이스케이프한다 — 둘 다 안 하면 코드 안의
+     * `<` 가 태그로 읽힌다.
+     */
+    code(token: Tokens.Code) {
+      const lang = resolveLanguage(token.lang);
+      const highlighted = highlightCode(token.text, token.lang);
+      const cls = lang ? ` class="hljs language-${lang}"` : '';
+      const attr = lang ? ` data-lang="${escapeHtml(lang)}"` : '';
+      const inner = highlighted ?? escapeHtml(token.text);
+      return `<pre${attr}><code${cls}>${inner}</code></pre>\n`;
     },
 
     /**
