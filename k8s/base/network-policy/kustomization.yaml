@@ -30,7 +30,6 @@ resources:
   - 13-allow-ingress-to-frontend.yaml
   - 14-allow-ingest-to-quant.yaml
   - 15-allow-recommendation-to-ann.yaml
-  - 16-allow-recommendation-to-experiment.yaml
   - 17-allow-ingress-to-acme-solver.yaml
   - 18-allow-blog-shell-fetch.yaml
 

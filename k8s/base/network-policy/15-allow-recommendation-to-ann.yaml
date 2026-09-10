@@ -20,6 +20,6 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: recommendation
+              app.kubernetes.io/name: engagement # ADR-0093 폴드
       ports:
         - { port: http, protocol: TCP }
