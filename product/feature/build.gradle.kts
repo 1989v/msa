@@ -1,3 +1,5 @@
+// ADR-0093 — product:feature: commerce 모듈러 모놀리스의 라이브러리(비-bootable).
+// 카탈로그 SSOT. 전용 datasource(product_db)+Flyway 는 DataSourceConfig 가 배선한다.
 plugins {
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.kotlin.jpa)
@@ -33,9 +35,9 @@ dependencies {
     testImplementation(libs.kotest.extensions.spring)
 }
 
-tasks.bootJar {
-    archiveBaseName.set("product")
-}
-
 // QueryDSL Q class generation path
 kotlin.sourceSets.main { kotlin.srcDir("build/generated/source/kapt/main") }
+
+// 라이브러리 — 실행 가능 JAR 아님 (ADR-0093: commerce:app 이 링크한다).
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") { enabled = false }
+tasks.named<Jar>("jar") { enabled = true }

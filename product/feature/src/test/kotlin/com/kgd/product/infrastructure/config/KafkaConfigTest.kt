@@ -32,13 +32,13 @@ class KafkaConfigTest : BehaviorSpec({
     }
 
     fun extractErrorHandler(): DefaultErrorHandler {
-        val config = KafkaConfig().apply {
-            val field = KafkaConfig::class.java.getDeclaredField("bootstrapServers")
+        val config = ProductKafkaConfig().apply {
+            val field = ProductKafkaConfig::class.java.getDeclaredField("bootstrapServers")
             field.isAccessible = true
             field.set(this, "localhost:9092")
         }
-        val factory = config.kafkaListenerContainerFactory(
-            consumerFactory = config.consumerFactory(),
+        val factory = config.productKafkaListenerContainerFactory(
+            consumerFactory = config.productConsumerFactory(),
             kafkaTemplate = newKafkaTemplate(),
         )
         val field = AbstractKafkaListenerContainerFactory::class.java

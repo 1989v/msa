@@ -6,6 +6,7 @@ import com.kgd.common.messaging.IdempotentMetrics
 import com.kgd.product.application.product.usecase.SyncProductStockUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Component
 import java.util.UUID
@@ -32,7 +33,8 @@ import java.util.UUID
 class InventoryStockSyncConsumer(
     private val syncProductStockUseCase: SyncProductStockUseCase,
     private val objectMapper: ObjectMapper,
-    private val idempotentEventHandler: IdempotentEventHandler,
+    // 한정자 필수 — 폴드된 호스트에는 도메인 수만큼 핸들러가 있다(ADR-0093)
+    @Qualifier("productIdempotentEventHandler") private val idempotentEventHandler: IdempotentEventHandler,
     private val idempotentMetrics: IdempotentMetrics,
 ) {
     private val log = KotlinLogging.logger {}

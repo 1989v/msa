@@ -21,13 +21,13 @@ import org.springframework.kafka.support.serializer.JacksonJsonSerializer
 import org.springframework.util.backoff.FixedBackOff
 
 @Configuration
-class KafkaConfig {
+class ProductKafkaConfig {
 
     @Value("\${spring.kafka.bootstrap-servers}")
     private lateinit var bootstrapServers: String
 
     @Bean
-    fun producerFactory(): ProducerFactory<String, Any> {
+    fun productProducerFactory(): ProducerFactory<String, Any> {
         val props = mapOf(
             ProducerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
             ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG to StringSerializer::class.java,
@@ -40,11 +40,11 @@ class KafkaConfig {
     }
 
     @Bean
-    fun kafkaTemplate(producerFactory: ProducerFactory<String, Any>): KafkaTemplate<String, Any> =
+    fun productKafkaTemplate(producerFactory: ProducerFactory<String, Any>): KafkaTemplate<String, Any> =
         KafkaTemplate(producerFactory)
 
     @Bean
-    fun consumerFactory(): ConsumerFactory<String, String> {
+    fun productConsumerFactory(): ConsumerFactory<String, String> {
         val config = mapOf(
             ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG to bootstrapServers,
             ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG to StringDeserializer::class.java,
@@ -56,7 +56,7 @@ class KafkaConfig {
     }
 
     @Bean
-    fun kafkaListenerContainerFactory(
+    fun productKafkaListenerContainerFactory(
         consumerFactory: ConsumerFactory<String, String>,
         kafkaTemplate: KafkaTemplate<String, Any>,
     ): ConcurrentKafkaListenerContainerFactory<String, String> =

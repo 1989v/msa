@@ -6,10 +6,10 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-class OpenApiConfig {
+class ProductOpenApiConfig {
 
     @Bean
-    fun openAPI(): OpenAPI = OpenAPI()
+    fun productOpenAPI(): OpenAPI = OpenAPI()
         .info(
             Info()
                 .title("Product Service API")

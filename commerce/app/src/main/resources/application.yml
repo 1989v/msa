@@ -74,6 +74,24 @@ spring:
         hikari:
           maximum-pool-size: 3
           minimum-idle: 1
+    # ADR-0093 — product 도메인 전용 datasource(카탈로그 SSOT, 스키마 격리).
+    product:
+      master:
+        jdbc-url: jdbc:mysql://${PRODUCT_DB_MASTER:localhost:3316}/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${PRODUCT_MYSQL_USER:product_user}
+        password: ${PRODUCT_MYSQL_PASSWORD:product_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 5
+          minimum-idle: 2
+      replica:
+        jdbc-url: jdbc:mysql://${PRODUCT_DB_REPLICA:localhost:3317}/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${PRODUCT_MYSQL_USER:product_user}
+        password: ${PRODUCT_MYSQL_PASSWORD:product_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 5
+          minimum-idle: 2
     # ADR-0058 round 2 — member 도메인 전용 datasource(스키마 격리).
     member:
       master:
@@ -146,6 +164,10 @@ kafka:
     # ADR-0058: order 도메인 폴드 — order 발행 토픽
     order-completed: order.order.completed
     order-cancelled: order.order.cancelled
+    # ADR-0093: product 도메인 폴드 — 카탈로그 발행 토픽.
+    # search-consumer 가 이 둘을 소비해 색인한다 — 이름을 바꾸면 색인이 끊긴다.
+    product-created: product.item.created
+    product-updated: product.item.updated
 
 # ADR-0058: order 도메인이 호출하는 외부 서비스 URL (commerce 폴드)
 product:
