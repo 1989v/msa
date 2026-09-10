@@ -1,0 +1,78 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/texture-check/index.html",
+  "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/152.0.0.0 Safari/537.36",
+  "ready": true,
+  "passed": true,
+  "threeRevision": "183",
+  "checks": [
+    {
+      "name": "GLB v2 header and JSON/BIN chunks",
+      "passed": true
+    },
+    {
+      "name": "Single embedded PNG; no external image/buffer URI",
+      "passed": true
+    },
+    {
+      "name": "PNG signature and 1024×1024 IHDR",
+      "passed": true,
+      "pngBytes": 24764
+    },
+    {
+      "name": "Embedded PNG full pixel and orientation preservation",
+      "passed": true,
+      "pixels": 1048576
+    },
+    {
+      "name": "Loader image requests remain embedded blob URLs",
+      "passed": true,
+      "requestCount": 1
+    },
+    {
+      "name": "Basecolor texture is sRGB with flipY=false",
+      "passed": true,
+      "colorSpace": "srgb",
+      "flipY": false
+    },
+    {
+      "name": "Loaded image remains 1K and every decoded RGBA pixel matches",
+      "passed": true
+    },
+    {
+      "name": "UV coordinates preserved",
+      "passed": true,
+      "uvs": [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0.5,
+        1,
+        0.5,
+        0,
+        0,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "UV orientation: four interior samples address expected quadrants",
+      "passed": true
+    },
+    {
+      "name": "Two bones, skin indices and weights preserved",
+      "passed": true
+    },
+    {
+      "name": "Animation clip/keyframes preserved",
+      "passed": true
+    },
+    {
+      "name": "Textured rig animated deformation preserved",
+      "passed": true
+    }
+  ],
+  "glbBytes": 27892,
+  "errors": []
+}

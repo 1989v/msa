@@ -26,6 +26,6 @@ questions:
   - id: Q05
     topic: 캐릭터 리깅과 텍스처 제작 경로
     stage: T02B-before-character
-    status: open
-    default: 표준 glTF 도구를 사용하고 T01A 제한 exporter를 확장하지 않음
-    resolution: T02B-1에서 Three 표준 exporter/loader의 스킨·애니메이션 왕복 및 CPU 변형 검증(4/4). 텍스처 제작/내보내기 경로는 T02B-2에서 검증할 때까지 open 유지. 원화 품질·출처/라이선스 기록, 유료 구매는 별도 결정
+    status: resolved-technical-pipeline
+    default: 자체 기하·UV·뼈대 및 Canvas 1K 아틀라스 → 표준 GLTFExporter → GLTFLoader
+    resolution: T02B-1 리깅 4/4 및 T02B-2 실제 브라우저의 PNG 내장·1K 전체 픽셀·UV·sRGB·변형 12/12 통과. 원본은 코드로 관리하고 PNG/GLB를 파생물로 저장. 기술 경로만 확정하며 실제 캐릭터·GPU 색상·원화 품질은 T02B-3 이후 검증. 품질 미달 시 제작 방식 재검토, 유료 구매는 별도 결정

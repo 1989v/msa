@@ -2,7 +2,10 @@
 
 ## 현재
 
-- **T02B-1 리깅 파일 경로 검증 완료. 다음 T02B-2 텍스처 경로. 캐릭터 연결 전.**
+- **T02B-2 텍스처 경로 검증 완료. 다음 T02B-3 주인공 모델. 캐릭터 연결 전.**
+- `implementation/t02b/texture-check/`에 1K PNG(24,764 bytes), 내장 GLB(27,892 bytes), 원본/빌드 저장.
+  실제 Chrome 152 이미지 디코딩·UV·sRGB·리깅 검사 12/12, 런타임 오류 0.
+  `verifications/t02b-2-browser.json`에 원시 증거. GPU 렌더/최종 아트/실기기는 미검증.
 - 사용자 잔여 한도 15% 지시에 따라 `planning/t02b-small-steps.md`로 T02B를 4개 소단위로 나눴다.
 - `implementation/t02b/rig-check/`에 재현 소스·GLB(2,604 bytes)·테스트·README 저장.
   표준 Three.js exporter/loader의 뼈대·가중치·애니메이션 왕복과 CPU 정점 변형, tests 4/4 직접 재검증.
@@ -26,10 +29,13 @@
 
 ## 다음 작업
 
-**T02B-2: 텍스처 경로만 검증하고 기록·커밋.**
+**T02B-3: 원화 기준 주인공 모델 제작을 작은 단위로 진행·기록·커밋.**
 
 - `planning/t02b-small-steps.md`와 `implementation/t02b/rig-check/README.md`부터 읽는다.
-- 1K 아틀라스의 UV/색 공간/GLB 내장 이미지 왕복을 검증하고 Q05 제작 방식을 확정한다.
+- `implementation/t02b/texture-check/README.md`를 읽는다. Q05 기술 경로는 검증 완료.
+- 기존 캐릭터 원화와 art-direction의 8~15k triangles/1K atlas/LOD 목표를 기준으로 제작한다.
+- 원본 기하·UV·뼈대 정의와 Canvas 아틀라스 → 표준 GLTFExporter → GLTFLoader 경로를 사용한다.
+  진단 스트립을 캐릭터로 대체하지 않는다. 품질 미달 시 도구/제작 방식을 재검토한다.
 - 리깅 실험은 반복 제작하지 않는다. 다음 모델 제작·동작 연결은 각각 별도 소단위다.
 
 이후 T02B 전체 연결 계약:

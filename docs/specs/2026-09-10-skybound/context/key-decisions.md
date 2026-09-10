@@ -63,3 +63,10 @@
 - 새 클린룸 에이전트가 만든 진단 스트립으로 표준 Three GLTFExporter/GLTFLoader를 검증했다.
 - 뼈대·가중치·애니메이션 보존 및 CPU 정점 변형은 4/4 통과. 제한된 정적 exporter를 확장하지 않았다.
 - 이 경로는 리깅 기술 가능성만 확정한다. 텍스처/실제 모델/아트 품질은 미검증이며 Q05는 open이다.
+
+## T02B-2 · 텍스처 제작 경로
+
+- 자체 기하/UV/뼈대와 Canvas 1K 아틀라스 → 표준 GLTFExporter → GLTFLoader를 기술 경로로 확정한다.
+- basecolor는 sRGB, 입력 flipY=false, GLB 안에 PNG를 포함한다. 코드 원본과 파생 PNG/GLB를 함께 저장한다.
+- 실제 브라우저에서 12/12 통과했다. 이미지 전체 픽셀, UV, 내장 참조, 기존 skin/animation을 확인했다.
+- Q05는 기술 경로만 해소. 원화 품질·실제 GPU 색상·복잡한 rig는 미검증이며 모델 품질이 미달하면 제작 도구를 재검토한다.
