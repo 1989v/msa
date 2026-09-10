@@ -1,0 +1,10 @@
+{
+  "name": "@amp/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@amp/shared": "*",
+    "ws": "^8.21.3"
+  }
+}

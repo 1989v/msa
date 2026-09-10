@@ -1,0 +1,15 @@
+{
+  "name": "@amp/client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5180",
+    "build": "vite build",
+    "preview": "vite preview --port 5181"
+  },
+  "dependencies": {
+    "@amp/shared": "*",
+    "three": "^0.186.0"
+  }
+}

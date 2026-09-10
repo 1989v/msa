@@ -1,0 +1,31 @@
+{
+  "name": "amp-arena",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev:server": "node --watch server/src/index.ts",
+    "dev:client": "npm -w client run dev",
+    "start": "node server/src/index.ts",
+    "build": "npm -w client run build",
+    "typecheck": "tsc -p shared --noEmit && tsc -p server --noEmit && tsc -p client --noEmit",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "@types/three": "^0.185.4",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.0"
+  },
+  "dependencies": {
+    "three": "^0.186.0",
+    "ws": "^8.21.3"
+  }
+}
