@@ -165,3 +165,37 @@ describe('하이드레이션 인계 표시 — data-seo-multi', () => {
     for (const tag of links) expect(tag).toContain('data-seo-multi');
   });
 });
+
+describe('이용 안내와 원천 마크업 정리', () => {
+  // 원천(TourAPI)은 평문을 주지 않는다 — 표본 182개 중 21개에 `<br>` 이 섞여 있었고,
+  // 화면만 sourceText 를 거치고 프리렌더는 안 거쳐 크롤러가 보는 본문에 `It&rsquo;s` 가
+  // 글자로 남아 있었다 (2026-09-10 실측: 프리렌더 3/800).
+  const dirty = {
+    ...doc,
+    overview: 'It&rsquo;s a park.<br />Open all year.',
+    useTime: '09:00~18:00<br>(입장마감 17:00)',
+    restDate: '매주 월요일',
+    useFee: '',
+    parking: null,
+  };
+
+  it('개요의 태그·엔티티가 본문에 글자로 남지 않는다', () => {
+    const html = renderAttractionDetail(SHELL, 'ko', dirty, { region: seoul });
+    expect(html).not.toContain('&lt;br');
+    expect(html).not.toContain('&amp;rsquo;');
+    expect(html).toContain('It’s a park.');
+  });
+
+  it('이용 안내가 정의 목록으로 본문에 들어간다 — 원천이 안 준 줄은 그리지 않는다', () => {
+    const html = renderAttractionDetail(SHELL, 'ko', dirty, { region: seoul });
+    expect(html).toContain('<dt>이용시간</dt>');
+    expect(html).toContain('<dt>쉬는날</dt>');
+    expect(html).not.toContain('<dt>이용요금</dt>');
+    expect(html).not.toContain('<dt>주차</dt>');
+  });
+
+  it('이용 안내가 하나도 없으면 절 자체를 만들지 않는다', () => {
+    const html = renderAttractionDetail(SHELL, 'ko', doc, { region: seoul });
+    expect(html).not.toContain('이용 안내');
+  });
+});

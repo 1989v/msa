@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  blogPostingJsonLd,
+  personJsonLd,
+  personRef,
+  sourceText,
+  PERSON_ID,
   clampDescription,
   detailMeta,
   gamePath,
@@ -153,5 +158,41 @@ describe('포털 페이지 카피', () => {
       expect(meta.title, path).toBeTruthy();
       expect(meta.description.length, path).toBeLessThanOrEqual(200);
     }
+  });
+});
+
+describe('Person 엔티티 — 사이트 전체를 하나의 @id 로 잇는다', () => {
+  it('전체 노드는 실재하는 프로필만 sameAs 로 적는다', () => {
+    const person = personJsonLd();
+    expect(person['@id']).toBe(PERSON_ID);
+    expect(person.sameAs).toContain('https://github.com/1989v');
+    expect(person.sameAs.every((u: string) => u.startsWith('https://'))).toBe(true);
+  });
+
+  it('참조는 @id 만 갖는다 — sameAs 를 페이지마다 복제하지 않는다', () => {
+    expect(personRef['@id']).toBe(PERSON_ID);
+    expect(personRef).not.toHaveProperty('sameAs');
+  });
+
+  it('운영자 글은 같은 @id 로 묶이고, 다른 저자는 자기 작성자 공간이 정체성이다', () => {
+    // author 는 두 모양 중 하나라 유니온이다 — 검사에서는 키로 읽는다
+    const authorOf = (handle: string): Record<string, unknown> =>
+      blogPostingJsonLd({ title: 't', slug: 's', author: { handle, displayName: '이름' } })
+        .author as Record<string, unknown>;
+    expect(authorOf('kgd')['@id']).toBe(PERSON_ID);
+    expect(authorOf('someone')['@id']).toBeUndefined();
+    expect(authorOf('someone').url).toContain('/authors/someone');
+  });
+});
+
+describe('sourceText — 원천 마크업 정리', () => {
+  it('태그와 관측된 엔티티를 푼다', () => {
+    expect(sourceText('a<br />b')).toBe('a\nb');
+    expect(sourceText('It&rsquo;s')).toBe('It’s');
+    expect(sourceText('<div class="x">y</div>')).toBe('y');
+  });
+
+  it('모르는 엔티티는 건드리지 않는다 — 추측해서 바꾸면 뜻이 달라진다', () => {
+    expect(sourceText('&zzz;')).toBe('&zzz;');
   });
 });

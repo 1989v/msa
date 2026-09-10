@@ -222,8 +222,11 @@ export function videoGameJsonLd(lang, game) {
     applicationCategory: 'Game',
     operatingSystem: 'Any',
     playMode: 'SinglePlayer',
-    author: { '@type': 'Organization', name: game.developerName || 'kgd' },
-    publisher: { '@type': 'Organization', name: BRAND, url: GAME_ORIGIN },
+    // 개발자 이름이 시드에 따로 있으면 그것을, 없으면 운영자 본인이다
+    author: game.developerName && game.developerName !== 'kgd'
+      ? { '@type': 'Organization', name: game.developerName }
+      : personRef,
+    publisher: { '@type': 'Organization', name: BRAND, url: GAME_ORIGIN, founder: personRef },
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'KRW', availability: 'https://schema.org/InStock' },
   };
   if (image) json.image = image;
@@ -291,6 +294,46 @@ export function resumeTitle(name) {
  * 사이트 신원. 구글은 검색결과에 표기할 사이트명을 홈페이지의 WebSite 에서 먼저 읽으므로
  * **호스트 루트마다 자기 이름·자기 url** 로 넣어야 한다. 인자를 비우면 apex 다.
  */
+/**
+ * 사이트를 만들고 운영하는 사람. **호스트를 가리지 않는 하나의 `@id`** 다.
+ *
+ * 게임은 `Organization "kgd"`, 블로그는 이름만 있는 `Person`, 관광지는 저자 표시가 아예
+ * 없어서 — 검색엔진이 보기에 세 사이트를 **서로 다른 주체**가 만든 것이었다. 같은 `@id` 로
+ * 묶어야 한쪽에서 쌓인 신뢰가 나머지에 닿는다 (E-E-A-T).
+ *
+ * `sameAs` 는 **실재하는 프로필만** 적는다 — 없는 주소를 적으면 대조에 실패해 신호가
+ * 도움이 아니라 잡음이 된다. 화면(AboutSection)에 걸려 있는 것과 같은 주소다.
+ */
+export const PERSON_ID = `${PORTAL_ORIGIN}/#person`;
+
+export function personJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    '@id': PERSON_ID,
+    name: '권기덕',
+    alternateName: 'kgd',
+    url: `${PORTAL_ORIGIN}/portfolio`,
+    jobTitle: '백엔드 엔지니어',
+    sameAs: [
+      'https://github.com/1989v',
+      'https://www.linkedin.com/in/gideok-kwon-57531b2a9/',
+    ],
+  };
+}
+
+/**
+ * 다른 문서에서 이 사람을 가리키는 참조.
+ *
+ * `sameAs` 같은 본문은 apex 홈의 전체 노드가 갖고, 여기는 `@id` 와 이름만 둔다 —
+ * 소비자는 `@id` 로 두 노드를 합친다. 페이지마다 전체 노드를 복제하면 프로필이 바뀔 때
+ * 고칠 자리가 늘어난다.
+ */
+export const personRef = { '@type': 'Person', '@id': PERSON_ID, name: '권기덕' };
+
+/** 운영자 본인의 블로그 핸들. 등록제 다중 저자라 남의 글을 본인 것으로 묶으면 안 된다 */
+export const OWNER_BLOG_HANDLE = 'kgd';
+
 export function websiteJsonLd(site) {
   const { name, url, searchUrlTemplate } = site ?? {
     name: PORTAL_BRAND,
@@ -502,7 +545,9 @@ export function attractionMeta(lang, attraction) {
   const name = attraction.title;
   const label = placeCategoryLabel(attraction.category, lang);
   const where = attraction.address || '';
-  const overview = (attraction.overview || '').trim();
+  // 원천 개요는 평문이 아니다 — `<br />`·`&rsquo;` 가 섞여 온다. 스니펫에 그대로 실리면
+  // 검색결과에 태그가 글자로 보인다.
+  const overview = sourceText(attraction.overview);
   const fallback =
     lang === 'en'
       ? `${name} is a ${label.toLowerCase()} attraction${where ? ` at ${where}` : ' in South Korea'}. See the map, photos, directions and things to do nearby.`
@@ -522,7 +567,7 @@ export function touristAttractionJsonLd(lang, attraction) {
     '@context': 'https://schema.org',
     '@type': 'TouristAttraction',
     name: attraction.title,
-    description: clampDescription(attraction.overview || attractionMeta(lang, attraction).description, 300),
+    description: clampDescription(sourceText(attraction.overview) || attractionMeta(lang, attraction).description, 300),
     url: attractionUrl(lang, attraction.id),
     inLanguage: lang,
     isPartOf: { '@type': 'WebSite', name: placeBrand(lang), url: PLACE_ORIGIN },
@@ -549,6 +594,58 @@ export function touristAttractionJsonLd(lang, attraction) {
   }
   return json;
 }
+
+/* ─── 개요 본문 정리 ────────────────────────────────────────────────────────
+ * 원천(TourAPI)의 `overview` 는 **평문이 아니다.** 표본 720건에서 실제로 관측된 것:
+ *   `<br />` 24 · `<br>` 3 · `<em>`/`<b>`/`<strong>`/`<div class=…>` 소수
+ *   `&rsquo;` 32 · `&ldquo;`/`&rdquo;` 각 10 · `&nbsp;` 8 · `&ndash;` 5 · `&lt;`/`&gt;`/`&amp;` …
+ * 국문은 대신 `\n` 이 들어온다(180건 중 30건).
+ *
+ * 지금까지 이걸 그대로 <p> 에 넣어서, 영문 화면에 `<br />` 와 `&rsquo;` 가 **글자로 보이고**
+ * 국문은 개행이 공백으로 접혀 문단 구분이 사라졌다 (2026-09-05 라이브 실측).
+ */
+
+/** 관측된 엔티티만 명시적으로 푼다. innerHTML 을 쓰지 않는다 — 원천 문자열을 HTML 로 해석하면
+ *  거기 담긴 것이 무엇이든 실행 경로가 열린다. 모르는 엔티티는 건드리지 않고 그대로 둔다. */
+const ENTITIES = {
+  '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&apos;': "'",
+  '&lsquo;': '‘', '&rsquo;': '’', '&ldquo;': '“', '&rdquo;': '”',
+  '&ndash;': '–', '&mdash;': '—', '&hellip;': '…', '&middot;': '·',
+  '&deg;': '°', '&eacute;': 'é', '&times;': '×',
+};
+
+/**
+ * 원천 개요 → 화면에 낼 평문. 줄바꿈은 `\n` 으로 남기고 화면이 `white-space: pre-line` 으로 살린다.
+ *
+ * 태그를 지우는 것이지 서식을 살리는 것이 아니다 — `<em>` 을 기울임으로 되살리려면 원천 HTML 을
+ * 신뢰해야 하는데, 우리가 통제하지 않는 문자열이라 그러지 않는다. 줄바꿈만 뜻이 분명해 살린다.
+ */
+/**
+ * 원천 텍스트 → 화면에 낼 평문. 개요만이 아니라 **이용정보에도 같은 것이 섞여 온다**
+ * (표본 182개 중 21개: infoCenter `<br>` 11 · useTime `<br>` 8 · 개행 10).
+ * 한 함수로 둔다 — 두 벌로 나뉘면 한쪽만 고쳐지고 다른 쪽에 태그가 남는다.
+ */
+/**
+ * @param {string | null | undefined} raw
+ * @returns {string}
+ */
+export function sourceText(raw) {
+  if (!raw) return '';
+  let text = raw.replace(/\r\n?/g, '\n');
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/(p|div|li)>/gi, '\n');
+  text = text.replace(/<[^>]*>/g, '');
+  text = text.replace(/&[a-zA-Z]+;/g, (m) => ENTITIES[m.toLowerCase()] ?? m);
+  text = text.replace(/&#(\d{1,6});/g, (_, code) => {
+    const n = Number(code);
+    // 제어문자는 되돌리지 않는다 — 화면에 보이지 않으면서 줄만 어그러뜨린다
+    return n >= 32 && n <= 0x10ffff ? String.fromCodePoint(n) : '';
+  });
+  // 원천이 <br /><br /><br /> 처럼 겹쳐 보내는 곳이 있다 — 빈 줄은 하나까지만
+  text = text.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n');
+  return text.trim();
+}
+
 
 // ─── 포털 페이지 카피 (프리렌더 · 런타임 공용) ───────────────────────────────
 
@@ -772,8 +869,17 @@ export function blogPostingJsonLd(post) {
     description: post.summary ?? '',
     mainEntityOfPage: { '@type': 'WebPage', '@id': blogPostUrl(post.slug) },
     url: blogPostUrl(post.slug),
-    author: { '@type': 'Person', name: post.author?.displayName ?? '' },
-    publisher: { '@type': 'Organization', name: BLOG_BRAND, url: BLOG_ORIGIN },
+    // 운영자 본인의 글만 사이트 전체를 잇는 Person `@id` 로 묶는다. 다른 저자는 자기
+    // 작성자 공간이 정체성이다 — 남의 글을 본인 것으로 묶으면 저자 신호가 거짓이 된다.
+    author:
+      post.author?.handle === OWNER_BLOG_HANDLE
+        ? personRef
+        : {
+            '@type': 'Person',
+            name: post.author?.displayName ?? '',
+            ...(post.author?.handle ? { url: blogAuthorUrl(post.author.handle) } : {}),
+          },
+    publisher: { '@type': 'Organization', name: BLOG_BRAND, url: BLOG_ORIGIN, founder: personRef },
     ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
     // 없으면 발행일이 곧 최신성이 된다 — 고친 글이 계속 옛 글로 읽힌다.
     // 서버 렌더(BlogMetaRenderer)와 같은 값을 심어야 한다: 하이드레이션이 그쪽을 교체한다.

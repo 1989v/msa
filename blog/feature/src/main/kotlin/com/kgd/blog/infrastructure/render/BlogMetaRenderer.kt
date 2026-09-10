@@ -77,7 +77,7 @@ class BlogMetaRenderer(
             canonical = canonical,
             image = space.author.avatarUrl,
             ogType = "profile",
-            jsonLd = listOf(personJsonLd(space, canonical)),
+            jsonLd = listOf(profileJsonLd(space, canonical)),
         )
         return compose(shell, meta, authorBody(space))
     }
@@ -217,8 +217,30 @@ class BlogMetaRenderer(
         post.publishedAt?.let { put("datePublished", isoOffset(it)) }
         // dateModified 가 없으면 발행일이 곧 최신성이 된다 — 고친 글이 계속 옛 글로 읽힌다
         (post.updatedAt ?: post.publishedAt)?.let { put("dateModified", isoOffset(it)) }
-        put("author", mapOf("@type" to "Person", "name" to post.author.displayName))
-        put("publisher", mapOf("@type" to "Organization", "name" to BlogSeoCopy.BRAND, "url" to origin))
+        // portal-fe 의 `blogPostingJsonLd` 와 **같은 모양**이어야 한다 — 하이드레이션이
+        // 이 블록을 교체하므로, 어긋나면 렌더 전후로 저자 신호가 달라진다.
+        // 운영자 본인의 글만 사이트 전체를 잇는 Person `@id` 로 묶는다 (등록제 다중 저자).
+        put(
+            "author",
+            if (post.author.handle == OWNER_HANDLE) {
+                personRef()
+            } else {
+                buildMap {
+                    put("@type", "Person")
+                    put("name", post.author.displayName)
+                    post.author.handle?.let { put("url", BlogSeoCopy.authorUrl(origin, it)) }
+                }
+            },
+        )
+        put(
+            "publisher",
+            mapOf(
+                "@type" to "Organization",
+                "name" to BlogSeoCopy.BRAND,
+                "url" to origin,
+                "founder" to personRef(),
+            ),
+        )
         put("articleSection", post.categoryName.takeIf { it.isNotBlank() })
         post.coverImageUrl?.let { put("image", it) }
         if (post.ratingCount > 0) {
@@ -251,7 +273,14 @@ class BlogMetaRenderer(
         )
     }
 
-    private fun personJsonLd(space: BlogAuthorSpace, canonical: String): Map<String, Any?> = buildMap {
+    /**
+     * 사이트 전체를 잇는 Person 참조. 전체 노드(`sameAs` 등)는 apex 홈이 갖고 여기는
+     * `@id` 와 이름만 둔다 — portal-fe `copy.mjs` 의 `personRef` 와 같은 값이어야 한다.
+     */
+    private fun personRef(): Map<String, Any?> =
+        mapOf("@type" to "Person", "@id" to PERSON_ID, "name" to "권기덕")
+
+    private fun profileJsonLd(space: BlogAuthorSpace, canonical: String): Map<String, Any?> = buildMap {
         put("@context", "https://schema.org")
         put("@type", "ProfilePage")
         put("url", canonical)
@@ -286,5 +315,9 @@ class BlogMetaRenderer(
         const val SEO_MULTI = "data-seo-multi"
 
         val KST: java.time.ZoneOffset = java.time.ZoneOffset.ofHours(9)
+
+        /** portal-fe `copy.mjs` 의 PERSON_ID · OWNER_BLOG_HANDLE 과 같은 값이어야 한다 */
+        const val PERSON_ID = "https://1989v.com/#person"
+        const val OWNER_HANDLE = "kgd"
     }
 }

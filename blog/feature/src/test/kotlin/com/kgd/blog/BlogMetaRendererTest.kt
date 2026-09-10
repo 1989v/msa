@@ -65,6 +65,10 @@ class BlogMetaRendererTest : BehaviorSpec({
             html shouldNotContain """<script type="application/ld+json">"""
         }
 
+        then("운영자 글의 저자는 사이트 전체를 잇는 Person @id 다 — portal-fe personRef 와 같은 값") {
+            html shouldContain "\"author\":{\"@type\":\"Person\",\"@id\":\"https://1989v.com/#person\""
+        }
+
         then("발행·수정 시각이 KST 오프셋으로 나간다 — 오프셋이 없으면 소비자가 UTC 로 읽는다") {
             html shouldContain
                 """<meta property="article:published_time" content="2026-08-21T09:00:00+09:00" />"""

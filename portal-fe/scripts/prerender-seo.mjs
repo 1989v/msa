@@ -79,6 +79,8 @@ import {
   ADSENSE_HOSTS,
   adsTxt,
   SEO_MULTI_ATTR,
+  personJsonLd,
+  sourceText,
 } from '../src/seo/copy.mjs';
 
 const MULTI = SEO_MULTI_ATTR;
@@ -865,6 +867,12 @@ export function indexDoc(a, sidoCode) {
     overview,
     latitude: a.latitude,
     longitude: a.longitude,
+    // 이용 안내 — "몇 시에 여나"·"얼마인가"·"쉬는 날인가"는 답변형 검색이 가장 많이 받는
+    // 질문인데, 화면에만 있고 정적 HTML 에는 없어서 JS 를 안 돌리는 수집기는 못 봤다.
+    useTime: a.useTime ?? null,
+    restDate: a.restDate ?? null,
+    useFee: a.useFee ?? null,
+    parking: a.parking ?? null,
     // sitemap 의 lastmod. 원천 수정일이 없는 문서는 그냥 비운다 — 빌드일을 대신 적으면
     // 6만 URL 이 배포마다 전부 "갱신됨"이 되어 신호가 신호이길 그만둔다.
     modifiedAt: a.modifiedAt ?? null,
@@ -990,12 +998,32 @@ export function renderAttractionDetail(shell, lang, doc, { region = null, nearby
           [placeCategoryLabel(doc.category, lang), doc.address].filter(Boolean).join(' · '),
         )}</p>` +
         (doc.tel ? `<p>${escapeHtml(doc.tel)}</p>` : '') +
-        `<p>${escapeHtml(doc.overview)}</p>` +
+        `<p>${escapeHtml(sourceText(doc.overview))}</p>` +
+        visitorInfoHtml(lang, doc) +
         (nearbyList
           ? `<h2>${lang === 'en' ? 'Things to do nearby' : '주변 가볼 만한 곳'}</h2><ul>${nearbyList}</ul>`
           : ''),
     ),
   });
+}
+
+/**
+ * 이용 안내를 정의 목록으로. 답변형 검색은 **정답 문장이 HTML 에 그대로 있는 페이지**를
+ * 인용하므로, 화면에만 있으면 없는 것과 같다. 원천이 안 준 줄은 그리지 않는다.
+ * @param {'ko'|'en'} lang
+ * @param {Record<string, any>} doc
+ */
+function visitorInfoHtml(lang, doc) {
+  const labels = lang === 'en'
+    ? { useTime: 'Hours', restDate: 'Closed', useFee: 'Admission', parking: 'Parking' }
+    : { useTime: '이용시간', restDate: '쉬는날', useFee: '이용요금', parking: '주차' };
+  const rows = ['useTime', 'restDate', 'useFee', 'parking']
+    .map((key) => [key, sourceText(doc[key])])
+    .filter(([, value]) => value)
+    .map(([key, value]) => `<dt>${escapeHtml(labels[key])}</dt><dd>${escapeHtml(value)}</dd>`)
+    .join('');
+  if (!rows) return '';
+  return `<h2>${lang === 'en' ? 'Visitor info' : '이용 안내'}</h2><dl>${rows}</dl>`;
 }
 
 /**
@@ -1336,7 +1364,9 @@ async function renderPortalPages(shell) {
       description: meta.description,
       canonical,
       siteName: PORTAL_BRAND,
-      jsonLd: path === '/' ? [websiteJsonLd()] : [],
+      // Person 전체 노드는 apex 홈 한 곳에만 둔다 — 나머지 페이지는 personRef 의 `@id` 로
+      // 이 노드를 가리킨다. 프로필이 바뀌면 고칠 자리가 하나다.
+      jsonLd: path === '/' ? [websiteJsonLd(), personJsonLd()] : [],
       body: shellBody(
         `<h1>${escapeHtml(meta.title.split(' — ')[0])}</h1><p>${escapeHtml(meta.description)}</p>` +
           `<nav>${nav}</nav>` +
