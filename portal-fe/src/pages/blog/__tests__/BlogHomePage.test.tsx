@@ -35,6 +35,7 @@ const post = (id: number, title: string, categoryPath: string): BlogPostSummary 
   author: { handle: 'kgd', displayName: 'kgd', avatarUrl: null, bio: null },
   status: 'PUBLISHED',
   publishedAt: '2026-08-20T00:00:00Z',
+  updatedAt: '2026-08-20T00:00:00Z',
   readingMinutes: 3,
   viewCount: 10,
   likeCount: 0,

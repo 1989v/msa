@@ -60,6 +60,10 @@ class BlogMetaRenderer(
             image = post.coverImageUrl,
             ogType = "article",
             jsonLd = listOf(articleJsonLd(post, canonical), breadcrumbJsonLd(detail.breadcrumb)),
+            // og:type=article 만 있고 시각이 없으면 공유 카드·리치 결과에 날짜가 안 붙고,
+            // 답변형 검색은 최신성을 강하게 보는데 판단 근거가 사라진다 (2026-09-10 실측:
+            // 글 상세에 article:published_time·modified_time 둘 다 없었다).
+            articleTimes = post.publishedAt to post.updatedAt,
         )
         return compose(shell, meta, postBody(detail, canonical))
     }
@@ -124,6 +128,7 @@ class BlogMetaRenderer(
         ogType: String,
         jsonLd: List<Map<String, Any?>>,
         noindex: Boolean = false,
+        articleTimes: Pair<java.time.LocalDateTime?, java.time.LocalDateTime?>? = null,
     ): String {
         val lines = mutableListOf(
             "<title>${escape(title)}</title>",
@@ -140,6 +145,12 @@ class BlogMetaRenderer(
             """<meta name="twitter:description" content="${escape(description)}" />""",
         )
         if (noindex) lines += """<meta name="robots" content="noindex, follow" />"""
+        articleTimes?.first?.let {
+            lines += """<meta property="article:published_time" content="${escape(isoOffset(it))}" />"""
+        }
+        articleTimes?.second?.let {
+            lines += """<meta property="article:modified_time" content="${escape(isoOffset(it))}" />"""
+        }
         if (image != null) {
             lines += """<meta property="og:image" content="${escape(image)}" />"""
             lines += """<meta name="twitter:image" content="${escape(image)}" />"""
@@ -147,7 +158,10 @@ class BlogMetaRenderer(
         jsonLd.filter { it.isNotEmpty() }.forEach {
             // </script> 가 JSON 문자열에 섞이면 파서가 조기 종료된다
             val json = objectMapper.writeValueAsString(it).replace("<", "\\u003c")
-            lines += """<script type="application/ld+json">$json</script>"""
+            // SEO_MULTI 는 useSeo(portal-fe) 가 "내가 관리하는 태그" 를 고르는 표시다. 없으면
+            // 하이드레이션이 여기 심은 것을 못 찾아 같은 블록을 한 벌 더 붙인다 — 2026-09-10
+            // 실측: 글 상세 렌더 후 BlogPosting ×2 · BreadcrumbList ×2.
+            lines += """<script type="application/ld+json" $SEO_MULTI>$json</script>"""
         }
         return lines.joinToString("\n    ")
     }
@@ -200,7 +214,9 @@ class BlogMetaRenderer(
         put("description", BlogSeoCopy.postDescription(post))
         put("mainEntityOfPage", mapOf("@type" to "WebPage", "@id" to canonical))
         put("url", canonical)
-        post.publishedAt?.let { put("datePublished", it.toString()) }
+        post.publishedAt?.let { put("datePublished", isoOffset(it)) }
+        // dateModified 가 없으면 발행일이 곧 최신성이 된다 — 고친 글이 계속 옛 글로 읽힌다
+        (post.updatedAt ?: post.publishedAt)?.let { put("dateModified", isoOffset(it)) }
         put("author", mapOf("@type" to "Person", "name" to post.author.displayName))
         put("publisher", mapOf("@type" to "Organization", "name" to BlogSeoCopy.BRAND, "url" to origin))
         put("articleSection", post.categoryName.takeIf { it.isNotBlank() })
@@ -250,6 +266,13 @@ class BlogMetaRenderer(
         )
     }
 
+    /**
+     * 저장된 시각은 KST 벽시계다(`LocalDateTime`). 오프셋 없이 내보내면 소비자가 UTC 로 읽어
+     * 발행 시각이 9시간 앞당겨진다 — `+09:00` 을 붙여 뜻을 잃지 않게 한다.
+     */
+    private fun isoOffset(value: java.time.LocalDateTime): String =
+        value.atOffset(KST).format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
     private fun escape(value: String?): String = (value ?: "")
         .replace("&", "&amp;")
         .replace("<", "&lt;")
@@ -258,5 +281,10 @@ class BlogMetaRenderer(
 
     private companion object {
         val SEO_BLOCK = Regex("<!--seo:start-->[\\s\\S]*?<!--seo:end-->")
+
+        /** portal-fe `src/seo/copy.mjs` 의 SEO_MULTI_ATTR 과 같은 값이어야 한다 */
+        const val SEO_MULTI = "data-seo-multi"
+
+        val KST: java.time.ZoneOffset = java.time.ZoneOffset.ofHours(9)
     }
 }

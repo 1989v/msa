@@ -75,6 +75,8 @@ export interface BlogPostSummary {
   author: BlogAuthorSummary;
   status: PostStatus;
   publishedAt: string | null;
+  /** 최종 수정 시각 — BlogPosting.dateModified 가 쓴다. 구 응답에는 없다. */
+  updatedAt: string | null;
   readingMinutes: number;
   viewCount: number;
   likeCount: number;

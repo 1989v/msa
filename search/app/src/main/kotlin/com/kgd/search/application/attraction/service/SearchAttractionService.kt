@@ -144,6 +144,7 @@ class SearchAttractionService(
         titleLocal = titleLocal,
         category = category,
         areaCode = areaCode,
+        sidoCode = ldongRegnCd,
         address = address,
         latitude = latitude,
         longitude = longitude,
@@ -161,5 +162,6 @@ class SearchAttractionService(
         googlePlaceId = googlePlaceId,
         distanceKm = distanceKm,
         position = position,
+        modifiedAt = modifiedAt,
     )
 }

@@ -6,6 +6,15 @@
  * 그래서 순수 JS 로 두고 양쪽에서 import 한다 (빌드 스크립트는 TS 를 로드하지 못함).
  */
 
+/**
+ * 라우트마다 개수가 달라지는 head 태그(hreflang·JSON-LD)에 붙는 표시.
+ *
+ * useSeo 는 이 표시가 붙은 것만 지우고 다시 심는다. 그래서 **미리 심어 둔 쪽도 같은 표시를
+ * 달아야 한다** — 안 달면 하이드레이션이 기존 것을 못 찾아 같은 블록을 한 벌 더 붙인다.
+ * 프리렌더(prerender-seo.mjs)와 블로그 서버 렌더(BlogMetaRenderer.kt)가 이 값을 쓴다.
+ */
+export const SEO_MULTI_ATTR = 'data-seo-multi';
+
 export const GAME_ORIGIN = 'https://game.1989v.com';
 export const PORTAL_ORIGIN = 'https://1989v.com';
 /** 이력서 호스트 (ADR-0064). 색인 대상이 아니다 — robots 로 전면 차단한다. */
@@ -766,6 +775,11 @@ export function blogPostingJsonLd(post) {
     author: { '@type': 'Person', name: post.author?.displayName ?? '' },
     publisher: { '@type': 'Organization', name: BLOG_BRAND, url: BLOG_ORIGIN },
     ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
+    // 없으면 발행일이 곧 최신성이 된다 — 고친 글이 계속 옛 글로 읽힌다.
+    // 서버 렌더(BlogMetaRenderer)와 같은 값을 심어야 한다: 하이드레이션이 그쪽을 교체한다.
+    ...(post.updatedAt || post.publishedAt
+      ? { dateModified: post.updatedAt ?? post.publishedAt }
+      : {}),
     ...(post.categoryName ? { articleSection: post.categoryName } : {}),
     ...(post.coverImageUrl ? { image: post.coverImageUrl } : {}),
     ...(post.ratingCount > 0

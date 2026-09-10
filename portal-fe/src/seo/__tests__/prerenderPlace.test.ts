@@ -144,3 +144,24 @@ describe('renderRegionDetail', () => {
     expect(html).toContain('href="/regions/11"'); // 부모 시도로 가는 빵부스러기
   });
 });
+
+describe('하이드레이션 인계 표시 — data-seo-multi', () => {
+  // useSeo 는 `[data-seo-multi]` 가 붙은 태그만 지우고 다시 심는다. 프리렌더가 표시를
+  // 빠뜨리면 하이드레이션이 기존 것을 못 찾아 **같은 블록을 한 벌 더** 붙인다 —
+  // 2026-09-10 실측: 관광지 상세 렌더 후 TouristAttraction ×2 · BreadcrumbList ×2 였고,
+  // 두 breadcrumb 의 내용까지 달라(`…›서울특별시›경복궁` vs `…›경복궁`) 검색엔진이
+  // 어느 쪽을 쓸지 임의로 골랐다.
+  it('JSON-LD 는 전부 표시를 달고 나간다 — 표시 없는 ld+json 이 하나도 없어야 한다', () => {
+    const html = renderAttractionDetail(SHELL, 'ko', doc, { region: seoul });
+    const scripts = html.match(/<script type="application\/ld\+json"[^>]*>/g) ?? [];
+    expect(scripts.length).toBeGreaterThan(0);
+    for (const tag of scripts) expect(tag).toContain('data-seo-multi');
+  });
+
+  it('hreflang 도 같은 표시를 단다 — 안 그러면 대체 주소가 두 벌씩 선언된다', () => {
+    const html = renderRegionDetail(SHELL, 'ko', seoul, { bothLangs: true });
+    const links = html.match(/<link rel="alternate"[^>]*>/g) ?? [];
+    expect(links.length).toBeGreaterThan(0);
+    for (const tag of links) expect(tag).toContain('data-seo-multi');
+  });
+});

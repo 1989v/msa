@@ -33,6 +33,15 @@ interface SearchAttractionUseCase {
         val titleLocal: String? = null,
         val category: String? = null,
         val areaCode: String? = null,
+        /**
+         * 법정동 시도코드 (ADR-0071 의 지역 축).
+         *
+         * 응답에 실어야 상세 화면이 breadcrumb 에 지역 단계를 넣을 수 있다. 없던 동안
+         * 프리렌더는 `…›서울특별시›경복궁`, 클라이언트는 `…›경복궁` 을 심어 한 페이지에
+         * 서로 다른 BreadcrumbList 두 개가 남았다 (2026-09-10 실측).
+         * `areaCode` 는 구 TourAPI 체계라 문서의 43% 에서 비어 이 자리에 쓸 수 없다.
+         */
+        val sidoCode: String? = null,
         val address: String? = null,
         val latitude: Double,
         val longitude: Double,
@@ -53,6 +62,11 @@ interface SearchAttractionUseCase {
         val googlePlaceId: String? = null,
         val distanceKm: Double? = null,
         val position: Int = 0,
+        /**
+         * 원천 최종 수정일. sitemap 의 `lastmod` 가 이 값을 쓴다 — 없으면 6만 URL 이
+         * 갱신 여부를 알릴 방법이 없어 크롤러가 전량을 같은 우선순위로 다시 훑는다.
+         */
+        val modifiedAt: java.time.LocalDateTime? = null,
     )
 
     data class Result(

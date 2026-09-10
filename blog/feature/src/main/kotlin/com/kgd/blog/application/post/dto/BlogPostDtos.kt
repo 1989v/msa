@@ -20,6 +20,11 @@ data class BlogPostSummary(
     val author: BlogAuthorSummary,
     val status: PostStatus,
     val publishedAt: LocalDateTime?,
+    /**
+     * 최종 수정 시각. `article:modified_time` 과 `BlogPosting.dateModified` 가 이 값을 쓴다 —
+     * 답변형 검색은 최신성을 강하게 보는데, 없으면 발행 후 고친 글이 계속 옛 글로 읽힌다.
+     */
+    val updatedAt: LocalDateTime?,
     val readingMinutes: Int,
     val viewCount: Long,
     val likeCount: Long,

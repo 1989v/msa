@@ -9,6 +9,7 @@ import ShopPage from './pages/ShopPage';
 import ShopProductDetailPage from './pages/ShopProductDetailPage';
 import MyOrdersPage from './pages/MyOrdersPage';
 import LoginPage from './pages/LoginPage';
+import NotFoundPage from './pages/NotFoundPage';
 import ShopOAuthCallbackPage from './pages/ShopOAuthCallbackPage';
 
 // ADR-0058 R3 FE 통합 — 흡수될 sub-app 슬롯 (lazy). P2 에서 실제 앱 라우터로 교체.
@@ -256,6 +257,12 @@ function App() {
           <Route path="/quant/*" element={<QuantApp />} />
           <Route path="/gifticon/*" element={<GifticonApp />} />
           <Route path="/agent-viewer/*" element={<AgentViewerApp />} />
+
+          {/* 없는 주소. 이 줄이 없으면 `<Routes>` 가 아무것도 그리지 않아 셸의 기본 타이틀에
+              빈 본문인 200 페이지가 남는다 — nginx 가 SPA 폴백이라 상태 코드로는 못 가르고,
+              검색엔진에는 제목이 같은 빈 문서가 무수히 많은 사이트로 보인다. noindex 가
+              서버 상태 코드를 대신한다 (NotFoundPage). */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
       {/* 모바일 앱 셸 — 탭바 + 스택 전환 방향 판정 (kh-motion-app-shell spec §4) */}

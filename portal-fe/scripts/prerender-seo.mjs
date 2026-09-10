@@ -78,7 +78,10 @@ import {
   blogPostUrl,
   ADSENSE_HOSTS,
   adsTxt,
+  SEO_MULTI_ATTR,
 } from '../src/seo/copy.mjs';
+
+const MULTI = SEO_MULTI_ATTR;
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const DIST = resolve(ROOT, 'dist');
@@ -359,13 +362,18 @@ function metaTags({ title, description, canonical, lang, image, imageSmall, imag
     lines.push(`<meta name="twitter:image" content="${image}" />`);
     if (imageAlt) lines.push(`<meta name="twitter:image:alt" content="${escapeHtml(imageAlt)}" />`);
   }
+  // hreflang·JSON-LD 는 `data-seo-multi` 를 달고 나간다. 이 표시는 useSeo 가 "내가 관리하는
+  // 태그" 를 고르는 기준이고, 없으면 하이드레이션이 기존 것을 못 찾아 **같은 블록을 한 벌 더
+  // 붙인다** — 2026-09-10 실측: 게임 상세·관광지 상세·블로그 글 모두 렌더 후 JSON-LD 4개
+  // (VideoGame ×2, BreadcrumbList ×2). 관광지는 두 breadcrumb 의 내용까지 달라
+  // (`…›서울특별시›경복궁` vs `…›경복궁`) 검색엔진이 어느 쪽을 쓸지 임의로 고르는 상태였다.
   for (const alt of alternates ?? []) {
-    lines.push(`<link rel="alternate" hreflang="${alt.hreflang}" href="${alt.href}" />`);
+    lines.push(`<link rel="alternate" hreflang="${alt.hreflang}" href="${alt.href}" ${MULTI} />`);
   }
   for (const data of jsonLd ?? []) {
     // </script> 가 JSON 문자열에 섞이면 파서가 조기 종료된다
     lines.push(
-      `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`,
+      `<script type="application/ld+json" ${MULTI}>${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`,
     );
   }
   return lines.join('\n    ');
@@ -623,7 +631,11 @@ async function writeRobotsAndSitemaps(
   const placeDetailEntries = LANGS.flatMap((lang) =>
     (places[lang] ?? [])
       .filter((a) => a.hasOverview)
-      .map((a) => ({ loc: placeUrl(lang, `/attractions/${a.id}`), priority: '0.7' })),
+      .map((a) => ({
+        loc: placeUrl(lang, `/attractions/${a.id}`),
+        lastmod: isoDate(a.modifiedAt),
+        priority: '0.7',
+      })),
   );
 
   await emit(`seo/${GAME_HOST}/sitemap.xml`, sitemapXml(gameEntries));
@@ -853,6 +865,9 @@ export function indexDoc(a, sidoCode) {
     overview,
     latitude: a.latitude,
     longitude: a.longitude,
+    // sitemap 의 lastmod. 원천 수정일이 없는 문서는 그냥 비운다 — 빌드일을 대신 적으면
+    // 6만 URL 이 배포마다 전부 "갱신됨"이 되어 신호가 신호이길 그만둔다.
+    modifiedAt: a.modifiedAt ?? null,
   };
 }
 
@@ -1300,6 +1315,15 @@ ${recent}
 `;
 }
 
+/** apex 홈이 링크하는 서비스 호스트. resume 는 색인 대상이 아니라 넣지 않는다 (ADR-0064) */
+const SUBDOMAIN_LINKS = [
+  [GAME_ORIGIN, '무료 웹게임'],
+  [PLACE_ORIGIN, '한국 관광지 검색'],
+  [BLOG_ORIGIN, '블로그'],
+  [RANK_ORIGIN, '랭킹 리더보드'],
+  [DEAL_ORIGIN, '혜택 링크 허브'],
+];
+
 async function renderPortalPages(shell) {
   const nav = Object.keys(PORTAL_PAGES)
     .map((path) => `<a href="${path}">${escapeHtml(PORTAL_PAGES[path].title.split(' — ')[0])}</a>`)
@@ -1316,7 +1340,12 @@ async function renderPortalPages(shell) {
       body: shellBody(
         `<h1>${escapeHtml(meta.title.split(' — ')[0])}</h1><p>${escapeHtml(meta.description)}</p>` +
           `<nav>${nav}</nav>` +
-          `<p><a href="${GAME_ORIGIN}">무료 웹게임</a> · <a href="${PLACE_ORIGIN}">한국 관광지 검색</a></p>`,
+          // 서브도메인 서비스로 가는 링크. 무 JS 크롤러에게는 이 줄이 apex 와 각 호스트를
+          // 잇는 **유일한** 연결이다 — sitemap 은 호스트 경계를 넘지 못하므로 여기서
+          // 빠지면 그 호스트는 사이트 그래프에서 고립된다.
+          `<p>${SUBDOMAIN_LINKS.map(
+            ([href, label]) => `<a href="${href}">${escapeHtml(label)}</a>`,
+          ).join(' · ')}</p>`,
       ),
     });
     // 루트만 호스트 키로 — 같은 번들이 game/place 호스트도 서빙하므로 / 는 호스트로 갈린다
@@ -1387,9 +1416,16 @@ function portalLlmsTxt() {
     '',
     '> 백엔드 엔지니어 권기덕이 직접 설계·구현하고 운영 중인 서비스 모음. 커머스 MSA 플랫폼을 기반으로 관광 검색, 웹 게임, 코드 개념 사전을 함께 서비스한다.',
     '',
+    // 색인 대상 호스트는 **빠짐없이** 적는다. 답변형 검색이 사이트를 훑는 진입 문서가
+    // 이것 하나라, 여기 없는 호스트는 apex 에서 가는 길이 사이트맵에도 없어(호스트 경계를
+    // 넘지 못한다) 발견 경로가 통째로 없다 — blog·deal·rank 가 그 상태였다.
+    // resume 는 넣지 않는다 (ADR-0064 — 색인 대상이 아니다).
     '## 서비스',
     `- [한국 관광지 검색](${PLACE_ORIGIN}/): TourAPI 기반 관광지 검색 · 지도 탐색`,
     `- [무료 웹게임](${GAME_ORIGIN}/): 설치 없이 브라우저에서 실행되는 웹게임 아케이드`,
+    `- [블로그](${BLOG_ORIGIN}/): 서버·검색·데이터를 직접 만들고 겪은 기록`,
+    `- [랭킹 리더보드](${RANK_ORIGIN}/): 지역별 최저가 주유소 등 집계와 등락`,
+    `- [혜택 링크 허브](${DEAL_ORIGIN}/): 카테고리별 혜택·제휴 링크 큐레이션`,
     `- [IT 개념 사전](${PORTAL_ORIGIN}/tech): 코드베이스에서 추출한 개념을 트리맵·그래프로 탐색`,
     `- [포트폴리오](${PORTAL_ORIGIN}/portfolio): 검색·전시·커머스·인프라·AI 도메인에서 만든 것들`,
     `- [스토어 데모](${PORTAL_ORIGIN}/shop): MSA 커머스 플랫폼 데모 (검색·추천·주문)`,

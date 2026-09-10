@@ -36,6 +36,7 @@ class BlogMetaRendererTest : BehaviorSpec({
             categoryPath = "/tech/server/search", categoryName = "검색",
             author = BlogAuthorSummary("kgd", "권기덕", null, "백엔드"),
             status = PostStatus.PUBLISHED, publishedAt = LocalDateTime.of(2026, 8, 21, 9, 0),
+            updatedAt = LocalDateTime.of(2026, 9, 2, 14, 30),
             readingMinutes = 3, viewCount = 10, likeCount = 2, commentCount = 1,
             ratingAverage = 4.5, ratingCount = 4,
         ),
@@ -57,6 +58,19 @@ class BlogMetaRendererTest : BehaviorSpec({
 
         then("자산 스크립트가 그대로 남는다 — SPA 가 이 위에서 마운트된다") {
             html shouldContain "/assets/index-abc123.js"
+        }
+
+        then("JSON-LD 에 data-seo-multi 가 붙는다 — 없으면 하이드레이션이 같은 블록을 한 벌 더 붙인다") {
+            html shouldContain """<script type="application/ld+json" data-seo-multi>"""
+            html shouldNotContain """<script type="application/ld+json">"""
+        }
+
+        then("발행·수정 시각이 KST 오프셋으로 나간다 — 오프셋이 없으면 소비자가 UTC 로 읽는다") {
+            html shouldContain
+                """<meta property="article:published_time" content="2026-08-21T09:00:00+09:00" />"""
+            html shouldContain
+                """<meta property="article:modified_time" content="2026-09-02T14:30:00+09:00" />"""
+            html shouldContain "\"dateModified\":\"2026-09-02T14:30:00+09:00\""
         }
 
         then("크롤러용 본문이 #root 안에 들어간다") {

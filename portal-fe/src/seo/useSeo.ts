@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { SEO_MULTI_ATTR } from './copy.mjs';
 
 export interface SeoAlternate {
   hreflang: string;
@@ -19,7 +20,8 @@ export interface SeoInput {
   noindex?: boolean;
 }
 
-const MULTI = 'data-seo-multi';
+/** 표시 문자열은 copy.mjs 가 단일 원본 — 프리렌더·블로그 서버 렌더도 같은 값을 심는다 */
+const MULTI = SEO_MULTI_ATTR;
 
 /**
  * head 메타를 라우트에 맞춰 갱신한다.

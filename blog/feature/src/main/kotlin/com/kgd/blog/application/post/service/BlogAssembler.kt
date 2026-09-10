@@ -42,6 +42,7 @@ class BlogAssembler(
         author = authorSummary(author),
         status = post.status,
         publishedAt = post.publishedAt,
+        updatedAt = post.updatedAt,
         readingMinutes = post.readingMinutes,
         viewCount = post.viewCount,
         likeCount = post.likeCount,

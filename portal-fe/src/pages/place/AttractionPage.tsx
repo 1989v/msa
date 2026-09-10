@@ -3,6 +3,7 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   AMENITY_CATEGORIES,
+  fetchAdminRegions,
   fetchAttraction,
   searchAttractions,
   SIGHT_CATEGORIES,
@@ -18,6 +19,8 @@ import {
   placeCategoryLabel,
   placePath,
   placeUrl,
+  regionDisplayName,
+  regionUrl,
   touristAttractionJsonLd,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
@@ -118,6 +121,15 @@ export default function AttractionPage() {
   // 문서 자신의 언어를 SEO 기준으로 삼는다 — id 는 언어별로 다르므로 /en/attractions/{ko-id}
   // 같은 어긋난 주소가 들어올 수 있고, 그때 canonical 이 올바른 쪽을 가리켜야 한다.
   const docLang: PlaceLang = attraction?.lang ?? lang;
+
+  // breadcrumb 의 지역 단계용. 허브·지역 시트와 같은 캐시 키를 써서 대부분 이미 받아 둔 것을
+  // 재사용한다 — 이 화면 때문에 API 를 더 부르는 경우는 상세로 바로 들어온 첫 방문뿐이다.
+  const { data: sidoRegions } = useQuery({
+    queryKey: ['admin-regions', 'SIDO', docLang],
+    queryFn: () => fetchAdminRegions({ level: 'SIDO', lang: docLang }),
+    staleTime: 30 * 60_000,
+  });
+  const sido = (sidoRegions ?? []).find((r) => r.code === attraction?.sidoCode) ?? null;
   const meta = attraction ? attractionMeta(docLang, attraction) : null;
   useSeo(
     attraction && meta
@@ -136,8 +148,14 @@ export default function AttractionPage() {
           // 잘못된 대체 주소를 선언하느니 걸지 않는다. 허브(/ ↔ /en)만 진짜 번역쌍이다.
           jsonLd: [
             touristAttractionJsonLd(docLang, attraction),
+            // 지역 단계는 프리렌더(renderAttractionDetail)와 같은 세 칸이어야 한다.
+            // 하이드레이션이 프리렌더가 심은 breadcrumb 을 갈아끼우므로, 여기서 빠뜨리면
+            // 정적 HTML 에 있던 지역 단계가 렌더 후 사라진다.
             breadcrumbJsonLd(docLang, [
               { name: docLang === 'en' ? 'Explore Korea' : '한국 관광지 탐색', url: placeUrl(docLang) },
+              ...(sido
+                ? [{ name: regionDisplayName(docLang, sido), url: regionUrl(docLang, sido.code) }]
+                : []),
               { name: meta.heading, url: attractionUrl(docLang, attraction.id) },
             ]),
           ],

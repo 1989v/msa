@@ -21,6 +21,12 @@ export interface Attraction {
   titleLocal?: string | null;
   category: string | null;
   areaCode: string | null;
+  /**
+   * 법정동 시도코드 (ADR-0071 의 지역 축). 상세 화면의 breadcrumb 지역 단계가 이것을 쓴다 —
+   * `areaCode` 는 구 TourAPI 체계라 문서의 43% 에서 비어 그 자리에 못 쓴다.
+   * 색인이 새로 돌기 전 문서에는 없다 — 없으면 지역 단계를 뺀다.
+   */
+  sidoCode?: string | null;
   address: string | null;
   latitude: number;
   longitude: number;
