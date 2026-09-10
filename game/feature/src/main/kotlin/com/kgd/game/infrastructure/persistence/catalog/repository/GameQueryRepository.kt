@@ -2,6 +2,7 @@ package com.kgd.game.infrastructure.persistence.catalog.repository
 
 import com.kgd.game.application.catalog.port.GameSearchCriteria
 import com.kgd.game.application.catalog.dto.GameSort
+import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.infrastructure.persistence.catalog.entity.GameJpaEntity
 import com.kgd.game.infrastructure.persistence.catalog.entity.QGameJpaEntity
@@ -54,7 +55,18 @@ class GameQueryRepository(
             .where(condition)
 
         val ordered = when (criteria.sort) {
-            GameSort.TRENDING -> query.orderBy(stats.weeklyPlayCount.coalesce(0L).desc(), game.id.desc())
+            // 인기 = 연 횟수 + 실제로 논 판 × 무게. 무게는 도메인이 갖고 있는 값을 그대로 쓴다 —
+            // 여기 숫자를 적어 두면 화면이 보여 주는 점수와 정렬이 서로 다른 순위를 갖게 된다.
+            GameSort.TRENDING -> query.orderBy(
+                Expressions.numberTemplate(
+                    Long::class.java,
+                    "coalesce({0}, 0) + {2} * coalesce({1}, 0)",
+                    stats.weeklyPlayCount,
+                    stats.weeklyEngagedCount,
+                    GameStats.ENGAGED_WEIGHT,
+                ).desc(),
+                game.id.desc(),
+            )
             // released_at 이 비면 created_at 으로 센다. NULLS LAST 로 두었을 때 시드가 released_at 을
             // 안 채운 새 게임(유니티 라인 셋)이 「새로 나온 게임」·신작 탭에서 영영 빠졌다 —
             // 새 게임일수록 뒤로 가는 정렬은 정렬이 아니라 함정이다

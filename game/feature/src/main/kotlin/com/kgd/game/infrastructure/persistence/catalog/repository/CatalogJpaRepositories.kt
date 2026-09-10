@@ -30,9 +30,17 @@ interface GameTagMapJpaRepository : JpaRepository<GameTagMapJpaEntity, Long> {
 }
 
 interface GameStatsJpaRepository : JpaRepository<GameStatsJpaEntity, Long> {
-    /** 주간 트렌딩 리셋 — 스케줄러 전용 벌크 업데이트 */
+    /**
+     * 주간 트렌딩 리셋 — 스케줄러 전용 벌크 업데이트.
+     *
+     * 두 항을 함께 0으로 둔다. 한쪽만 지우면 지난주에 논 판이 이번 주 점수로 계속 더해져
+     * 한 번 오른 게임이 내려오지 않는다.
+     */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query("update GameStatsJpaEntity s set s.weeklyPlayCount = 0 where s.weeklyPlayCount > 0")
+    @Query(
+        "update GameStatsJpaEntity s set s.weeklyPlayCount = 0, s.weeklyEngagedCount = 0 " +
+            "where s.weeklyPlayCount > 0 or s.weeklyEngagedCount > 0",
+    )
     fun resetAllWeekly(): Int
 }
 

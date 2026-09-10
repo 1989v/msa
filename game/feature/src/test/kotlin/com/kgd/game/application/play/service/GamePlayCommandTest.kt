@@ -154,11 +154,40 @@ class GamePlayCommandTest : BehaviorSpec({
     }
 
     given("세션 종료 시") {
+        /** 머문 시간만 다르게 해서 종료를 돌리고, 저장된 집계를 돌려준다 */
+        fun endAfter(seconds: Long): GameStats {
+            val gameRepository = mockk<GameRepositoryPort>()
+            val sessionRepository = mockk<PlaySessionRepositoryPort>()
+            val statsRepository = mockk<GameStatsRepositoryPort>()
+            val command = GamePlayCommand(gameRepository, statsRepository, sessionRepository, mockk())
+
+            val stats = GameStats.init(1L)
+            val session = GamePlaySession.restore(
+                id = 10L,
+                sessionKey = "sess-1",
+                gameId = 1L,
+                memberId = null,
+                deviceType = DeviceType.DESKTOP,
+                startedAt = Instant.now().minusSeconds(seconds),
+                endedAt = null,
+                durationSec = null,
+            )
+            every { sessionRepository.findBySessionKey("sess-1") } returns session
+            every { sessionRepository.save(any()) } answers { firstArg() }
+            every { statsRepository.findByGameId(1L) } returns stats
+            every { statsRepository.save(any()) } answers { firstArg() }
+            every { gameRepository.findByIds(listOf(1L)) } returns listOf(publishedGame())
+
+            command.endSession("sess-1")
+            return stats
+        }
+
         `when`("존재하는 세션 키가 주어지면") {
             then("종료 시각과 재생 시간이 기록되어야 한다") {
                 val gameRepository = mockk<GameRepositoryPort>()
                 val sessionRepository = mockk<PlaySessionRepositoryPort>()
-                val command = GamePlayCommand(gameRepository, mockk(), sessionRepository, mockk())
+                val statsRepository = mockk<GameStatsRepositoryPort>()
+                val command = GamePlayCommand(gameRepository, statsRepository, sessionRepository, mockk())
 
                 val session = GamePlaySession.restore(
                     id = 10L,
@@ -172,6 +201,8 @@ class GamePlayCommandTest : BehaviorSpec({
                 )
                 every { sessionRepository.findBySessionKey("sess-1") } returns session
                 every { sessionRepository.save(any()) } answers { firstArg() }
+                every { statsRepository.findByGameId(1L) } returns GameStats.init(1L)
+                every { statsRepository.save(any()) } answers { firstArg() }
                 every { gameRepository.findByIds(listOf(1L)) } returns listOf(publishedGame())
 
                 val result = command.endSession("sess-1")
@@ -179,6 +210,24 @@ class GamePlayCommandTest : BehaviorSpec({
                 result.gameSlug shouldBe "concept-memory"
                 result.session.isEnded() shouldBe true
                 (result.session.durationSec ?: 0) shouldBe 30L
+            }
+        }
+
+        // 여기서 보는 것은 「집계가 실제로 달라졌는가」다 — 저장 호출 횟수를 세면
+        // 조건을 지워도 다른 이유로 한 번은 불려 초록불이 난다.
+        `when`("한 판이라 할 만큼 머물렀으면") {
+            then("실제로 논 판이 올라간다") {
+                val stats = endAfter(GamePlaySession.ENGAGED_MIN_SEC)
+
+                stats.weeklyEngagedCount shouldBe 1
+            }
+        }
+
+        `when`("열어보고 바로 나갔으면") {
+            then("올라가지 않는다 — 이게 인기를 만들면 안 된다") {
+                val stats = endAfter(GamePlaySession.ENGAGED_MIN_SEC - 1)
+
+                stats.weeklyEngagedCount shouldBe 0
             }
         }
     }

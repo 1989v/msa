@@ -58,6 +58,14 @@ class GamePlayCommand(
         session.end(Instant.now())
         val saved = sessionRepository.save(session)
 
+        // 충분히 머문 판만 인기 점수에 더 얹는다. 판정은 세션 자신이 하고 여기서 조건을
+        // 다시 쓰지 않는다 — 두 곳이 각자 기준을 가지면 한쪽만 고쳐져 어긋난다.
+        if (saved.isEngaged()) {
+            val stats = statsRepository.findByGameId(session.gameId) ?: GameStats.init(session.gameId)
+            stats.recordEngagement()
+            statsRepository.save(stats)
+        }
+
         val game = gameRepository.findByIds(listOf(session.gameId)).firstOrNull()
         return PlaySessionResult(session = saved, gameId = session.gameId, gameSlug = game?.slug ?: "")
     }

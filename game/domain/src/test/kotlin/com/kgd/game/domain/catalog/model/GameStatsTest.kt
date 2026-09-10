@@ -49,4 +49,55 @@ class GameStatsTest : BehaviorSpec({
             }
         }
     }
+
+    given("인기 점수는 연 횟수와 실제로 논 판을 함께 본다") {
+        `when`("열어만 봤으면") {
+            then("연 횟수만큼이다") {
+                val stats = GameStats.init(gameId = 1L)
+                repeat(5) { stats.recordPlay() }
+
+                stats.trendingScore() shouldBe 5
+            }
+        }
+
+        `when`("한 판을 끝까지 놀았으면") {
+            then("열어만 본 세 번과 같아진다 — 이게 무게를 둔 이유다") {
+                val played = GameStats.init(gameId = 1L)
+                played.recordPlay()
+                played.recordEngagement()
+
+                val opened = GameStats.init(gameId = 2L)
+                repeat(3) { opened.recordPlay() }
+
+                played.trendingScore() shouldBe opened.trendingScore()
+            }
+        }
+
+        `when`("열어만 본 것이 훨씬 많아도") {
+            then("실제로 논 쪽이 앞선다") {
+                val skimmed = GameStats.init(gameId = 1L)
+                repeat(10) { skimmed.recordPlay() }
+
+                val engaged = GameStats.init(gameId = 2L)
+                repeat(5) {
+                    engaged.recordPlay()
+                    engaged.recordEngagement()
+                }
+
+                (engaged.trendingScore() > skimmed.trendingScore()) shouldBe true
+            }
+        }
+
+        `when`("주간 리셋이 돌면") {
+            then("두 항이 함께 0 이 된다 — 한쪽만 남으면 점수가 안 내려온다") {
+                val stats = GameStats.init(gameId = 1L)
+                repeat(4) { stats.recordPlay(); stats.recordEngagement() }
+                stats.resetWeekly()
+
+                stats.weeklyPlayCount shouldBe 0
+                stats.weeklyEngagedCount shouldBe 0
+                stats.trendingScore() shouldBe 0
+            }
+        }
+    }
 })

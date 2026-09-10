@@ -5,10 +5,13 @@ import com.kgd.game.application.catalog.dto.GameSort
 import com.kgd.game.domain.catalog.model.EngineType
 import com.kgd.game.domain.catalog.model.GameStatus
 import com.kgd.game.domain.catalog.model.Genre
+import com.kgd.game.domain.catalog.model.GameStats
 import com.kgd.game.domain.catalog.model.LoadType
 import com.kgd.game.domain.catalog.model.Orientation
 import com.kgd.game.infrastructure.config.GameDataSourceConfig
 import com.kgd.game.infrastructure.persistence.catalog.entity.GameJpaEntity
+import com.kgd.game.infrastructure.persistence.catalog.entity.GameStatsJpaEntity
+import com.kgd.game.infrastructure.persistence.catalog.repository.GameStatsJpaRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameJpaRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameQueryRepository
 import com.kgd.game.infrastructure.persistence.catalog.repository.GameTagMapJpaRepository
@@ -31,6 +34,7 @@ import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.ints.shouldBeGreaterThan
+import io.kotest.matchers.ints.shouldBeLessThan
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -111,6 +115,7 @@ class GameSchemaIntegrationSpec(
     @Autowired private val queryRepository: GameQueryRepository,
     @Autowired private val tagMapRepository: GameTagMapJpaRepository,
     @Autowired private val scoreRepository: GameScoreJpaRepository,
+    @Autowired private val statsRepository: GameStatsJpaRepository,
     @Autowired private val dailyScoreRepository: GameScoreDailyJpaRepository,
     @Autowired private val suggestionAdapter: GameSuggestionRepositoryAdapter,
     @Autowired private val replyAdapter: SuggestionReplyRepositoryAdapter,
@@ -379,6 +384,51 @@ class GameSchemaIntegrationSpec(
                     // 수정이 행을 새로 만들지 않았다 — 같은 사람의 제안은 여전히 하나다
                     suggestionAdapter.search(gameId, null, PageRequest.of(0, 50))
                         .content.count { it.memberId == 4242L } shouldBe 1
+                }
+        }
+    }
+
+    /**
+     * 인기 정렬은 「연 횟수 + 실제로 논 판 × 무게」다.
+     *
+     * **판정 근거는 MySQL 이 돌려준 순서**다 — 검사 안에서 점수를 다시 계산해 비교하면
+     * 공식의 사본을 재게 되어, SQL 이 열을 아예 안 읽어도 초록불이 난다.
+     */
+    Given("두 게임의 이번 주 집계가 다를 때") {
+        fun setStats(gameId: Long, opened: Long, engaged: Long) {
+            val stats = GameStats.restore(gameId, 0, 0, 0, opened, engaged)
+            statsRepository.save(GameStatsJpaEntity.fromDomain(stats))
+        }
+
+        fun trendingOrder(): List<String> =
+            queryRepository.search(publicCriteria(sort = GameSort.TRENDING), PageRequest.of(0, 5))
+                .content.map { it.slug }
+
+        When("논 판이 적은 쪽이 연 횟수만 훨씬 많으면") {
+            Then("실제로 논 쪽이 앞선다 — 열기만 한 것으로는 못 이긴다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val skimmed = gameRepository.findBySlug("snake")!!.id!!
+                    val played = gameRepository.findBySlug("overworld-quest")!!.id!!
+                    setStats(skimmed, opened = 10, engaged = 0) // 점수 10
+                    setStats(played, opened = 1, engaged = 5) // 점수 1 + 2×5 = 11
+
+                    val order = trendingOrder()
+
+                    order.indexOf("overworld-quest") shouldBeLessThan order.indexOf("snake")
+                }
+        }
+
+        When("반대로 뒤집으면") {
+            Then("순서도 뒤집힌다 — 정렬이 이 열을 실제로 읽는다")
+                .config(enabledIf = { dockerAvailable }) {
+                    val a = gameRepository.findBySlug("snake")!!.id!!
+                    val b = gameRepository.findBySlug("overworld-quest")!!.id!!
+                    setStats(a, opened = 1, engaged = 5) // 11
+                    setStats(b, opened = 10, engaged = 0) // 10
+
+                    val order = trendingOrder()
+
+                    order.indexOf("snake") shouldBeLessThan order.indexOf("overworld-quest")
                 }
         }
     }

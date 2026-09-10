@@ -17,6 +17,7 @@ class GameStatsJpaEntity(
     ratingSum: Long,
     ratingCount: Long,
     weeklyPlayCount: Long,
+    weeklyEngagedCount: Long = 0,
 ) {
     @Column(name = "play_count", nullable = false)
     var playCount: Long = playCount
@@ -34,11 +35,16 @@ class GameStatsJpaEntity(
     var weeklyPlayCount: Long = weeklyPlayCount
         private set
 
+    @Column(name = "weekly_engaged_count", nullable = false)
+    var weeklyEngagedCount: Long = weeklyEngagedCount
+        private set
+
     fun update(stats: GameStats) {
         playCount = stats.playCount
         ratingSum = stats.ratingSum
         ratingCount = stats.ratingCount
         weeklyPlayCount = stats.weeklyPlayCount
+        weeklyEngagedCount = stats.weeklyEngagedCount
     }
 
     fun toDomain(): GameStats = GameStats.restore(
@@ -47,6 +53,7 @@ class GameStatsJpaEntity(
         ratingSum = ratingSum,
         ratingCount = ratingCount,
         weeklyPlayCount = weeklyPlayCount,
+        weeklyEngagedCount = weeklyEngagedCount,
     )
 
     companion object {
@@ -56,6 +63,7 @@ class GameStatsJpaEntity(
             ratingSum = stats.ratingSum,
             ratingCount = stats.ratingCount,
             weeklyPlayCount = stats.weeklyPlayCount,
+            weeklyEngagedCount = stats.weeklyEngagedCount,
         )
     }
 }

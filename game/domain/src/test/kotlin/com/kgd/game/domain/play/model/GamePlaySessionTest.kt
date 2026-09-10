@@ -57,4 +57,36 @@ class GamePlaySessionTest : BehaviorSpec({
             }
         }
     }
+
+    given("인기 점수에 얹을 만큼 놀았는가") {
+        `when`("아직 안 끝난 세션이면") {
+            then("거짓이다 — 열려 있는 것만으로는 논 것이 아니다") {
+                newSession().isEngaged() shouldBe false
+            }
+        }
+
+        `when`("문턱 바로 아래에서 끝나면") {
+            then("거짓 — 열어보고 나간 것으로 읽는다") {
+                val session = newSession()
+                session.end(startedAt.plusSeconds(GamePlaySession.ENGAGED_MIN_SEC - 1))
+                session.isEngaged() shouldBe false
+            }
+        }
+
+        `when`("문턱에 닿으면") {
+            then("참 — 경계는 포함이다") {
+                val session = newSession()
+                session.end(startedAt.plusSeconds(GamePlaySession.ENGAGED_MIN_SEC))
+                session.isEngaged() shouldBe true
+            }
+        }
+
+        `when`("시계가 뒤로 간 세션이면") {
+            then("거짓 — duration 0 이 문턱을 넘어서는 안 된다") {
+                val session = newSession()
+                session.end(startedAt.minusSeconds(30))
+                session.isEngaged() shouldBe false
+            }
+        }
+    }
 })
