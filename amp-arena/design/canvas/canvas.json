@@ -1,0 +1,141 @@
+{
+  "artboards": [
+    {
+      "file": "Title.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 720,
+      "title": "1 타이틀"
+    },
+    {
+      "file": "Lobby.dc.html",
+      "x": 1360,
+      "y": 0,
+      "w": 1280,
+      "h": 720,
+      "title": "2 로비"
+    },
+    {
+      "file": "Room.dc.html",
+      "x": 2720,
+      "y": 0,
+      "w": 1280,
+      "h": 720,
+      "title": "3 대기실"
+    },
+    {
+      "file": "Main.dc.html",
+      "x": 4080,
+      "y": 0,
+      "w": 1280,
+      "h": 720,
+      "title": "4 인게임"
+    },
+    {
+      "file": "Result.dc.html",
+      "x": 5440,
+      "y": 0,
+      "w": 1280,
+      "h": 720,
+      "title": "5 결과"
+    },
+    {
+      "file": "Character.dc.html",
+      "x": 0,
+      "y": 880,
+      "w": 1200,
+      "h": 900,
+      "title": "캐릭터 시트"
+    },
+    {
+      "file": "Accessories.dc.html",
+      "x": 1280,
+      "y": 880,
+      "w": 1200,
+      "h": 800,
+      "title": "악세서리 6종"
+    },
+    {
+      "file": "Moves.dc.html",
+      "x": 2560,
+      "y": 880,
+      "w": 1200,
+      "h": 900,
+      "title": "기본 동작 18"
+    },
+    {
+      "file": "MapColosseum.dc.html",
+      "x": 0,
+      "y": 1940,
+      "w": 1200,
+      "h": 760,
+      "title": "맵 1 콜로세움"
+    },
+    {
+      "file": "MapSkyDock.dc.html",
+      "x": 1280,
+      "y": 1940,
+      "w": 1200,
+      "h": 760,
+      "title": "맵 2 스카이독"
+    },
+    {
+      "file": "Controls.dc.html",
+      "x": 2560,
+      "y": 1940,
+      "w": 1200,
+      "h": 860,
+      "title": "조작 · 상태 머신"
+    },
+    {
+      "file": "Netcode.dc.html",
+      "x": 3840,
+      "y": 1940,
+      "w": 1200,
+      "h": 1020,
+      "title": "네트워크 구조"
+    },
+    {
+      "file": "Roadmap.dc.html",
+      "x": 5120,
+      "y": 1940,
+      "w": 1200,
+      "h": 600,
+      "title": "로드맵 · 게이트"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "premise",
+      "x": 0,
+      "y": -260,
+      "w": 620,
+      "text": "AMP ARENA 시안 v0.1 (2026-09-10)\n겟앰프드 계열 8인 실시간 3D 대전 액션을 웹으로.\n시스템·조작·흐름은 원작 계열 문법 그대로, 캐릭터·UI·이름·아트는 오리지널.\n기획서: amp-arena/docs/GDD.md · 이 캔버스는 design/canvas/gen 이 생성한다."
+    },
+    {
+      "id": "row-screens",
+      "x": 700,
+      "y": -110,
+      "w": 420,
+      "text": "1행 · 화면 흐름 (1280×720)\n타이틀 → 로비 → 대기실 → 인게임 → 결과"
+    },
+    {
+      "id": "row-sheets",
+      "x": 0,
+      "y": 770,
+      "w": 420,
+      "text": "2행 · 캐릭터 · 악세서리 · 동작\n3D 리그와 애니메이션 키의 원본"
+    },
+    {
+      "id": "row-systems",
+      "x": 0,
+      "y": 1830,
+      "w": 420,
+      "text": "3행 · 맵 · 조작/상태 머신 · 네트워크 · 로드맵\n구현 P1 이 그대로 따르는 규칙"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

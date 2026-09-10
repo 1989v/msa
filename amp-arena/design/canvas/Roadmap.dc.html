@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&amp;family=Gothic+A1:wght@400;600;700;800&amp;display=swap">
+  <style>
+    body { margin: 0; background: #121830; color: #f5f2ea; font-family: 'Gothic A1', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-size: 14px; line-height: 1.4; }
+    a { color: #ffb020; } a:hover { color: #ff6a2a; }
+    .display { font-family: 'Black Han Sans', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; font-weight: 400; letter-spacing: 0.01em; }
+    .num { font-variant-numeric: tabular-nums; }
+    * { box-sizing: border-box; }
+
+  </style>
+</helmet>
+<div style="position:relative;width:1200px;height:600px;overflow:hidden;background:#121830;color:#f5f2ea;padding:28px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;flex-direction:row;align-items:flex-end;justify-content:space-between;gap:16px;padding-bottom:14px;border-bottom:3px solid #4c5a9c">
+    <div style="display:flex;flex-direction:column;gap:4px">
+      <div class="display" style="font-size:32px;color:#f5f2ea;line-height:1.1;">로드맵과 완료 게이트</div>
+      <div style="font-size:14px;color:#a9b0cc;line-height:1.5;">작은 단계로 나누고, 각 단계는 수치로 닫는다. 시안 확인 뒤 P1 부터 바로 구현에 들어간다.</div>
+    </div>
+    <div style="display:inline-flex;align-items:center;height:24px;padding:0 10px;background:#303b6e;color:#ffb020;border-radius:12px;font-weight:800;font-size:12px;flex:none">계획</div>
+  </div>
+    <div style="display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:12px"><div style="display:flex;flex-direction:column;gap:8px;padding:14px;background:#1c2342;border:2px solid #4ade80;border-radius:12px;box-shadow:0 4px 0 #0c1124">
+    <div style="display:flex;flex-direction:row;align-items:center;gap:8px"><div class="display" style="font-size:26px;color:#4ade80">P0</div><div style="font-size:16px;font-weight:800">시안</div></div>
+    <div style="font-size:12px;color:#f5f2ea;line-height:1.5">기획서 + 이 캔버스 13장</div>
+    <div style="font-size:11px;color:#a9b0cc;line-height:1.5"><span style="color:#4ade80;font-weight:800">완료 판정</span> · 사용자 확인</div>
+  </div><div style="display:flex;flex-direction:column;gap:8px;padding:14px;background:#1c2342;border:2px solid #ffb020;border-radius:12px;box-shadow:0 4px 0 #0c1124">
+    <div style="display:flex;flex-direction:row;align-items:center;gap:8px"><div class="display" style="font-size:26px;color:#ffb020">P1</div><div style="font-size:16px;font-weight:800">코어 전투</div></div>
+    <div style="font-size:12px;color:#f5f2ea;line-height:1.5">shared 시뮬 · 로컬 플레이(봇 3) · 콜로세움 · HUD</div>
+    <div style="font-size:11px;color:#a9b0cc;line-height:1.5"><span style="color:#ffb020;font-weight:800">완료 판정</span> · 이동·콤보·가드·잡기·다운 테스트, 봇과 3분 매치</div>
+  </div><div style="display:flex;flex-direction:column;gap:8px;padding:14px;background:#1c2342;border:2px solid #ffb020;border-radius:12px;box-shadow:0 4px 0 #0c1124">
+    <div style="display:flex;flex-direction:row;align-items:center;gap:8px"><div class="display" style="font-size:26px;color:#ffb020">P2</div><div style="font-size:16px;font-weight:800">온라인</div></div>
+    <div style="font-size:12px;color:#f5f2ea;line-height:1.5">로비 · 방 · 8인 · 예측/보간 · 결과 화면</div>
+    <div style="font-size:11px;color:#a9b0cc;line-height:1.5"><span style="color:#ffb020;font-weight:800">완료 판정</span> · 헤드리스 2탭 + 봇 6 매치 완주, 스냅 오차 로그</div>
+  </div><div style="display:flex;flex-direction:column;gap:8px;padding:14px;background:#1c2342;border:2px solid #33d1ff;border-radius:12px;box-shadow:0 4px 0 #0c1124">
+    <div style="display:flex;flex-direction:row;align-items:center;gap:8px"><div class="display" style="font-size:26px;color:#33d1ff">P3</div><div style="font-size:16px;font-weight:800">콘텐츠</div></div>
+    <div style="font-size:12px;color:#f5f2ea;line-height:1.5">악세서리 6 · 상자/하트/폭탄 · 스카이독 · 모드 3</div>
+    <div style="font-size:11px;color:#a9b0cc;line-height:1.5"><span style="color:#33d1ff;font-weight:800">완료 판정</span> · 악세서리별 테스트, 링아웃 KO</div>
+  </div><div style="display:flex;flex-direction:column;gap:8px;padding:14px;background:#1c2342;border:2px solid #33d1ff;border-radius:12px;box-shadow:0 4px 0 #0c1124">
+    <div style="display:flex;flex-direction:row;align-items:center;gap:8px"><div class="display" style="font-size:26px;color:#33d1ff">P4</div><div style="font-size:16px;font-weight:800">마감</div></div>
+    <div style="font-size:12px;color:#f5f2ea;line-height:1.5">이펙트 · SFX · 터치 패드 · 배포</div>
+    <div style="font-size:11px;color:#a9b0cc;line-height:1.5"><span style="color:#33d1ff;font-weight:800">완료 판정</span> · 1080p 60fps 트레이스, 모바일 가로 실측</div>
+  </div><div style="display:flex;flex-direction:column;gap:8px;padding:14px;background:#1c2342;border:2px solid #a78bfa;border-radius:12px;box-shadow:0 4px 0 #0c1124">
+    <div style="display:flex;flex-direction:row;align-items:center;gap:8px"><div class="display" style="font-size:26px;color:#a78bfa">2차</div><div style="font-size:16px;font-weight:800">차별화</div></div>
+    <div style="font-size:12px;color:#f5f2ea;line-height:1.5">스타일 6종 기술 · 스킨 페인터 · 진행/상점</div>
+    <div style="font-size:11px;color:#a9b0cc;line-height:1.5"><span style="color:#a78bfa;font-weight:800">완료 판정</span> · 별도 기획</div>
+  </div></div>
+    <div style="width:auto;height:auto;padding:12px;background:#1c2342;border:2px solid #4c5a9c;border-radius:10px;box-shadow:0 4px 0 #0c1124;"><div style="display:flex;flex-direction:column;gap:8px;align-items:stretch;justify-content:flex-start;"><div style="font-size:12px;color:#a9b0cc;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">기준 수치 (벤치마크 게이트)</div><table style="border-collapse:collapse;width:100%;"><thead><tr><th style="text-align:left;padding:6px 8px;font-size:11px;color:#a9b0cc;font-weight:700;border-bottom:2px solid #3a4680;">축</th><th style="text-align:left;padding:6px 8px;font-size:11px;color:#a9b0cc;font-weight:700;border-bottom:2px solid #3a4680;">목표</th><th style="text-align:left;padding:6px 8px;font-size:11px;color:#a9b0cc;font-weight:700;border-bottom:2px solid #3a4680;">판정</th></tr></thead><tbody><tr><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">동시 인원</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">방당 8인 (봇 포함)</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">봇 7 + 사람 1, 3분 완주</td></tr><tr><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">아레나</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">40×40m 급 · 발판 맵 3층</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">맵 정의 수치</td></tr><tr><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">시뮬레이션</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">60틱 · 스냅샷 20Hz</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">틱 지연 p99 < 4ms</td></tr><tr><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">클라</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">1080p 60fps, 8인 화면</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">프레임 p95 < 16.7ms</td></tr><tr><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">반응</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">입력→화면 < 50ms</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">타임스탬프 비교</td></tr><tr><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">매치</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">3분 · 결과까지 자동</td><td style="padding:6px 8px;font-size:12px;color:#f5f2ea;border-bottom:1px solid #3a4680;vertical-align:top">E2E 2탭 완주</td></tr></tbody></table></div></div></div>
+</x-dc>
+</body>
+</html>
