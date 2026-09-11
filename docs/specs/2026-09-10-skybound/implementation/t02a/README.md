@@ -34,10 +34,74 @@ Prototype tuning is exported as `MOVEMENT`: walk 3.2, sprint 6 units/s; jump 7 u
 
 T02B should read snapshots to animate the original character and place its feet at `position`. Render interpolation can use the previous/current snapshots and `alpha`; reset interpolation when `respawns` changes. Do not invent a placeholder model to label this playable. T02 input integration must produce press edges, clear input and pause on focus loss, and wire camera yaw consistently.
 
-Only ground and water contact exist. This is a point-foot heightfield controller, not a capsule solver. Shrine terraces, stairs, trees, rocks, vertical cliff faces and camera collisions are not included; T02 integration must add these before claiming wall/prop collision or an island walkthrough. No glide, wind current, moving platforms, combat, quest implementation, storage or touch controls. The terrain adapter scans triangles with bounding-box rejection; mobile performance requires measurement during integration.
+Only ground and water contact exist. This is a point-foot heightfield controller, not a capsule solver. Shrine terraces, stairs, trees, rocks, vertical cliff faces and camera collisions are not included; T02 integration must add these before claiming wall/prop collision or an island walkthrough. Glide/wind rules are opt-in and headless only (below); moving platforms, combat, quest implementation, storage and touch controls are not implemented by this core. The terrain adapter scans triangles with bounding-box rejection; mobile performance requires measurement during integration.
 
 Verify from repository root:
 
 ```sh
 node --test docs/specs/2026-09-10-skybound/implementation/t02a/tests/movement.test.mjs
 ```
+
+## T03A-2 · Opt-in headless flight integration
+
+```js
+const simulation = createSimulation({ terrain, checkpoint: { x: 0, z: 35 },
+  flight: { enabled: true, volumes: [
+    { x: 0, z: 0, radius: 3, minY: 10, maxY: 30, speed: 4 },
+  ] },
+});
+```
+
+Omitting `flight`, passing `null`, or `{enabled:false}` retains the existing demo behavior
+and snapshot shape. A supplied config must contain boolean `enabled`; volumes default to
+an empty array. The constructor copies and validates all wind volumes eagerly, including
+disabled configs, and freezes the retained copies. Caller mutation cannot change live wind.
+No viewer opts in: its animation bridge does not yet support gliding or a deployed sail.
+
+Enabled snapshots add `gliding` and effective `windSpeed` (zero when folded/grounded).
+Airborne deployed state reports mode `gliding`; all other modes keep their existing names.
+The rule source and tuning remain `implementation/t03a/src/gliding.mjs`.
+
+### One press, one consumer
+
+`jumpPressed` stays a press pulse, not a held button. With flight enabled, a pulse is
+retained across zero/substep frames and consumed once at the next 120Hz tick. Multiple
+pulses arriving before one tick coalesce. `clearInput()` removes the pending pulse.
+
+Priority at that tick is:
+
+1. Ground/coyote jump consumes the pulse; the resulting airborne state cannot reuse it.
+2. While folded and falling, an estimated landing within the 0.12s buffer window consumes
+   the pulse for a buffered jump. Time to contact uses current x/z terrain height and the
+   existing gravity equation. It is an estimate, not swept future-terrain collision.
+3. Otherwise the airborne pulse toggles the sail. An already deployed sail therefore
+   folds even near landing; it does not also queue a jump.
+
+Default-disabled behavior retains the original unconditional airborne jump buffer.
+Enabled buffering on rapidly changing terrain may expire if the predicted surface is left.
+
+### One stamina update and split gravity
+
+Each enabled tick calls the existing `stepGliding` helper once for the shared stamina.
+Grounded ticks use the helper's ground recovery/actual sprint drain. Airborne ticks use
+its glide/wind rules and apply gravity only for `dt - glidingTime`. Mid-tick exhaustion
+thus cannot receive a second full tick of gravity. Horizontal air control stays walk speed.
+
+A landing closes the sail and clears wind effect in the same tick, without a second
+stamina update; ground recovery starts on the next grounded tick. Water respawn restores
+checkpoint position, zero velocity, full shared stamina, folded sail and cleared pending
+input while preserving progress. `clearInput()` pauses input, not flight state: stopping
+simulation time is the caller's responsibility, as before.
+
+### Evidence / remaining work
+
+```sh
+node --test docs/specs/2026-09-10-skybound/implementation/t02a/tests/movement.test.mjs docs/specs/2026-09-10-skybound/implementation/t02a/tests/gliding-integration.test.mjs docs/specs/2026-09-10-skybound/implementation/t03a/tests/gliding.test.mjs
+```
+
+2026-09-12: **26 tests, 26 pass, 0 fail** (11 existing movement, 7 integration,
+8 pure rules). Integration coverage includes input ownership and buffering, shared-budget
+rates, funded partial-tick gravity, eager immutable wind config, frame partition replay,
+landing/respawn, invalid-input atomicity and the unchanged frame backlog bound.
+This adds no sail art/pose, wind visualization, collision geometry or playable flight UI.
+Those require a later adapter and browser/art verification before enabling the demo.

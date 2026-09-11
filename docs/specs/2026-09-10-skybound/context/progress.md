@@ -2,8 +2,9 @@
 
 ## 현재
 
-**T03A-1 활공·기력·기류 순수 규칙 저장. 다음 T03A-2 이동 코어 연결.**
-활공 규칙8/8 직접 통과. 기존 데모에는 아직 연결하지 않았다. `verifications/t03a-1.md`.
+**T03A-2 활공·이동 코어 연결 저장. 다음 T03A-3 돛 표현·화면 활성화.**
+활공 통합7+기존 이동11+순수 규칙8 = 26/26 직접 통과. 기존 데모 브라우저19/19. `verifications/t03a-2.md`.
+코어의 flight 옵션은 기본 비활성이다. 데모에서 활공하려면 다음 표현·bridge 연결이 필요하다.
 전체 구축 추정 **약 30%** 유지: [산정 근거](completion-estimate.md).
 전환/카메라/터치 단위10/10, 브라우저 터치15/15·PC11/11·이동19/19. `verifications/t02c-2.md`.
 사용자 최신 선호: 별도 요청 전에는 설명·데모 안내를 최소화하고 개발·검증·기록 중심으로 진행한다.
@@ -38,8 +39,8 @@ PC 키보드 이동·달리기·점프가 가능한 진단 프로토타입이다
 
 1. README → tasks → character/motion-report.md → T02A README 연결 계약을 읽는다.
 2. character/aerial-report.md를 읽는다. 점프/낙하/착지 원본과 뷰어 검증은 완료했으므로 재작성하지 않는다.
-3. **T03A-2**: `planning/t03a-small-steps.md`와 `implementation/t03a/README.md`를 읽고 이동 코어에 연결한다.
-   순수 규칙8/8 완료. shared stamina/단발 입력/glidingTime 계약을 지켜 중력·기력을 이중 적용하지 않는다.
+3. **T03A-3**: `planning/t03a-small-steps.md`, T02A README의 flight 계약을 읽고 돛/자세/bridge를 연결한다.
+   코어 연결은 완료했다. viewer에서 flight를 켜기 전에 gliding mode 표현을 구현한다.
    T02C 터치·PC 입력 기술 검증은 완료했다. 돛 표현과 공중 경로는 후속 단위로 분리한다.
 4. walk/run은 제자리 기술 초안이다. 현재 달리기에는 공중 구간·heel/toe roll이 없으며,
    실제 이동 속도/보폭 동기화·경사 적응·접지 IK·전신 관통 검사는 후속이다.
