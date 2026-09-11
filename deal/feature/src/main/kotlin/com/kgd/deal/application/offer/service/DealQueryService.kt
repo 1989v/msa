@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 
 /** 공개 조회 (ADR-0069). 만료·비전시 판정은 전부 저장소에서 끝난다. */
 @Service
-@Transactional(readOnly = true)
+@Transactional("dealTransactionManager", readOnly = true)
 class DealQueryService(
     private val categoryRepository: DealCategoryRepositoryPort,
     private val offerRepository: DealOfferRepositoryPort,

@@ -14,9 +14,9 @@ import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
- * ADR-0069/0072/0081 — code-dictionary + deal·blog·ranking 폴드의 **전체 컨텍스트 로드** 검증.
+ * ADR-0072/0081 — code-dictionary + blog·ranking 폴드의 **전체 컨텍스트 로드** 검증.
  *
- * 네 바운디드 컨텍스트가 한 JVM 에 스캔되므로 빈 이름 충돌이 없는지, 호스트 Flyway 가
+ * 세 바운디드 컨텍스트가 한 JVM 에 스캔되므로 빈 이름 충돌이 없는지, 호스트 Flyway 가
  * 자기 스키마에만 적용되는지 확인한다. Spring 은 기본적으로 빈 오버라이드를 막으므로,
  * 컨텍스트가 뜬다는 것 자체가 충돌 부재의 증거다 (배포 시 파드 기동 실패를 사전 차단).
  *
@@ -44,7 +44,7 @@ class CodeDictionaryContextLoadSpec(
     @Autowired private val ctx: ApplicationContext,
 ) : BehaviorSpec({
 
-    Given("code-dictionary + deal·blog·ranking 이 한 JVM 에 폴드된 컨텍스트") {
+    Given("code-dictionary + blog·ranking 이 한 JVM 에 폴드된 컨텍스트") {
         Then("호스트 EMF/TM 과 QueryFactory 가 충돌 없이 로드된다")
             .config(enabledIf = { dockerAvailable }) {
                 listOf(
@@ -60,17 +60,11 @@ class CodeDictionaryContextLoadSpec(
                 ).forEach { ctx.containsBean(it) shouldBe false }
             }
 
-        // ADR-0093 ② — deal 은 전환 기간 동안 **여기서도** 서빙된다(게이트웨이가 옮기기 전까지).
-        // 단 스키마는 호스트 것을 그대로 쓴다 — `spring.datasource.deal.url` 이 없으므로
-        // DealDataSourceConfig 가 안 켜지는 것이 그 조건이다. 이 속성이 실수로 들어오면
-        // 같은 파드에서 스키마가 갈려 어드민이 고친 값이 화면에 안 보이게 된다.
-        Then("deal 은 호스트 스키마를 쓴다 — 전용 datasource 가 없다")
+        // ADR-0093 ② 완료 — deal 은 commerce 로 갔다. 여기 남아 있으면 안 된다.
+        Then("deal 의 빈은 더 이상 이 컨텍스트에 없다")
             .config(enabledIf = { dockerAvailable }) {
                 listOf("dealDataSource", "dealEntityManagerFactory", "dealFlyway")
                     .forEach { ctx.containsBean(it) shouldBe false }
-                ctx.getBeanNamesForType(
-                    com.kgd.deal.presentation.controller.DealController::class.java,
-                ).size shouldBe 1
             }
 
         /**
@@ -80,10 +74,9 @@ class CodeDictionaryContextLoadSpec(
          * 그 도메인의 API 만 조용히 404 가 된다 — 기동 실패가 아니라서 배포 후에야 드러난다
          * (ADR-0072 blog 폴드 때 실제로 겪었다). 새 도메인을 폴드하면 여기 한 줄을 더한다.
          */
-        Then("폴드된 도메인(deal·blog)의 컨트롤러가 전부 빈으로 등록된다")
+        Then("폴드된 도메인(blog)의 컨트롤러가 전부 빈으로 등록된다")
             .config(enabledIf = { dockerAvailable }) {
                 listOf(
-                    com.kgd.deal.presentation.controller.DealController::class.java,
                     com.kgd.blog.presentation.controller.BlogPublicController::class.java,
                     com.kgd.blog.presentation.controller.BlogStudioController::class.java,
                     com.kgd.blog.presentation.controller.BlogAdminController::class.java,

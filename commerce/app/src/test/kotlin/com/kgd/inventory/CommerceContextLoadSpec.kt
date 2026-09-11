@@ -4,6 +4,7 @@ import com.kgd.commerce.CommerceApplication
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.booleans.shouldBeTrue
+import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -89,6 +90,46 @@ class CommerceContextLoadSpec(
                     "dealDataSource", "dealEntityManagerFactory",
                     "dealTransactionManager", "dealFlyway",
                 ).forEach { ctx.containsBean(it).shouldBeTrue() }
+            }
+
+        /**
+         * ADR-0058 불변식 — 폴드된 도메인의 `@Transactional` 은 **자기 TM 을 한정자로 지정**해야 한다.
+         *
+         * 빈 존재만 세면 이 결함을 못 잡는다. 한정자가 없으면 primary(inventory) TM 에 붙고,
+         * deal EM 이 트랜잭션에 참여하지 않아 `@Modifying` UPDATE 가 조용히 실패한다.
+         * 그리고 `RecordDealClickUseCase` 의 호출부는 그 실패를 **의도적으로 삼킨다**(리다이렉트가
+         * 본질이라서) — 그래서 로그에도 안 남고 클릭 수만 안 오른다.
+         *
+         * 2026-09-11 운영에서 실제로 그랬다: 클릭 행은 40→42 로 늘고 click_count 는 8 고정.
+         * 그래서 **값으로 판정한다** — 실제로 한 번 올려 보고 1 이 늘었는지 읽는다.
+         */
+        Then("deal 클릭 수가 실제로 증가한다 — 한정자 없는 @Transactional 이면 조용히 실패한다")
+            .config(enabledIf = { dockerAvailable }) {
+                val offers = ctx.getBean(
+                    com.kgd.deal.infrastructure.persistence.repository.DealOfferJpaRepository::class.java,
+                )
+                // V1 은 카테고리만 시드한다 — 오퍼는 이 검사가 직접 만든다(자기 완결).
+                val saved = offers.save(
+                    com.kgd.deal.infrastructure.persistence.entity.DealOfferJpaEntity(
+                        slug = "tm-qualifier-probe",
+                        categoryId = 1,
+                        merchant = "probe",
+                        title = "probe",
+                        benefit = "probe",
+                        targetUrl = "https://example.invalid/probe",
+                    ),
+                )
+                val id = requireNotNull(saved.id)
+                val was = offers.findById(id).orElseThrow().clickCount
+
+                ctx.getBean(com.kgd.deal.application.offer.usecase.RecordDealClickUseCase::class.java)
+                    .execute(
+                        com.kgd.deal.application.offer.usecase.RecordDealClickUseCase.Command(
+                            offerId = id, referrer = null, userAgent = null,
+                        ),
+                    )
+
+                offers.findById(id).orElseThrow().clickCount shouldBe was + 1
             }
     }
 }) {

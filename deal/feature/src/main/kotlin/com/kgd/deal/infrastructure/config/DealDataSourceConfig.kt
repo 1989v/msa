@@ -4,7 +4,6 @@ import com.kgd.common.persistence.ScopedFlywayMigrator
 import jakarta.persistence.EntityManagerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.jdbc.autoconfigure.DataSourceProperties
 import org.springframework.boot.jpa.EntityManagerFactoryBuilder
@@ -20,23 +19,16 @@ import javax.sql.DataSource
 /**
  * ADR-0093 ② — deal 도메인의 **전용** datasource(deal_db) + EMF + TM. 비-@Primary.
  *
- * ## 왜 조건부인가
+ * 전환 기간에는 `spring.datasource.deal.url` 조건부였다 — code-dictionary 와 commerce 가
+ * 동시에 deal 을 서빙해야 게이트웨이 전환 한 시점만 전환점이 되기 때문이다. 전환이 끝나
+ * deal 은 commerce 에만 있으므로 조건을 걷었다(속성 하나로 스키마가 갈리는 상태를 영구로
+ * 두지 않는다).
  *
- * 이 설정은 `spring.datasource.deal.url` 이 있을 때만 켜진다. 전환 기간 동안 **두 호스트가
- * 동시에 deal 을 서빙해야 하기 때문**이다 —
- *
- *   code-dictionary : 속성 없음 → 이 설정 꺼짐 → 호스트 EMF·스캔이 그대로 처리(기존 그대로)
- *   commerce        : 속성 있음 → 이 설정 켜짐 → deal_db 로 분리
- *
- * 게이트웨이가 라우트를 옮기는 한 시점이 유일한 전환점이 되고, 그 전후로 경로가 빈 곳을
- * 가리키는 창이 없다. game 을 code-dictionary → content 로 옮길 때 이 준비 없이 커밋 A 를
- * 올려 `/api/v1/games` 가 수 분간 404 였다 — 같은 실수를 반복하지 않는다.
- *
- * code-dictionary 에서 deal 이 완전히 빠지면(②-C) 이 조건은 지워도 된다. 남겨 두면
- * 속성 하나로 스키마가 갈리는 상태가 영구가 되므로 **그때 지운다**.
+ * **이 도메인의 `@Transactional` 은 전부 `dealTransactionManager` 를 한정자로 갖는다.**
+ * 빠뜨리면 primary(inventory) TM 에 붙고 deal EM 이 트랜잭션에 참여하지 않아
+ * `@Modifying` UPDATE 가 조용히 실패한다 — 2026-09-11 운영에서 click_count 가 그렇게 멈췄다.
  */
 @Configuration
-@ConditionalOnProperty(name = ["spring.datasource.deal.url"])
 @EnableJpaRepositories(
     basePackages = ["com.kgd.deal"],
     entityManagerFactoryRef = "dealEntityManagerFactory",

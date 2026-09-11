@@ -39,7 +39,7 @@ spec:
           containers:
             - name: linkcheck
               # 새 이미지를 만들지 않는다 — 호스트 앱을 웹서버 없이 띄웠다가 끝나면 내린다.
-              image: commerce/code-dictionary:latest
+              image: commerce/commerce:latest
               imagePullPolicy: IfNotPresent
               args:
                 # 웹서버를 띄우지 않는다. ApplicationRunner 가 끝나면 컨텍스트가 닫히고 종료된다.
@@ -47,16 +47,11 @@ spec:
                 # linkcheck 프로파일이 DealLinkCheckRunner 를 켠다.
                 - "--spring.profiles.active=kubernetes,linkcheck"
               env:
+                # ADR-0093 ② — deal 이 commerce 로 옮겨가면서 이 배치도 commerce 이미지가 됐다.
+                # code-dictionary 이미지로 두면 link_status 를 **옛 스키마에** 써서
+                # 화면에 영영 반영되지 않는다(경로는 이미 deal_db 를 본다).
                 # DB 자격증명은 application.yml 기본값을 쓴다(oci-arm 은 그 값으로 프로비저닝됨).
-                # prod-k8s 로 올릴 때는 Deployment 와 같은 Secret 주입 패치를 이 CronJob 에도 걸 것.
-                # 호스트 앱 컨텍스트를 그대로 띄우므로 이 키가 필요하다 (ADR-0092).
-                # 배치는 좌석 토큰을 안 쓰지만, 서명 컴포넌트가 키 없이는 안 뜬다.
-                - name: GAME_HMAC_SECRET
-                  valueFrom:
-                    secretKeyRef: { name: game-hmac, key: secret }
-                - name: GAME_DB_MASTER
-                  value: "mysql-code-dictionary-master:3306"
-                - name: GAME_DB_REPLICA
+                - name: DEAL_DB_HOST
                   value: "mysql-code-dictionary-master:3306"
               resources:
                 requests: { cpu: 100m, memory: 384Mi }

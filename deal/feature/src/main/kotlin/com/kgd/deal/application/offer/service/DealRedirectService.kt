@@ -37,7 +37,7 @@ class DealRedirectService(
         .maximumSize(1_000)
         .build<String, OfferSnapshot>()
 
-    @Transactional(readOnly = true)
+    @Transactional("dealTransactionManager", readOnly = true)
     override fun execute(slug: String, now: LocalDateTime): Decision {
         val snapshot = cache.get(slug) { key -> loadSnapshot(key) } ?: return Decision.NotFound
         val offer = snapshot.offer
@@ -55,7 +55,7 @@ class DealRedirectService(
      * 순서를 뒤집으면 DB 가 흔들릴 때 수익 링크가 통째로 죽는다.
      * [Propagation.REQUIRES_NEW] 로 조회 트랜잭션과 분리해 실패가 밖으로 번지지 않게 한다.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional("dealTransactionManager", propagation = Propagation.REQUIRES_NEW)
     override fun execute(command: RecordDealClickUseCase.Command) {
         clickRepository.save(
             OfferClick(

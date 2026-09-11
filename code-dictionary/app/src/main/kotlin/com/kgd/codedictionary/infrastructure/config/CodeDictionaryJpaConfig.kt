@@ -8,8 +8,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
  * JpaRepositoriesAutoConfiguration 이 back-off 하므로, code-dictionary 리포지토리는
  * 여기서 명시 등록한다 (기본 entityManagerFactory/transactionManager 바인딩).
  *
- * ADR-0069 — deal:feature 는 game 과 달리 **전용 datasource 를 두지 않고** 이 기본
- * EMF/TM 을 그대로 쓴다(같은 스키마). 그래서 리포지토리 스캔 범위에 com.kgd.deal 을 더한다.
+ * ADR-0093 ② — deal 은 commerce 로 옮겨가며 전용 스키마(deal_db)를 갖게 됐다.
+ * 여기 남는 blog·ranking 은 아직 호스트 EMF/TM 과 스키마를 공유한다(③단계에서 분리).
  * ADR-0072 — blog:feature 도 같은 이유로 com.kgd.blog 을 더한다.
  * ADR-0081 — ranking:feature 도 같은 이유로 com.kgd.ranking 을 더한다.
  *
@@ -19,5 +19,5 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
  * 다음 사람이 그게 동작한다고 믿는다.
  */
 @Configuration
-@EnableJpaRepositories(basePackages = ["com.kgd.codedictionary", "com.kgd.deal", "com.kgd.blog", "com.kgd.ranking"])
+@EnableJpaRepositories(basePackages = ["com.kgd.codedictionary", "com.kgd.blog", "com.kgd.ranking"])
 class CodeDictionaryJpaConfig

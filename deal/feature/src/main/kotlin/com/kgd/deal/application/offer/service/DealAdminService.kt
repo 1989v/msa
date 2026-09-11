@@ -30,7 +30,7 @@ import java.time.LocalDateTime
 
 /** 어드민 CRUD + 방치 감시 (ADR-0069). 인증은 게이트웨이의 admin 경로 ROLE_ADMIN 필터가 담당한다. */
 @Service
-@Transactional(readOnly = true)
+@Transactional("dealTransactionManager", readOnly = true)
 class DealAdminService(
     private val categoryRepository: DealCategoryRepositoryPort,
     private val offerRepository: DealOfferRepositoryPort,
@@ -45,7 +45,7 @@ class DealAdminService(
     override fun execute(): List<DealCategoryAdminResponse> =
         categoryRepository.findAll().map { it.toAdminResponse() }
 
-    @Transactional
+    @Transactional("dealTransactionManager")
     override fun execute(request: DealCategoryRequest): DealCategoryAdminResponse {
         if (categoryRepository.existsByCode(request.code)) {
             throw BusinessException(ErrorCode.DUPLICATE_RESOURCE, "이미 있는 카테고리 코드입니다: ${request.code}")
@@ -53,7 +53,7 @@ class DealAdminService(
         return categoryRepository.save(request.toDomain(id = null)).toAdminResponse()
     }
 
-    @Transactional
+    @Transactional("dealTransactionManager")
     override fun execute(command: UpdateDealCategoryUseCase.Command): DealCategoryAdminResponse {
         val (id, request) = command
         val existing = categoryRepository.findById(id)
@@ -67,7 +67,7 @@ class DealAdminService(
         return saved.toAdminResponse()
     }
 
-    @Transactional
+    @Transactional("dealTransactionManager")
     override fun execute(command: DeleteDealCategoryUseCase.Command) {
         val id = command.id
         if (offerRepository.existsByCategoryId(id)) {
@@ -87,7 +87,7 @@ class DealAdminService(
             .map { it.toAdminResponse(codes) }
     }
 
-    @Transactional
+    @Transactional("dealTransactionManager")
     override fun execute(request: DealOfferRequest): DealOfferAdminResponse {
         if (offerRepository.existsBySlug(request.slug)) {
             throw BusinessException(ErrorCode.DUPLICATE_RESOURCE, "이미 있는 slug 입니다: ${request.slug}")
@@ -96,7 +96,7 @@ class DealAdminService(
         return offerRepository.save(request.toDomain(id = null)).toAdminResponse(categoryCodes())
     }
 
-    @Transactional
+    @Transactional("dealTransactionManager")
     override fun execute(command: UpdateDealOfferUseCase.Command): DealOfferAdminResponse {
         val (id, request) = command
         val existing = offerRepository.findById(id)
@@ -111,7 +111,7 @@ class DealAdminService(
         return saved.toAdminResponse(categoryCodes())
     }
 
-    @Transactional
+    @Transactional("dealTransactionManager")
     override fun execute(command: DeleteDealOfferUseCase.Command) {
         val id = command.id
         val existing = offerRepository.findById(id)

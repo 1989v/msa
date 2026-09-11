@@ -10,7 +10,7 @@ plugins {
 dependencies {
     implementation(project(":code-dictionary:domain"))
     // ADR-0093: game:feature 는 content:app 으로 이동
-    implementation(project(":deal:feature")) // ADR-0069: 혜택 링크 허브 co-deploy (스키마는 호스트 공유)
+    // ADR-0093 ②: deal:feature 는 commerce:app 으로 이동 (전용 스키마 deal_db)
     implementation(project(":blog:feature")) // ADR-0072: 블로그 플랫폼 co-deploy (스키마는 호스트 공유)
     implementation(project(":ranking:feature")) // ADR-0081: 랭킹 리더보드 co-deploy (스키마는 호스트 공유)
     implementation(project(":common"))
@@ -42,7 +42,6 @@ dependencies {
     // ADR-0059: code-dictionary + game 폴드 컨텍스트 로드 검증 (빈 충돌 / 이중 Flyway)
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.mysql)
-    testImplementation(project(":deal:feature"))
     testImplementation(project(":blog:feature"))
     testImplementation(project(":ranking:feature"))
 }
