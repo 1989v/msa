@@ -2,11 +2,12 @@
 
 ## 현재
 
-**T02B-4a 걷기/달리기 제자리 클립과 검증 뷰어 저장. 다음 T02B-4b 점프/착지·이동 스냅샷 연결.**
+**T02B-4b-1 점프/낙하/착지 제자리 클립 저장. 다음 T02B-4b-2 실제 이동 스냅샷 연결.**
 게임에서 조작하며 이동하는 상태는 아직 아니다. T02B-3 최종 아트도 REVISE다.
 
 - 사용자 최신 의도: 다른 게임을 참고하지 않는 클린룸 창작, PRD·원화·작은 단위 구현→검증→저장 반복.
-  최신 한도 안내는 5h 55%. 남은 양을 직접 측정한 값은 아니다.
+  최신 한도 안내는 5h 16%. 계정 잔여 한도 조회 도구가 없어 직접 확인할 수 없다.
+  사용자 수치를 기준으로 한 소단위씩 진행한다. 크레딧 오류가 나면 저장 경계를 기록한다.
 - 작업/저장 위치: `/Users/gideok-kwon/IdeaProjects/msa/docs/specs/2026-09-10-skybound/`.
   다른 게임 폴더를 읽거나 변경하지 않는다. 새 창작 컨텍스트에는 이 게임 자료만 전달한다.
 - T01A 소품 GLB: `implementation/t01a/`, tests5/5.
@@ -15,17 +16,19 @@
 - T02B 리깅/텍스처 진단: `implementation/t02b/rig-check/` tests4/4,
   `texture-check/` 실제 브라우저12/12. 진단 스트립은 주인공이 아니다.
 - 주인공 원본/GLB/atlas/뷰어: `implementation/t02b/character/`.
-  LOD0 14,882tri / LOD1 5,000tri, 19bones,1K atlas. GLB 2,013,048 / 1,637,492 bytes.
-  idle/rig-inspection/walk/run을 표준 GLTFExporter→GLTFLoader로 재로드한다.
-- 최신 검증: 모델+동작 **10/10**, 동작 브라우저 **21/21**, 뷰어 **31/31**.
-  `verifications/t02b-4a.md`, `t02b-4a-motion-browser.json`, `t02b-4a-browser.json`.
+  LOD0 14,882tri / LOD1 5,000tri, 19bones,1K atlas. GLB 2,096,808 / 1,721,252 bytes.
+  idle/rig-inspection/walk/run/jump/fall/land를 표준 GLTFExporter→GLTFLoader로 재로드한다.
+- 최신 검증: 모델+동작 **13/13**, 공중동작 브라우저 **24/24**, 기존 보행 **21/21**, 뷰어 **31/31**.
+  `verifications/t02b-4b1.md` 및 `t02b-4b1-*-browser.json`에 증거 저장.
+- jump/land는 일회 재생 후 끝 자세 유지 및 종료, fall은 반복한다. 종료 후 재재생/reset 확인.
+  root의 실제 포물선 이동은 아직 없으며 T02A가 소유한다.
 - 재생성 비용: 빌드 약1초 미만, 모델/동작 테스트 약0.3초, 브라우저 GLB 재생성/캡처 수초.
   원화2장은 assets/에 보존하고 재생성하지 않는다. 임시 `/private/tmp/skybound-cleanroom/`에는 중요한 원본이 없다.
 
 ## 다음 작은 단위
 
 1. README → tasks → character/motion-report.md → T02A README 연결 계약을 읽는다.
-2. **T02B-4b-1**: 점프/낙하/착지 포즈/클립과 전환을 먼저 독립 뷰어에서 검증·저장한다.
+2. character/aerial-report.md를 읽는다. 점프/낙하/착지 원본과 뷰어 검증은 완료했으므로 재작성하지 않는다.
 3. **T02B-4b-2**: T02A snapshot의 position(발)/velocity/grounded/mode/stamina로
    캐릭터 위치·동작을 연결하고 실제 섬에서 접지를 검증한다. PC/터치 제품 입력은 T02C.
 4. walk/run은 제자리 기술 초안이다. 현재 달리기에는 공중 구간·heel/toe roll이 없으며,

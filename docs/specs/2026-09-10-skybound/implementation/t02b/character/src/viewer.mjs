@@ -6,11 +6,12 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createCharacter } from './model.mjs';
 import { createAtlas } from './atlas.mjs';
 import { createLocomotionClips } from './motion.mjs';
+import { createAerialClips, AERIAL_PLAYBACK } from './aerial.mjs';
 
 const state = window.__SKYBOUND_CHARACTER__ = {
   ready: false, error: null, stats: [], lod: 0, view: 'threequarter', frame: 0,
   glbBase64: [], atlasBase64: null, loadedFromGLB: false, pose: false,
-  animated: false, motion: 'idle', motionTime: 0, rotating: false, renderedBounds: null, threeRevision: THREE.REVISION,
+  animated: false, motion: 'idle', motionTime: 0, motionCompleted: false, rotating: false, renderedBounds: null, threeRevision: THREE.REVISION,
 };
 const $ = selector => document.querySelector(selector);
 function base64(buffer) {
@@ -52,7 +53,7 @@ async function main() {
     const authored = createCharacter(THREE, { lod, texture });
     authored.root.updateMatrixWorld(true);
     const buffer = await new GLTFExporter().parseAsync(authored.root, {
-      binary: true, animations: [...(authored.clips ?? []), ...createLocomotionClips(THREE)], onlyVisible: true,
+      binary: true, animations: [...(authored.clips ?? []), ...createLocomotionClips(THREE), ...createAerialClips(THREE)], onlyVisible: true,
     });
     state.glbBase64[lod] = base64(buffer);
     const loaded = await new GLTFLoader().parseAsync(buffer, '');
@@ -123,7 +124,13 @@ async function main() {
     const delta = Math.min((now - lastTime) / 1000, 0.05); lastTime = now;
     if (state.animated) {
       mixer?.update(delta);
-      state.motionTime = mixer.time % activeClip.duration;
+      const action = mixer.clipAction(activeClip);
+      state.motionTime = action.time;
+      if (AERIAL_PLAYBACK[state.motion] === 'once' && action.paused) {
+        state.animated = false; state.motionCompleted = true;
+        $('#animate').setAttribute('aria-pressed', 'false');
+        $('#animate').textContent = '동작 다시 재생';
+      }
     }
     if (state.rotating) {
       const offset = camera.position.clone().sub(controls.target);
@@ -170,22 +177,26 @@ async function main() {
     $('#animate').setAttribute('aria-pressed', 'false');
     $('#animate').textContent = '동작 재생';
     state.motionTime = 0;
+    state.motionCompleted = false;
     requestDraw();
   }
   function setMotion(name, { play = false, time = 0 } = {}) {
-    if (!['idle', 'walk', 'run'].includes(name)) throw new Error(`Unknown motion: ${name}`);
+    if (!['idle', 'walk', 'run', 'jump', 'fall', 'land'].includes(name)) throw new Error(`Unknown motion: ${name}`);
     if (!Number.isFinite(time) || time < 0) throw new Error('Motion time must be a nonnegative number');
     activeClip = loadedModels[state.lod].animations.find(clip => clip.name === name);
     if (!activeClip) throw new Error(`Missing loaded GLB motion: ${name}`);
     mixer.stopAllAction();
-    mixer.clipAction(activeClip).reset().play();
-    mixer.setTime(time);
-    state.motion = name; state.motionTime = time % activeClip.duration;
-    state.pose = false; state.animated = play;
+    const once = AERIAL_PLAYBACK[name] === 'once';
+    const action = mixer.clipAction(activeClip).reset().setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, once ? 1 : Infinity);
+    action.clampWhenFinished = once; action.play();
+    mixer.setTime(once ? Math.min(time, activeClip.duration) : time);
+    state.motion = name; state.motionTime = action.time;
+    state.motionCompleted = once && time >= activeClip.duration;
+    state.pose = false; state.animated = play && !state.motionCompleted;
     $('#motion').value = name;
     $('#pose').setAttribute('aria-pressed', 'false');
-    $('#animate').setAttribute('aria-pressed', String(play));
-    $('#animate').textContent = play ? '동작 정지' : '동작 재생';
+    $('#animate').setAttribute('aria-pressed', String(state.animated));
+    $('#animate').textContent = state.animated ? '동작 정지' : state.motionCompleted ? '동작 다시 재생' : '동작 재생';
     lastTime = performance.now(); requestDraw();
   }
   function getMotionSnapshot() {
@@ -202,7 +213,7 @@ async function main() {
       for (let i = part.start; i < part.start + part.count; i++) box.expandByPoint(mesh.getVertexPosition(i, new THREE.Vector3()).applyMatrix4(mesh.matrixWorld));
       return { min: box.min.toArray(), max: box.max.toArray() };
     });
-    return { motion: state.motion, time: state.motionTime, duration: activeClip?.duration, joints, soles, rootPosition: model.position.toArray() };
+    return { motion: state.motion, time: state.motionTime, duration: activeClip?.duration, playback: AERIAL_PLAYBACK[state.motion] ?? 'repeat', completed: state.motionCompleted, joints, soles, rootPosition: model.position.toArray() };
   }
   function setLOD(lod) {
     lod = Number(lod);

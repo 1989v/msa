@@ -77,3 +77,10 @@ node --test docs/specs/2026-09-10-skybound/implementation/t02b/character/tests/m
 
 기술 증거와 한계는 [motion-report.md](motion-report.md)를 참조한다.
 아트 판정은 여전히 별도이며, 동작 검사가 아트 승인을 의미하지 않는다.
+
+## 공중 자세 진단 · T02B-4b-1
+
+동작 선택과 `setMotion`은 `jump`/`fall`/`land`도 지원한다. 점프·착지는
+한 번 재생 후 끝 자세를 유지하고, 낙하는 반복한다. 실제 root 상승·낙하나
+지형 판정은 연결하지 않았다. 클립 정책·검증·한계는
+[aerial-report.md](aerial-report.md)에 기록한다.
