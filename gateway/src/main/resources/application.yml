@@ -137,6 +137,31 @@ spring:
               uri: http://engagement:8091 # ADR-0093: engagement 폴드
               predicates: [Path=/svc/experiment/actuator/health]
               filters: [StripPrefix=2]
+            - id: actuator-content
+              uri: http://content:8097
+              predicates: [Path=/svc/content/actuator/health]
+              filters: [StripPrefix=2]
+            # 도메인 이름으로도 물을 수 있게 — content 가 받는 넷
+            - id: actuator-place
+              uri: http://content:8097
+              predicates: [Path=/svc/place/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-game
+              uri: http://content:8097
+              predicates: [Path=/svc/game/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-blog
+              uri: http://content:8097
+              predicates: [Path=/svc/blog/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-ranking
+              uri: http://content:8097
+              predicates: [Path=/svc/ranking/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-deal
+              uri: http://commerce:8085 # ADR-0093 ②: commerce 폴드
+              predicates: [Path=/svc/deal/actuator/health]
+              filters: [StripPrefix=2]
 
 server:
   port: 8080

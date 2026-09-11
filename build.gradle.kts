@@ -634,6 +634,9 @@ val verifyPodTopology by tasks.registering {
         }
 
         val jibText = rootProject.file("buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts").readText()
+        val gatewayYml = rootProject.file("gateway/src/main/resources/application.yml").readText()
+        val adminHealthList = rootProject.file("admin/frontend/src/api/system.ts").readText()
+            .substringAfter("const SERVICES = [").substringBefore("];")
         val workflowText = rootProject.file(".github/workflows/images.yml").readText()
         val allJvm = Regex("ALL_JVM=\"([^\"]*)\"").find(workflowText)?.groupValues?.get(1)
             ?.split(" ")?.filter { it.isNotBlank() }?.toSet().orEmpty()
@@ -648,7 +651,26 @@ val verifyPodTopology by tasks.registering {
             if (!rootProject.file("k8s/base/$pod/deployment.yaml").exists()) {
                 failures += "k8s/base/$pod/deployment.yaml 이 없다 — 이미지는 나오는데 배포될 곳이 없다"
             }
+            // 파드가 살아 있는지 **밖에서** 물을 수 있어야 한다. 게이트웨이 자신은 /actuator/health
+            // 를 직접 노출하므로 프록시 라우트를 갖지 않는다.
+            if (pod != "gateway" && !gatewayYml.contains("Path=/svc/$pod/actuator/health")) {
+                failures += "gateway application.yml 에 /svc/$pod/actuator/health 라우트가 없다 — " +
+                    "밖에서 이 파드의 health 를 물을 길이 없다"
+            }
+            if (!adminHealthList.contains("name: '$pod'")) {
+                failures += "admin/frontend/src/api/system.ts 의 SERVICES 에 '$pod' 이 없다 — " +
+                    "시스템 대시보드가 이 파드를 세지 않는다. 파드가 사라진 뒤에도 줄이 남아 " +
+                    "계속 DOWN 으로 보이던 것이 같은 자리다 (code-dictionary → atlas)"
+            }
         }
+
+        // 반대 방향 — 대시보드가 없는 파드를 세고 있으면 영원히 DOWN 이다.
+        Regex("\\{ name: '([a-z0-9-]+)'").findAll(adminHealthList).map { it.groupValues[1] }
+            .filterNot { it in residentPods }
+            .forEach {
+                failures += "admin/frontend/src/api/system.ts 의 SERVICES 에 상주 파드가 아닌 " +
+                    "'$it' 이 있다 — 그 줄은 영원히 DOWN 으로 보인다"
+            }
 
         if (failures.isNotEmpty()) {
             throw GradleException(
