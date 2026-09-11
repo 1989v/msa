@@ -40,7 +40,7 @@ spec:
               args: ["--job=lcls-codes"]
               env:
                 - name: PLACE_API
-                  value: "http://place:8096"
+                  value: "http://content:8097"
                 - name: REDIS_HOST
                   value: "redis"
                 - name: TOUR_API_KEY

@@ -53,7 +53,7 @@ spec:
                 - name: OPENSEARCH_URIS
                   value: "http://opensearch:9200"
                 - name: PLACE_SERVICE_URL
-                  value: "http://place:8096"
+                  value: "http://content:8097"
                 # 이 값이 비면 벡터 없이 색인한다(첫 채움 전 정상 상태).
                 # search:app 의 search.query-vector.model-ref 와 **한 글자도 달라선 안 된다.**
                 - name: SEARCH_EMBEDDING_MODEL_REF

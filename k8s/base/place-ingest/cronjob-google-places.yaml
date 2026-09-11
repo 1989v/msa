@@ -50,7 +50,7 @@ spec:
               args: ["--job=google-places"]   # 키 없으면 건너뛰고 정상 종료
               env:
                 - name: PLACE_API
-                  value: "http://place:8096"
+                  value: "http://content:8097"
                 # 한 회차에 가져올 미보강분 수. **일일 한도가 아니다** — 한도는 제공자 단위
                 # 장부(ADR-0082)가 들고 있고, 이 값은 배치 크기일 뿐이다.
                 - name: GOOGLE_PLACES_DAILY_BUDGET

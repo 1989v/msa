@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @Component
 class CategoryLexiconAdapter(
-    @Value("\${search.category-lexicon.base-url:http://place:8096}") private val baseUrl: String,
+    @Value("\${search.category-lexicon.base-url:http://content:8097}") private val baseUrl: String,
     @Value("\${search.category-lexicon.enabled:true}") private val enabled: Boolean,
 ) : CategoryLexiconPort {
 

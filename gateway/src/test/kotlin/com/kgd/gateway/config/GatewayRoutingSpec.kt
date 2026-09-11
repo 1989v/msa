@@ -138,7 +138,7 @@ class GatewayRoutingSpec(
             // 파드를 합치거나 이름을 바꾸면 여기도 같이 고친다 — 고치지 않으면 이 검사가 먼저 깨진다.
             val knownServices = setOf(
                 "auth", "search", "analytics", "engagement", "account",
-                "sideapp", "code-dictionary", "commerce", "place",
+                "sideapp", "content", "code-dictionary", "commerce",
             )
             val destinations = routeLocator.routes.collectList().block().orEmpty()
                 .map { it.uri }

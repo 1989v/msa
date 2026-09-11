@@ -49,7 +49,7 @@ spec:
               args: ["--job=overview"]
               env:
                 - name: PLACE_API
-                  value: "http://place:8096"
+                  value: "http://content:8097"
                 # ADR-0082 — JVM 과 같은 제공자 단위 쿼터 장부
                 - name: REDIS_HOST
                   value: "redis"

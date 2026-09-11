@@ -18,6 +18,13 @@ class GatewayRouteConfig(
     private companion object {
         // ADR-0059: game:feature 가 code-dictionary:app 에 폴드되어 같은 포트를 공유
         const val CODE_DICTIONARY_URI = "http://code-dictionary:8089"
+
+        /**
+         * ADR-0093 — game 은 content 파드로 옮겼다. code-dictionary 에 남은 것은
+         * 자기 도메인(개념 사전·포트폴리오·전시·이력서)과 아직 스키마를 공유하는
+         * deal·blog·ranking 이다. ②~③단계에서 그 셋도 이쪽으로 온다.
+         */
+        const val CONTENT_URI = "http://content:8097"
     }
 
     private fun userConfig() = AuthenticationGatewayFilter.Config(
@@ -209,7 +216,7 @@ class GatewayRouteConfig(
             .route("game-private-gate") { r ->
                 r.path("/api/v1/games/private/*/allow")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             .route("game-admin") { r ->
                 r.path("/api/v1/admin/games/**")
@@ -217,7 +224,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 평점 — 회원은 1인 1표, 비로그인은 기기 1표(X-Device-Id). 게임 호스트에 로그인
             // 진입점이 없어 인증 필수 규칙이 기능을 죽이고 있었다. 익명 쓰기라 Rate Limiter 를 건다.
@@ -232,7 +239,7 @@ class GatewayRouteConfig(
                             }
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 클라우드 세이브 — 게스트 허용(이어하기 코드로 식별). 익명 쓰기라 Rate Limiter 를 건다
             .route("game-save") { r ->
@@ -246,7 +253,7 @@ class GatewayRouteConfig(
                             }
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 플레이 세션·로그라이크 런은 게스트 허용 — 로그인 사용자만 X-User-Id 로 식별
             .route("game-session") { r ->
@@ -258,7 +265,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 내 기록 — **로그인 전용**. 아래 카탈로그가 /api/v1/games/** 를 필터 없이 받으므로
             // 여기서 먼저 잡지 않으면 두 가지가 동시에 터진다: 필터가 없어 X-User-Id 가
@@ -270,7 +277,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 점수 제출 — 게스트 허용. 로그인 사용자만 X-User-Id 로 식별해 기록을 잇는다.
             // 필터가 없으면 신원 헤더 위조로 남의 이름에 점수를 귀속시킬 수 있다.
@@ -280,7 +287,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 개선 제안 읽기 — 본문·상태·답글이 전부 공개라 게스트도 읽는다. 필터를 거는 것은
             // 「내 글인가」를 서버가 판정하기 위해서다: 필터가 없으면 클라이언트가 붙인
@@ -292,7 +299,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 제안 등록·수정·답글 — **로그인 필수**. 위 읽기 라우트가 GET 을 먼저 가져가므로
             // 여기에는 쓰기만 남는다. 소유권과 운영자 자격은 서비스가 판정한다.
@@ -307,7 +314,7 @@ class GatewayRouteConfig(
                             }
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 친구 그룹 — **로그인 전용**. 담긴 것이 별칭 목록이라 남의 것이 열리면 그 사람
             // 지인의 이름을 보게 된다. 아래 카탈로그가 /api/v1/games/** 를 필터 없이 받으므로
@@ -319,7 +326,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 파티 판 진행 (투표·채점·결과 해시) — 게스트 허용. 초대 링크로 들어온 사람이
             // 참가자라 로그인을 요구하지 않고, 신원은 릴레이가 좌석을 줄 때 발급한 토큰이 갖는다.
@@ -330,13 +337,13 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 카탈로그 조회 (리스트/상세/유사/컬렉션/태그) — 공개
             .route("game-catalog") { r ->
                 r.path("/api/v1/games/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 온라인 대전 릴레이 (raw WebSocket) — 게스트 허용. 브라우저 WebSocket 은 Authorization
             // 헤더를 붙일 수 없어 항상 익명 경로를 타고, 필터는 클라이언트가 위조한 신원 헤더를 벗긴다.
@@ -347,7 +354,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 광고 슬롯/보상 (HOUSE, ADR-0059 §3) — 게스트 허용, 로그인 시 X-User-Id 식별
             .route("game-ads") { r ->
@@ -356,7 +363,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 포트폴리오 (code-dictionary 소유) — 공개 조회 + 로그인 시 스니펫 게이트 해제.
             // YAML 무인증 라우트에서 이동: 필터 없이는 X-User-Id 가 주입되지 않아 로그인 해제가
@@ -508,7 +515,7 @@ class GatewayRouteConfig(
                 r.method(HttpMethod.GET)
                     .and().path("/api/places/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri("http://place:8096")
+                    .uri(CONTENT_URI) // ADR-0093: content 폴드
             }
             .route("place-service-write") { r ->
                 r.path("/api/places/**")
@@ -516,7 +523,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://place:8096")
+                    .uri(CONTENT_URI) // ADR-0093: content 폴드
             }
             .build()
 }
