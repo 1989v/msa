@@ -18,7 +18,7 @@ VALUES
      'Eight-player 3D arena brawler. Classic arena-fighter grammar — three-hit combos, grabs and throws, guard and guard crush, knockdowns and ring-outs — with five fighting styles and six accessories (greatsword, spear, twin pistols, shield, booster) on top. Four maps: colosseum, skydock, rooftop, frozen lake. Quick match starts when the room fills or after 30 seconds with bots filling empty seats; make a code room to invite friends. The host client adjudicates and hands over to the next player if it leaves.',
      '/games/thumbs/shots/arena.jpg', NULL, 'HTML5',
      'IFRAME', '/games/arena/index.html', 'LANDSCAPE', 1, 'kgd', 0, 'BETA',
-     'VERSUS', '["versus","brawler","3d","multiplayer","online"]', NULL, NULL, NOW(6), NOW(6), NOW(6))
+     'VERSUS', '["versus","brawler","3d","multiplayer","online"]', NULL, NOW(6), NOW(6), NOW(6), NOW(6))
 ON DUPLICATE KEY UPDATE
     title = VALUES(title), description = VALUES(description),
     title_en = VALUES(title_en), description_en = VALUES(description_en),
@@ -27,6 +27,7 @@ ON DUPLICATE KEY UPDATE
     orientation = VALUES(orientation), supports_mobile = VALUES(supports_mobile),
     status = VALUES(status), content_updated_at = NOW(6);
 
+-- released_at=NOW(6) — BETA 부터는 공개 상태라 체크 제약(chk_game_released_when_visible)이 출시 시각을 요구한다.
 -- orientation='LANDSCAPE' — 세로에서는 「가로로 돌려 주세요」 안내를 띄운다. 터치는 왼쪽 가상 스틱 + 오른쪽 버튼 넷.
 -- supports_mobile=1 근거: 844×390 터치 레이아웃 E2E(tools/e2e-mobile.mjs) 오류 0. 실기기 프레임은 미측정.
 -- sdk_integrated=0 — 플랫폼 기록·세이브 API 는 아직 안 쓴다(Phase 2).
