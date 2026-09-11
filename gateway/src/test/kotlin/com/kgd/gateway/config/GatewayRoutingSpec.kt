@@ -5,6 +5,7 @@ import io.kotest.extensions.spring.SpringExtension
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.cloud.gateway.route.RouteLocator
 import org.springframework.core.env.Environment
 import org.springframework.test.web.reactive.server.WebTestClient
 
@@ -28,6 +29,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 )
 class GatewayRoutingSpec(
     @Autowired private val env: Environment,
+    @Autowired private val routeLocator: RouteLocator,
 ) : BehaviorSpec({
 
     val client = WebTestClient
@@ -123,6 +125,27 @@ class GatewayRoutingSpec(
                     .exchange()
                     .expectStatus().isUnauthorized
             }
+        }
+    }
+
+    // ADR-0093 — 재편의 가장 큰 위험은 라우팅이다. 파드가 합쳐지면 목적지 호스트 이름이
+    // 바뀌는데, 라우트를 하나 빠뜨려도 게이트웨이는 멀쩡히 뜨고 그 경로만 죽는다
+    // (2026-09-11: product 를 commerce 로 옮기고 게이트웨이 이미지가 안 나가 /api/v1/products 가
+    //  운영에서 404 였다). 그래서 **목적지 이름의 집합**을 검사로 고정한다.
+    Given("라우트 표의 목적지") {
+        Then("모든 라우트가 실재하는 파드 이름을 가리킨다") {
+            // k8s/base/*/service.yaml 로 존재하는 백엔드 Service 이름.
+            // 파드를 합치거나 이름을 바꾸면 여기도 같이 고친다 — 고치지 않으면 이 검사가 먼저 깨진다.
+            val knownServices = setOf(
+                "auth", "search", "analytics", "engagement", "account",
+                "sideapp", "code-dictionary", "commerce", "place",
+            )
+            val destinations = routeLocator.routes.collectList().block().orEmpty()
+                .map { it.uri }
+                .filter { it.scheme == "http" || it.scheme == "https" }
+                .mapNotNull { it.host }
+                .toSortedSet()
+            destinations.filterNot { it in knownServices } shouldBe emptyList<String>()
         }
     }
 }) {

@@ -45,7 +45,7 @@ class GatewayRouteConfig(
         "order" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "search" to "http://search:8083",
         "inventory" to "http://commerce:8085",
-        "gifticon" to "http://gifticon:8086",
+        "gifticon" to "http://sideapp:8095", // ADR-0093: sideapp 폴드
         "auth" to "http://auth:8087",
         "fulfillment" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
         "warehouse" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
@@ -135,7 +135,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri("http://gifticon:8086")
+                    .uri("http://sideapp:8095") // ADR-0093: sideapp 폴드
             }
             // 찜 **수**만 공개다 — 게임 상세가 "좋아요" 자리에 쓴다.
             // 라우트를 앞에 두는 것은 아래 wishlist-service 가 /api/v1/wishlist/** 를 통째로
