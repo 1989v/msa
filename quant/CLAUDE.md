@@ -22,7 +22,7 @@
 | Gradle path | 역할 |
 |---|---|
 | `:quant:domain` | Pure Kotlin 도메인 (Asset/Market/Strategy sealed/Tranche/Signal/IndicatorContent) |
-| `:quant:app` | Spring Boot 앱 (port 8094) — REST + ta4j + multik + JPA + ClickHouse + pgvector |
+| `:quant:feature` | 비-bootable 라이브러리. `sideapp:app`(port 8095) 에 폴드 (ADR-0093) — REST + ta4j + multik + JPA + ClickHouse + pgvector. 전용 datasource(quant)+Flyway 는 `QuantDataSourceConfig` 가 배선 |
 | `quant/ingest/` | Python sidecar (별도 lifecycle) — yfinance/FDR → ClickHouse insert |
 | `quant/frontend/` | React SPA (basename `/quant/`) — 메뉴 3종 |
 
@@ -47,11 +47,11 @@
 ## Commands
 
 ```bash
-./gradlew :quant:app:build            # 빌드
+./gradlew :sideapp:app:build            # 빌드
 ./gradlew :quant:domain:test          # 도메인 테스트 (불변식 property-based)
-./gradlew :quant:app:test             # app 테스트 (UseCase, 컨트롤러 등)
-./gradlew :quant:app:bootJar          # 실행 JAR
-./gradlew :quant:app:bootRun --args='--spring.profiles.active=ingest-bithumb'
+./gradlew :quant:feature:test             # app 테스트 (UseCase, 컨트롤러 등)
+./gradlew :sideapp:app:bootJar          # 실행 JAR
+./gradlew :sideapp:app:bootRun --args='--spring.profiles.active=ingest-bithumb'
                                             # 빗썸 히스토리 수집 배치
 ```
 

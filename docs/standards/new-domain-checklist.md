@@ -8,16 +8,28 @@
 
 - [ ] `docs/adr/` 에 ADR 을 먼저 쓴다. 새 모듈 추가는 ADR 트리거다 (`hns:start` PHASE 2.8).
   번호는 `ls docs/adr | sort | tail` 로 확인한 뒤 +1 (번호 중복 사고 전례 있음, `docs/README.md`).
-- [ ] **배치 형태**를 ADR 에 적는다. 기본은 **새 JVM 을 만들지 않는다** (ADR-0058) —
-  `:domain` + `:feature` 라이브러리를 호스트 앱에 폴드한다.
+- [ ] **어느 파드에 들어가는지**를 ADR 에 적는다. 기본은 **새 JVM 을 만들지 않는다**
+  (ADR-0058 / ADR-0093) — `:domain` + `:feature` 라이브러리를 호스트 앱에 폴드한다.
+  고르는 기준은 기술 스택이 아니라 **성격**이다. 도메인이 무엇에 관한 것인지로 한 줄 고른다.
 
-  | 호스트 | 성격 | 폴드된 도메인 |
-  |---|---|---|
-  | `commerce:app` | 커머스 BC, 도메인별 **전용 datasource** | order · inventory · fulfillment · warehouse · member · wishlist |
-  | `code-dictionary:app` | 포털 콘텐츠, **호스트 스키마 공유** (game 만 전용 `game_db`) | game · deal · blog · ranking |
+  | 호스트 | 성격 — 이런 도메인이 여기 온다 | 폴드된 도메인 | 스키마 |
+  |---|---|---|---|
+  | `commerce:app` | 돈·재고·주문이 오가는 커머스 트랜잭션과 사가 | order · inventory · fulfillment · warehouse · product | 도메인별 전용 |
+  | `content:app` | 사람에게 보여 주는 것. 서브도메인으로 공개된다 | game · place · blog · ranking | game·place 전용, 나머지 과도기 공유 |
+  | `atlas:app` | apex 사이트 자체의 총람 — 사전·카탈로그·포트폴리오·전시 | code-dictionary | 호스트 |
+  | `account:app` | **사람에 관한** 데이터. 회원이 지우면 같이 지워지는 것 | member · wishlist · resume | 도메인별 전용 |
+  | `engagement:app` | 실험·추천 — 다른 도메인을 관찰해 순위를 매기는 것 | recommendation · experiment | 전용 + ClickHouse read |
+  | `sideapp:app` | 위 어디에도 안 붙는 **도메인 단절 사이드앱** | quant · chatbot · gifticon | 도메인별 전용 |
 
-  새 `:app`(상주 JVM)은 gateway·product·search·quant 급의 사유(리액티브 혼재 금지·SLA·규모)가 있을 때만
-  — 사유를 ADR 에 적는다.
+  > `content`·`atlas` 는 ADR-0093 ②~④ 단계에서 `code-dictionary` 가 갈라져 생긴다. 그 전에
+  > 노출 도메인을 새로 만든다면 `code-dictionary:app` 에 붙이고 ADR 에 그렇게 적는다.
+
+- [ ] **새 `:app`(상주 JVM)을 만들려면 그것이 결정이어야 한다.** 빌드 게이트
+  `verifyPodTopology`(루트 `build.gradle.kts`)가 `settings.gradle.kts` 의 `:{x}:app` 을 세어
+  ADR-0093 의 승인 목록 밖이면 push 를 막는다. 통과시키려면 `approvedPods` 에 한 줄 더하고
+  ADR 을 고치게 되어 있다 — 분류표를 우회해 파드가 늘어난 것이 ADR-0093 을 쓰게 만든 원인이다.
+  단독 유지의 사유는 gateway(리액티브 혼재 금지)·auth(키 분실 = 전 회원 로그인 불가)·
+  search(P99 SLA Tier 1)·analytics(Kafka Streams GC) 급이어야 하고, ADR-0093 §2 에 적는다.
 
 ## 1. 모듈 골격
 

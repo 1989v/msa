@@ -7,7 +7,7 @@
 | Gradle path | 역할 |
 |---|---|
 | `:product:domain` | Pure Kotlin 도메인 (Product, Money, ProductStatus) |
-| `:product:app` | Spring Boot 앱 (port 8081) |
+| `:product:feature` | 비-bootable 라이브러리. `commerce:app` 에 폴드 (ADR-0093). 전용 datasource(product_db)+Flyway 는 `ProductDataSourceConfig` 가 배선 |
 
 ## 구조 상태 (ADR-0083)
 
@@ -16,13 +16,17 @@
 ## Commands
 
 ```bash
-./gradlew :product:app:build       # 빌드
+./gradlew :commerce:app:build      # 호스트 앱 (product 포함)
 ./gradlew :product:domain:test     # 도메인 테스트 (Spring context 없음)
-./gradlew :product:app:bootJar     # bootJar 생성
+./gradlew :commerce:app:bootJar    # bootJar 생성
 ```
 
 ## Key Rules
 
+- **운영 프로파일은 코드와 따로 움직인다** — 기본 yml 의 `spring.datasource.product.*` 는
+  `${PRODUCT_DB_MASTER:localhost:3316}` 이라, `commerce/app/.../application-kubernetes.yml` 에
+  product 블록이 없으면 운영에서 localhost 로 붙어 컨텍스트가 죽는다(2026-09-11 실제 장애).
+  폴드는 코드만 옮긴다 — 프로파일은 손으로 따라가야 한다
 - Product 는 **카탈로그(이름/가격/카테고리/상태 + 영양·원재료·원산지, ADR-0060) 의 SSOT**. **재고(stock) 는 Inventory 서비스가 SSOT** — 재고 조회/변경은 Inventory 를 통해 (ADR-0013)
 - 영양 필드는 100g 기준·nullable — 오픈데이터(#15100066) 품목제조보고번호 조인, 미매칭 null (추정 채움 금지)
 - Kafka 발행 토픽: `product.item.created`, `product.item.updated`

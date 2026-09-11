@@ -47,7 +47,8 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 
 - **모듈 구조 & 패키지** → `docs/architecture/module-structure.md`
 - **레이어 구조 표준 (필수, ADR-0083)**: UseCase **인터페이스** + Outbound Port(`application/{entity}/port`) + Adapter(`infrastructure`), **디렉토리 == 패키지**, application 은 infrastructure 를 import 하지 않는다 → `docs/conventions/package-structure.md`. 견본은 `inventory/feature`. **폴드(`:feature`)는 배포 형태이지 레이어 면제가 아니다** — 가장 최근 세 도메인(blog·deal·ranking)이 JpaRepository 를 서비스에 직접 주입한 채 리뷰를 통과했다. 정리 순서는 `docs/plans/2026-08-26-layer-structure-alignment.md`
-- **신규 도메인 체크리스트 (필수)**: ADR → 모듈 골격 → 레이어 → 호스트 폴드 3곳+1줄 → 스키마 → 메시징 → 외부 호출 → 노출 → 테스트 → 문서 → 검증 4줄 → `docs/standards/new-domain-checklist.md`
+- **신규 도메인 체크리스트 (필수)**: ADR → **파드 배분** → 모듈 골격 → 레이어 → 호스트 폴드 3곳+1줄 → 스키마 → 메시징 → 외부 호출 → 노출 → 테스트 → 문서 → 검증 4줄 → `docs/standards/new-domain-checklist.md`.
+  **새 도메인은 새 파드를 만들지 않는다** — 성격 축(커머스·노출·총람·사람·실험·사이드앱)으로 기존 호스트 하나에 `:feature` 로 접는다 (ADR-0093 §1). 새 `:app` 은 빌드 게이트 `verifyPodTopology` 가 막고, 통과시키려면 승인 목록과 ADR 을 함께 고쳐야 한다
 - **테스트**: Kotest BehaviorSpec + MockK → `docs/standards/test-rules.md`
 - **Kafka 토픽** → `docs/architecture/kafka-convention.md`
 - **API 응답 포맷**: `ApiResponse<T>` → `docs/architecture/api-response.md`
@@ -171,7 +172,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 
 | 서비스 | CLAUDE.md | 비고 |
 |--------|-----------|------|
-| product | `product/CLAUDE.md` | SSOT, Kafka 발행 |
+| product | `product/CLAUDE.md` | SSOT, Kafka 발행. `:product:feature` 로 commerce:app 에 폴드 (ADR-0093) |
 | order | `order/CLAUDE.md` | 결제 연동, 상태 전이. `:order:feature` 로 commerce:app 에 폴드 (ADR-0058) |
 | search | `search/CLAUDE.md` | OpenSearch 인덱싱, 4개 모듈 |
 | gateway | `gateway/CLAUDE.md` | 인증 필터, Rate Limiting, K8s DNS 라우팅 |
@@ -180,17 +181,20 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 | experiment | `experiment/CLAUDE.md` | A/B 테스트 플랫폼. `:experiment:feature` 로 **engagement:app 에 폴드** (ADR-0093) |
 | member | `member/CLAUDE.md` | 회원 식별, 프로필 관리 (최소 개인정보) |
 | wishlist | `wishlist/CLAUDE.md` | 찜하기 — 다형 대상(상품·게임·관광지·블로그 글), 로그인 전용, opaque targetKey (ADR-0074). 관광지는 **여행 묶음**으로 모은다 — `collection_id IS NULL` 이 미분류이고 '기본' 묶음 행을 만들지 않는다 (ADR-0080) |
-| quant | `quant/CLAUDE.md` | 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS + Phase 3 실매매 (ADR-0033/0036/0037, Phase 3 코어 구현 완료, 거래소 어댑터 4종 wire-up 후 Beta) |
+| quant | `quant/CLAUDE.md` | `:quant:feature` 로 sideapp:app 에 폴드 (ADR-0093). 통합 트레이딩 플랫폼 — sealed Strategy(Tranche/Signal/Hybrid) + 차트 분석 + 입문자 지표 학습 CMS + Phase 3 실매매 (ADR-0033/0036/0037, Phase 3 코어 구현 완료, 거래소 어댑터 4종 wire-up 후 Beta) |
 | auth | `auth/CLAUDE.md` | OAuth 인증, RBAC (ROLE_USER/SELLER/ADMIN) — 서비스 코드 존재 |
-| gifticon | `gifticon/CLAUDE.md` | 기프티콘 보관·공유·만료 알림. **별도 레포 서브모듈**(`1989v/msa-gifticon`) — 서브모듈 먼저 푸시 후 본체 |
+| gifticon | `gifticon/CLAUDE.md` | `:gifticon:feature` 로 sideapp:app 에 폴드 (ADR-0093). 기프티콘 보관·공유·만료 알림. **별도 레포 서브모듈**(`1989v/msa-gifticon`) — 서브모듈 먼저 푸시 후 본체 |
 | code-dictionary | `code-dictionary/CLAUDE.md` | IT 개념 사전, OpenSearch 검색, 트리맵/그래프 시각화, 어드민 CRUD + 포트폴리오 카드. FE 는 portal-fe 단일 SPA 의 메인 콘텐츠로 통합 (2026-05-05, scroll anchor 기반). **game:feature 호스트** (ADR-0059) |
 | game | `game/CLAUDE.md` | 게임 플랫폼 — 카탈로그(태그/큐레이션/평점) + 플레이 세션 + **개선 제안**(상태 있는 공개 피드백, ADR-0087) + HOUSE 광고(후속). `:game:domain`+`:game:feature` 라이브러리로 code-dictionary:app 에 폴드, FE 는 portal-fe `/games/*` (ADR-0059) |
 | inventory | `inventory/CLAUDE.md` | 재고 예약/차감/복구 — **재고 SSOT** (ADR-0013). commerce:app 폴드. **레이어 표준 견본** (ADR-0083) |
 | fulfillment | `fulfillment/CLAUDE.md` | 출고 상태 머신 (FulfillmentOrder), Saga choreography 의 출고 단계. commerce:app 폴드 |
 | warehouse | `warehouse/CLAUDE.md` | 창고 마스터. commerce:app 폴드. Kafka 없음 |
-| chatbot | `chatbot/CLAUDE.md` | 대화형 AI — Anthropic SDK 직접 + 채널 추상화(WebSocket/Slack) + 문서 지식원 (ADR-0052) |
+| chatbot | `chatbot/CLAUDE.md` | `:chatbot:feature` 로 sideapp:app 에 폴드 (ADR-0093). 대화형 AI — Anthropic SDK 직접 + 채널 추상화(WebSocket/Slack) + 문서 지식원 (ADR-0052) |
 | recommendation | `recommendation/CLAUDE.md` | 추천 — 룰 기반 CB · Item-Item CF · Thompson 밴딧 · ANN 사이드카 (ADR-0044~0049). analytics 의 ClickHouse 를 **읽기만**. `:recommendation:feature` 로 **engagement:app 에 폴드** (ADR-0093) — ANN 사이드카는 별도 파드 유지 |
-| commerce | `commerce/CLAUDE.md` | **폴드 호스트** — 자기 도메인 없이 order·inventory·fulfillment·warehouse·member·wishlist 를 한 JVM 으로 (ADR-0058). 도메인별 datasource/EMF/TM |
+| commerce | `commerce/CLAUDE.md` | **폴드 호스트** — 자기 도메인 없이 order·inventory·fulfillment·warehouse·product 를 한 JVM 으로 (ADR-0058/0093). 도메인별 datasource/EMF/TM |
+| account | — | **폴드 호스트** (ADR-0093) — member·wishlist. 사람에 관한 데이터 |
+| engagement | — | **폴드 호스트** (ADR-0093) — recommendation·experiment |
+| sideapp | — | **폴드 호스트** (ADR-0093) — quant·chatbot·gifticon. 어느 축에도 안 붙는 사이드앱 |
 | admin | `admin/CLAUDE.md` | 백오피스 (**FE 전용** — 어드민 API 는 각 서비스가 `/api/v1/admin/**` 로 제공) |
 | place | `place/CLAUDE.md` | 행정 지리 계층(대륙/국가/광역/도시) + POI + **관광지(Attraction) SSOT**, OpenSearch geo_distance 근처검색. 오픈데이터(GeoNames/상가정보/TourAPI) 적재 (ADR-0056/0065). 수집은 `place/ingest` CronJob 이 매일 자동 (ADR-0070) — 외부 :443 을 부르는 유일한 place 계열 파드. 운영 활성 (2026-08-09) |
 | blog | `blog/CLAUDE.md` | 블로그 플랫폼 — 계층 카테고리(3단) + 다중 저자(등록제) + 댓글·평점·좋아요·조회수 + 글 상세 서버 meta 주입. `:blog:domain`+`:blog:feature` 라이브러리로 code-dictionary:app 에 폴드(스키마 공유), FE 는 portal-fe `blog.1989v.com` (ADR-0072) |

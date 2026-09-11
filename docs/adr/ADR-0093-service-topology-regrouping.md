@@ -101,7 +101,7 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 
 | 단계 | 내용 | 테이블 이전 | 상태 |
 |---|---|---|---|
-| **①** | product·place 를 `:app` → `:feature` 폴드 · `engagement` · `sideapp` · `account`(member·wishlist) | **0** | engagement·account·product 완료(2026-09-11), place·sideapp 남음 |
+| **①** | product·place 를 `:app` → `:feature` 폴드 · `engagement` · `sideapp` · `account`(member·wishlist) | **0** | engagement·account·product·sideapp 완료(2026-09-11), place 남음 |
 | **②** | `deal` → commerce · `ranking` → content | 3 + 5 | 미착수 |
 | **③** | `blog` → content | 7 | 미착수 |
 | **④** | `resume` → account (`:resume:feature` 모듈 신설 선행) | 11 | 미착수 |
@@ -130,6 +130,7 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 |---|---|
 | `engagement` | ClickHouse `DataSource` 빈 하나로 `DataSourceAutoConfiguration` 이 back-off → experiment 의 JPA 소멸. Hikari 풀이 기동 때 연결을 열어 ClickHouse 장애가 A/B 배정까지 세움 |
 | `account` | 두 도메인 모두 비-@Primary 였다(commerce 에서는 inventory 가 primary) → primary 없는 호스트에서 타입 주입 실패 |
+| `sideapp` | quant·chatbot 이 MySQL 을 **자동 구성에 맡기고** 있었고 gifticon 이 `@Primary dataSource` 를 직접 만들어, 폴드 순간 두 도메인의 JPA 가 사라진다. gifticon Querydsl 은 `EntityManager` 를 타입으로 받아 **quant DB 로 질의**. ClickHouse 풀 둘이 기동 때 연결을 열어 ClickHouse 장애가 chatbot·gifticon 까지 내림. `LocalFileKmsAdapter` 가 `@Profile` 로 갈려 프로파일 없는 컨텍스트에서 KMS 주입 실패 |
 | `product` | **여섯**: 클래스명 충돌(`DataSourceConfig`·`KafkaConfig`·`OpenApiConfig`) · 빈 이름 충돌 5종 · 설정 키 누락 · 최상위 `kafka:` 중복 키 · `IdempotentEventHandler` 다중화 · common 멱등 엔티티 스캔 누락 · Querydsl 이 호스트 EMF 에 붙어 **다른 DB 로 질의** |
 
 배포 쪽에서도 셋이 나왔다.
@@ -140,6 +141,36 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
   허용 목록이 `In` 방식인 규칙(ClickHouse)은 폴드마다 갱신해야 하고, `NotIn` 방식(MySQL·Redis·Kafka)은 그대로 통과한다.
 - **`settings.gradle.kts` 를 건드리면 전 서비스가 재빌드·재배포된다.** 4 OCPU 단일 노드에서
   load 6.14 까지 올라갔다. 폴드 커밋은 그 성질을 항상 갖는다 — 한산한 시간에 올린다.
+- **`images.yml` 의 `case` 는 첫 일치가 이긴다.** commerce 줄에 `product/*` 를 더하면서 위에 있던
+  product 전용 줄을 안 지워, product 를 건드린 커밋이 계속 'product' 로 분류돼 없는
+  `:product:app:test` 를 찾다 죽었다. 게이트가 거기서 멈추니 그 커밋의 이미지는 **하나도** 안 나온다.
+- **폴드는 코드만 옮긴다 — 운영 프로파일은 안 따라온다.** 기본 yml 의 `spring.datasource.product.*`
+  기본값이 `localhost:3316` 인데 `commerce` 의 kubernetes 프로파일에 product 블록을 안 넣어
+  운영에서 `Connection refused` 로 CrashLoopBackOff 가 났다. 도메인 블록을 옮길 때
+  **application.yml 과 application-kubernetes.yml 을 짝으로** 옮긴다.
+- **폴드된 라이브러리에 `application.yml` 을 남기지 않는다.** 호스트와 같은 클래스패스 이름으로
+  경합한다. product/feature 에만 남아 있었고, 이기는 쪽이 jar 순서로 정해져 근거가 되지 못했다.
+- **라벨을 안 따라간 NetworkPolicy 는 에러 없이 무효가 된다.** product 폴드 뒤
+  `allow-order-to-product`·`allow-search-batch-to-product` 가 없는 파드를 선택한 채 남아 있었다.
+  앞엣것은 한 프로세스 안이 돼 필요 없어졌고, 뒤엣것은 대상이 commerce 라 **실제로 막힌**
+  상태였다(그 CronJob 이 suspend 라 안 드러났다). 같은 커밋에서 `PRODUCT_API_BASE_URL` 도
+  없는 Service 를 가리키고 있었다 — 파드 이름이 바뀌면 **매니페스트 안의 URL 도 찾아야 한다.**
+- **게이트웨이 이미지는 따로 나간다.** 라우트를 commerce 로 옮겼는데 그 커밋의 이미지 빌드가
+  위 `case` 결함으로 통째로 실패해, 매니페스트는 넘어갔고 게이트웨이만 옛 이미지로 남았다 —
+  `/api/v1/products` 가 운영에서 404 였다. 파드 이름이 바뀌는 커밋은 **게이트웨이 이미지가
+  실제로 새 태그인지**까지 확인해야 끝난다.
+
+### 이번에 세운 게이트 둘
+
+문서로는 안 지켜진다는 것이 이 ADR 의 출발점이므로, 두 가지를 빌드로 내렸다.
+
+- **`verifyPodTopology`** (루트 `build.gradle.kts`, `verifyArchitecture` 묶음 → pre-push) —
+  `settings.gradle.kts` 의 `:{x}:app` 이 승인 목록 밖이면 막는다. 새 파드를 만들려면
+  목록에 한 줄 더하며 ADR 을 고치게 된다. 같은 태스크가 각 파드의 jib 매핑 · `ALL_JVM` ·
+  `k8s/base/<name>/deployment.yaml` 셋을 다 요구한다 — 위 '조용히 꺼진 jib' 을 잡는다.
+  회귀를 주입해 두 갈래 모두 빨간불을 확인했다.
+- **`GatewayRoutingSpec` 의 목적지 검사** — 라우트 표의 모든 http(s) 목적지 호스트가 실재하는
+  Service 이름 집합 안에 있는지 본다. 라우트 하나를 폴드 전 이름으로 되돌려 빨간불을 확인했다.
 
 ## Alternatives Considered
 

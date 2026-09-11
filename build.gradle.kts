@@ -593,6 +593,80 @@ val verifySearchIndexContract by tasks.registering {
 subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifySearchIndexContract) } } }
 
 /**
+ * ADR-0093 파드 토폴로지 게이트.
+ *
+ * 새 도메인은 **기본적으로 새 파드를 만들지 않는다.** 성격 축으로 정한 상주 파드 중 하나에
+ * `:{domain}:feature` 로 접히고, 새 파드를 만들려면 그것이 의식적인 결정이어야 한다.
+ * ADR-0058 이 분류표를 적어 두고도 그 뒤 석 달 동안 도메인 다섯이 표를 거치지 않고
+ * 파드를 하나씩 더 만들었다 — 문서만으로는 안 지켜진다는 증거다.
+ *
+ * 그래서 배포 단위를 빌드가 센다:
+ *  1. `settings.gradle.kts` 의 `:{x}:app` 은 전부 [approvedPods] 에 있어야 한다.
+ *     새 파드를 만들면 여기서 막히고, 통과시키려면 이 목록에 한 줄 더하며 ADR 을 고치게 된다.
+ *  2. 그 파드는 jib 매핑·images.yml 의 ALL_JVM·k8s/base/<name>/deployment.yaml 셋을 다 가져야 한다.
+ *     하나라도 빠지면 조용히 깨진다 — jib 은 SKIPPED 로 넘어가고 워크플로는 성공으로 끝나
+ *     매니페스트 태그만 올라가 ErrImagePull 이 된다(2026-09-11 engagement 에서 실제로 겪음).
+ */
+val approvedPods: Set<String> = setOf(
+    // 단독 유지 (ADR-0093 §2 에 근거 기재)
+    "gateway", "auth", "search", "analytics",
+    // 폴드 호스트
+    "commerce", "account", "engagement", "sideapp",
+    // ②~④ 단계에서 content/atlas 로 갈릴 과도기 파드
+    "code-dictionary", "place",
+    // 상주 아님(배치·보조) — 이미지는 있으나 Deployment 가 없거나 CronJob 이다
+    "agent-viewer",
+)
+
+/** [approvedPods] 중 상주 Deployment 를 갖는 것. jib·ALL_JVM·k8s 매니페스트 셋을 다 요구한다. */
+val residentPods: Set<String> = approvedPods - setOf("agent-viewer")
+
+val verifyPodTopology by tasks.registering {
+    group = "verification"
+    description = "배포 단위(:*:app)가 승인된 파드 목록과 배포 배선을 벗어나지 않는지 확인"
+    doLast {
+        val failures = mutableListOf<String>()
+
+        val settingsText = rootProject.file("settings.gradle.kts").readText()
+        val declared = Regex("\"([a-z0-9-]+):app\"").findAll(settingsText).map { it.groupValues[1] }.toSortedSet()
+
+        (declared - approvedPods).forEach {
+            failures += "새 배포 단위 ':$it:app' — ADR-0093 의 파드 분류를 거치지 않았다. " +
+                "다른 파드에 ':$it:feature' 로 접거나, 정말 새 파드라면 approvedPods 에 추가하고 ADR 을 고칠 것"
+        }
+
+        val jibText = rootProject.file("buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts").readText()
+        val workflowText = rootProject.file(".github/workflows/images.yml").readText()
+        val allJvm = Regex("ALL_JVM=\"([^\"]*)\"").find(workflowText)?.groupValues?.get(1)
+            ?.split(" ")?.filter { it.isNotBlank() }?.toSet().orEmpty()
+
+        declared.filter { it in residentPods }.forEach { pod ->
+            if (!jibText.contains("\"$pod\" to ")) {
+                failures += "$pod 이 jib mainClassByImage 에 없다 — jib 이 조용히 SKIPPED 되고 이미지가 안 나온다"
+            }
+            if (pod !in allJvm) {
+                failures += "$pod 이 images.yml 의 ALL_JVM 에 없다 — 공유 의존성 변경 때 혼자 재빌드에서 빠진다"
+            }
+            if (!rootProject.file("k8s/base/$pod/deployment.yaml").exists()) {
+                failures += "k8s/base/$pod/deployment.yaml 이 없다 — 이미지는 나오는데 배포될 곳이 없다"
+            }
+        }
+
+        if (failures.isNotEmpty()) {
+            throw GradleException(
+                failures.joinToString(
+                    prefix = "파드 토폴로지 위반 (ADR-0093):\n  ",
+                    separator = "\n  ",
+                    postfix = "\n\n분류 기준은 docs/adr/ADR-0093-service-topology-regrouping.md §1 이다.",
+                ),
+            )
+        }
+    }
+}
+
+subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyPodTopology) } } }
+
+/**
  * 구조 게이트 묶음. pre-push 훅과 CI 는 **이 태스크 하나만** 부른다 —
  * 개별 이름을 부르면 게이트를 새로 만들 때 호출부에 추가하는 걸 잊고,
  * `check` 에만 달린 채 아무 데서도 안 도는 상태가 된다 (2026-08-26 실제로 그랬다).
@@ -600,5 +674,11 @@ subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifySe
 val verifyArchitecture by tasks.registering {
     group = "verification"
     description = "레이어·배선·쿼터·검색 인덱스 계약 게이트를 한 번에"
-    dependsOn(verifyLayerDependencies, verifyFlywayWiring, verifyExternalApiQuota, verifySearchIndexContract)
+    dependsOn(
+        verifyLayerDependencies,
+        verifyFlywayWiring,
+        verifyExternalApiQuota,
+        verifySearchIndexContract,
+        verifyPodTopology,
+    )
 }

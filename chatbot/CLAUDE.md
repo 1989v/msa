@@ -8,13 +8,13 @@
 | Gradle path | 역할 |
 |---|---|
 | `:chatbot:domain` | Pure Kotlin 도메인 — `Conversation`, `Message`, `AccessDecision` |
-| `:chatbot:app` | Spring Boot 앱 (port 8086) — REST + WebSocket + Slack 이벤트 |
+| `:chatbot:feature` | 비-bootable 라이브러리. `sideapp:app`(port 8095) 에 폴드 (ADR-0093) — REST + WebSocket + Slack 이벤트. 전용 datasource(chatbot_db)는 `ChatbotDataSourceConfig` 가 배선 |
 
 ## Commands
 
 ```bash
 ./gradlew :chatbot:domain:test
-./gradlew :chatbot:app:build
+./gradlew :sideapp:app:build
 ```
 
 ## 구조 상태 (ADR-0083)
