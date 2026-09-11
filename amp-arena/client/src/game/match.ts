@@ -1,5 +1,5 @@
 // 매치 런타임: 고정 60틱 시뮬 + 매 프레임 렌더. 입력원(로컬/네트워크)은 MatchSource 가 감싼다.
-import { DT, MAPS, type Input, type Player, type World, type WorldEvent, type RankEntry, type RosterEntry, type MoveId, type PState, type AccessoryId } from '@amp/shared';
+import { DT, MAPS, PICKUP_RANGE, type Input, type Player, type World, type WorldEvent, type RankEntry, type RosterEntry, type MoveId, type PState, type AccessoryId } from '@amp/shared';
 import { Renderer } from './renderer.ts';
 import { Hud } from './hud.ts';
 import { InputController } from './input.ts';
@@ -186,6 +186,12 @@ export class Match {
       if (left !== this.lastCountdown && left > 0 && left <= 3) { this.lastCountdown = left; audio.play('tick'); }
     } else if (this.lastCountdown !== -2 && world.phase === 'play') { this.lastCountdown = -2; audio.play('go'); }
     const plates = players.map((rp) => { const s = this.renderer.project(rp.x, rp.y + 1.9, rp.z); return { id: rp.id, x: s.x, y: s.y, visible: s.visible }; });
+    if (meView) {
+      const me = world.players[src.myId];
+      let near = false;
+      if (me && me.holding < 0) for (const it of world.items) { if (it.kind !== 'heart' && it.heldBy < 0 && !it.airborne && Math.abs(it.y - me.pos.y) <= 1.5 && Math.hypot(it.x - me.pos.x, it.z - me.pos.z) < PICKUP_RANGE) { near = true; break; } }
+      this.hud.setPrompt(near ? (this.input.hasTouch ? '줍기 버튼으로 줍는다' : 'F 줍기') : me && me.holding >= 0 ? (this.input.hasTouch ? '공격 버튼으로 던진다' : 'Z 던지기 · F 내려놓기') : null);
+    }
     this.hud.update({
       me: world.players[src.myId], players: world.players.filter((p): p is Player => !!p), myId: src.myId,
       phase: world.phase, phaseT: world.phaseT, timeLeft: world.timeLeft, score: world.score, teams: world.teams, plates, rtt: src.rtt,
@@ -222,7 +228,10 @@ export class Match {
         audio.play('ko');
         if (ev.v === src.myId) this.shake = 1;
         if (ev.cause === 'fall') this.hud.pushFeed(`<b>${name(ev.v)}</b> <span class="muted">낙사${ev.a >= 0 ? ` (<b>${name(ev.a)}</b>)` : ''}</span>`);
-        else this.hud.pushFeed(`<b>${name(ev.a)}</b> <span class="muted">이</span> <b style="color:var(--ink)">${name(ev.v)}</b> <span class="muted">을 KO</span>`);
+        else {
+          const friendly = src.world.teams && src.world.players[ev.a]?.team === v?.team;
+          this.hud.pushFeed(`<b>${name(ev.a)}</b> <span class="muted">이</span> <b style="color:var(--ink)">${name(ev.v)}</b> <span class="muted">을 KO${friendly ? ' (아군 · KO −1)' : ''}</span>`);
+        }
         if (ev.v === src.myId) this.hud.showCenter('KO', ev.a >= 0 ? `${this.nameOf.get(ev.a) ?? '?'} 에게 당했다` : '낙사', true);
         else if (ev.a === src.myId) { const s = this.renderer.project(v?.pos.x ?? 0, (v?.pos.y ?? 0) + 1.6, v?.pos.z ?? 0); this.hud.showDamage(s.x, s.y, 'KO!', 'ko'); }
         break;
@@ -236,6 +245,7 @@ export class Match {
       case 'crateBreak': this.renderer.spawnDust(ev.x, ev.y - 0.3, ev.z); this.renderer.spawnHit(ev.x, ev.y, ev.z, 'hit'); audio.play('hit'); break;
       case 'heal': if (ev.id === src.myId) { audio.play('heal'); const me = src.world.players[src.myId]; if (me) { const s = this.renderer.project(me.pos.x, me.pos.y + 1.8, me.pos.z); this.hud.showDamage(s.x, s.y, `+${ev.amount}`, 'guard'); } } break;
       case 'pickup': if (ev.id === src.myId) audio.play('pickup'); break;
+      case 'pad': this.renderer.kickPad(ev.x, ev.z); this.renderer.spawnDust(ev.x, ev.y + 0.1, ev.z); if (ev.id === src.myId) audio.play('jump'); break;
       case 'end': audio.play('end'); break;
       case 'grab': break;
     }

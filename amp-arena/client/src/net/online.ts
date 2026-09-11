@@ -1,7 +1,7 @@
 // 온라인 세션 컨트롤러: 릴레이 방(대기실) · 매치 시작 · 방장 역할(권위 워커 + 루프백) · 방장 승계.
 // 화면(app.ts)은 이 클래스의 state 를 그리고 명령만 내린다.
 import {
-  ACCESSORY_IDS, STYLE_IDS, MAX_PLAYERS, MAPS, MODES, TICK_RATE, sanitizeName, occupiedSeats, hostOf,
+  STYLES, STYLE_IDS, MAX_PLAYERS, MAPS, MODES, TICK_RATE, sanitizeName, occupiedSeats, hostOf,
   type MatchConfig, type RosterEntry, type Pick, type RoomSettings, type GuestMsg, type HostMsg, type ArenaMsg, type AccessoryId, type StyleId, type MapId, type ModeId,
 } from '@amp/shared';
 import { RelayClient, type RelayIn } from './relay.ts';
@@ -350,7 +350,9 @@ export class Online {
         if (occ.includes(i)) continue;
         const team = teams ? (count[0] <= count[1] ? 0 : 1) : 0;
         count[team]++;
-        roster.push({ id: i, name: BOT_NAMES[i], team, acc: ACCESSORY_IDS[(i + n) % ACCESSORY_IDS.length], style: STYLE_IDS[(i * 2 + n++) % STYLE_IDS.length], bot: true });
+        const style = STYLE_IDS[(i * 2 + n) % STYLE_IDS.length];
+        const accs = STYLES[style].accessories;
+        roster.push({ id: i, name: BOT_NAMES[i], team, acc: accs[(i + n++) % accs.length], style, bot: true });
       }
     }
     roster.sort((a, b) => a.id - b.id);

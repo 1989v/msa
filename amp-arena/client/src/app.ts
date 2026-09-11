@@ -1,5 +1,5 @@
 // 화면 흐름: 타이틀 → (연습 매치) | (온라인 → 대기실 → 매치 → 결과 → 대기실(코드 방) / 온라인(빠른 대전))
-import { ACCESSORIES, ACCESSORY_IDS, STYLES, STYLE_IDS, MODES, MODE_IDS, MAPS, MAP_IDS, type AccessoryId, type StyleId, type MapId, type ModeId, type RoomSettings } from '@amp/shared';
+import { ACCESSORIES, STYLES, STYLE_IDS, MODES, MODE_IDS, MAPS, MAP_IDS, allowedAccessory, type AccessoryId, type StyleId, type MapId, type ModeId, type RoomSettings } from '@amp/shared';
 import { Online, lobbyCloseSec } from './net/online.ts';
 import type { GuestSource } from './net/guestsource.ts';
 import { LocalSource } from './local/localsource.ts';
@@ -52,6 +52,7 @@ export class App {
     if (!(this.acc in ACCESSORIES)) this.acc = 'none';
     this.style = (localStorage.getItem('amp.style') as StyleId) ?? 'fighter';
     if (!(this.style in STYLES)) this.style = 'fighter';
+    this.acc = allowedAccessory(this.style, this.acc);
     this.showTitle();
   }
 
@@ -108,7 +109,7 @@ export class App {
       <span class="chip version">P1 · 2026-09</span>
       <div class="hints"><span class="row" style="gap:6px">${icon('keyboard', 20, 'var(--muted)')}키보드</span><span class="row" style="gap:6px">${icon('gamepad', 20, 'var(--muted)')}게임패드</span><span>우클릭 드래그 카메라</span></div>`);
     this.renderAccPicker(el.querySelector('.accs') as HTMLElement, el.querySelector('.acc-desc') as HTMLElement, (a) => { this.acc = a; localStorage.setItem('amp.acc', a); });
-    this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (st) => { this.style = st; localStorage.setItem('amp.style', st); });
+    this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (st, acc) => { this.style = st; localStorage.setItem('amp.style', st); localStorage.setItem('amp.acc', acc); });
     const nickEl = el.querySelector('.nick') as HTMLInputElement;
     const readNick = () => { const n = nickEl.value.trim(); if (n.length < 2) { this.toast('닉네임은 2자 이상'); nickEl.focus(); return null; } this.nick = n; localStorage.setItem('amp.nick', n); return n; };
     (el.querySelector('.practice') as HTMLButtonElement).onclick = () => {
@@ -124,20 +125,33 @@ export class App {
     nickEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') (el.querySelector('.practice') as HTMLButtonElement).click(); });
   }
 
+  /** 악세서리 선택지는 직업이 정한다 — 직업을 바꾸면 못 드는 악세서리는 맨손으로 돌아간다 */
   private renderAccPicker(container: HTMLElement, desc: HTMLElement, onPick: (a: AccessoryId) => void, enabled = true): void {
     const draw = () => {
-      container.innerHTML = ACCESSORY_IDS.map((a) => `<button class="acc ${a === this.acc ? 'on' : ''}" data-acc="${a}" ${enabled ? '' : 'disabled'}>${icon(ACC_ICON[a], 28, a === this.acc ? '#1a1f3a' : 'var(--amp)', 2.2)}<span>${ACCESSORIES[a].name}</span></button>`).join('');
+      const ids = STYLES[this.style].accessories;
+      container.innerHTML = ids.map((a) => `<button class="acc ${a === this.acc ? 'on' : ''}" data-acc="${a}" ${enabled ? '' : 'disabled'}>${icon(ACC_ICON[a], 28, a === this.acc ? '#1a1f3a' : 'var(--amp)', 2.2)}<span>${ACCESSORIES[a].name}</span></button>`).join('');
       desc.textContent = ACC_DESC[this.acc];
       container.querySelectorAll<HTMLButtonElement>('.acc').forEach((b) => { b.onclick = () => { this.acc = b.dataset.acc as AccessoryId; onPick(this.acc); draw(); }; });
     };
+    this.accDraw = draw;
     draw();
   }
 
-  private renderStylePicker(container: HTMLElement, desc: HTMLElement, onPick: (s: StyleId) => void, enabled = true): void {
+  private accDraw: (() => void) | null = null;
+
+  private renderStylePicker(container: HTMLElement, desc: HTMLElement, onPick: (s: StyleId, acc: AccessoryId) => void, enabled = true): void {
     const draw = () => {
       container.innerHTML = STYLE_IDS.map((st) => `<button class="acc stylebtn ${st === this.style ? 'on' : ''}" data-style="${st}" ${enabled ? '' : 'disabled'}><span class="swatch" style="background:${STYLES[st].look.hairColor}"></span><span>${STYLES[st].name}</span></button>`).join('');
-      desc.textContent = STYLES[this.style].desc;
-      container.querySelectorAll<HTMLButtonElement>('.stylebtn').forEach((b) => { b.onclick = () => { this.style = b.dataset.style as StyleId; onPick(this.style); draw(); }; });
+      desc.textContent = `${STYLES[this.style].desc} 악세서리: ${STYLES[this.style].accessories.filter((a) => a !== 'none').map((a) => ACCESSORIES[a].name).join('·')}`;
+      container.querySelectorAll<HTMLButtonElement>('.stylebtn').forEach((b) => {
+        b.onclick = () => {
+          this.style = b.dataset.style as StyleId;
+          this.acc = allowedAccessory(this.style, this.acc);
+          onPick(this.style, this.acc);
+          draw();
+          this.accDraw?.();
+        };
+      });
     };
     draw();
   }
@@ -338,7 +352,7 @@ export class App {
         </div>
       </div>`);
     this.renderAccPicker(el.querySelector('.accs') as HTMLElement, el.querySelector('.acc-desc') as HTMLElement, (a) => { localStorage.setItem('amp.acc', a); online.setPick({ acc: a }); }, !st.started);
-    this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (s) => { localStorage.setItem('amp.style', s); online.setPick({ style: s }); }, !st.started);
+    this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (s, acc) => { localStorage.setItem('amp.style', s); localStorage.setItem('amp.acc', acc); online.setPick({ style: s, acc }); }, !st.started);
     (el.querySelector('.leave') as HTMLButtonElement).onclick = () => { online.leave(); this.showLobby(); };
     (el.querySelector('.team') as HTMLButtonElement).onclick = () => { this.team = this.team === 0 ? 1 : 0; online.setPick({ team: this.team }); };
     const start = el.querySelector('.start') as HTMLButtonElement | null;

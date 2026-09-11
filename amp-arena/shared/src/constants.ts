@@ -5,8 +5,8 @@ export const SNAPSHOT_EVERY = 6; // 10Hz — 릴레이 상한(40 msg/s) 안에�
 
 export const GRAVITY = 18;
 export const MAX_FALL_SPEED = 30;
-export const WALK_SPEED = 4.5;
-export const RUN_SPEED = 7.5;
+export const WALK_SPEED = 4.0;   // 2026-09-11 2차 소감: 달리기가 너무 빨라 걷기·달리기 모두 낮춤
+export const RUN_SPEED = 6.2;
 export const JUMP_SPEED_BASE = 6.5; // + 0.5 × 점프 스탯
 export const AIR_CONTROL = 0.35;
 export const GROUND_FRICTION = 0.62; // 입력 없을 때 틱마다 곱한다 (약 8틱이면 정지)

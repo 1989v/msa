@@ -138,8 +138,8 @@ function platformTexture(): THREE.CanvasTexture {
   }, 256);
 }
 
-// 카메라: 캐릭터 뒤 6.6m · 위 8.2m (피치 약 49°) — 내 주변을 내려다보는 시야. 시선은 앞 1.4m 지점.
-const CAM_DIST = 6.6, CAM_HEIGHT = 8.2, CAM_LOOK_AHEAD = 1.2;
+// 카메라: 캐릭터 뒤 5.6m · 위 7m (피치 약 49°, 2차 소감으로 조금 더 가깝게) — 내 주변을 내려다보는 시야. 시선은 앞 1.4m 지점.
+const CAM_DIST = 5.6, CAM_HEIGHT = 7.0, CAM_LOOK_AHEAD = 1.1;
 
 export class Renderer {
   readonly scene = new THREE.Scene();
@@ -150,6 +150,7 @@ export class Renderer {
   private itemMeshes = new Map<number, { obj: THREE.Object3D; kind: string; light?: THREE.Mesh }>();
   private texHeart: THREE.CanvasTexture | null = null;
   private crateMat: THREE.MeshLambertMaterial | null = null;
+  private pads: { mesh: THREE.Mesh; baseY: number; kick: number }[] = [];
   private effects: Effect[] = [];
   private mapGroup = new THREE.Group();
   private texStar = starTexture('#ffffff', '#ff6a2a');
@@ -198,6 +199,7 @@ export class Renderer {
   };
 
   buildMap(map: MapDef): void {
+    this.pads = [];
     this.map = map;
     this.mapGroup.clear();
     const g = this.mapGroup;
@@ -302,6 +304,22 @@ export class Renderer {
           g.add(cap);
         }
       }
+    }
+    // 점프대: 노란 원판 + 테두리 링 (시뮬의 pads 와 같은 자리·반지름)
+    for (const pad of map.pads) {
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(pad.r, pad.r * 1.08, 0.14, 24), new THREE.MeshLambertMaterial({ color: 0xffb020 }));
+      disc.position.set(pad.x, pad.y + 0.07, pad.z);
+      disc.castShadow = true; disc.receiveShadow = true;
+      g.add(disc);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(pad.r * 0.72, 0.05, 8, 28), new THREE.MeshBasicMaterial({ color: 0x1a1f3a }));
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.set(pad.x, pad.y + 0.15, pad.z);
+      g.add(ring);
+      const arrow = new THREE.Mesh(new THREE.ConeGeometry(pad.r * 0.28, pad.r * 0.5, 3), new THREE.MeshBasicMaterial({ color: 0x1a1f3a }));
+      arrow.rotation.x = -Math.PI / 2; arrow.rotation.z = Math.PI;
+      arrow.position.set(pad.x, pad.y + 0.15, pad.z);
+      g.add(arrow);
+      this.pads.push({ mesh: disc, baseY: pad.y + 0.07, kick: 0 });
     }
     const platTex = theme === 'rooftop' ? concreteTexture() : platformTexture();
     for (const b of map.boxes) {
@@ -432,7 +450,17 @@ export class Renderer {
     this.effects.push({ obj: s, life: 0, max: 0.35, from: 0.5, to: 1.6, rise: 0.2 });
   }
 
+  /** 점프대가 눌렸다 — 원판이 잠깐 내려앉았다 올라온다 */
+  kickPad(x: number, z: number): void {
+    for (const p of this.pads) if (Math.hypot(p.mesh.position.x - x, p.mesh.position.z - z) < 0.5) p.kick = 1;
+  }
+
   updateEffects(dt: number): void {
+    for (const p of this.pads) {
+      if (p.kick <= 0) continue;
+      p.kick = Math.max(0, p.kick - dt * 4);
+      p.mesh.position.y = p.baseY - 0.1 * Math.sin(p.kick * Math.PI);
+    }
     const keep: Effect[] = [];
     for (const e of this.effects) {
       e.life += dt;

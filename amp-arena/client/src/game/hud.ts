@@ -32,7 +32,7 @@ export class Hud {
   private hints: HTMLElement;
   private plates = new Map<number, { el: HTMLElement; n: HTMLElement; hp: HTMLElement }>();
   private platesLayer: HTMLElement; private dmgLayer: HTMLElement;
-  private combo: HTMLElement; private center: HTMLElement; private netinfo: HTMLElement;
+  private combo: HTMLElement; private center: HTMLElement; private netinfo: HTMLElement; private prompt: HTMLElement; private promptText: string | null = null;
   private rosterInfo: RosterEntry[] = [];
   private lastSec = -1; private frame = 0; private comboHideAt = 0;
   private overlay: HTMLElement | null = null;
@@ -52,6 +52,7 @@ export class Hud {
       <div class="timer"><div class="box"><div class="row"><span class="display" style="font-size:22px;color:var(--red)">레드</span><span class="display num s sl">0</span></div><span class="display num t">3:00</span><div class="row"><span class="display num s sr">0</span><span class="display" style="font-size:22px;color:var(--blue)">블루</span></div></div><span class="chip mode"></span></div>
       <div class="roster"><div class="r" style="font-size:10px;color:var(--dim);height:16px"><i style="visibility:hidden"></i><span>이름</span><span>HP</span><span>KO</span></div></div>
       <div class="netinfo"></div>
+      <div class="prompt"></div>
       <div class="skill"><div class="ring"><svg viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="27" style="fill:var(--bg2);stroke:var(--line2);stroke-width:4px"></circle><circle class="cd" cx="32" cy="32" r="27" style="fill:none;stroke:var(--green);stroke-width:4px;stroke-dasharray:170 170;transform:rotate(-90deg);transform-origin:32px 32px"></circle></svg><div class="icon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"></div><span class="key">V</span></div><div class="col" style="gap:4px"><b class="skill-name">-</b><span class="chip green skill-state">준비됨</span><span class="muted ammo" style="font-size:11px"></span></div></div>
       <div class="feed"></div>
       <div class="hints">${[['Z', '공격'], ['X', '점프'], ['C', '가드'], ['V', '기술'], ['Shift', '대시'], ['Q E', '카메라']].map(([k, l]) => `<span class="row" style="gap:5px"><span class="key">${k}</span><span>${l}</span></span>`).join('')}</div>
@@ -64,7 +65,7 @@ export class Hud {
     this.timerT = q('.timer .t'); this.scoreL = q('.sl'); this.scoreR = q('.sr'); this.modeChip = q('.mode');
     this.roster = q('.roster'); this.skill = q('.skill'); this.skillRing = this.el.querySelector('.cd') as SVGCircleElement;
     this.skillState = q('.skill-state'); this.skillName = q('.skill-name'); this.ammoLine = q('.ammo');
-    this.feed = q('.feed'); this.hints = q('.hints'); this.combo = q('.combo'); this.center = q('.center'); this.netinfo = q('.netinfo');
+    this.feed = q('.feed'); this.hints = q('.hints'); this.combo = q('.combo'); this.center = q('.center'); this.netinfo = q('.netinfo'); this.prompt = q('.prompt');
     this.feed.style.display = 'none';
     setTimeout(() => this.hints.classList.add('off'), 30000);
   }
@@ -184,6 +185,14 @@ export class Hud {
       this.hideCenter();
     }
     if (this.comboHideAt && performance.now() > this.comboHideAt) { this.combo.classList.remove('on'); this.comboHideAt = 0; }
+  }
+
+  /** 발밑 안내 (줍기·던지기). 같은 글이면 DOM 을 건드리지 않는다 */
+  setPrompt(text: string | null): void {
+    if (text === this.promptText) return;
+    this.promptText = text;
+    this.prompt.textContent = text ?? '';
+    this.prompt.style.display = text ? '' : 'none';
   }
 
   pushFeed(html: string): void {

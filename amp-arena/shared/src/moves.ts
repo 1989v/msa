@@ -1,5 +1,6 @@
 // 프레임 데이터 — 기획서 §6.2·§7 의 표. 60틱 기준.
 // 2026-09-11 플레이 소감 반영: 근접 리치 +0.25m, 다음 타는 후딜이 끝나야 나간다(연타 속도 ↓).
+// 2026-09-11 2차 소감(공격이 너무 빠르다): 발동 ×1.2 · 후딜 ×1.25 · 경직 ×1.4 (잡기·던지기 제외). 기획서 §6.2 표와 같다.
 export type HitEffect = 'hitstun' | 'launch';
 
 export interface MoveDef {
@@ -32,54 +33,54 @@ const def = (m: Partial<MoveDef> & Pick<MoveDef, 'id' | 'startup' | 'active' | '
 
 export const MOVES = {
   // 파이터 (맨손 기본)
-  jab: def({ id: 'jab', startup: 5, active: 3, recovery: 10, damage: 5, reach: 1.35, radius: 0.55, effect: 'hitstun', hitstun: 14, push: 1.5 }),
-  straight: def({ id: 'straight', startup: 6, active: 3, recovery: 12, damage: 6, reach: 1.45, radius: 0.55, effect: 'hitstun', hitstun: 16, push: 2 }),
-  roundhouse: def({ id: 'roundhouse', startup: 10, active: 5, recovery: 18, damage: 10, reach: 1.55, radius: 0.7, effect: 'launch', launchH: 6, launchV: 7 }),
-  tackle: def({ id: 'tackle', startup: 8, active: 8, recovery: 16, damage: 8, reach: 1.2, radius: 0.6, effect: 'launch', launchH: 5, launchV: 5, moveSpeed: 6, moveUntil: 'active' }),
-  divekick: def({ id: 'divekick', startup: 6, active: 0, recovery: 12, damage: 9, reach: 1.0, radius: 0.6, effect: 'launch', launchH: 4, launchV: 5, activeUntilLand: true }),
-  uppercut: def({ id: 'uppercut', startup: 14, active: 4, recovery: 22, damage: 14, reach: 1.25, radius: 0.7, effect: 'launch', launchH: 2, launchV: 9 }),
+  jab: def({ id: 'jab', startup: 6, active: 3, recovery: 13, damage: 5, reach: 1.35, radius: 0.55, effect: 'hitstun', hitstun: 20, push: 1.5 }),
+  straight: def({ id: 'straight', startup: 7, active: 3, recovery: 15, damage: 6, reach: 1.45, radius: 0.55, effect: 'hitstun', hitstun: 22, push: 2 }),
+  roundhouse: def({ id: 'roundhouse', startup: 12, active: 5, recovery: 23, damage: 10, reach: 1.55, radius: 0.7, effect: 'launch', launchH: 6, launchV: 7 }),
+  tackle: def({ id: 'tackle', startup: 10, active: 8, recovery: 20, damage: 8, reach: 1.2, radius: 0.6, effect: 'launch', launchH: 5, launchV: 5, moveSpeed: 6, moveUntil: 'active' }),
+  divekick: def({ id: 'divekick', startup: 7, active: 0, recovery: 15, damage: 9, reach: 1.0, radius: 0.6, effect: 'launch', launchH: 4, launchV: 5, activeUntilLand: true }),
+  uppercut: def({ id: 'uppercut', startup: 17, active: 4, recovery: 28, damage: 14, reach: 1.25, radius: 0.7, effect: 'launch', launchH: 2, launchV: 9 }),
   grab: def({ id: 'grab', startup: 4, active: 2, recovery: 12, damage: 0, reach: 0, radius: 0, effect: 'hitstun' }),
   // 그래플러
-  hook: def({ id: 'hook', startup: 7, active: 3, recovery: 14, damage: 8, reach: 1.35, radius: 0.6, effect: 'hitstun', hitstun: 18, push: 2 }),
-  bodySlam: def({ id: 'bodySlam', startup: 12, active: 5, recovery: 20, damage: 12, reach: 1.4, radius: 0.75, effect: 'launch', launchH: 5, launchV: 8, superArmor: true }),
+  hook: def({ id: 'hook', startup: 8, active: 3, recovery: 18, damage: 8, reach: 1.35, radius: 0.6, effect: 'hitstun', hitstun: 25, push: 2 }),
+  bodySlam: def({ id: 'bodySlam', startup: 14, active: 5, recovery: 25, damage: 12, reach: 1.4, radius: 0.75, effect: 'launch', launchH: 5, launchV: 8, superArmor: true }),
   dashGrab: def({ id: 'dashGrab', startup: 4, active: 22, recovery: 14, damage: 0, reach: 0, radius: 0, effect: 'hitstun', moveSpeed: 9, moveUntil: 'active' }),
   // 스피드스타
-  quick1: def({ id: 'quick1', startup: 3, active: 2, recovery: 7, damage: 3, reach: 1.3, radius: 0.5, effect: 'hitstun', hitstun: 12, push: 1 }),
-  quick2: def({ id: 'quick2', startup: 3, active: 2, recovery: 7, damage: 3, reach: 1.3, radius: 0.5, effect: 'hitstun', hitstun: 12, push: 1 }),
-  quick3: def({ id: 'quick3', startup: 4, active: 2, recovery: 8, damage: 4, reach: 1.35, radius: 0.5, effect: 'hitstun', hitstun: 14, push: 1.5 }),
-  quick4: def({ id: 'quick4', startup: 7, active: 4, recovery: 16, damage: 8, reach: 1.5, radius: 0.65, effect: 'launch', launchH: 6, launchV: 6 }),
-  spinKick: def({ id: 'spinKick', startup: 8, active: 18, recovery: 14, damage: 4, reach: 0.6, radius: 1.3, effect: 'hitstun', hitstun: 10, push: 2, arcDeg: 360, multiHit: 6 }),
+  quick1: def({ id: 'quick1', startup: 4, active: 2, recovery: 9, damage: 3, reach: 1.3, radius: 0.5, effect: 'hitstun', hitstun: 17, push: 1 }),
+  quick2: def({ id: 'quick2', startup: 4, active: 2, recovery: 9, damage: 3, reach: 1.3, radius: 0.5, effect: 'hitstun', hitstun: 17, push: 1 }),
+  quick3: def({ id: 'quick3', startup: 5, active: 2, recovery: 10, damage: 4, reach: 1.35, radius: 0.5, effect: 'hitstun', hitstun: 20, push: 1.5 }),
+  quick4: def({ id: 'quick4', startup: 8, active: 4, recovery: 20, damage: 8, reach: 1.5, radius: 0.65, effect: 'launch', launchH: 6, launchV: 6 }),
+  spinKick: def({ id: 'spinKick', startup: 10, active: 18, recovery: 18, damage: 4, reach: 0.6, radius: 1.3, effect: 'hitstun', hitstun: 14, push: 2, arcDeg: 360, multiHit: 6 }),
   // 헤비
-  heavy1: def({ id: 'heavy1', startup: 11, active: 4, recovery: 18, damage: 12, reach: 1.45, radius: 0.7, effect: 'hitstun', hitstun: 20, push: 3, superArmor: true }),
-  heavy2: def({ id: 'heavy2', startup: 14, active: 5, recovery: 24, damage: 16, reach: 1.5, radius: 0.8, effect: 'launch', launchH: 7, launchV: 7, superArmor: true }),
-  quake: def({ id: 'quake', startup: 20, active: 4, recovery: 26, damage: 18, reach: 0.5, radius: 2.6, effect: 'launch', launchH: 5, launchV: 8, arcDeg: 360, pierce: true, superArmor: true }),
+  heavy1: def({ id: 'heavy1', startup: 13, active: 4, recovery: 23, damage: 12, reach: 1.45, radius: 0.7, effect: 'hitstun', hitstun: 28, push: 3, superArmor: true }),
+  heavy2: def({ id: 'heavy2', startup: 17, active: 5, recovery: 30, damage: 16, reach: 1.5, radius: 0.8, effect: 'launch', launchH: 7, launchV: 7, superArmor: true }),
+  quake: def({ id: 'quake', startup: 24, active: 4, recovery: 33, damage: 18, reach: 0.5, radius: 2.6, effect: 'launch', launchH: 5, launchV: 8, arcDeg: 360, pierce: true, superArmor: true }),
   // 마셜 (발차기)
-  kick1: def({ id: 'kick1', startup: 6, active: 3, recovery: 11, damage: 6, reach: 1.6, radius: 0.55, effect: 'hitstun', hitstun: 14, push: 2 }),
-  kick2: def({ id: 'kick2', startup: 7, active: 3, recovery: 12, damage: 7, reach: 1.7, radius: 0.55, effect: 'hitstun', hitstun: 16, push: 2.5 }),
-  kick3: def({ id: 'kick3', startup: 11, active: 5, recovery: 20, damage: 12, reach: 1.8, radius: 0.7, effect: 'launch', launchH: 7, launchV: 6 }),
-  flyingKick: def({ id: 'flyingKick', startup: 6, active: 16, recovery: 14, damage: 12, reach: 1.3, radius: 0.7, effect: 'launch', launchH: 6, launchV: 6, moveSpeed: 9, moveUntil: 'active' }),
+  kick1: def({ id: 'kick1', startup: 7, active: 3, recovery: 14, damage: 6, reach: 1.6, radius: 0.55, effect: 'hitstun', hitstun: 20, push: 2 }),
+  kick2: def({ id: 'kick2', startup: 8, active: 3, recovery: 15, damage: 7, reach: 1.7, radius: 0.55, effect: 'hitstun', hitstun: 22, push: 2.5 }),
+  kick3: def({ id: 'kick3', startup: 13, active: 5, recovery: 25, damage: 12, reach: 1.8, radius: 0.7, effect: 'launch', launchH: 7, launchV: 6 }),
+  flyingKick: def({ id: 'flyingKick', startup: 7, active: 16, recovery: 18, damage: 12, reach: 1.3, radius: 0.7, effect: 'launch', launchH: 6, launchV: 6, moveSpeed: 9, moveUntil: 'active' }),
   // 브레이커 (대검)
-  gs1: def({ id: 'gs1', startup: 9, active: 4, recovery: 14, damage: 12, reach: 1.85, radius: 0.9, effect: 'hitstun', hitstun: 20, push: 3, arcDeg: 150 }),
-  gs2: def({ id: 'gs2', startup: 12, active: 5, recovery: 22, damage: 16, reach: 1.85, radius: 0.9, effect: 'launch', launchH: 6, launchV: 7, arcDeg: 150 }),
-  gsSlam: def({ id: 'gsSlam', startup: 22, active: 4, recovery: 26, damage: 20, reach: 0.6, radius: 2.5, effect: 'launch', launchH: 5, launchV: 8, arcDeg: 360, pierce: true }),
+  gs1: def({ id: 'gs1', startup: 11, active: 4, recovery: 18, damage: 12, reach: 1.85, radius: 0.9, effect: 'hitstun', hitstun: 28, push: 3, arcDeg: 150 }),
+  gs2: def({ id: 'gs2', startup: 14, active: 5, recovery: 28, damage: 16, reach: 1.85, radius: 0.9, effect: 'launch', launchH: 6, launchV: 7, arcDeg: 150 }),
+  gsSlam: def({ id: 'gsSlam', startup: 26, active: 4, recovery: 33, damage: 20, reach: 0.6, radius: 2.5, effect: 'launch', launchH: 5, launchV: 8, arcDeg: 360, pierce: true }),
   // 스파이크 (장창)
-  sp1: def({ id: 'sp1', startup: 6, active: 3, recovery: 10, damage: 6, reach: 2.15, radius: 0.45, effect: 'hitstun', hitstun: 14, push: 2, arcDeg: 30 }),
-  sp2: def({ id: 'sp2', startup: 6, active: 3, recovery: 10, damage: 6, reach: 2.15, radius: 0.45, effect: 'hitstun', hitstun: 16, push: 2, arcDeg: 30 }),
-  sp3: def({ id: 'sp3', startup: 9, active: 4, recovery: 16, damage: 12, reach: 2.25, radius: 0.5, effect: 'launch', launchH: 6, launchV: 6, arcDeg: 30 }),
-  spCharge: def({ id: 'spCharge', startup: 6, active: 30, recovery: 18, damage: 14, reach: 1.8, radius: 0.6, effect: 'launch', launchH: 6, launchV: 6, arcDeg: 40, moveSpeed: 12, moveUntil: 'active', pierce: true }),
+  sp1: def({ id: 'sp1', startup: 7, active: 3, recovery: 13, damage: 6, reach: 2.15, radius: 0.45, effect: 'hitstun', hitstun: 20, push: 2, arcDeg: 30 }),
+  sp2: def({ id: 'sp2', startup: 7, active: 3, recovery: 13, damage: 6, reach: 2.15, radius: 0.45, effect: 'hitstun', hitstun: 22, push: 2, arcDeg: 30 }),
+  sp3: def({ id: 'sp3', startup: 11, active: 4, recovery: 20, damage: 12, reach: 2.25, radius: 0.5, effect: 'launch', launchH: 6, launchV: 6, arcDeg: 30 }),
+  spCharge: def({ id: 'spCharge', startup: 7, active: 30, recovery: 23, damage: 14, reach: 1.8, radius: 0.6, effect: 'launch', launchH: 6, launchV: 6, arcDeg: 40, moveSpeed: 12, moveUntil: 'active', pierce: true }),
   // 월 (방패)
-  shieldBash: def({ id: 'shieldBash', startup: 7, active: 3, recovery: 12, damage: 8, reach: 1.25, radius: 0.6, effect: 'hitstun', hitstun: 16, push: 3 }),
-  shieldCharge: def({ id: 'shieldCharge', startup: 6, active: 38, recovery: 16, damage: 12, reach: 1.1, radius: 0.6, effect: 'launch', launchH: 6, launchV: 5, moveSpeed: 8, moveUntil: 'active' }),
+  shieldBash: def({ id: 'shieldBash', startup: 8, active: 3, recovery: 15, damage: 8, reach: 1.25, radius: 0.6, effect: 'hitstun', hitstun: 22, push: 3 }),
+  shieldCharge: def({ id: 'shieldCharge', startup: 7, active: 38, recovery: 20, damage: 12, reach: 1.1, radius: 0.6, effect: 'launch', launchH: 6, launchV: 5, moveSpeed: 8, moveUntil: 'active' }),
   // 부스터 (로켓 글러브)
-  rk1: def({ id: 'rk1', startup: 5, active: 3, recovery: 10, damage: 6, reach: 1.75, radius: 0.55, effect: 'hitstun', hitstun: 14, push: 1.5 }),
-  rk2: def({ id: 'rk2', startup: 6, active: 3, recovery: 12, damage: 6, reach: 1.85, radius: 0.55, effect: 'hitstun', hitstun: 16, push: 2 }),
-  rk3: def({ id: 'rk3', startup: 10, active: 5, recovery: 18, damage: 12, reach: 1.95, radius: 0.7, effect: 'launch', launchH: 6, launchV: 7 }),
-  rocketPunch: def({ id: 'rocketPunch', startup: 8, active: 1, recovery: 14, damage: 16, reach: 0, radius: 0, effect: 'launch', launchH: 6, launchV: 6 }),
+  rk1: def({ id: 'rk1', startup: 6, active: 3, recovery: 13, damage: 6, reach: 1.75, radius: 0.55, effect: 'hitstun', hitstun: 20, push: 1.5 }),
+  rk2: def({ id: 'rk2', startup: 7, active: 3, recovery: 15, damage: 6, reach: 1.85, radius: 0.55, effect: 'hitstun', hitstun: 22, push: 2 }),
+  rk3: def({ id: 'rk3', startup: 12, active: 5, recovery: 23, damage: 12, reach: 1.95, radius: 0.7, effect: 'launch', launchH: 6, launchV: 7 }),
+  rocketPunch: def({ id: 'rocketPunch', startup: 10, active: 1, recovery: 18, damage: 16, reach: 0, radius: 0, effect: 'launch', launchH: 6, launchV: 6 }),
   // 아이템 던지기 (판정 없음 — 아이템이 한다)
   itemThrow: def({ id: 'itemThrow', startup: 6, active: 0, recovery: 12, damage: 0, reach: 0, radius: 0, effect: 'hitstun' }),
   // 더블탭 (쌍권총) — 실제 판정은 투사체
-  gunShot: def({ id: 'gunShot', startup: 3, active: 1, recovery: 8, damage: 4, reach: 0, radius: 0, effect: 'hitstun', hitstun: 8, push: 1 }),
-  gunRoll: def({ id: 'gunRoll', startup: 4, active: 20, recovery: 10, damage: 4, reach: 0, radius: 0, effect: 'hitstun', hitstun: 8, push: 1, moveSpeed: -9, moveUntil: 'active' }),
+  gunShot: def({ id: 'gunShot', startup: 4, active: 1, recovery: 10, damage: 4, reach: 0, radius: 0, effect: 'hitstun', hitstun: 11, push: 1 }),
+  gunRoll: def({ id: 'gunRoll', startup: 5, active: 20, recovery: 13, damage: 4, reach: 0, radius: 0, effect: 'hitstun', hitstun: 11, push: 1, moveSpeed: -9, moveUntil: 'active' }),
 } as const;
 
 export type MoveId = keyof typeof MOVES;

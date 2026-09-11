@@ -3,6 +3,8 @@ export interface Box { minX: number; maxX: number; minY: number; maxY: number; m
 export interface Cylinder { x: number; z: number; r: number; h: number }
 export interface Spawn { x: number; z: number; y: number; team: number } // team 0 = 레드/무팀, 1 = 블루
 export interface CrateSpot { x: number; z: number; y: number }
+/** 점프대: 밟으면 위로 튕긴다 (power = 상승 m/s). 2026-09-11 2차 소감 「번지 가능한 맵」 */
+export interface Pad { x: number; z: number; y: number; r: number; power: number }
 
 export type MapId = 'colosseum' | 'skydock' | 'rooftop' | 'icelake';
 export type MapTheme = 'colosseum' | 'sky' | 'rooftop' | 'ice';
@@ -20,6 +22,7 @@ export interface MapDef {
   cylinders: Cylinder[];  // 기둥·바위
   spawns: Spawn[];
   crates: CrateSpot[];
+  pads: Pad[];            // 점프대
   fallY: number;
 }
 
@@ -52,11 +55,12 @@ export const COLOSSEUM: MapDef = {
     const a = ((i * 60 + 30) * Math.PI) / 180;
     return { x: 9 * Math.cos(a), z: 9 * Math.sin(a), y: 0 };
   }),
+  pads: [{ x: 5, z: 12, y: 0, r: 0.9, power: 11 }, { x: -5, z: -12, y: 0, r: 0.9, power: 11 }],
   fallY: -8,
 };
 
 export const SKYDOCK: MapDef = {
-  id: 'skydock', name: '스카이독', theme: 'sky', desc: '발판 5 · 낙사 · 던지기로 링아웃',
+  id: 'skydock', name: '스카이독', theme: 'sky', desc: '발판 5 · 점프대 3 · 낙사 · 던지기로 링아웃',
   groundRadius: 0, wallRadius: 0, wallHeight: 0, ice: false,
   boxes: [
     box(0, 0, 24, 16, -3, 0),      // 중앙
@@ -71,12 +75,13 @@ export const SKYDOCK: MapDef = {
     { x: -17, z: 0, y: 2, team: 0 }, { x: 17, z: 0, y: 2, team: 1 }, { x: 0, z: 19, y: 0, team: 0 }, { x: 0, z: -19, y: 0, team: 1 },
   ],
   crates: [{ x: -21.5, z: 2.5, y: 2 }, { x: 21.5, z: 2.5, y: 2 }, { x: -21.5, z: -2.5, y: 2 }, { x: 21.5, z: -2.5, y: 2 }],
+  pads: [{ x: -10.5, z: 0, y: 0, r: 0.9, power: 12 }, { x: 10.5, z: 0, y: 0, r: 0.9, power: 12 }, { x: 0, z: 0, y: 0, r: 1.0, power: 13 }],
   fallY: -8,
 };
 
 /** 옥상: 30×20 지붕, 기계실(+2m)과 계단 턱(+1m), 실외기 3개. 난간 없음 — 가장자리가 곧 낙사. */
 export const ROOFTOP: MapDef = {
-  id: 'rooftop', name: '옥상', theme: 'rooftop', desc: '30×20 · 난간 없음 · 실외기 엄폐',
+  id: 'rooftop', name: '옥상', theme: 'rooftop', desc: '30×20 · 난간 없음 · 점프대로 기계실 지붕',
   groundRadius: 0, wallRadius: 0, wallHeight: 0, ice: false,
   boxes: [
     box(0, 0, 30, 20, -3, 0),       // 지붕
@@ -92,6 +97,7 @@ export const ROOFTOP: MapDef = {
     { x: 13, z: -8, y: 0, team: 1 }, { x: 13, z: 8, y: 0, team: 1 }, { x: 5, z: 8.5, y: 0, team: 1 }, { x: 12, z: 0, y: 0, team: 1 },
   ],
   crates: [{ x: -13.5, z: 0, y: 0 }, { x: 13.5, z: -8.5, y: 0 }, { x: 3, z: 8.5, y: 0 }, { x: -3, z: -8.5, y: 0 }],
+  pads: [{ x: -4.5, z: 5, y: 0, r: 0.9, power: 11 }, { x: 11, z: 0, y: 0, r: 0.9, power: 11 }],
   fallY: -8,
 };
 
@@ -106,6 +112,7 @@ export const ICELAKE: MapDef = {
   ],
   spawns: ringSpawns(12, 8),
   crates: [0, 1, 2, 3].map((i) => { const a = ((i * 90 + 45) * Math.PI) / 180; return { x: 6 * Math.cos(a), z: 6 * Math.sin(a), y: 0 }; }),
+  pads: [],
   fallY: -8,
 };
 

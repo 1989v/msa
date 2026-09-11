@@ -186,3 +186,7 @@ input, select { font-family: var(--font); }
   .accs .acc { padding: 6px 4px; font-size: 11px; }
   .accs .acc svg { width: 20px; height: 20px; }
 }
+
+/* 발밑 안내 (줍기·던지기) — 조작 힌트 바로 위 */
+.hud .prompt { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; background: rgba(12, 17, 36, 0.78); border: 2px solid var(--amp); color: var(--amp); font-weight: 800; font-size: 14px; pointer-events: none; }
+.match.touch .hud .prompt { bottom: 150px; }

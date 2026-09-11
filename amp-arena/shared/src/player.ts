@@ -5,7 +5,7 @@ import { type Input, BTN_ATTACK, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN
 import { MOVES, type MoveId, totalTicks, chainTick, isActiveAt, PROJECTILE_MOVES, GRAB_MOVES } from './moves.ts';
 import { ACCESSORIES, type AccessoryId } from './accessories.ts';
 import { STYLES, type StyleId, statsForStyle } from './styles.ts';
-import type { MapDef } from './maps.ts';
+import type { MapDef, Box, Pad } from './maps.ts';
 
 export type PState =
   | 'idle' | 'walk' | 'run' | 'jump' | 'fall' | 'land'
@@ -104,11 +104,16 @@ export interface SimContext {
   tryPickup(p: Player): boolean;
   dropHeld(p: Player): void;
   throwHeld(p: Player): void;
+  /** 바닥에 놓인 상자 — 옆면은 막히고 위에 올라설 수 있다 */
+  solidCrates(): Box[];
+  onPad(p: Player, pad: Pad): void;
 }
 
 const ACTIONABLE = new Set<PState>(['idle', 'walk', 'run', 'land']);
 const GRABBABLE = new Set<PState>(['idle', 'walk', 'run', 'guard', 'hitstun', 'land', 'stun']);
 const NO_HIT = new Set<PState>(['down', 'getup', 'roll', 'dead']);
+/** 점프대가 튕겨 올리는 상태 — 서 있거나 뛰거나 착지 중일 때 */
+const PAD_STATES = new Set<PState>(['idle', 'walk', 'run', 'land', 'jump', 'fall', 'guard']);
 
 export const isActionable = (p: Player) => ACTIONABLE.has(p.state);
 export const isGrabbable = (p: Player) => GRABBABLE.has(p.state) && p.grabbedBy < 0;
@@ -154,7 +159,7 @@ function findGrabTarget(ctx: SimContext, p: Player): Player | null {
   // 중심 거리 1.0m(스타일별) 이내 = 몸이 거의 닿은 상태 (반지름 0.4 씩)
   let best: Player | null = null, bestD = STYLES[p.style].grabRange;
   for (const q of ctx.players) {
-    if (!q || q === p || !q.alive || !isGrabbable(q) || q.invuln > 0 || (ctx.teams && q.team === p.team)) continue;
+    if (!q || q === p || !q.alive || !isGrabbable(q) || q.invuln > 0) continue; // 팀전에서도 아군을 잡을 수 있다 (2차 소감: 팀끼리도 때려져야)
     if (Math.abs(q.pos.y - p.pos.y) > 0.6) continue;
     const dx = q.pos.x - p.pos.x, dz = q.pos.z - p.pos.z;
     const d = Math.hypot(dx, dz);
@@ -473,8 +478,9 @@ export function integrate(ctx: SimContext, p: Player): void {
   p.pos.y += p.vel.y * C.DT;
   p.pos.z += p.vel.z * C.DT;
 
-  const wallHit = resolveHorizontal(map, p);
-  const support = supportHeight(map, p, prevY);
+  const crates = ctx.solidCrates();
+  const wallHit = resolveHorizontal(map, p, crates);
+  const support = supportHeight(map, p, prevY, crates);
   const wasGrounded = p.grounded;
   if (p.vel.y <= 0 && p.pos.y <= support + 1e-4) {
     p.pos.y = support;
@@ -482,6 +488,18 @@ export function integrate(ctx: SimContext, p: Player): void {
     p.grounded = true;
   } else {
     p.grounded = false;
+  }
+  // 점프대: 밟으면 위로 튕긴다 (누워 있거나 잡혀 있으면 안 튄다)
+  if (p.grounded && PAD_STATES.has(p.state)) {
+    for (const pad of map.pads) {
+      if (Math.abs(p.pos.y - pad.y) > 0.25 || Math.hypot(p.pos.x - pad.x, p.pos.z - pad.z) > pad.r) continue;
+      p.vel.y = pad.power;
+      p.grounded = false;
+      p.airDashes = Math.max(p.airDashes, 1);
+      setState(p, 'jump');
+      ctx.onPad(p, pad);
+      break;
+    }
   }
   if (p.grounded && !wasGrounded) onLand(p);
   if (p.grounded && (p.state === 'jump' || p.state === 'fall')) onLand(p);
@@ -504,12 +522,12 @@ function onLand(p: Player): void {
 }
 
 /** 발밑에서 가장 높은 지지면. 지금 높이보다 STEP_UP 이상 높은 면은 무시한다. */
-export function supportHeight(map: MapDef, p: Player, prevY: number): number {
+export function supportHeight(map: MapDef, p: Player, prevY: number, extra: Box[] = []): number {
   let best = -Infinity;
   const r = C.PLAYER_RADIUS * 0.5;
   const limit = prevY + C.STEP_UP;
   if (map.groundRadius > 0 && Math.hypot(p.pos.x, p.pos.z) <= map.groundRadius + r && 0 <= limit) best = 0;
-  for (const b of map.boxes) {
+  for (const b of extra.length ? [...map.boxes, ...extra] : map.boxes) {
     if (p.pos.x < b.minX - r || p.pos.x > b.maxX + r || p.pos.z < b.minZ - r || p.pos.z > b.maxZ + r) continue;
     if (b.maxY <= limit && b.maxY > best) best = b.maxY;
   }
@@ -520,7 +538,7 @@ export function supportHeight(map: MapDef, p: Player, prevY: number): number {
 }
 
 /** 옆면 충돌: 원형 벽·기둥·발판 옆면. 밀어낸 뒤 true 를 돌려준다. */
-export function resolveHorizontal(map: MapDef, p: Player): boolean {
+export function resolveHorizontal(map: MapDef, p: Player, extra: Box[] = []): boolean {
   let hit = false;
   const R = C.PLAYER_RADIUS;
   if (map.wallRadius > 0 && p.pos.y < map.wallHeight) {
@@ -546,7 +564,7 @@ export function resolveHorizontal(map: MapDef, p: Player): boolean {
       if (vn < 0) { p.vel.x -= vn * nx; p.vel.z -= vn * nz; hit = true; }
     }
   }
-  for (const b of map.boxes) {
+  for (const b of extra.length ? [...map.boxes, ...extra] : map.boxes) {
     // 발이 윗면보다 STEP_UP 이상 아래에 있고 머리가 아랫면보다 위일 때만 옆면이 막는다
     if (p.pos.y >= b.maxY - C.STEP_UP || p.pos.y + C.PLAYER_HEIGHT <= b.minY) continue;
     const px = clamp(p.pos.x, b.minX, b.maxX), pz = clamp(p.pos.z, b.minZ, b.maxZ);

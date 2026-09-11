@@ -4,13 +4,18 @@ import * as C from '../src/constants.ts';
 import { BTN_ATTACK, BTN_GUARD, BTN_SPECIAL, BTN_JUMP, type Input } from '../src/input.ts';
 import { MOVES } from '../src/moves.ts';
 import type { AccessoryId } from '../src/accessories.ts';
+import { STYLES, STYLE_IDS, type StyleId } from '../src/styles.ts';
 
 const inp = (mx = 0, mz = 0, btn = 0): Input => ({ seq: 0, mx, mz, btn });
 
+/** 그 악세서리를 들 수 있는 직업 — 직업별 분리 규칙(styles.ts accessories) 때문에 맨손으로 바뀌지 않게 */
+const styleFor = (acc: AccessoryId): StyleId => STYLE_IDS.find((st) => STYLES[st].accessories.includes(acc)) ?? 'fighter';
+
 function setup(accA: AccessoryId, accB: AccessoryId = 'none', dist = 1.2) {
   const w = new World({ mapId: 'colosseum', modeId: 'ffa_dm', seconds: 180, seed: 5 });
-  const a = w.addPlayer(0, 'A', 0, accA, false);
-  const b = w.addPlayer(1, 'B', 1, accB, false);
+  w.items = []; // 맵 상자는 치운다 (이제 상자가 막힌다)
+  const a = w.addPlayer(0, 'A', 0, accA, false, styleFor(accA));
+  const b = w.addPlayer(1, 'B', 1, accB, false, styleFor(accB));
   for (let i = 0; i < C.COUNTDOWN_TICKS; i++) w.step([]);
   a.pos.x = 0; a.pos.z = 0; a.yaw = 0; b.pos.x = 0; b.pos.z = dist; b.yaw = Math.PI;
   return { w, a, b };

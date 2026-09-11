@@ -68,6 +68,7 @@ describe('이동·점프', () => {
   });
   it('단상(1.5m)은 걸어서 오르지 못하고 점프로 오른다', () => {
     const { w } = world();
+    w.items = []; // 길목의 상자(9m 링)는 이제 막히므로 치운다
     place(w, 0, 0, 8.5, 0); place(w, 1, -10, -10);
     run(w, 0, inp(0, 1), 60);
     expect(w.players[0]!.pos.y).toBe(0);
@@ -79,7 +80,7 @@ describe('이동·점프', () => {
 });
 
 describe('공격·콤보', () => {
-  it('잽은 발동 5 뒤 판정, 상대 경직 14틱, 데미지 5', () => {
+  it('잽은 발동 6 뒤 판정, 상대 경직 20틱, 데미지 5', () => {
     const { w, a, b } = world();
     place(w, 0, 0, 0, 0); place(w, 1, 0, 1.2, Math.PI);
     const ev = run(w, 0, inp(0, 0, BTN_ATTACK), MOVES.jab.startup + 1);
@@ -87,7 +88,7 @@ describe('공격·콤보', () => {
     expect(hit && hit.t === 'hit' && hit.dmg).toBe(5);
     expect(b.hp).toBe(a.maxHp - 5);
     expect(b.state).toBe('hitstun');
-    run(w, 0, inp(), 14);
+    run(w, 0, inp(), MOVES.jab.hitstun);
     expect(b.state).toBe('idle');
   });
   it('연타하면 잽 → 스트레이트 → 돌려차기로 이어지고 3타는 띄운다', () => {
@@ -173,9 +174,10 @@ describe('공격·콤보', () => {
     expect(a.cooldown).toBeGreaterThan(0);
   });
   it('프레임 데이터 표와 총 틱이 일치한다', () => {
-    expect(totalTicks(MOVES.jab)).toBe(5 + 3 + 10);
-    expect(chainTick(MOVES.jab)).toBe(5 + 3 + 10);
-    expect(totalTicks(MOVES.roundhouse)).toBe(10 + 5 + 18);
+    // 2026-09-11 2차: 발동 ×1.2 · 후딜 ×1.25 (기획서 §6.2 표)
+    expect(totalTicks(MOVES.jab)).toBe(6 + 3 + 13);
+    expect(chainTick(MOVES.jab)).toBe(6 + 3 + 13);
+    expect(totalTicks(MOVES.roundhouse)).toBe(12 + 5 + 23);
   });
 });
 

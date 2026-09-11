@@ -3,11 +3,12 @@ import * as C from './constants.ts';
 import { makeRng, yawFromDir, dirX, dirZ } from './math.ts';
 import { type Input, EMPTY_INPUT } from './input.ts';
 import { MOVES, type MoveId, type MoveDef, isActiveAt, PROJECTILE_MOVES, CRATE_HIT, BOMB_HIT } from './moves.ts';
-import { MAPS, type MapDef, type MapId, type Spawn } from './maps.ts';
+import { MAPS, type MapDef, type MapId, type Spawn, type Box, type Pad } from './maps.ts';
 import { MODES, type ModeDef, type ModeId } from './modes.ts';
 import { type Player, type SimContext, stepPlayer, createPlayer, canBeHit, isSolid, applyDamage, setState, respawn, facingX, facingZ, supportHeight } from './player.ts';
 import { ACCESSORIES, type AccessoryId } from './accessories.ts';
 import type { StyleId } from './styles.ts';
+import { allowedAccessory } from './styles.ts';
 import {
   type Item, type ItemKind, createItem, CRATE_RESPAWN_TICKS, CRATE_BREAK_RADIUS, BOMB_FUSE_TICKS, BOMB_RADIUS, HEART_HEAL,
   PICKUP_RANGE, THROW_ITEM_VEL_H, THROW_ITEM_VEL_V, DROP_HEART, DROP_BOMB,
@@ -31,6 +32,7 @@ export type WorldEvent =
   | { t: 'explode'; x: number; y: number; z: number }
   | { t: 'crateBreak'; x: number; y: number; z: number; drop: 'heart' | 'bomb' | null }
   | { t: 'heal'; id: number; amount: number }
+  | { t: 'pad'; id: number; x: number; y: number; z: number }
   | { t: 'end'; ranking: RankEntry[] };
 
 export interface RankEntry { id: number; name: string; team: number; kos: number; deaths: number; dmg: number; alive: boolean; hp: number; rank: number; win: boolean }
@@ -71,7 +73,7 @@ export class World implements SimContext {
   }
 
   addPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean, style: StyleId = 'fighter'): Player {
-    const p = createPlayer(id, name, this.teams ? team : 0, acc, bot, this.mode.lives, style);
+    const p = createPlayer(id, name, this.teams ? team : 0, allowedAccessory(style, acc), bot, this.mode.lives, style);
     const s = this.spawnFor(p);
     p.pos.x = s.x; p.pos.y = s.y; p.pos.z = s.z;
     p.yaw = yawFromDir(-s.x, -s.z);
@@ -178,11 +180,25 @@ export class World implements SimContext {
     this.events.push({ t: 'shot', id: p.id, x: ox, y: oy, z: oz, move });
   }
 
+  /** 바닥에 놓인 상자는 1m 상자로 막힌다 (들려 있거나 날아가는 중이면 아니다) */
+  solidCrates(): Box[] {
+    const out: Box[] = [];
+    for (const it of this.items) {
+      if (it.kind !== 'crate' || it.heldBy >= 0 || it.airborne) continue;
+      out.push({ minX: it.x - 0.5, maxX: it.x + 0.5, minY: it.y, maxY: it.y + 1, minZ: it.z - 0.5, maxZ: it.z + 0.5 });
+    }
+    return out;
+  }
+
+  onPad(p: Player, pad: Pad): void {
+    this.events.push({ t: 'pad', id: p.id, x: pad.x, y: pad.y, z: pad.z });
+  }
+
   tryPickup(p: Player): boolean {
     let best: Item | null = null, bestD = PICKUP_RANGE;
     for (const it of this.items) {
       if (it.kind === 'heart' || it.heldBy >= 0 || it.airborne) continue;
-      if (Math.abs(it.y - p.pos.y) > 1.0) continue;
+      if (Math.abs(it.y - p.pos.y) > 1.5) continue;
       const d = Math.hypot(it.x - p.pos.x, it.z - p.pos.z);
       if (d < bestD) { bestD = d; best = it; }
     }
@@ -235,7 +251,6 @@ export class World implements SimContext {
       const arcCos = m.arcDeg >= 360 ? -2 : Math.cos((m.arcDeg / 2) * (Math.PI / 180));
       for (const v of this.players) {
         if (!v || v === a || !canBeHit(v) || (a.hitMask & (1 << v.id)) !== 0) continue;
-        if (this.teams && v.team === a.team) continue;
         if ((v.state === 'launched' || v.state === 'thrown') && v.juggled) continue;
         const dx = v.pos.x - cx, dy = v.pos.y + C.BODY_HEIGHT - cy, dz = v.pos.z - cz;
         if (dx * dx + dy * dy + dz * dz > rr) continue;
@@ -249,8 +264,13 @@ export class World implements SimContext {
       }
       for (const it of this.items) {
         if (it.kind !== 'crate' || it.heldBy >= 0) continue;
-        const dx = it.x - cx, dy = it.y + 0.5 - cy, dz = it.z - cz;
-        if (dx * dx + dy * dy + dz * dz > (m.radius + 0.6) ** 2) continue;
+        // 상자는 몸에서 판정 중심까지 이어지는 선분에 걸리면 맞는다 — 붙어 서서 때려도 들어간다 (2차 소감: 판정이 좁다)
+        if (Math.abs(it.y + 0.5 - cy) > 1.2) continue;
+        const sx = a.pos.x, sz = a.pos.z, ex = cx, ez = cz;
+        const lx = ex - sx, lz = ez - sz, ll = lx * lx + lz * lz;
+        const tt = ll > 1e-6 ? Math.max(0, Math.min(1, ((it.x - sx) * lx + (it.z - sz) * lz) / ll)) : 0;
+        const qx = sx + lx * tt, qz = sz + lz * tt;
+        if (Math.hypot(it.x - qx, it.z - qz) > m.radius + 0.75) continue;
         this.hitCrate(it, a, m.damage);
       }
     }
@@ -266,7 +286,6 @@ export class World implements SimContext {
       if (!dead) {
         for (const v of this.players) {
           if (!v || v.id === pr.owner || !canBeHit(v) || (pr.hitMask & (1 << v.id)) !== 0) continue;
-          if (this.teams && owner && v.team === owner.team) continue;
           const dx = v.pos.x - pr.x, dy = v.pos.y + C.BODY_HEIGHT - pr.y, dz = v.pos.z - pr.z;
           if (dx * dx + dy * dy + dz * dz > (pr.radius + C.BODY_RADIUS) ** 2) continue;
           pr.hitMask |= 1 << v.id;
@@ -313,7 +332,6 @@ export class World implements SimContext {
           for (const v of this.players) {
             if (!v || v.id === it.thrownBy || !canBeHit(v)) continue;
             const th = this.players[it.thrownBy];
-            if (this.teams && th && v.team === th.team) continue;
             if (Math.hypot(v.pos.x - it.x, v.pos.z - it.z) < 0.75 && it.y > v.pos.y - 0.2 && it.y < v.pos.y + 1.9) {
               if (it.kind === 'crate') { this.breakCrate(it, th ?? null, true); remove = true; }
               else { it.vx = 0; it.vz = 0; it.vy = Math.min(it.vy, 0); }
@@ -380,7 +398,6 @@ export class World implements SimContext {
     if (thrown) {
       for (const v of this.players) {
         if (!v || !canBeHit(v) || (by && v.id === by.id)) continue;
-        if (this.teams && by && v.team === by.team) continue;
         if (Math.hypot(v.pos.x - it.x, v.pos.z - it.z) < CRATE_BREAK_RADIUS && Math.abs(v.pos.y + C.BODY_HEIGHT - it.y) < 1.6) this.hitPlayer(by, v, CRATE_HIT, it.x, it.z);
       }
     }
@@ -488,7 +505,9 @@ export class World implements SimContext {
     let credit = a;
     if (!credit && v.lastHitBy >= 0 && this.tick - v.lastHitTick <= C.KO_CREDIT_TICKS) credit = this.players[v.lastHitBy] ?? null;
     if (credit && credit.id === v.id) credit = null;
-    if (credit) {
+    if (credit && this.teams && credit.team === v.team) {
+      credit.kos--; // 아군 KO: 팀 점수 없이 KO 만 깎인다 (팀전에서도 아군이 맞는다, 2차 소감)
+    } else if (credit) {
       credit.kos++;
       if (this.teams) this.score[credit.team]++;
     } else if (cause === 'fall') {

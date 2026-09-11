@@ -20,9 +20,9 @@ try {
   await page.sleep(600);
   // ① 카메라 오프셋
   const c0 = JSON.parse(await page.eval(CAM));
-  // 높이는 항상 8.2. 수평 거리는 6.6 이지만 벽 근처(스폰 지점)에서는 벽 반지름 클램프로 줄어든다 — 4.0 아래로는 안 간다
-  checks.lookDown = c0.dy > 7.8 && c0.dy < 8.6 && c0.dxz > 4.0 && c0.dxz < 6.9;
-  console.log(`camera at rest: ${JSON.stringify(c0)}  (기대: dy≈8.2, dxz≈6.6 또는 벽 클램프로 그 이하)`);
+  // 높이는 항상 7.0 (2차 소감으로 8.2 → 7.0). 수평 거리는 5.6 이지만 벽 근처(스폰 지점)에서는 벽 반지름 클램프로 줄어든다 — 3.4 아래로는 안 간다
+  checks.lookDown = c0.dy > 6.6 && c0.dy < 7.4 && c0.dxz > 3.4 && c0.dxz < 5.9;
+  console.log(`camera at rest: ${JSON.stringify(c0)}  (기대: dy≈7.0, dxz≈5.6 또는 벽 클램프로 그 이하)`);
   // ② 캐릭터가 왼쪽·오른쪽·아래로 움직여 방향을 바꿔도 카메라 요는 그대로
   const yaws = [c0.yaw];
   for (const [code, key] of [['ArrowLeft', 'ArrowLeft'], ['ArrowDown', 'ArrowDown'], ['ArrowRight', 'ArrowRight']]) {
