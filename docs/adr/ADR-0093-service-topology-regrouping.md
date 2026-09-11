@@ -101,9 +101,9 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 
 | 단계 | 내용 | 테이블 이전 | 상태 |
 |---|---|---|---|
-| **①** | product·place 를 `:app` → `:feature` 폴드 · `engagement` · `sideapp` · `account`(member·wishlist) | **0** | engagement·account·product·sideapp 완료(2026-09-11), place 남음 |
+| **①** | product·place 를 `:app` → `:feature` 폴드 · `engagement` · `sideapp` · `account`(member·wishlist) | **0** | 완료(2026-09-11) |
 | **②** | `deal` → commerce · `ranking` → content | 3 + 5 | 완료(2026-09-11) |
-| **③** | `blog` → content | 7 | 진행 중(2026-09-11) |
+| **③** | `blog` → content · `code-dictionary` → `atlas` 개명 | 7 | 완료(2026-09-11) |
 | **④** | ~~`resume` → account~~ **기각** (2026-09-11, 아래 §7) | 0 | 기각 |
 
 총 **26테이블**. `blog_post_view`(하루 1표 조회 원장)와 `resume_access_log`(열람 기록)는 행이
@@ -112,6 +112,13 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 ①은 데이터 이전이 없어 ADR-0058 의 재분리 체크리스트만으로 끝난다. ②~④는 각각 마이그레이션이
 붙으므로 **한 단계가 배포되어 안정된 뒤 다음 단계로 간다.** 커밋한 마이그레이션은 되돌릴 수
 없으므로(체크섬 불일치로 서비스가 죽는다) 단계마다 운영 `flyway_schema_history` 확인이 완료 조건이다.
+
+**옛 테이블은 아직 안 지운다.** `code_dictionary_db` 의 `deal_*`·`ranking_*`·`gas_station*`·
+`blog_*` 는 새 스키마로 복사(체크섬 대조)만 하고 남겨 뒀다 — 이슈가 다 가라앉은 뒤에 지운다.
+지금 지우면 롤백 경로가 사라진다.
+
+**결과: 상주 백엔드 JVM 11개** — gateway · auth · search · search-consumer · analytics ·
+commerce · account · engagement · sideapp · content · atlas. 재편 전 15에서 줄었다.
 
 ### 6) ADR-0058 의 불변식은 그대로 간다
 
@@ -233,6 +240,42 @@ blog 1(조회 원장 `REQUIRES_NEW`). 조사 자체도 한 번 틀렸다 — `@T
 로 만들었더니 빈 이름 `openApiConfig` 가 겹쳐 컨텍스트가 안 떴다
 (`ConflictingBeanDefinitionException`). 폴드 호스트에 들어가는 `@Configuration` 은
 **도메인 접두사를 붙인다.** 이번에도 잡은 것은 컨텍스트 로드 검사다.
+
+### NetworkPolicy 가 폴드를 안 따라온 것이 세 번째다 — 이번엔 셸 페치
+
+`blog` 이 content 로 옮겨 갔는데 `allow-blog-shell-fetch` 의 `from` 은
+code-dictionary → **atlas** 로만 따라갔다. blog 는 atlas 에 없다. content 가 portal-fe 의
+`index.html` 을 못 받아 최소 HTML 로 떨어졌고, 글 상세는 **200 에 메타도 정상인 채**
+자산 `link` 21개와 `script` 3개가 빠진 29,662 바이트로 나갔다(전환 전 33,913).
+SPA 가 안 붙는다. 남은 흔적은 warn 로그 한 줄이다.
+
+정책 파일 자신이 이 증상을 예고하고 있었다 — "화면은 뜨는데 SPA 가 안 붙는다,
+원인이 NetworkPolicy 라는 신호가 어디에도 없다". 예고를 적어 두는 것으로는 안 막힌다.
+
+두 가지로 막았다.
+
+- **`kgd.io/host-of: {domain}` 애너테이션 + `verifyPodTopology`** — 정책이 그 애너테이션을
+  달면, 게이트가 호스트 앱의 `scanBasePackages` 에서 그 도메인을 담은 파드를 뽑아
+  정책의 `podSelector` 가 그것을 가리키는지 본다. 실제로 났던 상태(`from: atlas`)로
+  되돌려 빨간불을 확인했다.
+- **`BlogShellHealthIndicator`** — 셸 페치 상태(OK·STALE·MISSING)를 `/actuator/health` 로
+  낸다. readiness 그룹은 `readinessState` 만 포함하므로 DOWN 이어도 파드가 트래픽에서 빠지지
+  않는다(셸이 없다고 글을 안 내보내는 것이 더 나쁘다). 어드민 대시보드가 content 를
+  DOWN 으로 표시하는 것이 목적이다.
+
+고친 뒤 같은 글을 다시 받아 **기준선과 바이트까지 같음**을 확인했다
+(`md5=7a010474666905aa66e344a3eed5f09a`, 33,913 바이트, script 5 · link 22).
+
+### 이름이 바뀌면 health 경로와 대시보드도 같이 어긋난다
+
+`/svc/content/actuator/health` 가 아예 없어 새 파드의 상태를 밖에서 물을 길이 없었고,
+어드민 시스템 대시보드는 여전히 `code-dictionary` 를 세고 있어 그 줄이 영원히 DOWN 이었다.
+대시보드는 **폴드된 도메인 이름**(product·order·member…)으로 세고 있어서 한 파드가 여러 줄로
+나뉘기도 했다 — 파드 이름 기준 열 개로 바꿨다.
+
+`verifyPodTopology` 가 상주 파드마다 ① 게이트웨이의 `/svc/<pod>/actuator/health` 라우트
+② 어드민 `SERVICES` 의 한 줄을 요구하고, 반대로 상주 파드가 아닌 이름이 목록에 있으면 막는다.
+둘 다 회귀를 주입해 빨간불을 확인했다.
 
 ### 큐에 있는 워크플로 런은 `cancel-in-progress: false` 여도 밀려난다
 

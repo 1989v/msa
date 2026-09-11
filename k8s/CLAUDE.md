@@ -108,6 +108,18 @@ k8s/argocd/install.sh                                   # Argo + 워치독 (Argo
   **K8s 프로파일 publish/consume 가 전면 차단됐다 — 무증상으로.** CronJob/Job 파드는
   `part-of=commerce-platform` 라벨이 있어야 egress 허용 대상이 된다
 
+- **파드 이름이 바뀌면 NetworkPolicy 의 라벨도 같이 옮긴다 — 세 번 당했다.** 정책은 라벨이
+  어긋나도 에러를 내지 않는다. 열려 있어야 할 경로가 조용히 막히고(`Connection refused`),
+  막혀야 할 것은 그대로 열린다. `quant-ingest→quant`·`search-batch→product` 에 이어
+  blog 가 content 로 갔는데 셸 페치 정책은 `atlas` 를 가리켜 **모든 글이 SPA 없이 200 으로**
+  나갔다. 폴드를 따라가야 하는 정책은 `kgd.io/host-of: {domain}` 을 달아 둔다 —
+  `verifyPodTopology` 가 호스트 앱의 `scanBasePackages` 와 대조해 막는다
+
+- **파드 이름이 바뀌면 이것들도 같이 바뀐다** (이름 하나가 다섯 곳이다):
+  게이트웨이 라우트 · 게이트웨이 `/svc/<pod>/actuator/health` 프록시 ·
+  `admin/frontend/src/api/system.ts` 의 `SERVICES` · NetworkPolicy 라벨 · 매니페스트 안의 URL
+  (`PRODUCT_API_BASE_URL` 류). 앞의 셋은 `verifyPodTopology` 가 요구한다
+
 - **MySQL 유저를 수동 생성할 때 인증 플러그인을 명시한다** —
   `IDENTIFIED WITH mysql_native_password BY ...`. 기본(caching_sha2)으로 만들면 앱이 Access denied.
   init 스크립트 유저는 서버 플래그 덕에 native 로 생성되지만 수동 세션은 아니다
