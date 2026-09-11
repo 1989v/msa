@@ -23,6 +23,10 @@ dependencies {
     // 셸 HTML 캐시 — deal 과 같은 이유로 Spring cache 추상화를 쓰지 않고 직접 쓴다.
     implementation(libs.caffeine)
     implementation(libs.kotlin.logging)
+    // ADR-0093 ③ — 전용 스키마(blog_db). ScopedFlywayMigrator 가 돌린다.
+    implementation("org.flywaydb:flyway-core")
+    runtimeOnly("org.flywaydb:flyway-mysql")
+    runtimeOnly(libs.mysql.connector)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)

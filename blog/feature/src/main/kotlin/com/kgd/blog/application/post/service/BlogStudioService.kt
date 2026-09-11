@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
  * 화면이 거르는 게 아니다 — 화면에서 거르면 페이지네이션이 어긋나고 언젠가 남의 글이 샌다.
  */
 @Service
-@Transactional(readOnly = true)
+@Transactional("blogTransactionManager", readOnly = true)
 class BlogStudioService(
     private val postRepository: BlogPostRepositoryPort,
     private val profileService: BlogProfileService,

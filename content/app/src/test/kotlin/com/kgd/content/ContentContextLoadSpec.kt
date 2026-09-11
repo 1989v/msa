@@ -57,15 +57,17 @@ class ContentContextLoadSpec(
     @Autowired @Qualifier("placeDataSource") private val placeDs: DataSource,
     @Autowired @Qualifier("gameDataSource") private val gameDs: DataSource,
     @Autowired @Qualifier("rankingDataSource") private val rankingDs: DataSource,
+    @Autowired @Qualifier("blogDataSource") private val blogDs: DataSource,
 ) : BehaviorSpec({
 
-    Given("content 모듈러 모놀리스 (place + game + ranking 한 JVM)") {
-        Then("세 도메인의 EMF/TM 과 전용 Flyway 가 충돌 없이 로드된다") {
+    Given("content 모듈러 모놀리스 (place + game + ranking + blog 한 JVM)") {
+        Then("네 도메인의 EMF/TM 과 전용 Flyway 가 충돌 없이 로드된다") {
             listOf(
                 "placeEntityManagerFactory", "placeTransactionManager", "placeFlyway",
                 "gameEntityManagerFactory", "gameTransactionManager", "gameFlyway",
                 "gameJpaQueryFactory",
                 "rankingEntityManagerFactory", "rankingTransactionManager", "rankingFlyway",
+                "blogEntityManagerFactory", "blogTransactionManager", "blogFlyway",
             ).forEach { ctx.containsBean(it).shouldBeTrue() }
         }
 
@@ -76,11 +78,12 @@ class ContentContextLoadSpec(
 
         // 이름이 아니라 **연결이 실제로 어디로 가는지**를 본다. 빈 존재만 세면
         // 자동 구성 back-off 로 JPA 가 죽은 상태도 통과한다.
-        Then("세 datasource 가 서로 다른 스키마를 본다") {
+        Then("네 datasource 가 서로 다른 스키마를 본다") {
             fun schemaOf(ds: DataSource) = ds.connection.use { it.catalog }
             schemaOf(placeDs) shouldBe "place_db"
             schemaOf(gameDs) shouldBe "game_db"
             schemaOf(rankingDs) shouldBe "ranking_db"
+            schemaOf(blogDs) shouldBe "blog_db"
         }
 
         Then("두 도메인의 컨트롤러가 전부 빈으로 등록된다") {
@@ -92,6 +95,8 @@ class ContentContextLoadSpec(
                 com.kgd.game.presentation.party.controller.PartyController::class.java,
                 com.kgd.place.presentation.attraction.controller.AttractionController::class.java,
                 com.kgd.ranking.presentation.controller.RankingController::class.java,
+                com.kgd.blog.presentation.controller.BlogPublicController::class.java,
+                com.kgd.blog.presentation.controller.BlogPageController::class.java,
             ).forEach { ctx.getBeanNamesForType(it).size shouldBe 1 }
         }
 
@@ -121,6 +126,7 @@ class ContentContextLoadSpec(
                         conn.createStatement().use {
                             it.execute("CREATE DATABASE IF NOT EXISTS game_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS ranking_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS blog_db")
                         }
                     }
                 }
@@ -135,10 +141,15 @@ class ContentContextLoadSpec(
             val placeUrl = c.jdbcUrl
             val gameUrl = placeUrl.replace("/place_db", "/game_db")
             val rankingUrl = placeUrl.replace("/place_db", "/ranking_db")
+            val blogUrl = placeUrl.replace("/place_db", "/blog_db")
             registry.add("spring.datasource.place.url") { placeUrl }
             registry.add("spring.datasource.place.username") { c.username }
             registry.add("spring.datasource.place.password") { c.password }
             registry.add("spring.datasource.place.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
+            registry.add("spring.datasource.blog.url") { blogUrl }
+            registry.add("spring.datasource.blog.username") { c.username }
+            registry.add("spring.datasource.blog.password") { c.password }
+            registry.add("spring.datasource.blog.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             registry.add("spring.datasource.ranking.url") { rankingUrl }
             registry.add("spring.datasource.ranking.username") { c.username }
             registry.add("spring.datasource.ranking.password") { c.password }

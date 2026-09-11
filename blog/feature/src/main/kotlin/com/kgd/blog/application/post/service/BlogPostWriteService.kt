@@ -30,7 +30,7 @@ import java.util.UUID
  * 권한 차이는 [BlogIdentity.isAdmin] 한 값으로만 표현된다.
  */
 @Service
-@Transactional
+@Transactional("blogTransactionManager")
 class BlogPostWriteService(
     private val postRepository: BlogPostRepositoryPort,
     private val categoryRepository: BlogCategoryRepositoryPort,

@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional
  * 공개 조회. 쓰기가 없으므로 전부 read-only — replica 로 라우팅된다(RoutingDataSource).
  */
 @Service
-@Transactional(readOnly = true)
+@Transactional("blogTransactionManager", readOnly = true)
 class BlogQueryService(
     private val postRepository: BlogPostRepositoryPort,
     private val categoryRepository: BlogCategoryRepositoryPort,

@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional
  * 스팸이 익명에서만 오지는 않는다.
  */
 @Service
-@Transactional
+@Transactional("blogTransactionManager")
 class BlogCommentService(
     private val commentRepository: BlogCommentRepositoryPort,
     private val postRepository: BlogPostRepositoryPort,

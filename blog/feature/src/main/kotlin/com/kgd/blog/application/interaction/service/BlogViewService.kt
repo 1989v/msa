@@ -47,7 +47,7 @@ class BlogViewService(
     }
 
     /** 보존기간 초과 원장 정리 — retention CronJob 이 부른다 (ADR-0077) */
-    @Transactional
+    @Transactional("blogTransactionManager")
     override fun execute(): Int =
         viewRepository.deleteOlderThan(LocalDate.now().minusDays(PurgeBlogViewsUseCase.RETENTION_DAYS))
 

@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
  * 배치해 서로 경합하지 않게 한다 — 데이터 모델은 둘을 독립으로 둔다.
  */
 @Service
-@Transactional
+@Transactional("blogTransactionManager")
 class BlogReactionService(
     private val postRepository: BlogPostRepositoryPort,
     private val reactionRepository: BlogReactionRepositoryPort,

@@ -18,6 +18,7 @@ data:
     CREATE DATABASE IF NOT EXISTS chatbot_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS deal_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS ranking_db         CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    CREATE DATABASE IF NOT EXISTS blog_db            CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS member_db          CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS wishlist_db        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     CREATE DATABASE IF NOT EXISTS gifticon_db        CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -37,6 +38,7 @@ data:
     chatbot_db:commerce_user:CHATBOT_PASSWORD
     deal_db:deal_user:DEAL_PASSWORD
     ranking_db:ranking_user:RANKING_PASSWORD
+    blog_db:blog_user:BLOG_PASSWORD
     member_db:member_user:MEMBER_PASSWORD
     wishlist_db:wishlist_user:WISHLIST_PASSWORD
     gifticon_db:gifticon_user:GIFTICON_PASSWORD

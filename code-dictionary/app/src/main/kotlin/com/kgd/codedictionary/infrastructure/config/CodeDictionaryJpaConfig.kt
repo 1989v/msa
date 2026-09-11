@@ -1,6 +1,9 @@
 package com.kgd.codedictionary.infrastructure.config
 
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 
 /**
@@ -20,4 +23,17 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
  */
 @Configuration
 @EnableJpaRepositories(basePackages = ["com.kgd.codedictionary", "com.kgd.blog"])
-class CodeDictionaryJpaConfig
+class CodeDictionaryJpaConfig {
+
+    /**
+     * ADR-0093 ③ **전환 한정** — blog 의 `@Transactional` 은 `blogTransactionManager` 를
+     * 한정자로 갖는다(content 에서 비-primary 라서). 여기서는 아직 호스트 스키마를 쓰므로
+     * 같은 TM 을 그 이름으로도 노출해, 두 호스트가 동시에 blog 를 서빙할 수 있게 한다.
+     * blog 가 빠지면(③-C) 이 빈도 지운다.
+     */
+    @Bean
+    fun blogTransactionManager(
+        @Qualifier("transactionManager") transactionManager: PlatformTransactionManager,
+    ): PlatformTransactionManager = transactionManager
+}
+
