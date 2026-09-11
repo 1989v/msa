@@ -664,6 +664,39 @@ val verifyPodTopology by tasks.registering {
             }
         }
 
+        // NetworkPolicy 가 폴드를 따라오는지. 정책이 `kgd.io/host-of: {domain}` 을 달면
+        // 그 정책의 podSelector 이름들이 **그 도메인을 실제로 담은 파드**여야 한다.
+        // 라벨이 안 따라간 정책은 에러 없이 무효가 되거나(열어야 할 것을 안 연다) 조용히 막는다 —
+        // blog 가 content 로 옮겨 갔는데 셸 페치 정책은 atlas 를 가리킨 채라 모든 글이
+        // SPA 없이 나갔다(로그에 warn 한 줄, 응답은 200).
+        val hostOfDomain: Map<String, String> = residentPods.mapNotNull { pod ->
+            rootProject.file("$pod/app/src/main/kotlin").takeIf(File::exists)?.let { root ->
+                root.walkTopDown().filter { it.isFile && it.name.endsWith("Application.kt") }
+                    .flatMap { Regex("\"com\\.kgd\\.(\\w+)\"").findAll(it.readText()).map { m -> m.groupValues[1] } }
+                    .map { it to pod }.toList()
+            }
+        }.flatten().toMap()
+
+        rootProject.file("k8s/base/network-policy").listFiles()
+            ?.filter { it.isFile && it.extension == "yaml" }
+            ?.sortedBy { it.name }
+            ?.forEach { policy ->
+                val text = policy.readText()
+                val domain = Regex("kgd\\.io/host-of:\\s*(\\S+)").find(text)?.groupValues?.get(1) ?: return@forEach
+                val expected = hostOfDomain[domain]
+                if (expected == null) {
+                    failures += "${policy.name}: kgd.io/host-of 가 가리키는 '$domain' 을 담은 호스트가 없다"
+                    return@forEach
+                }
+                val names = Regex("app\\.kubernetes\\.io/name:\\s*(\\S+)").findAll(text)
+                    .map { it.groupValues[1] }.toSet()
+                if (expected !in names) {
+                    failures += "${policy.name}: '$domain' 은 $expected 파드에 있는데 정책이 그것을 " +
+                        "가리키지 않는다(${names.joinToString()}). NetworkPolicy 는 라벨이 어긋나도 " +
+                        "에러를 내지 않고 조용히 무효가 된다"
+                }
+            }
+
         // 반대 방향 — 대시보드가 없는 파드를 세고 있으면 영원히 DOWN 이다.
         Regex("\\{ name: '([a-z0-9-]+)'").findAll(adminHealthList).map { it.groupValues[1] }
             .filterNot { it in residentPods }

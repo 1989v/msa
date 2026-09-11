@@ -1,4 +1,4 @@
-# ADR-0072 §6 — code-dictionary → portal-fe (블로그 셸 페치)
+# ADR-0072 §6 — blog 호스트 → portal-fe (블로그 셸 페치)
 #
 # 블로그 글 상세는 백엔드가 portal-fe 의 실제 index.html 을 받아 메타를 주입해 내보낸다.
 # 13-allow-ingress-to-frontend 는 FE Pod 의 ingress 를 ingress-nginx 로만 열어 두므로,
@@ -7,12 +7,19 @@
 #
 # 13번 파일을 고치지 않고 별도 정책으로 두는 이유: NetworkPolicy 는 합집합이라 이렇게 두면
 # **portal-fe 에만** 이 예외가 붙는다. 13번의 podSelector 에 from 을 더하면 admin-fe·
-# quant-fe·gifticon-fe 까지 code-dictionary 에 열린다.
+# quant-fe·gifticon-fe 까지 열린다.
+#
+# **from 은 blog 를 담은 파드다.** 폴드가 옮겨 가면 여기도 같이 옮겨야 하는데, 이름이
+# code-dictionary → atlas 로만 따라가고 blog 가 content 로 간 것은 놓쳐 실제로 21분 동안
+# 모든 글이 SPA 없이 나갔다. 그래서 kgd.io/host-of 로 "이 정책은 blog 의 호스트를 가리킨다"
+# 를 적어 두고, verifyPodTopology 가 호스트 앱의 scanBasePackages 와 대조한다.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: allow-blog-shell-fetch
   namespace: commerce
+  annotations:
+    kgd.io/host-of: blog
   labels:
     app.kubernetes.io/part-of: commerce-platform
     app.kubernetes.io/component: network-policy
@@ -26,6 +33,6 @@ spec:
     - from:
         - podSelector:
             matchLabels:
-              app.kubernetes.io/name: atlas
+              app.kubernetes.io/name: content
       ports:
         - { port: 80, protocol: TCP }
