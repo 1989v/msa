@@ -136,13 +136,19 @@ async function main() {
   }
   function requestDraw() { if (!scheduled) { scheduled = true; requestAnimationFrame(draw); } }
   function setView(view = 'threequarter') {
-    const vectors = { front: [0, 0.11, 1], back: [0, 0.11, -1], side: [1, 0.11, 0], threequarter: [0.58, 0.16, 1] };
+    const vectors = { front: [0, 0.11, 1], back: [0, 0.11, -1], side: [1, 0.11, 0], threequarter: [0.58, 0.16, 1], detail: [0.58, 0.10, 1] };
     if (!vectors[view]) throw new Error(`Unknown view: ${view}`);
     state.view = view;
     const vfov = THREE.MathUtils.degToRad(camera.fov);
-    const distance = Math.max(size.y / (2 * Math.tan(vfov / 2)), size.x / (2 * Math.tan(vfov / 2) * camera.aspect)) * 1.24;
-    controls.target.copy(center);
-    camera.position.copy(center).add(new THREE.Vector3(...vectors[view]).normalize().multiplyScalar(distance));
+    const detail = view === 'detail';
+    // Naru's authored face/upper torso occupies Y=1.25–1.70m. Leave a
+    // little headroom and fit shoulder width on portrait canvases too.
+    const frameHeight = detail ? 0.55 : size.y;
+    const frameWidth = detail ? 0.62 : size.x;
+    const distance = Math.max(frameHeight / (2 * Math.tan(vfov / 2)), frameWidth / (2 * Math.tan(vfov / 2) * camera.aspect)) * 1.24;
+    controls.minDistance = detail ? 0.55 : 2.2;
+    controls.target.copy(detail ? new THREE.Vector3(0, 1.475, 0.01) : center);
+    camera.position.copy(controls.target).add(new THREE.Vector3(...vectors[view]).normalize().multiplyScalar(distance));
     controls.update();
     document.querySelectorAll('[data-view]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.view === view)));
     requestDraw();

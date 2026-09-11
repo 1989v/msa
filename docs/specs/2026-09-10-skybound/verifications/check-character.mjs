@@ -2,7 +2,8 @@
 // node check-character.mjs <CDP port> <viewer URL> [artifact label]
 import { mkdir, writeFile } from 'node:fs/promises';
 
-const [port, url] = process.argv.slice(2);
+const [port, url, artifact = 't02b-3'] = process.argv.slice(2);
+if (!/^[a-z0-9-]+$/.test(artifact)) throw new Error('Invalid artifact label');
 if (!port || !url) throw new Error('Usage: node check-character.mjs <CDP port> <viewer URL>');
 const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
 const page = pages.find((entry) => entry.type === 'page');
@@ -108,7 +109,7 @@ try {
     check(`View selected ${view} ${width}`,current.view===view);
     const screenshot=await send('Page.captureScreenshot',{format:'png'});
     const label=width===390?'portrait':view;
-    await writeFile(new URL(`t02b-3-${label}.png`,import.meta.url),Buffer.from(screenshot.data,'base64'));
+    await writeFile(new URL(`${artifact}-${label}.png`,import.meta.url),Buffer.from(screenshot.data,'base64'));
     snapshots.push({label,width,height,...current});
   }
   await evaluate(`(() => {const s=document.querySelector('#lod');s.value='1';s.dispatchEvent(new Event('change',{bubbles:true}));})()`);
@@ -118,12 +119,25 @@ try {
   await settle();
   check('Rig inspection pose responds',(await state()).pose===true);
   const posed=await send('Page.captureScreenshot',{format:'png'});
-  await writeFile(new URL('t02b-3-lod1-pose.png',import.meta.url),Buffer.from(posed.data,'base64'));
+  await writeFile(new URL(`${artifact}-lod1-pose.png`,import.meta.url),Buffer.from(posed.data,'base64'));
   await evaluate(`document.querySelector('#pose').click()`);
   await settle();
   check('Rest pose can be restored',(await state()).pose===false);
+  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
+  await evaluate(`(() => {const s=document.querySelector('#lod');s.value='0';s.dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('[data-view="detail"]').click();})()`);
+  await settle();
+  const detail=await state();
+  check('Detail view selected',detail.view==='detail');
+  check('Detail shows larger model than whole body',detail.renderedBounds.bottom-detail.renderedBounds.top>snapshots.find(s=>s.label==='threequarter').renderedBounds.bottom-snapshots.find(s=>s.label==='threequarter').renderedBounds.top);
+  const closeup=await send('Page.captureScreenshot',{format:'png'});
+  await writeFile(new URL(`${artifact}-detail.png`,import.meta.url),Buffer.from(closeup.data,'base64'));
+  snapshots.push({label:'detail',...detail});
+  await evaluate(`document.querySelector('[data-view="front"]').click()`);
+  await settle();
+  const reset=await state(), b=reset.renderedBounds;
+  check('Full framing restored after detail',reset.view==='front' && b.top>=0 && b.bottom<=b.canvasHeight);
   check('No browser errors',errors.length===0);
   const report={url,checks,errors,snapshots};
-  await writeFile(new URL('t02b-3-browser.json',import.meta.url),JSON.stringify(report,null,2)+'\n');
+  await writeFile(new URL(`${artifact}-browser.json`,import.meta.url),JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify({passed:checks.length,failed:0,stats:initial.stats.map(({parts,...rest})=>rest),errors},null,2));
 } finally {socket.close();}

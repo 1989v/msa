@@ -34,6 +34,9 @@ python3 -m http.server 8768 --bind 127.0.0.1 --directory docs/specs/2026-09-10-s
 LOD 선택, `rig-inspection` 중간 포즈, `idle` 재생과 자동 회전을 제공한다.
 기본은 정지 상태이며 재생/자동 회전은 명시적인 버튼 조작 후에만 시작한다.
 DPR은 2로 제한한다. 입력/리사이즈/모션 변화가 있을 때만 렌더링한다.
+`얼굴·상체 확대`는 Y=1.25–1.70m 부근을 사선으로 가까이 보여준다.
+확대 보기에서는 카메라 최소 거리를 0.55m로 낮추며, 전신 방향 버튼이나
+초기화를 선택하면 기존 전신 구도와 최소 거리 2.2m로 돌아간다.
 
 ## 검증 / 저장 인터페이스
 
@@ -44,7 +47,7 @@ DPR은 2로 제한한다. 입력/리사이즈/모션 변화가 있을 때만 렌
 - `glbBase64[0|1]`, `atlasBase64`: data URI 접두사가 없는 Base64
 - `lod`, `view`, `pose`, `animated`, `rotating`, `frame`
 - `modelBounds`, `renderedBounds`: 월드 경계와 canvas 내 픽셀 경계
-- `setView('front'|'back'|'side'|'threequarter')`, `setLOD(0|1)`,
+- `setView('front'|'back'|'side'|'threequarter'|'detail')`, `setLOD(0|1)`,
   `setPose(boolean)`, `renderNow()`
 
 `ready=true`에서도 `error`가 있으면 실패다. 저장 대상은

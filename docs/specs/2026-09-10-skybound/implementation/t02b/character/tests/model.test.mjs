@@ -34,3 +34,22 @@ test('inspection clip moves elbow, knee and cape and reset restores bind pose',(
   points.forEach((i,k)=>assert.ok(c.mesh.getVertexPosition(i,new THREE.Vector3()).distanceTo(before[k])>.01,names[k]));
   mixer.stopAllAction();c.skeleton.pose();c.root.updateMatrixWorld(true);c.skeleton.update();points.forEach((i,k)=>assert.ok(c.mesh.getVertexPosition(i,new THREE.Vector3()).distanceTo(before[k])<1e-6));
 });
+
+test('both eyes remain in front of the actual facial triangles at both LODs',()=>{
+  for(const lod of [0,1]){
+    const c=createCharacter(THREE,{lod});
+    c.root.updateMatrixWorld(true);
+    c.skeleton.update();
+    for(const x of [-.028,.028]){
+      const ray=new THREE.Raycaster(new THREE.Vector3(x,1.5665,.5),new THREE.Vector3(0,0,-1));
+      const hits=ray.intersectObject(c.mesh);
+      assert.ok(hits.length>1);
+      let triangleEnd=0;
+      const frontmostPart=c.stats.parts.find(part=>{
+        triangleEnd+=part.triangles;
+        return hits[0].faceIndex<triangleEnd;
+      });
+      assert.equal(frontmostPart.name,'iris',`LOD ${lod}, eye ${x}: skin or hair must not hide the eye`);
+    }
+  }
+});

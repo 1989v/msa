@@ -56,25 +56,152 @@ export function createCharacter(THREE,{lod=0,texture=null}={}) {
   }
   // Tailored torso: tucked waist, chest and shoulder slope; skirts overlap the trouser waist.
   loft('tunic',[[0,.87,0,.145,.10],[0,.98,0,.118,.085],[0,1.08,0,.12,.078],[0,1.22,.003,.155,.095],[0,1.32,0,.18,.085],[0,1.39,0,.075,.057]],'cloth',(u,v)=>rig('spine','chest',Math.min(1,v*1.4)),32);
-  loft('split-tunic-skirt',[[0,.76,0,.185,.115],[0,.84,0,.17,.12],[0,.98,0,.122,.09]],'cloth',rig('hips'),28);
+  // Four overlapping coat tails leave the front and side vents open below the belt.
+  const tails = [
+    {start:-1.47,end:-.035,length:.237},
+    {start:.07,end:1.48,length:.279},
+    {start:1.60,end:3.16,length:.24},
+    {start:3.12,end:4.66,length:.225},
+  ];
+  tails.forEach((tail,index)=>{
+    const panel=(u,v)=>{
+      const angle=tail.start+(tail.end-tail.start)*u;
+      const fold=Math.sin(u*Math.PI*3+.45)*.009*Math.sin(v*Math.PI*.8);
+      const waist=.124,flare=.054*v+fold;
+      const hemSlope=.034*(u-.5)+.014*Math.sin(u*Math.PI);
+      return [
+        Math.sin(angle)*(waist+flare),
+        .99-v*(tail.length+hemSlope),
+        Math.cos(angle)*(.096+.026*v+fold)+(index<2?.006:0),
+      ];
+    };
+    surface('tunic-tail-'+index,12,10,panel,'cloth',rig('hips'));
+    surface('tunic-tail-hem-'+index,12,2,(u,v)=>{
+      const q=panel(u,.973+v*.027);
+      const angle=tail.start+(tail.end-tail.start)*u;
+      q[0]+=.001*Math.sin(angle);
+      q[2]+=.001*Math.cos(angle);
+      return q;
+    },'seam',rig('hips'));
+  });
   loft('belt',[[0,.975,0,.125,.094],[0,.995,0,.126,.095],[0,1.018,0,.124,.093]],'leather',rig('spine'),24);
   tube('neck',[0,1.36,0],[0,1.52,0],.051,.047,'skin',rig('neck'),20);
-  // Adult proportions: ~7.5 heads, shaped jaw and cheek planes, forward facial volume.
-  loft('face',[[0,1.465,.028,.028,.033],[0,1.485,.022,.048,.048],[0,1.515,.013,.068,.063],[0,1.554,.008,.075,.071],[0,1.592,.002,.070,.068],[0,1.637,-.003,.052,.052],[0,1.657,-.009,.007,.010]],'skin',rig('head'),32);
-  for(const s of [-1,1]){oval('ear',[s*.071,1.55,.0],[.014,.025,.012],'skin',rig('head'),12,8);
-  oval('eye-white',[s*.027,1.565,.070],[.016,.0065,.0038],'eye',rig('head'),16,8);
-  oval('iris',[s*.026,1.565,.074],[.0048,.0054,.002],'iris',rig('head'),12,8);
-  tube('brow',[s*.011,1.583,.069],[s*.044,1.586,.063],.0035,.002,'hair',rig('head'),8);
+  // The facial surface carries the anatomy; eyes and lips follow its actual depth.
+  // Head sections are smoothly interpolated instead of exposing planar ring bands.
+  const faceSections = [
+    [1.465,.023,.030,.032], [1.485,.044,.025,.047],
+    [1.515,.062,.015,.060], [1.543,.073,.005,.070],
+    [1.568,.071,.001,.073], [1.596,.069,-.001,.071],
+    [1.628,.057,-.003,.060], [1.653,.035,-.007,.037],
+    [1.662,.002,-.009,.003],
+  ];
+  const gaussian=(value,center,width)=>Math.exp(-(((value-center)/width)**2));
+  function faceSection(y){
+    let k=0;
+    while(k<faceSections.length-2&&y>faceSections[k+1][0])k++;
+    const a=faceSections[k],b=faceSections[k+1];
+    const t=Math.max(0,Math.min(1,(y-a[0])/(b[0]-a[0])));
+    return a.map((value,i)=>{
+      if(i===0)return y;
+      const prev=faceSections[Math.max(0,k-1)][i];
+      const next=faceSections[Math.min(faceSections.length-1,k+2)][i];
+      return .5*((2*value)+(-prev+b[i])*t+(2*prev-5*value+4*b[i]-next)*t*t+(-prev+3*value-3*b[i]+next)*t*t*t);
+    });
   }
-  oval('nose-bridge',[0,1.549,.071],[.010,.022,.009],'skin',rig('head'),14,10);
-  oval('nose-tip',[0,1.535,.081],[.010,.006,.009],'skin',rig('head'),14,8);
-  oval('mouth',[0,1.516,.073],[.017,.0035,.002],'lip',rig('head'),16,6);
-  // Scalp with uneven side part; independent tapered swept locks give the bob a broken edge.
-  surface('hair-cap',32,18,(u,v)=>{const a=u*Math.PI*2;const front=Math.cos(a);const bottom=front>.3?1.602:1.514;const h=v*Math.PI/2;return[Math.sin(a)*.083*Math.cos(h),bottom+(1.681-bottom)*Math.sin(h),-.009+Math.cos(a)*.081*Math.cos(h)];},'hair',rig('head'));
-  for(let k=0;k<11;k++){let a=k/11*Math.PI*2,cx=Math.sin(a)*.062,cz=-.012+Math.cos(a)*.059;
-  const front=Math.cos(a)>.45;
-  loft('hair-lock-'+k,[[cx+Math.sin(a)*.02,front?1.57:1.485,cz+.015,.002,.002],[cx+Math.sin(a)*.019,1.56,cz+.018,.020,.015],[cx,1.62,cz,.027,.021],[cx*.3,1.671,cz*.2,.006,.007]],'hair',rig('head'),12);
+  function facialDepth(x,y){
+    const cheeks=.005*gaussian(Math.abs(x),.043,.022)*gaussian(y,1.544,.018);
+    const sockets=-.008*gaussian(Math.abs(x),.028,.017)*gaussian(y,1.566,.013);
+    const brow=.003*gaussian(Math.abs(x),.026,.025)*gaussian(y,1.585,.009);
+    const bridge=.022*gaussian(x,0,.008)*gaussian(y,1.549,.026);
+    const tip=.013*gaussian(x,0,.011)*gaussian(y,1.537,.008);
+    const muzzle=.003*gaussian(x,0,.025)*gaussian(y,1.518,.012);
+    const chin=.004*gaussian(x,0,.022)*gaussian(y,1.486,.010);
+    return cheeks+sockets+brow+bridge+tip+muzzle+chin;
   }
+  function faceFront(x,y){
+    const [,width,z,depth]=faceSection(y);
+    return z+depth*Math.sqrt(Math.max(0,1-(x/width)**2))+facialDepth(x,y);
+  }
+  surface('face',44,28,(u,v)=>{
+    const y=1.465+v*.197,angle=u*Math.PI*2;
+    const [,width,z,depth]=faceSection(y),x=width*Math.sin(angle);
+    return [x,y,z+depth*Math.cos(angle)+facialDepth(x,y)*Math.max(0,Math.cos(angle))**5];
+  },'skin',rig('head'));
+  for(const side of [-1,1]){
+    oval('ear',[side*.071,1.548,-.001],[.013,.023,.011],'skin',rig('head'),12,8);
+    const eyePoint=(u,v)=>{
+      const x=side*(.012+u*.032);
+      const center=1.566+u*.001;
+      const arch=Math.sin(u*Math.PI);
+      const y=center+(v-.5)*.012*arch;
+      return [x,y,faceFront(x,y)+.001+.006*arch*Math.sin(v*Math.PI)];
+    };
+    surface('eye-white-'+side,16,6,eyePoint,'eye',rig('head'));
+    const eyeZ=faceFront(side*.028,1.5665)+.008;
+    oval('iris',[side*.028,1.5665,eyeZ],[.0045,.0048,.0012],'iris',rig('head'),12,8);
+    for(const upper of [false,true]){
+      surface('eyelid-'+side+'-'+upper,16,3,(u,v)=>{
+        const q=eyePoint(u,upper?1:0);
+        q[1]+=(upper?1:-1)*v*.003*Math.sin(u*Math.PI);
+        q[2]+=.0012*Math.sin(v*Math.PI);
+        return q;
+      },'skin',rig('head'));
+    }
+    surface('brow-'+side,16,3,(u,v)=>{
+      const x=side*(.010+.038*u);
+      const y=1.587+.004*Math.sin(u*Math.PI)-.003*u+(v-.5)*.004*(1-.6*u);
+      return [x,y,faceFront(x,y)+.0015];
+    },'hair',rig('head'));
+  }
+  for(const upper of [false,true]){
+    surface('lip-'+upper,18,4,(u,v)=>{
+      const x=(u-.5)*.033,arch=Math.sin(u*Math.PI);
+      const cupid=upper?.0015*Math.cos((u-.5)*Math.PI*4)*arch:0;
+      const y=1.516+(upper?1:-1)*v*.003*arch+cupid;
+      return [x,y,faceFront(x,y)+.001+.0025*Math.sin(v*Math.PI)*arch];
+    },'lip',rig('head'));
+  }
+  // Side-parted bob: a continuous scalp and broad, swept locks with distinct curved ends.
+  // Each lock is a flattened curved sheet with thickness, not a vertical tapered cone.
+  surface('hair-cap',28,16,(u,v)=>{
+    const angle=u*Math.PI*2,front=Math.max(0,Math.cos(angle));
+    const bottom=1.517+.088*front+.012*Math.sin(angle);
+    const latitude=v*Math.PI/2;
+    const wave=.003*Math.sin(angle*7+v*3)*(1-v);
+    return [
+      Math.sin(angle)*(.094+wave)*Math.cos(latitude)**.72+.006*v,
+      bottom+(1.681-bottom)*Math.sin(latitude),
+      -.010+Math.cos(angle)*(.095+wave)*Math.cos(latitude)**.72,
+    ];
+  },'hair',rig('head'));
+  function hairLock(name,points,width){
+    surface(name,10,14,(u,v)=>{
+      const t=v,inv=1-t;
+      const center=points[0].map((_,i)=>inv**3*points[0][i]+3*inv*inv*t*points[1][i]+3*inv*t*t*points[2][i]+t**3*points[3][i]);
+      const tangent=points[0].map((_,i)=>3*inv*inv*(points[1][i]-points[0][i])+6*inv*t*(points[2][i]-points[1][i])+3*t*t*(points[3][i]-points[2][i]));
+      const normal=new THREE.Vector3(center[0],.08,center[2]+.012).normalize();
+      const across=new THREE.Vector3(...tangent).cross(normal).normalize();
+      const round=u*Math.PI*2;
+      const taper=Math.sin(Math.PI*(.10+.90*t))**.7;
+      const breadth=width*taper*(1-.25*t);
+      return center.map((x,i)=>x+across.getComponent(i)*Math.cos(round)*breadth+normal.getComponent(i)*Math.sin(round)*.006*taper);
+    },'hair',rig('head'));
+  }
+  const locks=[
+    // Long side of the part sweeps across the forehead then curls past the temple.
+    [[[.029,1.659,.041],[-.011,1.691,.067],[-.073,1.628,.089],[-.067,1.586,.061]],.024],
+    [[[.023,1.670,.024],[-.033,1.696,.047],[-.089,1.611,.074],[-.072,1.548,.036]],.027],
+    [[[.018,1.674,.005],[-.066,1.680,.018],[-.098,1.565,.032],[-.078,1.516,.005]],.028],
+    // Short side bends outward above the exposed eyebrow and follows the ear.
+    [[[.033,1.655,.049],[.070,1.664,.059],[.083,1.602,.060],[.068,1.573,.038]],.019],
+    [[[.036,1.665,.023],[.096,1.653,.026],[.093,1.561,.017],[.080,1.528,-.009]],.025],
+    [[[.025,1.669,-.016],[.083,1.658,-.043],[.109,1.552,-.047],[.070,1.514,-.054]],.027],
+    // Uneven rear waves, with the lowest tips tucked inward at the nape.
+    [[[-.015,1.674,-.025],[-.080,1.658,-.060],[-.106,1.555,-.040],[-.066,1.510,-.048]],.027],
+    [[[-.007,1.672,-.031],[-.054,1.659,-.097],[-.067,1.554,-.096],[-.028,1.514,-.074]],.028],
+    [[[.013,1.671,-.030],[.040,1.651,-.106],[.051,1.551,-.097],[.011,1.505,-.078]],.028],
+  ];
+  locks.forEach(([points,width],index)=>hairLock('hair-lock-'+index,points,width));
   // A-pose limbs use smoothly blended elbow/knee rings. Boot soles are actual geometry.
   for(const [side,s] of [['L',1],['R',-1]]){
     const arm='upperArm_'+side,fore='forearm_'+side,hand='hand_'+side,thigh='thigh_'+side,shin='shin_'+side,foot='foot_'+side;
@@ -121,9 +248,9 @@ export function createCharacter(THREE,{lod=0,texture=null}={}) {
     ];
   };
   const capeWeights = (u,v) => rig('capeUpper','capeLower',v*v);
-  surface('cape-outer',42,23,(u,v)=>cape(u,v,false),'capeTrim',capeWeights,true);
-  surface('cape-lining',42,23,(u,v)=>cape(u,v,true),'cape',capeWeights);
-  surface('cape-hem',42,2,(u,v)=>{
+  surface('cape-outer',36,20,(u,v)=>cape(u,v,false),'capeTrim',capeWeights,true);
+  surface('cape-lining',36,20,(u,v)=>cape(u,v,true),'cape',capeWeights);
+  surface('cape-hem',36,2,(u,v)=>{
     const outer=cape(u,1,false),inner=cape(u,1,true);
     return outer.map((x,i)=>x+(inner[i]-x)*v);
   },'cape',()=>rig('capeLower'),true);
@@ -148,9 +275,9 @@ export function createCharacter(THREE,{lod=0,texture=null}={}) {
     const angle=u*Math.PI*2;
     const folds=.007*Math.sin(v*Math.PI*5+Math.sin(angle));
     return [
-      Math.sin(angle)*(.071+.142*v+folds),
-      1.415-.097*v-.024*Math.cos(angle)*Math.sin(v*Math.PI)+.012*Math.sin(angle),
-      Math.cos(angle)*(.071+.035*v+folds),
+      Math.sin(angle)*(.071+.174*v+folds),
+      1.418-.097*v-.024*Math.cos(angle)*Math.sin(v*Math.PI)+.012*Math.sin(angle)+.036*Math.sin(angle)**2*v,
+      Math.cos(angle)*(.071+.060*v+folds),
     ];
   },'cape',rig('chest'));
   oval('cape-brooch',[-.125,1.346,.092],[.026,.026,.01],'brass',rig('chest'),20,12);
