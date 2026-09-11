@@ -48,7 +48,7 @@ spec:
                 - name: OPENSEARCH_URIS
                   value: "http://opensearch:9200"
                 - name: PRODUCT_SERVICE_URL
-                  value: "http://product:8081"
+                  value: "http://commerce:8085" # ADR-0093: product 는 commerce 로 폴드
               resources:
                 requests: { cpu: 100m, memory: 512Mi }
                 limits:   { memory: 1Gi }

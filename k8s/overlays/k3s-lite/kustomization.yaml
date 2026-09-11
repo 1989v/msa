@@ -57,22 +57,18 @@ patches:
     target:
       kind: Deployment
       name: gateway
-  - path: patches/redis-standalone-product.yaml
+  - path: patches/redis-standalone-commerce.yaml
     target:
       kind: Deployment
-      name: product
-  - path: patches/redis-standalone-gifticon.yaml
-    target:
-      kind: Deployment
-      name: gifticon
+      name: commerce
   - path: patches/redis-standalone-analytics.yaml
     target:
       kind: Deployment
       name: analytics
-  - path: patches/redis-standalone-experiment.yaml
+  - path: patches/redis-standalone-engagement.yaml
     target:
       kind: Deployment
-      name: experiment
+      name: engagement
   - path: patches/redis-standalone-code-dictionary.yaml
     target:
       kind: Deployment
@@ -92,12 +88,6 @@ patches:
       kind: Deployment
       name: code-dictionary
 
-  # gifticon: 글로벌 512Mi limit 부족 → OOMKilled. 768Mi 로 상향.
-  - path: patches/gifticon-resources.yaml
-    target:
-      kind: Deployment
-      name: gifticon
-
   # ADR-0058: commerce 는 order+inventory+fulfillment+warehouse 4-도메인 모놀리스 →
   # 글로벌 reduce(768Mi) 로는 4 EMF/풀 워킹셋 부족. 1280Mi 로 상향.
   - path: patches/commerce-resources.yaml
@@ -105,15 +95,15 @@ patches:
       kind: Deployment
       name: commerce
 
-  # quant Phase 2: replicas=1 강제 (Recreate) + KMS local + outbox kafka-relay enable
+  # ADR-0093 sideapp: replicas=1 강제 (Recreate) + KMS local + outbox kafka-relay enable
   # + Telegram dispatcher disabled (Bot Token 미설정 시) — TG-P2-15
-  - path: patches/quant-phase2.yaml
+  - path: patches/sideapp-local.yaml
     target:
       kind: Deployment
-      name: quant
+      name: sideapp
 
   # clickhouse: 1Gi limit 부족 → OOMKilled. 2Gi 로 상향.
-  # analytics / experiment / quant 가 의존하므로 회복 시 연쇄 회복.
+  # analytics / engagement / sideapp 이 의존하므로 회복 시 연쇄 회복.
   - path: patches/clickhouse-resources.yaml
     target:
       kind: StatefulSet

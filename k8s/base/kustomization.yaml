@@ -14,17 +14,14 @@ resources:
   - search-consumer
   - search-batch
   - auth
-  - gifticon
   - commerce
   # ADR-0058: warehouse·fulfillment 는 inventory(commerce) 로 폴드 — 별도 Deployment 없음
   # (스키마 warehouse_db/fulfillment_db 는 유지, fulfillment.order.* 토픽도 commerce 가 발행)
   - analytics
-  - chatbot
   - code-dictionary
-  - quant
+  # ADR-0093: quant·chatbot·gifticon 은 sideapp 으로 폴드 — 별도 Deployment 없음
+  # (스키마 quant/chatbot_db/gifticon_db 유지, quant-ingest·*-fe 는 그대로 별도 이미지)
   - quant-ingest
-  # ADR-0093 ①-B1: sideapp 을 먼저 띄운다. quant·chatbot·gifticon 제거는
-  # 게이트웨이가 sideapp 을 가리키는 이미지로 바뀐 뒤(①-B3)다.
   - sideapp
   - account     # ADR-0093: member + wishlist 폴드 (commerce 에서 이동)
   - engagement  # ADR-0093: recommendation + experiment 폴드
@@ -51,7 +48,7 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|search|search-consumer|auth|gifticon|commerce|analytics|engagement|account|sideapp|chatbot|code-dictionary|quant|place)"
+      name: "(gateway|search|search-consumer|auth|commerce|analytics|engagement|account|sideapp|code-dictionary|place)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment

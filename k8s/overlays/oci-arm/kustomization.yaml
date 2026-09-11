@@ -148,12 +148,7 @@ patches:
     target:
       kind: Deployment
       name: analytics
-  # ─── Tier L (1Gi) — quant: Phase 3 실시간 트레이딩 엔진 ──────────────────
   # code-dictionary 는 k3s-lite 베이스 패치에서 이미 1Gi 로 설정됨.
-  - path: patches/resources-l-1gi.yaml
-    target:
-      kind: Deployment
-      name: quant
   # ─── Tier XL (1.2Gi) — sideapp: quant(트레이딩) + chatbot + gifticon 3-도메인 ──
   # 폴드 전 셋의 limit 합은 1Gi+512Mi+768Mi = 2.28Gi 였다. 한 JVM 이 되면서
   # 힙 밖(메타스페이스·스레드·코드캐시)이 한 벌로 줄어 1.2Gi 로 잡는다.
@@ -178,8 +173,6 @@ patches:
     target: {kind: Deployment, name: recommendation-ann}
   - path: patches/resources-s-512mi.yaml
     target: {kind: Deployment, name: auth}
-  - path: patches/resources-s-512mi.yaml
-    target: {kind: Deployment, name: chatbot}
   # ─── Tier XS (384Mi) — 최소 CRUD ─────────────────────────────────────────
   # ADR-0058: commerce(4-도메인 모놀리스)는 XL — 단일 inventory 의 xs(384Mi)로는 즉시 OOM.
   - path: patches/resources-xl-1200mi.yaml
@@ -267,14 +260,6 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "7"
-  - target: {kind: Deployment, name: "^(gifticon)$"}
-    patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: placeholder
-        annotations:
-          argocd.argoproj.io/sync-wave: "8"
   - target: {kind: Deployment, name: "^(engagement)$"}
     patch: |-
       apiVersion: apps/v1
@@ -299,24 +284,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "11"
-  - target: {kind: Deployment, name: "^(quant)$"}
-    patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: placeholder
-        annotations:
-          argocd.argoproj.io/sync-wave: "12"
-  - target: {kind: Deployment, name: "^(chatbot)$"}
-    patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: placeholder
-        annotations:
-          argocd.argoproj.io/sync-wave: "13"
-  # ADR-0093 ①-B1: sideapp 을 먼저 띄운다. 게이트웨이가 sideapp 을 가리키기 전(①-B2)까지
-  # quant·chatbot·gifticon 과 공존한다 — 그래야 경로가 한 순간도 빈 곳을 가리키지 않는다.
+  # ADR-0093: quant+chatbot+gifticon 폴드. 셋이 쓰던 웨이브 8·12·13 을 하나로 합친다.
   - target: {kind: Deployment, name: "^(sideapp)$"}
     patch: |-
       apiVersion: apps/v1
@@ -366,9 +334,6 @@ images:
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
     newTag: 0a8999c
-  - name: commerce/chatbot
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/chatbot
-    newTag: 6feb9be
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
     newTag: 0a8999c
@@ -381,9 +346,6 @@ images:
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
     newTag: 8a6d588
-  - name: commerce/gifticon
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon
-    newTag: 6feb9be
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 6a1889c
@@ -396,9 +358,6 @@ images:
   - name: commerce/portal-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/portal-fe
     newTag: f845b2a
-  - name: commerce/quant
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant
-    newTag: 6feb9be
   - name: commerce/quant-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/quant-fe
     newTag: cb23a78

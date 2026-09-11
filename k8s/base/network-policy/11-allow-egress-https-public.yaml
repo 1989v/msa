@@ -28,7 +28,7 @@ metadata:
 spec:
   podSelector:
     matchExpressions:
-      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, gifticon, sideapp, quant-ingest, deal-linkcheck, place-ingest, ranking-ingest] }
+      - { key: app.kubernetes.io/name, operator: In, values: [auth, sideapp, quant-ingest, deal-linkcheck, place-ingest, ranking-ingest] }
   policyTypes:
     - Egress
   egress:

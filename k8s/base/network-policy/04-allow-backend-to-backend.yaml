@@ -2,9 +2,13 @@
 #
 # 직접 백엔드-백엔드 호출은 의도적으로 마찰을 둔다 (Saga / 이벤트 기반 권장).
 # 현재 허용되는 페어:
-#   - order → product         (order/.../WebClientConfig.kt:14-18)
-#   - search-batch → product  (productApiReindexJob 페이지 스캔 + seed Job bulk 적재, ADR-0056/0058)
+#   - search-batch → commerce (productApiReindexJob 페이지 스캔 + seed Job bulk 적재, ADR-0056/0058)
 #   - auth → commerce         (SSO 회원 조회/생성)
+#
+# ADR-0093: order → product 는 **규칙이 필요 없어졌다** — 둘 다 commerce 안이라 프로세스 내부
+# 호출이다. product 를 가리키던 두 규칙은 파드가 사라져 아무것도 선택하지 않는 채로 남아 있었고,
+# search-batch 쪽은 그래서 **실제로 막힌 상태**였다(대상 CronJob 이 suspend 라 안 드러났을 뿐).
+# 라벨을 따라가지 않으면 규칙은 에러 없이 무효가 된다.
 #   - search-batch → place    (attractionApiReindexJob 페이지 풀스캔, ADR-0065)
 #   - search → place          (질의 이해가 쓰는 분류 코드표 조회, ADR-0090 D8)
 #
@@ -13,7 +17,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-order-to-product
+  name: allow-search-batch-to-commerce
   namespace: commerce
   labels:
     app.kubernetes.io/part-of: commerce-platform
@@ -21,29 +25,7 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: product
-  policyTypes:
-    - Ingress
-  ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              app.kubernetes.io/name: order
-      ports:
-        - { port: http, protocol: TCP }
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-search-batch-to-product
-  namespace: commerce
-  labels:
-    app.kubernetes.io/part-of: commerce-platform
-    app.kubernetes.io/component: network-policy
-spec:
-  podSelector:
-    matchLabels:
-      app.kubernetes.io/name: product
+      app.kubernetes.io/name: commerce
   policyTypes:
     - Ingress
   ingress:

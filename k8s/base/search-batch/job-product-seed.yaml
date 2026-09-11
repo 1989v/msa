@@ -42,7 +42,7 @@ spec:
             - name: SEED_PATH
               value: "/seed/products.jsonl"
             - name: PRODUCT_SERVICE_URL
-              value: "http://product:8081"
+              value: "http://commerce:8085" # ADR-0093: product 는 commerce 로 폴드
           volumeMounts:
             - name: seed
               mountPath: /seed
