@@ -162,6 +162,27 @@ spring:
               uri: http://commerce:8085 # ADR-0093 ②: commerce 폴드
               predicates: [Path=/svc/deal/actuator/health]
               filters: [StripPrefix=2]
+            # 나머지 도메인 이름도 자기 호스트로 — 목록이 반쪽이면 404 가 「그 도메인이 죽었다」로 읽힌다
+            - id: actuator-inventory
+              uri: http://commerce:8085
+              predicates: [Path=/svc/inventory/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-fulfillment
+              uri: http://commerce:8085
+              predicates: [Path=/svc/fulfillment/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-warehouse
+              uri: http://commerce:8085
+              predicates: [Path=/svc/warehouse/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-chatbot
+              uri: http://sideapp:8095 # ADR-0093: sideapp 폴드
+              predicates: [Path=/svc/chatbot/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-recommendation
+              uri: http://engagement:8091 # ADR-0093: engagement 폴드
+              predicates: [Path=/svc/recommendation/actuator/health]
+              filters: [StripPrefix=2]
 
 server:
   port: 8080

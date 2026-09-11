@@ -277,6 +277,34 @@ SPA 가 안 붙는다. 남은 흔적은 warn 로그 한 줄이다.
 ② 어드민 `SERVICES` 의 한 줄을 요구하고, 반대로 상주 파드가 아닌 이름이 목록에 있으면 막는다.
 둘 다 회귀를 주입해 빨간불을 확인했다.
 
+### `ddl-auto=none` 이 가린 것을 검사로 끌어냈다
+
+운영 파드는 `SPRING_JPA_HIBERNATE_DDL_AUTO=none` 으로 뜬다 — 엔티티와 스키마가 어긋나도
+검증하지 않는다. 그래서 불일치는 **폴드할 때만** 드러난다. 이번에 둘 나왔다:
+`place.attraction_category_codes.depth` 와 `blog_post_rating.score` 가 TINYINT 인데
+엔티티는 `Int` 였다(각각 V16 확장 · V1 에서 직접 수정).
+
+`game` 에만 있던 Flyway+`validate` 검사를 place·blog·ranking·deal 에 붙였다.
+Testcontainers MySQL 에 도메인 전용 Flyway 를 돌리고 `ddl-auto=validate` 로 컨텍스트를 띄운다 —
+컨텍스트가 뜨는 것 자체가 일치의 증거다. place 의 V16 을 빼면 빨간불이 나는 것으로
+**그 마이그레이션이 실제로 필요했다는 것**까지 확인했다.
+
+`place` 스펙만 `Ctx` 에 `@Primary` 별칭을 두지 않는다 — place 는 자기 config 가 이미
+`@Primary` 라 둘이 되면 `JpaBaseConfiguration`(`@ConditionalOnSingleCandidate`)이 물러나
+`EntityManagerFactoryBuilder` 가 아예 안 생긴다. 폴드 호스트마다 primary 가 다르다는 사실이
+테스트 슬라이스에도 그대로 나타난다.
+
+### 테스트 게이트가 폴드를 안 따라오면 검사는 있으나 안 돈다
+
+`deal` 이 commerce 로 온 뒤 `images.yml` 의 commerce arm 에 `:deal:domain:test`·
+`:deal:feature:test` 가 없었다. **그 도메인의 테스트가 CI 에서 한 번도 안 돌았고 초록불은
+계속 났다.** ⑨(게이트가 판정을 안 한다)의 또 다른 모양이다 — 이번엔 파이프라인이 아니라
+태스크 목록 쪽이다.
+
+`verifyPodTopology` 가 호스트의 `scanBasePackages` 로 도메인→파드 지도를 만들고,
+담긴 도메인마다 그 arm 에 `:{module}:feature:test` 가 있는지 요구한다. NetworkPolicy 검사와
+**같은 지도**를 쓴다 — 폴드 배치의 단일 원본이 앱 클래스 하나가 된다.
+
 ### 큐에 있는 워크플로 런은 `cancel-in-progress: false` 여도 밀려난다
 
 `images.yml` 은 `concurrency.cancel-in-progress: false` 인데도 blog 전환 커밋(`7739bad`)의
