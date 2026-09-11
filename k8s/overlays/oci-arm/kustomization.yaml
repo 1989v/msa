@@ -332,7 +332,7 @@ images:
     newTag: 305467b
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: c99e70b
+    newTag: 59405ce
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
     newTag: 586cfc1
@@ -344,7 +344,7 @@ images:
     newTag: 305467b
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: c145f68
+    newTag: 59405ce
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 6a1889c
