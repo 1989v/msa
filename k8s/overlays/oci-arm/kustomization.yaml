@@ -324,28 +324,31 @@ patches:
 images:
   - name: commerce/account
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/account
-    newTag: 22ed9b7
+    newTag: 305467b
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
     newTag: cb23a78
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
-    newTag: 0a8999c
+    newTag: 305467b
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
-    newTag: 0a8999c
+    newTag: 305467b
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 2d2bacb
+    newTag: 305467b
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 0a8999c
+    newTag: 305467b
+  - name: commerce/content
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
+    newTag: 305467b
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
-    newTag: 0a8999c
+    newTag: 305467b
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 8a6d588
+    newTag: 305467b
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 6a1889c
@@ -375,19 +378,19 @@ images:
     newTag: 6a1889c
   - name: commerce/search
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search
-    newTag: 0a8999c
+    newTag: 305467b
   - name: commerce/search-batch
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-batch
-    newTag: 0a8999c
+    newTag: 305467b
   - name: commerce/search-consumer
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-consumer
-    newTag: 0a8999c
+    newTag: 305467b
   - name: commerce/search-embed
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/search-embed
     newTag: 8f325ca
   - name: commerce/sideapp
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/sideapp
-    newTag: 0a8999c
+    newTag: 305467b
   # 인프라 이미지 — default-deny egress 라 기동 래퍼의 nori 다운로드가 불가.
   # analysis-nori 베이크 이미지로 교체 (docker/opensearch/Dockerfile, 수동 빌드·푸시)
   - name: opensearchproject/opensearch
