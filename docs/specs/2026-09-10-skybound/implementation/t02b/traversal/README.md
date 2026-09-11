@@ -1,6 +1,6 @@
 # T02B-4b-2 · 이동 / 캐릭터 연결 진단
 
-기존 Skybound 월드·이동 코어·저장 GLB를 연결한 PC 진단 fixture다.
+기존 Skybound 월드·이동 코어·저장 GLB를 연결한 PC·터치 입력 진단 fixture다.
 다른 게임·외부 에셋을 사용하지 않으며 기존 원본 소스는 수정하지 않는다.
 
 ```sh
@@ -44,13 +44,14 @@ blur/탭 숨김은 입력과 누적 시간을 비우고 정지하며 명시적�
 - `ready`, `error`, `paused`, `loadedFromGLB`, `snapshot`, `animation`, `animationTime`
 - `characterPosition: {x,y,z}`, `characterYaw`, `terrainHeight`, `frames`
 - `camera: {yaw,pitch,distance,dragging}`, `setCameraForTest({yaw?,pitch?,distance?})`
+- `touch: {x,z,sprint,moveId,lookId,sprintId,jumpId,jumpPending}`: 각 입력 소유 ID는 미사용 시 null
 - `advanceForTest(dt, input={})`: 일시정지 상태에서만 같은 simulation→animation→render
   경로를 수동 실행한다. 자동 RAF와 섞으면 오류다. 최신 상태 요약을 반환한다.
   입력 `yaw`를 생략하면 현재 카메라 yaw를 쓰고, 명시하면 해당 값을 우선한다.
 - `resetForTest()`: 일시정지, 새 simulation/animation 상태로 출발점 복구
 - `pause()` / `resume()`: 자동 조작 실행 제어
 
-카메라 pitch는 0.08–1.15rad로 제한한다. 드래그는 mouse 우클릭과 pointer capture만
+카메라 pitch는 0.08–1.15rad로 제한한다. PC 드래그는 mouse 우클릭과 pointer capture만
 사용하며 pointer lock은 사용하지 않는다. pointerup/cancel/lostcapture와 pause/blur에서
 드래그를 해제한다. 우클릭 메뉴는 canvas에서만 막는다. 출발점 복귀는 카메라 기본값도
 복구하고 화면 크기 변경은 현재 yaw/pitch/거리를 보존한다.
@@ -66,10 +67,28 @@ blur/탭 숨김은 입력과 누적 시간을 비우고 정지하며 명시적�
 
 이 화면은 풀밭·길 높이와 물 아래 리스폰만 반영한다. 나무·바위·계단·유적·벽의
 캡슐 충돌, 카메라 충돌, 경사면 발 IK, 발 미끄럼 보정은 없다. root가 지형 높이에
-맞는다는 검사는 양발이 경사면에 완전히 붙는다는 의미가 아니다. T02C-1 PC 시야만
-추가했으며 터치 조작, 정식 키 설정, 게임 상태 머신은 후속 범위다. 모바일 성능과
+맞는다는 검사는 양발이 경사면에 완전히 붙는다는 의미가 아니다. PC 시야와 기본 터치
+이동만 추가했으며 정식 키 설정, 게임 상태 머신은 후속 범위다. 모바일 성능과
 아트 품질 PASS를 주장하지 않으며 이 fixture를 완성된 섬 탐험으로 취급하지 않는다.
 
 T02C-1 순수 카메라 검사 3개는 회전/줌 범위, yaw와 이동 전방의 일치,
 비정상 입력 거부·불변성을 확인한다. `node --test .../tests/camera.test.mjs`로 실행한다.
 브라우저 우클릭·휠·방향 상대 이동과 취소 동작은 별도 PC 시야 검증 보고서에 기록한다.
+
+## T02C-2 · 기본 터치 조작
+
+왼쪽 `#touch-move` 스틱은 중심에서의 거리로 이동 강도를 정하고 대각선 크기를
+1로 제한한다. canvas 오른쪽에서 시작한 별도 손가락은 시야를 회전한다.
+`#touch-sprint`는 누른 동안 달리기, `#touch-jump`는 누르는 순간 한 번만 점프한다.
+한 역할에 두 번째 손가락이 들어오거나 이미 소유된 ID를 다른 역할에 쓰면 무시한다.
+좌우 입력은 동시에 유지할 수 있다. 멀티터치 확대와 활공은 포함하지 않는다.
+
+pointerup/cancel/lostcapture는 해당 손가락만 해제하고, pause/blur/hidden/reset은
+모든 소유권·누른 버튼·점프 대기와 capture를 비운다. 일시정지 중 게임 터치는 무시한다.
+취소된 점프의 대기 pulse는 버리고, 정상적으로 빠르게 눌렀다 뗀 pulse는 다음 frame에 전달한다.
+브라우저 스크롤 방지는 canvas와 터치 조작부의 `touch-action:none`으로 한정한다.
+공유 토큰 색상을 쓰고 스틱은 112px, 버튼은 최소 44px이다. 가로·세로 화면에 배치한다.
+
+`node --test .../tests/touch.test.mjs`: 순수 소유권 검사 **4/4 통과**.
+중복/추가 포인터 격리, 대각선/아날로그 강도, 개별 취소, 점프 pulse, 전체 초기화를
+검증한다. 실제 멀티터치·취소·반응형 검수는 root의 별도 touch 보고서에 기록한다.

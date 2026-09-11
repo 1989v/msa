@@ -1,0 +1,114 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/traversal/index.html",
+  "checks": [
+    {
+      "name": "Portrait controls fit viewport",
+      "passed": true
+    },
+    {
+      "name": "Paused movement touch ignored",
+      "passed": true
+    },
+    {
+      "name": "Two touches move and turn together",
+      "passed": true
+    },
+    {
+      "name": "Lifting look preserves movement",
+      "passed": true
+    },
+    {
+      "name": "Touch cancellation releases movement",
+      "passed": true
+    },
+    {
+      "name": "Action targets at least 44px",
+      "passed": true
+    },
+    {
+      "name": "Sprint hold activates",
+      "passed": true
+    },
+    {
+      "name": "Sprint release clears",
+      "passed": true
+    },
+    {
+      "name": "Jump touch starts airborne movement",
+      "passed": true
+    },
+    {
+      "name": "Blur pauses and clears all touch owners",
+      "passed": true
+    },
+    {
+      "name": "portrait horizontal overflow absent",
+      "passed": true
+    },
+    {
+      "name": "portrait touch controls visible",
+      "passed": true
+    },
+    {
+      "name": "landscape horizontal overflow absent",
+      "passed": true
+    },
+    {
+      "name": "landscape touch controls visible",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "samples": [
+    {
+      "touch": {
+        "x": 0,
+        "z": -0.875,
+        "sprint": false,
+        "moveId": 3,
+        "lookId": 4,
+        "sprintId": null,
+        "jumpId": null,
+        "jumpPending": false
+      },
+      "camera": {
+        "yaw": 0.1750000000000007,
+        "pitch": 0.35,
+        "distance": 5.2,
+        "dragging": true
+      },
+      "snapshot": {
+        "tick": 75,
+        "position": {
+          "x": -0.12187569631551765,
+          "y": 9.029547673315815,
+          "z": 33.307358089433286
+        },
+        "velocity": {
+          "x": -0.4875027852620706,
+          "y": 0,
+          "z": -2.7572343089338136
+        },
+        "grounded": true,
+        "mode": "walking",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "alpha": 0.9959999999999833,
+        "steps": 30,
+        "droppedTime": 0.01670000000000027
+      },
+      "paused": false
+    }
+  ],
+  "errors": []
+}

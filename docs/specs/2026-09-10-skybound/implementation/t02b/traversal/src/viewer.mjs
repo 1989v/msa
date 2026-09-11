@@ -5,6 +5,7 @@ import { createTerrain } from '../../../t02a/src/terrain.mjs';
 import { createSimulation, MOVEMENT } from '../../../t02a/src/simulation.mjs';
 import { createAnimationBridge } from './animation.mjs';
 import { CAMERA_DEFAULTS, updateCamera, cameraOffset } from './camera.mjs';
+import { createTouchInput } from './touch.mjs';
 import '../style.css';
 
 const state = window.__SKYBOUND_TRAVERSAL__ = { ready: false, error: null, paused: true, snapshot: null, animation: 'idle', characterPosition: null, terrainHeight: null, frames: 0 };
@@ -47,18 +48,25 @@ async function main() {
   const mixer = new THREE.AnimationMixer(character);
   const camera = new THREE.PerspectiveCamera(48, 1, .1, 1800);
   const keys = new Set();
+  const touch = createTouchInput(), captures = new Map();
+  const movePad = document.querySelector('#touch-move'), sprintButton = document.querySelector('#touch-sprint'), jumpButton = document.querySelector('#touch-jump');
   let simulation, bridge, request = null, lastTime = null, jumpPending = false;
   let orbit = { ...CAMERA_DEFAULTS }, drag = null;
   function result() {
     return { snapshot: state.snapshot, animation: state.animation, animationTime: state.animationTime,
       characterPosition: state.characterPosition, characterYaw: state.characterYaw, terrainHeight: state.terrainHeight,
-      camera: state.camera, paused: state.paused, frames: state.frames };
+      camera: state.camera, touch: state.touch, paused: state.paused, frames: state.frames };
   }
   function draw() {
     const offset = cameraOffset(orbit), p = character.position;
     camera.position.set(p.x + offset.x, p.y + 1.05 + offset.y, p.z + offset.z);
     camera.lookAt(p.x, p.y + 1.05, p.z);
-    state.camera = { ...orbit, dragging: drag !== null };
+    state.touch = touch.snapshot();
+    state.camera = { ...orbit, dragging: drag !== null || state.touch.lookId !== null };
+    movePad.style.setProperty('--stick-x', `${state.touch.x * 40}px`);
+    movePad.style.setProperty('--stick-y', `${state.touch.z * 40}px`);
+    sprintButton.setAttribute('aria-pressed', String(state.touch.sprint));
+    for (const element of [movePad, sprintButton, jumpButton]) element.setAttribute('aria-disabled', String(state.paused));
     scene.updateMatrixWorld(true);
     renderer.render(scene, camera); state.frames++;
     state.characterPosition = { x: character.position.x, y: character.position.y, z: character.position.z };
@@ -89,6 +97,7 @@ async function main() {
   }
   function pause() {
     state.paused = true;
+    clearTouch();
     clearDrag();
     if (request !== null) cancelAnimationFrame(request);
     request = null; lastTime = null; keys.clear(); jumpPending = false;
@@ -101,8 +110,10 @@ async function main() {
     if (state.paused) return;
     try {
       const dt = lastTime === null ? 0 : (time - lastTime) / 1000; lastTime = time;
-      advance(dt, { x: Number(keys.has('KeyD')) - Number(keys.has('KeyA')), z: Number(keys.has('KeyS')) - Number(keys.has('KeyW')),
-        sprint: keys.has('ShiftLeft') || keys.has('ShiftRight'), jumpPressed: jumpPending });
+      const fingers = touch.snapshot(), touchJump = touch.consumeJump();
+      advance(dt, { x: Math.max(-1, Math.min(1, fingers.x + Number(keys.has('KeyD')) - Number(keys.has('KeyA')))),
+        z: Math.max(-1, Math.min(1, fingers.z + Number(keys.has('KeyS')) - Number(keys.has('KeyW')))),
+        sprint: fingers.sprint || keys.has('ShiftLeft') || keys.has('ShiftRight'), jumpPressed: jumpPending || touchJump });
       jumpPending = false;
       request = requestAnimationFrame(frame);
     } catch (error) { pause(); state.error = error.stack || String(error); status.textContent = `이동을 멈췄습니다: ${error.message}`; }
@@ -133,6 +144,45 @@ async function main() {
     orbit = updateCamera(orbit, { ...values, type: 'set' });
     draw(); return { ...state.camera };
   }
+  function clearTouch() {
+    touch.clear();
+    const held = [...captures]; captures.clear();
+    for (const [id, element] of held) if (element.hasPointerCapture(id)) element.releasePointerCapture(id);
+    if (state.snapshot) draw();
+  }
+  function endTouch(event) {
+    const element = captures.get(event.pointerId);
+    if (!element) return;
+    captures.delete(event.pointerId);
+    touch.end(event.pointerId, { cancel: event.type !== 'pointerup' });
+    if (element.hasPointerCapture(event.pointerId)) element.releasePointerCapture(event.pointerId);
+    draw();
+  }
+  function bindTouch(element, role) {
+    element.addEventListener('pointerdown', event => {
+      if (event.pointerType !== 'touch') return;
+      document.documentElement.dataset.touch = 'true';
+      event.preventDefault();
+      if (state.paused) return;
+      const rect = element.getBoundingClientRect();
+      if (role === 'look' && event.clientX < rect.left + rect.width * .45) return;
+      const x = role === 'move' ? rect.left + rect.width / 2 : event.clientX;
+      const y = role === 'move' ? rect.top + rect.height / 2 : event.clientY;
+      if (!touch.begin(role, event.pointerId, x, y)) return;
+      captures.set(event.pointerId, element); element.setPointerCapture(event.pointerId);
+      if (role === 'move') touch.move(event.pointerId, event.clientX, event.clientY);
+      draw();
+    });
+    element.addEventListener('pointermove', event => {
+      if (captures.get(event.pointerId) !== element || state.paused) return;
+      event.preventDefault();
+      const delta = touch.move(event.pointerId, event.clientX, event.clientY);
+      if (delta) orbit = updateCamera(orbit, { type: 'drag', ...delta });
+      draw();
+    });
+    for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) element.addEventListener(type, endTouch);
+  }
+  bindTouch(movePad, 'move'); bindTouch(canvas, 'look'); bindTouch(sprintButton, 'sprint'); bindTouch(jumpButton, 'jump');
   canvas.addEventListener('contextmenu', event => event.preventDefault());
   canvas.addEventListener('pointerdown', event => {
     if (event.pointerType !== 'mouse' || event.button !== 2) return;

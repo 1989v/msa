@@ -1,6 +1,6 @@
 # Skybound — 바람의 유적
 
-**현재: 기존 섬에서 키보드 이동·달리기·점프와 우클릭 시야 회전·휠 줌이 가능한 연결 프로토타입을 저장했습니다. 터치·사물 충돌·전체 게임·최종 아트는 미완료입니다.**
+**현재: 기존 섬에서 키보드 이동·달리기·점프와 우클릭 시야 회전·휠 줌이 가능한 연결 프로토타입을 저장했습니다. 터치 이동·시야와 점프/달리기도 추가했습니다. 사물 충돌·전체 게임·최종 아트는 미완료입니다.**
 
 [PC 이동 프로토타입 실행 안내](implementation/t02b/traversal/README.md) — 로컬 서버에서 `http://127.0.0.1:8768/implementation/t02b/traversal/index.html`.
 
@@ -19,7 +19,7 @@
 11. [T02B-2 텍스처 검증](implementation/t02b/texture-check/README.md): 1K PNG·UV·sRGB 왕복, 브라우저 12/12
 
 창작 구현은 기존 게임 소스를 읽지 않는 새 세션/에이전트에서 진행합니다.
-구현은 **9개 그룹 / 24개 실행 단위**로 나뉩니다. T02B는 한도에 맞춰 [4개 소단위](planning/t02b-small-steps.md)로 세분화했습니다. 다음은 **T02C-2: 터치 이동·시야 입력**입니다.
-[주인공 모델 스튜디오](implementation/t02b/character/README.md)와 [최신 실제 캡처·검수](verifications/t02c-1.md)를 저장했습니다. 캐릭터 화면은 로컬 서버의 `implementation/t02b/character/index.html`에서 볼 수 있습니다. 장면은 로컬 서버에서
+구현은 **9개 그룹 / 24개 실행 단위**로 나뉩니다. T02B는 한도에 맞춰 [4개 소단위](planning/t02b-small-steps.md)로 세분화했습니다. 다음은 **T03A-1: 활공·기력·기류 규칙**입니다.
+[주인공 모델 스튜디오](implementation/t02b/character/README.md)와 [최신 실제 캡처·검수](verifications/t02c-2.md)를 저장했습니다. 캐릭터 화면은 로컬 서버의 `implementation/t02b/character/index.html`에서 볼 수 있습니다. 장면은 로컬 서버에서
 `http://127.0.0.1:8768/implementation/t01b/index.html`로 볼 수 있습니다.
 원화 2장은 디자인 참고 이미지이며 리깅된 모델이나 동작하는 게임 화면이 아닙니다.

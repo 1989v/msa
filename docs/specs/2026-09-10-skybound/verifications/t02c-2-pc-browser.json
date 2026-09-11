@@ -1,0 +1,123 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/traversal/index.html",
+  "checks": [
+    {
+      "name": "Fixture HTTP200",
+      "passed": true
+    },
+    {
+      "name": "Right press captures drag",
+      "passed": true
+    },
+    {
+      "name": "Actual mouse drag rotates yaw and pitch",
+      "passed": true
+    },
+    {
+      "name": "Release clears drag",
+      "passed": true
+    },
+    {
+      "name": "Wheel clamps distance to 8",
+      "passed": true
+    },
+    {
+      "name": "Wheel clamps distance to 3",
+      "passed": true
+    },
+    {
+      "name": "Actual W follows rotated camera",
+      "passed": true
+    },
+    {
+      "name": "Blur cancels camera drag",
+      "passed": true
+    },
+    {
+      "name": "Pointer cancellation clears drag",
+      "passed": true
+    },
+    {
+      "name": "Reset restores camera",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "samples": [
+    {
+      "snapshot": {
+        "tick": 0,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0
+      },
+      "animation": "idle",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186,
+      "paused": true
+    },
+    {
+      "snapshot": {
+        "tick": 29,
+        "position": {
+          "x": -0.7733333333333329,
+          "y": 9.059941327920413,
+          "z": 35
+        },
+        "velocity": {
+          "x": -3.2,
+          "y": 0,
+          "z": -1.9594348786357652e-16
+        },
+        "grounded": true,
+        "mode": "walking",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "alpha": 0.9964000000000359,
+        "steps": 29,
+        "droppedTime": 0
+      },
+      "animation": "walk",
+      "characterPosition": {
+        "x": -0.7733333333333329,
+        "y": 9.059941327920413,
+        "z": 35
+      },
+      "terrainHeight": 9.059941327920413,
+      "paused": true
+    }
+  ],
+  "errors": []
+}
