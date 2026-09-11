@@ -4,6 +4,7 @@ import { createWorld } from '../../../t01b/src/world.mjs';
 import { createTerrain } from '../../../t02a/src/terrain.mjs';
 import { createSimulation, MOVEMENT } from '../../../t02a/src/simulation.mjs';
 import { createAnimationBridge } from './animation.mjs';
+import { CAMERA_DEFAULTS, updateCamera, cameraOffset } from './camera.mjs';
 import '../style.css';
 
 const state = window.__SKYBOUND_TRAVERSAL__ = { ready: false, error: null, paused: true, snapshot: null, animation: 'idle', characterPosition: null, terrainHeight: null, frames: 0 };
@@ -47,12 +48,17 @@ async function main() {
   const camera = new THREE.PerspectiveCamera(48, 1, .1, 1800);
   const keys = new Set();
   let simulation, bridge, request = null, lastTime = null, jumpPending = false;
+  let orbit = { ...CAMERA_DEFAULTS }, drag = null;
   function result() {
     return { snapshot: state.snapshot, animation: state.animation, animationTime: state.animationTime,
       characterPosition: state.characterPosition, characterYaw: state.characterYaw, terrainHeight: state.terrainHeight,
-      paused: state.paused, frames: state.frames };
+      camera: state.camera, paused: state.paused, frames: state.frames };
   }
   function draw() {
+    const offset = cameraOffset(orbit), p = character.position;
+    camera.position.set(p.x + offset.x, p.y + 1.05 + offset.y, p.z + offset.z);
+    camera.lookAt(p.x, p.y + 1.05, p.z);
+    state.camera = { ...orbit, dragging: drag !== null };
     scene.updateMatrixWorld(true);
     renderer.render(scene, camera); state.frames++;
     state.characterPosition = { x: character.position.x, y: character.position.y, z: character.position.z };
@@ -74,17 +80,16 @@ async function main() {
     }
     mixer.setTime(motion.time);
     const p = character.position;
-    camera.position.set(p.x, p.y + 2.6, p.z + 5.2);
-    camera.lookAt(p.x, p.y + 1.05, p.z);
     sun.position.set(p.x - 35, p.y + 65, p.z + 35); sun.target.position.copy(p);
     draw(); return result();
   }
   function advance(dt, input) {
-    const snapshot = simulation.advance(dt, input);
+    const snapshot = simulation.advance(dt, { yaw: orbit.yaw, ...input });
     return publish(snapshot, snapshot.steps * MOVEMENT.step);
   }
   function pause() {
     state.paused = true;
+    clearDrag();
     if (request !== null) cancelAnimationFrame(request);
     request = null; lastTime = null; keys.clear(); jumpPending = false;
     simulation?.clearInput(); start.textContent = '시작';
@@ -97,7 +102,7 @@ async function main() {
     try {
       const dt = lastTime === null ? 0 : (time - lastTime) / 1000; lastTime = time;
       advance(dt, { x: Number(keys.has('KeyD')) - Number(keys.has('KeyA')), z: Number(keys.has('KeyS')) - Number(keys.has('KeyW')),
-        yaw: 0, sprint: keys.has('ShiftLeft') || keys.has('ShiftRight'), jumpPressed: jumpPending });
+        sprint: keys.has('ShiftLeft') || keys.has('ShiftRight'), jumpPressed: jumpPending });
       jumpPending = false;
       request = requestAnimationFrame(frame);
     } catch (error) { pause(); state.error = error.stack || String(error); status.textContent = `이동을 멈췄습니다: ${error.message}`; }
@@ -110,6 +115,7 @@ async function main() {
   }
   function resetForTest() {
     pause(); mixer.stopAllAction();
+    orbit = { ...CAMERA_DEFAULTS };
     simulation = createSimulation({ terrain, checkpoint: { x: 0, z: 35 }, waterHeight });
     bridge = createAnimationBridge(durations); character.rotation.y = Math.PI;
     return publish(simulation.snapshot(), 0);
@@ -118,6 +124,36 @@ async function main() {
     if (!state.paused) throw new Error('Pause traversal before deterministic stepping');
     return advance(dt, input);
   }
+  function clearDrag() {
+    const previous = drag; drag = null;
+    if (previous && canvas.hasPointerCapture(previous.id)) canvas.releasePointerCapture(previous.id);
+    if (state.snapshot) draw();
+  }
+  function setCameraForTest(values) {
+    orbit = updateCamera(orbit, { ...values, type: 'set' });
+    draw(); return { ...state.camera };
+  }
+  canvas.addEventListener('contextmenu', event => event.preventDefault());
+  canvas.addEventListener('pointerdown', event => {
+    if (event.pointerType !== 'mouse' || event.button !== 2) return;
+    event.preventDefault(); clearDrag(); canvas.focus();
+    drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
+    canvas.setPointerCapture(event.pointerId); draw();
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (!drag || event.pointerId !== drag.id) return;
+    if (!(event.buttons & 2)) { clearDrag(); return; }
+    orbit = updateCamera(orbit, { type: 'drag', dx: event.clientX - drag.x, dy: event.clientY - drag.y });
+    drag.x = event.clientX; drag.y = event.clientY; draw();
+  });
+  for (const eventName of ['pointerup', 'pointercancel', 'lostpointercapture']) canvas.addEventListener(eventName, event => {
+    if (drag && event.pointerId === drag.id) clearDrag();
+  });
+  canvas.addEventListener('wheel', event => {
+    event.preventDefault();
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
+    orbit = updateCamera(orbit, { type: 'zoom', delta: event.deltaY * unit }); draw();
+  }, { passive: false });
   start.addEventListener('click', () => state.paused ? resume() : pause());
   reset.addEventListener('click', resetForTest);
   addEventListener('keydown', event => {
@@ -136,7 +172,7 @@ async function main() {
     if (state.snapshot) draw();
   }
   resetForTest(); resize(); new ResizeObserver(resize).observe(canvas);
-  Object.assign(state, { ready: true, loadedFromGLB: true, clips: Object.keys(clips), worldStats: world.stats, advanceForTest, resetForTest, pause, resume });
+  Object.assign(state, { ready: true, loadedFromGLB: true, clips: Object.keys(clips), worldStats: world.stats, advanceForTest, resetForTest, setCameraForTest, pause, resume });
   start.disabled = false; reset.disabled = false;
 }
 main().catch(error => { state.error = error.stack || String(error); state.ready = true; status.textContent = `화면을 열지 못했습니다: ${error.message}`; console.error(error); });
