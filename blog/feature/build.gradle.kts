@@ -23,10 +23,11 @@ dependencies {
     // 셸 HTML 캐시 — deal 과 같은 이유로 Spring cache 추상화를 쓰지 않고 직접 쓴다.
     implementation(libs.caffeine)
     implementation(libs.kotlin.logging)
+    // 셸 페치 실패는 200 응답 뒤에 숨는다 — HealthIndicator 로 밖에 드러낸다.
+    implementation(libs.spring.boot.starter.actuator)
     // ADR-0093 ③ — 전용 스키마(blog_db). ScopedFlywayMigrator 가 돌린다.
     implementation("org.flywaydb:flyway-core")
     runtimeOnly("org.flywaydb:flyway-mysql")
-    runtimeOnly(libs.mysql.connector)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)

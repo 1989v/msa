@@ -33,6 +33,15 @@ class ShellHtmlProvider(
     @Volatile
     private var lastGood: String? = null
 
+    /** 마지막 시도의 결과. 헬스가 읽는다 — 실패해도 200 이 나가므로 응답만 봐서는 알 수 없다. */
+    @Volatile
+    private var state: ShellState = ShellState.UNKNOWN
+
+    /**
+     * 셸 페치 상태. 호출해도 페치를 유발하지 않는다 — [shell] 이 갱신한 값을 읽기만 한다.
+     */
+    fun state(): ShellState = state
+
     /**
      * 셸 HTML. 한 번도 받아 오지 못했으면 null 이고, 호출부는 SPA 없는 최소 HTML 로 떨어진다.
      */
@@ -45,11 +54,28 @@ class ShellHtmlProvider(
             require(!html.isNullOrBlank() && html.contains(SEO_START)) { "셸에 seo 마커가 없다" }
             cache.put(KEY, html)
             lastGood = html
+            state = ShellState.OK
             html
         }.getOrElse {
+            state = if (lastGood != null) ShellState.STALE else ShellState.MISSING
             log.warn(it) { "portal-fe 셸을 받지 못했다 — 마지막 정상본으로 대체 (url=$shellUrl)" }
             lastGood
         }
+    }
+
+    /** 셸 페치 상태. [STALE]·[MISSING] 은 글이 200 으로 나가는 채로 품질이 깎인 상태다. */
+    enum class ShellState {
+        /** 아직 한 번도 페치하지 않았다 (요청이 오기 전) */
+        UNKNOWN,
+
+        /** 최근 5분 안에 받아 왔다 */
+        OK,
+
+        /** 페치는 실패했지만 마지막 정상본으로 서빙 중 — 자산 해시가 옛것일 수 있다 */
+        STALE,
+
+        /** 한 번도 못 받았다 — SPA 없는 최소 HTML 이 나간다 */
+        MISSING,
     }
 
     companion object {
