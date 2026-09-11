@@ -324,7 +324,7 @@ patches:
 images:
   - name: commerce/account
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/account
-    newTag: 0a8999c
+    newTag: 22ed9b7
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
     newTag: cb23a78
