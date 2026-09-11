@@ -26,9 +26,7 @@ resources:
   - account     # ADR-0093: member + wishlist 폴드 (commerce 에서 이동)
   - engagement  # ADR-0093: recommendation + experiment 폴드
   - recommendation-ann
-  - place
-  # ADR-0093 ①-B1: content 를 먼저 띄운다. place 제거는 게이트웨이·내부 호출자가
-  # content 를 가리키는 이미지로 바뀐 뒤(①-B3)다.
+  # ADR-0093: place 는 content 로 폴드 — 별도 Deployment 없음(스키마 place_db 유지)
   - content
   # ADR-0070: 관광지 개요/콘텐츠 수집 배치 (외부 :443 을 부르는 유일한 place 계열 파드)
   - place-ingest
@@ -51,7 +49,7 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|search|search-consumer|auth|commerce|analytics|engagement|account|sideapp|content|code-dictionary|place)"
+      name: "(gateway|search|search-consumer|auth|commerce|analytics|engagement|account|sideapp|content|code-dictionary)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment

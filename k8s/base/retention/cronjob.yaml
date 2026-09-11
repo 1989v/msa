@@ -11,6 +11,7 @@ metadata:
     app.kubernetes.io/component: retention
 spec:
   # ADR-0077 — 원장 보존기간 정리 (blog_post_view 90일, resume_access_log 365일).
+  # party_friend_group(365일)은 content 이미지의 retention-content 가 따로 돈다 (ADR-0093).
   #
   # 일요일 05:00 UTC = 14:00 KST. deal-linkcheck(04:00 UTC)보다 한 시간 뒤에 둔다 —
   # 같은 이미지를 띄우는 배치 둘이 겹치면 단일 노드에서 메모리가 함께 뛴다.
@@ -49,15 +50,9 @@ spec:
               env:
                 # DB 자격증명은 application.yml 기본값을 쓴다(oci-arm 은 그 값으로 프로비저닝됨).
                 # prod-k8s 로 올릴 때는 Deployment 와 같은 Secret 주입 패치를 이 CronJob 에도 걸 것.
-                # 호스트 앱 컨텍스트를 그대로 띄우므로 이 키가 필요하다 (ADR-0092).
-                # 배치는 좌석 토큰을 안 쓰지만, 서명 컴포넌트가 키 없이는 안 뜬다.
-                - name: GAME_HMAC_SECRET
-                  valueFrom:
-                    secretKeyRef: { name: game-hmac, key: secret }
-                - name: GAME_DB_MASTER
-                  value: "mysql-code-dictionary-master:3306"
-                - name: GAME_DB_REPLICA
-                  value: "mysql-code-dictionary-master:3306"
+                # ADR-0093: game 이 content 로 옮겨가 이 이미지에는 없다 — GAME_* 는 뺐다.
+                # party_friend_group 정리는 retention-content CronJob 이 맡는다.
+                []
               resources:
                 requests: { cpu: 100m, memory: 384Mi }
                 limits:   { memory: 640Mi }
