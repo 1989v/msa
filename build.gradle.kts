@@ -664,6 +664,39 @@ val verifyPodTopology by tasks.registering {
             }
         }
 
+        // Argo sync wave — 게이트웨이는 **맨 마지막**이어야 한다.
+        // 라우트는 목적지가 이미 있을 때만 유효한데, 게이트웨이가 백엔드보다 먼저 갱신되면
+        // 새 경로를 아는 게이트웨이가 아직 옛 이미지인 백엔드를 가리키는 창이 매 배포마다 생긴다.
+        // 웨이브가 아예 없으면 wave 0 — 인프라 StatefulSet 과 같이 떠서 CPU 예산을 넘긴다
+        // (account 가 ADR-0093 ① 이후 계속 그 상태였다).
+        val overlay = rootProject.file("k8s/overlays/oci-arm/kustomization.yaml").readText()
+        val waveOf: Map<String, Int> = Regex(
+            """target:\s*\{kind: Deployment, name: "\^\(([^)]+)\)\$"\}[\s\S]*?sync-wave: "(\d+)"""",
+        ).findAll(overlay).flatMap { m ->
+            val wave = m.groupValues[2].toInt()
+            m.groupValues[1].split("|").map { it to wave }
+        }.toMap()
+
+        val backendWaves = residentPods.filter { it != "gateway" }.mapNotNull { pod ->
+            val w = waveOf[pod]
+            if (w == null) {
+                failures += "$pod 에 argocd sync-wave 가 없다 — wave 0 으로 인프라 StatefulSet 과 " +
+                    "같은 배치에 떠서 웨이브당 JVM 2개 예산 밖이 된다"
+            }
+            w
+        }
+        val gatewayWave = waveOf["gateway"]
+        if (gatewayWave == null) {
+            failures += "gateway 에 argocd sync-wave 가 없다 — 라우트가 백엔드보다 먼저 나간다"
+        } else {
+            val later = backendWaves.filter { it >= gatewayWave }
+            if (later.isNotEmpty()) {
+                failures += "gateway 의 sync-wave($gatewayWave)가 마지막이 아니다 — " +
+                    "웨이브 ${later.distinct().sorted()} 의 백엔드가 게이트웨이보다 늦게 뜬다. " +
+                    "새 라우트가 아직 옛 이미지인 백엔드를 가리키는 창이 생긴다"
+            }
+        }
+
         // 어느 도메인이 어느 파드에 있는지 — 호스트 앱의 scanBasePackages 가 단일 원본이다.
         // 아래 두 검사(CI 테스트 arm · NetworkPolicy 라벨)가 이 지도를 함께 쓴다.
         val hostOfDomain: Map<String, String> = residentPods.mapNotNull { pod ->
