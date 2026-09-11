@@ -83,6 +83,14 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+    # member·wishlist 는 Redis 를 쓰지 않는다 — 코드에 RedisTemplate 사용이 0건이고
+    # kgd.common.redis 도 꺼져 있다. 그런데 common 이 spring-boot-starter-data-redis 를
+    # 끌고 와서 Boot 의 헬스 인디케이터만 살아 있고, 그게 기본값 localhost:6379 로 붙다
+    # 실패해 **전체 health 가 503** 이 됐다(파드는 Ready 라 트래픽에는 영향 없음).
+    # commerce 시절에는 호스트가 redis-1 을 설정해 줘서 가려져 있던 것이라, 폴드가
+    # 드러낸 것이다. 안 쓰는 연결을 새로 여는 대신 인디케이터를 끈다.
+    redis:
+      enabled: false
   metrics:
     tags:
       application: ${spring.application.name}
