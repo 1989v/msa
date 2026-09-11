@@ -10,7 +10,13 @@ import { botInput, newBotMemory, STYLES, MOVES, type BotMemory } from '@amp/shar
 import { STRIKE_HOLD } from './poses.ts';
 
 /** E2E·디버그용 창 훅: 월드 조회와 오토파일럿(봇 AI 가 내 캐릭터를 조종) */
-interface DebugHook { source: MatchSource; lastInput: Input | null; autopilot: boolean }
+interface DebugHook {
+  source: MatchSource; lastInput: Input | null; autopilot: boolean;
+  /** 카메라 위치·요 — 운영에서 「내려다보는 고정 요」를 수치로 확인한다 */
+  camera: () => { x: number; y: number; z: number; yaw: number };
+  /** 리그의 현재(보간된) 포즈 — 타격 때 팔·다리가 뻗었는지 */
+  pose: (id: number) => { nearArm: [number, number]; farArm: [number, number]; nearLeg: [number, number]; reach: number; lean: number } | null;
+}
 declare global { interface Window { __amp?: DebugHook } }
 
 export interface RenderPlayer {
@@ -84,7 +90,11 @@ export class Match {
     this.hud.setRoster(source.roster, source.myId, source.world.teams);
     const me = source.world.players[source.myId];
     if (me) this.renderer.resetCamera(me.yaw);
-    this.debug = { source, lastInput: null, autopilot: new URLSearchParams(location.search).get('autopilot') === '1' };
+    this.debug = {
+      source, lastInput: null, autopilot: new URLSearchParams(location.search).get('autopilot') === '1',
+      camera: () => { const c = this.renderer.camera.position; return { x: c.x, y: c.y, z: c.z, yaw: this.renderer.camYaw }; },
+      pose: (id) => { const r = this.renderer.rigs.get(id); if (!r) return null; const p = r.currentPose; return { nearArm: [...p.nearArm], farArm: [...p.farArm], nearLeg: [...p.nearLeg], reach: p.reach, lean: p.lean }; },
+    };
     window.__amp = this.debug;
     audio.unlock();
     window.addEventListener('keydown', this.onKey);

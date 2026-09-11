@@ -135,6 +135,9 @@ export class CharacterRig {
 
   setShirt(color: string): void { this.shirtMat.color.set(color); }
 
+  /** 지금 그려지는(보간된) 포즈 — 디버그·E2E 가 「팔이 뻗었는가」를 수치로 읽는다 */
+  get currentPose(): Readonly<Pose> { return this.pose; }
+
   /** 스타일 외형: 머리 모양·색, 몸통·머리 크기 */
   setLook(look: StyleLook): void {
     const key = `${look.hair}:${look.hairColor}:${look.torso}:${look.head}`;
