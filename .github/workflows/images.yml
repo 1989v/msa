@@ -296,7 +296,7 @@ jobs:
               sideapp)            TASKS+=" :sideapp:app:test :quant:domain:test :quant:feature:test :chatbot:domain:test :chatbot:feature:test :gifticon:domain:test :gifticon:feature:test" ;;
               content)            TASKS+=" :content:app:test :place:domain:test :place:feature:test :game:domain:test :game:feature:test :ranking:domain:test :ranking:feature:test :blog:domain:test :blog:feature:test" ;;
               atlas)              TASKS+=" :atlas:app:test :code-dictionary:domain:test :code-dictionary:feature:test" ;;
-              commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :product:domain:test :product:feature:test" ;;
+              commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :product:domain:test :product:feature:test :deal:domain:test :deal:feature:test" ;;
               *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
             esac
           done

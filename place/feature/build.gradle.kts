@@ -29,6 +29,10 @@ dependencies {
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)
+    // 스키마 검증 — Flyway 적용 + ddl-auto=validate 로 엔티티/마이그레이션 일치를 확인한다.
+    // 운영은 ddl-auto=none 이라 불일치가 거기서는 절대 안 드러난다.
+    testImplementation(libs.testcontainers.junit)
+    testImplementation(libs.testcontainers.mysql)
     testImplementation(libs.mockk)
 }
 

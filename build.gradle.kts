@@ -664,11 +664,8 @@ val verifyPodTopology by tasks.registering {
             }
         }
 
-        // NetworkPolicy 가 폴드를 따라오는지. 정책이 `kgd.io/host-of: {domain}` 을 달면
-        // 그 정책의 podSelector 이름들이 **그 도메인을 실제로 담은 파드**여야 한다.
-        // 라벨이 안 따라간 정책은 에러 없이 무효가 되거나(열어야 할 것을 안 연다) 조용히 막는다 —
-        // blog 가 content 로 옮겨 갔는데 셸 페치 정책은 atlas 를 가리킨 채라 모든 글이
-        // SPA 없이 나갔다(로그에 warn 한 줄, 응답은 200).
+        // 어느 도메인이 어느 파드에 있는지 — 호스트 앱의 scanBasePackages 가 단일 원본이다.
+        // 아래 두 검사(CI 테스트 arm · NetworkPolicy 라벨)가 이 지도를 함께 쓴다.
         val hostOfDomain: Map<String, String> = residentPods.mapNotNull { pod ->
             rootProject.file("$pod/app/src/main/kotlin").takeIf(File::exists)?.let { root ->
                 root.walkTopDown().filter { it.isFile && it.name.endsWith("Application.kt") }
@@ -677,6 +674,33 @@ val verifyPodTopology by tasks.registering {
             }
         }.flatten().toMap()
 
+        // 폴드된 도메인의 테스트가 CI 에서 **실제로 도는지**. 호스트 `:app:test` 만 부르면
+        // 그 안의 도메인 테스트는 하나도 안 돈다 — `deal` 이 commerce 로 온 뒤 그 상태로 남아
+        // 스키마 검사도 단위 테스트도 CI 에서 한 번도 실행되지 않았다. 초록불은 났다.
+        hostOfDomain.forEach { (pkg, pod) ->
+            // 패키지 이름과 모듈 디렉토리가 다를 수 있다 (com.kgd.codedictionary ↔ code-dictionary)
+            val module = rootProject.projectDir.listFiles()
+                ?.filter { it.isDirectory && File(it, "feature").isDirectory }
+                ?.map { it.name }
+                ?.firstOrNull { it.replace("-", "") == pkg }
+            if (module != null) {
+                val arm = Regex("^\\s+$pod\\)\\s+TASKS\\+=\"([^\"]*)\"", RegexOption.MULTILINE)
+                    .find(workflowText)?.groupValues?.get(1)
+                if (arm == null) {
+                    failures += "images.yml 테스트 게이트에 $pod 전용 arm 이 없다 — 기본 arm 은 " +
+                        "':$pod:domain:test' 를 부르는데 폴드 호스트에는 그 모듈이 없다"
+                } else if (!arm.contains(":$module:feature:test")) {
+                    failures += "images.yml 의 $pod arm 에 ':$module:feature:test' 가 없다 — " +
+                        "$pod 이 $module 을 담는데 그 테스트가 CI 에서 한 번도 안 돈다"
+                }
+            }
+        }
+
+        // NetworkPolicy 가 폴드를 따라오는지. 정책이 `kgd.io/host-of: {domain}` 을 달면
+        // 그 정책의 podSelector 이름들이 **그 도메인을 실제로 담은 파드**여야 한다.
+        // 라벨이 안 따라간 정책은 에러 없이 무효가 되거나(열어야 할 것을 안 연다) 조용히 막는다 —
+        // blog 가 content 로 옮겨 갔는데 셸 페치 정책은 atlas 를 가리킨 채라 모든 글이
+        // SPA 없이 나갔다(로그에 warn 한 줄, 응답은 200).
         rootProject.file("k8s/base/network-policy").listFiles()
             ?.filter { it.isFile && it.extension == "yaml" }
             ?.sortedBy { it.name }
