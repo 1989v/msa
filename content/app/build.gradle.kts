@@ -12,6 +12,7 @@ dependencies {
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation(project(":place:feature"))
     implementation(project(":game:feature")) // co-deploy (content 모듈러 모놀리스)
+    implementation(project(":ranking:feature")) // ADR-0093 ②b: 랭킹 리더보드 폴드 (전용 스키마 ranking_db)
     // 메인 클래스(@SpringBootApplication) 컴파일 + bootJar 구성용 최소 의존
     implementation(libs.spring.boot.starter.web)
 

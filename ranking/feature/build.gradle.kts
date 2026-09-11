@@ -19,6 +19,10 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.kotlin.logging)
+    // ADR-0093 ②b — 전용 스키마(ranking_db). ScopedFlywayMigrator 가 돌린다.
+    implementation("org.flywaydb:flyway-core")
+    runtimeOnly("org.flywaydb:flyway-mysql")
+    runtimeOnly(libs.mysql.connector)
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)

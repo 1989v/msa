@@ -6,13 +6,13 @@ import org.springframework.boot.runApplication
 import org.springframework.scheduling.annotation.EnableScheduling
 
 // ADR-0093: content 모듈러 모놀리스 — 사람에게 보여 주는 것, 서브도메인으로 공개되는 도메인.
-// 지금은 game(게임 플랫폼) + place(관광지·지리 SSOT) 둘이고, ②~③단계에서 스키마를 뗀
-// blog·ranking 이 합류한다. 도메인별 datasource/EMF/TM 은 각 feature 의 설정이 배선한다
+// place(관광지·지리 SSOT) + game(게임 플랫폼) + ranking(리더보드)이고, ③에서 blog 가 합류한다. 도메인별 datasource/EMF/TM 은 각 feature 의 설정이 배선한다
 // (place 가 @Primary, game 은 비-@Primary 를 유지).
 @SpringBootApplication(
     scanBasePackages = [
         "com.kgd.place",
         "com.kgd.game",
+        "com.kgd.ranking",
         "com.kgd.common.exception",
         "com.kgd.common.response",
     ],

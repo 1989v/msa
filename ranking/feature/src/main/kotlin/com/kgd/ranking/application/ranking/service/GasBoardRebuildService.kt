@@ -52,7 +52,7 @@ class GasBoardRebuildService(
      * 중 하나여야 한다. 보드별로 쪼개면 일부만 어제 값인 화면이 생기고, 그 상태는 화면만
      * 봐서는 알 수 없다.
      */
-    @Transactional
+    @Transactional("rankingTransactionManager")
     override fun execute(command: RebuildGasBoardsUseCase.Command): RebuildGasBoardsUseCase.Result {
         val stations = stationRepository.findAll().filter { it.areaCode != null }
         if (stations.isEmpty()) {

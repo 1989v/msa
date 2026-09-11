@@ -22,7 +22,7 @@ class GasStationSyncService(
     private val stationRepository: GasStationRepositoryPort,
 ) : SyncGasStationsUseCase {
 
-    @Transactional
+    @Transactional("rankingTransactionManager")
     override fun execute(command: SyncGasStationsUseCase.Command): GasStationBulkResult {
         val items = command.stations
         if (items.isEmpty()) return GasStationBulkResult(0, 0, 0)

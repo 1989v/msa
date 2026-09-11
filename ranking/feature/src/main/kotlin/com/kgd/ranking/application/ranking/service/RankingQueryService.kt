@@ -27,7 +27,7 @@ import java.time.Instant
  * 외부 호출이 없다 — 전부 우리 DB 읽기라 Tier 1 이다. 오피넷은 수집 CronJob 만 부른다.
  */
 @Service
-@Transactional(readOnly = true)
+@Transactional("rankingTransactionManager", readOnly = true)
 class RankingQueryService(
     private val boardRepository: RankingBoardRepositoryPort,
     private val snapshotRepository: RankingSnapshotRepositoryPort,
