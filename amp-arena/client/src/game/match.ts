@@ -6,7 +6,8 @@ import { InputController } from './input.ts';
 import { SLOT_COLORS } from './rig.ts';
 import { targetPose } from './poses.ts';
 import { audio } from './audio.ts';
-import { botInput, newBotMemory, STYLES, type BotMemory } from '@amp/shared';
+import { botInput, newBotMemory, STYLES, MOVES, type BotMemory } from '@amp/shared';
+import { STRIKE_HOLD } from './poses.ts';
 
 /** E2E·디버그용 창 훅: 월드 조회와 오토파일럿(봇 AI 가 내 캐릭터를 조종) */
 interface DebugHook { source: MatchSource; lastInput: Input | null; autopilot: boolean }
@@ -136,7 +137,10 @@ export class Match {
       rig.root.rotation.y = rp.yaw;
       const attackLike = rp.state === 'attack' || rp.state === 'special' || rp.state === 'dashAttack' || rp.state === 'jumpAttack';
       const frozen = (this.hitstop.get(rp.id) ?? 0) > now;
-      if (!frozen) rig.setPose(targetPose(rp.state, rp.t, rp.move, rp.speed, rp.grounded, rp.holding >= 0), attackLike ? Math.min(1, k * 2.2) : k);
+      // 타격 구간은 보간 없이 그 포즈를 그대로 박는다 — 부드럽게 섞으면 팔·다리가 다 뻗기 전에 돌아와 동작이 뭉개진다
+      const mv = attackLike && rp.move ? MOVES[rp.move] : null;
+      const striking = !!mv && rp.t >= mv.startup && rp.t < mv.startup + mv.active + Math.round(mv.recovery * STRIKE_HOLD);
+      if (!frozen) rig.setPose(targetPose(rp.state, rp.t, rp.move, rp.speed, rp.grounded, rp.holding >= 0), striking ? 1 : attackLike ? Math.min(1, k * 3) : k);
       rig.root.visible = rp.state !== 'dead' || rp.t < 60;
       rig.setOpacity(rp.invuln > 0 ? (Math.floor(now / 90) % 2 ? 0.45 : 0.85) : 1);
       // 착지·대시 먼지
@@ -158,8 +162,7 @@ export class Match {
     this.renderer.updateEffects(dt);
     const turn = this.input.cameraTurn();
     if (meView) {
-      const moving = meView.state === 'walk' || meView.state === 'run' || meView.state === 'roll';
-      this.renderer.updateCamera(meView.x, meView.y, meView.z, meView.yaw, moving, turn, dt);
+      this.renderer.updateCamera(meView.x, meView.y, meView.z, turn, dt);
       if (this.shake > 0) {
         this.shake = Math.max(0, this.shake - dt * 2.2);
         const s = this.shake * 0.35;

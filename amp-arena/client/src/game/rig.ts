@@ -208,34 +208,29 @@ export class CharacterRig {
     this.accGroup.clear();
     this.shieldGroup.clear();
     switch (acc) {
+      // 무기는 전완 축(손 아래 -Y)을 따라 붙는다 — 팔을 앞으로 뻗으면 무기가 같은 선으로 쭉 나간다 (팔에 직각으로 붙이면 뻗을 때 위를 향한다)
       case 'greatsword': {
-        const blade = new THREE.BoxGeometry(0.09, 0.9, 0.03); blade.translate(0, -0.55, 0);
+        const blade = new THREE.BoxGeometry(0.1, 0.95, 0.035); blade.translate(0, -0.62, 0);
         this.accGroup.add(part(blade, lambert(STEEL), 1.08));
-        const guard = new THREE.BoxGeometry(0.26, 0.05, 0.06); guard.translate(0, -0.1, 0);
+        const guard = new THREE.BoxGeometry(0.3, 0.05, 0.07); guard.translate(0, -0.13, 0);
         this.accGroup.add(part(guard, lambert(AMP), 1.1));
-        const grip = new THREE.CylinderGeometry(0.03, 0.03, 0.22, 8); grip.translate(0, 0.06, 0);
+        const grip = new THREE.CylinderGeometry(0.03, 0.03, 0.2, 8); grip.translate(0, -0.02, 0);
         this.accGroup.add(part(grip, lambert(0x7a4f22), 1.15));
-        this.accGroup.rotation.x = -Math.PI / 2; // 전완 방향으로 뻗는다
         break;
       }
       case 'spear': {
-        const shaft = new THREE.CylinderGeometry(0.025, 0.025, 1.9, 8); shaft.translate(0, -0.4, 0);
+        const shaft = new THREE.CylinderGeometry(0.025, 0.025, 1.9, 8); shaft.translate(0, -0.55, 0);
         this.accGroup.add(part(shaft, lambert(WOOD), 1.2));
-        const tip = new THREE.ConeGeometry(0.06, 0.3, 8); tip.translate(0, -1.5, 0);
+        const tip = new THREE.ConeGeometry(0.065, 0.32, 8); tip.rotateX(Math.PI); tip.translate(0, -1.62, 0);
         this.accGroup.add(part(tip, lambert(STEEL), 1.1));
-        this.accGroup.rotation.x = -Math.PI / 2;
         break;
       }
       case 'pistols': {
-        for (const g of [this.accGroup]) {
-          const body = new THREE.BoxGeometry(0.07, 0.1, 0.24); body.translate(0, -0.02, 0.1);
-          g.add(part(body, lambert(0x3b4260), 1.1));
-        }
+        const gun = () => { const body = new THREE.BoxGeometry(0.07, 0.3, 0.09); body.translate(0, -0.14, 0.02); return part(body, lambert(0x3b4260), 1.1); };
+        this.accGroup.add(gun());
         const left = new THREE.Group();
-        const body2 = new THREE.BoxGeometry(0.07, 0.1, 0.24); body2.translate(0, -0.02, 0.1);
-        left.add(part(body2, lambert(0x3b4260), 1.1));
+        left.add(gun());
         left.position.set(0, -0.17, 0);
-        this.lElbow.add(left);
         this.shieldGroup.add(left);
         break;
       }
@@ -279,6 +274,7 @@ export class CharacterRig {
     p.nearLeg = [L(p.nearLeg[0], target.nearLeg[0]), L(p.nearLeg[1], target.nearLeg[1])];
     p.farLeg = [L(p.farLeg[0], target.farLeg[0]), L(p.farLeg[1], target.farLeg[1])];
     p.lift = L(p.lift, target.lift); p.lying = L(p.lying, target.lying); p.spin = target.spin;
+    p.reach = L(p.reach, target.reach);
     this.apply();
   }
 
@@ -296,7 +292,7 @@ export class CharacterRig {
     this.body.position.y = p.lift;
     // 눕힘: 발목 기준으로 뒤로 넘어간다
     this.body.rotation.x = deg(p.lying) + deg(p.spin);
-    this.body.position.z = p.lying > 45 ? -0.2 : 0;
+    this.body.position.z = p.lying > 45 ? -0.2 : p.reach; // 타격 포즈는 몸을 앞으로 내민다
     this.body.position.y += p.lying > 45 ? 0.05 : 0;
     this.shadowBlob.visible = true;
   }

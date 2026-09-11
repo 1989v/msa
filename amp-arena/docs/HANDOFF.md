@@ -54,6 +54,7 @@ node tools/e2e-online-full.mjs $P http://127.0.0.1:5180 <outDir>   # 빠른 대�
 node tools/e2e-mobile.mjs   $P http://127.0.0.1:5180 <outDir>      # 844×390 터치 레이아웃
 node tools/e2e-autopilot.mjs $P http://127.0.0.1:5180 <outDir>     # 봇 AI 가 내 캐릭터 조종 60초 (준 데미지 > 0)
 node tools/e2e-fullmatch.mjs $P http://127.0.0.1:5180 <outDir>     # 연습 2분 완주
+node tools/shot-poses.mjs   $P http://127.0.0.1:5180 <outDir>      # 포즈 갤러리(/poses.html) 게임 각도·옆·앞 스크린샷 — 타격 포즈는 수치가 아니라 그림으로 판정한다
 # 운영 실측 — 페이지 base 는 파일까지(index.html) 준다. /games/arena/ 는 portal-fe SPA 의 카탈로그 상세로 간다
 node tools/e2e-online.mjs $P https://game.1989v.com/games/arena/index.html <outDir>   # Cloudflare + 실제 릴레이
 node tools/e2e-catalog.mjs $P https://game.1989v.com/games/arena <outDir>             # 카탈로그 상세 IFRAME 안에 타이틀이 뜨는지

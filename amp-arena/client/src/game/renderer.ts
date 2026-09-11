@@ -1,6 +1,6 @@
 // Three.js 장면: 맵 · 캐릭터 리그 · 투사체 · 이펙트 · 추적 카메라.
 import * as THREE from 'three';
-import { type MapDef, type Projectile, type Item, lerpAngle, type AccessoryId } from '@amp/shared';
+import { type MapDef, type Projectile, type Item, type AccessoryId } from '@amp/shared';
 import { CharacterRig } from './rig.ts';
 
 function heartTexture(): THREE.CanvasTexture {
@@ -138,6 +138,9 @@ function platformTexture(): THREE.CanvasTexture {
   }, 256);
 }
 
+// 카메라: 캐릭터 뒤 6.6m · 위 8.2m (피치 약 49°) — 내 주변을 내려다보는 시야. 시선은 앞 1.4m 지점.
+const CAM_DIST = 6.6, CAM_HEIGHT = 8.2, CAM_LOOK_AHEAD = 1.2;
+
 export class Renderer {
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
@@ -156,8 +159,6 @@ export class Renderer {
   private container: HTMLElement;
   private map: MapDef | null = null;
   camYaw = 0;
-  private followYaw = 0;
-  private manualYaw = 0;
   private camPos = new THREE.Vector3(0, 6, -10);
   private tmp = new THREE.Vector3();
 
@@ -446,19 +447,12 @@ export class Renderer {
     this.effects = keep;
   }
 
-  /** 추적 카메라: 이동 방향 뒤를 따라가고, Q/E·우클릭·오른스틱은 수동 오프셋 */
-  updateCamera(tx: number, ty: number, tz: number, yaw: number, moving: boolean, turn: { keys: number; dragPx: number; stick: number }, dt: number, snap = false): void {
+  /** 내려다보는 추적 카메라. 요는 고정 — Q/E·우클릭 드래그·오른스틱으로만 돈다. 캐릭터가 도는 방향을 따라가지 않는다(따라가면 어지럽다). */
+  updateCamera(tx: number, ty: number, tz: number, turn: { keys: number; dragPx: number; stick: number }, dt: number, snap = false): void {
     const manual = turn.keys * 1.7 * dt + turn.stick * 2.2 * dt + turn.dragPx * 0.006;
-    if (manual !== 0) this.manualYaw -= manual;
-    if (moving) {
-      const k = 1 - Math.exp(-2.6 * dt);
-      this.followYaw = lerpAngle(this.followYaw, yaw, k);
-      if (manual === 0) this.manualYaw *= Math.exp(-0.9 * dt);
-    }
-    this.camYaw = this.followYaw + this.manualYaw;
-    const dist = 7.2, height = 5.2;
-    const dx = -Math.sin(this.camYaw) * dist, dz = -Math.cos(this.camYaw) * dist;
-    let px = tx + dx, pz = tz + dz, py = ty + height;
+    if (manual !== 0) this.camYaw -= manual;
+    const fx = Math.sin(this.camYaw), fz = Math.cos(this.camYaw); // 카메라가 보는 앞 방향
+    let px = tx - fx * CAM_DIST, pz = tz - fz * CAM_DIST, py = ty + CAM_HEIGHT;
     const map = this.map;
     if (map && map.wallRadius > 0) {
       const r = Math.hypot(px, pz), max = map.wallRadius - 0.6;
@@ -470,11 +464,12 @@ export class Renderer {
     this.camPos.y += (py - this.camPos.y) * k;
     this.camPos.z += (pz - this.camPos.z) * k;
     this.camera.position.copy(this.camPos);
-    this.camera.lookAt(tx, ty + 1.1, tz);
+    // 내 캐릭터를 화면 중앙보다 조금 아래에 두어 앞쪽(카메라 기준 위쪽)이 더 보이게 한다
+    this.camera.lookAt(tx + fx * CAM_LOOK_AHEAD, ty + 0.6, tz + fz * CAM_LOOK_AHEAD);
   }
 
   resetCamera(yaw: number): void {
-    this.followYaw = yaw; this.manualYaw = 0; this.camYaw = yaw;
+    this.camYaw = yaw;
   }
 
   /** 월드 좌표 → 화면 px */
