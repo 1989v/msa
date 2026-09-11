@@ -19,7 +19,7 @@ export class LocalSource implements MatchSource {
   constructor(o: LocalOptions) {
     this.world = new World({ mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, seed: (Math.random() * 0xffffffff) >>> 0 });
     const me = this.world.addPlayer(0, o.name, 0, o.acc, false, o.style);
-    this.roster.push({ id: 0, name: me.name, team: me.team, acc: o.acc, style: o.style, bot: false, sid: 'local' });
+    this.roster.push({ id: 0, name: me.name, team: me.team, acc: o.acc, style: o.style, bot: false });
     const n = Math.max(1, Math.min(7, o.bots));
     for (let i = 1; i <= n; i++) {
       const acc = ACCESSORY_IDS[(i * 2) % ACCESSORY_IDS.length];
@@ -27,7 +27,7 @@ export class LocalSource implements MatchSource {
       const team = this.world.teams ? i % 2 : 0;
       const p = this.world.addPlayer(i, BOT_NAMES[i - 1], team, acc, true, style);
       this.mems[i] = newBotMemory(this.world.rng);
-      this.roster.push({ id: i, name: p.name, team: p.team, acc, style, bot: true, sid: '' });
+      this.roster.push({ id: i, name: p.name, team: p.team, acc, style, bot: true });
     }
   }
 

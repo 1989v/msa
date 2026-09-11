@@ -1,7 +1,7 @@
 // 시뮬레이션 상수 — 기획서(docs/GDD.md) §5·§6·§10 의 숫자가 여기 한 곳에 있다.
 export const TICK_RATE = 60;
 export const DT = 1 / TICK_RATE;
-export const SNAPSHOT_EVERY = 3; // 20Hz
+export const SNAPSHOT_EVERY = 6; // 10Hz — 릴레이 상한(40 msg/s) 안에서 게스트 입력 20Hz 와 같이 쓴다
 
 export const GRAVITY = 18;
 export const MAX_FALL_SPEED = 30;

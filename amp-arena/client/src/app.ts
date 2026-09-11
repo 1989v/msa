@@ -1,7 +1,7 @@
-// 화면 흐름: 타이틀 → (연습 매치) | (로비 → 대기실 → 온라인 매치 → 결과 → 대기실)
-import { ACCESSORIES, ACCESSORY_IDS, STYLES, STYLE_IDS, MODES, MODE_IDS, MAPS, MAP_IDS, type RoomState, type RoomSummary, type AccessoryId, type StyleId, type MapId, type ModeId, type ServerMsg } from '@amp/shared';
-import { NetClient } from './net/client.ts';
-import { NetSource } from './net/netsource.ts';
+// 화면 흐름: 타이틀 → (연습 매치) | (온라인 → 대기실 → 매치 → 결과 → 대기실(코드 방) / 온라인(빠른 대전))
+import { ACCESSORIES, ACCESSORY_IDS, STYLES, STYLE_IDS, MODES, MODE_IDS, MAPS, MAP_IDS, type AccessoryId, type StyleId, type MapId, type ModeId, type RoomSettings } from '@amp/shared';
+import { Online, lobbyCloseSec } from './net/online.ts';
+import type { GuestSource } from './net/guestsource.ts';
 import { LocalSource } from './local/localsource.ts';
 import { Match } from './game/match.ts';
 import { icon, boltLogo, ACC_ICON } from './ui/icons.ts';
@@ -30,23 +30,20 @@ function avatar(color: string, size = 84): string {
 }
 
 const SLOT_COLORS = ['#ff6a2a', '#4488ff', '#4ade80', '#ffb020', '#a78bfa', '#33d1ff', '#f472b6', '#f5f2ea'];
+const SECONDS_OPTS: [string, string][] = [['120', '2분'], ['180', '3분'], ['300', '5분']];
 
 export class App {
   private root: HTMLElement;
   private nick: string;
   private acc: AccessoryId = 'none';
   private style: StyleId = 'fighter';
-  private net: NetClient | null = null;
-  private sid = '';
+  private team = -1;
+  private settings: RoomSettings = { map: 'colosseum', mode: 'ffa_dm', seconds: 180, fillBots: true };
+  private online: Online | null = null;
   private match: Match | null = null;
-  private room: RoomState | null = null;
-  private rooms: RoomSummary[] = [];
-  private online = 0;
-  private chat: { from: string; text: string; system?: boolean }[] = [];
   private screen: HTMLElement | null = null;
   private view: 'title' | 'lobby' | 'room' | 'match' = 'title';
-  private creating = false;
-  private matchEnded = false;
+  private countdownTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(root: HTMLElement) {
     this.root = root;
@@ -80,6 +77,7 @@ export class App {
   showTitle(): void {
     this.view = 'title';
     this.disposeMatch();
+    this.stopCountdown();
     const el = this.mount(`
       <div class="title-bg"></div>
       <div class="col" style="position:relative;align-items:center;gap:14px;width:100%">
@@ -103,7 +101,7 @@ export class App {
           </div>
           <div class="row">
             <button class="btn primary practice" style="flex:1">연습 · 봇과 대전</button>
-            <button class="btn go-lobby" style="flex:1">온라인 로비</button>
+            <button class="btn go-lobby" style="flex:1">온라인 대전</button>
           </div>
         </div>
       </div>
@@ -122,7 +120,7 @@ export class App {
         seconds: Number((el.querySelector('.secs') as HTMLSelectElement).value),
       });
     };
-    (el.querySelector('.go-lobby') as HTMLButtonElement).onclick = () => { if (readNick()) this.connectOnline(); };
+    (el.querySelector('.go-lobby') as HTMLButtonElement).onclick = () => { if (readNick()) void this.connectOnline(); };
     nickEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') (el.querySelector('.practice') as HTMLButtonElement).click(); });
   }
 
@@ -146,15 +144,15 @@ export class App {
 
   private startPractice(o: { mapId: MapId; modeId: ModeId; bots: number; seconds: number }): void {
     const src = new LocalSource({ name: this.nick, acc: this.acc, style: this.style, mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, bots: o.bots });
-    this.runMatch(src, { onExit: () => this.showTitle(), onAgain: () => this.startPractice(o) });
+    this.runMatch(src, { onExit: () => this.showTitle(), onAgain: () => this.startPractice(o), exitLabel: '타이틀로' });
   }
 
-  private runMatch(src: LocalSource | NetSource, opts: { onExit: () => void; onAgain?: () => void }): void {
+  private runMatch(src: LocalSource | GuestSource, opts: { onExit: () => void; onAgain?: () => void; exitLabel: string }): void {
     this.disposeMatch();
+    this.stopCountdown();
     this.screen?.remove();
     this.screen = null;
     this.view = 'match';
-    this.matchEnded = false;
     this.match = new Match(this.root, src, opts);
   }
 
@@ -162,166 +160,163 @@ export class App {
     if (this.match) { this.match.dispose(); this.match = null; }
   }
 
+  private stopCountdown(): void {
+    if (this.countdownTimer) clearInterval(this.countdownTimer);
+    this.countdownTimer = null;
+  }
+
   // ---------------- 온라인 ----------------
   private async connectOnline(): Promise<void> {
-    if (this.net?.connected) { this.showLobby(); return; }
-    const net = new NetClient();
-    this.net = net;
-    try { await net.connect(); } catch (e) { this.toast((e as Error).message); this.net = null; return; }
-    net.onClose = () => { if (this.view !== 'title') { this.toast('서버 연결이 끊겼습니다'); this.net = null; this.showTitle(); } };
-    net.on('welcome', (m) => { this.sid = m.sid; this.nick = m.name; });
-    net.on('rooms', (m) => { this.rooms = m.rooms; this.online = m.online; if (this.view === 'lobby') this.showLobby(); });
-    net.on('room', (m) => this.onRoom(m.room));
-    net.on('left', () => { this.room = null; this.chat = []; this.disposeMatch(); this.showLobby(); net.send({ t: 'list' }); });
-    net.on('chat', (m) => { this.chat.push(m); if (this.chat.length > 40) this.chat.shift(); this.refreshChat(); });
-    net.on('err', (m) => this.toast(m.msg));
-    net.on('start', (m) => this.onStart(m));
-    net.send({ t: 'hello', name: this.nick });
-    this.chat = [];
+    if (this.online?.connected) { this.showLobby(); return; }
+    const online = new Online(this.nick, { acc: this.acc, style: this.style, team: this.team }, this.settings, {
+      onState: () => { if (this.view === 'room') this.showRoom(); },
+      onMatch: (src) => this.onMatch(src),
+      onRoundEnd: () => { this.disposeMatch(); this.showRoom(); },
+      onToast: (m) => this.toast(m),
+      onDisconnect: () => { this.online = null; if (this.view !== 'title') this.showTitle(); },
+    });
+    this.online = online;
+    try { await online.connect(); } catch (e) { this.toast((e as Error).message); this.online = null; return; }
     this.showLobby();
   }
 
-  private onRoom(room: RoomState): void {
-    const prev = this.room;
-    this.room = room;
-    if (this.view === 'match') {
-      // 결과 화면이 끝나 방이 대기 상태로 돌아오면 대기실로
-      if (room.phase === 'wait' && prev && prev.phase !== 'wait') { this.disposeMatch(); this.showRoom(); }
-      return;
-    }
-    this.showRoom();
-  }
-
-  private onStart(m: Extract<ServerMsg, { t: 'start' }>): void {
-    if (!this.net) return;
-    const src = new NetSource(this.net, m);
-    this.runMatch(src, { onExit: () => { this.disposeMatch(); this.showRoom(); } });
+  private onMatch(src: GuestSource): void {
+    const online = this.online;
+    if (!online) return;
+    const party = online.state.party;
+    this.runMatch(src, {
+      exitLabel: party ? '대기실로' : '로비로',
+      onExit: () => {
+        // 코드 방: done → roundEnded 가 오면 대기실. 빠른 대전: 방을 나가 로비로
+        online.finishRound();
+        if (!party) { this.disposeMatch(); this.showLobby(); }
+        else { this.disposeMatch(); this.showRoom(); }
+      },
+    });
   }
 
   private topbar(mid: string, right: string): string {
     return `<div class="topbar"><div class="row" style="gap:18px">${boltLogo(30)}${mid}</div><div class="row">${right}</div></div>`;
   }
 
-  private chatPanel(placeholder: string): string {
-    return `<div class="panel chat"><div class="log"></div><div class="row"><input class="field chat-in" style="flex:1;height:36px;font-size:13px" maxlength="120" placeholder="${placeholder}"><button class="btn chat-send" style="height:36px;font-size:13px">보내기</button></div></div>`;
+  private settingsForm(cls: string, s: RoomSettings, enabled: boolean): string {
+    const sel = (c: string, opts: [string, string][], cur: string) => `<select class="field ${c}" style="height:38px;font-size:13px" ${enabled ? '' : 'disabled'}>${opts.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+    return `<div class="${cls} col" style="gap:6px">
+      <div class="kv"><span class="muted">모드</span>${sel('rmode', MODE_IDS.map((m) => [m, MODES[m].name]), s.mode)}</div>
+      <div class="kv"><span class="muted">맵</span>${sel('rmap', MAP_IDS.map((m) => [m, MAPS[m].name]), s.map)}</div>
+      <div class="kv"><span class="muted">시간</span>${sel('rsec', SECONDS_OPTS, String(s.seconds))}</div>
+      <div class="kv"><span class="muted">빈 자리</span>${sel('rbots', [['1', '봇으로 채움'], ['0', '비워 둠']], s.fillBots ? '1' : '0')}</div>
+    </div>`;
   }
 
-  private wireChat(el: HTMLElement): void {
-    const input = el.querySelector('.chat-in') as HTMLInputElement | null;
-    const send = el.querySelector('.chat-send') as HTMLButtonElement | null;
-    if (!input || !send) return;
-    const go = () => { const t = input.value.trim(); if (!t) return; this.net?.send({ t: 'chat', text: t }); input.value = ''; };
-    send.onclick = go;
-    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-    this.refreshChat();
-  }
-
-  private refreshChat(): void {
-    const log = this.screen?.querySelector('.chat .log') as HTMLElement | null;
-    if (!log) return;
-    log.innerHTML = this.chat.map((c) => `<div class="${c.system ? 'sys' : ''}"><b>${esc(c.from)}</b><span class="muted"> : </span>${esc(c.text)}</div>`).join('');
-    log.scrollTop = log.scrollHeight;
+  private readSettings(el: HTMLElement): RoomSettings {
+    return {
+      mode: (el.querySelector('.rmode') as HTMLSelectElement).value as ModeId,
+      map: (el.querySelector('.rmap') as HTMLSelectElement).value as MapId,
+      seconds: Number((el.querySelector('.rsec') as HTMLSelectElement).value),
+      fillBots: (el.querySelector('.rbots') as HTMLSelectElement).value === '1',
+    };
   }
 
   showLobby(): void {
     this.view = 'lobby';
-    const wait = this.rooms.filter((r) => r.phase === 'wait').length;
-    const rows = this.rooms.map((r) => `<div class="room-row" data-id="${r.id}" data-locked="${r.locked ? 1 : 0}">
-        <span class="num muted">#${r.id}</span>
-        <span class="row" style="gap:6px;font-weight:700">${r.locked ? icon('lock', 14, 'var(--amp)') : ''}${esc(r.name)}</span>
-        <span class="muted" style="font-size:12px">${MODES[r.mode].name}</span>
-        <span class="muted" style="font-size:12px">${MAPS[r.map].name}</span>
-        <span class="num" style="font-weight:700">${r.count} / ${r.max}</span>
-        <span class="chip ${r.phase === 'wait' ? 'green' : 'red'}" style="font-size:11px">${r.phase === 'wait' ? '대기중' : '게임중'}</span>
-      </div>`).join('');
+    this.stopCountdown();
     const el = this.mount(`
-      ${this.topbar(`<span class="chip amp">자유 1</span>`, `<span class="chip">접속 ${this.online}</span><span class="chip amp">${esc(this.nick)}</span>`)}
+      ${this.topbar(`<span class="chip amp">온라인 대전</span>`, `<span class="chip amp">${esc(this.nick)}</span>`)}
       <div class="lobby" style="grid-template-columns:240px minmax(0, 1fr)">
         <div class="panel me col" style="align-content:start">
           <div style="display:flex;justify-content:center">${avatar(SLOT_COLORS[0], 96)}</div>
           <div class="display" style="font-size:24px;text-align:center">${esc(this.nick)}</div>
-          <div class="row" style="justify-content:center"><span class="chip">${ACCESSORIES[this.acc].name} 선호</span></div>
-          <button class="btn primary create">${icon('plus', 18, '#1a1f3a', 2.4)}방 만들기</button>
-          <button class="btn refresh">${icon('refresh', 18)}새로고침</button>
+          <div class="row" style="justify-content:center;flex-wrap:wrap;gap:6px"><span class="chip">${STYLES[this.style].name}</span><span class="chip">${ACCESSORIES[this.acc].name}</span></div>
+          <span class="label">매치 설정 · 내가 방장일 때 적용</span>
+          ${this.settingsForm('settings-form', this.settings, true)}
           <button class="btn ghost back">${icon('door', 18)}타이틀로</button>
-          <div class="create-form col" style="display:none">
-            <span class="label">새 방</span>
-            <input class="field rname" maxlength="24" placeholder="방 이름" value="${esc(this.nick)}의 방" style="height:38px;font-size:13px">
-            <select class="field rmode" style="height:38px;font-size:13px">${MODE_IDS.map((m) => `<option value="${m}" ${m === 'team_dm' ? 'selected' : ''}>${MODES[m].name}</option>`).join('')}</select>
-            <select class="field rmap" style="height:38px;font-size:13px">${MAP_IDS.map((m) => `<option value="${m}">${MAPS[m].name}</option>`).join('')}</select>
-            <select class="field rsec" style="height:38px;font-size:13px"><option value="120">2분</option><option value="180" selected>3분</option><option value="300">5분</option></select>
-            <input class="field rpass" maxlength="16" placeholder="비밀번호 (선택)" style="height:38px;font-size:13px">
-            <label class="row" style="font-size:13px"><input type="checkbox" class="rbots" checked> 빈 자리는 봇으로 채움</label>
-            <button class="btn primary rgo">만들기</button>
-          </div>
         </div>
         <div class="center">
-          <div class="panel col" style="flex:1;min-height:0">
-            <div class="row" style="justify-content:space-between"><span class="label">방 목록 · 자유 1 채널</span><div class="row" style="gap:6px"><span class="chip" style="color:var(--green)">대기중 ${wait}</span><span class="chip" style="color:var(--red)">게임중 ${this.rooms.length - wait}</span></div></div>
-            <div class="room-row head"><span>번호</span><span>방 이름</span><span>모드</span><span>맵</span><span>인원</span><span>상태</span></div>
-            <div class="rooms">${rows || `<div class="muted" style="padding:24px;text-align:center">방이 없습니다. 첫 방을 만들어 보세요.</div>`}</div>
+          <div class="panel col" style="gap:14px">
+            <div class="row" style="justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap">
+              <div class="col" style="gap:4px;flex:1;min-width:220px"><span class="display" style="font-size:20px">빠른 대전</span><span class="muted" style="font-size:13px">8인 자동 매칭. 사람이 다 모이거나 30초가 지나면 시작하고, 빈 자리는 봇이 채웁니다.</span></div>
+              <button class="btn primary bigbtn quick" style="min-width:180px">${icon('bolt', 22, '#1a1f3a', 2.4)}빠른 대전</button>
+            </div>
           </div>
-          ${this.chatPanel('채널 대화 · Enter')}
+          <div class="panel col" style="gap:14px">
+            <div class="row" style="justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap">
+              <div class="col" style="gap:4px;flex:1;min-width:220px"><span class="display" style="font-size:20px">친구와 · 코드 방</span><span class="muted" style="font-size:13px">방을 만들면 6자리 코드가 나옵니다. 코드를 받은 사람이 들어오면 방장이 시작합니다.</span></div>
+              <button class="btn create" style="min-width:180px">${icon('plus', 18, 'var(--ink)', 2.4)}방 만들기</button>
+            </div>
+            <div class="row" style="gap:8px;flex-wrap:wrap">
+              <input class="field code-in" maxlength="6" placeholder="방 코드 6자리" style="flex:1;min-width:160px;height:42px;text-transform:uppercase;letter-spacing:3px;font-weight:800">
+              <button class="btn join-code" style="height:42px">코드로 입장</button>
+            </div>
+          </div>
+          <div class="panel muted" style="font-size:12px;line-height:1.6">방장(가장 먼저 들어온 사람)의 화면이 판정을 맡고, 방장이 나가면 다음 사람이 이어받습니다. 방장의 입력에도 게스트 평균만큼 지연을 넣어 조건을 맞춥니다.</div>
         </div>
       </div>`);
-    const form = el.querySelector('.create-form') as HTMLElement;
-    (el.querySelector('.create') as HTMLButtonElement).onclick = () => { this.creating = !this.creating; form.style.display = this.creating ? '' : 'none'; };
-    if (this.creating) form.style.display = '';
-    (el.querySelector('.rgo') as HTMLButtonElement).onclick = () => {
-      this.net?.send({
-        t: 'create', name: (el.querySelector('.rname') as HTMLInputElement).value, mode: (el.querySelector('.rmode') as HTMLSelectElement).value as ModeId,
-        map: (el.querySelector('.rmap') as HTMLSelectElement).value as MapId, seconds: Number((el.querySelector('.rsec') as HTMLSelectElement).value),
-        pass: (el.querySelector('.rpass') as HTMLInputElement).value || undefined, fillBots: (el.querySelector('.rbots') as HTMLInputElement).checked,
-      });
-      this.creating = false;
+    const online = this.online!;
+    const applySettings = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); };
+    for (const c of ['.rmode', '.rmap', '.rsec', '.rbots']) (el.querySelector(c) as HTMLSelectElement).onchange = applySettings;
+    const busy = (b: HTMLButtonElement, on: boolean) => { b.disabled = on; };
+    (el.querySelector('.quick') as HTMLButtonElement).onclick = async (ev) => {
+      const b = ev.currentTarget as HTMLButtonElement; busy(b, true); applySettings();
+      const ok = await online.quick(); busy(b, false);
+      if (ok) this.showRoom();
     };
-    (el.querySelector('.refresh') as HTMLButtonElement).onclick = () => this.net?.send({ t: 'list' });
-    (el.querySelector('.back') as HTMLButtonElement).onclick = () => { this.net?.close(); this.net = null; this.showTitle(); };
-    el.querySelectorAll<HTMLElement>('.room-row[data-id]').forEach((row) => {
-      row.onclick = () => {
-        const pass = row.dataset.locked === '1' ? window.prompt('비밀번호') ?? '' : undefined;
-        this.net?.send({ t: 'join', roomId: row.dataset.id!, pass });
-      };
-    });
-    this.wireChat(el);
+    (el.querySelector('.create') as HTMLButtonElement).onclick = async (ev) => {
+      const b = ev.currentTarget as HTMLButtonElement; busy(b, true); applySettings();
+      const ok = await online.create(); busy(b, false);
+      if (ok) this.showRoom();
+    };
+    const codeIn = el.querySelector('.code-in') as HTMLInputElement;
+    const joinCode = async () => {
+      const code = codeIn.value.trim().toUpperCase();
+      if (code.length !== 6) { this.toast('코드는 6자리입니다'); return; }
+      applySettings();
+      const ok = await online.joinCode(code);
+      if (ok) this.showRoom();
+    };
+    (el.querySelector('.join-code') as HTMLButtonElement).onclick = joinCode;
+    codeIn.addEventListener('keydown', (e) => { if (e.key === 'Enter') void joinCode(); });
+    (el.querySelector('.back') as HTMLButtonElement).onclick = () => { online.close(); this.online = null; this.showTitle(); };
   }
 
   showRoom(): void {
-    const room = this.room;
-    if (!room) { this.showLobby(); return; }
+    const online = this.online;
+    if (!online || !online.inRoom) { this.showLobby(); return; }
+    const st = online.state;
     this.view = 'room';
-    const isHost = room.host === this.sid;
-    const teams = MODES[room.mode].teams;
-    const mySlot = room.slots.find((s) => s && s.sid === this.sid);
-    const slots = room.slots.map((s, i) => {
-      if (!s) return `<div class="slot empty">${icon('plus', 26, 'var(--dim)')}<span style="font-size:12px;font-weight:700">빈 자리${room.fillBots ? ' · 봇으로 채움' : ''}</span></div>`;
-      const me = s.sid === this.sid;
-      const status = s.sid === room.host ? '<span class="chip amp">방장</span>' : s.bot ? '<span class="chip">봇</span>' : s.ready ? '<span class="chip green">준비</span>' : '<span class="chip">대기</span>';
-      return `<div class="slot ${teams ? (s.team === 0 ? 'red' : 'blue') : ''}">
-        <span class="tag" style="color:${teams ? (s.team === 0 ? 'var(--red)' : 'var(--blue)') : 'var(--dim)'}">${teams ? (s.team === 0 ? '레드' : '블루') : '슬롯'} ${i + 1}</span>
-        ${s.sid === room.host ? `<span class="crown">${icon('crown', 18, 'var(--amp)', 2.4)}</span>` : ''}
+    const host = st.host;
+    const hostSettings = st.seats[host]?.settings ?? this.settings;
+    const teams = MODES[hostSettings.mode].teams;
+    const isHost = online.isHost;
+    const chatInput = (this.screen?.querySelector('.chat-in') as HTMLInputElement | null)?.value ?? '';
+    const slots = st.seats.map((s, i) => {
+      if (!s) return `<div class="slot empty">${icon('plus', 26, 'var(--dim)')}<span style="font-size:12px;font-weight:700">빈 자리${hostSettings.fillBots ? ' · 봇으로 채움' : ''}</span></div>`;
+      const me = i === st.mySeat;
+      const pick = s.pick;
+      const team = teams ? (pick && pick.team >= 0 ? pick.team : -1) : -1;
+      const status = i === host ? '<span class="chip amp">방장</span>' : '<span class="chip green">참가</span>';
+      return `<div class="slot ${team === 0 ? 'red' : team === 1 ? 'blue' : ''}">
+        <span class="tag" style="color:${team === 0 ? 'var(--red)' : team === 1 ? 'var(--blue)' : 'var(--dim)'}">${team === 0 ? '레드' : team === 1 ? '블루' : teams ? '자동' : '슬롯'} ${i + 1}</span>
+        ${i === host ? `<span class="crown">${icon('crown', 18, 'var(--amp)', 2.4)}</span>` : ''}
         ${avatar(SLOT_COLORS[i], 84)}
         <div style="font-size:14px;font-weight:800;${me ? 'color:var(--amp)' : ''}">${esc(s.name)}</div>
-        <div class="row" style="gap:6px">${status}<span class="chip" style="font-size:11px">${STYLES[s.style ?? 'fighter'].name} · ${ACCESSORIES[s.acc].name}</span></div>
+        <div class="row" style="gap:6px">${status}<span class="chip" style="font-size:11px">${pick ? `${STYLES[pick.style].name} · ${ACCESSORIES[pick.acc].name}` : '선택 중'}</span></div>
       </div>`;
     }).join('');
-    const sel = (cls: string, opts: [string, string][], cur: string) => `<select class="field ${cls}" ${isHost ? '' : 'disabled'}>${opts.map(([v, l]) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
-    const humans = room.slots.filter((s) => s && !s.bot);
-    const readyCount = humans.filter((s) => s!.ready || s!.sid === room.host).length;
+    const count = st.seats.filter((s) => s).length;
+    const head = st.party
+      ? `<span style="font-size:16px;font-weight:800">코드 방</span><span class="chip amp code" style="letter-spacing:3px;font-size:15px">${esc(st.code)}</span><button class="btn ghost copy" style="height:30px;font-size:12px">코드 복사</button>`
+      : `<span style="font-size:16px;font-weight:800">빠른 대전</span><span class="chip countdown">${st.started ? '시작 중' : `${lobbyCloseSec(st.joinedAt)}초 뒤 자동 시작`}</span>`;
     const el = this.mount(`
-      ${this.topbar(`<span style="font-size:16px;font-weight:800">${esc(room.name)}</span><span class="num muted">#${room.id}</span><span class="chip">${MODES[room.mode].name} · ${MAPS[room.map].name} · ${room.seconds / 60}분</span>`,
-        `${teams ? `<span class="chip">레드 ${room.slots.filter((s) => s && s.team === 0).length} : ${room.slots.filter((s) => s && s.team === 1).length} 블루</span>` : ''}<button class="btn ghost leave" style="height:34px;font-size:13px">${icon('door', 16)}나가기</button>`)}
+      ${this.topbar(`${head}<span class="chip">${MODES[hostSettings.mode].name} · ${MAPS[hostSettings.map].name} · ${hostSettings.seconds / 60}분</span>`,
+        `<span class="chip">${count} / 8</span><button class="btn ghost leave" style="height:34px;font-size:13px">${icon('door', 16)}나가기</button>`)}
       <div class="room">
         <div class="top">
           <div class="slots">${slots}</div>
           <div class="side">
             <div class="panel settings col" style="gap:6px">
-              <div class="row" style="justify-content:space-between"><span class="label">매치 설정</span><span class="chip" style="font-size:11px">${isHost ? '방장' : '방장만 변경'}</span></div>
-              <div class="kv"><span class="muted">모드</span>${sel('smode', MODE_IDS.map((m) => [m, MODES[m].name]), room.mode)}</div>
-              <div class="kv"><span class="muted">맵</span>${sel('smap', MAP_IDS.map((m) => [m, MAPS[m].name]), room.map)}</div>
-              <div class="kv"><span class="muted">시간</span>${sel('ssec', [['120', '2분'], ['180', '3분'], ['300', '5분']], String(room.seconds))}</div>
-              <div class="kv"><span class="muted">빈 자리</span>${sel('sbots', [['1', '봇으로 채움'], ['0', '비워 둠']], room.fillBots ? '1' : '0')}</div>
-              <div class="kv"><span class="muted">비밀번호</span><b>${room.locked ? '있음' : '없음'}</b></div>
+              <div class="row" style="justify-content:space-between"><span class="label">매치 설정</span><span class="chip" style="font-size:11px">${isHost ? '방장 · 내가 정한다' : '방장이 정한다'}</span></div>
+              ${this.settingsForm('settings-form', isHost ? this.settings : hostSettings, isHost)}
             </div>
             <div class="panel col">
               <div class="row" style="justify-content:space-between"><span class="label">스타일 · 악세서리</span><span class="chip" style="font-size:11px">매치 중 교체 불가</span></div>
@@ -333,30 +328,39 @@ export class App {
           </div>
         </div>
         <div class="bottom">
-          ${this.chatPanel('대기실 대화 · Enter')}
+          <div class="panel chat"><div class="log"></div><div class="row"><input class="field chat-in" style="flex:1;height:36px;font-size:13px" maxlength="120" placeholder="대기실 대화 · Enter" value="${esc(chatInput)}"><button class="btn chat-send" style="height:36px;font-size:13px">보내기</button></div></div>
           <button class="btn team" ${teams ? '' : 'disabled'}>${icon('refresh', 18)}팀 바꾸기</button>
-          ${isHost
-            ? `<button class="btn primary bigbtn start" ${room.phase !== 'wait' ? 'disabled' : ''}>${icon('bolt', 22, '#1a1f3a', 2.4)}게임 시작 · ${readyCount}/${humans.length} 준비</button>`
-            : `<button class="btn ${mySlot?.ready ? '' : 'primary'} bigbtn ready" ${room.phase !== 'wait' ? 'disabled' : ''}>${mySlot?.ready ? '준비 취소' : '준비'}</button>`}
+          ${st.party
+            ? (isHost
+              ? `<button class="btn primary bigbtn start" ${st.started ? 'disabled' : ''}>${icon('bolt', 22, '#1a1f3a', 2.4)}게임 시작 · ${count}명${hostSettings.fillBots && count < 8 ? ' + 봇' : ''}</button>`
+              : `<button class="btn bigbtn" disabled>방장이 시작하면 들어갑니다</button>`)
+            : `<button class="btn bigbtn" disabled>${st.started ? '매치 준비 중' : '자동 시작 대기'}</button>`}
         </div>
       </div>`);
-    this.renderAccPicker(el.querySelector('.accs') as HTMLElement, el.querySelector('.acc-desc') as HTMLElement, (a) => { localStorage.setItem('amp.acc', a); this.net?.send({ t: 'acc', acc: a }); }, room.phase === 'wait');
-    if (mySlot && mySlot.acc !== this.acc && room.phase === 'wait') this.net?.send({ t: 'acc', acc: this.acc });
-    this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (st) => { localStorage.setItem('amp.style', st); this.net?.send({ t: 'style', style: st }); }, room.phase === 'wait');
-    if (mySlot && mySlot.style !== this.style && room.phase === 'wait') this.net?.send({ t: 'style', style: this.style });
-    (el.querySelector('.leave') as HTMLButtonElement).onclick = () => this.net?.send({ t: 'leave' });
-    (el.querySelector('.team') as HTMLButtonElement).onclick = () => { if (mySlot) this.net?.send({ t: 'team', team: mySlot.team === 0 ? 1 : 0 }); };
+    this.renderAccPicker(el.querySelector('.accs') as HTMLElement, el.querySelector('.acc-desc') as HTMLElement, (a) => { localStorage.setItem('amp.acc', a); online.setPick({ acc: a }); }, !st.started);
+    this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (s) => { localStorage.setItem('amp.style', s); online.setPick({ style: s }); }, !st.started);
+    (el.querySelector('.leave') as HTMLButtonElement).onclick = () => { online.leave(); this.showLobby(); };
+    (el.querySelector('.team') as HTMLButtonElement).onclick = () => { this.team = this.team === 0 ? 1 : 0; online.setPick({ team: this.team }); };
     const start = el.querySelector('.start') as HTMLButtonElement | null;
-    if (start) start.onclick = () => this.net?.send({ t: 'start' });
-    const ready = el.querySelector('.ready') as HTMLButtonElement | null;
-    if (ready) ready.onclick = () => this.net?.send({ t: 'ready', ready: !mySlot?.ready });
-    if (isHost) {
-      const sendSettings = () => this.net?.send({
-        t: 'settings', mode: (el.querySelector('.smode') as HTMLSelectElement).value as ModeId, map: (el.querySelector('.smap') as HTMLSelectElement).value as MapId,
-        seconds: Number((el.querySelector('.ssec') as HTMLSelectElement).value), fillBots: (el.querySelector('.sbots') as HTMLSelectElement).value === '1',
-      });
-      for (const c of ['.smode', '.smap', '.ssec', '.sbots']) (el.querySelector(c) as HTMLSelectElement).onchange = sendSettings;
+    if (start) start.onclick = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); online.start(); };
+    const copy = el.querySelector('.copy') as HTMLButtonElement | null;
+    if (copy) copy.onclick = () => { void navigator.clipboard?.writeText(st.code).then(() => this.toast('코드를 복사했습니다'), () => this.toast(st.code)); };
+    if (isHost) for (const c of ['.rmode', '.rmap', '.rsec', '.rbots']) (el.querySelector(c) as HTMLSelectElement).onchange = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); };
+    // 채팅
+    const log = el.querySelector('.chat .log') as HTMLElement;
+    log.innerHTML = st.chat.map((c) => `<div class="${c.system ? 'sys' : ''}"><b>${esc(c.from)}</b><span class="muted"> : </span>${esc(c.text)}</div>`).join('');
+    log.scrollTop = log.scrollHeight;
+    const input = el.querySelector('.chat-in') as HTMLInputElement;
+    const go = () => { const t = input.value.trim(); if (!t) return; input.value = ''; online.chat(t); };
+    (el.querySelector('.chat-send') as HTMLButtonElement).onclick = go;
+    input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+    // 빠른 대전 자동 시작 카운트다운
+    this.stopCountdown();
+    if (!st.party && !st.started) {
+      this.countdownTimer = setInterval(() => {
+        const c = this.screen?.querySelector('.countdown');
+        if (c && this.view === 'room') c.textContent = `${lobbyCloseSec(st.joinedAt)}초 뒤 자동 시작`;
+      }, 1000);
     }
-    this.wireChat(el);
   }
 }

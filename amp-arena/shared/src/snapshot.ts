@@ -17,7 +17,12 @@ export interface Snapshot {
   p: PlayerSnap[];
   pr: ProjSnap[];
   it: ItemSnap[];
+  /** 월드 단위 상태 [nextProjId, nextItemId, ...crateTimers] — 방장 승계 때 새 방장이 이어서 돌리려면 필요하다 */
+  w?: number[];
 }
+
+/** 릴레이 4KB 상한을 지키려고 소수 셋째 자리까지만 보낸다 (1mm). 예측 오차 무시 문턱(1cm)보다 작다. */
+const r3 = (v: number): number => (Number.isInteger(v) ? v : Math.round(v * 1000) / 1000 || 0); // `|| 0` 은 -0 을 0 으로
 
 const stateIndex = new Map<PState, number>(STATE_IDS.map((s, i) => [s, i]));
 const moveIndex = new Map<MoveId, number>(MOVE_IDS.map((m, i) => [m, i]));
@@ -50,14 +55,16 @@ export function decodePlayer(p: Player, s: PlayerSnap): void {
 export function encodeSnapshot(w: World): Snapshot {
   return {
     tick: w.tick, phase: w.phase, phaseT: w.phaseT, timeLeft: w.timeLeft, score: [w.score[0], w.score[1]],
-    p: w.players.filter((p): p is Player => !!p).map(encodePlayer),
-    pr: w.projectiles.map((pr) => [pr.id, pr.owner, moveIndex.get(pr.move) ?? 0, pr.x, pr.y, pr.z, pr.vx, pr.vz, pr.life, pr.radius, pr.hitMask, pr.pierce ? 1 : 0]),
-    it: w.items.map((it) => [it.id, ITEM_KINDS.indexOf(it.kind), it.x, it.y, it.z, it.vx, it.vy, it.vz, it.hp, it.heldBy, it.fuse, it.airborne ? 1 : 0, it.thrownBy, it.spot, it.lastHitBy, it.lastHitTick]),
+    p: w.players.filter((p): p is Player => !!p).map((p) => encodePlayer(p).map(r3)),
+    pr: w.projectiles.map((pr) => [pr.id, pr.owner, moveIndex.get(pr.move) ?? 0, r3(pr.x), r3(pr.y), r3(pr.z), r3(pr.vx), r3(pr.vz), pr.life, pr.radius, pr.hitMask, pr.pierce ? 1 : 0]),
+    it: w.items.map((it) => [it.id, ITEM_KINDS.indexOf(it.kind), r3(it.x), r3(it.y), r3(it.z), r3(it.vx), r3(it.vy), r3(it.vz), it.hp, it.heldBy, it.fuse, it.airborne ? 1 : 0, it.thrownBy, it.spot, it.lastHitBy, it.lastHitTick]),
+    w: [w.nextProjId, w.nextItemId, ...w.crateTimers],
   };
 }
 
 export function applySnapshot(w: World, s: Snapshot): void {
   w.tick = s.tick; w.phase = s.phase; w.phaseT = s.phaseT; w.timeLeft = s.timeLeft; w.score = [s.score[0], s.score[1]];
+  if (s.w && s.w.length >= 2) { w.nextProjId = s.w[0]; w.nextItemId = s.w[1]; w.crateTimers = s.w.slice(2); }
   for (const ps of s.p) {
     const p = w.players[ps[0]];
     if (p) decodePlayer(p, ps);

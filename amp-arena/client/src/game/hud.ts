@@ -14,6 +14,7 @@ export interface HudView {
   teams: boolean;
   plates: PlateView[];
   rtt: number | null;
+  info: string | null;
   modeId: ModeId;
   mapName: string;
 }
@@ -136,7 +137,7 @@ export class Hud {
         r.ko.textContent = String(p.kos);
         r.row.classList.toggle('dead', !p.alive || p.state === 'dead');
       }
-      this.netinfo.textContent = v.rtt !== null ? `RTT ${Math.round(v.rtt)}ms` : '';
+      this.netinfo.textContent = [v.info, v.rtt !== null ? `RTT ${Math.round(v.rtt)}ms` : ''].filter(Boolean).join(' · ');
     }
     // 명찰
     const seen = new Set<number>();

@@ -4,62 +4,78 @@
 
 | 무엇 | 어디 |
 |---|---|
-| 기획서 (단일 원본) | `amp-arena/docs/GDD.md` |
+| 기획서 (단일 원본) | `amp-arena/docs/GDD.md` (§12 네트워크는 2026-09-11 방장 권위로 개정) |
 | 시안 캔버스 (발행본) | https://claude.ai/code/artifact/70a06d89-577c-4e82-96ac-622bd95a5023 |
 | 시안 소스 | `amp-arena/design/canvas/gen/` → `node amp-arena/design/canvas/gen/build.mjs` 가 `design/canvas/*.dc.html` 생성 |
 | 시안 조립·재발행 | `design` 스킬의 `seed-canvas.mjs` 로 `design/dist/amp-arena-mockup.html` 을 만들고 같은 경로로 재발행 |
-| 시안 스크린샷 | `scripts/cdp-chrome.sh start <이름>` → `node amp-arena/design/tools/shot-all.mjs <port> amp-arena/design/canvas <outDir>` → `stop` |
-| 볼트 사본 | 개인 볼트 `claude/artifact/amp-arena-mockup.{html,md}` |
-| 코드 | `amp-arena/{shared,server,client}` (P1 부터) |
+| 볼트 사본 | 개인 볼트 `claude/artifact/amp-arena-mockup.{html,md}` · `wiki/entities/amp-arena.md` |
+| 코드 | `amp-arena/{shared,client,tools}` |
+| 배포 산출물 | games 레포(`1989v/games`, msa 의 `portal-fe/public/games` 서브모듈) `arena/` + `thumbs/shots/arena.jpg` |
+| 카탈로그 행 | `game/feature/src/main/resources/gamedb/migration/V89__seed_arena.sql` (slug `arena`, BETA) |
+| 운영 주소 | https://game.1989v.com/games/arena (카탈로그 상세 → IFRAME `/games/arena/index.html`) |
 
 ## 작업 위치
 
-- 브랜치 `worktree-amp-arena`, 워크트리 `.claude/worktrees/amp-arena` (공유 트리 오염 방지).
-- 커밋은 `amp-arena/` 아래만 담는다. 푸시는 사용자에게 마지막에 한 번 묻는다.
+- 브랜치 `worktree-amp-arena`, 워크트리 `.claude/worktrees/amp-arena`. 푸시는 `HEAD:main` 으로, 계정 1989v(전환 → 푸시 → 즉시 복귀).
+- games 레포는 이 세션에서 git 을 못 쓴다(워크트리 가드) → `tools/publish-games.mjs` 가 GitHub API 로 커밋한다. 그 뒤 msa 의 서브모듈 포인터를 올린다.
 
 ## 진행
 
 - [x] P0 시안 — 기획서 + 캔버스 13장 발행 (2026-09-10)
 - [x] P1 코어 전투 — shared 시뮬(상태 머신·판정·잡기·다운·낙사·모드) + 연습 모드(봇) + 콜로세움 + HUD (2026-09-11)
-- [x] P2 온라인 — 로비·방·8인·서버 60틱·예측/되감기·100ms 보간·결과 (2026-09-11, 헤드리스 2탭 E2E 통과)
-- [x] P3 콘텐츠 — 악세서리 6종(테스트 11개)·스카이독·모드 3·아이템(상자·하트·폭탄, 테스트 9개) (2026-09-11)
-- [x] P4 마감 — 합성 SFX·터치 조작·히트스톱/흔들림·Dockerfile·README. 모바일 가로 844×390 E2E 통과 (2026-09-11)
-- [x] 플레이 소감 반영 (2026-09-11) — 좌우 반전(카메라 오른쪽 벡터 부호), 근접 리치 +0.25m, 연타는 후딜 끝나야, **스타일 5종**, **맵 2종 추가**(옥상·얼음 호수). 테스트 56, E2E 전부 오류 0
-- [~] 배포 — `k8s/base/amp-arena` + `network-policy/19` + `overlays/oci-arm/ingresses/amp-arena.yaml`(arena.1989v.com) + `images.yml` 매핑까지 커밋. **남은 것: Cloudflare DNS `arena` 레코드(proxied)** 를 `rank` 와 같은 대상으로 추가. 이미지 태그는 CI 가 첫 빌드 뒤 bootstrap → sha 로 바꾼다(aee6fb2 로 바뀜, OCI 파드 Running 1/1). Cloudflare 우회 차단(AOP)은 overlay 의 aop-patch 대상에 amp-arena Ingress 를 넣어 적용 — 확인은 `curl -skI -H "Host: arena.1989v.com" https://<OCI_IP>/` 가 400
-- [ ] Phase 2 (차별화) — 스킨 페인터(UV 아틀라스), 진행·상점, 스탯 분배 UI. 시안 캔버스에는 스타일·새 맵이 아직 없다
+- [x] P2 온라인 — 예측/되감기·100ms 보간·결과 (2026-09-11)
+- [x] P3 콘텐츠 — 악세서리 6종·스카이독·모드 3·아이템(상자·하트·폭탄) (2026-09-11)
+- [x] P4 마감 — 합성 SFX·터치 조작·히트스톱/흔들림·README. 모바일 가로 844×390 E2E (2026-09-11)
+- [x] 플레이 소감 반영 — 좌우 반전, 근접 리치 +0.25m, 연타는 후딜 끝나야, 스타일 5종, 맵 2종 추가(옥상·얼음 호수) (2026-09-11)
+- [x] **서버 제거 → 플랫폼 릴레이 + 방장 권위** (2026-09-11) — 파드 0. `arena.1989v.com` Ingress·NetworkPolicy·Deployment·CI 매핑·Dockerfile 삭제.
+  방장 워커 권위(60틱) · 스냅샷 10Hz · 입력 20Hz · 지연 균등화 · 방장 승계(마지막 스냅샷 + 월드 단위 상태). 테스트 64, E2E: 코드 방 2탭 · 빠른 대전 3탭(방장 숨김·승계·완주) 오류 0, 릴레이 실측 최대 2,243자 · 23 msg/s
+- [ ] Phase 2 (차별화) — 스킨 페인터(UV 아틀라스), 진행·상점·기록(플랫폼 `/api/v1/games/arena/*` 세션·기록 API 연결, `sdk_integrated`), 스탯 분배 UI. 시안 캔버스에는 스타일·새 맵이 아직 없다
 
 ## 장르 문법 중 아직 없는 것
 
 - 계정·경험치·골드·상점·스탯 분배 UI (스탯 공식은 시뮬에 있고 전원 3 고정)
-- 매치 중 채팅, 점수판(Tab), 관전 카메라 전환, 밀리는 오브젝트(드럼통)
-- KO 시 악세서리 드랍/줍기, 래그 보상(공격자 시점 리와인드)
-- 맵은 2종, 캐릭터 외형은 1종(색만 8종)
+- 매치 중 채팅, 점수판(Tab), 관전(릴레이 `spectate` 는 있으나 클라이언트 미지원), 밀리는 오브젝트(드럼통)
+- KO 시 악세서리 드랍/줍기, 래그 보상(공격자 시점 리와인드), 방장 승계 중 손실 입력 복구
+- 캐릭터 외형은 1종(스타일별 머리·체형 차이 + 색 8종)
 
 ## 실행·검증 명령
 
 ```bash
 cd amp-arena && npm install
-npm run check                     # tsc 3패키지 + vitest 23개
-npm run build && npm start        # client/dist 빌드 → 서버가 8787 에서 정적 + /ws 서빙
-# E2E (헤드리스 크롬, WebGL 은 --gl 필요, 끝나면 반드시 stop)
-PORT=8787 node server/src/index.ts &   # 서버
+npm run check                          # tsc 2패키지 + vitest 64개 (시뮬 · 스냅샷 · 권위/승계)
+npm run dev                            # 개발 릴레이 8790 + vite 5180 → http://127.0.0.1:5180 (온라인은 탭 둘 이상)
+npm run build:games                    # client/dist-games (base /games/arena/)
+ARENA_BASE=/games/arena/ ARENA_OUT=dist-games npm -w client run preview   # 5181 에서 빌드 산출물 검증 (http://127.0.0.1:5181/games/arena/)
+# E2E — 헤드리스 크롬(WebGL 은 --gl), 온라인 스크립트는 개발 릴레이를 스스로 띄우고 끈다. 끝나면 반드시 stop
 P=$(../scripts/cdp-chrome.sh start amparena --gl | tail -1)
-node tools/e2e-practice.mjs $P http://127.0.0.1:8787 <outDir>     # 15초 스모크
-node tools/e2e-online.mjs   $P http://127.0.0.1:8787 <outDir>     # 2탭 스모크
-node tools/e2e-mobile.mjs   $P http://127.0.0.1:8787 <outDir>     # 844×390 터치 레이아웃
-node tools/e2e-autopilot.mjs $P http://127.0.0.1:8787 <outDir>    # 키→입력 매핑 + 봇 AI 가 내 캐릭터 조종 60초 (준 데미지 > 0)
-node tools/e2e-fullmatch.mjs $P http://127.0.0.1:8787 <outDir>    # 연습 2분 완주 → 결과 → 다시 하기 (약 2.5분)
-node tools/e2e-online-full.mjs $P http://127.0.0.1:8787 <outDir>  # 2탭 2분 완주 → 결과 → 대기실 복귀 (약 3분)
+node tools/e2e-practice.mjs $P http://127.0.0.1:5180 <outDir>      # 15초 스모크
+node tools/e2e-online.mjs   $P http://127.0.0.1:5180 <outDir>      # 코드 방 2탭: 방장·게스트·릴레이 상한
+node tools/e2e-online-full.mjs $P http://127.0.0.1:5180 <outDir>   # 빠른 대전 3탭: 방장 숨김 → 승계 → 2분 완주 → 로비 (약 2.5분)
+node tools/e2e-mobile.mjs   $P http://127.0.0.1:5180 <outDir>      # 844×390 터치 레이아웃
+node tools/e2e-autopilot.mjs $P http://127.0.0.1:5180 <outDir>     # 봇 AI 가 내 캐릭터 조종 60초 (준 데미지 > 0)
+node tools/e2e-fullmatch.mjs $P http://127.0.0.1:5180 <outDir>     # 연습 2분 완주
 ../scripts/cdp-chrome.sh stop amparena
 ```
 
-- `?autopilot=1` 이면 봇 AI 가 내 캐릭터를 같은 입력 파이프라인으로 조종한다(디버그·E2E 용). `window.__amp` 로 월드를 들여다볼 수 있다.
-- **헤드리스 크롬은 마지막에 연 탭만 visible** 이라 다른 탭은 rAF 가 멈춰 게임 루프가 안 돈다(frames 0). 여러 탭을 재려면 `Page.bringToFront` 로 번갈아 앞에 둔다.
-- 스크립트로 키를 마구 누르는 조작은 조준이 없어 2분 동안 준 데미지 0 이 나온다 — 그건 게임이 아니라 스크립트 문제였고, 오토파일럿으로 60초에 3 KO·275 데미지가 확인됐다.
+- `?autopilot=1` 이면 봇 AI 가 내 캐릭터를 조종한다(디버그·E2E). `window.__amp.source` 로 월드·`epoch`·`hostSeat`·`lastAuth` 를 본다. `?relay=ws://…` 로 릴레이 주소를 바꿀 수 있다.
+- **헤드리스 크롬은 마지막에 연 탭만 visible** 이라 다른 탭은 rAF 가 멈춘다. 권위 워커는 그래도 돈다(3탭 E2E 의 `hostHiddenStillTicks`).
+
+## 배포 절차 (games 레포 → msa)
+
+```bash
+npm run build:games
+GH_TOKEN=$(gh auth token -u 1989v) node tools/publish-games.mjs --dir client/dist-games --dest arena --prune \
+  --file thumbs/shots/arena.jpg=<320x180 jpg> --message "arena: …"        # 새 커밋 sha 출력
+cd .. && git update-index --cacheinfo 160000,<sha>,portal-fe/public/games  # 서브모듈 포인터 올림 → 커밋 → 푸시
+```
+
+- msa 푸시 뒤 CI 가 portal-fe(서브모듈 경로 변경)와 code-dictionary(game 마이그레이션) 이미지를 굽고 Argo 가 반영한다.
+- 카탈로그 상세는 API 로 바로 뜨지만 프리렌더·사이트맵은 portal-fe 다음 빌드에 잡힌다.
 
 ## 막힌 것 · 함정
 
-- 워크트리 세션은 다른 레포(볼트)의 git 명령을 거부한다. 볼트 사본은 파일만 넣었고 볼트 커밋은 별도 세션/사용자 몫.
-- 헤드리스 크롬은 반드시 `scripts/cdp-chrome.sh` 로 띄우고 같은 명령 안에서 `stop` 한다 (훅이 직접 실행을 막는다).
-- 디자인 캔버스 `.dc.html` 은 정적 HTML 이라 브라우저로 바로 열어 확인할 수 있다. `{{ }}` 를 쓰지 않는다.
+- 워크트리 세션은 다른 레포의 git 명령을 거부한다 → games 레포는 API 게시, 볼트 커밋은 별도 세션.
+- 릴레이는 메시지 4,096자 · 40 msg/s 를 넘기면 연결을 끊는다. 스냅샷에 새 필드를 더하면 `client/test/authority.test.ts` 의 상한 테스트가 먼저 잡는다.
+- 방장 승계 뒤 `acks` 는 옛 방장의 마지막 값에서 시작해야 한다 — 0 으로 두면 게스트가 밀린 입력을 두 번 재실행해 순간이동한다.
+- `dist-games/` 의 파일명 해시가 매번 바뀐다 — 게시는 항상 `--prune` 으로 해서 `arena/` 아래 옛 번들을 같이 지운다.
 - Node 22.22 는 `.ts` 를 그대로 실행한다(타입 제거). `enum`·파라미터 프로퍼티처럼 지워지지 않는 문법은 쓰지 않는다 (`erasableSyntaxOnly`).

@@ -27,12 +27,15 @@ export interface MatchSource {
   drainEvents(): WorldEvent[];
   ended: { ranking: RankEntry[]; score: [number, number] } | null;
   rtt: number | null;
+  /** HUD 에 붙는 짧은 상태 (온라인: 방장/게스트, 입력 지연) */
+  info?: string | null;
   dispose(): void;
 }
 
 export interface MatchOptions {
-  onExit: () => void;           // 나가기 (로컬: 타이틀, 온라인: 대기실 복귀 대기)
+  onExit: () => void;           // 나가기 (로컬: 타이틀, 온라인: 대기실·로비 복귀)
   onAgain?: () => void;         // 로컬: 다시
+  exitLabel: string;
 }
 
 const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]!));
@@ -173,7 +176,7 @@ export class Match {
     this.hud.update({
       me: world.players[src.myId], players: world.players.filter((p): p is Player => !!p), myId: src.myId,
       phase: world.phase, phaseT: world.phaseT, timeLeft: world.timeLeft, score: world.score, teams: world.teams, plates, rtt: src.rtt,
-      modeId: world.mode.id, mapName: world.map.name,
+      modeId: world.mode.id, mapName: world.map.name, info: src.info ?? null,
     });
     this.renderer.render();
     if (src.ended && !this.resultShown) this.showResult(src.ended);
@@ -230,7 +233,7 @@ export class Match {
     this.input.enabled = false;
     const buttons = [] as { label: string; primary?: boolean; onClick: () => void }[];
     if (this.opts.onAgain) buttons.push({ label: '다시 하기', primary: true, onClick: () => this.opts.onAgain!() });
-    buttons.push({ label: this.source.online ? '대기실로' : '타이틀로', primary: !this.opts.onAgain, onClick: () => this.opts.onExit() });
+    buttons.push({ label: this.opts.exitLabel, primary: !this.opts.onAgain, onClick: () => this.opts.onExit() });
     this.hud.showResult(r.ranking, r.score, this.source.world.teams, this.source.myId, buttons);
     const s = this.stats;
     console.log(`[match] frames ${s.frames} · slow(>20ms) ${s.slow} · worst ${(s.worst * 1000).toFixed(1)}ms · ${((s.frames / ((performance.now() - s.t0) / 1000))).toFixed(1)} fps avg`);
