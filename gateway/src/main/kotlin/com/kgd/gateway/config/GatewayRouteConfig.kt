@@ -17,12 +17,11 @@ class GatewayRouteConfig(
 ) {
     private companion object {
         // ADR-0059: game:feature 가 code-dictionary:app 에 폴드되어 같은 포트를 공유
-        const val CODE_DICTIONARY_URI = "http://code-dictionary:8089"
+        const val ATLAS_URI = "http://atlas:8089"
 
         /**
-         * ADR-0093 — game 은 content 파드로 옮겼다. code-dictionary 에 남은 것은
-         * 자기 도메인(개념 사전·포트폴리오·전시·이력서)과 아직 스키마를 공유하는
-         * deal·blog·ranking 이다. ②~③단계에서 그 셋도 이쪽으로 온다.
+         * ADR-0093 — 폴드돼 있던 넷(game·deal·ranking·blog)이 전부 떠나고
+         * 자기 도메인(개념 사전·서비스 카탈로그·포트폴리오·전시·이력서)만 남아 `atlas` 가 됐다.
          */
         const val CONTENT_URI = "http://content:8097"
 
@@ -377,7 +376,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(optionalUserConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(ATLAS_URI)
             }
             // === ADR-0064 이력서 사이트 (code-dictionary 소유) ===
             // 공개 조회는 인증 없이 통과시키고, 열람 가부는 서비스의 토큰 게이트가 판정한다.
@@ -388,12 +387,12 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(ATLAS_URI)
             }
             .route("resume-public") { r ->
                 r.path("/api/v1/resume/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(ATLAS_URI)
             }
             // === ADR-0066 메인 전시 (code-dictionary 소유) ===
             // 어드민 경로를 먼저 선언해야 공개 라우트에 가려지지 않는다.
@@ -403,19 +402,19 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(ATLAS_URI)
             }
             .route("display-public") { r ->
                 r.path("/api/v1/display/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(ATLAS_URI)
             }
             // === /tech 업무 도메인 맵 (code-dictionary 소유) ===
             // 개념↔업무 도메인 매핑. 공개 포트폴리오 면이라 인증 없음.
             .route("tech-domains") { r ->
                 r.path("/api/v1/tech/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(ATLAS_URI)
             }
             // === ADR-0081 랭킹 리더보드 (code-dictionary 소유) ===
             // 공개 조회만 연다. 수집기가 쓰는 `/internal` 하위는 여기 없다 — 클러스터 안에서

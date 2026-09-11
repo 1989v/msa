@@ -4,7 +4,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: code-dictionary
+  name: atlas
 spec:
   template:
     spec:

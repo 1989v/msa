@@ -1,6 +1,6 @@
 spring:
   application:
-    name: code-dictionary-service
+    name: atlas-service
   lifecycle:
     timeout-per-shutdown-phase: 30s
   datasource:
@@ -38,7 +38,7 @@ spring:
         format_sql: false
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    locations: classpath:codedictionarydb/migration
     url: jdbc:mysql://localhost:3338/code_dictionary_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
     user: ${MYSQL_USER:code_dictionary_user}
     password: ${MYSQL_PASSWORD:code_dictionary_password}

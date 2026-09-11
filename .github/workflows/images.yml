@@ -84,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          ALL_JVM="gateway search search-batch search-consumer auth analytics engagement account sideapp content code-dictionary commerce"
+          ALL_JVM="gateway search search-batch search-consumer auth analytics engagement account sideapp content atlas commerce"
           ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
@@ -172,7 +172,8 @@ jobs:
               # ADR-0093: game 은 content 호스트로 옮겼다. deal·blog·ranking 은 아직
               # code-dictionary 스키마를 공유해서 ②~③단계 전까지 여기 남는다.
               game/*)                                    JVM_SVCS+=" content" ;;
-              code-dictionary/*|deal/*|blog/*|ranking/*) JVM_SVCS+=" code-dictionary" ;;
+              # ADR-0093: deal→commerce · ranking·blog→content 로 떠났고, 남은 것이 atlas 다
+              code-dictionary/*|atlas/*)                 JVM_SVCS+=" atlas" ;;
               chatbot/*)                                 JVM_SVCS+=" sideapp" ;; # ADR-0093 폴드
               # ADR-0070: place/ingest 는 파이썬 배치 이미지 — place/* 보다 먼저 걸러야 한다
               place/ingest/*)                            DOCKER_SVCS+=" place-ingest" ;;
@@ -184,6 +185,7 @@ jobs:
               engagement/*)                              JVM_SVCS+=" engagement" ;;
               sideapp/*)                                 JVM_SVCS+=" sideapp" ;;
               content/*)                                 JVM_SVCS+=" content" ;;
+              blog/*|ranking/*)                          JVM_SVCS+=" content" ;; # ADR-0093 ②③ 폴드
               recommendation-ml/*)                       DOCKER_SVCS+=" recommendation-ml" ;;
               recommendation-ann/*)                      DOCKER_SVCS+=" recommendation-ann" ;;
               search/embed/*)                            DOCKER_SVCS+=" search-embed" ;;
@@ -292,7 +294,8 @@ jobs:
               engagement)         TASKS+=" :engagement:app:test :recommendation:domain:test :recommendation:feature:test :experiment:domain:test :experiment:feature:test" ;;
               account)            TASKS+=" :account:app:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
               sideapp)            TASKS+=" :sideapp:app:test :quant:domain:test :quant:feature:test :chatbot:domain:test :chatbot:feature:test :gifticon:domain:test :gifticon:feature:test" ;;
-              content)            TASKS+=" :content:app:test :place:domain:test :place:feature:test :game:domain:test :game:feature:test" ;;
+              content)            TASKS+=" :content:app:test :place:domain:test :place:feature:test :game:domain:test :game:feature:test :ranking:domain:test :ranking:feature:test :blog:domain:test :blog:feature:test" ;;
+              atlas)              TASKS+=" :atlas:app:test :code-dictionary:domain:test :code-dictionary:feature:test" ;;
               commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :product:domain:test :product:feature:test" ;;
               *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
             esac

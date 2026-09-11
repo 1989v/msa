@@ -148,7 +148,7 @@ patches:
     target:
       kind: Deployment
       name: analytics
-  # code-dictionary 는 k3s-lite 베이스 패치에서 이미 1Gi 로 설정됨.
+  # atlas 는 k3s-lite 베이스 패치에서 이미 1Gi 로 설정됨.
   # ─── Tier L (1Gi) — content: place + game 2-도메인 ───────────────────────
   # 전역 resources-reduce(k3s-lite 상속)가 base 값을 절반으로 깎아 768Mi 가 되는데,
   # place(단독 512Mi) + game(code-dictionary 안에서 1Gi 파드의 일부) 을 한 JVM 에
@@ -228,7 +228,7 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "1"
-  - target: {kind: Deployment, name: "^(code-dictionary)$"}
+  - target: {kind: Deployment, name: "^(atlas)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment
@@ -330,8 +330,8 @@ images:
   - name: commerce/auth
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/auth
     newTag: 305467b
-  - name: commerce/code-dictionary
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
+  - name: commerce/atlas
+    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/atlas
     newTag: f8a469d
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce

@@ -30,7 +30,7 @@ val mainClassByImage: Map<String, String> = mapOf(
     "auth" to "com.kgd.auth.AuthApplicationKt",
     "commerce" to "com.kgd.commerce.CommerceApplicationKt",
     "analytics" to "com.kgd.analytics.AnalyticsApplicationKt",
-    "code-dictionary" to "com.kgd.codedictionary.CodeDictionaryApplicationKt",
+    "atlas" to "com.kgd.atlas.AtlasApplicationKt",                // ADR-0093 폴드 호스트 (옛 code-dictionary)
     "agent-viewer-api" to "com.kgd.agentviewer.AgentViewerApplicationKt",
     "engagement" to "com.kgd.engagement.EngagementApplicationKt", // ADR-0093 폴드 호스트
     "account" to "com.kgd.account.AccountApplicationKt",         // ADR-0093 폴드 호스트

@@ -17,7 +17,7 @@ include(
     "auth:domain",
     "auth:app",
     "code-dictionary:domain",
-    "code-dictionary:app",
+    "code-dictionary:feature",
     "game:sim",     // #23 흡수: KMP 결정적 sim-core (jvm: Tier B 리플레이 / js: 브라우저)
     "game:web",     // #23 흡수: Kotlin/JS 브라우저 클라이언트 (game:sim js 코어 소비)
     "game:domain",
@@ -51,6 +51,8 @@ include(
     "sideapp:app",
     // ADR-0093 — content: game+place 폴드 호스트 (노출 서브도메인). ②~③에서 blog·ranking 합류
     "content:app",
+    // ADR-0093 — atlas: apex 총람 (개념사전·포트폴리오·전시·이력서) 폴드 호스트
+    "atlas:app",
     "place:domain",
     "place:feature", // ADR-0093: content:app 이 흡수 (비-bootable)
     "deal:domain",

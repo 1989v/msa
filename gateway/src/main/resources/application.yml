@@ -47,7 +47,7 @@ spring:
             # /api/v1/portfolio/** 는 GatewayRouteConfig.kt 로 이동 — 로그인 시 X-User-Id 주입이
             # 필요해졌다(스니펫 게이트). 여기 무인증 라우트로 남겨두면 어느 쪽이 이길지 보장되지 않는다.
             - id: code-dictionary-service
-              uri: http://code-dictionary:8089
+              uri: http://atlas:8089
               predicates:
                 - Path=/api/v1/concepts/**, /api/v1/index/**, /api/v1/search/**, /api/v1/services/**
             # TG-P2-13 — Quant SSE (long-lived). 반드시 REST 라우트보다 위에 두어
@@ -90,9 +90,9 @@ spring:
               uri: http://auth:8087
               predicates: [Path=/svc/auth/actuator/health]
               filters: [StripPrefix=2]
-            - id: actuator-code-dictionary
-              uri: http://code-dictionary:8089
-              predicates: [Path=/svc/code-dictionary/actuator/health]
+            - id: actuator-atlas
+              uri: http://atlas:8089
+              predicates: [Path=/svc/atlas/actuator/health]
               filters: [StripPrefix=2]
             - id: actuator-member
               uri: http://account:8093 # ADR-0093: account 폴드

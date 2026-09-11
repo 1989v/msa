@@ -18,7 +18,7 @@ resources:
   # ADR-0058: warehouse·fulfillment 는 inventory(commerce) 로 폴드 — 별도 Deployment 없음
   # (스키마 warehouse_db/fulfillment_db 는 유지, fulfillment.order.* 토픽도 commerce 가 발행)
   - analytics
-  - code-dictionary
+  - atlas
   # ADR-0093: quant·chatbot·gifticon 은 sideapp 으로 폴드 — 별도 Deployment 없음
   # (스키마 quant/chatbot_db/gifticon_db 유지, quant-ingest·*-fe 는 그대로 별도 이미지)
   - quant-ingest
@@ -49,7 +49,7 @@ patches:
   - path: patches/securitycontext-jvm.yaml
     target:
       kind: Deployment
-      name: "(gateway|search|search-consumer|auth|commerce|analytics|engagement|account|sideapp|content|code-dictionary)"
+      name: "(gateway|search|search-consumer|auth|commerce|analytics|engagement|account|sideapp|content|atlas)"
   - path: patches/securitycontext-web.yaml
     target:
       kind: Deployment

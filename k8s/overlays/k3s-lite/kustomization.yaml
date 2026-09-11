@@ -69,10 +69,10 @@ patches:
     target:
       kind: Deployment
       name: engagement
-  - path: patches/redis-standalone-code-dictionary.yaml
+  - path: patches/redis-standalone-atlas.yaml
     target:
       kind: Deployment
-      name: code-dictionary
+      name: atlas
   - path: patches/redis-standalone-search.yaml
     target:
       kind: Deployment
@@ -82,11 +82,11 @@ patches:
       kind: Deployment
       name: auth
 
-  # code-dictionary needs more memory than the global 512Mi limit.
-  - path: patches/code-dictionary-resources.yaml
+  # atlas needs more memory than the global 512Mi limit.
+  - path: patches/atlas-resources.yaml
     target:
       kind: Deployment
-      name: code-dictionary
+      name: atlas
 
   # ADR-0058: commerce 는 order+inventory+fulfillment+warehouse 4-도메인 모놀리스 →
   # 글로벌 reduce(768Mi) 로는 4 EMF/풀 워킹셋 부족. 1280Mi 로 상향.

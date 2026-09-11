@@ -40,7 +40,7 @@ spec:
           containers:
             - name: retention
               # 새 이미지를 만들지 않는다 — 호스트 앱을 웹서버 없이 띄웠다가 끝나면 내린다.
-              image: commerce/code-dictionary:latest
+              image: commerce/atlas:latest
               imagePullPolicy: IfNotPresent
               args:
                 # 웹서버를 띄우지 않는다. ApplicationRunner 가 끝나면 컨텍스트가 닫히고 종료된다.

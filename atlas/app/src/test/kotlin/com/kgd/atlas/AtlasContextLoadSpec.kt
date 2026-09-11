@@ -1,4 +1,4 @@
-package com.kgd.codedictionary
+package com.kgd.atlas
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
@@ -14,7 +14,7 @@ import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
- * ADR-0093 ②③ 이후 — code-dictionary(atlas 예정) 단독 컨텍스트 로드 검증.
+ * ADR-0093 — atlas 단독 컨텍스트 로드 검증 (옛 code-dictionary).
  *
  * 폴드된 넷이 전부 떠난 뒤, 남은 자기 도메인이 온전히 뜨는지와 떠난 것들의 빈이 남지
  * 않았는지를 확인한다. Spring 은 기본적으로 빈 오버라이드를 막으므로,
@@ -26,10 +26,10 @@ private val dockerAvailable: Boolean =
     runCatching { DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false)
 
 @Suppress("unused")
-fun codeDictionaryDockerAvailable(): Boolean = dockerAvailable
+fun atlasDockerAvailable(): Boolean = dockerAvailable
 
 @org.springframework.boot.test.context.SpringBootTest(
-    classes = [CodeDictionaryApplication::class],
+    classes = [AtlasApplication::class],
     webEnvironment = org.springframework.boot.test.context.SpringBootTest.WebEnvironment.NONE,
     properties = [
         "spring.kafka.bootstrap-servers=localhost:9092",
@@ -37,14 +37,14 @@ fun codeDictionaryDockerAvailable(): Boolean = dockerAvailable
     ],
 )
 @org.junit.jupiter.api.condition.EnabledIf(
-    value = "com.kgd.codedictionary.CodeDictionaryContextLoadSpecKt#codeDictionaryDockerAvailable",
+    value = "com.kgd.atlas.AtlasContextLoadSpecKt#atlasDockerAvailable",
     disabledReason = "Docker 미연결 — Testcontainers MySQL 사용 불가",
 )
-class CodeDictionaryContextLoadSpec(
+class AtlasContextLoadSpec(
     @Autowired private val ctx: ApplicationContext,
 ) : BehaviorSpec({
 
-    Given("폴드가 전부 빠진 code-dictionary 단독 컨텍스트") {
+    Given("폴드가 전부 빠진 atlas 컨텍스트") {
         Then("호스트 EMF/TM 과 QueryFactory 가 로드된다")
             .config(enabledIf = { dockerAvailable }) {
                 listOf(

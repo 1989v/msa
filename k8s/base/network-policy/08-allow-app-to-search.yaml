@@ -1,7 +1,7 @@
 # ADR-0031 §1 (table) — 백엔드 → OpenSearch :9200 (ADR-0055)
 #
-# search 계열 서비스 (search, search-batch, search-consumer) 와 code-dictionary 가
-# OpenSearch 를 호출한다 (search + code-dictionary 공용, Nori plugin 사용 — ADR-0055).
+# search 계열 서비스 (search, search-batch, search-consumer) 와 atlas 가
+# OpenSearch 를 호출한다 (search + atlas 공용, Nori plugin 사용 — ADR-0055).
 #
 # 라벨 선택 근거:
 #   - k8s/infra/local/opensearch/service.yaml:8 (app.kubernetes.io/name=opensearch)

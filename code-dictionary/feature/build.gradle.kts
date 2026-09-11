@@ -1,3 +1,5 @@
+// ADR-0093 — code-dictionary:feature: atlas 모듈러 모놀리스의 라이브러리(비-bootable).
+// 개념 사전·서비스 카탈로그·포트폴리오·전시·이력서. 스키마는 code_dictionary_db 그대로.
 plugins {
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.kotlin.jpa)
@@ -44,9 +46,9 @@ dependencies {
     testImplementation(libs.testcontainers.mysql)
 }
 
-tasks.bootJar {
-    archiveBaseName.set("code-dictionary")
-}
+// 라이브러리 — 실행 가능 JAR 아님 (ADR-0093: atlas:app 이 링크한다).
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") { enabled = false }
+tasks.named<Jar>("jar") { enabled = true }
 
 // QueryDSL Q class generation path
 kotlin.sourceSets.main { kotlin.srcDir("build/generated/source/kapt/main") }

@@ -1,27 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: code-dictionary
+  name: atlas
   namespace: commerce
   labels:
-    app.kubernetes.io/name: code-dictionary
+    app.kubernetes.io/name: atlas
     app.kubernetes.io/part-of: commerce-platform
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: code-dictionary
+      app.kubernetes.io/name: atlas
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: code-dictionary
+        app.kubernetes.io/name: atlas
         app.kubernetes.io/part-of: commerce-platform
     spec:
-      serviceAccountName: code-dictionary
+      serviceAccountName: atlas
       terminationGracePeriodSeconds: 45
       containers:
         - name: app
-          image: commerce/code-dictionary:latest
+          image: commerce/atlas:latest
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -29,8 +29,8 @@ spec:
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "kubernetes"
-            # 게임 세이브 at-rest 암호화 키. optional 인 이유는 시크릿 생성 전에 파드가
-            # 못 뜨는 순서 의존을 만들지 않기 위해서다 — 없으면 기본 키로 뜨고 경고를 남긴다.
+            # ADR-0093: game 은 content 로 떠났다 — GAME_* 와 세이브 암호화 키는 그쪽에 있다.
+            # 여기 남는 AES_KEY/JWT_SECRET 은 이력서 공유링크 토큰 검증에 쓴다.
             - name: AES_KEY
               valueFrom:
                 secretKeyRef: { name: platform-aes, key: secret, optional: true }
@@ -39,28 +39,8 @@ spec:
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef: { name: platform-jwt, key: secret, optional: true }
-            # 아케이드 세션 토큰 HMAC 키 (ADR-0092).
-            #
-            # optional 을 **안 붙인다** — 위 둘과 다른 이유다. AES_KEY·JWT_SECRET 은 없으면
-            # 기본 키로 뜨지만, 서명 키가 공개 기본값으로 폴백하면 **검사가 도는 채로 아무것도
-            # 막지 않는다.** 없다고 뜨는 편이 있다고 믿게 만드는 것보다 낫다.
-            #
-            # 이 레포는 공개라 키를 매니페스트에 두지 않는다. **파드를 올리기 전에 만든다:**
-            #   kubectl -n commerce create secret generic game-hmac \
-            #     --from-literal=secret="$(openssl rand -hex 32)"
-            #
-            # 키를 바꾸면 진행 중이던 아케이드 세션의 점수 제출이 거부된다(판당 수 분).
-            # 회원 데이터에는 영향이 없다 — 이 서명은 세션 수명만큼만 산다.
-            - name: GAME_HMAC_SECRET
-              valueFrom:
-                secretKeyRef: { name: game-hmac, key: secret }
             - name: OPENSEARCH_URIS
               value: "http://opensearch:9200"
-            # ADR-0059 — 폴드된 game 도메인: 전용 스키마(game_db) + 세션 이벤트 발행
-            - name: GAME_DB_MASTER
-              value: "mysql-code-dictionary-master:3306"
-            - name: GAME_DB_REPLICA
-              value: "mysql-code-dictionary-master:3306"
             - name: KAFKA_BOOTSTRAP_SERVERS
               value: "kafka:9092"
           readinessProbe:
