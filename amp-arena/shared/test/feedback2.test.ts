@@ -21,12 +21,12 @@ function arena(modeId: 'ffa_dm' | 'team_dm' = 'ffa_dm', mapId: 'colosseum' | 'sk
 const steps = (w: World, ia: Input, ib: Input, n: number) => { const ev = []; for (let i = 0; i < n; i++) ev.push(...w.step([ia, ib])); return ev; };
 
 describe('2차 소감', () => {
-  it('걷기·달리기가 느려졌고 공격 템포가 느려졌다 (잽 발동 6 · 후딜 13 · 경직 20)', () => {
+  it('걷기·달리기가 느려졌고 공격 템포가 느려졌다 (잽 발동 6 · 후딜 13 · 경직 14)', () => {
     expect(C.WALK_SPEED).toBe(4.0);
     expect(C.RUN_SPEED).toBe(6.2);
     expect(MOVES.jab.startup).toBe(6);
     expect(MOVES.jab.recovery).toBe(13);
-    expect(MOVES.jab.hitstun).toBe(20);
+    expect(MOVES.jab.hitstun).toBe(14); // 3차 소감: 경직은 원래 값 — 연타 사이에 가드가 들어간다
     expect(chainTick(MOVES.jab)).toBe(6 + 3 + 13);
     expect(MOVES.grab.startup).toBe(4); // 잡기는 그대로
   });

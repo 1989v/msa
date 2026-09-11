@@ -1,14 +1,15 @@
 // 터치 조작: 왼쪽 가상 스틱 + 오른쪽 버튼 4+1, 남는 오른쪽 영역 드래그는 카메라.
-import { BTN_ATTACK, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP } from '@amp/shared';
+import { BTN_ATTACK, BTN_HEAVY, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP } from '@amp/shared';
 
 export interface TouchState { x: number; y: number; btn: number; dragPx: number }
 
 const BUTTONS: [string, string, number, string][] = [
-  ['atk', '공격', BTN_ATTACK, 'right:104px;bottom:60px;width:88px;height:88px;font-size:18px'],
-  ['jump', '점프', BTN_JUMP, 'right:24px;bottom:118px;width:66px;height:66px'],
-  ['guard', '가드', BTN_GUARD, 'right:196px;bottom:34px;width:66px;height:66px'],
-  ['special', '기술', BTN_SPECIAL, 'right:150px;bottom:150px;width:66px;height:66px'],
-  ['pickup', '줍기', BTN_PICKUP, 'right:30px;bottom:200px;width:52px;height:52px;font-size:12px'],
+  ['atk', '약공', BTN_ATTACK, 'right:110px;bottom:36px;width:84px;height:84px;font-size:18px'],
+  ['heavy', '강공', BTN_HEAVY, 'right:26px;bottom:36px;width:74px;height:74px;font-size:16px'],
+  ['jump', '점프', BTN_JUMP, 'right:34px;bottom:124px;width:64px;height:64px'],
+  ['guard', '가드', BTN_GUARD, 'right:206px;bottom:44px;width:64px;height:64px'],
+  ['special', '기술', BTN_SPECIAL, 'right:124px;bottom:134px;width:64px;height:64px'],
+  ['pickup', '줍기', BTN_PICKUP, 'right:44px;bottom:204px;width:52px;height:52px;font-size:12px'],
 ];
 
 export function touchWanted(): boolean {

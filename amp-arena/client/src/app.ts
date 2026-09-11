@@ -5,6 +5,7 @@ import type { GuestSource } from './net/guestsource.ts';
 import { LocalSource } from './local/localsource.ts';
 import { Match } from './game/match.ts';
 import { icon, boltLogo, ACC_ICON } from './ui/icons.ts';
+import { isEmbedded, enterFullscreen } from './ui/fullscreen.ts';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const ACC_DESC: Record<AccessoryId, string> = {
@@ -107,13 +108,14 @@ export class App {
         </div>
       </div>
       <span class="chip version">P1 · 2026-09</span>
-      <div class="hints"><span class="row" style="gap:6px">${icon('keyboard', 20, 'var(--muted)')}키보드</span><span class="row" style="gap:6px">${icon('gamepad', 20, 'var(--muted)')}게임패드</span><span>우클릭 드래그 카메라</span></div>`);
+      <div class="hints"><span class="row" style="gap:6px">${icon('keyboard', 20, 'var(--muted)')}Z 약공 · X 강공 · Space 점프 · C 가드 · V 기술 · F 줍기</span><span class="row" style="gap:6px">${icon('gamepad', 20, 'var(--muted)')}게임패드</span><span>우클릭 드래그 카메라${isEmbedded() ? ' · 시작하면 전체화면' : ''}</span></div>`);
     this.renderAccPicker(el.querySelector('.accs') as HTMLElement, el.querySelector('.acc-desc') as HTMLElement, (a) => { this.acc = a; localStorage.setItem('amp.acc', a); });
     this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (st, acc) => { this.style = st; localStorage.setItem('amp.style', st); localStorage.setItem('amp.acc', acc); });
     const nickEl = el.querySelector('.nick') as HTMLInputElement;
     const readNick = () => { const n = nickEl.value.trim(); if (n.length < 2) { this.toast('닉네임은 2자 이상'); nickEl.focus(); return null; } this.nick = n; localStorage.setItem('amp.nick', n); return n; };
     (el.querySelector('.practice') as HTMLButtonElement).onclick = () => {
       if (!readNick()) return;
+      if (isEmbedded()) void enterFullscreen(); // 카탈로그 IFRAME 안이면 무대가 좁다 — 버튼 제스처 안에서 전체화면으로
       this.startPractice({
         mapId: (el.querySelector('.map') as HTMLSelectElement).value as MapId,
         modeId: (el.querySelector('.mode') as HTMLSelectElement).value as ModeId,
@@ -121,7 +123,7 @@ export class App {
         seconds: Number((el.querySelector('.secs') as HTMLSelectElement).value),
       });
     };
-    (el.querySelector('.go-lobby') as HTMLButtonElement).onclick = () => { if (readNick()) void this.connectOnline(); };
+    (el.querySelector('.go-lobby') as HTMLButtonElement).onclick = () => { if (readNick()) { if (isEmbedded()) void enterFullscreen(); void this.connectOnline(); } };
     nickEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') (el.querySelector('.practice') as HTMLButtonElement).click(); });
   }
 

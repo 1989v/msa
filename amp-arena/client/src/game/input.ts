@@ -1,5 +1,5 @@
 // 키보드·게임패드 → Input. 이동은 카메라 요(yaw)로 돌려 월드 방향으로 보낸다.
-import { BTN_ATTACK, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP, type Input } from '@amp/shared';
+import { BTN_ATTACK, BTN_HEAVY, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP, type Input } from '@amp/shared';
 import { TouchPad, touchWanted } from './touch.ts';
 
 const MOVE_KEYS: Record<string, [number, number]> = {
@@ -85,7 +85,8 @@ export class InputController {
     let btn = 0;
     const has = (c: string) => this.down.has(c);
     if (has('KeyZ') || has('KeyJ')) btn |= BTN_ATTACK;
-    if (has('KeyX') || has('KeyK') || has('Space')) btn |= BTN_JUMP;
+    if (has('KeyX') || has('KeyK')) btn |= BTN_HEAVY;   // 2026-09-12: X 는 강공, 점프는 Space
+    if (has('Space')) btn |= BTN_JUMP;
     if (has('KeyC') || has('KeyL')) btn |= BTN_GUARD;
     if (has('KeyV')) btn |= BTN_SPECIAL;
     if (has('KeyF')) btn |= BTN_PICKUP;
@@ -102,12 +103,13 @@ export class InputController {
       const ax = p.axes[0] ?? 0, ay = -(p.axes[1] ?? 0);
       if (Math.hypot(ax, ay) > 0.18) { x = ax; y = ay; }
       const b = (i: number) => !!p.buttons[i]?.pressed;
-      if (b(0)) btn |= BTN_ATTACK;
-      if (b(1)) btn |= BTN_JUMP;
-      if (b(2)) btn |= BTN_SPECIAL;
-      if (b(3)) btn |= BTN_PICKUP;
+      if (b(0)) btn |= BTN_ATTACK;   // A 약공
+      if (b(2)) btn |= BTN_HEAVY;    // X 강공
+      if (b(1)) btn |= BTN_JUMP;     // B 점프
+      if (b(3)) btn |= BTN_SPECIAL;  // Y 기술
+      if (b(6)) btn |= BTN_PICKUP;   // LT 줍기
       if (b(5) || b(7)) btn |= BTN_GUARD;
-      if (b(4) || b(6)) btn |= BTN_DASH;
+      if (b(4)) btn |= BTN_DASH;
     }
     const l = Math.hypot(x, y);
     if (l > 1) { x /= l; y /= l; }

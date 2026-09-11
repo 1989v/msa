@@ -36,6 +36,7 @@ export function encodePlayer(p: Player): PlayerSnap {
     p.cooldown, p.ammo, p.reload,
     p.lives, p.alive ? 1 : 0, p.kos, p.deaths, p.dmgDealt, p.lastHitBy, p.lastHitTick, p.consecBy, p.consecCount, p.prevBtn,
     p.vel.x, p.vel.y, p.vel.z,
+    p.chain, p.switchHeavy ? 1 : 0, p.counterT,
   ];
 }
 
@@ -50,6 +51,7 @@ export function decodePlayer(p: Player, s: PlayerSnap): void {
   p.cooldown = s[i++]; p.ammo = s[i++]; p.reload = s[i++];
   p.lives = s[i++]; p.alive = s[i++] === 1; p.kos = s[i++]; p.deaths = s[i++]; p.dmgDealt = s[i++]; p.lastHitBy = s[i++]; p.lastHitTick = s[i++]; p.consecBy = s[i++]; p.consecCount = s[i++]; p.prevBtn = s[i++];
   p.vel.x = s[i++]; p.vel.y = s[i++]; p.vel.z = s[i++];
+  p.chain = s[i++] ?? 0; p.switchHeavy = s[i++] === 1; p.counterT = s[i++] ?? 0;
 }
 
 export function encodeSnapshot(w: World): Snapshot {

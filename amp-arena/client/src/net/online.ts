@@ -1,7 +1,7 @@
 // 온라인 세션 컨트롤러: 릴레이 방(대기실) · 매치 시작 · 방장 역할(권위 워커 + 루프백) · 방장 승계.
 // 화면(app.ts)은 이 클래스의 state 를 그리고 명령만 내린다.
 import {
-  STYLES, STYLE_IDS, MAX_PLAYERS, MAPS, MODES, TICK_RATE, sanitizeName, occupiedSeats, hostOf,
+  randomLoadout, makeRng, MAX_PLAYERS, MAPS, MODES, TICK_RATE, sanitizeName, occupiedSeats, hostOf,
   type MatchConfig, type RosterEntry, type Pick, type RoomSettings, type GuestMsg, type HostMsg, type ArenaMsg, type AccessoryId, type StyleId, type MapId, type ModeId,
 } from '@amp/shared';
 import { RelayClient, type RelayIn } from './relay.ts';
@@ -345,14 +345,13 @@ export class Online {
       roster.push({ id: seat, name: s?.name ?? `${seat + 1}번`, team, acc: pick?.acc ?? 'none', style: pick?.style ?? 'fighter', bot: false });
     }
     if (settings.fillBots) {
-      let n = 0;
+      const rng = makeRng(seed ^ 0x5bd1e995); // 봇 장비는 매치 시드로 무작위 — 게스트도 cfg 로 같은 값을 받는다
       for (let i = 0; i < MAX_PLAYERS; i++) {
         if (occ.includes(i)) continue;
         const team = teams ? (count[0] <= count[1] ? 0 : 1) : 0;
         count[team]++;
-        const style = STYLE_IDS[(i * 2 + n) % STYLE_IDS.length];
-        const accs = STYLES[style].accessories;
-        roster.push({ id: i, name: BOT_NAMES[i], team, acc: accs[(i + n++) % accs.length], style, bot: true });
+        const { style, acc } = randomLoadout(rng);
+        roster.push({ id: i, name: BOT_NAMES[i], team, acc, style, bot: true });
       }
     }
     roster.sort((a, b) => a.id - b.id);

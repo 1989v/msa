@@ -5,7 +5,8 @@ export const BTN_GUARD = 4;
 export const BTN_SPECIAL = 8;
 export const BTN_DASH = 16;
 export const BTN_PICKUP = 32;
-export const BTN_ALL = 63;
+export const BTN_HEAVY = 64;   // 강공 (2026-09-12: 약공·강공 두 키)
+export const BTN_ALL = 127;
 
 export interface Input {
   seq: number;

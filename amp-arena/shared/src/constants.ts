@@ -23,6 +23,7 @@ export const GUARD_REGEN_PER_TICK = 20 / TICK_RATE;
 export const GUARD_COST_MULT = 4;
 export const GUARD_ANGLE_DEG = 180;
 export const STUN_TICKS = 90;
+export const COUNTER_WINDOW_TICKS = 15; // 가드로 막은 뒤 약공/강공을 누르면 반격기가 나가는 창
 
 export const LAND_TICKS = 6;
 export const DOWN_TICKS = 50;

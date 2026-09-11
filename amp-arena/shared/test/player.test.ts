@@ -91,19 +91,19 @@ describe('공격·콤보', () => {
     run(w, 0, inp(), MOVES.jab.hitstun);
     expect(b.state).toBe('idle');
   });
-  it('연타하면 잽 → 스트레이트 → 돌려차기로 이어지고 3타는 띄운다', () => {
+  it('약공 연타는 잽 → 스트레이트 → 로킥으로 이어진다 (띄우기는 강공 사슬)', () => {
     const { w, a, b } = world();
     place(w, 0, 0, 0, 0); place(w, 1, 0, 1.2, Math.PI);
     const seen: string[] = [];
     let btn = BTN_ATTACK;
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 70; i++) { // 3타(잽 22 + 스트레이트 25 + 로킥 24 = 71틱)까지만 — 그 뒤엔 새 사슬이 시작된다
       btn = i % 2 === 0 ? BTN_ATTACK : 0; // 격틱 연타
       w.step([inp(0, 0, btn), inp()]);
       if (a.move && seen[seen.length - 1] !== a.move) seen.push(a.move);
     }
-    expect(seen.slice(0, 3)).toEqual(['jab', 'straight', 'roundhouse']);
-    expect(['launched', 'down', 'getup', 'idle']).toContain(b.state);
-    expect(b.hp).toBe(a.maxHp - 5 - 6 - 10);
+    expect(seen.slice(0, 3)).toEqual(['jab', 'straight', 'kick1']);
+    expect(['hitstun', 'idle']).toContain(b.state);
+    expect(b.hp).toBe(a.maxHp - 5 - 6 - 6);
   });
   it('띄워진 상대는 착지 후 다운 → 기상 → 대기, 다운 중 무적', () => {
     const { w, a, b } = world();

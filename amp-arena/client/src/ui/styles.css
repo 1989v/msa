@@ -190,3 +190,7 @@ input, select { font-family: var(--font); }
 /* 발밑 안내 (줍기·던지기) — 조작 힌트 바로 위 */
 .hud .prompt { position: absolute; left: 50%; bottom: 64px; transform: translateX(-50%); padding: 6px 14px; border-radius: 999px; background: rgba(12, 17, 36, 0.78); border: 2px solid var(--amp); color: var(--amp); font-weight: 800; font-size: 14px; pointer-events: none; }
 .match.touch .hud .prompt { bottom: 150px; }
+
+/* 매치 안 전체화면 토글 — 우하단 기술 카드 위 */
+.match .fsbtn { position: absolute; right: 16px; top: 232px; height: 30px; font-size: 12px; padding: 0 10px; opacity: 0.8; z-index: 5; }
+.match.touch .fsbtn { top: auto; bottom: 270px; right: 16px; }

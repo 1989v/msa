@@ -25,12 +25,12 @@ function run(w: World, ia: Input, ib: Input, n: number) { const ev = []; for (le
 function mash(w: World, n: number, ib: Input = inp()) { const ev = []; for (let i = 0; i < n; i++) ev.push(...w.step([inp(0, 0, i % 2 === 0 ? BTN_ATTACK : 0), ib])); return ev; }
 
 describe('악세서리', () => {
-  it('브레이커: 2단 베기, 2타는 띄움, 잡기 불가', () => {
+  it('브레이커: 약공 베기·가로베기, 잡기 불가', () => {
     const { w, a, b } = setup('greatsword', 'none', 1.4);
     const seen: string[] = [];
     for (let i = 0; i < 70; i++) { w.step([inp(0, 0, i % 2 === 0 ? BTN_ATTACK : 0), inp()]); if (a.move && seen[seen.length - 1] !== a.move) seen.push(a.move); }
-    expect(seen.slice(0, 2)).toEqual(['gs1', 'gs2']);
-    expect(b.hp).toBeLessThanOrEqual(b.maxHp - 12 - 16);
+    expect(seen.slice(0, 2)).toEqual(['gs1', 'gsSweep']);
+    expect(b.hp).toBeLessThanOrEqual(b.maxHp - 12 - 11);
     // 밀착해도 잡기가 아니라 베기
     const s2 = setup('greatsword', 'none', 0.8);
     s2.w.step([inp(0, 0, BTN_ATTACK), inp()]);

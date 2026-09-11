@@ -450,6 +450,7 @@ export class World implements SimContext {
             return;
           }
         }
+        v.counterT = C.COUNTER_WINDOW_TICKS; // 막았다 — 이 안에 공격 키를 누르면 반격기
         this.events.push({ t: 'hit', a: a ? a.id : -1, v: v.id, dmg: 0, x: hx, y: hy, z: hz, kind: 'guard', launch: false });
         return;
       }

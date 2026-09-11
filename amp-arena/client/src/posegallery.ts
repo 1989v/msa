@@ -12,6 +12,9 @@ const items: { acc: AccessoryId; move: MoveId; label: string }[] = [
   { acc: 'greatsword', move: 'gs1', label: '대검 내려베기' }, { acc: 'greatsword', move: 'gs2', label: '대검 가로베기' },
   { acc: 'spear', move: 'sp1', label: '창 찌르기' }, { acc: 'pistols', move: 'gunShot', label: '사격' },
   { acc: 'shield', move: 'shieldBash', label: '방패 밀치기' }, { acc: 'rocket', move: 'rk2', label: '로켓 스트레이트' },
+  // 3차 소감: 강공·반격 추가 동작
+  { acc: 'none', move: 'haymaker', label: '헤이메이커' }, { acc: 'none', move: 'headbutt', label: '박치기' }, { acc: 'none', move: 'axeKick', label: '도끼차기' },
+  { acc: 'none', move: 'kneeStrike', label: '무릎' }, { acc: 'greatsword', move: 'gsOverhead', label: '대검 내려찍기' }, { acc: 'shield', move: 'shieldSlam', label: '방패 슬램' }, { acc: 'none', move: 'counter', label: '반격기' },
 ];
 
 const view = new URLSearchParams(location.search).get('view') ?? 'game';

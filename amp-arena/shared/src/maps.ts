@@ -1,5 +1,7 @@
 // 맵 정의 — 기획서 §9. 단위 m, 아레나 중심 (0,0), y 는 높이.
-export interface Box { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number }
+export interface Box { minX: number; maxX: number; minY: number; maxY: number; minZ: number; maxZ: number; room?: number; part?: 'wall' | 'roof' }
+/** 들어갈 수 있는 방: 벽 4면(문 하나) + 지붕. 시뮬은 벽·지붕을 보통 상자로 보고, 화면은 안에 있을 때 벽·지붕을 비친다. */
+export interface Room { minX: number; maxX: number; minZ: number; maxZ: number; floor: number; height: number; door: { side: 'n' | 's' | 'e' | 'w'; center: number; width: number } }
 export interface Cylinder { x: number; z: number; r: number; h: number }
 export interface Spawn { x: number; z: number; y: number; team: number } // team 0 = 레드/무팀, 1 = 블루
 export interface CrateSpot { x: number; z: number; y: number }
@@ -23,12 +25,31 @@ export interface MapDef {
   spawns: Spawn[];
   crates: CrateSpot[];
   pads: Pad[];            // 점프대
+  rooms: Room[];          // 들어갈 수 있는 방 (벽·지붕 상자는 boxes 에 이미 펼쳐져 있다)
   fallY: number;
 }
 
 const box = (cx: number, cz: number, w: number, d: number, bottom: number, top: number): Box => ({
   minX: cx - w / 2, maxX: cx + w / 2, minY: bottom, maxY: top, minZ: cz - d / 2, maxZ: cz + d / 2,
 });
+
+/** 방 → 벽·지붕 상자. 문이 있는 벽은 둘로 쪼갠다. 벽 두께 0.3, 지붕 두께 0.3(위에 올라설 수 있다). */
+export function roomBoxes(r: Room, index: number): Box[] {
+  const T = 0.3, top = r.floor + r.height;
+  const out: Box[] = [];
+  const wall = (minX: number, maxX: number, minZ: number, maxZ: number): Box => ({ minX, maxX, minY: r.floor, maxY: top, minZ, maxZ, room: index, part: 'wall' });
+  const split = (side: 'n' | 's' | 'e' | 'w', lo: number, hi: number): [number, number][] => {
+    if (r.door.side !== side) return [[lo, hi]];
+    const a = r.door.center - r.door.width / 2, b = r.door.center + r.door.width / 2;
+    return [[lo, a], [b, hi]].filter(([x, y]) => y - x > 0.05) as [number, number][];
+  };
+  for (const [a, b] of split('n', r.minX, r.maxX)) out.push(wall(a, b, r.maxZ - T, r.maxZ));
+  for (const [a, b] of split('s', r.minX, r.maxX)) out.push(wall(a, b, r.minZ, r.minZ + T));
+  for (const [a, b] of split('e', r.minZ, r.maxZ)) out.push(wall(r.maxX - T, r.maxX, a, b));
+  for (const [a, b] of split('w', r.minZ, r.maxZ)) out.push(wall(r.minX, r.minX + T, a, b));
+  out.push({ minX: r.minX, maxX: r.maxX, minY: top, maxY: top + T, minZ: r.minZ, maxZ: r.maxZ, room: index, part: 'roof' });
+  return out;
+}
 
 const ringSpawns = (r: number, count: number, y = 0): Spawn[] => {
   const out: Spawn[] = [];
@@ -56,6 +77,7 @@ export const COLOSSEUM: MapDef = {
     return { x: 9 * Math.cos(a), z: 9 * Math.sin(a), y: 0 };
   }),
   pads: [{ x: 5, z: 12, y: 0, r: 0.9, power: 11 }, { x: -5, z: -12, y: 0, r: 0.9, power: 11 }],
+  rooms: [],
   fallY: -8,
 };
 
@@ -76,28 +98,33 @@ export const SKYDOCK: MapDef = {
   ],
   crates: [{ x: -21.5, z: 2.5, y: 2 }, { x: 21.5, z: 2.5, y: 2 }, { x: -21.5, z: -2.5, y: 2 }, { x: 21.5, z: -2.5, y: 2 }],
   pads: [{ x: -10.5, z: 0, y: 0, r: 0.9, power: 12 }, { x: 10.5, z: 0, y: 0, r: 0.9, power: 12 }, { x: 0, z: 0, y: 0, r: 1.0, power: 13 }],
+  rooms: [],
   fallY: -8,
 };
 
-/** 옥상: 30×20 지붕, 기계실(+2m)과 계단 턱(+1m), 실외기 3개. 난간 없음 — 가장자리가 곧 낙사. */
+/** 기계실: 8×6 방, 높이 2.3, 동쪽 벽 가운데 1.8m 문. 안에 상자가 하나 있다. */
+const ROOFTOP_ROOM: Room = { minX: -14, maxX: -6, minZ: 2, maxZ: 8, floor: 0, height: 2.3, door: { side: 'e', center: 5, width: 1.8 } };
+
+/** 옥상: 30×20 지붕, 기계실(들어갈 수 있는 방, 지붕 2.3m)과 계단 턱(+1m), 실외기 3개. 난간 없음 — 가장자리가 곧 낙사. */
 export const ROOFTOP: MapDef = {
-  id: 'rooftop', name: '옥상', theme: 'rooftop', desc: '30×20 · 난간 없음 · 점프대로 기계실 지붕',
+  id: 'rooftop', name: '옥상', theme: 'rooftop', desc: '30×20 · 난간 없음 · 들어갈 수 있는 기계실',
   groundRadius: 0, wallRadius: 0, wallHeight: 0, ice: false,
   boxes: [
     box(0, 0, 30, 20, -3, 0),       // 지붕
-    box(-10, 5, 8, 6, 0, 2.0),      // 기계실 (점프로 못 오름, 턱을 밟고 오른다)
-    box(-10, 0.5, 8, 3, 0, 1.0),    // 턱
+    box(-10, 0.5, 8, 3, 0, 1.0),    // 턱 (기계실 지붕 2.3m 는 점프대나 턱→점프로 오른다)
     box(8, 6, 2, 2, 0, 1.2),        // 실외기
     box(8, -6, 2, 2, 0, 1.2),
     box(0, -8, 3, 1.5, 0, 1.0),
+    ...roomBoxes(ROOFTOP_ROOM, 0),  // 기계실: 동쪽 문으로 들어간다 (2026-09-12 소감 「건물 내부 진입」)
   ],
+  rooms: [ROOFTOP_ROOM],
   cylinders: [],
   spawns: [
     { x: -13, z: -8, y: 0, team: 0 }, { x: -13, z: 8, y: 0, team: 0 }, { x: -5, z: -8.5, y: 0, team: 0 }, { x: -10, z: 5, y: 2, team: 0 },
     { x: 13, z: -8, y: 0, team: 1 }, { x: 13, z: 8, y: 0, team: 1 }, { x: 5, z: 8.5, y: 0, team: 1 }, { x: 12, z: 0, y: 0, team: 1 },
   ],
-  crates: [{ x: -13.5, z: 0, y: 0 }, { x: 13.5, z: -8.5, y: 0 }, { x: 3, z: 8.5, y: 0 }, { x: -3, z: -8.5, y: 0 }],
-  pads: [{ x: -4.5, z: 5, y: 0, r: 0.9, power: 11 }, { x: 11, z: 0, y: 0, r: 0.9, power: 11 }],
+  crates: [{ x: -13.5, z: -6, y: 0 }, { x: 13.5, z: -8.5, y: 0 }, { x: 3, z: 8.5, y: 0 }, { x: -3, z: -8.5, y: 0 }, { x: -12, z: 6.5, y: 0 }],
+  pads: [{ x: -4.5, z: 3.2, y: 0, r: 0.9, power: 11 }, { x: 11, z: 0, y: 0, r: 0.9, power: 11 }],
   fallY: -8,
 };
 
@@ -113,6 +140,7 @@ export const ICELAKE: MapDef = {
   spawns: ringSpawns(12, 8),
   crates: [0, 1, 2, 3].map((i) => { const a = ((i * 90 + 45) * Math.PI) / 180; return { x: 6 * Math.cos(a), z: 6 * Math.sin(a), y: 0 }; }),
   pads: [],
+  rooms: [],
   fallY: -8,
 };
 

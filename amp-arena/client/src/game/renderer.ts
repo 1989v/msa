@@ -151,6 +151,8 @@ export class Renderer {
   private texHeart: THREE.CanvasTexture | null = null;
   private crateMat: THREE.MeshLambertMaterial | null = null;
   private pads: { mesh: THREE.Mesh; baseY: number; kick: number }[] = [];
+  private roomParts: { mesh: THREE.Mesh; mats: THREE.MeshLambertMaterial[]; room: number }[] = [];
+  private roomAlpha: number[] = [];
   private effects: Effect[] = [];
   private mapGroup = new THREE.Group();
   private texStar = starTexture('#ffffff', '#ff6a2a');
@@ -200,6 +202,8 @@ export class Renderer {
 
   buildMap(map: MapDef): void {
     this.pads = [];
+    this.roomParts = [];
+    this.roomAlpha = map.rooms.map(() => 1);
     this.map = map;
     this.mapGroup.clear();
     const g = this.mapGroup;
@@ -333,6 +337,12 @@ export class Renderer {
       m.position.set((b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2, (b.minZ + b.maxZ) / 2);
       m.castShadow = true; m.receiveShadow = true;
       g.add(m);
+      if (b.room !== undefined) {
+        // 방의 벽·지붕: 내 캐릭터가 안에 있으면 비쳐서 위에서도 보인다
+        const mats = [sideMat, top as THREE.MeshLambertMaterial].filter((x, i, arr) => arr.indexOf(x) === i);
+        for (const mat of mats) mat.transparent = true;
+        this.roomParts.push({ mesh: m, mats, room: b.room });
+      }
       if (theme === 'rooftop' && big) {
         // 지붕 가장자리 표시선 (시뮬에는 없음 — 낙사 경계를 눈으로 알리는 용도)
         const edge = new THREE.Mesh(new THREE.BoxGeometry(w + 0.3, 0.12, d + 0.3), new THREE.MeshLambertMaterial({ color: 0xffb020 }));
@@ -433,14 +443,14 @@ export class Renderer {
     for (const [id, m] of this.itemMeshes) if (!seen.has(id)) { this.scene.remove(m.obj); this.itemMeshes.delete(id); }
   }
 
-  spawnHit(x: number, y: number, z: number, kind: 'hit' | 'launch' | 'guard' | 'ko'): void {
+  spawnHit(x: number, y: number, z: number, kind: 'hit' | 'launch' | 'guard' | 'ko' | 'blast'): void {
     const tex = kind === 'guard' ? this.texGuard : kind === 'hit' ? this.texStar : this.texStarBig;
     const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false }));
     s.position.set(x, y, z);
     s.material.rotation = Math.random() * Math.PI;
-    const size = kind === 'ko' ? 3.2 : kind === 'launch' ? 2.0 : kind === 'guard' ? 1.4 : 1.3;
+    const size = kind === 'blast' ? 7.5 : kind === 'ko' ? 3.2 : kind === 'launch' ? 2.0 : kind === 'guard' ? 1.4 : 1.3; // blast ≈ 폭탄 반지름 3.2 의 지름
     this.scene.add(s);
-    this.effects.push({ obj: s, life: 0, max: kind === 'ko' ? 0.45 : 0.28, from: size * 0.35, to: size, rise: 0.6 });
+    this.effects.push({ obj: s, life: 0, max: kind === 'blast' ? 0.6 : kind === 'ko' ? 0.45 : 0.28, from: size * 0.35, to: size, rise: kind === 'blast' ? 1.2 : 0.6 });
   }
 
   spawnDust(x: number, y: number, z: number): void {
@@ -448,6 +458,22 @@ export class Renderer {
     s.position.set(x, y + 0.15, z);
     this.scene.add(s);
     this.effects.push({ obj: s, life: 0, max: 0.35, from: 0.5, to: 1.6, rise: 0.2 });
+  }
+
+  /** 내 캐릭터 위치 — 방 안이면 그 방의 벽·지붕을 비친다 (밖에서는 불투명) */
+  setViewer(x: number, y: number, z: number, dt: number): void {
+    const map = this.map;
+    if (!map || !this.roomParts.length) return;
+    map.rooms.forEach((r, i) => {
+      const inside = x > r.minX - 0.6 && x < r.maxX + 0.6 && z > r.minZ - 0.6 && z < r.maxZ + 0.6 && y < r.floor + r.height - 0.2;
+      const target = inside ? 0.22 : 1;
+      this.roomAlpha[i] += (target - this.roomAlpha[i]) * Math.min(1, dt * 8);
+    });
+    for (const p of this.roomParts) {
+      const a = this.roomAlpha[p.room] ?? 1;
+      for (const mat of p.mats) mat.opacity = a;
+      p.mesh.castShadow = a > 0.9;
+    }
   }
 
   /** 점프대가 눌렸다 — 원판이 잠깐 내려앉았다 올라온다 */

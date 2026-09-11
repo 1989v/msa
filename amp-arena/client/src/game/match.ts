@@ -8,6 +8,7 @@ import { targetPose } from './poses.ts';
 import { audio } from './audio.ts';
 import { botInput, newBotMemory, STYLES, MOVES, type BotMemory } from '@amp/shared';
 import { STRIKE_HOLD } from './poses.ts';
+import { toggleFullscreen, isFullscreen } from '../ui/fullscreen.ts';
 
 /** E2E·디버그용 창 훅: 월드 조회와 오토파일럿(봇 AI 가 내 캐릭터를 조종) */
 interface DebugHook {
@@ -69,6 +70,7 @@ export class Match {
   private hitstop = new Map<number, number>(); // 리그별 포즈 정지 만료 시각
   private shake = 0;
   private lastCountdown = -1;
+  private counterUntil = 0; // 가드로 막은 뒤 반격 창 안내가 보이는 시각
   private debug: DebugHook;
   private autoMem: BotMemory | null = null;
   private onKey = (e: KeyboardEvent): void => { if (e.code === 'KeyM' && !(document.activeElement && document.activeElement.tagName === 'INPUT')) { const m = audio.toggleMute(); this.hud.pushFeed(`<span class="muted">효과음 ${m ? '끔' : '켬'} (M)</span>`); } };
@@ -98,6 +100,12 @@ export class Match {
     window.__amp = this.debug;
     audio.unlock();
     window.addEventListener('keydown', this.onKey);
+    const fs = document.createElement('button');
+    fs.className = 'btn ghost fsbtn';
+    fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면';
+    fs.onclick = () => { void toggleFullscreen().then(() => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; }); };
+    document.addEventListener('fullscreenchange', () => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; });
+    this.el.appendChild(fs);
     if (this.input.hasTouch) {
       this.el.classList.add('touch');
       const hint = document.createElement('div');
@@ -173,6 +181,7 @@ export class Match {
     const turn = this.input.cameraTurn();
     if (meView) {
       this.renderer.updateCamera(meView.x, meView.y, meView.z, turn, dt);
+      this.renderer.setViewer(meView.x, meView.y, meView.z, dt);
       if (this.shake > 0) {
         this.shake = Math.max(0, this.shake - dt * 2.2);
         const s = this.shake * 0.35;
@@ -190,7 +199,8 @@ export class Match {
       const me = world.players[src.myId];
       let near = false;
       if (me && me.holding < 0) for (const it of world.items) { if (it.kind !== 'heart' && it.heldBy < 0 && !it.airborne && Math.abs(it.y - me.pos.y) <= 1.5 && Math.hypot(it.x - me.pos.x, it.z - me.pos.z) < PICKUP_RANGE) { near = true; break; } }
-      this.hud.setPrompt(near ? (this.input.hasTouch ? '줍기 버튼으로 줍는다' : 'F 줍기') : me && me.holding >= 0 ? (this.input.hasTouch ? '공격 버튼으로 던진다' : 'Z 던지기 · F 내려놓기') : null);
+      const counter = now < this.counterUntil ? (this.input.hasTouch ? '반격! 약공' : 'Z 반격!') : null;
+      this.hud.setPrompt(counter ?? (near ? (this.input.hasTouch ? '줍기 버튼으로 줍는다' : 'F 줍기') : me && me.holding >= 0 ? (this.input.hasTouch ? '약공 버튼으로 던진다' : 'Z 던지기 · F 내려놓기') : null));
     }
     this.hud.update({
       me: world.players[src.myId], players: world.players.filter((p): p is Player => !!p), myId: src.myId,
@@ -207,7 +217,7 @@ export class Match {
     switch (ev.t) {
       case 'hit': {
         const mine = ev.a === src.myId || ev.v === src.myId;
-        if (ev.kind === 'guard') { this.renderer.spawnHit(ev.x, ev.y, ev.z, 'guard'); if (mine) { audio.play('guard'); const s = this.renderer.project(ev.x, ev.y + 0.4, ev.z); this.hud.showDamage(s.x, s.y, '가드', 'guard'); } break; }
+        if (ev.kind === 'guard') { this.renderer.spawnHit(ev.x, ev.y, ev.z, 'guard'); if (mine) { audio.play('guard'); const s = this.renderer.project(ev.x, ev.y + 0.4, ev.z); this.hud.showDamage(s.x, s.y, '가드', 'guard'); } if (ev.v === src.myId) this.counterUntil = performance.now() + 250; break; }
         if (ev.kind === 'guardBreak') { this.renderer.spawnHit(ev.x, ev.y, ev.z, 'launch'); audio.play('guardBreak'); const s = this.renderer.project(ev.x, ev.y + 0.4, ev.z); this.hud.showDamage(s.x, s.y, '가드 크러시!', 'guard'); break; }
         this.renderer.spawnHit(ev.x, ev.y, ev.z, ev.launch ? 'launch' : 'hit');
         audio.play(ev.launch ? 'heavy' : 'hit');
@@ -241,7 +251,7 @@ export class Match {
         break;
       case 'shot': this.renderer.spawnDust(ev.x, ev.y, ev.z); if (ev.id === src.myId) audio.play('shot'); break;
       case 'phase': if (ev.phase === 'play') this.hud.hideCenter(); break;
-      case 'explode': this.renderer.spawnHit(ev.x, ev.y, ev.z, 'ko'); this.renderer.spawnDust(ev.x, ev.y - 0.4, ev.z); audio.play('explode'); this.shake = Math.max(this.shake, 0.6); break;
+      case 'explode': this.renderer.spawnHit(ev.x, ev.y, ev.z, 'blast'); this.renderer.spawnDust(ev.x, ev.y - 0.4, ev.z); audio.play('explode'); this.shake = Math.max(this.shake, 0.8); break;
       case 'crateBreak': this.renderer.spawnDust(ev.x, ev.y - 0.3, ev.z); this.renderer.spawnHit(ev.x, ev.y, ev.z, 'hit'); audio.play('hit'); break;
       case 'heal': if (ev.id === src.myId) { audio.play('heal'); const me = src.world.players[src.myId]; if (me) { const s = this.renderer.project(me.pos.x, me.pos.y + 1.8, me.pos.z); this.hud.showDamage(s.x, s.y, `+${ev.amount}`, 'guard'); } } break;
       case 'pickup': if (ev.id === src.myId) audio.play('pickup'); break;

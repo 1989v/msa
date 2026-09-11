@@ -66,6 +66,14 @@ export const POSES = {
   hookWind: P(-2, 2, [-40, 110], [30, 80], [20, -5], [-20, 0]),
   hook: P(16, 6, [72, 40], [-20, 90], [32, -10], [-30, 0], 0, 0, 0.16),
   flyKick: P(30, 6, [-60, 20], [-50, 20], [96, 0], [-30, -70], 0.12, 0, 0.22),
+  // 3차 소감: 약공·강공 사슬 추가 동작
+  hook2Wind: P(-2, 2, [30, 80], [-40, 110], [20, -5], [-20, 0]),
+  hook2: P(16, 6, [-20, 90], [72, 40], [32, -10], [-30, 0], 0, 0, 0.16),
+  headbuttWind: P(-18, -14, [-40, 60], [-40, 60], [20, -5], [-20, 0]),
+  headbutt: P(34, 28, [-50, 40], [-50, 40], [30, -10], [-30, 0], 0, 0, 0.2),
+  knee: P(12, 4, [-30, 70], [40, 60], [110, -115], [-20, 0], 0.04, 0, 0.1),
+  axeWind: P(-12, -6, [-30, 40], [40, 50], [150, -20], [-20, 0], 0.06),
+  axeKick: P(22, 10, [-40, 30], [50, 40], [50, 0], [-15, 0], 0, 0, 0.16),
 } as const;
 
 export type PoseId = keyof typeof POSES;
@@ -85,6 +93,10 @@ export const MOVE_POSES: Record<MoveId, [PoseId, PoseId]> = {
   spinKick: ['roundWind', 'kickHigh'],
   heavy1: ['swingWind', 'swing'], heavy2: ['swing2Wind', 'swing2'], quake: ['slamWind', 'slam'],
   kick1: ['roundWind', 'roundhouse'], kick2: ['roundWind', 'kickHigh'], kick3: ['roundWind', 'roundhouse'], flyingKick: ['flyKick', 'flyKick'],
+  haymaker: ['swing2Wind', 'straight'], hook2: ['hook2Wind', 'hook2'], headbutt: ['headbuttWind', 'headbutt'], lariat: ['swing2Wind', 'swing2'],
+  axeKick: ['axeWind', 'axeKick'], hammer1: ['swingWind', 'swing'], hammer2: ['swing2Wind', 'swing2'], kneeStrike: ['roundWind', 'knee'],
+  gsSweep: ['swing2Wind', 'swing2'], gsOverhead: ['swingWind', 'swing'], spSweep: ['thrustWind', 'thrust'], gunBurst: ['shoot', 'shoot'],
+  shieldJab: ['bashWind', 'bash'], shieldSlam: ['slamWind', 'bash'], rkHeavy: ['uppercutWind', 'uppercut'], counter: ['straightWind', 'straight'],
 };
 
 export function lerpPose(a: Pose, b: Pose, t: number): Pose {

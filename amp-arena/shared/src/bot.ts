@@ -1,5 +1,5 @@
 // 봇: 사람과 같은 입력 파이프라인을 탄다. 서버(온라인)와 클라(연습 모드)가 같이 쓴다.
-import { type Input, BTN_ATTACK, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH } from './input.ts';
+import { type Input, BTN_ATTACK, BTN_HEAVY, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH } from './input.ts';
 import { type Player, isActionable } from './player.ts';
 import type { World } from './world.ts';
 import { MOVES } from './moves.ts';
@@ -108,14 +108,15 @@ export function botInput(w: World, p: Player, mem: BotMemory): Input {
     out.btn |= BTN_GUARD;
     return out;
   }
+  if (p.state === 'guard' && p.counterT > 0 && rng() < 0.5) { out.btn |= BTN_ATTACK; return out; } // 막았으면 반격
   if (p.state === 'attack' || p.state === 'special') {
-    // 콤보 이어가기: 격틱으로 눌러 엣지를 만든다
-    if (rng() < 0.75 && tick % 3 === 0) out.btn |= BTN_ATTACK;
+    // 사슬 이어가기: 같은 키를 격틱으로 눌러 엣지를 만든다. 약공 사슬 끝에 가끔 강공 피니시
+    if (rng() < 0.75 && tick % 3 === 0) out.btn |= p.chain === 1 ? BTN_HEAVY : (p.comboIdx >= 1 && rng() < 0.3 ? BTN_HEAVY : BTN_ATTACK);
     return out;
   }
   if (isActionable(p)) {
     if (p.cooldown <= 0 && rng() < 0.12 * mem.aggression) { out.btn |= BTN_SPECIAL; out.mx = nx; out.mz = nz; return out; }
-    if (rng() < 0.35 + mem.aggression * 0.4) { out.btn |= BTN_ATTACK; out.mx = nx; out.mz = nz; return out; }
+    if (rng() < 0.35 + mem.aggression * 0.4) { out.btn |= rng() < 0.3 ? BTN_HEAVY : BTN_ATTACK; out.mx = nx; out.mz = nz; return out; }
     // 아니면 옆으로 돈다
     out.mx = -nz * mem.strafeDir; out.mz = nx * mem.strafeDir;
   }

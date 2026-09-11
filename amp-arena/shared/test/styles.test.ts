@@ -32,17 +32,17 @@ describe('스타일', () => {
       expect(a.maxHp).toBe(70 + 10 * s.hp);
     }
   });
-  it('파이터: 잽·스트레이트·돌려차기, 어퍼컷', () => {
+  it('파이터: 약공 잽·스트레이트·로킥, 어퍼컷', () => {
     const { w, a, b } = setup('fighter');
-    expect(chainOf(w, a, 90).slice(0, 3)).toEqual(['jab', 'straight', 'roundhouse']);
+    expect(chainOf(w, a, 90).slice(0, 3)).toEqual(['jab', 'straight', 'kick1']);
     expect(b.hp).toBeLessThan(b.maxHp);
     const s2 = setup('fighter');
     run(s2.w, inp(0, 0, BTN_SPECIAL), inp(), 1);
     expect(s2.a.move).toBe('uppercut');
   });
-  it('그래플러: 훅·바디슬램 2단, 대시 잡기는 3m 밖 상대를 붙잡는다, 던지기 22', () => {
+  it('그래플러: 약공 훅·훅·박치기, 대시 잡기는 3m 밖 상대를 붙잡는다, 던지기 22', () => {
     const { w, a, b } = setup('grappler', 'fighter', 1.6);
-    expect(chainOf(w, a, 70).slice(0, 2)).toEqual(['hook', 'bodySlam']);
+    expect(chainOf(w, a, 110).slice(0, 3)).toEqual(['hook', 'hook2', 'headbutt']);
     const s2 = setup('grappler', 'fighter', 3.5);
     run(s2.w, inp(0, 0, BTN_SPECIAL), inp(), 1);
     expect(s2.a.state).toBe('grabTry');
@@ -63,9 +63,9 @@ describe('스타일', () => {
     expect(a.state).toBe('attack');
     expect(a.move).toBe('bodySlam');
   });
-  it('스피드스타: 4단, 이동 +15%, 회전 발차기는 여러 번 때린다', () => {
+  it('스피드스타: 약공 3단, 이동 +15%, 회전 발차기는 여러 번 때린다', () => {
     const { w, a, b } = setup('speedster', 'fighter', 1.2);
-    expect(chainOf(w, a, 80).slice(0, 4)).toEqual(['quick1', 'quick2', 'quick3', 'quick4']);
+    expect(chainOf(w, a, 80).slice(0, 3)).toEqual(['quick1', 'quick2', 'quick3']);
     const s2 = setup('speedster', 'fighter', 12);
     run(s2.w, inp(0, 1), inp(), 60);
     expect(s2.a.pos.z).toBeGreaterThan(C.WALK_SPEED * 1.1);
@@ -77,9 +77,9 @@ describe('스타일', () => {
     expect(s3.a.move === 'spinKick' || hits > 0).toBe(true);
     expect(hits).toBeGreaterThanOrEqual(2);
   });
-  it('헤비: 2단 강타, 지진은 반지름 2.6m 를 전부 띄운다, 이동 −10%', () => {
+  it('헤비: 약공 해머 2단, 지진은 반지름 2.6m 를 전부 띄운다, 이동 −10%', () => {
     const { w, a, b } = setup('heavy', 'fighter', 1.4);
-    expect(chainOf(w, a, 90).slice(0, 2)).toEqual(['heavy1', 'heavy2']);
+    expect(chainOf(w, a, 90).slice(0, 2)).toEqual(['hammer1', 'hammer2']);
     const s2 = setup('heavy', 'fighter', 2.2);
     const c = s2.w.addPlayer(2, 'C', 1, 'none', false); c.pos.x = -2; c.pos.z = 0; c.yaw = 0;
     run(s2.w, inp(0, 0, BTN_SPECIAL), inp(), 1);

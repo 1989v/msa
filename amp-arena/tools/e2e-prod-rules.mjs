@@ -66,6 +66,15 @@ try {
   checks.friendlyFire = after.hp < after.max && after.hitBy === 0;
   console.log(`friendly fire: before ${ff} → after jab hp ${after.hp}/${after.max} state ${after.state} lastHitBy ${after.hitBy} myDmgDealt ${after.myDmg} (기대: hp 가 줄고 lastHitBy 가 나)`);
 
+  // ④ 강공(X): 파이터의 강공 사슬 첫 타는 돌려차기, 이어 누르면 헤이메이커
+  await page.eval(`(() => { const me = ${ME}; me.pos.x = 4; me.pos.z = 4; me.pos.y = 0; me.vel.x = me.vel.z = 0; me.state = 'idle'; me.t = 0; me.move = null; me.comboIdx = 0; me.chain = 0; return true; })()`);
+  await page.sleep(60);
+  const moves = new Set();
+  for (let i = 0; i < 16; i++) { await page.tap('KeyX', 'x', 30); await page.sleep(60); const mv = await page.eval(`${ME}.move`); if (mv) moves.add(mv); }
+  const heavySeen = [...moves];
+  checks.heavyChain = heavySeen.includes('roundhouse') && heavySeen.includes('haymaker');
+  console.log(`heavy chain (X 연타): moves seen ${JSON.stringify(heavySeen)} (기대: roundhouse, haymaker)`);
+
   await page.shot(`${out}/prod-rules.png`);
   console.log(`bundle ${bundle}`);
   console.log(`checks ${JSON.stringify(checks)}`);

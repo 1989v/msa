@@ -1,7 +1,7 @@
 // 플레이어 상태 머신 + 개인 물리. 서버와 클라(예측)가 같은 함수를 돈다.
 import * as C from './constants.ts';
 import { type Vec3, v3, yawFromDir, dirX, dirZ, clamp, wrapAngle } from './math.ts';
-import { type Input, BTN_ATTACK, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP, pressed, held } from './input.ts';
+import { type Input, BTN_ATTACK, BTN_HEAVY, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP, pressed, held } from './input.ts';
 import { MOVES, type MoveId, totalTicks, chainTick, isActiveAt, PROJECTILE_MOVES, GRAB_MOVES } from './moves.ts';
 import { ACCESSORIES, type AccessoryId } from './accessories.ts';
 import { STYLES, type StyleId, statsForStyle } from './styles.ts';
@@ -38,6 +38,9 @@ export interface Player {
   move: MoveId | null;   // 공격·기술 중인 동작
   comboIdx: number;
   comboQueued: boolean;
+  chain: number;         // 0 약공 사슬, 1 강공 사슬
+  switchHeavy: boolean;  // 약공 사슬 중 강공 입력 — 후딜 끝에 강공 피니시로 넘어간다
+  counterT: number;      // 가드로 막은 뒤 반격 창 남은 틱
   hitMask: number;       // 이번 동작으로 이미 때린 플레이어 비트
   juggled: boolean;      // 공중 추가타를 이미 맞았다
   shotFired: boolean;    // 투사체 동작에서 발사했다
@@ -82,7 +85,7 @@ export function createPlayer(id: number, name: string, team: number, acc: Access
   const a = ACCESSORIES[acc];
   return {
     id, name, team, acc, style, bot, stats,
-    pos: v3(), vel: v3(), yaw: 0, state: 'idle', t: 0, move: null, comboIdx: 0, comboQueued: false, hitMask: 0, juggled: false, shotFired: false,
+    pos: v3(), vel: v3(), yaw: 0, state: 'idle', t: 0, move: null, comboIdx: 0, comboQueued: false, chain: 0, switchHeavy: false, counterT: 0, hitMask: 0, juggled: false, shotFired: false,
     hp: maxHp, maxHp, guard: C.GUARD_MAX, grounded: true, airDashes: 0, landTicks: C.LAND_TICKS, invuln: 0, hitstunLeft: 0,
     grabbing: -1, grabbedBy: -1, grabTarget: -1, mash: 0, throwX: 0, throwZ: 1, wallBonus: false, holding: -1,
     cooldown: 0, ammo: a.ammo, reload: 0,
@@ -131,6 +134,7 @@ function startMove(ctx: SimContext, p: Player, move: MoveId, state: PState, mx: 
   p.move = move;
   p.hitMask = 0;
   p.comboQueued = false;
+  p.switchHeavy = false;
   p.shotFired = false;
   setState(p, state);
   if (moving) p.yaw = yawFromDir(mx, mz);
@@ -211,6 +215,8 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
   const moving = ctx.phase === 'play' && Math.hypot(input.mx, input.mz) > 0.05;
   const mx = moving ? input.mx : 0, mz = moving ? input.mz : 0;
   const atk = pressed(btn, prev, BTN_ATTACK);
+  const hvy = pressed(btn, prev, BTN_HEAVY);
+  if (p.counterT > 0) p.counterT--;
   const jump = pressed(btn, prev, BTN_JUMP);
   const special = pressed(btn, prev, BTN_SPECIAL);
   const pickup = pressed(btn, prev, BTN_PICKUP);
@@ -222,6 +228,7 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
   // 맨손이면 스타일의 공격·기술, 악세서리를 들면 악세서리 것
   const bare = acc.id === 'none';
   const combo = bare ? style.combo : acc.combo;
+  const heavyChain = bare ? style.heavy : acc.heavy;
   const specialMove = bare ? style.special : acc.special;
   const specialCd = bare ? style.specialCooldownSec : acc.specialCooldownSec;
   const airDashMax = Math.max(acc.airDashes, style.airDashes);
@@ -259,16 +266,27 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
         break;
       }
       if (guardHeld && p.grounded) { setState(p, 'guard'); stopXZ(p); break; }
+      if (hvy) {
+        // 강공 사슬 시작. 원거리는 3발 연사(탄 3 이상)
+        if (acc.ranged) {
+          if (p.ammo >= 3 || acc.ammo === 0) { p.chain = 1; p.comboIdx = 0; startMove(ctx, p, heavyChain[0], 'attack', mx, mz, moving); }
+          else if (p.reload === 0) p.reload = acc.reloadTicks;
+          break;
+        }
+        p.chain = 1; p.comboIdx = 0;
+        startMove(ctx, p, heavyChain[0], 'attack', mx, mz, moving);
+        break;
+      }
       if (atk) {
         if (acc.ranged) {
-          if (p.ammo > 0 || acc.ammo === 0) { startMove(ctx, p, acc.combo[0], 'attack', mx, mz, moving); p.comboIdx = 0; }
+          if (p.ammo > 0 || acc.ammo === 0) { p.chain = 0; startMove(ctx, p, acc.combo[0], 'attack', mx, mz, moving); p.comboIdx = 0; }
           else if (p.reload === 0) p.reload = acc.reloadTicks;
           break;
         }
         const g = acc.canGrab ? findGrabTarget(ctx, p) : null;
         if (g) { p.grabTarget = g.id; startMove(ctx, p, 'grab', 'grabTry', mx, mz, false); p.yaw = yawFromDir(g.pos.x - p.pos.x, g.pos.z - p.pos.z); break; }
         if (p.state === 'run' && p.acc !== 'pistols') { startMove(ctx, p, 'tackle', 'dashAttack', mx, mz, moving); break; }
-        p.comboIdx = 0;
+        p.chain = 0; p.comboIdx = 0;
         startMove(ctx, p, combo[0], 'attack', mx, mz, moving);
         break;
       }
@@ -335,14 +353,24 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
           ctx.onProjectile(p, p.move!);
         }
       }
-      if (p.state === 'attack') {
-        if (atk && p.t >= m.startup) p.comboQueued = true;
-        const chain = combo;
-        if (p.comboQueued && p.comboIdx < chain.length - 1 && p.t >= chainTick(m) && p.grounded) {
-          if (acc.ranged && p.ammo === 0) { setState(p, 'idle'); break; }
-          p.comboIdx++;
-          startMove(ctx, p, chain[p.comboIdx], 'attack', mx, mz, moving);
-          break;
+      if (p.state === 'attack' && p.move !== 'counter') {
+        // 같은 키 연타 = 같은 사슬의 다음 타. 약공 사슬 중 강공 = 강공 사슬의 마지막 타(피니시)로 넘어간다
+        const same = p.chain === 1 ? hvy : atk;
+        if (same && p.t >= m.startup) p.comboQueued = true;
+        if (hvy && p.chain === 0 && p.t >= m.startup && !acc.ranged) p.switchHeavy = true;
+        const chain = p.chain === 1 ? heavyChain : combo;
+        if (p.t >= chainTick(m) && p.grounded) {
+          if (p.switchHeavy) {
+            p.switchHeavy = false; p.chain = 1; p.comboIdx = heavyChain.length - 1;
+            startMove(ctx, p, heavyChain[p.comboIdx], 'attack', mx, mz, moving);
+            break;
+          }
+          if (p.comboQueued && p.comboIdx < chain.length - 1) {
+            if (acc.ranged && p.ammo === 0) { setState(p, 'idle'); break; }
+            p.comboIdx++;
+            startMove(ctx, p, chain[p.comboIdx], 'attack', mx, mz, moving);
+            break;
+          }
         }
       }
       if (m.activeUntilLand) {
@@ -356,6 +384,12 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
     case 'guard': {
       stopXZ(p);
       if (moving) p.yaw = yawFromDir(mx, mz);
+      // 반격기: 막은 직후 창 안에 약공/강공 — 빠른 띄우기 한 방, 사슬은 이어지지 않는다
+      if ((atk || hvy) && p.counterT > 0) {
+        p.counterT = 0; p.chain = 0; p.comboIdx = 99;
+        startMove(ctx, p, 'counter', 'attack', mx, mz, moving);
+        break;
+      }
       if (!guardHeld) setState(p, 'idle');
       break;
     }
@@ -479,6 +513,7 @@ export function integrate(ctx: SimContext, p: Player): void {
   p.pos.z += p.vel.z * C.DT;
 
   const crates = ctx.solidCrates();
+  if (p.vel.y > 0) resolveCeiling(map, p, prevY);
   const wallHit = resolveHorizontal(map, p, crates);
   const support = supportHeight(map, p, prevY, crates);
   const wasGrounded = p.grounded;
@@ -535,6 +570,16 @@ export function supportHeight(map: MapDef, p: Player, prevY: number, extra: Box[
     if (Math.hypot(p.pos.x - c.x, p.pos.z - c.z) <= c.r + r && c.h <= limit && c.h > best) best = c.h;
   }
   return best;
+}
+
+/** 천장: 상자 밑면을 머리로 치면 그 아래에서 멈춘다 (방 지붕 아래에서 점프) */
+export function resolveCeiling(map: MapDef, p: Player, prevY: number): void {
+  const r = C.PLAYER_RADIUS * 0.6;
+  const headPrev = prevY + C.PLAYER_HEIGHT, head = p.pos.y + C.PLAYER_HEIGHT;
+  for (const b of map.boxes) {
+    if (p.pos.x < b.minX - r || p.pos.x > b.maxX + r || p.pos.z < b.minZ - r || p.pos.z > b.maxZ + r) continue;
+    if (headPrev <= b.minY + 1e-4 && head > b.minY) { p.pos.y = b.minY - C.PLAYER_HEIGHT; p.vel.y = 0; }
+  }
 }
 
 /** 옆면 충돌: 원형 벽·기둥·발판 옆면. 밀어낸 뒤 true 를 돌려준다. */

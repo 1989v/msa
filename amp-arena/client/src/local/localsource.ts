@@ -1,5 +1,5 @@
 // 연습 모드: 월드 전체를 클라에서 돌린다 (봇 포함). 서버 없이 같은 시뮬 코드.
-import { World, botInput, newBotMemory, STYLES, STYLE_IDS, type Input, type WorldEvent, type RankEntry, type RosterEntry, type AccessoryId, type StyleId, type MapId, type ModeId, type BotMemory } from '@amp/shared';
+import { World, botInput, newBotMemory, randomLoadout, type Input, type WorldEvent, type RankEntry, type RosterEntry, type AccessoryId, type StyleId, type MapId, type ModeId, type BotMemory } from '@amp/shared';
 import { type MatchSource, type RenderPlayer, renderFromPlayer } from '../game/match.ts';
 
 const BOT_NAMES = ['봇-알파', '봇-브라보', '봇-찰리', '봇-델타', '봇-에코', '봇-폭스', '봇-골프'];
@@ -22,9 +22,7 @@ export class LocalSource implements MatchSource {
     this.roster.push({ id: 0, name: me.name, team: me.team, acc: o.acc, style: o.style, bot: false });
     const n = Math.max(1, Math.min(7, o.bots));
     for (let i = 1; i <= n; i++) {
-      const style = STYLE_IDS[(i * 3 + 1) % STYLE_IDS.length];
-      const accs = STYLES[style].accessories;
-      const acc = accs[(i * 2) % accs.length];
+      const { style, acc } = randomLoadout(this.world.rng); // 봇 직업·악세서리 무작위 (직업 규칙 안에서)
       const team = this.world.teams ? i % 2 : 0;
       const p = this.world.addPlayer(i, BOT_NAMES[i - 1], team, acc, true, style);
       this.mems[i] = newBotMemory(this.world.rng);
