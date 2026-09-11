@@ -45,22 +45,29 @@ class GatewayRouteConfig(
     private fun optionalUserConfig() = AuthenticationGatewayFilter.Config(required = false)
 
     /**
-     * Swagger UI 집계 대상 — 서비스명 → 내부 URI (springdoc webmvc-ui 보유 서비스).
-     * `/api/docs/specs/{service}` 가 각 서비스의 `/v3/api-docs` 로 프록시되고,
-     * gateway 의 springdoc UI (`/api/docs`) 가 이 spec 들을 드롭다운으로 노출한다.
+     * Swagger UI 집계 대상 — 서비스명 → (내부 URI, 업스트림 spec 경로).
+     * `/api/docs/specs/{service}` 가 그 경로로 프록시되고, gateway 의 springdoc UI (`/api/docs`)
+     * 가 이 spec 들을 드롭다운으로 노출한다.
+     *
+     * **폴드 호스트는 그룹 경로를 쓴다.** 한 JVM 에 여러 도메인이 있으면 기본 `/v3/api-docs` 는
+     * 전부 합쳐진 하나라, 서비스마다 그것을 내주면 이름만 다르고 내용이 같다 — `product` 항목이
+     * Order Service 스펙을 내던 것이 그 때문이다. 도메인이 자기 `GroupedOpenApi` 를 선언하고
+     * 여기서 `/v3/api-docs/{group}` 을 가리킨다. 단독 파드는 그룹이 없으므로 기본 경로 그대로다.
      */
     private val openApiServices = mapOf(
-        "product" to "http://commerce:8085", // ADR-0093: commerce 폴드
-        "order" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
-        "search" to "http://search:8083",
-        "inventory" to "http://commerce:8085",
-        "gifticon" to "http://sideapp:8095", // ADR-0093: sideapp 폴드
-        "auth" to "http://auth:8087",
-        "fulfillment" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
-        "warehouse" to "http://commerce:8085", // ADR-0058: commerce 폴드 (inventory:app 서빙)
-        "recommendation" to "http://engagement:8091", // ADR-0093: engagement 폴드
-        "member" to "http://account:8093", // ADR-0093: account 폴드
-        "wishlist" to "http://account:8093", // ADR-0093: account 폴드
+        // 폴드 도메인 — 그룹 경로 (각 도메인의 infrastructure/config/OpenApiConfig.kt 가 선언)
+        "product" to ("http://commerce:8085" to "/v3/api-docs/product"),
+        "order" to ("http://commerce:8085" to "/v3/api-docs/order"),
+        "inventory" to ("http://commerce:8085" to "/v3/api-docs/inventory"),
+        "fulfillment" to ("http://commerce:8085" to "/v3/api-docs/fulfillment"),
+        "warehouse" to ("http://commerce:8085" to "/v3/api-docs/warehouse"),
+        "gifticon" to ("http://sideapp:8095" to "/v3/api-docs/gifticon"),
+        "recommendation" to ("http://engagement:8091" to "/v3/api-docs/recommendation"),
+        "member" to ("http://account:8093" to "/v3/api-docs/member"),
+        "wishlist" to ("http://account:8093" to "/v3/api-docs/wishlist"),
+        // 단독 파드 — 그룹이 없으므로 기본 경로
+        "search" to ("http://search:8083" to "/v3/api-docs"),
+        "auth" to ("http://auth:8087" to "/v3/api-docs"),
     )
 
     @Bean
@@ -68,10 +75,11 @@ class GatewayRouteConfig(
         builder.routes()
             // OpenAPI spec 프록시 (public — API 문서)
             .apply {
-                openApiServices.forEach { (service, uri) ->
+                openApiServices.forEach { (service, target) ->
+                    val (uri, specPath) = target
                     route("openapi-$service") { r ->
                         r.path("/api/docs/specs/$service")
-                            .filters { f -> f.setPath("/v3/api-docs") }
+                            .filters { f -> f.setPath(specPath) }
                             .uri(uri)
                     }
                 }

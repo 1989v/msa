@@ -201,6 +201,47 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 - **`GatewayRoutingSpec` 의 목적지 검사** — 라우트 표의 모든 http(s) 목적지 호스트가 실재하는
   Service 이름 집합 안에 있는지 본다. 라우트 하나를 폴드 전 이름으로 되돌려 빨간불을 확인했다.
 
+## 실행 기록 — ②③단계와 정리 (2026-09-11)
+
+### 트랜잭션 한정자가 폴드의 두 번째 조용한 결함이다
+
+`deal` 을 commerce 로 접은 뒤 `/go/{slug}` 리다이렉터의 클릭 수가 운영에서 올라가지 않았다.
+리다이렉트는 정상이었고 로그도 조용했다. 원인은 `@Transactional` 13곳에 한정자가 없어
+**호스트의 primary TM(inventory)** 에 붙은 것이다 — 그 트랜잭션에는 deal 의 EntityManager 가
+참여하지 않아 `@Modifying` 이 커밋되지 않고, 호출부가 예외를 삼켜 아무 흔적도 남지 않았다.
+값(8→9)으로 확인하고서야 고쳐진 것을 알았다.
+
+전수 조사에서 20곳이 더 나왔다: product 4 · warehouse 4 · gifticon 10 · chatbot 1 ·
+blog 1(조회 원장 `REQUIRES_NEW`). 조사 자체도 한 번 틀렸다 — `@Transactional("` 만 세고
+`transactionManager = "…"` 형을 빼서 `game` 을 결함으로 잘못 보고했다(실제 29/29 정상).
+
+**`verifyTransactionQualifiers`** (루트 `build.gradle.kts`, `verifyArchitecture` 묶음 → pre-push)
+로 내렸다. 판정은 소스에서 끌어낸다 — `*DataSourceConfig.kt` 에 애너테이션 `@Primary` 가 있으면
+그 도메인이 호스트의 primary 라 면제, 없으면 모든 `@Transactional` 이 자기 TM 이름을 달아야 한다.
+도메인 목록을 손으로 유지하지 않으므로 새 도메인이 등록 없이 바로 걸린다. blog 조회 원장의
+한정자를 떼어 빨간불을, 되돌려 초록불을 확인했다.
+
+### 폴드 호스트의 API 문서는 도메인마다 갈라야 한다
+
+`/api/docs/specs/product` 가 **Order Service 스펙**을 냈다. 게이트웨이 드롭다운이 서비스마다
+그 호스트의 `/v3/api-docs` 를 그대로 프록시하는데, 폴드 호스트에서 그것은 도메인 다섯이
+합쳐진 하나다. 이름만 다르고 내용이 같았고, 제목은 `OpenAPI` 빈을 가진 order 것이 이겼다.
+
+도메인이 자기 `GroupedOpenApi`(`{Domain}OpenApiConfig`)를 선언하고 게이트웨이가
+`/v3/api-docs/{group}` 을 가리키게 했다. 단독 파드(search·auth)는 그룹이 없으므로 기본 경로 그대로다.
+그 과정에서 **①단계에서 봤던 클래스명 충돌이 그대로 재현됐다** — 아홉 곳을 전부 `OpenApiConfig`
+로 만들었더니 빈 이름 `openApiConfig` 가 겹쳐 컨텍스트가 안 떴다
+(`ConflictingBeanDefinitionException`). 폴드 호스트에 들어가는 `@Configuration` 은
+**도메인 접두사를 붙인다.** 이번에도 잡은 것은 컨텍스트 로드 검사다.
+
+### 큐에 있는 워크플로 런은 `cancel-in-progress: false` 여도 밀려난다
+
+`images.yml` 은 `concurrency.cancel-in-progress: false` 인데도 blog 전환 커밋(`7739bad`)의
+런이 `cancelled` 로 끝났다. GitHub 는 같은 concurrency 그룹에서 **대기 중인 런을 하나만**
+유지하고, 새 런이 들어오면 앞의 대기 런을 취소한다. 실행 중인 런은 안전하지만 **대기 중이면
+아니다.** 파드 이름·라우트가 바뀌는 커밋은 뒤에 다른 커밋을 바로 올리지 않는다 —
+게이트웨이 이미지가 안 나온 채 매니페스트만 넘어가면 라우트가 빈 곳을 가리킨다.
+
 ## Alternatives Considered
 
 | 후보 | 판정 | 근거 |

@@ -85,7 +85,7 @@ class ChatService(
             ?: throw ConversationNotFoundException(command.conversationId)
     }
 
-    @Transactional
+    @Transactional("chatbotTransactionManager")
     override fun execute(command: CloseConversationUseCase.Command) {
         val conversation = conversationRepository.findById(command.conversationId)
             ?: throw ConversationNotFoundException(command.conversationId)

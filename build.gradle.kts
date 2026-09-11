@@ -665,6 +665,66 @@ val verifyPodTopology by tasks.registering {
 subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyPodTopology) } } }
 
 /**
+ * 폴드된 비-@Primary 도메인의 `@Transactional` 한정자 게이트.
+ *
+ * 한 JVM 에 여러 도메인을 올리면 한정자 없는 `@Transactional` 은 **호스트의 primary TM** 에 붙는다.
+ * 그 트랜잭션에는 자기 도메인의 EntityManager 가 참여하지 않아 `@Modifying` 쓰기가 조용히 사라진다 —
+ * 컴파일도 기동도 통과하고 예외도 없다. 실제로 deal 클릭 수가 운영에서 이 이유로 0 에 머물렀다.
+ *
+ * 판정은 소스에서 끌어낸다: `*DataSourceConfig.kt` 에 애너테이션 `@Primary` 가 있으면 그 도메인이
+ * 호스트의 primary 라 면제고, 없으면 그 도메인의 모든 `@Transactional` 이 자기 TM 이름을 달아야 한다.
+ * (KDoc 안의 "@Primary" 는 줄 앞이 `*` 라 걸리지 않는다.)
+ */
+val verifyTransactionQualifiers by tasks.registering {
+    group = "verification"
+    description = "폴드된 비-primary 도메인의 @Transactional 이 자기 TM 한정자를 갖는지 확인"
+    doLast {
+        val failures = mutableListOf<String>()
+        val primaryAnnotation = Regex("^[ \\t]*@Primary\\b", RegexOption.MULTILINE)
+        val tmBean = Regex("fun\\s+(\\w*[Tt]ransactionManager)\\s*\\(")
+        val txAnnotation = Regex("^[ \\t]*@Transactional\\b.*$", RegexOption.MULTILINE)
+
+        rootProject.projectDir.listFiles()
+            ?.filter { it.isDirectory && File(it, "feature/src/main").isDirectory }
+            ?.sortedBy { it.name }
+            ?.forEach { domainDir ->
+                val configs = domainDir.walkTopDown()
+                    .filter { it.isFile && it.name.endsWith("DataSourceConfig.kt") }
+                    .toList()
+                if (configs.isEmpty()) return@forEach
+                val text = configs.joinToString("\n") { it.readText() }
+                if (primaryAnnotation.containsMatchIn(text)) return@forEach  // 이 호스트의 primary
+                val tm = tmBean.find(text)?.groupValues?.get(1) ?: return@forEach
+
+                File(domainDir, "feature/src/main").walkTopDown()
+                    .filter { it.isFile && it.extension == "kt" }
+                    .forEach { src ->
+                        txAnnotation.findAll(src.readText()).forEach { m ->
+                            if (!m.value.contains("\"$tm\"")) {
+                                val rel = src.relativeTo(rootProject.projectDir)
+                                failures += "$rel: ${m.value.trim()} — 한정자가 없다. " +
+                                    "호스트의 primary TM 에 붙어 이 도메인 쓰기가 조용히 사라진다. " +
+                                    "@Transactional(\"$tm\", ...) 로 바꿀 것"
+                            }
+                        }
+                    }
+            }
+
+        if (failures.isNotEmpty()) {
+            throw GradleException(
+                failures.joinToString(
+                    prefix = "트랜잭션 한정자 위반 (ADR-0058/0093):\n  ",
+                    separator = "\n  ",
+                    postfix = "\n\n근거는 docs/conventions/transactional-usage.md 이다.",
+                ),
+            )
+        }
+    }
+}
+
+subprojects { plugins.withId("java") { tasks.named("check") { dependsOn(verifyTransactionQualifiers) } } }
+
+/**
  * 구조 게이트 묶음. pre-push 훅과 CI 는 **이 태스크 하나만** 부른다 —
  * 개별 이름을 부르면 게이트를 새로 만들 때 호출부에 추가하는 걸 잊고,
  * `check` 에만 달린 채 아무 데서도 안 도는 상태가 된다 (2026-08-26 실제로 그랬다).
@@ -678,5 +738,6 @@ val verifyArchitecture by tasks.registering {
         verifyExternalApiQuota,
         verifySearchIndexContract,
         verifyPodTopology,
+        verifyTransactionQualifiers,
     )
 }

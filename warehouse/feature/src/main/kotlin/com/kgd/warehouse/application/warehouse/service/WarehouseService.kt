@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-@Transactional
+@Transactional("warehouseTransactionManager")
 class WarehouseService(
     private val warehouseRepository: WarehouseRepositoryPort,
 ) : CreateWarehouseUseCase, GetWarehouseUseCase {
@@ -32,19 +32,19 @@ class WarehouseService(
         )
     }
 
-    @Transactional(readOnly = true)
+    @Transactional("warehouseTransactionManager", readOnly = true)
     override fun findById(id: Long): GetWarehouseUseCase.Result {
         val warehouse = warehouseRepository.findById(id)
             ?: throw WarehouseNotFoundException(id)
         return warehouse.toResult()
     }
 
-    @Transactional(readOnly = true)
+    @Transactional("warehouseTransactionManager", readOnly = true)
     override fun findAll(): List<GetWarehouseUseCase.Result> {
         return warehouseRepository.findAll().map { it.toResult() }
     }
 
-    @Transactional(readOnly = true)
+    @Transactional("warehouseTransactionManager", readOnly = true)
     override fun findDefaultWarehouse(): GetWarehouseUseCase.Result {
         val warehouse = warehouseRepository.findFirstActiveWarehouse()
             ?: throw NoActiveWarehouseException()

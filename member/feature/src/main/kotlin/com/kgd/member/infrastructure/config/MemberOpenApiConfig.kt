@@ -1,4 +1,4 @@
-package com.kgd.product.infrastructure.config
+package com.kgd.member.infrastructure.config
 
 import io.swagger.v3.oas.models.info.Info
 import org.springdoc.core.models.GroupedOpenApi
@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 /**
- * 이 도메인의 OpenAPI 그룹 — `/v3/api-docs/product`.
+ * 이 도메인의 OpenAPI 그룹 — `/v3/api-docs/member`.
  *
  * 폴드 호스트는 여러 도메인을 한 JVM 에 담으므로 기본 `/v3/api-docs` 는 전부 합쳐진 하나다.
  * 게이트웨이의 `/api/docs/specs/{service}` 드롭다운이 그 하나를 서비스마다 똑같이 내주면
@@ -14,14 +14,14 @@ import org.springframework.context.annotation.Configuration
  * 그룹을 도메인이 직접 선언해 패키지로 경계를 긋는다. 재분리되어도 경로가 그대로 유효하다.
  */
 @Configuration
-class ProductOpenApiConfig {
+class MemberOpenApiConfig {
 
     @Bean
-    fun productOpenApiGroup(): GroupedOpenApi = GroupedOpenApi.builder()
-        .group("product")
-        .packagesToScan("com.kgd.product")
+    fun memberOpenApiGroup(): GroupedOpenApi = GroupedOpenApi.builder()
+        .group("member")
+        .packagesToScan("com.kgd.member")
         .addOpenApiCustomizer { openApi ->
-            openApi.info(Info().title("Product Service API").description("상품 관리 서비스 API").version("1.0.0"))
+            openApi.info(Info().title("Member Service API").description("회원 식별·프로필 API").version("1.0.0"))
         }
         .build()
 }

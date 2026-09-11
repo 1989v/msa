@@ -44,6 +44,34 @@ TX1 (짧은 트랜잭션): 엔티티 저장/변경
 - **가능하면 메서드 레벨에서 필요한 곳에만 `@Transactional` 을 선언한다.**
 - 클래스 레벨 선언이 필요한 경우, 조회 메서드에는 `@Transactional(readOnly = true)` 를 명시한다.
 
+### 5. 폴드된 비-primary 도메인은 자기 TM 을 한정자로 쓴다 (게이트 있음)
+
+한 JVM 에 여러 도메인을 올리면(ADR-0058/0093) 도메인마다 DataSource·EntityManagerFactory·
+TransactionManager 가 따로 있다. 이때 한정자 없는 `@Transactional` 은 **호스트의 primary TM**
+에 붙는다. 그 트랜잭션에는 자기 도메인의 EntityManager 가 참여하지 않으므로 `@Modifying` 쓰기가
+커밋되지 않는다 — 컴파일도 기동도 통과하고 예외도 안 난다.
+
+```kotlin
+// ❌ BAD: content 호스트에서 이 쓰기는 place TM 에 붙어 사라진다
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+override fun execute(command: RecordBlogViewUseCase.Command) { ... }
+
+// ✅ GOOD
+@Transactional("blogTransactionManager", propagation = Propagation.REQUIRES_NEW)
+override fun execute(command: RecordBlogViewUseCase.Command) { ... }
+```
+
+- 적용 대상은 `*DataSourceConfig.kt` 에 애너테이션 `@Primary` 가 **없는** 도메인 전부다.
+  primary 인 도메인(호스트마다 하나)은 한정자를 생략해도 같은 TM 에 붙으므로 면제다.
+- 재분리로 그 도메인이 다시 자기 파드가 되면 config 에 `@Primary` 를 붙이게 되고,
+  한정자는 그대로 둬도 같은 빈을 가리키므로 고칠 것이 없다.
+- **게이트**: `./gradlew verifyTransactionQualifiers` (`verifyArchitecture` 묶음 → pre-push).
+  판정은 소스에서 끌어낸다 — 도메인 목록을 손으로 유지하지 않는다.
+
+> 실제 사고: deal 이 commerce 로 폴드된 뒤 `/go/{slug}` 리다이렉터의 클릭 수가 운영에서
+> 올라가지 않았다. 13곳 전부 한정자가 없어 inventory TM 에 붙었고, 호출부가 예외를 삼켜
+> 리다이렉트는 정상이었다. 값(8→9)으로 확인하고서야 고쳐진 것을 알았다.
+
 ## 예시
 
 ```kotlin

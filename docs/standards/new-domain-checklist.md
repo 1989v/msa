@@ -59,6 +59,9 @@
   **빠뜨리면 기동은 되고 그 도메인만 조용히 404** 다.
 - [ ] 호스트 EMF `packages(...)` 에 엔티티 패키지 (스키마 공유형). 전용 datasource 형은 feature 의
   `{Svc}DataSourceConfig` 가 자기 EMF/TM 을 갖는다 — `@Transactional("{svc}TransactionManager")` 한정자 명시.
+  **한정자를 빠뜨리면 호스트의 primary TM 에 붙어 쓰기가 조용히 사라진다**(deal 클릭 수 사고).
+  `verifyTransactionQualifiers` 가 `@Primary` 없는 도메인 전부에 이것을 강제한다 — 도메인 목록을
+  손으로 유지하지 않고 `*DataSourceConfig.kt` 에서 판정하므로, 새 도메인은 등록 없이 바로 걸린다.
 - [ ] 호스트 `@EnableJpaRepositories` basePackages (스키마 공유형).
 - [ ] 호스트 컨텍스트 로드 spec(`CodeDictionaryContextLoadSpec` / `CommerceContextLoadSpec`)에
   "폴드된 도메인의 컨트롤러가 전부 빈으로 등록된다" 한 줄 추가 — 첫 번째 항목 누락을 잡는 유일한 자동 장치.
@@ -93,6 +96,9 @@
 
 - [ ] gateway 라우트 — 인증 수준별로 분리(public / 게스트 허용 `required=false` / ROLE_USER / ADMIN), `gateway/CLAUDE.md`.
 - [ ] 어드민 API 는 `/api/v1/admin/**` 로 서비스가 제공 (admin 은 FE 전용).
+- [ ] API 문서에 드러낼 도메인이면 feature 에 `GroupedOpenApi`(`infrastructure/config/OpenApiConfig.kt`)
+  를 두고 gateway `openApiServices` 에 `/v3/api-docs/{group}` 으로 등록한다. 폴드 호스트의 기본
+  `/v3/api-docs` 는 도메인이 합쳐진 하나라 **이름만 다른 같은 스펙**이 된다.
 - [ ] 서브도메인이면 루트 `CLAUDE.md` "새 서브도메인 서비스 체크리스트" 4단계 (ingress · `App.tsx` · 프리렌더
   `_hosts/$host` · `SUBDOMAIN_ORIGIN`). 로그인은 apex `/login` 한 곳 (ADR-0079).
 - [ ] SEO 카피는 `portal-fe/src/seo/copy.mjs` 한 곳. `index.html` 에 canonical 을 두지 않는다 (ADR-0062).

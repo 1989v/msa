@@ -32,7 +32,7 @@ class BlogViewService(
      * 조회 트랜잭션과 분리해 REQUIRES_NEW 로 연다. 상세 조회는 read-only 라 같은 트랜잭션에
      * 쓰기를 얹을 수 없다.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional("blogTransactionManager", propagation = Propagation.REQUIRES_NEW)
     override fun execute(command: RecordBlogViewUseCase.Command) {
         val (postId, visitorKey, userAgent) = command
         if (visitorKey.isNullOrBlank()) return
