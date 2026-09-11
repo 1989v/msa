@@ -10,13 +10,14 @@ const relay = spawn(process.execPath, [new URL('./dev-relay.mjs', import.meta.ur
 relay.stdout.on('data', (d) => process.stdout.write(`  [relay] ${d}`));
 await new Promise((r) => setTimeout(r, 400));
 const stats = async () => (await fetch(`http://127.0.0.1:${RELAY_PORT}/stats`)).json();
+const pageUrl = (suffix) => (base.endsWith('.html') ? base + suffix.replace(/^\//, '') : base + suffix); // 운영은 /games/arena/index.html 처럼 파일까지 준다
 const A = new Page(port), B = new Page(port);
 const t0 = Date.now();
 const log = (m) => console.log(`+${((Date.now() - t0) / 1000).toFixed(1)}s ${m}`);
 const NET = `JSON.stringify({ info: window.__amp?.source?.info, epoch: window.__amp?.source?.epoch, host: window.__amp?.source?.hostSeat, tick: window.__amp?.source?.lastAuth?.snap?.tick, myId: window.__amp?.source?.myId, timer: document.querySelector('.hud .timer .t')?.textContent, netinfo: document.querySelector('.hud .netinfo')?.textContent })`;
 try {
-  await A.open(base + '/', { width: 1280, height: 720 });
-  await B.open(base + '/', { width: 1280, height: 720 });
+  await A.open(pageUrl('/'), { width: 1280, height: 720 });
+  await B.open(pageUrl('/'), { width: 1280, height: 720 });
   for (const [p, name] of [[A, '알파'], [B, '브라보']]) {
     await p.waitFor(`document.querySelector('.practice')`);
     await p.type('.nick', name);

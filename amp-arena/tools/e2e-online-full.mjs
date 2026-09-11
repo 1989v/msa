@@ -13,6 +13,7 @@ await new Promise((r) => setTimeout(r, 400));
 const stats = async () => (await fetch(`http://127.0.0.1:${RELAY_PORT}/stats`)).json();
 const t0 = Date.now();
 const log = (m) => console.log(`+${((Date.now() - t0) / 1000).toFixed(0)}s ${m}`);
+const pageUrl = (suffix) => (base.endsWith('.html') ? base + suffix.replace(/^\//, '') : base + suffix); // 운영은 /games/arena/index.html 처럼 파일까지 준다
 const A = new Page(port), B = new Page(port), C = new Page(port);
 const tabs = [['A', A], ['B', B], ['C', C]];
 const OBSERVER = `(() => { window.__resultSeen = false; new MutationObserver(() => { if (document.querySelector('.result')) window.__resultSeen = true; }).observe(document.body, { childList: true, subtree: true }); return true; })()`;
@@ -21,7 +22,7 @@ const net = async (p) => JSON.parse(await p.eval(NET));
 const checks = {};
 try {
   for (const [n, p] of tabs) {
-    await p.open(base + '/?autopilot=1', { width: 1280, height: 720 });
+    await p.open(pageUrl('/?autopilot=1'), { width: 1280, height: 720 });
     await p.waitFor(`document.querySelector('.practice')`);
     await p.type('.nick', `탭${n}`);
     await p.click('.go-lobby');

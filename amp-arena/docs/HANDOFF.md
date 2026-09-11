@@ -54,8 +54,13 @@ node tools/e2e-online-full.mjs $P http://127.0.0.1:5180 <outDir>   # 빠른 대�
 node tools/e2e-mobile.mjs   $P http://127.0.0.1:5180 <outDir>      # 844×390 터치 레이아웃
 node tools/e2e-autopilot.mjs $P http://127.0.0.1:5180 <outDir>     # 봇 AI 가 내 캐릭터 조종 60초 (준 데미지 > 0)
 node tools/e2e-fullmatch.mjs $P http://127.0.0.1:5180 <outDir>     # 연습 2분 완주
+# 운영 실측 — 페이지 base 는 파일까지(index.html) 준다. /games/arena/ 는 portal-fe SPA 의 카탈로그 상세로 간다
+node tools/e2e-online.mjs $P https://game.1989v.com/games/arena/index.html <outDir>   # Cloudflare + 실제 릴레이
+node tools/e2e-catalog.mjs $P https://game.1989v.com/games/arena <outDir>             # 카탈로그 상세 IFRAME 안에 타이틀이 뜨는지
 ../scripts/cdp-chrome.sh stop amparena
 ```
+
+운영 실측(2026-09-11): 코드 방 생성 → 게스트 입장 → 매치, 방장/게스트 역할·스냅샷 흐름 정상, 콘솔 오류 0. 헤드리스 소프트웨어 GL 두 탭이라 RTT 는 수백 ms 로 찍혔다(실기기 수치 아님).
 
 - `?autopilot=1` 이면 봇 AI 가 내 캐릭터를 조종한다(디버그·E2E). `window.__amp.source` 로 월드·`epoch`·`hostSeat`·`lastAuth` 를 본다. `?relay=ws://…` 로 릴레이 주소를 바꿀 수 있다.
 - **헤드리스 크롬은 마지막에 연 탭만 visible** 이라 다른 탭은 rAF 가 멈춘다. 권위 워커는 그래도 돈다(3탭 E2E 의 `hostHiddenStillTicks`).
