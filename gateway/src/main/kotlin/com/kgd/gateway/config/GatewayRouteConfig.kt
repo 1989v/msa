@@ -423,7 +423,7 @@ class GatewayRouteConfig(
             .route("ranking-public") { r ->
                 r.path("/api/v1/ranking/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // === ADR-0069 혜택 링크 허브 (code-dictionary 소유) ===
             // 어드민 경로를 먼저 선언해야 공개 라우트에 가려지지 않는다.

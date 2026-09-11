@@ -12,7 +12,7 @@ dependencies {
     // ADR-0093: game:feature 는 content:app 으로 이동
     // ADR-0093 ②: deal:feature 는 commerce:app 으로 이동 (전용 스키마 deal_db)
     implementation(project(":blog:feature")) // ADR-0072: 블로그 플랫폼 co-deploy (스키마는 호스트 공유)
-    implementation(project(":ranking:feature")) // ADR-0081: 랭킹 리더보드 co-deploy (스키마는 호스트 공유)
+    // ADR-0093 ②b: ranking:feature 는 content:app 으로 이동 (전용 스키마 ranking_db)
     implementation(project(":common"))
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
@@ -43,7 +43,6 @@ dependencies {
     testImplementation(libs.testcontainers.junit)
     testImplementation(libs.testcontainers.mysql)
     testImplementation(project(":blog:feature"))
-    testImplementation(project(":ranking:feature"))
 }
 
 tasks.bootJar {

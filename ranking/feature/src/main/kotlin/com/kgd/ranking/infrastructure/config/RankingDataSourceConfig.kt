@@ -19,18 +19,15 @@ import javax.sql.DataSource
 /**
  * ADR-0093 ②b — ranking 도메인의 **전용** datasource(ranking_db) + EMF + TM. 비-@Primary.
  *
- * `spring.datasource.ranking.url` 이 있을 때만 켜진다. 전환 기간 동안 code-dictionary 와
- * content 가 **동시에** ranking 을 서빙해야 게이트웨이 전환 한 시점만 전환점이 되기 때문이다.
- * code-dictionary 에는 그 키가 없어 기존처럼 호스트 EMF 를 쓴다. ②b-C 에서 조건을 걷는다.
+ * 전환 기간에는 `spring.datasource.ranking.url` 조건부였다(두 호스트가 동시에 서빙해야
+ * 게이트웨이 전환 한 시점만 전환점이 되기 때문). 전환이 끝나 조건을 걷었다.
  *
  * **이 도메인의 `@Transactional("rankingTransactionManager")` 은 전부 `rankingTransactionManager` 를 한정자로 갖는다.**
  * 빠뜨리면 primary(content 에서는 place) TM 에 붙고 ranking EM 이 트랜잭션에 참여하지 않아
  * 쓰기가 조용히 사라진다 — deal 을 옮길 때 운영에서 click_count 가 그렇게 멈췄다.
- * 전환 기간에는 code-dictionary 도 그 이름을 알아야 해서, 거기서는 호스트 TM 을 같은
- * 이름으로 한 번 더 노출한다(CodeDictionaryJpaConfig, ②b-C 에서 제거).
+ * (전환 기간에는 code-dictionary 가 호스트 TM 을 같은 이름으로 노출했고, 지금은 제거됐다.)
  */
 @Configuration
-@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name = ["spring.datasource.ranking.url"])
 @EnableJpaRepositories(
     basePackages = ["com.kgd.ranking"],
     entityManagerFactoryRef = "rankingEntityManagerFactory",

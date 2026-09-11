@@ -14,9 +14,9 @@ import org.testcontainers.containers.MySQLContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
- * ADR-0072/0081 — code-dictionary + blog·ranking 폴드의 **전체 컨텍스트 로드** 검증.
+ * ADR-0072 — code-dictionary + blog 폴드의 **전체 컨텍스트 로드** 검증.
  *
- * 세 바운디드 컨텍스트가 한 JVM 에 스캔되므로 빈 이름 충돌이 없는지, 호스트 Flyway 가
+ * 두 바운디드 컨텍스트가 한 JVM 에 스캔되므로 빈 이름 충돌이 없는지, 호스트 Flyway 가
  * 자기 스키마에만 적용되는지 확인한다. Spring 은 기본적으로 빈 오버라이드를 막으므로,
  * 컨텍스트가 뜬다는 것 자체가 충돌 부재의 증거다 (배포 시 파드 기동 실패를 사전 차단).
  *
@@ -44,7 +44,7 @@ class CodeDictionaryContextLoadSpec(
     @Autowired private val ctx: ApplicationContext,
 ) : BehaviorSpec({
 
-    Given("code-dictionary + blog·ranking 이 한 JVM 에 폴드된 컨텍스트") {
+    Given("code-dictionary + blog 가 한 JVM 에 폴드된 컨텍스트") {
         Then("호스트 EMF/TM 과 QueryFactory 가 충돌 없이 로드된다")
             .config(enabledIf = { dockerAvailable }) {
                 listOf(
@@ -60,11 +60,15 @@ class CodeDictionaryContextLoadSpec(
                 ).forEach { ctx.containsBean(it) shouldBe false }
             }
 
-        // ADR-0093 ② 완료 — deal 은 commerce 로 갔다. 여기 남아 있으면 안 된다.
-        Then("deal 의 빈은 더 이상 이 컨텍스트에 없다")
+        // ADR-0093 ② 완료 — deal 은 commerce, ranking 은 content 로 갔다.
+        Then("deal·ranking 의 빈은 더 이상 이 컨텍스트에 없다")
             .config(enabledIf = { dockerAvailable }) {
-                listOf("dealDataSource", "dealEntityManagerFactory", "dealFlyway")
-                    .forEach { ctx.containsBean(it) shouldBe false }
+                listOf(
+                    "dealDataSource", "dealEntityManagerFactory", "dealFlyway",
+                    "rankingDataSource", "rankingEntityManagerFactory", "rankingFlyway",
+                    // 전환 기간에만 있던 별칭 — ranking 이 떠난 뒤엔 없어야 한다.
+                    "rankingTransactionManager",
+                ).forEach { ctx.containsBean(it) shouldBe false }
             }
 
         /**

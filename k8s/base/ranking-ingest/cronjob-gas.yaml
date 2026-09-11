@@ -54,7 +54,7 @@ spec:
                   python -m src.main --job=gas-boards
               env:
                 - name: RANKING_API
-                  value: "http://code-dictionary:8089"
+                  value: "http://content:8097" # ADR-0093 ②b: ranking 은 content 로 폴드
                 # 오피넷 자체 키. 공공데이터포털의 한국석유공사 항목은 `API 유형: LINK` 라
                 # 포털이 중계하지 않고 바로가기만 걸어둔 것이어서 포털 인증키가 발급되지 않는다.
                 # 없으면 수집기가 "아직 안 켬"으로 보고 정상 종료한다.

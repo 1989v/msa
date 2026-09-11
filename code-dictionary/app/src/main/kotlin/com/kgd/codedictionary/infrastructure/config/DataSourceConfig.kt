@@ -73,7 +73,7 @@ class DataSourceConfig {
         @Qualifier("dataSource") dataSource: DataSource,
     ): LocalContainerEntityManagerFactoryBean =
         builder.dataSource(dataSource)
-            .packages("com.kgd.codedictionary", "com.kgd.blog", "com.kgd.ranking")
+            .packages("com.kgd.codedictionary", "com.kgd.blog")
             .persistenceUnit("code-dictionary")
             .build()
 
