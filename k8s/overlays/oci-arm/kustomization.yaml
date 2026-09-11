@@ -268,7 +268,8 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "9"
-  - target: {kind: Deployment, name: "^(place|agent-viewer-api)$"}
+  # ADR-0093 ①-B1: content 는 place 와 같은 웨이브에 함께 뜬다(전환 동안 공존).
+  - target: {kind: Deployment, name: "^(place|content|agent-viewer-api)$"}
     patch: |-
       apiVersion: apps/v1
       kind: Deployment

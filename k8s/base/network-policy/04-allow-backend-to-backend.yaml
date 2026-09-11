@@ -9,8 +9,10 @@
 # 호출이다. product 를 가리키던 두 규칙은 파드가 사라져 아무것도 선택하지 않는 채로 남아 있었고,
 # search-batch 쪽은 그래서 **실제로 막힌 상태**였다(대상 CronJob 이 suspend 라 안 드러났을 뿐).
 # 라벨을 따라가지 않으면 규칙은 에러 없이 무효가 된다.
-#   - search-batch → place    (attractionApiReindexJob 페이지 풀스캔, ADR-0065)
-#   - search → place          (질의 이해가 쓰는 분류 코드표 조회, ADR-0090 D8)
+#   - search-batch → content  (attractionApiReindexJob 페이지 풀스캔, ADR-0065)
+#   - search → content        (질의 이해가 쓰는 분류 코드표 조회, ADR-0090 D8)
+#     ADR-0093: place 는 content 파드로 폴드됐다. 전환 창(①-B1~B3) 동안 두 이름을 함께 연다 —
+#     한쪽만 옮기면 그 사이 호출이 default-deny 로 조용히 끊긴다.
 #
 # 새 백엔드-백엔드 호출이 추가되면 별도 NetworkPolicy 를 추가한다.
 # 공유 manifest 한 파일에 모아두고 ingress 를 늘리는 방식 (per-target)으로 관리.
@@ -76,8 +78,8 @@ metadata:
     app.kubernetes.io/component: network-policy
 spec:
   podSelector:
-    matchLabels:
-      app.kubernetes.io/name: place
+    matchExpressions:
+      - { key: app.kubernetes.io/name, operator: In, values: [place, content] }
   policyTypes:
     - Ingress
   ingress:
