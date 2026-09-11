@@ -5,11 +5,12 @@ import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { createCharacter } from './model.mjs';
 import { createAtlas } from './atlas.mjs';
+import { createLocomotionClips } from './motion.mjs';
 
 const state = window.__SKYBOUND_CHARACTER__ = {
   ready: false, error: null, stats: [], lod: 0, view: 'threequarter', frame: 0,
   glbBase64: [], atlasBase64: null, loadedFromGLB: false, pose: false,
-  animated: false, rotating: false, renderedBounds: null, threeRevision: THREE.REVISION,
+  animated: false, motion: 'idle', motionTime: 0, rotating: false, renderedBounds: null, threeRevision: THREE.REVISION,
 };
 const $ = selector => document.querySelector(selector);
 function base64(buffer) {
@@ -51,7 +52,7 @@ async function main() {
     const authored = createCharacter(THREE, { lod, texture });
     authored.root.updateMatrixWorld(true);
     const buffer = await new GLTFExporter().parseAsync(authored.root, {
-      binary: true, animations: authored.clips ?? [], onlyVisible: true,
+      binary: true, animations: [...(authored.clips ?? []), ...createLocomotionClips(THREE)], onlyVisible: true,
     });
     state.glbBase64[lod] = base64(buffer);
     const loaded = await new GLTFLoader().parseAsync(buffer, '');
@@ -120,7 +121,10 @@ async function main() {
   function draw(now = performance.now()) {
     scheduled = false;
     const delta = Math.min((now - lastTime) / 1000, 0.05); lastTime = now;
-    if (state.animated) mixer?.update(delta);
+    if (state.animated) {
+      mixer?.update(delta);
+      state.motionTime = mixer.time % activeClip.duration;
+    }
     if (state.rotating) {
       const offset = camera.position.clone().sub(controls.target);
       offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), delta * 0.3);
@@ -157,14 +161,48 @@ async function main() {
     state.pose = Boolean(enabled && poseClip);
     state.animated = false;
     mixer?.stopAllAction();
-    const clip = state.pose ? poseClip : activeClip;
+    const clip = state.pose ? poseClip : null;
     if (clip) {
       mixer.clipAction(clip).play();
       mixer.setTime(state.pose ? clip.duration * 0.5 : 0);
     }
     $('#pose').setAttribute('aria-pressed', String(state.pose));
     $('#animate').setAttribute('aria-pressed', 'false');
+    $('#animate').textContent = '동작 재생';
+    state.motionTime = 0;
     requestDraw();
+  }
+  function setMotion(name, { play = false, time = 0 } = {}) {
+    if (!['idle', 'walk', 'run'].includes(name)) throw new Error(`Unknown motion: ${name}`);
+    if (!Number.isFinite(time) || time < 0) throw new Error('Motion time must be a nonnegative number');
+    activeClip = loadedModels[state.lod].animations.find(clip => clip.name === name);
+    if (!activeClip) throw new Error(`Missing loaded GLB motion: ${name}`);
+    mixer.stopAllAction();
+    mixer.clipAction(activeClip).reset().play();
+    mixer.setTime(time);
+    state.motion = name; state.motionTime = time % activeClip.duration;
+    state.pose = false; state.animated = play;
+    $('#motion').value = name;
+    $('#pose').setAttribute('aria-pressed', 'false');
+    $('#animate').setAttribute('aria-pressed', String(play));
+    $('#animate').textContent = play ? '동작 정지' : '동작 재생';
+    lastTime = performance.now(); requestDraw();
+  }
+  function getMotionSnapshot() {
+    model.updateMatrixWorld(true);
+    let mesh;
+    model.traverse(object => { if (object.isSkinnedMesh) mesh = object; });
+    mesh.skeleton.update();
+    const joints = Object.fromEntries(mesh.skeleton.bones.map(bone => [bone.name, {
+      position: bone.getWorldPosition(new THREE.Vector3()).toArray(), quaternion: bone.quaternion.toArray(),
+    }]));
+    const soles = ['L', 'R'].map(side => {
+      const part = state.stats[state.lod].parts.find(part => part.name === `boot-sole-${side}`);
+      const box = new THREE.Box3();
+      for (let i = part.start; i < part.start + part.count; i++) box.expandByPoint(mesh.getVertexPosition(i, new THREE.Vector3()).applyMatrix4(mesh.matrixWorld));
+      return { min: box.min.toArray(), max: box.max.toArray() };
+    });
+    return { motion: state.motion, time: state.motionTime, duration: activeClip?.duration, joints, soles, rootPosition: model.position.toArray() };
   }
   function setLOD(lod) {
     lod = Number(lod);
@@ -174,7 +212,7 @@ async function main() {
     model = loadedModels[lod].scene;
     scene.add(model);
     mixer = new THREE.AnimationMixer(model);
-    activeClip = loadedModels[lod].animations[0] ?? null;
+    activeClip = loadedModels[lod].animations.find(clip => clip.name === state.motion) ?? null;
     poseClip = loadedModels[lod].animations.find(clip => clip.name === 'rig-inspection') ?? activeClip;
     $('#pose').disabled = !poseClip; $('#animate').disabled = !activeClip;
     $('#lod').value = String(lod);
@@ -192,12 +230,10 @@ async function main() {
   document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => setView(button.dataset.view)));
   $('#lod').addEventListener('change', event => setLOD(event.target.value));
   $('#pose').addEventListener('click', () => setPose(!state.pose));
+  $('#motion').addEventListener('change', event => setMotion(event.target.value, { play: state.animated }));
   $('#animate').addEventListener('click', () => {
-    state.animated = !state.animated; state.pose = false;
-    if (state.animated) { mixer.stopAllAction(); mixer.clipAction(activeClip).reset().play(); }
-    $('#animate').setAttribute('aria-pressed', String(state.animated));
-    $('#pose').setAttribute('aria-pressed', 'false');
-    lastTime = performance.now(); requestDraw();
+    if (state.animated) setPose(false);
+    else setMotion(state.motion, { play: true });
   });
   $('#rotate').addEventListener('click', () => {
     state.rotating = !state.rotating;
@@ -206,6 +242,8 @@ async function main() {
   });
   $('#reset').addEventListener('click', () => {
     state.rotating = false; $('#rotate').setAttribute('aria-pressed', 'false');
+    state.motion = 'idle'; $('#motion').value = 'idle';
+    activeClip = loadedModels[state.lod].animations.find(clip => clip.name === 'idle');
     setPose(false); setView('threequarter');
   });
   controls.addEventListener('change', requestDraw);
@@ -215,7 +253,7 @@ async function main() {
   });
   new ResizeObserver(resize).observe(canvas.parentElement);
   setLOD(0); resize(); draw();
-  Object.assign(state, { ready: true, loadedFromGLB: true, setLOD, setView, setPose, renderNow: draw });
+  Object.assign(state, { ready: true, loadedFromGLB: true, setLOD, setView, setPose, setMotion, getMotionSnapshot, renderNow: draw });
   $('#status').dataset.ready = 'true';
 }
 main().catch(error => {

@@ -31,7 +31,7 @@ python3 -m http.server 8768 --bind 127.0.0.1 --directory docs/specs/2026-09-10-s
 5. **다시 읽은 모델만** 스튜디오에 추가한다. 직접 만든 메시는 렌더링하지 않는다.
 
 좌표는 Y-up, +Z가 정면, 발바닥 Y≈0이다. 방향 버튼, 드래그/확대,
-LOD 선택, `rig-inspection` 중간 포즈, `idle` 재생과 자동 회전을 제공한다.
+LOD 선택, `rig-inspection` 중간 포즈, `idle`/`walk`/`run` 선택·재생과 자동 회전을 제공한다.
 기본은 정지 상태이며 재생/자동 회전은 명시적인 버튼 조작 후에만 시작한다.
 DPR은 2로 제한한다. 입력/리사이즈/모션 변화가 있을 때만 렌더링한다.
 `얼굴·상체 확대`는 Y=1.25–1.70m 부근을 사선으로 가까이 보여준다.
@@ -45,10 +45,13 @@ DPR은 2로 제한한다. 입력/리사이즈/모션 변화가 있을 때만 렌
 - `ready`, `error`, `loadedFromGLB`, `threeRevision`
 - `stats[0|1]`: 삼각형/정점/본/재질 수, 파일 바이트, 클립 이름 등
 - `glbBase64[0|1]`, `atlasBase64`: data URI 접두사가 없는 Base64
-- `lod`, `view`, `pose`, `animated`, `rotating`, `frame`
+- `lod`, `view`, `pose`, `animated`, `motion`, `motionTime`, `rotating`, `frame`
 - `modelBounds`, `renderedBounds`: 월드 경계와 canvas 내 픽셀 경계
 - `setView('front'|'back'|'side'|'threequarter'|'detail')`, `setLOD(0|1)`,
   `setPose(boolean)`, `renderNow()`
+- `setMotion('idle'|'walk'|'run', { play: false, time: 0 })`: 선택한 재로딩 클립을
+  지정 시점에 정지 표시하거나 재생한다. `getMotionSnapshot()`은 재로딩된
+  본의 월드 위치·로컬 quaternion, 실제 변형된 발바닥 경계를 반환한다.
 
 `ready=true`에서도 `error`가 있으면 실패다. 저장 대상은
 `assets/naru-lod0.glb`, `assets/naru-lod1.glb`, `assets/naru-atlas.png`다.
@@ -59,3 +62,18 @@ DPR은 2로 제한한다. 입력/리사이즈/모션 변화가 있을 때만 렌
 `../../../verifications/`의 T02B-3 보고서를 참조한다. 보고서가 없으면 해당
 검증은 미실행이다. 이 fixture는 게임 입력·이동·충돌·전투에 연결하지 않으며,
 실제 플레이 카메라에서의 품질과 모든 움직임의 관통 검사는 아직 검증하지 않는다.
+
+## 제자리 동작 진단 · T02B-4a
+
+`src/motion.mjs`는 THREE 주입만 받는 순수 클립 생성기다. 원본 리그의
+rest offset을 이용한 평면 두 관절 계산으로 발목 경로를 만들고, 결과를
+표준 glTF 위치/quaternion 트랙으로 저장한다. 실행 중 IK 의존성은 없다.
+재생 중 동작 선택은 새 클립의 시작으로 전환하며, 정지·리깅 포즈 해제·LOD 변경은
+원본 자세로 복귀한다. 초기화는 기본 동작 선택과 사선 시점도 복구한다.
+
+```sh
+node --test docs/specs/2026-09-10-skybound/implementation/t02b/character/tests/motion.test.mjs
+```
+
+기술 증거와 한계는 [motion-report.md](motion-report.md)를 참조한다.
+아트 판정은 여전히 별도이며, 동작 검사가 아트 승인을 의미하지 않는다.

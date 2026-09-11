@@ -1,97 +1,57 @@
-# 이어받기 · 2026-09-10
+# 이어받기 · 2026-09-11
 
 ## 현재
 
-- **T02B-3c 접촉부·비대칭 스카프 보완 저장. T02B-4a 걷기/달리기 동작 검증 진행. 캐릭터의 게임 연결 전.**
-- `implementation/t02b/character/`: 원본 모델/atlas, 두 LOD GLB, 뷰어, 모델 테스트 저장.
-  수정 후 단위 6/6, 확대 포즈 포함 실제 GLB 브라우저 검사 31/31. 최종 아트 통과가 아니다.
-  LOD0 14,882tri / LOD1 5,000tri, 19 bones, 1K atlas. 재빌드 1초 미만, 브라우저 재생성 수초.
-  내장 PNG 포함 GLB는 1,956,004 / 1,580,448 bytes(동작 추가 전). `verifications/t02b-3c.md`에 검증/미달 기록.
-- 2026-09-11 시각 검토: 어깨/스카프 이음, 망토 외곽, 바지 볼륨 1차 수정 완료.
-  T02B-3b에서 눈 노출/얼굴 곡면, 옆가르마 머리, 열린 튜닉 패널을 보완했다.
-  넓은 스카프·스트랩 관통/어깨 천 겹침과 재질은 여전히 미달이다. 최종 아트 REVISE.
-- `verifications/t02b-3-before-*.png`에 수정 전 화면 보존. 최신 비교는 같은 접두사의 화면 파일.
-- GLB Base64 전체를 한 CDP 응답에 넣으면 시간 초과가 발생했다. 32KiB 단위로 읽어 해결했다.
-- `implementation/t02b/texture-check/`에 1K PNG(24,764 bytes), 내장 GLB(27,892 bytes), 원본/빌드 저장.
-  실제 Chrome 152 이미지 디코딩·UV·sRGB·리깅 검사 12/12, 런타임 오류 0.
-  `verifications/t02b-2-browser.json`에 원시 증거. GPU 렌더/최종 아트/실기기는 미검증.
-- 이전 사용자 잔여 한도 15% 지시에 따라 `planning/t02b-small-steps.md`로 T02B를 4개 소단위로 나눴다.
-- `implementation/t02b/rig-check/`에 재현 소스·GLB(2,604 bytes)·테스트·README 저장.
-  표준 Three.js exporter/loader의 뼈대·가중치·애니메이션 왕복과 CPU 정점 변형, tests 4/4 직접 재검증.
-  진단 메시이며 실제 주인공/텍스처/GPU 렌더 검증이 아니다.
-- 저장 위치: `/Users/gideok-kwon/IdeaProjects/msa/docs/specs/2026-09-10-skybound/`.
-- 클린룸 폴더 `/private/tmp/skybound-cleanroom/`와 빈 `src/`만 생성했다.
-  이 임시 폴더가 없어져도 잃는 구현은 없다. 중요한 결과는 전부 위 문서 폴더에 있다.
-- 원화 2장은 `assets/`에 보존. 재생성에는 이미지 생성 호출 2회가 필요하므로
-  기존 PNG와 manifest의 프롬프트를 사용하고 불필요하게 다시 생성하지 않는다.
-- 실험 소스/GLB/뷰어: `implementation/t01a/`. 재생성은 build.mjs 1회(이번 실행 약 1초 이내).
-- 브라우저 원시 결과/캡처: `verifications/t01a-*`. 테스트 5개 통과, 3화면비 실제 GLB 로드.
-- 현재 장면: `implementation/t01b/`; 빌드 약 1초 이내, 환경 기하/카메라 테스트 9/9.
-- 이동 규칙: `implementation/t02a/`; 테스트 11/11, 약 1초 이내 재실행.
-- 최신 화면과 복구 로그: `verifications/t01c-*`; 브라우저 행동 12/12, 3화면비 오류 없음.
-- P0 로컬 커밋: `a4750b05`. 병행 세션의 `a2baf0e8`에 T01A 초기 파일이 먼저 포함됐다.
-  이 커밋을 되돌리지 않는다. 이후 수정/검증/인계는 본 작업 경로만 별도 커밋한다.
-- 사용자 의도: 왕국의 눈물 같은 웹 오픈월드, 기존 게임의 제약을 계승하지 않는
-  클린룸 창작, PRD·디자인 먼저, 작은 단계로 나누어 토큰 소모 관리.
-- 후속 지시 “순차로 진행해”에 따라 T01B를 새 에이전트 `/root/skybound_t01b`로 재개했다.
-  각 단위의 검증/커밋 후 다음 단위로 이어간다. 실행 경계는 tasks.md를 따른다.
+**T02B-4a 걷기/달리기 제자리 클립과 검증 뷰어 저장. 다음 T02B-4b 점프/착지·이동 스냅샷 연결.**
+게임에서 조작하며 이동하는 상태는 아직 아니다. T02B-3 최종 아트도 REVISE다.
 
-## 다음 작업
+- 사용자 최신 의도: 다른 게임을 참고하지 않는 클린룸 창작, PRD·원화·작은 단위 구현→검증→저장 반복.
+  최신 한도 안내는 5h 55%. 남은 양을 직접 측정한 값은 아니다.
+- 작업/저장 위치: `/Users/gideok-kwon/IdeaProjects/msa/docs/specs/2026-09-10-skybound/`.
+  다른 게임 폴더를 읽거나 변경하지 않는다. 새 창작 컨텍스트에는 이 게임 자료만 전달한다.
+- T01A 소품 GLB: `implementation/t01a/`, tests5/5.
+- T01B/C 지형·카메라: `implementation/t01b/`, tests9/9, 브라우저 행동12/12.
+- T02A 순수 이동/지형 접지: `implementation/t02a/`, tests11/11.
+- T02B 리깅/텍스처 진단: `implementation/t02b/rig-check/` tests4/4,
+  `texture-check/` 실제 브라우저12/12. 진단 스트립은 주인공이 아니다.
+- 주인공 원본/GLB/atlas/뷰어: `implementation/t02b/character/`.
+  LOD0 14,882tri / LOD1 5,000tri, 19bones,1K atlas. GLB 2,013,048 / 1,637,492 bytes.
+  idle/rig-inspection/walk/run을 표준 GLTFExporter→GLTFLoader로 재로드한다.
+- 최신 검증: 모델+동작 **10/10**, 동작 브라우저 **21/21**, 뷰어 **31/31**.
+  `verifications/t02b-4a.md`, `t02b-4a-motion-browser.json`, `t02b-4a-browser.json`.
+- 재생성 비용: 빌드 약1초 미만, 모델/동작 테스트 약0.3초, 브라우저 GLB 재생성/캡처 수초.
+  원화2장은 assets/에 보존하고 재생성하지 않는다. 임시 `/private/tmp/skybound-cleanroom/`에는 중요한 원본이 없다.
 
-**T02B-4a: 걷기/달리기 클립을 만들어 독립 뷰어에서 검증.**
+## 다음 작은 단위
 
-- 기술 리깅/파일 경로는 검증되었으므로 동작 검증은 아트 마감과 분리해 진행한다.
-- T02B-3 전체 아트는 미완료로 유지. 피부/천 표현·목과 어깨 연결의 원화 차이를 낮추거나 숨기지 않는다.
-- `motion.mjs`와 뷰어 동작 선택만 먼저. 점프/착지·실제 지형 이동 연결은 다음 소단위다.
+1. README → tasks → character/motion-report.md → T02A README 연결 계약을 읽는다.
+2. **T02B-4b-1**: 점프/낙하/착지 포즈/클립과 전환을 먼저 독립 뷰어에서 검증·저장한다.
+3. **T02B-4b-2**: T02A snapshot의 position(발)/velocity/grounded/mode/stamina로
+   캐릭터 위치·동작을 연결하고 실제 섬에서 접지를 검증한다. PC/터치 제품 입력은 T02C.
+4. walk/run은 제자리 기술 초안이다. 현재 달리기에는 공중 구간·heel/toe roll이 없으며,
+   실제 이동 속도/보폭 동기화·경사 적응·접지 IK·전신 관통 검사는 후속이다.
+5. 피부/천/헤어·목과 어깨의 원화 품질은 별도 미완료로 유지한다.
+   기술 동작 검증을 진행한다고 아트 기준을 낮추거나 통과로 표시하지 않는다.
 
-- 최신 사용자 한도 안내는 5h 리밋 55%. 작은 단위 구현→검증→저장 원칙은 유지한다.
-- 새 모델을 처음부터 만들지 않는다. character/model-report.md 및 verifications/t02b-3.md를 읽는다.
-- 최신 `verifications/t02b-3b-detail.png`와 원화를 먼저 비교한다.
-- 단순히 천 폭을 넓히는 수정은 판 같은 실루엣/관통을 만들었다. 목·어깨 위에 닿는 접힘과 스트랩의 앞뒤 순서를 설계하고 수정한다.
-- 얼굴/피부·머리·천의 최종 품질은 아직 미달. 표면 정의만 반복 수정해서 개선이 부족하면 모델링/재질 제작 방식을 재검토한다.
-- T02B-3 전체는 미완료이며 아트 검수 후 T02B-4 걷기/점프/착지와 이동 연결로 간다.
+## 다시 밟지 않을 함정
 
-- `planning/t02b-small-steps.md`와 `implementation/t02b/rig-check/README.md`부터 읽는다.
-- `implementation/t02b/texture-check/README.md`를 읽는다. Q05 기술 경로는 검증 완료.
-- 기존 캐릭터 원화와 art-direction의 8~15k triangles/1K atlas/LOD 목표를 기준으로 제작한다.
-- 원본 기하·UV·뼈대 정의와 Canvas 아틀라스 → 표준 GLTFExporter → GLTFLoader 경로를 사용한다.
-  진단 스트립을 캐릭터로 대체하지 않는다. 품질 미달 시 도구/제작 방식을 재검토한다.
-- 리깅 실험은 반복 제작하지 않는다. 다음 모델 제작·동작 연결은 각각 별도 소단위다.
+- 큰 GLB Base64를 한 CDP 응답에 넣으면 시간 초과. `check-character.mjs`의 32KiB 분할 수집 유지.
+- 발바닥 높이 테스트만으로 발목 이음새 벌어짐을 못 잡았다. 하단 wrap/boot의 skin weight를
+  공유 전이로 바꾸고 실제 정점→삼각형 거리 검사를 추가했다. `t02b-4a-before-ankle-fix.png`가 이전 상태다.
+- 천 폭만 늘리면 판형 스카프/관통이 생긴다. 대칭 둘레 loft를 대각선 앞천으로 교체한 기록은 t02b-3c.md.
+- 지형은 topHeight 수식이 아닌 실제 초원/길 삼각형 사용. 수면 -18, 높은 단차는 이동 거부.
+  실제 캡슐·소품·벽·카메라 충돌은 아직 없다.
+- 다른 작업의 커밋/파일은 되돌리지 않는다. 본 작업 경로만 커밋한다.
 
-이후 T02B 전체 연결 계약:
+## 실행 환경과 차단
 
-1. README → tasks의 T02B → T02A README → art-direction/캐릭터 원화를 읽는다.
-2. 새 창작 세션/에이전트에 그 자료만 전달한다. 다른 게임 소스/문서/아트 금지.
-3. 작업 위치는 독립 디렉터리, 최종 통합 위치는 `portal-fe/public/games/skybound/`.
-4. Three.js/esbuild의 설치 의존성 사용은 가능하다. 먼저 재현 가능한 빌드 경로를 만든다.
-5. Q05(캐릭터 리깅/텍스처 제작 경로)를 먼저 검증하고 모델을 제작한다.
-   제한된 정적 T01A exporter를 리깅에 확장하지 않는다. 단순 블록 캐릭터로 원화 기준을 낮추지 않는다.
-6. 이동 스냅샷으로 발 위치/애니메이션을 연결하고 검증·다음 입력을 기록한다.
-   원화 품질이 아직 미통과인 상태를 명시하고 월드 콘텐츠 확장은 보류한다.
-
-## 금지/주의
-
-- 다른 게임의 품질을 목표나 상한으로 삼지 않는다.
-- 원화/PRD 완료를 게임 완료로 표현하지 않는다. 원화는 실제 플레이 화면이 아니다.
-- 아직 없는 build/test 명령을 통과했다고 쓰지 않는다.
-- 실제 모바일 기기 미검증을 에뮬레이션으로 대체해 통과 처리하지 않는다.
-- 사용자의 다른 작업은 건드리지 않는다. 현재 변경은 이 문서 폴더만 소유한다.
-
-## 검증과 막힌 것
-
-- T02B-3 모델 보고 중 크레딧 오류가 한 차례 발생했으나 사용자 재개 후 형상 수정에 성공했다.
-  지속 차단은 없다. 재발 시 현재 소스를 보존하고 그 시점 결과를 기록한다.
-- T02B-1 첫 독립 에이전트 실행은 workspace out of credits 오류였다.
-  사용자 재개 요청 후 같은 소단위를 재시도해 성공했다. 현재 지속 차단은 아니다.
-- 이번 재개에서 T02A 회귀 테스트도 `pass 11 / fail 0` 재확인했다.
-- P0 파일/링크/이미지 및 설계 리뷰 결과는 `verifications/p0.md`에 기록한다.
-- 검증 결과: 상대 링크 18개 오류 0, PNG 2개 CRC/크기 정상, 독립 설계 리뷰 SHIP.
-- T01A: build 성공, node:test `pass 5 / fail 0`; 실제 GLB 브라우저 로드와 색상 캡처 완료.
-- T01B/T01C: build 성공, tests `pass 9 / fail 0`; camera behavior `pass 12 / fail 0`.
-- T02A: `pass 11 / fail 0`. 실제 지형 삼각형을 어댑터로 받아 접지한다.
-- 재발 방지: 수면은 렌더와 같은 -18, 높은 단차는 이전 x/z로 이동을 거부한다.
-  실제 캐릭터 캡슐·소품·벽·카메라 충돌은 아직 없다.
-- 로컬 서버는 세션 종료로 꺼질 수 있다. HTTP 200 확인 후 브라우저 QA를 실행한다.
-  실행법: `python3 -m http.server 8768 --bind 127.0.0.1 --directory docs/specs/2026-09-10-skybound`.
-- 브라우저 MCP 프로필이 사용 중이면 사용자/MCP 브라우저를 종료하지 않는다.
-  `scripts/cdp-chrome.sh`로만 격리 검증한다. 검증 후 전용 skybound-prop 프로필은 정리했다.
+- 설치 Three.js0.183.2/esbuild0.27.7 사용, 추가 패키지 없이 빌드한다.
+- 창작 에이전트가 간헐적으로 workspace out of credits 오류를 냈지만 재개 후 모델/동작을 저장했다.
+  과거 오류를 지속 차단으로 가정하지 않는다. 재발 시 정확한 실패와 저장 경계를 기록한다.
+- 실제 모바일 성능·게임 완주·배포는 미검증. 외부 공개는 T09의 별도 승인 단계다.
+- 서버는 꺼질 수 있다. HTTP200 확인 후 QA:
+  `python3 -m http.server 8768 --bind 127.0.0.1 --directory docs/specs/2026-09-10-skybound`.
+- 캐릭터: `http://127.0.0.1:8768/implementation/t02b/character/index.html`.
+- Chrome은 `CLAUDE_SCRATCHPAD=/private/tmp/skybound-validation`의
+  `scripts/cdp-chrome.sh start skybound-prop --gl`(9403)만 사용하고 검사 후 stop한다.
+  사용자/MCP Chrome을 종료하지 않는다. 이번 전용 프로필은 종료 완료.

@@ -226,8 +226,19 @@ export function createCharacter(THREE,{lod=0,texture=null}={}) {
       [s*.109,.46,.01,.050,.047],
       [s*.109,.42,.005,.044,.040],
     ],'cloth',(u,v)=>rig(thigh,shin,Math.max(0,(v-.45)*1.7)),26);
-    loft('shin-wrap-'+side,[[s*.11,.18,.012,.034,.038],[s*.11,.27,.005,.037,.041],[s*.109,.38,.004,.041,.042],[s*.109,.43,.004,.043,.043]],'wrap',rig(shin),24);
-    loft('boot-upper-'+side,[[s*.11,.055,.052,.049,.099],[s*.11,.095,.042,.049,.084],[s*.11,.145,.008,.036,.042],[s*.11,.205,.006,.039,.043]],'leather',rig(foot),24);
+    const wrapRings=[[s*.11,.18,.012,.034,.038],[s*.11,.27,.005,.037,.041],[s*.109,.38,.004,.041,.042],[s*.109,.43,.004,.043,.043]];
+    const bootRings=[[s*.11,.055,.052,.049,.099],[s*.11,.095,.042,.049,.084],[s*.11,.145,.008,.036,.042],[s*.11,.205,.006,.039,.043]];
+    // Both overlapping ankle surfaces share the same height-based deformation.
+    // The cuff follows the shin while the lower boot/sole follows the foot;
+    // separate rigid weights previously pulled the wrap out of the cuff in gait.
+    const ankleWeights=rings=>(u,v)=>{
+      const k=Math.min(rings.length-2,Math.floor(v*(rings.length-1)));
+      const t=v*(rings.length-1)-k;
+      const y=rings[k][1]+(rings[k+1][1]-rings[k][1])*t;
+      return rig(foot,shin,Math.max(0,Math.min(1,(y-.11)/.04)));
+    };
+    loft('shin-wrap-'+side,wrapRings,'wrap',ankleWeights(wrapRings),24);
+    loft('boot-upper-'+side,bootRings,'leather',ankleWeights(bootRings),24);
     loft('boot-sole-'+side,[[s*.11,0,.05,.05,.10],[s*.11,.026,.05,.052,.102],[s*.11,.04,.05,.051,.10]],'sole',rig(foot),24);
     for(let j=0;j<3;j++)tube('boot-lace-'+side+j,[s*.11-.026,.104+j*.022,.093-j*.021],[s*.11+.026,.109+j*.022,.091-j*.021],.003,.003,'seam',rig(foot),8);
   }
