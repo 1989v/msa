@@ -1,0 +1,268 @@
+# ADR-0093 — sideapp: quant + chatbot + gifticon 통합 설정.
+# 세 독립 앱의 yml 을 그대로 옮겨 왔고, datasource 만 도메인 prefix 로 내렸다
+# (`spring.datasource.*` → `spring.datasource.{quant,chatbot,gifticon}.*`).
+# 그 외 키는 무변경이라 재분리 시 그대로 되돌아간다.
+server:
+  port: 8095
+  shutdown: graceful
+
+spring:
+  application:
+    name: sideapp-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+  threads:
+    virtual:
+      enabled: true  # ADR-0024 §3 가상 스레드 (quant)
+
+  datasource:
+    # quant 전용 — 이 호스트에서 primary 다.
+    quant:
+      url: jdbc:mysql://${QUANT_DB_HOST:localhost:3306}/quant?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${DB_USERNAME:quant}
+      password: ${DB_PASSWORD:quant}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    # chatbot 전용 (auth MySQL 인스턴스에 chatbot_db 스키마 공존 — ADR-0052)
+    chatbot:
+      url: jdbc:mysql://${CHATBOT_DB_HOST:localhost:3346}/chatbot_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${CHATBOT_MYSQL_USER:commerce_user}
+      password: ${CHATBOT_MYSQL_PASSWORD:commerce_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 5
+        minimum-idle: 2
+    # gifticon 전용 (master/replica 라우팅)
+    gifticon:
+      master:
+        jdbc-url: jdbc:mysql://${GIFTICON_DB_MASTER:localhost:3336}/gifticon_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${GIFTICON_MYSQL_USER:gifticon_user}
+        password: ${GIFTICON_MYSQL_PASSWORD:gifticon_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 5
+          minimum-idle: 2
+      replica:
+        jdbc-url: jdbc:mysql://${GIFTICON_DB_REPLICA:localhost:3337}/gifticon_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        username: ${GIFTICON_MYSQL_USER:gifticon_user}
+        password: ${GIFTICON_MYSQL_PASSWORD:gifticon_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 5
+          minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  # 호스트 기본 Flyway 는 쓰지 않는다 — `classpath:db/migration` 을 재귀 스캔해
+  # 남의 도메인 마이그레이션을 남의 스키마에 적용한다. quant 는 QuantDataSourceConfig 의
+  # ScopedFlywayMigrator 가 `classpath:quantdb/migration` 으로 따로 돌린다.
+  flyway:
+    enabled: false
+
+  # TG-P2-11: Redis Token Bucket Rate Limiter (quant). 세 도메인이 한 연결을 공유한다.
+  data:
+    redis:
+      host: ${SIDEAPP_REDIS_HOST:localhost}
+      port: ${SIDEAPP_REDIS_PORT:6379}
+      timeout: 2s
+
+kgd:
+  common:
+    redis:
+      enabled: false  # quant Phase 1 불필요
+    analytics:
+      enabled: false
+    security:
+      enabled: true   # gifticon — auth JWT 검증
+    web-client:
+      enabled: true   # gifticon — OCR 컨테이너 호출
+
+jwt:
+  # gateway·auth 와 같은 값이어야 한다 (기본값은 로컬 전용, 운영은 JWT_SECRET 주입)
+  secret: ${JWT_SECRET:default-dev-secret-key-32-chars-long!}
+  access-expiry: 1800
+  refresh-expiry: 604800
+
+encryption:
+  aes-key: ${AES_KEY:default-aes-key-exactly-32bytes!}
+
+gifticon:
+  storage:
+    path: ${GIFTICON_STORAGE_PATH:/tmp/gifticon-images}
+
+chatbot:
+  ai:
+    api-key: ${ANTHROPIC_API_KEY:}
+    model: claude-sonnet-4-6
+    max-tokens: 4096
+    max-budget-per-request: 0.50
+    max-budget-per-day: 50.00
+    timeout-seconds: 30
+    max-concurrent: 5
+  knowledge:
+    type: filesystem
+    docs-root: ${CHATBOT_DOCS_ROOT:..}
+    categories:
+      architecture: docs/architecture
+      adr: docs/adr
+      standard: docs/standards
+      guide: CLAUDE.md
+  conversation:
+    context-window-max-tokens: 10000
+    session-timeout-minutes: 60
+    max-messages-per-session: 50
+  slack:
+    signing-secret: ${SLACK_SIGNING_SECRET:}
+    bot-token: ${SLACK_BOT_TOKEN:}
+  security:
+    public-categories:
+      - architecture
+      - guide
+    internal-only-categories:
+      - standard
+      - spec
+
+# TG-06.5: quant 전용 ClickHouse 설정. analytics DB 와 분리 (ADR-0024 §12).
+quant:
+  clickhouse:
+    url: ${QUANT_CH_URL:jdbc:clickhouse://localhost:8123/quant}
+    username: ${QUANT_CH_USERNAME:quant}
+    password: ${QUANT_CH_PASSWORD:quant}
+    database: quant
+  # TG-P2-03 (ADR-0027): KEK 보관 어댑터 분기.
+  # provider 값에 따라 OCI Vault / LocalFile / Fake 중 1개만 활성화된다.
+  # - oci   : 운영 (K8s Secret 으로 OCI_* 자격증명 주입 필수)
+  # - local : 로컬 dev / k3s-lite (application-local.yml 에서 KEK hex 주입)
+  # - fake  : (예약) 테스트 환경. 실제 빈 등록은 테스트 source set 에서 수동 구성.
+  security:
+    kms:
+      provider: ${QUANT_KMS_PROVIDER:local}
+      local:
+        current-version: ${QUANT_LOCAL_KEK_CURRENT_VERSION:v1}
+        kek-versions:
+          v1: ${QUANT_LOCAL_KEK_V1:}
+      oci:
+        tenancy-ocid: ${OCI_TENANCY:}
+        user-ocid: ${OCI_USER:}
+        fingerprint: ${OCI_FINGERPRINT:}
+        private-key-path: ${OCI_PRIVATE_KEY_PATH:}
+        region: ${OCI_REGION:}
+        vault-key-ocid: ${OCI_VAULT_KEY_OCID:}
+        crypto-endpoint: ${OCI_VAULT_CRYPTO_ENDPOINT:}
+    # Phase 3 (L1) — 2FA brute-force 방어 한도 (per-user 1분당 시도 횟수)
+    two-fa:
+      max-attempts-per-minute: ${QUANT_2FA_MAX_ATTEMPTS:5}
+  # TG-P2-05 (ADR-0026): audit_log 별도 ClickHouse DB (`quant_audit`) + RBAC 분리.
+  # `enabled=true` 시에만 AuditClickHouseConfig / ClickHouseAuditLogPublisher / AuditChainVerifier 가 등록.
+  audit:
+    enabled: ${QUANT_AUDIT_ENABLED:false}
+    chain-verifier:
+      enabled: ${QUANT_AUDIT_CHAIN_VERIFIER_ENABLED:false}
+    # Phase 3 (L4) — 매일 KST 03:00 audit_event chain 무결성 검증
+    verify:
+      enabled: ${QUANT_AUDIT_VERIFY_ENABLED:false}
+      tenants: ${QUANT_AUDIT_VERIFY_TENANTS:}
+      limit: ${QUANT_AUDIT_VERIFY_LIMIT:100000}
+    clickhouse:
+      url: ${QUANT_AUDIT_CH_URL:jdbc:clickhouse://localhost:8123/quant_audit}
+      user: ${QUANT_AUDIT_CH_USER:quant_audit_writer}
+      password: ${QUANT_AUDIT_CH_PASSWORD:}
+      pool-size: ${QUANT_AUDIT_CH_POOL_SIZE:4}
+  # TG-P2-06 / TG-P2-07: 시세 hot path. 기본 비활성, 운영 활성화 시 K8s overlay 에서 enabled=true.
+  market:
+    bithumb-ws:
+      enabled: ${QUANT_BITHUMB_WS_ENABLED:false}
+      url: ${QUANT_BITHUMB_WS_URL:wss://pubwss.bithumb.com/pub/ws}
+      symbols: ${QUANT_BITHUMB_WS_SYMBOLS:BTC_KRW,ETH_KRW}
+      monitor-interval-ms: 1000
+      system-tenant: system
+    bithumb-rest:
+      base-url: ${QUANT_BITHUMB_REST_URL:https://api.bithumb.com}
+    kafka-fanout:
+      enabled: ${QUANT_MARKET_KAFKA_FANOUT_ENABLED:false}
+      topic: quant.market.tick.bithumb.v1
+  # TG-P2-08: PAPER 모드 가상 거래소 파라미터. 'paper' 또는 'test' 프로파일에서만 PaperExchangeAdapter 활성화.
+  paper:
+    slippage:
+      rate: ${QUANT_PAPER_SLIPPAGE_RATE:0.0005}      # 0.05% 고정 슬리피지
+    execution-latency:
+      ms:
+        default: ${QUANT_PAPER_LATENCY_MS:50}        # 평균 거래소 지연
+        jitter: ${QUANT_PAPER_LATENCY_JITTER_MS:20}  # ± jitter
+    partial-fill:
+      probability: ${QUANT_PAPER_PARTIAL_FILL_PROB:0.0}  # Phase 2 reserved (현재 사용 안 함)
+  # TG-P2-10: Telegram Bot 알림 어댑터. bot-token / default-chat-id 미설정 시 발송은 skip 되고 메트릭만 기록.
+  # 운영에서는 K8s Secret 으로 TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID 주입.
+  notification:
+    telegram:
+      api-base: ${TELEGRAM_API_BASE:https://api.telegram.org}
+      bot-token: ${TELEGRAM_BOT_TOKEN:}
+      default-chat-id: ${TELEGRAM_CHAT_ID:}
+      rate-limit-interval-ms: ${TELEGRAM_RATE_LIMIT_INTERVAL_MS:1000}
+    dispatcher:
+      enabled: ${QUANT_NOTIFICATION_DISPATCHER:true}
+  # TG-P2-11: Resilience (CircuitBreaker / Redis Token Bucket / DLQ).
+  # CircuitBreaker bean 은 항상 등록 (CircuitBreakerConfiguration), Rate Limiter / DLQ 는 conditional.
+  resilience:
+    ratelimit:
+      enabled: ${QUANT_RATELIMIT_ENABLED:false}
+      bithumb:
+        bucket-size: ${QUANT_BITHUMB_BUCKET_SIZE:90}     # 빗썸 Public API 150/sec 의 60%
+        refill-rate: ${QUANT_BITHUMB_REFILL_RATE:90}     # tokens per second
+  # TG-P2-12: Outbox → Kafka relay 활성화 플래그.
+  # default false — 운영 활성화는 K8s overlay 에서 QUANT_OUTBOX_RELAY=true 주입.
+  outbox:
+    relay:
+      enabled: ${QUANT_OUTBOX_RELAY:false}
+      topic: ${QUANT_OUTBOX_RELAY_TOPIC:quant.events.v1}
+      publish-timeout-seconds: ${QUANT_OUTBOX_RELAY_TIMEOUT_SEC:5}
+
+  # Phase 3 실매매 (ADR-0037 / L7) — 모든 기능 default OFF, K8s overlay 또는 환경변수로 활성화.
+  # 거래소 어댑터 / live-trading / reconcile / audit-verify / 2FA 한도 등.
+  # (기존 quant.audit / quant.security 블록과 병합되도록 spring.profiles 중첩 회피.)
+  live-trading:
+    enabled: ${QUANT_LIVE_TRADING_ENABLED:false}
+  reconcile:
+    enabled: ${QUANT_RECONCILE_ENABLED:false}
+  bithumb:
+    live:
+      enabled: ${QUANT_BITHUMB_LIVE_ENABLED:false}
+      base-url: ${QUANT_BITHUMB_LIVE_URL:https://api.bithumb.com}
+  upbit:
+    live:
+      enabled: ${QUANT_UPBIT_LIVE_ENABLED:false}
+  bybit:
+    live:
+      enabled: ${QUANT_BYBIT_LIVE_ENABLED:false}
+  okx:
+    live:
+      enabled: ${QUANT_OKX_LIVE_ENABLED:false}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}

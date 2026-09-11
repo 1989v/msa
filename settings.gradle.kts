@@ -13,7 +13,7 @@ include(
     "search:batch",
     "agent-viewer:api",
     "gifticon:domain",
-    "gifticon:app",
+    "gifticon:feature",
     "auth:domain",
     "auth:app",
     "code-dictionary:domain",
@@ -30,7 +30,7 @@ include(
     "warehouse:domain",
     "warehouse:feature", // ADR-0058: commerce 모듈러 모놀리스 라이브러리 (구 warehouse:app, 비-bootable)
     "chatbot:domain",
-    "chatbot:app",
+    "chatbot:feature",
     "analytics:domain",
     "analytics:app",
     "experiment:domain",
@@ -40,13 +40,15 @@ include(
     "wishlist:domain",
     "wishlist:feature",
     "quant:domain",
-    "quant:app",
+    "quant:feature",
     "recommendation:domain",
     "recommendation:feature",
     // ADR-0093 — engagement: recommendation+experiment 폴드 호스트
     "engagement:app",
     // ADR-0093 — account: member+wishlist 폴드 호스트
     "account:app",
+    // ADR-0093 — sideapp: quant+chatbot+gifticon 폴드 호스트 (도메인 단절 사이드앱)
+    "sideapp:app",
     "place:domain",
     "place:app",
     "deal:domain",

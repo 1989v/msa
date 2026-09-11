@@ -1,0 +1,32 @@
+# ADR-0093 — sideapp 운영 프로파일. 세 독립 앱의 kubernetes 프로파일을 합쳤다.
+# **기본 application.yml 의 도메인 prefix 와 짝이 맞아야 한다** — 여기 블록을 빠뜨리면
+# 그 도메인만 localhost 로 붙어 기동이 통째로 깨진다(product 폴드에서 실제로 겪음).
+spring:
+  datasource:
+    quant:
+      url: jdbc:mysql://mysql-quant-master:3306/quant?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    chatbot:
+      url: jdbc:mysql://mysql-auth-master:3306/chatbot_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    gifticon:
+      master:
+        jdbc-url: jdbc:mysql://mysql-gifticon-master:3306/gifticon_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      replica:
+        # gifticon 은 replica 인스턴스가 없다 — master 를 가리킨다(독립 앱 때와 같다).
+        jdbc-url: jdbc:mysql://mysql-gifticon-master:3306/gifticon_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+  data:
+    redis:
+      host: redis-1
+      port: 6379
+
+# ADR-0029 PR-9 — processed_event 7일 retention cleanup 스케줄러 활성화.
+# common 의 IdempotentEventCleanupScheduler 가 매일 cron 시각에 retention 보다 오래된 row 를 삭제.
+# 서비스별 cron 분산: inventory 03:30 · order 03:00 · fulfillment 03:15 · product 03:45 · sideapp(quant) 04:00.
+kgd:
+  common:
+    messaging:
+      idempotent:
+        cleanup:
+          enabled: true
+          retention: P7D
+          cron: "0 0 4 * * *"
+          zone: Asia/Seoul

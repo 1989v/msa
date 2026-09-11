@@ -84,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          ALL_JVM="gateway search search-batch search-consumer auth gifticon analytics engagement account code-dictionary commerce chatbot quant place"
+          ALL_JVM="gateway search search-batch search-consumer auth analytics engagement account sideapp code-dictionary commerce place"
           ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed amp-arena"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
@@ -152,7 +152,9 @@ jobs:
               search/batch/*)                            JVM_SVCS+=" search-batch" ;;
               search/consumer/*)                         JVM_SVCS+=" search-consumer" ;;
               auth|auth/*)                               JVM_SVCS+=" auth" ;;
-              gifticon|gifticon/app/*|gifticon/domain/*) JVM_SVCS+=" gifticon" ;;
+              # ADR-0093: gifticon·chatbot·quant 는 sideapp 호스트로 폴드됐다.
+              # 서브모듈 포인터 bump 는 path 가 슬래시 없는 'gifticon' 으로 나온다.
+              gifticon|gifticon/feature/*|gifticon/domain/*) JVM_SVCS+=" sideapp" ;;
               gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
               # ADR-0093: product 는 commerce 호스트로 폴드됐다. case 는 첫 일치가 이기므로
               # product 전용 줄을 위에 남겨 두면 :product:app:test 를 찾다 빌드가 통째로 깨진다.
@@ -168,15 +170,16 @@ jobs:
               # 수집기만 고친 커밋이 code-dictionary 를 굽고 정작 수집기 이미지는 안 나온다.
               ranking/ingest/*)                          DOCKER_SVCS+=" ranking-ingest" ;;
               code-dictionary/*|game/*|deal/*|blog/*|ranking/*) JVM_SVCS+=" code-dictionary" ;;
-              chatbot/*)                                 JVM_SVCS+=" chatbot" ;;
+              chatbot/*)                                 JVM_SVCS+=" sideapp" ;; # ADR-0093 폴드
               # ADR-0070: place/ingest 는 파이썬 배치 이미지 — place/* 보다 먼저 걸러야 한다
               place/ingest/*)                            DOCKER_SVCS+=" place-ingest" ;;
               place/*)                                   JVM_SVCS+=" place" ;;
-              quant/app/*|quant/domain/*|quant/glossary*)JVM_SVCS+=" quant" ;;
+              quant/feature/*|quant/domain/*|quant/glossary*) JVM_SVCS+=" sideapp" ;; # ADR-0093 폴드
               quant/frontend/*)                          DOCKER_SVCS+=" quant-fe" ;;
               quant/ingest/*)                            DOCKER_SVCS+=" quant-ingest" ;;
               recommendation/feature/*|recommendation/domain/*) JVM_SVCS+=" engagement" ;; # ADR-0093 폴드
               engagement/*)                              JVM_SVCS+=" engagement" ;;
+              sideapp/*)                                 JVM_SVCS+=" sideapp" ;;
               recommendation-ml/*)                       DOCKER_SVCS+=" recommendation-ml" ;;
               recommendation-ann/*)                      DOCKER_SVCS+=" recommendation-ann" ;;
               search/embed/*)                            DOCKER_SVCS+=" search-embed" ;;
@@ -285,6 +288,7 @@ jobs:
               # ADR-0093: engagement·account 도 aggregator 라 :{svc}:domain 이 없다 (commerce 와 같은 함정).
               engagement)         TASKS+=" :engagement:app:test :recommendation:domain:test :recommendation:feature:test :experiment:domain:test :experiment:feature:test" ;;
               account)            TASKS+=" :account:app:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
+              sideapp)            TASKS+=" :sideapp:app:test :quant:domain:test :quant:feature:test :chatbot:domain:test :chatbot:feature:test :gifticon:domain:test :gifticon:feature:test" ;;
               commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :product:domain:test :product:feature:test" ;;
               *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
             esac

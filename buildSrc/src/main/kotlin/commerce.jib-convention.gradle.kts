@@ -28,15 +28,13 @@ val mainClassByImage: Map<String, String> = mapOf(
     "search-consumer" to "com.kgd.search.SearchConsumerApplicationKt",
     "search-batch" to "com.kgd.search.SearchBatchApplicationKt",
     "auth" to "com.kgd.auth.AuthApplicationKt",
-    "gifticon" to "com.kgd.gifticon.GifticonApplicationKt",
     "commerce" to "com.kgd.commerce.CommerceApplicationKt",
     "analytics" to "com.kgd.analytics.AnalyticsApplicationKt",
-    "chatbot" to "com.kgd.chatbot.ChatbotApplicationKt",
     "code-dictionary" to "com.kgd.codedictionary.CodeDictionaryApplicationKt",
     "agent-viewer-api" to "com.kgd.agentviewer.AgentViewerApplicationKt",
-    "quant" to "com.kgd.quant.QuantApplicationKt",
     "engagement" to "com.kgd.engagement.EngagementApplicationKt", // ADR-0093 폴드 호스트
     "account" to "com.kgd.account.AccountApplicationKt",         // ADR-0093 폴드 호스트
+    "sideapp" to "com.kgd.sideapp.SideappApplicationKt",         // ADR-0093 폴드 호스트
     "place" to "com.kgd.place.PlaceApplicationKt"
 )
 
