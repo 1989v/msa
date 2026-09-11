@@ -332,10 +332,10 @@ images:
     newTag: 305467b
   - name: commerce/code-dictionary
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/code-dictionary
-    newTag: 305467b
+    newTag: cf67c6e
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 305467b
+    newTag: cf67c6e
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
     newTag: 305467b
