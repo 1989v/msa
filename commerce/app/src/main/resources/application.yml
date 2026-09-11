@@ -74,6 +74,18 @@ spring:
         hikari:
           maximum-pool-size: 3
           minimum-idle: 1
+    # ADR-0093 ② — deal 도메인 전용 datasource(deal_db).
+    # 원래 code-dictionary 스키마를 공유했고, 파드가 갈리면서 자기 스키마로 뗐다.
+    # 이 키가 있으면 DealDataSourceConfig 가 켜진다 — code-dictionary 에는 이 키가 없어
+    # 거기서는 기존처럼 호스트 EMF 를 쓴다(전환 기간 동안 둘 다 서빙).
+    deal:
+      url: jdbc:mysql://${DEAL_DB_HOST:localhost:3338}/deal_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+      username: ${DEAL_MYSQL_USER:deal_user}
+      password: ${DEAL_MYSQL_PASSWORD:deal_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 3
+        minimum-idle: 1
     # ADR-0093 — product 도메인 전용 datasource(카탈로그 SSOT, 스키마 격리).
     product:
       master:

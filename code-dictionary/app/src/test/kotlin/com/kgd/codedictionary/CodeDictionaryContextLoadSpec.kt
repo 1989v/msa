@@ -60,6 +60,19 @@ class CodeDictionaryContextLoadSpec(
                 ).forEach { ctx.containsBean(it) shouldBe false }
             }
 
+        // ADR-0093 ② — deal 은 전환 기간 동안 **여기서도** 서빙된다(게이트웨이가 옮기기 전까지).
+        // 단 스키마는 호스트 것을 그대로 쓴다 — `spring.datasource.deal.url` 이 없으므로
+        // DealDataSourceConfig 가 안 켜지는 것이 그 조건이다. 이 속성이 실수로 들어오면
+        // 같은 파드에서 스키마가 갈려 어드민이 고친 값이 화면에 안 보이게 된다.
+        Then("deal 은 호스트 스키마를 쓴다 — 전용 datasource 가 없다")
+            .config(enabledIf = { dockerAvailable }) {
+                listOf("dealDataSource", "dealEntityManagerFactory", "dealFlyway")
+                    .forEach { ctx.containsBean(it) shouldBe false }
+                ctx.getBeanNamesForType(
+                    com.kgd.deal.presentation.controller.DealController::class.java,
+                ).size shouldBe 1
+            }
+
         /**
          * 폴드된 도메인의 **컨트롤러가 실제로 매핑되는지** 본다.
          *

@@ -53,7 +53,7 @@ class CommerceContextLoadSpec(
     @Autowired private val ctx: ApplicationContext,
 ) : BehaviorSpec({
 
-    Given("commerce 모듈러 모놀리스 (inventory + warehouse + fulfillment 한 JVM)") {
+    Given("commerce 모듈러 모놀리스 (inventory + warehouse + fulfillment + order + product + deal 한 JVM)") {
         Then("3 도메인 EMF/TM + 전용 outbox/idempotency 가 충돌 없이 로드된다")
             .config(enabledIf = { dockerAvailable }) {
                 // 3 persistence units (도메인별 datasource 격리)
@@ -82,6 +82,13 @@ class CommerceContextLoadSpec(
                 ctx.containsBean("inventoryIdempotentEventCleanupScheduler").shouldBeTrue()
                 ctx.containsBean("fulfillmentIdempotentEventCleanupScheduler").shouldBeTrue()
                 ctx.containsBean("orderIdempotentEventCleanupScheduler").shouldBeTrue()
+
+                // ADR-0093 ② — deal 전용 스키마(deal_db). 조건부 설정이라 키가 없으면
+                // 통째로 안 켜지고 리포지토리가 호스트 EMF 로 붙는다 — 그 상태를 잡는다.
+                listOf(
+                    "dealDataSource", "dealEntityManagerFactory",
+                    "dealTransactionManager", "dealFlyway",
+                ).forEach { ctx.containsBean(it).shouldBeTrue() }
             }
     }
 }) {
@@ -103,6 +110,7 @@ class CommerceContextLoadSpec(
                             it.execute("CREATE DATABASE IF NOT EXISTS fulfillment_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS order_db")
                             it.execute("CREATE DATABASE IF NOT EXISTS product_db")
+                            it.execute("CREATE DATABASE IF NOT EXISTS deal_db")
                         }
                     }
                 }
@@ -119,6 +127,7 @@ class CommerceContextLoadSpec(
             val ful = inv.replace("/inventory_db", "/fulfillment_db")
             val ord = inv.replace("/inventory_db", "/order_db")
             val prod = inv.replace("/inventory_db", "/product_db")
+            val deal = inv.replace("/inventory_db", "/deal_db")
             // inventory (master/replica)
             for (role in listOf("master", "replica")) {
                 registry.add("spring.datasource.$role.jdbc-url") { inv }
@@ -142,6 +151,12 @@ class CommerceContextLoadSpec(
                 registry.add("spring.datasource.product.$role.password") { mysql.password }
                 registry.add("spring.datasource.product.$role.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
             }
+            // deal 은 master/replica 가 아니라 단일 url 이다 — 읽기 복제본이 없다.
+            // 이 키가 있어야 DealDataSourceConfig(@ConditionalOnProperty)가 켜진다.
+            registry.add("spring.datasource.deal.url") { deal }
+            registry.add("spring.datasource.deal.username") { mysql.username }
+            registry.add("spring.datasource.deal.password") { mysql.password }
+            registry.add("spring.datasource.deal.driver-class-name") { "com.mysql.cj.jdbc.Driver" }
         }
     }
 }

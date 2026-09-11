@@ -25,6 +25,10 @@ dependencies {
     implementation(libs.caffeine)
     // kotlin-logging 람다 로깅
     implementation(libs.kotlin.logging)
+    // ADR-0093 ② — 전용 스키마(deal_db) 마이그레이션. 폴드 앱에서는 ScopedFlywayMigrator 가
+    // 돌리지만 flyway-core 자체는 이 모듈의 의존이다.
+    implementation("org.flywaydb:flyway-core")
+    runtimeOnly("org.flywaydb:flyway-mysql")
     runtimeOnly(libs.mysql.connector)
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.kotest.extensions.spring)

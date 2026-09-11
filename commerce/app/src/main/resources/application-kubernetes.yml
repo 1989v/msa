@@ -21,6 +21,10 @@ spring:
         jdbc-url: jdbc:mysql://mysql-order-master:3306/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       replica:
         jdbc-url: jdbc:mysql://mysql-order-replica:3306/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    # ADR-0093 ② — deal 전용 스키마. code-dictionary MySQL 인스턴스에 함께 있다
+    # (스키마만 분리했고 인스턴스는 안 옮겼다 — 옮길 이유가 없다).
+    deal:
+      url: jdbc:mysql://mysql-code-dictionary-master:3306/deal_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
     # ADR-0093 — product(카탈로그 SSOT) 전용 datasource (k8s per-service MySQL).
     product:
       master:
