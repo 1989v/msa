@@ -365,7 +365,7 @@ images:
     newTag: 6feb9be
   - name: commerce/commerce
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/commerce
-    newTag: 6feb9be
+    newTag: "7107320"
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: 6feb9be
