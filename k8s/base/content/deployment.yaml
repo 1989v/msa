@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: content
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: content
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: content
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      serviceAccountName: content
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: app
+          image: commerce/content:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8097
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            # ── place ────────────────────────────────────────────────────
+            # 오픈데이터 시드 — 기본 비활성. place-seed ConfigMap 생성 후 PLACE_SEED_ENABLED=true 로 1회 적재(멱등).
+            - name: PLACE_SEED_ENABLED
+              value: "false"
+            - name: PLACE_SEED_REGIONS_PATH
+              value: "/seed/regions.jsonl"
+            - name: PLACE_SEED_POIS_PATH
+              value: "/seed/pois.jsonl"
+            - name: OPENSEARCH_URIS
+              value: "http://opensearch:9200"
+            # ── game ─────────────────────────────────────────────────────
+            # 게임 세이브 at-rest 암호화 키. optional 인 이유는 시크릿 생성 전에 파드가
+            # 못 뜨는 순서 의존을 만들지 않기 위해서다 — 없으면 기본 키로 뜨고 경고를 남긴다.
+            - name: AES_KEY
+              valueFrom:
+                secretKeyRef: { name: platform-aes, key: secret, optional: true }
+            # 비밀 게임 접근 판정이 auth 가 발급한 JWT 를 검증한다 — auth·gateway 와 같은 키여야 한다.
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: platform-jwt, key: secret, optional: true }
+            # 아케이드 세션 토큰 HMAC 키 (ADR-0092).
+            #
+            # optional 을 **안 붙인다** — 위 둘과 다른 이유다. AES_KEY·JWT_SECRET 은 없으면
+            # 기본 키로 뜨지만, 서명 키가 공개 기본값으로 폴백하면 **검사가 도는 채로 아무것도
+            # 막지 않는다.** 없다고 뜨는 편이 있다고 믿게 만드는 것보다 낫다.
+            #
+            # 시크릿 이름은 code-dictionary 가 쓰던 것과 같다(`game-hmac`) — 파드만 옮겨간
+            # 것이라 키를 새로 만들지 않는다. 없으면 컨테이너가 생성 단계에서 막힌다.
+            - name: GAME_HMAC_SECRET
+              valueFrom:
+                secretKeyRef: { name: game-hmac, key: secret }
+            # game_db 는 code-dictionary MySQL 인스턴스에 그대로 있다 — 스키마는 안 옮긴다.
+            - name: GAME_DB_MASTER
+              value: "mysql-code-dictionary-master:3306"
+            - name: GAME_DB_REPLICA
+              value: "mysql-code-dictionary-master:3306"
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:9092"
+          volumeMounts:
+            - name: seed
+              mountPath: /seed
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            # 두 도메인의 EMF 를 세우므로 단일 앱보다 늦게 준비된다.
+            initialDelaySeconds: 25
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 50
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          resources:
+            requests:
+              cpu: 120m
+              memory: 640Mi
+            limits:
+              memory: 1280Mi
+      volumes:
+        # 시드 JSONL 주입 (optional — 없어도 부팅 가능).
+        - name: seed
+          configMap:
+            name: place-seed
+            optional: true

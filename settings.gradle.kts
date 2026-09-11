@@ -49,8 +49,10 @@ include(
     "account:app",
     // ADR-0093 — sideapp: quant+chatbot+gifticon 폴드 호스트 (도메인 단절 사이드앱)
     "sideapp:app",
+    // ADR-0093 — content: game+place 폴드 호스트 (노출 서브도메인). ②~③에서 blog·ranking 합류
+    "content:app",
     "place:domain",
-    "place:app",
+    "place:feature", // ADR-0093: content:app 이 흡수 (비-bootable)
     "deal:domain",
     "deal:feature", // ADR-0069: 혜택 링크 허브 라이브러리 (code-dictionary:app 이 흡수, 비-bootable)
     "blog:domain",

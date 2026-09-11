@@ -20,25 +20,6 @@ spring:
       hikari:
         maximum-pool-size: 5
         minimum-idle: 2
-    # ADR-0059: game 도메인 전용 datasource(스키마 격리). Flyway 는 GameDataSourceConfig 의
-    # 전용 빈(classpath:gamedb/migration)이 수행 — 아래 spring.flyway 와 별개.
-    game:
-      master:
-        jdbc-url: jdbc:mysql://${GAME_DB_MASTER:localhost:3338}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
-        username: ${GAME_MYSQL_USER:game_user}
-        password: ${GAME_MYSQL_PASSWORD:game_password}
-        driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
-      replica:
-        jdbc-url: jdbc:mysql://${GAME_DB_REPLICA:localhost:3338}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
-        username: ${GAME_MYSQL_USER:game_user}
-        password: ${GAME_MYSQL_PASSWORD:game_password}
-        driver-class-name: com.mysql.cj.jdbc.Driver
-        hikari:
-          maximum-pool-size: 3
-          minimum-idle: 1
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   # #23 아케이드 흡수 — 리더보드 ZSET / 세션 / 리플레이 저장소 (k3s-lite 는 오버레이가 standalone 주입)
@@ -71,19 +52,6 @@ opensearch:
   index-name: concept-index
   retention: 2
 
-# ADR-0059: 게임 세션 이벤트 토픽 (수신: analytics)
-game:
-  kafka:
-    topics:
-      session-started: game.session.started
-      session-ended: game.session.ended
-  # #23 아케이드 흡수 — 세션 토큰 HMAC.
-  # **기본값을 두지 않는다.** 공개 레포에 적힌 값으로 폴백하면 서명이 누구나 만들 수 있는 것이
-  # 되어 검사가 도는 채로 아무것도 막지 않는다. 없으면 기동이 실패한다(HmacSessionTokenService).
-  # 로컬도 주입이 필요하다 — 32바이트 이상이면 아무 값이나 된다.
-  security:
-    hmac-secret: ${GAME_HMAC_SECRET:}
-
 management:
   endpoints:
     web:
@@ -111,15 +79,8 @@ management:
       percentiles-histogram:
         http.server.requests: true
 
-# 게임 세이브 at-rest 암호화 (game:feature 의 SaveCipher).
-# 기본값은 개발 편의용 공개 값이라 운영에서는 반드시 AES_KEY 로 덮어써야 한다 —
-# 기본 키로 뜨면 기동 시 경고를 남긴다.
-encryption:
-  aes-key: ${AES_KEY:default-aes-key-exactly-32bytes!}
-
-# 비밀 게임 접근 판정(ADR-0089)이 토큰의 주체를 읽는다 — auth 가 발급한 JWT 를 검증하므로
-# **auth·gateway 와 같은 키여야 한다**. 폴드된 game 의 JwtTokenIdentityAdapter 가 JwtUtil 을 주입받고,
-# 그 빈은 아래 스위치가 켜져야 생긴다 — 없으면 컨텍스트가 아예 안 뜬다(기동 실패).
+# auth 가 발급한 JWT 를 검증한다 — **auth·gateway 와 같은 키여야 한다**.
+# 이 빈은 아래 `kgd.common.security.enabled` 스위치가 켜져야 생긴다.
 jwt:
   secret: ${JWT_SECRET:default-dev-secret-key-32-chars-long!}
 
@@ -127,6 +88,6 @@ kgd:
   common:
     security:
       enabled: true
-      # AesUtil 은 SaveCipher 가 직접 만든다 — 자동설정이 하나 더 만들 이유가 없다
+      # AesUtil 은 쓰는 쪽이 직접 만든다 — 자동설정이 하나 더 만들 이유가 없다
       aes-enabled: false
 

@@ -611,9 +611,9 @@ val approvedPods: Set<String> = setOf(
     // 단독 유지 (ADR-0093 §2 에 근거 기재)
     "gateway", "auth", "search", "analytics",
     // 폴드 호스트
-    "commerce", "account", "engagement", "sideapp",
-    // ②~④ 단계에서 content/atlas 로 갈릴 과도기 파드
-    "code-dictionary", "place",
+    "commerce", "account", "engagement", "sideapp", "content",
+    // ②~④ 단계에서 atlas 로 이름이 바뀔 과도기 파드
+    "code-dictionary",
     // 상주 아님(배치·보조) — 이미지는 있으나 Deployment 가 없거나 CronJob 이다
     "agent-viewer",
 )

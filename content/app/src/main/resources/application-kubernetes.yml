@@ -1,0 +1,21 @@
+# ADR-0093 — content 운영 프로파일.
+# **기본 application.yml 의 도메인 prefix 와 짝이 맞아야 한다** — 여기 블록을 빠뜨리면
+# 그 도메인만 localhost 로 붙어 기동이 통째로 깨진다(product 폴드에서 실제로 겪음).
+spring:
+  datasource:
+    place:
+      url: jdbc:mysql://mysql-place:3306/place_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    game:
+      master:
+        jdbc-url: jdbc:mysql://mysql-code-dictionary-master:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+      replica:
+        jdbc-url: jdbc:mysql://mysql-code-dictionary-master:3306/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+  kafka:
+    bootstrap-servers: kafka:29092
+  data:
+    redis:
+      host: redis-1
+      port: 6379
+
+opensearch:
+  uris: http://opensearch:9200

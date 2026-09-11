@@ -2,7 +2,6 @@ package com.kgd.codedictionary.infrastructure.retention
 
 import com.kgd.blog.application.interaction.usecase.PurgeBlogViewsUseCase
 import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryPort
-import com.kgd.game.application.roster.usecase.PurgeRostersUseCase
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.ApplicationArguments
 import org.springframework.boot.ApplicationRunner
@@ -23,6 +22,10 @@ private val log = KotlinLogging.logger {}
  * **deal-linkcheck 에 얹지 않은 이유**: 그 CronJob 은 외부 :443 egress 가 열린 유일한
  * 배치다. 네트워크가 필요 없는 정리 작업에 그 권한을 함께 주게 된다. 여기는 DB 만 만진다.
  *
+ * ADR-0093 으로 `party_friend_group` 은 여기서 빠졌다 — game 이 content 파드로 옮겨가
+ * 그 원장을 이 이미지의 클래스패스에서 볼 수 없다. content 이미지의 `ContentRetentionRunner`
+ * 가 같은 방식으로 돈다(CronJob 둘).
+ *
  * 원장마다 따로 잡는 이유는 보존기간의 근거가 다르기 때문이다 — 아래 상수 주석 참조.
  * 하나가 실패해도 나머지는 돈다. 정리 실패로 다른 원장까지 안 지워지면 다음 주까지
  * 두 배로 쌓이고, 실패한 쪽은 로그에 남으므로 조용히 묻히지도 않는다.
@@ -33,7 +36,6 @@ private val log = KotlinLogging.logger {}
 class RetentionRunner(
     private val purgeBlogViews: PurgeBlogViewsUseCase,
     private val resumeAccessLog: ResumeAccessLogRepositoryPort,
-    private val purgeRosters: PurgeRostersUseCase,
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments) {
@@ -42,7 +44,6 @@ class RetentionRunner(
             purge("resume_access_log") {
                 resumeAccessLog.purgeOlderThan(LocalDateTime.now().minusDays(RESUME_ACCESS_RETENTION_DAYS))
             },
-            purge("party_friend_group") { purgeRosters.unusedFor(FRIEND_GROUP_RETENTION_DAYS) },
         )
         log.info { "원장 정리 완료 — ${results.joinToString(", ")}" }
     }
@@ -69,17 +70,5 @@ class RetentionRunner(
          * 압박도 조회수 원장보다 약하다.
          */
         const val RESUME_ACCESS_RETENTION_DAYS = 365L
-
-        /**
-         * 친구 그룹 보존기간 — **마지막으로 판에 쓰인 뒤** 이만큼 안 쓰면 파기한다 (ADR-0092).
-         *
-         * 만든 날이 아니라 쓴 날로 재는 이유는, 명부는 오래 두고 재사용하는 물건이기 때문이다.
-         * 반년에 한 번 모이는 모임의 명부가 만든 지 1년이 됐다고 사라지면 기능의 동기가 사라진다.
-         *
-         * **이 숫자는 `/privacy` §6 에 적힌 것과 같아야 한다.** 한쪽만 고치면 개인정보처리방침이
-         * 거짓이 된다. 그리고 상수만 두고 호출자가 없으면 무기한 누적된다 — `blog_post_view` 가
-         * 실제로 그랬다. 그래서 이 상수는 위 `run()` 에서 반드시 소비된다.
-         */
-        const val FRIEND_GROUP_RETENTION_DAYS = 365L
     }
 }

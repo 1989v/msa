@@ -1,0 +1,133 @@
+# ADR-0093 — content: place + game 통합 설정.
+# 두 독립 구성(place:app 의 yml, code-dictionary 안 game 블록)을 그대로 옮겨 왔고,
+# place 의 datasource 만 도메인 prefix 로 내렸다(`spring.datasource.*` → `spring.datasource.place.*`).
+# game 블록은 code-dictionary 에 있던 것과 키·기본값이 같다 — 재분리도 그대로다.
+server:
+  port: 8097
+  shutdown: graceful
+
+spring:
+  application:
+    name: content-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  datasource:
+    # place 전용 — 이 호스트에서 primary 다.
+    place:
+      url: jdbc:mysql://${PLACE_DB_HOST:localhost:3306}/place_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      username: ${MYSQL_USER:place_user}
+      password: ${MYSQL_PASSWORD:place_password}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      hikari:
+        maximum-pool-size: 5
+        minimum-idle: 2
+    # game 전용 (스키마 격리). Flyway 는 GameDataSourceConfig 의 전용 빈(classpath:gamedb/migration).
+    game:
+      master:
+        jdbc-url: jdbc:mysql://${GAME_DB_MASTER:localhost:3338}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+        username: ${GAME_MYSQL_USER:game_user}
+        password: ${GAME_MYSQL_PASSWORD:game_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+      replica:
+        jdbc-url: jdbc:mysql://${GAME_DB_REPLICA:localhost:3338}/game_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8&useUnicode=true
+        username: ${GAME_MYSQL_USER:game_user}
+        password: ${GAME_MYSQL_PASSWORD:game_password}
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        hikari:
+          maximum-pool-size: 3
+          minimum-idle: 1
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  # 호스트 기본 Flyway 는 쓰지 않는다 — `classpath:db/migration` 을 재귀 스캔해 남의 도메인
+  # 마이그레이션을 남의 스키마에 적용한다. place 는 PlaceDataSourceConfig 의
+  # ScopedFlywayMigrator(`placedb/migration`), game 은 GameDataSourceConfig(`gamedb/migration`).
+  flyway:
+    enabled: false
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+  # game 아케이드 — 리더보드 ZSET / 세션 / 리플레이 저장소
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+
+opensearch:
+  uris: ${OPENSEARCH_URIS:http://localhost:9200}
+
+place:
+  seed:
+    enabled: ${PLACE_SEED_ENABLED:false}
+    regions-path: ${PLACE_SEED_REGIONS_PATH:/seed/regions.jsonl}
+    pois-path: ${PLACE_SEED_POIS_PATH:/seed/pois.jsonl}
+  poi:
+    index: ${PLACE_POI_INDEX:poi}
+
+# ADR-0059: 게임 세션 이벤트 토픽 (수신: analytics)
+game:
+  kafka:
+    topics:
+      session-started: game.session.started
+      session-ended: game.session.ended
+  # #23 아케이드 흡수 — 세션 토큰 HMAC.
+  # **기본값을 두지 않는다.** 공개 레포에 적힌 값으로 폴백하면 서명이 누구나 만들 수 있는 것이
+  # 되어 검사가 도는 채로 아무것도 막지 않는다. 없으면 기동이 실패한다(HmacSessionTokenService).
+  # 로컬도 주입이 필요하다 — 32바이트 이상이면 아무 값이나 된다.
+  security:
+    hmac-secret: ${GAME_HMAC_SECRET:}
+
+# 게임 세이브 at-rest 암호화 (game:feature 의 SaveCipher).
+# 기본값은 개발 편의용 공개 값이라 운영에서는 반드시 AES_KEY 로 덮어써야 한다 —
+# 기본 키로 뜨면 기동 시 경고를 남긴다.
+encryption:
+  aes-key: ${AES_KEY:default-aes-key-exactly-32bytes!}
+
+# auth 가 발급한 JWT 를 검증한다(비밀 게임 접근 판정, ADR-0089) —
+# **auth·gateway 와 같은 키여야 한다**. game 의 JwtTokenIdentityAdapter 가 JwtUtil 을
+# 주입받고, 그 빈은 아래 스위치가 켜져야 생긴다 — 없으면 컨텍스트가 아예 안 뜬다.
+jwt:
+  secret: ${JWT_SECRET:default-dev-secret-key-32-chars-long!}
+
+kgd:
+  common:
+    security:
+      enabled: true
+      # AesUtil 은 SaveCipher 가 직접 만든다 — 자동설정이 하나 더 만들 이유가 없다
+      aes-enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+      group:
+        liveness:
+          include: livenessState
+        readiness:
+          include: readinessState
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
