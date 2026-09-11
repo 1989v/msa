@@ -25,6 +25,9 @@ class GatewayRouteConfig(
          * deal·blog·ranking 이다. ②~③단계에서 그 셋도 이쪽으로 온다.
          */
         const val CONTENT_URI = "http://content:8097"
+
+        /** ADR-0093 ② — deal(혜택 링크 허브)은 커머스 성격이라 commerce 로 옮겼다. */
+        const val COMMERCE_URI = "http://commerce:8085"
     }
 
     private fun userConfig() = AuthenticationGatewayFilter.Config(
@@ -430,19 +433,19 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(COMMERCE_URI)
             }
             .route("deal-public") { r ->
                 r.path("/api/v1/deal/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(COMMERCE_URI)
             }
             // 아웃바운드 리다이렉터. `/api/v1/deal/go/...` 가 아니라 `/go/...` 인 이유는 이 주소가
             // 공유되기 때문이다. ingress 는 deal 호스트에만 이 prefix 를 연다.
             .route("deal-redirect") { r ->
                 r.path("/go/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(COMMERCE_URI)
             }
             // === ADR-0072 블로그 플랫폼 (code-dictionary 소유) ===
             // 좁은 경로부터 선언한다 — 선언 순서가 곧 우선순위라, 공개 라우트를 먼저 두면
