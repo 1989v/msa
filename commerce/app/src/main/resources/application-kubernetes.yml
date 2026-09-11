@@ -21,17 +21,12 @@ spring:
         jdbc-url: jdbc:mysql://mysql-order-master:3306/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       replica:
         jdbc-url: jdbc:mysql://mysql-order-replica:3306/order_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    # ADR-0058 round 2 — member/wishlist 전용 datasource (k8s per-service MySQL).
-    member:
+    # ADR-0093 — product(카탈로그 SSOT) 전용 datasource (k8s per-service MySQL).
+    product:
       master:
-        jdbc-url: jdbc:mysql://mysql-member-master:3306/member_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        jdbc-url: jdbc:mysql://mysql-product-master:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       replica:
-        jdbc-url: jdbc:mysql://mysql-member-replica:3306/member_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-    wishlist:
-      master:
-        jdbc-url: jdbc:mysql://mysql-wishlist-master:3306/wishlist_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-      replica:
-        jdbc-url: jdbc:mysql://mysql-wishlist-replica:3306/wishlist_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        jdbc-url: jdbc:mysql://mysql-product-replica:3306/product_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
   kafka:
     bootstrap-servers: kafka:29092
   data:
