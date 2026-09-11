@@ -234,7 +234,7 @@ export function createCharacter(THREE,{lod=0,texture=null}={}) {
   // Neck-width attachment opens over the shoulders, then gathers to a slanted tail.
   // Two continuous surfaces plus edge bands give the mantle real cloth thickness.
   const cape = (u,v,lining) => {
-    const angle = -2.3 + u*4.6;
+    const angle = -1.85 + u*3.7;
     const shoulder = Math.min(1,v/.25);
     const lower = Math.max(0,(v-.25)/.75);
     const spread = .068 + .180*Math.sin(shoulder*Math.PI/2) - .042*lower;
@@ -260,31 +260,86 @@ export function createCharacter(THREE,{lod=0,texture=null}={}) {
       return outer.map((x,i)=>x+(inner[i]-x)*u);
     },'cape',capeWeights,edge===1);
   }
-  // Closed irregular collar roll; low at the throat, higher behind the neck.
-  surface('folded-collar',32,10,(u,v)=>{
+  // Soft wrap closes around the neck; its throat edge dips diagonally into the brooch.
+  surface('folded-collar',28,8,(u,v)=>{
     const angle=u*Math.PI*2,roll=v*Math.PI*2;
-    const radius=.067+.018*Math.cos(roll);
+    const radius=.061+.009*Math.cos(roll);
     return [
       Math.sin(angle)*radius,
-      1.424+.019*Math.sin(roll)-.025*Math.cos(angle)+.009*Math.sin(angle),
-      Math.cos(angle)*radius,
+      1.428+.012*Math.sin(roll)-.021*Math.cos(angle)+.012*Math.sin(angle),
+      Math.cos(angle)*radius+.006,
     ];
   },'cape',rig('chest'));
-  // Layered scarf fans from the throat over the shoulder seam instead of a straight bar.
-  surface('front-scarf-fold',32,12,(u,v)=>{
-    const angle=u*Math.PI*2;
-    const folds=.007*Math.sin(v*Math.PI*5+Math.sin(angle));
-    return [
-      Math.sin(angle)*(.071+.174*v+folds),
-      1.418-.097*v-.024*Math.cos(angle)*Math.sin(v*Math.PI)+.012*Math.sin(angle)+.036*Math.sin(angle)**2*v,
-      Math.cos(angle)*(.071+.060*v+folds),
-    ];
-  },'cape',rig('chest'));
-  oval('cape-brooch',[-.125,1.346,.092],[.026,.026,.01],'brass',rig('chest'),20,12);
-  // Crossbody strap follows torso in front and returns over the rear shoulder.
-  const strap=(back)=>surface(back?'strap-back':'strap-front',3,26,(u,v)=>{const x=.13-v*.34;return[x+(u-.5)*.022,1.37-v*.53,(back?-1:1)*(.091+.02*Math.sin(v*Math.PI))];},'leather',(u,v)=>rig('hips','chest',Math.max(0,1-v)),back);
-  strap(false);
-  strap(true);
+  // Open, asymmetric cloth patches replace the old closed shoulder-width loft.
+  // Each station is a top/free-edge pair: the gathered left anchor fans into a
+  // diagonal fold and ends at a low right tip, leaving most of the chest visible.
+  const scarfStations=[
+    [[-.135,1.389,.071],[-.139,1.350,.094]],
+    [[-.068,1.413,.076],[-.065,1.348,.109]],
+    [[.022,1.412,.077],[.036,1.320,.113]],
+    [[.123,1.383,.083],[.145,1.292,.107]],
+    [[.201,1.355,.082],[.238,1.268,.082]],
+  ];
+  function clothSection(stations,u,v){
+    const k=Math.min(stations.length-2,Math.floor(u*(stations.length-1)));
+    const t=u*(stations.length-1)-k;
+    const edges=[0,1].map(edge=>[0,1,2].map(axis=>{
+      const a=stations[k][edge][axis],b=stations[k+1][edge][axis];
+      const prev=stations[Math.max(0,k-1)][edge][axis];
+      const next=stations[Math.min(stations.length-1,k+2)][edge][axis];
+      return .5*(2*a+(-prev+b)*t+(2*prev-5*a+4*b-next)*t*t+(-prev+3*a-3*b+next)*t*t*t);
+    }));
+    return edges[0].map((x,i)=>x+(edges[1][i]-x)*v);
+  }
+  const scarfPoint=(u,v)=>{
+    const q=clothSection(scarfStations,u,v);
+    // Two broad cloth rolls converge at the fastening, with a recessed valley.
+    // Curvature changes the section itself, rather than adding texture-like noise.
+    const gather=Math.sin(Math.PI*(.12+.8*u));
+    q[2]+=gather*(.013*Math.sin(v*Math.PI)-.008*Math.sin(v*Math.PI*2));
+    q[1]-=.012*Math.sin(u*Math.PI)*Math.sin(v*Math.PI);
+    return q;
+  };
+  surface('front-scarf-fold',28,10,scarfPoint,'cape',rig('chest'));
+  const shoulderStations=[
+    [[-.135,1.389,.071],[-.139,1.350,.094]],
+    [[-.179,1.368,.084],[-.201,1.315,.088]],
+    [[-.213,1.337,.077],[-.243,1.284,.062]],
+  ];
+  const shoulderPoint=(u,v)=>{
+    const q=clothSection(shoulderStations,u,v);
+    q[2]+=.009*Math.sin(u*Math.PI)*Math.sin(v*Math.PI);
+    return q;
+  };
+  surface('scarf-shoulder-gather',14,8,shoulderPoint,'cape',rig('chest'));
+  // The free hems turn back by 3 mm, not a padded rim.
+  for(const [name,point,n] of [['scarf-hem',scarfPoint,32],['scarf-gather-hem',shoulderPoint,14]]){
+    surface(name,n,2,(u,v)=>{
+      const q=point(u,1);
+      q[2]-=.003*v;
+      q[1]+=.002*Math.sin(v*Math.PI);
+      return q;
+    },'cape',rig('chest'));
+  }
+  oval('cape-brooch',[-.125,1.366,.100],[.023,.023,.008],'brass',rig('chest'),16,8);
+  // One continuous satchel strap: front chest -> beneath scarf -> shoulder -> beneath cape.
+  // The upper route is deliberately inside the outer cloth, never intermittently on top.
+  const strapRoute=[
+    [-.205,.838,.088],[-.133,.975,.108],[-.047,1.112,.114],
+    [.045,1.25,.108],[.100,1.325,.082],[.145,1.375,.040],
+    [.151,1.383,-.010],[.141,1.363,-.063],[.085,1.267,-.102],
+    [-.014,1.119,-.103],[-.108,.975,-.094],[-.205,.838,-.058],
+  ];
+  const strapPoint=(u,v)=>{
+    const k=Math.min(strapRoute.length-2,Math.floor(v*(strapRoute.length-1)));
+    const t=v*(strapRoute.length-1)-k;
+    const a=strapRoute[k],b=strapRoute[k+1];
+    return a.map((x,i)=>x+(b[i]-x)*t+(i===0?(u-.5)*.022:0));
+  };
+  surface('satchel-strap',3,44,strapPoint,'leather',(u,v)=>{
+    const y=strapPoint(.5,v)[1];
+    return rig('hips','chest',Math.max(0,Math.min(1,(y-.88)/.38)));
+  });
   loft('map-satchel',[[-.205,.685,.008,.050,.066],[-.205,.716,.008,.065,.081],[-.205,.84,.008,.065,.079],[-.205,.885,.008,.051,.068]],'leather',rig('hips'),24);
   oval('satchel-flap',[-.205,.827,.082],[.063,.059,.009],'leather',rig('hips'),20,12);
   for(const x of [-.239,-.175]){tube('satchel-closure',[x,.845,.093],[x,.754,.094],.006,.006,'leather',rig('hips'),8);

@@ -53,3 +53,42 @@ test('both eyes remain in front of the actual facial triangles at both LODs',()=
     }
   }
 });
+
+test('scarf, sleeve and strap clearance at sampled contacts survives both LODs and inspection pose',()=>{
+  // Samples target the previous exposed strap patch and shoulder holes, plus the rear route.
+  // The left shoulder is now a separate gathered cloth patch; all original sample
+  // positions and clearance bounds remain unchanged, preserving the earlier hole regression.
+  // These check actual deformed triangles, not the procedural surface formulas.
+  const contacts=[
+    {x:.096,y:1.32,back:false,outer:'front-scarf-fold',inner:'satchel-strap',min:.015,max:.045},
+    {x:-.022,y:1.15,back:false,outer:'satchel-strap',inner:'tunic',min:.012,max:.04},
+    {x:.2,y:1.34,back:false,outer:'front-scarf-fold',inner:'sleeve-L',min:.003,max:.025},
+    {x:-.2,y:1.34,back:false,outer:'scarf-shoulder-gather',inner:'sleeve-R',min:.003,max:.025},
+    {x:.04,y:1.2,back:true,outer:'cape-outer',inner:'satchel-strap',min:.02,max:.05},
+  ];
+  for(const lod of [0,1])for(const pose of ['rest','rig-inspection']){
+    const c=createCharacter(THREE,{lod});
+    if(pose!=='rest'){
+      const mixer=new THREE.AnimationMixer(c.root);
+      mixer.clipAction(c.clips.find(clip=>clip.name===pose)).play();
+      mixer.setTime(1.5);
+    }
+    c.root.updateMatrixWorld(true);
+    c.skeleton.update();
+    const partAt=faceIndex=>{
+      let end=0;
+      return c.stats.parts.find(part=>{end+=part.triangles;return faceIndex<end;}).name;
+    };
+    for(const sample of contacts){
+      const direction=sample.back?1:-1;
+      const ray=new THREE.Raycaster(new THREE.Vector3(sample.x,sample.y,-direction*.5),new THREE.Vector3(0,0,direction));
+      const hits=ray.intersectObject(c.mesh);
+      const label=`LOD ${lod} ${pose} ${sample.outer}/${sample.inner}`;
+      assert.equal(partAt(hits[0].faceIndex),sample.outer,label);
+      const inner=hits.find(hit=>partAt(hit.faceIndex)===sample.inner);
+      assert.ok(inner,label);
+      const gap=inner.distance-hits[0].distance;
+      assert.ok(gap>=sample.min&&gap<=sample.max,`${label}: clearance ${gap}`);
+    }
+  }
+});

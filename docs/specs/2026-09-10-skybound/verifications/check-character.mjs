@@ -132,6 +132,15 @@ try {
   const closeup=await send('Page.captureScreenshot',{format:'png'});
   await writeFile(new URL(`${artifact}-detail.png`,import.meta.url),Buffer.from(closeup.data,'base64'));
   snapshots.push({label:'detail',...detail});
+  await evaluate(`document.querySelector('#pose').click()`);
+  await settle();
+  const detailPose=await state();
+  check('High LOD detail inspection pose responds',detailPose.pose && detailPose.lod===0);
+  const poseCloseup=await send('Page.captureScreenshot',{format:'png'});
+  await writeFile(new URL(`${artifact}-detail-pose.png`,import.meta.url),Buffer.from(poseCloseup.data,'base64'));
+  snapshots.push({label:'detail-pose',...detailPose});
+  await evaluate(`document.querySelector('#pose').click()`);
+  await settle();
   await evaluate(`document.querySelector('[data-view="front"]').click()`);
   await settle();
   const reset=await state(), b=reset.renderedBounds;
