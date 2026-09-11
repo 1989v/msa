@@ -2,9 +2,9 @@
 #
 # 외부 인터넷 :443 호출이 필요한 서비스 화이트리스트:
 #   - auth         OAuth 토큰 검증 (Google/Apple/Kakao 등)
-#   - quant        거래소 API (Binance/Upbit/Bithumb), Telegram, KMS (OCI Vault — ADR-0027)
+#   - sideapp      거래소 API (Binance/Upbit/Bithumb), Telegram, KMS (OCI Vault — ADR-0027),
+#                  기프티콘 외부 OCR API. ADR-0093 폴드 전 이름은 quant·gifticon
 #   - quant-ingest yfinance / FinanceDataReader (Yahoo / Naver) OHLCV 시세 수집 sidecar
-#   - gifticon     외부 OCR API
 #   - deal-linkcheck  혜택 링크 생존 점검 CronJob (ADR-0069) — 주 1회 HEAD/GET.
 #                     상시 파드인 code-dictionary 에는 열지 않는다: 배치가 필요로 하는
 #                     외부 접근 때문에 상시 노출면을 늘리지 않기 위해서다.
@@ -28,7 +28,7 @@ metadata:
 spec:
   podSelector:
     matchExpressions:
-      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, quant-ingest, gifticon, deal-linkcheck, place-ingest, ranking-ingest] }
+      - { key: app.kubernetes.io/name, operator: In, values: [auth, quant, gifticon, sideapp, quant-ingest, deal-linkcheck, place-ingest, ranking-ingest] }
   policyTypes:
     - Egress
   egress:

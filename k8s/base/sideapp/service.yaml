@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sideapp
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: sideapp
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  selector:
+    app.kubernetes.io/name: sideapp
+  ports:
+    - name: http
+      port: 8095
+      targetPort: http

@@ -159,6 +159,13 @@ patches:
     target:
       kind: Deployment
       name: quant
+  # ─── Tier XL (1.2Gi) — sideapp: quant(트레이딩) + chatbot + gifticon 3-도메인 ──
+  # 폴드 전 셋의 limit 합은 1Gi+512Mi+768Mi = 2.28Gi 였다. 한 JVM 이 되면서
+  # 힙 밖(메타스페이스·스레드·코드캐시)이 한 벌로 줄어 1.2Gi 로 잡는다.
+  - path: patches/resources-xl-1200mi.yaml
+    target:
+      kind: Deployment
+      name: sideapp
   # ─── Tier S (512Mi) — Kafka consumer + 경량 JPA ─────────────────────────
   - path: patches/resources-s-512mi.yaml
     # ─── Tier M (768Mi) — k3s-lite 글로벌 기본값으로 충분, 별도 패치 없음 ────
@@ -313,6 +320,16 @@ patches:
         name: placeholder
         annotations:
           argocd.argoproj.io/sync-wave: "13"
+  # ADR-0093 ①-B1: sideapp 을 먼저 띄운다. 게이트웨이가 sideapp 을 가리키기 전(①-B2)까지
+  # quant·chatbot·gifticon 과 공존한다 — 그래야 경로가 한 순간도 빈 곳을 가리키지 않는다.
+  - target: {kind: Deployment, name: "^(sideapp)$"}
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: placeholder
+        annotations:
+          argocd.argoproj.io/sync-wave: "12"
   - target: {kind: Deployment, name: "^(recommendation-ann)$"}
     patch: |-
       apiVersion: apps/v1

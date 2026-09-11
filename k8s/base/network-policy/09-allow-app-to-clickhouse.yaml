@@ -1,10 +1,10 @@
-# ADR-0031 §1 (table) — {analytics, quant, quant-ingest, engagement} → ClickHouse (8123 HTTP)
+# ADR-0031 §1 (table) — {analytics, sideapp, quant-ingest, engagement} → ClickHouse (8123 HTTP)
 # ADR-0093: recommendation 이 engagement 파드로 폴드되며 라벨이 바뀌었다 — 목록을 안 고치면
 # 파드는 Ready 인데 ClickHouse 만 Connection refused 로 조용히 막힌다(실제로 겪음).
 #
 # ClickHouse 호출 서비스:
 #   - analytics      events 적재/조회
-#   - quant          OHLCV 차트 read (ChartController)
+#   - sideapp        OHLCV 차트 read (ChartController) — ADR-0093 폴드 전 이름은 quant
 #   - quant-ingest   OHLCV write (yfinance/FDR sidecar)
 #   - recommendation ADR-0045 Phase 1 — analytics DB 의 recommendation_events MV read + raw insert
 # 다른 서비스가 추가로 필요해지면 ingress.from.podSelector matchExpressions 에 추가.
@@ -35,7 +35,7 @@ spec:
     - from:
         - podSelector:
             matchExpressions:
-              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, quant-ingest, engagement, recommendation-ml, search-batch] }
+              - { key: app.kubernetes.io/name, operator: In, values: [analytics, quant, sideapp, quant-ingest, engagement, recommendation-ml, search-batch] }
       ports:
         - { port: 8123, protocol: TCP }   # HTTP — recommendation 등이 사용
         - { port: 9000, protocol: TCP }   # Native TCP — recommendation-ml (clickhouse_driver) 가 사용

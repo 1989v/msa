@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sideapp
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: sideapp
+    app.kubernetes.io/part-of: commerce-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: sideapp
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sideapp
+        app.kubernetes.io/part-of: commerce-platform
+    spec:
+      serviceAccountName: sideapp
+      # quant 백테스트가 끝나고 outbox 를 비울 시간 — 셋 중 가장 긴 값을 쓴다.
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: app
+          image: commerce/sideapp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8095
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
+            # ── quant ────────────────────────────────────────────────────
+            - name: DB_USERNAME
+              value: "quant"
+            - name: DB_PASSWORD
+              value: "quant"
+            # ClickHouse `quant` DB — ohlcv read + ranking VIEW + DART corp_codes + investor_flows
+            # ingest cronjob 들과 동일 host/port. user 는 read 권한 보유한 analytics 계정 재사용.
+            - name: QUANT_CH_URL
+              value: "jdbc:clickhouse://clickhouse:8123/quant"
+            - name: QUANT_CH_USERNAME
+              value: "analytics"
+            - name: QUANT_CH_PASSWORD
+              value: "analytics"
+            # Bithumb 호가/체결 WS subscriber 활성화 (ADR-0039 PA).
+            - name: QUANT_CHARTS_ORDERBOOK_BITHUMB_ENABLED
+              value: "true"
+            # ── chatbot ──────────────────────────────────────────────────
+            # 지식원은 파일시스템이고 기본값이 레포 루트다. 이미지 안에서는 /app 이다.
+            - name: CHATBOT_DOCS_ROOT
+              value: "/app"
+            # ── gifticon ─────────────────────────────────────────────────
+            # auth 가 발급한 JWT 를 검증하려면 auth 와 같은 키여야 한다 (optional — 없으면 로컬 기본값)
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef: { name: platform-jwt, key: secret, optional: true }
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: http
+            # 세 도메인의 EMF 넷을 세우므로 단일 앱보다 늦게 준비된다.
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              # 진행 중인 백테스트가 마무리되고 outbox 가 flush 될 시간.
+              exec:
+                command: ["sh", "-c", "sleep 10"]
+          resources:
+            requests:
+              cpu: 150m
+              memory: 640Mi
+            limits:
+              memory: 1280Mi
