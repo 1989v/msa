@@ -114,6 +114,25 @@ spring:
               uri: http://analytics:8090
               predicates: [Path=/svc/analytics/actuator/health]
               filters: [StripPrefix=2]
+            # ADR-0093 — 폴드 **호스트 이름**으로도 조회할 수 있어야 한다.
+            # 도메인 이름(member·wishlist·quant·gifticon·experiment)으로만 라우트가 있어서
+            # 파드 이름으로 물으면 404 였다. order 는 ADR-0058 폴드 때부터 아예 없었다.
+            - id: actuator-order
+              uri: http://commerce:8085
+              predicates: [Path=/svc/order/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-account
+              uri: http://account:8093
+              predicates: [Path=/svc/account/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-engagement
+              uri: http://engagement:8091
+              predicates: [Path=/svc/engagement/actuator/health]
+              filters: [StripPrefix=2]
+            - id: actuator-sideapp
+              uri: http://sideapp:8095
+              predicates: [Path=/svc/sideapp/actuator/health]
+              filters: [StripPrefix=2]
             - id: actuator-experiment
               uri: http://engagement:8091 # ADR-0093: engagement 폴드
               predicates: [Path=/svc/experiment/actuator/health]
