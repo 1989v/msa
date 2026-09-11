@@ -2,8 +2,13 @@
 
 ## 현재
 
-**T02B-4b-1 점프/낙하/착지 제자리 클립 저장. 다음 T02B-4b-2 실제 이동 스냅샷 연결.**
-게임에서 조작하며 이동하는 상태는 아직 아니다. T02B-3 최종 아트도 REVISE다.
+**T02B-4b-2 기존 섬·이동 코어·캐릭터 연결 저장. 다음 T02C 정식 PC/터치 입력과 시야.**
+PC 키보드 이동·달리기·점프가 가능한 진단 프로토타입이다. 전체 게임/최종 아트는 미완료다.
+
+- 새 실행 위치: `implementation/t02b/traversal/`. 원본 world/simulation/character는 수정하지 않고 연결했다.
+- 전환 어댑터3/3, 이전 이동규칙11/11, 실제브라우저19/19 직접 통과. `verifications/t02b-4b2.md`.
+- 재빌드 약1초 미만, 소프트웨어 WebGL QA 수십초. 많은 프레임을 단일 CDP 평가에서 렌더하면 timeout; 소량씩 나눠서 검사한다.
+- 고정150ms 대기로 키입력을 판정하지 않는다. 실제 위치변화를 제한시간 안에 관찰해 판정한다. FPS성능 통과로 해석하지 않는다.
 
 - 사용자 최신 의도: 다른 게임을 참고하지 않는 클린룸 창작, PRD·원화·작은 단위 구현→검증→저장 반복.
   최신 한도 안내는 5h 16%. 계정 잔여 한도 조회 도구가 없어 직접 확인할 수 없다.
@@ -29,8 +34,8 @@
 
 1. README → tasks → character/motion-report.md → T02A README 연결 계약을 읽는다.
 2. character/aerial-report.md를 읽는다. 점프/낙하/착지 원본과 뷰어 검증은 완료했으므로 재작성하지 않는다.
-3. **T02B-4b-2**: T02A snapshot의 position(발)/velocity/grounded/mode/stamina로
-   캐릭터 위치·동작을 연결하고 실제 섬에서 접지를 검증한다. PC/터치 제품 입력은 T02C.
+3. **T02C**: traversal/README.md를 읽고 현재 진단 입력을 기반으로 정식 PC/터치 동시 이동·시야 입력을 작은 단위로 구현한다.
+   포커스/메뉴/pointercancel 입력 해제와 카메라 시야 조작을 검증한다. 현재 카메라는 고정 추적이며 장애물 충돌은 없다.
 4. walk/run은 제자리 기술 초안이다. 현재 달리기에는 공중 구간·heel/toe roll이 없으며,
    실제 이동 속도/보폭 동기화·경사 적응·접지 IK·전신 관통 검사는 후속이다.
 5. 피부/천/헤어·목과 어깨의 원화 품질은 별도 미완료로 유지한다.
@@ -54,7 +59,8 @@
 - 실제 모바일 성능·게임 완주·배포는 미검증. 외부 공개는 T09의 별도 승인 단계다.
 - 서버는 꺼질 수 있다. HTTP200 확인 후 QA:
   `python3 -m http.server 8768 --bind 127.0.0.1 --directory docs/specs/2026-09-10-skybound`.
-- 캐릭터: `http://127.0.0.1:8768/implementation/t02b/character/index.html`.
+- PC 이동: `http://127.0.0.1:8768/implementation/t02b/traversal/index.html` — 시작 후 WASD/Shift/Space.
+- 캐릭터 스튜디오: `http://127.0.0.1:8768/implementation/t02b/character/index.html`.
 - Chrome은 `CLAUDE_SCRATCHPAD=/private/tmp/skybound-validation`의
   `scripts/cdp-chrome.sh start skybound-prop --gl`(9403)만 사용하고 검사 후 stop한다.
   사용자/MCP Chrome을 종료하지 않는다. 이번 전용 프로필은 종료 완료.

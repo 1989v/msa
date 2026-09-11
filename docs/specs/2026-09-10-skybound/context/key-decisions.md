@@ -105,3 +105,10 @@
 - jump/land는 LoopOnce+clamp, fall은 반복. 일회재생 endpoint를 modulo로0에 되돌리지 않고 종료 상태를 보존한다.
 - 랜딩 말미 모든 피부 정점 bind복귀와 발 접지, 실제 GLB의 종료·재재생을 검증했다.
 - 사용자가 잔여16% 안내. 조회 도구 부재로 수치 직접확인은 불가. 새 에이전트 크레딧 오류 후 사용자 재개 지시에 재시도해 성공했다.
+
+## T02B-4b-2 · 기존 구현 연결
+
+- 새 traversal/만 추가해 기존 world 실제삼각형→terrain/simulation→GLB 위치와 동작으로 연결했다. root 위치는 simulation 발 위치를 그대로 따른다.
+- 착지는 falling→grounded에서 1회, 이동 재개는 즉시 walk/run, respawn은 착지생략/시간초기화. point heightfield이며 경사발IK나 prop/camera충돌이 아니다.
+- 키보드는 검증용 WASD/Shift/Space이며 blur/숨김시 일시정지. T02C의 정식 시야·touch 입력은 후속.
+- 수십 프레임 GPU렌더를 한 CDP 평가로 몰면 시간초과. 검증을 작게 나누고 키입력은 고정시간 대신 위치변화 조건으로 확인했다.
