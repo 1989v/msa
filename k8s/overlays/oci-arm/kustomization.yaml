@@ -45,7 +45,6 @@ resources:
   # delete 로 무력화.
   - ingresses/commerce-platform.yaml
   - ingresses/private-games.yaml
-  - ingresses/amp-arena.yaml
   # cloudflared — Zero Trust Tunnel connector. Public Hostname / TCP route /
   # Access policy 는 Cloudflare dashboard 에서 관리. tunnel 토큰 Secret 은
   # cf-origin-ca-tls 와 동일하게 OCI 에서 수동 등록 (git 미포함).
@@ -63,10 +62,6 @@ patches:
   # 본인 CA 로 교체해야 한다. 검증/롤백 → origin-lockdown/README.md
   - path: origin-lockdown/aop-patch.yaml
     target: {kind: Ingress, name: commerce-proxied}
-  # amp-arena(arena.<DOMAIN>)는 WebSocket 타임아웃 때문에 별도 Ingress 지만 proxied host 라
-  # 같은 검증을 건다 — 안 걸면 `curl -H "Host: arena.<DOMAIN>" https://<OCI_IP>/` 가 200 으로 열린다.
-  - path: origin-lockdown/aop-patch.yaml
-    target: {kind: Ingress, name: amp-arena}
   # 모든 Deployment — 무중단: 새 파드 Ready 후 교체 (서지 예산은 sync-wave 가 묶는다, ADR-0075)
   - path: patches/rolling-surge-first.yaml
     target:
@@ -365,9 +360,6 @@ images:
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
     newTag: cb23a78
-  - name: commerce/amp-arena
-    newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/amp-arena
-    newTag: e6d535e
   - name: commerce/analytics
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/analytics
     newTag: 0a8999c

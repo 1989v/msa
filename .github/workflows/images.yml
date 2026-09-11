@@ -85,7 +85,7 @@ jobs:
           set -euo pipefail
 
           ALL_JVM="gateway search search-batch search-consumer auth analytics engagement account sideapp code-dictionary commerce place"
-          ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed amp-arena"
+          ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
           if [[ -n "${SERVICES_INPUT// /}" ]]; then
@@ -185,7 +185,6 @@ jobs:
               search/embed/*)                            DOCKER_SVCS+=" search-embed" ;;
               admin/frontend/*)                          DOCKER_SVCS+=" admin-fe" ;;
               portal-fe/*)                               DOCKER_SVCS+=" portal-fe" ;;
-              amp-arena/*)                               DOCKER_SVCS+=" amp-arena" ;; # 8인 대전 액션 (Node + WS)
               # k8s 매니페스트만 변경 → 빌드 무관 (Argo CD 가 직접 sync)
               # docs/ai/private/career/ideabank → 빌드 무관
             esac
@@ -338,7 +337,6 @@ jobs:
             [recommendation-ml]="recommendation-ml"
             [recommendation-ann]="recommendation-ann"
             [search-embed]="search/embed"
-            [amp-arena]="amp-arena"
           )
           for svc in ${{ steps.changes.outputs.docker_services }}; do
             ctx="${DOCKER_CTX[$svc]:-}"
