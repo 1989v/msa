@@ -149,6 +149,14 @@ patches:
       kind: Deployment
       name: analytics
   # code-dictionary 는 k3s-lite 베이스 패치에서 이미 1Gi 로 설정됨.
+  # ─── Tier L (1Gi) — content: place + game 2-도메인 ───────────────────────
+  # 전역 resources-reduce(k3s-lite 상속)가 base 값을 절반으로 깎아 768Mi 가 되는데,
+  # place(단독 512Mi) + game(code-dictionary 안에서 1Gi 파드의 일부) 을 한 JVM 에
+  # 담기엔 EMF 둘 + OpenSearch 클라이언트가 그 안에 안 들어간다.
+  - path: patches/resources-l-1gi.yaml
+    target:
+      kind: Deployment
+      name: content
   # ─── Tier XL (1.2Gi) — sideapp: quant(트레이딩) + chatbot + gifticon 3-도메인 ──
   # 폴드 전 셋의 limit 합은 1Gi+512Mi+768Mi = 2.28Gi 였다. 한 JVM 이 되면서
   # 힙 밖(메타스페이스·스레드·코드캐시)이 한 벌로 줄어 1.2Gi 로 잡는다.
