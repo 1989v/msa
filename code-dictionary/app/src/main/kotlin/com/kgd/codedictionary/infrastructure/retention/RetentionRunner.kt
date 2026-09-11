@@ -1,6 +1,5 @@
 package com.kgd.codedictionary.infrastructure.retention
 
-import com.kgd.blog.application.interaction.usecase.PurgeBlogViewsUseCase
 import com.kgd.codedictionary.application.resume.port.ResumeAccessLogRepositoryPort
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.ApplicationArguments
@@ -22,9 +21,10 @@ private val log = KotlinLogging.logger {}
  * **deal-linkcheck 에 얹지 않은 이유**: 그 CronJob 은 외부 :443 egress 가 열린 유일한
  * 배치다. 네트워크가 필요 없는 정리 작업에 그 권한을 함께 주게 된다. 여기는 DB 만 만진다.
  *
- * ADR-0093 으로 `party_friend_group` 은 여기서 빠졌다 — game 이 content 파드로 옮겨가
- * 그 원장을 이 이미지의 클래스패스에서 볼 수 없다. content 이미지의 `ContentRetentionRunner`
- * 가 같은 방식으로 돈다(CronJob 둘).
+ * ADR-0093 으로 `party_friend_group`(game)과 `blog_post_view`(blog)는 여기서 빠졌다 —
+ * 둘 다 content 파드로 옮겨가 이 이미지의 클래스패스에서 안 보인다. 원장은 그것을 아는
+ * 도메인 모듈이 정리한다(`GameRetentionRunner`·`BlogRetentionRunner`, content 이미지의 CronJob).
+ * 여기 남는 것은 이 호스트가 소유한 `resume_access_log` 하나다.
  *
  * 원장마다 따로 잡는 이유는 보존기간의 근거가 다르기 때문이다 — 아래 상수 주석 참조.
  * 하나가 실패해도 나머지는 돈다. 정리 실패로 다른 원장까지 안 지워지면 다음 주까지
@@ -34,13 +34,11 @@ private val log = KotlinLogging.logger {}
 @Order(0)
 @Profile("retention")
 class RetentionRunner(
-    private val purgeBlogViews: PurgeBlogViewsUseCase,
     private val resumeAccessLog: ResumeAccessLogRepositoryPort,
 ) : ApplicationRunner {
 
     override fun run(args: ApplicationArguments) {
         val results = listOf(
-            purge("blog_post_view") { purgeBlogViews.execute() },
             purge("resume_access_log") {
                 resumeAccessLog.purgeOlderThan(LocalDateTime.now().minusDays(RESUME_ACCESS_RETENTION_DAYS))
             },

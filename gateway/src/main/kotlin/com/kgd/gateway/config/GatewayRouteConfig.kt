@@ -456,7 +456,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(adminConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 작성자 스튜디오 — 로그인까지만 엣지가 본다. "저자인가"·"내 글인가"는
             // 서비스가 판정한다 (소유권은 게이트웨이가 알 수 없는 정보다).
@@ -466,7 +466,7 @@ class GatewayRouteConfig(
                         f.filter(authFilter.apply(userConfig()))
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 댓글은 로그인 필수 + Rate Limiter. 스팸이 익명에서만 오지는 않는다.
             .route("blog-comments") { r ->
@@ -480,7 +480,7 @@ class GatewayRouteConfig(
                             }
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 좋아요·평점은 익명 허용(방문자 1표). 익명 쓰기라 Rate Limiter 를 건다 —
             // 게임 평점과 같은 판단이다.
@@ -495,7 +495,7 @@ class GatewayRouteConfig(
                             }
                             .stripPrefix(0)
                     }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 목록·상세·카테고리·작성자 공간 조회 — 공개.
             // 인증 필터를 걸지 않아도 게이트웨이가 채운 신원 헤더는 그대로 전달되므로,
@@ -503,7 +503,7 @@ class GatewayRouteConfig(
             .route("blog-public") { r ->
                 r.path("/api/v1/blog/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // 글 상세·작성자 공간의 HTML (meta 주입, ADR-0072 §6).
             // `/api` 밑이 아닌 이유는 이 주소가 공유되기 때문이다 — deal 의 `/go` 와 같은 판단.
@@ -511,7 +511,7 @@ class GatewayRouteConfig(
             .route("blog-page") { r ->
                 r.path("/posts/**", "/authors/**")
                     .filters { f -> f.stripPrefix(0) }
-                    .uri(CODE_DICTIONARY_URI)
+                    .uri(CONTENT_URI)
             }
             // Place Service — 지역/POI 근처검색 조회는 비로그인 공개 (탐색). 쓰기(적재)는 ADMIN. (ADR-0056)
             .route("place-service-read") { r ->

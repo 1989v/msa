@@ -42,8 +42,8 @@ code-dictionary 파드 = code-dictionary 7,507 + game 10,718 + blog 4,629
 |---|---|---|---|
 | `commerce` | order · inventory · fulfillment · warehouse · product · deal | 8,129 | 커머스 트랜잭션·사가 |
 | `content` | game · place · blog · ranking | 22,346 | 노출 서브도메인 (game·place·blog·rank) |
-| `atlas` | 개념 사전 · 서비스 카탈로그 · 포트폴리오 · 전시 | 4,791 | apex 사이트 총람 |
-| `account` | member · wishlist · resume | 4,634 | 사람에 관한 데이터 |
+| `atlas` | 개념 사전 · 서비스 카탈로그 · 포트폴리오 · 전시 · **이력서** | — | apex 사이트 총람 |
+| `account` | member · wishlist | — | **회원(타인)**에 관한 데이터 |
 | `engagement` | recommendation · experiment | — | 실험·추천 (ADR-0058 계획 실행) |
 | `sideapp` | quant · chatbot · gifticon | — | 도메인 단절 사이드앱 |
 | 단독 6 | gateway · auth · search · search-consumer · analytics · recommendation-ann | — | 아래 근거 |
@@ -102,9 +102,9 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 | 단계 | 내용 | 테이블 이전 | 상태 |
 |---|---|---|---|
 | **①** | product·place 를 `:app` → `:feature` 폴드 · `engagement` · `sideapp` · `account`(member·wishlist) | **0** | engagement·account·product·sideapp 완료(2026-09-11), place 남음 |
-| **②** | `deal` → commerce · `ranking` → content | 3 + 5 | 미착수 |
-| **③** | `blog` → content | 7 | 미착수 |
-| **④** | `resume` → account (`:resume:feature` 모듈 신설 선행) | 11 | 미착수 |
+| **②** | `deal` → commerce · `ranking` → content | 3 + 5 | 완료(2026-09-11) |
+| **③** | `blog` → content | 7 | 진행 중(2026-09-11) |
+| **④** | ~~`resume` → account~~ **기각** (2026-09-11, 아래 §7) | 0 | 기각 |
 
 총 **26테이블**. `blog_post_view`(하루 1표 조회 원장)와 `resume_access_log`(열람 기록)는 행이
 계속 쌓이는 원장이라 이전 시간을 따로 잡는다.
@@ -117,6 +117,35 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 
 `:domain` 분리 유지 · 스키마/datasource/EMF/TM 도메인별 분리 · 컨텍스트 간 통신은 같은 JVM
 이라도 Kafka 유지 · 교차 빈 주입 금지. 이번 개정은 **어느 JVM 에 담느냐만** 바꾼다.
+
+### 7) ④ `resume` → account 는 기각한다 (2026-09-11)
+
+원안의 근거는 분류표의 한 줄 — "`account` = 사람에 관한 데이터" 였다. 옮기려고 코드를 열어
+보니 **그 분류가 두 가지를 섞고 있었다.**
+
+- `account` 가 담는 것은 **회원(타인)의 데이터**다 — member 신원, wishlist. 회원이 탈퇴하면
+  같이 지워지는 것들이다.
+- `resume` 는 **사이트 주인의 콘텐츠**다. 지우는 주체도 수명도 다르다. 같은 "사람에 관한" 이지만
+  담는 이유가 반대다.
+
+코드가 그 판단을 뒷받침했다. 실제 결합은 셋이다.
+
+1. `PortfolioProjectService`(code-dictionary 자기 도메인)가 resume 리포지토리 포트를
+   **다섯 개 직접 주입**받는다. 포트폴리오는 사실상 resume 구조화 데이터의 읽기 뷰다.
+2. `/api/v1/resume` 의 응답 `ResumeOverview` 는 **문서 + 구조화 프로필**이다
+   (`getProfile.profile()`). 문서만 떼어 갈 수 없다.
+3. resume 11 테이블 중 7개(company·project·skill·skill_group·category·project_skill·
+   code_snippet)가 그 구조화 데이터고, `/portfolio` 와 `/resume` 가 **같은 행을 함께** 읽는다.
+
+옮기면 한 페이지 렌더에 HTTP 홉이 두 번 생긴다(포트폴리오 1, 이력서 개요 1). 문서 4테이블만
+쪼개는 안도 시도했으나 2번 때문에 성립하지 않는다 — 실제로 추출해 보고 컴파일 오류로 확인했다.
+
+**resume 는 portfolio 와 한 바운디드 컨텍스트다.** 둘 다 apex 사이트가 자기 경력을 보여 주는
+면이고, 그것이 `atlas` 의 정체성이다. 그래서 atlas 에 남긴다 — 이전 테이블 0.
+
+> 이 기각이 남기는 것: **분류표의 한 줄로 이전을 정하지 않는다.** 라벨이 같아도 담는 이유가
+> 다를 수 있고, 그건 코드를 열어야 보인다. ①~③ 은 모듈 경계가 이미 있었지만 ④ 는 없었다 —
+> "모듈이 없다" 가 곧 "경계가 없다" 였다.
 
 ## 실행 기록 — ①단계에서 실제로 나온 것 (2026-09-11)
 
@@ -190,7 +219,6 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 - (+) ADR-0058 의 미실행 계획(`engagement`) 정리, 평가 누락(`place`) 해소
 - (−) `content` 22,346줄로 여전히 최대다. 노출 서브도메인 넷이 한 파드라 **장애 반경이 크게 줄지는 않는다.**
   `game` 이 혼자 10,718줄로 절반이라 **후속 분리 1순위**이나, 파드 예산 때문에 이번에는 넣지 않는다
-- (−) 26테이블 이전. ②~④는 되돌릴 수 없는 작업이라 단계 사이에 안정화 기간이 필요하다
+- (−) 15테이블 이전(④ 기각으로 26 → 15). ②~③은 되돌릴 수 없는 작업이다
 - (−) 새 파드 이름 다섯(`atlas`·`content`·`account`·`engagement`·`sideapp`) → OCIR 이미지,
   k8s Deployment/Service/ServiceAccount, 게이트웨이 URI 상수, `images.yml` 경로 매핑, Argo 전부 갱신
-- (−) `:resume:feature` 모듈 신설이 필요하다. blog·deal 과 달리 resume 는 아직 모듈이 아니다
