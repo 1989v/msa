@@ -148,13 +148,14 @@ jobs:
             fi
             case "$file" in
               gateway/*)                                 JVM_SVCS+=" gateway" ;;
-              product/*)                                 JVM_SVCS+=" product" ;;
               search/app/*|search/domain/*)              JVM_SVCS+=" search" ;;
               search/batch/*)                            JVM_SVCS+=" search-batch" ;;
               search/consumer/*)                         JVM_SVCS+=" search-consumer" ;;
               auth|auth/*)                               JVM_SVCS+=" auth" ;;
               gifticon|gifticon/app/*|gifticon/domain/*) JVM_SVCS+=" gifticon" ;;
               gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
+              # ADR-0093: product 는 commerce 호스트로 폴드됐다. case 는 첫 일치가 이기므로
+              # product 전용 줄을 위에 남겨 두면 :product:app:test 를 찾다 빌드가 통째로 깨진다.
               inventory/*|warehouse/*|fulfillment/*|order/*|product/*|commerce/*)  JVM_SVCS+=" commerce" ;;
               # ADR-0093: member·wishlist 는 account 호스트로 옮겼다
               member/*|wishlist/*|account/*)             JVM_SVCS+=" account" ;;
