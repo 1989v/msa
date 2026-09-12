@@ -21,11 +21,13 @@ export function createPlatform(THREE, col, baseTerrain, { x = 8, z = 30, topY, s
     heightAt: (px, pz) => baseTerrain.heightAt(px, pz),
     supportHeightAt(px, pz, feetY) {
       if (!Number.isFinite(feetY)) throw new TypeError('Finite previous feet required');
-      const ground = baseTerrain.heightAt(px, pz), pad = collision.heightAt(px, pz);
+      const ground = baseTerrain.supportHeightAt ? baseTerrain.supportHeightAt(px, pz, feetY) : baseTerrain.heightAt(px, pz);
+      const pad = collision.heightAt(px, pz);
       return pad !== null && pad <= feetY + 1e-8 ? Math.max(ground ?? -Infinity, pad) : ground;
     },
   });
   const bounds = Object.freeze({ minX: x-half, maxX: x+half, minZ: z-half, maxZ: z+half });
   return { root, terrain, topY: actualTop, bounds, center: Object.freeze({ x, y: actualTop, z }),
+    setComplete(complete) { mark.material.color.copy(col(complete ? 'meadow' : 'brass')); mark.scale.setScalar(complete ? 1.5 : 1); },
     supports: position => collision.heightAt(position.x, position.z) !== null && Math.abs(position.y - actualTop) < 1e-6 };
 }

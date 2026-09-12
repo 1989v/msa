@@ -4,7 +4,7 @@
 
 [PC 이동 프로토타입 실행 안내](implementation/t02b/traversal/README.md) — 로컬 서버에서 `http://127.0.0.1:8768/implementation/t02b/traversal/index.html`.
 
-**전체 구축 추정: 약 30%** — [범위와 산정 근거](context/completion-estimate.md).
+**전체 구축 추정: 약 35%** — [범위와 산정 근거](context/completion-estimate.md).
 
 1. [전체 PRD](PRD.md): 경험, 세계, 시스템, 범위와 완료 기준
 2. [아트 디렉션](art-direction.md): 원화의 읽는 법, 토큰과 제작 규격
@@ -19,7 +19,7 @@
 11. [T02B-2 텍스처 검증](implementation/t02b/texture-check/README.md): 1K PNG·UV·sRGB 왕복, 브라우저 12/12
 
 창작 구현은 기존 게임 소스를 읽지 않는 새 세션/에이전트에서 진행합니다.
-구현은 **9개 그룹 / 24개 실행 단위**로 나뉩니다. T02B는 한도에 맞춰 [4개 소단위](planning/t02b-small-steps.md)로 세분화했습니다. 다음은 **T03B-2b: 두 번째 착지점·경로 완주**입니다.
+구현은 **9개 그룹 / 24개 실행 단위**로 나뉩니다. T02B는 한도에 맞춰 [4개 소단위](planning/t02b-small-steps.md)로 세분화했습니다. 다음은 **T04A-1: 물체 조작 순수 규칙**입니다.
 [주인공 모델 스튜디오](implementation/t02b/character/README.md)와 [최신 실제 캡처·검수](verifications/t02c-2.md)를 저장했습니다. 캐릭터 화면은 로컬 서버의 `implementation/t02b/character/index.html`에서 볼 수 있습니다. 장면은 로컬 서버에서
 `http://127.0.0.1:8768/implementation/t01b/index.html`로 볼 수 있습니다.
 원화 2장은 디자인 참고 이미지이며 리깅된 모델이나 동작하는 게임 화면이 아닙니다.
@@ -29,3 +29,5 @@
 [최신 기류 검증](verifications/t03b-1.md) — 단위16/16, 브라우저11+19 통과. 앞쪽 지면 원 안에서 돛을 펼치면 상승·기력 회복.
 
 [첫 공중 착지대 검증](verifications/t03b-2a.md) — 기류에서 오른쪽 착지대로 이동 가능. 단위45/45, 브라우저10/10.
+
+[두 착지점 경로 완료 검증](verifications/t03b-2b.md) — 단위48/48, 브라우저14/14. 이동 진단 경로이며 게임 전체 완주는 아닙니다.

@@ -2,7 +2,7 @@
 // node check-platform.mjs <CDP port> <viewer URL> [artifact label]
 import { mkdir, writeFile } from 'node:fs/promises';
 
-const [port, url, artifact = 't03b-2a'] = process.argv.slice(2);
+const [port, url, artifact = 't03b-2b'] = process.argv.slice(2);
 if (!/^[a-z0-9-]+$/.test(artifact)) throw new Error('Invalid artifact label');
 if (!port || !url) throw new Error('Usage: node check-platform.mjs <CDP port> <viewer URL>');
 const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
@@ -59,7 +59,7 @@ try{
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
   await send('Page.navigate',{url});
   await evaluate(`new Promise((resolve,reject)=>{const start=Date.now();const poll=()=>{const s=window.__SKYBOUND_TRAVERSAL__;if(s?.error)return reject(new Error(s.error));if(s?.ready)return resolve();if(Date.now()-start>12000)return reject(new Error('Load timeout'));setTimeout(poll,100)};poll()})`);
-  const get=()=>evaluate(`(()=>{const s=window.__SKYBOUND_TRAVERSAL__;return {snapshot:s.snapshot,platform:s.platform,updraft:s.updraft,sailVisible:s.sailVisible,characterPosition:s.characterPosition}})()`);
+  const get=()=>evaluate(`(()=>{const s=window.__SKYBOUND_TRAVERSAL__;return {snapshot:s.snapshot,route:s.route,destination:s.destination,platform:s.platform,updraft:s.updraft,sailVisible:s.sailVisible,characterPosition:s.characterPosition}})()`);
   const advance=(input={})=>evaluate(`window.__SKYBOUND_TRAVERSAL__.advanceForTest(.25,${JSON.stringify(input)})`);
   async function moveTo(x,z,max=30){for(let i=0;i<max;i++){const s=await get(),dx=x-s.snapshot.position.x,dz=z-s.snapshot.position.z,d=Math.hypot(dx,dz);if(d<.1)return;await advance({x:dx/Math.max(d,.8),z:dz/Math.max(d,.8)});}throw new Error('Target not reached');}
   await evaluate('window.__SKYBOUND_TRAVERSAL__.resetForTest()');
@@ -82,10 +82,21 @@ try{
   check('Rendered feet match platform top',Math.abs(landed.characterPosition.y-pad.topY)<1e-5);
   const shot=await send('Page.captureScreenshot',{format:'png'});
   await writeFile(new URL(`${artifact}-landing.png`,import.meta.url),Buffer.from(shot.data,'base64'));
+  check('First pad does not finish route',!landed.route.complete);
+  const destination=landed.destination;
+  await evaluate('window.__SKYBOUND_TRAVERSAL__.advanceForTest(.15,{jumpPressed:true});window.__SKYBOUND_TRAVERSAL__.advanceForTest(1/120,{jumpPressed:true})');
+  await moveTo(destination.center.x,destination.center.z);
+  for(let i=0;i<24;i++){if((await get()).destination.landed)break;await advance();}
+  const completed=await get();samples.push(completed);
+  check('Second pad reached with basic stamina',completed.destination.landed&&completed.snapshot.grounded&&completed.snapshot.stamina>0&&completed.snapshot.respawns===0);
+  check('Ordered route completes',completed.route.complete&&completed.platform.everLanded&&!completed.sailVisible);
+  check('Visible completion notice',await evaluate(`document.body.innerText.includes('경로 완료')`));
+  const finishShot=await send('Page.captureScreenshot',{format:'png'});
+  await writeFile(new URL(`${artifact}-complete.png`,import.meta.url),Buffer.from(finishShot.data,'base64'));
   for(let i=0;i<12;i++){await advance({x:1});if(!(await get()).snapshot.grounded)break;}
   const off=await get();check('Stepping off platform falls',!off.snapshot.grounded&&!off.platform.landed&&off.platform.everLanded);
   await evaluate('window.__SKYBOUND_TRAVERSAL__.resetForTest()');
-  const reset=await get();check('Reset allows another attempt',!reset.platform.everLanded&&reset.snapshot.stamina===100&&reset.snapshot.grounded);
+  const reset=await get();check('Reset allows another attempt',!reset.platform.everLanded&&!reset.route.complete&&reset.snapshot.stamina===100&&reset.snapshot.grounded);
   check('No browser errors',errors.length===0);
   await writeFile(new URL(`${artifact}-browser.json`,import.meta.url),JSON.stringify({url,checks,samples,errors},null,2)+'\n');
   console.log(JSON.stringify({passed:checks.length,failed:0,errors}));

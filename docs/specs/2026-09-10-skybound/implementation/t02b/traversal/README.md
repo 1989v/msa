@@ -212,3 +212,10 @@ node docs/specs/2026-09-10-skybound/implementation/t02b/traversal/build.mjs
 기존 체크포인트, 상승 통과/하강 착지/보행 지지/가장자리 추락, 공유 기력으로 기류→착지대
 도달 및 돛 닫힘, 물 리스폰 기록 보존을 확인한다. 실제 원본 초원 경로와 화면 가독성은
 root의 브라우저 QA로 별도 기록한다. 두 번째 착지대·전체 탐험 경로는 이번 범위가 아니다.
+
+## T03B-2b · 두 번째 착지대와 경로 완료
+
+두 번째 착지대는 (14,30), 첫 착지대보다2m 낮고 폭4m다. 합성 supportHeightAt은 두 상판 모두 지지하며 원래 heightAt/체크포인트는 초원 기준이다.
+`route.mjs`의 순수 updateRoute가 첫 착지 → 두 번째 착지 순서를 기록한다. 두 번째에 먼저 도착해도 완료되지 않는다. 진행은 기존 progress와 병합하며 물 리스폰에서 보존하고 전체reset에서 지운다.
+`state.route={first,second,complete,stage}`, `state.destination={center,bounds,topY,landed}`를 노출한다. 기존 state.platform은 첫 발판이다. 완료 시 두 번째 표식이 커지고 색이 바뀌며 '경로 완료' 안내가 나온다.
+전체 관련검사48/48, 실제 초원 경로 브라우저14/14 통과. 기본 기력으로 기류→첫 발판→점프/활공→둘째 발판 도달 및 재시도를 확인했다. 이는 이동 진단 경로이며 게임 전체의 퀘스트/엔딩 완료가 아니다.
