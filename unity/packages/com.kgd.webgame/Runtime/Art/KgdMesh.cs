@@ -322,8 +322,11 @@ namespace Kgd.Art
             for (int i = 0; i < sides; i++)
             {
                 int b = baseIndex + j * row + i;
-                _t.Add(b); _t.Add(b + row); _t.Add(b + row + 1);
-                _t.Add(b); _t.Add(b + row + 1); _t.Add(b + 1);
+                // **감기는 바깥에서 봐서 시계 방향이어야 한다.** 반대로 감으면 겉면이 뒷면으로
+                // 잡혀 카메라 쪽이 잘리고 반대편 안쪽이 보인다 — 수풀이 검고 바위가 흰 우산처럼
+                // 보이던 뿌리이고, 외곽선 껍질을 두르면 통째로 검게 된다(스프라이트 굽기에서 잡혔다).
+                _t.Add(b); _t.Add(b + row + 1); _t.Add(b + row);
+                _t.Add(b); _t.Add(b + 1); _t.Add(b + row + 1);
             }
             return this;
         }
