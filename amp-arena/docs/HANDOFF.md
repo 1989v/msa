@@ -13,7 +13,7 @@
 | 배포 산출물 | games 레포(`1989v/games`, msa 의 `portal-fe/public/games` 서브모듈) `arena/` + `thumbs/shots/arena.jpg` |
 | 카탈로그 행 | `game/feature/src/main/resources/gamedb/migration/V89__seed_arena.sql` (slug `arena`, BETA) + `V90__arena_score_boards.sql` (순위표 보드 online/practice, sdk_integrated=1) |
 | 운영 주소 | https://game.1989v.com/games/arena (카탈로그 상세 → IFRAME `/games/arena/index.html`) |
-| 운영 상태 (2026-09-12 저녁) | main 301bca30 · games 2f1d1a4a · 이미지 portal-fe:301bca3 / content:fe7efbb · 번들 `index-BD2occoP.js`. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules}.mjs` + `e2e-online.mjs`(운영 릴레이 2탭, 채팅·점수판 포함) + `e2e-progress.mjs` 전부 통과 |
+| 운영 상태 (2026-09-12 밤) | main 0eb5b470 · games 9d5d8aa1 · 이미지 portal-fe:0eb5b47 / content:fe7efbb · 번들 `index-k9gUwH4y.js`. **Phase 2 완료**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules}.mjs` + `e2e-online.mjs`(채팅·점수판) + `e2e-progress.mjs` + `e2e-emblem.mjs` 전부 통과 |
 
 ## 작업 위치
 
