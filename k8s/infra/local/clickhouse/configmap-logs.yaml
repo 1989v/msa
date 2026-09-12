@@ -10,6 +10,11 @@ data:
   # ClickHouse 자체 진단 로그에는 기본 TTL 이 없다. 앱 테이블이 한 건도 없는 인스턴스가
   # 로그만으로 12.8 GiB 를 썼고 그중 text_log 가 9.49 GiB 였다 (96G 노드 디스크의 13%).
   # PVC 는 2Gi 지만 local-path 라 쿼터가 안 먹어 한도 없이 자란다.
+  #
+  # 이 파일을 고쳐도 이미 쌓인 데이터는 줄지 않는다. ClickHouse 는 시스템 로그 테이블의
+  # 정의가 바뀌면 기존 테이블을 <이름>_0 으로 개명해 두고 새 정의로 새 테이블을 만든다.
+  # 개명된 쪽에는 새 TTL 이 없어 영영 남는다 — 적용 뒤 system.parts 로 확인하고
+  # DROP TABLE system.<이름>_0 으로 직접 지운다.
   logs.xml: |
     <clickhouse>
         <!-- 서버 내부 로그 본문. 파일 로그로 충분하고 테이블로 쌓을 이유가 없다 -->
@@ -33,4 +38,7 @@ data:
         <part_log>
             <ttl>event_date + INTERVAL 3 DAY DELETE</ttl>
         </part_log>
+        <error_log>
+            <ttl>event_date + INTERVAL 7 DAY DELETE</ttl>
+        </error_log>
     </clickhouse>
