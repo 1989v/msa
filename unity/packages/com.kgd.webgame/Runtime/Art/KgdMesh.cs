@@ -184,6 +184,37 @@ namespace Kgd.Art
             return this;
         }
 
+        /// <summary>
+        /// 정점마다 법선을 따로 주는 면 — **지형처럼 이어 붙는 격자**에 쓴다.
+        ///
+        /// <see cref="Face"/> 는 면 하나에 법선 하나라, 격자로 산을 깎으면 칸마다 밝기가
+        /// 끊겨 동심원 띠가 보인다(실제 화면). 높이밭에서 뽑은 법선을 정점마다 실으면
+        /// 이음매가 사라진다.
+        /// </summary>
+        public KgdMesh FaceSmooth(Vector3 a, Vector3 b, Vector3 c, Vector3 d,
+                                  Vector3 na, Vector3 nb, Vector3 nc, Vector3 nd,
+                                  Color color, float glow = 0f)
+        {
+            Vector3 e1 = b - a, e2 = d - a;
+            if (e2.sqrMagnitude < 1e-10f) e2 = c - b;
+            if (e1.sqrMagnitude < 1e-10f) e1 = c - d;
+            Vector3 flat = Vector3.Cross(e1, e2).normalized;
+            if (flat.sqrMagnitude < 0.5f) flat = Vector3.up;
+            Vector3 u = e1.sqrMagnitude > 1e-8f ? e1.normalized : Vector3.right;
+            if (Mathf.Abs(flat.y) > 0.8f) u = Vector3.right;
+            Vector3 w = Vector3.Cross(flat, u);
+            var shaded = color;
+            shaded.a = glow;
+            int i = _v.Count;
+            AddAt(a, na, shaded, new Vector2(Vector3.Dot(a, u), Vector3.Dot(a, w)) * _surf.Scale, u);
+            AddAt(b, nb, shaded, new Vector2(Vector3.Dot(b, u), Vector3.Dot(b, w)) * _surf.Scale, u);
+            AddAt(c, nc, shaded, new Vector2(Vector3.Dot(c, u), Vector3.Dot(c, w)) * _surf.Scale, u);
+            AddAt(d, nd, shaded, new Vector2(Vector3.Dot(d, u), Vector3.Dot(d, w)) * _surf.Scale, u);
+            _t.Add(i); _t.Add(i + 1); _t.Add(i + 2);
+            _t.Add(i); _t.Add(i + 2); _t.Add(i + 3);
+            return this;
+        }
+
         /// <summary>지면에 눕는 사각형 — 표식·장판·그림자 대용.</summary>
         public KgdMesh Quad(Vector3 center, float width, float depth, Color color, float glow = 0f)
         {
