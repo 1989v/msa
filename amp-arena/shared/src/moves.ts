@@ -121,6 +121,7 @@ export const GRAB_MOVES: Partial<Record<MoveId, true>> = { grab: true, dashGrab:
 /** 오브젝트가 주는 피해 — 플레이어 동작이 아니라 아이템 판정에 쓴다 */
 export const CRATE_HIT: MoveDef = def({ id: 'jab', startup: 0, active: 0, recovery: 0, damage: 8, reach: 0, radius: 0, effect: 'launch', launchH: 5, launchV: 6 });
 export const BOMB_HIT: MoveDef = def({ id: 'jab', startup: 0, active: 0, recovery: 0, damage: 20, reach: 0, radius: 0, effect: 'launch', launchH: 6, launchV: 8, guardBreak: true });
+export const BARREL_HIT: MoveDef = def({ id: 'jab', startup: 0, active: 0, recovery: 0, damage: 25, reach: 0, radius: 0, effect: 'launch', launchH: 7, launchV: 9, guardBreak: true });
 
 export const totalTicks = (m: MoveDef) => m.startup + m.active + m.recovery;
 /** 다음 타로 넘어가는 시점 — 후딜이 끝나야 한다 (연타 속도는 후딜이 정한다) */

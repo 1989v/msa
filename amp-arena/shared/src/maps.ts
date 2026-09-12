@@ -4,7 +4,7 @@ export interface Box { minX: number; maxX: number; minY: number; maxY: number; m
 export interface Room { minX: number; maxX: number; minZ: number; maxZ: number; floor: number; height: number; door: { side: 'n' | 's' | 'e' | 'w'; center: number; width: number } }
 export interface Cylinder { x: number; z: number; r: number; h: number }
 export interface Spawn { x: number; z: number; y: number; team: number } // team 0 = 레드/무팀, 1 = 블루
-export interface CrateSpot { x: number; z: number; y: number }
+export interface CrateSpot { x: number; z: number; y: number } // 상자·드럼통 자리
 /** 점프대: 밟으면 위로 튕긴다 (power = 상승 m/s). 2026-09-11 2차 소감 「번지 가능한 맵」 */
 export interface Pad { x: number; z: number; y: number; r: number; power: number }
 
@@ -24,6 +24,7 @@ export interface MapDef {
   cylinders: Cylinder[];  // 기둥·바위
   spawns: Spawn[];
   crates: CrateSpot[];
+  barrels: CrateSpot[];   // 드럼통 자리 — 맞거나 던져지면 터지는 오브젝트
   pads: Pad[];            // 점프대
   rooms: Room[];          // 들어갈 수 있는 방 (벽·지붕 상자는 boxes 에 이미 펼쳐져 있다)
   fallY: number;
@@ -63,10 +64,16 @@ const ringSpawns = (r: number, count: number, y = 0): Spawn[] => {
   return out;
 };
 
+/** 콜로세움 동·서 문루: 5×5 방, 높이 2.4, 아레나 중심 쪽 벽에 문. 안에 드럼통이 하나씩 있다 (2026-09-12 「건물 내부」를 모든 맵에). */
+const COLOSSEUM_ROOMS: Room[] = [
+  { minX: 12.5, maxX: 17.5, minZ: 3.5, maxZ: 8.5, floor: 0, height: 2.4, door: { side: 'w', center: 6, width: 1.8 } },
+  { minX: -17.5, maxX: -12.5, minZ: -8.5, maxZ: -3.5, floor: 0, height: 2.4, door: { side: 'e', center: -6, width: 1.8 } },
+];
+
 export const COLOSSEUM: MapDef = {
-  id: 'colosseum', name: '콜로세움', theme: 'colosseum', desc: '벽 있음 · 낙사 없음 · 40m',
+  id: 'colosseum', name: '콜로세움', theme: 'colosseum', desc: '벽 있음 · 낙사 없음 · 40m · 동서 문루',
   groundRadius: 20, wallRadius: 20, wallHeight: 3, ice: false,
-  boxes: [box(0, 12, 4, 4, 0, 1.5), box(0, -12, 4, 4, 0, 1.5)],
+  boxes: [box(0, 12, 4, 4, 0, 1.5), box(0, -12, 4, 4, 0, 1.5), ...COLOSSEUM_ROOMS.flatMap((r, i) => roomBoxes(r, i))],
   cylinders: [
     { x: -8.5, z: 8.5, r: 0.8, h: 6 }, { x: 8.5, z: 8.5, r: 0.8, h: 6 },
     { x: -8.5, z: -8.5, r: 0.8, h: 6 }, { x: 8.5, z: -8.5, r: 0.8, h: 6 },
@@ -76,13 +83,17 @@ export const COLOSSEUM: MapDef = {
     const a = ((i * 60 + 30) * Math.PI) / 180;
     return { x: 9 * Math.cos(a), z: 9 * Math.sin(a), y: 0 };
   }),
+  barrels: [{ x: 15, z: 6, y: 0 }, { x: -15, z: -6, y: 0 }],
   pads: [{ x: 5, z: 12, y: 0, r: 0.9, power: 11 }, { x: -5, z: -12, y: 0, r: 0.9, power: 11 }],
-  rooms: [],
+  rooms: COLOSSEUM_ROOMS,
   fallY: -8,
 };
 
+/** 스카이독 컨테이너: 중앙 발판 남쪽에 8×4 방, 높이 2.3, 북쪽(중앙 쪽) 문. 안에 드럼통. */
+const SKYDOCK_ROOM: Room = { minX: -4, maxX: 4, minZ: -7.5, maxZ: -3.5, floor: 0, height: 2.3, door: { side: 'n', center: 0, width: 1.8 } };
+
 export const SKYDOCK: MapDef = {
-  id: 'skydock', name: '스카이독', theme: 'sky', desc: '발판 5 · 점프대 3 · 낙사 · 던지기로 링아웃',
+  id: 'skydock', name: '스카이독', theme: 'sky', desc: '발판 5 · 점프대 3 · 컨테이너 · 낙사 · 던지기로 링아웃',
   groundRadius: 0, wallRadius: 0, wallHeight: 0, ice: false,
   boxes: [
     box(0, 0, 24, 16, -3, 0),      // 중앙
@@ -90,6 +101,7 @@ export const SKYDOCK: MapDef = {
     box(19, 0, 8, 8, -3, 2),       // 동
     box(0, 16, 6, 10, -3, 0),      // 북
     box(0, -16, 6, 10, -3, 0),     // 남
+    ...roomBoxes(SKYDOCK_ROOM, 0),
   ],
   cylinders: [],
   spawns: [
@@ -97,8 +109,9 @@ export const SKYDOCK: MapDef = {
     { x: -17, z: 0, y: 2, team: 0 }, { x: 17, z: 0, y: 2, team: 1 }, { x: 0, z: 19, y: 0, team: 0 }, { x: 0, z: -19, y: 0, team: 1 },
   ],
   crates: [{ x: -21.5, z: 2.5, y: 2 }, { x: 21.5, z: 2.5, y: 2 }, { x: -21.5, z: -2.5, y: 2 }, { x: 21.5, z: -2.5, y: 2 }],
+  barrels: [{ x: 0, z: -5.5, y: 0 }, { x: -19, z: 3, y: 2 }, { x: 19, z: -3, y: 2 }],
   pads: [{ x: -10.5, z: 0, y: 0, r: 0.9, power: 12 }, { x: 10.5, z: 0, y: 0, r: 0.9, power: 12 }, { x: 0, z: 0, y: 0, r: 1.0, power: 13 }],
-  rooms: [],
+  rooms: [SKYDOCK_ROOM],
   fallY: -8,
 };
 
@@ -124,6 +137,7 @@ export const ROOFTOP: MapDef = {
     { x: 13, z: -8, y: 0, team: 1 }, { x: 13, z: 8, y: 0, team: 1 }, { x: 5, z: 8.5, y: 0, team: 1 }, { x: 12, z: 0, y: 0, team: 1 },
   ],
   crates: [{ x: -13.5, z: -6, y: 0 }, { x: 13.5, z: -8.5, y: 0 }, { x: 3, z: 8.5, y: 0 }, { x: -3, z: -8.5, y: 0 }, { x: -12, z: 6.5, y: 0 }],
+  barrels: [{ x: -8, z: 6.5, y: 0 }, { x: 5, z: -3, y: 0 }], // 기계실 안 하나, 밖 하나
   pads: [{ x: -4.5, z: 3.2, y: 0, r: 0.9, power: 11 }, { x: 11, z: 0, y: 0, r: 0.9, power: 11 }],
   fallY: -8,
 };
@@ -139,6 +153,7 @@ export const ICELAKE: MapDef = {
   ],
   spawns: ringSpawns(12, 8),
   crates: [0, 1, 2, 3].map((i) => { const a = ((i * 90 + 45) * Math.PI) / 180; return { x: 6 * Math.cos(a), z: 6 * Math.sin(a), y: 0 }; }),
+  barrels: [{ x: 0, z: 4.5, y: 0 }, { x: 0, z: -4.5, y: 0 }],
   pads: [],
   rooms: [],
   fallY: -8,

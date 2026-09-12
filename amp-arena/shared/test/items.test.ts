@@ -121,3 +121,20 @@ describe('아이템', () => {
     expect(CRATE_HP).toBe(10);
   });
 });
+
+describe('폭발과 상자', () => {
+  it('폭탄에 부서진 상자는 월드에서 사라진다 (hp 0 인 채 남지 않는다)', () => {
+    const { w, a, b } = setup();
+    a.pos.x = 8; a.pos.z = -8; b.pos.x = 12; b.pos.z = 12;
+    w.items = [];
+    const crate = createItem(w.nextItemId++, 'crate', 0, 0, 1);
+    const bomb = createItem(w.nextItemId++, 'bomb', 0, 0, 1.5);
+    bomb.fuse = 2;
+    w.items.push(crate, bomb);
+    const ev = run(w, inp(), inp(), 6);
+    expect(ev.some((e) => e.t === 'explode')).toBe(true);
+    expect(ev.some((e) => e.t === 'crateBreak')).toBe(true);
+    expect(w.items.find((i) => i.id === crate.id)).toBeUndefined();
+    expect(w.items.every((i) => i.hp > 0)).toBe(true);
+  });
+});

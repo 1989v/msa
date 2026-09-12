@@ -17,7 +17,7 @@ export interface Snapshot {
   p: PlayerSnap[];
   pr: ProjSnap[];
   it: ItemSnap[];
-  /** 월드 단위 상태 [nextProjId, nextItemId, ...crateTimers] — 방장 승계 때 새 방장이 이어서 돌리려면 필요하다 */
+  /** 월드 단위 상태 [nextProjId, nextItemId, ...crateTimers, ...barrelTimers] — 방장 승계 때 새 방장이 이어서 돌리려면 필요하다 */
   w?: number[];
 }
 
@@ -60,13 +60,13 @@ export function encodeSnapshot(w: World): Snapshot {
     p: w.players.filter((p): p is Player => !!p).map((p) => encodePlayer(p).map(r3)),
     pr: w.projectiles.map((pr) => [pr.id, pr.owner, moveIndex.get(pr.move) ?? 0, r3(pr.x), r3(pr.y), r3(pr.z), r3(pr.vx), r3(pr.vz), pr.life, pr.radius, pr.hitMask, pr.pierce ? 1 : 0]),
     it: w.items.map((it) => [it.id, ITEM_KINDS.indexOf(it.kind), r3(it.x), r3(it.y), r3(it.z), r3(it.vx), r3(it.vy), r3(it.vz), it.hp, it.heldBy, it.fuse, it.airborne ? 1 : 0, it.thrownBy, it.spot, it.lastHitBy, it.lastHitTick]),
-    w: [w.nextProjId, w.nextItemId, ...w.crateTimers],
+    w: [w.nextProjId, w.nextItemId, ...w.crateTimers, ...w.barrelTimers],
   };
 }
 
 export function applySnapshot(w: World, s: Snapshot): void {
   w.tick = s.tick; w.phase = s.phase; w.phaseT = s.phaseT; w.timeLeft = s.timeLeft; w.score = [s.score[0], s.score[1]];
-  if (s.w && s.w.length >= 2) { w.nextProjId = s.w[0]; w.nextItemId = s.w[1]; w.crateTimers = s.w.slice(2); }
+  if (s.w && s.w.length >= 2) { const nc = w.map.crates.length; w.nextProjId = s.w[0]; w.nextItemId = s.w[1]; w.crateTimers = s.w.slice(2, 2 + nc); w.barrelTimers = s.w.slice(2 + nc); }
   for (const ps of s.p) {
     const p = w.players[ps[0]];
     if (p) decodePlayer(p, ps);

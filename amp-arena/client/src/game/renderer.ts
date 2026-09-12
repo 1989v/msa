@@ -406,6 +406,22 @@ export class Renderer {
           const outline = new THREE.Mesh(new THREE.BoxGeometry(1.04, 1.04, 1.04), new THREE.MeshBasicMaterial({ color: 0x1a1f3a, side: THREE.BackSide }));
           g.add(outline);
           obj = g;
+        } else if (it.kind === 'barrel') {
+          // 드럼통: 붉은 통 + 검은 테 두 줄 + 노란 띠 (터진다는 신호)
+          const g = new THREE.Group();
+          const body = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 1.1, 16), new THREE.MeshLambertMaterial({ color: 0xb8402e }));
+          body.castShadow = true; body.receiveShadow = true;
+          g.add(body);
+          for (const y of [-0.32, 0.32]) {
+            const band = new THREE.Mesh(new THREE.TorusGeometry(0.43, 0.035, 6, 20), new THREE.MeshLambertMaterial({ color: 0x2a2f45 }));
+            band.rotation.x = Math.PI / 2; band.position.y = y;
+            g.add(band);
+          }
+          const mark = new THREE.Mesh(new THREE.CylinderGeometry(0.425, 0.425, 0.2, 16, 1, true), new THREE.MeshLambertMaterial({ color: 0xffb020, side: THREE.DoubleSide }));
+          g.add(mark);
+          const outline = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 1.16, 16), new THREE.MeshBasicMaterial({ color: 0x1a1f3a, side: THREE.BackSide }));
+          g.add(outline);
+          obj = g;
         } else if (it.kind === 'heart') {
           if (!this.texHeart) this.texHeart = heartTexture();
           const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.texHeart, transparent: true }));
@@ -432,12 +448,13 @@ export class Renderer {
       }
       const h = it.heldBy >= 0 ? holders.get(it.heldBy) : null;
       if (h) {
-        m.obj.position.set(h.x, h.y + (it.kind === 'crate' ? 2.35 : 2.2), h.z);
+        m.obj.position.set(h.x, h.y + (it.kind === 'crate' ? 2.35 : it.kind === 'barrel' ? 2.45 : 2.2), h.z);
       } else {
-        const bob = it.kind === 'heart' ? Math.sin(now / 250) * 0.08 + 0.6 : it.kind === 'crate' ? 0.5 : 0.32;
+        const bob = it.kind === 'heart' ? Math.sin(now / 250) * 0.08 + 0.6 : it.kind === 'crate' ? 0.5 : it.kind === 'barrel' ? 0.55 : 0.32;
         m.obj.position.set(it.x, it.y + bob, it.z);
       }
       if (it.kind === 'crate') m.obj.rotation.y = it.airborne ? now / 200 : 0;
+      if (it.kind === 'barrel') m.obj.rotation.z = it.airborne ? now / 150 : 0; // 던져지면 구른다
       if (m.light) { const on = it.fuse >= 0 && Math.floor(now / (it.fuse < 60 ? 60 : 160)) % 2 === 0; (m.light.material as THREE.MeshBasicMaterial).color.set(on ? 0xff3b3b : 0xffb020); m.light.scale.setScalar(on ? 1.6 : 1); }
     }
     for (const [id, m] of this.itemMeshes) if (!seen.has(id)) { this.scene.remove(m.obj); this.itemMeshes.delete(id); }

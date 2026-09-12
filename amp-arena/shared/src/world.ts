@@ -2,15 +2,15 @@
 import * as C from './constants.ts';
 import { makeRng, yawFromDir, dirX, dirZ } from './math.ts';
 import { type Input, EMPTY_INPUT } from './input.ts';
-import { MOVES, type MoveId, type MoveDef, isActiveAt, PROJECTILE_MOVES, CRATE_HIT, BOMB_HIT } from './moves.ts';
-import { MAPS, type MapDef, type MapId, type Spawn, type Box, type Pad } from './maps.ts';
+import { MOVES, type MoveId, type MoveDef, isActiveAt, PROJECTILE_MOVES, CRATE_HIT, BOMB_HIT, BARREL_HIT } from './moves.ts';
+import { MAPS, type MapDef, type MapId, type Spawn, type Box, type Pad, type CrateSpot } from './maps.ts';
 import { MODES, type ModeDef, type ModeId } from './modes.ts';
 import { type Player, type SimContext, stepPlayer, createPlayer, canBeHit, isSolid, applyDamage, setState, respawn, facingX, facingZ, supportHeight } from './player.ts';
 import { ACCESSORIES, type AccessoryId } from './accessories.ts';
 import type { StyleId } from './styles.ts';
 import { allowedAccessory } from './styles.ts';
 import {
-  type Item, type ItemKind, createItem, CRATE_RESPAWN_TICKS, CRATE_BREAK_RADIUS, BOMB_FUSE_TICKS, BOMB_RADIUS, HEART_HEAL,
+  type Item, type ItemKind, createItem, CRATE_RESPAWN_TICKS, CRATE_BREAK_RADIUS, BOMB_FUSE_TICKS, BOMB_RADIUS, HEART_HEAL, BARREL_RADIUS, BARREL_RESPAWN_TICKS,
   PICKUP_RANGE, THROW_ITEM_VEL_H, THROW_ITEM_VEL_V, DROP_HEART, DROP_BOMB,
 } from './items.ts';
 
@@ -53,6 +53,7 @@ export class World implements SimContext {
   nextProjId = 1;
   nextItemId = 1;
   crateTimers: number[] = [];
+  barrelTimers: number[] = [];
   events: WorldEvent[] = [];
   rng: () => number;
   score: [number, number] = [0, 0];
@@ -69,6 +70,10 @@ export class World implements SimContext {
     this.map.crates.forEach((c, i) => {
       this.items.push(createItem(this.nextItemId++, 'crate', c.x, c.y, c.z, i));
       this.crateTimers[i] = 0;
+    });
+    this.map.barrels.forEach((c, i) => {
+      this.items.push(createItem(this.nextItemId++, 'barrel', c.x, c.y, c.z, i));
+      this.barrelTimers[i] = 0;
     });
   }
 
@@ -180,12 +185,13 @@ export class World implements SimContext {
     this.events.push({ t: 'shot', id: p.id, x: ox, y: oy, z: oz, move });
   }
 
-  /** 바닥에 놓인 상자는 1m 상자로 막힌다 (들려 있거나 날아가는 중이면 아니다) */
+  /** 바닥에 놓인 상자(1m)·드럼통(0.9×1.1m)은 상자로 막힌다 (들려 있거나 날아가는 중이면 아니다) */
   solidCrates(): Box[] {
     const out: Box[] = [];
     for (const it of this.items) {
-      if (it.kind !== 'crate' || it.heldBy >= 0 || it.airborne) continue;
-      out.push({ minX: it.x - 0.5, maxX: it.x + 0.5, minY: it.y, maxY: it.y + 1, minZ: it.z - 0.5, maxZ: it.z + 0.5 });
+      if ((it.kind !== 'crate' && it.kind !== 'barrel') || it.heldBy >= 0 || it.airborne || it.hp <= 0) continue;
+      const r = it.kind === 'barrel' ? 0.45 : 0.5, h = it.kind === 'barrel' ? 1.1 : 1;
+      out.push({ minX: it.x - r, maxX: it.x + r, minY: it.y, maxY: it.y + h, minZ: it.z - r, maxZ: it.z + r });
     }
     return out;
   }
@@ -263,8 +269,8 @@ export class World implements SimContext {
         this.hitPlayer(a, v, m, a.pos.x, a.pos.z);
       }
       for (const it of this.items) {
-        if (it.kind !== 'crate' || it.heldBy >= 0) continue;
-        // 상자는 몸에서 판정 중심까지 이어지는 선분에 걸리면 맞는다 — 붙어 서서 때려도 들어간다 (2차 소감: 판정이 좁다)
+        if ((it.kind !== 'crate' && it.kind !== 'barrel') || it.heldBy >= 0 || it.hp <= 0) continue;
+        // 상자·드럼통은 몸에서 판정 중심까지 이어지는 선분에 걸리면 맞는다 — 붙어 서서 때려도 들어간다 (2차 소감: 판정이 좁다)
         if (Math.abs(it.y + 0.5 - cy) > 1.2) continue;
         const sx = a.pos.x, sz = a.pos.z, ex = cx, ez = cz;
         const lx = ex - sx, lz = ez - sz, ll = lx * lx + lz * lz;
@@ -295,7 +301,7 @@ export class World implements SimContext {
       }
       if (!dead) {
         for (const it of this.items) {
-          if (it.kind !== 'crate' || it.heldBy >= 0) continue;
+          if ((it.kind !== 'crate' && it.kind !== 'barrel') || it.heldBy >= 0 || it.hp <= 0) continue;
           if (Math.hypot(it.x - pr.x, it.z - pr.z) < pr.radius + 0.6 && Math.abs(it.y + 0.5 - pr.y) < 0.9) { this.hitCrate(it, owner, m.damage); dead = true; break; }
         }
       }
@@ -316,9 +322,10 @@ export class World implements SimContext {
   }
 
   private stepItems(): void {
-    const keep: Item[] = [];
+    // 없어진 아이템은 hp 0 으로 표시만 하고 마지막에 한 번 걸러 낸다 — 폭발·파괴가 도중에 드랍을 넣거나 남을 지워도 안전하다
+    // (전에는 폭탄에 부서진 상자가 keep 목록에 다시 들어가 hp 0 인 채 남았다)
     for (const it of this.items) {
-      let remove = false;
+      if (it.hp <= 0) continue;
       if (it.heldBy >= 0) {
         const h = this.players[it.heldBy];
         if (!h || h.holding !== it.id || h.state === 'dead') { it.heldBy = -1; it.airborne = true; it.thrownBy = -1; if (h) { it.x = h.pos.x; it.z = h.pos.z; it.y = h.pos.y + 0.5; } }
@@ -333,68 +340,77 @@ export class World implements SimContext {
             if (!v || v.id === it.thrownBy || !canBeHit(v)) continue;
             const th = this.players[it.thrownBy];
             if (Math.hypot(v.pos.x - it.x, v.pos.z - it.z) < 0.75 && it.y > v.pos.y - 0.2 && it.y < v.pos.y + 1.9) {
-              if (it.kind === 'crate') { this.breakCrate(it, th ?? null, true); remove = true; }
+              if (it.kind === 'crate') this.breakCrate(it, th ?? null, true);
+              else if (it.kind === 'barrel') this.explode(it);
               else { it.vx = 0; it.vz = 0; it.vy = Math.min(it.vy, 0); }
               break;
             }
           }
         }
-        if (!remove) {
+        if (it.hp > 0) {
           const wallR = this.map.wallRadius;
           if (wallR > 0 && Math.hypot(it.x, it.z) > wallR - 0.4) { const k = (wallR - 0.4) / Math.hypot(it.x, it.z); it.x *= k; it.z *= k; it.vx = 0; it.vz = 0; }
           const g = this.groundAt(it.x, it.y, it.z, prevY);
           if (it.vy <= 0 && it.y <= g + 1e-4) {
             it.y = g; it.vy = 0; it.airborne = false;
-            if (it.kind === 'crate' && it.thrownBy >= 0) { this.breakCrate(it, this.players[it.thrownBy] ?? null, true); remove = true; }
+            if (it.kind === 'crate' && it.thrownBy >= 0) this.breakCrate(it, this.players[it.thrownBy] ?? null, true);
+            else if (it.kind === 'barrel' && it.thrownBy >= 0) this.explode(it);
             it.vx = 0; it.vz = 0; it.thrownBy = -1;
           }
-          if (it.y < this.map.fallY) remove = true;
+          if (it.y < this.map.fallY) it.hp = 0;
         }
       }
-      if (!remove && it.kind === 'bomb' && it.fuse >= 0) {
+      if (it.hp > 0 && it.kind === 'bomb' && it.fuse >= 0) {
         it.fuse--;
-        if (it.fuse <= 0) { this.explode(it); remove = true; }
+        if (it.fuse <= 0) this.explode(it);
       }
-      if (!remove && it.kind === 'heart' && !it.airborne) {
+      if (it.hp > 0 && it.kind === 'heart' && !it.airborne) {
         for (const v of this.players) {
           if (!v || v.state === 'dead' || !v.alive) continue;
           if (Math.hypot(v.pos.x - it.x, v.pos.z - it.z) < 0.9 && Math.abs(v.pos.y - it.y) < 1.2) {
             const before = v.hp;
             v.hp = Math.min(v.maxHp, v.hp + HEART_HEAL);
             this.events.push({ t: 'heal', id: v.id, amount: v.hp - before });
-            remove = true;
+            it.hp = 0;
             break;
           }
         }
       }
-      if (!remove) keep.push(it);
     }
-    this.items = keep;
-    // 상자 재생성 (자리에 사람이 없을 때)
-    for (let i = 0; i < this.crateTimers.length; i++) {
-      if (this.crateTimers[i] <= 0) continue;
-      this.crateTimers[i]--;
-      if (this.crateTimers[i] > 0) continue;
-      const c = this.map.crates[i];
+    this.items = this.items.filter((x) => x.hp > 0);
+    // 상자·드럼통 재생성 (자리에 사람이 없을 때)
+    this.respawnSpots(this.crateTimers, this.map.crates, 'crate');
+    this.respawnSpots(this.barrelTimers, this.map.barrels, 'barrel');
+  }
+
+  private respawnSpots(timers: number[], spots: CrateSpot[], kind: ItemKind): void {
+    for (let i = 0; i < timers.length; i++) {
+      if (timers[i] <= 0) continue;
+      timers[i]--;
+      if (timers[i] > 0) continue;
+      const c = spots[i];
       const blocked = this.players.some((p) => p && Math.hypot(p.pos.x - c.x, p.pos.z - c.z) < 1.5);
-      if (blocked) { this.crateTimers[i] = 60; continue; }
-      this.items.push(createItem(this.nextItemId++, 'crate', c.x, c.y, c.z, i));
+      if (blocked) { timers[i] = 60; continue; }
+      this.items.push(createItem(this.nextItemId++, kind, c.x, c.y, c.z, i));
     }
   }
 
+  /** 상자·드럼통 타격. 내구도가 다하면 상자는 부서지고 드럼통은 터진다 */
   private hitCrate(it: Item, a: Player | null, dmg: number): void {
+    if (it.hp <= 0) return;
     if (a && it.lastHitBy === a.id && this.tick - it.lastHitTick < 10) return;
     it.lastHitBy = a ? a.id : -1;
     it.lastHitTick = this.tick;
     it.hp -= Math.max(1, dmg);
     if (it.hp <= 0) {
-      this.breakCrate(it, a, false);
-      this.items = this.items.filter((x) => x !== it);
+      if (it.kind === 'barrel') this.explode(it); else this.breakCrate(it, a, false);
+      this.items = this.items.filter((x) => x.hp > 0);
     }
   }
 
-  /** 상자 파괴: 던져진 것이면 주변 피해, 드랍 굴림, 자리 재생성 예약 */
+  /** 상자 파괴: 던져진 것이면 주변 피해, 드랍 굴림, 자리 재생성 예약. hp 0 으로 표시하면 stepItems 끝에서 없어진다 */
   private breakCrate(it: Item, by: Player | null, thrown: boolean): void {
+    it.hp = 0;
     if (thrown) {
       for (const v of this.players) {
         if (!v || !canBeHit(v) || (by && v.id === by.id)) continue;
@@ -412,21 +428,30 @@ export class World implements SimContext {
     this.events.push({ t: 'crateBreak', x: it.x, y: it.y + 0.5, z: it.z, drop });
   }
 
+  /** 폭탄·드럼통 폭발: 반경 안 플레이어 피해(던진/때린 사람이 주체, 자신도 맞는다), 반경 안 상자는 부서지고 드럼통은 연쇄로 터진다 */
   private explode(it: Item): void {
+    it.hp = 0;
+    const barrel = it.kind === 'barrel';
+    if (barrel && it.spot >= 0) this.barrelTimers[it.spot] = BARREL_RESPAWN_TICKS;
+    const radius = barrel ? BARREL_RADIUS : BOMB_RADIUS, hit = barrel ? BARREL_HIT : BOMB_HIT;
     const by = this.players[it.thrownBy >= 0 ? it.thrownBy : it.lastHitBy] ?? null;
     for (const v of this.players) {
       if (!v || !canBeHit(v)) continue;
-      if (Math.hypot(v.pos.x - it.x, v.pos.z - it.z) < BOMB_RADIUS && Math.abs(v.pos.y - it.y) < 2.5) {
+      if (Math.hypot(v.pos.x - it.x, v.pos.z - it.z) < radius && Math.abs(v.pos.y - it.y) < 2.5) {
         if (v.holding === it.id) v.holding = -1;
-        this.hitPlayer(by && by.id !== v.id ? by : null, v, BOMB_HIT, it.x, it.z);
+        this.hitPlayer(by && by.id !== v.id ? by : null, v, hit, it.x, it.z);
       }
     }
+    const crates: Item[] = [], chain: Item[] = [];
     for (const c of this.items) {
-      if (c.kind === 'crate' && c !== it && c.heldBy < 0 && Math.hypot(c.x - it.x, c.z - it.z) < BOMB_RADIUS) c.hp = -1;
+      if (c === it || c.heldBy >= 0 || c.hp <= 0 || (c.kind !== 'crate' && c.kind !== 'barrel')) continue;
+      if (Math.hypot(c.x - it.x, c.z - it.z) >= radius) continue;
+      c.hp = 0; // 먼저 표시해야 연쇄가 서로를 다시 터뜨리지 않는다
+      (c.kind === 'crate' ? crates : chain).push(c);
     }
-    for (const c of this.items.filter((x) => x.kind === 'crate' && x.hp <= 0)) { this.breakCrate(c, by, false); }
-    this.items = this.items.filter((x) => !(x.kind === 'crate' && x.hp <= 0));
+    for (const c of crates) this.breakCrate(c, by, false);
     this.events.push({ t: 'explode', x: it.x, y: it.y + 0.5, z: it.z });
+    for (const b of chain) { if (by) b.lastHitBy = by.id; this.explode(b); }
   }
 
   /** 타격 적용: 가드 → 데미지 → 반응(경직/띄움) → 사망 */
