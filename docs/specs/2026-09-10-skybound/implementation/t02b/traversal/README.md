@@ -99,7 +99,7 @@ pointerup/cancel/lostcapture는 해당 손가락만 해제하고, pause/blur/hid
 
 Space 또는 같은 터치 액션으로 점프 후 공중에서 다시 눌러 돛을 펼치고 다시 눌러
 접는다. Ground/coyote 점프와 접힌 상태의 임박한 착지 점프 버퍼가 우선한다.
-기력은 이동 코어의 공유 값이며 활공 시 소비한다. 이 화면에는 상승기류가 없다.
+기력은 이동 코어의 공유 값이며 활공 시 소비한다. T03B-1에서 출발점 앞 상승기류 하나를 연결했다.
 
 `src/glider.mjs`는 Skybound 원화 보드와 돛 표식만 참고한 146 triangles / 7 meshes의
 새 절차형 진단 모델이다. 기존 world palette의 ochre/slate/brass를 사용하며,
@@ -134,3 +134,45 @@ palm mesh 정점 평균과 목표 간 거리가 5mm 미만인지 검증한다. �
 복구 후 quaternion은 적용 전 값과 완전히 일치한다. glider 경계/예산 검사와 함께
 **2/2 통과**. 브라우저의 실제 로딩 GLB 접점과 터치 활공 검증은 별도 root 보고서에
 기록한다. 이 결과는 손가락 그립·팔 주변 의상 관통·전체 매달림 아트의 승인과 다르다.
+
+
+## T03B-1 · 초원 상승기류 하나
+
+출발점 `(0,35)`에서 전방으로 약 5m 이동하면 `(0,30)`의 반경 3m 기류에
+들어간다. 금빛 지면 원과 흰색 상승 화살표로 위치·방향을 표시한다. 지상 또는
+접힌 돛에는 상승력이 없으며, 점프 후 공중에서 같은 액션을 다시 눌러 펼친다.
+활공 중 내부에서는 기존 SR-2 규칙의 상승 목표 4m/s와 공유 기력 회복을 사용한다.
+기류 밖에서는 다시 활공 하강·소비로 전환한다.
+
+`src/updraft.mjs`가 불변 `volume`을 만들고 viewer가 그 값을 그대로
+`createSimulation({flight:{enabled:true,volumes:[updraft.volume]}})`에 전달한다.
+시뮬레이션은 기존 계약대로 이 정의를 복제하여 보관한다. 바닥은 실제 초원 삼각형
+adapter의 반경 내 0.5m 격자 표본 최저 높이보다 0.2m 아래, 천장은 중심 지면 +12m다.
+이는 완벽한 지형 최소값 계산이 아닌 이 작은 초원 fixture의 경사 여유다.
+바닥·천장 원은 정확한 물리 반경/높이를 표시하고 금빛 원은 별도로 실제 지면 +0.035m를 따른다.
+반경과 minY는 포함, maxY는 제외한다. 새로운 섬·경로·물리 규칙을 추가하지 않았다.
+
+world palette `cloud`/`brass`만 사용한 진단 표시다. 화살표 48개를 하나의
+InstancedMesh(384 triangles)로 그리고 경계/지면에 LineSegments 2개를 쓴다.
+프레임 갱신에는 기존 행렬과 인스턴스 버퍼를 재사용한다. 절대 시간
+`snapshot.tick * MOVEMENT.step`만으로 위치를 계산하므로 pause/카메라 조작은
+기류를 진행시키지 않고 reset은 초기 입자 배치로 돌아간다. 리스폰은 기존 전역
+시뮬레이션 tick을 유지하므로 환경 입자 위상도 이어진다.
+
+`window.__SKYBOUND_TRAVERSAL__.updraft`와 수동 advance 반환값에
+`{volume,inside,active,time,stats}`를 제공한다. inside는 현재 발 위치의 기하 포함,
+active는 inside + 펼친 돛 + 실제 snapshot.windSpeed > 0이다.
+경계 통과 한 tick에는 이전 위치에서 샘플한 windSpeed와 현재 inside가 다를 수 있다.
+
+검증 명령(저장된 의존성 사용, 설치 없음):
+
+```sh
+node --test docs/specs/2026-09-10-skybound/implementation/t02b/traversal/tests/*.test.mjs
+node docs/specs/2026-09-10-skybound/implementation/t02b/traversal/build.mjs
+```
+
+단위 검사 **16/16 통과**: 새 3개는 실제 표시 경계/지면 높이, 비공유 원본 변경 격리,
+물리 규칙과의 경계 일치, 여러 시점 모든 화살표 정점의 원기둥 내부 배치,
+같은 시간/초기화 재현 및 버퍼 유지 여부를 확인한다. 브라우저 진입·상승·회복·이탈과
+화면 가독성은 root의 별도 보고서에 기록한다. 이 표시는 최종 기류 아트 승인이나
+모바일 성능 보증이 아니다.

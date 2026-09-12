@@ -1,0 +1,217 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/traversal/index.html",
+  "checks": [
+    {
+      "name": "Spawn starts outside wind",
+      "passed": true
+    },
+    {
+      "name": "Can walk into marked wind",
+      "passed": true
+    },
+    {
+      "name": "Folded sail gets no lift",
+      "passed": true
+    },
+    {
+      "name": "Deploy activates wind",
+      "passed": true
+    },
+    {
+      "name": "Wind produces actual ascent",
+      "passed": true
+    },
+    {
+      "name": "Wind restores shared stamina",
+      "passed": true
+    },
+    {
+      "name": "Hands remain attached while rising",
+      "passed": true
+    },
+    {
+      "name": "Leaving cylinder disables wind",
+      "passed": true
+    },
+    {
+      "name": "Outside wind descends and spends stamina",
+      "passed": true
+    },
+    {
+      "name": "Reset restores outside checkpoint",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "samples": [
+    {
+      "snapshot": {
+        "tick": 120,
+        "position": {
+          "x": 0,
+          "y": 9.162527241203176,
+          "z": 29.999999999999964
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": -2.000000000000597
+        },
+        "grounded": true,
+        "mode": "running",
+        "sprinting": true,
+        "stamina": 75.99999999999966,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 2.6229018956769323e-14,
+        "steps": 30,
+        "droppedTime": 0
+      },
+      "updraft": {
+        "volume": {
+          "x": 0,
+          "z": 30,
+          "radius": 3,
+          "minY": 8.806567399771474,
+          "maxY": 21.162527241203172,
+          "speed": 4
+        },
+        "inside": true,
+        "active": false,
+        "time": 1,
+        "stats": {
+          "instances": 48,
+          "meshes": 1,
+          "lineObjects": 2,
+          "triangles": 384
+        }
+      },
+      "sailVisible": false,
+      "gripErrors": null,
+      "paused": true
+    },
+    {
+      "snapshot": {
+        "tick": 259,
+        "position": {
+          "x": 0,
+          "y": 14.008360574536493,
+          "z": 29.999999999999964
+        },
+        "velocity": {
+          "x": 0,
+          "y": 4,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "gliding",
+        "sprinting": false,
+        "stamina": 94.15000000000035,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": true,
+        "windSpeed": 4,
+        "alpha": 5.287437154777308e-14,
+        "steps": 30,
+        "droppedTime": 0
+      },
+      "updraft": {
+        "volume": {
+          "x": 0,
+          "z": 30,
+          "radius": 3,
+          "minY": 8.806567399771474,
+          "maxY": 21.162527241203172,
+          "speed": 4
+        },
+        "inside": true,
+        "active": true,
+        "time": 2.158333333333333,
+        "stats": {
+          "instances": 48,
+          "meshes": 1,
+          "lineObjects": 2,
+          "triangles": 384
+        }
+      },
+      "sailVisible": true,
+      "gripErrors": {
+        "left": 2.5989403973189026e-10,
+        "right": 2.5989403973189026e-10
+      },
+      "paused": true
+    },
+    {
+      "snapshot": {
+        "tick": 499,
+        "position": {
+          "x": 3.200000000000005,
+          "y": 16.221693907870005,
+          "z": 29.999999999999964
+        },
+        "velocity": {
+          "x": 0,
+          "y": -2.5,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "gliding",
+        "sprinting": false,
+        "stamina": 87.20000000000073,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": true,
+        "windSpeed": 0,
+        "alpha": 1.061650767297806e-13,
+        "steps": 30,
+        "droppedTime": 0
+      },
+      "updraft": {
+        "volume": {
+          "x": 0,
+          "z": 30,
+          "radius": 3,
+          "minY": 8.806567399771474,
+          "maxY": 21.162527241203172,
+          "speed": 4
+        },
+        "inside": false,
+        "active": false,
+        "time": 4.158333333333333,
+        "stats": {
+          "instances": 48,
+          "meshes": 1,
+          "lineObjects": 2,
+          "triangles": 384
+        }
+      },
+      "sailVisible": true,
+      "gripErrors": {
+        "left": 2.58597500205781e-10,
+        "right": 2.586728676500088e-10
+      },
+      "paused": true
+    }
+  ],
+  "errors": []
+}

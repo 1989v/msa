@@ -8,6 +8,7 @@ import { CAMERA_DEFAULTS, updateCamera, cameraOffset } from './camera.mjs';
 import { createTouchInput } from './touch.mjs';
 import { createGlider } from './glider.mjs';
 import { createFlightPose } from './flight-pose.mjs';
+import { createUpdraft, insideUpdraft } from './updraft.mjs';
 import '../style.css';
 
 const state = window.__SKYBOUND_TRAVERSAL__ = { ready: false, error: null, paused: true, snapshot: null, animation: 'idle', characterPosition: null, terrainHeight: null, frames: 0 };
@@ -39,6 +40,16 @@ async function main() {
     for (let i = 0; i < mesh.geometry.attributes.position.count; i++) positions.push(...new THREE.Vector3().fromBufferAttribute(mesh.geometry.attributes.position, i).applyMatrix4(mesh.matrixWorld).toArray());
     return { positions, indices: mesh.geometry.index.array };
   }));
+  const windCenterFloor = terrain.heightAt(0, 30);
+  if (!Number.isFinite(windCenterFloor)) throw new Error('Updraft center needs actual meadow');
+  const windFloors = [windCenterFloor];
+  for (let z = 27; z <= 33; z += .5) for (let x = -3; x <= 3; x += .5) {
+    if (x * x + (z - 30) ** 2 <= 9) windFloors.push(terrain.heightAt(x, z));
+  }
+  if (windFloors.some(value => !Number.isFinite(value))) throw new Error('Updraft footprint leaves meadow');
+  const updraft = createUpdraft(THREE, world.col, { x: 0, z: 30, radius: 3,
+    minY: Math.min(...windFloors) - .2, maxY: windCenterFloor + 12, speed: 4 }, terrain);
+  scene.add(updraft.root);
   const loaded = await new GLTFLoader().loadAsync(new URL('../character/assets/naru-lod0.glb', location.href).href);
   const character = loaded.scene;
   character.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
@@ -60,7 +71,7 @@ async function main() {
   function result() {
     return { snapshot: state.snapshot, animation: state.animation, animationTime: state.animationTime,
       characterPosition: state.characterPosition, characterYaw: state.characterYaw, terrainHeight: state.terrainHeight,
-      camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, gripErrors: state.gripErrors, flightPoseActive: state.flightPoseActive, paused: state.paused, frames: state.frames };
+      updraft: state.updraft, camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, gripErrors: state.gripErrors, flightPoseActive: state.flightPoseActive, paused: state.paused, frames: state.frames };
   }
   function draw() {
     const offset = cameraOffset(orbit), p = character.position;
@@ -83,6 +94,10 @@ async function main() {
     status.textContent = `${state.paused ? '일시정지' : '이동 중'} · ${state.animation} · 기력 ${Math.round(state.snapshot.stamina)}`;
   }
   function publish(snapshot, elapsed) {
+    updraft.update(snapshot.tick * MOVEMENT.step);
+    const inside = insideUpdraft(updraft.volume, snapshot.position);
+    state.updraft = { volume: updraft.volume, inside, active: inside && snapshot.gliding && snapshot.windSpeed > 0,
+      time: snapshot.tick * MOVEMENT.step, stats: updraft.stats };
     flightPose.restore();
     const motion = bridge.update(snapshot, elapsed);
     state.snapshot = snapshot; state.animation = motion.name; state.animationTime = motion.time;
@@ -139,7 +154,7 @@ async function main() {
   function resetForTest() {
     pause(); flightPose.restore(); mixer.stopAllAction();
     orbit = { ...CAMERA_DEFAULTS };
-    simulation = createSimulation({ terrain, checkpoint: { x: 0, z: 35 }, waterHeight, flight: { enabled: true, volumes: [] } });
+    simulation = createSimulation({ terrain, checkpoint: { x: 0, z: 35 }, waterHeight, flight: { enabled: true, volumes: [updraft.volume] } });
     bridge = createAnimationBridge(durations); character.rotation.y = Math.PI;
     return publish(simulation.snapshot(), 0);
   }
