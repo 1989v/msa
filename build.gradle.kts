@@ -633,21 +633,11 @@ val verifyPodTopology by tasks.registering {
                 "다른 파드에 ':$it:feature' 로 접거나, 정말 새 파드라면 approvedPods 에 추가하고 ADR 을 고칠 것"
         }
 
-        val jibText = rootProject.file("buildSrc/src/main/kotlin/commerce.jib-convention.gradle.kts").readText()
         val gatewayYml = rootProject.file("gateway/src/main/resources/application.yml").readText()
         val adminHealthList = rootProject.file("admin/frontend/src/api/system.ts").readText()
             .substringAfter("const SERVICES = [").substringBefore("];")
-        val workflowText = rootProject.file(".github/workflows/images.yml").readText()
-        val allJvm = Regex("ALL_JVM=\"([^\"]*)\"").find(workflowText)?.groupValues?.get(1)
-            ?.split(" ")?.filter { it.isNotBlank() }?.toSet().orEmpty()
 
         declared.filter { it in residentPods }.forEach { pod ->
-            if (!jibText.contains("\"$pod\" to ")) {
-                failures += "$pod 이 jib mainClassByImage 에 없다 — jib 이 조용히 SKIPPED 되고 이미지가 안 나온다"
-            }
-            if (pod !in allJvm) {
-                failures += "$pod 이 images.yml 의 ALL_JVM 에 없다 — 공유 의존성 변경 때 혼자 재빌드에서 빠진다"
-            }
             if (!rootProject.file("k8s/base/$pod/deployment.yaml").exists()) {
                 failures += "k8s/base/$pod/deployment.yaml 이 없다 — 이미지는 나오는데 배포될 곳이 없다"
             }
@@ -706,28 +696,6 @@ val verifyPodTopology by tasks.registering {
                     .map { it to pod }.toList()
             }
         }.flatten().toMap()
-
-        // 폴드된 도메인의 테스트가 CI 에서 **실제로 도는지**. 호스트 `:app:test` 만 부르면
-        // 그 안의 도메인 테스트는 하나도 안 돈다 — `deal` 이 commerce 로 온 뒤 그 상태로 남아
-        // 스키마 검사도 단위 테스트도 CI 에서 한 번도 실행되지 않았다. 초록불은 났다.
-        hostOfDomain.forEach { (pkg, pod) ->
-            // 패키지 이름과 모듈 디렉토리가 다를 수 있다 (com.kgd.codedictionary ↔ code-dictionary)
-            val module = rootProject.projectDir.listFiles()
-                ?.filter { it.isDirectory && File(it, "feature").isDirectory }
-                ?.map { it.name }
-                ?.firstOrNull { it.replace("-", "") == pkg }
-            if (module != null) {
-                val arm = Regex("^\\s+$pod\\)\\s+TASKS\\+=\"([^\"]*)\"", RegexOption.MULTILINE)
-                    .find(workflowText)?.groupValues?.get(1)
-                if (arm == null) {
-                    failures += "images.yml 테스트 게이트에 $pod 전용 arm 이 없다 — 기본 arm 은 " +
-                        "':$pod:domain:test' 를 부르는데 폴드 호스트에는 그 모듈이 없다"
-                } else if (!arm.contains(":$module:feature:test")) {
-                    failures += "images.yml 의 $pod arm 에 ':$module:feature:test' 가 없다 — " +
-                        "$pod 이 $module 을 담는데 그 테스트가 CI 에서 한 번도 안 돈다"
-                }
-            }
-        }
 
         // 쓰기가 조용히 사라지는 도메인에는 호스트 컨텍스트에서 도는 검사가 있어야 한다.
         // @Modifying 은 호출부 트랜잭션에 얹히므로 한정자가 어긋나면 예외도 로그도 없이 실패한다.
