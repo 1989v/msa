@@ -5,7 +5,7 @@ import { writeFileSync } from 'node:fs';
 export class Page {
   constructor(port) { this.port = port; this.seq = 0; this.pending = new Map(); this.events = new Map(); this.errors = []; this.logs = []; }
 
-  async open(url, { width = 1280, height = 720 } = {}) {
+  async open(url, { width = 1280, height = 720, mobile = false, touch = false } = {}) {
     const created = await (await fetch(`http://127.0.0.1:${this.port}/json/new?about:blank`, { method: 'PUT' })).json();
     this.id = created.id;
     this.ws = new WebSocket(created.webSocketDebuggerUrl);
@@ -20,7 +20,8 @@ export class Page {
       } else if (m.method && this.events.has(m.method)) this.events.get(m.method)(m.params);
     });
     await new Promise((r) => this.ws.addEventListener('open', r));
-    await this.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile: false });
+    await this.send('Emulation.setDeviceMetricsOverride', { width, height, deviceScaleFactor: 1, mobile });
+    if (touch) await this.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 }); // navigator.maxTouchPoints > 0, pointer: coarse
     await this.send('Page.enable');
     await this.send('Runtime.enable');
     const loaded = new Promise((resolve) => this.events.set('Page.loadEventFired', resolve));
@@ -62,6 +63,11 @@ export class Page {
   keyUp(code, key = code) { return this.send('Input.dispatchKeyEvent', { type: 'keyUp', code, key, windowsVirtualKeyCode: keyCode(key) }); }
   async tap(code, key = code, ms = 40) { await this.keyDown(code, key); await this.sleep(ms); await this.keyUp(code, key); }
   async hold(code, key, ms) { await this.keyDown(code, key); await this.sleep(ms); await this.keyUp(code, key); }
+
+  /** 터치 이벤트(화면 좌표). points = [{x,y,id}] — 실제 손가락처럼 pointerdown/move/up 이 뜬다 */
+  touchStart(points) { return this.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: points }); }
+  touchMove(points) { return this.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: points }); }
+  touchEnd() { return this.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
 
   /** 헤드리스는 마지막에 연 탭만 visible 이라 rAF 가 돈다 — 탭을 앞으로 가져와야 게임 루프가 진행된다 */
   front() { return this.send('Page.bringToFront'); }

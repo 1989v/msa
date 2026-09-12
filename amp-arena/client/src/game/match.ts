@@ -106,13 +106,7 @@ export class Match {
     fs.onclick = () => { void toggleFullscreen().then(() => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; }); };
     document.addEventListener('fullscreenchange', () => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; });
     this.el.appendChild(fs);
-    if (this.input.hasTouch) {
-      this.el.classList.add('touch');
-      const hint = document.createElement('div');
-      hint.className = 'rotate-hint';
-      hint.textContent = '가로로 돌려 주세요';
-      this.el.appendChild(hint);
-    }
+    if (this.input.hasTouch) this.el.classList.add('touch'); // 세로 기기는 orient.ts 가 뿌리를 돌려 가로로 만든다
     this.raf = requestAnimationFrame(this.loop);
   }
 

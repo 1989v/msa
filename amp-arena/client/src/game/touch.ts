@@ -1,5 +1,11 @@
 // 터치 조작: 왼쪽 가상 스틱 + 오른쪽 버튼 4+1, 남는 오른쪽 영역 드래그는 카메라.
 import { BTN_ATTACK, BTN_HEAVY, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP } from '@amp/shared';
+import { isRotated } from '../ui/orient.ts';
+
+/** 화면 좌표 → 뿌리(#app) 좌표. 뿌리가 90° 돌아가 있으면 x' = y, y' = W − x (W = 화면 너비) */
+function toLocal(x: number, y: number): { x: number; y: number } {
+  return isRotated() ? { x: y, y: window.innerWidth - x } : { x, y };
+}
 
 export interface TouchState { x: number; y: number; btn: number; dragPx: number }
 
@@ -54,31 +60,33 @@ export class TouchPad {
     if ((e.target as HTMLElement).classList.contains('tbtn')) return;
     e.preventDefault();
     const w = this.el.clientWidth;
-    if (e.clientX < w * 0.45 && this.stickId < 0) {
+    const p = toLocal(e.clientX, e.clientY);
+    if (p.x < w * 0.45 && this.stickId < 0) {
       this.stickId = e.pointerId;
-      this.stickOrigin = { x: e.clientX, y: e.clientY };
-      this.stick.style.left = `${e.clientX - 60}px`; this.stick.style.top = `${e.clientY - 60}px`;
+      this.stickOrigin = { x: p.x, y: p.y };
+      this.stick.style.left = `${p.x - 60}px`; this.stick.style.top = `${p.y - 60}px`;
       this.stick.classList.add('on');
       // 빠른 재터치 = 대시
       if (performance.now() - this.lastRelease < 260) this.dashLatched = true;
       this.el.setPointerCapture(e.pointerId);
     } else if (this.camId < 0) {
-      this.camId = e.pointerId; this.camLastX = e.clientX;
+      this.camId = e.pointerId; this.camLastX = p.x;
       this.el.setPointerCapture(e.pointerId);
     }
   };
 
   private onMove = (e: PointerEvent): void => {
+    const p = toLocal(e.clientX, e.clientY);
     if (e.pointerId === this.stickId) {
       e.preventDefault();
-      const dx = e.clientX - this.stickOrigin.x, dy = e.clientY - this.stickOrigin.y;
+      const dx = p.x - this.stickOrigin.x, dy = p.y - this.stickOrigin.y;
       const l = Math.hypot(dx, dy), max = 56;
       const k = l > max ? max / l : 1;
       this.vec = { x: (dx * k) / max, y: -(dy * k) / max };
       this.knob.style.transform = `translate(${dx * k}px, ${dy * k}px)`;
       if (l > max * 0.95) this.dashLatched = true;
     } else if (e.pointerId === this.camId) {
-      this.dragPx += e.clientX - this.camLastX; this.camLastX = e.clientX;
+      this.dragPx += p.x - this.camLastX; this.camLastX = p.x;
     }
   };
 
