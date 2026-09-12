@@ -49,6 +49,8 @@ export interface MatchOptions {
   exitLabel: string;
   /** 판이 끝나면 내 결과로 순위표 제출 — 돌려준 문구를 결과 화면 아래 한 줄로 보여준다 */
   onResult?: (me: RankEntry, ranking: RankEntry[]) => Promise<string | null>;
+  /** 온라인: 채팅 보내기 (Enter 로 입력창) — 없으면 채팅 UI 를 만들지 않는다 */
+  chat?: (text: string) => void;
 }
 
 const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]!));
@@ -73,6 +75,8 @@ export class Match {
   private followId = -1;
   /** 명단의 색 조합 스킨 → 상의·머리·머리띠 색 (없으면 자리 색·직업 색·기본) */
   private shirtOf = new Map<number, string>();
+  private scoreboardOn = false;
+  private chatbox: HTMLElement | null = null;
   private hairOf = new Map<number, string>();
   private bandOf = new Map<number, string>();
   private stats = { frames: 0, slow: 0, t0: performance.now(), worst: 0 };
@@ -87,8 +91,41 @@ export class Match {
   private onKey = (e: KeyboardEvent): void => {
     if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
     if (e.code === 'KeyM') { const m = audio.toggleMute(); this.hud.pushFeed(`<span class="muted">효과음 ${m ? '끔' : '켬'} (M)</span>`); }
-    if (e.code === 'Tab' && this.followId >= 0) { e.preventDefault(); this.followId = this.nextFollow(this.followId, e.shiftKey ? -1 : 1); }
+    if (e.code === 'Tab') { e.preventDefault(); this.scoreboardOn = true; this.renderScoreboard(); } // 누르고 있는 동안 점수판 — rAF 를 기다리지 않고 바로 그린다
+    if ((e.code === 'BracketRight' || e.code === 'BracketLeft') && this.followId >= 0) { e.preventDefault(); this.followId = this.nextFollow(this.followId, e.code === 'BracketRight' ? 1 : -1); }
+    if (e.code === 'Enter' && this.opts.chat && !this.source.ended) { e.preventDefault(); this.openChat(); }
   };
+  private onKeyUp = (e: KeyboardEvent): void => { if (e.code === 'Tab') { this.scoreboardOn = false; this.hud.setScoreboard(false); } };
+
+  /** 채팅 입력창 — 열려 있는 동안은 게임 입력이 막힌다(InputController 가 INPUT 포커스를 본다). Enter 보내기 · Esc 닫기 */
+  private openChat(): void {
+    if (!this.opts.chat || this.chatbox) return;
+    const box = document.createElement('div');
+    box.className = 'chatbox';
+    box.innerHTML = `<input class="field" maxlength="120" placeholder="채팅 · Enter 보내기 · Esc 닫기">`;
+    this.el.appendChild(box);
+    this.chatbox = box;
+    const input = box.querySelector('input') as HTMLInputElement;
+    const close = () => { box.remove(); this.chatbox = null; };
+    input.addEventListener('keydown', (e) => {
+      e.stopPropagation();
+      if (e.key === 'Escape') { close(); return; }
+      if (e.key === 'Enter') { const t = input.value.trim(); if (t) this.opts.chat!(t); close(); }
+    });
+    input.addEventListener('blur', () => setTimeout(() => { if (this.chatbox === box) close(); }, 0));
+    input.focus();
+  }
+
+  /** 점수판을 지금 그린다 (Tab 을 누른 순간·타이머 탭·매 6프레임 갱신) */
+  private renderScoreboard(): void {
+    const w = this.source.world;
+    this.hud.setScoreboard(true, w.players.filter((p): p is Player => !!p), w.teams, this.source.myId, [w.score[0], w.score[1]]);
+  }
+
+  /** 받은 채팅 — HUD 피드에 한 줄 */
+  chatLine(from: string, text: string): void {
+    this.hud.pushFeed(`<b style="color:var(--amp)">${esc(from)}</b><span class="muted">:</span> ${esc(text)}`);
+  }
 
   /** 관전 대상: 살아 있는 플레이어 중 다음/이전 (없으면 아무나) */
   private nextFollow(from: number, dir: 1 | -1): number {
@@ -130,12 +167,21 @@ export class Match {
     window.__amp = this.debug;
     audio.unlock();
     window.addEventListener('keydown', this.onKey);
+    window.addEventListener('keyup', this.onKeyUp);
+    this.hud.onTimerTap(() => { this.scoreboardOn = !this.scoreboardOn; if (!this.scoreboardOn) this.hud.setScoreboard(false); });
     const fs = document.createElement('button');
     fs.className = 'btn ghost fsbtn';
     fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면';
     fs.onclick = () => { void toggleFullscreen().then(() => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; }); };
     document.addEventListener('fullscreenchange', () => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; });
     this.el.appendChild(fs);
+    if (opts.chat) {
+      const cb = document.createElement('button');
+      cb.className = 'btn ghost chatbtn';
+      cb.textContent = '💬 채팅';
+      cb.onclick = () => this.openChat();
+      this.el.appendChild(cb);
+    }
     if (this.input.hasTouch) this.el.classList.add('touch'); // 세로 기기는 orient.ts 가 뿌리를 돌려 가로로 만든다
     if (source.spectator) {
       // 관전: 사람 먼저, 없으면 첫 플레이어. 체력판·기술판은 감춘다
@@ -205,6 +251,7 @@ export class Match {
       if (rp.id === (this.followId >= 0 ? this.followId : src.myId)) meView = rp;
     }
     for (const ev of src.drainEvents()) this.onEvent(ev);
+    if (this.scoreboardOn && this.stats.frames % 6 === 0) this.renderScoreboard();
     this.renderer.updateProjectiles(world.projectiles);
     const holders = new Map<number, { x: number; y: number; z: number }>();
     for (const rp of players) if (rp.holding >= 0) holders.set(rp.id, { x: rp.x, y: rp.y, z: rp.z });
@@ -230,7 +277,7 @@ export class Match {
     if (this.followId >= 0) {
       const fp = world.players[this.followId];
       if (!fp || !fp.alive) this.followId = this.nextFollow(this.followId, 1); // 대상이 죽거나 나가면 다음 사람
-      this.hud.setPrompt(`관전 · ${this.nameOf.get(this.followId) ?? ''}${this.input.hasTouch ? '' : ' · Tab 전환'}`);
+      this.hud.setPrompt(`관전 · ${this.nameOf.get(this.followId) ?? ''}${this.input.hasTouch ? '' : ' · [ ] 전환'}`);
     } else if (meView) {
       const me = world.players[src.myId];
       let near: Item | null = null;
@@ -322,6 +369,7 @@ export class Match {
     this.running = false;
     cancelAnimationFrame(this.raf);
     window.removeEventListener('keydown', this.onKey);
+    window.removeEventListener('keyup', this.onKeyUp);
     this.input.dispose();
     this.hud.dispose();
     this.renderer.dispose();

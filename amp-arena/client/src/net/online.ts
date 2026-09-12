@@ -27,6 +27,7 @@ export interface OnlineHooks {
   onRoundEnd: () => void;       // 결과 뒤 대기실로(코드 방) 또는 로비로(빠른 대전)
   onToast: (msg: string) => void;
   onDisconnect: () => void;
+  onChat?: (from: string, text: string, system: boolean) => void; // 매치 중 HUD 피드용
 }
 
 const CFG_WAIT_MS = 1200;    // 방장이 hi 를 못 받은 좌석을 기다리는 시간
@@ -210,6 +211,7 @@ export class Online {
   private pushChat(from: string, text: string, system = false): void {
     this.state.chat.push({ from, text, system });
     if (this.state.chat.length > 40) this.state.chat.shift();
+    this.hooks.onChat?.(from, text, system);
     this.hooks.onState();
   }
 

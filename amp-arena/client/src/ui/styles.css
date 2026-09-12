@@ -213,3 +213,12 @@ input, select { font-family: var(--font); }
 .swatch.owned small { color: var(--ink); }
 .swatch.on { border-color: var(--amp); box-shadow: 0 0 0 2px rgba(255,176,32,0.35); }
 .swatch.on small { color: var(--amp); font-weight: 800; }
+/* 점수판·채팅 (2026-09-12) */
+.hud .scoreboard { position: absolute; left: 50%; top: 112px; transform: translateX(-50%); min-width: 380px; max-width: 94%; padding: 10px 12px; background: rgba(12,17,36,0.94); border: 2px solid var(--line2); border-radius: 12px; }
+.hud .scoreboard tr.dead td { color: var(--dim); }
+.hud .scoreboard tr.me td { background: rgba(255,176,32,0.08); }
+.match .chatbox { position: absolute; left: 20px; bottom: 64px; width: min(420px, 80%); z-index: 6; }
+.match .chatbox input { width: 100%; height: 38px; }
+.match.touch .chatbox { left: 12px; bottom: auto; top: 60px; width: min(360px, 60%); }
+.match .chatbtn { position: absolute; right: 16px; top: 268px; height: 30px; font-size: 12px; padding: 0 10px; opacity: 0.8; z-index: 5; }
+.match.touch .chatbtn { top: auto; bottom: 306px; right: 16px; }

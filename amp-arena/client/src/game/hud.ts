@@ -29,6 +29,7 @@ export class Hud {
   private roster: HTMLElement; private rosterRows = new Map<number, { row: HTMLElement; bar: HTMLElement; ko: HTMLElement }>();
   private skill: HTMLElement; private skillRing: SVGCircleElement; private skillState: HTMLElement; private skillName: HTMLElement; private ammoLine: HTMLElement;
   private feed: HTMLElement; private feedLines: string[] = [];
+  private scoreboard: HTMLElement; private timerBox: HTMLElement;
   private hints: HTMLElement;
   private plates = new Map<number, { el: HTMLElement; n: HTMLElement; hp: HTMLElement }>();
   private platesLayer: HTMLElement; private dmgLayer: HTMLElement;
@@ -55,6 +56,7 @@ export class Hud {
       <div class="prompt"></div>
       <div class="skill"><div class="ring"><svg viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="27" style="fill:var(--bg2);stroke:var(--line2);stroke-width:4px"></circle><circle class="cd" cx="32" cy="32" r="27" style="fill:none;stroke:var(--green);stroke-width:4px;stroke-dasharray:170 170;transform:rotate(-90deg);transform-origin:32px 32px"></circle></svg><div class="icon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"></div><span class="key">V</span></div><div class="col" style="gap:4px"><b class="skill-name">-</b><span class="chip green skill-state">준비됨</span><span class="muted ammo" style="font-size:11px"></span></div></div>
       <div class="feed"></div>
+      <div class="scoreboard" style="display:none"></div>
       <div class="hints">${[['Z', '약공'], ['X', '강공'], ['Space', '점프'], ['C', '가드'], ['V', '기술'], ['F', '줍기'], ['Shift', '대시'], ['Q E', '카메라']].map(([k, l]) => `<span class="row" style="gap:5px"><span class="key">${k}</span><span>${l}</span></span>`).join('')}</div>
       <div class="combo display"></div>
       <div class="center display"></div>`;
@@ -65,7 +67,7 @@ export class Hud {
     this.timerT = q('.timer .t'); this.scoreL = q('.sl'); this.scoreR = q('.sr'); this.modeChip = q('.mode');
     this.roster = q('.roster'); this.skill = q('.skill'); this.skillRing = this.el.querySelector('.cd') as SVGCircleElement;
     this.skillState = q('.skill-state'); this.skillName = q('.skill-name'); this.ammoLine = q('.ammo');
-    this.feed = q('.feed'); this.hints = q('.hints'); this.combo = q('.combo'); this.center = q('.center'); this.netinfo = q('.netinfo'); this.prompt = q('.prompt');
+    this.feed = q('.feed'); this.scoreboard = q('.scoreboard'); this.timerBox = q('.timer .box'); this.hints = q('.hints'); this.combo = q('.combo'); this.center = q('.center'); this.netinfo = q('.netinfo'); this.prompt = q('.prompt');
     this.feed.style.display = 'none';
     setTimeout(() => this.hints.classList.add('off'), 30000);
   }
@@ -249,6 +251,24 @@ export class Hud {
     this.el.appendChild(o);
     this.overlay = o;
     this.hideCenter();
+  }
+
+  /** 점수판 (Tab 을 누르고 있는 동안 · 타이머 탭) — KO 순, 같으면 준 데미지 순 */
+  setScoreboard(on: boolean, players: Player[] = [], teams = false, myId = -1, score: [number, number] = [0, 0]): void {
+    if (!on) { this.scoreboard.style.display = 'none'; return; }
+    const rows = [...players].sort((a, b) => b.kos - a.kos || b.dmgDealt - a.dmgDealt);
+    this.scoreboard.style.display = '';
+    this.scoreboard.innerHTML = `<div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="label">점수판</span>${teams ? `<span class="chip"><span style="color:var(--red)">레드 ${score[0]}</span> : <span style="color:var(--blue)">블루 ${score[1]}</span></span>` : ''}</div>
+      <table class="stats-table"><thead><tr><th>#</th>${teams ? '<th>팀</th>' : ''}<th>이름</th><th>KO</th><th>데스</th><th>데미지</th><th>HP</th></tr></thead><tbody>
+      ${rows.map((p, i) => `<tr class="${p.id === myId ? 'me' : ''}${p.alive && p.state !== 'dead' ? '' : ' dead'}"><td class="num">${i + 1}</td>${teams ? `<td><span class="chip ${p.team === 0 ? 'red' : 'blue'}" style="font-size:10px">${teamName(p.team)}</span></td>` : ''}<td style="font-weight:800;${p.id === myId ? 'color:var(--amp)' : ''}">${esc(p.name)}${p.bot ? ' <span class="muted" style="font-size:10px">봇</span>' : ''}</td><td class="num">${p.kos}</td><td class="num muted">${p.deaths}</td><td class="num muted">${p.dmgDealt}</td><td class="num">${p.hp}</td></tr>`).join('')}
+      </tbody></table>`;
+  }
+
+  /** 타이머 상자를 탭하면(터치·마우스) 점수판을 여닫는다 — HUD 는 pointer-events 가 없어 상자만 켠다 */
+  onTimerTap(fn: () => void): void {
+    this.timerBox.style.pointerEvents = 'auto';
+    this.timerBox.style.cursor = 'pointer';
+    this.timerBox.onclick = fn;
   }
 
   /** 결과 화면 아래 한 줄 — 순위표 제출 결과 */

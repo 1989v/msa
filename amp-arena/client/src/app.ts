@@ -243,6 +243,7 @@ export class App {
       onMatch: (src) => this.onMatch(src),
       onRoundEnd: () => { this.disposeMatch(); this.showRoom(); },
       onToast: (m) => this.toast(m),
+      onChat: (from, text) => this.match?.chatLine(from, text),
       onDisconnect: () => { this.online = null; if (this.view !== 'title') this.showTitle(); },
     });
     this.online = online;
@@ -257,6 +258,7 @@ export class App {
     this.runMatch(src, {
       exitLabel: party ? '대기실로' : '로비로',
       onResult: (me, ranking) => this.finishMatch(me, ranking, 'online', src.world.cfg.mapId, src.world.cfg.modeId),
+      chat: (t) => online.chat(t),
       onExit: () => {
         // 코드 방: done → roundEnded 가 오면 대기실. 빠른 대전: 방을 나가 로비로
         online.finishRound();
@@ -301,7 +303,7 @@ export class App {
           <div class="row" style="justify-content:center;flex-wrap:wrap;gap:6px"><span class="chip">${STYLES[this.style].name}</span><span class="chip">${ACCESSORIES[this.acc].name}</span></div>
           <span class="label">매치 설정 · 내가 방장일 때 적용</span>
           ${this.settingsForm('settings-form', this.settings, true)}
-          <label class="row" style="gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="spectate" ${this.spectate ? 'checked' : ''}> 관전으로 참가 — 싸우지 않고 본다 (Tab 으로 대상 전환)</label>
+          <label class="row" style="gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="spectate" ${this.spectate ? 'checked' : ''}> 관전으로 참가 — 싸우지 않고 본다 ([ ] 로 대상 전환)</label>
           <button class="btn ghost back">${icon('door', 18)}타이틀로</button>
         </div>
         <div class="center">

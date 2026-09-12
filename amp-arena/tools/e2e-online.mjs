@@ -50,6 +50,23 @@ try {
   for (let i = 0; i < 5; i++) { await A.tap('KeyZ', 'z', 50); await B.tap('KeyZ', 'z', 50); await A.sleep(150); }
   await A.tap('KeyV', 'v', 50);
   await A.sleep(1500);
+  // 채팅: A 가 Enter → 입력 → Enter, B 의 HUD 피드에 「알파: …」
+  await A.front();
+  await A.tap('Enter', 'Enter', 40);
+  await A.waitFor(`document.activeElement && document.activeElement.closest('.chatbox')`, { timeout: 3000 });
+  await A.send('Input.insertText', { text: '안녕 브라보' });
+  await A.tap('Enter', 'Enter', 40);
+  await B.waitFor(`(document.querySelector('.hud .feed')?.textContent ?? '').includes('안녕 브라보')`, { timeout: 5000 });
+  const feedB = await B.eval(`document.querySelector('.hud .feed').textContent`);
+  log(`B feed after chat: ${feedB.trim().slice(0, 80)}`);
+  // 점수판: Tab 을 누르는 동안 보이고 떼면 사라진다
+  await A.keyDown('Tab', 'Tab');
+  await A.sleep(250);
+  const sb = JSON.parse(await A.eval(`(() => { const s = document.querySelector('.hud .scoreboard'); return JSON.stringify({ shown: s && s.style.display !== 'none', rows: s ? s.querySelectorAll('tbody tr').length : 0, chatClosed: !document.querySelector('.chatbox') }); })()`));
+  await A.keyUp('Tab', 'Tab');
+  await A.sleep(120);
+  const sbHidden = await A.eval(`document.querySelector('.hud .scoreboard').style.display === 'none'`);
+  log(`scoreboard while holding Tab: ${JSON.stringify(sb)} · hidden after release: ${sbHidden}`);
   await A.front(); await A.sleep(600); await A.shot(`${out}/e2e-online-A.png`);
   await B.front(); await B.sleep(600); await B.shot(`${out}/e2e-online-B.png`);
   const na = JSON.parse(await A.eval(NET)), nb = JSON.parse(await B.eval(NET));
@@ -60,6 +77,7 @@ try {
   const checks = {
     hostIsA: String(na.info).includes('방장'), guestIsB: String(nb.info).includes('게스트'), sameHost: na.host === nb.host && nb.host === na.myId,
     snapshotsFlow: nb.tick > 60, relayCaps: st.maxChars <= 4096 && st.maxPerSec <= 40 && Object.keys(st.closes).length === 0,
+    chat: feedB.includes('알파') && feedB.includes('안녕 브라보'), scoreboard: sb.shown && sb.rows === 8 && sb.chatClosed && sbHidden,
   };
   log(`checks ${JSON.stringify(checks)}`);
   console.log(`errors A: ${A.errors.length} · B: ${B.errors.length}`);

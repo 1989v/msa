@@ -38,14 +38,14 @@
 - [x] 밸런스 2차 + KO 악세서리 드랍 + 밀리는 드럼통 (2026-09-12) — `tools/balance.mjs` 봇 토너먼트로 조정(기획서 §7.3), KO 시 든 악세서리가 떨어지고 직업이 맞는 사람이 주워 든다(`acc` 아이템, 25초 소멸, 봇도 줍는다), 드럼통은 걸어서 민다. 테스트 `shared/test/accdrop.test.ts`
 - [x] 짧은 화면 스크롤 (2026-09-12 운영 실측이 잡음) — 폰 가로 844×390 에서 타이틀 「연습」 버튼이 화면 밖이라 손이 안 닿았다(E2E 가 `el.click()` 으로 눌러 가려져 있었다). `.screen` 을 스크롤 가능하게(가운데 정렬은 auto 마진), 로비 칸·대기실 슬롯도 스크롤. 모바일 E2E 는 이제 `tapElement`(실제 탭)로 누른다
 - [x] 시안 캔버스 v0.2 (2026-09-12) — 스타일 5종·옥상·얼음 호수 아트보드 추가(16장), 콜로세움·스카이독에 문루·컨테이너·드럼통·점프대 반영. `node design/canvas/gen/build.mjs` → seed → 같은 URL 재발행(Version 4). 카탈로그 썸네일도 새 카메라로 교체
-- [x] 관전 (2026-09-12) — 로비 체크박스 → `Pick.spectate`, `buildRoster`(`client/src/net/roster.ts`)가 명단에서 빼고 `cfg.spectators`, `GuestSource.spectator`(입력 안 보냄), 매치 `followId`(Tab 전환). 실측 `tools/e2e-spectate.mjs`
+- [x] 관전 (2026-09-12) — 로비 체크박스 → `Pick.spectate`, `buildRoster`(`client/src/net/roster.ts`)가 명단에서 빼고 `cfg.spectators`, `GuestSource.spectator`(입력 안 보냄), 매치 `followId`(`]`/`[` 전환). 실측 `tools/e2e-spectate.mjs`
 - [x] 플랫폼 순위표 (2026-09-12) — `client/src/platform/score.ts` (online/practice 보드, Bearer 쿠키, 결과 화면 한 줄), 마이그레이션 `game/.../V90__arena_score_boards.sql`(보드 이름·sdk_integrated). 세션은 카탈로그 페이지 몫. 실측 `tools/e2e-score.mjs`(가짜 API) · `tools/e2e-prod-score.mjs`(운영)
 - [x] 진행 (2026-09-12) — `client/src/platform/progress.ts`(경험치·레벨·골드·스탯 분배·색 스킨, `sanitizeProgress`), `save.ts`(플랫폼 세이브 동기화), `ui/progressui.ts`(타이틀 줄·모달). 스탯은 명단으로 시뮬에(`sanitizeStatDelta`), 스킨은 리그 색으로. 테스트 `client/test/progress.test.ts`·`shared/test/stats.test.ts`, 실측 `tools/e2e-progress.mjs`
-- [ ] Phase 2 남은 것 — 스킨 페인터(UV 아틀라스; 그림 전달 경로 필요), 매치 중 채팅·점수판
+- [x] 점수판·매치 중 채팅 (2026-09-12) — Tab 점수판(타이머 탭), Enter 채팅(릴레이 `c` → HUD 피드), 관전 전환은 `]`/`[`. E2E `e2e-online.mjs` 에 채팅·점수판 검사
+- [ ] Phase 2 남은 것 — 스킨 페인터(UV 아틀라스; 그림 전달 경로 필요)
 
 ## 장르 문법 중 아직 없는 것
 
-- 매치 중 채팅, 점수판(Tab)
 - 캐릭터 외형은 1종(스타일별 머리·체형 차이 + 색 8종)
 
 ## 실행·검증 명령
