@@ -1,0 +1,1338 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/traversal/index.html",
+  "checks": [
+    {
+      "name": "Fixture HTTP200",
+      "passed": true
+    },
+    {
+      "name": "Spawn grounded on actual terrain",
+      "passed": true
+    },
+    {
+      "name": "Character starts at simulation feet",
+      "passed": true
+    },
+    {
+      "name": "walk changes world position",
+      "passed": true
+    },
+    {
+      "name": "walk selects matching animation",
+      "passed": true
+    },
+    {
+      "name": "walk root follows simulation",
+      "passed": true
+    },
+    {
+      "name": "walk remains grounded",
+      "passed": true
+    },
+    {
+      "name": "run changes world position",
+      "passed": true
+    },
+    {
+      "name": "run selects matching animation",
+      "passed": true
+    },
+    {
+      "name": "run root follows simulation",
+      "passed": true
+    },
+    {
+      "name": "run remains grounded",
+      "passed": true
+    },
+    {
+      "name": "Jump rises above terrain",
+      "passed": true
+    },
+    {
+      "name": "Descending selects fall",
+      "passed": true
+    },
+    {
+      "name": "Ground contact selects land",
+      "passed": true
+    },
+    {
+      "name": "Root follows entire jump trajectory",
+      "passed": true
+    },
+    {
+      "name": "Landing settles to idle",
+      "passed": true
+    },
+    {
+      "name": "Diagnostic keyboard moves character",
+      "passed": true
+    },
+    {
+      "name": "Blur pauses simulation",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "samples": [
+    {
+      "snapshot": {
+        "tick": 0,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0
+      },
+      "animation": "idle",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186,
+      "paused": true
+    },
+    {
+      "snapshot": {
+        "tick": 120,
+        "position": {
+          "x": 0,
+          "y": 9.032266545880322,
+          "z": 31.800000000000324
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": -3.2
+        },
+        "grounded": true,
+        "mode": "walking",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 2.6229018956769323e-14,
+        "steps": 30,
+        "droppedTime": 0
+      },
+      "animation": "walk",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.032266545880322,
+        "z": 31.800000000000324
+      },
+      "terrainHeight": 9.032266545880322,
+      "paused": true
+    },
+    {
+      "snapshot": {
+        "tick": 120,
+        "position": {
+          "x": 0,
+          "y": 9.267661554496295,
+          "z": 29.000000000000128
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": -6
+        },
+        "grounded": true,
+        "mode": "running",
+        "sprinting": true,
+        "stamina": 75.99999999999966,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 2.6229018956769323e-14,
+        "steps": 30,
+        "droppedTime": 0
+      },
+      "animation": "run",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.267661554496295,
+        "z": 29.000000000000128
+      },
+      "terrainHeight": 9.267661554496295,
+      "paused": true
+    },
+    {
+      "snapshot": {
+        "tick": 4,
+        "position": {
+          "x": 0,
+          "y": 9.282827553126303,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 6.333333333333332,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 4.163336342344337e-16,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.282827553126303,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 8,
+        "position": {
+          "x": 0,
+          "y": 9.480049775348526,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 5.666666666666664,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.480049775348526,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 12,
+        "position": {
+          "x": 0,
+          "y": 9.655049775348525,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 4.9999999999999964,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.655049775348525,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 16,
+        "position": {
+          "x": 0,
+          "y": 9.807827553126303,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 4.333333333333329,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.807827553126303,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 20,
+        "position": {
+          "x": 0,
+          "y": 9.938383108681858,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 3.666666666666662,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.938383108681858,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 24,
+        "position": {
+          "x": 0,
+          "y": 10.046716442015192,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 2.999999999999996,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.046716442015192,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 28,
+        "position": {
+          "x": 0,
+          "y": 10.132827553126303,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 2.33333333333333,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.132827553126303,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 32,
+        "position": {
+          "x": 0,
+          "y": 10.196716442015193,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 1.6666666666666632,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.196716442015193,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 36,
+        "position": {
+          "x": 0,
+          "y": 10.238383108681859,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0.9999999999999963,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.238383108681859,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 40,
+        "position": {
+          "x": 0,
+          "y": 10.257827553126303,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0.3333333333333298,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "rising",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "jump",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.257827553126303,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 44,
+        "position": {
+          "x": 0,
+          "y": 10.255049775348525,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -0.3333333333333368,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.255049775348525,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 48,
+        "position": {
+          "x": 0,
+          "y": 10.230049775348524,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -1.0000000000000033,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.230049775348524,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 52,
+        "position": {
+          "x": 0,
+          "y": 10.182827553126302,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -1.6666666666666703,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.182827553126302,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 56,
+        "position": {
+          "x": 0,
+          "y": 10.113383108681857,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -2.3333333333333366,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.113383108681857,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 60,
+        "position": {
+          "x": 0,
+          "y": 10.02171644201519,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -3.0000000000000027,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 10.02171644201519,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 64,
+        "position": {
+          "x": 0,
+          "y": 9.907827553126301,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -3.6666666666666687,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.907827553126301,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 68,
+        "position": {
+          "x": 0,
+          "y": 9.77171644201519,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -4.333333333333336,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.77171644201519,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 72,
+        "position": {
+          "x": 0,
+          "y": 9.613383108681857,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -5.0000000000000036,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.613383108681857,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 76,
+        "position": {
+          "x": 0,
+          "y": 9.432827553126302,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -5.666666666666671,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.432827553126302,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 80,
+        "position": {
+          "x": 0,
+          "y": 9.230049775348524,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": -6.333333333333339,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "falling",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.230049775348524,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 84,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 88,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 92,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 96,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 100,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 104,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 108,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 112,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 116,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    },
+    {
+      "snapshot": {
+        "tick": 120,
+        "position": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 1.2490009027033011e-15,
+        "steps": 4,
+        "droppedTime": 0
+      },
+      "animation": "land",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.06338310868186,
+        "z": 35
+      },
+      "terrainHeight": 9.06338310868186
+    }
+  ],
+  "errors": []
+}

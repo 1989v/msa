@@ -1,0 +1,113 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/traversal/index.html",
+  "checks": [
+    {
+      "name": "Grounded sail hidden",
+      "passed": true
+    },
+    {
+      "name": "First jump does not deploy",
+      "passed": true
+    },
+    {
+      "name": "Airborne press deploys visible sail",
+      "passed": true
+    },
+    {
+      "name": "Gliding pose stays supported",
+      "passed": true
+    },
+    {
+      "name": "Gliding consumes shared stamina",
+      "passed": true
+    },
+    {
+      "name": "Root follows flight simulation",
+      "passed": true
+    },
+    {
+      "name": "Pause preserves deployed sail",
+      "passed": true
+    },
+    {
+      "name": "Next press folds sail",
+      "passed": true
+    },
+    {
+      "name": "Landing hides sail",
+      "passed": true
+    },
+    {
+      "name": "Actual Space redeploys airborne sail",
+      "passed": true
+    },
+    {
+      "name": "Reset clears flight and restores stamina",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "samples": [
+    {
+      "snapshot": {
+        "tick": 19,
+        "position": {
+          "x": 0,
+          "y": 9.90796644201519,
+          "z": 35
+        },
+        "velocity": {
+          "x": 0,
+          "y": 3.849999999999995,
+          "z": 0
+        },
+        "grounded": false,
+        "mode": "gliding",
+        "sprinting": false,
+        "stamina": 99.9,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": true,
+        "windSpeed": 0,
+        "alpha": 2.914335439641036e-15,
+        "steps": 1,
+        "droppedTime": 0
+      },
+      "sailVisible": true,
+      "gliding": true,
+      "gliderStats": {
+        "triangles": 146,
+        "meshes": 7,
+        "bounds": {
+          "min": [
+            -1.3682942661893605,
+            1.9083493652939796,
+            -0.6947931984994508
+          ],
+          "max": [
+            1.3682942661893605,
+            2.5035996416289525,
+            0.9347931984994508
+          ]
+        },
+        "technicalPose": true
+      },
+      "animation": "fall",
+      "characterPosition": {
+        "x": 0,
+        "y": 9.90796644201519,
+        "z": 35
+      },
+      "paused": true
+    }
+  ],
+  "errors": []
+}

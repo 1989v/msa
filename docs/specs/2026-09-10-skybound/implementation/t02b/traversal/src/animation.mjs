@@ -1,4 +1,5 @@
-const modes = { idle: 'idle', walking: 'walk', running: 'run', rising: 'jump', falling: 'fall' };
+// Gliding temporarily reuses the original fall clip; dedicated grip pose is pending.
+const modes = { idle: 'idle', walking: 'walk', running: 'run', rising: 'jump', falling: 'fall', gliding: 'fall' };
 export function createAnimationBridge(durations) {
   let previous = null, name = 'idle', time = 0;
   return {

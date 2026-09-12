@@ -21,6 +21,7 @@ esbuild 0.27.7을 재사용한다. 설치나 CDN 요청은 없다. 공유 UI 토
 - 첫 `continuous meadow`와 `walkable-looking…` mesh의 정점을 matrixWorld로
   변환하여 `t02a/src/terrain.mjs`에 전달한다. 분석식으로 지형을 재생성하지 않는다.
 - `t02a/src/simulation.mjs`는 120Hz fixed step, 체크포인트 (0,35), 수면 Y=−18이다.
+- T03A-3부터 이 fixture는 `flight:{enabled:true,volumes:[]}`를 선택한다. 새 기류는 배치하지 않는다.
 - `character/assets/naru-lod0.glb`를 GLTFLoader로 읽는다. 기존 7개 클립 중
   idle/walk/run/jump/fall/land를 사용하고 검사 포즈는 이동에 사용하지 않는다.
 - 캐릭터 root 위치는 snapshot의 feet 위치와 같다. +Z 정면을
@@ -45,6 +46,7 @@ blur/탭 숨김은 입력과 누적 시간을 비우고 정지하며 명시적�
 - `characterPosition: {x,y,z}`, `characterYaw`, `terrainHeight`, `frames`
 - `camera: {yaw,pitch,distance,dragging}`, `setCameraForTest({yaw?,pitch?,distance?})`
 - `touch: {x,z,sprint,moveId,lookId,sprintId,jumpId,jumpPending}`: 각 입력 소유 ID는 미사용 시 null
+- `gliding`, `sailVisible`, `gliderStats`, `flightEnabled`: 활공 규칙과 진단 돛 표시 상태
 - `advanceForTest(dt, input={})`: 일시정지 상태에서만 같은 simulation→animation→render
   경로를 수동 실행한다. 자동 RAF와 섞으면 오류다. 최신 상태 요약을 반환한다.
   입력 `yaw`를 생략하면 현재 카메라 yaw를 쓰고, 명시하면 해당 값을 우선한다.
@@ -92,3 +94,22 @@ pointerup/cancel/lostcapture는 해당 손가락만 해제하고, pause/blur/hid
 `node --test .../tests/touch.test.mjs`: 순수 소유권 검사 **4/4 통과**.
 중복/추가 포인터 격리, 대각선/아날로그 강도, 개별 취소, 점프 pulse, 전체 초기화를
 검증한다. 실제 멀티터치·취소·반응형 검수는 root의 별도 touch 보고서에 기록한다.
+
+## T03A-3 · 작은 활공 데모 연결
+
+Space 또는 같은 터치 액션으로 점프 후 공중에서 다시 눌러 돛을 펼치고 다시 눌러
+접는다. Ground/coyote 점프와 접힌 상태의 임박한 착지 점프 버퍼가 우선한다.
+기력은 이동 코어의 공유 값이며 활공 시 소비한다. 이 화면에는 상승기류가 없다.
+
+`src/glider.mjs`는 Skybound 원화 보드와 돛 표식만 참고한 146 triangles / 7 meshes의
+새 절차형 진단 모델이다. 기존 world palette의 ochre/slate/brass를 사용하며,
+삼각 천·지지대·횡봉을 머리 위에 표시한다. snapshot.gliding일 때만 보이고 접기·착지·
+리스폰·초기화에서 사라진다. 일시정지는 열려 있는 돛을 접지 않고 시간과 입력만 멈춘다.
+
+캐릭터 GLB는 재생성하지 않았다. 애니메이션 bridge는 gliding 상태를 기존 `fall`
+클립으로 임시 대응한다. **손과 횡봉의 접점, 매달린 자세, 천의 접힘·물리, 전용
+활공 아트는 아직 구현하지 않았다.** 이 돛은 최종 아트 PASS 결과가 아니다.
+
+관련 단위 검사 5/5 통과: 기존 bridge 3개 + gliding 전환 1개 + 돛 예산/유한 정점/
+인덱스/머리 위 경계 1개. 실제 입력·활공·접기·착지·일시정지·리스폰 표시는
+root의 별도 glider 브라우저 보고서로 검증한다.

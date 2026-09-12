@@ -29,3 +29,14 @@ test('respawn suppresses landing, resets clip time, and does not mutate snapshot
   assert.equal(result.name, 'idle'); assert.equal(result.time, 0); assert.equal(result.respawned, true);
   assert.deepEqual(snapshot, before);
 });
+test('gliding deliberately reuses fall, then resumes landing/walk or resets after respawn', () => {
+  const bridge = createAnimationBridge(durations);
+  const flying = { ...snap('falling'), mode: 'gliding', gliding: true };
+  assert.equal(bridge.update(flying, .1).name, 'fall');
+  assert.equal(bridge.update(flying, .1).once, false);
+  assert.equal(bridge.update(snap('falling'), .1).name, 'fall');
+  bridge.update(flying, .1); assert.equal(bridge.update(snap('idle'), .1).name, 'land');
+  assert.equal(bridge.update(snap('walking'), .1).name, 'walk');
+  bridge.update(flying, .1); const restored = bridge.update(snap('idle', 1), .1);
+  assert.equal(restored.name, 'idle'); assert.equal(restored.time, 0);
+});

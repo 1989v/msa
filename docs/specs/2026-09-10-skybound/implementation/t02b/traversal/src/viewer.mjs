@@ -6,6 +6,7 @@ import { createSimulation, MOVEMENT } from '../../../t02a/src/simulation.mjs';
 import { createAnimationBridge } from './animation.mjs';
 import { CAMERA_DEFAULTS, updateCamera, cameraOffset } from './camera.mjs';
 import { createTouchInput } from './touch.mjs';
+import { createGlider } from './glider.mjs';
 import '../style.css';
 
 const state = window.__SKYBOUND_TRAVERSAL__ = { ready: false, error: null, paused: true, snapshot: null, animation: 'idle', characterPosition: null, terrainHeight: null, frames: 0 };
@@ -41,6 +42,8 @@ async function main() {
   const character = loaded.scene;
   character.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
   scene.add(character);
+  const glider = createGlider(THREE, world.col); scene.add(glider.root);
+  state.gliderStats = glider.stats; state.flightEnabled = true;
   const clips = Object.fromEntries(loaded.animations.map(clip => [clip.name, clip]));
   const names = ['idle', 'walk', 'run', 'jump', 'fall', 'land'];
   if (names.some(name => !clips[name])) throw new Error('Saved Naru GLB needs idle/walk/run/jump/fall/land clips');
@@ -55,7 +58,7 @@ async function main() {
   function result() {
     return { snapshot: state.snapshot, animation: state.animation, animationTime: state.animationTime,
       characterPosition: state.characterPosition, characterYaw: state.characterYaw, terrainHeight: state.terrainHeight,
-      camera: state.camera, touch: state.touch, paused: state.paused, frames: state.frames };
+      camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, paused: state.paused, frames: state.frames };
   }
   function draw() {
     const offset = cameraOffset(orbit), p = character.position;
@@ -63,6 +66,8 @@ async function main() {
     camera.lookAt(p.x, p.y + 1.05, p.z);
     state.touch = touch.snapshot();
     state.camera = { ...orbit, dragging: drag !== null || state.touch.lookId !== null };
+    state.gliding = state.snapshot?.gliding === true; state.sailVisible = glider.root.visible;
+    jumpButton.textContent = state.snapshot?.grounded ? '점프' : state.gliding ? '돛 접기' : '점프 / 돛';
     movePad.style.setProperty('--stick-x', `${state.touch.x * 40}px`);
     movePad.style.setProperty('--stick-y', `${state.touch.z * 40}px`);
     sprintButton.setAttribute('aria-pressed', String(state.touch.sprint));
@@ -81,6 +86,8 @@ async function main() {
     character.position.set(snapshot.position.x, snapshot.position.y, snapshot.position.z);
     if (motion.respawned) character.rotation.y = Math.PI;
     if (Math.hypot(snapshot.velocity.x, snapshot.velocity.z) > .01) character.rotation.y = Math.atan2(snapshot.velocity.x, snapshot.velocity.z);
+    glider.root.visible = snapshot.gliding === true;
+    glider.root.position.copy(character.position); glider.root.rotation.y = character.rotation.y;
     if (motion.changed) {
       mixer.stopAllAction();
       const action = mixer.clipAction(clips[motion.name]).reset().setLoop(motion.once ? THREE.LoopOnce : THREE.LoopRepeat, motion.once ? 1 : Infinity);
@@ -127,7 +134,7 @@ async function main() {
   function resetForTest() {
     pause(); mixer.stopAllAction();
     orbit = { ...CAMERA_DEFAULTS };
-    simulation = createSimulation({ terrain, checkpoint: { x: 0, z: 35 }, waterHeight });
+    simulation = createSimulation({ terrain, checkpoint: { x: 0, z: 35 }, waterHeight, flight: { enabled: true, volumes: [] } });
     bridge = createAnimationBridge(durations); character.rotation.y = Math.PI;
     return publish(simulation.snapshot(), 0);
   }
