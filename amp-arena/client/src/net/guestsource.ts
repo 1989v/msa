@@ -25,6 +25,8 @@ export class GuestSource implements MatchSource {
   readonly myId: number;
   readonly roster: RosterEntry[];
   readonly online = true;
+  /** 관전: 명단에 내 좌석이 없다 — 입력을 보내지 않고 스냅샷만 받아 남을 따라 본다 */
+  readonly spectator: boolean;
   ended: { ranking: RankEntry[]; score: [number, number] } | null = null;
   rtt: number | null = null;
   info: string | null = null;
@@ -50,6 +52,7 @@ export class GuestSource implements MatchSource {
     this.channel = channel;
     this.myId = mySeat;
     this.roster = cfg.roster;
+    this.spectator = !cfg.roster.some((r) => r.id === mySeat);
     this.epoch = cfg.epoch;
     this.hostSeat = cfg.host;
     this.world = new World({ mapId: cfg.map, modeId: cfg.mode, seconds: cfg.seconds, seed: cfg.seed });
@@ -84,7 +87,7 @@ export class GuestSource implements MatchSource {
   }
 
   tick(input: Input): void {
-    if (this.ended) return;
+    if (this.ended || this.spectator) return;
     this.pending.push(input);
     if (this.pending.length > 180) this.pending.shift();
     this.world.stepLocal(this.myId, input);

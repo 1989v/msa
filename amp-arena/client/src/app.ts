@@ -37,6 +37,7 @@ const SECONDS_OPTS: [string, string][] = [['120', '2분'], ['180', '3분'], ['30
 export class App {
   private root: HTMLElement;
   private nick: string;
+  private spectate = false; // 관전으로 참가 — 명단에서 빠지고 남을 따라 본다
   private acc: AccessoryId = 'none';
   private style: StyleId = 'fighter';
   private team = -1;
@@ -194,7 +195,7 @@ export class App {
   // ---------------- 온라인 ----------------
   private async connectOnline(): Promise<void> {
     if (this.online?.connected) { this.showLobby(); return; }
-    const online = new Online(this.nick, { acc: this.acc, style: this.style, team: this.team }, this.settings, {
+    const online = new Online(this.nick, { acc: this.acc, style: this.style, team: this.team, spectate: this.spectate }, this.settings, {
       onState: () => { if (this.view === 'room') this.showRoom(); },
       onMatch: (src) => this.onMatch(src),
       onRoundEnd: () => { this.disposeMatch(); this.showRoom(); },
@@ -257,6 +258,7 @@ export class App {
           <div class="row" style="justify-content:center;flex-wrap:wrap;gap:6px"><span class="chip">${STYLES[this.style].name}</span><span class="chip">${ACCESSORIES[this.acc].name}</span></div>
           <span class="label">매치 설정 · 내가 방장일 때 적용</span>
           ${this.settingsForm('settings-form', this.settings, true)}
+          <label class="row" style="gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" class="spectate" ${this.spectate ? 'checked' : ''}> 관전으로 참가 — 싸우지 않고 본다 (Tab 으로 대상 전환)</label>
           <button class="btn ghost back">${icon('door', 18)}타이틀로</button>
         </div>
         <div class="center">
@@ -283,6 +285,7 @@ export class App {
     const applySettings = () => { this.settings = this.readSettings(el); online.setSettings(this.settings); };
     for (const c of ['.rmode', '.rmap', '.rsec', '.rbots']) (el.querySelector(c) as HTMLSelectElement).onchange = applySettings;
     const busy = (b: HTMLButtonElement, on: boolean) => { b.disabled = on; };
+    (el.querySelector('.spectate') as HTMLInputElement).onchange = (e) => { this.spectate = (e.target as HTMLInputElement).checked; online.setPick({ spectate: this.spectate }); };
     (el.querySelector('.quick') as HTMLButtonElement).onclick = async (ev) => {
       const b = ev.currentTarget as HTMLButtonElement; busy(b, true); applySettings();
       const ok = await online.quick(); busy(b, false);
@@ -321,7 +324,7 @@ export class App {
       const me = i === st.mySeat;
       const pick = s.pick;
       const team = teams ? (pick && pick.team >= 0 ? pick.team : -1) : -1;
-      const status = i === host ? '<span class="chip amp">방장</span>' : '<span class="chip green">참가</span>';
+      const status = (i === host ? '<span class="chip amp">방장</span>' : '') + (pick?.spectate ? '<span class="chip">관전</span>' : i === host ? '' : '<span class="chip green">참가</span>');
       return `<div class="slot ${team === 0 ? 'red' : team === 1 ? 'blue' : ''}">
         <span class="tag" style="color:${team === 0 ? 'var(--red)' : team === 1 ? 'var(--blue)' : 'var(--dim)'}">${team === 0 ? '레드' : team === 1 ? '블루' : teams ? '자동' : '슬롯'} ${i + 1}</span>
         ${i === host ? `<span class="crown">${icon('crown', 18, 'var(--amp)', 2.4)}</span>` : ''}

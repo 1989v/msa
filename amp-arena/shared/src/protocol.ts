@@ -20,10 +20,12 @@ export interface MatchConfig {
   seconds: number;
   seed: number;
   roster: RosterEntry[];
+  /** 관전 좌석 — 명단에 없고 스냅샷만 받는다 (2026-09-12) */
+  spectators?: number[];
 }
 
 /** 대기실에서 서로에게 알리는 내 선택. 방을 만들 때 정한 매치 설정은 방장 것만 의미가 있다. */
-export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: number }
+export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: number; spectate?: boolean } // spectate: 싸우지 않고 본다 — 명단에서 빠진다
 export interface RoomSettings { map: MapId; mode: ModeId; seconds: number; fillBots: boolean }
 
 /** 게스트 → 방장 (`to` 지정) 또는 방 전체 브로드캐스트 */

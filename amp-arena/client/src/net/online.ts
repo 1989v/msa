@@ -6,6 +6,7 @@ import {
 } from '@amp/shared';
 import { RelayClient, type RelayIn } from './relay.ts';
 import { GuestSource, type HostChannel } from './guestsource.ts';
+import { buildRoster } from './roster.ts';
 import type { WorkerIn, WorkerOut } from './authority.worker.ts';
 
 export interface SeatInfo { seat: number; name: string; pick: Pick | null; settings: RoomSettings | null }
@@ -28,7 +29,6 @@ export interface OnlineHooks {
   onDisconnect: () => void;
 }
 
-const BOT_NAMES = ['봇-알파', '봇-브라보', '봇-찰리', '봇-델타', '봇-에코', '봇-폭스', '봇-골프', '봇-호텔'];
 const CFG_WAIT_MS = 1200;    // 방장이 hi 를 못 받은 좌석을 기다리는 시간
 const CFG_TIMEOUT_MS = 6000; // 게스트가 cfg 를 기다리는 시간
 const HOST_DELAY_MIN = 33, HOST_DELAY_MAX = 150;
@@ -334,28 +334,8 @@ export class Online {
   private buildConfig(occ: number[], seed: number, epoch: number): MatchConfig {
     const mine = this.state.seats[this.state.mySeat];
     const settings = mine?.settings ?? this.settings;
-    const teams = MODES[settings.mode].teams;
-    const count = [0, 0];
-    const roster: RosterEntry[] = [];
-    for (const seat of occ) {
-      const s = this.state.seats[seat];
-      const pick = s?.pick;
-      const team = teams ? (pick && pick.team >= 0 ? pick.team : (count[0] <= count[1] ? 0 : 1)) : 0;
-      count[team]++;
-      roster.push({ id: seat, name: s?.name ?? `${seat + 1}번`, team, acc: pick?.acc ?? 'none', style: pick?.style ?? 'fighter', bot: false });
-    }
-    if (settings.fillBots) {
-      const rng = makeRng(seed ^ 0x5bd1e995); // 봇 장비는 매치 시드로 무작위 — 게스트도 cfg 로 같은 값을 받는다
-      for (let i = 0; i < MAX_PLAYERS; i++) {
-        if (occ.includes(i)) continue;
-        const team = teams ? (count[0] <= count[1] ? 0 : 1) : 0;
-        count[team]++;
-        const { style, acc } = randomLoadout(rng);
-        roster.push({ id: i, name: BOT_NAMES[i], team, acc, style, bot: true });
-      }
-    }
-    roster.sort((a, b) => a.id - b.id);
-    return { epoch, host: this.state.mySeat, map: settings.map in MAPS ? settings.map : 'colosseum', mode: settings.mode, seconds: settings.seconds, seed, roster };
+    const { roster, spectators } = buildRoster(occ, this.state.seats, settings, seed);
+    return { epoch, host: this.state.mySeat, map: settings.map in MAPS ? settings.map : 'colosseum', mode: settings.mode, seconds: settings.seconds, seed, roster, spectators };
   }
 
   private applyConfig(cfg: MatchConfig): void {
@@ -368,7 +348,7 @@ export class Online {
     const src = new GuestSource(this.channel, cfg, this.state.mySeat);
     this.source = src;
     if (cfg.host === this.state.mySeat) this.becomeHost(null);
-    else src.info = `게스트 · 방장 ${this.seatName(cfg.host)}`;
+    else src.info = `${src.spectator ? '관전' : '게스트'} · 방장 ${this.seatName(cfg.host)}`;
     this.hooks.onMatch(src);
     this.hooks.onState();
   }

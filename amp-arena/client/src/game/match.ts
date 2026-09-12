@@ -12,7 +12,7 @@ import { toggleFullscreen, isFullscreen } from '../ui/fullscreen.ts';
 
 /** E2E·디버그용 창 훅: 월드 조회와 오토파일럿(봇 AI 가 내 캐릭터를 조종) */
 interface DebugHook {
-  source: MatchSource; lastInput: Input | null; autopilot: boolean;
+  source: MatchSource; lastInput: Input | null; autopilot: boolean; spectating: () => number;
   /** 카메라 위치·요 — 운영에서 「내려다보는 고정 요」를 수치로 확인한다 */
   camera: () => { x: number; y: number; z: number; yaw: number };
   /** 리그의 현재(보간된) 포즈 — 타격 때 팔·다리가 뻗었는지 */
@@ -37,6 +37,8 @@ export interface MatchSource {
   rtt: number | null;
   /** HUD 에 붙는 짧은 상태 (온라인: 방장/게스트, 입력 지연) */
   info?: string | null;
+  /** 관전: 내 캐릭터가 없다 — 카메라는 남을 따라간다 (Tab 으로 전환) */
+  readonly spectator?: boolean;
   dispose(): void;
 }
 
@@ -66,6 +68,8 @@ export class Match {
   private prevGrounded = new Map<number, boolean>();
   private prevState = new Map<number, PState>();
   private nameOf = new Map<number, string>();
+  /** 관전 대상 플레이어 id (관전이 아니면 -1) */
+  private followId = -1;
   private stats = { frames: 0, slow: 0, t0: performance.now(), worst: 0 };
   private source: MatchSource;
   private opts: MatchOptions;
@@ -75,7 +79,21 @@ export class Match {
   private counterUntil = 0; // 가드로 막은 뒤 반격 창 안내가 보이는 시각
   private debug: DebugHook;
   private autoMem: BotMemory | null = null;
-  private onKey = (e: KeyboardEvent): void => { if (e.code === 'KeyM' && !(document.activeElement && document.activeElement.tagName === 'INPUT')) { const m = audio.toggleMute(); this.hud.pushFeed(`<span class="muted">효과음 ${m ? '끔' : '켬'} (M)</span>`); } };
+  private onKey = (e: KeyboardEvent): void => {
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+    if (e.code === 'KeyM') { const m = audio.toggleMute(); this.hud.pushFeed(`<span class="muted">효과음 ${m ? '끔' : '켬'} (M)</span>`); }
+    if (e.code === 'Tab' && this.followId >= 0) { e.preventDefault(); this.followId = this.nextFollow(this.followId, e.shiftKey ? -1 : 1); }
+  };
+
+  /** 관전 대상: 살아 있는 플레이어 중 다음/이전 (없으면 아무나) */
+  private nextFollow(from: number, dir: 1 | -1): number {
+    const ids = this.source.world.players.filter((p): p is Player => !!p).map((p) => p.id);
+    if (!ids.length) return -1;
+    const alive = ids.filter((id) => this.source.world.players[id]!.alive);
+    const pool = alive.length ? alive : ids;
+    const i = pool.indexOf(from);
+    return pool[(i < 0 ? (dir > 0 ? 0 : pool.length - 1) : (i + dir + pool.length) % pool.length)];
+  }
 
   constructor(container: HTMLElement, source: MatchSource, opts: MatchOptions) {
     this.source = source;
@@ -95,7 +113,7 @@ export class Match {
     const me = source.world.players[source.myId];
     if (me) this.renderer.resetCamera(me.yaw);
     this.debug = {
-      source, lastInput: null, autopilot: new URLSearchParams(location.search).get('autopilot') === '1',
+      source, lastInput: null, autopilot: new URLSearchParams(location.search).get('autopilot') === '1', spectating: () => this.followId,
       camera: () => { const c = this.renderer.camera.position; return { x: c.x, y: c.y, z: c.z, yaw: this.renderer.camYaw }; },
       pose: (id) => { const r = this.renderer.rigs.get(id); if (!r) return null; const p = r.currentPose; return { nearArm: [...p.nearArm], farArm: [...p.farArm], nearLeg: [...p.nearLeg], reach: p.reach, lean: p.lean }; },
     };
@@ -109,6 +127,12 @@ export class Match {
     document.addEventListener('fullscreenchange', () => { fs.textContent = isFullscreen() ? '⤢ 전체화면 해제' : '⤢ 전체화면'; });
     this.el.appendChild(fs);
     if (this.input.hasTouch) this.el.classList.add('touch'); // 세로 기기는 orient.ts 가 뿌리를 돌려 가로로 만든다
+    if (source.spectator) {
+      // 관전: 사람 먼저, 없으면 첫 플레이어. 체력판·기술판은 감춘다
+      this.el.classList.add('spectator');
+      const human = source.roster.find((r) => !r.bot);
+      this.followId = human ? human.id : this.nextFollow(-1, 1);
+    }
     this.raf = requestAnimationFrame(this.loop);
   }
 
@@ -166,7 +190,7 @@ export class Match {
       if (rp.id === src.myId && ps !== rp.state && (rp.state === 'attack' || rp.state === 'special' || rp.state === 'dashAttack' || rp.state === 'jumpAttack')) audio.play('whoosh');
       this.prevGrounded.set(rp.id, rp.grounded);
       this.prevState.set(rp.id, rp.state);
-      if (rp.id === src.myId) meView = rp;
+      if (rp.id === (this.followId >= 0 ? this.followId : src.myId)) meView = rp;
     }
     for (const ev of src.drainEvents()) this.onEvent(ev);
     this.renderer.updateProjectiles(world.projectiles);
@@ -191,7 +215,11 @@ export class Match {
       if (left !== this.lastCountdown && left > 0 && left <= 3) { this.lastCountdown = left; audio.play('tick'); }
     } else if (this.lastCountdown !== -2 && world.phase === 'play') { this.lastCountdown = -2; audio.play('go'); }
     const plates = players.map((rp) => { const s = this.renderer.project(rp.x, rp.y + 1.9, rp.z); return { id: rp.id, x: s.x, y: s.y, visible: s.visible }; });
-    if (meView) {
+    if (this.followId >= 0) {
+      const fp = world.players[this.followId];
+      if (!fp || !fp.alive) this.followId = this.nextFollow(this.followId, 1); // 대상이 죽거나 나가면 다음 사람
+      this.hud.setPrompt(`관전 · ${this.nameOf.get(this.followId) ?? ''}${this.input.hasTouch ? '' : ' · Tab 전환'}`);
+    } else if (meView) {
       const me = world.players[src.myId];
       let near = false;
       if (me && me.holding < 0) for (const it of world.items) { if (it.kind !== 'heart' && it.heldBy < 0 && !it.airborne && Math.abs(it.y - me.pos.y) <= 1.5 && Math.hypot(it.x - me.pos.x, it.z - me.pos.z) < PICKUP_RANGE) { near = true; break; } }

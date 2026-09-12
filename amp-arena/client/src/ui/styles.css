@@ -194,3 +194,5 @@ input, select { font-family: var(--font); }
 /* 매치 안 전체화면 토글 — 우하단 기술 카드 위 */
 .match .fsbtn { position: absolute; right: 16px; top: 232px; height: 30px; font-size: 12px; padding: 0 10px; opacity: 0.8; z-index: 5; }
 .match.touch .fsbtn { top: auto; bottom: 270px; right: 16px; }
+/* 관전: 내 캐릭터가 없으니 체력판·기술판을 감춘다 (2026-09-12) */
+.match.spectator .hud .plate, .match.spectator .hud .skill { display: none; }
