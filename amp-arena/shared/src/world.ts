@@ -54,6 +54,10 @@ export class World implements SimContext {
   nextItemId = 1;
   crateTimers: number[] = [];
   barrelTimers: number[] = [];
+  /** 지연 보상(틱) — 플레이어별. 방장이 왕복 지연으로 정한다. 0 이면(연습·게스트 예측) 현재 위치로 판정한다 */
+  latency: number[] = [];
+  /** 최근 HISTORY_TICKS 틱의 위치 고리 — [id][tick % HISTORY_TICKS] = {tick, x, y, z} */
+  private hist: ({ tick: number; x: number; y: number; z: number } | undefined)[][] = [];
   events: WorldEvent[] = [];
   rng: () => number;
   score: [number, number] = [0, 0];
@@ -128,6 +132,7 @@ export class World implements SimContext {
     }
     this.syncHeld();
     this.separatePlayers();
+    this.recordHistory();
     if (this.phase === 'play') {
       this.resolveHits();
       this.stepProjectiles();
@@ -136,6 +141,29 @@ export class World implements SimContext {
     this.handleDeaths();
     if (this.phase === 'play') this.checkEnd();
     return this.events;
+  }
+
+  private recordHistory(): void {
+    for (const p of this.players) {
+      if (!p) continue;
+      const ring = this.hist[p.id] ?? (this.hist[p.id] = new Array(C.HISTORY_TICKS));
+      ring[this.tick % C.HISTORY_TICKS] = { tick: this.tick, x: p.pos.x, y: p.pos.y, z: p.pos.z };
+    }
+  }
+
+  /** ticksAgo 틱 전의 위치 (기록이 없으면 지금 위치). 지연 보상용 — 공격자가 봤던 시점의 상대 위치 */
+  posAgo(p: Player, ticksAgo: number): { x: number; y: number; z: number } {
+    const n = Math.min(Math.max(0, Math.round(ticksAgo)), C.LAG_COMP_MAX_TICKS);
+    if (n <= 0) return p.pos;
+    const want = this.tick - n;
+    const ring = this.hist[p.id];
+    if (!ring) return p.pos;
+    const e = ring[((want % C.HISTORY_TICKS) + C.HISTORY_TICKS) % C.HISTORY_TICKS];
+    if (e && e.tick === want) return e;
+    // 그 틱 기록이 없으면(막 들어온 플레이어) 가장 오래된 기록으로
+    let oldest: { tick: number; x: number; y: number; z: number } | undefined;
+    for (const r of ring) if (r && (!oldest || r.tick < oldest.tick)) oldest = r;
+    return oldest ?? p.pos;
   }
 
   /** 클라 예측: 내 캐릭터만 한 틱 돌린다 (판정 없음). */
@@ -255,13 +283,15 @@ export class World implements SimContext {
       const cy = a.pos.y + (a.state === 'jumpAttack' ? 0.3 : C.HIT_HEIGHT);
       const rr = (m.radius + C.BODY_RADIUS) ** 2;
       const arcCos = m.arcDeg >= 360 ? -2 : Math.cos((m.arcDeg / 2) * (Math.PI / 180));
+      const lag = this.latency[a.id] ?? 0; // 지연 보상: 상대는 공격자가 봤던 시점(왕복 지연 + 보간 지연)의 위치로 판정한다
       for (const v of this.players) {
         if (!v || v === a || !canBeHit(v) || (a.hitMask & (1 << v.id)) !== 0) continue;
         if ((v.state === 'launched' || v.state === 'thrown') && v.juggled) continue;
-        const dx = v.pos.x - cx, dy = v.pos.y + C.BODY_HEIGHT - cy, dz = v.pos.z - cz;
+        const vp = lag > 0 ? this.posAgo(v, lag) : v.pos;
+        const dx = vp.x - cx, dy = vp.y + C.BODY_HEIGHT - cy, dz = vp.z - cz;
         if (dx * dx + dy * dy + dz * dz > rr) continue;
         if (arcCos > -2) {
-          const ddx = v.pos.x - a.pos.x, ddz = v.pos.z - a.pos.z;
+          const ddx = vp.x - a.pos.x, ddz = vp.z - a.pos.z;
           const d = Math.hypot(ddx, ddz);
           if (d > 1e-6 && (ddx * fx + ddz * fz) / d < arcCos) continue;
         }

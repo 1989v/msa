@@ -7,6 +7,7 @@ export type WorkerIn =
   | { t: 'init'; init: AuthorityInit }
   | { t: 'in'; seat: number; inputs: unknown[] }
   | { t: 'left'; seat: number }
+  | { t: 'lat'; seat: number; rttMs: number }
   | { t: 'stop' };
 export type WorkerOut =
   | { t: 'out'; m: HostMsg }
@@ -57,6 +58,7 @@ ctx.onmessage = (ev: MessageEvent<WorkerIn>) => {
       break;
     case 'in': auth?.input(m.seat, m.inputs); break;
     case 'left': auth?.left(m.seat); break;
+    case 'lat': auth?.setLatency(m.seat, m.rttMs); break;
     case 'stop': stop(); break;
   }
 };

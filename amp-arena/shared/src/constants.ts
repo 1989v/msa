@@ -1,6 +1,11 @@
 // 시뮬레이션 상수 — 기획서(docs/GDD.md) §5·§6·§10 의 숫자가 여기 한 곳에 있다.
 export const TICK_RATE = 60;
 export const DT = 1 / TICK_RATE;
+/** 게스트가 남을 그리는 지연(틱) — 스냅샷 두 장 사이를 보간하려고 이만큼 뒤를 그린다 */
+export const INTERP_TICKS = 6;
+/** 지연 보상: 방장이 플레이어 위치를 이만큼(틱) 기억해 두고, 타격 판정은 공격자가 「봤던 시점」의 상대 위치로 한다 */
+export const HISTORY_TICKS = 20;
+export const LAG_COMP_MAX_TICKS = HISTORY_TICKS - 1;
 export const SNAPSHOT_EVERY = 6; // 10Hz — 릴레이 상한(40 msg/s) 안에서 게스트 입력 20Hz 와 같이 쓴다
 
 export const GRAVITY = 18;

@@ -389,6 +389,7 @@ export class Online {
     };
     worker.postMessage({ t: 'init', init: { cfg, resume, gone: [...this.gone] } } satisfies WorkerIn);
     src.setChannel(loop);
+    if (resume) src.resendPending(); // 승계: 옛 방장이 못 본 내 입력을 내 워커에 넣는다
     src.info = '방장';
     // 게스트 왕복을 재서 내 입력 지연을 맞춘다 (사람이 없으면 0)
     this.hostPingTimer = setInterval(() => {
@@ -397,6 +398,9 @@ export class Online {
       const target = rtts.length ? Math.min(HOST_DELAY_MAX, Math.max(HOST_DELAY_MIN, rtts[Math.floor(rtts.length / 2)] / 2)) : 0;
       const cur = loop.delayMs;
       loop.delayMs = cur + Math.max(-16, Math.min(16, target - cur));
+      // 지연 보상: 좌석별 왕복 지연을 워커에 알린다. 내 것은 루프백 지연의 두 배(가고 오고)
+      for (const [seat, rtt] of this.guestRtt) if (this.occupied().includes(seat)) worker.postMessage({ t: 'lat', seat, rttMs: rtt } satisfies WorkerIn);
+      worker.postMessage({ t: 'lat', seat: this.state.mySeat, rttMs: loop.delayMs * 2 } satisfies WorkerIn);
       src.info = `방장 · 입력 지연 ${Math.round(loop.delayMs)}ms (${rtts.length}명 기준)`;
     }, 2000);
   }

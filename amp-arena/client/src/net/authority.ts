@@ -2,7 +2,7 @@
 // DOM 에 기대지 않아 워커 안에서도, 테스트(node)에서도 돈다.
 import {
   World, botInput, newBotMemory, encodeSnapshot, applySnapshot, makeRng, sanitizeInput,
-  MAX_PLAYERS, SNAPSHOT_EVERY, RELAY_SAFE_CHARS,
+  MAX_PLAYERS, SNAPSHOT_EVERY, RELAY_SAFE_CHARS, TICK_RATE, INTERP_TICKS, LAG_COMP_MAX_TICKS,
   type Input, type BotMemory, type WorldEvent, type Snapshot, type MatchConfig, type HostMsg,
 } from '@amp/shared';
 
@@ -16,6 +16,12 @@ export interface AuthorityInit {
 
 const MAX_EVENTS_PER_SNAPSHOT = 24;
 const QUEUE_MAX = 30;
+
+/** 왕복 지연 → 지연 보상 틱. 게스트가 남을 보는 시점은 「스냅샷 편도 + 보간 지연」 뒤이고 입력이 오는 데 편도가 더 걸리므로 왕복 + 보간이다 */
+export function latencyTicksFor(rttMs: number): number {
+  if (!(rttMs > 0)) return 0;
+  return Math.min(LAG_COMP_MAX_TICKS, Math.round((rttMs / 1000) * TICK_RATE) + INTERP_TICKS);
+}
 
 export class Authority {
   readonly world: World;
@@ -67,7 +73,14 @@ export class Authority {
     if (q.length > QUEUE_MAX) q.splice(0, q.length - QUEUE_MAX);
   }
 
+  /** 좌석의 왕복 지연(ms) — 방장이 2초마다 잰다. 그 좌석의 타격 판정을 그만큼 되감는다 */
+  setLatency(seat: number, rttMs: number): void {
+    if (seat < 0 || seat >= MAX_PLAYERS || this.bots.has(seat)) return;
+    this.world.latency[seat] = latencyTicksFor(rttMs);
+  }
+
   left(seat: number): void {
+    this.world.latency[seat] = 0;
     this.world.removePlayer(seat);
     this.queues[seat] = [];
     this.bots.delete(seat);

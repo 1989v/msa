@@ -1,11 +1,12 @@
 // 온라인 매치의 게스트 쪽: 내 캐릭터는 예측(입력 즉시 시뮬 + 스냅샷 되감기·재실행), 남은 캐릭터는 100ms 지연 보간.
 // 방장도 자기 권위 시뮬의 게스트로 이 코드를 그대로 쓴다(루프백 채널) — 그래서 방장과 게스트의 체감이 같다.
 import {
-  World, applySnapshot, decodePlayer, createPlayer, STATE_IDS, MOVE_IDS, TICK_RATE, lerpAngle,
+  World, applySnapshot, decodePlayer, createPlayer, STATE_IDS, MOVE_IDS, TICK_RATE, lerpAngle, INTERP_TICKS as SHARED_INTERP_TICKS,
   type Input, type WorldEvent, type RankEntry, type RosterEntry, type Snapshot, type PlayerSnap, type PState, type MoveId,
   type MatchConfig, type GuestMsg, type HostMsg,
 } from '@amp/shared';
 import { type MatchSource, type RenderPlayer, renderFromPlayer } from '../game/match.ts';
+import { resendChunks } from './recover.ts';
 
 /** 게스트가 방장에게 닿는 길. 릴레이(게스트) 또는 루프백(방장 자신). */
 export interface HostChannel {
@@ -13,7 +14,7 @@ export interface HostChannel {
   on(h: (d: HostMsg) => void): () => void;
 }
 
-const INTERP_TICKS = 6; // 100ms
+const INTERP_TICKS = SHARED_INTERP_TICKS; // 100ms — 방장의 지연 보상(authority.ts)도 같은 값을 더한다
 const ERR_IGNORE = 0.01, ERR_SNAP = 3;
 const SEND_EVERY = 3; // 입력 3틱마다 한 번 = 20Hz (릴레이 40 msg/s 의 절반)
 
@@ -65,12 +66,21 @@ export class GuestSource implements MatchSource {
     this.off = channel.on((d) => this.onMsg(d));
   }
 
-  /** 방장이 바뀌었다 — 옛 방장의 스냅샷은 버리고 새 세대의 첫 스냅샷에 맞춘다 */
+  /** 방장이 바뀌었다 — 옛 방장의 스냅샷은 버리고 새 세대의 첫 스냅샷에 맞춘다. 게스트면 아직 반영 안 된 입력을 새 방장에게 다시 보낸다 */
   onHostChange(epoch: number, host: number): void {
     if (epoch <= this.epoch && host === this.hostSeat) return;
     this.epoch = Math.max(this.epoch, epoch);
     this.hostSeat = host;
     this.resetInterp();
+    if (host !== this.myId) this.resendPending();
+  }
+
+  /** ack 뒤의 입력을 지금 채널로 다시 보낸다 (승계: 게스트는 릴레이로, 새 방장은 루프백을 끼운 뒤 자기 워커로) */
+  resendPending(): void {
+    if (this.ended) return;
+    const chunks = resendChunks(this.pending, this.ack);
+    for (const c of chunks) this.channel.send({ t: 'i', inputs: c });
+    if (chunks.length) console.log(`[net] 승계 재전송 · 입력 ${chunks.reduce((n, c) => n + c.length, 0)}개 (${chunks.length}묶음) · ack ${this.ack}`);
   }
 
   tick(input: Input): void {
