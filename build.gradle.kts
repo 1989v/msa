@@ -755,6 +755,42 @@ val verifyPodTopology by tasks.registering {
                 }
             }
 
+        // 위 검사는 `kgd.io/host-of` 를 단 정책에만 걸린다 — 19개 중 1개만 달고 있다.
+        // 주석을 손으로 붙이는 구조라 안 붙인 정책은 검사 밖이고, 그게 이 결함이 세 번
+        // 재발한 이유다. 이쪽은 옵트인이 아니다: 정책이 고르는 이름은 **매니페스트가 실제로
+        // 파드에 붙이는 라벨**이어야 한다. 사라진 파드를 가리키는 정책은 열어야 할 것을 안 연다.
+        val labeledPodNames: Set<String> = listOf("k8s/base", "k8s/infra", "k8s/overlays")
+            .map(rootProject::file)
+            .filter(File::exists)
+            .flatMap { base ->
+                base.walkTopDown()
+                    .filter { it.isFile && it.extension in setOf("yaml", "yml") }
+                    .filterNot { it.path.contains("network-policy") }
+                    .map { it.readText() }
+                    .filter { Regex("kind:\\s*(Deployment|StatefulSet|CronJob|Job|DaemonSet)").containsMatchIn(it) }
+                    .flatMap { text ->
+                        Regex("app\\.kubernetes\\.io/name:\\s*(\\S+)").findAll(text).map { it.groupValues[1] }
+                    }
+                    .toList()
+            }
+            .toSet()
+
+        rootProject.file("k8s/base/network-policy").listFiles()
+            ?.filter { it.isFile && it.extension == "yaml" }
+            ?.sortedBy { it.name }
+            ?.forEach { policy ->
+                Regex("app\\.kubernetes\\.io/name:\\s*(\\S+)").findAll(policy.readText())
+                    .map { it.groupValues[1] }
+                    .toSet()
+                    .filterNot { it in labeledPodNames }
+                    .sorted()
+                    .forEach { name ->
+                        failures += "${policy.name}: '$name' 을 고르는데 그 이름을 파드에 붙이는 " +
+                            "워크로드가 매니페스트에 없다 — NetworkPolicy 는 아무것도 고르지 못해도 " +
+                            "에러를 내지 않는다(열어야 할 것을 조용히 안 연다)"
+                    }
+            }
+
         // 반대 방향 — 대시보드가 없는 파드를 세고 있으면 영원히 DOWN 이다.
         Regex("\\{ name: '([a-z0-9-]+)'").findAll(adminHealthList).map { it.groupValues[1] }
             .filterNot { it in residentPods }
