@@ -4,8 +4,28 @@ using UnityEngine;
 namespace Kgd.Art
 {
     /// <summary>
-    /// 박스·프리즘을 쌓아 메시 하나를 만든다. 면마다 밝기를 달리 실어 조명이 없어도
-    /// 3톤 이상이 나오게 한다 — 단색 도형은 개체로 안 읽힌다.
+    /// 아틀라스 한 칸을 가리키는 표면. <see cref="KgdMesh.Use"/> 로 걸어 두면 그 뒤에 그리는
+    /// 도형이 전부 그 무늬를 쓴다.
+    ///
+    /// <para><b>Scale 은 월드 1 유닛이 무늬 몇 번인가</b>이다 — 도형 크기가 아니라 월드 길이로
+    /// 재므로 큰 벽과 작은 상자가 같은 결을 갖는다. 도형마다 0..1 로 펴면 큰 면에서 무늬가
+    /// 늘어나 뭉개진다.</para>
+    /// </summary>
+    public struct KgdSurface
+    {
+        public Vector2 Tile;
+        public float Scale;
+
+        public KgdSurface(Vector2 tile, float scale) { Tile = tile; Scale = scale; }
+
+        /// <summary>무늬 없음 — 아틀라스 0번 칸(민무늬)을 한 점만 읽는다.</summary>
+        public static readonly KgdSurface None = new(Vector2.zero, 0f);
+    }
+
+    /// <summary>
+    /// 도형을 쌓아 메시 하나를 만든다. 정점마다 색·법선·**UV·탄젠트**를 싣는다 —
+    /// UV 가 없으면 셰이더의 텍스처 슬롯이 살아 있어도 모든 정점이 같은 텍셀 하나를 읽어
+    /// 표면이 통째로 단색 판이 된다(실제로 그 상태로 오래 돌았다).
     ///
     /// **게임이 상속해서 이름만 바꿔 쓸 수 있다** — 호출부가 수백 군데라 타입 이름을
     /// 바꾸면 그만큼 고쳐야 한다. 로직은 여기 한 벌만 둔다.
@@ -15,12 +35,41 @@ namespace Kgd.Art
         private readonly List<Vector3> _v = new();
         private readonly List<Vector3> _n = new();
         private readonly List<Color> _c = new();
+        private readonly List<Vector2> _uv = new();
+        private readonly List<Vector2> _tile = new();
+        private readonly List<Vector4> _tan = new();
         private readonly List<int> _t = new();
+
+        private KgdSurface _surf = KgdSurface.None;
 
         public int VertexCount => _v.Count;
 
+        /// <summary>지금까지 넣은 정점 수. <see cref="Shade"/> 의 시작점으로 쓴다.</summary>
+        public int Mark => _v.Count;
+
         /// <summary>면 밝기 — 위 / 아래 / 옆 네 방향. 태양이 위에서 비스듬히 오는 것을 흉내낸다.</summary>
         private static readonly float[] FaceShade = { 1.00f, 0.86f, 1.14f, 0.62f, 0.92f, 0.78f };
+
+        /// <summary>이 뒤로 그리는 도형의 표면 무늬를 정한다.</summary>
+        public KgdMesh Use(KgdSurface surface) { _surf = surface; return this; }
+
+        /// <summary>
+        /// 밑동을 어둡게 깎는다 — 형태가 부피로 읽히게 하는 가장 싼 수단이다.
+        /// 방향광 하나로는 아래위가 같은 밝기라 도형이 판으로 보인다.
+        /// </summary>
+        /// <param name="from"><see cref="Mark"/> 로 받아 둔 시작 정점.</param>
+        public KgdMesh Shade(int from, float baseY, float span, float strength)
+        {
+            if (span <= 0.0001f) return this;
+            for (int i = Mathf.Max(0, from); i < _c.Count; i++)
+            {
+                float k = Mathf.Clamp01((_v[i].y - baseY) / span);
+                float f = Mathf.Lerp(1f - strength, 1f, k);
+                var c = _c[i];
+                _c[i] = new Color(c.r * f, c.g * f, c.b * f, c.a);
+            }
+            return this;
+        }
 
         public KgdMesh Box(Vector3 center, Vector3 size, Color color, float glow = 0f)
             => Box(center, size, Quaternion.identity, color, glow);
@@ -46,10 +95,11 @@ namespace Kgd.Art
                 Color shaded = color * FaceShade[f];
                 shaded.a = glow;
 
-                AddVert(center + rot * (nn - nu - nw), rot * n, shaded);
-                AddVert(center + rot * (nn + nu - nw), rot * n, shaded);
-                AddVert(center + rot * (nn + nu + nw), rot * n, shaded);
-                AddVert(center + rot * (nn - nu + nw), rot * n, shaded);
+                Vector3 wu = rot * u, ww = rot * w, wn = rot * n;
+                AddPlanar(center + rot * (nn - nu - nw), wn, shaded, wu, ww);
+                AddPlanar(center + rot * (nn + nu - nw), wn, shaded, wu, ww);
+                AddPlanar(center + rot * (nn + nu + nw), wn, shaded, wu, ww);
+                AddPlanar(center + rot * (nn - nu + nw), wn, shaded, wu, ww);
 
                 _t.Add(b); _t.Add(b + 2); _t.Add(b + 1);
                 _t.Add(b); _t.Add(b + 3); _t.Add(b + 2);
@@ -81,13 +131,14 @@ namespace Kgd.Art
             {
                 int j = (i + 1) % 4;
                 Vector3 n = Vector3.Cross(topRing[i] - bottomRing[i], bottomRing[j] - bottomRing[i]).normalized;
+                Vector3 tanDir = (bottomRing[j] - bottomRing[i]).normalized;
                 Color shaded = color * (0.72f + 0.14f * i);
                 shaded.a = glow;
                 int b = _v.Count;
-                AddVert(bottomRing[i], n, shaded);
-                AddVert(bottomRing[j], n, shaded);
-                AddVert(topRing[j], n, shaded);
-                AddVert(topRing[i], n, shaded);
+                AddPlanar(bottomRing[i], n, shaded, tanDir, axis);
+                AddPlanar(bottomRing[j], n, shaded, tanDir, axis);
+                AddPlanar(topRing[j], n, shaded, tanDir, axis);
+                AddPlanar(topRing[i], n, shaded, tanDir, axis);
                 _t.Add(b); _t.Add(b + 2); _t.Add(b + 1);
                 _t.Add(b); _t.Add(b + 3); _t.Add(b + 2);
             }
@@ -96,64 +147,79 @@ namespace Kgd.Art
             int cap = _v.Count;
             Color capColor = color * 1.14f;
             capColor.a = glow;
-            for (int i = 0; i < 4; i++) AddVert(topRing[i], axis, capColor);
+            for (int i = 0; i < 4; i++) AddPlanar(topRing[i], axis, capColor, side, fwd);
             _t.Add(cap); _t.Add(cap + 2); _t.Add(cap + 1);
             _t.Add(cap); _t.Add(cap + 3); _t.Add(cap + 2);
             return this;
         }
 
-        /// <summary>지면에 눕는 사각형 — 표식·장판·그림자 대용.</summary>
         /// <summary>
         /// 네 꼭짓점이 제각각인 면 하나(a→b→c→d, 시계 반대). 비탈처럼 **기울고 폭이 변하는**
         /// 면에 쓴다 — 상자를 여러 개 쌓아 흉내 내면 층마다 턱과 밝기 차가 생겨 격자무늬가 된다.
         /// </summary>
         public KgdMesh Face(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color, float glow = 0f)
         {
-            Vector3 n = Vector3.Cross(b - a, d - a).normalized;
+            // **퇴화 사각형을 견딘다.** 부채꼴을 (중심, p0, p1, 중심) 으로 그리면 d−a 가 0 이라
+            // 법선이 NaN 이 되고, 그 면은 화면에서 **하얗게 탄다** — 성문 앞마당이 지름 15 유닛짜리
+            // 흰 원으로 보이던 것이 이것이었다.
+            Vector3 e1 = b - a, e2 = d - a;
+            if (e2.sqrMagnitude < 1e-10f) e2 = c - b;
+            if (e1.sqrMagnitude < 1e-10f) e1 = c - d;
+            Vector3 n = Vector3.Cross(e1, e2).normalized;
+            if (n.sqrMagnitude < 0.5f) n = Vector3.up;
+            Vector3 u = e1.sqrMagnitude > 1e-8f ? e1.normalized : Vector3.right;
+            // **바닥면은 월드 축으로 편다.** 면이 제 모서리 방향을 축으로 쓰면 부채꼴·리본에서
+            // 면마다 무늬가 돌아, 성문 앞마당에 수레바퀴 살 같은 줄이 생긴다(실제로 그랬다).
+            if (Mathf.Abs(n.y) > 0.8f) u = Vector3.right;
+            Vector3 w = Vector3.Cross(n, u);
             var shaded = color;
             shaded.a = glow;
             int i = _v.Count;
-            AddVert(a, n, shaded);
-            AddVert(b, n, shaded);
-            AddVert(c, n, shaded);
-            AddVert(d, n, shaded);
+            AddPlanar(a, n, shaded, u, w);
+            AddPlanar(b, n, shaded, u, w);
+            AddPlanar(c, n, shaded, u, w);
+            AddPlanar(d, n, shaded, u, w);
             _t.Add(i); _t.Add(i + 1); _t.Add(i + 2);
             _t.Add(i); _t.Add(i + 2); _t.Add(i + 3);
             return this;
         }
 
+        /// <summary>지면에 눕는 사각형 — 표식·장판·그림자 대용.</summary>
         public KgdMesh Quad(Vector3 center, float width, float depth, Color color, float glow = 0f)
         {
             float hw = width * 0.5f, hd = depth * 0.5f;
             int b = _v.Count;
             Color c = color; c.a = glow;
-            AddVert(center + new Vector3(-hw, 0f, -hd), Vector3.up, c);
-            AddVert(center + new Vector3(hw, 0f, -hd), Vector3.up, c);
-            AddVert(center + new Vector3(hw, 0f, hd), Vector3.up, c);
-            AddVert(center + new Vector3(-hw, 0f, hd), Vector3.up, c);
+            AddPlanar(center + new Vector3(-hw, 0f, -hd), Vector3.up, c, Vector3.right, Vector3.forward);
+            AddPlanar(center + new Vector3(hw, 0f, -hd), Vector3.up, c, Vector3.right, Vector3.forward);
+            AddPlanar(center + new Vector3(hw, 0f, hd), Vector3.up, c, Vector3.right, Vector3.forward);
+            AddPlanar(center + new Vector3(-hw, 0f, hd), Vector3.up, c, Vector3.right, Vector3.forward);
             _t.Add(b); _t.Add(b + 2); _t.Add(b + 1);
             _t.Add(b); _t.Add(b + 3); _t.Add(b + 2);
             return this;
         }
 
-        /// <summary>지면에 눕는 고리 — 사거리·범위 표시.</summary>
+        /// <summary>지면에 눕는 고리 — 사거리·범위 표시. 무늬를 입히지 않는다.</summary>
         public KgdMesh Ring(Vector3 center, float radius, float thickness, Color color, int segments = 40,
                                float glow = 1f)
         {
             Color c = color; c.a = glow;
             float inner = radius - thickness * 0.5f, outer = radius + thickness * 0.5f;
+            var keep = _surf;
+            _surf = KgdSurface.None;
             for (int i = 0; i < segments; i++)
             {
                 float a0 = i / (float)segments * Mathf.PI * 2f;
                 float a1 = (i + 1) / (float)segments * Mathf.PI * 2f;
                 int b = _v.Count;
-                AddVert(center + new Vector3(Mathf.Cos(a0) * inner, 0f, Mathf.Sin(a0) * inner), Vector3.up, c);
-                AddVert(center + new Vector3(Mathf.Cos(a1) * inner, 0f, Mathf.Sin(a1) * inner), Vector3.up, c);
-                AddVert(center + new Vector3(Mathf.Cos(a1) * outer, 0f, Mathf.Sin(a1) * outer), Vector3.up, c);
-                AddVert(center + new Vector3(Mathf.Cos(a0) * outer, 0f, Mathf.Sin(a0) * outer), Vector3.up, c);
+                AddPlanar(center + new Vector3(Mathf.Cos(a0) * inner, 0f, Mathf.Sin(a0) * inner), Vector3.up, c, Vector3.right, Vector3.forward);
+                AddPlanar(center + new Vector3(Mathf.Cos(a1) * inner, 0f, Mathf.Sin(a1) * inner), Vector3.up, c, Vector3.right, Vector3.forward);
+                AddPlanar(center + new Vector3(Mathf.Cos(a1) * outer, 0f, Mathf.Sin(a1) * outer), Vector3.up, c, Vector3.right, Vector3.forward);
+                AddPlanar(center + new Vector3(Mathf.Cos(a0) * outer, 0f, Mathf.Sin(a0) * outer), Vector3.up, c, Vector3.right, Vector3.forward);
                 _t.Add(b); _t.Add(b + 2); _t.Add(b + 1);
                 _t.Add(b); _t.Add(b + 3); _t.Add(b + 2);
             }
+            _surf = keep;
             return this;
         }
 
@@ -173,16 +239,22 @@ namespace Kgd.Art
             Vector3 fwd = Vector3.Cross(side, axis);
             Color c = color; c.a = glow;
 
+            float height = (top - bottom).magnitude;
+            float circ = Mathf.PI * (rBottom + rTop);       // 평균 둘레 — 옆면 무늬가 늘어나지 않게
+            float vBase = Vector3.Dot(bottom, axis);        // 이어 붙는 기둥끼리 무늬가 끊기지 않게
+
             int baseIndex = _v.Count;
             for (int i = 0; i <= sides; i++)
             {
                 float a = i / (float)sides * Mathf.PI * 2f;
                 Vector3 dir = side * Mathf.Cos(a) + fwd * Mathf.Sin(a);
+                Vector3 tanDir = side * -Mathf.Sin(a) + fwd * Mathf.Cos(a);
                 // 옆면이 기울어도 법선이 표면을 따라가게 — 위아래 반지름 차를 축 성분으로 섞는다
-                float slope = (rBottom - rTop) / Mathf.Max(0.0001f, (top - bottom).magnitude);
+                float slope = (rBottom - rTop) / Mathf.Max(0.0001f, height);
                 Vector3 n = (dir + axis * slope).normalized;
-                AddVert(bottom + dir * rBottom, n, c);
-                AddVert(top + dir * rTop, n, c);
+                float u = i / (float)sides * circ;
+                AddAt(bottom + dir * rBottom, n, c, new Vector2(u, vBase), tanDir);
+                AddAt(top + dir * rTop, n, c, new Vector2(u, vBase + height), tanDir);
             }
             for (int i = 0; i < sides; i++)
             {
@@ -201,11 +273,11 @@ namespace Kgd.Art
         {
             Color c = color; c.a = glow;
             int mid = _v.Count;
-            AddVert(at, n, c);
+            AddPlanar(at, n, c, side, fwd);
             for (int i = 0; i <= sides; i++)
             {
                 float a = i / (float)sides * Mathf.PI * 2f;
-                AddVert(at + (side * Mathf.Cos(a) + fwd * Mathf.Sin(a)) * r, n, c);
+                AddPlanar(at + (side * Mathf.Cos(a) + fwd * Mathf.Sin(a)) * r, n, c, side, fwd);
             }
             for (int i = 0; i < sides; i++)
             {
@@ -225,6 +297,8 @@ namespace Kgd.Art
             sides = Mathf.Clamp(sides, 4, 20);
             rings = Mathf.Clamp(rings, 2, 12);
             Color c = color; c.a = glow;
+            float circ = Mathf.PI * (size.x + size.z) * 0.5f;
+            float arc = Mathf.PI * size.y * 0.5f;
             int baseIndex = _v.Count;
             for (int j = 0; j <= rings; j++)
             {
@@ -236,10 +310,11 @@ namespace Kgd.Art
                     float u = i / (float)sides;
                     float a = u * Mathf.PI * 2f;
                     var dir = new Vector3(Mathf.Cos(a) * rr, y, Mathf.Sin(a) * rr);
+                    var tanDir = new Vector3(-Mathf.Sin(a), 0f, Mathf.Cos(a));
                     float wob = lumpy == 0f ? 1f
                         : 1f + lumpy * (Hash(seed + i * 7 + j * 31) - 0.5f);
                     var p = center + Vector3.Scale(dir * wob, size * 0.5f);
-                    AddVert(p, dir.normalized, c);
+                    AddAt(p, dir.normalized, c, new Vector2(u * circ, (1f - v) * arc), tanDir);
                 }
             }
             int row = sides + 1;
@@ -259,9 +334,16 @@ namespace Kgd.Art
             return ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 2147483647f;
         }
 
-        private void AddVert(Vector3 p, Vector3 n, Color c)
+        /// <summary>월드 좌표를 면의 두 축에 투영해 UV 를 만든다 — 이어진 면끼리 무늬가 안 끊긴다.</summary>
+        private void AddPlanar(Vector3 p, Vector3 n, Color c, Vector3 u, Vector3 w)
+            => AddAt(p, n, c, new Vector2(Vector3.Dot(p, u), Vector3.Dot(p, w)), u);
+
+        private void AddAt(Vector3 p, Vector3 n, Color c, Vector2 uv, Vector3 tangent)
         {
             _v.Add(p); _n.Add(n); _c.Add(c);
+            _uv.Add(uv * _surf.Scale);
+            _tile.Add(_surf.Tile);
+            _tan.Add(new Vector4(tangent.x, tangent.y, tangent.z, 1f));
         }
 
         public Mesh Build(string name, bool recalcBounds = true)
@@ -271,6 +353,9 @@ namespace Kgd.Art
             m.SetVertices(_v);
             m.SetNormals(_n);
             m.SetColors(_c);
+            m.SetUVs(0, _uv);
+            m.SetUVs(1, _tile);
+            m.SetTangents(_tan);
             m.SetTriangles(_t, 0);
             if (recalcBounds) m.RecalculateBounds();
             m.UploadMeshData(false);

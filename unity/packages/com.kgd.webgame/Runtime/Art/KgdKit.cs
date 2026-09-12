@@ -40,6 +40,7 @@ namespace Kgd.Art
             if (tex != null) mat.SetTexture("_MainTex", tex);
             mat.SetColor("_Tint", tint ?? Color.white);
             mat.SetFloat("_VColor", 0f);   // 가져온 모델에는 정점 색이 없다 — 켜 두면 값이 정의되지 않는다
+            mat.SetFloat("_Atlas", 0f);    // 모델은 자기 UV 가 이미 펴져 있다 — 아틀라스로 접으면 한 칸에 뭉친다
             _materials[key] = mat;
             return mat;
         }
@@ -102,6 +103,7 @@ namespace Kgd.Art
             else Debug.LogError($"스킨 텍스처를 못 찾았다: {CharacterKit + skin}");
             mat.SetColor("_Tint", tint ?? Color.white);
             mat.SetFloat("_VColor", 0f);
+            mat.SetFloat("_Atlas", 0f);
             _materials[key] = mat;
             return mat;
         }
