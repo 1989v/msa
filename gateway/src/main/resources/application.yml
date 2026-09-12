@@ -141,6 +141,11 @@ spring:
               uri: http://content:8097
               predicates: [Path=/svc/content/actuator/health]
               filters: [StripPrefix=2]
+            # 수집 배치 최신성. health 와 별개 엔드포인트라 서비스 상태 판정에 섞이지 않는다
+            - id: actuator-content-ingest
+              uri: http://content:8097
+              predicates: [Path=/svc/content/actuator/ingest]
+              filters: [StripPrefix=2]
             # 도메인 이름으로도 물을 수 있게 — content 가 받는 넷
             - id: actuator-place
               uri: http://content:8097

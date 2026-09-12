@@ -7,3 +7,4 @@ com.kgd.common.messaging.IdempotentEventHandlerAutoConfiguration
 com.kgd.common.messaging.outbox.KgdMessagingOutboxAutoConfiguration
 com.kgd.common.startup.DataSourceWarmupAutoConfiguration
 com.kgd.common.quota.ExternalApiQuotaAutoConfiguration
+com.kgd.common.observability.IngestEndpointAutoConfiguration

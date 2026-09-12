@@ -8,6 +8,7 @@ import com.kgd.ranking.infrastructure.persistence.entity.RankingEntryJpaEntity
 import com.kgd.ranking.infrastructure.persistence.entity.RankingSnapshotJpaEntity
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import java.time.Instant
 
 interface RankingBoardJpaRepository : JpaRepository<RankingBoardJpaEntity, Long> {
@@ -37,6 +38,10 @@ interface GasStationJpaRepository : JpaRepository<GasStationJpaEntity, Long> {
 }
 
 interface GasStationPriceJpaRepository : JpaRepository<GasStationPriceJpaEntity, Long> {
+
+    @Query("SELECT MAX(p.updatedAt) FROM GasStationPriceJpaEntity p")
+    fun findLatestUpdatedAt(): Instant?
+
     fun findByStationIdAndProductCode(stationId: Long, productCode: String): GasStationPriceJpaEntity?
     fun findByStationIdIn(stationIds: Collection<Long>): List<GasStationPriceJpaEntity>
     fun findByStationIdInAndProductCode(stationIds: Collection<Long>, productCode: String): List<GasStationPriceJpaEntity>

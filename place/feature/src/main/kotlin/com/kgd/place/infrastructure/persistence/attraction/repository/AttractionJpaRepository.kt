@@ -6,8 +6,13 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
+import java.time.LocalDateTime
 
 interface AttractionJpaRepository : JpaRepository<AttractionJpaEntity, Long> {
+
+    @Query("SELECT MAX(a.introSyncedAt) FROM AttractionJpaEntity a")
+    fun findLatestIntroSyncedAt(): LocalDateTime?
+
     fun findByContentIdIn(contentIds: Collection<String>): List<AttractionJpaEntity>
 
     fun findByLang(lang: String, pageable: Pageable): Page<AttractionJpaEntity>
