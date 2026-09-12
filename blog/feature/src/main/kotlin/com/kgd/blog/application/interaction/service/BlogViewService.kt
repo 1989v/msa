@@ -5,6 +5,7 @@ import com.kgd.blog.application.interaction.usecase.PurgeBlogViewsUseCase
 import com.kgd.blog.application.interaction.usecase.RecordBlogViewUseCase
 import com.kgd.blog.application.post.port.BlogPostRepositoryPort
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +18,7 @@ import java.time.LocalDate
  * 카운터는 표시·정렬용 파생값이고 진실은 원장이다.
  */
 @Service
+@Qualifier("blogTransactionManager")
 class BlogViewService(
     private val viewRepository: BlogPostViewRepositoryPort,
     private val postRepository: BlogPostRepositoryPort,
@@ -32,7 +34,7 @@ class BlogViewService(
      * 조회 트랜잭션과 분리해 REQUIRES_NEW 로 연다. 상세 조회는 read-only 라 같은 트랜잭션에
      * 쓰기를 얹을 수 없다.
      */
-    @Transactional("blogTransactionManager", propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     override fun execute(command: RecordBlogViewUseCase.Command) {
         val (postId, visitorKey, userAgent) = command
         if (visitorKey.isNullOrBlank()) return
@@ -47,7 +49,7 @@ class BlogViewService(
     }
 
     /** 보존기간 초과 원장 정리 — retention CronJob 이 부른다 (ADR-0077) */
-    @Transactional("blogTransactionManager")
+    @Transactional
     override fun execute(): Int =
         viewRepository.deleteOlderThan(LocalDate.now().minusDays(PurgeBlogViewsUseCase.RETENTION_DAYS))
 

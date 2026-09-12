@@ -6,10 +6,12 @@ import com.kgd.wishlist.domain.model.WishlistTargetType
 import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
+@Qualifier("wishlistTransactionManager")
 class ProductEventConsumer(
     private val wishlistRepositoryPort: WishlistRepositoryPort,
     private val objectMapper: ObjectMapper
@@ -22,7 +24,7 @@ class ProductEventConsumer(
         groupId = "wishlist-product-cleanup",
         containerFactory = "wishlistKafkaListenerContainerFactory",
     )
-    @Transactional("wishlistTransactionManager")
+    @Transactional
     fun onProductDeleted(record: ConsumerRecord<String, String>) {
         log.info { "Received product.deleted event: key=${record.key()}" }
 

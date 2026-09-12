@@ -13,6 +13,7 @@ import com.kgd.game.domain.play.exception.SessionNotFoundException
 import com.kgd.game.domain.play.model.DeviceType
 import com.kgd.game.domain.play.model.GamePlaySession
 import com.kgd.game.domain.play.model.GameRating
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.Instant
@@ -22,6 +23,7 @@ data class PlaySessionResult(val session: GamePlaySession, val gameId: Long, val
 
 /** 플레이 유스케이스의 트랜잭션 경계 — Kafka 발행은 파사드(GamePlayService)가 커밋 후 수행 */
 @Component
+@Qualifier("gameTransactionManager")
 class GamePlayCommand(
     private val gameRepository: GameRepositoryPort,
     private val statsRepository: GameStatsRepositoryPort,
@@ -29,7 +31,7 @@ class GamePlayCommand(
     private val ratingRepository: GameRatingRepositoryPort,
 ) {
 
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     fun startSession(slug: String, memberId: Long?, deviceType: DeviceType): PlaySessionResult {
         val game = findPlayableGame(slug)
         val gameId = requireNotNull(game.id) { "영속화된 게임에는 id가 있어야 합니다" }
@@ -51,7 +53,7 @@ class GamePlayCommand(
         return PlaySessionResult(session = session, gameId = gameId, gameSlug = game.slug)
     }
 
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     fun endSession(sessionKey: String): PlaySessionResult {
         val session = sessionRepository.findBySessionKey(sessionKey)
             ?: throw SessionNotFoundException(sessionKey)
@@ -70,7 +72,7 @@ class GamePlayCommand(
         return PlaySessionResult(session = saved, gameId = session.gameId, gameSlug = game?.slug ?: "")
     }
 
-    @Transactional(transactionManager = "gameTransactionManager")
+    @Transactional
     /** 회원이면 회원 표, 아니면 기기 표. 둘 다 재투표는 기존 표를 덮어써 표 수를 늘리지 않는다. */
     fun rate(slug: String, memberId: Long?, deviceId: String?, score: Int): RatingResultDto {
         val game = findPlayableGame(slug)
