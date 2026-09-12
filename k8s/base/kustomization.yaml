@@ -33,6 +33,9 @@ resources:
   - ranking-ingest
   # ADR-0069: 혜택 링크 생존 점검 배치 (code-dictionary 이미지 재사용, 상주 파드 없음)
   - deal-linkcheck
+  # MySQL 논리 백업. local-path 라 데이터와 같은 디스크에 놓이므로 논리 손실(DROP·잘못된
+  # 마이그레이션·앱 버그)만 막는다. 노드 손실은 못 막는다 — 오프노드 사본은 별건.
+  - db-backup
   # ADR-0077: 원장 보존기간 정리 배치 (같은 이미지 재사용, 외부 egress 없음)
   - retention
   # Frontend + non-JVM services (Phase 7 extension)

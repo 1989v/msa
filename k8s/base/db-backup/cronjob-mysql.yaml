@@ -1,0 +1,76 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-backup-mysql
+  namespace: commerce
+  labels:
+    app.kubernetes.io/name: db-backup
+    app.kubernetes.io/part-of: commerce-platform
+    app.kubernetes.io/component: backup
+spec:
+  # 03:00 UTC = 12:00 KST. 04:00 UTC 의 deal-linkcheck·05:00 의 retention 앞에 둔다 —
+  # 정리 배치가 지운 뒤가 아니라 지우기 전 상태를 남긴다.
+  schedule: "0 3 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: db-backup
+            # part-of 누락 시 default-deny 에서 egress 미허용 → MySQL 접근조차 불가
+            app.kubernetes.io/part-of: commerce-platform
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          enableServiceLinks: false
+          containers:
+            - name: mysqldump
+              # 서버와 같은 이미지라 클라이언트 버전이 어긋날 일이 없고 노드에 이미 받아져 있다.
+              image: mysql:8.0
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: MYSQL_PWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: mysql-root
+                      key: MYSQL_ROOT_PASSWORD
+                - name: RETENTION_DAYS
+                  value: "7"
+              command: ["/bin/bash", "-eo", "pipefail", "-c"]
+              args:
+                - |
+                  target=/backup/mysql-$(date -u +%Y%m%dT%H%M%SZ).sql.gz
+
+                  mysqldump --host=mysql-headless --user=root \
+                    --all-databases --single-transaction --routines --triggers --events \
+                    --set-gtid-purged=OFF --no-tablespaces \
+                    | gzip -c > "$target"
+
+                  # 덤프가 중간에 끊겨도 gzip 은 유효할 수 있다. mysqldump 가 끝까지 돈 경우에만
+                  # 남기는 완료 표식을 확인해야 "파일이 있다" 가 아니라 "복구할 수 있다" 가 된다.
+                  gzip -t "$target"
+                  gzip -dc "$target" | tail -5 | grep -q '^-- Dump completed'
+
+                  ln -sfn "$(basename "$target")" /backup/mysql-latest.sql.gz
+                  find /backup -name 'mysql-*.sql.gz' -type f -mtime "+${RETENTION_DAYS}" -delete
+
+                  echo "backup ok $(basename "$target") $(stat -c%s "$target") bytes"
+                  ls -la /backup
+              volumeMounts:
+                - name: backup
+                  mountPath: /backup
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  memory: 512Mi
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: db-backup
