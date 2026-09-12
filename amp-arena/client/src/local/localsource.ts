@@ -4,7 +4,7 @@ import { type MatchSource, type RenderPlayer, renderFromPlayer } from '../game/m
 
 const BOT_NAMES = ['봇-알파', '봇-브라보', '봇-찰리', '봇-델타', '봇-에코', '봇-폭스', '봇-골프'];
 
-export interface LocalOptions { name: string; acc: AccessoryId; style: StyleId; mapId: MapId; modeId: ModeId; seconds: number; bots: number; stats?: Partial<Stats>; skin?: Skin }
+export interface LocalOptions { name: string; acc: AccessoryId; style: StyleId; mapId: MapId; modeId: ModeId; seconds: number; bots: number; stats?: Partial<Stats>; skin?: Skin; emblem?: string }
 
 export class LocalSource implements MatchSource {
   readonly world: World;
@@ -19,7 +19,7 @@ export class LocalSource implements MatchSource {
   constructor(o: LocalOptions) {
     this.world = new World({ mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, seed: (Math.random() * 0xffffffff) >>> 0 });
     const me = this.world.addPlayer(0, o.name, 0, o.acc, false, o.style, o.stats);
-    this.roster.push({ id: 0, name: me.name, team: me.team, acc: o.acc, style: o.style, bot: false, stats: o.stats, skin: o.skin });
+    this.roster.push({ id: 0, name: me.name, team: me.team, acc: o.acc, style: o.style, bot: false, stats: o.stats, skin: o.skin, emblem: o.emblem });
     const n = Math.max(1, Math.min(7, o.bots));
     for (let i = 1; i <= n; i++) {
       const { style, acc } = randomLoadout(this.world.rng); // 봇 직업·악세서리 무작위 (직업 규칙 안에서)

@@ -1,6 +1,6 @@
 // 진행 (2026-09-12 Phase 2): 경험치·레벨·골드·스탯 분배·색 조합 스킨. 순수 함수 + localStorage.
 // 서버 동기화는 save.ts. 스탯 배분은 명단(roster)에 실려 방장이 상한을 다시 검사한다(sanitizeStatDelta) — 클라이언트 값은 믿지 않는다.
-import { MAX_STAT_ALLOC, MAX_STAT_POINTS, type RankEntry, type Stats, type Skin } from '@amp/shared';
+import { MAX_STAT_ALLOC, MAX_STAT_POINTS, EMBLEM_CELLS, sanitizeEmblem, type RankEntry, type Stats, type Skin } from '@amp/shared';
 import { matchScore } from './score.ts';
 
 export interface Progress {
@@ -13,6 +13,7 @@ export interface Progress {
   alloc: Partial<Stats>;   // 분배한 스탯 포인트 (스탯별 0~MAX_STAT_ALLOC)
   owned: string[];         // 산 스킨 id (`shirt:8` …)
   skin: Skin;              // 입은 색 (팔레트 인덱스, -1 = 기본)
+  emblem: string;          // 가슴 그림 12×12 (빈 문자열 = 없음)
   updated: number;         // ms
 }
 
@@ -67,6 +68,8 @@ export function allocate(p: Progress, stat: keyof Stats, delta: 1 | -1): Progres
 /** 상의: 앞 8은 자리 색(무료, 기본 -1 은 내 자리 색), 뒤 8은 상점 */
 export const SHIRT_PALETTE = ['#ff6a2a', '#4488ff', '#4ade80', '#ffb020', '#a78bfa', '#33d1ff', '#f472b6', '#f5f2ea', '#e11d48', '#0f766e', '#7c2d12', '#1e293b', '#fde047', '#c084fc', '#22d3ee', '#111111'];
 export const HAIR_PALETTE = ['#f5d0a0', '#ffffff', '#e8c65a', '#d8452e', '#4488ff', '#4ade80'];
+/** 엠블럼 팔레트 — 인덱스 1~9 (0 은 투명). 리그·페인터가 같이 쓴다 */
+export const EMBLEM_PALETTE = ['#1c1f2e', '#f5f2ea', '#ee4444', '#ffb020', '#4ade80', '#33d1ff', '#4488ff', '#a78bfa', '#f472b6'];
 export const BAND_PALETTE = ['#4488ff', '#4ade80', '#f472b6', '#f5f2ea'];
 export type SkinKind = keyof Skin;
 export interface ShopItem { id: string; kind: SkinKind; idx: number; name: string; color: string; price: number }
@@ -86,6 +89,13 @@ export function buy(p: Progress, id: string): { ok: boolean; reason?: string; p:
   if (p.gold < item.price) return { ok: false, reason: `골드 부족 (${item.price} 필요)`, p };
   return { ok: true, p: { ...p, gold: p.gold - item.price, owned: [...p.owned, id], updated: Date.now() } };
 }
+/** 엠블럼을 칠한다 (12×12 인덱스 문자열, 빈 문자열 = 지움). 형태가 틀리면 그대로 둔다 */
+export function setEmblem(p: Progress, grid: string): Progress {
+  const clean = grid === '' ? '' : (sanitizeEmblem(grid) ?? p.emblem);
+  return { ...p, emblem: clean, updated: Date.now() };
+}
+export const emptyEmblem = (): string => '0'.repeat(EMBLEM_CELLS);
+
 /** 입기 — 산 것만. -1 이면 기본으로 */
 export function wear(p: Progress, kind: SkinKind, idx: number): Progress | null {
   if (idx >= 0 && !owns(p, `${kind}:${idx}`)) return null;
@@ -94,7 +104,7 @@ export function wear(p: Progress, kind: SkinKind, idx: number): Progress | null 
 
 // ---- 저장 ----
 export const PROGRESS_KEY = 'amp.progress.v1';
-export const emptyProgress = (): Progress => ({ v: 1, xp: 0, gold: 0, matches: 0, kos: 0, wins: 0, alloc: {}, owned: [], skin: { shirt: -1, hair: -1, band: -1 }, updated: 0 });
+export const emptyProgress = (): Progress => ({ v: 1, xp: 0, gold: 0, matches: 0, kos: 0, wins: 0, alloc: {}, owned: [], skin: { shirt: -1, hair: -1, band: -1 }, emblem: '', updated: 0 });
 const int = (v: unknown, lo: number, hi: number, d = 0): number => (typeof v === 'number' && Number.isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : d);
 /** 어디서 온 값이든(로컬·서버) 형태를 맞춘다 — 깨진 값 하나로 진행이 통째로 날아가지 않게 */
 export function sanitizeProgress(raw: unknown): Progress {
@@ -111,7 +121,7 @@ export function sanitizeProgress(raw: unknown): Progress {
     hair: int(rs.hair, -1, HAIR_PALETTE.length - 1, -1),
     band: int(rs.band, -1, BAND_PALETTE.length - 1, -1),
   };
-  const p: Progress = { v: 1, xp: int(r.xp, 0, 1e9), gold: int(r.gold, 0, 1e9), matches: int(r.matches, 0, 1e9), kos: int(r.kos, 0, 1e9), wins: int(r.wins, 0, 1e9), alloc, owned, skin, updated: int(r.updated, 0, 1e15) };
+  const p: Progress = { v: 1, xp: int(r.xp, 0, 1e9), gold: int(r.gold, 0, 1e9), matches: int(r.matches, 0, 1e9), kos: int(r.kos, 0, 1e9), wins: int(r.wins, 0, 1e9), alloc, owned, skin, emblem: sanitizeEmblem(r.emblem) ?? '', updated: int(r.updated, 0, 1e15) };
   // 안 산 색은 입을 수 없다 · 포인트 초과분은 뒤 스탯부터 뺀다
   for (const k of ['shirt', 'hair', 'band'] as SkinKind[]) if (p.skin[k] >= 0 && !(k === 'shirt' && p.skin[k] < 8) && !owns(p, `${k}:${p.skin[k]}`)) p.skin[k] = -1;
   let over = usedPoints(p) - statPoints(p);

@@ -42,7 +42,7 @@
 - [x] 플랫폼 순위표 (2026-09-12) — `client/src/platform/score.ts` (online/practice 보드, Bearer 쿠키, 결과 화면 한 줄), 마이그레이션 `game/.../V90__arena_score_boards.sql`(보드 이름·sdk_integrated). 세션은 카탈로그 페이지 몫. 실측 `tools/e2e-score.mjs`(가짜 API) · `tools/e2e-prod-score.mjs`(운영)
 - [x] 진행 (2026-09-12) — `client/src/platform/progress.ts`(경험치·레벨·골드·스탯 분배·색 스킨, `sanitizeProgress`), `save.ts`(플랫폼 세이브 동기화), `ui/progressui.ts`(타이틀 줄·모달). 스탯은 명단으로 시뮬에(`sanitizeStatDelta`), 스킨은 리그 색으로. 테스트 `client/test/progress.test.ts`·`shared/test/stats.test.ts`, 실측 `tools/e2e-progress.mjs`
 - [x] 점수판·매치 중 채팅 (2026-09-12) — Tab 점수판(타이머 탭), Enter 채팅(릴레이 `c` → HUD 피드), 관전 전환은 `]`/`[`. E2E `e2e-online.mjs` 에 채팅·점수판 검사
-- [ ] Phase 2 남은 것 — 스킨 페인터(UV 아틀라스; 그림 전달 경로 필요)
+- [x] 가슴 그림 엠블럼 (2026-09-12) — 12×12 격자 페인터(`client/src/ui/emblemui.ts`), 144자 문자열을 명단에 실어 온라인 상대에게도 보임(`sanitizeEmblem`, cfg 봉투 크기 테스트), 리그 토르소 앞뒤 CanvasTexture(`rig.setEmblem`). Phase 2 완료. 테스트 `shared/test/emblem.test.ts`, 실측 `tools/e2e-emblem.mjs`·`tools/shot-emblem.mjs`
 
 ## 장르 문법 중 아직 없는 것
 

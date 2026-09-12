@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 import type { AccessoryId, StyleLook, HairKind } from '@amp/shared';
 import { type Pose, POSES } from './poses.ts';
+import { EMBLEM_PALETTE } from '../platform/progress.ts';
+import { EMBLEM_SIZE } from '@amp/shared';
 
 export const SLOT_COLORS = ['#ff6a2a', '#4488ff', '#4ade80', '#ffb020', '#a78bfa', '#33d1ff', '#f472b6', '#f5f2ea'];
 const SKIN = 0xf6cfa6, OUTLINE = 0x1a1f3a, PANTS = 0x2f3a6e, SHOE = 0xf5f2ea, HAIR = 0x2b2f4a, BAND = 0xffb020;
@@ -52,6 +54,10 @@ export class CharacterRig {
   private bandMat = lambert(BAND);
   private headG!: THREE.Group;
   private lookKey = '';
+  private emblem = '';
+  private emblemGroup: THREE.Group | null = null;
+  private emblemCanvas: HTMLCanvasElement | null = null;
+  private emblemTex: THREE.CanvasTexture | null = null;
   acc: AccessoryId = 'none';
 
   constructor(shirtColor: string) {
@@ -139,6 +145,38 @@ export class CharacterRig {
 
   /** 지금 그려지는(보간된) 포즈 — 디버그·E2E 가 「팔이 뻗었는가」를 수치로 읽는다 */
   get currentPose(): Readonly<Pose> { return this.pose; }
+
+  /** 가슴 엠블럼 — 12×12 격자(0=투명·1~9=팔레트). 토르소 앞뒤 평면에 그린다(위에서 비스듬히 보는 카메라라 뒷면이 잘 보인다). */
+  setEmblem(grid: string): void {
+    if (grid === this.emblem) return;
+    this.emblem = grid;
+    const has = /[1-9]/.test(grid);
+    if (!has) { if (this.emblemGroup) this.emblemGroup.visible = false; return; }
+    if (!this.emblemGroup) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = EMBLEM_SIZE;
+      const tex = new THREE.CanvasTexture(cv); tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter;
+      const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.5 });
+      const g = new THREE.Group();
+      // 앞(+z)·뒤(−z) 두 평면. 토르소 앞면 z ≈ 0.14, 외곽선 껍질(×1.06) 표면 ≈ 0.148 — 그 바깥 0.155 에 둬야 가려지지 않는다. 중심 y ≈ 0.21
+      for (const [z, ry] of [[0.155, 0], [-0.155, Math.PI]] as const) {
+        const pl = new THREE.Mesh(new THREE.PlaneGeometry(0.4, 0.4), mat);
+        pl.position.set(0, 0.21, z); pl.rotation.y = ry;
+        g.add(pl);
+      }
+      this.torsoPivot.add(g);
+      this.emblemGroup = g; this.emblemCanvas = cv; this.emblemTex = tex;
+    }
+    const ctx = this.emblemCanvas!.getContext('2d')!;
+    ctx.clearRect(0, 0, EMBLEM_SIZE, EMBLEM_SIZE);
+    for (let i = 0; i < grid.length; i++) {
+      const v = grid.charCodeAt(i) - 48;
+      if (v <= 0) continue;
+      ctx.fillStyle = EMBLEM_PALETTE[v - 1] ?? '#000';
+      ctx.fillRect(i % EMBLEM_SIZE, Math.floor(i / EMBLEM_SIZE), 1, 1);
+    }
+    this.emblemTex!.needsUpdate = true;
+    this.emblemGroup.visible = true;
+  }
 
   /** 스타일 외형: 머리 모양·색, 몸통·머리 크기 */
   setLook(look: StyleLook): void {

@@ -11,6 +11,17 @@ import type { WorldEvent, RankEntry } from './world.ts';
 
 /** 색 조합 스킨 — 팔레트 인덱스, -1 은 기본(상의는 자리 색, 머리는 직업 색, 머리띠는 주황) */
 export interface Skin { shirt: number; hair: number; band: number }
+
+/** 엠블럼(가슴 그림): 12×12 격자를 팔레트 인덱스 한 자리씩 이어 붙인 144자 문자열. 0=투명, 1~9=색.
+    자유 그림이 아니라 저해상 격자인 이유는 릴레이(4KB) 안에서 명단에 실어 남에게도 보여야 하기 때문이다 —
+    8명치 144자면 약 1.2KB 라 스냅샷과 달리 시작 때 한 번 보내는 cfg 에 든다. */
+export const EMBLEM_SIZE = 12;
+export const EMBLEM_CELLS = EMBLEM_SIZE * EMBLEM_SIZE;
+const EMBLEM_RE = new RegExp(`^[0-9]{${EMBLEM_CELLS}}$`);
+export function sanitizeEmblem(raw: unknown): string | undefined {
+  if (typeof raw !== 'string' || !EMBLEM_RE.test(raw)) return undefined;
+  return /[1-9]/.test(raw) ? raw : undefined; // 전부 0(빈 그림)이면 싣지 않는다
+}
 export function sanitizeSkin(raw: unknown): Skin | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Record<string, unknown>;
@@ -20,7 +31,7 @@ export function sanitizeSkin(raw: unknown): Skin | undefined {
 }
 
 /** 매치 참가자 한 줄. id = 릴레이 좌석 번호 = 월드 플레이어 번호. stats·skin 은 진행(레벨·상점)에서 온다 */
-export interface RosterEntry { id: number; name: string; team: number; acc: AccessoryId; style: StyleId; bot: boolean; stats?: Partial<Stats>; skin?: Skin }
+export interface RosterEntry { id: number; name: string; team: number; acc: AccessoryId; style: StyleId; bot: boolean; stats?: Partial<Stats>; skin?: Skin; emblem?: string }
 
 /** 방장이 정해 뿌리는 매치 설정. 승계 때마다 epoch 가 오르고 host 가 바뀐다. */
 export interface MatchConfig {
@@ -36,7 +47,7 @@ export interface MatchConfig {
 }
 
 /** 대기실에서 서로에게 알리는 내 선택. 방을 만들 때 정한 매치 설정은 방장 것만 의미가 있다. */
-export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: number; spectate?: boolean; stats?: Partial<Stats>; skin?: Skin } // spectate: 싸우지 않고 본다 — 명단에서 빠진다. stats·skin: 진행
+export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: number; spectate?: boolean; stats?: Partial<Stats>; skin?: Skin; emblem?: string } // spectate: 싸우지 않고 본다 — 명단에서 빠진다. stats·skin·emblem: 진행
 export interface RoomSettings { map: MapId; mode: ModeId; seconds: number; fillBots: boolean }
 
 /** 게스트 → 방장 (`to` 지정) 또는 방 전체 브로드캐스트 */

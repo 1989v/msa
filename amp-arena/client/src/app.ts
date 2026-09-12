@@ -10,6 +10,8 @@ import { onPlatform, submitScore, buildScoreRequest, scoreNote, platformNickname
 import { type Progress, loadProgress, saveProgress, applyMatch } from './platform/progress.ts';
 import { pullProgress, pushProgress } from './platform/save.ts';
 import { progressPanelHtml, openStatsModal, openShopModal } from './ui/progressui.ts';
+import { openEmblemModal } from './ui/emblemui.ts';
+import { setEmblem } from './platform/progress.ts';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const ACC_DESC: Record<AccessoryId, string> = {
@@ -78,7 +80,7 @@ export class App {
     this.progress = p;
     saveProgress(p);
     pushProgress(p);
-    this.online?.setPick({ stats: p.alloc, skin: p.skin });
+    this.online?.setPick({ stats: p.alloc, skin: p.skin, emblem: p.emblem });
     this.renderProgressRow();
   }
 
@@ -88,6 +90,7 @@ export class App {
     host.innerHTML = progressPanelHtml(this.progress);
     (host.querySelector('.stats-btn') as HTMLButtonElement).onclick = () => openStatsModal(this.root, () => this.progress, this.style, (p) => this.setProgress(p));
     (host.querySelector('.shop-btn') as HTMLButtonElement).onclick = () => openShopModal(this.root, () => this.progress, (p) => this.setProgress(p), (m) => this.toast(m));
+    (host.querySelector('.emblem-btn') as HTMLButtonElement).onclick = () => openEmblemModal(this.root, () => this.progress, (grid) => this.setProgress(setEmblem(this.progress, grid)));
   }
 
   private mount(html: string): HTMLElement {
@@ -195,7 +198,7 @@ export class App {
   }
 
   private startPractice(o: { mapId: MapId; modeId: ModeId; bots: number; seconds: number }): void {
-    const src = new LocalSource({ name: this.nick, acc: this.acc, style: this.style, mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, bots: o.bots, stats: this.progress.alloc, skin: this.progress.skin });
+    const src = new LocalSource({ name: this.nick, acc: this.acc, style: this.style, mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, bots: o.bots, stats: this.progress.alloc, skin: this.progress.skin, emblem: this.progress.emblem });
     this.runMatch(src, { onExit: () => this.showTitle(), onAgain: () => this.startPractice(o), exitLabel: '타이틀로', onResult: (me, ranking) => this.finishMatch(me, ranking, 'practice', o.mapId, o.modeId) });
   }
 
@@ -238,7 +241,7 @@ export class App {
   // ---------------- 온라인 ----------------
   private async connectOnline(): Promise<void> {
     if (this.online?.connected) { this.showLobby(); return; }
-    const online = new Online(this.nick, { acc: this.acc, style: this.style, team: this.team, spectate: this.spectate, stats: this.progress.alloc, skin: this.progress.skin }, this.settings, {
+    const online = new Online(this.nick, { acc: this.acc, style: this.style, team: this.team, spectate: this.spectate, stats: this.progress.alloc, skin: this.progress.skin, emblem: this.progress.emblem }, this.settings, {
       onState: () => { if (this.view === 'room') this.showRoom(); },
       onMatch: (src) => this.onMatch(src),
       onRoundEnd: () => { this.disposeMatch(); this.showRoom(); },

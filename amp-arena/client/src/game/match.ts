@@ -79,6 +79,7 @@ export class Match {
   private chatbox: HTMLElement | null = null;
   private hairOf = new Map<number, string>();
   private bandOf = new Map<number, string>();
+  private emblemOf = new Map<number, string>();
   private stats = { frames: 0, slow: 0, t0: performance.now(), worst: 0 };
   private source: MatchSource;
   private opts: MatchOptions;
@@ -155,6 +156,7 @@ export class Match {
       if (sk && sk.band >= 0 && BAND_PALETTE[sk.band]) this.bandOf.set(r.id, BAND_PALETTE[sk.band]);
       const rig0 = this.renderer.ensureRig(r.id, this.shirtOf.get(r.id)!, r.acc);
       const band = this.bandOf.get(r.id); if (band) rig0.setBand(band);
+      if (r.emblem) { this.emblemOf.set(r.id, r.emblem); rig0.setEmblem(r.emblem); }
     }
     this.hud.setRoster(source.roster, source.myId, source.world.teams);
     const me = source.world.players[source.myId];
@@ -229,6 +231,7 @@ export class Match {
       const look = STYLES[world.players[rp.id]?.style ?? 'fighter'].look;
       const hair = this.hairOf.get(rp.id);
       rig.setLook(hair ? { ...look, hairColor: hair } : look);
+      rig.setEmblem(this.emblemOf.get(rp.id) ?? '');
       rig.root.position.set(rp.x, rp.y, rp.z);
       rig.root.rotation.y = rp.yaw;
       const attackLike = rp.state === 'attack' || rp.state === 'special' || rp.state === 'dashAttack' || rp.state === 'jumpAttack';

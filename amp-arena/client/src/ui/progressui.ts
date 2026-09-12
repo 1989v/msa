@@ -21,6 +21,7 @@ export function progressPanelHtml(p: Progress): string {
       <div class="row" style="gap:6px">
         <button class="btn stats-btn" style="height:34px;font-size:13px">스탯 분배${free > 0 ? ` <span class="chip amp" style="font-size:11px">${free}</span>` : ''}</button>
         <button class="btn shop-btn" style="height:34px;font-size:13px">상점</button>
+        <button class="btn emblem-btn" style="height:34px;font-size:13px">그림</button>
       </div>
     </div>`;
 }
