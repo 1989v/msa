@@ -8,6 +8,10 @@ const agg = (ids) => Object.fromEntries(ids.map((id) => [id, { held: 0, kos: 0, 
 const byStyle = agg(STYLE_IDS), byAcc = agg(ACCESSORY_IDS);
 const t0 = performance.now();
 let ticks = 0, drift = 0, counted = 0;
+// **표가 유효한지부터 찍는다.** 2026-09-13: 봇이 스스로 떨어져 죽는 바람에 판당 사망 34 중 크레딧 KO 가 10.5 뿐이었고,
+// 자멸 1·2위(스피드스타·더블탭)가 그대로 「KO 비가 낮아 약하다」로 읽혔다. 「봇 결함부터 보라」는 말은 이미 있었지만
+// 표 옆에 없어서 안 지켜졌다 — 그래서 같은 출력에 넣는다. 자멸 비율이 높으면 아래 수치는 무기가 아니라 길찾기를 재고 있다.
+const cause = { hit: 0, koFall: 0, selfFall: 0 };
 for (let m = 0; m < matches; m++) {
   const seed = 1000 + m * 7919;
   const mapId = MAP_IDS[m % MAP_IDS.length];
@@ -24,7 +28,10 @@ for (let m = 0; m < matches; m++) {
   for (let t = 0; t < (seconds + 10) * 60 && !ranking; t++) {
     const inputs = [];
     for (let i = 0; i < MAX_PLAYERS; i++) inputs[i] = botInput(w, w.players[i], mems[i]);
-    for (const e of w.step(inputs)) if (e.t === 'end') ranking = e.ranking;
+    for (const e of w.step(inputs)) {
+      if (e.t === 'end') ranking = e.ranking;
+      else if (e.t === 'ko') cause[e.a >= 0 ? (e.cause === 'fall' ? 'koFall' : 'hit') : 'selfFall']++;
+    }
     ticks++;
   }
   if (!ranking) { console.log(`match ${m} (${mapId}) did not end`); continue; }
@@ -47,4 +54,10 @@ const table = (title, a) => {
 table('직업', byStyle);
 table('악세서리', byAcc);
 console.log(`\n${matches}판 · ${seconds}초 · ${ticks} 틱 · ${((performance.now() - t0) / 1000).toFixed(1)}s`);
+const deaths = cause.hit + cause.koFall + cause.selfFall;
+const selfPct = (cause.selfFall / deaths) * 100;
+console.log(`\n사망 ${deaths} (판당 ${(deaths / matches).toFixed(1)}) — 타격사 ${((cause.hit / deaths) * 100).toFixed(0)}% · 밀려서 낙사 ${((cause.koFall / deaths) * 100).toFixed(0)}% · **자멸 ${selfPct.toFixed(0)}%**`);
+console.log(selfPct > 15
+  ? `  ⚠ 자멸이 ${selfPct.toFixed(0)}% 다 — 아래 표는 무기·직업이 아니라 봇 길찾기를 재고 있다. 먼저 봇을 고친다 (shared/test/botedge.test.ts)`
+  : '  자멸이 적어 아래 표를 무기·직업 차이로 읽어도 된다');
 console.log(`판 끝에 시작 장비와 달라진 사람 ${drift}/${counted} (${((drift / counted) * 100).toFixed(0)}%) — KO 드랍·줍기 때문. 집계는 시작 장비 기준이다`);
