@@ -8,10 +8,21 @@ const sheet = (w, h, inner) => `<div style="position:relative;width:${w}px;heigh
 const txt = (x, y, t, { size = 12, color = T.ink, weight = 700, anchor = 'middle' } = {}) =>
   `<text x="${r2(x)}" y="${r2(y)}" text-anchor="${anchor}" style="font:${weight} ${size}px 'Gothic A1',sans-serif;fill:${color}">${t}</text>`;
 
+/** 드럼통(터지는 오브젝트)·점프대 평면 기호 */
+const BARREL = (cx, cy, r) => `<circle cx="${r2(cx)}" cy="${r2(cy)}" r="${r2(r)}" style="fill:#b8402e;stroke:${T.outline};stroke-width:2px"></circle><circle cx="${r2(cx)}" cy="${r2(cy)}" r="${r2(r * 0.42)}" style="fill:${T.amp}"></circle>`;
+const PAD = (cx, cy, r) => `<circle cx="${r2(cx)}" cy="${r2(cy)}" r="${r2(r)}" style="fill:${T.amp};stroke:${T.outline};stroke-width:2px"></circle><path d="M ${r2(cx - r * 0.45)} ${r2(cy + r * 0.3)} L ${r2(cx)} ${r2(cy - r * 0.42)} L ${r2(cx + r * 0.45)} ${r2(cy + r * 0.3)} Z" style="fill:${T.outline}"></path>`;
+/** 들어갈 수 있는 방: 회색 상자 + 문(주황 띠). rect 는 (x0..x1, z0..z1), door 는 문 중심 좌표와 방향('x' 세로 띠 / 'z' 가로 띠) */
+const ROOM = (w2s, sc, x0, x1, z0, z1, door, name) => {
+  const [px, py] = w2s(x0, z1);
+  const [dx, dy] = w2s(door.x, door.z);
+  const strip = door.dir === 'x' ? `<rect x="${r2(dx - 3)}" y="${r2(dy - 0.9 * sc)}" width="6" height="${r2(1.8 * sc)}" style="fill:${T.amp}"></rect>` : `<rect x="${r2(dx - 0.9 * sc)}" y="${r2(dy - 3)}" width="${r2(1.8 * sc)}" height="6" style="fill:${T.amp}"></rect>`;
+  return `<rect x="${r2(px)}" y="${r2(py)}" width="${r2((x1 - x0) * sc)}" height="${r2((z1 - z0) * sc)}" style="fill:#6d7390;stroke:${T.outline};stroke-width:3px;opacity:0.92"></rect>${strip}${txt(px + (x1 - x0) * sc / 2, py + (z1 - z0) * sc + 13, name, { size: 10, color: T.ink })}`;
+};
+
 const SPAWN = (cx, cy, s, i, team) => `<circle cx="${r2(cx)}" cy="${r2(cy)}" r="${s}" style="fill:${team === 'red' ? T.red : team === 'blue' ? T.blue : T.amp};stroke:${T.outline};stroke-width:2px"></circle>${txt(cx, cy + 4, String(i), { size: 11, color: T.ink })}`;
 
 export function mapColosseumBoard() {
-  const W = 1200, H = 760;
+  const W = 1200, H = 820; // 규칙 표가 9행이라 760 은 잘린다
   const sc = 12, C = 270; // 12px / m, 중심
   const w2s = (x, z) => [C + x * sc, C - z * sc];
   const plan = [];
@@ -22,6 +33,11 @@ export function mapColosseumBoard() {
   for (const z of [12, -12]) { const [px, py] = w2s(0, z); plan.push(`<rect x="${r2(px - 2 * sc)}" y="${r2(py - 2 * sc)}" width="${4 * sc}" height="${4 * sc}" style="fill:#c9bfae;stroke:${T.outline};stroke-width:2px"></rect>${txt(px, py + 4, '+1.5m', { size: 10, color: T.outline })}`); }
   for (let i = 0; i < 6; i++) { const a = (i * 60 + 30) * Math.PI / 180; const [px, py] = w2s(9 * Math.cos(a), 9 * Math.sin(a)); plan.push(`<rect x="${r2(px - 6)}" y="${r2(py - 6)}" width="12" height="12" style="fill:${T.woodDark};stroke:${T.outline};stroke-width:2px"></rect>`); }
   for (let i = 0; i < 8; i++) { const a = (i * 45) * Math.PI / 180; const [px, py] = w2s(15 * Math.cos(a), 15 * Math.sin(a)); plan.push(SPAWN(px, py, 10, i + 1, Math.cos(a) > 0.01 ? 'red' : Math.cos(a) < -0.01 ? 'blue' : (i === 2 ? 'red' : 'blue'))); }
+  // 동·서 문루 (2026-09-12): 5×5 방, 아레나 쪽 문 1.8m, 안에 드럼통. 점프대 2.
+  plan.push(ROOM(w2s, sc, 12.5, 17.5, 3.5, 8.5, { x: 12.5, z: 6, dir: 'x' }, '동 문루'));
+  plan.push(ROOM(w2s, sc, -17.5, -12.5, -8.5, -3.5, { x: -12.5, z: -6, dir: 'x' }, '서 문루'));
+  for (const [x, z] of [[15, 6], [-15, -6]]) { const [px, py] = w2s(x, z); plan.push(BARREL(px, py, 0.45 * sc)); }
+  for (const [x, z] of [[5, 12], [-5, -12]]) { const [px, py] = w2s(x, z); plan.push(PAD(px, py, 0.9 * sc)); }
   // 축척
   plan.push(`<line x1="20" y1="520" x2="${20 + 10 * sc}" y2="520" style="stroke:${T.ink};stroke-width:3px"></line>${txt(20 + 5 * sc, 512, '10m', { size: 11, color: T.ink })}`);
   const planSvg = `<svg viewBox="0 0 540 540" width="540" height="540" style="display:block" xmlns="http://www.w3.org/2000/svg">${plan.join('')}</svg>`;
@@ -31,11 +47,11 @@ export function mapColosseumBoard() {
   const thumb = svg.replace('width="1280" height="1280"', '').replace('width="1280" height="720"', 'width="560" height="315"');
 
   const legend = `<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:8px">${[
-    ['#b3aa9c', '기둥 ×4 (r 0.8m)'], ['#c9bfae', '단상 ×2 (4×4m, +1.5m)'], [T.woodDark, '상자 ×6'], [T.red, '레드 스폰'], [T.blue, '블루 스폰'],
+    ['#b3aa9c', '기둥 ×4 (r 0.8m)'], ['#c9bfae', '단상 ×2 (4×4m, +1.5m)'], [T.woodDark, '상자 ×6'], ['#6d7390', '문루 ×2 (5×5m · 2.4m)'], ['#b8402e', '드럼통 ×2'], [T.amp, '점프대 ×2'], [T.red, '레드 스폰'], [T.blue, '블루 스폰'],
   ].map(([c, n]) => `<div style="display:flex;flex-direction:row;align-items:center;gap:6px;font-size:12px"><div style="width:14px;height:14px;border-radius:3px;background:${c};border:2px solid ${T.outline}"></div>${n}</div>`).join('')}</div>`;
   const rules = table(['항목', '값'], [
     ['크기', '원형 지름 40m · 외벽 3m'], ['낙사', '없음 (벽으로 막힘)'], ['기둥', '4개, 반지름 12m 원주 대각'], ['단상', '남북 2개, 높이 1.5m — 점프로 오름'],
-    ['상자', '6개, 파괴 30초 뒤 재생성'], ['스폰', '반지름 15m 원주 45° 간격 · 팀전은 동서'], ['용도', '기본 맵 · 근접전 · 첫 매치'],
+    ['상자', '6개, 파괴 30초 뒤 재생성'], ['문루', '동·서 5×5m 방(2.4m), 아레나 쪽 문 1.8m — 안에 드럼통(반경 3m · 25, 연쇄)'], ['점프대', '(5,12)·(−5,−12), 상승 11 m/s'], ['스폰', '반지름 15m 원주 45° 간격 · 팀전은 동서'], ['용도', '기본 맵 · 근접전 · 첫 매치'],
   ], { size: 12, colW: [70] });
   const inner = `
     ${sheetHeader('맵 1 — 콜로세움', '벽이 있어 낙사가 없는 기본 아레나. 기둥과 단상이 시야와 동선을 끊는다.', '맵')}
@@ -82,6 +98,10 @@ export function mapSkyDockBoard() {
   for (const [x, z] of [[-21.5, 2.5], [21.5, 2.5], [-21.5, -2.5], [21.5, -2.5]]) { const [px, py] = w2s(x, z); plan.push(`<rect x="${r2(px - 6)}" y="${r2(py - 6)}" width="12" height="12" style="fill:${T.woodDark};stroke:${T.outline};stroke-width:2px"></rect>`); }
   const spawns = [[-10, 6, 'red'], [-10, -6, 'red'], [10, 6, 'blue'], [10, -6, 'blue'], [-17, 0, 'red'], [17, 0, 'blue'], [0, 19, 'red'], [0, -19, 'blue']];
   spawns.forEach(([x, z, t], i) => { const [px, py] = w2s(x, z); plan.push(SPAWN(px, py, 10, i + 1, t)); });
+  // 컨테이너 (2026-09-12): 중앙 발판 남쪽 8×4 방(2.3m), 북쪽 문. 드럼통 3 · 점프대 3
+  plan.push(ROOM(w2s, sc, -4, 4, -7.5, -3.5, { x: 0, z: -3.5, dir: 'z' }, '컨테이너'));
+  for (const [x, z] of [[0, -5.5], [-19, 3], [19, -3]]) { const [px, py] = w2s(x, z); plan.push(BARREL(px, py, 0.45 * sc)); }
+  for (const [x, z] of [[-10.5, 0], [10.5, 0], [0, 0]]) { const [px, py] = w2s(x, z); plan.push(PAD(px, py, 0.9 * sc)); }
   plan.push(`<line x1="20" y1="520" x2="${20 + 10 * sc}" y2="520" style="stroke:${T.ink};stroke-width:3px"></line>${txt(20 + 5 * sc, 512, '10m', { size: 11, color: T.ink })}`);
   plan.push(txt(440, 525, '빗금 = 낙사 (y < −8m)', { size: 11, color: T.muted }));
   const planSvg = `<svg viewBox="0 0 540 540" width="540" height="540" style="display:block" xmlns="http://www.w3.org/2000/svg">${plan.join('')}</svg>`;
@@ -101,7 +121,7 @@ export function mapSkyDockBoard() {
   })();
   const rules = table(['항목', '값'], [
     ['발판', '중앙 24×16m · 동서 8×8m(+2m) · 남북 6×10m'], ['간격', '3m — 걷기 점프로 건넘, 달리기 점프로 여유'], ['낙사', 'y < −8m 즉시 KO · 마지막 3초 타격자에게 KO'],
-    ['상자', '4개, 동서 발판'], ['스폰', '중앙 모서리 4 + 측면 발판 4'], ['핵심', '태클·던지기·로켓 펀치로 링아웃'],
+    ['상자', '4개, 동서 발판'], ['컨테이너', '중앙 남쪽 8×4m 방(2.3m), 북쪽 문 — 안에 드럼통'], ['드럼통', '컨테이너 안 + 동서 발판(옆 상자를 같이 날린다)'], ['점프대', '(±10.5, 0) 12 m/s · (0, 0) 13 m/s'], ['스폰', '중앙 모서리 4 + 측면 발판 4'], ['핵심', '태클·던지기·로켓 펀치로 링아웃'],
   ], { size: 12, colW: [60] });
   const inner = `
     ${sheetHeader('맵 2 — 스카이독', '허공에 뜬 발판 5개. 벽이 없어 던지기와 태클이 곧 KO 수단이다.', '맵')}
@@ -246,5 +266,111 @@ export function roadmapBoard() {
     ${sheetHeader('로드맵과 완료 게이트', '작은 단계로 나누고, 각 단계는 수치로 닫는다. 시안 확인 뒤 P1 부터 바로 구현에 들어간다.', '계획')}
     <div style="display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:12px">${cards}</div>
     ${panel(col([label('기준 수치 (벤치마크 게이트)'), gates], { gap: 8 }), { pad: 12 })}`;
+  return doc({ body: sheet(W, H, inner) });
+}
+
+/** 맵 3 옥상 (2026-09-11 · 기계실 개방 2026-09-12) */
+export function mapRooftopBoard() {
+  const W = 1200, H = 760;
+  const sc = 14, C = 270;
+  const w2s = (x, z) => [C + x * sc, C - z * sc];
+  const plan = [];
+  plan.push(`<rect x="0" y="0" width="540" height="540" style="fill:#0b1026"></rect>`);
+  // 도시 야경 — 먼 건물 실루엣
+  for (let i = 0; i < 14; i++) plan.push(`<rect x="${i * 40}" y="${r2(30 + ((i * 37) % 60))}" width="30" height="${r2(60 - ((i * 37) % 60))}" style="fill:#161c3a"></rect>`);
+  const rect = (x0, x1, z0, z1, fill, name, h) => { const [px, py] = w2s(x0, z1); return `<rect x="${r2(px)}" y="${r2(py)}" width="${r2((x1 - x0) * sc)}" height="${r2((z1 - z0) * sc)}" rx="3" style="fill:${fill};stroke:${T.outline};stroke-width:3px"></rect>${name ? txt(px + (x1 - x0) * sc / 2, py + (z1 - z0) * sc / 2 + 4, `${name}${h ? ' +' + h + 'm' : ''}`, { size: 10, color: T.outline }) : ''}`; };
+  plan.push(rect(-15, 15, -10, 10, '#8a919f', '', 0));
+  // 헬리패드 무늬
+  plan.push(`<circle cx="${C}" cy="${C}" r="${4 * sc}" style="fill:none;stroke:#c9cfdb;stroke-width:3px"></circle>${txt(C, C + 6, 'H', { size: 26, color: '#c9cfdb' })}`);
+  plan.push(rect(-14, -6, -1, 2, '#a4abb8', '턱', 1));
+  plan.push(rect(7, 9, 5, 7, '#a4abb8', '실외기', 1.2));
+  plan.push(rect(7, 9, -7, -5, '#a4abb8', '실외기', 1.2));
+  plan.push(rect(-1.5, 1.5, -8.75, -7.25, '#a4abb8', '', 1));
+  plan.push(ROOM(w2s, sc, -14, -6, 2, 8, { x: -6, z: 5, dir: 'x' }, '기계실 8×6m · 2.3m'));
+  for (const [x, z] of [[-13.5, -6], [13.5, -8.5], [3, 8.5], [-3, -8.5], [-12, 6.5]]) { const [px, py] = w2s(x, z); plan.push(`<rect x="${r2(px - 6)}" y="${r2(py - 6)}" width="12" height="12" style="fill:${T.woodDark};stroke:${T.outline};stroke-width:2px"></rect>`); }
+  for (const [x, z] of [[-8, 6.5], [5, -3]]) { const [px, py] = w2s(x, z); plan.push(BARREL(px, py, 0.45 * sc)); }
+  for (const [x, z] of [[-4.5, 3.2], [11, 0]]) { const [px, py] = w2s(x, z); plan.push(PAD(px, py, 0.9 * sc)); }
+  const spawns = [[-13, -8, 'red'], [-13, 8, 'red'], [-5, -8.5, 'red'], [-10, 5, 'red'], [13, -8, 'blue'], [13, 8, 'blue'], [5, 8.5, 'blue'], [12, 0, 'blue']];
+  spawns.forEach(([x, z, t], i) => { const [px, py] = w2s(x, z); plan.push(SPAWN(px, py, 10, i + 1, t)); });
+  plan.push(`<line x1="20" y1="520" x2="${20 + 10 * sc}" y2="520" style="stroke:${T.ink};stroke-width:3px"></line>${txt(20 + 5 * sc, 512, '10m', { size: 11, color: T.ink })}`);
+  plan.push(txt(430, 525, '지붕 밖 = 낙사 (난간 없음)', { size: 11, color: T.muted }));
+  const planSvg = `<svg viewBox="0 0 540 540" width="540" height="540" style="display:block" xmlns="http://www.w3.org/2000/svg">${plan.join('')}</svg>`;
+  const legend = `<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:8px">${[
+    ['#8a919f', '지붕 30×20m (0m)'], ['#a4abb8', '턱 +1m · 실외기 +1.2m'], ['#6d7390', '기계실 (들어갈 수 있는 방, 동쪽 문)'], [T.woodDark, '상자 ×5'], ['#b8402e', '드럼통 ×2'], [T.amp, '점프대 ×2'], [T.red, '레드 스폰'], [T.blue, '블루 스폰'],
+  ].map(([c, n]) => `<div style="display:flex;flex-direction:row;align-items:center;gap:6px;font-size:12px"><div style="width:14px;height:14px;border-radius:3px;background:${c};border:2px solid ${T.outline}"></div>${n}</div>`).join('')}</div>`;
+  const section = (() => {
+    const s = 12, gy = 150, x0 = 40;
+    const box = (x, w, h, fill) => `<rect x="${r2(x0 + (x + 16) * s)}" y="${r2(gy - h * s)}" width="${r2(w * s)}" height="${r2(h * s + 8)}" style="fill:${fill};stroke:${T.outline};stroke-width:2px"></rect>`;
+    return `<svg viewBox="0 0 600 220" width="560" height="205" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="600" height="220" style="fill:${T.bg2}"></rect>
+      ${box(-15, 30, 0, '#8a919f')}${box(-14, 8, 1, '#a4abb8')}${box(-14, 8, 2.3, '#6d7390')}${box(7, 2, 1.2, '#a4abb8')}
+      ${txt(x0 + 2 * s, gy - 42, '기계실 지붕 +2.3m (턱 +1m 을 밟고 점프)', { size: 11, anchor: 'start' })}${txt(x0 + 24 * s, gy - 22, '실외기 +1.2m', { size: 11, anchor: 'start' })}
+      ${figure({ x: x0 + 14 * s, y: gy - 12, s: 0.32, pose: 'jump' })}${figure({ x: x0 + 20 * s, y: gy, s: 0.32, pose: 'run', facing: -1 })}
+      <line x1="0" y1="${gy + 56}" x2="600" y2="${gy + 56}" style="stroke:${T.red};stroke-width:2px;stroke-dasharray:6 6"></line>${txt(540, gy + 50, 'y = −8m 낙사', { size: 11, color: T.red })}
+    </svg>`;
+  })();
+  const rules = table(['항목', '값'], [
+    ['크기', '지붕 30×20m · 난간 없음 — 가장자리가 곧 낙사'], ['기계실', '8×6m 방, 높이 2.3m, 동쪽 벽 가운데 1.8m 문. 안에 상자 1 · 드럼통 1'], ['벽·지붕', '시뮬에서 보통 상자(천장에 머리가 막힌다) · 화면은 안에 있으면 벽·지붕을 비친다'],
+    ['턱·실외기', '+1m 턱을 밟고 기계실 지붕(+2.3m)에 오른다 · 실외기 +1.2m 엄폐'], ['드럼통', '기계실 안 (−8, 6.5) · 밖 (5, −3)'], ['점프대', '(−4.5, 3.2) · (11, 0) 11 m/s'], ['스폰', '레드 서쪽 4 · 블루 동쪽 4'],
+  ], { size: 12, colW: [70] });
+  const inner = `
+    ${sheetHeader('맵 3 — 옥상', '도시 야경 위 30×20m 지붕. 기계실에 들어가 싸울 수 있고, 난간이 없어 가장자리가 곧 낙사다.', '맵')}
+    <div style="display:grid;grid-template-columns:560px minmax(0, 1fr);gap:20px">
+      ${panel(col([label('평면도 (14px = 1m)'), planSvg, legend], { gap: 8 }), { pad: 10 })}
+      <div style="display:flex;flex-direction:column;gap:16px">
+        ${panel(col([label('단면 (서→동)'), section], { gap: 8 }), { pad: 10 })}
+        ${panel(rules, { pad: 10 })}
+      </div>
+    </div>`;
+  return doc({ body: sheet(W, H, inner) });
+}
+
+/** 맵 4 얼음 호수 (2026-09-11) */
+export function mapIceLakeBoard() {
+  const W = 1200, H = 760;
+  const sc = 13, C = 270;
+  const w2s = (x, z) => [C + x * sc, C - z * sc];
+  const plan = [];
+  plan.push(`<rect x="0" y="0" width="540" height="540" style="fill:#223a66"></rect>`);
+  plan.push(`<circle cx="${C}" cy="${C}" r="${18 * sc}" style="fill:#cfe6f5;stroke:${T.outline};stroke-width:4px"></circle>`);
+  for (const R of [6, 12]) plan.push(`<circle cx="${C}" cy="${C}" r="${R * sc}" style="fill:none;stroke:rgba(40,70,120,0.25);stroke-width:1.5px"></circle>`);
+  // 균열 무늬
+  for (let i = 0; i < 6; i++) { const a = (i * 61 + 17) * Math.PI / 180; plan.push(`<line x1="${r2(C + Math.cos(a) * 4 * sc)}" y1="${r2(C + Math.sin(a) * 4 * sc)}" x2="${r2(C + Math.cos(a + 0.4) * 15 * sc)}" y2="${r2(C + Math.sin(a + 0.4) * 15 * sc)}" style="stroke:rgba(90,130,180,0.35);stroke-width:2px"></line>`); }
+  const rock = (x, z, r, h) => { const [px, py] = w2s(x, z); return `<circle cx="${r2(px)}" cy="${r2(py)}" r="${r2(r * sc)}" style="fill:#7d8593;stroke:${T.outline};stroke-width:2px"></circle>${txt(px, py + 4, `+${h}m`, { size: 9, color: T.outline })}`; };
+  plan.push(rock(0, 0, 1.6, 2.2));
+  for (const [x, z] of [[9, 9], [-9, 9], [9, -9], [-9, -9]]) plan.push(rock(x, z, 0.9, 1.4));
+  for (let i = 0; i < 4; i++) { const a = (i * 90 + 45) * Math.PI / 180; const [px, py] = w2s(6 * Math.cos(a), 6 * Math.sin(a)); plan.push(`<rect x="${r2(px - 6)}" y="${r2(py - 6)}" width="12" height="12" style="fill:${T.woodDark};stroke:${T.outline};stroke-width:2px"></rect>`); }
+  for (const [x, z] of [[0, 4.5], [0, -4.5]]) { const [px, py] = w2s(x, z); plan.push(BARREL(px, py, 0.45 * sc)); }
+  for (let i = 0; i < 8; i++) { const a = (i * 45) * Math.PI / 180; const [px, py] = w2s(12 * Math.cos(a), 12 * Math.sin(a)); plan.push(SPAWN(px, py, 10, i + 1, Math.cos(a) > 0.01 ? 'red' : Math.cos(a) < -0.01 ? 'blue' : (i === 2 ? 'red' : 'blue'))); }
+  plan.push(`<line x1="20" y1="520" x2="${20 + 10 * sc}" y2="520" style="stroke:${T.ink};stroke-width:3px"></line>${txt(20 + 5 * sc, 512, '10m', { size: 11, color: T.ink })}`);
+  plan.push(txt(440, 525, '얼음판 밖 = 물 (낙사)', { size: 11, color: T.ink }));
+  const planSvg = `<svg viewBox="0 0 540 540" width="540" height="540" style="display:block" xmlns="http://www.w3.org/2000/svg">${plan.join('')}</svg>`;
+  const legend = `<div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:8px">${[
+    ['#cfe6f5', '얼음판 r 18m (미끄러움)'], ['#7d8593', '바위 ×5 (중앙 r 1.6 · 작은 r 0.9)'], [T.woodDark, '상자 ×4'], ['#b8402e', '드럼통 ×2'], [T.red, '레드 스폰'], [T.blue, '블루 스폰'],
+  ].map(([c, n]) => `<div style="display:flex;flex-direction:row;align-items:center;gap:6px;font-size:12px"><div style="width:14px;height:14px;border-radius:3px;background:${c};border:2px solid ${T.outline}"></div>${n}</div>`).join('')}</div>`;
+  // 미끄러짐 곡선: 손을 떼면 틱당 1.5% 감속 → 약 2.5초
+  const slide = (() => {
+    const pts = []; let v = 6.2; for (let t = 0; t <= 180; t += 6) { pts.push(`${r2(40 + t * 2.8)},${r2(170 - v * 20)}`); for (let k = 0; k < 6; k++) v *= 0.985; }
+    return `<svg viewBox="0 0 600 220" width="560" height="205" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <rect x="0" y="0" width="600" height="220" style="fill:${T.bg2}"></rect>
+      <line x1="40" y1="170" x2="560" y2="170" style="stroke:${T.line2};stroke-width:2px"></line><line x1="40" y1="30" x2="40" y2="170" style="stroke:${T.line2};stroke-width:2px"></line>
+      <polyline points="${pts.join(' ')}" style="fill:none;stroke:${T.amp};stroke-width:3px"></polyline>
+      ${txt(300, 195, '손을 뗀 뒤 시간 (0 → 3초)', { size: 11, color: T.muted })}${txt(60, 40, '속도 6.2 m/s', { size: 11, color: T.muted, anchor: 'start' })}
+      ${txt(300, 60, '틱당 1.5% 감속 — 약 2.5초 미끄러진다 · 가속은 틱당 7% · 공격 중엔 멈춘다', { size: 11, color: T.ink })}
+    </svg>`;
+  })();
+  const rules = table(['항목', '값'], [
+    ['크기', '반지름 18m 얼음판, 밖은 물(낙사 y < −8m)'], ['미끄러움', '목표 속도에 틱당 7% 씩 붙고, 손을 떼면 틱당 1.5% 씩 감속. 공격 중엔 멈춘다'], ['바위', '중앙 r 1.6m(+2.2m) + 작은 바위 4 (r 0.9m, +1.4m) — 엄폐·발판'],
+    ['상자·드럼통', '상자 4 (반지름 6m) · 드럼통 2 (바위 남북 4.5m)'], ['스폰', '반지름 12m 원주 8 · 팀전은 동서'], ['봇', '벽 없는 맵에서 앞 0.9m 에 지지면이 없으면 멈춘다'],
+  ], { size: 12, colW: [80] });
+  const inner = `
+    ${sheetHeader('맵 4 — 얼음 호수', '미끄러워 멈추기 어려운 원형 얼음판. 가장자리 밖은 물이라 밀려나면 끝이다.', '맵')}
+    <div style="display:grid;grid-template-columns:560px minmax(0, 1fr);gap:20px">
+      ${panel(col([label('평면도 (13px = 1m)'), planSvg, legend], { gap: 8 }), { pad: 10 })}
+      <div style="display:flex;flex-direction:column;gap:16px">
+        ${panel(col([label('미끄러짐'), slide], { gap: 8 }), { pad: 10 })}
+        ${panel(rules, { pad: 10 })}
+      </div>
+    </div>`;
   return doc({ body: sheet(W, H, inner) });
 }

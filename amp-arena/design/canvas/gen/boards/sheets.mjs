@@ -143,3 +143,35 @@ export function movesBoard() {
     <div style="display:flex;flex-direction:row;gap:10px;align-items:center">${p('콤보 입력은 각 타격의 지속 시작~후딜 종료 사이에만 받는다. 3타·강타 뒤에는 대시 캔슬이 없다. 같은 공격자에게 연속 4히트째부터 넉백 ×1.5 (무한 콤보 방지).', { size: 12 })}</div>`;
   return doc({ body: sheet(W, H, inner) });
 }
+
+/** 스타일(직업) 5종 — 2026-09-12 구현분. 머리 색·체형 배율·사슬·V 기술·들 수 있는 악세서리. */
+export function stylesBoard() {
+  const W = 1200, H = 900;
+  const ST = [
+    { name: '파이터', hair: '#2b2f4a', torso: '1.00', desc: '고르게 균형 잡힌 기본형', light: '잽 · 스트레이트 · 로킥', heavy: '돌려차기 · 헤이메이커', v: '어퍼컷 (3초)', acc: ['부스터', '월', '더블탭'], pose: 'attack1', shirt: T.slot[0] },
+    { name: '그래플러', hair: '#5a3a22', torso: '1.14', desc: '잡기 범위 1.3m · 던지기 22', light: '훅 · 훅 · 박치기', heavy: '바디슬램(슈퍼아머) · 래리어트', v: '대시 잡기 (5초)', acc: ['월', '브레이커'], pose: 'grab', shirt: T.slot[1] },
+    { name: '스피드스타', hair: '#e8c65a', torso: '0.92', desc: '이동 +15% · 공중 대시 1회 · 방어 −1', light: '속공 3단', heavy: '발차기 · 도끼차기', v: '회전 발차기 (4초)', acc: ['더블탭', '스파이크'], pose: 'dashAttack', shirt: T.slot[2] },
+    { name: '헤비', hair: '#3a3f55', torso: '1.22', desc: '체력 +2 · 방어 +1 · 이동 −10%', light: '해머 2단', heavy: '강타 2단(슈퍼아머)', v: '지진 (7초 · 반지름 2.6m 다운)', acc: ['브레이커', '월'], pose: 'attack2', shirt: T.slot[3] },
+    { name: '마셜', hair: '#d8452e', torso: '0.98', desc: '점프 +2 · 근력 +1 · 리치 1.6~1.8m', light: '발차기 · 발차기 · 무릎', heavy: '상단차기 · 도끼차기', v: '비연각 (5초)', acc: ['스파이크', '부스터'], pose: 'attack3', shirt: T.slot[4] },
+  ];
+  const cards = ST.map((st) => `<div style="display:flex;flex-direction:column;gap:8px;padding:12px;background:${T.panel};border:2px solid ${T.line2};border-radius:12px;box-shadow:0 4px 0 ${T.bg2};min-width:0">
+    <div style="height:170px;display:flex;align-items:flex-end;justify-content:center;background:${T.bg2};border-radius:10px;overflow:hidden">${svgWrap(figure({ x: 95, y: 150, s: 1.15, pose: st.pose, hair: st.hair, shirt: st.shirt }), { w: 190, h: 170, vb: '0 0 190 170', extra: 'overflow:hidden' })}</div>
+    <div style="display:flex;flex-direction:row;align-items:center;gap:8px"><div style="width:18px;height:18px;border-radius:5px;background:${st.hair};border:2px solid ${T.outline}"></div><div class="display" style="font-size:20px">${st.name}</div>${chip('체형 ×' + st.torso, { color: T.panel3, fg: T.muted, size: 11 })}</div>
+    <div style="font-size:12px;color:${T.muted}">${st.desc}</div>
+    <div style="font-size:11px;color:${T.muted}">약공 (Z) 사슬</div><div style="font-size:13px;font-weight:700">${st.light}</div>
+    <div style="font-size:11px;color:${T.muted}">강공 (X) 사슬 — 마지막 타가 피니시</div><div style="font-size:13px;font-weight:700">${st.heavy}</div>
+    <div style="font-size:11px;color:${T.muted}">기술 (V)</div><div style="font-size:13px;font-weight:700;color:${T.amp}">${st.v}</div>
+    <div style="display:flex;flex-direction:row;flex-wrap:wrap;gap:4px">${['맨손', ...st.acc].map((a) => chip(a, { color: T.bg2, fg: T.ink, size: 11 })).join('')}</div>
+  </div>`).join('');
+  const rules = table(['규칙', '내용'], [
+    ['사슬', '같은 키를 이어 누르면 다음 타. 약공 사슬 도중 강공을 누르면 강공 사슬의 마지막 타(피니시)가 나간다.'],
+    ['반격', '가드로 막은 뒤 15틱 안에 약공 → 반격기(8, 띄움). 연타 사이에 가드가 들어갈 만큼 경직은 원래 값.'],
+    ['템포', '선딜 ×1.2 · 후딜 ×1.25 (2차 소감: 공격이 너무 빠르다). 걷기 4.0 · 달리기 6.2 m/s.'],
+    ['악세서리', '스타일마다 들 수 있는 것이 다르다(위 칩). 봇은 스타일·악세서리를 무작위로 고른다.'],
+  ], { size: 12, colW: [70] });
+  const inner = `
+    ${sheetHeader('스타일 5종 — 직업', '머리 모양·색과 체형 배율로 실루엣이 갈린다. 약공·강공 사슬, V 기술, 들 수 있는 악세서리가 다르다. 단일 원본은 styles.ts.', '캐릭터')}
+    <div style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:12px">${cards}</div>
+    ${panel(rules, { pad: 10 })}`;
+  return doc({ body: sheet(W, H, inner) });
+}
