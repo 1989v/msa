@@ -157,6 +157,108 @@ namespace Kgd.Art
             return this;
         }
 
+        /// <summary>
+        /// 둥근 기둥·고깔 — **옆면 법선을 이어 붙여 매끄럽게** 만든다.
+        ///
+        /// 상자를 아무리 쌓아도 둥근 것은 안 나온다. 나무 몸통·수관·망루 지붕처럼
+        /// 「깎인 것이 아니라 둥근 것」이 필요한 자리가 이 함수다. 면마다 법선을 따로 주면
+        /// 열 면짜리 고깔도 각져 보이므로, 법선은 축에서 바깥으로 향하는 방향을 쓴다.
+        /// </summary>
+        public KgdMesh Round(Vector3 bottom, Vector3 top, float rBottom, float rTop,
+                             int sides, Color color, float glow = 0f)
+        {
+            sides = Mathf.Clamp(sides, 3, 24);
+            Vector3 axis = (top - bottom).normalized;
+            Vector3 side = Vector3.Cross(axis, Mathf.Abs(axis.y) > 0.95f ? Vector3.forward : Vector3.up).normalized;
+            Vector3 fwd = Vector3.Cross(side, axis);
+            Color c = color; c.a = glow;
+
+            int baseIndex = _v.Count;
+            for (int i = 0; i <= sides; i++)
+            {
+                float a = i / (float)sides * Mathf.PI * 2f;
+                Vector3 dir = side * Mathf.Cos(a) + fwd * Mathf.Sin(a);
+                // 옆면이 기울어도 법선이 표면을 따라가게 — 위아래 반지름 차를 축 성분으로 섞는다
+                float slope = (rBottom - rTop) / Mathf.Max(0.0001f, (top - bottom).magnitude);
+                Vector3 n = (dir + axis * slope).normalized;
+                AddVert(bottom + dir * rBottom, n, c);
+                AddVert(top + dir * rTop, n, c);
+            }
+            for (int i = 0; i < sides; i++)
+            {
+                int b = baseIndex + i * 2;
+                _t.Add(b); _t.Add(b + 1); _t.Add(b + 3);
+                _t.Add(b); _t.Add(b + 3); _t.Add(b + 2);
+            }
+            // 끝면 — 반지름이 0 이 아니면 덮는다
+            if (rTop > 0.001f) Cap(top, axis, side, fwd, rTop, sides, color * 1.12f, glow, false);
+            if (rBottom > 0.001f) Cap(bottom, -axis, side, fwd, rBottom, sides, color * 0.82f, glow, true);
+            return this;
+        }
+
+        private void Cap(Vector3 at, Vector3 n, Vector3 side, Vector3 fwd, float r,
+                         int sides, Color color, float glow, bool flip)
+        {
+            Color c = color; c.a = glow;
+            int mid = _v.Count;
+            AddVert(at, n, c);
+            for (int i = 0; i <= sides; i++)
+            {
+                float a = i / (float)sides * Mathf.PI * 2f;
+                AddVert(at + (side * Mathf.Cos(a) + fwd * Mathf.Sin(a)) * r, n, c);
+            }
+            for (int i = 0; i < sides; i++)
+            {
+                if (flip) { _t.Add(mid); _t.Add(mid + 1 + i); _t.Add(mid + 2 + i); }
+                else { _t.Add(mid); _t.Add(mid + 2 + i); _t.Add(mid + 1 + i); }
+            }
+        }
+
+        /// <summary>
+        /// 둥근 덩이 — 바위·수관처럼 사방이 둥근 것. <paramref name="rings"/> 만큼 가로로 잘라
+        /// 쌓고 법선을 중심에서 바깥으로 준다. <paramref name="lumpy"/> 가 0 이 아니면
+        /// 자리마다 반지름을 흔들어 **돌덩이**가 된다 — 흔들지 않으면 공이다.
+        /// </summary>
+        public KgdMesh Blob(Vector3 center, Vector3 size, int sides, int rings,
+                            Color color, float lumpy = 0f, int seed = 0, float glow = 0f)
+        {
+            sides = Mathf.Clamp(sides, 4, 20);
+            rings = Mathf.Clamp(rings, 2, 12);
+            Color c = color; c.a = glow;
+            int baseIndex = _v.Count;
+            for (int j = 0; j <= rings; j++)
+            {
+                float v = j / (float)rings;
+                float phi = v * Mathf.PI;
+                float y = Mathf.Cos(phi), rr = Mathf.Sin(phi);
+                for (int i = 0; i <= sides; i++)
+                {
+                    float u = i / (float)sides;
+                    float a = u * Mathf.PI * 2f;
+                    var dir = new Vector3(Mathf.Cos(a) * rr, y, Mathf.Sin(a) * rr);
+                    float wob = lumpy == 0f ? 1f
+                        : 1f + lumpy * (Hash(seed + i * 7 + j * 31) - 0.5f);
+                    var p = center + Vector3.Scale(dir * wob, size * 0.5f);
+                    AddVert(p, dir.normalized, c);
+                }
+            }
+            int row = sides + 1;
+            for (int j = 0; j < rings; j++)
+            for (int i = 0; i < sides; i++)
+            {
+                int b = baseIndex + j * row + i;
+                _t.Add(b); _t.Add(b + row); _t.Add(b + row + 1);
+                _t.Add(b); _t.Add(b + row + 1); _t.Add(b + 1);
+            }
+            return this;
+        }
+
+        private static float Hash(int n)
+        {
+            n = (n << 13) ^ n;
+            return ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 2147483647f;
+        }
+
         private void AddVert(Vector3 p, Vector3 n, Color c)
         {
             _v.Add(p); _n.Add(n); _c.Add(c);
