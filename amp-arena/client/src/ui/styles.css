@@ -200,3 +200,16 @@ input, select { font-family: var(--font); }
 .match.touch .fsbtn { top: auto; bottom: 270px; right: 16px; }
 /* 관전: 내 캐릭터가 없으니 체력판·기술판을 감춘다 (2026-09-12) */
 .match.spectator .hud .plate, .match.spectator .hud .skill { display: none; }
+/* 진행: 스탯 분배·상점 모달 (2026-09-12) */
+.modal { position: absolute; inset: 0; background: rgba(10, 13, 30, 0.72); display: flex; align-items: center; justify-content: center; z-index: 30; padding: 16px; }
+.modal-box { width: min(640px, 96vw); max-height: 92%; overflow-y: auto; }
+.stats-table { border-collapse: collapse; width: 100%; }
+.stats-table th, .stats-table td { padding: 6px 8px; border-bottom: 1px solid var(--line2); text-align: left; font-size: 13px; }
+.stats-table .num { text-align: center; font-variant-numeric: tabular-nums; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px; background: var(--panel); border: 2px solid var(--line2); border-radius: 10px; color: var(--ink); cursor: pointer; min-width: 64px; }
+.swatch span { display: block; width: 36px; height: 36px; border-radius: 8px; border: 2px solid var(--outline); }
+.swatch small { font-size: 11px; color: var(--muted); }
+.swatch.owned small { color: var(--ink); }
+.swatch.on { border-color: var(--amp); box-shadow: 0 0 0 2px rgba(255,176,32,0.35); }
+.swatch.on small { color: var(--amp); font-weight: 800; }

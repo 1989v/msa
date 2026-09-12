@@ -21,6 +21,31 @@ export const STATE_IDS: PState[] = [
 export interface Stats { hp: number; atk: number; def: number; jmp: number; spd: number; tec: number }
 export const defaultStats = (): Stats => ({ hp: C.STAT_DEFAULT, atk: C.STAT_DEFAULT, def: C.STAT_DEFAULT, jmp: C.STAT_DEFAULT, spd: C.STAT_DEFAULT, tec: C.STAT_DEFAULT });
 
+/** 진행(레벨)으로 분배한 스탯 — 스탯당 최대 +5, 총합 29 (Lv30). 클라이언트가 보낸 값은 방장이 여기서 다시 검사한다 */
+export const MAX_STAT_ALLOC = 5;
+export const MAX_STAT_POINTS = 29;
+const STAT_ORDER: (keyof Stats)[] = ['hp', 'atk', 'def', 'jmp', 'spd', 'tec'];
+export function sanitizeStatDelta(raw: unknown): Partial<Stats> {
+  const out: Partial<Stats> = {};
+  if (!raw || typeof raw !== 'object') return out;
+  const r = raw as Record<string, unknown>;
+  let total = 0;
+  for (const k of STAT_ORDER) {
+    const v = r[k];
+    if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+    let n = Math.max(0, Math.min(MAX_STAT_ALLOC, Math.round(v)));
+    n = Math.min(n, MAX_STAT_POINTS - total); // 총합을 넘는 만큼은 뒤 스탯부터 깎인다
+    if (n <= 0) continue;
+    out[k] = n; total += n;
+  }
+  return out;
+}
+export function applyStatDelta(base: Stats, d: Partial<Stats>): Stats {
+  const s = { ...base };
+  for (const k of STAT_ORDER) s[k] = base[k] + (d[k] ?? 0);
+  return s;
+}
+
 export interface Player {
   id: number;            // 슬롯 번호 0~7
   name: string;

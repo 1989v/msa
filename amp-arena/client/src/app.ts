@@ -7,6 +7,9 @@ import { Match, type MatchOptions } from './game/match.ts';
 import { icon, boltLogo, ACC_ICON } from './ui/icons.ts';
 import { isEmbedded, enterFullscreen } from './ui/fullscreen.ts';
 import { onPlatform, submitScore, buildScoreRequest, scoreNote, platformNickname, type ScoreBoard } from './platform/score.ts';
+import { type Progress, loadProgress, saveProgress, applyMatch } from './platform/progress.ts';
+import { pullProgress, pushProgress } from './platform/save.ts';
+import { progressPanelHtml, openStatsModal, openShopModal } from './ui/progressui.ts';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const ACC_DESC: Record<AccessoryId, string> = {
@@ -38,6 +41,7 @@ export class App {
   private root: HTMLElement;
   private nick: string;
   private spectate = false; // 관전으로 참가 — 명단에서 빠지고 남을 따라 본다
+  private progress: Progress = loadProgress(); // 경험치·골드·스탯 분배·스킨 (로컬 원본, 플랫폼 세이브로 기기 간 이어하기)
   private acc: AccessoryId = 'none';
   private style: StyleId = 'fighter';
   private team = -1;
@@ -57,6 +61,33 @@ export class App {
     if (!(this.style in STYLES)) this.style = 'fighter';
     this.acc = allowedAccessory(this.style, this.acc);
     this.showTitle();
+    void this.syncProgress();
+  }
+
+  /** 서버본이 이 기기보다 앞서 있으면(다른 기기에서 놀았다) 받아서 쓴다 */
+  private async syncProgress(): Promise<void> {
+    const server = await pullProgress(this.progress);
+    if (!server) return;
+    this.progress = server;
+    saveProgress(server);
+    if (this.view === 'title') this.renderProgressRow();
+  }
+
+  /** 진행이 바뀌면 저장·서버 동기화·대기실 선택 갱신·타이틀 줄 다시 그리기 */
+  private setProgress(p: Progress): void {
+    this.progress = p;
+    saveProgress(p);
+    pushProgress(p);
+    this.online?.setPick({ stats: p.alloc, skin: p.skin });
+    this.renderProgressRow();
+  }
+
+  private renderProgressRow(): void {
+    const host = this.screen?.querySelector('.progress-host') as HTMLElement | null;
+    if (!host) return;
+    host.innerHTML = progressPanelHtml(this.progress);
+    (host.querySelector('.stats-btn') as HTMLButtonElement).onclick = () => openStatsModal(this.root, () => this.progress, this.style, (p) => this.setProgress(p));
+    (host.querySelector('.shop-btn') as HTMLButtonElement).onclick = () => openShopModal(this.root, () => this.progress, (p) => this.setProgress(p), (m) => this.toast(m));
   }
 
   private mount(html: string): HTMLElement {
@@ -96,6 +127,8 @@ export class App {
           <span class="label">악세서리</span>
           <div class="accs"></div>
           <div class="acc-desc muted" style="font-size:12px;min-height:34px"></div>
+          <span class="label">진행 · 레벨마다 스탯 포인트, 골드로 색 조합</span>
+          <div class="progress-host"></div>
           <span class="label">연습 설정</span>
           <div class="row">
             <select class="field map" style="flex:1;height:38px">${MAP_IDS.map((m) => `<option value="${m}">${MAPS[m].name}</option>`).join('')}</select>
@@ -127,6 +160,7 @@ export class App {
     };
     (el.querySelector('.go-lobby') as HTMLButtonElement).onclick = () => { if (readNick()) { if (isEmbedded()) void enterFullscreen(); void this.connectOnline(); } };
     nickEl.addEventListener('keydown', (e) => { if (e.key === 'Enter') (el.querySelector('.practice') as HTMLButtonElement).click(); });
+    this.renderProgressRow();
   }
 
   /** 악세서리 선택지는 직업이 정한다 — 직업을 바꾸면 못 드는 악세서리는 맨손으로 돌아간다 */
@@ -161,8 +195,8 @@ export class App {
   }
 
   private startPractice(o: { mapId: MapId; modeId: ModeId; bots: number; seconds: number }): void {
-    const src = new LocalSource({ name: this.nick, acc: this.acc, style: this.style, mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, bots: o.bots });
-    this.runMatch(src, { onExit: () => this.showTitle(), onAgain: () => this.startPractice(o), exitLabel: '타이틀로', onResult: (me, ranking) => this.submitResult(me, ranking, 'practice', o.mapId, o.modeId) });
+    const src = new LocalSource({ name: this.nick, acc: this.acc, style: this.style, mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, bots: o.bots, stats: this.progress.alloc, skin: this.progress.skin });
+    this.runMatch(src, { onExit: () => this.showTitle(), onAgain: () => this.startPractice(o), exitLabel: '타이틀로', onResult: (me, ranking) => this.finishMatch(me, ranking, 'practice', o.mapId, o.modeId) });
   }
 
   /** 판 결과를 플랫폼 순위표에 올린다 (플랫폼 위에서만 · 점수 0 은 보내지 않는다) */
@@ -172,6 +206,15 @@ export class App {
     if (!(req.score > 0)) return null;
     const r = await submitScore(req);
     return scoreNote(board, req.score, r);
+  }
+
+  /** 판이 끝났다: 진행(경험치·골드) 반영 + 순위표 제출 → 결과 화면 한 줄 */
+  private async finishMatch(me: RankEntry, ranking: RankEntry[], board: ScoreBoard, mapId: MapId, modeId: ModeId): Promise<string | null> {
+    const r = applyMatch(this.progress, me, board === 'online');
+    this.setProgress(r.p);
+    const reward = `+${r.rewards.xp} XP · +${r.rewards.gold} 골드${r.to > r.from ? ` · Lv ${r.to} 달성!` : ''}`;
+    const score = await this.submitResult(me, ranking, board, mapId, modeId);
+    return [score, reward].filter(Boolean).join(' · ');
   }
 
   private runMatch(src: LocalSource | GuestSource, opts: MatchOptions): void {
@@ -195,7 +238,7 @@ export class App {
   // ---------------- 온라인 ----------------
   private async connectOnline(): Promise<void> {
     if (this.online?.connected) { this.showLobby(); return; }
-    const online = new Online(this.nick, { acc: this.acc, style: this.style, team: this.team, spectate: this.spectate }, this.settings, {
+    const online = new Online(this.nick, { acc: this.acc, style: this.style, team: this.team, spectate: this.spectate, stats: this.progress.alloc, skin: this.progress.skin }, this.settings, {
       onState: () => { if (this.view === 'room') this.showRoom(); },
       onMatch: (src) => this.onMatch(src),
       onRoundEnd: () => { this.disposeMatch(); this.showRoom(); },
@@ -213,7 +256,7 @@ export class App {
     const party = online.state.party;
     this.runMatch(src, {
       exitLabel: party ? '대기실로' : '로비로',
-      onResult: (me, ranking) => this.submitResult(me, ranking, 'online', src.world.cfg.mapId, src.world.cfg.modeId),
+      onResult: (me, ranking) => this.finishMatch(me, ranking, 'online', src.world.cfg.mapId, src.world.cfg.modeId),
       onExit: () => {
         // 코드 방: done → roundEnded 가 오면 대기실. 빠른 대전: 방을 나가 로비로
         online.finishRound();

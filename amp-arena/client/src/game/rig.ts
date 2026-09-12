@@ -49,6 +49,7 @@ export class CharacterRig {
   private shieldGroup = new THREE.Group();
   private shadowBlob: THREE.Mesh;
   private hairGroup = new THREE.Group();
+  private bandMat = lambert(BAND);
   private headG!: THREE.Group;
   private lookKey = '';
   acc: AccessoryId = 'none';
@@ -107,11 +108,11 @@ export class CharacterRig {
       headG.add(hl);
     }
     // 머리띠
-    const band = new THREE.Mesh(new THREE.TorusGeometry(0.325, 0.035, 8, 24), lambert(BAND));
+    const band = new THREE.Mesh(new THREE.TorusGeometry(0.325, 0.035, 8, 24), this.bandMat);
     band.rotation.x = Math.PI / 2;
     band.position.y = 0.12;
     headG.add(band);
-    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.22), lambert(BAND));
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.03, 0.22), this.bandMat);
     tail.position.set(-0.08, 0.1, -0.38);
     tail.rotation.y = 0.5;
     headG.add(tail);
@@ -134,6 +135,7 @@ export class CharacterRig {
   }
 
   setShirt(color: string): void { this.shirtMat.color.set(color); }
+  setBand(color: string): void { this.bandMat.color.set(color); }
 
   /** 지금 그려지는(보간된) 포즈 — 디버그·E2E 가 「팔이 뻗었는가」를 수치로 읽는다 */
   get currentPose(): Readonly<Pose> { return this.pose; }

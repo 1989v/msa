@@ -40,11 +40,11 @@
 - [x] 시안 캔버스 v0.2 (2026-09-12) — 스타일 5종·옥상·얼음 호수 아트보드 추가(16장), 콜로세움·스카이독에 문루·컨테이너·드럼통·점프대 반영. `node design/canvas/gen/build.mjs` → seed → 같은 URL 재발행(Version 4). 카탈로그 썸네일도 새 카메라로 교체
 - [x] 관전 (2026-09-12) — 로비 체크박스 → `Pick.spectate`, `buildRoster`(`client/src/net/roster.ts`)가 명단에서 빼고 `cfg.spectators`, `GuestSource.spectator`(입력 안 보냄), 매치 `followId`(Tab 전환). 실측 `tools/e2e-spectate.mjs`
 - [x] 플랫폼 순위표 (2026-09-12) — `client/src/platform/score.ts` (online/practice 보드, Bearer 쿠키, 결과 화면 한 줄), 마이그레이션 `game/.../V90__arena_score_boards.sql`(보드 이름·sdk_integrated). 세션은 카탈로그 페이지 몫. 실측 `tools/e2e-score.mjs`(가짜 API) · `tools/e2e-prod-score.mjs`(운영)
-- [ ] Phase 2 (차별화) — 스킨 페인터(UV 아틀라스), 진행·상점, 스탯 분배 UI
+- [x] 진행 (2026-09-12) — `client/src/platform/progress.ts`(경험치·레벨·골드·스탯 분배·색 스킨, `sanitizeProgress`), `save.ts`(플랫폼 세이브 동기화), `ui/progressui.ts`(타이틀 줄·모달). 스탯은 명단으로 시뮬에(`sanitizeStatDelta`), 스킨은 리그 색으로. 테스트 `client/test/progress.test.ts`·`shared/test/stats.test.ts`, 실측 `tools/e2e-progress.mjs`
+- [ ] Phase 2 남은 것 — 스킨 페인터(UV 아틀라스; 그림 전달 경로 필요), 매치 중 채팅·점수판
 
 ## 장르 문법 중 아직 없는 것
 
-- 계정·경험치·골드·상점·스탯 분배 UI (스탯 공식은 시뮬에 있고 전원 3 고정)
 - 매치 중 채팅, 점수판(Tab)
 - 캐릭터 외형은 1종(스타일별 머리·체형 차이 + 색 8종)
 

@@ -45,7 +45,7 @@ export class Authority {
     this.world = w;
     for (const r of init.cfg.roster) {
       if (gone.has(r.id)) continue;
-      w.addPlayer(r.id, r.name, r.team, r.acc, r.bot, r.style);
+      w.addPlayer(r.id, r.name, r.team, r.acc, r.bot, r.style, r.stats);
       this.queues[r.id] = [];
       if (r.bot) this.bots.add(r.id);
     }

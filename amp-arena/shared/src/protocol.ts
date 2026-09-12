@@ -6,10 +6,21 @@ import type { StyleId } from './styles.ts';
 import type { MapId } from './maps.ts';
 import type { ModeId } from './modes.ts';
 import type { Snapshot } from './snapshot.ts';
+import type { Stats } from './player.ts';
 import type { WorldEvent, RankEntry } from './world.ts';
 
-/** 매치 참가자 한 줄. id = 릴레이 좌석 번호 = 월드 플레이어 번호. */
-export interface RosterEntry { id: number; name: string; team: number; acc: AccessoryId; style: StyleId; bot: boolean }
+/** 색 조합 스킨 — 팔레트 인덱스, -1 은 기본(상의는 자리 색, 머리는 직업 색, 머리띠는 주황) */
+export interface Skin { shirt: number; hair: number; band: number }
+export function sanitizeSkin(raw: unknown): Skin | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const r = raw as Record<string, unknown>;
+  const n = (v: unknown, hi: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(-1, Math.min(hi, Math.round(v))) : -1);
+  const s = { shirt: n(r.shirt, 15), hair: n(r.hair, 7), band: n(r.band, 7) };
+  return s.shirt < 0 && s.hair < 0 && s.band < 0 ? undefined : s;
+}
+
+/** 매치 참가자 한 줄. id = 릴레이 좌석 번호 = 월드 플레이어 번호. stats·skin 은 진행(레벨·상점)에서 온다 */
+export interface RosterEntry { id: number; name: string; team: number; acc: AccessoryId; style: StyleId; bot: boolean; stats?: Partial<Stats>; skin?: Skin }
 
 /** 방장이 정해 뿌리는 매치 설정. 승계 때마다 epoch 가 오르고 host 가 바뀐다. */
 export interface MatchConfig {
@@ -25,7 +36,7 @@ export interface MatchConfig {
 }
 
 /** 대기실에서 서로에게 알리는 내 선택. 방을 만들 때 정한 매치 설정은 방장 것만 의미가 있다. */
-export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: number; spectate?: boolean } // spectate: 싸우지 않고 본다 — 명단에서 빠진다
+export interface Pick { name: string; acc: AccessoryId; style: StyleId; team: number; spectate?: boolean; stats?: Partial<Stats>; skin?: Skin } // spectate: 싸우지 않고 본다 — 명단에서 빠진다. stats·skin: 진행
 export interface RoomSettings { map: MapId; mode: ModeId; seconds: number; fillBots: boolean }
 
 /** 게스트 → 방장 (`to` 지정) 또는 방 전체 브로드캐스트 */

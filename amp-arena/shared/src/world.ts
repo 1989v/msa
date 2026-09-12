@@ -5,10 +5,10 @@ import { type Input, EMPTY_INPUT } from './input.ts';
 import { MOVES, type MoveId, type MoveDef, isActiveAt, PROJECTILE_MOVES, CRATE_HIT, BOMB_HIT, BARREL_HIT } from './moves.ts';
 import { MAPS, type MapDef, type MapId, type Spawn, type Box, type Pad, type CrateSpot } from './maps.ts';
 import { MODES, type ModeDef, type ModeId } from './modes.ts';
-import { type Player, type SimContext, stepPlayer, createPlayer, canBeHit, isSolid, applyDamage, setState, respawn, facingX, facingZ, supportHeight } from './player.ts';
+import { type Player, type SimContext, type Stats, stepPlayer, createPlayer, canBeHit, isSolid, applyDamage, setState, respawn, facingX, facingZ, supportHeight, sanitizeStatDelta, applyStatDelta } from './player.ts';
 import { ACCESSORIES, type AccessoryId } from './accessories.ts';
 import type { StyleId } from './styles.ts';
-import { allowedAccessory } from './styles.ts';
+import { allowedAccessory, statsForStyle } from './styles.ts';
 import {
   type Item, type ItemKind, createItem, CRATE_RESPAWN_TICKS, CRATE_BREAK_RADIUS, BOMB_FUSE_TICKS, BOMB_RADIUS, HEART_HEAL, BARREL_RADIUS, BARREL_RESPAWN_TICKS,
   BARREL_PUSH_SPEED, BARREL_FRICTION, ACC_DESPAWN_TICKS,
@@ -84,8 +84,10 @@ export class World implements SimContext {
     });
   }
 
-  addPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean, style: StyleId = 'fighter'): Player {
-    const p = createPlayer(id, name, this.teams ? team : 0, allowedAccessory(style, acc), bot, this.mode.lives, style);
+  addPlayer(id: number, name: string, team: number, acc: AccessoryId, bot: boolean, style: StyleId = 'fighter', statsDelta?: Partial<Stats>): Player {
+    // 진행으로 분배한 스탯은 여기서 다시 검사한다 — 명단은 클라이언트가 만든 값이라 상한을 믿지 않는다
+    const stats = applyStatDelta(statsForStyle(style), sanitizeStatDelta(statsDelta));
+    const p = createPlayer(id, name, this.teams ? team : 0, allowedAccessory(style, acc), bot, this.mode.lives, style, stats);
     const s = this.spawnFor(p);
     p.pos.x = s.x; p.pos.y = s.y; p.pos.z = s.z;
     p.yaw = yawFromDir(-s.x, -s.z);

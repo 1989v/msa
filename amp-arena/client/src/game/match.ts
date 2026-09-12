@@ -4,6 +4,7 @@ import { Renderer } from './renderer.ts';
 import { Hud } from './hud.ts';
 import { InputController } from './input.ts';
 import { SLOT_COLORS } from './rig.ts';
+import { SHIRT_PALETTE, HAIR_PALETTE, BAND_PALETTE } from '../platform/progress.ts';
 import { targetPose } from './poses.ts';
 import { audio } from './audio.ts';
 import { botInput, newBotMemory, STYLES, MOVES, ACCESSORIES, allowedAccessory, type BotMemory, type Item } from '@amp/shared';
@@ -70,6 +71,10 @@ export class Match {
   private nameOf = new Map<number, string>();
   /** 관전 대상 플레이어 id (관전이 아니면 -1) */
   private followId = -1;
+  /** 명단의 색 조합 스킨 → 상의·머리·머리띠 색 (없으면 자리 색·직업 색·기본) */
+  private shirtOf = new Map<number, string>();
+  private hairOf = new Map<number, string>();
+  private bandOf = new Map<number, string>();
   private stats = { frames: 0, slow: 0, t0: performance.now(), worst: 0 };
   private source: MatchSource;
   private opts: MatchOptions;
@@ -107,7 +112,12 @@ export class Match {
     this.renderer.buildMap(source.world.map);
     for (const r of source.roster) {
       this.nameOf.set(r.id, r.name);
-      this.renderer.ensureRig(r.id, SLOT_COLORS[r.id % 8], r.acc);
+      const sk = r.skin;
+      this.shirtOf.set(r.id, sk && sk.shirt >= 0 && SHIRT_PALETTE[sk.shirt] ? SHIRT_PALETTE[sk.shirt] : SLOT_COLORS[r.id % 8]);
+      if (sk && sk.hair >= 0 && HAIR_PALETTE[sk.hair]) this.hairOf.set(r.id, HAIR_PALETTE[sk.hair]);
+      if (sk && sk.band >= 0 && BAND_PALETTE[sk.band]) this.bandOf.set(r.id, BAND_PALETTE[sk.band]);
+      const rig0 = this.renderer.ensureRig(r.id, this.shirtOf.get(r.id)!, r.acc);
+      const band = this.bandOf.get(r.id); if (band) rig0.setBand(band);
     }
     this.hud.setRoster(source.roster, source.myId, source.world.teams);
     const me = source.world.players[source.myId];
@@ -169,8 +179,10 @@ export class Match {
     const k = 1 - Math.exp(-22 * dt);
     let meView: RenderPlayer | null = null;
     for (const rp of players) {
-      const rig = this.renderer.ensureRig(rp.id, SLOT_COLORS[rp.id % 8], rp.acc);
-      rig.setLook(STYLES[world.players[rp.id]?.style ?? 'fighter'].look);
+      const rig = this.renderer.ensureRig(rp.id, this.shirtOf.get(rp.id) ?? SLOT_COLORS[rp.id % 8], rp.acc);
+      const look = STYLES[world.players[rp.id]?.style ?? 'fighter'].look;
+      const hair = this.hairOf.get(rp.id);
+      rig.setLook(hair ? { ...look, hairColor: hair } : look);
       rig.root.position.set(rp.x, rp.y, rp.z);
       rig.root.rotation.y = rp.yaw;
       const attackLike = rp.state === 'attack' || rp.state === 'special' || rp.state === 'dashAttack' || rp.state === 'jumpAttack';
