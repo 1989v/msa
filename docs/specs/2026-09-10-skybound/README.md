@@ -19,7 +19,7 @@
 11. [T02B-2 텍스처 검증](implementation/t02b/texture-check/README.md): 1K PNG·UV·sRGB 왕복, 브라우저 12/12
 
 창작 구현은 기존 게임 소스를 읽지 않는 새 세션/에이전트에서 진행합니다.
-구현은 **9개 그룹 / 24개 실행 단위**로 나뉩니다. T02B는 한도에 맞춰 [4개 소단위](planning/t02b-small-steps.md)로 세분화했습니다. 다음은 **T04A-1: 물체 조작 순수 규칙**입니다.
+구현은 **9개 그룹 / 24개 실행 단위**로 나뉩니다. T02B는 한도에 맞춰 [4개 소단위](planning/t02b-small-steps.md)로 세분화했습니다. 다음은 **T04A-2a: 데모 선택·운반 연결**입니다.
 [주인공 모델 스튜디오](implementation/t02b/character/README.md)와 [최신 실제 캡처·검수](verifications/t02c-2.md)를 저장했습니다. 캐릭터 화면은 로컬 서버의 `implementation/t02b/character/index.html`에서 볼 수 있습니다. 장면은 로컬 서버에서
 `http://127.0.0.1:8768/implementation/t01b/index.html`로 볼 수 있습니다.
 원화 2장은 디자인 참고 이미지이며 리깅된 모델이나 동작하는 게임 화면이 아닙니다.
@@ -31,3 +31,5 @@
 [첫 공중 착지대 검증](verifications/t03b-2a.md) — 기류에서 오른쪽 착지대로 이동 가능. 단위45/45, 브라우저10/10.
 
 [두 착지점 경로 완료 검증](verifications/t03b-2b.md) — 단위48/48, 브라우저14/14. 이동 진단 경로이며 게임 전체 완주는 아닙니다.
+
+[물체 조작 순수 규칙](implementation/t04a/README.md) — 7/7 통과. 데모 연결은 다음 단계입니다.
