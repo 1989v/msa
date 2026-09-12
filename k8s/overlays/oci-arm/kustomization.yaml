@@ -374,7 +374,7 @@ images:
     newTag: 7e964f4
   - name: commerce/gateway
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gateway
-    newTag: 7e964f4
+    newTag: 9216adf
   - name: commerce/gifticon-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/gifticon-fe
     newTag: 6a1889c
