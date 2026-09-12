@@ -729,6 +729,39 @@ val verifyPodTopology by tasks.registering {
             }
         }
 
+        // 쓰기가 조용히 사라지는 도메인에는 호스트 컨텍스트에서 도는 검사가 있어야 한다.
+        // @Modifying 은 호출부 트랜잭션에 얹히므로 한정자가 어긋나면 예외도 로그도 없이 실패한다.
+        // 도메인 자기 테스트는 TM 이 하나뿐인 슬라이스라 그 상태에서도 통과한다 — 호스트 스펙이라야 잡는다.
+        hostOfDomain.forEach { (pkg, pod) ->
+            val module = rootProject.projectDir.listFiles()
+                ?.filter { it.isDirectory && File(it, "feature/src/main").isDirectory }
+                ?.map { it.name }
+                ?.firstOrNull { it.replace("-", "") == pkg }
+                ?: return@forEach
+            val isPrimary = File(rootProject.projectDir, "$module/feature/src/main").walkTopDown()
+                .filter { it.isFile && it.name.endsWith("DataSourceConfig.kt") }
+                .any { Regex("^[ \\t]*@Primary", RegexOption.MULTILINE).containsMatchIn(it.readText()) }
+            if (isPrimary) return@forEach
+
+            val hasModifying = File(rootProject.projectDir, "$module/feature/src/main").walkTopDown()
+                .any { it.isFile && it.extension == "kt" && it.readText().contains("@Modifying") }
+            if (!hasModifying) return@forEach
+
+            val hostSpec = File(rootProject.projectDir, "$pod/app/src/test").takeIf(File::exists)
+                ?.walkTopDown()?.filter { it.isFile && it.name.endsWith("ContextLoadSpec.kt") }
+                ?.joinToString("\n") { it.readText() }
+                .orEmpty()
+            // 진입점(UseCase·컨슈머) 참조를 본다. 컨트롤러 빈 단언은 presentation 만 쓰므로
+            // 그것과 갈린다. 「값이 변했는지」까지는 기계로 못 가리므로 여기까지가 한계다.
+            val entryPoints = listOf("com.kgd.$pkg.application.", "com.kgd.$pkg.infrastructure.consumer.")
+            if (entryPoints.none { hostSpec.contains(it) }) {
+                failures += "$pod 의 ContextLoadSpec 이 $module 의 진입점을 부르지 않는다 — " +
+                    "$module 은 비-primary 인데 @Modifying 쓰기를 갖는다. 한정자가 어긋나면 " +
+                    "예외 없이 사라지고, 도메인 자기 테스트는 TM 이 하나뿐이라 통과한다. " +
+                    "UseCase 를 불러 값이 변했는지 보는 검사가 필요하다"
+            }
+        }
+
         // NetworkPolicy 가 폴드를 따라오는지. 정책이 `kgd.io/host-of: {domain}` 을 달면
         // 그 정책의 podSelector 이름들이 **그 도메인을 실제로 담은 파드**여야 한다.
         // 라벨이 안 따라간 정책은 에러 없이 무효가 되거나(열어야 할 것을 안 연다) 조용히 막는다 —

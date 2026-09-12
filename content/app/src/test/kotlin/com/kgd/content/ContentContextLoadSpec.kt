@@ -108,6 +108,51 @@ class ContentContextLoadSpec(
             (gameRepository.count() >= 6).shouldBeTrue()
             gameRepository.findBySlug("overworld-quest").shouldNotBeNull()
         }
+
+        // 컨텍스트가 뜨는 것은 배선만 증명한다. 한정자가 빠진 @Transactional 은 호스트의
+        // primary TM(place)에 붙어 쓰기만 조용히 사라지므로, 값이 실제로 변하는지 봐야 한다.
+        Then("blog 조회수가 실제로 증가한다 — 한정자 없는 @Transactional 이면 조용히 실패한다") {
+            val posts = ctx.getBean(
+                com.kgd.blog.infrastructure.persistence.repository.BlogPostJpaRepository::class.java,
+            )
+            val saved = posts.save(
+                com.kgd.blog.infrastructure.persistence.entity.BlogPostJpaEntity(
+                    slug = "tm-qualifier-probe",
+                    title = "probe",
+                ),
+            )
+            val id = requireNotNull(saved.id)
+            val was = posts.findById(id).orElseThrow().viewCount
+
+            ctx.getBean(com.kgd.blog.application.interaction.usecase.RecordBlogViewUseCase::class.java)
+                .execute(
+                    com.kgd.blog.application.interaction.usecase.RecordBlogViewUseCase.Command(
+                        postId = id, visitorKey = "probe-visitor", userAgent = "Mozilla/5.0",
+                    ),
+                )
+
+            posts.findById(id).orElseThrow().viewCount shouldBe was + 1
+        }
+
+        Then("game 평점 집계가 실제로 반영된다 — 두 리포지토리 쓰기가 한 트랜잭션이어야 한다") {
+            val stats = ctx.getBean(
+                com.kgd.game.infrastructure.persistence.catalog.repository.GameStatsJpaRepository::class.java,
+            )
+            val games = ctx.getBean(
+                com.kgd.game.infrastructure.persistence.catalog.repository.GameJpaRepository::class.java,
+            )
+            val gameId = requireNotNull(games.findBySlug("snake")?.id)
+            val before = stats.findById(gameId).orElse(null)?.ratingCount ?: 0
+
+            ctx.getBean(com.kgd.game.application.play.usecase.RateGameUseCase::class.java)
+                .execute(
+                    com.kgd.game.application.play.usecase.RateGameUseCase.Command(
+                        slug = "snake", memberId = null, deviceId = "tm-qualifier-probe", score = 5,
+                    ),
+                )
+
+            stats.findById(gameId).orElseThrow().ratingCount shouldBe before + 1
+        }
     }
 }) {
 

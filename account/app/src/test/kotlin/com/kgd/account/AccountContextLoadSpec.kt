@@ -75,6 +75,32 @@ class AccountContextLoadSpec(
             schemaOf(memberDs) shouldBe "member_db"
             schemaOf(wishlistDs) shouldBe "wishlist_db"
         }
+
+        // 컨텍스트가 뜨는 것은 배선만 증명한다. 한정자가 빠진 @Transactional 은 호스트의
+        // primary TM(member)에 붙어 @Modifying 삭제가 조용히 실패하므로 값으로 본다.
+        Then("상품 삭제 이벤트가 찜을 실제로 지운다 — 한정자 없는 @Transactional 이면 조용히 실패한다")
+            .config(enabledIf = { dockerAvailable }) {
+                val items = ctx.getBean(
+                    com.kgd.wishlist.infrastructure.persistence.repository.WishlistItemJpaRepository::class.java,
+                )
+                items.save(
+                    com.kgd.wishlist.infrastructure.persistence.entity.WishlistItemJpaEntity(
+                        memberId = 9_900_001L,
+                        targetType = com.kgd.wishlist.domain.model.WishlistTargetType.PRODUCT,
+                        targetKey = "990001",
+                    ),
+                )
+                items.count() shouldBe 1L
+
+                ctx.getBean(com.kgd.wishlist.infrastructure.consumer.ProductEventConsumer::class.java)
+                    .onProductDeleted(
+                        org.apache.kafka.clients.consumer.ConsumerRecord(
+                            "product.deleted", 0, 0L, "990001", """{"productId":990001}""",
+                        ),
+                    )
+
+                items.count() shouldBe 0L
+            }
     }
 }) {
 

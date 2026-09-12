@@ -15,6 +15,9 @@ dependencies {
 
     testImplementation(libs.spring.boot.starter.test)
     testImplementation(libs.spring.boot.starter.data.jpa)
+    // 쓰기 경로 스모크가 wishlist 도메인 타입과 Kafka 레코드를 만든다
+    testImplementation(project(":wishlist:domain"))
+    testImplementation(libs.spring.kafka)
     testImplementation(libs.kotest.extensions.spring)
     // ADR-0058 검증 방법 — 폴드 결함은 실제 컨텍스트를 띄워야 드러난다
     testImplementation(libs.testcontainers.junit)
