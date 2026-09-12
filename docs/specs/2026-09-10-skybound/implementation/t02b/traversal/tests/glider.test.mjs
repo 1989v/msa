@@ -8,7 +8,7 @@ test('original sail is lightweight, above the head, symmetric and hidden until f
   assert.deepEqual([...names].sort(), ['brass', 'ochre', 'slate']);
   assert.equal(sail.root.visible, false); assert.ok(sail.stats.triangles > 2 && sail.stats.triangles < 250);
   const { min, max } = sail.stats.bounds;
-  assert.ok(min[1] > 1.8 && max[1] < 2.6); assert.ok(max[0] - min[0] > 2.5);
+  assert.ok(min[1] > 1.68 && max[1] < 2.6); assert.ok(max[0] - min[0] > 2.5);
   assert.ok(Math.abs(min[0] + max[0]) < 1e-6);
   sail.root.traverse(object => {
     if (!object.isMesh) return;

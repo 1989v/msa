@@ -2,7 +2,7 @@
 // node check-glider.mjs <CDP port> <viewer URL> [artifact label]
 import { mkdir, writeFile } from 'node:fs/promises';
 
-const [port, url, artifact = 't03a-3'] = process.argv.slice(2);
+const [port, url, artifact = 't03a-4'] = process.argv.slice(2);
 if (!/^[a-z0-9-]+$/.test(artifact)) throw new Error('Invalid artifact label');
 if (!port || !url) throw new Error('Usage: node check-glider.mjs <CDP port> <viewer URL>');
 const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
@@ -59,7 +59,7 @@ try{
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:900,deviceScaleFactor:1,mobile:false});
   await send('Page.navigate',{url});
   await evaluate(`new Promise((resolve,reject)=>{const start=Date.now();const poll=()=>{const s=window.__SKYBOUND_TRAVERSAL__;if(s?.error)return reject(new Error(s.error));if(s?.ready)return resolve();if(Date.now()-start>12000)return reject(new Error('Load timeout'));setTimeout(poll,100)};poll()})`);
-  const get=()=>evaluate(`(()=>{const s=window.__SKYBOUND_TRAVERSAL__;return {snapshot:s.snapshot,sailVisible:s.sailVisible,gliding:s.gliding,gliderStats:s.gliderStats,animation:s.animation,characterPosition:s.characterPosition,paused:s.paused}})()`);
+  const get=()=>evaluate(`(()=>{const s=window.__SKYBOUND_TRAVERSAL__;return {touch:s.touch,snapshot:s.snapshot,gripErrors:s.gripErrors,flightPoseActive:s.flightPoseActive,sailVisible:s.sailVisible,gliding:s.gliding,gliderStats:s.gliderStats,animation:s.animation,characterPosition:s.characterPosition,paused:s.paused}})()`);
   await evaluate('window.__SKYBOUND_TRAVERSAL__.resetForTest()');
   check('Grounded sail hidden',!(await get()).sailVisible);
   await evaluate('window.__SKYBOUND_TRAVERSAL__.advanceForTest(.15,{jumpPressed:true})');
@@ -68,7 +68,12 @@ try{
   let s=await get();samples.push(s);
   check('Airborne press deploys visible sail',s.snapshot.gliding&&s.sailVisible&&s.gliding);
   check('Gliding pose stays supported',s.animation==='fall');
-  const stamina=s.snapshot.stamina;
+  for(let phase=0;phase<4;phase++){
+    await evaluate('window.__SKYBOUND_TRAVERSAL__.advanceForTest(.05,{x:1})');
+    const grip=await get();samples.push(grip);
+    check(`Both hands follow bar at flight sample ${phase}`,grip.flightPoseActive&&grip.gripErrors?.left<.03&&grip.gripErrors?.right<.03);
+  }
+  const stamina=(await get()).snapshot.stamina;
   await evaluate('window.__SKYBOUND_TRAVERSAL__.advanceForTest(.1)');
   s=await get();check('Gliding consumes shared stamina',s.snapshot.stamina<stamina);
   check('Root follows flight simulation',positionMatch(s));
@@ -78,6 +83,7 @@ try{
   await writeFile(new URL(`${artifact}-flight.png`,import.meta.url),Buffer.from(shot.data,'base64'));
   await evaluate('window.__SKYBOUND_TRAVERSAL__.advanceForTest(1/120,{jumpPressed:true})');
   check('Next press folds sail',!(await get()).sailVisible&&!(await get()).snapshot.gliding);
+  check('Fold removes flight pose',!(await get()).flightPoseActive);
   await evaluate('window.__SKYBOUND_TRAVERSAL__.resetForTest();window.__SKYBOUND_TRAVERSAL__.advanceForTest(.15,{jumpPressed:true});window.__SKYBOUND_TRAVERSAL__.advanceForTest(1/120,{jumpPressed:true})');
   for(let i=0;i<8;i++){if((await get()).snapshot.grounded)break;await evaluate('window.__SKYBOUND_TRAVERSAL__.advanceForTest(.25)');}
   s=await get();check('Landing hides sail',s.snapshot.grounded&&!s.sailVisible&&!s.snapshot.gliding);
@@ -90,6 +96,27 @@ try{
   check('Actual Space redeploys airborne sail',(await get()).sailVisible);
   await evaluate('window.__SKYBOUND_TRAVERSAL__.resetForTest()');
   s=await get();check('Reset clears flight and restores stamina',!s.sailVisible&&!s.snapshot.gliding&&s.snapshot.stamina===100);
+  await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true});
+  await send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:5});
+  await evaluate('new Promise(r=>setTimeout(r,150))');
+  await evaluate('window.__SKYBOUND_TRAVERSAL__.resume()');
+  const tap=async()=>{
+    const pt=await evaluate(`(()=>{const r=document.querySelector('#touch-jump').getBoundingClientRect();return {id:1,x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+    await send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[pt]});
+    await send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  };
+  await tap();console.log(JSON.stringify({touchFirst:await get()}));
+  await evaluate(`new Promise(resolve=>{const t=Date.now();const poll=()=>{if(!window.__SKYBOUND_TRAVERSAL__.snapshot.grounded||Date.now()-t>3000)return resolve();setTimeout(poll,20)};poll()})`);
+  await tap();
+  await evaluate(`new Promise(resolve=>{const t=Date.now();const poll=()=>{if(window.__SKYBOUND_TRAVERSAL__.sailVisible||Date.now()-t>3000)return resolve();setTimeout(poll,20)};poll()})`);
+  console.log(JSON.stringify({touchFinal:await get()}));
+  check('Actual touch jump then sail deploys',(await get()).sailVisible);
+  await evaluate('window.__SKYBOUND_TRAVERSAL__.pause()');
+  const mobileShot=await send('Page.captureScreenshot',{format:'png'});
+  await writeFile(new URL(`${artifact}-touch.png`,import.meta.url),Buffer.from(mobileShot.data,'base64'));
+  await evaluate('window.__SKYBOUND_TRAVERSAL__.resetForTest()');
+  check('Reset removes flight pose',!(await get()).flightPoseActive);
+  await send('Emulation.setTouchEmulationEnabled',{enabled:false});
   check('No browser errors',errors.length===0);
   await writeFile(new URL(`${artifact}-browser.json`,import.meta.url),JSON.stringify({url,checks,samples,errors},null,2)+'\n');
   console.log(JSON.stringify({passed:checks.length,failed:0,errors}));

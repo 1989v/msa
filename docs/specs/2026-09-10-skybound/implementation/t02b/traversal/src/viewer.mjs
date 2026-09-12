@@ -7,6 +7,7 @@ import { createAnimationBridge } from './animation.mjs';
 import { CAMERA_DEFAULTS, updateCamera, cameraOffset } from './camera.mjs';
 import { createTouchInput } from './touch.mjs';
 import { createGlider } from './glider.mjs';
+import { createFlightPose } from './flight-pose.mjs';
 import '../style.css';
 
 const state = window.__SKYBOUND_TRAVERSAL__ = { ready: false, error: null, paused: true, snapshot: null, animation: 'idle', characterPosition: null, terrainHeight: null, frames: 0 };
@@ -43,6 +44,7 @@ async function main() {
   character.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
   scene.add(character);
   const glider = createGlider(THREE, world.col); scene.add(glider.root);
+  const flightPose = createFlightPose(THREE, character, glider.targets);
   state.gliderStats = glider.stats; state.flightEnabled = true;
   const clips = Object.fromEntries(loaded.animations.map(clip => [clip.name, clip]));
   const names = ['idle', 'walk', 'run', 'jump', 'fall', 'land'];
@@ -58,7 +60,7 @@ async function main() {
   function result() {
     return { snapshot: state.snapshot, animation: state.animation, animationTime: state.animationTime,
       characterPosition: state.characterPosition, characterYaw: state.characterYaw, terrainHeight: state.terrainHeight,
-      camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, paused: state.paused, frames: state.frames };
+      camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, gripErrors: state.gripErrors, flightPoseActive: state.flightPoseActive, paused: state.paused, frames: state.frames };
   }
   function draw() {
     const offset = cameraOffset(orbit), p = character.position;
@@ -81,6 +83,7 @@ async function main() {
     status.textContent = `${state.paused ? '일시정지' : '이동 중'} · ${state.animation} · 기력 ${Math.round(state.snapshot.stamina)}`;
   }
   function publish(snapshot, elapsed) {
+    flightPose.restore();
     const motion = bridge.update(snapshot, elapsed);
     state.snapshot = snapshot; state.animation = motion.name; state.animationTime = motion.time;
     character.position.set(snapshot.position.x, snapshot.position.y, snapshot.position.z);
@@ -94,6 +97,8 @@ async function main() {
       action.clampWhenFinished = motion.once; action.play();
     }
     mixer.setTime(motion.time);
+    state.flightPoseActive = snapshot.gliding === true;
+    state.gripErrors = state.flightPoseActive ? flightPose.apply() : null;
     const p = character.position;
     sun.position.set(p.x - 35, p.y + 65, p.z + 35); sun.target.position.copy(p);
     draw(); return result();
@@ -132,7 +137,7 @@ async function main() {
     canvas.focus(); request = requestAnimationFrame(frame); return result();
   }
   function resetForTest() {
-    pause(); mixer.stopAllAction();
+    pause(); flightPose.restore(); mixer.stopAllAction();
     orbit = { ...CAMERA_DEFAULTS };
     simulation = createSimulation({ terrain, checkpoint: { x: 0, z: 35 }, waterHeight, flight: { enabled: true, volumes: [] } });
     bridge = createAnimationBridge(durations); character.rotation.y = Math.PI;

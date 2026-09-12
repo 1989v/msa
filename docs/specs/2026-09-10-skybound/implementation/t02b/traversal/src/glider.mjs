@@ -16,11 +16,15 @@ export function createGlider(THREE, color) {
     mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.normalize()); root.add(mesh);
   }
   spar(nose, left, .018); spar(nose, right, .018); spar(nose, tail, .022);
-  const gripL = [-.42, 1.93, .12], gripR = [.42, 1.93, .12];
+  const gripL = [-.42, 1.72, .12], gripR = [.42, 1.72, .12];
   spar(left, gripL, .012, brass); spar(right, gripR, .012, brass); spar(gripL, gripR, .025);
-  let triangles = 0;
-  root.traverse(object => { if (object.isMesh) { object.castShadow = true; triangles += (object.geometry.index?.count ?? object.geometry.attributes.position.count) / 3; } });
+  const targets = {};
+  for (const [side, x] of [['left', .32], ['right', -.32]]) {
+    const target = new THREE.Object3D(); target.name = `${side} palm grip`; target.position.set(x, gripL[1], gripL[2]); root.add(target); targets[side] = target;
+  }
+  let triangles = 0, meshes = 0;
+  root.traverse(object => { if (object.isMesh) { meshes++; object.castShadow = true; triangles += (object.geometry.index?.count ?? object.geometry.attributes.position.count) / 3; } });
   root.updateMatrixWorld(true);
   const bounds = new THREE.Box3().setFromObject(root);
-  return { root, stats: { triangles, meshes: root.children.length, bounds: { min: bounds.min.toArray(), max: bounds.max.toArray() }, technicalPose: true } };
+  return { root, targets, stats: { triangles, meshes, bounds: { min: bounds.min.toArray(), max: bounds.max.toArray() }, technicalPose: true } };
 }
