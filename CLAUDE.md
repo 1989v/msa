@@ -63,7 +63,7 @@ kubectl apply -k k8s/overlays/prod-k8s                  # 서비스 + HPA + PDB 
 - **JPA 영속성 컨벤션**: enum STRING, FK-as-ID / 연관관계 정책, Flyway+validate, Querydsl 조회 → `docs/conventions/jpa-persistence.md`
 - **멱등성 패턴**: Kafka Consumer 중복 처리 방어 → `docs/conventions/idempotent-consumer.md` (실천 가이드, ADR-0012/0029)
 - **장애 대비 전략**: CircuitBreaker, DLQ, Rate Limiting, CQRS → `docs/adr/ADR-0015-resilience-strategy.md`
-- **백업/복구**: XtraBackup + Binlog PITR → `docker/backup/README.md` (스크립트) · `k8s/infra/prod/backup/` (CronJob 래퍼)
+- **백업/복구**: **운영(oci-arm)은 `k8s/base/db-backup/` 의 MySQL 논리 백업이 전부다** — 매일 03:00 UTC mysqldump + gzip, 보관 7일, RPO 24시간. `local-path` 라 데이터와 같은 디스크에 놓여 **논리 손실은 막고 노드 손실은 못 막는다**. 복구 시 `--default-character-set=utf8mb4` 필수 (빼면 한글이 깨진 채 행 수만 맞는다) → `k8s/base/db-backup/README.md`. XtraBackup + Binlog PITR(RPO ~0)는 `docker/backup/` · `k8s/infra/prod/backup/` 에 있는 **설계안이고 운영에 배선돼 있지 않다** — 2026-09-12 확인
 - **K8s 전환**: 배포 모드 이원화, Eureka 제거, Jib → `docs/adr/ADR-0019-k8s-migration.md`
 - **외부 데이터 연동 3규칙 (필수)**: ① 원천 필드는 **전부** 적재 — 지금 안 써도 컬럼으로 남긴다(원천 호출은 일일 한도 자원이라 다시 받으려면 그 한도를 또 쓴다) ② 가공은 원천을 덮지 않고 **파생 컬럼**으로 ③ 전체 동기화 경로의 필드 목록도 함께 갱신(안 하면 다음 배치가 새 컬럼을 지운다) → `docs/architecture/data-sources.md` §0
 - **원천 데이터 대장 (외부 데이터를 붙이면 필수 갱신)**: 출처·라이선스·키 필요 여부·받는 방법 → `docs/architecture/data-sources.md`. 출처표시 의무가 있는 것(GeoNames CC BY 4.0, TourAPI 공공누리, 참가격 KOGL 제1유형)이 섞여 있어 **코드에만 있고 대장에 없으면 없는 것으로 친다**

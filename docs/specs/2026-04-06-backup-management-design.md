@@ -2,6 +2,12 @@
 <!-- source: k8s/infra/prod/backup -->
 # Backup Management Design
 
+> **운영 반영 상태 (2026-09-12 확인)** — 이 설계는 `docker/backup/` 스크립트와
+> `k8s/infra/prod/backup/` CronJob 으로 구현돼 있으나 **oci-arm 운영 클러스터에는 배선돼 있지 않다.**
+> 운영에서 실제로 도는 것은 `k8s/base/db-backup/` 의 MySQL 논리 백업 하나이고, 아래 RPO ~0 · binlog PITR ·
+> PostgreSQL · 파일볼륨은 **아직 목표치다.** 백업 대상 표의 스키마 목록도 낡았다 — 실제는 MySQL 19스키마이고
+> charting 은 ADR-0036 에서 quant 로 통합돼 없다.
+
 ## 1. Overview
 
 MSA Commerce Platform 프로덕션 환경의 데이터 백업 및 복구 프로세스 설계.

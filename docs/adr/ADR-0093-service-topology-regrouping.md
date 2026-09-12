@@ -113,9 +113,13 @@ Gradle 모듈과 충돌) · `curation`(deal·game 을 가리키는 기존 용어
 붙으므로 **한 단계가 배포되어 안정된 뒤 다음 단계로 간다.** 커밋한 마이그레이션은 되돌릴 수
 없으므로(체크섬 불일치로 서비스가 죽는다) 단계마다 운영 `flyway_schema_history` 확인이 완료 조건이다.
 
-**옛 테이블은 아직 안 지운다.** `code_dictionary_db` 의 `deal_*`·`ranking_*`·`gas_station*`·
-`blog_*` 는 새 스키마로 복사(체크섬 대조)만 하고 남겨 뒀다 — 이슈가 다 가라앉은 뒤에 지운다.
-지금 지우면 롤백 경로가 사라진다.
+**옛 테이블 삭제 조건: ③단계 배포(2026-09-11)로부터 2주 무사고 → 2026-09-25 이후.**
+`code_dictionary_db` 의 `deal_*`·`ranking_*`·`gas_station*`·`blog_*` 는 새 스키마로 복사
+(체크섬 대조)만 하고 남겨 뒀다. 무기한 보류는 영구가 되므로 날짜를 박는다.
+
+「무사고」는 그 기간에 새 스키마 쪽으로 롤백을 검토한 일이 없었다는 뜻이다.
+삭제 전에 `k8s/base/db-backup` 의 최신 덤프가 그날짜인지 확인한다 — 삭제가 논리 손실이므로
+그 백업이 유일한 되돌림 수단이다.
 
 **결과: 상주 백엔드 JVM 11개** — gateway · auth · search · search-consumer · analytics ·
 commerce · account · engagement · sideapp · content · atlas. 재편 전 15에서 줄었다.
