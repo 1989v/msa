@@ -38,6 +38,7 @@ export const POSES = {
   roundhouse: P(-10, 0, [-45, 30], [60, 40], [100, 0], [-15, 0], 0.03, 0, 0.14),
   tackle: P(40, 6, [60, 0], [50, 0], [-10, -40], [-35, 0], 0.08, 0, 0.22),
   divekick: P(26, 4, [-50, 20], [-60, 20], [85, 0], [-20, -60], 0, 0, 0.16),
+  airAttack: P(14, 2, [-50, 45], [-60, 35], [98, -8], [15, -70], 0.08, 0, 0.18),
   uppercutWind: P(14, 6, [-40, 90], [20, 60], [35, -40], [-20, -10], -0.08),
   uppercut: P(-8, -8, [140, 0], [-30, 60], [30, -20], [-30, 0], 0.06, 0, 0.12),
   guard: P(6, 2, [55, -125], [50, -120], [20, -30], [-15, -25], -0.03),
@@ -81,7 +82,7 @@ export type PoseId = keyof typeof POSES;
 /** 동작별 준비 → 타격 포즈 */
 export const MOVE_POSES: Record<MoveId, [PoseId, PoseId]> = {
   jab: ['jabWind', 'jab'], straight: ['straightWind', 'straight'], roundhouse: ['roundWind', 'roundhouse'],
-  tackle: ['tackle', 'tackle'], divekick: ['divekick', 'divekick'], uppercut: ['uppercutWind', 'uppercut'], grab: ['grab', 'grab'],
+  tackle: ['tackle', 'tackle'], divekick: ['divekick', 'divekick'], airAttack: ['jump', 'airAttack'], uppercut: ['uppercutWind', 'uppercut'], grab: ['grab', 'grab'],
   gs1: ['swingWind', 'swing'], gs2: ['swing2Wind', 'swing2'], gsSlam: ['slamWind', 'slam'],
   sp1: ['thrustWind', 'thrust'], sp2: ['thrustWind', 'thrust'], sp3: ['thrustWind', 'thrust'], spCharge: ['thrust', 'thrust'],
   shieldBash: ['bashWind', 'bash'], shieldCharge: ['bash', 'bash'],

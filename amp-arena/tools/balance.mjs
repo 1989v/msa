@@ -7,16 +7,17 @@ const matches = Number(process.argv[2] ?? 24), seconds = Number(process.argv[3] 
 const agg = (ids) => Object.fromEntries(ids.map((id) => [id, { held: 0, kos: 0, deaths: 0, dmg: 0, wins: 0, top3: 0 }]));
 const byStyle = agg(STYLE_IDS), byAcc = agg(ACCESSORY_IDS);
 const t0 = performance.now();
-let ticks = 0;
+let ticks = 0, drift = 0, counted = 0;
 for (let m = 0; m < matches; m++) {
   const seed = 1000 + m * 7919;
   const mapId = MAP_IDS[m % MAP_IDS.length];
   const w = new World({ mapId, modeId: 'ffa_dm', seconds, seed });
   const rng = makeRng(seed ^ 0x5bd1e995);
-  const mems = [];
+  const mems = [], startAcc = [];
   for (let i = 0; i < MAX_PLAYERS; i++) {
     const { style, acc } = randomLoadout(rng);
-    w.addPlayer(i, `봇${i}`, 0, acc, true, style);
+    const p = w.addPlayer(i, `봇${i}`, 0, acc, true, style);
+    startAcc[i] = p.acc; // **시작 장비로 집계한다** — KO 드랍(2026-09-12) 뒤로는 판 끝의 acc 가 「죽어서 잃은 결과」라 무기 성능이 아니다
     mems[i] = newBotMemory(w.rng);
   }
   let ranking = null;
@@ -27,9 +28,11 @@ for (let m = 0; m < matches; m++) {
     ticks++;
   }
   if (!ranking) { console.log(`match ${m} (${mapId}) did not end`); continue; }
+  counted += ranking.length;
   for (const r of ranking) {
     const p = w.players[r.id];
-    for (const a of [byStyle[p.style], byAcc[p.acc]]) { a.held++; a.kos += r.kos; a.deaths += r.deaths; a.dmg += r.dmg; if (r.rank === 1) a.wins++; if (r.rank <= 3) a.top3++; }
+    if (p.acc !== startAcc[r.id]) drift++;
+    for (const a of [byStyle[p.style], byAcc[startAcc[r.id]]]) { a.held++; a.kos += r.kos; a.deaths += r.deaths; a.dmg += r.dmg; if (r.rank === 1) a.wins++; if (r.rank <= 3) a.top3++; }
   }
 }
 const table = (title, a) => {
@@ -44,3 +47,4 @@ const table = (title, a) => {
 table('직업', byStyle);
 table('악세서리', byAcc);
 console.log(`\n${matches}판 · ${seconds}초 · ${ticks} 틱 · ${((performance.now() - t0) / 1000).toFixed(1)}s`);
+console.log(`판 끝에 시작 장비와 달라진 사람 ${drift}/${counted} (${((drift / counted) * 100).toFixed(0)}%) — KO 드랍·줍기 때문. 집계는 시작 장비 기준이다`);

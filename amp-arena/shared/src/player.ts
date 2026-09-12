@@ -345,6 +345,12 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
     case 'jump': case 'fall': {
       airControl(p, mx, mz, moving, spd);
       if (atk) {
+        // 공중 약공: 속도를 건드리지 않아 점프 궤적이 그대로 이어진다 — 뛰면서 때린다
+        startMove(ctx, p, 'airAttack', 'jumpAttack', mx, mz, moving);
+        break;
+      }
+      if (hvy) {
+        // 공중 강공: 급강하 킥 — 앞아래로 내리꽂고 착지까지 판정이 남는다
         startMove(ctx, p, 'divekick', 'jumpAttack', mx, mz, moving);
         p.vel.x = facingX(p) * 6; p.vel.z = facingZ(p) * 6;
         if (p.vel.y > -3) p.vel.y = -3;
@@ -401,7 +407,8 @@ export function stepPlayer(ctx: SimContext, p: Player, input: Input): void {
       if (m.activeUntilLand) {
         // 착지는 integrate() 가 처리한다
       } else if (p.t >= totalTicks(m)) {
-        setState(p, 'idle');
+        // 공중에서 끝났으면 낙하로 — idle 로 두면 공중에서 다시 점프할 수 있다
+        setState(p, p.grounded ? 'idle' : 'fall');
         p.move = null;
       }
       break;
@@ -573,7 +580,7 @@ function onLand(p: Player): void {
     case 'jump': case 'fall':
       p.landTicks = C.LAND_TICKS; setState(p, 'land'); break;
     case 'jumpAttack':
-      p.landTicks = MOVES.divekick.recovery; setState(p, 'land'); p.move = null; break;
+      p.landTicks = MOVES[p.move ?? 'divekick'].recovery; setState(p, 'land'); p.move = null; break;
     case 'launched': case 'thrown':
       p.vel.x = 0; p.vel.z = 0; p.wallBonus = false; setState(p, 'down'); break;
     case 'dead':

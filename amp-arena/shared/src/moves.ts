@@ -101,6 +101,9 @@ export const MOVES = {
   // 더블탭 (쌍권총) — 실제 판정은 투사체
   gunShot: def({ id: 'gunShot', startup: 4, active: 1, recovery: 12, damage: 3, reach: 0, radius: 0, effect: 'hitstun', hitstun: 8, push: 1 }),
   gunRoll: def({ id: 'gunRoll', startup: 5, active: 20, recovery: 13, damage: 4, reach: 0, radius: 0, effect: 'hitstun', hitstun: 8, push: 1, moveSpeed: -9, moveUntil: 'active' }),
+  // 공중 약공 (2026-09-13): 점프 궤적을 유지한 채 지르는 발차기. 급강하(divekick)와 달리 아래로 끌어내리지 않는다 —
+  // 공중 체공 약 0.9초에 총 20틱이라 한 번 뛰어 최대 두 번. 모든 직업·악세서리 공통(급강하와 같은 결).
+  airAttack: def({ id: 'airAttack', startup: 5, active: 3, recovery: 12, damage: 7, reach: 1.45, radius: 0.6, effect: 'hitstun', hitstun: 14, push: 2 }),
 } as const;
 
 export type MoveId = keyof typeof MOVES;

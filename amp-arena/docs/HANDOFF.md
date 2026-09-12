@@ -42,6 +42,8 @@
 - [x] 플랫폼 순위표 (2026-09-12) — `client/src/platform/score.ts` (online/practice 보드, Bearer 쿠키, 결과 화면 한 줄), 마이그레이션 `game/.../V90__arena_score_boards.sql`(보드 이름·sdk_integrated). 세션은 카탈로그 페이지 몫. 실측 `tools/e2e-score.mjs`(가짜 API) · `tools/e2e-prod-score.mjs`(운영)
 - [x] 진행 (2026-09-12) — `client/src/platform/progress.ts`(경험치·레벨·골드·스탯 분배·색 스킨, `sanitizeProgress`), `save.ts`(플랫폼 세이브 동기화), `ui/progressui.ts`(타이틀 줄·모달). 스탯은 명단으로 시뮬에(`sanitizeStatDelta`), 스킨은 리그 색으로. 테스트 `client/test/progress.test.ts`·`shared/test/stats.test.ts`, 실측 `tools/e2e-progress.mjs`
 - [x] 점수판·매치 중 채팅 (2026-09-12) — Tab 점수판(타이머 탭), Enter 채팅(릴레이 `c` → HUD 피드), 관전 전환은 `]`/`[`. E2E `e2e-online.mjs` 에 채팅·점수판 검사
+- [x] 공중 공격 (2026-09-13 소감 「점프하면서도 공격」) — 공중 약공 = `airAttack`(점프 궤적 유지, 5/3/12·7 데미지, 한 번 뛰어 최대 두 번), 공중 강공 = 기존 급강하. 무브가 공중에서 끝나면 `fall` 로(전엔 `idle` 이라 공중 재점프가 될 뻔), 착지 경직은 쓴 무브의 후딜. **봇은 `ACTIONABLE`(idle/walk/run/land) 밖이라 공중 공격을 쓰지 않는다** — 봇 밸런스에 영향 없음. 테스트 `shared/test/airattack.test.ts`, 그림 `tools/shot-airattack.mjs`
+- [x] 밸런스 계측기 수정 (2026-09-13) — `balance.mjs` 가 **판 끝** 악세서리로 집계하던 것을 **시작 장비**로(KO 드랍 뒤로 판 끝 42% 가 달라진다). 60판은 노이즈(마셜 0.65↔0.92↔0.96) — **300판 이상에서만 판정**. 300판 실측으로 기획서 §7.3 의 「전부 ±30% 안」 기록을 사실로 정정(헤비·스피드스타·브레이커·더블탭이 밖). 원거리는 봇이 공정하게 못 재니 사람 데이터로 판정
 - [x] 가슴 그림 엠블럼 (2026-09-12) — 12×12 격자 페인터(`client/src/ui/emblemui.ts`), 144자 문자열을 명단에 실어 온라인 상대에게도 보임(`sanitizeEmblem`, cfg 봉투 크기 테스트), 리그 토르소 앞뒤 CanvasTexture(`rig.setEmblem`). Phase 2 완료. 테스트 `shared/test/emblem.test.ts`, 실측 `tools/e2e-emblem.mjs`·`tools/shot-emblem.mjs`
 
 ## 장르 문법 중 아직 없는 것
