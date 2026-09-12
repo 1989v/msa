@@ -1,11 +1,12 @@
 // 화면 흐름: 타이틀 → (연습 매치) | (온라인 → 대기실 → 매치 → 결과 → 대기실(코드 방) / 온라인(빠른 대전))
-import { ACCESSORIES, STYLES, STYLE_IDS, MODES, MODE_IDS, MAPS, MAP_IDS, allowedAccessory, type AccessoryId, type StyleId, type MapId, type ModeId, type RoomSettings } from '@amp/shared';
+import { ACCESSORIES, STYLES, STYLE_IDS, MODES, MODE_IDS, MAPS, MAP_IDS, allowedAccessory, NICK_MAX, type AccessoryId, type StyleId, type MapId, type ModeId, type RoomSettings, type RankEntry } from '@amp/shared';
 import { Online, lobbyCloseSec } from './net/online.ts';
 import type { GuestSource } from './net/guestsource.ts';
 import { LocalSource } from './local/localsource.ts';
-import { Match } from './game/match.ts';
+import { Match, type MatchOptions } from './game/match.ts';
 import { icon, boltLogo, ACC_ICON } from './ui/icons.ts';
 import { isEmbedded, enterFullscreen } from './ui/fullscreen.ts';
+import { onPlatform, submitScore, buildScoreRequest, scoreNote, platformNickname, type ScoreBoard } from './platform/score.ts';
 
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 const ACC_DESC: Record<AccessoryId, string> = {
@@ -48,7 +49,7 @@ export class App {
 
   constructor(root: HTMLElement) {
     this.root = root;
-    this.nick = localStorage.getItem('amp.nick') ?? '';
+    this.nick = localStorage.getItem('amp.nick') ?? platformNickname()?.slice(0, NICK_MAX) ?? ''; // 다른 게임에서 쓰던 플랫폼 닉네임을 빈칸에 미리 채운다
     this.acc = (localStorage.getItem('amp.acc') as AccessoryId) ?? 'none';
     if (!(this.acc in ACCESSORIES)) this.acc = 'none';
     this.style = (localStorage.getItem('amp.style') as StyleId) ?? 'fighter';
@@ -160,10 +161,19 @@ export class App {
 
   private startPractice(o: { mapId: MapId; modeId: ModeId; bots: number; seconds: number }): void {
     const src = new LocalSource({ name: this.nick, acc: this.acc, style: this.style, mapId: o.mapId, modeId: o.modeId, seconds: o.seconds, bots: o.bots });
-    this.runMatch(src, { onExit: () => this.showTitle(), onAgain: () => this.startPractice(o), exitLabel: '타이틀로' });
+    this.runMatch(src, { onExit: () => this.showTitle(), onAgain: () => this.startPractice(o), exitLabel: '타이틀로', onResult: (me, ranking) => this.submitResult(me, ranking, 'practice', o.mapId, o.modeId) });
   }
 
-  private runMatch(src: LocalSource | GuestSource, opts: { onExit: () => void; onAgain?: () => void; exitLabel: string }): void {
+  /** 판 결과를 플랫폼 순위표에 올린다 (플랫폼 위에서만 · 점수 0 은 보내지 않는다) */
+  private async submitResult(me: RankEntry, ranking: RankEntry[], board: ScoreBoard, mapId: MapId, modeId: ModeId): Promise<string | null> {
+    if (!onPlatform()) return null;
+    const req = buildScoreRequest(me, board, MAPS[mapId].name, MODES[modeId].name, ranking.length);
+    if (!(req.score > 0)) return null;
+    const r = await submitScore(req);
+    return scoreNote(board, req.score, r);
+  }
+
+  private runMatch(src: LocalSource | GuestSource, opts: MatchOptions): void {
     this.disposeMatch();
     this.stopCountdown();
     this.screen?.remove();
@@ -202,6 +212,7 @@ export class App {
     const party = online.state.party;
     this.runMatch(src, {
       exitLabel: party ? '대기실로' : '로비로',
+      onResult: (me, ranking) => this.submitResult(me, ranking, 'online', src.world.cfg.mapId, src.world.cfg.modeId),
       onExit: () => {
         // 코드 방: done → roundEnded 가 오면 대기실. 빠른 대전: 방을 나가 로비로
         online.finishRound();

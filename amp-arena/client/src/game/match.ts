@@ -44,6 +44,8 @@ export interface MatchOptions {
   onExit: () => void;           // 나가기 (로컬: 타이틀, 온라인: 대기실·로비 복귀)
   onAgain?: () => void;         // 로컬: 다시
   exitLabel: string;
+  /** 판이 끝나면 내 결과로 순위표 제출 — 돌려준 문구를 결과 화면 아래 한 줄로 보여준다 */
+  onResult?: (me: RankEntry, ranking: RankEntry[]) => Promise<string | null>;
 }
 
 const esc = (s: string) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]!));
@@ -262,6 +264,8 @@ export class Match {
     if (this.opts.onAgain) buttons.push({ label: '다시 하기', primary: true, onClick: () => this.opts.onAgain!() });
     buttons.push({ label: this.opts.exitLabel, primary: !this.opts.onAgain, onClick: () => this.opts.onExit() });
     this.hud.showResult(r.ranking, r.score, this.source.world.teams, this.source.myId, buttons);
+    const mine = r.ranking.find((e) => e.id === this.source.myId);
+    if (mine && this.opts.onResult) void this.opts.onResult(mine, r.ranking).then((note) => { if (note && this.running) this.hud.setResultNote(note); });
     const s = this.stats;
     console.log(`[match] frames ${s.frames} · slow(>20ms) ${s.slow} · worst ${(s.worst * 1000).toFixed(1)}ms · ${((s.frames / ((performance.now() - s.t0) / 1000))).toFixed(1)} fps avg`);
   }

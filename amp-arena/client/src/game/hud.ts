@@ -236,6 +236,7 @@ export class Hud {
       <div class="panel" style="padding:10px"><table><thead><tr><th>순위</th>${teams ? '<th>팀</th>' : ''}<th>닉네임</th><th>KO</th><th>데스</th><th>준 데미지</th><th>결과</th></tr></thead><tbody>
       ${ranking.map((r) => `<tr class="${r.id === myId ? 'me' : ''}"><td class="rank">${r.rank}</td>${teams ? `<td><span class="chip ${r.team === 0 ? 'red' : 'blue'}">${teamName(r.team)}</span></td>` : ''}<td style="font-weight:800;${r.id === myId ? 'color:var(--amp)' : ''}">${esc(r.name)}${r.rank === 1 ? ' <span style="color:var(--amp);font-size:11px">MVP</span>' : ''}</td><td class="num">${r.kos}</td><td class="num muted">${r.deaths}</td><td class="num muted">${r.dmg}</td><td style="font-weight:800;color:${r.win ? 'var(--green)' : 'var(--dim)'}">${r.win ? '승리' : '패배'}</td></tr>`).join('')}
       </tbody></table></div>
+      <div class="note muted" style="min-height:18px;font-size:13px"></div>
       <div class="row btns"></div>`;
     const btns = o.querySelector('.btns') as HTMLElement;
     for (const b of buttons) {
@@ -248,6 +249,12 @@ export class Hud {
     this.el.appendChild(o);
     this.overlay = o;
     this.hideCenter();
+  }
+
+  /** 결과 화면 아래 한 줄 — 순위표 제출 결과 */
+  setResultNote(text: string): void {
+    const n = this.overlay?.querySelector('.note');
+    if (n) n.textContent = text;
   }
 
   dispose(): void { this.el.remove(); }
