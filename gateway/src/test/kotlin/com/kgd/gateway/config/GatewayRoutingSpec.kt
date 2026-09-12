@@ -2,6 +2,7 @@ package com.kgd.gateway.config
 
 import io.kotest.core.spec.style.BehaviorSpec
 import io.kotest.extensions.spring.SpringExtension
+import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -89,6 +90,29 @@ class GatewayRoutingSpec(
             // 공개 라우트인 /api/auth/** 가 이 경로를 먼저 삼키면 안 된다.
             Then("/api/auth/roles/1 은 401 (ADMIN 경계)") {
                 status("/api/auth/roles/1") shouldBe 401
+            }
+        }
+
+        When("actuator 프록시를 토큰 없이 호출하면") {
+            // show-details: always 라 무인증 200 이면 내부 datasource 빈 이름까지 나간다.
+            // 소비자는 어드민 대시보드 하나뿐이고 그쪽은 모든 요청에 Bearer 를 싣는다.
+            Then("/svc/commerce/actuator/health 는 401") {
+                status("/svc/commerce/actuator/health") shouldBe 401
+            }
+            Then("/svc/content/actuator/ingest 도 401") {
+                status("/svc/content/actuator/ingest") shouldBe 401
+            }
+        }
+
+        When("actuator 프록시 라우트를 전수로 보면") {
+            Then("모든 /svc 라우트가 ROLE_ADMIN 필터를 갖는다") {
+                val svcRoutes = routeLocator.routes.collectList().block().orEmpty()
+                    .filter { it.id.startsWith("actuator-") }
+                svcRoutes.shouldNotBeEmpty()
+                val 무인증 = svcRoutes.filterNot { r ->
+                    r.filters.any { it.toString().contains("Authentication") }
+                }.map { it.id }
+                무인증 shouldBe emptyList()
             }
         }
 
