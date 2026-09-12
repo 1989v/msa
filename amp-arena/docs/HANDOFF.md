@@ -11,8 +11,9 @@
 | 볼트 사본 | 개인 볼트 `claude/artifact/amp-arena-mockup.{html,md}` · `wiki/entities/amp-arena.md` |
 | 코드 | `amp-arena/{shared,client,tools}` |
 | 배포 산출물 | games 레포(`1989v/games`, msa 의 `portal-fe/public/games` 서브모듈) `arena/` + `thumbs/shots/arena.jpg` |
-| 카탈로그 행 | `game/feature/src/main/resources/gamedb/migration/V89__seed_arena.sql` (slug `arena`, BETA) |
+| 카탈로그 행 | `game/feature/src/main/resources/gamedb/migration/V89__seed_arena.sql` (slug `arena`, BETA) + `V90__arena_score_boards.sql` (순위표 보드 online/practice, sdk_integrated=1) |
 | 운영 주소 | https://game.1989v.com/games/arena (카탈로그 상세 → IFRAME `/games/arena/index.html`) |
+| 운영 상태 (2026-09-12) | main 81c3186f · games 74d153bc · 이미지 portal-fe:81c3186 / content:fe7efbb · 번들 `index-BMtBqZEY.js`. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules}.mjs` + `e2e-online.mjs`(운영 릴레이 2탭) 전부 통과 |
 
 ## 작업 위치
 
@@ -84,7 +85,7 @@ GH_TOKEN=$(gh auth token -u 1989v) node tools/publish-games.mjs --dir client/dis
 cd .. && git update-index --cacheinfo 160000,<sha>,portal-fe/public/games  # 서브모듈 포인터 올림 → 커밋 → 푸시
 ```
 
-- msa 푸시 뒤 CI 가 portal-fe(서브모듈 경로 변경)와 code-dictionary(game 마이그레이션) 이미지를 굽고 Argo 가 반영한다.
+- msa 푸시 뒤 CI 가 portal-fe(서브모듈 경로 변경)와 **content**(game 마이그레이션 — ADR-0093 뒤 `game/*` 는 content 호스트) 이미지를 굽고 Argo 가 반영한다. 롤아웃 확인은 두 디플로이의 태그 + `GET /api/v1/games/arena` 의 `scoreBoards`(마이그레이션 적용) + `index.html` 의 번들 이름.
 - 카탈로그 상세는 API 로 바로 뜨지만 프리렌더·사이트맵은 portal-fe 다음 빌드에 잡힌다.
 
 ## 막힌 것 · 함정
