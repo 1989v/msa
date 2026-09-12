@@ -22,21 +22,26 @@ val serviceImageName: String = project.path
 // cannot contain hyphens, so `code-dictionary` becomes package `codedictionary`
 // and `agent-viewer` becomes `agentviewer`. Kotlin top-level `fun main()`
 // compiles to a generated class with the `Kt` suffix.
-val mainClassByImage: Map<String, String> = mapOf(
+// 폴드 호스트 매핑은 생성물에서 읽는다 (gradle/topology.properties).
+// 손으로 유지하다 빠뜨리면 jib 이 조용히 SKIPPED 되고 이미지가 안 나온다.
+private val generatedMainClasses: Map<String, String> =
+    rootProject.file("gradle/topology.properties").takeIf { it.isFile }?.let { f ->
+        java.util.Properties().apply { f.inputStream().use { load(it) } }
+            .entries.mapNotNull { (k, v) ->
+                Regex("^pod\\.(.+)\\.mainClass$").find(k.toString())
+                    ?.groupValues?.get(1)?.let { it to v.toString() }
+            }.toMap()
+    }.orEmpty()
+
+/** 폴드 규칙 밖의 배포 단위 — :{x}:app 이 아니라 생성물에 안 들어간다. */
+private val extraMainClasses: Map<String, String> = mapOf(
     "gateway" to "com.kgd.gateway.GatewayApplicationKt",
-    "search" to "com.kgd.search.SearchApplicationKt",
     "search-consumer" to "com.kgd.search.SearchConsumerApplicationKt",
     "search-batch" to "com.kgd.search.SearchBatchApplicationKt",
-    "auth" to "com.kgd.auth.AuthApplicationKt",
-    "commerce" to "com.kgd.commerce.CommerceApplicationKt",
-    "analytics" to "com.kgd.analytics.AnalyticsApplicationKt",
-    "atlas" to "com.kgd.atlas.AtlasApplicationKt",                // ADR-0093 폴드 호스트 (옛 code-dictionary)
     "agent-viewer-api" to "com.kgd.agentviewer.AgentViewerApplicationKt",
-    "engagement" to "com.kgd.engagement.EngagementApplicationKt", // ADR-0093 폴드 호스트
-    "account" to "com.kgd.account.AccountApplicationKt",         // ADR-0093 폴드 호스트
-    "sideapp" to "com.kgd.sideapp.SideappApplicationKt",         // ADR-0093 폴드 호스트
-    "content" to "com.kgd.content.ContentApplicationKt"         // ADR-0093 폴드 호스트
 )
+
+val mainClassByImage: Map<String, String> = generatedMainClasses + extraMainClasses
 
 val resolvedMainClass: String? = mainClassByImage[serviceImageName]
 val jibRegistry: String = (project.findProperty("jibRegistry") as String?) ?: "commerce"

@@ -84,7 +84,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          ALL_JVM="gateway search search-batch search-consumer auth analytics engagement account sideapp content atlas commerce"
+          # 폴드 배치 파생물. ./gradlew generateTopology 가 만들고 verifyTopologyGenerated 가 지킨다.
+          . scripts/ci/topology.sh
+
+          ALL_JVM="gateway search-batch search-consumer $TOPOLOGY_ALL_JVM"
           ALL_DOCKER="admin-fe gifticon-fe portal-fe quant-fe quant-ingest place-ingest ranking-ingest recommendation-ml recommendation-ann search-embed"
 
           # 서비스 지정 실행 — 한 개만 다시 굽고 싶을 때. 전체 폴백을 타지 않는다.
@@ -147,50 +150,30 @@ jobs:
               continue
             fi
             case "$file" in
+              # ── 폴드 규칙 밖의 예외. 생성 함수보다 **먼저** 와야 한다 (case 는 첫 일치가 이긴다) ──
               gateway/*)                                 JVM_SVCS+=" gateway" ;;
-              search/app/*|search/domain/*)              JVM_SVCS+=" search" ;;
               search/batch/*)                            JVM_SVCS+=" search-batch" ;;
               search/consumer/*)                         JVM_SVCS+=" search-consumer" ;;
-              auth|auth/*)                               JVM_SVCS+=" auth" ;;
-              # ADR-0093: gifticon·chatbot·quant 는 sideapp 호스트로 폴드됐다.
-              # 서브모듈 포인터 bump 는 path 가 슬래시 없는 'gifticon' 으로 나온다.
-              gifticon|gifticon/feature/*|gifticon/domain/*) JVM_SVCS+=" sideapp" ;;
+              search/embed/*)                            DOCKER_SVCS+=" search-embed" ;;
+              # 서브모듈 포인터 bump 는 path 가 슬래시 없는 'gifticon' 으로 나온다
+              gifticon)                                  JVM_SVCS+=" sideapp" ;;
+              auth)                                      JVM_SVCS+=" auth" ;;
               gifticon/frontend/*)                       DOCKER_SVCS+=" gifticon-fe" ;;
-              # ADR-0093: product 는 commerce 호스트로 폴드됐다. case 는 첫 일치가 이기므로
-              # product 전용 줄을 위에 남겨 두면 :product:app:test 를 찾다 빌드가 통째로 깨진다.
-              inventory/*|warehouse/*|fulfillment/*|order/*|product/*|commerce/*)  JVM_SVCS+=" commerce" ;;
-              # ADR-0093: member·wishlist 는 account 호스트로 옮겼다
-              member/*|wishlist/*|account/*)             JVM_SVCS+=" account" ;;
-              analytics/*)                               JVM_SVCS+=" analytics" ;;
-              experiment/*)                              JVM_SVCS+=" engagement" ;; # ADR-0093 폴드
-              # code-dictionary:app 에 폴드된 모듈들 — 이쪽 변경도 code-dictionary 리빌드다.
-              # 여기 빠지면 해당 모듈은 아무리 고쳐도 운영에 영원히 반영되지 않는다.
-              #   game (ADR-0059) · deal (ADR-0069) · blog (ADR-0072) · ranking (ADR-0081)
-              # ranking/ingest 는 파이썬 배치라 아래에서 먼저 걸러진다 — 순서가 뒤집히면
-              # 수집기만 고친 커밋이 code-dictionary 를 굽고 정작 수집기 이미지는 안 나온다.
-              ranking/ingest/*)                          DOCKER_SVCS+=" ranking-ingest" ;;
-              # ADR-0093: game 은 content 호스트로 옮겼다. deal·blog·ranking 은 아직
-              # code-dictionary 스키마를 공유해서 ②~③단계 전까지 여기 남는다.
-              game/*)                                    JVM_SVCS+=" content" ;;
-              # ADR-0093: deal→commerce · ranking·blog→content 로 떠났고, 남은 것이 atlas 다
-              code-dictionary/*|atlas/*)                 JVM_SVCS+=" atlas" ;;
-              chatbot/*)                                 JVM_SVCS+=" sideapp" ;; # ADR-0093 폴드
-              # ADR-0070: place/ingest 는 파이썬 배치 이미지 — place/* 보다 먼저 걸러야 한다
-              place/ingest/*)                            DOCKER_SVCS+=" place-ingest" ;;
-              place/*)                                   JVM_SVCS+=" content" ;; # ADR-0093 폴드
-              quant/feature/*|quant/domain/*|quant/glossary*) JVM_SVCS+=" sideapp" ;; # ADR-0093 폴드
               quant/frontend/*)                          DOCKER_SVCS+=" quant-fe" ;;
               quant/ingest/*)                            DOCKER_SVCS+=" quant-ingest" ;;
-              recommendation/feature/*|recommendation/domain/*) JVM_SVCS+=" engagement" ;; # ADR-0093 폴드
-              engagement/*)                              JVM_SVCS+=" engagement" ;;
-              sideapp/*)                                 JVM_SVCS+=" sideapp" ;;
-              content/*)                                 JVM_SVCS+=" content" ;;
-              blog/*|ranking/*)                          JVM_SVCS+=" content" ;; # ADR-0093 ②③ 폴드
+              place/ingest/*)                            DOCKER_SVCS+=" place-ingest" ;;
+              ranking/ingest/*)                          DOCKER_SVCS+=" ranking-ingest" ;;
               recommendation-ml/*)                       DOCKER_SVCS+=" recommendation-ml" ;;
               recommendation-ann/*)                      DOCKER_SVCS+=" recommendation-ann" ;;
-              search/embed/*)                            DOCKER_SVCS+=" search-embed" ;;
               admin/frontend/*)                          DOCKER_SVCS+=" admin-fe" ;;
               portal-fe/*)                               DOCKER_SVCS+=" portal-fe" ;;
+              # ── 폴드 배치는 생성물이 정한다 (scripts/ci/topology.sh) ──
+              # 도메인이 호스트를 옮겨도 이 파일은 안 고친다. 손으로 유지하다 deal 이 통째로
+              # 빠져 있었고, 그 도메인은 아무리 고쳐도 이미지가 안 나갔다.
+              *)
+                _pod=$(topology_pod_for_path "$file")
+                [ -n "$_pod" ] && JVM_SVCS+=" $_pod"
+                ;;
               # k8s 매니페스트만 변경 → 빌드 무관 (Argo CD 가 직접 sync)
               # docs/ai/private/career/ideabank → 빌드 무관
             esac
@@ -281,23 +264,18 @@ jobs:
         if: ${{ steps.changes.outputs.jvm_services != '' }}
         run: |
           set -euo pipefail
+          . scripts/ci/topology.sh
           TASKS=""
           for svc in ${{ steps.changes.outputs.jvm_services }}; do
             case "$svc" in
-              gateway)            TASKS+=" :gateway:test" ;;
-              search)             TASKS+=" :search:app:test :search:domain:test" ;;
-              search-batch)       TASKS+=" :search:batch:test" ;;
-              search-consumer)    TASKS+=" :search:consumer:test" ;;
-              # ADR-0058: commerce 는 aggregator(:commerce:app)만 있고 :commerce:domain 없음 →
-              # 폴드된 4 도메인/feature 테스트를 직접 지정 (default 의 :commerce:domain:test 는 미존재 → CI 실패).
-              # ADR-0093: engagement·account 도 aggregator 라 :{svc}:domain 이 없다 (commerce 와 같은 함정).
-              engagement)         TASKS+=" :engagement:app:test :recommendation:domain:test :recommendation:feature:test :experiment:domain:test :experiment:feature:test" ;;
-              account)            TASKS+=" :account:app:test :member:domain:test :member:feature:test :wishlist:domain:test :wishlist:feature:test" ;;
-              sideapp)            TASKS+=" :sideapp:app:test :quant:domain:test :quant:feature:test :chatbot:domain:test :chatbot:feature:test :gifticon:domain:test :gifticon:feature:test" ;;
-              content)            TASKS+=" :content:app:test :place:domain:test :place:feature:test :game:domain:test :game:feature:test :ranking:domain:test :ranking:feature:test :blog:domain:test :blog:feature:test" ;;
-              atlas)              TASKS+=" :atlas:app:test :code-dictionary:domain:test :code-dictionary:feature:test" ;;
-              commerce)           TASKS+=" :commerce:app:test :inventory:domain:test :inventory:feature:test :warehouse:domain:test :warehouse:feature:test :fulfillment:domain:test :fulfillment:feature:test :order:domain:test :order:feature:test :product:domain:test :product:feature:test :deal:domain:test :deal:feature:test" ;;
-              *)                  TASKS+=" :${svc}:app:test :${svc}:domain:test" ;;
+              # 폴드 호스트가 아닌 것만 여기 남는다 — 나머지는 생성물이 정한다
+              gateway)         TASKS+=" :gateway:test" ;;
+              search-batch)    TASKS+=" :search:batch:test" ;;
+              search-consumer) TASKS+=" :search:consumer:test" ;;
+              *)
+                t=$(topology_test_tasks "$svc")
+                TASKS+=" ${t:-:${svc}:app:test :${svc}:domain:test}"
+                ;;
             esac
           done
           echo "── Gradle test tasks: $TASKS"
