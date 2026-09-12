@@ -350,7 +350,7 @@ patches:
 images:
   - name: commerce/account
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/account
-    newTag: 7e964f4
+    newTag: 1281d0a
   - name: commerce/admin-fe
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/admin-fe
     newTag: fc0c9d3
@@ -368,7 +368,7 @@ images:
     newTag: 7e964f4
   - name: commerce/content
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/content
-    newTag: 7e964f4
+    newTag: 1281d0a
   - name: commerce/engagement
     newName: ap-chuncheon-1.ocir.io/axyooxbyk5yv/engagement
     newTag: 7e964f4
