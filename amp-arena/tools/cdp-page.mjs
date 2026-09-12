@@ -29,8 +29,15 @@ export class Page {
     await Promise.race([loaded, this.sleep(8000)]);
   }
 
+  /** 응답이 30초 안에 안 오면 실패로 — 크롬이 죽으면 답이 영영 안 오는데, 그러면 E2E 가 조용히 멈춰 있게 된다 (2026-09-12 실제 발생) */
   send(method, params = {}) {
-    return new Promise((resolve, reject) => { const id = ++this.seq; this.pending.set(id, { resolve, reject }); this.ws.send(JSON.stringify({ id, method, params })); });
+    return new Promise((resolve, reject) => {
+      const id = ++this.seq;
+      const timer = setTimeout(() => { if (this.pending.has(id)) { this.pending.delete(id); reject(new Error(`CDP timeout: ${method} (크롬이 죽었나?)`)); } }, 30000);
+      this.pending.set(id, { resolve: (v) => { clearTimeout(timer); resolve(v); }, reject: (e) => { clearTimeout(timer); reject(e); } });
+      if (this.ws.readyState !== WebSocket.OPEN) { clearTimeout(timer); this.pending.delete(id); reject(new Error(`CDP closed: ${method}`)); return; }
+      this.ws.send(JSON.stringify({ id, method, params }));
+    });
   }
 
   sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
