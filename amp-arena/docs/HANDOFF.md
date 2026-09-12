@@ -13,7 +13,7 @@
 | 배포 산출물 | games 레포(`1989v/games`, msa 의 `portal-fe/public/games` 서브모듈) `arena/` + `thumbs/shots/arena.jpg` |
 | 카탈로그 행 | `game/feature/src/main/resources/gamedb/migration/V89__seed_arena.sql` (slug `arena`, BETA) + `V90__arena_score_boards.sql` (순위표 보드 online/practice, sdk_integrated=1) |
 | 운영 주소 | https://game.1989v.com/games/arena (카탈로그 상세 → IFRAME `/games/arena/index.html`) |
-| 운영 상태 (2026-09-12 밤) | main 0eb5b470 · games 9d5d8aa1 · 이미지 portal-fe:0eb5b47 / content:fe7efbb · 번들 `index-k9gUwH4y.js`. **Phase 2 완료**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules}.mjs` + `e2e-online.mjs`(채팅·점수판) + `e2e-progress.mjs` + `e2e-emblem.mjs` 전부 통과 |
+| 운영 상태 (2026-09-13) | main 84ec14b1 · games 1f984baa · 이미지 portal-fe:84ec14b · 번들 `index-B3nwRH39.js`. **Phase 2 완료 + 공중 공격**. 운영 실측: `tools/e2e-prod-{fullscreen,portrait,score,rules,air}.mjs` + `e2e-online.mjs`(채팅·점수판) + `e2e-progress.mjs` + `e2e-emblem.mjs` 전부 통과 |
 
 ## 작업 위치
 
@@ -42,7 +42,7 @@
 - [x] 플랫폼 순위표 (2026-09-12) — `client/src/platform/score.ts` (online/practice 보드, Bearer 쿠키, 결과 화면 한 줄), 마이그레이션 `game/.../V90__arena_score_boards.sql`(보드 이름·sdk_integrated). 세션은 카탈로그 페이지 몫. 실측 `tools/e2e-score.mjs`(가짜 API) · `tools/e2e-prod-score.mjs`(운영)
 - [x] 진행 (2026-09-12) — `client/src/platform/progress.ts`(경험치·레벨·골드·스탯 분배·색 스킨, `sanitizeProgress`), `save.ts`(플랫폼 세이브 동기화), `ui/progressui.ts`(타이틀 줄·모달). 스탯은 명단으로 시뮬에(`sanitizeStatDelta`), 스킨은 리그 색으로. 테스트 `client/test/progress.test.ts`·`shared/test/stats.test.ts`, 실측 `tools/e2e-progress.mjs`
 - [x] 점수판·매치 중 채팅 (2026-09-12) — Tab 점수판(타이머 탭), Enter 채팅(릴레이 `c` → HUD 피드), 관전 전환은 `]`/`[`. E2E `e2e-online.mjs` 에 채팅·점수판 검사
-- [x] 공중 공격 (2026-09-13 소감 「점프하면서도 공격」) — 공중 약공 = `airAttack`(점프 궤적 유지, 5/3/12·7 데미지, 한 번 뛰어 최대 두 번), 공중 강공 = 기존 급강하. 무브가 공중에서 끝나면 `fall` 로(전엔 `idle` 이라 공중 재점프가 될 뻔), 착지 경직은 쓴 무브의 후딜. **봇은 `ACTIONABLE`(idle/walk/run/land) 밖이라 공중 공격을 쓰지 않는다** — 봇 밸런스에 영향 없음. 테스트 `shared/test/airattack.test.ts`, 그림 `tools/shot-airattack.mjs`
+- [x] 공중 공격 (2026-09-13 소감 「점프하면서도 공격」) — 공중 약공 = `airAttack`(점프 궤적 유지, 5/3/12·7 데미지, 한 번 뛰어 최대 두 번), 공중 강공 = 기존 급강하. 무브가 공중에서 끝나면 `fall` 로(전엔 `idle` 이라 공중 재점프가 될 뻔), 착지 경직은 쓴 무브의 후딜. **봇은 `ACTIONABLE`(idle/walk/run/land) 밖이라 공중 공격을 쓰지 않는다** — 봇 밸런스에 영향 없음. 테스트 `shared/test/airattack.test.ts`, 그림 `tools/shot-airattack.mjs`, 운영 실측 `tools/e2e-prod-air.mjs`(번들 `index-B3nwRH39.js` 에서 3/3)
 - [x] 밸런스 계측기 수정 (2026-09-13) — `balance.mjs` 가 **판 끝** 악세서리로 집계하던 것을 **시작 장비**로(KO 드랍 뒤로 판 끝 42% 가 달라진다). 60판은 노이즈(마셜 0.65↔0.92↔0.96) — **300판 이상에서만 판정**. 300판 실측으로 기획서 §7.3 의 「전부 ±30% 안」 기록을 사실로 정정(헤비·스피드스타·브레이커·더블탭이 밖). 원거리는 봇이 공정하게 못 재니 사람 데이터로 판정
 - [x] 가슴 그림 엠블럼 (2026-09-12) — 12×12 격자 페인터(`client/src/ui/emblemui.ts`), 144자 문자열을 명단에 실어 온라인 상대에게도 보임(`sanitizeEmblem`, cfg 봉투 크기 테스트), 리그 토르소 앞뒤 CanvasTexture(`rig.setEmblem`). Phase 2 완료. 테스트 `shared/test/emblem.test.ts`, 실측 `tools/e2e-emblem.mjs`·`tools/shot-emblem.mjs`
 
@@ -70,6 +70,7 @@ node tools/shot-poses.mjs   $P http://127.0.0.1:5180 <outDir>      # 포즈 갤�
 # 운영 실측 — 페이지 base 는 파일까지(index.html) 준다. /games/arena/ 는 portal-fe SPA 의 카탈로그 상세로 간다
 node tools/e2e-online.mjs $P https://game.1989v.com/games/arena/index.html <outDir>   # Cloudflare + 실제 릴레이
 node tools/e2e-catalog.mjs $P https://game.1989v.com/games/arena <outDir>             # 카탈로그 상세 IFRAME 안에 타이틀이 뜨는지
+node tools/e2e-prod-air.mjs $P https://game.1989v.com/games/arena/index.html <outDir> # 공중 약공(궤적 유지)·강공(급강하)
 ../scripts/cdp-chrome.sh stop amparena
 ```
 
@@ -97,3 +98,6 @@ cd .. && git update-index --cacheinfo 160000,<sha>,portal-fe/public/games  # 서
 - 방장 승계 뒤 `acks` 는 옛 방장의 마지막 값에서 시작해야 한다 — 0 으로 두면 게스트가 밀린 입력을 두 번 재실행해 순간이동한다.
 - `dist-games/` 의 파일명 해시가 매번 바뀐다 — 게시는 항상 `--prune` 으로 해서 `arena/` 아래 옛 번들을 같이 지운다.
 - Node 22.22 는 `.ts` 를 그대로 실행한다(타입 제거). `enum`·파라미터 프로퍼티처럼 지워지지 않는 문법은 쓰지 않는다 (`erasableSyntaxOnly`).
+- 입력은 rAF 폴링이라 **짧은 탭(40ms)은 느린 헤드리스 GL 에서 프레임 사이로 빠진다**. E2E 는 키를 150ms 넘게 누른다(`Page.hold`).
+- **시간이 지나면 변하는 값으로 무브를 판정하지 않는다.** 공중 약공 뒤 `vel.y` 가 −3.6 이라 급강하로 오독했는데, 실제로는 표본을 220ms 뒤에 떠서 중력(18 m/s²)이 깎은 값이었다.
+  판별자는 시뮬이 고정하는 것이어야 한다 — 급강하는 수평 6 m/s 를 주고 공중 약공은 속도를 아예 안 건드리므로 `hypot(vx, vz)` 로 가른다. 낙하 상태 확인도 착지 전에 떠야 해서 높이 8m 에서 시작한다.
