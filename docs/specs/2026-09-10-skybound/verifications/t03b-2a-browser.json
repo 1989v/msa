@@ -1,0 +1,194 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/traversal/index.html",
+  "checks": [
+    {
+      "name": "Starts with basic stamina and no platform completion",
+      "passed": true
+    },
+    {
+      "name": "Can walk beneath platform on meadow",
+      "passed": true
+    },
+    {
+      "name": "Wind reaches launch altitude",
+      "passed": true
+    },
+    {
+      "name": "Basic capability reaches platform",
+      "passed": true
+    },
+    {
+      "name": "Landing retains stamina and avoids respawn",
+      "passed": true
+    },
+    {
+      "name": "Landing closes sail and records route flag",
+      "passed": true
+    },
+    {
+      "name": "Rendered feet match platform top",
+      "passed": true
+    },
+    {
+      "name": "Stepping off platform falls",
+      "passed": true
+    },
+    {
+      "name": "Reset allows another attempt",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "samples": [
+    {
+      "snapshot": {
+        "tick": 360,
+        "position": {
+          "x": 7.999999999999993,
+          "y": 8.92914690690575,
+          "z": 29.99999999999997
+        },
+        "velocity": {
+          "x": 2.150459699021667,
+          "y": 0,
+          "z": -1.3440373118885702
+        },
+        "grounded": true,
+        "mode": "walking",
+        "sprinting": false,
+        "stamina": 100,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {},
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 7.951972413877684e-14,
+        "steps": 30,
+        "droppedTime": 0
+      },
+      "platform": {
+        "bounds": {
+          "minX": 6,
+          "maxX": 10,
+          "minZ": 28,
+          "maxZ": 32
+        },
+        "center": {
+          "x": 8,
+          "y": 14.162527084350586,
+          "z": 30
+        },
+        "topY": 14.162527084350586,
+        "landed": false,
+        "everLanded": false
+      },
+      "updraft": {
+        "volume": {
+          "x": 0,
+          "z": 30,
+          "radius": 3,
+          "minY": 8.806567399771474,
+          "maxY": 21.162527241203172,
+          "speed": 4
+        },
+        "inside": false,
+        "active": false,
+        "time": 3,
+        "stats": {
+          "instances": 48,
+          "meshes": 1,
+          "lineObjects": 2,
+          "triangles": 384
+        }
+      },
+      "sailVisible": false,
+      "characterPosition": {
+        "x": 7.999999999999993,
+        "y": 8.92914690690575,
+        "z": 29.99999999999997
+      }
+    },
+    {
+      "snapshot": {
+        "tick": 979,
+        "position": {
+          "x": 7.999999999999969,
+          "y": 14.162527084350586,
+          "z": 30.000000000000043
+        },
+        "velocity": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        },
+        "grounded": true,
+        "mode": "idle",
+        "sprinting": false,
+        "stamina": 66.16666666666869,
+        "checkpoint": {
+          "x": 0,
+          "y": 9.06338310868186,
+          "z": 35
+        },
+        "progress": {
+          "firstAerialLanding": true
+        },
+        "respawns": 0,
+        "gliding": false,
+        "windSpeed": 0,
+        "alpha": 2.1274648709379562e-13,
+        "steps": 30,
+        "droppedTime": 0
+      },
+      "platform": {
+        "bounds": {
+          "minX": 6,
+          "maxX": 10,
+          "minZ": 28,
+          "maxZ": 32
+        },
+        "center": {
+          "x": 8,
+          "y": 14.162527084350586,
+          "z": 30
+        },
+        "topY": 14.162527084350586,
+        "landed": true,
+        "everLanded": true
+      },
+      "updraft": {
+        "volume": {
+          "x": 0,
+          "z": 30,
+          "radius": 3,
+          "minY": 8.806567399771474,
+          "maxY": 21.162527241203172,
+          "speed": 4
+        },
+        "inside": false,
+        "active": false,
+        "time": 8.158333333333333,
+        "stats": {
+          "instances": 48,
+          "meshes": 1,
+          "lineObjects": 2,
+          "triangles": 384
+        }
+      },
+      "sailVisible": false,
+      "characterPosition": {
+        "x": 7.999999999999969,
+        "y": 14.162527084350586,
+        "z": 30.000000000000043
+      }
+    }
+  ],
+  "errors": []
+}

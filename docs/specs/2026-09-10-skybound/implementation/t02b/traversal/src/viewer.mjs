@@ -9,6 +9,7 @@ import { createTouchInput } from './touch.mjs';
 import { createGlider } from './glider.mjs';
 import { createFlightPose } from './flight-pose.mjs';
 import { createUpdraft, insideUpdraft } from './updraft.mjs';
+import { createPlatform } from './platform.mjs';
 import '../style.css';
 
 const state = window.__SKYBOUND_TRAVERSAL__ = { ready: false, error: null, paused: true, snapshot: null, animation: 'idle', characterPosition: null, terrainHeight: null, frames: 0 };
@@ -50,6 +51,8 @@ async function main() {
   const updraft = createUpdraft(THREE, world.col, { x: 0, z: 30, radius: 3,
     minY: Math.min(...windFloors) - .2, maxY: windCenterFloor + 12, speed: 4 }, terrain);
   scene.add(updraft.root);
+  const platform = createPlatform(THREE, world.col, terrain, { topY: windCenterFloor + 5 });
+  scene.add(platform.root);
   const loaded = await new GLTFLoader().loadAsync(new URL('../character/assets/naru-lod0.glb', location.href).href);
   const character = loaded.scene;
   character.traverse(object => { if (object.isMesh) { object.castShadow = true; object.receiveShadow = true; } });
@@ -71,7 +74,7 @@ async function main() {
   function result() {
     return { snapshot: state.snapshot, animation: state.animation, animationTime: state.animationTime,
       characterPosition: state.characterPosition, characterYaw: state.characterYaw, terrainHeight: state.terrainHeight,
-      updraft: state.updraft, camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, gripErrors: state.gripErrors, flightPoseActive: state.flightPoseActive, paused: state.paused, frames: state.frames };
+      platform: state.platform, updraft: state.updraft, camera: state.camera, touch: state.touch, gliding: state.gliding, sailVisible: state.sailVisible, gripErrors: state.gripErrors, flightPoseActive: state.flightPoseActive, paused: state.paused, frames: state.frames };
   }
   function draw() {
     const offset = cameraOffset(orbit), p = character.position;
@@ -98,6 +101,13 @@ async function main() {
     const inside = insideUpdraft(updraft.volume, snapshot.position);
     state.updraft = { volume: updraft.volume, inside, active: inside && snapshot.gliding && snapshot.windSpeed > 0,
       time: snapshot.tick * MOVEMENT.step, stats: updraft.stats };
+    const landed = snapshot.grounded && platform.supports(snapshot.position);
+    if (landed && !snapshot.progress.firstAerialLanding) {
+      simulation.setProgress({ ...snapshot.progress, firstAerialLanding: true });
+      snapshot = { ...snapshot, progress: simulation.snapshot().progress };
+    }
+    state.platform = { bounds: platform.bounds, center: platform.center, topY: platform.topY,
+      landed, everLanded: snapshot.progress.firstAerialLanding === true };
     flightPose.restore();
     const motion = bridge.update(snapshot, elapsed);
     state.snapshot = snapshot; state.animation = motion.name; state.animationTime = motion.time;
@@ -154,7 +164,7 @@ async function main() {
   function resetForTest() {
     pause(); flightPose.restore(); mixer.stopAllAction();
     orbit = { ...CAMERA_DEFAULTS };
-    simulation = createSimulation({ terrain, checkpoint: { x: 0, z: 35 }, waterHeight, flight: { enabled: true, volumes: [updraft.volume] } });
+    simulation = createSimulation({ terrain: platform.terrain, checkpoint: { x: 0, z: 35 }, waterHeight, flight: { enabled: true, volumes: [updraft.volume] } });
     bridge = createAnimationBridge(durations); character.rotation.y = Math.PI;
     return publish(simulation.snapshot(), 0);
   }

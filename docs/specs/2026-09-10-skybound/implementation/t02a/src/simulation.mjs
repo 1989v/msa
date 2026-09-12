@@ -12,6 +12,10 @@ function intent(value) {
 
 export function createSimulation({ terrain, checkpoint = { x: 0, z: 35 }, progress = {}, waterHeight = MOVEMENT.waterHeight, flight = null }) {
   if (typeof terrain?.heightAt !== 'function') throw new TypeError('Terrain adapter required');
+  if (terrain.supportHeightAt !== undefined && typeof terrain.supportHeightAt !== 'function') throw new TypeError('Optional support query must be a function');
+  // One-way tops are eligible only below the previous feet. Base heightAt remains
+  // the checkpoint query; ascending through a top never acquires support.
+  const supportHeight = (x, z, feetY) => terrain.supportHeightAt ? terrain.supportHeightAt(x, z, feetY) : terrain.heightAt(x, z);
   if (!Number.isFinite(waterHeight)) throw new TypeError('Finite water height required');
   if (flight !== null && (typeof flight !== 'object' || typeof flight.enabled !== 'boolean')) throw new TypeError('Flight config needs boolean enabled');
   const flightEnabled = flight?.enabled === true;
@@ -47,7 +51,7 @@ export function createSimulation({ terrain, checkpoint = { x: 0, z: 35 }, progre
     if (flightEnabled && pendingAction) {
       // One pulse, one consumer. A folded imminent landing keeps the legacy buffer;
       // otherwise an airborne press belongs only to the sail, never a second jump.
-      const floor = terrain.heightAt(position.x, position.z);
+      const floor = supportHeight(position.x, position.z, position.y);
       const gap = floor === null ? Infinity : position.y - floor;
       const landingTime = velocity.y <= 0 && gap >= 0 && Number.isFinite(gap)
         ? (velocity.y + Math.sqrt(velocity.y * velocity.y + 2 * MOVEMENT.gravity * gap)) / MOVEMENT.gravity : Infinity;
@@ -65,7 +69,7 @@ export function createSimulation({ terrain, checkpoint = { x: 0, z: 35 }, progre
     if (buffer > 0 && coyote > 0) { velocity.y = MOVEMENT.jumpSpeed; grounded = false; coyote = 0; buffer = 0; }
     const previousY = position.y, previousX = position.x, previousZ = position.z;
     position.x += velocity.x * dt; position.z += velocity.z * dt;
-    const floor = terrain.heightAt(position.x, position.z);
+    const floor = supportHeight(position.x, position.z, previousY);
     if (grounded && floor !== null && floor - previousY > MOVEMENT.maxStep) {
       // An unwalkable upward ledge must block the proposed step, not put feet under its top.
       position.x = previousX; position.z = previousZ; velocity.x = 0; velocity.z = 0; velocity.y = 0;

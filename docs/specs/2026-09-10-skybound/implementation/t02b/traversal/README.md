@@ -176,3 +176,39 @@ node docs/specs/2026-09-10-skybound/implementation/t02b/traversal/build.mjs
 같은 시간/초기화 재현 및 버퍼 유지 여부를 확인한다. 브라우저 진입·상승·회복·이탈과
 화면 가독성은 root의 별도 보고서에 기록한다. 이 표시는 최종 기류 아트 승인이나
 모바일 성능 보증이 아니다.
+
+
+## T03B-2a · 중간 착지대 하나
+
+상승기류 동쪽 `(8,30)`에 4m × 4m의 작은 분필빛 돌 착지대를 추가했다.
+윗면은 기류 중심 실제 지면 +5m이며 float32 렌더 정점으로 확정한 `topY`를 사용한다.
+기류 안에서 착지대보다 약 4m 높이까지 오른 뒤 동쪽으로 활공하면 기본 기력으로
+도달할 수 있다. 원래 출발점 체크포인트를 유지하며 자동 체크포인트는 만들지 않는다.
+
+`src/platform.mjs`의 보이는 윗면 BufferGeometry 두 삼각형을 `createTerrain`에
+직접 전달한다. 장식 돌/금빛 원은 충돌하지 않는다. world palette chalk/chalkShade/brass를
+사용한 임시 절차형 표식이며 최종 섬 아트가 아니다.
+
+이 adapter의 `heightAt(x,z)`는 기존 풀밭/길만 조회한다. 선택적
+`supportHeightAt(x,z,previousFeetY)`는 이전 발 높이 +1e-8 이하인 윗면만 포함하여
+가장 높은 지지면을 반환한다. simulation의 이동/착지 및 임박한 착지 버퍼 조회가
+이 선택적 메서드를 사용한다. 기존 adapter에는 기존 heightAt 동작이 유지된다.
+아래에서 걷거나 상승할 때 윗면이 수평 이동을 막거나 위로 순간이동시키지 않는다.
+하강할 때 이전 발 위치에서 지지면을 지나면 착지하며, 윗면 보행 중에는 지지를 유지하고
+가장자리 밖으로 나가면 떨어진다. 실제 벽/천장/입체 바위 충돌은 추가하지 않았다.
+
+체크포인트 검증은 계속 `heightAt`을 사용하므로 pad 아래 좌표를 넘겨도 풀밭 안전점이다.
+착지대 체크포인트 지정은 지원하지 않는다. `state.platform`과 advance 반환값은
+`{center,bounds,topY,landed,everLanded}`를 제공한다. 착지하면
+`simulation.progress.firstAerialLanding=true`를 기존 진행 값과 합쳐 저장한다.
+물에 떨어진 뒤 리스폰해도 기록은 유지되며 fixture 전체 reset은 기록도 초기화한다.
+
+```sh
+node --test docs/specs/2026-09-10-skybound/implementation/t02b/traversal/tests/*.test.mjs docs/specs/2026-09-10-skybound/implementation/t02a/tests/*.test.mjs docs/specs/2026-09-10-skybound/implementation/t03a/tests/*.test.mjs
+node docs/specs/2026-09-10-skybound/implementation/t02b/traversal/build.mjs
+```
+
+**45/45 통과**, 빌드 통과. 새 3개 검사는 실제 렌더 top 좌표/충돌 일치, 아래 통행과
+기존 체크포인트, 상승 통과/하강 착지/보행 지지/가장자리 추락, 공유 기력으로 기류→착지대
+도달 및 돛 닫힘, 물 리스폰 기록 보존을 확인한다. 실제 원본 초원 경로와 화면 가독성은
+root의 브라우저 QA로 별도 기록한다. 두 번째 착지대·전체 탐험 경로는 이번 범위가 아니다.
