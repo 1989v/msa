@@ -9,6 +9,7 @@ import com.kgd.deal.application.offer.usecase.ResolveDealRedirectUseCase
 import com.kgd.deal.application.offer.usecase.ResolveDealRedirectUseCase.Decision
 import com.kgd.deal.domain.model.Offer
 import com.kgd.deal.domain.model.OfferClick
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -26,6 +27,7 @@ private data class OfferSnapshot(val offer: Offer, val categoryCode: String)
  * 클릭 수를 우리가 센다. 거치지 않는 것 하나 — **URL 을 건드리지 않는다.**
  */
 @Service
+@Qualifier("dealTransactionManager")
 class DealRedirectService(
     private val offerRepository: DealOfferRepositoryPort,
     private val categoryRepository: DealCategoryRepositoryPort,
@@ -37,7 +39,7 @@ class DealRedirectService(
         .maximumSize(1_000)
         .build<String, OfferSnapshot>()
 
-    @Transactional("dealTransactionManager", readOnly = true)
+    @Transactional(readOnly = true)
     override fun execute(slug: String, now: LocalDateTime): Decision {
         val snapshot = cache.get(slug) { key -> loadSnapshot(key) } ?: return Decision.NotFound
         val offer = snapshot.offer
@@ -55,7 +57,7 @@ class DealRedirectService(
      * 순서를 뒤집으면 DB 가 흔들릴 때 수익 링크가 통째로 죽는다.
      * [Propagation.REQUIRES_NEW] 로 조회 트랜잭션과 분리해 실패가 밖으로 번지지 않게 한다.
      */
-    @Transactional("dealTransactionManager", propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     override fun execute(command: RecordDealClickUseCase.Command) {
         clickRepository.save(
             OfferClick(

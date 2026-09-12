@@ -809,14 +809,21 @@ val verifyTransactionQualifiers by tasks.registering {
                 if (primaryAnnotation.containsMatchIn(text)) return@forEach  // 이 호스트의 primary
                 val tm = tmBean.find(text)?.groupValues?.get(1) ?: return@forEach
 
+                // 클래스 레벨 `@Qualifier` 는 그 클래스의 모든 @Transactional 에 적용된다
+                // (Spring 6.2+). 열에 0 으로 붙은 것만 본다 — 생성자 파라미터의 @Qualifier 는 들여써 있다.
+                val classQualifier = Regex("^@Qualifier\\(\"$tm\"\\)", RegexOption.MULTILINE)
+
                 File(domainDir, "feature/src/main").walkTopDown()
                     .filter { it.isFile && it.extension == "kt" }
                     .forEach { src ->
-                        txAnnotation.findAll(src.readText()).forEach { m ->
+                        val text = src.readText()
+                        if (classQualifier.containsMatchIn(text)) return@forEach
+                        txAnnotation.findAll(text).forEach { m ->
                             if (!m.value.contains("\"$tm\"")) {
                                 val rel = src.relativeTo(rootProject.projectDir)
                                 failures += "$rel: ${m.value.trim()} — 한정자가 없다. " +
                                     "호스트의 primary TM 에 붙어 이 도메인 쓰기가 조용히 사라진다. " +
+                                    "클래스에 @Qualifier(\"$tm\") 를 붙이거나 " +
                                     "@Transactional(\"$tm\", ...) 로 바꿀 것"
                             }
                         }

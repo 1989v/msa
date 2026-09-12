@@ -61,6 +61,23 @@ override fun execute(command: RecordBlogViewUseCase.Command) { ... }
 override fun execute(command: RecordBlogViewUseCase.Command) { ... }
 ```
 
+**클래스 단위로 한 번 선언하는 쪽을 기본으로 한다.** Spring 6.2 부터 클래스에 붙은
+`@Qualifier` 가 그 클래스의 모든 `@Transactional` 에 적용된다 — 메서드마다 문자열을
+기억할 필요가 없어진다.
+
+```kotlin
+@Service
+@Qualifier("dealTransactionManager")
+class DealRedirectService(...) {
+    @Transactional(readOnly = true)                                 // 한정자 생략 가능
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+}
+```
+
+기존 코드를 한꺼번에 바꾸지 않는다. 이미 붙어 있는 한정자는 정상 동작하고, 전환은
+**동작을 바꾸는 변경**이라 그 도메인에 값 기반 쓰기 검사가 있을 때만 안전하다.
+새 도메인과 어차피 손대는 클래스에서 이 형태로 쓴다.
+
 - 적용 대상은 `*DataSourceConfig.kt` 에 애너테이션 `@Primary` 가 **없는** 도메인 전부다.
   primary 인 도메인(호스트마다 하나)은 한정자를 생략해도 같은 TM 에 붙으므로 면제다.
 - 재분리로 그 도메인이 다시 자기 파드가 되면 config 에 `@Primary` 를 붙이게 되고,
