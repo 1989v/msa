@@ -5,12 +5,13 @@ import { Page } from './cdp-page.mjs';
 const [port, base = 'http://127.0.0.1:8787', out = '.'] = process.argv.slice(2);
 const page = new Page(port);
 try {
-  await page.open(base + '/?touch=1', { width: 844, height: 390 });
+  await page.open(base + '/?touch=1', { width: 844, height: 390, mobile: true, touch: true });
   await page.waitFor(`document.querySelector('.practice')`);
   await page.shot(`${out}/e2e-mobile-title.png`);
   await page.type('.nick', '모바일');
   await page.eval(`document.querySelector('.bots').value = '3'`);
-  await page.click('.practice');
+  const tap = await page.tapElement('.practice'); // 실제 탭 — 버튼에 손이 닿아야 한다 (2026-09-12: 넘친 타이틀이 스크롤이 안 돼 못 닿던 결함)
+  console.log(`tapped .practice at ${JSON.stringify(tap)}`);
   await page.waitFor(`document.querySelector('.match canvas') && document.querySelector('.touchpad')`);
   await page.sleep(3600);
   await page.hold('ArrowUp', 'ArrowUp', 800);

@@ -17,7 +17,10 @@ input, select { font-family: var(--font); }
 .num { font-variant-numeric: tabular-nums; }
 
 /* ---- 공통 부품 ---- */
-.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; }
+/* 화면이 넘치면 스크롤한다 — justify-content:center 는 넘칠 때 위가 잘려 스크롤로 못 가므로, 가운데 정렬은 내용의 auto 마진이 맡는다
+   (2026-09-12 운영 실측: 폰 가로 844×390 에서 타이틀의 「연습」 버튼이 화면 밖이라 손이 안 닿았다) */
+.screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 16px; padding: 24px; overflow-y: auto; overflow-x: hidden; }
+.screen > .col { flex: 0 0 auto; margin-top: auto; margin-bottom: auto; }
 .panel { background: var(--panel); border: 2px solid var(--line2); border-radius: 12px; box-shadow: 0 4px 0 var(--bg2); padding: 16px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 22px; border-radius: 10px; border: 2px solid var(--line2); background: var(--panel3); color: var(--ink); font-weight: 800; font-size: 15px; box-shadow: 0 4px 0 var(--bg2); white-space: nowrap; }
 .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--bg2); }
@@ -57,6 +60,7 @@ input, select { font-family: var(--font); }
 .topbar { position: absolute; left: 0; right: 0; top: 0; height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: var(--bg2); border-bottom: 2px solid var(--line); z-index: 2; }
 .topbar .logo { font-size: 30px; gap: 6px; }
 .lobby { position: absolute; left: 20px; right: 20px; top: 70px; bottom: 20px; display: grid; grid-template-columns: 220px minmax(0, 1fr) 240px; gap: 16px; }
+.lobby > * { min-height: 0; overflow-y: auto; } /* 짧은 화면에서 칸 안이 넘치면 그 칸만 스크롤 */
 .lobby .center { display: flex; flex-direction: column; gap: 16px; min-height: 0; }
 .rooms { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 2px; min-height: 0; }
 .room-row { display: grid; grid-template-columns: 64px 1fr 120px 100px 60px 80px; gap: 8px; align-items: center; height: 40px; padding: 0 12px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; }
@@ -70,7 +74,7 @@ input, select { font-family: var(--font); }
 .users { display: flex; flex-direction: column; gap: 6px; font-size: 13px; overflow: auto; }
 
 .room { position: absolute; left: 20px; right: 20px; top: 70px; bottom: 20px; display: grid; grid-template-rows: minmax(0, 1fr) 110px; gap: 14px; }
-.room .top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; min-height: 0; align-items: start; overflow: hidden; }
+.room .top { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 16px; min-height: 0; align-items: start; overflow: auto; } /* 짧은 화면: 슬롯이 넘치면 스크롤 (시작 버튼은 아래 줄에 고정) */
 .slots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 12px; height: 100%; max-height: 520px; }
 .slot { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px; background: var(--panel); border: 2px solid var(--line2); border-radius: 12px; box-shadow: 0 4px 0 var(--bg2); min-height: 120px; }
 .slot.red { border-color: var(--red); } .slot.blue { border-color: var(--blue); }

@@ -76,6 +76,19 @@ export class Page {
   touchMove(points) { return this.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: points }); }
   touchEnd() { return this.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
 
+  /** 요소를 보이게 스크롤한 뒤 그 중심을 실제 터치로 탭한다 (터치 에뮬레이션 필요). el.click() 과 달리 손이 닿을 수 없는 버튼이면 실패한다 */
+  async tapElement(selector) {
+    const ok = await this.eval(`(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return false; el.scrollIntoView({ block: 'center', inline: 'center' }); return true; })()`);
+    if (!ok) throw new Error(`no element: ${selector}`);
+    await this.sleep(250);
+    const r = JSON.parse(await this.eval(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return JSON.stringify({ x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, vw: innerWidth, vh: innerHeight }); })()`));
+    if (r.x < 0 || r.y < 0 || r.x > r.vw || r.y > r.vh) throw new Error(`${selector} 가 화면 밖이다: ${JSON.stringify(r)}`);
+    await this.touchStart([{ x: r.x, y: r.y, id: 9 }]);
+    await this.sleep(60);
+    await this.touchEnd();
+    return r;
+  }
+
   /** 헤드리스는 마지막에 연 탭만 visible 이라 rAF 가 돈다 — 탭을 앞으로 가져와야 게임 루프가 진행된다 */
   front() { return this.send('Page.bringToFront'); }
 

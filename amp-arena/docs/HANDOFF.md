@@ -34,6 +34,7 @@
 - [x] 승계 입력 복구·지연 보상 (2026-09-12) — `recover.ts`(ack 뒤 입력 16개씩 재전송), `World.latency`/`posAgo`(왕복+보간 지연만큼 되감은 상대 위치로 타격 판정), 워커 `lat` 메시지
 - [x] 방·드럼통 (2026-09-12) — 콜로세움 동서 문루·스카이독 컨테이너, 드럼통(잽 3방·던지기로 폭발, 반경 3m 25, 연쇄, 45초 재생성) 전 맵. 좀비 상자 수정. 테스트 `shared/test/barrel.test.ts`, 스크린샷 `tools/shot-barrel.mjs`
 - [x] 세로 모바일 강제 가로 (2026-09-12) — `client/src/ui/orient.ts` 가 세로 터치 기기에서 `#app` 을 90° 돌리고 `touch.ts` 가 좌표를 되돌린다. 전체화면 진입 뒤 가로 잠금 시도. 실측 `tools/e2e-portrait.mjs` (390×844, 회귀 주입으로 빨간불 확인)
+- [x] 짧은 화면 스크롤 (2026-09-12 운영 실측이 잡음) — 폰 가로 844×390 에서 타이틀 「연습」 버튼이 화면 밖이라 손이 안 닿았다(E2E 가 `el.click()` 으로 눌러 가려져 있었다). `.screen` 을 스크롤 가능하게(가운데 정렬은 auto 마진), 로비 칸·대기실 슬롯도 스크롤. 모바일 E2E 는 이제 `tapElement`(실제 탭)로 누른다
 - [x] 시안 캔버스 v0.2 (2026-09-12) — 스타일 5종·옥상·얼음 호수 아트보드 추가(16장), 콜로세움·스카이독에 문루·컨테이너·드럼통·점프대 반영. `node design/canvas/gen/build.mjs` → seed → 같은 URL 재발행(Version 4). 카탈로그 썸네일도 새 카메라로 교체
 - [x] 관전 (2026-09-12) — 로비 체크박스 → `Pick.spectate`, `buildRoster`(`client/src/net/roster.ts`)가 명단에서 빼고 `cfg.spectators`, `GuestSource.spectator`(입력 안 보냄), 매치 `followId`(Tab 전환). 실측 `tools/e2e-spectate.mjs`
 - [x] 플랫폼 순위표 (2026-09-12) — `client/src/platform/score.ts` (online/practice 보드, Bearer 쿠키, 결과 화면 한 줄), 마이그레이션 `game/.../V90__arena_score_boards.sql`(보드 이름·sdk_integrated). 세션은 카탈로그 페이지 몫. 실측 `tools/e2e-score.mjs`(가짜 API) · `tools/e2e-prod-score.mjs`(운영)

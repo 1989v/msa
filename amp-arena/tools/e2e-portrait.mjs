@@ -24,7 +24,8 @@ try {
   await page.shot(`${out}/e2e-portrait-title.png`);
   await page.type('.nick', '세로');
   await page.eval(`document.querySelector('.bots').value = '2'`);
-  await page.click('.practice');
+  const tap = await page.tapElement('.practice'); // 실제 탭 (돌아간 뿌리 안에서 스크롤 → 화면 좌표)
+  console.log(`tapped .practice at ${JSON.stringify(tap)}`);
   await page.waitFor(`document.querySelector('.match canvas') && document.querySelector('.touchpad') && window.__amp && window.__amp.source.world.phase === 'play'`, { timeout: 25000 });
   await page.sleep(500);
   const canvas = JSON.parse(await page.eval(`(() => { const c = document.querySelector('.match canvas'); const r = c.getBoundingClientRect(); return JSON.stringify({ buf: [c.width, c.height], css: [c.clientWidth, c.clientHeight], box: [Math.round(r.width), Math.round(r.height)], buttons: document.querySelectorAll('.touchpad .tbtn').length }); })()`));
