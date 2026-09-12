@@ -35,6 +35,11 @@ kubectl -n commerce create job --from=cronjob/db-backup-mysql db-backup-manual
 
 전체 복구는 되돌릴 수 없다. **먼저 지금 상태를 한 번 더 덤프**하고 시작한다.
 
+> **`--default-character-set=utf8mb4` 를 반드시 붙인다.** 빼면 한글이 깨진 채로 들어가는데
+> 행 수는 그대로라 정상으로 보인다. 복구 검증에서 실제로 겪었다 —
+> `진행 중인 여행 혜택 모음` 이 `ì§„í–‰ ì¤‘ì¸ ...` 으로 들어갔고 행 수 대조는 9/9 로 통과했다.
+> 덤프 일부만 잘라 쓸 때는 `SET NAMES utf8mb4` 가 있는 **헤더를 같이** 넣어야 한다.
+
 ```bash
 # 1. 백업 목록
 kubectl -n commerce run bk --rm -it --restart=Never --image=busybox:1.36 \
@@ -43,12 +48,25 @@ kubectl -n commerce run bk --rm -it --restart=Never --image=busybox:1.36 \
   "volumes":[{"name":"b","persistentVolumeClaim":{"claimName":"db-backup"}}]}}'
 
 # 2. 한 스키마만 복구 — 전체 복구보다 이쪽이 대부분의 상황에 맞는다
-kubectl -n commerce exec -i mysql-0 -- sh -c \
-  'MYSQL_PWD=$MYSQL_ROOT_PASSWORD mysql --user=root --one-database <스키마명>' < dump.sql
+gzip -dc mysql-latest.sql.gz \
+  | kubectl -n commerce exec -i mysql-0 -- sh -c \
+      'MYSQL_PWD=$MYSQL_ROOT_PASSWORD mysql --user=root --default-character-set=utf8mb4 \
+         --one-database <스키마명>'
 ```
 
 덤프에는 `mysql` 스키마(계정·권한)도 들어 있다. 계정까지 되돌릴 의도가 아니라면
 `--one-database` 로 대상 스키마를 한정한다.
+
+## 복구가 실제로 되는지 확인하는 법
+
+"파일이 있다"와 "복구된다"는 다르다. **행 수만 대조하면 안 된다** — 인코딩이 깨져도 행 수는 맞는다.
+새 스키마로 한 도메인만 복원해 `CHECKSUM TABLE` 을 원본과 대조한다.
+
+```bash
+# restore_probe 로 복원한 뒤
+mysql -N -e 'CHECKSUM TABLE deal_db.deal_offer'
+mysql -N -e 'CHECKSUM TABLE restore_probe.deal_offer'   # 두 값이 같아야 한다
+```
 
 ## 대상 밖
 
