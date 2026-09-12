@@ -146,7 +146,7 @@ export class App {
         </div>
       </div>
       <span class="chip version">P1 · 2026-09</span>
-      <div class="hints"><span class="row" style="gap:6px">${icon('keyboard', 20, 'var(--muted)')}Z 약공 · X 강공 · Space 점프 · C 가드 · V 기술 · F 줍기</span><span class="row" style="gap:6px">${icon('gamepad', 20, 'var(--muted)')}게임패드</span><span>우클릭 드래그 카메라${isEmbedded() ? ' · 시작하면 전체화면' : ''}</span></div>`);
+      <div class="hints"><span class="row" style="gap:6px">${icon('keyboard', 20, 'var(--muted)')}Z 약공 · X 강공 · Space 점프(공중에서도 Z·X) · C 가드 · V 기술 · F 줍기</span><span class="row" style="gap:6px">${icon('gamepad', 20, 'var(--muted)')}게임패드</span><span>우클릭 드래그 카메라${isEmbedded() ? ' · 시작하면 전체화면' : ''}</span></div>`);
     this.renderAccPicker(el.querySelector('.accs') as HTMLElement, el.querySelector('.acc-desc') as HTMLElement, (a) => { this.acc = a; localStorage.setItem('amp.acc', a); });
     this.renderStylePicker(el.querySelector('.styles') as HTMLElement, el.querySelector('.style-desc') as HTMLElement, (st, acc) => { this.style = st; localStorage.setItem('amp.style', st); localStorage.setItem('amp.acc', acc); });
     const nickEl = el.querySelector('.nick') as HTMLInputElement;

@@ -57,7 +57,7 @@ export class Hud {
       <div class="skill"><div class="ring"><svg viewBox="0 0 64 64" width="64" height="64"><circle cx="32" cy="32" r="27" style="fill:var(--bg2);stroke:var(--line2);stroke-width:4px"></circle><circle class="cd" cx="32" cy="32" r="27" style="fill:none;stroke:var(--green);stroke-width:4px;stroke-dasharray:170 170;transform:rotate(-90deg);transform-origin:32px 32px"></circle></svg><div class="icon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"></div><span class="key">V</span></div><div class="col" style="gap:4px"><b class="skill-name">-</b><span class="chip green skill-state">준비됨</span><span class="muted ammo" style="font-size:11px"></span></div></div>
       <div class="feed"></div>
       <div class="scoreboard" style="display:none"></div>
-      <div class="hints">${[['Z', '약공'], ['X', '강공'], ['Space', '점프'], ['C', '가드'], ['V', '기술'], ['F', '줍기'], ['Shift', '대시'], ['Q E', '카메라']].map(([k, l]) => `<span class="row" style="gap:5px"><span class="key">${k}</span><span>${l}</span></span>`).join('')}</div>
+      <div class="hints">${[['Z', '약공'], ['X', '강공'], ['Space', '점프'], ['Z X', '공중 공격'], ['C', '가드'], ['V', '기술'], ['F', '줍기'], ['Shift', '대시'], ['Q E', '카메라']].map(([k, l]) => `<span class="row" style="gap:5px"><span class="key">${k}</span><span>${l}</span></span>`).join('')}</div>
       <div class="combo display"></div>
       <div class="center display"></div>`;
     container.appendChild(this.el);
