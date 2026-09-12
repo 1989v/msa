@@ -1,10 +1,10 @@
 // 봇: 사람과 같은 입력 파이프라인을 탄다. 서버(온라인)와 클라(연습 모드)가 같이 쓴다.
-import { type Input, BTN_ATTACK, BTN_HEAVY, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH } from './input.ts';
+import { type Input, BTN_ATTACK, BTN_HEAVY, BTN_JUMP, BTN_GUARD, BTN_SPECIAL, BTN_DASH, BTN_PICKUP } from './input.ts';
 import { type Player, isActionable } from './player.ts';
 import type { World } from './world.ts';
 import { MOVES } from './moves.ts';
 import { ACCESSORIES } from './accessories.ts';
-import { STYLES } from './styles.ts';
+import { STYLES, allowedAccessory } from './styles.ts';
 import { supportHeight } from './player.ts';
 
 export interface BotMemory {
@@ -76,6 +76,21 @@ export function botInput(w: World, p: Player, mem: BotMemory): Input {
       return out;
     }
   }
+  // 맨손이면 근처에 떨어진 쓸 수 있는 악세서리를 주우러 간다 (KO 드랍)
+  if (p.acc === 'none' && isActionable(p) && p.holding < 0) {
+    let item = null as { x: number; z: number } | null, id = 8;
+    for (const it of w.items) {
+      if (it.kind !== 'acc' || it.heldBy >= 0 || it.airborne || it.hp <= 0 || allowedAccessory(p.style, it.acc) !== it.acc) continue;
+      const dist = Math.hypot(it.x - p.pos.x, it.z - p.pos.z);
+      if (dist < id) { id = dist; item = it; }
+    }
+    if (item) {
+      const ix = item.x - p.pos.x, iz = item.z - p.pos.z, il = Math.hypot(ix, iz) || 1;
+      if (id > 0.9) { out.mx = ix / il; out.mz = iz / il; if (id > 4) out.btn |= BTN_DASH; }
+      if (id < 1.2 && tick % 2 === 0) out.btn |= BTN_PICKUP; // 격틱으로 눌러 엣지를 만든다
+      return out;
+    }
+  }
   // 상대가 누워 있으면 살짝 물러난다
   if (target.state === 'down' || target.state === 'getup') {
     if (d < 2.2) { out.mx = -nx; out.mz = -nz; }
@@ -96,7 +111,7 @@ export function botInput(w: World, p: Player, mem: BotMemory): Input {
       if (supportHeight(w.map, probe, p.pos.y) < p.pos.y - 3) { out.mx = 0; out.mz = 0; out.btn &= ~BTN_DASH; }
     }
     // 원거리는 사거리 안이면 쏜다
-    if (acc.ranged && d < 12 && isActionable(p) && rng() < 0.3) { out.btn |= BTN_ATTACK; out.mx = nx; out.mz = nz; }
+    if (acc.ranged && d < 12 && isActionable(p) && rng() < 0.22) { out.btn |= BTN_ATTACK; out.mx = nx; out.mz = nz; } // 0.3 은 더블탭 봇이 KO 비 1.71 (밸런스 2차)
     return out;
   }
 

@@ -3,6 +3,25 @@ import * as THREE from 'three';
 import { type MapDef, type Projectile, type Item, type AccessoryId } from '@amp/shared';
 import { CharacterRig } from './rig.ts';
 
+/** 바닥에 떨어진 악세서리(KO 드랍) — 손에 붙는 리그 메시와 별개로, 알아볼 만큼만 단순하게. 노란 고리가 「주울 수 있다」 표시 */
+function accessoryPickupMesh(acc: AccessoryId): THREE.Object3D {
+  const g = new THREE.Group();
+  const lam = (c: number) => new THREE.MeshLambertMaterial({ color: c });
+  const add = (geo: THREE.BufferGeometry, mat: THREE.Material) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; g.add(m); return m; };
+  switch (acc) {
+    case 'greatsword': { const b = add(new THREE.BoxGeometry(0.1, 1.0, 0.04), lam(0xc9cfdb)); b.rotation.z = 0.9; const h = add(new THREE.BoxGeometry(0.32, 0.06, 0.08), lam(0xffb020)); h.position.set(0.3, -0.36, 0); h.rotation.z = 0.9; break; }
+    case 'spear': { const sh = add(new THREE.CylinderGeometry(0.03, 0.03, 1.8, 8), lam(0x8a5a2b)); sh.rotation.z = 1.1; const t = add(new THREE.ConeGeometry(0.07, 0.3, 8), lam(0xc9cfdb)); t.position.set(-0.85, 0.42, 0); t.rotation.z = 1.1 + Math.PI; break; }
+    case 'pistols': { for (const dx of [-0.16, 0.16]) { const m = add(new THREE.BoxGeometry(0.08, 0.3, 0.1), lam(0x3b4260)); m.position.x = dx; m.rotation.z = 0.5; } break; }
+    case 'shield': { add(new THREE.BoxGeometry(0.42, 0.52, 0.06), lam(0x4488ff)); const e = add(new THREE.BoxGeometry(0.18, 0.22, 0.02), lam(0xffb020)); e.position.z = 0.04; break; }
+    case 'rocket': { for (const dx of [-0.18, 0.18]) { const sp = add(new THREE.SphereGeometry(0.14, 12, 10), lam(0xff3b3b)); sp.position.x = dx; } break; }
+    default: add(new THREE.SphereGeometry(0.2, 10, 8), lam(0xffb020));
+  }
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.35, 0.5, 24), new THREE.MeshBasicMaterial({ color: 0xffb020, transparent: true, opacity: 0.55, side: THREE.DoubleSide }));
+  ring.rotation.x = -Math.PI / 2; ring.position.y = -0.45;
+  g.add(ring);
+  return g;
+}
+
 function heartTexture(): THREE.CanvasTexture {
   return makeTexture((ctx, s) => {
     ctx.translate(s / 2, s / 2);
@@ -422,6 +441,8 @@ export class Renderer {
           const outline = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 1.16, 16), new THREE.MeshBasicMaterial({ color: 0x1a1f3a, side: THREE.BackSide }));
           g.add(outline);
           obj = g;
+        } else if (it.kind === 'acc') {
+          obj = accessoryPickupMesh(it.acc);
         } else if (it.kind === 'heart') {
           if (!this.texHeart) this.texHeart = heartTexture();
           const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: this.texHeart, transparent: true }));
@@ -450,11 +471,12 @@ export class Renderer {
       if (h) {
         m.obj.position.set(h.x, h.y + (it.kind === 'crate' ? 2.35 : it.kind === 'barrel' ? 2.45 : 2.2), h.z);
       } else {
-        const bob = it.kind === 'heart' ? Math.sin(now / 250) * 0.08 + 0.6 : it.kind === 'crate' ? 0.5 : it.kind === 'barrel' ? 0.55 : 0.32;
+        const bob = it.kind === 'heart' ? Math.sin(now / 250) * 0.08 + 0.6 : it.kind === 'crate' ? 0.5 : it.kind === 'barrel' ? 0.55 : it.kind === 'acc' ? Math.sin(now / 300) * 0.08 + 0.6 : 0.32;
         m.obj.position.set(it.x, it.y + bob, it.z);
       }
       if (it.kind === 'crate') m.obj.rotation.y = it.airborne ? now / 200 : 0;
       if (it.kind === 'barrel') m.obj.rotation.z = it.airborne ? now / 150 : 0; // 던져지면 구른다
+      if (it.kind === 'acc') m.obj.rotation.y = now / 900; // 천천히 돈다 — 눈에 띄게
       if (m.light) { const on = it.fuse >= 0 && Math.floor(now / (it.fuse < 60 ? 60 : 160)) % 2 === 0; (m.light.material as THREE.MeshBasicMaterial).color.set(on ? 0xff3b3b : 0xffb020); m.light.scale.setScalar(on ? 1.6 : 1); }
     }
     for (const [id, m] of this.itemMeshes) if (!seen.has(id)) { this.scene.remove(m.obj); this.itemMeshes.delete(id); }

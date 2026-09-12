@@ -11,6 +11,7 @@ import type { StyleId } from './styles.ts';
 import { allowedAccessory } from './styles.ts';
 import {
   type Item, type ItemKind, createItem, CRATE_RESPAWN_TICKS, CRATE_BREAK_RADIUS, BOMB_FUSE_TICKS, BOMB_RADIUS, HEART_HEAL, BARREL_RADIUS, BARREL_RESPAWN_TICKS,
+  BARREL_PUSH_SPEED, BARREL_FRICTION, ACC_DESPAWN_TICKS,
   PICKUP_RANGE, THROW_ITEM_VEL_H, THROW_ITEM_VEL_V, DROP_HEART, DROP_BOMB,
 } from './items.ts';
 
@@ -33,6 +34,8 @@ export type WorldEvent =
   | { t: 'crateBreak'; x: number; y: number; z: number; drop: 'heart' | 'bomb' | null }
   | { t: 'heal'; id: number; amount: number }
   | { t: 'pad'; id: number; x: number; y: number; z: number }
+  | { t: 'accDrop'; id: number; acc: AccessoryId; x: number; y: number; z: number } // KO 로 악세서리가 떨어졌다
+  | { t: 'equip'; id: number; acc: AccessoryId }                                  // 떨어진 악세서리를 주워 들었다
   | { t: 'end'; ranking: RankEntry[] };
 
 export interface RankEntry { id: number; name: string; team: number; kos: number; deaths: number; dmg: number; alive: boolean; hp: number; rank: number; win: boolean }
@@ -132,6 +135,7 @@ export class World implements SimContext {
     }
     this.syncHeld();
     this.separatePlayers();
+    this.pushBarrels();
     this.recordHistory();
     if (this.phase === 'play') {
       this.resolveHits();
@@ -148,6 +152,23 @@ export class World implements SimContext {
       if (!p) continue;
       const ring = this.hist[p.id] ?? (this.hist[p.id] = new Array(C.HISTORY_TICKS));
       ring[this.tick % C.HISTORY_TICKS] = { tick: this.tick, x: p.pos.x, y: p.pos.y, z: p.pos.z };
+    }
+  }
+
+  /** 걸어서 드럼통을 민다 — 입력 방향 앞에 바닥의 드럼통이 붙어 있으면 그쪽으로 미끄러진다 (2026-09-12 「밀리는 오브젝트」) */
+  private pushBarrels(): void {
+    for (const p of this.players) {
+      if (!p || p.state === 'dead' || p.state === 'held') continue;
+      const inp = p.lastInput;
+      const m = Math.hypot(inp.mx, inp.mz);
+      if (m < 0.3) continue;
+      for (const it of this.items) {
+        if (it.kind !== 'barrel' || it.heldBy >= 0 || it.airborne || it.hp <= 0) continue;
+        const dx = it.x - p.pos.x, dz = it.z - p.pos.z, d = Math.hypot(dx, dz);
+        if (d < 1e-6 || d > 0.45 + C.PLAYER_RADIUS + 0.15 || Math.abs(it.y - p.pos.y) > 1.0) continue;
+        if ((dx * inp.mx + dz * inp.mz) / (d * m) < 0.4) continue; // 앞쪽에 있을 때만
+        it.vx = (dx / d) * BARREL_PUSH_SPEED; it.vz = (dz / d) * BARREL_PUSH_SPEED;
+      }
     }
   }
 
@@ -231,17 +252,34 @@ export class World implements SimContext {
   tryPickup(p: Player): boolean {
     let best: Item | null = null, bestD = PICKUP_RANGE;
     for (const it of this.items) {
-      if (it.kind === 'heart' || it.heldBy >= 0 || it.airborne) continue;
+      if (it.kind === 'heart' || it.heldBy >= 0 || it.airborne || it.hp <= 0) continue;
+      if (it.kind === 'acc' && allowedAccessory(p.style, it.acc) !== it.acc) continue; // 내 직업이 못 드는 것은 줍지 않는다
       if (Math.abs(it.y - p.pos.y) > 1.5) continue;
       const d = Math.hypot(it.x - p.pos.x, it.z - p.pos.z);
       if (d < bestD) { bestD = d; best = it; }
     }
     if (!best) return false;
+    if (best.kind === 'acc') return this.equip(p, best);
     best.heldBy = p.id;
     best.vx = best.vy = best.vz = 0;
     if (best.kind === 'bomb' && best.fuse < 0) best.fuse = BOMB_FUSE_TICKS;
     p.holding = best.id;
     this.events.push({ t: 'pickup', id: p.id, item: best.id, kind: best.kind });
+    return true;
+  }
+
+  /** 떨어진 악세서리를 주워 든다. 이미 든 것이 있으면 그 자리에 내려놓는다(바꿔 들기) */
+  private equip(p: Player, it: Item): boolean {
+    if (p.acc !== 'none') {
+      const old = createItem(this.nextItemId++, 'acc', p.pos.x, p.pos.y, p.pos.z);
+      old.acc = p.acc; old.fuse = ACC_DESPAWN_TICKS;
+      this.items.push(old);
+    }
+    p.acc = it.acc;
+    p.ammo = ACCESSORIES[it.acc].ammo; p.reload = 0;
+    it.hp = 0;
+    this.items = this.items.filter((x) => x.hp > 0);
+    this.events.push({ t: 'equip', id: p.id, acc: p.acc });
     return true;
   }
 
@@ -389,6 +427,20 @@ export class World implements SimContext {
           }
           if (it.y < this.map.fallY) it.hp = 0;
         }
+      }
+      else if (it.kind === 'barrel' && (it.vx !== 0 || it.vz !== 0)) {
+        // 밀린 드럼통: 바닥을 미끄러지다 선다. 발판 밖으로 나가면 떨어진다
+        it.x += it.vx * C.DT; it.z += it.vz * C.DT;
+        it.vx *= BARREL_FRICTION; it.vz *= BARREL_FRICTION;
+        if (Math.hypot(it.vx, it.vz) < 0.05) { it.vx = 0; it.vz = 0; }
+        const wallR = this.map.wallRadius;
+        if (wallR > 0 && Math.hypot(it.x, it.z) > wallR - 0.5) { const k = (wallR - 0.5) / Math.hypot(it.x, it.z); it.x *= k; it.z *= k; it.vx = 0; it.vz = 0; }
+        const g = this.groundAt(it.x, it.y, it.z, it.y);
+        if (g < it.y - 0.05) it.airborne = true; else if (g > it.y) it.y = g;
+      }
+      if (it.hp > 0 && it.kind === 'acc' && it.fuse > 0) {
+        it.fuse--;
+        if (it.fuse <= 0) it.hp = 0; // 25초 안에 안 주우면 사라진다
       }
       if (it.hp > 0 && it.kind === 'bomb' && it.fuse >= 0) {
         it.fuse--;
@@ -571,6 +623,15 @@ export class World implements SimContext {
     }
     this.releaseGrabs(v);
     if (v.holding >= 0) this.dropHeld(v);
+    if (cause !== 'fall' && v.acc !== 'none') {
+      // 들고 있던 악세서리가 그 자리에 떨어진다 — 주운 사람이 든다(원래 주인도). 낙사는 같이 떨어져 없어진다
+      const d = createItem(this.nextItemId++, 'acc', v.pos.x, v.pos.y, v.pos.z);
+      d.acc = v.acc; d.fuse = ACC_DESPAWN_TICKS;
+      d.airborne = true; d.vy = 3; d.vx = (this.rng() - 0.5) * 2; d.vz = (this.rng() - 0.5) * 2;
+      this.items.push(d);
+      this.events.push({ t: 'accDrop', id: v.id, acc: v.acc, x: v.pos.x, y: v.pos.y + 0.8, z: v.pos.z });
+      v.acc = 'none'; v.ammo = 0; v.reload = 0;
+    }
     v.move = null;
     setState(v, 'dead');
     if (this.mode.lives > 0) {

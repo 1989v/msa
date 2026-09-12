@@ -6,7 +6,7 @@ import { InputController } from './input.ts';
 import { SLOT_COLORS } from './rig.ts';
 import { targetPose } from './poses.ts';
 import { audio } from './audio.ts';
-import { botInput, newBotMemory, STYLES, MOVES, type BotMemory } from '@amp/shared';
+import { botInput, newBotMemory, STYLES, MOVES, ACCESSORIES, allowedAccessory, type BotMemory, type Item } from '@amp/shared';
 import { STRIKE_HOLD } from './poses.ts';
 import { toggleFullscreen, isFullscreen } from '../ui/fullscreen.ts';
 
@@ -221,10 +221,16 @@ export class Match {
       this.hud.setPrompt(`관전 · ${this.nameOf.get(this.followId) ?? ''}${this.input.hasTouch ? '' : ' · Tab 전환'}`);
     } else if (meView) {
       const me = world.players[src.myId];
-      let near = false;
-      if (me && me.holding < 0) for (const it of world.items) { if (it.kind !== 'heart' && it.heldBy < 0 && !it.airborne && Math.abs(it.y - me.pos.y) <= 1.5 && Math.hypot(it.x - me.pos.x, it.z - me.pos.z) < PICKUP_RANGE) { near = true; break; } }
+      let near: Item | null = null;
+      if (me && me.holding < 0) for (const it of world.items) {
+        if (it.kind === 'heart' || it.heldBy >= 0 || it.airborne || it.hp <= 0 || Math.abs(it.y - me.pos.y) > 1.5 || Math.hypot(it.x - me.pos.x, it.z - me.pos.z) >= PICKUP_RANGE) continue;
+        if (it.kind === 'acc' && allowedAccessory(me.style, it.acc) !== it.acc) continue; // 내 직업이 못 드는 것은 안내하지 않는다
+        near = it; break;
+      }
       const counter = now < this.counterUntil ? (this.input.hasTouch ? '반격! 약공' : 'Z 반격!') : null;
-      this.hud.setPrompt(counter ?? (near ? (this.input.hasTouch ? '줍기 버튼으로 줍는다' : 'F 줍기') : me && me.holding >= 0 ? (this.input.hasTouch ? '약공 버튼으로 던진다' : 'Z 던지기 · F 내려놓기') : null));
+      const pickKey = this.input.hasTouch ? '줍기 버튼' : 'F';
+      const pickText = near ? (near.kind === 'acc' ? `${pickKey} 장착 · ${ACCESSORIES[near.acc].name}` : (this.input.hasTouch ? '줍기 버튼으로 줍는다' : 'F 줍기')) : null;
+      this.hud.setPrompt(counter ?? (pickText ?? (me && me.holding >= 0 ? (this.input.hasTouch ? '약공 버튼으로 던진다' : 'Z 던지기 · F 내려놓기') : null)));
     }
     this.hud.update({
       me: world.players[src.myId], players: world.players.filter((p): p is Player => !!p), myId: src.myId,
@@ -279,6 +285,8 @@ export class Match {
       case 'crateBreak': this.renderer.spawnDust(ev.x, ev.y - 0.3, ev.z); this.renderer.spawnHit(ev.x, ev.y, ev.z, 'hit'); audio.play('hit'); break;
       case 'heal': if (ev.id === src.myId) { audio.play('heal'); const me = src.world.players[src.myId]; if (me) { const s = this.renderer.project(me.pos.x, me.pos.y + 1.8, me.pos.z); this.hud.showDamage(s.x, s.y, `+${ev.amount}`, 'guard'); } } break;
       case 'pickup': if (ev.id === src.myId) audio.play('pickup'); break;
+      case 'accDrop': this.renderer.spawnDust(ev.x, ev.y - 0.4, ev.z); this.hud.pushFeed(`<b>${name(ev.id)}</b> <span class="muted">의</span> <b style="color:var(--amp)">${ACCESSORIES[ev.acc].name}</b> <span class="muted">이 떨어졌다</span>`); break;
+      case 'equip': if (ev.id === src.myId) audio.play('pickup'); this.hud.pushFeed(`<b>${name(ev.id)}</b> <span class="muted">이</span> <b style="color:var(--amp)">${ACCESSORIES[ev.acc].name}</b> <span class="muted">을 들었다</span>`); break;
       case 'pad': this.renderer.kickPad(ev.x, ev.z); this.renderer.spawnDust(ev.x, ev.y + 0.1, ev.z); if (ev.id === src.myId) audio.play('jump'); break;
       case 'end': audio.play('end'); break;
       case 'grab': break;

@@ -99,7 +99,7 @@ describe('3차 소감 — 약공·강공', () => {
     const { a } = arena('fighter');
     a.chain = 1; a.switchHeavy = true; a.counterT = 7;
     const row = encodePlayer(a);
-    expect(row.slice(-3)).toEqual([1, 1, 7]);
+    expect(row.slice(-4, -1)).toEqual([1, 1, 7]); // 맨 뒤는 악세서리 인덱스 (KO 드랍으로 바뀐다)
   });
 });
 

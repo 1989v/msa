@@ -2,6 +2,7 @@
 import { STATE_IDS, type Player, type PState } from './player.ts';
 import { MOVE_IDS, type MoveId } from './moves.ts';
 import { ITEM_KINDS, type Item } from './items.ts';
+import { ACCESSORY_IDS } from './accessories.ts';
 import type { World, Projectile } from './world.ts';
 
 export type PlayerSnap = number[];
@@ -37,6 +38,7 @@ export function encodePlayer(p: Player): PlayerSnap {
     p.lives, p.alive ? 1 : 0, p.kos, p.deaths, p.dmgDealt, p.lastHitBy, p.lastHitTick, p.consecBy, p.consecCount, p.prevBtn,
     p.vel.x, p.vel.y, p.vel.z,
     p.chain, p.switchHeavy ? 1 : 0, p.counterT,
+    ACCESSORY_IDS.indexOf(p.acc), // 악세서리는 KO 로 떨어지고 주워서 바뀐다 (2026-09-12)
   ];
 }
 
@@ -52,6 +54,7 @@ export function decodePlayer(p: Player, s: PlayerSnap): void {
   p.lives = s[i++]; p.alive = s[i++] === 1; p.kos = s[i++]; p.deaths = s[i++]; p.dmgDealt = s[i++]; p.lastHitBy = s[i++]; p.lastHitTick = s[i++]; p.consecBy = s[i++]; p.consecCount = s[i++]; p.prevBtn = s[i++];
   p.vel.x = s[i++]; p.vel.y = s[i++]; p.vel.z = s[i++];
   p.chain = s[i++] ?? 0; p.switchHeavy = s[i++] === 1; p.counterT = s[i++] ?? 0;
+  const ai = s[i++]; if (ai !== undefined && ai >= 0 && ACCESSORY_IDS[ai]) p.acc = ACCESSORY_IDS[ai];
 }
 
 export function encodeSnapshot(w: World): Snapshot {
@@ -59,7 +62,7 @@ export function encodeSnapshot(w: World): Snapshot {
     tick: w.tick, phase: w.phase, phaseT: w.phaseT, timeLeft: w.timeLeft, score: [w.score[0], w.score[1]],
     p: w.players.filter((p): p is Player => !!p).map((p) => encodePlayer(p).map(r3)),
     pr: w.projectiles.map((pr) => [pr.id, pr.owner, moveIndex.get(pr.move) ?? 0, r3(pr.x), r3(pr.y), r3(pr.z), r3(pr.vx), r3(pr.vz), pr.life, pr.radius, pr.hitMask, pr.pierce ? 1 : 0]),
-    it: w.items.map((it) => [it.id, ITEM_KINDS.indexOf(it.kind), r3(it.x), r3(it.y), r3(it.z), r3(it.vx), r3(it.vy), r3(it.vz), it.hp, it.heldBy, it.fuse, it.airborne ? 1 : 0, it.thrownBy, it.spot, it.lastHitBy, it.lastHitTick]),
+    it: w.items.map((it) => [it.id, ITEM_KINDS.indexOf(it.kind), r3(it.x), r3(it.y), r3(it.z), r3(it.vx), r3(it.vy), r3(it.vz), it.hp, it.heldBy, it.fuse, it.airborne ? 1 : 0, it.thrownBy, it.spot, it.lastHitBy, it.lastHitTick, ACCESSORY_IDS.indexOf(it.acc)]),
     w: [w.nextProjId, w.nextItemId, ...w.crateTimers, ...w.barrelTimers],
   };
 }
@@ -75,7 +78,7 @@ export function applySnapshot(w: World, s: Snapshot): void {
     id: a[0], owner: a[1], move: MOVE_IDS[a[2]] ?? 'gunShot', x: a[3], y: a[4], z: a[5], vx: a[6], vz: a[7], life: a[8], radius: a[9], hitMask: a[10], pierce: a[11] === 1,
   }));
   w.items = (s.it ?? []).map((a): Item => ({
-    id: a[0], kind: ITEM_KINDS[a[1]] ?? 'crate', x: a[2], y: a[3], z: a[4], vx: a[5], vy: a[6], vz: a[7], hp: a[8], heldBy: a[9], fuse: a[10], airborne: a[11] === 1, thrownBy: a[12], spot: a[13], lastHitBy: a[14], lastHitTick: a[15],
+    id: a[0], kind: ITEM_KINDS[a[1]] ?? 'crate', x: a[2], y: a[3], z: a[4], vx: a[5], vy: a[6], vz: a[7], hp: a[8], heldBy: a[9], fuse: a[10], airborne: a[11] === 1, thrownBy: a[12], spot: a[13], lastHitBy: a[14], lastHitTick: a[15], acc: ACCESSORY_IDS[a[16]] ?? 'none',
   }));
 }
 

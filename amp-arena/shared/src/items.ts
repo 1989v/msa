@@ -1,6 +1,8 @@
 // 아이템·오브젝트 — 기획서 §8. 상자(파괴·들기·던지기) · 하트(회복) · 폭탄(줍고 3초 뒤 폭발) · 드럼통(맞거나 던져지면 터진다).
-export type ItemKind = 'crate' | 'heart' | 'bomb' | 'barrel';
-export const ITEM_KINDS: ItemKind[] = ['crate', 'heart', 'bomb', 'barrel']; // 스냅샷이 인덱스를 싣는다 — 뒤에만 붙인다
+import type { AccessoryId } from './accessories.ts';
+
+export type ItemKind = 'crate' | 'heart' | 'bomb' | 'barrel' | 'acc';
+export const ITEM_KINDS: ItemKind[] = ['crate', 'heart', 'bomb', 'barrel', 'acc']; // 스냅샷이 인덱스를 싣는다 — 뒤에만 붙인다
 
 export interface Item {
   id: number;
@@ -15,6 +17,7 @@ export interface Item {
   spot: number;        // 상자·드럼통 자리 번호 (재생성용), 드랍은 -1
   lastHitBy: number;
   lastHitTick: number;
+  acc: AccessoryId;    // 'acc'(떨어진 악세서리)만 쓴다 — KO 된 사람이 들고 있던 것. 나머지는 'none'
 }
 
 export const CRATE_HP = 10;            // 잽 2방
@@ -23,6 +26,10 @@ export const BARREL_HP = 15;
 export const BARREL_RADIUS = 3.0;
 export const BARREL_DAMAGE = 25;
 export const BARREL_RESPAWN_TICKS = 2700; // 45초
+export const BARREL_PUSH_SPEED = 2.4;     // 걸어서 밀면 이 속도로 미끄러진다 (m/s)
+export const BARREL_FRICTION = 0.9;       // 틱마다 속도에 곱한다 — 약 0.7초 안에 선다
+// 떨어진 악세서리 (2026-09-12 「KO 시 악세서리 드랍」): KO 된 사람이 들고 있던 것이 그 자리에 떨어지고, 25초 안에 줍지 않으면 사라진다
+export const ACC_DESPAWN_TICKS = 1500;
 export const CRATE_RESPAWN_TICKS = 1800; // 30초
 export const CRATE_THROW_DAMAGE = 8;
 export const CRATE_BREAK_RADIUS = 1.3;
@@ -37,5 +44,5 @@ export const DROP_HEART = 0.3;
 export const DROP_BOMB = 0.2; // 하트 뒤 누적 0.5 까지
 
 export function createItem(id: number, kind: ItemKind, x: number, y: number, z: number, spot = -1): Item {
-  return { id, kind, x, y, z, vx: 0, vy: 0, vz: 0, hp: kind === 'crate' ? CRATE_HP : kind === 'barrel' ? BARREL_HP : 1, heldBy: -1, fuse: -1, airborne: false, thrownBy: -1, spot, lastHitBy: -1, lastHitTick: -1000 };
+  return { id, kind, x, y, z, vx: 0, vy: 0, vz: 0, hp: kind === 'crate' ? CRATE_HP : kind === 'barrel' ? BARREL_HP : 1, heldBy: -1, fuse: -1, airborne: false, thrownBy: -1, spot, lastHitBy: -1, lastHitTick: -1000, acc: 'none' };
 }

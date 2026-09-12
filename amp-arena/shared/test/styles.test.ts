@@ -59,7 +59,7 @@ describe('스타일', () => {
     a.comboIdx = 1; a.move = 'bodySlam'; a.state = 'attack'; a.t = 0; a.hitMask = 0;
     // b 가 즉시 잽 — a 의 발동 12틱 안에 맞는다
     for (let i = 0; i < MOVES.jab.startup + 1; i++) w.step([inp(), inp(0, 0, i === 0 ? BTN_ATTACK : 0)]);
-    expect(a.hp).toBe(a.maxHp - Math.floor(5 * C.defMult(4) + 1e-6)); // 방어 4 → 4 데미지
+    expect(a.hp).toBe(a.maxHp - Math.floor(6 * C.defMult(4) + 1e-6)); // 방어 4 → 잽 6 이 5 데미지
     expect(a.state).toBe('attack');
     expect(a.move).toBe('bodySlam');
   });

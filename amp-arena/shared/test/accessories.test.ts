@@ -30,7 +30,7 @@ describe('악세서리', () => {
     const seen: string[] = [];
     for (let i = 0; i < 70; i++) { w.step([inp(0, 0, i % 2 === 0 ? BTN_ATTACK : 0), inp()]); if (a.move && seen[seen.length - 1] !== a.move) seen.push(a.move); }
     expect(seen.slice(0, 2)).toEqual(['gs1', 'gsSweep']);
-    expect(b.hp).toBeLessThanOrEqual(b.maxHp - 12 - 11);
+    expect(b.hp).toBeLessThanOrEqual(b.maxHp - 10 - 10); // 밸런스 2차: 12/11 → 10/10
     // 밀착해도 잡기가 아니라 베기
     const s2 = setup('greatsword', 'none', 0.8);
     s2.w.step([inp(0, 0, BTN_ATTACK), inp()]);
@@ -48,7 +48,7 @@ describe('악세서리', () => {
   it('스파이크: 리치 2.2m 에서 찌르기가 닿고 1.0m 옆은 빗나간다', () => {
     const { w, b } = setup('spear', 'none', 2.1);
     run(w, inp(0, 0, BTN_ATTACK), inp(), MOVES.sp1.startup + 2);
-    expect(b.hp).toBe(b.maxHp - 6);
+    expect(b.hp).toBe(b.maxHp - 7); // 밸런스 2차: 찌르기 6 → 7
     const s2 = setup('spear', 'none', 1.5);
     s2.b.pos.x = 1.0;
     run(s2.w, inp(0, 0, BTN_ATTACK), inp(), MOVES.sp1.startup + 2);
@@ -67,7 +67,7 @@ describe('악세서리', () => {
     const { w, a, b } = setup('pistols', 'none', 8);
     const ev = run(w, inp(0, 0, BTN_ATTACK), inp(), 40);
     expect(ev.some((e) => e.t === 'shot')).toBe(true);
-    expect(b.hp).toBe(b.maxHp - 4);
+    expect(b.hp).toBe(b.maxHp - 3); // 밸런스 2차: 탄 4 → 3
     expect(a.ammo).toBe(11);
   });
   it('더블탭: 탄창이 비면 재장전 1.5초 뒤 12발로 돌아온다', () => {

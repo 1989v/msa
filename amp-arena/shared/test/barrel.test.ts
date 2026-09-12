@@ -98,12 +98,14 @@ describe('드럼통', () => {
     expect(w.items.filter((i) => i.kind === 'barrel' && i.spot === bl.spot).length).toBe(1);
   });
 
-  it('바닥의 드럼통은 걸어서 통과하지 못한다', () => {
+  it('바닥의 드럼통은 걸어서 통과하지 못한다 — 밀려 가되 몸이 겹치지는 않는다', () => {
     const { w, a } = setup();
-    barrelAt(w, 0, 2.5);
-    steps(w, inp(0, 1), inp(), 90);
-    expect(a.pos.z).toBeLessThan(2.5 - 0.45 - C.PLAYER_RADIUS + 0.05);
-    expect(a.pos.z).toBeGreaterThan(1.0);
+    const bl = barrelAt(w, 0, 2.5);
+    let minGap = 99;
+    for (let i = 0; i < 90; i++) { w.step([inp(0, 1), inp()]); minGap = Math.min(minGap, Math.hypot(bl.x - a.pos.x, bl.z - a.pos.z)); }
+    expect(minGap).toBeGreaterThan(0.45 + C.PLAYER_RADIUS - 0.08);
+    expect(bl.z).toBeGreaterThan(3.0); // 밀렸다
+    expect(a.pos.z).toBeLessThan(bl.z);
   });
 });
 

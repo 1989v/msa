@@ -80,13 +80,13 @@ describe('이동·점프', () => {
 });
 
 describe('공격·콤보', () => {
-  it('잽은 발동 6 뒤 판정, 상대 경직 20틱, 데미지 5', () => {
+  it('잽은 발동 6 뒤 판정, 상대 경직 20틱, 데미지 6 (밸런스 2차: 맨손 KO 비 0.41 → 잽 5→6)', () => {
     const { w, a, b } = world();
     place(w, 0, 0, 0, 0); place(w, 1, 0, 1.2, Math.PI);
     const ev = run(w, 0, inp(0, 0, BTN_ATTACK), MOVES.jab.startup + 1);
     const hit = ev.find((e) => e.t === 'hit');
-    expect(hit && hit.t === 'hit' && hit.dmg).toBe(5);
-    expect(b.hp).toBe(a.maxHp - 5);
+    expect(hit && hit.t === 'hit' && hit.dmg).toBe(6);
+    expect(b.hp).toBe(a.maxHp - 6);
     expect(b.state).toBe('hitstun');
     run(w, 0, inp(), MOVES.jab.hitstun);
     expect(b.state).toBe('idle');
@@ -103,7 +103,7 @@ describe('공격·콤보', () => {
     }
     expect(seen.slice(0, 3)).toEqual(['jab', 'straight', 'kick1']);
     expect(['hitstun', 'idle']).toContain(b.state);
-    expect(b.hp).toBe(a.maxHp - 5 - 6 - 6);
+    expect(b.hp).toBe(a.maxHp - 6 - 7 - 6);
   });
   it('띄워진 상대는 착지 후 다운 → 기상 → 대기, 다운 중 무적', () => {
     const { w, a, b } = world();
@@ -138,7 +138,7 @@ describe('공격·콤보', () => {
     const { w, a, b } = world();
     place(w, 0, 0, 0, 0); place(w, 1, 0, 1.2, 0); // b 도 +z 를 본다 = a 에게 등을 보인다
     run(w, 0, inp(0, 0, BTN_ATTACK), MOVES.jab.startup + 1, inp(0, 0, BTN_GUARD));
-    expect(b.hp).toBe(b.maxHp - 5);
+    expect(b.hp).toBe(b.maxHp - 6);
   });
   it('밀착 상태에서 공격 키는 잡기가 되고, 던지면 15 데미지 후 다운', () => {
     const { w, a, b } = world();
