@@ -20,6 +20,7 @@
         --yeonji: #a2231d;
         --ocher: #b38b6d;
         --ocher-text: #8a6346;
+        --ink: #0a0a0a;
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
       html, body { width: 1200px; height: 630px; }
@@ -45,6 +46,11 @@
         background: var(--giwa);
         color: var(--hanji);
       }
+      /* 아케이드 정경 — /games/** 의 바탕은 송연이고 강조 낱말은 연지를 그대로 쓴다 (DESIGN.md §12) */
+      .card[data-tone='ink'] {
+        background: var(--ink);
+        color: var(--hanji);
+      }
 
       /* 결(grain) — 종이의 촘촘한 세로 올. 면이 정하는 색을 쓴다 */
       .card::before {
@@ -58,7 +64,8 @@
         );
         pointer-events: none;
       }
-      .card[data-tone='giwa']::before {
+      .card[data-tone='giwa']::before,
+      .card[data-tone='ink']::before {
         background: repeating-linear-gradient(
           90deg,
           rgba(249, 248, 242, 0.028) 0 1px,
@@ -88,7 +95,8 @@
         text-transform: uppercase;
         color: var(--ocher-text);
       }
-      .card[data-tone='giwa'] .label { color: var(--ocher); }
+      .card[data-tone='giwa'] .label,
+      .card[data-tone='ink'] .label { color: var(--ocher); }
       .rule {
         flex: 1;
         height: 1px;
@@ -174,7 +182,8 @@
       set('sub', q.get('sub'));
       set('host', q.get('host'));
       set('seal', q.get('seal') ?? '1989');
-      document.getElementById('card').dataset.tone = q.get('tone') === 'giwa' ? 'giwa' : 'hanji';
+      const tone = q.get('tone');
+      document.getElementById('card').dataset.tone = tone === 'giwa' || tone === 'ink' ? tone : 'hanji';
     </script>
   </body>
 </html>

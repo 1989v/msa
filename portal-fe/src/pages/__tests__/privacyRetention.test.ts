@@ -11,17 +11,22 @@ import { describe, expect, it } from 'vitest';
  */
 const REPO = resolve(__dirname, '../../../..');
 
+/**
+ * 보존기간 상수는 도메인마다 자기 러너에 있다 (ADR-0093 폴드 정리 이후) — 한 파일이 아니라
+ * 러너 목록을 훑는다. 새 원장이 생기면 여기에 그 러너를 더한다.
+ */
+const RETENTION_RUNNERS = [
+  'code-dictionary/feature/src/main/kotlin/com/kgd/codedictionary/infrastructure/retention/RetentionRunner.kt',
+  'game/feature/src/main/kotlin/com/kgd/game/infrastructure/retention/GameRetentionRunner.kt',
+];
+
 function retentionDaysFromCode(constName: string): number {
-  const src = readFileSync(
-    resolve(
-      REPO,
-      'code-dictionary/app/src/main/kotlin/com/kgd/codedictionary/infrastructure/retention/RetentionRunner.kt',
-    ),
-    'utf-8',
-  );
-  const m = src.match(new RegExp(`const val ${constName} = (\\d+)L`));
-  if (!m) throw new Error(`${constName} 를 못 찾았다 — 상수 이름이 바뀌었으면 이 검사도 함께 고쳐야 한다`);
-  return Number(m[1]);
+  for (const rel of RETENTION_RUNNERS) {
+    const src = readFileSync(resolve(REPO, rel), 'utf-8');
+    const m = src.match(new RegExp(`const val ${constName} = (\\d+)L`));
+    if (m) return Number(m[1]);
+  }
+  throw new Error(`${constName} 를 못 찾았다 — 상수 이름이 바뀌었거나 러너가 옮겨졌으면 이 검사도 함께 고쳐야 한다`);
 }
 
 const privacyText = () => readFileSync(resolve(REPO, 'portal-fe/src/pages/PrivacyPage.tsx'), 'utf-8');

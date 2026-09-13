@@ -5,15 +5,22 @@
  * 얹으면 이미지 빌드가 그만큼 무거워지고, 카드는 문구가 바뀔 때만 다시 구우면 되는 물건이다.
  * 그래서 손으로 돌리고 결과 PNG 를 커밋한다.
  *
- *   node scripts/make-og-cards.mjs [--chrome <경로>]
+ *   node scripts/make-og-cards.mjs [--chrome <경로>] [--no-games]
  *
- * 결과: portal-fe/public/og/<key>.png
+ * 결과: portal-fe/public/og/<key>.png · public/og/games/<slug>.png (전용 아트 없는 게임)
+ *
+ * 게임 폴백 카드는 **전용 아트가 없는 게임에만** 굽는다. 아트(`public/games/thumbs/og/`)는
+ * 게임 서브모듈에 살고 폴백은 여기 사이트에 산다 — 아트가 들어오면 프리렌더가 그쪽을 먼저
+ * 집으므로 폴백은 저절로 진다. 카탈로그는 운영 API 에서 받는다(손으로 돌리는 스크립트라
+ * 네트워크가 있다).
  *
  * 카드 목록은 여기 한 곳이다 — copy.mjs 의 `ogCardUrl()` 이 같은 key 로 주소를 만든다.
  * 한쪽만 늘리면 있지도 않은 이미지를 og:image 로 선언하게 되고, 언퍼러는 그걸 **카드 없음**이
  * 아니라 **깨진 카드**로 그린다.
  */
 import { mkdir, writeFile, rm } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { GAME_ORIGIN, genreLabelOf, titleOf } from '../src/seo/copy.mjs';
 import { spawn } from 'node:child_process';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -107,6 +114,28 @@ function shoot(url, out) {
   });
 }
 
+const API_ORIGIN = process.env.SEO_API_ORIGIN || 'https://api.1989v.com';
+const GAME_HOST = new URL(GAME_ORIGIN).host;
+
+/** 전용 아트가 없는 게임의 타이포 폴백 카드 명세 */
+function gameCard(game) {
+  return {
+    key: `games/${game.slug}`,
+    label: genreLabelOf(game.genre, 'ko'),
+    title: titleOf(game, 'ko'),
+    sub: '설치도 가입도 없이 브라우저에서 바로 — 무료 웹게임',
+    host: GAME_HOST,
+    tone: 'ink',
+  };
+}
+
+async function gamesWithoutArt() {
+  const res = await fetch(`${API_ORIGIN}/api/v1/games?sort=new&page=0&size=300`, { signal: AbortSignal.timeout(15_000) });
+  if (!res.ok) throw new Error(`games → ${res.status}`);
+  const games = (await res.json()).data?.content ?? [];
+  return games.filter((g) => !existsSync(resolve(ROOT, 'public/games/thumbs/og', `${g.slug}.png`)));
+}
+
 async function main() {
   await rm(OUT_DIR, { recursive: true, force: true });
   await mkdir(OUT_DIR, { recursive: true });
@@ -115,14 +144,26 @@ async function main() {
     await shoot(cardUrl(card), out);
     console.log(`[og] ${card.key}.png`);
   }
+  const bakedGames = [];
+  if (!process.argv.includes('--no-games')) {
+    await mkdir(resolve(OUT_DIR, 'games'), { recursive: true });
+    for (const game of await gamesWithoutArt()) {
+      const card = gameCard(game);
+      await shoot(cardUrl(card), resolve(OUT_DIR, `${card.key}.png`));
+      bakedGames.push(game.slug);
+      console.log(`[og] ${card.key}.png (폴백)`);
+    }
+  }
   // 목록을 파일로도 남긴다 — 무엇이 있어야 하는지 사람이 눈으로 대조할 자리
   await writeFile(
     resolve(OUT_DIR, 'README.md'),
     `# 소셜 카드\n\n\`scripts/make-og-cards.mjs\` 가 구운 것이다. 손으로 고치지 않는다.\n\n` +
       CARDS.map((c) => `- \`${c.key}.png\` — ${c.host}`).join('\n') +
+      '\n\n## 게임 폴백\n\n전용 아트(`public/games/thumbs/og/`)가 없는 게임에만 굽는다. 아트가 들어오면 그쪽이 이긴다.\n\n' +
+      bakedGames.map((slug) => `- \`games/${slug}.png\``).join('\n') +
       '\n',
   );
-  console.log(`[og] ${CARDS.length}장 · ${OUT_DIR}`);
+  console.log(`[og] 호스트 ${CARDS.length}장 · 게임 폴백 ${bakedGames.length}장 · ${OUT_DIR}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

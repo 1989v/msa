@@ -68,6 +68,8 @@ import {
   RANK_BRAND,
   RANK_SITE_NAME,
   RANK_ORIGIN,
+  RANK_COVERAGE_NOTE,
+  RANK_GAS_SOURCE,
   rankHubMeta,
   rankUrl,
   BLOG_ORIGIN,
@@ -245,7 +247,7 @@ async function main() {
   await renderPlaceHubs(shell, places, regions);
   await renderPlaceDetails(shell, places, regions);
   await renderDealHub(shell, dealSections);
-  await renderRankHub(shell);
+  await renderRankHub(shell, rankBoards);
   await renderBlogHub(shell, blog);
 
   if (games.length === 0) {
@@ -318,10 +320,15 @@ async function fetchCatalog() {
     );
     details.push(...chunk);
   }
-  // 전용 OG 카드(1200×630)가 있으면 붙여준다 — 없으면 목록 썸네일로 떨어진다
+  // 전용 OG 카드(1200×630)가 있으면 그것을, 없으면 타이포 폴백 카드(make-og-cards.mjs 가
+  // 굽는 public/og/games/<slug>.png)를, 그것도 없으면 목록 썸네일로 떨어진다.
+  // 전용 아트는 게임 서브모듈(public/games)에, 폴백은 사이트(public/og)에 산다 —
+  // 아트가 들어오면 폴백은 저절로 진다.
   for (const game of details) {
-    const rel = `games/thumbs/og/${game.slug}.png`;
-    if (existsSync(resolve(ROOT, 'public', rel))) game.ogImageUrl = `/${rel}`;
+    const art = `games/thumbs/og/${game.slug}.png`;
+    const fallback = `og/games/${game.slug}.png`;
+    if (existsSync(resolve(ROOT, 'public', art))) game.ogImageUrl = `/${art}`;
+    else if (existsSync(resolve(ROOT, 'public', fallback))) game.ogImageUrl = `/${fallback}`;
   }
   // 목록 카드에 실을 썸네일. DB 의 thumbnailUrl 이 실물과 어긋난 게 있어(SPA 폴백이
   // index.html 을 200 으로 돌려준다) 존재 확인을 통과한 것만 <img> 로 내보낸다.
@@ -425,8 +432,34 @@ function compose(shell, { lang, body, ...meta }) {
  * SPA 가 마운트되면 통째로 교체되는 임시 본문. 크롤러·JS 미실행 방문자에게
  * 실제 텍스트와 내부 링크를 보여주는 것이 목적이라 스타일은 최소로만 준다.
  */
+/**
+ * 색인 대상 호스트 전부. resume 는 색인 대상이 아니라 넣지 않는다 (ADR-0064).
+ * apex 홈의 본문과 모든 프리렌더 페이지의 바닥글이 같은 목록을 쓴다.
+ */
+const SITE_LINKS = [
+  [PORTAL_ORIGIN, '1989v'],
+  [GAME_ORIGIN, '무료 웹게임'],
+  [PLACE_ORIGIN, '한국 관광지 검색'],
+  [BLOG_ORIGIN, '블로그'],
+  [RANK_ORIGIN, '랭킹 리더보드'],
+  [DEAL_ORIGIN, '혜택 링크 허브'],
+];
+
+/**
+ * 모든 프리렌더 페이지의 바닥글 — 호스트 사이를 잇는 링크.
+ *
+ * 2026-09-13 실측: apex 홈만 다섯 허브로 링크하고, 허브 다섯은 **어느 쪽으로도 되돌아가는
+ * 링크가 없었다.** sitemap 은 호스트 경계를 넘지 못하므로(ADR-0062 §5) 크롤러가 본
+ * 사이트 그래프는 apex 에서 한 방향으로만 뻗은 나무였다 — 한 허브에 들어온 크롤러는
+ * 거기서 끝난다. 화면의 GNB 는 JS 가 그리므로 크롤러 사본에는 없다.
+ */
+function siteFooter() {
+  const links = SITE_LINKS.map(([href, label]) => `<a href="${href}">${escapeHtml(label)}</a>`).join(' · ');
+  return `<footer><nav>${links}</nav></footer>`;
+}
+
 function shellBody(inner) {
-  return `<div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif">${inner}</div>`;
+  return `<div style="max-width:1080px;margin:0 auto;padding:32px 20px;color:#dce4f5;font-family:system-ui,-apple-system,'Apple SD Gothic Neo',sans-serif">${inner}${siteFooter()}</div>`;
 }
 
 function gameLinkList(lang, games) {
@@ -710,6 +743,7 @@ async function writeRobotsAndSitemaps(
   await emit(`seo/${PLACE_HOST}/llms.txt`, placeLlmsTxt(places));
   await emit(`seo/${BLOG_HOST}/llms.txt`, blogLlmsTxt(blog));
   await emit(`seo/${DEAL_HOST}/llms.txt`, dealLlmsTxt(dealSections));
+  await emit(`seo/${RANK_HOST}/llms.txt`, rankLlmsTxt(rankBoards));
 
   await writeAdsTxt();
 }
@@ -1288,8 +1322,14 @@ function rankSitemapEntries(boards) {
  * 내보내면 크롤러가 어제 값을 오늘 문서로 읽는다. 주소는 sitemap 이 알리고, 내용은
  * 라우트 + useSeo 가 채운다.
  */
-async function renderRankHub(shell) {
+async function renderRankHub(shell, boards = []) {
   const meta = rankHubMeta();
+  // 보드 링크는 제목·범위만 싣는다 — 값(가격·순위)은 매일 바뀌어 프리렌더에 굳히면 크롤러가
+  // 어제 값을 오늘 문서로 읽는다. 주소를 아는 것과 값을 아는 것은 다른 일이다.
+  // 2026-09-13 실측: 허브 본문에 링크가 하나도 없어 보드 URL 은 sitemap 에만 있었다.
+  const boardLinks = boards
+    .map((b) => `<li><a href="/boards/${escapeHtml(b.slug)}">${escapeHtml(b.title)}</a>${b.scopeName ? ` · ${escapeHtml(b.scopeName)}` : ''}</li>`)
+    .join('');
   const html = compose(shell, {
     lang: 'ko',
     title: meta.title,
@@ -1299,9 +1339,37 @@ async function renderRankHub(shell) {
     image: meta.image,
     imageAlt: RANK_BRAND,
     jsonLd: [websiteJsonLd({ name: RANK_SITE_NAME, url: RANK_ORIGIN })],
-    body: shellBody(`<h1>${escapeHtml(RANK_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>`),
+    body: shellBody(
+      `<h1>${escapeHtml(RANK_BRAND)}</h1><p>${escapeHtml(meta.description)}</p>` +
+        `<p>${escapeHtml(RANK_COVERAGE_NOTE)} ${escapeHtml(RANK_GAS_SOURCE)}</p>` +
+        (boardLinks ? `<h2>보드</h2><ul>${boardLinks}</ul>` : ''),
+    ),
   });
   await emit(`prerender/_hosts/${RANK_HOST}.html`, html);
+}
+
+/**
+ * rank 의 AEO 진입 문서. 6개 색인 호스트 중 유일하게 없었다 (2026-09-13 실측 404).
+ * 보드 목록은 sitemap 이 갖고, 여기는 무엇을 어디서 보면 되는지만 적는다.
+ */
+function rankLlmsTxt(boards = []) {
+  const list = boards.slice(0, 40).map((b) => `- [${b.title}](${rankUrl(`/boards/${b.slug}`)})`).join('\n');
+  return [
+    `# ${RANK_SITE_NAME}`,
+    '',
+    '> 무엇이든 줄 세워 보여주는 리더보드. 첫 보드는 지역별 최저가 주유소 — 시군구·유종별 순위를 어제 대비 등락과 함께 매일 갱신한다.',
+    '',
+    '## 시작점',
+    `- [허브](${RANK_ORIGIN}/)`,
+    `- [전체 URL 목록](${RANK_ORIGIN}/sitemap.xml)`,
+    '',
+    '## 데이터',
+    `- ${RANK_COVERAGE_NOTE}`,
+    `- ${RANK_GAS_SOURCE}`,
+    '- 순위는 현재값이 아니라 스냅샷 원장이다 — 등락은 이전 스냅샷과의 차이다',
+    '',
+    ...(list ? ['## 보드', list, ''] : []),
+  ].join('\n');
 }
 
 /**
@@ -1471,15 +1539,6 @@ function techGlossaryNav(byCategory) {
   return `<ul>${items}</ul>`;
 }
 
-/** apex 홈이 링크하는 서비스 호스트. resume 는 색인 대상이 아니라 넣지 않는다 (ADR-0064) */
-const SUBDOMAIN_LINKS = [
-  [GAME_ORIGIN, '무료 웹게임'],
-  [PLACE_ORIGIN, '한국 관광지 검색'],
-  [BLOG_ORIGIN, '블로그'],
-  [RANK_ORIGIN, '랭킹 리더보드'],
-  [DEAL_ORIGIN, '혜택 링크 허브'],
-];
-
 async function renderPortalPages(shell, concepts = []) {
   // /tech 는 용어집 13장으로 들어가는 문이다 — 그 링크가 없으면 sitemap 에만 있는 주소가 되고,
   // 내부 링크 없는 URL 은 잘 크롤되지 않는다.
@@ -1503,13 +1562,8 @@ async function renderPortalPages(shell, concepts = []) {
       body: shellBody(
         `<h1>${escapeHtml(meta.title.split(' — ')[0])}</h1><p>${escapeHtml(meta.description)}</p>` +
           `<nav>${nav}</nav>` +
-          (path === '/tech' ? `<h2>분류별 용어집</h2>${glossaryNav}` : '') +
-          // 서브도메인 서비스로 가는 링크. 무 JS 크롤러에게는 이 줄이 apex 와 각 호스트를
-          // 잇는 **유일한** 연결이다 — sitemap 은 호스트 경계를 넘지 못하므로 여기서
-          // 빠지면 그 호스트는 사이트 그래프에서 고립된다.
-          `<p>${SUBDOMAIN_LINKS.map(
-            ([href, label]) => `<a href="${href}">${escapeHtml(label)}</a>`,
-          ).join(' · ')}</p>`,
+          (path === '/tech' ? `<h2>분류별 용어집</h2>${glossaryNav}` : ''),
+        // 서브도메인으로 가는 링크는 shellBody 의 바닥글이 모든 페이지에 붙인다
       ),
     });
     // 루트만 호스트 키로 — 같은 번들이 game/place 호스트도 서빙하므로 / 는 호스트로 갈린다
