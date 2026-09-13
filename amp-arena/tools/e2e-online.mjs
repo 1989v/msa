@@ -42,6 +42,10 @@ try {
   await A.shot(`${out}/e2e-room-ready.png`);
   await B.shot(`${out}/e2e-room-guest.png`);
   log('both see 2 seats');
+  // 2026-09-13 준비 게이트: 게스트가 준비를 눌러야 방장이 한 번에 시작한다.
+  // (안 누르면 방장이 한 번 경고를 보고 다시 눌러야 한다 — AFK 로 방이 잠기지 않게)
+  await B.click('.readybtn');
+  await B.sleep(600);
   await A.click('.start');
   for (const p of [A, B]) await p.waitFor(`document.querySelector('.match canvas') && window.__amp`, { timeout: 15000 });
   log('match started on both tabs');
