@@ -2,6 +2,8 @@
 <html lang="ko" data-theme="light"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>나루 · 이동 연결 진단</title><link rel="stylesheet" href="./viewer.bundle.css"></head>
 <body><main><header><h1>나루의 첫걸음</h1><p>이동 연결 진단</p></header>
 <div class="game-stage"><canvas id="viewer" tabindex="0" aria-label="나루 이동 화면. 키보드 또는 왼쪽 스틱으로 이동하고 오른쪽 화면 드래그로 시야를 돌립니다."></canvas>
+<span class="aim-dot" aria-hidden="true">+</span>
+<div class="carry-controls"><button id="manipulate" disabled>집기 · E</button><button id="rotate-object" disabled>90° 회전 · R</button><button id="cancel-object" disabled>취소</button><p id="carry-hint" aria-live="polite"></p></div>
 <div class="touch-controls" aria-label="터치 조작">
   <div id="touch-move" role="group" aria-label="이동 스틱"><span class="stick-knob" aria-hidden="true"></span><span class="stick-label">이동</span></div>
   <span class="look-hint">오른쪽 화면 드래그 · 시야</span>

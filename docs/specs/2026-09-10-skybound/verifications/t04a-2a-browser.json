@@ -1,0 +1,50 @@
+{
+  "url": "http://127.0.0.1:8768/implementation/t02b/traversal/index.html",
+  "checks": [
+    {
+      "name": "E grabs aimed prism",
+      "passed": true
+    },
+    {
+      "name": "Carry does not commit placement",
+      "passed": true
+    },
+    {
+      "name": "R rotates 90 degrees",
+      "passed": true
+    },
+    {
+      "name": "Carry locks movement and jump",
+      "passed": true
+    },
+    {
+      "name": "Pause freezes held pose",
+      "passed": true
+    },
+    {
+      "name": "E commits rotated placement",
+      "passed": true
+    },
+    {
+      "name": "Touch button grabs prism",
+      "passed": true
+    },
+    {
+      "name": "Overlapping preview rejects drop",
+      "passed": true
+    },
+    {
+      "name": "Cancel restores committed pose",
+      "passed": true
+    },
+    {
+      "name": "Reset restores player and prism",
+      "passed": true
+    },
+    {
+      "name": "No browser errors",
+      "passed": true
+    }
+  ],
+  "errors": []
+}
