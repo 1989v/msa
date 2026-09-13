@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><title>귀야행 척준경 — 목표 화면 v2</title>
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;background:#07090c;display:flex;align-items:center;justify-content:center;min-height:100vh}
+#stage{width:1080px;height:1440px;image-rendering:pixelated;-ms-interpolation-mode:nearest-neighbor;display:block}
+</style></head>
+<body>
+<canvas id="stage" width="360" height="480"></canvas>
+<script>
+const W=360,H=480,HUD=46;
+const c=document.getElementById('stage'),x=c.getContext('2d');
+x.imageSmoothingEnabled=false;
+// ---- 팔레트: 깊은 청록 동굴 + 한지/연지/금박 + 옥빛 발광 (38색) ----
+const P={
+ v0:'#05070b',v1:'#080d14',v2:'#0d151f',v3:'#12202e',v4:'#1a2c3d',v5:'#24394c',v6:'#31485c',v7:'#42596d',
+ j0:'#071410',j1:'#0c2019',j2:'#123026',j3:'#1a4534',j4:'#255c43',j5:'#358f5f',
+ st0:'#131a20',st1:'#1e2830',st2:'#2b3742',st3:'#3b4a56',st4:'#51626e',st5:'#6d7e88',st6:'#8f9ea5',
+ e0:'#2b201a',e1:'#4a3527',e2:'#6f5038',e3:'#8a6a50',e4:'#b38b6d',
+ h0:'#7d8380',h1:'#a9ada4',h2:'#d8d9cf',h3:'#f9f8f2',
+ r0:'#4a0f0d',r1:'#7d1a15',r2:'#a2231d',r3:'#c8402f',r4:'#e8705a',
+ g0:'#6b4c18',g1:'#8a6321',g2:'#D9A441',g3:'#f2d488',
+ c0:'#12474f',c1:'#1d6f75',c2:'#2fa39b',c3:'#63d3c0',c4:'#b6f2e2',
+ s0:'#3c5060',s1:'#5b7384',s2:'#8fa3b0',s3:'#cfd8de',s4:'#eef3f6'
+};
+const O=P.v0;
+const R=(a,b,w,h,col)=>{x.fillStyle=col;x.fillRect(a|0,b|0,w|0,h|0)};
+function dith(a,b,w,h,col,m){x.fillStyle=col;a|=0;b|=0;for(let j=0;j<h;j++)for(let i=0;i<w;i++){const q=((i+a)+((j+b)*2))%4,s=(i+a+j+b)&1;const on=m===2?s===0:m===3?q===0:m===4?(((i+a)%4===0)&&((j+b)%2===0)):((i+a)%2===0&&(j+b)%2===0);if(on)x.fillRect(a+i,b+j,1,1)}}
+let seed=771013;const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff};
+const off=document.createElement('canvas'),ox=off.getContext('2d');
+function ptext(str,px,py,size,col,align){
+ off.width=Math.max(8,str.length*size*1.9|0);off.height=size*2.3|0;
+ ox.clearRect(0,0,off.width,off.height);ox.fillStyle='#fff';
+ ox.font=size+'px "Do Hyeon", monospace';ox.textBaseline='top';ox.fillText(str,1,1);
+ const d=ox.getImageData(0,0,off.width,off.height).data;
+ let mnX=1e9,mxX=-1,mnY=1e9,mxY=-1;
+ for(let j=0;j<off.height;j++)for(let i=0;i<off.width;i++){if(d[(j*off.width+i)*4+3]>=128){if(i<mnX)mnX=i;if(i>mxX)mxX=i;if(j<mnY)mnY=j;if(j>mxY)mxY=j}}
+ if(mxX<0)return 0;const w=mxX-mnX+1,sx=align==='right'?px-w:align==='center'?px-(w>>1):px;
+ x.fillStyle=col;
+ for(let j=mnY;j<=mxY;j++)for(let i=mnX;i<=mxX;i++){if(d[(j*off.width+i)*4+3]>=128)x.fillRect(sx+i-mnX,py+j-mnY,1,1)}
+ return w;
+}
+function glow(gx,gy,r,cols){ // 동심 발광 (디더 폴오프)
+ for(let k=cols.length-1;k>=0;k--){const rr=r*(k+1)/cols.length;
+  for(let j=-rr;j<=rr;j++)for(let i=-rr;i<=rr;i++){const d2=i*i+j*j;if(d2>rr*rr)continue;
+   if(k>0&&d2<(r*k/cols.length)*(r*k/cols.length))continue;
+   if(k>0&&((i+gx+j+gy)&1)!==0)continue;
+   if(k>1&&((i*j+k)%3!==0))continue;
+   R(gx+i,gy+j,1,1,cols[k])}}
+}
+// ================= 배경: 동굴 심부 (패럴랙스 4겹) =================
+function ridge(y0,amp,per,col,fill,ph){
+ for(let i=0;i<W;i++){const h=amp*(0.6*Math.sin(i/per+ph)+0.4*Math.sin(i/(per*0.37)+ph*2));R(i,y0-h,1,fill,col)}
+}
+function backdrop(){
+ R(0,HUD,W,H-HUD,P.v1);
+ // 깊이 그라데이션 (아래로 어두워짐)
+ R(0,HUD,W,70,P.v3);R(0,HUD+70,W,80,P.v2);R(0,HUD+150,W,120,P.v2);R(0,HUD+270,W,H,P.v1);
+ dith(0,HUD,W,60,P.v4,1);dith(0,HUD+62,W,20,P.v3,1);dith(0,HUD+150,W,30,P.v1,2);
+ // 천장 틈으로 드는 달빛 기둥 2개
+ [[96,26],[262,18]].forEach(([bx,bw])=>{
+  for(let j=0;j<150;j++){const t=j/150,w=bw+j*0.34;dith(bx-w/2,HUD+j,w,1,t<0.45?P.v6:P.v5,t<0.3?1:(t<0.7?4:4))}
+  dith(bx-bw/2-2,HUD,bw+4,26,P.v7,1);
+ });
+ // 먼 암벽 실루엣
+ ridge(HUD+64,26,47,P.v3,180,0.7);
+ dith(0,HUD+44,W,26,P.v4,4);
+ ridge(HUD+96,20,31,P.v2,200,2.4);
+ // 먼 배경의 무너진 석탑·기와 실루엣
+ [[42,HUD+78,26,44],[196,HUD+92,20,34],[318,HUD+70,22,52]].forEach(([px,py,pw,ph])=>{
+  for(let k=0;k<3;k++){const w=pw-k*4,yy=py+k*(ph/3);R(px+(pw-w)/2,yy,w,ph/3,P.v3);
+   R(px+(pw-w)/2-3,yy,w+6,3,P.v4);R(px+(pw-w)/2-4,yy,w+8,1,P.v2)}
+  R(px+pw/2-1,py-7,3,7,P.v4);
+ });
+ // 배경 종유석
+ for(let i=0;i<26;i++){const px=rnd()*W|0,len=8+rnd()*26|0;
+  for(let j=0;j<len;j++){const w=Math.max(1,(4*(1-j/len))|0);R(px-(w>>1),HUD+j,w,1,P.v3)}}
+ // 떠도는 혼불 티끌
+ for(let i=0;i<48;i++){const px=rnd()*W|0,py=HUD+rnd()*(H-HUD)|0;R(px,py,1,1,rnd()>.55?P.c2:P.c1)}
+ for(let i=0;i<9;i++){const px=rnd()*W|0,py=HUD+20+rnd()*(H-HUD-60)|0;glow(px,py,4,[P.c4,P.c1])}
+}
+// ================= 지형 =================
+function stalac(px,py,len,up,col,edge){ // 종유석/석순
+ for(let j=0;j<len;j++){const t=up?1-j/len:j/len,w=Math.max(1,Math.round(7*(1-t)));
+  const yy=up?py-j:py+j;R(px-(w>>1),yy,w,1,col);
+  if(w>2){R(px-(w>>1),yy,1,1,edge);R(px+(w>>1)-(w%2?0:1),yy,1,1,O)}}
+}
+function slab(sx,sy,sw,opt){ // 밟을 수 있는 암반 플랫폼
+ const o=opt||{},th=o.th||16,moss=o.moss!==false;
+ // 상단 이끼/옥빛 이끼
+ for(let i=0;i<sw;i++){const bump=(i%7===0||i%11===3)?1:0;
+  R(sx+i,sy-bump,1,1,P.st5);R(sx+i,sy+1,1,1,P.st4);
+ }
+ R(sx,sy-1,sw,1,O);
+ if(moss){for(let i=0;i<sw;i++){if((i+sx)%3!==0)continue;const hh=1+((i*7)%3);R(sx+i,sy-1-hh,1,hh,P.j3);if(hh>2)R(sx+i,sy-1-hh,1,1,P.j4)}}
+ // 몸통
+ R(sx,sy+2,sw,th-2,P.st2);
+ R(sx,sy+2,sw,3,P.st3);
+ dith(sx,sy+4,sw,6,P.st3,1);
+ dith(sx,sy+8,sw,th-8,P.st1,2);
+ R(sx,sy+th-2,sw,2,P.st0);
+ // 암반 균열
+ for(let i=0;i<sw;i+=13){const px=sx+i+((i*5)%7);R(px,sy+4,1,th-7,P.st1);R(px+1,sy+6,1,4,P.st0)}
+ // 측면 마감
+ R(sx-1,sy,1,th,O);R(sx+sw,sy,1,th,O);
+ R(sx,sy+2,2,th-2,P.st1);R(sx+sw-2,sy+2,2,th-2,P.st1);
+ // 아래로 늘어진 뿌리 · 종유석
+ if(o.hang!==false){
+  for(let k=0;k<sw/22;k++){const px=sx+6+((k*29+ (sx%13))%Math.max(1,sw-10)),len=5+((px*7)%12);
+   stalac(px,sy+th-1,len,false,P.st1,P.st2)}
+  for(let k=0;k<sw/30;k++){const px=sx+12+((k*41+(sx%7))%Math.max(1,sw-16));
+   for(let j=0;j<8+((px*3)%9);j++)R(px+((j%4===0)?1:0),sy+th+j,1,1,P.j2)}
+ }
+ // 옥빛 이끼 발광 점
+ if(o.lit)for(let k=0;k<2;k++){const px=sx+8+((k*37+sx)%Math.max(1,sw-16));glow(px,sy-3,4,[P.c3,P.c1])}
+}
+function stair(sx,sy,n,dir){ // 오르내리는 계단 블록
+ for(let k=0;k<n;k++){const bx=sx+dir*k*9,by=sy-k*9;
+  R(bx,by,10,3,P.st4);R(bx,by,10,1,P.st5);R(bx,by+3,10,6,P.st2);R(bx,by+9,10,1,P.st0);
+  R(bx-1,by,1,10,O);R(bx+10,by,1,10,O);
+  if(k%2===0)R(bx+2,by-2,2,2,P.j3)}
+}
+function rope(rx,ry,len){ // 오르는 밧줄
+ for(let j=0;j<len;j++){const off2=(j%6<3)?0:1;R(rx+off2,ry+j,2,1,(j%6<3)?P.e3:P.e2)}
+ R(rx-2,ry-2,6,3,P.st3);R(rx-2,ry-3,6,1,O);
+}
+function chain(cxp,cy,len){ // 늘어진 쇠사슬 + 등롱
+ for(let j=0;j<len;j+=4){R(cxp,cy+j,2,3,P.st4);R(cxp,cy+j,2,1,P.st5);R(cxp,cy+j+3,2,1,P.st1)}
+ lantern(cxp+1,cy+len);
+}
+function lantern(lx,ly){
+ glow(lx,ly+6,14,[P.g2,P.g1,P.g0]);
+ R(lx,ly-2,1,3,P.st3);R(lx-3,ly-1,7,2,P.st2);R(lx-4,ly-2,9,1,O);
+ R(lx-4,ly+1,9,12,P.r2);R(lx-4,ly+1,9,1,P.r1);R(lx+3,ly+2,1,11,P.r1);R(lx-5,ly+1,1,12,O);R(lx+4,ly+1,1,12,O);
+ R(lx-4,ly+13,9,2,P.st1);R(lx-2,ly+3,5,8,P.g2);R(lx-1,ly+4,3,6,P.g3);R(lx,ly+15,1,3,P.g1);
+}
+function jangseung(jx,base,hgt){ // 배경의 장승 (표식)
+ const w=9;
+ R(jx,base-hgt,w,hgt,P.e2);R(jx,base-hgt,2,hgt,P.e3);R(jx+w-3,base-hgt,3,hgt,P.e1);
+ R(jx-1,base-hgt,1,hgt,O);R(jx+w,base-hgt,1,hgt,O);
+ R(jx-3,base-hgt-4,w+6,4,P.e1);R(jx-3,base-hgt-4,w+6,1,P.e3);R(jx-3,base-hgt-5,w+6,1,O);
+ const fy=base-hgt+7;
+ R(jx+1,fy,3,3,O);R(jx+5,fy,3,3,O);R(jx+1,fy,3,1,P.h1);R(jx+5,fy,3,1,P.h1);
+ R(jx+4,fy+4,2,3,P.e1);R(jx+2,fy+8,6,3,O);for(let i=0;i<6;i+=2)R(jx+2+i,fy+8,1,3,P.h2);
+ R(jx+2,fy+13,6,2,P.r0);
+}
+// ================= 수집품 =================
+function soulOrb(sx,sy){ // 혼백 — 주 수집품
+ glow(sx,sy,9,[P.c3,P.c1,P.c0]);
+ for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const d2=i*i+j*j;if(d2<=9)R(sx+i,sy+j,1,1,d2>6?P.c2:P.c4)}
+ R(sx-1,sy-2,2,2,P.s4);R(sx-3,sy+3,2,1,P.c1);R(sx+2,sy-3,1,1,P.c4);
+}
+function talismanPick(sx,sy){ // 부적 조각
+ glow(sx,sy+4,10,[P.g2,P.g0]);
+ R(sx-4,sy,9,13,P.g2);R(sx-4,sy,9,1,P.g3);R(sx-4,sy+13,9,1,P.g0);R(sx-5,sy,1,13,O);R(sx+5,sy,1,13,O);
+ R(sx-2,sy+2,2,8,P.r2);R(sx+1,sy+2,2,6,P.r2);R(sx-1,sy+11,3,1,P.r2);
+ R(sx+3,sy+3,1,4,P.g0);
+}
+function jarPick(sx,sy){ // 옹기 — 부술 수 있는 수집 오브제
+ R(sx-5,sy-8,11,3,P.e2);R(sx-5,sy-8,11,1,P.e3);R(sx-6,sy-9,13,1,O);
+ for(let j=0;j<10;j++){const w=11+Math.round(3*Math.sin(j/10*Math.PI));R(sx-(w>>1),sy-5+j,w,1,j<3?P.e3:P.e2);R(sx-(w>>1)+w-3,sy-5+j,3,1,P.e1);R(sx-(w>>1)-1,sy-5+j,1,1,O);R(sx-(w>>1)+w,sy-5+j,1,1,O)}
+ R(sx-5,sy+5,11,2,P.e0);R(sx-6,sy+7,13,1,O);
+ R(sx-3,sy-3,2,5,P.e4);
+}
+// ================= 척준경 (26px) =================
+function hero(hx,fy){
+ const cx=hx,t=fy-26;
+ // 뒷다리
+ R(cx-5,t+17,4,6,P.s0);R(cx-6,t+17,1,6,O);R(cx-7,t+23,6,2,P.v2);R(cx-7,t+23,6,1,P.s0);R(cx-8,t+25,7,1,O);
+ // 앞다리 (내딛음)
+ R(cx+2,t+17,4,4,P.s0);R(cx+4,t+20,4,3,P.s0);R(cx+3,t+23,7,2,P.v2);R(cx+3,t+23,7,1,P.s0);R(cx+3,t+25,8,1,O);R(cx+10,t+22,1,3,O);
+ // 치마형 찰갑
+ for(let j=0;j<6;j++){const w=11+j,px=cx-(w>>1);R(px,t+13+j,w,1,j<2?P.s2:P.s1);R(px-1,t+13+j,1,1,O);R(px+w,t+13+j,1,1,O)}
+ R(cx-6,t+18,12,1,P.v2);
+ for(let i=-4;i<=4;i+=3)R(cx+i,t+15,1,3,P.s0);
+ // 몸통
+ for(let j=0;j<7;j++){const w=(j<2?9:10),px=cx-(w>>1);R(px,t+7+j,w,1,P.s1);R(px-1,t+7+j,1,1,O);R(px+w,t+7+j,1,1,O)}
+ for(let j=t+7;j<t+14;j+=2)for(let i=cx-4;i<cx+5;i+=2)R(i,j,1,1,P.s0);
+ R(cx-2,t+9,5,3,P.g1);R(cx-1,t+10,3,1,P.g2); // 가슴 금박
+ R(cx-5,t+12,11,2,P.r2);R(cx-5,t+12,11,1,P.r3);R(cx-6,t+12,1,2,O);R(cx+6,t+12,1,2,O); // 허리끈
+ // 어깨
+ R(cx-8,t+6,5,4,P.s2);R(cx-9,t+6,1,4,O);R(cx-8,t+5,5,1,O);R(cx-8,t+10,5,1,P.s0);
+ R(cx+4,t+6,5,4,P.s2);R(cx+9,t+6,1,4,O);R(cx+4,t+5,5,1,O);R(cx+4,t+10,5,1,P.s0);
+ // 등의 갈고리 밧줄
+ for(let j=0;j<9;j++)R(cx-8-((j%3===0)?1:0),t+8+j,1,1,P.e4);
+ R(cx-10,t+16,3,2,P.e3);R(cx-11,t+15,2,2,P.s2);
+ // 투구 + 붉은 술
+ for(let j=0;j<5;j++){const w=[5,8,9,10,10][j],px=cx-(w>>1);R(px,t+j,w,1,j<1?P.s2:P.s1);R(px-1,t+j,1,1,O);R(px+w,t+j,1,1,O)}
+ R(cx-5,t+5,11,1,P.g2);R(cx-5,t+6,11,1,P.s0);R(cx-6,t+5,1,2,O);R(cx+6,t+5,1,2,O);
+ R(cx,t-4,2,4,P.r2);R(cx,t-5,2,1,P.r3);R(cx-1,t-2,4,1,P.r3);
+ // 얼굴 + 볼가리개
+ R(cx-3,t+6,7,5,P.e4);R(cx-3,t+11,7,1,O);R(cx-3,t+6,7,1,P.e3);
+ R(cx-2,t+8,1,2,O);R(cx+1,t+8,1,2,O);R(cx-2,t+10,4,1,P.e1);
+ R(cx-5,t+6,2,5,P.s0);R(cx+4,t+6,2,5,P.s0);R(cx-5,t+11,2,1,O);R(cx+4,t+11,2,1,O);
+ // 장검 — 오른쪽 위로 베어 올린 순간
+ const hnd=[cx+10,t+7];
+ R(cx+4,t+8,6,2,P.s1);R(cx+8,t+6,4,2,P.s1);R(cx+4,t+7,8,1,O); // 앞팔
+ R(cx-2,t+10,7,2,P.s0); // 뒷팔
+ R(hnd[0]-3,hnd[1],5,3,P.e4);R(hnd[0]-3,hnd[1]+3,5,1,P.v2);
+ R(hnd[0]+1,hnd[1]-2,3,6,P.v2);R(hnd[0]+2,hnd[1]-1,1,4,P.g2);
+ for(let k=0;k<17;k++){const bx=hnd[0]+4+k,by=hnd[1]-2-(k*0.8|0);R(bx,by,2,3,P.s3);R(bx,by+3,2,1,P.s1);R(bx,by-1,1,1,P.s4)}
+ R(hnd[0]+21,hnd[1]-16,3,3,P.s4);
+ // 검기 초승
+ for(let a=-52;a<=38;a+=0.8){const rad=a*Math.PI/180,ox2=hnd[0]+3,oy2=hnd[1]+2;
+  for(let rr=16;rr<21;rr++){const px=ox2+Math.cos(rad)*rr,py=oy2-Math.sin(rad)*rr;
+   const t2=(rr-16)/5;if(t2>0.45&&(((px|0)+(py|0))&1)!==0)continue;R(px,py,1,1,t2<0.3?P.g3:(t2<0.7?P.g2:P.g1))}}
+ dith(cx-9,fy-2,20,3,P.st4,2);
+}
+// ================= 적 =================
+function dokkaebi(dx,by,pose){ // 22px 잡졸
+ const t=by-22,cx=dx;
+ R(cx-5,t+15,4,6,P.e1);R(cx+1,t+15,4,6,P.e1);R(cx-6,t+15,1,6,O);R(cx+5,t+15,1,6,O);
+ R(cx-6,t+21,5,2,O);R(cx+1,t+21,5,2,O);
+ for(let j=0;j<8;j++){const w=[7,10,11,12,12,11,11,10][j],px=cx-(w>>1);R(px,t+8+j,w,1,j<1?P.j4:P.j3);R(px+w-3,t+8+j,3,1,P.j2);R(px-1,t+8+j,1,1,O);R(px+w,t+8+j,1,1,O)}
+ R(cx-4,t+12,8,3,P.j2);
+ R(cx-3,t+15,7,2,P.e2);R(cx-3,t+15,7,1,P.e3); // 털가죽 허리
+ for(let j=0;j<8;j++){const w=[6,9,11,11,11,10,8,6][j],px=cx-(w>>1);R(px,t+j,w,1,j<2?P.j4:P.j3);R(px+w-3,t+j,3,1,P.j2);R(px-1,t+j,1,1,O);R(px+w,t+j,1,1,O)}
+ R(cx-1,t-4,2,5,P.h2);R(cx-1,t-5,2,1,P.h3);R(cx-2,t-1,4,1,P.j2); // 외뿔
+ R(cx-4,t+3,3,3,O);R(cx+2,t+3,3,3,O);R(cx-3,t+4,2,2,P.r3);R(cx+3,t+4,2,2,P.r3);
+ R(cx-3,t+7,7,2,O);for(let i=0;i<7;i+=2)R(cx-3+i,t+7,1,1,P.h2);
+ R(cx-6,t+2,2,3,P.j2);R(cx+5,t+2,2,3,P.j2);
+ // 팔 + 못 박힌 방망이
+ if(pose===0){ // 치켜든 공격 준비
+  R(cx+5,t+9,3,4,P.j3);R(cx+7,t+5,3,4,P.j3);R(cx+8,t+3,4,3,P.e4);
+  for(let k=0;k<7;k++)R(cx+11+k,t+1-k,2,2,P.e1);
+  club(cx+19,t-10);
+  R(cx-8,t+9,3,5,P.j3);R(cx-10,t+13,4,3,P.j4);
+ }else{ // 앞으로 내민 자세
+  R(cx-8,t+9,4,3,P.j3);R(cx-12,t+8,4,3,P.j3);R(cx-15,t+7,4,3,P.e4);
+  for(let k=0;k<6;k++)R(cx-17-k,t+6-k,2,2,P.e1);
+  club(cx-25,t-1);
+  R(cx+5,t+10,4,3,P.j3);R(cx+8,t+12,3,4,P.j4);
+ }
+ dith(cx-7,by-1,15,2,P.st1,2);
+}
+function club(kx,ky){
+ for(let j=0;j<9;j++){const w=[6,8,9,9,9,8,8,7,6][j],px=kx-(w>>1);R(px,ky+j,w,1,j<2?P.e3:P.e2);R(px+w-2,ky+j,2,1,P.e1);R(px-1,ky+j,1,1,O);R(px+w,ky+j,1,1,O)}
+ for(let j=0;j<3;j++){R(kx-6,ky+1+j*3,2,2,P.s2);R(kx+4,ky+2+j*3,2,2,P.s2)}
+}
+function wonghwi(gx,gy){ // 원귀 24px · 발 없이 부양 · 반투명
+ const h=24;
+ glow(gx,gy+10,15,[P.c1,P.c0]);
+ for(let j=0;j<h;j++){const w=7+((j/h)*10|0),px=gx-(w>>1),tt=j/h;
+  for(let i=0;i<w;i++){
+   if(tt>0.88&&((i+px+j)%3!==0))continue;
+   if(tt>0.6&&((i+px+j)&1)!==0)continue;
+   R(px+i,gy+j,1,1,tt<0.4?P.h3:(tt<0.7?P.h2:P.h1))}
+  if(tt<0.72){R(px-1,gy+j,1,1,P.h0);R(px+w,gy+j,1,1,P.h0)}}
+ R(gx-9,gy+8,4,6,P.h2);R(gx+6,gy+8,4,6,P.h2);R(gx-10,gy+8,1,6,P.h0);R(gx+10,gy+8,1,6,P.h0);
+ R(gx-5,gy-3,11,5,O);R(gx-4,gy-4,9,1,O);
+ for(let i=-5;i<=5;i++){const len=8+((i*i)%4);R(gx+i,gy-1,1,len,(i<-3||i>3)?P.v2:O)}
+ R(gx-2,gy+3,2,2,P.r3);R(gx+1,gy+3,2,2,P.r3);R(gx-2,gy+5,1,4,P.r1);R(gx+2,gy+5,1,3,P.r1);
+ dith(gx-8,gy+h-5,17,10,P.h0,1);
+}
+// ================= 보스 방 (최종 목표) =================
+function bossRoom(){
+ const gx=252,gy=352,gw=108,gh=H-352;
+ // 석문 아치
+ R(gx,gy,gw,gh,P.v2);
+ const ax=gx+16,aw=64,atop=gy+18,abot=H-8;
+ const ins=j=>{const t=(j-atop)/30;return t<1?Math.round((1-Math.sqrt(1-(1-t)*(1-t)))*32):0};
+ for(let j=atop;j<abot;j++){const n=ins(j);R(ax+n,j,aw-n*2,1,P.v0)}
+ // 안쪽 붉은 귀기
+ for(let j=abot-1;j>atop+6;j--){const t=(abot-j)/(abot-atop-6),n=ins(j);
+  if(((j+(t*9|0))&1)===0)R(ax+n+2,j,aw-n*2-4,1,t>.66?P.r1:(t>.32?P.r0:P.v0))}
+ dith(ax+12,abot-44,40,40,P.r2,1);
+ // 보스 실루엣 — 거대한 쌍뿔 원귀대장
+ const bx=ax+32,bt=abot-46;
+ for(let j=0;j<34;j++){const w=[10,16,22,26,30,32,34,34,34,33,32,31,30,30,29,28,28,27,27,26,26,25,24,24,23,22,22,21,20,19,18,17,15,12][j],px=bx-(w>>1);
+  R(px,bt+j,w,1,P.r0);if(j<3)R(px,bt+j,w,1,P.r1)}
+ R(bx-16,bt-16,5,18,P.r0);R(bx+12,bt-16,5,18,P.r0);R(bx-17,bt-20,6,5,P.r1);R(bx+12,bt-20,6,5,P.r1); // 쌍뿔
+ R(bx-9,bt+7,6,4,P.g3);R(bx+4,bt+7,6,4,P.g3);R(bx-8,bt+8,4,2,P.h3);R(bx+5,bt+8,4,2,P.h3); // 눈
+ glow(bx-6,bt+9,7,[P.g2,P.g0]);glow(bx+7,bt+9,7,[P.g2,P.g0]);
+ for(let i=0;i<26;i+=3)R(bx-13+i,bt+15,2,3,P.r1); // 이빨
+ // 아치 테두리 · 기와
+ for(let j=atop;j<abot;j++){const n=ins(j);R(ax+n-4,j,4,1,P.st3);R(ax+aw-n,j,4,1,P.st2)}
+ R(ax-7,atop-5,aw+14,5,P.st4);R(ax-7,atop-5,aw+14,1,P.st5);R(ax-8,atop-6,aw+16,1,O);
+ for(let j=0;j<10;j++){const w=gw+14-j*4;R(gx-7+(gw+14-w)/2,gy-10+j,w,1,j<2?P.st5:(j<5?P.st3:P.st2))}
+ R(gx-9,gy,gw+18,4,P.st2);R(gx-9,gy,gw+18,1,P.st4);R(gx-10,gy-11,gw+20,1,O);
+ // 편액
+ R(gx+34,gy+4,42,13,P.v1);R(gx+34,gy+4,42,1,P.g1);R(gx+34,gy+16,42,1,P.g1);
+ ptext('鬼將',gx+55,gy+6,11,P.g2,'center');
+ // 문 앞 붉은 빛 번짐
+ dith(gx+6,H-26,gw-12,26,P.r1,1);dith(gx+20,H-18,gw-40,18,P.r2,3);
+ lantern(gx+4,gy+26);lantern(gx+gw-6,gy+22);
+}
+// ================= HUD =================
+function hud(){
+ R(0,0,W,HUD,P.v1);R(0,0,W,1,P.st3);R(0,HUD-2,W,1,P.v0);R(0,HUD-1,W,1,P.g0);
+ dith(0,1,W,HUD-3,P.v3,1);
+ // 로고
+ R(4,3,116,25,P.v0);R(4,3,116,1,P.g0);R(4,27,116,1,P.g0);R(4,3,1,25,P.g0);R(119,3,1,25,P.g0);
+ ptext('귀야행 척준경',8,6,18,P.g2);
+ ptext('혼백을 모아 귀장을 봉인하라',5,31,11,P.h1);
+ // 체력
+ for(let i=0;i<8;i++){const bx=128+i*10;R(bx,4,9,11,P.v0);
+  if(i<6){R(bx+1,5,7,9,P.r2);R(bx+1,5,7,2,P.r3);R(bx+1,11,7,3,P.r1)}else R(bx+1,5,7,9,P.v3)}
+ // 기력(魂) 게이지
+ R(128,18,80,9,P.v0);
+ for(let i=0;i<50;i++)R(129+i,19,1,7,P.c0);
+ R(129,19,50,2,P.c2);R(129,24,50,2,P.c0);
+ for(let i=8;i<80;i+=8)R(128+i,18,1,9,P.v1);
+ ptext('魂',212,17,11,P.c3);
+ // 혼백 수집 카운터
+ for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const d2=i*i+j*j;if(d2<=9)R(230+i,9+j,1,1,d2>6?P.c2:P.c4)}
+ ptext('14/22',240,3,13,P.h2);
+ // 부적
+ const fx=232;R(fx-3,20,8,11,P.g2);R(fx-3,20,8,1,P.g3);R(fx-2,22,2,7,P.r2);R(fx+2,22,2,5,P.r2);
+ ptext('×3',242,19,12,P.h2);
+ // 미니맵 (탐험 구조 · 현재 위치 · 보스)
+ const mx=276,my=3,mw=80,mh=40;
+ R(mx,my,mw,mh,P.v0);R(mx,my,mw,1,P.st2);R(mx,my+mh-1,mw,1,P.st2);R(mx,my,1,mh,P.st2);R(mx+mw-1,my,1,mh,P.st2);
+ dith(mx+1,my+1,mw-2,mh-2,P.v3,1);
+ const rooms=[[4,4,20,9],[28,3,22,8],[54,6,20,10],[6,17,26,9],[36,15,18,10],[58,19,18,11],[12,29,30,8],[46,31,30,7]];
+ rooms.forEach((r2,i)=>{R(mx+r2[0],my+r2[1],r2[2],r2[3],i<6?P.v4:P.v3);R(mx+r2[0],my+r2[1],r2[2],1,P.st3);R(mx+r2[0],my+r2[1]+r2[3]-1,r2[2],1,P.v1)});
+ // 통로
+ R(mx+24,my+7,4,2,P.st2);R(mx+50,my+7,4,2,P.st2);R(mx+16,my+13,2,4,P.st2);R(mx+62,my+16,2,3,P.st2);R(mx+32,my+20,4,2,P.st2);R(mx+40,my+25,2,4,P.st2);R(mx+42,my+33,4,2,P.st2);
+ R(mx+40,my+19,2,3,P.c1);
+ // 현재 위치
+ R(mx+40,my+18,3,3,P.c4);glow(mx+41,my+19,4,[P.c3,P.c1]);
+ // 보스 표시
+ R(mx+58,my+33,5,5,P.r3);R(mx+59,my+34,3,3,P.r4);
+ ptext('지도',mx+2,my+mh+1,9,P.h0);
+ ptext('점수 018420',356,32,12,P.h2,'right');
+}
+// ================= 조립 =================
+function draw(){
+ backdrop();
+ // 천장 석순
+ for(let i=0;i<W;i+=11){const px=i+((i*7)%6),len=10+((px*5)%22);stalac(px,HUD+len,len,true,P.st2,P.st3)}
+ R(0,HUD,W,4,P.st1);R(0,HUD+4,W,1,P.v0);
+ // ---- 상단 층: 좌측 회랑 + 수집품
+ slab(0,HUD+58,96,{th:14,lit:true});
+ jangseung(18,HUD+58,26);
+ soulOrb(62,HUD+44);jarPick(84,HUD+56);
+ dokkaebi(40,HUD+58,1);
+ chain(120,HUD+6,34);
+ // ---- 상단 우측 회랑 + 계단
+ slab(214,HUD+44,146,{th:14,lit:true});
+ talismanPick(246,HUD+26);soulOrb(300,HUD+30);
+ dokkaebi(330,HUD+44,1);
+ stair(196,HUD+50,3,-1);
+ // ---- 중단 중앙 섬 (수직 이동 구간)
+ slab(122,HUD+116,116,{th:16,lit:true});
+ soulOrb(150,HUD+102);soulOrb(206,HUD+100);
+ dokkaebi(196,HUD+116,0);
+ rope(112,HUD+72,46);
+ wonghwi(92,HUD+86);
+ // ---- 중단 좌우 작은 발판
+ slab(0,HUD+150,64,{th:14});
+ jarPick(30,HUD+148);
+ slab(268,HUD+126,92,{th:14});
+ dokkaebi(300,HUD+126,1);
+ rope(266,HUD+58,66);
+ slab(250,HUD+180,52,{th:13});
+ soulOrb(274,HUD+166);
+ slab(0,HUD+250,44,{th:13});
+ slab(64,HUD+276,40,{th:12});
+ soulOrb(20,HUD+236);
+ // ---- 하단 주 회랑: 주인공이 싸우는 층
+ slab(44,HUD+204,192,{th:18,lit:true});
+ stair(26,HUD+212,3,-1);
+ dokkaebi(196,HUD+204,1);
+ hero(112,HUD+204);
+ soulOrb(84,HUD+188);
+ wonghwi(236,HUD+178);
+ // 검기 히트 이펙트
+ glow(166,HUD+192,9,[P.g3,P.g2,P.g0]);
+ for(let k=0;k<8;k++){const a=rnd()*6.28,rr=7+rnd()*9;R(166+Math.cos(a)*rr,HUD+192+Math.sin(a)*rr,2,2,rnd()>.5?P.g2:P.h2)}
+ // ---- 중하단 연결구: 부서진 석교 + 발판
+ slab(126,HUD+268,74,{th:14,lit:true});
+ soulOrb(146,HUD+254);jarPick(186,HUD+266);
+ dokkaebi(166,HUD+268,0);
+ slab(238,HUD+296,58,{th:13});
+ wonghwi(262,HUD+272);
+ chain(216,HUD+222,40);
+ // ---- 하단 배경: 무너진 석축 회랑 (깊이)
+ for(let k=0;k<4;k++){const px=18+k*88,py=H-98;
+  R(px,py,30,62,P.v2);R(px,py,30,3,P.v3);R(px+24,py+3,6,59,P.v1);
+  for(let j=0;j<3;j++)R(px+3,py+10+j*16,24,2,P.v3);
+  R(px-4,py-6,38,6,P.v3);R(px-4,py-7,38,1,P.v1)}
+ dith(0,H-102,W,14,P.v3,4);
+ // ---- 밑바닥 + 낙하 구덩이 + 달린 다리
+ slab(0,H-34,116,{th:34,hang:false});
+ for(let i=0;i<116;i+=9)R(i+2,H-30,3,2,P.st1);
+ slab(150,H-26,64,{th:26,hang:false});
+ dith(116,H-34,34,34,P.v0,2);R(116,H-34,1,34,O);R(149,H-26,1,26,O);R(214,H-26,1,26,O);
+ dith(214,H-26,38,26,P.v0,2);
+ for(let k=0;k<6;k++){const px=120+rnd()*28;glow(px,H-12+rnd()*8,4,[P.c2,P.c0])}
+ for(let i=0;i<40;i++){const px=214+i,sag=Math.round(3*Math.sin(i/40*Math.PI));
+  R(px,H-24+sag,1,2,P.e2);if(i%4===0){R(px,H-26+sag,1,2,P.e3);R(px,H-21+sag,1,5,P.e1)}}
+ R(211,H-31,4,9,P.st3);R(252,H-33,4,11,P.st3);
+ soulOrb(60,H-48);talismanPick(184,H-48);
+ dokkaebi(88,H-34,1);
+ rope(148,HUD+222,70);
+ // ---- 보스 방
+ bossRoom();
+ // ---- 전경 프레이밍: 좌우 모서리 암벽만
+ for(let j=0;j<30;j++){const w=10+j*0.5;dith(0,H-30+j,w,1,P.v0,2)}
+ for(let k=0;k<2;k++){const yy=HUD+6+k*14;R(0,yy,14+k*6,3,P.v0);for(let i=0;i<14+k*6;i+=4)R(i,yy-3,2,4,P.v0)}
+ // 비네트 (모서리만 살짝)
+ for(let j=HUD;j<H;j++)for(let i=0;i<W;i++){
+  const dx2=(i-W/2)/(W/2),dy2=(j-(HUD+H)/2)/((H-HUD)/2),d=dx2*dx2*0.7+dy2*dy2;
+  if(d>1.18&&((i+j*2)%3===0))R(i,j,1,1,P.v0);
+ }
+ hud();
+}
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{seed=771013;draw()});
+</script>
+</body></html>

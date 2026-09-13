@@ -1,0 +1,162 @@
+<!-- @dsCard group="원장" -->
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>한국사 장수 원장</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=Gothic+A1:wght@400;500;700;800&display=swap">
+<style>
+  :root { color-scheme: light; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#f3f0e6; color:#1d1d1f;
+         font-family:'Gothic A1',system-ui,-apple-system,sans-serif; padding:38px 42px; }
+  header { border-bottom:2px solid #1d1d1f; padding-bottom:16px; margin-bottom:24px;
+           display:flex; align-items:flex-end; justify-content:space-between; gap:28px; flex-wrap:wrap; }
+  .eyebrow { font-size:11px; letter-spacing:.3em; font-weight:700; color:#8a8271; margin-bottom:6px; }
+  h1 { font-family:'Nanum Myeongjo',serif; font-size:34px; font-weight:800; }
+  .lede { font-size:13px; color:#6b6558; line-height:1.75; max-width:72ch; margin-top:10px; }
+  .lede b { color:#1d1d1f; }
+  .counts { display:flex; gap:22px; font-size:12px; color:#6b6558; }
+  .counts b { display:block; font-family:'Nanum Myeongjo',serif; font-size:26px; color:#1d1d1f; }
+
+  h2 { font-family:'Nanum Myeongjo',serif; font-size:19px; font-weight:700;
+       margin:26px 0 10px; display:flex; align-items:baseline; gap:10px; }
+  h2 span { font-size:11.5px; font-weight:700; color:#8a8271; letter-spacing:.04em; }
+
+  table { width:100%; border-collapse:collapse; }
+  th { text-align:left; font-size:10.5px; letter-spacing:.08em; font-weight:800; color:#8a8271;
+       padding:0 10px 7px 0; border-bottom:1px solid #ddd8c8; }
+  td { padding:9px 10px 9px 0; border-bottom:1px solid #e6e1d2; font-size:13px;
+       color:#55503f; vertical-align:top; line-height:1.55; }
+  td.name { font-weight:800; color:#1d1d1f; white-space:nowrap; }
+  td.mark { color:#55503f; }
+  td.mark.todo { color:#b0a794; }
+  .pill { font-size:10px; font-weight:800; letter-spacing:.05em; padding:2px 7px; white-space:nowrap; }
+  .use-j { background:#a2231d; color:#fff; }
+  .use-z { background:#2E5C7E; color:#fff; }
+  .use-g { background:#1d6f75; color:#fff; }
+  .use-none { background:#e4dfd0; color:#8a8271; }
+  .uses { display:flex; gap:4px; flex-wrap:wrap; }
+  .drawn { font-size:10px; font-weight:800; color:#3d7029; letter-spacing:.05em; }
+  .undrawn { font-size:10px; font-weight:700; color:#b0a794; letter-spacing:.05em; }
+
+  footer { margin-top:30px; border-top:1px solid #ddd8c8; padding-top:16px;
+           display:grid; grid-template-columns:1fr 1fr; gap:26px;
+           font-size:12px; color:#6b6558; line-height:1.75; }
+  footer b { color:#1d1d1f; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="eyebrow">공용 원장 · 게임이 여기서 골라 쓴다</div>
+    <h1>한국사 장수 원장</h1>
+    <p class="lede">
+      <b>인물 규정은 여기서 한 번만 정한다.</b> 같은 인물이 게임마다 다른 실루엣이면 포트폴리오가 갈라진다.
+      원장이 정하는 것은 <b>누가 있는가 · 시대 · 대표 싸움 · 실루엣 표식 · 사료 주의</b>이고,
+      비율·파트 목록·승급 색·해상도별 산출물은 <b>각 게임이 따로</b> 만든다.
+    </p>
+  </div>
+  <div class="counts">
+    <div><b>24</b>장수</div>
+    <div><b>6</b>시대</div>
+    <div><b>6</b>표식 확정</div>
+  </div>
+</header>
+
+<h2>고구려 <span>기원전 37 ~ 668</span></h2>
+<table>
+  <tr><th style="width:110px">장수</th><th style="width:190px">대표 싸움</th><th>실루엣 표식</th><th style="width:150px">쓰는 게임</th><th style="width:70px">시안</th></tr>
+  <tr><td class="name">광개토대왕</td><td>영토 확장 · 391–412</td><td class="mark">깃 두 갈래 + 대각 창</td>
+      <td><div class="uses"><span class="pill use-j">전란</span></div></td><td class="drawn">다시 그림</td></tr>
+  <tr><td class="name">을지문덕</td><td>살수대첩 · 612</td><td class="mark">뒤로 휜 고깔 관모 + 죽간</td>
+      <td><div class="uses"><span class="pill use-j">전란</span><span class="pill use-z">좀비 레인</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">양만춘</td><td>안시성 · 645</td><td class="mark">앞으로 당긴 활 + 얼굴 아랫절반 면갑</td>
+      <td><div class="uses"><span class="pill use-j">전란</span><span class="pill use-z">좀비 레인</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">연개소문</td><td>당 침공 방어 · 645–666</td><td class="mark">맨머리 + 부채꼴 칼 다섯</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">온달</td><td>아단성 · 590</td><td class="mark">거친 삼베 겹옷 + 가죽 어깨받이 + 자루 긴 도끼</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+</table>
+
+<h2>백제 <span>기원전 18 ~ 660</span></h2>
+<table>
+  <tr><th style="width:110px">장수</th><th style="width:190px">대표 싸움</th><th>실루엣 표식</th><th style="width:150px">쓰는 게임</th><th style="width:70px">시안</th></tr>
+  <tr><td class="name">계백</td><td>황산벌 · 660</td><td class="mark">어깨 위로 세운 환두대도 + 관모 옆 은화 관식</td>
+      <td><div class="uses"><span class="pill use-z">좀비 레인</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">흑치상지</td><td>백제 부흥운동 · 660년대</td><td class="mark">목가리개 긴 투구 + 한 손에 쥔 말고삐</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+</table>
+
+<h2>신라 · 통일신라 <span>기원전 57 ~ 935</span></h2>
+<table>
+  <tr><th style="width:110px">장수</th><th style="width:190px">대표 싸움</th><th>실루엣 표식</th><th style="width:150px">쓰는 게임</th><th style="width:70px">시안</th></tr>
+  <tr><td class="name">김유신</td><td>황산벌 · 660 / 삼국통일</td><td class="mark">목가리개 붙은 투구 + 고리자루 큰칼</td>
+      <td><div class="uses"><span class="pill use-j">전란</span><span class="pill use-z">좀비 레인</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">이사부</td><td>우산국 정벌 · 512</td><td class="mark">뱃머리에 세운 나무 사자 + 짧은 창</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">장보고</td><td>청해진 · 828</td><td class="mark">소매 좁은 해상 전포 + 허리에 감은 밧줄과 만곡도</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+</table>
+
+<h2>발해 <span>698 ~ 926</span></h2>
+<table>
+  <tr><th style="width:110px">장수</th><th style="width:190px">대표 싸움</th><th>실루엣 표식</th><th style="width:150px">쓰는 게임</th><th style="width:70px">시안</th></tr>
+  <tr><td class="name">대조영</td><td>천문령 · 698</td><td class="mark">털 덧댄 어깨 + 시위를 당긴 각궁</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+</table>
+
+<h2>고려 <span>918 ~ 1392</span></h2>
+<table>
+  <tr><th style="width:110px">장수</th><th style="width:190px">대표 싸움</th><th>실루엣 표식</th><th style="width:150px">쓰는 게임</th><th style="width:70px">시안</th></tr>
+  <tr><td class="name">왕건</td><td>후삼국 통일 · 936</td><td class="mark">평평한 면판 + 구슬줄, 무기 없음</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">서희</td><td>강동 6주 담판 · 993</td><td class="mark">관복 흉배 + 펼친 두루마리, 무기 없음</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">강감찬</td><td>귀주대첩 · 1019</td><td class="mark">양옆으로 뻗은 복두 날개 + 흰 수염</td>
+      <td><div class="uses"><span class="pill use-j">전란</span><span class="pill use-z">좀비 레인</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">윤관</td><td>동북 9성 · 1107</td><td class="mark">양옆 뿔 투구 + 등 뒤 원형 방패</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">척준경</td><td>여진 정벌 선봉 · 1107 / 단기로 성벽을 넘어 적장을 벰</td><td class="mark">정수리에 붉은 술 달린 둥근 투구 + 양손으로 쥔 장검 + 등에 멘 갈고리 밧줄</td>
+      <td><div class="uses"><span class="pill use-g">귀야행</span></div></td><td class="drawn">2D (26px)</td></tr>
+  <tr><td class="name">김윤후</td><td>처인성 · 1232</td><td class="mark">민머리 + 대각 가사 + 활</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">최영</td><td>홍산대첩 · 1376</td><td class="mark">흰 머리와 수염 + 자루 긴 언월도</td>
+      <td><div class="uses"><span class="pill use-z">좀비 레인</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">배중손</td><td>삼별초 · 1270</td><td class="mark">삿갓형 투구 + 배를 가리키는 손, 짧은 창</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+</table>
+
+<h2>조선 <span>1392 ~ 1897</span></h2>
+<table>
+  <tr><th style="width:110px">장수</th><th style="width:190px">대표 싸움</th><th>실루엣 표식</th><th style="width:150px">쓰는 게임</th><th style="width:70px">시안</th></tr>
+  <tr><td class="name">이순신</td><td>한산도 · 1592 / 명량 · 1597</td><td class="mark">투구 간주 + 드림이 감싼 얼굴 + 푸른 전대</td>
+      <td><div class="uses"><span class="pill use-j">전란</span><span class="pill use-z">좀비 레인</span></div></td><td class="drawn">2D · 3D</td></tr>
+  <tr><td class="name">권율</td><td>행주대첩 · 1593</td><td class="mark">어깨보다 넓은 챙 + 수직 깃대</td>
+      <td><div class="uses"><span class="pill use-z">좀비 레인</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">김시민</td><td>진주성 · 1592</td><td class="mark">가로로 누운 총통 + 뾰족한 투구</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">곽재우</td><td>의병 · 1592</td><td class="mark">흩날리는 붉은 두건 + 교차한 쌍검</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">정문부</td><td>북관대첩 · 1592</td><td class="mark">도포 위에 두른 가죽 갑 + 등에 멘 각궁</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+  <tr><td class="name">임경업</td><td>백마산성 · 1636</td><td class="mark">두정갑 위 붉은 전대 + 편곤</td>
+      <td><div class="uses"><span class="pill use-none">대기</span></div></td><td class="undrawn">미착수</td></tr>
+</table>
+
+<footer>
+  <div>
+    <b>실루엣이 규정의 핵심이다.</b> 게임에서 장수는 작게 나온다 — 전란은 112px, 좀비 레인은
+    58px 버튼 안의 글자 하나, 귀야행은 26px 이다. 얼굴은 어느 쪽에서도 안 보이므로 <b>머리 위 형태와 손에 든 것</b>이
+    인물을 가른다. 그래서 표식이 서로 겹치면 안 되고, 그 판정을 원장이 한 번에 한다.
+  </div>
+  <div>
+    <b>실존 인물 규칙.</b> 정부 지정 표준영정을 보고 그리지 않는다 — 그 그림 자체에 화가의
+    저작권이 있다. 참고는 <b>갑주·투구·관모 유물과 고분벽화</b>로 하고 초상은 창작한다.
+    희화화하지 않는다. <b>양만춘</b>은 이름이 조선 후기 기록에 처음 나와 학계에서 확정되지
+    않았다 — 사서에는 「안시성주」로만 남았고, 게임 안 설명문에 이 한 줄을 적는다.
+    <b>척준경</b>의 무용담은 『고려사』 열전이 근거이고 초상·유물은 남아 있지 않다 — 갑주는 고려 중기 찰갑 일반형으로 창작한다.
+  </div>
+</footer>
+</body>
+</html>
