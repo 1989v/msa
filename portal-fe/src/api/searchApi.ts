@@ -32,29 +32,91 @@ export interface ApiResponse<T> {
   error: { code: string; message: string } | null;
 }
 
-export const searchConcepts = async (
-  query: string,
-  category?: string,
-  level?: string,
-  page = 0,
-  size = 20
-): Promise<SearchResponse> => {
-  const params = new URLSearchParams({ q: query, page: String(page), size: String(size) });
-  if (category) params.set('category', category);
-  if (level) params.set('level', level);
-  const res = await api.get<ApiResponse<SearchResponse>>(`/api/v1/search?${params}`);
+/** 통합 검색 (`GET /api/search/unified`) — 타입별 묶음. 관광지는 하이브리드, 나머지는 unified 인덱스 */
+export type UnifiedType =
+  | 'attraction'
+  | 'blog_post'
+  | 'game'
+  | 'concept'
+  | 'deal_offer'
+  | 'service'
+  | 'product';
+
+export interface UnifiedHit {
+  type: UnifiedType;
+  id: string;
+  /** type 과 함께 주소를 조립하는 열쇠 — 관광지·상품은 id, 나머지는 slug */
+  slug: string;
+  title: string;
+  summary: string | null;
+  category: string | null;
+  thumbnailUrl: string | null;
+  facets: Record<string, string>;
+  score: number;
+}
+
+export interface UnifiedGroup {
+  type: UnifiedType;
+  total: number;
+  hits: UnifiedHit[];
+}
+
+export interface UnifiedResult {
+  query: string;
+  understood: { type: UnifiedType | null; residual: string | null };
+  groups: UnifiedGroup[];
+}
+
+export const fetchUnifiedSearch = async (
+  q: string,
+  type?: string,
+  lang?: string,
+  size = 5,
+): Promise<UnifiedResult> => {
+  const params = new URLSearchParams({ q, size: String(size) });
+  if (type) params.set('type', type);
+  if (lang) params.set('lang', lang);
+  const res = await api.get<ApiResponse<UnifiedResult>>(`/api/search/unified?${params}`);
   return res.data.data;
+};
+
+/**
+ * /tech 개념 검색 — 통합 검색의 `type=concept` 묶음을 옛 응답 모양으로 되돌린다.
+ * 옛 `/api/v1/search`(atlas 의 OpenSearch 색인)는 운영에서 500 이라 통합 인덱스로 갈아탔다 (플랜 §2 U5).
+ * category·level 필터는 화면이 호출하지 않아 받지 않는다.
+ */
+export const searchConcepts = async (query: string, size = 20): Promise<SearchResponse> => {
+  const result = await fetchUnifiedSearch(query, 'concept', undefined, size);
+  const group = result.groups.find((g) => g.type === 'concept');
+  const hits: SearchHit[] = (group?.hits ?? []).map((h) => ({
+    conceptId: h.slug,
+    conceptName: h.title,
+    category: h.category ?? '',
+    level: h.facets.level ?? '',
+    filePath: null,
+    lineStart: null,
+    lineEnd: null,
+    codeSnippet: null,
+    gitUrl: null,
+    description: h.summary,
+    score: h.score,
+  }));
+  return { hits, totalHits: group?.total ?? 0, maxScore: hits[0]?.score ?? null };
 };
 
 import type { GraphData, SuggestItem, ConceptDetail, ConceptHierarchy } from '../types/graph';
 
-export const suggestConcepts = async (
-  query: string,
-  size = 8
-): Promise<SuggestItem[]> => {
-  const params = new URLSearchParams({ q: query, size: String(size) });
-  const res = await api.get<ApiResponse<SuggestItem[]>>(`/api/v1/search/suggest?${params}`);
-  return res.data.data;
+/** 자동완성도 같은 이유로 통합 검색의 concept 묶음이다 — 접두사 매칭이 아니라 BM25 상위다 */
+export const suggestConcepts = async (query: string, size = 8): Promise<SuggestItem[]> => {
+  const result = await fetchUnifiedSearch(query, 'concept', undefined, size);
+  const group = result.groups.find((g) => g.type === 'concept');
+  return (group?.hits ?? []).map((h) => ({
+    conceptId: h.slug,
+    name: h.title,
+    category: (h.category ?? 'BASICS') as SuggestItem['category'],
+    level: (h.facets.level ?? 'BEGINNER') as SuggestItem['level'],
+    description: h.summary ?? '',
+  }));
 };
 
 export const fetchGraphData = async (): Promise<GraphData> => {

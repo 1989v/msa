@@ -82,7 +82,7 @@ class SearchUnifiedService(
             hits = page.hits.map {
                 SearchUnifiedUseCase.Hit(
                     type = it.type, id = it.sourceId, slug = it.slug, title = it.title, summary = it.summary,
-                    category = it.category, thumbnailUrl = it.thumbnailUrl, score = it.score,
+                    category = it.category, thumbnailUrl = it.thumbnailUrl, facets = it.facets, score = it.score,
                 )
             },
         )

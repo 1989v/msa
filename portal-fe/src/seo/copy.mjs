@@ -362,7 +362,7 @@ export function websiteJsonLd(site) {
   const { name, url, searchUrlTemplate } = site ?? {
     name: PORTAL_BRAND,
     url: PORTAL_ORIGIN,
-    searchUrlTemplate: `${PORTAL_ORIGIN}/tech?q={search_term_string}`,
+    searchUrlTemplate: `${PORTAL_ORIGIN}/search?q={search_term_string}`,
   };
   const json = {
     '@context': 'https://schema.org',

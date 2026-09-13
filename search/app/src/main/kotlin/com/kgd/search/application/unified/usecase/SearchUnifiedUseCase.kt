@@ -28,6 +28,8 @@ interface SearchUnifiedUseCase {
         val summary: String? = null,
         val category: String? = null,
         val thumbnailUrl: String? = null,
+        /** 타입별 축(개념 level · 게임 genre …). 관광지는 비어 있다 */
+        val facets: Map<String, String> = emptyMap(),
         val score: Double = 0.0,
     )
 

@@ -58,3 +58,39 @@ export function resolveExplorerHref(code: string, href: string): string {
 export function portalHomeHref(): string {
   return isProd1989vHost ? `${PORTAL_ORIGIN}/` : '/';
 }
+
+/** 통합 검색 화면 — apex 하나에만 둔다(주소가 갈리지 않게). 로컬은 상대 경로 */
+export function unifiedSearchHref(q: string, type?: string): string {
+  const params = new URLSearchParams({ q });
+  if (type) params.set('type', type);
+  const path = `/search?${params}`;
+  return isProd1989vHost ? `${PORTAL_ORIGIN}${path}` : path;
+}
+
+/**
+ * 통합 검색 결과 한 건의 주소. 인덱스는 URL 을 굽지 않는다 — `type` + `slug` 로 여기서 조립한다.
+ * 프로덕션은 각 서비스의 정규 origin 으로, 로컬/k3d 는 App.tsx 의 apex 경로로 간다.
+ */
+export function unifiedHitHref(type: string, slug: string, category?: string | null): string {
+  const prod = isProd1989vHost;
+  const conceptCategory = String(category ?? '').toLowerCase().replace(/_/g, '-');
+  switch (type) {
+    case 'attraction':
+      return prod ? `${PLACE_ORIGIN}/attractions/${slug}` : `/place/attractions/${slug}`;
+    case 'blog_post':
+      return prod ? `${BLOG_ORIGIN}/posts/${slug}` : `/posts/${slug}`;
+    case 'game':
+      return prod ? `${GAME_ORIGIN}/games/${slug}` : `/games/${slug}`;
+    case 'concept':
+      return `${prod ? PORTAL_ORIGIN : ''}/tech${conceptCategory ? `/${conceptCategory}` : ''}#${slug}`;
+    case 'deal_offer':
+      // 카드와 같은 문 — /go/ 를 거쳐야 클릭 계측이 남는다 (ADR-0069)
+      return prod ? `${DEAL_ORIGIN}/go/${slug}` : `/go/${slug}`;
+    case 'product':
+      return `${prod ? PORTAL_ORIGIN : ''}/shop/products/${slug}`;
+    case 'service':
+      return resolveExplorerHref(slug, `/${slug}`);
+    default:
+      return portalHomeHref();
+  }
+}

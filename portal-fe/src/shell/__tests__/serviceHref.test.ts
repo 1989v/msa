@@ -82,3 +82,34 @@ describe('portalHomeHref', () => {
     expect((await loadWithHost('localhost')).portalHomeHref()).toBe('/');
   });
 });
+
+describe('unifiedHitHref — 통합 검색 결과의 주소 (인덱스는 URL 을 굽지 않는다)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('프로덕션(어느 호스트든) — 타입마다 그 서비스의 정규 origin 으로', async () => {
+    const { unifiedHitHref, unifiedSearchHref } = await loadWithHost('blog.1989v.com');
+    expect(unifiedHitHref('attraction', '12345')).toBe('https://place.1989v.com/attractions/12345');
+    expect(unifiedHitHref('blog_post', 'my-post')).toBe('https://blog.1989v.com/posts/my-post');
+    expect(unifiedHitHref('game', 'arena')).toBe('https://game.1989v.com/games/arena');
+    expect(unifiedHitHref('concept', 'saga-pattern', 'DESIGN_PATTERN')).toBe('https://1989v.com/tech/design-pattern#saga-pattern');
+    // 혜택은 카드와 같은 문 — /go/ 를 거쳐야 클릭 계측이 남는다
+    expect(unifiedHitHref('deal_offer', 'yeogi-event')).toBe('https://deal.1989v.com/go/yeogi-event');
+    expect(unifiedHitHref('product', '73')).toBe('https://1989v.com/shop/products/73');
+    expect(unifiedHitHref('service', 'place')).toBe('https://place.1989v.com/');
+    expect(unifiedHitHref('service', 'tech')).toBe('https://1989v.com/tech');
+    // 검색 화면은 apex 하나 — 서브도메인에서 검색해도 주소가 갈리지 않는다
+    expect(unifiedSearchHref('야경')).toBe('https://1989v.com/search?q=%EC%95%BC%EA%B2%BD');
+  });
+
+  it('로컬 — App.tsx 의 apex 경로로', async () => {
+    const { unifiedHitHref, unifiedSearchHref } = await loadWithHost('localhost');
+    expect(unifiedHitHref('attraction', '12345')).toBe('/place/attractions/12345');
+    expect(unifiedHitHref('blog_post', 'my-post')).toBe('/posts/my-post');
+    expect(unifiedHitHref('game', 'arena')).toBe('/games/arena');
+    expect(unifiedHitHref('concept', 'saga-pattern', 'DESIGN_PATTERN')).toBe('/tech/design-pattern#saga-pattern');
+    expect(unifiedSearchHref('야경', 'game')).toBe('/search?q=%EC%95%BC%EA%B2%BD&type=game');
+  });
+});

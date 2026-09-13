@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { fetchDisplayServices, type DisplayService } from '../../api/displayApi';
-import { portalHomeHref, resolveExplorerHref } from '../../shell/serviceHref';
+import { portalHomeHref, resolveExplorerHref, unifiedSearchHref } from '../../shell/serviceHref';
 import KhSheet from '../shell/KhSheet';
 import './ServiceExplorer.css';
 
@@ -21,6 +21,15 @@ let cache: DisplayService[] | null = null;
 export default function ServiceExplorer({ onClose }: { onClose: () => void }) {
   const [services, setServices] = useState<DisplayService[] | null>(cache);
   const [failed, setFailed] = useState(false);
+  const [query, setQuery] = useState('');
+
+  // 어느 호스트에서 열든 통합 검색은 apex 의 /search 하나다 — 주소가 서비스마다 갈리지 않게
+  const submitSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    window.location.assign(unifiedSearchHref(q));
+  };
 
   useEffect(() => {
     if (cache) return;
@@ -40,6 +49,17 @@ export default function ServiceExplorer({ onClose }: { onClose: () => void }) {
 
   return (
     <KhSheet label="서비스 탐색" onClose={onClose} className="kh-sheet--dialog">
+      <form className="kh-explorer-search" role="search" onSubmit={submitSearch}>
+        <input
+          className="kh-field"
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="모든 서비스에서 찾기 — 관광지 · 글 · 게임 · 개념 · 혜택 · 상품"
+          aria-label="통합 검색어"
+          enterKeyHint="search"
+        />
+      </form>
       <ul className="kh-explorer-list">
         {/* 본진 행은 고정이다 — 서브도메인 호스트에서 런처로 돌아가는 상시 통로.
             display_service 는 런처 "위에" 전시할 것만 담으므로 런처 자신이 없다. */}

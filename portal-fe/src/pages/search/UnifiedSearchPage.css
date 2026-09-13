@@ -1,0 +1,165 @@
+/* 통합 검색 — DESIGN.md 토큰만 사용, hex 직접 입력 금지. 한 단 고정 폭, 묶음 사이 여백을 크게 */
+
+.usearch-page {
+  background: var(--ko-surface-0);
+  color: var(--ko-text-primary);
+  min-height: 60vh;
+  padding: var(--ko-space-10) var(--ko-space-6) 96px;
+}
+
+.usearch-inner {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+.usearch-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-4);
+  margin-bottom: var(--ko-space-8);
+}
+
+.usearch-form {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ko-space-3);
+}
+
+.usearch-field {
+  flex: 1;
+  font-size: var(--ko-text-lg);
+}
+
+.usearch-submit {
+  flex: none;
+}
+
+.usearch-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ko-space-2);
+}
+
+.usearch-chip {
+  min-height: 2rem;
+  padding: 0 var(--ko-space-3);
+  border: 1px solid var(--ko-border-default);
+  border-radius: var(--ko-radius-full);
+  background: transparent;
+  color: var(--ko-text-secondary);
+  font: inherit;
+  font-size: var(--ko-text-sm);
+  cursor: pointer;
+}
+
+.usearch-chip.is-intent {
+  border-style: dashed;
+}
+
+.usearch-chip.is-active {
+  border-color: var(--ko-accent-primary);
+  background: var(--ko-accent-primary-bg);
+  color: var(--ko-text-primary);
+}
+
+.usearch-chip:focus-visible {
+  outline: var(--ko-focus-ring);
+  outline-offset: 2px;
+}
+
+.usearch-summary {
+  margin: 0 0 var(--ko-space-6);
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+}
+
+.usearch-group + .usearch-group {
+  margin-top: var(--ko-space-10);
+}
+
+.usearch-group-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ko-space-2);
+  margin: 0 0 var(--ko-space-3);
+  font-size: var(--ko-text-lg);
+  font-weight: 700;
+}
+
+.usearch-group-count {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+  font-weight: 400;
+}
+
+.usearch-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 행은 괘선으로만 가른다 — 카드가 겹겹이면 결과가 서식이 된다 */
+.usearch-list li + li {
+  border-top: 1px solid var(--ko-border-subtle);
+}
+
+.usearch-hit {
+  display: flex;
+  gap: var(--ko-space-4);
+  padding: var(--ko-space-3) var(--ko-space-2);
+  color: inherit;
+  text-decoration: none;
+}
+
+.usearch-hit:hover {
+  background: var(--ko-surface-2);
+}
+
+.usearch-thumb {
+  flex: none;
+  width: 4.5rem;
+  height: 3rem;
+  object-fit: cover;
+  border-radius: var(--ko-radius-sm);
+  background: var(--ko-surface-2);
+}
+
+.usearch-hit-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ko-space-1);
+  min-width: 0;
+}
+
+.usearch-hit-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.usearch-hit-summary {
+  color: var(--ko-text-secondary);
+  font-size: var(--ko-text-sm);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.usearch-hit-meta {
+  color: var(--ko-text-muted);
+  font-size: var(--ko-text-xs);
+}
+
+.usearch-more {
+  margin-top: var(--ko-space-3);
+}
+
+@media (max-width: 40rem) {
+  .usearch-page {
+    padding: var(--ko-space-6) var(--ko-space-4) 96px;
+  }
+  .usearch-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

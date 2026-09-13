@@ -77,7 +77,7 @@ export default function TechGlossaryPage() {
 
       <dl className="glossary-terms">
         {items.map((c) => (
-          <div key={c.conceptId} className="glossary-row">
+          <div key={c.conceptId} id={c.conceptId} className="glossary-row">
             <dt>
               {c.name}
               {c.synonyms?.length ? <span className="glossary-alt">{c.synonyms.join(', ')}</span> : null}

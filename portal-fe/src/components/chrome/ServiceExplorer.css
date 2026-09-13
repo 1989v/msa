@@ -9,6 +9,13 @@
   flex-direction: column;
 }
 
+/* 통합 검색 입력 — 목록 위 한 줄. 제출하면 apex /search 로 나간다 */
+.kh-explorer-search {
+  padding: 0 var(--ko-space-2) var(--ko-space-3);
+  margin-bottom: var(--ko-space-2);
+  border-bottom: 1px solid var(--ko-border-subtle);
+}
+
 /* 행은 괘선으로만 가른다 — 카드가 겹겹이면 시트가 서식이 된다 */
 .kh-explorer-list li + li {
   border-top: 1px solid var(--ko-border-subtle);

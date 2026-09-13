@@ -49,7 +49,7 @@ class UnifiedSearchAdapter(
                 UnifiedSearchPort.Hit(
                     id = d.id, type = d.type, sourceId = d.sourceId, slug = d.slug, title = d.title,
                     summary = d.summary, category = d.category, thumbnailUrl = d.thumbnailUrl,
-                    score = hit.score() ?: 0.0,
+                    facets = d.facets, score = hit.score() ?: 0.0,
                 )
             }
         }

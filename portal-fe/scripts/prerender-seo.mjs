@@ -720,7 +720,8 @@ async function writeRobotsAndSitemaps(
   await writePlaceSitemaps([...placeHubEntries, ...regionEntries], placeDetailEntries);
 
   await emit(`seo/${GAME_HOST}/robots.txt`, robotsTxt(GAME_ORIGIN));
-  await emit(`seo/${PORTAL_HOST}/robots.txt`, robotsTxt(PORTAL_ORIGIN));
+  // 통합 검색 결과(/search?q=)는 색인 대상이 아니다 — noindex 에 더해 크롤도 막는다
+  await emit(`seo/${PORTAL_HOST}/robots.txt`, robotsTxt(PORTAL_ORIGIN, ['/search']));
   await emit(`seo/${PLACE_HOST}/robots.txt`, robotsTxt(PLACE_ORIGIN));
   // 이력서는 색인 대상이 아니다 (ADR-0064). sitemap·llms.txt 도 두지 않는다.
   await emit(`seo/${RESUME_HOST}/robots.txt`, 'User-agent: *\nDisallow: /\n');

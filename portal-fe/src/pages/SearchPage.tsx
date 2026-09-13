@@ -141,7 +141,7 @@ export default function SearchPage() {
     async (query: string) => {
       if (!model) return;
       try {
-        const result = await searchConcepts(query, undefined, undefined, 0, 50);
+        const result = await searchConcepts(query, 50);
         const hitIds = result.hits.map((h) => h.conceptId);
         setDrill((prev) => revealConcepts(prev, model, hitIds));
         setView('map');

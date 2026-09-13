@@ -22,6 +22,8 @@ interface UnifiedSearchPort {
         val summary: String?,
         val category: String?,
         val thumbnailUrl: String?,
+        /** 타입별 축 — 개념의 level, 게임의 genre 처럼 화면이 그대로 보여줄 값 */
+        val facets: Map<String, String> = emptyMap(),
         val score: Double,
     )
 
