@@ -106,7 +106,11 @@ function landingSpot(w: World, p: Player, mx: number, mz: number, jumping: boole
 /** 돌진·구르기 기술은 낭떠러지에서 자살 버튼이다 — 이동 거리만큼 앞(또는 뒤)에 바닥이 있어야 쓴다 */
 function specialIsSafe(w: World, p: Player, moveId: string, nx: number, nz: number): boolean {
   const m = MOVES[moveId as keyof typeof MOVES];
-  if (!m || m.moveSpeed === 0 || m.moveUntil === 'none') return true;
+  if (!m) return true;
+  // 기술은 시작하면 수십 틱 동안 방향을 못 바꾼다. 그래서 **안 움직이는 기술도** 절벽 앞에서는 쓰지 않는다 —
+  // 그 사이에 밀리거나 튕기면 회피 로직이 아예 못 돈다 (직업당 3종을 넣은 뒤 자멸의 1/4 이 state 'special' 이었다).
+  if (!footing(w, p, nx, nz, 1.6)) return false;
+  if (m.moveSpeed === 0 || m.moveUntil === 'none') return true;
   const ticks = m.moveUntil === 'active' ? m.startup + m.active : m.startup;
   const travel = Math.abs(m.moveSpeed) * (ticks / 60) + 0.5;
   const sign = m.moveSpeed > 0 ? 1 : -1;

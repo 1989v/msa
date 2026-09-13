@@ -86,12 +86,12 @@ input, select { font-family: var(--font); }
 .side .panel { padding: 12px; }
 .settings .kv { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 1px 0; }
 .settings select, .settings .field { height: 30px; font-size: 12px; padding: 0 6px; }
-.accs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.accs { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr)); gap: 8px; }
 .acc { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; background: var(--panel2); border: 2px solid var(--line2); border-radius: 10px; color: var(--ink); font-weight: 800; font-size: 12px; }
 .acc.on { background: var(--amp); border-color: var(--amp); color: var(--outline); }
 .styles { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .stylebtn { flex-direction: row; gap: 5px; padding: 8px 3px; font-size: 11px; white-space: nowrap; }
-.stylebtn .swatch { width: 14px; height: 14px; border-radius: 4px; border: 2px solid var(--outline); flex: none; }
+.stylebtn .swatch { width: 14px; height: 14px; min-width: 0; padding: 0; border-radius: 4px; border: 2px solid var(--outline); flex: none; }
 .acc svg { width: 28px; height: 28px; }
 .room .acc { padding: 6px 4px; font-size: 11px; gap: 2px; }
 .room .acc svg { width: 22px; height: 22px; }

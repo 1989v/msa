@@ -613,6 +613,24 @@
   height: 100%;
 }
 
+/*
+ * 데스크톱 전체화면 — 무대가 화면을 갖고 iframe 이 그 안을 채운다.
+ * iframe 높이는 useStageFit 이 내용을 재서 **인라인으로** 준다(1440×900 창에서 521px).
+ * 전체화면으로 올려도 그 값이 남아 있으면 화면 위쪽만 쓰고 게임은 그대로 잘린다 —
+ * 인라인을 이기려면 !important 가 필요하다.
+ */
+.game-stage:fullscreen {
+  height: 100%;
+  margin-bottom: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+.game-stage:fullscreen .game-stage-frame {
+  height: 100% !important;
+  min-height: 0;
+}
+
 .game-stage.is-immersive .game-stage-frame {
   width: 100%;
   height: 100%;

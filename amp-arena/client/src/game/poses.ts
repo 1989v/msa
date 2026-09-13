@@ -98,6 +98,18 @@ export const MOVE_POSES: Record<MoveId, [PoseId, PoseId]> = {
   axeKick: ['axeWind', 'axeKick'], hammer1: ['swingWind', 'swing'], hammer2: ['swing2Wind', 'swing2'], kneeStrike: ['roundWind', 'knee'],
   gsSweep: ['swing2Wind', 'swing2'], gsOverhead: ['swingWind', 'swing'], spSweep: ['thrustWind', 'thrust'], gunBurst: ['shoot', 'shoot'],
   shieldJab: ['bashWind', 'bash'], shieldSlam: ['slamWind', 'bash'], rkHeavy: ['uppercutWind', 'uppercut'], counter: ['straightWind', 'straight'],
+  // 직업당 3종 (2026-09-13) — 새 포즈를 만들지 않고 결이 같은 기존 포즈에 붙인다.
+  // 주먹 계열은 잽·훅, 휘두르는 것은 베기, 내려치는 것은 슬램, 찌르는 것은 찌르기, 날리는 것은 던지기·사격.
+  kn1: ['jabWind', 'jab'], kn2: ['straightWind', 'straight'], knHook: ['hookWind', 'hook'], knSmash: ['swing2Wind', 'swing2'], knRush: ['jabWind', 'jab'],
+  ch1: ['swingWind', 'swing'], ch2: ['swing2Wind', 'swing2'], ch3: ['swingWind', 'swing'], chSpin: ['swing2Wind', 'swing2'], chWhirl: ['swing2Wind', 'swing2'],
+  cl1: ['jabWind', 'jab'], cl2: ['straightWind', 'straight'], clRip: ['hookWind', 'hook'], clRend: ['swingWind', 'swing'], clHook: ['thrustWind', 'thrust'],
+  an1: ['swingWind', 'swing'], an2: ['swing2Wind', 'swing2'], anCrush: ['slamWind', 'slam'], anQuake: ['slamWind', 'slam'], anDrop: ['slamWind', 'slam'],
+  dg1: ['jabWind', 'jab'], dg2: ['straightWind', 'straight'], dg3: ['jabWind', 'jab'], dgFinish: ['hookWind', 'hook'], dgBlink: ['thrust', 'thrust'],
+  ckThrow: ['throw', 'throw'], ckHeavy: ['throw', 'throw'], ckSpin: ['roll', 'throw'],
+  hm1: ['swingWind', 'swing'], hm2: ['swing2Wind', 'swing2'], hmDrop: ['slamWind', 'slam'], hmQuake: ['slamWind', 'slam'], hmShock: ['slamWind', 'slam'],
+  cn1: ['shoot', 'shoot'], cnHeavy: ['shoot', 'shoot'], cnBarrage: ['shoot', 'shoot'],
+  st1: ['thrustWind', 'thrust'], st2: ['swingWind', 'swing'], st3: ['thrustWind', 'thrust'], stSweep: ['swing2Wind', 'swing2'], stVault: ['roundWind', 'kickHigh'],
+  nc1: ['jabWind', 'jab'], nc2: ['hookWind', 'hook'], nc3: ['straightWind', 'straight'], ncFinish: ['swing2Wind', 'swing2'], ncStorm: ['roundWind', 'roundhouse'],
 };
 
 export function lerpPose(a: Pose, b: Pose, t: number): Pose {

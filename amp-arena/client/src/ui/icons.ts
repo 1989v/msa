@@ -15,10 +15,24 @@ const PATHS: Record<string, string> = {
   users: 'M9 12 A4 4 0 1 0 9 4 A4 4 0 0 0 9 12 Z M3 21 V19 A5 5 0 0 1 8 14 H10 A5 5 0 0 1 15 19 V21 M16 4 A4 4 0 0 1 16 12 M21 21 V19 A5 5 0 0 0 17.5 14.2',
   gamepad: 'M7 8 H17 A5 5 0 0 1 21 14 L20 17 A2 2 0 0 1 16.5 17.5 L15 15 H9 L7.5 17.5 A2 2 0 0 1 4 17 L3 14 A5 5 0 0 1 7 8 Z',
   keyboard: 'M3 6 H21 V18 H3 Z M7 10 H7.01 M11 10 H11.01 M15 10 H15.01 M7 14 H17',
+  knuckle: 'M4 9 H20 V13 H4 Z M8 9 V13 M12 9 V13 M16 9 V13 M5 13 L7 18 H17 L19 13',
+  chain: 'M4 4 L9 9 M9 9 A2 2 0 1 0 12.5 12.5 M12.5 12.5 L15 15 M18 18 m-3.2 0 a3.2 3.2 0 1 0 6.4 0 a3.2 3.2 0 1 0 -6.4 0',
+  claw: 'M6 4 C8 10 8 16 6 20 M12 3 C14 10 14 16 12 21 M18 4 C20 10 20 16 18 20',
+  anchor: 'M12 3 A2.2 2.2 0 1 1 12 7.4 A2.2 2.2 0 1 1 12 3 M12 7.4 V20 M7 11 H17 M4 14 A8 8 0 0 0 20 14',
+  dagger: 'M5 19 L14 10 M4 20 L7 17 M15 4 H20 V9 M11 7 L17 13',
+  chakram: 'M12 3 A9 9 0 1 0 12.01 3 M12 8 A4 4 0 1 0 12.01 8 M12 3 V8 M21 12 H16 M12 21 V16 M3 12 H8',
+  hammer: 'M8 4 H19 V10 H8 Z M11 10 L4 19 M4 19 L6 21',
+  cannon: 'M4 17 H9 L19 8 L16 4 L7 13 V17 M3.5 17 A3.5 3.5 0 0 0 10.5 17',
+  staff: 'M4 20 L20 4 M3 19 L5 21 M19 3 L21 5 M9 15 L12 12',
+  nunchaku: 'M5 3 L9 11 M15 12 L19 20 M9 11 C11 14 13 14.5 15 12',
   arrowRight: 'M5 12 H19 M13 6 L19 12 L13 18',
 };
 
-export const ACC_ICON: Record<string, string> = { none: 'fist', greatsword: 'sword', spear: 'spear', pistols: 'pistol', shield: 'shield', rocket: 'glove' };
+export const ACC_ICON: Record<string, string> = {
+  none: 'fist', greatsword: 'sword', spear: 'spear', pistols: 'pistol', shield: 'shield', rocket: 'glove',
+  knuckle: 'knuckle', chain: 'chain', claw: 'claw', anchor: 'anchor', dagger: 'dagger',
+  chakram: 'chakram', hammer: 'hammer', cannon: 'cannon', staff: 'staff', nunchaku: 'nunchaku',
+};
 
 export function icon(name: string, size = 20, color = 'currentColor', sw = 2): string {
   const d = PATHS[name] ?? PATHS.bolt;

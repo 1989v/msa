@@ -26,7 +26,7 @@ import {
   videoGameJsonLd,
 } from '../../seo/copy.mjs';
 import { useSeo } from '../../seo/useSeo';
-import { shouldAutoLandscape } from './stageOrientation';
+import { shouldEnterFullStage } from './stageOrientation';
 import FavoriteButton from '../../components/favorite/FavoriteButton';
 import { useStageFit } from './useStageFit';
 import { fetchGraphData } from '../../api/searchApi';
@@ -149,10 +149,8 @@ export default function GameDetailPage() {
   orientationRef.current = game?.orientation;
 
   const autoLandscape = useCallback(() => {
-    const go = shouldAutoLandscape({
+    const go = shouldEnterFullStage({
       orientation: orientationRef.current,
-      coarsePointer: window.matchMedia('(pointer: coarse)').matches,
-      portrait: window.innerHeight >= window.innerWidth,
       fullscreen: !!document.fullscreenElement,
     });
     if (go) enterLandscape();

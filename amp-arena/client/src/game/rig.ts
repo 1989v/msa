@@ -286,6 +286,120 @@ export class CharacterRig {
         this.shieldGroup.add(g);
         break;
       }
+      // ── 직업당 3종 (2026-09-13). 무기는 전완 축(-Y)을 따라 붙는다 — 위 브레이커 주석과 같은 규칙.
+      case 'knuckle': {
+        for (const hand of [this.rHand, this.lHand]) {
+          const bar = new THREE.BoxGeometry(0.2, 0.09, 0.11); bar.translate(0, -0.11, 0);
+          const g = part(bar, lambert(STEEL), 1.1);
+          const stud = new THREE.BoxGeometry(0.03, 0.05, 0.03);
+          for (const dx of [-0.06, 0, 0.06]) { const m = new THREE.Mesh(stud, lambert(AMP)); m.position.set(dx, -0.16, 0); g.add(m); }
+          (hand === this.rHand ? this.accGroup : this.shieldGroup).add(g);
+          if (hand === this.lHand) g.position.set(0, -0.17, 0);
+        }
+        break;
+      }
+      case 'chain': {
+        // 손잡이 → 사슬 마디 넷 → 추. 늘어뜨려 붙여 두면 휘두르는 포즈에서 원심력처럼 보인다.
+        const grip = new THREE.CylinderGeometry(0.028, 0.028, 0.16, 8); grip.translate(0, -0.08, 0);
+        this.accGroup.add(part(grip, lambert(0x7a4f22), 1.15));
+        for (let i = 0; i < 4; i++) {
+          const link = new THREE.TorusGeometry(0.045, 0.014, 6, 12);
+          const m = part(link, lambert(STEEL), 1.1);
+          m.rotation.x = Math.PI / 2; m.rotation.z = i % 2 ? Math.PI / 2 : 0;
+          m.position.y = -0.24 - i * 0.09;
+          this.accGroup.add(m);
+        }
+        const ball = part(new THREE.SphereGeometry(0.12, 12, 10), lambert(0x3b4260), 1.06);
+        ball.position.y = -0.72;
+        this.accGroup.add(ball);
+        break;
+      }
+      case 'claw': {
+        for (const hand of [this.rHand, this.lHand]) {
+          const g = new THREE.Group();
+          for (const dx of [-0.07, 0, 0.07]) {
+            const talon = new THREE.ConeGeometry(0.022, 0.34, 6); talon.rotateX(Math.PI); talon.translate(dx, -0.3, 0.02);
+            g.add(part(talon, lambert(STEEL), 1.1));
+          }
+          (hand === this.rHand ? this.accGroup : this.shieldGroup).add(g);
+          if (hand === this.lHand) g.position.set(0, -0.17, 0);
+        }
+        break;
+      }
+      case 'anchor': {
+        const shaft = new THREE.CylinderGeometry(0.035, 0.035, 0.8, 8); shaft.translate(0, -0.42, 0);
+        this.accGroup.add(part(shaft, lambert(STEEL), 1.1));
+        const cross = new THREE.BoxGeometry(0.42, 0.06, 0.08); cross.translate(0, -0.58, 0);
+        this.accGroup.add(part(cross, lambert(STEEL), 1.1));
+        for (const sx of [-1, 1]) {
+          const fluke = new THREE.ConeGeometry(0.09, 0.26, 6); fluke.rotateZ(sx * 0.9); fluke.translate(sx * 0.22, -0.74, 0);
+          this.accGroup.add(part(fluke, lambert(0x3b4260), 1.08));
+        }
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.02, 6, 14), lambert(AMP));
+        ring.rotation.y = Math.PI / 2; ring.position.y = -0.04;
+        this.accGroup.add(ring);
+        break;
+      }
+      case 'dagger': {
+        for (const hand of [this.rHand, this.lHand]) {
+          const g = new THREE.Group();
+          const blade = new THREE.BoxGeometry(0.05, 0.36, 0.02); blade.translate(0, -0.3, 0);
+          g.add(part(blade, lambert(STEEL), 1.1));
+          const guard = new THREE.BoxGeometry(0.16, 0.035, 0.05); guard.translate(0, -0.11, 0);
+          g.add(part(guard, lambert(AMP), 1.1));
+          (hand === this.rHand ? this.accGroup : this.shieldGroup).add(g);
+          if (hand === this.lHand) g.position.set(0, -0.17, 0);
+        }
+        break;
+      }
+      case 'chakram': {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.028, 8, 22), lambert(STEEL));
+        ring.rotation.x = Math.PI / 2; ring.position.y = -0.24;
+        this.accGroup.add(ring);
+        const spare = new THREE.Mesh(new THREE.TorusGeometry(0.19, 0.028, 8, 22), lambert(0x3b4260));
+        spare.rotation.x = Math.PI / 2; spare.position.set(0, -0.4, 0);
+        this.shieldGroup.add(spare);
+        break;
+      }
+      case 'hammer': {
+        const haft = new THREE.CylinderGeometry(0.032, 0.032, 0.85, 8); haft.translate(0, -0.5, 0);
+        this.accGroup.add(part(haft, lambert(WOOD), 1.15));
+        const head = new THREE.BoxGeometry(0.36, 0.24, 0.24); head.translate(0, -0.94, 0);
+        this.accGroup.add(part(head, lambert(STEEL), 1.06));
+        const band = new THREE.BoxGeometry(0.38, 0.05, 0.26); band.translate(0, -0.94, 0);
+        this.accGroup.add(part(band, lambert(AMP), 1.08));
+        break;
+      }
+      case 'cannon': {
+        // 어깨에 얹는 포신 — 오른팔 축을 따라 앞으로 길게
+        const barrel = new THREE.CylinderGeometry(0.1, 0.13, 0.72, 10); barrel.translate(0, -0.44, 0);
+        this.accGroup.add(part(barrel, lambert(0x3b4260), 1.06));
+        const muzzle = new THREE.CylinderGeometry(0.14, 0.14, 0.1, 10); muzzle.translate(0, -0.82, 0);
+        this.accGroup.add(part(muzzle, lambert(STEEL), 1.06));
+        const drum = new THREE.CylinderGeometry(0.1, 0.1, 0.16, 8); drum.rotateZ(Math.PI / 2); drum.translate(0.12, -0.22, 0);
+        this.accGroup.add(part(drum, lambert(AMP), 1.08));
+        break;
+      }
+      case 'staff': {
+        const pole = new THREE.CylinderGeometry(0.028, 0.028, 2.1, 8); pole.translate(0, -0.45, 0);
+        this.accGroup.add(part(pole, lambert(WOOD), 1.2));
+        for (const y of [0.55, -1.45]) {
+          const cap = new THREE.CylinderGeometry(0.045, 0.045, 0.12, 8); cap.translate(0, y, 0);
+          this.accGroup.add(part(cap, lambert(STEEL), 1.1));
+        }
+        break;
+      }
+      case 'nunchaku': {
+        const stick = (y: number, tilt: number) => {
+          const s2 = new THREE.CylinderGeometry(0.032, 0.032, 0.42, 8); s2.translate(0, y, 0);
+          const m = part(s2, lambert(0x7a4f22), 1.12); m.rotation.z = tilt; return m;
+        };
+        this.accGroup.add(stick(-0.24, 0));
+        this.accGroup.add(stick(-0.62, 0.7));
+        const cord = new THREE.CylinderGeometry(0.01, 0.01, 0.12, 6); cord.translate(0, -0.46, 0);
+        this.accGroup.add(part(cord, lambert(STEEL), 1.1));
+        break;
+      }
       case 'rocket': {
         for (const hand of [this.rHand, this.lHand]) {
           const glove = part(new THREE.SphereGeometry(0.13, 12, 10), lambert(RED), 1.08);
