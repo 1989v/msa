@@ -50,13 +50,18 @@ object QueryIntent {
      * `FD`·`SH` 어디에도 안 걸리면서 실제로는 상업 시설을 가리킨다.
      * 관광 맥락의 수식어로 쓰이는 말은 **어느 코드로 가든** 필터로 승격하지 않는다.
      */
-    private val COMMERCE_WORDS: Set<String> = setOf(
-        "맛집", "음식", "음식점", "먹거리", "먹을거리", "시장", "쇼핑", "카페", "술집", "주점", "대여", "렌탈",
-        "food", "restaurant", "market", "markets", "shopping", "cafe", "rental", "rent",
+    private val FOOD_WORDS: Set<String> = setOf(
+        "맛집", "음식", "음식점", "먹거리", "먹을거리", "카페", "술집", "주점",
+        "food", "restaurant", "cafe",
     )
+    private val SHOP_WORDS: Set<String> = setOf(
+        "시장", "쇼핑", "대여", "렌탈",
+        "market", "markets", "shopping", "rental", "rent",
+    )
+    private val COMMERCE_WORDS: Set<String> = FOOD_WORDS + SHOP_WORDS
 
-    /** 「야시장」·「전통시장」·「night market」 — 어절 끝이 이것이면 상업 의도다. */
-    private val COMMERCE_SUFFIXES: Set<String> = setOf("시장", "market", "markets")
+    /** 「야시장」·「전통시장」·「night market」 — 어절 끝이 이것이면 상점 의도다. */
+    private val SHOP_SUFFIXES: Set<String> = setOf("시장", "market", "markets")
 
     /**
      * **산업관광(EX06) 소분류 이름은 동의어 나열이 아니라 산업 나열이다** —
@@ -86,11 +91,14 @@ object QueryIntent {
         val lclsCode: String? = null,
         val lclsDepth: Int? = null,
         /**
-         * 질의가 상점·식당·시장을 **직접 가리킨다**. 필터로는 안 올리지만(위 COMMERCE 주석),
+         * 질의가 **상점·시장을 직접 가리킨다** (음식은 아니다). 필터로는 안 올리지만(위 COMMERCE 주석),
          * 이때는 랭킹의 상업 하향(sight 3.0 / commerce 0.35)도 꺼야 한다 — 「야시장」의 정답은
          * 전부 `shopping` 인데 하향이 그것을 잡음 아래로 내린다.
          * 실측(2026-09-13): 「야시장」 nDCG 0.681 → 0.030, 「night market」 0.864 → 0.349,
          * 「hanbok rental」 0.848 → 0.456 — 셋 다 정답이 `SH` 였다.
+         *
+         * **음식 의도는 반대다** — 「전통시장 먹거리」의 정답은 `culture` 로 실린 먹거리촌·먹자골목이라
+         * 하향이 있어야 상점 전통시장이 밀려난다 (하향을 끄니 0.693 → 0.390). 음식어가 있으면 켠 채 둔다.
          */
         val commerceIntent: Boolean = false,
     ) {
@@ -180,7 +188,8 @@ object QueryIntent {
 
         var contentTypeId: String? = null
         var lcls: Pair<String, Int>? = null
-        var commerce = isCommerce(normalize(raw), lexicon)
+        var shop = isShop(normalize(raw), lexicon)
+        var food = isFood(normalize(raw), lexicon)
         val kept = mutableListOf<String>()
 
         // 붙여 쓴 말("가볼만한곳")과 띄어 쓴 말("가볼만한 곳")을 함께 잡으려면 이어붙인 것도 봐야 한다.
@@ -189,8 +198,10 @@ object QueryIntent {
             val two = if (i + 1 < words.size) normalize(words[i] + words[i + 1]) else null
             val one = normalize(words[i])
 
-            if (two != null && isCommerce(two, lexicon)) commerce = true
-            if (isCommerce(one, lexicon)) commerce = true
+            if (two != null && isShop(two, lexicon)) shop = true
+            if (isShop(one, lexicon)) shop = true
+            if (two != null && isFood(two, lexicon)) food = true
+            if (isFood(one, lexicon)) food = true
 
             val twoHit = two?.let { match(it, lexicon) }
             if (twoHit != null) {
@@ -215,18 +226,26 @@ object QueryIntent {
             contentTypeId = contentTypeId,
             lclsCode = lcls?.first,
             lclsDepth = lcls?.second,
-            commerceIntent = commerce,
+            // 음식어가 하나라도 있으면 상점 의도로 치지 않는다 — 「전통시장 먹거리」는 먹거리가 머리다
+            commerceIntent = shop && !food,
         )
     }
 
-    /** 상업 의도어이거나(끝이 「시장」·「market」 포함), 사전이 음식·쇼핑·숙박 코드로 보내는 말. */
-    private fun isCommerce(normalized: String, lexicon: Lexicon): Boolean =
-        normalized in normalizedCommerceWords ||
-            COMMERCE_SUFFIXES.any { normalized.endsWith(it) } ||
-            lexicon.lookup(normalized)?.let { hit -> COMMERCE_PREFIXES.any { hit.first.startsWith(it) } } == true
+    /** 상점 의도어이거나(끝이 「시장」·「market」 포함), 사전이 쇼핑·숙박 코드로 보내는 말. */
+    private fun isShop(normalized: String, lexicon: Lexicon): Boolean =
+        normalized in normalizedShopWords ||
+            SHOP_SUFFIXES.any { normalized.endsWith(it) } ||
+            lexicon.lookup(normalized)?.first?.let { it.startsWith("SH") || it.startsWith("AC") } == true
+
+    /** 음식 의도어이거나 사전이 음식(FD) 코드로 보내는 말. */
+    private fun isFood(normalized: String, lexicon: Lexicon): Boolean =
+        normalized in normalizedFoodWords ||
+            lexicon.lookup(normalized)?.first?.startsWith("FD") == true
 
     private val normalizedStopPhrases: Set<String> = STOP_PHRASES.map { normalize(it) }.toSet()
     private val normalizedCommerceWords: Set<String> = COMMERCE_WORDS.map { normalize(it) }.toSet()
+    private val normalizedShopWords: Set<String> = SHOP_WORDS.map { normalize(it) }.toSet()
+    private val normalizedFoodWords: Set<String> = FOOD_WORDS.map { normalize(it) }.toSet()
     private val normalizedTypeIntents: Map<String, String> =
         TYPE_INTENTS.entries.associate { normalize(it.key) to it.value }
 

@@ -132,8 +132,12 @@ class QueryIntentTest : BehaviorSpec({
                 QueryIntent.analyze("hanbok rental", commerce).commerceIntent shouldBe true
                 QueryIntent.analyze("한복 대여", commerce).commerceIntent shouldBe true
             }
-            Then("사전이 음식·쇼핑 코드로 보내는 말도 상업 의도다") {
-                QueryIntent.analyze("전통시장 먹거리", commerce).commerceIntent shouldBe true
+            Then("음식어가 섞이면 상점 의도로 치지 않는다 — 먹거리촌은 culture 라 하향이 있어야 올라온다") {
+                QueryIntent.analyze("전통시장 먹거리", commerce).commerceIntent shouldBe false
+                QueryIntent.analyze("맛집", commerce).commerceIntent shouldBe false
+            }
+            Then("사전이 쇼핑 코드로 보내는 말은 상점 의도다") {
+                QueryIntent.analyze("시장 구경", commerce).commerceIntent shouldBe true
             }
         }
     }
