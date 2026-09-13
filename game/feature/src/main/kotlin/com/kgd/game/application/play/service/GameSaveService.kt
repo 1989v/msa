@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional
  * version 을 들고 서버가 앞서면 서버본을 받는 쪽으로 푼다 — 막는 대신 맞춘다.
  */
 @Service
-@Qualifier("gameTransactionManager")
 class GameSaveService(
     private val gameRepository: GameRepositoryPort,
     private val saveCommand: GameSaveCommand,
@@ -58,6 +57,7 @@ class GameSaveService(
 }
 
 /** 세이브 조회/업서트의 트랜잭션 경계 — 버전 비교와 쓰기가 한 트랜잭션 */
+@Qualifier("gameTransactionManager")
 @Component
 class GameSaveCommand(
     private val saveRepository: GameSaveRepositoryPort,

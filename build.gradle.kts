@@ -854,21 +854,36 @@ val verifyTransactionQualifiers by tasks.registering {
                 val tm = tmBean.find(text)?.groupValues?.get(1) ?: return@forEach
 
                 // 클래스 레벨 `@Qualifier` 는 그 클래스의 모든 @Transactional 에 적용된다
-                // (Spring 6.2+). 열에 0 으로 붙은 것만 본다 — 생성자 파라미터의 @Qualifier 는 들여써 있다.
-                val classQualifier = Regex("^@Qualifier\\(\"$tm\"\\)", RegexOption.MULTILINE)
-
+                // (Spring 6.2+). 다만 **그 @Transactional 이 속한 클래스**에 붙어야 한다 —
+                // 파일 어딘가에 있기만 하면 되는 게 아니다. 한 파일에 여러 top-level 선언이
+                // 있을 때(서비스 + DTO data class), @Qualifier 가 엉뚱한 선언에 붙으면
+                // @Transactional 은 여전히 primary TM 에 붙고 쓰기가 조용히 사라진다.
+                // 그래서 파일을 top-level 타입 선언 단위로 쪼개 그 클래스 헤더만 본다.
+                val topDecl = Regex(
+                    """^(?:@[^\n]*\n)*(?:public |internal |private |abstract |open |sealed |data |value |final |enum )*(?:class|object|interface)\b""",
+                    RegexOption.MULTILINE,
+                )
                 File(domainDir, "feature/src/main").walkTopDown()
                     .filter { it.isFile && it.extension == "kt" }
                     .forEach { src ->
                         val text = src.readText()
-                        if (classQualifier.containsMatchIn(text)) return@forEach
-                        txAnnotation.findAll(text).forEach { m ->
-                            if (!m.value.contains("\"$tm\"")) {
-                                val rel = src.relativeTo(rootProject.projectDir)
-                                failures += "$rel: ${m.value.trim()} — 한정자가 없다. " +
-                                    "호스트의 primary TM 에 붙어 이 도메인 쓰기가 조용히 사라진다. " +
-                                    "클래스에 @Qualifier(\"$tm\") 를 붙이거나 " +
-                                    "@Transactional(\"$tm\", ...) 로 바꿀 것"
+                        // 각 top-level 선언의 시작 오프셋 — 이 경계로 파일을 클래스별 세그먼트로 나눈다.
+                        val starts = topDecl.findAll(text).map { it.range.first }.toList()
+                        if (starts.isEmpty()) return@forEach
+                        val bounds = starts + listOf(text.length)
+                        for (i in starts.indices) {
+                            val seg = text.substring(bounds[i], bounds[i + 1])
+                            // 이 세그먼트(한 클래스)의 헤더 애너테이션에 클래스 레벨 @Qualifier 가 있나.
+                            val header = seg.substringBefore("class ").substringBefore("object ").substringBefore("interface ")
+                            if (Regex("@Qualifier\\(\"$tm\"\\)").containsMatchIn(header)) continue
+                            txAnnotation.findAll(seg).forEach { m ->
+                                if (!m.value.contains("\"$tm\"")) {
+                                    val rel = src.relativeTo(rootProject.projectDir)
+                                    failures += "$rel: ${m.value.trim()} — 한정자가 이 클래스에 없다. " +
+                                        "호스트의 primary TM 에 붙어 이 도메인 쓰기가 조용히 사라진다. " +
+                                        "그 @Transactional 이 속한 클래스에 @Qualifier(\"$tm\") 를 붙이거나 " +
+                                        "@Transactional(\"$tm\", ...) 로 바꿀 것"
+                                }
                             }
                         }
                     }

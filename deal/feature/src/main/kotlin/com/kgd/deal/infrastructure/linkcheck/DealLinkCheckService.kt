@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /** 점검 대상 한 건 — 트랜잭션 밖으로 들고 나가는 값이라 엔티티가 아니다 */
-@Qualifier("dealTransactionManager")
 data class LinkCheckTarget(val offerId: Long, val slug: String, val targetUrl: String)
 
 /**
@@ -19,6 +18,7 @@ data class LinkCheckTarget(val offerId: Long, val slug: String, val targetUrl: S
  * 커넥션 하나를 수 분간 붙잡아 free-tier 풀을 말린다 (docs/conventions/transactional-usage.md).
  * 그래서 "대상 읽기 → (밖에서 점검) → 결과 쓰기"로 트랜잭션을 두 토막 낸다.
  */
+@Qualifier("dealTransactionManager")
 @Service
 class DealLinkCheckService(
     private val offerRepository: DealOfferJpaRepository,

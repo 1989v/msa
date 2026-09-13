@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional
 import tools.jackson.core.type.TypeReference
 import tools.jackson.module.kotlin.jacksonObjectMapper
 
-@Qualifier("gameTransactionManager")
 data class HouseCreativeDto(val title: String?, val body: String?, val href: String?, val emoji: String?)
 
 
@@ -101,6 +100,7 @@ class AdService(
 }
 
 /** 보상 원장의 트랜잭션 경계 */
+@Qualifier("gameTransactionManager")
 @Component
 class RewardCommand(
     private val rewardRepository: RewardGrantRepositoryPort,
