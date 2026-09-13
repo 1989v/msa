@@ -12,7 +12,9 @@ const out = process.argv[3];
 const mode = process.argv[4] || 'portrait';
 const [W, H] = mode === 'portrait' ? [390, 844] : mode === 'desktop' ? [1280, 720] : [844, 390];
 const mobile = mode !== 'desktop';
-const port = 9300 + Math.floor(Math.random() * 300);
+// 9700 대 — cdp-chrome.sh 가 쓰는 9400 대와 겹치지 않게. 겹치면 **남의 크롬에 붙어 남의 게임을 잰다**
+// (2026-09-13 실측: 깊은 밤을 재는데 캡처에 전란 성문이 찍혔다)
+const port = 9700 + Math.floor(Math.random() * 200);
 const profile = path.join(out, `chrome-${mode}`);
 fs.mkdirSync(profile, { recursive: true });
 
@@ -67,6 +69,10 @@ async function main() {
 
   const t0 = Date.now();
   await send('Page.navigate', { url });
+  // 붙은 페이지가 내가 연 페이지인지 본다 — 포트가 겹쳐 남의 크롬에 붙으면 남의 게임을 재게 된다
+  await sleep(300);
+  const here = await evalJs('location.href');
+  if (!here || !here.startsWith(url.split('#')[0])) throw new Error(`다른 페이지에 붙었다: ${here} (원한 것 ${url})`);
 
   // 유니티가 준비 신호(PlatformAdapter.runStart 또는 unityInstance)를 낼 때까지
   let ready = null, firstFrame = null;
@@ -98,6 +104,18 @@ async function main() {
   await shotAt('t1', 1200);
   await shotAt('t4', 2800);
   await shotAt('t12', 8000);
+  // KGD_PRESS="KeyA@1500,KeyS@600" — 터치 버튼(data-vt-code)을 차례로 누르고 그때마다 한 장 찍는다.
+  // 키보드는 캔버스에 안 들어가므로 버튼 자리를 터치로 누른다
+  for (const spec of String(process.env.KGD_PRESS || '').split(',').filter(Boolean)) {
+    const [code, wait] = spec.split('@');
+    const rect = await evalJs(`(function(){var b=document.querySelector('[data-vt-code="${code}"]');if(!b)return '';var r=b.getBoundingClientRect();return JSON.stringify({x:r.x+r.width/2,y:r.y+r.height/2});})()`);
+    if (!rect) { console.error('button not found: ' + code); continue; }
+    const c = JSON.parse(rect);
+    await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: c.x, y: c.y }] });
+    await sleep(60);
+    await send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await shotAt('press-' + code, Number(wait || 500));
+  }
   await sleep(18000);
 
   // 프레임 시간 — 8초 동안 rAF 간격
